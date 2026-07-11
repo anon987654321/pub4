@@ -210,11 +210,11 @@ function clearThinkingAloud() {
 
 function scheduleThinkingAloud(stage = "thinking") {
   clearThinkingAloud();
-  thinkingAloudTimer = setTimeout(() => {
-    if (State.mode !== 'thinking' || tts.playing || tts.muted) return;
-    const aside = stage === 'routing' ? 'routing' : stage === 'scanning' ? 'scanning' : 'still thinking';
-    enqueueSpeech(aside);
-  }, 3200);
+  // Spoken "scanning"/"routing"/"still thinking" filler removed on request:
+  // it competed with real replies in the serial TTS queue and, on slow
+  // turns, was the most-heard utterance ("it only says scanning"). The
+  // visual status (showStage) still shows progress silently. The timer
+  // machinery stays so clearThinkingAloud callers remain valid.
 }
 
 function speakFailure(reason = "Sorry, I hit a snag.") {
@@ -427,9 +427,9 @@ async function sendMessage(text) {
         } catch (_) {}
       }
       if (raw === '[DONE]') {
-        if (pending.trim() && !ttsSuppressed) {
+        if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
           tts.lastText = pending.trim();
-          enqueueSpeech(pending.trim());
+          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
         }
         pending = '';
         State.mode = 'idle';
@@ -454,18 +454,9 @@ async function sendMessage(text) {
       if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
       window._chatOnChunk?.(chunk);
       pending += chunk;
+      totalTTSChars += chunk.length;
       State.pulse = Math.min(0.6, State.pulse + 0.05);
-      let m;
-      while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
-        const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
-        const sent = pending.slice(0, cut).trim();
-        pending = pending.slice(cut);
-        if (!sent) continue;
-        totalTTSChars += sent.length;
-        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-        ttsFirst = false;
-        enqueueSpeech(prefix + sent);
-      }
+      if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
     };
     window.MASTERChat.startChatStream({
       message: finalText,
@@ -517,9 +508,9 @@ async function sendMessage(text) {
       } catch (_) { /* not JSON, fall through to normal content handling */ }
     }
     if (raw === '[DONE]') {
-      if (pending.trim() && !ttsSuppressed) {
+      if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
-        enqueueSpeech(pending.trim());
+        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
       }
       if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
         rootBody.dataset.uncertain = '1';
@@ -551,18 +542,9 @@ async function sendMessage(text) {
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
     pending += chunk;
+    totalTTSChars += chunk.length;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
-    let m;
-    while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
-      const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
-      const sent = pending.slice(0, cut).trim();
-      pending = pending.slice(cut);
-      if (!sent) continue;
-      totalTTSChars += sent.length;
-      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-      ttsFirst = false;
-      enqueueSpeech(prefix + sent);
-    }
+    if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
   };
   evtSrc.addEventListener('mood', (ev) => {
     const m = (ev.data || '').trim();
@@ -717,15 +699,9 @@ async function acquireWakeLock() {
 }
 
 function guardVoice(v, opts = {}) {
-  const raw = String(v || '').trim();
-  if (!raw) return undefined;
-  const voice = VOICE_ALIASES[raw.toLowerCase()] || raw;
-  if (opts.explicit) return voice;
-  const personaVoice = window.MASTER_PERSONA?.voice || TTS_DEFAULT_VOICE;
-  const selected = State.voiceName || personaVoice;
-  if (voice === personaVoice || voice === selected) return voice;
-  if ((raw === "pernille" || raw === "finn" || voice.startsWith("nb-")) && tts.lang !== "nb") return undefined;
-  return voice;
+  void v;
+  void opts;
+  return TTS_DEFAULT_VOICE;
 }
 
 function previewVoice(voice) {

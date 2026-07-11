@@ -12,14 +12,11 @@ module Master
       AXIOM_DISPLAY_LIMIT = 10
 
       FALLBACK_PERSONA = {
-        "voice" => "ms-MY-OsmanNeural",
-        # Kept in sync with data/personas.yml's malay entry — see its comment
-        # for why -35%/-150Hz was replaced (well past the range Azure/edge
-        # neural voices render cleanly).
+        "voice" => "nb-NO-PernilleNeural",
         "tts_rate" => "-8%",
-        "tts_pitch" => "-35Hz",
-        "style" => "deep",
-        "description" => "Terse. Direct. No filler. Dark.",
+        "tts_pitch" => "+8Hz",
+        "style" => "clear",
+        "description" => "Norwegian. Clear. Curious. Warm editorial voice.",
       }.freeze
 
       MOOD_LINES = {

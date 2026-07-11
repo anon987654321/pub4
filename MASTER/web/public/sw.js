@@ -57,7 +57,7 @@ self.addEventListener('fetch', e => {
   // aborted (new message sent, reconnect, navigation). Status polls are just
   // pointless to cache.
   if (DYNAMIC_PREFIXES.some(p => url.pathname.startsWith(p))) {
-    e.respondWith(fetch(e.request));
+    e.respondWith(fetch(e.request).catch(() => Response.error()));
     return;
   }
 

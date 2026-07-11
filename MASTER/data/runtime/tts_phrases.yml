@@ -10,8 +10,8 @@ phrases:
     voice: pernille
     style: calm
   - text: "Council convenes."
-    voice: ryan
-    style: heavy
+    voice: pernille
+    style: clear
   - text: "Scan complete."
     voice: pernille
     style: clear

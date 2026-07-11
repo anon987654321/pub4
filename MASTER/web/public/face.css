@@ -39,6 +39,9 @@
   --radius-lg: 12px;
   --radius-pill: 999px;
   --face-bar-height: 36px;
+  --hud-above-bar: calc(var(--face-bar-height) + var(--safe-bottom));
+  --hud-tier-caption: calc(var(--hud-above-bar) + 34px);
+  --hud-tier-status: calc(var(--hud-above-bar) + 10px);
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;
   --face-glow-scale: 1.42;
@@ -336,8 +339,8 @@ body[data-mode="listening"] .top-left-logo {
 /* Mic indicator — top-right, visible only during STT */
 #mic-dot {
   position: fixed;
-  top: var(--inset-t);
-  right: var(--inset-r);
+  top: calc(var(--inset-t) + 2px);
+  right: calc(var(--inset-r) + 2px);
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -361,7 +364,7 @@ body[data-mode="listening"] #mic-dot {
 .ui-status {
   position: fixed;
   right: var(--inset-r);
-  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
+  bottom: var(--hud-tier-status);
   z-index: var(--z-ui);
   font: 9px/1.1 var(--font-label);
   text-transform: uppercase;
@@ -377,7 +380,7 @@ body[data-mode="listening"] #mic-dot {
 .face-controls {
   position: fixed;
   left: var(--inset-l);
-  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
+  bottom: var(--hud-tier-status);
   z-index: var(--z-ui);
   display: flex;
   flex-wrap: wrap;
@@ -393,7 +396,7 @@ body[data-mode="listening"] #mic-dot {
 
 .model-badge {
   position: fixed;
-  top: var(--inset-t);
+  top: calc(var(--inset-t) + 18px);
   right: var(--inset-r);
   z-index: var(--z-ui);
   padding: 5px 8px;
@@ -436,7 +439,8 @@ body[data-mode="listening"] #mic-dot {
 }
 
 .mood-sparkline {
-  right: var(--inset-r);
+  top: calc(var(--inset-t) + 2px);
+  right: calc(var(--inset-r) + 22px);
   display: flex;
   align-items: end;
   gap: 2px;
@@ -620,7 +624,7 @@ body[data-mode="listening"] #mic-dot {
 .session-stats {
   position: fixed;
   left: var(--inset-l);
-  bottom: var(--inset-b);
+  bottom: var(--hud-tier-caption);
   z-index: var(--z-ui);
   font: 9px/1.2 var(--font-label);
   color: var(--face-muted);
@@ -633,7 +637,7 @@ body[data-mode="listening"] #mic-dot {
 .provider-chip {
   position: fixed;
   right: var(--inset-r);
-  bottom: var(--inset-b);
+  bottom: var(--hud-tier-caption);
   z-index: var(--z-ui);
   font: 9px/1.2 var(--font-label);
   color: color-mix(in srgb, var(--master-accent, var(--c-accent)) 72%, var(--face-fg));
@@ -649,13 +653,13 @@ html[data-model-provider] .provider-chip { opacity: .92; }
 
 .agent-hud {
   position: fixed;
-  top: calc(36px + var(--safe-top));
+  top: calc(54px + var(--safe-top));
   left: var(--inset-l);
   z-index: var(--z-ui);
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-width: min(280px, calc(100vw - 24px));
+  max-width: min(240px, calc(100vw - 120px - var(--safe-left) - var(--safe-right)));
   pointer-events: none;
   user-select: none;
   font: 9px/1.35 var(--font-label);
@@ -756,7 +760,7 @@ body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08
 .idle-help-trail {
   position: fixed;
   left: 50%;
-  bottom: calc(88px + var(--safe-bottom));
+  bottom: calc(var(--hud-tier-caption) + 28px);
   transform: translateX(-50%);
   font: 10px/1 var(--font-label);
   color: var(--face-muted);
@@ -843,19 +847,27 @@ html[data-input-dense="1"] #zsh { border-top: 1.5px solid color-mix(in srgb, var
 /* Closed-caption strip (FA141) */
 #tts-live {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--face-bar-height) + var(--safe-bottom) + 22px);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: min(72vw, 520px);
+  bottom: var(--hud-tier-caption);
   z-index: calc(var(--z-chrome) + 2);
   background: transparent;
   color: var(--face-fg);
   font: 10px/1.25 var(--font-label);
-  padding: 1px 6px;
+  padding: 1px 10px;
   text-align: center;
   white-space: pre-wrap;
   pointer-events: none;
   max-height: 2.5em;
   overflow: hidden;
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+body[data-mode="speaking"] #tts-live,
+body[data-tts-loading="true"] #tts-live {
+  opacity: 1;
 }
 
 /* Inline status text — shows thinking/speaking inside the prompt bar */
@@ -1119,14 +1131,7 @@ body[data-phantom-glitch="1"] canvas {
 .tool-stack[open] summary::before { content: "▾ "; }
 
 .pipeline-stage {
-  position: fixed;
-  right: var(--inset-r);
-  bottom: calc(52px + var(--safe-bottom));
-  z-index: var(--z-ui);
-  font: 10px var(--font-label);
-  color: var(--face-dim);
-  letter-spacing: 0.04em;
-  pointer-events: none;
+  display: none;
 }
 
 #chat-history-panel {
@@ -1354,6 +1359,28 @@ body::after {
 .council-persona-badge[data-visible="1"] { opacity: 1; }
 .council-persona-badge[data-lane="left"] { left: 28%; transform: none; }
 .council-persona-badge[data-lane="right"] { left: auto; right: 28%; transform: none; }
+
+.sound-on-chip {
+  position: fixed;
+  top: calc(var(--inset-t) + 36px);
+  right: var(--inset-r);
+  z-index: var(--z-ui);
+  padding: 4px 8px;
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-pill);
+  background: #000;
+  color: var(--face-muted);
+  font: 9px/1 var(--font-label);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: .72;
+}
+.sound-on-chip:hover,
+.sound-on-chip:focus-visible {
+  opacity: 1;
+  color: var(--face-fg);
+}
 
 .council-multi-face {
   position: fixed;

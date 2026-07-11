@@ -510,8 +510,8 @@ class TestWebUI < Minitest::Test
   end
 
   # Personality
-  def test_personality_default_is_malay
-    assert_equal :malay, Master::Voice::Personality::DEFAULT
+  def test_personality_default_is_anchor
+    assert_equal :anchor, Master::Voice::Personality::DEFAULT
   end
 
   def test_personality_system_prompt_non_empty

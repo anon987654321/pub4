@@ -5,16 +5,12 @@ require "fileutils"
 
 module Master
   module Voice
-    # Fast, varied, warm — Osman is a guest, not the default drone.
+    # Single-voice policy: Pernille only; style still varies.
     module WarmErratic
       STATE = File.join(Master::ROOT, ".master", "tts_voice_state.json")
 
       VOICES = [
-        [:ryan, 26],
-        [:william, 26],
-        [:wayne, 24],
-        [:finn, 14],
-        [:osman, 10],
+        [:pernille, 100],
       ].freeze
 
       STYLES = {
@@ -78,30 +74,12 @@ module Master
         FAST_STYLES.sample
       end
 
-      def pick_voice(style, text)
-        return [:ryan, style] if style == :calm && bad_news?(text)
-        return [:ryan, style] if style == :deadpan
-        return [:william, style] if style == :chipper && rand < 0.6
-
-        pool = VOICES.reject { |name, _| name == last_voice }
-        pool = VOICES if pool.empty?
-
-        if rand < 0.12
-          guest_voice, guest_style = surprise_guest
-          return [guest_voice, guest_style]
-        end
-
-        [weighted_choice(pool), style]
+      def pick_voice(style, _text)
+        [:pernille, style]
       end
 
       def surprise_guest
-        [
-          [:finn, :energetic],
-          [:ryan, :deadpan],
-          [:william, :chipper],
-          [:wayne, :amused],
-          [:ezinne, :clear]
-        ].sample
+        [:pernille, FAST_STYLES.sample]
       end
 
       def weighted_choice(items)

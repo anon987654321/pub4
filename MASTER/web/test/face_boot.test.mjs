@@ -289,6 +289,13 @@ test("tts defaults to server style inference and recovers after fallback cooldow
   assert.match(runtime, /style_locked/);
   assert.match(runtime, /serverUnavailableUntil/);
   assert.match(runtime, /serverFailureCount/);
+  assert.match(runtime, /res\.status === 429/);
+  assert.match(runtime, /pullStreamingTtsChunk/);
+  assert.match(runtime, /flushStreamTts/);
+  assert.match(runtime, /looksLikeListingStream/);
+  assert.match(runtime, /shouldSpeakStreamReply/);
+  assert.match(runtime, /synthInFlight/);
+  assert.doesNotMatch(runtime, /while \(\(m = pending\.match\(SENT_BREAK\)\)/);
   assert.doesNotMatch(controller, /params\[:style\]\.present\?/);
   assert.doesNotMatch(controller, /params\[:voice\]\.present\?/);
 });

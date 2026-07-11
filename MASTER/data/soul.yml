@@ -5,8 +5,8 @@
 
 schema: 1
 version: "2.6.0"
-persona: malay
-voice: ms-MY-OsmanNeural
+persona: anchor
+voice: nb-NO-PernilleNeural
 language:
   primary: english
   secondary: norwegian
@@ -70,7 +70,7 @@ absolute:
 negotiable:
   style: sentence_case
   default_model: z-ai/glm-4.5-air:free
-  tts_voice: ms-MY-OsmanNeural
+  tts_voice: nb-NO-PernilleNeural
   language_detection: true
   conflict_resolution:
     strategy: highest_priority_wins

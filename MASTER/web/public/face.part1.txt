@@ -219,7 +219,7 @@ function applyIdleSignature(voice) {
 }
 function setVoiceName(voice, opts = {}) {
   let raw = String(voice || '').trim();
-  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'osman';
+  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -266,6 +266,76 @@ function dayNightTint() {
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 const TTS_CHUNK_MAX = 220;
+const TTS_MIN_CHUNK = 48;
+const TTS_STREAM_CHAR_CAP = 12000;
+function pullStreamingTtsChunk(pending) {
+  if (!pending) return { chunk: '', rest: '' };
+  const sentBreak = pending.match(SENT_BREAK);
+  if (sentBreak) {
+    const cut = sentBreak.index + sentBreak[0].length;
+    return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+  }
+  if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
+  const slice = pending.slice(0, TTS_CHUNK_MAX);
+  let cut = TTS_CHUNK_MAX;
+  const lastSpace = slice.lastIndexOf(' ');
+  if (lastSpace > 48) cut = lastSpace + 1;
+  return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+}
+function shouldEnqueueTtsChunk(text, opts = {}) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (opts.flush) return true;
+  if (t.length >= TTS_MIN_CHUNK) return true;
+  if (/[.!?…]["'\u201D]?$/.test(t)) return true;
+  return false;
+}
+function looksLikeListingStream(text) {
+  const t = String(text || '');
+  if (looksLikeProse(t)) return false;
+  const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
+  const tokens = t.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 8) {
+    const short = tokens.filter((tok) => tok.length <= 28 && !/[.!?…]/.test(tok)).length;
+    const times = tokens.filter((tok) => /^\d{1,2}:\d{2}$/.test(tok)).length;
+    const paths = tokens.filter((tok) => /[./\\]/.test(tok)).length;
+    const nums = tokens.filter((tok) => /^\d+$/.test(tok)).length;
+    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;
+  }
+  if (lines.length < 3) return false;
+  const tabular = lines.filter((l) => /^\d+\s+\d+\s+/.test(l) || /^[\d.:+\-]+\s+[\w./-]+$/.test(l)).length;
+  return tabular / lines.length >= 0.6;
+}
+function looksLikeProse(text) {
+  const t = String(text || '').trim();
+  if (t.length < 64) return false;
+  const sentences = (t.match(/[^.!?…]+[.!?…]+/g) || []).length;
+  return sentences >= 2 || /\b(the|this|that|you|we|I|here|there|because|however)\b/i.test(t);
+}
+function shouldSpeakStreamReply(text, ttsSuppressed) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (!ttsSuppressed) return true;
+  return looksLikeProse(t);
+}
+function flushStreamTts(pending, opts = {}) {
+  const text = String(pending || '').trim();
+  if (!text || looksLikeListingStream(text)) return;
+  let rest = text;
+  let first = true;
+  let pulled;
+  const tsPrefix = opts.prependTimestamp
+    ? `As of ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. `
+    : '';
+  const speakOpts = { flush: true };
+  while ((pulled = pullStreamingTtsChunk(rest)).chunk) {
+    rest = pulled.rest;
+    const prefix = first ? tsPrefix : '';
+    first = false;
+    enqueueSpeech(prefix + pulled.chunk, speakOpts);
+  }
+  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
+}
 function detectLang(text) {
   if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
   return 'en';

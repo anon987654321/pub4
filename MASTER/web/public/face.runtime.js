@@ -221,7 +221,7 @@ function applyIdleSignature(voice) {
 }
 function setVoiceName(voice, opts = {}) {
   let raw = String(voice || '').trim();
-  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'osman';
+  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -268,6 +268,76 @@ function dayNightTint() {
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 const TTS_CHUNK_MAX = 220;
+const TTS_MIN_CHUNK = 48;
+const TTS_STREAM_CHAR_CAP = 12000;
+function pullStreamingTtsChunk(pending) {
+  if (!pending) return { chunk: '', rest: '' };
+  const sentBreak = pending.match(SENT_BREAK);
+  if (sentBreak) {
+    const cut = sentBreak.index + sentBreak[0].length;
+    return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+  }
+  if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
+  const slice = pending.slice(0, TTS_CHUNK_MAX);
+  let cut = TTS_CHUNK_MAX;
+  const lastSpace = slice.lastIndexOf(' ');
+  if (lastSpace > 48) cut = lastSpace + 1;
+  return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+}
+function shouldEnqueueTtsChunk(text, opts = {}) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (opts.flush) return true;
+  if (t.length >= TTS_MIN_CHUNK) return true;
+  if (/[.!?…]["'\u201D]?$/.test(t)) return true;
+  return false;
+}
+function looksLikeListingStream(text) {
+  const t = String(text || '');
+  if (looksLikeProse(t)) return false;
+  const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
+  const tokens = t.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 8) {
+    const short = tokens.filter((tok) => tok.length <= 28 && !/[.!?…]/.test(tok)).length;
+    const times = tokens.filter((tok) => /^\d{1,2}:\d{2}$/.test(tok)).length;
+    const paths = tokens.filter((tok) => /[./\\]/.test(tok)).length;
+    const nums = tokens.filter((tok) => /^\d+$/.test(tok)).length;
+    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;
+  }
+  if (lines.length < 3) return false;
+  const tabular = lines.filter((l) => /^\d+\s+\d+\s+/.test(l) || /^[\d.:+\-]+\s+[\w./-]+$/.test(l)).length;
+  return tabular / lines.length >= 0.6;
+}
+function looksLikeProse(text) {
+  const t = String(text || '').trim();
+  if (t.length < 64) return false;
+  const sentences = (t.match(/[^.!?…]+[.!?…]+/g) || []).length;
+  return sentences >= 2 || /\b(the|this|that|you|we|I|here|there|because|however)\b/i.test(t);
+}
+function shouldSpeakStreamReply(text, ttsSuppressed) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (!ttsSuppressed) return true;
+  return looksLikeProse(t);
+}
+function flushStreamTts(pending, opts = {}) {
+  const text = String(pending || '').trim();
+  if (!text || looksLikeListingStream(text)) return;
+  let rest = text;
+  let first = true;
+  let pulled;
+  const tsPrefix = opts.prependTimestamp
+    ? `As of ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. `
+    : '';
+  const speakOpts = { flush: true };
+  while ((pulled = pullStreamingTtsChunk(rest)).chunk) {
+    rest = pulled.rest;
+    const prefix = first ? tsPrefix : '';
+    first = false;
+    enqueueSpeech(prefix + pulled.chunk, speakOpts);
+  }
+  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
+}
 function detectLang(text) {
   if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
   return 'en';
@@ -860,7 +930,6 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
-
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1173,8 +1242,8 @@ if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
 const COUNCIL_VOICE = {
-  Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
-  Security: 'osman', User: 'ryan', Mentor: 'yasmin'
+  Architect: 'pernille', Skeptic: 'pernille', Pragmatist: 'pernille',
+  Security: 'pernille', User: 'pernille', Mentor: 'pernille'
 };
 
 const PERSONA_TINT = {
@@ -1337,7 +1406,6 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
-
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -2133,7 +2201,6 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
-
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -2183,7 +2250,7 @@ function beep(freq, dur) {
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const VISEME_STEP_MS = 90;
-const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
+const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
 const TTS_DEFAULT_VOICE = 'nb-NO-PernilleNeural';
@@ -2203,8 +2270,7 @@ function emitTtsEvent(type, detail = {}) {
   });
 }
 function _activeTtsVoice() {
-  const persona = window.MASTER_PERSONA || {};
-  return State.voiceName || persona.voice || TTS_DEFAULT_VOICE;
+  return TTS_DEFAULT_VOICE;
 }
 function _nextTtsVoice() { return _activeTtsVoice(); }
 const TTS_STYLE_KEY = 'master:tts_style';
@@ -2493,10 +2559,23 @@ async function writeCachedTTS(key, blob) {
   } catch (_) {}
 }
 
+function latchTtsRateLimit(res) {
+  const retryAfter = Math.max(5, parseInt(res?.headers?.get?.('Retry-After') || '60', 10) || 60) * 1000;
+  tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
+  tts.serverUnavailable = true;
+  tts.serverUnavailableUntil = Date.now() + retryAfter;
+  tts.prefetch.clear();
+}
 async function loadTTSBlob(text, voice, style) {
+  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');
   const key = await ttsCacheKey(text, voice, style).catch(() => null);
   const cached = key ? await readCachedTTS(key) : null;
   if (cached) return cached;
+  while (tts.synthInFlight > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');
+  }
+  tts.synthInFlight++;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TTS_FETCH_TIMEOUT_MS);
   try {
@@ -2511,6 +2590,10 @@ async function loadTTSBlob(text, voice, style) {
       }
       return pollTTSJob(job, controller.signal);
     }
+    if (res.status === 429) {
+      latchTtsRateLimit(res);
+      throw new Error('429');
+    }
     if (!res.ok) throw new Error(res.status);
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
@@ -2521,6 +2604,8 @@ async function loadTTSBlob(text, voice, style) {
   } catch (e) {
     clearTimeout(timer);
     throw e;
+  } finally {
+    tts.synthInFlight = Math.max(0, (tts.synthInFlight || 0) - 1);
   }
 }
 
@@ -2573,6 +2658,11 @@ async function pollTTSJob(job, signal) {
         const avail = Number(res.headers.get('X-TTS-Bytes') || 0);
         if (avail > 0) tryPartialTTSPlay(job, avail);
       }
+      continue;
+    }
+    if (res.status === 429) {
+      latchTtsRateLimit(res);
+      await new Promise((resolve) => setTimeout(resolve, Math.min(15000, (tts.serverUnavailableUntil || 0) - Date.now() || 5000)));
       continue;
     }
     if (!res.ok) throw new Error(res.status);
@@ -2680,8 +2770,9 @@ function clearViseme() {
 }
 
 function fetchTTS(text, voice, style) {
-  if ((tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) || tts.prefetch.has(text)) return;
+  if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) return;
   if (tts.serverUnavailable && Date.now() >= (tts.serverUnavailableUntil || 0)) tts.serverUnavailable = false;
+  if (tts.prefetch.has(text) || (tts.synthInFlight || 0) > 0) return;
   const meta = tts.meta.get(text) || {};
   const p = loadTTSBlob(text, voice || meta.voice, style || meta.style).catch(() => null);
   tts.prefetch.set(text, p);
@@ -2739,6 +2830,7 @@ function enqueueSpeech(text, opts = {}) {
     .replace(/[*_~]/g, '')
     .trim();
   if (!clean) return;
+  if (!shouldEnqueueTtsChunk(clean, opts)) return;
   const _v = _nextTtsVoice();
   const decorated = _quirkifyTts(clean, _v, opts);
   applyParalinguisticState(decorated);
@@ -2752,14 +2844,13 @@ function enqueueSpeech(text, opts = {}) {
   tts.lanes[lane].push(decorated);
   tts.queue.push(decorated);
   nodImpulse += 0.022;
-  if (tts.playing && !tts.serverUnavailable) fetchTTS(decorated);
   ttsTick();
 }
 
 function requeueChunk(text) {
   if (!text) return false;
   const n = (tts.attempts.get(text) || 0) + 1;
-  if (n > 3) { tts.attempts.delete(text); return false; }
+  if (n > 5) { tts.attempts.delete(text); return false; }
   tts.attempts.set(text, n);
   tts.queue.unshift(text);
   return true;
@@ -2888,7 +2979,8 @@ function ttsTick() {
           if (errLive?.textContent === 'speech unavailable') errLive.textContent = '';
         }, 2500);
       }
-      if (token === tts.cancelToken) scheduleTtsTick(800);
+      const retryMs = Math.max(800, (tts.serverUnavailableUntil || 0) - Date.now() || 0);
+      if (token === tts.cancelToken) scheduleTtsTick(retryMs);
     });
 }
 
@@ -2916,7 +3008,6 @@ function ttsTogglePause() {
   tts.paused = true;
   if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }
-
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -3129,11 +3220,11 @@ function clearThinkingAloud() {
 
 function scheduleThinkingAloud(stage = "thinking") {
   clearThinkingAloud();
-  thinkingAloudTimer = setTimeout(() => {
-    if (State.mode !== 'thinking' || tts.playing || tts.muted) return;
-    const aside = stage === 'routing' ? 'routing' : stage === 'scanning' ? 'scanning' : 'still thinking';
-    enqueueSpeech(aside);
-  }, 3200);
+  // Spoken "scanning"/"routing"/"still thinking" filler removed on request:
+  // it competed with real replies in the serial TTS queue and, on slow
+  // turns, was the most-heard utterance ("it only says scanning"). The
+  // visual status (showStage) still shows progress silently. The timer
+  // machinery stays so clearThinkingAloud callers remain valid.
 }
 
 function speakFailure(reason = "Sorry, I hit a snag.") {
@@ -3346,9 +3437,9 @@ async function sendMessage(text) {
         } catch (_) {}
       }
       if (raw === '[DONE]') {
-        if (pending.trim() && !ttsSuppressed) {
+        if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
           tts.lastText = pending.trim();
-          enqueueSpeech(pending.trim());
+          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
         }
         pending = '';
         State.mode = 'idle';
@@ -3373,18 +3464,9 @@ async function sendMessage(text) {
       if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
       window._chatOnChunk?.(chunk);
       pending += chunk;
+      totalTTSChars += chunk.length;
       State.pulse = Math.min(0.6, State.pulse + 0.05);
-      let m;
-      while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
-        const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
-        const sent = pending.slice(0, cut).trim();
-        pending = pending.slice(cut);
-        if (!sent) continue;
-        totalTTSChars += sent.length;
-        const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-        ttsFirst = false;
-        enqueueSpeech(prefix + sent);
-      }
+      if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
     };
     window.MASTERChat.startChatStream({
       message: finalText,
@@ -3436,9 +3518,9 @@ async function sendMessage(text) {
       } catch (_) { /* not JSON, fall through to normal content handling */ }
     }
     if (raw === '[DONE]') {
-      if (pending.trim() && !ttsSuppressed) {
+      if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
-        enqueueSpeech(pending.trim());
+        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
       }
       if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
         rootBody.dataset.uncertain = '1';
@@ -3470,18 +3552,9 @@ async function sendMessage(text) {
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
     pending += chunk;
+    totalTTSChars += chunk.length;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
-    let m;
-    while ((m = pending.match(SENT_BREAK)) || (pending.length > TTS_CHUNK_MAX && (m = pending.match(/\s+/)))) {
-      const cut = m ? m.index + m[0].length : TTS_CHUNK_MAX;
-      const sent = pending.slice(0, cut).trim();
-      pending = pending.slice(cut);
-      if (!sent) continue;
-      totalTTSChars += sent.length;
-      const prefix = (ttsFirst && tts.prependTimestamp) ? `As of ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}. ` : '';
-      ttsFirst = false;
-      enqueueSpeech(prefix + sent);
-    }
+    if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
   };
   evtSrc.addEventListener('mood', (ev) => {
     const m = (ev.data || '').trim();
@@ -3636,15 +3709,9 @@ async function acquireWakeLock() {
 }
 
 function guardVoice(v, opts = {}) {
-  const raw = String(v || '').trim();
-  if (!raw) return undefined;
-  const voice = VOICE_ALIASES[raw.toLowerCase()] || raw;
-  if (opts.explicit) return voice;
-  const personaVoice = window.MASTER_PERSONA?.voice || TTS_DEFAULT_VOICE;
-  const selected = State.voiceName || personaVoice;
-  if (voice === personaVoice || voice === selected) return voice;
-  if ((raw === "pernille" || raw === "finn" || voice.startsWith("nb-")) && tts.lang !== "nb") return undefined;
-  return voice;
+  void v;
+  void opts;
+  return TTS_DEFAULT_VOICE;
 }
 
 function previewVoice(voice) {
@@ -4060,4 +4127,3 @@ await import('/face_semantics.js');
 await import('/face_minimal_ui.js');
 await import('/face_loops_music.js');
 await import('/face_loops_nudge.js');
-

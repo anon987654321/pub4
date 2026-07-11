@@ -106,10 +106,8 @@ class TtsController < ApplicationController
     [voice_key, synth_style, rate, pitch]
   end
 
-  def resolve_tts_voice(raw, fallback_voice = nil)
-    candidate = raw.to_s.strip
-    candidate = fallback_voice.to_s if candidate.empty? && fallback_voice
-    Master::Voice::Speech.resolve_voice(candidate.empty? ? Master::Voice::Speech::DEFAULT_VOICE : candidate)
+  def resolve_tts_voice(_raw, _fallback_voice = nil)
+    Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
   end
 
   def resolve_tts_style(raw_style, text)

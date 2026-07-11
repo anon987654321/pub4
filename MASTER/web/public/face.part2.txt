@@ -310,8 +310,8 @@ if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
 const COUNCIL_VOICE = {
-  Architect: 'ryan', Skeptic: 'steffan', Pragmatist: 'finn',
-  Security: 'osman', User: 'ryan', Mentor: 'yasmin'
+  Architect: 'pernille', Skeptic: 'pernille', Pragmatist: 'pernille',
+  Security: 'pernille', User: 'pernille', Mentor: 'pernille'
 };
 
 const PERSONA_TINT = {
