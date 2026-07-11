@@ -321,14 +321,14 @@
 // public/face_phosphor_trail.js
 (() => {
   "use strict";
-  const TRAIL_DECAY = 0.82;
+  const TRAIL_DECAY = 0.86;
   let trailCanvas = null;
   let trailCtx = null;
   function ensureTrail(w, h) {
     if (!trailCanvas) {
       trailCanvas = document.createElement("canvas");
       trailCanvas.id = "face-phosphor-trail";
-      trailCanvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0.55;mix-blend-mode:screen;image-rendering:pixelated";
+      trailCanvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0.46;mix-blend-mode:screen;image-rendering:pixelated";
       document.body.appendChild(trailCanvas);
       trailCtx = trailCanvas.getContext("2d");
     }

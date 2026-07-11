@@ -951,6 +951,7 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
+
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1427,6 +1428,7 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
+
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -2222,6 +2224,7 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
+
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -3079,6 +3082,7 @@ function ttsTogglePause() {
   refresh();
   setInterval(refresh, 60000);
 })();
+
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -4229,3 +4233,4 @@ await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
 await import(_deferFaceMod('face_loops_nudge.js'));
+
