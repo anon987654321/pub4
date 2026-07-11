@@ -57,12 +57,15 @@ class TtsController < ApplicationController
     job = TtsJob.find(params[:job].to_s)
     return head(:not_found) unless job
 
+    TtsJob.materialize!(job) if job.pending?
     tts_job_response(job)
   end
 
   def stream
     job = TtsJob.find(params[:job].to_s)
     return head(:not_found) unless job
+
+    TtsJob.materialize!(job) if job.pending?
 
     if job.ready?
       bytes = job.bytes

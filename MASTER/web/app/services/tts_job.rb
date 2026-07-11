@@ -7,6 +7,8 @@ require "json"
 class TtsJob
   CACHE_DIR = Rails.root.join("tmp", "tts_cache")
   @queue_mutex = Mutex.new
+  @materialize_mutex = Mutex.new
+  @materializing = {}
   @queue = []
   @worker = nil
 
@@ -40,17 +42,42 @@ class TtsJob
   end
 
   def self.spawn_worker_locked!
+    return if @worker&.alive?
+
     @worker = Thread.new do
+      Thread.current.name = "tts-job-worker"
       Thread.current.report_on_exception = false
       loop do
         job = @queue_mutex.synchronize { @queue.shift }
-        break unless job
-
-        job.perform
+        if job
+          materialize!(job)
+        else
+          sleep 0.25
+        end
       end
-    ensure
-      @queue_mutex.synchronize { @worker = nil }
     end
+  end
+
+  # Falcon's async reactor often never schedules short-lived enqueue threads, so
+  # jobs sat at .job forever while the client polled 202 pending. Run synthesis
+  # on the status/stream poll path as well; one mutex per job_id avoids doubles.
+  def self.materialize!(job)
+    return job unless job&.pending?
+
+    @materialize_mutex.synchronize do
+      return job if job.ready? || job.failed?
+      return job if @materializing[job.job_id]
+
+      @materializing[job.job_id] = true
+    end
+    job.perform
+    job
+  ensure
+    @materialize_mutex.synchronize { @materializing.delete(job.job_id) if job }
+  end
+
+  def self.ensure_worker!
+    @queue_mutex.synchronize { spawn_worker_locked! }
   end
 
   def self.find(job_id)
