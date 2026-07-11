@@ -1,5 +1,5 @@
 <% content_for :title, "Food" %>
-<header role="banner" aria-label="Food listings header">
+<header class="page-header" role="banner" aria-label="Food listings header">
   <h1>Available food</h1>
   <nav role="navigation" aria-label="Food actions">
     <% if authenticated? %><%= link_to "List food", new_food_listing_path %><% end %>

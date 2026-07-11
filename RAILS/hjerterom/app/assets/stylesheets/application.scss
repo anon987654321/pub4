@@ -1,74 +1,44 @@
 @use "pub4_stack" as *;
+@use "x_base" as x;
+@use "x_root" as xroot;
+@use "x_shell";
+@use "x_widgets";
+@use "x_responsive";
 
 :root {
-  --turbo-progress-bar-color: var(--x-accent, #1d9bf0);
+  @include xroot.x-app-root-tokens;
+  --turbo-progress-bar-color: var(--accent);
   --app-accent: #e11d48;
   --app-accent-dark: #9f1239;
   --heart-accent-light: #fb7185;
-  --text: var(--black);
-  --text-dim: var(--dark-grey);
-  --panel: var(--white);
+  --accent: var(--app-accent);
+  --panel: var(--bg);
 }
 
-body {
-  color: var(--text);
-  background: var(--white);
+#dark-toggle {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
 }
 
-main {
-  align-items: stretch;
-  justify-content: flex-start;
+.theme-root {
   min-height: 100vh;
 }
 
-nav {
-  background: var(--panel);
-  border-bottom: 1px solid var(--extra-light-grey);
-}
-
-nav.nav-visible,
-nav:focus-within,
-nav:hover {
-  transform: translateY(0);
-}
-
-nav a {
-  color: var(--text);
-  font-weight: 600;
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-  padding-bottom: 2px;
-  transition: color 120ms ease, border-color 120ms ease;
-}
-
-nav a:hover {
-  color: var(--app-accent);
-}
-
-nav a[aria-current="page"] {
-  color: var(--app-accent);
-  font-weight: 800;
-  border-bottom-color: var(--app-accent);
-}
-
-nav .brand {
-  display: block;
-  width: 3.25rem;
-  height: 2.75rem;
-  line-height: 0;
-  margin-inline-end: auto;
-  flex-shrink: 0;
-}
-
-nav .brand-spacer {
-  display: block;
-  width: 3.25rem;
-  height: 2.75rem;
-}
-
-nav .brand svg {
-  width: 100%;
-  height: 100%;
+#dark-toggle:checked ~ .theme-root {
+  @include x.x-light-tokens;
+  color-scheme: light;
+  --bg: var(--x-bg);
+  --surface: var(--x-surface);
+  --surface2: var(--x-surface-elevated);
+  --search-bg: var(--x-search-bg);
+  --text: var(--x-text);
+  --text-dim: var(--x-text-secondary);
+  --border: var(--x-border);
+  --hover: var(--x-hover);
+  --hover-subtle: var(--x-hover-subtle);
+  --panel-blur-bg: var(--bg);
+  --panel: var(--bg);
 }
 
 body.map-home-page {
@@ -76,10 +46,9 @@ body.map-home-page {
   background: var(--white);
 }
 
-.map-home-page nav {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-100%);
+.map-home-page .app-shell,
+.map-home-page .theme-toggle {
+  display: none;
 }
 
 .map-home-page main {
