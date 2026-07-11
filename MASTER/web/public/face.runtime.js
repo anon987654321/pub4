@@ -2810,7 +2810,15 @@ function ttsTick() {
   setTTSLoading(true);
   if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
   if (tts.watchdog) clearTimeout(tts.watchdog);
-  const wdMs = Math.min(120000, Math.max(20000, text.length * 180));
+  // The watchdog arms BEFORE the blob fetch, so its timeout must cover the
+  // whole synthesis queue wait (pollTTSJob is allowed ~3 minutes on the
+  // 1-CPU VPS), not just playback. At the old 20s floor it fired while jobs
+  // were still legitimately pending, requeued each utterance, and after
+  // requeueChunk's 3 attempts DROPPED it - so only the instant pre-cached
+  // status phrases ("Scanning.") were ever heard while every real reply
+  // died in the queue. 200s base + playback allowance keeps it as a true
+  // hung-playback failsafe instead of a queue-latency killer.
+  const wdMs = 200000 + Math.min(120000, Math.max(20000, text.length * 180));
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
