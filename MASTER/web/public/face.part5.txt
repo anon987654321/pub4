@@ -314,6 +314,20 @@ async function sendMessage(text) {
     const raw = ev.data || '';
     clearTimeout(_stallTimer);
     delete rootBody.dataset.networkStall;
+    // ChatService writes the trace id twice: once as a properly named SSE
+    // "trace" event (which nothing here listens for) and once as a plain
+    // unnamed data: line, which lands right here in onmessage alongside real
+    // reply text. Nothing filtered it out, so `{"type":"trace","trace_id":"…"}`
+    // got silently prepended to `pending` and read aloud verbatim next to the
+    // actual answer — a raw internal id in the middle of natural conversation
+    // is exactly the kind of thing a socially fluent assistant should never
+    // say. Recognize and drop it before it reaches the content path.
+    if (raw.length < 200 && raw.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.type === 'trace') return;
+      } catch (_) { /* not JSON, fall through to normal content handling */ }
+    }
     if (raw === '[DONE]') {
       if (pending.trim() && !ttsSuppressed) {
         tts.lastText = pending.trim();
