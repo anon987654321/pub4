@@ -15,13 +15,40 @@ function ensureFrameLoop() {
 // iOS app-switch rAF suspension, GPU driver churn) kills the loop forever
 // with zero errors. Instead of finding every trigger, check every 2s whether
 // frames actually advanced while the tab is visible, and re-arm if not.
+// If re-arming doesn't help either (some webviews and battery-saver modes
+// suspend rAF wholesale while the page stays visible), fall back to a
+// setTimeout pump at ~25fps — a slightly cheaper face beats a black one —
+// and hand back to rAF the moment natural ticks resume.
 let _watchdogTimer = null;
 let _watchdogLastFrames = -1;
+let _pumpTimer = null;
+let _pumpTick = false;
+let _naturalRafSeen = false;
+function _startFramePump() {
+  if (_pumpTimer) return;
+  _pumpTimer = setInterval(() => {
+    if (State.hidden || document.hidden) return;
+    _pumpTick = true;
+    try { frame(performance.now()); } finally { _pumpTick = false; }
+    requestAnimationFrame(frame); // keep offering control back to rAF
+  }, 40);
+}
+function _stopFramePump() {
+  if (!_pumpTimer) return;
+  clearInterval(_pumpTimer);
+  _pumpTimer = null;
+}
 function armFrameLoopWatchdog() {
   if (_watchdogTimer) return;
   _watchdogTimer = setInterval(() => {
     if (State.hidden || document.hidden) { _watchdogLastFrames = _dbgFrames; return; }
-    if (_dbgFrames === _watchdogLastFrames) requestAnimationFrame(frame);
+    if (_naturalRafSeen) {
+      _naturalRafSeen = false;
+      _stopFramePump();
+    } else if (_dbgFrames === _watchdogLastFrames) {
+      requestAnimationFrame(frame);
+      _startFramePump();
+    }
     _watchdogLastFrames = _dbgFrames;
   }, 2000);
 }
@@ -176,6 +203,7 @@ function frame(t) {
     return;
   }
   frameLoopActive = true;
+  if (!_pumpTick) _naturalRafSeen = true;
   _dbgFrames++;
   fpsSampleFrames++;
   if (t - fpsLastSample >= 500) {
