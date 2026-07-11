@@ -713,7 +713,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes controller, 'def destroy'
     assert_includes controller, 'authorize_owner'
     assert File.file?(File.join(ROOT, 'brgen/app/views/marketplace/stores/edit.html.erb'))
-    assert_includes read_brgen('app/assets/stylesheets/_marketplace.scss'), '.store-grid'
+    assert_includes read_brgen('app/assets/stylesheets/_marketplace_stores.scss'), '.store-grid'
+    assert_includes read_brgen('app/assets/stylesheets/application.scss'), '_marketplace_stores'
   end
 
   def test_secondary_brgen_verticals_use_infinite_scroll_reflexes
