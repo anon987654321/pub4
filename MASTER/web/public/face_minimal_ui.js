@@ -113,9 +113,21 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
         if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd} osman`);
       }
     };
+    // rec.start() throws InvalidStateError when recognition is already
+    // running (including the main STT mic), and a bare keydown listener
+    // hijacked "?" even while typing in the chat box. Guard both.
+    let osmanRecActive = false;
+    rec.onend = () => { osmanRecActive = false; };
+    rec.onerror = () => { osmanRecActive = false; };
+    const safeStart = () => {
+      if (osmanRecActive) return;
+      try { rec.start(); osmanRecActive = true; } catch (_) {}
+    };
     document.addEventListener('keydown', e => {
-      if (e.key === '?') { e.preventDefault(); rec.start(); }
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.key === '?') { e.preventDefault(); safeStart(); }
     });
-    window.startOsmanVoice = () => rec.start();
+    window.startOsmanVoice = safeStart;
   }
 })();

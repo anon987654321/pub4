@@ -74,7 +74,12 @@ module Master
 
       DEFAULT_VOICE = :pernille
       DEFAULT_STYLE = :calm
-      MAX_CHARS = 900
+      # clean_text hard-truncates every utterance at this length with no
+      # continuation. At 900 a full LLM reply enqueued as one utterance lost
+      # everything past the first few sentences — "tts only speaks the first
+      # words". Edge TTS synthesizes several KB fine; the serial queue is the
+      # real throughput limit, so a generous cap only costs synth seconds.
+      MAX_CHARS = 4000
       CHUNK_CHARS = 220
 
       module_function

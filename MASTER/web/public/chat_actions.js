@@ -92,7 +92,7 @@ function dispatchSseBlock(block, handlers) {
   const dataLines = [];
   block.split("\n").forEach((line) => {
     if (line.startsWith("event:")) event = line.slice(6).trim();
-    else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+    else if (line.startsWith("data:")) dataLines.push(line.slice(5).replace(/^ /, ""));
   });
   const data = dataLines.join("\n");
   if (event === "message") {
