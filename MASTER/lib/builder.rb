@@ -47,6 +47,9 @@ module Master
         Reach::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
           web_fetch: Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]))
       },
+      "DynamicHttp" => ->(_r, i) {
+        Reach::DynamicHttp.new(governor: i[:governor], event_bus: i[:bus])
+      },
     }.freeze
 
     module_function

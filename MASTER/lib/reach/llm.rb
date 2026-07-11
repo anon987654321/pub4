@@ -211,6 +211,22 @@ module Master
           result.ok? ? JSON.pretty_generate(result.value!) : "Error: #{result.message}"
         end
       end
+
+      class DynamicHttp < RubyLLM::Tool
+        description "Call a configured HTTP tool from data/tools.dynamic.yml."
+        param :name, desc: "Tool name from tools.dynamic.yml", required: true
+        param :params, desc: "JSON object of query/body parameters", required: false
+
+        def initialize(tool) = @tool = tool
+
+        def execute(name:, params: "{}")
+          payload = params.is_a?(Hash) ? params : JSON.parse(params.to_s)
+          result = @tool.call(name: name.to_s, params: payload)
+          result.ok? ? result.value!.to_s : "Error: #{result.message}"
+        rescue JSON::ParserError => e
+          "Error: invalid params JSON — #{e.message}"
+        end
+      end
     end
   end
 end

@@ -36,8 +36,12 @@ module Master
         def load_tool_registry
           path = File.join(Master::ROOT, "data", "tools.yml")
           rows = Master.load_yaml(path)
-          return {} unless rows.is_a?(Array)
-          rows.each_with_object({}) { |row, h| h[row["name"].to_s] = row if row.is_a?(Hash) }
+          base = rows.is_a?(Array) ? rows.select { |row| row.is_a?(Hash) } : []
+          merged = base + Ground::DynamicTools.registry_rows
+          merged.each_with_object({}) do |row, h|
+            key = row["dynamic_name"] ? "DynamicHttp" : row["name"].to_s
+            h[key] = row
+          end
         end
 
         def tool_available_for_context?(meta)
