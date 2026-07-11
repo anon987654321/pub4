@@ -14,18 +14,7 @@ body.vertical-messenger {
   font-family: var(--font-primary);
 }
 
-body.vertical-messenger .sidebar,
-body.vertical-messenger .widgets,
-body.vertical-messenger .tab-bar,
-body.vertical-messenger .compose-fab,
-body.vertical-messenger .theme-toggle,
-body.vertical-messenger .city-carousel,
-body.vertical-messenger .widget-search,
-body.vertical-messenger .mobile-sheet,
-body.vertical-messenger .mobile-sheet-backdrop,
-body.vertical-messenger .feed-header {
-  display: none;
-}
+/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
 body.vertical-messenger .layout {
   grid-template-areas: "main";

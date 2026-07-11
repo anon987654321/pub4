@@ -8,6 +8,26 @@ body[class*="vertical-"] main {
   padding-top: 0;
 }
 
+/* Immersive verticals: full-screen product surface, all x-shell chrome hidden.
+   Browsable verticals (marketplace/takeaway/tv) keep the sidebar + widgets and
+   are intentionally excluded. .feed-header is already hidden above for every
+   vertical, so it is omitted here. */
+@each $surface in (maps, dating, messenger, playlist) {
+  body.vertical-#{$surface} {
+    .sidebar,
+    .widgets,
+    .tab-bar,
+    .compose-fab,
+    .theme-toggle,
+    .city-carousel,
+    .widget-search,
+    .mobile-sheet,
+    .mobile-sheet-backdrop {
+      display: none;
+    }
+  }
+}
+
 body.vertical-marketplace [data-controller="live-search"],
 body.vertical-takeaway [data-controller="live-search"] {
   background: var(--x-search-bg, #202327);

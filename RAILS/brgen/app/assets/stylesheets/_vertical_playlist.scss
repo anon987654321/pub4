@@ -20,18 +20,7 @@ body.vertical-playlist {
   color: var(--color-text);
 }
 
-body.vertical-playlist .sidebar,
-body.vertical-playlist .widgets,
-body.vertical-playlist .tab-bar,
-body.vertical-playlist .compose-fab,
-body.vertical-playlist .theme-toggle,
-body.vertical-playlist .city-carousel,
-body.vertical-playlist .widget-search,
-body.vertical-playlist .mobile-sheet,
-body.vertical-playlist .mobile-sheet-backdrop,
-body.vertical-playlist .feed-header {
-  display: none;
-}
+/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
 body.vertical-playlist .layout {
   grid-template-areas: "main";

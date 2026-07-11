@@ -13,18 +13,7 @@ body.vertical-maps {
   font-family: var(--font-primary);
 }
 
-body.vertical-maps .sidebar,
-body.vertical-maps .widgets,
-body.vertical-maps .tab-bar,
-body.vertical-maps .compose-fab,
-body.vertical-maps .theme-toggle,
-body.vertical-maps .city-carousel,
-body.vertical-maps .widget-search,
-body.vertical-maps .mobile-sheet,
-body.vertical-maps .mobile-sheet-backdrop,
-body.vertical-maps .feed-header {
-  display: none;
-}
+/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
 body.vertical-maps .layout {
   grid-template-areas: "main";

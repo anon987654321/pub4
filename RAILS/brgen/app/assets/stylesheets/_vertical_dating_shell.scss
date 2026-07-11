@@ -14,17 +14,7 @@ body.vertical-dating {
   font-family: var(--font-primary);
 }
 
-body.vertical-dating .sidebar,
-body.vertical-dating .widgets,
-body.vertical-dating .tab-bar,
-body.vertical-dating .compose-fab,
-body.vertical-dating .theme-toggle,
-body.vertical-dating .city-carousel,
-body.vertical-dating .widget-search,
-body.vertical-dating .mobile-sheet,
-body.vertical-dating .mobile-sheet-backdrop {
-  display: none;
-}
+/* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
 body.vertical-dating .layout {
   grid-template-areas: "main";
