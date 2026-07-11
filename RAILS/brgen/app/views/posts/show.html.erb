@@ -42,7 +42,7 @@
     </div>
   <% end %>
   <% if @post.content.present? %>
-    <p><%= @post.content %></p>
+    <div class="post_body"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
   <% end %>
   <div class="cluster mt-12">
     <button class="btn-share" data-controller="share"

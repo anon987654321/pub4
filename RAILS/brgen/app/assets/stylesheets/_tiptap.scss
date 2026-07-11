@@ -1,0 +1,48 @@
+/* Tiptap minimal compose editor. Mirrors .compose-input; the mount + toolbar
+   stay hidden until the tiptap_editor controller confirms Tiptap loaded, so the
+   plain textarea is the visible fallback when it doesn't. */
+.tiptap_mount { width: 100%; }
+
+.tiptap_area {
+  min-height: 44px;
+  padding: 10px 0;
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.4;
+  outline: none;
+}
+
+.tiptap_area p { margin: 0 0 0.5em; }
+.tiptap_area p:last-child { margin-bottom: 0; }
+.tiptap_area ul { list-style: disc; padding-inline-start: 1.4em; margin: 0 0 0.5em; }
+
+.tiptap_toolbar { display: flex; gap: 4px; }
+
+.tiptap_btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 15px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.tiptap_btn:hover { color: var(--text); background: var(--hover); }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

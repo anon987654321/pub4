@@ -1,6 +1,6 @@
 <%= form_with model: Post.new, url: posts_path, class: "compose-box", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
   <div class="compose-avatar" aria-hidden="true"><%= guest? ? "?" : (Current.user.username&.first&.upcase || "B") %></div>
-  <div class="compose-inner">
+  <div class="compose-inner" data-controller="tiptap-editor">
     <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
     <%= f.text_area :content,
           rows: 1,
@@ -9,9 +9,17 @@
           data: {
             controller: "textarea-autogrow",
             feed_compose_target: "input",
+            tiptap_editor_target: "field",
             action: "focus->feed-compose#expand input->feed-compose#syncTitle blur->feed-compose#collapse"
           } %>
+    <div class="tiptap_mount" data-tiptap-editor-target="mount"
+         data-action="focus->feed-compose#expand" hidden></div>
     <div class="compose-footer" data-feed-compose-target="footer" hidden>
+      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
+      </div>
       <div class="compose-actions" aria-hidden="true">
         <span title="Photo">📷</span><span title="Poll">📊</span><span title="Emoji">😊</span><span title="Place">📍</span>
       </div>

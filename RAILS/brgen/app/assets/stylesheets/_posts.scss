@@ -86,9 +86,14 @@
 .post_show header { font-size: .875rem; color: var(--text-dim); margin-bottom: 8px; }
 .post_show header a { color: var(--text-dim); }
 .post_show h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.25; letter-spacing: -0.01em; margin: 0 0 0.9rem; color: var(--text); }
-.post_show p { color: var(--text); line-height: 1.7; font-size: 1.0625rem; margin: 0 0 1.2em; }
-.post_show p:last-of-type { margin-bottom: 0; }
-.post_show a { text-decoration: underline; }
+.post_body { color: var(--text); line-height: 1.7; font-size: 1.0625rem; }
+.post_body p { margin: 0 0 1.2em; }
+.post_body p:last-child { margin-bottom: 0; }
+.post_body ul, .post_body ol { margin: 0 0 1.2em; padding-inline-start: 1.5em; }
+.post_body ul { list-style: disc; }
+.post_body ol { list-style: decimal; }
+.post_body li { margin-bottom: 4px; }
+.post_show a, .post_body a { text-decoration: underline; }
 .post_show .post-image { display: block; max-width: 100%; border-radius: var(--radius); margin: 0 0 1.2em; }
 
 /* Comments — single-column, editorial body, nested replies indented */
