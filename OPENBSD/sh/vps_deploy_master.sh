@@ -18,9 +18,9 @@ export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
 # rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.
 doas rm -rf public/assets
 doas chown -R dev:dev public
-bundle34 config set --local without 'development test' 2>/dev/null || true
-bundle34 exec rails assets:precompile
-bundle34 exec ruby "$ROOT/RAILS/master_web_assets_gate.rb"
+bundle34 config set --local without 'development:test' 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
+BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/RAILS/master_web_assets_gate.rb"
 
 echo "==> restart master"
 doas rcctl restart master
