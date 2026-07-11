@@ -33,8 +33,8 @@ def stub_master_container
     Master::Voice::Speech::DEFAULT_VOICE, nil, nil
   )
   gateway = Class.new do
-    def receive(channel:, message:)
-      Master::Result.ok({ rendered: message.to_s, client_actions: [] })
+    def receive(channel:, message:, metadata: {})
+      Master::Result.ok({ rendered: message.to_s, client_actions: [], metadata: metadata })
     end
   end.new
   skills = Struct.new(:loaded).new([])

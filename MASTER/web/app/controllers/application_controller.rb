@@ -183,7 +183,7 @@ class ApplicationController < ActionController::Base
 
   def warming_exempt_path?
     path = request.path
-    return true if path == "/up" || path == "/health"
+    return true if path == "/up" || path == "/health" || path == "/bridge/health"
     return true if smoke_chat_probe?
     return true if path.start_with?("/assets/", "/runtime/")
     return true if path.match?(%r{\A/(?:face\.|three\.module|chat-|particle_|cognition_|visual_|face3d_|face_|face_vision|face_deferred|topology_|cluster_|domain_cluster|mask|sw\.js|manifest\.json|icon\.|offline\.html)})

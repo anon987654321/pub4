@@ -26,6 +26,14 @@ pairing:
   code_ttl_seconds: 600
   allowlist_path: "MASTER/data/security/allowlist.yml"
 
+bridge:
+  # OpenClaw hooks → POST https://ai.brgen.no/bridge/turn
+  # Set MASTER_BRIDGE_TOKEN in env (separate from gateway.auth.token).
+  bind: "127.0.0.1"
+  path: "/bridge/turn"
+  health_path: "/bridge/health"
+  rate_limit_per_minute: 60
+
 tools:
   custom:
     enabled: true
