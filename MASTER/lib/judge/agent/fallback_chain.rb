@@ -20,6 +20,11 @@ module Master
             selected_model = attempt.fetch(:model)
             mode = attempt.fetch(:mode)
             next if timed_out_models.include?(selected_model)
+            if Ground::ModelSkipCache.skipped?(selected_model)
+              reason = Ground::ModelSkipCache.skip_reason(selected_model)
+              stage_warnings << "skipped #{selected_model} (recent failure: #{reason})"
+              next
+            end
 
             response = attempt_model_with_retries(
               selected_model: selected_model,
@@ -37,7 +42,10 @@ module Master
             end
 
             last_response = response
-            timed_out_models << selected_model if failover_skip_model?(response)
+            if failover_skip_model?(response)
+              timed_out_models << selected_model
+              record_failover_skip(selected_model, response)
+            end
             stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
           end
 
@@ -50,6 +58,8 @@ module Master
           retry_count = @model_router&.failover_max_retries.to_i
           retry_count = 0 if retry_count.negative?
           (retry_count + 1).times do |retry_index|
+            @bus&.publish("llm:retry_attempt", model: selected_model, mode:, attempt: retry_index + 1,
+                                            max: retry_count + 1)
             wrapped = filter_prompt(apply_reasoning_mode(prompt, mode: mode))
             response = @dispatcher.send_with_cache(
               selected_model,
@@ -71,11 +81,17 @@ module Master
         end
 
         def backoff_before_retry(model, mode, retry_index)
-          cooldown = @model_router&.failover_cooldown_seconds.to_i
-          cooldown = 300 if cooldown <= 0
-          delay = cooldown * (2**retry_index)
-          @bus&.publish("llm:failover_backoff", model: model, mode: mode, retry: retry_index + 1, delay: delay)
+          tiers = @model_router&.failover_cooldown_tiers || [30, 60, 300]
+          delay = tiers[[retry_index, tiers.size - 1].min]
+          @bus&.publish("llm:failover_backoff", model: model, mode: mode, retry: retry_index + 1, delay: delay,
+                                                tiered: true)
           sleep delay if ENV["MASTER_STRICT_BACKOFF"] == "1"
+        end
+
+        def record_failover_skip(model, response)
+          cat = response.respond_to?(:category) ? response.category : :provider_error
+          Ground::ModelSkipCache.skip!(model, reason: response.message, category: cat)
+          @bus&.publish("llm:failover_skip", model:, category: cat, ttl_ms: Ground::ModelSkipCache.skip_ttl_ms)
         end
 
         def mode_chain_for(candidates)

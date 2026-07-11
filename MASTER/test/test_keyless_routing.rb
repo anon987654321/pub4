@@ -15,6 +15,7 @@ class TestKeylessRouting < Minitest::Test
       MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
+    ENV["MASTER_NO_CLAUDE_CLI"] = "1"
   end
 
   def teardown

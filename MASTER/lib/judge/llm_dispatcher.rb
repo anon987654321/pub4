@@ -48,6 +48,7 @@ module Master
         Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
         Reach::MemoryRecord => Reach::LLM::MemoryRecord,
         Reach::SubdomainOrchestrator => Reach::LLM::SubdomainOrchestrator,
+        Reach::DynamicHttp => Reach::LLM::DynamicHttp,
       }.freeze
 
       def self.build_tool_capable_re
@@ -246,6 +247,9 @@ module Master
 
       def record_provider_outcome(model, status, latency_ms: nil, error: nil)
         Ground::ModelQuota.record(model) if status == :success
+        unless status == :success
+          Ground::ModelSkipCache.skip!(model, reason: error || status.to_s, category: status)
+        end
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
         @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
         Ground::KeyRotator.rotate_for(model) if %i[rate_limit quota_exceeded].include?(status)

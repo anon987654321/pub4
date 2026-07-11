@@ -1,0 +1,24 @@
+# Auth profile lanes — OAuth/CLI before API keys (OpenCrabs/OpenClaw pattern).
+schema: 1
+lanes:
+  - id: claude_cli
+    kind: cli
+    command: claude
+    priority: 1
+    models:
+      - claude-cli:claude-opus-4-8
+  - id: codex_cli
+    kind: cli
+    command: codex
+    priority: 2
+    models: []
+  - id: copilot_oauth
+    kind: oauth
+    env_token: GITHUB_COPILOT_TOKEN
+    priority: 3
+    models: []
+  - id: openrouter_api
+    kind: api_key
+    env: OPENROUTER_API_KEY
+    priority: 10
+    models: []

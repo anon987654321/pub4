@@ -40,8 +40,11 @@ module Master
           pref = preferred(task_type:)
           all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
           all = all.reject { |id| web_chat_model?(id) } unless web_chat_enabled?
-          chain = (primary_models + [pref] + all + continuity_models + [@config.model]).uniq
-          @provider_health ? @provider_health.rank(chain) : chain
+          chain = (Ground::AuthProfileLane.models_for_router(self) + primary_models + [pref] + all +
+                   continuity_models + [@config.model]).uniq
+          chain = Ground::ModelSkipCache.filter(chain)
+          ranked = @provider_health ? @provider_health.rank(chain) : chain
+          Ground::ModelSkipCache.filter(ranked)
         end
 
         # Grok API when XAI key is present; subscription Opus when claude binary exists;
@@ -253,6 +256,15 @@ module Master
         def failover_cooldown_seconds
           val = @rules.dig("failover", "cooldown_seconds").to_i
           val.positive? ? val : 300
+        end
+
+        def failover_cooldown_tiers
+          tiers = Array(@rules.dig("failover", "cooldown_tiers")).map { |s| s.to_i }.select(&:positive?)
+          tiers.empty? ? [30, 60, failover_cooldown_seconds] : tiers
+        end
+
+        def failover_skip_ttl_ms
+          Ground::ModelSkipCache.skip_ttl_ms
         end
 
         private

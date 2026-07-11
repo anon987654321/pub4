@@ -26,6 +26,8 @@ fallback_policy:
 failover:
   sequence: [fast, default, medium, strong]
   cooldown_seconds: 300
+  cooldown_tiers: [30, 60, 300]
+  skip_ttl_ms: 600000
   max_retries: 2
 
 defaults: &model_defaults
