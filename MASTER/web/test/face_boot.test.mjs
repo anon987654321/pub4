@@ -23,6 +23,8 @@ test("face.js loads modules and runtime parts through MASTER_ASSET_PATHS", () =>
   assert.match(faceJs, /FACE_BLOB_URL/);
   assert.match(tail, /function sendMessage/);
   assert.match(tail, /window\.MASTER_FACE =/);
+  assert.match(tail, /_deferFaceMod/);
+  assert.doesNotMatch(tail, /await import\('\/face_semantics\.js'\)/);
 });
 
 test("face.js builds a blob runtime and rewrites module asset paths", () => {
@@ -114,6 +116,9 @@ test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () 
 
 test("chat index wires viseme and experimental asset paths", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(index, /faceRuntime/);
+  assert.match(index, /faceModules/);
+  assert.doesNotMatch(index, /faceParts/);
   assert.match(index, /visemePacks/);
   assert.match(index, /clusterMiner/);
   assert.match(index, /face3dPreview/);

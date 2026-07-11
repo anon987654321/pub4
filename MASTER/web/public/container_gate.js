@@ -13,6 +13,17 @@ function metaReady() {
 function setReady(isReady, detail) {
   window.MASTER_CONTAINER_READY = isReady;
   document.body.dataset.containerReady = isReady ? "1" : "0";
+  let readyMeta = document.querySelector('meta[name="master-container-ready"]');
+  if (isReady) {
+    if (!readyMeta) {
+      readyMeta = document.createElement('meta');
+      readyMeta.name = 'master-container-ready';
+      document.head.appendChild(readyMeta);
+    }
+    readyMeta.content = '1';
+  } else if (readyMeta) {
+    readyMeta.content = '0';
+  }
   const input = document.getElementById("zin");
   if (input) {
     input.disabled = !isReady;

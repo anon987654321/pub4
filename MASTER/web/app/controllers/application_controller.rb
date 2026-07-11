@@ -168,17 +168,8 @@ class ApplicationController < ActionController::Base
   end
 
   def start_container_bootstrap!
-    app_config = Rails.application.config
-    return if app_config.x.master_bootstrap_started
-
-    app_config.x.master_bootstrap_started = true
-    Thread.new do
-      Thread.current.report_on_exception = false
-      MasterContainerLoader.ensure!
-    rescue StandardError => e
-      app_config.x.master_bootstrap_started = false
-      Rails.logger.error("master bootstrap failed: #{e.class}: #{e.message}")
-    end
+    # Bootstrap thread is owned by config/initializers/master_container.rb.
+    nil
   end
 
   def warming_exempt_path?

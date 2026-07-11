@@ -685,7 +685,13 @@ function scheduleTtsTick(delay) {
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
 
+function browserTtsFallbackAllowed() {
+  if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
+  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (_) {}
+  return false;
+}
 function speakWithBrowserTTS(text, token) {
+  if (!browserTtsFallbackAllowed()) return false;
   if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
@@ -790,6 +796,7 @@ function ttsTick() {
       tts.serverUnavailable = true;
       tts.serverUnavailableUntil = Date.now() + Math.min(120000, 15000 * tts.serverFailureCount);
       if (speakWithBrowserTTS(text, token)) return;
+      setTtsHealthStatus('tts: unavailable', 12000);
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);
       requeueChunk(text);
       const s = document.getElementById('zsh-status');

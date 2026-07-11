@@ -218,6 +218,16 @@ function applyIdleSignature(voice) {
   State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
 }
 function setVoiceName(voice, opts = {}) {
+  const locked = TTS_DEFAULT_VOICE;
+  if (window.MASTER_VOICE_POLICY?.persona_affects_text_only !== false) {
+    const prev = State.voiceName || '';
+    if (prev !== locked) {
+      State.voiceName = locked;
+      applyIdleSignature(locked);
+      if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;
+    }
+    return;
+  }
   let raw = String(voice || '').trim();
   if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;

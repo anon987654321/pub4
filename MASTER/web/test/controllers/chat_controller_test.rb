@@ -25,7 +25,6 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "voice-picker"
     refute_includes response.body, "tts-style-chips"
     refute_includes response.body, "tts-style-indicator"
-    refute_includes response.body, 'id="tts-rate"'
     refute_includes response.body, "face-controls"
     assert_includes response.body, "spin-btn"
   end
@@ -40,7 +39,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     ].each do |name|
       assert_match(/#{Regexp.escape(name)}/, response.body)
     end
-    assert_match(/faceParts/, response.body)
+    assert_match(/faceRuntime/, response.body)
     assert_match(/faceModules/, response.body)
     assert_match(%r{/assets/face-[0-9a-f]+\.js}, response.body)
   end

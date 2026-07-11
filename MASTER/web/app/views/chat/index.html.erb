@@ -36,7 +36,6 @@
     })();
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
-      faceParts: <%= raw((1..5).map { |part| asset_path("face.part#{part}.txt") }.to_json) %>,
       faceModulesList: <%= raw(%w[
         face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
         face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
@@ -251,7 +250,7 @@
     <span id="zsh-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
     <span id="char-count" aria-hidden="true"></span>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
-    <span id="tts-rate" aria-hidden="true"></span>
+
     <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
   </form>
   <%# Loaded ahead of the manifest below: defines window.ParticleKernel, the base global that

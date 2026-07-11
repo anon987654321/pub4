@@ -20,9 +20,14 @@ doas rm -rf public/assets
 doas chown -R dev:dev public
 bundle34 config set --local without 'development:test' 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle34 install
-BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
 BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/RAILS/master_web_assets_gate.rb"
+
+echo "==> sync rc.d master"
+if [ -f "$ROOT/OPENBSD/etc/rc.d/master" ]; then
+  doas cp "$ROOT/OPENBSD/etc/rc.d/master" /etc/rc.d/master
+fi
 
 echo "==> restart master"
 doas rcctl restart master
@@ -31,6 +36,7 @@ rcctl check master
 
 echo "==> smoke"
 curl -fsS http://127.0.0.1:53187/up
+curl -fsS http://127.0.0.1:53187/health | ruby -rjson -e 'h=JSON.parse(STDIN.read); d=h["deploy"]||{}; abort("tts_socket false") if d["tts_socket"]==false; abort("checks.tts false") if h.dig("checks","tts")==false; puts "health ok sha=#{d["git_sha"]} tts_socket=#{d["tts_socket"]}"'
 ruby "$WEB/script/probe_http"
 
 echo "==> master deploy ok"

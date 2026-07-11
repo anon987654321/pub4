@@ -1,4 +1,6 @@
-# Transcendent TTS — emotion-aware multi-engine orchestration.
+# Transcendent TTS — emotion-aware multi-engine orchestration (CLI / MLX / Replicate).
+# Web /chat/tts uses Edge socket synthesis only — see data/voice.yml and TtsJob.
+# Production overrides: OPENBSD/etc/rc.d/master sets MASTER_TTS_MODE=classic.
 # Replicate (Cloudflare) added as production cloud engine for OpenBSD VPS (supplements local MLX).
 transcendent:
   enabled: true

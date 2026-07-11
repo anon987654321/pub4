@@ -10,9 +10,12 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     body = JSON.parse(response.body)
     assert_includes %w[ok degraded], body["status"]
     assert body["checks"].key?("tts")
+    assert_equal true, body.dig("checks", "tts")
     assert body["checks"].key?("git")
     assert body["deploy"].key?("voice_policy")
     assert_equal "pernille", body.dig("deploy", "voice_policy", "single_voice")
+    assert body["deploy"].key?("tts_socket")
+    assert body["deploy"].key?("face_runtime_digest")
   end
 
   test "rails health check is exempt from container warmup" do

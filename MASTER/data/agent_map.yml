@@ -6,17 +6,24 @@ topics:
   tts:
     files:
       - data/voice.yml
+      - data/tts.yml
       - lib/voice/policy.rb
       - lib/voice/speech.rb
+      - lib/voice/tts_supervisor.rb
+      - web/app/services/tts_job.rb
       - web/app/controllers/tts_controller.rb
+      - web/app/controllers/health_controller.rb
       - web/public/face.part4.txt
       - web/public/face.part5.txt
+      - OPENBSD/etc/rc.d/master
     tests:
       - test/test_speech.rb
       - test/test_yaml_registries.rb
+      - web/test/controllers/health_controller_test.rb
       - web/test/face_boot.test.mjs
     deploy: zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh
     playbook: master_web_pernille_defaults
+    proof: curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'
 
   face_boot:
     files:

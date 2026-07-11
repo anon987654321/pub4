@@ -123,6 +123,14 @@ up_checks.each do |name, port|
   begin
     payload = JSON.parse(health_out)
     failures << "#{name} health: status=#{payload['status']}" if payload["status"] == "unavailable"
+    if name == "master"
+      deploy = payload["deploy"] || {}
+      failures << "master health: deploy.tts_socket false" if deploy["tts_socket"] == false
+      failures << "master health: missing deploy.face_runtime_digest" if deploy["face_runtime_digest"].to_s.empty?
+      voice = deploy.dig("voice_policy", "single_voice").to_s
+      failures << "master health: voice_policy.single_voice=#{voice.inspect} (expected pernille)" if voice != "pernille"
+      failures << "master health: checks.tts false" if payload.dig("checks", "tts") == false
+    end
   rescue JSON::ParserError
     failures << "#{name} health: invalid JSON"
   end

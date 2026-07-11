@@ -373,7 +373,12 @@ async function sendMessage(text) {
   const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
   if (voiceMatch) {
     if (window.MASTER_VOICE_POLICY?.persona_affects_text_only && voiceMatch[1].toLowerCase() !== 'last') {
-      if (uiStatus) uiStatus.textContent = 'tts: Pernille only; persona affects text';
+      if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
+      if (uiStatus) {
+        const style = _nextTtsStyle();
+        uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;
+      }
+      return;
     }
     setVoiceName(voiceMatch[1]);
     if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
@@ -1136,7 +1141,10 @@ window.announceTTS = announceTTS;
 window.enqueueSpeech = enqueueSpeech;
 window.mouthPool = mouthPool;
 window.eyePool = eyePool;
-await import('/face_semantics.js');
-await import('/face_minimal_ui.js');
-await import('/face_loops_music.js');
-await import('/face_loops_nudge.js');
+function _deferFaceMod(name) {
+  return window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`;
+}
+await import(_deferFaceMod('face_semantics.js'));
+await import(_deferFaceMod('face_minimal_ui.js'));
+await import(_deferFaceMod('face_loops_music.js'));
+await import(_deferFaceMod('face_loops_nudge.js'));

@@ -128,6 +128,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       if (e.key === '?') { e.preventDefault(); safeStart(); }
     });
+    window.startVoiceRec = safeStart;
     window.startOsmanVoice = safeStart;
   }
 })();

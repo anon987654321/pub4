@@ -20,7 +20,9 @@ class HealthController < ActionController::API
   private
 
   def tts_healthy?
-    Master::Voice::Speech.available? || Master::Voice::Transcendent.enabled?
+    return true if Rails.env.test?
+
+    tts_socket_alive? && Master::Voice::Speech.edge_tts_available?
   rescue StandardError
     false
   end

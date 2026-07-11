@@ -70,13 +70,13 @@ lessons:
     area: master_web
     signal: "White page, silent TTS, or voice/lang regressions after persona changes"
     action: "Single-voice policy in data/voice.yml (tts.single_voice: pernille). Ruby reads Voice::Policy; JS reads MASTER_VOICE_POLICY. guardVoice always returns nb-NO-PernilleNeural. rc.d/master fingerprints face_*.js + sw.js. vps_deploy_master.sh runs bundle install before precompile."
-    proof: "curl page includes MASTER_VOICE_POLICY; GET /chat/tts?voice=pernille returns audio; test -S /home/dev/pub4/MASTER/.master/tts.sock; GET /health deploy.face_runtime_digest present; bin/smoke --web clean"
+    proof: "curl page includes MASTER_VOICE_POLICY; GET /chat/tts status returns audio; GET /health checks.tts true and deploy.tts_socket true; ruby OPENBSD/health_check.rb --core; bin/smoke --web clean"
 
   - id: master_deploy_confidence
     area: master_web
     signal: "Code pushed but unsure prod serves new face.runtime digest or TTS socket is down"
     action: "GET /health returns deploy.git_sha, deploy.face_runtime_digest, deploy.tts_socket, deploy.assets_precompile_at. Face status strip shows tts: socket down or tts: waiting Ns on rate limit. After deploy run probe_http and curl /health on vm23."
-    proof: "curl -fsS http://127.0.0.1:53187/health | jq .deploy; face #tts-live shows health hints when degraded"
+    proof: "curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'; OPENBSD/health_check.rb asserts deploy.tts_socket; face #tts-live shows health hints when degraded"
 
   - id: ecology_layer_visibility
     area: master_web
