@@ -8,7 +8,7 @@ module Master
     class Personality
       include PersonalityPromptBuilder
 
-      DEFAULT = :malay
+      DEFAULT = :anchor
       AXIOM_DISPLAY_LIMIT = 10
 
       FALLBACK_PERSONA = {
