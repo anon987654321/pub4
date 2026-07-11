@@ -50,8 +50,7 @@
         face_vision.bundle.js cognition_ecology.js cognition_ecology_render.js
       ].to_h { |name| [name, asset_path(name)] }.to_json) %>,
       faceVisionBundle: "<%= asset_path("face_vision.bundle.js") %>",
-      faceRuntime: "<%= asset_path("face.runtime.js") %>",
-      visemePacks: "<%= asset_path("viseme_packs.json") %>"
+      faceRuntime: "<%= asset_path("face.runtime.js") %>"
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
