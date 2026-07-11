@@ -75,7 +75,7 @@ module Master
       def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, &blk)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         selected_model = vision_model_for(selected_model) if image_present?(image)
-        cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model)
+        cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
             send_llm_request(selected_model, messages, system:, stream:, image: image, &blk)
@@ -208,8 +208,14 @@ module Master
         @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
       end
 
-      def cache_key_for(message, context, model = nil)
+      # system must be part of the key: two calls can share the same message
+      # text (e.g. Enhance's ask_once and the real turn's chat both receive
+      # the identical user message) but mean entirely different requests
+      # under different instructions — omitting it let one call's cached
+      # completion be served back as the other's answer.
+      def cache_key_for(message, context, model = nil, system = nil)
         parts = model ? "#{model}\n#{message}" : message
+        parts = "#{parts}\nsys:#{system}" if system
         return Digest::SHA256.hexdigest(parts) if context.empty?
         window = context.last(CACHE_WINDOW).map { |msg| "#{msg[:role]}:#{msg[:content]}" }.join("\n")
         Digest::SHA256.hexdigest("#{parts}\n#{window}")

@@ -82,6 +82,32 @@ class TestLLMDispatcher < Minitest::Test
     refute dispatcher.send(:tool_available_for_context?, { "file_types" => [".rb"] })
   end
 
+  def test_cache_key_differs_by_system_prompt
+    dispatcher, = build_dispatcher
+
+    # Regression: Enhance#enhance calls ask_once(msg, system: ENHANCE_SYSTEM)
+    # with the raw user message text; the real turn calls chat(msg) with the
+    # persona system prompt. Both produce messages.last[:content] == msg, so
+    # a cache key built without the system prompt let the real turn's answer
+    # get served the Enhance call's cached completion when the message text
+    # matched (confirmed live: "tell me a short joke" returned Enhance's
+    # <think> reasoning about JSON rewrite rules instead of a joke).
+    key_enhance = dispatcher.send(:cache_key_for, "tell me a short joke", [], "some-model", "you are a message clarity editor")
+    key_turn    = dispatcher.send(:cache_key_for, "tell me a short joke", [], "some-model", "you are MASTER, a constitutional coding agent")
+
+    refute_equal key_enhance, key_turn, "different system prompts must not collide on the same cache key"
+  end
+
+  def test_cache_key_stable_without_system_prompt
+    dispatcher, = build_dispatcher
+
+    k1 = dispatcher.send(:cache_key_for, "hello", [], "some-model")
+    k2 = dispatcher.send(:cache_key_for, "hello", [], "some-model")
+
+    assert_equal k1, k2, "identical inputs must still produce a deterministic key"
+    assert_equal 64, k1.length, "SHA256 hex is 64 chars"
+  end
+
   def test_send_claude_cli_returns_timeout_error
     dispatcher, _session, _bus = build_dispatcher
     def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)
