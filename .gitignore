@@ -61,7 +61,6 @@ MASTER/.constitutional_locks/
 # Repo-relative temp dir
 tmp/
 RAILS/*/vendor/bundle/
-RAILS/*/vendor/
 *.so
 
 # Generated MASTER snapshots / runtime
