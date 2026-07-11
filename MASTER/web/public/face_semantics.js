@@ -380,7 +380,6 @@ if (renderer) {
     }, 500);
     setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
   }
-  (window.MASTER_FACE?.ensureFrameLoop || (() => requestAnimationFrame(frame)))();
   if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
 } else {
   (function start2D() {

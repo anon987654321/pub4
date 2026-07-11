@@ -1304,7 +1304,11 @@ async function swapMask(imageUrl) {
 
 let frameLoopActive = false;
 function ensureFrameLoop() {
-  if (frameLoopActive || State.hidden || document.hidden) return;
+  if (State.hidden || document.hidden) return;
+  // Always schedule a frame. face_semantics.js used to call this during module
+  // init before startEverything(); the frameLoopActive guard then made
+  // startEverything()'s call a no-op while the first rAF never ran — scene alive,
+  // dbgFrames stuck at 0, canvas black ("face not showing").
   frameLoopActive = true;
   requestAnimationFrame(frame);
 }

@@ -141,7 +141,8 @@
         clearTimeout(hintT);clearTimeout(retryT);clearTimeout(fallback);
         clearInterval(timer);timer=null;
         if(typeof window.stop2DFallback==='function')window.stop2DFallback();
-        showProgress(100);
+        var ui=uiEl();
+        if(ui&&/^loading face /i.test(ui.textContent||''))ui.textContent='';
       }
       function bootFailed(){clearWatch();fallbackUi();}
       function showProgress(pct){
