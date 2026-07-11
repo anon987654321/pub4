@@ -126,6 +126,13 @@ const providerChip = (() => {
 function syncProviderChip(provider) {
   if (!providerChip || !provider) return;
   const label = String(provider).slice(0, 12);
+  // Idempotency guard — load-bearing, not an optimization: this function
+  // emits MASTERVisual.event(), whose bridge re-dispatches a master:visual
+  // DOM event carrying the same provider, which the listener below feeds
+  // straight back into syncProviderChip. Without exiting on a repeat
+  // provider that's unbounded mutual recursion (RangeError: Maximum call
+  // stack size exceeded, observed live on every SSE model event).
+  if (providerChip.dataset.provider === label) return;
   providerChip.textContent = label;
   providerChip.dataset.provider = label;
   document.documentElement.dataset.modelProvider = label;
