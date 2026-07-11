@@ -211,21 +211,25 @@ ollama_phi: &ollama_phi
 
 models:
   grok_primary:
-    - *grok_4_fast
-    - *grok_4
+    - *nemotron_super
+    - *gemma_2_9b_free
+    - *gpt_oss_120b
+    - *qwen3_next
+    - *llama_70b
   keyless:
     - *web_chat_grok
     - *web_chat_chatgpt
     - *web_chat_kimi
     - *web_chat_gemini
   default:
-    - *grok_4_fast
-    - *gemini_2_flash_exp_free
-    - *gemini_flash_openrouter
+    - *nemotron_super
+    - *gemma_2_9b_free
     - *gpt_oss_120b
     - *qwen3_next
     - *llama_70b
     - *qwen_coder
+    - *gemini_2_flash_exp_free
+    - *gemini_flash_openrouter
   primary:
     - *grok_4_fast
     - *claude_cli_opus

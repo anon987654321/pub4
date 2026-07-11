@@ -11,7 +11,13 @@ module Master
       DEFAULT_WEB_PORT = 53_187
 
       DEFAULTS = {
-        "model" => "x-ai/grok-4-fast",
+        # grok-4-fast is deprecated by xAI (confirmed 2026-07-11: 404 "xAI
+        # recommends switching to Grok 4.3"). This is the ultimate fallback
+        # model (used when routing is disabled, or as the last resort in
+        # ModelRouter#fallback_chain) — must be something that actually works
+        # without requiring paid credits, since this repo should work for
+        # anyone with or without an OpenRouter balance.
+        "model" => "nvidia/nemotron-3-super-120b-a12b:free",
         "web_host" => "127.0.0.1",
         "web_public_url" => "https://ai.brgen.no",
         "web_port" => DEFAULT_WEB_PORT,

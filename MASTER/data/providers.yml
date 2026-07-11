@@ -40,7 +40,11 @@ xai:
   ruby_llm_key: xai_api_key
   min_key_length: 20
   strengths: [reasoning, coding, fast]
-  default_model: grok-4-fast
+  # grok-4-fast and grok-4 are both deprecated by xAI (confirmed 2026-07-11 via
+  # direct API test: 404 "xAI recommends switching to Grok 4.3"). This provider
+  # block only activates with a direct XAI_API_KEY (not set here — OpenRouter
+  # is the active path), so it's a dormant fallback, but keep it non-dead.
+  default_model: grok-4.3
 
 mistral:
   env: [MISTRAL_API_KEY]

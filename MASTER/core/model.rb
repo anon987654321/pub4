@@ -13,7 +13,10 @@ module Master::Core
   # parse is total and pure: any malformed reply becomes a note Effect, so a bad
   # generation is data the loop observes, never a crash. That keeps the fold total.
   class Model
-    DEFAULT_MODEL = "x-ai/grok-4-fast"
+    # grok-4-fast is deprecated by xAI (confirmed 2026-07-11: 404 "xAI
+    # recommends switching to Grok 4.3"). Free model so this works without
+    # requiring a funded OpenRouter account.
+    DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
 
     # Built from Memory's evidence policy so the numbers the model is told match
     # the numbers the Constitution enforces — one source, no prose drift.
