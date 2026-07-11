@@ -9,9 +9,10 @@ the boot sequence or the deploy path — it'll save you re-deriving all of it.
 
 The web tier is Rails 8 on Falcon, bound to loopback port 53187 and published
 at https://ai.brgen.no through relayd. The chat surface at `GET /` combines
-the assistant stream and the face runtime. Health is at `GET /up`. SSE
-endpoints include `GET /chat/message` (assistant stream), `GET /chat/metrics`
-(session metrics), and `GET /events/stream` (event bus).
+the assistant stream and the face runtime. Health is at `GET /up`. Streaming
+endpoints include `POST /chat/message` (preferred assistant stream),
+`GET /chat/message` (legacy fallback), `GET /chat/metrics` (session metrics),
+and `GET /events/stream` (event bus).
 
 The single HTML entrypoint is `app/views/chat/index.html.erb` via
 `ChatController#index`. Runtime assets live under `public/`: `face.js` for
@@ -43,12 +44,23 @@ code read.
 - The prompt must become visible even if face loading fails.
 - The boot manifest must keep `particle_kernel.js` before face/runtime consumers.
 - SSE may remain open; tests must not wait for network idle on the face page.
+- `MASTER_FACE` is the public face runtime global; do not add new
+  `MASTERFace` call sites.
+- `MASTERChat.startChatStream()` is the preferred chat transport. Keep the
+  old `EventSource` GET path only as fallback, and preserve named SSE face
+  reactions (`mood`, `model`, `verdict`, `council:speech`, `confidence`,
+  `felt`) on the POST path.
+- Web TTS style is unlocked by default (`auto`) so the server can infer style.
+  Only send `style` with `style_locked=1` after an explicit user style choice.
+- Browser `speechSynthesis` fallback must be recoverable; do not make one
+  failed server-TTS request permanently downgrade the session.
 
 **Files:**
 - `app/views/chat/index.html.erb`: primer, WebGL guard, boot manifest, lazy `import("face.js")`.
 - `public/face.js`: deferred face loader.
 - `public/face.part*.txt`: split face runtime payload.
-- `public/three.face.module.js`: heavy WebGL module, warmed by prefetch only.
+- `public/three.face.module.js`: heavy WebGL module, imported only after the
+  primer tap and WebGL feature detection.
 - `public/visual_bridge.js`: runtime event/SSE bridge.
 - `public/cognition_ecology*.js`: 2D canvas ecology, allowed before primer.
 
@@ -66,6 +78,25 @@ code read.
 4. Tap or press Enter.
 5. Confirm the primer dismisses, prompt appears, and the face either starts or fails visibly.
 6. Confirm console errors do not indicate eager WebGL or THREE.js boot before tap.
+
+## Runtime contract (chat, face, TTS)
+
+`chat_actions.js` owns the preferred POST streaming transport and SSE block
+parser. `face.part5.txt` / `face.runtime.js` own the face-specific reaction
+layer: token chunks drive chat text and TTS; named events drive mood, model
+badges, verdict pulses, council mouth offsets, confidence, and felt state.
+When adding a named SSE event, decide deliberately whether it belongs in the
+generic `sse_contract.js` handlers, the face-specific `handleFaceNamedEvent()`,
+or both.
+
+`face.runtime.js` is generated from `face.part*.txt`; edit the part file and
+regenerate or keep both in sync in the same commit. Contract tests intentionally
+read both generated and source files so drift is visible early.
+
+TTS requests should omit `style` unless the user explicitly locks one through
+the UI or `/voice ... <style>`. Server TTS failures may temporarily use browser
+speech, but the cooldown must expire so the Edge/server voice can recover
+without a page reload.
 
 ## RESOLVED 2026-07-11: the real "dead tap" root cause was a MutationObserver loop
 
