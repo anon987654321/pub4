@@ -39,12 +39,9 @@
   --radius-lg: 12px;
   --radius-pill: 999px;
   --face-bar-height: 36px;
-  --hud-above-bar: calc(var(--face-bar-height) + var(--safe-bottom));
-  --hud-tier-caption: calc(var(--hud-above-bar) + 34px);
-  --hud-tier-status: calc(var(--hud-above-bar) + 10px);
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;
-  --face-glow-scale: 1.42;
+  --face-glow-scale: 1.22;
   --face-phosphor-decay: 0.80;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
