@@ -33,11 +33,18 @@ def synth(voice, rate, pitch, text, out_path)
   File.exist?(out_path) && File.size(out_path) > 0
 end
 
+def worker_env
+  root = File.expand_path("..", __dir__)
+  env = ENV.to_h
+  %w[BUNDLE_PATH BUNDLE_BIN_PATH RUBYOPT GEM_HOME GEM_PATH].each { env.delete(_1) }
+  env["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
+  env
+end
+
 def synth_subprocess(voice, rate, pitch, text, out_path)
   script = File.expand_path(__FILE__)
-  env = { "BUNDLE_GEMFILE" => ENV.fetch("BUNDLE_GEMFILE", File.expand_path("../Gemfile", __dir__)) }
   _out, err, status = Open3.capture3(
-    env, Gem.ruby, script, voice, rate, pitch, out_path,
+    worker_env, Gem.ruby, script, voice, rate, pitch, out_path,
     stdin_data: text.to_s
   )
   unless status.success?

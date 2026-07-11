@@ -66,7 +66,9 @@ class HealthController < ActionController::API
   end
 
   def tts_socket_alive?
-    File.socket?(Master::Voice::Speech::TTS_SOCKET)
+    Master::Voice::TtsSupervisor.pool_size.times.any? do |i|
+      Master::Voice::TtsSupervisor.socket_alive?(Master::Voice::TtsSupervisor.socket_path(index: i))
+    end
   rescue StandardError
     false
   end

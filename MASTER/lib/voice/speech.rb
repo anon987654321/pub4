@@ -331,6 +331,7 @@ module Master
         timeout = worker_timeout
         _out, err, status = Timeout.timeout(timeout) do
           Master::Reach::Exec.capture3(
+            TtsSupervisor.daemon_env(Master::ROOT),
             WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
             stdin_data: text.to_s
           )
@@ -366,7 +367,12 @@ module Master
           UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
             File.open(audio_path, "wb") do |f|
-              while (chunk = s.readpartial(8192))
+              loop do
+                begin
+                  chunk = s.readpartial(8192)
+                rescue EOFError
+                  break
+                end
                 f.write(chunk)
                 on_chunk&.call(f.pos)
               end

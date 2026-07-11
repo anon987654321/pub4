@@ -107,6 +107,37 @@ class TestSpeech < Minitest::Test
     end
   end
 
+  def test_synthesize_edge_socket_treats_eof_as_success
+    path = File.join(Dir.tmpdir, "m3_socket_eof_tts_test.mp3")
+    audio = "fake-mp3-bytes"
+    Dir.mktmpdir("master_tts_sock") do |root|
+      socket_path = File.join(root, "tts.sock")
+      server = UNIXServer.new(socket_path)
+      server_thread = Thread.new do
+        client = server.accept
+        line = client.gets
+        client.write(audio)
+        client.close
+        line
+      end
+      Master::Voice::TtsSupervisor.stub(:next_socket, socket_path) do
+        result = Master::Voice::Speech.synthesize_edge_socket(
+          text: "hello",
+          voice_name: "en-GB-RyanNeural",
+          style_config: { rate: "+0%", pitch: "+0Hz" },
+          audio_path: path
+        )
+        assert_equal path, result
+        assert_equal audio, File.binread(path)
+      end
+      server_thread.join
+    ensure
+      server&.close
+    end
+  ensure
+    File.delete(path) if File.exist?(path)
+  end
+
   def test_synthesize_streaming_falls_back_to_oneshot_when_socket_fails
     path = File.join(Dir.tmpdir, "m3_stream_tts_test.mp3")
     status = Struct.new(:success?).new(true)
