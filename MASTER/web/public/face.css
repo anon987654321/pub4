@@ -40,9 +40,14 @@
   --radius-pill: 999px;
   --face-bar-height: 36px;
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
-  --face-particle-size: 0.024;
-  --face-glow-scale: 1.38;
-  --face-phosphor-decay: 0.88;
+  /* Last-known-good additive balance (pre "pristine detail tier", which
+     raised all three at once and saturated the whole face to a white oval:
+     ~17k points × bigger size × hotter glow × slower decay overflows the
+     framebuffer even fully assembled). These override the JS defaults via
+     applyFaceCssVars, so they — not face.part1.txt — are the live values. */
+  --face-particle-size: 0.019;
+  --face-glow-scale: 1.22;
+  --face-phosphor-decay: 0.80;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
   --ease-out: cubic-bezier(0.25,0.1,0.25,1);
