@@ -332,7 +332,7 @@ module Master
         _out, err, status = Timeout.timeout(timeout) do
           Master::Reach::Exec.capture3(
             TtsSupervisor.daemon_env(Master::ROOT),
-            WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+            Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
             stdin_data: text.to_s,
             chdir: Master::ROOT
           )
