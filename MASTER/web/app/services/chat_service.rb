@@ -207,24 +207,31 @@ class ChatService
 
   def write_chunk(token)
     text = token.to_s
-    return if text.empty?
+    return if text.empty? || @stream_broken
 
     @streamed = true
     @stream.write("data: #{escape_sse(text)}\n\n")
+  rescue StandardError => e
+    @stream_broken = true
+    Master::Ground::Swallow.log(e, context: "ChatService.write_chunk")
   end
 
   def write_event(event, data)
+    return if @stream_broken
+
     @stream.write("event: #{event}\ndata: #{data}\n\n")
   rescue StandardError => e
-    Master::Ground::Swallow.log(e, context: "ChatService.write_event", event_bus: @container[:bus])
+    @stream_broken = true
+    Master::Ground::Swallow.log(e, context: "ChatService.write_event")
   end
 
   def write_json_event(event, data)
-    return if data.nil?
+    return if data.nil? || @stream_broken
 
     @stream.write("event: #{event}\ndata: #{data.to_json}\n\n")
   rescue StandardError => e
-    Master::Ground::Swallow.log(e, context: "ChatService.write_json_event", event_bus: @container[:bus])
+    @stream_broken = true
+    Master::Ground::Swallow.log(e, context: "ChatService.write_json_event")
   end
 
   def write_council_speech(event)
