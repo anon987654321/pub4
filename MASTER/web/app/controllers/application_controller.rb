@@ -102,6 +102,10 @@ class ApplicationController < ActionController::Base
     enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", limit: TTS_RATE_LIMIT, window: TTS_WINDOW_S)
   end
 
+  def enforce_tts_poll_rate_limit
+    enforce_rate_limit!("master:rl:tts:poll:#{request.remote_ip}", limit: TTS_POLL_RATE_LIMIT, window: TTS_POLL_WINDOW_S)
+  end
+
   def enforce_web_read_rate_limit
     enforce_rate_limit!("master:rl:web:read:#{request.remote_ip}", limit: WEB_READ_RATE_LIMIT, window: WEB_READ_WINDOW_S)
   end
