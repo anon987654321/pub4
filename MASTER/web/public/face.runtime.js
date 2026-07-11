@@ -2554,8 +2554,14 @@ async function tryPartialTTSPlay(job, bytes) {
 async function pollTTSJob(job, signal) {
   const streamChunk = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk');
   const audioStream = window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream');
-  for (let attempt = 0; attempt < 20; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 1500)));
+  // ~3 minutes of patience, not ~26s: synthesis is a serial queue on a 1-CPU
+  // VPS, so a reply behind a few other chunks legitimately takes 30-60s+.
+  // Giving up early threw "tts timeout", which latched serverUnavailable and
+  // silenced every later utterance — the "it only says scanning" bug (the
+  // pre-cached status phrases play instantly; everything real timed out).
+  // Late audio is still worth having: ttsTick serializes playback anyway.
+  for (let attempt = 0; attempt < 90; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 2000)));
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
     if (res.status === 202) {
       if (streamChunk) {
@@ -4046,3 +4052,4 @@ await import('/face_semantics.js');
 await import('/face_minimal_ui.js');
 await import('/face_loops_music.js');
 await import('/face_loops_nudge.js');
+
