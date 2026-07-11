@@ -333,7 +333,8 @@ module Master
           Master::Reach::Exec.capture3(
             TtsSupervisor.daemon_env(Master::ROOT),
             WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
-            stdin_data: text.to_s
+            stdin_data: text.to_s,
+            chdir: Master::ROOT
           )
         end
         unless status.success?
@@ -355,6 +356,10 @@ module Master
 
       def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
         sock_path = TtsSupervisor.next_socket
+        unless File.socket?(sock_path)
+          TtsSupervisor.ensure_daemon!
+          sock_path = TtsSupervisor.next_socket
+        end
         return unless File.socket?(sock_path)
 
         req = JSON.generate(
