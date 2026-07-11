@@ -3,9 +3,8 @@
 # Shared importmap pins for the pub4 Rails family.
 # Include from each app: eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
-sc_vendor = Shared::Engine.root.join("vendor/javascript")
 sc_pin = lambda do |name|
-  pin "@stimulus-components/#{name}", to: sc_vendor.join("@stimulus-components--#{name}.js").to_s
+  pin "@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js"
 end
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
@@ -38,5 +37,5 @@ pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bun
   rails-nested-form carousel
 ].each { |name| sc_pin.call(name) }
 
-pin "@stimulus-components/textarea-autogrow", to: sc_vendor.join("@stimulus-components--textarea-autogrow.js").to_s
-pin "stimulus-textarea-autogrow", to: sc_vendor.join("@stimulus-components--textarea-autogrow.js").to_s
+pin "@stimulus-components/textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"
+pin "stimulus-textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"

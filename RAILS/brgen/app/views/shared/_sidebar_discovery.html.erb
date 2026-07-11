@@ -1,5 +1,5 @@
 <% communities = Community.popular.limit(4) %>
-<% if communities.any? %>
+<% if communities.any? && !content_for?(:widgets_includes_communities) %>
   <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
     <h3>Communities</h3>
     <% communities.each do |community| %>

@@ -53,6 +53,17 @@ module Shared
       app.config.assets.paths << path unless app.config.assets.paths.include?(path)
     end
 
+    # importmap_baseline.rb pins @stimulus-components/* by bare filename
+    # (e.g. "@stimulus-components--dialog.js"); without this path registered,
+    # the asset pipeline can't resolve it and the pin falls through to a raw
+    # to_s of the engine root, which importmap serializes as a literal
+    # filesystem path (e.g. "/home/brgen/shared/vendor/javascript/...") that
+    # the browser then 404s on verbatim.
+    initializer "shared.vendor_javascript" do |app|
+      path = root.join("vendor/javascript").to_s
+      app.config.assets.paths << path unless app.config.assets.paths.include?(path)
+    end
+
     initializer "shared.public_static" do |app|
       public_path = root.join("public").to_s
       next unless File.directory?(public_path)
