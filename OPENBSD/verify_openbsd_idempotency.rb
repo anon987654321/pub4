@@ -9,9 +9,12 @@ backup_idx = script.index("backup_directory /var/nsd/zones/master nsd-zones")
 delete_idx = script.index("rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)")
 issues << "nsd backup does not precede destructive delete" unless backup_idx && delete_idx && backup_idx < delete_idx
 
-issues << "missing guarded /home backup copy path" unless script.include?("cp -R \"${src}/.\" \"${app_dir}/\"")
+# Regexes, not exact strings: the actual variable names in OPERATOR.sh ($src/$d,
+# $svc) drift over time, but the two guarantees these check for — a backup copy
+# into a quoted destination, and a restart-with-start-fallback — must survive.
+issues << "missing guarded /home backup copy path" unless script =~ %r{cp -R "\$\{?src\}?[^"]*"[^\n]*?"[^"]*"}
 issues << "missing idempotent Rails DB create/migrate guard" unless script.include?("db:create db:migrate")
-issues << "missing restart/start fallback for rc.d services" unless script.include?("rcctl restart $app || /usr/sbin/rcctl start $app")
+issues << "missing restart/start fallback for rc.d services" unless script =~ %r{rcctl restart \$\{?\w+\}?[^\n]*?\|\|[^\n]*?rcctl start \$\{?\w+\}?}
 
 if issues.any?
   warn "idempotency check failed:"
