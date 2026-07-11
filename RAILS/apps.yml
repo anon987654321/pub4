@@ -182,33 +182,27 @@ apps:
         - { name: infrastructure knowledge graph,                          status: planned, agent: ignore }
         - { name: OpenBSD package intelligence,                            status: planned, agent: ignore }
 
-  hjerterom:
-    title: Hjerterom
-    domain: hjerterom.brgen.no
-    port: 38891
-    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
-    stack_later: PostgreSQL, route optimization, reporting jobs, operational forecasting
-    deploy_script: RAILS/hjerterom/hjerterom.sh
-    deploy_root: RAILS/hjerterom
-    public: true
-    features:
-      core:
-        - { name: Donation / FoodItem intake model,                        status: done }
-        - { name: Box (weekly food parcel) coordination,                   status: done }
-        - { name: Volunteer model (shifts, availability),                  status: done }
-        - { name: shift scheduling + notifications,                        status: done, notes: "ShiftReminderJob in recurring.yml + shift callbacks deliver_notification + volunteer user_id link" }
-        - { name: Donor model + management,                                status: done }
-        - { name: Beneficiary model + matching,                            status: done, notes: "beneficiaries#match dietary tag matching" }
-        - { name: clothing / toy / book reuse tracking,                    status: done, notes: "FoodItem toys category + reuse_status metadata + reuse scopes" }
-        - { name: distribution route optimization,                         status: done, notes: "DeliveryRoute/DeliveryStop + RoutePlanner.build_for + operator dashboard route status" }
-        - { name: operator dashboard,                                      status: done, notes: "OperatorController#index at /operator with shifts, requests, reuse counters, route status, queue failures" }
-      planned:
-        - { name: reporting jobs (Solid Queue),                            status: planned, agent: ignore }
-        - { name: operational forecasting,                                 status: planned, agent: ignore }
 
 # ── Archived / not in RAILS (recovery in OPERATOR/archive/recovery/) ───────
 
 archived_apps:
+
+  hjerterom:
+    title: Hjerterom
+    domain: hjerterom.brgen.no
+    port: 38891
+    status: done
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    deploy_script: RAILS/hjerterom/hjerterom.sh
+    deploy_root: RAILS/hjerterom
+    notes: >-
+      Feature-complete (donation intake, box coordination, volunteer shifts, route
+      optimization, operator dashboard — all status: done) but decommissioned from
+      the live VPS fleet on 2026-07-11 to relieve memory pressure on a 1GB box that
+      couldn't reliably keep 5 Rails apps above resource_guard's free-memory
+      threshold. rc.d service stopped/disabled and relayd routing removed on the
+      VPS; source tree and hjerterom.sh untouched — redeploy is a normal
+      `zsh hjerterom.sh` run if VPS capacity increases.
 
   privcam:
     title: Privcam
