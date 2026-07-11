@@ -149,10 +149,14 @@ module Master
       end
 
       def daemon_env(root)
-        env = ENV.to_h
-        %w[BUNDLE_PATH BUNDLE_BIN_PATH RUBYOPT GEM_HOME GEM_PATH].each { env.delete(_1) }
-        env["BUNDLE_GEMFILE"] = File.join(root, "Gemfile")
-        env
+        {
+          "HOME" => ENV["HOME"].to_s,
+          "USER" => ENV["USER"].to_s,
+          "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
+          "LANG" => ENV.fetch("LANG", "C.UTF-8"),
+          "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
+          "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
+        }
       end
     end
   end
