@@ -646,6 +646,14 @@ function startEverything() {
   primerFired = true;
   document.body?.classList.remove('face-loading');
   morphCurrent = 0.72; morphTarget = 1.08;
+  // ensureFrameLoop() kicks off the one requestAnimationFrame(frame) call that
+  // starts the render loop (renderer.render(scene, camera), then it reschedules
+  // itself). Nothing called it: the face's scene/mesh/particle state all built
+  // and updated correctly on every tts/canvas event, but frame() was never
+  // invoked even once, so nothing was ever painted to the canvas — the face
+  // was fully "alive" internally and invisible on screen. This is the actual
+  // fix for the long-standing "no 3D face visible" report.
+  ensureFrameLoop();
   initAudio();
   prefetchTtsPhraseBank?.();
   if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
