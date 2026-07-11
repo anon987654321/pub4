@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # fix_macos.sh
-# Fully autonomous macOS setup with flat SGI IRIX-style UI and AeroSpace tiling.
+# Fully autonomous macOS setup aligned with MASTER design tokens (design_tokens.yml).
+# Phosphor cream on absolute black, 8px grid, 1px hairlines, zero radius, AeroSpace tiling.
 # Single execution required. Restart + Accessibility approvals afterward.
 
 set -euo pipefail
@@ -83,13 +84,13 @@ default-root-container-orientation = 'auto'
 
 gaps.inner.horizontal = 8
 gaps.inner.vertical = 8
-gaps.outer.left = 8
-gaps.outer.bottom = 8
-gaps.outer.top = 8
-gaps.outer.right = 8
+gaps.outer.left = 12
+gaps.outer.bottom = 12
+gaps.outer.top = 12
+gaps.outer.right = 12
 
 after-startup-command = [
-    'exec-and-forget borders active_color=0xff00d4ff inactive_color=0xff1b263b width=5.0',
+    'exec-and-forget borders active_color=0xffe7e9ea inactive_color=0x24e7e9ea width=1.0',
     'exec-and-forget sketchybar',
 ]
 
@@ -142,25 +143,44 @@ ctrl + shift - space : osascript -e 'tell application "System Events" to keystro
 ctrl + shift - l : /System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend
 EOF
 
-# Ghostty
+# Ghostty — MASTER face_root tokens (RAILS/shared/design_tokens.yml)
 mkdir -p ~/.config/ghostty
 cat > ~/.config/ghostty/config << 'EOF'
 font-family = "JetBrainsMono Nerd Font"
-font-size = 16
+font-size = 13
+font-feature = -liga
 
-background = #0d1b2a
-foreground = #00d4ff
-background-opacity = 0.95
+background = #000000
+foreground = #e7e9ea
+cursor-color = #f5f0e8
+background-opacity = 1
 background-blur = 0
 
+palette-0 = #000000
+palette-1 = #ff3344
+palette-2 = #10a37f
+palette-3 = #c9a227
+palette-4 = #5b8def
+palette-5 = #8b5cf6
+palette-6 = #4285f4
+palette-7 = #e7e9ea
+palette-8 = #5a5a5a
+palette-9 = #ff3344
+palette-10 = #10a37f
+palette-11 = #c9a227
+palette-12 = #5b8def
+palette-13 = #8b5cf6
+palette-14 = #4285f4
+palette-15 = #f5f0e8
+
 macos-titlebar-style = hidden
-window-padding-x = 16
-window-padding-y = 16
+window-padding-x = 12
+window-padding-y = 12
 tab-bar-location = hidden
 scrollbar-location = never
 
 cursor-style = block
-cursor-style-blink = false
+cursor-style-blink = true
 mouse-hide-while-typing = true
 EOF
 
@@ -170,47 +190,93 @@ cat > ~/.config/borders/bordersrc << 'EOF'
 #!/bin/bash
 
 options=(
-    active_color=0xff00d4ff
-    inactive_color=0xff1b263b
-    width=5.0
+    active_color=0xffe7e9ea
+    inactive_color=0x24e7e9ea
+    width=1.0
 )
 
 borders "${options[@]}"
 EOF
 chmod +x ~/.config/borders/bordersrc
 
-# Sketchybar
+# Sketchybar — MASTER chrome layer (--face-bar-height: 36px)
 mkdir -p ~/.config/sketchybar
 cat > ~/.config/sketchybar/sketchybarrc << 'EOF'
 #!/usr/bin/env zsh
 
-sketchybar --bar height=32 \
-                 color=0xff0d1b2a \
-                 border_color=0xff00d4ff \
-                 border_width=2
+sketchybar --bar height=36 \
+                 color=0xff000000 \
+                 border_color=0x24e7e9ea \
+                 border_width=1 \
+                 corner_radius=0 \
+                 y_offset=0 \
+                 margin=0 \
+                 shadow=off
+
+sketchybar --default label.font="JetBrains Mono:Bold:9.0" \
+                     label.color=0x5ae7e9ea \
+                     icon.drawing=off \
+                     background.drawing=off
+
+sketchybar --add item master left \
+           --set master label="MASTER" \
+                     label.y_offset=1
 
 sketchybar --add item clock right \
            --set clock update_freq=30 \
-                     icon.drawing=off \
                      script='date "+%H:%M"' \
-                     label.color=0xff00d4ff \
-                     background.color=0xff1b263b
+                     label.font="JetBrains Mono:Regular:11.0" \
+                     label.color=0xffe7e9ea
 EOF
 chmod +x ~/.config/sketchybar/sketchybarrc
 
-# Starship
+# Starship — MASTER prompt_line / renderer_prompt_components.rb
 mkdir -p ~/.config
 cat > ~/.config/starship.toml << 'EOF'
 add_newline = false
+palette = "master_phosphor"
+
+[palettes.master_phosphor]
+black = "#000000"
+red = "#ff3344"
+green = "#10a37f"
+yellow = "#c9a227"
+blue = "#5b8def"
+magenta = "#8b5cf6"
+cyan = "#4285f4"
+white = "#e7e9ea"
 
 [character]
-success_symbol = "[➜](bold cyan)"
+success_symbol = "[master$](bold red)"
+error_symbol = "[master$](bold red)"
+format = "$symbol "
+
+[directory]
+style = "bold red"
+format = "[$path]($style)"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+format = "[$branch](red) "
+symbol = ""
+
+[git_status]
+format = "[$all_status](dim red) "
+
+[cmd_duration]
+format = "[$duration](dim) "
+min_time = 500
+
+[time]
+disabled = true
 EOF
 
 # Zsh configuration
 print -P "Updating shell configuration..."
 
 touch ~/.zshrc
+grep -q "MASTER_BRUTALIST" ~/.zshrc 2>/dev/null || printf '\nexport MASTER_BRUTALIST=1\n' >> ~/.zshrc
 grep -q "starship" ~/.zshrc 2>/dev/null || printf '\neval "$(starship init zsh)"\n' >> ~/.zshrc
 grep -q "eza" ~/.zshrc 2>/dev/null || printf '\nalias ls="eza --icons"\nalias ll="eza -l --icons"\n' >> ~/.zshrc
 grep -q "zoxide" ~/.zshrc 2>/dev/null || printf '\neval "$(zoxide init zsh)"\n' >> ~/.zshrc
@@ -219,7 +285,7 @@ grep -q "fzf" ~/.zshrc 2>/dev/null || printf '\nsource <(fzf --zsh)\n' >> ~/.zsh
 # Start services
 print -P "Starting services..."
 
-brew services start skhd 2>/dev/null || true
+pgrep -x skhd >/dev/null 2>&1 || skhd &
 
 # Remove quarantine flags on freshly installed GUI apps
 for app in AeroSpace Ghostty Ice; do
