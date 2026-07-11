@@ -249,6 +249,17 @@ test("chat_actions posts chat stream instead of EventSource GET", () => {
   assert.match(actions, /window\.MASTERChat/);
   assert.match(actions, /MASTER_FACE\?\.sendMessage/);
   assert.match(runtime, /MASTERChat\.startChatStream/);
+  assert.match(runtime, /handleFaceNamedEvent\(event, data\)/);
+});
+
+test("face runtime keeps named SSE reactions on the POST stream path", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  assert.match(runtime, /function handleFaceNamedEvent/);
+  ["mood", "model", "verdict", "council:speech", "confidence", "felt"].forEach((event) => {
+    assert.ok(runtime.includes(`event === '${event}'`), `missing named handler for ${event}`);
+  });
+  assert.match(runtime, /applyPersonaVisual/);
+  assert.match(runtime, /MASTER_SSE\?\.dispatchNamed/);
 });
 
 test("face runtime keeps chat stream and particle worker boot paths", () => {

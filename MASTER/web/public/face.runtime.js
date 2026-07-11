@@ -3039,6 +3039,110 @@ function speakFailure(reason = "Sorry, I hit a snag.") {
   if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });
 }
 
+function handleFaceNamedEvent(event, data) {
+  const raw = String(data || '');
+  if (event === 'mood') {
+    const m = raw.trim();
+    if (!m) return true;
+    State.mood = m;
+    updateMoodHistory(m);
+    if (m === 'curious') State.surpriseY = 0.7;
+    if (TINT[m]) fadeColorTo(TINT[m]);
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = 'mood: ' + m;
+    syncShareStateUrl();
+    return true;
+  }
+  if (event === 'model') {
+    const m = raw.trim();
+    if (!m) return true;
+    State.model = m; State.modelName = m.split('/').pop();
+    const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
+    if (key) fadeColorTo(TINT[key]);
+    if (mouthPool && window.ParticleKernel) {
+      const K = window.ParticleKernel;
+      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+        const b = i * K.FIELDS_PER_CELL;
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+      }
+      setTimeout(() => {
+        if (!mouthPool) return;
+        for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
+          const b = i * K.FIELDS_PER_CELL;
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
+        }
+      }, 1000);
+    }
+    showModelBadge(State.modelName || m);
+    State.modelSwitch = 1.0;
+    syncShareStateUrl();
+    const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
+    const live = document.getElementById('mood-live');
+    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
+    return true;
+  }
+  if (event === 'verdict') {
+    const v = raw.trim();
+    if (TINT[v]) fadeColorTo(TINT[v]);
+    State.pulse = 0.6;
+    State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
+    if (State.confidence > 0.75) State.pulse = 0.9;
+    if (v === 'pass') {
+      beep(880, 0.06);
+      morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
+      State.bloom = 1.0;
+    }
+    if (v === 'veto') {
+      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+      morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
+      State.fracture = 1.0;
+      const prevPh = zshIn?.placeholder;
+      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+    }
+    const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
+    if (v === 'pass') tally.pass += 1;
+    if (v === 'veto') tally.veto += 1;
+    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
+    return true;
+  }
+  if (event === 'council:speech') {
+    try {
+      const payload = JSON.parse(raw || '{}');
+      const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
+      if (persona) {
+        rootBody.dataset.councilPersona = persona;
+        applyPersonaVisual(persona);
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+      }
+      if (lane) offsetCouncilMouthPool?.(lane, 0.22);
+      if (plan?.length) tts.visemePlan = plan;
+      if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
+      if (voice && text && !tts.playing) {
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+      }
+      setTimeout(() => {
+        if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
+        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
+      }, 8000);
+    } catch (_) {}
+    return true;
+  }
+  if (event === 'confidence') {
+    const c = parseFloat(raw); if (!isNaN(c)) State.confidence = c;
+    return true;
+  }
+  if (event === 'felt') {
+    try {
+      const payload = JSON.parse(raw || '{}');
+      if (payload.mood) State.mood = payload.mood;
+      if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+    } catch (_) {}
+    return true;
+  }
+  return false;
+}
+
 let _firstChatSent = false;
 async function sendMessage(text) {
   const trimmed = text.trim();
@@ -3183,7 +3287,7 @@ async function sendMessage(text) {
       imageToken
     }, {
       onMessage,
-      onNamed: (event, data) => window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
+      onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
       onError: () => {
         clearTimeout(stallTimer);
         State.flash = 1; State.shake = 0.8; State.mode = 'error';
