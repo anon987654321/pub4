@@ -169,14 +169,13 @@ After dismissal, `loadFace()` dynamically `import()`s the fingerprinted
 
 Separately, `face_deferred_loader.js` waits for the `primer:ready` event
 and loads a *second*, independent "vision" layer (`face_vision.bundle.js`,
-`cognition_ecology.js`). Known-broken as of 2026-07-10 but non-fatal
-(properly `.catch()`-guarded): `face_vision_c.js`/`face_vision_d.js` fetch
-`/canvas/topology`, `/data/rules.yml`, `/viseme_packs.json` at hardcoded,
-un-fingerprinted paths that don't resolve — the first has no matching
-route at all, `rules.yml` lives outside `public/` in `MASTER/data/`, and
-`viseme_packs.json` exists as a real fingerprinted asset but isn't read
-from `MASTER_ASSET_PATHS` like everything else is. Left unfixed pending a
-decision on whether `rules.yml` should even be servable to visitors.
+`cognition_ecology.js`). The core face runtime dispatches
+`master:face-ready` from `markFaceReady()`; the vision modules use that event
+for boot metrics and deferred hooks. `/canvas/topology` is a Rails route, and
+the viseme-pack loader must keep using `MASTER_ASSET_PATHS.visemePacks` rather
+than hardcoded asset URLs. Do not expose `MASTER/data/rules.yml` directly to
+visitors unless there is an explicit product/security decision to make those
+rules public.
 
 ## The asset-manifest footgun (bit us twice in one session)
 

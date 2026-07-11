@@ -37,6 +37,25 @@ async function enhanceMessage(text) {
   return { text, preEnhanced: false };
 }
 
+async function runSlashCommand(text) {
+  window._chatOnUser?.(text);
+  try {
+    const resp = await fetch("/chat/command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken() },
+      body: JSON.stringify({ command: text })
+    });
+    const data = await resp.json().catch(() => ({ output: "" }));
+    const out = (data.output || "(no output)").toString();
+    window._chatOnChunk?.(out);
+    window._chatOnDone?.();
+    (data.client_actions || []).forEach(triggerClientAction);
+  } catch (err) {
+    window._chatOnChunk?.(`error: ${err?.message || err}`);
+    window._chatOnError?.("command failed");
+  }
+}
+
 function loopsMusicUrl() {
   return window.MASTER_ASSET_PATHS?.faceModules?.["face_loops_music.js"] || "/face_loops_music.js";
 }
@@ -190,6 +209,80 @@ async function startChatStream(payload, handlers) {
   }
 }
 
+async function sendMessage(text) {
+  const input = chatInput();
+  const message = String(text ?? input?.value ?? "").trim();
+  if (!message) return false;
+  if (window.MASTER_FACE?.sendMessage && window.MASTER_FACE.sendMessage !== sendMessage) {
+    return window.MASTER_FACE.sendMessage(message);
+  }
+  if (!navigator.onLine) {
+    const queued = await queueOfflineSend(message);
+    if (queued) return true;
+  }
+  if (isBangCommand(message) && message.length > 1) return runSlashCommand(`/shell ${message.slice(1).trim()}`);
+  if (message.startsWith("/")) return runSlashCommand(message);
+
+  window._chatOnUser?.(message);
+  const enhanced = await enhanceMessage(message);
+  const imageToken = window._imageToken || null;
+  window._imageToken = null;
+  let assistantBuffer = "";
+  let ttsBuffer = "";
+  const sentenceBreak = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+  const flushSpeech = (force = false) => {
+    let match;
+    while ((match = ttsBuffer.match(sentenceBreak)) || (force && ttsBuffer.trim())) {
+      const cut = match ? match.index + match[0].length : ttsBuffer.length;
+      const sentence = ttsBuffer.slice(0, cut).trim();
+      ttsBuffer = ttsBuffer.slice(cut);
+      if (sentence) window.MASTERVoice?.enqueue?.(sentence);
+      if (!match) break;
+    }
+  };
+
+  try {
+    await startChatStream({
+      message: enhanced.text,
+      state: validatedFeltState(),
+      preEnhanced: enhanced.preEnhanced,
+      imageToken
+    }, {
+      onMessage(rawData) {
+        const raw = rawData || "";
+        if (raw === "[DONE]") {
+          flushSpeech(true);
+          window.MASTERVoice?.setLastText?.(assistantBuffer);
+          window._chatOnDone?.();
+          return;
+        }
+        if (raw.startsWith("ERROR:")) {
+          flushSpeech(true);
+          window._chatOnChunk?.(`\n${raw}\n`);
+          window._chatOnError?.("stream error");
+          return;
+        }
+        const chunk = raw.replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
+        assistantBuffer += chunk;
+        ttsBuffer += chunk;
+        window._chatOnChunk?.(chunk);
+        flushSpeech(false);
+      },
+      onNamed(event, data) {
+        window.MASTER_SSE?.dispatchNamed?.(event, data);
+        window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event });
+      },
+      onError(err) {
+        flushSpeech(true);
+        window._chatOnError?.(err?.message || "stream interrupted");
+      }
+    });
+  } catch (_) {
+    return false;
+  }
+  return true;
+}
+
 window.MASTERChat = {
   enhanceMessage,
   isBangCommand,
@@ -199,6 +292,7 @@ window.MASTERChat = {
   drainOfflineQueue,
   openChatStream,
   startChatStream,
+  sendMessage,
   closeChatStream
 };
 
@@ -234,4 +328,4 @@ function startMic(btn) {
 }
 
 window.collectFeltState = collectFeltState;
-window.sendMessage = (text) => window.MASTER_FACE?.sendMessage?.(text);
+if (!window.sendMessage) window.sendMessage = sendMessage;

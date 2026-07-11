@@ -8,8 +8,8 @@ class TtsController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    voice_locked = ActiveModel::Type::Boolean.new.cast(params[:voice_locked]) || params[:voice].present?
-    style_locked = ActiveModel::Type::Boolean.new.cast(params[:style_locked]) || params[:style].present?
+    voice_locked = ActiveModel::Type::Boolean.new.cast(params[:voice_locked]) == true
+    style_locked = ActiveModel::Type::Boolean.new.cast(params[:style_locked]) == true
     voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
     pre = Master::Voice::Expression.for_pre_speech(style: synth_style, text: text)
     container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: pre)

@@ -247,9 +247,20 @@ test("chat_actions posts chat stream instead of EventSource GET", () => {
   assert.match(actions, /\/chat\/message/);
   assert.doesNotMatch(actions, /new EventSource\(/);
   assert.match(actions, /window\.MASTERChat/);
-  assert.match(actions, /MASTER_FACE\?\.sendMessage/);
+  assert.match(actions, /async function sendMessage/);
+  assert.match(actions, /sendMessage,/);
+  assert.match(actions, /if \(!window\.sendMessage\) window\.sendMessage = sendMessage/);
   assert.match(runtime, /MASTERChat\.startChatStream/);
   assert.match(runtime, /handleFaceNamedEvent\(event, data\)/);
+});
+
+test("face runtime dispatches ready event for deferred vision hooks", () => {
+  const part1 = readFileSync(join(publicDir, "face.part1.txt"), "utf8");
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const vision = readFileSync(join(publicDir, "face_vision_core.js"), "utf8");
+  assert.match(part1, /master:face-ready/);
+  assert.match(runtime, /master:face-ready/);
+  assert.match(vision, /addEventListener\("master:face-ready"/);
 });
 
 test("face runtime keeps named SSE reactions on the POST stream path", () => {
@@ -273,10 +284,13 @@ test("face runtime keeps chat stream and particle worker boot paths", () => {
 
 test("tts defaults to server style inference and recovers after fallback cooldown", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const controller = readFileSync(join(root, "app", "controllers", "tts_controller.rb"), "utf8");
   assert.match(runtime, /TTS_STYLE_DEFAULT = 'auto'/);
   assert.match(runtime, /style_locked/);
   assert.match(runtime, /serverUnavailableUntil/);
   assert.match(runtime, /serverFailureCount/);
+  assert.doesNotMatch(controller, /params\[:style\]\.present\?/);
+  assert.doesNotMatch(controller, /params\[:voice\]\.present\?/);
 });
 
 test("service worker avoids stale undigested precache", () => {

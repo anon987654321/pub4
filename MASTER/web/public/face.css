@@ -41,7 +41,7 @@
   --face-bar-height: 36px;
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;
-  --face-glow-scale: 1.22;
+  --face-glow-scale: 1.42;
   --face-phosphor-decay: 0.80;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
