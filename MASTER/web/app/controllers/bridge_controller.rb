@@ -31,10 +31,13 @@ class BridgeController < ApplicationController
     metadata = Master::Reach::OpenclawBridge.gateway_metadata(body)
     elevated = Master::Reach::OpenclawBridge.elevated?(body)
 
-    with_master_fiber(unlocked: elevated) do
-      result = container[:gateway].receive(channel: :api, message: message, metadata: metadata)
-      render json: bridge_response(result, metadata)
-    end
+    result = Master::Reach::IngressRunner.run_turn(
+      container: container,
+      message: message,
+      metadata: metadata,
+      elevated: elevated
+    )
+    render json: bridge_response(result, metadata)
   rescue StandardError => e
     render json: { error: e.message, ok: false }, status: :internal_server_error
   end

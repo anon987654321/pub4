@@ -17,7 +17,7 @@ require "yaml"
 # leaves the URL after one hop. Query strings live in proxy logs, browser
 # history, and Referer headers; cookies do not.
 class AuthTier
-  PUBLIC_PATHS = %w[/up /health /bridge/health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
+  PUBLIC_PATHS = %w[/up /health /bridge/health /ingress/health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
   PUBLIC_PREFIX = %w[/assets/].freeze
   TOKEN_BYTES = 48
   MIN_TOKEN_LENGTH = 43 # 32 random bytes encoded as urlsafe base64.

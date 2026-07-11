@@ -33,6 +33,9 @@ Rails.application.routes.draw do
   get  "health" => "health#show"
   get  "bridge/health", to: "bridge#health"
   post "bridge/turn",   to: "bridge#turn"
+  get  "ingress/health", to: "ingress#health"
+  post "ingress/cron/:name", to: "ingress#cron"
+  post "ingress/webhook/:name", to: "ingress#webhook"
   get  "metrics" => "chat#metrics_prometheus"
   get  "radio_bergen" => "pages#radio_bergen"
 end

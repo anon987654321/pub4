@@ -34,6 +34,12 @@ bridge:
   health_path: "/bridge/health"
   rate_limit_per_minute: 60
 
+ingress:
+  # Cron/webhook triggers → POST /ingress/cron/:name or /ingress/webhook/:name
+  # Set MASTER_INGRESS_TOKEN (falls back to MASTER_BRIDGE_TOKEN).
+  health_path: "/ingress/health"
+  rate_limit_per_minute: 30
+
 tools:
   custom:
     enabled: true

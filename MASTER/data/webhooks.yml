@@ -1,0 +1,6 @@
+# Webhook ingress — POST /ingress/webhook/:name with JSON body { "message": "..." }.
+# Example:
+# - name: deploy_notify
+#   enabled: false
+#   elevated: false
+#   message: "summarize latest deploy status"
