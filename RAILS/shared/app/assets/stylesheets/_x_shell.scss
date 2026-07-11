@@ -1,0 +1,216 @@
+// x.com three-column app shell — canonical layout for pub4 Rails apps.
+// @use "x_shell" as shell; after pub4_stack in application.scss.
+
+.app-shell {
+  position: relative;
+  z-index: var(--z-app, 10);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hover) transparent;
+}
+
+.layout {
+  display: grid;
+  grid-template-areas: "sidebar main widgets";
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--widgets-width);
+  align-items: start;
+  max-width: var(--x-layout-max);
+  min-height: 100%;
+  margin: 0 auto;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 0.75rem 16px;
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  color: var(--text);
+  margin: 4px 0 8px;
+  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+}
+
+.brand:hover {
+  background: var(--hover);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.brand-wordmark {
+  width: auto;
+  padding: 0 12px;
+  justify-content: flex-start;
+}
+
+.brand-text {
+  font-family: var(--x-font);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0.75rem;
+  border-radius: var(--radius-pill);
+  border-inline-start: 2px solid transparent;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 400;
+  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: var(--hover);
+  text-decoration: none;
+}
+
+.nav-item.active {
+  font-weight: 700;
+  border-inline-start-color: var(--accent);
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+}
+
+.compose-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 230px;
+  min-height: 52px;
+  padding: 0 24px;
+  margin-top: 16px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast, 180ms);
+  text-decoration: none;
+}
+
+.compose-btn:hover {
+  opacity: 0.88;
+  text-decoration: none;
+  color: #000;
+}
+
+.compose-icon {
+  display: none;
+  flex-shrink: 0;
+}
+
+.compose-fab {
+  position: fixed;
+  inset-inline-end: calc(16px + var(--safe-right, 0px));
+  bottom: calc(70px + var(--safe-bottom, 0px));
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-pill);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #000;
+  z-index: var(--z-nav, 80);
+  text-decoration: none;
+}
+
+.compose-fab:hover {
+  color: #000;
+  text-decoration: none;
+}
+
+.compose-fab svg {
+  width: 22px;
+  height: 22px;
+}
+
+main#main-content,
+main[role="main"] {
+  grid-area: main;
+  flex: 1;
+  min-width: 0;
+  max-width: var(--feed-max);
+  min-height: 100vh;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 5vw, 48px);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.widgets {
+  grid-area: widgets;
+  width: var(--widgets-width);
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 0.75rem 16px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hover) transparent;
+}
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  inset-inline: 0;
+  display: none;
+  min-height: 54px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  z-index: var(--z-nav, 80);
+  padding-bottom: var(--safe-bottom, 0px);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: var(--text);
+  transition: background var(--transition-fast, 180ms);
+}
+
+.tab-item:hover {
+  background: var(--hover);
+  text-decoration: none;
+}

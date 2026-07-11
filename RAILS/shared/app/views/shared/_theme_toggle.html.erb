@@ -1,0 +1,7 @@
+<input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
+  data-controller="theme-toggle" data-theme-toggle-storage-key-value="<%= local_assigns.fetch(:storage_key, "pub4-theme") %>" data-action="change->theme-toggle#persist">
+<label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+    <path d="M12 3a1 1 0 0 1 1 1v1.06a7 7 0 0 1 5.94 5.94H20a1 1 0 1 1 0 2h-1.06A7 7 0 0 1 13 18.94V20a1 1 0 1 1-2 0v-1.06A7 7 0 0 1 5.06 13H4a1 1 0 1 1 0-2h1.06A7 7 0 0 1 11 5.06V4a1 1 0 0 1 1-1zm0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+  </svg>
+</label>

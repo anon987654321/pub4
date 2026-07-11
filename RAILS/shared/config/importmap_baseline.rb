@@ -29,6 +29,7 @@ pin "pub4/browser_fingerprint", to: "pub4_browser_fingerprint_controller.js"
 pin "pub4/theme_meta", to: "pub4_theme_meta.js"
 pin "pub4/theme_toggle", to: "pub4_theme_toggle_controller.js"
 pin "pub4/minimal_gesture", to: "minimal-gesture.js"
+pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.mjs"
 
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
