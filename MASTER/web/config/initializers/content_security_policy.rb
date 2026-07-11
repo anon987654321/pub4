@@ -22,4 +22,7 @@ Rails.application.configure do
     policy.frame_src "https://www.youtube.com", "https://www.youtube-nocookie.com"
     policy.frame_ancestors :self, *embed_hosts
   end
+
+  enforce = ENV["PUB4_CSP_ENFORCE"] == "1"
+  config.content_security_policy_report_only = !enforce
 end

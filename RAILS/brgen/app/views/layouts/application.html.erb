@@ -183,15 +183,7 @@
           <%= form.submit "Search", class: "visually-hidden" %>
         <% end %>
         <%= yield :widgets %>
-        <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
-          <h3>What's happening</h3>
-          <p class="dim">City communities across Scandinavia and Europe.</p>
-        </div>
-        <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
-          <h3>Who to follow</h3>
-          <div class="who-follow">brgen.no <button class="btn btn-ghost btn-sm">Follow</button></div>
-          <div class="who-follow">longyearbyn.no <button class="btn btn-ghost btn-sm">Follow</button></div>
-        </div>
+        <%= render "shared/sidebar_discovery" %>
         <%= render "shared/newsletter_cta" %>
       </aside>
     </div>

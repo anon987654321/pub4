@@ -1042,3 +1042,57 @@ enhancements:
   status: implemented
   handler: css
   summary: Mood sparkline bars tint from --mood-accent with soft phosphor glow
+- id: bl_viseme_asset_paths
+  area: web
+  tier: p0
+  status: implemented
+  handler: both
+  summary: viseme_packs.json + MASTER_ASSET_PATHS wiring; face_vision bundle rebuilt
+- id: bl_fingerprinted_experimental
+  area: web
+  tier: p1
+  status: implemented
+  handler: js
+  summary: cluster_miner and face3d_preview load via digested MASTER_ASSET_PATHS
+- id: bl_emotion_bus
+  area: bus
+  tier: p1
+  status: implemented
+  handler: js
+  summary: visual_bridge dispatches master:emotion; face runtime consumes clusters/emotion
+- id: bl_face3d_visibility
+  area: face
+  tier: p1
+  status: implemented
+  handler: js
+  summary: face3d_preview pauses RAF when tab hidden; deviceorientation head pose
+- id: bl_tts_partial_play
+  area: tts
+  tier: p1
+  status: implemented
+  handler: js
+  summary: Partial TTS stream plays audio during synthesis wait (not probe-only)
+- id: bl_master_csp_enforce
+  area: web
+  tier: p1
+  status: implemented
+  handler: ruby
+  summary: MASTER CSP report-only unless PUB4_CSP_ENFORCE=1 (fleet parity)
+- id: bl_bridge_env_wiring
+  area: bus
+  tier: p1
+  status: implemented
+  handler: both
+  summary: MASTER_BRIDGE_TOKEN and MASTER_INGRESS_TOKEN in master.env.sample + rc.d
+- id: bl_brgen_assets_cruft
+  area: web
+  tier: p1
+  status: implemented
+  handler: both
+  summary: Untrack RAILS/brgen/public/assets from git; deploy precompile only
+- id: bl_brgen_sidebar_live
+  area: web
+  tier: p2
+  status: implemented
+  handler: both
+  summary: Replace placeholder sidebar widgets with live community discovery partial

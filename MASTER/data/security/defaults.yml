@@ -28,6 +28,7 @@ pairing:
 
 bridge:
   # OpenClaw hooks → POST https://ai.brgen.no/bridge/turn
+  # Set MASTER_BRIDGE_TOKEN in OPENBSD/etc/master.env (see master.env.sample)
   # Set MASTER_BRIDGE_TOKEN in env (separate from gateway.auth.token).
   bind: "127.0.0.1"
   path: "/bridge/turn"

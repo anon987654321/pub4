@@ -112,6 +112,20 @@ test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () 
   assert.match(ciProbe, /probe_webgl_guard\.mjs/);
 });
 
+test("chat index wires viseme and experimental asset paths", () => {
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(index, /visemePacks/);
+  assert.match(index, /clusterMiner/);
+  assert.match(index, /face3dPreview/);
+});
+
+test("visual_bridge emits master:emotion and uses asset paths", () => {
+  const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
+  assert.match(bridge, /master:emotion/);
+  assert.match(bridge, /MASTER_ASSET_PATHS\?\.clusterMiner/);
+  assert.match(bridge, /MASTER_ASSET_PATHS\?\.face3dPreview/);
+});
+
 test("chat index includes photo attach and LAUI agent hud", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /id="photo-button"/);

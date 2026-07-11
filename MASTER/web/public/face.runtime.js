@@ -438,6 +438,22 @@ function updateRuntimeProfile() {
 }
 
 updateRuntimeProfile();
+
+window.addEventListener('master:emotion', (ev) => {
+  const em = ev.detail || {};
+  if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
+  if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.42);
+  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';
+});
+
+window.addEventListener('master:clusters', (ev) => {
+  const em = ev.detail?.emotion;
+  if (!em) return;
+  if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
+  if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.38);
+  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));
+});
+
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
   State.reducedMotion = event.matches;
   updateRuntimeProfile();
@@ -824,7 +840,6 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(768), FACE_GRID_COLS, FACE_GRID_ROWS));
-
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1301,7 +1316,6 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
-
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -2022,7 +2036,6 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
-
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -2426,9 +2439,12 @@ async function tryPartialTTSPlay(job, bytes) {
     tts._partialPlayed = true;
     emitTtsEvent('tts:chunk:partial', { job, bytes: blob.size });
     const url = URL.createObjectURL(blob);
-    const probe = new Audio(url);
-    probe.preload = 'auto';
-    probe.addEventListener('canplay', () => URL.revokeObjectURL(url), { once: true });
+    const partial = new Audio(url);
+    partial.preload = 'auto';
+    partial.volume = Math.min(1, (tts.volume || 1) * 0.85);
+    partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
+    partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
+    if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
   } catch (_) {}
 }
 
@@ -2776,7 +2792,6 @@ function ttsTogglePause() {
   tts.paused = true;
   if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
 }
-
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -3732,4 +3747,3 @@ await import('/face_semantics.js');
 await import('/face_minimal_ui.js');
 await import('/face_loops_music.js');
 await import('/face_loops_nudge.js');
-

@@ -2107,12 +2107,7 @@
       V.run(147, { type: "postMessage", detail: { mood: ev.data.mood, mode: ev.data.mode } });
     });
 
-    fetch("/data/rules.yml", { credentials: "same-origin" })
-      .then((r) => (r.ok ? r.text() : ""))
-      .then((text) => V.run(143, { type: "rules", detail: { text } }))
-      .catch(() => V.run(143, { type: "rules", detail: {} }));
-
-    fetch("/viseme_packs.json", { credentials: "same-origin" })
+    fetch(window.MASTER_ASSET_PATHS?.visemePacks || "/viseme_packs.json", { credentials: "same-origin" })
       .then((r) => (r.ok ? r.json() : null))
       .then((packs) => V.run(145, { type: "viseme-packs", detail: { packs } }))
       .catch(() => V.run(145, { type: "viseme-packs", detail: {} }));

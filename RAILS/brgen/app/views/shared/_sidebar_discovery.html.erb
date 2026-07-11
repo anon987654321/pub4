@@ -1,0 +1,17 @@
+<% communities = Community.popular.limit(4) %>
+<% if communities.any? %>
+  <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
+    <h3>Communities</h3>
+    <% communities.each do |community| %>
+      <%= link_to community_path(community), class: "who-follow" do %>
+        <span><%= community.name %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+<% if authenticated? %>
+  <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
+    <h3>Your feed</h3>
+    <p class="dim"><%= link_to "New post", new_post_path %> · <%= link_to "Messages", conversations_path %></p>
+  </div>
+<% end %>

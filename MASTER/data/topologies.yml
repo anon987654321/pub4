@@ -121,5 +121,5 @@ topologies:
     label: Semantic Bitmap Face
     purpose: Anatomical regions as runtime signals — Gmail6 redesign
     renderer: face3d_renderer.js
-    status: planned
+    status: live
     palette: operator

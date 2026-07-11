@@ -436,6 +436,22 @@ function updateRuntimeProfile() {
 }
 
 updateRuntimeProfile();
+
+window.addEventListener('master:emotion', (ev) => {
+  const em = ev.detail || {};
+  if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
+  if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.42);
+  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';
+});
+
+window.addEventListener('master:clusters', (ev) => {
+  const em = ev.detail?.emotion;
+  if (!em) return;
+  if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
+  if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.38);
+  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));
+});
+
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
   State.reducedMotion = event.matches;
   updateRuntimeProfile();

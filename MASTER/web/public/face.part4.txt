@@ -401,9 +401,12 @@ async function tryPartialTTSPlay(job, bytes) {
     tts._partialPlayed = true;
     emitTtsEvent('tts:chunk:partial', { job, bytes: blob.size });
     const url = URL.createObjectURL(blob);
-    const probe = new Audio(url);
-    probe.preload = 'auto';
-    probe.addEventListener('canplay', () => URL.revokeObjectURL(url), { once: true });
+    const partial = new Audio(url);
+    partial.preload = 'auto';
+    partial.volume = Math.min(1, (tts.volume || 1) * 0.85);
+    partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
+    partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
+    if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
   } catch (_) {}
 }
 

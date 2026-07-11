@@ -94,6 +94,16 @@
     };
 
     window.dispatchEvent(new CustomEvent("master:visual", { detail: visual }));
+    const emotion = {
+      arousal: clamp(detail.arousal ?? (0.22 + (1 - state.confidence) * 0.55 + state.entropy * 0.28), 0, 1),
+      valence: clamp(detail.valence ?? (state.confidence - state.entropy * 0.35), -1, 1),
+      focus: clamp(detail.focus ?? state.confidence, 0, 1),
+      confidence: state.confidence,
+      fatigue: clamp(detail.fatigue ?? Math.max(0, state.entropy - 0.35) * 0.4, 0, 1),
+      mode: visual.mode,
+      source: name
+    };
+    window.dispatchEvent(new CustomEvent("master:emotion", { detail: emotion }));
     if (canonical && canonical !== state.canonicalTopology) {
       state.canonicalTopology = canonical;
       window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: canonical, source: name } }));
@@ -423,7 +433,7 @@
 
     if (clusters && !window.MASTERClusterMiner) {
       const script = document.createElement("script");
-      script.src = "/cluster_miner.js";
+      script.src = window.MASTER_ASSET_PATHS?.clusterMiner || "/cluster_miner.js";
       script.defer = true;
       script.onload = () => emitVisual("clusters:ready", { topology: "neural", entropy: 0.18, confidence: 0.86, mode: "clusters" });
       script.onerror = () => emitVisual("clusters:error", { topology: "serpent", entropy: 0.62, confidence: 0.36, mode: "error" });
@@ -431,7 +441,7 @@
     }
 
     if (face3d) {
-      import("/face3d_preview.js")
+      import(window.MASTER_ASSET_PATHS?.face3dPreview || "/face3d_preview.js")
         .then(() => emitVisual("face3d:ready", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "face3d" }))
         .catch(error => emitVisual("face3d:error", { topology: "serpent", entropy: 0.70, confidence: 0.30, mode: "error", raw: String(error?.message || error) }));
     }

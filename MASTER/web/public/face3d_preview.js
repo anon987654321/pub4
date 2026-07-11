@@ -57,7 +57,13 @@ function bootFace3d() {
     };
   }
 
+  let rafId = null;
+
   function frame(now) {
+    if (document.hidden) {
+      rafId = null;
+      return;
+    }
     const dt = Math.min(50, now - last);
     last = now;
     const t = (now - t0) * 0.001;
@@ -92,10 +98,20 @@ function bootFace3d() {
       reportedNonblank = true;
       window.MASTERVisual?.event?.('face3d:nonblank', { topology: 'papua-mask', entropy: 0.12, confidence: 0.92, mode: 'face3d', lit_pixels: renderer.lastLitPixels });
     }
-    requestAnimationFrame(frame);
+    rafId = requestAnimationFrame(frame);
   }
 
-  requestAnimationFrame(frame);
+  rafId = requestAnimationFrame(frame);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && rafId == null) rafId = requestAnimationFrame(frame);
+  }, { passive: true });
+
+  window.addEventListener("deviceorientation", (ev) => {
+    if (!ev.beta && !ev.gamma) return;
+    const yaw = ((ev.gamma || 0) / 90) * 0.42;
+    const pitch = ((ev.beta || 0) - 45) / 90 * 0.22;
+    engine.setPose({ yaw, pitch, roll: engine.snapshot?.()?.pose?.roll || 0 });
+  }, { passive: true });
 }
 
 if (FACE3D_ACTIVE) bootFace3d();

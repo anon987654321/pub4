@@ -134,6 +134,7 @@ migration_steps:
   order: 10
   action: Optional WebGL renderer preserving retro canvas default
   status: partial
+  note: visibility throttle + deviceorientation shipped; WebGL path deferred per hardening rules
 hardening:
   implementation_order:
   - Keep typed-array particle core

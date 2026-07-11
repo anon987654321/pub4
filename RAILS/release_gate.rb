@@ -100,6 +100,7 @@ end
 
 %w[
   test/pwa_design_contract_test.rb
+  ../MASTER/web/test/pwa_master_contract_test.rb
   test/shared_social_routes_test.rb
   shared/test/services/frontend_auditor_test.rb
   shared/test/lib/pub4/deploy_paths_test.rb

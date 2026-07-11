@@ -20,9 +20,10 @@ clusters:
       - MASTER/web/public/face.js
       - MASTER/web/public/visual_bridge.js
     next_actions:
-      - Add service-worker strategy audit.
-      - Add installability checklist.
-      - Make Face3D preview mobile-safe with battery/thermal policy.
+      - Add share_target to manifest (deferred).
+    implemented:
+      - pwa_master_contract_test.rb + SW digest audit in face_boot.test.mjs
+      - Face3D visibility throttle + deviceorientation pose mapping
 
   - id: offline_first_memory
     name: Offline-First Memory and Sync

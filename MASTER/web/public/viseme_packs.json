@@ -1,0 +1,12 @@
+{
+  "default": ["AA", "EE", "OH", "MM", "rest"],
+  "osman": ["AA", "EE", "OH", "MM", "CH", "rest"],
+  "shapes": {
+    "AA": { "jaw": 0.72, "mouthWide": 0.35 },
+    "EE": { "mouthWide": 0.55, "cheekRaise": 0.18 },
+    "OH": { "mouthRound": 0.62, "jaw": 0.28 },
+    "MM": { "mouthRound": 0.22, "jaw": 0.08 },
+    "CH": { "mouthWide": 0.22, "jaw": 0.18 },
+    "rest": { "jaw": 0.04, "mouthRound": 0.02 }
+  }
+}

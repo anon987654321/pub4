@@ -117,7 +117,7 @@ clusters:
 
   - id: repo_ecology
     name: Repo Ecology
-    status: planned
+    status: partial
     layer: repository_mining
     files:
       - data/runtime/repo_ecology.yml
@@ -181,7 +181,7 @@ clusters:
 new_clusters:
   - id: cluster_miner
     name: Cluster Miner
-    status: proposed
+    status: live
     purpose: >
       Scans file paths, runtime events, architecture registry, and repo ecology
       notes to produce reusable clusters with confidence, evidence, and migration
@@ -193,6 +193,20 @@ new_clusters:
       - confidence
       - risks
       - next_actions
+
+  - id: emotion_bus
+    name: Emotion Bus
+    status: live
+    purpose: >
+      Normalized arousal/valence/focus/confidence/fatigue events from visual_bridge
+      to face runtime and ecology via master:emotion.
+    outputs:
+      - arousal
+      - valence
+      - focus
+      - confidence
+      - fatigue
+      - source
 
   - id: evidence_graph
     name: Evidence Graph
