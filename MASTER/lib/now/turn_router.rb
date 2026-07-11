@@ -40,7 +40,7 @@ module Master
         agent = container[:agent]
         return Master::Result.err("agent unavailable", category: :infrastructure) unless agent
 
-        result = agent.call({ message: text, on_chunk:, felt_sense: })
+        result = agent.call({ message: text, on_chunk:, felt_sense:, task_type: "chat" })
         return result if result.is_a?(Master::Result::Err)
 
         reply = result.value!.to_s
