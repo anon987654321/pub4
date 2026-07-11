@@ -580,6 +580,9 @@ function dequeueTtsLane() {
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
+  // Speaking counts as activity — keeps frame()'s idle drift from dissolving
+  // the face while a long reply is being read aloud.
+  State.lastTouch = performance.now();
   emitTtsEvent('tts:anticipate', { expression: { arousal: 0.25 }, style: _nextTtsStyle(_nextTtsVoice()) });
   window.MASTERVisual?.event?.('tts:prefetch', { topology: 'papua-mask', entropy: 0.22, confidence: 0.8, mode: 'anticipate' });
   const clean = text

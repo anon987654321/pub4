@@ -1741,7 +1741,11 @@ function frame(t) {
   if (faceMat) {
     const idleS = (t - State.lastTouch) / 1000;
     const confTight = 0.78 + State.confidence * 0.22;
-    morphTarget = !primerFired ? 0.88 : (idleS > 60 ? Math.max(0, 1 - (idleS - 60) / 30) : confTight);
+    // Idle drift may relax the face but must never fully scatter it: at
+    // morph 0 all ~17k additive points pile into one oval and saturate to a
+    // white blob ("no face, just a glow"). Chat/TTS turns reset lastTouch,
+    // so this floor only shows during genuinely idle stretches.
+    morphTarget = !primerFired ? 0.88 : (idleS > 60 ? Math.max(0.55, 1 - (idleS - 60) / 30) : confTight);
     const springK = 0.038, springDamp = 0.72;
     if (!faceMat._morphVel) faceMat._morphVel = 0;
     faceMat._morphVel += (morphTarget - morphCurrent) * springK;
@@ -1757,6 +1761,11 @@ function frame(t) {
     const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
     const _breathSize = 0.94 + 0.12 * _breath;
     faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
+    // Energy conservation for the additive pass: the less assembled the face,
+    // the more its points overlap in one region, so brightness must drop with
+    // morph or the cloud saturates to a solid white oval. Assembled (morph≈1)
+    // keeps full exposure; fully scattered would run at 35%.
+    if (faceMat.uniforms.uExposure) faceMat.uniforms.uExposure.value = 0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent));
     const energeticGlow = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle || ''))
       && (State.pulse || 0) > 0.35 ? Math.min(0.42, (State.pulse || 0) * 0.35) : 0;
     if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.03 + 0.06 * _breath + energeticGlow;
@@ -2695,6 +2704,9 @@ function dequeueTtsLane() {
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
+  // Speaking counts as activity — keeps frame()'s idle drift from dissolving
+  // the face while a long reply is being read aloud.
+  State.lastTouch = performance.now();
   emitTtsEvent('tts:anticipate', { expression: { arousal: 0.25 }, style: _nextTtsStyle(_nextTtsVoice()) });
   window.MASTERVisual?.event?.('tts:prefetch', { topology: 'papua-mask', entropy: 0.22, confidence: 0.8, mode: 'anticipate' });
   const clean = text
@@ -3210,6 +3222,10 @@ function handleFaceNamedEvent(event, data) {
 let _firstChatSent = false;
 async function sendMessage(text) {
   const trimmed = text.trim();
+  // A conversation IS interaction: without this, the 60s idle drift in
+  // frame() starts dissolving the face mid-chat because only pointer/focus
+  // events used to reset lastTouch.
+  State.lastTouch = performance.now();
   wakeFromSleep();
   State.pulse = Math.max(State.pulse || 0, 0.35);
   window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });

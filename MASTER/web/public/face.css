@@ -60,11 +60,6 @@
 }
 /* END:generated-face-root */
 
-:root {
-  --face-glow-scale: 1.42;
-  --face-phosphor-decay: 0.90;
-}
-
 html, body {
   height: 100%;
   background: #000;

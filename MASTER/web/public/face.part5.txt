@@ -329,6 +329,10 @@ function handleFaceNamedEvent(event, data) {
 let _firstChatSent = false;
 async function sendMessage(text) {
   const trimmed = text.trim();
+  // A conversation IS interaction: without this, the 60s idle drift in
+  // frame() starts dissolving the face mid-chat because only pointer/focus
+  // events used to reset lastTouch.
+  State.lastTouch = performance.now();
   wakeFromSleep();
   State.pulse = Math.max(State.pulse || 0, 0.35);
   window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });
