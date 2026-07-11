@@ -171,6 +171,14 @@ test("face3d preview consumes TTS events and reports nonblank frames", () => {
   assert.match(renderer, /lastLitPixels/);
 });
 
+test("face.css includes subtle visual polish layers", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  assert.match(css, /body::after/);
+  assert.match(css, /radial-gradient/);
+  assert.match(css, /--face-glow-scale:\s*1\.42/);
+  assert.match(css, /mood-sparkline i[\s\S]*--mood-accent/);
+});
+
 test("face.css keeps primer and prompt layering stable", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.match(css, /#primer/);

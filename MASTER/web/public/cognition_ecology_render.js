@@ -33,7 +33,7 @@
     const spanY = internalH * 0.56;
     const t = state.terrainPhase;
     const calm = state.confidence;
-    const alphaBase = 0.018 + state.activity * 0.032;
+    const alphaBase = 0.014 + state.activity * 0.026;
 
     for (let r = 0; r < rows; r++) {
       const v = r / Math.max(1, rows - 1);
@@ -51,9 +51,9 @@
         else ctx.lineTo(px, py);
       }
       const storm = state.weather === "storm" || state.weather === "serpent";
-      const color = storm ? "180,140,120" : "220,198,168";
-      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v) * (0.7 + state.confidence * 0.4)})`;
-      ctx.lineWidth = 0.75 + state.entropy * 1.2;
+      const color = storm ? "180,140,120" : "228,206,176";
+      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.5 + v) * (0.65 + state.confidence * 0.45)})`;
+      ctx.lineWidth = 0.65 + state.entropy * 1.0;
       ctx.stroke();
     }
 

@@ -1006,3 +1006,39 @@ enhancements:
   status: implemented
   handler: ruby
   summary: face_research.yml wired into RuntimeCatalog /runtime/config boot
+- id: vis_subtle_vignette
+  area: face
+  tier: p2
+  status: implemented
+  handler: css
+  summary: Soft radial vignette overlay — depth without dimming chrome
+- id: vis_warmer_phosphor
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Warmer depth shading, softer grain, gentler fresnel glow in particle shader
+- id: vis_calm_idle_breath
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Reduced idle breath amplitude and slower mood color lerp when quiet
+- id: vis_engagement_focus_dim
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Agent engagement subtly dims or lifts uFocusDim during listen/think/speak
+- id: vis_ecology_softer
+  area: face
+  tier: p2
+  status: implemented
+  handler: js
+  summary: Cognition ecology terrain lines lowered alpha and warmer stroke
+- id: vis_mood_sparkline_glow
+  area: web
+  tier: p3
+  status: implemented
+  handler: css
+  summary: Mood sparkline bars tint from --mood-accent with soft phosphor glow

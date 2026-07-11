@@ -984,7 +984,7 @@ void main(){
   vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
   vAlpha=max(vAlpha,0.08);
   float shade=mix(0.14,1.0,depth);
-  vec3 warmCool=mix(vec3(0.58,0.62,0.88),vec3(1.0,0.94,0.80),depth);
+  vec3 warmCool=mix(vec3(0.62,0.64,0.86),vec3(1.0,0.96,0.84),depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmCool*shade);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
@@ -1028,12 +1028,12 @@ void main(){
   float alpha=disc*vAlpha*uFocusDim;
   float eyeRgn=smoothstep(0.30,0.50,vZoneVal)*(1.0-smoothstep(0.50,0.65,vZoneVal));
   float mouthRgn=smoothstep(0.68,0.82,vZoneVal);
-  float zonePhosphor=mix(1.0,mix(0.78,0.94,mouthRgn),eyeRgn*0.55);
+  float zonePhosphor=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
   alpha*=zonePhosphor;
   float ringWave=abs(sin(vDepth*9.0-uPulseRing*5.5));
   alpha*=0.82+smoothstep(0.55,0.95,ringWave)*uPulseRing*0.38;
   float beat=1.0+uHeartbeat*0.24*(1.0-square*0.45);
-  vec3 col=vColor+vFresnel*vColor*0.42;
+  vec3 col=vColor+vFresnel*vColor*0.50;
   col*=beat;
   float w=1.0+uShake*0.12;
   col.r*=1.0+uShake*0.14;
@@ -1044,7 +1044,7 @@ void main(){
   float scan=0.86+0.14*abs(sin(gl_FragCoord.y*0.5+uTime*38.0));
   alpha*=mix(1.0,scan,uScanline);
   float dither=bayer4(gl_FragCoord.xy);
-  float grain=mix(0.44,0.80,uPhosphorSoft);
+  float grain=mix(0.50,0.84,uPhosphorSoft);
   alpha=step(dither,alpha*(grain+vDepth*0.18));
   gl_FragColor=vec4(col,max(0.0,alpha));
 }`;
@@ -1550,7 +1550,8 @@ function frame(t) {
     }
   }
 
-  const lerpSpeed = State.reducedMotion ? 0.12 : 0.04 + Math.min(0.08, State.pulse * 0.6);
+  const idleCalm = State.mode === 'idle' && !tts.playing ? 0.028 : 0.04;
+  const lerpSpeed = State.reducedMotion ? 0.12 : idleCalm + Math.min(0.08, State.pulse * 0.6);
   colorCurrent.lerp(colorTarget, lerpSpeed);
   if ((_dbgFrames & 7) === 0) {
     const r = (colorCurrent.r * 255)|0, g = (colorCurrent.g * 255)|0, b = (colorCurrent.b * 255)|0;
@@ -1622,7 +1623,7 @@ function frame(t) {
     const idleSig = State.idleSignature || { breath: 1, saccade: 0.2, pulse_floor: 0.1 };
     const hiddenTab = State.hidden || document.hidden;
     const breathHz = hiddenTab ? 0.55 : 1.1;
-    const breathAmp = hiddenTab ? 0.022 : (0.012 + (1 - State.confidence) * 0.008 + (State.entropy || 0) * 0.005);
+    const breathAmp = hiddenTab ? 0.018 : (0.009 + (1 - State.confidence) * 0.006 + (State.entropy || 0) * 0.004);
     const councilBreath = document.documentElement.dataset.councilBreath === '1' ? Math.sin(sec * 0.85) * 0.018 : 0;
     if (gestureStart) State.pressureTension = Math.min(1, (t - pressStart) / 1200);
     else State.pressureTension = Math.max(0, (State.pressureTension || 0) * 0.92);
@@ -1662,11 +1663,11 @@ function frame(t) {
     const shoutBoost   = tts.playing && voiceRMS > 0.35  ? 1.0 + (voiceRMS - 0.35) * 1.2 : 1.0;
     const phonemeBoost = 1.0 + (State.visemeAmp || 0) * 0.18;
     const _breath = 0.5 + 0.5 * Math.sin(performance.now() * 0.000698);
-    const _breathSize = 0.92 + 0.18 * _breath;
+    const _breathSize = 0.94 + 0.12 * _breath;
     faceMat.uniforms.uSize.value = FACE_PIXEL_SIZE * (0.55 + State.confidence * 0.45 + State.pulse * 0.12) * whisperScale * shoutBoost * phonemeBoost * _breathSize;
     const energeticGlow = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle || ''))
       && (State.pulse || 0) > 0.35 ? Math.min(0.42, (State.pulse || 0) * 0.35) : 0;
-    if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.02 + 0.08 * _breath + energeticGlow;
+    if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.03 + 0.06 * _breath + energeticGlow;
     const hcVal = State.highContrast ? 1.0 : (State.contrastMore ? 0.9 : 0.0);
     faceMat.uniforms.uHc.value = hcVal;
     const curlTarget = State.mode === 'thinking' ? 1.0 : Math.min(0.65, (State.entropy || 0) * 0.9);
@@ -1724,12 +1725,16 @@ function frame(t) {
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
     const baseExposure = soulDensity * confExposure;
     faceMat.uniforms.uExposure.value = baseExposure;
-    const focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
+    const engagement = document.documentElement.dataset.agentEngagement || '';
+    let focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
+    if (engagement === 'attending') focusDim *= 0.97;
+    else if (engagement === 'thinking') focusDim *= 0.94;
+    else if (engagement === 'speaking') focusDim = Math.min(1.04, focusDim * 1.02);
     faceMat.uniforms.uFocusDim.value += (focusDim - faceMat.uniforms.uFocusDim.value) * 0.06;
-    const phosphorSoft = State.reducedMotion ? 0.42 : 0.68;
+    const phosphorSoft = State.reducedMotion ? 0.46 : 0.74;
     faceMat.uniforms.uPhosphorSoft.value += (phosphorSoft - faceMat.uniforms.uPhosphorSoft.value) * 0.04;
     const crtProfile = rootBody.dataset.runtimeProfile === 'crt';
-    const scanTarget = crtProfile ? 0.42 : (State.mode === 'thinking' ? 0.38 : (State.mode === 'speaking' ? 0.18 : 0.12));
+    const scanTarget = crtProfile ? 0.40 : (State.mode === 'thinking' ? 0.32 : (State.mode === 'speaking' ? 0.14 : 0.08));
     faceMat.uniforms.uScanline.value += (scanTarget - faceMat.uniforms.uScanline.value) * 0.05;
     const chromaTarget = (State.mood === 'veto' || State.fracture > 0.35) ? 0.22 : 0.0;
     if (faceMat.uniforms.uChroma) faceMat.uniforms.uChroma.value += (chromaTarget - faceMat.uniforms.uChroma.value) * 0.12;

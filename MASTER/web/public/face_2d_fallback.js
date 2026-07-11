@@ -53,8 +53,10 @@ function start2DFallback() {
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    const grad = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, w * 0.4);
-    grad.addColorStop(0, "#1a1a1a");
+    const breath = 0.5 + 0.5 * Math.sin(phase * 0.9);
+    const grad = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, w * 0.42);
+    grad.addColorStop(0, `rgba(28,26,24,${0.55 + breath * 0.08})`);
+    grad.addColorStop(0.55, "#121110");
     grad.addColorStop(1, "#000000");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
@@ -63,7 +65,8 @@ function start2DFallback() {
     const cy = h * 0.44;
     ctx.beginPath();
     ctx.ellipse(cx, cy, w * 0.23, h * 0.34, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(60,60,60,0.15)";
+    const faceAlpha = 0.12 + breath * 0.06;
+    ctx.fillStyle = `rgba(72,68,62,${faceAlpha})`;
     ctx.fill();
 
     [-0.13, 0.13].forEach((ex) => {

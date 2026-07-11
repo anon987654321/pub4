@@ -60,6 +60,11 @@
 }
 /* END:generated-face-root */
 
+:root {
+  --face-glow-scale: 1.42;
+  --face-phosphor-decay: 0.90;
+}
+
 html, body {
   height: 100%;
   background: #000;
@@ -147,6 +152,24 @@ canvas#face {
   z-index: 2;
   pointer-events: none;
   mix-blend-mode: screen;
+  opacity: 0.88;
+  transition: opacity 420ms var(--ease-out);
+}
+
+html[data-agent-engagement="thinking"] #cognition-ecology { opacity: 0.94; }
+html[data-agent-engagement="speaking"] #cognition-ecology { opacity: 0.82; }
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(ellipse 78% 68% at 50% 44%, transparent 42%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 50%, rgba(0, 0, 0, 0.18) 100%); }
 }
 
 canvas {
@@ -429,9 +452,10 @@ body[data-mode="listening"] #mic-dot {
   display: block;
   width: 4px;
   border-radius: 2px 2px 0 0;
-  background: color-mix(in srgb, var(--face-fg) 58%, transparent);
-  opacity: .8;
-  transition: height 220ms var(--ease-out), opacity 220ms var(--ease-out);
+  background: color-mix(in srgb, var(--mood-accent, var(--face-fg)) 62%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--mood-accent, var(--face-fg)) 18%, transparent);
+  opacity: .82;
+  transition: height 320ms var(--ease-out), opacity 320ms var(--ease-out), background 420ms var(--ease-out);
 }
 
 .mood-sparkline i[data-mood="weary"] { height: 4px; opacity: .4; }
@@ -494,7 +518,12 @@ body[data-mode="listening"] #mic-dot {
   font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif;
   letter-spacing: -.04em;
   color: var(--face-fg);
-  transition: transform var(--transition-fast) var(--ease-out);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--face-fg) 12%, transparent);
+  transition: transform var(--transition-fast) var(--ease-out), text-shadow 420ms var(--ease-out);
+}
+
+#primer:hover h1 {
+  text-shadow: 0 0 36px color-mix(in srgb, var(--face-fg) 18%, transparent);
 }
 
 #primer:active h1 { transform: scale(1.03); }
