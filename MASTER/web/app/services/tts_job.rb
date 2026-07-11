@@ -23,6 +23,15 @@ class TtsJob
     )
     return job if job.ready?
 
+    # Write the token file now, before the client can start polling — perform()
+    # used to be the only writer, but it only runs once the background worker
+    # thread dequeues this job, which can be seconds after enqueue if other
+    # jobs are ahead of it. In that window, GET /chat/tts/status found no token
+    # file, returned a real 404 (not 202 pending), and the client's pollTTSJob
+    # treats any non-202 as fatal and throws immediately — silently falling
+    # back to the browser's native speechSynthesis (a different, robotic voice
+    # per OS/browser). Writing the token at enqueue time closes that race.
+    job.write_token
     @queue_mutex.synchronize do
       @queue << job unless @queue.any? { |queued| queued.job_id == job.job_id }
       spawn_worker_locked! unless @worker&.alive?
@@ -132,11 +141,8 @@ class TtsJob
     File.binread(cache_path, avail)
   end
 
-  def perform
-    return if ready?
-
+  def write_token
     FileUtils.mkdir_p(CACHE_DIR)
-    File.delete(error_path) if File.exist?(error_path)
     File.write(
       CACHE_DIR.join("#{@job_id}.job"),
       JSON.generate(
@@ -149,6 +155,13 @@ class TtsJob
         style_locked: @style_locked
       )
     )
+  end
+
+  def perform
+    return if ready?
+
+    write_token
+    File.delete(error_path) if File.exist?(error_path)
     ok = synthesize_streaming_to_cache
     unless ok && bytes_available > 0
       message = Master::Voice::Speech.last_error || "synthesis produced empty audio"
