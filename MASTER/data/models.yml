@@ -148,14 +148,10 @@ model_defs:
     id: cohere/command-r-plus
     <<: *model_defaults
     score: { quality: 0.86, speed: 0.72, cost: 0.65 }
-  grok_4_fast: &grok_4_fast
-    id: x-ai/grok-4-fast
+  grok_4_3: &grok_4_3
+    id: x-ai/grok-4.3
     <<: *model_defaults
     score: { quality: 0.92, speed: 0.92, cost: 0.78 }
-  grok_4: &grok_4
-    id: x-ai/grok-4
-    <<: *model_defaults
-    score: { quality: 0.94, speed: 0.85, cost: 0.70 }
   web_chat_grok: &web_chat_grok
     id: web-chat:grok
     <<: *model_defaults
@@ -231,9 +227,9 @@ models:
     - *gemini_2_flash_exp_free
     - *gemini_flash_openrouter
   primary:
-    - *grok_4_fast
     - *claude_cli_opus
     - *claude_opus_api
+    - *nemotron_super
   strong:
     - *claude_cli_opus
     - *claude_opus_api
@@ -254,7 +250,8 @@ models:
     - *deepseek_chat
     - *gemini_flash_openrouter
     - *mistral_large
-    - *grok_4_fast
+    - *grok_4_3
+    - *nemotron_super
     - *command_r_plus
   cheap:
     - *gemini_2_flash_exp_free

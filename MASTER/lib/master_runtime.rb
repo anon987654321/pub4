@@ -75,7 +75,8 @@ module Master
     end
 
     def default_model
-      return "x-ai/grok-4-fast" if api_key_present?("XAI_API_KEY") || api_key_present?("OPENROUTER_API_KEY")
+      return "grok-4.3" if api_key_present?("XAI_API_KEY") && !api_key_present?("OPENROUTER_API_KEY")
+      return FREE_PRIMARY_MODEL if api_key_present?("OPENROUTER_API_KEY")
       return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
       return "gemini-2.5-flash" if api_key_present?("GOOGLE_API_KEY") || api_key_present?("GEMINI_API_KEY")
       return "web-chat:grok" if keyless_llm_enabled?

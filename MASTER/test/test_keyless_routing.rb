@@ -28,7 +28,7 @@ class TestKeylessRouting < Minitest::Test
 
   def test_default_model_prefers_grok_api_with_xai_key
     ENV["XAI_API_KEY"] = "xai-" + ("a" * 32)
-    assert_equal "x-ai/grok-4-fast", Master.default_model
+    assert_equal "grok-4.3", Master.default_model
     refute Master.keyless_llm_enabled?
   end
 
@@ -45,20 +45,20 @@ class TestKeylessRouting < Minitest::Test
     assert_includes chain, "web-chat:kimi"
   end
 
-  def test_router_prefers_grok_api_when_openrouter_key_present
+  def test_router_prefers_free_chain_when_openrouter_key_present
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     router = Master::Now::Routing::ModelRouter.new(
-      config: FakeConfig.new("x-ai/grok-4-fast"), root: Master::ROOT,
+      config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
     )
     refute router.keyless_mode?
     chain = router.fallback_chain(task_type: :exploration)
-    assert_equal "x-ai/grok-4-fast", chain.first
+    assert_equal "nvidia/nemotron-3-super-120b-a12b:free", chain.first
   end
 
   def test_web_chat_disabled_when_keys_present_without_opt_in
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     router = Master::Now::Routing::ModelRouter.new(
-      config: FakeConfig.new("x-ai/grok-4-fast"), root: Master::ROOT,
+      config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
     )
     refute router.web_chat_enabled?
     refute_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"
@@ -68,7 +68,7 @@ class TestKeylessRouting < Minitest::Test
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     ENV["MASTER_WEB_CHAT"] = "1"
     router = Master::Now::Routing::ModelRouter.new(
-      config: FakeConfig.new("x-ai/grok-4-fast"), root: Master::ROOT,
+      config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
     )
     assert router.web_chat_enabled?
     assert_includes router.fallback_chain(task_type: :exploration), "web-chat:grok"

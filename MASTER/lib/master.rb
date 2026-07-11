@@ -50,6 +50,8 @@ module Master
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
   YAML_LOAD_TIMEOUT_S = 5
   OPENROUTER_DEFAULT = "z-ai/glm-4.5-air:free"
+  # First slug in models.grok_primary — verified working on OpenRouter :free pool (2026-07-11).
+  FREE_PRIMARY_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   DEFAULT_CONTEXT_WINDOW = 128_000
   CTX_WINDOW_SIZE = DEFAULT_CONTEXT_WINDOW
