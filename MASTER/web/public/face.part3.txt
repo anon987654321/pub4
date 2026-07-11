@@ -7,6 +7,42 @@ function ensureFrameLoop() {
   // dbgFrames stuck at 0, canvas black ("face not showing").
   frameLoopActive = true;
   requestAnimationFrame(frame);
+  armFrameLoopWatchdog();
+}
+
+// Self-healing for the render loop. frame() only continues if its own last
+// requestAnimationFrame ran — any single missed tick (visibilitychange races,
+// iOS app-switch rAF suspension, GPU driver churn) kills the loop forever
+// with zero errors. Instead of finding every trigger, check every 2s whether
+// frames actually advanced while the tab is visible, and re-arm if not.
+let _watchdogTimer = null;
+let _watchdogLastFrames = -1;
+function armFrameLoopWatchdog() {
+  if (_watchdogTimer) return;
+  _watchdogTimer = setInterval(() => {
+    if (State.hidden || document.hidden) { _watchdogLastFrames = _dbgFrames; return; }
+    if (_dbgFrames === _watchdogLastFrames) requestAnimationFrame(frame);
+    _watchdogLastFrames = _dbgFrames;
+  }, 2000);
+}
+
+// WebGL context loss is the silent permanent-black-canvas case: the browser
+// (usually a phone under GPU memory pressure) revokes the context, every
+// renderer.render() after that is a no-op, and NOTHING throws — the loop keeps
+// ticking, dbgFrames keeps counting, the face is just gone. contextlost fires
+// on the CANVAS (the old vision-layer listeners sat on window and never ran).
+// preventDefault() is what tells the browser we want a restore; on restore,
+// THREE re-uploads GL state lazily on the next render.
+if (typeof cv !== 'undefined' && cv?.addEventListener) {
+  cv.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    if (uiStatus) uiStatus.textContent = 'gpu context lost — recovering…';
+  }, false);
+  cv.addEventListener('webglcontextrestored', () => {
+    if (uiStatus && uiStatus.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
+    try { resize(); } catch (_) {}
+    ensureFrameLoop();
+  }, false);
 }
 
 let _dbgFrames = 0;
