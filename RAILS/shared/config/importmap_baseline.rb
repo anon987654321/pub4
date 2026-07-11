@@ -10,10 +10,13 @@ end
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
-# Same relative-import issue as date-fns below: index.js pulls in
-# ./fetch_request, ./fetch_response, ./request_interceptor, ./verbs via
-# relative paths, which only resolve when served from the same CDN directory.
-pin "@rails/request.js", to: "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/index.js"
+# src/index.js pulls in ./fetch_request, ./fetch_response,
+# ./request_interceptor, ./verbs via *extensionless* relative imports —
+# valid for a bundler (which auto-resolves the .js) but not for a browser's
+# native ES module loader, which requests the literal path with no
+# extension and 404s. dist/requestjs.js is the pre-bundled, self-contained
+# build (no imports at all) — use that instead.
+pin "@rails/request.js", to: "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/dist/requestjs.js"
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
