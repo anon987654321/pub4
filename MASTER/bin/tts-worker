@@ -58,6 +58,22 @@ if ARGV[0] == "--daemon"
   require_eventmachine_ssl!
   sock_path = ARGV[1] or abort "tts-worker --daemon: missing SOCKET_PATH"
   FileUtils.mkdir_p(File.dirname(sock_path))
+  # Refuse to steal a live daemon's socket: if something answers the health
+  # probe at this path, a healthy daemon owns it and a second spawn (racing
+  # supervisor calls, manual runs) must not unlink it. Only clear dead paths.
+  if File.socket?(sock_path)
+    begin
+      UNIXSocket.open(sock_path) do |probe|
+        probe.write(%({"health":true}\n))
+        if IO.select([probe], nil, nil, 1) && probe.gets.to_s.strip == "ok"
+          warn "tts-worker: healthy daemon already bound to #{sock_path}; exiting"
+          exit 0
+        end
+      end
+    rescue SystemCallError, EOFError, IOError
+      # dead socket file — safe to replace
+    end
+  end
   File.unlink(sock_path) rescue nil
   server = UNIXServer.new(sock_path)
   begin
@@ -66,8 +82,22 @@ if ARGV[0] == "--daemon"
     warn "tts-worker: chmod unsupported for #{sock_path}; continuing with filesystem permissions"
   end
   warn "tts-worker: daemon ready on #{sock_path}"
-  trap("INT") { File.unlink(sock_path) rescue nil; exit 0 }
-  trap("TERM") { File.unlink(sock_path) rescue nil; exit 0 }
+  # Unlink on exit ONLY if the path still refers to the socket this process
+  # bound. An older daemon dying after a newer one has already re-bound the
+  # same path would otherwise unlink the newer daemon's socket out from under
+  # it — the pool then has a live process nobody can reach until the next
+  # respawn, and every synthesis in between burns its full connect timeout.
+  bound_ino = (File.stat(sock_path).ino rescue nil)
+  cleanup = proc do
+    begin
+      File.unlink(sock_path) if bound_ino && File.stat(sock_path).ino == bound_ino
+    rescue StandardError
+      nil
+    end
+    exit 0
+  end
+  trap("INT", &cleanup)
+  trap("TERM", &cleanup)
 
   loop do
     client = server.accept
