@@ -199,6 +199,29 @@ class TestWebUI < Minitest::Test
     assert_includes source, 'dataset.hiddenTab'
   end
 
+  def test_face_state_observer_does_not_watch_its_own_attribute_writes
+    source = File.read(File.expand_path("../web/public/face_state.js", __dir__))
+
+    # Regression: face_state.js's applyFrom() writes el.dataset.runtimeStatus on
+    # the same elements observe() watches. Observing `attributes: true` there
+    # re-fires the callback on every write -> an infinite mutation->observe->mutate
+    # microtask loop that starves the main thread before load or the primer tap
+    # handler ever runs (root cause behind 30+ "dead tap"/"slow page" commits,
+    # fixed 2026-07-11). childList/characterData carry the real external signal.
+    assert_includes source, "childList: true, subtree: true, characterData: true"
+    refute_match(/observe\(el,\s*\{[^}]*attributes/, source)
+  end
+
+  def test_rc_d_master_digest_globs_all_face_modules
+    rc = File.read(File.expand_path("../../OPENBSD/etc/rc.d/master", __dir__))
+
+    # Regression: the precompile-skip digest once named ~10 face files
+    # explicitly, so editing any of the ~30 other standalone face_*.js modules
+    # (e.g. face_state.js) silently skipped precompile on restart and kept a
+    # stale fingerprint live. The digest must glob face_*.js, not enumerate it.
+    assert_includes rc, "face_*.js"
+  end
+
   def test_primer_tap_unlocks_prompt_before_face_ready
     index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
     css = File.read(File.expand_path("../web/public/face.css", __dir__))
