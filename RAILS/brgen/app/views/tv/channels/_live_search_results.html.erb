@@ -1,4 +1,5 @@
-<section id="tv-channels-list" role="region" aria-label="TV channel results">
+<%= turbo_frame_tag "tv-channels-list", target: "_top" do %>
+<section id="tv-channels-list" role="region" aria-label="TV channel results" data-turbo-permanent>
   <% @channels.each do |c| %>
     <%= render "tv/channels/row", channel: c %>
   <% end %>
@@ -9,3 +10,4 @@
            reflex: "ChannelsInfiniteScrollReflex#load_more",
            sentinel_id: "tv-channels-sentinel",
            q: params[:q] %>
+<% end %>
