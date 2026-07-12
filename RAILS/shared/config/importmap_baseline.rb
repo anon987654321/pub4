@@ -42,6 +42,9 @@ pin "pub4/theme_meta", to: "pub4_theme_meta.js"
 pin "pub4/theme_toggle", to: "pub4_theme_toggle_controller.js"
 pin "pub4/minimal_gesture", to: "minimal-gesture.js"
 pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.mjs"
+# @stimulus-components/lightbox imports this; only brgen pinned it locally,
+# so every other app using this shared baseline couldn't resolve it.
+pin "lightgallery", to: "lightgallery.js"
 
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
