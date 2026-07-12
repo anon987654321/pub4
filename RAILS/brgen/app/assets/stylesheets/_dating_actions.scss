@@ -20,7 +20,7 @@
 .swipe-chips .chip {
   border-radius: var(--x-radius-pill);
   font: var(--text-xs) / 1 var(--x-font);
-  padding: 0.2rem 0.55rem;
+  padding: var(--space-1) var(--space-2);
 }
 
 .swipe-chips .chip--status {
@@ -36,11 +36,11 @@
 }
 
 .swipe-action {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: var(--space-14);
+  height: var(--space-14);
   border-radius: var(--x-radius-pill);
   border: 2px solid transparent;
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
   line-height: 1;
   display: grid;
   place-items: center;
