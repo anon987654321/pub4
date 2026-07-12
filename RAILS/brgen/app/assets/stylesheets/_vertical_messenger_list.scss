@@ -1,14 +1,14 @@
 /* Messenger — iMessage-style threads on messenger.brgen.no */
 body.vertical-messenger {
-  --msg-bg: #0a0a0a;
-  --msg-ink: #ffffff;
-  --msg-muted: rgba(255, 255, 255, 0.58);
-  --msg-surface: #141414;
-  --msg-border: rgba(255, 255, 255, 0.08);
+  --msg-bg: var(--x-bg);
+  --msg-ink: var(--x-text);
+  --msg-muted: var(--x-text-secondary);
+  --msg-surface: var(--x-surface-elevated);
+  --msg-border: var(--x-border);
   --msg-bubble-self: linear-gradient(135deg, oklch(60% 0.18 255), oklch(50% 0.2 293));
-  --msg-bubble-peer: #1c1c1e;
-  --msg-accent: oklch(70% 0.18 148);
-  --font-primary: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --msg-bubble-peer: var(--x-surface-elevated);
+  --msg-accent: var(--x-accent);
+  --font-primary: "Inter", var(--x-font);
   background: var(--msg-bg);
   color: var(--msg-ink);
   font-family: var(--font-primary);
@@ -74,11 +74,11 @@ body.vertical-messenger .messenger-compose-row input[type="text"] {
 }
 
 body.vertical-messenger .messenger-compose-row input[type="submit"] {
-  padding: 0.65rem 1rem;
+  padding: var(--space-3) var(--space-4);
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   background: var(--msg-accent);
-  color: #fff;
+  color: var(--x-text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -96,9 +96,9 @@ body.vertical-messenger ul[aria-label="Conversations"] li a {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;
-  gap: 0.15rem 0.75rem;
-  padding: 0.85rem 1rem;
-  border-radius: 14px;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--x-radius-card);
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
   color: inherit;
@@ -107,8 +107,8 @@ body.vertical-messenger ul[aria-label="Conversations"] li a {
 }
 
 body.vertical-messenger ul[aria-label="Conversations"] li a:hover {
-  background: #1a1a1a;
-  border-color: rgba(255, 255, 255, 0.14);
+  background: var(--x-hover);
+  border-color: var(--x-border);
 }
 
 body.vertical-messenger ul[aria-label="Conversations"] strong {
@@ -137,11 +137,11 @@ body.vertical-messenger ul[aria-label="Conversations"] mark {
   grid-column: 2;
   align-self: start;
   background: var(--msg-accent);
-  color: #fff;
-  border-radius: var(--radius-pill);
+  color: var(--x-text);
+  border-radius: var(--x-radius-pill);
   min-width: 1.25rem;
   height: 1.25rem;
-  padding: 0 0.35rem;
+  padding: 0 var(--space-1);
   font-size: 0.6875rem;
   font-weight: 700;
   display: grid;
