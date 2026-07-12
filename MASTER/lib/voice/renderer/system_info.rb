@@ -48,6 +48,8 @@ module Master
           boot_log = "/var/run/dmesg.boot"
           raw = if File.readable?(boot_log)
                   File.readlines(boot_log, chomp: true)
+                elsif RUBY_PLATFORM.include?("darwin")
+                  macos_hw_lines
                 else
                   stdout, = Master::Reach::Exec.capture3("dmesg")
                   stdout.lines(chomp: true)
@@ -57,6 +59,28 @@ module Master
           lines.empty? ? ["dmesg unavailable"] : lines
         rescue StandardError => _e
           ["dmesg unavailable"]
+        end
+
+        def macos_hw_lines
+          lines = []
+          model = sysctl_value("hw.model")
+          cpu = sysctl_value("machdep.cpu.brand_string")
+          mem = sysctl_value("hw.memsize")
+          version = sysctl_value("kern.version")&.lines&.first&.strip
+          lines << "hw0 at mainbus0: #{model}" if model
+          lines << "cpu0 at mainbus0: #{cpu}" if cpu
+          lines << "mem0: #{mem.to_i / 1_048_576}MB avail" if mem
+          lines << version if version
+          lines
+        rescue StandardError => _e
+          []
+        end
+
+        def sysctl_value(key)
+          stdout, status = Master::Reach::Exec.capture3("sysctl", "-n", key)
+          return unless status.success?
+
+          stdout.strip.presence
         end
       end
     end

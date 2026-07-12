@@ -4,14 +4,22 @@ module Master
   module Voice
     # Splash and prompt rendering extracted from Renderer.
     module RendererPromptComponents
+      PHASE_COLORS = {
+        "discover" => :yellow,
+        "implement" => :cyan,
+        "audit" => :red,
+        "grind" => :magenta,
+        "polish" => :magenta,
+        "watch" => :blue,
+      }.freeze
+
       def splash(model)
         context = splash_context(model)
         lines = splash_dmesg_lines
         lines.concat(runtime_splash_lines(context))
         host_status = Master::Ground::HostBudget.status_line
         lines << d(host_status) if host_status
-        short_host = context[:host].split(".").first
-        lines.concat(["", d("#{context[:user]}@#{short_host}#{context[:prompt]} ready"), ""])
+        lines.concat(["", splash_ready_line(context), ""])
         lines.join("\n")
       end
 
@@ -21,44 +29,71 @@ module Master
         git = git_prompt_segments
         tokens = options[:tokens]
         cost = cost_label(options[:cost])
-        line = [git, @p.dim(short_model(model)), d("tokens0: #{token_label(tokens)}"),
+        token_segment = if Aesthetic.wscons?
+                          d("tokens0: #{token_label(tokens)}")
+                        else
+                          "↖ #{token_bar(tokens)}#{token_label(tokens)}"
+                        end
+        line = [git, @p.dim(short_model(model)), token_segment,
                 context_label(tokens), cost, violation_badge(options.fetch(:violations, 0)),
                 phase_label(phase)].reject(&:empty?).join("  ")
         prompt = phase_prompt(options.fetch(:last_ok, true), phase)
         [line, prompt + " "]
       end
 
-      def phase_tinted(text, _phase)
-        @p.dim(text)
+      def phase_tinted(text, phase)
+        return @p.dim(text) if Aesthetic.wscons?
+
+        color = PHASE_COLORS[phase.to_s]
+        color ? @p.dim.public_send(color, text) : @p.dim(text)
       end
 
       def violation_badge(count)
         count = count.to_i
-        return d(" [0v]") if count.zero?
-        return d(" [#{count}v]") if count < 10
+        if Aesthetic.wscons?
+          return d(" [0v]") if count.zero?
+          return d(" [#{count}v]") if count < 10
 
-        @p.red(" [#{count}v]")
+          return @p.red(" [#{count}v]")
+        end
+
+        return @p.green(" [0v]") if count.zero?
+        return @p.yellow(" [#{count}v]") if count < 10
+
+        @p.bold.red(" [#{count}v]")
       end
 
       def prompt_token
-        "#{safe_hostname.split('.').first}$"
+        Aesthetic.wscons? ? "#{safe_hostname.split('.').first}$" : "master$"
       end
 
-      def phase_prompt(last_ok, _phase)
+      def phase_prompt(last_ok, phase)
         return @p.red(prompt_token) unless last_ok
+        return d(prompt_token) if Aesthetic.wscons?
 
-        d(prompt_token)
+        color = PHASE_COLORS.fetch(phase.to_s, :red)
+        @p.bold.public_send(color, prompt_token)
       end
 
       def cost_label(cost)
         cents = (cost.to_f * 100).round(2)
         return "" if cents.zero?
 
-        d("cost0: ¢#{format('%.2f', cents)}")
+        label = "¢#{format('%.2f', cents)}"
+        if Aesthetic.wscons?
+          return d("cost0: #{label}")
+        end
+
+        budget = @config.respond_to?(:budget_max) ? @config.budget_max.to_f : 0.0
+        return @p.dim(label) unless budget.positive?
+
+        @p.dim("#{label} #{progress_bar(cost.to_f / budget, 4)}")
       end
 
       def speaker_tag(name = "master")
-        d("#{name}0 at session0:")
+        return d("#{name}0 at session0:") if Aesthetic.wscons?
+
+        "#{@p.dim('<')}#{@p.bold.red(name)}#{@p.dim('>')}"
       end
 
       def status_row(uptime:, turns:, violations: 0)
@@ -88,6 +123,15 @@ module Master
       end
 
       private
+
+      def splash_ready_line(context)
+        short_host = context[:host].split(".").first
+        if Aesthetic.wscons?
+          return d("#{context[:user]}@#{short_host}#{context[:prompt]} ready")
+        end
+
+        @p.bold.red("master") + @p.dim("@#{context[:host]} ready")
+      end
 
       def splash_context(model)
         shell = File.basename(ENV["SHELL"] || "zsh")
@@ -126,6 +170,7 @@ module Master
           d("MASTER (CONSTITUTIONAL) ##{context[:revision]}: #{context[:now].strftime('%a %b %e %H:%M:%S %Z %Y')}"),
           d("    #{context[:user]}@#{context[:host]}:#{@config["root"] || Dir.pwd}"),
           d("runtime0: #{RUBY_PLATFORM} ruby #{RUBY_VERSION} #{context[:shell]} #{context[:user]}#{context[:prompt]}"),
+          d("aesthetic0: #{Aesthetic.mode}"),
           d("model0: #{short_model(context[:model])}"), d("rev0: #{context[:revision]}")
         ]
       end
@@ -144,11 +189,18 @@ module Master
       def git_prompt_segments
         ahead, behind = git_ahead_behind
         branch = git_branch || "detached"
-        parts = [branch]
-        parts << "(dirty)" if git_dirty?
-        parts << "+#{ahead}" if ahead.positive?
-        parts << "-#{behind}" if behind.positive?
-        d(parts.join(" "))
+        if Aesthetic.wscons?
+          parts = [branch]
+          parts << "(dirty)" if git_dirty?
+          parts << "+#{ahead}" if ahead.positive?
+          parts << "-#{behind}" if behind.positive?
+          return d(parts.join(" "))
+        end
+
+        dirty = git_dirty? ? @p.red("●") : @p.dim("○")
+        ahead_label = ahead.positive? ? @p.dim(" ↑#{ahead}") : ""
+        behind_label = behind.positive? ? @p.yellow(" ↓#{behind}") : ""
+        @p.red(branch) + dirty + ahead_label + behind_label
       end
 
       def phase_label(phase)

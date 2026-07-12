@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../voice/aesthetic"
+
 module Master
   module Ground
     # Machine-readable runtime catalog over data/runtime/*.yml.
@@ -99,6 +101,7 @@ module Master
             enhancements_pending_count: pending,
             enhancements: Array(runtime_cfg["enhancements"]),
             falcon_worker_budget: falcon_workers,
+            aesthetic: Master::Voice::Aesthetic.mode,
           }
         end
 

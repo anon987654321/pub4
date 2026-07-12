@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+
+sketchybar --bar height=36 \
+                 color=0xff000000 \
+                 border_color=0x241a3a1a \
+                 border_width=1 \
+                 corner_radius=0 \
+                 y_offset=0 \
+                 margin=0 \
+                 shadow=off
+
+sketchybar --default label.font="JetBrains Mono:Regular:11.0" \
+                     label.color=0xff63c363 \
+                     icon.drawing=off \
+                     background.drawing=off
+
+sketchybar --add item host left \
+           --set host label="$(hostname -s)" \
+                     label.y_offset=1
+
+sketchybar --add item clock right \
+           --set clock update_freq=30 \
+                     script='date "+%H:%M"'

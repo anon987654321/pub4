@@ -6,6 +6,17 @@
   const hasBrutalist = PROFILES.some((p) => (typeof p === "string" ? p : p.id) === "brutalist")
     || window.MASTER_RUNTIME?.enhancements?.includes?.("brutalist_profile");
 
+  function applyWscons() {
+    document.documentElement.dataset.runtimeProfile = "wscons";
+    document.documentElement.style.setProperty("--transition-fast", "0ms");
+    document.documentElement.style.setProperty("--transition-normal", "0ms");
+    document.documentElement.style.setProperty("--ease-out", "steps(2,end)");
+    document.documentElement.style.setProperty("--face-phosphor-decay", "0");
+    document.documentElement.style.setProperty("--c-text", "#63c363");
+    document.documentElement.style.setProperty("--x-text", "#63c363");
+    document.body.classList.add("wscons-mode");
+  }
+
   function applyBrutalist() {
     document.documentElement.dataset.runtimeProfile = "brutalist";
     document.documentElement.style.setProperty("--transition-fast", "0ms");
@@ -15,7 +26,9 @@
     document.body.classList.add("brutalist-mode");
   }
 
-  if (hasBrutalist || new URLSearchParams(location.search).get("brutalist") === "1") applyBrutalist();
+  const aesthetic = window.MASTER_RUNTIME?.aesthetic || document.documentElement.dataset.aesthetic;
+  if (aesthetic === "wscons") applyWscons();
+  else if (hasBrutalist || new URLSearchParams(location.search).get("brutalist") === "1") applyBrutalist();
 
   let strip = document.getElementById("brutalist-strip");
   if (!strip) {

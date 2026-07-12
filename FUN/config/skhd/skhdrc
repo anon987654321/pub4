@@ -1,0 +1,3 @@
+ctrl + shift - return : open -a Ghostty
+ctrl + shift - space : osascript -e 'tell application "System Events" to keystroke space using {command down}'
+ctrl + shift - l : /System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend

@@ -2,6 +2,9 @@
 (() => {
   "use strict";
 
+  const aesthetic = window.MASTER_RUNTIME?.aesthetic || document.documentElement.dataset.aesthetic;
+  if (aesthetic === "wscons") return;
+
   const TRAIL_DECAY = 0.86;
   let trailCanvas = null;
   let trailCtx = null;

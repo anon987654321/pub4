@@ -54,6 +54,7 @@ class TestRuntimeCatalog < Minitest::Test
     assert_equal "/runtime/config", payload[:config_path]
     assert payload[:enhancements_pending_count].is_a?(Integer)
     assert payload[:enhancements].is_a?(Array)
+    assert_includes %w[wscons phosphor], payload[:aesthetic]
     refute payload.key?(:topologies)
   end
 

@@ -1,0 +1,43 @@
+add_newline = false
+palette = "openbsd_wscons"
+format = "$directory$git_branch$git_status$character"
+
+[palettes.openbsd_wscons]
+black = "#000000"
+red = "#ff6b6b"
+green = "#63c363"
+yellow = "#c9a227"
+blue = "#3d7a3d"
+magenta = "#3d7a3d"
+cyan = "#3d7a3d"
+white = "#aaaaaa"
+
+[character]
+success_symbol = "[\\$](green)"
+error_symbol = "[\\$](red)"
+format = "$symbol "
+
+[directory]
+style = "green"
+format = "$path "
+truncation_length = 2
+truncate_to_repo = true
+
+[git_branch]
+format = "[$branch](dim green) "
+symbol = ""
+
+[git_status]
+format = "[$all_status](dim green) "
+
+[cmd_duration]
+disabled = true
+
+[time]
+disabled = true
+
+[os]
+disabled = true
+
+[ruby]
+disabled = true

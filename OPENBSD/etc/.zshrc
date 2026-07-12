@@ -7,31 +7,12 @@ export DEEPSEEK_API_KEY=__REDACTED__
 
 export PATH="/home/dev/.local/share/gem/ruby/3.4/bin:$PATH"
 
-# Modern dev terminal (Nerd Fonts, Starship, Neovim, good aliases)
-# Installed via OPENBSD pkg_add + this tracked .zshrc
-if command -v starship >/dev/null 2>&1; then
-  eval "$(starship init zsh)"
-fi
+export MASTER_AESTHETIC="${MASTER_AESTHETIC:-wscons}"
+export MASTER_BRUTALIST=1
+export MASTER_STARSHIP=0
 
-export EDITOR=nvim
-export VISUAL=nvim
-
-# Quality of life (from operator's blessed local stack)
-alias v='nvim'
-alias ll='ls -lah'
-alias gs='git status'
-alias ga='git add'
-alias gc='git commit'
-alias gp='git push'
-alias brgen='tmux-ssh dev@brgen.no'  # if remote helper needed inside VPS
-
-# tmux-ssh: persistent named tmux over ssh (synced from live dev stack for consistency)
-tmux-ssh() {
-  typeset host=$1
-  typeset session=${2:-main}
-  [[ -z $host ]] && { print "Usage: tmux-ssh user@host [session]"; return 1 }
-  ssh -t "$host" "tmux new -A -s $session"
-}
+typeset -g PUB4_ROOT="${HOME}/pub4"
+source "${PUB4_ROOT}/FUN/zshrc.shared"
 
 # Non-interactive shells (SSH `cmd`, scp): env only, no auto-launch.
 [[ -o interactive && -t 0 && -t 1 ]] || return

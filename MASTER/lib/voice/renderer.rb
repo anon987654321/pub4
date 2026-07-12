@@ -4,6 +4,7 @@
 require "pastel"
 require "socket"
 require_relative "../ground/host_budget"
+require_relative "aesthetic"
 require_relative "renderer/git_status"
 require_relative "renderer/system_info"
 

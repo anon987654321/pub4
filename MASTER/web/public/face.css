@@ -1327,3 +1327,37 @@ body::after {
   #chat-log { position: static; max-height: none; overflow: visible; opacity: 1; }
   .message { break-inside: avoid; color: #000; }
 }
+
+/* wscons aesthetic — flat 80-column scrollback log (MASTER_AESTHETIC=wscons) */
+html[data-aesthetic="wscons"],
+body.wscons-mode {
+  --c-text: #63c363;
+  --x-text: #63c363;
+  --face-phosphor-decay: 0;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 0;
+}
+
+html[data-aesthetic="wscons"] body,
+body.wscons-mode {
+  font-family: var(--x-font-mono);
+  font-size: 12px;
+  line-height: 1.33;
+  -webkit-font-smoothing: auto;
+}
+
+html[data-aesthetic="wscons"] #zsh,
+html[data-aesthetic="wscons"] #chat-log,
+body.wscons-mode #zsh,
+body.wscons-mode #chat-log {
+  max-width: 80ch;
+  border-radius: 0;
+}
+
+html[data-aesthetic="wscons"] #face-phosphor-trail,
+body.wscons-mode #face-phosphor-trail {
+  display: none !important;
+}

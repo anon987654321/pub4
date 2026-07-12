@@ -822,8 +822,17 @@ stage_2() {
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+capture_openbsd_dmesg() {
+  typeset script="${SCRIPT_DIR}/dmesg/capture_dmesg.sh"
+  [[ -r /var/run/dmesg.boot ]] || return 0
+  [[ -f $script ]] || return 0
+  chmod +x "$script" 2>/dev/null || true
+  sh "$script" 2>/dev/null || log WARN "dmesg capture failed"
+}
+
 deploy_live() {
   sync_openbsd_apply "${SCRIPT_DIR}"
+  capture_openbsd_dmesg
 }
 
 main() {

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../voice/aesthetic"
+
 module Master
   module Now
     module BootBanner
@@ -15,16 +17,19 @@ module Master
         status = Master::Ops::LoopSlot.status
         budget = Master::Ops::ProcessBudget.status
         brutalist = ENV["MASTER_BRUTALIST"] == "1"
+        aesthetic = Master::Voice::Aesthetic.mode
         lines = [
           "master: boot safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} web=#{ENV.fetch("MASTER_WEB", "0")}",
           "master: background=#{ENV.fetch("MASTER_BACKGROUND", "0")} watch=#{ENV.fetch("MASTER_WATCH", "0")}",
           "master: loop=#{status[:selected] || "none"} owner=#{status[:owner] || "none"}",
           "master: budget valid=#{budget[:valid]} slot=#{budget[:slot] || "unknown"}",
+          "master: aesthetic=#{aesthetic}",
           "master: motd #{motd_spotlight}",
           "master: ready dmesg=preserved",
         ]
-        if brutalist
-          lines << "master: profile=brutalist motion=steps typography=mono"
+        if brutalist || aesthetic == "wscons"
+          profile = aesthetic == "wscons" ? "wscons" : "brutalist"
+          lines << "master: profile=#{profile} motion=steps typography=mono"
           lines << "master: H=entropy C=confidence mode=inspectable"
         end
         lines

@@ -1,0 +1,34 @@
+# Shared zsh baseline for pub4 (macOS + OpenBSD). Sourced by platform rc files.
+
+export EDITOR=nvim
+export VISUAL=nvim
+
+alias v='nvim'
+alias ll='ls -lah'
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+
+if command -v bat >/dev/null 2>&1; then
+  alias cat='bat --paging=never'
+fi
+
+if [[ ${MASTER_STARSHIP:-0} == 1 ]] && command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
+
+if command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
+fi
+
+tmux-ssh() {
+  typeset host=$1
+  typeset session=${2:-main}
+  [[ -z $host ]] && { print "Usage: tmux-ssh user@host [session]"; return 1 }
+  ssh -t "$host" "tmux new -A -s $session"
+}
