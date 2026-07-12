@@ -1,7 +1,8 @@
 <% if @category %>
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
-<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list">
+<%= turbo_frame_tag "ports", target: "_top" do %>
+<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list" data-turbo-permanent>
   <% @ports.each do |port| %>
     <%= render "ports/row", port: %>
   <% end %>
@@ -16,3 +17,4 @@
            q: params[:q],
            category_id: params[:category_id],
            sort: params[:sort] %>
+<% end %>
