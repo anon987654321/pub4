@@ -45,7 +45,10 @@
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-<main id="main-content" role="main"><%= yield %></main>
+<main id="main-content" role="main">
+  <%= link_to "OpenBSD ports", root_path, class: "logo" %>
+  <%= yield %>
+</main>
 <%= render "shared/install_prompt" %>
 </body>
 </html>
