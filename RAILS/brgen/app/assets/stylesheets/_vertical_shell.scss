@@ -30,17 +30,17 @@ body[class*="vertical-"] main {
 
 body.vertical-marketplace [data-controller="live-search"],
 body.vertical-takeaway [data-controller="live-search"] {
-  background: var(--x-search-bg, #202327);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
+  background: var(--x-search-bg, var(--x-surface));
+  border-bottom: 1px solid var(--x-border);
+  padding: var(--space-3) var(--space-4);
 }
 
 body.vertical-marketplace .search-form input[type="search"],
 body.vertical-takeaway .search-form input[type="search"] {
-  border-radius: var(--radius-pill);
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  border-radius: var(--x-radius-pill);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--x-border);
+  background: var(--x-bg);
   width: 100%;
 }
 
@@ -48,6 +48,6 @@ body.vertical-marketplace .search-form,
 body.vertical-takeaway .search-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2);
   align-items: center;
 }
