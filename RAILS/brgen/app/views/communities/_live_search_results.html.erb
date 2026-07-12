@@ -3,7 +3,8 @@
 <% end %>
 
 <% if @communities.any? %>
- <ul class="community-list" id="communities-list">
+ <%= turbo_frame_tag "communities-list", target: "_top" do %>
+ <ul class="community-list" id="communities-list" data-turbo-permanent>
  <% @communities.each do |community| %>
    <%= render "communities/card", community: community %>
  <% end %>
@@ -14,6 +15,7 @@
             reflex: "CommunitiesInfiniteScrollReflex#load_more",
             sentinel_id: "communities-sentinel",
             q: params[:q] %>
+ <% end %>
 <% else %>
  <p class="empty">No communities match this search.</p>
 <% end %>
