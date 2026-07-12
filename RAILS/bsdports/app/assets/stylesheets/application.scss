@@ -8,8 +8,8 @@
 }
 
 .dep-graph {
-  border: 1px solid var(--extra-light-grey);
-  background: var(--x-surface-elevated, #16181c);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .logo {
@@ -23,6 +23,18 @@
   background-size: contain;
 }
 
+/* x_widgets' .page-header (a slim sticky 53px section bar) and pub4_stack's
+   .page-header (a generic unconstrained-height flex intro) both compile in
+   here and collide. This page's header is the intro-block kind — h1 +
+   description + search — so its height needs to fit that content instead
+   of clipping to x_widgets' sticky bar height, which pushed the overflow
+   up into the logo above it. */
+header.page-header {
+  height: auto;
+  position: static;
+  top: auto;
+}
+
 header {
   width: 100%;
   max-width: 660px;
@@ -32,8 +44,8 @@ header {
   .tabs {
     display: flex;
     margin-top: 18px;
-    color: var(--light-grey);
-    border-bottom: 1px solid var(--extra-light-grey);
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
     font-family: var(--x-font-mono, ui-monospace, monospace);
     font-size: 0.8125rem;
 
@@ -57,9 +69,9 @@ header {
 #search {
   width: 90%;
   max-width: 584px;
-  border: 1px solid var(--extra-light-grey);
+  border: 1px solid var(--border);
   border-radius: var(--x-radius-sm);
-  background: var(--x-search-bg, #202327);
+  background: var(--surface);
   font-size: 18px;
   display: flex;
   align-items: center;
@@ -68,12 +80,12 @@ header {
 
   &::before {
     content: "$";
-    color: var(--dark-grey);
+    color: var(--text-dim);
     margin-inline-end: 10px;
   }
 
   &:focus-within {
-    border-color: var(--light-blue);
+    border-color: var(--accent);
   }
 
   input {
@@ -84,10 +96,10 @@ header {
     padding: 16px 0;
     font-size: 16px;
     font-family: inherit;
-    color: var(--black);
+    color: var(--text);
 
     &::placeholder {
-      color: var(--dark-grey);
+      color: var(--text-dim);
     }
   }
 }
@@ -108,13 +120,13 @@ header {
   align-items: baseline;
   gap: 0.75rem;
   padding: 0.85rem 0;
-  border-bottom: 1px solid var(--extra-light-grey);
+  border-bottom: 1px solid var(--border);
 }
 
 .port-name {
   font-family: var(--x-font-mono, ui-monospace, monospace);
   font-weight: 700;
-  color: var(--black);
+  color: var(--text);
   text-decoration: none;
 }
 
@@ -123,6 +135,36 @@ header {
 }
 
 .port-comment {
-  color: var(--dark-grey);
+  color: var(--text-dim);
   font-size: 0.9rem;
+}
+
+.categories {
+  width: 90%;
+  max-width: 660px;
+  margin-top: 1.5rem;
+}
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list .chip {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--x-radius-sm);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-decoration: none;
+}
+
+.category-list .chip:hover {
+  background: var(--hover);
+  color: var(--text);
+  text-decoration: none;
 }
