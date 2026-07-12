@@ -54,6 +54,12 @@ group :development, :test do
   gem 'bundler-audit'
   gem 'rubocop-rails-omakase'
 end
+
+group :test do
+  gem "capybara"
+  gem "puma"
+  gem "selenium-webdriver"
+end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem 'pub4-shared', path: '../shared'
 

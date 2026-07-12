@@ -6,7 +6,7 @@ require "rbconfig"
 require "timeout"
 
 ROOT = File.expand_path(__dir__)
-APPS = %w[amber brgen bsdports hjerterom].freeze
+APPS = %w[amber brgen bsdports].freeze
 FAILURES = []
 STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_GATE_STEP_TIMEOUT", "180"))
 

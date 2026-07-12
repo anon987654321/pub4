@@ -24,6 +24,8 @@ module Shared
     BEM_IN_VIEW_PATTERN = /class=["'][^"']*__[^"']*["']/
     UTILITY_SOUP_PATTERN = /class=["'][^"']*(?:\b(?:mt|mb|ml|mr|px|py|col|row|d-flex)\b[^"']*){3,}/i
     DIV_NESTING_PATTERN = /<div[^>]*>\s*<div[^>]*>\s*<div[^>]*>\s*<div/i
+    INVALID_PARAGRAPH_BLOCK_PATTERN = /<p\b[^>]*>\s*<(?:div|section|article|form|nav|ul|ol)\b/i
+    EMPTY_LANDMARK_PATTERN = /<(nav|main|aside|section)\b[^>]*>\s*<\/\1>/im
     LONG_TRANSITION_PATTERN = /transition(?:-duration)?\s*:\s*([4-9]\d\d|\d{4,})\s*ms/i
     CENTERED_PROSE_PATTERN = /text-align:\s*center/i
     MAX_CONTENT_WIDTH_PATTERN = /max-width:\s*(\d+(?:\.\d+)?)(ch|rem)/
@@ -34,7 +36,7 @@ module Shared
       |actiontext\.css
       |frontend/layouts/visualizer
       |public/assets/layouts/visualizer
-      |public/assets/.*-[a-f0-9]{6,}\.(?:css|scss|js)\z
+      |public/assets/.*-[a-f0-9]{6,}\.(?:css|scss|js|erb|html)\z
       |minimal-ui\.css
     }ix
     MAILER_STYLE_PATH_PATTERN = %r{(?:layouts/(?:mailer|_mailer_styles)|_mailer/)}
@@ -102,6 +104,14 @@ module Shared
       add(:warning, path, :bem_in_views, "BEM class in view — use bare tag targeting") if body.match?(BEM_IN_VIEW_PATTERN)
       add(:warning, path, :utility_class_soup, "Utility class soup in view — move to SCSS") if body.match?(UTILITY_SOUP_PATTERN)
       add(:warning, path, :anti_divitis, "Deep div nesting — flatten or use semantic landmarks") if body.match?(DIV_NESTING_PATTERN)
+      add(:warning, path, :invalid_paragraph_block, "Block element nested directly inside <p>; use a field or semantic wrapper") if body.match?(INVALID_PARAGRAPH_BLOCK_PATTERN)
+      add(:warning, path, :empty_landmark, "Empty landmark found; remove it until it contains meaningful content") if body.match?(EMPTY_LANDMARK_PATTERN)
+      if path.match?(%r{(?:\A|/)app/views/}) && !layout_path?(path) && body.match?(/<main\b/i)
+        add(:warning, path, :nested_main, "View defines <main> inside the application layout; use section or div")
+      end
+      if body.scan(/turbo-cache-control/i).size > 1
+        add(:warning, path, :duplicate_turbo_cache_control, "Multiple Turbo cache-control directives found")
+      end
       add(:warning, path, :skip_to_main, "Layout missing skip link to #main-content") if layout_missing_skip?(path, body)
       add(:warning, path, :single_h1, "Multiple h1 tags in one view") if body.scan(/<h1\b/i).size > 1
     end
@@ -184,7 +194,14 @@ module Shared
     end
 
     def layout_missing_skip?(path, body)
-      path.include?("/app/views/layouts/") && !body.match?(/skip|#main-content/i)
+      layout_path?(path) &&
+        !path.match?(/(?:\A|\/)_?mailer(?:\.|_)/) &&
+        !path.end_with?("/master_embed.html.erb") &&
+        !body.match?(/skip|#main-content/i)
+    end
+
+    def layout_path?(path)
+      path.match?(%r{(?:\A|/)app/views/layouts/})
     end
 
     def selector_depths(body)

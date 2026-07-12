@@ -4,7 +4,7 @@
 require "pathname"
 
 ROOT = File.expand_path(__dir__)
-APPS = %w[amber brgen bsdports hjerterom].freeze
+APPS = %w[amber brgen bsdports].freeze
 SHARED = Pathname(ROOT).join("shared")
 
 load SHARED.join("app/services/shared/frontend_auditor.rb")

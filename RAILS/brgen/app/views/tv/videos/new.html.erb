@@ -11,10 +11,10 @@
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true %></div>
+    <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true, direct_upload: true, data: { controller: "direct-upload" } %></div>
     <div class="field">
       <%= f.label :thumbnail %>
-      <%= f.file_field :thumbnail, accept: "image/*" %>
+      <%= f.file_field :thumbnail, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
       <div class="preset-strip">
         <% %w[none portrait landscape street blockbuster].each do |p| %>
           <label class="preset-opt">

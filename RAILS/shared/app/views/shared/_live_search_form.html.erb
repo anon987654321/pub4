@@ -1,12 +1,12 @@
 <%# Shared live-search form — Turbo Stream responses via pub4-shared %>
-<div data-controller="live-search" role="search" aria-label="<%= label %>">
-  <%= form_with url: url, method: :get, data: { turbo_stream: true } do |f| %>
+<div data-controller="live-search" role="search" aria-label="<%= label %>" data-action="turbo:submit-end->live-search#complete">
+  <%= form_with url: url, method: :get, data: { turbo_stream: true, live_search_target: "form" } do |f| %>
     <div class="search-form">
       <%= f.search_field :q,
             value: query,
             placeholder: placeholder,
             data: { live_search_target: "input", action: "input->live-search#input" },
-            aria: { label: "Search query" } %>
+            aria: { label: "Search query", controls: "live_search_results" } %>
       <% if local_assigns[:filter_fields_proc] %>
         <%= filter_fields_proc.call(f) %>
       <% elsif local_assigns[:extra_fields].present? %>
@@ -17,6 +17,7 @@
       <% end %>
     </div>
   <% end %>
+  <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
 </div>
 
 <div id="search_suggestions">

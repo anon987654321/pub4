@@ -1,6 +1,6 @@
 <% content_for :title, @port.name %>
-<article role="article" aria-label="Port details">
-  <header role="banner" aria-label="Port header">
+<article aria-label="Port details">
+  <header aria-label="Port header">
     <h1><%= @port.name %> <small><%= @port.version %></small></h1>
     <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>
@@ -18,9 +18,9 @@
 
   <% if @dependencies.any? %>
     <h2>Dependencies</h2>
-    <ul role="list" aria-label="Port dependencies">
+    <ul aria-label="Port dependencies">
       <% @dependencies.each do |dep| %>
-        <li role="listitem">
+        <li>
           <%= link_to dep.depends_on.name, port_path(dep.depends_on) %>
           <small><%= dep.dep_type %></small>
         </li>
@@ -32,9 +32,9 @@
 
   <% if @rdeps.any? %>
     <h2>Reverse dependencies</h2>
-    <ul role="list" aria-label="Ports that depend on this package">
+    <ul aria-label="Ports that depend on this package">
       <% @rdeps.each do |reverse| %>
-        <li role="listitem"><%= link_to reverse.name, port_path(reverse) %></li>
+        <li><%= link_to reverse.name, port_path(reverse) %></li>
       <% end %>
     </ul>
   <% end %>
@@ -46,8 +46,7 @@
   </section>
 
   <% if @deps.any? %>
-    <svg class="dep-graph" width="400" height="<%= [200, 30 + @deps.size * 25].max %>" role="img" aria-labelledby="dep-graph-title" aria-hidden="true">
-      <title id="dep-graph-title">Decorative dependency graph for <%= @port.name %></title>
+    <svg class="dep-graph" width="400" height="<%= [200, 30 + @deps.size * 25].max %>" aria-hidden="true" focusable="false">
       <circle cx="300" cy="100" r="18" fill="#fff" stroke="#000" />
       <text x="300" y="104" text-anchor="middle" font-size="7"><%= @port.name[0,10] %></text>
       <% @deps.each_with_index do |dep, i| %>
@@ -114,10 +113,10 @@
   </div>
   <% if authenticated? %>
     <%= form_with url: port_comments_path(@port), id: "port_comment_form", data: { turbo: true } do |f| %>
-      <p><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :content, rows: 3, placeholder: "Add a comment…" , data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div></p>
+      <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+        <%= f.text_area :content, rows: 3, placeholder: "Add a comment…", data: { character_counter_target: "input" } %>
+        <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+      </div>
       <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>

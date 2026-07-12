@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "takeaway-restaurants-list", target: "_top" do %>
-<section role="region" aria-label="Restaurant results" id="takeaway-restaurants-list" data-turbo-permanent>
+<section role="region" aria-label="Restaurant results" id="takeaway-restaurants-list">
   <% @restaurants.each do |r| %>
     <%= render "takeaway/restaurants/card", restaurant: r %>
   <% end %>

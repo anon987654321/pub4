@@ -3,6 +3,14 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["input", "preview"]
 
+  connect() {
+    this.objectUrls = []
+  }
+
+  disconnect() {
+    this.#clearObjectUrls()
+  }
+
   trigger() {
     this.inputTarget.click()
   }
@@ -23,20 +31,31 @@ export default class extends Controller {
   drop(event) {
     event.preventDefault()
     this.element.classList.remove("is-dragging")
-    this.inputTarget.files = event.dataTransfer.files
-    this.#renderPreview(event.dataTransfer.files)
+    const accepted = Array.from(event.dataTransfer.files).filter((file) => file.type.startsWith("image/"))
+    const transfer = new DataTransfer()
+    accepted.forEach((file) => transfer.items.add(file))
+    this.inputTarget.files = transfer.files
+    this.#renderPreview(transfer.files)
   }
 
   #renderPreview(files) {
     if (!this.hasPreviewTarget) return
+    this.#clearObjectUrls()
     this.previewTarget.innerHTML = ""
     Array.from(files).slice(0, 6).forEach((file) => {
       if (!file.type.startsWith("image/")) return
       const img = document.createElement("img")
       img.alt = file.name
-      img.src = URL.createObjectURL(file)
+      const url = URL.createObjectURL(file)
+      this.objectUrls.push(url)
+      img.src = url
       img.className = "media-picker-thumb"
       this.previewTarget.appendChild(img)
     })
+  }
+
+  #clearObjectUrls() {
+    this.objectUrls.forEach((url) => URL.revokeObjectURL(url))
+    this.objectUrls = []
   }
 }

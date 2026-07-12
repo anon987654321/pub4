@@ -14,7 +14,10 @@ const displayModeQuery = window.matchMedia("(display-mode: standalone)")
 const syncStandaloneMode = () => {
   const standalone = displayModeQuery.matches
   document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser"
-  document.querySelectorAll("nav").forEach(nav => nav.classList.toggle("nav-visible", standalone))
+  document.querySelectorAll("nav").forEach((nav) => {
+    const primaryNavigation = nav.hasAttribute("data-pwa-primary-nav")
+    nav.classList.toggle("nav-visible", standalone || primaryNavigation)
+  })
 }
 
 syncStandaloneMode()

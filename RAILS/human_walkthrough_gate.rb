@@ -26,11 +26,6 @@ APP_FILES = {
     home: "app/views/ports/index.html.erb",
     nav: %w[Ports Categories Maintainers Sign\ in],
   },
-  "hjerterom" => {
-    layout: "app/views/layouts/application.html.erb",
-    home: "app/views/home/index.html.erb",
-    nav: %w[Mat Ressurser Fellesskap Drift Logg\ inn],
-  },
 }.freeze
 
 def read_app_file(app, relative)

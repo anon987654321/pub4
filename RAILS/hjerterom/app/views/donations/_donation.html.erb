@@ -1,5 +1,0 @@
-<article id="<%= dom_id(donation) %>">
-  <h2><%= link_to donation.source_name, donation %></h2>
-  <p class="dim"><%= donation.status.humanize %><% if donation.pickup_window.present? %> · <%= donation.pickup_window %><% end %></p>
-  <% if donation.notes.present? %><p><%= donation.notes %></p><% end %>
-</article>

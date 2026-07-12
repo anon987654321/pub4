@@ -1,8 +1,0 @@
-<% content_for :title, @beneficiary.name %>
-
-<header class="page-header">
-  <h1><%= @beneficiary.name %></h1>
-  <p class="dim"><%= @beneficiary.household_label %></p>
-</header>
-
-<p><%= link_to "Find matching food", match_beneficiary_path(@beneficiary), class: "btn" %></p>

@@ -4,7 +4,7 @@
 
 <% if @communities.any? %>
  <%= turbo_frame_tag "communities-list", target: "_top" do %>
- <ul class="community-list" id="communities-list" data-turbo-permanent>
+ <ul class="community-list" id="communities-list">
  <% @communities.each do |community| %>
    <%= render "communities/card", community: community %>
  <% end %>

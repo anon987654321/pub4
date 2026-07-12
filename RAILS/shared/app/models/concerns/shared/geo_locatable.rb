@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# DRY + KISS for geographic proximity across apps (brgen marketplace/dating/takeaway, hjerterom, etc).
+# Geographic proximity shared by Brgen's marketplace, dating, and takeaway surfaces.
 # Standardizes on pure-Ruby haversine + bbox prefilter for chainable scopes (no PostGIS/earthdistance dep).
 # Replaces 5+ near-identical ad-hoc scopes with inconsistent math (euclid, deg approx, earth_distance, haversine).
 # Usage:

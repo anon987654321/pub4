@@ -21,10 +21,11 @@
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>
-    <div class="field" data-controller="media-picker">
+    <div class="field" data-controller="media-picker direct-upload">
       <%= f.file_field :image,
             accept: "image/*",
             capture: "environment",
+            direct_upload: true,
             class: "media-input-hidden",
             data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
       <div class="media-actions">

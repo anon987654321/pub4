@@ -7,7 +7,7 @@
   <%= form_with(model: @profile, url: dating_profile_path, method: :patch, data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
     <%= render "shared/errors", object: @profile %>
     <div class="field"><%= f.label :bio, "About you" %><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :bio, rows: 4 , data: { character_counter_target: "input" } %>
+  <%= f.text_area :bio, rows: 4, maxlength: 500, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
     <div class="field"><%= f.label :gender %><%= f.select :gender, Dating::Profile::GENDERS, { include_blank: "—" } %></div>
@@ -32,7 +32,7 @@
         </div>
       </div>
     <% end %>
-    <div class="field"><%= f.label :photos, "Add photos" %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+    <div class="field"><%= f.label :photos, "Add photos" %><%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
     <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, "Make profile visible" %></div>
     <div class="field"><%= f.submit "Save", class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
   <% end %>

@@ -2,7 +2,7 @@
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
 <%= turbo_frame_tag "ports", target: "_top" do %>
-<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list" data-turbo-permanent>
+<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list">
   <% @ports.each do |port| %>
     <%= render "ports/row", port: %>
   <% end %>

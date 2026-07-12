@@ -38,12 +38,12 @@
 
   <div class="field">
     <%= form.label :audio_file, "Audio file" %>
-    <%= form.file_field :audio_file, direct_upload: true %>
+    <%= form.file_field :audio_file, direct_upload: true, data: { controller: "direct-upload" } %>
   </div>
 
   <div class="field">
     <%= form.label :artwork %>
-    <%= form.file_field :artwork, direct_upload: true %>
+    <%= form.file_field :artwork, direct_upload: true, data: { controller: "direct-upload" } %>
   </div>
 
   <%= form.submit class: "btn btn-primary btn-sm" %>

@@ -19,6 +19,18 @@ img, video {
   height: auto;
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 input, button, textarea, select {
   font: inherit;
 }
@@ -346,6 +358,50 @@ progress::-webkit-progress-value {
   border-radius: var(--x-radius-pill);
 }
 
+.direct-upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(80px, 2fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--x-radius-sm);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+}
+
+.direct-upload-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.direct-upload-value {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.direct-upload-complete {
+  border-color: var(--color-success);
+}
+
+.direct-upload-error {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+@media (max-width: 480px) {
+  .direct-upload {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .direct-upload-progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
 input[type="radio"].star:checked ~ .star,
 input[type="radio"].star:checked {
   color: var(--color-accent);
@@ -358,6 +414,39 @@ input[type="radio"].star:checked {
   display: flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.errors {
+  margin-block-end: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--color-danger);
+  border-inline-start-width: 4px;
+  border-radius: var(--x-radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
+}
+
+.errors-title {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-base);
+  line-height: 1.4;
+}
+
+.errors-list {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-5);
+}
+
+.error-msg + .error-msg {
+  margin-block-start: var(--space-1);
+}
+
+.field_with_errors {
+  display: contents;
+}
+
+.field_with_errors :is(input, select, textarea) {
+  border-color: var(--color-danger) !important;
 }
 
 fieldset {

@@ -55,6 +55,12 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 end
 
+group :test do
+  gem "capybara"
+  gem "puma"
+  gem "selenium-webdriver"
+end
+
 gem "faker", require: false
 
 group :development do

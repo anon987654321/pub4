@@ -5,8 +5,6 @@ require "minitest/autorun"
 class FleetHealthContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   ACTIVE_APPS = %w[amber brgen bsdports].freeze
-  ARCHIVED_APPS = %w[hjerterom privcam pub_attorney mytoonz].freeze
-  ALL_APPS = (ACTIVE_APPS + ARCHIVED_APPS).freeze
 
   def test_active_apps_expose_health_route
     ACTIVE_APPS.each do |app|
@@ -15,13 +13,6 @@ class FleetHealthContractTest < Minitest::Test
     end
     fleet_routes = File.read(File.join(ROOT, "shared", "config", "routes", "fleet.rb"))
     assert_match(/get ["']health["']/, fleet_routes)
-  end
-
-  def test_archived_apps_keep_health_route_for_redeploy
-    ARCHIVED_APPS.each do |app|
-      routes = File.read(File.join(ROOT, app, "config", "routes.rb"))
-      assert_match(/fleet\.rb/, routes, "#{app} must load shared fleet routes")
-    end
   end
 
   def test_shared_security_initializers_present

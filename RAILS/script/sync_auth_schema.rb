@@ -20,7 +20,7 @@ AUTH_IDX = [
 
 ROOT = File.expand_path("..", __dir__)
 
-%w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+%w[amber brgen bsdports].each do |app|
   path = File.join(ROOT, app, "db", "schema.rb")
   lines = File.readlines(path)
   next if lines.any? { |line| line.include?("remember_token") }

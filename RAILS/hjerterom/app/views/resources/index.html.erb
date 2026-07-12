@@ -1,9 +1,0 @@
-<% content_for :title, "Resources" %>
-<header role="banner" aria-label="Resources header">
-  <h1>Resources</h1>
-  <nav role="navigation" aria-label="Resource actions">
-    <% if authenticated? %><%= link_to "Add resource", new_resource_path %><% end %>
-  </nav>
-</header>
-
-<%= live_search_index url: resources_path, results_partial: "resources/live_search_results", placeholder: "Search resources…", label: "Resource search", frame_id: "hjerterom-resources" %>

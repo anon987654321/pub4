@@ -5,7 +5,7 @@
 </div>
 
 <%= turbo_frame_tag "outfits", target: "_top" do %>
-<div class="item-grid" id="outfits" data-turbo-permanent><%= render @outfits %></div>
+<div class="item-grid" id="outfits"><%= render @outfits %></div>
 
 <% if @outfits.empty? %>
   <div class="empty" role="status" aria-live="polite"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>

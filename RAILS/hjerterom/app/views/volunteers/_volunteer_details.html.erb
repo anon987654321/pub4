@@ -1,8 +1,0 @@
-<article id="<%= dom_id(volunteer) %>">
-  <h1><%= volunteer.name %></h1>
-  <dl>
-    <% if volunteer.email.present? %><dt>Email</dt><dd><%= mail_to volunteer.email %></dd><% end %>
-    <% if volunteer.phone.present? %><dt>Phone</dt><dd><%= volunteer.phone %></dd><% end %>
-    <% if volunteer.notes.present? %><dt>Notes</dt><dd><%= volunteer.notes %></dd><% end %>
-  </dl>
-</article>

@@ -6,7 +6,7 @@ export default class extends Controller {
   trigger() { this.inputTarget.click() }
 
   pick(e) {
-    const files = Array.from(e.target.files)
+    const files = Array.from(e.target.files).filter((file) => file.type.startsWith("image/"))
     if (!files.length) return
     this.previewTarget.innerHTML = ""
     files.forEach((f, i) => {
@@ -21,14 +21,23 @@ export default class extends Controller {
         rm.type = "button"
         rm.className = "media-thumb-rm"
         rm.textContent = "✕"
+        rm.setAttribute("aria-label", `Remove ${f.name}`)
         rm.addEventListener("click", () => {
-          wrap.remove()
-          if (!this.previewTarget.children.length) this.inputTarget.value = ""
+          this.#removeFile(i)
         })
         wrap.append(img, rm)
         this.previewTarget.appendChild(wrap)
       }
       reader.readAsDataURL(f)
     })
+  }
+
+  #removeFile(index) {
+    const transfer = new DataTransfer()
+    Array.from(this.inputTarget.files).forEach((file, fileIndex) => {
+      if (fileIndex !== index) transfer.items.add(file)
+    })
+    this.inputTarget.files = transfer.files
+    this.inputTarget.dispatchEvent(new Event("change", { bubbles: true }))
   }
 }

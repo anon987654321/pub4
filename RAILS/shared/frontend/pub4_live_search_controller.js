@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input"]
+  static targets = ["form", "input", "status"]
   static values = { delay: { type: Number, default: 300 } }
 
   connect() {
@@ -18,12 +18,22 @@ export default class extends Controller {
   }
 
   submitForm() {
-    const form = this.element.querySelector("form")
-    if (!form) return
+    if (!this.hasFormTarget) return
 
-    const action = new URL(form.action, window.location.origin)
+    const action = new URL(this.formTarget.action, window.location.origin)
     action.searchParams.set("format", "turbo_stream")
-    form.action = action.pathname + action.search
-    form.requestSubmit()
+    this.formTarget.action = action.pathname + action.search
+    this.formTarget.setAttribute("aria-busy", "true")
+    if (this.hasStatusTarget) this.statusTarget.textContent = "Updating results"
+    this.formTarget.requestSubmit()
+  }
+
+  complete(event) {
+    if (event.target !== this.formTarget) return
+
+    this.formTarget.removeAttribute("aria-busy")
+    if (this.hasStatusTarget) {
+      this.statusTarget.textContent = event.detail.success ? "Results updated" : "Search could not be completed"
+    }
   }
 }

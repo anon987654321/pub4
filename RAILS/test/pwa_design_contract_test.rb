@@ -6,7 +6,7 @@ require "minitest/autorun"
 class PwaDesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SHARED_ROOT = File.join(ROOT, "shared")
-  APPS = %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].freeze
+  APPS = %w[amber brgen bsdports].freeze
 
   def test_all_apps_ship_generated_workbox_workers
     each_app do |app, root|

@@ -1,8 +1,0 @@
-<article class="food-listing-card" role="article" aria-label="Food listing">
-  <%= link_to listing.title, food_listing_path(listing) %>
-  <p><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
-  <p>Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>
-  <% if listing.dietary_info.present? %>
-    <small><%= listing.dietary_info %></small>
-  <% end %>
-</article>

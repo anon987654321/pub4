@@ -1,8 +1,0 @@
-<% content_for :title, "Lawyers" %>
-
-<header class="page-header" role="banner" aria-label="Lawyers header">
-  <h1>Pub Attorney</h1>
-</header>
-<p class="dim">Find qualified lawyers for free legal help</p>
-
-<%= live_search_index url: lawyers_path, results_partial: "lawyers/live_search_results", placeholder: "Search lawyers…", label: "Lawyer search", frame_id: "pub-attorney-lawyers" %>

@@ -1,7 +1,10 @@
 <% if object.errors.any? %>
-  <div class="errors">
+  <section class="errors" role="alert" aria-labelledby="form-errors-title" tabindex="-1">
+    <h2 id="form-errors-title" class="errors-title"><%= pluralize(object.errors.count, "issue") %> prevented this from being saved</h2>
+    <ul class="errors-list">
     <% object.errors.full_messages.each do |msg| %>
-      <p class="error-msg"><%= msg %></p>
+      <li class="error-msg"><%= msg %></li>
     <% end %>
-  </div>
+    </ul>
+  </section>
 <% end %>

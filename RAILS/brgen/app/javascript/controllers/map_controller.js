@@ -26,7 +26,7 @@ export default class extends Controller {
 
   _rootCanvas() {
     if (this.hasCanvasTarget) return this.canvasTarget
-    return this.element.querySelector("#map, #hjerterom-map")
+    return this.element.querySelector("#map")
   }
 
   _readPoints() {

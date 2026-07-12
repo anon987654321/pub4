@@ -66,4 +66,40 @@ class FrontendAuditorTest < Minitest::Test
       assert findings.none? { |finding| finding.rule == :inline_style_attr }
     end
   end
+
+  def test_flags_block_elements_nested_in_paragraphs
+    assert_view_rule('<p><div class="field">x</div></p>', :invalid_paragraph_block)
+  end
+
+  def test_flags_empty_landmarks
+    assert_view_rule('<nav aria-label="Actions"></nav>', :empty_landmark)
+  end
+
+  def test_flags_main_landmarks_in_regular_views
+    assert_view_rule('<main><h1>Nested</h1></main>', :nested_main)
+  end
+
+  def test_flags_duplicate_turbo_cache_control_directives
+    assert_view_rule(<<~HTML, :duplicate_turbo_cache_control, layout: true)
+      <a href="#main-content">Skip</a>
+      <meta name="turbo-cache-control" content="no-preview">
+      <meta name="turbo-cache-control" content="no-cache">
+      <main id="main-content"></main>
+    HTML
+  end
+
+  private
+
+  def assert_view_rule(contents, rule, layout: false)
+    Dir.mktmpdir do |tmpdir|
+      relative = layout ? "app/views/layouts/application.html.erb" : "app/views/posts/show.html.erb"
+      view = Pathname(tmpdir).join(relative)
+      view.dirname.mkpath
+      view.write(contents)
+
+      findings = Shared::FrontendAuditor.call(root: tmpdir)
+
+      assert findings.any? { |finding| finding.rule == rule && finding.severity == :warning }
+    end
+  end
 end

@@ -5,19 +5,22 @@
 <div class="form-wrap">
   <%= form_with model: @listing, url: marketplace_listing_path(@listing), method: :patch do |f| %>
     <%= render "shared/errors", object: @listing %>
-    <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true, maxlength: 200, autocomplete: "off" %></div>
     <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
+    <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help">Enter the price in øre; for example, 25000 is NOK 250.</p></div>
     <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
-    <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001" %></div>
-    <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
+    <details class="advanced-fields">
+      <summary>Precise coordinates (optional)</summary>
+      <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001", min: -90, max: 90 %></div>
+      <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001", min: -180, max: 180 %></div>
+    </details>
     <div class="field"><%= f.label :status %><%= f.select :status, Marketplace::Listing::STATUSES %></div>
-    <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+    <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
     <div class="field"><%= f.submit "Save", class: "btn btn-primary" %></div>
   <% end %>
 </div>

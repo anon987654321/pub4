@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 ROOT = File.expand_path("..", __dir__)
-VIEW_ROOTS = %w[amber brgen bsdports hjerterom privcam pub_attorney mytoonz shared/app/views].map { |p| File.join(ROOT, p) }
+VIEW_ROOTS = %w[amber brgen bsdports shared/app/views].map { |p| File.join(ROOT, p) }
 
 SPAN_OLD = /<span class="char-counter" data-char-counter-target="counter"><\/span>/
 SPAN_NEW = /<span class="char-counter" data-character-counter-target="counter" aria-live="polite"><\/span>/

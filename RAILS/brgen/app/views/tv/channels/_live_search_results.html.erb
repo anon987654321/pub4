@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "tv-channels-list", target: "_top" do %>
-<section id="tv-channels-list" role="region" aria-label="TV channel results" data-turbo-permanent>
+<section id="tv-channels-list" role="region" aria-label="TV channel results">
   <% @channels.each do |c| %>
     <%= render "tv/channels/row", channel: c %>
   <% end %>

@@ -28,7 +28,7 @@
     <%= f.label :life_phase, "Life phase" %>
     <%= f.select :life_phase, Item::LIFE_PHASES, include_blank: "Not set" %>
   </div>
-  <div class="field media-picker" data-controller="media-picker" data-action="dragover->media-picker#dragover dragleave->media-picker#dragleave drop->media-picker#drop">
+  <div class="field media-picker" data-controller="media-picker direct-upload" data-action="dragover->media-picker#dragover dragleave->media-picker#dragleave drop->media-picker#drop">
     <%= f.label :photos %>
     <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
     <button type="button" class="btn btn-ghost" data-action="click->media-picker#trigger">Choose or drop photos</button>

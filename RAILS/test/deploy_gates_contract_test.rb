@@ -57,8 +57,4 @@ class DeployGatesContractTest < Minitest::Test
     assert File.file?(File.join(ROOT, "bsdports/db/queue_schema.rb"))
   end
 
-  def test_hjerterom_operator_dashboard_route
-    routes = File.read(File.join(ROOT, "hjerterom/config/routes.rb"))
-    assert_includes routes, 'get "operator", to: "operator#index"'
-  end
 end

@@ -20,6 +20,40 @@ h2 {
   letter-spacing: -0.01em;
 }
 
+main#main-content > :first-child:not(.flash) {
+  margin-block-start: var(--space-lg);
+}
+
+main#main-content > section,
+main#main-content > header {
+  margin-block-end: var(--space-xl);
+}
+
+main#main-content header > nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-block-start: var(--space-md);
+}
+
+@media (max-width: 640px) {
+  main#main-content {
+    padding-inline: var(--space-md);
+  }
+
+  main#main-content header > nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-block-end: var(--space-xs);
+    scrollbar-width: thin;
+  }
+
+  main#main-content header > nav .btn,
+  main#main-content header > nav form {
+    flex: 0 0 auto;
+  }
+}
+
 [dir="rtl"] .form .field--check {
   flex-direction: row-reverse;
 }

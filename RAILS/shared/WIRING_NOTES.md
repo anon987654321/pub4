@@ -83,7 +83,7 @@ Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/sh
 
 ## Visual design system (2026-07-10)
 
-**Reference:** x.com's real, current design language is the base for every app's chrome — not a vague "social app" look, the actual measured values. Source of truth is code, not this doc: `shared/app/assets/stylesheets/_x_base.scss` (two mixins, `x-dark-tokens`/`x-light-tokens`) and `shared/design_tokens.yml`. All five apps (amber, brgen, hjerterom, mytoonz, bsdports) inherit these via `pub4_stack` → `_tokens.scss` → `_x_base.scss`, so a change to `_x_base.scss` propagates everywhere.
+**Reference:** x.com's current design language is the base for every app's chrome. Source of truth is code, not this doc: `shared/app/assets/stylesheets/_x_base.scss` (two mixins, `x-dark-tokens`/`x-light-tokens`) and `shared/design_tokens.yml`. All three apps (amber, brgen, bsdports) inherit these via `pub4_stack` → `_tokens.scss` → `_x_base.scss`, so a change to `_x_base.scss` propagates everywhere.
 
 Real X reference values baked into the tokens (verify against current x.com before changing, don't guess):
 - Accent `#1d9bf0`, danger `#f4212e`, success `#00ba7c`, warning `#ffd400`

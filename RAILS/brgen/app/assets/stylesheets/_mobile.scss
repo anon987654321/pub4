@@ -13,6 +13,7 @@
 }
 
 .tab-item {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -20,6 +21,21 @@
   padding: var(--space-3);
   color: var(--x-text);
   transition: background var(--transition-fast);
+}
+
+.tab-item[aria-current="page"] {
+  color: var(--x-accent);
+  background: var(--x-hover-subtle);
+}
+
+.tab-item[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset-block-end: calc(4px + var(--safe-bottom));
+  width: 5px;
+  height: 5px;
+  border-radius: var(--x-radius-pill);
+  background: currentColor;
 }
 
 .tab-item-button {
@@ -93,4 +109,3 @@
 }
 
 .mobile-sheet-links a:hover { background: var(--hover); }
-

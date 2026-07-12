@@ -1,6 +1,5 @@
 // Registers @stimulus-components baseline + StimulusReflex (+ optional Futurism).
 import AutoSubmit from "@stimulus-components/auto-submit"
-import CharacterCounter from "@stimulus-components/character-counter"
 import CheckboxSelectAll from "@stimulus-components/checkbox-select-all"
 import Clipboard from "@stimulus-components/clipboard"
 import ContentLoader from "@stimulus-components/content-loader"
@@ -30,6 +29,8 @@ import InstallPrompt from "pub4/install_prompt"
 import ThemeToggle from "pub4/theme_toggle"
 import InfiniteScroll from "pub4/infinite_scroll"
 import BrowserFingerprint from "pub4/browser_fingerprint"
+import DirectUpload from "pub4/direct_upload"
+import CharacterCounter from "pub4/character_counter"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -66,6 +67,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("theme-toggle", ThemeToggle)
   application.register("infinite-scroll", InfiniteScroll)
   application.register("browser-fingerprint", BrowserFingerprint)
+  application.register("direct-upload", DirectUpload)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     application.register(name, component)

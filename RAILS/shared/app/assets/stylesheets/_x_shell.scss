@@ -177,6 +177,7 @@ main[role="main"] {
   padding-bottom: var(--safe-bottom, 0px);
 }
 .tab-item {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -188,4 +189,19 @@ main[role="main"] {
 .tab-item:hover {
   background: var(--hover);
   text-decoration: none;
+}
+
+.tab-item[aria-current="page"] {
+  color: var(--accent);
+  background: var(--hover-subtle);
+}
+
+.tab-item[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset-block-end: calc(4px + var(--safe-bottom, 0px));
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
 }

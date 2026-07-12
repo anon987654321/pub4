@@ -36,7 +36,6 @@ class DeployBacklogTest < Minitest::Test
       amber/config/routes.rb
       brgen/config/routes.rb
       bsdports/config/routes.rb
-      hjerterom/config/routes.rb
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
       assert_includes source, 'mount SolidQueue::Engine, at: "/admin/jobs"'
@@ -354,7 +353,6 @@ class DeployBacklogTest < Minitest::Test
     %w[
       amber/app/javascript/application.js
       bsdports/app/javascript/application.js
-      hjerterom/app/javascript/application.js
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
       assert_includes source, 'import "pub4/hotwire"'
@@ -366,14 +364,13 @@ class DeployBacklogTest < Minitest::Test
     %w[
       amber/app/views/layouts/application.html.erb
       bsdports/app/views/layouts/application.html.erb
-      hjerterom/app/views/layouts/application.html.erb
       brgen/app/views/layouts/application.html.erb
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
       assert_includes source, 'data-turbo-permanent'
-      assert_includes source, 'turbo-cache-control", content: "no-cache"'
+      refute_includes source, 'turbo-cache-control", content: "no-cache"'
 
-      # amber and hjerterom factor the sign-out link (and its turbo_prefetch:
+      # Amber factors the sign-out link (and its turbo_prefetch:
       # false safety attribute — prevents a hover-prefetch from firing the
       # DELETE) into shared/_sidebar_nav.html.erb rather than inlining it in
       # the layout; check that partial too when the layout itself doesn't.
@@ -401,7 +398,6 @@ class DeployBacklogTest < Minitest::Test
       amber/config/database.yml
       brgen/config/database.yml
       bsdports/config/database.yml
-      hjerterom/config/database.yml
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
       assert_includes source, 'journal_mode: WAL'
@@ -516,7 +512,7 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_shared_auth_fields_migrated_across_rails_apps
-    %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+    %w[amber brgen bsdports].each do |app|
       migration = File.join(ROOT, app, 'db/migrate/20260709120000_add_shared_auth_fields_to_users.rb')
       assert File.file?(migration), "missing shared auth migration for #{app}"
 
@@ -541,7 +537,7 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_schema_dumps_include_shared_auth_user_columns
-    %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+    %w[amber brgen bsdports].each do |app|
       schema = File.read(File.join(ROOT, app, 'db', 'schema.rb'))
       assert_includes schema, 't.string "remember_token"', "#{app} schema missing remember_token"
       assert_includes schema, 't.string "magic_link_token"', "#{app} schema missing magic_link_token"
@@ -638,7 +634,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes sentinel, 'data-kind'
     assert_includes builder, 'Builder::XmlMarkup'
 
-    %w[amber brgen bsdports hjerterom mytoonz privcam pub_attorney].each do |app|
+    %w[amber brgen bsdports].each do |app|
       routes = File.read(File.join(ROOT, "#{app}/config/routes.rb"))
       assert_includes routes, 'sitemaps#index', "#{app} missing sitemap route"
       assert File.file?(File.join(ROOT, app, 'app/controllers/sitemaps_controller.rb')),
@@ -651,15 +647,6 @@ class DeployBacklogTest < Minitest::Test
     brgen_routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
     assert_includes brgen_routes, 'robots#show'
     assert_includes read_brgen('app/controllers/sitemaps_controller.rb'), 'Brgen::DomainRegistry.resolve'
-  end
-
-  def test_privcam_videos_infinite_scroll_sentinel_lives_in_results_partial
-    partial = File.read(File.join(ROOT, 'privcam/app/views/videos/_live_search_results.html.erb'))
-    index = File.read(File.join(ROOT, 'privcam/app/views/videos/index.html.erb'))
-
-    assert_includes partial, 'VideosInfiniteScrollReflex#load_more'
-    assert_includes partial, 'videos-infinite-scroll-sentinel'
-    refute_includes index, 'infinite_scroll_sentinel'
   end
 
   def test_marketplace_deals_stores_and_playlist_sets_use_infinite_scroll
@@ -772,26 +759,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'bsdports/app/reflexes/ports_infinite_scroll_reflex.rb')),
                     'ports/row'
 
-    assert_includes File.read(File.join(ROOT, 'hjerterom/app/views/food_listings/_live_search_results.html.erb')),
-                    'FoodListingsInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'hjerterom/app/reflexes/food_listings_infinite_scroll_reflex.rb')),
-                    'food_listings/card'
-
-    assert_includes File.read(File.join(ROOT, 'hjerterom/app/views/resources/_live_search_results.html.erb')),
-                    'ResourcesInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'hjerterom/app/reflexes/resources_infinite_scroll_reflex.rb')),
-                    'resources/card'
-
-    assert_includes File.read(File.join(ROOT, 'hjerterom/app/views/beneficiaries/index.html.erb')),
-                    'BeneficiariesInfiniteScrollReflex#load_more'
     assert_includes File.read(File.join(ROOT, 'bsdports/app/views/maintainers/show.html.erb')),
                     'MaintainerPortsInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'pub_attorney/app/views/cases/_live_search_results.html.erb')),
-                    'CasesInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'pub_attorney/app/views/lawyers/_live_search_results.html.erb')),
-                    'LawyersInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'mytoonz/app/views/comic_strips/_live_search_results.html.erb')),
-                    'ComicStripsInfiniteScrollReflex#load_more'
     assert_includes sentinel, 'data-maintainer-id'
   end
 

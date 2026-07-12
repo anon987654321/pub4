@@ -21,7 +21,7 @@
 
 <% if @listings.any? %>
   <%= turbo_frame_tag "marketplace-listings", target: "_top" do %>
-    <div class="deal-grid" id="marketplace-listings" data-turbo-permanent>
+    <div class="deal-grid" id="marketplace-listings">
       <% @listings.each do |listing| %>
         <%= render "marketplace/listings/card", listing: listing, distance_km: @listing_distances&.fetch(listing.id, nil) %>
       <% end %>

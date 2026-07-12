@@ -120,7 +120,7 @@
 
 label { display: block; font-size: var(--text-sm); color: var(--x-text-secondary); }
 
-input[type=text], input[type=email], input[type=password], textarea, select {
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=url], input[type=search], textarea, select {
   width: 100%;
   padding: var(--space-2);
   background: var(--x-bg);
@@ -133,6 +133,22 @@ input[type=text], input[type=email], input[type=password], textarea, select {
   transition: border-color var(--transition-fast);
 }
 
+input[type=file] {
+  max-width: 100%;
+  padding: var(--space-2) 0;
+  color: var(--x-text-secondary);
+}
+
+input[type=file]::file-selector-button {
+  min-height: 40px;
+  margin-inline-end: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-bg);
+  color: var(--x-text);
+  cursor: pointer;
+}
+
 input:focus, textarea:focus, select:focus { border-color: var(--text-dim); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
-

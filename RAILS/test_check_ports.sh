@@ -21,8 +21,7 @@ assert_rejects_duplicate_ports() {
   "apps": [
     { "name": "amber", "domain": "amber.brgen.no", "port": 61352 },
     { "name": "brgen", "domain": "brgen.no", "port": 61352 },
-    { "name": "bsdports", "domain": "bsdports.org", "port": 47312 },
-    { "name": "hjerterom", "domain": "hjerterom.brgen.no", "port": 38891 }
+    { "name": "bsdports", "domain": "bsdports.org", "port": 47312 }
   ]
 }
 JSON
@@ -38,8 +37,7 @@ assert_rejects_invalid_port() {
   "apps": [
     { "name": "amber", "domain": "amber.brgen.no", "port": 70000 },
     { "name": "brgen", "domain": "brgen.no", "port": 38182 },
-    { "name": "bsdports", "domain": "bsdports.org", "port": 47312 },
-    { "name": "hjerterom", "domain": "hjerterom.brgen.no", "port": 38891 }
+    { "name": "bsdports", "domain": "bsdports.org", "port": 47312 }
   ]
 }
 JSON

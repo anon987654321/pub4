@@ -71,13 +71,3 @@ apps:
       checks:
         - type: selector
           css: "body"
-  hjerterom:
-    port: 38891
-    paths:
-      - path: /up
-        expect_status: 200
-    browser:
-      warmup_s: 2
-      checks:
-        - type: selector
-          css: "body"

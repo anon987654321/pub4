@@ -1,6 +1,6 @@
 # Rails apps
 
-3 active production Rails 8.1 apps under one shared engine (plus `hjerterom` archived — decommissioned on the 1GB VPS 2026-07-11, source retained). **Source of truth: `apps.yml`.** Horizon/aspirational work: `apps.horizon.yml` (agent: ignore). Per-app notes: `<app>/AGENTS.md`.
+3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`.
 
 ## Apps
 
@@ -9,7 +9,6 @@
 | brgen | brgen.no | 38182 | City social + marketplace, dating, TV, takeaway, playlist |
 | amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence |
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
-| hjerterom | hjerterom.brgen.no | 38891 | Food rescue (decommissioned on VPS; redeploy when RAM allows) |
 
 Deploy: `cd RAILS && doas zsh OPERATOR.sh` (default: brgen) or `doas zsh OPERATOR.sh <app>`
 
@@ -70,7 +69,7 @@ Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistr
 | dating | dating |
 | ai | MASTER relay → :53187 |
 
-**Standalone apps:** amber (amber.brgen.no:61352), hjerterom (hjerterom.brgen.no:38891), bsdports (bsdports.org:47312).
+**Standalone apps:** amber (amber.brgen.no:61352), bsdports (bsdports.org:47312).
 
 **Operator UI:** MASTER domain bar (`MASTER/web/public/domain_cluster.js`), matrix console (`MASTER/tools/public/index.html`), CLI `/domain <name>` via `SubdomainOrchestrator`.
 
@@ -100,7 +99,7 @@ curl -fsS http://127.0.0.1:<port>/up
 ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 ```
 
-**Status:** brgen/amber/hjerterom/bsdports ready when VPS `bin/ci` + public `/up` pass; master (ai.brgen.no) ready on auth smoke + `/up`. Ship criteria: `MASTER/data/operator_playbook.yml`.
+**Status:** brgen/amber/bsdports are ready when VPS `bin/ci` + public `/up` pass; master (ai.brgen.no) is ready on auth smoke + `/up`. Ship criteria: `MASTER/data/operator_playbook.yml`.
 
 **Blockers:**
 

@@ -1,9 +1,0 @@
-<% content_for :title, "Food" %>
-<header class="page-header" role="banner" aria-label="Food listings header">
-  <h1>Available food</h1>
-  <nav role="navigation" aria-label="Food actions">
-    <% if authenticated? %><%= link_to "List food", new_food_listing_path %><% end %>
-  </nav>
-</header>
-
-<%= live_search_index url: food_listings_path, results_partial: "food_listings/live_search_results", placeholder: "Search food listings…", label: "Food listing search", frame_id: "hjerterom-food-listings" %>

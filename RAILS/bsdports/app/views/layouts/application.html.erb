@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#000000" data-light-color="#ffffff" data-dark-color="#000000">
-  <meta name="turbo-cache-control" content="no-preview">
-  <%= tag.meta name: "turbo-cache-control", content: "no-cache" %>
   <title><%= content_for?(:title) ? "#{yield :title} — BSDports" : "BSDports" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "BSDports — browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
@@ -31,7 +29,7 @@
 </head>
 <body class="zen-minimal" data-pwa-key="bsdports" data-controller="pwa-standalone">
 <a class="skip-link" href="#main-content">Skip to main content</a>
-<nav role="navigation" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
+<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
   <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
   <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>

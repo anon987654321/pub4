@@ -66,8 +66,11 @@
 }
 
 .btn {
-  display: inline-block;
-  padding: 0.3rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.45rem 0.9rem;
   background: var(--color-black);
   color: var(--color-white);
   border: none;
@@ -77,8 +80,15 @@
   text-decoration: none;
 }
 
+.btn:focus-visible,
+.btn-sm:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .btn-sm {
-  padding: 0.2rem 0.5rem;
+  min-height: 36px;
+  padding: 0.3rem 0.65rem;
   font-size: 0.75rem;
   background: #444;
   color: #fff;

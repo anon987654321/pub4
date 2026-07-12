@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR=${0:a:h}
 typeset -a CORE_APPS=(brgen)
-typeset -a ALL_APPS=(brgen amber bsdports hjerterom)
+typeset -a ALL_APPS=(brgen amber bsdports)
 
 deploy_app() {
   typeset app=$1
@@ -30,11 +30,11 @@ Usage:
     all)
       for app in $ALL_APPS; do deploy_app "$app"; done
       ;;
-    brgen|amber|bsdports|hjerterom)
+    brgen|amber|bsdports)
       deploy_app "$1"
       ;;
     *)
-      print -u2 "OPERATOR.sh: unknown app '$1' (try brgen, amber, bsdports, hjerterom, or all)"
+      print -u2 "OPERATOR.sh: unknown app '$1' (try brgen, amber, bsdports, or all)"
       exit 1
       ;;
   esac

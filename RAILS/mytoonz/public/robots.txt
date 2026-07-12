@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: /admin
-
-Sitemap: https://mytoonz.brgen.no/sitemap.xml

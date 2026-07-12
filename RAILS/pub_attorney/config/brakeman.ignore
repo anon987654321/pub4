@@ -1,8 +1,0 @@
-{
-  "ignored_warnings": [
-    {
-      "fingerprint": "c1ecbd8c30ae130265aefbef73eb8b48f4e1e0aa612d6dacceefb28e67ea3d21",
-      "note": "pkg_info uses argv array; port names come from indexed DB rows, skipped when CI=1"
-    }
-  ]
-}

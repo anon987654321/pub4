@@ -1,30 +1,33 @@
 <% content_for :title, "New listing" %>
 
-<div class="page-header" role="banner" aria-label="New marketplace listing header">
+<div class="page-header" aria-label="New marketplace listing header">
   <h1>New listing</h1>
-  <nav role="navigation" aria-label="Listing actions"></nav>
 </div>
 
 <turbo-frame id="marketplace-new-listing" data-turbo-action="replace">
 <div class="form-wrap">
   <%= form_with model: @listing, url: marketplace_listings_path, html: { role: "form", "aria-label": "Create marketplace listing" } do |f| %>
     <%= render "shared/errors", object: @listing %>
-    <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true, maxlength: 200, autocomplete: "off" %></div>
     <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
+    <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help">Enter the price in øre; for example, 25000 is NOK 250.</p></div>
     <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
-    <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001" %></div>
-    <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
-    <div class="field" data-controller="media-picker" data-media-picker-multiple-value="true">
+    <details class="advanced-fields">
+      <summary>Precise coordinates (optional)</summary>
+      <div class="field"><%= f.label :latitude %><%= f.number_field :latitude, step: "0.000001", min: -90, max: 90 %></div>
+      <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001", min: -180, max: 180 %></div>
+    </details>
+    <div class="field" data-controller="media-picker direct-upload" data-media-picker-multiple-value="true">
       <%= f.file_field :photos,
             multiple: true,
             accept: "image/*",
             capture: "environment",
+            direct_upload: true,
             class: "media-input-hidden",
             data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
       <div class="media-actions">

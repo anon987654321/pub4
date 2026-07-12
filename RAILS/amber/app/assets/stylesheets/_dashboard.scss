@@ -1,7 +1,15 @@
 .dash-stats dl {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-lg);
   margin-bottom: var(--space-md);
+}
+
+.dash-stats dl > div {
+  min-width: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-xs);
 }
 
 .dash-stats dt {
@@ -13,6 +21,23 @@
 .dash-stats dd {
   font-size: 1.5rem;
   font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .dash-stats dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .plan-row,
+  .cpw-row {
+    align-items: flex-start;
+  }
+
+  .cpw-row {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
 }
 
 .weather-bar {
