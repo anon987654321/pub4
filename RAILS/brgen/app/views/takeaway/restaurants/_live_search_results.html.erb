@@ -1,4 +1,5 @@
-<section role="region" aria-label="Restaurant results" id="takeaway-restaurants-list">
+<%= turbo_frame_tag "takeaway-restaurants-list", target: "_top" do %>
+<section role="region" aria-label="Restaurant results" id="takeaway-restaurants-list" data-turbo-permanent>
   <% @restaurants.each do |r| %>
     <%= render "takeaway/restaurants/card", restaurant: r %>
   <% end %>
@@ -13,3 +14,4 @@
            sentinel_id: "takeaway-restaurants-sentinel",
            q: params[:q],
            cuisine: params[:cuisine] %>
+<% end %>

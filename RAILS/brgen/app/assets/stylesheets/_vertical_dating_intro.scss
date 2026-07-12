@@ -6,7 +6,7 @@
   justify-content: center;
   flex: 1;
   width: 100%;
-  gap: clamp(12px, 3vh, 28px);
+  gap: clamp(var(--space-3), 3vh, var(--space-7));
 }
 
 .dating-heart-stage {
@@ -41,30 +41,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-1);
   font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--dating-muted);
 }
 
 .dating-intro-bankid {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1);
   font-weight: 600;
-  color: #e8d4f0;
+  color: var(--dating-accent);
   letter-spacing: -0.02em;
 }
 
 .dating-intro-bankid-mark {
   display: inline-grid;
-  grid-template-columns: repeat(3, 5px);
-  gap: 2px;
+  grid-template-columns: repeat(3, var(--space-1));
+  gap: var(--space-1);
 }
 
 .dating-intro-bankid-mark span {
-  width: 5px;
-  height: 5px;
+  width: var(--space-1);
+  height: var(--space-1);
   border-radius: 1px;
   background: currentColor;
 }
