@@ -11,7 +11,7 @@ class HomeController < ApplicationController
         @demo_items = Amber::DemoWardrobe.preview_items
         @demo_outfits = Amber::DemoWardrobe.preview_outfits
       end
-      @pagy, @guest_posts = pagy(Post.public_feed.includes(:user, :outfit, :item))
+      @pagy, @guest_posts = pagy(Post.public_feed.includes(:outfit, :item, user: :profile))
       @anon_service = Shared::AnonymousPostService.new(request: request, user: Current.user)
       return
     end

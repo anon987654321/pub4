@@ -6,11 +6,11 @@ class PostsController < ApplicationController
   before_action :authorize_owner!, only: :destroy
 
   def index
-    @pagy, @posts = pagy(Post.public_feed.includes(:user, :outfit, :item))
+    @pagy, @posts = pagy(Post.public_feed.includes(:outfit, :item, user: :profile))
   end
 
   def feed
-    @pagy, @posts = pagy(Current.user.feed_posts.includes(:user, :outfit, :item))
+    @pagy, @posts = pagy(Current.user.feed_posts.includes(:outfit, :item, user: :profile))
   end
 
   def show
