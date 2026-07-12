@@ -1,33 +1,33 @@
 /* Postpro preset strip */
 .preset-strip {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1);
   flex-wrap: wrap;
-  padding: 8px 0 2px;
+  padding: var(--space-2) 0 var(--space-1);
 }
 
 .preset-opt {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1);
   cursor: pointer;
 }
 
 .preset-opt input[type="radio"] { display: none; }
 
 .preset-opt span {
-  padding: 5px 0.875rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  font-size: .8125rem;
-  color: var(--text-dim);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-pill);
+  font-size: var(--text-sm);
+  color: var(--x-text-secondary);
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .preset-opt input:checked + span {
-  background: var(--text);
-  border-color: var(--text);
-  color: #000;
+  background: var(--x-text);
+  border-color: var(--x-text);
+  color: var(--x-bg);
   font-weight: 700;
 }
 
@@ -36,22 +36,22 @@
   width: 100%;
   max-height: 480px;
   object-fit: cover;
-  border-radius: var(--radius);
+  border-radius: var(--x-radius-card);
   display: block;
-  margin: 8px 0;
+  margin: var(--space-2) 0;
 }
 
 .push-enable-btn {
   position: fixed;
-  bottom: calc(72px + var(--safe-bottom) + 8px);
+  bottom: calc(72px + var(--safe-bottom) + var(--space-2));
   inset-inline-start: 50%;
   transform: translateX(-50%);
-  background: var(--text);
-  color: #000;
+  background: var(--x-text);
+  color: var(--x-bg);
   border: none;
-  border-radius: var(--radius-pill);
-  padding: 10px 20px;
-  font-size: .9375rem;
+  border-radius: var(--x-radius-pill);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
   z-index: calc(var(--z-splash) - 1);
@@ -61,10 +61,10 @@
 /* Affiliate deals */
 .affiliate-deal {
   display: flex;
-  gap: 10px;
+  gap: var(--space-2);
   align-items: flex-start;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--x-border);
   text-decoration: none;
   color: inherit;
 }
@@ -73,6 +73,6 @@
   width: 52px;
   height: 52px;
   object-fit: cover;
-  border-radius: var(--radius);
+  border-radius: var(--x-radius-card);
   flex-shrink: 0;
 }

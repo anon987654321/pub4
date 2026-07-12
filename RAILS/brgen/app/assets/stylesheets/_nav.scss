@@ -68,8 +68,8 @@ a.feed-tab { text-decoration: none; display: block; }
 .compose-prompt {
   display: block;
   color: var(--x-text-secondary);
-  font-size: 20px;
-  padding: 10px 0;
+  font-size: var(--text-lg);
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--x-border);
   margin-bottom: var(--space-3);
 }
@@ -82,9 +82,9 @@ a.feed-tab { text-decoration: none; display: block; }
   background: transparent;
   color: var(--x-text);
   font: inherit;
-  font-size: 20px;
+  font-size: var(--text-lg);
   line-height: 1.4;
-  padding: 10px 0;
+  padding: var(--space-2) 0;
   resize: none;
   min-height: 44px;
 }
@@ -98,13 +98,13 @@ a.feed-tab { text-decoration: none; display: block; }
 }
 
 .compose-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.compose-actions { display: flex; gap: var(--space-3); color: var(--x-text-secondary); font-size: 18px; }
+.compose-actions { display: flex; gap: var(--space-3); color: var(--x-text-secondary); font-size: var(--text-base); }
 .compose-action {
   background: none;
   border: 0;
-  padding: 4px;
+  padding: var(--space-1);
   color: inherit;
-  font-size: 18px;
+  font-size: var(--text-base);
   opacity: 0.5;
   cursor: default;
 }
