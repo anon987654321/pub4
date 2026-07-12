@@ -29,6 +29,46 @@ body.zen-minimal .sidebar.revealed {
   pointer-events: auto;
 }
 
+/* Swipe affordance — the sidebar has no visible edge once hidden, so a
+   quiet pulsing arrow marks where it slides in from. Same easing as the
+   reveal itself, so the hint and the panel move with one hand. */
+.nav-affordance {
+  position: fixed;
+  inset-inline-start: 6px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  z-index: 998;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--hover-subtle);
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+body.zen-minimal .sidebar:not(.revealed) ~ .nav-affordance {
+  opacity: 0.35;
+  animation: nav-affordance-pulse 2.6s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}
+
+@keyframes nav-affordance-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.zen-minimal .sidebar:not(.revealed) ~ .nav-affordance {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 body.zen-minimal .city-carousel:not(.revealed),
 body.zen-minimal .tab-bar:not(.revealed) {
   opacity: 0.02;

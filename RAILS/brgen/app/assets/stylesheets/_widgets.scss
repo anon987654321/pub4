@@ -45,7 +45,10 @@ article:hover { background: var(--hover-subtle); }
 .x-content { flex: 1; min-width: 0; }
 .x-header { display: flex; gap: 4px; font-size: 0.8125rem; color: var(--text-dim); margin-bottom: 2px; }
 .x-name { color: var(--text); font-weight: 700; letter-spacing: -0.01em; }
-.x-handle, .x-time, .x-count { color: var(--text-dim); font-size: 0.8125rem; }
+/* Handle carries identity (where a post is from) — keep it a shade
+   brighter than the timestamp, which is decoration. */
+.x-handle { color: var(--text); opacity: 0.75; font-size: 0.8125rem; }
+.x-time, .x-count { color: var(--text-dim); font-size: 0.8125rem; }
 /* Title carries the visual weight next to the avatar, echoing old-brgen's
    large title-beside-avatar header (BRGEN_OLD .avatar_and_title .title). */
 .x-text { font-size: 1.0625rem; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; margin: 0 0 8px; color: var(--text); font-family: var(--x-font); text-transform: none; }

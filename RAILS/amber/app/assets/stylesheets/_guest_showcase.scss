@@ -87,7 +87,15 @@
   &__media--swatch {
     display: grid;
     place-items: center;
-    background: color-mix(in srgb, var(--swatch, #e8eaed) 72%, #ffffff);
+    background:
+      repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.35) 0,
+        rgba(255, 255, 255, 0.35) 1px,
+        transparent 1px,
+        transparent 5px
+      ),
+      color-mix(in srgb, var(--swatch, #e8eaed) 72%, #ffffff);
   }
 
   &__img {

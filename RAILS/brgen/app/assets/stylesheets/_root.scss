@@ -6,6 +6,10 @@
   @include x.x-dark-tokens;
   @include xroot.x-app-root-tokens;
   color-scheme: dark;
+  /* brgen's own hue, rotated off x.com's #1d9bf0 so a screenshot reads as
+     brgen rather than a generic X clone; same saturation/lightness. */
+  --x-accent: #1d55f0;
+  --x-accent-hover: #1a4dd8;
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -21,6 +25,8 @@
 #dark-toggle:checked ~ .theme-root {
   @include x.x-light-tokens;
   color-scheme: light;
+  --x-accent: #1d55f0;
+  --x-accent-hover: #1a4dd8;
   --bg: var(--x-bg);
   --surface: var(--x-surface);
   --surface2: var(--x-surface-elevated);
@@ -55,6 +61,5 @@ html, body {
 
 a { color: var(--text); text-decoration: none; }
 a:hover { text-decoration: underline; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
