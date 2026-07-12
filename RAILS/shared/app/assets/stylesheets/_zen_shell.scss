@@ -143,19 +143,19 @@ input, button, textarea, select {
 
 .btn--danger {
   background: var(--color-danger);
-  color: #fff;
+  color: var(--x-text);
 }
 
 .btn--sm {
   min-height: 36px;
   padding-inline: var(--space-3);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .btn--lg {
   min-height: 52px;
   padding-inline: var(--space-6);
-  font-size: 1.05rem;
+  font-size: var(--text-base);
 }
 
 .avatar-initials {

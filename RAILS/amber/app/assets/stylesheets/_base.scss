@@ -20,8 +20,8 @@ body {
 @media (min-width: 1280px) {
   html,
   body {
-    font-size: 21px;
-    line-height: 28px;
+    font-size: var(--text-lg);
+    line-height: 1.333;
   }
 }
 
