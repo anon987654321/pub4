@@ -247,8 +247,8 @@ cyan = "#4285f4"
 white = "#e7e9ea"
 
 [character]
-success_symbol = "[master$](bold red)"
-error_symbol = "[master$](bold red)"
+success_symbol = "master[\\$](bold red)"
+error_symbol = "master[\\$](bold red)"
 format = "$symbol "
 
 [directory]
