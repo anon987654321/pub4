@@ -5,9 +5,9 @@
   <% rows.each do |row| %>
     <% next if row.items.empty? %>
     <div class="wardrobe-carousel-row<%= " wardrobe-carousel-row--reverse" if row.reverse %>">
-      <div class="wardrobe-carousel-row__head">
-        <h2 class="wardrobe-carousel-row__label"><%= row.label %></h2>
-        <p class="wardrobe-carousel-row__hint"><%= row.hint %></p>
+      <div class="wardrobe-carousel-row-head">
+        <h2 class="wardrobe-carousel-row-label"><%= row.label %></h2>
+        <p class="wardrobe-carousel-row-hint"><%= row.hint %></p>
       </div>
       <div
         class="swiper wardrobe-swiper"

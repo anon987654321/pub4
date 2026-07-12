@@ -21,10 +21,10 @@
         <% end %>
         <div class="x-actions">
           <span class="x-act">💬 <span class="x-count"><%= post.comment_count %></span></span>
-          <span class="x-act">🔁</span>
-          <span class="x-act">❤️ <span class="x-count"><%= post.score %></span></span>
-          <span class="x-act">📊</span>
-          <button type="button" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy">↗</button>
+          <span class="x-act">↻</span>
+          <span class="x-act">↑ <span class="x-count"><%= post.score %></span></span>
+          <span class="x-act">⋯</span>
+          <button type="button" class="x-act" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy" title="Share">↗</button>
         </div>
         <div class="x-meta-bottom">
           <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %></time>

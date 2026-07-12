@@ -37,9 +37,10 @@ module Master
       def infer_law(entry)
         tier = entry["tier"].to_s
         case tier
-        when "kernel", "safety" then "ROBUSTNESS"
-        when "clean_code", "style" then "DENSITY"
-        when "architecture", "design" then "ABSTRACTION"
+        when "kernel", "safety", "reliability", "performance", "security", "robustness",
+             "correctness", "verification" then "ROBUSTNESS"
+        when "clean_code", "style", "density", "clarity", "aesthetic" then "DENSITY"
+        when "architecture", "design", "solid", "interface" then "ABSTRACTION"
         else "DENSITY"
         end
       end

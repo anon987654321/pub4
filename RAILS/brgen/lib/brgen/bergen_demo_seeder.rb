@@ -27,7 +27,7 @@ module Brgen
       %w[Live live_bergenlive]
     ].freeze
 
-    POSTS = [
+    POSTS = [  # Curated for realism; in full seed use SEED_SCALE for volume + Faker for "millions" feel via counters (e.g. 10k+ views)
       {
         user: "emilie_floyen", community: "bergen", hours_ago: 1, votes: 14,
         title: "Hva skjer i Bergen i helgen?",
@@ -433,7 +433,9 @@ module Brgen
           title: row[:title],
           content: row[:content],
           anonymous: row[:anonymous] == true,
-          created_at: row[:hours_ago].hours.ago + rand(0..45).minutes
+          created_at: row[:hours_ago].hours.ago + rand(0..45).minutes,
+          views_count: rand(500, 25000),  # popular impression
+          likes_count: (row[:votes].to_i * 50 + rand(100, 2000))  # scale for millions feel
         )
         post.record_activity!("BergenDemoSeed") if post.respond_to?(:record_activity!)
 

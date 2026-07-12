@@ -77,14 +77,8 @@ module Master
         end
 
         def current_axiom_names
-          path = File.join(@root, "MASTER", "data", "axioms.jsonl")
-          return [] unless File.exist?(path)
-
-          File.foreach(path).filter_map do |line|
-            JSON.parse(line).fetch("name", nil)
-          rescue JSON::ParserError, KeyError
-            nil
-          end.map(&:to_s).to_set
+          Master.load_yaml(Master::RULES_PATH).fetch("principle_priorities", {})
+                .values.flatten.filter_map { |entry| entry.is_a?(Hash) ? entry.keys.first.to_s : nil }.to_set
         end
 
         def module_bucket(path)

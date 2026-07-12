@@ -268,33 +268,10 @@ git:
     - "string-interpolated git commands"
     - "rm -rf in deploy scripts without explicit guard"
 
-# Operator directives — distilled from the human operator's feedback memory.
-# Personality injects these verbatim into every system prompt so MASTER and its
-# LLM agents apply the same rules the operator applies to their own work.
-operator_directives:
-  - "Flat Hierarchy always on: merge/rename before new files; paths are dense Rails-parameterize slugs (snake_case, Strunk-clean tokens) — OpenBSD-flat, Zeitwerk-true, Roda-tight."
-  - "Autoproceed once approved: execute the full backlog without per-step go/no-go."
-  - "No new files without approval: edit originals in place; never _v2/_new/staging copies; merge/rename first."
-  - "Frequent small commits: one commit per meaningful change, never batched."
-  - "Mandatory lint/beautify on touch: full pass, not just changed lines."
-  - "Always autofix violations: run /sweep immediately after any /scan finds violations."
-  - "Read every comment in a touched file: delete if it restates code, rewrite Strunk-and-White if kept."
-  - "Reorder files by importance on every touch: public API > primary > helpers > privates > edge cases."
-  - "No heavy work on Termux/Android: defer Ruby runs, large clones, mass ops to the VPS."
-  - "Bare HTML/CSS targeting: nav a not .nav__link; tag helper; no class attrs on tag-targetable elements."
-  - "Update README.md after any behavior/capability/surface change, no prompting."
-  - "Restart MASTER after every web edit: doas rcctl restart master per scp under MASTER/web/."
-  - "No Python: Ruby only for scripting."
-  - "Proper casing in prose; no === ---- [ok] • | ASCII decorations. Boot dmesg banner is sacred."
-  - "Pair violations with opportunities — every scan output surfaces both, never just bugs."
-  - "Aim for 2x architectural wins over 5% incremental fixes; ask what shape, not what tweak."
-  - "Subrule findings carry the subrule id (HEDGE, PREAMBLE, OCP, LSP, NN_GROUP), not just the parent."
-  - "When similar code repeats across files, default to merge/decouple/flatten before local patching."
-  - "Architecture data shapes are not sacred — re-examine them periodically for misfit."
-  - "After landing a batch, surface what's next or structurally off — don't itemize the diff."
-  - "Best-of-N for non-trivial autofixes: generate candidates, score by violation delta, pick winner."
-  - "Stylesheets are high-churn surfaces: prefer _tokens.scss and pub4_stack tokens; edit app/assets/stylesheets with intent."
-  - "On every view/CSS touch: flatten divitis, enforce bare tag targeting, run FrontendAuditor."
+# Operator directives moved to data/operator_principles.yml (27 principles,
+# runtime authority) — this block was a fossilized parallel copy that also
+# duplicated this file's own ruby.comments.reassess_on_touch and html/css
+# sections. Deleted 2026-07-12; see operator_principles.yml instead.
 
 erb:
   html_safe: explicit_only_after_sanitize
@@ -379,6 +356,11 @@ typography:
     - "tracking: tighten display, loosen all-caps (.08em)"
     - "no centered body copy; left-align for left-to-right languages"
 
+# Canonical 10-item reference — style.yml is not globbed by Master.load_rules,
+# so this list feeds no detector directly. All 10 now have live semantic
+# entries in data/rules/unit.yml: SYSTEM_STATUS/MATCH_REAL_WORLD/USER_CONTROL/
+# CONSISTENCY/GUARD_EXPENSIVE_OPS/RECOGNITION_OVER_RECALL/FLEXIBILITY_EFFICIENCY/
+# AESTHETIC_MINIMALISM/ERROR_RECOVERY/HELP_AND_DOCUMENTATION.
 nielsen_heuristics:
   - { id: 1, name: visibility_of_system_status,        rule: "every async action shows progress within 100ms" }
   - { id: 2, name: match_real_world,                   rule: "use users' language; mirror real-world conventions" }

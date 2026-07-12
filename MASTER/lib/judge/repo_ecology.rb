@@ -78,6 +78,7 @@ module Master
           files: records.size,
           score: score(records),
           dead_file_candidates: dead_file_candidates(records),
+          dead_method_candidates: dead_method_candidates(records),
           duplicate_basenames: duplicate_basenames(records),
           similar_clusters: similar_clusters(records),
           sprawl: sprawl(records),
@@ -97,6 +98,9 @@ module Master
         lines << ""
         lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) do |item|
           "#{item[:path]} — #{item[:reason]}"
+        end)
+        lines.concat(render_section("Dead-method candidates", report[:dead_method_candidates]) do |item|
+          "#{item[:path]}##{item[:method]} — #{item[:reason]}"
         end)
         lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) do |item|
           "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
@@ -190,6 +194,39 @@ module Master
         return unless inbound.zero?
         return if record.lines < 3
         { path: record.path, reason: "no stem references found", lines: record.lines }
+      end
+
+      # Method-level extension of dead_file_candidates: a defined method whose
+      # name never appears as a token in any OTHER file is a dead-code
+      # candidate. Same text-reachability heuristic, finer grain — misses
+      # metaprogrammed/reflective calls (send, method_missing) by design;
+      # those need semantic review, not a false "confirmed dead" claim.
+      def dead_method_candidates(records)
+        ruby_records = records.compact.select { |r| r.ext == ".rb" && !protected_path?(r.path) }
+        corpus = ruby_records.map { |r| [r.path, r.tokens.join(" ")] }.to_h
+        ruby_records.flat_map { |r| dead_methods_in(r, corpus) }.first(MAX_DEAD_CANDIDATES)
+      end
+
+      DEAD_METHOD_SKIP = %w[
+        initialize call to_s to_str to_a to_h to_i to_f inspect eql hash coerce
+        respond_to_missing method_missing each build new run perform
+      ].to_set.freeze
+
+      def dead_methods_in(record, corpus)
+        return [] unless File.exist?(record.full_path)
+        source = File.read(record.full_path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+        names = source.scan(/^\s*def\s+(?:self\.)?([a-z_][a-zA-Z0-9_]*[?!]?)/).flatten.uniq
+        names.reject { |n| DEAD_METHOD_SKIP.include?(n.delete("?!")) }.filter_map do |name|
+          # record.tokens never include ?/! (token regex excludes punctuation) —
+          # a call site like `x.done?` tokenizes to "done", not "done?".
+          bare = name.delete("?!")
+          next if record.tokens.count(bare) > 1 # called elsewhere in its own file — normal for private helpers
+          inbound = corpus.count { |path, text| path != record.path && text.include?(bare) }
+          next unless inbound.zero?
+          { path: record.path, method: name, reason: "no call-site references found in corpus" }
+        end
+      rescue StandardError
+        []
       end
 
       def protected_path?(path)

@@ -50,6 +50,7 @@ def parse_initial_message_options(argv)
       puts ""
       puts "Pipe mode:  echo '/status' | bin/cli"
       puts "Fast mode:  bin/cli --fast   (status/orient/tools/help only)"
+      puts "Gates:      MASTER/bin/check --profile=contributor|agent|full"
       puts "VPS 1GB:    auto-skips TTS/boot-scan/web — use /scan lib not full-repo prompts"
       exit 0
     end

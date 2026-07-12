@@ -1,14 +1,14 @@
-/* Post cards */
+/* Post cards — x.com flat feed style, token aligned */
 .post-card {
   display: flex;
-  padding: 0.75rem 16px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--x-border);
   border-inline-start: 2px solid transparent;
   cursor: pointer;
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.post-card:hover { background: var(--hover-subtle); border-inline-start-color: var(--accent); }
+.post-card:hover { background: var(--x-hover-subtle); border-inline-start-color: var(--x-accent); }
 
 .vote-col {
   width: 36px;
@@ -16,38 +16,38 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding-top: 2px;
-  margin-inline-end: 0.75rem;
+  gap: var(--space-1);
+  padding-top: var(--space-1);
+  margin-inline-end: var(--space-3);
 }
 
 .vote-btn {
   background: none;
   border: none;
-  color: var(--text-dim);
+  color: var(--x-text-secondary);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
   padding: 4px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.vote-btn:hover { color: var(--upvote); background: var(--hover); }
-.vote-btn.down:hover { color: var(--downvote); background: var(--hover-subtle); }
+.vote-btn:hover { color: var(--upvote); background: var(--x-hover); }
+.vote-btn.down:hover { color: var(--downvote); background: var(--x-hover-subtle); }
 .vote-btn.active-up { color: var(--upvote); }
 .vote-btn.active-down { color: var(--downvote); }
-.vote-score { font-size: .75rem; font-weight: 700; color: var(--text-dim); }
+.vote-score { font: 700 var(--text-xs) / 1 var(--x-font); color: var(--x-text-secondary); }
 
 .post-body { flex: 1; min-width: 0; }
-.post-meta { font-size: .875rem; color: var(--text-dim); margin-bottom: 4px; }
-.post-meta a { color: var(--text-dim); }
-.post-meta .community { color: var(--text); font-weight: 700; }
-.post-title { font-size: 0.9375rem; color: var(--text); line-height: 1.5; margin-bottom: 0.75rem; }
-.post-title a { color: var(--text); }
+.post-meta { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 4px; }
+.post-meta a { color: var(--x-text-secondary); }
+.post-meta .community { color: var(--x-text); font-weight: 700; }
+.post-title { font: 500 0.9375rem / 1.5 var(--x-font); color: var(--x-text); margin-bottom: var(--space-3); }
+.post-title a { color: var(--x-text); }
 .post-title a:hover { text-decoration: underline; }
 
 .post-actions { display: flex; gap: 0; }
@@ -56,39 +56,39 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: var(--text-dim);
-  font-size: .875rem;
+  color: var(--x-text-secondary);
+  font: var(--text-sm) / 1 var(--x-font);
   padding: 8px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
 }
 
-.post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
+.post-actions a:hover { color: var(--x-accent); background: var(--x-hover); text-decoration: none; }
 
-/* Post show — single-column editorial reading (old-brgen feel on the dark shell).
-   Overrides the generic feed-card `article { display: flex }` / dimmed `article p`. */
+/* Post show — single-column editorial reading (x.com flat dark shell).
+   Uses --x- tokens for presentability. */
 .post_show {
   display: block;
-  padding: 20px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 20px var(--space-4);
+  border-bottom: 1px solid var(--x-border);
 }
 .post_show:hover { background: none; }
 .post_vote {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin-bottom: 12px;
-  color: var(--text-dim);
+  color: var(--x-text-secondary);
   font-weight: 700;
 }
 .post_vote button, .post_vote span { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .post_vote button:hover { color: var(--upvote); }
 .post_vote button { transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1); }
 .post_vote button:active { transform: scale(0.8); }
-.post_show header { font-size: .875rem; color: var(--text-dim); margin-bottom: 8px; }
-.post_show header a { color: var(--text-dim); }
-.post_show h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.25; letter-spacing: -0.01em; margin: 0 0 0.9rem; color: var(--text); }
-.post_body { color: var(--text); line-height: 1.7; font-size: 1.0625rem; }
+.post_show header { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 8px; }
+.post_show header a { color: var(--x-text-secondary); }
+.post_show h1 { font: 800 1.5rem / 1.25 var(--x-font); letter-spacing: -0.01em; margin: 0 0 0.9rem; color: var(--x-text); }
+.post_body { color: var(--x-text); line-height: 1.7; font-size: 1.0625rem; }
 .post_body p { margin: 0 0 1.2em; }
 .post_body p:last-child { margin-bottom: 0; }
 .post_body ul, .post_body ol { margin: 0 0 1.2em; padding-inline-start: 1.5em; }
@@ -96,26 +96,26 @@
 .post_body ol { list-style: decimal; }
 .post_body li { margin-bottom: 4px; }
 .post_show a, .post_body a { text-decoration: underline; }
-.post_show .post-image { display: block; max-width: 100%; border-radius: var(--radius); margin: 0 0 1.2em; }
+.post_show .post-image { display: block; max-width: 100%; border-radius: var(--x-radius-card); margin: 0 0 1.2em; }
 
-/* Comments — single-column, editorial body, nested replies indented */
-.comment-form-wrap { padding: 16px; border-bottom: 1px solid var(--border); }
+/* Comments — x.com style nested, editorial. */
+.comment-form-wrap { padding: var(--space-4); border-bottom: 1px solid var(--x-border); }
 .comment_item {
   display: block;
-  padding: 0.75rem 16px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--x-border);
 }
 .comment_item:hover { background: none; }
-.comment_item header { font-size: .875rem; color: var(--text-dim); margin-bottom: 4px; }
-.comment_item header span:first-child { color: var(--text); font-weight: 700; }
-.comment_item p { color: var(--text); line-height: 1.6; font-size: 0.9375rem; margin: 0; }
+.comment_item header { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 4px; }
+.comment_item header span:first-child { color: var(--x-text); font-weight: 700; }
+.comment_item p { color: var(--x-text); line-height: 1.6; font-size: 0.9375rem; margin: 0; }
 .comment_item a { text-decoration: underline; }
 .comment_item .comment_item { padding-inline-end: 0; padding-inline-start: 40px; border-bottom: 0; }
 
-/* Forms */
-.form-wrap { padding: 24px 16px; max-width: 480px; }
-.form-wrap--compact { padding: 0.75rem 16px; max-width: none; }
-.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+/* Forms — x.com minimal */
+.form-wrap { padding: 24px var(--space-4); max-width: 480px; }
+.form-wrap--compact { padding: var(--space-3) var(--space-4); max-width: none; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-4); }
 .field--check { flex-direction: row; align-items: center; gap: 10px; }
 
 label { display: block; font-size: .875rem; color: var(--text-dim); }

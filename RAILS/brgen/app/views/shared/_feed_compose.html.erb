@@ -15,13 +15,16 @@
     <div class="tiptap_mount" data-tiptap-editor-target="mount"
          data-action="focus->feed-compose#expand" hidden></div>
     <div class="compose-footer" data-feed-compose-target="footer" hidden>
-      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
         <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
         <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
         <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
       </div>
-      <div class="compose-actions" aria-hidden="true">
-        <span title="Photo">📷</span><span title="Poll">📊</span><span title="Emoji">😊</span><span title="Place">📍</span>
+      <div class="compose-actions">
+        <button type="button" class="compose-action" title="Add photo" disabled>📷</button>
+        <button type="button" class="compose-action" title="Poll" disabled>📊</button>
+        <button type="button" class="compose-action" title="Emoji" disabled>😊</button>
+        <button type="button" class="compose-action" title="Location" disabled>📍</button>
       </div>
       <div class="compose-submit">
         <% if guest? %>

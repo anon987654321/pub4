@@ -17,6 +17,8 @@ ActiveJob::Base.queue_adapter = :inline
 was_strict = ApplicationRecord.strict_loading_by_default
 ApplicationRecord.strict_loading_by_default = false
 
+scale = (ENV['SEED_SCALE'] || (Rails.env.production? ? 1 : 5)).to_i.clamp(1, 50)
+
 if Rails.env.development? || Rails.env.test?
   User.destroy_all
   Item.destroy_all
@@ -24,7 +26,8 @@ if Rails.env.development? || Rails.env.test?
   Post.destroy_all
 end
 
-users = 20.times.map do
+num_users = (20 * scale).clamp(5, 500)
+users = num_users.times.map do
   User.strict_loading(false).create!(
     email_address: Amber::FashionFaker.user_email,
     password: "password123",
@@ -38,7 +41,7 @@ end
 puts "Created #{users.size} users"
 
 items = users.flat_map do |user|
-  8.times.map do
+  (8 * scale).clamp(2, 20).times.map do
     attrs = Amber::FashionFaker.item_attributes
     Item.create!(attrs.merge(user: user))
   end
@@ -47,7 +50,7 @@ end
 puts "Created #{items.size} wardrobe items"
 
 outfits = users.flat_map do |user|
-  3.times.map do
+  (3 * scale).clamp(1, 10).times.map do
     outfit_items = user.items.sample(rand(3..5))
     outfit = Outfit.create!(
       user: user,
@@ -64,20 +67,20 @@ end
 puts "Created #{outfits.size} outfits"
 
 posts = users.flat_map do |user|
-  5.times.map do
+  (5 * scale).clamp(1, 20).times.map do
     Post.create!(
       user: user,
       body: Amber::FashionFaker.post_body,
       outfit: user.outfits.sample,
       item: user.items.sample,
-      likes_count: rand(0..42)
+      likes_count: rand(10 * scale, 5000 * scale)
     )
   end
 end
 
 puts "Created #{posts.size} posts"
 
-posts.sample(30).each do |post|
+posts.sample(30 * scale).each do |post|
   liker = users.sample
   post.reactions.create!(user: liker, kind: %w[like love].sample) if post.respond_to?(:reactions)
 end

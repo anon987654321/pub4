@@ -18,7 +18,15 @@ module Master
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
       WORKER_TIMEOUT = 45
       @last_error = nil
-      @synthesis_mutex = Mutex.new
+      # One mutex per pool slot, not one global mutex — ac0146eac serialized
+      # synthesis when TtsSupervisor pool_size was 1, so a single mutex was
+      # harmless. Pool_size later defaulted to 2 ("for parallel synth"), but
+      # the mutex stayed global and silently capped real concurrency at 1
+      # regardless of idle pool workers. Sized dynamically so MASTER_TTS_POOL_SIZE=1
+      # still gets full serialization.
+      @synthesis_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
+      @synthesis_rr_mutex = Mutex.new
+      @synthesis_rr = 0
 
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
@@ -62,24 +70,19 @@ module Master
         fail: { rate: "-8%", pitch: "-40Hz" },
         question: { rate: "+0%", pitch: "+15Hz" },
 
-        # Creative vocal effects for Osman (and other voices)
-        dramatic:     { rate: "-15%", pitch: "-60Hz" },   # lower, slower, intense
-        intimate:     { rate: "-5%",  pitch: "-25Hz" },   # close, warm
-        intense:      { rate: "+5%",  pitch: "+20Hz" },   # urgent, raised
-        ethereal:     { rate: "-20%", pitch: "+40Hz" },   # high, slow, airy
-        robotic:      { rate: "+10%", pitch: "-80Hz" },   # flat, mechanical
-        whispered:    { rate: "-25%", pitch: "-10Hz" },   # very soft, breathy feel via extreme rate
-        storyteller:  { rate: "-8%",  pitch: "-15Hz" },   # narrative, measured
-        energetic:    { rate: "+15%", pitch: "+30Hz" }    # lively, higher
+        dramatic:     { rate: "-15%", pitch: "-60Hz" },
+        intimate:     { rate: "-5%",  pitch: "-25Hz" },
+        intense:      { rate: "+5%",  pitch: "+20Hz" },
+        ethereal:     { rate: "-20%", pitch: "+40Hz" },
+        robotic:      { rate: "+10%", pitch: "-80Hz" },
+        whispered:    { rate: "-25%", pitch: "-10Hz" },
+        storyteller:  { rate: "-8%",  pitch: "-15Hz" },
+        energetic:    { rate: "+15%", pitch: "+30Hz" }
       }.freeze
 
       DEFAULT_VOICE = Policy.single_voice_key
       DEFAULT_STYLE = :calm
-      # clean_text hard-truncates every utterance at this length with no
-      # continuation. At 900 a full LLM reply enqueued as one utterance lost
-      # everything past the first few sentences — "tts only speaks the first
-      # words". Edge TTS synthesizes several KB fine; the serial queue is the
-      # real throughput limit, so a generous cap only costs synth seconds.
+      # generous MAX; historical truncation lost tail of replies; queue bounds cost
       MAX_CHARS = 4000
       CHUNK_CHARS = 220
 
@@ -144,8 +147,6 @@ module Master
         fallback
       end
 
-      # register_for: creative vs factual bias from prompt_style_principles + voice leaks.
-      # Delegates to Expression (single source for all runtime → TTS + face mapping).
       def register_for(text)
         Master::Voice::Expression.for_text(text)[:register]
       end
@@ -253,8 +254,17 @@ module Master
       end
 
       def synthesize_streaming_to_file(text, output_path:, on_chunk: nil, **opts)
-        @synthesis_mutex.synchronize do
+        @synthesis_mutexes[next_synthesis_slot].synchronize do
           synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)
+        end
+      end
+
+      def next_synthesis_slot
+        @synthesis_rr_mutex.synchronize do
+          size = [TtsSupervisor.pool_size, 1].max
+          slot = @synthesis_rr % size
+          @synthesis_rr += 1
+          slot
         end
       end
 

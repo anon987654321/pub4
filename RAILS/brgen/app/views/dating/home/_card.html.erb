@@ -14,7 +14,7 @@
     <span class="swipe-stamp swipe-stamp--pass" aria-hidden="true">NOPE</span>
     <div class="swipe-overlay">
       <div class="swipe-meta">
-        <h2>
+        <h2 class="swipe-name">
           <%= profile.user.email_address.split("@").first %>
           <% if profile.age %><span class="swipe-age">, <%= profile.age %></span><% end %>
         </h2>

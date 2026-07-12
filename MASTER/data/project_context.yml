@@ -68,16 +68,15 @@ entries:
 
     Passes run one commit each with tests green and Zeitwerk ok: skeleton, then voice, trace, ground, reach, judge, loop, and finally now with stages folded into pipeline-as-data in `now/pipeline.rb`. Work happens on VPS dev@brgen.no on branch `refactor/seven-modules`. Time-orientation—now versus loop versus trace—replaces file-type splits; `judge/` unifies four "is this OK?" trees.
 - key: project_master_yml_json_authority
-  name: master.yml + master.json are the constitutional source of truth
-  description: Current Ruby MASTER must implement what the predecessor master.json
-    (v43.0.1) and master.yml (v31, v49.75, etc.) describe — close the drift
+  name: master.yml/master.json migration is complete — soul.yml/rules.yml are sole authority
+  description: The predecessor master.yml/master.json drift-closing effort (started
+    2026-05-05) is finished; both predecessor files are deleted. Authority chain
+    is CLAUDE.md's "Authority order" — soul.yml, then rules.yml.
   type: project
   body: |-
-    The directive is that MASTER should do what `master.yml` and `master.json` describe. YAML and JSON predecessors are the authoritative spec; Ruby is the executor. This was stated 2026-05-05 after mining deleted `master.json` (November–December 2025, 130 commits) and `master.yml` (December 2025–February 2026, 668 commits).
+    Historical: on 2026-05-05, the directive was that MASTER should implement what predecessor `master.json` (v43.0.1, November–December 2025, 130 commits) and `master.yml` (v31–v49.75, December 2025–February 2026, 668 commits) described, mined from their deleted history. That drift-closing work is done — the priority gaps listed at the time (Universal Laws ladder, Strunk & White safeguards, biases section, structural_ops taxonomy, council personas, evidence logging, beauty section, per-language templates, and the rest) now live in `soul.yml` and `rules.yml`.
 
-    Priority gaps to close include the six Universal Laws ladder from ROBUSTNESS through SINGULARITY, LINEARITY, PROXIMITY, ABSTRACTION, and DENSITY; Strunk & White safeguards with `apply_to` and `never_apply_to` that never delete vars, calls, or conditionals; a biases section covering hallucination, simulation, completion_theater, sycophancy, false_confidence, and cognitive traps; structural_ops taxonomy; an eight-phase workflow plus learn and introspect; patterns.veto and high regex; five adversarial questions and five to fifteen solutions; fixed-point convergence with two silent runs; incremental scanning; prediction engine and autofix thresholds; twelve weighted council personas with veto rights; SHA256 evidence logging; a beauty section; preserve boot, dmesg, and help; OpenBSD per-config validators; tech stack constants for LCP, INP, CLS, WCAG, touch, and 66ch; cost guards; and per-language templates.
-
-    Execute in order; each item should be commit-able. Aesthetic items are first-class for this architect user.
+    Neither predecessor file exists in the repo anymore. `soul.yml` (constitution) and `rules.yml` (scan rules + `principle_priorities`) are the sole authoritative sources — see the "Authority order" line in `CLAUDE.md`. Do not look for law in `master.yml`/`master.json`; they are gone.
 - key: reference_grok_ui_cli_patterns
   name: Grok-inspired UI/CLI patterns (chatlog dump 2026-05-07)
   description: Reference dump from a sister chat — StyleCoach UI prompt, htmx+SSE

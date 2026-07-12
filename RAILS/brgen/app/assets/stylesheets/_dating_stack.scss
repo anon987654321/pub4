@@ -30,10 +30,10 @@
 
 .swipe-photo {
   position: relative;
-  border-radius: 14px;
+  border-radius: var(--x-radius-card);
   overflow: hidden;
   aspect-ratio: 3 / 4;
-  background: #111;
+  background: var(--x-surface-elevated);
 }
 
 .swipe-photo img {
@@ -47,17 +47,20 @@
   position: absolute;
   inset: auto 0 0;
   padding: 2.5rem 1rem 1rem;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.82) 72%);
-  color: #fff;
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--x-bg) 82%, transparent) 72%);
+  color: var(--x-text);
   pointer-events: none;
 }
 
 .swipe-meta h2 {
   margin: 0;
-  font-size: clamp(1.35rem, 4.5vw, 1.75rem);
-  font-weight: 700;
+  font: 700 clamp(1.35rem, 4.5vw, 1.75rem) / 1.15 var(--x-font);
   letter-spacing: -0.02em;
-  line-height: 1.15;
+  color: var(--x-text);
+}
+
+.swipe-name {
+  display: inline;
 }
 
 .swipe-age {
@@ -67,8 +70,8 @@
 
 .swipe-location {
   margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.78);
+  font: var(--text-sm) / 1 var(--x-font);
+  color: var(--x-text-secondary);
 }
 
 .swipe-stamp {
@@ -76,9 +79,8 @@
   top: 1.25rem;
   padding: 0.35rem 0.65rem;
   border: 3px solid currentColor;
-  border-radius: 6px;
-  font-size: 1.5rem;
-  font-weight: 800;
+  border-radius: var(--x-radius-sm);
+  font: 800 1.5rem / 1 var(--x-font);
   letter-spacing: 0.08em;
   opacity: 0;
   transform: rotate(-18deg) scale(0.85);
@@ -111,11 +113,12 @@
   display: grid;
   place-items: center;
   height: 100%;
-  background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+  background: var(--x-surface-elevated);
 }
 
 .swipe-placeholder span {
   font-size: clamp(3rem, 14vw, 4.5rem);
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.18);
+  color: var(--x-text-secondary);
+  opacity: 0.18;
 }

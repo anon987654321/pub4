@@ -3,8 +3,8 @@
 body.vertical-marketplace {
   --shop-luxury-serif: "Libre Baskerville", "Georgia", "Times New Roman", serif;
   --shop-cta: oklch(75% 0.17 55);
-  --shop-cta-text: #111;
-  --shop-luxury-bg: #fafafa;
+  --shop-cta-text: var(--text);
+  --shop-luxury-bg: var(--surface);
   --shop-editorial-tracking: 0.12em;
 }
 
@@ -35,7 +35,7 @@ body.vertical-marketplace .deal-card {
 }
 
 body.vertical-marketplace .deal-card:hover {
-  background: #fff;
+  background: var(--hover);
   border-color: var(--shop-cta);
 }
 
@@ -63,7 +63,7 @@ body.vertical-marketplace .deal-cat.active {
 }
 
 body.vertical-marketplace .deal-search {
-  background: var(--x-search-bg, #202327);
+  background: var(--search-bg, var(--surface));
   padding: 1rem 16px;
 }
 

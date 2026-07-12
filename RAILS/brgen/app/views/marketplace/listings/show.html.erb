@@ -2,12 +2,12 @@
 <% content_for :description, meta_description_for(@listing) %>
 <% content_for :json_ld, json_ld_for(@listing, type: :product) %>
 
-<div class="page-header">
+<div class="page-header marketplace-listing-header">
   <div>
     <p class="dim">Marketplace / <%= @listing.category&.name || "Listing" %></p>
     <h1><%= @listing.title %></h1>
   </div>
-  <nav role="navigation">
+  <nav role="navigation" aria-label="Listing actions">
     <% if authenticated? && Current.user == @listing.user %>
       <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
     <% elsif authenticated? %>
@@ -22,15 +22,15 @@
 
 <%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
 
-<article>
+<article class="marketplace-listing">
   <p class="listing-price"><%= @listing.price_display %></p>
   <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user.email_address.split("@").first %></p>
   <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · <%= pluralize(@listing.reviews_count.to_i, "review") %> · status: <%= @listing.status %></p>
   <% if @listing.reviews_count.to_i.positive? %>
     <p class="dim"><%= number_with_precision(@listing.rating, precision: 1) %> ★ seller interaction rating</p>
   <% end %>
-  <p class="mt-12"><%= simple_format(@listing.description) %></p>
-  <button class="btn-share mt-12" data-controller="share"
+  <div class="listing-description"><%= simple_format(@listing.description) %></div>
+  <button class="btn-share" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share">Share</button>

@@ -54,7 +54,7 @@ html, body {
 
 @media (min-width: 1280px) {
   html, body {
-    font-size: 21px;
+    font-size: 21px; /* x.com large screen scale; aligns with --x-font-size * 1.3125 */
     line-height: 28px;
   }
 }

@@ -1,26 +1,25 @@
 .swipe-body {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-inline: 0.15rem;
+  gap: var(--space-2);
+  padding-inline: var(--space-1);
 }
 
 .swipe-bio {
   margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.45;
-  color: var(--dating-muted, var(--text-secondary, inherit));
+  font: var(--text-sm) / 1.45 var(--x-font);
+  color: var(--dating-muted, var(--x-text-secondary));
 }
 
 .swipe-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-1);
 }
 
 .swipe-chips .chip {
-  border-radius: var(--radius-pill);
-  font-size: 0.75rem;
+  border-radius: var(--x-radius-pill);
+  font: var(--text-xs) / 1 var(--x-font);
   padding: 0.2rem 0.55rem;
 }
 
@@ -30,8 +29,8 @@
 
 .swipe-actions {
   display: flex;
-  gap: 1.25rem;
-  margin-top: 0.25rem;
+  gap: var(--space-5);
+  margin-top: var(--space-1);
   justify-content: center;
   align-items: center;
 }
@@ -39,7 +38,7 @@
 .swipe-action {
   width: 3.5rem;
   height: 3.5rem;
-  border-radius: 50%;
+  border-radius: var(--x-radius-pill);
   border: 2px solid transparent;
   font-size: 1.35rem;
   line-height: 1;

@@ -10,14 +10,14 @@
 body.vertical-dating .page-header {
   max-width: min(100%, 420px);
   margin-inline: auto;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--x-border);
 }
 
 body.vertical-dating header .dim {
   color: var(--dating-muted);
-  font-size: 0.8125rem;
+  font: var(--text-xs) / 1 var(--x-font);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0;
@@ -28,7 +28,7 @@ body.vertical-dating header h1 {
   font-weight: 700;
   font-size: clamp(1.5rem, 5vw, 1.875rem);
   letter-spacing: -0.03em;
-  margin: 0.15rem 0 0;
+  margin: var(--space-1) 0 0;
 }
 
 body.vertical-dating header nav {
@@ -39,8 +39,8 @@ body.vertical-dating header nav {
 
 body.vertical-dating .btn-ghost {
   color: var(--dating-muted);
-  border-color: rgba(255, 255, 255, 0.12);
-  font-size: 0.8125rem;
+  border-color: var(--x-border);
+  font: var(--text-xs) / 1 var(--x-font);
 }
 
 body.vertical-dating .dating-discover {
@@ -51,7 +51,7 @@ body.vertical-dating .dating-discover {
 body.vertical-dating .swipe-card {
   background: var(--dating-card);
   border-color: var(--dating-border);
-  border-radius: var(--x-radius-lg);
+  border-radius: var(--x-radius-card);
 }
 
 body.vertical-dating .swipe-bio {
@@ -64,7 +64,7 @@ body.vertical-dating .swipe-signin {
   background: linear-gradient(90deg, var(--dating-accent), var(--dating-accent-warm));
   color: #fff;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   font-weight: 600;
 }
 

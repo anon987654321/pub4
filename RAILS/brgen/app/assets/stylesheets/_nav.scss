@@ -4,13 +4,13 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
   background: var(--panel-blur-bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--x-border);
   z-index: 10;
 }
 
-.feed-header h1 { font-size: 20px; font-weight: 800; padding: 0.75rem 0 4px; }
+.feed-header h1 { font: 800 20px / 1 var(--x-font); padding: var(--space-3) 0 4px; }
 
 /* Horizontal subnav with right-edge fade (BRGEN_OLD spec) */
 .feed-tabs {
@@ -18,8 +18,8 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  mask-image: linear-gradient(to right, #000 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent 100%);
+  mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
 }
 
 .feed-tabs::-webkit-scrollbar { display: none; }
@@ -27,11 +27,10 @@
 .feed-tab {
   flex: 1;
   display: block;
-  padding: 16px;
+  padding: var(--space-4);
   text-align: center;
-  font: 0.9375rem/1 var(--x-font);
-  font-weight: 500;
-  color: var(--text-dim);
+  font: 500 var(--text-sm) / 1 var(--x-font);
+  color: var(--x-text-secondary);
   background: none;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -39,49 +38,49 @@
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.feed-tab:hover { background: var(--hover); color: var(--text); text-decoration: none; }
-.feed-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
+.feed-tab:hover { background: var(--x-hover); color: var(--x-text); text-decoration: none; }
+.feed-tab.active { color: var(--x-text); border-bottom-color: var(--x-accent); font-weight: 700; }
 a.feed-tab { text-decoration: none; display: block; }
 
 /* Compose box */
 .compose-box {
   display: flex;
-  gap: 0.75rem;
-  padding: 0.75rem 16px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--x-border);
 }
 
 .compose-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background: var(--surface2);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface-elevated);
   flex-shrink: 0;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 1rem;
-  color: var(--text-dim);
+  font-size: var(--x-font-size);
+  color: var(--x-text-secondary);
 }
 
 .compose-inner { flex: 1; min-width: 0; }
 
 .compose-prompt {
   display: block;
-  color: var(--text-dim);
+  color: var(--x-text-secondary);
   font-size: 20px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--x-border);
+  margin-bottom: var(--space-3);
 }
 
-.compose-prompt:hover { color: var(--text); text-decoration: none; }
+.compose-prompt:hover { color: var(--x-text); text-decoration: none; }
 
 .compose-input {
   width: 100%;
   border: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--x-text);
   font: inherit;
   font-size: 20px;
   line-height: 1.4;
@@ -90,16 +89,25 @@ a.feed-tab { text-decoration: none; display: block; }
   min-height: 44px;
 }
 
-.compose-input::placeholder { color: var(--text-dim); }
+.compose-input::placeholder { color: var(--x-text-secondary); }
 .compose-input:focus { outline: none; }
 
 .compose-box--expanded .compose-input {
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--x-border);
+  margin-bottom: var(--space-3);
 }
 
-.compose-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-.compose-actions { display: flex; gap: 0.75rem; color: var(--text-dim); font-size: 18px; }
+.compose-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.compose-actions { display: flex; gap: var(--space-3); color: var(--x-text-secondary); font-size: 18px; }
+.compose-action {
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: inherit;
+  font-size: 18px;
+  opacity: 0.5;
+  cursor: default;
+}
 .compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
-.compose-as { font-size: 1rem; }
-.compose-hint { font-size: 1rem; margin: 0.5rem 0 0; }
+.compose-as { font-size: var(--x-font-size); }
+.compose-hint { font-size: var(--x-font-size); margin: var(--space-2) 0 0; }

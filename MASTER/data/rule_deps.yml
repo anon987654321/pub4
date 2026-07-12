@@ -92,6 +92,18 @@ deps:
     after: [FEATURE_ENVY, god_class]
   CQS:
     after: [SRP]
+
+  # SOLID literal proxies (OPEN_CLOSED/LISKOV/INTERFACE_SEGREGATION/
+  # DEPENDENCY_INVERSION): all judge class/method boundaries, so they must
+  # not run before SRP settles what "one class" even means here.
+  OPEN_CLOSED:
+    after: [SRP]
+  LISKOV:
+    after: [SRP, god_class]
+  INTERFACE_SEGREGATION:
+    after: [SRP]
+  DEPENDENCY_INVERSION:
+    after: [FEATURE_ENVY, SRP]
   html_lang:
     after: [meta_charset]
   no_inline_styles:

@@ -67,13 +67,87 @@ codebase:
   detect_semantic: Are IO/DB calls scattered deep in business logic?
   fix: Return data from core, let shell handle IO.
 - id: CONVENTION_OVER_CONFIG
-  source: Convention over Configuration (Rails / DHH)
+  source: Convention over Configuration (Rails Doctrine, DHH)
   name: Sensible defaults reduce decisions
   tier: productivity
   severity: info
   autofix: false
   detect_semantic: Does this require explicit config where a convention would suffice?
   fix: Provide sensible defaults, override only when needed.
+- id: PROGRAMMER_HAPPINESS
+  source: Optimize for Programmer Happiness (Rails Doctrine, DHH)
+  name: Ceremony and friction are costs, not virtues
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Does this force unnecessary ceremony or friction the programmer
+    shouldn't have to think about?
+  fix: Simplify the API surface; favor expressiveness over rigor for its own sake.
+- id: OMAKASE
+  source: The Menu Is Omakase (Rails Doctrine, DHH)
+  name: Prefer the curated default over a competing tool
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Does this introduce a competing tool where a Rails-blessed default
+    already exists?
+  fix: Prefer the curated default (Hotwire, Solid Queue/Cache/Cable, Minitest) unless
+    there is a specific reason to deviate.
+- id: NO_ONE_PARADIGM
+  source: No One Paradigm (Rails Doctrine, DHH)
+  name: Mix paradigms pragmatically
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Does this force a single paradigm where a pragmatic mix would
+    read better?
+  fix: Mix paradigms where each fits — don't force uniformity for ideology's sake.
+- id: BEAUTIFUL_CODE
+  source: Exalt Beautiful Code (Rails Doctrine, DHH)
+  name: Elegance is a requirement, not a bonus
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Would a reader consider this code elegant, or merely correct?
+  fix: Rewrite for aesthetic clarity, not just passing tests.
+- id: SHARP_KNIVES
+  source: Provide Sharp Knives (Rails Doctrine, DHH)
+  name: Trust the programmer over guarding against misuse
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Does this restrict a capable programmer's power to prevent a
+    rare misuse, at the cost of the common case?
+  fix: Trust the programmer; document the danger instead of removing the capability.
+- id: INTEGRATED_SYSTEMS
+  source: Value Integrated Systems (Rails Doctrine, DHH)
+  name: Prefer one cohesive system over fragmentation
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Does this fragment a cohesive concern across services or gems
+    where one integrated system would be simpler?
+  fix: Prefer a well-organized monolith over premature service extraction.
+- id: PROGRESS_OVER_STABILITY
+  source: Progress Over Stability (Rails Doctrine, DHH)
+  name: A beneficial breaking change beats frozen compatibility
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Is this avoiding a beneficial breaking change purely to preserve
+    backward compatibility?
+  fix: Take the breaking change if it meaningfully improves the design; provide
+    a clear upgrade path.
+- id: BIG_TENT
+  source: Push Up a Big Tent (Rails Doctrine, DHH)
+  name: Write for contributors of every skill level
+  tier: philosophy
+  severity: info
+  autofix: false
+  detect_semantic: Does this alienate contributors of different skill levels or
+    backgrounds unnecessarily — needless cleverness, exclusionary jargon?
+  fix: Write for a big tent of contributors — clarity over cleverness, welcoming
+    over gatekeeping.
 - id: MONOLITH_FIRST
   source: MonolithFirst (Martin Fowler, bliki)
   name: Start monolith, extract when team exceeds 15

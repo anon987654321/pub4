@@ -39,6 +39,14 @@ PROFILES = {
   "full"        => [run_bin["ci"], run_bin["probe", "all"], rake["audit"]],
 }.freeze
 
+# line count awareness (soul SIMPLEST_WORKS, file warn 200/hard 300)
+# runs fast; warns on non-light profiles for lib/**/*.rb
+lib_rbs = Dir[File.join(ROOT, "lib/**/*.rb")]
+oversized = lib_rbs.select { |f| File.readlines(f).size > 300 }
+if profile != "contributor" && oversized.any?
+  warn "check: oversized (>300 lines) in lib: #{oversized.map { |f| File.basename(f) }.join(', ')}"
+end
+
 steps = PROFILES[profile] or abort "check: unknown profile '#{profile}' (have: #{PROFILES.keys.join(', ')})"
 warn "check[web]: live web checks skipped (set MASTER_WEB_LIVE=1)" if profile == "web" && !web_live
 

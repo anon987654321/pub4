@@ -4,17 +4,17 @@
   .sidebar { width: 120px; align-items: flex-start; }
   .nav-item {
     width: 100%;
-    gap: 0.75rem;
+    gap: var(--space-3);
     justify-content: flex-start;
-    padding-inline: 10px;
-    font-size: 16px;
+    padding-inline: var(--space-2);
+    font-size: var(--x-font-size);
   }
   .nav-item svg { width: 22px; height: 22px; }
   .compose-btn {
     width: 100%;
     min-height: 46px;
-    padding-inline: 0.75rem;
-    font-size: 0.9375rem;
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
   }
   .compose-label { display: inline; }
   .compose-icon { display: none; }
@@ -30,6 +30,6 @@
   .tab-bar { display: flex; }
   .compose-fab { display: flex; }
   main { max-width: 100%; border-left: none; border-right: none; padding-bottom: calc(60px + var(--safe-bottom)); }
-  .theme-toggle { top: 10px; right: 10px; }
+  .theme-toggle { top: var(--space-2); right: var(--space-2); }
 }
 

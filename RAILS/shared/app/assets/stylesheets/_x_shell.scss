@@ -1,6 +1,3 @@
-// x.com three-column app shell — canonical layout for pub4 Rails apps.
-// @use "x_shell" as shell; after pub4_stack in application.scss.
-
 .app-shell {
   position: relative;
   z-index: var(--z-app, 10);
@@ -9,7 +6,6 @@
   scrollbar-width: thin;
   scrollbar-color: var(--hover) transparent;
 }
-
 .layout {
   display: grid;
   grid-template-areas: "sidebar main widgets";
@@ -19,7 +15,6 @@
   min-height: 100%;
   margin: 0 auto;
 }
-
 .sidebar {
   grid-area: sidebar;
   width: var(--sidebar-width);
@@ -34,7 +29,6 @@
   padding: 0 0.75rem 16px;
   overflow-y: auto;
 }
-
 .brand {
   display: flex;
   align-items: center;
@@ -47,33 +41,28 @@
   margin: 4px 0 8px;
   transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
 }
-
 .brand:hover {
   background: var(--hover);
   border-color: var(--accent);
   text-decoration: none;
 }
-
 .brand-wordmark {
   width: auto;
   padding: 0 12px;
   justify-content: flex-start;
 }
-
 .brand-text {
   font-family: var(--x-font);
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-
 .sidebar nav {
   display: flex;
   flex-direction: column;
   gap: 2px;
   width: 100%;
 }
-
 .nav-item {
   display: flex;
   align-items: center;
@@ -88,21 +77,17 @@
   width: fit-content;
   white-space: nowrap;
 }
-
 .nav-item:hover {
   background: var(--hover);
   text-decoration: none;
 }
-
 .nav-item.active {
   font-weight: 700;
   border-inline-start-color: var(--accent);
 }
-
 .nav-item svg {
   flex-shrink: 0;
 }
-
 .compose-btn {
   display: flex;
   align-items: center;
@@ -122,18 +107,15 @@
   transition: opacity var(--transition-fast, 180ms);
   text-decoration: none;
 }
-
 .compose-btn:hover {
   opacity: 0.88;
   text-decoration: none;
   color: #000;
 }
-
 .compose-icon {
   display: none;
   flex-shrink: 0;
 }
-
 .compose-fab {
   position: fixed;
   inset-inline-end: calc(16px + var(--safe-right, 0px));
@@ -149,17 +131,14 @@
   z-index: var(--z-nav, 80);
   text-decoration: none;
 }
-
 .compose-fab:hover {
   color: #000;
   text-decoration: none;
 }
-
 .compose-fab svg {
   width: 22px;
   height: 22px;
 }
-
 main#main-content,
 main[role="main"] {
   grid-area: main;
@@ -172,7 +151,6 @@ main[role="main"] {
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
 }
-
 .widgets {
   grid-area: widgets;
   width: var(--widgets-width);
@@ -187,7 +165,6 @@ main[role="main"] {
   scrollbar-width: thin;
   scrollbar-color: var(--hover) transparent;
 }
-
 .tab-bar {
   position: fixed;
   bottom: 0;
@@ -199,7 +176,6 @@ main[role="main"] {
   z-index: var(--z-nav, 80);
   padding-bottom: var(--safe-bottom, 0px);
 }
-
 .tab-item {
   flex: 1;
   display: flex;
@@ -209,7 +185,6 @@ main[role="main"] {
   color: var(--text);
   transition: background var(--transition-fast, 180ms);
 }
-
 .tab-item:hover {
   background: var(--hover);
   text-decoration: none;

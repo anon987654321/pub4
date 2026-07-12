@@ -23,20 +23,20 @@ class HealthController < ActionController::API
     return true if Rails.env.test?
 
     tts_socket_alive? && Master::Voice::Speech.edge_tts_available?
-  rescue StandardError
+  rescue StandardError => _
     false
   end
 
   def replicate_healthy?
     Master::Voice::Engines.replicate_token?
-  rescue StandardError
+  rescue StandardError => _
     false
   end
 
   def git_healthy?
     repo = Rails.root.join("..").to_s
     system("git", "-C", repo, "rev-parse", "--is-inside-work-tree", out: File::NULL, err: File::NULL)
-  rescue StandardError
+  rescue StandardError => _
     false
   end
 
@@ -45,7 +45,7 @@ class HealthController < ActionController::API
     return "warming" unless c
 
     c[:agent].respond_to?(:model)
-  rescue StandardError
+  rescue StandardError => _
     false
   end
 
@@ -72,7 +72,7 @@ class HealthController < ActionController::API
     size.times.any? do |i|
       Master::Voice::TtsSupervisor.socket_alive?(Master::Voice::TtsSupervisor.socket_path(index: i))
     end
-  rescue StandardError
+  rescue StandardError => _
     false
   end
 

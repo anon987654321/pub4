@@ -9,22 +9,22 @@
   background: var(--hover-subtle);
 }
 
-.feed-post .post-body,
-.feed-post .prose {
+.feed-post-body,
+.feed-post-prose {
   font-size: 0.9375rem;
   line-height: 1.4;
   color: var(--text);
   font-family: var(--x-font);
 }
 
-.feed-post .post-meta,
-.feed-post .byline {
+.feed-post-meta,
+.feed-post-byline {
   font-size: 0.8125rem;
   color: var(--text-dim);
   margin-bottom: 0.5rem;
 }
 
-.feed-post .post-meta .author {
+.feed-post-meta-author {
   color: var(--text);
   font-weight: 700;
 }

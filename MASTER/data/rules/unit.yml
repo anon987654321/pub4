@@ -31,6 +31,7 @@ unit:
   tier: principle
   severity: warning
   autofix: false
+  violates_law: SINGULARITY
   aliases:
   - duplicate_code
   detect_semantic: Are two units expressing the same idea twice?
@@ -43,6 +44,7 @@ unit:
   tier: principle
   severity: warning
   autofix: false
+  violates_law: LINEARITY
   aliases:
   - long_method
   - god_class
@@ -59,8 +61,11 @@ unit:
   autofix: false
   aliases:
   - pola
-  detect_semantic: Does the name promise behavior the implementation contradicts?
-  fix: NAME truthfully; rename when the implementation drifts.
+  - no_surprises
+  detect_semantic: Does the name promise behavior the implementation contradicts,
+    or would a reader be surprised by this behavior generally?
+  fix: NAME truthfully; rename when the implementation drifts. Prefer predictable
+    over clever.
 - id: SRP
   source: SOLID — Single Responsibility Principle (Robert C. Martin)
   name: Single Responsibility
@@ -75,6 +80,8 @@ unit:
   tier: solid
   severity: warning
   autofix: false
+  detect_structural: case/when or is_a?/instance_of? chain (3+ branches) dispatching
+    on a type tag — see OpenClosedRule
   detect_semantic: Must you modify core code to extend this?
   fix: Strategy pattern, dependency injection, hooks.
 - id: LISKOV
@@ -83,6 +90,8 @@ unit:
   tier: solid
   severity: warning
   autofix: false
+  detect_structural: subclass method refuses the parent's contract (raises NotImplementedError/NoMethodError)
+    or requires more args than the parent — see LiskovRule
   detect_semantic: Does a subclass break the parent's contract?
   fix: Use composition if substitutability fails.
 - id: INTERFACE_SEGREGATION
@@ -91,6 +100,9 @@ unit:
   tier: solid
   severity: warning
   autofix: false
+  detect_structural: module with 8+ public methods included by 2+ classes in the
+    same file — see InterfaceSegregationRule (same-file heuristic; cross-file
+    inclusion stays semantic-only)
   detect_semantic: Does this interface force implementors to stub unused methods?
   fix: Split into smaller role-based interfaces.
 - id: DEPENDENCY_INVERSION
@@ -99,6 +111,8 @@ unit:
   tier: solid
   severity: warning
   autofix: false
+  detect_structural: initialize hardcodes Service/Client/Adapter/Gateway/Repository/Provider.new
+    instead of accepting it as a parameter — see DependencyInversionRule
   detect_semantic: Does this class directly instantiate its dependencies?
   fix: Inject dependencies through constructor.
 - id: ONE_JOB
@@ -109,14 +123,6 @@ unit:
   autofix: false
   detect_semantic: Does this module handle unrelated responsibilities?
   fix: Split into focused modules.
-- id: NO_SURPRISES
-  source: Principle of Least Astonishment
-  name: Predictable over clever
-  tier: philosophy
-  severity: warning
-  autofix: false
-  detect_semantic: Would a reader be surprised by this behavior?
-  fix: Rename or split to match expectations.
 - id: COMPOSABLE
   source: Unix philosophy / functional composition
   name: Small pieces that combine cleanly
@@ -267,8 +273,24 @@ unit:
   tier: refactoring
   severity: info
   autofix: false
+  detect_structural: method with 4+ params matching common primitive-hint names
+    (id/name/type/status/count/...) — see PrimitiveObsessionRule (single-method
+    heuristic; genuine false-positive risk on generic-but-unrelated primitives,
+    semantic check is the real filter)
   detect_semantic: Are primitives used where a value object would be clearer?
   fix: Create a value object.
+- id: FEATURE_ENVY
+  source: 'Refactoring code smell: Feature Envy (Fowler)'
+  name: A method more interested in another object than its own
+  tier: refactoring
+  severity: warning
+  autofix: false
+  detect_structural: method's dominant receiver is called 4+ times, more than
+    local (@ivar/self) access — see FeatureEnvyRule (single-method heuristic,
+    same-file only)
+  detect_semantic: Is this method more interested in another object's data than
+    its own?
+  fix: Move the method (or the envious part of it) to the object it talks to most.
 - id: MESSAGE_CHAIN
   source: 'Refactoring code smell: Message Chains (Fowler)'
   name: Avoid a.b.c.d chains
@@ -350,6 +372,42 @@ unit:
   autofix: false
   detect_semantic: Does this output contain information that does not earn its place?
   fix: Every element must earn its place.
+- id: MATCH_REAL_WORLD
+  source: 'Nielsen Heuristic #2 — Match between system and the real world (NN/g)'
+  name: Speak the user's language, not system internals
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: Does this expose implementation jargon instead of a real-world
+    term the user already knows?
+  fix: Mirror the user's language and real-world conventions; order info naturally.
+- id: RECOGNITION_OVER_RECALL
+  source: 'Nielsen Heuristic #6 — Recognition rather than recall (NN/g)'
+  name: Show options instead of requiring the user to remember them
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: Does this require the user to remember information across steps
+    instead of showing it?
+  fix: Make objects, actions, and options visible; minimize memory load.
+- id: FLEXIBILITY_EFFICIENCY
+  source: 'Nielsen Heuristic #7 — Flexibility and efficiency of use (NN/g)'
+  name: Provide shortcuts for experts without cluttering novices' path
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: Does this serve only novice or only expert users when both accelerators
+    and defaults could coexist?
+  fix: Add shortcuts for experts; keep sensible defaults for novices.
+- id: HELP_AND_DOCUMENTATION
+  source: 'Nielsen Heuristic #10 — Help and documentation (NN/g)'
+  name: Provide searchable, concrete, task-focused help
+  tier: ux
+  severity: info
+  autofix: false
+  detect_semantic: If the user gets stuck here, is there searchable, concrete,
+    task-focused help nearby?
+  fix: Add context-sensitive help with concrete steps; keep it easy to search.
 - id: CONSISTENCY
   source: 'Nielsen Heuristic #4 — Consistency and standards (NN/g)'
   name: Same term means same thing everywhere
@@ -375,11 +433,13 @@ unit:
   detect_semantic: Is the same prompt sent multiple times without caching?
   fix: Hash prompt, cache response with bounded TTL.
 - id: GUARD_EXPENSIVE_OPS
-  source: MASTER-native (guard expensive operations)
+  source: MASTER-native (guard expensive operations); Nielsen heuristic 5, error
+    prevention
   name: Confirm before costly or destructive operations
   tier: safety
   severity: error
   autofix: true
+  detect_lexical: \b(delete_all|destroy_all|drop_table|truncate)\b|rm\s+-rf\b
   detect_semantic: Does this execute an expensive or destructive operation without
     confirmation?
   fix: Cost estimate before execution. Require opt-in for danger.

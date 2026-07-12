@@ -2,9 +2,9 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(72%, 1fr);
-  gap: 0.75rem;
+  gap: var(--space-3);
   overflow-x: auto;
-  padding: 2px 2px 0.75rem;
+  padding: 2px 2px var(--space-3);
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -14,15 +14,15 @@
 .photo-thumb-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   align-items: center;
 }
 
 .match-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--x-radius-pill);
   object-fit: cover;
   float: inline-start;
-  margin-inline-end: 12px;
+  margin-inline-end: var(--space-3);
 }

@@ -36,15 +36,9 @@ module Master
     end
 
     def self.error_context(msg, context, location)
-      base = {
-        file: location&.path,
-        method: location&.base_label,
-        attempted: msg.to_s,
-      }
+      base = { file: location&.path, method: location&.base_label, attempted: msg.to_s }
       return base unless context
-      return base.merge(context) if context.respond_to?(:merge)
-
-      base.merge(detail: context)
+      context.respond_to?(:merge) ? base.merge(context) : base.merge(detail: context)
     end
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)

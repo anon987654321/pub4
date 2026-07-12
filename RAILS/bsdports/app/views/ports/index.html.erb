@@ -7,3 +7,14 @@
   </nav>
   <%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: "Search ports…", label: "Search ports", frame_id: "bsdports-ports" %>
 </header>
+
+<% if @categories&.any? %>
+<section class="categories" aria-label="Port categories">
+  <h2 class="dim">Categories</h2>
+  <ul class="category-list">
+    <% @categories.each do |cat| %>
+      <li><%= link_to cat.name, ports_path(category_id: cat.id), class: "chip" %></li>
+    <% end %>
+  </ul>
+</section>
+<% end %>

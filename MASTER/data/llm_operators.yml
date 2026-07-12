@@ -113,8 +113,8 @@ operators:
       structure your system prompt with explicit <project_instructions> blocks.
     reading_gate: |
       Before proposing any changes, produce a dependency graph of the modules
-      affected and identify which axioms in axioms.jsonl would be violated
-      by naive approaches.
+      affected and identify which principles in rules.yml principle_priorities
+      would be violated by naive approaches.
     output_format: |
       Structured deliberation: finding → impact → options → recommendation.
       For code: diffs with explicit axiom-compliance notes.

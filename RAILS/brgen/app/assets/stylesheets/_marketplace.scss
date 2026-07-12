@@ -1,14 +1,15 @@
-/* Marketplace card grid */
+/* Marketplace card grid — x.com flat cards, token aligned for presentability */
 .deal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
-  padding: 16px;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
 .deal-card {
-  background: var(--surface2);
-  border-radius: var(--radius);
+  background: var(--x-surface-elevated);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -17,37 +18,34 @@
   color: inherit;
 }
 
-.deal-card:hover { background: var(--hover); text-decoration: none; }
+.deal-card:hover { background: var(--x-hover); text-decoration: none; }
 
 .deal-card-img {
   position: relative;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: var(--search-bg);
+  background: var(--x-search-bg);
 }
 
 .deal-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .deal-card-img .deal-badge {
   position: absolute;
-  top: 8px;
-  inset-inline-start: 8px;
-  background: var(--text);
+  top: var(--space-2);
+  inset-inline-start: var(--space-2);
+  background: var(--x-text);
   color: #000;
-  font-size: .6875rem;
-  font-weight: 700;
+  font: 700 var(--text-xs) / 1 var(--x-font);
   padding: 2px 7px;
-  border-radius: var(--radius);
+  border-radius: var(--x-radius-sm);
   letter-spacing: .03em;
 }
 
-.deal-card-body { padding: 10px 0.75rem 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.deal-card-body { padding: 10px var(--space-3) var(--space-3); flex: 1; display: flex; flex-direction: column; gap: var(--space-1); }
 
 .deal-card-title {
-  font-size: .875rem;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--text);
+  font: 500 var(--text-sm) / 1.3 var(--x-font);
+  color: var(--x-text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -55,31 +53,29 @@
 }
 
 .deal-price {
-  font-size: 1.125rem;
-  font-weight: 800;
-  color: var(--text);
+  font: 800 1.125rem / 1 var(--x-font);
+  color: var(--x-text);
   margin-top: auto;
-  padding-top: 6px;
+  padding-top: var(--space-1);
 }
 
 .deal-price-original {
-  font-size: .8125rem;
-  color: var(--text-dim);
+  font: var(--text-xs) / 1 var(--x-font);
+  color: var(--x-text-secondary);
   text-decoration: line-through;
 }
 
-.deal-meta { font-size: .75rem; color: var(--text-dim); }
+.deal-meta { font: var(--text-xs) / 1 var(--x-font); color: var(--x-text-secondary); }
 
 .deal-cta {
   display: block;
-  margin: 0 0.75rem 0.75rem;
-  padding: 8px;
+  margin: 0 var(--space-3) var(--space-3);
+  padding: var(--space-2);
   text-align: center;
-  background: var(--text);
+  background: var(--x-text);
   color: #000;
-  border-radius: var(--radius);
-  font-size: .875rem;
-  font-weight: 700;
+  border-radius: var(--x-radius-pill);
+  font: 700 var(--text-sm) / 1 var(--x-font);
   text-decoration: none;
 }
 
@@ -87,17 +83,17 @@
 
 .deal-search {
   display: flex;
-  gap: 8px;
-  padding: 0.75rem 16px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--x-border);
 }
 
 .deal-search input { flex: 1; }
 
 .deal-cats {
   display: flex;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: var(--space-2);
+  padding: 10px var(--space-4);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
@@ -119,4 +115,24 @@
 
 .deal-cat:hover { background: var(--search-bg); border-color: var(--text-dim); text-decoration: none; }
 .deal-cat.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Marketplace listing show polish for x.com presentability */
+.marketplace-listing .listing-price {
+  font: 800 1.5rem / 1 var(--x-font);
+  color: var(--x-text);
+}
+.marketplace-listing .dim {
+  color: var(--x-text-secondary);
+}
+.marketplace-listing .listing-description {
+  margin-top: var(--space-4);
+}
+.marketplace-listing .btn-share {
+  margin-top: var(--space-4);
+}
+.marketplace-listing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 

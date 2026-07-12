@@ -1,4 +1,6 @@
-# Cognitive biases MASTER must actively resist.
+# Decision-proposal biases, read by Ground::BiasGuard when annotating self-improvement
+# proposals. Distinct from rules.yml's biases: section (output-text scanning,
+# hallucination/sycophancy/simulation) — same word, two different pipeline stages.
 confirmation_bias:
   countermeasure: "Generate three counter-arguments before accepting a fix that only confirms the scanner result."
 sunk_cost_bias:

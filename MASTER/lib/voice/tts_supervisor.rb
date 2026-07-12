@@ -157,9 +157,10 @@ module Master
       end
 
       def daemon_env(root)
-        # Wipe the parent Falcon/web bundle env entirely — nil deletes on Process.spawn merge.
-        wipe = ENV.keys.to_h { |key| [key, nil] }
-        wipe.merge(spawn_env(root))
+        env = spawn_env(root).dup
+        # Wipe bundle keys so child tts-worker doesn't inherit web bundle state.
+        BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }
+        env
       end
 
       def spawn_env(root)

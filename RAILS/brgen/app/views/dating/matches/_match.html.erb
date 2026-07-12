@@ -3,6 +3,8 @@
   <% if other.dating_profile&.photos&.attached? %>
     <%= lazy_image_tag other.dating_profile.photos.first, alt: other.display_name, class: "match-avatar" %>
   <% end %>
-  <strong><%= other.email_address.split("@").first %></strong>
-  <p class="dim">Matched</p>
+  <div class="match-info">
+    <strong><%= other.email_address.split("@").first %></strong>
+    <p class="dim">Matched</p>
+  </div>
 </article>

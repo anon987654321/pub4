@@ -93,8 +93,8 @@
 }
 
 .amber-compose-btn {
-  background: var(--accent) !important;
-  color: #202124 !important;
+  background: var(--accent);
+  color: #202124;
   border-radius: var(--radius-pill);
   font-weight: 700;
   border: none;
@@ -125,15 +125,15 @@
   margin-bottom: 0.75rem;
 }
 
-.amber-guest-feed .feed-post .post-meta {
+.amber-guest-feed .post-meta {
   color: #5f6368;
 }
 
-.amber-guest-feed .feed-post .author {
+.amber-guest-feed .author {
   color: #202124;
   font-weight: 700;
 }
 
-.amber-guest-feed .feed-post .post-body {
+.amber-guest-feed .post-body {
   color: #3c4043;
 }

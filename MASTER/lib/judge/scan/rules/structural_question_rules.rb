@@ -165,7 +165,7 @@ module Master
           def initialize
             super()
             @id = "COUPLER_SMELLS"
-            @description = "feature envy, inappropriate intimacy, and message chains"
+            @description = "inappropriate intimacy and message chains"
             @severity = :warning
             @rule_tags = %i[COUPLING DEMETER]
             @auto_fix = false
@@ -179,12 +179,28 @@ module Master
               findings << finding(line: index + 1, message: "message chain #{line[MESSAGE_CHAIN].strip} — introduce a query method") if line.match?(MESSAGE_CHAIN)
               findings << finding(line: index + 1, message: "inappropriate intimacy via reflective access — expose a real collaboration boundary") if line.match?(INTIMACY)
             end
-            findings.concat(feature_envy_findings(code))
+            findings
+          end
+        end
+
+        # Split from CouplerRule 2026-07-12: rule_deps.yml's SRP entry already
+        # referenced FEATURE_ENVY as its own id (SRP: after: [FEATURE_ENVY,
+        # god_class]) — a dangling reference, since the check previously lived
+        # under COUPLER_SMELLS. This gives it a real matching id and a single
+        # responsibility of its own.
+        class FeatureEnvyRule < Rule
+          def initialize
+            super()
+            @id = "FEATURE_ENVY"
+            @description = "method talks to one collaborator's internals more than its own"
+            @severity = :warning
+            @rule_tags = %i[COUPLING DEMETER]
+            @auto_fix = false
           end
 
-          private
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
 
-          def feature_envy_findings(code)
             methods(code).filter_map do |start_line, body|
               receivers = body.scan(/\b([a-z][a-zA-Z0-9_]*)\./).flatten
               next if receivers.size < 5
@@ -196,6 +212,8 @@ module Master
               end
             end
           end
+
+          private
 
           def methods(code)
             result = []

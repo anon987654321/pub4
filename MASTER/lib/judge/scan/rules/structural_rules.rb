@@ -244,6 +244,260 @@ module Master
           end
         end
 
+      # SOLID literal proxies — data/rules/unit.yml OPEN_CLOSED/LISKOV/
+      # INTERFACE_SEGREGATION/DEPENDENCY_INVERSION previously had detect_semantic
+      # only. These give each a same-file AST proxy; the semantic prompt still
+      # carries the cases these heuristics miss.
+
+        class OpenClosedRule < Rule
+          MIN_BRANCHES = 3
+          TYPE_PREDICATE = /\.(class|type|kind)\b/
+          TYPE_CHECK = /\b(is_a\?|instance_of\?)\b/
+
+          def initialize
+            super()
+            @id = "OPEN_CLOSED"
+            @description = "case/when or is_a? chains that must grow on every new type"
+            @severity = :warning
+            @rule_tags = %i[SOLID OCP]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            findings = []
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::CaseNode)
+              next unless node.conditions.size >= MIN_BRANCHES
+              next unless type_dispatch?(node)
+              findings << finding(line: node.location.start_line,
+                message: "case dispatches on type across #{node.conditions.size} branches — new types require editing this switch; consider polymorphism or a lookup table")
+            end
+            findings
+          end
+
+          private
+
+          def type_dispatch?(node)
+            return true if node.predicate&.slice.to_s.match?(TYPE_PREDICATE)
+            node.conditions.any? do |when_node|
+              when_node.respond_to?(:conditions) &&
+                when_node.conditions.any? { |c| c.slice.match?(TYPE_CHECK) }
+            end
+          end
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+        end
+
+        class LiskovRule < Rule
+          def initialize
+            super()
+            @id = "LISKOV"
+            @description = "subclass breaks the parent's contract via refused bequest or narrowed signature"
+            @severity = :warning
+            @rule_tags = %i[SOLID LSP]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            classes = collect_classes(ast)
+            findings = []
+            classes.each_value do |info|
+              parent = classes[info[:superclass]]
+              next unless parent
+              info[:methods].each do |name, def_node|
+                parent_def = parent[:methods][name]
+                next unless parent_def
+                findings.concat(compare_methods(def_node, parent_def))
+              end
+            end
+            findings
+          end
+
+          private
+
+          def compare_methods(sub_def, parent_def)
+            findings = []
+            body_text = sub_def.body&.slice.to_s.strip
+            if (match = body_text.match(/\Araise\s+(NotImplementedError|NoMethodError)\b/))
+              findings << finding(line: sub_def.location.start_line,
+                message: "#{sub_def.name} refuses the parent's contract (raises #{match[1]}) — use composition if substitutability fails")
+            end
+            sub_required = required_param_count(sub_def)
+            parent_required = required_param_count(parent_def)
+            if sub_required > parent_required
+              findings << finding(line: sub_def.location.start_line,
+                message: "#{sub_def.name} requires #{sub_required} args, parent requires #{parent_required} — narrows what callers can pass, breaking substitutability")
+            end
+            findings
+          end
+
+          def required_param_count(def_node)
+            params = def_node.parameters
+            return 0 unless params
+            params.requireds.size + params.keywords.count { |k| k.is_a?(Prism::RequiredKeywordParameterNode) }
+          end
+
+          def collect_classes(ast)
+            classes = {}
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::ClassNode)
+              methods = {}
+              node.body&.body&.each do |child|
+                methods[child.name] = child if child.is_a?(Prism::DefNode)
+              end
+              classes[node.name] = { superclass: node.superclass&.slice&.to_sym, methods: methods }
+            end
+            classes
+          end
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+        end
+
+        class DependencyInversionRule < Rule
+          COLLABORATOR_SUFFIX = /(Service|Client|Adapter|Gateway|Repository|Provider)\z/
+
+          def initialize
+            super()
+            @id = "DEPENDENCY_INVERSION"
+            @description = "constructor hardcodes a concrete collaborator instead of accepting it as a dependency"
+            @severity = :warning
+            @rule_tags = %i[SOLID DIP]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            findings = []
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::DefNode) && node.name == :initialize
+              params = param_names(node)
+              next unless node.body
+              visit(node.body) do |call|
+                next unless call.is_a?(Prism::CallNode) && call.name == :new && call.receiver
+                const = call.receiver.slice
+                next unless const.match?(COLLABORATOR_SUFFIX)
+                next if params.include?(const.to_sym)
+                findings << finding(line: call.location.start_line,
+                  message: "#{const}.new hardcoded in initialize — inject as a constructor parameter instead")
+              end
+            end
+            findings
+          end
+
+          private
+
+          def param_names(def_node)
+            params = def_node.parameters
+            return [] unless params
+            (params.requireds + params.optionals + params.keywords).filter_map do |p|
+              p.respond_to?(:name) ? p.name : nil
+            end
+          end
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+        end
+
+        class InterfaceSegregationRule < Rule
+          METHOD_LIMIT = 8
+
+          def initialize
+            super()
+            @id = "INTERFACE_SEGREGATION"
+            @description = "large module forces includers to stub methods they don't use"
+            @severity = :warning
+            @rule_tags = %i[SOLID ISP]
+            @auto_fix = false
+          end
+
+          def check(code, path:)
+            return [] unless path.to_s.end_with?(".rb", ".rake")
+            check_ast(Prism.parse(code).value, code, path:)
+          rescue StandardError
+            []
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+            modules = collect_modules(ast)
+            includers = collect_includers(ast)
+            findings = []
+            modules.each do |name, method_count|
+              next if method_count <= METHOD_LIMIT
+              users = includers[name] || []
+              next if users.size < 2
+              findings << finding(line: 1,
+                message: "module #{name} has #{method_count} public methods, included by #{users.size} classes — split into smaller role-based modules")
+            end
+            findings
+          end
+
+          private
+
+          def collect_modules(ast)
+            modules = {}
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::ModuleNode)
+              count = node.body&.body.to_a.count { |c| c.is_a?(Prism::DefNode) }
+              modules[node.name] = count
+            end
+            modules
+          end
+
+          def collect_includers(ast)
+            includers = Hash.new { |h, k| h[k] = [] }
+            visit(ast) do |node|
+              next unless node.is_a?(Prism::ClassNode)
+              node.body&.body&.each do |child|
+                next unless child.is_a?(Prism::CallNode) && child.name == :include
+                arg = child.arguments&.arguments&.first
+                includers[arg.slice.to_sym] << node.name if arg
+              end
+            end
+            includers
+          end
+
+          def visit(node, &block)
+            return unless node.respond_to?(:child_nodes)
+            block.call(node)
+            node.child_nodes.compact.each { |c| visit(c, &block) }
+          end
+        end
+
         StructuralRules = Module.new
       end
     end

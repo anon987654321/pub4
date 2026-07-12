@@ -1,6 +1,6 @@
 <% cache [post, Current.user&.id, post.anonymous?] do %>
   <article class="feed-post" role="article" aria-label="Post by <%= post.author_name %>">
-    <header class="post-meta byline" role="banner" aria-label="Post header">
+    <header class="feed-post-meta feed-post-byline" role="banner" aria-label="Post header">
       <span class="author">
         <% if post.anonymous? || post.user&.guest? %>
           <%= post.author_name %>
@@ -10,7 +10,7 @@
       </span>
       · <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> ago</time>
     </header>
-    <div class="post-body prose"><%= post.body %></div>
+    <div class="feed-post-body feed-post-prose"><%= post.body %></div>
     <% if post.outfit %><p><em>Outfit: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em></p><% end %>
     <% if post.item %><p><em>Item: <%= link_to post.item.title, item_path(post.item) %></em></p><% end %>
     <footer>

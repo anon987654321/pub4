@@ -60,6 +60,9 @@ engineering_fit:
   fit: Solution matches the load and the failure modes — no slack, no shortfall.
   why_required: State the load the artifact carries (users, edge cases, lifetimes,
     blast radius). The verdict follows from the load.
+# Output-text bias patterns (scanned by the RuleDSL text scanner). Distinct from
+# data/biases.yml's decision-proposal biases (confirmation/sunk-cost/authority),
+# which BiasGuard reads separately — same word, two different pipeline stages.
 biases:
   critical:
     hallucination:
@@ -247,19 +250,35 @@ anti_patterns:
   - pattern: speculative_generality
     reason: yagni_in_disguise
 principle_priorities:
+  # tier1/append_only, show_cost, degrade_gracefully and tier2/least_power,
+  # open_closed, liskov, interface_segregation, dependency_inversion,
+  # test_first, skeleton_first and tier3/user_friendly restored 2026-07-12
+  # from data/axioms.jsonl (deleted — superseded by this section) after a
+  # gap audit found no equivalent principle recorded anywhere else.
   tier1_critical:
   - evidence: "@assumption -> validate"
   - reversible: "@irreversible -> add_rollback"
   - security: "@untrusted -> validate_sanitize"
   - self_apply: "@output -> must_pass_own_constitution"
+  - append_only: "@history_or_audit_log -> never_mutate_append_only"
+  - show_cost: "@operation_has_cost -> show_cost_before_execution"
+  - degrade_gracefully: "@dependency_unavailable -> degrade_not_break"
   tier2_quality:
   - dry: "@duplication>=3 -> abstract"
   - kiss: "@complexity>10 -> simplify"
   - srp: "@two_reasons_to_change -> split"
+  - least_power: "@task_solvable_by_cheap_tool -> use_cheap_before_llm"
+  - open_closed: "@behavior_change -> extend_not_modify"
+  - liskov: "@subclass -> preserve_parent_contract"
+  - interface_segregation: "@fat_interface -> split_by_client"
+  - dependency_inversion: "@high_level_module -> depend_on_abstraction"
+  - test_first: "@fix_or_feature -> write_failing_test_first"
+  - skeleton_first: "@new_feature -> thinnest_working_slice_first"
   tier3_polish:
   - explicit: "@implicit -> make_explicit"
   - minimalism: "@bloat -> subtract"
   - rhythm: "@inconsistent -> align"
+  - user_friendly: "@interface_change -> visibility_control_prevention_consistency_recognition"
 preserve_user_intent:
   forbidden_changes_during_refactor:
   - public_method_signature
@@ -619,14 +638,12 @@ learned_smells:
   pattern: "\\b(?:copy|duplicate|same as)\\b"
   confidence: 0.75
   autofix: extract_shared_method
-- id: god_class
-  pattern: "^\\s*class\\b"
-  confidence: 0.6
-  autofix: propose_decomposition
-- id: n_plus_one
-  pattern: "\\b(?:includes|preload|eager_load)\\b"
-  confidence: 0.88
-  autofix: add_includes
+# god_class/n_plus_one learned_smells removed 2026-07-12: god_class's regex
+# (^\s*class\b) matched every class declaration with zero signal, riding
+# alongside the real AST-based NO_GOD_CLASS rule (structural_rules.rb:78);
+# n_plus_one's regex matched the FIX keywords (includes/preload/eager_load),
+# not the problem, riding alongside the real N_PLUS_ONE rule
+# (universal_rules.rb:40). Both were redundant, one was backwards.
 foundations:
   information_theory:
     source: Shannon (1948); Kolmogorov complexity / minimum description length

@@ -10,6 +10,10 @@ require 'faker'
 # Each city domain is an isolated experience.
 Brgen::CitySeed.sync! if defined?(Brgen::CitySeed) && ActiveRecord::Base.connection.table_exists?(:cities)
 
+# Scale for "wildly popular" impression in dev/demo: SEED_SCALE=50 for thousands of users/posts
+# with high engagement counters. Keep small for prod/demo.
+SEED_SCALE = [1, (ENV['SEED_SCALE'] || (Rails.env.production? ? 1 : 10)).to_i].max
+
 if Rails.env.production? && City.table_exists?
   puts "Production seed: Bergen demo only (skipping Faker flood)."
   User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
@@ -52,7 +56,8 @@ admin = User.find_or_create_by!(email_address: 'admin@brgen.no') do |u|
   u.password = u.password_confirmation = 'password123'
 end
 
-users = 50.times.map do |i|
+num_users = (50 * SEED_SCALE).clamp(10, 5000)
+users = num_users.times.map do |i|
   User.create!(
     email_address: "seed#{i}@#{Faker::Internet.domain_name}",
     password: 'password123',
@@ -76,15 +81,18 @@ communities = %w[news tech bergen norge kultur food music film].map do |slug|
   end
 end
 
-# Core posts + activity
-posts = users.sample(30).flat_map do |user|
-  4.times.map do
+# Core posts + activity — scale for popular impression (high views/likes)
+posts_per = (4 * SEED_SCALE).clamp(1, 20)
+posts = users.sample([30, users.size].min).flat_map do |user|
+  posts_per.times.map do
     Post.create!(
       user: user,
       community: communities.sample,
       title: Faker::Lorem.sentence(word_count: 5),
       content: Faker::Lorem.paragraph(sentence_count: 4),
-      created_at: rand(1..90).days.ago
+      created_at: rand(1..90).days.ago,
+      views_count: rand(100 * SEED_SCALE, 50000 * SEED_SCALE),
+      likes_count: rand(10 * SEED_SCALE, 5000 * SEED_SCALE)
     )
   end
 end
@@ -117,7 +125,8 @@ categories.each do |root_name, children|
   end
 end
 
-stores = 12.times.map do |i|
+num_stores = (12 * SEED_SCALE).clamp(5, 200)
+stores = num_stores.times.map do |i|
   name = Faker::Company.name
   Marketplace::Store.create!(
     owner: users.sample,
@@ -128,8 +137,9 @@ stores = 12.times.map do |i|
   )
 end
 
+listings_per = (5 * SEED_SCALE).clamp(1, 10)
 listings = stores.flat_map do |store|
-  5.times.map do
+  listings_per.times.map do
     Marketplace::Listing.create!(
       user: store.owner,
       store: store,
@@ -139,7 +149,8 @@ listings = stores.flat_map do |store|
       category: Marketplace::Category.all.sample,
       location: Faker::Address.city,
       status: 'active',
-      created_at: rand(1..60).days.ago
+      created_at: rand(1..60).days.ago,
+      views_count: rand(100 * SEED_SCALE, 10000 * SEED_SCALE)
     )
   end
 end
@@ -160,7 +171,8 @@ end
 puts "Marketplace: #{stores.size} stores, #{listings.size} listings, some orders"
 
 # --- Dating subapp ---
-dating_profiles = users.sample(35).map do |user|
+num_dating = (35 * SEED_SCALE).clamp(10, 1000)
+dating_profiles = users.sample(num_dating).map do |user|
   Dating::Profile.create!(
     user: user,
     bio: Faker::Lorem.paragraph(sentence_count: 3),
@@ -170,24 +182,28 @@ dating_profiles = users.sample(35).map do |user|
     latitude: user.latitude,
     longitude: user.longitude,
     bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample,
-    visible: true
+    visible: true,
+    matches_count: rand(5 * SEED_SCALE, 500 * SEED_SCALE)
   )
 end
 
-dating_profiles.each_cons(2) do |a, b|
+# Generate many likes for popular feel
+dating_profiles.each_cons(3) do |a, b, c|
   Dating::Like.find_or_create_by!(liker: a.user, likee: b.user)
+  Dating::Like.find_or_create_by!(liker: b.user, likee: c.user)
 end
 
 puts "Dating: #{dating_profiles.size} profiles, #{Dating::Like.count} likes, #{Dating::Match.count} matches"
 
 # --- Playlist subapp ---
-playlists = users.sample(15).map do |user|
+num_play = (15 * SEED_SCALE).clamp(5, 200)
+playlists = users.sample(num_play).map do |user|
   Playlist::Playlist.create!(
     user: user,
     name: "#{Faker::Music.genre} #{Faker::Music.album}",
     description: Faker::Lorem.sentence,
     tracks_count: rand(5..25),
-    plays_count: rand(10..500),
+    plays_count: rand(100 * SEED_SCALE, 100000 * SEED_SCALE),
     collaborative: [true, false].sample
   )
 end
@@ -222,7 +238,8 @@ puts "Playlist: #{playlists.size} playlists, tracks, sets"
 ActsAsTenant.current_tenant = seed_city if seed_city
 city_label = seed_city&.name.presence || "Bergen"
 cuisines = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab]
-restaurants = 15.times.map do
+num_rest = (15 * SEED_SCALE).clamp(5, 100)
+restaurants = num_rest.times.map do
   Takeaway::Restaurant.create!(
     user: users.sample,
     name: Faker::Restaurant.name,
@@ -291,7 +308,8 @@ end
 puts "Takeaway: #{restaurants.size} restaurants, menu items, orders, reviews, drivers"
 
 # --- TV subapp ---
-channels = 8.times.map do |i|
+num_ch = (8 * SEED_SCALE).clamp(3, 50)
+channels = num_ch.times.map do |i|
   Tv::Channel.create!(
     user: users.sample,
     name: "#{Faker::Company.name} TV",
@@ -329,7 +347,8 @@ puts "TV: #{channels.size} channels, #{videos.size} videos, broadcasts"
 places = []
 if ActiveRecord::Base.connection.table_exists?(:places)
   city = City.first
-  places = 25.times.map do
+  num_places = (25 * SEED_SCALE).clamp(10, 500)
+  places = num_places.times.map do
     Place.create!(
       city: city,
       name: "#{Faker::Company.name} #{%w[Cafe Bar Shop Park].sample}",
@@ -379,12 +398,12 @@ if places.any?
   end
 end
 
-puts "\nBrgen + subapps fully seeded with fictive Faker data."
+puts "\nBrgen + subapps fully seeded with fictive Faker data (scale=#{SEED_SCALE})."
 puts "Users: #{User.count}, Posts: #{Post.count}, Marketplace listings: #{Marketplace::Listing.count}"
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
 place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count : 0
 puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"
-puts 'Ready for demo / development.'
+puts 'Ready for demo / development. Use SEED_SCALE=20 for more "millions" impression via volume + counters.'
 
 if (bergen = City.find_by(domain: 'brgen.no')) && !ENV['SKIP_BERGEN_DEMO']
   puts "\nSeeding Bergen demo content (Norwegian posts, users, media)..."
