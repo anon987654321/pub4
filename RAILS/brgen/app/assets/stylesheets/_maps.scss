@@ -5,10 +5,10 @@
 .media-gallery__item {
   scroll-snap-align: start;
   display: block;
-  border-radius: 10px;
+  border-radius: var(--x-radius-card);
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid var(--x-border);
+  background: var(--x-surface);
 }
 
 .media-gallery__item img {
@@ -52,25 +52,25 @@
 
 .map-popup {
   display: grid;
-  gap: .25rem;
+  gap: var(--space-1);
   min-width: 12rem;
 }
 
 .map-popup p {
   margin: 0;
-  color: var(--text-dim, #64748b);
+  color: var(--x-text-secondary);
 }
 
 .map-popup a {
-  color: var(--primary, #e11d48);
+  color: var(--x-accent);
   font-weight: 900;
   text-decoration: none;
 }
 
 .maplibregl-popup-content {
-  border-radius: 1rem;
-  padding: .9rem 1rem;
-  border: 1px solid var(--border);
+  border-radius: var(--x-radius-card);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--x-border);
 }
 
 .match-overlay {
@@ -78,7 +78,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 1rem;
+  padding: var(--space-4);
   background: rgba(2, 6, 23, .58);
   z-index: 120;
   animation: matchFadeIn .18s ease-out both;
@@ -86,19 +86,19 @@
 
 .match-overlay__card {
   width: min(24rem, 100%);
-  padding: 1.25rem;
-  border-radius: 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  padding: var(--space-5);
+  border-radius: var(--x-radius-card);
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
   text-align: center;
 }
 
 .match-overlay__eyebrow {
-  margin: 0 0 .35rem;
+  margin: 0 0 var(--space-1);
   text-transform: uppercase;
   letter-spacing: .18em;
-  font-size: .72rem;
-  color: var(--text-dim);
+  font-size: var(--text-xs);
+  color: var(--x-text-secondary);
 }
 
 @keyframes matchFadeIn {
@@ -117,10 +117,10 @@
 
 [dir="rtl"] .comment .comment {
   padding-inline-start: 0;
-  padding-inline-end: 56px;
+  padding-inline-end: var(--space-14);
 }
 
 [dir="rtl"] .live-badge {
   margin-inline-end: 0;
-  margin-inline-start: 6px;
+  margin-inline-start: var(--space-1);
 }

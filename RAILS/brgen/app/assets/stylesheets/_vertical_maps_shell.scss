@@ -41,13 +41,13 @@ body.vertical-maps .map-canvas {
 
 body.vertical-maps .map-hud {
   position: fixed;
-  top: max(16px, env(safe-area-inset-top));
-  inset-inline-start: max(16px, env(safe-area-inset-left));
-  inset-inline-end: max(16px, env(safe-area-inset-right));
+  top: max(var(--space-4), env(safe-area-inset-top));
+  inset-inline-start: max(var(--space-4), env(safe-area-inset-left));
+  inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
   z-index: var(--z-app);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
   max-width: min(100%, 360px);
   pointer-events: none;
 }
@@ -58,12 +58,12 @@ body.vertical-maps .map-hud > * {
 
 body.vertical-maps .map-search-input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 14px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--x-radius-card);
   border: 1px solid var(--maps-border);
   background: var(--maps-surface);
   color: var(--maps-ink);
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
 }
 
 body.vertical-maps .map-search-input::placeholder {
@@ -71,8 +71,8 @@ body.vertical-maps .map-search-input::placeholder {
 }
 
 body.vertical-maps .map-place-popup {
-  padding: 0.85rem 1rem;
-  border-radius: 14px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--x-radius-card);
   border: 1px solid var(--maps-border);
   background: var(--maps-surface);
   color: var(--maps-ink);
