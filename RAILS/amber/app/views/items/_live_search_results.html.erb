@@ -14,7 +14,8 @@
   </select>
 </div>
 
-<div class="item-grid" id="items" data-filter-target="grid">
+<%= turbo_frame_tag "items", target: "_top" do %>
+<div class="item-grid" id="items" data-filter-target="grid" data-turbo-permanent>
   <%= render @items %>
 </div>
 
@@ -27,5 +28,6 @@
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,
            reflex: "ItemsInfiniteScrollReflex#load_more",
-           sentinel_id: "amber-items-sentinel",
+           sentinel_id: "amber-items-sentinel" %>
+<% end %>
            q: params[:q] %>
