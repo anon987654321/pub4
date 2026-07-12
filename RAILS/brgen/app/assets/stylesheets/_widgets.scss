@@ -43,16 +43,22 @@ article { padding: 20px 16px; border-bottom: 1px solid var(--border); transition
 article:hover { background: var(--hover-subtle); }
 .x-avatar { width: 48px; height: 48px; border-radius: var(--radius-pill); background: var(--surface2); flex-shrink: 0; }
 .x-content { flex: 1; min-width: 0; }
-.x-header { display: flex; gap: 4px; font-size: 0.9375rem; color: var(--text-dim); margin-bottom: 2px; }
+.x-header { display: flex; gap: 4px; font-size: 0.8125rem; color: var(--text-dim); margin-bottom: 2px; }
 .x-name { color: var(--text); font-weight: 700; letter-spacing: -0.01em; }
 .x-handle, .x-time, .x-count { color: var(--text-dim); font-size: 0.8125rem; }
-.x-text { font-size: 0.9375rem; line-height: 1.4; margin: 0 0 8px; color: var(--text); font-family: var(--x-font); text-transform: none; }
+/* Title carries the visual weight next to the avatar, echoing old-brgen's
+   large title-beside-avatar header (BRGEN_OLD .avatar_and_title .title). */
+.x-text { font-size: 1.0625rem; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; margin: 0 0 8px; color: var(--text); font-family: var(--x-font); text-transform: none; }
 .x-text a { color: var(--text); text-decoration: none; }
 .x-text a:hover { text-decoration: underline; }
 .x-actions { display: flex; align-items: center; justify-content: space-between; gap: 4px; color: var(--text-dim); font-size: 0.8125rem; margin-top: 8px; }
 .x-act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: var(--radius-pill); transition: color var(--transition-fast), background var(--transition-fast); }
 .x-act:hover { color: var(--accent); background: var(--hover); }
 .x-count { font-size: 0.8125rem; }
+/* Bottom-right timestamp, echoing old-brgen's .topic .time_and_user
+   (position: absolute; right: 0; bottom: -22px) without the absolute
+   positioning, which doesn't suit the current flex/hairline card. */
+.x-meta-bottom { display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; font-size: 0.8125rem; color: var(--text-dim); }
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 article h2 { font-size: 0.9375rem; font-weight: 500; margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: .9375rem; }
