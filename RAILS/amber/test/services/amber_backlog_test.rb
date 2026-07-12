@@ -73,7 +73,7 @@ class AmberBacklogTest < Minitest::Test
     assert_includes routes, "get :timeline"
     assert_includes view, "Style evolution"
     assert_includes view, "Life phases"
-    assert_includes read("app/views/layouts/application.html.erb"), "timeline_wardrobe_items_path"
+    assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "timeline_wardrobe_items_path"
   end
 
   def test_wardrobe_items_migration_and_intelligence_jobs_are_wired
@@ -99,6 +99,6 @@ class AmberBacklogTest < Minitest::Test
     assert_includes controller, "def create"
     assert_includes read("app/controllers/creator_wardrobe_items_controller.rb"), "def create"
     assert_includes read("app/views/creator_profiles/show.html.erb"), "Showcase"
-    assert_includes read("app/views/layouts/application.html.erb"), "new_my_creator_profile_path"
+    assert_includes read("app/views/users/show.html.erb"), "new_my_creator_profile_path"
   end
 end

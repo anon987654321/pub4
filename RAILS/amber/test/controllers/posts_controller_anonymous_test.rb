@@ -13,7 +13,7 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to root_url
-    post = Post.order(:id).last
+    post = Post.includes(:user).order(:id).last
     assert post.anonymous?
     assert post.user.guest?
     assert_equal "Loving this linen capsule #ootd", post.body
