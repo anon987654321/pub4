@@ -28,6 +28,11 @@ module Shared
       cable_ready
         .set_attribute(selector: selector, name: "data-loading", value: "false")
         .broadcast
+
+      # Dispatch for additional Stimulus/Hotwire listeners (e.g. re-init controllers)
+      cable_ready
+        .dispatch_event(name: "infinite-scroll:updated", detail: { id: element.id })
+        .broadcast
     end
 
     def page
