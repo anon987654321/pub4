@@ -10,11 +10,11 @@
   </ul>
 <% end %>
 
-<%= form_with model: @message, url: conversation_messages_path(@conversation), id: "new_message", html: { role: "form", "aria-label": "Send message form" } do |f| %>
-  <p><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :content, rows: 4, placeholder: "Message..." , data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div></p>
+<%= form_with model: @message, url: conversation_messages_path(@conversation), id: "new_message", data: { turbo: true }, html: { role: "form", "aria-label": "Send message form" } do |f| %>
+  <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+    <%= f.text_area :content, rows: 4, placeholder: "Message...", data: { character_counter_target: "input" } %>
+    <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+  </div>
   <%= f.hidden_field :message_type, value: "text" %>
   <p><%= f.submit "Send" %></p>
 <% end %>
