@@ -83,6 +83,8 @@
 }
 .post_vote button, .post_vote span { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .post_vote button:hover { color: var(--upvote); }
+.post_vote button { transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.post_vote button:active { transform: scale(0.8); }
 .post_show header { font-size: .875rem; color: var(--text-dim); margin-bottom: 8px; }
 .post_show header a { color: var(--text-dim); }
 .post_show h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.25; letter-spacing: -0.01em; margin: 0 0 0.9rem; color: var(--text); }
