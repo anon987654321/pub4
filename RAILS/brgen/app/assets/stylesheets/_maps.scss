@@ -35,11 +35,11 @@
 
 .map-marker span {
   display: block;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: var(--radius-pill);
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--x-radius-pill);
   border: 2px solid rgba(255, 255, 255, .82);
-  background: var(--primary, #e11d48);
+  background: var(--x-accent);
 }
 
 .map-marker--food span {
