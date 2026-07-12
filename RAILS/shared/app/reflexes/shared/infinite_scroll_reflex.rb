@@ -19,11 +19,15 @@ module Shared
       if @pagy&.next
         cable_ready
           .set_attribute(selector: selector, name: "data-next-page", value: @pagy.next)
-          .set_attribute(selector: selector, name: "data-loading", value: "false")
           .broadcast
       else
         cable_ready.remove(selector: selector).broadcast
       end
+
+      # Always clear loading state for Hotwire/Stimulus integration
+      cable_ready
+        .set_attribute(selector: selector, name: "data-loading", value: "false")
+        .broadcast
     end
 
     def page
