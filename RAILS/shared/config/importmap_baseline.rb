@@ -45,6 +45,10 @@ pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bun
 # @stimulus-components/lightbox imports this; only brgen pinned it locally,
 # so every other app using this shared baseline couldn't resolve it.
 pin "lightgallery", to: "lightgallery.js"
+# amber's autosave/draft_store controllers import this directly; only brgen
+# pinned it locally (from app/javascript/, not vendor/javascript/, but the
+# content itself has no external deps so it moves here just as cleanly).
+pin "idb-keyval", to: "idb-keyval.js"
 
 %w[
   animated-number auto-submit character-counter checkbox-select-all clipboard
