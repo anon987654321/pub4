@@ -1,6 +1,6 @@
 .dating-discover-panel {
   min-height: 100dvh;
-  padding: max(12px, env(safe-area-inset-top)) 12px max(88px, env(safe-area-inset-bottom));
+  padding: max(var(--space-3), env(safe-area-inset-top)) var(--space-3) max(var(--space-22), env(safe-area-inset-bottom));
 }
 
 .dating-discover-panel[hidden] {
@@ -62,7 +62,7 @@ body.vertical-dating .btn,
 body.vertical-dating .btn-primary,
 body.vertical-dating .swipe-signin {
   background: linear-gradient(90deg, var(--dating-accent), var(--dating-accent-warm));
-  color: #fff;
+  color: var(--x-text);
   border: none;
   border-radius: var(--x-radius-pill);
   font-weight: 600;
@@ -73,5 +73,5 @@ body.vertical-dating .empty {
   margin-inline: auto;
   text-align: center;
   color: var(--dating-muted);
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
 }
