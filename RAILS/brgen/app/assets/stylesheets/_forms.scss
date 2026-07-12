@@ -75,6 +75,14 @@ body.zen-minimal .tab-bar:not(.revealed) {
   pointer-events: none;
 }
 
+@media (max-width: 768px) {
+  body.zen-minimal .tab-bar,
+  body.zen-minimal .tab-bar:not(.revealed) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 body.zen-minimal .layout > main,
 body.zen-minimal .deal-grid,
 body.zen-minimal .post-card {
@@ -92,12 +100,12 @@ body.zen-minimal .revealed ~ .layout > main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  background: var(--accent);
-  color: #000;
+  padding: var(--space-2) var(--space-5);
+  background: var(--x-accent);
+  color: var(--x-bg);
   border: none;
-  border-radius: var(--radius-pill);
-  font-size: .9375rem;
+  border-radius: var(--x-radius-pill);
+  font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
   transition: opacity var(--transition-fast);
@@ -105,27 +113,26 @@ body.zen-minimal .revealed ~ .layout > main {
 }
 
 .btn:hover { opacity: .88; text-decoration: none; }
-.btn-primary { background: var(--text); color: #000; }
-.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-ghost:hover { background: var(--hover); }
-.btn-danger { background: var(--hover); color: var(--text); border: 1px solid var(--border); }
-.btn-sm { padding: 6px 0.875rem; font-size: .875rem; }
+.btn-primary { background: var(--x-text); color: var(--x-bg); }
+.btn-ghost { background: transparent; border: 1px solid var(--x-border); color: var(--x-text); }
+.btn-ghost:hover { background: var(--x-hover); }
+.btn-danger { background: var(--x-hover); color: var(--x-text); border: 1px solid var(--x-border); }
+.btn-sm { padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
 
 .tiptap-editor {
   min-height: 120px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
-.tiptap-input { margin-top: 0.5rem; }
+.tiptap-input { margin-top: var(--space-2); }
 
 .disappearing-settings {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
-  margin: 0.5rem 0 1rem;
-  font-size: 0.875rem;
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-sm);
 }
-
