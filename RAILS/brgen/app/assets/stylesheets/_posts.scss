@@ -26,9 +26,9 @@
   border: none;
   color: var(--x-text-secondary);
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--text-base);
   line-height: 1;
-  padding: 4px;
+  padding: var(--space-1);
   border-radius: var(--x-radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
   display: flex;
@@ -43,10 +43,10 @@
 .vote-score { font: 700 var(--text-xs) / 1 var(--x-font); color: var(--x-text-secondary); }
 
 .post-body { flex: 1; min-width: 0; }
-.post-meta { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 4px; }
+.post-meta { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: var(--space-1); }
 .post-meta a { color: var(--x-text-secondary); }
 .post-meta .community { color: var(--x-text); font-weight: 700; }
-.post-title { font: 500 0.9375rem / 1.5 var(--x-font); color: var(--x-text); margin-bottom: var(--space-3); }
+.post-title { font: 500 var(--text-sm) / 1.5 var(--x-font); color: var(--x-text); margin-bottom: var(--space-3); }
 .post-title a { color: var(--x-text); }
 .post-title a:hover { text-decoration: underline; }
 
@@ -55,10 +55,10 @@
 .post-actions a {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   color: var(--x-text-secondary);
   font: var(--text-sm) / 1 var(--x-font);
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: var(--x-radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
 }
@@ -77,7 +77,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   color: var(--x-text-secondary);
   font-weight: 700;
 }
@@ -85,10 +85,10 @@
 .post_vote button:hover { color: var(--upvote); }
 .post_vote button { transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1); }
 .post_vote button:active { transform: scale(0.8); }
-.post_show header { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 8px; }
+.post_show header { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: var(--space-2); }
 .post_show header a { color: var(--x-text-secondary); }
 .post_show h1 { font: 800 1.5rem / 1.25 var(--x-font); letter-spacing: -0.01em; margin: 0 0 0.9rem; color: var(--x-text); }
-.post_body { color: var(--x-text); line-height: 1.7; font-size: 1.0625rem; }
+.post_body { color: var(--x-text); line-height: 1.7; font-size: var(--text-base); }
 .post_body p { margin: 0 0 1.2em; }
 .post_body p:last-child { margin-bottom: 0; }
 .post_body ul, .post_body ol { margin: 0 0 1.2em; padding-inline-start: 1.5em; }
@@ -108,26 +108,26 @@
 .comment_item:hover { background: none; }
 .comment_item header { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 4px; }
 .comment_item header span:first-child { color: var(--x-text); font-weight: 700; }
-.comment_item p { color: var(--x-text); line-height: 1.6; font-size: 0.9375rem; margin: 0; }
+.comment_item p { color: var(--x-text); line-height: 1.6; font-size: var(--text-sm); margin: 0; }
 .comment_item a { text-decoration: underline; }
 .comment_item .comment_item { padding-inline-end: 0; padding-inline-start: 40px; border-bottom: 0; }
 
 /* Forms — x.com minimal */
-.form-wrap { padding: 24px var(--space-4); max-width: 480px; }
+.form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
 .form-wrap--compact { padding: var(--space-3) var(--space-4); max-width: none; }
-.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-4); }
-.field--check { flex-direction: row; align-items: center; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
+.field--check { flex-direction: row; align-items: center; gap: var(--space-2); }
 
-label { display: block; font-size: .875rem; color: var(--text-dim); }
+label { display: block; font-size: var(--text-sm); color: var(--x-text-secondary); }
 
 input[type=text], input[type=email], input[type=password], textarea, select {
   width: 100%;
-  padding: 0.75rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 0.9375rem;
+  padding: var(--space-2);
+  background: var(--x-bg);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-sm);
+  color: var(--x-text);
+  font-size: var(--text-sm);
   font-family: inherit;
   outline: none;
   transition: border-color var(--transition-fast);

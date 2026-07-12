@@ -95,7 +95,7 @@ nav { display: flex; flex-direction: column; gap: var(--space-1); width: 100%; }
   padding: 0 var(--space-6);
   margin-top: var(--space-4);
   background: var(--x-accent);
-  color: #000;
+  color: var(--x-bg);
   border: none;
   border-radius: var(--x-radius-pill);
   font-size: var(--text-sm);
@@ -105,27 +105,27 @@ nav { display: flex; flex-direction: column; gap: var(--space-1); width: 100%; }
   text-decoration: none;
 }
 
-.compose-btn:hover { opacity: .88; text-decoration: none; color: #000; }
+.compose-btn:hover { opacity: .88; text-decoration: none; color: var(--x-bg); }
 .compose-icon { display: none; flex-shrink: 0; }
 
 .compose-fab {
   position: fixed;
-  inset-inline-end: calc(16px + var(--safe-right));
+  inset-inline-end: calc(var(--space-4) + var(--safe-right));
   bottom: calc(70px + var(--safe-bottom));
-  width: 54px;
-  height: 54px;
-  border-radius: var(--radius-pill);
+  width: var(--space-14);
+  height: var(--space-14);
+  border-radius: var(--x-radius-pill);
   display: none;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
-  color: #000;
+  background: var(--x-accent);
+  color: var(--x-bg);
   z-index: var(--z-nav);
   text-decoration: none;
 }
 
-.compose-fab:hover { color: #000; text-decoration: none; }
-.compose-fab svg { width: 22px; height: 22px; }
+.compose-fab:hover { color: var(--x-bg); text-decoration: none; }
+.compose-fab svg { width: var(--space-5); height: var(--space-5); }
 
 /* Main feed - x.com aligned */
 main {
