@@ -10,7 +10,8 @@ module Master
         lines.concat(runtime_splash_lines(context))
         host_status = Master::Ground::HostBudget.status_line
         lines << d(host_status) if host_status
-        lines.concat(["", @p.bold.red("master") + @p.dim("@#{context[:host]} ready"), ""])
+        short_host = context[:host].split(".").first
+        lines.concat(["", d("#{context[:user]}@#{short_host}#{context[:prompt]} ready"), ""])
         lines.join("\n")
       end
 
@@ -20,58 +21,44 @@ module Master
         git = git_prompt_segments
         tokens = options[:tokens]
         cost = cost_label(options[:cost])
-        line = [git, @p.dim(short_model(model)), "↖ #{token_bar(tokens)}#{token_label(tokens)}",
+        line = [git, @p.dim(short_model(model)), d("tokens0: #{token_label(tokens)}"),
                 context_label(tokens), cost, violation_badge(options.fetch(:violations, 0)),
                 phase_label(phase)].reject(&:empty?).join("  ")
         prompt = phase_prompt(options.fetch(:last_ok, true), phase)
         [line, prompt + " "]
       end
 
-      def phase_tinted(text, phase)
-        color = {
-          "discover" => :yellow,
-          "implement" => :cyan,
-          "audit" => :red,
-          "grind" => :magenta,
-          "polish" => :magenta,
-          "watch" => :blue,
-        }[phase.to_s]
-        color ? @p.dim.public_send(color, text) : @p.dim(text)
+      def phase_tinted(text, _phase)
+        @p.dim(text)
       end
 
       def violation_badge(count)
         count = count.to_i
-        return @p.green(" [0v]") if count.zero?
-        return @p.yellow(" [#{count}v]") if count < 10
+        return d(" [0v]") if count.zero?
+        return d(" [#{count}v]") if count < 10
 
-        @p.bold.red(" [#{count}v]")
+        @p.red(" [#{count}v]")
       end
 
       def prompt_token
         "#{safe_hostname.split('.').first}$"
       end
 
-      def phase_prompt(last_ok, phase)
+      def phase_prompt(last_ok, _phase)
         return @p.red(prompt_token) unless last_ok
 
-        color = { "discover" => :yellow, "implement" => :cyan, "audit" => :red,
-                  "grind" => :magenta, "polish" => :magenta, "watch" => :blue }.fetch(phase.to_s, :red)
-        @p.bold.public_send(color, prompt_token)
+        d(prompt_token)
       end
 
       def cost_label(cost)
         cents = (cost.to_f * 100).round(2)
         return "" if cents.zero?
 
-        label = "¢#{format('%.2f', cents)}"
-        budget = @config.respond_to?(:budget_max) ? @config.budget_max.to_f : 0.0
-        return @p.dim(label) unless budget.positive?
-
-        @p.dim("#{label} #{progress_bar(cost.to_f / budget, 4)}")
+        d("cost0: ¢#{format('%.2f', cents)}")
       end
 
       def speaker_tag(name = "master")
-        "#{@p.dim('<')}#{@p.bold.red(name)}#{@p.dim('>')}"
+        d("#{name}0 at session0:")
       end
 
       def status_row(uptime:, turns:, violations: 0)
@@ -156,10 +143,12 @@ module Master
 
       def git_prompt_segments
         ahead, behind = git_ahead_behind
-        dirty = git_dirty? ? @p.red("●") : @p.dim("○")
-        ahead_label = ahead.positive? ? @p.dim(" ↑#{ahead}") : ""
-        behind_label = behind.positive? ? @p.yellow(" ↓#{behind}") : ""
-        @p.red(git_branch || "detached") + dirty + ahead_label + behind_label
+        branch = git_branch || "detached"
+        parts = [branch]
+        parts << "(dirty)" if git_dirty?
+        parts << "+#{ahead}" if ahead.positive?
+        parts << "-#{behind}" if behind.positive?
+        d(parts.join(" "))
       end
 
       def phase_label(phase)

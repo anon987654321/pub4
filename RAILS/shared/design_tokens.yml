@@ -53,6 +53,25 @@ face_root:
     z-toast: "1100"
     z-skip: "2000"
 
+openbsd_wscons:
+  x_bg: "#000000"
+  x_surface: "#000000"
+  x_surface_elevated: "#0a140a"
+  x_search_bg: "#0f1a0f"
+  x_text: "#63c363"
+  x_text_secondary: "#3d7a3d"
+  x_border: "#1a3a1a"
+  x_hover: "rgba(99, 195, 99, 0.1)"
+  x_hover_subtle: "rgba(99, 195, 99, 0.03)"
+  x_accent: "#63c363"
+  x_accent_hover: "#4fa34f"
+  x_danger: "#ff6b6b"
+  x_font: '"JetBrains Mono", ui-monospace, monospace'
+  x_font_size: "12px"
+  x_line_height: "16px"
+  x_radius_pill: "0"
+  x_radius_card: "0"
+
 dark:
   x_bg: "#000000"
   x_surface: "#000000"

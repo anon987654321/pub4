@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # fix_macos.sh
 # Fully autonomous macOS setup aligned with MASTER design tokens (design_tokens.yml).
-# Phosphor cream on absolute black, 8px grid, 1px hairlines, zero radius, AeroSpace tiling.
+# OpenBSD wscons green on absolute black, 8px grid, 1px hairlines, zero radius, AeroSpace tiling.
 # Single execution required. Restart + Accessibility approvals afterward.
 
 set -euo pipefail
@@ -50,12 +50,12 @@ brew trust nikitabobko/tap 2>/dev/null || true
 # Install packages
 print -P "Installing packages..."
 
-FORMULAS=(skhd starship borders sketchybar eza bat zoxide fzf)
+FORMULAS=(skhd starship borders sketchybar bat zoxide fzf)
 for pkg in "${FORMULAS[@]}"; do
     brew list "$pkg" &>/dev/null || brew install "$pkg"
 done
 
-CASKS=(ghostty nikitabobko/tap/aerospace jordanbaird-ice font-jetbrains-mono-nerd-font)
+CASKS=(ghostty nikitabobko/tap/aerospace jordanbaird-ice font-jetbrains-mono)
 for pkg in "${CASKS[@]}"; do
     brew list --cask "$pkg" &>/dev/null || brew install --cask "$pkg"
 done
@@ -90,7 +90,7 @@ gaps.outer.top = 12
 gaps.outer.right = 12
 
 after-startup-command = [
-    'exec-and-forget borders active_color=0xffe7e9ea inactive_color=0x24e7e9ea width=1.0',
+    'exec-and-forget borders active_color=0xff63c363 inactive_color=0x2463c363 width=1.0',
     'exec-and-forget sketchybar',
 ]
 
@@ -143,35 +143,35 @@ ctrl + shift - space : osascript -e 'tell application "System Events" to keystro
 ctrl + shift - l : /System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend
 EOF
 
-# Ghostty — MASTER face_root tokens (RAILS/shared/design_tokens.yml)
+# Ghostty — openbsd_wscons palette (RAILS/shared/design_tokens.yml)
 mkdir -p ~/.config/ghostty
 cat > ~/.config/ghostty/config << 'EOF'
-font-family = "JetBrainsMono Nerd Font"
-font-size = 13
+font-family = "JetBrains Mono"
+font-size = 12
 font-feature = -liga
 
 background = #000000
-foreground = #e7e9ea
-cursor-color = #f5f0e8
+foreground = #63c363
+cursor-color = #63c363
 background-opacity = 1
 background-blur = 0
 
 palette-0 = #000000
-palette-1 = #ff3344
-palette-2 = #10a37f
+palette-1 = #ff6b6b
+palette-2 = #63c363
 palette-3 = #c9a227
-palette-4 = #5b8def
-palette-5 = #8b5cf6
-palette-6 = #4285f4
-palette-7 = #e7e9ea
-palette-8 = #5a5a5a
-palette-9 = #ff3344
-palette-10 = #10a37f
+palette-4 = #3d7a3d
+palette-5 = #3d7a3d
+palette-6 = #3d7a3d
+palette-7 = #aaaaaa
+palette-8 = #3d7a3d
+palette-9 = #ff6b6b
+palette-10 = #63c363
 palette-11 = #c9a227
-palette-12 = #5b8def
-palette-13 = #8b5cf6
-palette-14 = #4285f4
-palette-15 = #f5f0e8
+palette-12 = #3d7a3d
+palette-13 = #3d7a3d
+palette-14 = #3d7a3d
+palette-15 = #aaaaaa
 
 macos-titlebar-style = hidden
 window-padding-x = 12
@@ -190,8 +190,8 @@ cat > ~/.config/borders/bordersrc << 'EOF'
 #!/bin/bash
 
 options=(
-    active_color=0xffe7e9ea
-    inactive_color=0x24e7e9ea
+    active_color=0xff63c363
+    inactive_color=0x2463c363
     width=1.0
 )
 
@@ -199,76 +199,80 @@ borders "${options[@]}"
 EOF
 chmod +x ~/.config/borders/bordersrc
 
-# Sketchybar — MASTER chrome layer (--face-bar-height: 36px)
+# Sketchybar — dmesg-style status strip (hostname + clock)
 mkdir -p ~/.config/sketchybar
 cat > ~/.config/sketchybar/sketchybarrc << 'EOF'
 #!/usr/bin/env zsh
 
 sketchybar --bar height=36 \
                  color=0xff000000 \
-                 border_color=0x24e7e9ea \
+                 border_color=0x241a3a1a \
                  border_width=1 \
                  corner_radius=0 \
                  y_offset=0 \
                  margin=0 \
                  shadow=off
 
-sketchybar --default label.font="JetBrains Mono:Bold:9.0" \
-                     label.color=0x5ae7e9ea \
+sketchybar --default label.font="JetBrains Mono:Regular:11.0" \
+                     label.color=0xff63c363 \
                      icon.drawing=off \
                      background.drawing=off
 
-sketchybar --add item master left \
-           --set master label="MASTER" \
+sketchybar --add item host left \
+           --set host label="$(hostname -s)" \
                      label.y_offset=1
 
 sketchybar --add item clock right \
            --set clock update_freq=30 \
-                     script='date "+%H:%M"' \
-                     label.font="JetBrains Mono:Regular:11.0" \
-                     label.color=0xffe7e9ea
+                     script='date "+%H:%M"'
 EOF
 chmod +x ~/.config/sketchybar/sketchybarrc
 
-# Starship — MASTER prompt_line / renderer_prompt_components.rb
+# Starship — openbsd_wscons, flat hostname$ prompt
 mkdir -p ~/.config
 cat > ~/.config/starship.toml << 'EOF'
 add_newline = false
-palette = "master_phosphor"
+palette = "openbsd_wscons"
+format = "$directory$git_branch$git_status$character"
 
-[palettes.master_phosphor]
+[palettes.openbsd_wscons]
 black = "#000000"
-red = "#ff3344"
-green = "#10a37f"
+red = "#ff6b6b"
+green = "#63c363"
 yellow = "#c9a227"
-blue = "#5b8def"
-magenta = "#8b5cf6"
-cyan = "#4285f4"
-white = "#e7e9ea"
+blue = "#3d7a3d"
+magenta = "#3d7a3d"
+cyan = "#3d7a3d"
+white = "#aaaaaa"
 
 [character]
-success_symbol = "master[\\$](bold red)"
-error_symbol = "master[\\$](bold red)"
+success_symbol = "[\\$](green)"
+error_symbol = "[\\$](red)"
 format = "$symbol "
 
 [directory]
-style = "bold red"
-format = "[$path]($style)"
-truncation_length = 3
+style = "green"
+format = "$path "
+truncation_length = 2
 truncate_to_repo = true
 
 [git_branch]
-format = "[$branch](red) "
+format = "[$branch](dim green) "
 symbol = ""
 
 [git_status]
-format = "[$all_status](dim red) "
+format = "[$all_status](dim green) "
 
 [cmd_duration]
-format = "[$duration](dim) "
-min_time = 500
+disabled = true
 
 [time]
+disabled = true
+
+[os]
+disabled = true
+
+[ruby]
 disabled = true
 EOF
 
@@ -278,7 +282,7 @@ print -P "Updating shell configuration..."
 touch ~/.zshrc
 grep -q "MASTER_BRUTALIST" ~/.zshrc 2>/dev/null || printf '\nexport MASTER_BRUTALIST=1\n' >> ~/.zshrc
 grep -q "starship" ~/.zshrc 2>/dev/null || printf '\neval "$(starship init zsh)"\n' >> ~/.zshrc
-grep -q "eza" ~/.zshrc 2>/dev/null || printf '\nalias ls="eza --icons"\nalias ll="eza -l --icons"\n' >> ~/.zshrc
+grep -q 'alias ll=' ~/.zshrc 2>/dev/null || printf '\nalias ll="ls -lah"\n' >> ~/.zshrc
 grep -q "zoxide" ~/.zshrc 2>/dev/null || printf '\neval "$(zoxide init zsh)"\n' >> ~/.zshrc
 grep -q "fzf" ~/.zshrc 2>/dev/null || printf '\nsource <(fzf --zsh)\n' >> ~/.zshrc
 

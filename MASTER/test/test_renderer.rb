@@ -5,7 +5,7 @@ require_relative "test_helper"
 class TestRenderer < Minitest::Test
   class FakeRenderer < Master::Voice::Renderer
     def dmesg_lines
-      Array.new(9) { |i| "boot line #{i}" }.first(self.class::BOOT_DMESG_LINES)
+      Array.new(self.class::BOOT_DMESG_LINES + 2) { |i| "boot line #{i}" }.first(self.class::BOOT_DMESG_LINES)
     end
 
     def git_rev
@@ -25,17 +25,17 @@ class TestRenderer < Minitest::Test
     end
   end
 
-  def test_boot_dmesg_is_capped_at_five_lines
-    assert_equal 5, Master::Voice::Renderer::BOOT_DMESG_LINES
-    assert_equal 5, FakeRenderer.new(config: {}).dmesg_lines.size
+  def test_boot_dmesg_is_capped_at_ten_lines
+    assert_equal 10, Master::Voice::Renderer::BOOT_DMESG_LINES
+    assert_equal 10, FakeRenderer.new(config: {}).dmesg_lines.size
   end
 
   def test_splash_keeps_multiline_boot_shape
     lines = FakeRenderer.new(config: {}).splash("model").lines
 
-    assert_operator lines.size, :>, 5
+    assert_operator lines.size, :>, 10
     assert_operator lines.count { |line| line.include?("boot line") }, :>=, 2
-    assert_operator lines.count { |line| line.include?("boot line") }, :<=, 5
+    assert_operator lines.count { |line| line.include?("boot line") }, :<=, 10
   end
 
   def test_prompt_line_shows_context_usage

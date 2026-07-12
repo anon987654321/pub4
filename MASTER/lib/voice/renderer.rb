@@ -12,7 +12,7 @@ module Master
     DEFAULT_WEB_PORT = Ground::Config::DEFAULT_WEB_PORT
 
     class Renderer
-      BOOT_DMESG_LINES = 5
+      BOOT_DMESG_LINES = 10
       MS_PER_SEC = 1000
       TOKEN_BUDGET = 8000
       BAR_CELLS = 12
