@@ -2,27 +2,27 @@
 
 .amber-compose-box {
   display: flex;
-  gap: 0.75rem;
-  padding: 1rem 1.1rem;
-  margin: 0 0 1.25rem;
-  background: #ffffff;
-  color: #202124;
-  border: 1px solid #dadce0;
-  border-radius: 16px;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4);
+  margin: 0 0 var(--space-5);
+  background: var(--x-bg);
+  color: var(--x-text);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
   font-family: var(--x-font);
 }
 
 .amber-compose-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-pill);
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--x-radius-pill);
   background: linear-gradient(145deg, #ffe8d6, #f6d6d9 58%, #e8f0fe);
   flex-shrink: 0;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 1rem;
-  color: #5f6368;
+  font-size: var(--text-base);
+  color: var(--x-text-secondary);
 }
 
 .amber-compose-inner {
@@ -34,17 +34,17 @@
   width: 100%;
   border: 0;
   background: transparent;
-  color: #202124;
+  color: var(--x-text);
   font: inherit;
-  font-size: 1.0625rem;
+  font-size: var(--text-base);
   line-height: 1.45;
-  padding: 0.35rem 0;
+  padding: var(--space-1) 0;
   resize: none;
   min-height: 44px;
 }
 
 .amber-compose-input::placeholder {
-  color: #5f6368;
+  color: var(--x-text-secondary);
 }
 
 .amber-compose-input:focus {
@@ -52,30 +52,30 @@
 }
 
 .amber-compose-box--expanded .amber-compose-input {
-  border-bottom: 1px solid #dadce0;
-  margin-bottom: 0.65rem;
+  border-bottom: 1px solid var(--x-border);
+  margin-bottom: var(--space-2);
 }
 
 .amber-compose-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
 .amber-compose-tags {
   display: flex;
-  gap: 0.45rem;
+  gap: var(--space-1);
   flex-wrap: wrap;
-  color: #5f6368;
-  font-size: 0.75rem;
+  color: var(--x-text-secondary);
+  font-size: var(--text-xs);
 }
 
 .amber-compose-tags span {
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-pill);
-  background: #f1f3f4;
+  padding: var(--space-1) var(--space-1);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface-elevated);
 }
 
 .amber-compose-submit {
@@ -86,28 +86,28 @@
 }
 
 .amber-compose-as {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
-  color: #5f6368;
+  color: var(--x-text-secondary);
   text-transform: lowercase;
 }
 
 .amber-compose-btn {
-  background: var(--accent);
-  color: #202124;
-  border-radius: var(--radius-pill);
+  background: var(--x-accent);
+  color: var(--x-text);
+  border-radius: var(--x-radius-pill);
   font-weight: 700;
   border: none;
 }
 
 .amber-compose-hint {
-  font-size: 0.8125rem;
-  color: #5f6368;
-  margin: 0.45rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--x-text-secondary);
+  margin: var(--space-1) 0 0;
 }
 
 .amber-compose-hint a {
-  color: var(--accent);
+  color: var(--x-accent);
 }
 
 .amber-guest-feed {
@@ -117,23 +117,23 @@
 }
 
 .amber-guest-feed .feed-post {
-  background: #ffffff;
-  color: #202124;
-  border: 1px solid #dadce0;
-  border-radius: 12px;
-  padding: 1rem 1.1rem;
-  margin-bottom: 0.75rem;
+  background: var(--x-bg);
+  color: var(--x-text);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  padding: var(--space-4) var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .amber-guest-feed .post-meta {
-  color: #5f6368;
+  color: var(--x-text-secondary);
 }
 
 .amber-guest-feed .author {
-  color: #202124;
+  color: var(--x-text);
   font-weight: 700;
 }
 
 .amber-guest-feed .post-body {
-  color: #3c4043;
+  color: var(--x-text);
 }
