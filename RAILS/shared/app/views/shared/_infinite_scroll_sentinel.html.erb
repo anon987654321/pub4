@@ -4,6 +4,7 @@
        data-controller="infinite-scroll"
        data-infinite-scroll-reflex-value="<%= reflex %>"
        data-reflex="<%= reflex %>"
+       data-turbo="false"
        data-next-page="<%= pagy.next %>"
        <% if local_assigns[:sort].present? %>data-sort="<%= sort %>"<% end %>
        <% if local_assigns[:blog_id].present? %>data-blog-id="<%= blog_id %>"<% end %>
