@@ -30,6 +30,7 @@ pin "@stimulus_reflex/futurism"
 # for formatDistanceToNow.
 pin "date-fns", to: "https://unpkg.com/date-fns@4.4.0/index.js"
 pin "sortablejs"
+pin "web-vitals", to: "https://cdn.jsdelivr.net/npm/web-vitals@4.2.4/dist/web-vitals.js"
 pin "pub4/hotwire", to: "pub4_hotwire.js"
 pin "pub4/stimulus_boot", to: "pub4_stimulus_boot.js"
 pin "pub4/live_search", to: "pub4_live_search_controller.js"
