@@ -73,6 +73,8 @@ input, button, textarea, select {
 .w-min { width: min-content; }
 .w-max { width: max-content; }
 
+// Button primitives live in _x_buttons.scss (forwarded via _x_components.scss).
+
 .avatar-initials {
   display: inline-grid;
   place-items: center;

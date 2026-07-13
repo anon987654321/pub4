@@ -7,7 +7,7 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-5);
   background: var(--x-accent);
-  color: var(--x-bg);
+  color: #000;
   border: 1px solid transparent;
   border-radius: var(--x-radius-pill);
   font: inherit;
@@ -32,8 +32,13 @@
 
 .btn-primary,
 .btn--primary {
-  background: var(--x-text);
-  color: var(--x-bg);
+  background: var(--x-accent);
+  color: #000;
+}
+
+.btn-primary:hover,
+.btn--primary:hover {
+  color: #000;
 }
 
 .btn-ghost,
