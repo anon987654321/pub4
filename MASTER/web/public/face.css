@@ -28,11 +28,6 @@
   --border-soft: color-mix(in srgb, var(--face-fg) 14%, transparent);
   --border-strong: color-mix(in srgb, var(--face-fg) 24%, transparent);
   --hover-tint: color-mix(in srgb, var(--face-fg) 8%, transparent);
-  --flash-chroma-r: color-mix(in srgb, var(--c-danger) 65%, transparent);
-  --flash-chroma-b: color-mix(in srgb, var(--c-code) 62%, transparent);
-  --shadow-pip: color-mix(in srgb, var(--face-bg) 45%, transparent);
-  --shadow-banner: color-mix(in srgb, var(--face-bg) 28%, transparent);
-  --shadow-float: 0 16px 36px var(--shadow-banner);
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -114,11 +109,7 @@ body[data-runtime-profile="full"] canvas { filter: none; }
 body[data-long-silence="1"] canvas { filter: none; }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {
-  filter:
-    drop-shadow(1px 0 0 var(--flash-chroma-r))
-    drop-shadow(-1px 0 0 var(--flash-chroma-b))
-    saturate(1.08)
-    contrast(1.04);
+  filter: saturate(1.08) contrast(1.04);
 }
 
 body[data-focus-mode="1"] .top-left-logo,
@@ -153,19 +144,6 @@ canvas#face {
 
 html[data-agent-engagement="thinking"] #cognition-ecology { opacity: 0.94; }
 html[data-agent-engagement="speaking"] #cognition-ecology { opacity: 0.82; }
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  background: radial-gradient(ellipse 78% 68% at 50% 44%, transparent 42%, rgba(0, 0, 0, 0.28) 100%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::after { background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 50%, rgba(0, 0, 0, 0.18) 100%); }
-}
 
 canvas {
   position: fixed;
@@ -204,7 +182,6 @@ body[data-hidden-tab="1"] #cognition-ecology {
   place-items: start center;
   padding: calc(12vh + var(--safe-top)) 16px 16px;
   background: color-mix(in srgb, var(--face-bg) 72%, transparent);
-  backdrop-filter: blur(2px);
 }
 
 #cmd-palette[data-open="1"] { display: grid; }
@@ -213,7 +190,6 @@ body[data-hidden-tab="1"] #cognition-ecology {
   width: min(520px, 100%);
   border: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--face-bg) 94%, transparent);
-  box-shadow: 0 18px 48px color-mix(in srgb, var(--face-bg) 55%, transparent);
   contain: layout style paint;
 }
 
@@ -261,8 +237,7 @@ body[data-face-pip="1"] canvas {
   height: min(34vw, 320px);
   inset: auto 12px calc(56px + var(--safe-bottom)) auto;
   border-radius: 12px;
-  box-shadow: 0 12px 36px var(--shadow-pip);
-  transition: inset 180ms var(--ease-out), width 180ms var(--ease-out), height 180ms var(--ease-out), border-radius 180ms var(--ease-out), box-shadow 180ms var(--ease-out), transform 180ms var(--ease-out), filter var(--transition-fast) var(--ease-out);
+  transition: inset 180ms var(--ease-out), width 180ms var(--ease-out), height 180ms var(--ease-out), border-radius 180ms var(--ease-out), transform 180ms var(--ease-out), filter var(--transition-fast) var(--ease-out);
 }
 
 body[data-face-pip="1"][data-face-pip-corner="top-left"] canvas {
@@ -327,11 +302,7 @@ body[data-tts-loading="true"] .ui-status {
   pointer-events: none;
   user-select: none;
   text-rendering: optimizeLegibility;
-  transition: opacity 1.2s var(--ease-out), text-shadow 300ms var(--ease-out);
-}
-body[data-mode="speaking"] .top-left-logo,
-body[data-mode="listening"] .top-left-logo {
-  text-shadow: 0 0 8px color-mix(in srgb, var(--c-accent) 45%, transparent);
+  transition: opacity 1.2s var(--ease-out);
 }
 /* Mic indicator — top-right, visible only during STT */
 #mic-dot {
@@ -353,8 +324,8 @@ body[data-mode="listening"] #mic-dot {
   animation: micPulse 1.4s var(--ease-in-out) infinite;
 }
 @keyframes micPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-danger) 50%, transparent); }
-  50% { transform: scale(1.12); box-shadow: 0 0 0 5px transparent; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
 }
 
 /* Bottom-right status label */
@@ -449,7 +420,6 @@ body[data-mode="listening"] #mic-dot {
   width: 4px;
   border-radius: 2px 2px 0 0;
   background: color-mix(in srgb, var(--mood-accent, var(--face-fg)) 62%, transparent);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--mood-accent, var(--face-fg)) 18%, transparent);
   opacity: .82;
   transition: height 320ms var(--ease-out), opacity 320ms var(--ease-out), background 420ms var(--ease-out);
 }
@@ -514,12 +484,7 @@ body[data-mode="listening"] #mic-dot {
   font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif;
   letter-spacing: -.04em;
   color: var(--face-fg);
-  text-shadow: 0 0 28px color-mix(in srgb, var(--face-fg) 12%, transparent);
-  transition: transform var(--transition-fast) var(--ease-out), text-shadow 420ms var(--ease-out);
-}
-
-#primer:hover h1 {
-  text-shadow: 0 0 36px color-mix(in srgb, var(--face-fg) 18%, transparent);
+  transition: transform var(--transition-fast) var(--ease-out);
 }
 
 #primer:active h1 { transform: scale(1.03); }
@@ -705,15 +670,6 @@ body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08
   pointer-events: none;
   transition: opacity .14s steps(5,end), transform .2s var(--ease-out);
   transform: translateY(30%);
-}
-
-#zsh::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-soft) 20%, var(--border-soft) 80%, transparent);
-  pointer-events: none;
 }
 
 body.zen #zsh,
@@ -964,7 +920,6 @@ body[data-tts-loading="true"] canvas { filter: none; }
   color: var(--face-fg);
   font: 12px/1.3 var(--font-label);
   border-radius: 8px;
-  box-shadow: 0 12px 30px var(--shadow-banner);
   pointer-events: none;
 }
 
@@ -974,11 +929,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
 
-#ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 var(--font-label); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); transition: color 220ms var(--ease-linear), text-shadow 300ms var(--ease-out); }
-body[data-mode="speaking"] #ascii-star,
-body[data-mode="listening"] #ascii-star {
-  text-shadow: 0 0 6px color-mix(in srgb, var(--c-accent) 40%, transparent);
-}
+#ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 var(--font-label); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); transition: color 220ms var(--ease-linear); }
 
 .compaction-note,
 .btw-note,
@@ -1032,7 +983,6 @@ body[data-phantom-glitch="1"] canvas {
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--face-bg) 92%, transparent);
   color: var(--face-fg);
-  box-shadow: var(--shadow-float);
   transform: translateX(calc(-100% - 18px));
   opacity: 0;
   pointer-events: none;
@@ -1189,7 +1139,7 @@ body.face-loading::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: repeating-linear-gradient(0deg, #000 0 3px, #050505 3px 6px);
+  background: #000;
   opacity: 0.35;
   pointer-events: none;
   z-index: 2;
@@ -1203,25 +1153,7 @@ body[data-runtime-profile="crt"] #cognition-ecology {
   opacity: 0.88;
 }
 
-/* CRT phosphor overlay — ambient vignette + scanlines, ties the DOM chrome to the tube-screen identity implied by --face-phosphor-decay. Deliberately subtle: a texture, not an effect. */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at center, transparent 60%, color-mix(in srgb, var(--face-bg) 40%, transparent) 100%),
-    repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in srgb, var(--face-fg) 3%, transparent) 3px 4px);
-  pointer-events: none;
-  z-index: 5;
-}
-@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
-  body::after { display: none; }
-}
-@media print {
-  body::after { display: none; }
-}
-
-/* canvas-fx overlay tier: sits above raw canvas(0/1/2), below persistent chrome(--z-chrome/10) — loading-dither(2) < council-multi-face(3) < council-persona-badge(4) < crt-overlay(5) */
+/* canvas-fx overlay tier: sits above raw canvas(0/1/2), below persistent chrome(--z-chrome/10) — loading-dither(2) < council-multi-face(3) < council-persona-badge(4) */
 .council-persona-badge {
   position: fixed;
   top: 12%;
@@ -1289,7 +1221,6 @@ body::after {
 .council-multi-face .council-lane[data-active="1"] {
   transform: scale(1.15);
   background: color-mix(in srgb, var(--face-fg) 22%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--face-fg) 25%, transparent);
 }
 .council-multi-face .council-lane.pulse { animation: council-lane-pulse 0.9s ease; }
 @keyframes council-lane-pulse {

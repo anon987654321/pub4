@@ -57,11 +57,6 @@ face_root:
     border_soft: "color-mix(in srgb, var(--face-fg) 14%, transparent)"
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
     hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
-    flash_chroma_r: "color-mix(in srgb, var(--c-danger) 65%, transparent)"
-    flash_chroma_b: "color-mix(in srgb, var(--c-code) 62%, transparent)"
-    shadow_pip: "color-mix(in srgb, var(--face-bg) 45%, transparent)"
-    shadow_banner: "color-mix(in srgb, var(--face-bg) 28%, transparent)"
-    shadow_float: "0 16px 36px var(--shadow-banner)"
   layout:
     radius-xs: "4px"
     radius-sm: "8px"
