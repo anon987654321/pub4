@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Unified feed compose expand/collapse for brgen + amber.
+// Uses compose-box / compose-box--expanded classes (see shared/_x_compose.scss).
 export default class extends Controller {
   static targets = ["input", "title", "footer", "box"]
 

@@ -6,7 +6,7 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
   def test_guest_can_post_anonymously_on_frontpage
     get root_url
     assert_response :success
-    assert_includes response.body, "amber-compose-box"
+    assert_includes response.body, "compose-box"
 
     assert_difference -> { Post.count }, 1 do
       post posts_url, params: { post: { body: "Loving this linen capsule #ootd", anonymous: true } }

@@ -1,0 +1,91 @@
+<%
+  # Unified x.com-style feed compose for brgen and amber.
+  # Usage:
+  #   render "shared/x_compose", model: Post.new, url: posts_path
+  #   render "shared/x_compose", field: :body, variant: :card, i18n_scope: "amber.feed"
+  model = local_assigns.fetch(:model) { Post.new }
+  url = local_assigns.fetch(:url) { posts_path }
+  field = local_assigns.fetch(:field) { :content }
+  i18n_scope = local_assigns.fetch(:i18n_scope) { "feed" }
+  variant = local_assigns.fetch(:variant) { :feed }
+  show_tiptap = local_assigns.fetch(:show_tiptap) { false }
+  show_tags = local_assigns.fetch(:show_tags) { false }
+  maxlength = local_assigns[:maxlength]
+  guest_remaining = local_assigns[:guest_remaining]
+  avatar_glyph = local_assigns[:avatar_glyph] || "?"
+  form_actions = local_assigns[:form_actions]
+  box_classes = ["compose-box", ("compose-box--card" if variant == :card), local_assigns[:class]].compact.join(" ")
+  avatar_classes = ["compose-avatar", ("compose-avatar--gradient" if variant == :card)].compact.join(" ")
+  input_actions = ["focus->feed-compose#expand", "blur->feed-compose#collapse"]
+  input_actions << "input->feed-compose#syncTitle" if field == :content
+  input_data = {
+    controller: "textarea-autogrow",
+    feed_compose_target: "input",
+    action: input_actions.join(" ")
+  }
+  input_data[:tiptap_editor_target] = "field" if show_tiptap
+%>
+<%= form_with model: model, url: url, class: box_classes, data: { controller: "feed-compose", feed_compose_target: "box", action: form_actions }.compact do |f| %>
+  <div class="<%= avatar_classes %>" aria-hidden="true"><%= avatar_glyph %></div>
+  <div class="compose-inner"<%= %( data-controller="tiptap-editor") if show_tiptap %>>
+    <% if field == :content %>
+      <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
+    <% end %>
+    <%= f.text_area field,
+          rows: 1,
+          maxlength: maxlength,
+          placeholder: t("#{i18n_scope}.compose_prompt"),
+          class: "compose-input",
+          data: input_data %>
+    <% if show_tiptap %>
+      <div class="tiptap_mount" data-tiptap-editor-target="mount"
+           data-action="focus->feed-compose#expand" hidden></div>
+      <div class="compose-footer" data-feed-compose-target="footer" hidden>
+        <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
+        </div>
+        <div class="compose-actions">
+          <button type="button" class="compose-action" title="Add photo" disabled>📷</button>
+          <button type="button" class="compose-action" title="Poll" disabled>📊</button>
+          <button type="button" class="compose-action" title="Emoji" disabled>😊</button>
+          <button type="button" class="compose-action" title="Location" disabled>📍</button>
+        </div>
+        <div class="compose-submit">
+          <% if guest? %>
+            <%= f.hidden_field :anonymous, value: true %>
+            <span class="dim compose-as">anon</span>
+          <% end %>
+          <%= f.submit t("#{i18n_scope}.post_action"), class: "btn btn-sm" %>
+        </div>
+      </div>
+    <% else %>
+      <div class="compose-footer" data-feed-compose-target="footer" hidden>
+        <% if show_tags %>
+          <div class="compose-tags" aria-hidden="true">
+            <span>#ootd</span><span>#capsulewardrobe</span><span>#style</span>
+          </div>
+        <% end %>
+        <div class="compose-submit">
+          <% if guest? %>
+            <%= f.hidden_field :anonymous, value: true %>
+            <span class="compose-as">anon</span>
+          <% end %>
+          <%= f.submit t("#{i18n_scope}.post_action"), class: "btn btn-sm" %>
+        </div>
+      </div>
+    <% end %>
+    <p class="compose-hint">
+      <% if guest? %>
+        <% if guest_remaining %>
+          <%= t("#{i18n_scope}.guest_hint", limit: Shared::AnonymousPostService::LIMIT, remaining: guest_remaining) %>
+        <% else %>
+          <%= t("#{i18n_scope}.guest_hint", limit: Shared::AnonymousPostService::LIMIT) %>
+        <% end %>
+      <% else %>
+        <%= link_to t("#{i18n_scope}.advanced_post"), new_post_path, class: "link-inherit" %>
+      <% end %>
+    </p>
+  </div>
+<% end %>

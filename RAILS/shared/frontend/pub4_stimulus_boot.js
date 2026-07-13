@@ -34,6 +34,7 @@ import CharacterCounter from "pub4/character_counter"
 import LuxuryProduct from "pub4/luxury_product"
 import ScrollReveal from "pub4/scroll_reveal"
 import XAction from "pub4/x_action"
+import FeedCompose from "pub4/feed_compose"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -74,6 +75,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("luxury-product", LuxuryProduct)
   application.register("scroll-reveal", ScrollReveal)
   application.register("x-action", XAction)
+  application.register("feed-compose", FeedCompose)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     application.register(name, component)
