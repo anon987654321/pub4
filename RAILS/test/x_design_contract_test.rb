@@ -17,6 +17,12 @@ class XDesignContractTest < Minitest::Test
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
   TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_tokens.scss")
   THEME_TOGGLE_JS = File.join(SHARED, "frontend", "pub4_theme_toggle_controller.js")
+  BOTTOM_SHEET_JS = File.join(SHARED, "frontend", "bottom_sheet_controller.js")
+  STIMULUS_BOOT_JS = File.join(SHARED, "frontend", "pub4_stimulus_boot.js")
+  IMPORTMAP_BASELINE = File.join(SHARED, "config", "importmap_baseline.rb")
+  BRGEN_BOTTOM_SHEET_JS = File.join(ROOT, "brgen", "app", "javascript", "controllers", "bottom_sheet_controller.js")
+  BRGEN_APPLICATION_SCSS = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "application.scss")
+  X_MODAL_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_x_modal.scss")
   THEME_BOOTSTRAP_PARTIAL = File.join(SHARED, "app", "views", "shared", "_theme_bootstrap.html.erb")
   X_ACTION_JS = File.join(SHARED, "frontend", "pub4_x_action_controller.js")
   X_ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_x_action_bar.html.erb")
@@ -162,6 +168,24 @@ class XDesignContractTest < Minitest::Test
     assert_includes js, "document.documentElement.dataset.theme"
   end
 
+  def test_bottom_sheet_controller_promoted_to_shared
+    js = File.read(BOTTOM_SHEET_JS)
+    boot = File.read(STIMULUS_BOOT_JS)
+    importmap = File.read(IMPORTMAP_BASELINE)
+    modal = File.read(X_MODAL_SCSS)
+    brgen_scss = File.read(BRGEN_APPLICATION_SCSS)
+
+    assert_includes js, 'static targets = ["sheet", "backdrop"]'
+    assert_includes js, "pointerDown(event)"
+    assert_includes boot, 'import BottomSheet from "pub4/bottom_sheet"'
+    assert_includes boot, 'application.register("bottom-sheet", BottomSheet)'
+    assert_includes importmap, 'pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"'
+    refute File.file?(BRGEN_BOTTOM_SHEET_JS), "brgen must not keep a local bottom_sheet_controller.js"
+    refute_includes brgen_scss, '@use "_mobile"'
+    assert_includes modal, ".mobile-sheet-backdrop"
+    assert_includes modal, ".dialog"
+  end
+
   def test_theme_bootstrap_partial_sets_dataset_before_paint
     partial = File.read(THEME_BOOTSTRAP_PARTIAL)
     assert_includes partial, "document.documentElement.dataset.theme"
@@ -286,6 +310,7 @@ class XDesignContractTest < Minitest::Test
     assert_includes layout, "nav-affordance"
     assert_includes layout, "compose-fab"
     assert_includes layout, "mobile-sheet"
+    assert_includes layout, 'data-controller="bottom-sheet"'
     assert_includes layout, "particle_kernel"
     assert_includes layout, "yield :widgets"
     refute_includes shell, "nav_swiper"
@@ -322,6 +347,8 @@ class XDesignContractTest < Minitest::Test
     refute_includes shell, "wardrobe_showcase"
     refute_includes shell, 'class="compose-fab"'
     refute_includes shell, 'class="tab-bar"'
+    refute_includes layout, 'data-controller="bottom-sheet"'
+    assert_includes layout, "more_button: false"
 
     showcase_idx = layout.index("wardrobe_showcase")
     shell_idx = layout.index('render "shared/x_shell"')
