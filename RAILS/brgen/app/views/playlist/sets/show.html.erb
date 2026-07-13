@@ -13,7 +13,7 @@
   <% end %>
 </div>
 
-<%# Whyp-like collection player: waveform, timestamp comments, queue auto-next, customizable %>
+<%# Collection player: waveform, timestamp comments, queue auto-next, customizable %>
 <%= render "playlist/playlists/player", playlist: @set, tracks: @tracks, playlist_name: @set.name, tracks_count: @tracks.count, plays_count: 0, color: params[:color] || "#00d4ff", comments: @comments, track_comments: @track_comments %>
 
 <article>

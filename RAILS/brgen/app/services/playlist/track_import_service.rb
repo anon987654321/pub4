@@ -68,7 +68,7 @@ module Playlist
         uri.path.split("/").reject(&:blank?).last.to_s.tr("-", " ").titleize.presence || "SoundCloud track"
       when "whyp"
         id = uri.path.split("/").last
-        "Whyp ##{id}"
+        "Track ##{id}"
       else
         File.basename(uri.path).presence || uri.host
       end

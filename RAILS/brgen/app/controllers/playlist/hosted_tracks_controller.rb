@@ -28,7 +28,7 @@ module Playlist
           t.audio_file.attach(file)
           t.save ? t : nil
         end.compact
-        redirect_to playlist_hosted_tracks_path, notice: "#{created.size} tracks uploaded (bulk like Whyp)"
+        redirect_to playlist_hosted_tracks_path, notice: "#{created.size} tracks uploaded"
       else
         @track = Playlist::Track.new(track_params.except(:audio_file))
         @track.user = Current.user if @track.respond_to?(:user=)

@@ -96,7 +96,7 @@
     <span class="playlist-transport-time" data-playlist-player-target="duration">0:00</span>
 
     <% unless local_assigns[:embedded] %>
-    <button type="button" class="playlist-add-comment" data-action="playlist-player#addComment" aria-label="Add timestamped comment at current time (like Whyp)">+ Comment</button>
+    <button type="button" class="playlist-add-comment" data-action="playlist-player#addComment" aria-label="Add timestamped comment at current time">+ Comment</button>
     <% end %>
   </footer>
 
@@ -156,7 +156,7 @@
   </section>
 
   <section class="playlist-comments" aria-label="Timestamped comments" id="playlist:track:<%= active&.id %>:comments" data-playlist-player-target="commentsList">
-    <h3>Comments (click to seek, like Whyp)</h3>
+    <h3>Comments (click to seek)</h3>
     <% (local_assigns[:comments] || []).each do |c| %>
       <div class="playlist-comment" data-time="<%= c[:time] %>" data-action="click->playlist-player#seekToComment">
         <span class="time"><%= c[:time] %></span>

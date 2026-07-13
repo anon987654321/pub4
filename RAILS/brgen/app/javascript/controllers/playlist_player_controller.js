@@ -244,7 +244,7 @@ export default class extends Controller {
       ctx.fillRect(x, y, barWidth, barHeight)
     })
 
-    // Draw timestamped comment markers like Whyp
+    // Draw timestamped comment markers
     if (this.commentsValue && this.commentsValue.length > 0 && this.audioTarget && this.audioTarget.duration) {
       const duration = this.audioTarget.duration
       ctx.fillStyle = "#ffeb3b"
@@ -286,7 +286,7 @@ export default class extends Controller {
   }
 
   #recordListenOnce() {
-    // Record like Whyp: count a listen on play (server de-dupes per listener/duration via model)
+    // Count a listen on play (server de-dupes per listener/duration via model)
     const trackId = this.trackIdValue
     if (!trackId) return
     const token = document.querySelector('meta[name="csrf-token"]')?.content

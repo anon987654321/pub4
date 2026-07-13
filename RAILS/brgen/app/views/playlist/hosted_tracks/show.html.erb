@@ -19,12 +19,10 @@
   </section>
 <% end %>
 
-<%# Simple analytics like Whyp track dashboard (listens, comments, versions; deeper via affiliate) %>
 <section class="playlist-analytics" aria-label="Track analytics">
   <h3>Analytics</h3>
   <p class="dim"><%= @track.listens.count %> plays · <%= @comments.size %> timestamped comments · <%= @track.audio_versions.count %> prior versions</p>
   <p class="dim">Privacy: <%= @track.privacy.presence || "private" %> <% if @track.expires_at %>· expires <%= @track.expires_at.to_date %><% end %></p>
-  <p class="dim">Use our affiliate <a href="https://whyp.it" target="_blank">Whyp.it</a> for listener locations, traffic sources (embeds vs site), duration heatmaps and date-range dashboards.</p>
 </section>
 
 <% if @comments.any? %>
