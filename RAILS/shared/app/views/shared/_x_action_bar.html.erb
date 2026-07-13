@@ -1,4 +1,5 @@
 <%# locals: record, reply_path: nil, share_url: nil, liked: false, like_count: 0, repost_count: 0, view_count: nil, comment_count: 0 %>
+<% like_count = local_assigns.fetch(:like_count, 0).to_i %>
 <div class="x-actions">
   <% if local_assigns[:reply_path].present? %>
     <%= link_to reply_path, class: "x-act x-act--reply", aria: { label: "Reply" } do %>
@@ -27,10 +28,10 @@
           data-x-action-url-value="<%= reactions_path %>"
           data-x-action-target-gid-value="<%= record.to_signed_global_id %>"
           data-x-action-kind-value="like"
-          data-x-action-count-value="<%= local_assigns.fetch(:like_count, 0) %>"
+          data-x-action-count-value="<%= like_count %>"
           aria-label="Like">
     <%= x_icon(:like, size: 18) %>
-    <span class="x-count" data-x-action-target="count"><%= local_assigns.fetch(:like_count, 0) %></span>
+    <span class="x-count" data-x-action-target="count"><%= like_count.positive? ? like_count : "" %></span>
   </button>
 
   <% if local_assigns[:view_count].present? %>
@@ -41,14 +42,16 @@
   <% end %>
 
   <% if local_assigns[:share_url].present? %>
-    <button type="button"
-            class="x-act x-act--share"
-            aria-label="Share"
-            data-controller="clipboard"
-            data-clipboard-source-value="<%= share_url %>"
-            data-action="click->clipboard#copy">
-      <%= x_icon(:share, size: 18) %>
-    </button>
+    <span data-controller="clipboard" data-clipboard-success-content-value="Copied">
+      <input type="hidden" data-clipboard-target="source" value="<%= share_url %>" aria-hidden="true" tabindex="-1">
+      <button type="button"
+              class="x-act x-act--share"
+              aria-label="Share"
+              data-action="click->clipboard#copy"
+              data-clipboard-target="button">
+        <%= x_icon(:share, size: 18) %>
+      </button>
+    </span>
   <% else %>
     <button type="button" class="x-act x-act--share" aria-label="Share" disabled>
       <%= x_icon(:share, size: 18) %>
