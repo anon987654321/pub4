@@ -4,11 +4,19 @@
 # Verify OPERATOR.sh DNS, domain_registry.rb, and subdomain constants agree on city subdomains.
 
 require "pathname"
+require "json"
 require_relative "../OPERATOR/lib/utf8"
+begin
+  require_relative "../RAILS/shared/lib/pub4/deploy_paths"
+rescue LoadError
+  # ok for minimal ruby env
+end
 
 ROOT = Pathname.new(__dir__).join("..").expand_path
 OPENBSD = ROOT.join("OPERATOR", "openbsd", "OPERATOR.sh")
 REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
+MASTER_JSON = ROOT.join("OPERATOR", "master.json")
+RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze
 NORWEGIAN_PLAYLIST_ALIAS = "spilleliste"
@@ -68,6 +76,10 @@ openbsd = parse_openbsd_domains
 registry = parse_registry_entries
 routes = parse_registry_subdomains
 
+if defined?(Pub4::DeployPaths) && Pub4::DeployPaths.respond_to?(:validate_layout!)
+  Pub4::DeployPaths.validate_layout! rescue nil
+end
+
 missing_dns = registry.keys - openbsd.keys
 fail!(failures, "domain set mismatch: missing DNS #{missing_dns.sort.join(', ')}") if missing_dns.any?
 
@@ -94,10 +106,64 @@ routes.fetch(:playlist).each do |label|
   fail!(failures, "routes playlist lists unknown label #{label}")
 end
 
+# Additional drift checks: master.json (generated from apps.yml but source of truth for deploy)
+# and relayd.conf keypairs/forwards.
+def parse_master_json
+  return {} unless MASTER_JSON.exist?
+
+  data = JSON.parse(MASTER_JSON.read)
+  apps = (data["apps"] || []).each_with_object({}) { |a, h| h[a["name"]] = a }
+  master = data["master_face"] || {}
+  { apps: apps, master: master }
+end
+
+def parse_relayd_keypairs
+  return [] unless RELAYD.exist?
+
+  text = RELAYD.read
+  text.scan(/tls keypair "([^"]+)"/).flatten
+end
+
+master = parse_master_json
+relayd_keys = parse_relayd_keypairs
+
+# Check main deploy apps from master.json match expected domains/ports from registry + known
+if master[:apps] && !master[:apps].empty?
+  expected_apps = {
+    "amber" => { domain: "amber.brgen.no", port: 61352 },
+    "brgen" => { domain: "brgen.no", port: 38182 },
+    "bsdports" => { domain: "bsdports.org", port: 47312 }
+  }
+  expected_apps.each do |name, exp|
+    entry = master[:apps][name]
+    unless entry
+      fail!(failures, "master.json missing #{name}")
+      next
+    end
+    if entry["domain"] != exp[:domain]
+      fail!(failures, "master.json domain mismatch for #{name}: #{entry['domain']} != #{exp[:domain]}")
+    end
+    if entry["port"].to_i != exp[:port]
+      fail!(failures, "master.json port mismatch for #{name}: #{entry['port']} != #{exp[:port]}")
+    end
+  end
+  m = master[:master] || {}
+  if m["domain"] != "ai.brgen.no" || m["port"].to_i != 53187
+    fail!(failures, "master.json master_face mismatch: #{m['domain']}:#{m['port']}")
+  end
+end
+
+# At least the main domains should have keypairs in relayd
+%w[brgen.no ai.brgen.no amber.brgen.no bsdports.org].each do |dom|
+  unless relayd_keys.include?(dom)
+    fail!(failures, "relayd.conf missing tls keypair for #{dom}")
+  end
+end
+
 if failures.any?
   warn "Domain alignment failures:"
   failures.each { |failure| warn "  - #{failure}" }
   exit 1
 end
 
-puts "Domain alignment gate passed (#{registry.size} city domains)."
+puts "Domain alignment gate passed (#{registry.size} city domains + master.json/relayd checks)."

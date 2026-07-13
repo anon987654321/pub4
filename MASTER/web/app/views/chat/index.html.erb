@@ -88,7 +88,22 @@
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark" data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
-  <div class="top-left-logo" aria-hidden="true">brgen</div>
+  <div class="top-left-logo" aria-hidden="true">
+    <div class="city-logo-carousel" style="overflow:hidden;width:120px;height:14px;position:relative;font:9px/1 ui-monospace,monospace;color:#666;">
+      <div style="display:flex;animation:cityscroll 25s linear infinite;width:fit-content;">
+        <span style="padding:0 6px;white-space:nowrap;">playlist.lndon.uk</span>
+        <span style="padding:0 6px;white-space:nowrap;">playlist.cardff.uk</span>
+        <span style="padding:0 6px;white-space:nowrap;">tv.brgen.no</span>
+        <span style="padding:0 6px;white-space:nowrap;">takeaway.brgen.no</span>
+        <span style="padding:0 6px;white-space:nowrap;">maps.brgen.no</span>
+        <span style="padding:0 6px;white-space:nowrap;">messenger.brgen.no</span>
+        <span style="padding:0 6px;white-space:nowrap;">dating.brgen.no</span>
+        <span style="padding:0 6px;white-space:nowrap;">amber.brgen.no</span>
+        <span style="padding:0 6px;white-space:nowrap;">playlist.lndon.uk</span>
+      </div>
+    </div>
+    <style>@keyframes cityscroll {0%{transform:translateX(0)}100%{transform:translateX(-50%)}}</style>
+  </div>
   <div id="ascii-star" aria-hidden="true"></div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" aria-hidden="true"></canvas>
@@ -105,7 +120,9 @@
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
       script (including face_2d_fallback). A blocking <script src> above this line delays
       handler wiring; early taps look dead. #zsh and #ui-status are below this block —
-      resolve them lazily in go(), not at parse time. %>
+      resolve them lazily in go(), not at parse time.
+      See CLAUDE.md and history of "tap to start does nothing" for this high-risk path.
+      Enhancements here should preserve the _primerFired guard and dbgFrames check. %>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
@@ -162,9 +179,9 @@
         dismissPrimer();
         revealPrompt();
         var ui=uiEl();
-        if(ui)ui.textContent='face failed to load — reload';
+        if(ui)ui.textContent='face failed to load — reload or check console';
         var errLive=document.getElementById('error-live');
-        if(errLive)errLive.textContent='face failed to load — reload the page';
+        if(errLive)errLive.textContent='face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors.';
       }
       function resetFaceCanvasForWebGL(){
         var cv=document.getElementById('face');

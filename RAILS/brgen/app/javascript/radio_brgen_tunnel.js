@@ -374,7 +374,12 @@ export class RadioBrgen {
     })
     this.visualEngine = new VisualEngine(this.canvas)
 
-    if (options.heading) options.heading.textContent = options.headingText || "git dig · pub4/index.html"
+    if (options.heading && options.headingText) {
+      const hasCarousel = options.heading.id === "cityCarousel" || (options.heading.querySelector && options.heading.querySelector(".carousel-container"))
+      if (!hasCarousel) {
+        options.heading.textContent = options.headingText
+      }
+    }
 
     // Reintegrated SimpleCarousel from historical best (c7c8effcd)
     const cityCarousel = document.getElementById("cityCarousel")

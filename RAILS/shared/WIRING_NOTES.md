@@ -63,7 +63,7 @@ Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`, `Notifiable
 
 **Commentable:** brgen and amber use polymorphic `comments` + `Shared::Commentable` on `Post`.
 
-**Deferred DRY:** brgen still has local `NotificationsController` and `VotesController` vs shared stubs; Follow schema differs across apps. Promote when city inbox grouping and vote karma side-effects are unified.
+**Deferred DRY:** brgen still has local `NotificationsController` and `VotesController` vs shared stubs (see brgen/app/controllers/{notifications,votes}_controller.rb headers); Follow schema differs across apps. Promote when city inbox grouping and vote karma side-effects are unified. Controllers carry comments linking here.
 
 **Notification model:** brgen keeps `Notification` (not `Shared::Notification`) on the same `notifications` table. Brgen adds `title`/`body` presenters, a `match` kind for dating, and Turbo broadcasts to `brgen:notifications:*`. Shared::Notification is the thin engine stub for apps that eval `shared/config/routes/social.rb`. Same table, different presentation contract — duplication beats the wrong abstraction until inbox grouping unifies.
 

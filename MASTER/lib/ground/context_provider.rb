@@ -9,6 +9,7 @@ module Master
 
       def initialize(root: Master::ROOT)
         @root = root
+        @mutex = Mutex.new
       end
 
       def gather(query:, providers: PROVIDERS, limit: 20)
@@ -133,6 +134,51 @@ module Master
         Master::Ground::Swallow.log(e, context: "context_provider.rails_app_dirs")
         []
       end
+
+      # Defensive project name
+      def project_name
+        @root.basename.to_s
+      rescue StandardError
+        "unknown"
+      end
+
+      # Thread-safe-ish snapshot of context for a task
+      def snapshot_for(task: nil, file: nil)
+        @mutex ||= Mutex.new
+        @mutex.synchronize do
+          {
+            project: project_name,
+            task: task_context(task),
+            file: file_context(file),
+            timestamp: Time.now.utc.iso8601,
+          }.freeze
+        end
+      rescue StandardError => e
+        { error: e.message }.freeze
+      end
+
+      def task_context(task)
+        return {} unless task
+        {
+          description: task.to_s,
+          config_model: (defined?(@config) && @config ? @config.model : nil),
+        }
+      end
+
+      def file_context(file)
+        return {} unless file
+        path = Pathname.new(file)
+        {
+          path: path.to_s,
+          relative: (path.relative? ? path.to_s : path.relative_path_from(@root).to_s rescue path.to_s),
+          extension: path.extname,
+          basename: path.basename.to_s,
+        }
+      rescue StandardError => e
+        { path: file.to_s, error: e.message }
+      end
+
+      public :snapshot_for
     end
   end
 end

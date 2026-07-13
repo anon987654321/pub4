@@ -29,6 +29,8 @@ This file separates known debt from ordinary TODO work.
 
 The WebGL primer guard has source/test coverage, but the recurring "tap to start does nothing" class still needs manual real-browser verification when boot assets change.
 
+Recent: small improvements to fallback diagnostics and boot comments (see web/app/views/chat/index.html.erb).
+
 ### Host TTS Binaries
 
 **operator-priority** — TTS end-to-end audio depends on host binaries such as `edge-tts` and `espeak`. Web wiring can be correct while synthesis is unavailable locally. Check `GET /health` deploy.tts_socket and `test -S .master/tts.sock` on vm23.

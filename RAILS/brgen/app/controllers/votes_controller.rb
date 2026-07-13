@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# Brgen-specific VotesController.
+# See shared for Reactable/Votable concern. Local controller kept for
+# karma side-effects and city-specific behavior.
+# See RAILS/shared/WIRING_NOTES.md "Deferred DRY".
 class VotesController < ApplicationController
   before_action :require_real_user
 

@@ -339,6 +339,12 @@ body.vertical-playlist .playlist-index {
   background: var(--color-bg);
 }
 
+/* Restore the immersive radio logo (city carousel) inside tunnel; shell hides generic .city-carousel for playlist verticals */
+body.vertical-playlist .radio-tunnel .city-carousel,
+body.vertical-playlist .radio-header .city-carousel {
+  display: block;
+}
+
 @media (min-width: 768px) {
   body.vertical-playlist .radio-tunnel { cursor: none; }
   body.vertical-playlist .radio-cursor { display: block; }

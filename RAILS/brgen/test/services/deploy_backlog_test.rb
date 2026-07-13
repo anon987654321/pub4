@@ -268,7 +268,6 @@ class DeployBacklogTest < Minitest::Test
     assert_includes imports_controller, 'return if performed?'
     assert_includes playlists_controller, 'def embed'
     assert_includes playlists_controller, 'Playlist::Track.unexpired'
-    assert_includes playlists_controller, '@trending_playlists'
     assert_includes tracks_controller, ':expires_at'
     assert_includes routes, 'member { get :embed }'
     assert_includes routes, 'resources :imports, only: :create'
@@ -282,7 +281,6 @@ class DeployBacklogTest < Minitest::Test
     assert_includes show, 'json_ld_for(@playlist, type: :music_playlist)'
     assert_includes show, 'playlist_playlist_imports_path'
     assert_includes show, 'embed_playlist_playlist_url'
-    assert_includes index, '@trending_playlists'
     assert_includes hosted_form, 'form.datetime_field :expires_at'
   end
 

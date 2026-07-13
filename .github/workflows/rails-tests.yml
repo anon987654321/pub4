@@ -3,6 +3,11 @@ name: RAILS Tests
 # Auto-runs paused: GitHub account billing lock prevents job start (same as
 # master-tests.yml / master-through-master.yml). Restore push/pull_request
 # triggers after billing is fixed at github.com/settings/billing.
+#
+# Local equivalent:
+#   cd RAILS/<app> && bundle exec bin/ci
+# Or via root: OPERATOR/bin/check-rails --profile=contributor
+# Full: ruby RAILS/domain_alignment_gate.rb && ruby RAILS/check_production_gate.rb etc.
 on:
   workflow_dispatch:
   # push:

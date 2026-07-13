@@ -78,5 +78,25 @@ module Pub4
         .uniq
         .find { |path| File.file?(path) }
     end
+
+    # Lightweight sanity check for copy-tree layout (deployed: app/ + sibling shared/).
+    # In source tree, shared lives at RAILS/shared (inside the monorepo).
+    # Used by gates and deploy scripts to surface misconfigured PUB4_* env on VPS.
+    # Only active/noisy in prod-like envs to avoid local dev tree noise.
+    def validate_layout!
+      return true unless ENV["PUB4_RAILS_ROOT"] || ENV["RAILS_ENV"] == "production" || RUBY_PLATFORM.include?("openbsd")
+
+      root = rails_root
+      # Deployed copy-tree: /home/<app>/app  with sibling /home/<app>/shared
+      # Source: RAILS/ (apps + shared/ inside)
+      sibling_shared = root.join("../shared")
+      internal_shared = root.join("shared")
+      is_source = File.directory?(internal_shared.to_s)
+      is_deployed_sibling = File.directory?(sibling_shared.to_s)
+      unless is_source || is_deployed_sibling
+        warn "DeployPaths: unexpected layout. rails_root=#{root} (expected RAILS/shared in source or sibling shared/ on target)"
+      end
+      true
+    end
   end
 end

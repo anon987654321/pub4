@@ -6,8 +6,8 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
   def index
-    @pagy, @playlists = pagy(Playlist::Playlist.public_playlists.popular.includes(:user))
-    @trending_playlists = Playlist::Playlist.city_trending.includes(:user).limit(12)
+    # Minimal immersive view for playlist.brgen.no: only logo (city carousel) + warp visualizer + tap overlay.
+    # No library, trending, archaeology notes, nav, or now-playing.
   end
 
   def show

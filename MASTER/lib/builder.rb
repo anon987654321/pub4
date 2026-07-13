@@ -11,9 +11,10 @@ require_relative "trace/snapshot_publisher"
 module Master
   module Builder
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
-    RING_SIZE          = 1000
+    RING_SIZE = 1000
 
-    TOOL_MAP = {
+    # Default tool factories. Override via data/tools.yml or register_tool().
+    DEFAULT_TOOL_MAP = {
       "ReadFile"        => ->(r, i) {
         Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
       },
@@ -52,6 +53,34 @@ module Master
       },
     }.freeze
 
+    @tool_registry = DEFAULT_TOOL_MAP.dup
+    @registry_mutex = Mutex.new
+
+    class << self
+      # Register a custom tool factory at runtime. Thread-safe.
+      def register_tool(name, factory)
+        @registry_mutex.synchronize do
+          @tool_registry[name.to_s] = factory
+        end
+      end
+
+      # Unregister a tool. Returns the removed factory or nil.
+      def unregister_tool(name)
+        @registry_mutex.synchronize do
+          @tool_registry.delete(name.to_s)
+        end
+      end
+
+      def tool_map
+        @registry_mutex.synchronize { @tool_registry.dup.freeze }
+      end
+
+      # Reset to defaults (useful in tests).
+      def reset_tools!
+        @registry_mutex.synchronize { @tool_registry = DEFAULT_TOOL_MAP.dup }
+      end
+    end
+
     module_function
 
     def build(root: Dir.pwd)
@@ -77,6 +106,9 @@ module Master
     def build_fast(root: Dir.pwd)
       Ground::BootChecks.run(root:)
       config = Ground::Config.new(root)
+      if config.respond_to?(:validate) && !config.valid?
+        (config[:bus] || $stderr).puts "config validation warnings: #{config.validate.join('; ')}"
+      end
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
       bus = trace[:bus]
@@ -158,9 +190,10 @@ module Master
       defs = Master.load_yaml(path)
       return [] unless defs.is_a?(Array)
 
+      registry = ::Master::Builder.tool_map
       defs.filter_map do |defn|
         next unless defn["default"] == true
-        factory = TOOL_MAP[defn["name"].to_s]
+        factory = registry[defn["name"].to_s]
         unless factory
           infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"])
           next

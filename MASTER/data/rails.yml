@@ -3,7 +3,7 @@ style_guides: data/runtime.yml#style_guides
 
 stack:
   rails: "8.1.3"
-  ruby: "3.3+"
+  ruby: "3.4"
   database: "sqlite3 (default), PostgreSQL (production)"
   server: "Falcon (rackup --server falcon)"
   frontend: "Hotwire (Turbo + Stimulus)"

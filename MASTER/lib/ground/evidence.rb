@@ -77,6 +77,10 @@ module Master
         return [false, "unknown source type"] unless @source_config.key?(type)
 
         verifier, reason = verifier_for(type)
+        # Guard against undefined verifier methods
+        unless respond_to?(verifier, true)
+          return [false, "verifier #{verifier} not implemented"]
+        end
         [send(verifier, source), reason]
       end
 
@@ -97,11 +101,19 @@ module Master
       def document_verified?(source) = value(source, :status).to_i == 200 && value(source, :claim_present) == true
       def attributed?(source) = value(source, :attributed) == true
       def confirmed?(source) = value(source, :confirmed) == true
-      def consensus?(source) = Array(value(source, :providers)).map(&:to_s).uniq.size >= 2
+      def consensus?(source)
+        providers = Array(value(source, :providers)).map(&:to_s)
+        providers.uniq.size >= 2
+      end
+
+      # Fallback verifier for unknown source types — requires explicit :verified key
+      def explicitly_verified?(source) = value(source, :verified) == true
       def explicitly_verified?(source) = value(source, :verified) == true
 
       def total_trust(sources)
         weights = sources.select { |source| source[:verified] }.map { |source| source[:trust] }
+        return 0.0 if weights.empty?
+
         1.0 - weights.inject(1.0) { |product, weight| product * (1.0 - weight) }
       end
 
@@ -131,7 +143,10 @@ module Master
       end
 
       def value(source, key) = source[key] || source[key.to_s]
-      def source_key?(source, key) = source.respond_to?(:key?) && (source.key?(key) || source.key?(key.to_s))
+
+      def source_key?(source, key)
+        source.respond_to?(:key?) && (source.key?(key) || source.key?(key.to_s))
+      end
       def validation_error(message) = Result.err(message, category: :validation)
       def strong_source_required? = @combine["require_at_least_one_strong"] == true
 

@@ -2,6 +2,9 @@ name: MASTER Tests
 
 # Auto-runs paused: GitHub account billing lock prevents job start (~5s fail + email each push).
 # Restore push/pull_request triggers after billing is fixed at github.com/settings/billing.
+#
+# Local: cd MASTER && bin/check --profile=full
+# Or: OPERATOR/bin/check --profile=contributor && cd MASTER && bin/check --profile=agent
 on:
   workflow_dispatch:
   # push:

@@ -638,3 +638,15 @@ body.zen-minimal .revealed ~ main,
 body.zen-minimal .sidebar.revealed ~ main {
   opacity: 1;
 }
+
+/* City carousel as default logo (reintegrated from pub4/index.html history) */
+.logo-carousel { font-size: 0.75rem; line-height: 1; }
+.logo-carousel .swiper-wrapper { align-items: center; }
+.logo-slide {
+  font-family: ui-monospace, monospace;
+  color: #aaa;
+  white-space: nowrap;
+  padding: 0 4px;
+  opacity: 0.85;
+}
+.brand-wordmark .logo-carousel { max-width: 140px; overflow: hidden; }

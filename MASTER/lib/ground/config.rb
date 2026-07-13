@@ -2,6 +2,7 @@
 
 require "yaml"
 require "fileutils"
+require_relative "atomic_write"
 
 module Master
   module Ground
@@ -45,7 +46,10 @@ module Master
       def [](key) = @mutex.synchronize { @data[key.to_s] }
       def []=(key, value); @mutex.synchronize { @data[key.to_s] = value }; end
       def dig(key, *rest)
-        @mutex.synchronize { k = key.to_s; rest.empty? ? @data[k] : @data.dig(k, *rest) }
+        @mutex.synchronize do
+          k = key.to_s
+          rest.empty? ? @data[k] : @data.dig(k, *rest.map(&:to_s))
+        end
       end
 
       def model = self["model"]
@@ -59,17 +63,37 @@ module Master
       def reasoning_mode = self["reasoning_mode"].to_s
       def task_type = self["task_type"].to_s
       def auto_testing? = self["auto_testing"] == true
+      def web_port = self["web_port"].to_i
+      def history_max = self["history_max"].to_i
+      def cache_ttl = self["cache_ttl"].to_i
 
       include AtomicWrite
 
       def save!
         FileUtils.mkdir_p(File.dirname(@path))
+        errs = validate if respond_to?(:validate)
+        warn "config: validation issues before save: #{errs.join('; ')}" if errs && !errs.empty?
         write_atomic(@path, @data.to_yaml, fsync: true)
       end
 
       def reload!
         @mutex.synchronize { @data = load_config }
       end
+
+      # Validate config against known schema. Returns array of error strings.
+      def validate
+        errors = []
+        errors << "budget_max must be > 0" unless budget_max > 0
+        errors << "warn_at must be between 0 and 1" unless warn_at.between?(0.0, 1.0)
+        wp = self["web_port"].to_i
+        errors << "web_port must be 1-65535" unless wp.between?(1, 65_535)
+        errors << "history_max must be >= 0" unless history_max >= 0
+        errors << "cache_ttl must be >= 0" unless cache_ttl >= 0
+        errors << "model must not be empty" if model.to_s.empty?
+        errors
+      end
+
+      def valid? = validate.empty?
 
       # Frozen snapshot of boot values — safe to share across threads.
       BootConfig = Data.define(:root, :model, :web_host, :web_port, :web_public_url,
@@ -116,6 +140,7 @@ module Master
         case obj
         when Hash then obj.each_with_object({}) { |(k, v), h| h[k] = deep_dup(v) }
         when Array then obj.map { |v| deep_dup(v) }
+        when String then obj.dup
         when Numeric, Symbol, TrueClass, FalseClass, NilClass then obj
         else
           obj.respond_to?(:dup) ? (obj.dup rescue obj) : obj

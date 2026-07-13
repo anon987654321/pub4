@@ -1,5 +1,7 @@
+<% if local_assigns.fetch(:show_dat_gui, !local_assigns.fetch(:minimal, false)) %>
 <% content_for :head do %>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js" defer></script>
+<% end %>
 <% end %>
 
 <%= tag.div(
@@ -7,7 +9,7 @@
       data: {
         controller: "radio-tunnel",
         radio_tunnel_tracks_value: radio_tunnel_catalog,
-        radio_tunnel_heading_value: "git dig · pub4/index.html"
+        radio_tunnel_auto_start_value: local_assigns.fetch(:auto_start, !local_assigns.fetch(:minimal, false))
       }
     ) do %>
   <a href="#radio-canvas" class="radio-skip-link">Skip to main content</a>
@@ -16,7 +18,7 @@
     id="radio-canvas"
     data-radio-tunnel-target="canvas"
     role="img"
-    aria-label="Radio Bergen warp tunnel — excavated from pub4 index.html"
+    aria-label="warp tunnel visualizer"
   ></canvas>
 
   <header class="radio-header">
@@ -54,6 +56,7 @@
     </h1>
   </header>
 
+  <% unless local_assigns.fetch(:minimal, false) %>
   <nav class="radio-nav" aria-label="Playlist navigation">
     <% if authenticated? %>
       <%= link_to "New", new_playlist_playlist_path %>
@@ -74,17 +77,16 @@
     <span class="radio-note-icon" aria-hidden="true">♪</span>
     <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">J Dilla - Microphone Master</span>
   </div>
+  <% end %>
 
   <div
     class="radio-overlay"
     data-radio-tunnel-target="overlay"
-    hidden
+    <%= 'hidden' if local_assigns.fetch(:hide_overlay, false) %>
     aria-labelledby="radio-overlay-title"
   >
-    <h2 id="radio-overlay-title" class="visually-hidden">Radio Bergen — pub4/index.html</h2>
-    <p class="radio-start-eyebrow">git archaeology</p>
-    <p class="radio-start-message">pub4/index.html tracks · warp tunnel visualizer</p>
-    <p class="radio-start-hint">auto-playing on playlist.brgen.no</p>
+    <h2 id="radio-overlay-title" class="visually-hidden">Radio Bergen</h2>
+    <p class="radio-start-hint">tap to start</p>
   </div>
 
   <div class="radio-cursor" data-radio-tunnel-target="cursor" aria-hidden="true"></div>

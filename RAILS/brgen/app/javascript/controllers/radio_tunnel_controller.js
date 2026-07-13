@@ -3,7 +3,7 @@ import { RadioBrgen } from "radio_brgen_tunnel"
 
 export default class extends Controller {
   static targets = ["canvas", "overlay", "trackDisplay", "youtubePlayer", "cursor", "heading", "archaeology"]
-  static values = { tracks: Array, heading: String }
+  static values = { tracks: Array, heading: String, autoStart: { type: Boolean, default: true } }
 
   connect() {
     this.app = new RadioBrgen({
@@ -13,15 +13,12 @@ export default class extends Controller {
       youtubePlayer: this.hasYoutubePlayerTarget ? this.youtubePlayerTarget : null,
       cursor: this.hasCursorTarget ? this.cursorTarget : null,
       heading: this.hasHeadingTarget ? this.headingTarget : null,
-      headingText: this.headingValue || "git dig · pub4/index.html",
+      headingText: this.headingValue || null,
       tracks: this.hasTracksValue ? this.tracksValue : undefined,
       onStart: () => this.revealArchaeology()
     })
 
-    // Auto-start on playlist.brgen.no landing: immediately play tracks excavated from pub4/index.html
-    // (warp tunnel visualizer + first track embed). Audio autoplay may still require a user gesture
-    // per browser policy; the visualizer and track cycling run automatically.
-    if (this.app && !this.app.isStarted) {
+    if (this.autoStartValue && this.app && !this.app.isStarted) {
       this.app.start()
     }
   }
