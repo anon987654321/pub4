@@ -5,7 +5,7 @@ require "open3"
 require "rbconfig"
 
 class IntegrityLocaleTest < Minitest::Test
-  ROOT = File.expand_path("../../..", __dir__)
+  ROOT = File.expand_path("../..", __dir__)
   GATE = File.join(ROOT, "OPERATOR", "integrity_gate.rb")
 
   def test_integrity_chain_is_independent_of_operator_locale
