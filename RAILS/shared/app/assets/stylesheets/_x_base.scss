@@ -83,7 +83,6 @@
 @mixin x-semantic-status-tokens {
   --x-success: var(--color-success);
   --x-warning: var(--color-warning);
-  --x-danger: var(--x-danger);
   /* like/repost active: defer to verification checklist; fallback: */
   --x-like-active: var(--x-accent);
   --x-repost-active: var(--color-success);

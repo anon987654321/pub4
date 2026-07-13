@@ -128,6 +128,8 @@ def sync_static_tokens!
       --z-modal: 1000;
       --z-toast: 1100;
       --z-skip: 2000;
+      --color-success: #00ba7c;
+      --color-warning: #ffd400;
       --color-background: var(--x-bg);
       --color-midtone: var(--x-text-secondary);
       --color-highlight: var(--x-surface);
@@ -135,6 +137,10 @@ def sync_static_tokens!
       --color-border: var(--x-border);
       --text-primary: var(--x-text);
       --text-secondary: var(--x-text-secondary);
+      --x-success: var(--color-success);
+      --x-warning: var(--color-warning);
+      --x-like-active: var(--x-accent);
+      --x-repost-active: var(--color-success);
     }
     @media (prefers-color-scheme: light) {
       :root {

@@ -105,7 +105,7 @@ openbsd_wscons:
 
 # Legacy X/Twitter chrome — used only by pub4_stack social apps (_x_base.scss), not MASTER face.
 # Hex anchors here must match @mixin x-dark-tokens defaults in _x_base.scss.
-# Semantic status (--x-success, --x-warning, --x-like-active) live in _tokens.scss via x-semantic-status-tokens.
+# Semantic status (--x-success, --x-warning, --x-like-active) defined in _x_base.scss, included from _tokens.scss.
 social:
   x_bg: "#000000"
   x_surface: "#000000"
