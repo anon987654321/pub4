@@ -29,6 +29,11 @@ input, button, textarea, select {
   font: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--x-accent);
+  outline-offset: 2px;
+}
+
 @for $step from 1 through 16 {
   .mt-#{$step} { margin-top: var(--space-#{$step}); }
   .px-#{$step} { padding-inline: var(--space-#{$step}); }

@@ -136,3 +136,38 @@
   align-items: flex-start;
 }
 
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.store-card {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--x-radius-sm);
+  background: var(--x-surface-elevated);
+  transition: background var(--transition-fast);
+}
+
+.store-card:hover { background: var(--x-hover); }
+
+.featured-deals {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--x-border);
+}
+
+.featured-deals h2 {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.deal-card.featured {
+  display: inline-block;
+  margin: 0 var(--space-3) var(--space-2) 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--x-radius-sm);
+  background: var(--x-surface-elevated);
+}

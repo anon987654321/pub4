@@ -3,8 +3,6 @@
 @use "x_widgets";
 @use "x_responsive";
 @use "_root";
-@use "_brgen_overrides";
-@use "_a11y";
 @use "_canvas";
 @use "_nav";
 @use "_nav_swiper";
@@ -15,12 +13,13 @@
 @use "_forms";
 @use "_widgets";
 @use "_marketplace";
-@use "_marketplace_stores";
 @use "_nearby";
 @use "_share";
 @use "_media";
 @use "_affiliate";
-@use "_dating";
+@use "dating_stack";
+@use "dating_actions";
+@use "dating_media";
 @use "_vertical_dating";
 @use "_maps";
 @use "_vertical_shell";
@@ -28,5 +27,7 @@
 @use "_vertical_playlist";
 @use "_vertical_takeaway";
 @use "_vertical_tv";
-@use "_vertical_maps";
-@use "_vertical_messenger";
+@use "vertical_maps_shell";
+@use "vertical_maps_place";
+@use "vertical_messenger_list";
+@use "vertical_messenger_thread";

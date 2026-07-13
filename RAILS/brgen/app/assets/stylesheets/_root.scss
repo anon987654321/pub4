@@ -1,10 +1,9 @@
 @use "fonts";
 @use "x_base" as x;
-@use "x_root" as xroot;
 
 :root {
   @include x.x-dark-tokens;
-  @include xroot.x-app-root-tokens;
+  @include x.x-app-root-tokens;
   color-scheme: dark;
   /* brgen's own hue, rotated off x.com's #1d9bf0 so a screenshot reads as
      brgen rather than a generic X clone; same saturation/lightness. */
@@ -24,19 +23,10 @@
 
 #dark-toggle:checked ~ .theme-root {
   @include x.x-light-tokens;
+  @include x.x-app-root-tokens;
   color-scheme: light;
   --x-accent: #1d55f0;
   --x-accent-hover: #1a4dd8;
-  --bg: var(--x-bg);
-  --surface: var(--x-surface);
-  --surface2: var(--x-surface-elevated);
-  --search-bg: var(--x-search-bg);
-  --text: var(--x-text);
-  --text-dim: var(--x-text-secondary);
-  --border: var(--x-border);
-  --hover: var(--x-hover);
-  --hover-subtle: var(--x-hover-subtle);
-  --panel-blur-bg: var(--bg);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,3 +53,25 @@ a { color: var(--text); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Brgen-specific shell tweaks on top of the shared x shell. */
+.app-shell {
+  position: fixed;
+  inset: 0;
+}
+
+.brand-text { text-transform: uppercase; }
+
+.feed-hint { padding: 0 var(--space-4) var(--space-2); }
+
+@media (max-width: 1280px) {
+  .compose-label { display: inline; }
+  .compose-icon { display: none; }
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    inset-block-start: var(--space-2);
+    inset-inline-end: var(--space-2);
+  }
+}

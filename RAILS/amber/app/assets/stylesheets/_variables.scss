@@ -1,9 +1,8 @@
 @use "x_base" as x;
-@use "x_root" as xroot;
 
 :root {
   @include x.x-dark-tokens;
-  @include xroot.x-app-root-tokens;
+  @include x.x-app-root-tokens;
   color-scheme: dark;
   --accent: oklch(76% 0.13 68);
   --accent-hover: oklch(70% 0.13 68);
@@ -37,15 +36,6 @@
 
 #dark-toggle:checked ~ .theme-root {
   @include x.x-light-tokens;
+  @include x.x-app-root-tokens;
   color-scheme: light;
-  --bg: var(--x-bg);
-  --surface: var(--x-surface);
-  --surface2: var(--x-surface-elevated);
-  --search-bg: var(--x-search-bg);
-  --text: var(--x-text);
-  --text-dim: var(--x-text-secondary);
-  --border: var(--x-border);
-  --hover: var(--x-hover);
-  --hover-subtle: var(--x-hover-subtle);
-  --panel-blur-bg: var(--bg);
 }

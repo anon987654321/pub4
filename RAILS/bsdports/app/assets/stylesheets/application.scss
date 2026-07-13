@@ -1,9 +1,9 @@
 @use "pub4_stack" as *;
 @use "x_widgets";
-@use "x_root" as xroot;
+@use "x_base" as x;
 
 :root {
-  @include xroot.x-app-root-tokens;
+  @include x.x-app-root-tokens;
   --turbo-progress-bar-color: var(--accent);
 }
 
