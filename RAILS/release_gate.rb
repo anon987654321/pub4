@@ -106,6 +106,7 @@ end
   shared/test/services/frontend_auditor_test.rb
   shared/test/lib/pub4/deploy_paths_test.rb
   shared/test/lib/pub4/ci_guard_test.rb
+  shared/test/lib/design_tokens_test.rb
 ].each do |test|
   run(test, [*RUBY, test], chdir: ROOT)
 end

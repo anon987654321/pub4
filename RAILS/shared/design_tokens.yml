@@ -122,6 +122,8 @@ social:
   x_font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   x_font_size: "16px"
   x_line_height: "20px"
+  x_radius_sm: "8px"
+  x_radius_md: "12px"
   x_radius_pill: "9999px"
   x_radius_card: "16px"
   x_sidebar: "275px"

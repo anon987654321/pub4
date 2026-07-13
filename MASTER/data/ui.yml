@@ -2,6 +2,16 @@
 # Source: DESIGN.md v1. Any UI change must comply with these directives.
 # These are constitutional for the web layer — treat as PROTECTED tier.
 
+# HUD chrome tier — council review required before changing message_treatment or token wiring.
+chrome_tier:
+  source: "RAILS/shared/design_tokens.yml social: → DesignTokens.chrome_css → --chrome-* in face.css"
+  message_treatment: cream_body_blue_actions_only
+  rules:
+    - "Phosphor canvas and .msg-body stay cream via --c-text / --face-fg (no full x.com accent on canvas)."
+    - "HUD panel borders and radii use --chrome-border and --chrome-radius-*."
+    - "Links and action buttons in HUD/messages use --chrome-accent (social x_accent blue)."
+  council_review: required
+
 colors:
   background: "#000000"
   foreground: "#ffffff"

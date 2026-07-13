@@ -9,5 +9,13 @@ require_relative "../design_tokens"
 ROOT = File.expand_path("../..", __dir__)
 FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
 
-changed = DesignTokens.sync_face_css!(FACE_CSS)
-puts changed ? "updated #{FACE_CSS}" : "face.css :root already in sync"
+face_changed = DesignTokens.sync_face_css!(FACE_CSS)
+chrome_changed = DesignTokens.sync_chrome_css!(FACE_CSS)
+if face_changed || chrome_changed
+  parts = []
+  parts << "face-root" if face_changed
+  parts << "x-chrome" if chrome_changed
+  puts "updated #{FACE_CSS} (#{parts.join(', ')})"
+else
+  puts "face.css face-root and x-chrome already in sync"
+end
