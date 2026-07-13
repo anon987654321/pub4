@@ -71,7 +71,7 @@ Subdomain constraints live in `brgen/config/routes.rb` via `Brgen::DomainRegistr
 
 **Standalone apps:** amber (amber.brgen.no:61352), bsdports (bsdports.org:47312).
 
-**Operator UI:** MASTER domain bar (`MASTER/web/public/domain_cluster.js`), matrix console (`MASTER/tools/public/index.html`), CLI `/domain <name>` via `SubdomainOrchestrator`.
+**Operator UI:** MASTER domain bar (`MASTER/web/public/domain_cluster.js`), CLI `/domain <name>` via `SubdomainOrchestrator`.
 
 Gate: `ruby RAILS/domain_alignment_gate.rb`
 

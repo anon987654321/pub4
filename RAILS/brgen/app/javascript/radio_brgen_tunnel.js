@@ -1,14 +1,28 @@
 'use strict'
 
 const DEFAULT_TRACKS = [
-  { title: "Microphone Master [Extended]", id: "9EGHwkDix78", artist: "J Dilla" },
-  { title: "Sounds Like Love (Extended)", id: "jnP3tRG-LZs", artist: "J Dilla" },
-  { title: "Searchin' (Instrumental)", id: "1XJLtZJ9Ook", artist: "Jay Dee Aka J Dilla" },
-  { title: "Get It Together (Instrumental)", id: "t6T-Q6HMbEo", artist: "J-88 (Slum Village)" },
-  { title: "Hustle (Instrumental Mix)", id: "zoGTC7uROZE", artist: "J Dilla" },
-  { title: "Stupid Lies (Instrumental)", id: "7611GgbJAbM", artist: "J Dilla" },
-  { title: "Fantastic (Instrumental)", id: "j0z_-7TfPeM", artist: "J Dilla" },
-  { title: "Can I Be Me (Instrumental)", id: "Fo7WoYn_FEs", artist: "J Dilla" }
+  { title: "Microphone Master", id: "9EGHwkDix78", artist: "J Dilla" },
+  { title: "In Space", id: "vO2nWXCVt6o", artist: "J Dilla" },
+  { title: "Timeless", id: "dbbfo9_7D8g", artist: "J Dilla" },
+  { title: "Due Time", id: "WC09qDzU9y4", artist: "AFTA-1" },
+  { title: "Massage Situation", id: "6oUx6wGCekM", artist: "Flying Lotus" },
+  { title: "Eye", id: "ScVz2mntmCE", artist: "Madlib" },
+  { title: "Players", id: "KsULjOCYdnY", artist: "Slum Village" },
+  { title: "Exhibit A", id: "H3UIHZshNQ0", artist: "Jay Electronica" },
+  { title: "La La Instrumental", id: "EYJxxHQ7sX0", artist: "Slum Village" },
+  { title: "Get It Together", id: "t6T-Q6HMbEo", artist: "Slum Village" },
+  { title: "Fantastic", id: "a3ISYWWYgz8", artist: "Slum Village" },
+  { title: "me Yesterday Corded", id: "8DgAhgmpXNA", artist: "Flying Lotus" },
+  { title: "Camel", id: "fU9YRGLPDQ8", artist: "Flying Lotus" },
+  { title: "Golden Diva", id: "iu4FVvR2QQs", artist: "Flying Lotus" },
+  { title: "Worlds Full of Sadness", id: "MU3nfxsz2XA", artist: "Slum Village" },
+  { title: "Sarria's Mind", id: "gFKArkiz8vU", artist: "A. Mochi & Takaaki Itoh" },
+  { title: "Rounded", id: "oeaY2h_cKsg", artist: "Samiyam" },
+  { title: "Traffic", id: "bH-30pDoQdo", artist: "Chase Swayze" },
+  { title: "Underrated", id: "1jjFk2Vp5ok", artist: "Chase Swayze" },
+  { title: "BTS Radio 2006", id: "6nWdggkulHk", artist: "Flying Lotus" },
+  { title: "close to you", id: "8SQZtBRdSbE", artist: "kemt" },
+  { title: "Motor City 17", id: "OSg9Fwd8QSs", artist: "J Dilla" }
 ]
 
 class AudioEngine {
