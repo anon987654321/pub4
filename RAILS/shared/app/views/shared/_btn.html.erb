@@ -1,5 +1,7 @@
 <% label ||= local_assigns[:label] || local_assigns[:text] %>
-<% classes = ["btn", local_assigns[:variant] ? "btn--#{local_assigns[:variant]}" : nil, local_assigns[:size] ? "btn--#{local_assigns[:size]}" : nil].compact.join(" ") %>
+<% variant = local_assigns[:variant] %>
+<% size = local_assigns[:size] %>
+<% classes = ["btn", variant ? "btn--#{variant} btn-#{variant}" : nil, size ? "btn--#{size} btn-#{size}" : nil].compact.join(" ") %>
 <% if local_assigns[:to] %>
   <%= link_to label, local_assigns[:to], class: classes, data: local_assigns[:data] || {} %>
 <% else %>

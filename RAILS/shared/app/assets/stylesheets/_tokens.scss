@@ -1,7 +1,26 @@
 @use "x_base" as x;
 
-// Shared light-theme override set — used identically by [data-theme="light"]
-// and the @media(prefers-color-scheme:light) fallback below, so it's defined once.
+// Shared theme override sets — used by html[data-theme] and prefers-color-scheme fallback.
+@mixin semantic-dark-overrides {
+  @include x.x-dark-tokens;
+  @include x.x-semantic-status-tokens;
+  color-scheme: dark;
+  --color-background: var(--x-bg);
+  --color-midtone: var(--x-text-secondary);
+  --color-highlight: var(--x-surface);
+  --color-accent: var(--x-accent);
+  --color-danger: var(--x-danger);
+  --color-warning: #ffd400;
+  --color-success: #00ba7c;
+  --color-overlay: rgb(0 0 0 / 0.4);
+  --color-border: var(--x-border);
+  --color-midtone-tint: var(--x-hover);
+  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
+  --text-primary: var(--x-text);
+  --text-secondary: var(--x-text-secondary);
+}
+
 @mixin semantic-light-overrides {
   @include x.x-light-tokens;
   color-scheme: light;
@@ -18,22 +37,7 @@
 }
 
 :root {
-  @include x.x-dark-tokens;
-  color-scheme: dark;
-  --color-background: var(--x-bg);
-  --color-midtone: var(--x-text-secondary);
-  --color-highlight: var(--x-surface);
-  --color-accent: var(--x-accent);
-  --color-danger: var(--x-danger);
-  --color-warning: #ffd400;
-  --color-success: #00ba7c;
-  --color-overlay: rgb(0 0 0 / 0.4);
-  --color-border: var(--x-border);
-  --color-midtone-tint: var(--x-hover);
-  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
-  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
-  --text-primary: var(--x-text);
-  --text-secondary: var(--x-text-secondary);
+  @include semantic-dark-overrides;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -69,36 +73,18 @@
   --z-skip: 2000;
   --color-primary: var(--x-text);
   --color-surface: var(--x-surface);
-
-  /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
-  /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
-  --luxury-bg: #f8f5f0;
-  --luxury-surface: #ffffff;
-  --luxury-text: #2c2824;
-  --luxury-muted: #6b665f;
-  --luxury-border: #e6e0d8;
-  --luxury-accent: #8c7a5e;
-  --luxury-space-xs: 0.5rem;
-  --luxury-space-sm: 0.875rem;
-  --luxury-space-md: 1.5rem;
-  --luxury-space-lg: 2.25rem;
-  --luxury-space-xl: 3rem;
-  --luxury-radius-sm: 6px;
-  --luxury-radius-md: 10px;
-  --luxury-radius-lg: 14px;
-  --luxury-font-display: 2rem;
-  --luxury-font-title: 1.5rem;
-  --luxury-font-meta: 0.875rem;
-  --luxury-letter-tight: -0.01em;
-  --luxury-line-relaxed: 1.6;
 }
 
-[data-theme="light"] {
+html[data-theme="dark"] {
+  @include semantic-dark-overrides;
+}
+
+html[data-theme="light"] {
   @include semantic-light-overrides;
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
+  html:not([data-theme]) {
     @include semantic-light-overrides;
   }
 }

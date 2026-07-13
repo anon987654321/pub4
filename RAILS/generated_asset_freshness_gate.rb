@@ -8,6 +8,7 @@ ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 
 WATCHED = [
+  "app/assets/stylesheets/app.scss",
   "app/assets/stylesheets/application.scss",
   "app/assets/stylesheets/**/*.scss",
   "app/javascript/**/*.js",
@@ -20,13 +21,20 @@ def source_files(app_dir)
   end.uniq.select { |path| File.file?(path) }
 end
 
+def compiled_css_path(app_dir)
+  app_css = File.join(app_dir, "app", "assets", "builds", "app.css")
+  return app_css if File.file?(app_css)
+
+  File.join(app_dir, "app", "assets", "builds", "application.css")
+end
+
 def stale?(app_dir, result, app_name)
-  build = File.join(app_dir, "app", "assets", "builds", "application.css")
+  build = compiled_css_path(app_dir)
   sources = source_files(app_dir)
   return if sources.empty?
 
   unless File.file?(build)
-    result.fail("#{app_name}: missing compiled app/assets/builds/application.css")
+    result.fail("#{app_name}: missing compiled #{build.sub("#{app_dir}/", "")}")
     return
   end
 
@@ -35,7 +43,7 @@ def stale?(app_dir, result, app_name)
     next if File.mtime(source) <= build_mtime
 
     rel = source.sub("#{app_dir}/", "")
-    result.fail("#{app_name}: stale asset build — #{rel} newer than application.css")
+    result.fail("#{app_name}: stale asset build — #{rel} newer than #{File.basename(build)}")
   end
 
   sw_source = File.join(RAILS_ROOT, "shared", "pwa", "service_worker.js")

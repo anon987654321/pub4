@@ -14,7 +14,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'data-controller="carousel"'
     assert_includes response.body, "Headwear"
     assert_includes response.body, "Shoes"
-    assert_includes response.body, "amber-compose-box"
+    assert_includes response.body, "compose-box"
     assert_includes response.body, "share an #ootd thought above"
     assert_not_includes response.body, 'class="master-embed-frame"'
   end

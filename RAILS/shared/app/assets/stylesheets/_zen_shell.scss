@@ -73,72 +73,7 @@ input, button, textarea, select {
 .w-min { width: min-content; }
 .w-max { width: max-content; }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: 0 var(--space-4);
-  border-radius: var(--x-radius-pill);
-  border: 1px solid transparent;
-  background: var(--x-text, var(--color-primary));
-  color: var(--x-bg, var(--color-highlight));
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  transition: opacity 180ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
-}
-
-.btn:hover {
-  opacity: 0.88;
-  text-decoration: none;
-}
-
-.btn:disabled,
-.btn[aria-disabled="true"] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn--primary {
-  background: var(--x-text, var(--color-primary));
-  color: var(--x-bg, var(--color-highlight));
-}
-
-.btn--secondary {
-  background: transparent;
-  color: var(--x-text, var(--color-primary));
-  border-color: var(--x-border, var(--color-border));
-}
-
-.btn--ghost {
-  background: transparent;
-  color: var(--x-text, var(--color-primary));
-  border-color: var(--x-border, var(--color-border));
-}
-
-.btn--ghost:hover {
-  background: var(--x-hover, var(--color-midtone-tint));
-}
-
-.btn--danger {
-  background: var(--color-danger);
-  color: var(--x-text);
-}
-
-.btn--sm {
-  min-height: 36px;
-  padding-inline: var(--space-3);
-  font-size: var(--text-sm);
-}
-
-.btn--lg {
-  min-height: 52px;
-  padding-inline: var(--space-6);
-  font-size: var(--text-base);
-}
+// Button primitives live in _x_buttons.scss (forwarded via _x_components.scss).
 
 .avatar-initials {
   display: inline-grid;
@@ -219,19 +154,6 @@ article {
   contain: content;
   content-visibility: auto;
   contain-intrinsic-size: 0 200px;
-}
-
-.dialog {
-  border: 1px solid var(--color-border);
-  border-radius: var(--x-radius-lg);
-  padding: 0;
-  max-width: min(560px, 90vw);
-  max-height: 90dvh;
-  overflow: auto;
-}
-
-.dialog::backdrop {
-  background: rgb(0 0 0 / 0.5);
 }
 
 .tooltip-wrapper {

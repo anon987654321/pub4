@@ -29,24 +29,35 @@
 </head>
 <body data-pwa-key="bsdports" data-controller="pwa-standalone">
 <a class="skip-link" href="#main-content">Skip to main content</a>
-<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
-  <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
-  <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
-  <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>
-  <%= link_to "Maintainers", maintainers_path, aria: { current: current_page?(maintainers_path) ? 'page' : nil } %>
-  <% if authenticated? %>
-    <%= render "shared/inbox_link" %>
-    <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
-  <% else %>
-    <%= link_to "Sign in", new_session_path %>
+
+<% content_for :brand do %>
+  <%= link_to root_path, class: "brand brand-wordmark", aria: { label: "BSDports" } do %>
+    <span class="brand-text">BSDports</span>
   <% end %>
-</nav>
-<%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
-<%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-<main id="main-content" role="main">
-  <%= link_to "OpenBSD ports", root_path, class: "logo" %>
-  <%= yield %>
-</main>
+<% end %>
+
+<% content_for :sidebar_extras do %>
+  <% if authenticated? %>
+    <%= link_to "Sign out", session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } %>
+  <% end %>
+<% end %>
+
+<% content_for :main do %>
+  <main id="main-content" role="main">
+    <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
+    <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+    <%= yield %>
+  </main>
+<% end %>
+
+<% content_for :widgets do %>
+  <%= render "shared/x_search_widget", url: ports_path, placeholder: "Search ports…" %>
+<% end %>
+
+<div class="app-shell">
+  <%= render "shared/x_shell" %>
+  <%= render "shared/x_tab_bar", more_button: false %>
+</div>
 <%= render "shared/install_prompt" %>
 </body>
 </html>

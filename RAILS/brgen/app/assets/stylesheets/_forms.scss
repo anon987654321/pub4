@@ -1,29 +1,102 @@
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-5);
-  background: var(--x-accent);
-  color: var(--x-bg);
-  border: none;
-  border-radius: var(--x-radius-pill);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
-  text-decoration: none;
-  min-height: 44px;
+/* Form chrome — primary actions use accent pill via shared _x_buttons.scss (.btn / .btn-primary). */
+
+/* Zen-minimal mode */
+body.zen-minimal .sidebar,
+body.zen-minimal #cityCarousel,
+body.zen-minimal .tab-bar {
+  opacity: 0.05;
+  pointer-events: none;
 }
 
-.btn:hover { opacity: .88; text-decoration: none; }
-.btn-primary { background: var(--x-text); color: var(--x-bg); }
-.btn-ghost { background: transparent; border: 1px solid var(--x-border); color: var(--x-text); }
-.btn-ghost:hover { background: var(--x-hover); }
-.btn-danger { background: var(--x-hover); color: var(--x-text); border: 1px solid var(--x-border); }
-.btn-sm { min-height: 36px; padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+body.zen-minimal .brand {
+  position: fixed;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-3);
+  z-index: 999;
+  opacity: 0.65;
+}
 
-.btn:focus-visible,
+body.zen-minimal .brand svg { width: var(--space-3); height: var(--space-3); }
+
+body.zen-minimal .sidebar {
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.2s ease;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+body.zen-minimal .sidebar.revealed {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Swipe affordance — the sidebar has no visible edge once hidden, so a
+   quiet pulsing arrow marks where it slides in from. Same easing as the
+   reveal itself, so the hint and the panel move with one hand. */
+.nav-affordance {
+  position: fixed;
+  inset-inline-start: 6px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  z-index: 998;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--hover-subtle);
+  color: var(--text-dim);
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+body.zen-minimal .sidebar:not(.revealed) ~ .nav-affordance {
+  opacity: 0.35;
+  animation: nav-affordance-pulse 2.6s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}
+
+@keyframes nav-affordance-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.zen-minimal .sidebar:not(.revealed) ~ .nav-affordance {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+body.zen-minimal .city-carousel:not(.revealed),
+body.zen-minimal .tab-bar:not(.revealed) {
+  opacity: 0.02;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  body.zen-minimal .tab-bar,
+  body.zen-minimal .tab-bar:not(.revealed) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+body.zen-minimal .layout > main,
+body.zen-minimal .deal-grid,
+body.zen-minimal .post-card {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+body.zen-minimal .sidebar.revealed ~ .layout > main,
+body.zen-minimal .revealed ~ .layout > main {
+  opacity: 1;
+}
+
 .media-btn:focus-visible {
   outline: 2px solid var(--x-accent);
   outline-offset: 2px;

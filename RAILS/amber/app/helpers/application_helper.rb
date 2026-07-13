@@ -63,4 +63,31 @@ module ApplicationHelper
     url_for(attachment.variant(resize_to_limit: [ largest, largest ]))
   end
 
+  def sidebar_nav_items
+    Amber::XNavBuilder.sidebar_items(request, self)
+  end
+
+  def tab_bar_items
+    Amber::XNavBuilder.tab_bar_items(request, self)
+  end
+
+  PRODUCT_LUXURY_PREFIXES = %w[
+    items
+    wardrobe_items
+    outfits
+    planned_outfits
+    demo_wardrobe
+    declutter
+    ai
+    creator_profiles
+    creator_wardrobe_items
+  ].freeze
+
+  def product_luxury_surface?
+    PRODUCT_LUXURY_PREFIXES.include?(controller_path.split("/").first)
+  end
+
+  def body_surface_classes
+    "product-luxury" if product_luxury_surface?
+  end
 end

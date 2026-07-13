@@ -1,5 +1,7 @@
-@use "pub4_stack" as *;
+@use "pub4_stack_brgen" as *;
+@use "x_shell";
 @use "x_widgets";
+@use "x_responsive";
 @use "x_base" as x;
 
 :root {
@@ -7,29 +9,26 @@
   --turbo-progress-bar-color: var(--accent);
 }
 
+html,
 body {
-  padding-block-start: 58px;
+  height: 100%;
+  font-family: var(--x-font);
 }
 
-body > nav[aria-label="Primary navigation"] {
-  transform: translateY(0);
-  min-height: 52px;
+.app-shell {
+  height: 100%;
 }
 
-body > nav[aria-label="Primary navigation"] a[aria-current="page"] {
-  color: var(--x-text);
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-color: var(--x-accent);
-  text-underline-offset: 6px;
-  text-decoration-thickness: 2px;
+/* Mono scoped to port data cells — not global chrome/search UI. */
+.port-name,
+article code,
+article pre {
+  font-family: var(--x-font-mono, ui-monospace, monospace);
 }
 
 main#main-content {
   justify-content: flex-start;
-  width: min(100%, 760px);
-  margin-inline: auto;
-  padding: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2rem) 4rem;
+  padding-block: clamp(2rem, 6vw, 4.5rem) 4rem;
 }
 
 main#main-content :is(button, input[type="submit"], .btn) {
@@ -118,23 +117,8 @@ article > section,
   font-family: var(--x-font-mono);
 }
 
-.logo {
-  text-indent: -9999px;
-  overflow: hidden;
-  margin: 0 0 var(--space-8);
-  width: 182px;
-  height: 44px;
-  background-image: url("bsdports_182x44.svg");
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-
-/* x_widgets' .page-header (a slim sticky 53px section bar) and pub4_stack's
-   .page-header (a generic unconstrained-height flex intro) both compile in
-   here and collide. This page's header is the intro-block kind — h1 +
-   description + search — so its height needs to fit that content instead
-   of clipping to x_widgets' sticky bar height, which pushed the overflow
-   up into the logo above it. */
+/* x_widgets' sticky .page-header collides with this intro block — keep the
+   taller unconstrained-height variant for search + description headers. */
 header.page-header {
   height: auto;
   position: static;
@@ -180,7 +164,7 @@ header {
     margin-top: var(--space-4);
     color: var(--x-text-secondary);
     border-bottom: 1px solid var(--x-border);
-    font-family: var(--x-font-mono, ui-monospace, monospace);
+    font-family: var(--x-font);
     font-size: var(--text-sm);
 
     p {
@@ -220,6 +204,7 @@ header {
   border-radius: var(--x-radius-sm);
   background: var(--x-search-bg);
   color: var(--x-text);
+  font-family: var(--x-font);
 }
 
 .search-form input[type="search"]:focus-visible {
@@ -244,12 +229,13 @@ turbo-frame {
   display: flex;
   align-items: center;
   padding: 0 var(--space-5);
-  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-family: var(--x-font);
 
   &::before {
     content: "$";
     color: var(--x-text-secondary);
     margin-inline-end: var(--space-2);
+    font-family: var(--x-font-mono, ui-monospace, monospace);
   }
 
   &:focus-within {
@@ -297,7 +283,6 @@ turbo-frame {
 }
 
 .port-name {
-  font-family: var(--x-font-mono, ui-monospace, monospace);
   font-weight: 700;
   color: var(--x-text);
   text-decoration: none;
@@ -329,19 +314,6 @@ turbo-frame {
 }
 
 @media (max-width: 640px) {
-  body {
-    padding-block-start: 104px;
-  }
-
-  body > nav[aria-label="Primary navigation"] {
-    flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
-  }
-
-  body > nav[aria-label="Primary navigation"] .brand {
-    flex-basis: 100%;
-  }
-
   .search-form {
     grid-template-columns: 1fr;
   }

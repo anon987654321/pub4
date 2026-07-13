@@ -1,0 +1,9 @@
+<%
+  search_url = local_assigns.fetch(:url) { global_search_path }
+  placeholder = local_assigns.fetch(:placeholder) { "Search" }
+%>
+<%= form_with url: search_url, method: :get, class: "widget-search", role: "search", local: true do |form| %>
+  <%= x_icon(:search, size: 19) %>
+  <%= form.search_field :q, value: params[:q], placeholder: placeholder, aria: { label: placeholder } %>
+  <%= form.submit "Search", class: "visually-hidden" %>
+<% end %>

@@ -6,7 +6,7 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
   def test_guest_can_post_anonymously_on_frontpage
     get root_url
     assert_response :success
-    assert_includes response.body, "amber-compose-box"
+    assert_includes response.body, "compose-box"
 
     assert_difference -> { Post.count }, 1 do
       post posts_url, params: { post: { body: "Loving this linen capsule #ootd", anonymous: true } }
@@ -17,5 +17,17 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
     assert post.anonymous?
     assert post.user.guest?
     assert_equal "Loving this linen capsule #ootd", post.body
+  end
+
+  def test_guest_compose_hint_shows_zero_remaining_at_quota_limit
+    Shared::AnonymousPostQuota.delete_all
+    2.times do |i|
+      post posts_url, params: { post: { body: "Guest post #{i}", anonymous: true } }
+      assert_redirected_to root_url
+    end
+
+    get root_url
+    assert_response :success
+    assert_includes response.body, "0 of #{Shared::AnonymousPostService::LIMIT} posts left"
   end
 end

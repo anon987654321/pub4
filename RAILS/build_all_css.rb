@@ -50,8 +50,21 @@ def apps_with_scss
     .sort
 end
 
+def scss_entry_for(app)
+  styles_dir = File.join(RAILS_ROOT, app, "app", "assets", "stylesheets")
+  app_scss = File.join(styles_dir, "app.scss")
+  return app_scss if File.file?(app_scss)
+
+  File.join(styles_dir, "application.scss")
+end
+
+def css_output_for(app)
+  basename = File.basename(scss_entry_for(app), ".scss")
+  File.join(RAILS_ROOT, app, "app", "assets", "builds", "#{basename}.css")
+end
+
 def app_has_scss?(app)
-  File.file?(File.join(RAILS_ROOT, app, "app", "assets", "stylesheets", "application.scss"))
+  File.file?(scss_entry_for(app))
 end
 
 def selected_apps
@@ -101,8 +114,11 @@ def sync_static_tokens!
       --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
       --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
       --x-accent: #1d9bf0;
+      --x-accent-hover: #1a8cd8;
       --x-danger: #f4212e;
-      --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+      --x-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --x-font-size: 16px;
+      --x-line-height: 20px;
       --x-weight-normal: 400;
       --x-weight-medium: 500;
       --x-weight-bold: 700;
@@ -113,6 +129,10 @@ def sync_static_tokens!
       --x-radius-card: 16px;
       --x-radius-lg: 16px;
       --x-radius-pill: 9999px;
+      --x-sidebar: 275px;
+      --x-feed-max: 600px;
+      --x-widgets: 350px;
+      --x-layout-max: 1265px;
       --transition-fast: 180ms;
       --transition-normal: 300ms;
       --z-chrome: 10;
@@ -121,6 +141,8 @@ def sync_static_tokens!
       --z-modal: 1000;
       --z-toast: 1100;
       --z-skip: 2000;
+      --color-success: #00ba7c;
+      --color-warning: #ffd400;
       --color-background: var(--x-bg);
       --color-midtone: var(--x-text-secondary);
       --color-highlight: var(--x-surface);
@@ -128,6 +150,10 @@ def sync_static_tokens!
       --color-border: var(--x-border);
       --text-primary: var(--x-text);
       --text-secondary: var(--x-text-secondary);
+      --x-success: var(--color-success);
+      --x-warning: var(--color-warning);
+      --x-like-active: var(--x-accent);
+      --x-repost-active: var(--color-success);
     }
     @media (prefers-color-scheme: light) {
       :root {
@@ -182,8 +208,9 @@ rescue StandardError => e
 end
 
 def try_npx_sass(app_dir)
-  scss = File.join(app_dir, "app", "assets", "stylesheets", "application.scss")
-  out = File.join(app_dir, "app", "assets", "builds", "application.css")
+  app = File.basename(app_dir)
+  scss = scss_entry_for(app)
+  out = css_output_for(app)
   FileUtils.mkdir_p(File.dirname(out))
   styles_dir = File.join(app_dir, "app", "assets", "stylesheets")
   cmd = [
@@ -230,7 +257,7 @@ end
 
 apps.each do |app|
   app_dir = File.join(RAILS_ROOT, app)
-  out = File.join(app_dir, "app", "assets", "builds", "application.css")
+  out = css_output_for(app)
   next unless app_has_scss?(app)
 
   unless check_only

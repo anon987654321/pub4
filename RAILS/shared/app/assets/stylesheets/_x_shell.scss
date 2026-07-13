@@ -244,3 +244,16 @@ main[role="main"] {
   border-radius: var(--x-radius-pill);
   background: currentColor;
 }
+
+.tab-item-button {
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tab-item:active,
+.compose-btn:active,
+.compose-fab:active {
+  background: var(--x-hover);
+}

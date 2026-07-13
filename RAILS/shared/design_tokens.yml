@@ -104,6 +104,8 @@ openbsd_wscons:
   x_radius_card: "0"
 
 # Legacy X/Twitter chrome — used only by pub4_stack social apps (_x_base.scss), not MASTER face.
+# Hex anchors here must match @mixin x-dark-tokens defaults in _x_base.scss.
+# Semantic status (--x-success, --x-warning, --x-like-active) defined in _x_base.scss, included from _tokens.scss.
 social:
   x_bg: "#000000"
   x_surface: "#000000"
@@ -112,14 +114,15 @@ social:
   x_text: "#e7e9ea"
   x_text_secondary: "#71767b"
   x_border: "#2f3336"
-  x_hover: "rgba(231, 233, 234, 0.1)"
-  x_hover_subtle: "rgba(231, 233, 234, 0.03)"
+  # x_hover / x_hover_subtle: derived via color-mix in _x_base.scss and DesignTokens.chrome_css
   x_accent: "#1d9bf0"
   x_accent_hover: "#1a8cd8"
   x_danger: "#f4212e"
   x_font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   x_font_size: "16px"
   x_line_height: "20px"
+  x_radius_sm: "8px"
+  x_radius_md: "12px"
   x_radius_pill: "9999px"
   x_radius_card: "16px"
   x_sidebar: "275px"

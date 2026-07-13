@@ -1,0 +1,26 @@
+<% actor = notification.actor %>
+<% actor_name = actor&.try(:display_name) || actor&.try(:username) || "System" %>
+<% actor_handle = actor&.try(:username).presence %>
+<% notification_actions = capture do %>
+  <% unless notification.read? %>
+    <button type="button"
+            class="x-act x-act--read"
+            data-reflex="click->NotificationRead#mark_read"
+            data-notification-id="<%= notification.id %>"
+            data-turbo="false"
+            aria-label="Mark notification as read">
+      <%= x_icon(:notifications, size: 18) %>
+      <span class="x-count">Mark read</span>
+    </button>
+  <% end %>
+<% end %>
+<%= render "shared/x_card",
+           avatar_url: nil,
+           name: actor_name,
+           handle: (actor_handle ? "@#{actor_handle}" : nil),
+           time: time_ago_in_words(notification.created_at),
+           title: notification.title,
+           content: (notification.body.presence),
+           actions: notification_actions,
+           class: "x-notification#{" x-notification--unread" unless notification.read?}",
+           data_attributes: %(id="#{dom_id(notification)}" data-notification-id="#{notification.id}") %>

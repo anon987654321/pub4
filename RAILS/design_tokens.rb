@@ -7,6 +7,22 @@ module DesignTokens
   ROOT = File.expand_path(__dir__)
   SOURCE = File.join(ROOT, "shared", "design_tokens.yml")
   FACE_ORDER = %w[c_text x_text c_accent c_danger c_code].freeze
+  # social: palette → MASTER HUD --chrome-* aliases (cream body, blue actions only).
+  CHROME_ORDER = %w[
+    x_border
+    x_accent
+    x_accent_hover
+    x_surface_elevated
+    x_radius_sm
+    x_radius_md
+    x_radius_pill
+    x_radius_card
+  ].freeze
+  # Derived from --x-text; mirrors _x_base.scss x-dark-tokens hover mixins.
+  CHROME_DERIVED = {
+    "x_hover" => "color-mix(in srgb, var(--x-text) 10%, transparent)",
+    "x_hover_subtle" => "color-mix(in srgb, var(--x-text) 3%, transparent)",
+  }.freeze
 
   module_function
 
@@ -55,6 +71,31 @@ module DesignTokens
     CSS
   end
 
+  def chrome_var_name(key)
+    "--#{key.sub(/\Ax_/, 'chrome-').tr('_', '-')}"
+  end
+
+  def chrome_css
+    social = load.fetch("social")
+    lines = [":root {"]
+    CHROME_ORDER.each do |key|
+      lines << "  #{chrome_var_name(key)}: #{social.fetch(key)};"
+    end
+    CHROME_DERIVED.each do |key, value|
+      lines << "  #{chrome_var_name(key)}: #{value};"
+    end
+    lines << "}"
+    lines.join("\n")
+  end
+
+  def chrome_block
+    <<~CSS.strip
+      /* BEGIN:generated-x-chrome — ruby RAILS/scripts/generate_face_root_css.rb */
+      #{chrome_css}
+      /* END:generated-x-chrome */
+    CSS
+  end
+
   def sync_face_css!(path)
     body = read_utf8(path)
     pattern = %r{/\* BEGIN:generated-face-root.*?\*/.*?/\* END:generated-face-root \*/}m
@@ -66,6 +107,25 @@ module DesignTokens
 
     File.write(path, updated)
     true
+  end
+
+  def sync_chrome_css!(path)
+    body = read_utf8(path)
+    pattern = %r{/\* BEGIN:generated-x-chrome.*?\*/.*?/\* END:generated-x-chrome \*/}m
+    unless body.match?(pattern)
+      abort "design_tokens: missing generated-x-chrome markers in #{path}"
+    end
+    updated = body.sub(pattern, chrome_block)
+    return false if updated == body
+
+    File.write(path, updated)
+    true
+  end
+
+  def sync_face_chrome_css!(path)
+    face_changed = sync_face_css!(path)
+    chrome_changed = sync_chrome_css!(path)
+    [face_changed || chrome_changed, face_changed, chrome_changed]
   end
 
   def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_x_base.scss"))
@@ -93,5 +153,18 @@ module DesignTokens
     return nil if actual == expected
 
     "face.css :root drift — run: ruby RAILS/scripts/generate_face_root_css.rb"
+  end
+
+  def chrome_drift?(path)
+    body = read_utf8(path)
+    pattern = %r{/\* BEGIN:generated-x-chrome.*?\*/(.*?)/\* END:generated-x-chrome \*/}m
+    match = body.match(pattern)
+    return "missing generated-x-chrome markers" unless match
+
+    actual = match[1].strip
+    expected = chrome_css
+    return nil if actual == expected
+
+    "face.css x-chrome drift — run: ruby RAILS/scripts/generate_face_root_css.rb"
   end
 end

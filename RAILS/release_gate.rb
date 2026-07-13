@@ -99,12 +99,14 @@ APPS.each do |app|
 end
 
 %w[
+  test/x_design_contract_test.rb
   test/pwa_design_contract_test.rb
   ../MASTER/web/test/pwa_master_contract_test.rb
   test/shared_social_routes_test.rb
   shared/test/services/frontend_auditor_test.rb
   shared/test/lib/pub4/deploy_paths_test.rb
   shared/test/lib/pub4/ci_guard_test.rb
+  shared/test/lib/design_tokens_test.rb
 ].each do |test|
   run(test, [*RUBY, test], chdir: ROOT)
 end

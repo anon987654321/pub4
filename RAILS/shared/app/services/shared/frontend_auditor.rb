@@ -19,6 +19,8 @@ module Shared
     WILL_CHANGE_PATTERN = /will-change\s*:/
     BOX_SHADOW_HOVER_PATTERN = /:hover[^{]*\{[^}]*box-shadow\s*:|box-shadow\s*:[^;]+;[^}]*:hover/i
     BOX_SHADOW_PATTERN = /box-shadow\s*:\s*(?!none\b)/i
+    TEXT_SHADOW_PATTERN = /text-shadow\s*:\s*(?!none\b)/i
+    DROP_SHADOW_PATTERN = /filter\s*:[^;]*\bdrop-shadow\(/i
     BACKDROP_BLUR_PATTERN = /backdrop-filter\s*:\s*blur\(|filter\s*:[^;]*\bblur\(/i
     COLOR_INHERIT_PATTERN = /color:\s*inherit\b/
     BEM_IN_VIEW_PATTERN = /class=["'][^"']*__[^"']*["']/
@@ -128,6 +130,8 @@ module Shared
       add(:warning, path, :will_change, "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
       add(:warning, path, :paint_cost, "box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
       add(:warning, path, :flat_design, "box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
+      add(:warning, path, :flat_design, "text-shadow detected; this repo's design system is flat -- use font-weight or color for emphasis instead") if body.match?(TEXT_SHADOW_PATTERN)
+      add(:warning, path, :flat_design, "filter drop-shadow() detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(DROP_SHADOW_PATTERN)
       add(:warning, path, :flat_design, "backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
       add(:info, path, :color_inherit, "color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
@@ -184,7 +188,7 @@ module Shared
       Shared::FrontendRuleSet::PRESERVATION[:protected_stylesheet_files].any? { |name| path.end_with?(name) }
     end
 
-    PUB4_STACK_PARTIAL_RE = %r{/_(?:minimal|tokens|animations|zen_shell|pub4_stack|x_shell)(?:_brgen)?\.scss\z}
+    PUB4_STACK_PARTIAL_RE = %r{/_(?:minimal|tokens|animations|zen_shell|pub4_stack|x_[a-z_]+)(?:_brgen)?\.scss\z}
 
     def css_file_size_violation?(path, body)
       return false if protected_stylesheet?(path)

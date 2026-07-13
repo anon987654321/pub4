@@ -5,10 +5,6 @@
   @include x.x-dark-tokens;
   @include x.x-app-root-tokens;
   color-scheme: dark;
-  /* brgen's own hue, rotated off x.com's #1d9bf0 so a screenshot reads as
-     brgen rather than a generic X clone; same saturation/lightness. */
-  --x-accent: #1d55f0;
-  --x-accent-hover: #1a4dd8;
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -24,12 +20,24 @@
   min-height: 100vh;
 }
 
-#dark-toggle:checked ~ .theme-root {
+html[data-theme="dark"] {
+  @include x.x-dark-tokens;
+  @include x.x-app-root-tokens;
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
   @include x.x-light-tokens;
   @include x.x-app-root-tokens;
   color-scheme: light;
-  --x-accent: #1d55f0;
-  --x-accent-hover: #1a4dd8;
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme]) {
+    @include x.x-light-tokens;
+    @include x.x-app-root-tokens;
+    color-scheme: light;
+  }
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

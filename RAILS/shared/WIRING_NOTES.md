@@ -97,6 +97,108 @@ Real X reference values baked into the tokens (verify against current x.com befo
 
 **Process:** phase 1 (current) is exact parity with x.com's real values on the shared token layer. Deliberate, branded divergence from that baseline is phase 2 and hasn't started yet — don't invent a "unique" color/spacing choice on the shared layer without that being an explicit, separate decision.
 
+## x.com parity verification (phase 1)
+
+Run from repo root before merging visual/chrome work. Tier 1 gates are CI-blocking.
+
+```bash
+ruby RAILS/build_all_css.rb --check          # tokens.css ↔ _x_base.scss drift (no build)
+ruby RAILS/frontend_auditor_gate.rb          # 0 warnings — amber, brgen, bsdports, shared
+ruby RAILS/frontend_production_gate.rb       # dartsass + importmap + build_all_css
+ruby RAILS/test/x_design_contract_test.rb    # token/layout/shell/feed contract assertions
+# per app (CI also runs these):
+cd RAILS/brgen && bin/rails dartsass:build
+cd RAILS/amber && bin/rails dartsass:build
+cd RAILS/bsdports && bin/rails dartsass:build   # output: app/assets/builds/app.css
+```
+
+`x_design_contract_test.rb` is wired in `RAILS/release_gate.rb` alongside `pwa_design_contract_test.rb`. Optional hardening (PR 13): `ruby RAILS/script/x_visual_snapshot.rb` — see **Visual baseline refresh** below.
+
+### Icon contract
+
+x.com action/nav icons are **inline SVG** via `shared/_x_icon.html.erb` — no sprite sheet.
+
+| Concern | Rule |
+|---------|------|
+| Partial | `render "shared/x_icon", name: :like, size: 18` or `x_icon(:like)` from `Shared::XUiHelper` |
+| Path partials | `shared/x_icons/_<name>.html.erb` |
+| Markup | `viewBox="0 0 24 24"`, `fill="currentColor"`, `aria-hidden="true"` |
+| Sizes | 18×18 action row; 26×26 sidebar/tab nav |
+| Core names | `reply`, `repost`, `like`, `share`, `views`, `home`, `search`, `notifications`, `messages`, `compose` |
+
+App-specific nav icons (amber wardrobe, brgen nearby, etc.) live under `shared/x_icons/` with the same partial contract.
+
+### Action color verification checklist (deferred hex)
+
+Like/repost **active** hues are not YAML anchors until snapshotted from live x.com. Do not guess values (e.g. `#f91880`).
+
+| Token | Procedure | Until verified |
+|-------|-----------|----------------|
+| Like active hue | DevTools computed style on a liked post action; record hex + date below | `var(--x-accent)` via `--x-like-active` |
+| Repost active hue | Same on repost-active state | `var(--color-success)` via `--x-repost-active` |
+| Any new semantic hue | Dated DevTools snapshot required before `design_tokens.yml` change | Use existing `--x-*` aliases |
+
+Record verified values here when snapshotted:
+
+```
+# like-active:  (unverified — fallback --x-accent)
+# repost-active: (unverified — fallback --color-success)
+```
+
+### Phase 2 divergence process (not started)
+
+Phase 1 requires exact `design_tokens.yml#social:` ↔ `_x_base.scss` parity. Branded divergence is **explicit phase 2** — never override shared `--x-*` anchors on the stack layer without all of:
+
+1. Stakeholder sign-off (table below).
+2. `design_tokens.yml` change + `x_design_contract_test.rb` update.
+3. `ruby RAILS/build_all_css.rb --check` green.
+4. WIRING_NOTES entry naming the divergence and scope.
+
+| Divergence | Scope | Phase 2 trigger |
+|------------|-------|-----------------|
+| **brgen accent hue** | `brgen/_root.scss` or product partials only — **not** `--x-accent` on shared layer | Phase 1 parity gate passed; city brand decision |
+| **openbsd_wscons** | `design_tokens.yml#openbsd_wscons:` green terminal palette on bsdports chrome | Phase 1 bsdports x.com shell signed off; mono/data cells may stay scoped in phase 1 |
+| **amber luxury** | `body.product-luxury` only — Caprasimo, warm neutrals, `_items_luxury.scss` | Always outside phase 1 parity gate; x shell/feed audited on default body class |
+
+### Stakeholder decisions (2026-07-13, final)
+
+| # | Question | Decision | Implementation |
+|---|----------|----------|----------------|
+| 1 | MASTER canvas vs chrome | Cream message bodies; blue accent on links/buttons/focus only | PR 10: `--face-fg` on `.msg-body`; `--chrome-accent` on interactive chrome |
+| 2 | bsdports mono identity | x.com shell + mono scoped to data cells | PR 8: system UI body; mono on `.port-name`/`code`/`pre`; no `openbsd_wscons` in phase 1 |
+| 3 | amber luxury | `body.product-luxury` scope, outside parity gate | PR 7: luxury CSS gated; parity QA on default body |
+| 4 | Chirp font | System UI stack only — no Chirp CDN | `_x_base.scss` `--x-font`; no `@font-face` for Chirp |
+| 5 | Visual regression baselines | **RAILS team / frontend owner** owns PNG updates | PR 13 / process below |
+| 6 | web-vitals destination | Server logs only | PR 16: `Rails.logger`; no MASTER bus or external collector |
+
+### Visual baseline refresh (RAILS frontend owner)
+
+When x.com chrome drifts or intentional token updates land:
+
+1. **Owner:** RAILS team / frontend owner (on-call for x.com drift).
+2. Re-capture Playwright baselines: `ruby RAILS/script/x_visual_snapshot.rb --update` (after PR 13 lands).
+3. Viewports: 390×844, 1280×800. Pages: brgen home (dark + light), amber guest feed, bsdports ports index.
+4. Open a PR with updated `RAILS/test/fixtures/x_visual/*.png` only when visual diff exceeds 0.5% threshold.
+5. Include dated note in PR body: what changed on x.com and which surfaces were re-shot.
+6. Token-only changes: `build_all_css.rb --check` + `x_design_contract_test.rb` may suffice without PNG refresh.
+
+### Parity surface list (phase 1 sign-off)
+
+Phase 1 “parity done” means **these surfaces only** — not all brgen verticals.
+
+| Surface | Apps |
+|---------|------|
+| Shared token layer + flat rule | all |
+| Three-column shell + mobile tab bar | amber, brgen, bsdports |
+| Home/main feed (dark + light) | brgen, amber (default body — not `body.product-luxury`) |
+| Inline compose on home feed | brgen, amber |
+| Ports index + show (feed column) | bsdports |
+| MASTER HUD chrome (cmd palette, chat shell, status) | MASTER |
+
+Verticals (dating, marketplace, TV, takeaway, maps, messenger) get token alignment in phase 5+; per-vertical layout parity is explicitly out of phase 1 scope.
+
+**Feed card gate:** `x_design_contract_test.rb#test_feed_partials_use_x_card` — home-feed item partials must render via `shared/x_card` (directly or through `posts/post`) on ≥80% of listed templates. Amber `posts/_post` and bsdports `ports/_row` migration tracked against this list.
+
 ## Engine extraction (done)
 
 `install_frontend_baseline.sh` is deprecated. Prune per-app duplicates of shared controllers/partials when found.

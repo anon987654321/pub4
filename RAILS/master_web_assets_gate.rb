@@ -22,6 +22,9 @@ failures = []
 if (drift = DesignTokens.face_root_drift?(FACE_CSS))
   failures << drift
 end
+if (drift = DesignTokens.chrome_drift?(FACE_CSS))
+  failures << drift
+end
 if (drift = DesignTokens.scss_anchor_drift?)
   failures << drift
 end

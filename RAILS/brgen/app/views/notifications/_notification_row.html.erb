@@ -1,17 +1,26 @@
-<article id="notification-<%= notification.id %>" role="article" aria-label="Notification">
- <h3><%= notification.title %></h3>
- <% if notification.body.present? %><p><%= notification.body %></p><% end %>
- <p class="dim">
- <span data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</span>
- <% if notification.read? %> · read<% end %>
- </p>
- <% unless notification.read? %>
- <button type="button"
- class="btn btn-ghost btn-sm"
- data-reflex="click->NotificationRead#mark_read"
- data-notification-id="<%= notification.id %>"
- aria-label="Mark notification as read">
- Mark as read
- </button>
- <% end %>
-</article>
+<% actor = notification.actor %>
+<% actor_name = actor&.display_name || actor&.username || "System" %>
+<% actor_handle = actor&.username.presence %>
+<% notification_actions = capture do %>
+  <% unless notification.read? %>
+    <button type="button"
+            class="x-act x-act--read"
+            data-reflex="click->NotificationRead#mark_read"
+            data-notification-id="<%= notification.id %>"
+            data-turbo="false"
+            aria-label="Mark notification as read">
+      <%= x_icon(:notifications, size: 18) %>
+      <span class="x-count">Mark read</span>
+    </button>
+  <% end %>
+<% end %>
+<%= render "shared/x_card",
+           avatar_url: nil,
+           name: actor_name,
+           handle: (actor_handle ? "@#{actor_handle}" : nil),
+           time: time_ago_in_words(notification.created_at),
+           title: notification.title,
+           content: (notification.body.presence),
+           actions: notification_actions,
+           class: "x-notification#{" x-notification--unread" unless notification.read?}",
+           data_attributes: %(id="#{dom_id(notification)}" data-notification-id="#{notification.id}") %>

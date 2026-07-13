@@ -11,8 +11,11 @@
   --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
   --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
   --x-accent: #1d9bf0;
+  --x-accent-hover: #1a8cd8;
   --x-danger: #f4212e;
-  --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+  --x-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --x-font-size: 16px;
+  --x-line-height: 20px;
   --x-weight-normal: 400;
   --x-weight-medium: 500;
   --x-weight-bold: 700;
@@ -23,6 +26,10 @@
   --x-radius-card: 16px;
   --x-radius-lg: 16px;
   --x-radius-pill: 9999px;
+  --x-sidebar: 275px;
+  --x-feed-max: 600px;
+  --x-widgets: 350px;
+  --x-layout-max: 1265px;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
   --z-chrome: 10;
@@ -31,6 +38,8 @@
   --z-modal: 1000;
   --z-toast: 1100;
   --z-skip: 2000;
+  --color-success: #00ba7c;
+  --color-warning: #ffd400;
   --color-background: var(--x-bg);
   --color-midtone: var(--x-text-secondary);
   --color-highlight: var(--x-surface);
@@ -38,6 +47,10 @@
   --color-border: var(--x-border);
   --text-primary: var(--x-text);
   --text-secondary: var(--x-text-secondary);
+  --x-success: var(--color-success);
+  --x-warning: var(--color-warning);
+  --x-like-active: var(--x-accent);
+  --x-repost-active: var(--color-success);
 }
 @media (prefers-color-scheme: light) {
   :root {

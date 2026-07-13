@@ -365,17 +365,20 @@ class DeployBacklogTest < Minitest::Test
       brgen/app/views/layouts/application.html.erb
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
-      assert_includes source, 'data-turbo-permanent'
       refute_includes source, 'turbo-cache-control", content: "no-cache"'
 
       # Amber factors the sign-out link (and its turbo_prefetch:
       # false safety attribute — prevents a hover-prefetch from firing the
-      # DELETE) into shared/_sidebar_nav.html.erb rather than inlining it in
-      # the layout; check that partial too when the layout itself doesn't.
+      # DELETE) into Amber::XNavBuilder rather than inlining it in the layout.
       app_dir = relative.split("/").first
-      nav_partial = File.join(ROOT, app_dir, "app/views/shared/_sidebar_nav.html.erb")
+      nav_builder = File.join(ROOT, app_dir, "app/services/#{app_dir}/x_nav_builder.rb")
       haystack = source
-      haystack += File.read(nav_partial) if File.file?(nav_partial)
+      haystack += File.read(nav_builder) if File.file?(nav_builder)
+      if source.include?('render "shared/x_shell"')
+        haystack += File.read(File.join(ROOT, "shared/app/views/shared/_x_shell.html.erb"))
+        haystack += File.read(File.join(ROOT, "shared/app/views/shared/_x_tab_bar.html.erb"))
+      end
+      assert_includes haystack, 'data-turbo-permanent'
       assert_includes haystack, 'turbo_prefetch: false'
     end
 

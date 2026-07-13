@@ -1,0 +1,8 @@
+<nav role="navigation" class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
+  <%= x_render_tab_bar(local_assigns.fetch(:items) { tab_bar_items }) %>
+  <% if local_assigns.fetch(:more_button, true) %>
+    <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
+      <%= x_icon(:menu, size: 26) %>
+    </button>
+  <% end %>
+</nav>

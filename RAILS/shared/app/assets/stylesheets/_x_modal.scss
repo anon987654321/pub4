@@ -1,55 +1,16 @@
-/* Mobile tab bar */
-.tab-bar {
-  position: fixed;
-  bottom: 0;
-  inset-inline-start: 0;
-  inset-inline-end: 0;
-  display: none;
-  min-height: 54px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  z-index: var(--z-nav);
-  padding-bottom: var(--safe-bottom);
+// Modal + mobile bottom sheet — extracted from brgen/_mobile.scss + _zen_shell.scss.
+
+.dialog {
+  border: 1px solid var(--color-border);
+  border-radius: var(--x-radius-lg);
+  padding: 0;
+  max-width: min(560px, 90vw);
+  max-height: 90dvh;
+  overflow: auto;
 }
 
-.tab-item {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-3);
-  color: var(--x-text);
-  transition: background var(--transition-fast);
-}
-
-.tab-item[aria-current="page"] {
-  color: var(--x-accent);
-  background: var(--x-hover-subtle);
-}
-
-.tab-item[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  inset-block-end: calc(4px + var(--safe-bottom));
-  width: 5px;
-  height: 5px;
-  border-radius: var(--x-radius-pill);
-  background: currentColor;
-}
-
-.tab-item-button {
-  background: transparent;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-}
-
-.tab-item:hover { background: var(--x-hover); text-decoration: none; }
-.tab-item:active,
-.compose-btn:active,
-.compose-fab:active {
-  background: var(--x-hover);
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
 }
 
 .mobile-sheet-backdrop {
