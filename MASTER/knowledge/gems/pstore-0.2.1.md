@@ -1,2 +1,0 @@
-# Gemfile
-gem 'pstore'

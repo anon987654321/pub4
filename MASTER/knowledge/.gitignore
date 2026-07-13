@@ -1,4 +1,0 @@
-# Exclude nested git repos (cloned upstream repos)
-system_prompts/.git/
-ruby_llm/.git/
-awesome/.git/

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "open3"
 
 class DeployGatesContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -68,6 +69,30 @@ class DeployGatesContractTest < Minitest::Test
 
   def test_bsdports_queue_schema_present
     assert File.file?(File.join(ROOT, "bsdports/db/queue_schema.rb"))
+  end
+
+  def test_local_knowledge_corpus_is_not_tracked
+    files = git_files("MASTER/knowledge")
+
+    assert_empty files, "MASTER/knowledge is local-only and must remain untracked"
+  end
+
+  def test_only_nsd_source_templates_are_tracked
+    expected = %w[
+      OPENBSD/var/nsd/etc/nsd-zone.tmpl
+      OPENBSD/var/nsd/etc/nsd.conf
+      OPENBSD/var/nsd/zones/master/zone.tmpl
+    ]
+
+    assert_equal expected, git_files("OPENBSD/var/nsd")
+  end
+
+  private
+
+  def git_files(path)
+    output, status = Open3.capture2("git", "-C", REPO_ROOT, "ls-files", path)
+    assert status.success?, "git ls-files failed for #{path}"
+    output.lines.map(&:chomp).reject(&:empty?).sort
   end
 
 end

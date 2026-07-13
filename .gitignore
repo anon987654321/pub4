@@ -79,6 +79,10 @@ MASTER/tools/dilla/.live_tmp.wav
 MASTER/tools/dilla/dilla_beat_live*.mp3
 RAILS/*/app/assets/builds/*.css.map
 
+# NSD zone and DNSSEC outputs are regenerated from OPENBSD/var/nsd templates.
+OPENBSD/var/nsd/zones/master/*
+!OPENBSD/var/nsd/zones/master/zone.tmpl
+
 # MASTER/tools/dilla generated + scratch audio — large, regenerable. Never track.
 # KEPT on purpose (inputs the generator reads, do NOT ignore):
 #   - MASTER/tools/dilla/vocals_*.wav  (source vocal takes — VOCALS{} in dilla.rb)

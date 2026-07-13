@@ -1,2 +1,0 @@
-echo '<%= $VERBOSE %>' | erb
-#=> false
