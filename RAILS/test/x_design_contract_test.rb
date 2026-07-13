@@ -306,6 +306,8 @@ class XDesignContractTest < Minitest::Test
 
     assert_includes layout, 'render "shared/x_shell"'
     assert_includes layout, 'render "shared/x_tab_bar"'
+    assert_includes layout, "body_surface_classes"
+    assert_includes layout, "app-shell"
     assert_includes shell, "data-x-shell"
     assert_includes shell, "yield :main"
     assert_includes shell, "yield :widgets"
@@ -320,6 +322,32 @@ class XDesignContractTest < Minitest::Test
     refute_includes shell, "wardrobe_showcase"
     refute_includes shell, 'class="compose-fab"'
     refute_includes shell, 'class="tab-bar"'
+
+    showcase_idx = layout.index("wardrobe_showcase")
+    shell_idx = layout.index('render "shared/x_shell"')
+    assert showcase_idx, "amber layout missing wardrobe_showcase"
+    assert shell_idx, "amber layout missing x_shell render"
+    assert showcase_idx < shell_idx, "wardrobe showcase must render above shared/_x_shell"
+  end
+
+  def test_amber_luxury_css_scoped_to_product_luxury
+    items_luxury = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "_items_luxury.scss"))
+    guest_showcase = File.read(File.join(ROOT, "amber", "app", "assets", "stylesheets", "_guest_showcase.scss"))
+    tokens = File.read(TOKENS_SCSS)
+    layout = File.read(AMBER_LAYOUT)
+    helper = File.read(File.join(ROOT, "amber", "app", "helpers", "application_helper.rb"))
+
+    assert_includes items_luxury, "body.product-luxury"
+    assert_includes guest_showcase, "body.product-luxury"
+    refute_includes tokens, "--luxury-bg:"
+    assert_includes layout, "if product_luxury_surface?"
+    luxury_guard_idx = layout.index("if product_luxury_surface?")
+    caprasimo_idx = layout.index("Caprasimo")
+    assert luxury_guard_idx, "amber layout missing product_luxury_surface? guard"
+    assert caprasimo_idx, "amber layout missing Caprasimo font link"
+    assert luxury_guard_idx < caprasimo_idx, "Caprasimo must be gated behind product_luxury_surface?"
+    assert_includes helper, "def product_luxury_surface?"
+    assert_includes helper, "def body_surface_classes"
   end
 
   private

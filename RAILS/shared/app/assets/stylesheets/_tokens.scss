@@ -73,28 +73,6 @@
   --z-skip: 2000;
   --color-primary: var(--x-text);
   --color-surface: var(--x-surface);
-
-  /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
-  /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
-  --luxury-bg: #f8f5f0;
-  --luxury-surface: #ffffff;
-  --luxury-text: #2c2824;
-  --luxury-muted: #6b665f;
-  --luxury-border: #e6e0d8;
-  --luxury-accent: #8c7a5e;
-  --luxury-space-xs: 0.5rem;
-  --luxury-space-sm: 0.875rem;
-  --luxury-space-md: 1.5rem;
-  --luxury-space-lg: 2.25rem;
-  --luxury-space-xl: 3rem;
-  --luxury-radius-sm: 6px;
-  --luxury-radius-md: 10px;
-  --luxury-radius-lg: 14px;
-  --luxury-font-display: 2rem;
-  --luxury-font-title: 1.5rem;
-  --luxury-font-meta: 0.875rem;
-  --luxury-letter-tight: -0.01em;
-  --luxury-line-relaxed: 1.6;
 }
 
 html[data-theme="dark"] {

@@ -37,10 +37,6 @@ main#main-content header > nav {
 }
 
 @media (max-width: 640px) {
-  main#main-content {
-    padding-inline: var(--space-md);
-  }
-
   main#main-content header > nav {
     flex-wrap: nowrap;
     overflow-x: auto;

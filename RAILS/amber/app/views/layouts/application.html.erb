@@ -22,10 +22,12 @@
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional">
-  <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional" rel="stylesheet">
+  <% if product_luxury_surface? %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional">
+    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional" rel="stylesheet">
+  <% end %>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.css" crossorigin="anonymous">
   <link rel="stylesheet" href="/lightgallery.css">
   <%= render "shared/theme_bootstrap", storage_key: "amber-theme" %>
@@ -34,7 +36,8 @@
   <%= json_ld_script(organization_json_ld(site_name: "Amber", url: root_url)) %>
   <%= javascript_importmap_tags %>
 </head>
-<body data-pwa-key="amber"
+<body class="<%= body_surface_classes %>"
+      data-pwa-key="amber"
       data-controller="pwa-standalone browser-fingerprint"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
 <a class="skip-link" href="#main-content">Skip to main content</a>
