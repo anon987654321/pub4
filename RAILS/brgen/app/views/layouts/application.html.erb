@@ -90,14 +90,6 @@
     </div>
   </div>
 
-  <% if content_for?(:splash) %>
-    <div data-controller="dialog" data-action="click->dialog#backdropClose">
-      <dialog id="splash" class="splash" data-dialog-target="dialog" data-dialog-open-value="true" aria-modal="true">
-        <%= yield :splash %>
-      </dialog>
-    </div>
-  <% end %>
-
   <div class="app-shell">
     <div class="layout">
       <aside class="sidebar" data-turbo-permanent>
