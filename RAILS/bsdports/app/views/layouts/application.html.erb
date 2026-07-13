@@ -27,7 +27,7 @@
   <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Semantic search for OpenBSD ports.")) %>
   <%= javascript_importmap_tags %>
 </head>
-<body class="zen-minimal" data-pwa-key="bsdports" data-controller="pwa-standalone">
+<body data-pwa-key="bsdports" data-controller="pwa-standalone">
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>

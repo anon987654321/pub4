@@ -104,7 +104,7 @@ module ApplicationHelper
   end
 
   def body_surface_classes
-    parts = %w[zen-minimal]
+    parts = []
     parts << "vertical-#{active_vertical}" if active_vertical
     parts.join(" ")
   end
