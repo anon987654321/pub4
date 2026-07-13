@@ -7,7 +7,7 @@
 <%= render "shared/x_card",
   avatar_url: (listing.photos.attached? ? url_for(listing.photos.first) : nil),
   name: listing.title,
-  handle: listing.seller&.display_name ? "@#{listing.seller.display_name.parameterize}" : nil,
+  handle: listing.user&.display_name ? "@#{listing.user.display_name.parameterize}" : nil,
   time: time_ago_in_words(listing.created_at),
   meta: [
     listing.location,
