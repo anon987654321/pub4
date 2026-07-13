@@ -20,6 +20,10 @@ class XDesignContractTest < Minitest::Test
   X_ACTION_JS = File.join(SHARED, "frontend", "pub4_x_action_controller.js")
   X_ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_x_action_bar.html.erb")
   REACTION_BAR = File.join(SHARED, "app", "views", "shared", "_reaction_bar.html.erb")
+  INFINITE_SCROLL_SENTINEL = File.join(SHARED, "app", "views", "shared", "_infinite_scroll_sentinel.html.erb")
+  NOTIFICATION_READ_REFLEX = File.join(SHARED, "app", "reflexes", "shared", "notification_read_reflex.rb")
+  BRGEN_NOTIFICATION_ROW = File.join(ROOT, "brgen", "app", "views", "notifications", "_notification_row.html.erb")
+  X_FEED_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_x_feed.scss")
   ENGINE_RB = File.join(SHARED, "lib", "shared", "engine.rb")
   APPS = %w[amber brgen bsdports].freeze
 
@@ -244,6 +248,37 @@ class XDesignContractTest < Minitest::Test
   def test_x_action_bar_hides_zero_like_count
     partial = File.read(X_ACTION_BAR)
     assert_includes partial, 'like_count.positive? ? like_count : ""'
+  end
+
+  def test_infinite_scroll_sentinel_uses_x_feed_interaction_markup
+    sentinel = File.read(INFINITE_SCROLL_SENTINEL)
+    feed = File.read(X_FEED_SCSS)
+
+    assert_includes sentinel, 'class="infinite-scroll-sentinel"'
+    assert_includes sentinel, 'data-controller="infinite-scroll"'
+    assert_includes sentinel, 'data-loading="false"'
+    assert_includes sentinel, 'data-turbo="false"'
+    assert_includes sentinel, 'role="status"'
+    assert_includes sentinel, "infinite-scroll-sentinel__label"
+    assert_includes feed, ".infinite-scroll-sentinel"
+  end
+
+  def test_notification_read_reflex_morphs_dom_id_row_partial
+    reflex = File.read(NOTIFICATION_READ_REFLEX)
+
+    assert_includes reflex, "dom_id(notification)"
+    assert_includes reflex, 'partial: "notifications/notification_row"'
+    refute_includes reflex, '#notification-'
+  end
+
+  def test_brgen_notification_row_uses_x_card_and_x_act_patterns
+    row = File.read(BRGEN_NOTIFICATION_ROW)
+
+    assert_includes row, 'render "shared/x_card"'
+    assert_includes row, "x-notification"
+    assert_includes row, "x-act"
+    assert_includes row, "NotificationRead#mark_read"
+    assert_includes row, "dom_id(notification)"
   end
 
   private

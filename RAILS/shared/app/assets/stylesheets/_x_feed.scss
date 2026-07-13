@@ -186,3 +186,30 @@
     margin-bottom: 0;
   }
 }
+
+.infinite-scroll-sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+}
+
+.infinite-scroll-sentinel__label {
+  line-height: 1.25;
+}
+
+.infinite-scroll-sentinel[data-loading="true"] .infinite-scroll-sentinel__label {
+  color: var(--accent);
+}
+
+.x-post.x-notification--unread {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.x-post.x-notification--unread .x-name {
+  font-weight: 700;
+}

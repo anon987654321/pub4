@@ -1,6 +1,6 @@
 <% actor = notification.actor %>
-<% actor_name = actor&.display_name || actor&.username || "System" %>
-<% actor_handle = actor&.username.presence %>
+<% actor_name = actor&.try(:display_name) || actor&.try(:username) || "System" %>
+<% actor_handle = actor&.try(:username).presence %>
 <% notification_actions = capture do %>
   <% unless notification.read? %>
     <button type="button"
