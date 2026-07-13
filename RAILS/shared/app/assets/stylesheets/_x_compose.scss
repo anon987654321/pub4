@@ -105,6 +105,10 @@
 }
 .compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
 .compose-as { font-size: var(--x-font-size); }
+.compose-box:not(.compose-box--card) .compose-as,
+.compose-box:not(.compose-box--card) .compose-hint {
+  color: var(--x-text-secondary);
+}
 .compose-box--card .compose-as {
   font-size: var(--text-sm);
   font-weight: 600;

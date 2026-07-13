@@ -76,9 +76,9 @@
         </div>
       </div>
     <% end %>
-    <p class="compose-hint">
+    <p class="<%= variant == :card ? "compose-hint" : "dim compose-hint" %>">
       <% if guest? %>
-        <% if guest_remaining %>
+        <% if local_assigns.key?(:guest_remaining) %>
           <%= t("#{i18n_scope}.guest_hint", limit: Shared::AnonymousPostService::LIMIT, remaining: guest_remaining) %>
         <% else %>
           <%= t("#{i18n_scope}.guest_hint", limit: Shared::AnonymousPostService::LIMIT) %>

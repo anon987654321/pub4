@@ -18,4 +18,16 @@ class PostsControllerAnonymousTest < ActionDispatch::IntegrationTest
     assert post.user.guest?
     assert_equal "Loving this linen capsule #ootd", post.body
   end
+
+  def test_guest_compose_hint_shows_zero_remaining_at_quota_limit
+    Shared::AnonymousPostQuota.delete_all
+    2.times do |i|
+      post posts_url, params: { post: { body: "Guest post #{i}", anonymous: true } }
+      assert_redirected_to root_url
+    end
+
+    get root_url
+    assert_response :success
+    assert_includes response.body, "0 of #{Shared::AnonymousPostService::LIMIT} posts left"
+  end
 end
