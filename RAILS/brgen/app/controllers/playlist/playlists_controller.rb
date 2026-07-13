@@ -13,7 +13,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   def show
     @tracks = playlist_tracks
     @dilla_sketches = @playlist.dilla_sketches.recent.includes(:user)
-    # Group for whyp-like per-track timestamp comments on waveform
+    # Group per-track timestamp comments for the waveform
     @track_comments = @tracks.each_with_object({}) do |pt, h|
       tr = pt.track
       h[tr.id] = tr.timestamped_comments.chronological.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } }
