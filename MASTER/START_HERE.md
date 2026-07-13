@@ -125,4 +125,4 @@ Far-away visual tree with noise pruned and alignment notes. Do this before mergi
 - Prefer small patches; run the smallest check that proves the work.
 - Update `DECISIONS.md` or `DEBT.md` when settling ambiguity.
 - Face boot: read `web/CLAUDE.md` first.
-- RAILS app CSS/visual work: read `RAILS/shared/WIRING_NOTES.md`'s "Visual design system" section first — x.com is the base reference, tokens live in `RAILS/shared/app/assets/stylesheets/_x_base.scss`, and the flat-only (no shadow/blur/glow) rule applies repo-wide.
+- RAILS app CSS/visual work: read `RAILS/shared/WIRING_NOTES.md` first — **Visual design system** (x.com token anchors, flat-only rule) and **x.com parity verification** (CI commands, icon contract, phase 1 sign-off surfaces, stakeholder decisions). Tokens live in `RAILS/shared/app/assets/stylesheets/_x_base.scss` + `design_tokens.yml#social:`.

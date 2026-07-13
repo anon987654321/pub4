@@ -2,6 +2,7 @@
 
 require "yaml"
 require "minitest/autorun"
+require_relative "../design_tokens"
 
 class XDesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -46,6 +47,8 @@ class XDesignContractTest < Minitest::Test
   SCSS_LITERAL_MAP = {
     "x_font_size" => /--x-font-size:\s*([^;]+);/,
     "x_line_height" => /--x-line-height:\s*([^;]+);/,
+    "x_radius_sm" => /--x-radius-sm:\s*([^;]+);/,
+    "x_radius_md" => /--x-radius-md:\s*([^;]+);/,
     "x_radius_pill" => /--x-radius-pill:\s*([^;]+);/,
     "x_radius_card" => /--x-radius-card:\s*([^;]+);/,
     "x_sidebar" => /--x-sidebar:\s*([^;]+);/,
@@ -72,6 +75,10 @@ class XDesignContractTest < Minitest::Test
   SYSTEM_UI_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'.freeze
   FLAT_DESIGN_PATTERN = /box-shadow|text-shadow|backdrop-filter/i
   CYCLIC_X_DANGER_PATTERN = /--x-danger:\s*var\(--x-danger\)/
+  X_HOVER_DERIVED = {
+    "--x-hover" => "color-mix(in srgb, var(--x-text) 10%, transparent)",
+    "--x-hover-subtle" => "color-mix(in srgb, var(--x-text) 3%, transparent)",
+  }.freeze
 
   def test_social_tokens_match_x_base_defaults
     social = YAML.safe_load_file(TOKENS_YML).fetch("social")
@@ -161,6 +168,30 @@ class XDesignContractTest < Minitest::Test
     assert_match(/stylesheet_link_tag\s+:app/, layout)
     refute_match(/stylesheet_link_tag\s+:application/, layout)
     refute_match(/stylesheet_link_tag\s+["']application["']/, layout)
+  end
+
+  HOME_FEED_TEMPLATES = [
+    File.join(ROOT, "brgen", "app", "views", "posts", "_post.html.erb"),
+    File.join(ROOT, "brgen", "app", "views", "home", "_live_search_results.html.erb"),
+    File.join(ROOT, "brgen", "app", "views", "posts", "_live_search_results.html.erb"),
+    File.join(ROOT, "amber", "app", "views", "posts", "_post.html.erb"),
+    File.join(ROOT, "amber", "app", "views", "home", "index.html.erb"),
+  ].freeze
+
+  X_CARD_DIRECT = /render\s+["']shared\/x_card/
+  X_CARD_DELEGATE = /render\s+["']posts\/post/
+
+  def test_feed_partials_use_x_card
+    using_x_card = HOME_FEED_TEMPLATES.count do |path|
+      assert File.file?(path), "missing home-feed template: #{path}"
+      body = File.read(path)
+      body.match?(X_CARD_DIRECT) || body.match?(X_CARD_DELEGATE) || body.match?(/render\s+@guest_posts/)
+    end
+
+    ratio = using_x_card.to_f / HOME_FEED_TEMPLATES.size
+    assert ratio >= 0.8,
+           "expected ≥80% of home-feed templates to use shared/x_card " \
+           "(#{using_x_card}/#{HOME_FEED_TEMPLATES.size}); see WIRING_NOTES parity surface list"
   end
 
   def test_theme_toggle_controller_sets_document_element_dataset
@@ -375,6 +406,19 @@ class XDesignContractTest < Minitest::Test
     assert luxury_guard_idx < caprasimo_idx, "Caprasimo must be gated behind product_luxury_surface?"
     assert_includes helper, "def product_luxury_surface?"
     assert_includes helper, "def body_surface_classes"
+  end
+
+  def test_social_chrome_hover_derivation_matches_x_base
+    scss = File.read(X_BASE)
+    dark_block = mixin_block(scss, "x-dark-tokens")
+    chrome_css = DesignTokens.chrome_css
+
+    X_HOVER_DERIVED.each do |x_var, value|
+      x_decl = "#{x_var}: #{value};"
+      chrome_decl = "#{x_var.sub('--x-', '--chrome-')}: #{value};"
+      assert_includes dark_block, x_decl, "_x_base.scss missing #{x_decl}"
+      assert_includes chrome_css, chrome_decl, "chrome_css missing #{chrome_decl}"
+    end
   end
 
   private
