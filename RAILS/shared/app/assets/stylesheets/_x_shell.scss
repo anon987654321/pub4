@@ -162,7 +162,6 @@ main[role="main"] {
   padding-inline: clamp(16px, 5vw, 48px);
   border-left: 1px solid var(--x-border);
   border-right: 1px solid var(--x-border);
-  container: feed / inline-size;
 }
 .widgets {
   grid-area: widgets;
