@@ -31,18 +31,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker")
 }
 
-const bootMinimalGesture = () => {
-  if (!document.body?.classList.contains("zen-minimal")) return
-  if (window.__pub4MinimalGesture) return
-  window.__pub4MinimalGesture = true
-  import("pub4/minimal_gesture").then((module) => {
-    if (typeof module.initMinimalUI === "function") module.initMinimalUI()
-  })
-}
-
 document.addEventListener("turbo:load", () => {
-  bootMinimalGesture()
   bootNavReveal()
 })
-bootMinimalGesture()
 bootNavReveal()

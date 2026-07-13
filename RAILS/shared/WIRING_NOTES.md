@@ -14,7 +14,7 @@ Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass
 @use "pub4_stack" as *;
 ```
 
-`pub4_stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_shell` (offline page, install prompt, zen-minimal shell).
+`pub4_stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_shell` (offline page, install prompt, x.com-shell primitives).
 
 **Brgen** adds product partials after the stack (`_root`, `_canvas`, `_shell`, …). **Standalone apps** add a thin product block below `@use "pub4_stack"`.
 
