@@ -1,23 +1,7 @@
 @use "x_base" as x;
 
-// Shared light-theme override set — used identically by [data-theme="light"]
-// and the @media(prefers-color-scheme:light) fallback below, so it's defined once.
-@mixin semantic-light-overrides {
-  @include x.x-light-tokens;
-  color-scheme: light;
-  --color-background: var(--x-bg);
-  --color-midtone: var(--x-text-secondary);
-  --color-highlight: var(--x-surface);
-  --color-accent: var(--x-accent);
-  --color-border: var(--x-border);
-  --color-midtone-tint: var(--x-hover);
-  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
-  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
-  --text-primary: var(--x-text);
-  --text-secondary: var(--x-text-secondary);
-}
-
-:root {
+// Shared theme override sets — used by html[data-theme] and prefers-color-scheme fallback.
+@mixin semantic-dark-overrides {
   @include x.x-dark-tokens;
   @include x.x-semantic-status-tokens;
   color-scheme: dark;
@@ -35,6 +19,25 @@
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
   --text-primary: var(--x-text);
   --text-secondary: var(--x-text-secondary);
+}
+
+@mixin semantic-light-overrides {
+  @include x.x-light-tokens;
+  color-scheme: light;
+  --color-background: var(--x-bg);
+  --color-midtone: var(--x-text-secondary);
+  --color-highlight: var(--x-surface);
+  --color-accent: var(--x-accent);
+  --color-border: var(--x-border);
+  --color-midtone-tint: var(--x-hover);
+  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+  --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
+  --text-primary: var(--x-text);
+  --text-secondary: var(--x-text-secondary);
+}
+
+:root {
+  @include semantic-dark-overrides;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -94,12 +97,16 @@
   --luxury-line-relaxed: 1.6;
 }
 
-[data-theme="light"] {
+html[data-theme="dark"] {
+  @include semantic-dark-overrides;
+}
+
+html[data-theme="light"] {
   @include semantic-light-overrides;
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
+  html:not([data-theme]) {
     @include semantic-light-overrides;
   }
 }

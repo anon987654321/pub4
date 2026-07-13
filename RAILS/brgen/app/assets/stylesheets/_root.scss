@@ -20,10 +20,24 @@
   min-height: 100vh;
 }
 
-#dark-toggle:checked ~ .theme-root {
+html[data-theme="dark"] {
+  @include x.x-dark-tokens;
+  @include x.x-app-root-tokens;
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
   @include x.x-light-tokens;
   @include x.x-app-root-tokens;
   color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme]) {
+    @include x.x-light-tokens;
+    @include x.x-app-root-tokens;
+    color-scheme: light;
+  }
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
