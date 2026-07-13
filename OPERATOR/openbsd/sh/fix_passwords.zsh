@@ -4,7 +4,7 @@ set -euo pipefail
 # Fix hardcoded password123 in RAILS deploy scripts (pure zsh).
 
 SCRIPT_DIR=${0:a:h}
-RAILS_ROOT=${SCRIPT_DIR:h}/rails
+RAILS_ROOT=${SCRIPT_DIR:h:h:h}/RAILS
 
 log() { print "[$(date '+%H:%M:%S')] $*" }
 

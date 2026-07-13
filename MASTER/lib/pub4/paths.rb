@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Pub4
-  # Canonical repo layout paths. Legacy DEPLOY/* names resolve via symlinks
-  # (DEPLOY → OPERATOR, OPERATOR/rails → RAILS, OPERATOR/openbsd → OPENBSD).
+  # Canonical repo layout paths. OPENBSD is the config backup; operator tooling
+  # lives under OPERATOR/openbsd.
   module Paths
     module_function
 
@@ -22,6 +22,10 @@ module Pub4
       File.join(repo_root, "OPENBSD")
     end
 
+    def openbsd_operator_root
+      File.join(operator_root, "openbsd")
+    end
+
     def master_root
       File.join(repo_root, "MASTER")
     end
@@ -35,10 +39,9 @@ module Pub4
 
       legacy = path.to_s
         .sub(%r{\ADEPLOY/rails/}, "RAILS/")
-        .sub(%r{\ADEPLOY/openbsd/}, "OPENBSD/")
+        .sub(%r{\ADEPLOY/openbsd/}, "OPERATOR/openbsd/")
         .sub(%r{\ADEPLOY/}, "OPERATOR/")
         .sub(%r{\AOPERATOR/rails/}, "RAILS/")
-        .sub(%r{\AOPERATOR/openbsd/}, "OPENBSD/")
       File.expand_path(legacy, repo_root)
     end
   end

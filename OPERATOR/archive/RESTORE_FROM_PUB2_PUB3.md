@@ -56,8 +56,8 @@ pub4 MASTER or OPERATOR. The valuable parts are:
 - `MASTER/tools/convergence/evidence_gate.rb`
 - `MASTER/tools/convergence/README.md`
 - `MASTER/data/lessons/pub_archive_restore.yml`
-- `OPENBSD/domain_candidates_from_pub3.yml`
-- `OPENBSD/ptr_openbsd_amsterdam.rb`
+- `OPERATOR/openbsd/domain_candidates_from_pub3.yml`
+- `OPERATOR/openbsd/ptr_openbsd_amsterdam.rb`
 - `RAILS/archive_restore_gate.rb`
 
 ### Do not restore from pub3
@@ -89,8 +89,8 @@ Every restored artifact must satisfy these rules:
 | pub2 | Warp tunnel canvas visualizer | `OPERATOR/audio/radio_bergen_visualizer_controller.js` |
 | pub3 | Evidence score / convergence | `MASTER/tools/convergence/evidence_gate.rb` |
 | pub3 | Port chaos report | `RAILS/archive_restore_gate.rb` |
-| pub3 | Domain inventory fragments | `OPENBSD/domain_candidates_from_pub3.yml` |
-| pub3 | PTR constants | `OPENBSD/ptr_openbsd_amsterdam.rb` |
+| pub3 | Domain inventory fragments | `OPERATOR/openbsd/domain_candidates_from_pub3.yml` |
+| pub3 | PTR constants | `OPERATOR/openbsd/ptr_openbsd_amsterdam.rb` |
 | pub3 | Environment lessons | `MASTER/data/lessons/pub_archive_restore.yml` |
 
 ## Operator notes
@@ -112,11 +112,11 @@ ruby OPERATOR/audio/akmd_mastering_chain.rb input.wav public/audio/output.mp3
 PTR dry run:
 
 ```sh
-ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 185.52.176.18 --hostname ns.brgen.no
+ruby OPERATOR/openbsd/ptr_openbsd_amsterdam.rb --ipv4 185.52.176.18 --hostname ns.brgen.no
 ```
 
 PTR apply:
 
 ```sh
-APPLY_PTR=1 ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 185.52.176.18 --hostname ns.brgen.no
+APPLY_PTR=1 ruby OPERATOR/openbsd/ptr_openbsd_amsterdam.rb --ipv4 185.52.176.18 --hostname ns.brgen.no
 ```

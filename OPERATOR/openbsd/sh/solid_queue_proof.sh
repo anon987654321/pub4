@@ -7,7 +7,7 @@ app=${1:-}
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 ruby=${SOLID_QUEUE_PROOF_RUBY:-ruby34}
-proof_rb=$repo/OPENBSD/solid_queue_proof.rb
+proof_rb=$repo/OPERATOR/openbsd/solid_queue_proof.rb
 
 [[ -f $proof_rb ]] || { print -u2 "missing $proof_rb"; exit 1; }
 

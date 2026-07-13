@@ -10,7 +10,7 @@ core_services:
   - master
   - brgen
 
-# Start manually: doas ksh OPENBSD/start_all_apps.sh
+# Start manually: doas ksh OPERATOR/openbsd/start_all_apps.sh
 # Pins all apps (creates /var/db/pub4_all_apps; resource_guard skips shedding).
 optional_services:
   - amber

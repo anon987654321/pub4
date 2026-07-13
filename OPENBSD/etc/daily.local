@@ -1,7 +1,7 @@
 #!/bin/sh
 ruby /usr/local/bin/nsd-resign
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
-su -l dev -c '/home/dev/pub4/OPENBSD/backup_priv.sh'
+su -l dev -c '/home/dev/pub4/OPERATOR/openbsd/backup_priv.sh'
 
 if command -v drill >/dev/null 2>&1; then
   drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1 || \

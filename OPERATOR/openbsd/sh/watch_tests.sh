@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-MASTER_ROOT=${0:a:h:h}/MASTER
+MASTER_ROOT=${0:a:h:h:h}/MASTER
 TEST_FILE=${1:-test/test_agent.rb}
 WATCH_DIRS=( lib test )
 DELAY=2

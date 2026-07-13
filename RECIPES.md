@@ -5,8 +5,8 @@ Runtime authority: `OPERATOR/data/operator.yml` — list with `cd MASTER && bund
 ## Repo shape (visual overview)
 
 ```bash
-ruby OPENBSD/tools/tree.rb . --pub4-overview
-# or: zsh OPENBSD/sh/tree.sh . --pub4-overview
+ruby OPERATOR/openbsd/tools/tree.rb . --pub4-overview
+# or: zsh OPERATOR/openbsd/sh/tree.sh . --pub4-overview
 ```
 
 Prunes vendor/tmp/log/storage/node_modules/builds. Shows Rails apps collapsed, MASTER/lib subsystems, alignment notes.

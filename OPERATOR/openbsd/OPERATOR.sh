@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
-# Routine (on vm23): cd ~/pub4/OPENBSD && doas zsh OPERATOR.sh
-# Installs etc/ usr/ var/ onto /, validates pf/relayd, restarts services.
+# Routine (on vm23): cd ~/pub4 && doas zsh OPERATOR/openbsd/OPERATOR.sh
+# Installs OPENBSD/{etc,usr,var} onto /, validates pf/relayd, restarts services.
 # Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
 #
@@ -14,7 +14,7 @@
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
-# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/health_check.rb
+# - Post-deploy verification: ruby /home/dev/pub4/OPERATOR/openbsd/health_check.rb
 # Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
 
 set -euo pipefail
@@ -24,6 +24,8 @@ zmodload zsh/datetime
 
 typeset -a TMPFILES
 SCRIPT_DIR=${0:a:h}
+REPO_ROOT=${SCRIPT_DIR:h:h}
+CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 
 # Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
 log() {
@@ -79,7 +81,7 @@ backup_directory() {
 }
 
 install_template() {
-  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
   typeset content; content=$(<"$src")
   eval "cat > \"$dst\" <<INSTALL_TEMPLATE_EOF
@@ -88,7 +90,7 @@ INSTALL_TEMPLATE_EOF"
 }
 
 append_template() {
-  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
   typeset content; content=$(<"$src")
   eval "cat >> \"$dst\" <<APPEND_TEMPLATE_EOF
@@ -97,7 +99,7 @@ APPEND_TEMPLATE_EOF"
 }
 
 install_static() {
-  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  typeset src=${CONFIG_ROOT}/$1 dst=$2
   [[ -f $src ]] || { log ERROR "Missing file: $src"; exit 1 }
   cp "$src" "$dst"
 }
@@ -108,7 +110,7 @@ mark_step_completed() { print -r -- "$1" >> "${STATE_FILE}.steps" }
 # Install exact config trees from repo onto /. Run separately or before --sync-configs:
 #   doas cp -R etc usr var /
 install_root_configs() {
-  typeset src=${1:-${SCRIPT_DIR}}
+  typeset src=${1:-${CONFIG_ROOT}}
   [[ -d $src/etc ]] || { log ERROR "No etc/ in $src"; return 1 }
   backup_directory /etc "etc-pre-sync" || return 1
 
@@ -176,7 +178,7 @@ sync_openbsd_configs() {
 }
 
 sync_openbsd_apply() {
-  typeset src=${1:-${SCRIPT_DIR}}
+  typeset src=${1:-${CONFIG_ROOT}}
   install_root_configs "$src" || return 1
 
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid after sync"; return 1 }
@@ -599,7 +601,7 @@ bootstrap_rails_app() {
   chmod 640 /etc/${app}.env 2>/dev/null || true
 
   typeset svc=$app
-  [[ -f ${SCRIPT_DIR}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
+  [[ -f ${CONFIG_ROOT}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
   chmod 755 /etc/rc.d/${svc}
   /usr/sbin/rcctl enable ${svc}
   /usr/sbin/rcctl restart ${svc} || /usr/sbin/rcctl start ${svc} \
@@ -794,7 +796,7 @@ stage_2() {
   log INFO "MASTER: building face runtime + precompiling assets"
   RAILS_ENV=production bundle exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:precompile \
     || log WARN "MASTER assets:precompile failed"
-  ruby "${SCRIPT_DIR}/../rails/master_web_assets_gate.rb" 2>/dev/null \
+  ruby "${REPO_ROOT}/RAILS/master_web_assets_gate.rb" 2>/dev/null \
     || ruby "$m3dir/../RAILS/master_web_assets_gate.rb" 2>/dev/null \
     || log WARN "MASTER master_web_assets_gate skipped"
   typeset master_secret
@@ -802,8 +804,8 @@ stage_2() {
   _master_secret_lines=("${(@f)$(RAILS_ENV=production bundle exec rails secret 2>/dev/null)}")
   master_secret=${_master_secret_lines[-1]}
   [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
-  [[ -f ${SCRIPT_DIR}/etc/rc.d/master ]] || { log ERROR "missing etc/rc.d/master"; exit 1 }
-  cp "${SCRIPT_DIR}/etc/rc.d/master" /etc/rc.d/master
+  [[ -f ${CONFIG_ROOT}/etc/rc.d/master ]] || { log ERROR "missing OPENBSD/etc/rc.d/master"; exit 1 }
+  cp "${CONFIG_ROOT}/etc/rc.d/master" /etc/rc.d/master
   chmod 555 /etc/rc.d/master
   [[ -f $m3dir/data/soul.yml ]] && chmod 0444 "$m3dir/data/soul.yml"
   [[ -f $m3dir/data/checksums.yml ]] && chmod 0444 "$m3dir/data/checksums.yml"
@@ -819,14 +821,14 @@ stage_2() {
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 deploy_live() {
-  sync_openbsd_apply "${SCRIPT_DIR}"
+  sync_openbsd_apply "${CONFIG_ROOT}"
 }
 
 main() {
   if [[ ${1:-} = --help ]]; then
     print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ → /.
 Usage:
-  cd ~/pub4/OPENBSD && doas zsh OPERATOR.sh
+  cd ~/pub4 && doas zsh OPERATOR/openbsd/OPERATOR.sh
 
 Default: install configs, validate pf/relayd, restart services.
 

@@ -64,18 +64,18 @@ ownership:
     purpose: full OpenBSD installer/deployer
     risk: critical
     check: OPERATOR/bin/check-openbsd
-  openbsd/etc/:
+  ../OPENBSD/etc/:
     purpose: repo mirror of live /etc configs
     risk: critical
     check: OPERATOR/bin/check-openbsd
   openbsd/sh/vps_ci.sh:
     purpose: serial app CI entrypoint on vm23
     risk: high
-    check: zsh -n OPENBSD/sh/vps_ci.sh
+    check: zsh -n OPERATOR/openbsd/sh/vps_ci.sh
   openbsd/resource_guard.sh:
     purpose: load shedding on vm23
     risk: high
-    check: ksh -n OPENBSD/resource_guard.sh
+    check: ksh -n OPERATOR/openbsd/resource_guard.sh
   tools/:
     purpose: creative and utility scripts outside core deploy
     risk: medium

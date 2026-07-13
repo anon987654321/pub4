@@ -1,19 +1,19 @@
 #!/usr/bin/env zsh
-# Workstation orchestrator: sync pub4 to VPS and run OPENBSD/OPERATOR.sh.
+# Workstation orchestrator: sync pub4 to VPS and run OPERATOR/openbsd/OPERATOR.sh.
 #
 # Canonical app list: OPERATOR/master.json (active Rails apps).
 # NOT deployed (archived installers only)
 #   → see OPERATOR/archive/recovery/manifest.json
 #
 # Usage:
-#   zsh OPENBSD/sh/deploy_all.sh
-#   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh OPENBSD/sh/deploy_all.sh
-#   zsh OPENBSD/sh/deploy_all.sh --per-app   # also run rails/<app>/<app>.sh (copies to /home/<app>/app)
+#   zsh OPERATOR/openbsd/sh/deploy_all.sh
+#   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh OPERATOR/openbsd/sh/deploy_all.sh
+#   zsh OPERATOR/openbsd/sh/deploy_all.sh --per-app   # also run rails/<app>/<app>.sh (copies to /home/<app>/app)
 set -euo pipefail
 
 SCRIPT_DIR=${0:a:h}
 DEPLOY_ROOT=${SCRIPT_DIR:h}
-PUB4_ROOT=${PUB4_ROOT:-${DEPLOY_ROOT:h}}
+PUB4_ROOT=${PUB4_ROOT:-${DEPLOY_ROOT:h:h}}
 
 : "${VPS_HOST:=46.23.89.226}"
 : "${VPS_USER:=dev}"
@@ -54,15 +54,15 @@ if [[ $USE_GIT_PULL == 1 ]]; then
   vssh "cd ${REMOTE_PUB4} && git pull origin main"
 else
   command -v rsync >/dev/null 2>&1 || error "rsync required when USE_GIT_PULL=0"
-  log "Rsync OPERATOR/ → ${REMOTE_PUB4}/OPERATOR/ ..."
+  log "Rsync OPERATOR/openbsd/ → ${REMOTE_PUB4}/OPERATOR/openbsd/ ..."
   rsync -az --delete \
     -e "ssh ${(j: :)ssh_opts}" \
-    "${DEPLOY_ROOT}/" "${VPS_USER}@${VPS_HOST}:${REMOTE_PUB4}/OPERATOR/" \
+    "${DEPLOY_ROOT}/" "${VPS_USER}@${VPS_HOST}:${REMOTE_PUB4}/OPERATOR/openbsd/" \
     || error "rsync failed"
 fi
 
 log "Running OpenBSD deploy stage 2 (services + Rails bootstrap from RAILS trees)..."
-if ! vssh "cd ${REMOTE_PUB4}/OPENBSD && doas zsh OPERATOR.sh --stage-2"; then
+if ! vssh "cd ${REMOTE_PUB4} && doas zsh OPERATOR/openbsd/OPERATOR.sh --stage-2"; then
   if [[ $ALLOW_PARTIAL_DEPLOY == 1 ]]; then
     log "WARN: OPERATOR.sh reported issues — ALLOW_PARTIAL_DEPLOY=1 set"
   else
@@ -92,7 +92,7 @@ fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
   log "Authoritative remote health gate..."
-  if ! vssh "cd ${REMOTE_PUB4} && ${REMOTE_RUBY} OPENBSD/health_check.rb --public --all-ready-apps"; then
+  if ! vssh "cd ${REMOTE_PUB4} && ${REMOTE_RUBY} OPERATOR/openbsd/health_check.rb --public --all-ready-apps"; then
     [[ $ALLOW_PARTIAL_DEPLOY == 1 ]] \
       && log "WARN: remote health failed — ALLOW_PARTIAL_DEPLOY=1 set" \
       || error "remote health failed"
@@ -101,4 +101,4 @@ fi
 
 log "Deploy finished."
 log "VPS: ssh ${ssh_opts[*]} ${VPS_USER}@${VPS_HOST}"
-log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/OPENBSD/health_check.rb --public --all-ready-apps (on VPS)"
+log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/OPERATOR/openbsd/health_check.rb --public --all-ready-apps (on VPS)"

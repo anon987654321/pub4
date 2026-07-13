@@ -7,7 +7,7 @@ require "pathname"
 require_relative "../OPERATOR/lib/utf8"
 
 ROOT = Pathname.new(__dir__).join("..").expand_path
-OPENBSD = ROOT.join("OPENBSD", "OPERATOR.sh")
+OPENBSD = ROOT.join("OPERATOR", "openbsd", "OPERATOR.sh")
 REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze

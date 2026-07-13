@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../OPERATOR/lib/utf8"
+require_relative "../lib/utf8"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 RELAYD = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
@@ -70,7 +70,7 @@ else
   failures << "MASTER/web: missing AuthTier middleware"
 end
 
-openbsd = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
+openbsd = File.join(ROOT, "OPERATOR", "openbsd", "OPERATOR.sh")
 if File.file?(openbsd)
   text = File.read(openbsd)
   failures << "OPERATOR.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")

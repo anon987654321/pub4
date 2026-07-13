@@ -3,7 +3,7 @@
 # This is not authoritative production config. Reconcile with:
 # - OPERATOR/master.json
 # - RAILS/apps.yml
-# - OPENBSD/openbsd.sh
+# - OPERATOR/openbsd/OPERATOR.sh
 # - relayd/httpd/acme-client templates
 
 brgen_city_network:

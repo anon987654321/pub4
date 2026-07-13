@@ -19,6 +19,6 @@ fi
   cd "$ROOT"
   git fetch origin main 2>&1 || true
   ruby34 OPERATOR/integrity_gate.rb 2>&1
-  ruby34 OPENBSD/health_check.rb --public --all-ready-apps --json 2>&1
+  ruby34 OPERATOR/openbsd/health_check.rb --public --all-ready-apps --json 2>&1
   echo "== $(date -u +%FT%TZ) weekly integrity end"
 } >>"$LOG" 2>&1

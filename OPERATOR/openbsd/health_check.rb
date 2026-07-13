@@ -7,9 +7,9 @@ require "json"
 require "open3"
 require "optparse"
 require "yaml"
-require_relative "../OPERATOR/lib/utf8"
+require_relative "../lib/utf8"
 
-ROOT = File.expand_path("..", __dir__)
+ROOT = File.expand_path("../..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
 options = {
@@ -20,7 +20,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby34 OPENBSD/health_check.rb [--core|--all-ready-apps] [--public] [--json]"
+  parser.banner = "Usage: ruby34 OPERATOR/openbsd/health_check.rb [--core|--all-ready-apps] [--public] [--json]"
   parser.on("--core", "Check only core infrastructure plus brgen/master") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }

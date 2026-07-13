@@ -88,7 +88,7 @@ module Master
         # Inline in chat shell only — keeps first paint off the ~30KB full catalog parse.
         def web_boot_payload_minimal
           runtime_cfg = load("runtime")
-          vm = Master.load_yaml(Master::OPENBSD_ROOT.join("vm_resource.yml"), default: {}) rescue {}
+          vm = Master.load_yaml(File.join(Master::REPO_ROOT, "OPERATOR", "openbsd", "vm_resource.yml"), default: {}) rescue {}
           pending = enhancements.count { |item| item["status"].to_s == "pending" }
           falcon_workers = Integer(vm.dig("limits", "master_falcon_workers") || ENV.fetch("FALCON_COUNT", "2"))
 

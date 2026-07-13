@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # Mirror live VPS config into OPENBSD/ with secret redaction.
-# Run on VPS: doas ruby34 ~/pub4/OPENBSD/sync.rb
+# Run on VPS: doas ruby34 ~/pub4/OPERATOR/openbsd/sync.rb
 
 require "fileutils"
 
-MIRROR = File.expand_path("..", __FILE__)
+MIRROR = File.expand_path("../../OPENBSD", __dir__)
 
 FIXED_SOURCES = [
   "/etc/rc.d/master", "/etc/rc.d/brgen",

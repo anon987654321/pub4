@@ -64,7 +64,7 @@ class DeployGatesContractTest < Minitest::Test
     assert File.exist?(File.join(OPERATOR_ROOT, "data", "operator.yml"))
     assert File.exist?(File.join(REPO_ROOT, "bin", "pub4"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "apps.yml"))
-    assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "OPERATOR.sh"))
+    assert File.exist?(File.join(REPO_ROOT, "OPERATOR", "openbsd", "OPERATOR.sh"))
   end
 
   def test_bsdports_queue_schema_present
@@ -85,6 +85,14 @@ class DeployGatesContractTest < Minitest::Test
     ]
 
     assert_equal expected, git_files("OPENBSD/var/nsd")
+  end
+
+  def test_openbsd_contains_only_vps_config_backup
+    unexpected = git_files("OPENBSD").reject do |path|
+      path.start_with?("OPENBSD/etc/", "OPENBSD/usr/", "OPENBSD/var/")
+    end
+
+    assert_empty unexpected, "move OpenBSD tooling to OPERATOR/openbsd: #{unexpected.join(', ')}"
   end
 
   private

@@ -21,7 +21,7 @@ failures << "identity" unless runner.run("identity", RUBY, "OPERATOR/verify_depl
 failures << "production" unless runner.run("production", RUBY, "RAILS/check_production_gate.rb")
 failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/check_phantom_foreign_keys.rb")
 failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/domain_alignment_gate.rb")
-failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
+failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPERATOR/openbsd/deploy_smoke_gate.rb")
 
 if profile == "contributor"
   puts "deploy-check: extended gates     skip — contributor profile (use OPERATOR/bin/check-full for integrity)"

@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# OPENBSD/tools/tree.rb
+# OPERATOR/openbsd/tools/tree.rb
 #
 # Constitution-aware project tree for pub4.
 # Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
 #
-# Shell entry: OPENBSD/sh/tree.sh (operator wrapper for vm23 / local use).
+# Shell entry: OPERATOR/openbsd/sh/tree.sh (operator wrapper for vm23 / local use).
 
 require "yaml"
 require "optparse"

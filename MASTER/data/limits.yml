@@ -567,7 +567,7 @@ adversarial_questioning:
 known_issues:
   relayd_master_empty: "After rcctl restart master, relayd may mark master empty until /up health passes — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http \"/up\" not \"/\" for master."
   relayd_stale_backend_tables: "After mass app restarts relayctl may show empty/down while local /up is 200 — relayd-watchdog (cron */5) restarts relayd when backends are live but tables are stale."
-  resource_guard_shedding: "OPENBSD/resource_guard.sh stops optional Rails apps when load/mem thresholds hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin."
+  resource_guard_shedding: "OPERATOR/openbsd/resource_guard.sh stops optional Rails apps when load/mem thresholds hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin."
   rails_phantom_fk: "references with foreign_key: true alone creates phantom buyers/listings/likers/orders tables on SQLite — always set to_table. Run ruby RAILS/check_phantom_foreign_keys.rb."
   todo_checkbox_drift: "Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb, and per-app bin/ci instead of checkbox backlogs."
   tts_broken: "Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."

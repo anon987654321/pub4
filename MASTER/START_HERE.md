@@ -100,7 +100,7 @@ OPERATOR mirror: `OPERATOR/START_HERE.md` + `OPERATOR/OPERATOR.md` — not dupli
 ## Repo shape (run before big refactors)
 
 ```bash
-ruby OPENBSD/tools/tree.rb . --pub4-overview
+ruby OPERATOR/openbsd/tools/tree.rb . --pub4-overview
 ```
 
 Far-away visual tree with noise pruned and alignment notes. Do this before merging YAML/MD or restructuring folders.

@@ -19,15 +19,15 @@ ssh -p 31415 dev@server4.openbsd.amsterdam   # hypervisor
 ## Run
 
 ```zsh
-cd ~/pub4/OPENBSD
-doas zsh OPERATOR.sh
+cd ~/pub4
+doas zsh OPERATOR/openbsd/OPERATOR.sh
 ```
 
 | Command | Purpose |
 |---------|---------|
-| `doas zsh OPERATOR.sh` | Install etc/usr/var, validate, restart services |
-| `doas ksh resource_guard.sh` | Shed optional apps under load |
-| `doas ksh start_all_apps.sh` | Full stack |
+| `doas zsh OPERATOR/openbsd/OPERATOR.sh` | Install `OPENBSD/{etc,usr,var}`, validate, restart services |
+| `doas ksh OPERATOR/openbsd/resource_guard.sh` | Shed optional apps under load |
+| `doas ksh OPERATOR/openbsd/start_all_apps.sh` | Full stack |
 
 ## Stages
 
@@ -40,7 +40,7 @@ Boot core: `master` + `brgen`. Optional apps stopped until started. relayd inter
 
 ```zsh
 doas rcctl check master brgen
-ruby34 OPENBSD/health_check.rb
+ruby34 OPERATOR/openbsd/health_check.rb
 ```
 
 ## Rules
@@ -57,4 +57,4 @@ curl -fsS http://127.0.0.1:53187/up
 curl -sk https://ai.brgen.no/up
 ```
 
-Infra edits: `/scan OPENBSD` inside MASTER before applying live.
+Scan config changes with `/scan OPENBSD` and tooling changes with `/scan OPERATOR/openbsd` before applying live.

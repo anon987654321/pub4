@@ -10,9 +10,9 @@ post-pull: deployed /home/<app>/app trees are NOT updated by git pull alone.
 
 Next (serial — one app at a time):
   1. ruby34 OPERATOR/bin/vps-state
-  2. zsh OPERATOR/bin/vps-deploy <app>     # or: zsh OPENBSD/sh/vps_ci.sh <app>
+  2. zsh OPERATOR/bin/vps-deploy <app>     # or: zsh OPERATOR/openbsd/sh/vps_ci.sh <app>
   3. ruby34 OPERATOR/integrity_gate.rb
-  4. ruby34 OPENBSD/health_check.rb --public --all-ready-apps
+  4. ruby34 OPERATOR/openbsd/health_check.rb --public --all-ready-apps
 
 MASTER web changes also need:
   zsh OPERATOR/bin/vps-deploy master

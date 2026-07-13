@@ -44,7 +44,7 @@ One session at a time. Rapid reconnects trip pf bruteforce.
 | VMM host | `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` |
 | Console | `vmctl console vm23` then `doas pfctl -t bruteforce -T flush` |
 
-Full aliases and GitHub keys: `OPENBSD/SSH_ACCESS.md`. Network table: `OPENBSD/README.md`.
+Full aliases and GitHub keys: `OPERATOR/openbsd/SSH_ACCESS.md`. Network table: `OPERATOR/openbsd/README.md`.
 
 ## Domains
 
@@ -97,7 +97,7 @@ When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-dep
 - Run `bin/pub4 status` before starting work; use `RECIPES.md` for copy-paste paths.
 - Treat `RAILS/apps.yml` and `master.json` as inventories, not suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
-- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/sh/vps_ci.sh <app>` for per-app CI.
+- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPERATOR/openbsd/sh/vps_ci.sh <app>` for per-app CI.
 - Keep secrets in `/etc/*.env`; never commit them.
 - Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind relayd.
 - Prefer local gates first (`OPERATOR/bin/check`) before any SSH.
@@ -131,7 +131,7 @@ Recovery-only expect scripts refuse to run unless a human operator exports
 
 OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks for everyone.
 `OPERATOR.sh` fixes the repo copy before install, validates `su dev -c 'doas id'`, and rolls
-back on failure. Cron heal paths use `OPENBSD/sh/validate_doas.ksh` with the same validation.
+back on failure. Cron heal paths use `OPERATOR/openbsd/sh/validate_doas.ksh` with the same validation.
 
 ## Backups (Litestream)
 
@@ -145,12 +145,12 @@ off-host Litestream replica (sftp/s3) before treating backups as disaster-recove
 Always use tmux.
 
 ```zsh
-cd ~/pub4/OPENBSD
-tmux new-session -d -s deploy "doas zsh OPERATOR.sh 2>&1 | tee /tmp/deploy.log"
+cd ~/pub4
+tmux new-session -d -s deploy "doas zsh OPERATOR/openbsd/OPERATOR.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
 
-Default installs `etc/` `usr/` `var/`, validates pf/relayd, restarts services. Rare: `--first-install`, `--stage-1`, `--stage-2`.
+Default installs `OPENBSD/{etc,usr,var}`, validates pf/relayd, and restarts services. Rare: `--first-install`, `--stage-1`, `--stage-2`.
 
 After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-reload.
 
@@ -160,7 +160,7 @@ After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-relo
 cd /home/dev/pub4 && git pull --ff-only
 cd RAILS && doas zsh OPERATOR.sh          # brgen (default)
 doas zsh OPERATOR.sh amber                     # or: all
-ruby34 OPENBSD/health_check.rb --public --all-ready-apps
+ruby34 OPERATOR/openbsd/health_check.rb --public --all-ready-apps
 ```
 
 Per-app: `doas zsh RAILS/<app>/<app>.sh`. New Propshaft assets need `rails assets:precompile` before restart.
@@ -186,7 +186,7 @@ cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 
 ## Recovery
 
-Load shedding: `doas ksh OPENBSD/resource_guard.sh`. Full stack: `doas ksh OPENBSD/start_all_apps.sh`. Core health: `doas rcctl check master brgen relayd pf`.
+Load shedding: `doas ksh OPERATOR/openbsd/resource_guard.sh`. Full stack: `doas ksh OPERATOR/openbsd/start_all_apps.sh`. Core health: `doas rcctl check master brgen relayd pf`.
 
 SSH lockout only: `ssh server4`, then `vmctl console vm23` (manual — not agent-automated). pf
 lockout from console: `doas pfctl -t bruteforce -T flush`.
@@ -196,12 +196,12 @@ Any file changed on the VPS under `OPENBSD/` must be copied back to git and comm
 ## Repair playbooks
 
 - Integrity failure: run `ruby OPERATOR/integrity_gate.rb` and fix the first failing gate.
-- App CI failure: run `zsh OPENBSD/sh/vps_ci.sh <app>` serially. If caches are root-owned,
+- App CI failure: run `zsh OPERATOR/openbsd/sh/vps_ci.sh <app>` serially. If caches are root-owned,
   export the app `HOME` and `NPM_CONFIG_CACHE`.
 - MASTER dead tap: precompile `MASTER/web` production assets, restart `master`, then verify
   `https://ai.brgen.no` after the primer tap.
 - relayd/domain drift: run `RAILS/domain_alignment_gate.rb` and
-  `OPENBSD/deploy_smoke_gate.rb` before restarting relayd.
+  `OPERATOR/openbsd/deploy_smoke_gate.rb` before restarting relayd.
 - pf lockout: use the server4 console and flush the `bruteforce` table; do not keep reconnecting.
 - Silent TTS: verify `edge-tts` or `espeak` exists before debugging web routes.
 
@@ -213,6 +213,6 @@ script, says only "restarted stuff", or runs the full installer from macOS.
 
 ## Post-change
 
-- Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
+- Run `ruby34 OPERATOR/openbsd/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
 - Record persistent lessons in `OPERATOR/data/debt.yml` or `OPERATOR/DECISIONS.md`.

@@ -7,13 +7,13 @@ require_relative "../OPERATOR/lib/utf8"
 
 ROOT = File.expand_path("..", __dir__)
 MASTER_JSON = ENV.fetch("MASTER_JSON", File.join(ROOT, "OPERATOR", "master.json"))
-OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
+OPENBSD_DEPLOY = File.join(ROOT, "OPERATOR", "openbsd", "OPERATOR.sh")
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 RAILS_README = File.join(ROOT, "RAILS", "README.md")
 PWA_BUILDER = File.join(ROOT, "RAILS", "scripts", "build_workbox.mjs")
 RETIRED_ACTIVE_PATHS = [
-  "OPENBSD/sh/vps_console_install.exp",
-  "OPENBSD/sh/vps_console_poll_install.exp",
+  "OPERATOR/openbsd/sh/vps_console_install.exp",
+  "OPERATOR/openbsd/sh/vps_console_poll_install.exp",
   "OPENBSD/usr/local/bin/relayd-watchdog",
   "RAILS/env.sample",
   "RAILS/scripts/build_workbox.mjs",
@@ -88,7 +88,7 @@ def check_openbsd_ports(result, apps)
   end
 
   ports = openbsd_ports
-  result.fail("OPENBSD/OPERATOR.sh missing APP_PORTS map") if ports.empty?
+  result.fail("OPERATOR/openbsd/OPERATOR.sh missing APP_PORTS map") if ports.empty?
   apps.each do |app|
     result.fail("#{app.name}: missing fixed OpenBSD APP_PORTS entry") unless ports.key?(app.name)
     next unless ports.key?(app.name) && ports.fetch(app.name) != app.port
