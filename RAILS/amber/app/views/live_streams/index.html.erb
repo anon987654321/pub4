@@ -14,15 +14,17 @@
   <% end %>
 </section>
 
-<section>
-  <% @live_streams.each do |stream| %>
-    <article>
-      <h2><%= link_to stream.title, live_stream_path(stream) %></h2>
-      <p class="dim"><%= stream.status %> · <%= stream.scheduled_at || stream.created_at %></p>
-      <% if stream.user == Current.user %>
-        <%= button_to "Start", live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
-        <%= button_to "End", live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
-      <% end %>
-    </article>
-  <% end %>
-</section>
+<%= turbo_frame_tag "live-streams" do %>
+  <section>
+    <% @live_streams.each do |stream| %>
+      <article>
+        <h2><%= link_to stream.title, live_stream_path(stream) %></h2>
+        <p class="dim"><%= stream.status %> · <%= stream.scheduled_at || stream.created_at %></p>
+        <% if stream.user == Current.user %>
+          <%= button_to "Start", live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
+          <%= button_to "End", live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
+        <% end %>
+      </article>
+    <% end %>
+  </section>
+<% end %>

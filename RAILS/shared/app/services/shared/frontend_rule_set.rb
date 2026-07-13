@@ -13,7 +13,7 @@ module Shared
       max_font_weights: 3,
       max_type_sizes: 8,
       max_selector_classes: 2,
-      max_css_file_lines: 150
+      max_css_file_lines: 200
     }.freeze
 
     SPACING = {

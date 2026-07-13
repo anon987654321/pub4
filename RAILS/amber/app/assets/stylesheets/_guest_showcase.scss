@@ -17,7 +17,7 @@
 }
 
 .wardrobe-carousel-row {
-  padding: var(--space-2) 0 0.65rem;
+  padding: var(--space-2) 0 var(--space-sm);
 
   & + & {
     border-top: 1px solid var(--showcase-border);
@@ -26,14 +26,14 @@
   &__head {
     display: flex;
     align-items: baseline;
-    gap: 0.65rem;
-    padding: 0 1rem 0.45rem;
+    gap: var(--space-sm);
+    padding: 0 var(--space-md) var(--space-xs);
     flex-wrap: wrap;
   }
 
   &__label {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     font-weight: 500;
     letter-spacing: 0.01em;
     color: var(--showcase-text);
@@ -41,14 +41,14 @@
 
   &__hint {
     margin: 0;
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     color: var(--showcase-muted);
   }
 }
 
 .wardrobe-swiper {
   overflow: hidden;
-  padding-inline: 0.25rem;
+  padding-inline: var(--space-xs);
   mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 3%, #000 97%, transparent 100%);
 
@@ -66,11 +66,11 @@
   display: block;
   width: 4.5rem;
   height: 4.5rem;
-  border-radius: 12px;
+  border-radius: var(--x-radius-card);
   overflow: hidden;
   border: 1px solid var(--showcase-border);
   background: var(--showcase-bg);
-  transition: transform 180ms ease, border-color 180ms ease;
+  transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease;
 
   &:hover {
     transform: scale(1.04);
@@ -105,7 +105,7 @@
   }
 
   &__glyph {
-    font-size: 1.25rem;
+    font-size: var(--text-xl);
     font-weight: 700;
     color: var(--showcase-muted);
   }
@@ -113,6 +113,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .wardrobe-swiper .swiper-wrapper {
-    transition-duration: 0ms !important;
+    transition-duration: 0ms;
   }
 }

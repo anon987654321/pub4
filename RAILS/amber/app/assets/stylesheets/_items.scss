@@ -70,13 +70,13 @@
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0.45rem 0.9rem;
+  padding: var(--space-xs) var(--space-md);
   background: var(--color-black);
   color: var(--color-white);
   border: none;
   border-radius: var(--x-radius-xs);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 
@@ -88,10 +88,10 @@
 
 .btn-sm {
   min-height: 36px;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.75rem;
-  background: #444;
-  color: #fff;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  background: var(--x-hover-subtle);
+  color: var(--x-text);
   border: none;
   border-radius: var(--x-radius-xs);
   cursor: pointer;
@@ -108,13 +108,13 @@
 .badge {
   display: inline-block;
   background: var(--color-badge);
-  padding: 0.1rem 0.4rem;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--x-radius-xs);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
 .dim {
   color: var(--color-grey-text);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }

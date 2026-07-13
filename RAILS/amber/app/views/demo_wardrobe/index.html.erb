@@ -11,17 +11,19 @@
 </header>
 
 <% if @outfits.any? %>
-  <section>
-    <h2>Outfits</h2>
-    <div class="plan-list">
-      <% @outfits.each do |outfit| %>
-        <div class="plan-row">
-          <strong><%= outfit.name %></strong>
-          <span class="dim"><%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %></span>
-        </div>
-      <% end %>
-    </div>
-  </section>
+  <%= turbo_frame_tag "demo-outfits" do %>
+    <section>
+      <h2>Outfits</h2>
+      <div class="plan-list">
+        <% @outfits.each do |outfit| %>
+          <div class="plan-row">
+            <strong><%= outfit.name %></strong>
+            <span class="dim"><%= outfit.context_label %> · <%= pluralize(outfit.items.size, "piece") %></span>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
 <% end %>
 
 <section>

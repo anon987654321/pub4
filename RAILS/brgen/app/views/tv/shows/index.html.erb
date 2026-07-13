@@ -5,17 +5,19 @@
 </div>
 
 <% if @shows.any? %>
-  <div id="tv-shows-grid" class="show-grid card-grid" role="list" aria-label="TV shows">
-    <% @shows.each do |show| %>
-      <%= render "tv/shows/card", show:, channel: @channel %>
-    <% end %>
-  </div>
+  <%= turbo_frame_tag "tv-shows", target: "_top" do %>
+    <div id="tv-shows-grid" class="show-grid card-grid" role="list" aria-label="TV shows">
+      <% @shows.each do |show| %>
+        <%= render "tv/shows/card", show:, channel: @channel %>
+      <% end %>
+    </div>
 
-  <%= render "shared/infinite_scroll_sentinel",
-             pagy: @pagy,
-             reflex: "ShowsInfiniteScrollReflex#load_more",
-             sentinel_id: "tv-shows-sentinel",
-             channel_slug: @channel&.slug %>
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "ShowsInfiniteScrollReflex#load_more",
+               sentinel_id: "tv-shows-sentinel",
+               channel_slug: @channel&.slug %>
+  <% end %>
 <% else %>
   <div class="empty" role="status" aria-live="polite"><p>No shows yet.</p></div>
 <% end %>

@@ -1,11 +1,13 @@
-<section id="tv-channel-videos" class="video-grid" role="list" aria-label="Channel videos">
-  <% @videos.each do |video| %>
-    <%= render "tv/videos/tv_video", tv_video: video %>
-  <% end %>
-</section>
+<%= turbo_frame_tag "tv-channel-videos", target: "_top" do %>
+  <section id="tv-channel-videos" class="video-grid" role="list" aria-label="Channel videos">
+    <% @videos.each do |video| %>
+      <%= render "tv/videos/tv_video", tv_video: video %>
+    <% end %>
+  </section>
 
-<%= render "shared/infinite_scroll_sentinel",
-           pagy: @pagy,
-           reflex: "ChannelVideosInfiniteScrollReflex#load_more",
-           sentinel_id: "tv-channel-videos-sentinel",
-           channel_slug: @channel.slug %>
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "ChannelVideosInfiniteScrollReflex#load_more",
+             sentinel_id: "tv-channel-videos-sentinel",
+             channel_slug: @channel.slug %>
+<% end %>

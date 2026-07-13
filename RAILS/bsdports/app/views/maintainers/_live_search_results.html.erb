@@ -2,6 +2,7 @@
  <p class="dim"><%= @maintainers.size %> results for "<%= live_search_query %>"</p>
 <% end %>
 
+<%= turbo_frame_tag "bsdports-maintainers", target: "_top" do %>
 <ul id="maintainers" role="list" aria-label="Maintainers">
  <% @maintainers.each do |maintainer| %>
  <li>
@@ -14,4 +15,5 @@
 
 <% if @maintainers.empty? %>
  <p class="empty">No maintainers match this search.</p>
+<% end %>
 <% end %>

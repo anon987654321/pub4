@@ -79,7 +79,7 @@ body.vertical-dating .match-list .match-avatar {
 
 .dating-intro--dismissed {
   opacity: 0;
-  transform: translateY(-24px);
+  transform: translateY(calc(-1 * var(--space-3)));
   pointer-events: none;
 }
 

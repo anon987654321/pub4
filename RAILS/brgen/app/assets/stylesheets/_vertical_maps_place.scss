@@ -27,7 +27,7 @@ body.vertical-maps article.place dl {
 
 body.vertical-maps article.place dt {
   color: var(--maps-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -39,7 +39,7 @@ body.vertical-maps article.place dd {
 body.vertical-maps .btn,
 body.vertical-maps .btn-primary {
   background: linear-gradient(90deg, var(--maps-accent), #60a5fa);
-  color: #fff;
+  color: var(--maps-ink);
   border: none;
   border-radius: var(--radius-pill);
   font-weight: 600;

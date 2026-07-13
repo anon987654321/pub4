@@ -118,11 +118,11 @@
 .tag {
   display: inline-block;
   background: var(--x-hover-subtle);
-  padding: 0.15rem 0.5rem;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--x-radius-xs);
   font-size: var(--text-xs);
   font-weight: 600;
-  margin-inline-end: 0.3rem;
+  margin-inline-end: var(--space-xs);
 }
 
 .tag--phase {
@@ -138,21 +138,21 @@
 }
 
 .style-phase-card {
-  border: 1px solid var(--x-border, #2f3336);
+  border: 1px solid var(--x-border);
   border-radius: var(--x-radius-sm);
   padding: var(--space-md);
 }
 
 .style-phase-list {
-  margin: 0.5rem 0 0;
-  padding-inline-start: 1.2rem;
+  margin: var(--space-sm) 0 0;
+  padding-inline-start: var(--space-md);
 }
 
 .style-timeline {
   margin: var(--space-md) 0;
   padding: 0;
   list-style: none;
-  border-inline-start: 2px solid var(--x-border, #2f3336);
+  border-inline-start: 2px solid var(--x-border);
 }
 
 .style-timeline li {
@@ -164,19 +164,19 @@
 .style-timeline li::before {
   content: "";
   position: absolute;
-  inset-inline-start: calc(-1 * var(--space-md) - 5px);
-  top: 0.35rem;
-  width: 10px;
-  height: 10px;
+  inset-inline-start: calc(-1 * var(--space-md) - var(--space-xs));
+  top: var(--space-xs);
+  width: var(--space-2);
+  height: var(--space-2);
   border-radius: 50%;
-  background: var(--x-text, #e7e9ea);
+  background: var(--x-text);
 }
 
 .tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin: 0.5rem 0;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0;
 }
 
 .occasion-grid {
@@ -202,7 +202,7 @@
 }
 
 .occasion-count {
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   display: block;
 }
@@ -238,9 +238,9 @@
 }
 
 .capsule-decision {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
   min-width: 60px;
-  padding-top: 0.15rem;
+  padding-top: var(--space-xs);
 }

@@ -16,23 +16,25 @@
     </section>
   <% end %>
 
-  <section role="region" aria-label="Duplicate groups">
-    <h2>Duplicate groups</h2>
-    <% if @duplicates.present? %>
-      <% @duplicates.each do |group| %>
-        <article role="article" aria-label="Duplicate group">
-          <% items = group.respond_to?(:items) ? group.items : Array(group[:items] || group["items"] || group) %>
-          <h3><%= pluralize(items.size, "item") %></h3>
-          <div class="items-grid">
-            <% items.each do |item| %>
-              <%= render "items/item", item: item %>
-              <%= link_to "Review", review_declutter_path(item), class: "btn-sm" %>
-            <% end %>
-          </div>
-        </article>
+  <%= turbo_frame_tag "declutter-duplicates" do %>
+    <section role="region" aria-label="Duplicate groups">
+      <h2>Duplicate groups</h2>
+      <% if @duplicates.present? %>
+        <% @duplicates.each do |group| %>
+          <article role="article" aria-label="Duplicate group">
+            <% items = group.respond_to?(:items) ? group.items : Array(group[:items] || group["items"] || group) %>
+            <h3><%= pluralize(items.size, "item") %></h3>
+            <div class="items-grid">
+              <% items.each do |item| %>
+                <%= render "items/item", item: item %>
+                <%= link_to "Review", review_declutter_path(item), class: "btn-sm" %>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      <% else %>
+        <p>No duplicate groups need review.</p>
       <% end %>
-    <% else %>
-      <p>No duplicate groups need review.</p>
-    <% end %>
-  </section>
+    </section>
+  <% end %>
 </div>

@@ -3,17 +3,19 @@
 <% end %>
 
 <% if @sets.any? %>
-  <div id="playlist-sets-grid">
-    <% @sets.each do |set| %>
-      <%= render "playlist/sets/card", set: set %>
-    <% end %>
-  </div>
+  <%= turbo_frame_tag "playlist-sets", target: "_top" do %>
+    <div id="playlist-sets-grid">
+      <% @sets.each do |set| %>
+        <%= render "playlist/sets/card", set: set %>
+      <% end %>
+    </div>
 
-  <%= render "shared/infinite_scroll_sentinel",
-             pagy: @pagy,
-             reflex: "SetsInfiniteScrollReflex#load_more",
-             sentinel_id: "playlist-sets-sentinel",
-             q: params[:q] %>
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "SetsInfiniteScrollReflex#load_more",
+               sentinel_id: "playlist-sets-sentinel",
+               q: params[:q] %>
+  <% end %>
 <% else %>
   <div class="empty" role="status" aria-live="polite"><p>No sets yet.</p></div>
 <% end %>

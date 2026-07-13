@@ -113,8 +113,8 @@
   margin-inline: auto;
   color: var(--text-dim);
   margin-block: 0;
-  font-size: 0.9375rem;
-  line-height: 1.4;
+  font-size: var(--text-sm);
+  line-height: var(--x-line-height);
 }
 
 .amber-guest-hero .actions {

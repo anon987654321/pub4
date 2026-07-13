@@ -34,14 +34,14 @@
   top: var(--space-2);
   inset-inline-start: var(--space-2);
   background: var(--x-text);
-  color: #000;
+  color: var(--x-bg);
   font: 700 var(--text-xs) / 1 var(--x-font);
-  padding: 2px 7px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--x-radius-sm);
   letter-spacing: .03em;
 }
 
-.deal-card-body { padding: 10px var(--space-3) var(--space-3); flex: 1; display: flex; flex-direction: column; gap: var(--space-1); }
+.deal-card-body { padding: var(--space-3) var(--space-3) var(--space-3); flex: 1; display: flex; flex-direction: column; gap: var(--space-1); }
 
 .deal-card-title {
   font: 500 var(--text-sm) / 1.3 var(--x-font);
@@ -53,7 +53,7 @@
 }
 
 .deal-price {
-  font: 800 1.125rem / 1 var(--x-font);
+  font: 800 var(--text-xl) / 1 var(--x-font);
   color: var(--x-text);
   margin-top: auto;
   padding-top: var(--space-1);
@@ -73,7 +73,7 @@
   padding: var(--space-2);
   text-align: center;
   background: var(--x-text);
-  color: #000;
+  color: var(--x-bg);
   border-radius: var(--x-radius-pill);
   font: 700 var(--text-sm) / 1 var(--x-font);
   text-decoration: none;
@@ -93,8 +93,8 @@
 .deal-cats {
   display: flex;
   gap: var(--space-2);
-  padding: 10px var(--space-4);
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--x-border);
   overflow-x: auto;
   scrollbar-width: none;
 }

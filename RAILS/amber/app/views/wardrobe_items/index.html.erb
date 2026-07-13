@@ -7,13 +7,15 @@
   <% end %>
 
   <% if @wardrobe_items.any? %>
-    <%= tag.div class: "wardrobe-grid" do %>
-      <% @wardrobe_items.each do |wardrobe_item| %>
-        <%= tag.article class: "wardrobe-card" do %>
-          <%= tag.h2 wardrobe_item.item&.title || wardrobe_item.item&.name || t("amber.wardrobe.untitled", default: "Untitled item") %>
-          <%= tag.p wardrobe_item.condition if wardrobe_item.condition.present? %>
-          <%= tag.p wardrobe_item.notes if wardrobe_item.notes.present? %>
-          <%= link_to t("shared.view", default: "View"), wardrobe_item_path(wardrobe_item) %>
+    <%= turbo_frame_tag "wardrobe-items" do %>
+      <%= tag.div class: "wardrobe-grid" do %>
+        <% @wardrobe_items.each do |wardrobe_item| %>
+          <%= tag.article class: "wardrobe-card" do %>
+            <%= tag.h2 wardrobe_item.item&.title || wardrobe_item.item&.name || t("amber.wardrobe.untitled", default: "Untitled item") %>
+            <%= tag.p wardrobe_item.condition if wardrobe_item.condition.present? %>
+            <%= tag.p wardrobe_item.notes if wardrobe_item.notes.present? %>
+            <%= link_to t("shared.view", default: "View"), wardrobe_item_path(wardrobe_item) %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

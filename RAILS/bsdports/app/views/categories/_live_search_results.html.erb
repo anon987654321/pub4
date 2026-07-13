@@ -2,6 +2,7 @@
  <p class="dim"><%= @categories.size %> results for "<%= live_search_query %>"</p>
 <% end %>
 
+<%= turbo_frame_tag "bsdports-categories", target: "_top" do %>
 <ul id="categories" role="list" aria-label="Categories">
  <% @categories.each do |cat| %>
  <li>
@@ -14,4 +15,5 @@
 
 <% if @categories.empty? %>
  <p class="empty">No categories match this search.</p>
+<% end %>
 <% end %>
