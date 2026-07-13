@@ -1,0 +1,181 @@
+// Compose box primitives — extracted from brgen/_nav.scss + amber/_guest_compose.scss.
+
+.compose-box {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--x-border);
+}
+
+.compose-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface-elevated);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: var(--x-font-size);
+  color: var(--x-text-secondary);
+}
+
+.compose-inner { flex: 1; min-width: 0; }
+
+.compose-prompt {
+  display: block;
+  color: var(--x-text-secondary);
+  font-size: var(--text-lg);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--x-border);
+  margin-bottom: var(--space-3);
+}
+
+.compose-prompt:hover { color: var(--x-text); text-decoration: none; }
+
+.compose-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--x-text);
+  font: inherit;
+  font-size: var(--text-lg);
+  line-height: 1.4;
+  padding: var(--space-2) 0;
+  resize: none;
+  min-height: 44px;
+}
+
+.compose-input::placeholder { color: var(--x-text-secondary); }
+.compose-input:focus { outline: none; }
+
+.compose-box--expanded .compose-input {
+  border-bottom: 1px solid var(--x-border);
+  margin-bottom: var(--space-3);
+}
+
+.compose-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.compose-actions { display: flex; gap: var(--space-3); color: var(--x-text-secondary); font-size: var(--text-base); }
+.compose-action {
+  background: none;
+  border: 0;
+  padding: var(--space-1);
+  color: inherit;
+  font-size: var(--text-base);
+  opacity: 0.5;
+  cursor: default;
+}
+.compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
+.compose-as { font-size: var(--x-font-size); }
+.compose-hint { font-size: var(--x-font-size); margin: var(--space-2) 0 0; }
+
+/* Amber guest compose — product-specific wrapper; unified in PR 5 */
+.amber-compose-box {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4);
+  margin: 0 0 var(--space-5);
+  background: var(--x-bg);
+  color: var(--x-text);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  font-family: var(--x-font);
+}
+
+.amber-compose-avatar {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--x-radius-pill);
+  background: linear-gradient(145deg, #ffe8d6, #f6d6d9 58%, #e8f0fe);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: var(--text-base);
+  color: var(--x-text-secondary);
+}
+
+.amber-compose-inner {
+  flex: 1;
+  min-width: 0;
+}
+
+.amber-compose-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--x-text);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1.45;
+  padding: var(--space-1) 0;
+  resize: none;
+  min-height: 44px;
+}
+
+.amber-compose-input::placeholder {
+  color: var(--x-text-secondary);
+}
+
+.amber-compose-input:focus {
+  outline: none;
+}
+
+.amber-compose-box--expanded .amber-compose-input {
+  border-bottom: 1px solid var(--x-border);
+  margin-bottom: var(--space-2);
+}
+
+.amber-compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.amber-compose-tags {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  color: var(--x-text-secondary);
+  font-size: var(--text-xs);
+}
+
+.amber-compose-tags span {
+  padding: var(--space-1) var(--space-1);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface-elevated);
+}
+
+.amber-compose-submit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.amber-compose-as {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--x-text-secondary);
+  text-transform: lowercase;
+}
+
+.amber-compose-btn {
+  background: var(--x-accent);
+  color: var(--x-text);
+  border-radius: var(--x-radius-pill);
+  font-weight: 700;
+  border: none;
+}
+
+.amber-compose-hint {
+  font-size: var(--text-sm);
+  color: var(--x-text-secondary);
+  margin: var(--space-1) 0 0;
+}
+
+.amber-compose-hint a {
+  color: var(--x-accent);
+}

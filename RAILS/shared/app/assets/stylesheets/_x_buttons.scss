@@ -1,0 +1,81 @@
+// x.com button primitives — consolidated from brgen/_forms.scss, _minimal.scss, _zen_shell.scss.
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  background: var(--x-accent);
+  color: var(--x-bg);
+  border: 1px solid transparent;
+  border-radius: var(--x-radius-pill);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast, 180ms ease), background 160ms ease, border-color 160ms ease, color 160ms ease;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.btn:hover {
+  opacity: 0.88;
+  text-decoration: none;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary,
+.btn--primary {
+  background: var(--x-text);
+  color: var(--x-bg);
+}
+
+.btn-ghost,
+.btn--ghost {
+  background: transparent;
+  border-color: var(--x-border);
+  color: var(--x-text);
+}
+
+.btn-ghost:hover,
+.btn--ghost:hover {
+  background: var(--x-hover);
+  opacity: 1;
+}
+
+.btn-danger,
+.btn--danger {
+  background: var(--x-hover);
+  color: var(--x-text);
+  border-color: var(--x-border);
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--x-text);
+  border-color: var(--x-border);
+}
+
+.btn-sm,
+.btn--sm {
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.btn--lg {
+  min-height: 52px;
+  padding-inline: var(--space-6);
+  font-size: var(--text-base);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--x-accent);
+  outline-offset: 2px;
+}

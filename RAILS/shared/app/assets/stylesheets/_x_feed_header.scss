@@ -1,0 +1,43 @@
+// Sticky feed header + horizontal subnav — extracted from brgen/_nav.scss (verified source).
+
+.feed-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-4);
+  background: var(--panel-blur-bg);
+  border-bottom: 1px solid var(--x-border);
+  z-index: 10;
+}
+
+.feed-header h1 { font: 800 20px / 1 var(--x-font); padding: var(--space-3) 0 4px; }
+
+.feed-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
+}
+
+.feed-tabs::-webkit-scrollbar { display: none; }
+
+.feed-tab {
+  flex: 1;
+  display: block;
+  padding: var(--space-4);
+  text-align: center;
+  font: 500 var(--text-sm) / 1 var(--x-font);
+  color: var(--x-text-secondary);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.feed-tab:hover { background: var(--x-hover); color: var(--x-text); text-decoration: none; }
+.feed-tab.active { color: var(--x-text); border-bottom-color: var(--x-accent); font-weight: 700; }
+a.feed-tab { text-decoration: none; display: block; }
