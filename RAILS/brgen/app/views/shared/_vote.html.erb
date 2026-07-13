@@ -1,15 +1,21 @@
-<div id="vote-<%= votable.class.name.downcase %>-<%= votable.id %>" class="vote-widget">
+<div id="vote-<%= votable.class.name.downcase %>-<%= votable.id %>" class="x-actions vote-widget">
   <button type="button"
+          class="x-act x-act--vote-up"
           data-reflex="click->Vote#cast"
           data-votable-type="<%= votable.class.name %>"
           data-votable-id="<%= votable.id %>"
           data-value="1"
-          aria-label="Upvote">▲</button>
-  <span aria-label="Score"><%= votable.score %></span>
+          aria-label="Upvote">
+    <%= x_icon(:like, size: 18) %>
+  </button>
+  <span class="x-count" aria-label="Score"><%= votable.score %></span>
   <button type="button"
+          class="x-act x-act--vote-down"
           data-reflex="click->Vote#cast"
           data-votable-type="<%= votable.class.name %>"
           data-votable-id="<%= votable.id %>"
           data-value="-1"
-          aria-label="Downvote">▼</button>
+          aria-label="Downvote">
+    <span aria-hidden="true">▼</span>
+  </button>
 </div>

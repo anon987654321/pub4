@@ -1,12 +1,19 @@
 <% kinds = defined?(Shared::Reaction) ? Shared::Reaction::KINDS : %w[like love laugh wow sad angry local] %>
-<span id="reactions_<%= dom_id(target) %>">
+<span id="reactions_<%= dom_id(target) %>" class="x-actions">
   <% kinds.each do |k| %>
-    <%= button_to reactions_path,
-        params: { target_gid: target.to_signed_global_id.to_s, kind: k },
-        data: { turbo_stream: true },
-        class: (defined?(active) && active && k == kind ? "active" : nil),
-        aria: { label: "#{k.capitalize} #{target.class.name.downcase}" } do %>
-      <%= k %>
-    <% end %>
+    <% count = target.respond_to?(:reaction_count) ? target.reaction_count(k) : 0 %>
+    <% is_active = defined?(active) && active && defined?(kind) && kind == k %>
+    <button type="button"
+            class="x-act x-act--reaction x-act--<%= k %><%= " active" if is_active %>"
+            data-controller="x-action"
+            data-action="x-action#toggle"
+            data-x-action-url-value="<%= reactions_path %>"
+            data-x-action-target-gid-value="<%= target.to_signed_global_id %>"
+            data-x-action-kind-value="<%= k %>"
+            data-x-action-count-value="<%= count %>"
+            aria-label="<%= k.capitalize %> <%= target.class.name.downcase %>">
+      <%= x_reaction_glyph(k) %>
+      <span class="x-count" data-x-action-target="count"><%= count.positive? ? count : "" %></span>
+    </button>
   <% end %>
 </span>

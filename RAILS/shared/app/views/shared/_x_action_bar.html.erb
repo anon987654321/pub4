@@ -1,0 +1,57 @@
+<%# locals: record, reply_path: nil, share_url: nil, liked: false, like_count: 0, repost_count: 0, view_count: nil, comment_count: 0 %>
+<div class="x-actions">
+  <% if local_assigns[:reply_path].present? %>
+    <%= link_to reply_path, class: "x-act x-act--reply", aria: { label: "Reply" } do %>
+      <%= x_icon(:reply, size: 18) %>
+      <% if comment_count.to_i.positive? %>
+        <span class="x-count"><%= comment_count %></span>
+      <% end %>
+    <% end %>
+  <% else %>
+    <button type="button" class="x-act x-act--reply" aria-label="Reply" disabled>
+      <%= x_icon(:reply, size: 18) %>
+    </button>
+  <% end %>
+
+  <button type="button" class="x-act x-act--repost" aria-label="Repost">
+    <%= x_icon(:repost, size: 18) %>
+    <% if local_assigns.fetch(:repost_count, 0).to_i.positive? %>
+      <span class="x-count"><%= repost_count %></span>
+    <% end %>
+  </button>
+
+  <button type="button"
+          class="x-act x-act--like<%= " active" if local_assigns[:liked] %>"
+          data-controller="x-action"
+          data-action="x-action#toggle"
+          data-x-action-url-value="<%= reactions_path %>"
+          data-x-action-target-gid-value="<%= record.to_signed_global_id %>"
+          data-x-action-kind-value="like"
+          data-x-action-count-value="<%= local_assigns.fetch(:like_count, 0) %>"
+          aria-label="Like">
+    <%= x_icon(:like, size: 18) %>
+    <span class="x-count" data-x-action-target="count"><%= local_assigns.fetch(:like_count, 0) %></span>
+  </button>
+
+  <% if local_assigns[:view_count].present? %>
+    <span class="x-act x-act--views" aria-label="<%= view_count %> views">
+      <%= x_icon(:views, size: 18) %>
+      <span class="x-count"><%= view_count %></span>
+    </span>
+  <% end %>
+
+  <% if local_assigns[:share_url].present? %>
+    <button type="button"
+            class="x-act x-act--share"
+            aria-label="Share"
+            data-controller="clipboard"
+            data-clipboard-source-value="<%= share_url %>"
+            data-action="click->clipboard#copy">
+      <%= x_icon(:share, size: 18) %>
+    </button>
+  <% else %>
+    <button type="button" class="x-act x-act--share" aria-label="Share" disabled>
+      <%= x_icon(:share, size: 18) %>
+    </button>
+  <% end %>
+</div>
