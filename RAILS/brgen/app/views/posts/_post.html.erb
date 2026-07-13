@@ -8,7 +8,7 @@
       <button type="button" class="x-act" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy" title="Share">↗</button>
     <% end %>
     <%= render "shared/x_card",
-      avatar_url: (post.user&.avatar&.attached? ? url_for(post.user.avatar) : nil),
+      avatar_url: nil,
       name: post.author_name,
       handle: (post.community ? "@#{post.community.slug}" : nil),
       time: time_ago_in_words(post.created_at),
