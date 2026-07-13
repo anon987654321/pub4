@@ -83,6 +83,15 @@ RAILS/*/app/assets/builds/*.css.map
 OPENBSD/var/nsd/zones/master/*
 !OPENBSD/var/nsd/zones/master/zone.tmpl
 
+# LoRA training caches, extracted frames, staging copies, and reproducible bundles.
+lora/**/.cache/
+lora/**/_frames/
+lora/**/_latent_cache/
+lora/**/.aitk_size.json
+lora/**/raw/
+lora/**/*.zip
+lora/**/*.pid
+
 # MASTER/tools/dilla generated + scratch audio — large, regenerable. Never track.
 # KEPT on purpose (inputs the generator reads, do NOT ignore):
 #   - MASTER/tools/dilla/vocals_*.wav  (source vocal takes — VOCALS{} in dilla.rb)
