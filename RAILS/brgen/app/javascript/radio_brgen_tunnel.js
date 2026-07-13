@@ -20,9 +20,7 @@ const DEFAULT_TRACKS = [
   { title: "Rounded", id: "oeaY2h_cKsg", artist: "Samiyam" },
   { title: "Traffic", id: "bH-30pDoQdo", artist: "Chase Swayze" },
   { title: "Underrated", id: "1jjFk2Vp5ok", artist: "Chase Swayze" },
-  { title: "BTS Radio 2006", id: "6nWdggkulHk", artist: "Flying Lotus" },
-  { title: "close to you", id: "8SQZtBRdSbE", artist: "kemt" },
-  { title: "Motor City 17", id: "OSg9Fwd8QSs", artist: "J Dilla" }
+  { title: "BTS Radio 2006", id: "6nWdggkulHk", artist: "Flying Lotus" }
 ]
 
 class AudioEngine {

@@ -24,6 +24,9 @@ local_mp3:
     title: Diverse
     src: /audio/akmd/akmd_mike_t_jan_hakim-diverse.mp3
   - artist: Angelo Reira & Johann
+    title: Sandviken Hotell A
+    src: /audio/akmd/angelo_reira_and_johann-sandviken_hotell_a.mp3
+  - artist: Angelo Reira & Johann
     title: Sandviken Hotell B
     src: /audio/akmd/angelo_reira_and_johann-sandviken_hotell_b.mp3
   - artist: Chase Swayze
@@ -38,9 +41,6 @@ local_mp3:
   - artist: Mike T Jr
     title: Rauingar
     src: /audio/akmd/mike_t_jr-rauingar.mp3
-  - artist: Zaiton
-    title: Zaiton
-    src: /audio/akmd/zaiton.mp3
 
 external_reference:
   policy: reference_only_until_rights_review
@@ -106,9 +106,3 @@ external_reference:
       title: BTS Radio 2006
       id: 6nWdggkulHk
       start: 1364
-    - artist: kemt
-      title: close to you
-      id: 8SQZtBRdSbE
-    - artist: J Dilla
-      title: Motor City 17
-      id: OSg9Fwd8QSs
