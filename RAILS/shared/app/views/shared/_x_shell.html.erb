@@ -5,7 +5,11 @@
   <aside class="sidebar" data-turbo-permanent>
     <%= yield :brand if content_for?(:brand) %>
     <nav role="navigation" data-turbo-permanent aria-label="Primary navigation">
-      <%= render "shared/x_sidebar_nav", items: local_assigns[:sidebar_items] %>
+      <% if local_assigns[:sidebar_items] %>
+        <%= render "shared/x_sidebar_nav", items: local_assigns[:sidebar_items] %>
+      <% else %>
+        <%= render "shared/x_sidebar_nav" %>
+      <% end %>
     </nav>
     <%= yield :sidebar_extras if content_for?(:sidebar_extras) %>
     <%= yield :sidebar_compose if content_for?(:sidebar_compose) %>

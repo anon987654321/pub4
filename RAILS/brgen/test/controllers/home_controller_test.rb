@@ -12,6 +12,16 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, 'class="master-embed-frame"'
   end
 
+  def test_guest_root_renders_sidebar_nav_links
+    host! "brgen.no"
+    get root_url
+    assert_response :success
+    assert_includes response.body, 'aria-label="Primary navigation"'
+    assert_match(/class="nav-item[^"]*".*Home/m, response.body)
+    assert_match(/class="nav-item[^"]*".*Explore/m, response.body)
+    assert_match(/class="nav-item[^"]*".*Sign in/m, response.body)
+  end
+
   def test_root_feed_tabs_are_wired
     host! "brgen.no"
     get root_url

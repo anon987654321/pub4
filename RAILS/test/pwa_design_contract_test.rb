@@ -45,13 +45,22 @@ class PwaDesignContractTest < Minitest::Test
   end
 
   def test_all_layouts_apply_shared_visual_and_accessibility_baseline
-    each_app do |_app, root|
+    nav_marker = 'aria-label="Primary navigation"'
+    shell = read(SHARED_ROOT, "app/views/shared/_x_shell.html.erb")
+
+    each_app do |app, root|
       layout = read(root, "app/views/layouts/application.html.erb")
       assert_includes layout, "viewport-fit=cover"
       assert_includes layout, 'rel: "manifest"'
       assert_match(/stylesheet_link_tag (?:["'](?:application|app)["']|:app)/, layout)
       assert_match(/<main(?:\s|>)/, layout)
-      assert_includes layout, "aria-label=\"Primary navigation\""
+
+      if layout.include?('render "shared/x_shell"')
+        assert layout.include?(nav_marker) || shell.include?(nav_marker),
+               "#{app} layout must expose primary navigation aria-label in layout or shared/_x_shell"
+      else
+        assert_includes layout, nav_marker
+      end
     end
   end
 

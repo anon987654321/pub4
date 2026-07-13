@@ -275,6 +275,10 @@ class XDesignContractTest < Minitest::Test
     refute_includes shell, 'class="tab-bar"'
     refute_includes shell, 'class="compose-fab"'
     refute_includes shell, 'class="mobile-sheet"'
+    assert_includes shell, "if local_assigns[:sidebar_items]"
+    assert_includes shell, 'render "shared/x_sidebar_nav"'
+    sidebar_nav = File.read(File.join(SHARED, "app", "views", "shared", "_x_sidebar_nav.html.erb"))
+    assert_includes sidebar_nav, "local_assigns[:items].presence || sidebar_nav_items"
   end
 
   private
