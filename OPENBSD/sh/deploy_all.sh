@@ -2,7 +2,7 @@
 # Workstation orchestrator: sync pub4 to VPS and run OPENBSD/OPERATOR.sh.
 #
 # Canonical app list: OPERATOR/master.json (active Rails apps).
-# NOT deployed (archived installers only): privcam, pub_attorney, mytoonz
+# NOT deployed (archived installers only)
 #   → see OPERATOR/archive/recovery/manifest.json
 #
 # Usage:
@@ -39,11 +39,11 @@ typeset -a APPS
 if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/master.json ]]; then
   APPS=("${(@f)$(jq -r '.apps[].name' "${DEPLOY_ROOT}/master.json")}")
 else
-  APPS=(brgen amber bsdports hjerterom)
+  APPS=(brgen amber bsdports)
 fi
 
 log "pub4 deploy — ${#APPS[@]} apps from master.json"
-log "Archived (not in this run): privcam, pub_attorney, mytoonz"
+log "Archived (not in this run): see archive/recovery"
 
 log "Testing VPS connectivity..."
 vssh 'uname -a' || error "Cannot connect to ${VPS_USER}@${VPS_HOST}"

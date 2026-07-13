@@ -14,7 +14,7 @@ cd "$PUB4/MASTER/web" && RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE
 ruby "$PUB4/RAILS/master_web_assets_gate.rb"
 doas rcctl restart master || doas rcctl start master
 
-APPS=(brgen amber bsdports hjerterom)
+APPS=(brgen amber bsdports)
 for app in $APPS; do
   log "=== $app ==="
   typeset script="$PUB4/RAILS/${app}/${app}.sh"

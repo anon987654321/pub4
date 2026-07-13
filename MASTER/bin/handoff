@@ -71,7 +71,6 @@ ports = {
   "brgen" => 38_182,
   "amber" => 61_352,
   "bsdports" => 47_312,
-  "hjerterom" => 38_891,
 }
 puts "dev ports:"
 ports.each do |name, port|

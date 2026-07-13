@@ -9,7 +9,7 @@ set -e
 ALL_APPS_FLAG=/var/db/pub4_all_apps
 SHED_STATE=/var/db/resource_guard_shed
 CORE="master brgen"
-OPTIONAL="amber bsdports hjerterom litestream"
+OPTIONAL="amber bsdports litestream"
 # vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
 # busy, which is routine, not an emergency. Calm baseline ~0.5-1.4,
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
@@ -20,7 +20,7 @@ LOAD_RESTORE=1.5
 # History (2026-07-11): the guard originally measured vmstat's "pages free"
 # alone, which excludes the OpenBSD buffer cache (~20% of RAM, reclaimable
 # on demand). Any file I/O warming the cache dropped "free" below 12% while
-# real available memory was fine, so the guard shed amber/bsdports/hjerterom
+# real available memory was fine, so the guard shed amber/bsdports
 # on nearly every tick — a measurement artifact, not memory pressure. Free +
 # Cache from top(1) is the honest availability signal. MEM_RESTORE > MEM_WARN
 # gives hysteresis so shed/restore can't oscillate around one threshold.
@@ -97,7 +97,7 @@ fi
 # free, avoiding the simultaneous-restart memory spike that re-triggers the
 # guard. Only services this script shed (tracked in SHED_STATE) and that are
 # still enabled in rc.d are restored, so deliberately disabled services
-# (e.g. decommissioned hjerterom) stay down.
+# (e.g. decommissioned services) stay down.
 if [[ $shed -eq 0 && -s $SHED_STATE && $mem_avail_pct -ge $MEM_RESTORE ]]; then
   if awk -v l="$load" -v r="$LOAD_RESTORE" 'BEGIN{exit !(l<r)}'; then
     restored=""

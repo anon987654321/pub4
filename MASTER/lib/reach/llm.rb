@@ -200,7 +200,7 @@ module Master
       end
 
       class SubdomainOrchestrator < RubyLLM::Tool
-        description "Inspect or synchronize a pub4 subdomain cluster. Domains: marketplace, playlist, takeaway, tv, messages, maps, amber, hjerterom, bsdports, brgen, ai."
+        description "Inspect or synchronize a pub4 subdomain cluster. Domains: marketplace, playlist, takeaway, tv, messages, maps, amber, bsdports, brgen, ai."
         param :domain, desc: "Subdomain cluster key (e.g. marketplace, maps, amber, bsdports)", required: true
         param :context, desc: "Optional operator context or directive", required: false
 

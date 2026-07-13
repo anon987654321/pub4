@@ -113,7 +113,7 @@ module Master
         },
         "domain" => {
           summary: "inspect or sync a pub4 subdomain cluster",
-          detail: ["/domain <name>", "Names: marketplace playlist takeaway tv maps amber hjerterom bsdports brgen …"],
+          detail: ["/domain <name>", "Names: marketplace playlist takeaway tv maps amber bsdports brgen …"],
         },
         "music" => {
           summary: "open Radio Bergen or Dilla pocket on the face",

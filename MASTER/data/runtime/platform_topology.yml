@@ -98,10 +98,6 @@ applications:
     identity: BSD/OpenBSD ports/packages/research focus
     ui: terminal-informed, sparse color, typography-first, documentation-heavy
     role: source of truth for shared SCSS architecture
-  - id: hjerterom
-    identity: community-oriented Åsane/Bergen context
-    tone: calmer and warmer than MASTER
-    retains: semantic HTML, restrained design, bsdports baseline, SSR-first, offline capability
   - id: amber
     identity: experimental/research/runtime sandbox
     guarantees: lower operational

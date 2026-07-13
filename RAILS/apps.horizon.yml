@@ -33,7 +33,3 @@ horizon:
       - { name: semantic package search (pgvector), status: planned }
       - { name: infrastructure knowledge graph, status: planned }
       - { name: OpenBSD package intelligence, status: planned }
-  hjerterom:
-    planned:
-      - { name: reporting jobs (Solid Queue), status: planned }
-      - { name: operational forecasting, status: planned }

@@ -8,7 +8,7 @@ require "uri"
 module Master
   module Reach
     # Routes operator intent to pub4 subdomain clusters (brgen verticals, amber,
-    # hjerterom, bsdports, MASTER). Maps the Gemini/Grok subdomain_orchestrator tool.
+    # bsdports, MASTER). Maps the Gemini/Grok subdomain_orchestrator tool.
     class SubdomainOrchestrator
       TIER = :guarded
       NAME = "subdomain_orchestrator".freeze
@@ -16,7 +16,7 @@ module Master
 
       CLUSTER_DOMAINS = %w[
         marketplace playlist takeaway tv messages maps
-        amber hjerterom bsdports brgen ai dating messenger
+        amber bsdports brgen ai dating messenger
       ].freeze
 
       APP_PORTS_PATH = File.join(Master::DEPLOY_ROOT, "master.json").freeze
@@ -58,7 +58,7 @@ module Master
           probe_app("bsdports", "https://bsdports.org/up")
         when "maps"
           fetch_maps_viewport
-        when "amber", "hjerterom"
+        when "amber"
           probe_app(domain, app_url(domain))
         when "messages", "messenger"
           { broker: "active", cluster: "brgen", subdomain: "messenger", latency_ms: probe_latency("brgen"), queue_depth: 0 }

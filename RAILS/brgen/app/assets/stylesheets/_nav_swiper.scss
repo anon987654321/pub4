@@ -30,8 +30,8 @@
 
 .nav_link {
   flex: 0 0 auto;
-  padding: 16px 18px;
-  font: 0.9375rem/1 var(--x-font);
+  padding: var(--space-4) var(--space-4);
+  font: var(--text-sm)/1 var(--x-font);
   font-weight: 500;
   color: var(--text-dim);
   white-space: nowrap;

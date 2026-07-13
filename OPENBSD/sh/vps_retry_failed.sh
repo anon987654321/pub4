@@ -7,7 +7,7 @@ exec > >(tee -a "$LOG") 2>&1
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 
 export SKIP_MASTER_SCAN=1
-APPS=(brgen amber bsdports hjerterom)
+APPS=(brgen amber bsdports)
 
 for app in $APPS; do
   log "=== retry ${app} ==="
@@ -20,7 +20,7 @@ for app in $APPS; do
 done
 
 log "=== summary ==="
-for app in brgen amber bsdports hjerterom; do
+for app in brgen amber bsdports; do
   printf '  %s: ' "$app"
   doas rcctl check "$app" 2>/dev/null || print "not running"
 done

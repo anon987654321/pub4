@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Serial VPS deploy entrypoint — sync, CI, restart, health, deploy stamp.
-# Usage: zsh OPERATOR/bin/vps-deploy brgen|amber|bsdports|hjerterom|master
+# Usage: zsh OPERATOR/bin/vps-deploy brgen|amber|bsdports|master
 set -euo pipefail
 
 app=${1:-}

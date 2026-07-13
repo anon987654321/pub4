@@ -21,8 +21,7 @@ BACKENDS = {
   "brgen" => 38182,
   "amber" => 61352,
   "master" => 53187,
-  "bsdports" => 47312,
-  "hjerterom" => 38891
+  "bsdports" => 47312
 }.freeze
 
 def run(*cmd)

@@ -15,7 +15,6 @@ core_services:
 optional_services:
   - amber
   - bsdports
-  - hjerterom
   - litestream
 
 limits:

@@ -50,32 +50,10 @@ brgen_city_network:
 vertical_candidates:
   review: explicit_ownership_and_dns_required
   domains:
-    pubattorney:
-      app: pubattorney
-      names:
-        - pub.attorney
-        - freehelp.legal
-    privcam:
-      app: privcam
-      names:
-        - privcam.no
-    blognet:
-      app: blognet
-      names:
-        - foodielicio.us
-        - stacyspassion.com
-        - antibettingblog.com
-        - anticasinoblog.com
-        - antigamblingblog.com
-        - foball.no
     bsdports:
       app: bsdports
       names:
         - bsdports.org
-    hjerterom:
-      app: hjerterom
-      names:
-        - hjerterom.no
     amber:
       app: amber
       names:

@@ -12,7 +12,6 @@ module Pub4
       "brgen" => 38_182,
       "amber" => 61_352,
       "bsdports" => 47_312,
-      "hjerterom" => 38_891,
     }.freeze
 
     def initialize(root: Environment.repo_root(__dir__))
@@ -109,7 +108,6 @@ module Pub4
         "brgen" => "brgen",
         "amber" => "amber",
         "bsdports" => "bsdports",
-        "hjerterom" => "hjerterom",
       }
       mapping.transform_values do |service|
         out, status = Open3.capture2e("doas", "-n", "/usr/sbin/rcctl", "check", service)

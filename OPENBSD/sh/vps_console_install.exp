@@ -20,20 +20,18 @@ send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SEC
 at_prompt
 
 # Fix MASTER scan to use bundle exec (zeitwerk lives in MASTER/Gemfile)
-send "for a in brgen amber bsdports hjerterom; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/RAILS/\$a/\$a.sh; done\r"
+send "for a in brgen amber bsdports; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/RAILS/\$a/\$a.sh; done\r"
 at_prompt
 
-send "for a in brgen amber bsdports hjerterom; do echo ====\$a====; zsh /home/dev/pub4/RAILS/\$a/\$a.sh || echo FAIL_\$a; done 2>&1 | tee /tmp/console_install.log\r"
+send "for a in brgen amber bsdports; do echo ====\$a====; zsh /home/dev/pub4/RAILS/\$a/\$a.sh || echo FAIL_\$a; done 2>&1 | tee /tmp/console_install.log\r"
 
 set timeout 3600
 expect {
-  -re {FAIL_hjerterom} { }
-  -re {====hjerterom====} { exp_continue }
   timeout { puts "INSTALL_TIMEOUT"; }
 }
 
 at_prompt
-send "doas rcctl check master brgen amber bsdports hjerterom 2>&1\r"
+send "doas rcctl check master brgen amber bsdports 2>&1\r"
 at_prompt
 send "tail -20 /tmp/console_install.log\r"
 at_prompt

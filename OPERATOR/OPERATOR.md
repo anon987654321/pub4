@@ -21,7 +21,6 @@ Internet
       -> MASTER Falcon on ai.brgen.no
       -> brgen Rails app and vertical subdomains
       -> amber Rails app
-      -> hjerterom Rails app
       -> bsdports Rails app
   -> NSD/acme/httpd for DNS and certificate plumbing
 ```
@@ -60,13 +59,12 @@ Full aliases and GitHub keys: `OPENBSD/SSH_ACCESS.md`. Network table: `OPENBSD/R
 | brgen · tv | `https://tv.brgen.no` |
 | brgen · messenger | `https://messenger.brgen.no` |
 | amber | `https://amber.brgen.no` |
-| hjerterom | `https://hjerterom.brgen.no` |
 | bsdports | `https://bsdports.org` |
 
 The brgen verticals (marketplace/dating/playlist/takeaway/tv/messenger + `maps`) are one Rails
 app served under subdomains via `<brgen>`; relayd already routes them all (`etc/relayd.conf`).
 
-The stack serves four Rails apps (brgen, amber, hjerterom, bsdports) plus MASTER. `baibl` and
+The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl` and
 `blognet` were removed from the stack (apps, relayd, acme, nsd, litestream, inventories); their
 vanity/megablog domains (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`)
 went with them. City vanity apex domains (`oshlo.no`, `lsangeles.com`, …) still need stage-1 certs

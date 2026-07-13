@@ -237,9 +237,9 @@ sync_openbsd_apply() {
       || log WARN "$svc restart/start failed"
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 hjerterom 38891)
+  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312)
   typeset -a core_apps=(brgen)
-  typeset -a optional_apps=(amber bsdports hjerterom litestream)
+  typeset -a optional_apps=(amber bsdports litestream)
   for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
@@ -301,7 +301,6 @@ typeset -A APP_PORTS=(
   brgen 38182
   amber 61352
   bsdports 47312
-  hjerterom 38891
   master 53187
 )
 typeset -A FAILED_CERTS
@@ -313,7 +312,6 @@ ALL_APPS=(
   brgen:brgen.no
   amber:amber.brgen.no
   bsdports:bsdports.org
-  hjerterom:hjerterom.brgen.no
 )
 
 SERVICES=()
@@ -372,7 +370,6 @@ ALL_DOMAINS=(
   stacyspassion.com
   foball.no
   amber.brgen.no
-  hjerterom.brgen.no
 )
 
 # ── Stage 1: DNS, DNSSEC, TLS certificates ────────────────────────────────────
@@ -628,7 +625,6 @@ configure_relayd() {
   done
   DOMAIN_BACKEND[ai.brgen.no]=master
   BACKEND_PORT[master]=${APP_PORTS[master]:-53187}
-  DOMAIN_BACKEND[hjerterom.brgen.no]=hjerterom
   for entry in $ALL_DOMAINS; do
     dom=${entry%%:*}
     [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue

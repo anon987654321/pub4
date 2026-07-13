@@ -8,13 +8,13 @@ body.zen-minimal .tab-bar {
 
 body.zen-minimal .brand {
   position: fixed;
-  inset-block-start: 10px;
-  inset-inline-end: 0.75rem;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-3);
   z-index: 999;
   opacity: 0.65;
 }
 
-body.zen-minimal .brand svg { width: 28px; height: 28px; }
+body.zen-minimal .brand svg { width: var(--space-3); height: var(--space-3); }
 
 body.zen-minimal .sidebar {
   transform: translateX(-100%);

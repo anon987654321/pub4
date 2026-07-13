@@ -9,7 +9,7 @@ ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
 require "pub4/environment"
 
-APPS = %w[brgen amber bsdports hjerterom].freeze
+APPS = %w[brgen amber bsdports].freeze
 STAMP_DIR = "/var/db/pub4"
 
 def git_short(path)

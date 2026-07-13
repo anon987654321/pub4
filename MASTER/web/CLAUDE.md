@@ -226,11 +226,10 @@ routed, dynamically-rendered response can.
 
 ## The VPS is genuinely small
 
-1 vCPU, ~1GB RAM, running `master`, `brgen`, `amber`, `bsdports`,
-`hjerterom` concurrently (`mytoonz` is not currently enabled). A load
-average of 1.0 here means the single core is simply busy — not distress.
+1 vCPU, ~1GB RAM, running `master`, `brgen`, `amber`, `bsdports`
+concurrently. A load average of 1.0 here means the single core is simply busy — not distress.
 `resource_guard.sh` (cron, every 5 min) is meant to shed `amber`/
-`bsdports`/`hjerterom` under real pressure, but as of 2026-07-10 it's
+`bsdports` under real pressure, but as of 2026-07-10 it's
 paused (via its own `/var/db/pub4_all_apps` flag) after a threshold
 mismatch caused a brief full outage during a routine multi-app restart —
 see `OPENBSD/resource_guard.sh`'s header comment for the full story before

@@ -11,7 +11,6 @@ FIXED_SOURCES = [
   "/etc/rc.d/master", "/etc/rc.d/brgen",
   "/etc/rc.d/amber",
   "/etc/rc.d/bsdports",
-  "/etc/rc.d/hjerterom",
   "/etc/relayd.conf", "/etc/httpd.conf", "/etc/pf.conf",
   "/etc/acme-client.conf", "/var/nsd/etc/nsd.conf",
   "/etc/login.conf", "/etc/rc.conf.local",
