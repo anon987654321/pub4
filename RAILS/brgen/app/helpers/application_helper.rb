@@ -99,6 +99,18 @@ module ApplicationHelper
     Brgen::HomeFeed.following?(feed: params[:feed])
   end
 
+  def sidebar_nav_items
+    Brgen::XNavBuilder.sidebar_items(request, self)
+  end
+
+  def tab_bar_items
+    Brgen::XNavBuilder.tab_bar_items(request, self)
+  end
+
+  def home_feed_tabs
+    Brgen::XNavBuilder.home_feed_tabs(request, self)
+  end
+
   def vertical_surface?
     active_vertical.present?
   end

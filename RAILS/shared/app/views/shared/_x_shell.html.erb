@@ -1,0 +1,26 @@
+<%# Shared x.com shell grid: sidebar + main column slots + widgets.
+    Yield slots: :brand, :sidebar_extras, :sidebar_compose, :before_main, :main, :widgets
+    App-specific chrome (tab-bar, compose-fab, nav-affordance, pull-to-refresh) stays in layouts. %>
+<div class="layout" data-x-shell>
+  <aside class="sidebar" data-turbo-permanent>
+    <%= yield :brand if content_for?(:brand) %>
+    <nav role="navigation" data-turbo-permanent aria-label="Primary navigation">
+      <%= render "shared/x_sidebar_nav", items: local_assigns[:sidebar_items] %>
+    </nav>
+    <%= yield :sidebar_extras if content_for?(:sidebar_extras) %>
+    <%= yield :sidebar_compose if content_for?(:sidebar_compose) %>
+  </aside>
+
+  <% if content_for?(:main) %>
+    <%= yield :main %>
+  <% else %>
+    <main id="main-content" role="main">
+      <%= yield :before_main if content_for?(:before_main) %>
+      <%= yield %>
+    </main>
+  <% end %>
+
+  <aside class="widgets">
+    <%= yield :widgets if content_for?(:widgets) %>
+  </aside>
+</div>

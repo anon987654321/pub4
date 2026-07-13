@@ -1,0 +1,12 @@
+<%
+  title = local_assigns.fetch(:title) { "Home" }
+  tabs = local_assigns.fetch(:tabs) { home_feed_tabs }
+%>
+<div class="feed-header">
+  <h1><%= title %></h1>
+  <nav class="feed-tabs" aria-label="Feed">
+    <% tabs.each do |tab| %>
+      <%= x_feed_tab(label: tab.fetch(:label), path: tab.fetch(:path), active: tab.fetch(:active, false)) %>
+    <% end %>
+  </nav>
+</div>

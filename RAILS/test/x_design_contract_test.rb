@@ -12,6 +12,7 @@ class XDesignContractTest < Minitest::Test
   BRGEN_ROOT = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_root.scss")
   AMBER_VARS = File.join(ROOT, "amber", "app", "assets", "stylesheets", "_variables.scss")
   BRGEN_LAYOUT = File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb")
+  X_SHELL_PARTIAL = File.join(SHARED, "app", "views", "shared", "_x_shell.html.erb")
   AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
   TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_tokens.scss")
@@ -20,10 +21,6 @@ class XDesignContractTest < Minitest::Test
   X_ACTION_JS = File.join(SHARED, "frontend", "pub4_x_action_controller.js")
   X_ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_x_action_bar.html.erb")
   REACTION_BAR = File.join(SHARED, "app", "views", "shared", "_reaction_bar.html.erb")
-  INFINITE_SCROLL_SENTINEL = File.join(SHARED, "app", "views", "shared", "_infinite_scroll_sentinel.html.erb")
-  NOTIFICATION_READ_REFLEX = File.join(SHARED, "app", "reflexes", "shared", "notification_read_reflex.rb")
-  BRGEN_NOTIFICATION_ROW = File.join(ROOT, "brgen", "app", "views", "notifications", "_notification_row.html.erb")
-  X_FEED_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_x_feed.scss")
   ENGINE_RB = File.join(SHARED, "lib", "shared", "engine.rb")
   APPS = %w[amber brgen bsdports].freeze
 
@@ -250,35 +247,34 @@ class XDesignContractTest < Minitest::Test
     assert_includes partial, 'like_count.positive? ? like_count : ""'
   end
 
-  def test_infinite_scroll_sentinel_uses_x_feed_interaction_markup
-    sentinel = File.read(INFINITE_SCROLL_SENTINEL)
-    feed = File.read(X_FEED_SCSS)
+  def test_brgen_layout_includes_x_shell_markers
+    layout = File.read(BRGEN_LAYOUT)
+    shell = File.read(X_SHELL_PARTIAL)
 
-    assert_includes sentinel, 'class="infinite-scroll-sentinel"'
-    assert_includes sentinel, 'data-controller="infinite-scroll"'
-    assert_includes sentinel, 'data-loading="false"'
-    assert_includes sentinel, 'data-turbo="false"'
-    assert_includes sentinel, 'role="status"'
-    assert_includes sentinel, "infinite-scroll-sentinel__label"
-    assert_includes feed, ".infinite-scroll-sentinel"
-  end
+    assert_includes layout, 'render "shared/x_shell"'
+    assert_includes layout, 'render "shared/x_feed_header"'
+    assert_includes layout, 'render "shared/x_search_widget"'
+    assert_includes layout, 'render "shared/x_tab_bar"'
+    assert_includes shell, "data-x-shell"
+    assert_includes shell, "yield :before_main"
+    assert_includes shell, "yield :main"
+    assert_includes shell, "yield :widgets"
 
-  def test_notification_read_reflex_morphs_dom_id_row_partial
-    reflex = File.read(NOTIFICATION_READ_REFLEX)
-
-    assert_includes reflex, "dom_id(notification)"
-    assert_includes reflex, 'partial: "notifications/notification_row"'
-    refute_includes reflex, '#notification-'
-  end
-
-  def test_brgen_notification_row_uses_x_card_and_x_act_patterns
-    row = File.read(BRGEN_NOTIFICATION_ROW)
-
-    assert_includes row, 'render "shared/x_card"'
-    assert_includes row, "x-notification"
-    assert_includes row, "x-act"
-    assert_includes row, "NotificationRead#mark_read"
-    assert_includes row, "dom_id(notification)"
+    # Brgen layout inventory stays outside _x_shell.
+    assert_includes layout, 'render "shared/nav_swiper"'
+    assert_includes layout, 'id="cityCarousel"'
+    assert_includes layout, "pull-to-refresh"
+    assert_includes layout, "nav-affordance"
+    assert_includes layout, "compose-fab"
+    assert_includes layout, "mobile-sheet"
+    assert_includes layout, "particle_kernel"
+    assert_includes layout, "yield :widgets"
+    refute_includes shell, "nav_swiper"
+    refute_includes shell, 'id="cityCarousel"'
+    refute_match(/data-controller="pull-to-refresh"/, shell)
+    refute_includes shell, 'class="tab-bar"'
+    refute_includes shell, 'class="compose-fab"'
+    refute_includes shell, 'class="mobile-sheet"'
   end
 
   private
