@@ -4,7 +4,7 @@
 
 <% if @posts.any? %>
  <%= turbo_frame_tag "home-feed", target: "_top" do %>
- <div class="post-grid" id="home-feed">
+ <div class="post-feed" id="home-feed">
  <% @posts.each do |post| %>
  <%= render "posts/post", post: post %>
  <% end %>

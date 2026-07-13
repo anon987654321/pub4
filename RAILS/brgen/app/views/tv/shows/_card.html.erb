@@ -1,5 +1,7 @@
-<%= link_to tv_channel_show_path(channel, show), class: "show-card card" do %>
-  <h3><%= show.title %></h3>
-  <p class="dim"><%= truncate(show.description, length: 100) %></p>
-  <span class="chip"><%= show.episodes.count %> episodes</span>
-<% end %>
+<%= render "shared/x_card",
+  avatar_url: nil,
+  name: show.title,
+  content: truncate(show.description, length: 100),
+  meta: "#{show.episodes.count} episodes",
+  url: tv_channel_show_path(channel, show),
+  class: "x-tv" %>

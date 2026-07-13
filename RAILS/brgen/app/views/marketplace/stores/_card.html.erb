@@ -1,5 +1,7 @@
-<article class="store-card" role="listitem">
-  <h2><%= link_to store.name, marketplace_shop_path(store.slug) %></h2>
-  <% if store.vertical.present? %><p><%= store.vertical.humanize %></p><% end %>
-  <% if store.description.present? %><p class="dim"><%= store.description %></p><% end %>
-</article>
+<%= render "shared/x_card",
+  avatar_url: nil,
+  name: store.name,
+  handle: store.vertical&.humanize,
+  content: (store.description.present? ? store.description : nil),
+  url: marketplace_shop_path(store.slug),
+  class: "x-store" %>

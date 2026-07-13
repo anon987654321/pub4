@@ -29,9 +29,9 @@
           <p class="dim"><%= group[:count] %> items</p>
         </header>
         <% if group[:items].any? %>
-          <ol class="style-phase-list" role="list">
+          <ol class="style-phase-list" role="list" data-controller="scroll-reveal">
             <% group[:items].each do |item| %>
-              <li role="listitem">
+              <li role="listitem" class="timeline-item">
                 <%= link_to item[:title], item_path(item[:id]) %>
                 <span class="dim"><%= item[:category] %></span>
                 <% if item[:mood_effect].present? %>

@@ -1,7 +1,8 @@
-<article class="set-card">
-  <h2><%= link_to set.name, playlist_set_path(set) %></h2>
-  <p class="dim"><%= set.privacy.presence&.humanize || "Public" %> · <%= set.tracks.count %> tracks · <%= set.formatted_duration %></p>
-  <% if set.description.present? %>
-    <p><%= set.description %></p>
-  <% end %>
-</article>
+<%= render "shared/x_card",
+  avatar_url: nil,
+  name: set.name,
+  handle: set.privacy.presence&.humanize || "Public",
+  meta: "#{set.tracks.count} tracks · #{set.formatted_duration}",
+  content: set.description,
+  url: playlist_set_path(set),
+  class: "x-playlist" %>

@@ -1,6 +1,42 @@
 # Canonical design token anchors — keep in sync with _x_base.scss defaults and face.css :root.
 # Regenerate face :root: ruby RAILS/scripts/generate_face_root_css.rb
 
+# Luxury minimalist additions for wardrobe/product UIs (Aesop/Toteme/Nécessaire inspired)
+# Warm neutrals, generous spacing, refined typography. Use in amber + shared product views.
+luxury:
+  # Light mode (preferred for calm product viewing)
+  light_bg: "#f8f5f0"
+  light_surface: "#ffffff"
+  light_text: "#2c2824"
+  light_muted: "#6b665f"
+  light_border: "#e6e0d8"
+  light_accent: "#8c7a5e"   # warm taupe/gold
+  # Dark mode (compatible with existing)
+  dark_bg: "#1a1816"
+  dark_surface: "#24221f"
+  dark_text: "#e8e4dc"
+  dark_muted: "#8a8278"
+  dark_border: "#3a3630"
+  dark_accent: "#a38b6f"
+  # Shared luxury scale (more breathing room than minimal)
+  space_xs: "0.5rem"
+  space_sm: "0.875rem"
+  space_md: "1.5rem"
+  space_lg: "2.25rem"
+  space_xl: "3rem"
+  space_2xl: "4rem"
+  radius_sm: "6px"
+  radius_md: "10px"
+  radius_lg: "14px"
+  # Typography scale
+  font_size_display: "2rem"
+  font_size_title: "1.5rem"
+  font_size_body: "1rem"
+  font_size_meta: "0.875rem"
+  letter_spacing_tight: "-0.01em"
+  line_height_tight: "1.25"
+  line_height_relaxed: "1.6"
+
 face_root:
   anchors:
     c_text: "oklch(86% 0.02 80)"

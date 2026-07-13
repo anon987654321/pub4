@@ -3,7 +3,7 @@
 <% end %>
 
 <% if @posts.any? %>
-  <div class="post-grid" id="posts-feed">
+  <div class="post-feed" id="posts-feed">
     <% @posts.each do |post| %>
       <div data-controller="offline-feed"
            data-offline-feed-key-value="brgen-posts"

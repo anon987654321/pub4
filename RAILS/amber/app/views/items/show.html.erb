@@ -2,24 +2,26 @@
 <% content_for :description, meta_description_for(@item) %>
 <% content_for :json_ld, json_ld_for(@item, type: :product) %>
 
-<article class="item-detail">
+<article class="item-detail item-detail--luxury">
+  <div class="luxury-detail-grid">
   <% if @item.photos.attached? %>
-    <div class="item-photos">
+    <div class="luxury-photos">
       <% @item.photos.each do |photo| %>
-        <%= responsive_image_tag photo, alt: @item.title, widths: [400, 600, 800], sizes: "(max-width: 768px) 100vw, 600px", class: "item-photo" %>
+        <%= responsive_image_tag photo, alt: @item.title, widths: [480, 640, 960], sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
       <% end %>
     </div>
   <% end %>
 
-  <header role="banner" aria-label="Item header">
-    <div>
-      <p class="dim"><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
-      <h1><%= @item.title %></h1>
-    </div>
-    <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
-  </header>
+  <div class="luxury-meta">
+    <header role="banner" aria-label="Item header">
+      <div>
+        <p class="dim luxury-dim"><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
+        <h1 class="luxury-title"><%= @item.title %></h1>
+      </div>
+      <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
+    </header>
 
-  <div class="tag-row">
+  <div class="tag-row luxury-tags">
     <span class="tag"><%= pluralize(@item.times_worn.to_i, "wear") %></span>
     <% if @item.price? && @item.times_worn.to_i.positive? %>
       <span class="tag"><%= number_to_currency(@item.price / @item.times_worn.to_i) %> per wear</span>
@@ -27,7 +29,7 @@
     <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
   </div>
 
-  <dl class="meta">
+  <dl class="meta luxury-meta-list">
     <dt>Category</dt><dd><%= @item.category %></dd>
     <% if @item.color.present? %><dt>Color</dt><dd><%= @item.color %></dd><% end %>
     <% if @item.size.present? %><dt>Size</dt><dd><%= @item.size %></dd><% end %>
@@ -39,25 +41,26 @@
   </dl>
 
   <% if @item.mood_effect.present? || @item.life_phase.present? %>
-    <div class="tag-row">
+    <div class="tag-row luxury-tags">
       <% if @item.mood_effect.present? %><span class="tag">Mood: <%= @item.mood_effect %></span><% end %>
       <% if @item.life_phase.present? %><span class="tag tag--phase"><%= @item.life_phase %></span><% end %>
     </div>
   <% end %>
 
-  <section>
+  <section class="luxury-section">
     <h2>Wardrobe intelligence</h2>
-    <p class="dim">Use AI analysis for tags, mood, capsule fit, and declutter decisions.</p>
+    <p class="dim luxury-dim">Use AI analysis for tags, mood, capsule fit, and declutter decisions.</p>
     <div id="item_<%= @item.id %>_analysis"></div>
     <div id="item_<%= @item.id %>_tags"></div>
   </section>
 
-  <nav role="navigation" aria-label="Item actions">
+  <nav role="navigation" aria-label="Item actions" class="luxury-actions">
     <%= button_to "Worn today", wear_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "AI analyse", ai_analyze_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "AI tag mood", ai_tag_item_path(@item), method: :post, class: "btn" %>
-    <%= link_to "Declutter review", review_declutter_path(@item), class: "btn" %>
+    <%= button_to "Declutter review", review_declutter_path(@item), method: :post, class: "btn" %>
     <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
     <%= button_to "Delete", @item, method: :delete, data: { turbo_confirm: "Remove this item?" }, class: "btn btn-danger" %>
   </nav>
+</div>
 </article>

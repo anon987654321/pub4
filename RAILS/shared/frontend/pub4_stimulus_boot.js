@@ -31,6 +31,9 @@ import InfiniteScroll from "pub4/infinite_scroll"
 import BrowserFingerprint from "pub4/browser_fingerprint"
 import DirectUpload from "pub4/direct_upload"
 import CharacterCounter from "pub4/character_counter"
+import LuxuryProduct from "pub4/luxury_product"
+import ScrollReveal from "pub4/scroll_reveal"
+import XAction from "pub4/x_action"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -68,6 +71,9 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("infinite-scroll", InfiniteScroll)
   application.register("browser-fingerprint", BrowserFingerprint)
   application.register("direct-upload", DirectUpload)
+  application.register("luxury-product", LuxuryProduct)
+  application.register("scroll-reveal", ScrollReveal)
+  application.register("x-action", XAction)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     application.register(name, component)

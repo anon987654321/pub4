@@ -1,5 +1,7 @@
-<article class="deal-card">
-  <h2 class="deal-card-title"><%= link_to deal.headline, marketplace_deal_path(deal) %></h2>
-  <p class="deal-meta"><%= deal.listing.title %></p>
-  <p class="deal-price"><%= deal.listing.price_display %></p>
-</article>
+<%= render "shared/x_card",
+  avatar_url: (deal.listing.photos.attached? ? url_for(deal.listing.photos.first) : nil),
+  name: deal.headline,
+  handle: deal.listing.title,
+  content: capture { %(<div class="x-price">#{deal.listing.price_display}</div>).html_safe },
+  url: marketplace_deal_path(deal),
+  class: "x-deal" %>

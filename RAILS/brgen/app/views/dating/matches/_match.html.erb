@@ -1,10 +1,10 @@
 <% other = match.other_user(Current.user) %>
-<article class="match-row">
-  <% if other.dating_profile&.photos&.attached? %>
-    <%= lazy_image_tag other.dating_profile.photos.first, alt: other.display_name, class: "match-avatar" %>
-  <% end %>
-  <div class="match-info">
-    <strong><%= other.email_address.split("@").first %></strong>
-    <p class="dim">Matched</p>
-  </div>
-</article>
+<%= render "shared/x_card",
+  avatar: (other.dating_profile&.photos&.attached? ? lazy_image_tag(other.dating_profile.photos.first, alt: other.display_name, class: "x-avatar-img") : content_tag(:div, other.display_name.first, class: "x-avatar-placeholder")),
+  name: other.display_name || other.email_address.split("@").first,
+  name_url: user_path(other),
+  content: capture { %(<p class="x-meta">Matched on #{match.created_at.to_date}</p>).html_safe },
+  actions: capture do %>
+    <%= link_to "Message", conversation_path(match), class: "x-act x-act--primary" %>
+  <% end,
+  class: "x-match" %>

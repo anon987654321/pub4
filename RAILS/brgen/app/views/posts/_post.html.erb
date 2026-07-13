@@ -1,38 +1,20 @@
 <%= turbo_frame_tag dom_id(post) do %>
   <% cache [post, Current.user&.id] do %>
-    <article class="x-post" data-component="card">
-      <div class="x-avatar"></div>
-      <div class="x-content">
-        <div class="x-header">
-          <span class="x-name">
-            <% if post.anonymous? || post.user&.guest? || post.user.blank? %>
-              <%= post.author_name %>
-            <% else %>
-              <%= link_to post.author_name, user_path(post.user), class: "link-inherit" %>
-            <% end %>
-          </span>
-          <% if post.community %>
-            <span class="x-handle">@<%= post.community.slug %></span>
-          <% end %>
-        </div>
-        <h2 class="x-text"><%= link_to post.title, post %></h2>
-        <% if post.image.attached? %>
-          <%= link_to post do %><%= responsive_image_tag post.image, alt: post.title, loading: "lazy", class: "post-image" %><% end %>
-        <% end %>
-        <div class="x-actions">
-          <span class="x-act">💬 <span class="x-count"><%= post.comment_count %></span></span>
-          <span class="x-act">↻</span>
-          <span class="x-act">↑ <span class="x-count"><%= post.score %></span></span>
-          <span class="x-act">⋯</span>
-          <button type="button" class="x-act" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy" title="Share">↗</button>
-        </div>
-        <div class="x-meta-bottom">
-          <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %></time>
-          <% if post.reading_time_minutes.positive? %>
-            <span>· <%= post.reading_time_minutes %> min read</span>
-          <% end %>
-        </div>
-      </div>
-    </article>
+    <%= render "shared/x_card",
+      avatar_url: (post.user&.avatar&.attached? ? url_for(post.user.avatar) : nil),
+      name: post.author_name,
+      handle: (post.community ? "@#{post.community.slug}" : nil),
+      time: time_ago_in_words(post.created_at),
+      title: post.title,
+      url: post_path(post),
+      media: (post.image.attached? ? link_to(responsive_image_tag(post.image, alt: post.title, loading: "lazy", class: "post-image"), post) : nil),
+      actions: capture do %>
+        <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle" data-x-action-url-value="<%= comments_path(post_id: post) %>" data-x-action-count-value="<%= post.comment_count %>">💬 <span data-x-action-target="count"><%= post.comment_count %></span></span>
+        <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle">↻</span>
+        <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle" data-x-action-url-value="<%= vote_path(post) %>" data-x-action-count-value="<%= post.score %>">↑ <span data-x-action-target="count"><%= post.score %></span></span>
+        <span class="x-act">⋯</span>
+        <button type="button" class="x-act" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy" title="Share">↗</button>
+      <% end,
+      class: "x-post" %>
   <% end %>
 <% end %>

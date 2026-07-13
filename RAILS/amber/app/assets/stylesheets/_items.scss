@@ -4,6 +4,65 @@
   gap: var(--space-4);
 }
 
+/* Luxury minimalist refinements (Aesop/Toteme/Nécessaire) */
+.item-grid--luxury {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--luxury-space-lg);
+}
+
+.luxury-card,
+.item-card--luxury {
+  display: flex;
+  flex-direction: column;
+  gap: var(--luxury-space-sm);
+  padding: var(--luxury-space-md);
+  background: var(--luxury-surface);
+  border: 1px solid var(--luxury-border);
+  border-radius: var(--luxury-radius-md);
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+
+.luxury-card:hover,
+.item-card--luxury:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.luxury-card .item-photo,
+.item-card--luxury .item-photo {
+  width: 100%;
+  aspect-ratio: 4 / 5; /* better for clothing than square */
+  object-fit: cover;
+  border-radius: var(--luxury-radius-sm);
+  margin-bottom: var(--luxury-space-sm);
+}
+
+.luxury-card .item-title,
+.item-card--luxury .item-title {
+  font-size: var(--luxury-font-title);
+  font-weight: 600;
+  letter-spacing: var(--luxury-letter-tight);
+  line-height: 1.2;
+  color: var(--luxury-text);
+}
+
+.luxury-card .dim,
+.item-card--luxury .dim {
+  font-size: var(--luxury-font-meta);
+  color: var(--luxury-muted);
+  line-height: 1.4;
+}
+
+.luxury-card nav,
+.item-card--luxury nav {
+  display: flex;
+  gap: var(--luxury-space-sm);
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: var(--luxury-space-sm);
+}
+
+/* Base item-card (kept for compatibility) */
 .item-card {
   display: flex;
   flex-direction: column;
@@ -45,6 +104,96 @@
 .item-detail .item-photos img {
   width: 200px;
   border-radius: var(--x-radius-xs);
+}
+
+/* Luxury PDP */
+.luxury-detail-grid {
+  display: grid;
+  gap: var(--luxury-space-xl);
+}
+
+@media (min-width: 768px) {
+  .luxury-detail-grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.luxury-photos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--luxury-space-md);
+}
+
+.luxury-photo {
+  width: 100%;
+  border-radius: var(--luxury-radius-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.luxury-title {
+  font-size: var(--luxury-font-display);
+  font-weight: 600;
+  letter-spacing: var(--luxury-letter-tight);
+  line-height: var(--luxury-line-relaxed);
+  margin: 0.25rem 0;
+}
+
+.luxury-dim {
+  color: var(--luxury-muted);
+}
+
+.luxury-tags {
+  margin: var(--luxury-space-sm) 0;
+}
+
+.luxury-meta-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--luxury-space-xs) var(--luxury-space-md);
+  margin: var(--luxury-space-md) 0;
+  font-size: var(--luxury-font-meta);
+}
+
+.luxury-meta-list dt {
+  font-weight: 600;
+  color: var(--luxury-muted);
+}
+
+.luxury-section {
+  margin: var(--luxury-space-lg) 0;
+}
+
+.luxury-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--luxury-space-sm);
+  margin-top: var(--luxury-space-lg);
+}
+
+.luxury-actions .btn {
+  padding: 0.6rem 1.25rem;
+}
+
+/* Light scrolly reveals for timelines and long content (compatible with existing animations) */
+.style-phase-card,
+.timeline-item {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out);
+}
+
+.style-phase-card.is-visible,
+.timeline-item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .style-phase-card,
+  .timeline-item {
+    transition: none;
+  }
 }
 
 .meta {

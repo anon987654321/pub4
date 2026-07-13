@@ -1,4 +1,6 @@
-<li>
-  <%= link_to community.name, community_path(community) %>
-  <% if community.description.present? %><p class="dim"><%= community.description %></p><% end %>
-</li>
+<%= render "shared/x_card",
+  avatar_url: nil,
+  name: community.name,
+  content: community.description,
+  url: community_path(community),
+  class: "x-community" %>
