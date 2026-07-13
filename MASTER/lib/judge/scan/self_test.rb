@@ -215,7 +215,8 @@ module Master
 
         def top_level_yaml_keys(path)
           document = Psych.parse_file(path)
-          root = document&.root
+          return [] unless document
+          root = document.root
           return [] unless root.is_a?(Psych::Nodes::Mapping)
 
           root.children.each_slice(2).filter_map do |key_node, _value_node|

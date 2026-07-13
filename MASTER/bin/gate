@@ -22,13 +22,11 @@ COMMANDS = {
     "/critique .",
     "/review ."
   ].freeze,
-  deploy: [
-    "/scan ../DEPLOY",
-    "/fix ../DEPLOY",
-    "/scan ../DEPLOY",
-    "/critique ../DEPLOY",
-    "/review ../DEPLOY"
-  ].freeze
+  # DEPLOY was renamed to RAILS + OPERATOR (2026-07). /scan takes one path
+  # per invocation, so each former DEPLOY child gets its own pass.
+  deploy: %w[../RAILS ../OPERATOR].flat_map { |path|
+    ["/scan #{path}", "/fix #{path}", "/scan #{path}", "/critique #{path}", "/review #{path}"]
+  }.freeze
 }.freeze
 
 def run_command(*argv, chdir: ROOT)
@@ -58,7 +56,7 @@ git_diff("MASTER")
 assert_clean("MASTER")
 
 COMMANDS[:deploy].each { |line| run_master_line(line) }
-git_diff("DEPLOY", "MASTER")
-assert_clean("DEPLOY", "MASTER")
+git_diff("RAILS", "OPERATOR", "MASTER")
+assert_clean("RAILS", "OPERATOR", "MASTER")
 
 puts "ok: MASTER gate clean"

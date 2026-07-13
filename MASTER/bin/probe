@@ -65,13 +65,13 @@ CHECKS = {
     skip_reason: "no staged files",
   },
   "rails" => {
-    desc: "DEPLOY Rails production gate",
-    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "check_production_gate.rb")],
+    desc: "RAILS production gate",
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "check_production_gate.rb")],
     cwd: REPO_ROOT,
   },
   "phantom_fk" => {
     desc: "Rails schema phantom foreign-key targets",
-    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "check_phantom_foreign_keys.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "check_phantom_foreign_keys.rb")],
     cwd: REPO_ROOT,
   },
   "playbook" => {
@@ -87,7 +87,7 @@ CHECKS = {
   },
   "health" => {
     desc: "OpenBSD VPS stack health",
-    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "openbsd", "health_check.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "OPERATOR", "openbsd", "health_check.rb")],
     cwd: REPO_ROOT,
     skip: -> { !File.file?("/etc/relayd.conf") },
     skip_reason: "not on OpenBSD VPS (/etc/relayd.conf missing)",
@@ -106,13 +106,13 @@ CHECKS = {
   },
   "crawl" => {
     desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ master.json)",
-    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "rails", "crawl_probe.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "crawl_probe.rb")],
     cwd: REPO_ROOT,
   },
   "crawl-browser" => {
     desc: "Ferrum element crawl (MASTER face session + Rails landmarks)",
     cmd: ["sh", "-c",
-          "BUNDLE_WITH=test bundle exec ruby #{File.join(REPO_ROOT, 'DEPLOY', 'rails', 'crawl_browser.rb')}"],
+          "BUNDLE_WITH=test bundle exec ruby #{File.join(REPO_ROOT, 'RAILS', 'crawl_browser.rb')}"],
     cwd: MASTER_ROOT,
     skip: lambda {
       return true if ENV["MASTER_CRAWL_BROWSER"] == "0"
@@ -122,8 +122,8 @@ CHECKS = {
     skip_reason: "set MASTER_CRAWL_BROWSER=1 or PROBE_FORCE_BROWSER=1 (skipped on macOS by default)",
   },
   "integrity" => {
-    desc: "Full DEPLOY + Rails + OpenBSD gate chain",
-    cmd: [RUBY, File.join(REPO_ROOT, "DEPLOY", "integrity_gate.rb")],
+    desc: "Full RAILS + OPERATOR/OpenBSD gate chain",
+    cmd: [RUBY, File.join(REPO_ROOT, "OPERATOR", "integrity_gate.rb")],
     cwd: REPO_ROOT,
   },
   "selfscan" => {

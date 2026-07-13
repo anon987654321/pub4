@@ -183,7 +183,7 @@ module Master
       end
 
       def dispatch_tools(root, ai, ctx: nil)
-        reach = Master::Builder::TOOL_MAP.keys.sort
+        reach = Master::Builder.tool_map.keys.sort
         wired = Array(ai&.dig(:tools)).map { |t| t.class.name.split("::").last }.sort
         [
           "tools",
