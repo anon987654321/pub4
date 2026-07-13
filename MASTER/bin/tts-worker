@@ -64,6 +64,38 @@ def synth_subprocess(voice, rate, pitch, text, out_path)
   File.exist?(out_path) && File.size(out_path) > 0
 end
 
+# EventMachine's reactor cannot be safely reused within one process across
+# requests (see 4b9da6d2d: a second `save_sync` in the same daemon process
+# silently returned empty audio) -- so each request needs its own fresh
+# process. A full Open3.capture3 re-exec (synth_subprocess above) pays for
+# that isolation with a complete Ruby+Bundler+EventMachine+rb_edge_tts cold
+# boot on *every* request, which is why the "warm daemon" was slower than
+# the plain one-shot path it was meant to replace. fork() gives the same
+# per-request isolation via a copy-on-write child that skips bundler/require
+# entirely, so it inherits the already-loaded interpreter instead of
+# re-booting one.
+def synth_forked(voice, rate, pitch, text, out_path)
+  pid = Process.fork do
+    begin
+      Process.setproctitle("tts-worker: synth")
+    rescue StandardError
+      nil
+    end
+    begin
+      ok = synth(voice, rate, pitch, text, out_path)
+      exit!(ok ? 0 : 1)
+    rescue StandardError => e
+      warn "tts-worker: fork child error: #{e.class}: #{e.message}"
+      exit!(1)
+    end
+  end
+  _pid, status = Process.wait2(pid)
+  status.success? && File.exist?(out_path) && File.size(out_path) > 0
+rescue NotImplementedError, StandardError => e
+  warn "tts-worker: fork unavailable, falling back to subprocess: #{e.class}: #{e.message}"
+  synth_subprocess(voice, rate, pitch, text, out_path)
+end
+
 def require_eventmachine_ssl!
   return unless EventMachine.respond_to?(:ssl?) && !EventMachine.ssl?
 
@@ -132,7 +164,7 @@ if ARGV[0] == "--daemon"
       text  = req["text"].to_s
       next if voice.empty? || text.empty?
       out = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
-      ok = synth_subprocess(voice, rate, pitch, text, out)
+      ok = synth_forked(voice, rate, pitch, text, out)
       if ok
         begin
           File.open(out, "rb") { |f| IO.copy_stream(f, client) }
