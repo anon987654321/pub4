@@ -4,10 +4,10 @@ require_relative "../voice/aesthetic"
 
 module Master
   module Ground
-    # Machine-readable runtime catalog over data/runtime/*.yml.
+    # Machine-readable runtime catalog stored in data/runtime.yml.
     # Replaces prose docs/ for invariants, UI philosophy, events, enhancements, etc.
     class RuntimeCatalog
-      RUNTIME_DIR = File.join(Master::ROOT, "data", "runtime").freeze
+      CATALOG_PATH = File.join(Master::ROOT, "data", "runtime.yml").freeze
       SECTIONS = %w[
         invariants ui_philosophy event_registry provider_economy
         cognitive_spine face_enhancements micro_interactions
@@ -20,10 +20,7 @@ module Master
       class << self
         def load(section)
           key = section.to_s
-          @cache[key] ||= begin
-            path = File.join(RUNTIME_DIR, "#{key}.yml")
-            Master.load_yaml(path, default: {})
-          end
+          @cache[key] ||= catalog.fetch(key, {})
         end
 
         def all
@@ -69,7 +66,7 @@ module Master
           topologies = Master.load_yaml(Master.data_path("topologies.yml"), default: {})
           visual = Master.load_yaml(Master.data_path("ops", "visual.yml"), default: {})
           tts = Master.load_yaml(Master.data_path("tts.yml"), default: {})
-          runtime_cfg = Master.load_yaml(File.join(RUNTIME_DIR, "runtime.yml"), default: {})
+          runtime_cfg = load("runtime")
           philosophy = ui_philosophy
           pending = enhancements.count { |item| item["status"].to_s == "pending" }
 
@@ -90,7 +87,7 @@ module Master
 
         # Inline in chat shell only — keeps first paint off the ~30KB full catalog parse.
         def web_boot_payload_minimal
-          runtime_cfg = Master.load_yaml(File.join(RUNTIME_DIR, "runtime.yml"), default: {})
+          runtime_cfg = load("runtime")
           vm = Master.load_yaml(Master::OPENBSD_ROOT.join("vm_resource.yml"), default: {}) rescue {}
           pending = enhancements.count { |item| item["status"].to_s == "pending" }
           falcon_workers = Integer(vm.dig("limits", "master_falcon_workers") || ENV.fetch("FALCON_COUNT", "2"))
@@ -107,6 +104,13 @@ module Master
 
         def clear_cache!
           @cache = {}
+          @catalog = nil
+        end
+
+        private
+
+        def catalog
+          @catalog ||= Master.load_yaml(CATALOG_PATH, default: {})
         end
       end
     end

@@ -29,6 +29,19 @@ class DeployGatesContractTest < Minitest::Test
     end
   end
 
+  def test_check_full_runs_repository_contract_tests
+    source = File.read(File.join(OPERATOR_ROOT, "bin", "check-full"))
+
+    assert_includes source, 'runner.run("rails contracts"'
+    assert_includes source, 'RAILS/test/**/*_test.rb'
+  end
+
+  def test_production_gate_does_not_require_deleted_retired_app_gate
+    source = File.read(File.join(ROOT, "check_production_gate.rb"))
+
+    refute_includes source, "archive_restore_gate"
+  end
+
   def test_integrity_gate_wires_new_gates
     integrity = File.read(File.join(OPERATOR_ROOT, "integrity_gate.rb"))
     gates = File.read(File.join(OPERATOR_ROOT, "lib", "gate_environment.rb"))

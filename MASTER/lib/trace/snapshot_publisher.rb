@@ -166,25 +166,18 @@ module Master
       end
 
       def runtime_stats(root)
-        return [] unless File.directory?(File.join(root, "data/runtime"))
+        catalog_path = File.join(root, "data/runtime.yml")
+        return [] unless File.file?(catalog_path)
 
         pending = implemented = 0
-        path = File.join(root, "data/runtime/face_enhancements.yml")
-        if File.file?(path)
-          data = YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true) || {}
-          Array(data["enhancements"]).each do |row|
-            case row["status"].to_s
-            when "implemented" then implemented += 1
-            when "pending" then pending += 1
-            end
+        catalog = YAML.safe_load_file(catalog_path, permitted_classes: [Symbol], aliases: true) || {}
+        Array(catalog.dig("face_enhancements", "enhancements")).each do |row|
+          case row["status"].to_s
+          when "implemented" then implemented += 1
+          when "pending" then pending += 1
           end
         end
-        cfg = File.join(root, "data/runtime/runtime.yml")
-        enhancements = []
-        if File.file?(cfg)
-          raw = YAML.safe_load_file(cfg, permitted_classes: [Symbol], aliases: true) || {}
-          enhancements = Array(raw["enhancements"])
-        end
+        enhancements = Array(catalog.dig("runtime", "enhancements"))
         [
           "- runtime enhancements: #{implemented} implemented / #{pending} pending",
           "- active flags: #{enhancements.size} (#{enhancements.last(5).join(", ")})"

@@ -649,8 +649,8 @@ prompt_archaeology:
   - MASTER/data/models.yml
   - MASTER/data/council.yml
   - MASTER/data/attention_context.yml
-  - MASTER/data/runtime/provider_economy.yml
-  - MASTER/data/runtime/cognitive_spine.yml
+  - MASTER/data/runtime.yml#provider_economy
+  - MASTER/data/runtime.yml#cognitive_spine
   - MASTER/lib/now/routing/model_router.rb
   - MASTER/lib/reach/circuit_breaker.rb
 repo_topics:
@@ -661,7 +661,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - MASTER/knowledge/research/token_reduction.md
-    - MASTER/data/runtime/provider_economy.yml
+    - MASTER/data/runtime.yml#provider_economy
     - MASTER/data/budget.yml
     - MASTER/data/models.yml
     external_evidence:
@@ -683,7 +683,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - MASTER/data/models.yml
-    - MASTER/data/runtime/provider_economy.yml
+    - MASTER/data/runtime.yml#provider_economy
     - MASTER/data/budget.yml
     - MASTER/lib/now/routing/model_router.rb
     - MASTER/lib/reach/circuit_breaker.rb
@@ -703,8 +703,8 @@ repo_topics:
     local_evidence:
     - MASTER/data/architectures.yml
     - MASTER/data/limits.yml
-    - MASTER/data/runtime/repo_ecology.yml
-    - MASTER/data/runtime/cognitive_spine.yml
+    - MASTER/data/runtime.yml#repo_ecology
+    - MASTER/data/runtime.yml#cognitive_spine
     - RAILS/amber/ARCHITECTURE.md
     pattern: 'MASTER already thinks in architectures: rule DAGs, dataflow pipelines,
       CRDT convergence, Bayesian priors, repo ecology, and embodied codebase topology.
@@ -795,7 +795,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - MASTER/lib/judge/agent.rb
-    - MASTER/data/runtime/cognitive_spine.yml
+    - MASTER/data/runtime.yml#cognitive_spine
     # (external awesome-ai-agents reference removed 2026-05 during bloat cleanup)
     pattern: 'The repo contains a mirrored agent landscape plus internal agent/council/runtime
       work.
@@ -898,7 +898,7 @@ repo_topics:
     confidence: low
     local_evidence:
     - MASTER/web/public/face.js
-    - MASTER/data/runtime/repo_ecology.yml
+    - MASTER/data/runtime.yml#repo_ecology
     - MASTER/data/architectures.yml
     pattern: 'No strong physical exoskeleton repo evidence was found yet. Existing
       evidence points to a cognitive/interface exoskeleton: face, gestures, haptics,

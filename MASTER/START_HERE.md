@@ -79,9 +79,9 @@ There are ~80 files under `data/`. That is too many. They exist because the runt
 
 - `models.yml`, `providers.yml`, `agents/*.yml`, `personas.yml`, `tools.yml`, `mcp_servers.yml`
 
-**Tier 3 — Runtime catalog (`data/runtime/*.yml`):**
+**Tier 3 — Runtime catalog (`data/runtime.yml`):**
 
-- UI/face topology, event registry, routing notes — mostly reference material loaded by catalog helpers. **Merge candidate** for a single `data/runtime.yml` in a future pass.
+- UI/face topology, event registry, routing notes — consolidated behind `RuntimeCatalog.load(section)`.
 
 **Tier 4 — Prose (3 allowed markdown files in `data/`):**
 

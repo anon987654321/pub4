@@ -1,0 +1,2992 @@
+---
+cognitive_spine:
+  id: cognitive_runtime
+  tier: core
+  area: runtime
+  status: active
+  source: docs/cognitive_runtime.md
+  target_shape:
+  - models propose intents
+  - orchestrator validates intents
+  - every decision and mutation appended to disk
+  - providers scored and quarantined
+  - memory tiered and compacted
+  - failures become repair input
+  - workflows replayable from checkpoints
+  invariants:
+  - id: agents_no_direct_mutation
+    rule: Agents do not directly mutate durable state
+  - id: external_action_events
+    rule: Every external action emits an event before and after execution
+  - id: provider_routing
+    rule: Provider calls routed through capability, health, cost, and fallback policy
+  - id: append_only_telemetry
+    rule: Telemetry is append-only JSONL unless explicitly compacted
+  - id: tiered_memory
+    rule: Memory moves through canonical, episodic, semantic, compressed, and snapshot tiers
+  - id: repair_pipeline
+    rule: Repair follows observe → classify → propose → sandbox → validate → merge
+  - id: tool_contracts
+    rule: Tool contracts define inputs, outputs, permissions, retries, timeout, and validation
+  - id: git_repair_memory
+    rule: Git history mined as repair memory
+  - id: context_pressure
+    rule: Context pressure measured before escalation, compaction, or topology changes
+  landed_subsystems:
+  - path: brain/providers/routing.yml
+    role: declarative provider routing and fallback policy
+  - path: runtime/events/
+    role: append-only cognition/event stream
+  - path: runtime/telemetry/
+    role: failure, correction, latency, token, and context-pressure journals
+  - path: runtime/context_pressure.rb
+    role: cognitive-pressure tracking
+  - path: runtime/experience.rb
+    role: plan/provider/tool-route scoring
+  - path: runtime/event_record.rb
+    role: canonical event record primitive
+  - path: runtime/replay_reader.rb
+    role: replay reader for JSONL event streams
+  - path: runtime/stale_namespace_audit.rb
+    role: post-refactor namespace drift scanner
+  - path: repair/git_history_miner.rb
+    role: commit-history mining for lost repair logic
+  - path: tools/contracts/runtime_event.yml
+    role: contract for append-only event emission
+  - path: data/stale_namespaces.yml
+    role: migration registry for stale constants
+  spine_flow:
+  - workflow
+  - event_record
+  - append_only_stream
+  - replay_reader
+  - telemetry_derivation
+  - repair_learning
+  - provider_scoring
+  - orchestration_refinement
+  rollout_order:
+  - Land runtime primitives and policy files
+  - Make smoke and stale-namespace audit hard refactor gates
+  - Route all model calls through provider policy
+  - Wrap tool execution with contracts and event logging
+  - Add failure digest and provider health jobs to heartbeat
+  - Add checkpoint/replay reconstruction for full workflows
+  - Feed visual bridge from canonical runtime events
+  - UI panels for event stream, provider health, context pressure, repair queue
+  deletion_pressure:
+    remove:
+    - silent_retries
+    - hidden_mutable_globals
+    - provider_specific_execution_branches
+    - duplicate_registries
+    - telemetry_only_state
+    - ui_owned_runtime_state
+    - stale_namespace_compatibility_shims
+collaboration:
+  id: collaboration_protocol
+  tier: ops
+  area: workflow
+  status: active
+  source: docs/collaboration_protocol.md
+  hard_rule: Do not push directly to main when more than one session may be active
+  branch_pattern: session/<agent>-<focus>-<yyyymmdd>
+  branch_examples:
+  - session/master-visualizer-20260514
+  - session/master-epistemics-20260514
+  - session/master-repo-ecology-20260514
+  branch_discipline:
+    rule: Each session branch contains one coherent focus
+    valid_focuses:
+    - visualizer
+    - pressure_engine
+    - repo_ecology
+    - reference_graph
+    - epistemics
+    - runtime_hardening
+    - refactor_pass
+    avoid: mixing unrelated architectural work
+  merge_protocol:
+    steps:
+    - Rebase onto current main
+    - Run syntax checks
+    - Run /scan or equivalent static scan
+    - Run /ecology if tree structure changed
+    - Review touched paths
+    - Confirm no overlapping session changed the same files
+    - Merge with a clear summary
+  conflict_policy:
+    same_file_touched:
+    - stop both branches
+    - compare intent
+    - preserve smaller coherent change
+    - manually merge
+    - rerun checks
+    force_push: never over another session's work unless explicitly approved
+  commit_shape:
+    good:
+    - small
+    - reversible
+    - focused
+    - testable
+    - named by behavior
+    bad:
+    - giant mixed patches
+    - vague cleanup
+    - unrelated visual + runtime + docs changes
+    - speculative architecture without executable code
+  safety_requirements:
+    report:
+    - files changed
+    - commands added
+    - runtime risks
+    - rollback behavior
+    - test status
+    - known uncertainty
+  preferred_flow:
+  - branch
+  - implement
+  - scan
+  - ecology
+  - syntax/test
+  - rebase
+  - review
+  - merge
+  convergence_rule: MASTER optimizes for convergence over accumulation; multiple sessions useful only when they reduce entropy
+event_registry:
+  id: event_naming
+  tier: core
+  area: bus
+  status: active
+  source: docs/event_naming.md
+  pattern: namespace:action
+  namespaces:
+  - namespace: master
+    owner: core runtime
+    when: pipeline lifecycle, visual state, codebase-wide signals
+  - namespace: attention
+    owner: ground/now
+    when: attention context changes, breadcrumb updates
+  - namespace: judge
+    owner: judge
+    when: scan results, council start/done, violations
+  - namespace: trace
+    owner: trace
+    when: session records, telemetry, audit entries
+  - namespace: voice
+    owner: voice
+    when: TTS start/done, speech errors
+  established_events:
+  - event: master:visual
+    target: visual_bridge.js
+    purpose: topology/mode changes
+  - event: master:clusters
+    target: cluster registry
+    purpose: cluster registry updates
+  - event: master:codebase
+    target: codebase visual
+    purpose: repo-map or file-tree refreshes
+  - event: master:rule_event
+    target: scan pipeline
+    purpose: scan rule fired
+  - event: attention:context
+    target: attention breadcrumb
+    purpose: attention breadcrumb changed
+  - event: judge:scan_start
+    target: judge
+    purpose: scan begun on a path
+  - event: judge:scan_done
+    target: judge
+    purpose: scan results available
+  - event: judge:council_start
+    target: judge
+    purpose: council deliberation opened
+  - event: judge:council_done
+    target: judge
+    purpose: council result ready
+  - event: sound_critique_start
+    target: legacy
+    purpose: sound critique panel assembling — prefer judge:*
+    legacy: true
+  - event: sound_critique_done
+    target: legacy
+    purpose: sound critique result ready — prefer judge:*
+    legacy: true
+  rules:
+  - Prefer namespace:noun over namespace:verb_noun (attention:context not attention:context_changed)
+  - master:* is for signals that cross subsystem boundaries
+  - Never emit raw subsystem internals on master:*
+  - JS listeners in visual_bridge.js normalize inbound events to master:visual
+  - New events must appear in this registry before shipping
+face3d_migration:
+  id: face3d_migration
+  tier: ui
+  area: face
+  status: active
+  source:
+  - docs/face3d_engine.md
+  - docs/face3d_runtime_hardening.md
+  goals:
+  - keep retro Atkinson/Bayer/ZX/phosphor white dithered pixel look
+  - normalized 3D face coordinates
+  - blendshape-driven expression logic
+  - semantic anatomical zone particles
+  - typed arrays in hot loops
+  - speech, mood, confidence, tool events, verdicts drive one face state
+  - mine visual clusters into shared emotion/topology system
+  modules:
+  - path: web/public/face3d_engine.js
+    role: standalone MasterFace3D namespace with typed-array particle core
+  - path: web/public/face3d_renderer.js
+    role: Face3DCanvasRenderer retro phosphor/dither adapter
+  - path: web/public/face3d_preview.js
+    role: optional boot when ?face3d=1 or auto via visual_bridge
+  - path: web/public/cluster_miner.js
+    role: groups master:visual/codebase/rule_event into master:clusters
+  - path: data/visual_clusters.yml
+    role: canonical cluster registry
+  - path: lib/rails/face3d_runtime_policy.rb
+    role: quality degradation and audit policy
+  clusters:
+  - id: face_particle_body
+    files:
+    - web/public/face.js
+    - face3d_engine.js
+    - face3d_renderer.js
+    - face3d_preview.js
+    purpose: semantic particle face with normalized topology and blendshapes
+  - id: cognition_ecology
+    files:
+    - web/public/cognition_ecology.js
+    purpose: terrain, weather, trails, memories, agent spirits
+  - id: codebase_topology
+    files:
+    - web/public/codebase.js
+    - data/architectures.yml
+    purpose: modules as particle clusters; violations agitate, fixes settle
+  - id: runtime_visual_bridge
+    files:
+    - web/public/visual_bridge.js
+    purpose: normalize runtime events to master:visual state
+  - id: speech_audio_body
+    files:
+    - lib/voice/speech.rb
+    - bin/tts-worker
+    - web/public/face.js
+    purpose: TTS stream, audio analysis, mouth shaping during playback
+  - id: repo_ecology
+    files:
+    - data/runtime.yml#repo_ecology
+    - data/visual_clusters.yml
+    purpose: repository as semantic topology and cognitive geography
+  proposed_clusters:
+  - id: cluster_miner
+    role: runtime browser cluster miner with heat, confidence, evidence
+  - id: evidence_graph
+    role: tracks why files/events belong to clusters
+  - id: emotion_bus
+    role: entropy/confidence/mode/provider/cluster heat → emotion vector
+  - id: topology_registry
+    role: papua-mask, serpent, neural, torus, sphere, codebase forms
+  - id: migration_radar
+    role: ranks safe migration steps by blast radius and rollback plan
+  blendshape_mapping:
+  - blink
+  - squint
+  - browInnerUp
+  - browDown
+  - smile
+  - frown
+  - jawOpen
+  - mouthWide
+  - mouthRound
+  - pupilDilate
+  - nostrilFlare
+  - cheekRaise
+  - shock
+  - chibi
+  emotion_vector:
+    fields:
+    - arousal
+    - valence
+    - focus
+    - confidence
+    - fatigue
+    rule: blendshapes derived from emotion vector for continuity
+  migration_steps:
+  - id: step_1
+    order: 1
+    action: Load face3d_engine, renderer, preview, cluster_miner alongside face.js
+    status: implemented
+  - id: step_2
+    order: 2
+    action: Verify preview with ?face3d=1
+    status: implemented
+  - id: step_3
+    order: 3
+    action: Inspect clusters via MASTERClusterMiner.snapshot
+    status: implemented
+  - id: step_4
+    order: 4
+    action: Route master:clusters into Face3D emotion state
+    status: implemented
+  - id: step_5
+    order: 5
+    action: Use VisemeDriver for duration-based lipsync
+    status: implemented
+  - id: step_6
+    order: 6
+    action: Replace direct mouth mutation with blendshape targets
+    status: implemented
+  - id: step_7
+    order: 7
+    action: Convert mask builders to normalized anchors one mask at a time
+    status: implemented
+  - id: step_8
+    order: 8
+    action: Move particle storage from objects to typed arrays
+    status: implemented
+  - id: step_9
+    order: 9
+    action: Add spatial hash repulsion in CPU tick
+    status: implemented
+  - id: step_10
+    order: 10
+    action: Optional WebGL renderer preserving retro canvas default
+    status: partial
+    note: visibility throttle + deviceorientation shipped; WebGL path deferred per hardening rules
+  hardening:
+    implementation_order:
+    - Keep typed-array particle core
+    - Replace allocation-heavy spatial lookup with fixed typed-array buckets
+    - Add spatial repulsion inside CPU tick
+    - Gate expensive effects through quality controller
+    - Add visibility throttling before worker or GPU experiments
+    - Add worker physics after main-thread CPU path stable
+    - Add WebGPU only as optional acceleration after CPU fallback proven
+    runtime_rules:
+    - No parallel Face3D runtime
+    - No WebGPU until CPU fallback complete
+    - No per-frame object particles
+    - No synchronous GPU readback
+    - No canvas resize inside animation loop
+    - No layout-changing DOM writes in render path
+    quality_degradation_order:
+    - bloom
+    - spatial_repulsion
+    - oscilloscope_effects
+    - frame_cap
+    - particle_count_on_rebuild
+    preserve_in_degraded: core face motion and expression blendshapes
+    next_safe_patch: visibility throttling before worker physics experiments
+face_enhancements:
+  id: face_enhancements
+  tier: ui
+  area: face
+  status: active
+  enhancements:
+  - id: fe_001
+    area: face
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Map entropy/pressure to kernel velocity damping and attention decay
+  - id: fe_002
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Global breathing offset driven by system confidence
+  - id: fe_003
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Eye pupil size and saccade modulated by focus state
+  - id: fe_004
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Terrain reacts to vertical timbre (marketplace/dating/tv)
+  - id: fe_005
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Age decay rate follows mood arc from recent entropy
+  - id: fe_006
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Additive glow on high-arousal cells during energetic TTS
+  - id: fe_007
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Bayer dither low-res upscaling for pixel instrument look
+  - id: fe_008
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Mouse tilt strength scales with system openness
+  - id: fe_009
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Cluster personalities cohere per dominant vertical
+  - id: fe_010
+    area: face
+    tier: p3
+    status: implemented
+    handler: js
+    summary: Slow memory trail ghost particles for emotional history
+  - id: fe_011
+    area: tts
+    tier: p0
+    status: implemented
+    handler: ruby
+    summary: Server-driven viseme stream from edge-tts phonemes
+  - id: fe_012
+    area: tts
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Prosody rate/pitch affects kernel lerp time scale
+  - id: fe_013
+    area: tts
+    tier: p2
+    status: implemented
+    handler: ruby
+    summary: Style chaining whispered+ethereal layering
+  - id: fe_014
+    area: tts
+    tier: p0
+    status: implemented
+    handler: both
+    summary: Pre-speech inhale anticipation before audio starts
+  - id: fe_015
+    area: tts
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Post-speech decay tuned per style
+  - id: fe_016
+    area: tts
+    tier: p2
+    status: implemented
+    handler: ruby
+    summary: TTS effort signal increases particle density
+  - id: fe_017
+    area: tts
+    tier: p2
+    status: implemented
+    handler: both
+    summary: Voice-specific idle signatures per persona
+  - id: fe_018
+    area: tts
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Real-time ducking when user STT starts
+  - id: fe_019
+    area: tts
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Creative style bleed ring on eye pool after speech
+  - id: fe_020
+    area: tts
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Style preview modulates idle face on hover
+  - id: fe_021
+    area: web
+    tier: p0
+    status: implemented
+    handler: both
+    summary: TTS style picker chips with live face preview
+  - id: fe_022
+    area: web
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Mode/style indicator tied to canvas topology
+  - id: fe_023
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Emotional history sparkline from master:visual events
+  - id: fe_024
+    area: web
+    tier: p3
+    status: implemented
+    handler: both
+    summary: Face drag sends user:expression to influence response
+  - id: fe_025
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: User mic creates listening terrain ripples
+  - id: fe_026
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Error recovery visuals as instrument not popups
+  - id: fe_027
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Keyboard shortcuts with face acknowledgment animations
+  - id: fe_028
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Mobile pressure-sensitive long-press tension
+  - id: fe_029
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Theme switcher remaps particle palette
+  - id: fe_030
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Bidirectional felt sense sent with next message
+  - id: fe_031
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Multi-signal superposition for overlapping states
+  - id: fe_032
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Vertical timbre persistent kernel bias per subapp
+  - id: fe_033
+    area: bus
+    tier: p2
+    status: implemented
+    handler: both
+    summary: Graph density increases cross-pool particle influence
+  - id: fe_034
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Fused certainty from verdict/retrieval/council
+  - id: fe_035
+    area: bus
+    tier: p2
+    status: implemented
+    handler: both
+    summary: System-chosen TTS style visible on face
+  - id: fe_036
+    area: bus
+    tier: p2
+    status: implemented
+    handler: both
+    summary: Phantom events trigger flinch before text
+  - id: fe_037
+    area: bus
+    tier: p2
+    status: implemented
+    handler: both
+    summary: Long council creates thinking breath cycle
+  - id: fe_038
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: User interrupt reset ripple across pools
+  - id: fe_039
+    area: bus
+    tier: p2
+    status: implemented
+    handler: both
+    summary: Emotional arc drifts toward session baseline
+  - id: fe_040
+    area: bus
+    tier: p3
+    status: implemented
+    handler: both
+    summary: Cross-app resonance echoes on face
+  - id: fe_041
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Background-tab slow breathing still readable
+  - id: fe_042
+    area: perf
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Stronger reduced-motion respect everywhere
+  - id: fe_043
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Mobile touch targets tied to face affordances
+  - id: fe_044
+    area: perf
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Fixed-timestep Bayer for consistent pixel look
+  - id: fe_045
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Mood persists across reload via localStorage
+  - id: fe_046
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Battery profile consistent ecology agent halving
+  - id: fe_047
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: SSE batching reduces visual thrash
+  - id: fe_048
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Virtual scroll for long chat logs
+  - id: fe_049
+    area: perf
+    tier: p3
+    status: implemented
+    handler: js
+    summary: OffscreenCanvas face rendering where supported
+  - id: fe_050
+    area: council
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Council deliberation drives ecology spirit radius
+  - id: enh_style_chips
+    area: web
+    tier: p0
+    status: implemented
+    handler: both
+    summary: TTS style chips in prompt bar with live preview
+  - id: enh_viseme_hints
+    area: tts
+    tier: p0
+    status: implemented
+    handler: ruby
+    summary: Server viseme_hints from Expression module
+  - id: enh_voice_locked
+    area: tts
+    tier: p0
+    status: implemented
+    handler: ruby
+    summary: voice_locked param preserves user voice choice
+  - id: enh_face3d_auto
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Auto-enable face3d preview on desktop via visual_bridge
+  - id: enh_tts_audio_stream
+    area: tts
+    tier: p0
+    status: implemented
+    handler: both
+    summary: Partial MP3 stream endpoint during TTS synthesis
+  - id: enh_pre_speech_inhale
+    area: tts
+    tier: p0
+    status: implemented
+    handler: both
+    summary: Pre-speech inhale arousal spike before TTS
+  - id: enh_expression_module
+    area: bus
+    tier: p0
+    status: implemented
+    handler: ruby
+    summary: Central Expression module for TTS+face mapping
+  - id: enh_council_reversibility
+    area: council
+    tier: p1
+    status: implemented
+    handler: ruby
+    summary: Council reversibility emitted on bus
+  - id: enh_bridge_registry
+    area: bus
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Bridge classify prefers event registry
+  - id: enh_idle_breath_entropy
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Idle breath confidence modulation + entropy wobble
+  - id: enh_speech_valence
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Speech boundary mouthPool valence boost
+  - id: enh_high_conf_jitter
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: High confidence slows eyeJitter decay
+  - id: enh_cursor_fade
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Streaming cursor step fade on done
+  - id: enh_dmesg_fade
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Dmesg lines quick step fade-in
+  - id: enh_ecology_confidence
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Ecology orbit tightens with confidence
+  - id: enh_terrain_entropy
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: High entropy jagged terrain lines
+  - id: enh_felt_sense
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Felt sense round-trip in chat pipeline
+  - id: enh_mood_sparkline
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Mood sparkline UI element
+  - id: web_001
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Split face.js into particles/audio/expressions/tts modules
+  - id: web_002
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Web Worker for particle physics offload
+  - id: web_003
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Dev face panel with sliders via debug mode
+  - id: web_004
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Face modes switch 3D/raster/hybrid/wireframe
+  - id: web_005
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: 2D fallback uses ParticleKernel dither
+  - id: web_006
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Phosphor afterimage trail effects
+  - id: web_007
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Multiple simultaneous faces for council
+  - id: web_008
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Deep visual_bridge entropy/confidence drive
+  - id: web_009
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Glitch damage effects for veto/error
+  - id: web_010
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Dynamic particle LOD by viewport and FPS
+  - id: web_011
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Ecology orbit tightens with kernel attention
+  - id: web_012
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Memory events spawn crown zone cells
+  - id: web_013
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Reduced-motion low-amplitude breath scaling
+  - id: web_014
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Mouse tilt biases eyeMask position
+  - id: web_015
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Face edge hover peripheral arousal pulse
+  - id: web_016
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Double-tap cycles runtime visual profile
+  - id: web_017
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Pinch-to-zoom face scale on touch
+  - id: web_018
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Reduced-motion sinusoidal eye scan path
+  - id: web_019
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Long-press mood demo sequence on canvas
+  - id: web_020
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Streaming chunks nudge eye attention
+  - id: web_021
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Sentence-end mouthPool pressure bump
+  - id: web_022
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Veto/pass dmesg ecology calm burst
+  - id: web_023
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: STT start eye attention boost
+  - id: web_024
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: MouthDrive scales jaw uniform each frame
+  - id: web_025
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Photo ready spawns crown memory cells
+  - id: web_026
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Chat history sidebar collapsible searchable
+  - id: web_027
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Provider/model tint chip in prompt bar
+  - id: web_028
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Command palette cmd+k fuzzy commands
+  - id: web_029
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Placeholder cycles on idle input
+  - id: web_030
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Chat scroll-snap near-bottom RAF clamp
+  - id: web_031
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Message enter stagger delay up to 8 steps
+  - id: web_032
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Typing indicator until first stream chunk
+  - id: web_033
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Stream-live SR batched 120ms debounce
+  - id: web_034
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Reaction chips persist via dataset.reaction
+  - id: web_035
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: User messages right-aligned reversed prompt
+  - id: web_036
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Streaming cursor blink step fade on done
+  - id: web_037
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Fenced code blocks during stream
+  - id: web_038
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Dmesg accent lines 3-slot fade ring
+  - id: web_039
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Message timestamp on hover data-ts
+  - id: web_040
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Assistant confidence left-border band
+  - id: web_041
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Session save/load/export md jsonl png
+  - id: web_042
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Edge-hover swipe reveals prompt bar
+  - id: web_043
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Empty chat no-history ghost state
+  - id: web_044
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Stream retry button on failure
+  - id: web_045
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Collapsible long assistant blocks
+  - id: web_046
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Char count after 120 chars
+  - id: web_047
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Listening mode saturates face canvas
+  - id: web_048
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Cancel button pulses during thinking
+  - id: web_049
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Idle help trail toward input after silence
+  - id: web_050
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Speaking mode tints prompt prefix
+  - id: web_051
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Prompt disabled until primer unlocks
+  - id: web_052
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Self-violation canvas contrast flash
+  - id: web_053
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Mid-stream tool-stack progress chip
+  - id: web_054
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Uncertain verdict status blink
+  - id: web_055
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Primer dismiss scale opacity fade
+  - id: web_056
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Sleeping mode dims canvas and prompt
+  - id: web_057
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Error mood-cold white-only indication
+  - id: web_058
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: TTS-loading status shimmer
+  - id: web_059
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Pipeline-stage bar syncs to SSE stages
+  - id: web_060
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Network stall tints status calms canvas
+  - id: web_061
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Council persona badge via status rotator
+  - id: web_062
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Particle worker warm-start on primer
+  - id: web_063
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Visual governor caps FPS particle pressure
+  - id: web_064
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Virtual scroll trims chat to 56 messages
+  - id: web_065
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: OffscreenCanvas ecology buffer
+  - id: web_066
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Bridge RAF-batches rapid visual events
+  - id: web_067
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Battery profile halves ecology agents
+  - id: web_068
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Kernel frame dt clamp fixed timestep
+  - id: web_069
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Canvas resize 50px threshold debounce
+  - id: web_070
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Chat-append microtask queue
+  - id: web_071
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Primer boot spawns attention kernel cells
+  - id: web_072
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Hidden tab pauses face loop disconnects SSE
+  - id: web_073
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Coarse pointer halves particle grid
+  - id: web_074
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Activity-adaptive mood color lerp
+  - id: web_075
+    area: perf
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Dmesg shared 3-slot fade ring
+  - id: web_076
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Per-message action bar assistant bubbles
+  - id: web_077
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Session stats footer words elapsed
+  - id: web_078
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Typing dots until stream chunks
+  - id: web_079
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Collapsible thought-trace assistant
+  - id: web_080
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Keyboard shortcut sheet cmd palette
+  - id: web_108
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Print/export clean chat transcript
+  - id: web_161
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: PWA install prompt icons shortcuts
+  - id: web_171
+    area: web
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Service worker update toast
+  - id: web_173
+    area: perf
+    tier: p3
+    status: implemented
+    handler: js
+    summary: Debug overlay FPS particles state events
+  - id: f3d_001
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Load face3d_engine/renderer/preview/cluster_miner alongside face.js
+  - id: f3d_002
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Verify preview with ?face3d=1 query param
+  - id: f3d_003
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Inspect mined clusters via MASTERClusterMiner.snapshot
+  - id: f3d_004
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Route master:clusters into Face3D emotion state
+  - id: f3d_005
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Use VisemeDriver for duration-based lipsync
+  - id: f3d_006
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Replace mouth zone mutation with blendshape targets
+  - id: f3d_007
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Convert mask builders to normalized anchors
+  - id: f3d_008
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Move particle storage to typed arrays
+  - id: f3d_009
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Add spatial hash repulsion in CPU tick
+  - id: f3d_010
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Optional WebGL renderer preserving retro canvas default
+  - id: enh_laui_agent_hud
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: LAUI engagement rail with thought/action/speech lanes (ar5iv 2405.13050)
+  - id: enh_modality_chips
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Prompt vs input modality chips — photo/voice/code (ar5iv 2410.22370)
+  - id: enh_research_placeholders
+    area: web
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Research-informed placeholder cycle from face_research.yml modalities
+  - id: enh_photo_live_shell
+    area: web
+    tier: p0
+    status: implemented
+    handler: both
+    summary: Photo attach (+) in live chat shell index.html.erb
+  - id: enh_face_research_catalog
+    area: bus
+    tier: p2
+    status: implemented
+    handler: ruby
+    summary: face_research.yml wired into RuntimeCatalog /runtime/config boot
+  - id: vis_subtle_vignette
+    area: face
+    tier: p2
+    status: implemented
+    handler: css
+    summary: Soft radial vignette overlay — depth without dimming chrome
+  - id: vis_warmer_phosphor
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Warmer depth shading, softer grain, gentler fresnel glow in particle shader
+  - id: vis_calm_idle_breath
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Reduced idle breath amplitude and slower mood color lerp when quiet
+  - id: vis_engagement_focus_dim
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Agent engagement subtly dims or lifts uFocusDim during listen/think/speak
+  - id: vis_ecology_softer
+    area: face
+    tier: p2
+    status: implemented
+    handler: js
+    summary: Cognition ecology terrain lines lowered alpha and warmer stroke
+  - id: vis_mood_sparkline_glow
+    area: web
+    tier: p3
+    status: implemented
+    handler: css
+    summary: Mood sparkline bars tint from --mood-accent with soft phosphor glow
+  - id: bl_viseme_asset_paths
+    area: web
+    tier: p0
+    status: implemented
+    handler: both
+    summary: viseme_packs.json + MASTER_ASSET_PATHS wiring; face_vision bundle rebuilt
+  - id: bl_fingerprinted_experimental
+    area: web
+    tier: p1
+    status: implemented
+    handler: js
+    summary: cluster_miner and face3d_preview load via digested MASTER_ASSET_PATHS
+  - id: bl_emotion_bus
+    area: bus
+    tier: p1
+    status: implemented
+    handler: js
+    summary: visual_bridge dispatches master:emotion; face runtime consumes clusters/emotion
+  - id: bl_face3d_visibility
+    area: face
+    tier: p1
+    status: implemented
+    handler: js
+    summary: face3d_preview pauses RAF when tab hidden; deviceorientation head pose
+  - id: bl_tts_partial_play
+    area: tts
+    tier: p1
+    status: implemented
+    handler: js
+    summary: Partial TTS stream plays audio during synthesis wait (not probe-only)
+  - id: bl_master_csp_enforce
+    area: web
+    tier: p1
+    status: implemented
+    handler: ruby
+    summary: MASTER CSP report-only unless PUB4_CSP_ENFORCE=1 (fleet parity)
+  - id: bl_bridge_env_wiring
+    area: bus
+    tier: p1
+    status: implemented
+    handler: both
+    summary: MASTER_BRIDGE_TOKEN and MASTER_INGRESS_TOKEN in master.env.sample + rc.d
+  - id: bl_brgen_assets_cruft
+    area: web
+    tier: p1
+    status: implemented
+    handler: both
+    summary: Untrack RAILS/brgen/public/assets from git; deploy precompile only
+  - id: bl_brgen_sidebar_live
+    area: web
+    tier: p2
+    status: implemented
+    handler: both
+    summary: Replace placeholder sidebar widgets with live community discovery partial
+face_research:
+  meta:
+    updated: '2026-07-11'
+    purpose: Ground face enhancements in published HCI/agent-interface research
+  papers:
+  - id: laui_2405
+    title: Human-Centered LLM-Agent User Interface (LAUI)
+    arxiv: '2405.13050'
+    ar5iv: https://ar5iv.labs.arxiv.org/html/2405.13050v1
+    insight: 'Agent as secretary not butler — study user needs, propose interaction schemes, separate thought/action/speech lanes, multi-modal feedback coordinated by agent.
+
+      '
+    face_hooks:
+    - agent_hud
+    - engagement_rail
+    - proactive_hints
+  - id: genai_ui_survey_2410
+    title: Survey of UI Design in Generative AI Applications
+    arxiv: '2410.22370'
+    ar5iv: https://ar5iv.labs.arxiv.org/html/2410.22370v1
+    insight: 'Distinguish prompt (instruction) from input (data acted upon); taxonomy of user-guided interactions across text, visual, and audio modalities.
+
+      '
+    face_hooks:
+    - modality_chips
+    - placeholder_cycle
+    - photo_attach
+  repos:
+  - id: open_webui
+    name: open-webui/open-webui
+    url: https://github.com/open-webui/open-webui
+    pattern: streaming chat, model chips, tool-call transparency, keyboard palette
+  - id: assistant_ui
+    name: assistant-ui/assistant-ui
+    url: https://github.com/assistant-ui/assistant-ui
+    pattern: composable chat primitives, tool UI slots, streaming affordances
+  - id: huggingface_chat_ui
+    name: huggingface/chat-ui
+    url: https://github.com/huggingface/chat-ui
+    pattern: minimal chrome, model routing chip, multimodal attachments
+  - id: open_llm_vtuber
+    name: Open-LLM-VTuber/Open-LLM-VTuber
+    url: https://github.com/Open-LLM-VTuber/Open-LLM-VTuber
+    pattern: avatar lip-sync, viseme-driven face, proactive agent persona
+  - id: flute_x_gpt
+    name: DoubleBlind23408929/Flute-X-GPT
+    url: https://github.com/DoubleBlind23408929/Flute-X-GPT
+    pattern: LAUI reference — real-time multi-modal tutoring, function-call HUD
+  engagement_levels:
+  - id: passive
+    label: idle
+    face_mode: idle
+  - id: attending
+    label: listen
+    face_mode: attending
+  - id: deliberative
+    label: think
+    face_mode: thinking
+  - id: instrumental
+    label: act
+    face_mode: tool
+  - id: expressive
+    label: speak
+    face_mode: speaking
+  modalities:
+  - id: prompt_text
+    label: prompt
+    placeholder: ask anything — type your instruction
+  - id: input_photo
+    label: photo
+    placeholder: attach a photo (+) then describe what to see
+  - id: input_voice
+    label: voice
+    placeholder: tap mic — speak, I'll listen
+  - id: input_code
+    label: code
+    placeholder: paste code — ask for review or explain
+  - id: collaborative
+    label: co-plan
+    placeholder: what are you trying to accomplish?
+  proactive_hints:
+  - 'LAUI: describe your goal — I''ll propose a workflow, not just answer'
+  - 'prompt ≠ input: type what you want; attach photo/code as separate data'
+  - mid-stream tools show in the act lane — face reacts while agents work
+  - tap face canvas to replay last reply with viseme sync
+invariants:
+  id: non_negotiable_runtime_rules
+  tier: core
+  area: runtime
+  status: active
+  source: docs/non_negotiable_runtime_rules.md
+  invariants:
+  - id: no_direct_mutation
+    rule: No agent directly mutates durable state.
+  - id: side_effects_emit_events
+    rule: Every side effect emits runtime events.
+  - id: replay_without_memory
+    rule: Replay reconstructs workflows without model memory.
+  - id: contract_validation
+    rule: Tool execution requires contract validation.
+  - id: append_only_telemetry
+    rule: Telemetry is append-only unless compacted through policy.
+  - id: repair_consumes_failures
+    rule: Repair consumes failures as first-class runtime input.
+  - id: providers_are_resources
+    rule: Providers are runtime resources, not personalities.
+  - id: expensive_cognition_reserved
+    rule: Expensive cognition is reserved for high-risk decisions.
+  - id: rollback_beats_narration
+    rule: Rollback beats narration.
+  - id: deterministic_orchestration
+    rule: Deterministic orchestration beats hidden heuristics.
+  anti_patterns:
+  - hidden_retries
+  - mutable_globals
+  - provider_specific_orchestration_branches
+  - implicit_state_mutation
+  - silent_fallbacks
+  - direct_shell_without_contract
+  - model_selected_providers
+  - unverifiable_side_effects
+  - memory_as_source_of_truth
+  - ui_coupled_to_orchestration_state
+  philosophy:
+    models: probabilistic cognition edges
+    runtime: the operating system
+    orchestrator: owns truth
+  cognitive_runtime_invariants:
+  - id: agents_no_direct_mutation
+    rule: Agents do not directly mutate durable state.
+  - id: external_action_events
+    rule: Every external action emits an event before and after execution.
+  - id: provider_routing_policy
+    rule: Provider calls routed through capability, health, cost, and fallback policy.
+  - id: telemetry_jsonl
+    rule: Telemetry is append-only JSONL unless explicitly compacted.
+  - id: tiered_memory
+    rule: Memory moves through canonical, episodic, semantic, compressed, and snapshot tiers.
+  - id: repair_pipeline
+    rule: Repair follows observe → classify → propose → sandbox → validate → merge.
+  - id: tool_contracts
+    rule: Tool contracts define inputs, outputs, permissions, retries, timeout, and validation.
+  - id: git_as_repair_memory
+    rule: Git history is mined as repair memory, not treated as dead text.
+  - id: context_pressure
+    rule: Context pressure is measured before escalation, compaction, or topology changes.
+micro_interactions:
+  id: micro_interactions
+  tier: ui
+  area: web
+  status: active
+  interactions:
+  - id: mi_001
+    number: 1
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: zin focus raises eyePool attention cells
+  - id: mi_002
+    number: 2
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: step-ease zsh opacity transition
+  - id: mi_003
+    number: 3
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: photo pointerdown mouth-zone capture flash
+  - id: mi_004
+    number: 4
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: photo ready button accent fade
+  - id: mi_005
+    number: 5
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: enhance y/n mouth arousal pulse
+  - id: mi_006
+    number: 6
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: placeholder cycles on idle
+  - id: mi_007
+    number: 7
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: long-press photo preview burst
+  - id: mi_008
+    number: 8
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: long input scales zsh border density
+  - id: mi_009
+    number: 9
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: paste emits input:paste visual event
+  - id: mi_010
+    number: 10
+    category: input
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: cursor blink synced to primer pulse
+  - id: mi_011
+    number: 11
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: first chunk faster model tint lerp
+  - id: mi_012
+    number: 12
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: dmesg lines step fade-in
+  - id: mi_013
+    number: 13
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: sentence end mouthPool pressure
+  - id: mi_014
+    number: 14
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: cursor removal step fade
+  - id: mi_015
+    number: 15
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: scroll-snap near-bottom RAF
+  - id: mi_016
+    number: 16
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: assistant prompt delayed rhythm
+  - id: mi_017
+    number: 17
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: ERROR chunk red flash on msg-body
+  - id: mi_018
+    number: 18
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: veto/pass dmesg ecology calm burst
+  - id: mi_019
+    number: 19
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: streaming nudges eye attention
+  - id: mi_020
+    number: 20
+    category: streaming
+    target_file: web/public/chat.js
+    handler: js
+    status: implemented
+    summary: DONE left hairline settled marker
+  - id: mi_021
+    number: 21
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: idle breath entropy wobble
+  - id: mi_022
+    number: 22
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: high confidence slows eyeJitter decay
+  - id: mi_023
+    number: 23
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: speech boundary mouth valence boost
+  - id: mi_024
+    number: 24
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: ecology orbit from kernel attention
+  - id: mi_025
+    number: 25
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: terrain alpha scales with confidence
+  - id: mi_026
+    number: 26
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: memory events spawn crown cells
+  - id: mi_027
+    number: 27
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: vertex scale from mouthDrive
+  - id: mi_028
+    number: 28
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: codebase topology edge opacity cue
+  - id: mi_029
+    number: 29
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: reduced-motion low-amplitude breaths
+  - id: mi_030
+    number: 30
+    category: face
+    target_file: web/public/face.js
+    handler: js
+    status: implemented
+    summary: tilt/mouse eyeMask position bias
+  - id: mi_031
+    number: 31
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: bridge RAF batch rapid events
+  - id: mi_032
+    number: 32
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: kernel step 8ms min delta guard
+  - id: mi_033
+    number: 33
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: canvas resize 50px threshold cache
+  - id: mi_034
+    number: 34
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: chat append micro task queue
+  - id: mi_035
+    number: 35
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: SSE reconnect link quiet dmesg
+  - id: mi_036
+    number: 36
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: primer boot kernel cell spawn
+  - id: mi_037
+    number: 37
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: hidden tab kernel step rate drop
+  - id: mi_038
+    number: 38
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: coarse pointer halve edge points
+  - id: mi_039
+    number: 39
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: activity-adaptive color lerp factor
+  - id: mi_040
+    number: 40
+    category: perf
+    target_file: web/public/visual_bridge.js
+    handler: js
+    status: implemented
+    summary: dmesg shared 3-slot fade ring
+  - id: mi_041
+    number: 41
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: error face shake drops mouth confidence
+  - id: mi_042
+    number: 42
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: escape emits user:interrupt
+  - id: mi_043
+    number: 43
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: photo fail delayed red hairline
+  - id: mi_044
+    number: 44
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: enhance timeout quiet settle
+  - id: mi_045
+    number: 45
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: long-press shell emergency ttsSkip
+  - id: mi_046
+    number: 46
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: veto placeholder recovery hint
+  - id: mi_047
+    number: 47
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: low confidence eye twitch
+  - id: mi_048
+    number: 48
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: run command predictive face pulse
+  - id: mi_049
+    number: 49
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: STT start eye attention boost
+  - id: mi_050
+    number: 50
+    category: error
+    target_file: web/public/chat.js
+    handler: both
+    status: implemented
+    summary: network stall link thinking state
+  - id: mi_051
+    number: 51
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: first message crown provider echo
+  - id: mi_052
+    number: 52
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: face edge hover peripheral arousal
+  - id: mi_053
+    number: 53
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: idle help trail toward input
+  - id: mi_054
+    number: 54
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: pass verdict chat hairline flash
+  - id: mi_055
+    number: 55
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: model tint mouth valence nudge
+  - id: mi_056
+    number: 56
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: double-tap cycles visual profile
+  - id: mi_057
+    number: 57
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: tool dmesg longer fade + flow cell
+  - id: mi_058
+    number: 58
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: primer ready attention cell spawn
+  - id: mi_059
+    number: 59
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: topology switch contrast nudge
+  - id: mi_060
+    number: 60
+    category: discoverability
+    target_file: web/public/cognition_ecology.js
+    handler: js
+    status: implemented
+    summary: photo ready crown memory cells
+  - id: mi_061
+    number: 61
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: TTS boundary eye valence smile
+  - id: mi_062
+    number: 62
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: creative style warps breath frequency
+  - id: mi_063
+    number: 63
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: high entropy jagged terrain lines
+  - id: mi_064
+    number: 64
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: council deliberation spirit radius pulse
+  - id: mi_065
+    number: 65
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: auto-commit crown confidence joy
+  - id: mi_066
+    number: 66
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: visitor tier desaturates face
+  - id: mi_067
+    number: 67
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: wakeLock primer flash
+  - id: mi_068
+    number: 68
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: reduced-motion sinusoidal eye scan
+  - id: mi_069
+    number: 69
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: long response micro-yaw check-in
+  - id: mi_070
+    number: 70
+    category: personality
+    target_file: web/public/face.js
+    handler: both
+    status: implemented
+    summary: DONE high confidence dmesg brighten
+  - id: mi_071
+    number: 71
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: respect prefers-reduced-motion
+  - id: mi_072
+    number: 72
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: focus-visible raises eyePool attention
+  - id: mi_073
+    number: 73
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: dynamic canvas aria-label from state
+  - id: mi_074
+    number: 74
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: battery profile halve spawn counts
+  - id: mi_075
+    number: 75
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: chat scroll RAF overscroll clamp
+  - id: mi_076
+    number: 76
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: micro elements within face tokens
+  - id: mi_077
+    number: 77
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: dmesg visual echoes aria-hidden
+  - id: mi_078
+    number: 78
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: coarse pointer long-press widen STT
+  - id: mi_079
+    number: 79
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: visibilitychange pause kernel spawns
+  - id: mi_080
+    number: 80
+    category: accessibility
+    target_file: web/public/face.css
+    handler: js
+    status: implemented
+    summary: error recovery dmesg-style text
+platform_topology:
+  id: platform_topology
+  tier: platform
+  area: deploy
+  status: active
+  source: docs/platform_topology.md
+  primary_platform:
+    id: brgen.no
+    role: primary runtime surface and application umbrella
+    responsibilities:
+    - orchestration surface
+    - runtime observability
+    - MASTER integration
+    - authentication/session coordination
+    - shared search/indexing
+    - PWA shell
+    - dashboard and replay UI
+    - subapp routing
+    - SEO authority consolidation
+    stack:
+    - Rails 8
+    - Hotwire
+    - Turbo streams
+    - Stimulus
+    - pure SCSS
+    - semantic HTML
+    - offline-first PWA shell
+    - runtime-event-driven UI
+    interaction_model:
+      borrow_from: X/Twitter
+      patterns:
+      - dense feed-first layout
+      - persistent left navigation on desktop
+      - mobile bottom navigation
+      - sticky composer/search
+      - cursor-paginated timelines
+      - inline media/cards
+      - fast optimistic interactions
+      - keyboard shortcuts
+      - minimal modal friction
+      must_not_copy:
+      - X branding
+      - visual chrome
+      - dark-pattern engagement mechanics
+    feel_like:
+    - civic/social operating surface
+    - fast timeline application
+    - local/community graph
+    - observability-aware PWA
+    not_like:
+    - AI toy
+    - startup dashboard
+    - engagement casino
+    - decorative social clone
+  scss_baseline:
+    id: bsdports.org
+    role: standard SCSS baseline for all Rails apps
+    qualities:
+    - OpenBSD-inspired restraint
+    - semantic HTML defaults
+    - typographic rhythm
+    - low-noise navigation
+    - minimal chrome
+    - sparse color
+    - high contrast
+    - grepable/printable content
+    - fast static-first rendering
+    - responsive without framework dependency
+    shared_layers:
+    - tokens
+    - reset/base
+    - typography
+    - layout grid
+    - forms
+    - buttons
+    - tables
+    - flash/status messages
+    - navigation
+    - code/log rendering
+    - accessibility states
+    - print styles
+  subapps:
+    inherit:
+    - bsdports SCSS baseline
+    - typography system
+    - runtime event schema
+    - PWA shell
+    - auth/session conventions
+    - accessibility rules
+    - SCSS tokens
+    - observability contracts
+    rule: operationally separable
+  applications:
+  - id: bsdports.org
+    identity: BSD/OpenBSD ports/packages/research focus
+    ui: terminal-informed, sparse color, typography-first, documentation-heavy
+    role: source of truth for shared SCSS architecture
+  - id: amber
+    identity: experimental/research/runtime sandbox
+    guarantees: lower operational
+    rules:
+    - isolate experiments
+    - do not leak instability into core runtime
+    - preserve replay and telemetry discipline
+  - id: blogger_aggregate
+    identity: indexing, aggregation, summarization, SEO reinforcement
+    architecture:
+    - canonical metadata
+    - structured data/schema.org
+    - sitemap automation
+    - RSS/Atom ingestion
+    - deduplication
+    - semantic tagging
+    - replayable ingestion pipeline
+  shared_principles:
+  - semantic HTML
+  - pure SCSS
+  - bsdports SCSS baseline
+  - Hotwire-first interaction
+  - accessibility-first design
+  - PWA capability where appropriate
+  - replayable runtime telemetry
+  - restrained operational aesthetics
+  - OpenBSD-inspired clarity
+  anti_patterns:
+  - Tailwind sprawl
+  - hydration-heavy SPA architecture
+  - decorative dashboards
+  - utility-class soup
+  - fake activity animations
+  - hidden runtime state
+  - frontend-derived truth
+  - excessive JS frameworks
+  - engagement dark patterns
+provider_economy:
+  id: provider_economy
+  tier: core
+  area: routing
+  status: active
+  source: docs/provider_economy.md
+  principle: The orchestrator owns provider selection; models do not select themselves.
+  selection_criteria:
+  - capability
+  - latency
+  - hallucination_rate
+  - timeout_rate
+  - repair_burden
+  - token_cost
+  - context_capacity
+  - historical_reliability
+  routing_tiers:
+    cheap_cognition:
+      use_for:
+      - classification
+      - compression
+      - retrieval_ranking
+      - summarization
+      - critique
+      - voting
+      - lint_reasoning
+    expensive_cognition:
+      use_for:
+      - high_risk_synthesis
+      - architecture_decisions
+      - irreversible_mutations
+      - council_arbitration
+      - long_horizon_planning
+  quarantine:
+    triggers:
+    - hallucination_rate_spikes
+    - retries_exceed_threshold
+    - invalid_structured_outputs_repeat
+    - timeout_rate_climbs
+    - corruption_incidents_increase
+  long_term_direction:
+    flow:
+    - workflow
+    - capability_routing
+    - health_scoring
+    - quorum
+    - replay_analysis
+    - repair_feedback
+    - adaptive_optimization
+    goal: Provider layer becomes a runtime economy, not a static config file
+repo_ecology:
+  id: repo_ecology
+  tier: core
+  area: repository
+  status: active
+  source: docs/repo_ecology.md
+  core_principle: A repository is semantic topology, dependency ecology, cognitive geography, architectural history, and organizational memory — not a bag of files
+  optimize_for:
+  - comprehensibility
+  - semantic_coherence
+  - navigability
+  - architectural_elegance
+  - entropy_reduction
+  pipeline:
+  - scan
+  - classify
+  - cluster
+  - score
+  - simulate
+  - critique
+  - apply
+  - test
+  - rollback_if_needed
+  transformation_requirements:
+  - observable
+  - reversible
+  - scoped
+  - audited
+  - epistemically_justified
+  planned_subsystems:
+  - id: dead_file_scanner
+    detects:
+    - unreferenced_files
+    - orphaned_modules
+    - stale_migrations
+    - unused_tests
+    - abandoned_experiments
+    - duplicate_assets
+    safety:
+    - never_delete_without_graph_proof
+    - zero_inbound_references
+    - git_history_confidence_threshold
+  - id: similarity_clusterer
+    clusters:
+    - duplicated_modules
+    - overlapping_utilities
+    - convergent_abstractions
+    - namespace_fragmentation
+    outputs:
+    - merge_proposals
+    - bounded_context_candidates
+    - architectural_convergence_maps
+  - id: reference_graph
+    tracks:
+    - imports
+    - runtime_references
+    - constants
+    - events
+    - pipelines
+    - cli_commands
+    - file_mutations
+    enables:
+    - safe_rename
+    - scoped_rollback
+    - dependency_visualization
+    - blast_radius_estimation
+  - id: rename_planner
+    goals:
+    - semantic_consistency
+    - grammar_normalization
+    - namespace_coherence
+    - ambiguity_reduction
+    supports:
+    - import_rewriting
+    - test_rewriting
+    - rollback_journal
+    - migration_plans
+  - id: merge_planner
+    combines:
+    - semantic_similarity
+    - dependency_overlap
+    - runtime_coupling
+    - shared_terminology
+    produces:
+    - merge_simulations
+    - api_compatibility_warnings
+    - cohesion_scoring
+  - id: tree_aesthetic_scorer
+    metrics:
+    - folder_cohesion
+    - duplicate_naming
+    - depth_pressure
+    - orphan_density
+    - utility_sprawl
+    - entropy_gradients
+    - semantic_consistency
+    goal: repository should feel calm and intentional
+  - id: repo_weather
+    visualizes:
+    - architectural_turbulence
+    - dependency_storms
+    - duplication_hotspots
+    - entropy_fog
+    - stable_regions
+    - dead_zones
+    integrates: cognition_ecology
+  - id: semantic_terrain
+    generated_from:
+    - dependency_gravity
+    - module_centrality
+    - instability
+    - change_frequency
+    - memory_access
+    terrain:
+      mountains: stable architecture
+      rivers: data flow
+      fractures: contradictory abstractions
+      swamps: utility sprawl
+  safety:
+    never:
+    - blind_deletes
+    - global_rewrites_without_simulation
+    - unsafe_renames
+    - non_scoped_rollback
+    - silent_merges
+    always:
+    - touched_path_tracking
+    - rollback_journal
+    - diff_simulation
+    - syntax_validation
+    - test_execution
+    - governance_approval
+  epistemic_requirements:
+    expose:
+    - confidence
+    - assumptions
+    - unresolved_ambiguity
+    - dependency_risk
+    - blast_radius
+    - evidence
+    - critique_history
+    prefer:
+    - explicit_uncertainty
+    - reversible_changes
+    - conservative_execution
+    over:
+    - aggressive_automation
+    - speculative_restructuring
+  long_term: autonomous repository gardener for ecosystem stabilization, architectural healing, entropy reduction, semantic harmonization, cognition-aware restructuring
+routing_architecture:
+  id: routing_rearchitecture
+  tier: core
+  area: routing
+  status: applied
+  source: docs/ROUTING_REARCHITECTURE.md
+  authority: analysis and applied fixes; data/soul.yml and data/rules.yml remain law
+  current_path:
+  - Master.default_model
+  - Ground::Config stored default
+  - Now::Routing::ModelRouter#fallback_chain
+  - Judge::Agent::ModelSelector#routed_models
+  - Judge::Agent::FallbackChain#attempt_chat_with_fallbacks
+  - Judge::LLMDispatcher#send_with_cache
+  confirmed_gaps:
+  - id: webchat_undefined
+    issue: WebChat constant was undefined — free web-chat path dead
+    fix: lib/reach/web_chat.rb Master::Reach::WebChat
+  - id: ferrum_config_missing
+    issue: model_router dig for ferrum_web_chat block did not resolve
+    fix: added ferrum_web_chat block to data/models.yml
+  - id: free_tier_unrouted
+    issue: curated free tier never routed to
+    fix: routes explanation/exploration/fallback_default point at free tier
+  - id: opus_missing
+    issue: Opus 4.8 not encoded as primary when funded
+    fix: primary tier with claude-cli and anthropic opus paths
+  - id: vision_broken
+    issue: images routed to text-only glm model
+    fix: vision_model_for uses vision tier via router
+  - id: duplicate_anchors
+    issue: ".uniq collapsed cascade to single model"
+    fix: de-duplicated free tier anchors
+  - id: catalog_disconnected
+    issue: CatalogIndex not wired to ModelRouter
+    fix: ModelRouter#live_free_models merges live :free slugs
+  - id: stale_ids
+    issue: invented or stale model identifiers
+    fix: refreshed claude-opus-4-8, dropped gpt-5.5-thinking
+  - id: overlapping_abstractions
+    issue: four pick-a-model abstractions contradicted each other
+    fix: ModelRouter selector + CatalogIndex data source consolidated
+  - id: no_quota_rotation
+    issue: no per-model daily budget or multi-key round-robin
+    fix: Ground::KeyRotator multi-key OpenRouter round-robin
+  budget_aware_ladder:
+  - tier: S
+    name: Opus 4.8 primary when funded
+    models:
+    - claude-cli:claude-opus-4-8
+    - anthropic/claude-opus-4-8
+    entry: affordable and available
+  - tier: A
+    name: strong paid-cheap
+    models:
+    - deepseek-reasoner
+    - deepseek-chat
+    - gemini-2.5-pro
+    - claude-sonnet
+    entry: Opus budget gone but funds remain
+  - tier: B
+    name: OpenRouter free cascade
+    models:
+    - qwen3-coder
+    - deepseek-v3-free
+    - nemotron
+    - gpt-oss
+    - llama
+    - gemma
+    - glm
+    - hermes
+    - phi
+    entry: budget governor reports zero spendable balance
+  - tier: C
+    name: headless web-chat
+    gate: MASTER_WEB_CHAT env flag — opt-in only, ToS-sensitive
+  - tier: D
+    name: local Ollama
+    gate: env-gated offline fallback
+  governor_rules:
+  - pick entry tier once at turn start
+  - escalate upward only on low confidence for critical operations
+  - degrade downward on failure or exhausted quota
+  - rotate by least-recently-used within tier
+  - skip models in cooldown or over daily quota
+  applied_changes:
+  - Reach::WebChat Ferrum-backed opt-in web chat
+  - ferrum_web_chat block in models.yml
+  - free tier wired into routes
+  - vision routing fixed with vision tier
+  - primary tier for Opus subscription and paid paths
+  - live_free_models from CatalogIndex
+  - KeyRotator multi-key round-robin
+  - stale id refresh and free tier de-duplication
+runtime:
+  enhancements:
+  - particle_worker
+  - council_multi_face
+  - emotional_history
+  - felt_sense_roundtrip
+  - vertical_timbre
+  - chroma_veto
+  - crt_profile
+  - tts_phrase_bank
+  - tts_stream_chunk
+  - tts_worker_pool
+  - ducking_user_stt
+  - kernel_entropy_damping
+  - mood_arc_decay
+  - emotional_ghost_trail
+  - face_module_split
+  - cluster_vertical_bias
+  - council_spirit_radius
+  - signal_superposition
+  - mood_persist_reload
+  - face_render_modes
+  - chat_virtual_scroll
+  - phosphor_trail
+  - offscreen_ecology
+  - keyboard_face_ack
+  - theme_profile_cycle
+  - cross_pool_influence
+  - paralinguistic_tags
+  - pressure_sparkline
+  - actioncable_fallback
+  - emotional_timeline
+  - council_room_ui
+  - face_micro_interactions
+  - tts_audio_stream
+  - chat_scroll_snap
+  - provider_tint_chip
+  - face3d_canonical
+  - brutalist_profile
+  - primer_kernel_spawn
+  - perf_resize_debounce
+  - chat_append_queue
+  - face_blendshape_bridge
+  - mask_anchors_2d
+  - spatial_repulsion_2d
+  vertical_timbre:
+    marketplace:
+      arousal: 0.08
+      pressure: 0.14
+      valence: -0.05
+    dating:
+      arousal: -0.06
+      valence: 0.18
+      attention: 0.12
+    tv:
+      arousal: 0.04
+      scanline: 0.22
+    default:
+      arousal: 0.0
+      pressure: 0.0
+      valence: 0.0
+  ui_philosophy:
+    profiles:
+    - id: full
+      label: Full fidelity
+      motion: 1.0
+      density: 1.0
+    - id: battery
+      label: Battery saver
+      motion: 0.45
+      density: 0.55
+    - id: crt
+      label: CRT phosphor
+      motion: 0.85
+      density: 0.9
+      scanline: 0.38
+      phosphor: 0.72
+    - id: brutalist
+      label: Brutalist terminal
+      motion: 0.35
+      density: 0.75
+      steps: 2
+      monospace: 1.0
+      phosphor: 0.4
+style_guides:
+  id: style_guides
+  tier: policy
+  area: engineering
+  status: active
+  clone_script: script/clone_style_guides.sh
+  knowledge_dir: knowledge/style_guides
+  sources:
+  - id: ruby
+    repo: https://github.com/rubocop/ruby-style-guide
+    local: ruby-style-guide
+    rubocop: true
+    enforce_via:
+    - ".rubocop.yml"
+    - data/style.yml#ruby
+  - id: rails
+    repo: https://github.com/rubocop/rails-style-guide
+    local: rails-style-guide
+    rubocop: rubocop-rails-omakase
+    enforce_via:
+    - RAILS/shared/.rubocop.yml
+    - data/rails.yml
+  - id: javascript
+    repo: https://github.com/airbnb/javascript
+    local: javascript
+    eslint: true
+    enforce_via:
+    - web/eslint.config.mjs
+    - data/style.yml#html
+  - id: css
+    repo: https://github.com/airbnb/css
+    local: css
+    enforce_via:
+    - data/style.yml#css
+    - RAILS/shared/frontend
+  - id: thoughtbot
+    repo: https://github.com/thoughtbot/guides
+    local: guides
+    topics:
+    - ruby
+    - rails
+    - git
+    - shell
+  - id: normalize
+    repo: https://github.com/necolas/normalize.css
+    local: normalize.css
+    use: css_reset_baseline
+  ruby_style_guide:
+    frozen_string_literal: always
+    string_literals: double
+    hash_syntax: modern
+    guard_clauses: prefer_early_return
+    method_length_max: 15
+    line_length_max: 120
+    naming: snake_case
+    percent_literals: "%w[] %i[] for static lists"
+    trailing_commas: multiline_only
+  rails_style_guide:
+    controllers:
+    - thin_controllers_fat_models
+    - strong_parameters_require_permit
+    - rescue_from ActiveRecord::RecordNotFound
+    - head_or_redirect_guard_clauses
+    views:
+    - partials_with_locals
+    - dom_id_dom_class
+    - tag_and_class_names_helpers
+    - no_inline_style_or_script
+    - i18n_user_facing_strings
+    models:
+    - strict_loading_by_default
+    - includes_on_association_iteration
+    - find_each_for_large_sets
+    seo:
+    - lang_on_html
+    - meta_charset_first
+    - viewport_viewport_fit_cover
+    - csrf_and_csp_meta_tags
+    - canonical_url
+    - json_ld_schema_org
+    - meta_description_truncate_160
+  javascript_style_guide:
+    modules: es_modules_preferred
+    var: forbidden
+    const: default_binding
+    semicolons: always
+    eqeqeq: always
+    arrow_functions: prefer_for_callbacks
+    naming: camelCase
+  html_css_seo:
+    html: semantic_landmarks_bare_tag_targeting
+    css: bare_tag_first_rem_units
+    a11y: wcag_2_2_aaa_target
+    seo: shared/seo_kit_json_ld_canonical
+  gates:
+  - script/style_gate.rb
+  - bundle exec rubocop
+  - RAILS/shared/bin/rubocop
+tts_phrases:
+  phrases:
+  - text: Ready.
+    voice: pernille
+    style: clear
+  - text: Listening.
+    voice: pernille
+    style: calm
+  - text: Still thinking.
+    voice: pernille
+    style: calm
+  - text: Council convenes.
+    voice: pernille
+    style: clear
+  - text: Scan complete.
+    voice: pernille
+    style: clear
+ui_philosophy:
+  id: runtime_ui_direction
+  tier: ui
+  area: web
+  status: active
+  source: docs/runtime_ui_direction.md
+  feel_like:
+  - control room
+  - courtroom
+  - terminal
+  - scientific instrument
+  not_like:
+  - startup dashboard
+  - gamified AI toy
+  - casino UI
+  - neon control panel
+  visual_philosophy:
+    principles:
+    - restraint creates authority
+    - whitespace is structure
+    - typography is architecture
+    - motion communicates state
+    - observability beats decoration
+    runtime_derived:
+    - entropy
+    - confidence
+    - provider health
+    - workflow pressure
+    - repair activity
+    - replay state
+    - orchestration topology
+    rule: UI must not invent operational truth
+  typography:
+    use:
+    - readable line lengths
+    - visible hierarchy
+    - restrained contrast
+    - stable rhythm
+    - monospace only where semantic
+    avoid:
+    - tiny gray text
+    - decorative font systems
+    - excessive uppercase
+    - compressed spacing
+    - visual noise
+  motion:
+    should:
+    - communicate transitions
+    - expose workflow state
+    - show repair/retry activity
+    - reveal orchestration flow
+    - remain interruptible
+    avoid:
+    - infinite animation
+    - ornamental transitions
+    - motion without semantic meaning
+  rails_hotwire:
+    favor:
+    - server rendering
+    - HTML-first workflows
+    - Turbo streams
+    - progressive enhancement
+    - minimal JS runtime
+    - DOM-derived interaction
+    avoid:
+    - SPA complexity unless necessary
+    - duplicated client/server state
+    - hydration-heavy architectures
+  operational_aesthetic:
+    express:
+    - determinism
+    - inspectability
+    - replayability
+    - governance
+    - confidence under pressure
+    note: The interface is part of the runtime philosophy
+  vertical_timbre:
+    marketplace:
+      arousal: 0.55
+      valence: 0.1
+      focus: 0.75
+      terrain: angular
+    dating:
+      arousal: 0.45
+      valence: 0.25
+      focus: 0.6
+      terrain: soft_curves
+    tv:
+      arousal: 0.5
+      valence: 0.05
+      focus: 0.55
+      terrain: scanlines
+    brgen:
+      arousal: 0.48
+      valence: 0.12
+      focus: 0.65
+      terrain: civic_grid
+    amber:
+      arousal: 0.62
+      valence: 0.08
+      focus: 0.5
+      terrain: experimental
+  implementation_batches:
+  - id: batch_1
+    status: implemented
+    items:
+    - bridge_registry
+    - idle_breath_entropy
+    - speech_valence
+    - high_conf_jitter
+    - cursor_fade
+    - dmesg_fade
+  - id: batch_2
+    status: implemented
+    items:
+    - ecology_confidence_orbit
+    - terrain_confidence_alpha
+    - terrain_entropy_jagged
+  - id: batch_3
+    status: implemented
+    items:
+    - eye_jitter_entropy
+  - id: batch_4
+    status: implemented
+    items:
+    - ruby_runtime_events
+    - verdict_confidence_handler
+    - council_deliberation_face
+  - id: batch_5
+    status: implemented
+    items:
+    - expression_module
+    - council_reversibility
+    - style_bleed
+    - devicemotion
+    - relayd_hardening
+  - id: batch_6
+    status: implemented
+    items:
+    - brutalist_profile
+    - perf_guards
+    - backlog_audit
+    - placeholder_consolidation
+  - id: batch_7
+    status: implemented
+    items:
+    - face_blendshape_bridge
+    - mask_anchors_2d
+    - spatial_repulsion_2d
+    - backlog_zero_pending
+  engineering_balance:
+    overengineered:
+    - item: generic_web_placeholder_slots
+      action: consolidated — 146 placeholder rows removed; micro_interactions.yml is canonical
+    - item: visual_bridge_EVENT_MAP_dupe
+      action: resolved — patterns live in topologies.yml; visual_bridge delegates to registry
+    - item: face_part_monolith_blobs
+      action: modules absorb incrementally; do not split further until hot paths stable
+    underengineered:
+    - item: face3d_blendshape_migration
+      action: canonical render — 2D phosphor pixels on invisible 3D topology; WebGL face retired
+    - item: tts_true_streaming
+      action: partial bytes shipped; full MSE playback deferred
+    - item: release_gate_local_ruby
+      action: run via bundle exec ruby34 on VPS; Mac system Ruby 2.6 is not authoritative
+    brutalist_opportunities:
+      cli:
+      - MASTER_BRUTALIST=1 boot banner exposes H/C/mode dmesg lines
+      - step transitions zero easing in brutalist profile
+      web:
+      - brutalist-strip pre exposes entropy confidence mode
+      - square borders zero radius monospace labels
+      - dmesg as primary error surface not modals
+      face3d:
+      - lower phosphor decay harsher dither steps
+      - expose lit_pixels and blend targets in dev panel

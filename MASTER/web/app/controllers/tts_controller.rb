@@ -41,8 +41,7 @@ class TtsController < ApplicationController
   end
 
   def phrases
-    path = Master.data_path("runtime/tts_phrases.yml")
-    raw = File.exist?(path) ? YAML.safe_load_file(path, permitted_classes: [Symbol], aliases: true) : {}
+    raw = Master::Ground::RuntimeCatalog.load("tts_phrases")
     list = Array(raw["phrases"]).map do |row|
       {
         text: row["text"].to_s,

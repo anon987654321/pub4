@@ -22,7 +22,7 @@ entries:
 
     Priority-1 Orient work—`orient.rb`, slim AGENTS and CLAUDE, `/orient` plus subcommand, zshrc `[[ -t 0 ]]` guard—shipped then reverted as a useless wrapper. One fact equals one place; commits stay small and reversible; smoothing items remain follow-up tickets.
 
-    2026-07 doc consolidation: top-level MASTER stubs (SOURCE_TREE, TRACE, REPLICATE, CONVENTIONS, QUICKSTART, AGENT_CONTRACT, RUNTIME_MAP, root IDENTITY.md) removed or folded into START_HERE.md. Target law stack documented there (5 YAML + rules shards). Next YAML pass: merge data/runtime/*.yml into data/runtime.yml; fold tier-5 misc into patterns.yml + operator_principles.yml.
+    2026-07 doc consolidation: top-level MASTER stubs (SOURCE_TREE, TRACE, REPLICATE, CONVENTIONS, QUICKSTART, AGENT_CONTRACT, RUNTIME_MAP, root IDENTITY.md) removed or folded into START_HERE.md. Runtime shards were merged into data/runtime.yml. Next YAML pass: fold tier-5 misc into patterns.yml + operator_principles.yml.
 - key: project_falcon_em_subprocess
   name: Falcon Async + EventMachine = subprocess pattern
   description: EM-based gems (rb-edge-tts, em-http) inside Falcon request handlers

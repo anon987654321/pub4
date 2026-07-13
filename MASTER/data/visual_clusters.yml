@@ -120,7 +120,7 @@ clusters:
     status: partial
     layer: repository_mining
     files:
-      - data/runtime/repo_ecology.yml
+      - data/runtime.yml#repo_ecology
       - data/visual_clusters.yml
     signals:
       - scan

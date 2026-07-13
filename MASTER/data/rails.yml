@@ -1,5 +1,5 @@
 # Aligned with rubocop/rails-style-guide + rubocop-rails-omakase (RAILS/shared/.rubocop.yml)
-style_guides: data/runtime/style_guides.yml
+style_guides: data/runtime.yml#style_guides
 
 stack:
   rails: "8.1.3"

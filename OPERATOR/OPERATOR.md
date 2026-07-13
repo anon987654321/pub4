@@ -193,8 +193,26 @@ lockout from console: `doas pfctl -t bruteforce -T flush`.
 
 Any file changed on the VPS under `OPENBSD/` must be copied back to git and committed.
 
+## Repair playbooks
+
+- Integrity failure: run `ruby OPERATOR/integrity_gate.rb` and fix the first failing gate.
+- App CI failure: run `zsh OPENBSD/sh/vps_ci.sh <app>` serially. If caches are root-owned,
+  export the app `HOME` and `NPM_CONFIG_CACHE`.
+- MASTER dead tap: precompile `MASTER/web` production assets, restart `master`, then verify
+  `https://ai.brgen.no` after the primer tap.
+- relayd/domain drift: run `RAILS/domain_alignment_gate.rb` and
+  `OPENBSD/deploy_smoke_gate.rb` before restarting relayd.
+- pf lockout: use the server4 console and flush the `bruteforce` table; do not keep reconnecting.
+- Silent TTS: verify `edge-tts` or `espeak` exists before debugging web routes.
+
+## Patch examples
+
+A good operator patch updates every authority affected by a domain or port change, lists exact
+checks, and reports host, commands, result, and intentional skips. A bad patch changes one app
+script, says only "restarted stuff", or runs the full installer from macOS.
+
 ## Post-change
 
 - Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
-- Record persistent lessons in `BACKLOG.yml`, `OPERATOR/DEBT.md`, or `OPERATOR/DECISIONS.md`.
+- Record persistent lessons in `OPERATOR/data/debt.yml` or `OPERATOR/DECISIONS.md`.

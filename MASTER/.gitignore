@@ -26,7 +26,6 @@ data/feedback_ledger.jsonl
 data/traces/
 data/learnings.jsonl
 /runtime/
-!data/runtime/
 knowledge/
 
 # Runtime constitutional state — written by soul.yml hooks / scan runs. Keeping it

@@ -9,6 +9,8 @@ class IntegrityLocaleTest < Minitest::Test
   GATE = File.join(ROOT, "OPERATOR", "integrity_gate.rb")
 
   def test_integrity_chain_is_independent_of_operator_locale
+    assert_path_exists GATE
+
     env = { "LANG" => nil, "LC_ALL" => "C", "LC_CTYPE" => nil }
     output, status = Open3.capture2e(env, RbConfig.ruby, GATE, chdir: ROOT)
 
