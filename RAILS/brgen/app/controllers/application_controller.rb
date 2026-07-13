@@ -5,6 +5,14 @@ class ApplicationController < ActionController::Base
   include Authentication
   include Shared::PunditAuthorization
   include Shared::PagyPagination
+  # Rails' automatic helper inclusion (config.action_controller.include_all_helpers)
+  # scans the HOST app's app/helpers/, but pub4-shared is mounted as a separate
+  # engine gem -- its helpers aren't in that scan path and need an explicit
+  # `helper` call. Other shared helpers (e.g. Shared::SearchHelper's
+  # live_search_index) happened to already be reachable via a different
+  # inclusion path; Shared::StimulusFormHelper wasn't, breaking
+  # password_visibility_field on every sessions/new render.
+  helper Shared::StimulusFormHelper
   turbo_refreshes_with :morph, scroll: :preserve
   stale_when_importmap_changes
 
