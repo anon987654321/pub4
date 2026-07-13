@@ -13,7 +13,14 @@
 }
 
 @media (max-width: 1280px) { .city-carousel { left: calc(88px + 10px); } }
-@media (max-width: 768px) { .city-carousel { left: calc(10px + var(--safe-left)); } }
+@media (max-width: 768px) {
+  /* Below this width the sidebar collapses and the sticky feed-header's
+     page title ("Home" etc.) becomes flush with the left edge -- the same
+     band this fixed decorative carousel occupies, so they overlapped.
+     Hide the carousel rather than fight the page title for the same
+     8px-grid vertical strip; it's decorative, not load-bearing. */
+  .city-carousel { display: none; }
+}
 
 .carousel-container { width: 100%; height: 100%; position: relative; overflow: hidden; }
 
