@@ -1,5 +1,19 @@
 'use strict'
 
+class SimpleCarousel {
+  constructor(e, i = 2800) {
+    this.slides = Array.from(e.querySelectorAll(".carousel-slide"))
+    this.i = 0
+    this.n = this.slides.length
+    if (this.n > 1) this.t = setInterval(() => this.next(), i)
+  }
+  next() {
+    this.slides[this.i].classList.remove("active")
+    this.i = (this.i + 1) % this.n
+    this.slides[this.i].classList.add("active")
+  }
+}
+
 const DEFAULT_TRACKS = [
   { title: "Microphone Master", id: "9EGHwkDix78", artist: "J Dilla" },
   { title: "In Space", id: "vO2nWXCVt6o", artist: "J Dilla" },
@@ -131,6 +145,7 @@ class VisualEngine {
       particleCountPerRow: this.isMobile ? 32 : 64,
       rowCount: this.isMobile ? 125 : 250
     }
+    this.stars = []
     this.resize()
   }
 
@@ -146,6 +161,16 @@ class VisualEngine {
     this.centerX = this.w / 2
     this.centerY = this.h / 2
     this.initParticles()
+    // Reintegrated star field from c7c8effcd historical
+    this.stars = []
+    for (let i = 0; i < 80; i++) {
+      this.stars.push({
+        x: (Math.random() - 0.5) * this.w * 2,
+        y: (Math.random() - 0.5) * this.h * 2,
+        z: Math.random() * this.config.fov * 2 - this.config.fov,
+        brightness: Math.random() * 0.5 + 0.5
+      })
+    }
   }
 
   initParticles() {
@@ -261,6 +286,15 @@ class VisualEngine {
       this.centers = this.particles.map((_, i) => this.centers[i] || { x: this.centerX, y: this.centerY })
     }
 
+    // Update stars from historical c7c8effcd
+    const audioBoost = (audioData.average || 0) * 0.5
+    this.stars.forEach(star => {
+      star.z += (isPressed ? this.config.speed : -this.config.speed) * 0.5
+      if (star.z > this.config.fov) star.z -= this.config.fov * 2
+      else if (star.z < -this.config.fov) star.z += this.config.fov * 2
+      star.x = (Math.random() - 0.5) * this.w * 2 * (this.config.fov / (this.config.fov + star.z)) + this.centerX * 0.1 // rough
+    })
+
     if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 5)
     else this.colorInvertValue = Math.max(0, this.colorInvertValue - 5)
   }
@@ -289,6 +323,16 @@ class VisualEngine {
       })
     })
     if (this.colorInvertValue > 0) this.softInvert(this.colorInvertValue)
+    // Draw stars from c7c8effcd historical
+    this.stars.forEach(star => {
+      const scale = this.config.fov / (this.config.fov + star.z)
+      const sx = star.x * scale + this.centerX * 0.5 // approximate center
+      const sy = star.y * scale + this.centerY * 0.5
+      if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
+        const b = Math.floor(star.brightness * 200 + audioBoost * 50)
+        this.setPixel(sx | 0, sy | 0, b, b, b + 20, 180)
+      }
+    })
     this.ctx.putImageData(this.imageData, 0, 0)
   }
 
@@ -331,6 +375,19 @@ export class RadioBrgen {
     this.visualEngine = new VisualEngine(this.canvas)
 
     if (options.heading) options.heading.textContent = options.headingText || "git dig · pub4/index.html"
+
+    // Reintegrated SimpleCarousel from historical best (c7c8effcd)
+    const cityCarousel = document.getElementById("cityCarousel")
+    if (cityCarousel) {
+      new SimpleCarousel(cityCarousel)
+      // Inject historical carousel styles to avoid inline <style> auditor flag
+      const style = document.createElement('style')
+      style.textContent = `h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
+    .carousel-container{width:100%;height:100%;position:relative;overflow:hidden}
+    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform .3s ease,opacity .3s ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap}
+    .carousel-slide.active{opacity:1;transform:translateY(0%)}`
+      document.head.appendChild(style)
+    }
 
     this.setupGUI()
     this.setupEventListeners()
