@@ -50,8 +50,21 @@ def apps_with_scss
     .sort
 end
 
+def scss_entry_for(app)
+  styles_dir = File.join(RAILS_ROOT, app, "app", "assets", "stylesheets")
+  app_scss = File.join(styles_dir, "app.scss")
+  return app_scss if File.file?(app_scss)
+
+  File.join(styles_dir, "application.scss")
+end
+
+def css_output_for(app)
+  basename = File.basename(scss_entry_for(app), ".scss")
+  File.join(RAILS_ROOT, app, "app", "assets", "builds", "#{basename}.css")
+end
+
 def app_has_scss?(app)
-  File.file?(File.join(RAILS_ROOT, app, "app", "assets", "stylesheets", "application.scss"))
+  File.file?(scss_entry_for(app))
 end
 
 def selected_apps
@@ -195,8 +208,9 @@ rescue StandardError => e
 end
 
 def try_npx_sass(app_dir)
-  scss = File.join(app_dir, "app", "assets", "stylesheets", "application.scss")
-  out = File.join(app_dir, "app", "assets", "builds", "application.css")
+  app = File.basename(app_dir)
+  scss = scss_entry_for(app)
+  out = css_output_for(app)
   FileUtils.mkdir_p(File.dirname(out))
   styles_dir = File.join(app_dir, "app", "assets", "stylesheets")
   cmd = [
@@ -243,7 +257,7 @@ end
 
 apps.each do |app|
   app_dir = File.join(RAILS_ROOT, app)
-  out = File.join(app_dir, "app", "assets", "builds", "application.css")
+  out = css_output_for(app)
   next unless app_has_scss?(app)
 
   unless check_only

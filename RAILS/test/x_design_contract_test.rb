@@ -136,10 +136,10 @@ class XDesignContractTest < Minitest::Test
 
   def test_compiled_css_has_no_cyclic_x_danger
     APPS.each do |app|
-      css = File.join(ROOT, app, "app", "assets", "builds", "application.css")
+      css = compiled_css_path(app)
       next unless File.file?(css)
 
-      refute_match(CYCLIC_X_DANGER_PATTERN, File.read(css), "#{app} application.css has cyclic --x-danger")
+      refute_match(CYCLIC_X_DANGER_PATTERN, File.read(css), "#{app} #{File.basename(css)} has cyclic --x-danger")
     end
   end
 
@@ -247,6 +247,25 @@ class XDesignContractTest < Minitest::Test
     assert_includes partial, 'like_count.positive? ? like_count : ""'
   end
 
+  def test_bsdports_layout_includes_x_shell_markers
+    layout = File.read(BSDPORTS_LAYOUT)
+    shell = File.read(X_SHELL_PARTIAL)
+
+    assert_includes layout, 'render "shared/x_shell"'
+    assert_includes layout, 'render "shared/x_tab_bar"'
+    assert_includes layout, 'render "shared/x_search_widget"'
+    assert_includes shell, "data-x-shell"
+    assert_includes shell, "yield :before_main"
+    assert_includes shell, "yield :main"
+    assert_includes shell, "yield :widgets"
+    assert_includes shell, "if local_assigns[:sidebar_items]"
+    assert_includes shell, 'render "shared/x_sidebar_nav"'
+
+    refute_includes layout, 'class="nav-visible"'
+    refute_includes layout, 'class="logo"'
+    refute_includes shell, 'class="tab-bar"'
+  end
+
   def test_brgen_layout_includes_x_shell_markers
     layout = File.read(BRGEN_LAYOUT)
     shell = File.read(X_SHELL_PARTIAL)
@@ -304,6 +323,13 @@ class XDesignContractTest < Minitest::Test
   end
 
   private
+
+  def compiled_css_path(app)
+    app_css = File.join(ROOT, app, "app", "assets", "builds", "app.css")
+    return app_css if File.file?(app_css)
+
+    File.join(ROOT, app, "app", "assets", "builds", "application.css")
+  end
 
   def mixin_block(scss, name)
     start = scss.index("@mixin #{name}")
