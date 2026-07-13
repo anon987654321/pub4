@@ -7,9 +7,8 @@
   </div>
 <% end %>
 <%= render "shared/x_card",
-  avatar: content_tag(:div, restaurant.name.first, class: "x-avatar-placeholder"),
   name: restaurant.name,
-  name_url: takeaway_restaurant_path(restaurant),
+  url: takeaway_restaurant_path(restaurant),
   handle: restaurant.cuisine_type,
   content: restaurant_content,
   actions: link_to("View", takeaway_restaurant_path(restaurant), class: "x-act"),

@@ -3,9 +3,9 @@
   <%= button_to "Message", user_conversations_path(other), method: :post, class: "x-act x-act--primary" %>
 <% end %>
 <%= render "shared/x_card",
-  avatar: (other.dating_profile&.photos&.attached? ? lazy_image_tag(other.dating_profile.photos.first, alt: other.display_name, class: "x-avatar-img") : content_tag(:div, other.display_name.first, class: "x-avatar-placeholder")),
+  avatar_url: (other.dating_profile&.photos&.attached? ? url_for(other.dating_profile.photos.first) : nil),
   name: other.display_name || other.email_address.split("@").first,
-  name_url: user_path(other),
+  url: user_path(other),
   content: capture { %(<p class="x-meta">Matched on #{match.created_at.to_date}</p>).html_safe },
   actions: match_actions,
   class: "x-match" %>
