@@ -91,8 +91,8 @@ posts = users.sample([30, users.size].min).flat_map do |user|
       title: Faker::Lorem.sentence(word_count: 5),
       content: Faker::Lorem.paragraph(sentence_count: 4),
       created_at: rand(1..90).days.ago,
-      views_count: rand(100 * SEED_SCALE, 50000 * SEED_SCALE),
-      likes_count: rand(10 * SEED_SCALE, 5000 * SEED_SCALE)
+      views_count: rand((100 * SEED_SCALE)..(50000 * SEED_SCALE)),
+      likes_count: rand((10 * SEED_SCALE)..(5000 * SEED_SCALE))
     )
   end
 end
@@ -150,7 +150,7 @@ listings = stores.flat_map do |store|
       location: Faker::Address.city,
       status: 'active',
       created_at: rand(1..60).days.ago,
-      views_count: rand(100 * SEED_SCALE, 10000 * SEED_SCALE)
+      views_count: rand((100 * SEED_SCALE)..(10000 * SEED_SCALE))
     )
   end
 end
@@ -183,7 +183,7 @@ dating_profiles = users.sample(num_dating).map do |user|
     longitude: user.longitude,
     bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample,
     visible: true,
-    matches_count: rand(5 * SEED_SCALE, 500 * SEED_SCALE)
+    matches_count: rand((5 * SEED_SCALE)..(500 * SEED_SCALE))
   )
 end
 
@@ -203,7 +203,7 @@ playlists = users.sample(num_play).map do |user|
     name: "#{Faker::Music.genre} #{Faker::Music.album}",
     description: Faker::Lorem.sentence,
     tracks_count: rand(5..25),
-    plays_count: rand(100 * SEED_SCALE, 100000 * SEED_SCALE),
+    plays_count: rand((100 * SEED_SCALE)..(100000 * SEED_SCALE)),
     collaborative: [true, false].sample
   )
 end

@@ -1,6 +1,6 @@
 <% other = match.other_user(Current.user) %>
 <% match_actions = capture do %>
-  <%= link_to "Message", conversation_path(match), class: "x-act x-act--primary" %>
+  <%= button_to "Message", user_conversations_path(other), method: :post, class: "x-act x-act--primary" %>
 <% end %>
 <%= render "shared/x_card",
   avatar: (other.dating_profile&.photos&.attached? ? lazy_image_tag(other.dating_profile.photos.first, alt: other.display_name, class: "x-avatar-img") : content_tag(:div, other.display_name.first, class: "x-avatar-placeholder")),

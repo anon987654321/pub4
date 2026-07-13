@@ -1,9 +1,9 @@
 <%= turbo_frame_tag dom_id(post) do %>
   <% cache [post, Current.user&.id] do %>
     <% post_actions = capture do %>
-      <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle" data-x-action-url-value="<%= comments_path(post_id: post) %>" data-x-action-count-value="<%= post.comment_count %>">💬 <span data-x-action-target="count"><%= post.comment_count %></span></span>
+      <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle" data-x-action-url-value="<%= post_comments_path(post) %>" data-x-action-count-value="<%= post.comment_count %>">💬 <span data-x-action-target="count"><%= post.comment_count %></span></span>
       <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle">↻</span>
-      <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle" data-x-action-url-value="<%= vote_path(post) %>" data-x-action-count-value="<%= post.score %>">↑ <span data-x-action-target="count"><%= post.score %></span></span>
+      <span class="x-act" data-controller="x-action" data-action="click->x-action#toggle" data-x-action-url-value="<%= post_vote_path(post) %>" data-x-action-count-value="<%= post.score %>">↑ <span data-x-action-target="count"><%= post.score %></span></span>
       <span class="x-act">⋯</span>
       <button type="button" class="x-act" data-controller="clipboard" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy" title="Share">↗</button>
     <% end %>
