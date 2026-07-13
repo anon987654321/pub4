@@ -22,6 +22,8 @@ export default class extends Controller {
     hideBranding: { type: Boolean, default: false }
   }
 
+  #resizeWaveform
+
   connect() {
     this.playing = false
     this.peaks = this.#peaksForTrack(this.trackIdValue || "default")
