@@ -14,6 +14,7 @@ APP_FILES = {
   "amber" => {
     layout: "app/views/layouts/application.html.erb",
     home: "app/views/home/index.html.erb",
+    nav_partials: ["app/views/shared/_sidebar_nav.html.erb"],
     nav: %w[Sign\ in Sign\ up],
   },
   "brgen" => {
@@ -36,19 +37,21 @@ def source_checks(result, app)
   files = APP_FILES.fetch(app.name)
   layout = read_app_file(app.name, files.fetch(:layout))
   home = read_app_file(app.name, files.fetch(:home))
+  nav_source = ([layout, home] + files.fetch(:nav_partials, []).map { |path| read_app_file(app.name, path) }).join("\n")
 
   result.fail("#{app.name}: layout needs skip link to main content") unless layout.include?('href="#main-content"')
   result.fail("#{app.name}: layout needs main-content landmark") unless layout.include?('id="main-content"')
   result.fail("#{app.name}: home needs data-visitor-orientation marker") unless home.include?("data-visitor-orientation")
 
   files.fetch(:nav).each do |label|
-    result.fail("#{app.name}: primary visitor nav missing #{label}") unless layout.include?(label) || home.include?(label)
+    result.fail("#{app.name}: primary visitor nav missing #{label}") unless nav_source.include?(label)
   end
 
   if app.name == "brgen"
     result.fail("brgen: sidebar search must submit to global_search_path") unless layout.include?("form_with url: global_search_path")
     %w[Home Explore\ communities Posts Messages Nearby].each do |label|
-      result.fail("brgen: mobile tab missing aria label #{label}") unless layout.include?("aria: { label: \"#{label.tr('\\', '')}\" }")
+      aria_label = /aria:\s*\{[^}]*\blabel:\s*["']#{Regexp.escape(label.tr('\\', ''))}["']/
+      result.fail("brgen: mobile tab missing aria label #{label}") unless layout.match?(aria_label)
     end
   end
 end

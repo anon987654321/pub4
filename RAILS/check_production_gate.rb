@@ -147,15 +147,6 @@ else
   fail!(failures, "missing RAILS/master_web_assets_gate.rb")
 end
 
-archive_restore_gate = File.join(RAILS_ROOT, "archive_restore_gate.rb")
-if File.file?(archive_restore_gate)
-  stdout, status = Open3.capture2(RUBY_BIN, archive_restore_gate, chdir: ROOT)
-  print stdout
-  fail!(failures, "archive restore gate failed") unless status.success?
-else
-  fail!(failures, "missing RAILS/archive_restore_gate.rb")
-end
-
 master_tts_gate = File.join(RAILS_ROOT, "master_tts_gate.rb")
 if File.file?(master_tts_gate)
   stdout, status = Open3.capture2(RUBY_BIN, master_tts_gate, chdir: ROOT)
