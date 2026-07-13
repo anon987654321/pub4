@@ -98,6 +98,11 @@ nav.nav-visible {
 }
 
 nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px; /* touch target: --x-line-height is a fixed 20px, so an
+    unpadded anchor collapses to a 20px-tall hit area */
+  padding-block: 0.5rem;
   color: var(--dark-grey);
   font-size: 0.9375rem;
   text-decoration: none;
