@@ -27,37 +27,28 @@
   <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Semantic search for OpenBSD ports.")) %>
   <%= javascript_importmap_tags %>
 </head>
-<body data-pwa-key="bsdports" data-controller="pwa-standalone">
+<body data-pwa-key="bsdports" data-controller="pwa-standalone" class="bsdports-page">
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<% content_for :brand do %>
-  <%= link_to root_path, class: "brand brand-wordmark", aria: { label: "BSDports" } do %>
-    <span class="brand-text">BSDports</span>
-  <% end %>
-<% end %>
-
-<% content_for :sidebar_extras do %>
+<div class="corner-utility">
+  <%= render "shared/theme_toggle", storage_key: "bsdports-theme" %>
   <% if authenticated? %>
-    <%= link_to "Sign out", session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } %>
+    <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+  <% else %>
+    <%= link_to "Sign in", new_session_path %>
   <% end %>
-<% end %>
-
-<% content_for :main do %>
-  <main id="main-content" role="main">
-    <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
-    <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
-    <%= yield %>
-  </main>
-<% end %>
-
-<% content_for :widgets do %>
-  <%= render "shared/x_search_widget", url: ports_path, placeholder: "Search ports…" %>
-<% end %>
-
-<div class="app-shell">
-  <%= render "shared/x_shell" %>
-  <%= render "shared/x_tab_bar", more_button: false %>
 </div>
+
+<main id="main-content" role="main">
+  <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
+  <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+  <%= yield %>
+</main>
+
+<footer>
+  <p class="copyright">&copy; <%= Date.current.year %> BSDports</p>
+</footer>
+
 <%= render "shared/install_prompt" %>
 </body>
 </html>

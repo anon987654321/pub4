@@ -1,12 +1,16 @@
 <% content_for :title, "Ports" %>
-<header class="page-header" role="banner" aria-label="OpenBSD ports header" data-visitor-orientation>
-  <h1>OpenBSD ports</h1>
-  <p class="dim">Search packages, categories, maintainers, dependencies, and security notes across the BSD ports collection.</p>
-  <nav role="navigation" aria-label="Ports actions">
-    <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
-  </nav>
-  <%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: "Search ports…", label: "Search ports", frame_id: "bsdports-ports" %>
-</header>
+<div class="home-logo">
+  <%= image_tag "bsdports_182x44.svg", alt: "BSDports", width: 182, height: 44 %>
+</div>
+<p class="home-tagline">Search packages, categories, maintainers, dependencies, and security notes across the BSD ports collection.</p>
+
+<%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: "Search ports…", label: "Search ports", frame_id: "bsdports-ports", show_submit: false %>
+
+<nav class="home-links" role="navigation" aria-label="Ports actions">
+  <%= link_to "Categories", categories_path %>
+  <%= link_to "Maintainers", maintainers_path %>
+  <%= link_to "RSS", ports_path(format: :rss) %>
+</nav>
 
 <% if @categories&.any? %>
 <section class="categories" aria-label="Port categories">
