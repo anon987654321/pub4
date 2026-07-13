@@ -99,6 +99,7 @@ APPS.each do |app|
 end
 
 %w[
+  test/x_design_contract_test.rb
   test/pwa_design_contract_test.rb
   ../MASTER/web/test/pwa_master_contract_test.rb
   test/shared_social_routes_test.rb

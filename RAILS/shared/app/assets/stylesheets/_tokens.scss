@@ -19,6 +19,7 @@
 
 :root {
   @include x.x-dark-tokens;
+  @include x.x-semantic-status-tokens;
   color-scheme: dark;
   --color-background: var(--x-bg);
   --color-midtone: var(--x-text-secondary);

@@ -79,6 +79,16 @@
   --x-danger: #{$danger};
 }
 
+// Semantic status aliases — chrome uses --x-*; legacy --color-* remains for _zen_shell.
+@mixin x-semantic-status-tokens {
+  --x-success: var(--color-success);
+  --x-warning: var(--color-warning);
+  --x-danger: var(--x-danger);
+  /* like/repost active: defer to verification checklist; fallback: */
+  --x-like-active: var(--x-accent);
+  --x-repost-active: var(--color-success);
+}
+
 // Stable application aliases layered over either x token theme.
 @mixin x-app-root-tokens {
   --safe-top: env(safe-area-inset-top, 0px);
