@@ -100,7 +100,7 @@ export default class extends Controller {
   }
 
   submitComment() {
-    if (!this.hasCommentInputTarget || !this.pendingCommentTime) return
+    if (!this.hasCommentInputTarget || this.pendingCommentTime == null) return
     const body = this.commentInputTarget.value.trim()
     if (!body) return
     const trackId = this.trackIdValue

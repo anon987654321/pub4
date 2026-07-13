@@ -30,9 +30,9 @@ module Playlist
         end.compact
         redirect_to playlist_hosted_tracks_path, notice: "#{created.size} tracks uploaded (bulk like Whyp)"
       else
-        @track = Playlist::Track.new(track_params)
+        @track = Playlist::Track.new(track_params.except(:audio_file))
         @track.user = Current.user if @track.respond_to?(:user=)
-        @track.audio_file.attach(params[:track][:audio_file]) if params.dig(:track, :audio_file).present?
+        @track.audio_file.attach(files.first) if files.any?
         @track.artwork.attach(params[:track][:artwork]) if params.dig(:track, :artwork).present?
 
         if @track.save
