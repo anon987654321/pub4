@@ -17,6 +17,13 @@ export default class extends Controller {
       tracks: this.hasTracksValue ? this.tracksValue : undefined,
       onStart: () => this.revealArchaeology()
     })
+
+    // Auto-start on playlist.brgen.no landing: immediately play tracks excavated from pub4/index.html
+    // (warp tunnel visualizer + first track embed). Audio autoplay may still require a user gesture
+    // per browser policy; the visualizer and track cycling run automatically.
+    if (this.app && !this.app.isStarted) {
+      this.app.start()
+    }
   }
 
   disconnect() {

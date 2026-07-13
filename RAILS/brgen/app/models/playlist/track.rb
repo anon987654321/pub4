@@ -25,7 +25,7 @@ class Playlist::Track < ApplicationRecord
     cover: { resize_to_limit: [ 1_024, 1_024 ], format: :webp }
   }
 
-  SOURCE_TYPES = %w[upload youtube spotify soundcloud direct].freeze
+  SOURCE_TYPES = %w[upload youtube spotify soundcloud whyp direct].freeze
   PRIVACY_LEVELS = %w[private unlisted public].freeze
 
   validates :title, presence: true
@@ -75,6 +75,8 @@ class Playlist::Track < ApplicationRecord
       spotify_embed_url
     when "soundcloud"
       "https://w.soundcloud.com/player/?url=#{CGI.escape(source_url)}"
+    when "whyp"
+      whyp_embed_url
     end
   end
 
@@ -105,6 +107,17 @@ class Playlist::Track < ApplicationRecord
     return unless parts.length >= 2
 
     "https://open.spotify.com/embed/#{parts[-2]}/#{parts[-1]}"
+  rescue URI::InvalidURIError
+    nil
+  end
+
+  def whyp_embed_url
+    # Support https://whyp.it/tracks/123 or https://www.whyp.it/tracks/123
+    # Use /embed for clean customizable player iframe (affiliate partner)
+    uri = URI.parse(source_url)
+    if uri.path =~ %r{/tracks/(\d+)}
+      "https://whyp.it/tracks/#{$1}/embed"
+    end
   rescue URI::InvalidURIError
     nil
   end

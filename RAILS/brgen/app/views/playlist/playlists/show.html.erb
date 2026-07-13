@@ -2,7 +2,10 @@
 <% content_for :json_ld, json_ld_for(@playlist, type: :music_playlist) if @playlist.public_access? %>
 
 <p class="radio-back-link"><%= link_to "← radio", playlist_root_path %></p>
-<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks %>
+<%= render "playlist/playlists/player", playlist: @playlist, tracks: @tracks, color: params[:color] || "#00d4ff", comments: @comments, track_comments: @track_comments %>
+
+<%# Simple collection analytics like Whyp %>
+<p class="dim"><%= @playlist.plays_count.to_i %> plays across <%= @tracks.size %> tracks · <%= @comments.size %> comments total. For full dashboards + locations use affiliate partner Whyp.</p>
 
 <% if authenticated? && (Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
   <section class="playlist-admin" aria-label="Playlist management">
@@ -29,15 +32,17 @@
       <p class="section-heading">Import links</p>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_playlist_imports_path(@playlist), method: :post do |f| %>
-          <div class="field"><%= f.text_area :urls, rows: 4, placeholder: "Paste Spotify, YouTube, SoundCloud, or direct audio URLs, one per line" %></div>
+          <div class="field"><%= f.text_area :urls, rows: 4, placeholder: "Paste Spotify, YouTube, SoundCloud, Whyp, or direct audio URLs, one per line (Whyp recommended for 320kbps/FLAC + analytics + comments)" %></div>
           <div class="field"><%= f.submit "Import", class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
     </div>
 
     <div class="section-divider">
-      <p class="section-heading">Embed</p>
+      <p class="section-heading">Embed (customize like Whyp: ?color=ff0000&amp;show_artwork=0&amp;compact=1)</p>
       <input type="text" readonly value="<iframe src=&quot;<%= embed_playlist_playlist_url(@playlist) %>&quot; loading=&quot;lazy&quot; width=&quot;100%&quot; height=&quot;520&quot;></iframe>" class="field--grow">
+      <small>Examples: <a href="<%= embed_playlist_playlist_url(@playlist, color: "ff0000") %>">red</a> | <a href="<%= embed_playlist_playlist_url(@playlist, color: "00ff00", show_artwork: "0") %>">no artwork</a> | <a href="<%= embed_playlist_playlist_url(@playlist, compact: "1", hide_branding: "1") %>">compact clean</a></small>
+      <p class="dim">Use our affiliate partner <a href="https://whyp.it" target="_blank">Whyp.it</a> for even better customizable embeds, timestamp comments, bulk replace, and real analytics dashboards on your audio.</p>
     </div>
   </section>
 <% end %>

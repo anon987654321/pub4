@@ -52,6 +52,7 @@ module Playlist
       return "youtube" if host.include?("youtube.com") || host.include?("youtu.be")
       return "spotify" if host.include?("spotify.com")
       return "soundcloud" if host.include?("soundcloud.com")
+      return "whyp" if host.include?("whyp.it")
 
       "direct"
     end
@@ -65,6 +66,9 @@ module Playlist
         "Spotify #{uri.path.split("/").reject(&:blank?).last}"
       when "soundcloud"
         uri.path.split("/").reject(&:blank?).last.to_s.tr("-", " ").titleize.presence || "SoundCloud track"
+      when "whyp"
+        id = uri.path.split("/").last
+        "Whyp ##{id}"
       else
         File.basename(uri.path).presence || uri.host
       end

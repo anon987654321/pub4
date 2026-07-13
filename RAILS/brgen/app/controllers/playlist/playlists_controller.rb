@@ -13,10 +13,23 @@ class Playlist::PlaylistsController < Playlist::BaseController
   def show
     @tracks = playlist_tracks
     @dilla_sketches = @playlist.dilla_sketches.recent.includes(:user)
+    # Group for whyp-like per-track timestamp comments on waveform
+    @track_comments = @tracks.each_with_object({}) do |pt, h|
+      tr = pt.track
+      h[tr.id] = tr.timestamped_comments.chronological.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } }
+    end
+    active = @tracks.first&.track
+    @comments = active ? (@track_comments[active.id] || []) : []
   end
 
   def embed
     @tracks = playlist_tracks
+    @embed_options = {
+      color: params[:color] || "#00d4ff",
+      show_artwork: params[:show_artwork] != "0",
+      compact: params[:compact] == "1",
+      hide_branding: params[:hide_branding] == "1"
+    }
     render layout: false
   end
 

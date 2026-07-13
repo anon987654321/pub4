@@ -19,8 +19,15 @@
   data-playlist-player-artist-value="<%= active&.artist %>"
   data-playlist-player-artwork-value="<%= active_art %>"
   data-playlist-player-track-id-value="<%= active&.id %>"
+  data-playlist-player-color-value="<%= local_assigns[:color] || "#00d4ff" %>"
+  data-playlist-player-comments-value="<%= (local_assigns[:comments] || []).to_json %>"
+  data-playlist-player-track-comments-value="<%= (local_assigns[:track_comments] || {}).to_json %>"
+  data-playlist-player-show-artwork-value="<%= (local_assigns[:show_artwork].nil? ? true : local_assigns[:show_artwork]) %>"
+  data-playlist-player-compact-value="<%= !!local_assigns[:compact] %>"
+  data-playlist-player-hide-branding-value="<%= !!local_assigns[:hide_branding] %>"
 >
-  <header class="playlist-top">
+  <% unless local_assigns[:embedded] %>
+<header class="playlist-top">
     <div>
       <p class="playlist-top-eyebrow">brgen</p>
       <h1 class="playlist-top-title" itemprop="name"><%= heading %></h1>
@@ -29,8 +36,11 @@
       <%= link_to "New", new_playlist_playlist_path, class: "playlist-top-action" %>
     <% end %>
   </header>
+<% end %>
 
   <section class="playlist-stage" aria-label="Now playing">
+    <% show_art = local_assigns[:show_artwork].nil? ? true : local_assigns[:show_artwork] %>
+    <% if show_art %>
     <div class="playlist-artwork-wrap">
       <% if active_art %>
         <%= image_tag active_art, alt: active.title, class: "playlist-artwork", data: { playlist_player_target: "artwork" } %>
@@ -38,16 +48,17 @@
         <div class="playlist-artwork playlist-artwork--fallback" aria-hidden="true" data-playlist-player-target="artwork"></div>
       <% end %>
     </div>
+    <% end %>
 
     <canvas
-      class="playlist-waveform-canvas"
+      class="playlist-waveform-canvas <%= local_assigns[:compact] ? 'is-compact' : '' %>"
       data-playlist-player-target="waveform"
       data-action="click->playlist-player#waveformScrub"
       role="img"
       aria-label="Waveform"
     ></canvas>
 
-    <div class="playlist-now-playing">
+    <div class="playlist-now-playing <%= local_assigns[:compact] ? 'is-compact' : '' %>">
       <h2 class="playlist-now-playing-title" data-playlist-player-target="title" itemprop="track"><%= active&.title || "Select a track" %></h2>
       <p class="playlist-now-playing-artist" data-playlist-player-target="artist"><%= active&.artist.presence || "Unknown artist" %></p>
       <p class="playlist-now-playing-meta dim">
@@ -83,7 +94,19 @@
     </div>
 
     <span class="playlist-transport-time" data-playlist-player-target="duration">0:00</span>
+
+    <% unless local_assigns[:embedded] %>
+    <button type="button" class="playlist-add-comment" data-action="playlist-player#addComment" aria-label="Add timestamped comment at current time (like Whyp)">+ Comment</button>
+    <% end %>
   </footer>
+
+  <% unless local_assigns[:embedded] %>
+  <div class="playlist-comment-form" hidden data-playlist-player-target="commentForm">
+    <input type="text" placeholder="Comment at this time..." data-playlist-player-target="commentInput">
+    <button type="button" data-action="playlist-player#submitComment">Add</button>
+    <button type="button" data-action="playlist-player#cancelComment">Cancel</button>
+  </div>
+  <% end %>
 
   <iframe class="playlist-embed-frame" src="<%= active_embed %>" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" data-playlist-player-target="embed" <%= "hidden" unless active_embed %>></iframe>
   <% if active_src %>
@@ -109,6 +132,7 @@
         data-playlist-player-artist-param="<%= track.artist %>"
         data-playlist-player-artwork-param="<%= track_art %>"
         data-playlist-player-track-id-param="<%= track.id %>"
+        data-playlist-player-comments-param="<%= (local_assigns[:track_comments] && local_assigns[:track_comments][track.id] || local_assigns[:comments] || []).to_json %>"
         <%= "disabled" unless track_src || track_embed %>
         itemprop="track"
         itemscope
@@ -128,6 +152,16 @@
     <% end %>
     <% if tracks.empty? %>
       <p class="dim">No tracks in this playlist yet.</p>
+    <% end %>
+  </section>
+
+  <section class="playlist-comments" aria-label="Timestamped comments" id="playlist:track:<%= active&.id %>:comments" data-playlist-player-target="commentsList">
+    <h3>Comments (click to seek, like Whyp)</h3>
+    <% (local_assigns[:comments] || []).each do |c| %>
+      <div class="playlist-comment" data-time="<%= c[:time] %>" data-action="click->playlist-player#seekToComment">
+        <span class="time"><%= c[:time] %></span>
+        <span class="text"><%= c[:text] %></span>
+      </div>
     <% end %>
   </section>
 </div>

@@ -3,7 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "audio", "waveform", "scrub", "scrubFill", "playBtn",
-    "currentTime", "duration", "title", "artist", "artwork", "queueItem", "embed"
+    "currentTime", "duration", "title", "artist", "artwork", "queueItem", "embed",
+    "commentForm", "commentInput", "commentsList"
   ]
 
   static values = {
@@ -12,7 +13,13 @@ export default class extends Controller {
     title: String,
     artist: String,
     artwork: String,
-    trackId: String
+    trackId: String,
+    color: { type: String, default: "#00d4ff" },
+    comments: { type: Array, default: [] },
+    trackComments: { type: Object, default: {} },
+    showArtwork: { type: Boolean, default: true },
+    compact: { type: Boolean, default: false },
+    hideBranding: { type: Boolean, default: false }
   }
 
   connect() {
@@ -25,6 +32,7 @@ export default class extends Controller {
       this.audioTarget.addEventListener("timeupdate", () => this.#tick())
       this.audioTarget.addEventListener("loadedmetadata", () => this.#tick())
       this.audioTarget.addEventListener("ended", () => this.#onEnded())
+      this.audioTarget.addEventListener("play", () => this.#recordListenOnce(), { once: true })
     }
 
     if (this.hasSrcValue && this.hasAudioTarget && !this.audioTarget.src) {
@@ -33,6 +41,15 @@ export default class extends Controller {
 
     this.#drawWaveform(0)
     this.#tick()
+
+    if (!this.showArtworkValue && this.hasArtworkTarget) {
+      const wrap = this.artworkTarget.closest(".playlist-artwork-wrap")
+      if (wrap) wrap.style.display = "none"
+      else this.artworkTarget.hidden = true
+    }
+    if (this.compactValue) {
+      this.element.classList.add("is-compact")
+    }
   }
 
   disconnect() {
@@ -67,6 +84,48 @@ export default class extends Controller {
     this.#tick()
   }
 
+  seekToComment(event) {
+    if (!this.hasAudioTarget || !this.audioTarget.duration) return
+    const time = parseFloat(event.currentTarget.dataset.time) || 0
+    this.audioTarget.currentTime = time
+    this.#tick()
+  }
+
+  addComment() {
+    if (!this.hasCommentFormTarget || !this.hasAudioTarget) return
+    this.pendingCommentTime = this.audioTarget.currentTime || 0
+    this.commentFormTarget.hidden = false
+    this.commentInputTarget.focus()
+    this.commentInputTarget.placeholder = `Comment at ${this.#formatTime(this.pendingCommentTime)}`
+  }
+
+  submitComment() {
+    if (!this.hasCommentInputTarget || !this.pendingCommentTime) return
+    const body = this.commentInputTarget.value.trim()
+    if (!body) return
+    const trackId = this.trackIdValue
+    if (!trackId) return
+
+    // Stimulate the reflex
+    this.stimulate('PlaylistTimestampedComments#create', {
+      track_id: trackId,
+      body: body,
+      timestamp: this.pendingCommentTime
+    })
+
+    this.cancelComment()
+    // Note: model broadcasts append to comments; for full update, may need turbo or reload
+  }
+
+  cancelComment() {
+    if (this.hasCommentFormTarget) {
+      this.commentFormTarget.hidden = true
+      this.commentInputTarget.value = ''
+      this.commentInputTarget.placeholder = 'Comment at this time...'
+    }
+    this.pendingCommentTime = null
+  }
+
   load(event) {
     const item = event.currentTarget
     const src = item.dataset.playlistPlayerSrcParam
@@ -75,6 +134,7 @@ export default class extends Controller {
     const artist = item.dataset.playlistPlayerArtistParam
     const artwork = item.dataset.playlistPlayerArtworkParam
     const trackId = item.dataset.playlistPlayerTrackIdParam
+    const commentsJson = item.dataset.playlistPlayerCommentsParam
     if (!src && !embed) return
 
     this.srcValue = src
@@ -83,6 +143,9 @@ export default class extends Controller {
     this.artistValue = artist || ""
     this.artworkValue = artwork || ""
     this.trackIdValue = trackId || ""
+    if (commentsJson) {
+      try { this.commentsValue = JSON.parse(commentsJson) } catch (e) { /* keep */ }
+    }
     this.peaks = this.#peaksForTrack(trackId || src)
 
     if (src && this.hasAudioTarget) {
@@ -117,6 +180,7 @@ export default class extends Controller {
     this.#syncPlayButton()
     this.#drawWaveform(0)
     this.#tick()
+    this.#refreshCommentsList()
   }
 
   #tick() {
@@ -176,9 +240,23 @@ export default class extends Controller {
       const x = index * (barWidth + gap)
       const y = (height - barHeight) / 2
       const played = index <= playedIndex
-      ctx.fillStyle = played ? "#ff5500" : "rgba(255, 255, 255, 0.18)"
+      ctx.fillStyle = played ? this.colorValue : "rgba(255, 255, 255, 0.18)"
       ctx.fillRect(x, y, barWidth, barHeight)
     })
+
+    // Draw timestamped comment markers like Whyp
+    if (this.commentsValue && this.commentsValue.length > 0 && this.audioTarget && this.audioTarget.duration) {
+      const duration = this.audioTarget.duration
+      ctx.fillStyle = "#ffeb3b"
+      this.commentsValue.forEach(comment => {
+        const time = comment.time || 0
+        const idx = Math.floor((time / duration) * this.peaks.length)
+        if (idx >= 0 && idx < this.peaks.length) {
+          const x = idx * (barWidth + gap)
+          ctx.fillRect(x, 0, 2, height)
+        }
+      })
+    }
   }
 
   #peaksForTrack(seed) {
@@ -205,5 +283,37 @@ export default class extends Controller {
     const min = Math.floor(whole / 60)
     const sec = whole % 60
     return `${min}:${String(sec).padStart(2, "0")}`
+  }
+
+  #recordListenOnce() {
+    // Record like Whyp: count a listen on play (server de-dupes per listener/duration via model)
+    const trackId = this.trackIdValue
+    if (!trackId) return
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    fetch("/listens", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": token || "",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ track_id: trackId })
+    }).catch(() => { /* silent for public/embeds */ })
+  }
+
+  #refreshCommentsList() {
+    if (!this.hasCommentsListTarget) return
+    const list = this.commentsListTarget
+    // Clear previous dynamic children (keep h3)
+    Array.from(list.querySelectorAll(".playlist-comment")).forEach(el => el.remove())
+    const h3 = list.querySelector("h3")
+    ;(this.commentsValue || []).forEach(c => {
+      const div = document.createElement("div")
+      div.className = "playlist-comment"
+      div.dataset.time = c.time || 0
+      div.setAttribute("data-action", "click->playlist-player#seekToComment")
+      div.innerHTML = `<span class="time">${this.#formatTime(c.time || 0)}</span> <span class="text">${(c.text || "").replace(/</g,"&lt;")}</span>`
+      list.appendChild(div)
+    })
   }
 }

@@ -7,15 +7,17 @@ module PlaylistHelper
   /x
 
   def radio_tunnel_catalog
+    # Use tracks excavated from pub4/index.html (via manifest) as primary source for auto-play
     manifest = Brgen::RadioBergenManifest.youtube_tracks
 
+    # Optional mix-in of recent hosted youtube/direct from the vertical (still pub4 lineage spirit)
     hosted = Playlist::Track
       .where(source_type: %w[youtube direct])
       .where.not(source_url: [nil, ""])
-      .limit(12)
+      .limit(8)
       .filter_map { |track| radio_track_from_source(track) }
 
-    catalog = (hosted + manifest).uniq { |t| t[:id] }
+    catalog = (manifest + hosted).uniq { |t| t[:id] }
     catalog = radio_tunnel_fallback_tracks if catalog.empty?
     catalog.first(24)
   end

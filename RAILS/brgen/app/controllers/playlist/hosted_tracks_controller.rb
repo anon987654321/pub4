@@ -20,15 +20,26 @@ module Playlist
     end
 
     def create
-      @track = Playlist::Track.new(track_params)
-      @track.user = Current.user if @track.respond_to?(:user=)
-      @track.audio_file.attach(params[:track][:audio_file]) if params.dig(:track, :audio_file).present?
-      @track.artwork.attach(params[:track][:artwork]) if params.dig(:track, :artwork).present?
-
-      if @track.save
-        redirect_to playlist_hosted_track_path(@track), notice: t("playlist.track_created", default: "Track uploaded")
+      files = Array(params.dig(:track, :audio_file)).compact
+      if files.size > 1
+        created = files.map do |file|
+          t = Playlist::Track.new(track_params.except(:audio_file))
+          t.user = Current.user if t.respond_to?(:user=)
+          t.audio_file.attach(file)
+          t.save ? t : nil
+        end.compact
+        redirect_to playlist_hosted_tracks_path, notice: "#{created.size} tracks uploaded (bulk like Whyp)"
       else
-        render :new, status: :unprocessable_entity
+        @track = Playlist::Track.new(track_params)
+        @track.user = Current.user if @track.respond_to?(:user=)
+        @track.audio_file.attach(params[:track][:audio_file]) if params.dig(:track, :audio_file).present?
+        @track.artwork.attach(params[:track][:artwork]) if params.dig(:track, :artwork).present?
+
+        if @track.save
+          redirect_to playlist_hosted_track_path(@track), notice: t("playlist.track_created", default: "Track uploaded")
+        else
+          render :new, status: :unprocessable_entity
+        end
       end
     end
 
@@ -36,7 +47,10 @@ module Playlist
     end
 
     def update
-      if @track.update(track_params)
+      if params.dig(:track, :audio_file).present?
+        @track.replace_audio!(params[:track][:audio_file], actor: Current.user)
+      end
+      if @track.update(track_params.except(:audio_file))
         redirect_to playlist_hosted_track_path(@track), notice: t("playlist.track_updated", default: "Track updated")
       else
         render :edit, status: :unprocessable_entity
