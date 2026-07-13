@@ -3,7 +3,7 @@
 module Shared
   # Cross-app x.com UI rendering helpers (icons, nav items, feed tabs).
   module XUiHelper
-    NavItem = Data.define(:label, :path, :icon, :active, :aria)
+    NavItem = Data.define(:label, :path, :icon, :active, :aria, :data)
 
     REACTION_GLYPHS = {
       "like" => :like,
@@ -42,7 +42,9 @@ module Shared
 
     def x_sidebar_nav_link(item)
       attrs = x_nav_item_attrs(item)
-      link_to(attrs[:path], class: attrs[:class], aria: attrs[:aria]) do
+      link_options = { class: attrs[:class], aria: attrs[:aria] }
+      link_options[:data] = attrs[:data] if attrs[:data].present?
+      link_to(attrs[:path], **link_options) do
         safe_join([x_icon(attrs[:icon], size: 26), tag.span(attrs[:label])])
       end
     end
@@ -61,7 +63,8 @@ module Shared
           path: item.path,
           icon: item.icon,
           class: "nav-item#{" active" if item.active}",
-          aria: item.aria || { label: item.label }
+          aria: item.aria || { label: item.label },
+          data: item.data
         }
       else
         {
@@ -69,7 +72,8 @@ module Shared
           path: item.fetch(:path),
           icon: item.fetch(:icon),
           class: "nav-item#{" active" if item[:active]}",
-          aria: item[:aria] || { label: item[:label] }
+          aria: item[:aria] || { label: item[:label] },
+          data: item[:data]
         }
       end
     end

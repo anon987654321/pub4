@@ -63,13 +63,14 @@ module Brgen
 
     private
 
-    def nav_item(label, path, icon, aria:)
+    def nav_item(label, path, icon, aria:, data: nil)
       Shared::XUiHelper::NavItem.new(
         label: label,
         path: path,
         icon: icon,
         active: @helper.current_page?(path),
-        aria: aria
+        aria: aria,
+        data: data
       )
     end
   end

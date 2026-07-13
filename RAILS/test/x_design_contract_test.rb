@@ -281,6 +281,28 @@ class XDesignContractTest < Minitest::Test
     assert_includes sidebar_nav, "local_assigns[:items].presence || sidebar_nav_items"
   end
 
+  def test_amber_layout_includes_x_shell_markers
+    layout = File.read(AMBER_LAYOUT)
+    shell = File.read(X_SHELL_PARTIAL)
+
+    assert_includes layout, 'render "shared/x_shell"'
+    assert_includes layout, 'render "shared/x_tab_bar"'
+    assert_includes shell, "data-x-shell"
+    assert_includes shell, "yield :main"
+    assert_includes shell, "yield :widgets"
+    assert_includes shell, "yield :sidebar_compose"
+    assert_includes shell, 'render "shared/x_sidebar_nav"'
+
+    # Amber layout inventory stays outside _x_shell.
+    assert_includes layout, "amber-logo-banner"
+    assert_includes layout, "wardrobe_showcase"
+    assert_includes layout, "compose-fab"
+    refute_includes shell, "amber-logo-banner"
+    refute_includes shell, "wardrobe_showcase"
+    refute_includes shell, 'class="compose-fab"'
+    refute_includes shell, 'class="tab-bar"'
+  end
+
   private
 
   def mixin_block(scss, name)

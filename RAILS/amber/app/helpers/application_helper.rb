@@ -63,4 +63,11 @@ module ApplicationHelper
     url_for(attachment.variant(resize_to_limit: [ largest, largest ]))
   end
 
+  def sidebar_nav_items
+    Amber::XNavBuilder.sidebar_items(request, self)
+  end
+
+  def tab_bar_items
+    Amber::XNavBuilder.tab_bar_items(request, self)
+  end
 end

@@ -14,7 +14,7 @@ APP_FILES = {
   "amber" => {
     layout: "app/views/layouts/application.html.erb",
     home: "app/views/home/index.html.erb",
-    nav_partials: ["app/views/shared/_sidebar_nav.html.erb"],
+    nav_partials: ["app/services/amber/x_nav_builder.rb"],
     nav: %w[Sign\ in Sign\ up],
   },
   "brgen" => {
