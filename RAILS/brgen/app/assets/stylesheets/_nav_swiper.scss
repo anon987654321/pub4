@@ -54,7 +54,8 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--text-dim);
-  opacity: 0.5;
+  opacity: 0.65; /* this grip is the only discoverable path to sub-app nav
+    (marketplace/dating/tv/etc) -- keep it above half-visible */
   cursor: pointer;
   pointer-events: auto;
   transform: translateX(-50%);

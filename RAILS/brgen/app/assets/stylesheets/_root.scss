@@ -12,7 +12,10 @@
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
-  --z-carousel: 95;
+  /* Decorative-only (pointer-events: none) chrome -- must stay below
+     --z-ui (90, nav_swiper's grip) so it never visually buries the one
+     element in this band that's actually interactive/functional. */
+  --z-carousel: 5;
   --z-splash: 1000;
   --turbo-progress-bar-color: var(--accent);
 }
