@@ -28,6 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.css" crossorigin="anonymous">
   <link rel="stylesheet" href="/lightgallery.css">
+  <%= render "shared/theme_bootstrap", storage_key: "amber-theme" %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= yield :json_ld %>
   <%= json_ld_script(organization_json_ld(site_name: "Amber", url: root_url)) %>

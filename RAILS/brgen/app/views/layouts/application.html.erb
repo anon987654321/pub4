@@ -24,6 +24,7 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= yield :head %>
+  <%= render "shared/theme_bootstrap", storage_key: "brgen-theme" %>
   <% if active_vertical == :marketplace %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
