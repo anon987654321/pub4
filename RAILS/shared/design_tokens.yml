@@ -114,8 +114,7 @@ social:
   x_text: "#e7e9ea"
   x_text_secondary: "#71767b"
   x_border: "#2f3336"
-  x_hover: "rgba(231, 233, 234, 0.1)"
-  x_hover_subtle: "rgba(231, 233, 234, 0.03)"
+  # x_hover / x_hover_subtle: derived via color-mix in _x_base.scss and DesignTokens.chrome_css
   x_accent: "#1d9bf0"
   x_accent_hover: "#1a8cd8"
   x_danger: "#f4212e"

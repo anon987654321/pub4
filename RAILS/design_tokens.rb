@@ -12,14 +12,17 @@ module DesignTokens
     x_border
     x_accent
     x_accent_hover
-    x_hover
-    x_hover_subtle
     x_surface_elevated
     x_radius_sm
     x_radius_md
     x_radius_pill
     x_radius_card
   ].freeze
+  # Derived from --x-text; mirrors _x_base.scss x-dark-tokens hover mixins.
+  CHROME_DERIVED = {
+    "x_hover" => "color-mix(in srgb, var(--x-text) 10%, transparent)",
+    "x_hover_subtle" => "color-mix(in srgb, var(--x-text) 3%, transparent)",
+  }.freeze
 
   module_function
 
@@ -78,6 +81,9 @@ module DesignTokens
     CHROME_ORDER.each do |key|
       lines << "  #{chrome_var_name(key)}: #{social.fetch(key)};"
     end
+    CHROME_DERIVED.each do |key, value|
+      lines << "  #{chrome_var_name(key)}: #{value};"
+    end
     lines << "}"
     lines.join("\n")
   end
@@ -119,7 +125,7 @@ module DesignTokens
   def sync_face_chrome_css!(path)
     face_changed = sync_face_css!(path)
     chrome_changed = sync_chrome_css!(path)
-    face_changed || chrome_changed
+    [face_changed || chrome_changed, face_changed, chrome_changed]
   end
 
   def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_x_base.scss"))

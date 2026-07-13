@@ -60,13 +60,13 @@
   --chrome-border: #2f3336;
   --chrome-accent: #1d9bf0;
   --chrome-accent-hover: #1a8cd8;
-  --chrome-hover: rgba(231, 233, 234, 0.1);
-  --chrome-hover-subtle: rgba(231, 233, 234, 0.03);
   --chrome-surface-elevated: #16181c;
   --chrome-radius-sm: 8px;
   --chrome-radius-md: 12px;
   --chrome-radius-pill: 9999px;
   --chrome-radius-card: 16px;
+  --chrome-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
+  --chrome-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
 }
 /* END:generated-x-chrome */
 
@@ -205,7 +205,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
   width: min(520px, 100%);
   border: 1px solid var(--chrome-border);
   border-radius: var(--chrome-radius-card);
-  background: color-mix(in srgb, var(--face-bg) 94%, transparent);
+  background: color-mix(in srgb, var(--chrome-surface-elevated) 94%, transparent);
   contain: layout style paint;
 }
 
@@ -235,8 +235,12 @@ body[data-hidden-tab="1"] #cognition-ecology {
   cursor: pointer;
 }
 
-#cmd-palette-list li[data-active="1"],
 #cmd-palette-list li:hover {
+  background: var(--chrome-hover-subtle);
+}
+
+#cmd-palette-list li[data-active="1"],
+#cmd-palette-list li[data-active="1"]:hover {
   background: var(--chrome-hover);
   color: var(--face-fg);
 }
@@ -1000,7 +1004,7 @@ body[data-phantom-glitch="1"] canvas {
   padding: 10px 12px;
   border: 1px solid var(--chrome-border);
   border-radius: var(--chrome-radius-md);
-  background: color-mix(in srgb, var(--face-bg) 92%, transparent);
+  background: color-mix(in srgb, var(--chrome-surface-elevated) 92%, transparent);
   color: var(--face-fg);
   transform: translateX(calc(-100% - 18px));
   opacity: 0;
@@ -1076,7 +1080,7 @@ body[data-phantom-glitch="1"] canvas {
 }
 
 #history-list li:hover {
-  background: var(--chrome-hover);
+  background: var(--chrome-hover-subtle);
 }
 
 .history-role {
@@ -1110,6 +1114,7 @@ body[data-history-open="1"] #chat-log {
   background: #000;
   color: var(--face-fg);
   border: 1px solid var(--chrome-border);
+  border-radius: var(--chrome-radius-sm);
   font: 10px var(--font-label);
   text-decoration: none;
 }

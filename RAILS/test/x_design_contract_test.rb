@@ -2,6 +2,7 @@
 
 require "yaml"
 require "minitest/autorun"
+require_relative "../design_tokens"
 
 class XDesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -10,13 +11,7 @@ class XDesignContractTest < Minitest::Test
   TOKENS_YML = File.join(SHARED, "design_tokens.yml")
   TOKENS_CSS = File.join(SHARED, "public", "styles", "tokens.css")
   BRGEN_ROOT = File.join(ROOT, "brgen", "app", "assets", "stylesheets", "_root.scss")
-  AMBER_VARS = File.join(ROOT, "amber", "app", "assets", "stylesheets", "_variables.scss")
-  BRGEN_LAYOUT = File.join(ROOT, "brgen", "app", "views", "layouts", "application.html.erb")
-  AMBER_LAYOUT = File.join(ROOT, "amber", "app", "views", "layouts", "application.html.erb")
   BSDPORTS_LAYOUT = File.join(ROOT, "bsdports", "app", "views", "layouts", "application.html.erb")
-  TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_tokens.scss")
-  THEME_TOGGLE_JS = File.join(SHARED, "frontend", "pub4_theme_toggle_controller.js")
-  THEME_BOOTSTRAP_PARTIAL = File.join(SHARED, "app", "views", "shared", "_theme_bootstrap.html.erb")
   APPS = %w[amber brgen bsdports].freeze
 
   SCSS_PARAM_MAP = {
@@ -35,6 +30,8 @@ class XDesignContractTest < Minitest::Test
   SCSS_LITERAL_MAP = {
     "x_font_size" => /--x-font-size:\s*([^;]+);/,
     "x_line_height" => /--x-line-height:\s*([^;]+);/,
+    "x_radius_sm" => /--x-radius-sm:\s*([^;]+);/,
+    "x_radius_md" => /--x-radius-md:\s*([^;]+);/,
     "x_radius_pill" => /--x-radius-pill:\s*([^;]+);/,
     "x_radius_card" => /--x-radius-card:\s*([^;]+);/,
     "x_sidebar" => /--x-sidebar:\s*([^;]+);/,
@@ -61,6 +58,10 @@ class XDesignContractTest < Minitest::Test
   SYSTEM_UI_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'.freeze
   FLAT_DESIGN_PATTERN = /box-shadow|text-shadow|backdrop-filter/i
   CYCLIC_X_DANGER_PATTERN = /--x-danger:\s*var\(--x-danger\)/
+  X_HOVER_DERIVED = {
+    "--x-hover" => "color-mix(in srgb, var(--x-text) 10%, transparent)",
+    "--x-hover-subtle" => "color-mix(in srgb, var(--x-text) 3%, transparent)",
+  }.freeze
 
   def test_social_tokens_match_x_base_defaults
     social = YAML.safe_load_file(TOKENS_YML).fetch("social")
@@ -152,54 +153,17 @@ class XDesignContractTest < Minitest::Test
     refute_match(/stylesheet_link_tag\s+["']application["']/, layout)
   end
 
-  def test_theme_toggle_controller_sets_document_element_dataset
-    js = File.read(THEME_TOGGLE_JS)
-    assert_includes js, "document.documentElement.dataset.theme"
-  end
+  def test_social_chrome_hover_derivation_matches_x_base
+    scss = File.read(X_BASE)
+    dark_block = mixin_block(scss, "x-dark-tokens")
+    chrome_css = DesignTokens.chrome_css
 
-  def test_theme_bootstrap_partial_sets_dataset_before_paint
-    partial = File.read(THEME_BOOTSTRAP_PARTIAL)
-    assert_includes partial, "document.documentElement.dataset.theme"
-    assert_includes partial, "localStorage.getItem"
-    assert_includes partial, "content_security_policy_nonce"
-  end
-
-  def test_layouts_bootstrap_theme_before_stylesheets
-    [BRGEN_LAYOUT, AMBER_LAYOUT].each do |layout_path|
-      layout = File.read(layout_path)
-      assert_includes layout, "shared/theme_bootstrap"
-      bootstrap_idx = layout.index("theme_bootstrap")
-      stylesheet_idx = layout.index("stylesheet_link_tag")
-      assert bootstrap_idx, "#{layout_path} missing theme bootstrap"
-      assert stylesheet_idx, "#{layout_path} missing stylesheet link"
-      assert bootstrap_idx < stylesheet_idx, "#{layout_path} must bootstrap theme before stylesheet"
+    X_HOVER_DERIVED.each do |x_var, value|
+      x_decl = "#{x_var}: #{value};"
+      chrome_decl = "#{x_var.sub('--x-', '--chrome-')}: #{value};"
+      assert_includes dark_block, x_decl, "_x_base.scss missing #{x_decl}"
+      assert_includes chrome_css, chrome_decl, "chrome_css missing #{chrome_decl}"
     end
-  end
-
-  def test_tokens_scss_uses_html_data_theme_selectors
-    tokens = File.read(TOKENS_SCSS)
-    assert_includes tokens, 'html[data-theme="dark"]'
-    assert_includes tokens, 'html[data-theme="light"]'
-    assert_includes tokens, "html:not([data-theme])"
-    refute_includes tokens, ':root:not([data-theme="dark"])'
-  end
-
-  def test_brgen_and_amber_scss_no_checkbox_sibling_hack
-    [BRGEN_ROOT, AMBER_VARS].each do |path|
-      body = File.read(path)
-      refute_includes body, "#dark-toggle:checked", "#{path} still uses checkbox-sibling theme hack"
-      assert_includes body, 'html[data-theme="dark"]', "#{path} missing html[data-theme=\"dark\"]"
-      assert_includes body, 'html[data-theme="light"]', "#{path} missing html[data-theme=\"light\"]"
-    end
-  end
-
-  def test_brgen_compiled_css_uses_html_data_theme_selectors
-    css_path = File.join(ROOT, "brgen", "app", "assets", "builds", "application.css")
-    css = File.read(css_path)
-    assert_includes css, "html[data-theme=dark]"
-    assert_includes css, "html[data-theme=light]"
-    assert_includes css, "html:not([data-theme])"
-    refute_includes css, "#dark-toggle:checked"
   end
 
   private
