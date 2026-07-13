@@ -4,12 +4,20 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--hover) transparent;
+  scrollbar-color: var(--x-hover) transparent;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
 }
+.app-shell::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar,
+.widgets::-webkit-scrollbar { width: 8px; }
+.app-shell::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb,
+.widgets::-webkit-scrollbar-thumb { background: var(--x-hover); }
 .layout {
   display: grid;
   grid-template-areas: "sidebar main widgets";
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--widgets-width);
+  grid-template-columns: var(--x-sidebar) minmax(0, 1fr) var(--x-widgets);
   align-items: start;
   max-width: var(--x-layout-max);
   min-height: 100%;
@@ -17,7 +25,7 @@
 }
 .sidebar {
   grid-area: sidebar;
-  width: var(--sidebar-width);
+  width: var(--x-sidebar);
   flex-shrink: 0;
   align-self: flex-start;
   position: sticky;
@@ -28,6 +36,9 @@
   align-items: flex-start;
   padding: 0 0.75rem 16px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--x-hover) transparent;
 }
 .brand {
   display: flex;
@@ -35,15 +46,15 @@
   justify-content: center;
   width: 52px;
   height: 52px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border-radius: 50%;
+  border: 1px solid var(--x-border);
+  color: var(--x-text);
   margin: 4px 0 8px;
   transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
 }
 .brand:hover {
-  background: var(--hover);
-  border-color: var(--accent);
+  background: var(--x-hover);
+  border-color: var(--x-accent);
   text-decoration: none;
 }
 .brand-wordmark {
@@ -54,7 +65,7 @@
 .brand-text {
   font-family: var(--x-font);
   font-size: 1.0625rem;
-  font-weight: 700;
+  font-weight: var(--x-weight-bold);
   letter-spacing: 0.02em;
 }
 .sidebar nav {
@@ -68,22 +79,22 @@
   align-items: center;
   gap: 20px;
   padding: 0.75rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   border-inline-start: 2px solid transparent;
-  color: var(--text);
+  color: var(--x-text);
   font-size: 20px;
-  font-weight: 400;
+  font-weight: var(--x-weight-normal);
   transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
   width: fit-content;
   white-space: nowrap;
 }
 .nav-item:hover {
-  background: var(--hover);
+  background: var(--x-hover);
   text-decoration: none;
 }
 .nav-item.active {
-  font-weight: 700;
-  border-inline-start-color: var(--accent);
+  font-weight: var(--x-weight-bold);
+  border-inline-start-color: var(--x-accent);
 }
 .nav-item svg {
   flex-shrink: 0;
@@ -97,12 +108,13 @@
   min-height: 52px;
   padding: 0 24px;
   margin-top: 16px;
-  background: var(--accent);
+  background: var(--x-accent);
   color: #000;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   font-size: 17px;
-  font-weight: 700;
+  font-weight: var(--x-weight-bold);
+  touch-action: manipulation;
   cursor: pointer;
   transition: opacity var(--transition-fast, 180ms);
   text-decoration: none;
@@ -122,11 +134,11 @@
   bottom: calc(70px + var(--safe-bottom, 0px));
   width: 54px;
   height: 54px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   display: none;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
+  background: var(--x-accent);
   color: #000;
   z-index: var(--z-nav, 80);
   text-decoration: none;
@@ -144,16 +156,17 @@ main[role="main"] {
   grid-area: main;
   flex: 1;
   min-width: 0;
-  max-width: var(--feed-max);
+  max-width: var(--x-feed-max);
   min-height: 100vh;
   margin-inline: auto;
   padding-inline: clamp(16px, 5vw, 48px);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
+  border-left: 1px solid var(--x-border);
+  border-right: 1px solid var(--x-border);
+  container: feed / inline-size;
 }
 .widgets {
   grid-area: widgets;
-  width: var(--widgets-width);
+  width: var(--x-widgets);
   flex-shrink: 0;
   align-self: flex-start;
   position: sticky;
@@ -163,7 +176,7 @@ main[role="main"] {
   padding: 0.75rem 16px;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: var(--hover) transparent;
+  scrollbar-color: var(--x-hover) transparent;
 }
 .tab-bar {
   position: fixed;
@@ -171,8 +184,8 @@ main[role="main"] {
   inset-inline: 0;
   display: none;
   min-height: 54px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
+  background: var(--x-bg);
+  border-top: 1px solid var(--x-border);
   z-index: var(--z-nav, 80);
   padding-bottom: var(--safe-bottom, 0px);
 }
@@ -183,17 +196,18 @@ main[role="main"] {
   align-items: center;
   justify-content: center;
   padding: 0.75rem;
-  color: var(--text);
+  color: var(--x-text);
+  touch-action: manipulation;
   transition: background var(--transition-fast, 180ms);
 }
 .tab-item:hover {
-  background: var(--hover);
+  background: var(--x-hover);
   text-decoration: none;
 }
 
 .tab-item[aria-current="page"] {
-  color: var(--accent);
-  background: var(--hover-subtle);
+  color: var(--x-accent);
+  background: var(--x-hover-subtle);
 }
 
 .tab-item[aria-current="page"]::after {
@@ -202,6 +216,6 @@ main[role="main"] {
   inset-block-end: calc(4px + var(--safe-bottom, 0px));
   width: 5px;
   height: 5px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--x-radius-pill);
   background: currentColor;
 }

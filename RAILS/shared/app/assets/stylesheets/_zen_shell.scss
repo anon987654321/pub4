@@ -1,11 +1,5 @@
 /* Ultra-minimal shared UI for all apps — synced from MASTER web */
-@layer reset, tokens, base, layout, components, utilities, overrides;
-
-@font-face {
-  font-family: "Helvetica Neue Fallback";
-  src: local("Helvetica Neue"), local("HelveticaNeue");
-  font-display: swap;
-}
+@layer reset, base, layout, components, utilities, overrides;
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -35,39 +29,10 @@ input, button, textarea, select {
   font: inherit;
 }
 
-.mt-1 { margin-top: var(--space-1); }
-.mt-2 { margin-top: var(--space-2); }
-.mt-3 { margin-top: var(--space-3); }
-.mt-4 { margin-top: var(--space-4); }
-.mt-5 { margin-top: var(--space-5); }
-.mt-6 { margin-top: var(--space-6); }
-.mt-7 { margin-top: var(--space-7); }
-.mt-8 { margin-top: var(--space-8); }
-.mt-9 { margin-top: var(--space-9); }
-.mt-10 { margin-top: var(--space-10); }
-.mt-11 { margin-top: var(--space-11); }
-.mt-12 { margin-top: var(--space-12); }
-.mt-13 { margin-top: var(--space-13); }
-.mt-14 { margin-top: var(--space-14); }
-.mt-15 { margin-top: var(--space-15); }
-.mt-16 { margin-top: var(--space-16); }
-
-.px-1 { padding-inline: var(--space-1); }
-.px-2 { padding-inline: var(--space-2); }
-.px-3 { padding-inline: var(--space-3); }
-.px-4 { padding-inline: var(--space-4); }
-.px-5 { padding-inline: var(--space-5); }
-.px-6 { padding-inline: var(--space-6); }
-.px-7 { padding-inline: var(--space-7); }
-.px-8 { padding-inline: var(--space-8); }
-.px-9 { padding-inline: var(--space-9); }
-.px-10 { padding-inline: var(--space-10); }
-.px-11 { padding-inline: var(--space-11); }
-.px-12 { padding-inline: var(--space-12); }
-.px-13 { padding-inline: var(--space-13); }
-.px-14 { padding-inline: var(--space-14); }
-.px-15 { padding-inline: var(--space-15); }
-.px-16 { padding-inline: var(--space-16); }
+@for $step from 1 through 16 {
+  .mt-#{$step} { margin-top: var(--space-#{$step}); }
+  .px-#{$step} { padding-inline: var(--space-#{$step}); }
+}
 
 .text-sm { font-size: var(--text-sm); line-height: 1.4; }
 .text-base { font-size: var(--text-base); line-height: 1.5; }

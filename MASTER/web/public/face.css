@@ -33,11 +33,11 @@
   --shadow-pip: color-mix(in srgb, var(--face-bg) 45%, transparent);
   --shadow-banner: color-mix(in srgb, var(--face-bg) 28%, transparent);
   --shadow-float: 0 16px 36px var(--shadow-banner);
-  --radius-xs: 2px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-pill: 999px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
   --face-bar-height: 36px;
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;

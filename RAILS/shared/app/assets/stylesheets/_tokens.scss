@@ -5,7 +5,7 @@
 @mixin semantic-light-overrides {
   @include x.x-light-tokens;
   color-scheme: light;
-  --color-shadow: var(--x-bg);
+  --color-background: var(--x-bg);
   --color-midtone: var(--x-text-secondary);
   --color-highlight: var(--x-surface);
   --color-accent: var(--x-accent);
@@ -20,7 +20,7 @@
 :root {
   @include x.x-dark-tokens;
   color-scheme: dark;
-  --color-shadow: var(--x-bg);
+  --color-background: var(--x-bg);
   --color-midtone: var(--x-text-secondary);
   --color-highlight: var(--x-surface);
   --color-accent: var(--x-accent);
@@ -38,22 +38,35 @@
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
-  --space-1: 4px;
-  --space-2: 8px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
   --space-3: 0.75rem;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-7: 28px;
-  --space-8: 32px;
-  --space-9: 36px;
-  --space-10: 40px;
-  --space-11: 44px;
-  --space-12: 48px;
-  --space-13: 52px;
-  --space-14: 56px;
-  --space-15: 60px;
-  --space-16: 64px;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+  --space-13: 3.25rem;
+  --space-14: 3.5rem;
+  --space-15: 3.75rem;
+  --space-16: 4rem;
+  --transition-fast: 180ms;
+  --transition-normal: 300ms;
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-linear: cubic-bezier(0, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --z-canvas: 1;
+  --z-chrome: 10;
+  --z-ui: 90;
+  --z-overlay: 100;
+  --z-modal: 1000;
+  --z-toast: 1100;
+  --z-skip: 2000;
   --color-primary: var(--x-text);
   --color-surface: var(--x-surface);
 }

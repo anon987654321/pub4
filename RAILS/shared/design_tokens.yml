@@ -27,11 +27,11 @@ face_root:
     shadow_banner: "color-mix(in srgb, var(--face-bg) 28%, transparent)"
     shadow_float: "0 16px 36px var(--shadow-banner)"
   layout:
-    radius-xs: "2px"
-    radius-sm: "6px"
-    radius-md: "10px"
-    radius-lg: "12px"
-    radius-pill: "999px"
+    radius-xs: "4px"
+    radius-sm: "8px"
+    radius-md: "12px"
+    radius-lg: "16px"
+    radius-pill: "9999px"
     face-bar-height: "36px"
     # Additive-blending budget: ~17k points; raising size/glow/decay together
     # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the

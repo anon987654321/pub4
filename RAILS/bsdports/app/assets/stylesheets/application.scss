@@ -99,7 +99,23 @@ article > section,
 
 .dep-graph {
   border: 1px solid var(--x-border);
-  background: var(--surface);
+  border-radius: var(--x-radius-sm);
+  background: var(--x-surface);
+  color: var(--x-text);
+}
+
+.dep-graph line {
+  stroke: var(--x-border);
+}
+
+.dep-graph circle {
+  fill: var(--x-surface-elevated);
+  stroke: var(--x-text-secondary);
+}
+
+.dep-graph text {
+  fill: var(--x-text);
+  font-family: var(--x-font-mono);
 }
 
 .logo {
@@ -273,6 +289,11 @@ turbo-frame {
   gap: var(--space-3);
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--x-border);
+  transition: background var(--transition-fast) var(--ease-out);
+}
+
+.port-row:hover {
+  background: var(--x-hover-subtle);
 }
 
 .port-name {

@@ -24,13 +24,11 @@
   --sidebar-width: var(--x-sidebar);
   --widgets-width: var(--x-widgets);
   --feed-max: var(--x-feed-max);
-  --transition-fast: 180ms;
-  --transition-normal: 300ms;
-  --z-app: 10;
-  --z-nav: 80;
+  --z-app: var(--z-chrome);
+  --z-nav: var(--z-ui);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--x-accent);
   outline-offset: 2px;
 }
