@@ -8,9 +8,9 @@
     <div class="outfit-composition" aria-label="Items in <%= outfit.name %>">
       <% outfit.items.first(4).each do |item| %>
         <% if item.photos.attached? %>
-          <%= responsive_image_tag item.photos.first, alt: item.title, widths: [120, 180], sizes: "90px", class: "outfit-composition__item" %>
+          <%= responsive_image_tag item.photos.first, alt: item.title, widths: [120, 180], sizes: "90px" %>
         <% else %>
-          <span class="outfit-composition__item outfit-composition__placeholder"><%= item.category.to_s.first(2).upcase %></span>
+          <span><%= item.category.to_s.first(2).upcase %></span>
         <% end %>
       <% end %>
     </div>

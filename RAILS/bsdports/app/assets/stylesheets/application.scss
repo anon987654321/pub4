@@ -292,8 +292,8 @@ turbo-frame {
   transition: background var(--transition-fast) var(--ease-out);
 }
 
-.port-row__identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
-.port-row__identity code, .install-panel input, article dd code, .data-state { font-family: var(--x-font-mono); }
+.port-row > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
+.port-row > div code, .install-panel input, article dd code, .data-state { font-family: var(--x-font-mono); }
 .data-state { display: inline-flex; width: fit-content; padding: 0.15rem 0.4rem; border: 1px solid var(--x-border); border-radius: var(--x-radius-xs); color: var(--x-text-secondary); font-size: var(--text-xs); }
 .data-state--stale { border-color: #b7791f; color: #f6c453; }
 .ports-purpose { max-width: 58ch; font-size: var(--text-lg); line-height: 1.5; color: var(--x-text); }

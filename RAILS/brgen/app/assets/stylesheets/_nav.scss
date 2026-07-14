@@ -53,7 +53,7 @@ a.feed-tab { text-decoration: none; display: block; }
 }
 
 .compose-label-visible { display: block; color: var(--x-text); font-weight: 700; margin-bottom: var(--space-1); }
-.compose-box:focus-within { border-color: var(--x-accent); box-shadow: 0 0 0 1px var(--x-accent); }
+.compose-box:focus-within { border-color: var(--x-accent); outline: 1px solid var(--x-accent); outline-offset: 1px; }
 .local-feed-intro { padding: var(--space-4); border-bottom: 1px solid var(--x-border); }
 .local-feed-intro p { margin: 0; }
 .local-feed-kicker { color: var(--x-text); font-weight: 800; }
