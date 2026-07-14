@@ -15,7 +15,8 @@
             reflex: "HomeInfiniteScrollReflex#load_more",
             sentinel_id: "home-feed-sentinel",
             q: params[:q],
-            feed: params[:feed] %>
+            feed: params[:feed],
+            sort: params[:sort] %>
  <% end %>
 <% else %>
  <section class="empty">

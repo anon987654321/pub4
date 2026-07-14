@@ -787,7 +787,7 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.010; else FACE_PIXEL_SIZE = 0.017; };
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.013; else FACE_PIXEL_SIZE = 0.022; };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);

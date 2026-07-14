@@ -17,7 +17,8 @@
     <% if local_assigns[:avatar_url].present? %>
       <%= image_tag local_assigns[:avatar_url], class: "x-avatar-img", alt: local_assigns[:name] || "avatar" %>
     <% else %>
-      <div class="x-avatar-placeholder"><%= (local_assigns[:name] || "?").first.upcase %></div>
+      <% monogram = (local_assigns[:name] || "?").first.upcase %>
+      <div class="x-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= local_assigns[:name] || "Anonymous" %> monogram"><%= monogram %></div>
     <% end %>
   </div>
 

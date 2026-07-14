@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../core/master"
+require_relative "../reach/media_intent"
 
 module Master
   module Now
@@ -14,6 +15,8 @@ module Master
 
         if text.start_with?("/")
           dispatch_slash(text, container:, felt_sense:, on_turn:)
+        elsif Master::Reach::MediaIntent.handles?(text)
+          Master::Reach::MediaIntent.dispatch(text, root: container[:root] || Dir.pwd)
         elsif casual?(text)
           casual_reply(text, container:, felt_sense:, on_chunk:)
         else

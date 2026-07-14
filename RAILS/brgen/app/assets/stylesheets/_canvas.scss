@@ -12,7 +12,10 @@
   font-family: Helvetica, sans-serif;
 }
 
-@media (max-width: 1280px) { .city-carousel { left: calc(88px + 10px); } }
+/* The shared shell actually collapses to a 120px sidebar at 1265px.  The old
+   1280px/98px override fired while the 275px sidebar was still active and
+   visibly merged the city name into the BRGEN wordmark at a 1280px viewport. */
+@media (max-width: 1265px) { .city-carousel { inset-inline-start: calc(120px + 16px); } }
 @media (max-width: 768px) {
   /* Below this width the sidebar collapses and the sticky feed-header's
      page title ("Home" etc.) becomes flush with the left edge -- the same
@@ -71,4 +74,3 @@
 .splash .chip { padding: .2rem .65rem; border: 1px solid var(--border); font: 8.5px/1.35 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); }
 .splash .hint { color: var(--text-dim); font-size: .65rem; letter-spacing: .05em; }
 .splash a { color: inherit; }
-

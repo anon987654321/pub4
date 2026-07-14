@@ -155,7 +155,7 @@ class TestWebUI < Minitest::Test
     refute_nil kernel_idx
     refute_nil face_idx
     assert_operator kernel_idx, :<, face_idx
-    assert_includes index, '<link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">'
+    refute_includes index, '<link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">'
     refute_match(/rel="modulepreload"[^>]+asset_path\("face\.js"\)/, index)
     # Boot modules ship through the compact javascript_include_tag(*%w[...]) manifest,
     # so they appear as bare (suffix-less) names, not "<name>.js".
@@ -235,6 +235,12 @@ class TestWebUI < Minitest::Test
     assert_includes css, "z-index: var(--z-modal)"
     assert_includes css, "body:not(.face-ready) #zsh:not(.live)"
     assert_includes part5, "primerFired = true"
+    assert_includes index, 'aria-describedby="primer-capabilities primer-consent"'
+    assert_includes index, "Microphone access is requested only when you choose voice input"
+    assert_includes index, "text remains available if graphics fail"
+    assert_includes index, "if(e.key===' '||e.key==='Enter')"
+    assert_includes index, "fallbackUi()"
+    assert_includes css, "@media (prefers-reduced-motion: reduce)"
   end
 
   def test_command_palette_wired_in_chat_js
@@ -483,7 +489,7 @@ class TestWebUI < Minitest::Test
   def test_face_particles_are_crisp_depth_sized_pixels
     source = face_runtime_source
 
-    assert_includes source, "let FACE_PIXEL_SIZE = 0.019"
+    assert_includes source, "let FACE_PIXEL_SIZE = 0.022"
     assert_includes source, "let FACE_GLOW_SCALE = 1.22"
     assert_includes source, "gl_PointSize=clamp"
     assert_includes source, "depth"

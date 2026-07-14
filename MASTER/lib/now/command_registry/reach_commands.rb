@@ -10,6 +10,7 @@ module Master
           "postpro" => command(:dispatch_postpro, root),
           "repligen" => command(:dispatch_repligen, root),
           "photograph" => command(:dispatch_repligen, root),
+          "dilla" => command(:dispatch_dilla, root),
           "video" => command(:dispatch_video),
           "motion-dataset" => command(:dispatch_motion_dataset),
           "lora-train" => command(:dispatch_lora, "train"),
@@ -26,6 +27,12 @@ module Master
 
       def dispatch_repligen(root, ctx: nil)
         run_tool(root, "repligen", arg_for(ctx))
+      end
+
+      def dispatch_dilla(root, ctx: nil)
+        args = arg_for(ctx).to_s.strip
+        args = "generate --style dilla" if args.empty?
+        run_tool(root, "dilla", args)
       end
 
       def dispatch_video(ctx: nil)

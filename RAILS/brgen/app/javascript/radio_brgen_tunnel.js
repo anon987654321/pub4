@@ -287,7 +287,7 @@ class VisualEngine {
     }
 
     // Update stars from historical c7c8effcd
-    const audioBoost = (audioData.average || 0) * 0.5
+    this.audioBoost = (audioData.average || 0) * 0.5
     this.stars.forEach(star => {
       star.z += (isPressed ? this.config.speed : -this.config.speed) * 0.5
       if (star.z > this.config.fov) star.z -= this.config.fov * 2
@@ -329,7 +329,7 @@ class VisualEngine {
       const sx = star.x * scale + this.centerX * 0.5 // approximate center
       const sy = star.y * scale + this.centerY * 0.5
       if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
-        const b = Math.floor(star.brightness * 200 + audioBoost * 50)
+        const b = Math.floor(star.brightness * 200 + (this.audioBoost || 0) * 50)
         this.setPixel(sx | 0, sy | 0, b, b, b + 20, 180)
       }
     })

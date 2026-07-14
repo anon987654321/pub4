@@ -36,14 +36,13 @@
   </aside>
 <% end %>
 
-<nav class="sort-tabs" aria-label="Sort posts" role="tablist" data-controller="tabs">
-  <%= link_to "Hot", root_path(anchor: "hot"), class: "sort-tab active", id: "hot-tab", role: "tab", aria: { selected: true }, data: { tabs_target: "tab", tabs_hash_value: "#hot", action: "click->tabs#select" } %>
-  <%= link_to "Latest", posts_path(sort: "fresh", anchor: "latest"), class: "sort-tab", id: "latest-tab", role: "tab", aria: { selected: false }, data: { tabs_target: "tab", tabs_hash_value: "#latest", action: "click->tabs#select" } %>
-</nav>
-
-<section id="feed-panel" role="tabpanel" aria-labelledby="hot-tab" data-tabs-target="panel">
+<section id="feed-panel" aria-label="Local posts">
+  <header class="local-feed-intro">
+    <p class="local-feed-kicker">Bergen, right now</p>
+    <p>Neighbourhood notes, weather-window plans, gigs, openings and the useful small things a city tells itself.</p>
+  </header>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to "Sign in", new_session_path %> to see posts from people you follow.</p>
   <% end %>
-  <%= live_search_index url: root_path(feed: params[:feed]), results_partial: "home/live_search_results", placeholder: "Search feed…", label: "Feed search", frame_id: "brgen-home", feed: params[:feed] %>
+  <%= render "home/live_search_results" %>
 </section>

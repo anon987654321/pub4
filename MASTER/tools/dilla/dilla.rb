@@ -8,6 +8,7 @@
 
 require "fileutils"
 require "json"
+require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 
 ROOT = File.expand_path(__dir__)
@@ -77,6 +78,9 @@ PAD_CHORDS = [
   { name: "C7#9 Hendrix", hz: [130.81, 155.56, 196.00, 233.08, 277.18] },
   { name: "Fmaj13", hz: [174.61, 220.00, 261.63, 311.13, 392.00] },
   { name: "Fmaj9", hz: [174.61, 220.00, 261.63, 311.13, 392.00] },
+  { name: "Cmaj9", hz: [130.81, 164.81, 196.00, 246.94, 293.66] },
+  { name: "E7b9", hz: [82.41, 103.83, 123.47, 146.83, 174.61] },
+  { name: "Bm7b5", hz: [123.47, 146.83, 174.61, 220.00, 261.63] },
   { name: "Em9", hz: [164.81, 196.00, 246.94, 293.66, 369.99] },
   { name: "G7", hz: [196.00, 246.94, 293.66, 349.23, 392.00] }
 ].freeze
@@ -94,7 +98,8 @@ COMMANDS = %w[
   help scan sweep council debug sample source livestream separate render verify
   chords clean stems study rhythm melody harmony semantics ears play live live_now harmony_now regenerate bass
   grade grade_list sonitex_list analog_list prepare madlib dilla hiphop slum industrial techno analog analog_liveset
-  electronium midi mix v7 v8 v9 v10 v11 demux liveset
+  electronium midi mix v7 v8 v9 v10 v11 demux liveset quality
+  capabilities
 ].freeze
 # Analog stock characters — digital signal equivalents of film stock data.
 # noise_amp: RMS amplitude of the noise floor (≈tape hiss level)
@@ -130,6 +135,8 @@ GRADE_PRESETS = {
   broadcast:   { fx: %w[parallel_compress multiband_tone transient_sharpen],              stock: :tape_250 },
   sp1200:      { fx: %w[tape_saturation analog_noise transient_sharpen],                  stock: :tape_500 },
   sonitex:     { fx: %w[spectral_warmth tape_saturation harmonic_bloom analog_noise wow_flutter vinyl_crackle], stock: :acetate },
+  vinyl_lab:   { fx: %w[spectral_warmth tape_saturation harmonic_bloom platter_wow vinyl_crackle stylus_mistrack needle_drop_fade analog_noise], stock: :vinyl },
+  dub_chamber: { fx: %w[spectral_warmth tape_saturation dub_delay chamber_reverb analog_noise], stock: :tape_500 },
 }.freeze
 
 # Sonitex STX-1260 — Tone Projects lo-fi life-span workstation (VST).
@@ -209,10 +216,14 @@ ANALOG_CHAIN_VARIANTS = {
   cassette:   { stock: :cassette,  fx: %w[spectral_warmth wow_flutter analog_noise vinyl_crackle harmonic_bloom] },
   broadcast:  { stock: :tape_250,  fx: %w[parallel_compress multiband_tone transient_sharpen stereo_width spectral_warmth] },
   lo_fi:      { stock: :cassette,  fx: %w[spectral_warmth tape_saturation wow_flutter harmonic_bloom analog_noise] },
-  vinyl_hot:  { stock: :vinyl,     fx: %w[spectral_warmth harmonic_bloom vinyl_crackle analog_noise stereo_width] },
-  sonitex:    { stock: :acetate,   fx: %w[tape_saturation harmonic_bloom wow_flutter vinyl_crackle multiband_tone analog_noise] }
+  vinyl_hot:  { stock: :vinyl,     fx: %w[spectral_warmth harmonic_bloom vinyl_crackle platter_wow stylus_mistrack analog_noise stereo_width] },
+  sonitex:    { stock: :acetate,   fx: %w[tape_saturation harmonic_bloom wow_flutter vinyl_crackle multiband_tone print_through_echo reel_splice_clicks analog_noise] },
+  vinyl_lab:  { stock: :vinyl,     fx: %w[spectral_warmth tape_saturation harmonic_bloom platter_wow vinyl_crackle stylus_mistrack needle_drop_fade analog_noise] },
+  dub_chamber: { stock: :tape_500, fx: %w[spectral_warmth tape_saturation dub_delay chamber_reverb haas_jitter analog_noise] }
 }.freeze
-ANALOG_CHAIN_ROTATE = %i[acetate sp1200 cassette broadcast lo_fi vinyl_hot sonitex].freeze
+ANALOG_CHAIN_ROTATE = %i[acetate sp1200 cassette broadcast lo_fi vinyl_hot sonitex vinyl_lab dub_chamber].freeze
+# Chains with real vinyl playback (not tape) get a turntable-motor sub-bass rumble bed.
+TURNTABLE_RUMBLE_VARIANTS = %i[vinyl_hot vinyl_lab acetate sonitex].freeze
 # Internal presets — output filenames use neutral TAPE_RENDER_CATALOG codes only.
 SLUM_VILLAGE_TRACKS = %i[
   get_dis_money thelonious raise_it_up tell_me hold_tight players look_of_love
@@ -344,6 +355,12 @@ DILLA_PROGRESSIONS = {
   timeless_measured: %w[Dbmaj9 C#m7 G#m7 D#m7 Fm9 Bbm9 Abmaj9low],
   players_measured: %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
   jazz: %w[Dm9 Gm9 C7#9\ Hendrix Fmaj13],
+  # Circle-of-fifths sequence with seventh/ninth extensions: Bach-informed
+  # functional motion, voiced through the same drifting analog pad engine.
+  baroque: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9],
+  # Chromatic-mediant and tritone movement for a denser LA beat-scene field.
+  flylo: %w[C\ cluster E\ altered Bbm9 Gbmaj9 Dm9 G7 Cmaj9 E7b9],
+  neo_soul: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9],
   tritone: %w[Cm9 Gbmaj9 Bbm9 E\ altered],
   get_dis_money: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
   thelonious: %w[Fm9 Bbm9 Fm9 Bbm9],
@@ -362,6 +379,21 @@ DILLA_PROGRESSIONS = {
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 DILLA_TRACK_PRESETS = {
+  baroque: {
+    bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
+    feel: :thelonious,
+    timing: { snare: -14..-5, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -6..4 }
+  },
+  flylo: {
+    bpm: 89, progression: :flylo, chord_bars: 2, phrase_bars: 16, swing: 61,
+    feel: :madlib, stereo_pan: true,
+    timing: { snare: -30..-13, hat_up: 18..38, bass: 26..48, kick_anchor: 0..7, pad: 8..24 }
+  },
+  neo_soul: {
+    bpm: 84, progression: :neo_soul, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :timeless, stereo_pan: true,
+    timing: { snare: -20..-8, hat_up: 14..30, bass: 18..38, kick_anchor: 0..5, pad: 2..16 }
+  },
   get_dis_money: {
     bpm: 97, progression: :get_dis_money, chord_bars: 1, phrase_bars: 7,
     swing: 54, feel: :get_dis_money, stereo_pan: true,
@@ -414,7 +446,9 @@ CHORD_TEMPLATES = {
 }.freeze
 
 def sh!(*command)
-  puts ">>> #{command.flatten.join(' ')}"
+  display = command.flatten.join(" ")
+  display = "#{display.byteslice(0, 420)}… (#{display.bytesize} bytes)" if display.bytesize > 460
+  puts ">>> #{display}"
   abort "failed: #{command.flatten.first}" unless system(*command.flatten.map(&:to_s))
 end
 
@@ -670,6 +704,41 @@ def verify(path = File.join(ROOT, "full_track.mp3"))
   abort "verify failed" unless status.success? && text.include?("mean_volume:")
 end
 
+def dilla_quality(path, baseline_path = nil)
+  abort "missing #{path}" unless File.file?(path)
+  loud_out, loud_err, loud_status = capture(
+    "ffmpeg", "-hide_banner", "-i", path, "-af", "loudnorm=I=-14:TP=-1:LRA=11:print_format=json", "-f", "null", "-"
+  )
+  abort loud_err unless loud_status.success?
+  json_text = (loud_out + loud_err)[/\{\s*"input_i".*?\}/m]
+  loudness = json_text ? JSON.parse(json_text) : {}
+  spectrum = {
+    low: band_rms(path, highpass: 28, lowpass: 180),
+    mid: band_rms(path, highpass: 180, lowpass: 3_500),
+    high: band_rms(path, highpass: 3_500, lowpass: 16_000)
+  }
+  mono = band_rms(path, highpass: 28, lowpass: 16_000)
+  report = media_metadata(path).merge(
+    schema: "dilla.master.v1", path: File.expand_path(path), delivery: File.extname(path).delete_prefix(".").downcase,
+    integrated_lufs: loudness["input_i"]&.to_f, true_peak_dbtp: loudness["input_tp"]&.to_f,
+    loudness_range_lu: loudness["input_lra"]&.to_f, mono_rms_db: mono, spectral_rms_db: spectrum,
+    target: { integrated_lufs: -14.0..-11.0, true_peak_max_dbtp: -1.0 }, warnings: [],
+    capabilities: Master::Reach::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
+  )
+  report[:warnings] << "true peak exceeds -1 dBTP" if report[:true_peak_dbtp] && report[:true_peak_dbtp] > -1.0
+  report[:warnings] << "master is outside radio-ready -14..-11 LUFS range" if report[:integrated_lufs] && !(-14.0..-11.0).cover?(report[:integrated_lufs])
+  if baseline_path && File.file?(baseline_path)
+    baseline = JSON.parse(File.read(baseline_path), symbolize_names: true)
+    old = baseline[:spectral_rms_db] || {}
+    report[:spectral_delta_db] = spectrum.to_h { |band, value| [band, (value - old.fetch(band, value).to_f).round(3)] }
+    report[:warnings] << "spectral balance moved more than 4 dB" if report[:spectral_delta_db].values.any? { |delta| delta.abs > 4.0 }
+  end
+  sidecar = "#{path}.quality.json"
+  File.write(sidecar, JSON.pretty_generate(report) + "\n")
+  puts JSON.pretty_generate(report.merge(sidecar: sidecar))
+  report
+end
+
 def clean(input, output)
   abort "missing input" unless input && File.exist?(input)
   FileUtils.mkdir_p(File.dirname(output))
@@ -807,6 +876,14 @@ def frame_energy(path, highpass:, lowpass:)
     [index * hop.to_f / SAMPLE_RATE, Math.sqrt(slice.sum { |value| value * value } / slice.length)]
   end.compact
   { frames: frames, hop_seconds: hop.to_f / SAMPLE_RATE, duration_seconds: raw.length.to_f / SAMPLE_RATE }
+end
+
+def band_rms(path, highpass:, lowpass:)
+  raw = pipe_floats(path, "highpass=f=#{highpass},lowpass=f=#{lowpass},aformat=sample_fmts=flt:channel_layouts=mono")
+  return -Float::INFINITY if raw.empty?
+
+  rms = Math.sqrt(raw.sum { |value| value * value } / raw.length)
+  (20.0 * Math.log10([rms, 1.0e-12].max)).round(3)
 end
 
 def spectral_windows(path)
@@ -990,6 +1067,42 @@ def grade_filter(fx, stock)
   when "stereo_width"
     # Chromatic aberration analog: M/S stereo widening.
     "extrastereo=m=1.35"
+  when "print_through_echo"
+    # Print-through analog: adjacent tape-layer bleed. True print-through is a
+    # pre-echo; ffmpeg's aecho is forward-only, so this renders it as a faint
+    # post-echo shadow of the same magnitude and timing (~40ms, -25dB).
+    "aecho=1.0:0.056:38:0.11"
+  when "reel_splice_clicks"
+    # Reel splice analog: a physical tape join clicks once per reel length.
+    "aeval=exprs='val(0)+if(lt(mod(t,42.5),0.0015),0.4*(random(0)-0.5),0)|" \
+    "val(1)+if(lt(mod(t,42.5),0.0015),0.4*(random(1)-0.5),0)'"
+  when "stylus_mistrack"
+    # Groove mistracking analog: extra clipping kicks in only above a peak threshold.
+    "aeval=exprs='val(0)+0.5*(tanh(4*val(0))-val(0))*gt(abs(val(0)),0.55)|" \
+    "val(1)+0.5*(tanh(4*val(1))-val(1))*gt(abs(val(1)),0.55)'"
+  when "platter_wow"
+    # Off-centre pressing analog: wow locked to platter speed (33 1/3rpm ≈ 0.556Hz),
+    # not tape capstan speed — slower and more periodic than wow_flutter.
+    "vibrato=f=0.556:d=0.012"
+  when "needle_drop_fade"
+    # Needle-drop analog: stylus settling into a spinning groove.
+    "afade=t=in:st=0:d=0.12:curve=qsin"
+  when "haas_jitter"
+    # Console crosstalk / Haas analog: asymmetric micro-delay per channel for width.
+    "adelay=9|13,aecho=0.15:0.2:130:0.18"
+  when "spring_reverb"
+    # Spring tank analog: sparse, dispersive taps with a metallic mid resonance.
+    "aecho=0.8:0.65:29|61|101|149:0.5|0.4|0.3|0.22,equalizer=f=2200:t=o:w=1.4:g=3.0,highpass=f=350"
+  when "plate_reverb"
+    # Plate analog: dense, closely spaced early reflections, smooth decay.
+    "aecho=0.85:0.7:15|33|52|74|97|123:0.42|0.36|0.3|0.24|0.18|0.12"
+  when "chamber_reverb"
+    # Chamber analog: a few distinct early reflections before a short room tail.
+    "aecho=0.9:0.6:41|83|127|179:0.38|0.30|0.22|0.15"
+  when "dub_delay"
+    # Dub delay analog: regenerating tape-echo feedback with saturation in the loop.
+    "aecho=0.8:0.75:340|680:0.45|0.28,aeval=exprs='tanh(1.6*val(0))/#{Math.tanh(1.6).round(6)}|" \
+    "tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}'"
   end
 end
 
@@ -1119,17 +1232,33 @@ def dilla_mix_preprocess_filters(input_tag = "mix", out_tag: "dpre")
   ]
 end
 
-# Sonitex + creative analog grade stack + final limiter.
+# Sonitex + creative analog grade stack + streaming loudness delivery.
+# loudnorm supplies EBU R128 integrated loudness and true-peak analysis (including
+# its oversampled peak path); the final limiter remains a deterministic last guard.
+MASTER_TARGET_LUFS = -14.0
+MASTER_TARGET_LRA = 9.0
+TRUE_PEAK_CEILING_DB = -1.0
+TRUE_PEAK_CEILING_LINEAR = (10**(TRUE_PEAK_CEILING_DB / 20.0)).round(4)
+
+def true_peak_guard_filter(input_tag, out_tag: "out")
+  "[#{input_tag}]loudnorm=I=#{MASTER_TARGET_LUFS}:TP=#{TRUE_PEAK_CEILING_DB}:LRA=#{MASTER_TARGET_LRA}," \
+    "aresample=#{SAMPLE_RATE}," \
+    "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
+end
+
 def master_bus_filters(input_tag = "mix", track: nil)
   unless sonitex_enabled?
-    return ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[out]"]
+    filt = ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[premaster]"]
+    filt << true_peak_guard_filter("premaster")
+    return filt
   end
   s = sonitex_config(track:)
   variant = analog_resolve_variant(track:)
   filt = []
   filt.concat(sonitex_tape_filters(input_tag, out_tag: "snx_out"))
   filt.concat(analog_emulation_filters("snx_out", variant, out_tag: "ana_out"))
-  filt << "[ana_out]alimiter=limit=#{s[:limit]}:level_out=#{s[:level_out]}[out]"
+  filt << "[ana_out]alimiter=limit=#{s[:limit]}:level_out=#{s[:level_out]}[premaster]"
+  filt << true_peak_guard_filter("premaster")
   filt
 end
 
@@ -1747,7 +1876,8 @@ def load_mono_sample(path)
   pipe_floats(path, "aformat=channel_layouts=mono:sample_fmts=flt")
 end
 
-def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, chorus: false)
+def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, chorus: false,
+              source_offset: 0)
   voices = if chorus
              [{ cents: 0.0, pan: 0.0, gain: 0.55 }, { cents: 5.5, pan: -0.42, gain: 0.28 },
               { cents: -5.5, pan: 0.42, gain: 0.28 }, { cents: 11.0, pan: -0.18, gain: 0.12 }]
@@ -1757,7 +1887,7 @@ def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, c
   frames_n.times do |i|
     idx = frame + i
     break if idx >= left.length
-    t = i.to_f / SAMPLE_RATE
+    t = (source_offset + i).to_f / SAMPLE_RATE
     env = Math.exp(-t * decay) * (0.78 + 0.22 * Math.sin(2 * Math::PI * mod_hz * t))
     voices.each do |voice|
       fh = hz * (2 ** (voice[:cents] / 1200.0))
@@ -1770,7 +1900,8 @@ def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, c
 end
 
 # Rhodes/Juno-style pad voice — slow attack, detuned stack, harmonic bloom, stereo spread.
-def mix_dilla_pad_voice!(left, right, frame, frames_n, hz, amp, voice_i: 0, bar_i: 0, sub: false)
+def mix_dilla_pad_voice!(left, right, frame, frames_n, hz, amp, voice_i: 0, bar_i: 0, sub: false,
+                         source_offset: 0, total_frames: frames_n, absolute_frame_origin: 0)
   attack_n  = (0.072 * SAMPLE_RATE).round
   release_n = (0.48 * SAMPLE_RATE).round
   wow_hz    = 0.16 + voice_i * 0.025
@@ -1785,10 +1916,11 @@ def mix_dilla_pad_voice!(left, right, frame, frames_n, hz, amp, voice_i: 0, bar_
   frames_n.times do |i|
     idx = frame + i
     break if idx >= left.length
-    t = i.to_f / SAMPLE_RATE
-    t_abs = (frame + i).to_f / SAMPLE_RATE
-    attack = i < attack_n ? (i.to_f / attack_n) ** 1.35 : 1.0
-    rel_i = frames_n - i
+    source_i = source_offset + i
+    t = source_i.to_f / SAMPLE_RATE
+    t_abs = (absolute_frame_origin + frame + i).to_f / SAMPLE_RATE
+    attack = source_i < attack_n ? (source_i.to_f / attack_n) ** 1.35 : 1.0
+    rel_i = total_frames - source_i
     release = rel_i < release_n ? (rel_i.to_f / release_n) ** 0.75 : 1.0
     sustain = Math.exp(-t * (sub ? 0.05 : 0.07))
     breathe = 0.80 + 0.20 * Math.sin(2 * Math::PI * wow_hz * t_abs + bar_i * 0.55)
@@ -1806,6 +1938,69 @@ def mix_dilla_pad_voice!(left, right, frame, frames_n, hz, amp, voice_i: 0, bar_
       right[idx] += s * (0.5 + pan * 0.5)
     end
   end
+end
+
+STREAM_CHUNK_SECONDS = 4
+PAD_RENDER_SAMPLE_RATE = 22_050
+
+def soft_clip_sample(sample, knee: 0.85)
+  magnitude = sample.abs
+  return sample if magnitude <= knee
+
+  sample.negative? ? -(knee + (1.0 - knee) * Math.tanh((magnitude - knee) / (1.0 - knee))) :
+                     knee + (1.0 - knee) * Math.tanh((magnitude - knee) / (1.0 - knee))
+end
+
+def soft_clip_stereo_chunk!(left, right)
+  left.map! { |sample| soft_clip_sample(sample) }
+  right.map! { |sample| soft_clip_sample(sample) }
+end
+
+# Write long buses incrementally. At 44.1 kHz a five-minute stereo Float array
+# can exceed a gigabyte in Ruby; fixed-size chunks keep the render bounded while
+# preserving oscillator phase and one-shot tails across chunk boundaries.
+def write_stereo_chunks(path, duration, chunk_seconds: STREAM_CHUNK_SECONDS)
+  total_frames = (duration * SAMPLE_RATE).ceil
+  chunk_frames = [(chunk_seconds * SAMPLE_RATE).to_i, 1].max
+  stdin, stdout, stderr, wait = Open3.popen3(
+    "ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", SAMPLE_RATE.to_s,
+    "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", path
+  )
+  out_reader = Thread.new { stdout.read }
+  err_reader = Thread.new { stderr.read }
+  chunk_start = 0
+  while chunk_start < total_frames
+    count = [chunk_frames, total_frames - chunk_start].min
+    left = Array.new(count, 0.0)
+    right = Array.new(count, 0.0)
+    yield chunk_start, count, left, right
+    # A fixed transfer curve is invariant across chunk boundaries; per-chunk
+    # normalization would audibly pump a sustained pad every four seconds.
+    soft_clip_stereo_chunk!(left, right)
+    interleaved = Array.new(count * 2)
+    count.times do |i|
+      interleaved[i * 2] = left[i]
+      interleaved[i * 2 + 1] = right[i]
+    end
+    stdin.write(interleaved.pack("e*"))
+    chunk_start += count
+  end
+  stdin.close
+  status = wait.value
+  out_reader.value
+  error = err_reader.value
+  abort "wav stream failed: #{error}" unless status.success?
+  path
+ensure
+  stdin&.close unless stdin&.closed?
+end
+
+def overlap_window(event_frame, event_frames, chunk_start, chunk_frames)
+  overlap_start = [event_frame, chunk_start].max
+  overlap_end = [event_frame + event_frames, chunk_start + chunk_frames].min
+  return nil if overlap_end <= overlap_start
+
+  [overlap_start - chunk_start, overlap_start - event_frame, overlap_end - overlap_start]
 end
 
 def warm_dilla_pad_post(path)
@@ -1829,74 +2024,112 @@ def warm_dilla_pad_post(path)
   path
 end
 
-def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [])
-  frames = (duration * SAMPLE_RATE).ceil + SAMPLE_RATE
-  left   = Array.new(frames, 0.0)
-  right  = Array.new(frames, 0.0)
+def native_pad_voice_expression(hz, amp, voice_i, pan, phase_seed)
+  frequency = hz.round(4)
+  drift = "(1+0.0014*sin(2*PI*0.065*t+#{phase_seed.round(3)}))"
+  body = "(0.72*sin(2*PI*#{frequency}*#{drift}*t)+" \
+         "0.0933*sin(2*PI*#{frequency * 3.0}*#{drift}*t)+" \
+         "0.08*sin(2*PI*#{frequency * 2.0}*#{drift}*t))"
+  breathe = "(0.80+0.20*sin(2*PI*#{(0.16 + voice_i * 0.025).round(3)}*t+#{phase_seed.round(3)}))"
+  env = "min(1,pow(t/0.072,1.35))*exp(-t*0.07)*#{breathe}"
+  ["#{amp.round(6)}*#{(0.5 - pan * 0.5).round(4)}*#{env}*#{body}",
+   "#{amp.round(6)}*#{(0.5 + pan * 0.5).round(4)}*#{env}*#{body}"]
+end
 
-  pad_events.each_with_index do |(t, v, chord, sustain), pi|
+def render_native_pad_wav(path, pad_events, duration)
+  filters = []
+  labels = []
+  pad_events.each_with_index do |(time, velocity, chord, sustain), event_i|
     next unless chord
-    dur = [(sustain * SAMPLE_RATE).round, 1].max
-    drift = 1.0 + Math.sin((pi + 1) * 1.3) * 0.0010
-    sorted = chord[:hz].sort
-    sorted.each_with_index do |hz, vi|
-      strum = vi * 0.013
-      start = (t * SAMPLE_RATE).round + (strum * SAMPLE_RATE).round
-      voice_amp = v * (0.050 + vi * 0.0042)
-      mix_dilla_pad_voice!(left, right, start, dur, hz * drift, voice_amp, voice_i: vi, bar_i: pi)
-      next unless vi.zero?
-      mix_dilla_pad_voice!(left, right, start, dur, (hz * drift * 0.5).round(4), voice_amp * 0.42,
-                           voice_i: vi + 5, bar_i: pi, sub: true)
+    left_parts = []
+    right_parts = []
+    chord[:hz].sort.each_with_index do |hz, voice_i|
+      pan = [-0.38, -0.12, 0.14, 0.36, 0.22][voice_i % 5]
+      amp = velocity * (0.050 + voice_i * 0.0042)
+      pair = native_pad_voice_expression(hz, amp, voice_i, pan, event_i * 0.55 + voice_i * 0.9)
+      left_parts << pair[0]
+      right_parts << pair[1]
+      next unless voice_i.zero?
+
+      sub_pair = native_pad_voice_expression(hz * 0.5, amp * 0.42, voice_i + 5, pan, event_i * 0.61)
+      left_parts << sub_pair[0]
+      right_parts << sub_pair[1]
+    end
+    delay = [(time * 1000.0).round, 0].max
+    label = "pad#{event_i}"
+    # The pad is low-passed below 3 kHz later, so a half-rate oscillator bed is
+    # lossless for its audible band and roughly halves long-render DSP time.
+    filters << "aevalsrc=exprs='#{expr_sum(left_parts)}|#{expr_sum(right_parts)}':d=#{sustain.round(4)}:s=#{PAD_RENDER_SAMPLE_RATE}," \
+               "adelay=#{delay}|#{delay}[#{label}]"
+    labels << "[#{label}]"
+  end
+  if labels.empty?
+    filters << "anullsrc=r=#{PAD_RENDER_SAMPLE_RATE}:cl=stereo:d=#{duration}[pads]"
+  else
+    filters << "#{labels.join}amix=inputs=#{labels.length}:duration=longest:normalize=0," \
+               "atrim=0:#{duration},alimiter=limit=0.95:level_out=0.96[pads]"
+  end
+  sh! "ffmpeg", "-y", "-filter_complex", filters.join(";"), "-map", "[pads]", "-c:a", "pcm_s16le", path
+  path
+end
+
+def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [])
+  tones_path = "#{path}.tones.wav"
+  pads_path = "#{path}.pads.wav"
+  render_native_pad_wav(pads_path, pad_events, duration)
+  write_stereo_chunks(tones_path, duration) do |chunk_start, chunk_frames, left, right|
+    chop_events.each do |(t, v, chord)|
+      hz_list = chop_hz(chord)
+      next if hz_list.empty?
+      event_frame = (t * SAMPLE_RATE).round
+      total = (0.28 * SAMPLE_RATE).round
+      window = overlap_window(event_frame, total, chunk_start, chunk_frames)
+      next unless window
+      local_start, source_offset, count = window
+      frequency = hz_list[((t * 10).to_i) % hz_list.length]
+      mix_sine!(left, right, local_start, count, frequency, v * 0.13,
+                decay: 2.0, mod_hz: 0.45, source_offset:)
+    end
+
+    melody_events.each do |(t, v, hz)|
+      event_frame = (t * SAMPLE_RATE).round
+      total = (0.18 * SAMPLE_RATE).round
+      window = overlap_window(event_frame, total, chunk_start, chunk_frames)
+      next unless window
+      local_start, source_offset, count = window
+      frequency = hz.is_a?(Numeric) ? hz : MELODY_CHOP_HZ.first
+      count.times do |i|
+        tt = (source_offset + i).to_f / SAMPLE_RATE
+        sample = v * 0.11 * Math.exp(-tt * 8.5) * Math.sin(2 * Math::PI * frequency * tt)
+        left[local_start + i] += sample * 0.55
+        right[local_start + i] += sample * 0.45
+      end
+    end
+
+    bass_events.each do |hit|
+      t, v = hit[0], hit[1]
+      root = hit[2].is_a?(Numeric) ? hit[2] : 43.65
+      total = [((hit[3] || BASS_SUSTAIN_SEC) * SAMPLE_RATE).round, 1].max
+      event_frame = (t * SAMPLE_RATE).round
+      window = overlap_window(event_frame, total, chunk_start, chunk_frames)
+      next unless window
+      local_start, source_offset, count = window
+      count.times do |i|
+        tt = (source_offset + i).to_f / SAMPLE_RATE
+        lfo = 0.03 * Math.sin(2 * Math::PI * 0.12 * tt)
+        sample = v * 0.42 * Math.exp(-tt * BASS_DECAY_RATE) *
+                 Math.sin(2 * Math::PI * root * (1.0 + lfo) * tt)
+        left[local_start + i] += sample
+        right[local_start + i] += sample
+      end
     end
   end
-
-  chop_events.each do |(t, v, chord)|
-    hz_list = chop_hz(chord)
-    next if hz_list.empty?
-    f = hz_list[((t * 10).to_i) % hz_list.length]
-    mix_sine!(left, right, (t * SAMPLE_RATE).round, (0.28 * SAMPLE_RATE).round, f, v * 0.13, decay: 2.0, mod_hz: 0.45)
-  end
-
-  melody_events.each do |(t, v, hz)|
-    f = hz.is_a?(Numeric) ? hz : MELODY_CHOP_HZ.first
-    start = (t * SAMPLE_RATE).round
-    dur = (0.18 * SAMPLE_RATE).round
-    dur.times do |i|
-      idx = start + i
-      break if idx >= left.length
-      tt = i.to_f / SAMPLE_RATE
-      env = Math.exp(-tt * 8.5)
-      s = v * 0.11 * env * Math.sin(2 * Math::PI * f * tt)
-      left[idx]  += s * 0.55
-      right[idx] += s * 0.45
-    end
-  end
-
-  bass_events.each do |hit|
-    t, v = hit[0], hit[1]
-    root = hit[2].is_a?(Numeric) ? hit[2] : 43.65
-    sustain = hit[3] || BASS_SUSTAIN_SEC
-    start = (t * SAMPLE_RATE).round
-    dur   = [(sustain * SAMPLE_RATE).round, 1].max
-    dur.times do |i|
-      idx = start + i
-      break if idx >= left.length
-      tt = i.to_f / SAMPLE_RATE
-      lfo = 0.03 * Math.sin(2 * Math::PI * 0.12 * tt)
-      env = Math.exp(-tt * BASS_DECAY_RATE)
-      s = v * 0.42 * env * Math.sin(2 * Math::PI * root * (1.0 + lfo) * tt)
-      left[idx]  += s
-      right[idx] += s
-    end
-  end
-
-  peak = left.zip(right).flat_map { |l, r| [l.abs, r.abs] }.max || 1.0
-  if peak > 0.95
-    g = 0.88 / peak
-    left.map!  { |s| s * g }
-    right.map! { |s| s * g }
-  end
-  write_stereo_wav(path, left, right)
+  sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path,
+      "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=1.0 1.0:duration=longest:normalize=0," \
+                         "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
+      "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+  FileUtils.rm_f(pads_path)
+  FileUtils.rm_f(tones_path)
   warm_dilla_pad_post(path)
 end
 
@@ -1943,6 +2176,28 @@ def render_sample_bus(events, duration, kit, mapping)
     right.map! { |s| s * gain }
   end
   [left, right]
+end
+
+def render_sample_bus_wav(path, events, duration, kit, mapping)
+  write_stereo_chunks(path, duration) do |chunk_start, chunk_frames, left, right|
+    mapping.each do |event_key, default_key|
+      events.fetch(event_key, []).each do |hit|
+        time, velocity = hit[0], hit[1]
+        sample_key = hit[2].is_a?(Symbol) ? hit[2] : default_key
+        pan = hit[3] || 0.0
+        sample = kit.fetch(sample_key)
+        event_frame = (time * SAMPLE_RATE).round
+        window = overlap_window(event_frame, sample.length, chunk_start, chunk_frames)
+        next unless window
+        local_start, source_offset, count = window
+        count.times do |i|
+          value = sample[source_offset + i] * velocity
+          left[local_start + i] += value * (0.5 - pan * 0.35)
+          right[local_start + i] += value * (0.5 + pan * 0.35)
+        end
+      end
+    end
+  end
 end
 
 def gate_expr(hits, hold: 0.38, scale: 1.0)
@@ -1995,13 +2250,13 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   }
   drum_tmp     = File.join(ROOT, ".dilla_drums.wav")
   harmonic_tmp = File.join(ROOT, ".dilla_harmonic.wav")
-  left, right = render_sample_bus(
+  render_sample_bus_wav(
+    drum_tmp,
     events,
     duration,
     kit,
     kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat, bass: :bass_43
   )
-  write_stereo_wav(drum_tmp, left, right)
 
   chop_gate = gate_expr(events[:chop], hold: 0.32, scale: 0.95)
   pad_gate  = pad_gate_expr(events[:pad])
@@ -2027,6 +2282,8 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
     idx += 1
   end
   command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.035:d=#{duration}"]
+  turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
+  command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.05:d=#{duration}"] if turntable_rumble
 
   filt = ["[0:a]aformat=channel_layouts=stereo[drums]"]
   mix_labels = ["[drums]"]
@@ -2070,6 +2327,11 @@ def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = n
   filt << "[#{idx}:a]highpass=f=90,lowpass=f=8000,volume=0.18[vinyl]"
   mix_labels << "[vinyl]"
   mix_weights << "1.0"
+  if turntable_rumble
+    filt << "[#{idx + 1}:a]lowpass=f=45,highpass=f=18,volume=0.12[rumble]"
+    mix_labels << "[rumble]"
+    mix_weights << "0.5"
+  end
   filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
   filt.concat(dilla_mix_preprocess_filters("mix", out_tag: "dpre"))
   filt.concat(master_bus_filters("dpre", track: cfg[:track].to_s))
@@ -2193,13 +2455,13 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   }
   stab_hits = events[:stab].map { |t, v| [t, v, :ind_stab] }
   drum_tmp  = File.join(ROOT, ".ind_drums.wav")
-  left, right = render_sample_bus(
+  render_sample_bus_wav(
+    drum_tmp,
     events.merge(stab: stab_hits),
     duration,
     kit,
     kick: :ind_kick, clap: :ind_clap, hat: :ind_hat, open: :open_hat, bass: :ind_bass_e, stab: :ind_stab
   )
-  write_stereo_wav(drum_tmp, left, right)
 
   sides_path = File.join(STEM_DIR, "sides.mp3")
   command = ["ffmpeg", "-y", "-i", drum_tmp]
@@ -2586,11 +2848,11 @@ def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.
     open_hat: load_mono_sample(drum_sample_path("open_hat.wav"))
   }
   drum_tmp = File.join(ROOT, ".madlib_drums.wav")
-  left, right = render_sample_bus(
+  render_sample_bus_wav(
+    drum_tmp,
     events, duration, kit,
     kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat
   )
-  write_stereo_wav(drum_tmp, left, right)
 
   command = ["ffmpeg", "-y", "-i", drum_tmp,
              "-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.028:d=#{duration}"]
@@ -3271,6 +3533,8 @@ end
 
 cmd = ARGV.shift
 case cmd
+when "capabilities" then puts Master::Reach::AnalogCapabilities.report(:dilla)
+when "quality" then dilla_quality(ARGV.shift || File.join(ROOT, "full_track.mp3"), ARGV.shift)
 when nil, "help" then help
 when "scan" then scan
 when "sweep" then sweep

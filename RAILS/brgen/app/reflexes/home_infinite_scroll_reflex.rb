@@ -18,6 +18,7 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
       authenticated: Current.user.present? && !Current.user.guest?
     )
     scope = scope.includes(:user, :community, :votes)
+    scope = scope.reorder(created_at: :desc) if element.dataset["sort"] == "latest"
     return scope unless element.dataset["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

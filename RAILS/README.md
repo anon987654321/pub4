@@ -37,7 +37,10 @@ include Shared.concern(:Votable)   # Notifiable, ActivityTrackable, GeoLocatable
 ruby RAILS/check_production_gate.rb
 cd RAILS/<app> && bin/ci    # per-app RuboCop, Brakeman, bundler-audit, test
 MASTER/bin/probe rails
+ruby RAILS/visual_contract_gate.rb
 ```
+
+`visual_contract_gate.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations.
 
 On OpenBSD, use the package-qualified Ruby 3.4 commands:
 
@@ -100,6 +103,10 @@ ruby34 OPERATOR/openbsd/health_check.rb --public --all-ready-apps
 ```
 
 **Status:** brgen/amber/bsdports are ready when VPS `bin/ci` + public `/up` pass; master (ai.brgen.no) is ready on auth smoke + `/up`. Ship criteria: `MASTER/data/operator_playbook.yml`.
+
+## Media integration
+
+Rails uses `Pub4::DeployPaths` to resolve MASTER media tools from a source checkout or a VPS copy-tree; never assume `Rails.root/../../postpro`. Newsletter hero rendering can use the same postpro/repligen pair as MASTER. Keep provider tokens in the app’s `/etc/<app>.env`; do not add them to Rails credentials or source. MASTER’s natural-language media routing is local to the agent runtime, while Rails callers should use the shared service boundary so jobs remain observable and retryable.
 
 **Blockers:**
 

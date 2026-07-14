@@ -59,6 +59,7 @@ group :test do
   gem "capybara"
   gem "puma"
   gem "selenium-webdriver"
+  gem "axe-core-capybara"
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem 'pub4-shared', path: '../shared'

@@ -38,7 +38,7 @@ class PortsController < ApplicationController
     @comment = Comment.new
     @watching = authenticated? && @port.watches.exists?(user: Current.user)
     @advisories = @port.security_advisories.recent
-    @maintainer = @port.maintainer.present? ? Maintainer.find_by(name: @port.maintainer) : nil
+    @maintainer = @port.maintainer || Maintainer.find_by(name: @port[:maintainer])
     @dependency_tree = Dependency.tree_for(@port)
     @explore_summary = Ports::ExploreAssistant.summarize(@port)
     @pkg_info = if ENV["CI"] == "1" || Rails.env.test?

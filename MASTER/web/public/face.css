@@ -481,13 +481,14 @@ body[data-mode="listening"] #mic-dot {
 
 #primer h1 {
   margin: 0;
-  font: 200 clamp(1rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif;
-  letter-spacing: -.04em;
+  font: 400 clamp(1.05rem,3.2vw,1.5rem)/1 "Inter",Helvetica,Arial,sans-serif;
+  letter-spacing: .01em;
   color: var(--face-fg);
   transition: transform var(--transition-fast) var(--ease-out);
 }
 
 #primer:active h1 { transform: scale(1.03); }
+#primer .primer-consent { max-width: 42ch; margin: 12px auto 0; color: var(--face-muted); font: 400 .78rem/1.5 var(--font-label); }
 
 /* Tap ripple */
 @keyframes ripple { to { transform: translate(var(--x),var(--y)) translate(-50%,-50%) scale(22); opacity: 0; } }
@@ -844,7 +845,7 @@ body[data-uncertain="1"] #zsh-status { opacity: 1; animation: uncertainBlink 900
 
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
 .chip { font: 10px/1 var(--font-label); letter-spacing: .08em; padding: 5px 10px; border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: var(--radius-xs); color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
-#primer .tagline { opacity: .42; font-size: .88em; margin-top: 10px; letter-spacing: .04em; }
+#primer .tagline { opacity: .62; font-size: .88em; margin-top: 12px; letter-spacing: .08em; }
 
 /* #56 Sleeping dim */
 body[data-sleeping="1"] canvas { filter: brightness(0.85); }

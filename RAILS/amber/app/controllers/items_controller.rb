@@ -4,8 +4,8 @@ class ItemsController < ApplicationController
   include Shared::LiveSearchable
 
   before_action :require_real_user
-  before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]
-  before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear]
+  before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear archive restore]
+  before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear archive restore]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
@@ -79,6 +79,16 @@ class ItemsController < ApplicationController
     @item.update!(spark_joy: false)
     @item.record_activity!("AmberItemDecluttered", source_vertical: "amber")
     redirect_to items_path, notice: "Marked for declutter"
+  end
+
+  def archive
+    @item.update!(lifecycle_state: "sentimental_archive")
+    redirect_to @item, notice: "Archived. You can restore this item at any time."
+  end
+
+  def restore
+    @item.update!(lifecycle_state: "active")
+    redirect_to @item, notice: "Restored to your active wardrobe."
   end
 
   def wear

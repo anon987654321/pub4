@@ -1,6 +1,7 @@
 <%= form_with model: Post.new, url: posts_path, class: "compose-box", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
-  <div class="compose-avatar" aria-hidden="true"><%= guest? ? "?" : (Current.user.username&.first&.upcase || "B") %></div>
+  <div class="compose-avatar" aria-hidden="true"><%= guest? ? "G" : (Current.user.username&.first&.upcase || "B") %></div>
   <div class="compose-inner" data-controller="tiptap-editor">
+    <%= f.label :content, "Post to Bergen", class: "compose-label-visible" %>
     <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
     <%= f.text_area :content,
           rows: 1,
@@ -34,12 +35,12 @@
         <%= f.submit t("feed.post_action"), class: "btn btn-primary btn-sm" %>
       </div>
     </div>
-    <p class="dim compose-hint">
+    <div class="dim compose-hint">
       <% if guest? %>
-        <%= t("feed.guest_hint", limit: Shared::AnonymousPostService::LIMIT) %>
+        <details><summary>Posting as a guest</summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPostService::LIMIT) %> The limit slows spam without asking for an account.</p></details>
       <% else %>
         <%= link_to t("feed.advanced_post"), new_post_path, class: "link-inherit" %>
       <% end %>
-    </p>
+    </div>
   </div>
 <% end %>

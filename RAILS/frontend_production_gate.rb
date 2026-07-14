@@ -51,7 +51,11 @@ end
 
 build_script = File.join(RAILS_ROOT, "build_all_css.rb")
 if File.file?(build_script)
-  out, status = Open3.capture2e(RbConfig.ruby, build_script, chdir: ROOT)
+  # A gate must be read-only and bounded by local state. The old invocation
+  # performed three full Bundler/npx builds (and possible font downloads), so
+  # an offline or half-installed workspace could hang here with no output.
+  # Asset compilation belongs to the build/release step; this gate verifies it.
+  out, status = Open3.capture2e(RbConfig.ruby, build_script, "--check", chdir: ROOT)
   unless status.success?
     warn out unless out.strip.empty?
     exit 1

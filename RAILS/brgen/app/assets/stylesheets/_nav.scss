@@ -47,8 +47,17 @@ a.feed-tab { text-decoration: none; display: block; }
   display: flex;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-md);
+  margin: var(--space-3);
 }
+
+.compose-label-visible { display: block; color: var(--x-text); font-weight: 700; margin-bottom: var(--space-1); }
+.compose-box:focus-within { border-color: var(--x-accent); box-shadow: 0 0 0 1px var(--x-accent); }
+.local-feed-intro { padding: var(--space-4); border-bottom: 1px solid var(--x-border); }
+.local-feed-intro p { margin: 0; }
+.local-feed-kicker { color: var(--x-text); font-weight: 800; }
+.compose-hint details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 
 .compose-avatar {
   width: 40px;

@@ -5,19 +5,27 @@
     <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>
   <p><%= @port.comment %></p>
+  <section class="install-panel" aria-labelledby="install-heading">
+    <h2 id="install-heading">Install</h2>
+    <%= render "shared/copyable", text: "doas pkg_add #{@port.name}" %>
+    <p class="dim">Command targets <%= @port.platform.name %>. Branch, release and architecture availability are <strong>unknown in this index</strong>; confirm against your configured package repository before installing.</p>
+  </section>
   <% if @port.description.present? %>
     <%= read_more(@port.description, lines: 4) %>
   <% end %>
   <dl>
-    <dt>Maintainer</dt><dd><% if @maintainer %><%= link_to @port.maintainer, maintainer_path(@maintainer) %><% else %><%= @port.maintainer %><% end %></dd>
+    <dt>Exact identity</dt><dd><code><%= @port.pkgpath %>@<%= @port.version %></code></dd>
+    <dt>Platform</dt><dd><code><%= @port.platform.name %></code> · branch unknown · architecture unknown</dd>
+    <dt>Maintainer</dt><dd><% if @maintainer %><%= link_to @maintainer.name, maintainer_path(@maintainer) %><% else %><span class="data-state"><%= @port[:maintainer].presence || "unknown" %></span><% end %></dd>
     <dt>Local install</dt><dd><%= @pkg_info.present? ? "installed (#{@pkg_info})" : "not installed" %></dd>
     <dt>Pkgpath</dt><dd><code><%= @port.pkgpath %></code></dd>
     <% if @port.homepage.present? %><dt>Homepage</dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
-    <dt>Updated</dt><dd><%= @port.last_updated&.strftime("%Y-%m-%d") %></dd>
+    <% update_age = @port.last_updated && (Date.current - @port.last_updated).to_i %>
+    <dt>Updated</dt><dd><span class="data-state <%= update_age && update_age > 365 ? "data-state--stale" : "" %>"><%= @port.last_updated&.strftime("%Y-%m-%d") || "unknown" %><%= " · stale (#{update_age} days)" if update_age && update_age > 365 %></span></dd>
   </dl>
 
   <% if @dependencies.any? %>
-    <h2>Dependencies</h2>
+    <h2>Requires → dependencies</h2>
     <ul aria-label="Port dependencies">
       <% @dependencies.each do |dep| %>
         <li>
@@ -28,10 +36,10 @@
     </ul>
   <% end %>
 
-  <%= render "ports/dependency_tree", tree: @dependency_tree, heading: "Dependency tree" %>
+  <%= render "ports/dependency_tree", tree: @dependency_tree, heading: "This package → requires" %>
 
   <% if @rdeps.any? %>
-    <h2>Reverse dependencies</h2>
+    <h2>Required by ← reverse dependencies</h2>
     <ul aria-label="Ports that depend on this package">
       <% @rdeps.each do |reverse| %>
         <li><%= link_to reverse.name, port_path(reverse) %></li>
@@ -91,7 +99,7 @@
       <% end %>
     </ul>
   <% else %>
-    <p>No CVEs cross-referenced yet.</p>
+    <p class="data-state">Unknown: no advisories are linked in this local index. This is not the same as a verified clean security record.</p>
   <% end %>
   <%= button_to "Cross-reference with NVD", crossref_cves_port_path(@port), method: :post %>
 

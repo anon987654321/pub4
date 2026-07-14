@@ -109,8 +109,11 @@
   border-radius: 9999px;
   transition: color var(--transition-fast), background var(--transition-fast);
   cursor: pointer;
-  min-height: 36px; /* solid mobile tap target */
-  min-width: 36px;
+  min-height: 44px;
+  min-width: 44px;
+  border: 0;
+  background: transparent;
+  color: inherit;
   font-size: 0.8125rem;
 }
 .x-act:hover { color: var(--accent); background: var(--hover); }
@@ -121,13 +124,12 @@
 }
 .x-count { font-size: 0.8125rem; }
 
-@media (min-width: 768px) {
-  .x-act {
-    padding: 6px 8px;
-    min-height: 28px;
-    min-width: auto;
-  }
-}
+.monogram--0 { background: #4b2e83; color: #fff; }
+.monogram--1 { background: #7a3e12; color: #fff; }
+.monogram--2 { background: #075e54; color: #fff; }
+.monogram--3 { background: #7b1e3a; color: #fff; }
+.monogram--4 { background: #184e77; color: #fff; }
+.monogram--5 { background: #5f4b32; color: #fff; }
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 article h2 { font-size: 0.9375rem; font-weight: 500; margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: .9375rem; }

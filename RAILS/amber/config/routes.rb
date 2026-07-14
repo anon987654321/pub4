@@ -18,6 +18,8 @@ Rails.application.routes.draw do
     member do
       post :spark_joy
       post :declutter
+      post :archive
+      post :restore
       post :wear
     end
     collection do

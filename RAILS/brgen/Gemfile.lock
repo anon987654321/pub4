@@ -129,6 +129,10 @@ GEM
       string-format (~> 0.2)
     auth-sanitizer (0.2.1)
       version_gem (~> 1.1, >= 1.1.10)
+    axe-core-api (4.12.0)
+      dumb_delegator
+    axe-core-capybara (4.12.0)
+      axe-core-api (= 4.12.0)
     bake (0.24.1)
       bigdecimal
       samovar (~> 2.1)
@@ -171,6 +175,7 @@ GEM
       sass-embedded (~> 1.63)
     date (3.5.1)
     drb (2.2.3)
+    dumb_delegator (1.1.0)
     erb (6.0.4)
     erubi (1.13.1)
     et-orbi (1.4.0)
@@ -654,6 +659,7 @@ DEPENDENCIES
   acts_as_tenant
   async
   async-http
+  axe-core-capybara
   bcrypt (~> 3.1)
   brakeman
   bundler-audit

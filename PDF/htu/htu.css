@@ -1,0 +1,176 @@
+/* HTU letter canonical stylesheet — layout-1 (EB Garamond).
+   All PDF/ business plans MUST link only this file; do not fork per plan. */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: white;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+}
+
+article {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 5rem 4rem;
+  position: relative;
+  min-height: 100vh;
+}
+
+.logo {
+  position: absolute;
+  top: 2.5rem;
+  right: 2.5rem;
+  width: 5rem;
+  filter: brightness(0);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  font-size: 0.9375rem;
+  color: #555;
+  line-height: 1.8;
+}
+
+.content {
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 2.5rem 0 1rem;
+  font-style: italic;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 1.5rem 0 0.75rem;
+  font-style: italic;
+  color: #444;
+}
+
+p {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+ul, ol {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  margin: 0 0 1rem 1.25rem;
+  text-align: justify;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+.timeline {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  background: #fafafa;
+}
+
+.timeline dt {
+  font-weight: 500;
+  color: #666;
+  font-size: 0.9375rem;
+  float: left;
+  width: 7rem;
+}
+
+.timeline dd {
+  margin-left: 7.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.timeline dd:last-child {
+  margin-bottom: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  padding: 0.5rem 0;
+  vertical-align: top;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+td:first-child {
+  width: 2rem;
+  color: #999;
+}
+
+footer {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0 2.5rem;
+}
+
+.image-grid figure {
+  margin: 0;
+}
+
+.image-grid img {
+  width: 100%;
+  height: 10rem;
+  object-fit: cover;
+  display: block;
+}
+
+.image-grid figcaption {
+  font-size: 0.8125rem;
+  color: #888;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+@media print {
+  article {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  article {
+    padding: 7rem 2rem 3rem;
+  }
+  .logo {
+    top: 1.5rem;
+    right: 1.5rem;
+  }
+}

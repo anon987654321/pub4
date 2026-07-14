@@ -99,8 +99,13 @@
   <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
   <div id="tts-style-indicator" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-  <div id="primer" role="button" aria-labelledby="primer-title" tabindex="0">
+  <%# Small synchronous prerequisite: every deferred ecology/worker module and
+      the post-primer face import may assume window.ParticleKernel exists. %>
+  <script src="<%= asset_path("particle_kernel.js") %>"></script>
+  <div id="primer" role="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent" tabindex="0">
     <h1 id="primer-title">tap to start</h1>
+    <p class="tagline" id="primer-capabilities">voice · image · music · code</p>
+    <p class="primer-consent" id="primer-consent">Starts visuals and sound. Microphone access is requested only when you choose voice input; text remains available if graphics fail.</p>
   </div>
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
       script (including face_2d_fallback). A blocking <script src> above this line delays
@@ -255,9 +260,6 @@
 
     <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
   </form>
-  <%# Loaded ahead of the manifest below: defines window.ParticleKernel, the base global that
-      particle_worker, the cognition-ecology scripts, and the lazily-imported face modules read. %>
-  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.

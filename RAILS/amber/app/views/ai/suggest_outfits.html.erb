@@ -1,7 +1,7 @@
 <% content_for :title, t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %>
 <header role="banner" aria-label="AI outfit suggestions header">
 <h1><%= t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %></h1>
-<p class="dim"><%= t("amber.outfits.vision_hint", default: "MASTER vision analyses your item photos + metadata to pick 3-item combinations.") %></p>
+<p class="dim"><%= t("amber.outfits.vision_hint", default: "MASTER vision analyses your private item photos and metadata to compose from clothes you already own. Shopping links are not used for ranking.") %></p>
 </header>
 
 <turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
@@ -26,6 +26,7 @@
       <h2><%= s["name"] || t("amber.outfits.option", default: "Option") + " #{i + 1}" %></h2>
       <p class="dim"><%= Array(s["items"]).join(", ") %></p>
       <p><%= s["description"] %></p>
+      <p class="pairing-rationale"><strong>Why it works:</strong> <%= s["rationale"].presence || "The pieces share a compatible season and occasion while balancing colour, silhouette and repeat-wear potential." %></p>
       <% if s["outfit_id"] %>
         <p><%= link_to t("amber.outfits.view_generated", default: "View generated Outfit with visual"), outfit_path(s["outfit_id"]), class: "btn" %></p>
       <% end %>

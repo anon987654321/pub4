@@ -60,7 +60,16 @@
     <%= button_to "AI tag mood", ai_tag_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "Declutter review", review_declutter_path(@item), method: :post, class: "btn" %>
     <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
-    <%= button_to "Delete", @item, method: :delete, data: { turbo_confirm: "Remove this item?" }, class: "btn btn-danger" %>
+    <% if @item.lifecycle_state == "sentimental_archive" %>
+      <%= button_to "Restore to wardrobe", restore_item_path(@item), method: :post, class: "btn" %>
+    <% else %>
+      <%= button_to "Archive reversibly", archive_item_path(@item), method: :post, class: "btn" %>
+    <% end %>
   </nav>
+  <details class="danger-zone">
+    <summary>Permanent removal</summary>
+    <p class="dim luxury-dim">Archiving is safer. Permanent deletion removes the item record and its attached photos.</p>
+    <%= button_to "Delete permanently", @item, method: :delete, data: { turbo_confirm: "Permanently delete this item and its photos? This cannot be undone." }, class: "btn btn-danger" %>
+  </details>
 </div>
 </article>

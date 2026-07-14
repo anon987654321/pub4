@@ -9,6 +9,8 @@ require "logger"
 require "json"
 require "time"
 require "fileutils"
+require "digest"
+require_relative "../lib/reach/analog_capabilities"
 
 BOOT_TIME = Time.now.freeze
 
@@ -219,6 +221,11 @@ end
 REPLIGEN_PRESENT = File.exist?("repligen.rb")
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
+$postpro_seed = Integer(ENV.fetch("POSTPRO_SEED", "0"), exception: false) || 0
+
+def postpro_seed(offset = 0)
+  (($postpro_seed || 0) + offset).abs % 2_147_483_647
+end
 
 # Per-stock data: grain sigma (legacy), 3x3 colour matrix, and characteristic
 # curve [Dmin, Dmax, pivot, gamma] per R/G/B. Dmin lifts shadows (base+fog),
@@ -495,6 +502,15 @@ PRESETS = {
 
   quality_uplift: { fx: %w[adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen film_curve grain],
                     stock: :kodak_portra, temp: 5600, intensity: 0.75 },
+
+  vhs_tape: { fx: %w[optical_blur vhs_luma_bleed vhs_chroma_delay vhs_tracking_noise vhs_interlace_comb vhs_head_switch_band],
+              stock: :kodak_portra, temp: 6500, intensity: 0.80 },
+
+  crt_broadcast: { fx: %w[optical_blur crt_phosphor_bloom crt_scanlines hi8_chroma_noise],
+                   stock: :kodak_portra, temp: 6500, intensity: 0.75 },
+
+  camcorder_glitch: { fx: %w[optical_blur vhs_chroma_delay minidv_block_dropout vhs_tracking_noise crt_scanlines],
+                      stock: :kodak_portra, temp: 6500, intensity: 0.85 },
 }.freeze
 
 def halation_tint_for(stock)
@@ -878,7 +894,8 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   # amplitude follows a lognormal distribution. exp(gaussian_noise) produces
   # the characteristic long-tail clumping seen in real emulsion grain scans.
   cluster_sigma = [GRAIN_CELL_BASE * 2.5, 1.0].max
-  cluster_field = Vips::Image.gaussnoise(image.width, image.height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0)
+  cluster_field = Vips::Image.gaussnoise(image.width, image.height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0,
+                                                                   seed: postpro_seed(11))
                              .gaussblur(cluster_sigma).exp
                              .linear([1.0 / GRAIN_LOGNORM_MEAN], [0])
 
@@ -887,8 +904,8 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
     sublayers.map do |sl|
       cell      = [GRAIN_CELL_BASE * (2.0**sl[:sensitivity_shift]) * sl[:grain_scale], 1.5].max.round
       amplitude = base_amplitude * chan_scale * sl[:grain_scale] * sl[:weight]
-      perlin    = Vips::Image.perlin(image.width, image.height, cell_size: cell)
-      fractal   = Vips::Image.fractsurf(image.width, image.height, 2.5)
+      perlin    = Vips::Image.perlin(image.width, image.height, cell_size: cell, seed: postpro_seed(100 + ci))
+      fractal   = Vips::Image.fractsurf(image.width, image.height, 2.5, seed: postpro_seed(200 + ci))
       raw       = (perlin * 0.70 + fractal * 0.30)
       # Anisotropy: slight horizontal elongation along film-transport axis
       aniso     = raw.conv(GRAIN_ANISO_KERNEL, precision: :float)
@@ -1394,6 +1411,151 @@ rescue StandardError => e
   $logger.error "film_curl_vignette: #{e.message}"; image
 end
 
+# Video/broadcast artifacts — composite tape and CRT display, distinct signal
+# path from the film-scan artifacts above (no emulsion, no optics).
+
+# VHS luma bleed: composite video's luma channel has far narrower bandwidth
+# than a digital signal, so bright edges smear into the pixels to their right.
+def vhs_luma_bleed(image, intensity = 0.40)
+  luma = image.colourspace("b-w")
+  taps = (3 + intensity * 6).round
+  weights = (0...taps).map { |i| Math.exp(-i / (taps * 0.5)) }
+  total = weights.sum
+  trail = (0...taps).zip(weights).reduce(luma * 0) do |acc, (i, wt)|
+    acc + luma.embed(i, 0, image.width, image.height) * (wt / total)
+  end
+  bleed = rgb_bands(trail) - rgb_bands(luma)
+  safe_cast(image.cast("float") + bleed * intensity)
+rescue StandardError => e
+  $logger.error "vhs_luma_bleed: #{e.message}"; image
+end
+
+# VHS chroma delay: the chroma subcarrier lags the luma signal through the tape
+# path. Decompose to luma + chroma residual (not a naive per-channel shift —
+# that would also drag brightness), delay chroma only, recombine.
+def vhs_chroma_delay(image, intensity = 0.40)
+  r, g, b = image.cast("float").bandsplit
+  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
+  shift = (2 + intensity * 10).round
+  [r, g, b].map { |c| c - luma }.then do |cr, cg, cb|
+    cr_s = cr.embed(shift, 0, image.width, image.height)
+    cg_s = cg.embed(shift, 0, image.width, image.height)
+    cb_s = cb.embed(shift, 0, image.width, image.height)
+    safe_cast(Vips::Image.bandjoin([luma + cr_s, luma + cg_s, luma + cb_s]))
+  end
+rescue StandardError => e
+  $logger.error "vhs_chroma_delay: #{e.message}"; image
+end
+
+# VHS head-switching band: the bottom strip of an NTSC/PAL frame is where the
+# spinning tape head crosses over — a jittered, noisy band a few scanlines tall.
+def vhs_head_switch_band(image, intensity = 0.40)
+  w, h = image.width, image.height
+  band_h = [(h * 0.02 * (0.5 + intensity)).round, 2].max
+  top = image.crop(0, 0, w, h - band_h)
+  band = image.crop(0, h - band_h, w, band_h)
+  shift = (6 + intensity * 18).round
+  jittered = band.embed(rand(-shift..shift), 0, w, band_h)
+  noisy = jittered.cast("float") + rgb_bands(Vips::Image.gaussnoise(w, band_h, sigma: 30 * intensity))
+  safe_cast(top.join(clamp01(noisy / 255.0) * 255.0, :vertical))
+rescue StandardError => e
+  $logger.error "vhs_head_switch_band: #{e.message}"; image
+end
+
+# VHS mistracking: worn tape/misaligned heads read each horizontal strip with
+# a different lateral offset, worst near the bottom edge of the frame.
+def vhs_tracking_noise(image, intensity = 0.40)
+  w, h = image.width, image.height
+  strips = 24
+  strip_h = (h.to_f / strips).ceil
+  rows = (0...strips).filter_map do |i|
+    y0 = i * strip_h
+    sh = [y0 + strip_h, h].min - y0
+    next nil if sh <= 0
+    strip = image.crop(0, y0, w, sh)
+    phase = i.to_f / strips
+    shift = (Math.sin(phase * Math::PI * 10) * intensity * 14 * (phase**3)).round
+    shift.zero? ? strip : strip.embed(shift, 0, w, sh)
+  end
+  safe_cast(rows.reduce { |acc, r| acc.join(r, :vertical) })
+rescue StandardError => e
+  $logger.error "vhs_tracking_noise: #{e.message}"; image
+end
+
+# Interlace combing: odd and even fields captured 1/60s apart under motion,
+# displaced horizontally from each other when deinterlaced naively.
+def vhs_interlace_comb(image, intensity = 0.40)
+  w, h = image.width, image.height
+  shift = (1 + intensity * 4).round
+  shifted = image.embed(shift, 0, w, h)
+  odd_row = (Vips::Image.xyz(w, h).extract_band(1).cast("int") & 1).cast("uchar") * 255
+  safe_cast((rgb_bands(odd_row) > 0).ifthenelse(shifted, image))
+rescue StandardError => e
+  $logger.error "vhs_interlace_comb: #{e.message}"; image
+end
+
+# CRT phosphor bloom: P22 phosphor persistence glows green-dominant (human eye
+# is most sensitive there, and it decays slowest) — distinct from bloom_pro's
+# neutral highlight glow.
+def crt_phosphor_bloom(image, intensity = 0.5)
+  linear = image.colourspace("scrgb")
+  r, g, b = linear.bandsplit
+  excess = (g * 0.9 + r * 0.4 + b * 0.3).linear([1], [-0.55])
+  bright = (excess > 0).ifthenelse(excess, 0)
+  sigma = [image.width / 60.0, 4.0].max
+  glow_r = bright.gaussblur(sigma) * (0.35 * intensity)
+  glow_g = bright.gaussblur(sigma * 1.3) * (0.85 * intensity)
+  glow_b = bright.gaussblur(sigma * 0.8) * (0.30 * intensity)
+  glow = Vips::Image.bandjoin([glow_r, glow_g, glow_b])
+  safe_cast(clamp01(linear + glow).colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "crt_phosphor_bloom: #{e.message}"; image
+end
+
+# CRT scanline response: the raster gap between phosphor lines darkens every
+# other row — a hard row-parity mask, not a continuous wave (which aliases to
+# zero at integer pixel rows for a 2px period).
+def crt_scanlines(image, intensity = 0.35)
+  w, h = image.width, image.height
+  odd_row = (Vips::Image.xyz(w, h).extract_band(1).cast("int") & 1).cast("uchar") * 255
+  dark = image.cast("float") * (1.0 - intensity)
+  safe_cast((rgb_bands(odd_row) > 0).ifthenelse(image, dark))
+rescue StandardError => e
+  $logger.error "crt_scanlines: #{e.message}"; image
+end
+
+# MiniDV block dropout: a digital tape read error corrupts one DCT macroblock
+# at a time — a small solid-fill rectangle, not noise.
+def minidv_block_dropout(image, intensity = 0.35)
+  w, h = image.width, image.height
+  result = image
+  (intensity * 6).round.times do
+    bw = 8 + rand(w / 12)
+    bh = 8 + rand(h / 20)
+    x = rand([w - bw, 1].max)
+    y = rand([h - bh, 1].max)
+    shade = rand < 0.5 ? [20, 20, 24] : [180, 180, 190]
+    result = result.draw_rect(shade, x, y, bw, bh, fill: true)
+  end
+  result
+rescue StandardError => e
+  $logger.error "minidv_block_dropout: #{e.message}"; image
+end
+
+# Hi8 chroma noise: analog Hi8's chroma subcarrier has a much worse SNR than
+# its luma — noise piled onto the chroma residual only, luma stays clean.
+def hi8_chroma_noise(image, intensity = 0.40)
+  r, g, b = image.cast("float").bandsplit
+  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
+  noise = Vips::Image.gaussnoise(image.width, image.height, sigma: 18 * intensity)
+  cr_n = (r - luma) + noise
+  cg_n = (g - luma) + noise * 0.6
+  cb_n = (b - luma) + noise
+  safe_cast(Vips::Image.bandjoin([luma + cr_n, luma + cg_n, luma + cb_n]))
+rescue StandardError => e
+  $logger.error "hi8_chroma_noise: #{e.message}"; image
+end
+
 # Selenium toning: silver areas in shadow zones chemically convert to selenium
 # compounds — blue-violet shift in the deepest densities, neutral in highlights.
 def selenium_tone(image, intensity = 0.45)
@@ -1878,6 +2040,15 @@ def preset(image, name)
              when "clarity"             then clarity(result, 15, p[:intensity] * 0.65)
              when "edge_aware_nr"       then edge_aware_nr(result, p[:intensity] * 0.55)
              when "selective_sharpen"   then selective_sharpen(result, p[:intensity] * 0.65)
+             when "vhs_luma_bleed"      then vhs_luma_bleed(result, p[:intensity] * 0.40)
+             when "vhs_chroma_delay"    then vhs_chroma_delay(result, p[:intensity] * 0.40)
+             when "vhs_head_switch_band" then vhs_head_switch_band(result, p[:intensity] * 0.40)
+             when "vhs_tracking_noise"  then vhs_tracking_noise(result, p[:intensity] * 0.40)
+             when "vhs_interlace_comb"  then vhs_interlace_comb(result, p[:intensity] * 0.40)
+             when "crt_phosphor_bloom"  then crt_phosphor_bloom(result, p[:intensity] * 0.50)
+             when "crt_scanlines"       then crt_scanlines(result, p[:intensity] * 0.35)
+             when "minidv_block_dropout" then minidv_block_dropout(result, p[:intensity] * 0.35)
+             when "hi8_chroma_noise"    then hi8_chroma_noise(result, p[:intensity] * 0.40)
              else result
              end
     result = result.copy_memory
@@ -1994,6 +2165,8 @@ RECIPE_ALLOWED = %w[
   paper_texture dodgeburn_artifacts fixing_bath_fog reticulation expired_film
   gate_weave lens_ghosting ortho_film tilt_shift
   adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen
+  vhs_luma_bleed vhs_chroma_delay vhs_head_switch_band vhs_tracking_noise
+  vhs_interlace_comb crt_phosphor_bloom crt_scanlines minidv_block_dropout hi8_chroma_noise
 ].freeze
 
 def recipe(image, recipe_data)
@@ -2183,6 +2356,60 @@ def argv_flag(flag)
   idx && ARGV[idx + 1]
 end
 
+def postpro_quality_report(original, processed, reference_path = nil)
+  before = rgb_bands(original).cast("float")
+  after = rgb_bands(processed).cast("float")
+  report = {
+    dimensions: [processed.width, processed.height],
+    mean_rgb_before: before.bandsplit.map { |band| band.avg.round(3) },
+    mean_rgb_after: after.bandsplit.map { |band| band.avg.round(3) },
+    clipped_highlights_percent: (((after >= 254).avg / 255.0) * 100).round(4),
+    crushed_blacks_percent: (((after <= 1).avg / 255.0) * 100).round(4),
+    warnings: []
+  }
+  report[:warnings] << "highlight clipping exceeds 0.5%" if report[:clipped_highlights_percent] > 0.5
+  report[:warnings] << "black clipping exceeds 0.5%" if report[:crushed_blacks_percent] > 0.5
+  if reference_path && File.file?(reference_path)
+    reference = rgb_bands(load_image(reference_path)).resize(processed.width.to_f / load_image(reference_path).width,
+                                                              vscale: processed.height.to_f / load_image(reference_path).height)
+    report[:reference_mean_absolute_error] = (after - reference.cast("float")).abs.avg.round(4)
+  end
+  report
+rescue StandardError => e
+  { warnings: ["quality analysis unavailable: #{e.message}"] }
+end
+
+def write_grade_sidecar(input_path, output_path, preset_name, original, processed)
+  report = postpro_quality_report(original, processed, argv_flag("--reference"))
+  data = {
+    schema: "postpro.grade.v1",
+    generated_at: Time.now.utc.iso8601,
+    input: File.expand_path(input_path),
+    output: File.expand_path(output_path),
+    preset: preset_name,
+    recipe: PRESETS.fetch(preset_name.to_sym),
+    seed: $postpro_seed,
+    output_sha256: Digest::SHA256.file(output_path).hexdigest,
+    quality: report,
+    capabilities: Master::Reach::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] }
+  }
+  File.write("#{output_path}.json", JSON.pretty_generate(data) + "\n")
+  data
+end
+
+def write_comparison(original, processed, output_path)
+  return unless ARGV.include?("--compare")
+
+  height = [original.height, processed.height].min
+  left = original.thumbnail_image(height, height: height, size: :down)
+  right = processed.thumbnail_image(height, height: height, size: :down)
+  comparison = Vips::Image.arrayjoin([rgb_bands(left), rgb_bands(right)], across: 2, shim: 8,
+                                                                       background: [24, 24, 24])
+  path = output_path.sub(/(\.[^.]+)\z/, "-comparison\\1")
+  comparison.write_to_file(path, Q: CONFIG["jpeg_quality"] || 95)
+  path
+end
+
 # One-shot mode for programmatic use:
 #   ruby postpro.rb --input in.jpg --output out.jpg --preset portrait
 def one_shot_mode?
@@ -2190,11 +2417,13 @@ def one_shot_mode?
 end
 
 def introspect_mode?
-  (ARGV & %w[--list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
+  (ARGV & %w[--capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
 end
 
 def run_introspect
-  if ARGV.include?("--list-presets")
+  if ARGV.include?("--capabilities")
+    puts Master::Reach::AnalogCapabilities.report(:postpro)
+  elsif ARGV.include?("--list-presets")
     puts list_presets
   elsif ARGV.include?("--list-stocks")
     puts list_stocks
@@ -2235,6 +2464,9 @@ def run_one_shot
   processed = rgb_bands(processed)
   quality = CONFIG["jpeg_quality"] || 95
   processed.write_to_file(output_path, Q: quality)
+  write_comparison(image, processed, output_path)
+  sidecar = write_grade_sidecar(input_path, output_path, preset_name, image, processed)
+  sidecar[:quality][:warnings].each { |warning| $cli_logger.info "warn #{warning}" }
   $cli_logger.info "ok preset=#{preset_name} out=#{output_path}"
 end
 

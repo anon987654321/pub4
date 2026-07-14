@@ -62,7 +62,9 @@ def build(mode)
 
   process["training_folder"] = File.join(ROOT, "weights")
   process["datasets"].first["folder_path"] = File.join(ROOT, "dataset")
-  process["sample"]["prompts"] = prompts.fetch("prompts")
+  requested_prompt = ENV["RAGNHILD_PROMPT"].to_s.strip
+  # A direct request gets one exact prompt, while training keeps the curated suite.
+  process["sample"]["prompts"] = requested_prompt.empty? ? prompts.fetch("prompts") : [requested_prompt]
   process["sample"]["neg"] = prompts.fetch("negative")
   apply_device!(process)
 

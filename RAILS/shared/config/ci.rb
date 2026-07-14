@@ -35,6 +35,11 @@ Pub4::CiGuard.run! do
     step "Security: Brakeman", "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
     step "Tests: DB prepare", "env RAILS_ENV=test bin/rails db:test:prepare"
     step "Tests: Rails", "bin/rails test"
+    # System tests spin up a real headless-Chrome session -- too heavy for the
+    # 1-vCPU VPS gate (see resource_guard.sh), but must run in local/dev CI.
+    # This is also where axe-core accessibility checks live (see
+    # test/application_system_test_case.rb's assert_accessible).
+    step("Tests: System (a11y)", "bin/rails test:system") unless vps_host
     seed_env = vps_host ? "env RAILS_ENV=test SKIP_BERGEN_DEMO=1" : "env RAILS_ENV=test"
     step "Tests: Seeds", "#{seed_env} bin/rails db:seed:replant"
   end

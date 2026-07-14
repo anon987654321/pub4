@@ -1,6 +1,10 @@
 <li role="listitem" class="port-row">
-  <%= link_to port.name, port %>
-  <small><%= port.version %></small>
-  <small><%= link_to port.category.name, category_path(port.category) %></small>
-  <small><%= port.comment %></small>
+  <div class="port-row__identity">
+    <%= link_to port.name, port, class: "port-name" %>
+    <code><%= port.version %></code>
+    <code><%= port.pkgpath %></code>
+  </div>
+  <small><%= link_to port.category.name, category_path(port.category) %> · <%= port.comment %></small>
+  <% age = port.last_updated && (Date.current - port.last_updated).to_i %>
+  <span class="data-state <%= age && age > 365 ? "data-state--stale" : "" %>"><%= age ? (age > 365 ? "stale · #{age}d" : "updated #{age}d ago") : "update age unknown" %></span>
 </li>

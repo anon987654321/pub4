@@ -155,11 +155,14 @@
         <% if !vertical_surface? && current_page?(root_path) %>
           <div class="feed-header">
             <h1>Home</h1>
-            <nav class="feed-tabs" aria-label="Feed">
-              <%= link_to "For you", root_path(request.query_parameters.except("feed")),
-                    class: "feed-tab#{" active" unless home_feed_following?}" %>
-              <%= link_to "Following", root_path(request.query_parameters.merge(feed: "following")),
-                    class: "feed-tab#{" active" if home_feed_following?}" %>
+            <nav class="feed-tabs" aria-label="Feed ranking">
+              <% feed_views = [["For you · Hot", nil, nil], ["For you · Latest", nil, "latest"],
+                               ["Following · Hot", "following", nil], ["Following · Latest", "following", "latest"]] %>
+              <% feed_views.each do |label, feed, sort| %>
+                <% active = params[:feed].presence == feed && params[:sort].presence == sort %>
+                <%= link_to label, root_path(request.query_parameters.merge(feed: feed, sort: sort).compact),
+                      class: "feed-tab#{" active" if active}", aria: { current: active ? "page" : nil } %>
+              <% end %>
             </nav>
           </div>
         <% end %>

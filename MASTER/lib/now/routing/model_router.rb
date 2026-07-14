@@ -40,8 +40,16 @@ module Master
           pref = preferred(task_type:)
           all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
           all = all.reject { |id| web_chat_model?(id) } unless web_chat_enabled?
-          chain = (Ground::AuthProfileLane.models_for_router(self) + primary_models + [pref] + all +
-                   continuity_models + [@config.model]).uniq
+          paid_or_subscription = Ground::AuthProfileLane.models_for_router(self) + primary_models
+          # Greetings are explicitly routed to the free tier. A locally installed
+          # subscription CLI used to jump ahead of `pref`, contradicting the route
+          # table and spending the strongest lane on “hello”. Keep it available as
+          # fallback, but let the task-specific preference lead.
+          chain = if task_type.to_sym == :chitchat
+                    ([pref] + all + continuity_models + paid_or_subscription + [@config.model]).uniq
+                  else
+                    (paid_or_subscription + [pref] + all + continuity_models + [@config.model]).uniq
+                  end
           chain = Ground::ModelSkipCache.filter(chain)
           ranked = @provider_health ? @provider_health.rank(chain) : chain
           Ground::ModelSkipCache.filter(ranked)

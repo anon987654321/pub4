@@ -13,4 +13,9 @@ class PublicNavigationTest < ApplicationSystemTestCase
     assert_selector "nav.tab-bar[aria-label='Mobile navigation']", visible: :all
     assert_selector "nav.tab-bar a[aria-current='page']", visible: :all
   end
+
+  test "home page has no axe-core accessibility violations" do
+    visit root_path
+    assert_accessible
+  end
 end
