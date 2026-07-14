@@ -1,7 +1,7 @@
 <% communities = Community.popular.limit(4) %>
 <% if communities.any? && !content_for?(:widgets_includes_communities) %>
   <div class="sidebar-card" data-controller="scroll-reveal" data-minimal-reveal>
-    <h3>Communities</h3>
+    <h2>Communities</h2>
     <% communities.each do |community| %>
       <%= link_to community_path(community), class: "who-follow" do %>
         <span><%= community.name %></span>
