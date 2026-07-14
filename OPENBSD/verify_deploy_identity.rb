@@ -3,7 +3,7 @@
 
 # Verifies low-level OPERATOR identity hygiene without requiring app dependencies.
 # Run from the repository root:
-#   ruby OPERATOR/verify_deploy_identity.rb
+#   ruby OPENBSD/verify_deploy_identity.rb
 
 require "yaml"
 require_relative "lib/utf8"

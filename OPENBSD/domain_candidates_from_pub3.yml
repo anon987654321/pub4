@@ -1,9 +1,9 @@
 # Domain candidates recovered from pub3.
 #
 # This is not authoritative production config. Reconcile with:
-# - OPERATOR/master.json
+# - OPENBSD/master.json
 # - RAILS/apps.yml
-# - OPERATOR/openbsd/OPERATOR.sh
+# - OPENBSD/OPERATOR.sh
 # - relayd/httpd/acme-client templates
 
 brgen_city_network:

@@ -11,7 +11,7 @@ master_scan_dep() {
   [[ -x ${master}/bin/cli ]] || return 0
   [[ -n ${SKIP_MASTER_SCAN:-} ]] && { log "MASTER scan skipped (SKIP_MASTER_SCAN)"; return 0; }
   log "MASTER rules scan (OPERATOR) pre-bundle"
-  if ! (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/cli "/scan OPERATOR") \
+  if ! (cd "$master" && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle_exec exec ruby bin/cli "/scan OPENBSD") \
     </dev/null >"$log" 2>&1; then
     cat "$log" >&2
     log_err "MASTER scan CLI failed"

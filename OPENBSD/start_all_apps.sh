@@ -1,6 +1,6 @@
 #!/bin/ksh
 # Start every pub4 service on vm23 and pin them against resource_guard shedding.
-# Usage: doas ksh /home/dev/pub4/OPERATOR/openbsd/start_all_apps.sh
+# Usage: doas ksh /home/dev/pub4/OPENBSD/start_all_apps.sh
 
 set -e
 
@@ -24,5 +24,5 @@ for svc in $SERVICES; do
   rcctl check "$svc" || exit 1
 done
 
-ruby34 "$ROOT/OPERATOR/openbsd/health_check.rb"
+ruby34 "$ROOT/OPENBSD/health_check.rb"
 echo "all apps up (resource_guard shedding disabled via $ALL_APPS_FLAG)"

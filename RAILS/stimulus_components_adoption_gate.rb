@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 ROOT = File.expand_path("..", __dir__)
-require_relative "../OPERATOR/lib/gate_result"
+require_relative "../OPENBSD/lib/gate_result"
 RAILS_ROOT = File.join(ROOT, "RAILS")
 BOOT = File.join(RAILS_ROOT, "shared/frontend/pub4_stimulus_boot.js")
 BASELINE = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")

@@ -5,7 +5,7 @@
 
 require "pathname"
 require "json"
-require_relative "../OPERATOR/lib/utf8"
+require_relative "../OPENBSD/lib/utf8"
 begin
   require_relative "../RAILS/shared/lib/pub4/deploy_paths"
 rescue LoadError
@@ -13,9 +13,9 @@ rescue LoadError
 end
 
 ROOT = Pathname.new(__dir__).join("..").expand_path
-OPENBSD = ROOT.join("OPERATOR", "openbsd", "OPERATOR.sh")
+OPENBSD = ROOT.join("OPENBSD", "OPERATOR.sh")
 REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
-MASTER_JSON = ROOT.join("OPERATOR", "master.json")
+MASTER_JSON = ROOT.join("OPENBSD", "master.json")
 RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
 COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
 MASTER_ONLY_SUBAPPS = %w[ai].freeze

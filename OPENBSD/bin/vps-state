@@ -105,5 +105,5 @@ else
     end
   end
   puts
-  puts "note: dev SHA != deployed SHA until zsh OPERATOR/openbsd/sh/vps_ci.sh <app> runs"
+  puts "note: dev SHA != deployed SHA until zsh OPENBSD/sh/vps_ci.sh <app> runs"
 end

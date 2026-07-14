@@ -4,7 +4,7 @@
 require "open3"
 
 ROOT = File.expand_path("../..", __dir__)
-QUARANTINE = File.join(ROOT, "OPERATOR", "quarantine", "virus_museum")
+QUARANTINE = File.join(ROOT, "OPENBSD", "quarantine", "virus_museum")
 
 SECRET_PATTERNS = [
   /sk-[A-Za-z0-9_\-]{16,}/,
@@ -16,8 +16,8 @@ SECRET_PATTERNS = [
 ].freeze
 
 SKIP_PATH_RE = %r{
-  \A(?:OPERATOR/quarantine/|
-  OPERATOR/archive/recovery/references/|
+  \A(?:OPENBSD/quarantine/|
+  OPENBSD/archive/recovery/references/|
   .*/test/|
   .*/tests/|
   MASTER/data/eval_cases\.yml|
@@ -70,11 +70,11 @@ unless File.file?(File.join(QUARANTINE, "README.md"))
   failures << "virus museum README missing"
 end
 
-quarantine_files = git_ls_files("OPERATOR/quarantine/virus_museum")
+quarantine_files = git_ls_files("OPENBSD/quarantine/virus_museum")
 bad_ext = quarantine_files.reject { |path| path.end_with?(".txt") || path.end_with?("README.md") }
 failures.concat(bad_ext.map { |path| "virus museum non-text file: #{path}" })
 
-mode_lines, = Open3.capture2("git", "-C", ROOT, "ls-files", "-s", "OPERATOR/quarantine/virus_museum")
+mode_lines, = Open3.capture2("git", "-C", ROOT, "ls-files", "-s", "OPENBSD/quarantine/virus_museum")
 mode_lines.lines.each do |line|
   mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
   failures << "virus museum executable: #{path}" if mode && mode != "100644"

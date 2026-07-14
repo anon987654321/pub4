@@ -49,7 +49,7 @@ module Master
           "4. Binaries and large files are **listed only** (not inlined) — do not expect base64 blocks.",
           "5. Repeat for **both** `MASTER_snapshot.md` and `OPERATOR_snapshot.md` when present:",
           "   - `$SNAP/work/MASTER/...` from MASTER sections",
-          "   - `$SNAP/work/OPERATOR/...` from OPERATOR sections",
+          "   - `$SNAP/work/OPENBSD/...` from OPERATOR sections",
           "6. Verify: file count vs Tree, spot-check hashes, run targeted tests from the mirrored tree.",
           "",
           "Do not edit the mirrored tree until you have a written assessment and a trace for the path",

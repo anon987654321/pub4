@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Production push: master + brgen + amber (serial, fast path skips CI).
-# Usage (on vm23): zsh OPERATOR/openbsd/sh/vps_production_push.sh
+# Usage (on vm23): zsh OPENBSD/sh/vps_production_push.sh
 set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
@@ -10,10 +10,10 @@ git pull --ff-only origin main
 export SKIP_CI=1
 
 echo "==> master"
-zsh "$repo/OPERATOR/openbsd/sh/vps_deploy_master.sh"
+zsh "$repo/OPENBSD/sh/vps_deploy_master.sh"
 
 echo "==> brgen"
-zsh "$repo/OPERATOR/bin/vps-deploy" brgen
+zsh "$repo/OPENBSD/bin/vps-deploy" brgen
 
 echo "==> bergen demo seed"
 doas -u brgen sh -c 'cd /home/brgen/app && RAILS_ENV=production bundle exec rails runner "
@@ -23,7 +23,7 @@ doas -u brgen sh -c 'cd /home/brgen/app && RAILS_ENV=production bundle exec rail
 "'
 
 echo "==> amber"
-zsh "$repo/OPERATOR/bin/vps-deploy" amber
+zsh "$repo/OPENBSD/bin/vps-deploy" amber
 
 echo "==> health"
 for svc in master brgen amber; do

@@ -37,13 +37,13 @@ entries:
   description: pub4/MASTER — constitutional AI coding agent on OpenBSD VPS dev@brgen.no
   type: project
   body: |-
-    The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `OPERATOR/OPERATOR.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
+    The MASTER project runs on VPS dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, with passwordless doas. SSH uses `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`—password per session; see `OPENBSD/RUNBOOK.md`. The codebase lives at `~/pub4/MASTER/`—roughly six thousand lines of Ruby, Zeitwerk-autoloaded.
 
     MASTER is a constitutional AI agent replacing the Claude Code CLI. OpenRouter runs through `ruby_llm` with default model `nvidia/nemotron-3-super-120b-a12b:free`. Fallback order is qwen3-coder:free, then minimax-m2.5:free, then gpt-oss-120b:free, then gemini-2.0-flash.
 
     All coding happens on the VPS via sshpass SSH—never local edits. Patches go through `~/pub4/tmp/patch.rb`. Shell work uses zsh builtins only; no sed, awk, grep, find, head, or tail.
 
-    The pipeline is Intake → Enhance → Infer → Route → Guard → Deliberate → DestructiveReview → Execute → Review (Council, then Lint, then Prune) → Memory → Render. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby OPERATOR/integrity_gate.rb` and `bin/probe integrity`.
+    The pipeline is Intake → Enhance → Infer → Route → Guard → Deliberate → DestructiveReview → Execute → Review (Council, then Lint, then Prune) → Memory → Render. Pipe commands with `echo "cmd" | bundle exec ruby bin/cli`. Startup YAML includes `state.yml`, `limits.yml`, `rules.yml`, `voice.yml`, `style.yml`, and `models.yml`. The web tier is Falcon on port 53187; relayd terminates TLS at `https://ai.brgen.no` on 443. Deploy checks: `ruby OPENBSD/integrity_gate.rb` and `bin/probe integrity`.
 - key: project_master_dual_gemfile
   name: MASTER has two Gemfiles
   description: MASTER/Gemfile (CLI) and MASTER/web/Gemfile (Falcon web) are independent

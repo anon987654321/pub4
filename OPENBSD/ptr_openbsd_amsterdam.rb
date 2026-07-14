@@ -69,7 +69,7 @@ if $PROGRAM_NAME == __FILE__
   }
 
   parser = OptionParser.new do |opts|
-    opts.banner = "Usage: ruby OPERATOR/openbsd/ptr_openbsd_amsterdam.rb --ipv4 IP --hostname NAME"
+    opts.banner = "Usage: ruby OPENBSD/ptr_openbsd_amsterdam.rb --ipv4 IP --hostname NAME"
     opts.on("--ipv4 IP", "IPv4 address") { |value| options[:ip] = value }
     opts.on("--ipv6 IP", "IPv6 address") { |value| options[:ip] = value }
     opts.on("--hostname NAME", "PTR hostname, e.g. ns.brgen.no") { |value| options[:hostname] = value }

@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # OpenBSD vm23 deploy — executable script. Everything else in this tree is an exact config mirror.
-# Routine (on vm23): cd ~/pub4 && doas zsh OPERATOR/openbsd/OPERATOR.sh
+# Routine (on vm23): cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
 # Installs OPENBSD/{etc,usr,var} onto /, validates pf/relayd, restarts services.
 # Rare: --first-install | --stage-1 (DNS wipe) | --stage-2 (full app bootstrap)
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
@@ -14,7 +14,7 @@
 #   helpers exist for future --resume support; certificate-renewal cron must stay append-idempotent.
 # - Data preserved: Rails SQLite under /home/<app>/app/storage, ~/priv, acme certs in /etc/ssl when
 #   stage_1 is skipped. Re-running stage_2 does not drop databases.
-# - Post-deploy verification: ruby /home/dev/pub4/OPERATOR/openbsd/health_check.rb
+# - Post-deploy verification: ruby /home/dev/pub4/OPENBSD/health_check.rb
 # Engine-ize: bootstrap_rails now relies on bundle install for pub4-shared path gem (Gemfiles declare it); legacy sh shared/install_* deprecated in scripts + WIRING. No copy sprawl.
 
 set -euo pipefail
@@ -203,7 +203,7 @@ sync_openbsd_apply() {
     log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
   elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
     log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan OPERATOR --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
+    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan OPENBSD --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
       return 1
     fi
@@ -828,7 +828,7 @@ main() {
   if [[ ${1:-} = --help ]]; then
     print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ → /.
 Usage:
-  cd ~/pub4 && doas zsh OPERATOR/openbsd/OPERATOR.sh
+  cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
 
 Default: install configs, validate pf/relayd, restart services.
 

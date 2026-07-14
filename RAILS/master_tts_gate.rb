@@ -23,7 +23,7 @@ checks = {
     "tts_e2e poll",
     "tts_e2e"
   ],
-  "OPERATOR/openbsd/OPERATOR.sh" => [
+  "OPENBSD/OPERATOR.sh" => [
     "espeak"
   ],
   "OPENBSD/etc/rc.d/master" => [

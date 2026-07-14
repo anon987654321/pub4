@@ -123,7 +123,7 @@ module Master
       end
 
       def cross_repo_roots
-        deploy_rails = File.join(@root, "OPERATOR", "rails")
+        deploy_rails = File.join(@root, "OPENBSD", "rails")
         return [] unless Dir.exist?(deploy_rails)
 
         Dir.children(deploy_rails)

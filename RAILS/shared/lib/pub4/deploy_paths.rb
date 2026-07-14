@@ -38,7 +38,7 @@ module Pub4
       return Pathname.new(explicit) if explicit
 
       repo = env_value("PUB4_ROOT")
-      return Pathname.new(File.join(repo, "OPERATOR")) if repo
+      return Pathname.new(File.join(repo, "OPENBSD")) if repo
 
       rails_root.join("..").expand_path
     end

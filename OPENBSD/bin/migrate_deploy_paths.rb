@@ -15,8 +15,8 @@ SKIP_FILES = %w[
 REPLACEMENTS = [
   [%r{RAILS}, "RAILS"],
   [%r{OPENBSD}, "OPENBSD"],
-  [%r{OPERATOR/}, "OPERATOR/"],
-  [%r{\bDEPLOY\b(?!/)}, "OPERATOR"],
+  [%r{OPENBSD/}, "OPENBSD/"],
+  [%r{\bDEPLOY\b(?!/)}, "OPENBSD"],
 ].freeze
 
 def candidate_files

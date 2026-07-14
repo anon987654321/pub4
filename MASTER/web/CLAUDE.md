@@ -207,7 +207,7 @@ missing.
   restart might be in flight.
 - **The canonical source for every `/etc/rc.d/<app>` script and
   `resource_guard.sh` is this repo** (`OPENBSD/etc/rc.d/*`,
-  `OPERATOR/openbsd/resource_guard.sh`) — not whatever is live on the VPS. If you
+  `OPENBSD/resource_guard.sh`) — not whatever is live on the VPS. If you
   edit the live file directly (as happened during tonight's incident
   response), **mirror the change back into the repo file**, or the next
   sync from repo → server will silently revert your fix.
@@ -232,7 +232,7 @@ concurrently. A load average of 1.0 here means the single core is simply busy �
 `bsdports` under real pressure, but as of 2026-07-10 it's
 paused (via its own `/var/db/pub4_all_apps` flag) after a threshold
 mismatch caused a brief full outage during a routine multi-app restart —
-see `OPERATOR/openbsd/resource_guard.sh`'s header comment for the full story before
+see `OPENBSD/resource_guard.sh`'s header comment for the full story before
 re-enabling or retuning it. Restarting more than one or two of these apps
 back-to-back will spike load into the 4-7 range for a few minutes purely
 from cold-start warm-up; that's expected, not a crisis, as long as swap

@@ -4,9 +4,9 @@
 
 - `RAILS/` — Rails apps + shared engine (was `DEPLOY/rails`)
 - `OPENBSD/` — exact VPS configuration backup (`etc/`, `usr/`, `var/`)
-- `OPERATOR/openbsd/` — OpenBSD deploy, health, safety, and maintenance tooling
-- `OPERATOR/` — gates, bin/, data/, operator docs (was `DEPLOY/` minus rails/openbsd)
-- The `DEPLOY → OPERATOR` and `OPERATOR/rails → RAILS`
+- `OPENBSD/` — OpenBSD deploy, health, safety, and maintenance tooling
+- `OPENBSD/` — gates, bin/, data/, operator docs (was `DEPLOY/` minus rails/openbsd)
+- The `DEPLOY → OPERATOR` and `OPENBSD/rails → RAILS`
   compatibility symlinks were removed 2026-07-10 once every reference (rc.d
   scripts, cron scripts, `.gitignore`, comments, both locally and on the VPS)
   was confirmed updated to the direct paths. `MASTER/lib/pub4/paths.rb` still
@@ -28,7 +28,7 @@ App ports are internal implementation details. Public ingress is 22, 25, 80, and
 
 ## `rails/apps.yml` Is Canonical
 
-App status, domains, ports, and deploy scripts live in `RAILS/apps.yml`. `OPERATOR/master.json`, relayd, acme, NSD, and docs should agree with it.
+App status, domains, ports, and deploy scripts live in `RAILS/apps.yml`. `OPENBSD/master.json`, relayd, acme, NSD, and docs should agree with it.
 
 ## Copy-Tree Deploy
 
@@ -67,7 +67,7 @@ calls, not code fixes — flagging rather than guessing:
   rc.d rewrite, a resource-guard bug fix) was diagnosed and verified
   directly against production, on the only environment that exists. Adding
   a full staging copy on vm23 itself would worsen the existing 1-vCPU/1GB
-  resource pressure (see `OPERATOR/openbsd/resource_guard.sh`); a real fix needs
+  resource pressure (see `OPENBSD/resource_guard.sh`); a real fix needs
   either a second (smaller) VPS or an explicit decision to keep accepting
   this risk.
 - **Auto-commit atomicity.** An unrelated automated process periodically

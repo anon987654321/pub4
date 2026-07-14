@@ -6,7 +6,7 @@ require "open3"
 class DeployGatesContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   REPO_ROOT = File.expand_path("../..", __dir__)
-  OPERATOR_ROOT = File.join(REPO_ROOT, "OPERATOR")
+  OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD")
 
   GATE_FILES = %w[
     schema_migration_gate.rb
@@ -24,14 +24,14 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_check_rails_wires_new_gates
-    source = File.read(File.join(OPERATOR_ROOT, "bin", "check-rails"))
+    source = File.read(File.join(OPENBSD_ROOT, "bin", "check-rails"))
     %w[schema_migration_gate generated_asset_freshness_gate rails_runtime_gate].each do |gate|
       assert_includes source, gate
     end
   end
 
   def test_check_full_runs_repository_contract_tests
-    source = File.read(File.join(OPERATOR_ROOT, "bin", "check-full"))
+    source = File.read(File.join(OPENBSD_ROOT, "bin", "check-full"))
 
     assert_includes source, 'runner.run("rails contracts"'
     assert_includes source, 'RAILS/test/**/*_test.rb'
@@ -44,8 +44,8 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_integrity_gate_wires_new_gates
-    integrity = File.read(File.join(OPERATOR_ROOT, "integrity_gate.rb"))
-    gates = File.read(File.join(OPERATOR_ROOT, "lib", "gate_environment.rb"))
+    integrity = File.read(File.join(OPENBSD_ROOT, "integrity_gate.rb"))
+    gates = File.read(File.join(OPENBSD_ROOT, "lib", "gate_environment.rb"))
     assert_includes integrity, "gate_environment"
     assert_includes integrity, "GateEnvironment::INTEGRITY_GATES"
     %w[schema_migration asset_freshness human_walkthrough vps_health].each do |gate|
@@ -55,16 +55,16 @@ class DeployGatesContractTest < Minitest::Test
 
   def test_operator_surface_files_exist
     %w[bin/vps-state bin/vps-deploy bin/vps-logs bin/post-pull-checklist lib/gate_environment.rb].each do |rel|
-      path = File.join(OPERATOR_ROOT, rel)
-      assert File.exist?(path), "missing OPERATOR/#{rel}"
+      path = File.join(OPENBSD_ROOT, rel)
+      assert File.exist?(path), "missing OPENBSD/#{rel}"
     end
     assert File.exist?(File.join(ROOT, "apps.horizon.yml"))
     assert File.exist?(File.join(REPO_ROOT, "RECIPES.md"))
-    assert File.exist?(File.join(OPERATOR_ROOT, "data", "debt.yml"))
-    assert File.exist?(File.join(OPERATOR_ROOT, "data", "operator.yml"))
+    assert File.exist?(File.join(OPENBSD_ROOT, "data", "debt.yml"))
+    assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
     assert File.exist?(File.join(REPO_ROOT, "bin", "pub4"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "apps.yml"))
-    assert File.exist?(File.join(REPO_ROOT, "OPERATOR", "openbsd", "OPERATOR.sh"))
+    assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "OPERATOR.sh"))
   end
 
   def test_bsdports_queue_schema_present
@@ -87,12 +87,16 @@ class DeployGatesContractTest < Minitest::Test
     assert_equal expected, git_files("OPENBSD/var/nsd")
   end
 
-  def test_openbsd_contains_only_vps_config_backup
-    unexpected = git_files("OPENBSD").reject do |path|
-      path.start_with?("OPENBSD/etc/", "OPENBSD/usr/", "OPENBSD/var/")
+  def test_openbsd_has_operator_surfaces
+    %w[
+      OPENBSD/OPERATOR.sh
+      OPENBSD/bin/check
+      OPENBSD/lib/gate_environment.rb
+      OPENBSD/integrity_gate.rb
+      OPENBSD/sh/vps_ci.sh
+    ].each do |rel|
+      assert File.exist?(File.join(REPO_ROOT, rel)), "missing #{rel}"
     end
-
-    assert_empty unexpected, "move OpenBSD tooling to OPERATOR/openbsd: #{unexpected.join(', ')}"
   end
 
   def test_shared_search_partials_are_not_duplicated_per_app

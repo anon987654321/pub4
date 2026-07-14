@@ -10,9 +10,9 @@ STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "600"))
 runner = Pub4::CheckRunner.new(prefix: "deploy-full", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-failures << "local check" unless runner.run("local check", RUBY, "OPERATOR/bin/check")
+failures << "local check" unless runner.run("local check", RUBY, "OPENBSD/bin/check")
 contract_loader = 'Dir["RAILS/test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
 failures << "rails contracts" unless runner.run("rails contracts", RUBY, "-e", contract_loader)
-failures << "integrity" unless runner.run("integrity", RUBY, "OPERATOR/integrity_gate.rb")
+failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/integrity_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

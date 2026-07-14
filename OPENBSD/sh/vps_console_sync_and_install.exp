@@ -22,13 +22,13 @@ at_prompt
 send "echo $b64 | base64 -d > /tmp/pub4_deploy_sync.tgz && tar xzf /tmp/pub4_deploy_sync.tgz -C /home/dev/pub4 && echo SYNC_OK\r"
 at_prompt
 
-send "chmod +x /home/dev/pub4/OPERATOR/openbsd/sh/vps_on_vm_install.sh /home/dev/pub4/OPERATOR/openbsd/sh/vps_install_all.sh\r"
+send "chmod +x /home/dev/pub4/OPENBSD/sh/vps_on_vm_install.sh /home/dev/pub4/OPENBSD/sh/vps_install_all.sh\r"
 at_prompt
 
 send "pkill -f vps_on_vm_install.sh 2>/dev/null; pkill -f vps_install_all.sh 2>/dev/null; true\r"
 at_prompt
 
-send "nohup zsh /home/dev/pub4/OPERATOR/openbsd/sh/vps_on_vm_install.sh > /tmp/pub4_on_vm_install.log 2>&1 & echo INSTALL_PID:\$!\r"
+send "nohup zsh /home/dev/pub4/OPENBSD/sh/vps_on_vm_install.sh > /tmp/pub4_on_vm_install.log 2>&1 & echo INSTALL_PID:\$!\r"
 at_prompt
 
 send "sleep 2; head -8 /tmp/pub4_on_vm_install.log\r"

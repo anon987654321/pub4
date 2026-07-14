@@ -32,8 +32,8 @@ doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || log "WARN: master not ok"
 
 typeset -a APPS
-if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/OPERATOR/master.json ]]; then
-  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/OPERATOR/master.json")}")
+if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/OPENBSD/master.json ]]; then
+  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/OPENBSD/master.json")}")
 else
   APPS=(brgen amber bsdports)
 fi

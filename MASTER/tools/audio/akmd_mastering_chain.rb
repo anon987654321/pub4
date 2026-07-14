@@ -80,7 +80,7 @@ if $PROGRAM_NAME == __FILE__
   }
 
   parser = OptionParser.new do |opts|
-    opts.banner = "Usage: ruby OPERATOR/audio/akmd_mastering_chain.rb INPUT OUTPUT.mp3 [options]"
+    opts.banner = "Usage: ruby OPENBSD/audio/akmd_mastering_chain.rb INPUT OUTPUT.mp3 [options]"
     opts.on("--bitrate VALUE", "MP3 bitrate, default 128k") { |value| options[:bitrate] = value }
     opts.on("--sample-rate VALUE", "Sample rate, default 44100") { |value| options[:sample_rate] = value }
     opts.on("--print-command", "Print ffmpeg argv and exit") { options[:print_command] = true }

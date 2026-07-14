@@ -21,7 +21,7 @@ module Deploy
       apps.map(&:name)
     end
 
-    def master_apps(path: File.join(root, "OPERATOR", "master.json"))
+    def master_apps(path: File.join(root, "OPENBSD", "master.json"))
       data = JSON.parse(File.read(path))
       data.fetch("apps").map do |entry|
         App.new(

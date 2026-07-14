@@ -1,5 +1,5 @@
 # Radio Bergen YouTube reference sonic profiles (measured 45s clips, 2026-06-28).
-# Source manifest: OPERATOR/audio/radio_bergen_tracks.yml
+# Source manifest: OPENBSD/audio/radio_bergen_tracks.yml
 # Spectral: yt-dlp wav + librosa band ratios
 # Harmonic: analysis/harmonic_findings.json (chroma_cqt + pyin on full mix)
 

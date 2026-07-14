@@ -1,33 +1,33 @@
 # Start Here
 
-OPERATOR is the production surface for pub4: OpenBSD vm23, relayd, NSD/acme, Rails 8 apps, MASTER web, and operator recovery tools.
+OPENBSD is the production surface for pub4: vm23 config backup, relayd, NSD/acme, Rails 8 apps, MASTER web, and operator recovery tools.
 
 ## Read First
 
 1. `README.md` for the short layout.
-2. `OPERATOR.md` for everything else: deployment map, agent contract, live-operation safety
+2. `RUNBOOK.md` for everything else: deployment map, agent contract, live-operation safety
    (read before any SSH, `doas`, rc.d, pf, relayd, or full-stack deploy), deploy commands, gates.
 3. `MASTER/START_HERE.md` for MASTER agent rules and the **data file budget** (why ~80 YAML files exist and what merges next).
-4. `OPERATOR.md` repair playbooks and patch examples when a gate fails.
+4. `RUNBOOK.md` repair playbooks and patch examples when a gate fails.
 
 ## Golden Commands
 
 - `bin/pub4 status` — one-screen repo/VPS posture and next command.
 - `RECIPES.md` — copy-paste operator recipes.
-- `OPERATOR/bin/check --profile=contributor` — fast static deploy gates.
-- `OPERATOR/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
-- `OPERATOR/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
-- `OPERATOR/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on vm23 or with SSH/operator intent.
-- `OPERATOR/bin/check-full` chains the local checks and the integrity gate.
-- `OPERATOR/bin/vps-state` / `bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
+- `OPENBSD/bin/check --profile=contributor` — fast static deploy gates.
+- `OPENBSD/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
+- `OPENBSD/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
+- `OPENBSD/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on vm23 or with SSH/operator intent.
+- `OPENBSD/bin/check-full` chains the local checks and the integrity gate.
+- `OPENBSD/bin/vps-state` / `bin/pub4 vps deploy <app>` — deployed vs dev tree on vm23.
 
 ## Source Of Truth
 
 - App inventory: `RAILS/apps.yml`.
-- Public/deploy identity: `OPERATOR/master.json`.
+- Public/deploy identity: `OPENBSD/master.json`.
 - OpenBSD configs: `OPENBSD/etc/`.
-- Operator runbook: `OPERATOR/OPERATOR.md`.
-- Feature inventory: `RAILS/apps.yml`. Open debt: `OPERATOR/data/debt.yml`. Horizon: `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.
+- Operator runbook: `OPENBSD/RUNBOOK.md`.
+- Feature inventory: `RAILS/apps.yml`. Open debt: `OPENBSD/data/debt.yml`. Horizon: `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.
 
 ## Safety Defaults
 

@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 require "net/http"
-require_relative "../OPERATOR/lib/deploy_inventory"
-require_relative "../OPERATOR/lib/gate_result"
+require_relative "../OPENBSD/lib/deploy_inventory"
+require_relative "../OPENBSD/lib/gate_result"
 require_relative "crawl_support"
-require_relative "../OPERATOR/lib/utf8"
+require_relative "../OPENBSD/lib/utf8"
 
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")

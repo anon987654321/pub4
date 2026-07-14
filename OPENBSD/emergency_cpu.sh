@@ -1,12 +1,12 @@
 #!/bin/ksh
 # Emergency CPU relief for saturated VPS (vm23).
-# Run: doas ksh /home/dev/pub4/OPERATOR/openbsd/emergency_cpu.sh
+# Run: doas ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh
 #
 # Typical cause: Falcon crash-loops, hung bundle install, assets:precompile on restart.
 
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-if [[ -f ${GUARD_REPO}/OPERATOR/openbsd/stale_ci_cleanup.ksh ]]; then
-  . ${GUARD_REPO}/OPERATOR/openbsd/stale_ci_cleanup.ksh
+if [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then
+  . ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh
 fi
 
 echo "=== before ==="

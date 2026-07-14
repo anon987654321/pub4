@@ -41,7 +41,7 @@ module Master
       def collect_paths(label:, repo_root:, target:)
         label_key = label.to_s.upcase
         if git_repo?(repo_root) && GIT_LABELS.include?(label_key)
-          return deploy_pillar_paths(repo_root) if label_key == "OPERATOR"
+          return deploy_pillar_paths(repo_root) if label_key == "OPENBSD"
 
           git_tracked_paths(repo_root, label_key)
         else

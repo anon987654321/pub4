@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../OPERATOR/lib/gate_result"
-require_relative "../OPERATOR/lib/deploy_inventory"
+require_relative "../OPENBSD/lib/gate_result"
+require_relative "../OPENBSD/lib/deploy_inventory"
 
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")

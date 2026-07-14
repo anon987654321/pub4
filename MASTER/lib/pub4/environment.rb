@@ -38,8 +38,8 @@ module Pub4
       cwd = Dir.pwd
       return :deployed_app if cwd.match?(%r{/home/[^/]+/app\z})
       return :dev_checkout if cwd.include?("/home/dev/pub4") ||
-                               File.directory?(File.join(repo_root, "OPERATOR")) ||
-                               File.directory?(File.join(repo_root, "OPERATOR"))
+                               File.directory?(File.join(repo_root, "OPENBSD")) ||
+                               File.directory?(File.join(repo_root, "OPENBSD"))
       :local
     end
 
@@ -79,11 +79,11 @@ module Pub4
     def next_command_for(mode = self.mode)
       case mode
       when :vps_operator
-        "zsh OPERATOR/openbsd/sh/vps_ci.sh <app>  # after git pull; then ruby34 OPERATOR/integrity_gate.rb"
+        "zsh OPENBSD/sh/vps_ci.sh <app>  # after git pull; then ruby34 OPENBSD/integrity_gate.rb"
       when :local_contributor
-        ruby_version_ok? ? "OPERATOR/bin/check && cd MASTER && bin/check --profile=contributor" : "bin/ruby OPERATOR/bin/check  # resolves Ruby 3.4"
+        ruby_version_ok? ? "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor" : "bin/ruby OPENBSD/bin/check  # resolves Ruby 3.4"
       else
-        "OPERATOR/bin/check-full"
+        "OPENBSD/bin/check-full"
       end
     end
   end

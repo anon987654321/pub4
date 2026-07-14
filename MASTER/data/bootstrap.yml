@@ -13,7 +13,7 @@ sections:
     Modules: now (pipeline/CLI), loop (fix/rule/watch), judge (scanner/council), voice (render/TTS), ground (constitution/memory), reach (tools), trace (events/session).
     Flat Hierarchy: standing order aggressive_merge on every write — merge thin siblings, rename to dense Rails-parameterize slugs (snake_case, Strunk-clean tokens), OpenBSD-flat, Zeitwerk-true, Roda-tight.
     Pipeline: Intake → Enhance → Infer → Route → Guard → Deliberate → Execute → Review → Memory → Render. Review runs Council when enabled, then Lint on written paths, then Prune.
-    VPS/deploy: OPERATOR/OPERATOR.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
+    VPS/deploy: OPENBSD/RUNBOOK.md (human runbook). Do not memorize /scan /fix — standing orders and Review handle most choreography.
   trace: |-
     Trace map: Trace::EventBus carries pipeline, tools, scans. CLI: /tail 20 pipeline. Web: /events/stream.
     Activity: runtime/events/activity.jsonl (/tail, /replay). Evidence: runtime/events/evidence.jsonl (/replay evidence).
@@ -28,8 +28,8 @@ sections:
     Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
     Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.
     Shell on zsh/SSH: no sed/awk/grep/find — Ruby and zsh builtins. Scan before structural edits.
-    VPS: dev@46.23.89.226, ruby34, bundle34. Deploy operator: /orient deploy (OPERATOR/data/operator.yml). Full rule index: data/CANON.md (generated).
+    VPS: dev@46.23.89.226, ruby34, bundle34. Deploy operator: /orient deploy (OPENBSD/data/operator.yml). Full rule index: data/CANON.md (generated).
   deploy: |-
     RAILS/<app>/ is a full Rails 8 tree (app/views, config, db) — not a stub. <app>.sh copies it to /home/<app>/app on vm23.
-    Feature truth: RAILS/apps.yml. Debt: OPERATOR/data/debt.yml. Horizon (agent ignore): apps.horizon.yml.
-    bin/pub4 status · bin/pub4 vps deploy <app> · OPERATOR/bin/post-pull-checklist after git pull on VPS.
+    Feature truth: RAILS/apps.yml. Debt: OPENBSD/data/debt.yml. Horizon (agent ignore): apps.horizon.yml.
+    bin/pub4 status · bin/pub4 vps deploy <app> · OPENBSD/bin/post-pull-checklist after git pull on VPS.

@@ -4,13 +4,13 @@ require "json"
 require "net/http"
 require "socket"
 require "yaml"
-require_relative "../OPERATOR/lib/utf8"
+require_relative "../OPENBSD/lib/utf8"
 
 module CrawlSupport
   ROOT = File.expand_path("..", __dir__)
   MANIFEST = File.join(__dir__, "crawl_manifest.yml")
   APPS_YML = File.join(__dir__, "apps.yml")
-  MASTER_JSON = File.join(ROOT, "OPERATOR", "master.json")
+  MASTER_JSON = File.join(ROOT, "OPENBSD", "master.json")
 
   module_function
 

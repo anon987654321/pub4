@@ -6,7 +6,7 @@ require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
-OUT = File.join(ROOT, "OPERATOR", "master.json")
+OUT = File.join(ROOT, "OPENBSD", "master.json")
 
 data = YAML.safe_load(File.read(APPS_YML))
 apps = data.fetch("apps").map do |name, meta|

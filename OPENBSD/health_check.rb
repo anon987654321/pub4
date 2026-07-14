@@ -20,7 +20,7 @@ options = {
 }
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: ruby34 OPERATOR/openbsd/health_check.rb [--core|--all-ready-apps] [--public] [--json]"
+  parser.banner = "Usage: ruby34 OPENBSD/health_check.rb [--core|--all-ready-apps] [--public] [--json]"
   parser.on("--core", "Check only core infrastructure plus brgen/master") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }

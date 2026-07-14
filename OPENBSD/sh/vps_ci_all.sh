@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
 # Run all active Rails app CIs serially on vm23 — never parallel.
-# Usage: zsh OPERATOR/openbsd/sh/vps_ci_all.sh
+# Usage: zsh OPENBSD/sh/vps_ci_all.sh
 set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
-script=${repo}/OPERATOR/openbsd/sh/vps_ci.sh
+script=${repo}/OPENBSD/sh/vps_ci.sh
 apps=(brgen amber bsdports)
 max_load=${PUB4_CI_MAX_LOAD:-4}
 

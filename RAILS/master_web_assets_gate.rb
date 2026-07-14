@@ -11,11 +11,11 @@ ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")
 MANIFEST = File.join(ASSETS_DIR, ".manifest.json")
 REQUIRED = %w[face.css face.js face.runtime.js chat.js three.face.module.js].freeze
 DEPLOY_SCRIPTS = {
-  "OPERATOR/openbsd/OPERATOR.sh" => :start_or_restart,
-  "OPERATOR/openbsd/sh/vps_install_all.sh" => :start_or_restart,
-  "OPERATOR/openbsd/sh/vps_on_vm_install.sh" => :start_or_restart,
-  "OPERATOR/openbsd/sh/vps_console_install.exp" => :restart,
-  "OPERATOR/openbsd/sh/vps_deploy_master.sh" => :restart
+  "OPENBSD/OPERATOR.sh" => :start_or_restart,
+  "OPENBSD/sh/vps_install_all.sh" => :start_or_restart,
+  "OPENBSD/sh/vps_on_vm_install.sh" => :start_or_restart,
+  "OPENBSD/sh/vps_console_install.exp" => :restart,
+  "OPENBSD/sh/vps_deploy_master.sh" => :restart
 }.freeze
 
 failures = []

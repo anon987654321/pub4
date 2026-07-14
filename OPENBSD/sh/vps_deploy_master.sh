@@ -1,7 +1,7 @@
 #!/bin/sh
 # Deploy MASTER web + lib to vm23 after git pull.
 # Usage (from dev laptop):
-#   ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226 'zsh /home/dev/pub4/OPERATOR/openbsd/sh/vps_deploy_master.sh'
+#   ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh'
 
 set -e
 ROOT="${ROOT:-/home/dev/pub4}"

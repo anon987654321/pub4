@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Pub4
-  # Canonical repo layout paths. OPENBSD is the config backup; operator tooling
-  # lives under OPERATOR/openbsd.
+  # Canonical repo layout paths. OPENBSD holds the VPS config backup (etc/usr/var)
+  # and production operator tooling (bin, lib, sh, gates).
   module Paths
     module_function
 
@@ -11,7 +11,7 @@ module Pub4
     end
 
     def operator_root
-      File.join(repo_root, "OPERATOR")
+      openbsd_root
     end
 
     def rails_root
@@ -23,15 +23,15 @@ module Pub4
     end
 
     def openbsd_operator_root
-      File.join(operator_root, "openbsd")
+      openbsd_root
     end
 
     def master_root
       File.join(repo_root, "MASTER")
     end
 
-    # Legacy alias — DEPLOY was renamed to OPERATOR (2026-07).
-    def deploy_root = operator_root
+    # Legacy aliases — DEPLOY/OPERATOR were folded into OPENBSD (2026-07).
+    def deploy_root = openbsd_root
 
     def resolve(path)
       expanded = File.expand_path(path, repo_root)
@@ -39,9 +39,11 @@ module Pub4
 
       legacy = path.to_s
         .sub(%r{\ADEPLOY/rails/}, "RAILS/")
-        .sub(%r{\ADEPLOY/openbsd/}, "OPERATOR/openbsd/")
-        .sub(%r{\ADEPLOY/}, "OPERATOR/")
-        .sub(%r{\AOPERATOR/rails/}, "RAILS/")
+        .sub(%r{\ADEPLOY/openbsd/}, "OPENBSD/")
+        .sub(%r{\ADEPLOY/}, "OPENBSD/")
+        .sub(%r{\AOPERATOR/openbsd/}, "OPENBSD/")
+        .sub(%r{\AOPERATOR/}, "OPENBSD/")
+        .sub(%r{\AOPENBSD/rails/}, "RAILS/")
       File.expand_path(legacy, repo_root)
     end
   end

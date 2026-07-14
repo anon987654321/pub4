@@ -27,13 +27,13 @@ MP3 binaries into the repo.
 Run:
 
 ```sh
-ruby OPERATOR/audio/akmd_mastering_chain.rb input.wav output.mp3
+ruby OPENBSD/audio/akmd_mastering_chain.rb input.wav output.mp3
 ```
 
 Optional:
 
 ```sh
-ruby OPERATOR/audio/akmd_mastering_chain.rb input.wav output.mp3 --bitrate 192k
+ruby OPENBSD/audio/akmd_mastering_chain.rb input.wav output.mp3 --bitrate 192k
 ```
 
 ## Track manifest

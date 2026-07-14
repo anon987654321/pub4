@@ -6,8 +6,8 @@ module Master
   module Deploy
     module OperatorDocs
       ROOT = File.expand_path("../../../..", __dir__)
-      OPERATOR_PATH = File.join(ROOT, "OPERATOR", "data", "operator.yml")
-      DEBT_PATH = File.join(ROOT, "OPERATOR", "data", "debt.yml")
+      OPERATOR_PATH = File.join(ROOT, "OPENBSD", "data", "operator.yml")
+      DEBT_PATH = File.join(ROOT, "OPENBSD", "data", "debt.yml")
 
       module_function
 
@@ -25,7 +25,7 @@ module Master
 
       def render_deploy
         data = load_operator
-        lines = ["OPERATOR operator (runtime: OPERATOR/data/operator.yml)", ""]
+        lines = ["OPERATOR operator (runtime: OPENBSD/data/operator.yml)", ""]
         lines << data.dig("app_layout", "summary").to_s
         lines << "Deploy: #{data.dig('app_layout', 'deploy_entrypoint')}"
         lines << "Deployed: #{data.dig('app_layout', 'deployed_tree')}"

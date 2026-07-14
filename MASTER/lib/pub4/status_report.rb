@@ -69,11 +69,11 @@ module Pub4
     end
 
     def backlog_source
-      "OPERATOR/data/debt.yml"
+      "OPENBSD/data/debt.yml"
     end
 
     def backlog_open_count
-      path = File.join(@root, "OPERATOR", "data", "debt.yml")
+      path = File.join(@root, "OPENBSD", "data", "debt.yml")
       return 0 unless File.file?(path)
 
       data = YAML.safe_load(File.read(path)) || {}

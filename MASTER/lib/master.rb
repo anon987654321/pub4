@@ -28,10 +28,10 @@ module Master
   # Constitutional automation runtime and governed repository-work pipeline.
   ROOT = File.expand_path("..", __dir__).freeze
   REPO_ROOT = File.expand_path("..", ROOT).freeze
-  OPERATOR_ROOT = File.join(REPO_ROOT, "OPERATOR").freeze
+  OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD").freeze
   RAILS_ROOT = File.join(REPO_ROOT, "RAILS").freeze
   OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD").freeze
-  DEPLOY_ROOT = OPERATOR_ROOT.freeze
+  DEPLOY_ROOT = OPENBSD_ROOT.freeze
   DEPLOY_RAILS = RAILS_ROOT.freeze
   TOOLS_ROOT = File.join(ROOT, "tools").freeze
   DATA = File.join(ROOT, "data").freeze
@@ -42,7 +42,7 @@ module Master
     ["voice", "data/voice.yml"], ["limits", "data/limits.yml"], ["orders", "data/state.yml"],
     ["playbook", "data/operator_playbook.yml"], ["principles", "data/operator_principles.yml"],
     ["skills", "data/skills_registry.yml"], ["context", "data/project_context.yml"],
-    ["operator", "../OPERATOR/OPERATOR.md"]
+    ["operator", "../OPENBSD/RUNBOOK.md"]
   ].freeze
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
@@ -67,7 +67,7 @@ module Master
   }.freeze
 
   def self.repo_root = REPO_ROOT
-  def self.operator_path(*parts) = File.join(OPERATOR_ROOT, *parts)
+  def self.operator_path(*parts) = File.join(OPENBSD_ROOT, *parts)
   def self.rails_path(*parts) = File.join(RAILS_ROOT, *parts)
   def self.openbsd_path(*parts) = File.join(OPENBSD_ROOT, *parts)
   def self.deploy_path(*parts) = operator_path(*parts)

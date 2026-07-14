@@ -186,11 +186,11 @@ apps:
 archived_subsystems:
 
   baibl:
-    recovery_source: OPERATOR/archive/recovery/manifest.json
+    recovery_source: OPENBSD/archive/recovery/manifest.json
     notes: Retired from active stack; pub3 Rails installer/prototype preserved as recovery-only context.
 
   blognet:
-    recovery_source: OPERATOR/archive/recovery/references/build_blognet.rb
+    recovery_source: OPENBSD/archive/recovery/references/build_blognet.rb
     notes: Retired from active stack; old megablog/content-generation logic preserved as recovery-only context.
 
   aight_production_ai:

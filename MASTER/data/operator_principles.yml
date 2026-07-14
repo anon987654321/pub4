@@ -34,7 +34,7 @@ principles:
   description: OPERATOR or web edits require integrity or crawl probes; gate failure keeps the task open
   type: feedback
   body: |-
-    After OPERATOR/ or MASTER/web/ edits, run bin/probe integrity or ruby OPERATOR/integrity_gate.rb before declaring done. HTTP crawl syncs apps.yml to master.json. On VPS use MASTER_CRAWL_BROWSER=1 when primer, face-session, or ping/pong matter. Gate failure means the task is still open.
+    After OPENBSD/ or MASTER/web/ edits, run bin/probe integrity or ruby OPENBSD/integrity_gate.rb before declaring done. HTTP crawl syncs apps.yml to master.json. On VPS use MASTER_CRAWL_BROWSER=1 when primer, face-session, or ping/pong matter. Gate failure means the task is still open.
 - id: feedback_vps_serial_truth
   name: "Single Source of Truth — VPS serial production verify"
   description: One SSH session, verify on dev@46.23.89.226, copy openbsd edits back to git same session

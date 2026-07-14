@@ -56,7 +56,7 @@ git_diff("MASTER")
 assert_clean("MASTER")
 
 COMMANDS[:deploy].each { |line| run_master_line(line) }
-git_diff("RAILS", "OPERATOR", "MASTER")
-assert_clean("RAILS", "OPERATOR", "MASTER")
+git_diff("RAILS", "OPENBSD", "MASTER")
+assert_clean("RAILS", "OPENBSD", "MASTER")
 
 puts "ok: MASTER gate clean"

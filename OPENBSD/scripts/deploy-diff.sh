@@ -2,8 +2,8 @@
 # deploy-diff.sh — compare key VPS configs against OPENBSD/etc (read-only).
 #
 # Usage:
-#   zsh OPERATOR/openbsd/scripts/deploy-diff.sh
-#   SSH_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519_brgen zsh OPERATOR/openbsd/scripts/deploy-diff.sh
+#   zsh OPENBSD/scripts/deploy-diff.sh
+#   SSH_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519_brgen zsh OPENBSD/scripts/deploy-diff.sh
 
 set -euo pipefail
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# OPERATOR/openbsd/tools/tree.rb
+# OPENBSD/tools/tree.rb
 #
 # Constitution-aware project tree for pub4.
 # Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
 #
-# Shell entry: OPERATOR/openbsd/sh/tree.sh (operator wrapper for vm23 / local use).
+# Shell entry: OPENBSD/sh/tree.sh (operator wrapper for vm23 / local use).
 
 require "yaml"
 require "optparse"
@@ -108,7 +108,7 @@ class ProjectTree
     puts "  ⚠ DRIFT     apps.horizon.yml — agent-ignore; keep out of contributor path"
     puts "  ⚠ DRIFT     archive/recovery — legacy pub2/pub3 installers; document-only"
     puts "  ✗ NOISE     rails/node_modules, log/, storage/, app/assets/builds/"
-    puts "  → Gates: OPERATOR/bin/check-full | check-rails --profile=contributor"
+    puts "  → Gates: OPENBSD/bin/check-full | check-rails --profile=contributor"
   end
 
   def breakdown_lib(lib_root)
@@ -370,7 +370,7 @@ if __FILE__ == $PROGRAM_NAME
     opts.on("--deploy-overview", "Far-away OPERATOR pillar: rails apps + openbsd collapsed, noise pruned") do
       options[:overview] = true
       options[:pillar] = :deploy
-      options[:root] = File.join(Dir.pwd, "OPERATOR")
+      options[:root] = File.join(Dir.pwd, "OPENBSD")
       options[:max_depth] = 3
       options[:summary] = true
     end

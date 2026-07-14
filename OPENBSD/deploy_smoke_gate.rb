@@ -70,7 +70,7 @@ else
   failures << "MASTER/web: missing AuthTier middleware"
 end
 
-openbsd = File.join(ROOT, "OPERATOR", "openbsd", "OPERATOR.sh")
+openbsd = File.join(ROOT, "OPENBSD", "openbsd", "OPERATOR.sh")
 if File.file?(openbsd)
   text = File.read(openbsd)
   failures << "OPERATOR.sh: production db:seed is not explicitly gated" unless text.include?("RUN_PRODUCTION_SEEDS")
