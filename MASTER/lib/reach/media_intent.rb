@@ -14,6 +14,9 @@ module Master
     module MediaIntent
       module_function
 
+      # Finished media lands in the user's home directory, not the repo.
+      MEDIA_OUTPUT_DIR = File.expand_path("~")
+
       IMAGE_RE = /\b(?:make|create|generate|render|photograph|photo|portrait|image|picture)\b/i.freeze
       AUDIO_RE = /\b(?:make|create|generate|compose|render)\b.*\b(?:beat|loop|instrumental|track|music)\b|\b(?:dilla|j dilla|fly(?:ing)?\s+lotus|madlib|bach|baroque)\b.*\b(?:beat|loop|instrumental|track|music)\b/i.freeze
       POSTPRO_RE = /\b(?:post-?process|colour\s+grade|color\s+grade|film\s+look|vhs(?:\s+tape)?\s+look|crt(?:\s+broadcast)?\s+look|camcorder(?:\s+glitch)?\s+look|make\s+this\s+(?:cinematic|analog|analogue))\b/i.freeze
@@ -48,8 +51,10 @@ module Master
       end
 
       def generate_cloud_image(prompt, root:)
-        result = ScriptDispatch.run(root:, tool: "repligen", arg: ["generate", "--prompt", prompt].map { |v| Shellwords.escape(v) }.join(" "))
-        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :repligen }) : result
+        output = File.join(MEDIA_OUTPUT_DIR, "repligen-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.webp")
+        args = ["generate", "--prompt", prompt, "--output", output]
+        result = ScriptDispatch.run(root:, tool: "repligen", arg: args.map { |v| Shellwords.escape(v) }.join(" "))
+        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :repligen, path: output }) : result
       end
 
       def postprocess(text, root:)
@@ -76,7 +81,7 @@ module Master
                  else
                    "cinematic"
                  end
-        output_dir = File.join(MasterPaths.repo, ".master", "media")
+        output_dir = MEDIA_OUTPUT_DIR
         FileUtils.mkdir_p(output_dir)
         ext = File.extname(source)
         output = File.join(output_dir, "#{File.basename(source, ext)}-#{preset}#{ext}")
@@ -97,7 +102,7 @@ module Master
                 else
                   "dilla"
                 end
-        output_dir = File.join(MasterPaths.repo, ".master", "media")
+        output_dir = MEDIA_OUTPUT_DIR
         FileUtils.mkdir_p(output_dir)
         output = File.join(output_dir, "#{style}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.mp3")
         args = ["generate", "--style", style, "--output", output]

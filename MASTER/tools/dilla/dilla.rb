@@ -12,6 +12,9 @@ require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 
 ROOT = File.expand_path(__dir__)
+# Finished renders default to the user's home directory, not the repo — ROOT
+# stays the base for samples/stems/scratch temp files, which aren't user output.
+OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", File.expand_path("~"))
 SAMPLE_DIR = File.join(ROOT, "samples")
 DRUM_DIR = File.join(SAMPLE_DIR, "drums")
 CUSTOM_DRUM_DIR = File.join(DRUM_DIR, "custom")
@@ -31,7 +34,7 @@ SAMPLE_RATE = 44_100
 BASS_SUSTAIN_SEC = (ENV["BASS_SUSTAIN"] || 1.45).to_f
 BASS_DECAY_RATE = (ENV["BASS_DECAY"] || 1.15).to_f
 # Voicemails mix pipeline (make.rb heritage)
-VOICEMAILS_BEAT = ENV.fetch("BEAT", File.join(ROOT, "Voicemails.mp3"))
+VOICEMAILS_BEAT = ENV.fetch("BEAT", File.join(OUTPUT_DIR, "Voicemails.mp3"))
 MIX_DUR = 146
 MIX_BPM = 118.6
 LIVESET_MIN = (ENV["LIVESET_MIN"] || 60).to_i
@@ -652,7 +655,7 @@ def convert_audio(input, output)
   output
 end
 
-def render(destination = File.join(ROOT, "full_track.mp3"))
+def render(destination = File.join(OUTPUT_DIR, "full_track.mp3"))
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   FileUtils.mkdir_p(File.dirname(destination))
   duration = render_seconds
@@ -696,7 +699,7 @@ def codec_for(destination)
   ["-c:a", "pcm_s16le"]
 end
 
-def verify(path = File.join(ROOT, "full_track.mp3"))
+def verify(path = File.join(OUTPUT_DIR, "full_track.mp3"))
   abort "missing #{path}" unless File.exist?(path)
   output, error, status = capture("ffmpeg", "-hide_banner", "-i", path, "-af", "volumedetect", "-f", "null", "-")
   text = output + error
@@ -860,7 +863,7 @@ def semantics(input = nil)
   puts JSON.pretty_generate(type: "semantics", path: input, duration_seconds: rhythm_data.fetch(:duration_seconds), tags: semantic_tags(loudness, brightness, density))
 end
 
-def ears(path = File.join(ROOT, "full_track.mp3"))
+def ears(path = File.join(OUTPUT_DIR, "full_track.mp3"))
   abort "missing #{path}" unless File.exist?(path)
   report = media_metadata(path).merge(volume_metadata(path)).merge(path: path)
   report[:verdict] = ears_verdict(report)
@@ -1012,7 +1015,7 @@ def debug
 end
 
 def sweep
-  output = File.join(ROOT, "sweep_check.mp3")
+  output = File.join(OUTPUT_DIR, "sweep_check.mp3")
   previous = ENV["BARS"]
   ENV["BARS"] = "8"
   render(output)
@@ -2014,6 +2017,11 @@ def warm_dilla_pad_post(path)
     "equalizer=f=4200:t=o:w=1.2:g=-2.4",
     "aphaser=speed=0.11:decay=0.44",
     "aecho=0.44:0.5:130|210:0.30|0.16",
+    # Ensemble/chorus thickening on top of the oscillator-level unison detune
+    # above — two short, slightly different delay taps beating against the
+    # dry signal, the same multi-voice-detune trick analog string/pad
+    # machines (Juno, Solina) use for width and body.
+    "chorus=0.5:0.7:35|45:0.25|0.2:0.3|0.25:1.2|1.6",
     "vibrato=f=0.28:d=0.016",
     "acompressor=threshold=-26dB:ratio=2.1:attack=42:release=200:makeup=2.2",
     "volume=1.28",
@@ -2027,9 +2035,20 @@ end
 def native_pad_voice_expression(hz, amp, voice_i, pan, phase_seed)
   frequency = hz.round(4)
   drift = "(1+0.0014*sin(2*PI*0.065*t+#{phase_seed.round(3)}))"
+  # Unison detune: two extra copies of the fundamental at +/-0.4% pitch
+  # (roughly +/-7 cents), each drifting on its own independent slow LFO
+  # phase so they beat against the center voice instead of moving in
+  # lockstep — the analog ensemble/chorus trick (Juno/Prophet-style) that
+  # makes a single-oscillator pad read as full and lush instead of thin.
+  detune_up_hz = (frequency * 1.004).round(4)
+  detune_dn_hz = (frequency * 0.996).round(4)
+  drift_up = "(1+0.0011*sin(2*PI*0.081*t+#{(phase_seed + 1.7).round(3)}))"
+  drift_dn = "(1+0.0011*sin(2*PI*0.057*t+#{(phase_seed + 3.1).round(3)}))"
   body = "(0.72*sin(2*PI*#{frequency}*#{drift}*t)+" \
          "0.0933*sin(2*PI*#{frequency * 3.0}*#{drift}*t)+" \
-         "0.08*sin(2*PI*#{frequency * 2.0}*#{drift}*t))"
+         "0.08*sin(2*PI*#{frequency * 2.0}*#{drift}*t)+" \
+         "0.30*sin(2*PI*#{detune_up_hz}*#{drift_up}*t)+" \
+         "0.30*sin(2*PI*#{detune_dn_hz}*#{drift_dn}*t))"
   breathe = "(0.80+0.20*sin(2*PI*#{(0.16 + voice_i * 0.025).round(3)}*t+#{phase_seed.round(3)}))"
   env = "min(1,pow(t/0.072,1.35))*exp(-t*0.07)*#{breathe}"
   ["#{amp.round(6)}*#{(0.5 - pan * 0.5).round(4)}*#{env}*#{body}",
@@ -2225,7 +2244,7 @@ def dilla_stem_paths
 end
 
 # Full Jay Dee render: sample drums + stem chops, Dilla Time scheduling.
-def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = nil, keep_stems: false)
+def render_dilla(destination = File.join(OUTPUT_DIR, "dilla_beat.mp3"), bars_count = nil, keep_stems: false)
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
@@ -2750,7 +2769,7 @@ def render_analog(destination, bar_count: bars)
   puts "wrote #{destination}"
 end
 
-def analog_liveset(destination = File.join(ROOT, "analog_liveset.mp3"), minutes = 12)
+def analog_liveset(destination = File.join(OUTPUT_DIR, "analog_liveset.mp3"), minutes = 12)
   bar_count = [(minutes.to_f * 60.0 / (beat_seconds * 4)).ceil, 64].max
   render_analog(destination, bar_count: bar_count)
 end
@@ -2913,7 +2932,7 @@ def render_slum_album(output_dir = File.join(ROOT, "renders"))
 end
 
 # Full-length MPC hip-hop: Slum Village Vol. 1/2 presets via TRACK= env.
-def render_hiphop(destination = File.join(ROOT, "dilla_hiphop.mp3"))
+def render_hiphop(destination = File.join(OUTPUT_DIR, "dilla_hiphop.mp3"))
   prev = %w[BPM BARS TRACK PROGRESSION SWING].each_with_object({}) { |k, h| h[k] = ENV[k] }
   ENV["TRACK"] ||= "get_dis_money"
   ENV["BARS"] ||= "63"
@@ -2926,7 +2945,7 @@ end
 # TECHNO SYNTH (techno_hate.rb) — acid-industrial hybrid at 142 BPM
 # =============================================================================
 
-def render_techno(destination = File.join(ROOT, "techno_hate.mp3"))
+def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   n_bars = [bars, TECHNO_BARS].max
   beat  = 60.0 / TECHNO_BPM
@@ -3007,7 +3026,7 @@ end
 # =============================================================================
 
 def mix_out_path(ver)
-  File.join(ROOT, "final_mix_#{ver}.mp3")
+  File.join(OUTPUT_DIR, "final_mix_#{ver}.mp3")
 end
 
 def mix_tmp(ver, name)
@@ -3365,7 +3384,7 @@ def render_liveset(name = "default", minutes: LIVESET_MIN)
   files = set["files"]
   abort "liveset: empty set" if files.nil? || files.empty?
   inputs = files.flat_map { |f| ["-stream_loop", "-1", "-i", File.join(base_dir, f)] }
-  out = File.join(ROOT, "liveset_#{name}_#{minutes}m.wav")
+  out = File.join(OUTPUT_DIR, "liveset_#{name}_#{minutes}m.wav")
   sh! "ffmpeg", "-y", *inputs, "-filter_complex", liveset_filter(files.size),
       "-map", "[out]", "-t", (minutes * 60).to_s, "-ar", "44100", "-c:a", "pcm_s16le", out
   puts "liveset -> #{out}"
@@ -3525,7 +3544,7 @@ def electronium_ensure_loaded!
   eval(ELECTRONIUM_SOURCE, TOPLEVEL_BINDING, __FILE__, __LINE__)
 end
 
-def electronium_generate(destination = File.join(ROOT, "dilla_electronium.mid"))
+def electronium_generate(destination = File.join(OUTPUT_DIR, "dilla_electronium.mid"))
   electronium_ensure_loaded!
   path = DillaElectronium::Composer.new(bpm: bpm.to_i, bars: bars).write(destination)
   puts "wrote #{path}"
@@ -3534,7 +3553,7 @@ end
 cmd = ARGV.shift
 case cmd
 when "capabilities" then puts Master::Reach::AnalogCapabilities.report(:dilla)
-when "quality" then dilla_quality(ARGV.shift || File.join(ROOT, "full_track.mp3"), ARGV.shift)
+when "quality" then dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift)
 when nil, "help" then help
 when "scan" then scan
 when "sweep" then sweep
@@ -3544,17 +3563,17 @@ when "sample" then sample
 when "source" then source(ARGV.shift, ARGV.shift)
 when "livestream" then livestream(ARGV.shift, ARGV.shift)
 when "separate" then separate(ARGV.shift)
-when "render" then render(ARGV.shift || File.join(ROOT, "full_track.mp3"))
-when "verify" then verify(ARGV.shift || File.join(ROOT, "full_track.mp3"))
+when "render" then render(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
+when "verify" then verify(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
 when "chords" then chords
-when "clean" then clean(ARGV.shift, ARGV.shift || File.join(ROOT, "clean.wav"))
+when "clean" then clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav"))
 when "stems" then stems(*ARGV)
 when "study" then study(ARGV.shift, ARGV.shift)
 when "rhythm" then rhythm(ARGV.shift)
 when "melody" then melody(ARGV.shift)
 when "harmony" then harmony(ARGV.shift)
 when "semantics" then semantics(ARGV.shift)
-when "ears"       then ears(ARGV.shift || File.join(ROOT, "full_track.mp3"))
+when "ears"       then ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
 when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
 when "live"       then live((ARGV.shift || 32).to_i)
 when "live_now"    then live_now
@@ -3574,16 +3593,16 @@ when "madlib"
     render_madlib_drums(out)
   end
 when "dilla"
-  dest = ARGV.shift || File.join(ROOT, "dilla_beat.mp3")
+  dest = ARGV.shift || File.join(OUTPUT_DIR, "dilla_beat.mp3")
   n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
   render_dilla(dest, n_bars)
-when "hiphop"          then render_hiphop(ARGV.shift || File.join(ROOT, "dilla_hiphop.mp3"))
+when "hiphop"          then render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "dilla_hiphop.mp3"))
 when "slum"            then render_slum_album(ARGV.shift || File.join(ROOT, "renders"))
 when "industrial"      then render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3"))
-when "techno"          then render_techno(ARGV.shift || File.join(ROOT, "techno_hate.mp3"))
-when "analog"          then render_analog(ARGV.shift || File.join(ROOT, "analog_full.mp3"))
-when "analog_liveset"  then analog_liveset(ARGV.shift || File.join(ROOT, "analog_liveset.mp3"), (ARGV.shift || 12).to_f)
-when "electronium", "midi" then electronium_generate(ARGV.shift || File.join(ROOT, "dilla_electronium.mid"))
+when "techno"          then render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3"))
+when "analog"          then render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3"))
+when "analog_liveset"  then analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f)
+when "electronium", "midi" then electronium_generate(ARGV.shift || File.join(OUTPUT_DIR, "dilla_electronium.mid"))
 when "mix"  then run_mix(ARGV.shift || "v11")
 when "v7"   then run_mix("v7")
 when "v8"   then run_mix("v8")
