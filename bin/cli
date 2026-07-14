@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Compatibility wrapper for legacy invocations that expect bin/cli.
+# Delegates directly to bin/pub4.
+exec(File.join(__dir__, "pub4"), *ARGV)
