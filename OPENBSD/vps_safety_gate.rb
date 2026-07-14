@@ -15,10 +15,10 @@ else
 end
 
 validate_doas = File.join(TOOLING, "sh", "validate_doas.ksh")
-failures << "missing OPENBSD/sh/validate_doas.ksh" unless File.file?(validate_doas)
+failures << "missing OPENBSD/validate_doas.ksh" unless File.file?(validate_doas)
 
 console_common = File.join(TOOLING, "sh", "vps_console_common.exp")
-failures << "missing OPENBSD/sh/vps_console_common.exp" unless File.file?(console_common)
+failures << "missing OPENBSD/vps_console_common.exp" unless File.file?(console_common)
 
 Dir.glob(File.join(TOOLING, "sh", "vps_console*.exp")).sort.each do |path|
   rel = path.delete_prefix("#{ROOT}/")
@@ -35,7 +35,7 @@ drop_install = File.join(TOOLING, "sh", "vps_drop_install.exp")
 if File.file?(drop_install)
   text = File.read(drop_install)
   unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
-    failures << "OPENBSD/sh/vps_drop_install.exp must source vps_console_common.exp"
+    failures << "OPENBSD/vps_drop_install.exp must source vps_console_common.exp"
   end
 end
 

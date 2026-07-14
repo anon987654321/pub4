@@ -13,7 +13,7 @@ failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")
 failures << "ports" unless runner.run("ports", RUBY, "RAILS/port_inventory_gate.rb")
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
-failures << "vps_ci_all syntax" unless runner.run("vps_ci_all syntax", "zsh", "-n", "OPENBSD/sh/vps_ci_all.sh")
+failures << "vps_ci_all syntax" unless runner.run("vps_ci_all syntax", "zsh", "-n", "OPENBSD/vps_ci_all.sh")
 failures << "openbsd deploy syntax" unless runner.run("openbsd deploy syntax", "zsh", "-n", "OPENBSD/OPERATOR.sh")
 failures << "vps safety" unless runner.run("vps safety", RUBY, "OPENBSD/vps_safety_gate.rb")
 

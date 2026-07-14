@@ -62,5 +62,4 @@ module ApplicationHelper
     largest = widths.last
     url_for(attachment.variant(resize_to_limit: [ largest, largest ]))
   end
-
 end

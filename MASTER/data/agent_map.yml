@@ -21,7 +21,7 @@ topics:
       - test/test_yaml_registries.rb
       - web/test/controllers/health_controller_test.rb
       - web/test/face_boot.test.mjs
-    deploy: zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh
+    deploy: zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh
     playbook: master_web_pernille_defaults
     proof: curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'
 
@@ -36,18 +36,18 @@ topics:
     tests:
       - web/test/face_boot.test.mjs
       - web/script/probe_http
-    deploy: zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh
+    deploy: zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh
     playbook: master_web_pernille_defaults
 
   deploy:
     files:
-      - OPENBSD/sh/vps_deploy_master.sh
+      - OPENBSD/vps_deploy_master.sh
       - OPENBSD/etc/rc.d/master
       - RAILS/master_web_assets_gate.rb
       - OPENBSD/bin/vps-deploy
     tests:
       - web/script/probe_http
-    command: ssh dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/sh/vps_deploy_master.sh'
+    command: ssh dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh'
     playbook: post_sync_vps_proof
 
   persona:

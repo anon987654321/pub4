@@ -4,11 +4,11 @@ require "open3"
 
 module Master
   module Reach
-    # Tree — lists directory structure via OPENBSD/sh/tree.sh.
+    # Tree — lists directory structure via OPENBSD/tree.sh.
     # Safe: read-only, no writes.
     class Tree
       include PathGuard
-      SCRIPT = File.expand_path("../../../OPENBSD/sh/tree.sh", __dir__).freeze
+      SCRIPT = File.expand_path("../../../OPENBSD/tree.sh", __dir__).freeze
 
       def initialize(root:, event_bus: nil)
         @bus = event_bus

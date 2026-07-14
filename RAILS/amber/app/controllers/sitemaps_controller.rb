@@ -6,7 +6,7 @@ class SitemapsController < ApplicationController
   private
 
   def sitemap_entries
-    entries = [Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0")]
+    entries = [ Shared::SitemapBuilder::Entry.new(loc: root_url, changefreq: "daily", priority: "1.0") ]
 
     CreatorProfile.publicly_visible.order(updated_at: :desc).limit(2_000).each do |profile|
       entries << Shared::SitemapBuilder::Entry.new(

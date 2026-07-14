@@ -26,7 +26,7 @@ class OutfitGenerationService
     user.recommendations.create!(
       kind: "outfit",
       outfit: outfit,
-      reason: "Outfit generated for #{[weather, season, occasion].compact_blank.join(', ')}",
+      reason: "Outfit generated for #{[ weather, season, occasion ].compact_blank.join(', ')}",
       score: picks.sum { |item| item.underused? ? 1.0 : 0.5 },
       metadata: { weather: weather, season: season, occasion: occasion, item_ids: picks.map(&:id) }
     )

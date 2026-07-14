@@ -12,8 +12,8 @@ APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 RAILS_README = File.join(ROOT, "RAILS", "README.md")
 PWA_BUILDER = File.join(ROOT, "RAILS", "scripts", "build_workbox.mjs")
 RETIRED_ACTIVE_PATHS = [
-  "OPENBSD/sh/vps_console_install.exp",
-  "OPENBSD/sh/vps_console_poll_install.exp",
+  "OPENBSD/vps_console_install.exp",
+  "OPENBSD/vps_console_poll_install.exp",
   "OPENBSD/usr/local/bin/relayd-watchdog",
   "RAILS/env.sample",
   "RAILS/scripts/build_workbox.mjs"

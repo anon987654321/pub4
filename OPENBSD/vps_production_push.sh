@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Production push: master + brgen + amber (serial, fast path skips CI).
-# Usage (on vm23): zsh OPENBSD/sh/vps_production_push.sh
+# Usage (on vm23): zsh OPENBSD/vps_production_push.sh
 set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
@@ -10,7 +10,7 @@ git pull --ff-only origin main
 export SKIP_CI=1
 
 echo "==> master"
-zsh "$repo/OPENBSD/sh/vps_deploy_master.sh"
+zsh "$repo/OPENBSD/vps_deploy_master.sh"
 
 echo "==> brgen"
 zsh "$repo/OPENBSD/bin/vps-deploy" brgen

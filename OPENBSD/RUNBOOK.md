@@ -97,7 +97,7 @@ When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-dep
 - Run `bin/pub4 status` before starting work; use `OPENBSD/RECIPES.md` for copy-paste paths.
 - Treat `RAILS/apps.yml` and `master.json` as inventories, not suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
-- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/sh/vps_ci.sh <app>` for per-app CI.
+- Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/vps_ci.sh <app>` for per-app CI.
 - Keep secrets in `/etc/*.env`; never commit them.
 - Keep Rails `config.assume_ssl = true`; do not enable `force_ssl` behind relayd.
 - Prefer local gates first (`OPENBSD/bin/check`) before any SSH.
@@ -131,7 +131,7 @@ Recovery-only expect scripts refuse to run unless a human operator exports
 
 OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks for everyone.
 `OPERATOR.sh` fixes the repo copy before install, validates `su dev -c 'doas id'`, and rolls
-back on failure. Cron heal paths use `OPENBSD/sh/validate_doas.ksh` with the same validation.
+back on failure. Cron heal paths use `OPENBSD/validate_doas.ksh` with the same validation.
 
 ## Backups (Litestream)
 
@@ -196,7 +196,7 @@ Any file changed on the VPS under `OPENBSD/` must be copied back to git and comm
 ## Repair playbooks
 
 - Integrity failure: run `ruby OPENBSD/integrity_gate.rb` and fix the first failing gate.
-- App CI failure: run `zsh OPENBSD/sh/vps_ci.sh <app>` serially. If caches are root-owned,
+- App CI failure: run `zsh OPENBSD/vps_ci.sh <app>` serially. If caches are root-owned,
   export the app `HOME` and `NPM_CONFIG_CACHE`.
 - MASTER dead tap: precompile `MASTER/web` production assets, restart `master`, then verify
   `https://ai.brgen.no` after the primer tap.

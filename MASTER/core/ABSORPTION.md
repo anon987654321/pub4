@@ -127,10 +127,11 @@ Done and green (branch `master-rebuild-phase1`):
 
 - **Core fold complete** (slices 0–4): Model, atomic World, Constitution with an
   immutability rule, one-source evidence policy, host-aware Memory budget.
-- **Media-generation capability severed**: ~9.3k lines / 141 files — video, LoRA,
+- **Media-generation capability severed (PERMANENT)**: ~9.3k lines / 141 files — video, LoRA,
   comfyui, repligen, postpro, social_sim, motion_critique, their CLI/boot wiring,
   tools and assets. Kept the dual-use `ReplicateClient` + `replicate_kokoro` TTS
-  (production voice) and `SubdomainOrchestrator` (deploy).
+  (production voice) and `SubdomainOrchestrator` (deploy). Re-severed 2026-07-14
+  after temporary reintroduction (2026-07-09) for Ragnhild LoRA training loop.
 - **Five dead subsystems deleted**: eval_harness, prompt_evolver, system_pressure,
   soul_proposals, opportunity_surface.
 

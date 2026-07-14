@@ -6,7 +6,7 @@ Runtime authority: `OPENBSD/data/operator.yml` — list with `cd MASTER && bundl
 
 ```bash
 ruby OPENBSD/tools/tree.rb . --pub4-overview
-# or: zsh OPENBSD/sh/tree.sh . --pub4-overview
+# or: zsh OPENBSD/tree.sh . --pub4-overview
 ```
 
 Prunes vendor/tmp/log/storage/node_modules/builds. Shows Rails apps collapsed, MASTER/lib subsystems, alignment notes.

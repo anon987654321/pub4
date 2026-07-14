@@ -62,8 +62,8 @@ else
 fi
 
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-if [[ -r ${GUARD_REPO}/OPENBSD/sh/validate_doas.ksh ]]; then
-	. ${GUARD_REPO}/OPENBSD/sh/validate_doas.ksh
+if [[ -r ${GUARD_REPO}/OPENBSD/validate_doas.ksh ]]; then
+	. ${GUARD_REPO}/OPENBSD/validate_doas.ksh
 	install_doas_conf_from_repo "${GUARD_REPO}/OPENBSD/etc/doas.conf" resource-guard || true
 fi
 if [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then

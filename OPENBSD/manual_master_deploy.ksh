@@ -1,6 +1,6 @@
 #!/bin/ksh
 # Manual MASTER deploy — use when vps_deploy_master.sh stalls.
-# Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/sh/manual_master_deploy.ksh
+# Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/manual_master_deploy.ksh
 # Watch: tail -f /tmp/master_manual.log
 
 LOG=/tmp/master_manual.log

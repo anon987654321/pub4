@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-# OPENBSD/sh/tree.sh
+# OPENBSD/tree.sh
 #
 # Thin portable wrapper around the constitution-aware tree generator.
 # Provides the "full overview" requested during MASTER KISS/DRY redesign work.

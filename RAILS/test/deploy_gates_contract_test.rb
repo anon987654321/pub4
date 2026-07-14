@@ -94,7 +94,7 @@ class DeployGatesContractTest < Minitest::Test
       OPENBSD/bin/check
       OPENBSD/lib/gate_environment.rb
       OPENBSD/integrity_gate.rb
-      OPENBSD/sh/vps_ci.sh
+      OPENBSD/vps_ci.sh
     ].each do |rel|
       assert File.exist?(File.join(REPO_ROOT, rel)), "missing #{rel}"
     end

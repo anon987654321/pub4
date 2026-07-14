@@ -93,7 +93,7 @@ lessons:
   - id: post_sync_vps_proof
     area: deploy
     signal: "Code pushed but services stale or untested on vm23"
-    action: "After git pull: SKIP_MASTER_SCAN=1 zsh OPENBSD/sh/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/health_check.rb; curl https://ai.brgen.no/up"
+    action: "After git pull: SKIP_MASTER_SCAN=1 zsh OPENBSD/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/health_check.rb; curl https://ai.brgen.no/up"
     proof: "doas rcctl check master brgen amber bsdports; browser smoke on ai.brgen.no face"
 
   - id: rails_rcd_canonical_names
@@ -153,8 +153,8 @@ lessons:
   - id: vps_one_ssh_no_parallel_ci
     area: deploy
     signal: "load averages >10 on vm23; dozens of ruby in D state; rcctl master/amber failed; SSH hangs"
-    action: "Never open parallel SSH sessions to vm23. Use zsh OPENBSD/sh/vps_ci.sh APP (mutex via /var/tmp/pub4-ci.lock) or vps_ci_all.sh for serial six-app proof. MASTER scan: zsh OPENBSD/sh/vps_master_scan.sh. resource_guard cron runs stale_ci_cleanup.ksh when load>=4. Kill stale local ssh clients first; doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
-    proof: "uptime load <4; test -f /var/tmp/pub4-ci.lock; zsh OPENBSD/sh/vps_ci.sh brgen; doas rcctl check master brgen amber"
+    action: "Never open parallel SSH sessions to vm23. Use zsh OPENBSD/vps_ci.sh APP (mutex via /var/tmp/pub4-ci.lock) or vps_ci_all.sh for serial six-app proof. MASTER scan: zsh OPENBSD/vps_master_scan.sh. resource_guard cron runs stale_ci_cleanup.ksh when load>=4. Kill stale local ssh clients first; doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
+    proof: "uptime load <4; test -f /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen; doas rcctl check master brgen amber"
 
   - id: vps_ci_shared_tree_path
     area: deploy
@@ -166,4 +166,4 @@ lessons:
     area: deploy
     signal: "pub4-ci-guard: EACCES on flock or EPERM deleting lock.holder"
     action: "Lock at /var/tmp/pub4-ci.lock mode 666 (vps_ci ensure_ci_lock). Do not pre-create .holder as root — vps_ci removes stale holder before CI. CiGuard swallows EPERM on holder delete."
-    proof: "ls -l /var/tmp/pub4-ci.lock; zsh OPENBSD/sh/vps_ci.sh brgen exits 0"
+    proof: "ls -l /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen exits 0"

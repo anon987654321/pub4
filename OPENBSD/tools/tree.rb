@@ -7,7 +7,7 @@
 # Respects skip_dirs from MASTER/data/rules.yml + aggressive pruning for overview.
 # Usage: ruby tree.rb [root] [--max-depth=3] [--summary]
 #
-# Shell entry: OPENBSD/sh/tree.sh (operator wrapper for vm23 / local use).
+# Shell entry: OPENBSD/tree.sh (operator wrapper for vm23 / local use).
 
 require "yaml"
 require "optparse"

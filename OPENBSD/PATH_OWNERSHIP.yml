@@ -71,7 +71,7 @@ ownership:
   openbsd/sh/vps_ci.sh:
     purpose: serial app CI entrypoint on vm23
     risk: high
-    check: zsh -n OPENBSD/sh/vps_ci.sh
+    check: zsh -n OPENBSD/vps_ci.sh
   openbsd/resource_guard.sh:
     purpose: load shedding on vm23
     risk: high

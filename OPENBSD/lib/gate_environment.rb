@@ -47,7 +47,7 @@ module Deploy
 
       <<~WARN
         integrity: note — source updated in /home/dev/pub4; deployed /home/<app>/app trees are unchanged.
-        integrity: note — run: zsh OPENBSD/sh/vps_ci.sh <app>  (serial, one app at a time)
+        integrity: note — run: zsh OPENBSD/vps_ci.sh <app>  (serial, one app at a time)
         integrity: note — then: ruby34 OPENBSD/integrity_gate.rb
       WARN
     end
