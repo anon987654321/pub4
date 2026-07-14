@@ -104,7 +104,8 @@ module CrawlSupport
   def port_open?(host, port, timeout: 0.4)
     Socket.tcp(host, port, connect_timeout: timeout).close
     true
-  rescue StandardError
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
     false
   end
 end

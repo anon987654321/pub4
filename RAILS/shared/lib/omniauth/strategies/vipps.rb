@@ -25,7 +25,8 @@ module OmniAuth
 
       def raw_info
         @raw_info ||= access_token.get("/vipps-userinfo-api/userinfo").parsed || {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
         @raw_info = {}
       end
     end

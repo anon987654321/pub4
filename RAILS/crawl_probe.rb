@@ -5,6 +5,7 @@
 
 require "open3"
 require "optparse"
+require "timeout"
 require_relative "crawl_support"
 
 MASTER_ROOT = File.join(CrawlSupport::ROOT, "MASTER")
@@ -15,7 +16,7 @@ def run_browser_crawl(public:, skip_closed:)
   args << "--public" if public
   args << "--strict" unless skip_closed
   env = { "BUNDLE_WITH" => "test", "BUNDLE_GEMFILE" => File.join(MASTER_ROOT, "Gemfile") }
-  out, status = Open3.capture2e(env, "bundle", *args, chdir: MASTER_ROOT)
+  out, status = Timeout.timeout(60) { Open3.capture2e(env, "bundle", *args, chdir: MASTER_ROOT) }
   puts out unless out.strip.empty?
   status.success? ? [] : ["browser crawl failed"]
 rescue StandardError => e
