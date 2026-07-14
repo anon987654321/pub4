@@ -33,8 +33,12 @@ fi
 print "check: ruby syntax"
 ruby -c lib/master.rb >/dev/null
 print "ok: lib/master.rb syntax"
-for f in kernel/*.rb; do ruby -c "$f" >/dev/null; done
-print "ok: kernel syntax"
+if ls kernel/*.rb >/dev/null 2>&1; then
+  for f in kernel/*.rb; do ruby -c "$f" >/dev/null; done
+  print "ok: kernel syntax"
+else
+  print "ok: kernel syntax (no files)"
+fi
 
 # Tests
 print "check: test suite"

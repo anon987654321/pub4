@@ -30,7 +30,6 @@ module Master
   REPO_ROOT = File.expand_path("..", ROOT).freeze
   OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD").freeze
   RAILS_ROOT = File.join(REPO_ROOT, "RAILS").freeze
-  OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD").freeze
   DEPLOY_ROOT = OPENBSD_ROOT.freeze
   DEPLOY_RAILS = RAILS_ROOT.freeze
   TOOLS_ROOT = File.join(ROOT, "tools").freeze
