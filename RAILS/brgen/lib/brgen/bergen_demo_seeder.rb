@@ -433,9 +433,7 @@ module Brgen
           title: row[:title],
           content: row[:content],
           anonymous: row[:anonymous] == true,
-          created_at: row[:hours_ago].hours.ago + rand(0..45).minutes,
-          views_count: rand(500..25000),  # popular impression
-          likes_count: (row[:votes].to_i * 50 + rand(100..2000))  # scale for millions feel
+          created_at: row[:hours_ago].hours.ago + rand(0..45).minutes
         )
         post.record_activity!("BergenDemoSeed") if post.respond_to?(:record_activity!)
 

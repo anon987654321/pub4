@@ -90,9 +90,7 @@ posts = users.sample([30, users.size].min).flat_map do |user|
       community: communities.sample,
       title: Faker::Lorem.sentence(word_count: 5),
       content: Faker::Lorem.paragraph(sentence_count: 4),
-      created_at: rand(1..90).days.ago,
-      views_count: rand((100 * SEED_SCALE)..(50000 * SEED_SCALE)),
-      likes_count: rand((10 * SEED_SCALE)..(5000 * SEED_SCALE))
+      created_at: rand(1..90).days.ago
     )
   end
 end
