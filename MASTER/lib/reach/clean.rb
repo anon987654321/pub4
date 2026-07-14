@@ -6,9 +6,12 @@ require "timeout"
 module Master
   module Reach
     # Clean — removes trailing whitespace, CRLF, and excess blank lines
-    # from text files under a given path, using sh/clean.sh.
+    # from text files under a given path, using OPENBSD/clean.sh.
     class Clean
-      SCRIPT = File.expand_path("../../../sh/clean.sh", __dir__).freeze
+      # Was "../../../sh/clean.sh" -- resolved to a nonexistent repo-root
+      # sh/clean.sh (missing the OPENBSD/ segment), a pre-existing bug
+      # surfaced while flattening OPENBSD/sh/ into OPENBSD/ directly.
+      SCRIPT = File.expand_path("../../../OPENBSD/clean.sh", __dir__).freeze
       NAME = "clean".freeze
       TIER = :dangerous
       TIMEOUT_S = 120 # clean.sh must not wedge the pipeline (ROBUSTNESS)
