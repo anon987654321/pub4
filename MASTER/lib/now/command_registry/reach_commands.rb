@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../reach/brgen_bridge"
+
 module Master
   module Now
     module CommandRegistry
@@ -18,7 +20,12 @@ module Master
           "lora-generate" => command(:dispatch_lora, "generate"),
           "lora-postpro" => command(:dispatch_lora, "postpro"),
           "lora" => command(:dispatch_lora_summary),
+          "brgen" => command(:dispatch_brgen_status),
         }
+      end
+
+      def dispatch_brgen_status(ctx: nil)
+        Master::Reach::BrgenBridge.summary
       end
 
       def dispatch_postpro(root, ctx: nil)

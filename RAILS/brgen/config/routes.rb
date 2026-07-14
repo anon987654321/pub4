@@ -7,6 +7,9 @@ Rails.application.routes.draw do
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   post "share" => "posts#share", as: :share_post
+  # Loopback-only in practice (see InternalController's shared-secret gate);
+  # not subdomain-constrained since MASTER calls it directly by IP:port.
+  get "internal/status" => "internal#status", as: :internal_status
 
   jobs_constraint = ->(request) { request.cookies["session_id"].present? }
 
