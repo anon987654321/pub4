@@ -2,20 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title><%= content_for(:title) || "brgen" %></title>
+    <title><%= content_for(:title) || "MASTER" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="brgen">
+    <meta name="application-name" content="MASTER">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#030303">
+    <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
     <meta name="master-runtime" content="face">
     <meta name="master-visual-profile" content="auto">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
     <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
     <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
     <script>
@@ -28,39 +26,29 @@
       window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
     </script>
     <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
-    <%# Keep heavy face/THREE parsing behind the explicit chat primer tap. %>
     <link rel="stylesheet" href="<%= asset_path("face.css") %>">
     <link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>">
   </head>
-  <body class="zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
-    <a class="skip-link" href="#main-content">skip to main content</a>
-    <div class="top-left-logo" aria-hidden="true">brgen</div>
-    <canvas id="cognition-ecology" aria-hidden="true"></canvas>
-    <canvas id="face" aria-hidden="true"></canvas>
-    <div id="primer" role="dialog" aria-modal="true" aria-labelledby="primer-title" tabindex="0">
-      <div>
-        <h1 id="primer-title">master</h1>
-        <p class="tagline">Constitutional AI. Ask anything.</p>
-        <div class="chips">
-          <span class="chip">tap to begin</span>
-          <span class="chip">+ photo</span>
-          <span class="chip">mic voice</span>
-          <span class="chip">swipe up input</span>
-        </div>
+  <body class="x-app zen" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div class="app-shell">
+      <div class="layout">
+        <aside class="sidebar" aria-label="Sidebar">
+          <a href="/" class="brand" aria-label="MASTER">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <nav aria-label="Primary navigation">
+            <a href="/" class="nav-item">Chat</a>
+            <a href="https://brgen.no" class="nav-item">Brgen</a>
+            <a href="/dashboard" class="nav-item">Status</a>
+          </nav>
+        </aside>
+        <main id="main-content" role="main">
+          <%= yield %>
+        </main>
+        <aside class="widgets" aria-label="Widgets"></aside>
       </div>
     </div>
-    <main id="chat-shell" aria-label="MASTER chat">
-      <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
-    </main>
-    <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
-      <button id="photo-button" type="button" aria-label="Attach photo">+</button>
-      <input id="photo" type="file" accept="image/*" capture="environment" hidden>
-      <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
-      <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
-    </form>
-    <main id="main-content" aria-label="MASTER content">
-      <%= yield %>
-    </main>
     <script>
       window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     </script>

@@ -1,83 +1,92 @@
 # Visual contract for MASTER web surfaces.
-# Source: DESIGN.md v1. Any UI change must comply with these directives.
-# These are constitutional for the web layer — treat as PROTECTED tier.
+# Source: x.com design system (shared with RAILS/brgen). Constitutional for the web layer.
+# Tokens: RAILS/shared/design_tokens.yml + RAILS/shared/app/assets/stylesheets/_x_base.scss
+
+reference: x.com
+source_of_truth:
+  - RAILS/shared/app/assets/stylesheets/_x_base.scss
+  - RAILS/shared/design_tokens.yml
 
 colors:
   background: "#000000"
-  foreground: "#ffffff"
-  muted_foreground: "rgba(255,255,255,0.55)"
-  phosphor_cream: "oklch(86% 0.02 80)"
-  danger: "oklch(62% 0.18 28)"
+  surface: "#000000"
+  surface_elevated: "#16181c"
+  search_bg: "#202327"
+  text: "#e7e9ea"
+  text_secondary: "#71767b"
+  border: "#2f3336"
+  accent: "#1d9bf0"
+  accent_hover: "#1a8cd8"
+  danger: "#f4212e"
 
-spacing:
-  base: 0.5rem
-  scale: [0.5rem, 1rem, 1.5rem, 2rem, 3rem]
+layout:
+  sidebar: "275px"
+  feed_max: "600px"
+  widgets: "350px"
+  layout_max: "1265px"
+  shell: three_column
 
 typography:
-  body: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-  mono: "ui-monospace, SFMono-Regular, Menlo, monospace"
-  text_size: "0.95rem"
-  line_length_ch:  66
-  min_size_px:     16
-  scale_ratio:     1.25
+  body: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+  mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace'
+  font_size: "16px"
+  line_height: "20px"
+  large_screen_font_size: "21px"
+  large_screen_line_height: "28px"
+  line_length_ch: 66
+  min_size_px: 16
+
+spacing:
+  base: 8px
+  rhythm: 8px
 
 borders:
-  hairline: "1px solid #ffffff"
-  radius: "0"
+  hairline: "1px solid var(--x-border)"
+  radius_card: "16px"
+  radius_pill: "9999px"
 
-particles:
-  size: "1px"
-  shape: "square"
-  count: 3000
-  color: "#ffffff"
-  phosphor_decay: true
-
-phosphor:
-  palette: "cream monochrome via CSS tokens (--c-text, --face-fg, --face-bg)"
-  persistence: "framebuffer decay in WebGL — not CSS glow or bloom"
-  allowed_overlays:
-    - "CRT scanlines (monochrome repeating-linear-gradient)"
-    - "edge vignette (radial-gradient to black)"
-    - "transient chromatic aberration on data-face-flash only"
+flat_rule:
   forbidden:
-    - "ornamental glow, bloom, or blur halos"
-    - "accent palette beyond danger/mic indicator"
+    - box-shadow
+    - text-shadow
+    - backdrop-filter
+    - "filter: blur()"
+    - "filter: drop-shadow()"
+  elevation: "1px hairline border or solid background only"
 
 directives:
-  - "Absolute black (#000000) edge-to-edge background."
-  - "White or cream monochrome foreground. No decorative accent palette."
-  - "Particle visuals are 1px square device pixels in WebGL. Phosphor persistence via framebuffer decay, not CSS blur or bloom."
-  - "CRT scanlines and edge vignette are functional overlays, not ornamental chrome."
-  - "Preserve whitespace. Typography stays restrained and readable."
-  - "No ornamental components: no hamburger menus, no decorative borders, no floating chrome."
-  - "Prefer declarative HTML + SSE updates. Minimize custom JavaScript to simulation and runtime needs."
+  - "x.com three-column shell: 275px sidebar / 600px feed / 350px widgets / 1265px max."
+  - "Shared --x-* tokens from design_tokens.yml social palette; accent #1d9bf0."
+  - "System UI font stack; 16/20 base, 21/28 at min-width 1280px."
+  - "Flat chrome only — no shadows, blur, or glassmorphism."
+  - "WebGL face canvas lives inside the center feed column, not full-viewport overlay."
+  - "Sticky feed header 53px; pill compose; mobile bottom tab bar below 768px."
   - "rem-based spacing on an 8px grid."
-  - "No framework class explosion and no !important."
-  - "Transitions use cubic-bezier easing only — no ease or linear keywords."
+  - "Transitions use cubic-bezier easing only."
 
 canvas_states:
-  idle: "Low-amplitude Brownian drift."
-  boot: "Brief wireframe face coalescence (~2s) then dissolve."
-  command: "Particles regroup into structural diagrams for scans, pipeline stages, council signals."
-  mood: "Motion quality reflects homeostat state (focused / curious / tense / weary)."
-  audio: "Low frequencies influence cohesion. Transients trigger short scatter impulses."
+  idle: "Low-amplitude particle drift inside feed stage."
+  boot: "Brief wireframe coalescence then dissolve."
+  command: "Particles regroup for scans and pipeline diagrams."
+  mood: "Motion reflects homeostat state."
+  audio: "Low frequencies influence cohesion."
 
 text_treatment:
-  messages: "Plain white text, upper-third left alignment."
-  assistant_emphasis: "Temporary 1px left hairline."
-  input: "Bottom hairline that expands only while typing."
+  messages: "Plain --x-text in chat log above compose bar."
+  assistant_emphasis: "Bold name + secondary meta line (x-post header pattern)."
+  input: "Bottom compose bar in feed column (x.com post composer shape)."
 
 performance:
-  lcp_max_ms:    2500
-  inp_max_ms:     200
-  cls_max:        0.1
-  fcp_max_ms:    1800
-  ttfb_max_ms:   800
+  lcp_max_ms: 2500
+  inp_max_ms: 200
+  cls_max: 0.1
+  fcp_max_ms: 1800
+  ttfb_max_ms: 800
   bundle_max_kb: 150
 
 accessibility:
   contrast_normal: 4.5
-  contrast_large:  3.0
-  touch_target_px: 24
-  focus_visible:   true
-  reduced_motion:  true
+  contrast_large: 3.0
+  touch_target_px: 44
+  focus_visible: true
+  reduced_motion: true

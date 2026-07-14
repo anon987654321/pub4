@@ -12,10 +12,10 @@
   $accent: #1d9bf0,
   $accent-hover: #1a8cd8,
   $danger: #f4212e,
-  $c-text: oklch(86% 0.02 80),
-  $c-accent: oklch(86% 0.08 88),
-  $c-danger: oklch(62% 0.18 28),
-  $c-code: oklch(74% 0.11 255)
+  $c-text: #e7e9ea,
+  $c-accent: #1d9bf0,
+  $c-danger: #f4212e,
+  $c-code: #1d9bf0
 ) {
   --c-text: #{$c-text};
   --c-accent: #{$c-accent};

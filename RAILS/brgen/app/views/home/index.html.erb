@@ -37,10 +37,6 @@
 <% end %>
 
 <section id="feed-panel" aria-label="Local posts">
-  <header class="local-feed-intro">
-    <p class="local-feed-kicker">Bergen, right now</p>
-    <p>Neighbourhood notes, weather-window plans, gigs, openings and the useful small things a city tells itself.</p>
-  </header>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to "Sign in", new_session_path %> to see posts from people you follow.</p>
   <% end %>

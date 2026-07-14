@@ -39,20 +39,20 @@ luxury:
 
 face_root:
   anchors:
-    c_text: "oklch(86% 0.02 80)"
+    c_text: "#e7e9ea"
     x_text: "#e7e9ea"
-    c_accent: "oklch(86% 0.08 88)"
-    c_danger: "oklch(62% 0.18 28)"
-    c_code: "oklch(74% 0.11 255)"
+    c_accent: "#1d9bf0"
+    c_danger: "#f4212e"
+    c_code: "#1d9bf0"
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
   font_label: '"JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace'
   face_bg: "black"
   derived:
-    face_fg: "var(--c-text)"
-    face_muted: "color-mix(in srgb, var(--c-text) 35%, transparent)"
-    face_dim: "color-mix(in srgb, var(--c-text) 18%, transparent)"
-    face_soft: "color-mix(in srgb, var(--c-text) 8%, transparent)"
-    mood_accent: "var(--c-accent)"
+    face_fg: "var(--x-text)"
+    face_muted: "var(--x-text-secondary)"
+    face_dim: "var(--x-text-secondary)"
+    face_soft: "var(--x-hover-subtle)"
+    mood_accent: "var(--x-accent)"
     border_faint: "color-mix(in srgb, var(--face-fg) 10%, transparent)"
     border_soft: "color-mix(in srgb, var(--face-fg) 14%, transparent)"
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"

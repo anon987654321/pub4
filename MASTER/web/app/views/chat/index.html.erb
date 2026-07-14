@@ -62,18 +62,6 @@
     window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <%# non-blocking font load: preload as style, then promote to stylesheet on load via a
-      nonce'd script (CSP forbids inline onload handlers). Keeps the Inter CSS request off
-      the render-blocking critical path; display=swap already prevents invisible-text FOIT. %>
-  <link rel="preload" as="style" id="inter-font" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;700&display=swap"></noscript>
-  <script nonce="<%= content_security_policy_nonce %>">
-    (function(){var f=document.getElementById('inter-font');if(!f)return;
-      var on=function(){f.rel='stylesheet';};
-      f.addEventListener('load',on);if(f.sheet)on();})();
-  </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
@@ -88,19 +76,16 @@
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <style nonce="<%= content_security_policy_nonce %>">
-    html, body { background: #000; color: #f5f0e8; }
-    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
-    #primer { background: transparent; }
+    html, body { background: #000; color: #e7e9ea; }
+    canvas#face { display: block; background: #000; }
+    #primer { background: #000; }
     #zsh { background: #000; }
   </style>
 </head>
-<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark" data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
-  <a href="#zin" class="skip-link">skip to prompt</a>
+<body class="zen face-loading x-app" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark" data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
-  <div class="top-left-logo" aria-hidden="true">brgen</div>
   <div id="ascii-star" aria-hidden="true"></div>
-  <canvas id="cognition-ecology" aria-hidden="true"></canvas>
-  <canvas id="face" aria-hidden="true"></canvas>
   <div id="mic-dot" aria-hidden="true"></div>
   <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
   <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
@@ -108,20 +93,32 @@
   <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe>
   <div id="tts-live" aria-live="polite" aria-atomic="true"></div>
   <div id="tts-style-indicator" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-  <%# Small synchronous prerequisite: every deferred ecology/worker module and
-      the post-primer face import may assume window.ParticleKernel exists. %>
-  <script src="<%= asset_path("particle_kernel.js") %>"></script>
-  <div id="primer" role="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent" tabindex="0">
-    <h1 id="primer-title">tap to start</h1>
-    <p class="tagline" id="primer-capabilities">voice · image · music · code</p>
-    <p class="primer-consent" id="primer-consent">Starts visuals and sound. Microphone access is requested only when you choose voice input; text remains available if graphics fail.</p>
-  </div>
+  <div class="app-shell">
+    <div class="layout">
+      <aside class="sidebar" aria-label="Sidebar">
+        <a href="/" class="brand" aria-label="MASTER">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="/" class="nav-item active">Chat</a>
+          <a href="https://brgen.no" class="nav-item">Brgen</a>
+          <a href="/dashboard" class="nav-item">Status</a>
+        </nav>
+      </aside>
+
+      <main id="main-content" role="main">
+        <header class="feed-header"><h1>MASTER</h1></header>
+        <div class="master-face-stage" aria-hidden="true">
+          <canvas id="cognition-ecology"></canvas>
+          <canvas id="face"></canvas>
+          <div id="primer" role="button" aria-labelledby="primer-title" aria-describedby="primer-capabilities primer-consent" tabindex="0">
+            <h1 id="primer-title">tap to start</h1>
+            <p class="tagline" id="primer-capabilities">voice · image · music · code</p>
+            <p class="primer-consent" id="primer-consent">Starts visuals and sound. Microphone access is requested only when you choose voice input; text remains available if graphics fail.</p>
+          </div>
   <%# Boot + primer tap must run synchronously right after #primer — before ANY other
-      script (including face_2d_fallback). A blocking <script src> above this line delays
-      handler wiring; early taps look dead. #zsh and #ui-status are below this block —
-      resolve them lazily in go(), not at parse time.
-      See CLAUDE.md and history of "tap to start does nothing" for this high-risk path.
-      Enhancements here should preserve the _primerFired guard and dbgFrames check. %>
+      script (including face_2d_fallback). #zsh and #ui-status are below this block —
+      resolve them lazily in go(), not at parse time. %>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
@@ -250,14 +247,14 @@
       });
     })();
   </script>
+  <%# ParticleKernel must exist before lazy face import on tap; load after primer boot wiring. %>
+  <script src="<%= asset_path("particle_kernel.js") %>"></script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
-  <main id="chat-shell" aria-label="MASTER chat">
-    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
-  </main>
-  <div class="ui-status" id="ui-status" aria-live="polite" aria-atomic="true"></div>
-  <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
-  <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
+        </div>
+        <div id="chat-shell" aria-label="MASTER chat">
+          <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+        </div>
+        <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <button id="photo-button" type="button" aria-label="Attach photo">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
     <span class="pp">user</span><span class="sep2">$ </span>
@@ -268,7 +265,23 @@
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 
     <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
-  </form>
+        </form>
+      </main>
+
+      <aside class="widgets" aria-label="Widgets">
+        <div class="sidebar-card">
+          <h3>Runtime</h3>
+          <p class="widget-status" id="ui-status" aria-live="polite" aria-atomic="true">idle</p>
+        </div>
+        <div class="sidebar-card">
+          <h3>Model</h3>
+          <p class="widget-status provider-chip" id="widget-provider"></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <div id="mood-sparkline" class="mood-sparkline" aria-hidden="true"></div>
+  <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
   <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.
