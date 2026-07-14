@@ -172,7 +172,7 @@ def log(message, facility = "validate", level = "info")
 
   if RUBY_PLATFORM.include?("openbsd")
 
-    system("logger -t nmap \"#{msg}\"")
+    system("logger", "-t", "nmap", msg)
 
   else
 
@@ -180,7 +180,7 @@ def log(message, facility = "validate", level = "info")
 
   end
 
-  system("termux-toast \"#{msg}\"") if RUBY_PLATFORM.include?("linux") && `uname -o`.chomp == "Android" && $verbose
+  system("termux-toast", msg) if RUBY_PLATFORM.include?("linux") && `uname -o`.chomp == "Android" && $verbose
 
 end
 
