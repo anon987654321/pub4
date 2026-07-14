@@ -60,7 +60,7 @@ ownership:
     purpose: per-app deploy scripts
     risk: critical
     check: ruby OPENBSD/verify_deploy_identity.rb
-  openbsd/OPERATOR.sh:
+  OPERATOR.sh:
     purpose: full OpenBSD installer/deployer
     risk: critical
     check: OPENBSD/bin/check-openbsd

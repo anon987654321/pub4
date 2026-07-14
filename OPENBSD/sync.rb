@@ -5,7 +5,7 @@
 
 require "fileutils"
 
-MIRROR = File.expand_path("../../OPENBSD", __dir__)
+MIRROR = File.expand_path(__dir__)
 
 FIXED_SOURCES = [
   "/etc/rc.d/master", "/etc/rc.d/brgen",

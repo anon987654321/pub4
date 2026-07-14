@@ -1,4 +1,4 @@
-# OPERATOR operator runtime authority — served via /orient deploy and bin/pub4.
+# OPENBSD operator runtime authority — served via /orient deploy and bin/pub4.
 # Markdown stubs (START_HERE.md, RECIPES.md) point here; edit this file.
 
 meta:

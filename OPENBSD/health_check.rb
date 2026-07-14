@@ -7,9 +7,9 @@ require "json"
 require "open3"
 require "optparse"
 require "yaml"
-require_relative "../lib/utf8"
+require_relative "lib/utf8"
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
 
 options = {

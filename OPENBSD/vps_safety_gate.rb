@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-ROOT = File.expand_path("../..", __dir__)
+ROOT = File.expand_path("..", __dir__)
 OPENBSD = File.join(ROOT, "OPENBSD")
-TOOLING = File.join(ROOT, "OPENBSD", "openbsd")
+TOOLING = File.join(ROOT, "OPENBSD")
 failures = []
 
 doas_conf = File.join(OPENBSD, "etc", "doas.conf")

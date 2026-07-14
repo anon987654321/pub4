@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# OPERATOR integrity chain — production, phantom FK, frontend, relayd, domain, crawl inventory.
+# OPENBSD integrity chain — production, phantom FK, frontend, relayd, domain, crawl inventory.
 
 require "open3"
 require_relative "lib/utf8"

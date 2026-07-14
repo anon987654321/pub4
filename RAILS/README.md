@@ -25,7 +25,7 @@ Deploy: `cd RAILS && doas zsh OPERATOR.sh` (default: brgen) or `doas zsh OPERATO
 
 `RAILS/shared/` — engine gem, concerns, Stimulus baseline, `WIRING_NOTES.md`
 
-Copy-tree deploy mirrors shared at `/home/<app>/shared` (sibling of `app/`, not inside it). CI and jobs resolve OPERATOR tools via `Pub4::DeployPaths` (`shared/lib/pub4/deploy_paths.rb`) using `PUB4_RAILS_ROOT` or `/home/dev/pub4/OPENBSD/…` on vm23.
+Copy-tree deploy mirrors shared at `/home/<app>/shared` (sibling of `app/`, not inside it). CI and jobs resolve OPENBSD tools via `Pub4::DeployPaths` (`shared/lib/pub4/deploy_paths.rb`) using `PUB4_RAILS_ROOT` or `/home/dev/pub4/OPENBSD/…` on vm23.
 
 ```ruby
 include Shared.concern(:Votable)   # Notifiable, ActivityTrackable, GeoLocatable, …
