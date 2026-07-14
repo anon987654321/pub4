@@ -32,7 +32,7 @@ deploy_tracked_app() {
 
   sync_tree "${SRC_DIR}/" "${APP_DIR}"
   doas rm -rf "/home/${app_name}/shared"
-  sync_tree /home/dev/pub4/RAILS/shared "/home/${app_name}/shared"
+  sync_tree "${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared" "/home/${app_name}/shared"
   doas chown -R "${app_name}:${app_name}" "/home/${app_name}/shared"
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
   overlay_shared_initializers "$APP_DIR"
