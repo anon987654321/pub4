@@ -207,12 +207,12 @@
       <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
         <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M4 7h16v2H4zm0 8h16v2H4zm0-4h16v2H4z"/></svg>
       </button>
+      <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg>
+      <% end %>
     </nav>
-    <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg>
-    <% end %>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
-    <section class="mobile-sheet" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
+    <section class="mobile-sheet" aria-label="Quick actions" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
       <div class="mobile-sheet-handle"></div>
       <div class="mobile-sheet-links">
         <%= link_to "New post", new_post_path %>

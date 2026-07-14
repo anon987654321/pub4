@@ -135,7 +135,7 @@
   padding: 0 24px;
   margin-top: 16px;
   background: var(--x-accent);
-  color: #000;
+  color: #fff;
   border: none;
   border-radius: var(--x-radius-pill);
   font-size: 17px;
@@ -148,7 +148,7 @@
 .compose-btn:hover {
   opacity: 0.88;
   text-decoration: none;
-  color: #000;
+  color: #fff;
 }
 .compose-icon {
   display: none;
@@ -165,12 +165,12 @@
   align-items: center;
   justify-content: center;
   background: var(--x-accent);
-  color: #000;
+  color: #fff;
   z-index: var(--z-nav, 80);
   text-decoration: none;
 }
 .compose-fab:hover {
-  color: #000;
+  color: #fff;
   text-decoration: none;
 }
 .compose-fab svg {
