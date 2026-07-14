@@ -46,12 +46,15 @@ install_rcd() {
 }
 
 # relayd_add_relay DOMAIN PORT
-# Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app.
-# Run doas rcctl restart relayd after all relay additions are done.
+# Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app,
+# then restarts relayd if anything actually changed. Fails loudly (non-zero, caught
+# by @deploy.sh's set -euo pipefail) on a sed insert that doesn't land -- a silently
+# missing route is worse than an aborted deploy.
 relayd_add_relay() {
   local domain=$1 port=$2
   local app=${domain%%.*}
   local conf=/etc/relayd.conf
+  local changed=0
 
   [[ -f $conf ]] || { log_warn "relayd: ${conf} missing — skipping"; return 0; }
 
@@ -65,22 +68,30 @@ relayd_add_relay() {
     ${_PRIV} sed -i "1a\\
 table <${app}> { 127.0.0.1 }\\
 " "$conf" 2>/dev/null \
-      || { log_warn "relayd: could not add table <${app}>"; return 0; }
+      || { log_err "relayd: could not add table <${app}>"; return 1; }
     log_ok "relayd: added table <${app}>"
+    changed=1
   fi
   if ! grep -q "forward to <${app}>" "$conf" 2>/dev/null; then
     ${_PRIV} sed -i "/match request header.*forward to <master>/a\\
   match request header \"Host\" value \"${domain}\" forward to <${app}>\\
 " "$conf" 2>/dev/null \
-      || { log_warn "relayd: could not add Host routing for ${domain}"; return 0; }
+      || { log_err "relayd: could not add Host routing for ${domain}"; return 1; }
     log_ok "relayd: added Host routing for ${domain}"
+    changed=1
   fi
   if ! grep -q "forward to <${app}> port" "$conf" 2>/dev/null; then
     ${_PRIV} sed -i "/forward to <master> port/a\\
   forward to <${app}> port ${port} check http \"/up\" code 200\\
 " "$conf" 2>/dev/null \
-      || { log_warn "relayd: could not add forward for ${app}:${port}"; return 0; }
+      || { log_err "relayd: could not add forward for ${app}:${port}"; return 1; }
     log_ok "relayd: added forward to <${app}> port ${port}"
+    changed=1
+  fi
+
+  if [[ $changed == 1 ]]; then
+    ${_PRIV} rcctl restart relayd || { log_err "relayd: restart failed after config change"; return 1; }
+    log_ok "relayd: restarted to pick up ${domain}"
   fi
   return 0
 }
