@@ -198,12 +198,12 @@ test("face3d preview consumes TTS events and reports nonblank frames", () => {
   assert.match(renderer, /lastLitPixels/);
 });
 
-test("face.css includes x.com shell layout", () => {
+test("face.css includes subtle visual polish layers", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  assert.match(css, /\.layout\s*\{/);
-  assert.match(css, /grid-template-areas:\s*"sidebar main widgets"/);
-  assert.match(css, /--x-sidebar:\s*275px/);
-  assert.match(css, /--x-accent:\s*#1d9bf0/);
+  assert.match(css, /body::after/);
+  assert.match(css, /radial-gradient/);
+  assert.match(css, /--face-glow-scale:\s*1\.22/);
+  assert.match(css, /mood-sparkline i[\s\S]*--mood-accent/);
 });
 
 test("face.css keeps primer and prompt layering stable", () => {

@@ -106,10 +106,11 @@
   gap: 20px;
   padding: 0.75rem;
   border-radius: var(--x-radius-pill);
+  border-inline-start: 2px solid transparent;
   color: var(--x-text);
   font-size: 20px;
   font-weight: var(--x-weight-normal);
-  transition: background var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
   width: fit-content;
   white-space: nowrap;
 }
@@ -119,6 +120,7 @@
 }
 .nav-item.active {
   font-weight: var(--x-weight-bold);
+  border-inline-start-color: var(--x-accent);
 }
 .nav-item svg {
   flex-shrink: 0;
@@ -183,7 +185,7 @@ main[role="main"] {
   max-width: var(--x-feed-max);
   min-height: 100vh;
   margin-inline: auto;
-  padding-inline: 0;
+  padding-inline: clamp(16px, 5vw, 48px);
   border-left: 1px solid var(--x-border);
   border-right: 1px solid var(--x-border);
 }

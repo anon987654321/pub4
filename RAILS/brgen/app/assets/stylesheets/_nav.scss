@@ -4,23 +4,22 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  background: var(--x-bg);
+  padding: 0 var(--space-4);
+  background: var(--panel-blur-bg);
   border-bottom: 1px solid var(--x-border);
   z-index: 10;
 }
 
-.feed-header h1 {
-  font: 800 20px / 1 var(--x-font);
-  padding: 0 16px;
-  height: 53px;
-  display: flex;
-  align-items: center;
-}
+.feed-header h1 { font: 800 20px / 1 var(--x-font); padding: var(--space-3) 0 4px; }
 
 /* Horizontal subnav with right-edge fade (BRGEN_OLD spec) */
 .feed-tabs {
   display: flex;
   gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
 }
 
 .feed-tabs::-webkit-scrollbar { display: none; }
@@ -28,9 +27,9 @@
 .feed-tab {
   flex: 1;
   display: block;
-  padding: 16px 0;
+  padding: var(--space-4);
   text-align: center;
-  font: 500 15px / 20px var(--x-font);
+  font: 500 var(--text-sm) / 1 var(--x-font);
   color: var(--x-text-secondary);
   background: none;
   border: 0;

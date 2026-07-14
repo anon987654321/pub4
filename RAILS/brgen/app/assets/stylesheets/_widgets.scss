@@ -86,13 +86,43 @@
   }
 }
 
-.post-feed .x-act {
+/* brgen's stack never forwards shared/_minimal.scss (see _pub4_stack_brgen.scss),
+   so .x-act/.x-actions have no base rule here at all -- tap targets were
+   collapsing to bare text sizing (~19px tall). Define the base rule locally
+   rather than pull in the rest of _minimal.scss, which may collide with
+   zen_shell. */
+.x-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-start; /* x.com left-aligns primary actions */
+}
+.x-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 9999px;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  cursor: pointer;
   min-height: 44px;
   min-width: 44px;
   border: 0;
   background: transparent;
   color: inherit;
+  font-size: 0.8125rem;
 }
+.x-act:hover { color: var(--accent); background: var(--hover); }
+.x-act.active { color: var(--accent); }
+.x-act:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.x-count { font-size: 0.8125rem; }
 
 .monogram--0 { background: #4b2e83; color: #fff; }
 .monogram--1 { background: #7a3e12; color: #fff; }

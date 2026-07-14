@@ -18,11 +18,6 @@ module DesignTokens
     YAML.safe_load_file(SOURCE) || {}
   end
 
-  def social_token_lines
-    social = load.fetch("social")
-    social.map { |key, value| "  --#{key.tr('_', '-')}: #{value};" }
-  end
-
   def face_root_css
     data = load.fetch("face_root")
     anchors = data.fetch("anchors")
@@ -32,34 +27,6 @@ module DesignTokens
     FACE_ORDER.each do |key|
       lines << "  --#{key.tr('_', '-')}: #{anchors.fetch(key)};"
     end
-    lines.concat(social_token_lines)
-    lines << "  --x-weight-normal: 400;"
-    lines << "  --x-weight-medium: 500;"
-    lines << "  --x-weight-bold: 700;"
-    lines << "  --x-weight-heavy: 800;"
-    lines << "  --x-radius-xs: 4px;"
-    lines << "  --x-radius-sm: 8px;"
-    lines << "  --x-radius-md: 12px;"
-    lines << "  --x-radius-pill: 9999px;"
-    lines << "  --x-radius-card: 16px;"
-    lines << "  --x-radius-lg: 16px;"
-    lines << "  --bg: var(--x-bg);"
-    lines << "  --surface: var(--x-surface);"
-    lines << "  --surface2: var(--x-surface-elevated);"
-    lines << "  --search-bg: var(--x-search-bg);"
-    lines << "  --text: var(--x-text);"
-    lines << "  --text-dim: var(--x-text-secondary);"
-    lines << "  --accent: var(--x-accent);"
-    lines << "  --accent-hover: var(--x-accent-hover);"
-    lines << "  --border: var(--x-border);"
-    lines << "  --hover: var(--x-hover);"
-    lines << "  --hover-subtle: var(--x-hover-subtle);"
-    lines << "  --radius: var(--x-radius-card);"
-    lines << "  --radius-pill: var(--x-radius-pill);"
-    lines << "  --sp: 8px;"
-    lines << "  --sidebar-width: var(--x-sidebar);"
-    lines << "  --widgets-width: var(--x-widgets);"
-    lines << "  --feed-max: var(--x-feed-max);"
     lines << "  --x-font-mono: #{data.fetch('font_mono')};"
     lines << "  --font-label: #{data.fetch('font_label')};"
     lines << "  color-scheme: dark;"

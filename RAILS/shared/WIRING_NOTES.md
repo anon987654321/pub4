@@ -95,7 +95,7 @@ Real X reference values baked into the tokens (verify against current x.com befo
 
 **Flat rule, no exceptions:** no `box-shadow`, `text-shadow`, `backdrop-filter`, or `filter: blur()/drop-shadow()` anywhere in app CSS. Real X has none of these in its own chrome — elevation and separation come from a 1px hairline border (`var(--x-border)`/`var(--border)`) or a solid (non-translucent) background, never a shadow or a glassmorphism blur. If you're tempted to add elevation, add a border instead.
 
-**Process:** phase 1 (current) is exact parity with x.com's real values on the shared token layer. MASTER web (`ai.brgen.no`) uses the same shell + tokens via `face.css` (generated `:root` from `design_tokens.yml`). Deliberate, branded divergence from that baseline is phase 2 and hasn't started yet — don't invent a "unique" color/spacing choice on the shared layer without that being an explicit, separate decision.
+**Process:** phase 1 (current) is exact parity with x.com's real values on the shared token layer. Deliberate, branded divergence from that baseline is phase 2 and hasn't started yet — don't invent a "unique" color/spacing choice on the shared layer without that being an explicit, separate decision.
 
 ## Engine extraction (done)
 
