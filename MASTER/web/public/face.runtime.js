@@ -30,7 +30,7 @@ const zshIn = document.getElementById('zin');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
-let FACE_PIXEL_SIZE = 0.019;
+let FACE_PIXEL_SIZE = 0.022;
 let FACE_GLOW_SCALE = 1.22;
 let FACE_PHOSPHOR_DECAY = 0.88;
 let FACE_RENDER_SCALE = 0.72;
@@ -1093,7 +1093,7 @@ void main(){
   vec4 mv=modelViewMatrix*vec4(p,1.);
   float depth=clamp(p.z/0.82,0.,1.);
   float sizeBoost=0.78+curvature*0.62+depth*1.22+boundary*0.42;
-  gl_PointSize=clamp(uSize*(260./-mv.z)*sizeBoost,1.0,2.75);
+  gl_PointSize=clamp(uSize*(260./-mv.z)*sizeBoost,2.0,4.0);
   gl_Position=projectionMatrix*mv;
   float hc=uHc;
   float zoneAudio=0.0;
@@ -1128,52 +1128,17 @@ varying vec3 vColor;
 varying float vFresnel;
 varying float vDepth;
 varying float vZoneVal;
-uniform float uShake;
-uniform float uPulseRing;
-uniform float uHeartbeat;
-uniform float uGridAngle;
 uniform float uFocusDim;
-uniform float uPhosphorSoft;
-uniform float uScanline;
-uniform float uChroma;
-uniform float uTime;
-float bayer4(vec2 p){
-  vec2 ip=floor(mod(p,4.0));
-  float x=ip.x,y=ip.y;
-  float v=0.0;
-  if(y<1.0){if(x<1.0)v=0.0;else if(x<2.0)v=8.0;else if(x<3.0)v=2.0;else v=10.0;}
-  else if(y<2.0){if(x<1.0)v=12.0;else if(x<2.0)v=4.0;else if(x<3.0)v=14.0;else v=6.0;}
-  else if(y<3.0){if(x<1.0)v=3.0;else if(x<2.0)v=11.0;else if(x<3.0)v=1.0;else v=9.0;}
-  else{if(x<1.0)v=15.0;else if(x<2.0)v=7.0;else if(x<3.0)v=13.0;else v=5.0;}
-  return v/16.0;
-}
 void main(){
   vec2 pc=gl_PointCoord-0.5;
-  pc.x+=pc.y*uGridAngle*2.8;
-  pc.x+=uShake*0.018*sin(uTime*48.0+pc.y*22.0);
   float square=max(abs(pc.x),abs(pc.y))*2.0;
   float disc=step(square,0.90);
   float alpha=disc*vAlpha*uFocusDim;
   float eyeRgn=smoothstep(0.30,0.50,vZoneVal)*(1.0-smoothstep(0.50,0.65,vZoneVal));
   float mouthRgn=smoothstep(0.68,0.82,vZoneVal);
-  float zonePhosphor=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
-  alpha*=zonePhosphor;
-  float ringWave=abs(sin(vDepth*9.0-uPulseRing*5.5));
-  alpha*=0.82+smoothstep(0.55,0.95,ringWave)*uPulseRing*0.38;
-  float beat=1.0+uHeartbeat*0.24*(1.0-square*0.45);
-  vec3 col=vColor+vFresnel*vColor*0.50;
-  col*=beat;
-  float w=1.0+uShake*0.12;
-  col.r*=1.0+uShake*0.14;
-  col.b*=1.0+uShake*0.10;
-  col=clamp(col*w,0.0,1.0);
-  col.r+=uChroma*0.14;
-  col.b-=uChroma*0.12;
-  float scan=0.86+0.14*abs(sin(gl_FragCoord.y*0.5+uTime*38.0));
-  alpha*=mix(1.0,scan,uScanline);
-  float dither=bayer4(gl_FragCoord.xy);
-  float grain=mix(0.50,0.84,uPhosphorSoft);
-  alpha=step(dither,alpha*(grain+vDepth*0.18));
+  float zoneDim=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
+  alpha*=zoneDim;
+  vec3 col=clamp(vColor+vFresnel*vColor*0.50,0.0,1.0);
   gl_FragColor=vec4(col,max(0.0,alpha));
 }`;
 
@@ -1202,7 +1167,10 @@ if (_hasWebGL && THREE) {
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
       uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.10}, uTime:{value:0}
     },
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    // Normal (not additive) blending on the main point layer so individual
+    // pixels stay crisp and discrete instead of bleeding into neighbors —
+    // the glow layer below still uses additive blending for its soft halo.
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
 
@@ -2218,7 +2186,7 @@ cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoT
 // FA33 battery saver LOD
 if ('getBattery' in navigator) {
   navigator.getBattery().then(b => {
-    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.010; else FACE_PIXEL_SIZE = 0.017; };
+    const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.013; else FACE_PIXEL_SIZE = 0.022; };
     check();
     b.addEventListener('levelchange', check);
     b.addEventListener('chargingchange', check);
