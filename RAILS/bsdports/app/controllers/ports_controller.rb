@@ -3,8 +3,9 @@
 class PortsController < ApplicationController
   include Shared::LiveSearchable
 
-  allow_unauthenticated_access only: %i[index show explore crossref_cves review]
+  allow_unauthenticated_access only: %i[index show explore]
   before_action :set_port, only: %i[show explore watch unwatch crossref_cves review]
+  before_action :require_authentication, only: %i[crossref_cves review]
 
   def index
     expires_in 10.minutes, public: true if params[:q].blank? && params[:category_id].blank?
