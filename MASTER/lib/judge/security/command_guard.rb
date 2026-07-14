@@ -6,7 +6,14 @@ module Master
   module Judge
     module Security
       module CommandGuard
-        BANNED_COMMANDS = %w[sed awk tr grep cut head tail find wc sudo perl ruby dd xargs].freeze
+        # Any of these can trivially reintroduce whatever the rest of this list tries to
+        # prevent (bash -c 'sed ...', curl ... | sh, python -c '...') -- a token-level
+        # blocklist is a weak boundary in general, but omitting the shells/interpreters/
+        # network fetchers themselves defeats the point of having one at all.
+        BANNED_COMMANDS = %w[
+          sed awk tr grep cut head tail find wc sudo doas perl ruby python python3 dd xargs
+          bash sh zsh csh ksh fish curl wget nc ncat telnet
+        ].freeze
         TOKEN_SPLIT = /\s+|[|&;<>()]/
 
         module_function
