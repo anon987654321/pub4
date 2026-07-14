@@ -10,7 +10,7 @@ class TtsJob
   @materialize_mutex = Mutex.new
   @materializing = {}
   @queue = []
-  @worker = nil
+  @workers = []
 
   def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
     job = new(
@@ -36,15 +36,28 @@ class TtsJob
     job.write_token
     @queue_mutex.synchronize do
       @queue << job unless @queue.any? { |queued| queued.job_id == job.job_id }
-      spawn_worker_locked! unless @worker&.alive?
+      spawn_workers_locked!
     end
     job
   end
 
-  def self.spawn_worker_locked!
-    return if @worker&.alive?
+  # One worker thread per daemon pool slot -- a single worker serialized every
+  # job through one queue regardless of pool_size, so a reply queued behind a
+  # few other chunks legitimately took 30-60s+ even with idle daemon sockets
+  # sitting unused. Threads (not processes) are fine here: each job's real
+  # work is a blocking socket read waiting on Microsoft's Edge TTS endpoint,
+  # which releases the GVL, so N threads genuinely overlap N in-flight
+  # network round-trips even on a 1-vCPU box.
+  def self.spawn_workers_locked!
+    @workers.reject!(&:alive?)
+    wanted = [Master::Voice::TtsSupervisor.pool_size, 1].max
+    return if @workers.size >= wanted
 
-    @worker = Thread.new do
+    (wanted - @workers.size).times { @workers << spawn_worker }
+  end
+
+  def self.spawn_worker
+    Thread.new do
       Thread.current.name = "tts-job-worker"
       Thread.current.report_on_exception = false
       loop do
@@ -77,7 +90,7 @@ class TtsJob
   end
 
   def self.ensure_worker!
-    @queue_mutex.synchronize { spawn_worker_locked! }
+    @queue_mutex.synchronize { spawn_workers_locked! }
   end
 
   def self.find(job_id)
