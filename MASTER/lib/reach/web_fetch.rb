@@ -66,6 +66,7 @@ module Master
       def fetch_one(url)
         uri = URI(url)
         return Result.err("web_fetch: only http(s)", category: :validation) unless %w[http https].include?(uri.scheme)
+        return Result.err("web_fetch: refused internal/reserved address", category: :validation) unless SsrfGuard.safe_uri?(uri)
 
         perm = @governor.permit?(NAME, TIER, url)
         return perm if perm.err?
