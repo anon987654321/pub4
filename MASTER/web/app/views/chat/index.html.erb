@@ -55,6 +55,7 @@
       face3dPreview: "<%= asset_path("face3d_preview.js") %>"
     };
   </script>
+  <script src="<%= asset_path("particle_kernel.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     <% persona = Rails.application.config.x.master_container&.[](:personality) %>
     window.MASTER_PERSONA = <%= raw((persona.respond_to?(:browser_profile) ? persona.browser_profile : {}).to_json) %>;
@@ -248,7 +249,6 @@
     })();
   </script>
   <%# ParticleKernel must exist before lazy face import on tap; load after primer boot wiring. %>
-  <script src="<%= asset_path("particle_kernel.js") %>"></script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
         </div>
         <div id="chat-shell" aria-label="MASTER chat">
