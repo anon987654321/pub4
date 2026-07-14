@@ -90,32 +90,11 @@ module Master
         worker = File.join(root, "bin", "tts-worker")
         env = daemon_env(root)
         log = log_path(root, index:)
-        debug_spawn_context(root:, env:, index:)
         pid = Process.spawn(
           env, Gem.ruby, worker, "--daemon", path,
           chdir: root, out: log, err: log, close_others: true
         )
         Process.detach(pid)
-      end
-
-      # TEMPORARY diagnostic — remove once the intermittent GemNotFound crash
-      # (tts-worker resolving against MASTER/web's Gemfile.lock instead of
-      # MASTER's own, despite daemon_env's isolation) is root-caused. Isolated
-      # SSH reproduction has ruled out the script itself, the nil-env-unset
-      # mechanism, and TtsJob's parallel dispatch -- this captures the exact
-      # env/caller context at the moment a REAL Falcon-triggered spawn
-      # happens, to compare against a manual reproduction.
-      def debug_spawn_context(root:, env:, index:)
-        path = File.join(root, ".master", "tts-spawn-debug.log")
-        File.open(path, "a") do |f|
-          f.puts("--- spawn at #{Time.now} (index=#{index}, caller pid=#{Process.pid}) ---")
-          f.puts("daemon_env: #{env.inspect}")
-          f.puts("caller ENV[RUBYOPT]=#{ENV["RUBYOPT"].inspect} BUNDLE_GEMFILE=#{ENV["BUNDLE_GEMFILE"].inspect} GEM_HOME=#{ENV["GEM_HOME"].inspect}")
-          f.puts("Gem.ruby=#{Gem.ruby} RbConfig.ruby=#{RbConfig.ruby}")
-          f.puts("caller $LOADED_FEATURES bundler entries: #{$LOADED_FEATURES.grep(/bundler/).inspect}")
-        end
-      rescue StandardError => e
-        Kernel.warn("debug_spawn_context failed: #{e.class}: #{e.message}")
       end
 
       def link_legacy_socket(root)
