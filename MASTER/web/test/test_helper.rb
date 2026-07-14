@@ -29,8 +29,8 @@ def stub_master_container
   session = Struct.new(:token_est, :cost, :messages).new(0, 0.0, [])
   agent = Struct.new(:model).new("test/model")
   breaker = Struct.new(:open_models).new([])
-  personality = Struct.new(:voice, :tts_rate, :tts_pitch).new(
-    Master::Voice::Speech::DEFAULT_VOICE, nil, nil
+  personality = Struct.new(:name, :voice, :tts_rate, :tts_pitch).new(
+    Master::Voice::Personality::DEFAULT.to_s, Master::Voice::Speech::DEFAULT_VOICE, nil, nil
   )
   gateway = Class.new do
     def receive(channel:, message:, metadata: {})
