@@ -21,6 +21,9 @@ MASTER/web/public/assets/
 # Runtime and temp files
 .session_recovery
 
+# Local IDE caches
+.aider.tags.cache.v4/
+
 # OS files
 .DS_Store
 Thumbs.db

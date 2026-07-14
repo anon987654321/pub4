@@ -95,7 +95,7 @@ There are ~80 files under `data/`. That is too many. They exist because the runt
 
 **Target end state:** 5 law YAMLs + 1 patterns + registries + 1 runtime catalog + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub + `DEBT.md` / `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold living entries.
 
-OPERATOR mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate MASTER law.
+OPENBSD mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate MASTER law.
 
 ## Repo shape (run before big refactors)
 

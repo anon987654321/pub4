@@ -71,12 +71,12 @@ class ProjectTree
   def print_pub4_alignment
     puts
     puts "Alignment read (far-away):"
-    puts "  ✓ SENSIBLE  4 pillars: OPERATOR (prod), MASTER (agent), bin (CLI), lora (training)"
+    puts "  ✓ SENSIBLE  4 pillars: OPENBSD (prod), MASTER (agent), bin (CLI), lora (training)"
     puts "  ✓ SENSIBLE  RAILS: 7 apps + shared engine + apps.yml inventory"
     puts "  ✓ SENSIBLE  brgen verticals: dating maps marketplace playlist takeaway tv + social core"
     puts "  ✓ SENSIBLE  MASTER/lib: now judge loop reach ground trace voice (constitutional spine)"
     puts "  ⚠ DRIFT     MASTER/data: ~50 root yml + runtime/ shard — merge target (see START_HERE)"
-    puts "  ⚠ DRIFT     OPERATOR + MASTER duplicate DECISIONS/EXAMPLES/REPAIR/DEBT md pairs"
+    puts "  ⚠ DRIFT     OPENBSD + MASTER duplicate DECISIONS/EXAMPLES/REPAIR/DEBT md pairs"
     puts "  ⚠ DRIFT     brgen SCSS: many _vertical_* partials — visual split matches domains (ok)"
     puts "  ✗ NOISE     lora/*.jpg at repo root — move under lora/exports/"
     puts "  → Pillar views: --master-overview | --deploy-overview"
@@ -90,7 +90,7 @@ class ProjectTree
     puts "  ✓ SENSIBLE  core/ + kernel/ isolated from lib/ until absorption cutover"
     puts "  ✓ SENSIBLE  data/soul.yml + rules/*.yml shards — law tier, do not blind-merge"
     puts "  ⚠ DRIFT     data/ root: ~45 yml + runtime/ (14 shards) — merge per START_HERE tiers"
-    puts "  ⚠ DRIFT     Duplicate MD pairs with OPERATOR: DECISIONS, EXAMPLES, REPAIR, DEBT"
+    puts "  ⚠ DRIFT     Duplicate MD pairs with OPENBSD: DECISIONS, EXAMPLES, REPAIR, DEBT"
     puts "  ⚠ DRIFT     tools/ + web/ + bin/ — three faces; acceptable but watch overlap"
     puts "  ✗ NOISE     .master/ runtime (cache, tts, melodic) — local-only, never commit"
     puts "  → Deep dive: ruby tree.rb MASTER --master-lib"
@@ -98,7 +98,7 @@ class ProjectTree
 
   def print_deploy_alignment
     puts
-    puts "OPERATOR alignment (far-away):"
+    puts "OPENBSD alignment (far-away):"
     puts "  ✓ SENSIBLE  openbsd/etc + rc.d — production truth for vm23 (relayd, pf, acme)"
     puts "  ✓ SENSIBLE  rails/apps.yml inventory + shared engine — multi-tenant spine"
     puts "  ✓ SENSIBLE  brgen: social core + vertical engines (dating, maps, playlist, tv…)"
@@ -367,7 +367,7 @@ if __FILE__ == $PROGRAM_NAME
       options[:max_depth] = 3
       options[:summary] = true
     end
-    opts.on("--deploy-overview", "Far-away OPERATOR pillar: rails apps + openbsd collapsed, noise pruned") do
+    opts.on("--deploy-overview", "Far-away OPENBSD pillar: rails apps + config backup collapsed, noise pruned") do
       options[:overview] = true
       options[:pillar] = :deploy
       options[:root] = File.join(Dir.pwd, "OPENBSD")
@@ -379,7 +379,7 @@ if __FILE__ == $PROGRAM_NAME
       puts "\nExamples:"
       puts "  tree.rb . --pub4-overview       # full repo shape (start here)"
       puts "  tree.rb --master-overview       # MASTER pillar only"
-      puts "  tree.rb --deploy-overview       # OPERATOR pillar only"
+      puts "  tree.rb --deploy-overview       # OPENBSD pillar only"
       puts "  tree.rb MASTER --max-depth=5"
       puts "  tree.rb --focus lib --max-depth=6 --summary"
       puts "  tree.rb --master-lib            # best for working on the architecture"
@@ -399,7 +399,7 @@ if __FILE__ == $PROGRAM_NAME
   if options[:overview]
     banner = case options[:pillar]
              when :master then "MASTER pillar"
-             when :deploy then "OPERATOR pillar"
+             when :deploy then "OPENBSD pillar"
              else "pub4 overview"
              end
     puts "=== #{banner} (noise pruned: vendor, tmp, log, storage, node_modules, builds, assets, .master) ==="

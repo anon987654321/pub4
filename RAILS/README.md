@@ -10,7 +10,7 @@
 | amber | amber.brgen.no | 61352 | Wardrobe / outfit intelligence |
 | bsdports | bsdports.org | 47312 | Ports search and advisories |
 
-Deploy: `cd RAILS && doas zsh OPERATOR.sh` (default: brgen) or `doas zsh OPERATOR.sh <app>`
+Deploy: `cd RAILS && doas zsh deploy.sh` (default: brgen) or `doas zsh deploy.sh <app>`
 
 ## Contract
 

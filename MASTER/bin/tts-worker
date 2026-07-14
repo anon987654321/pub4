@@ -42,6 +42,23 @@ end
 
 BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }
 ENV["BUNDLE_GEMFILE"] = File.join(ROOT, "Gemfile")
+
+# TEMPORARY diagnostic -- remove once the intermittent GemNotFound crash
+# (this process resolving against MASTER/web's Gemfile.lock despite ROOT/
+# BUNDLE_GEMFILE looking correct right here) is root-caused.
+begin
+  File.open(File.join(ROOT, ".master", "tts-spawn-debug.log"), "a") do |f|
+    f.puts("--- child boot at #{Time.now} (pid=#{Process.pid}, reexec_done=#{ENV["TTS_WORKER_REEXEC_DONE"].inspect}) ---")
+    f.puts("ROOT=#{ROOT.inspect}")
+    f.puts("ENV[BUNDLE_GEMFILE]=#{ENV["BUNDLE_GEMFILE"].inspect}")
+    f.puts("ENV[RUBYOPT]=#{ENV["RUBYOPT"].inspect} ENV[GEM_HOME]=#{ENV["GEM_HOME"].inspect} ENV[GEM_PATH]=#{ENV["GEM_PATH"].inspect}")
+    f.puts("ENV[RUBYLIB]=#{ENV["RUBYLIB"].inspect}")
+    f.puts("__FILE__=#{__FILE__.inspect} __dir__=#{__dir__.inspect}")
+  end
+rescue StandardError
+  nil
+end
+
 require "bundler/setup"
 require "eventmachine"
 require "rb_edge_tts"

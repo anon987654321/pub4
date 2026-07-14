@@ -1,22 +1,16 @@
 # Decisions
 
+Deploy and VPS policy. Agent/runtime policy lives in `MASTER/DECISIONS.md`.
+
 ## Repo Layout (2026-07)
 
 - `RAILS/` — Rails apps + shared engine (was `DEPLOY/rails`)
-- `OPENBSD/` — exact VPS configuration backup (`etc/`, `usr/`, `var/`)
-- `OPENBSD/` — OpenBSD deploy, health, safety, and maintenance tooling
-- `OPENBSD/` — gates, bin/, data/, operator docs (was `DEPLOY/` minus rails/openbsd)
-- The `DEPLOY → OPERATOR` and `OPENBSD/rails → RAILS`
-  compatibility symlinks were removed 2026-07-10 once every reference (rc.d
-  scripts, cron scripts, `.gitignore`, comments, both locally and on the VPS)
-  was confirmed updated to the direct paths. `MASTER/lib/pub4/paths.rb` still
-  contains a runtime `DEPLOY/*` → new-path rewrite for any Ruby code that
-  still passes an old-style string in; that's deliberate legacy-string
-  tolerance, not a sign the symlinks should come back.
+- `OPENBSD/` — VPS config backup (`etc/`, `usr/`, `var/`) plus deploy tooling (`bin/`, `lib/`, `sh/`, gates)
+- The `DEPLOY → OPERATOR → OPENBSD` renames completed 2026-07-14; legacy path strings still resolve via `MASTER/lib/pub4/paths.rb`
 
 ## OpenBSD First
 
-OPERATOR targets OpenBSD vm23. macOS local checks are useful, but OpenBSD behavior wins for package names, service management, relayd, pf, NSD, and Ruby command names.
+OPENBSD targets vm23. macOS local checks are useful, but OpenBSD behavior wins for package names, service management, relayd, pf, NSD, and Ruby command names.
 
 ## relayd Owns TLS
 
@@ -44,36 +38,19 @@ Production app servers on vm23 are Falcon (`falcon serve` in `/etc/rc.d/*`). Do 
 
 Solid Queue inline mode uses the env var `SOLID_QUEUE_IN_PUMA=true` — that name comes from Solid Queue/Rails 8 defaults and means "run the supervisor inside the web server process," not "use Puma." Falcon honors it the same way.
 
+## Deploy Script Names
+
+- `OPENBSD/OPERATOR.sh` — full vm23 OpenBSD installer (etc/usr/var, relayd, services)
+- `RAILS/deploy.sh` — Rails app copy-tree deploy only (brgen, amber, bsdports)
+
 ## Release history (from RELEASE.md, merged 2026-07-10)
 
-- **OPERATOR gate chain restored** — repointed 10 `require_relative "utf8"` refs to `tools/utf8`
-  after the `tools/` reorg; every gate had been crashing with `LoadError`.
-- **CLI + probe bugs** — `Master::CommandRegistry.tree_lines` → `Master::Now::CommandRegistry
-  .dispatch_tree`; nsaudit eager-loads + skips the kernel spine; smoke-web no longer crashes on a
-  refused connection and skips cleanly off-VPS; asset drift regenerated.
-- **baibl + blognet removed** — apps, relayd, acme, nsd (zones + DNSSEC keys), litestream,
-  rc.d, inventories (`master.json`, `apps.yml`), gates, tests, and their vanity/megablog domains
-  (`baibl.no`, `blognet.no`, `foodielicio.us`, `anti{casino,gambling,betting}blog.com`).
-- **Web "tap to start" hardening** — added a platform-level guard in `chat/index.html.erb` that
-  blocks WebGL context creation until the primer tap, enforcing the deferred-boot contract so a
-  stale/eager asset can't wedge the main thread (the recurring dead-tap bug).
+- **Gate chain restored** — repointed `require_relative "utf8"` refs after the `tools/` reorg; every gate had been crashing with `LoadError`.
+- **CLI + probe bugs** — `Master::CommandRegistry.tree_lines` → `Master::Now::CommandRegistry.dispatch_tree`; nsaudit eager-loads + skips the kernel spine; smoke-web no longer crashes on a refused connection and skips cleanly off-VPS; asset drift regenerated.
+- **baibl + blognet removed** — apps, relayd, acme, nsd (zones + DNSSEC keys), litestream, rc.d, inventories (`master.json`, `apps.yml`), gates, tests, and their vanity/megablog domains.
+- **Web "tap to start" hardening** — platform-level guard in `chat/index.html.erb` blocks WebGL until primer tap.
 
 ## Open decisions (2026-07-10)
 
-Two things surfaced during an incident-response session that are policy
-calls, not code fixes — flagging rather than guessing:
-
-- **No staging environment.** Every fix tonight (a stale asset restart, an
-  rc.d rewrite, a resource-guard bug fix) was diagnosed and verified
-  directly against production, on the only environment that exists. Adding
-  a full staging copy on vm23 itself would worsen the existing 1-vCPU/1GB
-  resource pressure (see `OPENBSD/resource_guard.sh`); a real fix needs
-  either a second (smaller) VPS or an explicit decision to keep accepting
-  this risk.
-- **Auto-commit atomicity.** An unrelated automated process periodically
-  commits to `main` (training-themed messages, but also repo-restructuring
-  and asset-rebuild commits observed this session) and sometimes bundles
-  unrelated changes into one commit, or writes a commit message describing
-  something the diff doesn't actually contain. Whoever owns that process
-  should scope commits to one concern each — this repo's own tooling can't
-  enforce that from the outside.
+- **No staging environment.** vm23 is the only environment; a full staging copy would worsen 1-vCPU/1GB pressure (see `OPENBSD/resource_guard.sh`).
+- **Auto-commit atomicity.** Unrelated automated commits to `main` sometimes bundle unrelated changes; scope commits to one concern each.

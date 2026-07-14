@@ -84,4 +84,4 @@ puts "  #{probe_status('WebGL/tap probe', 'PROBE_REQUIRE_BROWSER')}"
 puts "  #{probe_status('Live web tests', 'MASTER_CI_WEB')}"
 puts "  TTS: edge-tts or espeak on PATH (#{capture('which', 'edge-tts') || capture('which', 'espeak') || 'not found'})"
 puts
-puts "recipes: RECIPES.md"
+puts "recipes: OPENBSD/RECIPES.md"

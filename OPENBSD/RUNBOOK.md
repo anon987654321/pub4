@@ -94,7 +94,7 @@ When SSH to vm23 is required, use normal paths: `doas zsh OPERATOR.sh`, `vps-dep
 
 **Rules:**
 
-- Run `bin/pub4 status` before starting work; use `RECIPES.md` for copy-paste paths.
+- Run `bin/pub4 status` before starting work; use `OPENBSD/RECIPES.md` for copy-paste paths.
 - Treat `RAILS/apps.yml` and `master.json` as inventories, not suggestions.
 - Any `/etc` change made on vm23 must be copied back to `OPENBSD/etc/`.
 - Use `ruby34` and `bundle34` on OpenBSD; `zsh OPENBSD/sh/vps_ci.sh <app>` for per-app CI.
@@ -158,8 +158,8 @@ After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-relo
 
 ```zsh
 cd /home/dev/pub4 && git pull --ff-only
-cd RAILS && doas zsh OPERATOR.sh          # brgen (default)
-doas zsh OPERATOR.sh amber                     # or: all
+cd RAILS && doas zsh deploy.sh          # brgen (default)
+doas zsh deploy.sh amber                     # or: all
 ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 ```
 

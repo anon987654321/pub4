@@ -72,15 +72,20 @@ PAD_CHORDS = [
   { name: "Abmaj9", hz: [207.65, 261.63, 311.13, 392.00, 466.16] },
   { name: "Dm9", hz: [146.83, 174.61, 220.00, 261.63, 329.63] },
   { name: "Gm9", hz: [196.00, 233.08, 293.66, 349.23, 440.00] },
-  { name: "Bm7b5+9", hz: [123.47, 146.83, 174.61, 220.00, 261.63] },
+  # "+9" means a natural 9th (C#), not the b9 (C) this had.
+  { name: "Bm7b5+9", hz: [123.47, 146.83, 174.61, 220.00, 277.18] },
   { name: "E altered", hz: [164.81, 196.00, 233.08, 293.66, 349.23] },
   { name: "Am9", hz: [110.00, 130.81, 164.81, 196.00, 246.94] },
   { name: "Bbm9", hz: [116.54, 138.59, 174.61, 207.65, 261.63] },
   { name: "Gbmaj9", hz: [92.50, 116.54, 138.59, 174.61, 207.65] },
   { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] },
   { name: "C7#9 Hendrix", hz: [130.81, 155.56, 196.00, 233.08, 277.18] },
-  { name: "Fmaj13", hz: [174.61, 220.00, 261.63, 311.13, 392.00] },
-  { name: "Fmaj9", hz: [174.61, 220.00, 261.63, 311.13, 392.00] },
+  # Was a byte-for-byte copy of Fmaj9's voicing (b7 instead of maj7, no 13th).
+  # Real Fmaj13: root, 3, 5, 13, maj7.
+  { name: "Fmaj13", hz: [174.61, 220.00, 261.63, 293.66, 329.63] },
+  # Had a b7 (Eb) instead of a major 7th — that's actually F9 (dominant), not
+  # Fmaj9. Real Fmaj9: root, 3, 5, maj7 (E), 9.
+  { name: "Fmaj9", hz: [174.61, 220.00, 261.63, 329.63, 392.00] },
   { name: "Cmaj9", hz: [130.81, 164.81, 196.00, 246.94, 293.66] },
   { name: "E7b9", hz: [82.41, 103.83, 123.47, 146.83, 174.61] },
   { name: "Bm7b5", hz: [123.47, 146.83, 174.61, 220.00, 261.63] },
@@ -89,13 +94,17 @@ PAD_CHORDS = [
 ].freeze
 # Get Dis Money / Herbie Sunlight stack — vocoder chords over E pedal (Ethan Hein).
 SLUM_VILLAGE_CHORDS = [
-  { name: "E9sus4/D", hz: [82.41, 196.00, 220.00, 293.66, 392.00] },
+  # Was E-G-A-D-G: a 3rd (G) with no 5th and no 9th — not actually a sus4 or
+  # a 9 chord despite the name, and the "/D" bass wasn't even in the voicing.
+  # Real E9sus4 (root E, 4th A, 5th B, b7 D, 9th F#), keeping the same E
+  # pedal bass as every other chord in this table.
+  { name: "E9sus4/D", hz: [82.41, 220.00, 246.94, 293.66, 369.99] },
   { name: "Db/E", hz: [82.41, 277.18, 311.13, 349.23, 415.30] },
   { name: "C/E", hz: [82.41, 261.63, 329.63, 392.00, 493.88] },
   { name: "Bm/E", hz: [82.41, 246.94, 293.66, 369.99, 440.00] },
   { name: "Bbm/E", hz: [82.41, 233.08, 277.18, 349.23, 415.30] },
   { name: "Am/E", hz: [82.41, 220.00, 261.63, 329.63, 392.00] },
-  { name: "E9sus4", hz: [82.41, 196.00, 220.00, 293.66, 392.00] }
+  { name: "E9sus4", hz: [82.41, 220.00, 246.94, 293.66, 369.99] }
 ].freeze
 COMMANDS = %w[
   help scan sweep council debug sample source livestream separate render verify
@@ -326,14 +335,18 @@ DONUT_CHORDS = [
   { name: "Abmaj9low", hz: [103.83, 130.81, 155.56, 196.00, 233.08] },
   { name: "C7b9",      hz: [130.81, 138.59, 164.81, 196.00, 233.08] },
   { name: "Fm/C",      hz: [130.81, 174.61, 207.65, 261.63, 311.13] },
-  { name: "Bb7sus",    hz: [116.54, 174.61, 196.00, 233.08, 311.13] },
+  # Was missing the 4th that actually makes a "sus" chord a sus chord.
+  # Real Bb7sus4(add9): root, 4, 5, b7, 9.
+  { name: "Bb7sus",    hz: [116.54, 155.56, 174.61, 207.65, 261.63] },
   { name: "G#m7",      hz: [103.83, 123.47, 155.56, 185.00, 233.08] },
   { name: "C#m7",      hz: [130.81, 155.56, 196.00, 233.08, 277.18] },
   { name: "D#m7",      hz: [155.56, 185.00, 233.08, 277.18, 311.13] },
   { name: "Dm7",       hz: [146.83, 174.61, 220.00, 261.63, 329.63] },
   { name: "Gm7",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] },
   { name: "Am7",       hz: [110.00, 130.81, 164.81, 196.00, 246.94] },
-  { name: "D7",        hz: [146.83, 185.00, 220.00, 261.63, 349.23] },
+  # Had both the major AND minor 3rd sounding at once (F# and F). Real D9:
+  # root, 3, 5, b7, 9.
+  { name: "D7",        hz: [146.83, 185.00, 220.00, 261.63, 329.63] },
   { name: "Eb7",       hz: [155.56, 196.00, 233.08, 277.18, 311.13] },
   { name: "Ebmaj9",    hz: [155.56, 196.00, 233.08, 293.66, 349.23] },
   { name: "Gm9",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] }
@@ -1702,7 +1715,14 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     end
     if section == :main && bar % 4 == 2 && !drums_only
       mel_step = [2, 6, 10][bar % 3]
-      mel_hz = MELODY_CHOP_HZ[(bar + mel_step) % MELODY_CHOP_HZ.length]
+      # Was a fixed 6-note pool (MELODY_CHOP_HZ) completely independent of
+      # the selected chord progression — every TRACK's melody cycled through
+      # the same pitches regardless of the underlying harmony, which is why
+      # pitch-detection found near-identical "chords" across tracks with
+      # totally different progressions. Draw from the actual current chord
+      # instead, an octave up into lead register.
+      chord_tones = chord[:hz].sort
+      mel_hz = chord_tones[(bar + mel_step) % chord_tones.length] * 2
       mel_t = [base + mel_step * step_p + dilla_swing_offset(mel_step, step_p, swing) + 0.006, 0.0].max
       events[:melody] << [mel_t.round(6), dilla_velocity(0.38, bar, mel_step, spread: 0.06) * sec_gain, mel_hz]
     end
@@ -2092,10 +2112,110 @@ def render_native_pad_wav(path, pad_events, duration)
   path
 end
 
+# --- FluidSynth pad rendering (real sampled electric-piano tone instead of ---
+# --- the pure-additive-sine aevalsrc engine above) -------------------------
+
+# GM program 4 = "Electric Piano 1" (Rhodes-style) — the classic Dilla/neo-soul
+# keys tone. Overridable since a different soundfont's map may differ.
+PAD_GM_PROGRAM = ENV.fetch("DILLA_PAD_PROGRAM", "4").to_i
+SMF_PPQN = 480
+SMF_TICKS_PER_SECOND = SMF_PPQN * 2 # fixed internal reference tempo of 120 BPM
+
+def pad_soundfont_path
+  return ENV["DILLA_SOUNDFONT"] if ENV["DILLA_SOUNDFONT"] && File.exist?(ENV["DILLA_SOUNDFONT"])
+
+  # GeneralUser GS (mrbumpy409/GeneralUser-GS on GitHub, free-for-any-use
+  # license) — a real 261-preset GM bank, cached locally rather than
+  # committed to the repo. Falls back to fluid-synth's small bundled test
+  # font if it hasn't been fetched.
+  cached = File.expand_path("~/.cache/dilla-soundfonts/GeneralUser-GS.sf2")
+  return cached if File.exist?(cached)
+
+  Dir.glob("/opt/homebrew/Cellar/fluid-synth/*/share/fluid-synth/sf2/*.sf2")
+     .find { |f| f.match?(/VintageDreamsWaves-v2\.sf2\z/) }
+end
+
+def fluidsynth_pad_available?
+  tool_available?("fluidsynth") && !pad_soundfont_path.nil?
+end
+
+def midi_vlq(number)
+  bytes = [number & 0x7f]
+  number >>= 7
+  while number.positive?
+    bytes.unshift((number & 0x7f) | 0x80)
+    number >>= 7
+  end
+  bytes.pack("C*")
+end
+
+# Writes a minimal single-track Standard MIDI File by hand (no midilib
+# dependency — this codebase otherwise stays dependency-light) from
+# pad_events shaped like render_native_pad_wav's: [time, velocity, chord, sustain].
+def write_pad_smf(path, pad_events, program: PAD_GM_PROGRAM)
+  notes = []
+  pad_events.each do |(time, velocity, chord, sustain)|
+    next unless chord
+
+    chord[:hz].each do |hz|
+      note = hz_to_midi(hz).round.clamp(0, 127)
+      on_tick = (time * SMF_TICKS_PER_SECOND).round
+      off_tick = (on_tick + (sustain * SMF_TICKS_PER_SECOND)).round
+      vel = (velocity.clamp(0.0, 1.0) * 100).round.clamp(1, 120)
+      notes << [on_tick, :on, note, vel]
+      notes << [off_tick, :off, note, 0]
+    end
+  end
+  notes.sort_by! { |tick, kind, _, _| [tick, kind == :off ? 0 : 1] }
+
+  events = [[0, [0xC0, program].pack("C*")]]
+  last_tick = 0
+  notes.each do |tick, kind, note, vel|
+    delta = [tick - last_tick, 0].max
+    status = kind == :on ? 0x90 : 0x80
+    events << [delta, [status, note, vel].pack("C*")]
+    last_tick = tick
+  end
+  events << [0, [0xFF, 0x2F, 0x00].pack("C*")]
+
+  track_data = events.map { |delta, bytes| midi_vlq(delta) + bytes }.join
+  track_chunk = "MTrk" + [track_data.bytesize].pack("N") + track_data
+  header = "MThd" + [6].pack("N") + [0, 1, SMF_PPQN].pack("n3")
+  File.binwrite(path, header + track_chunk)
+  path
+end
+
+PAD_TARGET_RMS_DB = -19.0
+
+def render_pad_via_fluidsynth(path, pad_events, duration)
+  midi_path = "#{path}.smf.mid"
+  write_pad_smf(midi_path, pad_events)
+  sh! "fluidsynth", "-ni", "-g", "1.5", "-F", path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
+  FileUtils.rm_f(midi_path)
+  # GeneralUser GS's EP patch renders far quieter than the old additive-synth
+  # pad engine did (measured ~-35dB RMS vs the tones bus's ~-27dB at equal
+  # amix weight, which buried the chords entirely) — a fixed -g wasn't enough
+  # across different voicings/velocities, so measure and normalize toward a
+  # fixed target instead of guessing a static boost.
+  measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
+  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
+  # fluidsynth renders exactly note-off-to-silence length; pad the file out to
+  # the mix's full duration so the later amix with tones_path lines up.
+  sh! "ffmpeg", "-y", "-i", path, "-af",
+      "volume=#{boost_db.round(2)}dB,apad=whole_dur=#{duration},alimiter=limit=0.95:level_out=0.96",
+      "-c:a", "pcm_s16le", "#{path}.pad.wav"
+  FileUtils.mv("#{path}.pad.wav", path)
+  path
+end
+
 def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [])
   tones_path = "#{path}.tones.wav"
   pads_path = "#{path}.pads.wav"
-  render_native_pad_wav(pads_path, pad_events, duration)
+  if fluidsynth_pad_available?
+    render_pad_via_fluidsynth(pads_path, pad_events, duration)
+  else
+    render_native_pad_wav(pads_path, pad_events, duration)
+  end
   write_stereo_chunks(tones_path, duration) do |chunk_start, chunk_frames, left, right|
     chop_events.each do |(t, v, chord)|
       hz_list = chop_hz(chord)

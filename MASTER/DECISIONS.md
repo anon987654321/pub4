@@ -1,5 +1,7 @@
 # Decisions
 
+Agent and runtime policy. Deploy and VPS policy lives in `OPENBSD/DECISIONS.md`.
+
 This file records intentional shapes that may otherwise look like bugs.
 
 ## Two Master Spines

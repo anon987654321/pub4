@@ -13,7 +13,7 @@ OPENBSD is the production surface for pub4: vm23 config backup, relayd, NSD/acme
 ## Golden Commands
 
 - `bin/pub4 status` — one-screen repo/VPS posture and next command.
-- `RECIPES.md` — copy-paste operator recipes.
+- `OPENBSD/RECIPES.md` — copy-paste operator recipes.
 - `OPENBSD/bin/check --profile=contributor` — fast static deploy gates.
 - `OPENBSD/bin/check-rails --profile=contributor` — Rails source gates (skips runtime on Ruby mismatch).
 - `OPENBSD/bin/check-openbsd` checks OpenBSD config/deploy identity locally.

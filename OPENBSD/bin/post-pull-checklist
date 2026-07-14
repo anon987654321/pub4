@@ -17,5 +17,5 @@ Next (serial — one app at a time):
 MASTER web changes also need:
   zsh OPENBSD/bin/vps-deploy master
 
-See RECIPES.md for copy-paste recipes.
+See OPENBSD/RECIPES.md for copy-paste recipes.
 EOF

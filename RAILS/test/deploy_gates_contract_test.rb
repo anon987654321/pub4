@@ -59,7 +59,8 @@ class DeployGatesContractTest < Minitest::Test
       assert File.exist?(path), "missing OPENBSD/#{rel}"
     end
     assert File.exist?(File.join(ROOT, "apps.horizon.yml"))
-    assert File.exist?(File.join(REPO_ROOT, "RECIPES.md"))
+    assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "RECIPES.md"))
+    assert File.exist?(File.join(REPO_ROOT, "RAILS", "deploy.sh"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "debt.yml"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
     assert File.exist?(File.join(REPO_ROOT, "bin", "pub4"))
