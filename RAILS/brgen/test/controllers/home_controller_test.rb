@@ -18,12 +18,12 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # link_to renders class before href, so match loosely rather than
     # requiring the class attribute to sit immediately before the tab text.
-    assert_match(/class="feed-tab active"[^>]*>For you · Hot/, response.body)
-    assert_includes response.body, "For you · Latest"
+    assert_match(/class="feed-tab active"[^>]*>For you</, response.body)
+    assert_includes response.body, ">Following</"
     assert_includes response.body, 'feed=following'
     get root_url(feed: "following")
     assert_response :success
-    assert_match(/class="feed-tab active"[^>]*>Following · Hot/, response.body)
+    assert_match(/class="feed-tab active"[^>]*>Following</, response.body)
   end
 
   def test_guest_root_can_open_master_embed

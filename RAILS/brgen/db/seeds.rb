@@ -180,8 +180,7 @@ dating_profiles = users.sample(num_dating).map do |user|
     latitude: user.latitude,
     longitude: user.longitude,
     bydel: %w[Sentrum Nordnes Sandviken Kalfaret].sample,
-    visible: true,
-    matches_count: rand((5 * SEED_SCALE)..(500 * SEED_SCALE))
+    visible: true
   )
 end
 
