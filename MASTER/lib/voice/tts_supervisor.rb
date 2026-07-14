@@ -13,9 +13,17 @@ module Master
       POLL_INTERVAL_S = 0.1
       # Process.spawn merges env onto the parent; Falcon's web bundle vars must not
       # leak into tts-worker children or Bundler resolves against web/vendor/bundle.
+      # RUBYLIB and BUNDLE_LOCKFILE were the actual live leak (confirmed on vm23):
+      # RUBYLIB prepends web/vendor/bundle/.../bundler-4.0.7/lib to $LOAD_PATH before
+      # any script code runs, so that vendored bundler loads regardless of GEM_HOME;
+      # BUNDLE_LOCKFILE then points it at web/Gemfile.lock while BUNDLE_GEMFILE (set
+      # below) correctly points at MASTER's own Gemfile -- Bundler resolves the
+      # mismatched lockfile's exact gem versions against MASTER's gem set and finds
+      # them missing (Bundler::GemNotFound), on every single spawn, not just some.
       BUNDLE_ISOLATION_KEYS = %w[
         BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
-        BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG GEM_HOME GEM_PATH RUBYOPT
+        BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG BUNDLE_LOCKFILE
+        GEM_HOME GEM_PATH RUBYOPT RUBYLIB
       ].freeze
 
       SPAWN_ENV_KEYS = %w[HOME USER PATH LANG LC_ALL].freeze
@@ -189,7 +197,11 @@ module Master
         {
           "HOME" => ENV.fetch("HOME", ""),
           "USER" => ENV.fetch("USER", ""),
-          "PATH" => ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin"),
+          # A hardcoded system PATH, not ENV.fetch("PATH", ...) -- Falcon's own PATH
+          # (inherited otherwise, since this key is always present) puts web's
+          # vendor/bundle/bin ahead of system bins, the same class of leak as
+          # RUBYLIB/BUNDLE_LOCKFILE above.
+          "PATH" => "/usr/local/bin:/usr/bin:/bin",
           "LANG" => ENV.fetch("LANG", "C.UTF-8"),
           "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
           "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),

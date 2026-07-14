@@ -11,9 +11,14 @@
 # EM reactor lifecycle.
 
 ROOT = File.expand_path("..", __dir__)
+# RUBYLIB and BUNDLE_LOCKFILE confirmed live on vm23 (Falcon's own process has both,
+# pointing at MASTER/web's vendored bundler-4.0.7/lib and web/Gemfile.lock) -- neither
+# was covered here, so any spawn path that skips full unsetenv_others isolation (see
+# ENV.delete below) still resolves the wrong Gemfile.lock against MASTER's Gemfile.
 BUNDLE_ISOLATION_KEYS = %w[
   BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
-  BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG GEM_HOME GEM_PATH RUBYOPT
+  BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG BUNDLE_LOCKFILE
+  GEM_HOME GEM_PATH RUBYOPT RUBYLIB
 ].freeze
 
 # ENV.delete below can't undo damage already done: if the launching process

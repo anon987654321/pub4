@@ -16,6 +16,37 @@ class TestSpeech < Minitest::Test
       assert_equal ENV.fetch("HOME", ""), env["HOME"]
       assert env.values.compact.size <= Master::Voice::TtsSupervisor::SPAWN_ENV_KEYS.size + 1
     end
+  ensure
+    ENV.delete("BUNDLE_PATH")
+    ENV.delete("BUNDLE_GEMFILE")
+    ENV.delete("GEM_HOME")
+  end
+
+  # Regression: confirmed live on vm23 -- Falcon's own process has RUBYLIB
+  # pointing at web's vendored bundler-4.0.7/lib and BUNDLE_LOCKFILE pointing
+  # at web/Gemfile.lock. Neither was in BUNDLE_ISOLATION_KEYS, so tts-worker
+  # daemons resolved web's lockfile against MASTER's Gemfile and crashed with
+  # Bundler::GemNotFound on every single spawn.
+  def test_daemon_env_strips_rubylib_and_bundle_lockfile_pollution
+    Dir.mktmpdir("master_tts_env") do |root|
+      ENV["RUBYLIB"] = "/wrong/web/vendor/bundle/ruby/3.4/gems/bundler-4.0.7/lib"
+      ENV["BUNDLE_LOCKFILE"] = "/wrong/web/Gemfile.lock"
+      env = Master::Voice::TtsSupervisor.daemon_env(root)
+      assert_nil env["RUBYLIB"]
+      assert_nil env["BUNDLE_LOCKFILE"]
+    end
+  ensure
+    ENV.delete("RUBYLIB")
+    ENV.delete("BUNDLE_LOCKFILE")
+  end
+
+  def test_daemon_env_path_is_not_inherited_from_caller
+    original_path = ENV["PATH"]
+    ENV["PATH"] = "/wrong/web/vendor/bundle/ruby/3.4/bin:/usr/local/bin"
+    env = Master::Voice::TtsSupervisor.daemon_env(Master::ROOT)
+    refute_includes env["PATH"], "vendor/bundle"
+  ensure
+    ENV["PATH"] = original_path
   end
 
   def test_tts_supervisor_health_check_uses_ping_without_synthesis
