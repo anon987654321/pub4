@@ -9,6 +9,13 @@ laws:
     - errors
     - input_validation
     - resource_management
+    research:
+      - name: "IEEE Top 10 Security Vulnerabilities in Code"
+        url: "https://ar5iv.labs.arxiv.org/html/2006.03281"
+      - name: "OWASP Top 10"
+        url: "https://owasp.org/Top10"
+      - name: "Defensive Programming"
+        url: "https://github.com/google/styleguide"
   SINGULARITY:
     priority: 2
     principle: One source of truth; no duplication; data integrity.
@@ -16,6 +23,11 @@ laws:
     - duplication
     - consistency
     - data_integrity
+    research:
+      - name: "DRY Principle (Andrew Hunt, David Thomas)"
+        url: "https://pragprog.com/titles/pragddd/the-pragmatic-programmer"
+      - name: "Database Normalization Theory"
+        url: "https://en.wikipedia.org/wiki/Database_normalization"
   LINEARITY:
     priority: 3
     principle: Sequential flow; minimal branches; clear path.
@@ -23,6 +35,11 @@ laws:
     - control_flow
     - nesting
     - complexity
+    research:
+      - name: "Cyclomatic Complexity (McCabe 1976)"
+        url: "https://en.wikipedia.org/wiki/Cyclomatic_complexity"
+      - name: "Cognitive Load in Code"
+        url: "https://ar5iv.labs.arxiv.org/html/2107.03127"
   PROXIMITY:
     priority: 4
     principle: Related code together; cohesive modules.
@@ -30,6 +47,11 @@ laws:
     - organization
     - coupling
     - modules
+    research:
+      - name: "Cohesion and Coupling (Yourdon & Constantine)"
+        url: "https://en.wikipedia.org/wiki/Cohesion_(computer_science)"
+      - name: "SOLID Principles"
+        url: "https://en.wikipedia.org/wiki/SOLID"
   ABSTRACTION:
     priority: 5
     principle: Right level; no leaky abstractions; appropriate hiding.
@@ -37,6 +59,11 @@ laws:
     - interfaces
     - encapsulation
     - apis
+    research:
+      - name: "Leaky Abstractions (Joel Spolsky)"
+        url: "https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions"
+      - name: "Interface Design Patterns"
+        url: "https://en.wikipedia.org/wiki/Interface_segregation_principle"
   DENSITY:
     priority: 6
     principle: Information dense; no noise; signal not noise.
@@ -44,6 +71,11 @@ laws:
     - verbosity
     - comments
     - naming
+    research:
+      - name: "Elements of Style (Strunk & White)"
+        url: "https://www.gutenberg.org/ebooks/37134"
+      - name: "Signal-to-Noise Ratio in Code"
+        url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
 zen:
   observe: Read current behavior before changing anything.
   simplify: Reduce moving parts before adding new components.

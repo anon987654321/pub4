@@ -12,6 +12,20 @@ language:
   secondary: norwegian
   dialect: bokmal
 
+research:
+  constitutional_ai:
+    - https://ar5iv.labs.arxiv.org/html/2212.06719  # Constitutional AI / Anthropic
+    - https://github.com/anthropic-ai/constitution-ai
+  code_governance:
+    - https://ar5iv.labs.arxiv.org/html/2104.07896  # Code Review Best Practices
+    - https://github.com/google/styleguide
+  linter_patterns:
+    - https://github.com/golangci/golangci-lint
+    - https://github.com/github/super-linter
+  ruby_governance:
+    - https://github.com/ruby-on-rails/rails
+    - https://github.com/rubocop/rubocop
+
 prompt_ordering:
   - master_identity
   - master_output_format
