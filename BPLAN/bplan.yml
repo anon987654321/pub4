@@ -1,0 +1,15 @@
+# BPLAN deploy manifest — separate from RAILS/apps.yml
+#
+# Content tree: BPLAN/ (HTML, legats, funding.yml)
+# App tree:     BPLAN/rails/ (standalone Rails 8, no ActiveRecord)
+
+app:
+  name: bplan
+  title: BPLAN
+  domain: bplan.pub.healthcare
+  port: 39282
+  deploy_script: BPLAN/rails/bplan.sh
+  deploy_root: BPLAN/rails
+  content_root: BPLAN
+  stack: Rails 8.1, Propshaft, Falcon, content-only
+  notes: Not mounted in RAILS/brgen or other deploy apps

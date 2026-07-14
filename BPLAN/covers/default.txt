@@ -1,0 +1,10 @@
+Hei,
+
+Vedlagt følger søknad til %{funder}.
+
+Prosjektet MASTER + RAILS utvikler suveren, selvforbedrende AI og praktiske norske webapplikasjoner
+med samfunnsnytte i Bergen og Vestland.
+
+Med vennlig hilsen,
+Johann Tepstad
+PubHealthcare · www.pub.healthcare

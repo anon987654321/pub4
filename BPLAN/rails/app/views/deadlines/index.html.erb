@@ -1,0 +1,16 @@
+<% content_for :title, "Fristkalender" %>
+
+<article>
+  <img src="/content/htu/bergen.svg" alt="" class="logo">
+  <header>
+    <h1>Fristkalender</h1>
+    <p class="meta">
+      Verifiser alltid på giverens nettside.
+      <%= link_to "Last ned ICS", deadlines_ics_path %>
+    </p>
+  </header>
+  <div class="content">
+    <%= render "shared/deadline_calendar", deadlines: @deadlines, today: @today %>
+    <p><%= link_to "← BPLAN", root_path %></p>
+  </div>
+</article>

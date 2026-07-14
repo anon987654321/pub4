@@ -1,0 +1,1427 @@
+---
+generated: '2026-07-14'
+applicant:
+  name: Johann Tepstad
+  org: PubHealthcare
+  address: Kanalveien 10, 5068 Bergen
+  web: www.pub.healthcare
+  email: bergen@pub.attorney
+  footer: Johann Tepstad &amp; GK Tepstad
+deadlines:
+- date: '2026-07-14'
+  end_date:
+  funder: Innovasjon Norge Bergen
+  track: innovasjon
+  priority: løpende
+  action: Book møte med rådgiver — ikke masse-e-post
+  batch: innovasjon
+  verify_url: https://www.innovasjonnorge.no
+- date: '2026-07-14'
+  end_date:
+  funder: Bergen kommune Startlån
+  track: bolig
+  priority: høy
+  action: Søk elektronisk — ingen frist, men bolig først
+  batch: bolig_asap
+  verify_url: https://husbanken.no/person/startlaan/
+- date: '2026-06-23'
+  end_date: '2026-09-01'
+  funder: Zuccarellostiftelsen personstipend
+  track: bolig
+  priority: medium
+  action: Stipendportalen — idrett/ungdom, kan brukes som brofinansiering
+  batch: frist_host_2026
+  legat_id: 31_zuccarellostiftelsen
+  verify_url: https://stipendportalen.no/utlysing/4985
+- date: '2026-09-01'
+  end_date: '2026-09-30'
+  funder: Bergen bys Utdanningsstiftelse
+  track: innovasjon
+  priority: høy
+  action: Søk 1.–30. sept — bostedsattest + skatteoppgjør. Siste dag 30.09 — MASTER/kompetanseheving-vinkel
+  batch: frist_host_2026
+  legat_id: '09_bergen_bys_utdanningsstiftelse'
+  verify_url: https://stipendportalen.no/utlysing/4990
+- date: '2026-09-20'
+  end_date:
+  funder: Gunvor Mindes legat
+  track: bolig
+  priority: høy
+  action: Personlig søknad — legeattest + skatteligning
+  batch: frist_host_2026
+  legat_id: 10_gunvor_mindes_legat
+  verify_url: https://stipendportalen.no/utlysing/4974
+- date: '2026-10-01'
+  end_date:
+  funder: SkatteFUNN
+  track: innovasjon
+  priority: løpende
+  action: FoU-logg fra MASTER — skattefradrag neste år
+  batch: innovasjon
+  verify_url: https://www.skattefunn.no
+instructions:
+- '1. Kjør: ruby BPLAN/build_legats.rb for å regenerere alle brev'
+- 2. Verifiser to-adresser på giverens nettside — mange bruker skjema, ikke e-post
+- '3. Konverter HTML til PDF: wkhtmltopdf eller nettleser Skriv ut → Lagre som PDF'
+- '4. Batch: ruby BPLAN/grok_send_legats.rb --batch bolig_asap --dry-run'
+- '5. Enkelt: ./BPLAN/send_legats.sh [--dry-run] [id]'
+- 6. Se BPLAN/legats/batches.yml for senderekkefølge
+- '7. Sendt-logg: BPLAN/legats/sent_log.yml (unngår duplikater)'
+applications:
+- id: 01_innovasjon_norge_master
+  file: legats/01_innovasjon_norge_master.html
+  funder: Innovasjon Norge
+  to: post@innovasjonnorge.no
+  subject: 'Søknad: MASTER — selvforbedrende AI-plattform for helseteknologi'
+  contact_url: https://www.innovasjonnorge.no
+  deadline: Fortløpende — avtal med rådgiver Bergen
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Innovasjon Norge — book møte med rådgiver Bergen, ikke masse-e-post. Bekreft
+    kanal på contact_url.
+  preferred_channel: rådgiver_møte
+- id: 02_trond_mohn_medical_ai
+  file: legats/02_trond_mohn_medical_ai.html
+  funder: Trond Mohn Foundation
+  to: post@mohnfoundation.no
+  subject: 'Pre-kvalifisering: MASTER + pub.healthcare for medisinsk AI'
+  contact_url: https://mohnfoundation.no
+  deadline: Se mohnfoundation.no — to-trinnsprosess med UiB/Helse Bergen
+  track: helse
+  project: master+pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 03_helse_vest_velferdsteknologi
+  file: legats/03_helse_vest_velferdsteknologi.html
+  funder: Helse Vest RHF
+  to: post@helse-vest.no
+  subject: 'Søknad: MASTER/RAILS — velferdsteknologi for Vestland'
+  contact_url: https://www.helse-vest.no
+  deadline: Se helse-vest.no innovasjonsutlysninger
+  track: helse
+  project: pub_healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 04_forskningsradet_ikt_ai
+  file: legats/04_forskningsradet_ikt_ai.html
+  funder: Forskningsrådet
+  to: post@forskningsradet.no
+  subject: 'Søknad: Konstitusjonell, selvforbedrende AI for programvareutvikling'
+  contact_url: https://www.forskningsradet.no
+  deadline: Se utlysninger IKT og digitalisering
+  track: forskning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 05_sparebankstiftelsen_sr_bank
+  file: legats/05_sparebankstiftelsen_sr_bank.html
+  funder: Sparebankstiftelsen SR-Bank
+  to: post@srstiftelsen.no
+  subject: 'Søknad: MASTER/RAILS — teknologisk entreprenørskap i Bergen'
+  contact_url: https://srstiftelsen.no
+  deadline: Fortløpende — søk via srstiftelsen.no
+  track: regional
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  preferred_channel: nettside_skjema
+- id: 06_vestland_fylke_digitalisering
+  file: legats/06_vestland_fylke_digitalisering.html
+  funder: Vestland fylkeskommune
+  to: post@vestlandfylke.no
+  subject: 'Søknad: MASTER/RAILS — digital verdiskaping i Vestland'
+  contact_url: https://www.vestlandfylke.no/tilskot/
+  deadline: Se vestlandfylke.no tilskuddsordninger
+  track: regional
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 07_skattefunn_rnd
+  file: legats/07_skattefunn_rnd.html
+  funder: SkatteFUNN / Forskningsrådet
+  to: skattefunn@forskningsradet.no
+  subject: 'Søknad SkatteFUNN: Selvforbedrende AI-plattform MASTER'
+  contact_url: https://www.skattefunn.no
+  deadline: Løpende innsending
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: '08_nordic_innovation_health'
+  file: legats/08_nordic_innovation_health.html
+  funder: Nordic Innovation
+  to: info@nordicinnovation.org
+  subject: 'Søknad: Nordic health tech — MASTER/RAILS from Norway'
+  contact_url: https://www.nordicinnovation.org
+  deadline: Se nordicinnovation.org utlysninger
+  track: nordic
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: '09_bergen_bys_utdanningsstiftelse'
+  file: legats/09_bergen_bys_utdanningsstiftelse.html
+  funder: Bergen bys Utdanningsstiftelse
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Bergen bys Utdanningsstiftelse 2026 — AI/systemutvikling
+  contact_url: https://stipendportalen.no/utlysing/4990
+  deadline: 30.09.2026
+  track: utdanning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (stipendportalen) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: stipendportalen
+- id: 10_gunvor_mindes_legat
+  file: legats/10_gunvor_mindes_legat.html
+  funder: Gunvor Mindes stiftelse
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Gunvor Mindes legat 2026 — utdanning og nødhjelp
+  contact_url: https://stipendportalen.no/utlysing/4974
+  deadline: 20.09.2026
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (stipendportalen) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: stipendportalen
+- id: 11_bergen_bys_vanskeligstilte
+  file: legats/11_bergen_bys_vanskeligstilte.html
+  funder: Bergen bys stiftelse til økonomisk vanskeligstilte
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Bergen bys stiftelse — økonomisk bistand
+  contact_url: https://stipendportalen.no/organisasjon/1152
+  deadline: Årlig — søk via Bergen kommune
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (stipendportalen) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: stipendportalen
+- id: 12_bergen_startlan_boligtilskudd
+  file: legats/12_bergen_startlan_boligtilskudd.html
+  funder: Bergen kommune Boligkontoret
+  to: boligkontoret@bergen.kommune.no
+  subject: Søknad Startlån og boligtilskudd — kjøp av leilighet i Bergen
+  contact_url: https://www.bergen.kommune.no/bolig
+  deadline: Fortløpende
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 13_westfal_larsen_rederi
+  file: legats/13_westfal_larsen_rederi.html
+  funder: Skibsreder H. Westfal-Larsens fond
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Westfal-Larsens fond — digital kompetanse for rederinæringen
+  contact_url: https://stipendportalen.no/organisasjon/2158
+  deadline: Se fondets vedtekter
+  track: utdanning
+  project: bsdports
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 14_anthonstiftelsen_ungdom
+  file: legats/14_anthonstiftelsen_ungdom.html
+  funder: Anthonstiftelsen
+  to: post@anthonstiftelsen.no
+  subject: 'Søknad: MASTER/RAILS — digital kompetanse for ungdom i Bergen'
+  contact_url: https://stipendportalen.no/anthonstiftelsen
+  deadline: Fortløpende
+  track: sosial
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 15_master_kjerne_direkte
+  file: legats/15_master_kjerne_direkte.html
+  funder: Generell innovasjon / teknologi
+  to: bergen@pub.attorney
+  subject: 'Søknad: MASTER — direkte kjerneplattform for selvforbedrende AI'
+  contact_url: https://stipendportalen.no/stotteordninger
+  deadline: Tilpass per giver
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 16_brgen_digitalt_demokrati
+  file: legats/16_brgen_digitalt_demokrati.html
+  funder: Demokrati og medieteknologi
+  to: bergen@pub.attorney
+  subject: 'Søknad: brgen.no — hyperlokalt digitalt demokrati i Bergen'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: samfunn
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 17_amber_baerekraft_mote
+  file: legats/17_amber_baerekraft_mote.html
+  funder: Bærekraft og innovasjon
+  to: bergen@pub.attorney
+  subject: 'Søknad: amber.brgen.no — bærekraftig garderobe og sirkulær mote'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: klima
+  project: amber
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 18_bsdports_digital_suverenitet
+  file: legats/18_bsdports_digital_suverenitet.html
+  funder: Digital suverenitet og sikkerhet
+  to: bergen@pub.attorney
+  subject: 'Søknad: bsdports.org — norsk sikker pakkeinfrastruktur'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: sikkerhet
+  project: bsdports
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 19_pub_healthcare_helseteknologi
+  file: legats/19_pub_healthcare_helseteknologi.html
+  funder: Helseinnovasjon
+  to: bergen@pub.attorney
+  subject: 'Søknad: pub.healthcare — AI-drevet helsetransformasjon'
+  contact_url: https://www.pub.healthcare
+  deadline: Tilpass per giver
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 20_syre_footwear_innovasjon
+  file: legats/20_syre_footwear_innovasjon.html
+  funder: Produktinnovasjon / moteindustri
+  to: bergen@pub.attorney
+  subject: 'Søknad: SYRE™ — bærekraftig skoinnovasjon fra Bergen'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: produkt
+  project: syre
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 21_norwegian_hedge_finans
+  file: legats/21_norwegian_hedge_finans.html
+  funder: Finansinnovasjon
+  to: bergen@pub.attorney
+  subject: 'Søknad: Norwegian Hedge — ansvarlig finans og risikostyring'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: finans
+  project: norwegian_hedge
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 22_ditt_parti_demokrati
+  file: legats/22_ditt_parti_demokrati.html
+  funder: Demokratisk innovasjon
+  to: bergen@pub.attorney
+  subject: 'Søknad: Ditt Parti — lokal politisk mobilisering i Bergen'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: samfunn
+  project: ditt_parti
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 23_ilumi_gravferd_verdighet
+  file: legats/23_ilumi_gravferd_verdighet.html
+  funder: Humanitære tjenester
+  to: bergen@pub.attorney
+  subject: 'Søknad: Ilumi Gravferd — verdig minneseremoni i Bergen'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: sosial
+  project: ilumi
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 24_digitaliseringsdirektoratet
+  file: legats/24_digitaliseringsdirektoratet.html
+  funder: Digitaliseringsdirektoratet
+  to: post@digdir.no
+  subject: 'Søknad: MASTER/RAILS — suveren AI for offentlig sektor'
+  contact_url: https://www.digdir.no
+  deadline: Se digdir.no utlysninger
+  track: offentlig
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 25_gjensidigestiftelsen_helse
+  file: legats/25_gjensidigestiftelsen_helse.html
+  funder: Gjensidigestiftelsen
+  to: stiftelsen@gjensidige.no
+  subject: 'Søknad: pub.healthcare — forebyggende helseteknologi'
+  contact_url: https://www.gjensidigestiftelsen.no
+  deadline: Se gjensidigestiftelsen.no
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 26_kavlitrust_samfunnsnytte
+  file: legats/26_kavlitrust_samfunnsnytte.html
+  funder: Kavli Trust
+  to: post@kavlitrust.com
+  subject: 'Søknad: MASTER/RAILS — samfunnsnyttig teknologi fra Bergen'
+  contact_url: https://kavlitrust.com
+  deadline: Se kavlitrust.com
+  track: samfunn
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 27_legeforeningen_forskning
+  file: legats/27_legeforeningen_forskning.html
+  funder: Den norske legeforening
+  to: post@legeforeningen.no
+  subject: 'Søknad: MASTER-drevet utvikling av medisinsk programvare'
+  contact_url: https://www.legeforeningen.no
+  deadline: Se legeforeningen.no stipender
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 28_media_city_bergen
+  file: legats/28_media_city_bergen.html
+  funder: Media City Bergen / regionale kulturfond
+  to: bergen@pub.attorney
+  subject: 'Søknad: brgen.no TV og medieteknologi — Media City Bergen'
+  contact_url: https://www.mediacitybergen.no
+  deadline: Se aktuelle utlysninger
+  track: kultur
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 29_openbsd_foundation_sikkerhet
+  file: legats/29_openbsd_foundation_sikkerhet.html
+  funder: Open Source / sikkerhetsmiljø
+  to: bergen@pub.attorney
+  subject: 'Søknad: pub4 — OpenBSD-integrert AI-utvikling'
+  contact_url: https://www.openbsdfoundation.org
+  deadline: Varierer
+  track: sikkerhet
+  project: master+bsdports
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 30_boligsparing_egenkapital
+  file: legats/30_boligsparing_egenkapital.html
+  funder: Generelle legater / økonomisk støtte
+  to: bergen@pub.attorney
+  subject: 'Søknad: Egenkapitalstøtte til boligkjøp i Bergen'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Varierer — sjekk stipendportalen.no
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 31_zuccarellostiftelsen
+  file: legats/31_zuccarellostiftelsen.html
+  funder: Zuccarellostiftelsen
+  to: post@zuccarellostiftelsen.no
+  subject: Søknad Zuccarellostiftelsen personstipend 2026
+  contact_url: https://stipendportalen.no/utlysing/4985
+  deadline: 01.09.2026
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (stipendportalen) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: stipendportalen
+- id: 32_hielmstierne_rosencrone
+  file: legats/32_hielmstierne_rosencrone.html
+  funder: Den Grevelige Hielmstierne-Rosencroneske Stiftelse
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Hielmstierne-Rosencrone — bistand bosatt i Bergen
+  contact_url: https://stipendportalen.no/organisasjon/1218
+  deadline: Årlig — se vedtekter
+  track: sosial
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 33_willy_brandt_norsk_tysk
+  file: legats/33_willy_brandt_norsk_tysk.html
+  funder: Den norsk-tyske Willy Brandt-stiftelsen
+  to: post@willy-brandt-stiftelsen.no
+  subject: 'Søknad: MASTER/RAILS — norsk-tysk teknologisamarbeid'
+  contact_url: https://stipendportalen.no/utlysing/3859
+  deadline: Fortløpende
+  track: nordic
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 34_uib_forskning_legat
+  file: legats/34_uib_forskning_legat.html
+  funder: Universitetet i Bergen — fond og legater
+  to: post@uib.no
+  subject: Søknad UiB legat — selvforbedrende AI og helseteknologi
+  contact_url: https://www4.uib.no/for-studenter/livet-som-student/fond-legater-og-stipend
+  deadline: Varierer per fond
+  track: forskning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 35_ekom_programmet
+  file: legats/35_ekom_programmet.html
+  funder: Norges forskningsråd / Ekom-programmet
+  to: post@forskningsradet.no
+  subject: 'Søknad: MASTER — pålitelig AI-infrastruktur for digital Norge'
+  contact_url: https://www.forskningsradet.no
+  deadline: Se IKT-utlysninger
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 36_dam_stiftelsen_helse
+  file: legats/36_dam_stiftelsen_helse.html
+  funder: Dam Foundation
+  to: post@dam.no
+  subject: 'Søknad Dam: pub.healthcare — folkehelse og digitalisering'
+  contact_url: https://dam.no
+  deadline: Se dam.no utlysninger
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 37_exxonmobil_fondet
+  file: legats/37_exxonmobil_fondet.html
+  funder: ExxonMobils fond i Norge
+  to: post@exxonmobil.no
+  subject: Søknad ExxonMobil fond — teknologisk kompetanse i Bergen
+  contact_url: https://stipendportalen.no/stotteordninger
+  deadline: Se stipendportalen.no
+  track: utdanning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 38_mowinckel_forskning
+  file: legats/38_mowinckel_forskning.html
+  funder: Mowinckel-Stiftelsen
+  to: post@mowinckel-stiftelsen.no
+  subject: 'Søknad Mowinckel: medisinsk programvare og AI'
+  contact_url: https://stipendportalen.no/stotteordninger
+  deadline: Se utlysninger
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 39_anders_jahres_pris
+  file: legats/39_anders_jahres_pris.html
+  funder: Anders Jahres stiftelse til vitenskapens fremme
+  to: post@anders-jahres-stiftelse.no
+  subject: 'Søknad Anders Jahre: MASTER-drevet medisinsk programvare'
+  contact_url: https://www.anders-jahres-stiftelse.no
+  deadline: Se årlige utlysninger
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 40_master_rails_konsolidert
+  file: legats/40_master_rails_konsolidert.html
+  funder: Generell søknad — alle givere
+  to: bergen@pub.attorney
+  subject: 'Søknad: MASTER + RAILS — konsolidert prosjektbeskrivelse'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: innovasjon
+  project: master+rails
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 66_legat_soker_fo_draft
+  file: legats/66_legat_soker_fo_draft.html
+  funder: SkatteFUNN / Forskningsrådet
+  to: skattefunn@forskningsradet.no
+  subject: 'Utkast: grok_send_legats.rb — menneskelig godkjenning før sending'
+  contact_url: https://www.skattefunn.no
+  deadline: Løpende — utkast, ikke send uten manuell gjennomgang
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: true
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 41_det_bergenske_stiftelse
+  file: legats/41_det_bergenske_stiftelse.html
+  funder: Det Bergenske Stiftelse
+  to: post@detbergenskestiftelse.no
+  subject: Søknad Det Bergenske Stiftelse — teknologi for fellesskap i Bergen
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se vedtekter
+  track: samfunn
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 42_bergen_forskningsstiftelse
+  file: legats/42_bergen_forskningsstiftelse.html
+  funder: Bergen Forskningsstiftelse
+  to: post@uib.no
+  subject: Søknad Bergen Forskningsstiftelse — selvforbedrende AI-systemer
+  contact_url: https://www4.uib.no
+  deadline: Varierer
+  track: forskning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 43_einar_juels_legat
+  file: legats/43_einar_juels_legat.html
+  funder: Einar Juels Legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Einar Juels Legat 2026 — høyere utdanning AI/systemutvikling
+  contact_url: https://stipendportalen.no/organisasjon/2828
+  deadline: Se stipendportalen.no
+  track: utdanning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 44_hp_petersens_legat
+  file: legats/44_hp_petersens_legat.html
+  funder: H.P. Petersens Legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad H.P. Petersens Legat — utdanning og nødhjelp
+  contact_url: https://stipendportalen.no/organisasjon/1467
+  deadline: Årlig
+  track: sosial
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 45_lyche_stiftelsen
+  file: legats/45_lyche_stiftelsen.html
+  funder: Lydia og Harald Lyches Stiftelse
+  to: post@lychestiftelsen.no
+  subject: Søknad Lychestiftelsen — økonomisk bistand og utdanning
+  contact_url: https://stipendportalen.no/organisasjon/1780
+  deadline: Se lychestiftelsen.no
+  track: sosial
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 46_ingvaldsens_legat
+  file: legats/46_ingvaldsens_legat.html
+  funder: Aase og Bernt Ingvaldsens legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Ingvaldsens legat — teknologiutdanning Bergen
+  contact_url: https://stipendportalen.no/ingvaldsenslegat
+  deadline: Se utlysning
+  track: utdanning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 47_bergens_tidende_legat
+  file: legats/47_bergens_tidende_legat.html
+  funder: Bergens Tidende legat
+  to: post@bt.no
+  subject: Søknad BT-legat — lokal medieteknologi (brgen.no)
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Varierer
+  track: kultur
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 48_bergens_kunstforening
+  file: legats/48_bergens_kunstforening.html
+  funder: Bergens Kunstforening
+  to: post@kunstforeningen.no
+  subject: Søknad Bergens Kunstforening — digital kunstformidling
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se utlysninger
+  track: kultur
+  project: amber
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 49_autismeforeningen_forskning
+  file: legats/49_autismeforeningen_forskning.html
+  funder: Autismeforeningens forskningsfond
+  to: post@autismeforeningen.no
+  subject: Søknad Autismeforeningen — tilgjengelig helseteknologi
+  contact_url: https://stipendportalen.no/organisasjon/1135
+  deadline: Se autismeforeningen.no
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 50_revmatikerforbundet_barnefond
+  file: legats/50_revmatikerforbundet_barnefond.html
+  funder: Norsk Revmatikerforbund — Barnefondet
+  to: post@revmatiker.no
+  subject: Søknad Revmatikerforbundet Barnefondet 2026
+  contact_url: https://stipendportalen.no/utlysing/4989
+  deadline: 15.09.2026
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 51_johan_throne_holst
+  file: legats/51_johan_throne_holst.html
+  funder: Johan Throne Holst legat
+  to: post@forskningsradet.no
+  subject: Søknad Johan Throne Holst — digitalisering av velferdsstaten
+  contact_url: https://stipendportalen.no/stotteordninger
+  deadline: Se utlysninger
+  track: forskning
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 52_vilhelm_bjerkreim_legat
+  file: legats/52_vilhelm_bjerkreim_legat.html
+  funder: Vilhelm og Marie Bjerkreim legat
+  to: post@uib.no
+  subject: Søknad Bjerkreim legat — medisinsk programvare
+  contact_url: https://www4.uib.no/for-studenter/livet-som-student/fond-legater-og-stipend
+  deadline: Varierer
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 53_cmi_bergen
+  file: legats/53_cmi_bergen.html
+  funder: Chr. Michelsens Institutt
+  to: post@cmi.no
+  subject: Søknad CMI — teknologi for offentlig sektor i utviklingskontekst
+  contact_url: https://www.cmi.no
+  deadline: Se cmi.no
+  track: forskning
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 54_mental_helse_bergen
+  file: legats/54_mental_helse_bergen.html
+  funder: Mental Helse Hordaland
+  to: post@mentalhelse.no
+  subject: Søknad Mental Helse — trygge digitale verktøy for pårørende
+  contact_url: https://www.verdensdagen.no
+  deadline: Fortløpende
+  track: helse
+  project: pub.healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 55_bergen_handelsstand
+  file: legats/55_bergen_handelsstand.html
+  funder: Bergen Handelsstands Forenings fond
+  to: post@bhf.no
+  subject: Søknad BHF fond — teknologisk entreprenørskap Bergen
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se BHF
+  track: innovasjon
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 56_den_norske_bank_bergen
+  file: legats/56_den_norske_bank_bergen.html
+  funder: Den norske Banks fond for Bergen
+  to: post@dnb.no
+  subject: Søknad DNB fond Bergen — innovasjon og samfunnsnytte
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Varierer
+  track: regional
+  project: pub4
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 57_rikard_rikardsen_legat
+  file: legats/57_rikard_rikardsen_legat.html
+  funder: Rikard Rikardsen legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Rikardsen legat — høyere utdanning
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: utdanning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 58_danielsen_arkitekt_legat
+  file: legats/58_danielsen_arkitekt_legat.html
+  funder: Ingolf og Hildur Danielsen legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Danielsen legat — digital design og arkitektur
+  contact_url: https://stipendportalen.no/organisasjon/1110
+  deadline: Se utlysning
+  track: utdanning
+  project: amber
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 59_zander_kaaes_stiftelse
+  file: legats/59_zander_kaaes_stiftelse.html
+  funder: Zander Kaaes Stiftelse
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Zander Kaaes — bistand bosatt Bergen (over 60)
+  contact_url: https://stipendportalen.no/zanderkaaesstiftelse
+  deadline: Årlig
+  track: sosial
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 60_hordaland_kunstsenter
+  file: legats/60_hordaland_kunstsenter.html
+  funder: Hordaland kunstsenter
+  to: post@hordalandkunstsenter.no
+  subject: Søknad Hordaland kunstsenter — digital kunst og MASTER
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se utlysninger
+  track: kultur
+  project: amber
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 61_equinor_talent
+  file: legats/61_equinor_talent.html
+  funder: Equinor talentstipend (referanse)
+  to: bergen@pub.attorney
+  subject: 'Søknad: MASTER/RAILS — teknologitalent fra Bergen'
+  contact_url: https://stipendportalen.no/stotteordninger
+  deadline: Se Equinor-programmer
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: true
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 62_kommunalt_startlan_egenkapital
+  file: legats/62_kommunalt_startlan_egenkapital.html
+  funder: Bergen kommune — boligsparing
+  to: boligkontoret@bergen.kommune.no
+  subject: Henvendelse boligsparing og egenkapital — leilighet Bergen
+  contact_url: https://www.bergen.kommune.no/bolig
+  deadline: Fortløpende
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 63_nav_okonomisk_radgivning
+  file: legats/63_nav_okonomisk_radgivning.html
+  funder: NAV Bergen — økonomisk rådgivning
+  to: postmottak@bergen.kommune.no
+  subject: Henvendelse NAV/Boligkontoret — boligkjøp og økonomisk plan
+  contact_url: https://www.nav.no
+  deadline: Fortløpende
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 64_husbanken_startlan
+  file: legats/64_husbanken_startlan.html
+  funder: Husbanken — startlånordningen
+  to: post@husbanken.no
+  subject: Søknad Startlån — kjøp av bolig i Bergen kommune
+  contact_url: https://www.husbanken.no
+  deadline: Via Bergen kommune
+  track: bolig
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 65_legathandboken_generell
+  file: legats/65_legathandboken_generell.html
+  funder: Legathåndboken — generell henvendelse
+  to: bergen@pub.attorney
+  subject: 'Mal: MASTER + RAILS — tilpasning per legat i Legathåndboken'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver
+  track: innovasjon
+  project: master+rails
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: true
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 67_arild_wahlstroms_fond
+  file: legats/67_arild_wahlstroms_fond.html
+  funder: Arild Wahlstrøms fond
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Wahlstrøms fond — Repligen og visuell produksjon
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: kultur
+  project: repligen_studio
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (stipendportalen) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: stipendportalen
+- id: 68_ole_bull_stiftelsen
+  file: legats/68_ole_bull_stiftelsen.html
+  funder: Ole Bull-stiftelsen
+  to: post@olebull.no
+  subject: Søknad Ole Bull-stiftelsen — Radio Bergen og lokal lyd
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se utlysninger
+  track: kultur
+  project: radio_bergen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 69_sparebanken_vest
+  file: legats/69_sparebanken_vest.html
+  funder: Sparebankstiftelsen Vest
+  to: post@spvstiftelsen.no
+  subject: Søknad Sparebankstiftelsen Vest — pub4 Bergen
+  contact_url: https://spvstiftelsen.no
+  deadline: Fortløpende
+  track: regional
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 70_conrad_mohrs_legat
+  file: legats/70_conrad_mohrs_legat.html
+  funder: Conrad Mohrs legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Conrad Mohrs legat — systemutvikling
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: utdanning
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 71_frederik_langes_legat
+  file: legats/71_frederik_langes_legat.html
+  funder: Frederik Langes legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Frederik Langes legat — SYRE og design
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: utdanning
+  project: syre
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 72_bergens_private_bankers
+  file: legats/72_bergens_private_bankers.html
+  funder: Bergens Private Bankers legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Bergens Private Bankers — entreprenørskap
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: utdanning
+  project: norwegian_hedge
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 73_louise_findals_legat
+  file: legats/73_louise_findals_legat.html
+  funder: Louise og Elias Findals legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Findals legat — bistand Bergen
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: sosial
+  project: personal
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 74_jacob_tulegns_legat
+  file: legats/74_jacob_tulegns_legat.html
+  funder: Jacob og Wilhelmine Tulegns legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Tulegns legat — høyere utdanning
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: utdanning
+  project: pub_attorney
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 75_knut_nordkvist_legat
+  file: legats/75_knut_nordkvist_legat.html
+  funder: Knut og Margit Nordkvist legat
+  to: postmottak@bergen.kommune.no
+  subject: Søknad Nordkvist legat — teknologiutdanning
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Årlig
+  track: utdanning
+  project: bsdports
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 76_edvard_grieg_fondet
+  file: legats/76_edvard_grieg_fondet.html
+  funder: Edvard Grieg-fondet
+  to: post@greigstiftelsen.no
+  subject: Søknad Grieg-fondet — Radio Bergen
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se utlysninger
+  track: kultur
+  project: radio_bergen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 77_vestland_kultur
+  file: legats/77_vestland_kultur.html
+  funder: Vestland fylkeskommune — kulturtilskudd
+  to: post@vestlandfylke.no
+  subject: Søknad Vestland kultur — brgen.no og Radio Bergen
+  contact_url: https://www.vestlandfylke.no/tilskot/
+  deadline: Se vestlandfylke.no
+  track: kultur
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 78_ilumi_sosial
+  file: legats/78_ilumi_sosial.html
+  funder: Lychestiftelsen / sosiale fond
+  to: post@lychestiftelsen.no
+  subject: Søknad — Ilumi Gravferd lavterskel
+  contact_url: https://stipendportalen.no/organisasjon/1780
+  deadline: Fortløpende
+  track: sosial
+  project: ilumi_gravferd
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 79_pub_attorney_civic
+  file: legats/79_pub_attorney_civic.html
+  funder: Det Bergenske Stiftelse
+  to: post@detbergenskestiftelse.no
+  subject: Søknad — pub.attorney juridisk veiledning
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se vedtekter
+  track: samfunn
+  project: pub_attorney
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 80_ditt_parti_bergenske
+  file: legats/80_ditt_parti_bergenske.html
+  funder: Det Bergenske Stiftelse
+  to: post@detbergenskestiftelse.no
+  subject: Søknad — Ditt Parti lokal demokrati
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Se vedtekter
+  track: samfunn
+  project: ditt_parti
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 81_sovereign_digdir
+  file: legats/81_sovereign_digdir.html
+  funder: Digitaliseringsdirektoratet
+  to: post@digdir.no
+  subject: Søknad — Sovereign VPS og OpenBSD-hosting
+  contact_url: https://www.digdir.no
+  deadline: Se utlysninger
+  track: sikkerhet
+  project: sovereign_vps
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: 82_amber_vestland_klima
+  file: legats/82_amber_vestland_klima.html
+  funder: Vestland fylkeskommune — klima
+  to: post@vestlandfylke.no
+  subject: Søknad — amber.brgen.no sirkulær garderobe
+  contact_url: https://www.vestlandfylke.no/tilskot/
+  deadline: Se utlysninger
+  track: klima
+  project: amber
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: vx_pub_healthcare_innovasjon_norge
+  file: legats/vx_pub_healthcare_innovasjon_norge.html
+  funder: Innovasjon Norge
+  to: post@innovasjonnorge.no
+  subject: 'Søknad: pub.healthcare — Helseteknologi — Innovasjon Norge'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: helse
+  project: pub_healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (rådgiver_møte) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: rådgiver_møte
+- id: vx_pub_healthcare_skattefunn
+  file: legats/vx_pub_healthcare_skattefunn.html
+  funder: SkatteFUNN
+  to: skattefunn@forskningsradet.no
+  subject: 'Søknad: pub.healthcare — Helseteknologi — SkatteFUNN'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: helse
+  project: pub_healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: vx_pub_healthcare_forskningsradet
+  file: legats/vx_pub_healthcare_forskningsradet.html
+  funder: Forskningsrådet
+  to: post@forskningsradet.no
+  subject: 'Søknad: pub.healthcare — Helseteknologi — Forskningsrådet'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: helse
+  project: pub_healthcare
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: vx_brgen_innovasjon_norge
+  file: legats/vx_brgen_innovasjon_norge.html
+  funder: Innovasjon Norge
+  to: post@innovasjonnorge.no
+  subject: 'Søknad: brgen.no — Hyperlokalt fellesskap — Innovasjon Norge'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: samfunn
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (rådgiver_møte) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: rådgiver_møte
+- id: vx_brgen_sr_bank
+  file: legats/vx_brgen_sr_bank.html
+  funder: Sparebankstiftelsen SR-Bank
+  to: post@srstiftelsen.no
+  subject: 'Søknad: brgen.no — Hyperlokalt fellesskap — Sparebankstiftelsen SR-Bank'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: samfunn
+  project: brgen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  preferred_channel: nettside_skjema
+- id: vx_bsdports_skattefunn
+  file: legats/vx_bsdports_skattefunn.html
+  funder: SkatteFUNN
+  to: skattefunn@forskningsradet.no
+  subject: 'Søknad: bsdports.org — Sikker pakkeinfrastruktur — SkatteFUNN'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: sikkerhet
+  project: bsdports
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: vx_bsdports_digdir
+  file: legats/vx_bsdports_digdir.html
+  funder: Digitaliseringsdirektoratet
+  to: post@digdir.no
+  subject: 'Søknad: bsdports.org — Sikker pakkeinfrastruktur — Digitaliseringsdirektoratet'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: sikkerhet
+  project: bsdports
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: vx_syre_innovasjon_norge
+  file: legats/vx_syre_innovasjon_norge.html
+  funder: Innovasjon Norge
+  to: post@innovasjonnorge.no
+  subject: 'Søknad: SYRE™ — Bergensk skoinnovasjon — Innovasjon Norge'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: produkt
+  project: syre
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: false
+  notes: Portal/skjema-kanal (rådgiver_møte) — ikke auto-e-post. Bekreft på contact_url.
+  preferred_channel: rådgiver_møte
+- id: vx_syre_sr_bank
+  file: legats/vx_syre_sr_bank.html
+  funder: Sparebankstiftelsen SR-Bank
+  to: post@srstiftelsen.no
+  subject: 'Søknad: SYRE™ — Bergensk skoinnovasjon — Sparebankstiftelsen SR-Bank'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: produkt
+  project: syre
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  preferred_channel: nettside_skjema
+- id: vx_radio_bergen_media_city
+  file: legats/vx_radio_bergen_media_city.html
+  funder: Media City Bergen
+  to: post@mediacitybergen.no
+  subject: 'Søknad: Radio Bergen — MASTER Voice — Media City Bergen'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: kultur
+  project: radio_bergen
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: vx_repligen_studio_media_city
+  file: legats/vx_repligen_studio_media_city.html
+  funder: Media City Bergen
+  to: post@mediacitybergen.no
+  subject: 'Søknad: Repligen Studio — Visuell produksjon — Media City Bergen'
+  contact_url: https://stipendportalen.no/organisasjoner?location=37
+  deadline: Tilpass per giver — verifiser på contact_url
+  track: kultur
+  project: repligen_studio
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: false
+  sendable: true
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: fun_regnvann_amber
+  file: legats/fun_regnvann_amber.html
+  funder: Se funding.yml / matchende giver
+  to: bergen@pub.attorney
+  subject: 'Søknad: Bergensk november-antrekk'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: klima
+  project: amber
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: true
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: fun_legat_soker_fo
+  file: legats/fun_legat_soker_fo.html
+  funder: Se funding.yml / matchende giver
+  to: bergen@pub.attorney
+  subject: 'Søknad: FoU på ansvarlig legat-automatisering'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: innovasjon
+  project: master
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: true
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+- id: fun_rolig_gravferd
+  file: legats/fun_rolig_gravferd.html
+  funder: Se funding.yml / matchende giver
+  to: bergen@pub.attorney
+  subject: 'Søknad: Ilumi — ingen diskokiste uten opt-in'
+  contact_url: https://stipendportalen.no
+  deadline: Tilpass per giver
+  track: sosial
+  project: ilumi_gravferd
+  from: bergen@pub.attorney
+  verify_to: true
+  draft: true
+  sendable: false
+  notes: Bekreft mottakeradresse på contact_url før mutt-sending.

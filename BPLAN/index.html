@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BPLAN — pub4</title>
+  <meta name="description" content="Forretningsplaner og legatsøknader for MASTER/RAILS-prosjekter i Bergen.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="htu/htu.css">
+</head>
+<body>
+  <article>
+    <img src="htu/bergen.svg" alt="" class="logo">
+    <header>
+      <h1>BPLAN</h1>
+      <p class="meta">15 ideer · én HTML per idé · Bergen<br><time datetime="2026-07-14">14. juli 2026</time></p>
+    </header>
+    <div class="content">
+      <h2>Forretningsplaner</h2>
+      <table>
+        <tr><td>1.</td><td><a href="master.html">MASTER — Selvforbedrende AI-plattform</a></td></tr>
+        <tr><td>2.</td><td><a href="pub_healthcare.html">pub.healthcare — Helseteknologi</a></td></tr>
+        <tr><td>3.</td><td><a href="brgen.html">brgen.no — Hyperlokalt fellesskap</a></td></tr>
+        <tr><td>4.</td><td><a href="amber.html">amber.brgen.no — Bærekraftig garderobe</a></td></tr>
+        <tr><td>5.</td><td><a href="bsdports.html">bsdports.org — Sikker pakkeinfrastruktur</a></td></tr>
+        <tr><td>6.</td><td><a href="syre.html">SYRE™ — Bergensk skoinnovasjon</a></td></tr>
+        <tr><td>7.</td><td><a href="norwegian_hedge.html">Norwegian Hedge — Finanssoftware</a></td></tr>
+        <tr><td>8.</td><td><a href="ditt_parti.html">Ditt Parti — Lokal demokrati</a></td></tr>
+        <tr><td>9.</td><td><a href="ilumi_gravferd.html">Ilumi Gravferd — Verdig minneseremoni</a></td></tr>
+        <tr><td>10.</td><td><a href="pub_attorney.html">pub.attorney — Juridisk veiledning</a></td></tr>
+        <tr><td>11.</td><td><a href="sovereign_vps.html">Sovereign VPS — Norsk hosting</a></td></tr>
+        <tr><td>12.</td><td><a href="radio_bergen.html">Radio Bergen — MASTER Voice</a></td></tr>
+        <tr><td>13.</td><td><a href="repligen_studio.html">Repligen Studio — Visuell produksjon</a></td></tr>
+        <tr><td>14.</td><td><a href="bolig_bergen.html">Bolig Bergen — Startlån</a></td></tr>
+        <tr><td>15.</td><td><a href="personal.html">Personlig — Bergen bolig og levekostnader</a></td></tr>
+      </table>
+      <h2>Portefølje — konvergens</h2>
+<p class="meta">Én sannhetskilde (funding.yml v4). Tall er realistiske for solo-utvikler i Bergen.</p>
+<table>
+  <thead><tr><th scope="col">Post</th><th scope="col">Realistisk tak</th></tr></thead>
+<tbody>
+<tr><td>Legater (sum alle idéer, ikke dobbelt)</td><td>NOK 150 000</td></tr>
+<tr><td>Primær innovasjon (IN/FR, én kanal)</td><td>NOK 600 000</td></tr>
+<tr><td>SkatteFUNN (skattefradrag)</td><td>NOK 100 000</td></tr>
+<tr><td>Levekostnad / mnd minimum</td><td>NOK 18 000</td></tr>
+<tr><td>Startlån-tilskudd (kommune)</td><td>250000–500000 NOK</td></tr>
+</tbody>
+</table>
+<p class="meta"><em>Summen av ask_legat_nok på tvers av idéer (ca. 150k NOK tak) er ikke utbetalbar i én pose — hvert legat er 5–75k, og dobbelsøk for samme leveranse samme kvartal avvises. Tallene viser realistisk spredning, ikke en samlet utbetaling.</em></p>
+
+<h3>Anti-dobbelsøk</h3>
+<table>
+  <tr><td>1.</td><td>Én primær innovasjonssøknad per prosjektår (IN eller Forskningsrådet — ikke begge for samme utgift)</td></tr>
+        <tr><td>2.</td><td>Legater 5–75k: brofinansiering — ikke to brev for identisk leveranse samme kvartal</td></tr>
+        <tr><td>3.</td><td>SkatteFUNN er skattefradrag neste år, ikke likviditet nå</td></tr>
+        <tr><td>4.</td><td>Boligspor (Startlån/tilskudd/personlegater) helt separat fra FoU-budsjett</td></tr>
+</table>
+<p class="meta">Startlån: Fortløpende — elektronisk via Husbanken · boligkontoret@bergen.kommune.no · tlf. 55 56 65 76</p>
+
+      <h3>Legatsum — hvorfor ikke bare addere?</h3>
+<p class="meta">
+  Summen av alle <code>ask_legat_nok</code> per idé er NOK 455 000 — men det er <em>ikke</em> et realistisk utbetalingsmål.
+  Klassiske legater er 5–75k per søknad; anti-dobbelsøk og kanalvalg begrenser faktisk likviditet.
+</p>
+<table>
+  <tr><td>Sum alle idé-asks (teoretisk)</td><td>NOK 455 000</td></tr>
+  <tr><td>Realistisk tak (portefølje)</td><td>NOK 150 000</td></tr>
+  <tr><td>Typisk enkeltlegat</td><td>5000–75000 NOK</td></tr>
+</table>
+
+      <h2>Fristkalender</h2>
+<p class="meta">Verifiser alltid på giverens nettside før sending. <code>ruby build_plans.rb</code> regenererer fra funding.yml.</p>
+<table>
+  <tr><td>#</td><td>Frist</td><td>Giver</td><td>Spor</td><td>Handling</td></tr>
+  <tr><td>1.</td><td>2026-06-23 – 2026-09-01 <span class="meta">(åpen nå)</span></td><td>Zuccarellostiftelsen personstipend</td><td>bolig</td><td>Stipendportalen — idrett/ungdom, kan brukes som brofinansiering</td></tr>
+        <tr><td>2.</td><td>2026-07-14 <span class="meta">(åpen nå)</span></td><td>Innovasjon Norge Bergen</td><td>innovasjon</td><td>Book møte med rådgiver — ikke masse-e-post</td></tr>
+        <tr><td>3.</td><td>2026-07-14 <span class="meta">(åpen nå)</span></td><td>Bergen kommune Startlån</td><td>bolig</td><td>Søk elektronisk — ingen frist, men bolig først</td></tr>
+        <tr><td>4.</td><td>2026-09-01 – 2026-09-30</td><td>Bergen bys Utdanningsstiftelse</td><td>innovasjon</td><td>Søk 1.–30. sept — bostedsattest + skatteoppgjør. Siste dag 30.09 — MASTER/kompetanseheving-vinkel</td></tr>
+        <tr><td>5.</td><td>2026-09-20</td><td>Gunvor Mindes legat</td><td>bolig</td><td>Personlig søknad — legeattest + skatteligning</td></tr>
+        <tr><td>6.</td><td>2026-10-01</td><td>SkatteFUNN</td><td>innovasjon</td><td>FoU-logg fra MASTER — skattefradrag neste år</td></tr>
+</table>
+
+      <h2>Wholesome idé-katalog (meta → ekte kanaler)</h2>
+<p>Disse er ærlige vinkler — søk reelle givere i kolonnen «Realistisk kanal» i funding.yml.</p>
+<table>
+  <tr><td>#</td><td>Idé</td><td>Realistisk?</td><td>Beløp</td><td>Vinkel</td></tr>
+  <tr><td>1.</td><td>Stiftelsen for folk som mistet BankID-brikke</td><td>Nei (meta)</td><td>—</td><td>pub.attorney + HTU for passivitetsfrister — ekte problem, ikke ekte fond</td></tr>
+        <tr><td>2.</td><td>Bevaringsfond for produksjonsklar Ruby</td><td>Nei (meta)</td><td>NOK 150 000</td><td>Rails 8 + MASTER som nasjonal kompetanse — søk SR-Bank/Innovasjon Norge i stedet</td></tr>
+        <tr><td>3.</td><td>Bergensk november-antrekk</td><td>Ja</td><td>NOK 35 000</td><td>Amber + vær-API — faktisk produktfeature</td></tr>
+        <tr><td>4.</td><td>FoU på ansvarlig legat-automatisering</td><td>Ja</td><td>NOK 80 000</td><td>grok_send_legats.rb med menneskelig godkjenning — SkatteFUNN/Forskningsrådet</td></tr>
+        <tr><td>5.</td><td>Ilumi — ingen diskokiste uten opt-in</td><td>Ja</td><td>NOK 40 000</td><td>Avstand fra pub3 Ragnhild-gimmick; verdighet først</td></tr>
+</table>
+
+      <h2>Legatsøknader</h2>
+      <table>
+      <tr><td>→</td><td><a href="legats/index.html">Alle legater</a> — <code>ruby build_legats.rb</code></td></tr>
+      <tr><td>→</td><td>BPLAN/rails: <code>cd rails && bundle exec rails server</code> (port 39282, egen app)</td></tr>
+    </table>
+    <p class="meta"><code>ruby build_plans.rb</code> · <code>ruby build_legats.rb</code> · kanon: <code>funding.yml</code></p>
+    </div>
+    <footer>
+      <p class="meta disclaimer">Tall og frister i BPLAN er realistiske estimater for solo-utvikler i Bergen (2026).
+Verifiser alltid på giverens nettside før sending. Ingen garanti for tildeling.
+Boligspor og innovasjonsspor holdes adskilt — ikke dobbelsøk for samme utgift.</p>
+    </footer>
+  </article>
+  <script>
+document.querySelectorAll('.content table').forEach(function(t) {
+  t.setAttribute('role', 'table');
+});
+
+  </script>
+</body>
+</html>

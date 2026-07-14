@@ -1,0 +1,11 @@
+Hei,
+
+Vedlagt følger søknad til %{funder}.
+
+Prosjektet kombinerer MASTER — et selvforbedrende, konstitusjonelt styrt AI-system — med praktiske
+Rails-applikasjoner for helse og velferd (pub.healthcare, brgen.no). Målet er trygghet, selvstendighet
+og effektivisering i tråd med velferdsteknologiens formål — koordinering og informasjon, ikke diagnose.
+
+Med vennlig hilsen,
+Johann Tepstad
+PubHealthcare · www.pub.healthcare

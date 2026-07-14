@@ -9,6 +9,7 @@ class PostsController < ApplicationController
   before_action :require_real_user, only: [ :edit, :update, :destroy ]
   before_action :require_real_user, only: [ :share ]
   before_action :set_post,          only: [ :show, :edit, :update, :destroy ]
+  before_action :authorize_owner,   only: [ :edit, :update, :destroy ]
   before_action :set_community,     only: [ :new, :create ]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
@@ -98,6 +99,12 @@ class PostsController < ApplicationController
 
   def set_post
     @post = Post.includes(:user, :community).find(params[:id])
+  end
+
+  def authorize_owner
+    return if Current.user == @post.user
+
+    redirect_to @post, alert: "Not allowed"
   end
 
   def set_community

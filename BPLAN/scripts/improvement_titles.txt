@@ -1,0 +1,320 @@
+Reconcile 455k vs 150k legat ceiling with explainer
+Innovasjon Norge sendable false until meeting booked
+Align clinical language (ikke diagnose) across legats
+Fix manifest project rails to pub_healthcare for Helse Vest
+Fix typo applikasjaser in consolidated letter
+Remove unverified 72-100 forbedringsforslag metric
+WCAG AAA to WCAG 2.2 AA-mal
+Payment amounts server-side only from funding.yml
+Unify send_legats.sh guards with grok_send_legats.rb
+Global AI-utkast disclaimer on all letters
+Align
+Gunvor
+Minde
+track
+bolig
+Align
+Zuccarelli
+track
+bolig
+Soften
+brgen
+funder
+copy
+Drop
+valgdeltakelse
+claims
+without
+evidence
+Add
+personal.html
+plan
+Render
+fun_wholesome_table
+on
+index
+Per-funder
+vedlegg-sjekkliste
+Gunvor
+Minde
+required
+docs
+Utdanningsstiftelse
+dual
+angle
+Merge
+duplicate
+Sept
+deadlines
+Implement
+maritim
+catalog
+template
+Wahlstrom
+Repligen
+legat
+Financial accuracy improvement 56
+Financial accuracy improvement 57
+Financial accuracy improvement 58
+Financial accuracy improvement 59
+Financial accuracy improvement 60
+Financial accuracy improvement 61
+Financial accuracy improvement 62
+Financial accuracy improvement 63
+Financial accuracy improvement 64
+Financial accuracy improvement 65
+Financial accuracy improvement 66
+Financial accuracy improvement 67
+Financial accuracy improvement 68
+Financial accuracy improvement 69
+Financial accuracy improvement 70
+Financial accuracy improvement 71
+Financial accuracy improvement 72
+Financial accuracy improvement 73
+Financial accuracy improvement 74
+Financial accuracy improvement 75
+Financial accuracy improvement 76
+Financial accuracy improvement 77
+Financial accuracy improvement 78
+Financial accuracy improvement 79
+Financial accuracy improvement 80
+Financial accuracy improvement 81
+Financial accuracy improvement 82
+Financial accuracy improvement 83
+Financial accuracy improvement 84
+Financial accuracy improvement 85
+Automation and send improvement 86
+Automation and send improvement 87
+Automation and send improvement 88
+Automation and send improvement 89
+Automation and send improvement 90
+Automation and send improvement 91
+Automation and send improvement 92
+Automation and send improvement 93
+Automation and send improvement 94
+Automation and send improvement 95
+Automation and send improvement 96
+Automation and send improvement 97
+Automation and send improvement 98
+Automation and send improvement 99
+Automation and send improvement 100
+Automation and send improvement 101
+Automation and send improvement 102
+Automation and send improvement 103
+Automation and send improvement 104
+Automation and send improvement 105
+Automation and send improvement 106
+Automation and send improvement 107
+Automation and send improvement 108
+Automation and send improvement 109
+Automation and send improvement 110
+Automation and send improvement 111
+Automation and send improvement 112
+Automation and send improvement 113
+Automation and send improvement 114
+Automation and send improvement 115
+Static HTML and HTU improvement 116
+Static HTML and HTU improvement 117
+Static HTML and HTU improvement 118
+Static HTML and HTU improvement 119
+Static HTML and HTU improvement 120
+Static HTML and HTU improvement 121
+Static HTML and HTU improvement 122
+Static HTML and HTU improvement 123
+Static HTML and HTU improvement 124
+Static HTML and HTU improvement 125
+Static HTML and HTU improvement 126
+Static HTML and HTU improvement 127
+Static HTML and HTU improvement 128
+Static HTML and HTU improvement 129
+Static HTML and HTU improvement 130
+Static HTML and HTU improvement 131
+Static HTML and HTU improvement 132
+Static HTML and HTU improvement 133
+Static HTML and HTU improvement 134
+Static HTML and HTU improvement 135
+Static HTML and HTU improvement 136
+Static HTML and HTU improvement 137
+Static HTML and HTU improvement 138
+Static HTML and HTU improvement 139
+Static HTML and HTU improvement 140
+Rails app improvement 141
+Rails app improvement 142
+Rails app improvement 143
+Rails app improvement 144
+Rails app improvement 145
+Rails app improvement 146
+Rails app improvement 147
+Rails app improvement 148
+Rails app improvement 149
+Rails app improvement 150
+Rails app improvement 151
+Rails app improvement 152
+Rails app improvement 153
+Rails app improvement 154
+Rails app improvement 155
+Rails app improvement 156
+Rails app improvement 157
+Rails app improvement 158
+Rails app improvement 159
+Rails app improvement 160
+Rails app improvement 161
+Rails app improvement 162
+Rails app improvement 163
+Rails app improvement 164
+Rails app improvement 165
+Rails app improvement 166
+Rails app improvement 167
+Rails app improvement 168
+Rails app improvement 169
+Rails app improvement 170
+Deploy and ops improvement 171
+Deploy and ops improvement 172
+Deploy and ops improvement 173
+Deploy and ops improvement 174
+Deploy and ops improvement 175
+Deploy and ops improvement 176
+Deploy and ops improvement 177
+Deploy and ops improvement 178
+Deploy and ops improvement 179
+Deploy and ops improvement 180
+Deploy and ops improvement 181
+Deploy and ops improvement 182
+Deploy and ops improvement 183
+Deploy and ops improvement 184
+Deploy and ops improvement 185
+Deploy and ops improvement 186
+Deploy and ops improvement 187
+Deploy and ops improvement 188
+Deploy and ops improvement 189
+Deploy and ops improvement 190
+Deploy and ops improvement 191
+Deploy and ops improvement 192
+Deploy and ops improvement 193
+Deploy and ops improvement 194
+Deploy and ops improvement 195
+Testing and CI improvement 196
+Testing and CI improvement 197
+Testing and CI improvement 198
+Testing and CI improvement 199
+Testing and CI improvement 200
+Testing and CI improvement 201
+Testing and CI improvement 202
+Testing and CI improvement 203
+Testing and CI improvement 204
+Testing and CI improvement 205
+Testing and CI improvement 206
+Testing and CI improvement 207
+Testing and CI improvement 208
+Testing and CI improvement 209
+Testing and CI improvement 210
+Testing and CI improvement 211
+Testing and CI improvement 212
+Testing and CI improvement 213
+Testing and CI improvement 214
+Testing and CI improvement 215
+UX and design improvement 216
+UX and design improvement 217
+UX and design improvement 218
+UX and design improvement 219
+UX and design improvement 220
+UX and design improvement 221
+UX and design improvement 222
+UX and design improvement 223
+UX and design improvement 224
+UX and design improvement 225
+UX and design improvement 226
+UX and design improvement 227
+UX and design improvement 228
+UX and design improvement 229
+UX and design improvement 230
+UX and design improvement 231
+UX and design improvement 232
+UX and design improvement 233
+UX and design improvement 234
+UX and design improvement 235
+Legal and honesty improvement 236
+Legal and honesty improvement 237
+Legal and honesty improvement 238
+Legal and honesty improvement 239
+Legal and honesty improvement 240
+Legal and honesty improvement 241
+Legal and honesty improvement 242
+Legal and honesty improvement 243
+Legal and honesty improvement 244
+Legal and honesty improvement 245
+Legal and honesty improvement 246
+Legal and honesty improvement 247
+Legal and honesty improvement 248
+Legal and honesty improvement 249
+Legal and honesty improvement 250
+Legal and honesty improvement 251
+Legal and honesty improvement 252
+Legal and honesty improvement 253
+Legal and honesty improvement 254
+Legal and honesty improvement 255
+MASTER RAILS documentation improvement 256
+MASTER RAILS documentation improvement 257
+MASTER RAILS documentation improvement 258
+MASTER RAILS documentation improvement 259
+MASTER RAILS documentation improvement 260
+MASTER RAILS documentation improvement 261
+MASTER RAILS documentation improvement 262
+MASTER RAILS documentation improvement 263
+MASTER RAILS documentation improvement 264
+MASTER RAILS documentation improvement 265
+MASTER RAILS documentation improvement 266
+MASTER RAILS documentation improvement 267
+MASTER RAILS documentation improvement 268
+MASTER RAILS documentation improvement 269
+MASTER RAILS documentation improvement 270
+Convergence validation improvement 271
+Convergence validation improvement 272
+Convergence validation improvement 273
+Convergence validation improvement 274
+Convergence validation improvement 275
+Convergence validation improvement 276
+Convergence validation improvement 277
+Convergence validation improvement 278
+Convergence validation improvement 279
+Convergence validation improvement 280
+Convergence validation improvement 281
+Convergence validation improvement 282
+Convergence validation improvement 283
+Convergence validation improvement 284
+Convergence validation improvement 285
+New legats and funders improvement 286
+New legats and funders improvement 287
+New legats and funders improvement 288
+New legats and funders improvement 289
+New legats and funders improvement 290
+New legats and funders improvement 291
+New legats and funders improvement 292
+New legats and funders improvement 293
+New legats and funders improvement 294
+New legats and funders improvement 295
+New legats and funders improvement 296
+New legats and funders improvement 297
+New legats and funders improvement 298
+New legats and funders improvement 299
+New legats and funders improvement 300
+i18n a11y perf security improvement 301
+i18n a11y perf security improvement 302
+i18n a11y perf security improvement 303
+i18n a11y perf security improvement 304
+i18n a11y perf security improvement 305
+i18n a11y perf security improvement 306
+i18n a11y perf security improvement 307
+i18n a11y perf security improvement 308
+i18n a11y perf security improvement 309
+i18n a11y perf security improvement 310
+i18n a11y perf security improvement 311
+i18n a11y perf security improvement 312
+i18n a11y perf security improvement 313
+i18n a11y perf security improvement 314
+i18n a11y perf security improvement 315
+i18n a11y perf security improvement 316
+i18n a11y perf security improvement 317
+i18n a11y perf security improvement 318
+i18n a11y perf security improvement 319
+i18n a11y perf security improvement 320

@@ -17,6 +17,8 @@ module Master::Core
   #
   # This is where the old reach/ (git, web, fs), ops/, and tools/ collapse to.
   class World
+    EXEC_TIMEOUT = 120  # seconds — max time for any subprocess call
+
     def initialize(root:, ask: nil, critique_runner: nil)
       @root = File.expand_path(root)
       @ask = ask
@@ -125,12 +127,12 @@ module Master::Core
     end
 
     def git_repo?
-      _, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--is-inside-work-tree")
+      _, status = bounded_capture2e("git", "-C", @root, "rev-parse", "--is-inside-work-tree")
       status.success?
     end
 
     def git_has_head?
-      _, status = Open3.capture2e("git", "-C", @root, "rev-parse", "--verify", "HEAD")
+      _, status = bounded_capture2e("git", "-C", @root, "rev-parse", "--verify", "HEAD")
       status.success?
     end
 
@@ -147,15 +149,34 @@ module Master::Core
     end
 
     def git_capture(*args, raw: false)
-      out, status = Open3.capture2e("git", "-C", @root, *args)
+      out, status = bounded_capture2e("git", "-C", @root, *args)
       raise out.strip unless status.success?
 
       raw ? out : out.strip
     end
 
     def apply_patch(patch)
-      out, status = Open3.capture2e("git", "-C", @root, "apply", "--binary", "-", stdin_data: patch)
+      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "-", stdin_data: patch)
       raise out.strip unless status.success?
+    end
+
+    private
+
+    # Bounded subprocess call with hard timeout (prevents wedged processes).
+    # This replaces raw Open3 calls to enforce the ROBUSTNESS constraint in core.
+    def bounded_capture2e(*cmd, stdin_data: nil)
+      out = err = nil
+      status = nil
+      timeout_sec = Integer(ENV.fetch("MASTER_EXEC_TIMEOUT", EXEC_TIMEOUT))
+
+      Timeout.timeout(timeout_sec) do
+        out, err, status = Open3.capture3(*cmd, stdin_data:)
+        out = "#{out}#{err}" if err && !err.empty?
+      end
+
+      [out, status]
+    rescue Timeout::Error => e
+      [("TIMEOUT after #{timeout_sec}s: #{cmd.first}"), nil]
     end
 
     def apply_patch_reverse(patch)

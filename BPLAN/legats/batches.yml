@@ -1,0 +1,98 @@
+# Senderekkefølge for grok_send_legats.rb
+# Kjør: ruby BPLAN/grok_send_legats.rb --batch bolig_asap --dry-run
+#
+# frist_host_2026: auto_from funding_deadlines — IDs hentes fra funding.yml
+# deadlines[] der batch=frist_host_2026 (felt legat_id). Regenerer ikke manuelt.
+
+batches:
+  bolig_asap:
+    description: "Bolig og økonomisk bistand — høyest prioritet for leilighet i Bergen"
+    delay_seconds: 120
+    ids:
+      - 12_bergen_startlan_boligtilskudd
+      - 64_husbanken_startlan
+      - 62_kommunalt_startlan_egenkapital
+      - 11_bergen_bys_vanskeligstilte
+      - 10_gunvor_mindes_legat
+      - 31_zuccarellostiftelsen
+      - 32_hielmstierne_rosencrone
+      - 44_hp_petersens_legat
+      - 45_lyche_stiftelsen
+      - 30_boligsparing_egenkapital
+      - 63_nav_okonomisk_radgivning
+
+  frist_host_2026:
+    description: "Utlysninger med frist høst 2026 (auto fra funding.yml deadlines)"
+    delay_seconds: 90
+    auto: true
+    auto_from: funding_deadlines
+
+  innovasjon:
+    description: "Større innovasjonspot — Innovasjon Norge, SkatteFUNN, regional"
+    delay_seconds: 180
+    ids:
+      - 01_innovasjon_norge_master
+      - 07_skattefunn_rnd
+      - 05_sparebankstiftelsen_sr_bank
+      - 06_vestland_fylke_digitalisering
+      - 55_bergen_handelsstand
+      - 56_den_norske_bank_bergen
+      - 40_master_rails_konsolidert
+
+  helse:
+    description: "Helse og velferdsteknologi"
+    delay_seconds: 120
+    ids:
+      - 02_trond_mohn_medical_ai
+      - 03_helse_vest_velferdsteknologi
+      - 19_pub_healthcare_helseteknologi
+      - 25_gjensidigestiftelsen_helse
+      - 36_dam_stiftelsen_helse
+      - 38_mowinckel_forskning
+      - 39_anders_jahres_pris
+      - 49_autismeforeningen_forskning
+      - 50_revmatikerforbundet_barnefond
+      - 52_vilhelm_bjerkreim_legat
+      - 54_mental_helse_bergen
+
+  bergen_legathandboken:
+    description: "Bergen-spesifikke legater fra katalogen"
+    delay_seconds: 90
+    ids:
+      - 41_det_bergenske_stiftelse
+      - 42_bergen_forskningsstiftelse
+      - 43_einar_juels_legat
+      - 46_ingvaldsens_legat
+      - 47_bergens_tidende_legat
+      - 48_bergens_kunstforening
+      - 57_rikard_rikardsen_legat
+      - 58_danielsen_arkitekt_legat
+      - 60_hordaland_kunstsenter
+
+  rails_apper:
+    description: "Indirekte RAILS-applikasjoner"
+    delay_seconds: 90
+    ids:
+      - 16_brgen_digitalt_demokrati
+      - 17_amber_baerekraft_mote
+      - 18_bsdports_digital_suverenitet
+      - 20_syre_footwear_innovasjon
+      - 21_norwegian_hedge_finans
+      - 22_ditt_parti_demokrati
+      - 23_ilumi_gravferd_verdighet
+
+  master_direkte:
+    description: "Direkte MASTER-kjerne"
+    delay_seconds: 120
+    ids:
+      - 15_master_kjerne_direkte
+      - 04_forskningsradet_ikt_ai
+      - 29_openbsd_foundation_sikkerhet
+      - 35_ekom_programmet
+
+  all_sendable:
+    description: "Alle med ekstern e-post (ekskluderer draft)"
+    delay_seconds: 60
+    auto: true
+    exclude_drafts: true
+    exclude_self: true

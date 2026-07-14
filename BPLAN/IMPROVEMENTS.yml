@@ -1,0 +1,969 @@
+---
+version: 2
+generated: '2026-07-14'
+summary:
+  total: 320
+  implemented: 253
+  deferred: 37
+  ops: 30
+items:
+- id: '001'
+  title: Reconcile 455k vs 150k legat ceiling with explainer
+  status: implemented
+- id: '002'
+  title: Innovasjon Norge sendable false until meeting booked
+  status: implemented
+- id: '003'
+  title: Align clinical language (ikke diagnose) across legats
+  status: implemented
+- id: '004'
+  title: Fix manifest project rails to pub_healthcare for Helse Vest
+  status: implemented
+- id: '005'
+  title: Fix typo applikasjaser in consolidated letter
+  status: implemented
+- id: '006'
+  title: Remove unverified 72-100 forbedringsforslag metric
+  status: implemented
+- id: '007'
+  title: WCAG AAA to WCAG 2.2 AA-mal
+  status: implemented
+- id: '008'
+  title: Payment amounts server-side only from funding.yml
+  status: implemented
+- id: '009'
+  title: Unify send_legats.sh guards with grok_send_legats.rb
+  status: implemented
+- id: '010'
+  title: Global AI-utkast disclaimer on all letters
+  status: implemented
+- id: '011'
+  title: Align
+  status: implemented
+- id: '012'
+  title: Gunvor
+  status: implemented
+- id: '013'
+  title: Minde
+  status: implemented
+- id: '014'
+  title: track
+  status: implemented
+- id: '015'
+  title: bolig
+  status: implemented
+- id: '016'
+  title: Align
+  status: implemented
+- id: '017'
+  title: Zuccarelli
+  status: implemented
+- id: '018'
+  title: track
+  status: implemented
+- id: '019'
+  title: bolig
+  status: implemented
+- id: '020'
+  title: Soften
+  status: implemented
+- id: '021'
+  title: brgen
+  status: implemented
+- id: '022'
+  title: funder
+  status: implemented
+- id: '023'
+  title: copy
+  status: implemented
+- id: '024'
+  title: Drop
+  status: implemented
+- id: '025'
+  title: valgdeltakelse
+  status: implemented
+- id: '026'
+  title: claims
+  status: implemented
+- id: '027'
+  title: without
+  status: implemented
+- id: '028'
+  title: evidence
+  status: implemented
+- id: '029'
+  title: Add
+  status: deferred
+- id: '030'
+  title: personal.html
+  status: deferred
+- id: '031'
+  title: plan
+  status: deferred
+- id: '032'
+  title: Render
+  status: deferred
+- id: '033'
+  title: fun_wholesome_table
+  status: deferred
+- id: '034'
+  title: 'on'
+  status: deferred
+- id: '035'
+  title: index
+  status: deferred
+- id: '036'
+  title: Per-funder
+  status: deferred
+- id: '037'
+  title: vedlegg-sjekkliste
+  status: deferred
+- id: '038'
+  title: Gunvor
+  status: deferred
+- id: '039'
+  title: Minde
+  status: deferred
+- id: '040'
+  title: required
+  status: deferred
+- id: '041'
+  title: docs
+  status: deferred
+- id: '042'
+  title: Utdanningsstiftelse
+  status: deferred
+- id: '043'
+  title: dual
+  status: deferred
+- id: '044'
+  title: angle
+  status: deferred
+- id: '045'
+  title: Merge
+  status: deferred
+- id: '046'
+  title: duplicate
+  status: implemented
+- id: '047'
+  title: Sept
+  status: implemented
+- id: '048'
+  title: deadlines
+  status: implemented
+- id: '049'
+  title: Implement
+  status: implemented
+- id: '050'
+  title: maritim
+  status: implemented
+- id: '051'
+  title: catalog
+  status: implemented
+- id: '052'
+  title: template
+  status: implemented
+- id: '053'
+  title: Wahlstrom
+  status: implemented
+- id: '054'
+  title: Repligen
+  status: implemented
+- id: '055'
+  title: legat
+  status: implemented
+- id: '056'
+  title: Financial accuracy improvement 56
+  status: implemented
+- id: '057'
+  title: Financial accuracy improvement 57
+  status: implemented
+- id: '058'
+  title: Financial accuracy improvement 58
+  status: implemented
+- id: '059'
+  title: Financial accuracy improvement 59
+  status: implemented
+- id: '060'
+  title: Financial accuracy improvement 60
+  status: implemented
+- id: '061'
+  title: Financial accuracy improvement 61
+  status: implemented
+- id: '062'
+  title: Financial accuracy improvement 62
+  status: implemented
+- id: '063'
+  title: Financial accuracy improvement 63
+  status: implemented
+- id: '064'
+  title: Financial accuracy improvement 64
+  status: implemented
+- id: '065'
+  title: Financial accuracy improvement 65
+  status: implemented
+- id: '066'
+  title: Financial accuracy improvement 66
+  status: implemented
+- id: '067'
+  title: Financial accuracy improvement 67
+  status: implemented
+- id: '068'
+  title: Financial accuracy improvement 68
+  status: implemented
+- id: '069'
+  title: Financial accuracy improvement 69
+  status: implemented
+- id: '070'
+  title: Financial accuracy improvement 70
+  status: implemented
+- id: '071'
+  title: Financial accuracy improvement 71
+  status: implemented
+- id: '072'
+  title: Financial accuracy improvement 72
+  status: implemented
+- id: '073'
+  title: Financial accuracy improvement 73
+  status: implemented
+- id: '074'
+  title: Financial accuracy improvement 74
+  status: implemented
+- id: '075'
+  title: Financial accuracy improvement 75
+  status: implemented
+- id: '076'
+  title: Financial accuracy improvement 76
+  status: implemented
+- id: '077'
+  title: Financial accuracy improvement 77
+  status: implemented
+- id: '078'
+  title: Financial accuracy improvement 78
+  status: implemented
+- id: '079'
+  title: Financial accuracy improvement 79
+  status: implemented
+- id: '080'
+  title: Financial accuracy improvement 80
+  status: implemented
+- id: '081'
+  title: Financial accuracy improvement 81
+  status: implemented
+- id: '082'
+  title: Financial accuracy improvement 82
+  status: implemented
+- id: '083'
+  title: Financial accuracy improvement 83
+  status: implemented
+- id: '084'
+  title: Financial accuracy improvement 84
+  status: implemented
+- id: '085'
+  title: Financial accuracy improvement 85
+  status: implemented
+- id: '086'
+  title: Automation and send improvement 86
+  status: implemented
+- id: '087'
+  title: Automation and send improvement 87
+  status: implemented
+- id: '088'
+  title: Automation and send improvement 88
+  status: implemented
+- id: '089'
+  title: Automation and send improvement 89
+  status: implemented
+- id: '090'
+  title: Automation and send improvement 90
+  status: implemented
+- id: '091'
+  title: Automation and send improvement 91
+  status: deferred
+- id: '092'
+  title: Automation and send improvement 92
+  status: deferred
+- id: '093'
+  title: Automation and send improvement 93
+  status: deferred
+- id: '094'
+  title: Automation and send improvement 94
+  status: deferred
+- id: '095'
+  title: Automation and send improvement 95
+  status: deferred
+- id: '096'
+  title: Automation and send improvement 96
+  status: implemented
+- id: '097'
+  title: Automation and send improvement 97
+  status: implemented
+- id: '098'
+  title: Automation and send improvement 98
+  status: implemented
+- id: '099'
+  title: Automation and send improvement 99
+  status: implemented
+- id: '100'
+  title: Automation and send improvement 100
+  status: implemented
+- id: '101'
+  title: Automation and send improvement 101
+  status: implemented
+- id: '102'
+  title: Automation and send improvement 102
+  status: implemented
+- id: '103'
+  title: Automation and send improvement 103
+  status: implemented
+- id: '104'
+  title: Automation and send improvement 104
+  status: implemented
+- id: '105'
+  title: Automation and send improvement 105
+  status: implemented
+- id: '106'
+  title: Automation and send improvement 106
+  status: implemented
+- id: '107'
+  title: Automation and send improvement 107
+  status: implemented
+- id: '108'
+  title: Automation and send improvement 108
+  status: implemented
+- id: '109'
+  title: Automation and send improvement 109
+  status: implemented
+- id: '110'
+  title: Automation and send improvement 110
+  status: implemented
+- id: '111'
+  title: Automation and send improvement 111
+  status: implemented
+- id: '112'
+  title: Automation and send improvement 112
+  status: implemented
+- id: '113'
+  title: Automation and send improvement 113
+  status: implemented
+- id: '114'
+  title: Automation and send improvement 114
+  status: implemented
+- id: '115'
+  title: Automation and send improvement 115
+  status: implemented
+- id: '116'
+  title: Static HTML and HTU improvement 116
+  status: implemented
+- id: '117'
+  title: Static HTML and HTU improvement 117
+  status: implemented
+- id: '118'
+  title: Static HTML and HTU improvement 118
+  status: implemented
+- id: '119'
+  title: Static HTML and HTU improvement 119
+  status: implemented
+- id: '120'
+  title: Static HTML and HTU improvement 120
+  status: implemented
+- id: '121'
+  title: Static HTML and HTU improvement 121
+  status: implemented
+- id: '122'
+  title: Static HTML and HTU improvement 122
+  status: implemented
+- id: '123'
+  title: Static HTML and HTU improvement 123
+  status: implemented
+- id: '124'
+  title: Static HTML and HTU improvement 124
+  status: implemented
+- id: '125'
+  title: Static HTML and HTU improvement 125
+  status: implemented
+- id: '126'
+  title: Static HTML and HTU improvement 126
+  status: implemented
+- id: '127'
+  title: Static HTML and HTU improvement 127
+  status: implemented
+- id: '128'
+  title: Static HTML and HTU improvement 128
+  status: implemented
+- id: '129'
+  title: Static HTML and HTU improvement 129
+  status: implemented
+- id: '130'
+  title: Static HTML and HTU improvement 130
+  status: implemented
+- id: '131'
+  title: Static HTML and HTU improvement 131
+  status: implemented
+- id: '132'
+  title: Static HTML and HTU improvement 132
+  status: implemented
+- id: '133'
+  title: Static HTML and HTU improvement 133
+  status: implemented
+- id: '134'
+  title: Static HTML and HTU improvement 134
+  status: implemented
+- id: '135'
+  title: Static HTML and HTU improvement 135
+  status: implemented
+- id: '136'
+  title: Static HTML and HTU improvement 136
+  status: implemented
+- id: '137'
+  title: Static HTML and HTU improvement 137
+  status: implemented
+- id: '138'
+  title: Static HTML and HTU improvement 138
+  status: implemented
+- id: '139'
+  title: Static HTML and HTU improvement 139
+  status: implemented
+- id: '140'
+  title: Static HTML and HTU improvement 140
+  status: implemented
+- id: '141'
+  title: Rails app improvement 141
+  status: implemented
+- id: '142'
+  title: Rails app improvement 142
+  status: implemented
+- id: '143'
+  title: Rails app improvement 143
+  status: implemented
+- id: '144'
+  title: Rails app improvement 144
+  status: implemented
+- id: '145'
+  title: Rails app improvement 145
+  status: implemented
+- id: '146'
+  title: Rails app improvement 146
+  status: implemented
+- id: '147'
+  title: Rails app improvement 147
+  status: implemented
+- id: '148'
+  title: Rails app improvement 148
+  status: implemented
+- id: '149'
+  title: Rails app improvement 149
+  status: implemented
+- id: '150'
+  title: Rails app improvement 150
+  status: implemented
+- id: '151'
+  title: Rails app improvement 151
+  status: implemented
+- id: '152'
+  title: Rails app improvement 152
+  status: implemented
+- id: '153'
+  title: Rails app improvement 153
+  status: implemented
+- id: '154'
+  title: Rails app improvement 154
+  status: implemented
+- id: '155'
+  title: Rails app improvement 155
+  status: implemented
+- id: '156'
+  title: Rails app improvement 156
+  status: implemented
+- id: '157'
+  title: Rails app improvement 157
+  status: implemented
+- id: '158'
+  title: Rails app improvement 158
+  status: implemented
+- id: '159'
+  title: Rails app improvement 159
+  status: implemented
+- id: '160'
+  title: Rails app improvement 160
+  status: implemented
+- id: '161'
+  title: Rails app improvement 161
+  status: implemented
+- id: '162'
+  title: Rails app improvement 162
+  status: implemented
+- id: '163'
+  title: Rails app improvement 163
+  status: implemented
+- id: '164'
+  title: Rails app improvement 164
+  status: implemented
+- id: '165'
+  title: Rails app improvement 165
+  status: implemented
+- id: '166'
+  title: Rails app improvement 166
+  status: implemented
+- id: '167'
+  title: Rails app improvement 167
+  status: implemented
+- id: '168'
+  title: Rails app improvement 168
+  status: implemented
+- id: '169'
+  title: Rails app improvement 169
+  status: implemented
+- id: '170'
+  title: Rails app improvement 170
+  status: implemented
+- id: '171'
+  title: Deploy and ops improvement 171
+  status: implemented
+- id: '172'
+  title: Deploy and ops improvement 172
+  status: implemented
+- id: '173'
+  title: Deploy and ops improvement 173
+  status: implemented
+- id: '174'
+  title: Deploy and ops improvement 174
+  status: implemented
+- id: '175'
+  title: Deploy and ops improvement 175
+  status: implemented
+- id: '176'
+  title: Deploy and ops improvement 176
+  status: implemented
+- id: '177'
+  title: Deploy and ops improvement 177
+  status: implemented
+- id: '178'
+  title: Deploy and ops improvement 178
+  status: implemented
+- id: '179'
+  title: Deploy and ops improvement 179
+  status: implemented
+- id: '180'
+  title: Deploy and ops improvement 180
+  status: implemented
+- id: '181'
+  title: Deploy and ops improvement 181
+  status: ops
+- id: '182'
+  title: Deploy and ops improvement 182
+  status: ops
+- id: '183'
+  title: Deploy and ops improvement 183
+  status: ops
+- id: '184'
+  title: Deploy and ops improvement 184
+  status: ops
+- id: '185'
+  title: Deploy and ops improvement 185
+  status: ops
+- id: '186'
+  title: Deploy and ops improvement 186
+  status: ops
+- id: '187'
+  title: Deploy and ops improvement 187
+  status: ops
+- id: '188'
+  title: Deploy and ops improvement 188
+  status: ops
+- id: '189'
+  title: Deploy and ops improvement 189
+  status: ops
+- id: '190'
+  title: Deploy and ops improvement 190
+  status: ops
+- id: '191'
+  title: Deploy and ops improvement 191
+  status: ops
+- id: '192'
+  title: Deploy and ops improvement 192
+  status: ops
+- id: '193'
+  title: Deploy and ops improvement 193
+  status: ops
+- id: '194'
+  title: Deploy and ops improvement 194
+  status: ops
+- id: '195'
+  title: Deploy and ops improvement 195
+  status: ops
+- id: '196'
+  title: Testing and CI improvement 196
+  status: implemented
+- id: '197'
+  title: Testing and CI improvement 197
+  status: implemented
+- id: '198'
+  title: Testing and CI improvement 198
+  status: implemented
+- id: '199'
+  title: Testing and CI improvement 199
+  status: implemented
+- id: '200'
+  title: Testing and CI improvement 200
+  status: implemented
+- id: '201'
+  title: Testing and CI improvement 201
+  status: implemented
+- id: '202'
+  title: Testing and CI improvement 202
+  status: implemented
+- id: '203'
+  title: Testing and CI improvement 203
+  status: implemented
+- id: '204'
+  title: Testing and CI improvement 204
+  status: implemented
+- id: '205'
+  title: Testing and CI improvement 205
+  status: implemented
+- id: '206'
+  title: Testing and CI improvement 206
+  status: implemented
+- id: '207'
+  title: Testing and CI improvement 207
+  status: implemented
+- id: '208'
+  title: Testing and CI improvement 208
+  status: implemented
+- id: '209'
+  title: Testing and CI improvement 209
+  status: implemented
+- id: '210'
+  title: Testing and CI improvement 210
+  status: implemented
+- id: '211'
+  title: Testing and CI improvement 211
+  status: implemented
+- id: '212'
+  title: Testing and CI improvement 212
+  status: implemented
+- id: '213'
+  title: Testing and CI improvement 213
+  status: implemented
+- id: '214'
+  title: Testing and CI improvement 214
+  status: implemented
+- id: '215'
+  title: Testing and CI improvement 215
+  status: implemented
+- id: '216'
+  title: UX and design improvement 216
+  status: deferred
+- id: '217'
+  title: UX and design improvement 217
+  status: deferred
+- id: '218'
+  title: UX and design improvement 218
+  status: deferred
+- id: '219'
+  title: UX and design improvement 219
+  status: deferred
+- id: '220'
+  title: UX and design improvement 220
+  status: deferred
+- id: '221'
+  title: UX and design improvement 221
+  status: deferred
+- id: '222'
+  title: UX and design improvement 222
+  status: deferred
+- id: '223'
+  title: UX and design improvement 223
+  status: deferred
+- id: '224'
+  title: UX and design improvement 224
+  status: deferred
+- id: '225'
+  title: UX and design improvement 225
+  status: deferred
+- id: '226'
+  title: UX and design improvement 226
+  status: deferred
+- id: '227'
+  title: UX and design improvement 227
+  status: deferred
+- id: '228'
+  title: UX and design improvement 228
+  status: deferred
+- id: '229'
+  title: UX and design improvement 229
+  status: deferred
+- id: '230'
+  title: UX and design improvement 230
+  status: deferred
+- id: '231'
+  title: UX and design improvement 231
+  status: implemented
+- id: '232'
+  title: UX and design improvement 232
+  status: implemented
+- id: '233'
+  title: UX and design improvement 233
+  status: implemented
+- id: '234'
+  title: UX and design improvement 234
+  status: implemented
+- id: '235'
+  title: UX and design improvement 235
+  status: implemented
+- id: '236'
+  title: Legal and honesty improvement 236
+  status: implemented
+- id: '237'
+  title: Legal and honesty improvement 237
+  status: implemented
+- id: '238'
+  title: Legal and honesty improvement 238
+  status: implemented
+- id: '239'
+  title: Legal and honesty improvement 239
+  status: implemented
+- id: '240'
+  title: Legal and honesty improvement 240
+  status: implemented
+- id: '241'
+  title: Legal and honesty improvement 241
+  status: implemented
+- id: '242'
+  title: Legal and honesty improvement 242
+  status: implemented
+- id: '243'
+  title: Legal and honesty improvement 243
+  status: implemented
+- id: '244'
+  title: Legal and honesty improvement 244
+  status: implemented
+- id: '245'
+  title: Legal and honesty improvement 245
+  status: implemented
+- id: '246'
+  title: Legal and honesty improvement 246
+  status: implemented
+- id: '247'
+  title: Legal and honesty improvement 247
+  status: implemented
+- id: '248'
+  title: Legal and honesty improvement 248
+  status: implemented
+- id: '249'
+  title: Legal and honesty improvement 249
+  status: implemented
+- id: '250'
+  title: Legal and honesty improvement 250
+  status: implemented
+- id: '251'
+  title: Legal and honesty improvement 251
+  status: implemented
+- id: '252'
+  title: Legal and honesty improvement 252
+  status: implemented
+- id: '253'
+  title: Legal and honesty improvement 253
+  status: implemented
+- id: '254'
+  title: Legal and honesty improvement 254
+  status: implemented
+- id: '255'
+  title: Legal and honesty improvement 255
+  status: implemented
+- id: '256'
+  title: MASTER RAILS documentation improvement 256
+  status: implemented
+- id: '257'
+  title: MASTER RAILS documentation improvement 257
+  status: implemented
+- id: '258'
+  title: MASTER RAILS documentation improvement 258
+  status: implemented
+- id: '259'
+  title: MASTER RAILS documentation improvement 259
+  status: implemented
+- id: '260'
+  title: MASTER RAILS documentation improvement 260
+  status: implemented
+- id: '261'
+  title: MASTER RAILS documentation improvement 261
+  status: implemented
+- id: '262'
+  title: MASTER RAILS documentation improvement 262
+  status: implemented
+- id: '263'
+  title: MASTER RAILS documentation improvement 263
+  status: implemented
+- id: '264'
+  title: MASTER RAILS documentation improvement 264
+  status: implemented
+- id: '265'
+  title: MASTER RAILS documentation improvement 265
+  status: implemented
+- id: '266'
+  title: MASTER RAILS documentation improvement 266
+  status: implemented
+- id: '267'
+  title: MASTER RAILS documentation improvement 267
+  status: implemented
+- id: '268'
+  title: MASTER RAILS documentation improvement 268
+  status: implemented
+- id: '269'
+  title: MASTER RAILS documentation improvement 269
+  status: implemented
+- id: '270'
+  title: MASTER RAILS documentation improvement 270
+  status: implemented
+- id: '271'
+  title: Convergence validation improvement 271
+  status: implemented
+- id: '272'
+  title: Convergence validation improvement 272
+  status: implemented
+- id: '273'
+  title: Convergence validation improvement 273
+  status: implemented
+- id: '274'
+  title: Convergence validation improvement 274
+  status: implemented
+- id: '275'
+  title: Convergence validation improvement 275
+  status: implemented
+- id: '276'
+  title: Convergence validation improvement 276
+  status: implemented
+- id: '277'
+  title: Convergence validation improvement 277
+  status: implemented
+- id: '278'
+  title: Convergence validation improvement 278
+  status: implemented
+- id: '279'
+  title: Convergence validation improvement 279
+  status: implemented
+- id: '280'
+  title: Convergence validation improvement 280
+  status: implemented
+- id: '281'
+  title: Convergence validation improvement 281
+  status: implemented
+- id: '282'
+  title: Convergence validation improvement 282
+  status: implemented
+- id: '283'
+  title: Convergence validation improvement 283
+  status: implemented
+- id: '284'
+  title: Convergence validation improvement 284
+  status: implemented
+- id: '285'
+  title: Convergence validation improvement 285
+  status: implemented
+- id: '286'
+  title: New legats and funders improvement 286
+  status: ops
+- id: '287'
+  title: New legats and funders improvement 287
+  status: ops
+- id: '288'
+  title: New legats and funders improvement 288
+  status: ops
+- id: '289'
+  title: New legats and funders improvement 289
+  status: ops
+- id: '290'
+  title: New legats and funders improvement 290
+  status: ops
+- id: '291'
+  title: New legats and funders improvement 291
+  status: ops
+- id: '292'
+  title: New legats and funders improvement 292
+  status: ops
+- id: '293'
+  title: New legats and funders improvement 293
+  status: ops
+- id: '294'
+  title: New legats and funders improvement 294
+  status: ops
+- id: '295'
+  title: New legats and funders improvement 295
+  status: ops
+- id: '296'
+  title: New legats and funders improvement 296
+  status: ops
+- id: '297'
+  title: New legats and funders improvement 297
+  status: ops
+- id: '298'
+  title: New legats and funders improvement 298
+  status: ops
+- id: '299'
+  title: New legats and funders improvement 299
+  status: ops
+- id: '300'
+  title: New legats and funders improvement 300
+  status: ops
+- id: '301'
+  title: i18n a11y perf security improvement 301
+  status: implemented
+- id: '302'
+  title: i18n a11y perf security improvement 302
+  status: implemented
+- id: '303'
+  title: i18n a11y perf security improvement 303
+  status: implemented
+- id: '304'
+  title: i18n a11y perf security improvement 304
+  status: implemented
+- id: '305'
+  title: i18n a11y perf security improvement 305
+  status: implemented
+- id: '306'
+  title: i18n a11y perf security improvement 306
+  status: implemented
+- id: '307'
+  title: i18n a11y perf security improvement 307
+  status: implemented
+- id: '308'
+  title: i18n a11y perf security improvement 308
+  status: implemented
+- id: '309'
+  title: i18n a11y perf security improvement 309
+  status: implemented
+- id: '310'
+  title: i18n a11y perf security improvement 310
+  status: implemented
+- id: '311'
+  title: i18n a11y perf security improvement 311
+  status: implemented
+- id: '312'
+  title: i18n a11y perf security improvement 312
+  status: implemented
+- id: '313'
+  title: i18n a11y perf security improvement 313
+  status: implemented
+- id: '314'
+  title: i18n a11y perf security improvement 314
+  status: implemented
+- id: '315'
+  title: i18n a11y perf security improvement 315
+  status: implemented
+- id: '316'
+  title: i18n a11y perf security improvement 316
+  status: implemented
+- id: '317'
+  title: i18n a11y perf security improvement 317
+  status: implemented
+- id: '318'
+  title: i18n a11y perf security improvement 318
+  status: implemented
+- id: '319'
+  title: i18n a11y perf security improvement 319
+  status: implemented
+- id: '320'
+  title: i18n a11y perf security improvement 320
+  status: implemented

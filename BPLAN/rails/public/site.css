@@ -1,0 +1,170 @@
+.bplan-site { min-height: 100vh; display: flex; flex-direction: column; }
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: #111;
+  color: #fff;
+  z-index: 100;
+}
+.bplan-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  font-family: "EB Garamond", Georgia, serif;
+  flex-wrap: wrap;
+}
+.bplan-nav-menu { display: flex; gap: 1rem; flex-wrap: wrap; }
+.bplan-nav-toggle { display: none; }
+.bplan-brand { font-weight: 600; text-decoration: none; }
+.bplan-main { flex: 1; }
+.bplan-footer { padding: 1.5rem 1.25rem; font-size: 0.9rem; opacity: 0.85; border-top: 1px solid rgba(0,0,0,.08); }
+.bplan-btn-pay {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  margin: 0.15rem 0;
+  border: 1px solid currentColor;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+.bplan-btn-pay--secondary { opacity: 0.85; font-size: 0.85rem; }
+.bplan-pay-cell { white-space: nowrap; vertical-align: top; }
+.bplan-doc-footer { margin-top: 2rem; padding-top: 1rem; font-size: 0.9rem; }
+
+.flash {
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  font-family: "EB Garamond", Georgia, serif;
+}
+.flash-notice { background: rgba(40, 120, 60, 0.12); }
+.flash-alert { background: rgba(180, 40, 40, 0.12); }
+
+.track-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  border: 1px solid currentColor;
+}
+.track-pill--innovasjon { color: #1a5f7a; background: rgba(26, 95, 122, 0.08); }
+.track-pill--helse { color: #2d6a4f; background: rgba(45, 106, 79, 0.08); }
+.track-pill--bolig { color: #7a4f1a; background: rgba(122, 79, 26, 0.08); }
+.track-pill--samfunn { color: #5c4d7a; background: rgba(92, 77, 122, 0.08); }
+.track-pill--finans { color: #4a4a4a; background: rgba(74, 74, 74, 0.08); }
+.track-pill--klima { color: #3d6b2e; background: rgba(61, 107, 46, 0.08); }
+.track-pill--sikkerhet { color: #333; background: rgba(0, 0, 0, 0.06); }
+.track-pill--produkt { color: #8b4513; background: rgba(139, 69, 19, 0.08); }
+.track-pill--sosial { color: #6b4c7a; background: rgba(107, 76, 122, 0.08); }
+.track-pill--civic { color: #2f4f6f; background: rgba(47, 79, 111, 0.08); }
+.track-pill--kultur { color: #8b3a62; background: rgba(139, 58, 98, 0.08); }
+
+.status-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  margin-right: 0.25rem;
+}
+.status-badge--sendable { background: rgba(40, 120, 60, 0.15); color: #1d5c34; }
+.status-badge--draft { background: rgba(120, 90, 20, 0.15); color: #6b4f10; }
+.status-badge--hold { background: rgba(100, 100, 100, 0.12); color: #444; }
+.badge-cell { white-space: nowrap; }
+
+.track-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.track-filters a {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid rgba(0,0,0,.15);
+  text-decoration: none;
+}
+.track-filters a.is-active { font-weight: 600; border-color: currentColor; }
+
+.plan-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+.plan-card {
+  border: 1px solid rgba(0,0,0,.08);
+  padding: 1rem;
+}
+
+.deadline-urgent { background: rgba(180, 60, 40, 0.06); }
+.deadline-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a33;
+}
+.deadline-table td { vertical-align: top; }
+
+.verify-banner {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(180, 120, 20, 0.4);
+  background: rgba(255, 240, 200, 0.35);
+}
+.attachment-checklist ul { margin-top: 0.5rem; }
+
+.bolig-cta {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid rgba(122, 79, 26, 0.25);
+  background: rgba(122, 79, 26, 0.05);
+}
+
+.payment-qr-placeholder {
+  border: 1px dashed rgba(0,0,0,.2);
+  padding: 1.5rem;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.pagination {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+a:focus-visible,
+button:focus-visible,
+.bplan-btn-pay:focus-visible {
+  outline: 2px solid #1a5f7a;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .bplan-nav-toggle {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid currentColor;
+    background: transparent;
+    font-family: inherit;
+  }
+  .bplan-nav-menu {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    padding-bottom: 0.5rem;
+  }
+  .bplan-nav-menu.is-open { display: flex; }
+}

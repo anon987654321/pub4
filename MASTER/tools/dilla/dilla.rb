@@ -2424,18 +2424,37 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "dilla_beat.mp3"), bars_cou
   turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
   command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.05:d=#{duration}"] if turntable_rumble
 
-  filt = ["[0:a]aformat=channel_layouts=stereo[drums]"]
+  filt = ["[0:a]aformat=channel_layouts=stereo[drums_raw]"]
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
   unless use_stem_harmony
-    timeless = %i[timeless donuts].include?(cfg[:track])
-    harm_lp = timeless ? 2400 : 1700
-    harm_w  = timeless ? "1.12" : "0.84"
-    filt << "[1:a]aformat=channel_layouts=stereo,lowpass=f=#{harm_lp},aphaser=speed=0.11:decay=0.32,adelay=11|15," \
+    # The pad/chord bus used to get a dull 1700Hz lowpass and a 0.84 mix
+    # weight for every track except "timeless"/"donuts" (1.12, 2400Hz) —
+    # measured at ~11dB quieter than the sample-based drum bus (which bakes
+    # in bass_43.wav) even before that extra penalty, on every Fantastic
+    # Vol. 2 track. Normalize toward the drum bus's actual level instead of
+    # a static per-track-family guess, and give every track the brighter,
+    # louder treatment.
+    drums_rms = band_rms(drum_tmp, highpass: 20, lowpass: 20_000)
+    harm_rms = band_rms(harmonic_tmp, highpass: 20, lowpass: 20_000)
+    harm_boost_db = (drums_rms - harm_rms).clamp(0.0, 18.0)
+    filt << "[1:a]aformat=channel_layouts=stereo,volume=#{harm_boost_db.round(2)}dB,lowpass=f=3200,aphaser=speed=0.11:decay=0.32,adelay=11|15," \
              "aecho=0.22:0.28:110:0.18[harm]"
     mix_labels << "[harm]"
-    mix_weights << harm_w
+    mix_weights << "1.10"
+    # Real sidechain duck (backlog #165, "kick/bass sidechain"): the bass
+    # sample and the pad's sustained chord roots occupy the same sub-150Hz
+    # band, so even with the harm bus now audible, a held chord and a bass
+    # hit still mask each other down there. Split the drum bus, duck only
+    # its low band against the harmonic bus, and recombine — kick/snare
+    # transients above 150Hz stay untouched.
+    filt << "[drums_raw]asplit=2[drums_hi_src][drums_lo_src]"
+    filt << "[drums_lo_src]lowpass=f=150[drums_lo]"
+    filt << "[drums_hi_src]highpass=f=150[drums_hi]"
+    filt << "[drums_lo][harm]sidechaincompress=threshold=0.05:ratio=4:attack=15:release=180:makeup=1[drums_lo_duck]"
+    filt << "[drums_hi][drums_lo_duck]amix=inputs=2:weights=1.0 1.0:duration=first:normalize=0[drums]"
   end
+  filt << "[drums_raw]anull[drums]" if use_stem_harmony
 
   if stem_map[:mids]
     pan_fx = cfg[:stereo_pan] ? ",apulsator=mode=sine:hz=#{pan_hz}:amount=0.38" : ""

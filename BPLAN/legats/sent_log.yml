@@ -1,0 +1,9 @@
+# Sendt-logg for grok_send_legats.rb / send_legats.sh
+# Schema:
+#   sent:
+#     - id: manifest application id (e.g. 10_gunvor_mindes_legat)
+#       sent_at: ISO8601 timestamp
+#       to: recipient email
+#       subject: email subject line
+#       batch: optional batch name
+sent: []

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bundle install
+ln -sfn .. public/content 2>/dev/null || true
+echo "BPLAN rails ready: bundle exec rails server  # port 39282"
