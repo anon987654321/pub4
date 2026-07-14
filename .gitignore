@@ -101,3 +101,4 @@ lora/**/*.pid
 #   - MASTER/tools/dilla/samples/      (drum kits read at runtime)
 MASTER/tools/dilla/renders/
 MASTER/tools/dilla/.harmony_*.wav
+vendor/bundle/
