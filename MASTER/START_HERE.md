@@ -24,7 +24,7 @@ bin/cli → Master.bootstrap_container
        → lib/ground (constitution, memory, policy)
        → lib/voice (persona, TTS, SOUL evolution)
        → web/ (Rails chat face)
-kernel/ — isolated constitutional fold spine (separate load path; do not merge with lib/ casually)
+core/ — isolated constitutional fold spine (separate load path; do not merge with lib/ casually)
 ```
 
 High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `lib/master.rb`, `web/app/views/chat/index.html.erb`, `web/public/face*`, `lib/reach/`, `.master/`.
@@ -107,7 +107,7 @@ Far-away visual tree with noise pruned and alignment notes. Do this before mergi
 
 ## Source And Local State
 
-- Source: `lib/`, `kernel/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
+- Source: `lib/`, `core/`, `data/`, `bin/`, `test/`, `spec/`, `web/app/`, `web/public/`.
 - Local/generated: `.master/`, `knowledge/`, `output/`, `web/public/assets/`, `web/storage/`, `web/log/`.
 
 ## Law Ladder

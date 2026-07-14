@@ -38,7 +38,7 @@ Symptom: `bin/nsaudit` or `bin/probe all` reports stale constants or duplicate n
 
 First command: `bin/nsaudit`.
 
-Check whether the finding crosses the known `lib/` and `kernel/` spine boundary. If yes, document or refine the skip. If no, fix stale references.
+Check whether the finding crosses the known `lib/` and `core/` spine boundary. If yes, document or refine the skip. If no, fix stale references.
 
 ## YAML Singularity Failure
 

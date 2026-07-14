@@ -56,10 +56,10 @@ ownership:
     purpose: personality, speech, TTS, rendering
     risk: medium
     check: bin/check
-  kernel/:
+  core/:
     purpose: isolated constitutional fold spine
     risk: high
-    check: rake test:kernel
+    check: rake test:core
   data/soul.yml:
     purpose: constitutional identity
     risk: critical

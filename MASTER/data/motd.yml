@@ -5,4 +5,4 @@ spots:
   - "council: multi-persona deliberation"
   - "engine: pub4-shared across active Rails apps"
   - "deploy: relayd health + OPERATOR.sh gates"
-  - "kernel: 5-file spine smoke in kernel/"
+  - "core: 5-file spine smoke in core/"
