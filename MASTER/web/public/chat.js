@@ -1,5 +1,9 @@
 "use strict";
 
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 const log   = document.getElementById('chat-log');
 const CHAT_VIRTUAL_MAX = 56;
 let chatArchived = 0;
@@ -275,7 +279,7 @@ window._chatOnChunk = (raw) => {
   }
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
   if (text.includes('```')) {
-    _streamEl.innerHTML = text.replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
+    _streamEl.innerHTML = escapeHtml(text).replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>').replace(/\n/g, '<br>');
   } else {
     _streamEl.textContent = text;
   }
