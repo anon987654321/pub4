@@ -3,7 +3,10 @@
 Rails.application.routes.draw do
   get "offline" => "rails/pwa#offline", as: :pwa_offline
 
-  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+  jobs_constraint = lambda { |request|
+    session_id = request.cookie_jar.signed[:session_id]
+    session_id.present? && ::Session.exists?(id: session_id)
+  }
 
   resource :session
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))

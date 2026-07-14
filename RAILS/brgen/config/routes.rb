@@ -11,7 +11,10 @@ Rails.application.routes.draw do
   # not subdomain-constrained since MASTER calls it directly by IP:port.
   get "internal/status" => "internal#status", as: :internal_status
 
-  jobs_constraint = ->(request) { request.cookies["session_id"].present? }
+  jobs_constraint = lambda { |request|
+    session_id = request.cookie_jar.signed[:session_id]
+    session_id.present? && ::Session.exists?(id: session_id)
+  }
 
   TV_SUBDOMAINS          = Brgen::DomainRegistry::TV_SUBDOMAINS
   DATING_SUBDOMAINS      = Brgen::DomainRegistry::DATING_SUBDOMAINS
