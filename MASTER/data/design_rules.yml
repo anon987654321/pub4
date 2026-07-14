@@ -55,7 +55,7 @@ typography:
     mobile_input_min_px: 16
     action: Reject unreadable contrast and mobile input text below 16px.
 
-layout:
+layout_rules:
   grid:
     columns: 12
     base_unit_px: 8
