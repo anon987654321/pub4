@@ -207,4 +207,19 @@ class TestSpeech < Minitest::Test
     assert style[:pitch].start_with?("-"), "deep pitch should be negative"
     assert style[:rate].start_with?("-"),  "deep rate should be negative"
   end
+
+  def test_worker_timeout_scales_with_text_length
+    base = Master::Voice::Speech.send(:worker_timeout, 0)
+    long = Master::Voice::Speech.send(:worker_timeout, Master::Voice::Speech::MAX_CHARS)
+    assert_equal Master::Voice::Speech::WORKER_TIMEOUT, base
+    assert long > base, "a full MAX_CHARS utterance should get more time than an empty one"
+    assert long <= Master::Voice::Speech::WORKER_TIMEOUT_MAX
+  end
+
+  def test_worker_timeout_respects_explicit_env_override_regardless_of_length
+    ENV["MASTER_TTS_TIMEOUT"] = "7"
+    assert_equal 7, Master::Voice::Speech.send(:worker_timeout, Master::Voice::Speech::MAX_CHARS)
+  ensure
+    ENV.delete("MASTER_TTS_TIMEOUT")
+  end
 end

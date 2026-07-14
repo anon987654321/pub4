@@ -17,6 +17,13 @@ module Master
       ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
       WORKER_TIMEOUT = 45
+      # WORKER_TIMEOUT was tuned (b2cc32b73) for MAX_CHARS=900 on the VPS;
+      # MAX_CHARS was later raised 4x (035888e8e) without touching the
+      # timeout, so a full-length reply's single unchunked Edge TTS call
+      # blew the fixed budget every time -- long replies produced no audio
+      # at all. Scale the budget with text length instead of a flat cap.
+      WORKER_TIMEOUT_PER_CHAR = 0.05
+      WORKER_TIMEOUT_MAX = 180
       @last_error = nil
       # One mutex per pool slot, not one global mutex — ac0146eac serialized
       # synthesis when TtsSupervisor pool_size was 1, so a single mutex was
@@ -338,7 +345,7 @@ module Master
       end
 
       def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
-        timeout = worker_timeout
+        timeout = worker_timeout(text.to_s.length)
         _out, err, status = Timeout.timeout(timeout) do
           Master::Reach::Exec.capture3(
             TtsSupervisor.daemon_env(Master::ROOT),
@@ -357,7 +364,7 @@ module Master
         warn_tts("edge worker produced empty audio")
         cleanup_failed_audio(audio_path)
       rescue Timeout::Error
-        warn_tts("edge worker timed out after #{worker_timeout}s")
+        warn_tts("edge worker timed out after #{timeout}s")
         cleanup_failed_audio(audio_path)
       rescue StandardError => e
         warn_tts("edge worker error: #{e.class}: #{e.message}")
@@ -378,7 +385,8 @@ module Master
           pitch: style_config[:pitch],
           text: text.to_s
         )
-        Timeout.timeout(worker_timeout) do
+        timeout = worker_timeout(text.to_s.length)
+        Timeout.timeout(timeout) do
           UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
             File.open(audio_path, "wb") do |f|
@@ -399,7 +407,7 @@ module Master
         warn_tts("edge socket produced empty audio")
         cleanup_failed_audio(audio_path)
       rescue Timeout::Error
-        warn_tts("edge socket timed out after #{worker_timeout}s")
+        warn_tts("edge socket timed out after #{timeout}s")
         cleanup_failed_audio(audio_path)
       rescue StandardError => e
         warn_tts("edge socket failed: #{e.class}: #{e.message}")
@@ -427,8 +435,10 @@ module Master
         nil
       end
 
-      def worker_timeout
-        Integer(ENV.fetch("MASTER_TTS_TIMEOUT", WORKER_TIMEOUT.to_s))
+      def worker_timeout(text_length = 0)
+        return Integer(ENV.fetch("MASTER_TTS_TIMEOUT")) if ENV.key?("MASTER_TTS_TIMEOUT")
+
+        [WORKER_TIMEOUT + (text_length * WORKER_TIMEOUT_PER_CHAR).ceil, WORKER_TIMEOUT_MAX].min
       rescue ArgumentError
         WORKER_TIMEOUT
       end
