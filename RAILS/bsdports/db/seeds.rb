@@ -43,7 +43,8 @@ else
         begin
           m = model_name.constantize
           m.delete_all if m.respond_to?(:table_exists?) && m.table_exists?
-        rescue NameError, StandardError
+        rescue NameError, StandardError => e
+          Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
         end
       end
       User.where("email_address LIKE 'portuser%' OR email_address LIKE '%@ports.example'").delete_all
@@ -134,7 +135,8 @@ else
     rand(4..(25 * scale).clamp(4, 150)).times do
       begin
         port.reactions.create!(user: users.sample, kind: %w[like star useful].sample)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
       end
     end
   end
