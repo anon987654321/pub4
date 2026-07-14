@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Marketplace::CartsController < Marketplace::BaseController
-  before_action :authenticate_user!
+  before_action :require_user_session
 
   def show
     @cart_items = Current.user.marketplace_orders

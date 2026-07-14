@@ -3,6 +3,7 @@
 class Tv::VideosController < Tv::BaseController
   allow_unauthenticated_access only: %i[show]
   before_action :set_video, only: %i[show destroy]
+  before_action :require_video_owner!, only: :destroy
 
   def show
     @video.view_events.create!(user: Current.user) if authenticated?
@@ -28,4 +29,10 @@ class Tv::VideosController < Tv::BaseController
   private
   def set_video    = (@video = Tv::Video.find(params[:id]))
   def video_params = params.require(:tv_video).permit(:title, :description, :video_file, :thumbnail, :tv_channel_id, :preset)
+
+  def require_video_owner!
+    return if @video.user == Current.user
+
+    redirect_to tv_video_path(@video), alert: "Not authorized"
+  end
 end

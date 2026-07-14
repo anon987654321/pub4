@@ -5,6 +5,7 @@ class Tv::ChannelsController < Tv::BaseController
 
   allow_unauthenticated_access only: %i[index show]
   before_action :set_channel, only: %i[show edit update destroy subscribe unsubscribe]
+  before_action :require_channel_owner!, only: %i[edit update destroy]
 
   def index
     scope = Tv::Channel.all.includes(:user)
@@ -46,4 +47,10 @@ class Tv::ChannelsController < Tv::BaseController
   private
   def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:id]))
   def channel_params = params.require(:tv_channel).permit(:name, :description, :banner, :avatar)
+
+  def require_channel_owner!
+    return if @channel.user == Current.user
+
+    redirect_to tv_channel_path(@channel), alert: "Not authorized"
+  end
 end

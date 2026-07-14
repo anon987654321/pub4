@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TypingIndicatorsController < ApplicationController
-  before_action :authenticate_user!
+  before_action :require_user_session
 
   def create
     conversation = Conversation.for_user(current_user).find(params[:conversation_id])

@@ -3,6 +3,7 @@
 module Tv
   class LiveStreamsController < ApplicationController
     before_action :set_live_stream, only: %i[show update destroy go_live end_live]
+    before_action :require_live_stream_owner!, only: %i[update destroy go_live end_live]
 
     def index
       @live_streams = Tv::LiveStream.recent.limit(50)
@@ -61,6 +62,12 @@ module Tv
 
     def resolve_channel(id_or_slug)
       Tv::Channel.find_by(slug: id_or_slug) || Tv::Channel.find(id_or_slug)
+    end
+
+    def require_live_stream_owner!
+      return if @live_stream.user == Current.user
+
+      redirect_to tv_live_stream_path(@live_stream), alert: "Not authorized"
     end
 
     def live_stream_params
