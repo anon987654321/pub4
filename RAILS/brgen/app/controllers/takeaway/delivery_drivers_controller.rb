@@ -3,6 +3,8 @@
 module Takeaway
   class DeliveryDriversController < ApplicationController
     before_action :set_driver, only: %i[show update]
+    before_action :require_real_user, only: :update
+    before_action :authorize_owner!, only: :update
 
     def index
       @delivery_drivers = Takeaway::DeliveryDriver.available.limit(100)
@@ -23,6 +25,10 @@ module Takeaway
 
     def set_driver
       @delivery_driver = Takeaway::DeliveryDriver.find(params[:id])
+    end
+
+    def authorize_owner!
+      redirect_to(takeaway_delivery_driver_path(@delivery_driver), alert: "Not allowed") unless @delivery_driver.user == Current.user
     end
 
     def driver_params
