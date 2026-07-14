@@ -3,7 +3,9 @@
 class Playlist::ListeningPartiesController < Playlist::BaseController
     before_action :require_real_user
     before_action :set_set
-    before_action :set_party, only: %i[show update destroy]
+    before_action :set_party,       only: %i[show update destroy]
+    before_action :authorize_host!, only: %i[update destroy]
+    before_action :require_host!, only: %i[update destroy]
 
     def show
       @messages = @party.party_messages.includes(:user).chronological.limit(100)
@@ -37,5 +39,9 @@ class Playlist::ListeningPartiesController < Playlist::BaseController
 
     def set_party
       @party = @set.listening_party || raise(ActiveRecord::RecordNotFound)
+    end
+
+    def require_host!
+      redirect_to(playlist_set_listening_party_path(@set), alert: "Not allowed") unless @party.host == Current.user
     end
   end
