@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "git_operations/mutations"
 
 module Master
   module Reach
     # GitOperations — git wrappers scoped to a repository root.
     class GitOperations
+      include Mutations
+
       def initialize(root_path)
         @root_path = root_path
       end
@@ -25,18 +28,6 @@ module Master
         status_lines(path).size
       end
 
-      def add_all
-        Master::Reach::Exec.capture2e("git", "-C", @root_path, "add", "-A")
-      end
-
-      def commit(message)
-        Master::Reach::Exec.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s)
-      end
-
-      def push
-        Master::Reach::Exec.capture2e("git", "-C", @root_path, "push")
-      end
-
       def ahead_behind
         out, _, st = Master::Reach::Exec.capture3(
           "git", "-C", @root_path, "rev-list", "--left-right", "--count", "HEAD...@{u}"
@@ -49,18 +40,6 @@ module Master
       def diff_stat(base = "HEAD")
         out, = Master::Reach::Exec.capture2e("git", "-C", @root_path, "diff", base, "--stat")
         out.strip
-      end
-
-      def reset_hard(ref = "origin/main")
-        Master::Reach::Exec.capture2e("git", "-C", @root_path, "reset", "--hard", ref)
-      end
-
-      def tag(name)
-        Master::Reach::Exec.capture2e("git", "-C", @root_path, "tag", name)
-      end
-
-      def fetch
-        Master::Reach::Exec.capture2e("git", "-C", @root_path, "fetch")
       end
 
       def head

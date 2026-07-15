@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "pipeline_context/factory_methods"
+
 module Master
   module Now
   # Typed pipeline context — enforces required keys, validates types, provides accessors.
   # Immutable update via #merge (returns new instance). Hash-compatible via [] and #to_h.
     class PipelineContext
+      extend FactoryMethods
+
       # Keys every stage may read or write. Unknown keys raise on construction.
       KNOWN_KEYS = %i[
         user_message on_chunk
@@ -50,10 +54,6 @@ module Master
         render: %i[output],
       }.freeze
 
-      def self.build(user_message:, **opts)
-        new({ user_message:, on_chunk: opts[:on_chunk] }.merge(opts))
-      end
-
       def initialize(hash)
         unknown = hash.keys - KNOWN_KEYS
         raise KeyError, "PipelineContext: unknown keys #{unknown.inspect}" unless unknown.empty?
@@ -87,38 +87,6 @@ module Master
       end
 
       def inspect = "#<PipelineContext #{@data.inspect}>"
-
-      # Validation helpers — called by pipeline and stages.
-      def self.validate!(ctx)
-        hash = ctx.is_a?(PipelineContext) ? ctx.to_h : ctx
-        missing = REQUIRED.reject { |k| hash.key?(k) }
-        raise ArgumentError, "PipelineContext missing required keys: #{missing.join(', ')}" unless missing.empty?
-      end
-
-      def self.assert_stage!(ctx, stage)
-        hash = ctx.is_a?(PipelineContext) ? ctx.to_h : ctx
-        prereqs = STAGE_PREREQUISITES.fetch(stage, [])
-        missing = prereqs.reject { |k| hash.key?(k) }
-        raise ArgumentError, "#{stage} stage missing prerequisites: #{missing.join(', ')}" unless missing.empty?
-        KEY_TYPES.each do |key, allowed|
-          next unless hash.key?(key)
-          value = hash[key]
-          next if allowed.any? { |t| value.is_a?(t) }
-          raise TypeError, "ctx[#{key.inspect}] expected #{allowed.map(&:name).join('|')}, got #{value.class}"
-        end
-      end
-
-      def self.fetch!(ctx, key)
-        value = ctx[key]
-        raise KeyError, "PipelineContext: missing key #{key.inspect}" unless ctx.key?(key)
-        value
-      end
-
-      # Wrap a plain Hash into a PipelineContext. Skips wrapping if already typed.
-      def self.wrap(hash)
-        return hash if hash.is_a?(PipelineContext)
-        new(hash)
-      end
 
       private
 

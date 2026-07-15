@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
+require_relative "homeostat/health_predicates"
+require_relative "homeostat/derived_signals"
+
 module Master
   module Loop
   # Continuous-time homeostatic drives (CTCS-HRRL, arXiv 2401.08999).
   # State vector decays toward setpoint; events shift it; readers bias routing,
   # reasoning depth, and persona mood. No external deps.
     class Homeostat
+      include HealthPredicates
+      include DerivedSignals
+
       DRIVES = {
         energy: { setpoint: 0.7, decay: 0.02 },
         error_rate: { setpoint: 0.0, decay: 0.05 },
@@ -50,46 +56,6 @@ module Master
         @bus&.publish("homeostat:observe", event: event, state: snap)
         publish_health_transition(snap)
         snap
-      end
-
-      # Cognitive health predicates — derived from error pressure, fatigue, and energy.
-      def healthy? = !degraded? && !critical?
-
-      def critical?
-        t = HEALTH_THRESHOLDS[:critical]
-        @state[:error_rate] >= t[:error_rate] ||
-          @state[:fatigue] >= t[:fatigue] ||
-          @state[:energy] <= t[:energy]
-      end
-
-      def degraded?
-        return false if critical?
-        t = HEALTH_THRESHOLDS[:degraded]
-        @state[:error_rate] >= t[:error_rate] ||
-          @state[:fatigue] >= t[:fatigue] ||
-          @state[:energy] <= t[:energy]
-      end
-
-      def health_status
-        return :critical if critical?
-        return :degraded if degraded?
-        :healthy
-      end
-
-      def model_tier_bias
-        return :cheap if @state[:error_rate] > 0.4 || @state[:fatigue] > 0.7
-        :default
-      end
-
-      def mood
-        return :tense if @state[:error_rate] > 0.4
-        return :curious if @state[:novelty_hunger] > 0.6
-      end
-
-      def circadian_phase
-        h = Time.now.hour
-        return :morning if (5..11).cover?(h)
-        return :evening if (18..22).cover?(h)
       end
 
       def summary
