@@ -3,11 +3,14 @@
 require "fileutils"
 require "open3"
 require "pathname"
+require_relative "soul/proposal_lifecycle"
 
 module Master
   module Voice
     # Manages the human-readable SOUL.md Evolution Protocol.
     class Soul
+      include ProposalLifecycle
+
       SOUL_PATH = File.join(Master::ROOT, "data", "SOUL.md").freeze
       PROPOSAL_PATH = File.join(Master::ROOT, ".master", "soul_proposal.md").freeze
       ABSOLUTE_PATTERNS = [/anti-simulation rule/i, /golden rule/i, /preserve.*then.*improve/i].freeze
@@ -33,45 +36,6 @@ module Master
         block.empty? ? "(no changelog)" : block
       end
 
-      def propose(rationale, agent: @agent)
-        return "no agent available for drafting" unless agent
-
-        draft = agent.ask_once(proposal_prompt(rationale)).to_s.strip
-        return "draft failed" if draft.empty?
-
-        save_proposal(draft)
-      rescue StandardError => e
-        "proposal error: #{e.message}"
-      end
-
-      def diff
-        return "no pending proposal" unless File.exist?(@proposal_path)
-
-        changes = changed_lines(@soul.lines, proposal.lines)
-        changes.empty? ? "(no visible changes)" : changes.join("\n")
-      end
-
-      def approve
-        return "no pending proposal" unless File.exist?(@proposal_path)
-
-        version = bump_version(extract_version, :patch)
-        updated = with_version_and_changelog(proposal, version)
-        persist(@soul_path, updated)
-        File.unlink(@proposal_path)
-        @soul = updated
-        committed = commit_approval(version)
-        "soul updated to v#{version}#{committed ? "" : " (git commit failed)"}"
-      rescue StandardError => e
-        "approve error: #{e.message}"
-      end
-
-      def reject
-        return "no pending proposal" unless File.exist?(@proposal_path)
-
-        File.unlink(@proposal_path)
-        "proposal rejected"
-      end
-
       def rollback
         previous = previous_revision
         return "no git history for data/SOUL.md" unless previous
@@ -90,16 +54,6 @@ module Master
         voice = @soul[/## Voice\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
         values = @soul[/## Values\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
         "#{voice}\n\n#{values}"
-      end
-
-      def propose_from_violations(rule_id, sample_violations, agent: @agent)
-        return "no agent available" unless agent
-
-        examples = sample_violations.first(3).map { |violation| violation_example(violation) }.join("\n")
-        rationale = "Recurring scan rule '#{rule_id}' flagged #{sample_violations.size} violations " \
-                    "across multiple files and cycles:\n#{examples}\nPropose whether the codebase axioms or soul " \
-                    "principles should acknowledge this pattern or whether the rule needs refinement."
-        propose(rationale, agent:)
       end
 
       private

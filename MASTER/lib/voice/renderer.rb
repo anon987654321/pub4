@@ -7,6 +7,7 @@ require_relative "../ground/host_budget"
 require_relative "aesthetic"
 require_relative "renderer/git_status"
 require_relative "renderer/system_info"
+require_relative "renderer/text_formatting"
 
 module Master
   module Voice
@@ -22,6 +23,7 @@ module Master
       include GitStatus
       include SystemInfo
       include RendererPromptComponents
+      include TextFormatting
 
       def initialize(config:)
         @config = config
@@ -58,9 +60,6 @@ module Master
         end
       end
 
-      def format_error(message) = render(message, mode: :error)
-      def format_dmesg(line) = @p.dim(line.to_s)
-
       def closing
         lines = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["closings"]
         return unless lines.is_a?(Array) && lines.any?
@@ -69,14 +68,6 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "renderer.closing")
         nil
-      end
-
-      def beautify(text)
-        text
-          .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
-          .gsub(/\s--\s/, " \u2014 ")
-          .gsub(/(\d)-(\d)/, "\\1\u2013\\2")
-          .gsub("...", "\u2026")
       end
 
       def output_guard

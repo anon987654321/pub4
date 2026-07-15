@@ -2,10 +2,15 @@
 
 require "json"
 require "fileutils"
+require_relative "session/persistence"
+require_relative "session/snapshots"
 
 module Master
   module Trace
     class Session
+      include Persistence
+      include Snapshots
+
       TOKENS_PER_CHAR = 4
       SESSION_NAME_MAX = 40
       # 100 KB session cost log cap
@@ -54,50 +59,6 @@ module Master
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
         File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }
         entry
-      end
-
-      def snapshot(path, content)
-        @mutex.synchronize do
-          @snapshots[path] ||= []
-          @snapshots[path] << content
-        end
-      end
-
-      def last_snapshot(path)
-        @mutex.synchronize { @snapshots[path]&.last }
-      end
-
-      def save!
-        FileUtils.mkdir_p(File.dirname(@path))
-        data = {
-          name: @name,
-          phase: @phase,
-          topic: @topic,
-          last_inferred_command: @last_inferred_command,
-          last_inferred_args: @last_inferred_args,
-          messages: pruned_messages,
-          cost: @cost,
-          ts: Time.now.to_i
-        }
-        File.write(@path, JSON.generate(data))
-      end
-
-      def load!
-        return self unless File.exist?(@path)
-        begin
-          data = JSON.parse(File.read(@path), symbolize_names: true)
-        rescue JSON::ParserError, Errno::ENOENT
-          data = {}
-        end
-        @name = data[:name]
-        @phase = data.fetch(:phase, nil)&.to_sym || :discover
-        @topic = data[:topic]
-        @last_inferred_command = data[:last_inferred_command]
-        @last_inferred_args = data[:last_inferred_args]
-        @messages = data.fetch(:messages, [])
-        @token_est = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
-        @cost = data[:cost].to_f
-        self
       end
 
       def self.estimate_tokens(text) = text.to_s.bytesize / TOKENS_PER_CHAR
