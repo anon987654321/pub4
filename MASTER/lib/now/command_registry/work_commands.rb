@@ -36,6 +36,10 @@ module Master
       end
 
       def work_command_deps(ai:, root:, infra:)
+        { root: root }.merge(ai_command_deps(ai:, root:, infra:)).merge(infra_command_deps(infra:))
+      end
+
+      def ai_command_deps(ai:, root:, infra:)
         {
           scanner: ai[:scanner],
           fix_loop: ai[:fix_loop],
@@ -43,23 +47,31 @@ module Master
           deliberation: ai[:deliberation],
           council_stage: ai[:council_stage],
           agent: ai[:agent],
-          session: infra[:session],
-          bus: infra[:bus],
+          code_index: ai[:code_index],
+          reference_graph: ai[:reference_graph],
+          propose_tree: ai[:propose_tree],
           review_crew: Judge::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root: root,
                                              code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
-          propose_tree: ai[:propose_tree],
+          git: ai[:git] || Reach::GitOperations.new(File.expand_path("..", root)),
+        }
+      end
+
+      def infra_command_deps(infra:)
+        {
+          session: infra[:session],
+          bus: infra[:bus],
           config: infra[:config],
           metrics: infra[:metrics],
           learnings: infra[:learnings],
-          git: ai[:git] || Reach::GitOperations.new(File.expand_path("..", root)),
           trace: infra[:trace],
-          code_index: ai[:code_index],
-          reference_graph: ai[:reference_graph],
-          root: root,
         }
       end
 
       def build_work_command_table(d)
+        build_scan_and_fix_commands(d).merge(build_review_and_meta_commands(d))
+      end
+
+      def build_scan_and_fix_commands(d)
         {
           "scan" => command(:dispatch_scan, d[:scanner], d[:root]),
           "self" => command(:dispatch_self, d[:scanner], d[:root], d[:bus]),
@@ -72,6 +84,11 @@ module Master
           "tail" => command(:dispatch_tail, d[:root]),
           "review" => command(:dispatch_review, d[:council_stage], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
           "critique" => command(:dispatch_critique, d[:deliberation], d[:root]),
+        }
+      end
+
+      def build_review_and_meta_commands(d)
+        {
           "workflow" => command(:dispatch_workflow, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus]),
           "triad" => command(:dispatch_triad, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus]),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),

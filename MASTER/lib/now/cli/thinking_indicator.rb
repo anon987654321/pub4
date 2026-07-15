@@ -23,6 +23,11 @@ module Master
       def print_thinking_indicator
         return unless $stdout.isatty
 
+        init_thinking_state!
+        @spin_thread = spawn_spinner_thread
+      end
+
+      def init_thinking_state!
         @think_mutex = Mutex.new
         @think_t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @think_stage = "intake"
@@ -30,8 +35,10 @@ module Master
           update_think_stage(payload)
           emit_dmesg_line(payload)
         end
+      end
 
-        @spin_thread = Thread.new do
+      def spawn_spinner_thread
+        Thread.new do
           i = 0
           loop do
             @think_mutex.synchronize do

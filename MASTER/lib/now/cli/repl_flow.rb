@@ -103,6 +103,17 @@ module Master
         stripped = line.strip
         return accept_top_suggestion if stripped.empty?
         NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
+
+        handled = dispatch_core_slash_command(stripped)
+        return handled unless handled == :unhandled
+
+        handled = dispatch_extra_slash_command(stripped)
+        return handled unless handled == :unhandled
+
+        dispatch_final_slash_command(stripped, line)
+      end
+
+      def dispatch_core_slash_command(stripped)
         case stripped
         when /\A\/(?:help|\?)(?:\s+(.+))?\z/ then run_help(Regexp.last_match(1))
         when "/exit", "/quit" then exit_cli
@@ -119,6 +130,12 @@ module Master
         when "/focus" then toggle_focus
         when "/last" then run_last
         when "/cmd" then run_cmd
+        else :unhandled
+        end
+      end
+
+      def dispatch_extra_slash_command(stripped)
+        case stripped
         when /\A\/dmesg\s+(\d+)\z/ then run_dmesg(Regexp.last_match(1).to_i)
         when "/dmesg" then toggle_dmesg
         when "/chips" then toggle_chips
@@ -129,6 +146,12 @@ module Master
         when /\A\/phase(?:\s+(.+))?\z/ then run_phase(Regexp.last_match(1).to_s)
         when "/ui-critique" then run_ui_critique
         when "/sound-critique" then run_sound_critique
+        else :unhandled
+        end
+      end
+
+      def dispatch_final_slash_command(stripped, line)
+        case stripped
         when "/rebuild" then run_rebuild
         when "/context" then run_context
         when "/snapshot" then run_snapshot
