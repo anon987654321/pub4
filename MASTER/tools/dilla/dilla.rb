@@ -878,15 +878,21 @@ rescue StandardError
   base_kit
 end
 
+def kicks_enabled?
+  ENV.fetch("KICKS", "0") != "0"
+end
+
 def drum_bus_mapping
   # Bass/sub stay on the harmonic bus only — routing them here too doubled
   # the low end on every kick and buried the pad chords in the mix.
-  {
-    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat,
+  map = {
+    snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat,
     poly: :ghost, shaker: :shaker, cowbell: :cowbell,
     poly5: :rim, clap: :clap, rim: :rim, glitch: :ind_stab, tabla: :tabla,
     tambourine: :tambourine, woodblock: :woodblock, agogo: :agogo
   }
+  map[:kick] = :kick if kicks_enabled?
+  map
 end
 
 def sonic_pad_lowpass(sonic)
@@ -3484,26 +3490,30 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     end
     if feel == :chromatic_planing
       pickup = base - step_p * 2
-      events[:kick] << [[pickup + dilla_timing_ms(:kick_sync, bar, 0, timing, beat_p) / 1000.0, 0.0].max.round(6), dilla_velocity(0.88, bar, 0)]
+      if kicks_enabled?
+        events[:kick] << [[pickup + dilla_timing_ms(:kick_sync, bar, 0, timing, beat_p) / 1000.0, 0.0].max.round(6),
+                          dilla_velocity(0.88, bar, 0)]
+      end
       events[:bass] << [[pickup + dilla_timing_ms(:bass, bar, 0, timing, beat_p) / 1000.0, 0.0].max.round(6),
                         dilla_velocity(0.50, bar, 0, spread: 0.05), bass_root]
     end
 
-    pattern.each_with_index do |step, i|
-      role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
-      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
-           dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
-      kick_vel = dilla_velocity(step.zero? ? 0.68 : 0.58, bar, step, spread: 0.05) * sec_gain
-      events[:kick] << [t.round(6), kick_vel]
-      if step.zero?
-        events[:sub_osc] ||= []
-        events[:sub_osc] << [t.round(6), dilla_velocity(0.10, bar, step, spread: 0.04) * sec_gain, 40.0]
-      end
-      bass_skip = drums_only ||
-                  (feel == :syncopated_slash_ninth && bar.zero? && step < 7) ||
-                  (feel != :syncopated_slash_ninth && bar.zero?) ||
-                  (section == :breakdown && step < 8)
-      unless bass_skip
+    if kicks_enabled?
+      pattern.each_with_index do |step, i|
+        role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
+        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+             dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
+        kick_vel = dilla_velocity(step.zero? ? 0.68 : 0.58, bar, step, spread: 0.05) * sec_gain
+        events[:kick] << [t.round(6), kick_vel]
+        if step.zero?
+          events[:sub_osc] ||= []
+          events[:sub_osc] << [t.round(6), dilla_velocity(0.10, bar, step, spread: 0.04) * sec_gain, 40.0]
+        end
+        bass_skip = drums_only ||
+                    (feel == :syncopated_slash_ninth && bar.zero? && step < 7) ||
+                    (feel != :syncopated_slash_ninth && bar.zero?) ||
+                    (section == :breakdown && step < 8)
+        next if bass_skip
         bass_lag = feel == :syncopated_slash_ninth ? step_p * 0.12 : 0.0
         events[:bass] << [[t + dilla_timing_ms(:bass, bar, step, timing, beat_p) / 1000.0 + bass_lag, 0.0].max.round(6),
                           dilla_velocity(0.28, bar, step, spread: 0.06) * sec_gain, bass_root, step_p * 0.55]
@@ -4945,7 +4955,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   mix_note  = sonitex_label
   patch_note = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id), @render_lead_patch&.dig(:id),
                 @render_arp_style].compact.join("/")
-  puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{mix_note}, #{stem_note}, patches=#{patch_note})"
+  kick_note = kicks_enabled? ? "kicks" : "no-kicks"
+  puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note})"
 end
 
 def industrial_techno_section(bar)
@@ -5171,7 +5182,8 @@ def help
       fetch-assets                   Cache CC0 drum WAVs + 2 extra soundfonts
       use-external-kit <name>        Install a fetched kit into samples/drums/custom/
                                       (01-hard-trap | 02-bounce | 03-soulful-vintage)
-    ENV: BPM BARS TRACK PROGRESSION SWING SONITEX SONITEX_PRESET BEAT LIVESET_MIN
+    ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
+     KICKS=0 (default) no kick drum | KICKS=1 enable kicks
          SONITEX=heavy (default) | SONITEX=classic | SONITEX=extreme | SONITEX=0 dry
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
