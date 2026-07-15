@@ -2,12 +2,17 @@
 
 require "sqlite3"
 require "json"
+require_relative "knowledge_store/strategy_outcomes"
+require_relative "knowledge_store/feedback_events"
 
 module Master
   module Ground
   # WAL-mode SQLite ledger for fix quality, strategy outcomes, and RSI feedback events.
     class KnowledgeStore
       include Master::Ground::Persistence::SqliteStore
+      include StrategyOutcomes
+      include FeedbackEvents
+
       DEFAULT_PATH = ".master/knowledge.sqlite3"
       QUALITY_WINDOW_DAYS = 30
       RSI_WINDOW_DAYS = 7
@@ -59,52 +64,6 @@ module Master
         GROUP BY rule HAVING total >= ?
         ORDER BY quality DESC LIMIT ?
       SQL
-      end
-
-      def record_strategy(trigger:, strategy:, outcome:)
-        ts = Time.now.to_i
-        existing = existing_strategy(trigger, strategy)
-        existing ? update_strategy(existing, outcome, ts) : insert_strategy(trigger, strategy, outcome, ts)
-      rescue SQLite3::Exception => e
-        warn "knowledge_store: #{e.message}"
-      end
-
-      def search(trigger_fragment, limit: 3)
-        fragment = "%#{trigger_fragment.to_s.downcase}%"
-        @db.execute(<<~SQL, [fragment, limit])
-        SELECT trigger, strategy, outcome, confidence
-        FROM strategy_outcomes
-        WHERE LOWER(trigger) LIKE ? AND outcome != 'failed'
-        ORDER BY confidence DESC LIMIT ?
-      SQL
-      end
-
-      def record_event(event_type:, dimension:, value: nil, metadata: nil)
-        @db.execute(
-          "INSERT INTO feedback_events (ts, event_type, dimension, value, metadata) VALUES (?, ?, ?, ?, ?)",
-          [Time.now.to_i, event_type.to_s, dimension.to_s, value&.to_s, encoded_metadata(metadata)],
-        )
-      rescue SQLite3::Exception => e
-        warn "knowledge_store: #{e.message}"
-      end
-
-      def provider_errors(model: nil, limit: 20)
-        where, args = provider_errors_query(model, limit)
-        @db.execute(<<~SQL, args).map { |row| provider_error_row(row) }
-          SELECT ts, dimension, value, metadata
-          FROM feedback_events
-          WHERE #{where.join(" AND ")}
-          ORDER BY ts DESC, id DESC
-          LIMIT ?
-        SQL
-      end
-
-      def opportunities
-        cutoff = Time.now.to_i - RSI_WINDOW_DAYS * 86_400
-        recent = @db.execute("SELECT event_type, dimension FROM feedback_events WHERE ts >= ?", [cutoff])
-        tool_failure_opportunities(recent) +
-          event_count_opportunities(recent, "user_correction", :repeated_correction, RSI_CORRECTION_MIN) +
-          event_count_opportunities(recent, "provider_error", :provider_errors, RSI_PROVIDER_MIN)
       end
 
       def close
