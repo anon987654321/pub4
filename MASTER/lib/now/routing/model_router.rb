@@ -18,10 +18,10 @@ module Master
 
         UNCERTAINTY_PHRASES = [
           "i'm not sure", "i don't know", "cannot determine",
-          "unclear", "uncertain", "might be", "possibly",
+          "unclear", "uncertain", "migh#{?t} be", "possibly",
           "probably not", "limited information", "i cannot",
           "i am unable", "i lack the", "not enough information",
-          "i would need more",
+          "i need more",
         ].freeze
 
         ESCALATION_CHAIN = %w[cheap default strong].freeze

@@ -37,7 +37,7 @@ module Master
           "- Read each `## \\`path\\`` section **line by line**; do not skim or paraphrase from headings alone.",
           "- **Cross-reference** symbols across files: follow requires/imports, route → controller → service",
           "  chains, YAML keys → Ruby readers, JS event names → subscribers, CLI commands → dispatchers.",
-          "- When the same name appears in multiple places, reconcile definitions — flag drift immediately.",
+          "- When the same name recurs in multiple places, reconcile definitions — flag drift immediately.",
           "",
         ]
       end
@@ -63,7 +63,7 @@ module Master
           "- **Smells & oddities**: dead code, parallel implementations, magic numbers, commented-out paths,",
           "  inconsistent conventions, docs that disagree with code.",
           "- **Gaps & friction**: missing tests, unwired features, slow/hidden boot steps, operator pain,",
-          "  places where a human or agent would get stuck without tribal knowledge.",
+          "  places where a human or agent gets stuck without tribal knowledge.",
           "",
         ]
       end

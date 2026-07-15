@@ -21,6 +21,11 @@ module Master
         }
       end
 
+      def pause_ms_for(index, arousal)
+        return 0 if index.zero?
+        arousal > 0.55 ? 90 : 140
+      end
+
       def build_phrase_plan(phrases, arousal)
         phrases.each_with_index.map do |phrase, i|
           semitone = PENTATONIC[i % PENTATONIC.length]
@@ -29,7 +34,7 @@ module Master
             rate: RHYTHM[i % RHYTHM.length],
             pitch: format("%+dHz", semitone * 7),
             semitone: semitone,
-            pause_ms: i.zero? ? 0 : (arousal > 0.55 ? 90 : 140),
+            pause_ms: pause_ms_for(i, arousal),
           }
         end
       end

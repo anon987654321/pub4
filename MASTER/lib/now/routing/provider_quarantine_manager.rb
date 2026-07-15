@@ -10,8 +10,8 @@ module Master
     # ProviderQuarantineManager — extends ProviderHealth with automatic quarantine
     # and recovery. Issue #396 item 9: "repair daemon and provider quarantine manager".
     #
-    # A provider entering quarantine is removed from routing until its quarantine
-    # expires or it is explicitly cleared. All decisions are appended to NDJSON so
+    # Quarantine removes a provider from routing until its quarantine
+    # expires or an operator clears it. We append all decisions to NDJSON so
     # the quarantine state is replayable from the event log.
       class ProviderQuarantineManager
         QUARANTINE_PATH = File.join(Master::ROOT, "runtime", "telemetry", "quarantine.ndjson").freeze

@@ -15,8 +15,8 @@ module Master
       BOOT_DIRS = %w[bin lib data].freeze
       BOOT_MAX_BYTES = 50_000
       # A readable snapshot inlines source, not media or generated bulk. Binaries
-      # are noted (never base64-inlined — that once produced multi-GB "snapshots"),
-      # and any text file past this cap is listed rather than pasted whole.
+      # get a path note (never base64-inlined — that once produced multi-GB "snapshots"),
+      # and any text file past this cap we list instead of pasting whole.
       MAX_INLINE_BYTES = 262_144
 
       module_function

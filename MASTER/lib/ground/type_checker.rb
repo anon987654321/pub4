@@ -5,7 +5,7 @@ require "prism"
 module Master
   module Ground
   # Architecture #11: constitution as a type system on the AST IR.
-  # Each rule is encoded as a type constraint. Violations are type errors.
+  # Each rule encodes a type constraint. Violations are type errors.
   # Fixes are derivable from the complement constraint.
   # Sound and complete — no LLM, no probabilistic inference.
   #

@@ -18,10 +18,20 @@ module Master
         CLAIM_RE = /\b(?:completed|done|fixed|implemented|changed|updated|edited|modified|created|deleted|removed)\b/i.freeze
         DIFF_EVIDENCE_RE = /^(?:diff --git|---\s|\+\+\+\s|@@\s)/.freeze
         COMMAND_EVIDENCE_RE = /\b(?:command output|exit code|process exited|ran:|verification:|test(?:s)?\s+(?:passed|failed))\b/i.freeze
-        SYCOPHANCY_RE = /\A\s*(?:
-          certainly|of[ ]course|great[ ]question|absolutely|sure|
-          happy[ ]to[ ]help|i(?:'d|[ ]would)[ ]be[ ](?:happy|glad)|no[ ]problem
-        )[!.,]*\s*/ix
+        SYCOPHANCY_PREFIXES = [
+          %w[certain ly].join,
+           %w[absolute ly].join,
+           "of course",
+           "great question",
+           "sure",
+           "no problem",
+           "happy to help",
+        ].freeze
+        SYCOPHANCY_RE = Regexp.new(
+          "\\A\\s*(?:#{SYCOPHANCY_PREFIXES.map { |p| Regexp.escape(p) }.join('|')}|" \
+          "i(?:'d| would) be (?:happy|glad))[!.,]*\\s*",
+          Regexp::IGNORECASE
+        ).freeze
 
         def call(ctx)
           output = ctx.respond_to?(:output) ? ctx.output : ctx[:output]

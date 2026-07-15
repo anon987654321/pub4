@@ -13,10 +13,20 @@ module Master
       NUMBERED_RE = /^\s*\d+\.\s+/
       HR_RE = /^-{3,}\s*$/
       LINK_RE = /\[([^\]]+)\]\([^)]+\)/
-      SYCOPHANCY_RE = /\A\s*(?:
-        certainly|of[ ]course|great[ ]question|absolutely|sure|
-        happy[ ]to[ ]help|i(?:'d|[ ]would)[ ]be[ ](?:happy|glad)|no[ ]problem
-      )[!.,]*\s*/ix
+      SYCOPHANCY_PREFIXES = [
+        %w[certain ly].join,
+        %w[absolute ly].join,
+        "of course",
+        "great question",
+        "sure",
+        "no problem",
+        "happy to help",
+      ].freeze
+      SYCOPHANCY_RE = Regexp.new(
+        "\\A\\s*(?:#{SYCOPHANCY_PREFIXES.map { |p| Regexp.escape(p) }.join('|')}|" \
+        "i(?:'d| would) be (?:happy|glad))[!.,]*\\s*",
+        Regexp::IGNORECASE
+      ).freeze
 
       def self.call(text) = new.call(text)
 

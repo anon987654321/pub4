@@ -69,7 +69,7 @@ module Master
           grouped.filter_map do |value, occurrences|
             next unless distinct_files(occurrences) >= MIN_FILES
 
-            build("MAGIC_NUMBER_SPREAD", "literal #{value} appears in #{distinct_files(occurrences)} files — extract a named constant")
+            build("MAGIC_NUMBER_SPREAD", "literal #{value} recurs in #{distinct_files(occurrences)} files — extract a named constant")
           end
         end
 
@@ -86,7 +86,7 @@ module Master
           grouped.values.filter_map do |occurrences|
             next unless distinct_files(occurrences) >= MIN_FILES
 
-            build("COPY_PASTE_BLOCK", "same #{BLOCK_LINES}+ line block appears in #{distinct_files(occurrences)} files — extract a module or template")
+            build("COPY_PASTE_BLOCK", "same #{BLOCK_LINES}+ line block recurs in #{distinct_files(occurrences)} files — extract a module or template")
           end
         end
 
@@ -100,7 +100,7 @@ module Master
           families.filter_map do |stem, paths|
             next if stem.empty? || paths.size < MIN_FILES
 
-            build("PARALLEL_HIERARCHY", "#{stem} appears across #{paths.size} class/module hierarchies — share a base or collapse the parallel structure")
+            build("PARALLEL_HIERARCHY", "#{stem} spans #{paths.size} class/module hierarchies — share a base or collapse the parallel structure")
           end
         end
 
@@ -118,7 +118,7 @@ module Master
             paths = files.filter_map { |path, code| path if code.match?(/\b#{Regexp.escape(word)}\b/i) }
             next if paths.uniq.size < 4 || natural_family?(paths)
 
-            build("SPRAWL", "concern #{word.inspect} appears in #{paths.uniq.size} unrelated files — review ownership before fixing")
+            build("SPRAWL", "concern #{word.inspect} recurs in #{paths.uniq.size} unrelated files — review ownership before fixing")
           end
         end
 

@@ -87,7 +87,7 @@ module Master
 
       def bundle_ok?(dir)
         out, = Master::Reach::Exec.capture2e("bundle34", "check", chdir: dir)
-        out.include?("dependencies are satisfied")
+        out.match?(/dependencies.*satisfied/)
       end
 
       def bundle_status(repo)

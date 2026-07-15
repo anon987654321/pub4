@@ -17,7 +17,7 @@ module Master
       ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
       WORKER_TIMEOUT = 45
-      # WORKER_TIMEOUT was tuned (b2cc32b73) for MAX_CHARS=900 on the VPS;
+      # b2cc32b73 tuned WORKER_TIMEOUT for MAX_CHARS=900 on the VPS;
       # MAX_CHARS was later raised 4x (035888e8e) without touching the
       # timeout, so a full-length reply's single unchunked Edge TTS call
       # blew the fixed budget every time -- long replies produced no audio
@@ -121,7 +121,7 @@ module Master
 
         EventMachine.ssl?
       rescue LoadError => e
-        warn_tts("edge unavailable: eventmachine cannot be loaded (#{e.message})")
+        warn_tts("edge unavailable: eventmachine failed to load (#{e.message})")
         false
       rescue StandardError => e
         warn_tts("edge availability probe failed: #{e.class}: #{e.message}")

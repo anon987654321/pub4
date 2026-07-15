@@ -82,14 +82,14 @@ module Master
           missing_fields(source, MANIFEST_RECOMMENDED, :low, "recommended") +
           missing_icons(source) + display_findings(source) + related_application_findings(source)
       rescue StandardError => e
-        [Finding.new(field: :manifest, message: "could not read manifest: #{e.message}", severity: :critical)]
+        [Finding.new(field: :manifest, message: "failed to read manifest: #{e.message}", severity: :critical)]
       end
 
       def audit_sw(root, rel)
         source = File.read(File.join(root, rel))
         private_cache_findings(source) + strategy_findings(source) + resilience_findings(source)
       rescue StandardError => e
-        [Finding.new(field: :service_worker, message: "could not read service worker: #{e.message}", severity: :high)]
+        [Finding.new(field: :service_worker, message: "failed to read service worker: #{e.message}", severity: :high)]
       end
 
       def audit_csrf(path)
@@ -99,7 +99,7 @@ module Master
         return [] unless source.match?(CSRF_LEGACY_SIGNAL)
         [Finding.new(
           field: :csrf,
-          message: "protect_from_forgery with: :null_session is deprecated in Rails 8.1 — migrate to Sec-Fetch-Site header strategy",
+          message: "Rails 8.1 deprecates protect_from_forgery with: :null_session — migrate to Sec-Fetch-Site header strategy",
           severity: :medium,
         )]
       rescue StandardError => e

@@ -14,7 +14,7 @@ module Master
       end
 
       # Apply a write through the standard pipeline.
-      # Returns Result.ok(full_path), or stages it if diff_stager is wired.
+      # Returns Result.ok(full_path), or stages it when diff_stager wires staging.
       def commit_write(full, content, path: nil)
         content = WhitespaceNormalizer.normalize(content, path: full)
         written = path || full

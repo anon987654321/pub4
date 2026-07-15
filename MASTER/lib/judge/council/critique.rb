@@ -22,7 +22,7 @@ module Master
             done_event: :ui_critique_done,
             constraints: [
               "must not break existing HTML semantics",
-              "must preserve intentional CSS measurements unless a measurable rule is violated",
+              "must preserve intentional CSS measurements unless we violate a measurable rule",
               "animations must respect prefers-reduced-motion",
               "solutions must be implementable without a build step",
               "use Ruby QualityFramework design rules from Deliberation",
@@ -56,7 +56,7 @@ module Master
               "prefer tiny generated tones or short assets over heavy dependencies",
               "preserve existing visual identity",
               "use Ruby QualityFramework sound rules from Deliberation",
-              "when Dilla-style timing is proposed, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
+              "when proposing Dilla-style timing, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
             ],
           },
         }.freeze

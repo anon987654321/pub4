@@ -15,10 +15,10 @@ module Master
       DEFAULT_WEB_PORT = 53_187
 
       DEFAULTS = {
-        # grok-4-fast is deprecated by xAI (confirmed 2026-07-11: 404 "xAI
+        # xAI deprecated grok-4-fast (confirmed 2026-07-11: 404 "xAI
         # recommends switching to Grok 4.3"). This is the ultimate fallback
-        # model (used when routing is disabled, or as the last resort in
-        # ModelRouter#fallback_chain) — must be something that actually works
+        # model for disabled routing, or as the last resort in
+        # ModelRouter#fallback_chain — must work
         # without requiring paid credits, since this repo should work for
         # anyone with or without an OpenRouter balance.
         "model" => "nvidia/nemotron-3-super-120b-a12b:free",
@@ -126,7 +126,7 @@ module Master
 
       def deep_dup(obj)
         case obj
-        when Hash then obj.each_with_object({}) { |(k, v), h| h[k] = deep_dup(v) }
+        when Hash then obj.transform_values { |v| deep_dup(v) }
         when Array then obj.map { |v| deep_dup(v) }
         when String then obj.dup
         when Numeric, Symbol, TrueClass, FalseClass, NilClass then obj

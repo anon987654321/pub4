@@ -45,7 +45,7 @@ module Master
             performance: :live_to_multitrack,
           },
           mix: {
-            signature_effects: [:vinyl_sim, :wah, :time_stretch, :tape_echo, :phaser, :ring_mod],
+            signature_effects: %i[vinyl_sim wah time_stretch tape_echo phaser ring_mod],
             texture: "SP-303 Vinyl Sim, cassette saturation, preserved surface noise, minimal processing",
           },
         },
@@ -116,7 +116,7 @@ module Master
           instructions: [
             "trigger samples live instead of sequencing perfectly",
             "embrace SP-303 style vinyl sim compression and time-stretch artifacts",
-            "bounce through rough media rather than polishing",
+            "bounce through rough media instead of polishing",
           ],
         },
       }.freeze
@@ -129,7 +129,7 @@ module Master
         - J Dilla: 96 PPQN MPC feel, 53-56% swing pocket, snares early, kicks late, hats nudged forward, 82-92 BPM, low-pass warmth.
         - Flying Lotus: jazz harmony plus electronic haze, unquantized drums, fast heavy sidechain pump, vinyl layer, pitch-down texture.
         - Madlib: SP-303 live triggering, Vinyl Sim grit, cassette/multitrack roughness, speed over polish, minor/jazz harmony.
-        - Code generation should expose timing, chord, and texture parameters rather than hard-code one beat.
+        - Code generation should expose timing, chord, and texture parameters instead of hard-coding one beat.
       TEXT
       end
 

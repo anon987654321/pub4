@@ -72,7 +72,8 @@ module Master
 
       def key?(key) = @data.key?(key.to_sym)
       def to_h = @data.dup
-      def freeze = self # already immutable
+      # already immutable
+      def freeze = self
 
       # Immutable update — returns a new PipelineContext merging overrides.
       # Accepts a Hash or another PipelineContext (e.g. when combining parallel

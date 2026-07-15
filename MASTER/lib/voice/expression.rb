@@ -56,7 +56,7 @@ module Master
         }
       end
 
-      # Maps genuine runtime signals onto the four fields the face actually renders
+      # Maps genuine runtime signals onto the four fields the face renders
       # via deriveBlendFromEmotion (valence, arousal, confidence, focus).
       def emotion_for(mode: nil, risk: nil, reversibility: nil, verdict: nil, score: nil)
         high_stakes = reversibility == :low || %i[high critical].include?(risk)
@@ -101,9 +101,9 @@ module Master
         hi, lo = style_tier(s)
 
         {
-          arousal: hi ? 1.0 : (lo ? 0.3 : 0.7),
-          pressure: hi ? 0.85 : (lo ? 0.25 : 0.6),
-          breath_boost: hi ? 0.35 : (lo ? -0.15 : 0.0),
+          arousal: tier_value(hi, lo, hi_val: 1.0, lo_val: 0.3, mid_val: 0.7),
+          pressure: tier_value(hi, lo, hi_val: 0.85, lo_val: 0.25, mid_val: 0.6),
+          breath_boost: tier_value(hi, lo, hi_val: 0.35, lo_val: -0.15, mid_val: 0.0),
           valence: lo ? 0.2 : 0.0,
           blendshapes: blendshapes_for(s),
           decay_rate: decay_rate_for(s),
@@ -116,15 +116,25 @@ module Master
         [hi, lo]
       end
 
+      def tier_value(hi, lo, hi_val:, lo_val:, mid_val:)
+        if hi
+          hi_val
+        elsif lo
+          lo_val
+        else
+          mid_val
+        end
+      end
+
       def blendshapes_for(style_name)
         s = style_name.to_s.downcase.to_sym
         hi, lo = style_tier(s)
 
         {
-          jaw: hi ? 0.78 : (lo ? 0.22 : 0.55),
-          smile: hi ? 0.38 : (lo ? 0.12 : 0.28),
-          brow: hi ? 0.68 : (lo ? 0.18 : 0.42),
-          lid_open: hi ? 0.88 : (lo ? 0.52 : 0.72),
+          jaw: tier_value(hi, lo, hi_val: 0.78, lo_val: 0.22, mid_val: 0.55),
+          smile: tier_value(hi, lo, hi_val: 0.38, lo_val: 0.12, mid_val: 0.28),
+          brow: tier_value(hi, lo, hi_val: 0.68, lo_val: 0.18, mid_val: 0.42),
+          lid_open: tier_value(hi, lo, hi_val: 0.88, lo_val: 0.52, mid_val: 0.72),
         }
       end
 
@@ -322,7 +332,14 @@ end
 
         case raw
         when Hash then raw[:score] || raw["score"] || raw[:confidence] || raw["confidence"]
-        when Symbol then raw == :pass ? 0.95 : (raw == :block ? 0.30 : 0.60)
+        when Symbol
+          if raw == :pass
+            0.95
+          elsif raw == :block
+            0.30
+          else
+            0.60
+          end
         else raw
         end
       end

@@ -175,7 +175,7 @@ module Master
       end
 
       # Method-level extension of dead_file_candidates: a defined method whose
-      # name never appears as a token in any OTHER file is a dead-code
+      # name never occurs as a token in any OTHER file is a dead-code
       # candidate. Same text-reachability heuristic, finer grain — misses
       # metaprogrammed/reflective calls (send, method_missing) by design;
       # those need semantic review, not a false "confirmed dead" claim.
@@ -198,7 +198,8 @@ module Master
           # record.tokens never include ?/! (token regex excludes punctuation) —
           # a call site like `x.done?` tokenizes to "done", not "done?".
           bare = name.delete("?!")
-          next if record.tokens.count(bare) > 1 # called elsewhere in its own file — normal for private helpers
+          # called elsewhere in its own file — normal for private helpers
+          next if record.tokens.count(bare) > 1
           inbound = corpus.count { |path, text| path != record.path && text.include?(bare) }
           next unless inbound.zero?
           { path: record.path, method: name, reason: "no call-site references found in corpus" }

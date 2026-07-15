@@ -179,18 +179,17 @@ module Master
       end
 
       def terminate_subprocess(wait_thr)
-        begin
-          Process.kill("TERM", wait_thr.pid)
-        rescue Errno::ESRCH
-          return
-        end
+        return unless signal_process(wait_thr, "TERM")
         return if wait_thr.join(0.5)
-        begin
-          Process.kill("KILL", wait_thr.pid)
-        rescue Errno::ESRCH => e
-          Master::Ground::Swallow.log(e, context: "LLMDispatcher.terminate_subprocess")
-          nil
-        end
+        signal_process(wait_thr, "KILL", log_context: "LLMDispatcher.terminate_subprocess")
+      end
+
+      def signal_process(wait_thr, signal, log_context: nil)
+        Process.kill(signal, wait_thr.pid)
+        true
+      rescue Errno::ESRCH => e
+        Master::Ground::Swallow.log(e, context: log_context) if log_context
+        false
       end
 
       def claude_cli_timeout_s
@@ -213,7 +212,7 @@ module Master
       # text (e.g. Enhance's ask_once and the real turn's chat both receive
       # the identical user message) but mean entirely different requests
       # under different instructions — omitting it let one call's cached
-      # completion be served back as the other's answer.
+      # completion serve back as the other's answer.
       def cache_key_for(message, context, model = nil, system = nil)
         parts = model ? "#{model}\n#{message}" : message
         parts = "#{parts}\nsys:#{system}" if system

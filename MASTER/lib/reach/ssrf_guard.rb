@@ -12,9 +12,9 @@ module Master
     # succeed silently.
     #
     # Known residual risk: this resolves the hostname once up front, but
-    # Net::HTTP resolves it again when it actually connects a few
+    # Net::HTTP resolves it again when it connects a few
     # milliseconds later — a DNS-rebinding attacker controlling the target
-    # domain could serve a public IP for this check and a private one for
+    # domain may serve a public IP for this check and a private one for
     # the real connection. Closing that fully means pinning the connection
     # to the resolved IP (custom socket + TLS SNI/hostname override), which
     # is a bigger change than this guard aims to be; this stops the common

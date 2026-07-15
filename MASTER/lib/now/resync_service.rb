@@ -51,7 +51,7 @@ module Master
       def dry_run_lines(lines)
         git.fetch
         ahead, behind = git.ahead_behind
-        (lines + ["  fetched origin", "  dry-run: would reset --hard origin/main (ahead=#{ahead} behind=#{behind})"]).join("\n")
+        (lines + ["  fetched origin", "  dry-run: reset --hard origin/main (ahead=#{ahead} behind=#{behind})"]).join("\n")
       end
 
       def bundle_install_line(dir, label)

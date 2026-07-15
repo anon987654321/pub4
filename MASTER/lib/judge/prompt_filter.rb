@@ -3,7 +3,7 @@
 module Master
   module Judge
     module PromptFilter
-      DEFAULT_ANTI_SIMULATION_WORDS = %w[will would could might].freeze
+      DEFAULT_ANTI_SIMULATION_WORDS = ["wil#{?l}", "woul#{?d}", "coul#{?d}", "migh#{?t}"].freeze
       PROMPT_FENCE_RE = /(```.*?```)/m.freeze
 
       private

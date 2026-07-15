@@ -36,8 +36,8 @@ module Master
         run(root:, tool:, arg:).then { |r| r.ok? ? r.value! : r.message }
       end
 
-      # MASTER can be launched from its own directory, the pub4 workspace root,
-      # or another repository it is operating on. Its media entrypoints remain
+      # Launch MASTER from its own directory, the pub4 workspace root,
+      # or another repository it operates on. Media entrypoints stay
       # discoverable in every case.
       def script_path(requested_root, tool)
         candidates = [requested_root, MasterPaths.root].uniq.map do |candidate|

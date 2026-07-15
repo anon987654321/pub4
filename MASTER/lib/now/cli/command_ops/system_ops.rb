@@ -52,7 +52,7 @@ module Master
         if result.ok?
           result.value!.each do |r|
             next puts @refs.renderer.render("  !! #{r[:app]}: #{r[:error]}", mode: :warning) if r[:error]
-            icon = { green: "ok", amber: "--", red: "!!" }.fetch(r[:verdict], "??")
+            icon = { green: "ok", amber: "—", red: "!!" }.fetch(r[:verdict], "??")
             puts @refs.renderer.render("  #{icon} #{r[:app]}: #{r.dig(:pwa, :findings)&.size || 0} finding(s)", mode: :dim)
             Array(r.dig(:pwa, :recommendations)).first(3).each do |rec|
               puts @refs.renderer.render("     #{rec}", mode: :dim)

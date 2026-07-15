@@ -19,7 +19,7 @@ module Master
       # BUNDLE_LOCKFILE then points it at web/Gemfile.lock while BUNDLE_GEMFILE (set
       # below) correctly points at MASTER's own Gemfile -- Bundler resolves the
       # mismatched lockfile's exact gem versions against MASTER's gem set and finds
-      # them missing (Bundler::GemNotFound), on every single spawn, not just some.
+      # them missing (Bundler::GemNotFound), on every single spawn, not only some.
       BUNDLE_ISOLATION_KEYS = %w[
         BUNDLE_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT
         BUNDLE_DISABLE_SHARED_GEMS BUNDLE_APP_CONFIG BUNDLE_LOCKFILE

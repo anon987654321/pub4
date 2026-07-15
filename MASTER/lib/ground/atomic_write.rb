@@ -7,7 +7,7 @@ module Master
   module Ground
     # Atomic file writes using temp file + rename. Ensures data durability
     # via fsync, and optionally fsyncs the parent directory on POSIX systems
-    # to guarantee the rename is committed to disk.
+    # to commit the rename to disk.
     module AtomicWrite
       def write_atomic(path, content, fsync: true, fsync_dir: true, mode: 0o644)
         dir = File.dirname(path)

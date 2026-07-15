@@ -7,7 +7,7 @@ module Master
     module Security
       module CommandGuard
         # Any of these can trivially reintroduce whatever the rest of this list tries to
-        # prevent (bash -c 'sed ...', curl ... | sh, python -c '...') -- a token-level
+        # prevent (bash -c with sed, curl piped to sh, python -c with inline code) — a token-level
         # blocklist is a weak boundary in general, but omitting the shells/interpreters/
         # network fetchers themselves defeats the point of having one at all.
         BANNED_COMMANDS = %w[

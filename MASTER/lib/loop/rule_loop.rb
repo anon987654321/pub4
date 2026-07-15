@@ -33,7 +33,7 @@ module Master
       SEMANTIC_PASS_CHECKLIST = <<~TEXT.strip
         Before answering, do a semantic pass:
         - summarize what the file does in 3 lines
-        - summarize what it assumes and what could break
+        - summarize what it assumes and what can break
         - enumerate module hierarchy, data flow, side effects, and implicit invariants
         - list direct callers/callees and related files
         - name the design pattern used or violated
@@ -194,13 +194,13 @@ module Master
         case style
         when :council
           <<~TEXT.chomp
-          Three reviewers assess before any fix is applied:
+          Three reviewers assess before we apply any fix:
           As Skeptic: Is this a real violation or a false positive? What is the blast radius?
           As Security: Does this create an attack surface? What must the fix preserve?
           As Maintainer: What is the minimum change that eliminates the violation without drift?
 
           Produce the corrected file only if all three agree the fix is safe.
-          If any reviewer would block, return exactly: UNCHANGED
+          If any reviewer blocks, return exactly: UNCHANGED
           TEXT
         when :diff
           "Return a unified diff patch only (like `diff -u`). Fix only the violation.\n" \

@@ -30,7 +30,7 @@ module Pub4
       File.join(repo_root, "MASTER")
     end
 
-    # Legacy aliases — DEPLOY/OPERATOR were folded into OPENBSD (2026-07).
+    # Legacy aliases — we folded DEPLOY/OPERATOR into OPENBSD (2026-07).
     def deploy_root = openbsd_root
 
     def resolve(path)

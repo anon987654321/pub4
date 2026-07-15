@@ -6,7 +6,7 @@ require "json"
 module Master
   module Ground
     # Error swallowing with structured telemetry. Never truly silent —
-    # every swallowed error is published to the event bus and written
+    # every swallowed error publishes to the event bus and writes
     # to a structured log for post-mortem analysis.
     module Swallow
       LOG_PATH = File.join(Master::ROOT, ".master", "swallowed_errors.jsonl").freeze

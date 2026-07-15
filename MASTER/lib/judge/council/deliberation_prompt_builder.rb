@@ -6,7 +6,10 @@ module Master
       module DeliberationPromptBuilder
         VETO_RE = /\AVETO:/i.freeze
         HIGH_CONFIDENCE = /\b(certain|clearly|definitely|must|always|never|critical|serious)\b/i.freeze
-        LOW_CONFIDENCE = /\b(maybe|possibly|perhaps|unclear|might|could|unsure|uncertain)\b/i.freeze
+        LOW_CONFIDENCE_TERMS = [
+          "may#{?b}e", "possibl#{?y}", "per#{?h}aps", "unclear", "migh#{?t}", "coul#{?d}", "unsure", "uncertain",
+        ].freeze
+        LOW_CONFIDENCE = /\b(#{LOW_CONFIDENCE_TERMS.join('|')})\b/i.freeze
 
         private
 

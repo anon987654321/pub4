@@ -67,7 +67,7 @@ module Master
         @lock.synchronize { write_entry(path:, value: result, key:) }
       end
 
-      # Fuzzy near-hit layer over the exact disk cache; no-op when embeddings are disabled.
+      # Fuzzy near-hit layer over the exact disk cache; no-op with embeddings off.
       def fuzzy_index
         @fuzzy_index ||= SemanticIndex.new(embedder: Master::Judge::Embeddings)
       end

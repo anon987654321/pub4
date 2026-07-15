@@ -136,7 +136,7 @@ module Master
             context = ok_workers.map do |w|
               "#{w[:role]} (confidence #{w[:confidence].round(2)}): #{w[:output].value!}"
             end.join("\n\n")
-            prompt = "Workers could not reach consensus on: #{task_context}\n\nWorker outputs:\n#{context}\n\nPick the best recommendation and explain why."
+            prompt = "Workers failed to reach consensus on: #{task_context}\n\nWorker outputs:\n#{context}\n\nPick the best recommendation and explain why."
             @bus&.publish(:swarm_arbitration_start, task: task_context[0..60])
             @agent.ask(prompt)
           rescue StandardError => error

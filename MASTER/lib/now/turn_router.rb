@@ -25,8 +25,8 @@ module Master
       end
 
       # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,
-      # ...) before it will admit a `done` effect — right for a coding goal, but
-      # it means the Fold can never just answer "hi". Plain conversation (no
+      # ...) before it admits a `done` effect — right for a coding goal, but
+      # it means the Fold can never answer "hi" alone. Plain conversation (no
       # recognized coding-task keyword, no risk-pattern hit) skips the Fold
       # entirely and talks straight to the agent, which already carries the
       # persona system prompt, model routing, and visitor-scoped tools

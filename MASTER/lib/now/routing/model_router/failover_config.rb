@@ -17,7 +17,7 @@ module Master
           end
 
           def failover_cooldown_tiers
-            tiers = Array(@rules.dig("failover", "cooldown_tiers")).map { |s| s.to_i }.select(&:positive?)
+            tiers = Array(@rules.dig("failover", "cooldown_tiers")).map(&:to_i).select(&:positive?)
             tiers.empty? ? [30, 60, failover_cooldown_seconds] : tiers
           end
 

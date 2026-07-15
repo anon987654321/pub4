@@ -15,7 +15,7 @@ class TestSessionCapture < Minitest::Test
       )
 
       assert_match(/capture: recorded/, result)
-      assert_includes File.read(File.join(dir, "runtime", "session_learnings.md")), "What new techniques were discovered?"
+      assert_includes File.read(File.join(dir, "runtime", "session_learnings.md")), "What new techniques did the session uncover?"
 
       patterns = Master.load_yaml(File.join(dir, "data", "patterns.yml"))
       openbsd = Master.load_yaml(File.join(dir, "data", "openbsd.yml"))

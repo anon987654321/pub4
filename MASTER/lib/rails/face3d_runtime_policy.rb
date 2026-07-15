@@ -29,7 +29,7 @@ module Master
 
       def audit_source(source)
         findings = []
-        findings << Finding.new(:webgpu, "WebGPU must not be introduced before CPU fallback is complete", :critical) if source.include?("navigator.gpu")
+        findings << Finding.new(:webgpu, "Add WebGPU only after CPU fallback completes", :critical) if source.include?("navigator.gpu")
         findings << Finding.new(:sync_gpu_readback, "synchronous GPU readback is forbidden in the Face3D render path", :critical) if source.include?("mapAsync") && source.include?("requestAnimationFrame")
         findings << Finding.new(:runtime_fork, "Face3D changes must use the existing face3d_engine / face3d_preview path", :high) if source.include?("particle-face")
         findings << Finding.new(:visibility, "preview loop should listen for visibilitychange", :medium) unless source.include?("visibilitychange")

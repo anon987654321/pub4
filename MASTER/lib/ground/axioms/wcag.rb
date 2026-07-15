@@ -17,7 +17,7 @@ module Master
           Criterion.new(id: "1.4.11", level: :AA, name: "Non-text Contrast",
             requirement: "UI component contrast >= 3:1 against adjacent colors"),
           Criterion.new(id: "1.4.12", level: :AA, name: "Text Spacing",
-            requirement: "No loss of content when letter/word/line spacing is increased"),
+            requirement: "No loss of content when users increase letter/word/line spacing"),
           Criterion.new(id: "1.4.13", level: :AA, name: "Content on Hover or Focus",
             requirement: "Hover/focus content dismissible, hoverable, persistent"),
           Criterion.new(id: "2.1.1", level: :A, name: "Keyboard",

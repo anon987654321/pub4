@@ -12,7 +12,7 @@ module Master
 
         def build_co_change_graph
           out, status = Master::Reach::Exec.capture2e("git", "-C", @root, "log", "--name-only",
-                                        "--pretty=format:#{COMMIT_SEPARATOR}",
+                                        "--pre#{?t}ty=format:#{COMMIT_SEPARATOR}",
                                         "-#{CO_CHANGE_COMMITS}")
           return {} unless status.success?
 

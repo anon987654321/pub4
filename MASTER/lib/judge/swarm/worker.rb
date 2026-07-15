@@ -43,7 +43,7 @@ module Master
 
         def worker_system_prompt
           "You are a specialized #{@role} agent. #{role_description}\n" \
-            "Respond only with what is asked. No preamble. No meta-commentary."
+            "Respond only with what we ask. No preamble. No meta-commentary."
         end
 
         def role_description = "General-purpose assistant."

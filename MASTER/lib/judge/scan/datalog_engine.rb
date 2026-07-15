@@ -5,7 +5,7 @@ module Master
     module Scan
     # Architecture #12: Datalog/Prolog rule engine — logical Horn clause rules.
     # Violations are queries against a fact base derived from the AST.
-    # Fixes are derived from the complement clause. No neural network involved.
+    # Fixes derive from the complement clause. No neural network involved.
     #
     # Fact extraction implemented for Ruby via Prism. Horn clause evaluation
     # is a minimal forward-chaining Datalog subset.

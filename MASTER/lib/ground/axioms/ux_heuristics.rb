@@ -10,7 +10,7 @@ module Master
           h2_real_world: "Match Between the System and the Real World — speak the user's language, not internal jargon",
           h3_user_control: "User Control and Freedom — provide a clearly marked exit from unwanted states",
           h4_consistency: "Consistency and Standards — follow platform and industry conventions",
-          h5_error_prevention: "Error Prevention — prevent problems from occurring rather than relying on error messages",
+          h5_error_prevention: "Error Prevention — prevent problems from occurring instead of relying on error messages",
           h6_recognition: "Recognition Rather than Recall — make elements, actions, and options visible",
           h7_flexibility: "Flexibility and Efficiency of Use — support both novice and expert users",
           h8_minimalism: "Aesthetic and Minimalist Design — every extra unit competes with relevant units",

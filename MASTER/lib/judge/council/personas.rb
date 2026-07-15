@@ -24,7 +24,7 @@ module Master
                       prompt: "Review for architectural soundness, coupling, and interface design.",
                       **PERSONA_DEFAULTS),
           Persona.new(name: "Skeptic", role: "Devil's advocate", bias: "Caution",
-                      prompt: "Find what could go wrong. Challenge every assumption.",
+                      prompt: "Find what goes wrong. Challenge every assumption.",
                       **PERSONA_DEFAULTS),
           Persona.new(name: "Pragmatist", role: "Implementation", bias: "Shipping",
                       prompt: "Is this shippable? Flag over-engineering.",

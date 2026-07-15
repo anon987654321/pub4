@@ -9,7 +9,6 @@ require_relative "cli/background_scan"
 require_relative "cli/repl_flow"
 require_relative "cli/bridge_run"
 
-
 require "open3"
 require "reline"
 require "tty-prompt"

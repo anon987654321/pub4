@@ -13,7 +13,7 @@ module Master
 
       # Raised for HTTP statuses worth a retry (rate limit, server-side fault).
       # A 4xx other than 429 means the request itself is wrong and retrying
-      # would just repeat the same failure.
+      # retries repeat the same failure.
       TransientError = Class.new(StandardError)
 
       CONFIG_PATH = File.expand_path("~/.config/repligen/config.json").freeze

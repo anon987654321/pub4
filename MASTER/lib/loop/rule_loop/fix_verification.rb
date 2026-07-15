@@ -3,7 +3,7 @@
 module Master
   module Loop
     class RuleLoop
-      # Staleness/verification checks run before and after a fix is applied
+      # Staleness/verification checks run before and after we apply a fix
       # (fingerprint drift, missing test coverage) — separate from RuleLoop's
       # own scan/prompt/apply pipeline.
       module FixVerification

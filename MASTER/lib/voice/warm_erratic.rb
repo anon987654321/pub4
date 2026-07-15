@@ -28,7 +28,7 @@ module Master
 
       FAST_STYLES = %i[chipper energetic brief amused clear question].freeze
 
-      HUMOR_RE = /\b(lol|haha|heh|anyway|plot twist|whoops|oops|wild|chaos|absolutely|literally|honestly|fair enough|not gonna lie|for what it'?s worth)\b/i
+      HUMOR_RE = /\b(lol|haha|heh|anyway|plot twist|whoops|oops|wild|chaos|honestly|fair enough|not gonna lie|for what it'?s worth)\b/i
       GOOD_NEWS_RE = /\b(done|complete|success|great|perfect|nice|queued|ready|finished|works|fixed|all set|sorted|boom)\b/i
       BAD_NEWS_RE = /\b(error|fail|broken|blocked|sorry|unfortunately|stuck|couldn'?t|didn'?t work|nope)\b/i
       CASUAL_RE = /\b(sure|yep|yeah|okay|cool|right|got it|no worries)\b/i

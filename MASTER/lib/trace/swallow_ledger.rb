@@ -48,7 +48,7 @@ module Master
         line = JSON.generate(at: Time.now.utc.iso8601, total:, counts: snapshot)
         File.open(path, "a") { |io| io.write(line, "\n") }
       rescue StandardError => e
-        # Cannot route through Swallow.log — it would recurse into this stream.
+        # Cannot route through Swallow.log — it recurses into this stream.
         ::Kernel.warn("swallow_ledger: flush failed — #{e.class}: #{e.message}")
       end
     end

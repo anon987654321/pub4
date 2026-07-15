@@ -48,7 +48,7 @@ module Master
         @event_log.append(event, safe_payload)
         @evidence_log&.append(event, safe_payload) if @evidence_log&.operational?(event)
       rescue StandardError => e
-        # warn-only: routing through the bus here would recurse
+        # warn-only: routing through the bus here recurses
         Master::Ground::Swallow.log(e, context: "event_bus.persist_event", event:)
       end
 

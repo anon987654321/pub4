@@ -50,7 +50,7 @@ module Master
       TEXT
 
       REPLICATE = <<~TEXT.strip
-        Replicate API is used only by the replicate_kokoro TTS engine. Token: REPLICATE_API_TOKEN in /etc/master.env or ~/.config/repligen/config.json.
+        Only replicate_kokoro TTS uses the Replicate API. Token: REPLICATE_API_TOKEN in /etc/master.env or ~/.config/repligen/config.json.
       TEXT
 
       CONVENTIONS = <<~TEXT.strip

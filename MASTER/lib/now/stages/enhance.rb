@@ -14,11 +14,12 @@ module Master
         MIN_WORDS = 5
 
         SKIP_RE = /\A(?:
-          \/                                      | # slash command
-          ```                                     | # code fence
-          (?:hi+|hey|hello)\z                     | # pure greeting
-          (?:yes|no|ok+|yep|nope?|sure|agreed)\z    # one-word affirmation
+          \/                                      |
+          ```                                     |
+          (?:hi+|hey|hello)\z                     |
+          (?:yes|no|ok+|yep|nope?|sure|agreed)\z
         )/xi.freeze
+        # SKIP_RE branches: slash command, code fence, pure greeting, one-word affirmation
 
         # S&W + Asgeir TJ leaked-prompt pattern library:
         # role clarity, latent-intent surfacing, format specificity, no-fluff constraint.
@@ -26,10 +27,10 @@ module Master
         You are a message clarity editor. Rewrite the user message to maximise signal and eliminate noise.
 
         Rules:
-        1. Strunk & White: active voice, cut filler ("I was wondering", "could you please", "just", "actually", "maybe"), omit needless words.
+        1. Strunk & White: active voice, cut filler ("I was wondering", "please", "maybe"), omit needless words.
         2. Surface the underlying ask — what does the user ACTUALLY want done or understood?
         3. Preserve all technical specifics: file names, line numbers, method names, error text, gem names.
-        4. Add a format hint when the output shape is implied but unstated ("as a diff", "list each file", "one sentence").
+        4. Add a format hint when the output shape implies but omits format ("as a diff", "list each file", "one sentence").
         5. Name the system, file, or component explicitly when implied but not stated.
         6. Keep the mood: question stays question, command stays command.
         7. Do NOT invent information. Do NOT change meaning. Do NOT add prose.

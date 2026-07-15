@@ -12,7 +12,8 @@ module Master
         SSH_OPTS = %w[-o BatchMode=yes -o ConnectTimeout=10].freeze
 
         def call
-          src = File.expand_path("../../..", root)  # ~/pub4 from MASTER root
+          # ~/pub4 from MASTER root
+          src = File.expand_path("../../..", root)
           cmd = ["openrsync", "-ae", "ssh #{SSH_OPTS.join(" ")}",
                  src, "#{REMOTE_HOST}:#{REMOTE_PATH}"]
           out, status = Master::Reach::Exec.capture2e(*cmd)

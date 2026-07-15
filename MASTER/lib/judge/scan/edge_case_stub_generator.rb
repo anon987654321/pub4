@@ -11,7 +11,7 @@ module Master
           ["empty string", "\"\""],
           ["empty array", "[]"],
           ["max integer", "(2**63 - 1)"],
-          ["very long string", "\"x\" * 10_000"],
+          ["10k-char string", "\"x\" * 10_000"],
           ["unicode", "\"Bergen ålesund 東京\""],
           ["invalid JSON", "\"{\""],
           ["truncated file", "\"partial: [\""],

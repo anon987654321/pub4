@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  # Raised when #value! is called on an Err result.
+  # Calling #value! on an Err result raises this.
   class UnwrapError < RuntimeError; end
 
   # Pure Ruby reader + detector for phantom_recovery (data/rules.yml).

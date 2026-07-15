@@ -14,7 +14,7 @@ module Master
     module BrgenBridge
       module_function
 
-      BRGEN_PORT = 38182
+      BRGEN_PORT = 38_182
       TIMEOUT = 5
 
       def status

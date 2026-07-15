@@ -52,8 +52,8 @@ module Master
         # "go", "no", "up" are common word PREFIXES too ("norwegian" starts
         # with "no", "quick" contains "ui" anywhere) and either weaker check
         # misroutes plain chat into the coding Fold. Every INTENTS keyword is
-        # a real whole word (inflections like "deliberating" are spelled out
-        # explicitly above) so exact match is correct, not just safer.
+        # a real whole word (we spell out inflections like "deliberating"
+        # explicitly above) so exact match is correct, not safer alone.
         tokens = downcased.scan(/\w+/)
         scores = INTENTS.transform_values do |keywords|
           tokens.count { |t| keywords.include?(t) }

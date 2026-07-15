@@ -6,7 +6,7 @@ module Master
   module Now
   module Stages
     # Council — 6-persona deliberation on dangerous or multi-file changes.
-    # PRAISE votes are appended to data/exemplars.yml for future reference.
+    # We append PRAISE votes to data/exemplars.yml for later reference.
     class Council
       include Master::Ground::AtomicWrite
       EXEMPLARS_PATH = File.join(Master::ROOT, "data", "exemplars.yml").freeze

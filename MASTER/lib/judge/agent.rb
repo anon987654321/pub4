@@ -62,46 +62,6 @@ module Master
         Result.err("agent: #{chat_error.message}", category: :handler_exception)
       end
 
-      def dispatch_chat_response(dispatch, stream:, image:, &blk)
-        response = attempt_chat_with_fallbacks(candidate_models: dispatch[:candidate_models], prompt: dispatch[:prompt],
-          context: dispatch[:context], stream:, image:, &blk)
-        @deps.homeostat&.observe(response.is_a?(Master::Result::Err) ? :llm_failure : :llm_success)
-        response
-      end
-
-      def finalize_chat_response(response, message, dispatch:, image:, stream:, escalation_depth:, task_type:, &blk)
-        response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
-
-        text = response.to_s
-        recovery_result = handle_phantom_recovery(text, message:, image:, stream:, escalation_depth:, task_type:, &blk)
-        return recovery_result if recovery_result
-
-        @session.add_message(role: :assistant, content: text)
-        publish_ctx_footer(dispatch[:selected_model])
-        Result.ok(text)
-      end
-
-      def prepare_chat_turn(message)
-        @context_window&.check_and_compact!
-        @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
-        @session.add_message(role: :user, content: message)
-      end
-
-      def check_rate_limit(model_id = nil)
-        @circuit_breaker.check_rate!(model_id) if @circuit_breaker.respond_to?(:check_rate!)
-        nil
-      rescue Reach::CircuitBreaker::CircuitError => err
-        Result.err(err.message, category: err.category)
-      end
-
-      def publish_ctx_footer(model_id)
-        est = @session.respond_to?(:token_est) ? @session.token_est : 0
-        limit = Master.context_window(model_id)
-        pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
-        @bus&.publish("ctx:footer", model: model_id, token_est: est, limit:, pct:)
-      end
-      private :prepare_chat_turn, :check_rate_limit, :publish_ctx_footer, :dispatch_chat_response, :finalize_chat_response
-
       def ask(prompt, context: nil, operation: nil, image: nil)
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
         selected_model = operation ? model_for(operation:) : routed_models.first
@@ -163,6 +123,45 @@ module Master
       end
 
       private
+
+      def dispatch_chat_response(dispatch, stream:, image:, &blk)
+        response = attempt_chat_with_fallbacks(candidate_models: dispatch[:candidate_models], prompt: dispatch[:prompt],
+          context: dispatch[:context], stream:, image:, &blk)
+        @deps.homeostat&.observe(response.is_a?(Master::Result::Err) ? :llm_failure : :llm_success)
+        response
+      end
+
+      def finalize_chat_response(response, message, dispatch:, image:, stream:, escalation_depth:, task_type:, &blk)
+        response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
+
+        text = response.to_s
+        recovery_result = handle_phantom_recovery(text, message:, image:, stream:, escalation_depth:, task_type:, &blk)
+        return recovery_result if recovery_result
+
+        @session.add_message(role: :assistant, content: text)
+        publish_ctx_footer(dispatch[:selected_model])
+        Result.ok(text)
+      end
+
+      def prepare_chat_turn(message)
+        @context_window&.check_and_compact!
+        @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
+        @session.add_message(role: :user, content: message)
+      end
+
+      def check_rate_limit(model_id = nil)
+        @circuit_breaker.check_rate!(model_id) if @circuit_breaker.respond_to?(:check_rate!)
+        nil
+      rescue Reach::CircuitBreaker::CircuitError => err
+        Result.err(err.message, category: err.category)
+      end
+
+      def publish_ctx_footer(model_id)
+        est = @session.respond_to?(:token_est) ? @session.token_est : 0
+        limit = Master.context_window(model_id)
+        pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
+        @bus&.publish("ctx:footer", model: model_id, token_est: est, limit:, pct:)
+      end
 
       def prepare_chat_dispatch(message, task_type)
         candidate_models = routed_models(message, task_type:)

@@ -9,7 +9,7 @@ require_relative "security_error"
 begin
   require "openssl"
 rescue LoadError => e
-  warn "openssl: #{e.message} — LLM calls will fail"
+  warn "openssl: #{e.message} — LLM calls fail"
 end
 
 unless File.respond_to?(:binary?)
@@ -125,7 +125,7 @@ module Master
     now/cli/repl_flow.rb now/cli/result_display.rb now/cli/bridge_run.rb judge/review_crew/agents.rb
   ]
   ignored_files.each { |relative| loader.ignore(File.join(__dir__, relative)) }
-  # command_ops is both a file and a helper directory; the file is required manually.
+  # command_ops is both a file and a helper directory; we require the file manually.
   loader.ignore(File.join(__dir__, "now", "cli", "command_ops"))
 
   Dir.glob(File.join(__dir__, "now", "command_registry", "*.rb")).each do |path|

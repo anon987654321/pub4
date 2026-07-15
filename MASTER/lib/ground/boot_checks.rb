@@ -68,13 +68,15 @@ module Master
           if File.directory?(dir)
             ok(".master_dir", "writable state directory present")
           else
-            begin
-              FileUtils.mkdir_p(dir)
-              ok(".master_dir", "created writable state directory")
-            rescue StandardError => e
-              fail(".master_dir", "cannot create: #{e.message}")
-            end
+            create_master_dir(dir)
           end
+        end
+
+        def create_master_dir(dir)
+          FileUtils.mkdir_p(dir)
+          ok(".master_dir", "created writable state directory")
+        rescue StandardError => e
+          fail(".master_dir", "cannot create: #{e.message}")
         end
 
         def check_config_readable(root)
@@ -165,18 +167,16 @@ module Master
 
         # Wire constitution Parliament chain integrity (from kimi patches)
         def check_constitution_chain(root)
-          begin
-            require "ground/constitution"
-            p = Master::Ground::Parliament.new
-            ok, err = p.verify_chain
-            if ok
-              ok("constitution_chain", "cryptographic amendment chain intact")
-            else
-              fail("constitution_chain", "chain verification failed: #{err}", severity: :warning)
-            end
-          rescue StandardError => e
-            warn_check("constitution_chain", "could not verify: #{e.message}")
+          require "ground/constitution"
+          parliament = Master::Ground::Parliament.new
+          chain_ok, err = parliament.verify_chain
+          if chain_ok
+            ok("constitution_chain", "cryptographic amendment chain intact")
+          else
+            fail("constitution_chain", "chain verification failed: #{err}", severity: :warning)
           end
+        rescue StandardError => e
+          warn_check("constitution_chain", "verification failed: #{e.message}")
         end
       end
     end

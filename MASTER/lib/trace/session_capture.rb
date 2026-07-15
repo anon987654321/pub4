@@ -8,9 +8,9 @@ module Master
   module Trace
     class SessionCapture
       QUESTIONS = {
-        techniques: "What new techniques were discovered?",
+        techniques: "What new techniques did the session uncover?",
         recurring_patterns: "What patterns kept recurring?",
-        automations: "What manual steps could be automated?",
+        automations: "What manual steps merit automation?",
         prompts: "What questions yielded good results?",
         providers: "What external tools/APIs were useful?",
         learned_behavior: "What made this work?",

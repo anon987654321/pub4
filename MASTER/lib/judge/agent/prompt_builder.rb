@@ -49,9 +49,9 @@ module Master
 
         def conversational_register_line
           "This turn is casual conversation, not a coding task: set aside the terse " \
-            "task-completion register and reply the way you'd actually talk — warm, " \
+            "task-completion register and reply the way you'd talk — warm, " \
             "a few natural sentences, genuinely present. Stay yourself. If the person " \
-            "asks something factual, use your tools to check rather than guessing, " \
+            "asks something factual, use your tools to check instead of guessing, " \
             "and give a real, specific answer."
         end
 

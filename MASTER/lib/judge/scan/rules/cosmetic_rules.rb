@@ -8,6 +8,37 @@ module Master
         EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
         NUMERIC_UNDERSCORE_RE = /[^\d_.]\d{5,}(?![\d_])/.freeze
 
+        module_function
+
+        def unwrap_ternary_branch(node)
+          case node
+          when Prism::ParenthesesNode then unwrap_ternary_branch(node.body)
+          when Prism::StatementsNode
+            node.body.size == 1 ? unwrap_ternary_branch(node.body.first) : node
+          when Prism::ElseNode then unwrap_ternary_branch(node.statements)
+          else node
+          end
+        end
+
+        def ternary_branch_exprs(branch)
+          return [] unless branch
+
+          body = case branch
+                 when Prism::StatementsNode then branch.body
+                 when Prism::ElseNode then ternary_branch_exprs(branch.statements)
+                 else [branch]
+                 end
+          body.map { |expr| unwrap_ternary_branch(expr) }
+        end
+
+        def nested_ternary_branch?(node)
+          return false unless node.is_a?(Prism::IfNode) && node.if_keyword.nil?
+
+          branches = ternary_branch_exprs(node.statements)
+          branches += ternary_branch_exprs(node.subsequent) if node.subsequent
+          branches.any? { |expr| expr.is_a?(Prism::IfNode) && expr.if_keyword.nil? }
+        end
+
         RuleDSL.rule :RUBY_SNAKE_METHODS,
           severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
           description: "methods use snake_case, never camelCase" do |src, path:|
@@ -55,8 +86,20 @@ module Master
           severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
           description: "no nested ternaries" do |src, path:|
           next [] if path.to_s.include?("/judge/scan/rules/")
-          scan_lines(src, /\?[^?:\n]*\?[^?:\n]*:[^?:\n]*:/,
-            message: "nested ternary — expand to if/elsif/else or case")
+          result = Prism.parse(src)
+          next [] if result.failure?
+
+          findings = []
+          walk = lambda do |node|
+            return unless node
+            if node.is_a?(Prism::IfNode) && node.if_keyword.nil? && Rules.nested_ternary_branch?(node)
+              findings << finding(line: node.location.start_line,
+                message: "nested ternary — expand to if/elsif/else or case")
+            end
+            node.child_nodes.compact.each { |child| walk.call(child) }
+          end
+          walk.call(result.value)
+          findings.uniq { |f| f[:line] }
         end
 
         RuleDSL.rule :NO_ABBREVIATED_IDENTIFIERS,

@@ -16,8 +16,8 @@ module Master
     #
     # A leading env Hash, chdir:, stdin_data:, and other Open3 spawn options pass
     # through unchanged. On timeout the returned status is a non-success Process
-    # status (the child was signalled), so existing `status.success?` checks fall
-    # through to their error path exactly as they would for a real failure.
+    # status (the child signalled), so existing `status.success?` checks fall
+    # through to their error path the same way they do for a real failure.
     module Exec
       module_function
 
@@ -76,7 +76,7 @@ module Master
         Timeout.timeout(timeout) { wait_thr.value }
       rescue Timeout::Error
         kill_group(wait_thr.pid)
-        readers.each { |reader| reader.kill }
+        readers.each(&:kill)
         wait_thr.value
       end
 

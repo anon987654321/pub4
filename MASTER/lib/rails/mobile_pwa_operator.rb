@@ -59,18 +59,14 @@ module Master
         Result.err("fix_app #{app_name}: #{e.message}", category: :unknown)
       end
 
+      OFFLINE_TEMPLATE = File.join(Master::ROOT, "data", "templates", "rails_pwa", "offline.html.erb").freeze
+
       def fix_offline_view(path)
         offline_view = File.join(path, "app", "views", "pages", "offline.html.erb")
         return nil if File.exist?(offline_view)
 
         FileUtils.mkdir_p(File.dirname(offline_view))
-        File.write(offline_view, <<~ERB)
-          <% content_for :title, "Offline" %>
-          <main role="main" aria-label="Offline">
-            <h1>Offline</h1>
-            <p>You are offline. Reconnect to sync pending actions.</p>
-          </main>
-        ERB
+        File.write(offline_view, File.read(OFFLINE_TEMPLATE))
         "offline page"
       end
 

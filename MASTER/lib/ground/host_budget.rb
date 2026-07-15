@@ -71,7 +71,7 @@ module Master
 
       def heavy_repo_message
         mb = total_mem_mb || "low"
-        "host budget: full-repo analyze/autofix would OOM on #{mb}MB — use /scan lib, /fix lib, or bin/cli --fast"
+        "host budget: full-repo analyze/autofix OOMs on #{mb}MB — use /scan lib, /fix lib, or bin/cli --fast"
       end
 
       def shell_fragment_tip

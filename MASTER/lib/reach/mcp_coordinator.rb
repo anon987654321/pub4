@@ -6,7 +6,7 @@ module Master
   module Reach
     # McpCoordinator — manages MCP server connections and exposes
     # their tools to the agent alongside MASTER's native tools.
-    # Servers are defined in data/mcp_servers.yml.
+    # data/mcp_servers.yml defines servers.
     class McpCoordinator
       CONFIG_PATH = "data/mcp_servers.yml".freeze
 

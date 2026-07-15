@@ -43,7 +43,7 @@ module Master
         end
 
         # Callers opt into a governed action through metadata because inferring
-        # a write from natural-language intent would block safe planning turns.
+        # inferring a write from natural-language intent blocks safe planning turns.
         def verify_declared_evidence(ctx)
           return unless @evidence
 

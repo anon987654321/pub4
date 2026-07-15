@@ -8,7 +8,7 @@ module Master
   module Reach
     # LLM-callable wrappers around the existing Master tool instances.
     # Each class holds a reference to the underlying tool via initialize,
-    # so governor, undo, and event_bus plumbing is preserved.
+    # so governor, undo, and event_bus plumbing stay intact.
     module LLM
 
     # LLM — shared base module for LLM-backed tool functionality.
@@ -83,7 +83,7 @@ module Master
       end
 
       class Shell < RubyLLM::Tool
-        description "Run a shell command in the project root. Blocked patterns are enforced."
+        description "Run a shell command in the project root. MASTER enforces blocked patterns."
         param :command, desc: "Shell command to execute", required: true
 
         def initialize(tool) = @tool = tool

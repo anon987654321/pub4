@@ -5,16 +5,18 @@ module Master
     # Fuzzy semantic cache: when SemanticCache's exact-key lookup misses, return a near-hit
     # whose prompt embedding is within a cosine threshold — ~31% of agent queries are
     # paraphrases of earlier ones. Pure Ruby over an injected embedder (Judge::Embeddings);
-    # degrades to a no-op when embeddings are disabled. Refs: semantic-similarity caching.
+    # degrades to a no-op with embeddings off. Refs: semantic-similarity caching.
     class SemanticIndex
       DEFAULT_THRESHOLD = 0.92
       MAX_ENTRIES = 500
 
       def initialize(embedder:, threshold: DEFAULT_THRESHOLD, max_entries: MAX_ENTRIES)
-        @embedder = embedder       # responds to: enabled?, embed(text), cosine(a, b)
+        # responds to: enabled?, embed(text), cosine(a, b)
+        @embedder = embedder
         @threshold = threshold
         @max_entries = max_entries
-        @entries = []              # [{ embedding:, value: }, ...], oldest first
+        # [{ embedding:, value: }, ...], oldest first
+        @entries = []
       end
 
       # Value of the nearest stored entry within threshold, or nil on a miss.

@@ -8,7 +8,7 @@ require_relative "environment"
 module Pub4
   class StatusReport
     PORTS = {
-      "MASTER web" => Integer(ENV.fetch("MASTER_WEB_PORT", "53187")),
+      "MASTER web" => Integer(ENV.fetch("MASTER_WEB_PORT", Master::Ground::Config::DEFAULT_WEB_PORT.to_s)),
       "brgen" => 38_182,
       "amber" => 61_352,
       "bsdports" => 47_312,

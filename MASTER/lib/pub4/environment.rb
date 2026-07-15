@@ -80,9 +80,15 @@ module Pub4
     def next_command_for(mode = self.mode)
       case mode
       when :vps_operator
-        "zsh OPENBSD/vps_ci.sh <app>  # after git pull; then ruby34 OPENBSD/integrity_gate.rb"
+        # after git pull; then ruby34 OPENBSD/integrity_gate.rb
+        "zsh OPENBSD/vps_ci.sh <app>"
       when :local_contributor
-        ruby_version_ok? ? "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor" : "bin/ruby OPENBSD/bin/check  # resolves Ruby 3.4"
+        if ruby_version_ok?
+          "OPENBSD/bin/check && cd MASTER && bin/check --profile=contributor"
+        else
+          # resolves Ruby 3.4
+          "bin/ruby OPENBSD/bin/check"
+        end
       else
         "OPENBSD/bin/check-full"
       end

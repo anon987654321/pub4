@@ -19,7 +19,7 @@ module Master
           signal: /\$\(|\bjQuery\b/,
           replace_with: "Stimulus controller with targets and data-action",
           severity: :high,
-          guide: "jQuery selectors are incompatible with Turbo — DOM nodes are replaced on navigation"
+          guide: "jQuery selectors are incompatible with Turbo — Turbo replaces DOM nodes on navigation"
         ),
         Rule.new(
           id: :remote_true,
@@ -62,7 +62,7 @@ module Master
         Rule.new(
           id: :respond_to_js,
           signal: /format\.js\s*\{|\.js\.erb/,
-          replace_with: "respond_to { |f| f.turbo_stream } with turbo_stream.replace/append/prepend",
+          replace_with: "respond_to(&:turbo_stream) with turbo_stream.replace/append/prepend",
           severity: :high,
           guide: "format.js with RJS/JS.ERB templates should become Turbo Stream responses"
         ),

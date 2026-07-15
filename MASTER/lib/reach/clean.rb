@@ -8,13 +8,14 @@ module Master
     # Clean — removes trailing whitespace, CRLF, and excess blank lines
     # from text files under a given path, using OPENBSD/clean.sh.
     class Clean
-      # Was "../../../sh/clean.sh" -- resolved to a nonexistent repo-root
+      # Was "../../../sh/clean.sh" — resolved to a nonexistent repo-root
       # sh/clean.sh (missing the OPENBSD/ segment), a pre-existing bug
       # surfaced while flattening OPENBSD/sh/ into OPENBSD/ directly.
       SCRIPT = File.expand_path("../../../OPENBSD/clean.sh", __dir__).freeze
       NAME = "clean".freeze
       TIER = :dangerous
-      TIMEOUT_S = 120 # clean.sh must not wedge the pipeline (ROBUSTNESS)
+      # clean.sh must not wedge the pipeline (ROBUSTNESS)
+      TIMEOUT_S = 120
 
       def initialize(root:, governor:, event_bus: nil)
         @bus = event_bus
@@ -45,11 +46,11 @@ module Master
 
       # Shell-out with a hard time budget: read stdout/stderr on separate threads
       # (so a full pipe can't deadlock the wait) and kill a child that overruns,
-      # rather than blocking the caller forever. Returns a nil status on timeout.
+      # instead of blocking the caller forever. Returns a nil status on timeout.
       def run_bounded(*cmd)
         # pgroup: true isolates the child (and any grandchildren clean.sh spawns)
         # in their own process group so a timeout can reap the whole tree, not
-        # just zsh — otherwise orphaned children keep running past the kill.
+        # zsh alone — otherwise orphaned children keep running past the kill.
         Open3.popen3(*cmd, pgroup: true) do |stdin, stdout, stderr, wait_thr|
           stdin.close
           out_reader = Thread.new { stdout.read }
