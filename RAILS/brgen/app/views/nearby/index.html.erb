@@ -1,6 +1,6 @@
 <% content_for :title, "Nearby" %>
 
-<div class="page-header"><h1>Nearby</h1></div>
+div class="page-header" role="banner"><h1>Nearby</h1></div>
 
 <% unless @located %>
   <div class="section-divider--24">
@@ -21,8 +21,8 @@
       </article>
     <% end %>
   <% else %>
-    <div class="empty"><p>No one nearby right now. Check back later.</p></div>
+    <div class="empty empty-state"><p>No one nearby right now. Check back later.</p></div>
   <% end %>
 <% else %>
-  <div class="empty"><p>Waiting for your location…</p></div>
+  <div class="empty empty-state"><p>Waiting for your location…</p></div>
 <% end %>

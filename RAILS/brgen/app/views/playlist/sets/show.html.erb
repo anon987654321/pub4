@@ -1,6 +1,6 @@
 <% content_for :title, @set.name %>
 
-<div class="page-header">
+div class="page-header" role="banner">
   <div>
     <p class="dim">Playlist set</p>
     <h1><%= @set.name %></h1>
@@ -126,7 +126,7 @@
     </article>
   <% end %>
 <% else %>
-  <div class="empty"><p>No tracks in this set yet.</p></div>
+  <div class="empty empty-state"><p>No tracks in this set yet.</p></div>
 <% end %>
 
 <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>

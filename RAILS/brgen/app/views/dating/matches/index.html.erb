@@ -9,7 +9,7 @@
 
 <turbo-frame id="dating-matches" data-turbo-action="replace">
 <% if @matches.none? %>
-  <div class="empty" role="status" aria-live="polite"><p>No matches yet.</p></div>
+  <div class="empty empty-state" role="status" aria-live="polite"><p>No matches yet.</p></div>
 <% else %>
   <section id="dating-matches-list" class="match-list" role="list" aria-label="Matches">
     <% @matches.each do |match| %>

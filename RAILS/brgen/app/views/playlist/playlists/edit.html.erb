@@ -1,6 +1,6 @@
 <% content_for :title, "Edit playlist" %>
 
-<div class="page-header"><h1>Edit playlist</h1></div>
+div class="page-header" role="banner"><h1>Edit playlist</h1></div>
 
 <div class="form-wrap">
   <%= form_with model: @playlist, url: playlist_playlist_path(@playlist), method: :patch do |f| %>

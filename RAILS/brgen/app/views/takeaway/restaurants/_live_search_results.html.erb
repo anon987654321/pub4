@@ -4,7 +4,7 @@
     <%= render "takeaway/restaurants/card", restaurant: r %>
   <% end %>
   <% if @restaurants.empty? %>
-    <div class="empty" role="status" aria-live="polite"><p>No restaurants yet. <%= link_to("Add one", new_takeaway_restaurant_path) if authenticated? %></p></div>
+    <div class="empty empty-state" role="status" aria-live="polite"><p>No restaurants yet. <%= link_to("Add one", new_takeaway_restaurant_path) if authenticated? %></p></div>
   <% end %>
 </section>
 

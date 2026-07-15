@@ -58,7 +58,7 @@
           <% end %>
         </div>
         <% if @profiles.empty? %>
-          <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
+          <div class="empty empty-state"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
         <% end %>
         <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
       </section>

@@ -1,6 +1,6 @@
 <% content_for :title, "#{@show.title} - Episode #{@episode.number}" %>
 
-<div class="page-header">
+div class="page-header" role="banner">
   <h1><%= @show.title %> — Episode <%= @episode.number %></h1>
   <h2><%= @episode.title %></h2>
 </div>
@@ -10,6 +10,6 @@
     <%= render "tv/videos/tv_video", video: @video %>
   </div>
 <% else %>
-  <div class="empty"><p>Video coming soon.</p></div>
+  <div class="empty empty-state"><p>Video coming soon.</p></div>
 <% end %>
 

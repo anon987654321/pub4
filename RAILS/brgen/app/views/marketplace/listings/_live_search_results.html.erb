@@ -38,5 +38,5 @@
                radius_km: @radius_km %>
   <% end %>
 <% else %>
-  <div class="empty"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
+  <div class="empty empty-state"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
 <% end %>

@@ -1,6 +1,6 @@
 <% content_for :title, @channel.name %>
 
-<div class="page-header">
+div class="page-header" role="banner">
   <div>
     <p class="dim">Brgen TV channel</p>
     <h1><%= @channel.name %></h1>
@@ -37,7 +37,7 @@
   <% if @videos.any? %>
     <%= render "tv/channels/channel_videos" %>
   <% else %>
-    <div class="empty">
+    <div class="empty empty-state">
       <p>No published videos yet.</p>
     </div>
   <% end %>
