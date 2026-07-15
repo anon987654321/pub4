@@ -513,6 +513,10 @@ TRACK_PRESETS = {
   generated_neapolitan: {
     bpm: 80, progression: :neapolitan, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :organic, stereo_pan: true
+  },
+  generated_techno: {
+    bpm: 80, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 0,
+    feel: :techno_house, stereo_pan: true
   }
 }.freeze
 INDUSTRIAL_BPM_DEFAULT = 132.0
@@ -1549,6 +1553,40 @@ def analog_drift_filter(input_tag, out_tag: "drifted")
   "[#{input_tag}]vibrato=f=0.13:d=0.0035,vibrato=f=0.19:d=0.002[#{out_tag}]"
 end
 
+CONVOLUTION_IR_CACHE = File.join(ROOT, ".dilla_ir_%s.wav")
+
+# Real convolution reverb via ffmpeg's afir filter — genuinely convolving
+# against an impulse response, just a synthesized one (exponentially
+# decaying filtered noise per "room") rather than a recorded one, since no
+# real IR files exist in this repo. That's a legitimate, standard way to
+# build a reverb IR algorithmically, not a fake stand-in for the effect.
+CONVOLUTION_ROOMS = {
+  plate: { decay: 2.6, color: "highpass=f=400,lowpass=f=6000" },
+  room: { decay: 1.1, color: "highpass=f=120,lowpass=f=4500" },
+  chamber: { decay: 3.4, color: "highpass=f=200,lowpass=f=3200" }
+}.freeze
+
+def synth_impulse_response!(room)
+  path = format(CONVOLUTION_IR_CACHE, room)
+  return path if File.exist?(path)
+  cfg = CONVOLUTION_ROOMS.fetch(room)
+  decay_rate = (3.0 / cfg[:decay]).round(3)
+  sh! "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=white:d=#{cfg[:decay] + 0.3}:r=#{SAMPLE_RATE}",
+      "-af", "aeval=exprs='val(0)*exp(-#{decay_rate}*t)|val(1)*exp(-#{decay_rate}*t)',#{cfg[:color]}",
+      "-ac", "2", "-ar", SAMPLE_RATE.to_s, path
+  path
+end
+
+# Real convolution against the synthesized IR (via ffmpeg's afir filter),
+# ir_input_idx being the ffmpeg -i index the caller has already added —
+# same pattern as the self-sample bus: this function only builds the
+# filter-graph string, the caller owns adding the actual -i input.
+def convolution_reverb_filter(input_tag, ir_input_idx, mix: 0.16, out_tag: "convolved")
+  "[#{input_tag}]asplit=2[#{out_tag}dry][#{out_tag}wetsrc];" \
+    "[#{out_tag}wetsrc][#{ir_input_idx}:a]afir=dry=0:wet=10[#{out_tag}wet];" \
+    "[#{out_tag}dry][#{out_tag}wet]amix=inputs=2:weights=#{(1.0 - mix).round(2)} #{mix}:duration=first:normalize=0[#{out_tag}]"
+end
+
 # Darker/deeper tonal color: gentle high rolloff (less brightness/major
 # "shimmer") plus a bit more low-mid weight — moodier without changing any
 # chord quality, on top of the STREAM_TRACKS rotation now leaning minor.
@@ -1568,18 +1606,23 @@ def build_up_filter(input_tag, duration, out_tag: "built")
   "[#{input_tag}]equalizer=f=4500:t=h:w=5000:g=3.5:enable='gte(t,#{start_t})'[#{out_tag}]"
 end
 
-def master_bus_filters(input_tag = "mix", track: nil, duration: nil)
+def master_bus_filters(input_tag = "mix", track: nil, duration: nil, ir_input_idx: nil)
   unless sonitex_enabled?
     filt = ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[premaster0]"]
     filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
     filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
     filt << analog_drift_filter("monobassed", out_tag: "drifted")
     filt << mood_darken_filter("drifted", out_tag: "darkened")
+    reverb_out = "darkened"
+    if ir_input_idx
+      filt << convolution_reverb_filter("darkened", ir_input_idx, out_tag: "reverbed")
+      reverb_out = "reverbed"
+    end
     if duration
-      filt << build_up_filter("darkened", duration, out_tag: "built")
+      filt << build_up_filter(reverb_out, duration, out_tag: "built")
       filt << true_peak_guard_filter("built")
     else
-      filt << true_peak_guard_filter("darkened")
+      filt << true_peak_guard_filter(reverb_out)
     end
     return filt
   end
@@ -1593,11 +1636,16 @@ def master_bus_filters(input_tag = "mix", track: nil, duration: nil)
   filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
   filt << analog_drift_filter("monobassed", out_tag: "drifted")
   filt << mood_darken_filter("drifted", out_tag: "darkened")
+  reverb_out = "darkened"
+  if ir_input_idx
+    filt << convolution_reverb_filter("darkened", ir_input_idx, out_tag: "reverbed")
+    reverb_out = "reverbed"
+  end
   if duration
-    filt << build_up_filter("darkened", duration, out_tag: "built")
+    filt << build_up_filter(reverb_out, duration, out_tag: "built")
     filt << true_peak_guard_filter("built")
   else
-    filt << true_peak_guard_filter("darkened")
+    filt << true_peak_guard_filter(reverb_out)
   end
   filt
 end
@@ -1765,7 +1813,7 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
     filter_parts << "[#{i + 1}:a]asetrate=44100*0.75,aresample=44100," \
                      "tremolo=f=32:d=0.15,aecho=0.7:0.6:250|450:0.4|0.28," \
                      "chorus=0.6:0.8:40|55:0.3|0.25:0.35|0.3:1.4|1.8," \
-                     "adelay=#{delay_ms}|#{delay_ms},volume=0.85[voice#{i}]"
+                     "adelay=#{delay_ms}|#{delay_ms},volume=1.35[voice#{i}]"
     labels << "[voice#{i}]"
   end
   filter_parts << "#{labels.join}amix=inputs=#{labels.length}:duration=first:normalize=0[voicemix]"
@@ -1905,7 +1953,7 @@ end
 
 STREAM_TRACKS = %w[
   chromatic_mediant_drift alternating_minor7_pair timeless chromatic_mediant syncopated_slash_ninth
-  generated generated_planing generated_mediant generated_polytonal generated_negative generated_neapolitan
+  generated generated_planing generated_mediant generated_polytonal generated_negative generated_neapolitan generated_techno
 ].freeze
 
 # Tempo dropped a lot over this session (92->68 BPM) without this changing,
@@ -1917,8 +1965,33 @@ STREAM_BARS_COUNT = 16
 # Non-stop chord/pad showcase: renders and plays each track once (full
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
+# A one-time boot announcement, same otherworldly-AI processing character
+# as the in-track speech, played once before the stream loop starts.
+def announce_boot!
+  return unless File.executable?(TTS_WORKER) && tool_available?("ffmpeg") && tool_available?("ffplay")
+  text = "MASTER music liveset, #{Time.now.strftime('%B %Y')} edition. Initializing."
+  raw = File.join(ROOT, ".dilla_boot_announce.mp3")
+  Open3.popen2(Gem.ruby, TTS_WORKER, SPEECH_VOICES.sample, "-35%", "-90Hz", raw) { |stdin, _stdout, wait|
+    stdin.write(text)
+    stdin.close
+    wait.value
+  }
+  return unless File.exist?(raw) && File.size(raw) > 500
+  processed = File.join(ROOT, ".dilla_boot_announce_fx.mp3")
+  sh! "ffmpeg", "-y", "-i", raw, "-af",
+      "asetrate=44100*0.75,aresample=44100,tremolo=f=32:d=0.15," \
+      "aecho=0.7:0.6:250|450:0.4|0.28," \
+      "chorus=0.6:0.8:40|55:0.3|0.25:0.35|0.3:1.4|1.8,volume=1.3",
+      "-c:a", "libmp3lame", "-b:a", "320k", processed
+  sh! "ffplay", "-nodisp", "-autoexit", processed
+ensure
+  FileUtils.rm_f(raw) if raw
+  FileUtils.rm_f(processed) if processed
+end
+
 def stream(bars_count = STREAM_BARS_COUNT)
   abort "ffplay required" unless tool_available?("ffplay")
+  announce_boot!
   prev_track = ENV["TRACK"]
   # Every restart (and there have been many, iterating on this live) reset
   # the rotation to index 0 — meaning repeated restarts kept replaying the
@@ -2166,6 +2239,10 @@ def generate_organic_kick_pattern(bar, seed_base = 5081)
 end
 
 def dilla_kick_pattern(bar, n_bars, feel)
+  # Detroit techno/house: steady four-on-the-floor, not humanized — that
+  # relentless, unswung quarter-note pulse is the actual genre signature,
+  # the opposite move from every Dilla-descended feel here.
+  return [0, 4, 8, 12] if feel == :techno_house
   # Replaced entirely: every feel now gets a freshly generated, per-bar
   # impromptu pattern instead of rotating a small fixed set — kept the old
   # arrays as KICK_POSITION_WEIGHTS' source data (real, curated position
@@ -2208,6 +2285,11 @@ end
 
 def dilla_hat_steps(bar, feel, n_bars: nil)
   case feel
+  when :techno_house
+    # Erratic, denser than the organic generator, no minimum-spacing
+    # smoothing — real acid/Detroit-house hats are chaotic on purpose.
+    rng = Random.new(bar * 971 + 3)
+    (0..15).select { rng.rand < 0.55 }
   when :organic
     generate_organic_hat_steps(bar, n_bars:)
   when :syncopated_slash_ninth
@@ -2574,6 +2656,37 @@ end
 # sample — they stack a pitch-dropping sub body for weight, a short
 # broadband click for attack/definition, and mild saturation for character.
 # Layers on top of the existing sample rather than replacing it.
+# Synthesized since no shaker/cowbell samples exist in the kit — filtered
+# noise burst for the shaker (broadband "shhh" with a fast-then-slow
+# double-envelope, real shaker physics: an initial hit then beads settling)
+def synth_shaker_sample(seed: 11)
+  len = (0.09 * SAMPLE_RATE).round
+  rng = Random.new(seed)
+  out = Array.new(len, 0.0)
+  len.times do |i|
+    t = i.to_f / SAMPLE_RATE
+    env = Math.exp(-t * 24.0) + 0.3 * Math.exp(-t * 60.0)
+    out[i] = 0.5 * env * (rng.rand * 2.0 - 1.0)
+  end
+  peak = out.map(&:abs).max || 1.0
+  out.map { |s| s / [peak, 0.01].max * 0.8 }
+end
+
+# Classic two-oscillator 808/909 cowbell: two square-ish tones (540Hz and
+# 800Hz, the real ratio used in analog cowbell circuits) with a fast decay.
+def synth_cowbell_sample
+  len = (0.18 * SAMPLE_RATE).round
+  out = Array.new(len, 0.0)
+  len.times do |i|
+    t = i.to_f / SAMPLE_RATE
+    env = Math.exp(-t * 14.0)
+    tone1 = Math.sin(2 * Math::PI * 540.0 * t) > 0 ? 1.0 : -1.0
+    tone2 = Math.sin(2 * Math::PI * 800.0 * t) > 0 ? 1.0 : -1.0
+    out[i] = 0.42 * env * (0.6 * tone1 + 0.4 * tone2)
+  end
+  out
+end
+
 def layered_kick_sample(base_sample, seed: 7)
   # True 808-style envelope, not a short punch: a fast pitch drop (150Hz ->
   # 42Hz over ~55ms, the "pluck") into a genuinely sustained low tone
@@ -3341,7 +3454,9 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     ghost: load_mono_sample(drum_sample_path("ghost.wav")),
     hat: load_mono_sample(drum_sample_path("hat.wav")),
     open_hat: load_mono_sample(drum_sample_path("open_hat.wav")),
-    bass_43: load_mono_sample(drum_sample_path("bass_43.wav"))
+    bass_43: load_mono_sample(drum_sample_path("bass_43.wav")),
+    shaker: synth_shaker_sample,
+    cowbell: synth_cowbell_sample
   }
   # Polyrhythm layer: a 3-against-4 cycle (bar/3 spacing) independent of the
   # main 16-grid groove entirely — real polyrhythm, not a variation of the
@@ -3351,6 +3466,20 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     t = (i * poly_beat).round(6)
     [t, (0.16 + 0.07 * Math.sin(i * 1.7)).clamp(0.08, 0.3), :ghost]
   end
+  # Shaker: steady 8th-note pulse (the "shhh" bed real shakers provide),
+  # velocity-humanized. Cowbell: sparse, syncopated, deliberately random —
+  # a real cowbell part is never on a predictable grid.
+  step_p8 = beat_p / 2.0
+  events[:shaker] = (0...(duration / step_p8).floor).map do |i|
+    t = (i * step_p8).round(6)
+    [t, dilla_velocity(0.24, i / 8, i % 8, spread: 0.15)]
+  end
+  cowbell_rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + 41)
+  events[:cowbell] = (0...(duration / beat_p).floor).filter_map do |i|
+    next unless cowbell_rng.rand < 0.22
+    t = (i * beat_p + cowbell_rng.rand(beat_p * 0.6)).round(6)
+    [t, dilla_velocity(0.3, i, 0, spread: 0.1)]
+  end
 
   drum_tmp     = File.join(ROOT, ".dilla_drums.wav")
   harmonic_tmp = File.join(ROOT, ".dilla_harmonic.wav")
@@ -3359,7 +3488,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     events,
     duration,
     kit,
-    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat, bass: :bass_43, poly: :ghost
+    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat, bass: :bass_43, poly: :ghost,
+    shaker: :shaker, cowbell: :cowbell
   )
 
   chop_gate = gate_expr(events[:chop], hold: 0.32, scale: 0.95)
@@ -3391,6 +3521,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     self_sample_idx = idx
     idx += 1
   end
+  ir_path = synth_impulse_response!(CONVOLUTION_ROOMS.keys.sample)
+  command += ["-i", ir_path]
+  ir_input_idx = idx
+  idx += 1
   command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.035:d=#{duration}"]
   turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
   command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.05:d=#{duration}"] if turntable_rumble
@@ -3468,7 +3602,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   end
   filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
   if sonitex_enabled?
-    filt.concat(master_bus_filters("mix", track: cfg[:track].to_s, duration:))
+    filt.concat(master_bus_filters("mix", track: cfg[:track].to_s, duration:, ir_input_idx:))
   else
     # Plain limiter only — the same minimal chain the proven-working test
     # used. loudnorm's dynamic gain-riding was a live suspect in why chords
@@ -4699,7 +4833,7 @@ when "semantics" then semantics(ARGV.shift)
 when "ears"       then ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
 when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
 when "live"       then live((ARGV.shift || 32).to_i)
-when "stream"     then stream((ARGV.shift || 20).to_i)
+when "stream"     then stream((ARGV.shift || STREAM_BARS_COUNT).to_i)
 when "live_now"    then live_now
 when "harmony_now" then harmony_now
 when "regenerate"  then regenerate((ARGV.shift || 16).to_i)
