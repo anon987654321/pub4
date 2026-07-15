@@ -40,13 +40,13 @@ luxury:
 face_root:
   anchors:
     c_text: "oklch(86% 0.02 300)"
-    x_text: "#e8e4dc"
+    x_text: "#d8d6e0"
     c_accent: "oklch(78% 0.10 300)"
     c_danger: "oklch(60% 0.14 35)"
     c_code: "oklch(74% 0.11 275)"
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
   font_label: '"JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace'
-  face_bg: "#0f0e0d"
+  face_bg: "black"
   derived:
     face_fg: "var(--c-text)"
     face_muted: "color-mix(in srgb, var(--c-text) 35%, transparent)"
