@@ -280,12 +280,12 @@
       }
     };
     cableSocket.onclose = () => { cableSocket = null; };
-    cableSocket.onerror = () => { try { cableSocket.close(); } catch (_e) {} cableSocket = null; };
+    cableSocket.onerror = () => { try { cableSocket.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:cable_close", err); } cableSocket = null; };
   }
 
   function disconnectSse() {
     if (!eventSource) return;
-    try { eventSource.close(); } catch (_error) {}
+    try { eventSource.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:sse_close", err); }
     eventSource = null;
     state.connected = false;
   }

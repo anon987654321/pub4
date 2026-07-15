@@ -1083,7 +1083,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     const trimmed = String(text || '').trim();
     if (!trimmed) return;
     let hist = [];
-    try { hist = JSON.parse(localStorage.getItem(CMD_KEY) || '[]'); } catch (_) {}
+    try { hist = JSON.parse(localStorage.getItem(CMD_KEY) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("chat:cmd_history_parse", err); }
     if (hist[hist.length - 1] !== trimmed) hist.push(trimmed);
     while (hist.length > 40) hist.shift();
     localStorage.setItem(CMD_KEY, JSON.stringify(hist));

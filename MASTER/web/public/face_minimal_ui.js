@@ -86,7 +86,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
           }
         }
       }, 160);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:cam_tracking", err); }
   }
   if (F_FACE_STATE.coarsePointer) setTimeout(enableCamTracking, 900);
 
@@ -121,7 +121,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     rec.onerror = () => { voiceRecActive = false; };
     const safeStart = () => {
       if (voiceRecActive) return;
-      try { rec.start(); voiceRecActive = true; } catch (_) {}
+      try { rec.start(); voiceRecActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:voice_rec_start", err); }
     };
     document.addEventListener('keydown', e => {
       const t = e.target;

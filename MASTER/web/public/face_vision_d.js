@@ -191,7 +191,7 @@
     const has = typeof WebTransport !== "undefined";
     root.dataset.webTransport = has ? "available" : "stub";
     if (has && ctx.detail.url) {
-      try { ctx.detail.transport = new WebTransport(ctx.detail.url); } catch (_) {}
+      try { ctx.detail.transport = new WebTransport(ctx.detail.url); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:web_transport", err); }
     }
   });
 
@@ -297,7 +297,7 @@
       list.sort((a, b) => (b.fps || 0) - (a.fps || 0));
       storeSet(KEY, JSON.stringify(list.slice(0, 20)));
       ctx.detail.leaderboard = list;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:leaderboard_store", err); }
   });
 
   V.register(145, "plugin viseme packs JSON", (ctx) => {
@@ -449,7 +449,7 @@
           if (bad) V.run(137, { type: "pressure", detail: { downgrade: true } });
         });
         obs.observe("cpu").catch(() => {});
-      } catch (_) {}
+      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:pressure_observer", err); }
     }
 
     if (document.startViewTransition) {

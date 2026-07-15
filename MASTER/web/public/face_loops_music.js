@@ -59,7 +59,7 @@ window._endlessWhite = (() => {
     }
   }
   return () => {
-    if (playing) { try { clearInterval(iv); ctx.close(); } catch(_){} playing = false; return false; }
+    if (playing) { try { clearInterval(iv); ctx.close(); } catch(err){ window.MASTER_LOG?.warn?.("face_loops_music:stop", err); } playing = false; return false; }
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       m = { dry: ctx.createGain(), pad: ctx.createGain(), verb: ctx.createGain(), conv: ctx.createConvolver(), noise: noise(1.0) };
@@ -186,10 +186,10 @@ window._dillaBg = (() => {
         if (!playing) return;
         const speaking = !!(F_FACE_TTS && F_FACE_TTS.playing);
         const target = speaking ? 0.025 : 0.14;
-        try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (_) {}
+        try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:duck_ramp", err); }
       }, 500);
       master.gain.setValueAtTime(0, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 5);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:start", err); }
   };
 })();

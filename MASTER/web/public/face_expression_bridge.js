@@ -75,7 +75,7 @@
     try {
       localStorage.setItem("master:mood", State.mood || "idle");
       localStorage.setItem("master:mode", State.mode || "idle");
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:persist_mood", err); }
   }
 
   function restoreMood(State) {
@@ -84,7 +84,7 @@
       const mode = localStorage.getItem("master:mode");
       if (mood) State.mood = mood;
       if (mode && State.mode === "idle") State.mode = mode;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:restore_mood", err); }
   }
 
   async function postUserExpression(expression, source = "face_drag") {
@@ -97,7 +97,7 @@
     });
     try {
       await fetch("/canvas/event", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, keepalive: true });
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:post_expression", err); }
     window.dispatchEvent(new CustomEvent("user:expression", {
       detail: { expression, source, blendshapes: expression.blendshapes || null }
     }));

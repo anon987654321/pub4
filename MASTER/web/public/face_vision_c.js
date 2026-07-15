@@ -129,7 +129,7 @@
       url: location.href
     };
     if (navigator.share) {
-      try { await navigator.share(data); return; } catch (_) {}
+      try { await navigator.share(data); return; } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:share", err); }
     }
     await navigator.clipboard?.writeText?.(data.url).catch(() => {});
     emit("share:card", { topology: "papua-mask", entropy: 0.1, confidence: 0.9, mode: "share" });
@@ -352,7 +352,7 @@
     const scale = Math.max(0.8, Math.min(1.6, Number(ctx.detail.scale ?? 1)));
     V.css("--font-scale", String(scale));
     root.dataset.fontScale = scale.toFixed(2);
-    try { localStorage.setItem("master:font-scale", String(scale)); } catch (_) {}
+    try { localStorage.setItem("master:font-scale", String(scale)); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:font_scale_store", err); }
   });
 
 V.register(118, "degraded WebGL UI trigger", (ctx) => {
@@ -466,7 +466,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       window.addEventListener("primer:ready", async () => {
         try {
           if ((await DeviceOrientationEvent.requestPermission()) === "granted") bindGyro();
-        } catch (_) {}
+        } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:gyro_permission", err); }
       }, { once: true });
     } else if (window.DeviceOrientationEvent) {
       bindGyro();

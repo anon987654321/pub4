@@ -367,7 +367,7 @@
       root.dataset.benchFps = fps.toFixed(1);
       try {
         localStorage.setItem("master:bench:last", JSON.stringify({ fps, at: Date.now() }));
-      } catch (_) {}
+      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_b:bench_store", err); }
     }
   });
 

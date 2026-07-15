@@ -67,7 +67,7 @@ if (typeof cv !== 'undefined' && cv?.addEventListener) {
   }, false);
   cv.addEventListener('webglcontextrestored', () => {
     if (uiStatus && uiStatus.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
-    try { resize(); } catch (_) {}
+    try { resize(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:webgl_context_restored", err); }
     ensureFrameLoop();
   }, false);
 }
@@ -699,7 +699,7 @@ function bindOrientation() {
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (_) {}
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); }
   } else if (window.DeviceOrientationEvent) {
     bindOrientation();
   }

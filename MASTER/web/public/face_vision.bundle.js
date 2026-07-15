@@ -914,7 +914,7 @@
       root.dataset.benchFps = fps.toFixed(1);
       try {
         localStorage.setItem("master:bench:last", JSON.stringify({ fps, at: Date.now() }));
-      } catch (_) {}
+      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_b:bench_store", err); }
     }
   });
 
@@ -1186,7 +1186,7 @@
       url: location.href
     };
     if (navigator.share) {
-      try { await navigator.share(data); return; } catch (_) {}
+      try { await navigator.share(data); return; } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:share", err); }
     }
     await navigator.clipboard?.writeText?.(data.url).catch(() => {});
     emit("share:card", { topology: "papua-mask", entropy: 0.1, confidence: 0.9, mode: "share" });
@@ -1409,7 +1409,7 @@
     const scale = Math.max(0.8, Math.min(1.6, Number(ctx.detail.scale ?? 1)));
     V.css("--font-scale", String(scale));
     root.dataset.fontScale = scale.toFixed(2);
-    try { localStorage.setItem("master:font-scale", String(scale)); } catch (_) {}
+    try { localStorage.setItem("master:font-scale", String(scale)); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:font_scale_store", err); }
   });
 
 V.register(118, "degraded WebGL UI trigger", (ctx) => {
@@ -1523,7 +1523,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       window.addEventListener("primer:ready", async () => {
         try {
           if ((await DeviceOrientationEvent.requestPermission()) === "granted") bindGyro();
-        } catch (_) {}
+        } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:gyro_permission", err); }
       }, { once: true });
     } else if (window.DeviceOrientationEvent) {
       bindGyro();
@@ -1808,7 +1808,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const has = typeof WebTransport !== "undefined";
     root.dataset.webTransport = has ? "available" : "stub";
     if (has && ctx.detail.url) {
-      try { ctx.detail.transport = new WebTransport(ctx.detail.url); } catch (_) {}
+      try { ctx.detail.transport = new WebTransport(ctx.detail.url); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:web_transport", err); }
     }
   });
 
@@ -1914,7 +1914,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       list.sort((a, b) => (b.fps || 0) - (a.fps || 0));
       storeSet(KEY, JSON.stringify(list.slice(0, 20)));
       ctx.detail.leaderboard = list;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:leaderboard_store", err); }
   });
 
   V.register(145, "plugin viseme packs JSON", (ctx) => {
@@ -2066,7 +2066,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
           if (bad) V.run(137, { type: "pressure", detail: { downgrade: true } });
         });
         obs.observe("cpu").catch(() => {});
-      } catch (_) {}
+      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:pressure_observer", err); }
     }
 
     if (document.startViewTransition) {

@@ -35,5 +35,5 @@
       E.drawToOffscreen?.();
     };
     window.MASTER_OFFSCREEN_ECOLOGY = true;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_offscreen_ecology:setup", err); }
 })();

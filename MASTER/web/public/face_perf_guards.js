@@ -25,7 +25,7 @@
       const worker = new Worker(window.MASTER_ASSET_PATHS?.faceModules?.particle_worker || "/particle_worker.js");
       worker.postMessage({ type: "warm", dt: 0.016 });
       setTimeout(() => worker.terminate(), 120);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_perf_guards:worker_warm", err); }
   });
 
   window.addEventListener("visual:ready", () => {

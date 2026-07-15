@@ -128,7 +128,7 @@
         const entry = [re, { ...meta }];
         if (idx >= 0) EVENT_CLASSIFIER[idx] = entry;
         else EVENT_CLASSIFIER.push(entry);
-      } catch (_) {}
+      } catch (err) { window.MASTER_LOG?.warn?.("topology_registry:merge_classifier", err); }
     });
   }
 
@@ -164,7 +164,7 @@
       Object.assign(RUNTIME_MODES, remote.RUNTIME_MODES || {});
       Object.assign(RESOLUTIONS, remote.RESOLUTIONS || {});
       window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: "registry:merged", source: "runtime" } }));
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("topology_registry:boot_remote", err); }
   }
 
   window.MASTERTopology = {

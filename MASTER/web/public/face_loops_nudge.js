@@ -53,7 +53,7 @@ window._nudgeLoop = (() => {
         const j = await r.json();
         if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 20);
       }
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:refill_research", err); }
   }
   if (RESEARCH_NUDGES) {
     _refillResearch();
@@ -69,10 +69,10 @@ window._nudgeLoop = (() => {
     if (F_FACE_NUDGE_TTS.queue.length >= 2) return;
     const line = (_nextLine() || '').slice(0, 200);
     if (!line) return;
-    try { if (typeof announceTTS === 'function') announceTTS(line); } catch (_) {}
+    try { if (typeof announceTTS === 'function') announceTTS(line); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:announce", err); }
     try {
       if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true });
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:enqueue_speech", err); }
     if (RESEARCH_NUDGES && _researchCache.length < 3) _refillResearch();
   }, NUDGE_INTERVAL_MS);
   return { force() { last = 0; } };

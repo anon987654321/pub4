@@ -66,7 +66,7 @@ function fadeTtsAudio(ms = 80) {
 function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
-  if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_pause", err); } tts.audio = null; }
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
@@ -126,7 +126,7 @@ function flashViolation() {
 }
 
 function cancelStream() {
-  if (evtSrc) { try { evtSrc.close(); } catch (_) {} evtSrc = null; }
+  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:cancel_stream_close", err); } evtSrc = null; }
   window._chatCancel?.();
   ttsSkip();
   State.mode = 'idle';
@@ -149,7 +149,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
+      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); } sendMessage(t2); } }, 1200);
     }
   };
   recognition.onend = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
@@ -182,11 +182,11 @@ function startSTT() {
   }
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); }
 }
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
-  try { recognition.stop(); } catch (_) {}
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
 }
 
 let evtSrc = null;
@@ -312,7 +312,7 @@ function handleFaceNamedEvent(event, data) {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
         if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
       }, 8000);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
     return true;
   }
   if (event === 'confidence') {
@@ -325,7 +325,7 @@ function handleFaceNamedEvent(event, data) {
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
       if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:felt_event", err); }
     return true;
   }
   return false;
@@ -396,7 +396,7 @@ async function sendMessage(text) {
     window._chatOnDone?.();
     return;
   }
-  if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
+  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
   showStage("routing…", 1000);
@@ -410,7 +410,7 @@ async function sendMessage(text) {
       preEnhanced = chosen === data.enhanced;
       finalText = chosen;
     }
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:enhance_message", err); }
 
   tts.lang = detectLang(text);
   const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
@@ -443,7 +443,7 @@ async function sendMessage(text) {
         try {
           const parsed = JSON.parse(raw);
           if (parsed && parsed.type === 'trace') return;
-        } catch (_) {}
+        } catch (_) { /* not JSON, fall through to normal content handling */ }
       }
       if (raw === '[DONE]') {
         if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
@@ -545,7 +545,7 @@ async function sendMessage(text) {
       clearThinkingAloud();
       showStage("");
       if (navigator.vibrate) navigator.vibrate([60]);
-      try { evtSrc.close(); } catch (_) {}
+      try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_done_close", err); }
       window._chatOnDone?.();
       return;
     }
@@ -654,32 +654,32 @@ async function sendMessage(text) {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
         if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
       }, 8000);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); }
   });
   evtSrc.addEventListener('confidence', (ev) => {
     const c = parseFloat(ev.data); if (isNaN(c)) return;
     State.confidence = c;
   });
   evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); }
   });
   evtSrc.addEventListener('compaction', (ev) => {
-    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); }
   });
   evtSrc.addEventListener('ctx_footer', (ev) => {
-    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); }
   });
   evtSrc.addEventListener('phantom', (ev) => {
-    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); }
   });
   evtSrc.addEventListener('tool_stack', (ev) => {
-    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); }
   });
   evtSrc.addEventListener('stage', (ev) => {
-    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); }
   });
   evtSrc.addEventListener('btw', (ev) => {
-    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); }
   });
   evtSrc.addEventListener('felt', (ev) => {
     try {
@@ -687,7 +687,7 @@ async function sendMessage(text) {
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
       if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); }
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);
@@ -697,7 +697,7 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
-    try { evtSrc.close(); } catch (_) {}
+    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); }
   };
 }
 
@@ -715,13 +715,13 @@ setInterval(() => {
     tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
   });
   syncShareStateUrl();
-  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (_) {}
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); }
 }, 8000);
 
 let wakeLock = null;
 async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
-  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (_) {} }
+  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_lock_request", err); } }
   await req();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
@@ -741,12 +741,12 @@ function previewVoice(voice) {
   loadTTSBlob("Let's work now.", chosen, style)
     .then(async (blob) => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_pause", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
       preSpeechInhale(style);
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_connect", err); }
       startVisemeAnim("Let's work now.");
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
@@ -802,11 +802,11 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_pause", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_connect", err); }
       startVisemeAnim(text);
       preSpeechInhale(useStyle);
       audio.onended = audio.onerror = () => {
@@ -835,7 +835,7 @@ function meanPoolField(pool, field) {
 }
 function collectFeltState() {
   let history = [];
-  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (_) {}
+  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:collect_felt_state", err); }
   const histEntropy = history.length
     ? history.reduce((s, e) => s + Number(e.entropy ?? 0.2), 0) / history.length
     : (State.entropy ?? 0.2);
@@ -951,7 +951,7 @@ const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';
 let _cmdHist = [];
 let _cmdHistIdx = -1;
-try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (_) {}
+try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:cmd_hist_read", err); }
 function _resizeZin() {
   if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
   zshIn.style.height = 'auto';
