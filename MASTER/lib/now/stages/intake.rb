@@ -18,7 +18,10 @@ module Master
           return Result.err("intake: empty message", category: :validation) if message_text.empty?
 
           expanded_message = expand_file_references(message_text)
+          classify_intent(ctx, expanded_message, message_text)
+        end
 
+        def classify_intent(ctx, expanded_message, message_text)
           # Unified /run entry point for natural language tasks (better LLM ergonomics)
           if expanded_message.start_with?("/run ")
             desc = expanded_message[5..].strip

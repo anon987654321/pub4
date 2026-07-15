@@ -62,6 +62,10 @@ module Master
             return pass_through(ctx, msg, locale)
           end
 
+          apply_inference(ctx, best, msg, locale)
+        end
+
+        def apply_inference(ctx, best, msg, locale)
           resolved = INFER_ALIASES.fetch(best[:command], best[:command])
           args = extract_args(cmd: best[:command], capture: best[:capture], match: best[:match], msg:)
           guard = constitutional_guard(resolved, args, msg)
@@ -196,6 +200,15 @@ module Master
 
         def extract_args(cmd:, capture:, match:, msg:)
           case capture
+          when "path", "cycles", "on_off", "first_group", "music_sub"
+            extract_args_group1(capture, match, msg)
+          else
+            extract_args_group2(capture, match, msg)
+          end
+        end
+
+        def extract_args_group1(capture, match, msg)
+          case capture
           when "path"
             path = match&.[](1)&.strip
             path = nil if path&.match?(/\A(?:all|everything|the|code|codebase)\z/i)
@@ -208,6 +221,11 @@ module Master
             match&.captures&.compact&.first.to_s.strip
           when "music_sub"
             msg.match?(/\b(?:radio\s+bergen|warp\s+tunnel|flying\s+lotus|madlib)\b/i) ? "radio" : ""
+          end
+        end
+
+        def extract_args_group2(capture, match, msg)
+          case capture
           when "persona_name"
             (match&.[](1) || match&.[](2) || match&.[](3)).to_s.strip
           when "soul_subcmd"

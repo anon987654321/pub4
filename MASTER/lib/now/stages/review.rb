@@ -64,6 +64,18 @@ module Master
           errors = lint_errors(ctx)
           return Result.ok(ctx) if rubric.nil? && errors.nil?
 
+          verdict = build_and_publish_verdict(ctx, rubric, errors)
+          merged = ctx.merge(review_verdict: verdict.pass?)
+          return Result.ok(merged) unless blocking_destructive?(ctx) && !verdict.pass?
+
+          @bus&.publish("review:blocked", command: ctx.command, reasons: verdict.reasons, phase: "post_execute")
+          Result.err("review: blocked — #{verdict.reasons.join(", ")}", category: :policy)
+        rescue StandardError => e
+          @bus&.publish("review:verdict_error", message: e.message)
+          Result.ok(ctx)
+        end
+
+        def build_and_publish_verdict(ctx, rubric, errors)
           verdict = Master::Judge::Verdict.new.call(
             deterministic: { lint: (errors || 0).zero? },
             rubric_score: rubric || 0.5
@@ -76,14 +88,7 @@ module Master
             command: ctx.command,
             phase: "post_execute"
           )
-          merged = ctx.merge(review_verdict: verdict.pass?)
-          return Result.ok(merged) unless blocking_destructive?(ctx) && !verdict.pass?
-
-          @bus&.publish("review:blocked", command: ctx.command, reasons: verdict.reasons, phase: "post_execute")
-          Result.err("review: blocked — #{verdict.reasons.join(", ")}", category: :policy)
-        rescue StandardError => e
-          @bus&.publish("review:verdict_error", message: e.message)
-          Result.ok(ctx)
+          verdict
         end
 
         def blocking_destructive?(ctx)

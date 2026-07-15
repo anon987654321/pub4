@@ -42,9 +42,12 @@ module Master
         end
 
         def strip_all(text)
-          cleaned = text
-          cleaned = cleaned.sub(SYCOPHANCY_RE, "")
+          cleaned = text.sub(SYCOPHANCY_RE, "")
+          cleaned = strip_rule_based(cleaned)
+          strip_markdown(cleaned)
+        end
 
+        def strip_rule_based(cleaned)
           rules.fetch("preambles", []).each { |p| cleaned = cleaned.sub(/\A\s*#{Regexp.escape(p)}\s*/i, "") }
           rules.fetch("endings",   []).each { |e| cleaned = cleaned.sub(/\s*#{Regexp.escape(e)}\s*\z/i, "") }
           rules.fetch("hedges",    []).each do |h|
@@ -54,7 +57,10 @@ module Master
               cleaned = cleaned.gsub(/\b#{Regexp.escape(h)}\b\s*/i, "")
             end
           end
+          cleaned
+        end
 
+        def strip_markdown(cleaned)
           cleaned = cleaned.gsub(HEADER_RE, "")
           cleaned = cleaned.gsub(BOLD_RE, '\1')
           cleaned = cleaned.gsub(ITALIC_RE, '\1')
@@ -62,8 +68,7 @@ module Master
           cleaned = cleaned.gsub(HR_RE, "")
           cleaned = cleaned.gsub(BULLET_RE, "")
           cleaned = cleaned.gsub(NUMBERED_RE, "")
-          cleaned = cleaned.gsub(/\n{3,}/, "\n\n")
-          cleaned
+          cleaned.gsub(/\n{3,}/, "\n\n")
         end
 
         def require_evidence(text)

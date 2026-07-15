@@ -15,8 +15,16 @@ module Master
         end
 
         def call(ctx)
-          findings = []
+          findings = scan_written_paths(ctx)
+          findings.concat(scan_inline_fences(ctx))
+          Result.ok(ctx.merge(lint_report: findings))
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Lint.call", event_bus: @bus)
+          Result.ok(ctx.merge(lint_error: e.message))
+        end
 
+        def scan_written_paths(ctx)
+          findings = []
           paths = Array(ctx.written_files).filter_map { |p| File.exist?(p) ? p : nil }
           paths.each do |scan_path|
             if File.directory?(scan_path)
@@ -26,19 +34,18 @@ module Master
               findings.concat(Result.wrap(@scanner.scan(scan_path, depth: :deep)).value_or([]))
             end
           end
+          findings
+        end
 
+        def scan_inline_fences(ctx)
           output = ctx.output.to_s
+          findings = []
           output.scan(FENCE_RE).each do |match|
             code = match[0]
             next if code.nil? || code.strip.empty?
-            inline_findings = scan_inline(code)
-            findings.concat(inline_findings)
+            findings.concat(scan_inline(code))
           end
-
-          Result.ok(ctx.merge(lint_report: findings))
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Lint.call", event_bus: @bus)
-          Result.ok(ctx.merge(lint_error: e.message))
+          findings
         end
 
         private

@@ -21,18 +21,13 @@ module Master
           return result if result.err?
 
           feedback = result.value!
-          if council_veto?(feedback)
-            publish_blocked(ctx, "council_veto")
-            return Result.err("review: blocked destructive /#{ctx.command}", category: :policy)
-          end
+          veto = check_council_veto(ctx, feedback)
+          return veto if veto
 
           verdict = build_verdict(feedback)
           publish_verdict(ctx, verdict, phase: "pre_execute")
-          unless verdict.pass?
-            publish_blocked(ctx, verdict.reasons.join(", "))
-            return Result.err("review: blocked destructive /#{ctx.command} — #{verdict.reasons.join(", ")}",
-                              category: :policy)
-          end
+          blocked = check_verdict_pass(ctx, verdict)
+          return blocked if blocked
 
           Result.ok(ctx.merge(council_feedback: feedback, review_preapproved: true))
         rescue StandardError => e
@@ -41,6 +36,20 @@ module Master
         end
 
         private
+
+        def check_council_veto(ctx, feedback)
+          return nil unless council_veto?(feedback)
+
+          publish_blocked(ctx, "council_veto")
+          Result.err("review: blocked destructive /#{ctx.command}", category: :policy)
+        end
+
+        def check_verdict_pass(ctx, verdict)
+          return nil if verdict.pass?
+
+          publish_blocked(ctx, verdict.reasons.join(", "))
+          Result.err("review: blocked destructive /#{ctx.command} — #{verdict.reasons.join(", ")}", category: :policy)
+        end
 
         def pre_execute?(ctx)
           ctx.intent == :command &&

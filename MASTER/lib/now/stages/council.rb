@@ -26,17 +26,25 @@ module Master
       def call(ctx)
         return Result.ok(ctx) unless should_run?(ctx)
 
-        stale = ground_truth_stale_paths(ctx)
-        unless stale.empty?
-          @bus&.publish("council:ground_truth_blocked", paths: stale)
-          return Result.err("council blocked: stale read required for #{stale.join(", ")}", category: :policy)
-        end
+        blocked = block_on_stale_ground_truth(ctx)
+        return blocked if blocked
 
         payload = extract_payload(ctx)
         result  = @deliberation.review(payload, context: ctx.message)
         return result if result.err?
 
-        feedback = result.value!
+        handle_council_feedback(ctx, result.value!)
+      end
+
+      def block_on_stale_ground_truth(ctx)
+        stale = ground_truth_stale_paths(ctx)
+        return nil if stale.empty?
+
+        @bus&.publish("council:ground_truth_blocked", paths: stale)
+        Result.err("council blocked: stale read required for #{stale.join(", ")}", category: :policy)
+      end
+
+      def handle_council_feedback(ctx, feedback)
         log_praise(ctx.message, feedback) if praise?(feedback)
         if reject?(feedback)
           @bus&.publish("council:veto", message: ctx.message.to_s[0, 120])
