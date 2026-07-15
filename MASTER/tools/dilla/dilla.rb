@@ -45,8 +45,8 @@ INLINE_SONIC_PROFILES = {
       "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
     },
     "synth" => {
-      "bpm" => 86, "swing" => 0.16, "pad_lowpass_hz" => 2400, "master_lowpass_hz" => 2600,
-      "bass_sustain_bar" => 0.94, "bass_shelf_db" => 9, "vinyl_noise" => 0.14,
+      "bpm" => 86, "swing" => 0.16, "pad_lowpass_hz" => 3400, "master_lowpass_hz" => 2800,
+      "bass_sustain_bar" => 0.94, "bass_shelf_db" => 9, "vinyl_noise" => 0.06,
       "texture" => "donuts_lowpass_warmth"
     }
   },
@@ -56,8 +56,8 @@ INLINE_SONIC_PROFILES = {
       "engine_chords" => %w[Gmaj7 Bmin7 Cmaj9 Gmaj7]
     },
     "synth" => {
-      "bpm" => 84, "swing" => 0.12, "pad_lowpass_hz" => 2800, "master_lowpass_hz" => 3400,
-      "bass_sustain_bar" => 0.88, "bass_shelf_db" => 6, "vinyl_noise" => 0.22,
+      "bpm" => 84, "swing" => 0.12, "pad_lowpass_hz" => 3600, "master_lowpass_hz" => 3600,
+      "bass_sustain_bar" => 0.88, "bass_shelf_db" => 6, "vinyl_noise" => 0.08,
       "sidechain_pump" => true, "texture" => "jazz_haze_sidechain"
     }
   },
@@ -67,8 +67,8 @@ INLINE_SONIC_PROFILES = {
       "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
     },
     "synth" => {
-      "bpm" => 96, "swing" => 0.20, "pad_lowpass_hz" => 2400, "master_lowpass_hz" => 3000,
-      "bass_sustain_bar" => 0.80, "bass_shelf_db" => 7, "vinyl_noise" => 0.28,
+      "bpm" => 96, "swing" => 0.20, "pad_lowpass_hz" => 3200, "master_lowpass_hz" => 3200,
+      "bass_sustain_bar" => 0.80, "bass_shelf_db" => 7, "vinyl_noise" => 0.10,
       "crush_mix" => 0.35, "texture" => "sp303_vinyl_grit"
     }
   },
@@ -78,8 +78,8 @@ INLINE_SONIC_PROFILES = {
       "engine_chords" => %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7]
     },
     "synth" => {
-      "bpm" => 93, "swing" => 0.18, "pad_lowpass_hz" => 2200, "master_lowpass_hz" => 2800,
-      "bass_sustain_bar" => 0.92, "bass_shelf_db" => 8, "vinyl_noise" => 0.18,
+      "bpm" => 93, "swing" => 0.18, "pad_lowpass_hz" => 3300, "master_lowpass_hz" => 3000,
+      "bass_sustain_bar" => 0.92, "bass_shelf_db" => 8, "vinyl_noise" => 0.07,
       "texture" => "neo_soul_pocket"
     }
   },
@@ -88,8 +88,8 @@ INLINE_SONIC_PROFILES = {
       "engine_chords" => %w[Dm9 Em7 Ebmaj7 Dm]
     },
     "synth" => {
-      "bpm" => 96, "swing" => 0.14, "pad_lowpass_hz" => 2000, "master_lowpass_hz" => 2600,
-      "bass_sustain_bar" => 0.85, "bass_shelf_db" => 10, "vinyl_noise" => 0.12,
+      "bpm" => 96, "swing" => 0.14, "pad_lowpass_hz" => 3000, "master_lowpass_hz" => 2800,
+      "bass_sustain_bar" => 0.85, "bass_shelf_db" => 10, "vinyl_noise" => 0.05,
       "texture" => "modern_dry_punch"
     }
   }
@@ -953,11 +953,11 @@ def drum_bus_mapping
 end
 
 def sonic_pad_lowpass(sonic)
-  sonic&.dig("synth", "pad_lowpass_hz")&.to_i || 2900
+  sonic&.dig("synth", "pad_lowpass_hz")&.to_i || 3400
 end
 
 def sonic_vinyl_level(sonic)
-  sonic&.dig("synth", "vinyl_noise")&.to_f || 0.18
+  sonic&.dig("synth", "vinyl_noise")&.to_f || 0.08
 end
 
 def sonic_bass_shelf(sonic)
@@ -968,11 +968,11 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
   lp = sonic_pad_lowpass(sonic)
   build_start = (duration * 0.82).round(2)
   outro_fade = (beat_p * 4.0 * 4).round(2)
-  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || "1.55"
+  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || "1.68"
   "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
-    "highpass=f=110,equalizer=f=95:t=h:w=120:g=-3.0," \
-    "equalizer=f=520:t=h:w=700:g=3.2,equalizer=f=1400:t=h:w=1200:g=2.0," \
-    "equalizer=f=#{lp}:t=o:w=1.0:g=0.5," \
+    "highpass=f=110,equalizer=f=95:t=h:w=120:g=-2.2," \
+    "equalizer=f=420:t=o:w=1.1:g=2.8,equalizer=f=680:t=h:w=900:g=2.6,equalizer=f=1400:t=h:w=1200:g=2.4," \
+    "equalizer=f=2800:t=h:w=1800:g=1.2,equalizer=f=#{lp}:t=o:w=1.0:g=0.8," \
     "afade=t=in:st=#{harm_fade_start}:d=#{harm_fade_dur}," \
     "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}," \
     "equalizer=f=800:t=h:w=600:g=-3:enable='between(t,#{build_start},#{duration})'[harm]"
@@ -1183,19 +1183,20 @@ def warm_dilla_pad_post_enhanced(path, sonic, cfg)
   patch_fx = @render_warm_patch&.dig(:fx) || @render_ep_patch&.dig(:fx)
   filt = [
     "aformat=channel_layouts=stereo",
-    "lowpass=f=#{lp}:width_type=q:width=0.82",
-    "equalizer=f=280:t=o:w=1.1:g=3.2",
-    "equalizer=f=1100:t=o:w=0.9:g=-1.6",
-    "equalizer=f=4200:t=o:w=1.2:g=-2.4",
-    ("tremolo=f=4.5:d=0.12" if cfg[:style_family] == :dilla),
-    "aphaser=speed=0.11:decay=0.44",
-    "aecho=0.44:0.5:130|210:0.30|0.16",
-    "chorus=0.5:0.7:35|45:0.25|0.2:0.3|0.25:1.2|1.6",
-    "vibrato=f=0.28:d=0.016",
+    "lowpass=f=#{lp}:width_type=q:width=0.88",
+    "equalizer=f=260:t=o:w=1.0:g=2.6",
+    "equalizer=f=520:t=h:w=700:g=2.4",
+    "equalizer=f=1100:t=o:w=0.9:g=-0.8",
+    "equalizer=f=3200:t=h:w=1600:g=1.4",
+    "equalizer=f=4800:t=o:w=1.4:g=-1.8",
+    ("tremolo=f=4.5:d=0.08" if cfg[:style_family] == :dilla),
+    "aecho=0.38:0.48:120|200:0.26|0.12",
+    "chorus=0.42:0.62:32|42:0.2|0.16:0.24|0.2:1.05|1.35",
+    "vibrato=f=0.22:d=0.011",
     patch_fx,
-    "acompressor=threshold=-26dB:ratio=2.1:attack=42:release=200:makeup=2.2",
-    "volume=1.28",
-    "alimiter=limit=0.97:level_out=0.99"
+    "acompressor=threshold=-24dB:ratio=1.7:attack=55:release=240:makeup=1.9",
+    "volume=1.18",
+    "alimiter=limit=0.96:level_out=0.98"
   ].compact.join(",")
   sh! "ffmpeg", "-y", "-i", path, "-af", filt, "-c:a", "pcm_s16le", tmp
   FileUtils.mv(tmp, path)
@@ -1241,7 +1242,7 @@ ANALOG_CFG = {
   tape_dc: 0.05,
   chorus_delay_l_ms: 9,
   chorus_delay_r_ms: 13,
-  vinyl_level: 0.14,
+  vinyl_level: 0.06,
   bad_tune_spike_cents: 16.0,
 }.freeze
 HIP_HOP_BPM = 86
@@ -1308,11 +1309,11 @@ COMMANDS = %w[
 # wow_depth: LFO depth [0,1] (tape tension variation)
 # warmth_db: low-frequency shelf boost in dB (color temperature ↔ tonal weight)
 AUDIO_STOCKS = {
-  tape_250:  { noise_amp: 0.003, sat_drive: 1.4, rolloff_hz: 14_500, wow_rate: 0.40, wow_depth: 0.003, warmth_db: 2.5 },
-  tape_500:  { noise_amp: 0.006, sat_drive: 2.2, rolloff_hz: 12_500, wow_rate: 0.45, wow_depth: 0.004, warmth_db: 4.0 },
-  vinyl:     { noise_amp: 0.009, sat_drive: 1.0, rolloff_hz: 18_000, wow_rate: 0.50, wow_depth: 0.015, warmth_db: 2.0 },
-  cassette:  { noise_amp: 0.015, sat_drive: 0.8, rolloff_hz: 10_500, wow_rate: 0.50, wow_depth: 0.025, warmth_db: 1.5 },
-  acetate:   { noise_amp: 0.022, sat_drive: 1.1, rolloff_hz:  9_500, wow_rate: 0.80, wow_depth: 0.040, warmth_db: 5.0 },
+  tape_250:  { noise_amp: 0.0018, sat_drive: 1.4, rolloff_hz: 14_500, wow_rate: 0.40, wow_depth: 0.003, warmth_db: 2.5 },
+  tape_500:  { noise_amp: 0.0035, sat_drive: 2.2, rolloff_hz: 12_500, wow_rate: 0.45, wow_depth: 0.004, warmth_db: 4.0 },
+  vinyl:     { noise_amp: 0.005, sat_drive: 1.0, rolloff_hz: 18_000, wow_rate: 0.50, wow_depth: 0.015, warmth_db: 2.0 },
+  cassette:  { noise_amp: 0.008, sat_drive: 0.8, rolloff_hz: 10_500, wow_rate: 0.50, wow_depth: 0.025, warmth_db: 1.5 },
+  acetate:   { noise_amp: 0.011, sat_drive: 1.1, rolloff_hz:  9_500, wow_rate: 0.80, wow_depth: 0.040, warmth_db: 5.0 },
 }.freeze
 
 # Analog grade presets — concept map:
@@ -1351,7 +1352,7 @@ SONITEX_STX1260 = {
   groove_wear_lp: 5200,
   wow_rate: 0.26, wow_depth: 0.007, flutter_hz: 4.4, flutter_depth: 0.0045,
   sibilance_db: 1.6, sibilance_hz: 5600, phone_lp: 4400,
-  hiss_amp: 0.0055, pop_rate: 0.00055, pop_amp: 0.20, click_rate: 0.0009,
+  hiss_amp: 0.0028, pop_rate: 0.00035, pop_amp: 0.14, click_rate: 0.0006,
   crush_bits: 12, crush_sr: 1.69, crush_mix: 0.32, crush_post_lp: 3600,
   out_comp_threshold: -19, out_comp_ratio: 2.6, out_comp_makeup: 1.8,
   limit: 0.92, level_out: 0.90
@@ -1365,7 +1366,7 @@ SONITEX_STX1269 = {
   groove_wear_lp: 3600,
   wow_rate: 0.32, wow_depth: 0.014, flutter_hz: 5.6, flutter_depth: 0.018,
   sibilance_db: 2.8, sibilance_hz: 5200, phone_lp: 3600,
-  hiss_amp: 0.014, pop_rate: 0.0015, pop_amp: 0.38, click_rate: 0.0022,
+  hiss_amp: 0.0055, pop_rate: 0.0008, pop_amp: 0.22, click_rate: 0.0012,
   crush_bits: 10, crush_sr: 1.69, crush_mix: 0.48, crush_post_lp: 2800,
   out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.5,
   limit: 0.86, level_out: 0.88
@@ -1393,14 +1394,14 @@ SONITEX_PRESETS = {
     crush_bits: 12, crush_sr: 1.85, crush_mix: 0.42, crush_post_lp: 2100,
     dist_drive: 1.48, dist_mix: 0.62, hf_rolloff: 2200, groove_wear_lp: 2600,
     head_bump_hz: 58, head_bump_db: 5.2, warmth_db: 5.5, lf_rolloff: 38,
-    wow_depth: 0.009, flutter_depth: 0.005, stereo_width: 1.12, hiss_amp: 0.0048,
+    wow_depth: 0.009, flutter_depth: 0.005, stereo_width: 1.12, hiss_amp: 0.0022,
     out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.4,
     limit: 0.86, level_out: 0.88
   ),
   heavy:    SONITEX_STX1269.merge(
     crush_bits: 8, crush_sr: 2.05, crush_mix: 0.58, crush_post_lp: 2400,
     dist_drive: 3.6, dist_mix: 0.88, dist_pre_emph_db: 6.2, dist_dc: 0.09,
-    hiss_amp: 0.016, pop_rate: 0.0018, pop_amp: 0.42, click_rate: 0.0025,
+    hiss_amp: 0.006, pop_rate: 0.0009, pop_amp: 0.24, click_rate: 0.0012,
     wow_depth: 0.016, flutter_depth: 0.012, stereo_width: 1.36,
     hf_rolloff: 9600, warmth_db: 7.0, head_bump_db: 6.0, groove_wear_lp: 3200,
     phone_lp: 3100, sibilance_db: 3.4,
@@ -2587,8 +2588,7 @@ def sonitex_resolve_preset(track: nil)
   track ||= (ENV["TRACK"] || ENV["PROGRESSION"] || "chromatic_minor_descent").to_s.downcase.tr("-", "_")
   raw = (ENV["SONITEX_PRESET"] || ENV["SONITEX"]).to_s.strip.downcase
   if raw.empty?
-    return :donuts_warm if %w[chromatic_minor_descent timeless soul borrowed_dominant_turn measured_chroma_field].include?(track)
-    return :heavy
+    return :donuts_warm
   end
   return nil if raw =~ /\A(?:0|false|off)\z/
   return :heavy if %w[1 true on heavy].include?(raw)
@@ -3651,8 +3651,8 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                  end
     pad_t = base + pad_offset + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
     sustain = (chord_bars * bar_p * 0.97).round(4)
-    pad_vel = dilla_velocity(phase == :recapitulation ? 0.94 : 0.88, bar, 0, spread: 0.03) * sec_gain
-    pad_vel *= 0.82 if phase == :development
+    pad_vel = dilla_velocity(phase == :recapitulation ? 0.96 : 0.92, bar, 0, spread: 0.03) * sec_gain
+    pad_vel *= 0.88 if phase == :development
     events[:pad] << [[pad_t, 0.0].max.round(6), pad_vel, chord, sustain]
     if feel == :timeless && section == :main && bar % 4 == 1 && phase != :development
       events[:pad] << [[pad_t + step_p * 0.5, 0.0].max.round(6),
@@ -3756,9 +3756,9 @@ def dilla_drum_filter(snare_env, hat_env, open_env, duration, sample_input: nil)
     labels  << "[sample]"
     weights << "0.72"
   end
-  filter << "[3:a]volume=0.14,highpass=f=90,lowpass=f=8000[vinyl]"
+  filter << "[3:a]volume=0.06,highpass=f=120,lowpass=f=6000[vinyl]"
   sat = Math.tanh(1.55).round(6)
-  filter << "#{labels.join}[vinyl]amix=inputs=#{labels.length + 1}:weights=#{weights.join(' ')} 0.22:duration=first," \
+  filter << "#{labels.join}[vinyl]amix=inputs=#{labels.length + 1}:weights=#{weights.join(' ')} 0.08:duration=first," \
             "aeval=exprs='tanh(1.55*val(0))/#{sat}|tanh(1.55*val(1))/#{sat}'," \
             "acompressor=threshold=-22dB:ratio=2.8:attack=18:release=110:makeup=4," \
             "acrusher=bits=12:samples=1.69:mix=0.18," \
@@ -4230,7 +4230,7 @@ def render_native_pad_wav(path, pad_events, duration)
     right_parts = []
     chord[:hz].sort.each_with_index do |hz, voice_i|
       pan = [-0.38, -0.12, 0.14, 0.36, 0.22][voice_i % 5]
-      amp = velocity * (0.050 + voice_i * 0.0042)
+      amp = velocity * (0.058 + voice_i * 0.0048)
       pair = native_pad_voice_expression(hz, amp, voice_i, pan, event_i * 0.55 + voice_i * 0.9)
       left_parts << pair[0]
       right_parts << pair[1]
@@ -4317,7 +4317,7 @@ def write_pad_smf(path, pad_events, program: PAD_GM_PROGRAM, bank: 0)
       note = hz_to_midi(hz).round.clamp(0, 127)
       on_tick = (time * SMF_TICKS_PER_SECOND).round
       off_tick = (on_tick + (sustain * SMF_TICKS_PER_SECOND)).round
-      vel = (velocity.clamp(0.0, 1.0) * 100).round.clamp(1, 120)
+      vel = (velocity.clamp(0.0, 1.0) * 108).round.clamp(48, 127)
       notes << [on_tick, :on, note, vel]
       notes << [off_tick, :off, note, 0]
     end
@@ -4344,7 +4344,7 @@ def write_pad_smf(path, pad_events, program: PAD_GM_PROGRAM, bank: 0)
   path
 end
 
-PAD_TARGET_RMS_DB = -19.0
+PAD_TARGET_RMS_DB = -17.5
 
 # Lazily, silently fetches EXTERNAL_SOUNDFONTS/EXTERNAL_DRUM_KIT_REPO on
 # first use so nothing needs to be typed/remembered — but any network
@@ -4466,6 +4466,7 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
   boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
   sh! "ffmpeg", "-y", "-i", path, "-af",
+      "equalizer=f=360:t=o:w=1.1:g=2.2,equalizer=f=2100:t=h:w=1500:g=1.6," \
       "volume=#{boost_db.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
       "-c:a", "pcm_s16le", "#{path}.pad.wav"
   FileUtils.mv("#{path}.pad.wav", path)
@@ -4926,7 +4927,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   vinyl_amp = sonic_vinyl_level(cfg[:sonic])
   command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=#{vinyl_amp}:d=#{duration}"]
   turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
-  command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.05:d=#{duration}"] if turntable_rumble
+  command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.02:d=#{duration}"] if turntable_rumble
 
   # Every attempt to fix chord audibility by tuning EQ/weights/sidechain
   # *within* the elaborate mix chain (NY parallel drum compression, a
@@ -4990,13 +4991,13 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     mix_weights << "0.75"
   end
 
-  filt << "[#{idx}:a]highpass=f=90,lowpass=f=8000,volume=0.18[vinyl]"
+  filt << "[#{idx}:a]highpass=f=120,lowpass=f=6000,volume=0.07[vinyl]"
   mix_labels << "[vinyl]"
-  mix_weights << "1.0"
+  mix_weights << "0.6"
   if turntable_rumble
-    filt << "[#{idx + 1}:a]lowpass=f=45,highpass=f=18,volume=0.12[rumble]"
+    filt << "[#{idx + 1}:a]lowpass=f=40,highpass=f=22,volume=0.05[rumble]"
     mix_labels << "[rumble]"
-    mix_weights << "0.5"
+    mix_weights << "0.35"
   end
   if self_sample_idx
     # The previous render, looped and buried quiet underneath this one — a
@@ -5160,7 +5161,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   command += ["-f", "lavfi", "-i", "aevalsrc='0.55*sin(2*PI*38*t)*exp(-mod(t,#{beat_p})*1.8)':d=#{duration}:s=#{SAMPLE_RATE}"]
   rumble_idx = idx
   idx += 1
-  command += ["-f", "lavfi", "-i", "anoisesrc=color=white:amplitude=0.045:d=#{duration}:r=#{SAMPLE_RATE}"]
+  command += ["-f", "lavfi", "-i", "anoisesrc=color=white:amplitude=0.022:d=#{duration}:r=#{SAMPLE_RATE}"]
   noise_idx = idx
 
   filt = []
@@ -5170,7 +5171,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
     filt << "[#{sides_idx}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
             "highpass=f=180,lowpass=f=8500,volume=0.18[texture]"
   end
-  filt << "[#{noise_idx}:a]highpass=f=300,lowpass=f=6000,volume=0.08[noise]"
+  filt << "[#{noise_idx}:a]highpass=f=400,lowpass=f=5000,volume=0.04[noise]"
   mix_in = ["[drums]", "[rumble]"]
   mix_w  = ["1.0", "0.55"]
   if sides_idx
@@ -5178,7 +5179,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
     mix_w << "0.28"
   end
   mix_in << "[noise]"
-  mix_w << "0.12"
+  mix_w << "0.06"
   filt << "#{mix_in.join}amix=inputs=#{mix_in.length}:weights=#{mix_w.join(' ')}:duration=first[bed]"
   filt << "[bed][drums_sc]sidechaincompress=threshold=-24dB:ratio=8:attack=0.5:release=110:level_sc=0.9[pumped]"
   filt << "[pumped]asplit=2[dry][rev_send]"
@@ -5258,7 +5259,7 @@ def help
     ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
          KICK_GAIN=0.38 (default) kick/sub level scale — lower if still loud
-         SONITEX=heavy (default) | SONITEX=classic | SONITEX=extreme | SONITEX=0 dry
+         SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
          samples/drums/custom/ overrides kit
