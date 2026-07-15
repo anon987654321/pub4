@@ -11,6 +11,7 @@ require "json"
 require "shellwords"
 require_relative "../../lib/reach/analog_capabilities"
 require "open3"
+require_relative "lib/composition_engine"
 
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the invoking directory (override with
@@ -410,15 +411,28 @@ def weighted_patch_pick(role, seed: nil)
   pool.last
 end
 
-def pick_synth_patches!(cfg)
+def pick_synth_patches!(cfg, bar: 0, n_bars: nil)
   seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0)
-  @render_ep_patch = weighted_patch_pick(:ep, seed: seed)
-  @render_warm_patch = weighted_patch_pick(:warm, seed: seed + 17)
-  @render_texture_patch = weighted_patch_pick(:texture, seed: seed + 29)
-  @render_lead_patch = weighted_patch_pick(:lead, seed: seed + 41)
-  @render_scale_lead_patch = weighted_patch_pick(:scale_lead, seed: seed + 79) ||
-                           weighted_patch_pick(:lead, seed: seed + 79)
+  roles = nil
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    section = @composition_session.section_at(bar)
+    roles = @composition_session.ensemble_roles(section)
+  end
+  pick_role = ->(role) { roles.nil? || roles.include?(role) }
+  @render_ep_patch = weighted_patch_pick(:ep, seed: seed) if pick_role.call(:ep)
+  @render_warm_patch = weighted_patch_pick(:warm, seed: seed + 17) if pick_role.call(:warm)
+  @render_texture_patch = weighted_patch_pick(:texture, seed: seed + 29) if pick_role.call(:texture)
+  @render_lead_patch = weighted_patch_pick(:lead, seed: seed + 41) if pick_role.call(:lead)
+  if pick_role.call(:scale_lead)
+    @render_scale_lead_patch = weighted_patch_pick(:scale_lead, seed: seed + 79) ||
+                               weighted_patch_pick(:lead, seed: seed + 79)
+  end
   @render_native_patch = weighted_patch_pick(:native, seed: seed + 53)
+  @render_ep_patch ||= weighted_patch_pick(:ep, seed: seed)
+  @render_warm_patch ||= weighted_patch_pick(:warm, seed: seed + 17)
+  @render_lead_patch ||= weighted_patch_pick(:lead, seed: seed + 41)
+  @render_scale_lead_patch ||= weighted_patch_pick(:scale_lead, seed: seed + 79) ||
+                               weighted_patch_pick(:lead, seed: seed + 79)
   @render_arp_style = (@render_lead_patch&.dig(:arp_styles) || [:updown]).sample(random: Random.new(seed + 67))
   @render_scale_arp_style = (@render_scale_lead_patch&.dig(:arp_styles) || [:updown]).sample(random: Random.new(seed + 83))
 end
@@ -800,15 +814,21 @@ def chord_phase_at(bar, pad_chords, chord_phases, chord_bars:, phrase_bars: nil)
 end
 
 def section_density(bar, n_bars, chord_phases: nil, pad_chords: nil, chord_bars: 2, phrase_bars: nil)
-  sec = dilla_section(bar, n_bars)
-  base = case sec
-         when :intro then 0.55
-         when :breakdown then 0.45
-         when :build
-           build_start = (n_bars * 0.82).to_i
-           0.72 + 0.28 * ((bar - build_start).to_f / [n_bars * 0.18, 1].max).clamp(0.0, 1.0)
-         when :outro then 0.5
-         else 1.0
+  base = if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+           prof = @composition_session.profile_at(bar)
+           tension = @composition_session.tension_at(bar)
+           (prof[:drums] * 0.5 + tension * 0.5).clamp(0.2, 1.0)
+         else
+           sec = dilla_section_legacy(bar, n_bars)
+           case sec
+           when :intro then 0.55
+           when :breakdown then 0.45
+           when :build
+             build_start = (n_bars * 0.82).to_i
+             0.72 + 0.28 * ((bar - build_start).to_f / [n_bars * 0.18, 1].max).clamp(0.0, 1.0)
+           when :outro then 0.5
+           else 1.0
+           end
          end
   phase = chord_phase_at(bar, pad_chords, chord_phases, chord_bars: chord_bars, phrase_bars: phrase_bars)
   base * (phase ? phase_gain_multiplier(phase) : 1.0)
@@ -1506,7 +1526,10 @@ def lead_events_creative(pad_events, cfg, duration: nil, n_bars: nil)
   leitmotif = leitmotif_for(pad_events)
   arp_style = @render_arp_style || :updown
   lead_patch = @render_lead_patch
-  gate_mul = lead_patch&.fetch(:gate, 0.82) || 0.82
+  gate_mul = (lead_patch&.fetch(:gate, 0.82) || 0.82)
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    gate_mul *= @composition_session.performer_profile[:gate_mul]
+  end
   octave_mul = 2.0 ** ((lead_patch&.fetch(:octave, 2) || 2) - 2)
   events = []
   burst_remaining = 0
@@ -1515,10 +1538,19 @@ def lead_events_creative(pad_events, cfg, duration: nil, n_bars: nil)
     bar_approx = (time / bar_p).floor.clamp(0, n_bars - 1)
     section = dilla_section(bar_approx, n_bars)
     progress = i.to_f / [pad_events.length - 1, 1].max
+    motif_cell = if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+                   @composition_session.motif_for_bar(bar_approx)
+                 end
+    leitmotif = motif_cell.degrees_for_playback if motif_cell
     if burst_remaining.positive?
       burst_remaining -= 1
     else
-      chance = lead_section_chance(section, progress)
+      chance = if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+                 prof = @composition_session.profile_at(bar_approx)
+                 (prof[:lead] * prof[:melodic_density]).clamp(0.05, 0.92)
+               else
+                 lead_section_chance(section, progress)
+               end
       chance += 0.15 if i % 11 == 5
       next unless rng.rand < chance
       burst_remaining = rng.rand(1..3)
@@ -1555,7 +1587,12 @@ def lead_events_creative(pad_events, cfg, duration: nil, n_bars: nil)
     next unless rng.rand < 0.55 && i.positive?
     answer_style = ARP_PATTERN_BUILDERS.keys.sample(random: rng)
     answer_pat = arp_degrees_for(answer_style, tones.length, rng)
-    answer_offset = pattern.length * step_dur * 0.45
+    conv_offset = if composition_enabled?
+                    DillaComposition::Conversation.answer_offset(:lead, beat_p)
+                  else
+                    0.0
+                  end
+    answer_offset = conv_offset + pattern.length * step_dur * 0.45
     answer_oct = octave_mul * 0.5
     answer_pat.each_with_index do |degree, step|
       hz = tones[degree % tones.length] * answer_oct
@@ -3745,8 +3782,58 @@ end
 
 # --- J Dilla Time beat engine (MPC3000 cyclic microtiming) ---
 
+COMPOSITION_SECTION_KIND = {
+  intro: :intro, verse: :main, hook: :build, bridge: :main,
+  solo: :build, breakdown: :breakdown, outro: :outro
+}.freeze
+
+def composition_enabled?
+  ENV["COMPOSITION"] != "0"
+end
+
+def composition_session!(n_bars: nil, track: nil, force_new: false)
+  if force_new
+    remove_instance_variable(:@composition_session) if instance_variable_defined?(:@composition_session)
+  end
+  return @composition_session if !force_new && instance_variable_defined?(:@composition_session) && @composition_session && !n_bars
+  track ||= (ENV["TRACK"] || "timeless").to_s
+  n_bars ||= bars
+  performer = (ENV["PERFORMER"] || "yancey").to_s.downcase.tr("-", "_").to_sym
+  groove = (ENV["GROOVE_DNA"] || "donuts").to_s.downcase.tr("-", "_").to_sym
+  @composition_session = if composition_enabled? && !force_new && File.exist?(DillaComposition::SESSION_PATH)
+                           DillaComposition::Session.load!(default_track: track, n_bars: n_bars)
+                         else
+                           DillaComposition::Session.new(track: track, performer: performer,
+                                                         groove_dna: groove, n_bars: n_bars)
+                         end
+  @composition_session
+end
+
+def reset_composition_session!
+  remove_instance_variable(:@composition_session) if instance_variable_defined?(:@composition_session)
+end
+
 def dilla_timing_ms(role, bar_index, step_index, timing = nil, beat_p = nil)
-  cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
+  base = cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
+  return base unless composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+  perf = @composition_session.performer_profile
+  groove = @composition_session.groove_profile
+  extra = case role
+          when :kick_anchor, :kick_sync then perf[:kick_lag_ms]
+          when :snare then perf[:snare_early_ms]
+          when :hat_down, :hat_up then perf[:hat_late_ms]
+          when :bass then (perf[:kick_lag_ms] * 1.6).round(1)
+          when :ghost then (perf[:ghost_boost] * 4 - 4).round(1)
+          else 0
+          end
+  dna = if %i[kick_anchor kick_sync].include?(role)
+          groove[:kick_offset_ms][step_index % groove[:kick_offset_ms].length]
+        elsif %i[hat_down hat_up].include?(role)
+          groove[:hat_offset_ms][step_index % groove[:hat_offset_ms].length]
+        else
+          0
+        end
+  (base + extra + dna).round(3)
 end
 
 def time_of_day_swing_offset
@@ -3792,6 +3879,12 @@ def dilla_swing_offset(step_index, step_p, swing, quintuplet: false)
 end
 
 def dilla_velocity(base, bar_index, step_index, spread: 0.10)
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    spread = @composition_session.performer_profile[:velocity_spread]
+    groove = @composition_session.groove_profile
+    curve = groove[:velocity_curve]
+    base *= curve[step_index % curve.length] if curve
+  end
   seed = (bar_index * 1_009) + (step_index * 313) + (base * 10_000).to_i
   rng  = Random.new(seed)
   gaussian = Math.sqrt(-2.0 * Math.log([rng.rand, 1e-9].max)) * Math.cos(2.0 * Math::PI * rng.rand)
@@ -3927,6 +4020,12 @@ end
 
 def dilla_fill_bar?(bar, section)
   return false if %i[intro breakdown].include?(section)
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    prof = @composition_session.profile_at(bar)
+    on_phrase = bar % 8 == 7 || (bar.positive? && bar % 16 == 15)
+    return false unless on_phrase
+    return Random.new(bar * 31 + @composition_session.generation).rand < prof[:fill_rate]
+  end
   bar % 8 == 7 || (bar.positive? && bar % 16 == 15)
 end
 
@@ -3986,7 +4085,7 @@ def dilla_section_bounds(n_bars)
   { intro: intro, outro: outro, cycle: cycle, body_start: intro }
 end
 
-def dilla_section(bar, n_bars)
+def dilla_section_legacy(bar, n_bars)
   b = dilla_section_bounds(n_bars)
   return :outro if bar >= n_bars - b[:outro]
   return :intro if bar < b[:intro]
@@ -3998,13 +4097,26 @@ def dilla_section(bar, n_bars)
   :main
 end
 
+def dilla_section(bar, n_bars)
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    return COMPOSITION_SECTION_KIND.fetch(@composition_session.section_at(bar), :main)
+  end
+  dilla_section_legacy(bar, n_bars)
+end
+
 def dilla_section_gain(bar, n_bars, chord_phases: nil, pad_chords: nil, chord_bars: 2, phrase_bars: nil)
-  sec_gain = case dilla_section(bar, n_bars)
-             when :intro then 0.72
-             when :breakdown then 0.58
-             when :build then 0.88
-             when :outro then 0.62
-             else 1.0
+  sec_gain = if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+               prof = @composition_session.profile_at(bar)
+               tension = @composition_session.tension_at(bar)
+               (prof[:drums] * 0.35 + prof[:harmony] * 0.35 + tension * 0.3).clamp(0.28, 1.0)
+             else
+               case dilla_section_legacy(bar, n_bars)
+               when :intro then 0.72
+               when :breakdown then 0.58
+               when :build then 0.88
+               when :outro then 0.62
+               else 1.0
+               end
              end
   phase = chord_phase_at(bar, pad_chords, chord_phases, chord_bars: chord_bars, phrase_bars: phrase_bars)
   sec_gain * (phase ? phase_gain_multiplier(phase) : 1.0)
@@ -4018,8 +4130,17 @@ def melody_pitch_from_chord(chord, bar, mel_step)
   color_idx = [1, 2, 3, 0, 2, 1][(bar + mel_step) % 6] % midis.length
   base_midi = midis[color_idx]
   rng = Random.new((bar * 97) + (mel_step * 41) + chord[:name].to_s.hash.abs)
-  approach = rng.rand < 0.28 ? base_midi - (rng.rand < 0.5 ? 1 : 2) : base_midi
-  midi_to_hz(approach + 12)
+  approach = if composition_enabled? && rng.rand < 0.22
+               neighbor = DillaComposition::Counterpoint.neighbor_tone(midi_to_hz(base_midi + 12),
+                                                                     direction: rng.rand < 0.5 ? :up : :down)
+               hz_to_midi(neighbor)
+             elsif rng.rand < 0.28
+               base_midi - (rng.rand < 0.5 ? 1 : 2)
+             else
+               base_midi
+             end
+  voiced = DillaComposition::Counterpoint.adjust_voices([midi_to_hz(approach + 12)])
+  voiced.first || midi_to_hz(approach + 12)
 end
 
 def dilla_hat_steps(bar, feel, n_bars: nil)
@@ -4182,6 +4303,10 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     chord = pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
     cvar = dilla_chord_change_variation(chord_change_i, bar, section, feel, step_p, chord)
     pad_t = base + cvar[:pad_offset] + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
+    if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+      lead_role = DillaComposition::Conversation.turn_order(bar).first
+      pad_t += DillaComposition::Conversation.answer_offset(lead_role, beat_p) * 0.12
+    end
     sustain = (chord_bars * bar_p * 0.97 * cvar[:sustain_mul]).round(4)
     pad_vel = dilla_velocity(phase == :recapitulation ? 0.96 : 0.92, bar, 0, spread: 0.03) * sec_gain
     pad_vel *= 0.88 if phase == :development
@@ -5110,6 +5235,10 @@ end
 # (inversion/retrograde/augmentation) instead of generating a fresh,
 # unrelated arp pattern at every chord change.
 def leitmotif_for(pad_events)
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    hook = @composition_session.motifs.find { |m| m.id == "hook" }
+    return hook.degrees_for_playback if hook
+  end
   seed_source = pad_events.first&.dig(2, :name).to_s
   rng = Random.new(seed_source.hash.abs % 100_000)
   length = [3, 4].sample(random: rng)
@@ -5501,8 +5630,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   cache_self_sample!(destination)
   FileUtils.rm_f(destination)
   cfg      = dilla_resolve_config
-  pick_synth_patches!(cfg)
   n_bars   = bars_count || bars
+  composition_session!(n_bars: n_bars, track: cfg[:track].to_s)
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    cfg = cfg.merge(swing: @composition_session.groove_profile[:swing].to_f)
+  end
+  pick_synth_patches!(cfg, bar: n_bars / 2, n_bars: n_bars)
   beat_p   = 60.0 / cfg[:bpm]
   duration = (beat_p * 4.0 * n_bars).round(3)
   needed_chords = (n_bars.to_f / cfg[:chord_bars]).ceil + 1
@@ -5722,7 +5855,13 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
                 @render_scale_lead_patch&.dig(:id), @render_scale_arp_style,
                 @render_lead_patch&.dig(:id), @render_arp_style, lead_arp_style].compact.join("/")
   kick_note = kicks_enabled? ? "kicks" : "no-kicks"
-  puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note})"
+  comp_note = ""
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    @composition_session.save!
+    s = @composition_session
+    comp_note = ", performer=#{s.performer}/#{s.groove_dna} gen=#{s.generation}"
+  end
+  puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note}#{comp_note})"
 end
 
 def industrial_techno_section(bar)
@@ -5896,6 +6035,125 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
 end
 
 # =============================================================================
+# COMPOSITION — memory, arrangement, performers, evolution, critique
+# =============================================================================
+
+def composition_jam(n_bars = 16)
+  ENV["COMPOSITION"] = "1"
+  reset_composition_session!
+  n_bars = (ENV["BARS"] || n_bars).to_i
+  sess = composition_session!(n_bars: n_bars, force_new: true)
+  puts "jam — #{sess.track} | performer=#{sess.performer} groove=#{sess.groove_dna} | #{n_bars} bars"
+  dest = File.join(ROOT, ".jam_tmp.wav")
+  render_dilla(dest, n_bars, keep_stems: true)
+  play_loop(dest)
+end
+
+def composition_evolve(n_bars = 16, generations = 5)
+  ENV["COMPOSITION"] = "1"
+  n_bars = (ENV["BARS"] || n_bars).to_i
+  generations = (ENV["GENERATIONS"] || generations).to_i
+  reset_composition_session!
+  sess = composition_session!(n_bars: n_bars, force_new: true)
+  cfg = dilla_resolve_config
+  dest = File.join(ROOT, ".evolve_best.wav")
+  render_fn = lambda do |session|
+    @composition_session = session
+    out = File.join(SCRATCH_DIR, "evolve_gen#{session.generation}.wav")
+    render_dilla(out, n_bars, keep_stems: false)
+    out
+  end
+  render_fn.define_singleton_method(:quality) { |path| dilla_quality(path) }
+  best = DillaComposition::Evolution.run(session: sess, cfg: cfg, n_bars: n_bars,
+                                         generations: generations, render_fn: render_fn)
+  FileUtils.cp(best[:path], dest) if best[:path] && File.exist?(best[:path])
+  DillaComposition::Critique.print_report(best[:critique]) if best[:critique]
+  puts "evolve best score=#{best[:score]} → #{dest}"
+  dest
+end
+
+def composition_critique(path = nil)
+  path ||= File.join(ROOT, ".live_tmp.wav")
+  path = File.join(ROOT, ".jam_tmp.wav") unless File.file?(path)
+  abort "no render to critique — run: ruby dilla.rb jam" unless File.file?(path)
+  report = dilla_quality(path)
+  sess = composition_session!(n_bars: bars)
+  critique = DillaComposition::Critique.analyze(report, session: sess)
+  DillaComposition::Critique.print_report(critique)
+  sess.critique_log << { path: path, critique: critique[:scores], overall: critique[:overall] }
+  sess.save!
+  critique
+end
+
+def composition_session_cmd(sub = nil, *rest)
+  case sub.to_s.downcase
+  when "save"
+    sess = composition_session!(n_bars: bars)
+    payload = sess.save!
+    puts "session saved → #{DillaComposition::SESSION_PATH}"
+    puts JSON.pretty_generate(payload.slice("track", "performer", "groove_dna", "generation", "best_score"))
+  when "load"
+    reset_composition_session!
+    ENV["COMPOSITION"] = "1"
+    n_bars = (rest[0] || ENV["BARS"] || bars).to_i
+    sess = composition_session!(n_bars: n_bars, force_new: true)
+    puts "session loaded — #{sess.track} performer=#{sess.performer} groove=#{sess.groove_dna}"
+  when "show", nil, ""
+    sess = composition_session!(n_bars: bars)
+    puts "── Session ──"
+    puts "track: #{sess.track}  performer: #{sess.performer}  groove: #{sess.groove_dna}"
+    puts "generation: #{sess.generation}  best_score: #{sess.best_score}"
+    puts "motifs: #{sess.motifs.map { |m| "#{m.id}(#{m.state})" }.join(', ')}"
+    puts "callbacks: #{sess.callbacks.length}  tension anchors: #{sess.tension_curve.length}"
+    puts "arrangement: #{sess.arrangement.map { |e| e[:section] }.uniq.join(' → ')}"
+  when "new"
+    reset_composition_session!
+    ENV["COMPOSITION"] = "1"
+    track = rest[0] || ENV["TRACK"] || "timeless"
+    n_bars = (rest[1] || ENV["BARS"] || bars).to_i
+    @composition_session = DillaComposition::Session.new(track: track, n_bars: n_bars)
+    @composition_session.save!
+    puts "new session — #{track} (#{n_bars} bars)"
+  else
+    abort "usage: ruby dilla.rb session [save|load|show|new] [args]"
+  end
+end
+
+def regenerate_stem(stem, bars_count = 16)
+  ENV["COMPOSITION"] = "1"
+  bars_count = (ENV["BARS"] || bars_count).to_i
+  sess = composition_session!(n_bars: bars_count)
+  case stem.to_s.downcase
+  when "bass"
+    sess.motifs.find { |m| m.id == "bass_motif" }&.evolve!
+  when "hats"
+    keys = DillaComposition::GROOVE_DNA.keys
+    sess.groove_dna = keys[(keys.index(sess.groove_dna) || 0) + 1] % keys.length
+  when "melody"
+    sess.motifs.find { |m| m.id == "hook" }&.evolve!
+    sess.record_callback!(bars_count / 2, "hook", :A_prime)
+  else
+    abort "usage: ruby dilla.rb regenerate-stem bass|hats|melody [bars]"
+  end
+  sess.save!
+  puts "regenerate-stem #{stem} — performer=#{sess.performer} groove=#{sess.groove_dna}"
+  regenerate(bars_count)
+end
+
+def composition_listen_loop(n_bars = 16)
+  ENV["COMPOSITION"] = "1"
+  n_bars = (ENV["BARS"] || n_bars).to_i
+  max_passes = (ENV["LISTEN_PASSES"] || 3).to_i
+  dest = File.join(ROOT, ".listen_loop.wav")
+  render_fn = ->(pass) { render_dilla(File.join(SCRATCH_DIR, "listen_pass#{pass}.wav"), n_bars); dest }
+  analyze_fn = ->(path) { dilla_quality(path) }
+  path = DillaComposition::ListeningLoop.converge(render_fn: render_fn, analyze_fn: analyze_fn, max_passes: max_passes)
+  FileUtils.cp(path, dest) if path && File.exist?(path)
+  puts "listen_loop → #{dest}"
+  play_loop(dest) if File.exist?(dest)
+end
+
+# =============================================================================
 # HELP
 # =============================================================================
 
@@ -5941,6 +6199,15 @@ def help
     ANALYSIS & GRADE
       scan | ears | verify | study | grade | grade_list | chords
 
+    COMPOSITION (session in #{DillaComposition::PROJECT_DIR})
+      jam [bars]                   Render + play with fresh session (motifs, performers, arrangement)
+      evolve [bars] [generations]  Mutate motifs/performer/groove, score, keep best (GENERATIONS=5)
+      critique [path]              Producer scores + recommendations on last render
+      session [save|load|show|new] Persist/load/show composition memory
+      regenerate-stem bass|hats|melody [bars]  Re-render one layer (motif/groove mutation)
+      listen_loop [bars]           Render → analyze LUFS/groove → adjust mix (LISTEN_PASSES=3)
+      COMPOSITION=0                Disable arrangement spine (legacy density sections)
+
     SONITEX
       sonitex_list                   List STX-1260 subset presets
 
@@ -5955,6 +6222,7 @@ def help
       progressions_log.txt there is the only record of generated progressions.
 
     ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
+         PERFORMER=yancey GROOVE_DNA=donuts COMPOSITION=1 GENERATIONS=5 LISTEN_PASSES=3
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
          KICK_GAIN=0.38 (default) kick/sub level scale — lower if still loud
          SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
@@ -6931,7 +7199,9 @@ end
 FLAG_ENV = {
   "track" => "TRACK", "progression" => "PROGRESSION", "sonitex" => "SONITEX_PRESET",
   "analog-chain" => "ANALOG_CHAIN", "sidechain" => "SIDECHAIN", "bars" => "BARS",
-  "bpm" => "BPM", "swing" => "SWING", "voicing" => "VOICING", "kicks" => "KICKS"
+  "bpm" => "BPM", "swing" => "SWING", "voicing" => "VOICING", "kicks" => "KICKS",
+  "performer" => "PERFORMER", "groove-dna" => "GROOVE_DNA", "composition" => "COMPOSITION",
+  "generations" => "GENERATIONS", "listen-passes" => "LISTEN_PASSES"
 }.freeze
 
 def apply_flags!(argv)
@@ -6974,6 +7244,19 @@ DISPATCH = {
   "live_now" => -> { live_now },
   "harmony_now" => -> { harmony_now },
   "regenerate" => -> { regenerate((ARGV.shift || 16).to_i) },
+  "regenerate-stem" => lambda do
+    stem = ARGV.shift or abort "usage: ruby dilla.rb regenerate-stem bass|hats|melody [bars]"
+    regenerate_stem(stem, (ARGV.shift || 16).to_i)
+  end,
+  "jam" => -> { composition_jam((ARGV.shift || 16).to_i) },
+  "evolve" => lambda do
+    n = (ARGV.shift || 16).to_i
+    gens = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : 5
+    composition_evolve(n, gens)
+  end,
+  "critique" => -> { composition_critique(ARGV.shift) },
+  "session" => -> { composition_session_cmd(ARGV.shift, *ARGV) },
+  "listen_loop" => -> { composition_listen_loop((ARGV.shift || 16).to_i) },
   "bass" => -> { bass((ARGV.shift || 55.0).to_f) },
   "grade" => -> { grade(ARGV.shift, ARGV.shift, ARGV.shift) },
   "fetch-assets" => -> { fetch_assets! },
