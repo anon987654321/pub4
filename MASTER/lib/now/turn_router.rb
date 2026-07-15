@@ -56,14 +56,23 @@ module Master
         goal = goal.to_s.strip
         return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
+        root, risk = assess_fold_risk(goal, container:)
+        memory = prepare_fold_memory(goal:, container:, risk:)
+        fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:))
+      rescue StandardError => e
+        Master::Result.err("core: #{e.message}", category: :infrastructure)
+      end
+
+      def assess_fold_risk(goal, container:)
         root = container[:root] || Dir.pwd
         assessment = FoldRisk.assess(goal, root:)
         risk = assessment[:risk]
         container[:bus]&.publish("fold:risk", risk:, intent: assessment[:intent])
+        [root, risk]
+      end
 
-        memory = prepare_fold_memory(goal:, container:, risk:)
-
-        fold = CoreBridge.run(
+      def run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:)
+        CoreBridge.run(
           goal,
           root:,
           bus: container[:bus],
@@ -73,9 +82,6 @@ module Master
           container:,
           risk:
         )
-        fold_to_result(fold)
-      rescue StandardError => e
-        Master::Result.err("core: #{e.message}", category: :infrastructure)
       end
 
       def prepare_fold_memory(goal:, container:, risk:)

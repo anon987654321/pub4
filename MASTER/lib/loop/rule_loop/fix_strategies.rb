@@ -4,6 +4,20 @@ module Master
   module Loop
     class RuleLoop
       module FixStrategies
+        ARCHITECTURE_PLAN_GUIDANCE = <<~TEXT.strip
+          Before answering, perform a depth check:
+          - enumerate the module hierarchy, data flow, side effects, implicit invariants, and edge cases
+          - list direct callers, callees, and related files
+          - state the design pattern being used or violated
+          - audit assumptions about input types, object state, concurrency, and failure modes
+          - run an inversion test: if this plan is wrong, what breaks, where, and when?
+
+          Produce a short architecture plan only:
+          1. Identify the smallest missing abstraction or boundary.
+          2. List the changes in order.
+          3. Name the risks and tests to preserve.
+        TEXT
+
         private
 
         def reflexion_verify(violation, proposed_src)
@@ -193,17 +207,7 @@ module Master
           Rule: #{violation[:rule]}
           Violation: line #{violation[:line]} — #{violation[:message]}
 
-          Before answering, perform a depth check:
-          - enumerate the module hierarchy, data flow, side effects, implicit invariants, and edge cases
-          - list direct callers, callees, and related files
-          - state the design pattern being used or violated
-          - audit assumptions about input types, object state, concurrency, and failure modes
-          - run an inversion test: if this plan is wrong, what breaks, where, and when?
-
-          Produce a short architecture plan only:
-          1. Identify the smallest missing abstraction or boundary.
-          2. List the changes in order.
-          3. Name the risks and tests to preserve.
+          #{ARCHITECTURE_PLAN_GUIDANCE}
 
           Source:
           ```ruby

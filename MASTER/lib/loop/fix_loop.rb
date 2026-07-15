@@ -83,30 +83,34 @@ module Master
       end
 
       def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:)
-        history          = []
-        seen_snapshots   = Set.new
-        recurring_violations = Hash.new(0)
-        consecutive_clean = 0
+        state = { history: [], seen_snapshots: Set.new, recurring_violations: Hash.new(0), consecutive_clean: 0 }
 
         max_passes.times do |i|
-          pass = i + 1
-          if Time.now >= deadline
-            @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
-            return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
-          end
-
-          result = @pass_runner.run_pass(
-            files: files, target: target, pass: pass, deadline: deadline,
-            history: history, seen_snapshots: seen_snapshots,
-            recurring_violations: recurring_violations,
-            consecutive_clean: consecutive_clean
-          )
-          consecutive_clean = result.consecutive_clean
-          return Result.ok(result.message) if result.status == :clean
-          break if result.status == :plateau
+          outcome = run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
+          break if outcome == :break
+          return outcome if outcome
         end
 
         Result.ok("plateau or max passes reached")
+      end
+
+      def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
+        pass = i + 1
+        if Time.now >= deadline
+          @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
+          return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
+        end
+
+        result = @pass_runner.run_pass(
+          files: files, target: target, pass: pass, deadline: deadline,
+          history: state[:history], seen_snapshots: state[:seen_snapshots],
+          recurring_violations: state[:recurring_violations],
+          consecutive_clean: state[:consecutive_clean]
+        )
+        state[:consecutive_clean] = result.consecutive_clean
+        return Result.ok(result.message) if result.status == :clean
+
+        result.status == :plateau ? :break : nil
       end
 
       def run_forever(target = @root, max_cycles: max_cycles_default, startup_delay: startup_delay_default,

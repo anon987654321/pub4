@@ -95,20 +95,12 @@ module Master
 
       def run_input(input)
         return empty_input(:run_input) if input.strip.empty?
-        if (host_err = host_budget_block(input))
-          return display_result(result: host_err, accumulated: "", streamed: false)
-        end
-        budget_err = budget_block_if_exceeded
-        return display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
+        blocked = check_budget_blocks(input)
+        return blocked if blocked
 
         @user_active = true
         @last_input = input
-        paste = paste_like_input?(input)
-        state = { streamed: false, thinking_shown: !paste }
-        accumulated = +""
-        on_chunk = build_stream_handler(accumulated) do |text|
-          handle_stream_text(text, state)
-        end
+        paste, state, accumulated = init_turn_state(input)
 
         print_thinking_indicator unless paste
         result = dispatch_turn(input, accumulated, state)
@@ -120,12 +112,39 @@ module Master
         @user_active = false
       end
 
+      def init_turn_state(input)
+        paste = paste_like_input?(input)
+        state = { streamed: false, thinking_shown: !paste }
+        accumulated = +""
+        build_stream_handler(accumulated) { |text| handle_stream_text(text, state) }
+        [paste, state, accumulated]
+      end
+
+      def check_budget_blocks(input)
+        if (host_err = host_budget_block(input))
+          return display_result(result: host_err, accumulated: "", streamed: false)
+        end
+        budget_err = budget_block_if_exceeded
+        return display_result(result: budget_err, accumulated: "", streamed: false) if budget_err
+
+        nil
+      end
+
       def dispatch_turn(input, accumulated, state)
-        on_turn = lambda do |line|
+        on_turn = build_on_turn_handler(accumulated, state)
+        @pipeline_thread = spawn_pipeline_thread(input, on_turn)
+        fetch_pipeline_result
+      end
+
+      def build_on_turn_handler(accumulated, state)
+        lambda do |line|
           accumulated << line << "\n"
           handle_stream_text(line + "\n", state) if $stdout.isatty
         end
-        @pipeline_thread = Thread.new do
+      end
+
+      def spawn_pipeline_thread(input, on_turn)
+        Thread.new do
           Thread.current.report_on_exception = false
           TurnRouter.call(
             message: input,
@@ -134,13 +153,14 @@ module Master
             on_turn:
           )
         end
-        begin
-          @pipeline_thread.value
-        rescue NoMemoryError
-          Result.err(host_oom_message, category: :infrastructure)
-        rescue StandardError => _e
-          Result.err("aborted", category: :abort)
-        end
+      end
+
+      def fetch_pipeline_result
+        @pipeline_thread.value
+      rescue NoMemoryError
+        Result.err(host_oom_message, category: :infrastructure)
+      rescue StandardError => _e
+        Result.err("aborted", category: :abort)
       end
 
       def empty_input(source)

@@ -162,26 +162,30 @@ module Master
       end
 
       def build_prompt_for(violation:, src:, path:, style: :file)
-        lang     = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
-        fix_hint = violation[:fix].to_s.strip
-        fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
-        action = prompt_action(style)
+        ctx = prompt_context_for(violation:, path:, style:)
         <<~PROMPT
         #{preamble}
 
-        File: #{File.basename(path)} (#{lang})
+        File: #{File.basename(path)} (#{ctx[:lang]})
         Rule violated: #{violation[:rule]}
         Line #{violation[:line]}: #{violation[:message]}
-        #{fix_line}
+        #{ctx[:fix_line]}
 
         #{SEMANTIC_PASS_CHECKLIST}
 
-        #{action}
+        #{ctx[:action]}
 
-        ```#{lang}
+        ```#{ctx[:lang]}
         #{src}
         ```
       PROMPT
+      end
+
+      def prompt_context_for(violation:, path:, style:)
+        lang = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+        fix_hint = violation[:fix].to_s.strip
+        fix_line = fix_hint.empty? ? "" : "How to fix: #{fix_hint}"
+        { lang:, fix_line:, action: prompt_action(style) }
       end
 
       def prompt_action(style)
