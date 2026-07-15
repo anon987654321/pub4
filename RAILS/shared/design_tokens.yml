@@ -39,11 +39,11 @@ luxury:
 
 face_root:
   anchors:
-    c_text: "oklch(86% 0.02 80)"
-    x_text: "#e7e9ea"
-    c_accent: "oklch(86% 0.08 88)"
-    c_danger: "oklch(62% 0.18 28)"
-    c_code: "oklch(74% 0.11 255)"
+    c_text: "oklch(86% 0.02 300)"
+    x_text: "#d8d6e0"
+    c_accent: "oklch(78% 0.10 300)"
+    c_danger: "oklch(60% 0.14 35)"
+    c_code: "oklch(74% 0.11 275)"
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
   font_label: '"JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace'
   face_bg: "black"
@@ -58,11 +58,11 @@ face_root:
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
     hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
   layout:
-    radius-xs: "4px"
-    radius-sm: "8px"
-    radius-md: "12px"
-    radius-lg: "16px"
-    radius-pill: "9999px"
+    radius-xs: "0"
+    radius-sm: "0"
+    radius-md: "0"
+    radius-lg: "0"
+    radius-pill: "0"
     face-bar-height: "36px"
     # Additive-blending budget: ~17k points; raising size/glow/decay together
     # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the
@@ -103,25 +103,27 @@ openbsd_wscons:
   x_radius_pill: "0"
   x_radius_card: "0"
 
-# Legacy X/Twitter chrome — used only by pub4_stack social apps (_x_base.scss), not MASTER face.
+# Dark flat SGI-IRIX/8-bit chrome — used by pub4_stack social apps (_x_base.scss), not MASTER face.
+# Flat: no bevels, no box-shadow. Square corners (radii below are 0). Cool
+# graphite/indigo palette in place of x.com's black/blue.
 social:
-  x_bg: "#000000"
-  x_surface: "#000000"
-  x_surface_elevated: "#16181c"
-  x_search_bg: "#202327"
-  x_text: "#e7e9ea"
-  x_text_secondary: "#71767b"
-  x_border: "#2f3336"
-  x_hover: "rgba(231, 233, 234, 0.1)"
-  x_hover_subtle: "rgba(231, 233, 234, 0.03)"
-  x_accent: "#1d9bf0"
-  x_accent_hover: "#1a8cd8"
-  x_danger: "#f4212e"
+  x_bg: "#17161c"
+  x_surface: "#17161c"
+  x_surface_elevated: "#211f28"
+  x_search_bg: "#232030"
+  x_text: "#d8d6e0"
+  x_text_secondary: "#8a879c"
+  x_border: "#46435a"
+  x_hover: "rgba(216, 214, 224, 0.1)"
+  x_hover_subtle: "rgba(216, 214, 224, 0.03)"
+  x_accent: "#7c6fd6"
+  x_accent_hover: "#9686e8"
+  x_danger: "#d1594a"
   x_font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   x_font_size: "16px"
   x_line_height: "20px"
-  x_radius_pill: "9999px"
-  x_radius_card: "16px"
+  x_radius_pill: "0"
+  x_radius_card: "0"
   x_sidebar: "275px"
   x_feed_max: "600px"
   x_widgets: "350px"

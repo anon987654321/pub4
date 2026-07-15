@@ -106,7 +106,7 @@
   align-items: center;
   gap: 4px;
   padding: 8px 10px;
-  border-radius: 9999px;
+  border-radius: 0;
   transition: color var(--transition-fast), background var(--transition-fast);
   cursor: pointer;
   min-height: 44px;

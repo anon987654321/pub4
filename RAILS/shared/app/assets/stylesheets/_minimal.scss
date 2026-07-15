@@ -457,7 +457,7 @@ footer {
 .x-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 9999px;
+  border-radius: 0;
   background: var(--surface2);
   flex-shrink: 0;
   overflow: hidden;
@@ -545,7 +545,7 @@ footer {
   align-items: center;
   gap: 4px;
   padding: 8px 10px;
-  border-radius: 9999px;
+  border-radius: 0;
   transition: color var(--transition-fast), background var(--transition-fast);
   cursor: pointer;
   min-height: 36px; /* solid mobile tap target */
@@ -610,7 +610,7 @@ footer {
     width: 80px;
     height: 80px;
     aspect-ratio: auto;
-    border-radius: 9999px;
+    border-radius: 0;
     margin-bottom: 0;
   }
 }

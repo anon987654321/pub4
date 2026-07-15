@@ -136,3 +136,11 @@ section h2 {
   margin-bottom: var(--sp, 8px);
   font-family: ui-monospace, monospace;
 }
+
+// Pixel-art framing for avatars/thumbnails — hard edges, no smoothing.
+.pixel-img {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border-radius: 0;
+}

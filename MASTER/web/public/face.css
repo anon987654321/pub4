@@ -2,11 +2,11 @@
 
 /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
 :root {
-  --c-text: oklch(86% 0.02 80);
-  --x-text: #e7e9ea;
-  --c-accent: oklch(86% 0.08 88);
-  --c-danger: oklch(62% 0.18 28);
-  --c-code: oklch(74% 0.11 255);
+  --c-text: oklch(86% 0.02 300);
+  --x-text: #d8d6e0;
+  --c-accent: oklch(78% 0.10 300);
+  --c-danger: oklch(60% 0.14 35);
+  --c-code: oklch(74% 0.11 275);
   --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   color-scheme: dark;
@@ -28,11 +28,11 @@
   --border-soft: color-mix(in srgb, var(--face-fg) 14%, transparent);
   --border-strong: color-mix(in srgb, var(--face-fg) 24%, transparent);
   --hover-tint: color-mix(in srgb, var(--face-fg) 8%, transparent);
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 9999px;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 0;
   --face-bar-height: 36px;
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;

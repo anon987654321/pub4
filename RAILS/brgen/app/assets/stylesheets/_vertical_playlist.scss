@@ -14,7 +14,7 @@ body.vertical-playlist {
   --space-sm: clamp(0.5rem, 2vw, 1rem);
   --space-md: clamp(1rem, 3vw, 1.5rem);
   --space-lg: clamp(1.5rem, 4vw, 2rem);
-  --border-radius: 0.5rem;
+  --border-radius: 0;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--color-bg);
   color: var(--color-text);
@@ -150,7 +150,7 @@ body.vertical-playlist .app-shell {
   width: 24px;
   height: 24px;
   border: 2px solid rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
+  border-radius: 0;
   pointer-events: none;
   z-index: 1000;
   mix-blend-mode: difference;
@@ -395,7 +395,7 @@ body.vertical-playlist .radio-header .city-carousel {
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: 0;
   background: rgba(18, 18, 18, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
