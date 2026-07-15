@@ -6,7 +6,7 @@ module Master
   module Voice
     class Renderer
       module SystemInfo
-        IMPORT_YMLS = %w[soul rules style limits state patterns openbsd vocabulary].freeze
+        IMPORT_YMLS = %w[soul rules style limits state patterns openbsd].freeze
 
         private
 

@@ -261,7 +261,7 @@ module Master
       end
 
       def add_refusal_policy(sections)
-        refusal = @rules.data(:refusal_templates)
+        refusal = @rules.data(:patterns)["refusal_templates"]
         return unless refusal.is_a?(Hash)
 
         phrasing = refusal["refusal_phrasing"] || {}

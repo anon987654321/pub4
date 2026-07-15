@@ -8,7 +8,6 @@ module Master
       include Master::Ground::AtomicWrite
       POLL_INTERVAL = 60
       JOURNAL_KEEP = 50
-      DATA_PATH = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
       STATE_PATH = ".master/heartbeat_state.yml".freeze
 
       RESULT_TRUNCATE = 200
@@ -166,10 +165,10 @@ module Master
       end
 
       def load_jobs
-        path = File.join(@root, "data", "heartbeat.yml")
+        path = File.join(@root, "data", "patterns.yml")
         return default_jobs unless File.exist?(path)
 
-        result = Master.load_yaml(path)
+        result = (Master.load_yaml(path) || {})["heartbeat"]
         jobs = result.is_a?(Array) ? result : default_jobs
         jobs.select { |j| j["enabled"] != false }
       rescue StandardError => e

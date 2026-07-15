@@ -19,7 +19,7 @@ require "fileutils"
 module Master
   module Now
     class CLI
-      CONFIG = Master.load_yaml(Master.data_path("cli.yml")).freeze
+      CONFIG = (Master.load_yaml(Master.data_path("patterns.yml")) || {}).fetch("cli", {}).freeze
       IDLE_SLEEP_DEFAULT = CONFIG.fetch("idle_sleep_seconds", 60)
       REPLAY_TURNS = CONFIG.fetch("replay_turns", 5)
       DMESG_BUFFER_LINES = CONFIG.fetch("dmesg_buffer_lines", 80)

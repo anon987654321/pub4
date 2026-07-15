@@ -5,10 +5,8 @@ module Master
     # Detects version drift between YAML data and the readers that consume it.
     class SchemaCheck
       EXPECTED = {
-        "cli.yml" => 1,
         "council.yml" => 1,
         "design_rules.yml" => 1,
-        "evidence.yml" => 1,
         "llm_output_rules.yml" => 1,
         "limits.yml" => 1,
         "models.yml" => 1,

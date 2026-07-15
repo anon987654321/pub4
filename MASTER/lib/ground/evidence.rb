@@ -8,11 +8,12 @@ module Master
   module Ground
     # Enforces source-typed evidence requirements for governed actions.
     class Evidence
-      DEFAULT_REL = "data/evidence.yml"
+      DEFAULT_REL = "data/patterns.yml"
       EXIT_CODE_TYPES = %w[test_pass static_analysis type_check].freeze
 
       def self.load(root: Master::ROOT, event_bus: nil)
-        new(Master.load_yaml(File.join(root, DEFAULT_REL)), root:, event_bus:)
+        config = (Master.load_yaml(File.join(root, DEFAULT_REL)) || {})["evidence"] || {}
+        new(config, root:, event_bus:)
       end
 
       attr_reader :schema
