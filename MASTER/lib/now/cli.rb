@@ -43,6 +43,11 @@ module Master
         Reline::HISTORY.clear
         load_cli_history
         setup_completion
+        init_session_state!
+        set_visitor_mode_if_unauthenticated
+      end
+
+      def init_session_state!
         @running = false
         @interrupt_at = Time.now
         @last_ok = true
@@ -60,7 +65,6 @@ module Master
         @seen_error_categories = {}
         @dmesg_sub = nil
         @exit_code = 0
-        set_visitor_mode_if_unauthenticated
       end
 
       def run(initial_message = nil)
@@ -107,6 +111,16 @@ module Master
         end
 
         print_thinking_indicator unless paste
+        result = dispatch_turn(input, accumulated, state)
+        print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
+        display_result(result:, accumulated:, streamed: state[:streamed])
+      ensure
+        @pipeline_thread = nil
+        stop_thinking_indicator
+        @user_active = false
+      end
+
+      def dispatch_turn(input, accumulated, state)
         on_turn = lambda do |line|
           accumulated << line << "\n"
           handle_stream_text(line + "\n", state) if $stdout.isatty
@@ -120,19 +134,13 @@ module Master
             on_turn:
           )
         end
-        result = begin
+        begin
           @pipeline_thread.value
         rescue NoMemoryError
           Result.err(host_oom_message, category: :infrastructure)
         rescue StandardError => _e
           Result.err("aborted", category: :abort)
         end
-        print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
-        display_result(result:, accumulated:, streamed: state[:streamed])
-      ensure
-        @pipeline_thread = nil
-        stop_thinking_indicator
-        @user_active = false
       end
 
       def empty_input(source)

@@ -23,17 +23,22 @@ module Master
           puts @refs.renderer.render("swallow-report: no ledger at #{ledger_path}", mode: :dim)
           return
         end
-        lines = File.readlines(ledger_path, chomp: true).last(5)
-        last = begin
-          lines.last && JSON.parse(lines.last)
-        rescue JSON::ParserError, StandardError => e
-          Master::Ground::Swallow.log(e, context: "CLI.run_swallow_report")
-          nil
-        end
+        last = parse_last_ledger_entry(File.readlines(ledger_path, chomp: true).last(5))
         unless last
           puts @refs.renderer.render("swallow-report: ledger empty or unreadable", mode: :dim)
           return
         end
+        print_swallow_counts(last)
+      end
+
+      def parse_last_ledger_entry(lines)
+        lines.last && JSON.parse(lines.last)
+      rescue JSON::ParserError, StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.run_swallow_report")
+        nil
+      end
+
+      def print_swallow_counts(last)
         puts @refs.renderer.render("swallow-report: total=#{last["total"]} contexts=#{last["counts"]&.size}", mode: :dim)
         last["counts"].to_a.sort_by { |_, v| -v }.first(10).each do |ctx, n|
           puts @refs.renderer.render("  #{n.to_s.rjust(4)}x #{ctx}", mode: :warning)

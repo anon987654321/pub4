@@ -177,16 +177,18 @@ module Master
         end
         proposer.displayed(rows) if proposer.respond_to?(:displayed)
         puts @refs.renderer.render("propose0: top #{rows.size} suggestion(s)", mode: :dim)
-        rows.group_by { |r| r[:kind] }.each do |kind, group|
-          puts @refs.renderer.render("  #{kind}:", mode: :dim)
-          group.each_with_index do |r, i|
-            meta = format(
-              "because=%s; rank=%.2f*%.2f; est=%dt/$%.4f",
-              r[:reason], r[:confidence], r[:impact], r[:estimated_tokens], r[:estimated_cost]
-            )
-            line = format("    %d. %-22s [%s]", i + 1, r[:action], meta)
-            puts @refs.renderer.render(line, mode: :dim)
-          end
+        rows.group_by { |r| r[:kind] }.each { |kind, group| render_proposal_group(kind, group) }
+      end
+
+      def render_proposal_group(kind, group)
+        puts @refs.renderer.render("  #{kind}:", mode: :dim)
+        group.each_with_index do |r, i|
+          meta = format(
+            "because=%s; rank=%.2f*%.2f; est=%dt/$%.4f",
+            r[:reason], r[:confidence], r[:impact], r[:estimated_tokens], r[:estimated_cost]
+          )
+          line = format("    %d. %-22s [%s]", i + 1, r[:action], meta)
+          puts @refs.renderer.render(line, mode: :dim)
         end
       end
 
