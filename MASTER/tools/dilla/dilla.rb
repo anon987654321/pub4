@@ -45,7 +45,7 @@ INLINE_SONIC_PROFILES = {
       "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
     },
     "synth" => {
-      "bpm" => 86, "swing" => 0.16, "pad_lowpass_hz" => 1700, "master_lowpass_hz" => 2200,
+      "bpm" => 86, "swing" => 0.16, "pad_lowpass_hz" => 2400, "master_lowpass_hz" => 2600,
       "bass_sustain_bar" => 0.94, "bass_shelf_db" => 9, "vinyl_noise" => 0.14,
       "texture" => "donuts_lowpass_warmth"
     }
@@ -879,9 +879,11 @@ rescue StandardError
 end
 
 def drum_bus_mapping
+  # Bass/sub stay on the harmonic bus only — routing them here too doubled
+  # the low end on every kick and buried the pad chords in the mix.
   {
     kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat,
-    bass: :bass_43, sub_osc: :bass_43, poly: :ghost, shaker: :shaker, cowbell: :cowbell,
+    poly: :ghost, shaker: :shaker, cowbell: :cowbell,
     poly5: :rim, clap: :clap, rim: :rim, glitch: :ind_stab, tabla: :tabla,
     tambourine: :tambourine, woodblock: :woodblock, agogo: :agogo
   }
@@ -901,16 +903,16 @@ end
 
 def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade_dur, beat_p, _n_bars)
   lp = sonic_pad_lowpass(sonic)
-  shelf = sonic_bass_shelf(sonic)
   build_start = (duration * 0.82).round(2)
   outro_fade = (beat_p * 4.0 * 4).round(2)
-  "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_HARM_WEIGHT'] || '1.0'}," \
-    "equalizer=f=95:t=h:w=140:g=-4.5,equalizer=f=1800:t=h:w=1600:g=1.4," \
-    "equalizer=f=#{lp}:t=o:w=1.2:g=-1.5," \
-    "equalizer=f=80:t=o:w=1:g=#{shelf}," \
+  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || "1.55"
+  "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
+    "highpass=f=110,equalizer=f=95:t=h:w=120:g=-3.0," \
+    "equalizer=f=520:t=h:w=700:g=3.2,equalizer=f=1400:t=h:w=1200:g=2.0," \
+    "equalizer=f=#{lp}:t=o:w=1.0:g=0.5," \
     "afade=t=in:st=#{harm_fade_start}:d=#{harm_fade_dur}," \
     "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}," \
-    "equalizer=f=800:t=h:w=600:g=-4:enable='between(t,#{build_start},#{duration})'[harm]"
+    "equalizer=f=800:t=h:w=600:g=-3:enable='between(t,#{build_start},#{duration})'[harm]"
 end
 
 def flylo_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
@@ -939,9 +941,10 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
     else
       "acrusher=bits=#{base[:bits]}:samples=#{base[:samples]}:mix=#{base[:mix]},"
     end
-  "[0:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_DRUM_WEIGHT'] || '0.55'}," \
-    "equalizer=f=480:t=h:w=420:g=-2.8,#{crush}" \
-    "equalizer=f=58:t=o:w=0.8:g=#{cfg[:style_family] == :dilla ? 2.5 : 1.2}#{haas}[drums]"
+  kick_boost = cfg[:style_family] == :dilla ? 0.4 : 0.9
+  "[0:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_DRUM_WEIGHT'] || '0.34'}," \
+    "equalizer=f=480:t=h:w=420:g=-4.5,#{crush}" \
+    "equalizer=f=58:t=o:w=0.8:g=#{kick_boost},highpass=f=28#{haas}[drums]"
 end
 
 def build_up_filter_enhanced(input_tag, duration, out_tag: "built")
@@ -3490,9 +3493,12 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
       t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
            dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
-      events[:kick] << [t.round(6), dilla_velocity(0.95, bar, step) * sec_gain]
-      events[:sub_osc] ||= []
-      events[:sub_osc] << [t.round(6), dilla_velocity(0.38, bar, step, spread: 0.05) * sec_gain, 40.0]
+      kick_vel = dilla_velocity(step.zero? ? 0.68 : 0.58, bar, step, spread: 0.05) * sec_gain
+      events[:kick] << [t.round(6), kick_vel]
+      if step.zero?
+        events[:sub_osc] ||= []
+        events[:sub_osc] << [t.round(6), dilla_velocity(0.10, bar, step, spread: 0.04) * sec_gain, 40.0]
+      end
       bass_skip = drums_only ||
                   (feel == :syncopated_slash_ninth && bar.zero? && step < 7) ||
                   (feel != :syncopated_slash_ninth && bar.zero?) ||
@@ -3746,7 +3752,7 @@ def generate_drum_kit!
   recipes = [
     ["kick.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.9*exp(-t*7.5)*sin(2*PI*(48+210*exp(-t*28))*t)+0.55*exp(-t*95)*sin(2*PI*3200*t)*between(t,0,0.006)':d=0.55:s=#{sr}"],
-     "lowpass=f=180,acrusher=bits=12:samples=2:mix=0.42,equalizer=f=55:t=o:w=0.8:g=7,acompressor=threshold=-18dB:ratio=4:attack=2:release=40"],
+     "lowpass=f=180,acrusher=bits=12:samples=2:mix=0.42,equalizer=f=55:t=o:w=0.8:g=4,acompressor=threshold=-20dB:ratio=3:attack=3:release=50"],
     ["snare.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.32:color=white:amplitude=0.95", "-f", "lavfi", "-i", "sine=f=195:d=0.32"],
      "[0:a]asplit=2[n][n2];[n]highpass=f=1200,lowpass=f=7000,aeval=exprs='val(0)*exp(-t*32)'[crack];" \
@@ -3957,7 +3963,7 @@ def layered_kick_sample(base_sample, seed: 7)
   # what made it sound bad, not the layering itself.
   drive = 1.1
   ceiling = Math.tanh(drive)
-  out.map { |s| (Math.tanh(s * gain * drive) / ceiling) * 0.44 }
+  out.map { |s| (Math.tanh(s * gain * drive) / ceiling) * 0.30 }
 end
 
 def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, chorus: false,
@@ -4534,18 +4540,18 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # downstream.
   if lead_rendered
     sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", lead_path,
-        "-filter_complex", "[0:a]volume=0.97[padsl];" \
-                           "[1:a]volume=0.85[tonesl];" \
-                           "[2:a]volume=0.9[leadl];" \
-                           "[padsl][tonesl][leadl]amix=inputs=3:weights=1.15 0.85 0.3:duration=longest:normalize=0," \
+        "-filter_complex", "[0:a]volume=1.18[padsl];" \
+                           "[1:a]volume=0.72[tonesl];" \
+                           "[2:a]volume=0.75[leadl];" \
+                           "[padsl][tonesl][leadl]amix=inputs=3:weights=1.45 0.55 0.22:duration=longest:normalize=0," \
                            "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
         "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
     FileUtils.rm_f(lead_path)
   else
     sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path,
-        "-filter_complex", "[0:a]volume=0.97[padsl];" \
-                           "[1:a]volume=0.85[tonesl];" \
-                           "[padsl][tonesl]amix=inputs=2:weights=1.15 0.85:duration=longest:normalize=0," \
+        "-filter_complex", "[0:a]volume=1.18[padsl];" \
+                           "[1:a]volume=0.72[tonesl];" \
+                           "[padsl][tonesl]amix=inputs=2:weights=1.45 0.55:duration=longest:normalize=0," \
                            "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
         "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
   end
@@ -4859,10 +4865,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # not another gain adjustment.
   filt = [build_drum_bus_filter(cfg, cfg[:sonic], duration:)]
   mix_labels = ["[drums]"]
-  mix_weights = ["1.0"]
+  mix_weights = ["0.72"]
   intro_bars = cfg.fetch(:intro_bars, 4)
-  harm_fade_start = (beat_p * 4.0 * intro_bars).round(2)
-  harm_fade_dur = (beat_p * 4.0 * 2).round(2)
+  harm_fade_start = (beat_p * 4.0 * [intro_bars, 2].min).round(2)
+  harm_fade_dur = (beat_p * 4.0 * 1.25).round(2)
   unless use_stem_harmony
     filt << build_harm_bus_filter(1, duration, cfg, cfg[:sonic], harm_fade_start, harm_fade_dur, beat_p, n_bars)
     if cfg[:sidechain]
@@ -4871,7 +4877,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       mix_weights = ["1.0"]
     else
       mix_labels << "[harm]"
-      mix_weights << "1.6"
+      mix_weights << "2.35"
     end
   end
 
