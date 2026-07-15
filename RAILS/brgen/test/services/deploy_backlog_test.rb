@@ -801,6 +801,13 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_brgen('app/views/layouts/application.html.erb'), 'unless vertical_surface?'
   end
 
+  def test_brgen_views_have_valid_page_header_open_tags
+    offenders = Dir[File.join(ROOT, 'brgen/app/views/**/*.html.erb')].select do |path|
+      File.read(path).match?(/^(div|header) class="page-header"/m)
+    end
+    assert_empty offenders, "broken page-header open tags (missing '<'): #{offenders.map { |p| p.sub(%r{.*brgen/}, '') }.join(', ')}"
+  end
+
   private
 
   def read_brgen(relative)

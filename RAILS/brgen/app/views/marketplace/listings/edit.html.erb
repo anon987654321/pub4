@@ -1,6 +1,6 @@
 <% content_for :title, "Edit listing" %>
 
-div class="page-header" role="banner"><h1>Edit listing</h1></div>
+<div class="page-header" role="banner"><h1>Edit listing</h1></div>
 
 <div class="form-wrap">
   <%= form_with model: @listing, url: marketplace_listing_path(@listing), method: :patch do |f| %>
