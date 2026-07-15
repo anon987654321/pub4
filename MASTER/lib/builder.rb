@@ -127,7 +127,7 @@ module Master
     def warn_config_validation(config)
       return unless config.respond_to?(:validate) && !config.valid?
 
-      (config[:bus] || $stderr).puts "config validation warnings: #{config.validate.join('; ')}"
+      config.fetch(:bus) { $stderr }.puts "config validation warnings: #{config.validate.join('; ')}"
     end
 
     def fast_agent_stub

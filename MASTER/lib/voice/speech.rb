@@ -310,8 +310,8 @@ module Master
       end
 
       def resolve_streaming_style(text_str, opts)
-        voice = resolve_voice(opts[:voice] || default_voice)
-        style = opts[:style] || default_style
+        voice = resolve_voice(opts.fetch(:voice) { default_voice })
+        style = opts.fetch(:style) { default_style }
         style = infer_style(text_str, fallback: default_style) if style == :auto && !opts[:style_locked]
         style = default_style unless STYLES.key?(style)
         style_config = style_config_for(voice, style)

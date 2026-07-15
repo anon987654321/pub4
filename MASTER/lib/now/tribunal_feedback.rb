@@ -61,7 +61,7 @@ module Master
       end
 
       def confidence
-        values = jurors.filter_map { |item| item[:confidence] || 0.5 }
+        values = jurors.filter_map { |item| item.fetch(:confidence, 0.5) }
         (values.sum / [jurors.size, 1].max).round(2)
       rescue StandardError
         0.5

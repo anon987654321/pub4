@@ -15,7 +15,7 @@ module Master
         arousal = emotion.dig(:scores, :arousal).to_f
 
         {
-          mode: emotion[:mode] || :melodic,
+          mode: emotion.fetch(:mode, :melodic),
           base_pitch: arousal > 0.6 ? "+8Hz" : "+0Hz",
           phrases: build_phrase_plan(phrases, arousal),
         }

@@ -77,8 +77,23 @@ module Master
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
           description: "prefer Hash#fetch over [] with ||" do |src, path:|
           next [] if path.to_s.include?("/judge/scan/rules/")
-          scan_lines(src, /\w+\[:\w+\]\s*\|\|/,
-            message: "hash symbol lookup with fallback — prefer hash.fetch(:key, default)")
+          src.each_line.with_index(1).filter_map do |line, n|
+            stripped = line.strip
+            next unless (m = stripped.match(/(@{0,2}\w+)\[:\w+\]\s*\|\|(?!=)/))
+            var = Regexp.escape(m[1])
+            # A genuine fetch-with-default candidate is `hash[:key] || <default>`
+            # where <default> is a plain value, not another lookup. Excluded here,
+            # none of which are fetch candidates: memoization (`||=`, handled by
+            # the negative lookahead above); the string-or-symbol dual-key
+            # fallback in either key order (`h[:k] || h["k"]` or
+            # `h["k"] || h[:k]`); and a comparison chain that coincidentally
+            # contains a bracket access (`a[:x] >= b[:x] ||`).
+            next if stripped.match?(/#{var}\[:\w+\]\s*\|\|\s*#{var}\[/)
+            next if stripped.match?(/#{var}\[["']\w+["']\]\s*\|\|\s*#{var}\[:\w+\]/)
+            next if stripped.match?(/(?:>=|<=|==|!=)\s*#{var}\[:\w+\]\s*\|\|/)
+
+            finding(line: n, message: "hash symbol lookup with fallback — prefer hash.fetch(:key, default)")
+          end
         end
 
         RuleDSL.rule :TRANSFORM_KEYS,

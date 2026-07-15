@@ -55,7 +55,7 @@ module Master
         key = persona_id.to_s
         base = PERSONAS[key] || PERSONAS["Pragmatist"]
         expression = Expression.for_council_persona(key)
-        viseme_plan = expression[:viseme_plan] || []
+        viseme_plan = expression.fetch(:viseme_plan, [])
 
         {
           persona: key,

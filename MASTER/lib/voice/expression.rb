@@ -132,9 +132,9 @@ module Master
         base = for_tts_style(style)
         spike = text.to_s.length > 120 ? 0.30 : 0.22
         {
-          arousal: [(base[:arousal] || 0.7) + spike, 1.0].min,
+          arousal: [base.fetch(:arousal, 0.7) + spike, 1.0].min,
           eye_attention: 0.38,
-          breath_boost: (base[:breath_boost] || 0.0) + 0.18,
+          breath_boost: base.fetch(:breath_boost, 0.0) + 0.18,
           style: style.to_s,
         }
       end
@@ -217,11 +217,11 @@ end
         under = for_tts_style(secondary_style)
         {
           **base,
-          arousal: [(base[:arousal] || 0.5) * 0.82 + (under[:arousal] || 0.3) * 0.18, 1.0].min,
-          pressure: [(base[:pressure] || 0.4) * 0.75 + (under[:pressure] || 0.2) * 0.25, 1.0].min,
-          breath_boost: (base[:breath_boost] || 0.0) + (under[:breath_boost] || 0.0) * 0.45,
+          arousal: [base.fetch(:arousal, 0.5) * 0.82 + under.fetch(:arousal, 0.3) * 0.18, 1.0].min,
+          pressure: [base.fetch(:pressure, 0.4) * 0.75 + under.fetch(:pressure, 0.2) * 0.25, 1.0].min,
+          breath_boost: base.fetch(:breath_boost, 0.0) + under.fetch(:breath_boost, 0.0) * 0.45,
           blendshapes: blendshapes_for(primary_style).merge(blendshapes_for(secondary_style)) { |_k, a, b| ((a + b) * 0.5).clamp(0.0, 1.0) },
-          decay_rate: [base[:decay_rate] || 0.5, under[:decay_rate] || 0.5].max,
+          decay_rate: [base.fetch(:decay_rate, 0.5), under.fetch(:decay_rate, 0.5)].max,
           chained: [primary_style, secondary_style],
         }
       end

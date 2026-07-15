@@ -11,7 +11,7 @@ module Master
         return t if t.strip.empty?
 
         primary = emotion[:primary]
-        scores = emotion[:scores] || {}
+        scores = emotion.fetch(:scores, {})
         out = t.dup
 
         case primary

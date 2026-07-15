@@ -24,7 +24,7 @@ module Master
         slot = Ops::LoopSlot.status
         autofix = ENV["MASTER_AUTOFIX"] == "1" ? "autofix" : "no-autofix"
         owner = slot[:owner].to_s.empty? ? "none" : slot[:owner]
-        "#{autofix} loop=#{slot[:selected] || "none"} owner=#{owner}"
+        "#{autofix} loop=#{slot.fetch(:selected, "none")} owner=#{owner}"
       rescue StandardError
         autofix = ENV["MASTER_AUTOFIX"] == "1" ? "autofix" : "no-autofix"
         "#{autofix} loop=none"

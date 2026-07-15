@@ -68,7 +68,7 @@ module Master
         @root        = container.fetch(:root, Dir.pwd)
         @violations  = 0
         @bus         = container[:bus]
-        @git         = container[:git] || Master::Reach::GitOperations.new(@root)
+        @git         = container.fetch(:git) { Master::Reach::GitOperations.new(@root) }
         @learnings   = container[:learnings]
       end
 

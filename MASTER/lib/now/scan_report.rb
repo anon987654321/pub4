@@ -49,7 +49,7 @@ module Master
       end
 
       def clustered_violations
-        @clustered_violations ||= filtered_violations.group_by { |violation| violation[:dedupe_key] || default_dedupe_key(violation) }.map do |_, cluster|
+        @clustered_violations ||= filtered_violations.group_by { |violation| violation.fetch(:dedupe_key) { default_dedupe_key(violation) } }.map do |_, cluster|
           confidences = cluster.map { |v| v[:confidence].to_f }.reject(&:zero?)
           cluster.first.merge(
             count: cluster.size,
@@ -57,8 +57,8 @@ module Master
             lines: cluster.map { |v| v[:line] }.compact.uniq.sort,
             confidence: confidences.empty? ? cluster.first[:confidence] : confidences.sum / confidences.size.to_f,
             impact_radius: impact_radius(cluster),
-            why: cluster.first[:why] || default_why(cluster.first),
-            genealogy: cluster.first[:genealogy] || default_genealogy(cluster.first)
+            why: cluster.first.fetch(:why) { default_why(cluster.first) },
+            genealogy: cluster.first.fetch(:genealogy) { default_genealogy(cluster.first) }
           )
         end
       end

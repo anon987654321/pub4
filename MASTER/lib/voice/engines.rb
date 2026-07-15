@@ -183,7 +183,7 @@ module Master
         ref = cfg["reference_clip"].to_s
         ref = File.expand_path(ref) unless ref.empty?
         device = cfg["chatterbox_device"] || "mps"
-        exag = emotion[:exaggeration] || cfg["exaggeration"] || 0.55
+        exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.55 }
 
         py = chatterbox_py_script(enriched, device, ref, wav)
         _out, _err, status = Master::Reach::Exec.capture3("python3", "-c", py)
@@ -236,9 +236,9 @@ module Master
         parts = []
         plan.each_with_index do |phrase, i|
           part = File.join(tmp_dir, "part_#{Process.pid}_#{i}.mp3")
-          ok = copy_if_synthesized(phrase[:text], part, voice, phrase[:rate] || rate, phrase[:pitch] || pitch)
+          ok = copy_if_synthesized(phrase[:text], part, voice, phrase.fetch(:rate, rate), phrase.fetch(:pitch, pitch))
           parts << part if ok
-          sleep((phrase[:pause_ms] || 0) / 1000.0) if i.positive? && ok
+          sleep(phrase.fetch(:pause_ms, 0) / 1000.0) if i.positive? && ok
         end
         parts
       end

@@ -52,7 +52,7 @@ module Master
           propose_tree: ai[:propose_tree],
           review_crew: Judge::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root: root,
                                              code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
-          git: ai[:git] || Reach::GitOperations.new(File.expand_path("..", root)),
+          git: ai.fetch(:git) { Reach::GitOperations.new(File.expand_path("..", root)) },
         }
       end
 

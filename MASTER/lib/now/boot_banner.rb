@@ -21,8 +21,8 @@ module Master
         lines = [
           "master: boot safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} web=#{ENV.fetch("MASTER_WEB", "0")}",
           "master: background=#{ENV.fetch("MASTER_BACKGROUND", "0")} watch=#{ENV.fetch("MASTER_WATCH", "0")}",
-          "master: loop=#{status[:selected] || "none"} owner=#{status[:owner] || "none"}",
-          "master: budget valid=#{budget[:valid]} slot=#{budget[:slot] || "unknown"}",
+          "master: loop=#{status.fetch(:selected, "none")} owner=#{status.fetch(:owner, "none")}",
+          "master: budget valid=#{budget[:valid]} slot=#{budget.fetch(:slot, "unknown")}",
           "master: aesthetic=#{aesthetic}",
           "master: motd #{motd_spotlight}",
           "master: ready dmesg=preserved",

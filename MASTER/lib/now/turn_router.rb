@@ -16,7 +16,7 @@ module Master
         if text.start_with?("/")
           dispatch_slash(text, container:, felt_sense:, on_turn:)
         elsif Master::Reach::MediaIntent.handles?(text)
-          Master::Reach::MediaIntent.dispatch(text, root: container[:root] || Dir.pwd)
+          Master::Reach::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd))
         elsif casual?(text)
           casual_reply(text, container:, felt_sense:, on_chunk:)
         else
@@ -64,7 +64,7 @@ module Master
       end
 
       def assess_fold_risk(goal, container:)
-        root = container[:root] || Dir.pwd
+        root = container.fetch(:root, Dir.pwd)
         assessment = FoldRisk.assess(goal, root:)
         risk = assessment[:risk]
         container[:bus]&.publish("fold:risk", risk:, intent: assessment[:intent])

@@ -36,7 +36,7 @@ module Master
       end
 
       def channel(body)
-        (body[:channel] || "api").to_s.strip.downcase
+        body.fetch(:channel, "api").to_s.strip.downcase
       end
 
       def trust(body)

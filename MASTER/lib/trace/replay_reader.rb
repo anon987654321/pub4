@@ -68,7 +68,7 @@ module Master
         return @recorder.pretty_last if turn.nil? && @recorder
         return "replay: no turn trace recorded" unless turn
 
-        lines = ["replay turn #{turn[:id]}", "  channel=#{turn[:channel]}  message=#{(turn[:message] || "")[0, 80]}"]
+        lines = ["replay turn #{turn[:id]}", "  channel=#{turn[:channel]}  message=#{turn.fetch(:message, "")[0, 80]}"]
         Array(turn[:events]).each do |ev|
           ms = ev[:ts_ms] || ev["ts_ms"]
           name = ev[:event] || ev["event"]

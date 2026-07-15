@@ -95,7 +95,7 @@ module Master
           session: Process.pid,
           file: payload[:path].to_s,
           count: payload[:count].to_i,
-          top_rules: payload[:top_rules] || {}
+          top_rules: payload.fetch(:top_rules, {})
         }
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, "#{JSON.generate(record)}\n", mode: "a")
