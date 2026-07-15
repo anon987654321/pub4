@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#000000" data-light-color="#ffffff" data-dark-color="#000000">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffffff" data-light-color="#ffffff" data-dark-color="#000000">
   <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
