@@ -5,6 +5,9 @@ require "fileutils"
 require "open3"
 require "set"
 require "time"
+require_relative "pass_runner/fast_stage"
+require_relative "pass_runner/llm_stage"
+require_relative "pass_runner/stagnation_detection"
 
 module Master
   module Loop
@@ -13,6 +16,10 @@ module Master
         PASS_BUDGET_SECONDS = 8 * 60
 
         PassResult = Struct.new(:status, :message, :consecutive_clean, keyword_init: true)
+
+        include FastStage
+        include LlmStage
+        include StagnationDetection
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
@@ -118,120 +125,6 @@ module Master
           false
         end
 
-        def fast_pass(files)
-          fixed = 0
-          rb = files.select { |f| f.end_with?(".rb") }
-          if rb.any?
-            _, status = Master::Reach::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
-            fixed += status.success? ? rb.size : rubocop_each_file(rb)
-          end
-          rb.each do |path|
-            next unless File.exist?(path)
-            fixed += analyze_ruby_file(path)
-          rescue StandardError => e
-            @bus&.publish("fix_loop:fast_error", file: path, error: e.message)
-          end
-          fixed
-        end
-
-        def rubocop_each_file(files)
-          files.count do |path|
-            _, status = Master::Reach::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: @root)
-            @bus&.publish("fix_loop:rubocop_file_failed", file: path) unless status.success?
-            status.success?
-          end
-        end
-
-        def analyze_ruby_file(path)
-          src = File.read(path, encoding: "UTF-8")
-          rel = path.delete_prefix("#{@root}/")
-
-          fixed, src = apply_ast_fixes(path, src, rel)
-          report_type_errors(path, src, rel)
-          report_datalog_findings(path, src, rel)
-          fixed
-        end
-
-        def apply_ast_fixes(path, src, rel)
-          fixed = 0
-          ast_result = Judge::Scan::AstFixer.fix(path, src)
-          if ast_result&.changed
-            src = File.read(path, encoding: "UTF-8")
-            fixed += ast_result.transforms.size
-            @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
-          end
-          [fixed, src]
-        end
-
-        def report_type_errors(path, src, rel)
-          Ground::TypeChecker.check(path, src).each do |te|
-            @bus&.publish("fix_loop:type_error", file: rel, rule: te.rule, message: te.message)
-          end
-        end
-
-        def report_datalog_findings(path, src, rel)
-          dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
-          dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
-          dl.evaluate.each do |finding|
-            @bus&.publish("fix_loop:datalog_finding", file: rel, rule: finding.rule_id, message: finding.message)
-          end
-        end
-
-        def llm_pass(violations:, files:, pass:, deadline: nil)
-          rule_violations = violations.group_by { |v| v[:rule].to_s }
-          runnable = @rule_order.ordered(violation_counts: @violation_counts)
-                                .select { |rule| rule_violations.key?(rule.id.to_s) }
-          fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
-          publish_llm_pass_status(pass:, deadline:)
-          fixed
-        end
-
-        def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
-          fixed = 0
-          @rule_order.dependency_levels(runnable).each do |group|
-            break if deadline && Time.now >= deadline
-            break if circuit_open?
-            results = run_rule_group(group:, files:, pass:, rule_violations:)
-            results.each do |rule, result|
-              @violation_counts[rule.id] += result[:fixed]
-              fixed += result[:fixed]
-              @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
-            end
-          end
-          fixed
-        end
-
-        def publish_llm_pass_status(pass:, deadline:)
-          if deadline && Time.now >= deadline
-            @bus&.publish("fix_loop:pass_timeout", pass:)
-          elsif circuit_open?
-            @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
-          end
-        end
-
-        def run_rule_group(group:, files:, pass:, rule_violations:)
-          return group.map { |rule| [rule, run_rule_once(rule, files, pass)] } unless disjoint_rule_files?(group, rule_violations)
-
-          group.map { |rule| Thread.new { [rule, run_rule_once(rule, files, pass)] } }.map(&:value)
-        end
-
-        def run_rule_once(rule, files, pass)
-          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-          rl.injected_preamble = @preamble
-          @bus&.publish("fix_loop:tier2_quality_route", pass:, rule: rule.id) if @rule_order.tier2?(rule.id)
-          rl.run_once(files)
-        end
-
-        def disjoint_rule_files?(rules, rule_violations)
-          seen = Set.new
-          rules.all? do |rule|
-            files = Array(rule_violations[rule.id.to_s]).map { |v| v[:file].to_s }.uniq
-            overlap = files.any? { |f| seen.include?(f) }
-            files.each { |f| seen << f }
-            !overlap
-          end
-        end
-
         def emit_topology(found, target)
           by_mod = found.group_by { |v| v[:file].to_s.split("/").first(3).join("/") }.transform_values(&:size)
           @bus&.publish("codebase:topology", {
@@ -267,65 +160,6 @@ module Master
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.append_improvement", event_bus: @bus, rule_id:)
-        end
-
-        def stagnant?(history, seen_snapshots, recurring_violations, found, pass)
-          return true if oscillating?(seen_snapshots, found, pass)
-          return true if recurrence_cycle?(recurring_violations, found, pass)
-
-          history << found.size
-          plateaued?(history, found, pass)
-        end
-
-        def oscillating?(seen_snapshots, found, pass)
-          snap = violation_snapshot(found)
-          if seen_snapshots.include?(snap)
-            @bus&.publish("fix_loop:oscillation", pass:, violations: found.size)
-            trigger_rollback("fix loop oscillation")
-            return true
-          end
-          seen_snapshots << snap
-          false
-        end
-
-        def recurrence_cycle?(recurring_violations, found, pass)
-          recurring = recurring_violation(found, recurring_violations)
-          return false unless recurring
-
-          @bus&.publish("fix_loop:cycle_detected", pass:, threshold: @plateau_window, violation: recurring)
-          trigger_rollback("fix loop cycle detected")
-          true
-        end
-
-        def plateaued?(history, found, pass)
-          window = @plateau_window
-          return false unless history.size >= window && history.last(window).uniq.size == 1
-
-          @bus&.publish("fix_loop:plateau", pass:, violations: found.size)
-          true
-        end
-
-        def recurring_violation(found, recurring_violations)
-          current = found.to_h { |v| [violation_key(v), v] }
-          (recurring_violations.keys - current.keys).each { |key| recurring_violations.delete(key) }
-          current.each do |key, violation|
-            recurring_violations[key] += 1
-            return violation if recurring_violations[key] >= @plateau_window
-          end
-          nil
-        end
-
-        def violation_snapshot(found)
-          Digest::SHA256.hexdigest(found.map { |v| violation_key(v) }.sort.join("|"))
-        end
-
-        def violation_key(v) = "#{v[:rule]}:#{v[:file]}:#{v[:line]}"
-
-        def trigger_rollback(message)
-          return unless @rollback
-          @rollback.call(Master::Result.err(message, category: :policy))
-        rescue StandardError => e
-          @bus&.publish("fix_loop:rollback_error", error: e.message)
         end
 
         def circuit_open? = @llm_router.circuit_open?
