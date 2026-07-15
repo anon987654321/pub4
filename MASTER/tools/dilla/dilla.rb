@@ -12,9 +12,20 @@ require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 
 ROOT = File.expand_path(__dir__)
-# Finished renders default to the user's home directory, not the repo — ROOT
-# stays the base for samples/stems/scratch temp files, which aren't user output.
+# Finished renders default to the invoking directory (override with
+# DILLA_OUTPUT_DIR). ROOT stays the base for samples/stems, which aren't
+# user output.
 OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", Dir.pwd)
+# Every cache and temp file the engine writes lives here — never loose
+# dotfiles in the invoking directory or next to the source. Safe to wipe,
+# with one exception: the progressions log (see log_progression!) is the
+# only record of generated progressions, which never repeat.
+SCRATCH_DIR = ENV.fetch("DILLA_SCRATCH_DIR", File.join(ROOT, ".cache"))
+
+def scratch_path(name)
+  FileUtils.mkdir_p(SCRATCH_DIR)
+  File.join(SCRATCH_DIR, name)
+end
 SAMPLE_DIR = File.join(ROOT, "samples")
 DRUM_DIR = File.join(SAMPLE_DIR, "drums")
 CUSTOM_DRUM_DIR = File.join(DRUM_DIR, "custom")
@@ -324,6 +335,19 @@ SYNTH_PATCH_CATALOG = [
               fx: "lowpass=f=2800,tremolo=f=3.5:d=0.14,chorus=0.35:0.55:28|36:0.14|0.1:0.18|0.14:0.85|1.1"),
   synth_patch(:cs_lead, role: :lead, program: 82, arp_styles: %i[downup quint_spread], octave: 2,
               fx: "chorus=0.4:0.6:35|45:0.2|0.15:0.2|0.2:0.9|1.2"),
+  # --- Scale-locked arp lead (continuous, same scale as each pad chord) ---
+  synth_patch(:scale_arp_prophet, role: :scale_lead, program: 81, weight: 3.2, fs_gain: 1.28, gate: 0.62,
+              arp_styles: %i[updown skip_up pingpong], octave: 2,
+              fx: "chorus=0.38:0.58:30|40:0.16|0.12:0.2|0.18:0.9|1.15,aecho=0.45:0.38:120|220:0.22|0.12,lowpass=f=4200"),
+  synth_patch(:scale_arp_moog, role: :scale_lead, program: 38, weight: 2.8, fs_gain: 1.25, gate: 0.58,
+              arp_styles: %i[up downup fibonacci], octave: 2,
+              fx: "lowpass=f=3600:width_type=q:width=0.8,tremolo=f=2.8:d=0.1,aecho=0.38:0.32:100|180:0.18|0.1"),
+  synth_patch(:scale_arp_rhodes, role: :scale_lead, program: 4, weight: 2.4, fs_gain: 1.3, gate: 0.55,
+              arp_styles: %i[updown quint_spread spiral], octave: 2,
+              fx: "tremolo=f=0.35:d=0.05,aecho=0.4:0.45:80|150:0.2|0.1,lowpass=f=4800"),
+  synth_patch(:scale_arp_supersaw, role: :scale_lead, program: 0, sf2: :supersaw, weight: 1.8, fs_gain: 1.22,
+              gate: 0.6, arp_styles: %i[spiral random_walk up], octave: 2,
+              fx: "chorus=0.45:0.65:34|44:0.2|0.16:0.24|0.2:1.05|1.3,lowpass=f=5000"),
   # --- Native additive fallbacks (no soundfont) ---
   synth_patch(:native_rhodes, role: :native, program: 0, weight: 2.5, native: { wave: :rhodes, detune: 0.005, bloom: 0.34 }),
   synth_patch(:native_rhodes_bleeding, role: :native, program: 0, weight: 1.8, native: { wave: :rhodes, detune: 0.008, bloom: 0.42 }),
@@ -358,8 +382,11 @@ def pick_synth_patches!(cfg)
   @render_warm_patch = weighted_patch_pick(:warm, seed: seed + 17)
   @render_texture_patch = weighted_patch_pick(:texture, seed: seed + 29)
   @render_lead_patch = weighted_patch_pick(:lead, seed: seed + 41)
+  @render_scale_lead_patch = weighted_patch_pick(:scale_lead, seed: seed + 79) ||
+                           weighted_patch_pick(:lead, seed: seed + 79)
   @render_native_patch = weighted_patch_pick(:native, seed: seed + 53)
   @render_arp_style = (@render_lead_patch&.dig(:arp_styles) || [:updown]).sample(random: Random.new(seed + 67))
+  @render_scale_arp_style = (@render_scale_lead_patch&.dig(:arp_styles) || [:updown]).sample(random: Random.new(seed + 83))
 end
 
 def patch_sf2_path(sf2_key)
@@ -1083,6 +1110,87 @@ def motif_from_chord(chord)
   [0, 1, 2, tones.length > 3 ? 3 : 1]
 end
 
+# Infer major/minor scale from pad chord name + intervals — arp lead walks
+# the same parent scale the pad harmony implies, not a random chromatic line.
+def chord_scale_mode(chord)
+  return :minor unless chord && chord[:hz]&.any?
+  name = chord[:name].to_s.downcase
+  return :major if name.include?("maj")
+  return :minor if name.match?(/(?:^|[^a-z])m[0-9#b]/) || name.end_with?("m")
+  ivs = chord_intervals_from_hz(chord[:hz])
+  return :minor if ivs.include?(3) && !ivs.include?(4)
+  return :major if ivs.include?(4) && !ivs.include?(3)
+  return :minor if ivs.include?(10) && !ivs.include?(11)
+  :major
+end
+
+def scale_tones_for_chord(chord, lead_low: 58, lead_high: 88)
+  return [] unless chord && chord[:hz]&.any?
+  root_midi = hz_to_midi(chord[:hz].min).floor
+  scale = SCALE_SEMITONES.fetch(chord_scale_mode(chord))
+  tones = []
+  (-1..3).each do |oct|
+    scale.each do |semi|
+      midi = root_midi + semi + oct * 12
+      tones << midi_to_hz(midi) if midi.between?(lead_low, lead_high)
+    end
+  end
+  tones = tones.uniq.sort
+  return tones unless tones.empty?
+  chord[:hz].sort.map { |hz| hz * 2.0 }.uniq.sort
+end
+
+def scale_arp_section_density(section, progress)
+  base = case section
+         when :intro then 0.38
+         when :breakdown then 0.48
+         when :build then 0.88
+         when :outro then 0.58
+         else 0.74
+         end
+  base * (progress < 0.1 ? 0.7 : 1.0)
+end
+
+# Continuous scale-locked arp on every pad chord — same root/mode as the pad,
+# stepping 16ths through scale degrees for the full chord sustain.
+def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
+  return [] if pad_events.empty?
+  beat_p = 60.0 / cfg[:bpm]
+  bar_p = beat_p * 4.0
+  n_bars ||= duration ? (duration / bar_p).ceil : 32
+  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + 4423
+  rng = Random.new(seed)
+  arp_style = @render_scale_arp_style || :updown
+  gate = @render_scale_lead_patch&.fetch(:gate, 0.62) || 0.62
+  step_p = beat_p / 4.0
+  events = []
+  pad_events.each_with_index do |(time, velocity, chord, sustain), i|
+    next unless chord && chord[:hz]&.any?
+    bar_approx = (time / bar_p).floor.clamp(0, n_bars - 1)
+    section = dilla_section(bar_approx, n_bars)
+    next if section == :intro && bar_approx < 2
+    progress = i.to_f / [pad_events.length - 1, 1].max
+    density = scale_arp_section_density(section, progress)
+    scale_tones = scale_tones_for_chord(chord)
+    next if scale_tones.empty?
+    pattern = arp_degrees_for(arp_style, scale_tones.length, rng)
+    pattern = motif_from_chord(chord) if rng.rand < 0.22
+    n_steps = [(sustain / step_p).floor, 4].max
+    n_steps = [n_steps, (sustain / step_p).ceil].min
+    step_dur = step_p * gate * 0.9
+    swing = cfg[:swing].to_f / 100.0 * step_p * 0.35
+    n_steps.times do |step|
+      hz = scale_tones[pattern[step % pattern.length] % scale_tones.length]
+      t = time + 0.02 + step * step_p + (step.odd? ? swing : 0.0)
+      break if t >= time + sustain - step_dur * 0.4
+      accent = step.zero? || (step % 4).zero?
+      vel = (velocity * (accent ? 0.44 : 0.34) * density).clamp(0.14, 0.58)
+      events << [t, vel, { name: "scale_arp", hz: [hz] }, step_dur]
+    end
+  end
+  events
+end
+
 def arp_degrees_for(style, tone_count, rng)
   builder = ARP_PATTERN_BUILDERS[style] || ARP_PATTERN_BUILDERS[:updown]
   raw = builder.arity >= 2 ? builder.call(tone_count, rng) : builder.call(tone_count)
@@ -1294,13 +1402,8 @@ EXTENDED_NINTH_CHORDS = [
   { name: "Am/E", hz: [82.41, 220.00, 261.63, 329.63, 392.00] },
   { name: "E9sus4", hz: [82.41, 220.00, 246.94, 293.66, 369.99] }
 ].freeze
-COMMANDS = %w[
-  help scan sweep council debug sample source livestream separate render verify
-  chords clean stems study rhythm melody harmony semantics ears play live live_now harmony_now regenerate bass
-  grade grade_list sonitex_list analog_list prepare loose_pocket dilla hiphop slum industrial techno analog analog_liveset
-  electronium midi mix v7 v8 v9 v10 v11 demux liveset quality
-  capabilities fetch-assets use-external-kit
-].freeze
+# COMMANDS is derived from the DISPATCH table at the bottom of this file —
+# one source of truth for dispatch, help, and the debug introspection dump.
 # Analog stock characters — digital signal equivalents of film stock data.
 # noise_amp: RMS amplitude of the noise floor (≈tape hiss level)
 # sat_drive: tanh waveshaper drive (1.0 = light tube warmth, 3.0 = heavy tape saturation)
@@ -1938,6 +2041,14 @@ def tool_available?(name)
   ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |directory| File.executable?(File.join(directory, name)) }
 end
 
+# One dependency gate for every external binary — reports all missing tools
+# at once instead of failing on the first and hiding the rest.
+def require_tools!(*names)
+  missing = names.reject { |name| tool_available?(name) }
+  return if missing.empty?
+  abort "#{missing.join(', ')} required"
+end
+
 def prompt(label)
   print "#{label}: "
   value = STDIN.gets&.strip
@@ -2069,8 +2180,7 @@ def livestream(input = nil, output = nil)
   input ||= prompt("livestream URL")
   output ||= File.join(SAMPLE_DIR, "livestream.wav")
   seconds_to_capture = (ENV["LIVE_SECONDS"] || 600).to_i
-  abort "yt-dlp required" unless tool_available?("yt-dlp")
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "yt-dlp", "ffmpeg"
   media_url = direct_media_url(input)
   FileUtils.mkdir_p(File.dirname(output))
   sh! "ffmpeg", "-y", "-t", seconds_to_capture.to_s, "-i", media_url, "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", output
@@ -2088,7 +2198,7 @@ end
 def separate(input = nil)
   input ||= prompt("audio path or URL")
   wav = File.exist?(input) ? input : source(input, File.join(SAMPLE_DIR, "source.wav"))
-  abort "demucs required" unless tool_available?("demucs")
+  require_tools! "demucs"
   FileUtils.mkdir_p(STEM_DIR)
   sh! "demucs", "-n", "htdemucs_ft", "-o", STEM_DIR, wav
   map = latest_stems
@@ -2104,8 +2214,7 @@ def latest_stems
 end
 
 def download_track(url, output)
-  abort "yt-dlp required" unless tool_available?("yt-dlp")
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "yt-dlp", "ffmpeg"
   temporary = File.join(SAMPLE_DIR, "download.%(ext)s")
   sh! "yt-dlp", "-f", "bestaudio", "--extract-audio", "--audio-format", "wav", url, "-o", temporary
   downloaded = Dir[File.join(SAMPLE_DIR, "download.wav")].max_by { |path| File.mtime(path) }
@@ -2124,14 +2233,14 @@ def direct_media_url(url)
 end
 
 def convert_audio(input, output)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   sh! "ffmpeg", "-y", "-i", input, "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", output
   puts "wrote #{output}"
   output
 end
 
 def render(destination = File.join(OUTPUT_DIR, "full_track.mp3"))
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   FileUtils.mkdir_p(File.dirname(destination))
   duration = render_seconds
   kick_period = (beat_seconds * 2.0).round(6)
@@ -2346,7 +2455,7 @@ def ears(path = File.join(OUTPUT_DIR, "full_track.mp3"))
 end
 
 def frame_energy(path, highpass:, lowpass:)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   raw = pipe_floats(path, "highpass=f=#{highpass},lowpass=f=#{lowpass},aformat=sample_fmts=flt:channel_layouts=mono")
   hop = 2_048
   frames = raw.each_slice(hop).with_index.map do |slice, index|
@@ -2762,7 +2871,7 @@ def analog_drift_filter(input_tag, out_tag: "drifted")
   "[#{input_tag}]vibrato=f=0.13:d=0.0035,vibrato=f=0.19:d=0.002[#{out_tag}]"
 end
 
-CONVOLUTION_IR_CACHE = File.join(ROOT, ".dilla_ir_%s.wav")
+CONVOLUTION_IR_CACHE = File.join(SCRATCH_DIR, "ir_%s.wav")
 
 # Real convolution reverb via ffmpeg's afir filter — genuinely convolving
 # against an impulse response, just a synthesized one (exponentially
@@ -2778,6 +2887,7 @@ CONVOLUTION_ROOMS = {
 def synth_impulse_response!(room)
   path = format(CONVOLUTION_IR_CACHE, room)
   return path if File.exist?(path)
+  FileUtils.mkdir_p(SCRATCH_DIR)
   cfg = CONVOLUTION_ROOMS.fetch(room)
   decay_rate = (3.0 / cfg[:decay]).round(3)
   sh! "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=white:d=#{cfg[:decay] + 0.3}:r=#{SAMPLE_RATE}",
@@ -3015,9 +3125,9 @@ ensure
 end
 
 def play(preset_name = nil, bars_count = 8)
-  abort "ffplay required" unless tool_available?("ffplay")
+  require_tools! "ffplay"
   preset_name ||= "dilla"
-  tmp = File.join(ROOT, ".play_tmp.mp3")
+  tmp = scratch_path("play_tmp.mp3")
   prev = ENV["BARS"]
   ENV["BARS"] = bars_count.to_s
   if preset_name == "dilla"
@@ -3033,7 +3143,7 @@ end
 
 # Loop a WAV via ffplay (rb-only playback).
 def play_loop(path)
-  abort "ffplay required" unless tool_available?("ffplay")
+  require_tools! "ffplay"
   abort "missing #{path}" unless File.exist?(path)
   cfg = dilla_resolve_config
   prog = CHORD_PROGRESSIONS[cfg[:progression]]
@@ -3088,7 +3198,7 @@ end
 
 # Fresh render + harmony-forward mix + ffplay loop.
 def regenerate(bars_count = 16)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   bars_count = (ENV["BARS"] || bars_count).to_i
   tmp = File.join(ROOT, ".live_tmp.wav")
   harm = File.join(ROOT, ".harmony_loud.wav")
@@ -3148,7 +3258,7 @@ STREAM_BARS_COUNT = 16
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
 def stream(bars_count = STREAM_BARS_COUNT)
-  abort "ffplay required" unless tool_available?("ffplay")
+  require_tools! "ffplay"
   prev_track = ENV["TRACK"]
   # Every restart (and there have been many, iterating on this live) reset
   # the rotation to index 0 — meaning repeated restarts kept replaying the
@@ -3181,7 +3291,7 @@ end
 
 # Instantly play a modulating bass tone — good for local audio system check.
 def bass(root_hz = 55.0)
-  abort "ffplay required" unless tool_available?("ffplay")
+  require_tools! "ffplay"
   # Warbling sub bass: fundamental + slow pitch LFO + low harmonic content.
   # Models J Dilla's low-end: not a clean sine, has movement and weight.
   lfo_hz   = 0.18
@@ -3813,7 +3923,7 @@ def drum_sample_path(name)
 end
 
 def generate_drum_kit!
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   FileUtils.mkdir_p(DRUM_DIR)
   FileUtils.mkdir_p(CUSTOM_DRUM_DIR)
   force = ENV["FORCE_KIT"] == "1"
@@ -3888,28 +3998,51 @@ EXTERNAL_SOUNDFONTS = {
 EXTERNAL_DRUM_KIT_REPO = "https://github.com/Boochi44/free-drum-samples"
 EXTERNAL_DRUM_KIT_CACHE = File.expand_path("~/.cache/dilla-samples/free-drum-samples")
 
+# Fetched assets are pinned by content: the first fetch records each file's
+# SHA256 (and the drum-kit repo's HEAD commit) into checksums.json next to
+# the cache; later runs verify and warn on drift instead of silently
+# rendering with different-sounding assets. Warn, not abort — upstream may
+# have legitimately updated, and the fix is deleting the manifest entry.
+def assets_verify_or_record!(manifest_path, key, actual)
+  require "digest" # cheap, but only needed on this path
+  manifest = File.exist?(manifest_path) ? JSON.parse(File.read(manifest_path)) : {}
+  if manifest.key?(key)
+    return if manifest[key] == actual
+    warn "warn: #{key} changed since first fetch (#{manifest[key][0, 12]}… -> #{actual[0, 12]}…) — " \
+         "renders may sound different; delete its entry in #{manifest_path} to accept the new version"
+  else
+    manifest[key] = actual
+    File.write(manifest_path, JSON.pretty_generate(manifest))
+  end
+end
+
 def fetch_assets!
-  abort "curl required" unless tool_available?("curl")
+  require_tools! "curl"
+  require "digest"
   sf_dir = File.expand_path("~/.cache/dilla-soundfonts")
   FileUtils.mkdir_p(sf_dir)
+  manifest_path = File.join(sf_dir, "checksums.json")
   EXTERNAL_SOUNDFONTS.each do |name, url|
     dest = File.join(sf_dir, name)
     if File.exist?(dest)
       puts "have: #{name}"
-      next
+    else
+      puts "fetching #{name}..."
+      sh! "curl", "-sL", "--fail", "-o", dest, url
     end
-    puts "fetching #{name}..."
-    sh! "curl", "-sL", "--fail", "-o", dest, url
+    assets_verify_or_record!(manifest_path, name, Digest::SHA256.file(dest).hexdigest)
   end
 
   if Dir.exist?(EXTERNAL_DRUM_KIT_CACHE)
     puts "have: free-drum-samples"
   else
-    abort "git required" unless tool_available?("git")
+    require_tools! "git"
     puts "fetching free-drum-samples (CC0)..."
     FileUtils.mkdir_p(File.dirname(EXTERNAL_DRUM_KIT_CACHE))
     sh! "git", "clone", "--depth", "1", EXTERNAL_DRUM_KIT_REPO, EXTERNAL_DRUM_KIT_CACHE
   end
+  head, _err, status = capture("git", "-C", EXTERNAL_DRUM_KIT_CACHE, "rev-parse", "HEAD")
+  assets_verify_or_record!(manifest_path, "free-drum-samples@HEAD", head.strip) if status.success?
   puts "assets cached. Use DILLA_SOUNDFONT=#{sf_dir}/<file>.sf2, or `ruby dilla.rb use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>`."
 end
 
@@ -4503,7 +4636,19 @@ end
 # "answer" voice on alternating phrases, an octave down, offset in time.
 def lead_events_from_pads(pad_events, duration: nil, n_bars: nil)
   cfg = dilla_resolve_config
-  lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars)
+  scale = lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars)
+  creative = lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars)
+  (scale + creative).sort_by { |e| e[0] }
+end
+
+def resolve_scale_lead_voice
+  if ENV["DILLA_SCALE_LEAD_PROGRAM"]
+    return { sf2: pad_soundfont_path, bank: 0, program: ENV["DILLA_SCALE_LEAD_PROGRAM"].to_i,
+             patch: @render_scale_lead_patch }
+  end
+  patch_voice_for(@render_scale_lead_patch) ||
+    patch_voice_for(@render_lead_patch) ||
+    { sf2: pad_soundfont_path, bank: 0, program: LEAD_GM_PROGRAMS.sample, patch: nil }
 end
 
 def lead_post_fx_chain(patch, duration, boost_db)
@@ -4513,16 +4658,18 @@ def lead_post_fx_chain(patch, duration, boost_db)
   [base, patch_fx || default_fx, "apad=whole_dur=#{duration}", "alimiter=limit=0.95:level_out=0.96"].join(",")
 end
 
-def render_lead_via_fluidsynth(path, lead_events, duration)
+def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
   return nil if lead_events.empty? || !fluidsynth_pad_available?
   midi_path = "#{path}.smf.mid"
-  lead_voice = resolve_lead_voice
+  lead_voice = scale_arp ? resolve_scale_lead_voice : resolve_lead_voice
   write_pad_smf(midi_path, lead_events, program: lead_voice[:program], bank: lead_voice[:bank])
-  sh! "fluidsynth", "-ni", "-g", "1.3", "-F", path, "-r", SAMPLE_RATE.to_s, lead_voice[:sf2], midi_path
+  fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
+  sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, lead_voice[:sf2], midi_path
   FileUtils.rm_f(midi_path)
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (LEAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
-  patch = lead_voice[:patch] || @render_lead_patch
+  target_db = scale_arp ? (LEAD_TARGET_RMS_DB + 1.5) : LEAD_TARGET_RMS_DB
+  boost_db = (target_db - measured_rms).clamp(0.0, 24.0)
+  patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
   sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(patch, duration, boost_db),
       "-c:a", "pcm_s16le", "#{path}.lead.wav"
   FileUtils.mv("#{path}.lead.wav", path)
@@ -4535,13 +4682,17 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   tones_path = "#{path}.tones.wav"
   pads_path = "#{path}.pads.wav"
   lead_path = "#{path}.lead.wav"
+  scale_lead_path = "#{path}.scale_lead.wav"
   if fluidsynth_pad_available?
     render_pad_via_fluidsynth(pads_path, pad_events, duration)
   else
     render_native_pad_wav(pads_path, pad_events, duration)
   end
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
-  lead_rendered = render_lead_via_fluidsynth(lead_path, lead_events_from_pads(pad_events, duration: duration, n_bars: n_bars_est), duration)
+  scale_events = lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars_est)
+  creative_events = lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est)
+  scale_lead_rendered = render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true)
+  lead_rendered = render_lead_via_fluidsynth(lead_path, creative_events, duration)
   # Karplus-Strong plucked-string accent on each chord's root — a genuinely
   # new instrument timbre (real physical-modeling algorithm, not another
   # oscillator/soundfont voice), pre-rendered per chord since the algorithm
@@ -4622,7 +4773,27 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # didn't already cover. One limiter at the combine stage remains as the
   # actual safety net; master_bus_filters is the real mastering-stage limit
   # downstream.
-  if lead_rendered
+  if scale_lead_rendered && lead_rendered
+    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", scale_lead_path, "-i", lead_path,
+        "-filter_complex", "[0:a]volume=1.18[padsl];" \
+                           "[1:a]volume=0.72[tonesl];" \
+                           "[2:a]volume=0.82[scalel];" \
+                           "[3:a]volume=0.68[leadl];" \
+                           "[padsl][tonesl][scalel][leadl]amix=inputs=4:weights=1.45 0.55 0.38 0.18:duration=longest:normalize=0," \
+                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
+        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+    FileUtils.rm_f(scale_lead_path)
+    FileUtils.rm_f(lead_path)
+  elsif scale_lead_rendered
+    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", scale_lead_path,
+        "-filter_complex", "[0:a]volume=1.18[padsl];" \
+                           "[1:a]volume=0.72[tonesl];" \
+                           "[2:a]volume=0.82[scalel];" \
+                           "[padsl][tonesl][scalel]amix=inputs=3:weights=1.45 0.55 0.38:duration=longest:normalize=0," \
+                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
+        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+    FileUtils.rm_f(scale_lead_path)
+  elsif lead_rendered
     sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", lead_path,
         "-filter_complex", "[0:a]volume=1.18[padsl];" \
                            "[1:a]volume=0.72[tonesl];" \
@@ -4760,13 +4931,31 @@ def dilla_stem_paths
   paths
 end
 
-PROGRESSION_LOG_PATH = File.join(OUTPUT_DIR, ".dilla_progressions_log.txt")
+PROGRESSION_LOG_PATH = File.join(SCRATCH_DIR, "progressions_log.txt")
+LEGACY_PROGRESSION_LOGS = [
+  File.join(OUTPUT_DIR, ".dilla_progressions_log.txt"),
+  File.join(ROOT, ".dilla_progressions_log.txt")
+].freeze
+
+# Older versions wrote the log as a dotfile into the invoking directory —
+# fold any of those into the canonical log the first time we write, so the
+# "nothing explored is lost" guarantee survives the path change.
+def migrate_legacy_progression_logs!
+  LEGACY_PROGRESSION_LOGS.each do |legacy|
+    next unless File.exist?(legacy)
+    File.open(PROGRESSION_LOG_PATH, "a") { |f| f.write(File.read(legacy)) }
+    FileUtils.rm_f(legacy)
+    puts "migrated legacy progression log #{legacy} -> #{PROGRESSION_LOG_PATH}"
+  end
+end
 
 # Every chord walked during a render, appended so nothing explored is lost —
 # generated progressions especially never repeat, so this is the only
 # record of what actually played if it's worth turning into a real song.
 def log_progression!(track, bpm, pads)
   return if pads.empty?
+  FileUtils.mkdir_p(SCRATCH_DIR)
+  migrate_legacy_progression_logs!
   lines = pads.map do |chord|
     notes = chord[:hz].map { |hz| nearest_note(hz) }.join(" ")
     "  #{chord[:name]}: #{notes}  (#{chord[:hz].map { |h| h.round(1) }.join(', ')} Hz)"
@@ -4781,7 +4970,7 @@ rescue StandardError => e
 end
 
 # Full Jay Dee render: sample drums + stem chops, Dilla Time scheduling.
-SELF_SAMPLE_CACHE = File.join(ROOT, ".dilla_self_sample.wav")
+SELF_SAMPLE_CACHE = File.join(SCRATCH_DIR, "self_sample.wav")
 
 # "Collapse over accretion": before this render's predecessor is deleted,
 # grab a short slice of it and cache it — the next render can layer that
@@ -4797,6 +4986,7 @@ def cache_self_sample!(destination)
   duration = output.to_f
   return if duration < 2.0
   offset = (rand * [duration - 1.5, 0.1].max).round(2)
+  FileUtils.mkdir_p(SCRATCH_DIR)
   sh! "ffmpeg", "-y", "-i", destination, "-ss", offset.to_s, "-t", "1.2",
       "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", SELF_SAMPLE_CACHE
 rescue StandardError
@@ -4804,7 +4994,7 @@ rescue StandardError
 end
 
 def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   pick_render_seed!
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
@@ -5027,8 +5217,9 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   end
   stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony+melody"
   mix_note  = sonitex_label
-  patch_note = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id), @render_lead_patch&.dig(:id),
-                @render_arp_style].compact.join("/")
+  patch_note = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id),
+                @render_scale_lead_patch&.dig(:id), @render_scale_arp_style,
+                @render_lead_patch&.dig(:id), @render_arp_style].compact.join("/")
   kick_note = kicks_enabled? ? "kicks" : "no-kicks"
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note})"
 end
@@ -5120,7 +5311,7 @@ end
 
 # Industrial techno: arranged 135 BPM groove, rumble sub, sidechain, dub space.
 def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp3"), bars_count = nil)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
   ibpm     = ENV.fetch("IBPM", INDUSTRIAL_TECHNO_BPM.to_s).to_f
@@ -5215,7 +5406,7 @@ def help
       loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
       loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
       DELICIOUS=1 (default)        0.72x pocket BPM | VLC=1 (default) all audio effects
-      dilla [out.mp3]              J Dilla beat — TRACK= preset (default chromatic_minor_descent)
+      dilla | beat [out.mp3]       J Dilla beat — TRACK= preset (default chromatic_minor_descent)
       hiphop [out.mp3]             Slum Village engine (default TRACK=syncopated_slash_ninth)
       slum [dir]                   Batch session_01..14 → renders/ (Sonitex on)
       industrial [out.mp3]         Industrial techno (default renders/foundry_pulse.mp3)
@@ -5256,6 +5447,12 @@ def help
       fetch-assets                   Cache CC0 drum WAVs + 2 extra soundfonts
       use-external-kit <name>        Install a fetched kit into samples/drums/custom/
                                       (01-hard-trap | 02-bounce | 03-soulful-vintage)
+    FLAGS (equivalent to the ENV vars below, usable on any command):
+      #{FLAG_ENV.keys.map { |k| "--#{k}=…" }.join(' ')}
+
+    SCRATCH: caches + temp audio in #{SCRATCH_DIR} (DILLA_SCRATCH_DIR overrides).
+      progressions_log.txt there is the only record of generated progressions.
+
     ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
          KICK_GAIN=0.38 (default) kick/sub level scale — lower if still loud
@@ -5392,7 +5589,7 @@ def analog_pad_expression(t, v, chord, sustain, bar_index)
 end
 
 def render_analog(destination, bar_count: bars)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   dur = (bar_count * beat_seconds * 4).round(3)
   ev = analog_schedule(bar_count)
   cycle = analog_two_bar_cycle
@@ -5522,7 +5719,7 @@ end
 
 # Pure drums: MPC one-shots + Madlib pockets + Dilla microtiming + SP-1200 dirt.
 def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.wav"), bars_count = nil)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
   cfg      = madlib_resolve_config
@@ -5620,7 +5817,7 @@ end
 # =============================================================================
 
 def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   n_bars = [bars, TECHNO_BARS].max
   beat  = 60.0 / TECHNO_BPM
   bar   = beat * 4
@@ -5941,7 +6138,7 @@ end
 def install_stems_from_audio(src, bpm: 90, label: nil)
   src = File.expand_path(src)
   abort "missing source: #{src}" unless File.exist?(src)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   FileUtils.mkdir_p(STEM_DIR)
   slices = {
     STEM_SUB    => "lowpass=f=85,equalizer=f=48:t=o:w=0.8:g=4",
@@ -5981,7 +6178,7 @@ def demux_fetch_audio(src)
   return File.expand_path(src) unless src.match?(%r{\Ahttps?://})
   FileUtils.mkdir_p(DEMUX_DIR)
   raw = File.join(DEMUX_DIR, "yt_#{Time.now.strftime("%Y%m%d_%H%M%S")}.wav")
-  abort "yt-dlp required" unless tool_available?("yt-dlp")
+  require_tools! "yt-dlp"
   sh! "yt-dlp", "-x", "--audio-format", "wav", "-o", raw, src
   raw
 end
@@ -5990,7 +6187,7 @@ def demux_six(src)
   audio = demux_fetch_audio(src)
   out = File.join(DEMUX_DIR, "demux")
   FileUtils.mkdir_p(out)
-  abort "demucs required" unless tool_available?("demucs")
+  require_tools! "demucs"
   sh! "demucs", "-n", DEMUX_MODEL, "-o", out, audio
   stem_dir = File.join(out, DEMUX_MODEL, File.basename(audio, ".*"))
   puts "stems -> #{stem_dir}"
@@ -6051,7 +6248,7 @@ def liveset_filter(count, periods: LIVESET_PERIODS)
 end
 
 def render_liveset(name = "default", minutes: LIVESET_MIN)
-  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  require_tools! "ffmpeg"
   m = stems_load_manifest
   set = m["sets"][name] || m["sets"][m["active"]] or abort "liveset: no stem set '#{name}'"
   base_dir = File.join(STEM_DIR, set["dir"] || ".")
@@ -6068,154 +6265,151 @@ end
 # ELECTRONIUM MIDI (electronium.rb) — lazy-loaded (requires midilib)
 # =============================================================================
 
-ELECTRONIUM_SOURCE = <<~'RUBY'
-  module DillaElectronium
-    PPQN = 480
-    CHORDS = {
-      fm9: [53, 56, 60, 63, 67], dbmaj9: [49, 53, 56, 60, 63], eb9: [51, 55, 58, 63, 65],
-      bbm9: [46, 49, 53, 56, 60], cm7b5: [48, 51, 54, 58], c7alt: [48, 52, 58, 61, 63]
-    }.freeze
-    PROGRESSION = %i[fm9 dbmaj9 eb9 bbm9 cm7b5 fm9 c7alt fm9].freeze
-    DRUMS = { kick: 36, snare: 38, closed_hat: 42, open_hat: 46 }.freeze
-    F_MINOR = [65, 67, 68, 70, 72, 73, 75].freeze
+# Defined eagerly (plain Ruby, no eval) but runnable only once midilib is
+# loaded: every MIDI:: reference lives inside a method body, so the
+# constant lookup happens at call time — electronium_ensure_loaded!
+# requires midilib before any of these methods run.
+module DillaElectronium
+  PPQN = 480
+  CHORDS = {
+    fm9: [53, 56, 60, 63, 67], dbmaj9: [49, 53, 56, 60, 63], eb9: [51, 55, 58, 63, 65],
+    bbm9: [46, 49, 53, 56, 60], cm7b5: [48, 51, 54, 58], c7alt: [48, 52, 58, 61, 63]
+  }.freeze
+  PROGRESSION = %i[fm9 dbmaj9 eb9 bbm9 cm7b5 fm9 c7alt fm9].freeze
+  DRUMS = { kick: 36, snare: 38, closed_hat: 42, open_hat: 46 }.freeze
+  F_MINOR = [65, 67, 68, 70, 72, 73, 75].freeze
 
-    module Groove
-      module_function
-      def offset_ticks(type)
-        case type
-        when :kick then rand(-5..1)
-        when :snare then rand(2..9)
-        when :hat then rand(-3..4)
-        when :bass then rand(-4..5)
-        else rand(-5..5)
-        end
-      end
-      def beat_to_ticks(beat, type = :melody)
-        ((beat * PPQN) + offset_ticks(type)).round.clamp(0, 1 << 30)
+  module Groove
+    module_function
+    def offset_ticks(type)
+      case type
+      when :kick then rand(-5..1)
+      when :snare then rand(2..9)
+      when :hat then rand(-3..4)
+      when :bass then rand(-4..5)
+      else rand(-5..5)
       end
     end
-
-    class TrackBuilder
-      include MIDI
-      def initialize(sequence, name, channel)
-        @sequence = sequence
-        @track = Track.new(sequence)
-        @track.name = name
-        @sequence.tracks << @track
-        @channel = channel
-      end
-      def note(note, start_beat, duration_beats, velocity, feel: :melody)
-        return if duration_beats <= 0
-        start = Groove.beat_to_ticks(start_beat, feel)
-        stop = [start + (duration_beats * PPQN).round, start + 1].max
-        @track.events << NoteOn.new(@channel, note, velocity.clamp(1, 127), 0, start)
-        @track.events << NoteOff.new(@channel, note, 0, 0, stop)
-      end
-      def finish
-        @track.events.sort_by! { |e| [e.time_from_start, e.is_a?(NoteOff) ? 0 : 1] }
-        @track.recalc_times
-      end
-    end
-
-    class Composer
-      include MIDI
-      def initialize(bpm:, bars:)
-        @bpm = bpm
-        @bars = bars
-        @sequence = Sequence.new
-        @sequence.ppqn = PPQN
-        add_tempo_track
-      end
-      def write(path)
-        add_drums
-        add_bass
-        add_chords
-        add_melody
-        File.open(path, "wb") { |f| @sequence.write(f) }
-        path
-      end
-      private
-      def add_tempo_track
-        track = Track.new(@sequence)
-        @sequence.tracks << track
-        track.events << Tempo.new(Tempo.bpm_to_mpq(@bpm))
-        track.events << MetaEvent.new(META_SEQ_NAME, "Dilla Electronium")
-        track.events << MetaEvent.new(META_TIME_SIG, [4, 2, 24, 8].pack("cccc"))
-      end
-      def add_drums
-        drums = TrackBuilder.new(@sequence, "drums", 9)
-        @bars.times do |bar|
-          base = bar * 4.0
-          [0.0, 1.75, 2.5, 3.5].each { |beat| drums.note(DRUMS[:kick], base + beat, 0.18, 105, feel: :kick) }
-          [1.0, 3.0].each { |beat| drums.note(DRUMS[:snare], base + beat, 0.12, 92, feel: :snare) }
-          drums.note(DRUMS[:snare], base + 2.75, 0.08, 42, feel: :snare) if bar.odd?
-          8.times do |step|
-            drums.note(DRUMS[:closed_hat], base + step * 0.5 + (step.odd? ? 0.055 : 0.0), 0.08, step.odd? ? 48 : 68, feel: :hat)
-          end
-          drums.note(DRUMS[:open_hat], base + 3.5, 0.18, 58, feel: :hat) if (bar % 4).zero?
-        end
-        drums.finish
-      end
-      def add_bass
-        bass = TrackBuilder.new(@sequence, "bass", 0)
-        chord_cycle.each_with_index do |chord_name, index|
-          root = CHORDS.fetch(chord_name).first - 12
-          start = index * 2.0
-          bass.note(root, start, 0.62, 98, feel: :bass)
-          bass.note(root + 12, start + 0.75, 0.25, 72, feel: :bass)
-          bass.note(root, start + 1.5, 0.38, 86, feel: :bass)
-        end
-        bass.finish
-      end
-      def add_chords
-        chords = TrackBuilder.new(@sequence, "electric-piano", 1)
-        chord_cycle.each_with_index do |chord_name, index|
-          CHORDS.fetch(chord_name).each_with_index do |note, voice|
-            chords.note(note + 12, index * 2.0, 1.82, 48 + voice * 4, feel: :melody)
-          end
-        end
-        chords.finish
-      end
-      def add_melody
-        lead = TrackBuilder.new(@sequence, "lead-chops", 2)
-        note_index = 2
-        direction = 1
-        (@bars * 4).times do |step|
-          if rand < 0.78
-            note = F_MINOR[note_index] + (rand < 0.25 ? 12 : 0)
-            lead.note(note, step * 1.0, [0.25, 0.5, 0.75].sample, rand(62..88), feel: :melody)
-          end
-          note_index += direction * (rand < 0.2 ? 2 : 1)
-          if note_index >= F_MINOR.length - 1
-            note_index = F_MINOR.length - 2
-            direction = -1
-          elsif note_index <= 0
-            note_index = 1
-            direction = 1
-          end
-          direction *= -1 if rand < 0.18
-        end
-        lead.finish
-      end
-      def chord_cycle
-        repeats = ((@bars * 4.0) / (PROGRESSION.length * 2.0)).ceil
-        PROGRESSION.cycle.take(PROGRESSION.length * repeats)
-      end
+    def beat_to_ticks(beat, type = :melody)
+      ((beat * PPQN) + offset_ticks(type)).round.clamp(0, 1 << 30)
     end
   end
-RUBY
+
+  class TrackBuilder
+    def initialize(sequence, name, channel)
+      @sequence = sequence
+      @track = MIDI::Track.new(sequence)
+      @track.name = name
+      @sequence.tracks << @track
+      @channel = channel
+    end
+    def note(note, start_beat, duration_beats, velocity, feel: :melody)
+      return if duration_beats <= 0
+      start = Groove.beat_to_ticks(start_beat, feel)
+      stop = [start + (duration_beats * PPQN).round, start + 1].max
+      @track.events << MIDI::NoteOn.new(@channel, note, velocity.clamp(1, 127), 0, start)
+      @track.events << MIDI::NoteOff.new(@channel, note, 0, 0, stop)
+    end
+    def finish
+      @track.events.sort_by! { |e| [e.time_from_start, e.is_a?(MIDI::NoteOff) ? 0 : 1] }
+      @track.recalc_times
+    end
+  end
+
+  class Composer
+    def initialize(bpm:, bars:)
+      @bpm = bpm
+      @bars = bars
+      @sequence = MIDI::Sequence.new
+      @sequence.ppqn = PPQN
+      add_tempo_track
+    end
+    def write(path)
+      add_drums
+      add_bass
+      add_chords
+      add_melody
+      File.open(path, "wb") { |f| @sequence.write(f) }
+      path
+    end
+    private
+    def add_tempo_track
+      track = MIDI::Track.new(@sequence)
+      @sequence.tracks << track
+      track.events << MIDI::Tempo.new(MIDI::Tempo.bpm_to_mpq(@bpm))
+      track.events << MIDI::MetaEvent.new(MIDI::META_SEQ_NAME, "Dilla Electronium")
+      track.events << MIDI::MetaEvent.new(MIDI::META_TIME_SIG, [4, 2, 24, 8].pack("cccc"))
+    end
+    def add_drums
+      drums = TrackBuilder.new(@sequence, "drums", 9)
+      @bars.times do |bar|
+        base = bar * 4.0
+        [0.0, 1.75, 2.5, 3.5].each { |beat| drums.note(DRUMS[:kick], base + beat, 0.18, 105, feel: :kick) }
+        [1.0, 3.0].each { |beat| drums.note(DRUMS[:snare], base + beat, 0.12, 92, feel: :snare) }
+        drums.note(DRUMS[:snare], base + 2.75, 0.08, 42, feel: :snare) if bar.odd?
+        8.times do |step|
+          drums.note(DRUMS[:closed_hat], base + step * 0.5 + (step.odd? ? 0.055 : 0.0), 0.08, step.odd? ? 48 : 68, feel: :hat)
+        end
+        drums.note(DRUMS[:open_hat], base + 3.5, 0.18, 58, feel: :hat) if (bar % 4).zero?
+      end
+      drums.finish
+    end
+    def add_bass
+      bass = TrackBuilder.new(@sequence, "bass", 0)
+      chord_cycle.each_with_index do |chord_name, index|
+        root = CHORDS.fetch(chord_name).first - 12
+        start = index * 2.0
+        bass.note(root, start, 0.62, 98, feel: :bass)
+        bass.note(root + 12, start + 0.75, 0.25, 72, feel: :bass)
+        bass.note(root, start + 1.5, 0.38, 86, feel: :bass)
+      end
+      bass.finish
+    end
+    def add_chords
+      chords = TrackBuilder.new(@sequence, "electric-piano", 1)
+      chord_cycle.each_with_index do |chord_name, index|
+        CHORDS.fetch(chord_name).each_with_index do |note, voice|
+          chords.note(note + 12, index * 2.0, 1.82, 48 + voice * 4, feel: :melody)
+        end
+      end
+      chords.finish
+    end
+    def add_melody
+      lead = TrackBuilder.new(@sequence, "lead-chops", 2)
+      note_index = 2
+      direction = 1
+      (@bars * 4).times do |step|
+        if rand < 0.78
+          note = F_MINOR[note_index] + (rand < 0.25 ? 12 : 0)
+          lead.note(note, step * 1.0, [0.25, 0.5, 0.75].sample, rand(62..88), feel: :melody)
+        end
+        note_index += direction * (rand < 0.2 ? 2 : 1)
+        if note_index >= F_MINOR.length - 1
+          note_index = F_MINOR.length - 2
+          direction = -1
+        elsif note_index <= 0
+          note_index = 1
+          direction = 1
+        end
+        direction *= -1 if rand < 0.18
+      end
+      lead.finish
+    end
+    def chord_cycle
+      repeats = ((@bars * 4.0) / (PROGRESSION.length * 2.0)).ceil
+      PROGRESSION.cycle.take(PROGRESSION.length * repeats)
+    end
+  end
+end
 
 def electronium_ensure_loaded!
-  return if defined?(DillaElectronium::Composer)
-  begin
-    require "midilib"
-    require "midilib/sequence"
-    require "midilib/track"
-    require "midilib/consts"
-  rescue LoadError
-    abort "midilib required — gem install midilib"
-  end
-  eval(ELECTRONIUM_SOURCE, TOPLEVEL_BINDING, __FILE__, __LINE__)
+  return if defined?(MIDI::Sequence)
+  require "midilib"
+  require "midilib/sequence"
+  require "midilib/track"
+  require "midilib/consts"
+rescue LoadError
+  abort "midilib required — gem install midilib"
 end
 
 def electronium_generate(destination = File.join(OUTPUT_DIR, "electronium.mid"))
@@ -6225,75 +6419,111 @@ def electronium_generate(destination = File.join(OUTPUT_DIR, "electronium.mid"))
   puts "wrote #{path}"
 end
 
-cmd = ARGV.shift
-case cmd
-when "capabilities" then puts Master::Reach::AnalogCapabilities.report(:dilla)
-when "quality" then dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift)
-when nil, "help" then help
-when "scan" then scan
-when "sweep" then sweep
-when "council" then council
-when "debug" then debug
-when "sample" then sample
-when "source" then source(ARGV.shift, ARGV.shift)
-when "livestream" then livestream(ARGV.shift, ARGV.shift)
-when "separate" then separate(ARGV.shift)
-when "render" then render(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
-when "verify" then verify(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
-when "chords" then chords
-when "clean" then clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav"))
-when "stems" then stems(*ARGV)
-when "study" then study(ARGV.shift, ARGV.shift)
-when "rhythm" then rhythm(ARGV.shift)
-when "melody" then melody(ARGV.shift)
-when "harmony" then harmony(ARGV.shift)
-when "semantics" then semantics(ARGV.shift)
-when "ears"       then ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
-when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
-when "live"       then live((ARGV.shift || 32).to_i)
-when "stream"     then stream((ARGV.shift || STREAM_BARS_COUNT).to_i)
-when "live_now"    then live_now
-when "harmony_now" then harmony_now
-when "regenerate"  then regenerate((ARGV.shift || 16).to_i)
-when "bass"       then bass((ARGV.shift || 55.0).to_f)
-when "grade"      then grade(ARGV.shift, ARGV.shift, ARGV.shift)
-when "fetch-assets" then fetch_assets!
-when "use-external-kit" then use_external_kit!(ARGV.shift || abort("usage: use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>"))
-when "grade_list" then grade_list
-when "sonitex_list" then sonitex_list
-when "analog_list"  then analog_list
-when "prepare"         then prepare(ARGV.shift)
-when "loose_pocket"
-  out = ARGV.shift
-  if out.nil? || out == "beats"
-    render_madlib_album(out == "beats" ? (ARGV.shift || File.join(ROOT, "renders", "beats")) : File.join(ROOT, "renders", "beats"))
-  else
-    render_madlib_drums(out)
+# =============================================================================
+# CLI — one table is the command list, the dispatch, and (via COMMANDS) the
+# debug/introspection surface. Adding a command = adding one entry here.
+# =============================================================================
+
+# `--flag=value` forms of the tuning ENV vars, usable anywhere on the command
+# line. ENV still works (flags win when both are set) — the flags exist so the
+# contract is visible in `help` and greppable, not to replace the env interface.
+FLAG_ENV = {
+  "track" => "TRACK", "progression" => "PROGRESSION", "sonitex" => "SONITEX_PRESET",
+  "analog-chain" => "ANALOG_CHAIN", "sidechain" => "SIDECHAIN", "bars" => "BARS",
+  "bpm" => "BPM", "swing" => "SWING", "voicing" => "VOICING", "kicks" => "KICKS"
+}.freeze
+
+def apply_flags!(argv)
+  argv.reject! do |arg|
+    next false unless arg.start_with?("--")
+    key, _, value = arg.delete_prefix("--").partition("=")
+    env_name = FLAG_ENV[key] or abort "unknown flag --#{key} — known: #{FLAG_ENV.keys.map { |k| "--#{k}" }.join(' ')}"
+    abort "flag --#{key} needs a value (--#{key}=...)" if value.empty?
+    ENV[env_name] = value
+    true
   end
-when "dilla"
-  dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
-  n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
-  render_dilla(dest, n_bars)
-when "hiphop"          then render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3"))
-when "slum"            then render_slum_album(ARGV.shift || File.join(ROOT, "renders"))
-when "industrial"      then render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3"))
-when "techno"          then render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3"))
-when "analog"          then render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3"))
-when "analog_liveset"  then analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f)
-when "electronium", "midi" then electronium_generate(ARGV.shift || File.join(OUTPUT_DIR, "electronium.mid"))
-when "mix"  then run_mix(ARGV.shift || "v11")
-when "v7"   then run_mix("v7")
-when "v8"   then run_mix("v8")
-when "v9"   then run_mix("v9")
-when "v10"  then run_mix("v10")
-when "v11"  then run_mix("v11")
-when "demux"
-  src = ARGV.shift or abort "usage: ruby dilla.rb demux <url-or-path> [deep]"
-  ARGV[0] == "deep" ? demux_deep(src) : demux_six(src)
-when "liveset"
-  set = ARGV.shift || stems_load_manifest["active"] || "default"
-  mins = (ARGV.shift || LIVESET_MIN).to_i
-  render_liveset(set, minutes: mins)
-else
-  help
+end
+
+DISPATCH = {
+  "capabilities" => -> { puts Master::Reach::AnalogCapabilities.report(:dilla) },
+  "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
+  "help" => -> { help },
+  "scan" => -> { scan },
+  "sweep" => -> { sweep },
+  "council" => -> { council },
+  "debug" => -> { debug },
+  "sample" => -> { sample },
+  "source" => -> { source(ARGV.shift, ARGV.shift) },
+  "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },
+  "separate" => -> { separate(ARGV.shift) },
+  "render" => -> { render(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
+  "verify" => -> { verify(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
+  "chords" => -> { chords },
+  "clean" => -> { clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav")) },
+  "stems" => -> { stems(*ARGV) },
+  "study" => -> { study(ARGV.shift, ARGV.shift) },
+  "rhythm" => -> { rhythm(ARGV.shift) },
+  "melody" => -> { melody(ARGV.shift) },
+  "harmony" => -> { harmony(ARGV.shift) },
+  "semantics" => -> { semantics(ARGV.shift) },
+  "ears" => -> { ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
+  "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
+  "live" => -> { live((ARGV.shift || 32).to_i) },
+  "stream" => -> { stream((ARGV.shift || STREAM_BARS_COUNT).to_i) },
+  "live_now" => -> { live_now },
+  "harmony_now" => -> { harmony_now },
+  "regenerate" => -> { regenerate((ARGV.shift || 16).to_i) },
+  "bass" => -> { bass((ARGV.shift || 55.0).to_f) },
+  "grade" => -> { grade(ARGV.shift, ARGV.shift, ARGV.shift) },
+  "fetch-assets" => -> { fetch_assets! },
+  "use-external-kit" => -> { use_external_kit!(ARGV.shift || abort("usage: use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>")) },
+  "grade_list" => -> { grade_list },
+  "sonitex_list" => -> { sonitex_list },
+  "analog_list" => -> { analog_list },
+  "prepare" => -> { prepare(ARGV.shift) },
+  "loose_pocket" => lambda do
+    out = ARGV.shift
+    if out.nil? || out == "beats"
+      render_madlib_album(out == "beats" ? (ARGV.shift || File.join(ROOT, "renders", "beats")) : File.join(ROOT, "renders", "beats"))
+    else
+      render_madlib_drums(out)
+    end
+  end,
+  "dilla" => lambda do
+    dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
+    n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
+    render_dilla(dest, n_bars)
+  end,
+  "hiphop" => -> { render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3")) },
+  "slum" => -> { render_slum_album(ARGV.shift || File.join(ROOT, "renders")) },
+  "industrial" => -> { render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3")) },
+  "techno" => -> { render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3")) },
+  "analog" => -> { render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3")) },
+  "analog_liveset" => -> { analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f) },
+  "electronium" => -> { electronium_generate(ARGV.shift || File.join(OUTPUT_DIR, "electronium.mid")) },
+  "mix" => -> { run_mix(ARGV.shift || "v11") },
+  "v7" => -> { run_mix("v7") },
+  "v8" => -> { run_mix("v8") },
+  "v9" => -> { run_mix("v9") },
+  "v10" => -> { run_mix("v10") },
+  "v11" => -> { run_mix("v11") },
+  "demux" => lambda do
+    src = ARGV.shift or abort "usage: ruby dilla.rb demux <url-or-path> [deep]"
+    ARGV[0] == "deep" ? demux_deep(src) : demux_six(src)
+  end,
+  "liveset" => lambda do
+    set = ARGV.shift || stems_load_manifest["active"] || "default"
+    mins = (ARGV.shift || LIVESET_MIN).to_i
+    render_liveset(set, minutes: mins)
+  end
+}.freeze
+
+COMMAND_ALIASES = { "midi" => "electronium", "beat" => "dilla" }.freeze
+COMMANDS = (DISPATCH.keys + COMMAND_ALIASES.keys).sort.freeze
+
+if __FILE__ == $PROGRAM_NAME
+  apply_flags!(ARGV)
+  cmd = ARGV.shift
+  handler = DISPATCH[COMMAND_ALIASES.fetch(cmd, cmd)]
+  handler ? handler.call : help
 end
