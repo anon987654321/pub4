@@ -161,7 +161,7 @@ try {
     State.profileOverride = savedProfile;
     rootBody.dataset.runtimeProfile = savedProfile;
   }
-} catch (_) {}
+} catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_profile", err); }
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
   rootBody.dataset.focusMode = value ? '1' : '0';
@@ -394,7 +394,7 @@ State.mode = _shareParams.get('mode') || State.mode;
 try {
   if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
   if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
-} catch (_) {}
+} catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_share_state", err); }
 const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
 rootBody.dataset.faceRenderMode = _faceMode;
 State.idleSignature = { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
@@ -411,7 +411,7 @@ function syncShareStateUrl() {
     if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
     if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
     history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sync_share_url", err); }
 }
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
@@ -421,7 +421,7 @@ function enterDegradedTextUI(reason) {
   rootBody.dataset.errorBoundary = '1';
   rootBody.dataset.runtimeProfile = 'text';
   rootBody.dataset.runtimeVisible = 'true';
-  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (_) {}
+  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:degraded_dispose", err); }
   if (cv && cv.style) cv.style.display = 'none';
   let banner = document.getElementById('face-error-banner');
   if (!banner) {
@@ -460,7 +460,7 @@ window.addEventListener('unhandledrejection', event => {
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
     if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
@@ -953,6 +953,7 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
+
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1397,6 +1398,7 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
+
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -1466,7 +1468,7 @@ if (typeof cv !== 'undefined' && cv?.addEventListener) {
   }, false);
   cv.addEventListener('webglcontextrestored', () => {
     if (uiStatus && uiStatus.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
-    try { resize(); } catch (_) {}
+    try { resize(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:webgl_context_restored", err); }
     ensureFrameLoop();
   }, false);
 }
@@ -2098,7 +2100,7 @@ function bindOrientation() {
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (_) {}
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); }
   } else if (window.DeviceOrientationEvent) {
     bindOrientation();
   }
@@ -2192,6 +2194,7 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
+
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -2220,7 +2223,7 @@ function initAudio() {
     humOsc.connect(ambientHumGain);
     ambientHumGain.connect(actx.destination);
     humOsc.start();
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:init_audio", err); }
 }
 function setAmbientHum(active) {
   if (!ambientHumGain || !actx) return;
@@ -2250,11 +2253,11 @@ function ttsStreamLiveEnabled() {
   try {
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '1') return true;
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_live_read", err); }
   return !!window.MASTER_VOICE_POLICY?.stream_live_default;
 }
 function setTtsStreamLive(on) {
-  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (_) {}
+  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_live_store", err); }
   if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;
 }
 function setTtsHealthStatus(msg, ttlMs = 8000) {
@@ -2324,7 +2327,7 @@ function setTtsStyle(style, opts = {}) {
   const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
   window.MASTER_TTS_STYLE = next;
   State.ttsStyleLocked = opts.lockStyle === false ? false : next !== 'auto';
-  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (_) {}
+  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:style_store", err); }
   syncTtsStyleUi();
   if (!opts.silent) {
     emitTtsEvent('tts:style:active', { style: next });
@@ -2389,11 +2392,11 @@ const EMOTION_HISTORY_KEY = 'master:emotion_history';
 const EMOTION_HISTORY_CAP = 50;
 function pushEmotionHistory(entry) {
   let ring = [];
-  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (_) {}
+  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:emotion_history_read", err); }
   if (!Array.isArray(ring)) ring = [];
   ring.push({ ts: Date.now(), ...entry });
   while (ring.length > EMOTION_HISTORY_CAP) ring.shift();
-  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (_) {}
+  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:emotion_history_store", err); }
   const bar = document.getElementById('mood-sparkline');
   if (!bar) return;
   bar.innerHTML = ring.slice(-20).map((e) => {
@@ -2424,7 +2427,7 @@ async function prefetchTtsPhraseBank() {
       const style = row.style || _nextTtsStyle(voice);
       fetchTTS(row.text, voice, style);
     });
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:prefetch_phrase_bank", err); }
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -2574,7 +2577,7 @@ async function writeCachedTTS(key, blob) {
   try {
     const tx = db.transaction(TTS_STORE, 'readwrite');
     tx.objectStore(TTS_STORE).put(blob, key);
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:write_cached_tts", err); }
 }
 
 function latchTtsRateLimit(res) {
@@ -2652,7 +2655,7 @@ async function tryPartialTTSPlay(job, bytes) {
     partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
     partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
     if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_partial", err); }
 }
 
 async function pollTTSJob(job, signal) {
@@ -2881,7 +2884,7 @@ function scheduleTtsTick(delay) {
 
 function browserTtsFallbackAllowed() {
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
-  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (_) {}
+  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:fallback_allowed_read", err); }
   return false;
 }
 function speakWithBrowserTTS(text, token) {
@@ -2967,7 +2970,7 @@ function ttsTick() {
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
-    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
+    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:audio_pause", err); } }
     tts.audio = audio;
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
@@ -3015,7 +3018,7 @@ function ttsTogglePause() {
   if (tts.audio.paused) {
     if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
       const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
-      try { tts.audio.currentTime = seek; } catch (_) {}
+      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:seek_resume", err); }
     }
     tts.audio.play().catch(() => {});
     tts.paused = false;
@@ -3049,6 +3052,7 @@ function ttsTogglePause() {
   refresh();
   setInterval(refresh, 60000);
 })();
+
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -3117,7 +3121,7 @@ function fadeTtsAudio(ms = 80) {
 function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
-  if (tts.audio) { try { tts.audio.pause(); } catch (_) {} tts.audio = null; }
+  if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_pause", err); } tts.audio = null; }
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
@@ -3177,7 +3181,7 @@ function flashViolation() {
 }
 
 function cancelStream() {
-  if (evtSrc) { try { evtSrc.close(); } catch (_) {} evtSrc = null; }
+  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:cancel_stream_close", err); } evtSrc = null; }
   window._chatCancel?.();
   ttsSkip();
   State.mode = 'idle';
@@ -3200,7 +3204,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (_) {} sendMessage(t2); } }, 1200);
+      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); } sendMessage(t2); } }, 1200);
     }
   };
   recognition.onend = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
@@ -3233,11 +3237,11 @@ function startSTT() {
   }
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (_) {}
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); }
 }
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
-  try { recognition.stop(); } catch (_) {}
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
 }
 
 let evtSrc = null;
@@ -3363,7 +3367,7 @@ function handleFaceNamedEvent(event, data) {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
         if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
       }, 8000);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
     return true;
   }
   if (event === 'confidence') {
@@ -3376,7 +3380,7 @@ function handleFaceNamedEvent(event, data) {
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
       if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:felt_event", err); }
     return true;
   }
   return false;
@@ -3447,7 +3451,7 @@ async function sendMessage(text) {
     window._chatOnDone?.();
     return;
   }
-  if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
+  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
   showStage("routing…", 1000);
@@ -3461,7 +3465,7 @@ async function sendMessage(text) {
       preEnhanced = chosen === data.enhanced;
       finalText = chosen;
     }
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:enhance_message", err); }
 
   tts.lang = detectLang(text);
   const isTimeSensitive = /\b(today|now|current|latest|recent|this (week|month|year)|right now|at the moment|as of)\b/i.test(text);
@@ -3494,7 +3498,7 @@ async function sendMessage(text) {
         try {
           const parsed = JSON.parse(raw);
           if (parsed && parsed.type === 'trace') return;
-        } catch (_) {}
+        } catch (_) { /* not JSON, fall through to normal content handling */ }
       }
       if (raw === '[DONE]') {
         if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
@@ -3596,7 +3600,7 @@ async function sendMessage(text) {
       clearThinkingAloud();
       showStage("");
       if (navigator.vibrate) navigator.vibrate([60]);
-      try { evtSrc.close(); } catch (_) {}
+      try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_done_close", err); }
       window._chatOnDone?.();
       return;
     }
@@ -3705,32 +3709,32 @@ async function sendMessage(text) {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
         if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
       }, 8000);
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); }
   });
   evtSrc.addEventListener('confidence', (ev) => {
     const c = parseFloat(ev.data); if (isNaN(c)) return;
     State.confidence = c;
   });
   evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); }
   });
   evtSrc.addEventListener('compaction', (ev) => {
-    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); }
   });
   evtSrc.addEventListener('ctx_footer', (ev) => {
-    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); }
   });
   evtSrc.addEventListener('phantom', (ev) => {
-    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); }
   });
   evtSrc.addEventListener('tool_stack', (ev) => {
-    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); }
   });
   evtSrc.addEventListener('stage', (ev) => {
-    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); }
   });
   evtSrc.addEventListener('btw', (ev) => {
-    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (_) {}
+    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); }
   });
   evtSrc.addEventListener('felt', (ev) => {
     try {
@@ -3738,7 +3742,7 @@ async function sendMessage(text) {
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
       if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (_) {}
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); }
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);
@@ -3748,7 +3752,7 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
-    try { evtSrc.close(); } catch (_) {}
+    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); }
   };
 }
 
@@ -3766,13 +3770,13 @@ setInterval(() => {
     tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
   });
   syncShareStateUrl();
-  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (_) {}
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); }
 }, 8000);
 
 let wakeLock = null;
 async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
-  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (_) {} }
+  async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_lock_request", err); } }
   await req();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
@@ -3792,12 +3796,12 @@ function previewVoice(voice) {
   loadTTSBlob("Let's work now.", chosen, style)
     .then(async (blob) => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_pause", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
       preSpeechInhale(style);
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:preview_voice_connect", err); }
       startVisemeAnim("Let's work now.");
       audio.onended = audio.onerror = () => {
         stopVisemeAnim();
@@ -3853,11 +3857,11 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
       const src = URL.createObjectURL(blob);
-      if (tts.audio) { try { tts.audio.pause(); } catch (_) {} }
+      if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_pause", err); } }
       const audio = new Audio(src);
       tts.audio = audio;
       audio.playbackRate = getTtsRate();
-      try { await connectTTSAudio(audio, 1.15); } catch (_) {}
+      try { await connectTTSAudio(audio, 1.15); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:play_duo_connect", err); }
       startVisemeAnim(text);
       preSpeechInhale(useStyle);
       audio.onended = audio.onerror = () => {
@@ -3886,7 +3890,7 @@ function meanPoolField(pool, field) {
 }
 function collectFeltState() {
   let history = [];
-  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (_) {}
+  try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:collect_felt_state", err); }
   const histEntropy = history.length
     ? history.reduce((s, e) => s + Number(e.entropy ?? 0.2), 0) / history.length
     : (State.entropy ?? 0.2);
@@ -4002,7 +4006,7 @@ const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';
 let _cmdHist = [];
 let _cmdHistIdx = -1;
-try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (_) {}
+try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:cmd_hist_read", err); }
 function _resizeZin() {
   if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
   zshIn.style.height = 'auto';
@@ -4202,3 +4206,4 @@ await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
 await import(_deferFaceMod('face_loops_nudge.js'));
+

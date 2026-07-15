@@ -26,7 +26,7 @@ function initAudio() {
     humOsc.connect(ambientHumGain);
     ambientHumGain.connect(actx.destination);
     humOsc.start();
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:init_audio", err); }
 }
 function setAmbientHum(active) {
   if (!ambientHumGain || !actx) return;
@@ -56,11 +56,11 @@ function ttsStreamLiveEnabled() {
   try {
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '1') return true;
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_live_read", err); }
   return !!window.MASTER_VOICE_POLICY?.stream_live_default;
 }
 function setTtsStreamLive(on) {
-  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (_) {}
+  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_live_store", err); }
   if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;
 }
 function setTtsHealthStatus(msg, ttlMs = 8000) {
@@ -130,7 +130,7 @@ function setTtsStyle(style, opts = {}) {
   const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
   window.MASTER_TTS_STYLE = next;
   State.ttsStyleLocked = opts.lockStyle === false ? false : next !== 'auto';
-  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (_) {}
+  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:style_store", err); }
   syncTtsStyleUi();
   if (!opts.silent) {
     emitTtsEvent('tts:style:active', { style: next });
@@ -195,11 +195,11 @@ const EMOTION_HISTORY_KEY = 'master:emotion_history';
 const EMOTION_HISTORY_CAP = 50;
 function pushEmotionHistory(entry) {
   let ring = [];
-  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (_) {}
+  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:emotion_history_read", err); }
   if (!Array.isArray(ring)) ring = [];
   ring.push({ ts: Date.now(), ...entry });
   while (ring.length > EMOTION_HISTORY_CAP) ring.shift();
-  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (_) {}
+  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:emotion_history_store", err); }
   const bar = document.getElementById('mood-sparkline');
   if (!bar) return;
   bar.innerHTML = ring.slice(-20).map((e) => {
@@ -230,7 +230,7 @@ async function prefetchTtsPhraseBank() {
       const style = row.style || _nextTtsStyle(voice);
       fetchTTS(row.text, voice, style);
     });
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:prefetch_phrase_bank", err); }
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -380,7 +380,7 @@ async function writeCachedTTS(key, blob) {
   try {
     const tx = db.transaction(TTS_STORE, 'readwrite');
     tx.objectStore(TTS_STORE).put(blob, key);
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:write_cached_tts", err); }
 }
 
 function latchTtsRateLimit(res) {
@@ -458,7 +458,7 @@ async function tryPartialTTSPlay(job, bytes) {
     partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
     partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
     if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
-  } catch (_) {}
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_partial", err); }
 }
 
 async function pollTTSJob(job, signal) {
@@ -687,7 +687,7 @@ function scheduleTtsTick(delay) {
 
 function browserTtsFallbackAllowed() {
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
-  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (_) {}
+  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:fallback_allowed_read", err); }
   return false;
 }
 function speakWithBrowserTTS(text, token) {
@@ -773,7 +773,7 @@ function ttsTick() {
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
-    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (_) {} }
+    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:audio_pause", err); } }
     tts.audio = audio;
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
@@ -821,7 +821,7 @@ function ttsTogglePause() {
   if (tts.audio.paused) {
     if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
       const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
-      try { tts.audio.currentTime = seek; } catch (_) {}
+      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:seek_resume", err); }
     }
     tts.audio.play().catch(() => {});
     tts.paused = false;
