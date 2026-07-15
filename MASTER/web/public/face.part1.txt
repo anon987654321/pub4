@@ -568,6 +568,7 @@ function markFaceReady() {
   faceReadyMarked = true;
   rootBody.classList.add('face-ready');
   rootBody.classList.remove('face-loading');
+  window.MASTER?.boot?.signal?.('face_ready', { source: 'markFaceReady' });
   window.dispatchEvent(new CustomEvent('master:face-ready'));
 }
 
@@ -587,6 +588,7 @@ if (_hasWebGL && THREE) {
     // primerFired alone.
     console.error('MASTER face: WebGLRenderer construction failed', e);
     window.__MASTER_RENDERER_FAILED__ = true;
+    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
   }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);

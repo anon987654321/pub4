@@ -45,17 +45,41 @@ end
 def load_apps
   body = YAML.safe_load(File.read(APPS_YML)) || {}
   apps = body.fetch("apps")
-  apps.to_h do |name, metadata|
+  merged = apps.to_h do |name, metadata|
     [
       name.to_s,
       {
         "domain" => metadata.fetch("domain").to_s,
-        "port" => Integer(metadata.fetch("port"))
+        "port" => Integer(metadata.fetch("port")),
+        "standalone" => false
+      }
+    ]
+  end
+  load_standalone_apps.each { |name, metadata| merged[name] = metadata }
+  merged
+rescue StandardError => e
+  warn "apps.yml unreadable: #{e.class}: #{e.message}"
+  load_standalone_apps
+end
+
+def load_standalone_apps
+  path = File.join(ROOT, "OPENBSD", "master.json")
+  return {} unless File.file?(path)
+
+  data = JSON.parse(File.read(path))
+  Array(data["standalone_apps"]).to_h do |entry|
+    name = entry.fetch("name").to_s
+    [
+      name,
+      {
+        "domain" => entry.fetch("domain").to_s,
+        "port" => Integer(entry.fetch("port")),
+        "standalone" => true
       }
     ]
   end
 rescue StandardError => e
-  warn "apps.yml unreadable: #{e.class}: #{e.message}"
+  warn "master.json standalone_apps unreadable: #{e.class}: #{e.message}"
   {}
 end
 
@@ -113,6 +137,7 @@ up_checks.each do |name, port|
   failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
 
   next unless ready_apps.include?(name)
+  next if apps.dig(name, "standalone")
 
   health_ok, health_out = curl_ok?("http://127.0.0.1:#{port}/health", timeout: 20)
   unless health_ok

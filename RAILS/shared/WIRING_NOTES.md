@@ -53,7 +53,7 @@ eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), bindin
 
 ## Social endpoints
 
-Five apps eval `shared/config/routes/social.rb` (notifications, reactions, reports). Controllers subclass `Shared::ReactionsController`, `Shared::NotificationsController`, `Shared::ReviewCasesController`.
+Amber and brgen eval `shared/config/routes/social.rb` (notifications, reactions, reports). BSDports intentionally omits those routes because its schema has no social tables.
 
 **Brgen** mounts equivalent routes inline; uses city-specific `NotificationsController` (grouped inbox) and `ModerationReport` for reports. Reactions use `Shared::ReactionToggle`.
 
@@ -75,7 +75,7 @@ Emit activity via `Shared::EventEmitter` / `include Shared::StructuredEvents` fo
 
 ```bash
 bin/rails dartsass:build
-bin/importmap audit
+bundle exec ruby -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])'
 bin/rails test
 ```
 

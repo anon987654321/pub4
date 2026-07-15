@@ -2,14 +2,11 @@
 
 class Comment < ApplicationRecord
   include Shared::Votable
+  include Shared::CommentThreading
   tracks_activity created: "CommentCreated", source_vertical: "social", actor: :user
 
   belongs_to :user
   belongs_to :commentable, polymorphic: true, touch: true
-  belongs_to :parent, class_name: "Comment", optional: true
-
-  has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
-
 
   validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
 
@@ -29,8 +26,6 @@ class Comment < ApplicationRecord
       .having(HAS_DOWNVOTE_SQL)
       .order(CONTROVERSIAL_SQL)
   }
-
-  def root?  = parent_id.nil?
 
   def depth
     d = 0

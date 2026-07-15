@@ -16,6 +16,7 @@
 #   LEGAT_DAILY_CAP=5
 #   FORCE_IN=1            # allow Innovasjon Norge sends
 
+require "digest"
 require "json"
 require "yaml"
 require "fileutils"
@@ -38,6 +39,13 @@ FROM = ENV.fetch("LEGAT_FROM", "bergen@pub.attorney")
 MUTT = ENV.fetch("MUTT_CMD", "mutt")
 DAILY_CAP = ENV.fetch("LEGAT_DAILY_CAP", "5").to_i
 FORCE_IN = ENV["FORCE_IN"].to_s == "1"
+BCC = ENV["LEGAT_BCC"].to_s.strip
+CHROME_CANDIDATES = [
+  ENV["CHROME_BIN"],
+  "chromium",
+  "google-chrome",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+].compact.uniq.freeze
 
 COVER_BY_TRACK = {
   "bolig" => <<~TXT,
@@ -130,6 +138,8 @@ def html_to_text(path)
 end
 
 def cover_for(app)
+  return app["cover_intro"].strip if app["cover_intro"].to_s.strip != ""
+
   custom = File.join(COVERS_DIR, "#{app['id']}.txt")
   return File.read(custom).strip if File.exist?(custom)
 
@@ -137,13 +147,48 @@ def cover_for(app)
   template % { funder: app["funder"] }
 end
 
-def attachment_for(html_path)
-  pdf = html_path.sub(/\.html\z/, ".pdf")
-  if system("which wkhtmltopdf >/dev/null 2>&1")
-    system("wkhtmltopdf", "-q", html_path, pdf, out: File::NULL, err: File::NULL)
-    return pdf if File.exist?(pdf)
+def chrome_pdf(html_path, pdf_path)
+  bin = CHROME_CANDIDATES.find { |c| c.include?("/") ? File.executable?(c) : system("which #{c} >/dev/null 2>&1") }
+  return false unless bin
+
+  system(
+    bin, "--headless", "--disable-gpu", "--no-sandbox",
+    "--print-to-pdf=#{pdf_path}", "file://#{html_path}",
+    out: File::NULL, err: File::NULL
+  ) && File.exist?(pdf_path)
+end
+
+def pdf_path_for(html_path, app_id: nil)
+  id = app_id || File.basename(html_path, ".html")
+  staged = File.join(LEGATS_DIR, "pdfs", "#{id}.pdf")
+  return staged if File.exist?(staged)
+
+  html_path.sub(/\.html\z/, ".pdf")
+end
+
+def attachments_for(html_path, app_id: nil)
+  pdf = pdf_path_for(html_path, app_id: app_id)
+  unless File.exist?(pdf)
+    if system("which wkhtmltopdf >/dev/null 2>&1")
+      system("wkhtmltopdf", "-q", html_path, pdf, out: File::NULL, err: File::NULL)
+    else
+      chrome_pdf(File.expand_path(html_path), pdf)
+    end
   end
-  html_path
+  files = []
+  files << pdf if File.exist?(pdf)
+  files << html_path if files.empty?
+  files
+end
+
+def mime_fingerprint(body, attach_paths)
+  parts = [body.to_s.encode("UTF-8", invalid: :replace, undef: :replace)]
+  attach_paths.each do |path|
+    next unless File.exist?(path)
+
+    parts << File.binread(path).force_encoding(Encoding::BINARY)
+  end
+  Digest::SHA256.hexdigest(parts.map(&:b).join("\0".b))
 end
 
 def sent_log
@@ -194,7 +239,7 @@ def already_sent?(id, app)
   true
 end
 
-def mark_sent(id, to:, subject:, batch: nil)
+def mark_sent(id, to:, subject:, batch: nil, mime_hash: nil, mutt_exit: 0)
   log = sent_log
   log["sent"] ||= {}
   log["daily"] ||= {}
@@ -203,6 +248,8 @@ def mark_sent(id, to:, subject:, batch: nil)
     "to" => to,
     "subject" => subject,
     "batch" => batch,
+    "mime_hash" => mime_hash,
+    "mutt_exit" => mutt_exit,
   }.compact
   log["daily"][today_key] = daily_sent_count + 1
   File.write(SENT_LOG_PATH, log.to_yaml)
@@ -298,30 +345,43 @@ def send_app(app, dry_run:, force:, confirm:, batch: nil)
 
   cover = cover_for(app)
   body = "#{cover}\n\n---\n\n#{html_to_text(html)}"
-  attach = attachment_for(html)
+  attach_paths = attachments_for(html, app_id: id)
+  fingerprint = mime_fingerprint(body, attach_paths)
+
+  if (prev = sent_log.dig("sent", id)) && prev["mime_hash"] == fingerprint
+    puts "skip #{id} (duplicate mime_hash #{fingerprint[0, 12]}…)"
+    return :skipped
+  end
 
   puts "→ #{id}"
   puts "  Funder: #{app['funder']}"
   puts "  To: #{app['to']}"
   puts "  Subject: #{app['subject']}"
-  puts "  Attach: #{attach}"
+  puts "  Attach: #{attach_paths.join(', ')}"
+  puts "  MIME: #{fingerprint[0, 12]}…"
 
   if dry_run || !confirm
-    eml = write_outbox_eml(app, body, attach)
+    eml = write_outbox_eml(app, body, attach_paths.join(", "))
     puts "  [dry-run] wrote #{eml}"
     return :dry_run
   end
 
-  IO.popen([MUTT, "-e", "set from='#{FROM}'", "-s", app["subject"], "-a", attach, "--", app["to"]], "w") do |io|
+  mutt_args = [MUTT, "-e", "set from='#{FROM}'", "-s", app["subject"]]
+  mutt_args += ["-b", BCC] if BCC != ""
+  attach_paths.each { |path| mutt_args += ["-a", path] }
+  mutt_args += ["--", app["to"]]
+
+  IO.popen(mutt_args, "w") do |io|
     io.write(body)
   end
 
+  exit_code = $CHILD_STATUS.exitstatus
   if $CHILD_STATUS.success?
-    mark_sent(id, to: app["to"], subject: app["subject"], batch: batch)
-    puts "  sent ✓"
+    mark_sent(id, to: app["to"], subject: app["subject"], batch: batch, mime_hash: fingerprint, mutt_exit: exit_code)
+    puts "  sent ✓#{BCC != '' ? " (bcc #{BCC})" : ''}"
     :sent
   else
-    warn "  mutt failed (exit #{$CHILD_STATUS.exitstatus})"
+    warn "  mutt failed (exit #{exit_code})"
     :error
   end
 end

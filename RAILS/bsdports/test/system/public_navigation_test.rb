@@ -5,7 +5,8 @@ class PublicNavigationTest < ApplicationSystemTestCase
     visit root_path
 
     assert_selector "h1", text: "OpenBSD ports"
-    assert_selector "input[placeholder='Search ports…']"
+    assert_selector "[role='search'][aria-label='Search ports']"
+    assert_selector "input[aria-label='Search query']"
     assert_selector "a.skip-link[href='#main-content']", text: "Skip to main content", visible: :all
     assert_selector "main#main-content"
     assert_selector "nav[aria-label='Primary navigation'] a[aria-current='page']", text: "BSDports", visible: :all

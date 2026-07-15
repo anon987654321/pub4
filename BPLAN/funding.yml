@@ -27,6 +27,8 @@ economics:
   bolig_note: "Startlån via Husbanken/Boligkontoret — fortløpende søknad. Tilskudd typisk 250–500k (behovsprøvd). Klassiske legater dekker ikke kjøpesum."
   developer_hourly_nok: 450
   developer_hours_year: 800
+  in_egenandel_typical_pct: 25
+  skattefunn_rate_pct: 22
 
 portfolio:
   convergence_version: 4
@@ -51,6 +53,21 @@ portfolio:
     tilskudd_typical_nok: "250000–500000"
     beholde_egenkapital_max_g: 1
     kontakt: "boligkontoret@bergen.kommune.no · tlf. 55 56 65 76"
+  financial_channels:
+    likviditet: "Legater og kontant utbetaling samme år — typisk 5–75k per søknad, maks ~150k porteføljetak"
+    skattefradrag: "SkatteFUNN — 19–25 % av godkjente FoU-kostnader, utbetales som skattefradrag neste år"
+    lan: "Startlån og IN-lånedel — separat fra FoU-budsjett; bolig først via Husbanken"
+  living_bridge:
+    months_until_first_payout: 6
+    monthly_nok: 18000
+    note: "Bro mellom nå og første tildeling — dekkes av egeninnsats, små legater og ærlig levekostnadsplan"
+  sensitivity_legat:
+    - { label: "50 % legat-treff", nok: 75000, note: "Én–to små tildelinger; fortsett egeninnsats" }
+    - { label: "100 % (realistisk tak)", nok: 150000, note: "Porteføljetak — ikke sum av alle idé-asks" }
+    - { label: "150 % (optimistisk)", nok: 225000, note: "Fortsatt langt under 455k — ingen dobbelsøk" }
+  bolig_price_band_bergen:
+    typical_search_nok: "2200000–3200000"
+    note: "Finn.no-utkast innen kommunens maks kjøpesum ved søknad — ikke fantasipris"
 
 # Sortert etter frist. Verifiser på stipendportalen.no / giverens nettside før sending.
 deadlines:
@@ -127,9 +144,12 @@ ventures:
       - { item: "Reise, møter, kurs", nok: 24000 }
       - { item: "Regnskap og juridisk bistand", nok: 18000 }
       - { item: "Buffer uforutsett", nok: 38000 }
+    vision: >
+      Et Bergen der norsk programvareutvikling eies lokalt — med AI som lærer av egne
+      feil under konstitusjonelle rammer, ikke som svart boks fra utlandet.
     wholesome_pitch: >
-      Selvforbedrende, styrt AI for programvareutvikling — tryggere og billigere
-      enn å outsource til utenlandske SaaS-verktøy.
+      Selvforbedrende, styrt AI for programvareutvikling — tryggere, billigere og
+      mer forståelig enn å leie utenlandske SaaS-verktøy.
     deliverables:
       - "Dokumentert selvforbedringsløkke med målbare iterasjoner"
       - "OpenBSD-inspirert sikkerhetsmodell"
@@ -151,9 +171,12 @@ ventures:
       - { item: "LLM/compute og VPS (isolert testmiljø)", nok: 52000 }
       - { item: "Regnskap og juridisk bistand", nok: 25000 }
       - { item: "Buffer uforutsett", nok: 68000 }
+    vision: >
+      Pasienter og pårørende møter ett tydelig norsk grensesnitt — mindre telefonkø
+      og papirrot, uten at maskinen tar kliniske valg.
     wholesome_pitch: >
-      Digitale verktøy som reduserer administrativ byrde og styrker samhandling —
-      uten å erstatte klinisk skjønn.
+      Digitale verktøy som letter koordinering og informasjonsflyt — administrativ
+      byrde ned, klinisk skjønn hos fagperson.
     deliverables:
       - "Prototyp for koordinering/informasjon (ikke diagnose)"
       - "Personvern- og DPIA-utkast"
@@ -175,8 +198,12 @@ ventures:
       - { item: "VPS og drift", nok: 45000 }
       - { item: "Bydelsworkshops og reise", nok: 35000 }
       - { item: "Buffer uforutsett", nok: 25000 }
+    vision: >
+      Bydelene snakker med hverandre igjen — naboer, foreninger og frivillighet i Bergen,
+      på egne servere med moderering folk stoler på.
     wholesome_pitch: >
-      Lokalt fellesskap, tillit og deltakelse i Bergen — reell Rails-app allerede deployet.
+      Hyperlokalt fellesskap med tillit og deltakelse — en reell Rails-app, ikke et
+      markedsføringsslagord.
     deliverables:
       - "Pilot tre bydeler"
       - "WCAG-gjennomgang"
@@ -197,8 +224,11 @@ ventures:
       - { item: "VPS og lagring", nok: 28000 }
       - { item: "Regnskap", nok: 12000 }
       - { item: "Buffer uforutsett", nok: 40000 }
+    vision: >
+      Garderoben husker hva du allerede eier — hverdagsklær som varer, vær tilpasset
+      Bergen, mindre impuls og shipping fra fjerne fabrikker.
     wholesome_pitch: >
-      Hjelp folk bruke klær lengre — mindre impulskjøp, lavere fotavtrykk.
+      Hjelp folk bruke klærne lengre — lavere fotavtrykk og færre unødvendige kjøp.
     deliverables:
       - "Outfit-forslag etter vær"
       - "Brukerrapport kost-per-bruk"
@@ -218,8 +248,12 @@ ventures:
       - { item: "Dokumentasjon og maritime pilot", nok: 30000 }
       - { item: "Regnskap", nok: 10000 }
       - { item: "Buffer uforutsett", nok: 20000 }
+    vision: >
+      Offentlige og maritime miljøer ser hvilken programvare som faktisk kjører —
+      åpent, revisjonbart, uten vendor lock-in.
     wholesome_pitch: >
-      Åpen, sporbar programvarekartlegging for offentlig sektor og maritime miljøer.
+      Sporbar programvarekartlegging for offentlig sektor og maritime virksomheter —
+      OpenBSD-ånd, norsk drift.
     deliverables:
       - "Oppdatert ports-import"
       - "Sårbarhetsdashboard"
@@ -240,8 +274,11 @@ ventures:
       - { item: "Fotoproduksjon (Repligen)", nok: 25000 }
       - { item: "Regnskap og IP-vurdering", nok: 20000 }
       - { item: "Buffer uforutsett", nok: 50000 }
+    vision: >
+      Fottøy som vokser frem i Bergen — håndverk og materialer testet lokalt før
+      noen lover masseproduksjon.
     wholesome_pitch: >
-      Lokal prototyping og bærekraftig fottøy — ikke massefabrikk på dag én.
+      Lokal prototyping og bærekraftig fottøy — fem–ti par først, ikke fabrikk på dag én.
     deliverables:
       - "5–10 prototypepar"
       - "Materialtest SINTEF-lignende partner om mulig"
@@ -263,8 +300,11 @@ ventures:
       - { item: "Juridisk vurdering lisens", nok: 25000 }
       - { item: "Dokumentasjon åpen metodikk", nok: 20000 }
       - { item: "Buffer uforutsett", nok: 15000 }
+    vision: >
+      Åpen risikoanalyse alle kan lese — læring og metodikk før kapital, med
+      Finanstilsynets rammer i forkant.
     wholesome_pitch: >
-      Programvare for risikoanalyse og læring — ikke uregulert fond. Finanstilsynet først.
+      Programvare for risikoanalyse og læring — ikke uregulert fond. Regulator først, hype sist.
     note: "Ikke søk klassiske legater som hedgefond — kun innovasjon/FoU for software"
     deliverables:
       - "Backtest-rammeverk med åpen metodikk"
@@ -285,8 +325,11 @@ ventures:
       - { item: "VPS og sikkerhet", nok: 38000 }
       - { item: "Partnerskap (frivillig organisasjon)", nok: 25000 }
       - { item: "Buffer uforutsett", nok: 27000 }
+    vision: >
+      Lokalpolitikk man faktisk forstår på fiskepiren — bydelsavgjørelser i klart norsk,
+      uten å erstatte stemmeseddelen.
     wholesome_pitch: >
-      Gjør lokal politikk forståelig — ikke erstatte valg eller partier.
+      Gjør lokal politikk lesbar — supplerer valg og partier, erstatter dem ikke.
     deliverables:
       - "Bydels-pilot"
       - "Tilgjengelig norsk UX"
@@ -306,8 +349,11 @@ ventures:
       - { item: "VPS, lagring og personvern", nok: 42000 }
       - { item: "Repligen (foto/video verdighet)", nok: 38000 }
       - { item: "Buffer uforutsett", nok: 45000 }
+    vision: >
+      En verdig avskjed uten overraskelsesregninger — ro, fastpris og en minnebok
+      familie kan dele i generasjoner.
     wholesome_pitch: >
-      Fastpris, ro, digital minnebok — verdighet uten gimmick.
+      Fastpris, stillhet og digital minnebok — verdighet uten salgstricks.
     deliverables:
       - "Digital minnebok MVP"
       - "Fastprisliste publisert"
@@ -327,8 +373,11 @@ ventures:
       - { item: "Brukertest med sårbar målgruppe", nok: 28000 }
       - { item: "Regnskap", nok: 14000 }
       - { item: "Buffer uforutsett", nok: 28000 }
+    vision: >
+      Alle skal kunne formulere et første brev på godt norsk — veiledning og maler
+      som peker mot advokat når det trengs.
     wholesome_pitch: >
-      Klart norsk for brev og skjema — ikke erstatte advokat i tvistesaker.
+      Klart norsk for brev og skjema — ikke erstatning for advokat i tvist.
     deliverables:
       - "HTU-malbibliotek"
       - "Juridisk disclaimer og henvisning til Advokatloven"
@@ -348,8 +397,11 @@ ventures:
       - { item: "Relayd/TLS og drift", nok: 18000 }
       - { item: "Dokumentasjon", nok: 7000 }
       - { item: "Buffer uforutsett", nok: 5000 }
+    vision: >
+      Norske tjenester på norsk jord — minimal overflate, egen maskin, færre
+      amerikanske API-nøkler i kjernen.
     wholesome_pitch: >
-      Egen maskin, minimal privilege — redusert avhengighet av utenlandsk sky.
+      Egen maskin med minimal privilege — redusert avhengighet av utenlandsk sky.
     deliverables:
       - "Deploy-dokumentasjon OpenBSD"
       - "Sikkerhetsrevisjon utkast"
@@ -369,8 +421,11 @@ ventures:
       - { item: "Podcast-distribusjon og metadata", nok: 18000 }
       - { item: "Tilgjengelighet (transkript)", nok: 12000 }
       - { item: "Buffer uforutsett", nok: 20000 }
+    vision: >
+      Bergens stemmer på lufta — lokalt innhold, transkribert og tilgjengelig,
+      uten algoritmisk støy fra Silicon Valley.
     wholesome_pitch: >
-      Lokalt innhold og tilgjengelig lyd — fellesskap, ikke algoritme-støy.
+      Lokalt innhold og tilgjengelig lyd — fellesskap på egne frekvenser.
     deliverables:
       - "10 pilot-sendinger"
       - "Podcast-feed"
@@ -390,8 +445,11 @@ ventures:
       - { item: "Lagring og leveranse", nok: 18000 }
       - { item: "Juridisk samtykke-mal", nok: 12000 }
       - { item: "Buffer uforutsett", nok: 10000 }
+    vision: >
+      Bilder som respekterer personen i rammen — samtykke først, vakker produksjon
+      for SYRE, Ilumi og brgen.
     wholesome_pitch: >
-      Respektfulle bilder med samtykke — støtter SYRE, Ilumi, brgen.
+      Respektfulle bilder med tydelig samtykke — visuell støtte til lokale prosjekter.
     deliverables:
       - "Samtykke-workflow dokumentert"
       - "10 kunde-case (frivillige)"
@@ -404,8 +462,11 @@ ventures:
     ask_legat_nok: 0
     ask_in_nok: 0
     project_total_nok: 0
+    vision: >
+      En stabil bolig i Bergen gjør alt annet mulig — ærlig Startlån-spor, adskilt
+      fra innovasjonsfantasi og FoU-budsjett.
     wholesome_pitch: >
-      Ærlig søknad om bolig i Bergen — separat fra alle innovasjonsprosjekter.
+      Ærlig boligplan i Bergen — helt separat fra utviklingsprosjekter og AI-søknader.
     note: "Førstegangsetablerer: min. 5 % egenkapital + avslag fra 3 banker. Ordinært startlån: ingen egenkapitalkrav for kvalifiserte søkere. Tilskudd 250–500k ved lav inntekt. Maks kjøpesum per husstand — se Bergen kommune."
     deliverables:
       - "Finansieringsbevis (Husbanken/Boligkontoret)"
@@ -425,9 +486,14 @@ ventures:
       - { item: "Husleie og boligutgifter i Bergen", nok: 18000 }
       - { item: "Nødvendig utstyr for inntektsgenererende arbeid", nok: 8000 }
       - { item: "Mat, transport og grunnleggende levekostnader", nok: 9000 }
+    vision: >
+      Levekostnader dekket mens bolig og arbeid bygges — ærlig personstipend,
+      ikke forkledd som FoU eller innovasjon.
     wholesome_pitch: >
-      Ærlig søknad om bistand til levekostnader og brofinansiering — ikke pakket som AI-prosjekt.
+      Bistand til levekostnader og brofinansiering — presentert som det det er,
+      ikke som teknologiprosjekt.
     note: "Gunvor Mindes, vanskeligstilte, Zuccarelli — typisk 10–50k NOK, ikke leilighetskjøp."
+    cashflow_note: "Typisk utbetaling sept–okt — bro til Startlån og første IN-møte; ikke boligkjøpesum."
     deliverables:
       - "Kvitteringsdokumentasjon for godkjente utgifter"
       - "Parallell Startlån-søknad der relevant"

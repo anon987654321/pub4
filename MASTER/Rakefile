@@ -13,6 +13,20 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
+desc "Run spec/ — Minitest specs organized by subsystem instead of one flat test/ dir"
+Rake::TestTask.new(:spec) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.ruby_opts << "-r./test/test_helper"
+  t.test_files = FileList["spec/**/*_spec.rb"]
+  t.warning = false
+end
+
+desc "Scan for tracked secrets and validate the quarantine/virus_museum structure"
+task :security_sweep do
+  sh RbConfig.ruby, "tools/security_sweep.rb"
+end
+
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
 task :constitution do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))

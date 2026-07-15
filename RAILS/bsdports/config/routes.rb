@@ -10,7 +10,6 @@ Rails.application.routes.draw do
 
   resource :session
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
   resources :passwords, param: :token
 

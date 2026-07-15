@@ -18,16 +18,8 @@ module Master
           deadline = Time.now + budget_seconds
 
           cycles.times do |cycle|
-            return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
-            brainstorm_result = brainstorm(prompt:, prior: ideas, constraints:)
-            return brainstorm_result if brainstorm_result.err?
-            ideas.concat(brainstorm_result.value!)
-            @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
-
-            return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
-            critique_result = critique(ideas)
-            return critique_result if critique_result.err?
-            critiques << critique_result.value!
+            err = run_ideation_cycle(cycle, prompt:, ideas:, critiques:, constraints:, deadline:)
+            return err if err
           end
 
           return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
@@ -38,6 +30,21 @@ module Master
         end
 
         private
+
+        def run_ideation_cycle(cycle, prompt:, ideas:, critiques:, constraints:, deadline:)
+          return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          brainstorm_result = brainstorm(prompt:, prior: ideas, constraints:)
+          return brainstorm_result if brainstorm_result.err?
+          ideas.concat(brainstorm_result.value!)
+          @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
+
+          return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          critique_result = critique(ideas)
+          return critique_result if critique_result.err?
+          critiques << critique_result.value!
+
+          nil
+        end
 
         def circuit_open?
           breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil

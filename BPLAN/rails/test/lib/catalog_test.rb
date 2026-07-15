@@ -5,7 +5,7 @@ require "test_helper"
 class CatalogTest < ActiveSupport::TestCase
   test "loads plans from funding.yml" do
     plans = Bplan::Catalog.plans
-    assert plans.size >= 14
+    assert plans.size >= 15
     assert_equal "master", plans.first[:slug]
   end
 
@@ -31,6 +31,16 @@ class CatalogTest < ActiveSupport::TestCase
     html = Bplan::Catalog.deadline_calendar_html
     assert_includes html, "Gunvor Mindes"
     assert_includes html, "2026-09-20"
+  end
+
+  test "plan html includes vision from funding.yml" do
+    body = Bplan::Catalog.plan_html("master")
+    assert_includes body, "Visjon:"
+    assert_includes body, "konstitusjonelle rammer"
+  end
+
+  test "bolig portal batch pending helper" do
+    assert_includes [true, false], Bplan::Catalog.bolig_portal_sept_pending?
   end
 
   test "venture budgets use per-idea breakdown lines" do

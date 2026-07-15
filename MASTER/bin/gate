@@ -22,9 +22,10 @@ COMMANDS = {
     "/critique .",
     "/review ."
   ].freeze,
-  # DEPLOY was renamed to RAILS + OPERATOR (2026-07). /scan takes one path
-  # per invocation, so each former DEPLOY child gets its own pass.
-  deploy: %w[../RAILS ../OPERATOR].flat_map { |path|
+  # DEPLOY was renamed to RAILS + OPENBSD (OPERATOR was later folded into
+  # OPENBSD). /scan takes one path per invocation, so each former DEPLOY
+  # child gets its own pass.
+  deploy: %w[../RAILS ../OPENBSD].flat_map { |path|
     ["/scan #{path}", "/fix #{path}", "/scan #{path}", "/critique #{path}", "/review #{path}"]
   }.freeze
 }.freeze

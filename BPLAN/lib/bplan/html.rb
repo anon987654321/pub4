@@ -138,7 +138,7 @@ module Bplan
           cells[0] = if cells.first.to_s == "·"
                        "·"
                      elsif cells.first.to_s.strip.empty?
-                       "#{i}."
+                       "#{i + 1}."
                      else
                        cells.first
                      end
@@ -228,6 +228,7 @@ module Bplan
               </table>
               #{helpers.portfolio_summary_block(funding)}
               #{legat_sum_explainer(funding, fmt: helpers.method(:fmt))}
+              #{helpers.bolig_portal_checklist_block(funding)}
               #{helpers.deadline_calendar_block(funding)}
               #{helpers.fun_wholesome_table(funding)}
               <h2>Legatsøknader</h2>

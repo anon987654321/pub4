@@ -8,8 +8,8 @@ Start with `START_HERE.md` (agent contract, runtime map, data file budget). Use 
 
 ## Creative media, without command syntax
 
-The chat router recognizes explicit creation requests before the normal agent turn. Ask in plain language: “generate a photo of Ragnhild in Bergen rain,” “make a Dilla beat,” “create a Bach-inspired instrumental,” or “give `/path/photo.jpg` a VHS look.” Ragnhild routes to the local FLUX LoRA and passes the exact prompt to its sampler; beats route to Dilla Lab; explicit grading requests route to Postpro; other image requests route to Replicate when `REPLICATE_API_TOKEN` is available. Generated media is local runtime state under `.master/media/`; no tool writes into the tracked source tree. A request will report a missing input, LoRA checkpoint, or provider token instead of silently substituting an unrelated result.
+The chat router recognizes explicit creation requests before the normal agent turn. Ask in plain language: “generate a photo of Bergen in rain,” “make a Dilla beat,” “create a Bach-inspired instrumental,” or “give `/path/photo.jpg` a VHS look.” Image requests route to Repligen when `REPLICATE_API_TOKEN` is available; beats route to Dilla Lab; explicit grading requests route to Postpro. Outputs are written outside the tracked source tree. Missing input or provider credentials produce an explicit error.
 
-The implementation is intentionally narrow: discussing J Dilla or photography remains a normal chat turn. Advanced users can still use `/lora-generate`, `/repligen`, and `/postpro`.
+The implementation is intentionally narrow: discussing J Dilla or photography remains a normal chat turn. Advanced users can invoke the Repligen and Postpro tools directly.
 
 Two spines share the `Master::` namespace intentionally. `lib/` is the application/runtime spine loaded by the gem and the CLI. `core/` is a small constitutional fold spine (`Master::Core::`) loaded on its own path by `bin/master-core` and the core tests. Because it lives under `Master::Core::` (not top-level `Master::`), it coexists with `lib/` in one process without constant collisions.

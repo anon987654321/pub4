@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "generated_from": "RAILS/apps.yml",
-  "generated_at": "2026-07-11",
+  "generated_from": "RAILS/apps.yml + BPLAN/bplan.yml",
+  "generated_at": "2026-07-15",
   "apps": [
     {
       "name": "amber",
@@ -17,6 +17,17 @@
       "name": "bsdports",
       "domain": "bsdports.org",
       "port": 47312
+    }
+  ],
+  "standalone_apps": [
+    {
+      "name": "bplan",
+      "title": "BPLAN",
+      "domain": "bplan.pub.healthcare",
+      "port": 39282,
+      "deploy_script": "BPLAN/rails/bplan.sh",
+      "deploy_root": "BPLAN/rails",
+      "content_root": "BPLAN"
     }
   ],
   "master_face": {

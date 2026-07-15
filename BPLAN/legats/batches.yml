@@ -6,20 +6,24 @@
 
 batches:
   bolig_asap:
-    description: "Bolig og økonomisk bistand — høyest prioritet for leilighet i Bergen"
+    description: "Bolig — e-postkanaler (Startlån, NAV, sosiale legater med ekstern mottaker)"
     delay_seconds: 120
     ids:
       - 12_bergen_startlan_boligtilskudd
       - 64_husbanken_startlan
       - 62_kommunalt_startlan_egenkapital
-      - 11_bergen_bys_vanskeligstilte
-      - 10_gunvor_mindes_legat
-      - 31_zuccarellostiftelsen
       - 32_hielmstierne_rosencrone
       - 44_hp_petersens_legat
       - 45_lyche_stiftelsen
-      - 30_boligsparing_egenkapital
       - 63_nav_okonomisk_radgivning
+
+  bolig_portal_sept:
+    description: "Bolig — stipendportalen sept 2026 (manuell innsending, ikke mutt)"
+    manual_only: true
+    ids:
+      - 10_gunvor_mindes_legat
+      - 31_zuccarellostiftelsen
+      - 11_bergen_bys_vanskeligstilte
 
   frist_host_2026:
     description: "Utlysninger med frist høst 2026 (auto fra funding.yml deadlines)"

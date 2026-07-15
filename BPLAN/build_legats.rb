@@ -392,13 +392,7 @@ add_app applications,
     <h2>2. Bakgrunn</h2>
     <p>Jeg er fast bosatt i Bergen og ønsker varig eierskap til modest bolig i kommunen. Inntekt kommer fra enkeltpersonforetak og innovasjonsprosjekter — noe banker vurderer som ustabil inntekt.</p>
 
-    <h2>3. Dokumentasjon vedlagt / ettersendes</h2>
-    <table>
-      <tr><td>1.</td><td>Skattemelding og næringsoppgave</td></tr>
-      <tr><td>2.</td><td>Husleiekontrakt / nåværende boligforhold</td></tr>
-      <tr><td>3.</td><td>Finn.no-utkast til relevante leiligheter i Bergen</td></tr>
-      <tr><td>4.</td><td>Oversikt over formue og gjeld</td></tr>
-    </table>
+    #{FundingHelpers.boligpakke_block(FUNDING)}
 
     <h2>4. Påstander</h2>
     <table>
@@ -431,6 +425,7 @@ add_app applications,
       <li>Utvidelse av bsdports med maritime avhengighetsanalyser</li>
       <li>Rapport til fondets styre</li>
     </ul>
+    #{FundingHelpers.legat_budget_section("bsdports", FUNDING)}
   BODY
 
 add_app applications,
@@ -450,11 +445,18 @@ add_app applications,
     <h2>2. Formål</h2>
     <p>Anthonstiftelsen støtter barn og unge. Dette prosjektet lærer ungdom å forstå algoritmer, identitet på nett og lokal demokratisk deltakelse — med MASTER som pedagogisk demonstrator for ansvarlig AI.</p>
 
-    <h2>3. Aktiviteter</h2>
+    <h2>3. Workshop-plan (dokumentert)</h2>
+    <table>
+      <tr><td>1.</td><td>Uke 1–2: «Hva er algoritmen?» — kritisk tenkning og kildekritikk</td></tr>
+      <tr><td>2.</td><td>Uke 3–4: Trygg identitet på nett — Vipps/Google, passord, phishing</td></tr>
+      <tr><td>3.</td><td>Uke 5–6: Lokal demokrati — brgen.no pilot per bydel</td></tr>
+      <tr><td>4.</td><td>Uke 7–8: MASTER-demo — ansvarlig AI uten hype</td></tr>
+    </table>
+    <h2>4. Leveranser</h2>
     <ul>
-      <li>Workshop-serie i Bergen-skoler (åpen kildekode, mediekompetanse)</li>
-      <li>brgen.no pilot for ungdomsdebatt per bydel</li>
-      <li>WCAG-tilgjengelig dokumentasjon på klart norsk</li>
+      <li>8 åpne workshop-økter i Bergen</li>
+      <li>WCAG 2.2 AA-mål dokumentasjon på klart norsk</li>
+      <li>Rapport til Anthonstiftelsen</li>
     </ul>
   BODY
 
@@ -776,16 +778,20 @@ add_app applications,
   project: "brgen",
   body: <<~BODY
     <h2>1. Sammendrag</h2>
-    <p>brgen.no inkluderer TV-kanaler, livestream, episoder og bydelsmedia — en RAILS-app utviklet med MASTER. Relevant for Media City Bergens medieteknologi-økosystem.</p>
+    <p>To komplementære spor: <strong>brgen.no</strong> (bydelsmedia, livestream, fellesskaps-TV) og <strong>Repligen Studio</strong> (visuell produksjon for lokale aktører). Begge er RAILS-apper utviklet med MASTER — relevant for Media City Bergen.</p>
 
-    <h2>2. Innovasjon</h2>
-    <p>Lokal journalistikk, creator-økonomi og fellesskaps-TV — med norsk infrastruktur og MASTER-drevet innholdsmoderering.</p>
-
-    <h2>3. Leveranser</h2>
+    <h2>2. brgen.no — medieteknologi</h2>
     <ul>
-      <li>Pilot med lokal mediepartner</li>
-      <li>Embeddable spiller og newsletter-kit</li>
-      <li>MASTER Postpro/Repligen for respektfulle bilder</li>
+      <li>Bydelskanaler og livestream med norsk infrastruktur</li>
+      <li>MASTER-drevet moderering og tilgjengelighet</li>
+      <li>Creator-økonomi uten utenlandsk plattformavhengighet</li>
+    </ul>
+
+    <h2>3. Repligen Studio — visuell produksjon</h2>
+    <ul>
+      <li>Respektfulle bilder og video for kulturaktører</li>
+      <li>Samtykke-mal og etterrettelig produksjonslogg</li>
+      <li>Pilot med én Bergen-aktør (kultur/kommune)</li>
     </ul>
   BODY
 
@@ -1020,7 +1026,7 @@ add_app applications,
       "Etisk og sikkerhetsgjennomgang",
       "Presentasjon for stiftelsen",
     ]
-  )
+  ) + FundingHelpers.anders_jahre_disclaimer_block
 
 add_app applications,
   file: "40_master_rails_konsolidert.html",
@@ -1116,6 +1122,8 @@ end
 
 def body_from_template(entry)
   venture = FundingHelpers.resolve_venture(entry.fetch("project", "personal"))
+  amount_note = entry["amount"].to_s.strip
+  amount_html = amount_note.empty? ? "" : "<p class=\"meta\"><strong>Søkt beløp (katalog):</strong> #{amount_note}</p>\n"
   case entry["template"]
   when "sosial"
     <<~BODY
@@ -1173,17 +1181,27 @@ def body_from_template(entry)
     <<~BODY
       <h2>1. Sammendrag</h2>
       <p>#{entry["angle"]}</p>
+      #{amount_html}
       <p>#{FUNDING.dig("ventures", "bolig_bergen", "wholesome_pitch")}</p>
       #{FundingHelpers.bolig_channels_block(FUNDING)}
-      <h2>3. Dokumentasjon</h2>
-      <table>
-        <tr><td>1.</td><td>Skattemelding og næringsoppgave</td></tr>
-        <tr><td>2.</td><td>Nåværende boligforhold</td></tr>
-        <tr><td>3.</td><td>Finn.no-utkast til leiligheter i Bergen</td></tr>
-        <tr><td>4.</td><td>Formue- og gjeldsoversikt</td></tr>
-      </table>
+      #{FundingHelpers.boligpakke_block(FUNDING)}
       #{FundingHelpers.claims_block("bolig_bergen", FUNDING)}
     BODY
+  when "nav_service"
+    <<~BODY
+      <h2>1. Henvendelse</h2>
+      <p>#{entry["angle"]}</p>
+      #{FundingHelpers.nav_service_block}
+      #{FundingHelpers.boligpakke_block(FUNDING)}
+    BODY
+  when "maritim"
+    FundingHelpers.maritim_template_body(entry, FUNDING)
+  when "autisme"
+    FundingHelpers.helse_template_body(entry, FUNDING, variant: :autisme)
+  when "mental_helse"
+    FundingHelpers.helse_template_body(entry, FUNDING, variant: :mental_helse)
+  when "revmatiker"
+    FundingHelpers.helse_template_body(entry, FUNDING, variant: :revmatiker)
   else
     funder_id = entry["funder_id"]
     funder_type = entry["funder_type"]&.to_sym || :legat
@@ -1215,7 +1233,10 @@ if File.exist?(catalog_path)
       deadline: entry["deadline"],
       track: entry["track"],
       project: entry["project"],
+      funder_id: entry["funder_id"],
       draft: entry["draft"] == true,
+      cover_intro: entry["cover_intro"],
+      amount: entry["amount"],
       body: body_from_template(entry)
   end
 end
@@ -1282,6 +1303,7 @@ FUNDING["ventures"].each do |venture, vdata|
       deadline: "Tilpass per giver — verifiser på contact_url",
       track: track,
       project: venture,
+      low_priority: true,
       body: standard_sections(
         project: venture,
         funder_type: ftype,
@@ -1348,6 +1370,9 @@ applications.each do |app|
     "notes" => manifest_notes(app, funder_record),
   }
   entry["preferred_channel"] = funder_record["preferred_channel"] if funder_record&.dig("preferred_channel")
+  entry["low_priority"] = true if app[:file].to_s.start_with?("vx_") || app[:low_priority]
+  entry["cover_intro"] = app[:cover_intro] if app[:cover_intro]
+  entry["amount"] = app[:amount] if app[:amount]
   manifest_entries << entry
 end
 

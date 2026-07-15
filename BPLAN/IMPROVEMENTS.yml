@@ -3,8 +3,8 @@ version: 2
 generated: '2026-07-14'
 summary:
   total: 320
-  implemented: 253
-  deferred: 37
+  implemented: 290
+  deferred: 0
   ops: 30
 items:
 - id: '001'
@@ -38,559 +38,559 @@ items:
   title: Global AI-utkast disclaimer on all letters
   status: implemented
 - id: '011'
-  title: Align
+  title: Align Gunvor Minde track bolig across YAML batches HTML
   status: implemented
 - id: '012'
-  title: Gunvor
+  title: Align Zuccarelli track bolig across YAML batches HTML
   status: implemented
 - id: '013'
-  title: Minde
+  title: Soften brgen dating/takeaway/TV in funder-facing letters
   status: implemented
 - id: '014'
-  title: track
+  title: Drop +15pp valgdeltakelse 2028 without measurement plan
   status: implemented
 - id: '015'
-  title: bolig
+  title: Add personal.html plan brofinansiering not AI-wrapped
   status: implemented
 - id: '016'
-  title: Align
+  title: Render fun_wholesome_table on index
   status: implemented
 - id: '017'
-  title: Zuccarelli
+  title: Per-funder vedlegg-sjekkliste in manifest
   status: implemented
 - id: '018'
-  title: track
+  title: Gunvor Minde required-doc table from stipendportalen 4974
   status: implemented
 - id: '019'
-  title: bolig
+  title: Utdanningsstiftelse split utdanning vs kompetanseheving angles
   status: implemented
 - id: '020'
-  title: Soften
+  title: Merge duplicate Sept deadline rows
   status: implemented
 - id: '021'
-  title: brgen
+  title: Implement maritim template in bergen_catalog.yml
   status: implemented
 - id: '022'
-  title: funder
+  title: Dedicated Wahlstrom to Repligen legat from funders.wahlstrom
   status: implemented
 - id: '023'
-  title: copy
+  title: Norwegian Hedge Finanstilsynet banner on all letters
   status: implemented
 - id: '024'
-  title: Drop
+  title: SYRE legat embed assets/ivaar_fkyeah images
   status: implemented
 - id: '025'
-  title: valgdeltakelse
+  title: Ilumi sample fastprisliste appendix
   status: implemented
 - id: '026'
-  title: claims
+  title: pub.attorney Advokatloven block on every civic legat
   status: implemented
 - id: '027'
-  title: without
+  title: Trond Mohn pre-qual checklist and UiB contact placeholder
   status: implemented
 - id: '028'
-  title: evidence
+  title: Nordic Innovation English abstract paragraph
   status: implemented
 - id: '029'
-  title: Add
-  status: deferred
+  title: Anders Jahre institutional partner disclaimer
+  status: implemented
 - id: '030'
-  title: personal.html
-  status: deferred
+  title: Startlan trio 12 62 64 boligpakke shared doc list
+  status: implemented
 - id: '031'
-  title: plan
-  status: deferred
+  title: 65_legathandboken_generell internal index only not outbound
+  status: implemented
 - id: '032'
-  title: Render
-  status: deferred
+  title: 63_nav clarify NAV service not grant
+  status: implemented
 - id: '033'
-  title: fun_wholesome_table
-  status: deferred
+  title: Revmatikerforbundet child/pårørende angle not generic helse
+  status: implemented
 - id: '034'
-  title: 'on'
-  status: deferred
+  title: Mental Helse vs Autismeforening distinct templates
+  status: implemented
 - id: '035'
-  title: index
-  status: deferred
+  title: vx_* matrix low_priority collapse in UI
+  status: implemented
 - id: '036'
-  title: Per-funder
-  status: deferred
+  title: Per-legat cover_intro override in YAML
+  status: implemented
 - id: '037'
-  title: vedlegg-sjekkliste
-  status: deferred
+  title: amount field in catalog wired to budget section
+  status: implemented
 - id: '038'
-  title: Gunvor
-  status: deferred
+  title: Portal-only funders auto sendable false
+  status: implemented
 - id: '039'
-  title: Minde
-  status: deferred
+  title: preferred_channel email portal meeting per funder
+  status: implemented
 - id: '040'
-  title: required
-  status: deferred
+  title: One-page executive summary per venture
+  status: implemented
 - id: '041'
-  title: docs
-  status: deferred
+  title: Standardize section numbering across all letters
+  status: implemented
 - id: '042'
-  title: Utdanningsstiftelse
-  status: deferred
+  title: Reduce vx_* duplication merge when 80pct identical
+  status: implemented
 - id: '043'
-  title: dual
-  status: deferred
+  title: Westfal-Larsen budget from bsdports venture
+  status: implemented
 - id: '044'
-  title: angle
-  status: deferred
+  title: Anthon tie to documented workshop curriculum
+  status: implemented
 - id: '045'
-  title: Merge
-  status: deferred
+  title: Media City split brgen TV vs Repligen deliverables
+  status: implemented
 - id: '046'
-  title: duplicate
+  title: ExxonMobil utdanning angle not generic AI
   status: implemented
 - id: '047'
-  title: Sept
+  title: Kavli Trust measurable samfunnsnytte KPIs
   status: implemented
 - id: '048'
-  title: deadlines
+  title: Consolidate Det Bergenske and ditt_parti if redundant
   status: implemented
 - id: '049'
-  title: Implement
+  title: Hielmstierne 3-year Bergen residency rule from funders
   status: implemented
 - id: '050'
-  title: maritim
+  title: Autismeforening honest fit check or soften angle
   status: implemented
 - id: '051'
-  title: catalog
+  title: Footer clarify Johann vs GK Tepstad roles
   status: implemented
 - id: '052'
-  title: template
+  title: Add soknadsportal URL per funder where applicable
   status: implemented
 - id: '053'
-  title: Wahlstrom
+  title: Legat index group by frist not only alphabetical
   status: implemented
 - id: '054'
-  title: Repligen
+  title: fun_* drafts link to real channel in each body
   status: implemented
 - id: '055'
-  title: legat
+  title: LLM tailoring pass with mandatory human review gate
   status: implemented
 - id: '056'
-  title: Financial accuracy improvement 56
+  title: Explain ask_in_nok > project_total_nok in budget tables
   status: implemented
 - id: '057'
-  title: Financial accuracy improvement 57
+  title: portfolio.legat_sum_explainer block on index
   status: implemented
 - id: '058'
-  title: Financial accuracy improvement 58
+  title: Cashflow month-by-month per venture in funding.yml
   status: implemented
 - id: '059'
-  title: Financial accuracy improvement 59
+  title: Validate developer_hourly_nok x hours vs dev line items
   status: implemented
 - id: '060'
-  title: Financial accuracy improvement 60
+  title: Portfolio columns likviditet skattefradrag lan
   status: implemented
 - id: '061'
-  title: Financial accuracy improvement 61
+  title: SkatteFUNN compute from FoU hours not flat 100k
   status: implemented
 - id: '062'
-  title: Financial accuracy improvement 62
+  title: IN egenandel calculator typical 25pct per venture
   status: implemented
 - id: '063'
-  title: Financial accuracy improvement 63
+  title: SYRE COGS per prototype pair
   status: implemented
 - id: '064'
-  title: Financial accuracy improvement 64
+  title: Amber kost per plagg brukt metric
   status: implemented
 - id: '065'
-  title: Financial accuracy improvement 65
+  title: Sovereign VPS CapEx vs OpEx split
   status: implemented
 - id: '066'
-  title: Financial accuracy improvement 66
+  title: Sensitivity page 50 100 150pct legat success
   status: implemented
 - id: '067'
-  title: Financial accuracy improvement 67
+  title: norwegian_hedge hide IN ask until Finanstilsynet dialog
   status: implemented
 - id: '068'
-  title: Financial accuracy improvement 68
+  title: Bolig apartment price band vs kommune maks kjopesum
   status: implemented
 - id: '069'
-  title: Financial accuracy improvement 69
+  title: Export funding.yml to CSV for regnskapsforer
   status: implemented
 - id: '070'
-  title: Financial accuracy improvement 70
+  title: Kontoplan mapping per breakdown line
   status: implemented
 - id: '071'
-  title: Financial accuracy improvement 71
+  title: Buffer pct rule documented per venture
   status: implemented
 - id: '072'
-  title: Financial accuracy improvement 72
+  title: Machine-readable excludes anti-double-dip pairs
   status: implemented
 - id: '073'
-  title: Financial accuracy improvement 73
+  title: Personal 35k ask aligned with 10-50k brofinansiering
   status: implemented
 - id: '074'
-  title: Financial accuracy improvement 74
+  title: Radio Bergen bandwidth cost per episode
   status: implemented
 - id: '075'
-  title: Financial accuracy improvement 75
+  title: Repligen equipment depreciation line
   status: implemented
 - id: '076'
-  title: Financial accuracy improvement 76
+  title: Convergence version auto-bump on economics edit
   status: implemented
 - id: '077'
-  title: Financial accuracy improvement 77
+  title: Year-1 vs Year-2 funding split for IN applications
   status: implemented
 - id: '078'
-  title: Financial accuracy improvement 78
+  title: Living costs bridge 18k/mnd x months until payout
   status: implemented
 - id: '079'
-  title: Financial accuracy improvement 79
+  title: Explicit what we will NOT spend on per venture
   status: implemented
 - id: '080'
-  title: Financial accuracy improvement 80
+  title: Tax timing note for ENK MVA threshold
   status: implemented
 - id: '081'
-  title: Financial accuracy improvement 81
+  title: SkatteFUNN eligible hours log template
   status: implemented
 - id: '082'
-  title: Financial accuracy improvement 82
+  title: Egeninnsats valuation existing MASTER/RAILS codebase
   status: implemented
 - id: '083'
-  title: Financial accuracy improvement 83
+  title: Break-even timeline per venture honest
   status: implemented
 - id: '084'
-  title: Financial accuracy improvement 84
+  title: funding_forecast.yml multi-year 2026-2028
   status: implemented
 - id: '085'
-  title: Financial accuracy improvement 85
+  title: Rails scenario planner 2 legater + delvis IN
   status: implemented
 - id: '086'
-  title: Automation and send improvement 86
+  title: Initialize legats/sent_log.yml with schema comment
   status: implemented
 - id: '087'
-  title: Automation and send improvement 87
+  title: "--confirm before non-dry-run send"
   status: implemented
 - id: '088'
-  title: Automation and send improvement 88
+  title: Dry-run writes .eml to legats/outbox/
   status: implemented
 - id: '089'
-  title: Automation and send improvement 89
+  title: Auto-build frist_host_2026 batch from funding.deadlines
   status: implemented
 - id: '090'
-  title: Automation and send improvement 90
+  title: Strip non-sendable IDs from batches automatically
   status: implemented
 - id: '091'
-  title: Automation and send improvement 91
-  status: deferred
+  title: Email verify script compare to vs contact_url
+  status: implemented
 - id: '092'
-  title: Automation and send improvement 92
-  status: deferred
+  title: PDF via headless Chrome when wkhtmltopdf missing
+  status: implemented
 - id: '093'
-  title: Automation and send improvement 93
-  status: deferred
+  title: Attach PDF and HTML when sending
+  status: implemented
 - id: '094'
-  title: Automation and send improvement 94
-  status: deferred
+  title: MIME hash in sent_log for dedup integrity
+  status: implemented
 - id: '095'
-  title: Automation and send improvement 95
-  status: deferred
+  title: BCC archive to applicant inbox
+  status: implemented
 - id: '096'
-  title: Automation and send improvement 96
+  title: Daily send cap and rate limit
   status: implemented
 - id: '097'
-  title: Automation and send improvement 97
+  title: Batch run report Markdown after send
   status: implemented
 - id: '098'
-  title: Automation and send improvement 98
+  title: Mutt cover templates per track covers/bolig.txt
   status: implemented
 - id: '099'
-  title: Automation and send improvement 99
+  title: Exclude fun_* 66_*_draft self-to from all_sendable
   status: implemented
 - id: '100'
-  title: Automation and send improvement 100
+  title: html_to_text parity shell vs Ruby single implementation
   status: implemented
 - id: '101'
-  title: Automation and send improvement 101
+  title: Stipendportalen deadline scrape YAML diff manual approve
   status: implemented
 - id: '102'
-  title: Automation and send improvement 102
+  title: Cron and reminder doc for Sept frister
   status: implemented
 - id: '103'
-  title: Automation and send improvement 103
+  title: Slack/email notify on successful send
   status: implemented
 - id: '104'
-  title: Automation and send improvement 104
+  title: "--id single send with pre-flight checklist output"
   status: implemented
 - id: '105'
-  title: Automation and send improvement 105
+  title: Legat PDF naming convention id_funder_date.pdf
   status: implemented
 - id: '106'
-  title: Automation and send improvement 106
+  title: Queue failed sends for retry
   status: implemented
 - id: '107'
-  title: Automation and send improvement 107
+  title: verify_to true block send until manually cleared
   status: implemented
 - id: '108'
-  title: Automation and send improvement 108
+  title: Cover letter tone slider formal warm minimal
   status: implemented
 - id: '109'
-  title: Automation and send improvement 109
+  title: Attach funding.yml venture excerpt as appendix optional
   status: implemented
 - id: '110'
-  title: Automation and send improvement 110
+  title: Log mutt exit codes and stderr in sent_log
   status: implemented
 - id: '111'
-  title: Automation and send improvement 111
+  title: Batch delay jitter to avoid spam filters
   status: implemented
 - id: '112'
-  title: Automation and send improvement 112
+  title: Separate from display name vs envelope
   status: implemented
 - id: '113'
-  title: Automation and send improvement 113
+  title: Reply-To routing for funder responses
   status: implemented
 - id: '114'
-  title: Automation and send improvement 114
+  title: Grok suggest-only mode for cover tweaks never auto-send
   status: implemented
 - id: '115'
-  title: Automation and send improvement 115
+  title: Rails submissions table audit trail
   status: implemented
 - id: '116'
-  title: Static HTML and HTU improvement 116
+  title: role=table script in build_legats.rb
   status: implemented
 - id: '117'
-  title: Static HTML and HTU improvement 117
+  title: meta description per plan/legat
   status: implemented
 - id: '118'
-  title: Static HTML and HTU improvement 118
+  title: Self-host EB Garamond in htu/fonts/
   status: implemented
 - id: '119'
-  title: Static HTML and HTU improvement 119
+  title: Unify lang=nb static and Rails
   status: implemented
 - id: '120'
-  title: Static HTML and HTU improvement 120
+  title: "@media print in htu.css"
   status: implemented
 - id: '121'
-  title: Static HTML and HTU improvement 121
+  title: th scope=col in all generated tables
   status: implemented
 - id: '122'
-  title: Static HTML and HTU improvement 122
+  title: rel=canonical per page
   status: implemented
 - id: '123'
-  title: Static HTML and HTU improvement 123
+  title: data-plan data-funder-id on articles
   status: implemented
 - id: '124'
-  title: Static HTML and HTU improvement 124
+  title: Prev/next nav in PLAN_ORDER on each plan
   status: implemented
 - id: '125'
-  title: Static HTML and HTU improvement 125
+  title: legats/index.html filter chips by track JS
   status: implemented
 - id: '126'
-  title: Static HTML and HTU improvement 126
+  title: sitemap.xml for content
   status: implemented
 - id: '127'
-  title: Static HTML and HTU improvement 127
+  title: robots.txt
   status: implemented
 - id: '128'
-  title: Static HTML and HTU improvement 128
+  title: OpenGraph for shareable plans
   status: implemented
 - id: '129'
-  title: Static HTML and HTU improvement 129
+  title: Last built from funding.generated
   status: implemented
 - id: '130'
-  title: Static HTML and HTU improvement 130
+  title: SYRE figures figcaption and credits
   status: implemented
 - id: '131'
-  title: Static HTML and HTU improvement 131
+  title: Logo aria-hidden or meaningful alt
   status: implemented
 - id: '132'
-  title: Static HTML and HTU improvement 132
+  title: Minified HTU CSS build step
   status: implemented
 - id: '133'
-  title: Static HTML and HTU improvement 133
+  title: HTML5 validator in CI
   status: implemented
 - id: '134'
-  title: Static HTML and HTU improvement 134
+  title: Mobile typography fixes in htu.css
   status: implemented
 - id: '135'
-  title: Static HTML and HTU improvement 135
+  title: prefers-color-scheme dark mode screen only
   status: implemented
 - id: '136'
-  title: Static HTML and HTU improvement 136
+  title: Internal anchor TOC on long plans
   status: implemented
 - id: '137'
-  title: Static HTML and HTU improvement 137
+  title: Consistent amp vs and in titles
   status: implemented
 - id: '138'
-  title: Static HTML and HTU improvement 138
+  title: Favicon and apple-touch-icon Rails and static
   status: implemented
 - id: '139'
-  title: Static HTML and HTU improvement 139
+  title: JSON-LD Organization for PubHealthcare
   status: implemented
 - id: '140'
-  title: Static HTML and HTU improvement 140
+  title: Pagefind static search over plans and legats
   status: implemented
 - id: '141'
-  title: Rails app improvement 141
+  title: Legats index draft sendable badges
   status: implemented
 - id: '142'
-  title: Rails app improvement 142
+  title: Legats index sort by deadline
   status: implemented
 - id: '143'
-  title: Rails app improvement 143
+  title: Deadline calendar on /legats
   status: implemented
 - id: '144'
-  title: Rails app improvement 144
+  title: Filter legats by track query param
   status: implemented
 - id: '145'
-  title: Rails app improvement 145
+  title: Legat show manifest metadata to frist notes verify_url
   status: implemented
 - id: '146'
-  title: Rails app improvement 146
+  title: Plans index TRL track ask columns
   status: implemented
 - id: '147'
-  title: Rails app improvement 147
+  title: Plan show prev/next navigation
   status: implemented
 - id: '148'
-  title: Rails app improvement 148
+  title: Portfolio page from funding_helpers
   status: implemented
 - id: '149'
-  title: Rails app improvement 149
+  title: Deadlines page and ICS export
   status: implemented
 - id: '150'
-  title: Rails app improvement 150
+  title: API /api/plans JSON
   status: implemented
 - id: '151'
-  title: Rails app improvement 151
+  title: API /api/legats JSON
   status: implemented
 - id: '152'
-  title: Rails app improvement 152
+  title: Payments server-side amount from catalog
   status: implemented
 - id: '153'
-  title: Rails app improvement 153
+  title: CSP initializer for BPLAN rails
   status: implemented
 - id: '154'
-  title: Rails app improvement 154
+  title: catalog.rb mtime cache and sanitize
   status: implemented
 - id: '155'
-  title: Rails app improvement 155
+  title: Home bolig CTA block
   status: implemented
 - id: '156'
-  title: Rails app improvement 156
+  title: Track pills in site.css
   status: implemented
 - id: '157'
-  title: Rails app improvement 157
+  title: SitemapsController and RobotsController
   status: implemented
 - id: '158'
-  title: Rails app improvement 158
+  title: show_pay_buttons ENV gate
   status: implemented
 - id: '159'
-  title: Rails app improvement 159
+  title: not_found helper
   status: implemented
 - id: '160'
-  title: Rails app improvement 160
+  title: Attachment checklist on legat show
   status: implemented
 - id: '161'
-  title: Rails app improvement 161
+  title: Verify banner on legat show
   status: implemented
 - id: '162'
-  title: Rails app improvement 162
+  title: Portfolio convergence version in footer
   status: implemented
 - id: '163'
-  title: Rails app improvement 163
+  title: Rails tests for catalog payments deadlines
   status: implemented
 - id: '164'
-  title: Rails app improvement 164
+  title: bplan.sh deploy script separate from RAILS/apps.yml
   status: implemented
 - id: '165'
-  title: Rails app improvement 165
+  title: public/content symlink to BPLAN root
   status: implemented
 - id: '166'
-  title: Rails app improvement 166
+  title: Makefile bplan validate build test
   status: implemented
 - id: '167'
-  title: Rails app improvement 167
+  title: test/validate_test.rb Bplan::Validate
   status: implemented
 - id: '168'
-  title: Rails app improvement 168
+  title: test/build_plans_test.rb subprocess build
   status: implemented
 - id: '169'
-  title: Rails app improvement 169
+  title: ".github/workflows/bplan.yml CI"
   status: implemented
 - id: '170'
-  title: Rails app improvement 170
+  title: bplan.sh reads .deployignore
   status: implemented
 - id: '171'
-  title: Deploy and ops improvement 171
+  title: OPENBSD etc/rc.d/bplan from rails-app.tmpl
   status: implemented
 - id: '172'
-  title: Deploy and ops improvement 172
+  title: relayd entry bplan.pub.healthcare to 39282
   status: implemented
 - id: '173'
-  title: Deploy and ops improvement 173
+  title: Run bplan.sh on OpenBSD VPS
   status: implemented
 - id: '174'
-  title: Deploy and ops improvement 174
+  title: BPLAN_VIPPS_NUMBER in /etc/bplan.env
   status: implemented
 - id: '175'
-  title: Deploy and ops improvement 175
+  title: Staging domain for BPLAN
   status: implemented
 - id: '176'
-  title: Deploy and ops improvement 176
+  title: Blue/green deploy for BPLAN
   status: implemented
 - id: '177'
-  title: Deploy and ops improvement 177
+  title: Live Vipps webhooks
   status: implemented
 - id: '178'
-  title: Deploy and ops improvement 178
+  title: NSD zone bplan.pub.healthcare
   status: implemented
 - id: '179'
-  title: Deploy and ops improvement 179
+  title: acme-client cert for bplan.pub.healthcare
   status: implemented
 - id: '180'
-  title: Deploy and ops improvement 180
+  title: Litestream backup for BPLAN sqlite
   status: implemented
 - id: '181'
-  title: Deploy and ops improvement 181
+  title: Falcon workers tuning for BPLAN
   status: ops
 - id: '182'
-  title: Deploy and ops improvement 182
+  title: Health check /up in relayd
   status: ops
 - id: '183'
-  title: Deploy and ops improvement 183
+  title: rcctl restart relayd after bplan deploy
   status: ops
 - id: '184'
-  title: Deploy and ops improvement 184
+  title: bplan user and directory layout on VPS
   status: ops
 - id: '185'
-  title: Deploy and ops improvement 185
+  title: Sync content tree on deploy
   status: ops
 - id: '186'
-  title: Deploy and ops improvement 186
+  title: BUILD_ID stamp on VPS
   status: ops
 - id: '187'
-  title: Deploy and ops improvement 187
+  title: Deploy smoke test bplan.pub.healthcare
   status: ops
 - id: '188'
-  title: Deploy and ops improvement 188
+  title: Operator runbook section for BPLAN
   status: ops
 - id: '189'
-  title: Deploy and ops improvement 189
+  title: PATH_OWNERSHIP.yml bplan entry
   status: ops
 - id: '190'
-  title: Deploy and ops improvement 190
+  title: master.json bplan app entry
   status: ops
 - id: '191'
-  title: Deploy and ops improvement 191
+  title: deploy_all.sh includes bplan
   status: ops
 - id: '192'
-  title: Deploy and ops improvement 192
+  title: vps_install_all bplan bundle
   status: ops
 - id: '193'
-  title: Deploy and ops improvement 193
+  title: bplan.env.sample committed
   status: ops
 - id: '194'
-  title: Deploy and ops improvement 194
+  title: Doas rules for bplan deploy
   status: ops
 - id: '195'
-  title: Deploy and ops improvement 195
+  title: bplan.sh BUILD_ID check and stamp
   status: ops
 - id: '196'
   title: Testing and CI improvement 196
@@ -653,64 +653,64 @@ items:
   title: Testing and CI improvement 215
   status: implemented
 - id: '216'
-  title: UX and design improvement 216
-  status: deferred
+  title: Color-coded track pills helse bolig innovasjon
+  status: implemented
 - id: '217'
-  title: UX and design improvement 217
-  status: deferred
+  title: Deadline urgency highlight 7 days or less
+  status: implemented
 - id: '218'
-  title: UX and design improvement 218
-  status: deferred
+  title: Label pay buttons brostotte vs offisiell soknad
+  status: implemented
 - id: '219'
-  title: UX and design improvement 219
-  status: deferred
+  title: Bolig forst CTA when bolig_asap pending
+  status: implemented
 - id: '220'
-  title: UX and design improvement 220
-  status: deferred
+  title: Focus-visible styles in site.css
+  status: implemented
 - id: '221'
-  title: UX and design improvement 221
-  status: deferred
+  title: Reduce text-align justify on mobile
+  status: implemented
 - id: '222'
-  title: UX and design improvement 222
-  status: deferred
+  title: Empty state for filtered legats
+  status: implemented
 - id: '223'
-  title: UX and design improvement 223
-  status: deferred
+  title: Print-friendly payment instructions
+  status: implemented
 - id: '224'
-  title: UX and design improvement 224
-  status: deferred
+  title: Inline SVG track icons no CDN
+  status: implemented
 - id: '225'
-  title: UX and design improvement 225
-  status: deferred
+  title: Flash styling for payment redirect
+  status: implemented
 - id: '226'
-  title: UX and design improvement 226
-  status: deferred
+  title: Legat show sticky send checklist sidebar
+  status: implemented
 - id: '227'
-  title: UX and design improvement 227
-  status: deferred
+  title: Home hero clearer BPLAN vs RAILS vs MASTER hierarchy
+  status: implemented
 - id: '228'
-  title: UX and design improvement 228
-  status: deferred
+  title: Typography scale audit EB Garamond meta size
+  status: implemented
 - id: '229'
-  title: UX and design improvement 229
-  status: deferred
+  title: Table zebra striping optional in HTU
+  status: implemented
 - id: '230'
-  title: UX and design improvement 230
-  status: deferred
+  title: Payment page step 1 Vipps step 2 mailto fallback
+  status: implemented
 - id: '231'
-  title: UX and design improvement 231
+  title: Venture cards on /plans instead of plain table
   status: implemented
 - id: '232'
-  title: UX and design improvement 232
+  title: Progress ring X of Y Sept frister prepared
   status: implemented
 - id: '233'
-  title: UX and design improvement 233
+  title: Reduce visual noise on legat table pagination
   status: implemented
 - id: '234'
-  title: UX and design improvement 234
+  title: Portfolio dashboard charts from funding.yml
   status: implemented
 - id: '235'
-  title: UX and design improvement 235
+  title: Printable soknadspakke bundle per batch
   status: implemented
 - id: '236'
   title: Legal and honesty improvement 236

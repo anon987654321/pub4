@@ -10,13 +10,28 @@
   </header>
   <div class="content">
     <nav class="track-filters" aria-label="Filtrer etter spor">
-      <%= link_to "Alle", legats_path, class: @track.blank? ? "is-active" : nil %>
+      <%= link_to "Alle", legats_path(show_vx: @show_vx ? "1" : nil), class: @track.blank? ? "is-active" : nil %>
       <% @tracks.each do |track| %>
-        <%= link_to track, legats_path(track: track), class: @track == track ? "is-active" : nil %>
+        <%= link_to track, legats_path(track: track, show_vx: @show_vx ? "1" : nil), class: @track == track ? "is-active" : nil %>
       <% end %>
     </nav>
 
-    <table>
+    <% if @low_priority_count.positive? %>
+      <p class="meta">
+        <% if @show_vx %>
+          Viser <%= @low_priority_count %> lavprioritets <code>vx_*</code>-søknader.
+          <%= link_to "Skjul vx_*", legats_path(track: @track) %>
+        <% else %>
+          <%= @low_priority_count %> <code>vx_*</code> matrix-søknader skjult.
+          <%= link_to "Vis vx_*", legats_path(track: @track, show_vx: "1") %>
+        <% end %>
+      </p>
+    <% end %>
+
+    <% if @legats.empty? %>
+      <p class="empty-state">Ingen legater matcher filteret. <%= link_to "Vis alle", legats_path(show_vx: "1") %>.</p>
+    <% else %>
+    <table class="zebra">
       <tr><td>#</td><td>Giver</td><td>Spor</td><td>Frist</td><td>Status</td></tr>
       <% @legats.each_with_index do |legat, i| %>
         <% offset = (@page - 1) * @per_page %>
@@ -36,6 +51,7 @@
         </tr>
       <% end %>
     </table>
+    <% end %>
 
     <% if @total_pages > 1 %>
       <nav class="pagination" aria-label="Sideinndeling">

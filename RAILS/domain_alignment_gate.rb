@@ -154,7 +154,7 @@ if master[:apps] && !master[:apps].empty?
 end
 
 # At least the main domains should have keypairs in relayd
-%w[brgen.no ai.brgen.no amber.brgen.no bsdports.org].each do |dom|
+%w[brgen.no ai.brgen.no amber.brgen.no bsdports.org bplan.pub.healthcare].each do |dom|
   unless relayd_keys.include?(dom)
     fail!(failures, "relayd.conf missing tls keypair for #{dom}")
   end

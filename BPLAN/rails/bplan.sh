@@ -88,6 +88,25 @@ doas chown -R "${APP_NAME}:${APP_NAME}" "${APP_DIR}/.bundle" "$bundle_home"
 bundle_install_as_app "$APP_NAME" "$APP_DIR"
 log_ok "production bundle installed for ${APP_NAME}"
 
+ensure_bplan_env() {
+  [[ -f /etc/bplan.env ]] && return 0
+  typeset secret sample="${PUB4_ROOT}/OPENBSD/etc/bplan.env.sample"
+  typeset -a secret_lines
+  secret_lines=("${(@f)$(doas su -l "$APP_NAME" -c "cd '${APP_DIR}' && RAILS_ENV=production bundle exec rails secret 2>/dev/null")}")
+  secret=${secret_lines[-1]}
+  [[ ${#secret} -ge 64 ]] || { log_err "bplan: rails secret failed"; return 1 }
+  if [[ -f $sample ]]; then
+    doas cp "$sample" /etc/bplan.env
+    doas sed -i "s|^SECRET_KEY_BASE=.*|SECRET_KEY_BASE=${secret}|" /etc/bplan.env
+  else
+    print -r -- "SECRET_KEY_BASE=${secret}" | doas tee /etc/bplan.env >/dev/null
+    print -r -- "BPLAN_BASE_URL=https://${APP_DOMAIN}" | doas tee -a /etc/bplan.env >/dev/null
+  fi
+  doas chmod 640 /etc/bplan.env
+  log_ok "created /etc/bplan.env"
+}
+ensure_bplan_env
+
 doas rcctl stop "$APP_NAME" 2>/dev/null || true
 rails_assets_precompile_as_app "$APP_NAME" "$APP_DIR" || true
 
@@ -97,3 +116,17 @@ install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
 rails_runtime_gate "$APP_NAME" "$APP_DIR" || exit 1
 doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
 log_ok "${APP_NAME} live on :${APP_PORT} (${APP_DOMAIN}) BUILD_ID=${build_id}"
+
+typeset _smoke_i=0 _smoke_ok=0
+while [[ $_smoke_i -lt 30 ]]; do
+  curl -fsS -m 10 "http://127.0.0.1:${APP_PORT}/up" >/dev/null 2>&1 && { _smoke_ok=1; break; }
+  sleep 1
+  _smoke_i=$((_smoke_i + 1))
+done
+[[ $_smoke_ok == 1 ]] || { log_err "smoke failed: http://127.0.0.1:${APP_PORT}/up"; exit 1; }
+log_ok "smoke: /up on :${APP_PORT}"
+if curl -fsS -m 20 "https://${APP_DOMAIN}/up" >/dev/null 2>&1; then
+  log_ok "smoke: https://${APP_DOMAIN}/up"
+else
+  log_warn "public https smoke skipped (cert/DNS may be pending)"
+fi

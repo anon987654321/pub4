@@ -803,6 +803,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  amount: Etter utlysning
 - id: 52_vilhelm_bjerkreim_legat
   file: legats/52_vilhelm_bjerkreim_legat.html
   funder: Vilhelm og Marie Bjerkreim legat
@@ -831,6 +832,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  amount: Etter samarbeid
 - id: 54_mental_helse_bergen
   file: legats/54_mental_helse_bergen.html
   funder: Mental Helse Hordaland
@@ -859,6 +861,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  amount: NOK 100k–500k
 - id: 56_den_norske_bank_bergen
   file: legats/56_den_norske_bank_bergen.html
   funder: Den norske Banks fond for Bergen
@@ -873,6 +876,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  amount: NOK 50k–250k
 - id: 57_rikard_rikardsen_legat
   file: legats/57_rikard_rikardsen_legat.html
   funder: Rikard Rikardsen legat
@@ -943,6 +947,7 @@ applications:
   draft: true
   sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  amount: Varierer
 - id: 62_kommunalt_startlan_egenkapital
   file: legats/62_kommunalt_startlan_egenkapital.html
   funder: Bergen kommune — boligsparing
@@ -998,7 +1003,8 @@ applications:
   verify_to: true
   draft: true
   sendable: false
-  notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  notes: Intern mal for Legathåndboken — tilpass per giver manuelt. Ikke masseutsendelse.
+  amount: Varierer
 - id: 67_arild_wahlstroms_fond
   file: legats/67_arild_wahlstroms_fond.html
   funder: Arild Wahlstrøms fond
@@ -1042,6 +1048,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  preferred_channel: nettside_skjema
 - id: 70_conrad_mohrs_legat
   file: legats/70_conrad_mohrs_legat.html
   funder: Conrad Mohrs legat
@@ -1239,6 +1246,7 @@ applications:
   sendable: false
   notes: Portal/skjema-kanal (rådgiver_møte) — ikke auto-e-post. Bekreft på contact_url.
   preferred_channel: rådgiver_møte
+  low_priority: true
 - id: vx_pub_healthcare_skattefunn
   file: legats/vx_pub_healthcare_skattefunn.html
   funder: SkatteFUNN
@@ -1253,6 +1261,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  low_priority: true
 - id: vx_pub_healthcare_forskningsradet
   file: legats/vx_pub_healthcare_forskningsradet.html
   funder: Forskningsrådet
@@ -1267,6 +1276,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  low_priority: true
 - id: vx_brgen_innovasjon_norge
   file: legats/vx_brgen_innovasjon_norge.html
   funder: Innovasjon Norge
@@ -1282,6 +1292,7 @@ applications:
   sendable: false
   notes: Portal/skjema-kanal (rådgiver_møte) — ikke auto-e-post. Bekreft på contact_url.
   preferred_channel: rådgiver_møte
+  low_priority: true
 - id: vx_brgen_sr_bank
   file: legats/vx_brgen_sr_bank.html
   funder: Sparebankstiftelsen SR-Bank
@@ -1297,6 +1308,7 @@ applications:
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   preferred_channel: nettside_skjema
+  low_priority: true
 - id: vx_bsdports_skattefunn
   file: legats/vx_bsdports_skattefunn.html
   funder: SkatteFUNN
@@ -1311,6 +1323,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  low_priority: true
 - id: vx_bsdports_digdir
   file: legats/vx_bsdports_digdir.html
   funder: Digitaliseringsdirektoratet
@@ -1325,6 +1338,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  low_priority: true
 - id: vx_syre_innovasjon_norge
   file: legats/vx_syre_innovasjon_norge.html
   funder: Innovasjon Norge
@@ -1340,6 +1354,7 @@ applications:
   sendable: false
   notes: Portal/skjema-kanal (rådgiver_møte) — ikke auto-e-post. Bekreft på contact_url.
   preferred_channel: rådgiver_møte
+  low_priority: true
 - id: vx_syre_sr_bank
   file: legats/vx_syre_sr_bank.html
   funder: Sparebankstiftelsen SR-Bank
@@ -1355,6 +1370,7 @@ applications:
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   preferred_channel: nettside_skjema
+  low_priority: true
 - id: vx_radio_bergen_media_city
   file: legats/vx_radio_bergen_media_city.html
   funder: Media City Bergen
@@ -1369,6 +1385,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  low_priority: true
 - id: vx_repligen_studio_media_city
   file: legats/vx_repligen_studio_media_city.html
   funder: Media City Bergen
@@ -1383,6 +1400,7 @@ applications:
   draft: false
   sendable: true
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
+  low_priority: true
 - id: fun_regnvann_amber
   file: legats/fun_regnvann_amber.html
   funder: Se funding.yml / matchende giver

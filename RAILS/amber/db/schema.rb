@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_14_164501) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -50,6 +50,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.index ["item_id"], name: "index_affiliate_links_on_item_id"
   end
 
+  create_table "anonymous_post_quotas", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fingerprint", null: false
+    t.integer "post_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
+  end
+
   create_table "comments", force: :cascade do |t|
     t.integer "commentable_id", null: false
     t.string "commentable_type", null: false
@@ -59,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -160,6 +169,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.integer "follower_id", null: false
     t.datetime "updated_at", null: false
     t.index ["followee_id"], name: "index_follows_on_followee_id"
+    t.index ["follower_id", "followee_id"], name: "index_follows_on_follower_id_and_followee_id", unique: true
     t.index ["follower_id"], name: "index_follows_on_follower_id"
   end
 
@@ -206,7 +216,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.string "size"
     t.boolean "spark_joy"
     t.integer "times_worn"
-    t.string "title"
+    t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["analysis_status"], name: "index_items_on_analysis_status"
@@ -247,6 +257,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.integer "outfit_id", null: false
     t.integer "position"
     t.datetime "updated_at", null: false
+    t.index ["item_id", "outfit_id"], name: "index_outfit_items_on_item_id_and_outfit_id", unique: true
     t.index ["item_id"], name: "index_outfit_items_on_item_id"
     t.index ["outfit_id"], name: "index_outfit_items_on_outfit_id"
   end
@@ -256,7 +267,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "likes_count"
-    t.string "name"
+    t.string "name", null: false
     t.string "occasion"
     t.string "season"
     t.datetime "updated_at", null: false
@@ -292,24 +303,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
     t.datetime "created_at", null: false
     t.text "notes"
     t.integer "outfit_id", null: false
-    t.date "planned_date"
+    t.date "planned_date", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["outfit_id"], name: "index_planned_outfits_on_outfit_id"
+    t.index ["user_id", "planned_date"], name: "index_planned_outfits_on_user_id_and_planned_date", unique: true
     t.index ["user_id"], name: "index_planned_outfits_on_user_id"
-  end
-
-  create_table "anonymous_post_quotas", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "fingerprint", null: false
-    t.integer "post_count", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
   end
 
   create_table "posts", force: :cascade do |t|
     t.boolean "anonymous", default: false, null: false
-    t.text "body"
+    t.text "body", null: false
     t.datetime "created_at", null: false
     t.integer "item_id"
     t.integer "likes_count"
@@ -395,22 +399,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_160000) do
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.datetime "deletion_scheduled_at"
     t.string "email_address", null: false
     t.boolean "guest", default: false, null: false
+    t.datetime "magic_link_expires_at"
+    t.string "magic_link_token"
+    t.string "otp_secret"
     t.string "password_digest", null: false
-    t.datetime "updated_at", null: false
     t.string "remember_token"
     t.datetime "remember_token_expires_at"
-    t.string "magic_link_token"
-    t.datetime "magic_link_expires_at"
-    t.datetime "deletion_scheduled_at"
-    t.datetime "deleted_at"
-    t.string "otp_secret"
     t.boolean "two_factor_enabled", default: false, null: false
-    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
-    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
+    t.datetime "updated_at", null: false
     t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
+    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
   end
 
   create_table "wardrobe_items", force: :cascade do |t|

@@ -12,7 +12,11 @@ IMPLEMENTED = Set.new(
   (171..180).to_a +
   (196..215).to_a +
   (231..285).to_a +
-  (301..320).to_a
+  (301..320).to_a +
+  # Deferred batch — content, automation, UX (v4 convergence pass)
+  (29..45).to_a +
+  (91..95).to_a +
+  (216..230).to_a
 )
 
 OPS = Set.new((181..195).to_a + (286..300).to_a)

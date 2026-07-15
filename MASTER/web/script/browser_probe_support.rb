@@ -52,6 +52,7 @@ module BrowserProbeSupport
       snap = evaluate(browser, <<~JS)
         ({
           primerFired: !!window._primerFired,
+          bootState: window.MASTER?.boot?.state?.() || document.body.dataset.bootState || null,
           faceSession: document.body.classList.contains('face-session'),
           masterFace: typeof window.MASTER_FACE,
           sendMessage: typeof window.sendMessage

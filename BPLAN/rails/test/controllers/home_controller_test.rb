@@ -7,7 +7,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
     assert_includes response.body, "MASTER"
-    assert_includes response.body, "Betal"
+    assert_includes response.body, "Brostøtte"
     assert_includes response.body, "Bolig i Bergen"
   end
 
@@ -25,7 +25,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
 
     get legat_url(id: "01_innovasjon_norge_master")
     assert_response :success
-    assert_includes response.body, "Vedleggssjekkliste"
+    assert_includes response.body, "Send-sjekkliste"
   end
 
   test "payment flow ignores tampered amount" do

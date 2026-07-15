@@ -4,7 +4,7 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 #
-# Uses ruby-faker + SEED_SCALE for fictive users + activity (reviews, watches, comments, reactions) to give
+# Uses ruby-faker + SEED_SCALE for fictive users, watches, and comments to give
 # "wildly popular" impression for demos. Real port data comes from import rake tasks.
 
 require "faker"
@@ -39,7 +39,7 @@ else
   if Rails.env.development? || Rails.env.test?
     # Light cleanup for repeatable demo seeds
     ActiveRecord::Base.connection.disable_referential_integrity do
-      %w[Review Comment Watch Installation Reaction].each do |model_name|
+      %w[Comment Watch].each do |model_name|
         begin
           m = model_name.constantize
           m.delete_all if m.respond_to?(:table_exists?) && m.table_exists?
@@ -51,7 +51,7 @@ else
     end
   end
 
-  puts "Seeding bsdports with fictive popular activity (scale=#{scale})..."
+  puts "Seeding BSDports demo activity (scale=#{scale})..."
 
   # High user count for "active community" feel
   num_users = (80 * scale).clamp(10, 1200)
@@ -59,7 +59,6 @@ else
     User.find_or_create_by!(email_address: "portuser#{i}@ports.example") do |u|
       u.password = "password"
       u.password_confirmation = "password"
-      u.username = Faker::Internet.unique.username(specifier: 5..12)
     end
   end
   admin = users.first
@@ -67,8 +66,10 @@ else
   puts "Seeded #{users.size} users."
 
   # Create fictive ports for demo volume (or attach to existing if import ran)
-  platform = Platform.find_by(slug: "openbsd") || Platform.first
-  cat = Category.first || Category.create!(name: "devel", slug: "devel") rescue nil
+  platform = Platform.find_by!(slug: "openbsd")
+  cat = Category.find_or_create_by!(platform: platform, slug: "devel") do |category|
+    category.name = "devel"
+  end
 
   existing_ports = Port.limit(30).to_a
   num_ports = [existing_ports.size, (15 * scale).clamp(5, 80)].max
@@ -80,30 +81,13 @@ else
               Port.find_or_create_by!(pkgpath: pkg, platform: platform) do |p|
                 p.name = Faker::App.name
                 p.version = "#{rand(1..9)}.#{rand(0..9)}.#{rand(0..9)}"
-                p.category = cat if cat
+                p.category = cat
                 p.description = Faker::Lorem.paragraph(sentence_count: 2)
               end
             end
           end
 
   puts "Using #{ports.size} ports for activity seeding."
-
-  # Reviews with helpful_count (popularity signal)
-  reviews_per = (2 * scale).clamp(1, 6)
-  ports.each do |port|
-    reviews_per.times do
-      r = Review.create!(
-        user: users.sample,
-        port: port,
-        rating: rand(3..5),
-        content: Faker::Lorem.paragraph(sentence_count: rand(1..3)),
-        helpful_count: rand(0, 80 * scale)
-      )
-      # occasional helpful boosts
-      rand(0..3).times { r.helpful! } if rand < 0.4
-    end
-  end
-  puts "Seeded reviews."
 
   # Watches (users following ports)
   ports.each do |port|
@@ -118,38 +102,14 @@ else
       Comment.create!(
         user: users.sample,
         port: port,
-        body: Faker::Lorem.sentence(word_count: rand(5..12))
+        content: Faker::Lorem.sentence(word_count: rand(5..12))
       )
     end
   end
 
-  # Installations (usage signal)
-  ports.sample(ports.size / 2).each do |port|
-    rand(2..(12 * scale)).times do
-      Installation.create!(user: users.sample, port: port, version: port.version) rescue nil
-    end
-  end
-
-  # Reactions on ports (reactable)
-  ports.each do |port|
-    rand(4..(25 * scale).clamp(4, 150)).times do
-      begin
-        port.reactions.create!(user: users.sample, kind: %w[like star useful].sample)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
-      end
-    end
-  end
-
-  total_reviews = Review.count
   total_watches = Watch.count
-  total_reactions = begin
-    Reaction.count
-  rescue StandardError
-    0
-  end
 
-  puts "Bsdports popular seed complete: #{users.size} users, #{ports.size} ports, #{total_reviews} reviews, #{total_watches} watches, ~#{total_reactions} reactions."
+  puts "Bsdports demo seed complete: #{users.size} users, #{ports.size} ports, #{total_watches} watches, #{Comment.count} comments."
   puts "For more: SEED_SCALE=10 bin/rails db:seed (then optionally run ports import rake)."
 end
 

@@ -8,8 +8,8 @@ require_relative "../../lib/reach/media_intent"
 class MediaIntentSpec < Minitest::Test
   MediaIntent = Master::Reach::MediaIntent
 
-  def test_recognizes_explicit_local_identity_image_requests
-    assert MediaIntent.handles?("generate a photo of the LoRA model Ragnhild at the fjord")
+  def test_recognizes_explicit_image_requests
+    assert MediaIntent.handles?("generate a photo of Bergen at the fjord")
   end
 
   def test_recognizes_original_beat_requests_without_a_slash_command
@@ -58,5 +58,22 @@ class MediaIntentSpec < Minitest::Test
     end
     assert styles.any? { |args| args.include?("--style baroque") }
     assert styles.any? { |args| args.include?("--style flylo") }
+  end
+
+  def test_routes_explicit_image_requests_to_repligen
+    captured = nil
+    runner = lambda do |**kwargs|
+      captured = kwargs
+      Master::Result.ok("rendered")
+    end
+
+    Master::Reach::ScriptDispatch.stub(:run, runner) do
+      result = MediaIntent.dispatch("generate a photo of Bergen at the fjord")
+      assert result.ok?
+      assert_equal :repligen, result.value![:media]
+    end
+
+    assert_equal "repligen", captured[:tool]
+    assert_includes captured[:arg], "--prompt generate\\ a\\ photo\\ of\\ Bergen\\ at\\ the\\ fjord"
   end
 end

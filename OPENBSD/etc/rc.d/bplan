@@ -1,0 +1,42 @@
+#!/bin/ksh
+PORT=39282
+APP_DIR=/home/bplan/app
+[ -r /etc/rails/common.env ] && . /etc/rails/common.env
+[ -r /etc/bplan.env ] && . /etc/bplan.env
+: "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bplan.env}"
+daemon="/bin/ksh"
+daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/bplan BPLAN_VIPPS_NUMBER=${BPLAN_VIPPS_NUMBER:-} && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+daemon_user="bplan"
+daemon_execdir="/home/bplan/app"
+daemon_logger="daemon.notice"
+daemon_timeout="120"
+. /etc/rc.d/rc.subr
+pexp="ruby34.*${PORT}"
+rc_bg=YES
+rc_reload=NO
+
+rc_pre() {
+  pkill -f "falcon.*${PORT}" 2>/dev/null || true
+  pkill -f "ruby34.*${PORT}" 2>/dev/null || true
+  sleep 1
+}
+
+rc_cmd $1
+rc=$?
+if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+  if [ "$rc" = "0" ]; then
+    _i=0
+    _up_ok=0
+    while [ "$_i" -lt 30 ]; do
+      curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
+      sleep 1
+      _i=$((_i + 1))
+    done
+    if [ "$_up_ok" = "1" ]; then
+      rcctl restart relayd 2>/dev/null || true
+    else
+      logger -t bplan "relayd skipped: /up not ready after restart"
+    fi
+  fi
+fi
+exit $rc

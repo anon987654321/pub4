@@ -38,6 +38,15 @@
       </table>
       <h2>Portefølje — konvergens</h2>
 <p class="meta">Én sannhetskilde (funding.yml v4). Tall er realistiske for solo-utvikler i Bergen.</p>
+<h3>Finansieringskanaler</h3>
+<table>
+  <thead><tr><th scope="col">Kanal</th><th scope="col">Hva det betyr</th></tr></thead>
+<tbody>
+<tr><td>Likviditet (kontant)</td><td>Legater og kontant utbetaling samme år — typisk 5–75k per søknad, maks ~150k porteføljetak</td></tr>
+<tr><td>Skattefradrag</td><td>SkatteFUNN — 19–25 % av godkjente FoU-kostnader, utbetales som skattefradrag neste år</td></tr>
+<tr><td>Lån / bolig</td><td>Startlån og IN-lånedel — separat fra FoU-budsjett; bolig først via Husbanken</td></tr>
+</tbody>
+</table>
 <table>
   <thead><tr><th scope="col">Post</th><th scope="col">Realistisk tak</th></tr></thead>
 <tbody>
@@ -48,6 +57,20 @@
 <tr><td>Startlån-tilskudd (kommune)</td><td>250000–500000 NOK</td></tr>
 </tbody>
 </table>
+<h3>Likviditet og sensitivitet (legater)</h3>
+<p class="meta"><strong>Levekostnadsbro:</strong> ca. 6 mnd × NOK 18 000 = NOK 108 000 — Bro mellom nå og første tildeling — dekkes av egeninnsats, små legater og ærlig levekostnadsplan</p>
+
+<table class="zebra">
+  <thead><tr><th scope="col">Scenario</th><th scope="col">Beløp</th><th scope="col">Kommentar</th></tr></thead>
+<tbody>
+<tr><td>50 % legat-treff</td><td>NOK 75 000</td><td>Én–to små tildelinger; fortsett egeninnsats</td></tr>
+<tr><td>100 % (realistisk tak)</td><td>NOK 150 000</td><td>Porteføljetak — ikke sum av alle idé-asks</td></tr>
+<tr><td>150 % (optimistisk)</td><td>NOK 225 000</td><td>Fortsatt langt under 455k — ingen dobbelsøk</td></tr>
+</tbody>
+</table>
+<p class="meta"><strong>Boligprisband Bergen:</strong> typisk 2200000–3200000 — Finn.no-utkast innen kommunens maks kjøpesum ved søknad — ikke fantasipris</p>
+
+
 <p class="meta"><em>Summen av ask_legat_nok på tvers av idéer (ca. 150k NOK tak) er ikke utbetalbar i én pose — hvert legat er 5–75k, og dobbelsøk for samme leveranse samme kvartal avvises. Tallene viser realistisk spredning, ikke en samlet utbetaling.</em></p>
 
 <h3>Anti-dobbelsøk</h3>
@@ -69,6 +92,18 @@
   <tr><td>Realistisk tak (portefølje)</td><td>NOK 150 000</td></tr>
   <tr><td>Typisk enkeltlegat</td><td>5000–75000 NOK</td></tr>
 </table>
+
+      <h2>Stipendportalen — bolig (sept 2026)</h2>
+<p class="meta">Batch <code>bolig_portal_sept</code> — manuell innsending på stipendportalen.no, ikke mutt/e-post. Bruk PDF fra tilhørende legat-HTML.</p>
+<table>
+  <thead><tr><th scope="col">#</th><th scope="col">Giver</th><th scope="col">/</th><th scope="col">vedlegg</th></tr></thead>
+<tbody>
+<tr><td>1.</td><td>Gunvor Mindes stiftelse — frist 2026-09-20 · Legeattest; Skatteligning; Personlig søknad — bolig/levekostnader</td></tr>
+<tr><td>2.</td><td>Zuccarellostiftelsen — frist 2026-09-01 · Stipendportalen-utlysing 4985; Personlig søknad — brofinansiering bolig/levekost; Dokumentasjon bosatt Bergen</td></tr>
+<tr><td>3.</td><td>Bergen bys stiftelse til økonomisk vanskeligstilte — frist se portal · Dokumentert økonomisk situasjon; Folkeregistrert Bergen 3+ år; Søknad via Bergen kommune</td></tr>
+</tbody>
+</table>
+<p class="meta">Parallelt: Startlån via Husbanken (<code>bolig_asap</code>-batch for e-postkanaler).</p>
 
       <h2>Fristkalender</h2>
 <p class="meta">Verifiser alltid på giverens nettside før sending. <code>ruby build_plans.rb</code> regenererer fra funding.yml.</p>

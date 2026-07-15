@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_14_164502) do
+  create_table "account_merges", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "guest_user_id", null: false
+    t.datetime "merged_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["guest_user_id", "user_id"], name: "index_account_merges_on_guest_user_id_and_user_id", unique: true
+    t.index ["guest_user_id"], name: "index_account_merges_on_guest_user_id"
+    t.index ["user_id"], name: "index_account_merges_on_user_id"
+  end
+
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", null: false
@@ -66,18 +78,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
   end
 
-  create_table "account_merges", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "guest_user_id", null: false
-    t.datetime "merged_at"
-    t.string "status", default: "pending", null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["guest_user_id", "user_id"], name: "index_account_merges_on_guest_user_id_and_user_id", unique: true
-    t.index ["guest_user_id"], name: "index_account_merges_on_guest_user_id"
-    t.index ["user_id"], name: "index_account_merges_on_user_id"
-  end
-
   create_table "cities", force: :cascade do |t|
     t.string "country_code", null: false
     t.datetime "created_at", null: false
@@ -97,7 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   create_table "comments", force: :cascade do |t|
     t.integer "commentable_id", null: false
     t.string "commentable_type", null: false
-    t.text "content"
+    t.text "content", null: false
     t.datetime "created_at", null: false
     t.integer "parent_id"
     t.datetime "summary_updated_at"
@@ -105,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -112,7 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "city_id"
     t.datetime "created_at", null: false
     t.text "description"
-    t.string "name"
+    t.string "name", null: false
     t.string "slug"
     t.string "subdomain"
     t.datetime "updated_at", null: false
@@ -120,6 +121,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.index ["city_id", "slug"], name: "index_communities_on_city_id_and_slug", unique: true
     t.index ["city_id"], name: "index_communities_on_city_id"
     t.index ["subdomain"], name: "index_communities_on_subdomain", unique: true
+    t.index ["user_id"], name: "index_communities_on_user_id"
   end
 
   create_table "conversation_participants", force: :cascade do |t|
@@ -146,6 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "disliker_id", null: false
     t.datetime "updated_at", null: false
     t.index ["dislikee_id"], name: "index_dating_dislikes_on_dislikee_id"
+    t.index ["disliker_id", "dislikee_id"], name: "index_dating_dislikes_on_disliker_id_and_dislikee_id", unique: true
     t.index ["disliker_id"], name: "index_dating_dislikes_on_disliker_id"
   end
 
@@ -155,6 +158,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "liker_id", null: false
     t.datetime "updated_at", null: false
     t.index ["likee_id"], name: "index_dating_likes_on_likee_id"
+    t.index ["liker_id", "likee_id"], name: "index_dating_likes_on_liker_id_and_likee_id", unique: true
     t.index ["liker_id"], name: "index_dating_likes_on_liker_id"
   end
 
@@ -164,6 +168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "receiver_id", null: false
     t.string "status"
     t.datetime "updated_at", null: false
+    t.index ["initiator_id", "receiver_id"], name: "index_dating_matches_on_initiator_id_and_receiver_id", unique: true
     t.index ["initiator_id"], name: "index_dating_matches_on_initiator_id"
     t.index ["receiver_id"], name: "index_dating_matches_on_receiver_id"
   end
@@ -224,12 +229,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "follower_id"
     t.datetime "updated_at", null: false
     t.index ["followed_id"], name: "index_follows_on_followed_id"
+    t.index ["follower_id", "followed_id"], name: "index_follows_on_follower_id_and_followed_id", unique: true
     t.index ["follower_id"], name: "index_follows_on_follower_id"
   end
 
   create_table "hashtags", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "name"
+    t.string "name", null: false
     t.datetime "updated_at", null: false
     t.integer "usage_count"
     t.index ["name"], name: "index_hashtags_on_name", unique: true
@@ -264,6 +270,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "parent_id"
     t.string "slug"
     t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_marketplace_categories_on_parent_id"
+    t.index ["slug"], name: "index_marketplace_categories_on_slug", unique: true
   end
 
   create_table "marketplace_deals", force: :cascade do |t|
@@ -290,21 +298,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.index ["listing_id"], name: "index_marketplace_listing_favorites_on_listing_id"
     t.index ["user_id", "listing_id"], name: "idx_marketplace_favorites_user_listing", unique: true
     t.index ["user_id"], name: "index_marketplace_listing_favorites_on_user_id"
-  end
-
-  create_table "marketplace_reviews", force: :cascade do |t|
-    t.text "body"
-    t.datetime "created_at", null: false
-    t.integer "listing_id", null: false
-    t.integer "rating", null: false
-    t.decimal "reviewer_lat", precision: 10, scale: 7
-    t.decimal "reviewer_lng", precision: 10, scale: 7
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["listing_id", "created_at"], name: "index_marketplace_reviews_on_listing_id_and_created_at"
-    t.index ["listing_id"], name: "index_marketplace_reviews_on_listing_id"
-    t.index ["user_id", "listing_id"], name: "index_marketplace_reviews_on_user_id_and_listing_id", unique: true
-    t.index ["user_id"], name: "index_marketplace_reviews_on_user_id"
   end
 
   create_table "marketplace_listings", force: :cascade do |t|
@@ -345,6 +338,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.index ["listing_id"], name: "index_marketplace_orders_on_listing_id"
   end
 
+  create_table "marketplace_reviews", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.integer "listing_id", null: false
+    t.integer "rating", null: false
+    t.decimal "reviewer_lat", precision: 10, scale: 7
+    t.decimal "reviewer_lng", precision: 10, scale: 7
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["listing_id", "created_at"], name: "index_marketplace_reviews_on_listing_id_and_created_at"
+    t.index ["listing_id"], name: "index_marketplace_reviews_on_listing_id"
+    t.index ["user_id", "listing_id"], name: "index_marketplace_reviews_on_user_id_and_listing_id", unique: true
+    t.index ["user_id"], name: "index_marketplace_reviews_on_user_id"
+  end
+
   create_table "marketplace_saved_searches", force: :cascade do |t|
     t.integer "category_id"
     t.datetime "created_at", null: false
@@ -354,6 +362,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.string "query"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["category_id"], name: "index_marketplace_saved_searches_on_category_id"
     t.index ["user_id"], name: "index_marketplace_saved_searches_on_user_id"
   end
 
@@ -396,7 +405,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   end
 
   create_table "messages", force: :cascade do |t|
-    t.text "content"
+    t.text "content", null: false
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
     t.datetime "expires_at"
@@ -404,6 +413,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "sender_id"
     t.datetime "updated_at", null: false
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
 
   create_table "moderation_flags", force: :cascade do |t|
@@ -600,6 +610,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "position"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["playlist_playlist_id", "playlist_track_id"], name: "idx_on_playlist_playlist_id_playlist_track_id_2abb1104d1", unique: true
     t.index ["playlist_playlist_id"], name: "index_playlist_playlist_tracks_on_playlist_playlist_id"
     t.index ["playlist_track_id"], name: "index_playlist_playlist_tracks_on_playlist_track_id"
     t.index ["user_id"], name: "index_playlist_playlist_tracks_on_user_id"
@@ -670,7 +681,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.text "content"
     t.datetime "created_at", null: false
     t.integer "karma"
-    t.string "title"
+    t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["city_id"], name: "index_posts_on_city_id"
@@ -843,10 +854,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.decimal "reviewer_lng", precision: 10, scale: 7
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["order_id", "user_id"], name: "index_takeaway_reviews_on_order_id_and_user_id", unique: true
     t.index ["order_id"], name: "index_takeaway_reviews_on_order_id"
     t.index ["restaurant_id", "created_at"], name: "index_takeaway_reviews_on_restaurant_id_and_created_at"
     t.index ["restaurant_id"], name: "index_takeaway_reviews_on_restaurant_id"
     t.index ["user_id"], name: "index_takeaway_reviews_on_user_id"
+  end
+
+  create_table "trust_signals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.text "metadata"
+    t.string "source"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "weight", default: 0, null: false
+    t.index ["user_id", "kind"], name: "index_trust_signals_on_user_id_and_kind"
+    t.index ["user_id"], name: "index_trust_signals_on_user_id"
   end
 
   create_table "tv_broadcasts", force: :cascade do |t|
@@ -876,6 +900,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["city_id"], name: "index_tv_channels_on_city_id"
+    t.index ["slug"], name: "index_tv_channels_on_slug", unique: true
     t.index ["user_id"], name: "index_tv_channels_on_user_id"
   end
 
@@ -949,6 +974,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["tv_channel_id"], name: "index_tv_subscriptions_on_tv_channel_id"
+    t.index ["user_id", "tv_channel_id"], name: "index_tv_subscriptions_on_user_id_and_tv_channel_id", unique: true
     t.index ["user_id"], name: "index_tv_subscriptions_on_user_id"
   end
 
@@ -993,18 +1019,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.index ["user_id"], name: "index_tv_view_events_on_user_id"
   end
 
-  create_table "trust_signals", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "kind", null: false
-    t.text "metadata"
-    t.string "source"
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.integer "weight", default: 0, null: false
-    t.index ["user_id", "kind"], name: "index_trust_signals_on_user_id_and_kind"
-    t.index ["user_id"], name: "index_trust_signals_on_user_id"
-  end
-
   create_table "typing_indicators", force: :cascade do |t|
     t.integer "conversation_id", null: false
     t.datetime "created_at", null: false
@@ -1018,6 +1032,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   create_table "users", force: :cascade do |t|
     t.integer "city_id"
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.datetime "deletion_scheduled_at"
     t.string "display_name"
     t.string "email_address", null: false
     t.boolean "guest", default: false, null: false
@@ -1025,22 +1041,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.decimal "latitude", precision: 10, scale: 7
     t.datetime "location_updated_at"
     t.decimal "longitude", precision: 10, scale: 7
+    t.datetime "magic_link_expires_at"
+    t.string "magic_link_token"
+    t.string "otp_secret"
     t.string "password_digest", null: false
+    t.string "remember_token"
+    t.datetime "remember_token_expires_at"
+    t.boolean "two_factor_enabled", default: false, null: false
     t.datetime "updated_at", null: false
     t.string "username"
     t.index ["city_id"], name: "index_users_on_city_id"
-    t.string "remember_token"
-    t.datetime "remember_token_expires_at"
-    t.string "magic_link_token"
-    t.datetime "magic_link_expires_at"
-    t.datetime "deletion_scheduled_at"
-    t.datetime "deleted_at"
-    t.string "otp_secret"
-    t.boolean "two_factor_enabled", default: false, null: false
-    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
-    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
     t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
+    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
+    t.index ["username"], name: "index_users_on_username", unique: true
   end
 
   create_table "votes", force: :cascade do |t|
@@ -1050,6 +1065,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
     t.integer "value"
     t.integer "votable_id", null: false
     t.string "votable_type", null: false
+    t.index ["user_id", "votable_type", "votable_id"], name: "index_votes_on_user_id_and_votable_type_and_votable_id", unique: true
     t.index ["user_id"], name: "index_votes_on_user_id"
     t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
   end
@@ -1083,6 +1099,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   add_foreign_key "marketplace_listings", "users"
   add_foreign_key "marketplace_orders", "marketplace_listings", column: "listing_id"
   add_foreign_key "marketplace_orders", "users", column: "buyer_id"
+  add_foreign_key "marketplace_reviews", "marketplace_listings", column: "listing_id"
+  add_foreign_key "marketplace_reviews", "users"
   add_foreign_key "marketplace_saved_searches", "users"
   add_foreign_key "marketplace_stores", "cities"
   add_foreign_key "marketplace_stores", "users", column: "owner_id"
@@ -1092,8 +1110,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   add_foreign_key "messages", "conversations"
   add_foreign_key "moderation_flags", "users"
   add_foreign_key "moderation_reports", "users"
-  add_foreign_key "marketplace_reviews", "marketplace_listings", column: "listing_id"
-  add_foreign_key "marketplace_reviews", "users"
   add_foreign_key "neighborhoods", "cities"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
@@ -1123,8 +1139,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   add_foreign_key "playlist_set_tracks", "playlist_sets"
   add_foreign_key "playlist_set_tracks", "playlist_tracks"
   add_foreign_key "playlist_set_tracks", "users"
-  add_foreign_key "playlist_tracks", "users"
   add_foreign_key "playlist_sets", "users"
+  add_foreign_key "playlist_tracks", "users"
   add_foreign_key "posts", "cities"
   add_foreign_key "posts", "communities"
   add_foreign_key "posts", "users"
@@ -1149,6 +1165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   add_foreign_key "takeaway_reviews", "takeaway_orders", column: "order_id"
   add_foreign_key "takeaway_reviews", "takeaway_restaurants", column: "restaurant_id"
   add_foreign_key "takeaway_reviews", "users"
+  add_foreign_key "trust_signals", "users"
   add_foreign_key "tv_broadcasts", "tv_channels"
   add_foreign_key "tv_broadcasts", "users"
   add_foreign_key "tv_channels", "cities"
@@ -1170,7 +1187,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120100) do
   add_foreign_key "tv_videos", "users"
   add_foreign_key "tv_view_events", "tv_videos"
   add_foreign_key "tv_view_events", "users"
-  add_foreign_key "trust_signals", "users"
   add_foreign_key "typing_indicators", "conversations"
   add_foreign_key "typing_indicators", "users"
   add_foreign_key "users", "cities"

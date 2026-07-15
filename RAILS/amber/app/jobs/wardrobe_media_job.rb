@@ -16,7 +16,8 @@ class WardrobeMediaJob < ApplicationJob
     needle = "Item/#{item_id}"
     SolidQueue::Job.where(finished_at: nil, class_name: name)
       .where("arguments LIKE ?", "%#{needle}%").exists?
-  rescue StandardError
+  rescue StandardError => e
+    Rails.logger.warn("pending_for? check failed for item #{item_id}: #{e.message}")
     false
   end
 
@@ -76,7 +77,8 @@ class WardrobeMediaJob < ApplicationJob
     needle = "Item/#{item_id}"
     SolidQueue::Job.where(finished_at: nil, class_name: job_class.name)
       .where("arguments LIKE ?", "%#{needle}%").exists?
-  rescue StandardError
+  rescue StandardError => e
+    Rails.logger.warn("job_pending? check failed for #{job_class.name}/#{item_id}: #{e.message}")
     false
   end
 end

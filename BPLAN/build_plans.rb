@@ -46,6 +46,7 @@ def venture_extra(slug)
     HTML
   when "bolig_bergen"
     FundingHelpers.bolig_channels_block(FUNDING) +
+      FundingHelpers.bolig_portal_checklist_block(FUNDING) +
       FundingHelpers.bolig_budget_block(FUNDING) +
       FundingHelpers.claims_block("bolig_bergen", FUNDING)
   when "personal"
@@ -67,6 +68,7 @@ def build_plan_body(slug, _venture)
 
   [
     FundingHelpers.summary_block(slug, FUNDING),
+    FundingHelpers.executive_summary_block(slug, FUNDING),
     FundingHelpers.wholesome_block(slug, FUNDING),
     venture_extra(slug),
     FundingHelpers.budget_table(slug, FUNDING),

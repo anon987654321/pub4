@@ -18,17 +18,17 @@ module FundingHelpers
   TXT
 
   TRACK_NEED = {
-    "innovasjon" => "Norske småmiljøer trenger produksjonsklar programvare uten å outsource til utenlandsk SaaS — med målbar innovasjon og norsk datakontroll.",
-    "helse" => "Helse- og omsorgssektoren trenger verktøy som effektiviserer samhandling uten å erstatte klinisk skjønn eller kompromittere personvern.",
-    "samfunn" => "Lokalt demokrati og fellesskap i Bergen trenger trygge, tilgjengelige digitale flater — ikke sentraliserte plattformer uten moderering.",
-    "klima" => "Forbrukere trenger praktiske verktøy for å bruke det de har lengre — ikke nok en grønn app uten målbar effekt.",
+    "innovasjon" => "Små norske miljøer trenger produksjonsklar programvare uten å lease utenlandsk sky — med målbar nytte og data i Norge.",
+    "helse" => "Helse og omsorg trenger verktøy som letter samhandling og dokumentasjon — uten å ta kliniske beslutninger eller svekke personvern.",
+    "samfunn" => "Bergen trenger trygge, lokale digitale møteplasser med moderering og tillit — ikke enda en sentralisert plattform.",
+    "klima" => "Folk trenger hjelp til å bruke det de allerede eier lengre — konkret reduksjon i impulskjøp, ikke grønnvasking.",
     "sikkerhet" => "Offentlig sektor og maritime miljøer trenger sporbar, minimal-privilege infrastruktur — ikke blind tillit til utenlandsk sky.",
-    "produkt" => "Bergen trenger lokal produksjonskompetanse og prototyping før skala — ikke masseimport uten kvalitetskontroll.",
-    "finans" => "Norske aktører trenger åpen risikomodellering og læringsverktøy — innenfor Finanstilsynets rammer, ikke uregulert spekulasjon.",
+    "produkt" => "Bergen trenger lokal prototyping og håndverk før skala — kvalitet og reparasjon fremfor masseimport.",
+    "finans" => "Norske aktører trenger åpen risikomodellering og læring — innenfor Finanstilsynets rammer, ikke uregulert spekulasjon.",
     "sosial" => "Pårørende i sorg trenger forutsigbarhet, verdighet og fastpris — ikke salgstaktikk i en sårbar situasjon.",
-    "civic" => "Borgere trenger forståelig norsk veiledning for brev og skjema — ikke juridisk sjargong eller dyr konsulenttime.",
-    "kultur" => "Bergen trenger lokalt medieinnhold og visuell produksjon med respekt for medvirkning — ikke bare algoritme-støy.",
-    "bolig" => "Stabil bolig i Bergen krever Startlån, Husbanken og ærlig dokumentasjon — ikke fantasibeløp fra klassiske legater.",
+    "civic" => "Borgere trenger klart norsk for brev og skjema — veiledning, ikke erstatning for advokat i tvist.",
+    "kultur" => "Bergen trenger lokalt innhold og visuell produksjon med samtykke og medvirkning — ikke bare algoritme-støy.",
+    "bolig" => "Stabil bolig i Bergen krever Startlån, Husbanken og ærlig dokumentasjon — personlegater er bro, ikke kjøpesum.",
   }.freeze
 
   TECH_TRACKS = %w[innovasjon helse samfunn sikkerhet].freeze
@@ -110,6 +110,7 @@ module FundingHelpers
     fin_cells << ["", "SkatteFUNN — skattefradrag på FoU, ikke kontant utbetaling"]
 
     cashflow = cashflow_note_block(venture, funding)
+    egenandel = in_egenandel_block(venture, funding)
 
     <<~HTML
       <h2>Budsjett (realistisk, 12 mnd)</h2>
@@ -122,7 +123,9 @@ module FundingHelpers
         #{Bplan::Html.format_table_rows(fin_cells, headers: %w[# Kilde], numbered: true)}
       </table>
       <p class="meta" style="margin-top:1rem;font-size:0.9rem;">#{econ['skattefunn_note']}</p>
+      #{egenandel}
       #{cashflow}
+      #{skattefunn_estimate_block(venture, funding)}
     HTML
   end
 
@@ -157,6 +160,7 @@ module FundingHelpers
               "<strong>#{v['title']}</strong> — PubHealthcare, Bergen. MASTER utvikler; RAILS/ deployer apper."
             end
     html = "<h2>1. Sammendrag</h2>\n<p>#{intro}</p>\n"
+    html += vision_block(venture, funding, inline: true)
     html += en_summary_block(venture, funding)
     html += "<p><em>#{v['note']}</em></p>\n" if v["note"] && %w[bolig_bergen personal norwegian_hedge].include?(venture)
     html += "<p>#{extra}</p>\n" if extra
@@ -199,6 +203,12 @@ module FundingHelpers
     legat_sum = ventures.sum { |_, v| v["ask_legat_nok"].to_i }
     in_max = ventures.map { |_, v| v["ask_in_nok"].to_i }.max
 
+    channels = p.fetch("financial_channels", {})
+    channel_rows = [
+      ["Likviditet (kontant)", channels["likviditet"] || "Legater samme år"],
+      ["Skattefradrag", channels["skattefradrag"] || econ["skattefunn_note"]],
+      ["Lån / bolig", channels["lan"] || econ["bolig_note"]],
+    ]
     ceiling_rows = [
       ["Legater (sum alle idéer, ikke dobbelt)", "NOK #{fmt(ceil['legat_sum_all_ventures'] || legat_sum)}"],
       ["Primær innovasjon (IN/FR, én kanal)", "NOK #{fmt(ceil['innovasjon_primary'] || in_max)}"],
@@ -210,9 +220,14 @@ module FundingHelpers
     <<~HTML
       <h2>Portefølje — konvergens</h2>
       <p class="meta">Én sannhetskilde (funding.yml v#{p['convergence_version'] || 1}). Tall er realistiske for solo-utvikler i Bergen.</p>
+      <h3>Finansieringskanaler</h3>
+      <table>
+        #{Bplan::Html.format_table_rows(channel_rows, headers: %w[Kanal Hva\ det\ betyr])}
+      </table>
       <table>
         #{Bplan::Html.format_table_rows(ceiling_rows, headers: %w[Post Realistisk\ tak])}
       </table>
+      #{financial_forecast_block(funding)}
       #{legat_sum_explainer_block(funding)}
       <h3>Anti-dobbelsøk</h3>
       <table>
@@ -246,11 +261,15 @@ module FundingHelpers
                  "<p><strong>Løsning:</strong> #{pitch}</p>"
                end
 
+    civic_note = track == "civic" ? advokatloven_notice_block : ""
+
     <<~BODY
       <h2>1. Sammendrag</h2>
       <p>Jeg søker støtte til <strong>#{v['title'] || project}</strong>. #{pitch}</p>
+      #{vision_block(venture, funding, inline: true)}
       #{tech}
       <p>#{angle}</p>
+      #{civic_note}
 
       <h2>2. Bakgrunn og behov</h2>
       <p>#{need}</p>
@@ -484,6 +503,238 @@ module FundingHelpers
     return "egenandel etter utlysning" unless inn.positive?
 
     "egenandel krav — book IN-rådgiver, ikke masse-e-post"
+  end
+
+  def boligpakke_block(funding, related_ids: %w[12_bergen_startlan_boligtilskudd 62_kommunalt_startlan_egenkapital 64_husbanken_startlan])
+    sl = funding.dig("portfolio", "startlan_bergen") || {}
+    rows = [
+      ["", "Skattemelding og næringsoppgave (siste 2 år)"],
+      ["", "Bostedsattest Bergen (min. 3 år)"],
+      ["", "Husleiekontrakt / nåværende boligforhold"],
+      ["", "Finn.no-utkast til leiligheter i Bergen (prisband dokumentert)"],
+      ["", "Formue- og gjeldsoversikt"],
+      ["", "Min. #{sl['bank_avslag_minimum'] || 3} bankavslag (førstegang)"],
+      ["", "Egenkapital #{sl['egenkapital_førstegang_prosent'] || 5} % dokumentert"],
+    ]
+    links = related_ids.map { |id| "<code>legats/#{id}.html</code>" }.join(", ")
+    <<~HTML
+      <h2>2. Boligpakke — felles dokumentasjon</h2>
+      <p class="meta">Startlån-trio og tilhørende boligspor deler samme vedleggspakke. Relaterte søknader: #{links}.</p>
+      <table>
+        #{Bplan::Html.format_table_rows(rows, headers: %w[# Vedlegg], numbered: true)}
+      </table>
+      #{attachment_checklist_block("startlan", funding)}
+    HTML
+  end
+
+  def anders_jahre_disclaimer_block
+    <<~HTML
+      <h2>7. Institusjonelt samarbeid</h2>
+      <p class="meta">Anders Jahre-stiftelsen forventer ofte samarbeid med etablert forskningsinstitusjon. Jeg søker ærlig som enkeltperson med UiB/Helse Bergen som <em>planlagt</em> samarbeidspartner — ikke som eksisterende formelt partnerskap. Kontakt med institutt bekreftes før endelig innsending.</p>
+    HTML
+  end
+
+  def nav_service_block
+    <<~HTML
+      <aside class="meta" role="note">
+        <strong>Dette er ikke et legat eller tilskudd.</strong> NAV Bergen tilbyr gratis gjelds- og boligrådgivning.
+        Henvendelsen dokumenterer at jeg tar boligplan på alvor parallelt med Startlån-søknad.
+      </aside>
+    HTML
+  end
+
+  def vision_block(venture, funding, inline: false)
+    vision = funding.dig("ventures", venture, "vision").to_s.strip
+    return "" if vision.empty?
+
+    if inline
+      "<p class=\"vision\"><strong>Visjon:</strong> <em>#{vision}</em></p>\n"
+    else
+      "<h2>Visjon</h2>\n<p><em>#{vision}</em></p>\n"
+    end
+  end
+
+  def advokatloven_notice_block
+    <<~HTML
+      <aside class="meta" role="note">
+        <strong>Juridisk merknad:</strong> pub.attorney er veiledning og malbibliotek — ikke advokattjeneste etter Advokatloven.
+        Ved tvist, straffesak eller kompleks økonomi henvises til advokat eller fri rettshjelp.
+      </aside>
+    HTML
+  end
+
+  def financial_forecast_block(funding)
+    p = funding.fetch("portfolio", {})
+    bridge = p.fetch("living_bridge", {})
+    sens = p.fetch("sensitivity_legat", [])
+    bolig = p.fetch("bolig_price_band_bergen", {})
+    return "" if sens.empty? && bridge.empty?
+
+    rows = sens.map { |s| [s["label"], "NOK #{fmt(s['nok'])}", s["note"]] }
+    bridge_line = if bridge.any?
+                    months = bridge["months_until_first_payout"]
+                    monthly = bridge["monthly_nok"] || funding.dig("economics", "monthly_minimum_living_nok")
+                    total = months.to_i * monthly.to_i
+                    "<p class=\"meta\"><strong>Levekostnadsbro:</strong> ca. #{months} mnd × NOK #{fmt(monthly)} = NOK #{fmt(total)} — #{bridge['note']}</p>\n"
+                  else
+                    ""
+                  end
+    bolig_line = bolig["note"].to_s.strip.empty? ? "" : "<p class=\"meta\"><strong>Boligprisband Bergen:</strong> typisk #{bolig['typical_search_nok']} — #{bolig['note']}</p>\n"
+
+    <<~HTML
+      <h3>Likviditet og sensitivitet (legater)</h3>
+      #{bridge_line}
+      <table class="zebra">
+        #{Bplan::Html.format_table_rows(rows, headers: %w[Scenario Beløp Kommentar])}
+      </table>
+      #{bolig_line}
+    HTML
+  end
+
+  def in_egenandel_block(venture, funding)
+    v = funding["ventures"][venture] || {}
+    inn = v["ask_in_nok"].to_i
+    return "" unless inn.positive?
+
+    pct = funding.dig("economics", "in_egenandel_typical_pct") || 25
+    egen = (inn * pct / 100.0).round(-3).to_i
+    <<~HTML
+      <p class="meta"><strong>IN egenandel (typisk #{pct} %):</strong> ca. NOK #{fmt(egen)} av mål NOK #{fmt(inn)} — i tillegg til prosjektkostnad, ikke inkludert i tabellen over.</p>
+    HTML
+  end
+
+  def skattefunn_estimate_block(venture, funding)
+    return "" unless %w[master pub_healthcare bsdports].include?(venture)
+
+    econ = funding["economics"]
+    hours = econ["developer_hours_year"].to_i
+    rate = econ["developer_hourly_nok"].to_i
+    pct = econ["skattefunn_rate_pct"] || 22
+    base = hours * rate
+    credit = (base * pct / 100.0).round(-3).to_i
+    <<~HTML
+      <p class="meta"><strong>SkatteFUNN-estimat:</strong> #{hours} FoU-timer × NOK #{fmt(rate)} × #{pct} % ≈ NOK #{fmt(credit)} skattefradrag (ikke kontant i år).</p>
+    HTML
+  end
+
+  def bolig_portal_checklist_block(funding)
+    ids = %w[gunvor_minde zuccarelli vanskeligstilte]
+    rows = ids.filter_map do |fid|
+      f = funding["funders"].find { |x| x["id"] == fid }
+      next unless f
+
+      checklist = (f["attachment_checklist"] || []).first(3).join("; ")
+      ["", "#{f['name']} — frist #{f['deadline'] || 'se portal'} · #{checklist}"]
+    end
+    <<~HTML
+      <h2>Stipendportalen — bolig (sept 2026)</h2>
+      <p class="meta">Batch <code>bolig_portal_sept</code> — manuell innsending på stipendportalen.no, ikke mutt/e-post. Bruk PDF fra tilhørende legat-HTML.</p>
+      <table>
+        #{Bplan::Html.format_table_rows(rows, headers: %w[# Giver / vedlegg], numbered: true)}
+      </table>
+      <p class="meta">Parallelt: Startlån via Husbanken (<code>bolig_asap</code>-batch for e-postkanaler).</p>
+    HTML
+  end
+
+  def executive_summary_block(venture, funding)
+    v = funding["ventures"][venture]
+    return "" unless v
+
+    breakdown = venture_breakdown(venture, funding)
+    top_costs = breakdown.first(3).map { |l| "#{l['item']} (#{fmt(l['nok'])} NOK)" }.join("; ")
+    vision = v["vision"].to_s.strip
+    <<~HTML
+      <section class="executive-summary">
+        <h2>Sammendrag (1 side)</h2>
+        <table>
+          <tr><td>Idé</td><td><strong>#{v['title']}</strong></td></tr>
+          <tr><td>Spor</td><td>#{v['track']}</td></tr>
+          <tr><td>TRL</td><td>#{v['trl'] || '—'}</td></tr>
+          <tr><td>Prosjektsum 12 mnd</td><td>NOK #{fmt(v['project_total_nok'])}</td></tr>
+          <tr><td>Legat-søkt</td><td>NOK #{fmt(v['ask_legat_nok'])}</td></tr>
+          <tr><td>IN-mål</td><td>#{v['ask_in_nok'].to_i.positive? ? "NOK #{fmt(v['ask_in_nok'])}" : '—'}</td></tr>
+          <tr><td>Topp 3 kostnader</td><td>#{top_costs}</td></tr>
+        </table>
+        <p>#{v['wholesome_pitch']}</p>
+        #{vision.empty? ? '' : "<p><em>#{vision}</em></p>"}
+      </section>
+    HTML
+  end
+
+  def venture_compare_block(funding)
+    rows = funding["ventures"].reject { |k, _| %w[personal bolig_bergen].include?(k) }.map do |slug, v|
+      [v["title"], v["track"], v["trl"] || "—", "NOK #{fmt(v['ask_legat_nok'])}", "NOK #{fmt(v['project_total_nok'])}"]
+    end
+    <<~HTML
+      <h2>Sammenlign idéer</h2>
+      <table class="zebra">
+        #{Bplan::Html.format_table_rows(rows, headers: %w[Idé Spor TRL Legat-søkt Prosjektsum])}
+      </table>
+    HTML
+  end
+
+  def portfolio_chart_block(funding)
+    ventures = funding["ventures"].reject { |k, _| %w[personal bolig_bergen].include?(k) }
+    max_ask = ventures.map { |_, v| v["ask_legat_nok"].to_i }.max
+    max_ask = 1 if max_ask.zero?
+    bars = ventures.map do |slug, v|
+      ask = v["ask_legat_nok"].to_i
+      pct = (ask * 100.0 / max_ask).round
+      label = v["title"].to_s[0, 28]
+      "<tr><td>#{label}</td><td><div class=\"bar-chart\"><span style=\"width:#{pct}%\"></span></div></td><td>NOK #{fmt(ask)}</td></tr>"
+    end.join("\n        ")
+    <<~HTML
+      <h2>Legat-asks per idé</h2>
+      <p class="meta">Visualisering av ask_legat_nok — ikke utbetalingsgaranti.</p>
+      <table class="zebra portfolio-chart">
+        <tr><td>Idé</td><td>Andel</td><td>Søkt</td></tr>
+        #{bars}
+      </table>
+    HTML
+  end
+
+  def helse_template_body(entry, funding, variant:)
+    v = funding["ventures"]["pub_healthcare"]
+    extra = case variant
+            when :autisme
+              "<p>Fokus: forutsigbar struktur, lav kognitiv belastning og tydelig visuell hierarki — ikke diagnose eller behandling.</p>"
+            when :mental_helse
+              "<p>Fokus: pårørende og psykisk helse — trygge, ikke-kliniske verktøy for informasjon og koordinering.</p>"
+            when :revmatiker
+              "<p>Fokus: barn og pårørende med revmatiske diagnoser — koordinering mellom skole, helse og familie, ikke medisinsk behandlingsråd.</p>"
+            else
+              ""
+            end
+    <<~BODY
+      <h2>1. Sammendrag</h2>
+      <p>Jeg søker støtte til helserelatert innovasjon via pub.healthcare og MASTER/RAILS. #{entry['angle']}</p>
+      #{extra}
+      <p>#{v['wholesome_pitch']}</p>
+      <h2>2. Pasient- og samfunnsnytte</h2>
+      <p>Velferdsteknologi skal styrke trygghet og selvstendighet — ikke erstatte klinisk skjønn.</p>
+      <h2>3. Leveranser</h2>
+      <ul>
+        #{v['deliverables'].map { |d| "<li>#{d}</li>" }.join("\n        ")}
+      </ul>
+      #{legat_budget_section('pub_healthcare', funding)}
+    BODY
+  end
+
+  def maritim_template_body(entry, funding)
+    v = funding["ventures"]["bsdports"] || {}
+    <<~BODY
+      <h2>1. Sammendrag</h2>
+      <p>#{entry['angle']}</p>
+      <p>#{v['wholesome_pitch']}</p>
+      <p>#{MASTER_BLURB}</p>
+      <h2>2. Maritim relevans</h2>
+      <p>Bergen som maritim hovedstad krever sporbar pakkeinfrastruktur og minimal-privilege-arkitektur ombord og i landbaserte systemer.</p>
+      <h2>3. Leveranser</h2>
+      <ul>
+        #{(v['deliverables'] || []).map { |d| "<li>#{d}</li>" }.join("\n        ")}
+      </ul>
+      #{legat_budget_section('bsdports', funding)}
+    BODY
   end
 
   def fun_wholesome_table(funding)

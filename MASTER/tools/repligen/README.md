@@ -12,7 +12,7 @@ ruby MASTER/tools/repligen.rb stats
 ruby MASTER/tools/repligen.rb capabilities
 ```
 
-Credentials resolve from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY`, or `~/.config/repligen/config.json`. Catalog state defaults to `~/.cache/repligen/models.json`. The local Ragnhild identity workflow does not use generic Repligen generation: MASTER routes it to `Master::Reach::LoraPipeline`, which verifies the dataset/checkpoint and passes the user's exact prompt into the local FLUX sampler.
+Credentials resolve from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY`, or `~/.config/repligen/config.json`. Catalog state defaults to `~/.cache/repligen/models.json`. MASTER routes explicit image-generation requests through this boundary; it does not claim a separate local identity-model path.
 
 Generation returns provider URLs unless `--output FILE` is supplied. Missing credentials, missing outputs, provider failures, cancellation, and timeouts are explicit failures; the tool does not silently substitute a model or claim a local file exists.
 

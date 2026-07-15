@@ -117,7 +117,7 @@ legater:
     deadline: "Se autismeforeningen.no"
     track: helse
     project: pub.healthcare
-    template: helse
+    template: autisme
     angle: "Tilgjengelig, forutsigbar programvare for autismespekteret — MASTER/RAILS med WCAG og klar struktur."
 
   - id: "50_revmatikerforbundet_barnefond"
@@ -129,7 +129,7 @@ legater:
     deadline: "15.09.2026"
     track: helse
     project: pub.healthcare
-    template: helse
+    template: revmatiker
     angle: "Digitale verktøy for familier med revmatiske diagnoser — koordinering og informasjon via pub.healthcare."
 
   - id: "51_johan_throne_holst"
@@ -187,7 +187,7 @@ legater:
     deadline: "Fortløpende"
     track: helse
     project: pub.healthcare
-    template: helse
+    template: mental_helse
     angle: "Verdensdagen for psykisk helse — digitale verktøy som styrker trygghet og selvstendighet for pårørende."
 
   - id: "55_bergen_handelsstand"
@@ -311,7 +311,7 @@ legater:
     deadline: "Fortløpende"
     track: bolig
     project: personal
-    template: bolig
+    template: nav_service
     angle: "Ærlig henvendelse om boligplan og inntektsituasjon — ikke legat, men viktig parallell kanal."
 
   - id: "64_husbanken_startlan"

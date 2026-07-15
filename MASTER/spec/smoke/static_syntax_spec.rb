@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
+require "open3"
 
 class StaticSyntaxSpec < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
@@ -14,19 +15,20 @@ class StaticSyntaxSpec < Minitest::Test
     end
   end
 
-  def test_visual_javascript_has_balanced_common_delimiters
+  def test_visual_javascript_is_syntactically_valid
+    skip "node not available" unless system("which node > /dev/null 2>&1")
+
     Dir.glob(File.join(ROOT, "web", "public", "*.js")).each do |path|
-      source = File.read(path)
-      assert_equal source.count("("), source.count(")"), path
-      assert_equal source.count("{"), source.count("}"), path
-      assert_equal source.count("["), source.count("]"), path
+      _out, status = Open3.capture2e("node", "--check", path)
+      assert status.success?, "node --check failed: #{path.sub(ROOT + '/', '')}"
     end
   end
 
   def test_executable_bins_have_ruby_shebang
     Dir.glob(File.join(ROOT, "bin", "*")).each do |path|
       next unless File.file?(path)
-      first = File.readline(path)
+
+      first = File.open(path, &:readline)
       assert_match(/ruby|sh|bash/, first, path)
     end
   end

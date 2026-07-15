@@ -134,7 +134,7 @@ module Ports
       message = "unresolved dependencies: #{unresolved.uniq.sort.first(12).join(', ')}"
       message += " (+#{unresolved.uniq.size - 12} more)" if unresolved.uniq.size > 12
       Rails.logger.warn("bsdports import: #{message}")
-      @import_run&.update!(error_message: [@import_run.error_message, message].compact.join(" | "))
+      @import_run&.update!(error_message: [ @import_run.error_message, message ].compact.join(" | "))
     end
 
     def rebuild_fts

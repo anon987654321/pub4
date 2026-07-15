@@ -27,7 +27,8 @@ Pub4::CiGuard.run! do
     else
       step "Styles: pub4 CSS", "echo 'build_all_css.rb not found in any known location -- skipping' >&2"
     end
-    step("Security: Importmap audit", "bundle exec importmap audit") unless vps_host
+    importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')
+    step("Security: Importmap audit", importmap_audit) unless vps_host
     rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'
     step("Style: Ruby", rubocop) unless vps_host
     audit = ENV["BUNDLER_AUDIT_UPDATE"] == "1" ? "bundle exec bundler-audit check --update" : "bundle exec bundler-audit check"

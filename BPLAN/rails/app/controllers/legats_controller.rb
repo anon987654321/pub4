@@ -5,8 +5,10 @@ class LegatsController < ApplicationController
 
   def index
     @track = params[:track].presence
+    @show_vx = params[:show_vx].to_s == "1"
     @tracks = catalog.tracks
-    @legats = catalog.legats_filtered(track: @track)
+    @low_priority_count = catalog.low_priority_count
+    @legats = catalog.legats_filtered(track: @track, include_low_priority: @show_vx)
     @sendable_count = catalog.legats_sendable.size
     @per_page = PER_PAGE
     @page = [params[:page].to_i, 1].max

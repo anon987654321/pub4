@@ -13,24 +13,30 @@
       <button type="button" class="bplan-btn-pay" data-copy-ref="<%= @reference %>">Kopier referanse</button>
     </p>
 
-    <h2>Slik betaler du</h2>
-    <% if @vipps.present? %>
-      <div class="payment-qr-placeholder" aria-hidden="true">
-        <p class="meta">[ QR-kode for Vipps kommer her ]</p>
-      </div>
-      <table>
-        <tr><td>1.</td><td>Åpne Vipps og send til <strong><%= @vipps %></strong></td></tr>
-        <tr><td>2.</td><td>Beløp: NOK <%= number_with_delimiter(@amount) %></td></tr>
-        <tr><td>3.</td><td>Melding: <%= @reference %></td></tr>
-      </table>
-    <% else %>
-      <div class="payment-qr-placeholder">
-        <p class="meta">Sett <code>BPLAN_VIPPS_NUMBER</code> for Vipps-QR, eller betal via e-post.</p>
-      </div>
-      <%= link_to "Send betalingsbekreftelse",
-            "mailto:#{@email}?subject=Betalingsbekreftelse%20#{@reference}&body=Beløp:%20NOK%20#{@amount}%0AReferanse:%20#{@reference}%0AProsjekt:%20#{@plan[:slug]}",
-            class: "bplan-btn-pay" %>
-    <% end %>
+    <ol class="payment-steps">
+      <li>
+        <h2>Steg 1 — Vipps</h2>
+        <% if @vipps.present? %>
+          <div class="payment-qr-placeholder" aria-hidden="true">
+            <p class="meta">[ QR-kode for Vipps kommer her ]</p>
+          </div>
+          <table>
+            <tr><td>·</td><td>Send til <strong><%= @vipps %></strong></td></tr>
+            <tr><td>·</td><td>Beløp: NOK <%= number_with_delimiter(@amount) %></td></tr>
+            <tr><td>·</td><td>Melding: <%= @reference %></td></tr>
+          </table>
+        <% else %>
+          <p class="meta">Sett <code>BPLAN_VIPPS_NUMBER</code> på serveren for Vipps-nummer.</p>
+        <% end %>
+      </li>
+      <li>
+        <h2>Steg 2 — E-post (fallback)</h2>
+        <p>Hvis Vipps ikke er tilgjengelig, send bekreftelse på e-post:</p>
+        <%= link_to "Send betalingsbekreftelse",
+              "mailto:#{@email}?subject=Betalingsbekreftelse%20#{@reference}&body=Beløp:%20NOK%20#{@amount}%0AReferanse:%20#{@reference}%0AProsjekt:%20#{@plan[:slug]}",
+              class: "bplan-btn-pay" %>
+      </li>
+    </ol>
 
     <p><%= link_to "← Tilbake", root_path %></p>
   </div>

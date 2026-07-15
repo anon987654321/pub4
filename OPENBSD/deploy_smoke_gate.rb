@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "json"
 require "yaml"
 require_relative "lib/utf8"
 
@@ -24,6 +25,18 @@ else
     domain = metadata.fetch("domain")
     failures << "relayd: missing forward for #{name}:#{port}" unless relayd.include?("port #{port}")
     failures << "relayd: missing Host route for #{domain}" unless relayd.include?(domain)
+  end
+
+  master_json = File.join(ROOT, "OPENBSD", "master.json")
+  if File.file?(master_json)
+    standalone = JSON.parse(File.read(master_json)).fetch("standalone_apps", [])
+    standalone.each do |entry|
+      name = entry.fetch("name")
+      port = entry.fetch("port")
+      domain = entry.fetch("domain")
+      failures << "relayd: missing forward for #{name}:#{port}" unless relayd.include?("port #{port}")
+      failures << "relayd: missing Host route for #{domain}" unless relayd.include?(domain)
+    end
   end
 
   failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")

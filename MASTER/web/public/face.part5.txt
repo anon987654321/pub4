@@ -860,8 +860,11 @@ function startEverything() {
   // invoked even once, so nothing was ever painted to the canvas — the face
   // was fully "alive" internally and invisible on screen. This is the actual
   // fix for the long-standing "no 3D face visible" report.
+  window.MASTER?.boot?.transition?.('FACE', { source: 'startEverything' });
   ensureFrameLoop();
   initAudio();
+  window.MASTER?.boot?.transition?.('VOICE', { source: 'initAudio' });
+  window.MASTER?.boot?.signal?.('voice_ready', { source: 'initAudio' });
   prefetchTtsPhraseBank?.();
   if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
   if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }

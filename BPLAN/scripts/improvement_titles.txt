@@ -8,191 +8,191 @@ WCAG AAA to WCAG 2.2 AA-mal
 Payment amounts server-side only from funding.yml
 Unify send_legats.sh guards with grok_send_legats.rb
 Global AI-utkast disclaimer on all letters
-Align
-Gunvor
-Minde
-track
-bolig
-Align
-Zuccarelli
-track
-bolig
-Soften
-brgen
-funder
-copy
-Drop
-valgdeltakelse
-claims
-without
-evidence
-Add
-personal.html
-plan
-Render
-fun_wholesome_table
-on
-index
-Per-funder
-vedlegg-sjekkliste
-Gunvor
-Minde
-required
-docs
-Utdanningsstiftelse
-dual
-angle
-Merge
-duplicate
-Sept
-deadlines
-Implement
-maritim
-catalog
-template
-Wahlstrom
-Repligen
-legat
-Financial accuracy improvement 56
-Financial accuracy improvement 57
-Financial accuracy improvement 58
-Financial accuracy improvement 59
-Financial accuracy improvement 60
-Financial accuracy improvement 61
-Financial accuracy improvement 62
-Financial accuracy improvement 63
-Financial accuracy improvement 64
-Financial accuracy improvement 65
-Financial accuracy improvement 66
-Financial accuracy improvement 67
-Financial accuracy improvement 68
-Financial accuracy improvement 69
-Financial accuracy improvement 70
-Financial accuracy improvement 71
-Financial accuracy improvement 72
-Financial accuracy improvement 73
-Financial accuracy improvement 74
-Financial accuracy improvement 75
-Financial accuracy improvement 76
-Financial accuracy improvement 77
-Financial accuracy improvement 78
-Financial accuracy improvement 79
-Financial accuracy improvement 80
-Financial accuracy improvement 81
-Financial accuracy improvement 82
-Financial accuracy improvement 83
-Financial accuracy improvement 84
-Financial accuracy improvement 85
-Automation and send improvement 86
-Automation and send improvement 87
-Automation and send improvement 88
-Automation and send improvement 89
-Automation and send improvement 90
-Automation and send improvement 91
-Automation and send improvement 92
-Automation and send improvement 93
-Automation and send improvement 94
-Automation and send improvement 95
-Automation and send improvement 96
-Automation and send improvement 97
-Automation and send improvement 98
-Automation and send improvement 99
-Automation and send improvement 100
-Automation and send improvement 101
-Automation and send improvement 102
-Automation and send improvement 103
-Automation and send improvement 104
-Automation and send improvement 105
-Automation and send improvement 106
-Automation and send improvement 107
-Automation and send improvement 108
-Automation and send improvement 109
-Automation and send improvement 110
-Automation and send improvement 111
-Automation and send improvement 112
-Automation and send improvement 113
-Automation and send improvement 114
-Automation and send improvement 115
-Static HTML and HTU improvement 116
-Static HTML and HTU improvement 117
-Static HTML and HTU improvement 118
-Static HTML and HTU improvement 119
-Static HTML and HTU improvement 120
-Static HTML and HTU improvement 121
-Static HTML and HTU improvement 122
-Static HTML and HTU improvement 123
-Static HTML and HTU improvement 124
-Static HTML and HTU improvement 125
-Static HTML and HTU improvement 126
-Static HTML and HTU improvement 127
-Static HTML and HTU improvement 128
-Static HTML and HTU improvement 129
-Static HTML and HTU improvement 130
-Static HTML and HTU improvement 131
-Static HTML and HTU improvement 132
-Static HTML and HTU improvement 133
-Static HTML and HTU improvement 134
-Static HTML and HTU improvement 135
-Static HTML and HTU improvement 136
-Static HTML and HTU improvement 137
-Static HTML and HTU improvement 138
-Static HTML and HTU improvement 139
-Static HTML and HTU improvement 140
-Rails app improvement 141
-Rails app improvement 142
-Rails app improvement 143
-Rails app improvement 144
-Rails app improvement 145
-Rails app improvement 146
-Rails app improvement 147
-Rails app improvement 148
-Rails app improvement 149
-Rails app improvement 150
-Rails app improvement 151
-Rails app improvement 152
-Rails app improvement 153
-Rails app improvement 154
-Rails app improvement 155
-Rails app improvement 156
-Rails app improvement 157
-Rails app improvement 158
-Rails app improvement 159
-Rails app improvement 160
-Rails app improvement 161
-Rails app improvement 162
-Rails app improvement 163
-Rails app improvement 164
-Rails app improvement 165
-Rails app improvement 166
-Rails app improvement 167
-Rails app improvement 168
-Rails app improvement 169
-Rails app improvement 170
-Deploy and ops improvement 171
-Deploy and ops improvement 172
-Deploy and ops improvement 173
-Deploy and ops improvement 174
-Deploy and ops improvement 175
-Deploy and ops improvement 176
-Deploy and ops improvement 177
-Deploy and ops improvement 178
-Deploy and ops improvement 179
-Deploy and ops improvement 180
-Deploy and ops improvement 181
-Deploy and ops improvement 182
-Deploy and ops improvement 183
-Deploy and ops improvement 184
-Deploy and ops improvement 185
-Deploy and ops improvement 186
-Deploy and ops improvement 187
-Deploy and ops improvement 188
-Deploy and ops improvement 189
-Deploy and ops improvement 190
-Deploy and ops improvement 191
-Deploy and ops improvement 192
-Deploy and ops improvement 193
-Deploy and ops improvement 194
-Deploy and ops improvement 195
+Align Gunvor Minde track bolig across YAML batches HTML
+Align Zuccarelli track bolig across YAML batches HTML
+Soften brgen dating/takeaway/TV in funder-facing letters
+Drop +15pp valgdeltakelse 2028 without measurement plan
+Add personal.html plan brofinansiering not AI-wrapped
+Render fun_wholesome_table on index
+Per-funder vedlegg-sjekkliste in manifest
+Gunvor Minde required-doc table from stipendportalen 4974
+Utdanningsstiftelse split utdanning vs kompetanseheving angles
+Merge duplicate Sept deadline rows
+Implement maritim template in bergen_catalog.yml
+Dedicated Wahlstrom to Repligen legat from funders.wahlstrom
+Norwegian Hedge Finanstilsynet banner on all letters
+SYRE legat embed assets/ivaar_fkyeah images
+Ilumi sample fastprisliste appendix
+pub.attorney Advokatloven block on every civic legat
+Trond Mohn pre-qual checklist and UiB contact placeholder
+Nordic Innovation English abstract paragraph
+Anders Jahre institutional partner disclaimer
+Startlan trio 12 62 64 boligpakke shared doc list
+65_legathandboken_generell internal index only not outbound
+63_nav clarify NAV service not grant
+Revmatikerforbundet child/pårørende angle not generic helse
+Mental Helse vs Autismeforening distinct templates
+vx_* matrix low_priority collapse in UI
+Per-legat cover_intro override in YAML
+amount field in catalog wired to budget section
+Portal-only funders auto sendable false
+preferred_channel email portal meeting per funder
+One-page executive summary per venture
+Standardize section numbering across all letters
+Reduce vx_* duplication merge when 80pct identical
+Westfal-Larsen budget from bsdports venture
+Anthon tie to documented workshop curriculum
+Media City split brgen TV vs Repligen deliverables
+ExxonMobil utdanning angle not generic AI
+Kavli Trust measurable samfunnsnytte KPIs
+Consolidate Det Bergenske and ditt_parti if redundant
+Hielmstierne 3-year Bergen residency rule from funders
+Autismeforening honest fit check or soften angle
+Footer clarify Johann vs GK Tepstad roles
+Add soknadsportal URL per funder where applicable
+Legat index group by frist not only alphabetical
+fun_* drafts link to real channel in each body
+LLM tailoring pass with mandatory human review gate
+Explain ask_in_nok > project_total_nok in budget tables
+portfolio.legat_sum_explainer block on index
+Cashflow month-by-month per venture in funding.yml
+Validate developer_hourly_nok x hours vs dev line items
+Portfolio columns likviditet skattefradrag lan
+SkatteFUNN compute from FoU hours not flat 100k
+IN egenandel calculator typical 25pct per venture
+SYRE COGS per prototype pair
+Amber kost per plagg brukt metric
+Sovereign VPS CapEx vs OpEx split
+Sensitivity page 50 100 150pct legat success
+norwegian_hedge hide IN ask until Finanstilsynet dialog
+Bolig apartment price band vs kommune maks kjopesum
+Export funding.yml to CSV for regnskapsforer
+Kontoplan mapping per breakdown line
+Buffer pct rule documented per venture
+Machine-readable excludes anti-double-dip pairs
+Personal 35k ask aligned with 10-50k brofinansiering
+Radio Bergen bandwidth cost per episode
+Repligen equipment depreciation line
+Convergence version auto-bump on economics edit
+Year-1 vs Year-2 funding split for IN applications
+Living costs bridge 18k/mnd x months until payout
+Explicit what we will NOT spend on per venture
+Tax timing note for ENK MVA threshold
+SkatteFUNN eligible hours log template
+Egeninnsats valuation existing MASTER/RAILS codebase
+Break-even timeline per venture honest
+funding_forecast.yml multi-year 2026-2028
+Rails scenario planner 2 legater + delvis IN
+Initialize legats/sent_log.yml with schema comment
+--confirm before non-dry-run send
+Dry-run writes .eml to legats/outbox/
+Auto-build frist_host_2026 batch from funding.deadlines
+Strip non-sendable IDs from batches automatically
+Email verify script compare to vs contact_url
+PDF via headless Chrome when wkhtmltopdf missing
+Attach PDF and HTML when sending
+MIME hash in sent_log for dedup integrity
+BCC archive to applicant inbox
+Daily send cap and rate limit
+Batch run report Markdown after send
+Mutt cover templates per track covers/bolig.txt
+Exclude fun_* 66_*_draft self-to from all_sendable
+html_to_text parity shell vs Ruby single implementation
+Stipendportalen deadline scrape YAML diff manual approve
+Cron and reminder doc for Sept frister
+Slack/email notify on successful send
+--id single send with pre-flight checklist output
+Legat PDF naming convention id_funder_date.pdf
+Queue failed sends for retry
+verify_to true block send until manually cleared
+Cover letter tone slider formal warm minimal
+Attach funding.yml venture excerpt as appendix optional
+Log mutt exit codes and stderr in sent_log
+Batch delay jitter to avoid spam filters
+Separate from display name vs envelope
+Reply-To routing for funder responses
+Grok suggest-only mode for cover tweaks never auto-send
+Rails submissions table audit trail
+role=table script in build_legats.rb
+meta description per plan/legat
+Self-host EB Garamond in htu/fonts/
+Unify lang=nb static and Rails
+@media print in htu.css
+th scope=col in all generated tables
+rel=canonical per page
+data-plan data-funder-id on articles
+Prev/next nav in PLAN_ORDER on each plan
+legats/index.html filter chips by track JS
+sitemap.xml for content
+robots.txt
+OpenGraph for shareable plans
+Last built from funding.generated
+SYRE figures figcaption and credits
+Logo aria-hidden or meaningful alt
+Minified HTU CSS build step
+HTML5 validator in CI
+Mobile typography fixes in htu.css
+prefers-color-scheme dark mode screen only
+Internal anchor TOC on long plans
+Consistent amp vs and in titles
+Favicon and apple-touch-icon Rails and static
+JSON-LD Organization for PubHealthcare
+Pagefind static search over plans and legats
+Legats index draft sendable badges
+Legats index sort by deadline
+Deadline calendar on /legats
+Filter legats by track query param
+Legat show manifest metadata to frist notes verify_url
+Plans index TRL track ask columns
+Plan show prev/next navigation
+Portfolio page from funding_helpers
+Deadlines page and ICS export
+API /api/plans JSON
+API /api/legats JSON
+Payments server-side amount from catalog
+CSP initializer for BPLAN rails
+catalog.rb mtime cache and sanitize
+Home bolig CTA block
+Track pills in site.css
+SitemapsController and RobotsController
+show_pay_buttons ENV gate
+not_found helper
+Attachment checklist on legat show
+Verify banner on legat show
+Portfolio convergence version in footer
+Rails tests for catalog payments deadlines
+bplan.sh deploy script separate from RAILS/apps.yml
+public/content symlink to BPLAN root
+Makefile bplan validate build test
+test/validate_test.rb Bplan::Validate
+test/build_plans_test.rb subprocess build
+.github/workflows/bplan.yml CI
+bplan.sh reads .deployignore
+OPENBSD etc/rc.d/bplan from rails-app.tmpl
+relayd entry bplan.pub.healthcare to 39282
+Run bplan.sh on OpenBSD VPS
+BPLAN_VIPPS_NUMBER in /etc/bplan.env
+Staging domain for BPLAN
+Blue/green deploy for BPLAN
+Live Vipps webhooks
+NSD zone bplan.pub.healthcare
+acme-client cert for bplan.pub.healthcare
+Litestream backup for BPLAN sqlite
+Falcon workers tuning for BPLAN
+Health check /up in relayd
+rcctl restart relayd after bplan deploy
+bplan user and directory layout on VPS
+Sync content tree on deploy
+BUILD_ID stamp on VPS
+Deploy smoke test bplan.pub.healthcare
+Operator runbook section for BPLAN
+PATH_OWNERSHIP.yml bplan entry
+master.json bplan app entry
+deploy_all.sh includes bplan
+vps_install_all bplan bundle
+bplan.env.sample committed
+Doas rules for bplan deploy
+bplan.sh BUILD_ID check and stamp
 Testing and CI improvement 196
 Testing and CI improvement 197
 Testing and CI improvement 198
@@ -213,26 +213,26 @@ Testing and CI improvement 212
 Testing and CI improvement 213
 Testing and CI improvement 214
 Testing and CI improvement 215
-UX and design improvement 216
-UX and design improvement 217
-UX and design improvement 218
-UX and design improvement 219
-UX and design improvement 220
-UX and design improvement 221
-UX and design improvement 222
-UX and design improvement 223
-UX and design improvement 224
-UX and design improvement 225
-UX and design improvement 226
-UX and design improvement 227
-UX and design improvement 228
-UX and design improvement 229
-UX and design improvement 230
-UX and design improvement 231
-UX and design improvement 232
-UX and design improvement 233
-UX and design improvement 234
-UX and design improvement 235
+Color-coded track pills helse bolig innovasjon
+Deadline urgency highlight 7 days or less
+Label pay buttons brostotte vs offisiell soknad
+Bolig forst CTA when bolig_asap pending
+Focus-visible styles in site.css
+Reduce text-align justify on mobile
+Empty state for filtered legats
+Print-friendly payment instructions
+Inline SVG track icons no CDN
+Flash styling for payment redirect
+Legat show sticky send checklist sidebar
+Home hero clearer BPLAN vs RAILS vs MASTER hierarchy
+Typography scale audit EB Garamond meta size
+Table zebra striping optional in HTU
+Payment page step 1 Vipps step 2 mailto fallback
+Venture cards on /plans instead of plain table
+Progress ring X of Y Sept frister prepared
+Reduce visual noise on legat table pagination
+Portfolio dashboard charts from funding.yml
+Printable soknadspakke bundle per batch
 Legal and honesty improvement 236
 Legal and honesty improvement 237
 Legal and honesty improvement 238

@@ -239,9 +239,9 @@ sync_openbsd_apply() {
       || log WARN "$svc restart/start failed"
   done
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
-  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312)
+  typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312 bplan 39282)
   typeset -a core_apps=(brgen)
-  typeset -a optional_apps=(amber bsdports litestream)
+  typeset -a optional_apps=(amber bsdports bplan litestream)
   for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true
@@ -304,6 +304,7 @@ typeset -A APP_PORTS=(
   amber 61352
   bsdports 47312
   master 53187
+  bplan 39282
 )
 typeset -A FAILED_CERTS
 
@@ -815,7 +816,14 @@ stage_2() {
 
   configure_relayd
 
-  log INFO "Deploy complete. Test: curl https://brgen.no, rcctl check master."
+  if [[ -f ${REPO_ROOT}/BPLAN/rails/bplan.sh ]]; then
+    log INFO "Deploying BPLAN standalone (bplan.sh)"
+    if ! su -l dev -c "zsh ${REPO_ROOT}/BPLAN/rails/bplan.sh"; then
+      log WARN "bplan.sh deploy failed — set /etc/bplan.env and rerun"
+    fi
+  fi
+
+  log INFO "Deploy complete. Test: curl https://brgen.no, rcctl check master, curl http://127.0.0.1:39282/up"
 }
 
 # ── Entry point ───────────────────────────────────────────────────────────────

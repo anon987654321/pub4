@@ -570,6 +570,7 @@ function markFaceReady() {
   faceReadyMarked = true;
   rootBody.classList.add('face-ready');
   rootBody.classList.remove('face-loading');
+  window.MASTER?.boot?.signal?.('face_ready', { source: 'markFaceReady' });
   window.dispatchEvent(new CustomEvent('master:face-ready'));
 }
 
@@ -589,6 +590,7 @@ if (_hasWebGL && THREE) {
     // primerFired alone.
     console.error('MASTER face: WebGLRenderer construction failed', e);
     window.__MASTER_RENDERER_FAILED__ = true;
+    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
   }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
@@ -951,7 +953,6 @@ let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBounda
 ({ home: faceHome, scatter: faceScatter, seeds: faceSeeds, edgePosData: faceEdgePosData,
    curvature: faceCurvature, boundary: faceBoundary, zone: faceZone, edgeAlpha: faceEdgeAlpha } =
   sampleDepthMapGrid(generateFaceDepthMap(512), FACE_GRID_COLS, FACE_GRID_ROWS));
-
 const VERT_SHADER = `
 vec3 mod289v3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec4 mod289v4(vec4 x){return x-floor(x*(1./289.))*289.;}
@@ -1396,7 +1397,6 @@ async function swapMask(imageUrl) {
     if (uiStatus) uiStatus.textContent = 'mask load failed';
   }
 }
-
 let frameLoopActive = false;
 function ensureFrameLoop() {
   if (State.hidden || document.hidden) return;
@@ -2192,7 +2192,6 @@ if ('getBattery' in navigator) {
     b.addEventListener('chargingchange', check);
   }).catch(() => {});
 }
-
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -3050,7 +3049,6 @@ function ttsTogglePause() {
   refresh();
   setInterval(refresh, 60000);
 })();
-
 // Sample the cleaned text across the audio length so the mouth moves with real prosody.
 function startVisemeAnim(text) {
   stopVisemeAnim();
@@ -3913,8 +3911,11 @@ function startEverything() {
   // invoked even once, so nothing was ever painted to the canvas — the face
   // was fully "alive" internally and invisible on screen. This is the actual
   // fix for the long-standing "no 3D face visible" report.
+  window.MASTER?.boot?.transition?.('FACE', { source: 'startEverything' });
   ensureFrameLoop();
   initAudio();
+  window.MASTER?.boot?.transition?.('VOICE', { source: 'initAudio' });
+  window.MASTER?.boot?.signal?.('voice_ready', { source: 'initAudio' });
   prefetchTtsPhraseBank?.();
   if (window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume();
   if (primer) { primer.style.transition = 'opacity 160ms ease, transform 160ms ease'; primer.style.opacity = '0'; primer.style.transform = 'scale(0.93)'; setTimeout(() => primer?.remove(), 200); }
@@ -4201,4 +4202,3 @@ await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
 await import(_deferFaceMod('face_loops_nudge.js'));
-

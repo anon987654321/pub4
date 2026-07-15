@@ -122,6 +122,7 @@
       resolve them lazily in go(), not at parse time.
       See CLAUDE.md and history of "tap to start does nothing" for this high-risk path.
       Enhancements here should preserve the _primerFired guard and dbgFrames check. %>
+  <script src="<%= asset_path("boot_fsm.js") %>"></script>
   <script nonce="<%= content_security_policy_nonce %>">
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
@@ -166,7 +167,11 @@
         var ui=uiEl();
         if(ui&&/^loading face /i.test(ui.textContent||''))ui.textContent='';
       }
-      function bootFailed(){clearWatch();fallbackUi();}
+      function bootFailed(){
+        clearWatch();
+        window.MASTER?.boot?.transition?.('ERROR', { source: 'bootFailed' });
+        fallbackUi();
+      }
       function showProgress(pct){
         var n=Math.max(0,Math.min(100,Math.round(pct)));
         var title=titleEl(),ui=uiEl();
@@ -191,6 +196,8 @@
       function loadFace(retried){
         if(window.__MASTER_FACE_IMPORT__)return;
         window.__MASTER_FACE_IMPORT__=true;
+        if(retried)window.MASTER?.boot?.transition?.('RECOVERING', { source: 'loadFace_retry' });
+        window.MASTER?.boot?.transition?.('ASSETS', { source: 'loadFace', retried: !!retried });
         resetFaceCanvasForWebGL();
         import("<%= asset_path("face.js") %>").then(function(){
           if(boot())clearWatch();
@@ -199,12 +206,14 @@
           if(retried){bootFailed();return;}
           var ui=uiEl();
           if(ui)ui.textContent='retrying…';
+          window.MASTER?.boot?.transition?.('RECOVERING', { source: 'loadFace_catch' });
           retryT=setTimeout(function(){loadFace(true);},1200);
         });
       }
       function go(){
         if(fired)return;
         fired=true;
+        window.MASTER?.boot?.transition?.('PRIMER', { source: 'primer_tap' });
         var title=titleEl();
         if(title)title.textContent='starting…';
         window._primerFired=true;

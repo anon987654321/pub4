@@ -201,6 +201,10 @@ footer {
   }
 }
 
+table.zebra tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.03);
+}
+
 @media (max-width: 600px) {
   article {
     padding: 7rem 2rem 3rem;

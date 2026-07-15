@@ -71,6 +71,15 @@ test("face.runtime.js is generated from face parts", () => {
   assert.ok(runtime.includes(part1.slice(0, 120)), "runtime should include part1 body");
 });
 
+test("boot_fsm defines deterministic boot phases before primer tap", () => {
+  const fsm = readFileSync(join(publicDir, "boot_fsm.js"), "utf8");
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  assert.match(fsm, /INIT.*PRIMER.*ASSETS.*FACE.*VOICE.*READY/s);
+  assert.match(fsm, /master:boot-state/);
+  assert.match(index, /asset_path\("boot_fsm\.js"\)/);
+  assert.ok(index.indexOf('asset_path("boot_fsm.js")') < index.indexOf("function go()"));
+});
+
 test("chat index inline boot lazy-imports face with status hint, auto-retry, 35s watchdog", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /MASTER_ASSET_PATHS/);

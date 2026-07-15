@@ -5,14 +5,30 @@
   <img src="/content/htu/bergen.svg" alt="" class="logo">
   <header>
     <h1>BPLAN — Bergen</h1>
-    <p class="meta">
-      Denne siden er <strong>BPLAN/rails</strong> — en egen, innholdsstyrt Rails-app.<br>
-      Den er <em>ikke</em> en del av <code>RAILS/brgen</code>, <code>RAILS/amber</code> eller andre deploy-apper.<br>
-      <strong>MASTER</strong> utvikler; <strong>RAILS/</strong> deployer brgen.no, pub.healthcare m.fl. — BPLAN dokumenterer og søker støtte til det arbeidet.
+    <p class="meta bplan-hierarchy">
+      <strong>MASTER</strong> — selvforbedrende AI-kjerne (utvikler kode)<br>
+      <strong>RAILS/</strong> — deploybare apper: brgen.no, amber, bsdports (produksjon)<br>
+      <strong>BPLAN/rails</strong> — denne siden: forretningsplaner, legater, frister (egen app, ikke i RAILS/apps.yml)
     </p>
   </header>
 
   <div class="content">
+    <% if bolig_asap_pending? %>
+      <aside class="bolig-cta bolig-cta--urgent" role="alert">
+        <h2>Bolig først — bolig_asap venter</h2>
+        <p>Sendbare e-postsøknader i <code>bolig_asap</code> er ikke logget som sendt. Prioriter Startlån, NAV og sosiale legater med ekstern mottaker.</p>
+        <%= link_to "Åpne bolig-legater", legats_path(track: "bolig"), class: "bplan-btn-pay" %>
+      </aside>
+    <% end %>
+    <% if bolig_portal_sept_pending? %>
+      <aside class="bolig-cta bolig-cta--urgent" role="alert">
+        <h2>Stipendportalen — sept 2026</h2>
+        <p>Manuell innsending i <code>bolig_portal_sept</code>: Gunvor Minde (20.09), Zuccarelli (01.09) og vanskeligstilte. Ikke mutt — last opp PDF på stipendportalen.no.</p>
+        <%= link_to "Les boligplanen", plan_path(slug: "bolig_bergen"), class: "bplan-btn-pay" %>
+        <%= link_to "Portal-legater", legats_path(track: "bolig"), class: "bplan-btn-pay bplan-btn-pay--secondary" %>
+      </aside>
+    <% end %>
+
     <aside class="bolig-cta">
       <h2>Bolig i Bergen</h2>
       <p>Startlån og tilskudd er et eget spor — separat fra FoU-budsjett.</p>
@@ -35,20 +51,22 @@
             </td>
             <td class="bplan-pay-cell">
               <% if plan[:ask_legat_nok].positive? %>
-                <%= button_to "Betal NOK #{number_with_delimiter(plan[:ask_legat_nok])}",
+                <%= button_to "Brostøtte NOK #{number_with_delimiter(plan[:ask_legat_nok])}",
                       pay_path(slug: plan[:slug]),
                       method: :post,
                       params: { kind: "legat" },
                       class: "bplan-btn-pay",
-                      form: { data: { turbo: false } } %>
+                      form: { data: { turbo: false } },
+                      title: "Uformell brostøtte — ikke offisiell søknad" %>
               <% end %>
               <% if catalog.show_in_pay?(plan) %>
-                <%= button_to "IN-mål #{number_with_delimiter(plan[:ask_in_nok])}",
+                <%= button_to "Offisiell IN-mål #{number_with_delimiter(plan[:ask_in_nok])}",
                       pay_path(slug: plan[:slug]),
                       method: :post,
                       params: { kind: "in" },
                       class: "bplan-btn-pay bplan-btn-pay--secondary",
-                      form: { data: { turbo: false } } %>
+                      form: { data: { turbo: false } },
+                      title: "Målbeløp for Innovasjon Norge — krever møte og egenandel" %>
               <% end %>
             </td>
           </tr>

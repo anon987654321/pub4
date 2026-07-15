@@ -12,8 +12,10 @@ ownership:
     purpose: production runbook
     risk: high
     check: OPENBSD/bin/check
-  ../BACKLOG.yml:
-    purpose: canonical open operator backlog
+  data/debt.yml:
+    purpose: canonical open operator debt (BACKLOG.yml was removed 2026-07-07;
+      features live in RAILS/apps.yml, debt here, operator recipes in
+      data/operator.yml)
     risk: medium
     check: bin/pub4 status
   rails/apps.horizon.yml:
@@ -64,6 +66,22 @@ ownership:
     purpose: full OpenBSD installer/deployer
     risk: critical
     check: OPENBSD/bin/check-openbsd
+  deploy_standalone_apps.sh:
+    purpose: deploy master.json standalone_apps (BPLAN)
+    risk: high
+    check: zsh -n OPENBSD/deploy_standalone_apps.sh
+  ../BPLAN/rails/bplan.sh:
+    purpose: BPLAN VPS deploy script
+    risk: critical
+    check: zsh -n BPLAN/rails/bplan.sh
+  etc/rc.d/bplan:
+    purpose: Falcon rc.d for BPLAN/rails
+    risk: critical
+    check: OPENBSD/bin/check-openbsd
+  etc/bplan.env.sample:
+    purpose: production env template for /etc/bplan.env
+    risk: medium
+    check: test -f OPENBSD/etc/bplan.env.sample
   ../OPENBSD/etc/:
     purpose: repo mirror of live /etc configs
     risk: critical

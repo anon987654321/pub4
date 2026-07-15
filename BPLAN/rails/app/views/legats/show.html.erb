@@ -32,16 +32,22 @@
     </aside>
   <% end %>
 
-  <div class="content">
-    <section class="attachment-checklist">
-      <h2>Vedleggssjekkliste</h2>
-      <ul>
-        <% @attachments.each do |item| %>
-          <li><%= item %></li>
+  <div class="content legat-layout">
+    <aside class="legat-sidebar">
+      <section class="attachment-checklist attachment-checklist--sticky">
+        <h2>Send-sjekkliste</h2>
+        <ul>
+          <% @attachments.each do |item| %>
+            <li><%= item %></li>
+          <% end %>
+        </ul>
+        <% if @sendable %>
+          <p class="meta">Kjør: <code>ruby grok_send_legats.rb --id <%= @legat['id'] %> --dry-run</code></p>
         <% end %>
-      </ul>
-    </section>
+      </section>
+    </aside>
 
+    <div class="legat-main">
     <section class="legat-metadata">
       <h2>Manifest</h2>
       <table>
@@ -55,6 +61,7 @@
     </section>
 
     <%= @body.html_safe %>
+    </div>
   </div>
   <footer class="bplan-doc-footer">
     <p><%= link_to "Alle legater", legats_path %> · <%= link_to "BPLAN", root_path %></p>

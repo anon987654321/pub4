@@ -23,13 +23,16 @@ module Deploy
 
     def master_apps(path: File.join(root, "OPENBSD", "master.json"))
       data = JSON.parse(File.read(path))
-      data.fetch("apps").map do |entry|
-        App.new(
-          name: entry.fetch("name"),
-          domain: entry["domain"],
-          port: entry.fetch("port").to_i
-        )
-      end
+      data.fetch("apps").map { |entry| app_from_json(entry) }
+    end
+
+    def standalone_apps(path: File.join(root, "OPENBSD", "master.json"))
+      data = JSON.parse(File.read(path))
+      Array(data["standalone_apps"]).map { |entry| app_from_json(entry) }
+    end
+
+    def all_deploy_apps(path: File.join(root, "OPENBSD", "master.json"))
+      master_apps(path: path) + standalone_apps(path: path)
     end
 
     private
@@ -47,6 +50,17 @@ module Deploy
           public: metadata.fetch("public", false)
         )
       end
+    end
+
+    def app_from_json(entry)
+      App.new(
+        name: entry.fetch("name"),
+        title: entry["title"],
+        domain: entry.fetch("domain"),
+        port: entry.fetch("port").to_i,
+        deploy_script: entry["deploy_script"],
+        deploy_root: entry["deploy_root"]
+      )
     end
   end
 end

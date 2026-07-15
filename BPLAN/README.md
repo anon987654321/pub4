@@ -24,8 +24,8 @@ flowchart LR
 
 ```
 BPLAN/
-  *.html              # 14 forretningsplaner (statisk)
-  legats/             # 97+ søknader
+  *.html              # 15 forretningsplaner (statisk)
+  legats/             # 96 søknader
   funding.yml         # kanonisk økonomi
   build_plans.rb
   build_legats.rb
@@ -75,6 +75,12 @@ export BPLAN_VIPPS_NUMBER=12345678   # valgfritt
 export BUILD_ID=$(git rev-parse --short HEAD)  # valgfritt override
 cd BPLAN/rails && ./bplan.sh
 # → bplan.pub.healthcare :39282
+
+# Fra workstation (git pull + OPERATOR + standalone):
+zsh OPENBSD/deploy_all.sh
+
+# Kun BPLAN på VPS:
+zsh OPENBSD/deploy_standalone_apps.sh
 ```
 
 Synker `BPLAN/rails` → `/home/bplan/app` og resten av `BPLAN/` → `/home/bplan/content` (respekterer `.deployignore`).
@@ -86,31 +92,39 @@ Regenerer: `ruby build_plans.rb`.
 
 Batch `frist_host_2026` henter `legat_id` automatisk fra deadlines med `batch: frist_host_2026`.
 
-## Send legater
+## Send legater (PDF → e-post)
+
+**68 sendbare** søknader med mottaker-e-post ligger i `legats/manifest.yml` (fra Legathåndboken / stipendportalen / givernes nettsider). Portal-only (Gunvor, Zuccarelli, …) er **ikke** i auto-send — last opp manuelt på stipendportalen.no.
+
+### På OpenBSD (vm23)
 
 ```bash
-cd BPLAN
+pkg_add mutt chromium    # PDF + sending
+doas rcctl start smtpd   # lokal utgående post
 
-# Dry-run (skriver .eml til legats/outbox/)
-ruby grok_send_legats.rb --batch bolig_asap --dry-run
-ruby grok_send_legats.rb --id 02_trond_mohn_medical_ai --dry-run
+cd ~/pub4/BPLAN
+export MUTT_CONFIG=$PWD/etc/muttrc
 
-# Faktisk sending (krever --confirm, daglig tak LEGAT_DAILY_CAP=5)
-ruby grok_send_legats.rb --batch helse --confirm
-FORCE_IN=1 ruby grok_send_legats.rb --id 01_innovasjon_norge_master --confirm
+./legat_mailer.sh build          # regenerer HTML + PDF i legats/pdfs/
+./legat_mailer.sh list           # alle 68 med e-post
+./legat_mailer.sh batches        # bolig_asap, helse, innovasjon, …
+./legat_mailer.sh dry-run helse  # forhåndsvis i legats/outbox/
 
-# Shell-wrapper
-./send_legats.sh --list
-./send_legats.sh --dry-run 02_trond_mohn_medical_ai
-./send_legats.sh --confirm 02_trond_mohn_medical_ai
+LEGAT_SEND=1 ./legat_mailer.sh send helse              # faktisk send (max 5/dag)
+LEGAT_SEND=1 FORCE_IN=1 ./legat_mailer.sh send innovasjon   # inkl. Innovasjon Norge
 ```
 
-Sikkerhetsregler:
-- Hopper over `draft`, `sendable: false`, self-to (`bergen@pub.attorney`)
-- Hopper over `*innovasjon_norge*` med mindre `FORCE_IN=1`
-- `sent_log.yml` hindrer duplikater
-- Egendefinert cover: `legats/covers/<id>.txt`
-- Batch-rapport: `legats/reports/*.md`
+### Vanlige batches
+
+| Batch | Innhold |
+|-------|---------|
+| `bolig_asap` | Startlån, NAV, sosiale legater (e-post) |
+| `helse` | Helse/velferd-legater |
+| `bergen_legathandboken` | Bergen-stiftelser fra katalogen |
+| `innovasjon` | IN, SkatteFUNN, regional (IN krever `FORCE_IN=1`) |
+| `all_sendable` | Alle 68 — bruk forsiktig |
+
+Sikkerhet: `LEGAT_SEND=1` latch, `sent_log.yml` mot duplikater, `LEGAT_DAILY_CAP=5`, Innovasjon Norge krever `FORCE_IN=1`.
 
 ## CI
 

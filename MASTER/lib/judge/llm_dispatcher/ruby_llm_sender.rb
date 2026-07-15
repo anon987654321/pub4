@@ -25,27 +25,7 @@ module Master
           available_tools = llm_tools(selected_model)
           chat_session.with_tools(*available_tools) unless available_tools.empty?
 
-          ask_arg = last_text
-          temp_file = nil
-          if image && ((!image[:path].to_s.empty? && File.file?(image[:path])) || !image[:data].to_s.empty?)
-            if !image[:path].to_s.empty? && File.file?(image[:path])
-              attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s))
-            else
-              ext = (if image[:mime].to_s =~ /png/i
-".png"
-else
-(image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg")
-end)
-              temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
-              temp_file.binmode
-              temp_file.write(Base64.strict_decode64(image[:data]))
-              temp_file.rewind
-              temp_file.close
-              attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
-            end
-            content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
-            ask_arg = content
-          end
+          ask_arg, temp_file = build_ask_arg(last_text, image)
 
           begin
             reply = if stream && blk
@@ -56,15 +36,41 @@ end)
             record_usage(reply, selected_model)
             Result.ok(extract_response(reply, selected_model))
           ensure
-            if temp_file
-              begin
-                temp_file.close unless temp_file.closed?
-                temp_file.unlink if File.exist?(temp_file.path)
-              rescue StandardError
-                nil
-              end
-            end
+            cleanup_temp_file(temp_file)
           end
+        end
+
+        def build_ask_arg(last_text, image)
+          has_image = image && ((!image[:path].to_s.empty? && File.file?(image[:path])) || !image[:data].to_s.empty?)
+          return [last_text, nil] unless has_image
+
+          temp_file = nil
+          if !image[:path].to_s.empty? && File.file?(image[:path])
+            attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s))
+          else
+            ext = (if image[:mime].to_s =~ /png/i
+".png"
+else
+(image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg")
+end)
+            temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
+            temp_file.binmode
+            temp_file.write(Base64.strict_decode64(image[:data]))
+            temp_file.rewind
+            temp_file.close
+            attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
+          end
+          content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
+          [content, temp_file]
+        end
+
+        def cleanup_temp_file(temp_file)
+          return unless temp_file
+
+          temp_file.close unless temp_file.closed?
+          temp_file.unlink if File.exist?(temp_file.path)
+        rescue StandardError
+          nil
         end
 
         def record_usage(reply, model)
@@ -74,15 +80,24 @@ end)
           cached = reply.respond_to?(:cached_tokens) ? reply.cached_tokens.to_i : 0
           cache_write = reply.respond_to?(:cache_creation_tokens) ? reply.cache_creation_tokens.to_i : 0
           tokens = input + output
-          if tokens.zero? && reply.respond_to?(:content)
-            tokens = Master::Trace::Session.estimate_tokens(reply.content)
-            return if tokens.zero?
-            cost = (tokens * COST_PER_TOKEN).round(6)
-            @session.record_cost(cost, model:, tokens:)
-            publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true)
-            return
-          end
+          return record_estimated_usage(reply, model) if tokens.zero? && reply.respond_to?(:content)
           return if tokens.zero?
+
+          record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:)
+        rescue StandardError => e
+          @bus&.publish("cost:record_error", error: e.message)
+        end
+
+        def record_estimated_usage(reply, model)
+          tokens = Master::Trace::Session.estimate_tokens(reply.content)
+          return if tokens.zero?
+
+          cost = (tokens * COST_PER_TOKEN).round(6)
+          @session.record_cost(cost, model:, tokens:)
+          publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true)
+        end
+
+        def record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:)
           regular = [input - cached - cache_write, 0].max
           cost = ((regular * COST_PER_TOKEN) +
                   (cached * COST_PER_TOKEN * CACHE_READ_RATIO) +
@@ -92,8 +107,6 @@ end)
           publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:)
           Trace::CacheEfficiency.record(input:, cached:, cache_write:)
           @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
-        rescue StandardError => e
-          @bus&.publish("cost:record_error", error: e.message)
         end
 
         def publish_llm_cost(model:, cost:, tokens:, tokens_in: 0, tokens_out: 0, cached: 0, cache_write: 0, estimated: false)

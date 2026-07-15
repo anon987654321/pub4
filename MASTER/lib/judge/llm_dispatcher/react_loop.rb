@@ -15,22 +15,30 @@ module Master
           last = nil
 
           REACT_MAX_STEPS.times do |step|
-            img = (step.zero? ? image : nil)
-            result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, image: img, &(step.zero? ? blk : nil))
+            result, done = react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
             return result if result.err?
 
-            text = result.to_s
-            calls = parse_tool_calls(text)
             last = result
-            break if calls.empty?
-
-            @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size)
-            history << { role: "assistant", content: text }
-            tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
-            history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
+            break if done
           end
 
           last || Result.err("react: no response generated", category: :llm_call_failure)
+        end
+
+        def react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
+          img = (step.zero? ? image : nil)
+          result = send_ruby_llm(selected_model, history, sys: react_sys, stream: step.zero? ? stream : false, image: img, &(step.zero? ? blk : nil))
+          return [result, true] if result.err?
+
+          text = result.to_s
+          calls = parse_tool_calls(text)
+          return [result, true] if calls.empty?
+
+          @bus&.publish("react:tool_calls", model: selected_model, step:, count: calls.size)
+          history << { role: "assistant", content: text }
+          tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
+          history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
+          [result, false]
         end
 
         def build_react_system(base_sys)

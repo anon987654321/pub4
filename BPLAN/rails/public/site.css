@@ -145,6 +145,63 @@
   margin-top: 1rem;
 }
 
+.empty-state {
+  padding: 1.5rem;
+  border: 1px dashed rgba(0,0,0,.15);
+  margin: 1rem 0;
+}
+
+.bolig-cta--urgent {
+  border-color: rgba(180, 60, 40, 0.45);
+  background: rgba(180, 60, 40, 0.08);
+}
+
+.bplan-hierarchy { line-height: 1.55; }
+
+.deadline-badge--soon { color: #a65a00; }
+
+.legat-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.attachment-checklist--sticky {
+  position: sticky;
+  top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(0,0,0,.1);
+  background: rgba(255,255,255,.9);
+}
+.legat-main { min-width: 0; }
+
+.payment-steps { margin: 1rem 0; padding-left: 1.25rem; }
+.payment-steps > li { margin-bottom: 1.25rem; }
+.payment-steps h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+
+.bar-chart {
+  height: 0.65rem;
+  background: rgba(0,0,0,.06);
+  border-radius: 2px;
+  min-width: 6rem;
+}
+.bar-chart span {
+  display: block;
+  height: 100%;
+  background: rgba(26, 95, 122, 0.55);
+  border-radius: 2px;
+}
+
+@media (max-width: 720px) {
+  .legat-layout { grid-template-columns: 1fr; }
+  .attachment-checklist--sticky { position: static; }
+}
+
+@media print {
+  .bplan-nav, .bplan-footer, .skip-link { display: none !important; }
+  .payment-steps, .payment-qr-placeholder { page-break-inside: avoid; }
+}
+
 a:focus-visible,
 button:focus-visible,
 .bplan-btn-pay:focus-visible {

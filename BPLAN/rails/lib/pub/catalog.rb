@@ -63,10 +63,63 @@ module Bplan
         legats.select { |entry| sendable?(entry) }
       end
 
-      def legats_filtered(track: nil)
+      def legats_filtered(track: nil, include_low_priority: false)
         list = legats
+        list = list.reject { |entry| entry["low_priority"] } unless include_low_priority
         list = list.select { |entry| entry["track"] == track.to_s } if track.present?
         legats_by_deadline(list)
+      end
+
+      def low_priority_count
+        legats.count { |entry| entry["low_priority"] }
+      end
+
+      def batch_pending?(batch_name, require_sendable: false)
+        batch = YAML.load_file(BPLAN_ROOT.join("legats/batches.yml")).dig("batches", batch_name, "ids") || []
+        sent_ids = sent_log_ids
+        batch.any? do |id|
+          entry = legat(id)
+          next false unless entry
+          next false if require_sendable && !sendable?(entry)
+
+          !sent_ids.include?(id)
+        end
+      rescue StandardError
+        false
+      end
+
+      def bolig_asap_pending?
+        batch_pending?("bolig_asap", require_sendable: true)
+      end
+
+      def bolig_portal_sept_pending?
+        batch_pending?("bolig_portal_sept")
+      end
+
+      def sent_log_ids
+        path = BPLAN_ROOT.join("legats/sent_log.yml")
+        return [] unless path.file?
+
+        log = YAML.load_file(path)
+        raw = log["sent"]
+        case raw
+        when Hash then raw.keys
+        when Array then raw.filter_map { |e| e["id"] if e.is_a?(Hash) }
+        else []
+        end
+      end
+
+      def deadline_urgent?(entry, today: funding["generated"].to_s)
+        date_s = entry["date"].to_s
+        return false if date_s.empty?
+
+        begin
+          d = Date.parse(date_s)
+          t = Date.parse(today)
+          (d - t).to_i.between?(0, 7)
+        rescue ArgumentError
+          false
+        end
       end
 
       def legats_by_deadline(list = legats)

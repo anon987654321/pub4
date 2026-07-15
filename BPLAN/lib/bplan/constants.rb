@@ -64,11 +64,14 @@ module Bplan
 
     NON_SENDABLE_APP_FILES = %w[
       01_innovasjon_norge_master.html
+      65_legathandboken_generell.html
     ].freeze
 
     NON_SENDABLE_NOTES = {
       "01_innovasjon_norge_master.html" =>
         "Innovasjon Norge — book møte med rådgiver Bergen, ikke masse-e-post. Bekreft kanal på contact_url.",
+      "65_legathandboken_generell.html" =>
+        "Intern mal for Legathåndboken — tilpass per giver manuelt. Ikke masseutsendelse.",
     }.freeze
   end
 

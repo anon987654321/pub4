@@ -31,8 +31,8 @@ run_bin = ->(name, *args) { ["bin/#{name} #{args.join(' ')}".strip, RUBY, File.j
 web_live = ENV["MASTER_WEB_LIVE"] == "1"
 
 PROFILES = {
-  "operator"    => [rake["test"], rake["test:core"], rake["lint:data_singularity"]],
-  "contributor" => [rake["test"], rake["lint:data_singularity"]],
+  "operator"    => [rake["test"], rake["spec"], rake["security_sweep"], rake["test:core"], rake["lint:data_singularity"]],
+  "contributor" => [rake["test"], rake["spec"], rake["security_sweep"], rake["lint:data_singularity"]],
   "agent"       => [rake["selftest"], rake["lint:data_singularity"]],
   "web"         => [["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
                     *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],

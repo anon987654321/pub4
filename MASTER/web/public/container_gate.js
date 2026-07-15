@@ -41,7 +41,12 @@ function setReady(isReady, detail) {
     document.documentElement.dataset.modelProvider = String(detail.model).slice(0, 24);
   }
   if (detail?.build) document.documentElement.dataset.build = String(detail.build).slice(0, 12);
-  if (isReady) window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));
+  if (isReady) {
+    window.MASTER?.boot?.signal?.("container_ready", { source: "container_gate", ...detail });
+    window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));
+  } else {
+    window.MASTER?.boot?.signal?.("container_warmup", { source: "container_gate" });
+  }
 }
 
 function ensureRetryBootButton() {
@@ -56,6 +61,7 @@ function ensureRetryBootButton() {
     pollCount = 0;
     if (pollTimer) clearTimeout(pollTimer);
     pollTimer = null;
+    window.MASTER?.boot?.transition?.("RECOVERING", { source: "retry_boot_button" });
     pollTick();
     const ui = document.getElementById("ui-status");
     if (ui) ui.textContent = "retrying boot…";

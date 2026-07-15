@@ -81,13 +81,23 @@ if (( run_per_app )); then
   done
 fi
 
+if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/master.json ]]; then
+  typeset -a STANDALONE
+  STANDALONE=("${(@f)$(jq -r '.standalone_apps[]?.name // empty' "${DEPLOY_ROOT}/master.json")}")
+  if (( ${#STANDALONE[@]} > 0 )); then
+    log "Standalone apps (master.json standalone_apps)..."
+    vssh "cd ${REMOTE_PUB4} && zsh OPENBSD/deploy_standalone_apps.sh 2>&1 | tee /tmp/standalone_deploy.log" \
+      || log "WARN: standalone deploy — see /tmp/standalone_deploy.log"
+  fi
+fi
+
 log "Smoke checks..."
 vssh 'ps aux | grep -E "falcon serve" | grep -v grep' || log "WARN: no Falcon processes"
 if command -v jq >/dev/null 2>&1; then
   while IFS=$'\t' read -r app port; do
     vssh "nc -z 127.0.0.1 ${port}" 2>/dev/null && log "  ${app} listening on :${port}" \
       || log "WARN: ${app} not listening on :${port}"
-  done < <(jq -r '.apps[] | [.name, .port] | @tsv' "${DEPLOY_ROOT}/master.json")
+  done < <(jq -r '(.apps[]?, .standalone_apps[]?) | [.name, .port] | @tsv' "${DEPLOY_ROOT}/master.json")
 fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then

@@ -10,11 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_14_164503) do
   create_table "categories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
-    t.string "name"
+    t.string "name", null: false
     t.integer "platform_id", null: false
     t.string "slug"
     t.datetime "updated_at", null: false
@@ -23,14 +23,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
   end
 
   create_table "comments", force: :cascade do |t|
-    t.text "content"
+    t.text "content", null: false
     t.datetime "created_at", null: false
     t.integer "parent_id"
     t.integer "port_id"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
     t.index ["port_id"], name: "index_comments_on_port_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "dependencies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "dep_type"
+    t.integer "depends_on_id"
+    t.integer "port_id"
+    t.datetime "updated_at", null: false
+    t.index ["depends_on_id"], name: "index_dependencies_on_depends_on_id"
+    t.index ["port_id", "depends_on_id", "dep_type"], name: "index_dependencies_on_port_id_and_depends_on_id_and_dep_type", unique: true
+    t.index ["port_id"], name: "index_dependencies_on_port_id"
   end
 
   create_table "import_runs", force: :cascade do |t|
@@ -47,16 +59,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
     t.index ["platform_id"], name: "index_import_runs_on_platform_id"
   end
 
-  create_table "dependencies", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "dep_type"
-    t.integer "depends_on_id"
-    t.integer "port_id"
-    t.datetime "updated_at", null: false
-    t.index ["depends_on_id"], name: "index_dependencies_on_depends_on_id"
-    t.index ["port_id"], name: "index_dependencies_on_port_id"
-  end
-
   create_table "maintainers", force: :cascade do |t|
     t.boolean "active", default: true
     t.datetime "created_at", null: false
@@ -64,18 +66,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_maintainers_on_name", unique: true
-  end
-
-  create_table "port_updates", force: :cascade do |t|
-    t.string "commit_id"
-    t.text "commit_message"
-    t.datetime "committed_at"
-    t.datetime "created_at", null: false
-    t.string "new_version"
-    t.string "old_version"
-    t.integer "port_id"
-    t.datetime "updated_at", null: false
-    t.index ["port_id"], name: "index_port_updates_on_port_id"
   end
 
   create_table "platforms", force: :cascade do |t|
@@ -89,6 +79,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
     t.index ["slug"], name: "index_platforms_on_slug", unique: true
   end
 
+  create_table "port_updates", force: :cascade do |t|
+    t.string "commit_id"
+    t.text "commit_message"
+    t.datetime "committed_at"
+    t.datetime "created_at", null: false
+    t.string "new_version", null: false
+    t.string "old_version"
+    t.integer "port_id"
+    t.datetime "updated_at", null: false
+    t.index ["port_id"], name: "index_port_updates_on_port_id"
+  end
+
   create_table "ports", force: :cascade do |t|
     t.integer "category_id"
     t.text "comment"
@@ -98,10 +100,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
     t.date "last_updated"
     t.string "maintainer"
     t.integer "maintainer_id"
-    t.string "name"
+    t.string "name", null: false
     t.boolean "permit_file_distfiles", default: false
-    t.integer "platform_id", null: false
     t.string "pkgpath"
+    t.integer "platform_id", null: false
     t.datetime "updated_at", null: false
     t.string "version"
     t.index ["category_id"], name: "index_ports_on_category_id"
@@ -139,21 +141,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.datetime "deletion_scheduled_at"
     t.string "email_address", null: false
+    t.datetime "magic_link_expires_at"
+    t.string "magic_link_token"
+    t.string "otp_secret"
     t.string "password_digest", null: false
-    t.datetime "updated_at", null: false
     t.string "remember_token"
     t.datetime "remember_token_expires_at"
-    t.string "magic_link_token"
-    t.datetime "magic_link_expires_at"
-    t.datetime "deletion_scheduled_at"
-    t.datetime "deleted_at"
-    t.string "otp_secret"
     t.boolean "two_factor_enabled", default: false, null: false
-    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
-    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
+    t.datetime "updated_at", null: false
     t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
+    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true
   end
 
   create_table "watches", force: :cascade do |t|
@@ -163,6 +165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["port_id"], name: "index_watches_on_port_id"
+    t.index ["user_id", "port_id"], name: "index_watches_on_user_id_and_port_id", unique: true
     t.index ["user_id"], name: "index_watches_on_user_id"
   end
 
@@ -174,8 +177,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
   add_foreign_key "import_runs", "platforms"
   add_foreign_key "port_updates", "ports"
   add_foreign_key "ports", "categories"
-  add_foreign_key "ports", "platforms"
   add_foreign_key "ports", "maintainers"
+  add_foreign_key "ports", "platforms"
   add_foreign_key "security_advisories", "ports"
   add_foreign_key "sessions", "users"
   add_foreign_key "watches", "ports"

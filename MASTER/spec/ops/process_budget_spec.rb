@@ -45,7 +45,17 @@ class ProcessBudgetSpec < Minitest::Test
 
   def test_compact_status_uses_severity_prefix
     with_clean_loop_env do
-      assert_match(/\AOK process:/, Master::Ops::ProcessBudget.compact_status)
+      status = Master::Ops::ProcessBudget.compact_status
+      assert_match(/\Aok: process: active=none max=\d+ owner=none\z/, status.lines.first.chomp)
+      assert_match(/\Aautofix\s+enabled=/, status.lines[1])
+    end
+  end
+
+  def test_compact_status_warns_on_invalid_loop_slot
+    with_clean_loop_env do
+      ENV["MASTER_AUTOFIX"] = "1"
+      ENV["MASTER_WATCHER"] = "1"
+      assert_match(/\Awarn: process:/, Master::Ops::ProcessBudget.compact_status)
     end
   end
 end

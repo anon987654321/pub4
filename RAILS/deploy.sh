@@ -5,7 +5,6 @@
 set -euo pipefail
 
 SCRIPT_DIR=${0:a:h}
-typeset -a CORE_APPS=(brgen)
 typeset -a ALL_APPS=(brgen amber bsdports)
 
 deploy_app() {
