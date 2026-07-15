@@ -88,22 +88,6 @@ module Master
           Result.ok(sr)
         end
 
-        def spawn_role_thread(t, finish_by)
-          Thread.new do
-            run_with_subagent_policy(t[:role]) do
-              remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
-              Timeout.timeout(remaining) do
-                [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
-              end
-            end
-          rescue Timeout::Error => _e
-            [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
-          rescue StandardError => e
-            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
-            [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
-          end
-        end
-
         def worker_roles = WORKER_CLASSES.keys
 
         # Spawn N workers in parallel, collect results within timeout, then run
@@ -124,6 +108,24 @@ module Master
           consensus, dissent, arbitrated = vote(ok_workers, tasks.first&.dig(:task).to_s)
           @bus&.publish(:swarm_vote_done, arbitrated:, consensus: consensus.to_s[0..80])
           Result.ok({ consensus:, dissent:, arbitrated:, workers: workers_out })
+        end
+
+        private
+
+        def spawn_role_thread(t, finish_by)
+          Thread.new do
+            run_with_subagent_policy(t[:role]) do
+              remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
+              Timeout.timeout(remaining) do
+                [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+              end
+            end
+          rescue Timeout::Error => _e
+            [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
+          rescue StandardError => e
+            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
+            [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
+          end
         end
 
         def spawn_vote_thread(task_spec, mutex, workers_out)
@@ -158,8 +160,6 @@ module Master
           Result.ok({ consensus: nil, dissent: workers_out, arbitrated: false,
                      workers: workers_out, verdict: :insufficient_quorum })
         end
-
-        private
 
         def join_or_timeout(th, timeout)
           return th.value if th.join(timeout)

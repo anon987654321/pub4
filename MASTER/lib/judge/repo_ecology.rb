@@ -75,6 +75,20 @@ module Master
         report
       end
 
+      def render(report)
+        lines = []
+        lines << "# Repo ecology"
+        lines << "score: #{report[:score][:grade]} (#{report[:score][:value]}/100)"
+        lines << "files: #{report[:files]}"
+        lines << ""
+        lines.concat(render_report_sections(report))
+        lines << ""
+        lines.concat(render_summary_lines(report))
+        lines.join("\n")
+      end
+
+      private
+
       def build_scan_report(records, graph)
         {
           root: @root,
@@ -90,18 +104,6 @@ module Master
           extension_mix: extension_mix(records),
           co_change_pairs: co_change_pairs(graph)
         }
-      end
-
-      def render(report)
-        lines = []
-        lines << "# Repo ecology"
-        lines << "score: #{report[:score][:grade]} (#{report[:score][:value]}/100)"
-        lines << "files: #{report[:files]}"
-        lines << ""
-        lines.concat(render_report_sections(report))
-        lines << ""
-        lines.concat(render_summary_lines(report))
-        lines.join("\n")
       end
 
       def render_report_sections(report)
@@ -144,8 +146,6 @@ module Master
           "extensions: #{report[:extension_mix].map { |ext, count| "#{ext}=#{count}" }.join(', ')}",
         ]
       end
-
-      private
 
       def collect_files(base)
         return [] unless File.exist?(base)

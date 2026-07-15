@@ -1,9 +1,15 @@
 # frozen_string_literal: true
 
+require_relative "rule_accessors"
+require_relative "rule_prompt_blocks"
+
 module Master
   module Ground
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
     class Rules
+      include RuleAccessors
+      include RulePromptBlocks
+
       RULES_SUBDIR = "rules"
       DATA_ALIASES = {
         workflow: %w[limits workflow],
@@ -51,8 +57,6 @@ module Master
         end
       end
 
-      def workflow = @workflow.freeze
-
       def philosophy(limit: nil)
         @philosophy ||= begin
           all_rules = Master.flatten_rules(@data["rules"])
@@ -66,44 +70,6 @@ module Master
 
       def all_rules = @all_rules ||= Master.flatten_rules(@data["rules"]).freeze
       def rules_for_scope(scope) = (@data.dig("rules", scope.to_s) || []).freeze
-
-      def kernel_block
-        return if kernel.empty?
-
-        pairs = kernel.map { |id, stmt| "  #{id}: #{stmt}" }.join("\n")
-        "## Kernel Rules (enforced)\n#{pairs}"
-      end
-
-      def philosophy_block(limit: 5)
-        items = philosophy(limit:)
-        return if items.empty?
-
-        top = items.map { |a| "  #{a["id"]}: #{a["name"]}" }.join("\n")
-        "## Rules (top #{items.size})\n#{top}"
-      end
-
-      def voice = @voice ||= (@voice_data["voice"] || @data["voice"] || {}).freeze
-      def strunk = @strunk ||= (voice["strunk"] || {}).freeze
-      def preserve = @preserve ||= (voice["preserve"] || {}).freeze
-
-      def constitution
-        @constitution ||= begin
-          absolute = @soul_data["absolute"] || {}
-          {
-            "golden_rule" => absolute["golden_rule"] || @data["golden_rule"],
-            "protection" => absolute["protection_tiers"] || @data["protection"],
-            "banned_output" => voice["banned_output"],
-            "anti_simulation" => absolute["anti_simulation"] || voice["anti_simulation"],
-            "communication_style" => voice["style"],
-          }.freeze
-        end
-      end
-
-      def code_rules = @code_rules ||= (@soul_data.dig("absolute", "code_rules") || {}).freeze
-      def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
-      def scan_depths = @scan_depths ||= (@data["scan_depths"] || {}).freeze
-      def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
-      def workflow_rule(key) = @workflow.dig(key.to_s) || {}
 
       def lookup(id)
         id_str = id.to_s

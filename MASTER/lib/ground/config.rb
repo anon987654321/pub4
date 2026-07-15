@@ -3,10 +3,13 @@
 require "yaml"
 require "fileutils"
 require_relative "atomic_write"
+require_relative "config_accessors"
 
 module Master
   module Ground
     class Config
+      include ConfigAccessors
+
       BUDGET_MAX_DEFAULT = 10.0
       HISTORY_MAX = 500
       DEFAULT_WEB_PORT = 53_187
@@ -51,21 +54,6 @@ module Master
           rest.empty? ? @data[k] : @data.dig(k, *rest.map(&:to_s))
         end
       end
-
-      def model = self["model"]
-      def budget_max = self["budget_max"].to_f
-      def warn_at = self["warn_at"].to_f
-      def max_per_file = self["max_per_file"].to_f
-      def req_max = self["req_max"].to_f
-      def trace = (ENV["MASTER_TRACE"] || self["trace"]).to_i
-      def prescan? = self["prescan"] == true
-      def auto? = self["auto"] == true
-      def reasoning_mode = self["reasoning_mode"].to_s
-      def task_type = self["task_type"].to_s
-      def auto_testing? = self["auto_testing"] == true
-      def web_port = self["web_port"].to_i
-      def history_max = self["history_max"].to_i
-      def cache_ttl = self["cache_ttl"].to_i
 
       include AtomicWrite
 

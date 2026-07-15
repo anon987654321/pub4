@@ -47,26 +47,6 @@ module Master
         set_visitor_mode_if_unauthenticated
       end
 
-      def init_session_state!
-        @running = false
-        @interrupt_at = Time.now
-        @last_ok = true
-        @violations = 0
-        @prev_violations = 0
-        @violations_mutex = Mutex.new
-        @bg_thread = nil
-        @bg_control = Queue.new
-        @seen_violations = {}
-        @user_active = false
-        @focus_mode = false
-        @show_chips = false
-        @last_input = nil
-        @last_cost = 0.0
-        @seen_error_categories = {}
-        @dmesg_sub = nil
-        @exit_code = 0
-      end
-
       def run(initial_message = nil)
         setup_signals
         @refs.session.load! if @refs.session.exists?
@@ -110,6 +90,28 @@ module Master
         @pipeline_thread = nil
         stop_thinking_indicator
         @user_active = false
+      end
+
+      private
+
+      def init_session_state!
+        @running = false
+        @interrupt_at = Time.now
+        @last_ok = true
+        @violations = 0
+        @prev_violations = 0
+        @violations_mutex = Mutex.new
+        @bg_thread = nil
+        @bg_control = Queue.new
+        @seen_violations = {}
+        @user_active = false
+        @focus_mode = false
+        @show_chips = false
+        @last_input = nil
+        @last_cost = 0.0
+        @seen_error_categories = {}
+        @dmesg_sub = nil
+        @exit_code = 0
       end
 
       def init_turn_state(input)
@@ -203,8 +205,6 @@ module Master
         base.unshift("[/fix #{violations_count}v]") if violations_count.positive?
         base
       end
-
-      private
 
       def stream_chunk_handler(accumulated, state)
         handler = CLI::StreamAccumulator.new(accumulated).handler do |text|
