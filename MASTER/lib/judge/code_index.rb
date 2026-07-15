@@ -4,11 +4,14 @@ require "prism"
 require "set"
 require "monitor"
 require_relative "code_index/symbol_visitor"
+require_relative "code_index/query_api"
 
 module Master
   module Judge
   # Prism-parsed symbol graph; rebuilt on write events.
     class CodeIndex
+      include QueryApi
+
       Symbol = Struct.new(:fqn, :type, :file, :line, :parent, :includes, keyword_init: true)
       Reference = Struct.new(:from_file, :from_line, :to_fqn, :ref_type, keyword_init: true)
 
@@ -58,10 +61,6 @@ module Master
         !@built_at.nil?
       end
 
-      def size
-        @lock.synchronize { @symbols.size }
-      end
-
       def reindex(file)
         @lock.synchronize do
           full = File.expand_path(file, @root)
@@ -70,59 +69,6 @@ module Master
         end
       rescue StandardError => e
         @bus&.publish("code_index:reindex_error", path: file, error: e.message)
-      end
-
-      def symbols_in(file)
-        with_built_index do
-          full = File.expand_path(file, @root)
-          @symbols.values.select { |s| s.file == full }
-        end
-      end
-
-      def find(name)
-        with_built_index { find_locked(name) }
-      end
-
-      def references_to(fqn)
-        with_built_index { references_for(fqn) }
-      end
-
-      def impact(fqn)
-        with_built_index do
-          refs = references_for(fqn)
-          files = refs.map(&:from_file).uniq.map { |f| relativize(f) }
-          callers = refs.map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }.uniq
-          { fqn: fqn, reference_count: refs.size, files: files, callers: callers }
-        end
-      end
-
-      def summary(limit: nil)
-        with_built_index do
-          classes = summary_classes
-          lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
-          stamp = @built_at&.strftime("%H:%M") || "never"
-          [
-            "# Codebase: #{lib_count} lib symbols (indexed #{stamp})",
-            "## Classes & Modules (#{classes.size})",
-            *classes,
-          ].join("\n")
-        end
-      end
-
-      def query(name)
-        with_built_index do
-          hits = find_locked(name)
-          next { error: "not found: #{name}" } if hits.empty?
-          hits.map { |s| query_entry(s) }
-        end
-      end
-
-      # Returns [file, line] for the first symbol matching name, or nil.
-      def lookup(name)
-        with_built_index do
-          hit = find_locked(name).first
-          hit ? [relativize(hit.file), hit.line] : nil
-        end
       end
 
       private
