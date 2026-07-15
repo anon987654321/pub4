@@ -85,17 +85,27 @@ module Master
 
         def analyze(code, file_path)
           lines = code.lines
-          if lines.size > 300
-            add_finding(
-              severity: :warning,
-              category: :performance,
-              message: "file is #{lines.size} lines",
-              line: 1,
-              suggestion: "split the file at responsibility boundaries",
-              file_path: file_path
-            )
-          end
+          check_file_length(lines, file_path)
+          check_long_lines(lines, file_path)
+          findings
+        end
 
+        private
+
+        def check_file_length(lines, file_path)
+          return unless lines.size > 300
+
+          add_finding(
+            severity: :warning,
+            category: :performance,
+            message: "file is #{lines.size} lines",
+            line: 1,
+            suggestion: "split the file at responsibility boundaries",
+            file_path: file_path
+          )
+        end
+
+        def check_long_lines(lines, file_path)
           lines.each_with_index do |line, idx|
             next if line.length <= 120
 
@@ -108,8 +118,6 @@ module Master
               file_path: file_path
             )
           end
-
-          findings
         end
       end
 
@@ -120,29 +128,38 @@ module Master
 
         def analyze(code, file_path)
           code.each_line.with_index(1) do |line, line_no|
-            if line.match?(/[ \t]+\n?\z/)
-              add_finding(
-                severity: :info,
-                category: :style,
-                message: "trailing whitespace",
-                line: line_no,
-                suggestion: "trim trailing spaces",
-                file_path: file_path
-              )
-            end
-
-            if line.match?(/!\s*important\b/)
-              add_finding(
-                severity: :warning,
-                category: :style,
-                message: "!important used",
-                line: line_no,
-                suggestion: "prefer cascade and specificity",
-                file_path: file_path
-              )
-            end
+            check_trailing_whitespace(line, line_no, file_path)
+            check_important_usage(line, line_no, file_path)
           end
           findings
+        end
+
+        private
+
+        def check_trailing_whitespace(line, line_no, file_path)
+          return unless line.match?(/[ \t]+\n?\z/)
+
+          add_finding(
+            severity: :info,
+            category: :style,
+            message: "trailing whitespace",
+            line: line_no,
+            suggestion: "trim trailing spaces",
+            file_path: file_path
+          )
+        end
+
+        def check_important_usage(line, line_no, file_path)
+          return unless line.match?(/!\s*important\b/)
+
+          add_finding(
+            severity: :warning,
+            category: :style,
+            message: "!important used",
+            line: line_no,
+            suggestion: "prefer cascade and specificity",
+            file_path: file_path
+          )
         end
       end
 
@@ -156,56 +173,71 @@ module Master
         end
 
         def analyze(code, file_path)
-          count = code.each_line.count
-          if count > 10 && code.scan(/^\s*def\s+/).size > 10
-            add_finding(
-              severity: :warning,
-              category: :architecture,
-              message: "many public methods detected",
-              line: 1,
-              suggestion: "split into smaller collaborating objects",
-              file_path: file_path
-            )
-          end
-
-          if ghost_smell?(code)
-            add_finding(
-              severity: :warning,
-              category: :architecture,
-              message: "ghost smell detected: guard clause may be hiding a missing abstraction",
-              line: 1,
-              suggestion: "look for repeated branching that wants a shared object or explicit policy",
-              file_path: file_path
-            )
-          end
-
-          if !@cycle_reported && (cycle = detect_cycle)
-            add_finding(
-              severity: :error,
-              category: :architecture,
-              message: "cyclic dependency detected: #{cycle.join(' -> ')}",
-              line: 1,
-              suggestion: "break the require chain by extracting shared code into a lower-level module",
-              file_path: file_path
-            )
-            @cycle_reported = true
-          end
-
-          if code.match?(/\b[a-z_]+(\.[a-z_]+){3,}\b/)
-            add_finding(
-              severity: :warning,
-              category: :architecture,
-              message: "message chain detected",
-              line: 1,
-              suggestion: "introduce a local variable or delegation",
-              file_path: file_path
-            )
-          end
-
+          check_many_public_methods(code, file_path)
+          check_ghost_smell(code, file_path)
+          check_cyclic_dependency(code, file_path)
+          check_message_chain(code, file_path)
           findings
         end
 
         private
+
+        def check_many_public_methods(code, file_path)
+          count = code.each_line.count
+          return unless count > 10 && code.scan(/^\s*def\s+/).size > 10
+
+          add_finding(
+            severity: :warning,
+            category: :architecture,
+            message: "many public methods detected",
+            line: 1,
+            suggestion: "split into smaller collaborating objects",
+            file_path: file_path
+          )
+        end
+
+        def check_ghost_smell(code, file_path)
+          return unless ghost_smell?(code)
+
+          add_finding(
+            severity: :warning,
+            category: :architecture,
+            message: "ghost smell detected: guard clause may be hiding a missing abstraction",
+            line: 1,
+            suggestion: "look for repeated branching that wants a shared object or explicit policy",
+            file_path: file_path
+          )
+        end
+
+        def check_cyclic_dependency(code, file_path)
+          return if @cycle_reported
+
+          cycle = detect_cycle
+          return unless cycle
+
+          add_finding(
+            severity: :error,
+            category: :architecture,
+            message: "cyclic dependency detected: #{cycle.join(' -> ')}",
+            line: 1,
+            suggestion: "break the require chain by extracting shared code into a lower-level module",
+            file_path: file_path
+          )
+          @cycle_reported = true
+        end
+
+        def check_message_chain(code, file_path)
+          return unless code.match?(/\b[a-z_]+(\.[a-z_]+){3,}\b/)
+
+          add_finding(
+            severity: :warning,
+            category: :architecture,
+            message: "message chain detected",
+            line: 1,
+            suggestion: "introduce a local variable or delegation",
+            file_path: file_path
+          )
+        end
 
         def detect_cycle
           return unless @reference_graph

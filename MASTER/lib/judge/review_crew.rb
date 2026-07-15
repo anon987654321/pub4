@@ -20,13 +20,25 @@ module Master
         files = target_files(target)
         return Result.err("review_crew: no files under #{target}") if files.empty?
 
-        workers = [
+        collected = dispatch_workers(build_workers, files)
+        synthesized = synthesize(collected, target: target, files: files)
+        Result.ok({ summary: synthesized, agents: collected })
+      rescue StandardError => e
+        Result.err("review_crew: #{e.message}", category: :infrastructure)
+      end
+
+      private
+
+      def build_workers
+        [
           SecurityAgent.new,
           PerformanceAgent.new,
           StyleAgent.new,
           ArchitectureAgent.new(root: @root, code_index: @code_index, reference_graph: @reference_graph),
         ]
+      end
 
+      def dispatch_workers(workers, files)
         queue = Queue.new
         workers.each do |worker|
           Thread.new do
@@ -51,13 +63,8 @@ module Master
 
         collected = []
         workers.size.times { collected << queue.pop }
-        synthesized = synthesize(collected, target: target, files: files)
-        Result.ok({ summary: synthesized, agents: collected })
-      rescue StandardError => e
-        Result.err("review_crew: #{e.message}", category: :infrastructure)
+        collected
       end
-
-      private
 
       def target_files(target)
         abs = File.expand_path(target, @root)
