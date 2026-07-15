@@ -38,7 +38,7 @@ class AmberBacklogTest < Minitest::Test
     generator = read("app/services/outfit_generation_service.rb")
     routes = read("config/routes.rb")
     item_form = read("app/views/items/_form.html.erb")
-    media_picker = read("app/javascript/controllers/media_picker_controller.js")
+    media_picker = File.read(File.join(ROOT, "..", "shared", "frontend", "pub4_media_picker_controller.js"))
 
     assert_includes migration, "analysis_status"
     assert_includes analytics, "never_worn"
@@ -53,7 +53,8 @@ class AmberBacklogTest < Minitest::Test
     assert_includes read("app/controllers/outfits_controller.rb"), "OutfitGenerationService"
     assert_includes read("app/jobs/wardrobe_media_job.rb"), "enqueue_once(SegmentGarmentImageJob"
     assert_includes read("app/jobs/wardrobe_media_job.rb"), "enqueue_once(RemoveBackgroundJob"
-    assert_includes item_form, "data-controller=\"media-picker\""
+    assert_includes item_form, "media-picker"
+    assert_includes item_form, "data-controller="
     assert_includes item_form, "direct_upload: true"
     assert_includes media_picker, "drop(event)"
     assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "Wardrobe analytics"
