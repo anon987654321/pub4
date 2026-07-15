@@ -25,6 +25,10 @@
   100% { --gradient-x: 0%; --gradient-y: 0%; }
 }
 
+.amber-swoosh-lines {
+  color: var(--text);
+}
+
 .amber-swoosh-line {
   opacity: 0.55;
   animation: amberSwooshDrift 6s ease-in-out infinite;

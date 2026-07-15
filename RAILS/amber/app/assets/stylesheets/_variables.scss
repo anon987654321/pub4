@@ -1,9 +1,9 @@
 @use "x_base" as x;
 
 :root {
-  @include x.x-dark-tokens;
+  @include x.x-light-tokens;
   @include x.x-app-root-tokens;
-  color-scheme: dark;
+  color-scheme: light;
   --accent: oklch(76% 0.13 68);
   --accent-hover: oklch(70% 0.13 68);
   --color-black: var(--x-bg);
@@ -35,7 +35,7 @@
 }
 
 #dark-toggle:checked ~ .theme-root {
-  @include x.x-light-tokens;
+  @include x.x-dark-tokens;
   @include x.x-app-root-tokens;
-  color-scheme: light;
+  color-scheme: dark;
 }
