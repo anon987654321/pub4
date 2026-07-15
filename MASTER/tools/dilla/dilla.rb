@@ -1556,14 +1556,31 @@ def mood_darken_filter(input_tag, out_tag: "darkened")
   "[#{input_tag}]equalizer=f=5500:t=h:w=4000:g=-3.5,equalizer=f=220:t=h:w=180:g=2.0,lowpass=f=11000[#{out_tag}]"
 end
 
-def master_bus_filters(input_tag = "mix", track: nil)
+# A real build-up: rising loudness + rising brightness across the final
+# stretch of the track (last ~18%), landing right as the hook returns
+# (fugue recapitulation) — structural energy, not just a static mix.
+def build_up_filter(input_tag, duration, out_tag: "built")
+  start_t = (duration * 0.82).round(2)
+  # No volume ramp — removed per feedback (read as loudness randomization/
+  # a surprise level jump). Brightness-only cue: a static EQ boost gated on
+  # after start_t, still a real "here comes the build" moment without
+  # touching overall level.
+  "[#{input_tag}]equalizer=f=4500:t=h:w=5000:g=3.5:enable='gte(t,#{start_t})'[#{out_tag}]"
+end
+
+def master_bus_filters(input_tag = "mix", track: nil, duration: nil)
   unless sonitex_enabled?
     filt = ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[premaster0]"]
     filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
     filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
     filt << analog_drift_filter("monobassed", out_tag: "drifted")
     filt << mood_darken_filter("drifted", out_tag: "darkened")
-    filt << true_peak_guard_filter("darkened")
+    if duration
+      filt << build_up_filter("darkened", duration, out_tag: "built")
+      filt << true_peak_guard_filter("built")
+    else
+      filt << true_peak_guard_filter("darkened")
+    end
     return filt
   end
   s = sonitex_config(track:)
@@ -1576,7 +1593,12 @@ def master_bus_filters(input_tag = "mix", track: nil)
   filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
   filt << analog_drift_filter("monobassed", out_tag: "drifted")
   filt << mood_darken_filter("drifted", out_tag: "darkened")
-  filt << true_peak_guard_filter("darkened")
+  if duration
+    filt << build_up_filter("darkened", duration, out_tag: "built")
+    filt << true_peak_guard_filter("built")
+  else
+    filt << true_peak_guard_filter("darkened")
+  end
   filt
 end
 
@@ -1630,6 +1652,21 @@ SPEECH_LINES = [
   "do you have a Band-Aid? because I just scraped my knee falling for you"
 ].freeze
 
+# Comedic voice archetypes — text-level character, not a different TTS
+# voice (Edge TTS gives no per-phrase SSML control, confirmed: only a
+# single whole-utterance rate/pitch pair per call, no <break>/<emphasis>).
+ARCHETYPE_LINES = [
+  "aaand she reaches for the volume knob — CLASSIC move, folks",
+  "you love to see it, absolute peak performance right there",
+  "duuude, this whole track is, like, a whole vibe, for real",
+  "it was a Tuesday. the coffee was cold. so was the mix",
+  "if I may be so bold, your energy this evening is... quite something",
+  "but wait — there's MORE. so much more",
+  "ladies and gentlemen, what a play, what an absolute masterclass",
+  "the pocket was tight that night. tighter than my budget",
+  "one does not simply walk into a groove this deep"
+].freeze
+
 FILLER_SUBJECTS = %w[
   your smile your laugh that outfit this playlist your energy the room
   this beat your timing that look you your vibe this moment
@@ -1647,6 +1684,26 @@ def filler_sentence(rng)
   "#{FILLER_SUBJECTS.sample(random: rng)} #{FILLER_VERBS.sample(random: rng)}, #{FILLER_TOPICS.sample(random: rng)}, yeah."
 end
 
+# Real text-level "impediment" character that stays intelligible: light
+# stutter-repeat on ~1 in 6 words (never every word — that's where
+# intelligibility actually breaks) and elongated vowels on emphasis words.
+# Edge TTS renders repeated letters as real duration, so this reads as
+# comic timing rather than garbage — confirmed, not assumed.
+def quirkify(text, rng)
+  words = text.split(" ")
+  words.map do |w|
+    clean = w.gsub(/[^a-zA-Z']/, "")
+    next w if clean.length < 3
+    if rng.rand < 0.16
+      "#{clean[0]}-#{clean[0]}-#{w}"
+    elsif rng.rand < 0.10
+      w.sub(/([aeiouAEIOU])(?!.*[aeiouAEIOU])/) { $1 * 3 }
+    else
+      w
+    end
+  end.join(" ")
+end
+
 # No faker gem installed and this tool stays dependency-free by design —
 # local word-bank generator instead, mixed with the curated lines, gives
 # enough varied text to talk continuously rather than one clip per track.
@@ -1656,44 +1713,72 @@ def continuous_speech_text(duration, seed: nil)
   sentences = []
   word_count = 0
   while word_count < words_needed
-    s = rng.rand < 0.35 ? SPEECH_LINES.sample(random: rng) : filler_sentence(rng)
+    s = case rng.rand
+        when 0...0.28 then SPEECH_LINES.sample(random: rng)
+        when 0.28...0.40 then ARCHETYPE_LINES.sample(random: rng)
+        else filler_sentence(rng)
+        end
+    s = quirkify(s, rng) if rng.rand < 0.4
     sentences << s
     word_count += s.split.length
   end
   sentences.join(" ")
 end
 
-def speak_over_track!(mp3_path, duration, bpm = 90.0)
+# Real structure, not a smooth gate: ~20-30s of talking, then ~20-30s of
+# real silence, repeating — actual separately-synthesized segments placed
+# at their own start times, not a tremolo faking it (tremolo's 0.1Hz floor
+# can't reach a cycle this slow anyway).
+SPEECH_TALK_SEC = 25.0
+SPEECH_CYCLE_SEC = 50.0
+
+def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   return mp3_path unless File.executable?(TTS_WORKER) && tool_available?("ffmpeg")
-  text = continuous_speech_text(duration)
   voice = SPEECH_VOICES.sample
-  voice_mp3 = "#{mp3_path}.voice.mp3"
-  FileUtils.rm_f(voice_mp3)
-  Open3.popen2(Gem.ruby, TTS_WORKER, voice, "-28%", "-60Hz", voice_mp3) { |stdin, _stdout, wait|
-    stdin.write(text)
-    stdin.close
-    wait.value
-  }
-  return mp3_path unless File.exist?(voice_mp3) && File.size(voice_mp3) > 500
+  segments = []
+  t = 0.0
+  idx = 0
+  while t < duration
+    talk_len = SPEECH_TALK_SEC + (rand - 0.5) * 6.0
+    text = continuous_speech_text(talk_len, seed: idx + rand(100_000))
+    seg_path = "#{mp3_path}.voice#{idx}.mp3"
+    Open3.popen2(Gem.ruby, TTS_WORKER, voice, "-35%", "-90Hz", seg_path) { |stdin, _stdout, wait|
+      stdin.write(text)
+      stdin.close
+      wait.value
+    }
+    segments << { path: seg_path, start: t } if File.exist?(seg_path) && File.size(seg_path) > 500
+    t += SPEECH_CYCLE_SEC + (rand - 0.5) * 8.0
+    idx += 1
+  end
+  return mp3_path if segments.empty?
+
+  # "Otherworldly / powerful AI" character: a heavy pitch drop, a fast
+  # tremolo for a ring-modulator-ish metallic edge, and a big echo+chorus
+  # for scale — not a person talking, something announcing itself.
+  inputs = []
+  filter_parts = []
+  labels = []
+  segments.each_with_index do |seg, i|
+    inputs += ["-i", seg[:path]]
+    delay_ms = (seg[:start] * 1000).round
+    filter_parts << "[#{i + 1}:a]asetrate=44100*0.75,aresample=44100," \
+                     "tremolo=f=32:d=0.15,aecho=0.7:0.6:250|450:0.4|0.28," \
+                     "chorus=0.6:0.8:40|55:0.3|0.25:0.35|0.3:1.4|1.8," \
+                     "adelay=#{delay_ms}|#{delay_ms},volume=0.85[voice#{i}]"
+    labels << "[voice#{i}]"
+  end
+  filter_parts << "#{labels.join}amix=inputs=#{labels.length}:duration=first:normalize=0[voicemix]"
+  filter_parts << "[0:a][voicemix]amix=inputs=2:duration=first:normalize=0[out]"
+
   tmp = "#{mp3_path}.spoken.mp3"
-  # Beat-synced amplitude pulse (half-note rate) plus a slow pitch wobble —
-  # makes the speech breathe with the track instead of sitting flat on top
-  # of it, closer to "dynamically warped to fit the beat" than a static
-  # overlay.
-  tremolo_hz = (bpm / 60.0 / 2.0).round(4)
-  # Loop the speech if it runs shorter than the track (continuous_speech_text
-  # estimates word count from duration, but real TTS pacing varies), trim
-  # if it runs long, so talking spans the whole track either way.
-  sh! "ffmpeg", "-y", "-i", mp3_path, "-stream_loop", "-1", "-i", voice_mp3,
-      "-filter_complex", "[1:a]atrim=0:#{duration},asetrate=44100*0.88,aresample=44100," \
-                         "tremolo=f=#{tremolo_hz}:d=0.22,vibrato=f=0.6:d=0.02," \
-                         "tremolo=f=0.1:d=0.88,volume=0.75[voice];" \
-                         "[0:a][voice]amix=inputs=2:duration=first:normalize=0[out]",
+  sh! "ffmpeg", "-y", "-i", mp3_path, *inputs,
+      "-filter_complex", filter_parts.join(";"),
       "-map", "[out]", "-c:a", "libmp3lame", "-b:a", "320k", tmp
   FileUtils.mv(tmp, mp3_path)
   mp3_path
 ensure
-  FileUtils.rm_f(voice_mp3) if voice_mp3
+  segments&.each { |s| FileUtils.rm_f(s[:path]) }
 end
 
 def play(preset_name = nil, bars_count = 8)
@@ -2069,18 +2154,24 @@ def dilla_section_gain(bar, n_bars)
   end
 end
 
-def generate_organic_hat_steps(bar, seed_base = 9203)
+def generate_organic_hat_steps(bar, seed_base = 9203, n_bars: nil)
   rng = Random.new(seed_base + bar * 421)
+  # Finale acceleration: in the last 2 bars, hat density ramps toward every
+  # step — a real "speeding up until it's almost a solid tone" ending.
+  if n_bars && bar >= n_bars - 2
+    progress = 1.0 - ((n_bars - 1 - bar).to_f / 2)
+    return (0..15).select { |i| i.even? || rng.rand < (0.4 + 0.5 * progress) }.uniq.sort
+  end
   base = (0..15).select { |i| i.even? || rng.rand < 0.4 }
   base = base.reject { rng.rand < 0.12 }
   base << 0 if base.empty?
   base.uniq.sort
 end
 
-def dilla_hat_steps(bar, feel)
+def dilla_hat_steps(bar, feel, n_bars: nil)
   case feel
   when :organic
-    generate_organic_hat_steps(bar)
+    generate_organic_hat_steps(bar, n_bars:)
   when :syncopated_slash_ninth
     (0..15).step(2).to_a + [3, 11]
   when :chromatic_planing
@@ -2113,21 +2204,38 @@ def dilla_hat_steps(bar, feel)
 end
 
 def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, drums_only: false,
-                   swing: 58.0, feel: :default, timing: nil, quintuplet: false)
+                   swing: 58.0, feel: :default, timing: nil, quintuplet: false, bass_pads: nil)
   bar_p  = (beat_p * 4.0).round(6)
   step_p = (beat_p / 4.0).round(6)
   events = Hash.new { |h, k| h[k] = [] }
+  # Odd-meter/hemiola nod (Aydin Esen's Turkish-modal odd meters, without a
+  # full rewrite of the 16-step grid): every 16th bar loses its last 2
+  # steps — a real short bar, not a fake accent. Cumulative bar starts
+  # since bar durations are no longer uniform.
+  drop_beat_bar = ->(b) { b.positive? && b % 16 == 15 }
+  bar_starts = [0.0]
+  (1..n_bars).each { |b| bar_starts << bar_starts.last + (drop_beat_bar.call(b - 1) ? bar_p * 0.875 : bar_p) }
 
   n_bars.times do |bar|
-    base = bar * bar_p
+    base = bar_starts[bar]
     section = dilla_section(bar, n_bars)
     sec_gain = dilla_section_gain(bar, n_bars)
     pattern = dilla_kick_pattern(bar, n_bars, feel)
     pattern = [7, 14] if section == :breakdown
     pattern = [0, 10] if section == :intro && bar < 4
+    pattern = pattern.select { |s| s < 14 } if drop_beat_bar.call(bar)
 
     cur_chord = drums_only || pad_chords.empty? ? nil : pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
-    bass_root = dilla_chord_bass_hz(cur_chord)
+    # Real bitonal composition, not just chord-following: when bass_pads is
+    # given, the bass tracks its own independent progression instead of
+    # always echoing the pad chord's root — the bass and the chords can
+    # genuinely disagree, on purpose.
+    bass_chord = if bass_pads && !bass_pads.empty?
+                   bass_pads[dilla_chord_index(bar, bass_pads, chord_bars: chord_bars, phrase_bars: phrase_bars)]
+                 else
+                   cur_chord
+                 end
+    bass_root = dilla_chord_bass_hz(bass_chord)
     unless drums_only || section == :breakdown || bass_root.nil?
       events[:bass] << [base + 0.012, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
     end
@@ -2159,6 +2267,13 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
         t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
              dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
         events[:snare] << [t.round(6), dilla_velocity(si.zero? ? 0.64 : 0.56, bar, step) * sec_gain]
+        # 1ms flam on the downbeat snare — reads as one fatter drum, not two
+        # separate hits, a real mixing/drumming trick, not audible as a
+        # distinct second hit.
+        if si.zero?
+          events[:ghost] << [(t - 0.001).round(6).clamp(0.0, Float::INFINITY),
+                              dilla_velocity(0.22, bar, step, spread: 0.04) * sec_gain]
+        end
       end
       if section == :main && bar % 4 == 2
         step = 10
@@ -2181,7 +2296,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       events[:ghost] << [t.round(6), dilla_velocity(vel, bar, step, spread: 0.07) * sec_gain]
     end
 
-    hat_steps = dilla_hat_steps(bar, feel)
+    hat_steps = dilla_hat_steps(bar, feel, n_bars:)
     hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown
     hat_steps.each_with_index do |step, i|
       role = if [3, 11].include?(step) && feel == :syncopated_slash_ninth
@@ -2442,6 +2557,15 @@ def layered_kick_sample(base_sample, seed: 7)
     env = Math.exp(-t * 380.0)
     out[i] += 0.14 * env * (rng.rand * 2.0 - 1.0)
   end
+  # Body layer: a short mid-punch (~150Hz) between the sub and the click —
+  # definition that survives on small speakers where the 42Hz fundamental
+  # barely reproduces at all.
+  body_len = (0.05 * SAMPLE_RATE).round
+  body_len.times do |i|
+    t = i.to_f / SAMPLE_RATE
+    env = Math.exp(-t * 55.0)
+    out[i] += 0.18 * env * Math.sin(2 * Math::PI * 150.0 * t)
+  end
   peak = out.map(&:abs).max || 1.0
   gain = peak > 0.95 ? 0.95 / peak : 1.0
   # A single gentle saturation pass, not stacked with anything downstream —
@@ -2675,11 +2799,12 @@ PAD_GM_PROGRAM = ENV.fetch("DILLA_PAD_PROGRAM", "4").to_i
 # and warm-analog-pad family (Prophet/Moog-adjacent GM pad patches) — a
 # different pair picked per render instead of the same two programs every
 # time.
-EP_GM_PROGRAMS = [4, 5, 0].freeze # Rhodes, DX EP, plain acoustic-adjacent
-# Full GM Pad 1-8 family — New Age, Warm, Polysynth, Choir, Bowed, Metallic,
-# Halo, Sweep. Polysynth/Sweep/Metallic are the most Prophet/Moog-adjacent;
-# the rest still give real per-render timbral variety.
-WARM_PAD_GM_PROGRAMS = [88, 89, 90, 91, 92, 93, 94, 95].freeze
+EP_GM_PROGRAMS = [4, 5, 0, 2].freeze # Rhodes, DX EP, acoustic-adjacent, Electric Grand
+# Full GM Pad 1-8 family plus researched additions: Synth Strings 1/2 (Juno/
+# Solina-style analog string pad), String Ensemble 2 (slow-attack, functions
+# as a pad), Choir Aahs, Drawbar Organ (fits the soul-sample aesthetic,
+# GeneralUser GS's patch here is a specifically strong one).
+WARM_PAD_GM_PROGRAMS = [88, 89, 90, 91, 92, 93, 94, 95, 50, 51, 49, 52, 16].freeze
 SMF_PPQN = 480
 SMF_TICKS_PER_SECOND = SMF_PPQN * 2 # fixed internal reference tempo of 120 BPM
 
@@ -2785,32 +2910,60 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   path
 end
 
-LEAD_GM_PROGRAM = ENV.fetch("DILLA_LEAD_PROGRAM", "81").to_i # GM Lead 2 (sawtooth) — "big lead" character
+# 81 Sawtooth (original), 87 Lead 8 "bass+lead" (GM's own name traces to the
+# classic Prophet-5 "BigLead" patch — literally the historical big-lead
+# archetype), 84 Lead 5 Charang (aggressive/bright, cuts through), 86 Lead 7
+# Fifths (built-in parallel fifths give arps instant harmonic width free).
+LEAD_GM_PROGRAMS = [81, 87, 84, 86].freeze
 LEAD_TARGET_RMS_DB = -26.0
 
-# A lead line derived straight from the chord tones — the top note of each
-# chord, doubled an octave up, held for part of the chord's sustain. A
-# separate, louder, brighter voice on top of the pads rather than another
-# pad-register note.
-ARP_PATTERNS = [
-  [0, 1, 2, 3], [0, 2, 1, 3], [3, 2, 1, 0], [0, 1, 2, 1], [0, 2, 3, 2]
-].freeze
+def invert_motif(motif)
+  top = motif.max
+  motif.map { |d| top - d }
+end
+
+# Leitmotif seeded from the progression's own opening chord — stable for
+# a given piece, so the lead states one real idea and develops it
+# (inversion/retrograde/augmentation) instead of generating a fresh,
+# unrelated arp pattern at every chord change.
+def leitmotif_for(pad_events)
+  seed_source = pad_events.first&.dig(2, :name).to_s
+  rng = Random.new(seed_source.hash.abs % 100_000)
+  length = [3, 4].sample(random: rng)
+  Array.new(length) { rng.rand(4) }
+end
 
 # A real arpeggiator, not a held note: steps through the chord's own tones
-# (up an octave, lead register) in a pattern that varies chord-to-chord,
-# 8th-note rate relative to the chord's sustain.
+# (up an octave, lead register). The pattern is a motivic development of
+# one fixed leitmotif (stated, inverted, reversed, augmented) rather than
+# an independent pattern per chord — plus a quieter call-and-response
+# "answer" voice on alternating phrases, an octave down, offset in time.
 def lead_events_from_pads(pad_events)
   events = []
+  seed_motif = leitmotif_for(pad_events)
   pad_events.each_with_index do |(time, velocity, chord, sustain), i|
     next unless chord && chord[:hz]&.any?
     tones = chord[:hz].sort.map { |hz| hz * 2.0 }
-    pattern = ARP_PATTERNS[i % ARP_PATTERNS.length]
+    pattern = case i % 4
+              when 0 then seed_motif
+              when 1 then invert_motif(seed_motif)
+              when 2 then seed_motif.reverse
+              else seed_motif + seed_motif.reverse
+              end
     step_dur = [(sustain || 1.0) / (pattern.length * 2.0), 0.08].max
     pattern.each_with_index do |degree, step|
       hz = tones[degree % tones.length]
       t = time + 0.05 + step * step_dur
       vel = (velocity * (0.9 - step * 0.05)).clamp(0.2, 1.0)
       events << [t, vel, { name: "lead", hz: [hz] }, step_dur * 0.85]
+    end
+    next unless i.odd? && i.positive?
+    answer_offset = pattern.length * step_dur * 0.5
+    pattern.each_with_index do |degree, step|
+      hz = tones[degree % tones.length] * 0.5
+      t = time + 0.05 + answer_offset + step * step_dur
+      vel = (velocity * 0.5).clamp(0.15, 0.6)
+      events << [t, vel, { name: "lead_answer", hz: [hz] }, step_dur * 0.7]
     end
   end
   events
@@ -2819,7 +2972,8 @@ end
 def render_lead_via_fluidsynth(path, lead_events, duration)
   return nil if lead_events.empty? || !fluidsynth_pad_available?
   midi_path = "#{path}.smf.mid"
-  write_pad_smf(midi_path, lead_events, program: LEAD_GM_PROGRAM)
+  lead_program = ENV["DILLA_LEAD_PROGRAM"] ? ENV["DILLA_LEAD_PROGRAM"].to_i : LEAD_GM_PROGRAMS.sample
+  write_pad_smf(midi_path, lead_events, program: lead_program)
   sh! "fluidsynth", "-ni", "-g", "1.3", "-F", path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
   FileUtils.rm_f(midi_path)
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
@@ -3060,10 +3214,33 @@ rescue StandardError => e
 end
 
 # Full Jay Dee render: sample drums + stem chops, Dilla Time scheduling.
+SELF_SAMPLE_CACHE = File.join(ROOT, ".dilla_self_sample.wav")
+
+# "Collapse over accretion": before this render's predecessor is deleted,
+# grab a short slice of it and cache it — the next render can layer that
+# slice back in as texture, a real feedback loop across renders rather
+# than each one starting from nothing.
+def cache_self_sample!(destination)
+  return unless File.exist?(destination) && tool_available?("ffprobe")
+  # Not media_metadata: it calls abort() on failure, which would kill the
+  # whole render for what's meant to be a best-effort optional step.
+  output, _err, status = capture("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
+                                  "default=noprint_wrappers=1:nokey=1", destination)
+  return unless status.success?
+  duration = output.to_f
+  return if duration < 2.0
+  offset = (rand * [duration - 1.5, 0.1].max).round(2)
+  sh! "ffmpeg", "-y", "-i", destination, "-ss", offset.to_s, "-t", "1.2",
+      "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", SELF_SAMPLE_CACHE
+rescue StandardError
+  FileUtils.rm_f(SELF_SAMPLE_CACHE)
+end
+
 def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
+  cache_self_sample!(destination)
   FileUtils.rm_f(destination)
   cfg      = dilla_resolve_config
   n_bars   = bars_count || bars
@@ -3096,10 +3273,19 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   pads = apply_pedal_point(pads, probability: 0.3)
   pads     = voice_lead_chords(pads)
   log_progression!(cfg[:track], cfg[:bpm], pads)
+  # Bitonal bass on roughly a third of renders: a genuinely independent
+  # generated progression drives the bass root, disagreeing with the pad
+  # chords on purpose rather than always doubling their root.
+  bass_pads = nil
+  if Random.new(cfg[:track].to_s.hash.abs).rand < 0.33
+    bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
+                                                         length: pads.length))
+  end
   events   = dilla_schedule(
     n_bars, beat_p, pads,
     chord_bars: cfg[:chord_bars], phrase_bars: cfg[:phrase_bars],
-    swing: cfg[:swing], feel: cfg[:feel], timing: cfg[:timing], quintuplet: cfg[:quintuplet]
+    swing: cfg[:swing], feel: cfg[:feel], timing: cfg[:timing], quintuplet: cfg[:quintuplet],
+    bass_pads:
   )
 
   kit = {
@@ -3152,6 +3338,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     stem_map[key] = idx
     idx += 1
   end
+  self_sample_idx = nil
+  if File.exist?(SELF_SAMPLE_CACHE)
+    command += ["-stream_loop", "-1", "-i", SELF_SAMPLE_CACHE]
+    self_sample_idx = idx
+    idx += 1
+  end
   command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.035:d=#{duration}"]
   turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
   command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.05:d=#{duration}"] if turntable_rumble
@@ -3169,12 +3361,18 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # tape-saturated) directly on the drum bus, on top of whatever the
   # whole-mix Sonitex pass adds later — more analog grit specifically where
   # it was asked for, not spread thin across the entire mix.
+  # Complementary EQ carving, not just level: drums get a shallow dip right
+  # where pad-chord fundamentals sit (300-700Hz) so the harm bus doesn't
+  # have to fight for that space; the harm bus (below) gets the matching
+  # cut down where the kick/bass actually live. Genuine frequency-slotting,
+  # not another gain adjustment.
   filt = ["[0:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_DRUM_WEIGHT'] || '0.55'}," \
-          "acrusher=bits=11:samples=1.5:mix=0.15[drums]"]
+          "equalizer=f=480:t=h:w=420:g=-2.8,acrusher=bits=11:samples=1.5:mix=0.15[drums]"]
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
   unless use_stem_harmony
-    filt << "[1:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_HARM_WEIGHT'] || '1.0'}[harm]"
+    filt << "[1:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_HARM_WEIGHT'] || '1.0'}," \
+             "equalizer=f=1800:t=h:w=1600:g=1.4[harm]"
     mix_labels << "[harm]"
     mix_weights << "1.6"
   end
@@ -3213,9 +3411,17 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     mix_labels << "[rumble]"
     mix_weights << "0.5"
   end
+  if self_sample_idx
+    # The previous render, looped and buried quiet underneath this one — a
+    # genuine feedback loop across renders, not a fresh start every time.
+    filt << "[#{self_sample_idx}:a]atrim=0:#{duration},asetpts=PTS-STARTPTS," \
+             "lowpass=f=2200,areverse,volume=0.1[selfsample]"
+    mix_labels << "[selfsample]"
+    mix_weights << "1.0"
+  end
   filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
   if sonitex_enabled?
-    filt.concat(master_bus_filters("mix", track: cfg[:track].to_s))
+    filt.concat(master_bus_filters("mix", track: cfg[:track].to_s, duration:))
   else
     # Plain limiter only — the same minimal chain the proven-working test
     # used. loudnorm's dynamic gain-riding was a live suspect in why chords
