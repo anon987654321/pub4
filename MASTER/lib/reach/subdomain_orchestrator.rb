@@ -63,17 +63,21 @@ module Master
         when "messages", "messenger"
           { broker: "active", cluster: "brgen", subdomain: "messenger", latency_ms: probe_latency("brgen"), queue_depth: 0 }
         when "marketplace", "takeaway", "playlist", "tv", "dating", "ai", "brgen"
-          {
-            cluster: "rails-multi-tenant",
-            subdomain: domain,
-            host: "brgen.no",
-            synchronized: probe_ok?("brgen"),
-            timestamp: Time.now.to_i,
-            context: context.strip.empty? ? nil : context.strip[0, 240]
-          }.compact
+          multi_tenant_status(domain, context)
         else
           { error: "Domain profile unallocated" }
         end
+      end
+
+      def multi_tenant_status(domain, context)
+        {
+          cluster: "rails-multi-tenant",
+          subdomain: domain,
+          host: "brgen.no",
+          synchronized: probe_ok?("brgen"),
+          timestamp: Time.now.to_i,
+          context: context.strip.empty? ? nil : context.strip[0, 240]
+        }.compact
       end
 
       def fetch_maps_viewport

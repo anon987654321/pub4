@@ -22,6 +22,10 @@ module RubyLLM
       alias_matches = all.select { |m| m.id == resolved_id }
       return preferred_match(alias_matches) if alias_matches.any?
 
+      fallback_model_info(model_id)
+    end
+
+    def fallback_model_info(model_id)
       Model::Info.new({
         id: model_id.to_s,
         name: model_id.to_s,

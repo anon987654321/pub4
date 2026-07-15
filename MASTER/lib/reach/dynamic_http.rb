@@ -25,13 +25,30 @@ module Master
         perm = @governor.permit?(NAME, TIER, "#{name} #{params}")
         return perm if perm.err?
 
+        uri = resolve_and_validate_uri(defn, params)
+        return uri if uri.is_a?(Result::Err)
+
         method = defn.fetch("method", "GET").to_s.upcase
+        response = perform_request(uri, method, defn, params)
+
+        text = response.body.to_s.byteslice(0, MAX_BYTES)
+        @bus&.publish("tool:after", tool: NAME, dynamic: name, status: response.code.to_i)
+        Result.ok("HTTP #{response.code}\n#{text}")
+      rescue StandardError => e
+        Result.err("dynamic_http: #{e.message}", category: :infrastructure)
+      end
+
+      def resolve_and_validate_uri(defn, params)
         url = interpolate(defn.fetch("url").to_s, params)
         uri = URI(url)
         return Result.err("dynamic_http: only http(s)", category: :validation) unless %w[http https].include?(uri.scheme)
         return Result.err("dynamic_http: refused internal/reserved address", category: :validation) unless SsrfGuard.safe_uri?(uri)
 
-        response = Timeout.timeout(TIMEOUT * 2) do
+        uri
+      end
+
+      def perform_request(uri, method, defn, params)
+        Timeout.timeout(TIMEOUT * 2) do
           Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: TIMEOUT) do |http|
             case method
             when "POST", "PUT", "PATCH"
@@ -45,12 +62,6 @@ module Master
             end
           end
         end
-
-        text = response.body.to_s.byteslice(0, MAX_BYTES)
-        @bus&.publish("tool:after", tool: NAME, dynamic: name, status: response.code.to_i)
-        Result.ok("HTTP #{response.code}\n#{text}")
-      rescue StandardError => e
-        Result.err("dynamic_http: #{e.message}", category: :infrastructure)
       end
 
       private

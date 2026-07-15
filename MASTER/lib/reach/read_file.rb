@@ -32,6 +32,12 @@ module Master
         full_path = resolved.value!
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
 
+        result = Result.ok(format_file_slice(full_path, offset:, limit:, hashline:))
+        @cache[key] = result
+        result
+      end
+
+      def format_file_slice(full_path, offset:, limit:, hashline:)
         lines = File.readlines(full_path)
         @ground_truth&.record_read!(full_path, content: lines.join)
         total = lines.size
@@ -44,10 +50,7 @@ module Master
             slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
           end
         suffix = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
-
-        result = Result.ok(numbered + suffix)
-        @cache[key] = result
-        result
+        numbered + suffix
       end
 
       private

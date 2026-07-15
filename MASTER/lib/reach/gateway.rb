@@ -35,6 +35,15 @@ module Master
         @bus&.publish("gateway:receive", channel: channel, size: message_text.bytesize)
 
         ctx = { user_message: message_text, channel: channel, metadata: metadata, turn_id: }
+        result = route_message(message_text, ctx)
+        render_to_adapter(channel, result, metadata)
+
+        err_msg = result.ok? ? nil : result.message&.to_s&.[](0, 120)
+        @bus&.publish("gateway:turn_done", turn_id:, ok: result.ok?, error: err_msg)
+        result
+      end
+
+      def route_message(message_text, ctx)
         client_actions = []
         unsub = @bus&.subscribe("client_action") do |ev|
           client_actions << ev.slice(:action, :url, :label).compact
@@ -47,16 +56,15 @@ module Master
                    Result.err("gateway: no router", category: :infrastructure)
                  end
         unsub&.call
-        result = attach_client_actions(result, client_actions) if client_actions.any?
+        client_actions.any? ? attach_client_actions(result, client_actions) : result
+      end
 
-        if (adapter = @adapters[channel])
-          text = result.ok? ? extract_text(result) : result.to_s
-          adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
-        end
+      def render_to_adapter(channel, result, metadata)
+        adapter = @adapters[channel]
+        return unless adapter
 
-        err_msg = result.ok? ? nil : result.message&.to_s&.[](0, 120)
-        @bus&.publish("gateway:turn_done", turn_id:, ok: result.ok?, error: err_msg)
-        result
+        text = result.ok? ? extract_text(result) : result.to_s
+        adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
       end
 
       def channels

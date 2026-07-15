@@ -30,25 +30,41 @@ module Master
         key = cache_key(prompt, model)
         path = cache_path(key)
 
-        @lock.synchronize do
-          hit = read_entry(path)
-          if hit
-            @bus&.publish("cache:hit", key:)
-            return restore_value(hit)
-          end
-        end
+        exact = exact_cache_hit(path, key)
+        return exact if exact
 
-        near = fuzzy_index.nearest(prompt)
-        if near
-          @bus&.publish("cache:fuzzy_hit", key:)
-          return near
-        end
+        near = fuzzy_cache_hit(prompt, key)
+        return near if near
 
         @bus&.publish("cache:miss", key:)
         result = blk.call
-        fuzzy_index.remember(prompt, result) if cacheable_result?(result)
-        @lock.synchronize { write_entry(path:, value: result, key:) } if cacheable_result?(result)
+        store_result(prompt, result, path:, key:)
         result
+      end
+
+      def exact_cache_hit(path, key)
+        @lock.synchronize do
+          hit = read_entry(path)
+          next nil unless hit
+
+          @bus&.publish("cache:hit", key:)
+          restore_value(hit)
+        end
+      end
+
+      def fuzzy_cache_hit(prompt, key)
+        near = fuzzy_index.nearest(prompt)
+        return nil unless near
+
+        @bus&.publish("cache:fuzzy_hit", key:)
+        near
+      end
+
+      def store_result(prompt, result, path:, key:)
+        return unless cacheable_result?(result)
+
+        fuzzy_index.remember(prompt, result)
+        @lock.synchronize { write_entry(path:, value: result, key:) }
       end
 
       # Fuzzy near-hit layer over the exact disk cache; no-op when embeddings are disabled.

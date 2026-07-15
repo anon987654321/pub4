@@ -54,26 +54,35 @@ module Master
 
       def connect(name, cfg)
         return unless cfg.is_a?(Hash) && cfg["enabled"] != false
+
         transport = (cfg["transport"] || "stdio").to_sym
-        mcp_config = case transport
-                     when :stdio
-                       { command: cfg["command"], args: cfg["args"] || [] }
-                     when :sse
-                       { url: cfg["url"] }
-                     else
-                       return
-                     end
-        client = ::RubyLLM::MCP::Client.new(
-          name: name,
-          transport_type: transport,
-          config: mcp_config,
-          start: false
-        )
+        mcp_config = mcp_transport_config(transport, cfg)
+        return unless mcp_config
+
+        client = build_mcp_client(name, transport, mcp_config)
         client.start
         @clients[name] = client
         @bus&.publish("mcp:server_connected", name:, transport: transport.to_s)
       rescue StandardError => e
         @bus&.publish("mcp:server_failed", name:, error: e.message)
+      end
+
+      def mcp_transport_config(transport, cfg)
+        case transport
+        when :stdio
+          { command: cfg["command"], args: cfg["args"] || [] }
+        when :sse
+          { url: cfg["url"] }
+        end
+      end
+
+      def build_mcp_client(name, transport, mcp_config)
+        ::RubyLLM::MCP::Client.new(
+          name: name,
+          transport_type: transport,
+          config: mcp_config,
+          start: false
+        )
       end
 
       def load_servers
