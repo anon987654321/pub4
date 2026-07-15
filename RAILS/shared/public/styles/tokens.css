@@ -1,17 +1,17 @@
-/* Auto-synced by build_all_css.rb — x.com base tokens */
+/* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
 :root {
   color-scheme: dark;
-  --x-bg: #000000;
-  --x-surface: #000000;
-  --x-surface-elevated: #16181c;
-  --x-search-bg: #202327;
-  --x-text: #e7e9ea;
-  --x-text-secondary: #71767b;
-  --x-border: #2f3336;
+  --x-bg: #17161c;
+  --x-surface: #17161c;
+  --x-surface-elevated: #211f28;
+  --x-search-bg: #232030;
+  --x-text: #d8d6e0;
+  --x-text-secondary: #8a879c;
+  --x-border: #46435a;
   --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
   --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
-  --x-accent: #1d9bf0;
-  --x-danger: #f4212e;
+  --x-accent: #7c6fd6;
+  --x-danger: #d1594a;
   --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
   --x-weight-normal: 400;
   --x-weight-medium: 500;

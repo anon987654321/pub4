@@ -446,3 +446,182 @@ body.vertical-playlist .radio-header .city-carousel {
 .playlist-queue-item.is-active {
   background: color-mix(in srgb, var(--color-accent) 8%, transparent);
 }
+
+/* Player chrome — header, stage, queue, comments */
+.playlist-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: max(12px, env(safe-area-inset-top)) 0 var(--space-md);
+}
+
+.playlist-top-eyebrow {
+  margin: 0 0 4px;
+  font: 10px/1.4 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.playlist-top-action {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--x-radius-pill);
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.playlist-stage {
+  display: grid;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.playlist-artwork-wrap {
+  width: min(100%, 420px);
+  margin-inline: auto;
+}
+
+.playlist-artwork {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--x-radius-card);
+  background: #101010;
+}
+
+.playlist-artwork--fallback {
+  background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+}
+
+.playlist-now-playing {
+  text-align: center;
+}
+
+.playlist-now-playing.is-compact .playlist-now-playing-title {
+  font-size: 1rem;
+}
+
+.playlist-now-playing-artist {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+}
+
+.playlist-now-playing-meta {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+}
+
+.playlist-transport-time {
+  font: 0.75rem/1 var(--font-mono);
+  color: var(--color-muted);
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.playlist-add-comment {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: var(--color-text);
+  border-radius: var(--x-radius-pill);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.playlist-comment-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.playlist-comment-form input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--x-radius-sm);
+  background: rgba(0, 0, 0, 0.4);
+  color: inherit;
+}
+
+.playlist-queue {
+  margin-top: var(--space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-queue-heading {
+  margin: var(--space-md) 0 var(--space-sm);
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.playlist-queue-index {
+  font: 0.75rem/1 var(--font-mono);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.playlist-queue-art img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--x-radius-sm);
+  background: #101010;
+}
+
+.playlist-queue-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.playlist-queue-meta strong {
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playlist-queue-meta span {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.playlist-comments {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-comments h3 {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.875rem;
+}
+
+.playlist-comment {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.playlist-comment .time {
+  font: 0.75rem/1.4 var(--font-mono);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.vote-form {
+  display: inline;
+  margin: 0;
+}

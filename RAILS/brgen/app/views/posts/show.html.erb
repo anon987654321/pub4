@@ -3,39 +3,51 @@
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <%= turbo_stream_from @post %>
 
-<article class="post_show">
+<article class="x-post-show">
   <%= turbo_frame_tag "post-vote-#{@post.id}" do %>
-    <div class="post_vote">
+    <div class="x-post-votes" role="group" aria-label="Post score">
       <% if authenticated? %>
-        <%= button_to "▲", post_vote_path(@post), params: { vote: { value: 1 } },
-              class: ("active-up" if @post.upvoted_by?(Current.user)) %>
+        <%= button_to post_vote_path(@post), params: { vote: { value: 1 } },
+              class: "vote-btn#{" active-up" if @post.upvoted_by?(Current.user)}",
+              form: { class: "vote-form" },
+              aria: { label: "Upvote" } do %>
+          <%= render "shared/x_feed_icon", name: "upvote" %>
+        <% end %>
       <% else %>
-        <span>▲</span>
+        <span class="vote-btn" aria-hidden="true"><%= render "shared/x_feed_icon", name: "upvote" %></span>
       <% end %>
-      <span data-controller="animated-number"
+      <span class="vote-score"
+            data-controller="animated-number"
             data-animated-number-start-value="0"
             data-animated-number-end-value="<%= @post.score.to_i %>"
-            data-animated-number-duration-value="900"><%= @post.score %></span>
+            data-animated-number-duration-value="900"
+            aria-label="Score"><%= @post.score %></span>
       <% if authenticated? %>
-        <%= button_to "▼", post_vote_path(@post), params: { vote: { value: -1 } },
-              class: ("active-down" if @post.downvoted_by?(Current.user)) %>
+        <%= button_to post_vote_path(@post), params: { vote: { value: -1 } },
+              class: "vote-btn down#{" active-down" if @post.downvoted_by?(Current.user)}",
+              form: { class: "vote-form" },
+              aria: { label: "Downvote" } do %>
+          <%= render "shared/x_feed_icon", name: "downvote" %>
+        <% end %>
       <% else %>
-        <span>▼</span>
+        <span class="vote-btn down" aria-hidden="true"><%= render "shared/x_feed_icon", name: "downvote" %></span>
       <% end %>
     </div>
   <% end %>
 
-  <header>
+  <p class="x-post-show-meta">
     <% if @post.community %>
       <%= link_to @post.community.name, community_path(@post.community) %> ·
     <% end %>
-    posted by <%= @post.author_name %> ·
+    <%= @post.author_name %> ·
     <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
     <% if @post.reading_time_minutes.positive? %>
       · <%= @post.reading_time_minutes %> min read
     <% end %>
-  </header>
+  </p>
+
   <h1><%= @post.title %></h1>
+
   <% if @post.image.attached? %>
     <div data-controller="lightbox">
       <a href="<%= url_for(@post.image) %>" data-lg-size="1600-1200">
@@ -43,14 +55,18 @@
       </a>
     </div>
   <% end %>
+
   <% if @post.content.present? %>
     <div class="post_body"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
   <% end %>
-  <div class="cluster mt-12">
-    <button class="btn-share" data-controller="share"
+
+  <div class="x-post-actions">
+    <button type="button" class="x-act" data-controller="share"
             data-share-title-value="<%= @post.title %>"
             data-share-url-value="<%= request.original_url %>"
-            data-action="click->share#share">Share</button>
+            data-action="click->share#share" aria-label="Share post">
+      <%= render "shared/x_feed_icon", name: "share" %> Share
+    </button>
   </div>
 </article>
 
@@ -66,12 +82,12 @@
         <%= render "comments/comment", comment: comment %>
       <% end %>
     <% else %>
-      <li>No comments yet. Be first.</li>
+      <li class="dim">No comments yet. Be first.</li>
     <% end %>
   </ul>
 </section>
 
-<aside>
+<aside class="post-show-aside">
   <h3>About</h3>
   <% if @post.community %>
     <p><%= @post.community.description.presence || @post.community.name %></p>

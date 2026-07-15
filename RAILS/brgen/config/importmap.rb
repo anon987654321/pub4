@@ -5,6 +5,7 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
 pin "radio_brgen_tunnel", to: "radio_brgen_tunnel.js"
+pin "brgen_shell", to: "brgen_shell.js"
 
 # Tiptap minimal rich-text editor (compose box). esm.sh serves the ProseMirror
 # tree self-resolved; the tiptap_editor controller degrades to a plain textarea

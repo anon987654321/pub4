@@ -74,13 +74,17 @@ module ApplicationHelper
     marketplace_marketplace_root_url(subdomain: marketplace_subdomain, host: Current.domain, **options)
   end
 
+  def brgen_ai_url
+    Rails.application.config.x.master_web_url
+  end
+
   # Primary vertical navigation for the pull-down swiper. front → home feed;
   # AI → the shared MASTER face; the rest are per-city verticals on subdomains.
   def brgen_nav_items
     domain = Current.domain
     [
       ["front", root_path],
-      ["AI", "https://ai.brgen.no"],
+      ["AI", brgen_ai_url],
       ["marketplace", "//#{marketplace_host}/"],
       ["dating", "//dating.#{domain}/"],
       ["playlist", "//playlist.#{domain}/"],

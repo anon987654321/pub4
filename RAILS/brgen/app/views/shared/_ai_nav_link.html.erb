@@ -1,0 +1,12 @@
+<%# locals: (class_name: "nav-item", show_label: true) %>
+<%= link_to brgen_ai_url,
+      class: local_assigns.fetch(:class_name, "nav-item"),
+      aria: { label: "AI assistant" },
+      data: { turbo: false } do %>
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+    <path d="M12 2l1.75 5.25L19 9l-5.25 1.75L12 16l-1.75-5.25L5 9l5.25-1.75L12 2zm0 13.5l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"/>
+  </svg>
+  <% if local_assigns.fetch(:show_label, true) %>
+    <span>AI</span>
+  <% end %>
+<% end %>

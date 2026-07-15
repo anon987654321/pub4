@@ -67,9 +67,14 @@ a:hover { text-decoration: underline; }
 
 .feed-hint { padding: 0 var(--space-4) var(--space-2); }
 
-@media (max-width: 1280px) {
+@media (min-width: 1265px) {
   .compose-label { display: inline; }
   .compose-icon { display: none; }
+}
+
+@media (min-width: 769px) and (max-width: 1264px) {
+  .compose-label { display: none; }
+  .compose-icon { display: block; }
 }
 
 @media (max-width: 768px) {

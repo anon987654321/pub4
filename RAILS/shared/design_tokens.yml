@@ -45,8 +45,8 @@ face_root:
     c_danger: "oklch(60% 0.14 35)"
     c_code: "oklch(74% 0.11 275)"
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
-  font_label: '"JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace'
-  face_bg: "black"
+  font_label: '"JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace'
+  face_bg: "#0f0e0d"
   derived:
     face_fg: "var(--c-text)"
     face_muted: "color-mix(in srgb, var(--c-text) 35%, transparent)"
@@ -104,7 +104,7 @@ openbsd_wscons:
   x_radius_card: "0"
 
 # Dark flat SGI-IRIX/8-bit chrome — used by pub4_stack social apps (_x_base.scss), not MASTER face.
-# Flat: no bevels, no box-shadow. Square corners (radii below are 0). Cool
+# Flat: no bevels, no box-shadow. Subtle radii for cards and controls. Cool
 # graphite/indigo palette in place of x.com's black/blue.
 social:
   x_bg: "#17161c"
@@ -122,8 +122,12 @@ social:
   x_font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   x_font_size: "16px"
   x_line_height: "20px"
-  x_radius_pill: "0"
-  x_radius_card: "0"
+  x_radius_xs: "4px"
+  x_radius_sm: "8px"
+  x_radius_md: "12px"
+  x_radius_pill: "9999px"
+  x_radius_card: "16px"
+  x_radius_lg: "16px"
   x_sidebar: "275px"
   x_feed_max: "600px"
   x_widgets: "350px"

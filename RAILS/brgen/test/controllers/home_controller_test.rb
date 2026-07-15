@@ -10,6 +10,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "compose-box"
     assert_includes response.body, "feed-panel"
     assert_not_includes response.body, 'class="master-embed-frame"'
+    assert_match(/aside class="sidebar"[\s\S]*?#{Regexp.escape(Rails.application.config.x.master_web_url)}/, response.body)
+    assert_includes response.body, 'aria-label="AI assistant"'
   end
 
   def test_root_feed_tabs_are_wired

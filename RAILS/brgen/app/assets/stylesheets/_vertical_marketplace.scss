@@ -30,7 +30,7 @@ body.vertical-marketplace .deal-grid {
 body.vertical-marketplace .deal-card {
   background: var(--shop-luxury-bg);
   border: 1px solid var(--x-border);
-  border-radius: 0;
+  border-radius: var(--x-radius-sm);
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 

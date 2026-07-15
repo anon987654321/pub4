@@ -1,6 +1,6 @@
 <% content_for :title, @community.name %>
 
-<header>
+<header class="community-header" role="banner" aria-label="Community">
   <h1><%= @community.name %></h1>
   <% if @community.description.present? %><p><%= @community.description %></p><% end %>
   <p><strong><%= @community.posts.count %></strong> posts</p>

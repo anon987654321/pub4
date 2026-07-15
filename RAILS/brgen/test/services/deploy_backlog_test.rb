@@ -39,7 +39,9 @@ class DeployBacklogTest < Minitest::Test
     ].each do |relative|
       source = File.read(File.join(ROOT, relative))
       assert_includes source, 'mount SolidQueue::Engine, at: "/admin/jobs"'
-      assert_match(/jobs_constraint = ->\(request\) \{ request\.cookies\["session_id"\]\.present\? \}/, source)
+      assert_match(/jobs_constraint = lambda \{ \|request\|/, source)
+      assert_includes source, "cookie_jar.signed[:session_id]"
+      assert_includes source, "Session.exists?"
     end
   end
 
@@ -465,8 +467,14 @@ class DeployBacklogTest < Minitest::Test
                     'navigator.clearAppBadge'
     assert_includes File.read(File.join(ROOT, 'shared/pwa/service_worker.js')), 'setAppBadge'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js')), 'workbox:core'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb')),
-                    'data-push-unread-value='
+    brgen_layout = File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
+    assert_includes brgen_layout, 'data-push-unread-value='
+    assert_includes brgen_layout, 'render "shared/ai_nav_link"'
+    assert_includes brgen_layout, 'brgen_ai_url'
+    refute_includes brgen_layout, 'javascript_include_tag "face"'
+    refute_includes brgen_layout, 'javascript_include_tag "particle_kernel"'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), 'AI assistant'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), 'brgen_ai_url'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'Create outfit'
     assert_includes File.read(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')), 'Search ports'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'
@@ -760,6 +768,32 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'bsdports/app/views/maintainers/show.html.erb')),
                     'MaintainerPortsInfiniteScrollReflex#load_more'
     assert_includes sentinel, 'data-maintainer-id'
+  end
+
+  def test_brgen_visual_polish_stack_is_wired
+    layout = read_brgen('app/views/layouts/application.html.erb')
+    scss = read_brgen('app/assets/stylesheets/application.scss')
+    manifest = read_brgen('app/views/pwa/manifest.json.erb')
+    show = read_brgen('app/views/posts/show.html.erb')
+    app_js = read_brgen('app/javascript/application.js')
+
+    assert_includes layout, 'yield :splash'
+    assert_includes layout, 'id="splash"'
+    assert_includes layout, '#17161c'
+    assert_includes manifest, '"theme_color": "#17161c"'
+    assert_includes scss, '_x_card_modifiers'
+    assert_includes scss, '_chrome_polish'
+    assert_includes scss, 'offline_page'
+    assert_includes read_brgen('app/assets/stylesheets/_vertical_playlist.scss'), '.playlist-top'
+    assert_includes read_brgen('app/assets/stylesheets/_vertical_tv.scss'), '.tv-live-streams'
+    assert_includes show, 'x-post-show'
+    assert_includes show, 'x_feed_icon'
+    refute_includes show, 'post_show'
+    assert_includes app_js, 'brgen_shell'
+    assert_includes read_brgen('config/importmap.rb'), 'brgen_shell'
+    assert_includes File.read(File.join(ROOT, 'shared/app/assets/stylesheets/_x_base.scss')), '--x-radius-card: 16px'
+    refute File.exist?(File.join(ROOT, 'brgen/app/controllers/playlist_controller.rb'))
+    refute File.exist?(File.join(ROOT, 'brgen/app/views/shared/_vote.html.erb'))
   end
 
   private

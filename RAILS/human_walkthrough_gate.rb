@@ -20,6 +20,7 @@ APP_FILES = {
   "brgen" => {
     layout: "app/views/layouts/application.html.erb",
     home: "app/views/home/index.html.erb",
+    nav_partials: ["app/views/shared/_ai_nav_link.html.erb"],
     nav: %w[Home Explore Search Sign\ in],
   },
   "bsdports" => {
@@ -49,9 +50,9 @@ def source_checks(result, app)
 
   if app.name == "brgen"
     result.fail("brgen: sidebar search must submit to global_search_path") unless layout.include?("form_with url: global_search_path")
-    %w[Home Explore\ communities Posts Messages Nearby].each do |label|
+    %w[Home Explore\ communities AI\ assistant Messages Nearby].each do |label|
       aria_label = /aria:\s*\{[^}]*\blabel:\s*["']#{Regexp.escape(label.tr('\\', ''))}["']/
-      result.fail("brgen: mobile tab missing aria label #{label}") unless layout.match?(aria_label)
+      result.fail("brgen: mobile tab missing aria label #{label}") unless nav_source.match?(aria_label)
     end
   end
 end

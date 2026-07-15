@@ -12,7 +12,7 @@ class CritiqueImplementationTest < Minitest::Test
     home = read("brgen/app/views/home/index.html.erb")
     post = read("brgen/app/views/posts/_post.html.erb")
     compose = read("brgen/app/views/shared/_feed_compose.html.erb")
-    css = read("brgen/app/assets/stylesheets/_widgets.scss")
+    css = read("brgen/app/assets/stylesheets/_feed_post.scss")
 
     assert_includes layout, "For you · Hot"
     assert_includes layout, "Following · Latest"

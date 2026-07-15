@@ -7,7 +7,7 @@
 .sidebar-card__head h3 { margin-bottom: 0; }
 .inherit { color: inherit; text-decoration: underline; }
 
-.sort-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.sort-tabs { display: flex; padding-bottom: var(--space-2); }
 
 .sort-tab {
   padding: 14px 16px; /* mobile tighter */
@@ -15,8 +15,7 @@
   font: 0.875rem/1 var(--x-font);
   font-weight: 500;
   color: var(--text-dim);
-  border-bottom: 2px solid transparent;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   white-space: nowrap;
 }
 
@@ -28,7 +27,7 @@
 }
 
 .sort-tab:hover { background: var(--hover); color: var(--text); text-decoration: none; }
-.sort-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
+.sort-tab.active { color: var(--text); font-weight: 700; }
 
 .empty { color: var(--text-dim); padding: 32px 12px; text-align: center; font-size: 0.875rem; }
 @media (min-width: 768px) {
@@ -56,7 +55,7 @@
 .post-grid article,
 .deal-card,
 .store-card {
-  border: 1px solid var(--border);
+  background: var(--surface2);
   border-radius: var(--radius);
   overflow: hidden;
   padding: 12px;
@@ -70,60 +69,6 @@
   }
 }
 
-/* x.com feed style - list for main social timelines (mobile-first dense) */
-.post-feed {
-  display: block;
-}
-.post-feed .x-post {
-  border-bottom: 1px solid var(--border);
-  margin: 0;
-  padding: 10px 12px; /* mobile dense */
-}
-
-@media (min-width: 768px) {
-  .post-feed .x-post {
-    padding: 12px 16px;
-  }
-}
-
-/* brgen's stack never forwards shared/_minimal.scss (see _pub4_stack_brgen.scss),
-   so .x-act/.x-actions have no base rule here at all -- tap targets were
-   collapsing to bare text sizing (~19px tall). Define the base rule locally
-   rather than pull in the rest of _minimal.scss, which may collide with
-   zen_shell. */
-.x-actions {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  color: var(--text-dim);
-  font-size: 0.8125rem;
-  margin-top: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-start; /* x.com left-aligns primary actions */
-}
-.x-act {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: 0;
-  transition: color var(--transition-fast), background var(--transition-fast);
-  cursor: pointer;
-  min-height: 44px;
-  min-width: 44px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-size: 0.8125rem;
-}
-.x-act:hover { color: var(--accent); background: var(--hover); }
-.x-act.active { color: var(--accent); }
-.x-act:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.x-count { font-size: 0.8125rem; }
-
 .monogram--0 { background: #4b2e83; color: #fff; }
 .monogram--1 { background: #7a3e12; color: #fff; }
 .monogram--2 { background: #075e54; color: #fff; }
@@ -135,6 +80,6 @@ article h2 { font-size: 0.9375rem; font-weight: 500; margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: .9375rem; }
 article mark { background: var(--hover); color: var(--text-dim); padding: 1px 4px; font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius); }
 
-.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); border: 1px solid var(--border); font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: var(--radius); margin-inline-end: 6px; }
+.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: var(--radius); margin-inline-end: 6px; }
 
 .video-player { width: 100%; max-height: 420px; background: #000; display: block; }

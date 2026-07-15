@@ -109,3 +109,90 @@ body.vertical-tv .show-card {
 body.vertical-tv .show-card:hover {
   background: var(--x-hover-subtle);
 }
+
+/* Live streams index + show */
+.tv-live-streams {
+  padding: 0 var(--space-4) var(--space-6);
+}
+
+.tv-live-streams h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: var(--space-4) 0 var(--space-3);
+}
+
+.live-stream-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.live-stream-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition-fast);
+}
+
+.live-stream-card:hover {
+  background: var(--x-hover-subtle);
+}
+
+.tv-live-stream {
+  padding: 0 var(--space-4) var(--space-6);
+}
+
+.tv-live-stream .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+}
+
+.live-stream-details {
+  padding: var(--space-4) 0;
+  color: var(--x-text-secondary);
+  line-height: 1.5;
+}
+
+.live-stream-chat {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--x-border);
+}
+
+.live-stream-chat h2 {
+  font-size: 1rem;
+  margin-bottom: var(--space-3);
+}
+
+.live-stream-chat form {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.live-stream-chat input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-sm);
+  background: var(--x-surface-elevated);
+  color: var(--x-text);
+}
+
+.tv-live-stream-form {
+  max-width: 42rem;
+  padding: var(--space-4);
+}
+
+.tv-live-stream-form .field {
+  margin-bottom: var(--space-4);
+}

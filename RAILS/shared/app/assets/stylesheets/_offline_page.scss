@@ -1,0 +1,58 @@
+/* PWA offline shell — shared/_offline_page.html.erb */
+
+.offline-page {
+  display: grid;
+  gap: var(--space-6, 1.5rem);
+  min-height: 60vh;
+  padding: clamp(24px, 6vw, 48px);
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+.offline-page-meta {
+  margin: 0;
+  font: 0.6875rem/1.4 ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim, var(--x-text-secondary));
+}
+
+.offline-page h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.offline-page-lead {
+  margin: 0;
+  color: var(--text-dim, var(--x-text-secondary));
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 36em;
+}
+
+.offline-page-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+}
+
+.offline-page-item {
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border: 1px solid var(--border, var(--x-border));
+  border-radius: var(--x-radius-card, 0);
+  background: var(--surface2, var(--x-surface-elevated));
+  font-size: 0.9375rem;
+}
+
+.offline-page-item a {
+  color: var(--text, var(--x-text));
+  text-decoration: none;
+}
+
+.offline-page-item a:hover {
+  text-decoration: underline;
+}

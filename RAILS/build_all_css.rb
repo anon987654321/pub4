@@ -12,6 +12,7 @@
 require "open3"
 require "yaml"
 require "fileutils"
+require_relative "design_tokens"
 
 RAILS_ROOT = File.expand_path(__dir__)
 ROOT = File.expand_path("..", __dir__)
@@ -28,7 +29,14 @@ end
 def fonts_dir
   File.join(shared_public_dir, "fonts")
 end
-X_TOKEN_MARKERS = ["--x-text: #e7e9ea", "--x-accent: #1d9bf0", "JetBrainsMono Nerd Font"].freeze
+def social_token_markers
+  social = DesignTokens.load.fetch("social")
+  [
+    "--x-text: #{social.fetch('x_text')}",
+    "--x-accent: #{social.fetch('x_accent')}",
+    "JetBrainsMono Nerd Font",
+  ].freeze
+end
 
 FONT_CDN = "https://cdn.jsdelivr.net/gh/Nick2bad4u/nerd-fonts-woff2@v1.0.5/fonts/woff2/JetBrainsMono/Ligatures".freeze
 FONT_SOURCES = {
@@ -80,6 +88,7 @@ def ensure_fonts!
 end
 
 def sync_static_tokens!
+  social = DesignTokens.load.fetch("social")
   tokens = File.join(shared_public_dir, "styles", "tokens.css")
   FileUtils.mkdir_p(File.dirname(tokens))
   unless File.writable?(File.dirname(tokens))
@@ -88,20 +97,20 @@ def sync_static_tokens!
     abort "css: cannot write tokens to #{File.dirname(tokens)}"
   end
   File.write(tokens, <<~CSS)
-    /* Auto-synced by build_all_css.rb — x.com base tokens */
+    /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
     :root {
       color-scheme: dark;
-      --x-bg: #000000;
-      --x-surface: #000000;
-      --x-surface-elevated: #16181c;
-      --x-search-bg: #202327;
-      --x-text: #e7e9ea;
-      --x-text-secondary: #71767b;
-      --x-border: #2f3336;
+      --x-bg: #{social.fetch("x_bg")};
+      --x-surface: #{social.fetch("x_surface")};
+      --x-surface-elevated: #{social.fetch("x_surface_elevated")};
+      --x-search-bg: #{social.fetch("x_search_bg")};
+      --x-text: #{social.fetch("x_text")};
+      --x-text-secondary: #{social.fetch("x_text_secondary")};
+      --x-border: #{social.fetch("x_border")};
       --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
       --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
-      --x-accent: #1d9bf0;
-      --x-danger: #f4212e;
+      --x-accent: #{social.fetch("x_accent")};
+      --x-danger: #{social.fetch("x_danger")};
       --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
       --x-weight-normal: 400;
       --x-weight-medium: 500;
@@ -204,7 +213,7 @@ end
 
 def verify_build(app, out)
   body = File.read(out)
-  missing = X_TOKEN_MARKERS.reject { |m| body.include?(m) }
+  missing = social_token_markers.reject { |m| body.include?(m) }
   return [] if missing.empty?
 
   ["#{app}: build missing #{missing.join(", ")}"]
@@ -215,7 +224,11 @@ def verify_face_css
   return [] unless File.file?(path)
 
   body = File.read(path)
-  missing = ["--x-text: #e7e9ea", "JetBrainsMono Nerd Font"].reject { |m| body.include?(m) }
+  anchors = DesignTokens.load.fetch("face_root").fetch("anchors")
+  missing = [
+    "--x-text: #{anchors.fetch('x_text')}",
+    "JetBrainsMono Nerd Font",
+  ].reject { |m| body.include?(m) }
   missing.map { |m| "MASTER/web face.css missing #{m}" }
 end
 
