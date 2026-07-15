@@ -50,7 +50,18 @@ print "vps-deploy: $app (secondary db schemas)"
 . "$repo/RAILS/_bundle.sh"
 . "$repo/RAILS/_runtime_gate.sh"
 . "$repo/RAILS/_database.sh"
+. "$repo/RAILS/_assets.sh"
 rails_prepare_secondary_dbs_as_app "$app" "/home/${app}/app"
+
+# The SKIP_CI=1 path (${app}.sh -> deploy_tracked_app -> rails_runtime_gate)
+# already precompiles as part of its gate. The default ci+sync path
+# (vps_ci.sh) only runs tests against a throwaway test DB and never
+# touches production assets -- without this, public/assets/ is simply
+# never created for a plain `vps-deploy $app` run, so Propshaft 404s
+# every asset_path() and the page renders with no CSS at all. Safe to
+# call unconditionally: Propshaft precompile is idempotent.
+print "vps-deploy: $app (assets precompile)"
+rails_assets_precompile_as_app "$app" "/home/${app}/app" || exit 1
 
 print "vps-deploy: $app (restart)"
 doas rcctl restart "$app"
