@@ -44,7 +44,8 @@ module Master
       def adjacent(file)
         radius = @graph.blast_radius(file)
         Array(radius[:inbound]) + Array(radius[:outbound])
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "GraphRetriever.adjacent")
         []
       end
 

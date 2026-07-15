@@ -71,7 +71,8 @@ module Master
             sidecar = "#{path}#{suffix}"
             File.delete(sidecar) if File.exist?(sidecar)
           end
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "SqliteStore.clear_wal_sidecars")
           nil
         end
 

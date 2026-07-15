@@ -77,7 +77,8 @@ module Master
             out << action(:flatten, rel, shallow_target(rel), "depth #{rel.count('/')} > #{MAX_LIB_DEPTH} — flatten toward lib/")
           end
           out.uniq { |row| "#{row[:action]}:#{row[:from]}:#{row[:to]}" }
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "AggressiveMerge.file_candidates")
           []
         end
 

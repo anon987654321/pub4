@@ -62,7 +62,8 @@ module Master
       def exhausted_models(day: today_key)
         data = load_data[day] || {}
         data.select { |model, used| trackable?(model) && used.to_i >= daily_limit }.keys
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ModelQuota.exhausted_models")
         []
       end
 
@@ -86,7 +87,8 @@ module Master
       def load_data
         return {} unless File.file?(path)
         JSON.parse(File.read(path))
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ModelQuota.load_data")
         {}
       end
 

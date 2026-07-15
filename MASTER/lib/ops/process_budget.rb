@@ -24,7 +24,8 @@ module Master
       def load_config
         return {} unless File.exist?(CONFIG_PATH)
         YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ProcessBudget.load_config")
         {}
       end
 

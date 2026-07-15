@@ -255,7 +255,8 @@ module Master
             return cycle if cycle
           end
           nil
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "ArchitectureAgent.detect_cycle")
           nil
         end
 

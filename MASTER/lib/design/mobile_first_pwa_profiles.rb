@@ -134,7 +134,8 @@ module Master
           next if rule.id == :animation_no_reduced_motion && has_reduced_motion
           findings << { id: rule.id, file:, message: rule.message, severity: rule.severity }
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "MobileFirstPwaProfiles.audit_css_file", path: file)
         nil
       end
 

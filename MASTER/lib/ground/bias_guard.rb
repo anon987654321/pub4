@@ -46,7 +46,8 @@ module Master
       def load_biases
         path = File.join(@root, BIAS_PATH)
         File.exist?(path) ? Master.load_yaml(path) : {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "BiasGuard.load_biases")
         {}
       end
     end

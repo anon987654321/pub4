@@ -88,7 +88,8 @@ module Master
 
           pid.to_i if pid&.match?(/\A\d+\z/)
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "HostBudget.suspended_ruby_pids")
         []
       end
 
@@ -114,7 +115,8 @@ module Master
 
       def cli_tty?
         $stdin.tty?
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "HostBudget.cli_tty?")
         false
       end
 

@@ -50,7 +50,8 @@ module Master
         return unless @embedder.enabled?
 
         @embedder.embed(text)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "SemanticIndex.embed")
         nil
       end
 

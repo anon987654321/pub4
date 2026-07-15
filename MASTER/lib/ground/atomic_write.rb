@@ -38,7 +38,8 @@ module Master
 
       def cleanup_atomic_temp(temp)
         File.delete(temp.path) if temp && File.exist?(temp.path)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "AtomicWrite.cleanup_atomic_temp")
         nil
       end
     end

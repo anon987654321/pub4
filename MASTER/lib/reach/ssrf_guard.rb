@@ -42,7 +42,8 @@ module Master
         return false if addresses.empty?
 
         addresses.all? { |addr| !blocked_ip?(IPAddr.new(addr)) }
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "SsrfGuard.safe_uri?")
         false
       end
 

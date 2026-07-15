@@ -117,7 +117,8 @@ module Master
         newest_source = files.map { |path| File.mtime(path) }.max
         oldest_output = outputs.map { |path| File.mtime(path) }.min
         oldest_output >= newest_source
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "SnapshotPublisher.boot_current?")
         false
       end
 
@@ -216,7 +217,8 @@ module Master
         branch, = Master::Reach::Exec.capture2e("git", "-C", repo_root, "rev-parse", "--abbrev-ref", "HEAD")
         sha, = Master::Reach::Exec.capture2e("git", "-C", repo_root, "rev-parse", "--short", "HEAD")
         ["- git: #{branch.strip} @ #{sha.strip}"]
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "SnapshotPublisher.git_summary")
         []
       end
 

@@ -103,7 +103,8 @@ module Master
         return {} unless File.exist?(path)
 
         Master.load_yaml(path) || {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "SessionCapture.read_yaml")
         {}
       end
 

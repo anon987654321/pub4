@@ -121,7 +121,8 @@ module Master
 
         def quiescent?(files, before)
           mtimes(files) == before
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "PassRunner.quiescent?")
           false
         end
 
@@ -169,7 +170,8 @@ module Master
           out, _, st = Master::Reach::Exec.capture3("/sbin/sysctl", "-n", "vm.loadavg")
           return unless st.success?
           out.to_s[/\d+(?:\.\d+)?/]&.to_f
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "PassRunner.system_load_avg")
           nil
         end
       end

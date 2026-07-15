@@ -93,7 +93,8 @@ module Master
         owner, name = model_id.split("/")
         get(URI("#{BASE}/models/#{owner}/#{name}"))
         true
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ReplicateClient.model_exists?")
         false
       end
 
@@ -178,13 +179,15 @@ module Master
 
       def cancel_prediction(id)
         post(URI("#{BASE}/predictions/#{id}/cancel"), {})
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ReplicateClient.cancel_prediction")
         nil
       end
 
       def cancel_training(id)
         post(URI("#{BASE}/trainings/#{id}/cancel"), {})
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ReplicateClient.cancel_training")
         nil
       end
 

@@ -73,7 +73,8 @@ module Master
 
         data = Master.load_yaml(PATH)
         data.is_a?(Hash) ? data.fetch("sections", {}) : {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "BootstrapDocs.load_file_sections")
         {}
       end
     end

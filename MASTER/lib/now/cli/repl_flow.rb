@@ -186,7 +186,8 @@ module Master
 
       def host_refusal_for(line)
         Master::Ground::HostBudget.refuse_heavy_prompt?(line)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.host_refusal_for")
         nil
       end
 

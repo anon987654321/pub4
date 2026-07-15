@@ -158,7 +158,8 @@ module Master
         last_line = nil
         File.foreach(files.last) { |line| last_line = line }
         last_line ? JSON.parse(last_line, symbolize_names: true) : nil
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ReplayReader.load_last_turn_from_disk")
         nil
       end
     end

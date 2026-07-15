@@ -37,7 +37,8 @@ module Master
         return false if key.nil?
         RubyLLM.configure { |cfg| cfg.openrouter_api_key = key }
         true
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "KeyRotator.configure_current!")
         false
       end
 

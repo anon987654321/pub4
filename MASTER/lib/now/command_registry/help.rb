@@ -210,7 +210,8 @@ module Master
         return [] unless File.exist?(path)
         data = Master.load_yaml(path) || {}
         (data.dig("infer", "commands") || {}).keys.map(&:to_s)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.infer_command_names")
         []
       end
 
@@ -222,7 +223,8 @@ module Master
           sample = Array(spec["patterns"]).first.to_s.gsub(/\\b/, "").tr("^$", "")[0, 48]
           "  say: #{sample}… → /#{name}"
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.infer_help_lines")
         []
       end
 

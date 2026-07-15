@@ -242,7 +242,8 @@ module Master
         return unless msg
 
         Master::Result.err(msg, category: :validation)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.host_budget_block")
         nil
       end
 

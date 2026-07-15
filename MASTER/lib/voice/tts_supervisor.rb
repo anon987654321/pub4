@@ -106,7 +106,8 @@ module Master
 
         File.unlink(legacy) if File.exist?(legacy) && !File.socket?(legacy)
         File.symlink(primary, legacy) unless File.exist?(legacy)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "TtsSupervisor.link_legacy_socket")
         nil
       end
 

@@ -55,14 +55,16 @@ module Master
         return unless File.file?(path)
         data = JSON.parse(File.read(path))
         @mutex.synchronize { @totals = data.transform_keys(&:to_sym) }
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CacheEfficiency.load!")
         nil
       end
 
       def persist!
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, JSON.pretty_generate(@totals))
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CacheEfficiency.persist!")
         nil
       end
     end

@@ -131,7 +131,8 @@ module Master
 
       def page_output?(text)
         $stdout.isatty && text.to_s.lines.size > TTY::Screen.height
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.page_output?")
         false
       end
 

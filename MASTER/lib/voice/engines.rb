@@ -139,7 +139,8 @@ module Master
         return result if attempted
 
         try_mlx_python_api(py, model, enriched, voice, speed, out_path)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.synth_mlx")
         false
       end
 
@@ -189,7 +190,8 @@ module Master
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.synth_chatterbox")
         false
       end
 
@@ -225,7 +227,8 @@ module Master
         FileUtils.cp(parts.first, out_path)
         parts.drop(1).each { |p| system("afplay", p, out: File::NULL, err: File::NULL); File.delete(p) }
         File.size?(out_path)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.synth_edge_melodic")
         false
       end
 
@@ -274,7 +277,8 @@ module Master
           FileUtils.mv(aiff, out_path.sub(/\.mp3\z/, ".aiff"))
           true
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Engines.synth_say")
         false
       end
 

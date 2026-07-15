@@ -70,7 +70,8 @@ module Master
         return unless st.success?
 
         load_average_1m(out)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Watcher.load_avg_1m")
         nil
       end
 
@@ -86,7 +87,8 @@ module Master
         return unless st2.success?
 
         memory_free_percent(free, physmem_bytes(total))
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Watcher.mem_free_pct")
         nil
       end
 
@@ -133,7 +135,8 @@ module Master
         return unless st.success?
 
         disk_percent(out)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Watcher.disk_root_pct")
         nil
       end
 
@@ -148,7 +151,8 @@ module Master
         return unless st.success?
 
         master_rss_mb_from_ps(out)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Watcher.master_rss_mb")
         nil
       end
 
@@ -165,7 +169,8 @@ module Master
       def master_alive?
         _, _, st = Master::Reach::Exec.capture3("/usr/sbin/rcctl", "check", "master")
         st.success?
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Watcher.master_alive?")
         nil
       end
 
@@ -193,7 +198,8 @@ module Master
 
       def load_config
         Master.load_yaml(File.join(@root, "data", "load.yml")) || {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Watcher.load_config")
         {}
       end
     end

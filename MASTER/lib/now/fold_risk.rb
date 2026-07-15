@@ -36,7 +36,8 @@ module Master
 
       def repo_wide?(goal)
         Ground::HostBudget.repo_wide_request?(goal.to_s)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "FoldRisk.repo_wide?")
         false
       end
     end

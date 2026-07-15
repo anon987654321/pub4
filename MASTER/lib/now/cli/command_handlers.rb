@@ -107,7 +107,8 @@ module Master
           rel = path.delete_prefix("#{@refs.root}/")
           File.directory?(path) ? "#{rel}/" : rel
         end.first(50)
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.complete_paths")
         []
       end
 

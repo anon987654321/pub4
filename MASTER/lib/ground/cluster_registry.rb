@@ -63,7 +63,8 @@ module Master
             raw: c
           )
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ClusterRegistry.load_visual")
         []
       end
 
@@ -80,7 +81,8 @@ module Master
             raw: c
           )
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ClusterRegistry.load_mobile_web")
         []
       end
 
@@ -98,7 +100,8 @@ module Master
             raw: c
           )
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ClusterRegistry.load_repo_topics")
         []
       end
     end

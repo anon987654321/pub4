@@ -14,7 +14,8 @@ module Master
 
         def open_breakers
           @agent.respond_to?(:circuit_breaker) ? Array(@agent.circuit_breaker&.open_models) : []
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "LlmRouter.open_breakers")
           []
         end
       end

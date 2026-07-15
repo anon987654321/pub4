@@ -45,7 +45,8 @@ module Master
 
       def load_config
         Master.load_yaml(Master::RULES_PATH).fetch("preserve_user_intent", {})
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PreserveUserIntent.load_config")
         {}
       end
 

@@ -129,7 +129,8 @@ module Master
       def load_config
         soul = Master.load_yaml(Master.data_path("soul.yml"))
         soul.dig("negotiable", "conflict_resolution") || {}
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ConflictResolver.load_config")
         {}
       end
     end

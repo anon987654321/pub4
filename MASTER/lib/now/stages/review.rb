@@ -98,13 +98,15 @@ module Master
         def council_confidence(ctx)
           scores = Array(ctx.council_feedback).filter_map { |item| item[:confidence] if item.respond_to?(:[]) }
           scores.empty? ? nil : scores.sum.to_f / scores.size
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Review.council_confidence")
           nil
         end
 
         def lint_errors(ctx)
           Array(ctx.lint_report).count { |finding| finding.respond_to?(:severity) && finding.severity.to_s == "error" }
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Review.lint_errors")
           nil
         end
       end

@@ -187,6 +187,7 @@ module Master
           File.exist?(File.join(@root, "data", "openbsd.yml")) &&
             File.read(File.join(@root, "data", "openbsd.yml")).include?("system_health_checks")
       rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PhaseGates.monitoring_configured?")
         false
       end
 
@@ -204,6 +205,7 @@ module Master
         data = YAML.safe_load(File.read(path), aliases: true)
         zero_count?(data["violations"] || data[:violations])
       rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PhaseGates.zero_scan_file?")
         false
       end
 
@@ -211,6 +213,7 @@ module Master
         path = File.join(@root, relative)
         File.exist?(path) && File.read(path).strip == "ok"
       rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "PhaseGates.status_file_ok?")
         false
       end
 

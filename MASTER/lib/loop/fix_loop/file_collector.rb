@@ -38,7 +38,8 @@ module Master
 
         def quiescent?(files, before)
           mtimes(files) == before
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "FileCollector.quiescent?")
           false
         end
 
@@ -52,7 +53,8 @@ module Master
              .select { |file| File.file?(file) && under_path?(file, target) }
              .reject { |file| skipped?(file) }
              .sort
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "FileCollector.collect_tracked")
           []
         end
 

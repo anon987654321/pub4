@@ -226,7 +226,8 @@ module Master
 
         def delete_temporary_path(path)
           File.delete(path) if path && File.exist?(path)
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "AstFixer.delete_temporary_path")
           nil
         end
       end

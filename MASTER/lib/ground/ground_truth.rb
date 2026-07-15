@@ -36,7 +36,8 @@ module Master
         else
           File.exist?(resolved) && Digest::SHA256.hexdigest(File.read(resolved)) == entry.sha256
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "GroundTruth.fresh?")
         false
       end
 

@@ -203,7 +203,8 @@ module Master
           next unless inbound.zero?
           { path: record.path, method: name, reason: "no call-site references found in corpus" }
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RepoEcology.dead_methods_in")
         []
       end
 

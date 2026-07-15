@@ -105,7 +105,8 @@ module Master
           add_snapshot_entry(path, pending, files)
           break if files.size >= SNAPSHOT_DIR_FILE_LIMIT
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.scan_snapshot_dir")
         nil
       end
 

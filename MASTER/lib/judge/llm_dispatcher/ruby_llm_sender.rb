@@ -75,7 +75,8 @@ end)
 
           temp_file.close unless temp_file.closed?
           temp_file.unlink if File.exist?(temp_file.path)
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RubyLLMSender.cleanup_temp_file")
           nil
         end
 

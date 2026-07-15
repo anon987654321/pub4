@@ -54,7 +54,8 @@ module Pub4
       socket = Socket.tcp(host, port, connect_timeout: 0.2)
       socket.close
       true
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Environment.port_open?")
       false
     end
 

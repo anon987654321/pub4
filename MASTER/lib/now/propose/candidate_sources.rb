@@ -62,7 +62,8 @@ module Master
           return value if value.is_a?(Time)
 
           Time.at(value.to_i)
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "CandidateSources.coerce_time")
           nil
         end
 
@@ -99,7 +100,8 @@ module Master
             adds, dels, _file = line.split("\t", 3)
             adds.to_i + dels.to_i
           end
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "CandidateSources.commit_line_deltas")
           []
         end
 

@@ -70,7 +70,8 @@ module Master
             count = @graph.clusters_for_file(path.to_s).size
             BLAST_THRESHOLDS.find { |threshold, _| count >= threshold }&.last
           end.max_by { |t| TIERS.index(t) }
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RiskClassifier.blast_tier_for")
           nil
         end
       end

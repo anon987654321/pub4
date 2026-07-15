@@ -20,7 +20,8 @@ module Master
         data = Master.load_yaml(Master::RULES_PATH)
         (data.dig("phantom_recovery", "detectors") || {}).transform_values { |v| compile_detector(v) }
       end
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "PhantomRecovery.detectors")
       {}
     end
 

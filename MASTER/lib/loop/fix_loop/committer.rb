@@ -114,7 +114,8 @@ module Master
           return [] unless @root
 
           @git.status_lines(".").filter_map { |line| changed_ruby_path(line) }
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Committer.changed_ruby_files")
           []
         end
 

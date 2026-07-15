@@ -25,7 +25,8 @@ module Master
 
           def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
             @provider_health&.record(model:, status:, latency_ms:, error:)
-          rescue StandardError
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "Diagnostics.record_provider_outcome")
             nil
           end
 

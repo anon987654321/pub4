@@ -159,7 +159,8 @@ module Master
             at: Time.now.to_i
           )
         )
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Transcendent.log_pick")
         nil
       end
 

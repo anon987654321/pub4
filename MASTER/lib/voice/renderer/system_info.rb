@@ -41,6 +41,7 @@ module Master
         def imports_loaded
           IMPORT_YMLS.select { |n| File.exist?(File.join(Master::DATA, "#{n}.yml")) }
         rescue StandardError => _e
+          Master::Ground::Swallow.log(_e, context: "SystemInfo.imports_loaded")
           []
         end
 
@@ -73,6 +74,7 @@ module Master
           lines << version if version
           lines
         rescue StandardError => _e
+          Master::Ground::Swallow.log(_e, context: "SystemInfo.macos_hw_lines")
           []
         end
 

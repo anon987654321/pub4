@@ -216,7 +216,8 @@ module Master
             %w[acted rejected expired].include?(candidate["event"]) &&
             Time.parse(candidate["ts"].to_s) >= ts
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Propose.stale_display?")
         false
       end
 

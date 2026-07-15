@@ -39,7 +39,8 @@ module Master
 
           record
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "EventLog.recent")
         []
       end
 

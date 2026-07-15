@@ -96,14 +96,16 @@ module Master
         return unless File.file?(STATE)
 
         JSON.parse(File.read(STATE)).fetch("voice", nil)&.to_sym
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "WarmErratic.last_voice")
         nil
       end
 
       def remember_voice(voice)
         FileUtils.mkdir_p(File.dirname(STATE))
         File.write(STATE, JSON.generate(voice: voice, at: Time.now.to_i))
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "WarmErratic.remember_voice")
         nil
       end
 

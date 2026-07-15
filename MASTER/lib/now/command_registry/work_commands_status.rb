@@ -60,7 +60,8 @@ module Master
 
       def last_event(root, pattern)
         Trace::EventLog.new(root: root).recent(40, pattern: pattern).last
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.last_event")
         nil
       end
 
@@ -113,7 +114,8 @@ end
           sum = pay.is_a?(Hash) ? pay.first(2).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
           { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.failure_events")
         []
       end
 
@@ -131,7 +133,8 @@ end
           sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
           { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
         end.compact
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.recent_events")
         []
       end
 
