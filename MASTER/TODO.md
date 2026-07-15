@@ -201,3 +201,223 @@ Findings inside `lib/judge/scan/rules/` itself (the scanner scanning its
 own implementation). Self-referential noise; only worth touching if a
 specific finding there is genuinely embarrassing (e.g. a real DEAD_CODE
 match in the scanner's own code).
+
+---
+
+# Beyond the scanner: architecture, coverage, and polish gaps
+
+Everything below this line was found by manually reading the codebase
+(2026-07-15 audit), not by `rake selftest`/`rake constitution`. It does not
+overlap the buckets above — do not re-run the scanner looking for these.
+
+## `core/` vs `kernel/` vs `lib/`
+
+- **`kernel/` is dead weight, not a blocker on the absorption plan.** Its
+  entire contents are one file, `kernel/spec/kernel_smoke.rb` (7 lines), a
+  literal placeholder ("intentionally does nothing and exits 0"). The only
+  reference to the directory anywhere is `bin/probe:97`, which shells out to
+  that placeholder as the `"kernel"` step of `bin/probe all`. Every other
+  hit for "kernel" in the tree (`lib/ground/rules.rb`,
+  `lib/ground/law_resolver.rb`, `lib/voice/personality_prompt_builder.rb`,
+  `lib/judge/scan/self_test.rb`, `lib/judge/scan/rule_registry_audit.rb`,
+  `bin/audit`) means the unrelated "kernel-tier rule" concept, not this
+  directory. **Delete `kernel/` and its one-line reference in `bin/probe`.**
+  There is nothing left to fold into `core/` — the memory note about a
+  kernel-fold rebuild plan is already moot.
+- `core/ABSORPTION.md`'s own line-count header is stale by ~100 lines
+  (claims 662, actual sum across `constitution.rb`/`world.rb`/`memory.rb`/
+  `model.rb`/`master.rb`/`core.rb` is 764) — one-line fix in the doc header.
+- `core/spec/core_smoke.rb` (89 lines, a real integration smoke test —
+  Effect admission, secret redaction, evidence-gated `done`) is **not**
+  wired into `Rakefile`, `bin/probe`, or `bin/ci`. It only runs if someone
+  manually invokes it per its own header comment. Add a rake task or a
+  `bin/probe` step for it — distinct from `test/core/test_*.rb` (13 files),
+  which already runs via `rake test:core`.
+
+## CI is currently not running at all — fix before trusting any of this
+
+- `.github/workflows/master-tests.yml` has its `push`/`pull_request`
+  triggers commented out (billing lock note in the file itself); only
+  `workflow_dispatch` remains. **Nothing runs automatically on push right
+  now.** Restore the triggers once billing is fixed — this is the single
+  highest-priority item in this whole document, everything else assumes CI
+  exists.
+- Separately, once restored: `bin/ci` (what the workflow calls) runs
+  `rake test`, `rake test:core`, `rake selftest`, `rake lint:data_singularity`,
+  conditionally `rake constitution`, `rake test:web`, `rake test:integration_web`
+  — but **never `rake spec`**. `rake spec` exists and *is* wired into
+  `bin/check`'s default/contributor profiles, so local `bin/check` runs are
+  more thorough than what CI would run. Either add `rake spec` to `bin/ci`,
+  or reconcile `bin/ci` with the comment inside the workflow file itself
+  that says local parity is `bin/check --profile=full` (the actual `run:`
+  step doesn't match its own comment).
+
+## Test/spec coverage gaps (not caught by the scanner — it checks style, not coverage)
+
+`test/` = 165 Minitest files, `spec/` = 24 RSpec files. Cross-referencing
+`lib/**/*.rb` (424 files) against both by filename found concrete,
+high-value gaps (verified by class name, not just filename):
+
+- **`lib/reach/{read_file,write_file,str_replace,shell,tree,list_dir,search_files}.rb`**
+  — the ~15 primitives `core/ABSORPTION.md` calls load-bearing for the
+  World absorption — have no behavioral test. The only related file,
+  `test/test_reach_tool_coverage.rb` (20 lines), only asserts every
+  `Master::Reach` class has a `TIER` constant; it never calls `.call` on
+  any of them. Given these are slated to become permanent `core/world.rb`
+  handlers, this is worth closing before that migration, not after.
+- **`lib/judge/scan/rules/{external_linter_rules,graph_rules,js_rules,lexical_rules,meta_rules,naming_rules,ruby_rules,semantic_rules,structural_rules,universal_rules,web_rules,structural_rules/convention_rules}.rb`**
+  (12 files — the actual constitution-rule definitions) have zero direct
+  unit tests exercising rule behavior against fixture input; they're only
+  exercised transitively by `rake constitution` scanning MASTER's own
+  source.
+- **`lib/master_runtime.rb` (135 lines), `lib/master_boot.rb` (60),
+  `lib/master_paths.rb` (17), `lib/master_data.rb` (70),
+  `lib/pressure_engine.rb` (140)** — top-level `lib/*.rb` siblings of
+  `lib/master.rb` with zero references anywhere in `test/` or `spec/`.
+- `lib/judge/swarm/` (coordinator, vote_engine, worker, 4 worker roles) and
+  `lib/judge/council/{ideation,selector,quality_framework,deliberation_prompt_builder,deliberation_synthesis}.rb`
+  have no dedicated test files (verify whether `test_council_deliberation.rb`/
+  `test_swarm.rb` cover them indirectly before assuming a full gap).
+- `lib/now/command_registry/*.rb` (10 files) — no per-file tests; only
+  generic dispatcher-level coverage via `test/test_script_dispatch.rb`.
+
+**Two parallel test frameworks (Minitest in `test/`, RSpec in `spec/`) is
+itself worth a decision** — see "Aggressive restructuring" below.
+
+## `web/` (MASTER/web, the Rails-based face app) — corrections + real findings
+
+Correcting a wrong premise before it spreads: **MASTER/web does not use
+Stimulus, CableReady, StimulusReflex, or `design_tokens.yml`/the "IRIX flat
+dark theme."** Those belong to `RAILS/shared/`, a different app family.
+MASTER/web ships hand-written vanilla JS (compiled from `face.part1-5.txt`
+into `face.runtime.js` — edit the parts, not the output, per
+`web/CLAUDE.md`) and its own `face.css`/`photo_upload.css`. No
+TODO/FIXME/HACK/stub markers exist anywhere in `web/app/**` — clean.
+
+Real findings:
+
+- **`app/views/layouts/application.html.erb` (76 lines) is dead code.**
+  Every controller renders JSON or explicitly `render layout: false`
+  (confirmed for `chat#index`, `dashboard#index`, `pwa#manifest`) — no route
+  lets the default layout apply. It duplicates a near-copy of
+  `chat/index.html.erb`'s boot shell (`#primer`, `#chat-shell`,
+  `#chat-log`, `#zsh`/`#zin`) with **drifted details that would collide if
+  it were ever re-enabled**: `#primer` is `role="dialog" aria-modal="true"`
+  in the layout vs `role="button"` in chat/index; `#zin` is an `<input>` in
+  the layout vs a `<textarea rows="1">` in chat/index. Delete the layout
+  file, or document explicitly why an unused Rails-convention default is
+  being kept.
+- **`app/views/dashboard/index.html.erb`** doesn't reuse `face.css` — it
+  has its own inline `<style>` block (lines 8-16) with hardcoded colors
+  (`#000`) duplicating patterns `face.css` already has, and **zero
+  `aria-*` attributes** (vs. 26 in chat/index, 10 in the layout). Since it
+  polls `/dashboard/live` and rewrites `<pre>` panels every tick, those
+  panels (`#status`, `#rtk`, `#plan`) want `aria-live="polite"` the same way
+  `#chat-log`/`#tts-live` already have it elsewhere.
+- **`public/photo_upload.css` exists with no `photo_upload.js`
+  counterpart** — the actual upload logic lives inline in `chat.js`
+  (`chat.js:524,563`). Either rename the CSS file to match where its logic
+  actually lives, or split the JS out to match the CSS's implied pairing.
+
+## `bin/` discoverability
+
+30 executables in `bin/`, but **26 of 30 aren't mentioned in any top-level
+doc** (README/AGENTS/START_HERE/DEBT/DECISIONS/REPAIR_PLAYBOOKS/GITHUB_WATCH)
+— most are self-documented via their own header comment, so this is a
+"can't discover from the top" gap, not an undocumented-behavior gap. Only
+`nsaudit` and `probe` are referenced in REPAIR_PLAYBOOKS.md/DECISIONS.md.
+Low-effort fix: one table in README.md or a new `bin/README.md` listing all
+30 with a one-line purpose each (most can be lifted straight from the
+scripts' own header comments).
+
+`bin/tts_e2e` uses an underscore while its siblings `tts-bootstrap`,
+`tts-speak`, `tts-worker` use hyphens — rename to `tts-e2e` for consistency
+(update any callers first).
+
+## `data/` folder
+
+Current count: 55 files across 10 subdirs + top level. This is a real
+**decrease** from the 78-file count in memory — the defrag has progressed,
+not stalled; worth noting so nobody re-starts work already done.
+
+**Naming-collision + likely-orphan finding:** `data/personas.yml`
+(top-level — TTS/LLM voice-character presets: malay, british, norwegian,
+ronin, lawyer, hacker, architect, sysadmin, trader, medic, anchor) and
+`data/personas/` (subdir — `brutalist.yml`, `rachel.yml`) share a name but
+are structurally unrelated: the subdir files are deploy/runtime profile
+configs (`voice.enabled`, `face.enabled`, `web.port`), not voice presets.
+**Grepping all of `lib/` and `web/` for any reference to the `data/personas/`
+directory or to `brutalist`/`rachel` as deploy profiles returns nothing** —
+these two files look orphaned, possibly leftover from an unbuilt
+multi-persona-deploy feature. Either wire them into a real loader or delete
+them; rename the subdir regardless (see restructuring section).
+
+## Missing architectural files
+
+- No `CHANGELOG` anywhere in the tree (zero hits, vendor excluded). Given
+  `DECISIONS.md`/`DEBT.md` already carry dated entries, this might be
+  intentionally redundant — make it a conscious call either way.
+- Only 1 of 16 `lib/` subsystems (`lib/loop/README.md`) has a
+  subsystem-level README/AGENTS.md. `ground/` (93 files, 7420 lines) and
+  `judge/` (82 files, 10851 lines) and `now/` (76 files, 8056 lines) are the
+  largest and most complex — they'd benefit most, using `loop/README.md` as
+  the template.
+- `lib/providers/catalog_index.rb` implements a real, working extension
+  point (a frozen `SOURCES` hash: `openrouter`, `replicate`,
+  `replicate_github`, each with `url`/`kind`/`normalizer`) with **no doc
+  anywhere** explaining "add a provider source here, add a normalizer
+  method there." Since `core/ABSORPTION.md` marks `providers/`+`grok/` as
+  done/stable, this is likely the final shape of that subsystem and worth
+  documenting once.
+
+## Aggressive restructuring (renaming, flattening, decoupling, merging)
+
+- **Delete `kernel/` outright.** One placeholder file, one dangling
+  `bin/probe` reference. Zero risk, immediate flattening win — removes an
+  entire top-level directory that no longer does anything.
+- **Pick one test framework.** Maintaining Minitest (`test/`, 165 files)
+  and RSpec (`spec/`, 24 files) side by side means two DSLs, two runners,
+  two sets of test-helper conventions to keep in sync — a DRY violation at
+  the tooling level, not just the code level. `spec/` is the smaller tree;
+  migrating its 24 files into `test/`'s Minitest convention and dropping
+  the RSpec dependency is the lower-effort direction, but either direction
+  collapses two parallel systems into one. Do this before adding `rake
+  spec` to CI (above) — no sense wiring a second framework more tightly
+  into CI right before deciding to retire it.
+- **Resolve the `data/personas.yml` vs `data/personas/` collision.** Rename
+  the subdir to `data/deploy_profiles/` (its actual contents) regardless of
+  whether it turns out to be live or orphaned — the name collision with
+  the unrelated voice-persona file is a landmine for the next person who
+  greps "personas" and gets both. If nothing loads it, delete it instead of
+  renaming.
+- **Merge `lib/master_runtime.rb`, `lib/master_boot.rb`,
+  `lib/master_paths.rb`, `lib/master_data.rb`** — four small top-level
+  files (17-140 lines) with overlapping "how MASTER starts up and where
+  its stuff lives" responsibility and zero test coverage between them.
+  Read them together before deciding, but this shape (several small
+  `master_*.rb` files sitting as siblings of `lib/master.rb` rather than
+  organized under a `lib/master/` subdirectory the way every other
+  subsystem is) is itself an inconsistency worth flattening one way or the
+  other: either fold them into one `lib/master_runtime.rb`, or move all
+  four under `lib/boot/` alongside a README, matching the rest of `lib/`'s
+  one-subsystem-per-directory convention.
+- **Delete the unused `application.html.erb` layout** in MASTER/web rather
+  than fixing its drifted duplicate markup — it has no live route, so
+  fixing the duplication is wasted effort compared to just removing the
+  dead file. If a default layout is required by Rails convention, replace
+  it with an intentionally minimal one, not a second copy of the chat boot
+  shell.
+- **Extract `dashboard/index.html.erb`'s inline `<style>` block into
+  `face.css`.** One shared stylesheet for the whole face app, not one
+  `face.css` plus a per-view inline block — the dashboard is the only view
+  that deviates from this.
+- **Rename `bin/tts_e2e` → `bin/tts-e2e`** for filename consistency with
+  its three siblings — small, mechanical, no behavior change.
+- ~~`tools/dilla/`'s checked-in dotfile artifacts~~ **Done 2026-07-15**:
+  all Dilla scratch/caches now live in `tools/dilla/.cache/`
+  (`SCRATCH_DIR`, overridable via `DILLA_SCRATCH_DIR`), legacy dotfile
+  progression logs auto-migrate in, and `.gitignore` covers both the new
+  dir and pre-`.cache` strays. See `tools/dilla/README.md`.
+- **Write a `lib/providers/README.md`** documenting the `SOURCES` hash
+  extension pattern — cheap, high-leverage, and matches what `loop/`
+  already does for its own subsystem.
