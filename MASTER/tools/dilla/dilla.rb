@@ -191,16 +191,41 @@ ARP_PATTERN_BUILDERS = {
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
 # and per-patch post-FX chains (tremolo/LFO/filter/delay) applied at render time.
 def synth_patch(id, role:, program:, bank: 0, sf2: :default, weight: 1.0, native: nil, mix: 1.0, fx: nil,
-                arp_styles: nil, octave: 2, gate: 0.82, color: nil, fs_gain: 1.5)
+                arp_styles: nil, octave: 2, gate: 0.82, color: nil, fs_gain: 1.5, midi_fx: nil, midi_arp: nil)
   { id: id, role: role, program: program, bank: bank, sf2: sf2, weight: weight, native: native,
     mix: mix, fx: fx, arp_styles: arp_styles || [:up, :updown], octave: octave, gate: gate, color: color,
-    fs_gain: fs_gain }
+    fs_gain: fs_gain, midi_fx: midi_fx, midi_arp: midi_arp }
 end
+
+# MIDI CC automation baked into SMF before FluidSynth — mod wheel, expression,
+# filter, chorus, pan, and pitch-bend LFO (hardware-synth style movement).
+MIDI_FX_PAD_EP = [
+  { cc: 1, rate_hz: 0.32, depth: 26, base: 20, curve: :sine },
+  { cc: 11, curve: :swell, depth: 50, base: 42 },
+  { cc: 74, curve: :slow_open, start: 68, end: 108 }
+].freeze
+MIDI_FX_PAD_WARM = [
+  { cc: 1, rate_hz: 0.2, depth: 32, base: 22, curve: :sine },
+  { cc: 91, rate_hz: 0.16, depth: 28, base: 38, curve: :sine },
+  { cc: 93, rate_hz: 0.38, depth: 18, base: 12, curve: :sine }
+].freeze
+MIDI_FX_LEAD = [
+  { cc: 1, rate_hz: 0.48, depth: 42, base: 28, curve: :sine },
+  { cc: 5, rate_hz: 0.28, depth: 22, base: 58, curve: :sine },
+  { cc: 10, rate_hz: 0.18, depth: 18, base: 64, curve: :sine },
+  { bend: true, rate_hz: 0.35, depth_cents: 12 }
+].freeze
+MIDI_FX_SCALE_LEAD = [
+  { cc: 1, rate_hz: 0.55, depth: 38, base: 32, curve: :sine },
+  { cc: 74, curve: :slow_open, start: 75, end: 115 },
+  { bend: true, rate_hz: 0.42, depth_cents: 8 }
+].freeze
 
 SYNTH_PATCH_CATALOG = [
   # --- Electric keys (EP / Rhodes family) ---
   synth_patch(:rhodes_mark1, role: :ep, program: 4, weight: 3.2, mix: 1.15, fs_gain: 1.65,
               color: "Mark I warm tine",
+              midi_fx: MIDI_FX_PAD_EP, midi_arp: { style: :skip_up, subdiv: 8, gate: 0.52, vel: 0.26 },
               fx: "tremolo=f=0.42:d=0.06,aecho=0.38:0.48:55|95:0.22|0.12,lowpass=f=4200,equalizer=f=280:t=o:w=1:g=2.5"),
   synth_patch(:rhodes_stage73, role: :ep, program: 4, weight: 2.8, mix: 1.1, fs_gain: 1.7,
               color: "stage Rhodes bark",
@@ -238,6 +263,7 @@ SYNTH_PATCH_CATALOG = [
   # --- Warm analog pads (Moog / Prophet / Juno) ---
   synth_patch(:moog_model_d, role: :warm, program: 91, weight: 3.0, mix: 0.82, fs_gain: 1.45,
               color: "Minimoog ladder pad",
+              midi_fx: MIDI_FX_PAD_WARM, midi_arp: { style: :updown, subdiv: 4, gate: 0.7, vel: 0.34 },
               fx: "lowpass=f=2400:width_type=q:width=0.85,tremolo=f=0.28:d=0.1,chorus=0.38:0.58:32|42:0.16|0.12:0.2|0.18:0.9|1.2,equalizer=f=180:t=o:w=1:g=2.2"),
   synth_patch(:moog_sub37_pad, role: :warm, program: 38, weight: 2.4, mix: 0.78, fs_gain: 1.4,
               color: "Moog sub harmonic pad",
@@ -247,6 +273,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "vibrato=f=0.18:d=0.014,tremolo=f=0.55:d=0.12,aecho=0.42:0.52:100|190:0.28|0.14,lowpass=f=3000"),
   synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.8, fs_gain: 1.5,
               color: "Prophet-5 poly",
+              midi_fx: MIDI_FX_PAD_WARM, midi_arp: { style: :pingpong, subdiv: 4, gate: 0.66, vel: 0.32 },
               fx: "chorus=0.48:0.68:34|44:0.22|0.18:0.26|0.22:1.05|1.35,vibrato=f=0.3:d=0.016,lowpass=f=3600"),
   synth_patch(:prophet_6_warm, role: :warm, program: 90, weight: 2.5, mix: 0.76, fs_gain: 1.45,
               color: "Prophet-6 stereo wash",
@@ -283,6 +310,7 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:reverse_pad_ghost, role: :texture, program: 95, mix: 0.1, fx: "areverse,lowpass=f=1600"),
   # --- Lead / arp voices ---
   synth_patch(:prophet_lead, role: :lead, program: 81, weight: 2.5, fs_gain: 1.35, arp_styles: %i[updown skip_up], octave: 2,
+              midi_fx: MIDI_FX_LEAD,
               fx: "chorus=0.42:0.62:32|42:0.18|0.14:0.22|0.18:0.95|1.2,aecho=0.5:0.4:150|280:0.3|0.18,lowpass=f=4800"),
   synth_patch(:big_lead_prophet5, role: :lead, program: 87, weight: 2.8, fs_gain: 1.4, arp_styles: %i[pingpong quint_spread], octave: 2,
               fx: "chorus=0.52:0.72:36|46:0.24|0.2:0.28|0.22:1.15|1.45,aecho=0.45:0.38:140|260:0.28|0.16,lowpass=f=5400"),
@@ -337,7 +365,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "chorus=0.4:0.6:35|45:0.2|0.15:0.2|0.2:0.9|1.2"),
   # --- Scale-locked arp lead (continuous, same scale as each pad chord) ---
   synth_patch(:scale_arp_prophet, role: :scale_lead, program: 81, weight: 3.2, fs_gain: 1.28, gate: 0.62,
-              arp_styles: %i[updown skip_up pingpong], octave: 2,
+              arp_styles: %i[updown skip_up pingpong], octave: 2, midi_fx: MIDI_FX_SCALE_LEAD,
               fx: "chorus=0.38:0.58:30|40:0.16|0.12:0.2|0.18:0.9|1.15,aecho=0.45:0.38:120|220:0.22|0.12,lowpass=f=4200"),
   synth_patch(:scale_arp_moog, role: :scale_lead, program: 38, weight: 2.8, fs_gain: 1.25, gate: 0.58,
               arp_styles: %i[up downup fibonacci], octave: 2,
@@ -1154,6 +1182,63 @@ def scale_arp_section_density(section, progress)
   base * (progress < 0.1 ? 0.7 : 1.0)
 end
 
+# Pad-layer arpeggiator — chord-tone figures under held pads (EP shimmer,
+# warm analog movement) rendered as real MIDI note streams.
+def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0)
+  return [] if pad_events.empty? || arp_cfg.nil?
+  beat_p = 60.0 / cfg[:bpm]
+  subdiv = arp_cfg.fetch(:subdiv, 4).to_i
+  step_p = beat_p / subdiv.to_f
+  gate = arp_cfg.fetch(:gate, 0.65).to_f
+  vel_scale = arp_cfg.fetch(:vel, 0.32).to_f
+  style = arp_cfg.fetch(:style, :updown)
+  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + seed_offset
+  rng = Random.new(seed)
+  swing = cfg[:swing].to_f / 100.0 * step_p * 0.28
+  events = []
+  pad_events.each_with_index do |(time, velocity, chord, sustain), i|
+    next unless chord && chord[:hz]&.any?
+    tones = chord[:hz].sort
+    pattern = arp_degrees_for(style, tones.length, rng)
+    n_steps = [(sustain / step_p).floor, 2].max
+    step_dur = step_p * gate
+    n_steps.times do |step|
+      hz = tones[pattern[step % pattern.length] % tones.length]
+      t = time + step * step_p + (step.odd? ? swing : 0.0)
+      break if t >= time + sustain - step_dur * 0.35
+      vel = (velocity * vel_scale * (step.zero? ? 1.0 : 0.82 - step * 0.02)).clamp(0.1, 0.55)
+      events << [t, vel, { name: "pad_arp", hz: [hz] }, step_dur]
+    end
+  end
+  events.sort_by { |e| e[0] }
+end
+
+def pad_midi_events_for_layer(pad_events, cfg, patch, role:, duration:)
+  held = pad_events
+  arp_cfg = patch&.dig(:midi_arp)
+  arp = pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: role.hash.abs % 5000) if arp_cfg
+  case role
+  when :warm
+    arp && !arp.empty? ? arp : held
+  when :ep
+    merged = held.dup
+    arp&.each { |e| merged << e }
+    merged.sort_by { |e| e[0] }
+  else
+    held
+  end
+end
+
+def resolve_midi_fx_for(patch, role:)
+  patch&.dig(:midi_fx) ||
+    case role
+    when :ep then MIDI_FX_PAD_EP
+    when :warm, :texture then MIDI_FX_PAD_WARM
+    when :scale_lead then MIDI_FX_SCALE_LEAD
+    when :lead then MIDI_FX_LEAD
+    end
+end
+
 # Continuous scale-locked arp on every pad chord — same root/mode as the pad,
 # stepping 16ths through scale degrees for the full chord sustain.
 def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
@@ -1581,64 +1666,64 @@ MICROTIMING_MS = {
 DRUM_PATTERN_SETS = {
   timeless: {
     kicks: [
-      [0, 7, 10, 14], [0, 3, 7, 10, 12, 14], [0, 5, 7, 10, 14], [0, 2, 7, 9, 13, 15],
-      [0, 1, 7, 10, 14], [0, 6, 9, 14], [0, 4, 8, 11, 14], [0, 3, 6, 10, 12, 14, 15],
-      [0, 5, 8, 10, 14], [0, 7, 11, 14], [0, 2, 6, 10, 14], [0, 4, 7, 10, 13]
+      [0, 8, 10, 15], [0, 3, 9, 11, 14], [0, 6, 10, 13], [0, 2, 7, 10, 14],
+      [0, 5, 9, 12, 15], [0, 1, 8, 11, 14], [0, 4, 7, 10, 13], [0, 3, 6, 10, 14],
+      [0, 7, 11, 14], [0, 2, 5, 9, 13], [0, 8, 12, 15], [0, 4, 10, 14]
     ],
-    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 11, 12], [4, 12, 14], [4, 9, 12]],
+    snares: [[4, 12], [4, 12], [4, 11, 12], [4, 10, 12], [4, 12, 14], [3, 12]],
     ghosts: [
-      [2, 6, 10, 14], [3, 5, 9, 13], [1, 7, 11, 15], [2, 5, 10, 13],
-      [3, 6, 11, 14], [1, 5, 9, 12], [2, 7, 10, 14], [4, 8, 11, 15]
+      [2, 5, 9, 13], [1, 6, 10, 14], [3, 7, 11, 15], [2, 6, 10, 13],
+      [1, 4, 8, 12], [3, 5, 9, 14], [2, 7, 11], [1, 5, 10, 13]
     ],
     hats: [
-      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 1, 3, 4, 6, 8, 10, 11, 13, 14],
-      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 7, 11],
-      [0, 4, 8, 12, 2, 6, 10, 14], [0, 1, 3, 5, 7, 9, 11, 13, 15]
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 1, 3, 5, 7, 9, 11, 13, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14, 1, 9], [0, 2, 4, 6, 8, 10, 12, 14, 5, 13],
+      [0, 3, 6, 9, 12, 15, 2, 8, 14], [0, 2, 4, 6, 8, 10, 12, 14, 7, 11]
     ],
     opens: [6, 14]
   },
   loose_pocket: {
     kicks: [
-      [0, 6, 10, 14], [0, 3, 7, 11, 14], [0, 5, 8, 12, 15], [0, 1, 7, 10, 13],
-      [0, 4, 9, 11, 14], [0, 2, 6, 10, 14], [0, 7, 10, 13], [0, 3, 8, 11, 14],
-      [0, 5, 9, 12, 15], [0, 2, 7, 10, 14]
+      [0, 5, 9, 13], [0, 2, 7, 11, 14], [0, 6, 10, 15], [0, 3, 8, 12, 14],
+      [0, 1, 6, 10, 13], [0, 4, 7, 11, 15], [0, 2, 9, 12, 14], [0, 5, 8, 10, 14],
+      [0, 3, 7, 10, 13], [0, 6, 11, 14]
     ],
-    snares: [[4, 12], [4, 10, 12], [4, 12, 14], [3, 11, 12], [4, 11, 12], [4, 12]],
+    snares: [[4, 12], [3, 11, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12], [4, 12]],
     ghosts: [
-      [1, 3, 5, 7, 9, 11, 13, 15], [2, 4, 6, 8, 10, 12, 14], [1, 5, 9, 13], [3, 7, 11, 15],
-      [2, 5, 8, 11, 14], [1, 4, 7, 10, 13], [3, 6, 9, 12, 15], [2, 6, 10, 14]
+      [1, 3, 5, 7, 9, 11, 13, 15], [2, 4, 6, 8, 10, 12, 14], [1, 4, 7, 10, 13],
+      [3, 6, 9, 12, 15], [2, 5, 8, 11, 14], [1, 5, 9, 13], [3, 7, 11, 15], [2, 6, 10]
     ],
     hats: [
-      [0, 2, 4, 6, 8, 10, 12, 14, 1, 5, 9, 13], [0, 2, 4, 6, 8, 10, 12, 14, 7, 15],
-      [0, 1, 3, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 11],
-      [0, 2, 4, 6, 8, 10, 12, 14, 5, 13], [0, 2, 4, 6, 8, 10, 12, 14, 1, 9]
+      [0, 2, 4, 6, 8, 10, 12, 14, 1, 5, 9, 13], [0, 2, 4, 6, 8, 10, 12, 14, 3, 7, 11, 15],
+      [0, 1, 3, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 5, 13],
+      [0, 2, 4, 6, 8, 10, 12, 14, 1, 9], [0, 2, 4, 6, 8, 10, 12, 14, 7, 15]
     ],
     opens: [6, 10, 14]
   },
   syncopated_slash_ninth: {
     kicks: [
-      [0, 7, 10, 14], [0, 3, 7, 10, 14], [0, 5, 9, 14], [0, 2, 7, 11, 14],
-      [0, 6, 10, 13], [0, 4, 7, 10, 14], [0, 1, 7, 10, 12, 14], [0, 8, 11, 14]
+      [0, 7, 11, 14], [0, 3, 8, 10, 14], [0, 5, 9, 13], [0, 2, 6, 10, 15],
+      [0, 4, 7, 11, 14], [0, 1, 7, 10, 13], [0, 6, 9, 12, 14], [0, 3, 7, 11, 15]
     ],
-    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12], [4, 9, 12]],
     ghosts: [
-      [2, 5, 9, 13], [3, 6, 10, 14], [1, 5, 8, 12], [2, 6, 11, 15],
-      [3, 7, 10, 13], [1, 4, 8, 11]
+      [2, 5, 8, 12], [3, 6, 10, 14], [1, 4, 9, 13], [2, 7, 11, 15],
+      [3, 5, 10, 13], [1, 6, 11, 14]
     ],
     hats: [
-      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 2, 4, 6, 8, 10, 12, 14, 3, 7, 11],
-      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11, 15], [0, 4, 8, 12, 3, 11]
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 2, 4, 6, 8, 10, 12, 14, 3, 7, 11, 15],
+      [0, 4, 8, 12, 3, 11], [0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 9, 11]
     ],
     opens: [6, 14]
   },
   chromatic_planing: {
     kicks: [
-      [0, 4, 8, 12], [0, 3, 7, 11, 14], [0, 2, 6, 10, 14], [0, 5, 9, 13],
-      [0, 1, 5, 9, 13], [0, 4, 7, 10, 14], [0, 3, 6, 9, 12, 15], [0, 2, 5, 8, 11, 14]
+      [0, 4, 8, 12], [0, 3, 6, 9, 12, 15], [0, 2, 5, 8, 11, 14], [0, 1, 4, 7, 10, 13],
+      [0, 5, 9, 13], [0, 2, 6, 10, 14], [0, 4, 7, 11, 14], [0, 3, 8, 12, 15]
     ],
-    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14]],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
     ghosts: [
-      [2, 6, 10, 14], [1, 5, 9, 13], [3, 7, 11, 15], [2, 5, 8, 11, 14]
+      [2, 6, 10, 14], [1, 5, 9, 13], [3, 7, 11, 15], [2, 5, 9, 12, 14]
     ],
     hats: [
       [0, 2, 4, 6, 8, 10, 12, 14], [1, 3, 5, 7, 9, 11, 13, 15],
@@ -1648,45 +1733,45 @@ DRUM_PATTERN_SETS = {
   },
   organic: {
     kicks: [
-      [0, 7, 10, 14], [0, 5, 7, 10, 14], [0, 3, 7, 10, 12, 14], [0, 6, 9, 14],
-      [0, 4, 8, 11, 14], [0, 2, 7, 10, 13], [0, 5, 8, 12, 15], [0, 1, 7, 10, 14]
+      [0, 8, 11, 14], [0, 4, 7, 10, 14], [0, 3, 6, 10, 13], [0, 5, 9, 12, 15],
+      [0, 2, 7, 10, 14], [0, 1, 6, 9, 13], [0, 4, 8, 11, 14], [0, 3, 7, 10, 14]
     ],
-    snares: [[4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
+    snares: [[4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12], [4, 9, 12]],
     ghosts: [
-      [3, 6, 11], [2, 5, 10, 14], [1, 7, 9, 13], [4, 8, 11, 15],
-      [3, 5, 9, 12], [2, 6, 10, 13]
+      [3, 6, 10, 13], [2, 5, 9, 14], [1, 7, 11, 15], [4, 8, 12],
+      [3, 5, 8, 11], [2, 6, 10, 14]
     ],
     hats: [
-      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 11],
-      [0, 1, 3, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 1, 9, 13]
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 1, 3, 4, 6, 8, 10, 12, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14, 1, 9, 13], [0, 2, 4, 6, 8, 10, 12, 14, 5, 7]
     ],
     opens: [6, 14]
   },
   techno_house: {
     kicks: [[0, 4, 8, 12]],
-    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14]],
-    ghosts: [[10], [10, 14], [6, 10], []],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
+    ghosts: [[10], [6, 10], [10, 14], []],
     hats: [
       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-      [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15],
-      [0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 15],
-      [0, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
+      [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15],
+      [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
+      [0, 2, 4, 5, 7, 8, 10, 11, 13, 14]
     ],
     opens: [6, 14]
   },
   default: {
     kicks: [
-      [0, 7, 10, 14], [0, 5, 7, 10, 14], [0, 3, 7, 10, 14], [0, 6, 9, 14],
-      [0, 4, 8, 11, 14], [0, 2, 7, 10, 13], [0, 5, 8, 10, 14], [0, 1, 7, 10, 14]
+      [0, 7, 10, 14], [0, 3, 8, 11, 14], [0, 5, 9, 13], [0, 2, 6, 10, 14],
+      [0, 4, 7, 11, 15], [0, 1, 7, 10, 13], [0, 6, 10, 14], [0, 3, 7, 10, 12, 14]
     ],
-    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14]],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
     ghosts: [
-      [3, 6, 11], [2, 5, 10, 14], [1, 7, 9, 13], [4, 8, 11, 15],
-      [3, 5, 9, 12], [2, 6, 10, 13]
+      [2, 5, 9, 13], [3, 6, 11, 14], [1, 4, 8, 12], [2, 7, 10, 15],
+      [3, 5, 9, 12], [1, 6, 10, 13]
     ],
     hats: [
       [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 1, 3, 4, 6, 8, 10, 11, 13, 14],
-      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 11]
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 1, 9]
     ],
     opens: [6, 14]
   }
@@ -3554,9 +3639,14 @@ def drum_pattern_pick(bar, feel, role)
   sets = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel))
   pool = sets.fetch(role)
   seed = drum_pattern_seed(feel)
-  # Phrase offset shifts every 4 bars so A/B/C/D rotations don't lock to bar 0.
-  idx = (bar + seed + (bar / 4)) % pool.length
-  Array(pool[idx]).dup
+  phrase = bar % 4
+  idx = (phrase + seed + (bar / 8)) % pool.length
+  steps = Array(pool[idx]).dup
+  # Fill bar: extra kick cluster on the & of 4 (step 15) for Dilla-style turns.
+  if role == :kicks && bar.positive? && (bar % 8) == 7
+    steps << 15 unless steps.include?(15)
+  end
+  steps.uniq.sort
 end
 
 def dilla_kick_pattern(bar, _n_bars, feel)
@@ -4450,43 +4540,101 @@ def midi_vlq(number)
   bytes.pack("C*")
 end
 
-# Writes a minimal single-track Standard MIDI File by hand (no midilib
-# dependency — this codebase otherwise stays dependency-light) from
-# pad_events shaped like render_native_pad_wav's: [time, velocity, chord, sustain].
-def write_pad_smf(path, pad_events, program: PAD_GM_PROGRAM, bank: 0)
-  notes = []
-  pad_events.each do |(time, velocity, chord, sustain)|
-    next unless chord
+def midi_fx_automation(duration, specs, channel: 0)
+  return [] unless duration && specs && !specs.empty?
+  ticks_total = (duration * SMF_TICKS_PER_SECOND).round
+  out = []
+  specs.each do |spec|
+    if spec[:bend]
+      rate = spec.fetch(:rate_hz, 0.3)
+      depth = spec.fetch(:depth_cents, 10)
+      samples = (duration * 6).ceil.clamp(8, 48)
+      samples.times do |i|
+        tick = (i * ticks_total.to_f / samples).round
+        t = i.to_f / samples
+        cents = depth * Math.sin(2 * Math::PI * rate * duration * t)
+        bend_val = (8192 + (cents / 100.0 * 4096)).round.clamp(0, 16_383)
+        lsb = bend_val & 0x7f
+        msb = (bend_val >> 7) & 0x7f
+        out << [tick, [0xE0 | channel, lsb, msb]]
+      end
+      next
+    end
+    cc = spec[:cc]
+    depth = spec.fetch(:depth, 40)
+    base = spec.fetch(:base, 30)
+    rate = spec.fetch(:rate_hz, 0.25)
+    curve = spec.fetch(:curve, :sine)
+    samples = (duration * 6).ceil.clamp(8, 48)
+    samples.times do |i|
+      tick = (i * ticks_total.to_f / samples).round
+      t = i.to_f / [samples - 1, 1].max
+      val = case curve
+            when :sine then base + depth * Math.sin(2 * Math::PI * rate * duration * (i.to_f / samples))
+            when :swell then base + depth * Math.sin(Math::PI * t * 0.85)
+            when :slow_open then spec.fetch(:start, 60) + (spec.fetch(:end, 110) - spec.fetch(:start, 60)) * t
+            else base
+            end
+      out << [tick, [0xB0 | channel, cc, val.round.clamp(0, 127)]]
+    end
+  end
+  out.sort_by { |tick, _| tick }
+end
 
+# Writes SMF with note events plus MIDI CC / pitch-bend automation.
+def write_smf(path, note_events, program: PAD_GM_PROGRAM, bank: 0, duration: nil, midi_fx: nil, channel: 0,
+              lead_mode: false)
+  timed = []
+  note_events.each do |parts|
+    time, velocity, chord, sustain = parts[0], parts[1], parts[2], parts[3]
+    next unless chord && chord[:hz]&.any?
     chord[:hz].each do |hz|
       note = hz_to_midi(hz).round.clamp(0, 127)
       on_tick = (time * SMF_TICKS_PER_SECOND).round
       off_tick = (on_tick + (sustain * SMF_TICKS_PER_SECOND)).round
-      vel = (velocity.clamp(0.0, 1.0) * 108).round.clamp(48, 127)
-      notes << [on_tick, :on, note, vel]
-      notes << [off_tick, :off, note, 0]
+      vel_mul = lead_mode ? 100 : 108
+      vel_min = lead_mode ? 36 : 48
+      vel = (velocity.clamp(0.0, 1.0) * vel_mul).round.clamp(vel_min, 127)
+      timed << [on_tick, :on, note, vel]
+      timed << [off_tick, :off, note, 0]
     end
   end
-  notes.sort_by! { |tick, kind, _, _| [tick, kind == :off ? 0 : 1] }
+  midi_fx_automation(duration, midi_fx, channel: channel).each do |tick, bytes|
+    timed << [tick, :cc, bytes]
+  end
+  timed.sort_by! { |tick, kind, *| [tick, kind == :off ? 0 : 1, kind == :cc ? 1 : 2] }
 
-  # Bank Select MSB (CC#0) before the program change — some curated
-  # single-purpose soundfonts (e.g. fetched specialty fonts) scatter their
-  # presets across non-zero banks instead of the standard GM bank 0 layout.
-  events = [[0, [0xB0, 0x00, bank & 0x7f].pack("C*")], [0, [0xC0, program].pack("C*")]]
+  track_events = [[0, [0xB0 | channel, 0x00, bank & 0x7f].pack("C*")],
+                  [0, [0xC0 | channel, program].pack("C*")]]
   last_tick = 0
-  notes.each do |tick, kind, note, vel|
+  timed.each do |entry|
+    tick = entry[0]
+    kind = entry[1]
     delta = [tick - last_tick, 0].max
-    status = kind == :on ? 0x90 : 0x80
-    events << [delta, [status, note, vel].pack("C*")]
+    bytes = if kind == :cc
+              entry[2].pack("C*")
+            else
+              status = kind == :on ? (0x90 | channel) : (0x80 | channel)
+              [status, entry[2], entry[3]].pack("C*")
+            end
+    track_events << [delta, bytes]
     last_tick = tick
   end
-  events << [0, [0xFF, 0x2F, 0x00].pack("C*")]
+  track_events << [0, [0xFF, 0x2F, 0x00].pack("C*")]
 
-  track_data = events.map { |delta, bytes| midi_vlq(delta) + bytes }.join
+  track_data = track_events.map { |delta, bytes| midi_vlq(delta) + bytes }.join
   track_chunk = "MTrk" + [track_data.bytesize].pack("N") + track_data
   header = "MThd" + [6].pack("N") + [0, 1, SMF_PPQN].pack("n3")
   File.binwrite(path, header + track_chunk)
   path
+end
+
+def write_pad_smf(path, pad_events, program: PAD_GM_PROGRAM, bank: 0, duration: nil, midi_fx: nil, patch: nil,
+                    role: :ep)
+  cfg = dilla_resolve_config
+  events = pad_midi_events_for_layer(pad_events, cfg, patch, role: role, duration: duration || 0)
+  fx = midi_fx || resolve_midi_fx_for(patch, role: role)
+  write_smf(path, events, program: program, bank: bank, duration: duration, midi_fx: fx)
 end
 
 PAD_TARGET_RMS_DB = -17.5
@@ -4561,14 +4709,15 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   texture_voice = resolve_texture_voice
   ep_mix = ep_voice[:patch]&.fetch(:mix, 1.0) || 1.0
   warm_mix = warm_voice[:patch]&.fetch(:mix, 0.7) || 0.7
-  layers = [[ep_path, ep_voice, ep_mix], [warm_path, warm_voice, warm_mix]]
+  layers = [[ep_path, ep_voice, ep_mix, :ep], [warm_path, warm_voice, warm_mix, :warm]]
   if texture_voice
     tex_mix = @render_texture_patch&.fetch(:mix, 0.15) || 0.15
-    layers << [texture_path, texture_voice, tex_mix]
+    layers << [texture_path, texture_voice, tex_mix, :texture]
   end
-  layers.each do |voice_path, voice, _w|
+  layers.each do |voice_path, voice, _w, role|
     midi_path = "#{voice_path}.smf.mid"
-    write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank])
+    write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank],
+                  duration: duration, patch: voice[:patch], role: role)
     fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
     sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", voice_path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
     FileUtils.rm_f(midi_path)
@@ -4674,7 +4823,10 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
   return nil if lead_events.empty? || !fluidsynth_pad_available?
   midi_path = "#{path}.smf.mid"
   lead_voice = scale_arp ? resolve_scale_lead_voice : resolve_lead_voice
-  write_pad_smf(midi_path, lead_events, program: lead_voice[:program], bank: lead_voice[:bank])
+  patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
+  role = scale_arp ? :scale_lead : :lead
+  write_smf(midi_path, lead_events, program: lead_voice[:program], bank: lead_voice[:bank],
+            duration: duration, midi_fx: resolve_midi_fx_for(patch, role: role), lead_mode: true)
   fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
   sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, lead_voice[:sf2], midi_path
   FileUtils.rm_f(midi_path)
