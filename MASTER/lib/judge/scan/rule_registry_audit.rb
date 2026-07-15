@@ -35,28 +35,17 @@ module Master
         def call
           Judge::Scan::RuleDSL
           yaml_entries = load_yaml_rules
-          registry = Judge::Scan::Rule.registry
-            .reject { |klass| RuleFactory.bridge_class?(klass) }
-            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
-            .to_set
-          yaml_ids = yaml_entries.map { |r| r["id"].to_s.downcase }
-          kernel = yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| r["id"].to_s.downcase }
-
-          lexical_yaml = yaml_entries.select { |r| r["detect_lexical"] }
-          lexical_wired = lexical_yaml.select { |r| registry.include?(r["id"].to_s.downcase) }
-          lexical_unwired = lexical_yaml.reject { |r| registry.include?(r["id"].to_s.downcase) }
-
-          semantic_only = yaml_entries.select { |r| r["detect_semantic"] && !r["detect_lexical"] && !r["detect_structural"] }
-          structural_unwired = yaml_entries.select { |r| r["detect_structural"] && !registry.include?(r["id"].to_s.downcase) }
+          registry = build_registry_ids
+          c = classify_yaml_entries(yaml_entries, registry)
 
           Report.new(
-            yaml_rules: yaml_ids.size,
+            yaml_rules: c[:yaml_ids].size,
             registry_ids: registry,
-            kernel_ids: kernel,
-            lexical_wired: lexical_wired.map { |r| r["id"] },
-            lexical_unwired: lexical_unwired.map { |r| r["id"] },
-            semantic_only: semantic_only.map { |r| r["id"] },
-            structural_unwired: structural_unwired.map { |r| r["id"] },
+            kernel_ids: c[:kernel],
+            lexical_wired: c[:lexical_wired],
+            lexical_unwired: c[:lexical_unwired],
+            semantic_only: c[:semantic_only],
+            structural_unwired: c[:structural_unwired],
             dep_graph_gaps: ungraphed_rule_ids(registry)
           )
         end
@@ -76,6 +65,33 @@ module Master
 
         def load_yaml_rules
           Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+        end
+
+        def build_registry_ids
+          Judge::Scan::Rule.registry
+            .reject { |klass| RuleFactory.bridge_class?(klass) }
+            .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
+            .to_set
+        end
+
+        def classify_yaml_entries(yaml_entries, registry)
+          yaml_ids = yaml_entries.map { |r| r["id"].to_s.downcase }
+          kernel = yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| r["id"].to_s.downcase }
+
+          lexical_yaml = yaml_entries.select { |r| r["detect_lexical"] }
+          lexical_wired = lexical_yaml.select { |r| registry.include?(r["id"].to_s.downcase) }
+          lexical_unwired = lexical_yaml.reject { |r| registry.include?(r["id"].to_s.downcase) }
+
+          semantic_only = yaml_entries.select { |r| r["detect_semantic"] && !r["detect_lexical"] && !r["detect_structural"] }
+          structural_unwired = yaml_entries.select { |r| r["detect_structural"] && !registry.include?(r["id"].to_s.downcase) }
+
+          {
+            yaml_ids:, kernel:,
+            lexical_wired: lexical_wired.map { |r| r["id"] },
+            lexical_unwired: lexical_unwired.map { |r| r["id"] },
+            semantic_only: semantic_only.map { |r| r["id"] },
+            structural_unwired: structural_unwired.map { |r| r["id"] },
+          }
         end
       end
     end

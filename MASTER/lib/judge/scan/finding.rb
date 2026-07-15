@@ -13,22 +13,9 @@ module Master
           reversibility: nil, blast_radius: nil, confidence: nil, why: nil,
           genealogy: nil, dedupe_key: nil, impact_radius: nil
         )
-          new(
-            rule: rule,
-            rule_id: rule.to_s,
-            message: message,
-            line: line,
-            severity: severity,
-            fix: fix,
-            tags: tags,
-            reversibility: reversibility,
-            blast_radius: blast_radius,
-            confidence: confidence,
-            why: why,
-            genealogy: genealogy,
-            dedupe_key: dedupe_key,
-            impact_radius: impact_radius
-          )
+          new(rule:, rule_id: rule.to_s, message:, line:, severity:, fix:, tags:,
+            reversibility:, blast_radius:, confidence:, why:, genealogy:,
+            dedupe_key:, impact_radius:)
         end
 
         def [](key)
