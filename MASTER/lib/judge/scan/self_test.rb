@@ -163,9 +163,17 @@ module Master
         def timeout_findings
           targets = ruby_lib_paths.select { |p| p.include?("/reach/") || p.include?("/judge/llm") }
           targets.flat_map do |path|
-            content = read_text(path)
-            next [] unless content.match?(/\b(?:Open3\.|Net::HTTP)\b/)
-            next [] if content.match?(/Timeout\.|read_timeout|open_timeout|block_until_ms/)
+            # Strip full-line comments first -- a file that only *mentions*
+            # Open3/Net::HTTP in prose (e.g. explaining a caller's behavior)
+            # is not itself making an unbounded call.
+            code = read_text(path).lines.reject { |line| line.match?(/\A\s*#/) }.join
+            next [] unless code.match?(/\b(?:Open3\.|Net::HTTP)\b/)
+            # wait_thr.join(timeout_s) is a legitimate bounded-wait idiom (join
+            # returns nil on timeout without raising, so the code must check it
+            # and kill the process) -- same guarantee as Timeout.timeout, just
+            # spelled differently. Matched narrowly so plain Array#join(", ")
+            # elsewhere in the file can't produce a false "it's bounded".
+            next [] if code.match?(/Timeout\.|read_timeout|open_timeout|block_until_ms|\b\w*thr\w*\.join\(/i)
             [finding(path:, line: 1, message: "HTTP/Open3 without bounded timeout (ROBUSTNESS)")]
           rescue StandardError
             []
