@@ -26,10 +26,10 @@ module DillaComposition
   ENSEMBLE_TIMELINE = {
     intro:     %i[ep],
     verse:     %i[ep warm],
-    hook:      %i[ep warm lead scale_lead],
-    bridge:    %i[ep texture warm],
-    solo:      %i[ep lead scale_lead],
-    breakdown: %i[warm texture],
+    hook:      %i[ep warm],
+    bridge:    %i[ep warm],
+    solo:      %i[ep warm],
+    breakdown: %i[warm],
     outro:     %i[ep warm]
   }.freeze
 

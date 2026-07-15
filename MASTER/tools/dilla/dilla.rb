@@ -12,6 +12,7 @@ require "shellwords"
 require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 require_relative "lib/composition_engine"
+require_relative "lib/producer_dna"
 
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the invoking directory (override with
@@ -414,14 +415,39 @@ SYNTH_PATCH_CATALOG = [
 
 SYNTH_PATCH_BY_ROLE = SYNTH_PATCH_CATALOG.group_by { |p| p[:role] }.freeze
 
-def weighted_patch_pick(role, seed: nil)
+# Soulful EP/pad palette — no voices, supersaws, music boxes, or horror textures.
+BEAUTIFUL_PATCH_IDS = {
+  ep: %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli galaxy_ep1 galaxy_ep2 organ_drawbar],
+  warm: %i[moog_model_d prophet_5_pad juno_strings moog_pad solina_ensemble string_orchestra],
+  scale_lead: %i[scale_arp_rhodes],
+  lead: %i[soft_synth_lead],
+  texture: %i[soft_synth_str]
+}.freeze
+
+CREEPY_PATCH_IDS = %i[
+  space_voice reverse_pad_ghost voice_lead whistle_hook charang_bite supersaw_1 supersaw_2
+  supersaw_3 scale_arp_supersaw scale_arp_prophet prophet_bleeding_lead music_box fm_lead_bell
+  dist_guitar banjo_pluck koto_pluck brass_synth square_lead ethnic_flute kalimba_dust
+  choir_aahs voice_oohs bowed_glass harpsi_pluck
+].freeze
+
+def weighted_patch_pick(role, seed: nil, soulful: true)
   pool = SYNTH_PATCH_BY_ROLE.fetch(role, [])
   return nil if pool.empty?
+  if soulful && ENV["CREEPY_PATCHES"] != "1"
+    allowed = BEAUTIFUL_PATCH_IDS[role]
+    if allowed
+      pool = pool.select { |p| allowed.include?(p[:id]) }
+      pool = SYNTH_PATCH_BY_ROLE.fetch(role, []).select { |p| allowed.include?(p[:id]) } if pool.empty?
+    end
+    pool = pool.reject { |p| CREEPY_PATCH_IDS.include?(p[:id]) }
+  end
+  return nil if pool.empty?
   rng = Random.new(seed || @render_seed || rand(1_000_000))
-  total = pool.sum { |p| p[:weight] }
+  total = pool.sum { |p| p[:weight] || 1.0 }
   roll = rng.rand * total
   pool.each do |patch|
-    roll -= patch[:weight]
+    roll -= (patch[:weight] || 1.0)
     return patch if roll <= 0
   end
   pool.last
@@ -482,15 +508,24 @@ def load_sonic_profiles
 end
 
 def sonic_profile_for(track)
-  key = TRACK_SONIC_MAP.fetch(track.to_sym, nil)
-  return nil unless key
-  load_sonic_profiles[key]
+  sym = track.to_sym
+  key = TRACK_SONIC_MAP.fetch(sym, nil)
+  base = key ? load_sonic_profiles[key] : nil
+  return base unless DillaProducerDNA.producer_track?(sym)
+  synth = (base&.dig("synth") || {}).merge(DillaProducerDNA.lofi_sonic_overlay(sym))
+  { "synth" => synth, "harmonic" => base&.dig("harmonic") || {} }
 end
 
 def style_family(track, feel: nil)
+  if (entry = DillaProducerDNA.track_entry(track))
+    return :flylo if entry[:producer] == :flylo
+    return :madlib if entry[:producer] == :madlib
+    return :dilla
+  end
   return :flylo if FLYLO_TRACKS.include?(track.to_sym) || feel == :loose_pocket
   return :dilla if DILLA_TRACKS.include?(track.to_sym) ||
-                   %i[timeless organic chromatic_planing syncopated_slash_ninth].include?(feel)
+                   %i[timeless organic chromatic_planing syncopated_slash_ninth
+                      dilla_slight dilla_drunk madlib_dusty flylo_abstract mpc3000 sp303 sp1200].include?(feel)
   return :madlib if track.to_s.include?("madlib")
   :default
 end
@@ -507,15 +542,20 @@ def resolve_swing(preset, sonic, time_offset)
   return 62.5 if ENV["GOLDEN_SWING"] == "1"
   return ENV["SWING"].to_f if ENV["SWING"]
   sonic_swing = sonic&.dig("synth", "swing")&.to_f
+  if DillaProducerDNA.producer_track?((ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym)
+    return preset.fetch(:swing, 54).to_f + time_offset
+  end
   base = if sonic_swing && sonic_swing < 1.0
-           (sonic_swing * 100.0) + time_offset
+           DillaProducerDNA.mpc_swing_from_sonic_fraction(sonic_swing) + time_offset
          else
-           preset.fetch(:swing, 58).to_f + time_offset
+           preset.fetch(:swing, 54).to_f + time_offset
          end
-  base.clamp(0.0, 72.0)
+  base.clamp(50.0, 66.0)
 end
 
 def track_preset(track)
+  prod = DillaProducerDNA.track_preset(track)
+  return prod if prod
   return TRACK_PRESETS[track] if TRACK_PRESETS.key?(track)
   base = TRACK_PRESETS[:timeless].dup
   base[:progression] = track if CHORD_PROGRESSIONS.key?(track)
@@ -523,11 +563,12 @@ def track_preset(track)
 end
 
 def curated_progression?(cfg)
-  CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
+  CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym) ||
+    DillaProducerDNA::CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
 end
 
 def enhanced_resolve_config
-  track = (ENV["TRACK"] || "timeless").to_s.downcase.tr("-", "_").to_sym
+  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
   preset = track_preset(track)
   prog = (ENV["PROGRESSION"] || preset.fetch(:progression, track)).to_s.downcase.tr("-", "_").to_sym
   sonic = sonic_profile_for(track)
@@ -842,6 +883,14 @@ def cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
     jitter = Random.new(seed).rand(-2.0..2.0)
     return (quantized + jitter).round(3)
   end
+  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
+  ticks = DillaProducerDNA.humanize_ticks_for(track)
+  if ticks.positive?
+    bpm = 60.0 / beat_p
+    h_ms = DillaProducerDNA.humanize_ms(bpm, ticks)
+    jitter = Random.new(seed + 17).rand(-h_ms..h_ms)
+    return (quantized + jitter).round(3)
+  end
   quantized
 end
 
@@ -1143,7 +1192,14 @@ def flylo_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
 end
 
 def build_drum_bus_filter(cfg, sonic, duration: nil)
-  base = cfg[:style_family] == :dilla ? { bits: 11, samples: 1.5, mix: 0.22 } : { bits: 8, samples: 1.2, mix: 0.12 }
+  crush_mix = sonic&.dig("synth", "crush_mix")&.to_f
+  base = if crush_mix&.positive?
+           { bits: 12, samples: 1.69, mix: crush_mix.clamp(0.08, 0.55) }
+         elsif cfg[:style_family] == :dilla
+           { bits: 11, samples: 1.5, mix: 0.22 }
+         else
+           { bits: 8, samples: 1.2, mix: 0.12 }
+         end
   haas = cfg[:style_family] == :flylo ? ",adelay=0|12" : ""
   # Grit as a per-track compositional choice, not a fixed mix-bus setting
   # — cleaner through the exposition, dirtiest through the development
@@ -1339,7 +1395,7 @@ def resolve_midi_fx_for(patch, role:)
 end
 
 def lead_arp_enabled?
-  ENV.fetch("LEAD_ARP", "1") != "0"
+  ENV.fetch("LEAD_ARP", "0") != "0"
 end
 
 # Per-patch lead arp figure — explicit midi_arp on the patch, or a default
@@ -1523,12 +1579,13 @@ end
 def dilla_chord_change_variation(chord_i, bar, section, feel, step_p, chord)
   cfg = dilla_resolve_config
   rng = chord_variation_rng(cfg, chord_i, chord, salt: 7711)
+  producer = DillaProducerDNA.producer_track?(cfg[:track])
   base_pad_offset = case feel
                     when :syncopated_slash_ninth then step_p * 2 + 0.012
                     when :chromatic_planing then -step_p * 2
-                    else 0.0
+                    else producer ? step_p * 0.18 : 0.0
                     end
-  sustain_mul = rng.rand(0.76..1.04)
+  sustain_mul = producer ? rng.rand(0.94..1.08) : rng.rand(0.76..1.04)
   sustain_mul *= 0.7 if section == :breakdown
   sustain_mul *= 1.06 if section == :build && rng.rand < 0.45
   chop_templates = [
@@ -2060,7 +2117,21 @@ DRUM_PATTERN_SETS = {
     ],
     opens: [6, 14]
   }
-}.freeze
+}.merge(
+  DillaProducerDNA::RG69_DRUM_PRESETS.transform_values do |p|
+    {
+      kicks: [p[:kicks]],
+      snares: [p[:snares]],
+      hats: [p[:hats]],
+      ghosts: [p[:ghosts]],
+      opens: [6, 14],
+      claps: [p[:claps]],
+      perc: [p[:perc]]
+    }
+  end
+).freeze
+
+RG69_DRUM_FEELS = DillaProducerDNA::RG69_DRUM_PRESETS.keys.freeze
 
 # Authored fill phrases — snare runs, kick clusters, ghost chatter into phrase ends.
 DRUM_FILL_SETS = {
@@ -2245,7 +2316,7 @@ TRACK_PRESETS = {
                      timing: { snare: -28..-12, hat_up: 18..36, bass: 24..44, kick_anchor: 0..6, pad: 6..20 } },
   suspended_minor_close: { bpm: 91, progression: :suspended_minor_close, chord_bars: 2, swing: 56 },
   timeless: {
-    bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
+    bpm: 94, progression: :time_donut, chord_bars: 2, phrase_bars: 8, swing: 54,
     feel: :timeless, quintuplet: true, voicing: :spread,
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
   },
@@ -3767,12 +3838,7 @@ rescue SystemCallError => e
 end
 
 # Curated rotation — researched progressions only (no random generated_* walks).
-STREAM_TRACKS = %w[
-  timeless fourth_third_sixth_second_turn voice_led_minor_arc neo_soul
-  minor_soul_loop players soul borrowed_dominant_turn
-  syncopated_slash_ninth sus_add9_ballad chromatic_mediant_drift
-  alternating_minor7_pair major7_relative_minor_turn
-].freeze
+STREAM_TRACKS = DillaProducerDNA::STREAM_ROTATION
 
 # Tempo dropped a lot over this session (92->68 BPM) without this changing,
 # so the same bar count now takes much longer in real time — re-read fresh
@@ -3946,6 +4012,8 @@ def dilla_velocity(base, bar_index, step_index, spread: 0.10)
     curve = groove[:velocity_curve]
     base *= curve[step_index % curve.length] if curve
   end
+  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
+  spread += DillaProducerDNA.humanize_ticks_for(track) * 0.012 if DillaProducerDNA.producer_track?(track)
   seed = (bar_index * 1_009) + (step_index * 313) + (base * 10_000).to_i
   rng  = Random.new(seed)
   gaussian = Math.sqrt(-2.0 * Math.log([rng.rand, 1e-9].max)) * Math.cos(2.0 * Math::PI * rng.rand)
@@ -3958,7 +4026,10 @@ GENERATED_STYLES = %i[
 ].freeze
 
 def dilla_progression(mode = :chromatic_minor_descent)
-  track = (ENV["TRACK"] || "timeless").to_s.downcase.tr("-", "_").to_sym
+  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
+  if (producer_pads = DillaProducerDNA.progression_for(track))&.any?
+    return producer_pads
+  end
   sonic = sonic_profile_for(track)
   engine_pads = progression_from_engine(sonic, mode)
   return engine_pads if engine_pads&.any?
@@ -4126,7 +4197,10 @@ def schedule_hat_roll!(events, bar, base, step_p, swing, quintuplet, timing, bea
 end
 
 def dilla_ghost_steps(bar, feel)
-  drum_pattern_pick(bar, feel, :ghosts)
+  steps = drum_pattern_pick(bar, feel, :ghosts)
+  sets = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel))
+  steps += drum_pattern_pick(bar, feel, :perc) if sets[:perc]
+  steps.uniq.sort
 end
 
 def dilla_open_steps(bar, feel, section:)
@@ -4376,7 +4450,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     if cvar[:double_pad]
       events[:pad] << [[pad_t + cvar[:double_pad_delay], 0.0].max.round(6),
                        dilla_velocity(cvar[:double_pad_vel], bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.68]
-    elsif feel == :timeless && section == :main && bar % 4 == 1 && phase != :development
+    elsif (feel == :timeless || RG69_DRUM_FEELS.include?(feel)) && section == :main && bar % 4 == 1 && phase != :development
       events[:pad] << [[pad_t + step_p * 0.5, 0.0].max.round(6),
                        dilla_velocity(0.22, bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.72]
     end
@@ -4963,7 +5037,9 @@ def native_pad_voice_expression(hz, amp, voice_i, pan, phase_seed, native_patch:
   body = native_waveform_body(frequency, wave: native[:wave] || :rhodes, bloom: native[:bloom] || 0.2,
                               drift: drift, detune: native[:detune] || 0.004, phase_seed: phase_seed)
   breathe = "(0.80+0.20*sin(2*PI*#{(0.16 + voice_i * 0.025).round(3)}*t+#{phase_seed.round(3)}))"
-  env = "min(1,pow(t/0.072,1.35))*exp(-t*0.07)*#{breathe}"
+  atk = (@render_pad_attack_sec || 0.072).round(4)
+  rel = (@render_pad_release_decay || 0.07).round(4)
+  env = "min(1,pow(t/#{atk},1.15))*exp(-t*#{rel})*#{breathe}"
   ["#{amp.round(6)}*#{(0.5 - pan * 0.5).round(4)}*#{env}*#{body}",
    "#{amp.round(6)}*#{(0.5 + pan * 0.5).round(4)}*#{env}*#{body}"]
 end
@@ -5333,7 +5409,7 @@ end
 def lead_post_fx_chain(patch, duration, boost_db)
   base = "volume=#{boost_db.round(2)}dB"
   patch_fx = patch&.dig(:fx)
-  default_fx = "aecho=0.6:0.4:180|340:0.35|0.22,lowpass=f=3600:width_type=q:width=0.8,aphaser=speed=0.12:decay=0.6"
+  default_fx = "lowpass=f=2800:width_type=q:width=0.9,aecho=0.35:0.4:120|220:0.18|0.08"
   [base, patch_fx || default_fx, "apad=whole_dur=#{duration}", "alimiter=limit=0.95:level_out=0.96"].join(",")
 end
 
@@ -5371,13 +5447,13 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     render_native_pad_wav(pads_path, pad_events, duration)
   end
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
-  scale_events = lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars_est)
+  scale_events = lead_arp_enabled? ? lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
   lead_arp_cfg = lead_arp_cfg_for(@render_lead_patch)
-  lead_arp_ev = lead_arp_events(pad_events, cfg, lead_arp_cfg)
-  creative_events = lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est)
-  scale_lead_rendered = render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true)
+  lead_arp_ev = lead_arp_enabled? ? lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
+  creative_events = lead_arp_enabled? ? lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
+  scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
   combined_lead = (lead_arp_ev + creative_events).sort_by { |e| e[0] }
-  lead_rendered = render_lead_via_fluidsynth(lead_path, combined_lead, duration)
+  lead_rendered = combined_lead.any? ? render_lead_via_fluidsynth(lead_path, combined_lead, duration) : nil
   # Karplus-Strong plucked-string accent on each chord's root — a genuinely
   # new instrument timbre (real physical-modeling algorithm, not another
   # oscillator/soundfont voice), pre-rendered per chord since the algorithm
@@ -5692,6 +5768,9 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   FileUtils.rm_f(destination)
   cfg      = dilla_resolve_config
   n_bars   = bars_count || bars
+  @render_pad_attack_sec = (cfg[:sonic]&.dig("synth", "pad_attack_ms") || 72).to_f / 1000.0
+  rel_ms = (cfg[:sonic]&.dig("synth", "pad_release_ms") || 1400).to_f
+  @render_pad_release_decay = (1.0 / [rel_ms / 1000.0, 0.25].max).round(4)
   composition_session!(n_bars: n_bars, track: cfg[:track].to_s)
   if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
     cfg = cfg.merge(swing: @composition_session.groove_profile[:swing].to_f)
