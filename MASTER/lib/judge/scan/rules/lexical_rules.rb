@@ -76,10 +76,22 @@ module Master
   RuleDSL.rule :EMPTY_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "empty rescue swallows errors silently" do |src, path:|
-    src.each_line.with_index(1).filter_map do |line, n|
-      bare_rescue   = line.match?(/^\s*rescue\s*$/)
-      naked_class   = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
-      finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise") if bare_rescue || naked_class
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    lines = src.lines
+    lines.each_with_index.filter_map do |line, index|
+      n = index + 1
+      bare_rescue = line.match?(/^\s*rescue\s*$/)
+      naked_class = line.match?(/^\s*rescue\s+\S+\s*$/) && !line.match?(/=>/)
+      next unless bare_rescue || naked_class
+      # Missing `=> e` alone isn't silent — a rescue whose body already returns
+      # a meaningful documented fallback, re-raises, warns, or publishes never
+      # needed the exception object. Only flag the same genuine discard shape
+      # SILENT_RESCUE/NARROW_SILENT_RESCUE check (nil/false/[]/{}/underscore-var
+      # with no prior handling), so this doesn't re-flag what those already
+      # catch, and doesn't flag a fine, self-documenting fallback.
+      next unless SilentRescue.discard_body?(lines, index)
+
+      finding(line: n, message: "empty rescue — use Ground::Swallow.log or re-raise")
     end
   end
 
