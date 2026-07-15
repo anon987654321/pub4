@@ -1527,14 +1527,17 @@ _title_word_hits() {
   words=("$@")
   [ ${#words[@]} -eq 0 ] && return 1
 
-  if echo "$base" | grep -q "$year"; then
+  local y tol
+  for y in "$year" $(( year - 1 )) $(( year + 1 )); do
+    [[ "$y" =~ ^[0-9]{4}$ ]] || continue
+    echo "$base" | grep -q "$y" || continue
     hits=0
     for word in "${words[@]}"; do
       echo "$base" | grep -q "$word" && hits=$((hits + 1))
     done
     [ "$hits" -ge 2 ] && return 0
     [ ${#words[@]} -eq 1 ] && [ ${#words[0]} -ge 7 ] && [ "$hits" -ge 1 ] && return 0
-  fi
+  done
 
   hits=0
   for word in "${words[@]}"; do
@@ -1561,13 +1564,26 @@ title_match_words() {
   print -l -- "${words[@]}"
 }
 
+# Torrent folder (or file) directly under staging or library root.
+media_container_item() {
+  local media_path="$1" item parent
+  item=$(dirname "$media_path")
+  while true; do
+    parent=$(dirname "$item")
+    [ "$parent" = "$STAGING_DIR" ] && { echo "$item"; return 0 }
+    [ "$parent" = "$DOWNLOAD_DIR" ] && { echo "$item"; return 0 }
+    [ "$parent" = "$item" ] || [ "$parent" = "/" ] && { echo "$media_path"; return 0 }
+    item="$parent"
+  done
+}
+
 media_path_matches_title() {
   local fpath="$1" title="$2" year="$3"
   local base item words
 
   words=("${(@f)$(title_match_words "$title")}")
   [ ${#words[@]} -eq 0 ] && return 1
-  item=$(staging_top_level_item "$fpath")
+  item=$(media_container_item "$fpath")
   base="$(basename "$fpath" | tr '[:upper:]' '[:lower:]') $(basename "$item" | tr '[:upper:]' '[:lower:]')"
   _title_word_hits "$base" "$year" "${words[@]}"
 }
@@ -1575,19 +1591,16 @@ media_path_matches_title() {
 # ── Helper: detect movies already present in the download dir ─────────────
 movie_exists_locally() {
   local title="$1" year="$2"
-  local match base words
-
-  words=("${(@f)$(title_match_words "$title")}")
-  [ ${#words[@]} -eq 0 ] && return 1
+  local match base
 
   while IFS= read -r match; do
     [ -z "$match" ] && continue
     [ -f "${match}.aria2" ] && continue
-    is_valid_media_file "$match" || continue
+    media_path_matches_title "$match" "$title" "$year" || continue
     base=$(basename "$match" | tr '[:upper:]' '[:lower:]')
     [ "$ENGLISH_ONLY" = true ] && ! passes_language_filter "$base" && continue
-    _title_word_hits "$base" "$year" "${words[@]}" && return 0
-  done < <(find "$DOWNLOAD_DIR" -maxdepth 3 \
+    verify_media_playable "$match" && return 0
+  done < <(find "$DOWNLOAD_DIR" -maxdepth 4 \
       \( -iname "*.mkv" -o -iname "*.mp4" -o -iname "*.m4v" -o -iname "*.avi" \) -size +400M 2>/dev/null)
 
   return 1
@@ -1631,14 +1644,7 @@ verify_media_playable() {
 
 # Walk up from a media file to the top-level item aria2 created under $STAGING_DIR.
 staging_top_level_item() {
-  local media_path="$1" item parent
-  item=$(dirname "$media_path")
-  while true; do
-    parent=$(dirname "$item")
-    [ "$parent" = "$STAGING_DIR" ] && { echo "$item"; return 0; }
-    [ "$parent" = "$item" ] || [ "$parent" = "/" ] && { echo "$media_path"; return 0; }
-    item="$parent"
-  done
+  media_container_item "$1"
 }
 
 # Move a verified staging folder/file into the library directory.
