@@ -15,26 +15,34 @@ module Master
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low)
         transcript = []
-        observer = lambda do |turn:, effect:, observation:|
+        observer = build_turn_observer(transcript, bus:, on_turn:)
+
+        memory ||= Master::Core::Memory.new(risk:)
+        critique_runner = container ? CouncilCrit.runner_for(container) : nil
+
+        done = build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:).run(goal)
+
+        { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.risk }
+      end
+
+      def build_turn_observer(transcript, bus:, on_turn:)
+        lambda do |turn:, effect:, observation:|
           line = "#{turn}: #{effect} -> #{observation}"
           transcript << line
           bus&.publish("core:turn", turn:, effect: effect.to_s, ok: observation.ok?, detail: observation.message)
           on_turn&.call(line)
         end
+      end
 
-        memory ||= Master::Core::Memory.new(risk:)
-        critique_runner = container ? CouncilCrit.runner_for(container) : nil
-
-        done = Master::Core::Fold.new(
+      def build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:)
+        Master::Core::Fold.new(
           model:       model || Master::Core::Model.new(**{ model_id: }.compact),
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path),
           world:       Master::Core::World.new(root:, critique_runner:),
           memory:,
           max_turns:,
           observer:
-        ).run(goal)
-
-        { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.risk }
+        )
       end
 
       def run_string(goal, root:, bus: nil, model: nil, model_id: nil)

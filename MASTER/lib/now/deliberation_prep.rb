@@ -13,6 +13,13 @@ module Master
         bus = container[:bus]
         return unless agent
 
+        run_ideation(goal, agent:, bus:, risk:)
+      rescue StandardError => e
+        container[:bus]&.publish("ideation:error", message: e.message)
+        nil
+      end
+
+      def run_ideation(goal, agent:, bus:, risk:)
         cycles = constrained_host? ? 1 : 2
         budget = constrained_host? ? 45 : 120
         ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
@@ -26,9 +33,6 @@ module Master
         payload = result.value!
         bus&.publish("ideation:done", ideas: payload[:ideas].size)
         payload
-      rescue StandardError => e
-        container[:bus]&.publish("ideation:error", message: e.message)
-        nil
       end
 
       def seed_memory!(memory, payload)

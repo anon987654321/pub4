@@ -162,6 +162,18 @@ module Master
         score = evidence_score(summary, ctx)
         @bus&.publish("pipeline:evidence_score", score:, threshold: evidence_threshold, violations: summary.violation_count)
 
+        blocked = check_violation_gates(summary, score)
+        return blocked if blocked
+
+        propose_rollback_if_below_block_threshold(score)
+
+        return Result.ok(ctx) if score >= evidence_threshold
+
+        @bus&.publish("pipeline:blocked", gate: "evidence_score", violations: 0, score:)
+        Result.err("deploy blocked: evidence score #{score} below #{evidence_threshold}", category: :policy)
+      end
+
+      def check_violation_gates(summary, score)
         tier1_violations = tier1_critical_violations(summary)
         unless tier1_violations.empty?
           @bus&.publish("pipeline:blocked", gate: "tier1_critical", violations: tier1_violations.size, score:)
@@ -174,16 +186,15 @@ module Master
           return Result.err("deploy blocked: self-scan has #{summary.violation_count} violation(s)", category: :policy)
         end
 
+        nil
+      end
+
+      def propose_rollback_if_below_block_threshold(score)
         block_threshold = evidence_block_threshold
-        if score < block_threshold
-          @bus&.publish("pipeline:rollback_proposed", gate: "evidence_block", score:, threshold: block_threshold)
-          @rollback&.call(Result.err("evidence score #{score} below block threshold #{block_threshold}", category: :policy))
-        end
+        return unless score < block_threshold
 
-        return Result.ok(ctx) if score >= evidence_threshold
-
-        @bus&.publish("pipeline:blocked", gate: "evidence_score", violations: 0, score:)
-        Result.err("deploy blocked: evidence score #{score} below #{evidence_threshold}", category: :policy)
+        @bus&.publish("pipeline:rollback_proposed", gate: "evidence_block", score:, threshold: block_threshold)
+        @rollback&.call(Result.err("evidence score #{score} below block threshold #{block_threshold}", category: :policy))
       end
 
       def deploy_intent?(ctx)

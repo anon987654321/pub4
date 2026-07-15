@@ -76,6 +76,10 @@ module Master
 
       def call
         expire_stale!
+        finalize_candidates(collect_candidates)
+      end
+
+      def collect_candidates
         candidates = []
         candidates.concat(from_violations)
         candidates.concat(from_last_assistant)
@@ -89,6 +93,10 @@ module Master
         candidates.concat(from_phase)
         candidates.concat(from_idle)
         candidates.concat(from_bus_tail)
+        candidates
+      end
+
+      def finalize_candidates(candidates)
         candidates
           .group_by { |c| c[:action] }
           .map { |_, group| group.max_by { |c| c[:rank] } }
