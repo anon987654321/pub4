@@ -3,7 +3,7 @@
 /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
 :root {
   --c-text: oklch(86% 0.02 300);
-  --x-text: #e8e4dc;
+  --x-text: #d8d6e0;
   --c-accent: oklch(78% 0.10 300);
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
@@ -18,7 +18,7 @@
   --inset-r: calc(12px + var(--safe-right));
   --inset-b: calc(12px + var(--safe-bottom));
   --inset-l: calc(12px + var(--safe-left));
-  --face-bg: #0f0e0d;
+  --face-bg: black;
   --face-fg: var(--c-text);
   --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
   --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
@@ -56,33 +56,6 @@
   --z-skip: 2000;
 }
 /* END:generated-face-root */
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: calc(var(--z-canvas) + 1);
-  background: radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--face-bg) 42%, transparent) 100%);
-}
-
-.agent-hud {
-  position: fixed;
-  inset-inline: var(--inset-l) var(--inset-r);
-  bottom: calc(var(--hud-tier-caption, 80px) + var(--safe-bottom));
-  z-index: var(--z-chrome);
-  display: grid;
-  gap: 4px;
-  font: 11px/1.35 var(--font-label);
-  color: var(--face-dim);
-  pointer-events: none;
-}
-
-.agent-hud-lane {
-  padding: 4px 8px;
-  border-inline-start: 2px solid var(--mood-accent);
-  background: color-mix(in srgb, var(--face-bg) 72%, transparent);
-}
 
 html, body {
   height: 100%;

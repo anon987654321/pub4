@@ -300,7 +300,7 @@ function applyPersonaVisual(persona) {
   const tint = PERSONA_TINT[persona];
   if (!tint) return;
   fadeColorTo(tint);
-  State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
 }
 const COUNCIL_LANE_OFFSET = { left: -0.22, center: 0, right: 0.22 };
 function offsetCouncilMouthPool(lane, delta = 0.18) {
@@ -365,23 +365,8 @@ if (_photoEl) _photoEl.addEventListener('change', () => {
 
 
 let lastT = performance.now();
-let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
-let microJitter = 0, nextMicroJitter = performance.now() + Math.random() * 600 + 200;
-let nextBlink = performance.now() + Math.random() * 5000 + 3000;
-function doBlink() {
-  if (!faceMat) return;
-  const orig = faceMat.uniforms.uSize.value;
-  let phase = 0;
-  const blinkTimer = setInterval(() => {
-    phase += 0.18;
-    if (phase < 1) {
-      faceMat.uniforms.uSize.value = orig * (1 - 0.55 * Math.sin(phase * Math.PI));
-    } else {
-      faceMat.uniforms.uSize.value = orig;
-      clearInterval(blinkTimer);
-    }
-  }, 14);
-}
+let _attnEyeClose = 0;
+window.MASTER_ATTENTION?.reset?.({ blinkMs: State.idleSignature?.blink_ms });
 let nodImpulse = 0;
 let glowPoints;
 let head;

@@ -157,6 +157,7 @@ function stepPoolAsync(pool, dtSec) {
   worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
 }
 function spawnEmotionalGhost(mood) {
+  if (!isRichMotionProfile()) return;
   window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
 }
 function applyWorkerPoolResult(pool, payload) {
@@ -331,7 +332,7 @@ function frame(t) {
     if (State.mode === 'error' && !rootBody.dataset.moodCold) {
       rootBody.dataset.moodCold = '1';
       // White-only error indication: shake + pulse (no hue per pure phosphor).
-      State.shake = 1.5;
+      applyShake(1.5);
       State.pulse = 0.9;
       State.flash = 1.0;
       setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);
@@ -343,28 +344,25 @@ function frame(t) {
   }
 
   if (head) {
-    const focusBoost = State.mode === 'listening' ? 1.35 : (State.mode === 'thinking' ? 0.55 : 1.0);
     const openness = 0.55 + (State.confidence || 0.75) * 0.45;
-    if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
-      saccadeX = (Math.random() - 0.5) * 0.28 * focusBoost;
-      nextSaccade = t + (Math.random() * 6000 + 3000) / focusBoost;
-    }
     const calmStare = State.calmStareUntil && t < State.calmStareUntil;
     const nervous = State.nervousUntil && t < State.nervousUntil;
-    if (!State.reducedMotion && t > nextMicroJitter) {
-      const amp = calmStare ? 0.028 : nervous ? 0.065 : 0.045;
-      microJitter = (Math.random() - 0.5) * amp;
-      nextMicroJitter = t + (calmStare ? 820 : nervous ? 240 : Math.random() * 600 + 200);
-    }
-    if (nervous && (_dbgFrames % 4 === 0)) microJitter += (Math.random() - 0.5) * 0.02;
-    if (!State.reducedMotion && t > nextBlink) {
-      doBlink();
-      nextBlink = t + Math.random() * 5000 + 2500;
-    }
-    saccadeX *= 0.93;
-    microJitter *= 0.78;
+    const attn = window.MASTER_ATTENTION?.tick?.({
+      t,
+      mode: State.mode,
+      speaking: State.mode === 'speaking',
+      ttsPlaying: !!tts.playing,
+      reducedMotion: State.reducedMotion,
+      calmStareUntil: State.calmStareUntil,
+      nervousUntil: State.nervousUntil,
+      blinkMs: State.idleSignature?.blink_ms,
+      frameIndex: _dbgFrames,
+    }) || { saccadeX: 0, microJitter: 0, fixationPitch: 0, eyeCloseTarget: 0 };
+    const saccadeX = attn.saccadeX || 0;
+    const microJitter = attn.microJitter || 0;
+    _attnEyeClose = attn.eyeCloseTarget || 0;
     const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
+    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03 + (attn.fixationPitch || 0);
     if (camera) {
       const pInput = State.coarsePointer
         ? { x: State.tiltX, y: -State.tiltY }
@@ -393,7 +391,7 @@ function frame(t) {
     const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
-    if (State.shake > 0.01 && !State.reducedMotion) {
+    if (State.shake > 0.01 && !State.reducedMotion && isRichMotionProfile()) {
       head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.z = State.lean;
@@ -460,7 +458,7 @@ function frame(t) {
     faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
     const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
     faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
-    const rainTarget = State.mood === 'weary' ? 1.0 : 0.0;
+    const rainTarget = (State.mood === 'weary' && isRichMotionProfile()) ? 1.0 : 0.0;
     faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
     const modelSwitch = State.modelSwitch || 0;
     faceMat.uniforms.uModelSwitch.value += (modelSwitch - faceMat.uniforms.uModelSwitch.value) * 0.12;
@@ -488,7 +486,7 @@ function frame(t) {
     State.idleAlphaDrift = Math.sin(t * 0.000785) * 0.5 + 0.5;
     faceMat.uniforms.uIdleDrift.value = State.idleAlphaDrift;
     const idleS3 = (t - State.lastTouch) / 1000;
-    const eyeCloseTarget = 0;
+    const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
@@ -715,7 +713,7 @@ if (window.DeviceMotionEvent) {
     lastAccel = [a.x, a.y, a.z];
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) {
-      lastShake = now; window.MASTER_FACE?.ttsSkip?.(); State.shake = 1.2;
+      lastShake = now; window.MASTER_FACE?.ttsSkip?.(); applyShake(1.2);
       morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
     }
   }, { passive: true });

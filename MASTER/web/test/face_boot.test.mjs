@@ -185,20 +185,12 @@ test("visual_bridge emits master:emotion and uses asset paths", () => {
   assert.match(bridge, /MASTER_ASSET_PATHS\?\.face3dPreview/);
 });
 
-test("chat index includes photo attach and LAUI agent hud", () => {
+test("chat index includes photo attach", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /id="photo-button"/);
   assert.match(index, /id="photo"/);
   assert.match(index, /photo_upload\.css/);
-  assert.match(index, /face_agent_hud/);
-});
-
-test("face_agent_hud implements LAUI engagement rail", () => {
-  const hud = readFileSync(join(publicDir, "face_agent_hud.js"), "utf8");
-  assert.match(hud, /agent-hud/);
-  assert.match(hud, /thought.*action.*speech/s);
-  assert.match(hud, /master:visual/);
-  assert.match(hud, /MASTER_AGENT_PLACEHOLDERS/);
+  assert.doesNotMatch(index, /face_agent_hud/);
 });
 
 test("face_research catalog documents ar5iv and github references", () => {
@@ -254,8 +246,7 @@ test("face3d preview consumes TTS events and reports nonblank frames", () => {
 
 test("face.css includes subtle visual polish layers", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  assert.match(css, /body::after/);
-  assert.match(css, /radial-gradient/);
+  assert.doesNotMatch(css, /body::after/);
   assert.match(css, /--face-glow-scale:\s*1\.22/);
   assert.match(css, /mood-sparkline i[\s\S]*--mood-accent/);
 });
@@ -265,8 +256,8 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /#primer/);
   assert.match(css, /z-index:\s*var\(--z-modal\)/);
   assert.match(css, /body:not\(\.face-ready\) #zsh:not\(\.live\)/);
-  assert.match(css, /--x-text:\s*#e8e4dc/);
-  assert.match(css, /--face-bg:\s*#0f0e0d/);
+  assert.match(css, /--x-text:\s*#d8d6e0/);
+  assert.match(css, /--face-bg:\s*black/);
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
 });
 

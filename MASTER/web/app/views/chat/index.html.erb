@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <meta name="theme-color" content="#0f0e0d">
+  <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
   <meta name="master-runtime" content="face">
   <meta name="master-tier" content="<%= @tier.to_s %>">
@@ -88,10 +88,10 @@
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>
   <style nonce="<%= content_security_policy_nonce %>">
-    html, body { background: #0f0e0d; color: #e8e4dc; }
-    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #0f0e0d; }
+    html, body { background: #000; color: #f5f0e8; }
+    canvas#face { display: block; position: fixed; inset: 0; width: 100%; height: 100%; background: #000; }
     #primer { background: transparent; }
-    #zsh { background: #0f0e0d; }
+    #zsh { background: #000; }
   </style>
 </head>
 <body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark" data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
@@ -284,7 +284,7 @@
       face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
       lazily on the primer tap (see the boot script above). %>
   <%= javascript_include_tag(*%w[face_state visual_governor topology_registry particle_worker
-        sse_contract chat_actions visual_bridge chat master_namespace face_agent_hud], defer: true) %>
+        sse_contract chat_actions visual_bridge chat master_namespace], defer: true) %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">

@@ -136,15 +136,31 @@ function applyTheme(_theme, persist = true) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', '#000000');
 }
-const RUNTIME_PROFILES = ['full', 'crt', 'battery'];
+const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
+function runtimeProfile() {
+  return rootBody.dataset.runtimeProfile || 'calm';
+}
+function isRichMotionProfile() {
+  const p = runtimeProfile();
+  return p === 'full' || p === 'crt';
+}
+function applyShake(intensity) {
+  const cap = isRichMotionProfile() ? intensity : Math.min(intensity, 0.22);
+  State.shake = Math.max(State.shake || 0, cap);
+}
 function cycleRuntimeProfile() {
-  const current = rootBody.dataset.runtimeProfile || 'full';
+  const current = runtimeProfile();
   const idx = RUNTIME_PROFILES.indexOf(current);
   const next = RUNTIME_PROFILES[(idx + 1) % RUNTIME_PROFILES.length];
   State.profileOverride = next;
   rootBody.dataset.runtimeProfile = next;
   localStorage.setItem('master:runtime_profile', next);
-  const tintMap = { full: TINT.idle, crt: new Color(0.92, 0.88, 0.78), battery: new Color(0.72, 0.74, 0.78) };
+  const tintMap = {
+    calm: TINT.idle,
+    full: TINT.idle,
+    crt: new Color(0.92, 0.88, 0.78),
+    battery: new Color(0.72, 0.74, 0.78),
+  };
   if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
   window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
   resize?.();
@@ -243,13 +259,7 @@ function setVoiceName(voice, opts = {}) {
     if (picker.value !== alias) picker.value = alias;
   }
   syncShareStateUrl();
-  if (opts.speakBlurb !== false && next && prev !== next) {
-    setTimeout(() => {
-      if (window.MASTER_FACE?.tts?.muted) return;
-      const blurb = (window.MASTER_PERSONA?.description || 'Ready.').split('.')[0].trim() || 'Ready.';
-      if (typeof playDuo === 'function') playDuo([[next, blurb]]);
-    }, 0);
-  }
+  void opts.speakBlurb;
 }
 function nearestRateIndex(rate) {
   const value = Number.isFinite(rate) && rate > 0 ? rate : 1.25;
@@ -271,7 +281,7 @@ const TINT = {
 };
 
 function dayNightTint() {
-  return new Color(0.92, 0.78, 0.48);
+  return new Color(1, 1, 1);
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -511,7 +521,7 @@ Object.defineProperty(State, 'mode', {
     rootBody.dataset.mode = v;
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking') startStar(); else stopStar();
+    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();
   },
   configurable: true
 });
@@ -521,7 +531,7 @@ function updateRuntimeProfile() {
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
   if (!State.profileOverride) {
-    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
+    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';
   }
   rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }

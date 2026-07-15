@@ -1,6 +1,7 @@
 "use strict";
 
 const FACE_MODULES = window.MASTER_ASSET_PATHS?.faceModulesList || [
+  "attention_model.js",
   "face_particles.js",
   "face_audio_bridge.js",
   "face_tts_bridge.js",

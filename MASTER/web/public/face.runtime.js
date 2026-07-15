@@ -138,15 +138,31 @@ function applyTheme(_theme, persist = true) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', '#000000');
 }
-const RUNTIME_PROFILES = ['full', 'crt', 'battery'];
+const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
+function runtimeProfile() {
+  return rootBody.dataset.runtimeProfile || 'calm';
+}
+function isRichMotionProfile() {
+  const p = runtimeProfile();
+  return p === 'full' || p === 'crt';
+}
+function applyShake(intensity) {
+  const cap = isRichMotionProfile() ? intensity : Math.min(intensity, 0.22);
+  State.shake = Math.max(State.shake || 0, cap);
+}
 function cycleRuntimeProfile() {
-  const current = rootBody.dataset.runtimeProfile || 'full';
+  const current = runtimeProfile();
   const idx = RUNTIME_PROFILES.indexOf(current);
   const next = RUNTIME_PROFILES[(idx + 1) % RUNTIME_PROFILES.length];
   State.profileOverride = next;
   rootBody.dataset.runtimeProfile = next;
   localStorage.setItem('master:runtime_profile', next);
-  const tintMap = { full: TINT.idle, crt: new Color(0.92, 0.88, 0.78), battery: new Color(0.72, 0.74, 0.78) };
+  const tintMap = {
+    calm: TINT.idle,
+    full: TINT.idle,
+    crt: new Color(0.92, 0.88, 0.78),
+    battery: new Color(0.72, 0.74, 0.78),
+  };
   if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
   window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
   resize?.();
@@ -245,13 +261,7 @@ function setVoiceName(voice, opts = {}) {
     if (picker.value !== alias) picker.value = alias;
   }
   syncShareStateUrl();
-  if (opts.speakBlurb !== false && next && prev !== next) {
-    setTimeout(() => {
-      if (window.MASTER_FACE?.tts?.muted) return;
-      const blurb = (window.MASTER_PERSONA?.description || 'Ready.').split('.')[0].trim() || 'Ready.';
-      if (typeof playDuo === 'function') playDuo([[next, blurb]]);
-    }, 0);
-  }
+  void opts.speakBlurb;
 }
 function nearestRateIndex(rate) {
   const value = Number.isFinite(rate) && rate > 0 ? rate : 1.25;
@@ -273,7 +283,7 @@ const TINT = {
 };
 
 function dayNightTint() {
-  return new Color(0.92, 0.78, 0.48);
+  return new Color(1, 1, 1);
 }
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
@@ -513,7 +523,7 @@ Object.defineProperty(State, 'mode', {
     rootBody.dataset.mode = v;
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking') startStar(); else stopStar();
+    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();
   },
   configurable: true
 });
@@ -523,7 +533,7 @@ function updateRuntimeProfile() {
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
   if (!State.profileOverride) {
-    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
+    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';
   }
   rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }
@@ -1256,7 +1266,7 @@ function applyPersonaVisual(persona) {
   const tint = PERSONA_TINT[persona];
   if (!tint) return;
   fadeColorTo(tint);
-  State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
 }
 const COUNCIL_LANE_OFFSET = { left: -0.22, center: 0, right: 0.22 };
 function offsetCouncilMouthPool(lane, delta = 0.18) {
@@ -1321,23 +1331,8 @@ if (_photoEl) _photoEl.addEventListener('change', () => {
 
 
 let lastT = performance.now();
-let saccadeX = 0, nextSaccade = performance.now() + Math.random() * 6000 + 3000;
-let microJitter = 0, nextMicroJitter = performance.now() + Math.random() * 600 + 200;
-let nextBlink = performance.now() + Math.random() * 5000 + 3000;
-function doBlink() {
-  if (!faceMat) return;
-  const orig = faceMat.uniforms.uSize.value;
-  let phase = 0;
-  const blinkTimer = setInterval(() => {
-    phase += 0.18;
-    if (phase < 1) {
-      faceMat.uniforms.uSize.value = orig * (1 - 0.55 * Math.sin(phase * Math.PI));
-    } else {
-      faceMat.uniforms.uSize.value = orig;
-      clearInterval(blinkTimer);
-    }
-  }, 14);
-}
+let _attnEyeClose = 0;
+window.MASTER_ATTENTION?.reset?.({ blinkMs: State.idleSignature?.blink_ms });
 let nodImpulse = 0;
 let glowPoints;
 let head;
@@ -1558,6 +1553,7 @@ function stepPoolAsync(pool, dtSec) {
   worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
 }
 function spawnEmotionalGhost(mood) {
+  if (!isRichMotionProfile()) return;
   window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
 }
 function applyWorkerPoolResult(pool, payload) {
@@ -1732,7 +1728,7 @@ function frame(t) {
     if (State.mode === 'error' && !rootBody.dataset.moodCold) {
       rootBody.dataset.moodCold = '1';
       // White-only error indication: shake + pulse (no hue per pure phosphor).
-      State.shake = 1.5;
+      applyShake(1.5);
       State.pulse = 0.9;
       State.flash = 1.0;
       setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);
@@ -1744,28 +1740,25 @@ function frame(t) {
   }
 
   if (head) {
-    const focusBoost = State.mode === 'listening' ? 1.35 : (State.mode === 'thinking' ? 0.55 : 1.0);
     const openness = 0.55 + (State.confidence || 0.75) * 0.45;
-    if (!State.reducedMotion && t > nextSaccade && State.mode !== 'thinking') {
-      saccadeX = (Math.random() - 0.5) * 0.28 * focusBoost;
-      nextSaccade = t + (Math.random() * 6000 + 3000) / focusBoost;
-    }
     const calmStare = State.calmStareUntil && t < State.calmStareUntil;
     const nervous = State.nervousUntil && t < State.nervousUntil;
-    if (!State.reducedMotion && t > nextMicroJitter) {
-      const amp = calmStare ? 0.028 : nervous ? 0.065 : 0.045;
-      microJitter = (Math.random() - 0.5) * amp;
-      nextMicroJitter = t + (calmStare ? 820 : nervous ? 240 : Math.random() * 600 + 200);
-    }
-    if (nervous && (_dbgFrames % 4 === 0)) microJitter += (Math.random() - 0.5) * 0.02;
-    if (!State.reducedMotion && t > nextBlink) {
-      doBlink();
-      nextBlink = t + Math.random() * 5000 + 2500;
-    }
-    saccadeX *= 0.93;
-    microJitter *= 0.78;
+    const attn = window.MASTER_ATTENTION?.tick?.({
+      t,
+      mode: State.mode,
+      speaking: State.mode === 'speaking',
+      ttsPlaying: !!tts.playing,
+      reducedMotion: State.reducedMotion,
+      calmStareUntil: State.calmStareUntil,
+      nervousUntil: State.nervousUntil,
+      blinkMs: State.idleSignature?.blink_ms,
+      frameIndex: _dbgFrames,
+    }) || { saccadeX: 0, microJitter: 0, fixationPitch: 0, eyeCloseTarget: 0 };
+    const saccadeX = attn.saccadeX || 0;
+    const microJitter = attn.microJitter || 0;
+    _attnEyeClose = attn.eyeCloseTarget || 0;
     const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
+    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03 + (attn.fixationPitch || 0);
     if (camera) {
       const pInput = State.coarsePointer
         ? { x: State.tiltX, y: -State.tiltY }
@@ -1794,7 +1787,7 @@ function frame(t) {
     const breath = silenceScale * idleSig.breath * tensionScale * (State.reducedMotion ? 1 : 1 + Math.sin(sec * breathHz) * breathAmp + State.pulse * 0.08 + councilBreath);
     head.scale.setScalar(breath);
     State.lean = (State.lean || 0) * 0.97;
-    if (State.shake > 0.01 && !State.reducedMotion) {
+    if (State.shake > 0.01 && !State.reducedMotion && isRichMotionProfile()) {
       head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.z = State.lean;
@@ -1861,7 +1854,7 @@ function frame(t) {
     faceMat.uniforms.uShake.value += (shakeTarget - faceMat.uniforms.uShake.value) * 0.18;
     const pulseRingTarget = State.pulse > 0.55 ? (State.pulse - 0.55) * 2.2 : 0;
     faceMat.uniforms.uPulseRing.value += (pulseRingTarget - faceMat.uniforms.uPulseRing.value) * 0.12;
-    const rainTarget = State.mood === 'weary' ? 1.0 : 0.0;
+    const rainTarget = (State.mood === 'weary' && isRichMotionProfile()) ? 1.0 : 0.0;
     faceMat.uniforms.uRain.value += (rainTarget - faceMat.uniforms.uRain.value) * 0.02;
     const modelSwitch = State.modelSwitch || 0;
     faceMat.uniforms.uModelSwitch.value += (modelSwitch - faceMat.uniforms.uModelSwitch.value) * 0.12;
@@ -1889,7 +1882,7 @@ function frame(t) {
     State.idleAlphaDrift = Math.sin(t * 0.000785) * 0.5 + 0.5;
     faceMat.uniforms.uIdleDrift.value = State.idleAlphaDrift;
     const idleS3 = (t - State.lastTouch) / 1000;
-    const eyeCloseTarget = 0;
+    const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
     morphGhost += (morphCurrent - morphGhost) * 0.035;
     faceMat.uniforms.uGridAngle.value = Math.sin(t * 0.00005) * 0.00524 + (State.entropy || 0) * 0.002;
@@ -2116,7 +2109,7 @@ if (window.DeviceMotionEvent) {
     lastAccel = [a.x, a.y, a.z];
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) {
-      lastShake = now; window.MASTER_FACE?.ttsSkip?.(); State.shake = 1.2;
+      lastShake = now; window.MASTER_FACE?.ttsSkip?.(); applyShake(1.2);
       morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
     }
   }, { passive: true });
@@ -2195,6 +2188,8 @@ if ('getBattery' in navigator) {
   }).catch(() => {});
 }
 
+// Speech / TTS runtime — concatenated into face.runtime.js by assets:build_face_runtime.
+// Edit here, not face.part4.txt (deprecated stub).
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {
@@ -2223,7 +2218,7 @@ function initAudio() {
     humOsc.connect(ambientHumGain);
     ambientHumGain.connect(actx.destination);
     humOsc.start();
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:init_audio", err); }
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:init_audio", err); }
 }
 function setAmbientHum(active) {
   if (!ambientHumGain || !actx) return;
@@ -2243,7 +2238,6 @@ function beep(freq, dur) {
 
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
-const VISEME_STEP_MS = 90;
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
@@ -2253,11 +2247,11 @@ function ttsStreamLiveEnabled() {
   try {
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '1') return true;
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_live_read", err); }
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_live_read", err); }
   return !!window.MASTER_VOICE_POLICY?.stream_live_default;
 }
 function setTtsStreamLive(on) {
-  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_live_store", err); }
+  try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_live_store", err); }
   if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;
 }
 function setTtsHealthStatus(msg, ttlMs = 8000) {
@@ -2327,7 +2321,7 @@ function setTtsStyle(style, opts = {}) {
   const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
   window.MASTER_TTS_STYLE = next;
   State.ttsStyleLocked = opts.lockStyle === false ? false : next !== 'auto';
-  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:style_store", err); }
+  try { localStorage.setItem(TTS_STYLE_KEY, next); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:style_store", err); }
   syncTtsStyleUi();
   if (!opts.silent) {
     emitTtsEvent('tts:style:active', { style: next });
@@ -2392,11 +2386,11 @@ const EMOTION_HISTORY_KEY = 'master:emotion_history';
 const EMOTION_HISTORY_CAP = 50;
 function pushEmotionHistory(entry) {
   let ring = [];
-  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:emotion_history_read", err); }
+  try { ring = JSON.parse(localStorage.getItem(EMOTION_HISTORY_KEY) || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:emotion_history_read", err); }
   if (!Array.isArray(ring)) ring = [];
   ring.push({ ts: Date.now(), ...entry });
   while (ring.length > EMOTION_HISTORY_CAP) ring.shift();
-  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:emotion_history_store", err); }
+  try { localStorage.setItem(EMOTION_HISTORY_KEY, JSON.stringify(ring)); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:emotion_history_store", err); }
   const bar = document.getElementById('mood-sparkline');
   if (!bar) return;
   bar.innerHTML = ring.slice(-20).map((e) => {
@@ -2427,7 +2421,7 @@ async function prefetchTtsPhraseBank() {
       const style = row.style || _nextTtsStyle(voice);
       fetchTTS(row.text, voice, style);
     });
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:prefetch_phrase_bank", err); }
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:prefetch_phrase_bank", err); }
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -2577,7 +2571,7 @@ async function writeCachedTTS(key, blob) {
   try {
     const tx = db.transaction(TTS_STORE, 'readwrite');
     tx.objectStore(TTS_STORE).put(blob, key);
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:write_cached_tts", err); }
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:write_cached_tts", err); }
 }
 
 function latchTtsRateLimit(res) {
@@ -2655,7 +2649,7 @@ async function tryPartialTTSPlay(job, bytes) {
     partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
     partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
     if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_partial", err); }
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_partial", err); }
 }
 
 async function pollTTSJob(job, signal) {
@@ -2774,23 +2768,6 @@ function finishTTSPlayback(src, continueQueue = true) {
   if (continueQueue) ttsTick();
 }
 
-const VOWEL_VISEME = { a:'A', e:'E', i:'I', o:'O', u:'U' };
-
-function setViseme(ch) {
-  const c = (ch || '').toLowerCase();
-  const previous = State.viseme;
-  State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
-  State.visemeAmp = 1.0;
-  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
-}
-
-function clearViseme() {
-  const previous = State.viseme;
-  State.viseme = 'neutral';
-  State.visemeAmp = 0;
-  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
-}
-
 function fetchTTS(text, voice, style) {
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) return;
   if (tts.serverUnavailable && Date.now() >= (tts.serverUnavailableUntil || 0)) tts.serverUnavailable = false;
@@ -2884,7 +2861,7 @@ function scheduleTtsTick(delay) {
 
 function browserTtsFallbackAllowed() {
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
-  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:fallback_allowed_read", err); }
+  try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
 }
 function speakWithBrowserTTS(text, token) {
@@ -2970,7 +2947,7 @@ function ttsTick() {
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
-    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:audio_pause", err); } }
+    if (tts.audio && tts.audio !== audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:audio_pause", err); } }
     tts.audio = audio;
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
@@ -3018,7 +2995,7 @@ function ttsTogglePause() {
   if (tts.audio.paused) {
     if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
       const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
-      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:seek_resume", err); }
+      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:seek_resume", err); }
     }
     tts.audio.play().catch(() => {});
     tts.paused = false;
@@ -3053,7 +3030,38 @@ function ttsTogglePause() {
   setInterval(refresh, 60000);
 })();
 
-// Sample the cleaned text across the audio length so the mouth moves with real prosody.
+window.MASTER_SPEECH_RUNTIME = Object.freeze({
+  get tts() { return tts; },
+  initAudio,
+  enqueueSpeech,
+  ttsTick,
+  loadTTSBlob,
+  emitTtsEvent,
+});
+window.MASTER = window.MASTER || {};
+window.MASTER.speechRuntime = window.MASTER_SPEECH_RUNTIME;
+
+// Viseme playback — mouth animation driven by TTS audio and server viseme plans.
+// Concatenated into face.runtime.js by assets:build_face_runtime (after face_speech_runtime.js).
+
+const VISEME_STEP_MS = 90;
+const VOWEL_VISEME = { a: 'A', e: 'E', i: 'I', o: 'O', u: 'U' };
+
+function setViseme(ch) {
+  const c = (ch || '').toLowerCase();
+  const previous = State.viseme;
+  State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
+  State.visemeAmp = 1.0;
+  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
+}
+
+function clearViseme() {
+  const previous = State.viseme;
+  State.viseme = 'neutral';
+  State.visemeAmp = 0;
+  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
+}
+
 function startVisemeAnim(text) {
   stopVisemeAnim();
   const plan = Array.isArray(tts.visemePlan) ? tts.visemePlan : null;
@@ -3080,7 +3088,6 @@ function startVisemeAnim(text) {
     if (!audio || !audio.duration || !isFinite(audio.duration)) { setViseme(text.charAt(i)); i = (i + 3) % text.length; return; }
     const idx = Math.min(text.length - 1, Math.floor((audio.currentTime / audio.duration) * text.length));
     setViseme(text.charAt(idx));
-    // drive closed-caption strip (FA141) on word-boundary proxy
     if (ttsLive) {
       const denom = Math.max(1, text.length);
       const wIdx = Math.min(words.length - 1, Math.floor((idx / denom) * words.length));
@@ -3097,6 +3104,17 @@ function startVisemeAnim(text) {
 function stopVisemeAnim() {
   if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
 }
+
+window.MASTER_SPEECH_PLAYBACK = Object.freeze({
+  VISEME_STEP_MS,
+  setViseme,
+  clearViseme,
+  startVisemeAnim,
+  stopVisemeAnim,
+});
+window.MASTER = window.MASTER || {};
+window.MASTER.speechPlayback = window.MASTER_SPEECH_PLAYBACK;
+// Viseme playback moved to face_speech_playback.js — concatenated by assets:build_face_runtime.
 
 function fadeTtsAudio(ms = 80) {
   return new Promise((resolve) => {
@@ -3174,7 +3192,7 @@ function enterSleep() {
 
 function flashViolation() {
   State.flash = 1;
-  State.shake = Math.max(State.shake || 0, 0.8);
+  applyShake(0.8);
   State.mode = 'error';
   rootBody.dataset.violationFlash = '1';
   setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);
@@ -3336,7 +3354,7 @@ function handleFaceNamedEvent(event, data) {
       State.bloom = 1.0;
     }
     if (v === 'veto') {
-      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+      beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
@@ -3404,7 +3422,7 @@ async function sendMessage(text) {
     State.mode = 'pass';
     State.bloom = 1.0;
     State.fracture = 0.85;
-    State.shake = Math.max(State.shake || 0, 0.45);
+    applyShake(0.45);
     State.pulse = Math.max(State.pulse || 0, 0.85);
     return;
   }
@@ -3515,7 +3533,7 @@ async function sendMessage(text) {
       }
       if (raw.startsWith('ERROR:')) {
         window._chatOnChunk?.(`\n${raw}\n`);
-        State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+        State.mode = 'error'; State.flash = 1; applyShake(0.8);
         fadeColorTo(TINT.veto);
         morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
         clearThinkingAloud();
@@ -3544,7 +3562,7 @@ async function sendMessage(text) {
       onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
       onError: () => {
         clearTimeout(stallTimer);
-        State.flash = 1; State.shake = 0.8; State.mode = 'error';
+        State.flash = 1; applyShake(0.8); State.mode = 'error';
         window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
         clearThinkingAloud();
         window._chatOnDmesg?.('link quiet');
@@ -3606,7 +3624,7 @@ async function sendMessage(text) {
     }
     if (raw.startsWith('ERROR:')) {
       window._chatOnChunk?.(`\n${raw}\n`);
-      State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+      State.mode = 'error'; State.flash = 1; applyShake(0.8);
       fadeColorTo(TINT.veto);
       morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
       clearThinkingAloud();
@@ -3679,7 +3697,7 @@ async function sendMessage(text) {
       State.bloom = 1.0;
     }
     if (v === 'veto') {
-      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+      beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
@@ -3746,7 +3764,7 @@ async function sendMessage(text) {
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);
-    State.flash = 1; State.shake = 0.8; State.mode = 'error';
+    State.flash = 1; applyShake(0.8); State.mode = 'error';
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
     clearThinkingAloud();
     window._chatOnDmesg?.('link quiet');

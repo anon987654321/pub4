@@ -1,47 +1,4 @@
-// Sample the cleaned text across the audio length so the mouth moves with real prosody.
-function startVisemeAnim(text) {
-  stopVisemeAnim();
-  const plan = Array.isArray(tts.visemePlan) ? tts.visemePlan : null;
-  if (plan?.length) {
-    plan.forEach((frame, i) => {
-      const at = Number(frame.t ?? frame.at ?? (i * VISEME_STEP_MS));
-      if (!Number.isFinite(at)) return;
-      setTimeout(() => {
-        if (!tts.playing && !tts.audio) return;
-        const shape = frame.shape || frame.v || 'E';
-        const amp = Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1;
-        State.viseme = shape;
-        State.visemeAmp = amp;
-        emitTtsEvent('tts:viseme', { shape, amp });
-      }, at);
-    });
-    return;
-  }
-  const words = text.split(/\s+/);
-  let lastWordIdx = -1;
-  let i = 0;
-  tts.visemeTimer = setInterval(() => {
-    const audio = tts.audio;
-    if (!audio || !audio.duration || !isFinite(audio.duration)) { setViseme(text.charAt(i)); i = (i + 3) % text.length; return; }
-    const idx = Math.min(text.length - 1, Math.floor((audio.currentTime / audio.duration) * text.length));
-    setViseme(text.charAt(idx));
-    // drive closed-caption strip (FA141) on word-boundary proxy
-    if (ttsLive) {
-      const denom = Math.max(1, text.length);
-      const wIdx = Math.min(words.length - 1, Math.floor((idx / denom) * words.length));
-      if (wIdx !== lastWordIdx) {
-        lastWordIdx = wIdx;
-        const from = Math.max(0, wIdx - 2);
-        const to = Math.min(words.length, wIdx + 3);
-        ttsLive.textContent = words.slice(from, to).join(' ');
-      }
-    }
-  }, VISEME_STEP_MS);
-}
-
-function stopVisemeAnim() {
-  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
-}
+// Viseme playback moved to face_speech_playback.js — concatenated by assets:build_face_runtime.
 
 function fadeTtsAudio(ms = 80) {
   return new Promise((resolve) => {
@@ -119,7 +76,7 @@ function enterSleep() {
 
 function flashViolation() {
   State.flash = 1;
-  State.shake = Math.max(State.shake || 0, 0.8);
+  applyShake(0.8);
   State.mode = 'error';
   rootBody.dataset.violationFlash = '1';
   setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);
@@ -281,7 +238,7 @@ function handleFaceNamedEvent(event, data) {
       State.bloom = 1.0;
     }
     if (v === 'veto') {
-      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+      beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
@@ -349,7 +306,7 @@ async function sendMessage(text) {
     State.mode = 'pass';
     State.bloom = 1.0;
     State.fracture = 0.85;
-    State.shake = Math.max(State.shake || 0, 0.45);
+    applyShake(0.45);
     State.pulse = Math.max(State.pulse || 0, 0.85);
     return;
   }
@@ -460,7 +417,7 @@ async function sendMessage(text) {
       }
       if (raw.startsWith('ERROR:')) {
         window._chatOnChunk?.(`\n${raw}\n`);
-        State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+        State.mode = 'error'; State.flash = 1; applyShake(0.8);
         fadeColorTo(TINT.veto);
         morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
         clearThinkingAloud();
@@ -489,7 +446,7 @@ async function sendMessage(text) {
       onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
       onError: () => {
         clearTimeout(stallTimer);
-        State.flash = 1; State.shake = 0.8; State.mode = 'error';
+        State.flash = 1; applyShake(0.8); State.mode = 'error';
         window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
         clearThinkingAloud();
         window._chatOnDmesg?.('link quiet');
@@ -551,7 +508,7 @@ async function sendMessage(text) {
     }
     if (raw.startsWith('ERROR:')) {
       window._chatOnChunk?.(`\n${raw}\n`);
-      State.mode = 'error'; State.flash = 1; State.shake = 0.8;
+      State.mode = 'error'; State.flash = 1; applyShake(0.8);
       fadeColorTo(TINT.veto);
       morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
       clearThinkingAloud();
@@ -624,7 +581,7 @@ async function sendMessage(text) {
       State.bloom = 1.0;
     }
     if (v === 'veto') {
-      beep(220, 0.10); State.shake = 0.6; dollyZoom(0.8);
+      beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
@@ -691,7 +648,7 @@ async function sendMessage(text) {
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);
-    State.flash = 1; State.shake = 0.8; State.mode = 'error';
+    State.flash = 1; applyShake(0.8); State.mode = 'error';
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
     clearThinkingAloud();
     window._chatOnDmesg?.('link quiet');

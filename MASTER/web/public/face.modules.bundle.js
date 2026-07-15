@@ -209,7 +209,8 @@
     try {
       localStorage.setItem("master:mood", State.mood || "idle");
       localStorage.setItem("master:mode", State.mode || "idle");
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("face_expression_bridge:persist_mood", err);
     }
   }
   function restoreMood(State) {
@@ -218,7 +219,8 @@
       const mode = localStorage.getItem("master:mode");
       if (mood) State.mood = mood;
       if (mode && State.mode === "idle") State.mode = mode;
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("face_expression_bridge:restore_mood", err);
     }
   }
   async function postUserExpression(expression, source = "face_drag") {
@@ -231,7 +233,8 @@
     });
     try {
       await fetch("/canvas/event", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, keepalive: true });
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("face_expression_bridge:post_expression", err);
     }
     window.dispatchEvent(new CustomEvent("user:expression", {
       detail: { expression, source, blendshapes: expression.blendshapes || null }
@@ -391,7 +394,8 @@
       E.drawToOffscreen?.();
     };
     window.MASTER_OFFSCREEN_ECOLOGY = true;
-  } catch (_) {
+  } catch (err) {
+    window.MASTER_LOG?.warn?.("face_offscreen_ecology:setup", err);
   }
 })();
 
@@ -566,7 +570,8 @@
       const worker = new Worker(window.MASTER_ASSET_PATHS?.faceModules?.particle_worker || "/particle_worker.js");
       worker.postMessage({ type: "warm", dt: 0.016 });
       setTimeout(() => worker.terminate(), 120);
-    } catch (_) {
+    } catch (err) {
+      window.MASTER_LOG?.warn?.("face_perf_guards:worker_warm", err);
     }
   });
   window.addEventListener("visual:ready", () => {

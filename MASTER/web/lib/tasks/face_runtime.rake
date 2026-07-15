@@ -4,8 +4,11 @@ namespace :assets do
   desc "Build public/face.runtime.js from face.part*.txt (skips blob assembly in browser)"
   task build_face_runtime: :environment do
     out = Rails.root.join("public/face.runtime.js")
-    source = (1..5).map do |part|
-      path = Rails.root.join("public", "face.part#{part}.txt")
+    segments = (1..3).map { |part| Rails.root.join("public", "face.part#{part}.txt") }
+    segments << Rails.root.join("public", "face_speech_runtime.js")
+    segments << Rails.root.join("public", "face_speech_playback.js")
+    segments << Rails.root.join("public", "face.part5.txt")
+    source = segments.map do |path|
       raise "missing #{path}" unless File.file?(path)
 
       File.read(path)
