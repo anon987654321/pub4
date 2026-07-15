@@ -61,15 +61,7 @@ module Master
         risk = assessment[:risk]
         container[:bus]&.publish("fold:risk", risk:, intent: assessment[:intent])
 
-        memory = Master::Core::Memory.new(risk:)
-        memory.note(:risk, risk)
-        ideation = DeliberationPrep.prepare!(goal:, container:, risk:)
-        if ideation
-          DeliberationPrep.seed_memory!(memory, ideation)
-        elsif FoldRisk.ideation_required?(risk)
-          memory.note(:chosen, "proceed: ideation skipped (no agent)")
-          memory.mark_ideation_complete!
-        end
+        memory = prepare_fold_memory(goal:, container:, risk:)
 
         fold = CoreBridge.run(
           goal,
@@ -86,6 +78,19 @@ module Master
         Master::Result.err("core: #{e.message}", category: :infrastructure)
       end
 
+      def prepare_fold_memory(goal:, container:, risk:)
+        memory = Master::Core::Memory.new(risk:)
+        memory.note(:risk, risk)
+        ideation = DeliberationPrep.prepare!(goal:, container:, risk:)
+        if ideation
+          DeliberationPrep.seed_memory!(memory, ideation)
+        elsif FoldRisk.ideation_required?(risk)
+          memory.note(:chosen, "proceed: ideation skipped (no agent)")
+          memory.mark_ideation_complete!
+        end
+        memory
+      end
+
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil)
         ctx = PipelineContext.wrap(user_message: input, felt_sense:)
         ctx = unwrap(Stages::Intake.new.call(ctx))
@@ -100,6 +105,12 @@ module Master
         commands = container[:commands]
         return Master::Result.err("command: registry unavailable", category: :infrastructure) unless commands
 
+        run_command_pipeline(ctx, container:, commands:)
+      rescue StandardError => e
+        Master::Result.err("command: #{e.message}", category: :infrastructure)
+      end
+
+      def run_command_pipeline(ctx, container:, commands:)
         agent = container[:agent]
         bus = container[:bus]
         renderer = container[:renderer]
@@ -117,8 +128,6 @@ module Master
           output_check: container[:output_check],
           event_bus: bus
         ).call(ctx)
-      rescue StandardError => e
-        Master::Result.err("command: #{e.message}", category: :infrastructure)
       end
 
       def fold_to_result(fold)
