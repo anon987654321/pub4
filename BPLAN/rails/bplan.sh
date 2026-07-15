@@ -19,12 +19,12 @@ RAILS_SHARED=${PUB4_ROOT}/RAILS
 SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}
 DEPLOYIGNORE=${BPLAN_ROOT}/.deployignore
 
-. "${RAILS_SHARED}/@core.sh"
-. "${RAILS_SHARED}/@bundle.sh"
-. "${RAILS_SHARED}/@sync.sh"
-. "${RAILS_SHARED}/@assets.sh"
-. "${RAILS_SHARED}/@runtime_gate.sh"
-. "${RAILS_SHARED}/@service.sh"
+. "${RAILS_SHARED}/_core.sh"
+. "${RAILS_SHARED}/_bundle.sh"
+. "${RAILS_SHARED}/_sync.sh"
+. "${RAILS_SHARED}/_assets.sh"
+. "${RAILS_SHARED}/_runtime_gate.sh"
+. "${RAILS_SHARED}/_service.sh"
 
 log "${APP_NAME} — deploying BPLAN (rails + content)"
 

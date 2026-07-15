@@ -46,10 +46,10 @@ else
 fi
 
 print "vps-deploy: $app (secondary db schemas)"
-. "$repo/RAILS/@core.sh"
-. "$repo/RAILS/@bundle.sh"
-. "$repo/RAILS/@runtime_gate.sh"
-. "$repo/RAILS/@database.sh"
+. "$repo/RAILS/_core.sh"
+. "$repo/RAILS/_bundle.sh"
+. "$repo/RAILS/_runtime_gate.sh"
+. "$repo/RAILS/_database.sh"
 rails_prepare_secondary_dbs_as_app "$app" "/home/${app}/app"
 
 print "vps-deploy: $app (restart)"
