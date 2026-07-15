@@ -13,6 +13,7 @@ require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 require_relative "lib/composition_engine"
 require_relative "lib/producer_dna"
+require_relative "lib/dfam_engine"
 
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the invoking directory (override with
@@ -511,13 +512,13 @@ def sonic_profile_for(track)
   sym = track.to_sym
   key = TRACK_SONIC_MAP.fetch(sym, nil)
   base = key ? load_sonic_profiles[key] : nil
-  return base unless DillaProducerDNA.producer_track?(sym)
-  synth = (base&.dig("synth") || {}).merge(DillaProducerDNA.lofi_sonic_overlay(sym))
+  return base unless DillaLofiMachine.harmony_profile?(sym)
+  synth = (base&.dig("synth") || {}).merge(DillaLofiMachine.lofi_sonic_overlay(sym))
   { "synth" => synth, "harmonic" => base&.dig("harmonic") || {} }
 end
 
 def style_family(track, feel: nil)
-  if (entry = DillaProducerDNA.track_entry(track))
+  if (entry = DillaLofiMachine.profile_entry(track))
     return :flylo if entry[:producer] == :flylo
     return :madlib if entry[:producer] == :madlib
     return :dilla
@@ -542,11 +543,11 @@ def resolve_swing(preset, sonic, time_offset)
   return 62.5 if ENV["GOLDEN_SWING"] == "1"
   return ENV["SWING"].to_f if ENV["SWING"]
   sonic_swing = sonic&.dig("synth", "swing")&.to_f
-  if DillaProducerDNA.producer_track?((ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym)
+  if DillaLofiMachine.harmony_profile?((ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym)
     return preset.fetch(:swing, 54).to_f + time_offset
   end
   base = if sonic_swing && sonic_swing < 1.0
-           DillaProducerDNA.mpc_swing_from_sonic_fraction(sonic_swing) + time_offset
+           DillaLofiMachine.mpc_swing_from_sonic_fraction(sonic_swing) + time_offset
          else
            preset.fetch(:swing, 54).to_f + time_offset
          end
@@ -554,7 +555,7 @@ def resolve_swing(preset, sonic, time_offset)
 end
 
 def track_preset(track)
-  prod = DillaProducerDNA.track_preset(track)
+  prod = DillaLofiMachine.profile_preset(track)
   return prod if prod
   return TRACK_PRESETS[track] if TRACK_PRESETS.key?(track)
   base = TRACK_PRESETS[:timeless].dup
@@ -564,11 +565,11 @@ end
 
 def curated_progression?(cfg)
   CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym) ||
-    DillaProducerDNA::CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
+    DillaLofiMachine::CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
 end
 
 def enhanced_resolve_config
-  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
+  track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
   preset = track_preset(track)
   prog = (ENV["PROGRESSION"] || preset.fetch(:progression, track)).to_s.downcase.tr("-", "_").to_sym
   sonic = sonic_profile_for(track)
@@ -883,11 +884,11 @@ def cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
     jitter = Random.new(seed).rand(-2.0..2.0)
     return (quantized + jitter).round(3)
   end
-  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
-  ticks = DillaProducerDNA.humanize_ticks_for(track)
+  track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
+  ticks = DillaLofiMachine.humanize_ticks_for(track)
   if ticks.positive?
     bpm = 60.0 / beat_p
-    h_ms = DillaProducerDNA.humanize_ms(bpm, ticks)
+    h_ms = DillaLofiMachine.humanize_ms(bpm, ticks)
     jitter = Random.new(seed + 17).rand(-h_ms..h_ms)
     return (quantized + jitter).round(3)
   end
@@ -1579,7 +1580,7 @@ end
 def dilla_chord_change_variation(chord_i, bar, section, feel, step_p, chord)
   cfg = dilla_resolve_config
   rng = chord_variation_rng(cfg, chord_i, chord, salt: 7711)
-  producer = DillaProducerDNA.producer_track?(cfg[:track])
+  producer = DillaLofiMachine.harmony_profile?(cfg[:track])
   base_pad_offset = case feel
                     when :syncopated_slash_ninth then step_p * 2 + 0.012
                     when :chromatic_planing then -step_p * 2
@@ -2118,7 +2119,7 @@ DRUM_PATTERN_SETS = {
     opens: [6, 14]
   }
 }.merge(
-  DillaProducerDNA::RG69_DRUM_PRESETS.transform_values do |p|
+  DillaLofiMachine::DRUM_PRESETS.transform_values do |p|
     {
       kicks: [p[:kicks]],
       snares: [p[:snares]],
@@ -2131,7 +2132,7 @@ DRUM_PATTERN_SETS = {
   end
 ).freeze
 
-RG69_DRUM_FEELS = DillaProducerDNA::RG69_DRUM_PRESETS.keys.freeze
+LOFI_DRUM_FEELS = DillaLofiMachine::DRUM_PRESETS.keys.freeze
 
 # Authored fill phrases — snare runs, kick clusters, ghost chatter into phrase ends.
 DRUM_FILL_SETS = {
@@ -2316,7 +2317,7 @@ TRACK_PRESETS = {
                      timing: { snare: -28..-12, hat_up: 18..36, bass: 24..44, kick_anchor: 0..6, pad: 6..20 } },
   suspended_minor_close: { bpm: 91, progression: :suspended_minor_close, chord_bars: 2, swing: 56 },
   timeless: {
-    bpm: 94, progression: :time_donut, chord_bars: 2, phrase_bars: 8, swing: 54,
+    bpm: 94, progression: :maj7_minor_cycle, chord_bars: 2, phrase_bars: 8, swing: 54,
     feel: :timeless, quintuplet: true, voicing: :spread,
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
   },
@@ -3838,7 +3839,7 @@ rescue SystemCallError => e
 end
 
 # Curated rotation — researched progressions only (no random generated_* walks).
-STREAM_TRACKS = DillaProducerDNA::STREAM_ROTATION
+STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
 
 # Tempo dropped a lot over this session (92->68 BPM) without this changing,
 # so the same bar count now takes much longer in real time — re-read fresh
@@ -4012,8 +4013,8 @@ def dilla_velocity(base, bar_index, step_index, spread: 0.10)
     curve = groove[:velocity_curve]
     base *= curve[step_index % curve.length] if curve
   end
-  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
-  spread += DillaProducerDNA.humanize_ticks_for(track) * 0.012 if DillaProducerDNA.producer_track?(track)
+  track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
+  spread += DillaLofiMachine.humanize_ticks_for(track) * 0.012 if DillaLofiMachine.harmony_profile?(track)
   seed = (bar_index * 1_009) + (step_index * 313) + (base * 10_000).to_i
   rng  = Random.new(seed)
   gaussian = Math.sqrt(-2.0 * Math.log([rng.rand, 1e-9].max)) * Math.cos(2.0 * Math::PI * rng.rand)
@@ -4026,8 +4027,8 @@ GENERATED_STYLES = %i[
 ].freeze
 
 def dilla_progression(mode = :chromatic_minor_descent)
-  track = (ENV["TRACK"] || "time_donut").to_s.downcase.tr("-", "_").to_sym
-  if (producer_pads = DillaProducerDNA.progression_for(track))&.any?
+  track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
+  if (producer_pads = DillaLofiMachine.progression_for(track))&.any?
     return producer_pads
   end
   sonic = sonic_profile_for(track)
@@ -4278,6 +4279,46 @@ def melody_pitch_from_chord(chord, bar, mel_step)
   voiced.first || midi_to_hz(approach + 12)
 end
 
+def schedule_dfam_events!(events, n_bars, beat_p, swing, quintuplet, timing)
+  return unless DfamEngine.enabled?
+  step_p = beat_p / 4.0
+  bar_p = beat_p * 4.0
+  track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s
+  pattern = DfamEngine.resolve_pattern(seed: (@render_seed || 0) + track.hash.abs)
+  patch = DfamEngine.resolve_patch
+  ticks = DillaLofiMachine.humanize_ticks_for(track)
+  n_bars.times do |bar|
+    16.times do |step|
+      idx = (bar * 16 + step) % DfamEngine::STEPS
+      pitch = pattern[:pitch][idx] / 100.0
+      vel = pattern[:velocity][idx] / 100.0
+      t = bar * bar_p + step * step_p +
+          dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+          dilla_timing_ms(:hat_down, bar, step, timing, beat_p) / 1000.0
+      if ticks.positive?
+        h_ms = DillaLofiMachine.humanize_ms(60.0 / beat_p, ticks)
+        t += Random.new(bar * 97 + step * 31 + idx).rand(-h_ms..h_ms) / 1000.0
+      end
+      events[:dfam] << [[t, 0.0].max.round(6), vel, pitch, idx, patch]
+    end
+  end
+end
+
+def render_dfam_wav(path, events, duration)
+  return unless events&.any?
+  write_stereo_chunks(path, duration) do |chunk_start, chunk_frames, left, right|
+    DfamEngine.mix_events!(left, right, events, chunk_start, chunk_frames, sample_rate: SAMPLE_RATE)
+  end
+  patch = DfamEngine.resolve_patch
+  tmp = "#{path}.fx.wav"
+  q = (patch[:res_pct] / 100.0 * 6.0 + 0.5).round(2)
+  sh! "ffmpeg", "-y", "-i", path, "-af",
+      "lowpass=f=#{patch[:filter_hz]}:width_type=q:width=#{q},volume=0.62",
+      "-c:a", "pcm_s16le", tmp
+  FileUtils.mv(tmp, path)
+  path
+end
+
 def dilla_hat_steps(bar, feel, n_bars: nil)
   steps = drum_pattern_pick(bar, feel, :hats)
   if n_bars && bar >= (n_bars * 0.82).to_i
@@ -4450,7 +4491,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     if cvar[:double_pad]
       events[:pad] << [[pad_t + cvar[:double_pad_delay], 0.0].max.round(6),
                        dilla_velocity(cvar[:double_pad_vel], bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.68]
-    elsif (feel == :timeless || RG69_DRUM_FEELS.include?(feel)) && section == :main && bar % 4 == 1 && phase != :development
+    elsif (feel == :timeless || LOFI_DRUM_FEELS.include?(feel)) && section == :main && bar % 4 == 1 && phase != :development
       events[:pad] << [[pad_t + step_p * 0.5, 0.0].max.round(6),
                        dilla_velocity(0.22, bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.72]
     end
@@ -4477,6 +4518,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       end
     end
   end
+  schedule_dfam_events!(events, n_bars, beat_p, swing, quintuplet, timing)
   events
 end
 
@@ -5033,15 +5075,18 @@ end
 def native_pad_voice_expression(hz, amp, voice_i, pan, phase_seed, native_patch: nil)
   frequency = hz.round(4)
   drift = "(1+0.0014*sin(2*PI*0.065*t+#{phase_seed.round(3)}))"
-  native = native_patch&.dig(:native) || @render_native_patch&.dig(:native) || { wave: :rhodes, detune: 0.004, bloom: 0.28 }
+  wave = @render_pad_native_wave || DillaLofiMachine.native_wave_for_pad
+  native = native_patch&.dig(:native) || @render_native_patch&.dig(:native) ||
+           { wave: wave, detune: 0.004, bloom: 0.28 }
+  pad_gain = @render_pad_gain || 1.0
   body = native_waveform_body(frequency, wave: native[:wave] || :rhodes, bloom: native[:bloom] || 0.2,
                               drift: drift, detune: native[:detune] || 0.004, phase_seed: phase_seed)
   breathe = "(0.80+0.20*sin(2*PI*#{(0.16 + voice_i * 0.025).round(3)}*t+#{phase_seed.round(3)}))"
   atk = (@render_pad_attack_sec || 0.072).round(4)
   rel = (@render_pad_release_decay || 0.07).round(4)
   env = "min(1,pow(t/#{atk},1.15))*exp(-t*#{rel})*#{breathe}"
-  ["#{amp.round(6)}*#{(0.5 - pan * 0.5).round(4)}*#{env}*#{body}",
-   "#{amp.round(6)}*#{(0.5 + pan * 0.5).round(4)}*#{env}*#{body}"]
+  ["#{(amp * pad_gain).round(6)}*#{(0.5 - pan * 0.5).round(4)}*#{env}*#{body}",
+   "#{(amp * pad_gain).round(6)}*#{(0.5 + pan * 0.5).round(4)}*#{env}*#{body}"]
 end
 
 def render_native_pad_wav(path, pad_events, duration)
@@ -5434,7 +5479,7 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
   path
 end
 
-def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [], cfg: nil)
+def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [], cfg: nil, dfam_events: nil)
   cfg ||= dilla_resolve_config
   pick_synth_patches!(cfg) unless @render_ep_patch
   tones_path = "#{path}.tones.wav"
@@ -5578,6 +5623,16 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   end
   FileUtils.rm_f(pads_path)
   FileUtils.rm_f(tones_path)
+  if dfam_events&.any?
+    dfam_path = "#{path}.dfam.wav"
+    render_dfam_wav(dfam_path, dfam_events, duration)
+    tmp = "#{path}.dfam_mix.wav"
+    sh! "ffmpeg", "-y", "-i", path, "-i", dfam_path,
+        "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=1.0 0.26:duration=first:normalize=0,alimiter=limit=0.96[out]",
+        "-map", "[out]", "-t", duration.to_s, "-c:a", "pcm_s16le", tmp
+    FileUtils.mv(tmp, path)
+    FileUtils.rm_f(dfam_path)
+  end
   warm_dilla_pad_post(path, cfg: cfg || dilla_resolve_config)
 end
 
@@ -5771,6 +5826,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   @render_pad_attack_sec = (cfg[:sonic]&.dig("synth", "pad_attack_ms") || 72).to_f / 1000.0
   rel_ms = (cfg[:sonic]&.dig("synth", "pad_release_ms") || 1400).to_f
   @render_pad_release_decay = (1.0 / [rel_ms / 1000.0, 0.25].max).round(4)
+  @render_pad_native_wave = DillaLofiMachine.native_wave_for_pad
+  @render_pad_gain = (cfg[:sonic]&.dig("synth", "pad_volume_pct") || 40).to_f / 100.0
   composition_session!(n_bars: n_bars, track: cfg[:track].to_s)
   if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
     cfg = cfg.merge(swing: @composition_session.groove_profile[:swing].to_f)
@@ -5866,7 +5923,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   use_stem_harmony = !stems.empty?
   unless use_stem_harmony
     render_harmonic_wav(harmonic_tmp, events[:pad], events[:chop], events[:bass], duration,
-                        melody_events: events[:melody], cfg: cfg)
+                        melody_events: events[:melody], cfg: cfg, dfam_events: events[:dfam])
   end
 
   command = ["ffmpeg", "-y", "-i", drum_tmp]
@@ -7345,7 +7402,9 @@ FLAG_ENV = {
   "analog-chain" => "ANALOG_CHAIN", "sidechain" => "SIDECHAIN", "bars" => "BARS",
   "bpm" => "BPM", "swing" => "SWING", "voicing" => "VOICING", "kicks" => "KICKS",
   "performer" => "PERFORMER", "groove-dna" => "GROOVE_DNA", "composition" => "COMPOSITION",
-  "generations" => "GENERATIONS", "listen-passes" => "LISTEN_PASSES"
+  "generations" => "GENERATIONS", "listen-passes" => "LISTEN_PASSES",
+  "drum-preset" => "DRUM_PRESET", "pad-wave" => "PAD_WAVE", "dfam" => "DFAM",
+  "bit-depth" => "BIT_DEPTH", "pad-attack" => "PAD_ATTACK", "pad-release" => "PAD_RELEASE"
 }.freeze
 
 def apply_flags!(argv)
@@ -7416,6 +7475,21 @@ DISPATCH = {
     else
       render_madlib_drums(out)
     end
+  end,
+  "lofi" => -> { puts JSON.pretty_generate(DillaLofiMachine.machine_status(ENV["TRACK"])) },
+  "dfam" => lambda do
+    require_tools! "ffmpeg"
+    pick_render_seed!
+    cfg = dilla_resolve_config
+    n = (ARGV.shift || 4).to_i
+    beat_p = 60.0 / cfg[:bpm]
+    events = Hash.new { |h, k| h[k] = [] }
+    schedule_dfam_events!(events, n, beat_p, cfg[:swing], cfg[:quintuplet], cfg[:timing])
+    path = File.join(OUTPUT_DIR, "dfam_preview.wav")
+    duration = (beat_p * 4.0 * n).round(3)
+    render_dfam_wav(path, events[:dfam], duration)
+    puts "wrote #{path} (#{cfg[:bpm].round} BPM, #{n} bars, DFAM 8-step)"
+    play(path) if ARGV.shift != "no-play"
   end,
   "dilla" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
