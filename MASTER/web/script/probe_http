@@ -88,12 +88,25 @@ begin
     end
   end
   if !token.empty?
-    authed_metrics = get("/chat/metrics", headers: { "X-Token" => token })
-    if authed_metrics.code == "200"
-      data = JSON.parse(authed_metrics.body)
-      failures << "metrics missing model" unless data.key?("model")
-    else
-      failures << "authed metrics #{authed_metrics.code}"
+    # /chat/metrics 503s with "warming up" until the background agent
+    # container finishes booting (~90s on the VPS, per ChatController#metrics)
+    # -- running right after a fresh restart (as vps_deploy_master.sh's smoke
+    # step does) hit this every single deploy, a false failure rather than a
+    # real regression. Poll the same readiness signal metrics itself depends
+    # on (/runtime/status's "ready" flag) before treating a non-200 as fatal.
+    deadline = Time.now + 100
+    loop do
+      authed_metrics = get("/chat/metrics", headers: { "X-Token" => token })
+      if authed_metrics.code == "200"
+        data = JSON.parse(authed_metrics.body)
+        failures << "metrics missing model" unless data.key?("model")
+        break
+      elsif authed_metrics.code == "503" && Time.now < deadline
+        sleep 2
+      else
+        failures << "authed metrics #{authed_metrics.code}"
+        break
+      end
     end
   end
 rescue Errno::ECONNREFUSED, SocketError => e
