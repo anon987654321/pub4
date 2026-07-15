@@ -255,7 +255,8 @@ else
 fi
 
 DOWNLOAD_DIR="${DOWNLOAD_DIR:-$DEFAULT_DOWNLOAD_DIR}"
-STAGING_DIR="${STAGING_DIR:-${DOWNLOAD_DIR}/.staging}"   # incomplete pulls; promoted after verify
+STATE_DIR="${STATE_DIR:-${HOME}/mov-sh-state}"
+STAGING_DIR="${STAGING_DIR:-${DOWNLOAD_DIR}/staging}"   # incomplete pulls; promoted after verify
 MIN_RATING=6.5
 MIN_YEAR=2025
 MAX_YEAR="$(date +%Y)"
@@ -265,7 +266,7 @@ TOP_COUNT=50
 MAX_SIZE_GB=4.0             # prefer compact WEBRips over 15+ GB encodes
 ENGLISH_ONLY=false          # if true: English audio only (no international)
 REQUIRE_ENG_SUBS=true       # international OK — but torrent must have English subs or English audio
-HISTORY_FILE="${HOME}/.mov_sh_history"
+HISTORY_FILE="${STATE_DIR}/history"
 DRY_RUN=false
 DO_DOWNLOAD=false
 LIST_ONLY=false
@@ -279,8 +280,8 @@ SOURCE_ARG="prestige"   # prestige (real fest/awards 2025+) | top | imdb | yts |
 PAGES=3
 YEAR_EXPLICIT=false
 AUTO_MODE=false
-SKIP_FILE="${HOME}/.mov_sh_skip"
-PRESTIGE_USER_FILE="${HOME}/.mov_sh_prestige"
+SKIP_FILE="${STATE_DIR}/skip"
+PRESTIGE_USER_FILE="${STATE_DIR}/prestige"
 SKIP_LIST_MERGED=""
 SYNC_OWNED=false          # scan download dir and treat matches as owned/skipped
 NO_SYNC_OWNED=false
@@ -298,7 +299,11 @@ PRUNE_INVALID=true       # remove sparse partials / orphan .aria2 on startup
 KEEP_HOURS=48            # cleanup-seen: keep media newer than this (hours); 0 = delete all matches
 MIN_FREE_GB=3.0          # stop downloading when less than this many GB free
 ALLOW_CAM=false          # if true: accept CAM/HDTS/TS (theatrical recordings — low quality)
-STREMIO_LOCK="${HOME}/.mov_sh_stremio.lock"
+STREMIO_LOCK="${STATE_DIR}/stremio.lock"
+RUN_LOCK="${STATE_DIR}/mov.sh.lock"
+FILE_ALLOCATION=trunc       # trunc avoids sparse holes that look complete but won't play
+FORCE_RUN=false
+REFETCH_IDS=()
 
 # Bad release tags we explicitly reject (see is_good_release() for the actual matching logic)
 # Kept here for documentation / easy future extension.
@@ -534,9 +539,7 @@ tt32916440
 tt30144839
 tt32298285
 tt26581740
-tt1312221
 tt27714581
-tt12042730
 tt14205554
 tt32649961
 tt37969426
@@ -584,6 +587,9 @@ while [[ $# -gt 0 ]]; do
     --imdb=*) IMDB_TARGETS+=("${1#*=}"); shift ;;
     --skip=*) EXTRA_SKIP_IDS+=("${1#*=}"); shift ;;
     --seen=*) EXTRA_SKIP_IDS+=("${1#*=}"); shift ;;
+    --refetch=*) REFETCH_IDS+=("${1#*=}"); shift ;;
+    --force) FORCE_RUN=true; shift ;;
+    --sparse) FILE_ALLOCATION=none; shift ;;
     --search=*) SEARCH_QUERIES+=("${1#*=}"); shift ;;
     --lookup=*) LOOKUP_QUERY="${1#*=}"; LOOKUP_MODE=true; shift ;;
     --sync-owned) SYNC_OWNED=true; shift ;;
@@ -611,17 +617,20 @@ Options:
   -l, --list            Just list the movies (no torrent search)
   --auto                Fully autonomous: skip prompt, auto pick & process ones with available torrents (best with -y)
   --library             Same as zero-arg: autonomous prestige auto-download
-  --cleanup-seen        Delete on-disk media matching ~/.mov_sh_skip (frees space for new pulls)
+  --cleanup-seen        Delete on-disk media matching ~/mov-sh-state/skip (frees space for new pulls)
   --no-cleanup-seen     Skip seen-library cleanup (default for zero-arg / --library)
   --keep-hours=N        During cleanup-seen, keep media modified within N hours (default: 48 in --library)
   --min-free-gb=N       Stop downloading when free disk drops below N GB (default: 3)
   --no-prune            Skip startup prune of sparse partials and stale .aria2 files
-  --seen=IMDB_ID        Mark title as seen — same as --skip (persisted to ~/.mov_sh_skip)
+  --seen=IMDB_ID        Mark title as seen — same as --skip (persisted to ~/mov-sh-state/skip)
+  --refetch=IMDB_ID     Re-fetch a title (removes from history/skip for this run; repeatable)
+  --force               Skip singleton lock (use when a stale lock blocks a new run)
+  --sparse              Use aria2 sparse allocation (saves disk; partials may look complete but fail playback)
   --top=N               How many to show (default: 30)
   --max=N               Maximum number of movies to download (default: 100)
   --quality=720p        Preferred quality (480p/720p/1080p proper encodes only)
   --dir=PATH            Target directory (smart default: ~/storage/external-1 on Termux, ~/Downloads/mov-sh on Linux)
-                          Downloads land in PATH/.staging first; promoted to PATH only after playable+audio verify
+                          Downloads land in PATH/staging first; promoted to PATH only after playable+audio verify
   --year=YYYY           Exact year (default min 2025, max current year)
   --year-min=YYYY       Minimum release year (default 2025)
   --year-max=YYYY       Maximum release year
@@ -638,7 +647,7 @@ Options:
   --allow-dubbed        Allow any language/dub — no English subtitle requirement
   --no-sub-requirement  Same as --allow-dubbed (skip subtitle requirement)
   --parallel=N          Download N torrents at once (zero-arg: 6 on macOS/Linux with flock, else 1)
-  --skip=IMDB_ID        Skip a title (repeatable); also persisted in ~/.mov_sh_skip
+  --skip=IMDB_ID        Skip a title (repeatable); also persisted in ~/mov-sh-state/skip
   --sync-owned          Scan download dir + match prestige list → auto-skip owned titles
   --no-sync-owned       Disable owned-title scan
   --imdb=ID             Target one IMDb ID directly (repeatable; stable vs --search)
@@ -652,8 +661,8 @@ Options:
   --help                This help
 
 Skip / owned / seen:
-  ~/.mov_sh_history — download log; also blocks re-fetch after you delete files from disk
-  ~/.mov_sh_skip + --seen= — explicitly watched titles (never re-fetched; --cleanup-seen deletes these from disk)
+  ~/mov-sh-state/history — download log; also blocks re-fetch after you delete files from disk
+  ~/mov-sh-state/skip + --seen= — explicitly watched titles (never re-fetched; --cleanup-seen deletes these from disk)
   Inline SKIP_LIST — hardcoded never-fetch (Sinners etc.)
   Zero-arg / --library: prestige list + live Cinemeta discovery → parallel auto-fetch (2023+)
 
@@ -682,7 +691,9 @@ Examples:
   ./mov.sh --lookup="Fjord 2026"              # resolve IMDB ID for prestige list edits
   ./mov.sh --search="Cannes 2026 winners" --list
   ./mov.sh --skip=tt31193180 --auto -y        # skip Sinners et al.
+  ./mov.sh --refetch=tt20215234 --auto -y     # re-download Conclave after a bad pull
   ./mov.sh --purge --auto -y                  # wipe dir, fetch only new titles
+  Stale downloads: pkill -9 -x aria2c  (never pkill -f mov.sh — kills your shell)
 EOF
       exit 0
       ;;
@@ -692,7 +703,7 @@ done
 
 # Curated batch queues (replaces queue-remaining.sh)
 if [[ -n ${QUEUE_MODE:-} ]]; then
-  STAGING_DIR="${STAGING_DIR:-${DOWNLOAD_DIR}/.staging}"
+  STAGING_DIR="${STAGING_DIR:-${DOWNLOAD_DIR}/staging}"
   dispatch_queue "$QUEUE_MODE"
   exit $?
 fi
@@ -759,7 +770,60 @@ fi
 
 
 # ── Setup & Dependencies ───────────────────────────────────────────────────
-mkdir -p "$DOWNLOAD_DIR" "$STAGING_DIR" || { echo "❌ Cannot create $DOWNLOAD_DIR"; exit 1; }
+migrate_legacy_mov_paths() {
+  local legacy new item
+  mkdir -p "$STATE_DIR"
+  for legacy new in \
+    "${HOME}/.mov_sh_history" "$HISTORY_FILE" \
+    "${HOME}/.mov_sh_skip" "$SKIP_FILE" \
+    "${HOME}/.mov_sh_prestige" "$PRESTIGE_USER_FILE"; do
+    [[ -f $legacy && ! -s $new ]] && cp "$legacy" "$new"
+  done
+  legacy="${DOWNLOAD_DIR}/.staging"
+  if [[ -d $legacy ]]; then
+    mkdir -p "$STAGING_DIR"
+    for item in "$legacy"/*(N); do
+      [[ -e $item ]] || continue
+      mv "$item" "$STAGING_DIR"/ 2>/dev/null || true
+    done
+    rmdir "$legacy" 2>/dev/null || true
+  fi
+}
+
+mkdir -p "$DOWNLOAD_DIR" "$STATE_DIR" "$STAGING_DIR" || { echo "❌ Cannot create $DOWNLOAD_DIR"; exit 1; }
+migrate_legacy_mov_paths
+
+acquire_run_lock() {
+  if [ "$FORCE_RUN" = true ]; then
+    echo "⚠️  --force: skipping singleton lock"
+    return 0
+  fi
+  if ! command -v flock >/dev/null 2>&1; then
+    return 0
+  fi
+  exec 8>>"$RUN_LOCK"
+  if ! flock -n 8; then
+    echo "❌ Another mov.sh is already running (lock: $RUN_LOCK)"
+    echo "   Kill stale workers: pkill -9 -x aria2c"
+    echo "   Or re-run with --force"
+    exit 1
+  fi
+}
+
+cleanup_stale_aria2() {
+  local pid cmd killed=0
+  while IFS= read -r pid cmd; do
+    [ -z "$pid" ] && continue
+    [[ "$cmd" == *"$STAGING_DIR"* ]] || continue
+    kill -9 "$pid" 2>/dev/null && killed=$((killed + 1))
+  done < <(ps aux 2>/dev/null | grep '[a]ria2c' | awk -v staging="$STAGING_DIR" '$0 ~ staging {print $2, substr($0, index($0,$11))}')
+  if [ "$killed" -gt 0 ]; then
+    echo "  🧹 Killed $killed stale aria2 worker(s) for $STAGING_DIR"
+  fi
+}
+
+acquire_run_lock
+[ "$DRY_RUN" = false ] && [ "$DO_DOWNLOAD" = true ] && cleanup_stale_aria2
 
 # Termux-specific storage warning (matches original Gist behavior)
 if is_termux && [[ ! -d "${HOME}/storage" ]]; then
@@ -830,7 +894,7 @@ count_job_successes() {
 wait_for_download_slot() {
   local max="$1" running
   while true; do
-    running=${#jobstates}
+    running=$(jobs -r 2>/dev/null | wc -l | tr -d ' ')
     [[ "$running" =~ ^[0-9]+$ ]] || running=0
     (( running < max )) && break
     sleep 1
@@ -858,6 +922,25 @@ load_skip_lists() {
     done
   fi
   SKIP_LIST_MERGED=$(echo "$SKIP_LIST_MERGED" | grep -E '^tt[0-9]+$' | sort -u)
+  apply_refetch_ids
+}
+
+apply_refetch_ids() {
+  local id tmp
+  [ ${#REFETCH_IDS[@]} -eq 0 ] && return 0
+  for id in "${REFETCH_IDS[@]}"; do
+    [[ "$id" =~ ^tt[0-9]+$ ]] || continue
+    SKIP_LIST_MERGED=$(print -l ${(f)SKIP_LIST_MERGED} | grep -vF "$id" 2>/dev/null || true)
+    if [ -s "$HISTORY_FILE" ]; then
+      tmp=$(grep -vF "$id" "$HISTORY_FILE" 2>/dev/null || true)
+      print -r -- "$tmp" >"$HISTORY_FILE"
+    fi
+    if [ -s "$SKIP_FILE" ]; then
+      tmp=$(grep -vF "$id" "$SKIP_FILE" 2>/dev/null || true)
+      print -r -- "$tmp" >"$SKIP_FILE"
+    fi
+    echo "  🔄 Refetch enabled: $id (removed from history/skip)"
+  done
 }
 
 skip_list_count() {
@@ -890,6 +973,7 @@ prune_invalid_downloads() {
     [ -d "$root" ] || continue
     while IFS= read -r path; do
       [ -z "$path" ] && continue
+      [ -f "${path}.aria2" ] && continue   # active download — never prune
       is_valid_media_file "$path" && continue
       rm -f "$path" "${path}.aria2" 2>/dev/null && removed=$((removed + 1)) && echo "  🗑️  partial: $(basename "$path")"
     done < <(find "$root" -maxdepth 3 \
@@ -916,7 +1000,7 @@ media_is_protected_by_keep_hours() {
   [ "$age_sec" -lt $(( keep_h * 3600 )) ]
 }
 
-# Delete on-disk media for titles in ~/.mov_sh_skip (seen / already watched).
+# Delete on-disk media for titles in ~/mov-sh-state/skip (seen / already watched).
 cleanup_seen_from_disk() {
   local keep_h="$KEEP_HOURS" imdb title year rating paths path parent freed_kb=0 total_kb=0
   echo "🧹 Cleaning seen/skipped titles from $DOWNLOAD_DIR (keep-hours=${keep_h})..."
@@ -1075,7 +1159,7 @@ if [ "$LOOKUP_MODE" = true ]; then
     printf "  %s (%s)  ⭐%s  %s\n" "$title" "$year" "$rating" "$imdb"
   done
   echo "────────────────────────────────────────────────────────────"
-  echo "Add to PRESTIGE_LIST or ~/.mov_sh_prestige as: YEAR<TAB>IMDB<TAB>TITLE"
+  echo "Add to PRESTIGE_LIST or ~/mov-sh-state/prestige as: YEAR<TAB>IMDB<TAB>TITLE"
   exit 0
 fi
 
@@ -1525,7 +1609,7 @@ is_valid_media_file() {
     head=$(dd if="$fpath" bs=16 count=1 skip=$((off / 16)) 2>/dev/null | od -An -tx1 | tr -d ' \n')
     [ "$head" = "00000000000000000000000000000000" ] && zero=$((zero + 1))
   done
-  [ "$zero" -lt 3 ]
+  [ "$zero" -eq 0 ]
 }
 
 # ffprobe/ffmpeg decode check — catches moov-missing MP4s and video-only rips.
@@ -1609,19 +1693,79 @@ verify_download_for_title() {
   movie_exists_locally "$title" "$year"
 }
 
+port_is_free() {
+  local port=$1
+  ! lsof -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+}
+
+pick_free_port() {
+  local base=$1 attempt port
+  for attempt in {0..39}; do
+    port=$(( base + attempt * 17 + RANDOM % 13 ))
+    (( port >= 1024 && port <= 65500 )) || continue
+    port_is_free "$port" && { print -r -- "$port"; return 0 }
+  done
+  print -r -- $(( 1024 + RANDOM % 64000 ))
+}
+
+find_resumable_hash_for_title() {
+  local title="$1" year="$2"
+  local path aria2 hash
+  while IFS= read -r path; do
+    [[ -f "${path}.aria2" ]] || continue
+    media_path_matches_title "$path" "$title" "$year" || continue
+    hash=$(grep -aoE '[0-9a-f]{40}' "${path}.aria2" 2>/dev/null | head -1)
+    hash=${hash:l}
+    [[ $hash =~ ^[0-9a-f]{40}$ ]] && { print -r -- "$hash"; return 0 }
+  done < <(find "$STAGING_DIR" -maxdepth 4 \
+      \( -iname "*.mkv" -o -iname "*.mp4" -o -iname "*.m4v" -o -iname "*.avi" \) 2>/dev/null)
+  while IFS= read -r aria2; do
+    path="${aria2%.aria2}"
+    [[ -f "$path" ]] || continue
+    media_path_matches_title "$path" "$title" "$year" || continue
+    hash=$(grep -aoE '[0-9a-f]{40}' "$aria2" 2>/dev/null | head -1)
+    hash=${hash:l}
+    [[ $hash =~ ^[0-9a-f]{40}$ ]] && { print -r -- "$hash"; return 0 }
+  done < <(find "$STAGING_DIR" -maxdepth 1 -name '*.aria2' 2>/dev/null)
+  return 1
+}
+
+prioritize_resume_hash() {
+  local candidates="$1" resume_hash="$2"
+  local line hash rest
+  resume_hash=${resume_hash:l}
+  [[ $resume_hash =~ ^[0-9a-f]{40}$ ]] || { print -r -- "$candidates"; return }
+  local -a preferred=() other=()
+  while IFS='|' read -r hash rest; do
+    [[ -z "$hash" ]] && continue
+    hash=${hash:l}
+    if [[ "$hash" == "$resume_hash" ]]; then
+      preferred+=("${hash}|${rest}")
+    else
+      other+=("${hash}|${rest}")
+    fi
+  done <<< "$candidates"
+  if [ ${#preferred[@]} -gt 0 ]; then
+    print -l -- "${preferred[@]}" "${other[@]}"
+  else
+    print -r -- "${resume_hash}|9999.0|1"
+    print -r -- "$candidates"
+  fi
+}
+
 # ── Helper: aria2c with hard timeout so dead magnets cannot stall overnight ─
 download_torrent() {
   local magnet="$1"
   local slot="${2:-0}"
   local imdb="${3:-}"
   local attempt_timeout="${4:-$DOWNLOAD_TIMEOUT_SEC}"
-  local timeout_bin=""
-  local port_seed=$(( slot * 47 + RANDOM % 100 ))
+  local timeout_bin="" err_file bt_port dht_port try rc port_base
+  err_file="${TMPDIR:-/tmp}/mov-sh-aria2-$$-${slot}.err"
+
+  port_base=$(( 6881 + slot * 137 + RANDOM % 200 ))
   if [[ "$imdb" =~ tt([0-9]+)$ ]]; then
-    port_seed=$(( 10#$match[1] % 3000 ))
+    port_base=$(( 6881 + (10#$match[1] % 2000) + slot * 53 ))
   fi
-  local bt_port=$((6881 + port_seed))
-  local dht_port=$((51413 + port_seed))
 
   if command -v timeout >/dev/null 2>&1; then
     timeout_bin="timeout"
@@ -1629,31 +1773,46 @@ download_torrent() {
     timeout_bin="gtimeout"
   fi
 
-  local -a aria_cmd=(aria2c
-    --seed-time=0
-    --file-allocation=none
-    --allow-overwrite=true
-    --console-log-level=notice
-    --summary-interval=30
-    --max-tries=3
-    --continue=true
-    --bt-stop-timeout=0
-    --bt-tracker-timeout=20
-    --connect-timeout=10
-    --timeout=30
-    --enable-dht=true
-    --bt-enable-lpd=true
-    --listen-port="$bt_port"
-    --dht-listen-port="$dht_port"
-    --dir="$STAGING_DIR"
-    "$magnet"
-  )
+  for try in 1 2 3 4; do
+    bt_port=$(pick_free_port "$port_base")
+    dht_port=$(pick_free_port $(( bt_port + 43000 )))
 
-  if [ -n "$timeout_bin" ]; then
-    "$timeout_bin" "$attempt_timeout" "${aria_cmd[@]}"
-  else
-    "${aria_cmd[@]}"
-  fi
+    local -a aria_cmd=(aria2c
+      --seed-time=0
+      --file-allocation="$FILE_ALLOCATION"
+      --allow-overwrite=true
+      --console-log-level=notice
+      --summary-interval=30
+      --max-tries=3
+      --continue=true
+      --bt-stop-timeout=0
+      --bt-tracker-timeout=20
+      --connect-timeout=10
+      --timeout=30
+      --enable-dht=true
+      --bt-enable-lpd=true
+      --listen-port="$bt_port"
+      --dht-listen-port="$dht_port"
+      --dir="$STAGING_DIR"
+      "$magnet"
+    )
+
+    : >"$err_file"
+    if [ -n "$timeout_bin" ]; then
+      "$timeout_bin" "$attempt_timeout" "${aria_cmd[@]}" 2>"$err_file"
+    else
+      "${aria_cmd[@]}" 2>"$err_file"
+    fi
+    rc=$?
+
+    if grep -qiE 'address already in use|failed to bind|bind.*error' "$err_file" 2>/dev/null; then
+      continue
+    fi
+    rm -f "$err_file"
+    return $rc
+  done
+  rm -f "$err_file"
+  return 1
 }
 
 seeders_ge_min() {
@@ -1700,10 +1859,6 @@ process_one_movie() {
     log_line "  👁️  Marked seen ($imdb) — won't re-fetch"
     return 0
   fi
-  if is_skipped_imdb "$imdb"; then
-    log_line "  ⏭️  Hard-skipped ($imdb)"
-    return 0
-  fi
 
   if movie_exists_locally "$title" "$year"; then
     log_line "  ✅ Already on disk — skipping download"
@@ -1718,6 +1873,15 @@ process_one_movie() {
   if [ -z "$candidates" ]; then
     log_line "  ❌ No suitable torrent found, skipping."
     return 1
+  fi
+
+  local resume_hash=""
+  if [ "$DRY_RUN" = false ]; then
+    resume_hash=$(find_resumable_hash_for_title "$title" "$year" 2>/dev/null || true)
+    if [ -n "$resume_hash" ]; then
+      log_line "  ♻️  Resuming partial (${resume_hash:0:8}…) — same torrent before alternates"
+      candidates=$(prioritize_resume_hash "$candidates" "$resume_hash")
+    fi
   fi
 
   local avail tried=0
@@ -1913,7 +2077,7 @@ fetch_prestige() {
 
 # ── Main Execution ────────────────────────────────────────────────────────
 echo "🎬 mov.sh – $(date '+%Y-%m-%d %H:%M')"
-AVAILABLE_GB=$(get_available_gb "$DOWNLOAD_DIR")
+AVAILABLE_GB=$(awk -v g="$(get_available_gb "$DOWNLOAD_DIR")" 'BEGIN{printf "%.1f", g}')
 echo "💾 ${AVAILABLE_GB} GB free in $DOWNLOAD_DIR"
 echo "📥 Staging incomplete pulls in $STAGING_DIR (promoted after playable+audio verify)"
 if [ "$ENGLISH_ONLY" = true ]; then
@@ -1938,7 +2102,7 @@ if [ "$SYNC_OWNED" = true ]; then
 fi
 skip_n=$(skip_list_count)
 skip_n=${skip_n:-0}
-[ "${skip_n:-0}" -gt 0 ] && echo "⏭️  Skipping $skip_n titles (~/.mov_sh_skip + SKIP_LIST)"
+[ "${skip_n:-0}" -gt 0 ] && echo "⏭️  Skipping $skip_n titles ($SKIP_FILE + SKIP_LIST)"
 [ ${#SEARCH_QUERIES} -gt 0 ] && echo "🔎 Extra Cinemeta searches: ${#SEARCH_QUERIES}"
 [ "$FILTER_CATALOG_JUNK" = true ] && [[ "$SOURCE_ARG" == "all" || "$SOURCE_ARG" == "top" ]] && \
   echo "🧹 Catalog junk filter on (concerts/TV/anime) — use --no-junk-filter to disable"
