@@ -77,7 +77,13 @@ MASTER/output/
 # (was DEPLOY/tools/dilla/ before the 2026-07 DEPLOY->OPERATOR/RAILS/OPENBSD
 # split — dilla itself lives under MASTER/tools/, never moved to OPERATOR)
 MASTER/tools/dilla/analysis/
+# .cache/ is the engine's consolidated scratch dir (SCRATCH_DIR in dilla.rb);
+# the dotfile patterns below it catch strays from pre-.cache versions.
+MASTER/tools/dilla/.cache/
 MASTER/tools/dilla/.dilla_*.wav
+# pre-.cache engine versions wrote this into whatever directory they ran
+# from — match it anywhere until no old-code process remains
+.dilla_progressions_log.txt
 MASTER/tools/dilla/.live_tmp.wav
 MASTER/tools/dilla/dilla_beat_live*.mp3
 RAILS/*/app/assets/builds/*.css.map

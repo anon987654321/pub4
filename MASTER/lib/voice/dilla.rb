@@ -38,9 +38,11 @@ module Master
       def council_brief
         brief
       rescue StandardError
-        ProductionDna.brief
-      rescue StandardError => e
-        "Dilla production profile failed to load: #{e.message}."
+        begin
+          ProductionDna.brief
+        rescue StandardError => e
+          "Dilla production profile failed to load: #{e.message}."
+        end
       end
     end
   end
