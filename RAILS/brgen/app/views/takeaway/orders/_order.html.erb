@@ -1,4 +1,5 @@
-<article class="order-row" role="article" aria-label="Order">
-  <h2><%= link_to order.restaurant.name, takeaway_order_path(order) %></h2>
-  <p class="dim"><%= order.status.humanize %> · <%= order.total_display %> · <time><%= order.created_at.strftime("%d %b %Y") %></time></p>
-</article>
+<%= render "shared/x_card",
+  name: order.restaurant.name,
+  meta: "#{order.status.humanize} · #{order.total_display} · #{order.created_at.strftime('%d %b %Y')}",
+  url: takeaway_order_path(order),
+  class: "x-takeaway" %>

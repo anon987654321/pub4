@@ -44,6 +44,7 @@ function initSplash() {
     const h2 = splash.querySelector("h2")
     if (h2) h2.classList.add("clicked")
     setTimeout(() => { splash.hidden = true; splash.classList.remove("ack") }, 220)
+    navigator.vibrate?.(8)
   }
 
   splash.addEventListener("click", e => { e.stopPropagation(); dismiss() })

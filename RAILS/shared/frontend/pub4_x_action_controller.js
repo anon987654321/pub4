@@ -6,10 +6,12 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["count"]
-  static values = { 
+  static values = {
     url: String,
     count: Number,
-    activeClass: { type: String, default: "active" }
+    activeClass: { type: String, default: "active" },
+    param: { type: String, default: "" },
+    paramKey: { type: String, default: "vote[value]" }
   }
 
   connect() {
@@ -30,14 +32,16 @@ export default class extends Controller {
     }
 
     if (this.urlValue) {
-      fetch(this.urlValue, {
-        method: "POST",
-        headers: {
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "",
-          "Accept": "text/vnd.turbo-stream.html, application/json"
-        },
-        credentials: "same-origin"
-      }).then(res => {
+      const headers = {
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || "",
+        "Accept": "text/vnd.turbo-stream.html, application/json"
+      }
+      const init = { method: "POST", headers, credentials: "same-origin" }
+      if (this.paramValue) {
+        headers["Content-Type"] = "application/x-www-form-urlencoded"
+        init.body = new URLSearchParams({ [this.paramKeyValue]: this.paramValue }).toString()
+      }
+      fetch(this.urlValue, init).then(res => {
         if (!res.ok) this._rollback(btn, isActive)
       }).catch(() => this._rollback(btn, isActive))
     }

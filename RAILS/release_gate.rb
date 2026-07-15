@@ -26,6 +26,7 @@ def ruby_cmd
   return ["ruby34"] if command_available?("ruby34")
   return ["env", "RBENV_VERSION=3.4.9", "rbenv", "exec", "ruby"] if rbenv_version_available?("3.4.9")
 
+  warn "release gate: no ruby34/rbenv 3.4.9 — set RUBY_CMD=ruby34 (using #{RbConfig.ruby})"
   [RbConfig.ruby]
 end
 

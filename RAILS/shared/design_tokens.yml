@@ -40,7 +40,7 @@ luxury:
 face_root:
   anchors:
     c_text: "oklch(86% 0.02 300)"
-    x_text: "#d8d6e0"
+    x_text: "#e8e4dc"
     c_accent: "oklch(78% 0.10 300)"
     c_danger: "oklch(60% 0.14 35)"
     c_code: "oklch(74% 0.11 275)"
@@ -64,6 +64,8 @@ face_root:
     radius-lg: "0"
     radius-pill: "0"
     face-bar-height: "36px"
+    hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"
+    hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + 44px)"
     # Additive-blending budget: ~17k points; raising size/glow/decay together
     # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the
     # framebuffer into a solid white oval. These are the last-known-good values.

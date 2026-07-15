@@ -28,12 +28,12 @@
   <section role="region" aria-label="Live streams now">
     <h2>Live now</h2>
     <% @live.each do |b| %>
-      <article>
-        <%= link_to tv_channel_path(b.channel) do %>
-          <span class="live-badge">Live</span>
-          <strong><%= b.title %></strong> — <%= b.channel.name %>
-        <% end %>
-      </article>
+      <%= render "shared/x_card",
+        name: b.title,
+        handle: b.channel.name,
+        content: capture { %(<span class="live-badge">Live</span>).html_safe },
+        url: tv_channel_path(b.channel),
+        class: "x-tv" %>
     <% end %>
   </section>
 <% end %>

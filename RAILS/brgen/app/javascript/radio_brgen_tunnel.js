@@ -383,7 +383,8 @@ export class RadioBrgen {
 
     // Reintegrated SimpleCarousel from historical best (c7c8effcd)
     const cityCarousel = document.getElementById("cityCarousel")
-    if (cityCarousel) {
+    if (cityCarousel && !cityCarousel.__carouselInit) {
+      cityCarousel.__carouselInit = true
       new SimpleCarousel(cityCarousel)
       // Inject historical carousel styles to avoid inline <style> auditor flag
       const style = document.createElement('style')

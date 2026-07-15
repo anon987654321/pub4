@@ -13,12 +13,9 @@
     <% end %>
   <% end %>
 
-  <%= tag.div class: "listing-grid" do %>
+  <div class="post-grid">
     <% @listings.each do |listing| %>
-      <%= tag.article class: "listing-card" do %>
-        <%= tag.h2 link_to(listing.title, marketplace_listing_path(listing)) %>
-        <%= tag.p listing.price_display %>
-      <% end %>
+      <%= render "marketplace/listings/card", listing: listing %>
     <% end %>
-  <% end %>
+  </div>
 <% end %>

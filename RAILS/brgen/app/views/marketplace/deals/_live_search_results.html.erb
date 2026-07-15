@@ -6,10 +6,7 @@
  <section class="featured-deals">
  <h2><%= t("marketplace.deals.featured", default: "Featured deals") %></h2>
  <% @featured_deals.each do |deal| %>
- <article class="deal-card featured">
- <h3><%= link_to deal.headline, marketplace_deal_path(deal) %></h3>
- <% if deal.badge.present? %><p><%= deal.badge %></p><% end %>
- </article>
+   <%= render "marketplace/deals/card", deal: deal %>
  <% end %>
  </section>
 <% end %>

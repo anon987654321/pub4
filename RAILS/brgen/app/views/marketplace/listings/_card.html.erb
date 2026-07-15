@@ -4,6 +4,12 @@
     <%= button_to "Add to cart", marketplace_listing_orders_path(listing), params: { quantity: 1 }, class: "x-act x-act--primary" %>
   <% end %>
 <% end %>
+<% listing_content = capture do %>
+  <div class="x-price"><%= listing.price_display %></div>
+  <% if listing.reviews_count.to_i.positive? %>
+    <div class="x-meta"><%= number_with_precision(listing.rating, precision: 1) %> ★ <%= pluralize(listing.reviews_count, "review") %></div>
+  <% end %>
+<% end %>
 <%= render "shared/x_card",
   avatar_url: (listing.photos.attached? ? url_for(listing.photos.first) : nil),
   name: listing.title,
@@ -16,7 +22,7 @@
     listing.category&.name,
     pluralize(listing.views_count.to_i, "view")
   ].compact.join(" · "),
-  content: (listing.reviews_count.to_i.positive? ? "#{number_with_precision(listing.rating, precision: 1)} ★ #{pluralize(listing.reviews_count, 'review')}" : nil),
+  content: listing_content,
   actions: listing_actions,
   url: marketplace_listing_path(listing),
   class: "x-listing",

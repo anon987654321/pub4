@@ -77,3 +77,25 @@
   margin: var(--space-2) 0 var(--space-4);
   font-size: var(--text-sm);
 }
+
+.compose-box textarea,
+.compose-box .ProseMirror {
+  max-height: min(40vh, 280px);
+  overflow-y: auto;
+}
+
+@media (max-width: 767px) {
+  .compose-box {
+    padding-bottom: calc(var(--space-2) + env(keyboard-inset-height, 0px));
+  }
+}
+
+#comments-section form textarea {
+  width: 100%;
+  min-height: 88px;
+  border-radius: var(--x-radius-sm);
+  border: 1px solid var(--border);
+  padding: var(--space-3);
+  background: var(--surface2);
+  color: var(--text);
+}

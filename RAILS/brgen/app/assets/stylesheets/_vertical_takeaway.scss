@@ -76,13 +76,11 @@ body.vertical-takeaway .chip {
   color: var(--foodora);
 }
 
-body.vertical-takeaway .order-list .order-row {
-  display: block;
-  padding: var(--space-3) var(--space-4);
+body.vertical-takeaway .order-list .x-post.x-takeaway {
   border-bottom: 1px solid var(--x-border);
 }
 
-body.vertical-takeaway .order-list .order-row:hover {
+body.vertical-takeaway .order-list .x-post.x-takeaway:hover {
   background: var(--x-hover-subtle);
 }
 

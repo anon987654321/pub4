@@ -1,11 +1,7 @@
-<article class="tv-channel-card">
-  <a href="<%= tv_video_path(tv_video) %>">
-    <% if tv_video.thumbnail.attached? %>
-      <%= lazy_image_tag tv_video.thumbnail, alt: tv_video.title, blurhash: tv_video.thumbnail.try(:metadata).try(:[], "blurhash"), class: tv_media_image_classes(tv_video.thumbnail) %>
-    <% else %>
-      <span aria-hidden="true"><%= tv_video.title[0] %></span>
-    <% end %>
-    <p><strong><%= tv_video.title %></strong></p>
-    <small><%= tv_video.channel.name %> · <%= tv_video.views_count %> views · <%= tv_video.duration_formatted %></small>
-  </a>
-</article>
+<%= render "shared/x_card",
+  avatar_url: (tv_video.thumbnail.attached? ? url_for(tv_video.thumbnail) : nil),
+  name: tv_video.title,
+  handle: tv_video.channel.name,
+  meta: "#{tv_video.views_count} views · #{tv_video.duration_formatted}",
+  url: tv_video_path(tv_video),
+  class: "x-tv" %>

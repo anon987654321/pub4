@@ -2,6 +2,7 @@
   avatar_url: (deal.listing.photos.attached? ? url_for(deal.listing.photos.first) : nil),
   name: deal.headline,
   handle: deal.listing.title,
+  meta: deal.badge.presence,
   content: capture { %(<div class="x-price">#{deal.listing.price_display}</div>).html_safe },
   url: marketplace_deal_path(deal),
   class: "x-deal" %>

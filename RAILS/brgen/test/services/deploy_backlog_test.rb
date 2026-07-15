@@ -60,7 +60,7 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_omniauth_wires_installed_providers_to_identity_primitives
-    initializer = File.read(File.join(ROOT, 'brgen/config/initializers/omniauth.rb'))
+    initializer = File.read(File.join(ROOT, 'shared/config/initializers/omniauth.rb'))
     callback = File.read(File.join(ROOT, 'shared/app/controllers/omniauth_callbacks_controller.rb'))
     links = File.read(File.join(ROOT, 'shared/app/views/shared/_oauth_links.html.erb'))
 
@@ -794,6 +794,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'shared/app/assets/stylesheets/_x_base.scss')), '--x-radius-card: 16px'
     refute File.exist?(File.join(ROOT, 'brgen/app/controllers/playlist_controller.rb'))
     refute File.exist?(File.join(ROOT, 'brgen/app/views/shared/_vote.html.erb'))
+    assert_includes File.read(File.join(ROOT, '_deploy.sh')), 'DEMO_SEED_ON_DEPLOY'
+    assert_includes File.read(File.join(ROOT, 'shared/config/initializers/omniauth.rb')), ':snapchat'
   end
 
   private

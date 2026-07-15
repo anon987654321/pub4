@@ -15,12 +15,14 @@ zsh "$repo/OPENBSD/vps_deploy_master.sh"
 echo "==> brgen"
 zsh "$repo/OPENBSD/bin/vps-deploy" brgen
 
-echo "==> bergen demo seed"
-doas -u brgen sh -c 'cd /home/brgen/app && RAILS_ENV=production bundle exec rails runner "
-  city = City.find_by(domain: \"brgen.no\") or raise \"brgen.no city missing\"
-  Brgen::BergenDemoSeeder.new(city).seed!
-  puts \"bergen_posts=#{Post.where(city: city).count} demo=#{Post.exists?(title: \"Regnværsdag på Bryggen\")}\"
-"'
+if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
+  echo "==> bergen demo seed"
+  doas -u brgen sh -c 'cd /home/brgen/app && RAILS_ENV=production bundle exec rails runner "
+    city = City.find_by(domain: \"brgen.no\") or raise \"brgen.no city missing\"
+    Brgen::BergenDemoSeeder.new(city).seed!
+    puts \"bergen_posts=#{Post.where(city: city).count} demo=#{Post.exists?(title: \"Regnværsdag på Bryggen\")}\"
+  "'
+fi
 
 echo "==> amber"
 zsh "$repo/OPENBSD/bin/vps-deploy" amber

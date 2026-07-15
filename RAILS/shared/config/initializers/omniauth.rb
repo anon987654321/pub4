@@ -1,30 +1,28 @@
 # frozen_string_literal: true
 
-# AN204: OAuth via OmniAuth (google + github + vipps)
+require Shared::Engine.root.join("lib/omniauth/strategies/vipps").to_s if File.exist?(Shared::Engine.root.join("lib/omniauth/strategies/vipps.rb"))
 
-require Shared::Engine.root.join("lib/omniauth/strategies/vipps").to_s
-
-Rails.application.config.middleware.use OmniAuth::Builder do
-  if ENV["VIPPS_CLIENT_ID"].present? && ENV["VIPPS_CLIENT_SECRET"].present?
-    provider :vipps,
-             ENV["VIPPS_CLIENT_ID"],
-             ENV["VIPPS_CLIENT_SECRET"]
-  end
-  if ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
-    provider :google_oauth2,
-             ENV["GOOGLE_CLIENT_ID"],
-             ENV["GOOGLE_CLIENT_SECRET"],
-             scope: "email,profile",
-             prompt: "select_account"
-  end
-
-  if ENV["GITHUB_CLIENT_ID"].present? && ENV["GITHUB_CLIENT_SECRET"].present?
-    provider :github,
-             ENV["GITHUB_CLIENT_ID"],
-             ENV["GITHUB_CLIENT_SECRET"],
-             scope: "user:email"
-  end
-end
-
+Rails.application.config.x.oauth_provider_slugs = []
 OmniAuth.config.allowed_request_methods = %i[post get]
 OmniAuth.config.silence_get_warning = true
+
+register_provider = lambda do |builder, name, client_id_env, client_secret_env, options = {}|
+  client_id = ENV[client_id_env].presence
+  client_secret = ENV[client_secret_env].presence
+  return unless client_id && client_secret
+
+  builder.provider name, client_id, client_secret, options
+  Rails.application.config.x.oauth_provider_slugs << name.to_s
+rescue LoadError, NameError, NoMethodError => error
+  Rails.logger.warn("omniauth provider #{name} unavailable: #{error.class}: #{error.message}")
+end
+
+Rails.application.config.middleware.use OmniAuth::Builder do
+  register_provider.call(self, :google_oauth2, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+    scope: "email,profile", prompt: "select_account")
+  register_provider.call(self, :github, "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", scope: "user:email")
+  register_provider.call(self, :vipps, "VIPPS_CLIENT_ID", "VIPPS_CLIENT_SECRET",
+    scope: "openid email name phoneNumber")
+  register_provider.call(self, :snapchat, "SNAPCHAT_CLIENT_ID", "SNAPCHAT_CLIENT_SECRET",
+    scope: "https://auth.snapchat.com/oauth2/api/user.display_name")
+end

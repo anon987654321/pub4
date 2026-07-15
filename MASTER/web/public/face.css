@@ -3,12 +3,12 @@
 /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
 :root {
   --c-text: oklch(86% 0.02 300);
-  --x-text: #d8d6e0;
+  --x-text: #e8e4dc;
   --c-accent: oklch(78% 0.10 300);
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
   --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
-  --font-label: "JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --font-label: "JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -18,7 +18,7 @@
   --inset-r: calc(12px + var(--safe-right));
   --inset-b: calc(12px + var(--safe-bottom));
   --inset-l: calc(12px + var(--safe-left));
-  --face-bg: black;
+  --face-bg: #0f0e0d;
   --face-fg: var(--c-text);
   --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
   --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
@@ -34,6 +34,8 @@
   --radius-lg: 0;
   --radius-pill: 0;
   --face-bar-height: 36px;
+  --hud-tier-status: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
+  --hud-tier-caption: calc(var(--face-bar-height) + var(--safe-bottom) + 44px);
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
   --face-particle-size: 0.019;
   --face-glow-scale: 1.22;
@@ -55,9 +57,36 @@
 }
 /* END:generated-face-root */
 
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-canvas) + 1);
+  background: radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--face-bg) 42%, transparent) 100%);
+}
+
+.agent-hud {
+  position: fixed;
+  inset-inline: var(--inset-l) var(--inset-r);
+  bottom: calc(var(--hud-tier-caption, 80px) + var(--safe-bottom));
+  z-index: var(--z-chrome);
+  display: grid;
+  gap: 4px;
+  font: 11px/1.35 var(--font-label);
+  color: var(--face-dim);
+  pointer-events: none;
+}
+
+.agent-hud-lane {
+  padding: 4px 8px;
+  border-inline-start: 2px solid var(--mood-accent);
+  background: color-mix(in srgb, var(--face-bg) 72%, transparent);
+}
+
 html, body {
   height: 100%;
-  background: #000;
+  background: var(--face-bg);
   color: var(--face-fg);
   font: 16px/1.42 "Inter",-apple-system,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-feature-settings: "ss01","cv05","kern" 1;
@@ -106,6 +135,10 @@ body[data-high-contrast="1"] .enhance-text { color: white; }
 body[data-runtime-profile="battery"] canvas { filter: none; }
 html[data-topology-flash="1"] canvas { filter: contrast(1.05); transition: filter .09s steps(2,end); }
 body[data-runtime-profile="full"] canvas { filter: none; }
+body[data-runtime-profile="calm"] canvas { filter: none; }
+body[data-runtime-profile="calm"] #cognition-ecology { opacity: 0.72; mix-blend-mode: normal; }
+body[data-runtime-profile="calm"] #ascii-star { display: none; }
+body[data-runtime-profile="calm"] .mood-sparkline { opacity: 0.35; }
 body[data-long-silence="1"] canvas { filter: none; }
 body[data-laughter="1"] canvas { filter: contrast(1.08) saturate(1.06); }
 body[data-face-flash="1"] canvas {

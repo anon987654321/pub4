@@ -43,7 +43,14 @@ def run_one(key)
     return false
   end
   puts "\n==> [gates] Running #{key} (#{File.basename(path)})"
-  system("ruby", path)
+  ruby_runner = File.expand_path("../../../MASTER/lib/pub4/ruby_runner.rb", __FILE__)
+  ruby = if File.file?(ruby_runner)
+           require ruby_runner
+           Pub4::RubyRunner.gate_ruby
+         else
+           ENV.fetch("RUBY_CMD", "ruby").split
+         end
+  system(*ruby, path)
   success = $?.success?
   puts success ? "[gates] #{key} PASSED" : "[gates] #{key} FAILED"
   success

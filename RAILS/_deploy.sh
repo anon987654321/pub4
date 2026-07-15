@@ -91,10 +91,12 @@ deploy_tracked_app() {
   [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
 
   rails_runtime_gate "$APP_NAME" "$APP_DIR" || exit 1
-  if [[ $app_name == brgen ]]; then
-    seed_bergen_demo_as_app "$APP_DIR"
-  elif [[ $app_name == amber ]]; then
-    seed_amber_demo_as_app "$APP_DIR"
+  if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
+    if [[ $app_name == brgen ]]; then
+      seed_bergen_demo_as_app "$APP_DIR"
+    elif [[ $app_name == amber ]]; then
+      seed_amber_demo_as_app "$APP_DIR"
+    fi
   fi
   doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
   if [[ $app_name == brgen ]]; then
