@@ -145,7 +145,7 @@ module Master
         pub = Master::Trace::SnapshotPublisher
         [
           pub.write(target: root, label: "MASTER", repo_root:, mode: :both),
-          pub.write(target: File.expand_path("../OPERATOR", root), label: "OPENBSD", repo_root:, mode: :both),
+          pub.write(target: File.expand_path("../OPENBSD", root), label: "OPENBSD", repo_root:, mode: :both),
         ].flatten.join("\n")
       end
 
