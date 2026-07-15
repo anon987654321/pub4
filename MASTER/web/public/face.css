@@ -3,7 +3,7 @@
 /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
 :root {
   --c-text: oklch(86% 0.02 300);
-  --x-text: #d8d6e0;
+  --x-text: #e8e4dc;
   --c-accent: oklch(78% 0.10 300);
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
@@ -18,7 +18,7 @@
   --inset-r: calc(12px + var(--safe-right));
   --inset-b: calc(12px + var(--safe-bottom));
   --inset-l: calc(12px + var(--safe-left));
-  --face-bg: black;
+  --face-bg: #0f0e0d;
   --face-fg: var(--c-text);
   --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
   --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);

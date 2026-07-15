@@ -72,11 +72,21 @@ module DesignTokens
     return "missing #{path}" unless File.file?(path)
 
     scss = read_utf8(path)
-    anchors = load.fetch("face_root").fetch("anchors")
-    drifted = anchors.filter_map do |key, value|
-      needle = key == "x_text" ? "$text: #{value}" : "$#{key.tr('_', '-')}: #{value}"
-      "#{key}=#{value}" unless scss.include?(needle)
+    data = load
+    face_anchors = data.fetch("face_root").fetch("anchors")
+    social = data.fetch("social")
+    drifted = []
+
+    face_anchors.each do |key, value|
+      next if key == "x_text"
+
+      needle = "$#{key.tr('_', '-')}: #{value}"
+      drifted << "#{key}=#{value}" unless scss.include?(needle)
     end
+
+    social_text = social.fetch("x_text")
+    drifted << "x_text=#{social_text}" unless scss.include?("$text: #{social_text}")
+
     return nil if drifted.empty?
 
     "_x_base.scss defaults drifted from design_tokens.yml anchors: #{drifted.join(', ')}"
