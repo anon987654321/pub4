@@ -1,22 +1,21 @@
-<article class="item-card" id="<%= dom_id(outfit) %>">
-  <% if outfit.image.attached? %>
-    <%= link_to outfit, class: "item-title" do %>
-      <%= responsive_image_tag outfit.image, alt: outfit.name, widths: [200, 400, 600], sizes: "(max-width: 768px) 80vw, 200px", style: "max-width:100%; height:auto;" %>
-    <% end %>
-  <% end %>
-  <% unless outfit.image.attached? %>
-    <div class="outfit-composition" aria-label="Items in <%= outfit.name %>">
-      <% outfit.items.first(4).each do |item| %>
-        <% if item.photos.attached? %>
-          <%= responsive_image_tag item.photos.first, alt: item.title, widths: [120, 180], sizes: "90px" %>
-        <% else %>
-          <span><%= item.category.to_s.first(2).upcase %></span>
-        <% end %>
+<article class="item-card item-card--luxury" id="<%= dom_id(outfit) %>">
+  <div class="item-photo-wrap">
+    <% if outfit.image.attached? %>
+      <%= link_to outfit, aria: { label: outfit.name } do %>
+        <%= responsive_image_tag outfit.image, alt: outfit.name, widths: [320, 480, 640], sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
       <% end %>
-    </div>
-  <% end %>
+    <% else %>
+      <div class="outfit-composition item-photo" aria-label="Items in <%= outfit.name %>">
+        <% outfit.items.first(4).each do |item| %>
+          <% if item.photos.attached? %>
+            <%= responsive_image_tag item.photos.first, alt: item.title, widths: [120, 180], sizes: "90px" %>
+          <% else %>
+            <span><%= item.category.to_s.first(2).upcase %></span>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
   <%= link_to outfit.name, outfit, class: "item-title" %>
-  <span class="dim"><%= outfit.context_label.presence || "Authored from your wardrobe" %></span>
-  <span class="dim"><%= outfit.items.count %> items · <%= outfit.likes_count.to_i %> likes</span>
-  <span class="dim"><%= pluralize(outfit.total_wears, "combined wear") %></span>
+  <span class="dim"><%= outfit.items.count %> items · <%= pluralize(outfit.total_wears, "wear") %></span>
 </article>

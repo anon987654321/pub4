@@ -1,3 +1,10 @@
+/* Amber's toteme/necessaire-inspired chrome has no dividing borders anywhere
+   in the shell — override the shared x-shell main-content column rule. */
+main#main-content,
+main[role="main"] {
+  border-inline: none;
+}
+
 .flash {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border);

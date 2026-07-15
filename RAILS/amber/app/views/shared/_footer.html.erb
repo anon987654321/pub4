@@ -1,0 +1,20 @@
+<footer class="amber-footer" role="contentinfo">
+  <div class="amber-footer-cols">
+    <nav aria-label="Wardrobe">
+      <h2>Wardrobe</h2>
+      <%= link_to "Browse", authenticated? ? items_path : demo_wardrobe_path %>
+      <%= link_to "Outfits", outfits_path if authenticated? %>
+      <%= link_to "AI styling", ai_search_path if authenticated? %>
+    </nav>
+    <nav aria-label="About">
+      <h2>About</h2>
+      <%= link_to "Amber", root_path %>
+      <%= link_to "Sign in", new_session_path unless authenticated? %>
+    </nav>
+    <nav aria-label="Support">
+      <h2>Support</h2>
+      <%= mail_to "hello@amber.brgen.no", "Contact" %>
+    </nav>
+  </div>
+  <p class="amber-footer-legal">&copy; <%= Date.current.year %> Amber. AI wardrobe management.</p>
+</footer>

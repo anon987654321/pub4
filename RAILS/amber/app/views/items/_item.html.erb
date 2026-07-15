@@ -1,17 +1,18 @@
 <!-- Luxury minimalist card (Aesop/Toteme/Nécessaire inspired) -->
 <!-- Use class="item-card item-card--luxury" or wrap grid in item-grid--luxury for full effect -->
 <article class="item-card item-card--luxury" id="<%= dom_id(item) %>" data-id="<%= item.id %>" data-category="<%= item.category %>" data-controller="offline-feed luxury-product" data-offline-feed-key-value="amber-items" data-offline-feed-title-value="<%= item.title %>" data-offline-feed-url-value="<%= item_path(item) %>" data-offline-feed-meta-value="<%= [item.category, item.color, item.brand].compact.join(" · ") %>">
-  <% if item.photos.attached? %>
-    <%= responsive_image_tag item.photos.first, alt: item.title, widths: [320, 480, 640], sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
-  <% end %>
+  <div class="item-photo-wrap">
+    <% if item.photos.attached? %>
+      <%= responsive_image_tag item.photos.first, alt: item.title, widths: [320, 480, 640], sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
+    <% end %>
+    <nav role="navigation" aria-label="Item actions">
+      <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>
+      <% unless item.spark_joy? %>
+        <%= button_to "Joy", spark_joy_item_path(item), method: :post, class: "btn-sm" %>
+      <% end %>
+      <%= link_to "Edit", edit_item_path(item), class: "btn-sm" %>
+    </nav>
+  </div>
   <%= link_to item.title, item, class: "item-title" %>
   <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
-  <span class="dim">Worn <%= item.times_worn.to_i %>× · <%= item.value_label %></span>
-  <nav role="navigation" aria-label="Item actions">
-    <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>
-    <% unless item.spark_joy? %>
-      <%= button_to "Joy", spark_joy_item_path(item), method: :post, class: "btn-sm" %>
-    <% end %>
-    <%= link_to "Edit", edit_item_path(item), class: "btn-sm" %>
-  </nav>
 </article>

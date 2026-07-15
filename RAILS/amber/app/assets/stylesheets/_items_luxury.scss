@@ -8,18 +8,8 @@
 .item-card--luxury {
   display: flex;
   flex-direction: column;
-  gap: var(--luxury-space-sm);
-  padding: var(--luxury-space-md);
-  background: var(--luxury-surface);
-  border: 1px solid var(--luxury-border);
-  border-radius: var(--luxury-radius-md);
-  transition: transform 180ms var(--ease-out), border-color 180ms var(--ease-out);
-}
-
-.luxury-card:hover,
-.item-card--luxury:hover {
-  transform: translateY(-1px);
-  border-color: var(--luxury-text);
+  gap: var(--luxury-space-xs);
+  transition: opacity 180ms var(--ease-out);
 }
 
 .luxury-card .item-photo,
@@ -27,16 +17,15 @@
   width: 100%;
   aspect-ratio: 4 / 5; /* better for clothing than square */
   object-fit: cover;
-  border-radius: var(--luxury-radius-sm);
-  margin-bottom: var(--luxury-space-sm);
+  background: var(--luxury-bg);
 }
 
 .luxury-card .item-title,
 .item-card--luxury .item-title {
-  font-size: var(--luxury-font-title);
-  font-weight: 600;
+  font-size: var(--luxury-font-meta);
+  font-weight: 500;
   letter-spacing: var(--luxury-letter-tight);
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--luxury-text);
 }
 
@@ -44,16 +33,44 @@
 .item-card--luxury .dim {
   font-size: var(--luxury-font-meta);
   color: var(--luxury-muted);
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+/* Title + one meta line stay always-visible -- the image does the rest of
+   the talking. The action nav overlays the photo, revealed on hover/focus,
+   so the resting grid reads as pure photography. */
+.luxury-card .item-photo-wrap,
+.item-card--luxury .item-photo-wrap {
+  position: relative;
 }
 
 .luxury-card nav,
 .item-card--luxury nav {
   display: flex;
-  gap: var(--luxury-space-sm);
+  gap: var(--luxury-space-xs);
   flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: var(--luxury-space-sm);
+  position: absolute;
+  inset-inline: var(--luxury-space-xs);
+  bottom: var(--luxury-space-xs);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+  pointer-events: none;
+}
+
+.luxury-card:hover nav,
+.luxury-card:focus-within nav,
+.item-card--luxury:hover nav,
+.item-card--luxury:focus-within nav {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.luxury-card nav .btn-sm,
+.item-card--luxury nav .btn-sm {
+  background: color-mix(in srgb, var(--luxury-surface) 92%, transparent);
+  backdrop-filter: blur(4px);
 }
 
 /* Luxury PDP */
@@ -77,8 +94,6 @@
 
 .luxury-photo {
   width: 100%;
-  border: 1px solid var(--luxury-border);
-  border-radius: var(--luxury-radius-lg);
 }
 
 .luxury-title {
