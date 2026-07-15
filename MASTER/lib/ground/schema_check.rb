@@ -9,7 +9,6 @@ module Master
         "council.yml" => 1,
         "design_rules.yml" => 1,
         "evidence.yml" => 1,
-        "epistemics.yml" => 1,
         "llm_output_rules.yml" => 1,
         "limits.yml" => 1,
         "models.yml" => 1,
