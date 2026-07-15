@@ -41,7 +41,7 @@ module Master
         "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
         "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"],
         "principles" => ["data/operator_principles.yml", "operator feedback injected into prompts"],
-        "skills" => ["data/skills_registry.yml", "slash-command skill triggers and bodies"],
+        "skills" => ["data/patterns.yml#skills_registry", "slash-command skill triggers and bodies"],
         "context" => ["data/project_context.yml", "durable project context for memory"],
         "bootstrap" => [nil, "agent bootstrap — quickstart/agents/trace/replicate/conventions"],
         "agents" => [nil, "alias for bootstrap agents section"],
@@ -69,7 +69,7 @@ module Master
           "reading tiers:",
           "  explore     /orient bootstrap + /orient soul|rules|limits",
           "  structural  soul.yml + rules.yml + limits.yml before edits",
-          "  production  + operator_playbook.yml + bin/playbook on VPS friction",
+          "  production  + patterns.yml#operator_playbook + bin/playbook on VPS friction",
           "",
           "authority:",
           *Master.authority_paths(root:).map { |label, path| "  #{label.ljust(10)} #{relative_or_absolute(root, path)}" },
@@ -97,8 +97,13 @@ module Master
         return "unknown: #{arg} (try: #{ORIENT_FILES.keys.join(", ")})" unless entry
         return "orient: #{arg} has no file path — use /orient #{arg}" if entry[0].nil?
 
-        full = File.join(root, entry[0])
-        File.exist?(full) ? File.read(full) : "missing: #{full}"
+        relative, fragment = entry[0].split("#", 2)
+        full = File.join(root, relative)
+        return "missing: #{full}" unless File.exist?(full)
+        return File.read(full) unless fragment
+
+        section = (Master.load_yaml(full) || {})[fragment]
+        section ? section.to_yaml : "missing: #{full}##{fragment}"
       end
 
       def dispatch_tree(root, ctx: nil)

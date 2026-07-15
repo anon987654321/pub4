@@ -102,8 +102,8 @@ module Master
           target = case rel
                    when %r{\Adata/principles/} then "data/operator_principles.yml"
                    when %r{\Adata/claude/} then "data/project_context.yml"
-                   when %r{\Adata/skills/} then "data/skills_registry.yml"
-                   else "YAML runtime (operator_principles.yml, skills_registry.yml, project_context.yml, or /orient bootstrap)"
+                   when %r{\Adata/skills/} then "data/patterns.yml#skills_registry"
+                   else "YAML runtime (operator_principles.yml, patterns.yml#skills_registry, project_context.yml, or /orient bootstrap)"
                    end
 
           [finding(

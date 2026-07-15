@@ -1349,3 +1349,301 @@ vocabulary:
   synonyms:
     tribunal: council
     sweep: fix
+
+# Merged from former operator_playbook.yml -- Operator playbook — durable lessons from production sessions.
+# Merged from former operator_playbook.yml -- Loaded at startup (limits.yml) and via Ground::OperatorPlaybook.
+# Merged from former operator_playbook.yml -- Each lesson: signal → action → proof. Prefer executable proof over TODO checkboxes.
+operator_playbook:
+
+  version: 1
+  updated: "2026-06-25"
+
+  lessons:
+    - id: relayd_master_health_up
+      area: openbsd
+      signal: "relayd marks master:53187 empty; HTTPS curl empty reply while local /up works"
+      action: "relayd.conf must check http \"/up\" for master (not \"/\" — face boot is slow). rc.d/master waits up to 30s for /up then rcctl restart relayd."
+      proof: "relayctl show hosts → master active; curl -fsS https://ai.brgen.no/up"
+
+    - id: relayd_after_master_restart
+      area: openbsd
+      signal: "doas rcctl restart master leaves ai.brgen.no empty until manual relayd restart"
+      action: "Use tracked OPENBSD/etc/rc.d/master (wait-for-/up + relayd restart). Post-reboot run doas rcctl restart master once."
+      proof: "rc.d/master contains wait loop on PORT/up and rcctl restart relayd"
+
+    - id: relayd_stale_backend_tables
+      area: openbsd
+      signal: "relayctl show hosts marks backend empty/down while curl http://127.0.0.1:PORT/up returns 200; HTTPS empty reply"
+      action: "doas rcctl restart relayd after mass app restarts. Cron runs /usr/local/bin/relayd-watchdog every 5 min to auto-heal stale tables."
+      proof: "relayctl show hosts → all tables active; ruby34 OPENBSD/health_check.rb"
+
+    - id: resource_guard_shedding
+      area: openbsd
+      signal: "Rails apps stopped after cron; only master/brgen remain"
+      action: "Create /var/db/pub4_all_apps or run OPENBSD/start_all_apps.sh to pin all services against resource_guard.sh shedding."
+      proof: "test -f /var/db/pub4_all_apps; doas rcctl check brgen amber bsdports"
+
+    - id: rails_phantom_foreign_keys
+      area: rails
+      signal: "SQLite no such table main.listings|buyers|likers|orders|menu_items during seed or insert"
+      action: "Never use foreign_key: true alone on namespaced refs — use foreign_key: { to_table: :users } or :marketplace_listings. Run RAILS/check_phantom_foreign_keys.rb."
+      proof: "ruby RAILS/check_phantom_foreign_keys.rb exits 0"
+
+    - id: rails_model_schema_drift
+      area: rails
+      signal: "unknown attribute, MissingAttributeError actor_id, strict_loading violations in seeds"
+      action: "Align models to schema.rb before seeds; grep belongs_to vs create_table; guard optional columns with has_attribute?; query associations instead of lazy-loading under strict_loading."
+      proof: "RAILS_ENV=test bundle exec rails db:seed exits 0 as app user"
+
+    - id: rails_shared_concern_dupes
+      area: rails
+      signal: "no such column taggings.post_id — polymorphic taggable expected"
+      action: "Do not redeclare has_many from Shared concerns (Taggable, Votable, Reactable) on host models."
+      proof: "Post model includes Shared::Taggable only once"
+
+    - id: rails_up_vs_root
+      area: rails
+      signal: "bin/ci passes /up but production landing 500; Could not find table cities"
+      action: "Treat /up as liveness only. Run db:migrate on production; ensure locality tables exist (EnsureLocalityTables); DomainRegistry must guard table_exists?(:cities); seed CitySeed.sync! after migrate."
+      proof: "curl -fsSI https://brgen.no/ returns 200; sqlite3 db/production.sqlite3 '.tables' lists cities"
+
+    - id: vps_ci_app_user
+      area: deploy
+      signal: "bin/ci fails as dev user; bundle without errors"
+      action: "Run CI as app user: doas sh -c \"su -m brgen -c 'cd /home/brgen/app && bin/ci'\". One app at a time on 1 GiB VM."
+      proof: "su -m brgen -c bin/ci per app"
+
+    - id: master_smoke_low_resource
+      area: master
+      signal: "bin/smoke pipe command times out on 1 GiB VPS"
+      action: "MASTER_LOW_RESOURCE=1 or MASTER_SMOKE_PIPE_TIMEOUT=90 for smoke/probe on vm23."
+      proof: "MASTER_LOW_RESOURCE=1 bundle34 exec ruby bin/smoke --web"
+
+    - id: master_web_pernille_defaults
+      area: master_web
+      signal: "White page, silent TTS, or voice/lang regressions after persona changes"
+      action: "Single-voice policy in data/voice.yml (tts.single_voice: pernille). Ruby reads Voice::Policy; JS reads MASTER_VOICE_POLICY. guardVoice always returns nb-NO-PernilleNeural. rc.d/master fingerprints face_*.js + sw.js. vps_deploy_master.sh runs bundle install before precompile."
+      proof: "curl page includes MASTER_VOICE_POLICY; GET /chat/tts status returns audio; GET /health checks.tts true and deploy.tts_socket true; ruby OPENBSD/health_check.rb --core; bin/smoke --web clean"
+
+    - id: master_deploy_confidence
+      area: master_web
+      signal: "Code pushed but unsure prod serves new face.runtime digest or TTS socket is down"
+      action: "GET /health returns deploy.git_sha, deploy.face_runtime_digest, deploy.tts_socket, deploy.assets_precompile_at. Face status strip shows tts: socket down or tts: waiting Ns on rate limit. After deploy run probe_http and curl /health on vm23."
+      proof: "curl -fsS http://127.0.0.1:53187/health | jq '{status, checks, deploy}'; OPENBSD/health_check.rb asserts deploy.tts_socket; face #tts-live shows health hints when degraded"
+
+    - id: ecology_layer_visibility
+      area: master_web
+      signal: "SSE events fire but ecology trails/weather invisible"
+      action: "Ecology canvas must sit above #face (z-index 2, mix-blend-mode screen). cognition_ecology.js listens on master:visual; render loop restarts on visibility + visual events."
+      proof: "grep 'z-index: 2' MASTER/web/public/face.css; browser devtools shows #cognition-ecology above canvas#face"
+
+    - id: ship_proof_not_checkboxes
+      area: process
+      signal: "Backlog marked done but production gaps remain"
+      action: "Ship readiness requires bin/probe repo, per-app bin/ci, health_check.rb, and db:seed — not checkbox files. Fix executable failures only."
+      proof: "bin/probe deploy; ruby OPENBSD/health_check.rb on VPS"
+
+    - id: post_sync_vps_proof
+      area: deploy
+      signal: "Code pushed but services stale or untested on vm23"
+      action: "After git pull: SKIP_MASTER_SCAN=1 zsh OPENBSD/vps_on_vm_install.sh; doas rcctl restart master; bundle34 exec bin/ci per app; bundle34 exec bin/smoke in MASTER; ruby34 OPENBSD/health_check.rb; curl https://ai.brgen.no/up"
+      proof: "doas rcctl check master brgen amber bsdports; browser smoke on ai.brgen.no face"
+
+    - id: rails_rcd_canonical_names
+      area: openbsd
+      signal: "rcctl stop brgen_rails kills brgen on same port; duplicate rc.d scripts"
+      action: "Canonical rc.d names are bare app names (brgen, amber, …). Never rcctl stop *_rails. retire_legacy_rails_rcd in deploy scripts removes stale /etc/rc.d/*_rails."
+      proof: "ls OPENBSD/etc/rc.d/ shows brgen not brgen_rails; grep -r '_rails' OPENBSD returns empty"
+
+    - id: master_scan_bundle_exec
+      area: deploy
+      signal: "OPERATOR.sh --sync-configs aborts: cannot load such file -- zeitwerk"
+      action: "MASTER bin/cli must run as dev via bundle34 exec (OPERATOR.sh uses su dev, not su -m — -m keeps HOME=/root). Set MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1."
+      proof: "su dev -c 'cd MASTER && MASTER_SCAN_ONLY=1 bundle34 exec ruby bin/cli /scan OPENBSD --depth deep' exits 0"
+
+    - id: relayd_csp_overwrites_rails
+      area: master_web
+      signal: "https://ai.brgen.no shows black screen; curl :53187 has script-src nonce but HTTPS CSP lacks nonce"
+      action: "Do not set Content-Security-Policy in relayd.conf — it replaces Rails headers and breaks nonce-gated inline boot scripts. Keep HSTS and other hardening headers in relayd; let each app own CSP."
+      proof: "curl -sI https://ai.brgen.no/ | grep -i content-security shows Rails policy with script-src nonce"
+
+    - id: sass_embedded_npm_cache
+      area: rails
+      signal: "bundle34 install fails on sass-embedded; npm EACCES on /root/.npm when installing as app user via doas"
+      action: "pkg_add node if missing. When running bundle install via doas su -m <app>, export HOME=/home/<app> and NPM_CONFIG_CACHE=/home/<app>/.npm so npm does not touch root-owned cache."
+      proof: "su -m brgen -c 'cd /home/brgen/app && bundle34 check' exits 0; bin/rails dartsass:build succeeds"
+
+    - id: takeaway_seed_city_association
+      area: rails
+      signal: "db:seed:replant fails after Playlist with City expected, got String"
+      action: "CityTenantable adds belongs_to :city on takeaway_restaurants, colliding with the legacy string city column. Set ActsAsTenant.current_tenant in seeds.rb; omit city: from create! and use update_column(:city, label) for the display string."
+      proof: "RAILS_ENV=test bundle exec rails db:seed:replant exits 0 in brgen"
+
+    - id: live_search_empty_query_count
+      area: rails
+      signal: "live_search_test fails on empty query .none scope count"
+      action: "Shared::LiveSearch#safe_count returns 0 when query.blank? before calling null_relation? or count on arbitrary scopes."
+      proof: "bundle exec rails test test/services/live_search_test.rb in brgen"
+
+    - id: github_actions_billing_lock
+      area: ci
+      signal: "MASTER Tests workflow fails in ~5s with no job logs; email on every push"
+      action: "GitHub account billing lock blocks runners. Pause push/pull_request triggers (workflow_dispatch only) until billing fixed at github.com/settings/billing. Re-enable .github/workflows/master-tests.yml and master-through-master.yml triggers after."
+      proof: "gh workflow list shows paused; push does not enqueue Actions email"
+
+    - id: gh_auth_vps_and_workstation
+      area: deploy
+      signal: "gh api returns HTTP 401 on VPS or Mac; cannot inspect PRs/workflows remotely"
+      action: "Run gh auth login on each host that needs GitHub API. VPS: su dev -c 'gh auth login'. Never commit tokens."
+      proof: "gh auth status shows logged in; gh api user returns 200"
+
+    - id: pf_ssh_not_bruteforce
+      area: openbsd
+      signal: "Operator assumes SSH lockout is pf bruteforce after rapid reconnects"
+      action: "Tracked pf.conf exempts SSH (pass in quick … port 22) before bruteforce table. Bruteforce is fed by HTTP/HTTPS rate limits only. Lockouts are usually RAM/CPU saturation from parallel SSH or bin/ci — use tmux, one app CI at a time, flush bruteforce only when HTTP wedge suspected."
+      proof: "grep 'port 22' OPENBSD/etc/pf.conf shows quick pass before block quick from <bruteforce>"
+
+    - id: vps_one_ssh_no_parallel_ci
+      area: deploy
+      signal: "load averages >10 on vm23; dozens of ruby in D state; rcctl master/amber failed; SSH hangs"
+      action: "Never open parallel SSH sessions to vm23. Use zsh OPENBSD/vps_ci.sh APP (mutex via /var/tmp/pub4-ci.lock) or vps_ci_all.sh for serial six-app proof. MASTER scan: zsh OPENBSD/vps_master_scan.sh. resource_guard cron runs stale_ci_cleanup.ksh when load>=4. Kill stale local ssh clients first; doas rcctl restart master amber after cleanup. If D-state ruby won't die: host console vmctl stop/start vm23."
+      proof: "uptime load <4; test -f /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen; doas rcctl check master brgen amber"
+
+    - id: vps_ci_shared_tree_path
+      area: deploy
+      signal: "Importmap/RuboCop still run on VPS despite ci.rb fix; postpro resolves to /home/postpro"
+      action: "config/ci.rb requires ../../shared from app/config → /home/<app>/shared (not /home/<app>/app/shared). vps_ci.sh syncs full RAILS/shared there plus code overlay. Set PUB4_RAILS_ROOT=/home/dev/pub4/RAILS for DeployPaths. Postpro/repligen: Pub4::DeployPaths or MASTER/tools/*.rb — never Rails.root/../../postpro alone on copy-tree."
+      proof: "grep unless vps_host /home/brgen/shared/config/ci.rb; ruby -e 'require \"pub4/deploy_paths\"' under brgen app finds /home/dev/pub4/MASTER/tools/postpro.rb"
+
+    - id: vps_ci_lock_perms
+      area: deploy
+      signal: "pub4-ci-guard: EACCES on flock or EPERM deleting lock.holder"
+      action: "Lock at /var/tmp/pub4-ci.lock mode 666 (vps_ci ensure_ci_lock). Do not pre-create .holder as root — vps_ci removes stale holder before CI. CiGuard swallows EPERM on holder delete."
+      proof: "ls -l /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen exits 0"
+
+skills_registry:
+  meta:
+    source: runtime authority — edit this file directly; do not add data/skills/*.md
+    count: 15
+  skills:
+  - name: axioms
+    description: Summarize constitutional rules and invariant checks.
+    triggers:
+    - "\\baxioms\\b"
+    body: |-
+      The axioms skill summarizes constitutional rules and invariant checks for the current context. It answers when the operator asks about axioms or when MASTER needs a compact statement of what must hold.
+
+      Use the smallest rule set that proves the point, not a lecture. Prefer rules that are verifiable from the repository or session state rather than restating generic principles.
+  - name: ecology
+    description: Inspect the repository ecology and connected file relationships.
+    triggers:
+    - "\\becology\\b"
+    body: |-
+      The ecology skill inspects how files, modules, and dependencies relate across the repository. It is triggered when the operator mentions ecology or when MASTER needs a grounded map of connected artifacts rather than an isolated file view.
+
+      Favor direct file and graph evidence over abstract summaries. Name concrete paths, imports, and call sites so follow-up work can start from evidence instead of inference.
+  - name: fix
+    description: Apply targeted repairs and verify the result.
+    triggers:
+    - "\\bfix\\b"
+    body: |-
+      The fix skill applies targeted repairs and verifies that the change actually resolves the reported problem. It activates on fix or when MASTER is asked to repair a specific defect rather than redesign a subsystem.
+
+      Prefer minimal edits, preserve user work, and verify the change path end to end. Confirm behavior with tests, logs, or a reproducible check before treating the fix as complete.
+  - name: model
+    description: Switch or inspect the active model for the current session.
+    triggers:
+    - "\\bmodel\\b"
+    body: |-
+      The model skill switches or inspects the active model for the current session. It responds when the operator asks about the model in use or when a task clearly benefits from a different cost–capability tradeoff.
+
+      Use the cheapest model that still meets the task, and switch only when the tradeoff is clear. State what changed and why so later turns do not assume a heavier model than necessary.
+  - name: process
+    description: Summarize the current operating state of MASTER.
+    triggers:
+    - "\\bprocess\\b"
+    body: |-
+      The process skill summarizes MASTER’s current operating state: what is running, what stage a workflow is in, and which subsystems are active. It is triggered on process or when the operator needs a snapshot of runtime behavior rather than repository contents.
+
+      Keep operational output compact enough to scan in one glance. Lead with the facts that unblock the next action and omit narrative filler.
+  - name: propose-tree
+    description: Suggest adjacent improvements from the current change set.
+    triggers:
+    - propose-tree
+    body: |-
+      The propose-tree skill suggests adjacent improvements grounded in the current change set. It activates on propose-tree or when the operator wants follow-up work that naturally extends what was just edited or reviewed.
+
+      Only propose follow-ups that are directly grounded in current evidence. Each suggestion should tie to a file, finding, or gap already visible in the session so the tree stays actionable rather than speculative.
+  - name: resync
+    description: Reconcile the worktree or runtime state with the intended source of
+      truth.
+    triggers:
+    - "\\bresync\\b"
+    body: |-
+      The resync skill reconciles the worktree or runtime state with the intended source of truth after drift, failed merges, or stale caches. It is triggered on resync or when MASTER must realign local state with git, config, or an external canonical copy.
+
+      Use after divergence, and confirm the restored state with evidence before moving on. Show what was out of sync, what was reset or merged, and how the result was verified.
+  - name: review
+    description: Review code with an eye for correctness, risk, and missing tests.
+    triggers:
+    - "\\breview\\b"
+    body: |-
+      The review skill examines code for correctness, risk, and missing tests. It activates on review or when the operator asks for a structured pass over a change without necessarily applying fixes.
+
+      Lead with findings, cite lines, and separate bugs from style or preference. Order by severity so the operator can decide what to fix first.
+  - name: rules
+    description: Inspect the registered rule set and its priorities.
+    triggers:
+    - "\\brules\\b"
+    body: |-
+      The rules skill inspects the registered rule set and how priorities resolve when rules conflict. It responds on rules or when MASTER must explain which constraints apply and in what order.
+
+      Prefer the live registry over stale documentation. Quote or summarize the active definitions MASTER actually loads, not copies that may lag the source files.
+  - name: scan
+    description: Scan files or directories for violations and opportunities.
+    triggers:
+    - "\\bscan\\b"
+    body: |-
+      The scan skill searches files or directories for violations, smells, and improvement opportunities within the requested scope. It is triggered on scan or as the first step of broader MASTER workflows that need evidence before fix or deliberation.
+
+      Findings should be evidence-led and narrow to the requested target. Report path, line or pattern, and severity so downstream skills can act without re-scanning the whole tree.
+  - name: status
+    description: Summarize the current session or repository health.
+    triggers:
+    - "\\bstatus\\b"
+    body: |-
+      The status skill summarizes session and repository health: branch, dirty files, failing checks, and anything else that affects whether work can proceed safely. It activates on status or when the operator needs a quick health read without a full scan.
+
+      Keep status terse, concrete, and tied to the latest verifiable evidence. Prefer commands and paths the operator can re-run over subjective assessments.
+  - name: tail
+    description: Read recent event history with a small, focused window.
+    triggers:
+    - "\\btail\\b"
+    body: |-
+      The tail skill reads recent event history through a small, focused window so the operator can see what MASTER or the environment did last. It is triggered on tail or when context from the latest log lines would explain the current state.
+
+      Show only enough history to explain the current issue or next step. Truncate older noise and highlight timestamps, errors, and the final outcome.
+  - name: topic
+    description: Track the current conversation or workstream topic.
+    triggers:
+    - "\\btopic\\b"
+    body: |-
+      The topic skill tracks the current conversation or workstream topic so later turns can resume without re-deriving intent. It responds on topic or when MASTER should label what is being worked on for session continuity.
+
+      Keep topic labels short and meaningful enough to recover later. One line should be enough for the operator to recognize the thread days afterward.
+  - name: why
+    description: Explain a rule, finding, or design choice with local evidence.
+    triggers:
+    - "\\bwhy\\b"
+    body: |-
+      The why skill explains a rule, finding, or design choice using evidence from the repository and session. It activates on why or when the operator asks for rationale behind a constraint, scan result, or architectural decision.
+
+      Prefer direct file references and current state over memory or theory. Point to the code, config, or log line that justifies the explanation.
+  - name: workflow
+    description: Inferred scan → fix preview → council deliberation. Users should not
+      need a command name.
+    triggers: []
+    body: |-
+      The workflow skill runs MASTER’s internal pipeline when the operator asks for a full pass without naming individual steps. Phrases such as run this through MASTER, full pass, or tribunal infer scan, fix dry-run, and council deliberation in sequence.
+
+      No /triad or /workflow command is required unless debugging. MASTER orchestrates the stages internally; the operator only needs the natural-language trigger.

@@ -378,7 +378,7 @@ session_startup:
       optional: [data/voice.yml, data/style.yml, data/state.yml]
       note: "Before production edits and deploy-touching changes."
     production_ops:
-      required: [data/operator_playbook.yml]
+      required: [data/patterns.yml#operator_playbook]
       optional: [/orient trace]
       note: "VPS friction, relayd, recovery — run bin/playbook when signals match."
   mandatory_reads:
@@ -563,7 +563,7 @@ adversarial_questioning:
     non_trivial: "propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick"
     threshold: "non-trivial if the fix spans more than one file, touches architecture, or has security implications"
 
-# Known issues — active bugs and watch-outs from operator_playbook.yml.
+# Known issues — active bugs and watch-outs from patterns.yml#operator_playbook.
 known_issues:
   relayd_master_empty: "After rcctl restart master, relayd may mark master empty until /up health passes — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http \"/up\" not \"/\" for master."
   relayd_stale_backend_tables: "After mass app restarts relayctl may show empty/down while local /up is 200 — relayd-watchdog (cron */5) restarts relayd when backends are live but tables are stale."

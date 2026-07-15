@@ -69,7 +69,7 @@ module Master
         path = File.join(@root, "data", REGISTRY_PATH)
         return unless File.file?(path)
 
-        data = Master.load_yaml(path)
+        data = (Master.load_yaml(path) || {})["skills_registry"] || {}
         Array(data["skills"]).each do |row|
           skill = registry_skill(row)
           @loaded << skill if skill
@@ -152,7 +152,7 @@ module Master
       end
 
       SKILLS_DIR = "skills".freeze
-      REGISTRY_PATH = "skills_registry.yml".freeze
+      REGISTRY_PATH = "patterns.yml".freeze
     end
   end
 end

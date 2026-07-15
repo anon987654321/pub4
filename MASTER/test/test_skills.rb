@@ -22,17 +22,18 @@ class TestSkills < Minitest::Test
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
       FileUtils.mkdir_p(data_dir)
-      File.write(File.join(data_dir, "skills_registry.yml"), <<~YAML)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
         ---
-        skills:
-          - name: alpha
-            description: first skill
-            triggers: ["alpha"]
-            body: alpha body
-          - name: beta
-            description: second skill
-            triggers: ["beta"]
-            body: beta body
+        skills_registry:
+          skills:
+            - name: alpha
+              description: first skill
+              triggers: ["alpha"]
+              body: alpha body
+            - name: beta
+              description: second skill
+              triggers: ["beta"]
+              body: beta body
       YAML
 
       skills = Master::Now::Skills.new(root: root)
@@ -53,13 +54,14 @@ class TestSkills < Minitest::Test
         description: scan files and directories
         ---
       MD
-      File.write(File.join(root, "data", "skills_registry.yml"), <<~YAML)
+      File.write(File.join(root, "data", "patterns.yml"), <<~YAML)
         ---
-        skills:
-          - name: registry_only
-            description: registry authority
-            triggers: ["registry"]
-            body: from registry
+        skills_registry:
+          skills:
+            - name: registry_only
+              description: registry authority
+              triggers: ["registry"]
+              body: from registry
       YAML
 
       skills = Master::Now::Skills.new(root: root)
@@ -73,15 +75,16 @@ class TestSkills < Minitest::Test
     Dir.mktmpdir do |root|
       data_dir = File.join(root, "data")
       FileUtils.mkdir_p(data_dir)
-      File.write(File.join(data_dir, "skills_registry.yml"), <<~YAML)
+      File.write(File.join(data_dir, "patterns.yml"), <<~YAML)
         ---
-        skills:
-          - name: alpha
-            description: alpha
-            triggers: ["alpha"]
-          - name: beta
-            description: beta
-            triggers: ["beta"]
+        skills_registry:
+          skills:
+            - name: alpha
+              description: alpha
+              triggers: ["alpha"]
+            - name: beta
+              description: beta
+              triggers: ["beta"]
       YAML
 
       skills = Master::Now::Skills.new(root: root)

@@ -58,7 +58,7 @@ principles:
   description: Runtime truth in YAML and /orient; stub READMEs track surface changes only
   type: feedback
   body: |-
-    Runtime-read material lives in operator_principles.yml, skills_registry.yml, project_context.yml, and Ground::BootstrapDocs (/orient). Allowed data markdown only SOUL.md, CANON.md, IDENTITY.md, skills/README.md. Top-level README files are one-paragraph stubs pointing at runtime truth—not prose duplication. When commands or behavior change, refresh stubs in the same or next commit without being asked.
+    Runtime-read material lives in operator_principles.yml, patterns.yml#skills_registry, project_context.yml, and Ground::BootstrapDocs (/orient). Allowed data markdown only SOUL.md, CANON.md, IDENTITY.md, skills/README.md. Top-level README files are one-paragraph stubs pointing at runtime truth—not prose duplication. When commands or behavior change, refresh stubs in the same or next commit without being asked.
 - id: feedback_flat_hierarchy
   name: "Flat Hierarchy — aggressive merge and rename"
   description: OpenBSD-flat layout; paths named like dense Rails parameterize slugs—Strunk-clean snake_case

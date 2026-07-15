@@ -43,7 +43,6 @@ absolute:
     - data/
     - data/SOUL.md
     - data/operator_principles.yml
-    - data/skills_registry.yml
     - data/project_context.yml
     - lib/judge/scan/
     - bin/cli

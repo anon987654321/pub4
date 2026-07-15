@@ -39,8 +39,8 @@ module Master
   BOOTSTRAP_AUTHORITY_FILES = [
     ["soul", "data/soul.yml"], ["rules", "data/rules.yml"], ["style", "data/style.yml"],
     ["voice", "data/voice.yml"], ["limits", "data/limits.yml"], ["orders", "data/state.yml"],
-    ["playbook", "data/operator_playbook.yml"], ["principles", "data/operator_principles.yml"],
-    ["skills", "data/skills_registry.yml"], ["context", "data/project_context.yml"],
+    ["playbook", "data/patterns.yml"], ["principles", "data/operator_principles.yml"],
+    ["skills", "data/patterns.yml"], ["context", "data/project_context.yml"],
     ["operator", "../OPENBSD/RUNBOOK.md"]
   ].freeze
 
