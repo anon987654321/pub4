@@ -35,12 +35,7 @@ module Master
         def try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)
           selected_model = attempt.fetch(:model)
           mode = attempt.fetch(:mode)
-          return nil if timed_out_models.include?(selected_model)
-          if Ground::ModelSkipCache.skipped?(selected_model)
-            reason = Ground::ModelSkipCache.skip_reason(selected_model)
-            stage_warnings << "skipped #{selected_model} (recent failure: #{reason})"
-            return nil
-          end
+          return nil if skip_fallback_attempt?(selected_model, timed_out_models:, stage_warnings:)
 
           response = attempt_model_with_retries(
             selected_model: selected_model,
@@ -53,12 +48,25 @@ module Master
           )
           return response if response.is_a?(Master::Result::Ok)
 
+          record_fallback_failure(response, selected_model, mode:, timed_out_models:, stage_warnings:)
+          response
+        end
+
+        def skip_fallback_attempt?(selected_model, timed_out_models:, stage_warnings:)
+          return true if timed_out_models.include?(selected_model)
+          return false unless Ground::ModelSkipCache.skipped?(selected_model)
+
+          reason = Ground::ModelSkipCache.skip_reason(selected_model)
+          stage_warnings << "skipped #{selected_model} (recent failure: #{reason})"
+          true
+        end
+
+        def record_fallback_failure(response, selected_model, mode:, timed_out_models:, stage_warnings:)
           if failover_skip_model?(response)
             timed_out_models << selected_model
             record_failover_skip(selected_model, response)
           end
           stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
-          response
         end
 
         def attempt_model_with_retries(selected_model:, mode:, prompt:, context:, stream:, image: nil, &blk)

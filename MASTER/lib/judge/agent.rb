@@ -54,13 +54,22 @@ module Master
         rate_err = check_rate_limit(dispatch[:selected_model])
         return rate_err if rate_err
 
+        response = dispatch_chat_response(dispatch, stream:, image:, &blk)
+        return response if response.is_a?(Master::Result::Err)
+
+        finalize_chat_response(response, message, dispatch:, image:, stream:, escalation_depth:, task_type:, &blk)
+      rescue StandardError => chat_error
+        Result.err("agent: #{chat_error.message}", category: :handler_exception)
+      end
+
+      def dispatch_chat_response(dispatch, stream:, image:, &blk)
         response = attempt_chat_with_fallbacks(candidate_models: dispatch[:candidate_models], prompt: dispatch[:prompt],
           context: dispatch[:context], stream:, image:, &blk)
-        if response.is_a?(Master::Result::Err)
-          @deps.homeostat&.observe(:llm_failure)
-          return response
-        end
-        @deps.homeostat&.observe(:llm_success)
+        @deps.homeostat&.observe(response.is_a?(Master::Result::Err) ? :llm_failure : :llm_success)
+        response
+      end
+
+      def finalize_chat_response(response, message, dispatch:, image:, stream:, escalation_depth:, task_type:, &blk)
         response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
         text = response.to_s
@@ -70,8 +79,6 @@ module Master
         @session.add_message(role: :assistant, content: text)
         publish_ctx_footer(dispatch[:selected_model])
         Result.ok(text)
-      rescue StandardError => chat_error
-        Result.err("agent: #{chat_error.message}", category: :handler_exception)
       end
 
       def prepare_chat_turn(message)
@@ -93,7 +100,7 @@ module Master
         pct = limit.positive? ? ((est.to_f / limit) * 100).round(1) : 0
         @bus&.publish("ctx:footer", model: model_id, token_est: est, limit:, pct:)
       end
-      private :prepare_chat_turn, :check_rate_limit, :publish_ctx_footer
+      private :prepare_chat_turn, :check_rate_limit, :publish_ctx_footer, :dispatch_chat_response, :finalize_chat_response
 
       def ask(prompt, context: nil, operation: nil, image: nil)
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]

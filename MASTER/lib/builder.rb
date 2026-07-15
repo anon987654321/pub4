@@ -147,7 +147,13 @@ module Master
       loop_c = boot_loop(root:, config:, bus: trace[:bus])
       reach = boot_reach(root:, config:, bus: trace[:bus])
       ground = boot_ground(root:, config:, homeostat: loop_c[:homeostat])
+      services = build_analysis_services(root:, config:, trace:, loop_c:, reach:)
 
+      { config:, boot_config: }.merge(services)
+        .merge(trace).merge(loop_c).merge(reach).merge(ground)
+    end
+
+    def build_analysis_services(root:, config:, trace:, loop_c:, reach:)
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
       output_check = Judge::OutputCheck.load(root:)
@@ -159,9 +165,7 @@ module Master
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
       pressure = PressureEngine.new(event_bus: bus)
       subscribe_pressure_ingest(bus:, pressure:)
-
-      { config:, boot_config:, renderer:, output_check:, code_index:, reference_graph:, ecology:, diag:, pressure: }
-        .merge(trace).merge(loop_c).merge(reach).merge(ground)
+      { renderer:, output_check:, code_index:, reference_graph:, ecology:, diag:, pressure: }
     end
 
     def subscribe_ecology_reindex(bus:, ecology:)

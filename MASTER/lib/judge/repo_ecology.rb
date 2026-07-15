@@ -105,6 +105,10 @@ module Master
       end
 
       def render_report_sections(report)
+        render_dead_and_duplicate_sections(report) + render_scale_and_coupling_sections(report)
+      end
+
+      def render_dead_and_duplicate_sections(report)
         lines = []
         lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) do |item|
           "#{item[:path]} — #{item[:reason]}"
@@ -115,6 +119,11 @@ module Master
         lines.concat(render_section("Duplicate basenames", report[:duplicate_basenames]) do |item|
           "#{item[:basename]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
         end)
+        lines
+      end
+
+      def render_scale_and_coupling_sections(report)
+        lines = []
         lines.concat(render_section("Similar clusters", report[:similar_clusters]) do |item|
           "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
         end)

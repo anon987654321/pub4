@@ -11,20 +11,8 @@ module Master
         private
 
         def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, &blk)
-          chat_session = RubyLLM.chat(model: selected_model)
-          final_sys = build_final_system(selected_model, sys)
-          chat_session.with_instructions(final_sys) if final_sys
-
-          messages[0...-1].each do |message_entry|
-            chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s)
-          end
-
-          last_entry = messages.last || {}
-          last_text = last_entry[:content].to_s
-
-          available_tools = llm_tools(selected_model)
-          chat_session.with_tools(*available_tools) unless available_tools.empty?
-
+          chat_session = build_chat_session(selected_model, messages, sys:, image:)
+          last_text = (messages.last || {})[:content].to_s
           ask_arg, temp_file = build_ask_arg(last_text, image)
 
           begin
@@ -40,28 +28,46 @@ module Master
           end
         end
 
+        def build_chat_session(selected_model, messages, sys:, image:)
+          chat_session = RubyLLM.chat(model: selected_model)
+          final_sys = build_final_system(selected_model, sys)
+          chat_session.with_instructions(final_sys) if final_sys
+
+          messages[0...-1].each do |message_entry|
+            chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s)
+          end
+
+          available_tools = llm_tools(selected_model)
+          chat_session.with_tools(*available_tools) unless available_tools.empty?
+          chat_session
+        end
+
         def build_ask_arg(last_text, image)
           has_image = image && ((!image[:path].to_s.empty? && File.file?(image[:path])) || !image[:data].to_s.empty?)
           return [last_text, nil] unless has_image
 
-          temp_file = nil
+          attachment, temp_file = build_image_attachment(image)
+          content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
+          [content, temp_file]
+        end
+
+        def build_image_attachment(image)
           if !image[:path].to_s.empty? && File.file?(image[:path])
-            attachment = RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s))
-          else
-            ext = (if image[:mime].to_s =~ /png/i
+            return [RubyLLM::Attachment.new(image[:path], filename: (image[:name].to_s.empty? ? File.basename(image[:path]) : image[:name].to_s)), nil]
+          end
+
+          ext = (if image[:mime].to_s =~ /png/i
 ".png"
 else
 (image[:mime].to_s =~ /webp/i ? ".webp" : ".jpg")
 end)
-            temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
-            temp_file.binmode
-            temp_file.write(Base64.strict_decode64(image[:data]))
-            temp_file.rewind
-            temp_file.close
-            attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
-          end
-          content = RubyLLM::Content.new(text: last_text, attachments: [attachment])
-          [content, temp_file]
+          temp_file = Tempfile.new(["master_vision_#{SecureRandom.hex(4)}", ext])
+          temp_file.binmode
+          temp_file.write(Base64.strict_decode64(image[:data]))
+          temp_file.rewind
+          temp_file.close
+          attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
+          [attachment, temp_file]
         end
 
         def cleanup_temp_file(temp_file)

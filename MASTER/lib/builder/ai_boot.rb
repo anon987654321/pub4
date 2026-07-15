@@ -10,28 +10,40 @@ module Master
       agent = bundle[:agent]
       tools = bundle[:tools]
 
+      services = wire_agent_services(root:, infra:, agent:, tools:, bus:)
+      scanner = services[:scanner]
+      council = services[:council]
+      autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms: council[:axioms])
+        .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
+      finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot: services[:lean_boot])
+
+      { agent:, soul: bundle[:soul], scanner:, ecology: infra[:ecology], swarm: services[:swarm],
+        deliberation: council[:deliberation], council_stage: council[:council_stage],
+        ideation: council[:ideation], guard: services[:guard],
+        reference_graph: infra[:reference_graph], agent_pool: bundle[:agent_pool],
+        context_window: bundle[:context_window], tools: }.merge(autonomous)
+    end
+
+    def wire_agent_services(root:, infra:, agent:, tools:, bus:)
       Ground::ActivePlan.attach(bus, root)
       agent.wire_constitution(Ground::Constitution.new)
-      ecology = infra[:ecology]
-      scanner = build_scanner(root:, agent:, bus:, ecology:)
+      scanner = build_scanner(root:, agent:, bus:, ecology: infra[:ecology])
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       swarm = lean_boot ? nil : Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       council = build_council(infra:, agent:, bus:, root:, lean_boot:)
       # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
       guard = Judge::Security::InjectionGuard.new(mode: :permissive)
-      autonomous = boot_autonomous(root:, infra:, agent:, scanner:, axioms: council[:axioms])
-        .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
+      { scanner:, lean_boot:, swarm:, council:, guard: }
+    end
+
+    def finalize_ai_boot(bus:, root:, infra:, agent:, autonomous:, scanner:, lean_boot:)
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       Trace::FeedbackLedger.new(event_bus: bus, learnings: autonomous[:learnings]).attach
       Trace::ReflexionLedger.new(event_bus: bus, root:).attach
       subscribe_graph_retriever(bus:, infra:, root:) unless lean_boot
-      unless ENV["MASTER_SKIP_SELF_TEST"] == "1"
-        publish_self_test(bus, Judge::Scan::SelfTest.new(root:, event_bus: bus).call)
-      end
-      { agent:, soul: bundle[:soul], scanner:, ecology:, swarm:, deliberation: council[:deliberation],
-        council_stage: council[:council_stage], ideation: council[:ideation], guard:,
-        reference_graph: infra[:reference_graph], agent_pool: bundle[:agent_pool],
-        context_window: bundle[:context_window], tools: }.merge(autonomous)
+      return if ENV["MASTER_SKIP_SELF_TEST"] == "1"
+
+      publish_self_test(bus, Judge::Scan::SelfTest.new(root:, event_bus: bus).call)
     end
 
     def build_agent_bundle(root:, infra:, bus:)
@@ -100,27 +112,34 @@ module Master
     end
 
     def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
-      lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
       bus = infra[:bus]
+      lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
+      core = build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
+      monitors = build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:,
+        fix_loop: core[:fix_loop], rollback: core[:rollback])
+      core.merge(monitors)
+    end
+
+    def build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
       standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
       git = Reach::GitOperations.new(root)
       rules = scanner.instance_variable_get(:@rules)
       learnings = infra[:learnings]
       rollback = Loop::Rollback.new(root:, bus:)
-
       fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
       watch_loop = build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:)
+      { standing:, git:, rollback:, fix_loop:, watch_loop: }
+    end
 
+    def build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:, fix_loop:, rollback:)
       heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
         event_bus: bus, homeostat: infra[:homeostat])
       triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
-
       propose_tree = lean_boot ? nil : Loop::ProposeTree.new(root:, agent:, event_bus: bus)
       subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
       watcher = build_watcher(bus:, root:)
-
-      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher:, git:, rollback: }
+      { heartbeat:, triggers:, propose_tree:, watcher: }
     end
 
     # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
