@@ -1965,33 +1965,8 @@ STREAM_BARS_COUNT = 16
 # Non-stop chord/pad showcase: renders and plays each track once (full
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
-# A one-time boot announcement, same otherworldly-AI processing character
-# as the in-track speech, played once before the stream loop starts.
-def announce_boot!
-  return unless File.executable?(TTS_WORKER) && tool_available?("ffmpeg") && tool_available?("ffplay")
-  text = "MASTER music liveset, #{Time.now.strftime('%B %Y')} edition. Initializing."
-  raw = File.join(ROOT, ".dilla_boot_announce.mp3")
-  Open3.popen2(Gem.ruby, TTS_WORKER, SPEECH_VOICES.sample, "-35%", "-90Hz", raw) { |stdin, _stdout, wait|
-    stdin.write(text)
-    stdin.close
-    wait.value
-  }
-  return unless File.exist?(raw) && File.size(raw) > 500
-  processed = File.join(ROOT, ".dilla_boot_announce_fx.mp3")
-  sh! "ffmpeg", "-y", "-i", raw, "-af",
-      "asetrate=44100*0.75,aresample=44100,tremolo=f=32:d=0.15," \
-      "aecho=0.7:0.6:250|450:0.4|0.28," \
-      "chorus=0.6:0.8:40|55:0.3|0.25:0.35|0.3:1.4|1.8,volume=1.3",
-      "-c:a", "libmp3lame", "-b:a", "320k", processed
-  sh! "ffplay", "-nodisp", "-autoexit", processed
-ensure
-  FileUtils.rm_f(raw) if raw
-  FileUtils.rm_f(processed) if processed
-end
-
 def stream(bars_count = STREAM_BARS_COUNT)
   abort "ffplay required" unless tool_available?("ffplay")
-  announce_boot!
   prev_track = ENV["TRACK"]
   # Every restart (and there have been many, iterating on this live) reset
   # the rotation to index 0 — meaning repeated restarts kept replaying the
@@ -2221,19 +2196,26 @@ KICK_MARKOV = { after_hit: 0.55, after_rest: 1.15 }.freeze
 def generate_organic_kick_pattern(bar, seed_base = 5081)
   rng = Random.new(seed_base + bar * 733)
   total = KICK_POSITION_WEIGHTS.sum.to_f
+  # Convention on regular bars, wild randomization on fill bars (every 8th)
+  # — real drummers don't improvise every bar, they hold the groove and
+  # cut loose at structural points.
+  fill_bar = bar.positive? && bar % 8 == 7
+  density_mult = fill_bar ? 6.0 : 3.4
+  min_gap = fill_bar ? 1 : 2
   prev_hit = false
   candidates = (0..15).select do |i|
-    position_prob = (KICK_POSITION_WEIGHTS[i] / total) * 3.4
+    position_prob = (KICK_POSITION_WEIGHTS[i] / total) * density_mult
     markov_mult = prev_hit ? KICK_MARKOV[:after_hit] : KICK_MARKOV[:after_rest]
-    hit = rng.rand < (position_prob * markov_mult).clamp(0.0, 0.95)
+    hit = rng.rand < (position_prob * markov_mult).clamp(0.0, fill_bar ? 0.98 : 0.95)
     prev_hit = hit
     hit
   end
   # Pure independent-per-step probability could land two hits a single
   # 16th apart — reads as a mistake/flam, not a groove. Enforce a minimum
-  # gap like a real kick pattern would have.
+  # gap like a real kick pattern would have (relaxed on fill bars, where
+  # tight clusters are the point).
   steps = []
-  candidates.each { |i| steps << i if steps.empty? || i - steps.last >= 2 }
+  candidates.each { |i| steps << i if steps.empty? || i - steps.last >= min_gap }
   steps << 0 if steps.empty?
   steps.uniq.sort
 end
@@ -2683,6 +2665,30 @@ def synth_cowbell_sample
     tone1 = Math.sin(2 * Math::PI * 540.0 * t) > 0 ? 1.0 : -1.0
     tone2 = Math.sin(2 * Math::PI * 800.0 * t) > 0 ? 1.0 : -1.0
     out[i] = 0.42 * env * (0.6 * tone1 + 0.4 * tone2)
+  end
+  out
+end
+
+# Karplus-Strong plucked-string synthesis (Stanford/CCRMA algorithm,
+# exact) — a genuinely new instrument timbre, not another oscillator/
+# soundfont voice. Fill a ring buffer of noise, then average adjacent
+# samples with a stretch factor for decay/damping control.
+def karplus_strong_pluck(freq, duration_sec, seed: nil, stretch: 0.996, damping: 0.5)
+  n = (SAMPLE_RATE / freq).round.clamp(2, SAMPLE_RATE)
+  rng = seed ? Random.new(seed) : Random.new
+  buf = Array.new(n) { rng.rand * 2.0 - 1.0 }
+  total = (duration_sec * SAMPLE_RATE).round
+  out = Array.new(total, 0.0)
+  total.times do |i|
+    idx = i % n
+    if i < n
+      out[i] = buf[idx]
+    else
+      prev = out[i - n]
+      prev2 = out[i - n - 1] || prev
+      averaged = damping * prev + (1.0 - damping) * prev2
+      out[i] = stretch * averaged
+    end
   end
   out
 end
@@ -3161,7 +3167,27 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     render_native_pad_wav(pads_path, pad_events, duration)
   end
   lead_rendered = render_lead_via_fluidsynth(lead_path, lead_events_from_pads(pad_events), duration)
+  # Karplus-Strong plucked-string accent on each chord's root — a genuinely
+  # new instrument timbre (real physical-modeling algorithm, not another
+  # oscillator/soundfont voice), pre-rendered per chord since the algorithm
+  # itself needs a contiguous buffer, then windowed into the tones stream
+  # the same way chop/melody events already are.
+  pluck_buffers = pad_events.filter_map do |(t, v, chord, _sustain)|
+    next unless chord && chord[:hz]&.any?
+    [t, v, karplus_strong_pluck(chord[:hz].min, 1.1, seed: chord[:name].to_s.hash.abs % 100_000)]
+  end
   write_stereo_chunks(tones_path, duration) do |chunk_start, chunk_frames, left, right|
+    pluck_buffers.each do |(t, v, buf)|
+      event_frame = (t * SAMPLE_RATE).round
+      window = overlap_window(event_frame, buf.length, chunk_start, chunk_frames)
+      next unless window
+      local_start, source_offset, count = window
+      count.times do |i|
+        sample = buf[source_offset + i] * v * 0.16
+        left[local_start + i] += sample
+        right[local_start + i] += sample
+      end
+    end
     chop_events.each do |(t, v, chord)|
       hz_list = chop_hz(chord)
       next if hz_list.empty?
@@ -3472,11 +3498,11 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   step_p8 = beat_p / 2.0
   events[:shaker] = (0...(duration / step_p8).floor).map do |i|
     t = (i * step_p8).round(6)
-    [t, dilla_velocity(0.24, i / 8, i % 8, spread: 0.15)]
+    [t, dilla_velocity(0.55, i / 8, i % 8, spread: 0.15)]
   end
   cowbell_rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + 41)
   events[:cowbell] = (0...(duration / beat_p).floor).filter_map do |i|
-    next unless cowbell_rng.rand < 0.22
+    next unless cowbell_rng.rand < 0.07
     t = (i * beat_p + cowbell_rng.rand(beat_p * 0.6)).round(6)
     [t, dilla_velocity(0.3, i, 0, spread: 0.1)]
   end
@@ -3551,9 +3577,14 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
           "equalizer=f=480:t=h:w=420:g=-2.8,acrusher=bits=11:samples=1.5:mix=0.15[drums]"]
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
+  # Ostinato-style progressive entry (Zimmer/Herrmann device): drums alone
+  # for the first few bars, chords fading in after — instruments arriving
+  # over time instead of everything present from bar 1.
+  harm_fade_start = (beat_p * 4.0 * 4).round(2)
+  harm_fade_dur = (beat_p * 4.0 * 2).round(2)
   unless use_stem_harmony
     filt << "[1:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_HARM_WEIGHT'] || '1.0'}," \
-             "equalizer=f=1800:t=h:w=1600:g=1.4[harm]"
+             "equalizer=f=1800:t=h:w=1600:g=1.4,afade=t=in:st=#{harm_fade_start}:d=#{harm_fade_dur}[harm]"
     mix_labels << "[harm]"
     mix_weights << "1.6"
   end
