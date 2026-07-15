@@ -3,11 +3,14 @@
 require "json"
 require "net/http"
 require "uri"
+require_relative "replicate_client/asset_transfer"
 
 module Master
   module Reach
     # Thin Replicate predictions client — used by the replicate_kokoro TTS engine.
     class ReplicateClient
+      include AssetTransfer
+
       # Raised for HTTP statuses worth a retry (rate limit, server-side fault).
       # A 4xx other than 429 means the request itself is wrong and retrying
       # would just repeat the same failure.
@@ -72,35 +75,11 @@ module Master
         end
       end
 
-      # Fetch a prediction output URL (e.g. synthesized audio) to a local path.
-      def download_url(url, path)
-        uri = URI(url)
-        raise "refusing non-https download url: #{url}" unless uri.scheme == "https"
-        raise "refusing download from untrusted host: #{uri.host}" unless uri.host.to_s.match?(ALLOWED_DOWNLOAD_HOST)
-
-        Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
-          res = http.get(uri.request_uri)
-          raise "download failed #{res.code}" unless res.code.to_i.between?(200, 299)
-
-          File.binwrite(path, res.body)
-        end
-        path
-      end
-
       # SHA-256 of a downloaded file, for provenance sidecars and the
       # content-addressed blob cache in repligen.rb.
       def self.checksum(path)
         require "digest"
         Digest::SHA256.file(path).hexdigest
-      end
-
-      def upload_file(path)
-        mime = path.end_with?(".png") ? "image/png" : "image/jpeg"
-        upload_binary(path, mime: mime)
-      end
-
-      def upload_zip(path)
-        upload_binary(path, mime: "application/zip")
       end
 
       def account_username

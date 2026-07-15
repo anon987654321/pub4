@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require_relative "result/ok_chaining"
+require_relative "result/err_chaining"
+require_relative "result/err_classification"
+
 module Master
   class Result
     CATEGORIES = {
@@ -44,6 +48,8 @@ module Master
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
 
     class Ok < Result
+      include OkChaining
+
       attr_reader :value
 
       def initialize(value)
@@ -57,26 +63,16 @@ module Master
       def unwrap = @value
       def value_or(_) = @value
 
-      def map(&blk) = Result.ok(blk.call(@value))
-      def flat_map(&blk) = blk.call(@value)
-
-      def and_then(label = nil, &blk)
-        result = blk.call(@value)
-        result.is_a?(Result) ? result : Result.ok(result)
-      rescue StandardError => e
-        Result.err("#{label || "stage"}: #{e.message}", category: :infrastructure)
-      end
-
       def deconstruct_keys(_keys) = { value: @value }
       def to_s = @value.to_s
       def inspect = "Ok(#{@value.inspect})"
     end
 
     class Err < Result
-      attr_reader :message, :category, :context
+      include ErrChaining
+      include ErrClassification
 
-      RETRIABLE = %i[infrastructure timeout].freeze
-      PERMANENT = %i[validation axiom_violation budget].freeze
+      attr_reader :message, :category, :context
 
       def initialize(message, category = :unknown, context = nil)
         raise ArgumentError, "message cannot be nil" if message.nil?
@@ -93,13 +89,6 @@ module Master
       def value! = raise(Master::UnwrapError, "Err#value! called: #{@message}")
       def unwrap = value!
       def value_or(default) = default
-
-      def map(&) = self
-      def flat_map(&) = self
-      def and_then(*) = self
-
-      def retriable? = RETRIABLE.include?(@category)
-      def permanent? = PERMANENT.include?(@category)
 
       def deconstruct_keys(_keys) = { message: @message, category: @category, context: @context }
       def to_s = @message
