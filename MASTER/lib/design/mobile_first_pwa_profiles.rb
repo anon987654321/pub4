@@ -15,7 +15,7 @@ module Master
         Rule.new(
           id: :font_size_too_small,
           pattern: /(?:^|[{\s;])font-size:\s*(\d+)px/,
-          extract: ->(m) { m[1].to_i },
+          extract: ->(m) { m[0].to_i },
           threshold: BODY_FONT_MIN_PX,
           message: "font-size %dpx below #{BODY_FONT_MIN_PX}px baseline",
           severity: :high
@@ -23,7 +23,7 @@ module Master
         Rule.new(
           id: :line_height_too_low,
           pattern: /line-height:\s*([\d.]+)(?!px|em|rem)/,
-          extract: ->(m) { m[1].to_f },
+          extract: ->(m) { m[0].to_f },
           threshold: LINE_HEIGHT_MIN,
           message: "line-height %.1f below #{LINE_HEIGHT_MIN} — readability baseline",
           severity: :medium
@@ -31,7 +31,7 @@ module Master
         Rule.new(
           id: :touch_target_too_small,
           pattern: /min-height:\s*(\d+)px/,
-          extract: ->(m) { m[1].to_i },
+          extract: ->(m) { m[0].to_i },
           threshold: TOUCH_TARGET_MIN_PX,
           message: "min-height %dpx below #{TOUCH_TARGET_MIN_PX}px WCAG touch target (2.5.8)",
           severity: :high
@@ -118,6 +118,13 @@ module Master
 
       def audit_css_file(file, findings)
         source = File.read(file)
+        collect_css_rule_findings(source, file, findings)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "MobileFirstPwaProfiles.audit_css_file", path: file)
+        nil
+      end
+
+      def collect_css_rule_findings(source, file, findings)
         has_reduced_motion = source.match?(/prefers-reduced-motion/)
 
         CSS_RULES.each do |rule|
@@ -134,9 +141,6 @@ module Master
           next if rule.id == :animation_no_reduced_motion && has_reduced_motion
           findings << { id: rule.id, file:, message: rule.message, severity: rule.severity }
         end
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "MobileFirstPwaProfiles.audit_css_file", path: file)
-        nil
       end
 
       def audit_html(path)
