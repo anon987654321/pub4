@@ -66,7 +66,7 @@ INLINE_SONIC_PROFILES = {
   flylo_camel: {
     "harmonic" => {
       "engine_progression" => "chromatic_mediant_drift",
-      "engine_chords" => %w[Gmaj7 Bmin7 Cmaj9 Gmaj7]
+      "engine_chords" => %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG]
     },
     "synth" => {
       "bpm" => 84, "swing" => 0.12, "pad_lowpass_hz" => 3600, "master_lowpass_hz" => 3600,
@@ -112,6 +112,11 @@ TRACK_SONIC_MAP = {
   timeless: :dilla_timeless,
   chromatic_minor_descent: :dilla_timeless,
   neo_soul: :slum_players,
+  minor_soul_loop: :dilla_timeless,
+  voice_led_minor_arc: :dilla_timeless,
+  fourth_third_sixth_second_turn: :dilla_timeless,
+  borrowed_dominant_turn: :dilla_timeless,
+  soul: :dilla_timeless,
   chromatic_mediant: :flylo_camel,
   chromatic_mediant_drift: :flylo_camel,
   sus_add9_ballad: :madlib_eye,
@@ -119,8 +124,19 @@ TRACK_SONIC_MAP = {
   generated_planing: :dilla_timeless,
   generated: :dilla_timeless,
   players: :slum_players,
-  fourth_third_sixth_second_turn: :dilla_timeless
+  alternating_minor7_pair: :slum_players,
+  major7_relative_minor_turn: :slum_players
 }.freeze
+
+# Researched progressions — loop cleanly; skip fugue development + heavy pedal/bitonal.
+CURATED_PROGRESSIONS = %i[
+  timeless_authentic players_measured fourth_third_sixth_second_turn
+  voice_led_minor_arc neo_soul soul minor_soul_loop borrowed_dominant_turn
+  syncopated_slash_ninth syncopated_slash_alt sus_add9_ballad
+  chromatic_mediant_drift major7_relative_minor_turn alternating_minor7_pair
+  minor_dominant_slash_cycle minor_major_ninth_pair minor_ninth_cycle
+  jazz baroque suspended_minor_close minor_cycle_descent
+].freeze
 
 FLYLO_TRACKS = %i[
   chromatic_mediant chromatic_mediant_drift sus_add9_ballad
@@ -499,9 +515,20 @@ def resolve_swing(preset, sonic, time_offset)
   base.clamp(0.0, 72.0)
 end
 
+def track_preset(track)
+  return TRACK_PRESETS[track] if TRACK_PRESETS.key?(track)
+  base = TRACK_PRESETS[:timeless].dup
+  base[:progression] = track if CHORD_PROGRESSIONS.key?(track)
+  base
+end
+
+def curated_progression?(cfg)
+  CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
+end
+
 def enhanced_resolve_config
   track = (ENV["TRACK"] || "timeless").to_s.downcase.tr("-", "_").to_sym
-  preset = TRACK_PRESETS.fetch(track, TRACK_PRESETS[:timeless])
+  preset = track_preset(track)
   prog = (ENV["PROGRESSION"] || preset.fetch(:progression, track)).to_s.downcase.tr("-", "_").to_sym
   sonic = sonic_profile_for(track)
   feel = preset[:feel] || :default
@@ -764,6 +791,27 @@ def arrange_fugue_progression(pads, needed_chords, cfg)
   outro.length.times { phases << :coda }
 
   [arranged.first(needed_chords), phases.first(needed_chords)]
+end
+
+# Curated hooks loop as written — no random generative development section
+# wedged into the middle of a Donuts/Slum transcription.
+def arrange_loop_progression(pads, needed_chords, _cfg)
+  return [pads, []] if pads.empty?
+  hook = pads
+  looped = (hook * (needed_chords.to_f / hook.length).ceil).first(needed_chords)
+  total_cycles = (needed_chords.to_f / hook.length).ceil
+  phases = looped.each_with_index.map do |_chord, i|
+    cycle = i / hook.length
+    pos = i % hook.length
+    if cycle.zero?
+      :exposition
+    elsif cycle >= total_cycles - 1 && pos >= [hook.length - 2, 0].max
+      :recapitulation
+    else
+      :main
+    end
+  end
+  [looped, phases]
 end
 
 def log_progression_phases!(track, bpm, pads, phases)
@@ -2101,9 +2149,10 @@ PAD_CHORD_LOOKUP = (
 ).each_with_object({}) { |c, m| m[c[:name]] = c unless m[c[:name]] }.freeze
 # Album / track progressions — Fantastic Vol. 1 & 2 + Donuts.
 CHORD_PROGRESSIONS = {
-  soul: %w[Fm9 Dbmaj9 Ebmaj9 Abmaj9],
-  chromatic_minor_descent: %w[Fm9 Dbmaj9 Bbm9 Eb7 Abmaj9low C7b9 Fm/C Bb7sus],
-  borrowed_dominant_turn: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9],
+  soul: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9],
+  # Smoother minor turn — same key as timeless, less harsh dominant clutter.
+  chromatic_minor_descent: %w[Fm9 Dbmaj9 Cm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Bb7sus],
+  borrowed_dominant_turn: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low],
   # Fm soul arc — i→iv→bVII→bIII→bVI→v→IVsus→i (voice-led, resolves home).
   voice_led_minor_arc: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 Bb7sus Fm9],
   # Measured Donuts / timeless engine loop — i–IV–iii–vi–ii–V–bVI–IV.
@@ -2122,10 +2171,10 @@ CHORD_PROGRESSIONS = {
   # Circle-of-fifths sequence with seventh/ninth extensions: Bach-informed
   # functional motion, voiced through the same drifting analog pad engine.
   baroque: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9],
-  # Chromatic-mediant and tritone movement for a denser LA beat-scene field.
-  chromatic_mediant: ["Cm9", "E altered", "Bbm9", "Gbmaj9", "Dm9", "G7", "Cmaj9", "E altered"],
+  # Chromatic-mediant field — thirds motion, voice-led back to Fm home.
+  chromatic_mediant: %w[Dm9 Fm9 AbMaj13s11 Bbm9 Ebmaj9 Cm9 Dbmaj9 Fm9],
   neo_soul: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9],
-  tritone: %w[Cm9 Gbmaj9 Bbm9 E\ altered],
+  tritone: %w[Cm9 Gbmaj9 Bbm9 Fm9],
   syncopated_slash_ninth: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
   chromatic_planing: %w[Fm9 Bbm9 Fm9 Bbm9],
   ascending_minor_stack: %w[Am9 Dm9 Gm9 Cm9],
@@ -2195,7 +2244,6 @@ TRACK_PRESETS = {
                      half_time_bars: (32..47),
                      timing: { snare: -28..-12, hat_up: 18..36, bass: 24..44, kick_anchor: 0..6, pad: 6..20 } },
   suspended_minor_close: { bpm: 91, progression: :suspended_minor_close, chord_bars: 2, swing: 56 },
-  borrowed_dominant_turn: { bpm: 95, progression: :borrowed_dominant_turn, chord_bars: 2, swing: 52 },
   timeless: {
     bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
@@ -2206,16 +2254,7 @@ TRACK_PRESETS = {
     feel: :timeless, quintuplet: true, voicing: :spread,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
   },
-  soul: { bpm: 86, progression: :soul, chord_bars: 4, swing: 58 },
   jazz: { bpm: 88, progression: :jazz, chord_bars: 4, swing: 60 },
-  fourth_third_sixth_second_turn: {
-    bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
-    feel: :timeless, quintuplet: true, voicing: :spread
-  },
-  voice_led_minor_arc: {
-    bpm: 86, progression: :voice_led_minor_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
-    feel: :timeless, quintuplet: true, voicing: :spread
-  },
   # Not a lookup — dilla_progression detects :generated and calls
   # generate_progression (functional-harmony random walk) instead.
   # GEN_ROOT/GEN_MODE/GEN_LENGTH/GEN_SEED env vars configure it.
@@ -2249,9 +2288,30 @@ TRACK_PRESETS = {
     bpm: 80, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 0,
     feel: :techno_house, stereo_pan: true
   },
+  fourth_third_sixth_second_turn: {
+    bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
+    feel: :timeless, quintuplet: true, voicing: :spread,
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
+  },
+  voice_led_minor_arc: {
+    bpm: 86, progression: :voice_led_minor_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
+    feel: :timeless, quintuplet: true, voicing: :spread,
+    timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14 }
+  },
+  borrowed_dominant_turn: {
+    bpm: 90, progression: :borrowed_dominant_turn, chord_bars: 2, phrase_bars: 8, swing: 54,
+    feel: :timeless, voicing: :spread,
+    timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
+  },
+  soul: {
+    bpm: 84, progression: :soul, chord_bars: 4, phrase_bars: 16, swing: 58,
+    feel: :timeless, voicing: :spread,
+    timing: { snare: -20..-8, hat_up: 14..28, bass: 20..36, kick_anchor: 0..5 }
+  },
   players: {
-    bpm: 93, progression: :measured_dominant_field, chord_bars: 2, phrase_bars: 16, swing: 58,
-    feel: :timeless, voicing: :spread
+    bpm: 93, progression: :players_measured, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :timeless, voicing: :spread,
+    timing: { snare: -20..-8, hat_up: 12..26, bass: 18..34, kick_anchor: 0..5 }
   }
 }.freeze
 INDUSTRIAL_BPM_DEFAULT = 132.0
@@ -3706,11 +3766,12 @@ rescue SystemCallError => e
   abort "playback failed: #{e.message}"
 end
 
+# Curated rotation — researched progressions only (no random generated_* walks).
 STREAM_TRACKS = %w[
-  timeless fourth_third_sixth_second_turn chromatic_mediant_drift chromatic_mediant
-  alternating_minor7_pair syncopated_slash_ninth sus_add9_ballad neo_soul
-  generated generated_planing generated_mediant generated_polytonal generated_negative generated_neapolitan generated_techno
-  voice_led_minor_arc chromatic_minor_descent minor_soul_loop
+  timeless fourth_third_sixth_second_turn voice_led_minor_arc neo_soul
+  minor_soul_loop players soul borrowed_dominant_turn
+  syncopated_slash_ninth sus_add9_ballad chromatic_mediant_drift
+  alternating_minor7_pair major7_relative_minor_turn
 ].freeze
 
 # Tempo dropped a lot over this session (92->68 BPM) without this changing,
@@ -5643,15 +5704,20 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     ENV["GEN_LENGTH"] = needed_chords.to_s
   end
   pads = dilla_progression(cfg[:progression])
-  # A fugue subject: stated (the hook), developed (explored away from it),
-  # then recapitulated (the hook returns). Plain looping felt static; pure
-  # endless generative wandering never resolved into anything recognizable.
-  # This is neither — the curated/generated hook repeats a couple of times
-  # to establish itself, a generative development section explores outward
-  # from its last chord, then the hook returns to close it.
   fugue_phases = []
-  pads, fugue_phases = arrange_fugue_progression(pads, needed_chords, cfg) unless pads.empty?
-  pads = apply_pedal_point(pads, probability: 0.35, seed: cfg[:track].hash.abs)
+  unless pads.empty?
+    pads, fugue_phases = if curated_progression?(cfg)
+                           arrange_loop_progression(pads, needed_chords, cfg)
+                         else
+                           arrange_fugue_progression(pads, needed_chords, cfg)
+                         end
+  end
+  pedal_prob = if curated_progression?(cfg)
+                 %i[syncopated_slash_ninth syncopated_slash_alt].include?(cfg[:progression].to_sym) ? 0.0 : 0.06
+               else
+                 0.18
+               end
+  pads = apply_pedal_point(pads, probability: pedal_prob, seed: cfg[:track].hash.abs)
   pads, fugue_phases = enrich_progression(pads, cfg, phases: fugue_phases)
   pads = voice_lead_chords(pads)
   @chord_phases = fugue_phases
@@ -5659,13 +5725,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   @render_chord_bars = cfg[:chord_bars]
   @render_phrase_bars = cfg[:phrase_bars]
   log_progression_phases!(cfg[:track], cfg[:bpm], pads, fugue_phases)
-  # Bitonal bass on roughly a third of renders: a genuinely independent
-  # generated progression drives the bass root, disagreeing with the pad
-  # chords on purpose rather than always doubling their root.
   bass_pads = nil
-  if Random.new(cfg[:track].to_s.hash.abs).rand < 0.33
-    bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
-                                                         length: pads.length))
+  unless curated_progression?(cfg)
+    if Random.new(cfg[:track].to_s.hash.abs).rand < 0.1
+      bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
+                                                           length: pads.length))
+    end
   end
   events   = dilla_schedule(
     n_bars, beat_p, pads,
