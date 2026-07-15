@@ -1982,6 +1982,13 @@ def dilla_timing_ms(role, bar_index, step_index, timing = nil, beat_p = nil)
   ((raw / tick_ms).round * tick_ms).round(3)
 end
 
+def time_of_day_swing_offset
+  hour = Time.now.hour
+  # Peaks around 2-4am (loosest/latest feel), tightest around 2pm.
+  distance_from_3am = [((hour - 3) % 24), (24 - ((hour - 3) % 24))].min
+  (4.0 - distance_from_3am * (4.0 / 12.0)).round(1)
+end
+
 def dilla_resolve_config
   track = (ENV["TRACK"] || "chromatic_minor_descent").to_s.downcase.tr("-", "_").to_sym
   preset = TRACK_PRESETS.fetch(track, TRACK_PRESETS[:chromatic_minor_descent])
@@ -1994,7 +2001,10 @@ def dilla_resolve_config
     progression: prog,
     chord_bars: preset.fetch(:chord_bars, 4),
     phrase_bars: preset[:phrase_bars],
-    swing: (ENV["SWING"] || preset.fetch(:swing, 58)).to_f,
+    # A slowly-changing external number driving a musical parameter, without
+    # a network dependency: time of day nudges swing — later/looser at
+    # night, tighter around midday. Real effect, no API needed for it.
+    swing: (ENV["SWING"] || (preset.fetch(:swing, 58) + time_of_day_swing_offset)).to_f,
     feel: preset[:feel] || :default,
     stereo_pan: preset[:stereo_pan] || false,
     timing: preset[:timing],
@@ -2129,12 +2139,22 @@ KICK_POSITION_WEIGHTS = begin
   counts.freeze
 end
 
+# Real drum patterns aren't independent per-step coin flips — a hit makes
+# the next step less likely (players don't usually double straight after a
+# hit) and a rest makes a hit somewhat more likely (tension resolving).
+# Blended with the measured position weights rather than replacing them.
+KICK_MARKOV = { after_hit: 0.55, after_rest: 1.15 }.freeze
+
 def generate_organic_kick_pattern(bar, seed_base = 5081)
   rng = Random.new(seed_base + bar * 733)
   total = KICK_POSITION_WEIGHTS.sum.to_f
+  prev_hit = false
   candidates = (0..15).select do |i|
-    prob = (KICK_POSITION_WEIGHTS[i] / total) * 3.4
-    rng.rand < prob
+    position_prob = (KICK_POSITION_WEIGHTS[i] / total) * 3.4
+    markov_mult = prev_hit ? KICK_MARKOV[:after_hit] : KICK_MARKOV[:after_rest]
+    hit = rng.rand < (position_prob * markov_mult).clamp(0.0, 0.95)
+    prev_hit = hit
+    hit
   end
   # Pure independent-per-step probability could land two hits a single
   # 16th apart — reads as a mistake/flam, not a groove. Enforce a minimum
