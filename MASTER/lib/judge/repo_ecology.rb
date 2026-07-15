@@ -70,11 +70,15 @@ module Master
         base = path ? File.expand_path(path, @root) : @root
         files = collect_files(base)
         records = files.map { |file| analyze_file(file) }
-        graph = co_change_graph
-        scanned_utc = Time.now.utc
-        report = {
+        report = build_scan_report(records, co_change_graph)
+        @bus&.publish("repo_ecology:scan", files: records.size, score: report[:score])
+        report
+      end
+
+      def build_scan_report(records, graph)
+        {
           root: @root,
-          scanned_at: scanned_utc.iso8601,
+          scanned_at: Time.now.utc.iso8601,
           files: records.size,
           score: score(records),
           dead_file_candidates: dead_file_candidates(records),
@@ -86,8 +90,6 @@ module Master
           extension_mix: extension_mix(records),
           co_change_pairs: co_change_pairs(graph)
         }
-        @bus&.publish("repo_ecology:scan", files: records.size, score: report[:score])
-        report
       end
 
       def render(report)
@@ -96,6 +98,14 @@ module Master
         lines << "score: #{report[:score][:grade]} (#{report[:score][:value]}/100)"
         lines << "files: #{report[:files]}"
         lines << ""
+        lines.concat(render_report_sections(report))
+        lines << ""
+        lines.concat(render_summary_lines(report))
+        lines.join("\n")
+      end
+
+      def render_report_sections(report)
+        lines = []
         lines.concat(render_section("Dead-file candidates", report[:dead_file_candidates]) do |item|
           "#{item[:path]} — #{item[:reason]}"
         end)
@@ -114,12 +124,16 @@ module Master
         lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) do |item|
           "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
         end)
-        lines << ""
+        lines
+      end
+
+      def render_summary_lines(report)
         sprawl = report[:sprawl]
-        lines << "sprawl: max_depth=#{sprawl[:max_depth]}, avg_depth=#{sprawl[:avg_depth]}, " \
-                 "orphan_dirs=#{sprawl[:orphan_dirs]}"
-        lines << "extensions: #{report[:extension_mix].map { |ext, count| "#{ext}=#{count}" }.join(', ')}"
-        lines.join("\n")
+        [
+          "sprawl: max_depth=#{sprawl[:max_depth]}, avg_depth=#{sprawl[:avg_depth]}, " \
+          "orphan_dirs=#{sprawl[:orphan_dirs]}",
+          "extensions: #{report[:extension_mix].map { |ext, count| "#{ext}=#{count}" }.join(', ')}",
+        ]
       end
 
       private
@@ -143,8 +157,14 @@ module Master
         rel = relative(file)
         content = File.read(file, encoding: "UTF-8", invalid: :replace, undef: :replace)
         tokens = content.downcase.scan(/[a-z][a-z0-9_]{2,}/)
-        symbol_count = @code_index ? (@code_index.symbols_in(rel).size rescue 0) : 0
-        FileRecord.new(
+        FileRecord.new(**file_record_fields(file, rel, content, tokens))
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "repo_ecology.analyze_file", event_bus: @bus, path: file)
+        nil
+      end
+
+      def file_record_fields(file, rel, content, tokens)
+        {
           path: rel,
           full_path: file,
           basename: File.basename(file),
@@ -152,15 +172,20 @@ module Master
           ext: File.extname(file).downcase,
           bytes: content.bytesize,
           lines: content.lines.size,
-          symbol_count: symbol_count,
+          symbol_count: symbol_count_for(rel),
           tokens: tokens,
           digest: Digest::SHA256.hexdigest(content),
           signature: signature(tokens, rel),
           inbound_refs: 0
-        )
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "repo_ecology.analyze_file", event_bus: @bus, path: file)
-        nil
+        }
+      end
+
+      def symbol_count_for(rel)
+        return 0 unless @code_index
+
+        @code_index.symbols_in(rel).size
+      rescue StandardError
+        0
       end
 
       def score(records)

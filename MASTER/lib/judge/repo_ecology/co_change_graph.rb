@@ -15,22 +15,32 @@ module Master
                                         "--pretty=format:#{COMMIT_SEPARATOR}",
                                         "-#{CO_CHANGE_COMMITS}")
           return {} unless status.success?
+
+          pair_counts = count_co_change_pairs(out)
+          graph_from_counts(pair_counts).transform_values(&:freeze).freeze
+        rescue StandardError => e
+          @bus&.publish("repo_ecology:co_change_error", error: e.message)
+          {}
+        end
+
+        def count_co_change_pairs(out)
           pair_counts = Hash.new(0)
           out.split(COMMIT_SEPARATOR).each do |chunk|
             files = chunk.lines.map(&:strip).reject(&:empty?).uniq
             next if files.size < 2
             files.combination(2) { |a, b| pair_counts[[a, b].sort] += 1 }
           end
+          pair_counts
+        end
+
+        def graph_from_counts(pair_counts)
           graph = Hash.new { |h, k| h[k] = {} }
           pair_counts.each do |(a, b), count|
             next if count < CO_CHANGE_MIN_COUNT
             graph[a][b] = count
             graph[b][a] = count
           end
-          graph.transform_values(&:freeze).freeze
-        rescue StandardError => e
-          @bus&.publish("repo_ecology:co_change_error", error: e.message)
-          {}
+          graph
         end
 
         def load_or_build_co_change_graph
