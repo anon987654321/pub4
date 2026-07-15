@@ -125,15 +125,8 @@ module Master
           return [] if topic.empty?
           return [] if @session.messages.size < 8
 
-          topic_words = meaningful_words(topic)
-          return [] if topic_words.empty?
-
-          recent_users = @session.messages.last(8).select { |msg| msg[:role].to_s == "user" }.map { |msg| msg[:content].to_s }
-          recent_words = meaningful_words(recent_users.join(" "))
-          return [] if recent_words.empty?
-
-          overlap = (topic_words & recent_words).size.to_f / [topic_words.size, 1].max
-          return [] if overlap >= 0.25
+          overlap = topic_drift_overlap(topic)
+          return [] unless overlap && overlap < 0.25
 
           [prop(
             action: "should I save context and start fresh?",
@@ -145,24 +138,23 @@ module Master
           []
         end
 
+        def topic_drift_overlap(topic)
+          topic_words = meaningful_words(topic)
+          return nil if topic_words.empty?
+
+          recent_users = @session.messages.last(8).select { |msg| msg[:role].to_s == "user" }.map { |msg| msg[:content].to_s }
+          recent_words = meaningful_words(recent_users.join(" "))
+          return nil if recent_words.empty?
+
+          (topic_words & recent_words).size.to_f / [topic_words.size, 1].max
+        end
+
         def from_benchmark
           return [] unless @scanner
           return [] unless @bus.respond_to?(:tail)
 
-          event = @bus.tail(30).reverse.find { |entry| entry[:event].to_s == "rule_loop:fix_applied" }
-          return [] unless event
-
-          rule_id = event[:payload].to_h[:rule].to_s
-          return [] if rule_id.empty?
-
-          rule = @scanner.rules.find { |candidate| candidate.id.to_s == rule_id }
-          return [] unless rule
-
-          tags = Array(rule.rule_tags).map { |tag| tag.to_s.upcase }
-          hint = rule.description.to_s.downcase
-          performanceish = tags.include?("PERFORMANCE") || rule_id.match?(/N_PLUS_ONE|SLOW|CACHE|LATENCY|THROUGHPUT/) ||
-                            hint.match?(/performance|slow|latency|throughput|benchmark|smoke/)
-          return [] unless performanceish
+          rule_id = benchmark_candidate_rule_id
+          return [] unless rule_id
 
           [prop(
             action: "/smoke",
@@ -174,21 +166,27 @@ module Master
           []
         end
 
+        def benchmark_candidate_rule_id
+          event = @bus.tail(30).reverse.find { |entry| entry[:event].to_s == "rule_loop:fix_applied" }
+          return nil unless event
+
+          rule_id = event[:payload].to_h[:rule].to_s
+          return nil if rule_id.empty?
+
+          rule = @scanner.rules.find { |candidate| candidate.id.to_s == rule_id }
+          return nil unless rule
+
+          tags = Array(rule.rule_tags).map { |tag| tag.to_s.upcase }
+          hint = rule.description.to_s.downcase
+          performanceish = tags.include?("PERFORMANCE") || rule_id.match?(/N_PLUS_ONE|SLOW|CACHE|LATENCY|THROUGHPUT/) ||
+                            hint.match?(/performance|slow|latency|throughput|benchmark|smoke/)
+          performanceish ? rule_id : nil
+        end
+
         def from_entropy_radar
           return [] unless @bus.respond_to?(:tail)
 
-          scans = @bus.tail(100).select { |entry| entry[:event].to_s == "scan:complete" }
-          return [] if scans.size < 3
-
-          grouped = scans.last(3).group_by { |entry| module_bucket(entry[:payload].to_h[:path].to_s) }
-          hot = grouped.filter_map do |module_name, entries|
-            next if module_name.empty? || entries.size < 3
-
-            total = entries.sum { |entry| entry[:payload].to_h[:count].to_i }
-            next if total <= 10
-
-            [module_name, total]
-          end.max_by { |_, total| total }
+          hot = entropy_hotspot
           return [] unless hot
 
           module_name, total = hot
@@ -202,18 +200,26 @@ module Master
           []
         end
 
+        def entropy_hotspot
+          scans = @bus.tail(100).select { |entry| entry[:event].to_s == "scan:complete" }
+          return nil if scans.size < 3
+
+          grouped = scans.last(3).group_by { |entry| module_bucket(entry[:payload].to_h[:path].to_s) }
+          grouped.filter_map do |module_name, entries|
+            next if module_name.empty? || entries.size < 3
+
+            total = entries.sum { |entry| entry[:payload].to_h[:count].to_i }
+            next if total <= 10
+
+            [module_name, total]
+          end.max_by { |_, total| total }
+        end
+
         def from_soul_evolution
           return [] unless @bus.respond_to?(:tail)
 
-          scan_events = @bus.tail(100).select { |entry| entry[:event].to_s == "scan:complete" }.last(5)
-          return [] if scan_events.empty?
-
-          surfaced = scan_events.flat_map { |entry| Array(entry[:payload].to_h[:top_rules]).map(&:to_s) }.uniq
-          return [] if surfaced.size < 3
-
-          known = current_axiom_names
-          new_patterns = surfaced.reject { |rule| known.include?(rule) }
-          return [] if new_patterns.size < 3
+          new_patterns = soul_evolution_candidates
+          return [] unless new_patterns
 
           [prop(
             action: "/council",
@@ -225,16 +231,20 @@ module Master
           []
         end
 
+        def soul_evolution_candidates
+          scan_events = @bus.tail(100).select { |entry| entry[:event].to_s == "scan:complete" }.last(5)
+          return nil if scan_events.empty?
+
+          surfaced = scan_events.flat_map { |entry| Array(entry[:payload].to_h[:top_rules]).map(&:to_s) }.uniq
+          return nil if surfaced.size < 3
+
+          known = current_axiom_names
+          new_patterns = surfaced.reject { |rule| known.include?(rule) }
+          new_patterns.size < 3 ? nil : new_patterns
+        end
+
         def from_god_class_trajectory
-          candidates = Dir.glob(File.join(@root, "MASTER", "lib", "**", "*.rb")).first(20)
-          hot = candidates.filter_map do |path|
-            next unless File.file?(path)
-
-            deltas = commit_line_deltas(path)
-            next unless deltas.size >= 3 && deltas.all? { |delta| delta > 20 }
-
-            [path.delete_prefix("#{@root}/"), deltas.sum]
-          end.max_by { |_, total| total }
+          hot = god_class_hotspot
           return [] unless hot
 
           rel, total = hot
@@ -248,19 +258,23 @@ module Master
           []
         end
 
+        def god_class_hotspot
+          candidates = Dir.glob(File.join(@root, "MASTER", "lib", "**", "*.rb")).first(20)
+          candidates.filter_map do |path|
+            next unless File.file?(path)
+
+            deltas = commit_line_deltas(path)
+            next unless deltas.size >= 3 && deltas.all? { |delta| delta > 20 }
+
+            [path.delete_prefix("#{@root}/"), deltas.sum]
+          end.max_by { |_, total| total }
+        end
+
         def from_decoupling
           return [] unless @bus.respond_to?(:tail)
 
-          fixes = @bus.tail(100).select do |entry|
-            entry[:event].to_s == "rule_loop:fix_applied" && entry[:payload].to_h[:rule].to_s == "LAW_OF_DEMETER"
-          end
-          return [] if fixes.size < 2
-
-          modules = fixes.map { |entry| File.dirname(entry[:payload].to_h[:file].to_s) }.reject(&:empty?)
-          return [] if modules.size < 2
-
-          pair = modules.first(2)
-          return [] if pair.uniq.size < 2
+          pair = decoupling_pair
+          return [] unless pair
 
           [prop(
             action: "/refactor",
@@ -270,6 +284,19 @@ module Master
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_decoupling", event_bus: @bus)
           []
+        end
+
+        def decoupling_pair
+          fixes = @bus.tail(100).select do |entry|
+            entry[:event].to_s == "rule_loop:fix_applied" && entry[:payload].to_h[:rule].to_s == "LAW_OF_DEMETER"
+          end
+          return nil if fixes.size < 2
+
+          modules = fixes.map { |entry| File.dirname(entry[:payload].to_h[:file].to_s) }.reject(&:empty?)
+          return nil if modules.size < 2
+
+          pair = modules.first(2)
+          pair.uniq.size < 2 ? nil : pair
         end
       end
     end
