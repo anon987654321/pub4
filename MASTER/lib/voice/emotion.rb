@@ -25,20 +25,8 @@ module Master
         scores[:expressiveness] = clamp(0.4 + scores[:humor] * 0.25 + scores[:wonder] * 0.2 + scores[:triumph] * 0.15)
         scores[:lyrical] = clamp(scores[:lyric] + (t.match?(/[!?]/) ? 0.12 : 0.0) + (t.split.length <= 14 ? 0.08 : 0.0))
 
-        primary =
-          if scores[:comfort] > 0.35 then :comfort
-          elsif scores[:triumph] > 0.3 then :triumph
-          elsif scores[:humor] > 0.2 then :humor
-          elsif scores[:wonder] > 0.2 then :wonder
-          elsif scores[:urgency] > 0.2 then :urgent
-          else :warm
-          end
-
-        mode =
-          if scores[:lyrical] >= 0.45 then :melodic
-          elsif scores[:expressiveness] >= 0.65 then :expressive
-          else :conversational
-          end
+        primary = primary_emotion(scores)
+        mode = emotion_mode(scores)
 
         {
           primary: primary,
@@ -57,7 +45,27 @@ module Master
       def clamp(v)
         [[v, 0.0].max, 1.0].min
       end
-      private_class_method :score, :clamp
+
+      PRIMARY_THRESHOLDS = [
+        [:comfort, 0.35, :comfort],
+        [:triumph, 0.3, :triumph],
+        [:humor, 0.2, :humor],
+        [:wonder, 0.2, :wonder],
+        [:urgency, 0.2, :urgent],
+      ].freeze
+
+      def primary_emotion(scores)
+        _key, _threshold, label = PRIMARY_THRESHOLDS.find { |key, threshold, _label| scores[key] > threshold }
+        label || :warm
+      end
+
+      def emotion_mode(scores)
+        return :melodic if scores[:lyrical] >= 0.45
+        return :expressive if scores[:expressiveness] >= 0.65
+
+        :conversational
+      end
+      private_class_method :score, :clamp, :primary_emotion, :emotion_mode
     end
   end
 end

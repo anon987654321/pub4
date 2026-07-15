@@ -104,36 +104,49 @@ module Master
 
       def method_line_ranges(src)
         require "ripper"
-        lines  = src.lines
         ranges = []
         stack  = []
         depth  = 0
 
-        Ripper.lex(src).each do |(_line, _col), type, token, _state|
-          case type
-          when :on_kw
-            case token
-            when "def"
-              stack.push({ name: nil, start: _line, depth: depth })
-              depth += 1
-            when "class", "module", "do", "begin", "for", "if", "unless",
-                 "while", "until", "case"
-              depth += 1 unless token == "if" && !stack.empty? && stack.last[:name]
-            when "end"
-              depth -= 1
-              if !stack.empty? && depth == stack.last[:depth]
-                entry        = stack.pop
-                entry[:end]  = _line
-                ranges << entry if entry[:name]
-              end
-            end
-          when :on_ident
-            if !stack.empty? && stack.last[:name].nil?
-              stack.last[:name] = token
-            end
-          end
+        Ripper.lex(src).each do |(line, _col), type, token, _state|
+          depth = lex_token_depth(type, token, line, stack, depth, ranges)
         end
         ranges
+      end
+
+      def lex_token_depth(type, token, line, stack, depth, ranges)
+        case type
+        when :on_kw
+          depth = kw_token_depth(token, line, stack, depth, ranges)
+        when :on_ident
+          stack.last[:name] = token if !stack.empty? && stack.last[:name].nil?
+        end
+        depth
+      end
+
+      def kw_token_depth(token, line, stack, depth, ranges)
+        case token
+        when "def"
+          stack.push({ name: nil, start: line, depth: depth })
+          depth + 1
+        when "class", "module", "do", "begin", "for", "if", "unless", "while", "until", "case"
+          return depth if token == "if" && !stack.empty? && stack.last[:name]
+
+          depth + 1
+        when "end"
+          close_method_range(stack, depth - 1, line, ranges)
+          depth - 1
+        else
+          depth
+        end
+      end
+
+      def close_method_range(stack, depth, line, ranges)
+        return unless !stack.empty? && depth == stack.last[:depth]
+
+        entry       = stack.pop
+        entry[:end] = line
+        ranges << entry if entry[:name]
       end
 
     end

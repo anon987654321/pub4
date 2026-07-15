@@ -85,12 +85,36 @@ module Master
 
       def stage_for(component, id)
         case component
-        when :postpro
-          id <= 58 ? :image_pipeline : (id <= 63 ? :grade_workflow : :quality_gate)
-        when :repligen
-          id <= 78 ? :prompt_pipeline : (id <= 92 ? :identity_review : (id <= 101 ? :lora_lifecycle : :provider_pipeline))
-        when :dilla
-          id <= 147 ? :performance_engine : (id <= 176 ? :analog_signal_chain : (id <= 191 ? :harmony_engine : (id <= 195 ? :arrangement_engine : :mastering_gate)))
+        when :postpro then postpro_stage(id)
+        when :repligen then repligen_stage(id)
+        when :dilla then dilla_stage(id)
+        end
+      end
+
+      def postpro_stage(id)
+        case id
+        when ..58 then :image_pipeline
+        when ..63 then :grade_workflow
+        else :quality_gate
+        end
+      end
+
+      def repligen_stage(id)
+        case id
+        when ..78 then :prompt_pipeline
+        when ..92 then :identity_review
+        when ..101 then :lora_lifecycle
+        else :provider_pipeline
+        end
+      end
+
+      def dilla_stage(id)
+        case id
+        when ..147 then :performance_engine
+        when ..176 then :analog_signal_chain
+        when ..191 then :harmony_engine
+        when ..195 then :arrangement_engine
+        else :mastering_gate
         end
       end
 

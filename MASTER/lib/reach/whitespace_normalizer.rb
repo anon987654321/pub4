@@ -55,33 +55,43 @@ module Master
         i = 0
         in_str = nil
         while i < rest.length
-          c = rest[i]
-          if in_str
-            out << c
-            if c == "\\" && rest[i + 1]
-              out << rest[i + 1]
-              i += 2
-              next
-            end
-            in_str = nil if c == in_str
-            i += 1
-          elsif c == "#"
-            out << rest[i..]
-            break
-          elsif c == '"' || c == "'"
-            in_str = c
-            out << c
-            i += 1
-          elsif c == " " && rest[i + 1] == " "
-            out << " "
-            i += 1
-            i += 1 while rest[i] == " "
-          else
-            out << c
-            i += 1
-          end
+          i, in_str = collapse_char(rest, i, in_str, out)
         end
         leading + out
+      end
+
+      def collapse_char(rest, i, in_str, out)
+        c = rest[i]
+        return collapse_in_string_char(rest, i, out, in_str) if in_str
+
+        if c == "#"
+          out << rest[i..]
+          return [rest.length, nil]
+        end
+        return collapse_spaces(rest, i, out) if c == " " && rest[i + 1] == " "
+
+        out << c
+        in_str = c if c == '"' || c == "'"
+        [i + 1, in_str]
+      end
+
+      def collapse_in_string_char(rest, i, out, in_str)
+        c = rest[i]
+        out << c
+        if c == "\\" && rest[i + 1]
+          out << rest[i + 1]
+          return [i + 2, in_str]
+        end
+
+        in_str = nil if c == in_str
+        [i + 1, in_str]
+      end
+
+      def collapse_spaces(rest, i, out)
+        out << " "
+        i += 1
+        i += 1 while rest[i] == " "
+        [i, nil]
       end
     end
   end

@@ -88,24 +88,27 @@ module Master
         pending = [abs_path]
         files = []
         until pending.empty? || files.size >= SNAPSHOT_DIR_FILE_LIMIT
-          current = pending.shift
-          begin
-            entries = Dir.children(current).sort
-            entries.each do |entry|
-              path = File.join(current, entry)
-              next if snapshot_skip_path?(path)
-              if File.directory?(path)
-                pending << path
-              elsif snapshot_file?(path)
-                files << path
-                break if files.size >= SNAPSHOT_DIR_FILE_LIMIT
-              end
-            end
-          rescue StandardError
-            nil
-          end
+          scan_snapshot_dir(pending.shift, pending, files)
         end
         files
+      end
+
+      def scan_snapshot_dir(current, pending, files)
+        Dir.children(current).sort.each do |entry|
+          path = File.join(current, entry)
+          next if snapshot_skip_path?(path)
+
+          add_snapshot_entry(path, pending, files)
+          break if files.size >= SNAPSHOT_DIR_FILE_LIMIT
+        end
+      rescue StandardError
+        nil
+      end
+
+      def add_snapshot_entry(path, pending, files)
+        return pending << path if File.directory?(path)
+
+        files << path if snapshot_file?(path)
       end
 
       def snapshot_skip_path?(path)

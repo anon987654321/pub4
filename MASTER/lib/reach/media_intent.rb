@@ -4,7 +4,6 @@ require "fileutils"
 require "shellwords"
 require "time"
 require_relative "../master_paths"
-require_relative "lora_pipeline"
 require_relative "script_dispatch"
 
 module Master
@@ -24,30 +23,14 @@ module Master
 
       def handles?(text)
         text.match?(AUDIO_RE) || text.match?(POSTPRO_RE) ||
-          (text.match?(IMAGE_RE) && (text.match?(/\bragnhild\b/i) || text.match?(/\b(?:photo|portrait|image|picture)\b/i)))
+          text.match?(IMAGE_RE) && text.match?(/\b(?:photo|portrait|image|picture)\b/i)
       end
 
       def dispatch(text, root: MasterPaths.root)
         return postprocess(text, root:) if text.match?(POSTPRO_RE)
         return generate_beat(text, root:) if text.match?(AUDIO_RE)
-        return generate_lora(text) if text.match?(/\bragnhild\b/i)
 
         generate_cloud_image(text, root:)
-      end
-
-      def generate_lora(prompt)
-        readiness = LoraPipeline.readiness
-        case readiness[:state]
-        when :untrained
-          return Result.err("warn: Ragnhild has no trained checkpoint yet — train the LoRA before requesting identity images", category: :validation)
-        when :training
-          return Result.err("warn: Ragnhild is training right now — ask again once training finishes", category: :validation)
-        when :writing
-          return Result.err("warn: Ragnhild's newest checkpoint is still being written — ask again shortly", category: :validation)
-        end
-
-        result = LoraPipeline.run(mode: "generate", prompt: prompt)
-        result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :lora }) : result
       end
 
       def generate_cloud_image(prompt, root:)
@@ -64,23 +47,7 @@ module Master
         source = File.expand_path(source)
         return Result.err("postpro: input not found #{source}", category: :validation) unless File.file?(source)
 
-        preset = if text.match?(/\bvhs\b/i)
-                   "vhs_tape"
-                 elsif text.match?(/\bcrt\b/i)
-                   "crt_broadcast"
-                 elsif text.match?(/\bcamcorder|mini\s*dv|hi\s*8\b/i)
-                   "camcorder_glitch"
-                 elsif text.match?(/\bportrait\b/i)
-                   "portrait"
-                 elsif text.match?(/\bnoir|black\s+and\s+white\b/i)
-                   "noir"
-                 elsif text.match?(/\blo[ -]?fi\b/i)
-                   "lo_fi"
-                 elsif text.match?(/\bmagic\s+hour|golden\s+hour\b/i)
-                   "magic_hour"
-                 else
-                   "cinematic"
-                 end
+        preset = postpro_preset_for(text)
         output_dir = MEDIA_OUTPUT_DIR
         FileUtils.mkdir_p(output_dir)
         ext = File.extname(source)
@@ -88,6 +55,20 @@ module Master
         args = ["--input", source, "--output", output, "--preset", preset]
         result = ScriptDispatch.run(root:, tool: "postpro", arg: args.map { |value| Shellwords.escape(value) }.join(" "))
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :postpro, path: output }) : result
+      end
+
+      POSTPRO_PRESETS = [
+        [/\bvhs\b/i, "vhs_tape"],
+        [/\bcrt\b/i, "crt_broadcast"],
+        [/\bcamcorder|mini\s*dv|hi\s*8\b/i, "camcorder_glitch"],
+        [/\bportrait\b/i, "portrait"],
+        [/\bnoir|black\s+and\s+white\b/i, "noir"],
+        [/\blo[ -]?fi\b/i, "lo_fi"],
+        [/\bmagic\s+hour|golden\s+hour\b/i, "magic_hour"],
+      ].freeze
+
+      def postpro_preset_for(text)
+        POSTPRO_PRESETS.find { |pattern, _preset| text.match?(pattern) }&.last || "cinematic"
       end
 
       def generate_beat(text, root:)
