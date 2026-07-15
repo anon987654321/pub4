@@ -701,7 +701,6 @@ repo_topics:
     status: live
     confidence: high
     local_evidence:
-    - MASTER/data/architectures.yml
     - MASTER/data/limits.yml
     - MASTER/data/runtime.yml#repo_ecology
     - MASTER/data/runtime.yml#cognitive_spine
@@ -899,7 +898,6 @@ repo_topics:
     local_evidence:
     - MASTER/web/public/face.js
     - MASTER/data/runtime.yml#repo_ecology
-    - MASTER/data/architectures.yml
     pattern: 'No strong physical exoskeleton repo evidence was found yet. Existing
       evidence points to a cognitive/interface exoskeleton: face, gestures, haptics,
       terrain, body-like repo topology, and agentic control surfaces.

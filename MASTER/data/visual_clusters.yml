@@ -57,7 +57,6 @@ clusters:
     layer: repository_body
     files:
       - web/public/codebase.js
-      - data/architectures.yml
     signals:
       - master:codebase
       - master:rule_event

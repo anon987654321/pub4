@@ -261,7 +261,6 @@ face3d_migration:
   - id: codebase_topology
     files:
     - web/public/codebase.js
-    - data/architectures.yml
     purpose: modules as particle clusters; violations agitate, fixes settle
   - id: runtime_visual_bridge
     files:
@@ -2720,7 +2719,6 @@ style_guides:
     rubocop: rubocop-rails-omakase
     enforce_via:
     - RAILS/shared/.rubocop.yml
-    - data/rails.yml
   - id: javascript
     repo: https://github.com/airbnb/javascript
     local: javascript
