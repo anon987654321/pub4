@@ -80,28 +80,28 @@ module Master
 
         def dispatch_parallel(role_tasks, deadline: SHARED_DEADLINE)
           finish_by = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
-
-          threads = role_tasks.map do |t|
-            Thread.new do
-              run_with_subagent_policy(t[:role]) do
-                remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
-                Timeout.timeout(remaining) do
-                  [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
-                end
-              end
-            rescue Timeout::Error => _e
-              [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
-            rescue StandardError => e
-              @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
-              [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
-            end
-          end
-
+          threads = role_tasks.map { |t| spawn_role_thread(t, finish_by) }
           results = threads.map { |th| join_or_parallel_timeout(th, deadline) }.to_h
 
           sr = build_swarm_result(results)
           @bus&.publish(:swarm_dispatch_parallel_done, roles: results.keys, verdict: sr.verdict)
           Result.ok(sr)
+        end
+
+        def spawn_role_thread(t, finish_by)
+          Thread.new do
+            run_with_subagent_policy(t[:role]) do
+              remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
+              Timeout.timeout(remaining) do
+                [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+              end
+            end
+          rescue Timeout::Error => _e
+            [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
+          rescue StandardError => e
+            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
+            [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
+          end
         end
 
         def worker_roles = WORKER_CLASSES.keys
@@ -115,23 +115,35 @@ module Master
           workers_out = []
           deadline = Time.now + timeout
 
-          threads = tasks.map do |task_spec|
-            Thread.new do
-              role = task_spec[:role]
-              result = run_with_subagent_policy(role) do
-                dispatch(role, task: task_spec[:task], context_slice: task_spec.fetch(:context_slice, {}))
-              end
-              confidence = extract_confidence(result)
-              entry = { role:, output: result, confidence: }
-              mutex.synchronize { workers_out << entry }
-            rescue StandardError => error
-              entry = { role: task_spec[:role],
-                        output: Result.err("worker error: #{error.message}", category: :infrastructure),
-                        confidence: 0.0 }
-              mutex.synchronize { workers_out << entry }
-            end
-          end
+          threads = tasks.map { |task_spec| spawn_vote_thread(task_spec, mutex, workers_out) }
+          join_vote_threads(threads, deadline, timeout)
 
+          ok_workers = workers_out.select { |w| w[:output].ok? }
+          return insufficient_quorum_result(ok_workers, workers_out) if ok_workers.size < MIN_QUORUM
+
+          consensus, dissent, arbitrated = vote(ok_workers, tasks.first&.dig(:task).to_s)
+          @bus&.publish(:swarm_vote_done, arbitrated:, consensus: consensus.to_s[0..80])
+          Result.ok({ consensus:, dissent:, arbitrated:, workers: workers_out })
+        end
+
+        def spawn_vote_thread(task_spec, mutex, workers_out)
+          Thread.new do
+            role = task_spec[:role]
+            result = run_with_subagent_policy(role) do
+              dispatch(role, task: task_spec[:task], context_slice: task_spec.fetch(:context_slice, {}))
+            end
+            confidence = extract_confidence(result)
+            entry = { role:, output: result, confidence: }
+            mutex.synchronize { workers_out << entry }
+          rescue StandardError => error
+            entry = { role: task_spec[:role],
+                      output: Result.err("worker error: #{error.message}", category: :infrastructure),
+                      confidence: 0.0 }
+            mutex.synchronize { workers_out << entry }
+          end
+        end
+
+        def join_vote_threads(threads, deadline, timeout)
           threads.each do |thread|
             remaining = [deadline - Time.now, 0].max
             unless thread.join(remaining)
@@ -139,18 +151,12 @@ module Master
               @bus&.publish(:swarm_worker_timeout, timeout:)
             end
           end
+        end
 
-          ok_workers = workers_out.select { |w| w[:output].ok? }
-
-          if ok_workers.size < MIN_QUORUM
-            @bus&.publish(:swarm_vote_insufficient_quorum, count: ok_workers.size)
-            return Result.ok({ consensus: nil, dissent: workers_out, arbitrated: false,
-                               workers: workers_out, verdict: :insufficient_quorum })
-          end
-
-          consensus, dissent, arbitrated = vote(ok_workers, tasks.first&.dig(:task).to_s)
-          @bus&.publish(:swarm_vote_done, arbitrated:, consensus: consensus.to_s[0..80])
-          Result.ok({ consensus:, dissent:, arbitrated:, workers: workers_out })
+        def insufficient_quorum_result(ok_workers, workers_out)
+          @bus&.publish(:swarm_vote_insufficient_quorum, count: ok_workers.size)
+          Result.ok({ consensus: nil, dissent: workers_out, arbitrated: false,
+                     workers: workers_out, verdict: :insufficient_quorum })
         end
 
         private

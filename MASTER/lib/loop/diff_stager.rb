@@ -39,21 +39,26 @@ module Master
         old_content = File.exist?(path) ? File.read(path) : ""
         return Result.ok("no change") if old_content == new_content
 
-        @mutex.synchronize do
-          @counter += 1
-        entry = Entry.new(
-          id: @counter,
-          path:,
-          old_content:,
-          new_content:,
-          tool:,
-          created_at: Time.now,
-        )
-        @pending << entry
-        end
+        entry = build_entry(path:, old_content:, new_content:, tool:)
         persist_entry(entry)
         @bus&.publish("stage:queued", id: entry.id, path: entry.path, stats: entry.diff_stats)
         Result.ok({ staged: true, id: entry.id, path: entry.path, stats: entry.diff_stats })
+      end
+
+      def build_entry(path:, old_content:, new_content:, tool:)
+        @mutex.synchronize do
+          @counter += 1
+          entry = Entry.new(
+            id: @counter,
+            path:,
+            old_content:,
+            new_content:,
+            tool:,
+            created_at: Time.now,
+          )
+          @pending << entry
+          entry
+        end
       end
 
       def pending = @pending.dup

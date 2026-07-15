@@ -35,6 +35,16 @@ module Master
         @halt_reason = nil
         @git         = git || Reach::GitOperations.new(root)
 
+        @file_collector = FileCollector.new(root: root, bus: bus)
+        @rule_order     = RuleOrder.new(rules: rules, learnings: learnings, bus: bus, root: root)
+        @pass_runner    = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
+          ground_truth:, preserve_user_intent:, law_resolver:)
+        # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
+        @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root: root) if bus
+      end
+
+      def build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
+        ground_truth:, preserve_user_intent:, law_resolver:)
         committer    = Committer.new(git: @git, bus: bus, root: root,
                                      ground_truth: ground_truth, preserve_user_intent: preserve_user_intent)
         conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
@@ -42,17 +52,13 @@ module Master
         llm_router   = LlmRouter.new(agent)
         preamble     = self.class.preamble_from_soul
 
-        @file_collector = FileCollector.new(root: root, bus: bus)
-        @rule_order     = RuleOrder.new(rules: rules, learnings: learnings, bus: bus, root: root)
-        @pass_runner    = PassRunner.new(
+        PassRunner.new(
           bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
           rules:, agent:, scanner:, learnings:, preamble:,
           clean_runs_required: clean_runs_required,
           plateau_window:      plateau_window,
           ground_truth: ground_truth
         )
-        # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
-        @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root: root) if bus
       end
 
       def convergence_cfg = @convergence ||= (@axioms&.thresholds&.[]("convergence") || {})
@@ -67,12 +73,20 @@ module Master
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
         return halted_result if halted?
 
-        files            = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
+        files    = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
+        deadline = Time.now + budget_seconds
+
+        run_passes(files:, target:, max_passes:, deadline:, budget_seconds:)
+      rescue StandardError => e
+        @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
+        Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
+      end
+
+      def run_passes(files:, target:, max_passes:, deadline:, budget_seconds:)
         history          = []
         seen_snapshots   = Set.new
         recurring_violations = Hash.new(0)
         consecutive_clean = 0
-        deadline         = Time.now + budget_seconds
 
         max_passes.times do |i|
           pass = i + 1
@@ -93,9 +107,6 @@ module Master
         end
 
         Result.ok("plateau or max passes reached")
-      rescue StandardError => e
-        @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
-        Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
       end
 
       def run_forever(target = @root, max_cycles: max_cycles_default, startup_delay: startup_delay_default,

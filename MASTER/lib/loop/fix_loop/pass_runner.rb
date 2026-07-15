@@ -144,34 +144,50 @@ module Master
 
         def analyze_ruby_file(path)
           src = File.read(path, encoding: "UTF-8")
-          fixed = 0
-          rel   = path.delete_prefix("#{@root}/")
+          rel = path.delete_prefix("#{@root}/")
 
+          fixed, src = apply_ast_fixes(path, src, rel)
+          report_type_errors(path, src, rel)
+          report_datalog_findings(path, src, rel)
+          fixed
+        end
+
+        def apply_ast_fixes(path, src, rel)
+          fixed = 0
           ast_result = Judge::Scan::AstFixer.fix(path, src)
           if ast_result&.changed
             src = File.read(path, encoding: "UTF-8")
             fixed += ast_result.transforms.size
             @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
           end
+          [fixed, src]
+        end
 
+        def report_type_errors(path, src, rel)
           Ground::TypeChecker.check(path, src).each do |te|
             @bus&.publish("fix_loop:type_error", file: rel, rule: te.rule, message: te.message)
           end
+        end
 
+        def report_datalog_findings(path, src, rel)
           dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
           dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
           dl.evaluate.each do |finding|
             @bus&.publish("fix_loop:datalog_finding", file: rel, rule: finding.rule_id, message: finding.message)
           end
-
-          fixed
         end
 
         def llm_pass(violations:, files:, pass:, deadline: nil)
-          fixed = 0
           rule_violations = violations.group_by { |v| v[:rule].to_s }
           runnable = @rule_order.ordered(violation_counts: @violation_counts)
                                 .select { |rule| rule_violations.key?(rule.id.to_s) }
+          fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
+          publish_llm_pass_status(pass:, deadline:)
+          fixed
+        end
+
+        def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
+          fixed = 0
           @rule_order.dependency_levels(runnable).each do |group|
             break if deadline && Time.now >= deadline
             break if circuit_open?
@@ -182,12 +198,15 @@ module Master
               @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
             end
           end
+          fixed
+        end
+
+        def publish_llm_pass_status(pass:, deadline:)
           if deadline && Time.now >= deadline
             @bus&.publish("fix_loop:pass_timeout", pass:)
           elsif circuit_open?
             @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
           end
-          fixed
         end
 
         def run_rule_group(group:, files:, pass:, rule_violations:)
@@ -251,6 +270,14 @@ module Master
         end
 
         def stagnant?(history, seen_snapshots, recurring_violations, found, pass)
+          return true if oscillating?(seen_snapshots, found, pass)
+          return true if recurrence_cycle?(recurring_violations, found, pass)
+
+          history << found.size
+          plateaued?(history, found, pass)
+        end
+
+        def oscillating?(seen_snapshots, found, pass)
           snap = violation_snapshot(found)
           if seen_snapshots.include?(snap)
             @bus&.publish("fix_loop:oscillation", pass:, violations: found.size)
@@ -258,21 +285,24 @@ module Master
             return true
           end
           seen_snapshots << snap
-
-          recurring = recurring_violation(found, recurring_violations)
-          if recurring
-            @bus&.publish("fix_loop:cycle_detected", pass:, threshold: @plateau_window, violation: recurring)
-            trigger_rollback("fix loop cycle detected")
-            return true
-          end
-
-          history << found.size
-          window = @plateau_window
-          if history.size >= window && history.last(window).uniq.size == 1
-            @bus&.publish("fix_loop:plateau", pass:, violations: found.size)
-            return true
-          end
           false
+        end
+
+        def recurrence_cycle?(recurring_violations, found, pass)
+          recurring = recurring_violation(found, recurring_violations)
+          return false unless recurring
+
+          @bus&.publish("fix_loop:cycle_detected", pass:, threshold: @plateau_window, violation: recurring)
+          trigger_rollback("fix loop cycle detected")
+          true
+        end
+
+        def plateaued?(history, found, pass)
+          window = @plateau_window
+          return false unless history.size >= window && history.last(window).uniq.size == 1
+
+          @bus&.publish("fix_loop:plateau", pass:, violations: found.size)
+          true
         end
 
         def recurring_violation(found, recurring_violations)

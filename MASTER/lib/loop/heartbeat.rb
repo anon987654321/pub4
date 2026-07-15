@@ -59,26 +59,24 @@ module Master
 
       def run_due!
         now = Time.now.to_i
-        results = []
-
-        @jobs.each do |job|
-          name = job["name"]
-          interval = job["interval_seconds"].to_i
-          last_run = @state.dig(name, "last_run").to_i
-
-          next unless now - last_run >= interval
-
-          @bus&.publish("heartbeat:run", job: name)
-          result = execute_job(job)
-          @state[name] = @state.fetch(name, {}).merge(
-            "last_run" => now,
-            "result" => result.to_s[0, RESULT_TRUNCATE]
-          )
-          results << { name: name, result: result }
-        end
-
+        results = @jobs.filter_map { |job| run_job_if_due(job, now) }
         persist_state unless results.empty?
         results
+      end
+
+      def run_job_if_due(job, now)
+        name = job["name"]
+        interval = job["interval_seconds"].to_i
+        last_run = @state.dig(name, "last_run").to_i
+        return nil unless now - last_run >= interval
+
+        @bus&.publish("heartbeat:run", job: name)
+        result = execute_job(job)
+        @state[name] = @state.fetch(name, {}).merge(
+          "last_run" => now,
+          "result" => result.to_s[0, RESULT_TRUNCATE]
+        )
+        { name: name, result: result }
       end
 
       def list

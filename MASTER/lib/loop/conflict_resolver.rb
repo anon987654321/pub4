@@ -68,29 +68,33 @@ module Master
         rows.group_by { |finding| [finding["file"], finding["line"]] }.values.reduce(rows) do |remaining, group|
           next remaining if group.size < 2
 
-          winner = group.reduce(group.first) do |best, finding|
-            favored = @law_resolver.winner(best["rule"], finding["rule"], rules_index: @rules_index)
-            if favored == best["rule"]
-              log_conflict(
-                rule_a: best["rule"],
-                rule_b: finding["rule"],
-                resolution: "law priority favors #{best["rule"]}",
-                file: finding["file"],
-                line: finding["line"]
-              )
-              best
-            else
-              log_conflict(
-                rule_a: finding["rule"],
-                rule_b: best["rule"],
-                resolution: "law priority favors #{finding["rule"]}",
-                file: best["file"],
-                line: best["line"]
-              )
-              finding
-            end
-          end
+          winner = pick_group_winner(group)
           remaining - (group - [winner])
+        end
+      end
+
+      def pick_group_winner(group)
+        group.reduce(group.first) do |best, finding|
+          favored = @law_resolver.winner(best["rule"], finding["rule"], rules_index: @rules_index)
+          if favored == best["rule"]
+            log_conflict(
+              rule_a: best["rule"],
+              rule_b: finding["rule"],
+              resolution: "law priority favors #{best["rule"]}",
+              file: finding["file"],
+              line: finding["line"]
+            )
+            best
+          else
+            log_conflict(
+              rule_a: finding["rule"],
+              rule_b: best["rule"],
+              resolution: "law priority favors #{finding["rule"]}",
+              file: best["file"],
+              line: best["line"]
+            )
+            finding
+          end
         end
       end
 

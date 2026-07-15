@@ -79,18 +79,23 @@ module Master
           # dissent is the array of worker entries that did not agree with the consensus.
           # arbitrated is true when the agent broke a tie; false otherwise.
           def vote(ok_workers, task_context)
-            total_weight = ok_workers.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] }
+            total_weight = weighted_confidence(ok_workers)
 
             # Group workers by their recommendation signal (:approve / :reject / :neutral).
             by_signal = ok_workers.group_by { |w| recommendation_signal(w[:output]) }
+            best_signal, best_workers = by_signal.max_by { |_signal, workers| weighted_confidence(workers) }
 
-            best_signal, best_workers = by_signal.max_by do |_signal, workers|
-              workers.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] }
-            end
-
-            best_weight = best_workers&.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] } || 0.0
+            best_weight = best_workers ? weighted_confidence(best_workers) : 0.0
             agreement = total_weight.positive? ? best_weight / total_weight : 0.0
 
+            build_vote_result(agreement, best_workers, ok_workers, task_context)
+          end
+
+          def weighted_confidence(workers)
+            workers.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] }
+          end
+
+          def build_vote_result(agreement, best_workers, ok_workers, task_context)
             if agreement >= CONSENSUS_THRESHOLD
               consensus = summarize_outputs(best_workers)
               dissent = ok_workers - best_workers
