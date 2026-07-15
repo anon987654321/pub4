@@ -9,7 +9,7 @@ class ItemsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
-    scope = Current.user.items.recent
+    scope = Current.user.items.with_attached_photos.recent
     scope = apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe") if live_search_query.present?
     @pagy, @items = pagy(scope)
     @analytics = WardrobeAnalyticsService.new(Current.user).summary

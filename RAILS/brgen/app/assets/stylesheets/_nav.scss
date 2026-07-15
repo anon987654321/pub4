@@ -142,3 +142,12 @@ a.feed-tab { text-decoration: none; }
 .compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
 .compose-as { font-size: var(--x-font-size); }
 .compose-hint { font-size: var(--x-font-size); margin: var(--space-2) 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -64,3 +64,12 @@
 
 .nav_swiper_grip:hover { opacity: 0.9; }
 .nav_swiper.revealed .nav_swiper_grip { transform: translate(-50%, 52px); opacity: 0.35; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

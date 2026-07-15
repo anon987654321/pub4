@@ -138,3 +138,12 @@
 .dressing-room-actions {
   margin-top: var(--space-sm);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

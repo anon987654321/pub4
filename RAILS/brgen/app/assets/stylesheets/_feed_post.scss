@@ -114,3 +114,12 @@
   width: 1.125rem;
   height: 1.125rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

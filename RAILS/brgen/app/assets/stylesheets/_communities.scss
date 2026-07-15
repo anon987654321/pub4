@@ -19,3 +19,12 @@
   font-weight: 600;
   text-decoration: none;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

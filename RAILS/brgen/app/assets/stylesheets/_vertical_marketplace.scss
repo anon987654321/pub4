@@ -98,3 +98,12 @@ body.vertical-marketplace .sidebar-card h3 {
   letter-spacing: 0.08em;
   font-size: var(--text-xs);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

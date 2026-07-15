@@ -132,3 +132,12 @@ section h2 {
   image-rendering: crisp-edges;
   border-radius: 0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

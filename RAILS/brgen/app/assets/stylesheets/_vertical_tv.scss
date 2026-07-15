@@ -188,3 +188,12 @@ body.vertical-tv .show-card:hover {
 .tv-live-stream-form .field {
   margin-bottom: var(--space-4);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

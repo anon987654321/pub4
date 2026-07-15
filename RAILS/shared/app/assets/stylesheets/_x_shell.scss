@@ -320,3 +320,12 @@ main[role="main"] {
   border-radius: var(--x-radius-pill);
   background: currentColor;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

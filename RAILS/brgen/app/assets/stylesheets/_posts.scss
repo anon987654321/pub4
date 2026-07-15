@@ -141,7 +141,7 @@ input[type=file] {
 }
 
 input[type=file]::file-selector-button {
-  min-height: 40px;
+  min-height: 44px;
   margin-inline-end: var(--space-2);
   padding-inline: var(--space-3);
   border: 0;
@@ -153,3 +153,12 @@ input[type=file]::file-selector-button {
 
 input:focus, textarea:focus, select:focus { background: var(--x-hover); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

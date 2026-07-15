@@ -107,3 +107,12 @@
 }
 
 .mobile-sheet-links a:hover { background: var(--hover); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

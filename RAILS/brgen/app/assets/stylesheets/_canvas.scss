@@ -90,3 +90,12 @@
 }
 .splash .hint { color: var(--text-dim); font-size: .65rem; letter-spacing: .05em; }
 .splash a { color: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

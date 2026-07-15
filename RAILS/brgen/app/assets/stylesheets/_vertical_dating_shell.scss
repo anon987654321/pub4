@@ -90,3 +90,12 @@ body.vertical-dating .match-list .x-post.x-match .x-avatar-img {
   letter-spacing: -0.01em;
   color: var(--dating-ink);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

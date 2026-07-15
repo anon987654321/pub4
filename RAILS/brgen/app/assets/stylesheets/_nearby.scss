@@ -77,3 +77,12 @@
 .hidden { display: none; }
 [hidden] { display: none; }
 .sidebar-dropdown { position: relative; margin-top: 1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

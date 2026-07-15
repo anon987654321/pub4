@@ -124,3 +124,12 @@
 .luxury-actions .btn {
   padding: 0.6rem 1.25rem;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

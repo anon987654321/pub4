@@ -21,7 +21,7 @@
 .btn-ghost { background: transparent; border: 1px solid var(--x-border); color: var(--x-text); }
 .btn-ghost:hover { background: var(--x-hover); }
 .btn-danger { background: var(--x-hover); color: var(--x-text); border: 1px solid var(--x-border); }
-.btn-sm { min-height: 36px; padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+.btn-sm { min-height: 44px; padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
 
 .btn:focus-visible,
 .media-btn:focus-visible {
@@ -98,4 +98,13 @@
   padding: var(--space-3);
   background: var(--surface2);
   color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

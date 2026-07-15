@@ -122,3 +122,12 @@
   color: var(--x-text-secondary);
   opacity: 0.18;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

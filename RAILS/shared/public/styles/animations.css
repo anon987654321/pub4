@@ -54,3 +54,12 @@
 [style*="--delay:"] {
   animation-delay: calc(var(--delay) * 40ms);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

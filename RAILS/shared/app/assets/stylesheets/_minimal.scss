@@ -99,7 +99,7 @@ nav.nav-visible {
 nav a {
   display: inline-flex;
   align-items: center;
-  min-height: 36px; /* touch target: --x-line-height is a fixed 20px, so an
+  min-height: 44px; /* touch target: --x-line-height is a fixed 20px, so an
     unpadded anchor collapses to a 20px-tall hit area */
   padding-block: 0.5rem;
   color: var(--dark-grey);
@@ -549,8 +549,8 @@ footer {
   border-radius: 0;
   transition: color var(--transition-fast), background var(--transition-fast);
   cursor: pointer;
-  min-height: 36px; /* solid mobile tap target */
-  min-width: 36px;
+  min-height: 44px; /* solid mobile tap target */
+  min-width: 44px;
   font-size: 0.8125rem;
 }
 .x-act:hover { color: var(--accent); background: var(--hover); }
@@ -592,8 +592,8 @@ footer {
   }
   .x-act {
     padding: 6px 8px;
-    min-height: 28px;
-    min-width: auto;
+    min-height: 44px;
+    min-width: 44px;
   }
   .x-header {
     flex-wrap: nowrap;
@@ -613,5 +613,14 @@ footer {
     aspect-ratio: auto;
     border-radius: 0;
     margin-bottom: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

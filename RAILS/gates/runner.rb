@@ -30,6 +30,7 @@ GATE_MAP = {
   schema_migration:      "schema_migration_gate.rb",
   stimulus_components:   "stimulus_components_adoption_gate.rb",
   visual_contract:       "visual_contract_gate.rb",
+  apps_yml:              "gates/apps_yml_validator.rb",
 }.freeze
 
 def gate_path(name)
