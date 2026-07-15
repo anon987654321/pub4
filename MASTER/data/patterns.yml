@@ -1521,6 +1521,24 @@ operator_playbook:
       action: "Lock at /var/tmp/pub4-ci.lock mode 666 (vps_ci ensure_ci_lock). Do not pre-create .holder as root — vps_ci removes stale holder before CI. CiGuard swallows EPERM on holder delete."
       proof: "ls -l /var/tmp/pub4-ci.lock; zsh OPENBSD/vps_ci.sh brgen exits 0"
 
+    - id: git_shared_worktree_commit_scope
+      area: process
+      signal: "git commit lands unexpected files from a concurrent agent's staged changes in this same working tree (e.g. .master/snapshot.md, unrelated RAILS/ edits riding along with an intended fix)"
+      action: "git add path && git commit only commits the whole index, not just what was just staged — Grok/Codex/other agents share this exact working tree and stage things independently. Before every commit: git status -sb -- <intended files> must show ONLY those files staged. If anything else shows up staged, git reset (unstages everything, keeps the working tree) and re-add only the intended paths, then re-verify before committing."
+      proof: "git status -sb -- <files> immediately before commit shows no unexpected entries; git log -1 --stat after the commit lists only the intended files"
+
+    - id: scanner_finding_comment_vs_code
+      area: master
+      signal: "rake selftest/constitution flags a pattern (e.g. HTTP/Open3 without bounded timeout, silent catch {}) that only appears in a comment, or inside a build-output copy under web/public/assets"
+      action: "Before fixing the flagged code, read the actual line: check it isn't inside a comment (strip # lines before matching) and isn't a Propshaft-fingerprinted copy under web/public/assets (already excluded via Scanner.skip_path? — reuse that check rather than hand-rolling a new exclusion list). Widen detection regexes narrowly (e.g. \\w*thr\\w*\\.join\\( for a bounded Thread/Process wait) rather than broadly, to avoid introducing new false negatives."
+      proof: "rake selftest finding count drops for the specific file/law with no behavior change; rake test stays green"
+
+    - id: env_isolation_list_incompleteness
+      area: master_web
+      signal: "a spawned subprocess (tts-worker or any Process.spawn(env, ...) child) resolves against the wrong Gemfile/Gemfile.lock despite an isolation env hash nil'ing named bundler keys"
+      action: "Process.spawn(env, ...) without unsetenv_others: true only clears the keys explicitly listed in that hash — any other bundler-adjacent var (RUBYLIB, BUNDLE_LOCKFILE, a stray marker var) passes through from the caller unfiltered. Diff the actual live env at the spawn point (Falcon's/Rails' full ENV) against the isolation list rather than assuming the named list is complete."
+      proof: "a one-time diagnostic log at the spawn point (or ps -o command= -p <spawned pid>) shows no leaked BUNDLE_*/RUBYLIB vars beyond the intended isolation set"
+
 skills_registry:
   meta:
     source: runtime authority — edit this file directly; do not add data/skills/*.md
