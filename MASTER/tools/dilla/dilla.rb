@@ -2076,8 +2076,21 @@ def voice_lead_chords(chords)
   prev_midis = chords.first[:hz].map { |h| hz_to_midi(h) }.sort
   chords.drop(1).each do |nxt|
     targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
-    voiced = targets.each_with_index.map do |target, i|
-      anchor = prev_midis[i % prev_midis.length]
+    # Greedy nearest-pitch-class assignment, not fixed sorted-index matching
+    # — index matching (voice i always follows voice i) breaks down whenever
+    # chord sizes differ, e.g. a 6-note polytonal stack following a 4-note
+    # chord: it was forcing a voice toward whatever pitch happened to sit at
+    # the same numeric position rather than its actual closest neighbor,
+    # which is what produced transitions that sounded unrelated to the
+    # chord before them.
+    available_anchors = prev_midis.dup
+    voiced = targets.map do |target|
+      anchor = if available_anchors.empty?
+                 target
+               else
+                 available_anchors.min_by { |a| pitch_class_distance(a, target) }
+               end
+      available_anchors.delete(anchor) if available_anchors.length > 1
       shift = ((anchor - target) / 12.0).round
       midi = target + shift * 12.0
       # Nearest-octave voice leading has no floor/ceiling on its own — over a
@@ -2093,6 +2106,11 @@ def voice_lead_chords(chords)
     led << { name: nxt[:name], hz: voiced.map { |m| midi_to_hz(m) }.uniq.first(5) }
   end
   led
+end
+
+def pitch_class_distance(a, b)
+  diff = (a - b) % 12.0
+  [diff, 12.0 - diff].min
 end
 
 # Position weights derived from the empirical frequency of each 16th-note
@@ -2890,9 +2908,18 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
     sh! "fluidsynth", "-ni", "-g", "1.5", "-F", voice_path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
     FileUtils.rm_f(midi_path)
   end
+  # Classic analog-synth unison detune (Juno/Prophet chorus character): two
+  # copies of the warm-pad voice, pitched a few cents apart, summed —
+  # what actually makes a single-oscillator GM patch read as a real
+  # multi-oscillator analog synth instead of a flat MIDI render.
   sh! "ffmpeg", "-y", "-i", ep_path, "-i", warm_path,
-      "-filter_complex", "[0:a]apad=whole_dur=#{duration}[ep];[1:a]apad=whole_dur=#{duration}[warm];" \
-                         "[ep][warm]amix=inputs=2:weights=1.0 0.7:duration=first:normalize=0[blend]",
+      "-filter_complex", "[0:a]apad=whole_dur=#{duration}[ep];" \
+                         "[1:a]apad=whole_dur=#{duration}[warmsrc];" \
+                         "[warmsrc]asplit=2[w1][w2];" \
+                         "[w1]asetrate=44100*1.0035,aresample=44100[wup];" \
+                         "[w2]asetrate=44100*0.9965,aresample=44100[wdown];" \
+                         "[wup][wdown]amix=inputs=2:weights=0.55 0.55:duration=first:normalize=0[wdetuned];" \
+                         "[ep][wdetuned]amix=inputs=2:weights=1.0 0.7:duration=first:normalize=0[blend]",
       "-map", "[blend]", "-c:a", "pcm_s16le", path
   FileUtils.rm_f(ep_path)
   FileUtils.rm_f(warm_path)
