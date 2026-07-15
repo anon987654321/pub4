@@ -1617,6 +1617,21 @@ def mood_darken_filter(input_tag, out_tag: "darkened")
   "[#{input_tag}]equalizer=f=5500:t=h:w=4000:g=-3.5,equalizer=f=220:t=h:w=180:g=2.0,lowpass=f=11000[#{out_tag}]"
 end
 
+# A real destabilizing moment, not another polite EQ nudge: heavy
+# lowpass+bitcrush gate right before the build lands, then a short hard
+# silence gap — the mix actually breaks for a beat instead of just getting
+# brighter. Fires at 79% through, build_up_filter picks up right after.
+def break_filter(input_tag, duration, out_tag: "broke")
+  break_t = (duration * 0.79).round(2)
+  gate_dur = 0.6
+  silence_dur = 0.18
+  "[#{input_tag}]" \
+    "lowpass=f=600:enable='between(t,#{break_t},#{break_t + gate_dur})'," \
+    "acrusher=bits=6:samples=8:mix=0.8:enable='between(t,#{break_t},#{break_t + gate_dur})'," \
+    "volume=0:enable='between(t,#{break_t + gate_dur},#{break_t + gate_dur + silence_dur})'" \
+    "[#{out_tag}]"
+end
+
 # A real build-up: rising loudness + rising brightness across the final
 # stretch of the track (last ~18%), landing right as the hook returns
 # (fugue recapitulation) — structural energy, not just a static mix.
@@ -2165,10 +2180,11 @@ KICK_MARKOV = { after_hit: 0.55, after_rest: 1.15 }.freeze
 def generate_organic_kick_pattern(bar, seed_base = 5081)
   rng = Random.new(seed_base + bar * 733)
   total = KICK_POSITION_WEIGHTS.sum.to_f
-  # Convention on regular bars, wild randomization on fill bars (every 8th)
-  # — real drummers don't improvise every bar, they hold the groove and
-  # cut loose at structural points.
-  fill_bar = bar.positive? && bar % 8 == 7
+  # Convention on regular bars, wild randomization on fill bars — a fixed
+  # "every 8th bar" period reads as scheduled/authored (real critique: a
+  # human drummer's chaos doesn't land on a metronomic grid). Probabilistic
+  # instead, same ~1-in-8 average rate but the actual bars land irregularly.
+  fill_bar = bar.positive? && Random.new(seed_base + bar).rand < 0.125
   density_mult = fill_bar ? 6.0 : 3.4
   min_gap = fill_bar ? 1 : 2
   prev_hit = false
@@ -2198,7 +2214,10 @@ def dilla_kick_pattern(bar, n_bars, feel)
   # impromptu pattern instead of rotating a small fixed set — kept the old
   # arrays as KICK_POSITION_WEIGHTS' source data (real, curated position
   # frequencies) rather than throwing them away.
-  generate_organic_kick_pattern(bar, feel.hash.abs % 10_000)
+  # @render_seed varies per render (set once in render_dilla) — without it
+  # every render of the same feel produced the exact same bar-for-bar kick
+  # sequence, which reads as authored/looped rather than freshly generated.
+  generate_organic_kick_pattern(bar, (feel.hash.abs + (@render_seed || 0)) % 10_000)
 end
 
 def dilla_section(bar, n_bars)
@@ -2544,6 +2563,10 @@ EXTERNAL_DRUM_KITS = %w[01-hard-trap 02-bounce 03-soulful-vintage].freeze
 # One choice per render (called once at the top of render_dilla, not per
 # sample), matching how EP/warm-pad/lead voices already vary per render
 # rather than per hit — a real drum kit doesn't swap character mid-hit.
+def pick_render_seed!
+  @render_seed = rand(1_000_000)
+end
+
 def pick_external_drum_kit!
   @current_external_kit = ensure_external_assets_lazy! && rand < 0.35 ? EXTERNAL_DRUM_KITS.sample : nil
 end
@@ -3299,23 +3322,29 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
       end
     end
   end
-  # Limit pads and tones (chop+melody+bass) independently before mixing —
+  # Balance pads and tones (chop+melody+bass) independently before mixing —
   # a shared limiter meant a loud bass transient in "tones" ducked the pad
-  # chords along with it. Pads get the higher ceiling and mix weight so the
-  # chords stay the foreground voice, not the bass.
+  # chords along with it. Static gain staging (volume=), not a limiter per
+  # stem, does that same job with zero dynamic/gain-reduction interaction —
+  # a limiter's job is peak safety, and stacking one per stem plus another
+  # on the combine (mastering-engineer critique: too many cascaded limiter
+  # stages loses transient definition) bought nothing a plain gain match
+  # didn't already cover. One limiter at the combine stage remains as the
+  # actual safety net; master_bus_filters is the real mastering-stage limit
+  # downstream.
   if lead_rendered
     sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", lead_path,
-        "-filter_complex", "[0:a]alimiter=limit=0.95:level_out=0.97[padsl];" \
-                           "[1:a]alimiter=limit=0.9:level_out=0.85[tonesl];" \
-                           "[2:a]alimiter=limit=0.95:level_out=0.9[leadl];" \
+        "-filter_complex", "[0:a]volume=0.97[padsl];" \
+                           "[1:a]volume=0.85[tonesl];" \
+                           "[2:a]volume=0.9[leadl];" \
                            "[padsl][tonesl][leadl]amix=inputs=3:weights=1.15 0.85 0.3:duration=longest:normalize=0," \
                            "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
         "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
     FileUtils.rm_f(lead_path)
   else
     sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path,
-        "-filter_complex", "[0:a]alimiter=limit=0.95:level_out=0.97[padsl];" \
-                           "[1:a]alimiter=limit=0.9:level_out=0.85[tonesl];" \
+        "-filter_complex", "[0:a]volume=0.97[padsl];" \
+                           "[1:a]volume=0.85[tonesl];" \
                            "[padsl][tonesl]amix=inputs=2:weights=1.15 0.85:duration=longest:normalize=0," \
                            "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
         "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
@@ -3486,6 +3515,7 @@ end
 
 def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
   abort "ffmpeg required" unless tool_available?("ffmpeg")
+  pick_render_seed!
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
   cache_self_sample!(destination)
@@ -3508,7 +3538,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   fugue_phases = []
   pads, fugue_phases = arrange_fugue_progression(pads, needed_chords, cfg) unless pads.empty?
   pads = apply_pedal_point(pads, probability: 0.35, seed: cfg[:track].hash.abs)
-  pads = enrich_progression(pads, cfg)
+  pads = enrich_progression(pads, cfg, phases: fugue_phases)
   pads = voice_lead_chords(pads)
   log_progression_phases!(cfg[:track], cfg[:bpm], pads, fugue_phases)
   # Bitonal bass on roughly a third of renders: a genuinely independent
@@ -3622,7 +3652,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # have to fight for that space; the harm bus (below) gets the matching
   # cut down where the kick/bass actually live. Genuine frequency-slotting,
   # not another gain adjustment.
-  filt = [build_drum_bus_filter(cfg, cfg[:sonic])]
+  filt = [build_drum_bus_filter(cfg, cfg[:sonic], duration:)]
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
   intro_bars = cfg.fetch(:intro_bars, 4)

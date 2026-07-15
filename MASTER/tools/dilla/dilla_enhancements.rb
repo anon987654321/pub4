@@ -251,13 +251,23 @@ module DillaEnhancements
     { name: "pass_cluster", hz: hz }
   end
 
-  def enrich_progression(pads, cfg)
+  # A fugue's recapitulation restating the exposition note-for-note in the
+  # same voicing reads as static — real recaps land the same material in a
+  # different register/spacing so the return feels like arrival, not replay.
+  CONTRAST_VOICINGS = {
+    quartal: :drop2, drop2: :cluster, cluster: :spread,
+    spread: :quartal, drop3: :spread
+  }.freeze
+
+  def enrich_progression(pads, cfg, phases: [])
     return pads if pads.empty?
     rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + pads.length)
     voicing = cfg[:voicing]
+    recap_voicing = CONTRAST_VOICINGS.fetch(voicing, :spread)
     out = []
     pads.each_with_index do |chord, i|
-      out << decorate_chord(chord, voicing: voicing)
+      chord_voicing = phases[i] == :recapitulation ? recap_voicing : voicing
+      out << decorate_chord(chord, voicing: chord_voicing)
       out << passing_cluster_between(out.last, pads[(i + 1) % pads.length], rng) if rng.rand < 0.12 && i < pads.length - 1
     end
     # Progression mutation on fugue repeats — transpose every 8 chords
@@ -470,14 +480,23 @@ module DillaEnhancements
     out
   end
 
+  # Every voice below used to be one exp(-t*k) shape at a different rate —
+  # correct that a rim, a woodblock and an agogo bell decay at different
+  # SPEEDS, wrong that they decay the same SHAPE. Real struck objects
+  # don't share one physical behavior; each gets the envelope its actual
+  # physical characteristics: a woodblock has ~zero ring (transient click,
+  # then silence), a tambourine's metal jingles shimmer well after the
+  # hand-hit decays (two-stage, not one), a bell's higher partials lose
+  # energy faster than its fundamental (independent per-partial decay).
   def synth_tambourine_sample
-    len = (0.05 * SAMPLE_RATE).round
+    len = (0.16 * SAMPLE_RATE).round
     rng = Random.new(88)
     out = Array.new(len, 0.0)
     len.times do |i|
       t = i.to_f / SAMPLE_RATE
-      env = Math.exp(-t * 45.0)
-      out[i] = env * (rng.rand * 2.0 - 1.0) * 0.5
+      hit = Math.exp(-t * 60.0)
+      shimmer = Math.exp(-t * 9.0) * 0.35
+      out[i] = (rng.rand * 2.0 - 1.0) * (hit * 0.5 + shimmer)
     end
     out
   end
@@ -487,8 +506,9 @@ module DillaEnhancements
     out = Array.new(len, 0.0)
     len.times do |i|
       t = i.to_f / SAMPLE_RATE
-      env = Math.exp(-t * 80.0)
-      out[i] = env * Math.sin(2 * Math::PI * 1200.0 * t) * 0.55
+      click = t < 0.0015 ? 1.0 : 0.0
+      body = Math.exp(-t * 140.0) * Math.sin(2 * Math::PI * 1200.0 * t)
+      out[i] = click * 0.4 + body * 0.55
     end
     out
   end
@@ -498,9 +518,9 @@ module DillaEnhancements
     out = Array.new(len, 0.0)
     len.times do |i|
       t = i.to_f / SAMPLE_RATE
-      env = Math.exp(-t * 22.0)
-      tone = Math.sin(2 * Math::PI * 660.0 * t) * 0.5 + Math.sin(2 * Math::PI * 990.0 * t) * 0.5
-      out[i] = env * tone * 0.45
+      fundamental = Math.exp(-t * 16.0) * Math.sin(2 * Math::PI * 660.0 * t)
+      overtone = Math.exp(-t * 34.0) * Math.sin(2 * Math::PI * 990.0 * t)
+      out[i] = (fundamental * 0.5 + overtone * 0.5) * 0.45
     end
     out
   end
@@ -565,9 +585,24 @@ module DillaEnhancements
     ]
   end
 
-  def build_drum_bus_filter(cfg, sonic)
-    crush = cfg[:style_family] == :dilla ? "acrusher=bits=11:samples=1.5:mix=0.22," : "acrusher=bits=8:samples=1.2:mix=0.12,"
+  def build_drum_bus_filter(cfg, sonic, duration: nil)
+    base = cfg[:style_family] == :dilla ? { bits: 11, samples: 1.5, mix: 0.22 } : { bits: 8, samples: 1.2, mix: 0.12 }
     haas = cfg[:style_family] == :flylo ? ",adelay=0|12" : ""
+    # Grit as a per-track compositional choice, not a fixed mix-bus setting
+    # — cleaner through the exposition, dirtiest through the development
+    # section, pulled back as the build lands. A producer varying the dirt
+    # on purpose, not one static crush knob for the whole record.
+    crush =
+      if duration && duration > 20
+        third = (duration / 3.0).round(2)
+        [
+          "acrusher=bits=#{base[:bits] + 2}:samples=#{base[:samples]}:mix=#{(base[:mix] * 0.5).round(2)}:enable='lt(t,#{third})'",
+          "acrusher=bits=#{base[:bits]}:samples=#{base[:samples]}:mix=#{(base[:mix] * 1.4).clamp(0.0, 0.6).round(2)}:enable='between(t,#{third},#{(third * 2).round(2)})'",
+          "acrusher=bits=#{base[:bits] + 1}:samples=#{base[:samples]}:mix=#{base[:mix]}:enable='gte(t,#{(third * 2).round(2)})'"
+        ].join(",") + ","
+      else
+        "acrusher=bits=#{base[:bits]}:samples=#{base[:samples]}:mix=#{base[:mix]},"
+      end
     "[0:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_DRUM_WEIGHT'] || '0.55'}," \
       "equalizer=f=480:t=h:w=420:g=-2.8,#{crush}" \
       "equalizer=f=58:t=o:w=0.8:g=#{cfg[:style_family] == :dilla ? 2.5 : 1.2}#{haas}[drums]"
@@ -627,7 +662,8 @@ module DillaEnhancements
       reverb_out = "reverbed"
     end
     if duration
-      filt << build_up_filter_enhanced(reverb_out, duration, out_tag: "built")
+      filt << break_filter(reverb_out, duration, out_tag: "broke")
+      filt << build_up_filter_enhanced("broke", duration, out_tag: "built")
       filt << true_peak_guard_for_style("built", cfg)
     else
       filt << true_peak_guard_for_style(reverb_out, cfg)
