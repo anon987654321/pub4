@@ -73,7 +73,7 @@ posts = users.flat_map do |user|
       body: Amber::FashionFaker.post_body,
       outfit: user.outfits.sample,
       item: user.items.sample,
-      likes_count: rand(10 * scale, 5000 * scale)
+      likes_count: rand(10 * scale..5000 * scale)
     )
   end
 end
