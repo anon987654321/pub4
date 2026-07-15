@@ -295,6 +295,17 @@ body[data-tts-loading="true"] .ui-status {
   50% { transform: translateY(-1px); }
 }
 
+/* Pristine chrome: only the logo, face, and shell prompt stay visible --
+   drop every top-right and bottom-right badge/status element. */
+#mic-dot,
+.model-badge,
+.sound-on-chip,
+.ui-status,
+.provider-chip,
+body[data-council-persona]::after {
+  display: none !important;
+}
+
 /* Top-left logo — Radio Bergen style */
 .top-left-logo {
   position: fixed;
@@ -936,7 +947,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 .tool:hover, .tool:focus { opacity:1; color:var(--face-fg); }
 .tool.active { color:var(--c-accent); opacity:1; }
 
-#ascii-star { position: fixed; top: 14px; left: 14px; font: 600 22px/1 var(--font-label); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); transition: color 220ms var(--ease-linear); }
+#ascii-star { position: fixed; top: calc(48px + var(--safe-top)); left: 14px; font: 600 22px/1 var(--font-label); color: var(--face-fg); mix-blend-mode: difference; pointer-events: none; z-index: calc(var(--z-chrome) - 1); transition: color 220ms var(--ease-linear); }
 
 .compaction-note,
 .btw-note,
