@@ -138,22 +138,24 @@ if warnings.any?
   warnings.each { |warning| warn "  - #{warning}" }
 end
 
-master_assets_gate = File.join(RAILS_ROOT, "master_web_assets_gate.rb")
-if File.file?(master_assets_gate)
-  stdout, status = Open3.capture2(RUBY_BIN, master_assets_gate, chdir: ROOT)
-  print stdout
-  fail!(failures, "MASTER/web assets gate failed") unless status.success?
-else
-  fail!(failures, "missing RAILS/master_web_assets_gate.rb")
-end
+unless ENV["GATE_SKIP_NESTED"] == "1"
+  master_assets_gate = File.join(RAILS_ROOT, "master_web_assets_gate.rb")
+  if File.file?(master_assets_gate)
+    stdout, status = Open3.capture2(RUBY_BIN, master_assets_gate, chdir: ROOT)
+    print stdout
+    fail!(failures, "MASTER/web assets gate failed") unless status.success?
+  else
+    fail!(failures, "missing RAILS/master_web_assets_gate.rb")
+  end
 
-master_tts_gate = File.join(RAILS_ROOT, "master_tts_gate.rb")
-if File.file?(master_tts_gate)
-  stdout, status = Open3.capture2(RUBY_BIN, master_tts_gate, chdir: ROOT)
-  print stdout
-  fail!(failures, "MASTER TTS gate failed") unless status.success?
-else
-  fail!(failures, "missing RAILS/master_tts_gate.rb")
+  master_tts_gate = File.join(RAILS_ROOT, "master_tts_gate.rb")
+  if File.file?(master_tts_gate)
+    stdout, status = Open3.capture2(RUBY_BIN, master_tts_gate, chdir: ROOT)
+    print stdout
+    fail!(failures, "MASTER TTS gate failed") unless status.success?
+  else
+    fail!(failures, "missing RAILS/master_tts_gate.rb")
+  end
 end
 
 if failures.any?

@@ -69,7 +69,7 @@
 .splash[hidden] { display: none; }
 .splash h2 { margin: 0 0 8px; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: 800; color: var(--text); letter-spacing: -0.03em; transition: transform var(--transition-fast) ease; }
 .splash h2.clicked { transform: scale(1.02); }
-.splash .tagline { color: var(--text-dim); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 1.6rem; max-width: 28em; line-height: 1.4; }
+.splash .tagline { color: var(--text-dim); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 1.6rem; max-width: 28em; line-height: 1.5; }
 .splash .chips { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin-bottom: 1.4rem; }
 .splash .chip {
   padding: .35rem .75rem;

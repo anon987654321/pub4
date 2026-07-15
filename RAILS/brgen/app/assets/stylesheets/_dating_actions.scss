@@ -7,7 +7,7 @@
 
 .swipe-bio {
   margin: 0;
-  font: var(--text-sm) / 1.45 var(--x-font);
+  font: var(--text-sm) / 1.5 var(--x-font);
   color: var(--dating-muted, var(--x-text-secondary));
 }
 
@@ -41,7 +41,7 @@
   border-radius: var(--x-radius-pill);
   border: 2px solid transparent;
   font-size: var(--text-xl);
-  line-height: 1;
+  line-height: 1.5;
   display: grid;
   place-items: center;
   cursor: pointer;

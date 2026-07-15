@@ -41,7 +41,7 @@
   background: var(--hover-subtle);
   border-inline-start: 3px solid var(--accent);
   font-size: 0.875rem;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text-dim);
 }
 
@@ -60,7 +60,7 @@
 .x-post-show h1 {
   font-size: clamp(1.25rem, 3vw, 1.5rem);
   font-weight: 800;
-  line-height: 1.25;
+  line-height: 1.5;
   margin: 0 0 var(--space-3);
   letter-spacing: -0.02em;
 }

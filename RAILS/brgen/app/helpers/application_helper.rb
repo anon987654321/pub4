@@ -71,7 +71,11 @@ module ApplicationHelper
   end
 
   def marketplace_root_url(**options)
-    marketplace_marketplace_root_url(subdomain: marketplace_subdomain, host: Current.domain, **options)
+    Rails.application.routes.url_helpers.marketplace_root_url(
+      subdomain: marketplace_subdomain,
+      host: Current.domain,
+      **options
+    )
   end
 
   def brgen_ai_url

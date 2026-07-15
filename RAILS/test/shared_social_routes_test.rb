@@ -18,7 +18,7 @@ class SharedSocialRoutesTest < Minitest::Test
   end
 
   def test_apps_load_shared_social_route_partial
-    %w[amber bsdports].each do |app|
+    SOCIAL_APPS.each do |app|
       routes = File.read(File.join(ROOT, app, "config/routes.rb"))
       assert_includes routes, "shared/config/routes/social.rb", "#{app} should eval shared social routes"
     end

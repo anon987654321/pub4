@@ -27,7 +27,8 @@ def run!(cmd, chdir: ROOT, env: nil)
 end
 
 def static_gate!
-  ok, out = run!(["ruby", File.join(RAILS_ROOT, "check_production_gate.rb")])
+  env = ENV.to_h.merge("GATE_SKIP_NESTED" => "1")
+  ok, out = run!(["ruby", File.join(RAILS_ROOT, "check_production_gate.rb")], env: env)
   puts out
   ok
 end

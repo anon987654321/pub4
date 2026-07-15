@@ -39,7 +39,7 @@ input, button, textarea, select {
   .px-#{$step} { padding-inline: var(--space-#{$step}); }
 }
 
-.text-sm { font-size: var(--text-sm); line-height: 1.4; }
+.text-sm { font-size: var(--text-sm); line-height: 1.5; }
 .text-base { font-size: var(--text-base); line-height: 1.5; }
 .text-lg { font-size: var(--text-lg); line-height: 1.5; }
 
@@ -399,7 +399,7 @@ input[type="radio"].star:checked {
   margin: 0;
   color: var(--color-danger);
   font-size: var(--text-base);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .errors-list {
@@ -561,7 +561,7 @@ body:has(dialog[data-dialog-target="dialog"][open]) {
 }
 
 /* City carousel as default logo (reintegrated from pub4/index.html history) */
-.logo-carousel { font-size: 0.75rem; line-height: 1; }
+.logo-carousel { font-size: 0.75rem; line-height: 1.5; }
 .logo-carousel .swiper-wrapper { align-items: center; }
 .logo-slide {
   font-family: ui-monospace, monospace;

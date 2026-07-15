@@ -26,7 +26,9 @@
   color: var(--x-text-secondary);
   cursor: pointer;
   font-size: var(--text-base);
-  line-height: 1;
+  line-height: 1.5;
+  min-height: 44px;
+  min-width: 44px;
   padding: var(--space-1);
   border-radius: var(--x-radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
@@ -42,7 +44,7 @@
 .vote-score { font: 700 var(--text-xs) / 1 var(--x-font); color: var(--x-text-secondary); }
 
 .post-body { flex: 1; min-width: 0; }
-.post-meta { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: var(--space-1); }
+.post-meta { font: var(--text-sm) / 1.5 var(--x-font); color: var(--x-text-secondary); margin-bottom: var(--space-1); }
 .post-meta a { color: var(--x-text-secondary); }
 .post-meta .community { color: var(--x-text); font-weight: 700; }
 .post-title { font: 500 var(--text-sm) / 1.5 var(--x-font); color: var(--x-text); margin-bottom: var(--space-3); }
@@ -86,7 +88,7 @@
 
 .comment_item header {
   font-size: 0.8125rem;
-  line-height: 1.4;
+  line-height: 1.5;
   color: var(--text-dim);
   margin-bottom: var(--space-1);
 }

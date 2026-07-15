@@ -29,14 +29,7 @@ Rails.application.routes.draw do
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index
-  resources :notifications, only: %i[index update] do
-    collection do
-      patch :read_all
-      get :badge
-    end
-  end
-  resources :reactions, only: :create
-  resources :reports, only: :create
+  instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
 
   namespace :admin do
     resources :reports, only: %i[index update]
@@ -157,7 +150,7 @@ Rails.application.routes.draw do
 
   constraints(subdomain: MARKETPLACE_SUBDOMAINS) do
     scope module: "marketplace", as: "marketplace" do
-      root "listings#index", as: :marketplace_root
+      root "listings#index"
       resources :shops, controller: "stores"
       resources :deals, only: %i[index show]
       resources :listings do
@@ -176,7 +169,7 @@ Rails.application.routes.draw do
 
   constraints(subdomain: MAPS_SUBDOMAINS) do
     scope module: "maps", as: "maps" do
-      root "home#index", as: :maps_root
+      root "home#index"
       resources :places, only: %i[index show] do
         member do
           post :check_in
