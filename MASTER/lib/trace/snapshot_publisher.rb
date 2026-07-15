@@ -33,27 +33,31 @@ module Master
         content, files, n_lines = build_document(target, label, repo_root:)
         dir = output_dir
         FileUtils.mkdir_p(dir)
-        day = Time.now.strftime("%Y-%m-%d")
-        paths = []
-        messages = []
 
+        write_snapshot_variants(dir, label, label_key, content, files:, n_lines:, mode:)
+      rescue StandardError => e
+        ["snapshot:#{label_key}: write failed: #{e.message}"]
+      end
+
+      def write_snapshot_variants(dir, label, label_key, content, files:, n_lines:, mode:)
+        messages = []
         if mode == :digest || mode == :both
           digest = File.join(dir, "#{label}_snapshot.md")
-          File.write(digest, content)
-          paths << digest
-          messages << "snapshot:#{label_key}: #{files.size} files #{n_lines} lines → #{digest}"
+          messages << write_snapshot_file(digest, content, label_key:, files:, n_lines:)
         end
 
         if mode == :archive || mode == :both
+          day = Time.now.strftime("%Y-%m-%d")
           archive = File.join(dir, "#{label}_snapshot_#{day}.md")
-          File.write(archive, content)
-          paths << archive
-          messages << "snapshot:#{label_key}: #{files.size} files #{n_lines} lines → #{archive}"
+          messages << write_snapshot_file(archive, content, label_key:, files:, n_lines:)
         end
 
         messages
-      rescue StandardError => e
-        ["snapshot:#{label_key}: write failed: #{e.message}"]
+      end
+
+      def write_snapshot_file(path, content, label_key:, files:, n_lines:)
+        File.write(path, content)
+        "snapshot:#{label_key}: #{files.size} files #{n_lines} lines → #{path}"
       end
 
       def build_document(target, label, repo_root:)
@@ -79,24 +83,29 @@ module Master
           .select { |f| File.file?(f) && File.size(f) < BOOT_MAX_BYTES }
           .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
           .sort
-        body = files.flat_map do |f|
-          rel = f.delete_prefix("#{root}/")
-          lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-          src = File.read(f, encoding: "UTF-8", invalid: :replace)
-          ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
-        rescue StandardError => e
-          Ground::Swallow.log(e, context: "snapshot_publisher.boot_light", path: f)
-          []
-        end
-        header = [
+        body = files.flat_map { |f| render_boot_light_file(f, root) }
+        (boot_light_header(files.size) + artifacts_section + body).join("\n")
+      end
+
+      def render_boot_light_file(f, root)
+        rel = f.delete_prefix("#{root}/")
+        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
+        src = File.read(f, encoding: "UTF-8", invalid: :replace)
+        ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
+      rescue StandardError => e
+        Ground::Swallow.log(e, context: "snapshot_publisher.boot_light", path: f)
+        []
+      end
+
+      def boot_light_header(file_count)
+        [
           "# MASTER Snapshot",
           "Generated: #{Time.now.utc.iso8601}",
           "",
           SnapshotAgentGuide.render(label: "MASTER"),
-          "Files: #{files.size}",
+          "Files: #{file_count}",
           ""
         ]
-        (header + artifacts_section + body).join("\n")
       end
 
       def boot_current?(root, *outputs)
@@ -116,6 +125,17 @@ module Master
         parts = SnapshotCollector.partition(SnapshotCollector.collect_paths(label:, repo_root:, target:))
         files = parts[:inlined]
         large = parts[:large]
+
+        md = tree_and_large_files_lines(files, large, target, repo_root)
+        md.concat(artifacts_section) if label == "MASTER"
+        md << "## Codebase" << ""
+        body, n_lines = codebase_lines(files, target, repo_root)
+        md.concat(body)
+        md << "files: #{files.size} / lines: #{n_lines}"
+        [md.join("\n"), files, n_lines]
+      end
+
+      def tree_and_large_files_lines(files, large, target, repo_root)
         md = ["## Tree", "```"]
         files.each { |path| md << path.delete_prefix("#{target}/").delete_prefix("#{repo_root}/").delete_prefix("/") }
         md << "```" << ""
@@ -127,8 +147,11 @@ module Master
           end
           md << ""
         end
-        md.concat(artifacts_section) if label == "MASTER"
-        md << "## Codebase" << ""
+        md
+      end
+
+      def codebase_lines(files, target, repo_root)
+        md = []
         n_lines = 0
         files.each do |path|
           rel = path.delete_prefix("#{target}/").delete_prefix("#{repo_root}/").delete_prefix("/")
@@ -138,14 +161,17 @@ module Master
           md.concat(section)
           md << ""
         end
-        md << "files: #{files.size} / lines: #{n_lines}"
-        [md.join("\n"), files, n_lines]
+        [md, n_lines]
       end
 
       def summary_header(target, label, repo_root:, files:, n_lines:)
         stamp = Time.now.utc.iso8601
         stats = runtime_stats(target) if label == "MASTER"
         git = git_summary(repo_root)
+        summary_lines(target, label, stamp, files:, n_lines:, stats:, git:, repo_root:).join("\n")
+      end
+
+      def summary_lines(target, label, stamp, files:, n_lines:, stats:, git:, repo_root:)
         [
           "# #{label} Snapshot",
           "Generated: #{stamp}",
@@ -162,7 +188,7 @@ module Master
           "## Recent changes",
           recent_commits(repo_root),
           ""
-        ].join("\n")
+        ]
       end
 
       def runtime_stats(root)

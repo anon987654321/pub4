@@ -43,12 +43,19 @@ module Master
       finding = detect(text, bus:)
       return { action: :continue } unless finding
 
-      count = @occurrence_mutex.synchronize do
+      count = record_occurrence(scope)
+      bus&.publish("phantom:occurrence", count:, scope:)
+      recovery_response(count, finding, bus:, session:, scope:)
+    end
+
+    def record_occurrence(scope)
+      @occurrence_mutex.synchronize do
         @occurrences[scope] += 1
         @occurrences[scope]
       end
-      bus&.publish("phantom:occurrence", count:, scope:)
+    end
 
+    def recovery_response(count, finding, bus:, session:, scope:)
       case count
       when 1
         session&.rollback_last_assistant_message if session.respond_to?(:rollback_last_assistant_message)

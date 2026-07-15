@@ -94,6 +94,11 @@ module Providers
     end
 
     def create_provider_tables
+      create_provider_snapshots_table
+      create_provider_models_table
+    end
+
+    def create_provider_snapshots_table
       db.execute_batch <<~SQL
         CREATE TABLE IF NOT EXISTS provider_snapshots (
           source TEXT PRIMARY KEY,
@@ -102,7 +107,11 @@ module Providers
           fetched_at TEXT NOT NULL,
           raw_json TEXT NOT NULL
         );
+      SQL
+    end
 
+    def create_provider_models_table
+      db.execute_batch <<~SQL
         CREATE TABLE IF NOT EXISTS provider_models (
           source TEXT NOT NULL,
           id TEXT NOT NULL,

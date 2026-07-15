@@ -8,22 +8,42 @@ module Master
       module_function
 
       def lines(label: "MASTER")
+        header_lines(label) + orient_lines + cross_reference_lines +
+          execution_trace_lines + architecture_assessment_lines + rehydrate_lines
+      end
+
+      def header_lines(label)
         [
           "## Agent analysis protocol",
           "",
           "This document is a **verbatim codebase mirror** for `#{label}`. Treat every fenced",
           "block as source of truth — not a summary. Work through it in this order:",
           "",
+        ]
+      end
+
+      def orient_lines
+        [
           "### 1. Orient",
           "- Read **Summary**, **Recent changes**, and **Tree** before opening any file block.",
           "- Note topology: where boot, routing, data, UI, deploy, and tests live relative to each other.",
           "",
+        ]
+      end
+
+      def cross_reference_lines
+        [
           "### 2. Word-for-word read + cross-reference",
           "- Read each `## \\`path\\`` section **line by line**; do not skim or paraphrase from headings alone.",
           "- **Cross-reference** symbols across files: follow requires/imports, route → controller → service",
           "  chains, YAML keys → Ruby readers, JS event names → subscribers, CLI commands → dispatchers.",
           "- When the same name appears in multiple places, reconcile definitions — flag drift immediately.",
           "",
+        ]
+      end
+
+      def execution_trace_lines
+        [
           "### 3. Deep execution traces (start → finish)",
           "- Pick critical paths (boot, request/response, scan/fix loop, deploy, TTS/chat SSE, face render)",
           "  and trace **one complete path** from entrypoint through every hop to side effects/output.",
@@ -31,6 +51,11 @@ module Master
           "  state mutates (files, DB, env, in-memory singletons, event bus).",
           "- Prefer evidence from this snapshot over assumptions from training data.",
           "",
+        ]
+      end
+
+      def architecture_assessment_lines
+        [
           "### 4. Architecture & design assessment",
           "- **Structure**: layering, boundaries, coupling, duplication, god objects, require cycles.",
           "- **Semantics**: naming honesty, invariants, tenancy/auth, error taxonomy, idempotency.",
@@ -40,6 +65,11 @@ module Master
           "- **Gaps & friction**: missing tests, unwired features, slow/hidden boot steps, operator pain,",
           "  places where a human or agent would get stuck without tribal knowledge.",
           "",
+        ]
+      end
+
+      def rehydrate_lines
+        [
           "### 5. Rehydrate files locally (mirror extraction)",
           "To turn this `.md` back into a working tree:",
           "",
