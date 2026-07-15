@@ -112,32 +112,30 @@ module Master
         css_files = Dir.glob(File.join(path, "**", "*.{css,scss}"))
           .reject { |f| f.include?("node_modules") || f.include?("vendor") }
         findings = []
+        css_files.each { |file| audit_css_file(file, findings) }
+        findings
+      end
 
-        css_files.each do |file|
-          source = begin
-            File.read(file)
-          rescue StandardError
-            next
-          end
-          has_reduced_motion = source.match?(/prefers-reduced-motion/)
+      def audit_css_file(file, findings)
+        source = File.read(file)
+        has_reduced_motion = source.match?(/prefers-reduced-motion/)
 
-          CSS_RULES.each do |rule|
-            source.scan(rule.pattern) do |m|
-              value = rule.extract&.call(m)
-              next if value && value >= rule.threshold
-              finding_message = value ? format(rule.message, value) : rule.message
-              findings << { id: rule.id, file:, message: finding_message, severity: rule.severity }
-            end
-          end
-
-          PATTERN_RULES.each do |rule|
-            next unless source.match?(rule.pattern)
-            next if rule.id == :animation_no_reduced_motion && has_reduced_motion
-            findings << { id: rule.id, file:, message: rule.message, severity: rule.severity }
+        CSS_RULES.each do |rule|
+          source.scan(rule.pattern) do |m|
+            value = rule.extract&.call(m)
+            next if value && value >= rule.threshold
+            finding_message = value ? format(rule.message, value) : rule.message
+            findings << { id: rule.id, file:, message: finding_message, severity: rule.severity }
           end
         end
 
-        findings
+        PATTERN_RULES.each do |rule|
+          next unless source.match?(rule.pattern)
+          next if rule.id == :animation_no_reduced_motion && has_reduced_motion
+          findings << { id: rule.id, file:, message: rule.message, severity: rule.severity }
+        end
+      rescue StandardError
+        nil
       end
 
       def audit_html(path)

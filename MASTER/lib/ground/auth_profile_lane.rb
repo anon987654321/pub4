@@ -22,26 +22,34 @@ module Master
 
       def lane_available?(lane)
         case lane.fetch("kind", "api_key").to_s
-        when "cli"
-          cmd = lane.fetch("command", lane["binary"]).to_s
-          return false if cmd.empty?
-          return false if cmd == "claude" && ENV["MASTER_NO_CLAUDE_CLI"] == "1"
-
-          ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
-            exe = File.join(dir, cmd)
-            File.file?(exe) && File.executable?(exe)
-          end
-        when "oauth"
-          token_env = Array(lane["env_token"] || lane["env"]).first.to_s
-          return false if token_env.empty?
-
-          Master.api_key_present?(token_env) || ENV[token_env].to_s.length >= 8
-        when "api_key"
-          envs = Array(lane["env"] || lane["env_token"])
-          envs.any? { |var| Master.api_key_present?(var.to_s) }
-        else
-          false
+        when "cli" then cli_lane_available?(lane)
+        when "oauth" then oauth_lane_available?(lane)
+        when "api_key" then api_key_lane_available?(lane)
+        else false
         end
+      end
+
+      def cli_lane_available?(lane)
+        cmd = lane.fetch("command", lane["binary"]).to_s
+        return false if cmd.empty?
+        return false if cmd == "claude" && ENV["MASTER_NO_CLAUDE_CLI"] == "1"
+
+        ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+          exe = File.join(dir, cmd)
+          File.file?(exe) && File.executable?(exe)
+        end
+      end
+
+      def oauth_lane_available?(lane)
+        token_env = Array(lane["env_token"] || lane["env"]).first.to_s
+        return false if token_env.empty?
+
+        Master.api_key_present?(token_env) || ENV[token_env].to_s.length >= 8
+      end
+
+      def api_key_lane_available?(lane)
+        envs = Array(lane["env"] || lane["env_token"])
+        envs.any? { |var| Master.api_key_present?(var.to_s) }
       end
 
       def models_for_router(router)

@@ -130,20 +130,7 @@ module Master
       end
 
       def propose(principle_id, new_text, rationale:, proposer:)
-        prev_hash = last_enacted_hash
-        amendment = {
-          id: SecureRandom.uuid,
-          timestamp: Time.now.utc.iso8601,
-          principle_id: principle_id.to_s,
-          new_text: new_text.to_s,
-          rationale: rationale.to_s,
-          proposer: proposer.to_s,
-          votes: {},
-          status: "open",
-          enacted_at: nil,
-          prev_hash: prev_hash,
-          hash: Digest::SHA256.hexdigest("#{principle_id}:#{new_text}:#{proposer}:#{prev_hash}"),
-        }
+        amendment = build_amendment(principle_id, new_text, rationale, proposer)
         @amendments[amendment[:id]] = amendment
         save_amendments
         @bus&.publish("parliament:proposed", principle: principle_id, proposer:)
@@ -193,6 +180,23 @@ module Master
       end
 
       private
+
+      def build_amendment(principle_id, new_text, rationale, proposer)
+        prev_hash = last_enacted_hash
+        {
+          id: SecureRandom.uuid,
+          timestamp: Time.now.utc.iso8601,
+          principle_id: principle_id.to_s,
+          new_text: new_text.to_s,
+          rationale: rationale.to_s,
+          proposer: proposer.to_s,
+          votes: {},
+          status: "open",
+          enacted_at: nil,
+          prev_hash: prev_hash,
+          hash: Digest::SHA256.hexdigest("#{principle_id}:#{new_text}:#{proposer}:#{prev_hash}"),
+        }
+      end
 
       def last_enacted_hash
         enacted = @amendments.values

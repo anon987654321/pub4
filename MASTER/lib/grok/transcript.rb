@@ -42,9 +42,7 @@ module Master
       def extract_chat_history(path)
         return "" unless File.file?(path)
 
-        turn_best = ""
-        last = ""
-
+        state = { turn_best: "", last: "" }
         File.foreach(path, encoding: "UTF-8") do |line|
           line = line.strip
           next if line.empty?
@@ -53,20 +51,24 @@ module Master
         rescue JSON::ParserError
           next
         else
-          if o["type"] == "user" || o["role"] == "user"
-            last = turn_best if turn_best.length > last.length
-            turn_best = ""
-            next
-          end
-
-          text = assistant_text(o)
-          next if text.nil? || text.empty?
-
-          turn_best = text if text.length > turn_best.length
+          apply_chat_history_object(o, state)
         end
 
-        last = turn_best if turn_best.length > last.length
-        last
+        state[:last] = state[:turn_best] if state[:turn_best].length > state[:last].length
+        state[:last]
+      end
+
+      def apply_chat_history_object(o, state)
+        if o["type"] == "user" || o["role"] == "user"
+          state[:last] = state[:turn_best] if state[:turn_best].length > state[:last].length
+          state[:turn_best] = ""
+          return
+        end
+
+        text = assistant_text(o)
+        return if text.nil? || text.empty?
+
+        state[:turn_best] = text if text.length > state[:turn_best].length
       end
 
       def extract_updates(path)
@@ -83,29 +85,33 @@ module Master
         rescue JSON::ParserError
           next
         else
-          next unless o["method"] == "session/update"
-
-          update = o.dig("params", "update") || {}
-          next unless update["sessionUpdate"] == "agent_message_chunk"
-
-          content = update["content"] || {}
-          next unless content["type"] == "text"
-
-          chunk = (content["text"] || "").to_s
-          next if chunk.empty?
-
-          key = update.dig("_meta", "promptId") ||
-                update.dig("_meta", "turnStartMs") ||
-                o.dig("params", "sessionId") ||
-                "default"
-
-          turns[key] = (turns[key] || "") + chunk
-          order << key unless order.include?(key)
+          apply_update_object(o, turns, order)
         end
 
         return "" if order.empty?
 
         turns[order.last].to_s.strip
+      end
+
+      def apply_update_object(o, turns, order)
+        return unless o["method"] == "session/update"
+
+        update = o.dig("params", "update") || {}
+        return unless update["sessionUpdate"] == "agent_message_chunk"
+
+        content = update["content"] || {}
+        return unless content["type"] == "text"
+
+        chunk = (content["text"] || "").to_s
+        return if chunk.empty?
+
+        key = update.dig("_meta", "promptId") ||
+              update.dig("_meta", "turnStartMs") ||
+              o.dig("params", "sessionId") ||
+              "default"
+
+        turns[key] = (turns[key] || "") + chunk
+        order << key unless order.include?(key)
       end
 
       def assistant_text(obj)
@@ -122,7 +128,7 @@ module Master
           parts.join("\n").strip unless parts.empty?
         end
       end
-      private_class_method :assistant_text
+      private_class_method :assistant_text, :apply_chat_history_object, :apply_update_object
     end
   end
 end

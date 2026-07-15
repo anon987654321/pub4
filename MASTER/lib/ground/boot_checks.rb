@@ -28,20 +28,25 @@ module Master
             check_constitution_chain(root),
           ]
 
-          fatals = results.select { |r| !r.ok && r.severity == :fatal }
-          warnings = results.select { |r| !r.ok && r.severity == :warning }
-
-          unless fatals.empty?
-            messages = fatals.map { |f| "  ✗ #{f.name}: #{f.message}" }.join("\n")
-            abort "BOOT FAILED — #{fatals.size} fatal check(s):\n#{messages}"
-          end
-
-          unless warnings.empty?
-            messages = warnings.map { |w| "  ⚠ #{w.name}: #{w.message}" }.join("\n")
-            warn "BOOT WARNINGS — #{warnings.size} warning(s):\n#{messages}"
-          end
-
+          abort_on_fatals(results)
+          warn_on_warnings(results)
           results
+        end
+
+        def abort_on_fatals(results)
+          fatals = results.select { |r| !r.ok && r.severity == :fatal }
+          return if fatals.empty?
+
+          messages = fatals.map { |f| "  ✗ #{f.name}: #{f.message}" }.join("\n")
+          abort "BOOT FAILED — #{fatals.size} fatal check(s):\n#{messages}"
+        end
+
+        def warn_on_warnings(results)
+          warnings = results.select { |r| !r.ok && r.severity == :warning }
+          return if warnings.empty?
+
+          messages = warnings.map { |w| "  ⚠ #{w.name}: #{w.message}" }.join("\n")
+          warn "BOOT WARNINGS — #{warnings.size} warning(s):\n#{messages}"
         end
 
         private

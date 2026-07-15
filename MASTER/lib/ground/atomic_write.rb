@@ -16,32 +16,30 @@ module Master
         temp = Tempfile.new(".master_atomic_", dir)
         temp.write(content)
         temp.flush
-        if fsync
-          temp.fsync
-        end
+        temp.fsync if fsync
         temp.close
 
         File.chmod(mode, temp.path)
         File.rename(temp.path, path)
-
-        if fsync_dir && RUBY_PLATFORM !~ /win32|mingw/
-          begin
-            dir_fd = IO.sysopen(dir, File::RDONLY)
-            dir_io = IO.new(dir_fd)
-            dir_io.fsync
-          ensure
-            dir_io&.close
-          end
-        end
-
+        fsync_directory(dir) if fsync_dir && RUBY_PLATFORM !~ /win32|mingw/
         path
-      rescue StandardError => e
-        begin
-          File.delete(temp.path) if temp && File.exist?(temp.path)
-        rescue StandardError
-          nil
-        end
+      rescue StandardError
+        cleanup_atomic_temp(temp)
         raise
+      end
+
+      def fsync_directory(dir)
+        dir_fd = IO.sysopen(dir, File::RDONLY)
+        dir_io = IO.new(dir_fd)
+        dir_io.fsync
+      ensure
+        dir_io&.close
+      end
+
+      def cleanup_atomic_temp(temp)
+        File.delete(temp.path) if temp && File.exist?(temp.path)
+      rescue StandardError
+        nil
       end
     end
   end
