@@ -106,9 +106,7 @@ module Master
     def build_fast(root: Dir.pwd)
       Ground::BootChecks.run(root:)
       config = Ground::Config.new(root)
-      if config.respond_to?(:validate) && !config.valid?
-        (config[:bus] || $stderr).puts "config validation warnings: #{config.validate.join('; ')}"
-      end
+      warn_config_validation(config)
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
       bus = trace[:bus]
@@ -124,6 +122,12 @@ module Master
       runtime = infra.merge(ai).merge(commands:, scanner:, root:)
       pipeline = Now::TurnPipeline.new(container: runtime)
       runtime.merge(pipeline:)
+    end
+
+    def warn_config_validation(config)
+      return unless config.respond_to?(:validate) && !config.valid?
+
+      (config[:bus] || $stderr).puts "config validation warnings: #{config.validate.join('; ')}"
     end
 
     def fast_agent_stub
@@ -151,12 +155,23 @@ module Master
       code_index.build_async
       reference_graph = Judge::ReferenceGraph.new(root:, event_bus: bus)
       ecology = Judge::RepoEcology.new(root:, event_bus: bus, code_index:)
+      subscribe_ecology_reindex(bus:, ecology:)
+      diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
+      pressure = PressureEngine.new(event_bus: bus)
+      subscribe_pressure_ingest(bus:, pressure:)
+
+      { config:, boot_config:, renderer:, output_check:, code_index:, reference_graph:, ecology:, diag:, pressure: }
+        .merge(trace).merge(loop_c).merge(reach).merge(ground)
+    end
+
+    def subscribe_ecology_reindex(bus:, ecology:)
       bus.subscribe("tool:after") do |ev|
         next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
         ecology.reindex(ev[:path])
       end
-      diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
-      pressure = PressureEngine.new(event_bus: bus)
+    end
+
+    def subscribe_pressure_ingest(bus:, pressure:)
       bus.subscribe("*") do |ev|
         event_name = ev[:event] || ev["event"] || ev[:type] || ev["type"] || "event"
         next if event_name.to_s.start_with?("pressure:")
@@ -164,9 +179,6 @@ module Master
       rescue StandardError => e
         Ground::Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
       end
-
-      { config:, boot_config:, renderer:, output_check:, code_index:, reference_graph:, ecology:, diag:, pressure: }
-        .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
     def boot_trace(root:, config:)
