@@ -87,6 +87,21 @@ module Master
           return [] if terms.empty?
           return tfidf_recall(query: query, top_n: top_n, store: store) unless fts5_available?
 
+          db = build_fts5_memory_db(store)
+          db.execute(<<~SQL, [fts5_query(terms), top_n]).map { |row| fts5_row(row) }
+            SELECT key, value, bm25(memory_fts) AS rank
+            FROM memory_fts
+            WHERE memory_fts MATCH ?
+            ORDER BY rank
+            LIMIT ?
+          SQL
+        rescue SQLite3::Exception
+          tfidf_recall(query: query, top_n: top_n, store: store)
+        ensure
+          db&.close
+        end
+
+        def build_fts5_memory_db(store)
           db = SQLite3::Database.new(":memory:")
           db.results_as_hash = true
           db.execute_batch(<<~SQL)
@@ -100,20 +115,11 @@ module Master
             value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
             db.execute("INSERT INTO memory_fts(key, value) VALUES (?, ?)", [key.to_s, value])
           end
+          db
+        end
 
-          db.execute(<<~SQL, [fts5_query(terms), top_n]).map do |row|
-            SELECT key, value, bm25(memory_fts) AS rank
-            FROM memory_fts
-            WHERE memory_fts MATCH ?
-            ORDER BY rank
-            LIMIT ?
-          SQL
-            { key: row["key"], value: row["value"], score: -row["rank"].to_f, fusion: "fts5" }
-          end
-        rescue SQLite3::Exception
-          tfidf_recall(query: query, top_n: top_n, store: store)
-        ensure
-          db&.close
+        def fts5_row(row)
+          { key: row["key"], value: row["value"], score: -row["rank"].to_f, fusion: "fts5" }
         end
 
         def fts5_query(terms)

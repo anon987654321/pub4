@@ -52,25 +52,7 @@ module Master
       end
 
       def run_due!
-        results = []
-        due.each do |order|
-          order["state"] = "running"
-          persist
-
-          result = execute_order(order)
-          order["last_run_at"] = Time.now.to_i
-
-          if result.ok?
-            order["state"] = "done"
-            order.delete("last_error")
-          else
-            order["state"] = "error"
-            order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
-          end
-
-          results << { name: order["name"], result: }
-          @bus&.publish("standing_order:ran", name: order["name"], ok: result.ok?, state: order["state"])
-        end
+        results = due.map { |order| run_one_order(order) }
         persist if results.any?
         results
       end
@@ -120,6 +102,25 @@ module Master
       end
 
       private
+
+      def run_one_order(order)
+        order["state"] = "running"
+        persist
+
+        result = execute_order(order)
+        order["last_run_at"] = Time.now.to_i
+
+        if result.ok?
+          order["state"] = "done"
+          order.delete("last_error")
+        else
+          order["state"] = "error"
+          order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
+        end
+
+        @bus&.publish("standing_order:ran", name: order["name"], ok: result.ok?, state: order["state"])
+        { name: order["name"], result: }
+      end
 
       def subscribe_events!
         return unless @bus

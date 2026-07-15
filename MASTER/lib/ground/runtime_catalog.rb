@@ -63,25 +63,30 @@ module Master
         end
 
         def web_boot_payload
-          topologies = Master.load_yaml(Master.data_path("topologies.yml"), default: {})
-          visual = Master.load_yaml(Master.data_path("ops", "visual.yml"), default: {})
-          tts = Master.load_yaml(Master.data_path("tts.yml"), default: {})
+          sources = web_boot_sources
           runtime_cfg = load("runtime")
           philosophy = ui_philosophy
-          pending = enhancements.count { |item| item["status"].to_s == "pending" }
 
           {
             topologies_path: "/runtime/topologies",
-            enhancements_pending_count: pending,
+            enhancements_pending_count: enhancements.count { |item| item["status"].to_s == "pending" },
             enhancements: Array(runtime_cfg["enhancements"]),
             vertical_timbre: philosophy["vertical_timbre"] || {},
             ui_philosophy: runtime_cfg["ui_philosophy"] || {},
             micro_interactions: micro_interactions,
             event_registry: event_registry,
-            visual_limits: visual["visual"] || visual,
-            tts_config: tts,
-            topologies: topologies,
+            visual_limits: sources[:visual]["visual"] || sources[:visual],
+            tts_config: sources[:tts],
+            topologies: sources[:topologies],
             face_research: face_research,
+          }
+        end
+
+        def web_boot_sources
+          {
+            topologies: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
+            visual: Master.load_yaml(Master.data_path("ops", "visual.yml"), default: {}),
+            tts: Master.load_yaml(Master.data_path("tts.yml"), default: {}),
           }
         end
 

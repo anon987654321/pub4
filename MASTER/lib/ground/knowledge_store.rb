@@ -89,27 +89,14 @@ module Master
       end
 
       def provider_errors(model: nil, limit: 20)
-        args = ["provider_error"]
-        where = ["event_type = ?"]
-        if model
-          where << "dimension = ?"
-          args << model.to_s
-        end
-        args << limit
-        @db.execute(<<~SQL, args).map do |row|
+        where, args = provider_errors_query(model, limit)
+        @db.execute(<<~SQL, args).map { |row| provider_error_row(row) }
           SELECT ts, dimension, value, metadata
           FROM feedback_events
           WHERE #{where.join(" AND ")}
           ORDER BY ts DESC, id DESC
           LIMIT ?
         SQL
-          {
-            ts: row["ts"].to_i,
-            model: row["dimension"],
-            status: row["value"],
-            metadata: decoded_metadata(row["metadata"]),
-          }
-        end
       end
 
       def opportunities
@@ -125,6 +112,26 @@ module Master
       end
 
       private
+
+      def provider_errors_query(model, limit)
+        args = ["provider_error"]
+        where = ["event_type = ?"]
+        if model
+          where << "dimension = ?"
+          args << model.to_s
+        end
+        args << limit
+        [where, args]
+      end
+
+      def provider_error_row(row)
+        {
+          ts: row["ts"].to_i,
+          model: row["dimension"],
+          status: row["value"],
+          metadata: decoded_metadata(row["metadata"]),
+        }
+      end
 
       def fix_quality_rows(rule, file_type, cutoff)
         if file_type

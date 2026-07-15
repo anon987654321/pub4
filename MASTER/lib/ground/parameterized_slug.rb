@@ -52,33 +52,45 @@ module Master
       end
 
       def issues_for_stem(stem)
-        out = []
-        if fold_suffix?(stem)
-          target = fold_target(stem)
-          out << Issue.new(action: "merge", from: stem, to: target,
-                           reason: "fold suffix sprawl — merge into #{target}")
-        end
-
         dense = dense_slug(stem)
+        [
+          fold_issue(stem),
+          density_issue(stem, dense),
+          token_count_issue(stem, dense),
+          suspicious_issue(stem),
+        ].compact.uniq { |row| "#{row.action}:#{row.from}:#{row.to}" }
+      end
+
+      def fold_issue(stem)
+        return unless fold_suffix?(stem)
+
+        target = fold_target(stem)
+        Issue.new(action: "merge", from: stem, to: target, reason: "fold suffix sprawl — merge into #{target}")
+      end
+
+      def density_issue(stem, dense)
         if !dense.empty? && dense != stem.to_s
-          out << Issue.new(action: "rename", from: stem, to: dense,
-                           reason: "low-density slug — rename to parameterized Strunk-clean path")
+          Issue.new(action: "rename", from: stem, to: dense,
+                   reason: "low-density slug — rename to parameterized Strunk-clean path")
         elsif filler_only?(stem)
-          out << Issue.new(action: "rename", from: stem, to: stem,
-                           reason: "filler-only slug — rename to concrete parameterized path (Strunk nouns/verbs)")
+          Issue.new(action: "rename", from: stem, to: stem,
+                   reason: "filler-only slug — rename to concrete parameterized path (Strunk nouns/verbs)")
         end
+      end
 
+      def token_count_issue(stem, dense)
         tokens = stem.to_s.split("_").reject(&:empty?)
-        if tokens.size > MAX_TOKENS && !dense.empty?
-          out << Issue.new(action: "rename", from: stem, to: dense,
-                           reason: "slug exceeds #{MAX_TOKENS} tokens — compress to dense parameterized path")
-        end
+        return unless tokens.size > MAX_TOKENS && !dense.empty?
 
-        if stem.to_s.match?(SUSPICIOUS)
-          out << Issue.new(action: "rename", from: stem, to: stem.to_s.gsub(SUSPICIOUS, "canonical"),
-                           reason: "suspicious segment — rename to honest Zeitwerk path")
-        end
-        out.uniq { |row| "#{row.action}:#{row.from}:#{row.to}" }
+        Issue.new(action: "rename", from: stem, to: dense,
+                 reason: "slug exceeds #{MAX_TOKENS} tokens — compress to dense parameterized path")
+      end
+
+      def suspicious_issue(stem)
+        return unless stem.to_s.match?(SUSPICIOUS)
+
+        Issue.new(action: "rename", from: stem, to: stem.to_s.gsub(SUSPICIOUS, "canonical"),
+                 reason: "suspicious segment — rename to honest Zeitwerk path")
       end
 
       def path_issues(path)
