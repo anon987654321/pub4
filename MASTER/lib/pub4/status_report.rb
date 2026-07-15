@@ -22,6 +22,10 @@ module Pub4
       payload = build
       return JSON.pretty_generate(payload) if json
 
+      render_status_lines(payload).join("\n")
+    end
+
+    def render_status_lines(payload)
       lines = []
       lines << "pub4 status"
       lines << "repo: #{payload[:repo]}"
@@ -38,7 +42,7 @@ module Pub4
       payload[:ports].each { |name, state| lines << "  #{name.ljust(14)} #{state}" }
       lines << ""
       lines << "next: #{payload[:next_command]}"
-      lines.join("\n")
+      lines
     end
 
     private

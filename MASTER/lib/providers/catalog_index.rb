@@ -89,6 +89,11 @@ module Providers
     end
 
     def migrate
+      create_provider_tables
+      create_provider_indexes
+    end
+
+    def create_provider_tables
       db.execute_batch <<~SQL
         CREATE TABLE IF NOT EXISTS provider_snapshots (
           source TEXT PRIMARY KEY,
@@ -113,7 +118,11 @@ module Providers
           updated_at TEXT NOT NULL,
           PRIMARY KEY (source, id)
         );
+      SQL
+    end
 
+    def create_provider_indexes
+      db.execute_batch <<~SQL
         CREATE INDEX IF NOT EXISTS idx_provider_models_source ON provider_models(source);
         CREATE INDEX IF NOT EXISTS idx_provider_models_name ON provider_models(name);
       SQL
