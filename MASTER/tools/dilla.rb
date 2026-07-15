@@ -30,11 +30,16 @@ when "dilla", "flylo", "baroque", "bach", "neo-soul", "neo_soul", "jazz"
   style = options[:style].tr("-", "_")
   # "flylo" -> "chromatic_mediant": the underlying engine's track/preset
   # keys were renamed away from artist names (theory-based names instead).
-  track = { "bach" => "baroque", "dilla" => "timeless", "flylo" => "chromatic_mediant" }.fetch(style, style)
+  track = {
+    "bach" => "baroque", "dilla" => "timeless", "flylo" => "chromatic_mediant_drift"
+  }.fetch(style, style)
   env = case track
-        when "chromatic_mediant" then { "TRACK" => track, "SONITEX_PRESET" => "classic", "ANALOG_CHAIN" => "cassette" }
+        when "chromatic_mediant", "chromatic_mediant_drift"
+          { "TRACK" => track, "SONITEX_PRESET" => "classic", "ANALOG_CHAIN" => "cassette", "SIDECHAIN" => "1" }
         when "baroque" then { "TRACK" => track, "SONITEX_PRESET" => "classic", "ANALOG_CHAIN" => "broadcast" }
         when "neo_soul" then { "TRACK" => track, "SONITEX_PRESET" => "donuts_warm", "ANALOG_CHAIN" => "dub_chamber" }
+        when "timeless"
+          { "TRACK" => track, "SONITEX_PRESET" => "donuts_warm", "ANALOG_CHAIN" => "broadcast" }
         else { "TRACK" => track, "SONITEX_PRESET" => "heavy", "ANALOG_CHAIN" => "broadcast" }
         end
   argv = [RbConfig.ruby, File.join(root, "dilla.rb"), "dilla", output]
