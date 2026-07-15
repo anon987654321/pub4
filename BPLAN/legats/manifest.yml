@@ -64,7 +64,7 @@ instructions:
 - 2. Verifiser to-adresser på giverens nettside — mange bruker skjema, ikke e-post
 - '3. Konverter HTML til PDF: wkhtmltopdf eller nettleser Skriv ut → Lagre som PDF'
 - '4. Batch: ruby BPLAN/grok_send_legats.rb --batch bolig_asap --dry-run'
-- '5. Enkelt: ./BPLAN/send_legats.sh [--dry-run] [id]'
+- '5. Enkelt: ./BPLAN/legat_mailer.sh dry-run ID'
 - 6. Se BPLAN/legats/batches.yml for senderekkefølge
 - '7. Sendt-logg: BPLAN/legats/sent_log.yml (unngår duplikater)'
 applications:
@@ -1259,7 +1259,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   low_priority: true
 - id: vx_pub_healthcare_forskningsradet
@@ -1274,7 +1274,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   low_priority: true
 - id: vx_brgen_innovasjon_norge
@@ -1305,7 +1305,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   preferred_channel: nettside_skjema
   low_priority: true
@@ -1321,7 +1321,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   low_priority: true
 - id: vx_bsdports_digdir
@@ -1336,7 +1336,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   low_priority: true
 - id: vx_syre_innovasjon_norge
@@ -1367,7 +1367,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   preferred_channel: nettside_skjema
   low_priority: true
@@ -1383,7 +1383,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   low_priority: true
 - id: vx_repligen_studio_media_city
@@ -1398,7 +1398,7 @@ applications:
   from: bergen@pub.attorney
   verify_to: true
   draft: false
-  sendable: true
+  sendable: false
   notes: Bekreft mottakeradresse på contact_url før mutt-sending.
   low_priority: true
 - id: fun_regnvann_amber

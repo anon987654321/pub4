@@ -5,17 +5,62 @@
 # deadlines[] der batch=frist_host_2026 (felt legat_id). Regenerer ikke manuelt.
 
 batches:
-  bolig_asap:
-    description: "Bolig — e-postkanaler (Startlån, NAV, sosiale legater med ekstern mottaker)"
+  refined_send:
+    description: "Kuratert e-postkø (~42) — ingen vx_*, portal, NAV eller duplikater"
     delay_seconds: 120
     ids:
-      - 12_bergen_startlan_boligtilskudd
-      - 64_husbanken_startlan
+      - 62_kommunalt_startlan_egenkapital
+      - 44_hp_petersens_legat
+      - 45_lyche_stiftelsen
+      - 32_hielmstierne_rosencrone
+      - 73_louise_findals_legat
+      - 02_trond_mohn_medical_ai
+      - 03_helse_vest_velferdsteknologi
+      - 25_gjensidigestiftelsen_helse
+      - 36_dam_stiftelsen_helse
+      - 38_mowinckel_forskning
+      - 39_anders_jahres_pris
+      - 49_autismeforeningen_forskning
+      - 50_revmatikerforbundet_barnefond
+      - 52_vilhelm_bjerkreim_legat
+      - 54_mental_helse_bergen
+      - 05_sparebankstiftelsen_sr_bank
+      - 06_vestland_fylke_digitalisering
+      - 07_skattefunn_rnd
+      - 14_anthonstiftelsen_ungdom
+      - 55_bergen_handelsstand
+      - 56_den_norske_bank_bergen
+      - 69_sparebanken_vest
+      - 08_nordic_innovation_health
+      - 43_einar_juels_legat
+      - 46_ingvaldsens_legat
+      - 57_rikard_rikardsen_legat
+      - 58_danielsen_arkitekt_legat
+      - 70_conrad_mohrs_legat
+      - 71_frederik_langes_legat
+      - 74_jacob_tulegns_legat
+      - 75_knut_nordkvist_legat
+      - 13_westfal_larsen_rederi
+      - 41_det_bergenske_stiftelse
+      - 47_bergens_tidende_legat
+      - 48_bergens_kunstforening
+      - 60_hordaland_kunstsenter
+      - 68_ole_bull_stiftelsen
+      - 76_edvard_grieg_fondet
+      - 77_vestland_kultur
+      - 82_amber_vestland_klima
+      - 26_kavlitrust_samfunnsnytte
+      - 04_forskningsradet_ikt_ai
+
+  bolig_asap:
+    description: "Bolig — sosiale legater med e-post (Startlån/Husbanken/NAV = portal eller timebestilling)"
+    delay_seconds: 120
+    ids:
       - 62_kommunalt_startlan_egenkapital
       - 32_hielmstierne_rosencrone
       - 44_hp_petersens_legat
       - 45_lyche_stiftelsen
-      - 63_nav_okonomisk_radgivning
+      - 73_louise_findals_legat
 
   bolig_portal_sept:
     description: "Bolig — stipendportalen sept 2026 (manuell innsending, ikke mutt)"
@@ -95,8 +140,10 @@ batches:
       - 35_ekom_programmet
 
   all_sendable:
-    description: "Alle med ekstern e-post (ekskluderer draft)"
+    description: "Alle sendbare med ekstern e-post (ekskluderer draft, vx_*, low_priority)"
     delay_seconds: 60
     auto: true
     exclude_drafts: true
     exclude_self: true
+    exclude_low_priority: true
+    exclude_vx: true

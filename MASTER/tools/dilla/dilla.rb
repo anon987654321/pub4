@@ -8,6 +8,7 @@
 
 require "fileutils"
 require "json"
+require "shellwords"
 require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 
@@ -310,20 +311,23 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:reverse_pad_ghost, role: :texture, program: 95, mix: 0.1, fx: "areverse,lowpass=f=1600"),
   # --- Lead / arp voices ---
   synth_patch(:prophet_lead, role: :lead, program: 81, weight: 2.5, fs_gain: 1.35, arp_styles: %i[updown skip_up], octave: 2,
-              midi_fx: MIDI_FX_LEAD,
+              midi_fx: MIDI_FX_LEAD, midi_arp: { style: :skip_up, subdiv: 8, gate: 0.58, vel: 0.52 },
               fx: "chorus=0.42:0.62:32|42:0.18|0.14:0.22|0.18:0.95|1.2,aecho=0.5:0.4:150|280:0.3|0.18,lowpass=f=4800"),
   synth_patch(:big_lead_prophet5, role: :lead, program: 87, weight: 2.8, fs_gain: 1.4, arp_styles: %i[pingpong quint_spread], octave: 2,
               fx: "chorus=0.52:0.72:36|46:0.24|0.2:0.28|0.22:1.15|1.45,aecho=0.45:0.38:140|260:0.28|0.16,lowpass=f=5400"),
   synth_patch(:prophet_bleeding_lead, role: :lead, program: 87, sf2: :supersaw, weight: 1.6, fs_gain: 1.38,
               arp_styles: %i[spiral coltrane], octave: 2,
+              midi_fx: MIDI_FX_LEAD, midi_arp: { style: :spiral, subdiv: 8, gate: 0.54, vel: 0.54 },
               fx: "chorus=0.58:0.78:44|54:0.3|0.25:0.32|0.28:1.25|1.6,aphaser=speed=0.16:decay=0.5,vibrato=f=0.38:d=0.015"),
   synth_patch(:charang_bite, role: :lead, program: 84, arp_styles: %i[up fibonacci], octave: 2,
               fx: "tremolo=f=5.5:d=0.18,aecho=0.5:0.38:140|260:0.28|0.16"),
   synth_patch(:fifths_lead, role: :lead, program: 86, arp_styles: %i[updown coltrane], octave: 2,
               fx: "vibrato=f=0.55:d=0.02,lowpass=f=4800"),
   synth_patch(:saw_lead, role: :lead, program: 81, arp_styles: %i[random_walk flylo_wobble], octave: 2,
+              midi_fx: MIDI_FX_LEAD, midi_arp: { style: :pingpong, subdiv: 8, gate: 0.55, vel: 0.5 },
               fx: "tremolo=f=3.2:d=0.2,aphaser=speed=0.22:decay=0.45"),
   synth_patch(:square_lead, role: :lead, program: 80, arp_styles: %i[euclidean donda_stab], octave: 2,
+              midi_fx: MIDI_FX_LEAD, midi_arp: { style: :euclidean, subdiv: 8, gate: 0.52, vel: 0.46 },
               fx: "acrusher=bits=10:samples=2:mix=0.18,aecho=0.4:0.35:100|200:0.25|0.14"),
   synth_patch(:supersaw_1, role: :lead, program: 0, sf2: :supersaw, arp_styles: %i[spiral updown], octave: 2,
               fx: "chorus=0.6:0.8:45|55:0.3|0.25:0.3|0.25:1.2|1.6,lowpass=f=6000"),
@@ -358,8 +362,10 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:voice_lead, role: :lead, program: 54, arp_styles: %i[updown flylo_wobble], octave: 2,
               fx: "vibrato=f=0.5:d=0.014,aphaser=speed=0.1:decay=0.6"),
   synth_patch(:minimoog_lead, role: :lead, program: 81, weight: 2.4, fs_gain: 1.35, arp_styles: %i[up random_walk], octave: 1,
+              midi_fx: MIDI_FX_LEAD, midi_arp: { style: :updown, subdiv: 4, gate: 0.65, vel: 0.48 },
               fx: "lowpass=f=2200:width_type=q:width=0.8,tremolo=f=2.5:d=0.12,equalizer=f=140:t=o:w=0.9:g=2.5,aecho=0.42:0.35:110|200:0.22|0.1"),
   synth_patch(:moog_ladder_lead, role: :lead, program: 38, weight: 2.0, fs_gain: 1.32, arp_styles: %i[updown fibonacci], octave: 1,
+              midi_fx: MIDI_FX_LEAD, midi_arp: { style: :fibonacci, subdiv: 4, gate: 0.6, vel: 0.5 },
               fx: "lowpass=f=2800,tremolo=f=3.5:d=0.14,chorus=0.35:0.55:28|36:0.14|0.1:0.18|0.14:0.85|1.1"),
   synth_patch(:cs_lead, role: :lead, program: 82, arp_styles: %i[downup quint_spread], octave: 2,
               fx: "chorus=0.4:0.6:35|45:0.2|0.15:0.2|0.2:0.9|1.2"),
@@ -822,16 +828,18 @@ def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
     events[:poly5] << [t, (0.12 + 0.06 * Math.sin(i * 0.9)).clamp(0.06, 0.28), :rim]
   end
 
-  # Clap layer 2&4
-  (0...(duration / bar_p).floor).each do |bar|
-    base = bar * bar_p
-    density = section_density(bar, n_bars, chord_phases: @chord_phases, pad_chords: @progression_chords,
-                              chord_bars: @render_chord_bars, phrase_bars: @render_phrase_bars)
-    next if density < 0.5
-    [1, 3].each do |beat|
-      t = (base + beat * beat_p).round(6)
-      events[:clap] ||= []
-      events[:clap] << [t, dilla_velocity(0.42 * density, bar, beat, spread: 0.08), :clap]
+  # Clap on 2&4 is scheduled in dilla_schedule (snare unison) when BACKBEAT_CLAP=1.
+  unless backbeat_clap_enabled?
+    (0...(duration / bar_p).floor).each do |bar|
+      base = bar * bar_p
+      density = section_density(bar, n_bars, chord_phases: @chord_phases, pad_chords: @progression_chords,
+                                chord_bars: @render_chord_bars, phrase_bars: @render_phrase_bars)
+      next if density < 0.5
+      [1, 3].each do |beat|
+        t = (base + beat * beat_p).round(6)
+        events[:clap] ||= []
+        events[:clap] << [t, dilla_velocity(0.42 * density, bar, beat, spread: 0.08), :clap]
+      end
     end
   end
 
@@ -994,6 +1002,28 @@ def kick_velocity_scale
   ENV.fetch("KICK_GAIN", "0.38").to_f.clamp(0.08, 1.0)
 end
 
+def halftime?
+  ENV.fetch("HALFTIME", "0") == "1"
+end
+
+def bass_slide_enabled?
+  ENV.fetch("BASS_SLIDE", "1") != "0"
+end
+
+def backbeat_clap_enabled?
+  ENV.fetch("BACKBEAT_CLAP", "1") != "0"
+end
+
+def drum_drop_enabled?
+  ENV.fetch("DRUM_DROP", "1") != "0"
+end
+
+def drum_drop_bar?(bar, section)
+  return false unless drum_drop_enabled?
+  return true if section == :breakdown && bar % 8 == 0
+  bar.positive? && bar % 32 == 31
+end
+
 def drum_bus_mapping
   # Bass/sub stay on the harmonic bus only — routing them here too doubled
   # the low end on every kick and buried the pad chords in the mix.
@@ -1066,6 +1096,7 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (0.22 * kick_velocity_scale + 0.08).round(2)).to_s
   "[0:a]aformat=channel_layouts=stereo,volume=#{drum_vol}," \
     "equalizer=f=480:t=h:w=420:g=-4.5,#{crush}" \
+    "acompressor=threshold=-20dB:ratio=2.8:attack=8:release=110," \
     "equalizer=f=58:t=o:w=0.8:g=#{kick_boost},highpass=f=28#{haas}[drums]"
 end
 
@@ -1187,24 +1218,24 @@ end
 def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0)
   return [] if pad_events.empty? || arp_cfg.nil?
   beat_p = 60.0 / cfg[:bpm]
-  subdiv = arp_cfg.fetch(:subdiv, 4).to_i
-  step_p = beat_p / subdiv.to_f
-  gate = arp_cfg.fetch(:gate, 0.65).to_f
-  vel_scale = arp_cfg.fetch(:vel, 0.32).to_f
-  style = arp_cfg.fetch(:style, :updown)
-  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + seed_offset
-  rng = Random.new(seed)
-  swing = cfg[:swing].to_f / 100.0 * step_p * 0.28
   events = []
   pad_events.each_with_index do |(time, velocity, chord, sustain), i|
     next unless chord && chord[:hz]&.any?
+    variation = arp_variation_for_chord(i, chord, cfg, arp_cfg, role: :pad)
+    subdiv = variation[:subdiv]
+    step_p = beat_p / subdiv.to_f
+    gate = variation[:gate]
+    vel_scale = variation[:vel]
+    rng = chord_variation_rng(cfg, i, chord, salt: seed_offset)
+    swing = cfg[:swing].to_f / 100.0 * step_p * 0.28
     tones = chord[:hz].sort
-    pattern = arp_degrees_for(style, tones.length, rng)
-    n_steps = [(sustain / step_p).floor, 2].max
+    pattern = arp_pattern_for_chord(chord, variation, tones.length, rng)
+    n_steps = [((sustain / step_p).floor * variation[:n_steps_mul]).to_i, 2].max
     step_dur = step_p * gate
     n_steps.times do |step|
+      next if arp_rest_step?(step, variation[:rest_prob], i)
       hz = tones[pattern[step % pattern.length] % tones.length]
-      t = time + step * step_p + (step.odd? ? swing : 0.0)
+      t = arp_step_time(time, step, step_p, swing, variation[:step_jitter], variation)
       break if t >= time + sustain - step_dur * 0.35
       vel = (velocity * vel_scale * (step.zero? ? 1.0 : 0.82 - step * 0.02)).clamp(0.1, 0.55)
       events << [t, vel, { name: "pad_arp", hz: [hz] }, step_dur]
@@ -1239,6 +1270,75 @@ def resolve_midi_fx_for(patch, role:)
     end
 end
 
+def lead_arp_enabled?
+  ENV.fetch("LEAD_ARP", "1") != "0"
+end
+
+# Per-patch lead arp figure — explicit midi_arp on the patch, or a default
+# derived from its arp_styles (continuous chord-tone movement, lead register).
+def lead_arp_cfg_for(patch)
+  return nil unless lead_arp_enabled?
+  patch&.dig(:midi_arp) || {
+    style: @render_arp_style || :updown,
+    subdiv: 8,
+    gate: (patch&.fetch(:gate, 0.72) || 0.72) * 0.88,
+    vel: 0.5
+  }
+end
+
+def lead_arp_section_density(section, progress)
+  base = case section
+         when :intro then 0.55
+         when :breakdown then 0.65
+         when :build then 1.0
+         when :outro then 0.72
+         else 0.85
+         end
+  base * (progress < 0.08 ? 0.75 : 1.0)
+end
+
+# Continuous lead arpeggiator — chord-tone figures on the lead voice (8th/16th
+# subdivisions, patch-specific pattern + MIDI FX). Layers under sparse
+# creative-lead bursts; distinct from scale-locked scale_lead layer.
+def lead_arp_events(pad_events, cfg, arp_cfg)
+  return [] if pad_events.empty? || arp_cfg.nil?
+  beat_p = 60.0 / cfg[:bpm]
+  bar_p = beat_p * 4.0
+  lead_patch = @render_lead_patch
+  octave_mul = 2.0**((lead_patch&.fetch(:octave, 2) || 2) - 1)
+  n_bars_est = pad_events.empty? ? 32 : ((pad_events.last[0] / bar_p).ceil + 1)
+  events = []
+  pad_events.each_with_index do |(time, velocity, chord, sustain), i|
+    next unless chord && chord[:hz]&.any?
+    bar_approx = (time / bar_p).floor.clamp(0, [n_bars_est - 1, 0].max)
+    section = dilla_section(bar_approx, n_bars_est)
+    next if section == :intro && bar_approx < 1
+    progress = i.to_f / [pad_events.length - 1, 1].max
+    density = lead_arp_section_density(section, progress)
+    variation = arp_variation_for_chord(i, chord, cfg, arp_cfg, patch: lead_patch, role: :lead)
+    subdiv = variation[:subdiv]
+    step_p = beat_p / subdiv.to_f
+    gate = variation[:gate]
+    vel_scale = variation[:vel]
+    rng = chord_variation_rng(cfg, i, chord, salt: 9907)
+    swing = cfg[:swing].to_f / 100.0 * step_p * 0.32
+    tones = chord[:hz].sort.map { |hz| hz * octave_mul }
+    pattern = arp_pattern_for_chord(chord, variation, tones.length, rng)
+    n_steps = [((sustain / step_p).floor * variation[:n_steps_mul]).to_i, 2].max
+    step_dur = step_p * gate
+    n_steps.times do |step|
+      next if arp_rest_step?(step, variation[:rest_prob], i)
+      hz = tones[pattern[step % pattern.length] % tones.length]
+      t = arp_step_time(time, step, step_p, swing, variation[:step_jitter], variation)
+      break if t >= time + sustain - step_dur * 0.3
+      accent = step.zero? || (step % 4).zero?
+      vel = (velocity * vel_scale * (accent ? 1.0 : 0.88) * density).clamp(0.2, 0.78)
+      events << [t, vel, { name: "lead_arp", hz: [hz] }, step_dur]
+    end
+  end
+  events.sort_by { |e| e[0] }
+end
+
 # Continuous scale-locked arp on every pad chord — same root/mode as the pad,
 # stepping 16ths through scale degrees for the full chord sustain.
 def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
@@ -1246,11 +1346,9 @@ def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
   beat_p = 60.0 / cfg[:bpm]
   bar_p = beat_p * 4.0
   n_bars ||= duration ? (duration / bar_p).ceil : 32
-  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + 4423
-  rng = Random.new(seed)
-  arp_style = @render_scale_arp_style || :updown
-  gate = @render_scale_lead_patch&.fetch(:gate, 0.62) || 0.62
-  step_p = beat_p / 4.0
+  scale_patch = @render_scale_lead_patch
+  base_gate = scale_patch&.fetch(:gate, 0.62) || 0.62
+  base_cfg = { style: @render_scale_arp_style || :updown, subdiv: 4, gate: base_gate, vel: 0.38 }
   events = []
   pad_events.each_with_index do |(time, velocity, chord, sustain), i|
     next unless chord && chord[:hz]&.any?
@@ -1261,18 +1359,23 @@ def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
     density = scale_arp_section_density(section, progress)
     scale_tones = scale_tones_for_chord(chord)
     next if scale_tones.empty?
-    pattern = arp_degrees_for(arp_style, scale_tones.length, rng)
-    pattern = motif_from_chord(chord) if rng.rand < 0.22
-    n_steps = [(sustain / step_p).floor, 4].max
+    variation = arp_variation_for_chord(i, chord, cfg, base_cfg, patch: scale_patch, role: :scale_lead)
+    subdiv = variation[:subdiv]
+    step_p = beat_p / subdiv.to_f
+    gate = variation[:gate]
+    rng = chord_variation_rng(cfg, i, chord, salt: 4423)
+    pattern = arp_pattern_for_chord(chord, variation, scale_tones.length, rng)
+    n_steps = [((sustain / step_p).floor * variation[:n_steps_mul]).to_i, 4].max
     n_steps = [n_steps, (sustain / step_p).ceil].min
     step_dur = step_p * gate * 0.9
     swing = cfg[:swing].to_f / 100.0 * step_p * 0.35
     n_steps.times do |step|
+      next if arp_rest_step?(step, variation[:rest_prob] * 0.65, i)
       hz = scale_tones[pattern[step % pattern.length] % scale_tones.length]
-      t = time + 0.02 + step * step_p + (step.odd? ? swing : 0.0)
+      t = arp_step_time(time, step, step_p, swing, variation[:step_jitter], variation)
       break if t >= time + sustain - step_dur * 0.4
       accent = step.zero? || (step % 4).zero?
-      vel = (velocity * (accent ? 0.44 : 0.34) * density).clamp(0.14, 0.58)
+      vel = (velocity * (accent ? 0.44 : 0.34) * density * variation[:vel]).clamp(0.14, 0.58)
       events << [t, vel, { name: "scale_arp", hz: [hz] }, step_dur]
     end
   end
@@ -1283,6 +1386,101 @@ def arp_degrees_for(style, tone_count, rng)
   builder = ARP_PATTERN_BUILDERS[style] || ARP_PATTERN_BUILDERS[:updown]
   raw = builder.arity >= 2 ? builder.call(tone_count, rng) : builder.call(tone_count)
   raw.map { |d| d % tone_count }
+end
+
+# Per-chord RNG — same progression, different figure/timing every change.
+def chord_variation_rng(cfg, chord_i, chord, salt: 0)
+  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + chord_i * 131 +
+         (chord[:name].to_s.hash.abs % 5000) + salt
+  Random.new(seed)
+end
+
+def arp_styles_for_patch(patch, fallback_style)
+  patch&.dig(:arp_styles) || [fallback_style || :updown]
+end
+
+# Each pad/lead chord gets its own arp style, subdiv, gate, swing, and pattern shape.
+def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role: :lead)
+  rng = chord_variation_rng(cfg, chord_i, chord, salt: role.hash.abs)
+  styles = arp_styles_for_patch(patch, base_arp_cfg[:style])
+  style = styles[chord_i % styles.length]
+  style = ARP_PATTERN_BUILDERS.keys.sample(random: rng) if rng.rand < 0.3
+  subdiv_pool = [base_arp_cfg.fetch(:subdiv, 8), 3, 4, 6, 8, 12].uniq
+  {
+    style: style,
+    subdiv: subdiv_pool[rng.rand(subdiv_pool.length)],
+    gate: base_arp_cfg.fetch(:gate, 0.62) * rng.rand(0.82..1.14),
+    vel: base_arp_cfg.fetch(:vel, 0.5) * rng.rand(0.75..1.2),
+    time_offset: rng.rand(-0.035..0.09),
+    step_jitter: rng.rand(0.0..0.022),
+    rest_prob: rng.rand(0.0..0.14),
+    pattern_mode: %i[style motif retrograde sparse call stagger].sample(random: rng),
+    swing_mul: rng.rand(0.6..1.4),
+    n_steps_mul: rng.rand(0.5..1.0)
+  }
+end
+
+def arp_pattern_for_chord(chord, variation, tone_count, rng)
+  case variation[:pattern_mode]
+  when :motif
+    motif_from_chord(chord).map { |d| d % tone_count }
+  when :retrograde
+    arp_degrees_for(variation[:style], tone_count, rng).reverse
+  when :sparse
+    arp_degrees_for(variation[:style], tone_count, rng).each_with_index.filter_map { |d, i| (i.even? || rng.rand < 0.42) ? d : nil }
+  when :call
+    motif_from_chord(chord).map { |d| d % tone_count } +
+      arp_degrees_for(variation[:style], tone_count, rng).first(4)
+  when :stagger
+    base = arp_degrees_for(variation[:style], tone_count, rng)
+    base.flat_map.with_index { |d, i| i.even? ? [d, d] : [d] }
+  else
+    arp_degrees_for(variation[:style], tone_count, rng)
+  end
+end
+
+def arp_rest_step?(step, rest_prob, chord_i)
+  return false if rest_prob < 0.02
+  Random.new(chord_i * 97 + step * 13).rand < rest_prob
+end
+
+def arp_step_time(time, step, step_p, swing, jitter, variation)
+  t = time + variation[:time_offset] + step * step_p
+  t += (step.odd? ? swing * variation[:swing_mul] : 0.0)
+  t += jitter * ((step % 3) - 1)
+  t
+end
+
+# Pad chord entry + chop placement — not locked to bar%4 templates.
+def dilla_chord_change_variation(chord_i, bar, section, feel, step_p, chord)
+  cfg = dilla_resolve_config
+  rng = chord_variation_rng(cfg, chord_i, chord, salt: 7711)
+  base_pad_offset = case feel
+                    when :syncopated_slash_ninth then step_p * 2 + 0.012
+                    when :chromatic_planing then -step_p * 2
+                    else 0.0
+                    end
+  sustain_mul = rng.rand(0.76..1.04)
+  sustain_mul *= 0.7 if section == :breakdown
+  sustain_mul *= 1.06 if section == :build && rng.rand < 0.45
+  chop_templates = [
+    [1, 5, 9, 13], [2, 6, 10, 14], [1, 9, 13], [3, 7, 11, 15],
+    [0, 4, 8, 12], [1, 3, 7, 11], [2, 5, 9, 14], [4, 8, 12, 15],
+    [1, 7, 13], [2, 8, 10, 14], [5, 9, 13], [0, 6, 10, 14], [3, 9, 15]
+  ]
+  chop_steps = chop_templates[(chord_i + bar) % chop_templates.length].dup
+  chop_steps.delete_at(rng.rand(chop_steps.length)) if rng.rand < 0.38 && chop_steps.length > 2
+  chop_steps << [0, 3, 6, 10, 14].sample(random: rng) if rng.rand < 0.28
+  {
+    pad_offset: base_pad_offset + rng.rand(-step_p * 0.4..step_p * 0.9),
+    sustain_mul: sustain_mul,
+    chop_steps: chop_steps.uniq.sort,
+    chop_jitter: rng.rand(-0.028..0.028),
+    pad_vel_mul: rng.rand(0.86..1.1),
+    double_pad: rng.rand < 0.2 && section == :main,
+    double_pad_delay: step_p * rng.rand(0.2..0.85),
+    double_pad_vel: rng.rand(0.18..0.32)
+  }
 end
 
 def lead_section_chance(section, progress)
@@ -1326,27 +1524,29 @@ def lead_events_creative(pad_events, cfg, duration: nil, n_bars: nil)
       burst_remaining = rng.rand(1..3)
     end
     tones = chord[:hz].sort.map { |hz| hz * octave_mul }
-    pattern = case i % 5
-              when 0 then leitmotif
-              when 1 then invert_motif(leitmotif)
-              when 2 then leitmotif.reverse
-              when 3 then arp_degrees_for(arp_style, tones.length, rng)
-              else leitmotif + invert_motif(leitmotif)
+    burst_cfg = { style: arp_style, subdiv: 2, gate: gate_mul, vel: 0.72 }
+    variation = arp_variation_for_chord(i, chord, cfg, burst_cfg, patch: lead_patch, role: :creative_lead)
+    pattern = case variation[:pattern_mode]
+              when :motif then motif_from_chord(chord).map { |d| d % tones.length }
+              when :retrograde then invert_motif(leitmotif)
+              when :call then leitmotif + invert_motif(leitmotif)
+              when :sparse then leitmotif.each_with_index.filter_map { |d, si| (si.even? || rng.rand < 0.5) ? d : nil }
+              else [leitmotif, invert_motif(leitmotif), leitmotif.reverse,
+                    arp_degrees_for(variation[:style], tones.length, rng),
+                    leitmotif + invert_motif(leitmotif)][i % 5]
               end
-    pattern = arp_degrees_for(arp_style, tones.length, rng) if rng.rand < 0.35
-    subdiv = case arp_style
-             when :flylo_wobble, :euclidean then 3
-             when :random_walk, :spiral then 4
-             else 2
-             end
+    pattern = arp_pattern_for_chord(chord, variation, tones.length, rng) if rng.rand < 0.38
+    subdiv = variation[:subdiv]
     step_dur = [(sustain || 1.0) / (pattern.length * subdiv.to_f), 0.045].max
     step_dur *= 1.35 if section == :build
-    step_dur *= 0.72 if gate_mul < 0.6
-    swing_push = cfg[:quintuplet] ? step_dur * 0.04 : 0.0
+    step_dur *= variation[:n_steps_mul].clamp(0.55, 1.0)
+    swing_push = (cfg[:quintuplet] ? step_dur * 0.04 : 0.0) * variation[:swing_mul]
     pattern.each_with_index do |degree, step|
+      next if arp_rest_step?(step, variation[:rest_prob], i + 500)
       hz = tones[degree % tones.length]
       approach = step.zero? && i.positive? ? hz * (2**(1.0 / 12.0)) : hz
-      t = time + 0.04 + step * step_dur + (step.odd? ? swing_push : 0.0)
+      t = time + variation[:time_offset] + 0.04 + step * step_dur + (step.odd? ? swing_push : 0.0) +
+          variation[:step_jitter] * ((step % 3) - 1)
       vel = (velocity * (0.88 - step * 0.04)).clamp(0.18, 0.95)
       vel *= 1.12 if section == :build
       pan = cfg[:stereo_pan] ? (step.even? ? -0.45 : 0.45) : (step.even? ? -0.12 : 0.12)
@@ -1776,6 +1976,21 @@ DRUM_PATTERN_SETS = {
     opens: [6, 14]
   }
 }.freeze
+
+# Authored fill phrases — snare runs, kick clusters, ghost chatter into phrase ends.
+DRUM_FILL_SETS = {
+  snare: [
+    [10, 11, 12, 13, 14, 15], [8, 9, 10, 11, 12, 14], [6, 8, 10, 12, 13, 14, 15],
+    [9, 10, 11, 12, 14, 15], [11, 12, 13, 14, 15], [8, 10, 12, 13, 14, 15]
+  ],
+  kicks: [
+    [12, 13, 14, 15], [10, 12, 14, 15], [8, 10, 12, 14, 15], [13, 14, 15], [11, 13, 15]
+  ],
+  ghosts: [
+    [13, 14, 15], [11, 13, 15], [12, 14, 15], [10, 12, 14, 15]
+  ]
+}.freeze
+
 MELODY_CHOP_HZ = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08].freeze
 LOOSE_POCKET_TIMING_MS = {
   snare: -28..-12, ghost: -10..18, hat_down: 8..18, hat_up: 22..40,
@@ -2223,6 +2438,43 @@ def require_tools!(*names)
   missing = names.reject { |name| tool_available?(name) }
   return if missing.empty?
   abort "#{missing.join(', ')} required"
+end
+
+def darwin?
+  RUBY_PLATFORM.include?("darwin")
+end
+
+# ffplay from agent/nohup shells often has no CoreAudio route on macOS;
+# afplay uses the logged-in user's default output device.
+def playback_tool
+  return "afplay" if darwin? && tool_available?("afplay")
+  return "ffplay" if tool_available?("ffplay")
+  nil
+end
+
+def require_playback_tool!
+  abort "afplay or ffplay required" unless playback_tool
+end
+
+def play_audio(path, loop: false)
+  tool = playback_tool
+  abort "afplay or ffplay required" unless tool
+  vol = (ENV["PLAY_VOL"] || "1").to_f.clamp(0.0, 1.0)
+  case tool
+  when "afplay"
+    if loop
+      puts "looping #{path} via afplay (Ctrl-C to stop)"
+      trap("INT") { exit 0 }
+      loop { sh! "afplay", "-v", format("%.3f", vol), path }
+    else
+      sh! "afplay", "-v", format("%.3f", vol), path
+    end
+  else
+    args = ["ffplay", "-nodisp", "-volume", (vol * 100).round.to_s]
+    args << (loop ? "-loop" : "-autoexit")
+    args << "0" if loop
+    sh!(*args, path)
+  end
 end
 
 def prompt(label)
@@ -3301,7 +3553,7 @@ ensure
 end
 
 def play(preset_name = nil, bars_count = 8)
-  require_tools! "ffplay"
+  require_playback_tool!
   preset_name ||= "dilla"
   tmp = scratch_path("play_tmp.mp3")
   prev = ENV["BARS"]
@@ -3311,7 +3563,7 @@ def play(preset_name = nil, bars_count = 8)
   else
     render(tmp)
   end
-  sh! "ffplay", "-nodisp", "-autoexit", tmp
+  play_audio(tmp)
 ensure
   prev ? ENV["BARS"] = prev : ENV.delete("BARS")
   FileUtils.rm_f(tmp)
@@ -3319,7 +3571,7 @@ end
 
 # Loop a WAV via ffplay (rb-only playback).
 def play_loop(path)
-  require_tools! "ffplay"
+  require_playback_tool!
   abort "missing #{path}" unless File.exist?(path)
   cfg = dilla_resolve_config
   prog = CHORD_PROGRESSIONS[cfg[:progression]]
@@ -3327,7 +3579,7 @@ def play_loop(path)
   puts "looping #{path} (#{File.size(path)} bytes, #{cfg[:bpm].to_i} BPM)"
   puts "progression: #{prog_names}"
   puts "Ctrl-C to stop"
-  exec "ffplay", "-nodisp", "-loop", "0", "-volume", "100", path
+  play_audio(path, loop: true)
 end
 
 # Instant playback — cached WAV, no render wait.
@@ -3434,7 +3686,16 @@ STREAM_BARS_COUNT = 16
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
 def stream(bars_count = STREAM_BARS_COUNT)
-  require_tools! "ffplay"
+  require_playback_tool!
+  if darwin? && ENV["DILLA_STREAM_LAUNCHED"] != "1" &&
+     (ENV["GROK_AGENT"] == "1" || !$stdout.tty? || ENV["DILLA_FORCE_TERMINAL"] == "1")
+    cmd = "cd #{Shellwords.escape(ROOT)} && DILLA_STREAM_LAUNCHED=1 ruby #{Shellwords.escape(__FILE__)} stream #{bars_count.to_i}"
+    puts "agent/background shell — opening Terminal for speaker playback…"
+    puts cmd
+    system("osascript", "-e", %(tell application "Terminal" to do script "#{cmd.gsub('"', '\\"')}"))
+    system("osascript", "-e", 'tell application "Terminal" to activate')
+    return
+  end
   prev_track = ENV["TRACK"]
   # Every restart (and there have been many, iterating on this live) reset
   # the rotation to index 0 — meaning repeated restarts kept replaying the
@@ -3656,8 +3917,52 @@ end
 def dilla_snare_steps(bar, feel, section:)
   return [] if section == :breakdown
   steps = drum_pattern_pick(bar, feel, :snares)
+  if halftime?
+    steps = steps.map { |s| s == 4 ? 8 : s }.reject { |s| s == 12 && bar.even? }
+    steps = [8] if steps.empty?
+  end
   steps -= [10, 14] if section == :intro
   steps.uniq.sort
+end
+
+def dilla_fill_bar?(bar, section)
+  return false if %i[intro breakdown].include?(section)
+  bar % 8 == 7 || (bar.positive? && bar % 16 == 15)
+end
+
+def schedule_drum_fills!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, feel, section)
+  return unless dilla_fill_bar?(bar, section)
+  seed = drum_pattern_seed(feel) + bar
+  DRUM_FILL_SETS[:snare][(bar / 8 + seed) % DRUM_FILL_SETS[:snare].length].each do |step|
+    t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+         dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
+    vel = step >= 10 ? 0.54 : 0.46
+    events[:snare] << [t.round(6), dilla_velocity(vel, bar, step, spread: 0.06) * sec_gain]
+  end
+  if kicks_enabled?
+    DRUM_FILL_SETS[:kicks][(bar / 8 + seed) % DRUM_FILL_SETS[:kicks].length].each do |step|
+      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+           dilla_timing_ms(:kick_sync, bar, step, timing, beat_p) / 1000.0, 0.0].max
+      events[:kick] << [t.round(6), dilla_velocity(0.4, bar, step, spread: 0.05) * sec_gain * kick_velocity_scale]
+    end
+  end
+  DRUM_FILL_SETS[:ghosts][(bar / 8 + seed) % DRUM_FILL_SETS[:ghosts].length].each do |step|
+    t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+         dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
+    events[:ghost] << [t.round(6), dilla_velocity(0.32, bar, step, spread: 0.07) * sec_gain]
+  end
+end
+
+def schedule_hat_roll!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, section)
+  return unless bar % 8 == 7 && !%i[intro breakdown].include?(section)
+  # 32nd-note roll on the last beat of every 8-bar phrase (steps 12–15.75).
+  16.times do |sub|
+    step = 12.0 + sub * 0.25
+    t = [base + step * step_p + dilla_swing_offset(step.floor, step_p, swing, quintuplet: quintuplet) +
+         dilla_timing_ms(:hat_up, bar, step.floor, timing, beat_p) / 1000.0, 0.0].max
+    accel = 0.34 + (sub / 15.0) * 0.22
+    events[:hat] << [t.round(6), dilla_velocity(accel, bar, step.floor, spread: 0.1) * sec_gain]
+  end
 end
 
 def dilla_ghost_steps(bar, feel)
@@ -3742,6 +4047,8 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
   drop_beat_bar = ->(b) { b.positive? && b % 16 == 15 }
   bar_starts = [0.0]
   (1..n_bars).each { |b| bar_starts << bar_starts.last + (drop_beat_bar.call(b - 1) ? bar_p * 0.875 : bar_p) }
+  chord_change_i = -1
+  prev_bass_root = nil
 
   n_bars.times do |bar|
     base = bar_starts[bar]
@@ -3766,7 +4073,11 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                  end
     bass_root = dilla_chord_bass_hz(bass_chord)
     unless drums_only || section == :breakdown || bass_root.nil?
-      events[:bass] << [base + 0.012, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
+      slide_from = bass_slide_enabled? && prev_bass_root && (prev_bass_root - bass_root).abs > 0.5 ? prev_bass_root : nil
+      bar_bass = [base + 0.012, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
+      bar_bass << slide_from if slide_from
+      events[:bass] << bar_bass
+      prev_bass_root = bass_root
     end
     if feel == :chromatic_planing
       pickup = base - step_p * 2
@@ -3778,7 +4089,9 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                         dilla_velocity(0.50, bar, 0, spread: 0.05), bass_root]
     end
 
-    if kicks_enabled?
+    drop_bar = drum_drop_bar?(bar, section)
+
+    if kicks_enabled? && !drop_bar
       pattern.each_with_index do |step, i|
         role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
         t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
@@ -3803,12 +4116,17 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
 
     unless section == :intro && bar < 4
       dilla_snare_steps(bar, feel, section:).each_with_index do |step, si|
+        next if drop_bar
         next if section == :breakdown
         t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
              dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
-        backbeat = [4, 12].include?(step)
+        backbeat = halftime? ? [8].include?(step) : [4, 12].include?(step)
         snare_vel = backbeat ? (si.zero? ? 0.64 : 0.56) : 0.48
         events[:snare] << [t.round(6), dilla_velocity(snare_vel, bar, step) * sec_gain]
+        if backbeat && backbeat_clap_enabled? && %i[main build].include?(section)
+          events[:clap] ||= []
+          events[:clap] << [t.round(6), dilla_velocity(0.4, bar, step, spread: 0.06) * sec_gain, :clap]
+        end
         if backbeat && si.zero?
           events[:ghost] << [(t - 0.001).round(6).clamp(0.0, Float::INFINITY),
                               dilla_velocity(0.22, bar, step, spread: 0.04) * sec_gain]
@@ -3820,6 +4138,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     ghost_steps += [1, 9] if feel == :loose_pocket && bar.odd?
     ghost_steps += [5] if feel == :loose_pocket && bar.even?
     ghost_steps.uniq.each do |step|
+      next if drop_bar
       t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
            dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
       vel = feel == :loose_pocket ? 0.34 : 0.28
@@ -3829,6 +4148,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     hat_steps = dilla_hat_steps(bar, feel, n_bars:)
     hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown
     hat_steps.each_with_index do |step, i|
+      next if drop_bar
       role = if [3, 11].include?(step) && feel == :syncopated_slash_ninth
                :hat_up
              elsif feel == :loose_pocket && step.odd?
@@ -3850,31 +4170,37 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                          dilla_velocity(0.22, bar, 10, spread: 0.04) * sec_gain]
     end
 
+    schedule_hat_roll!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, section) unless drop_bar
+    schedule_drum_fills!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, feel, section) unless drop_bar
+
     next if drums_only
     next if section == :intro && bar < 2
 
     next unless (bar % chord_bars).zero?
 
+    chord_change_i += 1
     chord = pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
-    pad_offset = case feel
-                 when :syncopated_slash_ninth then step_p * 2 + 0.012
-                 when :chromatic_planing then -step_p * 2
-                 else 0.0
-                 end
-    pad_t = base + pad_offset + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
-    sustain = (chord_bars * bar_p * 0.97).round(4)
+    cvar = dilla_chord_change_variation(chord_change_i, bar, section, feel, step_p, chord)
+    pad_t = base + cvar[:pad_offset] + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
+    sustain = (chord_bars * bar_p * 0.97 * cvar[:sustain_mul]).round(4)
     pad_vel = dilla_velocity(phase == :recapitulation ? 0.96 : 0.92, bar, 0, spread: 0.03) * sec_gain
     pad_vel *= 0.88 if phase == :development
+    pad_vel *= cvar[:pad_vel_mul]
     events[:pad] << [[pad_t, 0.0].max.round(6), pad_vel, chord, sustain]
-    if feel == :timeless && section == :main && bar % 4 == 1 && phase != :development
+    if cvar[:double_pad]
+      events[:pad] << [[pad_t + cvar[:double_pad_delay], 0.0].max.round(6),
+                       dilla_velocity(cvar[:double_pad_vel], bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.68]
+    elsif feel == :timeless && section == :main && bar % 4 == 1 && phase != :development
       events[:pad] << [[pad_t + step_p * 0.5, 0.0].max.round(6),
                        dilla_velocity(0.22, bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.72]
     end
     unless section == :breakdown || phase == :development
-      chop_steps = phase == :recapitulation ? [[1, 5, 9, 13], [2, 6, 10, 14], [1, 9, 13], [3, 7, 11, 15]][bar % 4]
-                                             : [[1, 5, 9], [2, 6, 10], [1, 9, 13], [3, 7, 11]][bar % 4]
-      chop_steps.each do |chop_step|
-        chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing, quintuplet: quintuplet), 0.0].max
+      chop_steps = cvar[:chop_steps]
+      chop_steps = chop_steps.select { |s| s < 12 } if phase != :recapitulation && chop_steps.length > 4
+      chop_steps << 15 if phase == :recapitulation && chord_change_i % 3 == 1
+      chop_steps.uniq.sort.each do |chop_step|
+        chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing, quintuplet: quintuplet) +
+                  cvar[:chop_jitter], 0.0].max
         chop_vel = phase == :recapitulation ? 0.58 : 0.52
         events[:chop] << [chop_t.round(6), dilla_velocity(chop_vel, bar, chop_step, spread: 0.04) * sec_gain, chord]
       end
@@ -4798,8 +5124,10 @@ end
 def lead_events_from_pads(pad_events, duration: nil, n_bars: nil)
   cfg = dilla_resolve_config
   scale = lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars)
+  arp_cfg = lead_arp_cfg_for(@render_lead_patch)
+  arp = lead_arp_events(pad_events, cfg, arp_cfg)
   creative = lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars)
-  (scale + creative).sort_by { |e| e[0] }
+  (scale + arp + creative).sort_by { |e| e[0] }
 end
 
 def resolve_scale_lead_voice
@@ -4854,9 +5182,12 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   end
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
   scale_events = lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars_est)
+  lead_arp_cfg = lead_arp_cfg_for(@render_lead_patch)
+  lead_arp_ev = lead_arp_events(pad_events, cfg, lead_arp_cfg)
   creative_events = lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est)
   scale_lead_rendered = render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true)
-  lead_rendered = render_lead_via_fluidsynth(lead_path, creative_events, duration)
+  combined_lead = (lead_arp_ev + creative_events).sort_by { |e| e[0] }
+  lead_rendered = render_lead_via_fluidsynth(lead_path, combined_lead, duration)
   # Karplus-Strong plucked-string accent on each chord's root — a genuinely
   # new instrument timbre (real physical-modeling algorithm, not another
   # oscillator/soundfont voice), pre-rendered per chord since the algorithm
@@ -4909,19 +5240,24 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     bass_events.each do |hit|
       t, v = hit[0], hit[1]
       root = hit[2].is_a?(Numeric) ? hit[2] : 43.65
+      slide_from = hit[4].is_a?(Numeric) ? hit[4] : nil
       total = [((hit[3] || BASS_SUSTAIN_SEC) * SAMPLE_RATE).round, 1].max
       event_frame = (t * SAMPLE_RATE).round
       window = overlap_window(event_frame, total, chunk_start, chunk_frames)
       next unless window
       local_start, source_offset, count = window
+      slide_portion = bass_slide_enabled? && slide_from ? 0.38 : 0.0
       count.times do |i|
         tt = (source_offset + i).to_f / SAMPLE_RATE
         lfo = 0.03 * Math.sin(2 * Math::PI * 0.12 * tt)
-        # Was 0.42 — ~3-4x melody(0.11)/chop(0.13)'s coefficient, so bass
-        # transients dominated the shared tones+pads limiter downstream and
-        # ducked the chords every time the bass hit.
+        progress = i.to_f / [count - 1, 1].max
+        freq = if slide_portion.positive? && progress < slide_portion
+                 slide_from + (root - slide_from) * (progress / slide_portion)
+               else
+                 root
+               end
         sample = v * 0.30 * Math.exp(-tt * BASS_DECAY_RATE) *
-                 Math.sin(2 * Math::PI * root * (1.0 + lfo) * tt)
+                 Math.sin(2 * Math::PI * freq * (1.0 + lfo) * tt)
         left[local_start + i] += sample
         right[local_start + i] += sample
       end
@@ -5381,9 +5717,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   end
   stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony+melody"
   mix_note  = sonitex_label
+  lead_arp_style = lead_arp_cfg_for(@render_lead_patch)&.dig(:style)
   patch_note = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id),
                 @render_scale_lead_patch&.dig(:id), @render_scale_arp_style,
-                @render_lead_patch&.dig(:id), @render_arp_style].compact.join("/")
+                @render_lead_patch&.dig(:id), @render_arp_style, lead_arp_style].compact.join("/")
   kick_note = kicks_enabled? ? "kicks" : "no-kicks"
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note})"
 end

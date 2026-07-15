@@ -49,6 +49,8 @@ end
 def manifest_sendable?(app, funder_record)
   return false if app[:draft]
   return false if app[:to] == APPLICANT[:email]
+  return false if app[:file].to_s.start_with?("vx_")
+  return false if app[:low_priority]
   return false if Bplan::Constants::NON_SENDABLE_APP_FILES.include?(app[:file].to_s)
   return false if funder_record&.dig("portal_only")
 
@@ -1385,7 +1387,7 @@ manifest = {
     "2. Verifiser to-adresser på giverens nettside — mange bruker skjema, ikke e-post",
     "3. Konverter HTML til PDF: wkhtmltopdf eller nettleser Skriv ut → Lagre som PDF",
     "4. Batch: ruby BPLAN/grok_send_legats.rb --batch bolig_asap --dry-run",
-    "5. Enkelt: ./BPLAN/send_legats.sh [--dry-run] [id]",
+    "5. Enkelt: ./BPLAN/legat_mailer.sh dry-run ID",
     "6. Se BPLAN/legats/batches.yml for senderekkefølge",
     "7. Sendt-logg: BPLAN/legats/sent_log.yml (unngår duplikater)",
   ],

@@ -3,7 +3,7 @@
 #
 # One check entrypoint. A profile is a named list of steps — pick one:
 #
-#   bin/check [--profile NAME]
+#   bin/check [--profile NAME] [--format brief]
 #
 #   operator     (default) unit suite + core spine + data singularity
 #   contributor  fast: unit suite + data singularity
@@ -15,16 +15,20 @@
 
 require "optparse"
 require_relative "../lib/pub4/check_runner"
+require_relative "../lib/pub4/check_brief"
 require_relative "../lib/pub4/ruby_runner"
 
 ROOT = File.expand_path("..", __dir__)
 RUBY = Pub4::RubyRunner.ruby_cmd
 
 profile = "operator"
+format = "human"
 OptionParser.new do |parser|
-  parser.banner = "usage: bin/check [--profile operator|contributor|agent|web|full]"
+  parser.banner = "usage: bin/check [--profile operator|contributor|agent|web|full] [--format human|brief]"
   parser.on("--profile=NAME") { |value| profile = value }
+  parser.on("--format=NAME") { |value| format = value }
 end.parse!
+abort "check: unknown format '#{format}' (have: human, brief)" unless %w[human brief].include?(format)
 
 rake = ->(*task) { [task.join(" "), RUBY, "-S", "rake", *task] }
 run_bin = ->(name, *args) { ["bin/#{name} #{args.join(' ')}".strip, RUBY, File.join(ROOT, "bin", name), *args] }
@@ -51,12 +55,21 @@ steps = PROFILES[profile] or abort "check: unknown profile '#{profile}' (have: #
 warn "check[web]: live web checks skipped (set MASTER_WEB_LIVE=1)" if profile == "web" && !web_live
 
 timeout = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", profile == "full" ? "600" : "240"))
-runner = Pub4::CheckRunner.new(prefix: "check:#{profile}", root: ROOT, timeout:)
+runner = Pub4::CheckRunner.new(prefix: "check:#{profile}", root: ROOT, timeout:, quiet: format == "brief")
 
-failures = steps.reject { |step| runner.run(*step) }.map(&:first)
+steps.each { |step| runner.run(*step) }
+failures = runner.results.reject { |r| r.success }.map(&:name)
 if failures.empty?
-  puts "check[#{profile}]: clean"
+  if format == "brief"
+    puts Pub4::CheckBrief.render(profile:, results: runner.results)
+  else
+    puts "check[#{profile}]: clean"
+  end
   exit 0
 end
-puts "check[#{profile}]: #{failures.size} failure(s): #{failures.join(', ')}"
+if format == "brief"
+  puts Pub4::CheckBrief.render(profile:, results: runner.results)
+else
+  puts "check[#{profile}]: #{failures.size} failure(s): #{failures.join(', ')}"
+end
 exit 1

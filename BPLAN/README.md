@@ -30,7 +30,7 @@ BPLAN/
   build_plans.rb
   build_legats.rb
   grok_send_legats.rb # batch-sending med mutt
-  send_legats.sh      # tynn wrapper
+  legat_mailer.sh     # build PDF + send wrapper
   lib/bplan/          # html + validate
   Makefile            # build + test
   rails/              # standalone Rails 8 app (port 39282)

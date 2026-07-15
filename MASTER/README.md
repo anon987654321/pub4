@@ -4,7 +4,7 @@ Constitutional AI runtime in Ruby, OpenBSD-first. Models propose; the constituti
 
 Local boot: `bundle install`, then `bundle exec ruby bin/cli`. Pipeline stages are in `Now::RuntimeMode::PIPELINE_STAGES`; dump with `/orient`. Law is `data/soul.yml` and `data/rules.yml`. Deploy: `OPENBSD/RUNBOOK.md`. Licensed MIT.
 
-Start with `START_HERE.md` (agent contract, runtime map, data file budget). Use `EXAMPLES.md` for patch shapes. Checks: `bin/check`, `--profile=agent`, `--profile=web`, `--profile=full`.
+Start with `AGENTS.md` (task-scoped agent entry) or `START_HERE.md` (full contract). Use `EXAMPLES.md` for patch shapes. Checks: `bin/check`, `--profile=agent`, `--profile=web`, `--profile=full`, `--format=brief`.
 
 ## Creative media, without command syntax
 

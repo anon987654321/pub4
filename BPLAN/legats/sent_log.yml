@@ -1,4 +1,4 @@
-# Sendt-logg for grok_send_legats.rb / send_legats.sh
+# Sendt-logg for grok_send_legats.rb / legat_mailer.sh
 # Schema:
 #   sent:
 #     - id: manifest application id (e.g. 10_gunvor_mindes_legat)

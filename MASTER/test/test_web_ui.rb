@@ -49,9 +49,12 @@ class TestWebUI < Minitest::Test
 
   def face_runtime_source
     base = File.expand_path("../web/public", __dir__)
-    parts = Dir.glob(File.join(base, "face.part*.txt")).sort.map { |path| File.read(path) }
+    segments = (1..3).map { |part| File.read(File.join(base, "face.part#{part}.txt")) }
+    segments << File.read(File.join(base, "face_speech_runtime.js"))
+    segments << File.read(File.join(base, "face_speech_playback.js"))
+    segments << File.read(File.join(base, "face.part5.txt"))
     loader = File.read(File.join(base, "face.js"))
-    (parts + [loader]).join("\n")
+    (segments + [loader]).join("\n")
   end
 
   # Result monad
@@ -396,7 +399,7 @@ class TestWebUI < Minitest::Test
 
   def test_face_tts_bridges_global_style_events
     bridge = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
-    part4 = File.read(File.expand_path("../web/public/face.part4.txt", __dir__))
+    speech = File.read(File.expand_path("../web/public/face_speech_runtime.js", __dir__))
     events = File.read(File.expand_path("../web/public/master_events.js", __dir__))
 
     assert_includes bridge, "new EventSource(\"/events/stream\")"
@@ -404,7 +407,7 @@ class TestWebUI < Minitest::Test
     assert_includes bridge, "type === \"tts:style:active\""
     assert_includes bridge, "new CustomEvent(\"tts:style:active\""
     assert_includes bridge, "new CustomEvent(\"master:visual\""
-    assert_includes part4, "tts:anticipate"
+    assert_includes speech, "tts:anticipate"
     assert_includes events, '"tts:style:active"'
     assert_includes events, '"tts:playback:start"'
     assert_includes events, '"tts:playback:end"'

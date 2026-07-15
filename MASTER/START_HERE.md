@@ -2,7 +2,7 @@
 
 MASTER is a constitutional AI runtime in Ruby. Models propose; the runtime validates against `data/soul.yml`, `data/rules.yml`, and scanner shards before durable writes. The Rails face in `web/` mirrors runtime state at `https://ai.brgen.no`.
 
-**Orientation:** one file. Law and config live in YAML under `data/`. Prose stubs: `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Everything else defers to `/orient` or this section.
+**Orientation:** `AGENTS.md` for task-scoped agent entry; this file for the full contract. Law and config live in YAML under `data/`. Prose stubs: `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Everything else defers to `/orient` or this section.
 
 ## Safe First Commands
 
@@ -10,6 +10,7 @@ MASTER is a constitutional AI runtime in Ruby. Models propose; the runtime valid
 - `bin/check --profile=agent` — law, scanners, loop, routing (may fail on known debt).
 - `bin/check --profile=web` — face/assets; set `MASTER_WEB_LIVE=1` for live web checks.
 - `bin/check --profile=full` — operator-grade probe path.
+- `bin/check --format=brief` — structured pass/fail with debt hints (pair with any profile).
 - Runtime dumps: `/orient bootstrap`, `/orient soul`, `/orient rules`, `/orient conventions`.
 
 ## Runtime Map

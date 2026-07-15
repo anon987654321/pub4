@@ -5,23 +5,35 @@ require "timeout"
 
 module Pub4
   class CheckRunner
+    Result = Struct.new(:name, :success, :output, keyword_init: true)
+
     TimeoutStatus = Struct.new(:success?) do
       def initialize = super(false)
     end
 
-    def initialize(prefix:, root:, timeout:)
+    attr_reader :results
+
+    def initialize(prefix:, root:, timeout:, quiet: false)
       @prefix = prefix
       @root = root
       @timeout = timeout
+      @quiet = quiet
+      @results = []
     end
 
     def run(name, *cmd, env: {})
-      print "#{@prefix}: #{name.ljust(22)} "
-      $stdout.flush
+      print "#{@prefix}: #{name.ljust(22)} " unless @quiet
+      $stdout.flush unless @quiet
       out, status = capture(env, *cmd)
-      puts(status.success? ? "ok" : "fail")
-      warn out if !out.empty? && (!status.success? || ENV["CHECK_VERBOSE"] == "1")
-      status.success?
+      ok = status.success?
+      @results << Result.new(name:, success: ok, output: out)
+      if @quiet
+        warn "#{@prefix}: #{name} #{ok ? 'ok' : 'fail'}"
+      else
+        puts(ok ? "ok" : "fail")
+      end
+      warn out if !out.empty? && (!ok || ENV["CHECK_VERBOSE"] == "1")
+      ok
     end
 
     private

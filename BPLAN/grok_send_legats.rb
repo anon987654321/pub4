@@ -33,7 +33,7 @@ MANIFEST_PATH = File.join(LEGATS_DIR, "manifest.yml")
 BATCHES_PATH = File.join(LEGATS_DIR, "batches.yml")
 SENT_LOG_PATH = File.join(LEGATS_DIR, "sent_log.yml")
 OUTBOX_DIR = File.join(LEGATS_DIR, "outbox")
-COVERS_DIR = File.join(LEGATS_DIR, "covers")
+COVERS_DIR = File.join(ROOT, "covers")
 REPORTS_DIR = File.join(LEGATS_DIR, "reports")
 FROM = ENV.fetch("LEGAT_FROM", "bergen@pub.attorney")
 MUTT = ENV.fetch("MUTT_CMD", "mutt")
@@ -46,75 +46,6 @@ CHROME_CANDIDATES = [
   "google-chrome",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ].compact.uniq.freeze
-
-COVER_BY_TRACK = {
-  "bolig" => <<~TXT,
-    Hei,
-
-    Vedlagt følger min søknad til %{funder}.
-
-    Jeg er bosatt i Bergen og søker ærlig om støtte knyttet til varig bolig og økonomisk stabilisering.
-    Dette er et separat spor fra mitt innovasjonsarbeid (MASTER/RAILS/pub.healthcare), men begge deler
-    handler om å skape varig fotfeste i Bergen.
-
-    Med vennlig hilsen,
-    Johann Tepstad
-    PubHealthcare · Kanalveien 10, 5068 Bergen
-    www.pub.healthcare
-  TXT
-  "sosial" => <<~TXT,
-    Hei,
-
-    Vedlagt følger søknad til %{funder}.
-
-    Jeg opplever økonomisk press som bosatt i Bergen, og søker ærlig bistand i tråd med stiftelsens formål.
-    Parallelt utvikler jeg legitim teknologi (MASTER/RAILS) som kan skape varig inntekt.
-
-    Med vennlig hilsen,
-    Johann Tepstad
-    PubHealthcare · Kanalveien 10, 5068 Bergen
-  TXT
-  "helse" => <<~TXT,
-    Hei,
-
-    Vedlagt følger søknad til %{funder}.
-
-    Prosjektet kombinerer MASTER — et selvforbedrende, konstitusjonelt styrt AI-system — med praktiske
-    Rails-applikasjoner for helse og velferd (pub.healthcare, brgen.no). Målet er trygghet, selvstendighet
-    og effektivisering i tråd med velferdsteknologiens formål.
-
-    Med vennlig hilsen,
-    Johann Tepstad
-    PubHealthcare · www.pub.healthcare
-  TXT
-  "innovasjon" => <<~TXT,
-    Hei,
-
-    Vedlagt følger søknad til %{funder}.
-
-    MASTER er et selvforbedrende AI-kodingsystem med konstitusjonell styring og OpenBSD-inspirert sikkerhet.
-    RAILS-mappen inneholder deploybare Rails 8-apper (brgen.no, amber.brgen.no, bsdports.org) som MASTER
-    utvikler og forbedrer — direkte forskning møter praktisk verdiskaping i Bergen.
-
-    Med vennlig hilsen,
-    Johann Tepstad
-    PubHealthcare · Kanalveien 10, 5068 Bergen
-    www.pub.healthcare
-  TXT
-}.freeze
-
-DEFAULT_COVER = <<~TXT
-  Hei,
-
-  Vedlagt følger søknad til %{funder}.
-
-  Prosjektet MASTER + RAILS utvikler suveren, selvforbedrende AI og praktiske norske webapplikasjoner
-  med samfunnsnytte i Bergen og Vestland.
-
-  Med vennlig hilsen,
-  Johann Tepstad
-  PubHealthcare · www.pub.healthcare
-TXT
 
 def load_yaml(path)
   YAML.load_file(path)
@@ -140,11 +71,14 @@ end
 def cover_for(app)
   return app["cover_intro"].strip if app["cover_intro"].to_s.strip != ""
 
+  funder = app["funder"]
   custom = File.join(COVERS_DIR, "#{app['id']}.txt")
-  return File.read(custom).strip if File.exist?(custom)
+  return (File.read(custom).strip % { funder: funder }) if File.exist?(custom)
 
-  template = COVER_BY_TRACK[app["track"]] || DEFAULT_COVER
-  template % { funder: app["funder"] }
+  track = app["track"].to_s
+  path = File.join(COVERS_DIR, "#{track}.txt")
+  path = File.join(COVERS_DIR, "default.txt") unless File.exist?(path)
+  File.read(path).strip % { funder: funder }
 end
 
 def chrome_pdf(html_path, pdf_path)
@@ -296,6 +230,8 @@ def resolve_batch_ids(batch_name, batch, manifest)
     apps = manifest.fetch("applications", [])
     apps = apps.reject { |a| a["draft"] } if batch["exclude_drafts"]
     apps = apps.select { |a| a["sendable"] } if batch["exclude_self"]
+    apps = apps.reject { |a| a["low_priority"] } if batch["exclude_low_priority"]
+    apps = apps.reject { |a| a["id"].to_s.start_with?("vx_") } if batch["exclude_vx"]
     return apps.map { |a| a["id"] }
   end
 
@@ -320,6 +256,7 @@ def skip_reason(app, force:)
   return "not sendable" unless app["sendable"] || force
   return "self-to" if self_to?(app) && !force
   return "innovasjon_norge (set FORCE_IN=1)" if innovasjon_norge?(id) && !FORCE_IN && !force
+  return "low_priority vx_*" if (app["low_priority"] || id.to_s.start_with?("vx_")) && !force
 
   nil
 end

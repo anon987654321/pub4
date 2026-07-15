@@ -234,6 +234,12 @@ module Bplan
 
           errors << "#{e['id']} is draft/self-to but marked sendable" if e["sendable"]
         end
+
+        manifest_entries.each do |e|
+          next unless e["id"].to_s.start_with?("vx_") || e["low_priority"]
+
+          errors << "#{e['id']} is vx_/low_priority but marked sendable" if e["sendable"]
+        end
         errors
       end
 
@@ -274,6 +280,8 @@ module Bplan
         apps = load_manifest(root).fetch("applications", [])
         apps = apps.reject { |a| a["draft"] } if batch["exclude_drafts"]
         apps = apps.select { |a| a["sendable"] } if batch["exclude_self"]
+        apps = apps.reject { |a| a["low_priority"] } if batch["exclude_low_priority"]
+        apps = apps.reject { |a| a["id"].to_s.start_with?("vx_") } if batch["exclude_vx"]
         apps.map { |a| a["id"] }
       end
 

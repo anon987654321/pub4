@@ -1,0 +1,106 @@
+From: bergen@pub.attorney
+To: post@detbergenskestiftelse.no
+Subject: Søknad Det Bergenske Stiftelse — teknologi for fellesskap i Bergen
+Date: Wed, 15 Jul 2026 18:56:12 +0200
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Hei,
+
+Vedlagt følger søknad til Det Bergenske Stiftelse.
+
+Prosjektet MASTER + RAILS utvikler suveren, selvforbedrende AI og praktiske norske webapplikasjoner
+med samfunnsnytte i Bergen og Vestland.
+
+Med vennlig hilsen,
+Johann Tepstad
+PubHealthcare · www.pub.healthcare
+
+---
+
+Søknad — Allmennyttig formål i Bergen
+  
+  
+  
+  
+  
+
+  
+    
+    
+      Søknad — Allmennyttig formål i Bergen
+
+      Det Bergenske Stiftelse
+PubHealthcare · Kanalveien 10, 5068 Bergen
+14. juli 2026
+
+    
+    
+      1. Sammendrag
+
+Jeg søker støtte til brgen.no — Hyperlokalt fellesskap. Hyperlokalt fellesskap med tillit og deltakelse — en reell Rails-app, ikke et markedsføringsslagord.
+
+Visjon: Bydelene snakker med hverandre igjen — naboer, foreninger og frivillighet i Bergen, på egne servere med moderering folk stoler på.
+
+MASTER er et selvrefinerende, konstitusjonelt styrt AI-kodingsystem i Ruby. Gjennom multi-agent debatt,
+kontinuerlig selvkritikk og iterative forbedringsløkker analyserer, refaktorerer og hever systemet kvaliteten
+på kode — inkludert sin egen — innenfor klare etiske og sikkerhetsmessige rammer inspirert av OpenBSD.
+
+RAILS/ inneholder deploybare Rails 8-apper (brgen.no, amber.brgen.no, bsdports.org m.fl.) som MASTER
+utvikler og forbedrer. BPLAN dokumenterer og søker støtte — det er en egen app, ikke en del av RAILS/.
+
+Det Bergenske Stiftelse støtter allmennyttige formål i Bergen. brgen.no styrker lokalt fellesskap, tillit og digital deltakelse.
+
+2. Bakgrunn og behov
+
+Bergen trenger trygge, lokale digitale møteplasser med moderering og tillit — ikke enda en sentralisert plattform.
+
+3. Løsning og innovasjon
+
+MASTER (direkte): Selvforbedrende multi-agent arkitektur med konstitusjonelle prinsipper og OpenBSD-inspirert sikkerhet.
+
+RAILS (indirekte): Rails 8-applikasjoner med Hotwire, Falcon, SQLite/Solid Queue — reelle tjenester.
+
+4. Mål og leveranser
+
+  • brgen.no pilot i bergenske bydeler
+        • MASTER-drevet tilgjengelighet og moderering
+        • Åpen rapport til stiftelsen
+
+5. Budsjett og finansiering
+
+Søkt beløp: NOK 40 000 (typisk legat/stipend — ikke millionbeløp)
+
+Prosjektramme (12 mnd): NOK 480 000 — detaljert i forretningsplan.
+
+  1.Utvikler tid (pilot 3 bydeler) — NOK 300 000
+        2.WCAG og tilgjengelighet — NOK 35 000
+        3.Moderering og tillitssignaler — NOK 40 000
+        4.VPS og drift — NOK 45 000
+
+Klassiske legater: typisk 5000–75000 NOK.
+
+6. Påstander
+
+  1.All støtte brukes til godkjent formål med etterrettelig dokumentasjon.
+        2.Leveranser dokumenteres i tråd med givers krav.
+        3.Prosjektet styrker norsk digital suverenitet og velferdsteknologi.
+
+    
+    
+      Med vennlig hilsen
+Johann Tepstad & GK Tepstad
+
+      Tall og frister i BPLAN er realistiske estimater for solo-utvikler i Bergen (2026).
+Verifiser alltid på giverens nettside før sending. Ingen garanti for tildeling.
+Boligspor og innovasjonsspor holdes adskilt — ikke dobbelsøk for samme utgift.
+
+    
+  
+  
+document.querySelectorAll('.content table').forEach(function(t) {
+  t.setAttribute('role', 'table');
+});
+
+--
+[attachment: /Users/mac/Documents/GitHub/pub4/BPLAN/legats/41_det_bergenske_stiftelse.pdf]
