@@ -28,6 +28,18 @@ module Master
       CONVERGE_THRESHOLD = 0.05
 
       MIN_SEVERITY = :warning
+
+      SEMANTIC_PASS_CHECKLIST = <<~TEXT.strip
+        Before answering, do a semantic pass:
+        - summarize what the file does in 3 lines
+        - summarize what it assumes and what could break
+        - enumerate module hierarchy, data flow, side effects, and implicit invariants
+        - list direct callers/callees and related files
+        - name the design pattern used or violated
+        - audit assumptions about nil/empty/max/unicode/concurrency/network/file-permission inputs
+        - state the inversion test: if this fix is wrong, what breaks, where, and when?
+      TEXT
+
       @soul_preamble_mutex = Mutex.new
       @soul_preamble_cache = nil
 
@@ -162,14 +174,7 @@ module Master
         Line #{violation[:line]}: #{violation[:message]}
         #{fix_line}
 
-        Before answering, do a semantic pass:
-        - summarize what the file does in 3 lines
-        - summarize what it assumes and what could break
-        - enumerate module hierarchy, data flow, side effects, and implicit invariants
-        - list direct callers/callees and related files
-        - name the design pattern used or violated
-        - audit assumptions about nil/empty/max/unicode/concurrency/network/file-permission inputs
-        - state the inversion test: if this fix is wrong, what breaks, where, and when?
+        #{SEMANTIC_PASS_CHECKLIST}
 
         #{action}
 

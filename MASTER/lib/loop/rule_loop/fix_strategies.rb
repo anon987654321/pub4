@@ -11,7 +11,16 @@ module Master
           return proposed_src unless File.exist?(path)
 
           original_src = File.read(path, encoding: "UTF-8") rescue (return proposed_src)
-          prompt = <<~PROMPT
+          prompt = reflexion_prompt(violation, original_src, proposed_src)
+          response = @agent.ask_once(prompt).to_s.strip
+          handle_reflexion_response(response, path, proposed_src)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RuleLoop.reflexion_verify", rule: @rule.id)
+          proposed_src
+        end
+
+        def reflexion_prompt(violation, original_src, proposed_src)
+          <<~PROMPT
             Verify this proposed code fix is correct. Reply ONLY with "SAFE" or "UNSAFE: <reason>".
 
             VIOLATION: #{violation[:rule]} line #{violation[:line]} — #{violation[:message]}
@@ -26,15 +35,14 @@ module Master
             #{proposed_src[0, 600]}
             ```
           PROMPT
-          response = @agent.ask_once(prompt).to_s.strip
+        end
+
+        def handle_reflexion_response(response, path, proposed_src)
           if response.start_with?("UNSAFE")
             @bus&.publish("rule_loop:reflexion_rejected", rule: @rule.id, file: path, reason: response[0, 160])
             return
           end
           @bus&.publish("rule_loop:reflexion_approved", rule: @rule.id, file: path)
-          proposed_src
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "RuleLoop.reflexion_verify", rule: @rule.id)
           proposed_src
         end
 
@@ -169,7 +177,16 @@ module Master
         end
 
         def architecture_plan(violation:, src:, path:, model:)
-          prompt = <<~PROMPT
+          prompt = architecture_plan_prompt(violation, src, path)
+          raw = model ? @agent.ask_once(prompt, model: model) : @agent.ask_once(prompt)
+          raw.to_s
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RuleLoop.architecture_plan", rule: @rule.id)
+          ""
+        end
+
+        def architecture_plan_prompt(violation, src, path)
+          <<~PROMPT
           You are planning a safe refactor for a Ruby file.
 
           File: #{path}
@@ -193,11 +210,6 @@ module Master
           #{src}
           ```
         PROMPT
-          raw = model ? @agent.ask_once(prompt, model: model) : @agent.ask_once(prompt)
-          raw.to_s
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "RuleLoop.architecture_plan", rule: @rule.id)
-          ""
         end
 
         def routing_model_ids
