@@ -49,19 +49,13 @@ module Master
 
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
         prepare_chat_turn(message)
-        candidate_models = routed_models(message, task_type:)
-        selected_model = candidate_models.first
-        @bus&.publish("llm:routed", model: selected_model, task_type: task_type || @config.task_type, reason: "routing")
-        prompt   = topic_anchored(message)
-        context  = conversation_context
-        tokens_approx = Trace::Session.estimate_tokens(message)
-        @bus&.publish("llm:request", model: selected_model, tokens: tokens_approx)
-        @deps.homeostat&.observe(:llm_call)
+        dispatch = prepare_chat_dispatch(message, task_type)
 
-        rate_err = check_rate_limit(selected_model)
+        rate_err = check_rate_limit(dispatch[:selected_model])
         return rate_err if rate_err
 
-        response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image:, &blk)
+        response = attempt_chat_with_fallbacks(candidate_models: dispatch[:candidate_models], prompt: dispatch[:prompt],
+          context: dispatch[:context], stream:, image:, &blk)
         if response.is_a?(Master::Result::Err)
           @deps.homeostat&.observe(:llm_failure)
           return response
@@ -70,18 +64,11 @@ module Master
         response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
         text = response.to_s
-        recovery = Master::PhantomRecovery.handle(text, bus: @bus, session: @session)
-        case recovery[:action]
-        when :discard
-          return Result.err("phantom recovery: discarded repetitive response", category: :policy)
-        when :escalate
-          return chat(message, image:, stream:, escalation_depth: escalation_depth + 1, task_type:, &blk) if escalation_depth < 2
-        when :halt
-          return Result.err("phantom recovery: halted after repeated phantom patterns", category: :policy)
-        end
+        recovery_result = handle_phantom_recovery(text, message:, image:, stream:, escalation_depth:, task_type:, &blk)
+        return recovery_result if recovery_result
 
         @session.add_message(role: :assistant, content: text)
-        publish_ctx_footer(selected_model)
+        publish_ctx_footer(dispatch[:selected_model])
         Result.ok(text)
       rescue StandardError => chat_error
         Result.err("agent: #{chat_error.message}", category: :handler_exception)
@@ -169,6 +156,30 @@ module Master
       end
 
       private
+
+      def prepare_chat_dispatch(message, task_type)
+        candidate_models = routed_models(message, task_type:)
+        selected_model = candidate_models.first
+        @bus&.publish("llm:routed", model: selected_model, task_type: task_type || @config.task_type, reason: "routing")
+        prompt = topic_anchored(message)
+        context = conversation_context
+        tokens_approx = Trace::Session.estimate_tokens(message)
+        @bus&.publish("llm:request", model: selected_model, tokens: tokens_approx)
+        @deps.homeostat&.observe(:llm_call)
+        { candidate_models:, selected_model:, prompt:, context: }
+      end
+
+      def handle_phantom_recovery(text, message:, image:, stream:, escalation_depth:, task_type:, &blk)
+        recovery = Master::PhantomRecovery.handle(text, bus: @bus, session: @session)
+        case recovery[:action]
+        when :discard
+          Result.err("phantom recovery: discarded repetitive response", category: :policy)
+        when :escalate
+          chat(message, image:, stream:, escalation_depth: escalation_depth + 1, task_type:, &blk) if escalation_depth < 2
+        when :halt
+          Result.err("phantom recovery: halted after repeated phantom patterns", category: :policy)
+        end
+      end
 
       def with_task_type(type)
         return yield unless type && !type.empty?
