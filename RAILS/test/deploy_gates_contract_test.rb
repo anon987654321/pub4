@@ -43,6 +43,19 @@ class DeployGatesContractTest < Minitest::Test
     refute_includes source, "archive_restore_gate"
   end
 
+  def test_production_gate_runs_in_process_from_lib
+    assert File.file?(File.join(ROOT, "gates", "lib", "production_gate.rb"))
+    source = File.read(File.join(ROOT, "rails_runtime_gate.rb"))
+    assert_includes source, "Deploy::ProductionGate.run(skip_nested: true)"
+    refute_includes source, "GATE_SKIP_NESTED"
+  end
+
+  def test_runner_registers_apps_yml_validator
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    assert_includes source, "apps_yml:"
+    assert_includes source, "gates/apps_yml_validator.rb"
+  end
+
   def test_integrity_gate_wires_new_gates
     integrity = File.read(File.join(OPENBSD_ROOT, "integrity_gate.rb"))
     gates = File.read(File.join(OPENBSD_ROOT, "lib", "gate_environment.rb"))

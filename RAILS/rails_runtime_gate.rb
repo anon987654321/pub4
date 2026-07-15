@@ -8,6 +8,7 @@ ROOT = File.expand_path("..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
 require "pub4/ruby_runner"
 require "pub4/environment"
+require_relative "gates/lib/production_gate"
 
 RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
@@ -27,10 +28,16 @@ def run!(cmd, chdir: ROOT, env: nil)
 end
 
 def static_gate!
-  env = ENV.to_h.merge("GATE_SKIP_NESTED" => "1")
-  ok, out = run!(["ruby", File.join(RAILS_ROOT, "check_production_gate.rb")], env: env)
-  puts out
-  ok
+  result = Deploy::ProductionGate.run(skip_nested: true)
+  unless result.ok?
+    warn "Production gate failures:"
+    result.failures.each { |failure| warn "  - #{failure}" }
+    return false
+  end
+
+  apps = YAML.safe_load(File.read(APPS_YML)).fetch("apps")
+  puts "Production gate passed for #{apps.size} Rails apps."
+  true
 end
 
 def runtime_ready?
