@@ -180,31 +180,77 @@ ARP_PATTERN_BUILDERS = {
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
 # and per-patch post-FX chains (tremolo/LFO/filter/delay) applied at render time.
 def synth_patch(id, role:, program:, bank: 0, sf2: :default, weight: 1.0, native: nil, mix: 1.0, fx: nil,
-                arp_styles: nil, octave: 2, gate: 0.82, color: nil)
+                arp_styles: nil, octave: 2, gate: 0.82, color: nil, fs_gain: 1.5)
   { id: id, role: role, program: program, bank: bank, sf2: sf2, weight: weight, native: native,
-    mix: mix, fx: fx, arp_styles: arp_styles || [:up, :updown], octave: octave, gate: gate, color: color }
+    mix: mix, fx: fx, arp_styles: arp_styles || [:up, :updown], octave: octave, gate: gate, color: color,
+    fs_gain: fs_gain }
 end
 
 SYNTH_PATCH_CATALOG = [
   # --- Electric keys (EP / Rhodes family) ---
-  synth_patch(:rhodes_mark1, role: :ep, program: 4, color: "warm tine"),
-  synth_patch(:rhodes_bright, role: :ep, program: 0, color: "acoustic piano edge"),
-  synth_patch(:wurli_bite, role: :ep, program: 2, color: "electric grand"),
-  synth_patch(:dx_ep_glass, role: :ep, program: 5, color: "FM bell EP"),
+  synth_patch(:rhodes_mark1, role: :ep, program: 4, weight: 3.2, mix: 1.15, fs_gain: 1.65,
+              color: "Mark I warm tine",
+              fx: "tremolo=f=0.42:d=0.06,aecho=0.38:0.48:55|95:0.22|0.12,lowpass=f=4200,equalizer=f=280:t=o:w=1:g=2.5"),
+  synth_patch(:rhodes_stage73, role: :ep, program: 4, weight: 2.8, mix: 1.1, fs_gain: 1.7,
+              color: "stage Rhodes bark",
+              fx: "chorus=0.42:0.62:28|38:0.18|0.14:0.22|0.18:0.95|1.25,aecho=0.32:0.4:70|130:0.2|0.1,equalizer=f=3200:t=h:w=1800:g=1.2"),
+  synth_patch(:rhodes_tine_wurli, role: :ep, program: 2, weight: 2.2, mix: 1.05, fs_gain: 1.55,
+              color: "Wurli bite + tine",
+              fx: "equalizer=f=900:t=o:w=0.9:g=2.8,acrusher=bits=12:samples=1.2:mix=0.08,lowpass=f=5200"),
+  synth_patch(:rhodes_dx_blend, role: :ep, program: 5, weight: 1.8, mix: 1.0, fs_gain: 1.5,
+              color: "DX glass + Rhodes body",
+              fx: "aecho=0.45:0.5:80|150:0.28|0.14,aphaser=speed=0.08:decay=0.55,equalizer=f=2400:t=h:w=1200:g=1.8"),
+  synth_patch(:rhodes_bleeding_edge, role: :ep, program: 4, weight: 1.6, mix: 1.2, fs_gain: 1.75,
+              color: "convolution-warm EP",
+              fx: "aecho=0.55:0.65:110|220:0.35|0.18,chorus=0.5:0.7:35|45:0.22|0.18:0.28|0.22:1.1|1.45,vibrato=f=0.22:d=0.01,lowpass=f=4800"),
+  synth_patch(:rhodes_bright, role: :ep, program: 0, weight: 1.2, color: "acoustic piano edge",
+              fx: "highpass=f=120,equalizer=f=3500:t=h:w=2000:g=1.4"),
+  synth_patch(:wurli_bite, role: :ep, program: 2, color: "electric grand",
+              fx: "equalizer=f=1100:t=o:w=0.8:g=3.0,acrusher=bits=11:samples=1.4:mix=0.1"),
+  synth_patch(:dx_ep_glass, role: :ep, program: 5, color: "FM bell EP",
+              fx: "aecho=0.4:0.5:90|170:0.3|0.16,aphaser=speed=0.1:decay=0.6"),
   synth_patch(:clav_funk, role: :ep, program: 7, color: "clavinet"),
   synth_patch(:harpsi_pluck, role: :ep, program: 6, color: "harpsichord"),
   synth_patch(:vibes_mallet, role: :ep, program: 11, color: "vibraphone"),
   synth_patch(:marimba_chop, role: :ep, program: 12, color: "marimba"),
-  synth_patch(:galaxy_ep1, role: :ep, program: 4, bank: 2, sf2: :galaxy, color: "Galaxy EP"),
-  synth_patch(:galaxy_ep2, role: :ep, program: 5, bank: 3, sf2: :galaxy, color: "Galaxy EP bright"),
+  synth_patch(:galaxy_ep1, role: :ep, program: 4, bank: 2, sf2: :galaxy, weight: 2.4, mix: 1.12, fs_gain: 1.6,
+              color: "Galaxy EP",
+              fx: "tremolo=f=0.35:d=0.08,aecho=0.4:0.5:60|120:0.25|0.12,lowpass=f=4500"),
+  synth_patch(:galaxy_ep2, role: :ep, program: 5, bank: 3, sf2: :galaxy, weight: 2.0, mix: 1.08, fs_gain: 1.55,
+              color: "Galaxy EP bright",
+              fx: "equalizer=f=1800:t=h:w=1400:g=2.2,aecho=0.35:0.45:80|150:0.22|0.1"),
+  synth_patch(:galaxy_ep_bleeding, role: :ep, program: 4, bank: 4, sf2: :galaxy, weight: 1.5, mix: 1.15,
+              color: "Galaxy EP + chorus halo",
+              fx: "chorus=0.55:0.75:40|50:0.28|0.22:0.3|0.25:1.15|1.55,aphaser=speed=0.12:decay=0.5"),
   synth_patch(:organ_drawbar, role: :ep, program: 16, color: "drawbar soul"),
   synth_patch(:organ_perc, role: :ep, program: 17, color: "perc organ"),
-  # --- Warm analog pads ---
-  synth_patch(:juno_strings, role: :warm, program: 50, fx: "chorus=0.55:0.75:40|55:0.3|0.25:0.35|0.3:1.1|1.5"),
+  # --- Warm analog pads (Moog / Prophet / Juno) ---
+  synth_patch(:moog_model_d, role: :warm, program: 91, weight: 3.0, mix: 0.82, fs_gain: 1.45,
+              color: "Minimoog ladder pad",
+              fx: "lowpass=f=2400:width_type=q:width=0.85,tremolo=f=0.28:d=0.1,chorus=0.38:0.58:32|42:0.16|0.12:0.2|0.18:0.9|1.2,equalizer=f=180:t=o:w=1:g=2.2"),
+  synth_patch(:moog_sub37_pad, role: :warm, program: 38, weight: 2.4, mix: 0.78, fs_gain: 1.4,
+              color: "Moog sub harmonic pad",
+              fx: "lowpass=f=2200,equalizer=f=95:t=o:w=0.8:g=3.5,aphaser=speed=0.1:decay=0.55"),
+  synth_patch(:moog_bleeding_edge, role: :warm, program: 91, weight: 1.8, mix: 0.85, fs_gain: 1.5,
+              color: "Moog + tape drift",
+              fx: "vibrato=f=0.18:d=0.014,tremolo=f=0.55:d=0.12,aecho=0.42:0.52:100|190:0.28|0.14,lowpass=f=3000"),
+  synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.8, fs_gain: 1.5,
+              color: "Prophet-5 poly",
+              fx: "chorus=0.48:0.68:34|44:0.22|0.18:0.26|0.22:1.05|1.35,vibrato=f=0.3:d=0.016,lowpass=f=3600"),
+  synth_patch(:prophet_6_warm, role: :warm, program: 90, weight: 2.5, mix: 0.76, fs_gain: 1.45,
+              color: "Prophet-6 stereo wash",
+              fx: "chorus=0.52:0.72:38|48:0.24|0.2:0.28|0.24:1.1|1.4,aecho=0.35:0.45:90|170:0.25|0.12"),
+  synth_patch(:prophet_rev2_bleeding, role: :warm, program: 87, weight: 1.7, mix: 0.74, fs_gain: 1.48,
+              color: "Rev2 hybrid supersaw bed",
+              fx: "chorus=0.55:0.75:42|52:0.28|0.22:0.3|0.25:1.2|1.5,aphaser=speed=0.14:decay=0.48,lowpass=f=4000"),
+  synth_patch(:juno_strings, role: :warm, program: 50, weight: 2.2, mix: 0.72,
+              fx: "chorus=0.55:0.75:40|55:0.3|0.25:0.35|0.3:1.1|1.5"),
   synth_patch(:solina_ensemble, role: :warm, program: 51, fx: "aphaser=speed=0.12:decay=0.5"),
-  synth_patch(:prophet_pad, role: :warm, program: 89, fx: "vibrato=f=0.32:d=0.018"),
+  synth_patch(:prophet_pad, role: :warm, program: 89, weight: 2.0, mix: 0.78,
+              fx: "vibrato=f=0.32:d=0.018,chorus=0.4:0.6:30|40:0.18|0.14:0.22|0.18:0.95|1.2"),
   synth_patch(:oberheim_pad, role: :warm, program: 90, fx: "tremolo=f=4.2:d=0.14"),
-  synth_patch(:moog_pad, role: :warm, program: 91, fx: "lowpass=f=2800:width_type=q:width=0.7"),
+  synth_patch(:moog_pad, role: :warm, program: 91, weight: 2.2, mix: 0.8,
+              fx: "lowpass=f=2600:width_type=q:width=0.75,tremolo=f=0.35:d=0.1,equalizer=f=160:t=o:w=1:g=2.0"),
   synth_patch(:cs80_ensemble, role: :warm, program: 92, fx: "aecho=0.35:0.45:120|200:0.28|0.14"),
   synth_patch(:pwm_sweep_pad, role: :warm, program: 93, fx: "tremolo=f=0.55:d=0.22,aphaser=speed=0.14:decay=0.55"),
   synth_patch(:choir_aahs, role: :warm, program: 52, fx: "aecho=0.45:0.55:80|140:0.28|0.14,lowpass=f=4200"),
@@ -225,10 +271,13 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:kalimba_dust, role: :texture, program: 108, mix: 0.16, fx: "highpass=f=400"),
   synth_patch(:reverse_pad_ghost, role: :texture, program: 95, mix: 0.1, fx: "areverse,lowpass=f=1600"),
   # --- Lead / arp voices ---
-  synth_patch(:prophet_lead, role: :lead, program: 81, arp_styles: %i[updown skip_up], octave: 2,
-              fx: "aecho=0.55:0.42:160|300:0.32|0.2,aphaser=speed=0.15:decay=0.55"),
-  synth_patch(:big_lead_prophet5, role: :lead, program: 87, arp_styles: %i[pingpong quint_spread], octave: 2,
-              fx: "chorus=0.45:0.65:30|40:0.2|0.15:0.25|0.2:1.0|1.3,lowpass=f=5200"),
+  synth_patch(:prophet_lead, role: :lead, program: 81, weight: 2.5, fs_gain: 1.35, arp_styles: %i[updown skip_up], octave: 2,
+              fx: "chorus=0.42:0.62:32|42:0.18|0.14:0.22|0.18:0.95|1.2,aecho=0.5:0.4:150|280:0.3|0.18,lowpass=f=4800"),
+  synth_patch(:big_lead_prophet5, role: :lead, program: 87, weight: 2.8, fs_gain: 1.4, arp_styles: %i[pingpong quint_spread], octave: 2,
+              fx: "chorus=0.52:0.72:36|46:0.24|0.2:0.28|0.22:1.15|1.45,aecho=0.45:0.38:140|260:0.28|0.16,lowpass=f=5400"),
+  synth_patch(:prophet_bleeding_lead, role: :lead, program: 87, sf2: :supersaw, weight: 1.6, fs_gain: 1.38,
+              arp_styles: %i[spiral coltrane], octave: 2,
+              fx: "chorus=0.58:0.78:44|54:0.3|0.25:0.32|0.28:1.25|1.6,aphaser=speed=0.16:decay=0.5,vibrato=f=0.38:d=0.015"),
   synth_patch(:charang_bite, role: :lead, program: 84, arp_styles: %i[up fibonacci], octave: 2,
               fx: "tremolo=f=5.5:d=0.18,aecho=0.5:0.38:140|260:0.28|0.16"),
   synth_patch(:fifths_lead, role: :lead, program: 86, arp_styles: %i[updown coltrane], octave: 2,
@@ -269,14 +318,18 @@ SYNTH_PATCH_CATALOG = [
               fx: "lowpass=f=3500,aecho=0.4:0.45:70|130:0.22|0.1"),
   synth_patch(:voice_lead, role: :lead, program: 54, arp_styles: %i[updown flylo_wobble], octave: 2,
               fx: "vibrato=f=0.5:d=0.014,aphaser=speed=0.08:decay=0.6"),
-  synth_patch(:minimoog_lead, role: :lead, program: 81, arp_styles: %i[up random_walk], octave: 1,
-              fx: "lowpass=f=2400,tremolo=f=2.8:d=0.15,aecho=0.45:0.38:120|220:0.24|0.12"),
+  synth_patch(:minimoog_lead, role: :lead, program: 81, weight: 2.4, fs_gain: 1.35, arp_styles: %i[up random_walk], octave: 1,
+              fx: "lowpass=f=2200:width_type=q:width=0.8,tremolo=f=2.5:d=0.12,equalizer=f=140:t=o:w=0.9:g=2.5,aecho=0.42:0.35:110|200:0.22|0.1"),
+  synth_patch(:moog_ladder_lead, role: :lead, program: 38, weight: 2.0, fs_gain: 1.32, arp_styles: %i[updown fibonacci], octave: 1,
+              fx: "lowpass=f=2800,tremolo=f=3.5:d=0.14,chorus=0.35:0.55:28|36:0.14|0.1:0.18|0.14:0.85|1.1"),
   synth_patch(:cs_lead, role: :lead, program: 82, arp_styles: %i[downup quint_spread], octave: 2,
               fx: "chorus=0.4:0.6:35|45:0.2|0.15:0.2|0.2:0.9|1.2"),
   # --- Native additive fallbacks (no soundfont) ---
-  synth_patch(:native_rhodes, role: :native, program: 0, native: { wave: :rhodes, detune: 0.004, bloom: 0.28 }),
+  synth_patch(:native_rhodes, role: :native, program: 0, weight: 2.5, native: { wave: :rhodes, detune: 0.005, bloom: 0.34 }),
+  synth_patch(:native_rhodes_bleeding, role: :native, program: 0, weight: 1.8, native: { wave: :rhodes, detune: 0.008, bloom: 0.42 }),
   synth_patch(:native_juno, role: :native, program: 0, native: { wave: :juno, detune: 0.006, bloom: 0.18 }),
-  synth_patch(:native_prophet, role: :native, program: 0, native: { wave: :saw, detune: 0.005, bloom: 0.22 }),
+  synth_patch(:native_prophet, role: :native, program: 0, weight: 2.2, native: { wave: :prophet, detune: 0.007, bloom: 0.26 }),
+  synth_patch(:native_moog, role: :native, program: 0, weight: 2.2, native: { wave: :moog, detune: 0.005, bloom: 0.24 }),
   synth_patch(:native_fm_glass, role: :native, program: 0, native: { wave: :fm, detune: 0.002, bloom: 0.35 }),
   synth_patch(:native_organ, role: :native, program: 0, native: { wave: :organ, detune: 0.003, bloom: 0.12 }),
   synth_patch(:native_warm_pad, role: :native, program: 0, native: { wave: :triangle, detune: 0.007, bloom: 0.15 }),
@@ -879,7 +932,11 @@ rescue StandardError
 end
 
 def kicks_enabled?
-  ENV.fetch("KICKS", "0") != "0"
+  ENV.fetch("KICKS", "1") != "0"
+end
+
+def kick_velocity_scale
+  ENV.fetch("KICK_GAIN", "0.38").to_f.clamp(0.08, 1.0)
 end
 
 def drum_bus_mapping
@@ -947,8 +1004,9 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
     else
       "acrusher=bits=#{base[:bits]}:samples=#{base[:samples]}:mix=#{base[:mix]},"
     end
-  kick_boost = cfg[:style_family] == :dilla ? 0.4 : 0.9
-  "[0:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_DRUM_WEIGHT'] || '0.34'}," \
+  kick_boost = cfg[:style_family] == :dilla ? 0.15 : 0.5
+  drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (0.22 * kick_velocity_scale + 0.08).round(2)).to_s
+  "[0:a]aformat=channel_layouts=stereo,volume=#{drum_vol}," \
     "equalizer=f=480:t=h:w=420:g=-4.5,#{crush}" \
     "equalizer=f=58:t=o:w=0.8:g=#{kick_boost},highpass=f=28#{haas}[drums]"
 end
@@ -3503,11 +3561,12 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
         role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
         t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
              dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
-        kick_vel = dilla_velocity(step.zero? ? 0.68 : 0.58, bar, step, spread: 0.05) * sec_gain
+        ks = kick_velocity_scale
+        kick_vel = dilla_velocity(step.zero? ? 0.52 : 0.44, bar, step, spread: 0.05) * sec_gain * ks
         events[:kick] << [t.round(6), kick_vel]
         if step.zero?
           events[:sub_osc] ||= []
-          events[:sub_osc] << [t.round(6), dilla_velocity(0.10, bar, step, spread: 0.04) * sec_gain, 40.0]
+          events[:sub_osc] << [t.round(6), dilla_velocity(0.06, bar, step, spread: 0.04) * sec_gain * ks, 40.0]
         end
         bass_skip = drums_only ||
                     (feel == :syncopated_slash_ninth && bar.zero? && step < 7) ||
@@ -3973,7 +4032,7 @@ def layered_kick_sample(base_sample, seed: 7)
   # what made it sound bad, not the layering itself.
   drive = 1.1
   ceiling = Math.tanh(drive)
-  out.map { |s| (Math.tanh(s * gain * drive) / ceiling) * 0.30 }
+  out.map { |s| (Math.tanh(s * gain * drive) / ceiling) * (0.16 * kick_velocity_scale + 0.06) }
 end
 
 def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, chorus: false,
@@ -4133,6 +4192,17 @@ def native_waveform_body(frequency, wave:, bloom: 0.2, drift: "1", detune: 0.004
   when :juno
     "0.50*sin(2*PI*#{f}*#{drift}*t)+0.30*sin(2*PI*#{det_up}*#{drift}*t)+0.20*sin(2*PI*#{det_dn}*#{drift}*t)+" \
     "#{bloom.round(3)}*sin(2*PI*#{f * 2.0}*#{drift}*t)"
+  when :moog
+    sub = (frequency * 0.5).round(4)
+    "0.58*(2*mod(#{f}*#{drift}*t,1)-1)+0.22*(2*mod(#{det_up}*#{drift}*t,1)-1)+" \
+    "0.14*(2*mod(#{det_dn}*#{drift}*t,1)-1)+#{bloom.round(3)}*(2*mod(#{sub}*#{drift}*t,1)-1)+" \
+    "0.10*sin(2*PI*#{f}*#{drift}*t)"
+  when :prophet
+    det2 = (frequency * (1.0 + detune * 1.6)).round(4)
+    det3 = (frequency * (1.0 - detune * 1.6)).round(4)
+    "0.38*(2*mod(#{f}*#{drift}*t,1)-1)+0.24*(2*mod(#{det_up}*#{drift}*t,1)-1)+" \
+    "0.24*(2*mod(#{det_dn}*#{drift}*t,1)-1)+0.14*(2*mod(#{det2}*#{drift}*t,1)-1)+" \
+    "0.12*(2*mod(#{det3}*#{drift}*t,1)-1)+#{bloom.round(3)}*sin(2*PI*#{f * 2.0}*#{drift}*t)"
   else # :rhodes default
     "0.72*sin(2*PI*#{f}*#{drift}*t)+#{bloom.round(3)}*sin(2*PI*#{f * 3.0}*#{drift}*t)+" \
     "0.08*sin(2*PI*#{f * 2.0}*#{drift}*t)+0.30*sin(2*PI*#{det_up}*#{drift}*t)+0.30*sin(2*PI*#{det_dn}*#{drift}*t)"
@@ -4344,7 +4414,9 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   ep_voice = resolve_ep_voice
   warm_voice = resolve_warm_voice
   texture_voice = resolve_texture_voice
-  layers = [[ep_path, ep_voice, 1.0], [warm_path, warm_voice, 0.7]]
+  ep_mix = ep_voice[:patch]&.fetch(:mix, 1.0) || 1.0
+  warm_mix = warm_voice[:patch]&.fetch(:mix, 0.7) || 0.7
+  layers = [[ep_path, ep_voice, ep_mix], [warm_path, warm_voice, warm_mix]]
   if texture_voice
     tex_mix = @render_texture_patch&.fetch(:mix, 0.15) || 0.15
     layers << [texture_path, texture_voice, tex_mix]
@@ -4352,7 +4424,8 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   layers.each do |voice_path, voice, _w|
     midi_path = "#{voice_path}.smf.mid"
     write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank])
-    sh! "fluidsynth", "-ni", "-g", "1.5", "-F", voice_path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
+    fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
+    sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", voice_path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
     FileUtils.rm_f(midi_path)
     if voice[:patch]&.dig(:fx) && tool_available?("ffmpeg")
       fx_tmp = "#{voice_path}.fx.wav"
@@ -4372,7 +4445,7 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
          "[w1]asetrate=44100*1.0035,aresample=44100[wup];" \
          "[w2]asetrate=44100*0.9965,aresample=44100[wdown];" \
          "[wup][wdown]amix=inputs=2:weights=0.55 0.55:duration=first:normalize=0[wdetuned];" \
-         "[ep][wdetuned]amix=inputs=2:weights=1.0 0.7:duration=first:normalize=0[blend]"
+         "[ep][wdetuned]amix=inputs=2:weights=#{ep_mix} #{warm_mix}:duration=first:normalize=0[blend]"
   inputs = ["-i", ep_path, "-i", warm_path]
   if texture_voice && File.exist?(texture_path)
     filt += ";[2:a]apad=whole_dur=#{duration}[tex];[blend][tex]amix=inputs=2:weights=1.0 #{layers.last[2]}:duration=first:normalize=0[blend2]"
@@ -5183,7 +5256,8 @@ def help
       use-external-kit <name>        Install a fetched kit into samples/drums/custom/
                                       (01-hard-trap | 02-bounce | 03-soulful-vintage)
     ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
-     KICKS=0 (default) no kick drum | KICKS=1 enable kicks
+     KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
+         KICK_GAIN=0.38 (default) kick/sub level scale — lower if still loud
          SONITEX=heavy (default) | SONITEX=classic | SONITEX=extreme | SONITEX=0 dry
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
