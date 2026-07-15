@@ -175,12 +175,14 @@ module Master
         def js_silent_catch_findings
           web = File.join(@root, "web", "public")
           return [] unless File.directory?(web)
-          Dir.glob(File.join(web, "**", "*.js")).flat_map do |path|
-            read_lines(path).each_with_index.filter_map do |line, index|
-              next unless line.match?(/catch\s*\([^)]*\)\s*\{\s*\}/)
-              finding(path:, line: index + 1, message: "silent catch {} in web JS — fail visibly")
+          Dir.glob(File.join(web, "**", "*.js"))
+            .reject { |path| Scanner.skip_path?(path, root: @root) }
+            .flat_map do |path|
+              read_lines(path).each_with_index.filter_map do |line, index|
+                next unless line.match?(/catch\s*\([^)]*\)\s*\{\s*\}/)
+                finding(path:, line: index + 1, message: "silent catch {} in web JS — fail visibly")
+              end
             end
-          end
         end
 
         def duplicate_rule_id_findings
