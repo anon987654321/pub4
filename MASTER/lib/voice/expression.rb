@@ -62,6 +62,15 @@ module Master
         high_stakes = reversibility == :low || %i[high critical].include?(risk)
         failing = mode.to_s.match?(/veto|error|fail|rollback|block/)
 
+        {
+          confidence: confidence_for(verdict:, score:, high_stakes:, failing:).clamp(0.0, 1.0),
+          valence: valence_for(verdict:, failing:).clamp(-1.0, 1.0),
+          arousal: (high_stakes || failing) ? 0.85 : 0.45,
+          focus: high_stakes ? 0.90 : 0.50,
+        }
+      end
+
+      def confidence_for(verdict:, score:, high_stakes:, failing:)
         confidence =
           case verdict
           when :pass then 0.95
@@ -71,19 +80,14 @@ module Master
           end
         confidence = score.to_f if verdict.nil? && score
         confidence -= 0.25 if failing
+        confidence
+      end
 
-        valence =
-          if verdict == :pass then 0.40
-          elsif verdict == :block || failing then -0.35
-          else 0.05
-          end
-
-        {
-          confidence: confidence.clamp(0.0, 1.0),
-          valence: valence.clamp(-1.0, 1.0),
-          arousal: (high_stakes || failing) ? 0.85 : 0.45,
-          focus: high_stakes ? 0.90 : 0.50,
-        }
+      def valence_for(verdict:, failing:)
+        if verdict == :pass then 0.40
+        elsif verdict == :block || failing then -0.35
+        else 0.05
+        end
       end
 
       # Evidence events carry a rendered emotion patch built from the verdict.
@@ -94,57 +98,33 @@ module Master
       # Rich visual deltas for a specific Osman creative style (used when tts:style:active fires).
       def for_tts_style(style_name)
         s = style_name.to_s.downcase.to_sym
-        hi = CREATIVE_STYLES.include?(s) || %i[intense energetic].include?(s)
-        lo = LOW_STYLES.include?(s)
+        hi, lo = style_tier(s)
 
         {
-          arousal: if hi
-1.0
-else
-lo ? 0.3 : 0.7
-end,
-          pressure: if hi
-0.85
-else
-lo ? 0.25 : 0.6
-end,
-          breath_boost: if hi
-0.35
-else
-lo ? -0.15 : 0.0
-end,
+          arousal: hi ? 1.0 : (lo ? 0.3 : 0.7),
+          pressure: hi ? 0.85 : (lo ? 0.25 : 0.6),
+          breath_boost: hi ? 0.35 : (lo ? -0.15 : 0.0),
           valence: lo ? 0.2 : 0.0,
           blendshapes: blendshapes_for(s),
           decay_rate: decay_rate_for(s),
         }
       end
 
-      def blendshapes_for(style_name)
-        s = style_name.to_s.downcase.to_sym
+      def style_tier(s)
         hi = CREATIVE_STYLES.include?(s) || %i[intense energetic].include?(s)
         lo = LOW_STYLES.include?(s)
+        [hi, lo]
+      end
+
+      def blendshapes_for(style_name)
+        s = style_name.to_s.downcase.to_sym
+        hi, lo = style_tier(s)
 
         {
-          jaw: if hi
-0.78
-else
-lo ? 0.22 : 0.55
-end,
-          smile: if hi
-0.38
-else
-lo ? 0.12 : 0.28
-end,
-          brow: if hi
-0.68
-else
-lo ? 0.18 : 0.42
-end,
-          lid_open: if hi
-0.88
-else
-lo ? 0.52 : 0.72
-end,
+          jaw: hi ? 0.78 : (lo ? 0.22 : 0.55),
+          smile: hi ? 0.38 : (lo ? 0.12 : 0.28),
+          brow: hi ? 0.68 : (lo ? 0.18 : 0.42),
+          lid_open: hi ? 0.88 : (lo ? 0.52 : 0.72),
         }
       end
 
@@ -326,19 +306,7 @@ end
         fused = 0.0
 
         CONFIDENCE_WEIGHTS.each do |key, weight|
-          raw = src[key] || src[key.to_s]
-          next if raw.nil?
-
-          score =
-            case raw
-            when Hash then raw[:score] || raw["score"] || raw[:confidence] || raw["confidence"]
-            when Symbol then if raw == :pass
-0.95
-else
-raw == :block ? 0.30 : 0.60
-end
-            else raw
-            end
+          score = confidence_score_for(key, src)
           next if score.nil?
 
           fused += score.to_f * weight
@@ -346,6 +314,17 @@ end
         end
 
         total_w.positive? ? (fused / total_w).clamp(0.0, 1.0) : 0.75
+      end
+
+      def confidence_score_for(key, src)
+        raw = src[key] || src[key.to_s]
+        return nil if raw.nil?
+
+        case raw
+        when Hash then raw[:score] || raw["score"] || raw[:confidence] || raw["confidence"]
+        when Symbol then raw == :pass ? 0.95 : (raw == :block ? 0.30 : 0.60)
+        else raw
+        end
       end
 
       private_class_method def viseme_timing_scale(style, rate)

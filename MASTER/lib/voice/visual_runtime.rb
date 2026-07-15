@@ -111,13 +111,7 @@ module Master
 
         messages = session.respond_to?(:messages) ? Array(session.messages) : []
         turn_count = messages.count { |m| (m[:role] || m["role"]).to_s == "user" }
-        entropies = messages.last(8).filter_map do |m|
-          meta = m[:felt_sense] || m["felt_sense"]
-          next unless meta.is_a?(Hash)
-
-          (meta[:entropy] || meta["entropy"]).to_f
-        end
-        avg = entropies.empty? ? 0.35 : (entropies.sum / entropies.size)
+        avg = recent_entropy_average(messages)
 
         {
           turn_count: turn_count,
@@ -127,6 +121,16 @@ module Master
         }
       rescue StandardError
         { turn_count: 0, recent_entropy_avg: 0.35, retrieval: nil, council: nil }
+      end
+
+      def recent_entropy_average(messages)
+        entropies = messages.last(8).filter_map do |m|
+          meta = m[:felt_sense] || m["felt_sense"]
+          next unless meta.is_a?(Hash)
+
+          (meta[:entropy] || meta["entropy"]).to_f
+        end
+        entropies.empty? ? 0.35 : (entropies.sum / entropies.size)
       end
 
       def float_or(value, fallback)

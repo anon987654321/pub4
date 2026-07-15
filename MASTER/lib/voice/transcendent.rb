@@ -55,22 +55,36 @@ module Master
 
         emotion = Emotion.analyze(clean)
         melody = Melody.plan(clean, emotion)
+        resolved_voice, resolved_rate, resolved_pitch = resolve_voice_and_prosody(
+          clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
+        )
 
+        out_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+        played = synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        return unless played && File.size?(out_path)
+
+        out_path
+      end
+
+      def synthesize_via_chain(clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        chain = build_engine_chain(cfg, emotion)
+        played, used_engine = try_engine_chain(
+          chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path
+        )
+        log_pick(used_engine, resolved_voice, resolved_rate, resolved_pitch, emotion)
+        played || Engines.synth_say(clean, out_path)
+      end
+
+      def resolve_voice_and_prosody(clean, cfg, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
         resolved_voice = voice || Speech.default_voice
         resolved_rate = rate
         resolved_pitch = pitch
         personality = cfg["personality"].to_s
 
         if personality == "warm_erratic" && style != :fixed
-          locked_style = style_locked ? style : nil
-          if voice_locked && voice
-            pick = WarmErratic.pick_for_voice(voice, clean, style: locked_style)
-          else
-            pick = WarmErratic.pick(clean)
-            resolved_voice = pick[:voice]
-          end
-          resolved_rate ||= pick[:rate]
-          resolved_pitch ||= pick[:pitch]
+          resolved_voice, wr_rate, wr_pitch = warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
+          resolved_rate ||= wr_rate
+          resolved_pitch ||= wr_pitch
         elsif style != :auto && Speech::STYLES.key?(style.to_sym)
           sc = Speech.style_config_for(resolved_voice, style)
           resolved_rate ||= sc[:rate]
@@ -79,45 +93,56 @@ module Master
 
         resolved_rate ||= "-5%"
         resolved_pitch ||= "-18Hz"
+        [resolved_voice, resolved_rate, resolved_pitch]
+      end
 
-        out_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+      def warm_erratic_prosody(voice, clean, style, voice_locked, style_locked, resolved_voice)
+        locked_style = style_locked ? style : nil
+        if voice_locked && voice
+          pick = WarmErratic.pick_for_voice(voice, clean, style: locked_style)
+        else
+          pick = WarmErratic.pick(clean)
+          resolved_voice = pick[:voice]
+        end
+        [resolved_voice, pick[:rate], pick[:pitch]]
+      end
+
+      def build_engine_chain(cfg, emotion)
         chain = cfg["engine_chain"].to_s.split(",").map(&:strip).reject(&:empty?)
         melodic_on = cfg["emotion_enabled"] && cfg["melodic_enabled"]
         melodic_on &&= emotion.dig(:scores, :lyrical).to_f >= cfg["melodic_threshold"].to_f
         chain = chain.reject { |e| e == "edge_melodic" } unless melodic_on
         chain = chain.reject { |e| %w[mlx chatterbox].include?(e) } unless cfg["emotion_enabled"]
+        chain
+      end
 
+      def try_engine_chain(chain, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
         played = false
         used_engine = nil
         chain.each do |engine|
           next unless Engines.attempt?(engine, cfg)
 
-          played = Engines.synth(
-            engine,
-            text: clean,
-            out_path: out_path,
-            cfg: cfg,
-            emotion: emotion,
-            melody: melody,
-            voice: Speech.resolve_voice(resolved_voice),
-            rate: resolved_rate.to_s,
-            pitch: resolved_pitch.to_s
-          )
+          played = attempt_engine(engine, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
           if played
             used_engine = engine
             break
           end
         end
+        [played, used_engine]
+      end
 
-        log_pick(used_engine, resolved_voice, resolved_rate, resolved_pitch, emotion)
-
-        unless played
-          played = Engines.synth_say(clean, out_path)
-        end
-
-        return unless played && File.size?(out_path)
-
-        out_path
+      def attempt_engine(engine, clean, cfg, emotion, melody, resolved_voice, resolved_rate, resolved_pitch, out_path)
+        Engines.synth(
+          engine,
+          text: clean,
+          out_path: out_path,
+          cfg: cfg,
+          emotion: emotion,
+          melody: melody,
+          voice: Speech.resolve_voice(resolved_voice),
+          rate: resolved_rate.to_s,
+          pitch: resolved_pitch.to_s
+        )
       end
 
       def log_pick(engine, voice, rate, pitch, emotion)

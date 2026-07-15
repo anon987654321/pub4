@@ -54,19 +54,33 @@ module Master
 
       def synth_replicate_kokoro(text, out_path, cfg, emotion)
         enriched = Enrich.apply(text, emotion)
-        model = cfg["replicate_model"] || "jaaari/kokoro-82m"
-        kokoro_voice = cfg["replicate_voice"] || "af_bella"
-        speed = (cfg["replicate_speed"] || 1.18).to_f
         client = Reach::ReplicateClient.new
-        output = client.predict(model, { text: enriched, voice: kokoro_voice, speed: speed })
-        return false if output.nil?
-
-        url = Array(output).flatten.first.to_s
-        return false if url.strip.empty?
+        url = predict_kokoro_url(client, cfg, enriched)
+        return false unless url
 
         tmp = out_path.sub(/\.mp3\z/, "_replicate#{File.extname(url)}")
         tmp = "#{tmp}.wav" if File.extname(tmp).empty?
         client.download_url(url, tmp)
+        finalize_kokoro_output(tmp, out_path)
+      rescue StandardError => e
+        Ground::Swallow.log(e, context: "Engines.synth_replicate_kokoro")
+        false
+      ensure
+        File.delete(tmp) if defined?(tmp) && tmp && File.exist?(tmp) && tmp != out_path
+      end
+
+      def predict_kokoro_url(client, cfg, enriched)
+        model = cfg["replicate_model"] || "jaaari/kokoro-82m"
+        kokoro_voice = cfg["replicate_voice"] || "af_bella"
+        speed = (cfg["replicate_speed"] || 1.18).to_f
+        output = client.predict(model, { text: enriched, voice: kokoro_voice, speed: speed })
+        return nil if output.nil?
+
+        url = Array(output).flatten.first.to_s
+        url.strip.empty? ? nil : url
+      end
+
+      def finalize_kokoro_output(tmp, out_path)
         return FileUtils.cp(tmp, out_path) if tmp.end_with?(".mp3") && File.size?(tmp)
 
         if convert_to_mp3(tmp, out_path)
@@ -75,11 +89,6 @@ module Master
           FileUtils.cp(tmp, out_path)
           File.size?(out_path)
         end
-      rescue StandardError => e
-        Ground::Swallow.log(e, context: "Engines.synth_replicate_kokoro")
-        false
-      ensure
-        File.delete(tmp) if defined?(tmp) && tmp && File.exist?(tmp) && tmp != out_path
       end
 
       def mlx_python
@@ -126,16 +135,29 @@ module Master
         bin = cfg["mlx_bin"].to_s.strip
         bin = "mlx_audio.tts.generate" if bin.empty?
 
-        if system("which", bin, out: File::NULL, err: File::NULL)
-          ok = system(
-            bin, "--model", model, "--text", enriched, "--voice", voice, "--speed", speed.to_s,
-            "--output_path", out_dir, "--file_prefix", "master",
-            out: File::NULL, err: File::NULL
-          )
-          candidate = Dir.glob(File.join(out_dir, "master*.wav")).max_by { |f| File.mtime(f) }
-          return convert_to_mp3(candidate, out_path) if ok && candidate
-        end
+        attempted, result = try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path)
+        return result if attempted
 
+        try_mlx_python_api(py, model, enriched, voice, speed, out_path)
+      rescue StandardError
+        false
+      end
+
+      def try_mlx_cli(bin, model, enriched, voice, speed, out_dir, out_path)
+        return [false, nil] unless system("which", bin, out: File::NULL, err: File::NULL)
+
+        ok = system(
+          bin, "--model", model, "--text", enriched, "--voice", voice, "--speed", speed.to_s,
+          "--output_path", out_dir, "--file_prefix", "master",
+          out: File::NULL, err: File::NULL
+        )
+        candidate = Dir.glob(File.join(out_dir, "master*.wav")).max_by { |f| File.mtime(f) }
+        return [true, convert_to_mp3(candidate, out_path)] if ok && candidate
+
+        [false, nil]
+      end
+
+      def try_mlx_python_api(py, model, enriched, voice, speed, out_path)
         wav = out_path.sub(/\.mp3\z/, ".wav")
         py_script = <<~PY
           import numpy as np
@@ -152,8 +174,6 @@ module Master
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false
-      rescue StandardError
-        false
       end
 
       def synth_chatterbox(text, out_path, cfg, emotion)
@@ -164,7 +184,17 @@ module Master
         device = cfg["chatterbox_device"] || "mps"
         exag = emotion[:exaggeration] || cfg["exaggeration"] || 0.55
 
-        py = <<~PY
+        py = chatterbox_py_script(enriched, device, ref, wav)
+        _out, _err, status = Master::Reach::Exec.capture3("python3", "-c", py)
+        return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
+
+        false
+      rescue StandardError
+        false
+      end
+
+      def chatterbox_py_script(enriched, device, ref, wav)
+        <<~PY
           import torchaudio as ta
           from chatterbox.mtl_tts import ChatterboxMultilingualTTS
           model = ChatterboxMultilingualTTS.from_pretrained(device=#{device.inspect}, t3_model="v3")
@@ -174,12 +204,6 @@ module Master
           wav = model.generate(#{enriched.inspect}, **kwargs)
           ta.save(#{wav.inspect}, wav, model.sr)
         PY
-        _out, _err, status = Master::Reach::Exec.capture3("python3", "-c", py)
-        return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
-
-        false
-      rescue StandardError
-        false
       end
 
       def synth_edge(text, out_path, voice, rate, pitch)
@@ -192,14 +216,7 @@ module Master
 
         tmp_dir = File.join(Master::ROOT, ".master", "melodic")
         FileUtils.mkdir_p(tmp_dir)
-        parts = []
-
-        plan.each_with_index do |phrase, i|
-          part = File.join(tmp_dir, "part_#{Process.pid}_#{i}.mp3")
-          ok = copy_if_synthesized(phrase[:text], part, voice, phrase[:rate] || rate, phrase[:pitch] || pitch)
-          parts << part if ok
-          sleep((phrase[:pause_ms] || 0) / 1000.0) if i.positive? && ok
-        end
+        parts = synthesize_phrase_parts(plan, tmp_dir, voice, rate, pitch)
 
         return false if parts.empty?
         return FileUtils.cp(parts.first, out_path) if parts.length == 1
@@ -210,6 +227,17 @@ module Master
         File.size?(out_path)
       rescue StandardError
         false
+      end
+
+      def synthesize_phrase_parts(plan, tmp_dir, voice, rate, pitch)
+        parts = []
+        plan.each_with_index do |phrase, i|
+          part = File.join(tmp_dir, "part_#{Process.pid}_#{i}.mp3")
+          ok = copy_if_synthesized(phrase[:text], part, voice, phrase[:rate] || rate, phrase[:pitch] || pitch)
+          parts << part if ok
+          sleep((phrase[:pause_ms] || 0) / 1000.0) if i.positive? && ok
+        end
+        parts
       end
 
       def copy_if_synthesized(text, out_path, voice, rate, pitch)

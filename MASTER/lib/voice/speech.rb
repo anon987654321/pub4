@@ -204,16 +204,35 @@ module Master
         text_str = clean_text(text)
         return if text_str.empty?
 
-        use_mode = (mode || synthesis_mode).to_s
-        if use_mode == "transcendent" && Transcendent.enabled?
-          return Transcendent.synthesize(
-            text_str, voice: voice, style: style, rate: rate, pitch: pitch,
-            voice_locked: voice_locked, style_locked: style_locked
-          )
-        end
+        attempted, result = try_transcendent_synthesis(
+          text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:
+        )
+        return result if attempted
 
         return unless available?
 
+        voice, style_config = resolve_voice_and_style(text_str, voice:, style:, rate:, pitch:, style_locked:)
+
+        if edge_tts_available?
+          path = synthesize_edge(text_str, voice: voice, style_config: style_config)
+          return path if path
+        end
+
+        synthesize_espeak(text_str) if espeak_path
+      end
+
+      def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
+        use_mode = (mode || synthesis_mode).to_s
+        return [false, nil] unless use_mode == "transcendent" && Transcendent.enabled?
+
+        result = Transcendent.synthesize(
+          text_str, voice: voice, style: style, rate: rate, pitch: pitch,
+          voice_locked: voice_locked, style_locked: style_locked
+        )
+        [true, result]
+      end
+
+      def resolve_voice_and_style(text_str, voice:, style:, rate:, pitch:, style_locked:)
         style = infer_style(text_str, fallback: default_style) if style == :auto && !style_locked
         expr = Master::Voice::Expression.for_text(text_str)
         if expr[:register] == :creative && %i[neutral normal clear].include?(style) then style = expr[:style] end
@@ -224,12 +243,7 @@ module Master
         style_config[:rate] = rate.to_s if rate && !rate.to_s.strip.empty?
         style_config[:pitch] = pitch.to_s if pitch && !pitch.to_s.strip.empty?
 
-        if edge_tts_available?
-          path = synthesize_edge(text_str, voice: voice, style_config: style_config)
-          return path if path
-        end
-
-        synthesize_espeak(text_str) if espeak_path
+        [voice, style_config]
       end
 
       def synthesize_audio(text, **opts)
@@ -281,6 +295,21 @@ module Master
         text_str = clean_text(text)
         return false if text_str.empty?
 
+        voice, style_config = resolve_streaming_style(text_str, opts)
+        return false unless edge_tts_available?
+
+        voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+        return true if attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
+        return true if attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
+
+        @last_error ||= "streaming synthesis produced empty audio"
+        false
+      rescue StandardError => e
+        @last_error = "#{e.class}: #{e.message}"
+        false
+      end
+
+      def resolve_streaming_style(text_str, opts)
         voice = resolve_voice(opts[:voice] || default_voice)
         style = opts[:style] || default_style
         style = infer_style(text_str, fallback: default_style) if style == :auto && !opts[:style_locked]
@@ -288,10 +317,10 @@ module Master
         style_config = style_config_for(voice, style)
         style_config[:rate] = opts[:rate].to_s if opts[:rate] && !opts[:rate].to_s.strip.empty?
         style_config[:pitch] = opts[:pitch].to_s if opts[:pitch] && !opts[:pitch].to_s.strip.empty?
+        [voice, style_config]
+      end
 
-        return false unless edge_tts_available?
-
-        voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+      def attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
         2.times do |attempt|
           path = synthesize_edge_socket(
             text: text_str,
@@ -307,21 +336,20 @@ module Master
           TtsSupervisor.ensure_daemon!
           sleep 0.15
         end
+        false
+      end
+
+      def attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
         path = synthesize_edge_oneshot(
           text: text_str,
           voice_name: voice_name,
           style_config: style_config,
           audio_path: output_path
         )
-        if path && File.exist?(output_path) && File.size(output_path) > 0
-          on_chunk&.call(File.size(output_path))
-          return true
-        end
-        @last_error ||= "streaming synthesis produced empty audio"
-        false
-      rescue StandardError => e
-        @last_error = "#{e.class}: #{e.message}"
-        false
+        return false unless path && File.exist?(output_path) && File.size(output_path) > 0
+
+        on_chunk&.call(File.size(output_path))
+        true
       end
 
       def mime_type_for(path)
@@ -346,14 +374,7 @@ module Master
 
       def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
         timeout = worker_timeout(text.to_s.length)
-        _out, err, status = Timeout.timeout(timeout) do
-          Master::Reach::Exec.capture3(
-            TtsSupervisor.daemon_env(Master::ROOT),
-            Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
-            stdin_data: text.to_s,
-            chdir: Master::ROOT
-          )
-        end
+        err, status = run_edge_worker(text, voice_name, style_config, audio_path, timeout)
         unless status.success?
           warn_tts("edge worker failed: #{err.to_s.strip}") unless err.to_s.strip.empty?
           return cleanup_failed_audio(audio_path)
@@ -371,21 +392,56 @@ module Master
         cleanup_failed_audio(audio_path)
       end
 
-      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
-        sock_path = TtsSupervisor.next_socket
-        unless File.socket?(sock_path)
-          TtsSupervisor.ensure_daemon!
-          sock_path = TtsSupervisor.next_socket
+      def run_edge_worker(text, voice_name, style_config, audio_path, timeout)
+        Timeout.timeout(timeout) do
+          _out, err, status = Master::Reach::Exec.capture3(
+            TtsSupervisor.daemon_env(Master::ROOT),
+            Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+            stdin_data: text.to_s,
+            chdir: Master::ROOT
+          )
+          [err, status]
         end
-        return unless File.socket?(sock_path)
+      end
 
-        req = JSON.generate(
+      def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
+        sock_path = resolve_socket_path
+        return unless sock_path
+
+        req = build_socket_request(voice_name, style_config, text)
+        timeout = worker_timeout(text.to_s.length)
+        stream_socket_response(sock_path, req, audio_path, timeout, on_chunk)
+        return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
+
+        warn_tts("edge socket produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue Timeout::Error
+        warn_tts("edge socket timed out after #{timeout}s")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("edge socket failed: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
+      end
+
+      def build_socket_request(voice_name, style_config, text)
+        JSON.generate(
           voice: voice_name,
           rate: style_config[:rate],
           pitch: style_config[:pitch],
           text: text.to_s
         )
-        timeout = worker_timeout(text.to_s.length)
+      end
+
+      def resolve_socket_path
+        sock_path = TtsSupervisor.next_socket
+        unless File.socket?(sock_path)
+          TtsSupervisor.ensure_daemon!
+          sock_path = TtsSupervisor.next_socket
+        end
+        File.socket?(sock_path) ? sock_path : nil
+      end
+
+      def stream_socket_response(sock_path, req, audio_path, timeout, on_chunk)
         Timeout.timeout(timeout) do
           UNIXSocket.open(sock_path) do |s|
             s.write("#{req}\n")
@@ -402,16 +458,6 @@ module Master
             end
           end
         end
-        return audio_path if File.exist?(audio_path) && File.size(audio_path) > 0
-
-        warn_tts("edge socket produced empty audio")
-        cleanup_failed_audio(audio_path)
-      rescue Timeout::Error
-        warn_tts("edge socket timed out after #{timeout}s")
-        cleanup_failed_audio(audio_path)
-      rescue StandardError => e
-        warn_tts("edge socket failed: #{e.class}: #{e.message}")
-        cleanup_failed_audio(audio_path)
       end
 
       def synthesize_espeak(text)
