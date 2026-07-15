@@ -40,30 +40,30 @@ module Master
 
       def dispatch_workers(workers, files)
         queue = Queue.new
-        workers.each do |worker|
-          Thread.new do
-            started = Time.now
-            @bus&.publish("review_crew:agent_started", agent: worker.name, files: files.size)
-            files.each do |file|
-              code = File.read(file, encoding: "UTF-8") rescue next
-              worker.analyze(code, file)
-            end
-            # BaseAgent#analyze accumulates into worker.findings and returns the whole
-            # growing array; read it once here instead of concatenating per file
-            # (which duplicated earlier files' findings quadratically).
-            worker_findings = worker.findings
-            elapsed = Time.now - started
-            @bus&.publish("review_crew:agent_done", agent: worker.name, findings: worker_findings.size, elapsed: elapsed)
-            queue << { agent: worker.name, findings: worker_findings.map(&:to_h), elapsed: elapsed }
-          rescue StandardError => e
-            @bus&.publish("review_crew:agent_error", agent: worker.name, error: e.message)
-            queue << { agent: worker.name, findings: [], elapsed: 0.0, error: e.message }
-          end
-        end
+        workers.each { |worker| Thread.new { run_worker(worker, files, queue) } }
 
         collected = []
         workers.size.times { collected << queue.pop }
         collected
+      end
+
+      def run_worker(worker, files, queue)
+        started = Time.now
+        @bus&.publish("review_crew:agent_started", agent: worker.name, files: files.size)
+        files.each do |file|
+          code = File.read(file, encoding: "UTF-8") rescue next
+          worker.analyze(code, file)
+        end
+        # BaseAgent#analyze accumulates into worker.findings and returns the whole
+        # growing array; read it once here instead of concatenating per file
+        # (which duplicated earlier files' findings quadratically).
+        worker_findings = worker.findings
+        elapsed = Time.now - started
+        @bus&.publish("review_crew:agent_done", agent: worker.name, findings: worker_findings.size, elapsed: elapsed)
+        queue << { agent: worker.name, findings: worker_findings.map(&:to_h), elapsed: elapsed }
+      rescue StandardError => e
+        @bus&.publish("review_crew:agent_error", agent: worker.name, error: e.message)
+        queue << { agent: worker.name, findings: [], elapsed: 0.0, error: e.message }
       end
 
       def target_files(target)

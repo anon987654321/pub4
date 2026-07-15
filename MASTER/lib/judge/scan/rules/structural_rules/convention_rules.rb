@@ -147,28 +147,30 @@ module Master
 
           def check_ast(ast, code, path:)
             return [] unless ast
-            findings = []
+
             lines = code.lines
-            visit(ast) do |node|
-              next unless node.is_a?(Prism::DefNode)
-              method_lines = lines[(node.location.start_line - 1)...node.location.end_line].join
-              branch_count = branch_dispatch_count(method_lines)
-              if branch_count >= BRANCH_THRESHOLD
-                findings << finding(
-                  line: node.location.start_line,
-                  message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — extract named handlers"
-                )
-              elsif pipeline_step_count(method_lines) >= PIPELINE_STEP_THRESHOLD
-                findings << finding(
-                  line: node.location.start_line,
-                  message: "Pipeline opportunity in #{node.name}: sequential transformations can be named stages"
-                )
-              end
-            end
-            findings
+            findings = []
+            visit(ast) { |node| findings << def_node_finding(node, lines) if node.is_a?(Prism::DefNode) }
+            findings.compact
           end
 
           private
+
+          def def_node_finding(node, lines)
+            method_lines = lines[(node.location.start_line - 1)...node.location.end_line].join
+            branch_count = branch_dispatch_count(method_lines)
+            if branch_count >= BRANCH_THRESHOLD
+              finding(
+                line: node.location.start_line,
+                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — extract named handlers"
+              )
+            elsif pipeline_step_count(method_lines) >= PIPELINE_STEP_THRESHOLD
+              finding(
+                line: node.location.start_line,
+                message: "Pipeline opportunity in #{node.name}: sequential transformations can be named stages"
+              )
+            end
+          end
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)

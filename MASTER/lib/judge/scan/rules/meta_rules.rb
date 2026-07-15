@@ -149,30 +149,32 @@ module Master
             return [] if @learned_smells.empty?
 
             language = self.language(path)&.to_s
-            @learned_smells.flat_map do |smell|
-              next [] unless applies_to_smell?(smell, language)
-
-              pattern = smell_pattern(smell)
-              next [] unless pattern
-
-              code.each_line.with_index(1).filter_map do |line, line_number|
-                next unless line.match?(pattern)
-
-                rule_id = smell["id"].to_s
-                Finding.build(
-                  rule: rule_id.empty? ? @id : rule_id,
-                  message: smell_message(smell),
-                  line: line_number,
-                  severity: smell_severity(smell),
-                  tags: smell_tags(smell),
-                  reversibility: smell["reversibility"],
-                  blast_radius: smell["blast_radius"]
-                )
-              end
-            end
+            @learned_smells.flat_map { |smell| findings_for_smell(smell, code, language) }
           rescue StandardError => e
             [Finding.build(rule: @id, message: "learned smell scan error — #{e.message}", line: 1,
               severity: :warning, tags: %i[LEARNED_SMELLS])]
+          end
+
+          def findings_for_smell(smell, code, language)
+            return [] unless applies_to_smell?(smell, language)
+
+            pattern = smell_pattern(smell)
+            return [] unless pattern
+
+            code.each_line.with_index(1).filter_map do |line, line_number|
+              next unless line.match?(pattern)
+
+              rule_id = smell["id"].to_s
+              Finding.build(
+                rule: rule_id.empty? ? @id : rule_id,
+                message: smell_message(smell),
+                line: line_number,
+                severity: smell_severity(smell),
+                tags: smell_tags(smell),
+                reversibility: smell["reversibility"],
+                blast_radius: smell["blast_radius"]
+              )
+            end
           end
 
           private

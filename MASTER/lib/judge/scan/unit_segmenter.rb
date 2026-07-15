@@ -72,21 +72,22 @@ module Master
           @lines.each_with_index do |line, idx|
             lineno = idx + 1
             if line.strip.empty?
-              if buffer.any?(&method(:non_blank?))
-                units << Unit.new(name: "paragraph_#{units.size + 1}", type: :paragraph,
-                                  start_line: start, end_line: lineno - 1, source: buffer.join)
-              end
+              flush_paragraph!(units, buffer, start, lineno - 1)
               buffer = []
               start = lineno + 1
             else
               buffer << line
             end
           end
-          if buffer.any?(&method(:non_blank?))
-            units << Unit.new(name: "paragraph_#{units.size + 1}", type: :paragraph,
-                              start_line: start, end_line: @lines.size, source: buffer.join)
-          end
+          flush_paragraph!(units, buffer, start, @lines.size)
           units
+        end
+
+        def flush_paragraph!(units, buffer, start_line, end_line)
+          return unless buffer.any?(&method(:non_blank?))
+
+          units << Unit.new(name: "paragraph_#{units.size + 1}", type: :paragraph,
+                            start_line:, end_line:, source: buffer.join)
         end
 
         def non_blank?(line) = !line.strip.empty?

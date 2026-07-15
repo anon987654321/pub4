@@ -96,12 +96,23 @@ module Master
             return if self.class.reloading?
 
             self.class.reloading = true
-            registry_ids = Judge::Scan::Rule.registry
+            registry_ids = build_registry_ids
+            yaml_rules = Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
+            @entries = build_lexical_entries(yaml_rules, registry_ids)
+            @mtime = rules_mtime
+          ensure
+            self.class.reloading = false
+          end
+
+          def build_registry_ids
+            Judge::Scan::Rule.registry
               .reject { |klass| RuleFactory.bridge_class?(klass) }
               .filter_map { |klass| RuleFactory.registry_id(klass, root: @root) }
               .to_set
-            yaml_rules = Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
-            @entries = yaml_rules
+          end
+
+          def build_lexical_entries(yaml_rules, registry_ids)
+            yaml_rules
               .select { |r| r["detect_lexical"] && !registry_ids.include?(r["id"].to_s.downcase) }
               .filter_map do |r|
                 {
@@ -116,9 +127,6 @@ module Master
               rescue RegexpError
                 nil
               end
-            @mtime = rules_mtime
-          ensure
-            self.class.reloading = false
           end
 
           def reload_if_stale
