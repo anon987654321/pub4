@@ -13,8 +13,19 @@ class MasterWebToken
   end
 
   def self.read
-    cfg = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
-    candidate = cfg.is_a?(Hash) ? cfg["web_token"].to_s : ""
-    candidate.length >= MIN_LENGTH ? candidate : ""
+    cfg = if File.exist?(config_path)
+      YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true)
+    else
+      {}
+    end
+
+    candidate = if cfg.is_a?(Hash)
+      cfg["web_token"] || cfg[:web_token]
+    end
+
+    token = candidate.to_s.strip
+    token.length >= MIN_LENGTH ? token : ""
+  rescue StandardError
+    ""
   end
 end
