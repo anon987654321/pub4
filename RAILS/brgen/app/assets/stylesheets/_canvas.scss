@@ -71,6 +71,22 @@
 .splash h2.clicked { transform: scale(1.02); }
 .splash .tagline { color: var(--text-dim); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 1.6rem; max-width: 28em; line-height: 1.4; }
 .splash .chips { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin-bottom: 1.4rem; }
-.splash .chip { padding: .2rem .65rem; border: 1px solid var(--border); font: 8.5px/1.35 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); }
+.splash .chip {
+  padding: .35rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--x-radius-pill);
+  font: 10px/1.35 ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.splash .chip:hover,
+.splash .chip:focus-within {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--hover-subtle);
+}
 .splash .hint { color: var(--text-dim); font-size: .65rem; letter-spacing: .05em; }
 .splash a { color: inherit; }

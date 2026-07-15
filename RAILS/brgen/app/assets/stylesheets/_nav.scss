@@ -1,53 +1,78 @@
-/* Sticky feed header */
+/* Sticky feed header — single source (accent underline + scroll fade) */
 .feed-header {
   position: sticky;
   top: 0;
+  z-index: var(--z-chrome, 10);
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-4) var(--space-2);
-  background: var(--panel-blur-bg);
-  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 
-.feed-header h1 { font: 800 20px / 1 var(--x-font); padding: var(--space-3) 0 4px; }
+.feed-header h1 {
+  margin: 0;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
 
-/* Horizontal subnav with right-edge fade (BRGEN_OLD spec) */
 .feed-tabs {
   display: flex;
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, var(--x-bg) 85%, transparent 100%);
+  padding: 0 var(--space-4);
+  mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
 }
 
 .feed-tabs::-webkit-scrollbar { display: none; }
 
 .feed-tab {
-  flex: 1;
-  display: block;
-  padding: var(--space-4);
-  text-align: center;
-  font: 500 var(--text-sm) / 1 var(--x-font);
-  color: var(--x-text-secondary);
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
   background: none;
-  border: 0;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.feed-tab:hover { background: var(--x-hover); color: var(--x-text); text-decoration: none; }
-.feed-tab.active { color: var(--x-text); font-weight: 700; }
-a.feed-tab { text-decoration: none; display: block; }
+.feed-tab:hover {
+  color: var(--text);
+  background: var(--hover-subtle);
+  text-decoration: none;
+}
 
-/* Compose box — background-fill affordance, no border */
+.feed-tab.active {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+
+a.feed-tab { text-decoration: none; }
+
+/* Compose — flat feed row, not floating card */
 .compose-box {
   display: flex;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--x-surface-elevated);
-  border-radius: var(--x-radius-md);
-  margin: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+  border-radius: 0;
   transition: background var(--transition-fast, 180ms);
 }
 

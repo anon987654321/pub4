@@ -84,6 +84,19 @@ body.vertical-takeaway .order-list .x-post.x-takeaway:hover {
   background: var(--x-hover-subtle);
 }
 
+body.vertical-takeaway .order-status,
+body.vertical-takeaway .x-meta:has(+ .x-meta) {
+  font-weight: 600;
+}
+
+body.vertical-takeaway .x-post.x-takeaway .x-meta {
+  color: var(--x-text-secondary);
+}
+
+body.vertical-takeaway .x-post.x-takeaway .x-meta:first-of-type {
+  color: var(--food-dash);
+}
+
 body.vertical-takeaway .order-status {
   position: sticky;
   bottom: calc(70px + var(--safe-bottom));

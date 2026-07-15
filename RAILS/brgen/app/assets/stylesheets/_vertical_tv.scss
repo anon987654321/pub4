@@ -49,17 +49,9 @@ body.vertical-tv .live-badge {
   50% { opacity: 0.72; }
 }
 
-body.vertical-tv section[aria-label="Live streams now"] article,
-body.vertical-tv .tv-channel-card {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
-  transition: background var(--transition-fast);
-}
-
-body.vertical-tv section[aria-label="Live streams now"] article:hover {
-  background: var(--x-hover-subtle);
+body.vertical-tv section[aria-label="Live streams now"] .x-post.x-tv,
+body.vertical-tv .live-stream-grid .x-post.x-tv {
+  margin-bottom: var(--space-2);
 }
 
 body.vertical-tv .preset-strip {

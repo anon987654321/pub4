@@ -1,6 +1,6 @@
 <% content_for :title, "Saved searches" %>
 
-div class="page-header" role="banner">
+<div class="page-header" role="banner" aria-label="Saved searches header">
   <div>
     <p class="dim">Marketplace alerts</p>
     <h1>Saved searches</h1>
@@ -9,21 +9,25 @@ div class="page-header" role="banner">
 </div>
 
 <% if @saved_searches.any? %>
-  <% @saved_searches.each do |saved_search| %>
-    <article>
-      <h2><%= saved_search.title %></h2>
-      <p class="dim">
-        <%= saved_search.query.presence || "Any query" %>
-        <% if saved_search.category %> · <%= saved_search.category.name %><% end %>
-        <% if saved_search.location.present? %> · <%= saved_search.location %><% end %>
-        <% if saved_search.notify? %> · alerts on<% end %>
-      </p>
-      <nav role="navigation">
-        <%= link_to "Run", marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "btn btn-sm" %>
-        <%= button_to "Delete", marketplace_saved_search_path(saved_search), method: :delete, class: "btn btn-ghost btn-sm" %>
-      </nav>
-    </article>
-  <% end %>
+  <div class="post-grid">
+    <% @saved_searches.each do |saved_search| %>
+      <% search_actions = capture do %>
+        <%= link_to "Run", marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "x-act x-act--primary" %>
+        <%= button_to "Delete", marketplace_saved_search_path(saved_search), method: :delete, class: "x-act" %>
+      <% end %>
+      <%= render "shared/x_card",
+        name: saved_search.title,
+        meta: [
+          saved_search.query.presence || "Any query",
+          saved_search.category&.name,
+          saved_search.location.presence,
+          (saved_search.notify? ? "alerts on" : nil)
+        ].compact.join(" · "),
+        actions: search_actions,
+        url: marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id),
+        class: "x-listing" %>
+    <% end %>
+  </div>
 <% else %>
   <div class="empty empty-state"><p>No saved searches. Search the marketplace, then save the search.</p></div>
 <% end %>

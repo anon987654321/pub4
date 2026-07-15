@@ -65,6 +65,10 @@ a:hover { text-decoration: underline; }
 
 .brand-text { text-transform: uppercase; }
 
+.brand-wordmark {
+  border-radius: var(--x-radius-sm);
+}
+
 .feed-hint { padding: 0 var(--space-4) var(--space-2); }
 
 @media (min-width: 1265px) {

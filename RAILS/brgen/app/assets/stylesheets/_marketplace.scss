@@ -164,10 +164,6 @@
   text-transform: uppercase;
 }
 
-.deal-card.featured {
-  display: inline-block;
-  margin: 0 var(--space-3) var(--space-2) 0;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--x-radius-sm);
-  background: var(--x-surface-elevated);
+.featured-deals .x-post.x-deal {
+  margin-bottom: var(--space-2);
 }

@@ -52,21 +52,10 @@
   }
 }
 
-.post-grid article,
-.deal-card,
-.store-card {
-  background: var(--surface2);
-  border-radius: var(--radius);
-  overflow: hidden;
-  padding: 12px;
-}
-
-@media (min-width: 768px) {
-  .post-grid article,
-  .deal-card,
-  .store-card {
-    padding: 16px;
-  }
+.post-grid .x-post,
+.deal-grid .x-post,
+.store-grid .x-post {
+  height: 100%;
 }
 
 .monogram--0 { background: #4b2e83; color: #fff; }

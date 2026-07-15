@@ -8,16 +8,16 @@
 </div>
 
 <% if @delivery_drivers.any? %>
-  <div role="list" aria-label="Delivery drivers">
-  <% @delivery_drivers.each do |driver| %>
-    <article role="listitem" aria-label="Driver <%= driver.user.display_name.presence || driver.user.email_address.split("@").first %>">
-      <h2><%= link_to driver.user.display_name.presence || driver.user.email_address.split("@").first, takeaway_delivery_driver_path(driver) %></h2>
-      <p class="dim"><%= driver.vehicle_type.presence&.humanize || "Vehicle not set" %> · <%= driver.available? ? "Available" : "Unavailable" %></p>
-      <% if driver.location? %>
-        <p><%= driver.current_lat %>, <%= driver.current_lng %></p>
-      <% end %>
-    </article>
-  <% end %>
+  <div class="order-list" role="list" aria-label="Delivery drivers">
+    <% @delivery_drivers.each do |driver| %>
+      <% label = driver.user.display_name.presence || driver.user.email_address.split("@").first %>
+      <%= render "shared/x_card",
+        name: label,
+        meta: "#{driver.vehicle_type.presence&.humanize || 'Vehicle not set'} · #{driver.available? ? 'Available' : 'Unavailable'}",
+        content: (driver.location? ? "#{driver.current_lat}, #{driver.current_lng}" : nil),
+        url: takeaway_delivery_driver_path(driver),
+        class: "x-takeaway" %>
+    <% end %>
   </div>
 <% else %>
   <div class="empty empty-state" role="status" aria-live="polite"><p>No available drivers.</p></div>

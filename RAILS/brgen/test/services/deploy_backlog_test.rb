@@ -796,6 +796,9 @@ class DeployBacklogTest < Minitest::Test
     refute File.exist?(File.join(ROOT, 'brgen/app/views/shared/_vote.html.erb'))
     assert_includes File.read(File.join(ROOT, '_deploy.sh')), 'DEMO_SEED_ON_DEPLOY'
     assert_includes File.read(File.join(ROOT, 'shared/config/initializers/omniauth.rb')), ':snapchat'
+    refute_includes read_brgen('app/assets/stylesheets/_posts.scss'), '.post_show'
+    assert_includes read_brgen('app/assets/stylesheets/_nav.scss'), 'border-bottom-color: var(--accent)'
+    assert_includes read_brgen('app/views/layouts/application.html.erb'), 'unless vertical_surface?'
   end
 
   private
