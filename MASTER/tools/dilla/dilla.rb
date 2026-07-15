@@ -994,7 +994,10 @@ end
 def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade_dur, beat_p, _n_bars)
   lp = sonic_pad_lowpass(sonic)
   build_start = (duration * 0.82).round(2)
-  outro_fade = (beat_p * 4.0 * 4).round(2)
+  # 16 beats, but never longer than the render itself — short (preview/smoke)
+  # renders would otherwise produce a negative afade start, which ffmpeg
+  # rejects as out of range.
+  outro_fade = [(beat_p * 4.0 * 4).round(2), duration].min
   harm_vol = ENV["DEBUG_HARM_WEIGHT"] || "1.68"
   "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
     "highpass=f=110,equalizer=f=95:t=h:w=120:g=-2.2," \
@@ -1572,35 +1575,123 @@ MICROTIMING_MS = {
   bass: 20..36,
   pad: 4..16
 }.freeze
-SYNCOPATED_KICK_PATTERNS = [
-  [0, 7, 10, 14],
-  [0, 5, 7, 10, 14],
-  [0, 3, 7, 10, 12, 14],
-  [0, 1, 7, 10, 14],
-  [0, 6, 9, 14],
-  [0, 4, 8, 11, 14],
-  [0, 2, 7, 9, 13, 15],
-  [0, 5, 8, 10, 14],
-  [0, 3, 6, 10, 12, 14, 15]
-].freeze
-GHOST_NOTE_PATTERNS = [
-  [3, 6, 11],
-  [2, 5, 10, 14],
-  [1, 7, 9, 13],
-  [4, 8, 11, 15],
-  [3, 5, 9, 12],
-  [2, 6, 10, 13]
-].freeze
+# Curated 16-step drum phrases per feel — rotated bar-to-bar instead of
+# probabilistic organic generation. Kicks/snares/ghosts/hats are authored
+# separately so each voice has its own pocket (Dilla/Madlib research).
+DRUM_PATTERN_SETS = {
+  timeless: {
+    kicks: [
+      [0, 7, 10, 14], [0, 3, 7, 10, 12, 14], [0, 5, 7, 10, 14], [0, 2, 7, 9, 13, 15],
+      [0, 1, 7, 10, 14], [0, 6, 9, 14], [0, 4, 8, 11, 14], [0, 3, 6, 10, 12, 14, 15],
+      [0, 5, 8, 10, 14], [0, 7, 11, 14], [0, 2, 6, 10, 14], [0, 4, 7, 10, 13]
+    ],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 11, 12], [4, 12, 14], [4, 9, 12]],
+    ghosts: [
+      [2, 6, 10, 14], [3, 5, 9, 13], [1, 7, 11, 15], [2, 5, 10, 13],
+      [3, 6, 11, 14], [1, 5, 9, 12], [2, 7, 10, 14], [4, 8, 11, 15]
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 1, 3, 4, 6, 8, 10, 11, 13, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 7, 11],
+      [0, 4, 8, 12, 2, 6, 10, 14], [0, 1, 3, 5, 7, 9, 11, 13, 15]
+    ],
+    opens: [6, 14]
+  },
+  loose_pocket: {
+    kicks: [
+      [0, 6, 10, 14], [0, 3, 7, 11, 14], [0, 5, 8, 12, 15], [0, 1, 7, 10, 13],
+      [0, 4, 9, 11, 14], [0, 2, 6, 10, 14], [0, 7, 10, 13], [0, 3, 8, 11, 14],
+      [0, 5, 9, 12, 15], [0, 2, 7, 10, 14]
+    ],
+    snares: [[4, 12], [4, 10, 12], [4, 12, 14], [3, 11, 12], [4, 11, 12], [4, 12]],
+    ghosts: [
+      [1, 3, 5, 7, 9, 11, 13, 15], [2, 4, 6, 8, 10, 12, 14], [1, 5, 9, 13], [3, 7, 11, 15],
+      [2, 5, 8, 11, 14], [1, 4, 7, 10, 13], [3, 6, 9, 12, 15], [2, 6, 10, 14]
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14, 1, 5, 9, 13], [0, 2, 4, 6, 8, 10, 12, 14, 7, 15],
+      [0, 1, 3, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 11],
+      [0, 2, 4, 6, 8, 10, 12, 14, 5, 13], [0, 2, 4, 6, 8, 10, 12, 14, 1, 9]
+    ],
+    opens: [6, 10, 14]
+  },
+  syncopated_slash_ninth: {
+    kicks: [
+      [0, 7, 10, 14], [0, 3, 7, 10, 14], [0, 5, 9, 14], [0, 2, 7, 11, 14],
+      [0, 6, 10, 13], [0, 4, 7, 10, 14], [0, 1, 7, 10, 12, 14], [0, 8, 11, 14]
+    ],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
+    ghosts: [
+      [2, 5, 9, 13], [3, 6, 10, 14], [1, 5, 8, 12], [2, 6, 11, 15],
+      [3, 7, 10, 13], [1, 4, 8, 11]
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 2, 4, 6, 8, 10, 12, 14, 3, 7, 11],
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11, 15], [0, 4, 8, 12, 3, 11]
+    ],
+    opens: [6, 14]
+  },
+  chromatic_planing: {
+    kicks: [
+      [0, 4, 8, 12], [0, 3, 7, 11, 14], [0, 2, 6, 10, 14], [0, 5, 9, 13],
+      [0, 1, 5, 9, 13], [0, 4, 7, 10, 14], [0, 3, 6, 9, 12, 15], [0, 2, 5, 8, 11, 14]
+    ],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14]],
+    ghosts: [
+      [2, 6, 10, 14], [1, 5, 9, 13], [3, 7, 11, 15], [2, 5, 8, 11, 14]
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14], [1, 3, 5, 7, 9, 11, 13, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14], [1, 3, 5, 7, 9, 11, 13, 15]
+    ],
+    opens: [6, 14]
+  },
+  organic: {
+    kicks: [
+      [0, 7, 10, 14], [0, 5, 7, 10, 14], [0, 3, 7, 10, 12, 14], [0, 6, 9, 14],
+      [0, 4, 8, 11, 14], [0, 2, 7, 10, 13], [0, 5, 8, 12, 15], [0, 1, 7, 10, 14]
+    ],
+    snares: [[4, 12], [4, 10, 12], [4, 12, 14], [4, 11, 12]],
+    ghosts: [
+      [3, 6, 11], [2, 5, 10, 14], [1, 7, 9, 13], [4, 8, 11, 15],
+      [3, 5, 9, 12], [2, 6, 10, 13]
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 11],
+      [0, 1, 3, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 1, 9, 13]
+    ],
+    opens: [6, 14]
+  },
+  techno_house: {
+    kicks: [[0, 4, 8, 12]],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14]],
+    ghosts: [[10], [10, 14], [6, 10], []],
+    hats: [
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15],
+      [0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 15],
+      [0, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
+    ],
+    opens: [6, 14]
+  },
+  default: {
+    kicks: [
+      [0, 7, 10, 14], [0, 5, 7, 10, 14], [0, 3, 7, 10, 14], [0, 6, 9, 14],
+      [0, 4, 8, 11, 14], [0, 2, 7, 10, 13], [0, 5, 8, 10, 14], [0, 1, 7, 10, 14]
+    ],
+    snares: [[4, 12], [4, 12], [4, 10, 12], [4, 12, 14]],
+    ghosts: [
+      [3, 6, 11], [2, 5, 10, 14], [1, 7, 9, 13], [4, 8, 11, 15],
+      [3, 5, 9, 12], [2, 6, 10, 13]
+    ],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11], [0, 1, 3, 4, 6, 8, 10, 11, 13, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14, 3, 11]
+    ],
+    opens: [6, 14]
+  }
+}.freeze
 MELODY_CHOP_HZ = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08].freeze
-# Madlib / Jaylib — loose MPC pockets, heavy ghosts, Dilla-time snare-early feel.
-LOOSE_POCKET_KICK_PATTERNS = [
-  [0, 6, 10, 14],
-  [0, 3, 7, 11, 14],
-  [0, 5, 8, 12, 15],
-  [0, 1, 7, 10, 13],
-  [0, 4, 9, 11, 14],
-  [0, 2, 6, 10, 14]
-].freeze
 LOOSE_POCKET_TIMING_MS = {
   snare: -28..-12, ghost: -10..18, hat_down: 8..18, hat_up: 22..40,
   kick_anchor: 0..6, kick_sync: 10..22
@@ -3449,69 +3540,47 @@ def pitch_class_distance(a, b)
   [diff, 12.0 - diff].min
 end
 
-# Position weights derived from the empirical frequency of each 16th-note
-# slot across every curated pattern in the file — not invented from
-# scratch. Used to *generate* a fresh, never-exactly-repeating pattern
-# each bar instead of only rotating a small fixed set: the "organic
-# exploratory impromptu" feel of a drummer varying a groove live rather
-# than a sequencer replaying the same loop.
-KICK_POSITION_WEIGHTS = begin
-  counts = Array.new(16, 0)
-  (SYNCOPATED_KICK_PATTERNS + LOOSE_POCKET_KICK_PATTERNS +
-   [[7, 10, 14], [3, 7, 10, 12, 14], [6, 9, 13, 15], [2, 7, 10, 14],
-    [14, 3, 7, 10], [14, 3, 8, 11], [13, 2, 6, 10], [15, 3, 7, 11]]).each do |pat|
-    pat.each { |step| counts[step] += 1 }
-  end
-  counts.freeze
+def drum_feel_key(feel)
+  feel = feel.to_sym
+  return feel if DRUM_PATTERN_SETS.key?(feel)
+  :default
 end
 
-# Real drum patterns aren't independent per-step coin flips — a hit makes
-# the next step less likely (players don't usually double straight after a
-# hit) and a rest makes a hit somewhat more likely (tension resolving).
-# Blended with the measured position weights rather than replacing them.
-KICK_MARKOV = { after_hit: 0.55, after_rest: 1.15 }.freeze
+def drum_pattern_seed(feel)
+  (feel.hash.abs + (@render_seed || 0)) % 10_000
+end
 
-def generate_organic_kick_pattern(bar, seed_base = 5081)
-  rng = Random.new(seed_base + bar * 733)
-  total = KICK_POSITION_WEIGHTS.sum.to_f
-  # Convention on regular bars, wild randomization on fill bars — a fixed
-  # "every 8th bar" period reads as scheduled/authored (real critique: a
-  # human drummer's chaos doesn't land on a metronomic grid). Probabilistic
-  # instead, same ~1-in-8 average rate but the actual bars land irregularly.
-  fill_bar = bar.positive? && Random.new(seed_base + bar).rand < 0.125
-  density_mult = fill_bar ? 6.0 : 3.4
-  min_gap = fill_bar ? 1 : 2
-  prev_hit = false
-  candidates = (0..15).select do |i|
-    position_prob = (KICK_POSITION_WEIGHTS[i] / total) * density_mult
-    markov_mult = prev_hit ? KICK_MARKOV[:after_hit] : KICK_MARKOV[:after_rest]
-    hit = rng.rand < (position_prob * markov_mult).clamp(0.0, fill_bar ? 0.98 : 0.95)
-    prev_hit = hit
-    hit
-  end
-  # Pure independent-per-step probability could land two hits a single
-  # 16th apart — reads as a mistake/flam, not a groove. Enforce a minimum
-  # gap like a real kick pattern would have (relaxed on fill bars, where
-  # tight clusters are the point).
-  steps = []
-  candidates.each { |i| steps << i if steps.empty? || i - steps.last >= min_gap }
-  steps << 0 if steps.empty?
+def drum_pattern_pick(bar, feel, role)
+  sets = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel))
+  pool = sets.fetch(role)
+  seed = drum_pattern_seed(feel)
+  # Phrase offset shifts every 4 bars so A/B/C/D rotations don't lock to bar 0.
+  idx = (bar + seed + (bar / 4)) % pool.length
+  Array(pool[idx]).dup
+end
+
+def dilla_kick_pattern(bar, _n_bars, feel)
+  drum_pattern_pick(bar, feel, :kicks)
+end
+
+def dilla_snare_steps(bar, feel, section:)
+  return [] if section == :breakdown
+  steps = drum_pattern_pick(bar, feel, :snares)
+  steps -= [10, 14] if section == :intro
   steps.uniq.sort
 end
 
-def dilla_kick_pattern(bar, n_bars, feel)
-  # Detroit techno/house: steady four-on-the-floor, not humanized — that
-  # relentless, unswung quarter-note pulse is the actual genre signature,
-  # the opposite move from every Dilla-descended feel here.
-  return [0, 4, 8, 12] if feel == :techno_house
-  # Replaced entirely: every feel now gets a freshly generated, per-bar
-  # impromptu pattern instead of rotating a small fixed set — kept the old
-  # arrays as KICK_POSITION_WEIGHTS' source data (real, curated position
-  # frequencies) rather than throwing them away.
-  # @render_seed varies per render (set once in render_dilla) — without it
-  # every render of the same feel produced the exact same bar-for-bar kick
-  # sequence, which reads as authored/looped rather than freshly generated.
-  generate_organic_kick_pattern(bar, (feel.hash.abs + (@render_seed || 0)) % 10_000)
+def dilla_ghost_steps(bar, feel)
+  drum_pattern_pick(bar, feel, :ghosts)
+end
+
+def dilla_open_steps(bar, feel, section:)
+  return [] if section == :breakdown
+  opens = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel))[:opens]
+  return [] unless opens
+  return opens if feel == :loose_pocket && bar % 8 == 5
+  return [opens[(bar / 2) % opens.length]] if [1, 3].include?(bar % 4)
+  []
 end
 
 def dilla_section_bounds(n_bars)
@@ -3558,63 +3627,16 @@ def melody_pitch_from_chord(chord, bar, mel_step)
   midi_to_hz(approach + 12)
 end
 
-def generate_organic_hat_steps(bar, seed_base = 9203, n_bars: nil)
-  rng = Random.new(seed_base + bar * 421)
-  # Finale acceleration: in the last 2 bars, hat density ramps toward every
-  # step — a real "speeding up until it's almost a solid tone" ending.
-  if n_bars && bar >= n_bars - 2
-    progress = 1.0 - ((n_bars - 1 - bar).to_f / 2)
-    return (0..15).select { |i| i.even? || rng.rand < (0.4 + 0.5 * progress) }.uniq.sort
-  end
-  base = (0..15).select { |i| i.even? || rng.rand < 0.4 }
-  base = base.reject { rng.rand < 0.12 }
-  base << 0 if base.empty?
-  base.uniq.sort
-end
-
 def dilla_hat_steps(bar, feel, n_bars: nil)
+  steps = drum_pattern_pick(bar, feel, :hats)
   if n_bars && bar >= (n_bars * 0.82).to_i
     progress = 1.0 - ((n_bars - 1 - bar).to_f / [n_bars * 0.18, 1].max)
-    rng = Random.new(bar * 421)
-    return (0..15).select { |i| i.even? || rng.rand < (0.35 + 0.55 * progress) }.uniq.sort
+    steps += (0..15).select { |i| i.odd? && Random.new(bar * 421).rand < (0.25 + 0.45 * progress) }
+  elsif n_bars && bar >= n_bars - 2
+    progress = 1.0 - ((n_bars - 1 - bar).to_f / 2)
+    steps += (0..15).select { |i| i.odd? && Random.new(bar * 421 + 7).rand < (0.35 + 0.5 * progress) }
   end
-  case feel
-  when :techno_house
-    # Erratic, denser than the organic generator, no minimum-spacing
-    # smoothing — real acid/Detroit-house hats are chaotic on purpose.
-    rng = Random.new(bar * 971 + 3)
-    (0..15).select { rng.rand < 0.55 }
-  when :organic
-    generate_organic_hat_steps(bar, n_bars:)
-  when :syncopated_slash_ninth
-    (0..15).step(2).to_a + [3, 11]
-  when :chromatic_planing
-    bar.even? ? [0, 2, 4, 6, 8, 10, 12, 14] : [1, 3, 5, 7, 9, 11, 13, 15]
-  when :loose_pocket
-    steps = (0..15).step(2).to_a
-    steps += [1, 5, 9, 13] if bar.odd?
-    steps += [7, 15] if (bar % 4) == 3
-    steps -= [8] if (bar % 8) == 5
-    steps.uniq.sort
-  when :timeless
-    if bar % 8 == 7
-      [0, 4, 8, 12]
-    elsif bar % 4 == 2
-      [0, 2, 4, 6, 8, 10, 12, 14, 3, 11]
-    elsif bar.odd?
-      [0, 1, 3, 4, 6, 8, 10, 11, 13, 14]
-    else
-      (0..15).step(2).to_a + [3, 7, 11]
-    end
-  else
-    if bar % 8 == 7
-      [0, 4, 8, 12]
-    elsif bar.odd?
-      [0, 1, 3, 4, 6, 8, 10, 11, 13, 14]
-    else
-      (0..15).step(2).to_a + [3, 11]
-    end
-  end.uniq.sort
+  steps.uniq.sort
 end
 
 def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, drums_only: false,
@@ -3689,33 +3711,24 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       end
     end
 
-    unless section == :breakdown || (section == :intro && bar < 4)
-      [4, 12].each_with_index do |step, si|
+    unless section == :intro && bar < 4
+      dilla_snare_steps(bar, feel, section:).each_with_index do |step, si|
+        next if section == :breakdown
         t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
              dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
-        events[:snare] << [t.round(6), dilla_velocity(si.zero? ? 0.64 : 0.56, bar, step) * sec_gain]
-        # 1ms flam on the downbeat snare — reads as one fatter drum, not two
-        # separate hits, a real mixing/drumming trick, not audible as a
-        # distinct second hit.
-        if si.zero?
+        backbeat = [4, 12].include?(step)
+        snare_vel = backbeat ? (si.zero? ? 0.64 : 0.56) : 0.48
+        events[:snare] << [t.round(6), dilla_velocity(snare_vel, bar, step) * sec_gain]
+        if backbeat && si.zero?
           events[:ghost] << [(t - 0.001).round(6).clamp(0.0, Float::INFINITY),
                               dilla_velocity(0.22, bar, step, spread: 0.04) * sec_gain]
         end
       end
-      if section == :main && bar % 4 == 2
-        step = 10
-        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
-             dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
-        events[:ghost] << [t.round(6), dilla_velocity(0.18, bar, step, spread: 0.05) * sec_gain]
-      end
     end
 
-    ghost_steps = if feel == :loose_pocket
-                    ghost_base = GHOST_NOTE_PATTERNS[(bar * 2) % GHOST_NOTE_PATTERNS.length]
-                    ghost_base + (bar.odd? ? [1, 9] : [5])
-                  else
-                    GHOST_NOTE_PATTERNS[(bar + bar / 4) % GHOST_NOTE_PATTERNS.length]
-                  end
+    ghost_steps = dilla_ghost_steps(bar, feel)
+    ghost_steps += [1, 9] if feel == :loose_pocket && bar.odd?
+    ghost_steps += [5] if feel == :loose_pocket && bar.even?
     ghost_steps.uniq.each do |step|
       t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
            dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
@@ -3738,8 +3751,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       events[:hat] << [t.round(6), dilla_velocity(i.even? ? 0.48 : 0.38, bar, step, spread: 0.08) * sec_gain]
     end
 
-    if section != :breakdown && ([1, 3].include?(bar % 4) || (feel == :loose_pocket && bar % 8 == 5))
-      open_step = feel == :loose_pocket && bar % 8 == 5 ? 10 : 6
+    dilla_open_steps(bar, feel, section:).each do |open_step|
       events[:open] << [[base + open_step * step_p + dilla_swing_offset(open_step, step_p, swing, quintuplet: quintuplet) + 0.008, 0.0].max.round(6),
                         dilla_velocity(0.32, bar, open_step, spread: 0.05) * sec_gain]
     end
