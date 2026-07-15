@@ -4,7 +4,7 @@ require "yaml"
 
 module Brgen
   # Realistic Bergen / r/bergen-inspired demo content for brgen.no (Tradedoubler, demos).
-  # Norwegian copy, local handles, staggered timestamps, optional picsum attachments.
+  # Norwegian copy, local handles, staggered timestamps, optional picsum + postpro attachments.
   class BergenDemoSeeder
     RADIO_BERGEN_PLAYLIST = "Radio Bergen"
     LOCAL_AUDIO_BASE = ENV.fetch("RADIO_BERGEN_AUDIO_BASE", "https://ai.brgen.no")
@@ -437,7 +437,9 @@ module Brgen
         )
         post.record_activity!("BergenDemoSeed") if post.respond_to?(:record_activity!)
 
-        DemoMedia.attach_remote!(post, :image, seed: row[:image]) if @attach_media && row[:image]
+        if @attach_media && row[:image]
+          DemoMedia.attach_remote_postpro!(post, :image, seed: row[:image], preset: "landscape")
+        end
 
         seed_comments!(post, row[:comments])
 
@@ -468,7 +470,9 @@ module Brgen
           status: "active",
           created_at: rand(2..21).days.ago
         )
-        DemoMedia.attach_remote!(listing, :photos, seed: row[:image]) if @attach_media
+        if @attach_media
+          DemoMedia.attach_remote_postpro!(listing, :photos, seed: row[:image], preset: "portrait")
+        end
       end
     end
 
@@ -507,7 +511,7 @@ module Brgen
           visible: false
         )
         if @attach_media && !profile.photos.attached?
-          DemoMedia.attach_remote!(profile, :photos, seed: row[:image], width: 600, height: 900)
+          DemoMedia.attach_remote_postpro!(profile, :photos, seed: row[:image], preset: "portrait", width: 600, height: 900)
         end
         profile.visible = profile.photos.attached?
         profile.save!

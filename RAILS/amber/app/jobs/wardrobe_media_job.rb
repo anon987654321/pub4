@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require "tempfile"
-require "rbconfig"
-require "pub4/deploy_paths"
-
 class WardrobeMediaJob < ApplicationJob
   queue_as :bulk
 
@@ -40,27 +36,9 @@ class WardrobeMediaJob < ApplicationJob
     enqueue_once(EmbedGarmentJob, item.id) if item.photos.attached?
     enqueue_once(CalculateSustainabilityJob, item.id)
 
-    # auto postpro film stock on item image upload (DF06)
     if item.photos.attached?
-      photo = item.photos.first
-      begin
-        script = Pub4::DeployPaths.postpro_script&.to_s
-        if script.present? && File.exist?(script)
-          tmp_in = Tempfile.new([ "in", File.extname(photo.filename.to_s.presence || ".jpg") ])
-          tmp_in.binmode
-          tmp_in.write(photo.download)
-          tmp_in.rewind
-          tmp_out = Tempfile.new([ "out", ".jpg" ])
-          system(RbConfig.ruby, script, "--input", tmp_in.path, "--output", tmp_out.path, "--stock", "kodak_portra", "--preset", "social")
-          if File.exist?(tmp_out.path)
-            Rails.logger.info("postpro film stock applied automatically to item #{item.id}")
-            # could re-attach processed version here
-          end
-          tmp_in.close!
-          tmp_out.close!
-        end
-      rescue StandardError => e
-        Rails.logger.warn("auto postpro failed for item #{item.id}: #{e.message}")
+      if Shared::PostproProcessor.apply_to_record!(item, :photos, preset: "portrait", replace: true)
+        Rails.logger.info("postpro portrait grade applied to item #{item.id}")
       end
     end
   end
