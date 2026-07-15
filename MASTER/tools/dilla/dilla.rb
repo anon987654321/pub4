@@ -14,7 +14,7 @@ require "open3"
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the user's home directory, not the repo — ROOT
 # stays the base for samples/stems/scratch temp files, which aren't user output.
-OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", File.expand_path("~"))
+OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", Dir.pwd)
 SAMPLE_DIR = File.join(ROOT, "samples")
 DRUM_DIR = File.join(SAMPLE_DIR, "drums")
 CUSTOM_DRUM_DIR = File.join(DRUM_DIR, "custom")
@@ -28,7 +28,7 @@ STEM_MANIFEST = File.join(STEM_DIR, "manifest.json")
 STEM_EXTS = %w[.mp3 .wav .ogg .flac].freeze
 DEMUX_DIR = SAMPLE_DIR
 DEMUX_MODEL = "htdemucs_6s"
-DEFAULT_BPM = 86.0
+DEFAULT_BPM = 68.0
 DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
 BASS_SUSTAIN_SEC = (ENV["BASS_SUSTAIN"] || 1.45).to_f
@@ -93,7 +93,7 @@ PAD_CHORDS = [
   { name: "G7", hz: [196.00, 246.94, 293.66, 349.23, 392.00] }
 ].freeze
 # Get Dis Money / Herbie Sunlight stack — vocoder chords over E pedal (Ethan Hein).
-SLUM_VILLAGE_CHORDS = [
+EXTENDED_NINTH_CHORDS = [
   # Was E-G-A-D-G: a 3rd (G) with no 5th and no 9th — not actually a sus4 or
   # a 9 chord despite the name, and the "/D" bass wasn't even in the voicing.
   # Real E9sus4 (root E, 4th A, 5th B, b7 D, 9th F#), keeping the same E
@@ -109,7 +109,7 @@ SLUM_VILLAGE_CHORDS = [
 COMMANDS = %w[
   help scan sweep council debug sample source livestream separate render verify
   chords clean stems study rhythm melody harmony semantics ears play live live_now harmony_now regenerate bass
-  grade grade_list sonitex_list analog_list prepare madlib dilla hiphop slum industrial techno analog analog_liveset
+  grade grade_list sonitex_list analog_list prepare loose_pocket dilla hiphop slum industrial techno analog analog_liveset
   electronium midi mix v7 v8 v9 v10 v11 demux liveset quality
   capabilities
 ].freeze
@@ -237,26 +237,26 @@ ANALOG_CHAIN_ROTATE = %i[acetate sp1200 cassette broadcast lo_fi vinyl_hot sonit
 # Chains with real vinyl playback (not tape) get a turntable-motor sub-bass rumble bed.
 TURNTABLE_RUMBLE_VARIANTS = %i[vinyl_hot vinyl_lab acetate sonitex].freeze
 # Internal presets — output filenames use neutral TAPE_RENDER_CATALOG codes only.
-SLUM_VILLAGE_TRACKS = %i[
-  get_dis_money thelonious raise_it_up tell_me hold_tight players look_of_love
-  forth_and_back conant_gardens i_dont_know climax go_ladies eyes_up untitled_fantastic
+NINTH_VOICING_TRACKS = %i[
+  syncopated_slash_ninth chromatic_planing ascending_minor_stack minor_soul_loop suspended_minor_turn major_relative_minor_cycle dominant_minor_resolve
+  syncopated_slash_alt minor_cycle_descent minor_stepwise_cycle major7_relative_minor_turn minor_major_ninth_pair minor_stepwise_ascent suspended_minor_close
 ].freeze
-SLUM_VILLAGE_BARS = { get_dis_money: 63, forth_and_back: 63, tell_me: 64 }.freeze
+NINTH_VOICING_BARS = { syncopated_slash_ninth: 63, syncopated_slash_alt: 63, minor_soul_loop: 64 }.freeze
 TAPE_RENDER_CATALOG = [
-  { preset: :get_dis_money,      out: "session_01", bars: 63 },
-  { preset: :thelonious,         out: "session_02", bars: 64 },
-  { preset: :raise_it_up,        out: "session_03", bars: 64 },
-  { preset: :tell_me,            out: "session_04", bars: 64 },
-  { preset: :hold_tight,         out: "session_05", bars: 64 },
-  { preset: :players,            out: "session_06", bars: 64 },
-  { preset: :look_of_love,       out: "session_07", bars: 64 },
-  { preset: :forth_and_back,     out: "session_08", bars: 63 },
-  { preset: :conant_gardens,     out: "session_09", bars: 64 },
-  { preset: :i_dont_know,         out: "session_10", bars: 64 },
-  { preset: :climax,             out: "session_11", bars: 64 },
-  { preset: :go_ladies,          out: "session_12", bars: 64 },
-  { preset: :eyes_up,            out: "session_13", bars: 64 },
-  { preset: :untitled_fantastic, out: "session_14", bars: 64 }
+  { preset: :syncopated_slash_ninth,      out: "session_01", bars: 63 },
+  { preset: :chromatic_planing,         out: "session_02", bars: 64 },
+  { preset: :ascending_minor_stack,        out: "session_03", bars: 64 },
+  { preset: :minor_soul_loop,            out: "session_04", bars: 64 },
+  { preset: :suspended_minor_turn,         out: "session_05", bars: 64 },
+  { preset: :major_relative_minor_cycle,            out: "session_06", bars: 64 },
+  { preset: :dominant_minor_resolve,       out: "session_07", bars: 64 },
+  { preset: :syncopated_slash_alt,     out: "session_08", bars: 63 },
+  { preset: :minor_cycle_descent,     out: "session_09", bars: 64 },
+  { preset: :minor_stepwise_cycle,         out: "session_10", bars: 64 },
+  { preset: :major7_relative_minor_turn,             out: "session_11", bars: 64 },
+  { preset: :minor_major_ninth_pair,          out: "session_12", bars: 64 },
+  { preset: :minor_stepwise_ascent,            out: "session_13", bars: 64 },
+  { preset: :suspended_minor_close, out: "session_14", bars: 64 }
 ].freeze
 INDUSTRIAL_TECHNO_BPM = 135.0
 INDUSTRIAL_TECHNO_BARS = 128
@@ -271,7 +271,7 @@ INDUSTRIAL_TECHNO_BARS = 128
 #   Ethan Hein — Get Dis Money, Thelonius transcriptions
 #   jdillabasslines.wordpress.com — Fantastic Vol. 2 BPM + bass phrasing
 #   Hooktheory — Donuts "Time" Ab major IV–iii–vi–ii–V
-DILLA_TIMING_MS = {
+MICROTIMING_MS = {
   kick_anchor: 0..5,
   kick_sync: 4..16,
   snare: -24..-8,
@@ -281,7 +281,7 @@ DILLA_TIMING_MS = {
   bass: 20..36,
   pad: 4..16
 }.freeze
-DILLA_KICK_PATTERNS = [
+SYNCOPATED_KICK_PATTERNS = [
   [0, 7, 10, 14],
   [0, 5, 7, 10, 14],
   [0, 3, 7, 10, 12, 14],
@@ -292,7 +292,7 @@ DILLA_KICK_PATTERNS = [
   [0, 5, 8, 10, 14],
   [0, 3, 6, 10, 12, 14, 15]
 ].freeze
-DILLA_GHOST_PATTERNS = [
+GHOST_NOTE_PATTERNS = [
   [3, 6, 11],
   [2, 5, 10, 14],
   [1, 7, 9, 13],
@@ -302,7 +302,7 @@ DILLA_GHOST_PATTERNS = [
 ].freeze
 MELODY_CHOP_HZ = [392.00, 349.23, 311.13, 277.18, 261.63, 233.08].freeze
 # Madlib / Jaylib — loose MPC pockets, heavy ghosts, Dilla-time snare-early feel.
-MADLIB_KICK_PATTERNS = [
+LOOSE_POCKET_KICK_PATTERNS = [
   [0, 6, 10, 14],
   [0, 3, 7, 11, 14],
   [0, 5, 8, 12, 15],
@@ -310,11 +310,11 @@ MADLIB_KICK_PATTERNS = [
   [0, 4, 9, 11, 14],
   [0, 2, 6, 10, 14]
 ].freeze
-MADLIB_DILLA_TIMING = {
+LOOSE_POCKET_TIMING_MS = {
   snare: -28..-12, ghost: -10..18, hat_down: 8..18, hat_up: 22..40,
   kick_anchor: 0..6, kick_sync: 10..22
 }.freeze
-# Linda Perhacs "Delicious" layer calibration — beat at 0.72x ≈ 65 BPM native (tell_me 90 * 0.72).
+# Linda Perhacs "Delicious" layer calibration — beat at 0.72x ≈ 65 BPM native (minor_soul_loop 90 * 0.72).
 DELICIOUS_POCKET_RATIO = 0.72
 DELICIOUS_REFERENCE_BPM = 90.0
 DELICIOUS_NATIVE_BPM = (DELICIOUS_REFERENCE_BPM * DELICIOUS_POCKET_RATIO).round(1)
@@ -324,10 +324,10 @@ VLC_EQ_BANDS = [
   [3000, 2.5], [6000, 1.5], [9000, -1.0], [12_000, -2.5], [15_000, -3.5]
 ].freeze
 VLC_COMPRESSOR = { threshold: -20, ratio: 4.0, attack: 8, release: 120, makeup: 3.2, mix: 0.78 }.freeze
-MADLIB_BEAT_CATALOG = TAPE_RENDER_CATALOG.map do |entry|
+LOOSE_POCKET_BEAT_CATALOG = TAPE_RENDER_CATALOG.map do |entry|
   { track: entry[:preset], out: entry[:out].sub("session", "beat"), bars: 32 }
 end.freeze
-DONUT_CHORDS = [
+MODAL_MINOR_CHORDS = [
   { name: "Fm9",       hz: [174.61, 207.65, 261.63, 311.13, 392.00] },
   { name: "Dbmaj9",    hz: [138.59, 174.61, 207.65, 261.63, 311.13] },
   { name: "Bbm9",      hz: [116.54, 138.59, 174.61, 207.65, 261.63] },
@@ -339,7 +339,9 @@ DONUT_CHORDS = [
   # Real Bb7sus4(add9): root, 4, 5, b7, 9.
   { name: "Bb7sus",    hz: [116.54, 155.56, 174.61, 207.65, 261.63] },
   { name: "G#m7",      hz: [103.83, 123.47, 155.56, 185.00, 233.08] },
-  { name: "C#m7",      hz: [130.81, 155.56, 196.00, 233.08, 277.18] },
+  # Root was literally C (130.81), a semitone flat of its own name — this
+  # spelled Cm7(b9), not C#m7. Real C#m7: root, b3, 5, b7, 9.
+  { name: "C#m7",      hz: [138.59, 164.81, 207.65, 246.94, 311.13] },
   { name: "D#m7",      hz: [155.56, 185.00, 233.08, 277.18, 311.13] },
   { name: "Dm7",       hz: [146.83, 174.61, 220.00, 261.63, 329.63] },
   { name: "Gm7",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] },
@@ -351,58 +353,89 @@ DONUT_CHORDS = [
   { name: "Ebmaj9",    hz: [155.56, 196.00, 233.08, 293.66, 349.23] },
   { name: "Gm9",       hz: [196.00, 233.08, 293.66, 349.23, 440.00] }
 ].freeze
+# Real transcriptions researched directly (distinct from the Get Dis Money /
+# Donuts-derived tables above): Slum Village "Fall in Love" & "Climax"
+# (Fantastic Vol. 2, ChordU); D'Angelo "Untitled (How Does It Feel)"
+# (Voodoo — same Soulquarians lineage Dilla recorded alongside); Flying
+# Lotus "Never Catch Me" (danny fratina's published chord analysis) for the
+# quartal/#11 extended-jazz color FlyLo is known for.
+EXTENDED_TENSION_CHORDS = [
+  { name: "Ebm7fil",    hz: [155.56, 185.00, 233.08, 277.18, 349.23] }, # Fall in Love
+  { name: "Bbm7fil",    hz: [116.54, 138.59, 174.61, 207.65, 261.63] },
+  { name: "Emaj7",      hz: [164.81, 207.65, 246.94, 311.13, 369.99] }, # Climax
+  { name: "E7climax",   hz: [164.81, 207.65, 246.94, 293.66, 369.99] },
+  { name: "Dadd9",      hz: [146.83, 185.00, 220.00, 329.63, 440.00] }, # Untitled (How Does It Feel)
+  { name: "A7sus4",     hz: [110.00, 146.83, 164.81, 196.00, 246.94] },
+  { name: "G6",         hz: [196.00, 246.94, 293.66, 329.63, 392.00] },
+  { name: "C9",         hz: [130.81, 164.81, 196.00, 233.08, 293.66] },
+  { name: "F#m9",       hz: [185.00, 220.00, 277.18, 329.63, 415.30] },
+  { name: "B9",         hz: [123.47, 155.56, 185.00, 220.00, 277.18] },
+  { name: "Asus9",      hz: [110.00, 146.83, 164.81, 220.00, 246.94] },
+  { name: "Cm11nc",     hz: [130.81, 155.56, 196.00, 233.08, 349.23] }, # Never Catch Me
+  { name: "AbMaj13s11", hz: [207.65, 261.63, 311.13, 392.00, 587.33] },
+  { name: "A7nc",       hz: [110.00, 138.59, 164.81, 196.00, 246.94] },
+  { name: "Dmaj9nc",    hz: [146.83, 185.00, 220.00, 277.18, 329.63] },
+  { name: "DMaj7overG", hz: [98.00,  146.83, 185.00, 220.00, 277.18] }
+].freeze
 PAD_CHORD_LOOKUP = (
-  PAD_CHORDS + SLUM_VILLAGE_CHORDS + DONUT_CHORDS
+  PAD_CHORDS + EXTENDED_NINTH_CHORDS + MODAL_MINOR_CHORDS + EXTENDED_TENSION_CHORDS
 ).each_with_object({}) { |c, m| m[c[:name]] = c unless m[c[:name]] }.freeze
 # Album / track progressions — Fantastic Vol. 1 & 2 + Donuts.
-DILLA_PROGRESSIONS = {
+CHORD_PROGRESSIONS = {
   soul: %w[Fm9 Dbmaj9 Ebmaj9 Abmaj9],
-  donuts: %w[Fm9 Dbmaj9 Bbm9 Eb7 Abmaj9low C7b9 Fm/C Bb7sus],
-  donuts_time: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9],
+  chromatic_minor_descent: %w[Fm9 Dbmaj9 Bbm9 Eb7 Abmaj9low C7b9 Fm/C Bb7sus],
+  borrowed_dominant_turn: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9],
   # Fm soul arc — i→iv→bVII→bIII→bVI→v→IVsus→i (voice-led, resolves home).
-  timeless_authentic: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 Bb7sus Fm9],
+  voice_led_minor_arc: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 Bb7sus Fm9],
   # Hooktheory Donuts "Time" — Ab major IV–iii–vi–ii–V with turnaround.
-  timeless_published: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9],
+  fourth_third_sixth_second_turn: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9],
   # Full Donuts minor cycle — borrowed dominants + slash colors.
-  donuts_arc: %w[Fm9 Bbm9 Eb7 Abmaj9low Dbmaj9 Fm/C C7b9 Bb7sus],
+  minor_dominant_slash_cycle: %w[Fm9 Bbm9 Eb7 Abmaj9low Dbmaj9 Fm/C C7b9 Bb7sus],
   # Prior engine map (kept for A/B).
-  timeless_legacy: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9],
+  minor_ninth_cycle: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9],
   # Librosa chroma on sub-heavy full mix — bass harmonic field, not stem truth.
-  timeless_measured: %w[Dbmaj9 C#m7 G#m7 D#m7 Fm9 Bbm9 Abmaj9low],
-  players_measured: %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
+  measured_chroma_field: %w[Dbmaj9 C#m7 G#m7 D#m7 Fm9 Bbm9 Abmaj9low],
+  measured_dominant_field: %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
   jazz: %w[Dm9 Gm9 C7#9\ Hendrix Fmaj13],
   # Circle-of-fifths sequence with seventh/ninth extensions: Bach-informed
   # functional motion, voiced through the same drifting analog pad engine.
   baroque: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9],
   # Chromatic-mediant and tritone movement for a denser LA beat-scene field.
-  flylo: %w[C\ cluster E\ altered Bbm9 Gbmaj9 Dm9 G7 Cmaj9 E7b9],
+  chromatic_mediant: %w[C\ cluster E\ altered Bbm9 Gbmaj9 Dm9 G7 Cmaj9 E7b9],
   neo_soul: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9],
   tritone: %w[Cm9 Gbmaj9 Bbm9 E\ altered],
-  get_dis_money: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
-  thelonious: %w[Fm9 Bbm9 Fm9 Bbm9],
-  raise_it_up: %w[Am9 Dm9 Gm9 Cm9],
-  tell_me: %w[Bbm9 Ebmaj9 Abmaj9 Fm9],
-  hold_tight: %w[Dm9 Gm9 Cm9 Fmaj9],
-  players: %w[Fmaj9 Em9 Am9 Dm9],
-  look_of_love: %w[Em9 Am9 Dm9 G7],
-  forth_and_back: %w[E9sus4/D C/E Bbm/E Am/E Db/E Bm/E E9sus4],
-  conant_gardens: %w[Gm9 Cm9 Fm9 Bbm9],
-  i_dont_know: %w[Am9 Dm9 Gm9 Cm9],
-  climax: %w[Fm9 Dbmaj9 Ebmaj9 Bbm9],
-  go_ladies: %w[Fm9 Bbm9 Ebmaj9 Abmaj9],
-  eyes_up: %w[Dm9 Gm9 Cm9 Fmaj9],
-  untitled_fantastic: %w[Cm9 Fm9 Bbm9 Ebmaj9]
+  syncopated_slash_ninth: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
+  chromatic_planing: %w[Fm9 Bbm9 Fm9 Bbm9],
+  ascending_minor_stack: %w[Am9 Dm9 Gm9 Cm9],
+  minor_soul_loop: %w[Bbm9 Ebmaj9 Abmaj9 Fm9],
+  suspended_minor_turn: %w[Dm9 Gm9 Cm9 Fmaj9],
+  major_relative_minor_cycle: %w[Fmaj9 Em9 Am9 Dm9],
+  dominant_minor_resolve: %w[Em9 Am9 Dm9 G7],
+  syncopated_slash_alt: %w[E9sus4/D C/E Bbm/E Am/E Db/E Bm/E E9sus4],
+  minor_cycle_descent: %w[Gm9 Cm9 Fm9 Bbm9],
+  minor_stepwise_cycle: %w[Am9 Dm9 Gm9 Cm9],
+  # Real Climax changes (ChordU) — was a fabricated Fm9/Dbmaj9/Ebmaj9/Bbm9
+  # loop in a completely different key from the actual track.
+  major7_relative_minor_turn: %w[Emaj7 G#m7 C#m7 E7climax],
+  minor_major_ninth_pair: %w[Fm9 Bbm9 Ebmaj9 Abmaj9],
+  minor_stepwise_ascent: %w[Dm9 Gm9 Cm9 Fmaj9],
+  suspended_minor_close: %w[Cm9 Fm9 Bbm9 Ebmaj9],
+  alternating_minor7_pair: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+  # D'Angelo — Untitled (How Does It Feel), Voodoo. Verse then bridge.
+  sus_add9_ballad: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
+  # Flying Lotus — Never Catch Me. Main loop then the tritone-sub modulation.
+  chromatic_mediant_drift: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG]
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
-DILLA_TRACK_PRESETS = {
+TRACK_PRESETS = {
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
-    feel: :thelonious,
+    feel: :chromatic_planing,
     timing: { snare: -14..-5, hat_up: 8..18, bass: 10..24, kick_anchor: 0..3, pad: -6..4 }
   },
-  flylo: {
-    bpm: 89, progression: :flylo, chord_bars: 2, phrase_bars: 16, swing: 61,
-    feel: :madlib, stereo_pan: true,
+  chromatic_mediant: {
+    bpm: 89, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 61,
+    feel: :loose_pocket, stereo_pan: true,
     timing: { snare: -30..-13, hat_up: 18..38, bass: 26..48, kick_anchor: 0..7, pad: 8..24 }
   },
   neo_soul: {
@@ -410,42 +443,77 @@ DILLA_TRACK_PRESETS = {
     feel: :timeless, stereo_pan: true,
     timing: { snare: -20..-8, hat_up: 14..30, bass: 18..38, kick_anchor: 0..5, pad: 2..16 }
   },
-  get_dis_money: {
-    bpm: 97, progression: :get_dis_money, chord_bars: 1, phrase_bars: 7,
-    swing: 54, feel: :get_dis_money, stereo_pan: true,
+  syncopated_slash_ninth: {
+    bpm: 90, progression: :syncopated_slash_ninth, chord_bars: 1, phrase_bars: 7,
+    swing: 54, feel: :syncopated_slash_ninth, stereo_pan: true, quintuplet: true,
     timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 }
   },
-  thelonious: {
-    bpm: 96, progression: :thelonious, chord_bars: 2, phrase_bars: 2,
-    swing: 56, feel: :thelonious,
+  chromatic_planing: {
+    bpm: 96, progression: :chromatic_planing, chord_bars: 2, phrase_bars: 2,
+    swing: 56, feel: :chromatic_planing,
     timing: { bass: 10..22, pad: -8..4, kick_sync: 6..16 }
   },
-  raise_it_up: { bpm: 95, progression: :raise_it_up, chord_bars: 2, swing: 58 },
-  tell_me: { bpm: 90, progression: :tell_me, chord_bars: 2, phrase_bars: 8, swing: 55 },
-  hold_tight: { bpm: 97, progression: :hold_tight, chord_bars: 2, swing: 57 },
-  players: { bpm: 93, progression: :players, chord_bars: 2, swing: 58 },
-  look_of_love: { bpm: 92, progression: :look_of_love, chord_bars: 2, swing: 56 },
-  forth_and_back: { bpm: 102, progression: :forth_and_back, chord_bars: 1, phrase_bars: 7, swing: 54, feel: :get_dis_money },
-  conant_gardens: { bpm: 94, progression: :conant_gardens, chord_bars: 2, swing: 58 },
-  i_dont_know: { bpm: 91, progression: :i_dont_know, chord_bars: 2, swing: 62,
+  ascending_minor_stack: { bpm: 95, progression: :ascending_minor_stack, chord_bars: 2, swing: 58 },
+  minor_soul_loop: { bpm: 90, progression: :minor_soul_loop, chord_bars: 2, phrase_bars: 8, swing: 55 },
+  suspended_minor_turn: { bpm: 97, progression: :suspended_minor_turn, chord_bars: 2, swing: 57 },
+  major_relative_minor_cycle: { bpm: 93, progression: :major_relative_minor_cycle, chord_bars: 2, swing: 58 },
+  dominant_minor_resolve: { bpm: 92, progression: :dominant_minor_resolve, chord_bars: 2, swing: 56 },
+  syncopated_slash_alt: { bpm: 102, progression: :syncopated_slash_alt, chord_bars: 1, phrase_bars: 7, swing: 54, feel: :syncopated_slash_ninth },
+  minor_cycle_descent: { bpm: 94, progression: :minor_cycle_descent, chord_bars: 2, swing: 58 },
+  minor_stepwise_cycle: { bpm: 91, progression: :minor_stepwise_cycle, chord_bars: 2, swing: 62,
                  timing: { bass: 8..28, kick_sync: 2..18 } },
-  climax: { bpm: 96, progression: :climax, chord_bars: 2, swing: 57 },
-  go_ladies: { bpm: 95, progression: :go_ladies, chord_bars: 2, swing: 58 },
-  eyes_up: { bpm: 93, progression: :eyes_up, chord_bars: 4, swing: 55 },
-  untitled_fantastic: { bpm: 91, progression: :untitled_fantastic, chord_bars: 2, swing: 56 },
-  donuts_time: { bpm: 95, progression: :donuts_time, chord_bars: 2, swing: 52 },
+  major7_relative_minor_turn: { bpm: 88, progression: :major7_relative_minor_turn, chord_bars: 2, swing: 57, quintuplet: true },
+  minor_major_ninth_pair: { bpm: 95, progression: :minor_major_ninth_pair, chord_bars: 2, swing: 58 },
+  minor_stepwise_ascent: { bpm: 93, progression: :minor_stepwise_ascent, chord_bars: 4, swing: 55 },
+  alternating_minor7_pair: { bpm: 88, progression: :alternating_minor7_pair, chord_bars: 2, swing: 58, quintuplet: true },
+  sus_add9_ballad: { bpm: 92, progression: :sus_add9_ballad, chord_bars: 2, phrase_bars: 16, swing: 56,
+                    feel: :timeless, stereo_pan: true },
+  chromatic_mediant_drift: { bpm: 78, progression: :chromatic_mediant_drift, chord_bars: 2, phrase_bars: 16, swing: 60,
+                     feel: :loose_pocket, stereo_pan: true,
+                     timing: { snare: -28..-12, hat_up: 18..36, bass: 24..44, kick_anchor: 0..6, pad: 6..20 } },
+  suspended_minor_close: { bpm: 91, progression: :suspended_minor_close, chord_bars: 2, swing: 56 },
+  borrowed_dominant_turn: { bpm: 95, progression: :borrowed_dominant_turn, chord_bars: 2, swing: 52 },
   timeless: {
-    bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
+    bpm: 86, progression: :voice_led_minor_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4, pad: 2..14 }
   },
-  donuts: {
-    bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
+  chromatic_minor_descent: {
+    bpm: 86, progression: :voice_led_minor_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
   },
   soul: { bpm: 86, progression: :soul, chord_bars: 4, swing: 58 },
-  jazz: { bpm: 88, progression: :jazz, chord_bars: 4, swing: 60 }
+  jazz: { bpm: 88, progression: :jazz, chord_bars: 4, swing: 60 },
+  # Not a lookup — dilla_progression detects :generated and calls
+  # generate_progression (functional-harmony random walk) instead.
+  # GEN_ROOT/GEN_MODE/GEN_LENGTH/GEN_SEED env vars configure it.
+  generated: {
+    bpm: 90, progression: :generated, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :organic, stereo_pan: true
+  },
+  # progression: matches a GENERATED_STYLES entry directly — dilla_progression
+  # detects this and routes to the matching generate_*_progression call.
+  generated_planing: {
+    bpm: 86, progression: :planing, chord_bars: 2, phrase_bars: 16, swing: 56,
+    feel: :organic, stereo_pan: true
+  },
+  generated_mediant: {
+    bpm: 78, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 60,
+    feel: :organic, stereo_pan: true
+  },
+  generated_polytonal: {
+    bpm: 92, progression: :polytonal, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :organic, stereo_pan: true
+  },
+  generated_negative: {
+    bpm: 84, progression: :negative_harmony, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :organic, stereo_pan: true
+  },
+  generated_neapolitan: {
+    bpm: 80, progression: :neapolitan, chord_bars: 2, phrase_bars: 16, swing: 56,
+    feel: :organic, stereo_pan: true
+  }
 }.freeze
 INDUSTRIAL_BPM_DEFAULT = 132.0
 
@@ -460,6 +528,186 @@ CHORD_TEMPLATES = {
   "sus" => [0, 5, 7],
   "dim" => [0, 3, 6]
 }.freeze
+
+# Real progression generator (not a lookup table) — a weighted-random walk
+# over scale-degree functional harmony, the same tonic/predominant/dominant
+# circulation Bach's chorales and jazz standards both run on: I tends
+# toward IV/V/vi, ii/IV lean toward V, V resolves to I, vi wanders through
+# ii/IV before finding its way back. Extended qualities (m9/maj9/dominant7)
+# keep it in the same lush-pad harmonic language as the researched
+# progressions rather than plain triads.
+SCALE_DEGREE_QUALITY = {
+  major: { 1 => "maj9", 2 => "m9", 3 => "m7", 4 => "maj9", 5 => "7", 6 => "m9", 7 => "dim" },
+  minor: { 1 => "m9", 2 => "dim", 3 => "maj9", 4 => "m9", 5 => "7", 6 => "maj9", 7 => "7" }
+}.freeze
+SCALE_SEMITONES = {
+  major: [0, 2, 4, 5, 7, 9, 11],
+  minor: [0, 2, 3, 5, 7, 8, 10]
+}.freeze
+# Degree -> {next_degree => relative weight}. Standard functional motion:
+# tonic radiates outward, predominants (ii/IV) gravitate to the dominant,
+# the dominant resolves home, vi is the deceptive detour.
+DEGREE_TRANSITIONS = {
+  1 => { 4 => 3, 5 => 3, 6 => 2, 2 => 1 },
+  2 => { 5 => 4, 7 => 1, 4 => 1 },
+  3 => { 6 => 2, 4 => 1, 2 => 1 },
+  4 => { 5 => 3, 1 => 2, 2 => 1 },
+  5 => { 1 => 4, 6 => 1, 4 => 1 },
+  6 => { 2 => 2, 4 => 2, 5 => 1 },
+  7 => { 1 => 3, 3 => 1 }
+}.freeze
+
+def weighted_pick(rng, weights)
+  total = weights.values.sum
+  roll = rng.rand(total)
+  acc = 0
+  weights.each do |value, weight|
+    acc += weight
+    return value if roll < acc
+  end
+  weights.keys.first
+end
+
+# Generates a fresh progression by scale-degree random walk rather than
+# picking from CHORD_PROGRESSIONS. root_hz sets the key center, mode is
+# :major or :minor, length is chord count. Same seed -> same progression,
+# so a track can be reproduced; no seed -> genuinely new each render.
+def chord_from_root(root_hz, quality, voices: 5)
+  intervals = CHORD_TEMPLATES.fetch(quality)
+  hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
+  extra = intervals.max + 2
+  hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
+  hz.sort.first(voices)
+end
+
+def generate_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)
+  rng = seed ? Random.new(seed) : Random.new
+  quality_for = SCALE_DEGREE_QUALITY.fetch(mode)
+  semitones = SCALE_SEMITONES.fetch(mode)
+  degree = 1
+  Array.new(length) do
+    quality = quality_for.fetch(degree)
+    chord_root_hz = root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+    chord = { name: "deg#{degree}#{quality}", hz: chord_from_root(chord_root_hz, quality) }
+    degree = weighted_pick(rng, DEGREE_TRANSITIONS.fetch(degree))
+    chord
+  end
+end
+
+# Dilla's chromatic-minor-descent language (Donuts/Fantastic Vol. 2) isn't
+# functional resolution — it's the *same* extended chord quality (m9/maj9)
+# walked scalar/chromatic steps, occasionally toggling major/minor color.
+# "Parallel planing" in classical-theory terms.
+PLANING_STEP_WEIGHTS = { -2 => 3, -1 => 2, 2 => 2, -3 => 1, 3 => 1, -5 => 1 }.freeze
+PLANING_QUALITIES = %w[m9 maj9].freeze
+
+def generate_planing_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)
+  rng = seed ? Random.new(seed) : Random.new
+  scale = SCALE_SEMITONES.fetch(mode)
+  degree = 0
+  quality = mode == :minor ? "m9" : "maj9"
+  Array.new(length) do
+    octave_shift = (degree.to_f / scale.length).floor
+    chord_root_hz = root_hz * (2**((scale[degree % scale.length] + octave_shift * 12) / 12.0))
+    chord = { name: "planing#{degree}#{quality}", hz: chord_from_root(chord_root_hz, quality) }
+    quality = PLANING_QUALITIES.sample(random: rng) if rng.rand < 0.25
+    degree += weighted_pick(rng, PLANING_STEP_WEIGHTS)
+    chord
+  end
+end
+
+# Flying Lotus's language (per "Never Catch Me" chord analysis): root
+# motion by thirds (chromatic mediants) rather than fifths, with an
+# occasional tritone substitution standing in for a dominant resolution.
+MEDIANT_STEP_WEIGHTS = { 3 => 3, -3 => 3, 4 => 2, -4 => 2, 6 => 1 }.freeze
+MEDIANT_QUALITIES = %w[m9 maj9 7].freeze
+
+def generate_chromatic_mediant_progression(root_hz: 130.81, length: 8, seed: nil)
+  rng = seed ? Random.new(seed) : Random.new
+  semitone_offset = 0
+  Array.new(length) do
+    chord_root_hz = root_hz * (2**(semitone_offset / 12.0))
+    quality = MEDIANT_QUALITIES.sample(random: rng)
+    chord = { name: "mediant#{semitone_offset}#{quality}", hz: chord_from_root(chord_root_hz, quality) }
+    semitone_offset += weighted_pick(rng, MEDIANT_STEP_WEIGHTS)
+    chord
+  end
+end
+
+# Aydin Esen's bitonal color: layer a second triad a tritone or major
+# 2nd above the primary chord's root (a real polychord stack) rather than
+# just extending the primary chord further up the tertian stack.
+POLYTONAL_OFFSETS = [6, 2, 10].freeze
+
+def generate_polytonal_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)
+  rng = seed ? Random.new(seed) : Random.new
+  quality_for = SCALE_DEGREE_QUALITY.fetch(mode)
+  semitones = SCALE_SEMITONES.fetch(mode)
+  degree = 1
+  Array.new(length) do
+    quality = quality_for.fetch(degree)
+    chord_root_hz = root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+    hz = chord_from_root(chord_root_hz, quality, voices: 4)
+    if rng.rand < 0.45
+      poly_root = chord_root_hz * (2**(POLYTONAL_OFFSETS.sample(random: rng) / 12.0))
+      hz += chord_from_root(poly_root, "maj", voices: 2)
+    end
+    chord = { name: "poly#{degree}#{quality}", hz: hz.sort.first(6) }
+    degree = weighted_pick(rng, DEGREE_TRANSITIONS.fetch(degree))
+    chord
+  end
+end
+
+# Real pedal-point technique (Bach organ works, film-scoring tension
+# device): freeze the bass note while the chords above it keep changing.
+# Implemented by literally replacing each chord's lowest voice with a
+# fixed anchor pitch for a stretch — the upper structure still moves, only
+# the foundation holds still, which is the actual effect.
+def apply_pedal_point(pads, probability: 0.35, seed: nil)
+  return pads if pads.length < 3
+  rng = seed ? Random.new(seed) : Random.new
+  pedal_root = pads.first[:hz].min
+  pads.map.with_index do |chord, i|
+    next chord if i.zero? || rng.rand >= probability
+    hz = chord[:hz].dup
+    hz[hz.index(hz.min)] = pedal_root
+    { name: "#{chord[:name]}_pedal", hz: hz.sort }
+  end
+end
+
+# Negative harmony (Ernst Levy / popularized by Jacob Collier): reflect
+# every pitch around a fixed axis between the tonic and dominant. A major
+# chord's mirror is its relative-minor-adjacent inversion — genuinely
+# different color from any of the other generators, not just a mode swap.
+def generate_negative_harmony_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)
+  source = generate_progression(root_hz:, mode:, length:, seed:)
+  # Axis sits between the tonic and dominant (7 semitones up) — reflecting
+  # around midi_axis = tonic_midi + 3.5 semitones is the standard convention.
+  axis_midi = hz_to_midi(root_hz) + 3.5
+  source.map do |chord|
+    mirrored = chord[:hz].map { |hz| midi_to_hz((2 * axis_midi) - hz_to_midi(hz)) }
+    { name: "neg_#{chord[:name]}", hz: mirrored.sort }
+  end
+end
+
+# Neapolitan/tritone-first: root motion dominated by a half-step (bII, the
+# Neapolitan) or a tritone, resolving to the tonic only rarely — deliberately
+# avoids the fifth-based motion every other generator here leans on.
+NEAPOLITAN_STEP_WEIGHTS = { 1 => 4, 6 => 3, 11 => 2, 4 => 1 }.freeze
+NEAPOLITAN_QUALITIES = %w[maj7 m9 7].freeze
+
+def generate_neapolitan_progression(root_hz: 130.81, length: 8, seed: nil)
+  rng = seed ? Random.new(seed) : Random.new
+  semitone_offset = 0
+  Array.new(length) do
+    chord_root_hz = root_hz * (2**(semitone_offset / 12.0))
+    quality = NEAPOLITAN_QUALITIES.sample(random: rng)
+    chord = { name: "napl#{semitone_offset}#{quality}", hz: chord_from_root(chord_root_hz, quality) }
+    step = weighted_pick(rng, NEAPOLITAN_STEP_WEIGHTS)
+    semitone_offset += rng.rand < 0.5 ? step : -step
+    chord
+  end
+end
 
 def sh!(*command)
   display = command.flatten.join(" ")
@@ -1123,10 +1371,10 @@ def grade_filter(fx, stock)
 end
 
 def sonitex_resolve_preset(track: nil)
-  track ||= (ENV["TRACK"] || ENV["PROGRESSION"] || "donuts").to_s.downcase.tr("-", "_")
+  track ||= (ENV["TRACK"] || ENV["PROGRESSION"] || "chromatic_minor_descent").to_s.downcase.tr("-", "_")
   raw = (ENV["SONITEX_PRESET"] || ENV["SONITEX"]).to_s.strip.downcase
   if raw.empty?
-    return :donuts_warm if %w[donuts timeless soul donuts_time timeless_measured].include?(track)
+    return :donuts_warm if %w[chromatic_minor_descent timeless soul borrowed_dominant_turn measured_chroma_field].include?(track)
     return :heavy
   end
   return nil if raw =~ /\A(?:0|false|off)\z/
@@ -1257,15 +1505,65 @@ TRUE_PEAK_CEILING_DB = -1.0
 TRUE_PEAK_CEILING_LINEAR = (10**(TRUE_PEAK_CEILING_DB / 20.0)).round(4)
 
 def true_peak_guard_filter(input_tag, out_tag: "out")
+  if ENV["DEBUG_NO_LOUDNORM"]
+    return "[#{input_tag}]alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
+  end
   "[#{input_tag}]loudnorm=I=#{MASTER_TARGET_LUFS}:TP=#{TRUE_PEAK_CEILING_DB}:LRA=#{MASTER_TARGET_LRA}," \
     "aresample=#{SAMPLE_RATE}," \
     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
 end
 
+# dilla_mix_preprocess_filters' NY drum bump (+5.2dB@58Hz/+3.6dB@92Hz) and
+# every Sonitex preset's own warmth/head-bump EQ both re-boost the same
+# sub-100Hz band the sample bass and synth bass already occupy, at various
+# points earlier in the chain — repeatedly undoing any balance correction
+# placed before them. This is the one point both the dry and Sonitex paths
+# funnel through right before the final safety limiter, so it's the only
+# place a correction here actually sticks.
+def mix_bass_chord_balance_filter(input_tag, out_tag: "balanced")
+  # Sonitex's saturation stages (tape_saturation/harmonic_bloom-style tanh
+  # waveshaping) generate real harmonic energy from whatever's loudest —
+  # the bass — so a hotter bass signal comes out of Sonitex measurably
+  # bassier than it went in, on top of Sonitex's own warmth/head-bump EQ.
+  # A dry mix needed -7/+6dB here; Sonitex needs noticeably more.
+  cut = sonitex_enabled? ? -11.0 : -7.0
+  boost = sonitex_enabled? ? 8.0 : 6.0
+  "[#{input_tag}]bass=g=#{cut}:f=95:width_type=h:w=170,equalizer=f=300:t=h:w=360:g=#{boost}[#{out_tag}]"
+end
+
+# Real mix-engineering technique: sum everything below ~120Hz to mono.
+# Stereo-widened sub content cancels on real speakers/systems (especially
+# mono or near-mono playback) and phase-cancellation down there is where
+# translation problems actually come from — the highs can stay wide.
+def sub_bass_mono_filter(input_tag, out_tag: "monobassed")
+  "[#{input_tag}]asplit=2[sblo_src][sbhi_src];" \
+  "[sblo_src]lowpass=f=120,pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[sblo];" \
+  "[sbhi_src]highpass=f=120[sbhi];" \
+  "[sblo][sbhi]amix=inputs=2:weights=1.0 1.0:duration=first:normalize=0[#{out_tag}]"
+end
+
+# Very slow, very subtle continuous pitch/tempo drift — real tape/vinyl
+# never holds perfectly still. Two independent slow LFOs (not locked to
+# the same rate) so it doesn't read as a single obvious wobble.
+def analog_drift_filter(input_tag, out_tag: "drifted")
+  "[#{input_tag}]vibrato=f=0.13:d=0.0035,vibrato=f=0.19:d=0.002[#{out_tag}]"
+end
+
+# Darker/deeper tonal color: gentle high rolloff (less brightness/major
+# "shimmer") plus a bit more low-mid weight — moodier without changing any
+# chord quality, on top of the STREAM_TRACKS rotation now leaning minor.
+def mood_darken_filter(input_tag, out_tag: "darkened")
+  "[#{input_tag}]equalizer=f=5500:t=h:w=4000:g=-3.5,equalizer=f=220:t=h:w=180:g=2.0,lowpass=f=11000[#{out_tag}]"
+end
+
 def master_bus_filters(input_tag = "mix", track: nil)
   unless sonitex_enabled?
-    filt = ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[premaster]"]
-    filt << true_peak_guard_filter("premaster")
+    filt = ["[#{input_tag}]alimiter=limit=0.90:level_out=0.92[premaster0]"]
+    filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
+    filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
+    filt << analog_drift_filter("monobassed", out_tag: "drifted")
+    filt << mood_darken_filter("drifted", out_tag: "darkened")
+    filt << true_peak_guard_filter("darkened")
     return filt
   end
   s = sonitex_config(track:)
@@ -1273,8 +1571,12 @@ def master_bus_filters(input_tag = "mix", track: nil)
   filt = []
   filt.concat(sonitex_tape_filters(input_tag, out_tag: "snx_out"))
   filt.concat(analog_emulation_filters("snx_out", variant, out_tag: "ana_out"))
-  filt << "[ana_out]alimiter=limit=#{s[:limit]}:level_out=#{s[:level_out]}[premaster]"
-  filt << true_peak_guard_filter("premaster")
+  filt << "[ana_out]alimiter=limit=#{s[:limit]}:level_out=#{s[:level_out]}[premaster0]"
+  filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
+  filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
+  filt << analog_drift_filter("monobassed", out_tag: "drifted")
+  filt << mood_darken_filter("drifted", out_tag: "darkened")
+  filt << true_peak_guard_filter("darkened")
   filt
 end
 
@@ -1302,6 +1604,98 @@ end
 # --- Live playback ---
 
 # Render a short preview and play it immediately via ffplay.
+TTS_WORKER = File.expand_path("../../bin/tts-worker", ROOT)
+SPEECH_VOICES = %w[en-US-GuyNeural en-US-AndrewNeural en-US-EricNeural en-GB-RyanNeural en-AU-WilliamNeural].freeze
+# MASTER's own TTS (MASTER/bin/tts-worker, Edge TTS one-shot mode) speaking
+# over the beat — real speech, not a stub, mixed in quiet. Original pickup
+# lines, not lyrics from any real song (those are copyrighted).
+SPEECH_LINES = [
+  "is your name Google? because you're everything I've been searching for",
+  "are you made of copper and tellurium? because you're Cu-Te",
+  "do you have a map? I just keep getting lost in your eyes",
+  "if you were a vegetable, you'd be a cute-cumber",
+  "are you a parking ticket? because you've got fine written all over you",
+  "is there an airport nearby, or is that just my heart taking off",
+  "do you believe in love at first sight, or should I walk by again",
+  "are you a magician? because whenever I look at you, everyone else disappears",
+  "I was going to say something really sweet about your smile, but you distracted me",
+  "excuse me, I think you dropped something: my jaw",
+  "are you French? because Eiffel for you",
+  "if I could rearrange the alphabet, I'd put U and I together",
+  "do you have a sunburn, or are you always this hot",
+  "are you a campfire? because you're hot and I want s'more",
+  "is it hot in here, or is it just you",
+  "are you a time traveler? because I can totally see you in my future",
+  "I'm not a photographer, but I can picture us together",
+  "do you have a Band-Aid? because I just scraped my knee falling for you"
+].freeze
+
+FILLER_SUBJECTS = %w[
+  your smile your laugh that outfit this playlist your energy the room
+  this beat your timing that look you your vibe this moment
+].freeze
+FILLER_VERBS = %w[
+  is throwing off is stealing is rewriting is upgrading is complicating
+  is improving is derailing is soundtracking is elevating is haunting
+].freeze
+FILLER_TOPICS = %w[
+  my whole schedule my train of thought my entire plan my focus
+  my Friday night my next three decisions my playlist my composure
+].freeze
+
+def filler_sentence(rng)
+  "#{FILLER_SUBJECTS.sample(random: rng)} #{FILLER_VERBS.sample(random: rng)}, #{FILLER_TOPICS.sample(random: rng)}, yeah."
+end
+
+# No faker gem installed and this tool stays dependency-free by design —
+# local word-bank generator instead, mixed with the curated lines, gives
+# enough varied text to talk continuously rather than one clip per track.
+def continuous_speech_text(duration, seed: nil)
+  rng = seed ? Random.new(seed) : Random.new
+  words_needed = (duration * 2.1).to_i
+  sentences = []
+  word_count = 0
+  while word_count < words_needed
+    s = rng.rand < 0.35 ? SPEECH_LINES.sample(random: rng) : filler_sentence(rng)
+    sentences << s
+    word_count += s.split.length
+  end
+  sentences.join(" ")
+end
+
+def speak_over_track!(mp3_path, duration, bpm = 90.0)
+  return mp3_path unless File.executable?(TTS_WORKER) && tool_available?("ffmpeg")
+  text = continuous_speech_text(duration)
+  voice = SPEECH_VOICES.sample
+  voice_mp3 = "#{mp3_path}.voice.mp3"
+  FileUtils.rm_f(voice_mp3)
+  Open3.popen2(Gem.ruby, TTS_WORKER, voice, "-28%", "-60Hz", voice_mp3) { |stdin, _stdout, wait|
+    stdin.write(text)
+    stdin.close
+    wait.value
+  }
+  return mp3_path unless File.exist?(voice_mp3) && File.size(voice_mp3) > 500
+  tmp = "#{mp3_path}.spoken.mp3"
+  # Beat-synced amplitude pulse (half-note rate) plus a slow pitch wobble —
+  # makes the speech breathe with the track instead of sitting flat on top
+  # of it, closer to "dynamically warped to fit the beat" than a static
+  # overlay.
+  tremolo_hz = (bpm / 60.0 / 2.0).round(4)
+  # Loop the speech if it runs shorter than the track (continuous_speech_text
+  # estimates word count from duration, but real TTS pacing varies), trim
+  # if it runs long, so talking spans the whole track either way.
+  sh! "ffmpeg", "-y", "-i", mp3_path, "-stream_loop", "-1", "-i", voice_mp3,
+      "-filter_complex", "[1:a]atrim=0:#{duration},asetrate=44100*0.88,aresample=44100," \
+                         "tremolo=f=#{tremolo_hz}:d=0.22,vibrato=f=0.6:d=0.02," \
+                         "tremolo=f=0.1:d=0.88,volume=0.75[voice];" \
+                         "[0:a][voice]amix=inputs=2:duration=first:normalize=0[out]",
+      "-map", "[out]", "-c:a", "libmp3lame", "-b:a", "320k", tmp
+  FileUtils.mv(tmp, mp3_path)
+  mp3_path
+ensure
+  FileUtils.rm_f(voice_mp3) if voice_mp3
+end
+
 def play(preset_name = nil, bars_count = 8)
   abort "ffplay required" unless tool_available?("ffplay")
   preset_name ||= "dilla"
@@ -1312,6 +1706,11 @@ def play(preset_name = nil, bars_count = 8)
     render_dilla(tmp)
   else
     render(tmp)
+  end
+  if ENV["SPEAK"]
+    cfg = dilla_resolve_config
+    track_duration = (60.0 / cfg[:bpm]) * 4.0 * bars_count
+    speak_over_track!(tmp, track_duration, cfg[:bpm])
   end
   sh! "ffplay", "-nodisp", "-autoexit", tmp
 ensure
@@ -1324,7 +1723,7 @@ def play_loop(path)
   abort "ffplay required" unless tool_available?("ffplay")
   abort "missing #{path}" unless File.exist?(path)
   cfg = dilla_resolve_config
-  prog = DILLA_PROGRESSIONS[cfg[:progression]]
+  prog = CHORD_PROGRESSIONS[cfg[:progression]]
   prog_names = prog.is_a?(Array) ? prog.join(" → ") : cfg[:progression].to_s
   puts "looping #{path} (#{File.size(path)} bytes, #{cfg[:bpm].to_i} BPM)"
   puts "progression: #{prog_names}"
@@ -1419,6 +1818,52 @@ rescue SystemCallError => e
   abort "playback failed: #{e.message}"
 end
 
+STREAM_TRACKS = %w[
+  chromatic_mediant_drift alternating_minor7_pair timeless chromatic_mediant syncopated_slash_ninth
+  generated generated_planing generated_mediant generated_polytonal generated_negative generated_neapolitan
+].freeze
+
+# Tempo dropped a lot over this session (92->68 BPM) without this changing,
+# so the same bar count now takes much longer in real time — re-read fresh
+# on every hotswap exec below rather than baked into the original CLI arg,
+# so tuning this constant alone is enough going forward.
+STREAM_BARS_COUNT = 16
+
+# Non-stop chord/pad showcase: renders and plays each track once (full
+# playback through real speakers, ffplay -autoexit), then moves on, forever.
+# Ctrl-C to stop. No LLM/agent involved — plain local playback.
+def stream(bars_count = STREAM_BARS_COUNT)
+  abort "ffplay required" unless tool_available?("ffplay")
+  prev_track = ENV["TRACK"]
+  # Every restart (and there have been many, iterating on this live) reset
+  # the rotation to index 0 — meaning repeated restarts kept replaying the
+  # same first track/pattern over and over regardless of what else was in
+  # rotation. Start from a random position instead.
+  start_at = rand(STREAM_TRACKS.length)
+  order = STREAM_TRACKS.rotate(start_at)
+  # Ruby can't safely reload this file in-process (the CLI dispatch at the
+  # bottom runs unconditionally, so a mid-run `load` would re-trigger it —
+  # risk of recursion). exec-ing a fresh process instead is safe: it fully
+  # replaces this process with a new one that reads the file from disk
+  # again, so edits since the last track take effect automatically between
+  # tracks without needing a manual kill+relaunch.
+  self_mtime = File.mtime(__FILE__)
+  puts "streaming — cycling #{order.join(', ')} (Ctrl-C to stop)"
+  loop do
+    order.each do |t|
+      if File.mtime(__FILE__) > self_mtime
+        puts "=== dilla.rb changed — restarting to pick it up ==="
+        exec(Gem.ruby, __FILE__, "stream", STREAM_BARS_COUNT.to_s)
+      end
+      ENV["TRACK"] = t
+      puts "=== #{t} ==="
+      play("dilla", bars_count)
+    end
+  end
+ensure
+  prev_track ? ENV["TRACK"] = prev_track : ENV.delete("TRACK")
+end
+
 # Instantly play a modulating bass tone — good for local audio system check.
 def bass(root_hz = 55.0)
   abort "ffplay required" unless tool_available?("ffplay")
@@ -1438,26 +1883,37 @@ end
 
 # --- J Dilla Time beat engine (MPC3000 cyclic microtiming) ---
 
-def dilla_timing_ms(role, bar_index, step_index, timing = nil)
-  range = timing&.fetch(role, nil) || DILLA_TIMING_MS.fetch(role)
+def dilla_timing_ms(role, bar_index, step_index, timing = nil, beat_p = nil)
+  range = timing&.fetch(role, nil) || MICROTIMING_MS.fetch(role)
   seed  = (bar_index * 97) + (step_index * 31) + role.hash.abs
-  range.begin + (seed % (range.end - range.begin + 1))
+  raw = range.begin + (seed % (range.end - range.begin + 1))
+  return raw unless beat_p
+  # The MPC3000 Dilla actually used had only 96 PPQ (pulses per quarter
+  # note) timing resolution — his "human" nudges were discrete steps on
+  # that coarse grid, not smooth continuous offsets. Quantize to the same
+  # grid rather than the arbitrary 1ms precision floats/integers give for
+  # free but hardware in 2000-2003 never had.
+  tick_ms = (beat_p * 1000.0) / 96.0
+  ((raw / tick_ms).round * tick_ms).round(3)
 end
 
 def dilla_resolve_config
-  track = (ENV["TRACK"] || "donuts").to_s.downcase.tr("-", "_").to_sym
-  preset = DILLA_TRACK_PRESETS.fetch(track, DILLA_TRACK_PRESETS[:donuts])
+  track = (ENV["TRACK"] || "chromatic_minor_descent").to_s.downcase.tr("-", "_").to_sym
+  preset = TRACK_PRESETS.fetch(track, TRACK_PRESETS[:chromatic_minor_descent])
   prog = (ENV["PROGRESSION"] || preset.fetch(:progression, track)).to_s.downcase.tr("-", "_").to_sym
   {
     track: track,
-    bpm: (ENV["BPM"] || preset[:bpm] || DEFAULT_BPM).to_f,
+    # Locked to a constant 92 by explicit request — no per-preset or ENV
+    # override, no variation between tracks.
+    bpm: DEFAULT_BPM,
     progression: prog,
     chord_bars: preset.fetch(:chord_bars, 4),
     phrase_bars: preset[:phrase_bars],
     swing: (ENV["SWING"] || preset.fetch(:swing, 58)).to_f,
     feel: preset[:feel] || :default,
     stereo_pan: preset[:stereo_pan] || false,
-    timing: preset[:timing]
+    timing: preset[:timing],
+    quintuplet: ENV["QUINTUPLET"] ? ENV["QUINTUPLET"] != "0" : (preset[:quintuplet] || false)
   }
 end
 
@@ -1471,9 +1927,20 @@ def dilla_chord_index(bar, pad_chords, chord_bars:, phrase_bars: nil)
   end
 end
 
-def dilla_swing_offset(step_index, step_p, swing)
+def dilla_swing_offset(step_index, step_p, swing, quintuplet: false)
   return 0.0 if swing.to_f <= 0.0 || step_index.even?
-  (step_p * swing.clamp(0.0, 100.0) / 100.0 * 0.5).round(6)
+  amount = swing.clamp(0.0, 100.0) / 100.0
+  unless quintuplet
+    return (step_p * amount * 0.5).round(6)
+  end
+  # Real Dilla technique (Charnas/Hein analysis): the beat divides into 5
+  # equal parts, not the standard 4 (16ths) or 6 (triplets) — the "and"
+  # lands at the 3rd of 5 divisions, a 3:2 ratio rather than 2:1. That's a
+  # different rhythmic subdivision, not just a different swing percentage.
+  beat_p = step_p * 4.0
+  quintuplet_pos = beat_p * 3.0 / 5.0
+  straight_pos = step_p * 2.0
+  ((quintuplet_pos - straight_pos) * amount).round(6)
 end
 
 def dilla_velocity(base, bar_index, step_index, spread: 0.10)
@@ -1483,9 +1950,26 @@ def dilla_velocity(base, bar_index, step_index, spread: 0.10)
   [[base * (1.0 + gaussian * spread), 0.03].max, 1.0].min.round(3)
 end
 
-def dilla_progression(mode = :donuts)
-  names = DILLA_PROGRESSIONS.fetch(mode.to_sym, DILLA_PROGRESSIONS.fetch(:donuts))
-  names.map { |n| PAD_CHORD_LOOKUP[n] || DONUT_CHORDS.find { |c| c[:name] == n } }.compact
+GENERATED_STYLES = %i[functional planing chromatic_mediant polytonal negative_harmony neapolitan].freeze
+
+def dilla_progression(mode = :chromatic_minor_descent)
+  if GENERATED_STYLES.include?(mode.to_sym) || mode.to_sym == :generated
+    root_hz = (ENV["GEN_ROOT"] || 130.81).to_f
+    gen_mode = (ENV["GEN_MODE"] || "minor").to_sym
+    length = (ENV["GEN_LENGTH"] || 8).to_i
+    seed = ENV["GEN_SEED"]&.to_i
+    style = mode.to_sym == :generated ? (ENV["GEN_STYLE"] || "functional").to_sym : mode.to_sym
+    case style
+    when :planing then return generate_planing_progression(root_hz:, mode: gen_mode, length:, seed:)
+    when :chromatic_mediant then return generate_chromatic_mediant_progression(root_hz:, length:, seed:)
+    when :polytonal then return generate_polytonal_progression(root_hz:, mode: gen_mode, length:, seed:)
+    when :negative_harmony then return generate_negative_harmony_progression(root_hz:, mode: gen_mode, length:, seed:)
+    when :neapolitan then return generate_neapolitan_progression(root_hz:, length:, seed:)
+    else return generate_progression(root_hz:, mode: gen_mode, length:, seed:)
+    end
+  end
+  names = CHORD_PROGRESSIONS.fetch(mode.to_sym, CHORD_PROGRESSIONS.fetch(:chromatic_minor_descent))
+  names.map { |n| PAD_CHORD_LOOKUP[n] || MODAL_MINOR_CHORDS.find { |c| c[:name] == n } }.compact
 end
 
 def dilla_chord_bass_hz(chord)
@@ -1510,7 +1994,15 @@ def voice_lead_chords(chords)
     voiced = targets.each_with_index.map do |target, i|
       anchor = prev_midis[i % prev_midis.length]
       shift = ((anchor - target) / 12.0).round
-      target + shift * 12.0
+      midi = target + shift * 12.0
+      # Nearest-octave voice leading has no floor/ceiling on its own — over a
+      # long progression it can drag deliberately bright voicings down into
+      # the bass's own register, so the pad reads as more bass instead of an
+      # audible chord sitting above it. Keep every voice in a register
+      # clearly above the kick/bass fundamental.
+      midi += 12.0 while midi < 48.0
+      midi -= 12.0 while midi > 81.0
+      midi
     end.sort
     prev_midis = voiced
     led << { name: nxt[:name], hz: voiced.map { |m| midi_to_hz(m) }.uniq.first(5) }
@@ -1518,28 +2010,44 @@ def voice_lead_chords(chords)
   led
 end
 
-def dilla_kick_pattern(bar, n_bars, feel)
-  case feel
-  when :get_dis_money
-    [[7, 10, 14], [3, 7, 10, 12, 14], [6, 9, 13, 15], [2, 7, 10, 14]][(bar / 2) % 4]
-  when :thelonious
-    [[14, 3, 7, 10], [14, 3, 8, 11], [13, 2, 6, 10], [15, 3, 7, 11]][bar % 4]
-  when :madlib
-    MADLIB_KICK_PATTERNS[(bar * 3 + bar / 4) % MADLIB_KICK_PATTERNS.length]
-  when :timeless
-    group = (bar / 4) % 2
-    pat = [[0, 7, 10, 14], [0, 5, 7, 10, 14], [0, 3, 7, 10, 12, 14], [0, 6, 9, 14]][(bar + group) % 4]
-    pat = [0, 10] if bar.zero?
-    pat += [2, 14] if bar % 8 == 5
-    pat.uniq.sort
-  else
-    group = (bar / 2) % 3
-    pat = DILLA_KICK_PATTERNS[(bar + group * 2) % DILLA_KICK_PATTERNS.length]
-    pat = [0, 10] if bar.zero?
-    pat = [0, 3, 6, 7, 10, 12, 14, 15] if bar == n_bars - 1
-    pat += [15] if bar % 8 == 7 && !pat.include?(15)
-    pat.uniq.sort
+# Position weights derived from the empirical frequency of each 16th-note
+# slot across every curated pattern in the file — not invented from
+# scratch. Used to *generate* a fresh, never-exactly-repeating pattern
+# each bar instead of only rotating a small fixed set: the "organic
+# exploratory impromptu" feel of a drummer varying a groove live rather
+# than a sequencer replaying the same loop.
+KICK_POSITION_WEIGHTS = begin
+  counts = Array.new(16, 0)
+  (SYNCOPATED_KICK_PATTERNS + LOOSE_POCKET_KICK_PATTERNS +
+   [[7, 10, 14], [3, 7, 10, 12, 14], [6, 9, 13, 15], [2, 7, 10, 14],
+    [14, 3, 7, 10], [14, 3, 8, 11], [13, 2, 6, 10], [15, 3, 7, 11]]).each do |pat|
+    pat.each { |step| counts[step] += 1 }
   end
+  counts.freeze
+end
+
+def generate_organic_kick_pattern(bar, seed_base = 5081)
+  rng = Random.new(seed_base + bar * 733)
+  total = KICK_POSITION_WEIGHTS.sum.to_f
+  candidates = (0..15).select do |i|
+    prob = (KICK_POSITION_WEIGHTS[i] / total) * 3.4
+    rng.rand < prob
+  end
+  # Pure independent-per-step probability could land two hits a single
+  # 16th apart — reads as a mistake/flam, not a groove. Enforce a minimum
+  # gap like a real kick pattern would have.
+  steps = []
+  candidates.each { |i| steps << i if steps.empty? || i - steps.last >= 2 }
+  steps << 0 if steps.empty?
+  steps.uniq.sort
+end
+
+def dilla_kick_pattern(bar, n_bars, feel)
+  # Replaced entirely: every feel now gets a freshly generated, per-bar
+  # impromptu pattern instead of rotating a small fixed set — kept the old
+  # arrays as KICK_POSITION_WEIGHTS' source data (real, curated position
+  # frequencies) rather than throwing them away.
+  generate_organic_kick_pattern(bar, feel.hash.abs % 10_000)
 end
 
 def dilla_section(bar, n_bars)
@@ -1561,13 +2069,23 @@ def dilla_section_gain(bar, n_bars)
   end
 end
 
+def generate_organic_hat_steps(bar, seed_base = 9203)
+  rng = Random.new(seed_base + bar * 421)
+  base = (0..15).select { |i| i.even? || rng.rand < 0.4 }
+  base = base.reject { rng.rand < 0.12 }
+  base << 0 if base.empty?
+  base.uniq.sort
+end
+
 def dilla_hat_steps(bar, feel)
   case feel
-  when :get_dis_money
+  when :organic
+    generate_organic_hat_steps(bar)
+  when :syncopated_slash_ninth
     (0..15).step(2).to_a + [3, 11]
-  when :thelonious
+  when :chromatic_planing
     bar.even? ? [0, 2, 4, 6, 8, 10, 12, 14] : [1, 3, 5, 7, 9, 11, 13, 15]
-  when :madlib
+  when :loose_pocket
     steps = (0..15).step(2).to_a
     steps += [1, 5, 9, 13] if bar.odd?
     steps += [7, 15] if (bar % 4) == 3
@@ -1595,7 +2113,7 @@ def dilla_hat_steps(bar, feel)
 end
 
 def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, drums_only: false,
-                   swing: 58.0, feel: :default, timing: nil)
+                   swing: 58.0, feel: :default, timing: nil, quintuplet: false)
   bar_p  = (beat_p * 4.0).round(6)
   step_p = (beat_p / 4.0).round(6)
   events = Hash.new { |h, k| h[k] = [] }
@@ -1613,78 +2131,78 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     unless drums_only || section == :breakdown || bass_root.nil?
       events[:bass] << [base + 0.012, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
     end
-    if feel == :thelonious
+    if feel == :chromatic_planing
       pickup = base - step_p * 2
-      events[:kick] << [[pickup + dilla_timing_ms(:kick_sync, bar, 0, timing) / 1000.0, 0.0].max.round(6), dilla_velocity(0.88, bar, 0)]
-      events[:bass] << [[pickup + dilla_timing_ms(:bass, bar, 0, timing) / 1000.0, 0.0].max.round(6),
+      events[:kick] << [[pickup + dilla_timing_ms(:kick_sync, bar, 0, timing, beat_p) / 1000.0, 0.0].max.round(6), dilla_velocity(0.88, bar, 0)]
+      events[:bass] << [[pickup + dilla_timing_ms(:bass, bar, 0, timing, beat_p) / 1000.0, 0.0].max.round(6),
                         dilla_velocity(0.50, bar, 0, spread: 0.05), bass_root]
     end
 
     pattern.each_with_index do |step, i|
-      role = (feel == :get_dis_money || step.nonzero?) ? :kick_sync : :kick_anchor
-      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
-           dilla_timing_ms(role, bar, step, timing) / 1000.0, 0.0].max
+      role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
+      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+           dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
       events[:kick] << [t.round(6), dilla_velocity(0.95, bar, step) * sec_gain]
       bass_skip = drums_only ||
-                  (feel == :get_dis_money && bar.zero? && step < 7) ||
-                  (feel != :get_dis_money && bar.zero?) ||
+                  (feel == :syncopated_slash_ninth && bar.zero? && step < 7) ||
+                  (feel != :syncopated_slash_ninth && bar.zero?) ||
                   (section == :breakdown && step < 8)
       unless bass_skip
-        bass_lag = feel == :get_dis_money ? step_p * 0.12 : 0.0
-        events[:bass] << [[t + dilla_timing_ms(:bass, bar, step, timing) / 1000.0 + bass_lag, 0.0].max.round(6),
+        bass_lag = feel == :syncopated_slash_ninth ? step_p * 0.12 : 0.0
+        events[:bass] << [[t + dilla_timing_ms(:bass, bar, step, timing, beat_p) / 1000.0 + bass_lag, 0.0].max.round(6),
                           dilla_velocity(0.28, bar, step, spread: 0.06) * sec_gain, bass_root, step_p * 0.55]
       end
     end
 
     unless section == :breakdown || (section == :intro && bar < 4)
       [4, 12].each_with_index do |step, si|
-        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
-             dilla_timing_ms(:snare, bar, step, timing) / 1000.0, 0.0].max
+        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+             dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
         events[:snare] << [t.round(6), dilla_velocity(si.zero? ? 0.64 : 0.56, bar, step) * sec_gain]
       end
       if section == :main && bar % 4 == 2
         step = 10
-        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
-             dilla_timing_ms(:ghost, bar, step, timing) / 1000.0, 0.0].max
+        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+             dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
         events[:ghost] << [t.round(6), dilla_velocity(0.18, bar, step, spread: 0.05) * sec_gain]
       end
     end
 
-    ghost_steps = if feel == :madlib
-                    base = DILLA_GHOST_PATTERNS[(bar * 2) % DILLA_GHOST_PATTERNS.length]
-                    base + (bar.odd? ? [1, 9] : [5])
+    ghost_steps = if feel == :loose_pocket
+                    ghost_base = GHOST_NOTE_PATTERNS[(bar * 2) % GHOST_NOTE_PATTERNS.length]
+                    ghost_base + (bar.odd? ? [1, 9] : [5])
                   else
-                    DILLA_GHOST_PATTERNS[(bar + bar / 4) % DILLA_GHOST_PATTERNS.length]
+                    GHOST_NOTE_PATTERNS[(bar + bar / 4) % GHOST_NOTE_PATTERNS.length]
                   end
     ghost_steps.uniq.each do |step|
-      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
-           dilla_timing_ms(:ghost, bar, step, timing) / 1000.0, 0.0].max
-      vel = feel == :madlib ? 0.34 : 0.28
+      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+           dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
+      vel = feel == :loose_pocket ? 0.34 : 0.28
       events[:ghost] << [t.round(6), dilla_velocity(vel, bar, step, spread: 0.07) * sec_gain]
     end
 
     hat_steps = dilla_hat_steps(bar, feel)
     hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown
     hat_steps.each_with_index do |step, i|
-      role = if [3, 11].include?(step) && feel == :get_dis_money
+      role = if [3, 11].include?(step) && feel == :syncopated_slash_ninth
                :hat_up
-             elsif feel == :madlib && step.odd?
+             elsif feel == :loose_pocket && step.odd?
                :hat_up
              else
                i.even? ? :hat_down : :hat_up
              end
-      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing) +
-           dilla_timing_ms(role, bar, step, timing) / 1000.0, 0.0].max
+      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+           dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
       events[:hat] << [t.round(6), dilla_velocity(i.even? ? 0.48 : 0.38, bar, step, spread: 0.08) * sec_gain]
     end
 
-    if section != :breakdown && ([1, 3].include?(bar % 4) || (feel == :madlib && bar % 8 == 5))
-      open_step = feel == :madlib && bar % 8 == 5 ? 10 : 6
-      events[:open] << [[base + open_step * step_p + dilla_swing_offset(open_step, step_p, swing) + 0.008, 0.0].max.round(6),
+    if section != :breakdown && ([1, 3].include?(bar % 4) || (feel == :loose_pocket && bar % 8 == 5))
+      open_step = feel == :loose_pocket && bar % 8 == 5 ? 10 : 6
+      events[:open] << [[base + open_step * step_p + dilla_swing_offset(open_step, step_p, swing, quintuplet: quintuplet) + 0.008, 0.0].max.round(6),
                         dilla_velocity(0.32, bar, open_step, spread: 0.05) * sec_gain]
     end
-    if feel == :madlib && section == :main && bar % 6 == 4
-      events[:ghost] << [[base + 10 * step_p + dilla_swing_offset(10, step_p, swing), 0.0].max.round(6),
+    if feel == :loose_pocket && section == :main && bar % 6 == 4
+      events[:ghost] << [[base + 10 * step_p + dilla_swing_offset(10, step_p, swing, quintuplet: quintuplet), 0.0].max.round(6),
                          dilla_velocity(0.22, bar, 10, spread: 0.04) * sec_gain]
     end
 
@@ -1695,11 +2213,11 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
 
     chord = pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
     pad_offset = case feel
-                 when :get_dis_money then step_p * 2 + 0.012
-                 when :thelonious then -step_p * 2
+                 when :syncopated_slash_ninth then step_p * 2 + 0.012
+                 when :chromatic_planing then -step_p * 2
                  else 0.0
                  end
-    pad_t = base + pad_offset + dilla_timing_ms(:pad, bar, 0, timing) / 1000.0
+    pad_t = base + pad_offset + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
     sustain = (chord_bars * bar_p * 0.97).round(4)
     events[:pad] << [[pad_t, 0.0].max.round(6), dilla_velocity(0.88, bar, 0, spread: 0.03) * sec_gain, chord, sustain]
     if feel == :timeless && section == :main && bar % 4 == 1
@@ -1709,7 +2227,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     unless section == :breakdown
       chop_steps = [[1, 5, 9], [2, 6, 10], [1, 9, 13], [3, 7, 11]][bar % 4]
       chop_steps.each do |chop_step|
-        chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing), 0.0].max
+        chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing, quintuplet: quintuplet), 0.0].max
         events[:chop] << [chop_t.round(6), dilla_velocity(0.52, bar, chop_step, spread: 0.04) * sec_gain, chord]
       end
     end
@@ -1723,7 +2241,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       # instead, an octave up into lead register.
       chord_tones = chord[:hz].sort
       mel_hz = chord_tones[(bar + mel_step) % chord_tones.length] * 2
-      mel_t = [base + mel_step * step_p + dilla_swing_offset(mel_step, step_p, swing) + 0.006, 0.0].max
+      mel_t = [base + mel_step * step_p + dilla_swing_offset(mel_step, step_p, swing, quintuplet: quintuplet) + 0.006, 0.0].max
       events[:melody] << [mel_t.round(6), dilla_velocity(0.38, bar, mel_step, spread: 0.06) * sec_gain, mel_hz]
     end
   end
@@ -1897,6 +2415,41 @@ end
 
 def load_mono_sample(path)
   pipe_floats(path, "aformat=channel_layouts=mono:sample_fmts=flt")
+end
+
+# LA beat-scene kicks (Brainfeeder/Flying Lotus lineage) are never one thin
+# sample — they stack a pitch-dropping sub body for weight, a short
+# broadband click for attack/definition, and mild saturation for character.
+# Layers on top of the existing sample rather than replacing it.
+def layered_kick_sample(base_sample, seed: 7)
+  # True 808-style envelope, not a short punch: a fast pitch drop (150Hz ->
+  # 42Hz over ~55ms, the "pluck") into a genuinely sustained low tone
+  # (~350ms total, slow decay) — the long boom is the whole point of an
+  # 808, not an incidental side effect of layering.
+  sub_len = (0.35 * SAMPLE_RATE).round
+  click_len = (0.009 * SAMPLE_RATE).round
+  out = base_sample.dup
+  out.concat(Array.new(sub_len - out.length, 0.0)) if out.length < sub_len
+  sub_len.times do |i|
+    t = i.to_f / SAMPLE_RATE
+    pitch = 42.0 + 108.0 * Math.exp(-t * 55.0)
+    env = Math.exp(-t * 9.0)
+    out[i] += 0.34 * env * Math.sin(2 * Math::PI * pitch * t)
+  end
+  rng = Random.new(seed)
+  click_len.times do |i|
+    t = i.to_f / SAMPLE_RATE
+    env = Math.exp(-t * 380.0)
+    out[i] += 0.14 * env * (rng.rand * 2.0 - 1.0)
+  end
+  peak = out.map(&:abs).max || 1.0
+  gain = peak > 0.95 ? 0.95 / peak : 1.0
+  # A single gentle saturation pass, not stacked with anything downstream —
+  # double saturation (this plus a second stage on the whole drum bus) is
+  # what made it sound bad, not the layering itself.
+  drive = 1.1
+  ceiling = Math.tanh(drive)
+  out.map { |s| (Math.tanh(s * gain * drive) / ceiling) * 0.44 }
 end
 
 def mix_sine!(left, right, frame, frames_n, hz, amp, decay: 2.6, mod_hz: 0.23, chorus: false,
@@ -2118,6 +2671,15 @@ end
 # GM program 4 = "Electric Piano 1" (Rhodes-style) — the classic Dilla/neo-soul
 # keys tone. Overridable since a different soundfont's map may differ.
 PAD_GM_PROGRAM = ENV.fetch("DILLA_PAD_PROGRAM", "4").to_i
+# Electric-piano family (Dilla/neo-soul: Rhodes, Wurlitzer-adjacent DX EP)
+# and warm-analog-pad family (Prophet/Moog-adjacent GM pad patches) — a
+# different pair picked per render instead of the same two programs every
+# time.
+EP_GM_PROGRAMS = [4, 5, 0].freeze # Rhodes, DX EP, plain acoustic-adjacent
+# Full GM Pad 1-8 family — New Age, Warm, Polysynth, Choir, Bowed, Metallic,
+# Halo, Sweep. Polysynth/Sweep/Metallic are the most Prophet/Moog-adjacent;
+# the rest still give real per-render timbral variety.
+WARM_PAD_GM_PROGRAMS = [88, 89, 90, 91, 92, 93, 94, 95].freeze
 SMF_PPQN = 480
 SMF_TICKS_PER_SECOND = SMF_PPQN * 2 # fixed internal reference tempo of 120 BPM
 
@@ -2187,11 +2749,28 @@ end
 
 PAD_TARGET_RMS_DB = -19.0
 
+# Rhodes alone (GM 4) is Dilla's half of the research (Rhodes/Wurlitzer);
+# blending in a warm analog pad voice covers the other half — both artists'
+# keyboards used real analog synths (Minimoog Voyager, Prophet 6/5, Yamaha
+# CS-60) alongside the electric piano, not instead of it. A different pair
+# picked per render rather than always the same two programs.
 def render_pad_via_fluidsynth(path, pad_events, duration)
-  midi_path = "#{path}.smf.mid"
-  write_pad_smf(midi_path, pad_events)
-  sh! "fluidsynth", "-ni", "-g", "1.5", "-F", path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
-  FileUtils.rm_f(midi_path)
+  ep_path = "#{path}.ep.wav"
+  warm_path = "#{path}.warm.wav"
+  ep_program = ENV["DILLA_PAD_PROGRAM"] ? PAD_GM_PROGRAM : EP_GM_PROGRAMS.sample
+  warm_program = ENV["DILLA_WARM_PAD_PROGRAM"] ? ENV["DILLA_WARM_PAD_PROGRAM"].to_i : WARM_PAD_GM_PROGRAMS.sample
+  [[ep_path, ep_program], [warm_path, warm_program]].each do |voice_path, program|
+    midi_path = "#{voice_path}.smf.mid"
+    write_pad_smf(midi_path, pad_events, program: program)
+    sh! "fluidsynth", "-ni", "-g", "1.5", "-F", voice_path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
+    FileUtils.rm_f(midi_path)
+  end
+  sh! "ffmpeg", "-y", "-i", ep_path, "-i", warm_path,
+      "-filter_complex", "[0:a]apad=whole_dur=#{duration}[ep];[1:a]apad=whole_dur=#{duration}[warm];" \
+                         "[ep][warm]amix=inputs=2:weights=1.0 0.7:duration=first:normalize=0[blend]",
+      "-map", "[blend]", "-c:a", "pcm_s16le", path
+  FileUtils.rm_f(ep_path)
+  FileUtils.rm_f(warm_path)
   # GeneralUser GS's EP patch renders far quieter than the old additive-synth
   # pad engine did (measured ~-35dB RMS vs the tones bus's ~-27dB at equal
   # amix weight, which buried the chords entirely) — a fixed -g wasn't enough
@@ -2199,23 +2778,75 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   # fixed target instead of guessing a static boost.
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
   boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
-  # fluidsynth renders exactly note-off-to-silence length; pad the file out to
-  # the mix's full duration so the later amix with tones_path lines up.
   sh! "ffmpeg", "-y", "-i", path, "-af",
-      "volume=#{boost_db.round(2)}dB,apad=whole_dur=#{duration},alimiter=limit=0.95:level_out=0.96",
+      "volume=#{boost_db.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
       "-c:a", "pcm_s16le", "#{path}.pad.wav"
   FileUtils.mv("#{path}.pad.wav", path)
+  path
+end
+
+LEAD_GM_PROGRAM = ENV.fetch("DILLA_LEAD_PROGRAM", "81").to_i # GM Lead 2 (sawtooth) — "big lead" character
+LEAD_TARGET_RMS_DB = -26.0
+
+# A lead line derived straight from the chord tones — the top note of each
+# chord, doubled an octave up, held for part of the chord's sustain. A
+# separate, louder, brighter voice on top of the pads rather than another
+# pad-register note.
+ARP_PATTERNS = [
+  [0, 1, 2, 3], [0, 2, 1, 3], [3, 2, 1, 0], [0, 1, 2, 1], [0, 2, 3, 2]
+].freeze
+
+# A real arpeggiator, not a held note: steps through the chord's own tones
+# (up an octave, lead register) in a pattern that varies chord-to-chord,
+# 8th-note rate relative to the chord's sustain.
+def lead_events_from_pads(pad_events)
+  events = []
+  pad_events.each_with_index do |(time, velocity, chord, sustain), i|
+    next unless chord && chord[:hz]&.any?
+    tones = chord[:hz].sort.map { |hz| hz * 2.0 }
+    pattern = ARP_PATTERNS[i % ARP_PATTERNS.length]
+    step_dur = [(sustain || 1.0) / (pattern.length * 2.0), 0.08].max
+    pattern.each_with_index do |degree, step|
+      hz = tones[degree % tones.length]
+      t = time + 0.05 + step * step_dur
+      vel = (velocity * (0.9 - step * 0.05)).clamp(0.2, 1.0)
+      events << [t, vel, { name: "lead", hz: [hz] }, step_dur * 0.85]
+    end
+  end
+  events
+end
+
+def render_lead_via_fluidsynth(path, lead_events, duration)
+  return nil if lead_events.empty? || !fluidsynth_pad_available?
+  midi_path = "#{path}.smf.mid"
+  write_pad_smf(midi_path, lead_events, program: LEAD_GM_PROGRAM)
+  sh! "fluidsynth", "-ni", "-g", "1.3", "-F", path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
+  FileUtils.rm_f(midi_path)
+  measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
+  boost_db = (LEAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
+  # Ping-pong delay + a slow filter sweep — a static arpeggio reads as a
+  # sequencer demo; the delay throws stereo motion in, the sweep keeps the
+  # tone from sitting static the whole track.
+  sh! "ffmpeg", "-y", "-i", path, "-af",
+      "volume=#{boost_db.round(2)}dB," \
+      "aecho=0.6:0.4:180|340:0.35|0.22," \
+      "lowpass=f=3600:width_type=q:width=0.8,aphaser=speed=0.12:decay=0.6," \
+      "apad=whole_dur=#{duration},alimiter=limit=0.95:level_out=0.96",
+      "-c:a", "pcm_s16le", "#{path}.lead.wav"
+  FileUtils.mv("#{path}.lead.wav", path)
   path
 end
 
 def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [])
   tones_path = "#{path}.tones.wav"
   pads_path = "#{path}.pads.wav"
+  lead_path = "#{path}.lead.wav"
   if fluidsynth_pad_available?
     render_pad_via_fluidsynth(pads_path, pad_events, duration)
   else
     render_native_pad_wav(pads_path, pad_events, duration)
   end
+  lead_rendered = render_lead_via_fluidsynth(lead_path, lead_events_from_pads(pad_events), duration)
   write_stereo_chunks(tones_path, duration) do |chunk_start, chunk_frames, left, right|
     chop_events.each do |(t, v, chord)|
       hz_list = chop_hz(chord)
@@ -2256,17 +2887,37 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
       count.times do |i|
         tt = (source_offset + i).to_f / SAMPLE_RATE
         lfo = 0.03 * Math.sin(2 * Math::PI * 0.12 * tt)
-        sample = v * 0.42 * Math.exp(-tt * BASS_DECAY_RATE) *
+        # Was 0.42 — ~3-4x melody(0.11)/chop(0.13)'s coefficient, so bass
+        # transients dominated the shared tones+pads limiter downstream and
+        # ducked the chords every time the bass hit.
+        sample = v * 0.30 * Math.exp(-tt * BASS_DECAY_RATE) *
                  Math.sin(2 * Math::PI * root * (1.0 + lfo) * tt)
         left[local_start + i] += sample
         right[local_start + i] += sample
       end
     end
   end
-  sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path,
-      "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=1.0 1.0:duration=longest:normalize=0," \
-                         "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
-      "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+  # Limit pads and tones (chop+melody+bass) independently before mixing —
+  # a shared limiter meant a loud bass transient in "tones" ducked the pad
+  # chords along with it. Pads get the higher ceiling and mix weight so the
+  # chords stay the foreground voice, not the bass.
+  if lead_rendered
+    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", lead_path,
+        "-filter_complex", "[0:a]alimiter=limit=0.95:level_out=0.97[padsl];" \
+                           "[1:a]alimiter=limit=0.9:level_out=0.85[tonesl];" \
+                           "[2:a]alimiter=limit=0.95:level_out=0.9[leadl];" \
+                           "[padsl][tonesl][leadl]amix=inputs=3:weights=1.15 0.85 0.3:duration=longest:normalize=0," \
+                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
+        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+    FileUtils.rm_f(lead_path)
+  else
+    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path,
+        "-filter_complex", "[0:a]alimiter=limit=0.95:level_out=0.97[padsl];" \
+                           "[1:a]alimiter=limit=0.9:level_out=0.85[tonesl];" \
+                           "[padsl][tonesl]amix=inputs=2:weights=1.15 0.85:duration=longest:normalize=0," \
+                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
+        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+  end
   FileUtils.rm_f(pads_path)
   FileUtils.rm_f(tones_path)
   warm_dilla_pad_post(path)
@@ -2317,20 +2968,45 @@ def render_sample_bus(events, duration, kit, mapping)
   [left, right]
 end
 
+# Measured (not guessed) via zero-crossing analysis of the sample body,
+# post-attack — the "43" in the filename doesn't reliably encode a MIDI
+# note. Only sample keys listed here get pitch-shifted to a target hz;
+# everything else (kick/snare/hat/ghost) plays at native pitch.
+SAMPLE_NATURAL_HZ = { bass_43: 49.0 }.freeze
+
 def render_sample_bus_wav(path, events, duration, kit, mapping)
   write_stereo_chunks(path, duration) do |chunk_start, chunk_frames, left, right|
     mapping.each do |event_key, default_key|
       events.fetch(event_key, []).each do |hit|
         time, velocity = hit[0], hit[1]
+        target_hz = hit[2].is_a?(Numeric) ? hit[2] : nil
         sample_key = hit[2].is_a?(Symbol) ? hit[2] : default_key
         pan = hit[3] || 0.0
         sample = kit.fetch(sample_key)
+        natural_hz = SAMPLE_NATURAL_HZ[sample_key]
+        # Sample-based bass ignored bass_root entirely — every hit played
+        # samples/drums/bass_43.wav at its own fixed pitch regardless of the
+        # actual chord, so the loudest, most frequent low-end voice in the
+        # mix never followed the harmony. Resample (classic MPC-style pitch
+        # shift) toward the chord root instead.
+        ratio = (target_hz && natural_hz) ? (target_hz / natural_hz) : 1.0
+        src_len = ratio == 1.0 ? sample.length : (sample.length / ratio).floor
         event_frame = (time * SAMPLE_RATE).round
-        window = overlap_window(event_frame, sample.length, chunk_start, chunk_frames)
+        window = overlap_window(event_frame, src_len, chunk_start, chunk_frames)
         next unless window
         local_start, source_offset, count = window
         count.times do |i|
-          value = sample[source_offset + i] * velocity
+          value =
+            if ratio == 1.0
+              sample[source_offset + i] * velocity
+            else
+              src_pos = (source_offset + i) * ratio
+              i0 = src_pos.floor
+              frac = src_pos - i0
+              s0 = sample[i0] || 0.0
+              s1 = sample[i0 + 1] || s0
+              (s0 + (s1 - s0) * frac) * velocity
+            end
           left[local_start + i] += value * (0.5 - pan * 0.35)
           right[local_start + i] += value * (0.5 + pan * 0.35)
         end
@@ -2363,30 +3039,86 @@ def dilla_stem_paths
   paths
 end
 
+PROGRESSION_LOG_PATH = File.join(OUTPUT_DIR, ".dilla_progressions_log.txt")
+
+# Every chord walked during a render, appended so nothing explored is lost —
+# generated progressions especially never repeat, so this is the only
+# record of what actually played if it's worth turning into a real song.
+def log_progression!(track, bpm, pads)
+  return if pads.empty?
+  lines = pads.map do |chord|
+    notes = chord[:hz].map { |hz| nearest_note(hz) }.join(" ")
+    "  #{chord[:name]}: #{notes}  (#{chord[:hz].map { |h| h.round(1) }.join(', ')} Hz)"
+  end
+  File.open(PROGRESSION_LOG_PATH, "a") do |f|
+    f.puts "=== #{Time.now.iso8601} — TRACK=#{track} BPM=#{bpm.round(1)} ==="
+    f.puts lines
+    f.puts
+  end
+rescue StandardError => e
+  warn "progression log write failed: #{e.message}"
+end
+
 # Full Jay Dee render: sample drums + stem chops, Dilla Time scheduling.
-def render_dilla(destination = File.join(OUTPUT_DIR, "dilla_beat.mp3"), bars_count = nil, keep_stems: false)
+def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
   abort "ffmpeg required" unless tool_available?("ffmpeg")
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
+  FileUtils.rm_f(destination)
   cfg      = dilla_resolve_config
   n_bars   = bars_count || bars
   beat_p   = 60.0 / cfg[:bpm]
   duration = (beat_p * 4.0 * n_bars).round(3)
-  pads     = voice_lead_chords(dilla_progression(cfg[:progression]))
+  needed_chords = (n_bars.to_f / cfg[:chord_bars]).ceil + 1
+  if GENERATED_STYLES.include?(cfg[:progression].to_sym) || cfg[:progression].to_sym == :generated
+    ENV["GEN_LENGTH"] = needed_chords.to_s
+  end
+  pads = dilla_progression(cfg[:progression])
+  # A fugue subject: stated (the hook), developed (explored away from it),
+  # then recapitulated (the hook returns). Plain looping felt static; pure
+  # endless generative wandering never resolved into anything recognizable.
+  # This is neither — the curated/generated hook repeats a couple of times
+  # to establish itself, a generative development section explores outward
+  # from its last chord, then the hook returns to close it.
+  if pads.length < needed_chords && !pads.empty?
+    hook = pads
+    hook_repeats = [(needed_chords * 0.4 / hook.length).ceil, 1].max
+    intro_hook = Array.new(hook_repeats) { hook }.flatten
+    dev_length = [(needed_chords * 0.4).round, 2].max
+    development = generate_progression(root_hz: hook.last[:hz].min, mode: :minor, length: dev_length, seed: nil)
+    remaining = needed_chords - intro_hook.length - development.length
+    outro_hook = remaining.positive? ? (hook * (remaining / hook.length.to_f).ceil).first(remaining) : []
+    pads = intro_hook + development + outro_hook
+  end
+  # Pedal point on roughly a third of the chords — bass holds while the
+  # upper voicing keeps moving, real harmonic tension rather than every
+  # chord fully resolving its own root.
+  pads = apply_pedal_point(pads, probability: 0.3)
+  pads     = voice_lead_chords(pads)
+  log_progression!(cfg[:track], cfg[:bpm], pads)
   events   = dilla_schedule(
     n_bars, beat_p, pads,
     chord_bars: cfg[:chord_bars], phrase_bars: cfg[:phrase_bars],
-    swing: cfg[:swing], feel: cfg[:feel], timing: cfg[:timing]
+    swing: cfg[:swing], feel: cfg[:feel], timing: cfg[:timing], quintuplet: cfg[:quintuplet]
   )
 
   kit = {
-    kick: load_mono_sample(drum_sample_path("kick.wav")),
+    kick: layered_kick_sample(load_mono_sample(drum_sample_path("kick.wav"))),
     snare: load_mono_sample(drum_sample_path("snare.wav")),
     ghost: load_mono_sample(drum_sample_path("ghost.wav")),
     hat: load_mono_sample(drum_sample_path("hat.wav")),
     open_hat: load_mono_sample(drum_sample_path("open_hat.wav")),
     bass_43: load_mono_sample(drum_sample_path("bass_43.wav"))
   }
+  # Polyrhythm layer: a 3-against-4 cycle (bar/3 spacing) independent of the
+  # main 16-grid groove entirely — real polyrhythm, not a variation of the
+  # existing pattern. Reuses the ghost-hit sample at low, varying velocity.
+  poly_beat = (beat_p * 4.0) / 3.0
+  events[:poly] = (0...(duration / poly_beat).floor).map do |i|
+    t = (i * poly_beat).round(6)
+    [t, (0.16 + 0.07 * Math.sin(i * 1.7)).clamp(0.08, 0.3), :ghost]
+  end
+
   drum_tmp     = File.join(ROOT, ".dilla_drums.wav")
   harmonic_tmp = File.join(ROOT, ".dilla_harmonic.wav")
   render_sample_bus_wav(
@@ -2394,7 +3126,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "dilla_beat.mp3"), bars_cou
     events,
     duration,
     kit,
-    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat, bass: :bass_43
+    kick: :kick, snare: :snare, ghost: :ghost, hat: :hat, open: :open_hat, bass: :bass_43, poly: :ghost
   )
 
   chop_gate = gate_expr(events[:chop], hold: 0.32, scale: 0.95)
@@ -2424,37 +3156,28 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "dilla_beat.mp3"), bars_cou
   turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
   command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.05:d=#{duration}"] if turntable_rumble
 
-  filt = ["[0:a]aformat=channel_layouts=stereo[drums_raw]"]
+  # Every attempt to fix chord audibility by tuning EQ/weights/sidechain
+  # *within* the elaborate mix chain (NY parallel drum compression, a
+  # sub-150Hz sidechain duck keyed off the harm bus, per-bus RMS-matched
+  # boosts, loudnorm) failed in real listening even when measurements said
+  # it should work — confirmed by a from-scratch minimal mix (plain per-bus
+  # volume + amix + one limiter, no sidechain/compression stack at all)
+  # that DID produce audible chords. That proves the elaborate chain itself
+  # was the problem, not the balance numbers. This mirrors that minimal,
+  # proven-working mix instead of layering another fix onto the old one.
+  # SP-1200-style crunch (that machine IS drum-sampler heritage: 12-bit,
+  # tape-saturated) directly on the drum bus, on top of whatever the
+  # whole-mix Sonitex pass adds later — more analog grit specifically where
+  # it was asked for, not spread thin across the entire mix.
+  filt = ["[0:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_DRUM_WEIGHT'] || '0.55'}," \
+          "acrusher=bits=11:samples=1.5:mix=0.15[drums]"]
   mix_labels = ["[drums]"]
   mix_weights = ["1.0"]
   unless use_stem_harmony
-    # The pad/chord bus used to get a dull 1700Hz lowpass and a 0.84 mix
-    # weight for every track except "timeless"/"donuts" (1.12, 2400Hz) —
-    # measured at ~11dB quieter than the sample-based drum bus (which bakes
-    # in bass_43.wav) even before that extra penalty, on every Fantastic
-    # Vol. 2 track. Normalize toward the drum bus's actual level instead of
-    # a static per-track-family guess, and give every track the brighter,
-    # louder treatment.
-    drums_rms = band_rms(drum_tmp, highpass: 20, lowpass: 20_000)
-    harm_rms = band_rms(harmonic_tmp, highpass: 20, lowpass: 20_000)
-    harm_boost_db = (drums_rms - harm_rms).clamp(0.0, 18.0)
-    filt << "[1:a]aformat=channel_layouts=stereo,volume=#{harm_boost_db.round(2)}dB,lowpass=f=3200,aphaser=speed=0.11:decay=0.32,adelay=11|15," \
-             "aecho=0.22:0.28:110:0.18[harm]"
+    filt << "[1:a]aformat=channel_layouts=stereo,volume=#{ENV['DEBUG_HARM_WEIGHT'] || '1.0'}[harm]"
     mix_labels << "[harm]"
-    mix_weights << "1.10"
-    # Real sidechain duck (backlog #165, "kick/bass sidechain"): the bass
-    # sample and the pad's sustained chord roots occupy the same sub-150Hz
-    # band, so even with the harm bus now audible, a held chord and a bass
-    # hit still mask each other down there. Split the drum bus, duck only
-    # its low band against the harmonic bus, and recombine — kick/snare
-    # transients above 150Hz stay untouched.
-    filt << "[drums_raw]asplit=2[drums_hi_src][drums_lo_src]"
-    filt << "[drums_lo_src]lowpass=f=150[drums_lo]"
-    filt << "[drums_hi_src]highpass=f=150[drums_hi]"
-    filt << "[drums_lo][harm]sidechaincompress=threshold=0.05:ratio=4:attack=15:release=180:makeup=1[drums_lo_duck]"
-    filt << "[drums_hi][drums_lo_duck]amix=inputs=2:weights=1.0 1.0:duration=first:normalize=0[drums]"
+    mix_weights << "1.6"
   end
-  filt << "[drums_raw]anull[drums]" if use_stem_harmony
 
   if stem_map[:mids]
     pan_fx = cfg[:stereo_pan] ? ",apulsator=mode=sine:hz=#{pan_hz}:amount=0.38" : ""
@@ -2491,10 +3214,17 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "dilla_beat.mp3"), bars_cou
     mix_weights << "0.5"
   end
   filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
-  filt.concat(dilla_mix_preprocess_filters("mix", out_tag: "dpre"))
-  filt.concat(master_bus_filters("dpre", track: cfg[:track].to_s))
+  if sonitex_enabled?
+    filt.concat(master_bus_filters("mix", track: cfg[:track].to_s))
+  else
+    # Plain limiter only — the same minimal chain the proven-working test
+    # used. loudnorm's dynamic gain-riding was a live suspect in why chords
+    # kept disappearing even at correct mix weights; skip it by default.
+    filt << "[mix]alimiter=limit=0.9:level_out=0.92[out]"
+  end
 
   command += ["-filter_complex", filt.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  File.write("/tmp/last_filter_graph.txt", filt.join(";\n")) if ENV["DEBUG_FILTER_DUMP"]
   sh!(*command)
   unless keep_stems
     FileUtils.rm_f(drum_tmp)
@@ -2684,11 +3414,11 @@ def help
     Dilla Lab — unified audio engine (#{ROOT})
 
     SYNTHESIS
-      madlib [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
-      madlib beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
+      loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
+      loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
       DELICIOUS=1 (default)        0.72x pocket BPM | VLC=1 (default) all audio effects
-      dilla [out.mp3]              J Dilla beat — TRACK= preset (default donuts)
-      hiphop [out.mp3]             Slum Village engine (default TRACK=get_dis_money)
+      dilla [out.mp3]              J Dilla beat — TRACK= preset (default chromatic_minor_descent)
+      hiphop [out.mp3]             Slum Village engine (default TRACK=syncopated_slash_ninth)
       slum [dir]                   Batch session_01..14 → renders/ (Sonitex on)
       industrial [out.mp3]         Industrial techno (default renders/foundry_pulse.mp3)
       techno [out.mp3]             Hard distorted techno (#{TECHNO_BPM} BPM)
@@ -2927,8 +3657,8 @@ end
 
 def madlib_resolve_config
   cfg = dilla_resolve_config
-  base_timing = DILLA_TIMING_MS.merge(cfg[:timing] || {})
-  timing = MADLIB_DILLA_TIMING.merge(base_timing) { |_k, mad, base| base || mad }
+  base_timing = MICROTIMING_MS.merge(cfg[:timing] || {})
+  timing = LOOSE_POCKET_TIMING_MS.merge(base_timing) { |_k, mad, base| base || mad }
   swing = (ENV["SWING"] || [cfg[:swing] + 6, 68].min).to_f
   bpm = cfg[:bpm]
   if delicious_pocket_enabled?
@@ -2937,7 +3667,7 @@ def madlib_resolve_config
     swing = [swing + 4, 72].min
     timing = timing.merge(snare: -32..-14, hat_up: 26..44, kick_sync: 14..28)
   end
-  cfg.merge(feel: :madlib, swing: swing, timing: timing, bpm: bpm, delicious: delicious_pocket_enabled?)
+  cfg.merge(feel: :loose_pocket, swing: swing, timing: timing, bpm: bpm, delicious: delicious_pocket_enabled?)
 end
 
 def vlc_eq_chain
@@ -2996,7 +3726,7 @@ def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.
   duration = (beat_p * 4.0 * n_bars).round(3)
   events   = dilla_schedule(
     n_bars, beat_p, [], drums_only: true,
-    swing: cfg[:swing], feel: :madlib, timing: cfg[:timing]
+    swing: cfg[:swing], feel: :loose_pocket, timing: cfg[:timing]
   )
   kit = {
     kick: load_mono_sample(drum_sample_path("kick.wav")),
@@ -3033,7 +3763,7 @@ end
 
 def render_madlib_album(output_dir = File.join(ROOT, "renders", "beats"))
   FileUtils.mkdir_p(output_dir)
-  MADLIB_BEAT_CATALOG.each do |entry|
+  LOOSE_POCKET_BEAT_CATALOG.each do |entry|
     base = File.join(output_dir, entry[:out])
     prev = %w[TRACK BARS BPM SWING DELICIOUS VLC].each_with_object({}) { |k, h| h[k] = ENV[k] }
     ENV["TRACK"] = entry[:track].to_s
@@ -3045,7 +3775,7 @@ def render_madlib_album(output_dir = File.join(ROOT, "renders", "beats"))
   ensure
     prev.each { |k, v| v ? ENV[k] = v : ENV.delete(k) }
   end
-  puts "madlib batch: #{MADLIB_BEAT_CATALOG.length} beats (wav+mp3) → #{output_dir}"
+  puts "loose_pocket batch: #{LOOSE_POCKET_BEAT_CATALOG.length} beats (wav+mp3) → #{output_dir}"
 end
 
 # =============================================================================
@@ -3071,9 +3801,9 @@ def render_slum_album(output_dir = File.join(ROOT, "renders"))
 end
 
 # Full-length MPC hip-hop: Slum Village Vol. 1/2 presets via TRACK= env.
-def render_hiphop(destination = File.join(OUTPUT_DIR, "dilla_hiphop.mp3"))
+def render_hiphop(destination = File.join(OUTPUT_DIR, "hiphop.mp3"))
   prev = %w[BPM BARS TRACK PROGRESSION SWING].each_with_object({}) { |k, h| h[k] = ENV[k] }
-  ENV["TRACK"] ||= "get_dis_money"
+  ENV["TRACK"] ||= "syncopated_slash_ninth"
   ENV["BARS"] ||= "63"
   render_dilla(destination, bars)
 ensure
@@ -3683,8 +4413,9 @@ def electronium_ensure_loaded!
   eval(ELECTRONIUM_SOURCE, TOPLEVEL_BINDING, __FILE__, __LINE__)
 end
 
-def electronium_generate(destination = File.join(OUTPUT_DIR, "dilla_electronium.mid"))
+def electronium_generate(destination = File.join(OUTPUT_DIR, "electronium.mid"))
   electronium_ensure_loaded!
+  FileUtils.rm_f(destination)
   path = DillaElectronium::Composer.new(bpm: bpm.to_i, bars: bars).write(destination)
   puts "wrote #{path}"
 end
@@ -3715,6 +4446,7 @@ when "semantics" then semantics(ARGV.shift)
 when "ears"       then ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"))
 when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
 when "live"       then live((ARGV.shift || 32).to_i)
+when "stream"     then stream((ARGV.shift || 20).to_i)
 when "live_now"    then live_now
 when "harmony_now" then harmony_now
 when "regenerate"  then regenerate((ARGV.shift || 16).to_i)
@@ -3724,7 +4456,7 @@ when "grade_list" then grade_list
 when "sonitex_list" then sonitex_list
 when "analog_list"  then analog_list
 when "prepare"         then prepare(ARGV.shift)
-when "madlib"
+when "loose_pocket"
   out = ARGV.shift
   if out.nil? || out == "beats"
     render_madlib_album(out == "beats" ? (ARGV.shift || File.join(ROOT, "renders", "beats")) : File.join(ROOT, "renders", "beats"))
@@ -3732,16 +4464,16 @@ when "madlib"
     render_madlib_drums(out)
   end
 when "dilla"
-  dest = ARGV.shift || File.join(OUTPUT_DIR, "dilla_beat.mp3")
+  dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
   n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
   render_dilla(dest, n_bars)
-when "hiphop"          then render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "dilla_hiphop.mp3"))
+when "hiphop"          then render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3"))
 when "slum"            then render_slum_album(ARGV.shift || File.join(ROOT, "renders"))
 when "industrial"      then render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3"))
 when "techno"          then render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3"))
 when "analog"          then render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3"))
 when "analog_liveset"  then analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f)
-when "electronium", "midi" then electronium_generate(ARGV.shift || File.join(OUTPUT_DIR, "dilla_electronium.mid"))
+when "electronium", "midi" then electronium_generate(ARGV.shift || File.join(OUTPUT_DIR, "electronium.mid"))
 when "mix"  then run_mix(ARGV.shift || "v11")
 when "v7"   then run_mix("v7")
 when "v8"   then run_mix("v8")

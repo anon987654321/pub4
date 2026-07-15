@@ -28,9 +28,11 @@ when "dilla", "flylo", "baroque", "bach", "neo-soul", "neo_soul", "jazz"
   # The renderer synthesizes drums, bass, pads, chops and melody, then applies
   # its tape/vinyl/parallel-bus/master chain; it does not return stems/snippets.
   style = options[:style].tr("-", "_")
-  track = { "bach" => "baroque", "dilla" => "timeless" }.fetch(style, style)
+  # "flylo" -> "chromatic_mediant": the underlying engine's track/preset
+  # keys were renamed away from artist names (theory-based names instead).
+  track = { "bach" => "baroque", "dilla" => "timeless", "flylo" => "chromatic_mediant" }.fetch(style, style)
   env = case track
-        when "flylo" then { "TRACK" => track, "SONITEX_PRESET" => "classic", "ANALOG_CHAIN" => "cassette" }
+        when "chromatic_mediant" then { "TRACK" => track, "SONITEX_PRESET" => "classic", "ANALOG_CHAIN" => "cassette" }
         when "baroque" then { "TRACK" => track, "SONITEX_PRESET" => "classic", "ANALOG_CHAIN" => "broadcast" }
         when "neo_soul" then { "TRACK" => track, "SONITEX_PRESET" => "donuts_warm", "ANALOG_CHAIN" => "dub_chamber" }
         else { "TRACK" => track, "SONITEX_PRESET" => "heavy", "ANALOG_CHAIN" => "broadcast" }
