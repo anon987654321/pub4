@@ -110,7 +110,7 @@ module Master
             source: src,
             wait_context: { rule: @rule.id, file: path, mode: :genetic }
           )
-          best_candidate(candidates || [], path)
+          best_candidate(Array(candidates), path)
         end
 
         def architect_then_fix(violation:, src:, path:)

@@ -156,7 +156,10 @@ module Master
             next if stripped.start_with?("#")
             next if stripped.match?(/loop\s*do/)
             next if stripped.match?(/retry\\/)
-            next unless stripped.match?(/\bretry\b|while\s+true/)
+            # The `retry` *keyword* is never preceded by `:` (symbol literal), followed
+            # by `?`/`:` (predicate method, hash key), part of a longer identifier like
+            # `retry_index`, or adjacent to `|` (regex-literal alternation, e.g. /retry|loop/).
+            next unless stripped.match?(/(?<![:\w|])retry(?![?:\w|])/) || stripped.match?(/while\s+true/)
             finding(line: n, message: "unbounded retry — add max_attempts cap and exponential backoff")
           end
         end
@@ -208,8 +211,16 @@ module Master
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
-            next unless stripped.match?(/\.(?:execute|query)\s*\(.*#\{/) ||
-                        stripped.match?(/\.(?:execute|query)\s*\(\s*["'][^"']*\+\s*/)
+            match = stripped.match(/\.(?:execute|query)\s*\(.*#\{/) ||
+                    stripped.match(/\.(?:execute|query)\s*\(\s*["'][^"']*\+\s*/)
+            next unless match
+            # A real `.execute(`/`.query(` call is never itself quoted string content —
+            # skip when it sits inside a string literal (e.g. a human-readable label
+            # like "Foo.execute(#{bar})" passed to a logger), which reads as an odd
+            # number of open quote characters before the match on this line.
+            prefix = stripped[0...match.begin(0)]
+            next if prefix.count('"').odd? || prefix.count("'").odd?
+
             finding(line: n, message: "SQL injection risk — use parameterized queries or ActiveRecord helpers")
           end
         end

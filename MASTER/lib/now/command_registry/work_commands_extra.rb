@@ -153,9 +153,9 @@ module Master
             "#{marker} [#{tier}] #{mod["id"]}"
           end
         end
-        quality_lines = metrics&.model_quality&.map do |mod, stat|
+        quality_lines = Array(metrics&.model_quality&.map do |mod, stat|
           "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
-        end || []
+        end)
         sections = ["available models:"] + model_lines
         sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
         sections.join("\n")

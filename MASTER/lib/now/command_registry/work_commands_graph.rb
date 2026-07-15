@@ -19,7 +19,7 @@ module Master
       end
 
       def gather_graph_data(abs, root:, code_index:, reference_graph:)
-        reference_graph.build if reference_graph && reference_graph.nodes.empty?
+        reference_graph.build if reference_graph&.nodes&.empty?
         radius = reference_graph.blast_radius(abs)
         neighbors = Judge::GraphRetriever.new(reference_graph: reference_graph, root: root)
                                            .neighbors([abs], hops: 2, limit: 10)
