@@ -68,8 +68,6 @@ module Master
       HTML_CHECKS = {
         landmarks: { pattern: /<main|<nav\b|<header\b|<footer\b/,
           message: "no landmark elements — add <main>, <nav>, <header>, <footer>", severity: :high },
-        focus_ring: { pattern: /focus-visible|:focus\b/,
-          message: "no focus-visible styles found", severity: :high },
         form_labels: { pattern: /<label\b/,
           message: "form found but no <label> elements", severity: :medium },
       }.freeze
@@ -113,7 +111,23 @@ module Master
           .reject { |f| f.include?("node_modules") || f.include?("vendor") || f.include?("/builds/") || f.include?("/public/assets/") }
         findings = []
         css_files.each { |file| audit_css_file(file, findings) }
+        findings << focus_ring_finding(css_files) unless any_focus_ring_style?(css_files)
         findings
+      end
+
+      def any_focus_ring_style?(css_files)
+        css_files.any? { |f| readable_css(f).match?(/focus-visible|:focus\b/) }
+      end
+
+      def readable_css(file)
+        File.read(file)
+      rescue StandardError
+        ""
+      end
+
+      def focus_ring_finding(css_files)
+        { id: :focus_ring, file: css_files.empty? ? "(no stylesheets)" : "(stylesheets)",
+          message: "no focus-visible styles found", severity: :high }
       end
 
       def audit_css_file(file, findings)
