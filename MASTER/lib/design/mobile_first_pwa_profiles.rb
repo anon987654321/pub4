@@ -110,7 +110,7 @@ module Master
 
       def audit_css(path)
         css_files = Dir.glob(File.join(path, "**", "*.{css,scss}"))
-          .reject { |f| f.include?("node_modules") || f.include?("vendor") || f.include?("/builds/") }
+          .reject { |f| f.include?("node_modules") || f.include?("vendor") || f.include?("/builds/") || f.include?("/public/assets/") }
         findings = []
         css_files.each { |file| audit_css_file(file, findings) }
         findings
