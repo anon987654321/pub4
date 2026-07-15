@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require_relative "harmony_engine"
 
 # Composition spine for dilla.rb — memory, arrangement, performers, tension,
 # critique, scoring, evolution, and session persistence.
@@ -336,15 +337,20 @@ module DillaComposition
   module Critique
     module_function
 
-    def analyze(report, session: nil, events: nil)
+    def analyze(report, session: nil, events: nil, progression_chords: nil)
       lufs = report[:integrated_lufs] || report["integrated_lufs"]
       groove = score_groove(events)
-      harmony = 72 + (session ? 8 : 0)
+      chords = progression_chords || report[:progression_chords] || DillaHarmony.last_progression_chords
+      harmony = if chords&.any?
+                  DillaHarmony.score_beauty(chords)
+                else
+                  report[:harmony_score] || (72 + (session ? 8 : 0))
+                end
       hook = session ? hook_score(session) : 55
       variation = session ? variation_score(session) : 50
       stereo = report.dig(:spectral_rms_db, :high) ? 88 : 75
       scores = { groove: groove, harmony: harmony, hook: hook, variation: variation, stereo: stereo, lufs: lufs_score(lufs) }
-      recs = recommendations(scores, session)
+      recs = recommendations(scores, session, chords: chords)
       { scores: scores, recommendations: recs, overall: (scores.values.compact.sum / scores.length).round(1) }
     end
 
@@ -370,16 +376,20 @@ module DillaComposition
       (-14.0..-11.0).cover?(lufs) ? 95 : 65
     end
 
-    def recommendations(scores, session)
+    def recommendations(scores, session, chords: nil)
       recs = []
       recs << "Increase hook repetition — register more A/A'/A'' callbacks." if scores[:hook] < 65
-      recs << "Reduce pad masking — lower warm mix or high-pass pads in breakdown." if scores[:harmony] < 70
+      if chords&.any?
+        recs.concat(DillaHarmony.recommendations(DillaHarmony.score_breakdown(chords)))
+      elsif scores[:harmony] < 70
+        recs << "Reduce pad masking — lower warm mix or high-pass pads in breakdown."
+      end
       recs << "Move bass entrance earlier in verse sections." if session && session.profile_at(4)[:bass] < 0.7
       recs << "Add ghost-note density for pocket." if scores[:groove] < 75
       recs << "Widen stereo image on hook — raise lead/EP pan spread." if scores[:stereo] < 80
       recs << "Target LUFS -14..-11 for delivery." if scores[:lufs] && scores[:lufs] < 80
       recs << "Track feels balanced — evolve motifs for next pass." if recs.empty?
-      recs
+      recs.uniq
     end
 
     def print_report(critique)
@@ -422,8 +432,10 @@ module DillaComposition
         score = Scorer.score_plan(session, cfg, n_bars)
         path = render_fn.call(session)
         report = render_fn.respond_to?(:quality) ? render_fn.quality(path) : {}
-        critique = Critique.analyze(report, session: session)
-        total = (score * 50 + critique[:overall] * 0.5).round(2)
+        critique = Critique.analyze(report, session: session,
+                                    progression_chords: DillaHarmony.last_progression_chords)
+        harmony_w = (critique[:scores][:harmony] || 70) * 0.12
+        total = (score * 44 + critique[:overall] * 0.44 + harmony_w).round(2)
         session.critique_log << { gen: gen, score: total, critique: critique[:scores] }
         if total > best[:score]
           best = { score: total, session: session, path: path, critique: critique }

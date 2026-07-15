@@ -13,6 +13,7 @@ require_relative "../../lib/reach/analog_capabilities"
 require "open3"
 require_relative "lib/composition_engine"
 require_relative "lib/producer_dna"
+require_relative "lib/harmony_engine"
 require_relative "lib/dfam_engine"
 
 ROOT = File.expand_path(__dir__)
@@ -753,35 +754,7 @@ CONTRAST_VOICINGS = {
 }.freeze
 
 def enrich_progression(pads, cfg, phases: [])
-  return [pads, phases] if pads.empty?
-  rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + pads.length)
-  voicing = cfg[:voicing]
-  recap_voicing = CONTRAST_VOICINGS.fetch(voicing, :drop2)
-  out = []
-  phases_out = []
-  pads.each_with_index do |chord, i|
-    phase = phases[i]
-    chord_voicing = case phase
-                    when :recapitulation then recap_voicing
-                    when :development then (voicing == :spread ? :drop2 : voicing)
-                    else voicing
-                    end
-    out << decorate_chord(chord, voicing: chord_voicing)
-    phases_out << phase
-    next_chord = pads[(i + 1) % pads.length]
-    motion = root_motion_semitones(chord, next_chord)
-    if phase == :development && i < pads.length - 1 && motion <= 4 && rng.rand < 0.06
-      out << passing_cluster_between(chord, next_chord, rng)
-      phases_out << :development
-    end
-  end
-  enriched = out.map.with_index do |c, i|
-    phase = phases_out[i]
-    shift = phase == :development && (i % 8) == 7 ? 1 : 0
-    next c if shift.zero? || c[:name].to_s.start_with?("pass_")
-    { name: "#{c[:name]}_t#{shift}", hz: c[:hz].map { |h| (h * (2**(shift / 12.0))).round(2) } }
-  end
-  [enriched, phases_out.first(enriched.length)]
+  DillaHarmony.enrich_progression(pads, cfg, phases: phases)
 end
 
 def progression_from_engine(sonic, _fallback_mode)
@@ -1580,15 +1553,9 @@ end
 def dilla_chord_change_variation(chord_i, bar, section, feel, step_p, chord)
   cfg = dilla_resolve_config
   rng = chord_variation_rng(cfg, chord_i, chord, salt: 7711)
-  producer = DillaLofiMachine.harmony_profile?(cfg[:track])
-  base_pad_offset = case feel
-                    when :syncopated_slash_ninth then step_p * 2 + 0.012
-                    when :chromatic_planing then -step_p * 2
-                    else producer ? step_p * 0.18 : 0.0
-                    end
-  sustain_mul = producer ? rng.rand(0.94..1.08) : rng.rand(0.76..1.04)
-  sustain_mul *= 0.7 if section == :breakdown
-  sustain_mul *= 1.06 if section == :build && rng.rand < 0.45
+  base_pad_offset = DillaHarmony.pad_entry_late(cfg, feel, step_p)
+  sustain_mul = DillaHarmony.pad_sustain_mul(cfg, section, rng)
+  chop_density = DillaHarmony.chop_density(cfg, section)
   chop_templates = [
     [1, 5, 9, 13], [2, 6, 10, 14], [1, 9, 13], [3, 7, 11, 15],
     [0, 4, 8, 12], [1, 3, 7, 11], [2, 5, 9, 14], [4, 8, 12, 15],
@@ -1596,7 +1563,11 @@ def dilla_chord_change_variation(chord_i, bar, section, feel, step_p, chord)
   ]
   chop_steps = chop_templates[(chord_i + bar) % chop_templates.length].dup
   chop_steps.delete_at(rng.rand(chop_steps.length)) if rng.rand < 0.38 && chop_steps.length > 2
-  chop_steps << [0, 3, 6, 10, 14].sample(random: rng) if rng.rand < 0.28
+  chop_steps << [0, 3, 6, 10, 14].sample(random: rng) if rng.rand < 0.28 && chop_density > 0.3
+  if chop_density < 0.35
+    keep = (chop_steps.length * chop_density * 2.5).ceil.clamp(1, chop_steps.length)
+    chop_steps = chop_steps.sort_by { |s| rng.rand }.first(keep).sort
+  end
   {
     pad_offset: base_pad_offset + rng.rand(-step_p * 0.4..step_p * 0.9),
     sustain_mul: sustain_mul,
@@ -2902,9 +2873,11 @@ def dilla_quality(path, baseline_path = nil)
     high: band_rms(path, highpass: 3_500, lowpass: 16_000)
   }
   mono = band_rms(path, highpass: 28, lowpass: 16_000)
+  harmony_score = DillaHarmony.score_beauty(DillaHarmony.last_progression_chords)
   report = media_metadata(path).merge(
     schema: "dilla.master.v1", path: File.expand_path(path), delivery: File.extname(path).delete_prefix(".").downcase,
     integrated_lufs: loudness["input_i"]&.to_f, true_peak_dbtp: loudness["input_tp"]&.to_f,
+    harmony_score: harmony_score, progression_chords: DillaHarmony.last_progression_chords,
     loudness_range_lu: loudness["input_lra"]&.to_f, mono_rms_db: mono, spectral_rms_db: spectrum,
     target: { integrated_lufs: -14.0..-11.0, true_peak_max_dbtp: -1.0 }, warnings: [],
     capabilities: Master::Reach::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
@@ -4041,6 +4014,7 @@ def dilla_progression(mode = :chromatic_minor_descent)
     length = (ENV["GEN_LENGTH"] || 8).to_i
     seed = ENV["GEN_SEED"]&.to_i
     style = mode.to_sym == :generated ? (ENV["GEN_STYLE"] || "functional").to_sym : mode.to_sym
+    style = :functional if DillaHarmony.block_generated?(track, style)
     routed = route_generated_style(style, root_hz:, mode: gen_mode, length:, seed:)
     return routed if routed
     case style
@@ -4070,41 +4044,7 @@ def midi_to_hz(midi)
 end
 
 def voice_lead_chords(chords)
-  return chords if chords.length <= 1
-  led = [chords.first]
-  prev_midis = chords.first[:hz].map { |h| hz_to_midi(h) }.sort
-  chords.drop(1).each do |nxt|
-    targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
-    # Greedy nearest-pitch-class assignment, not fixed sorted-index matching
-    # — index matching (voice i always follows voice i) breaks down whenever
-    # chord sizes differ, e.g. a 6-note polytonal stack following a 4-note
-    # chord: it was forcing a voice toward whatever pitch happened to sit at
-    # the same numeric position rather than its actual closest neighbor,
-    # which is what produced transitions that sounded unrelated to the
-    # chord before them.
-    available_anchors = prev_midis.dup
-    voiced = targets.map do |target|
-      anchor = if available_anchors.empty?
-                 target
-               else
-                 available_anchors.min_by { |a| pitch_class_distance(a, target) }
-               end
-      available_anchors.delete(anchor) if available_anchors.length > 1
-      shift = ((anchor - target) / 12.0).round
-      midi = target + shift * 12.0
-      # Nearest-octave voice leading has no floor/ceiling on its own — over a
-      # long progression it can drag deliberately bright voicings down into
-      # the bass's own register, so the pad reads as more bass instead of an
-      # audible chord sitting above it. Keep every voice in a register
-      # clearly above the kick/bass fundamental.
-      midi += 12.0 while midi < 48.0
-      midi -= 12.0 while midi > 81.0
-      midi
-    end.sort
-    prev_midis = voiced
-    led << { name: nxt[:name], hz: voiced.map { |m| midi_to_hz(m) }.uniq.first(5) }
-  end
-  led
+  DillaHarmony.voice_lead_chords(chords)
 end
 
 def pitch_class_distance(a, b)
@@ -4477,7 +4417,13 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
 
     chord_change_i += 1
     chord = pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars)]
-    cvar = dilla_chord_change_variation(chord_change_i, bar, section, feel, step_p, chord)
+    cfg = dilla_resolve_config
+    pad_chord = if section == :breakdown && DillaHarmony.soul_profile?(cfg[:track])
+                  DillaHarmony.strip_voices(chord, count: 2)
+                else
+                  chord
+                end
+    cvar = dilla_chord_change_variation(chord_change_i, bar, section, feel, step_p, pad_chord)
     pad_t = base + cvar[:pad_offset] + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
     if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
       lead_role = DillaComposition::Conversation.turn_order(bar).first
@@ -4487,23 +4433,24 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     pad_vel = dilla_velocity(phase == :recapitulation ? 0.96 : 0.92, bar, 0, spread: 0.03) * sec_gain
     pad_vel *= 0.88 if phase == :development
     pad_vel *= cvar[:pad_vel_mul]
-    events[:pad] << [[pad_t, 0.0].max.round(6), pad_vel, chord, sustain]
+    events[:pad] << [[pad_t, 0.0].max.round(6), pad_vel, pad_chord, sustain]
     if cvar[:double_pad]
       events[:pad] << [[pad_t + cvar[:double_pad_delay], 0.0].max.round(6),
-                       dilla_velocity(cvar[:double_pad_vel], bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.68]
+                       dilla_velocity(cvar[:double_pad_vel], bar, 1, spread: 0.05) * sec_gain, pad_chord, sustain * 0.68]
     elsif (feel == :timeless || LOFI_DRUM_FEELS.include?(feel)) && section == :main && bar % 4 == 1 && phase != :development
       events[:pad] << [[pad_t + step_p * 0.5, 0.0].max.round(6),
-                       dilla_velocity(0.22, bar, 1, spread: 0.05) * sec_gain, chord, sustain * 0.72]
+                       dilla_velocity(0.22, bar, 1, spread: 0.05) * sec_gain, pad_chord, sustain * 0.72]
     end
     unless section == :breakdown || phase == :development
       chop_steps = cvar[:chop_steps]
       chop_steps = chop_steps.select { |s| s < 12 } if phase != :recapitulation && chop_steps.length > 4
       chop_steps << 15 if phase == :recapitulation && chord_change_i % 3 == 1
+      chop_chord = DillaHarmony.soul_profile?(cfg[:track]) ? DillaHarmony.chop_tones(pad_chord) : pad_chord
       chop_steps.uniq.sort.each do |chop_step|
         chop_t = [base + chop_step * step_p + dilla_swing_offset(chop_step, step_p, swing, quintuplet: quintuplet) +
                   cvar[:chop_jitter], 0.0].max
         chop_vel = phase == :recapitulation ? 0.58 : 0.52
-        events[:chop] << [chop_t.round(6), dilla_velocity(chop_vel, bar, chop_step, spread: 0.04) * sec_gain, chord]
+        events[:chop] << [chop_t.round(6), dilla_velocity(chop_vel, bar, chop_step, spread: 0.04) * sec_gain, chop_chord]
       end
     end
     mel_allowed = !drums_only && section == :main && phase != :coda &&
@@ -5848,16 +5795,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
                            arrange_fugue_progression(pads, needed_chords, cfg)
                          end
   end
-  pedal_prob = if curated_progression?(cfg)
-                 %i[syncopated_slash_ninth syncopated_slash_alt].include?(cfg[:progression].to_sym) ? 0.0 : 0.06
-               else
-                 0.18
-               end
-  pads = apply_pedal_point(pads, probability: pedal_prob, seed: cfg[:track].hash.abs)
-  pads, fugue_phases = enrich_progression(pads, cfg, phases: fugue_phases)
-  pads = voice_lead_chords(pads)
+  pedal_prob = DillaHarmony.pedal_probability(cfg)
+  pads = apply_pedal_point(pads, probability: pedal_prob, seed: cfg[:track].hash.abs) unless pedal_prob.zero?
+  pads, fugue_phases = DillaHarmony.beautify_pipeline(pads, cfg, phases: fugue_phases)
   @chord_phases = fugue_phases
   @progression_chords = pads
+  DillaHarmony.remember_progression(pads)
   @render_chord_bars = cfg[:chord_bars]
   @render_phrase_bars = cfg[:phrase_bars]
   log_progression_phases!(cfg[:track], cfg[:bpm], pads, fugue_phases)
