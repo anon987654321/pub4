@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# @assets.sh — Propshaft/dartsass asset precompile for copy-tree deploy.
-# Source this file; do not execute directly. Requires @core.sh sourced first.
+# _assets.sh — Propshaft/dartsass asset precompile for copy-tree deploy.
+# Source this file; do not execute directly. Requires _core.sh sourced first.
 
 # master_web_assets_precompile — Propshaft digest manifest + digested files for production face UI.
 master_web_assets_precompile() {

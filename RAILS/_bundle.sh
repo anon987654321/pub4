@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# @bundle.sh — bundler and npm-cache helpers.
-# Source this file; do not execute directly. Requires @core.sh sourced first.
+# _bundle.sh — bundler and npm-cache helpers.
+# Source this file; do not execute directly. Requires _core.sh sourced first.
 
 bundle_exec() {
   local bundle_bin
