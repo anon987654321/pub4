@@ -89,20 +89,27 @@ module Master
       end
 
       def plan_for(app_state)
-        steps = []
+        steps = js_signal_steps(app_state) + missing_dependency_steps(app_state) + pwa_manifest_steps(app_state)
+        steps.sort_by { |s| s[:priority] }
+      end
 
-        if app_state.dig(:js_signals)&.include?(:dom_content_loaded)
+      def js_signal_steps(app_state)
+        steps = []
+        signals = app_state.dig(:js_signals)
+        if signals&.include?(:dom_content_loaded)
           steps << { priority: 1, action: "Replace DOMContentLoaded with document.addEventListener('turbo:load', ...)" }
         end
-
-        if app_state.dig(:js_signals)&.include?(:jquery_present)
+        if signals&.include?(:jquery_present)
           steps << { priority: 2, action: "Identify jQuery selectors — convert to Stimulus targets + data-action wiring" }
         end
-
-        if app_state.dig(:js_signals)&.include?(:cache_first_sw)
+        if signals&.include?(:cache_first_sw)
           steps << { priority: 3, action: "Upgrade service worker: split strategy by resource type (see SW_UPGRADE)" }
         end
+        steps
+      end
 
+      def missing_dependency_steps(app_state)
+        steps = []
         missing = Array(app_state[:missing])
         if missing.include?("solid_queue")
           steps << { priority: 4, action: "bundle add solid_queue && bin/rails solid_queue:install" }
@@ -110,16 +117,16 @@ module Master
         if missing.include?("solid_cache")
           steps << { priority: 4, action: "bundle add solid_cache && bin/rails solid_cache:install" }
         end
-
         if missing.include?("propshaft")
           steps << { priority: 3, action: "bundle add propshaft && bundle remove sprockets sprockets-rails — Propshaft is the Rails 8 default asset pipeline" }
         end
+        steps
+      end
 
-        if app_state.dig(:pwa, :manifest) && !app_state.dig(:pwa, :manifest_has_192)
-          steps << { priority: 5, action: "Add 192x192 icon to manifest — required for Lighthouse installability" }
-        end
+      def pwa_manifest_steps(app_state)
+        return [] unless app_state.dig(:pwa, :manifest) && !app_state.dig(:pwa, :manifest_has_192)
 
-        steps.sort_by { |s| s[:priority] }
+        [{ priority: 5, action: "Add 192x192 icon to manifest — required for Lighthouse installability" }]
       end
 
       def sw_upgrade_plan = SW_UPGRADE

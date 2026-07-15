@@ -44,6 +44,11 @@ module Master
           app: File.basename(app_path),
           path: app_path,
           rails_version: detect_rails_version(app_path),
+        }.merge(hotwire_and_assets_summary(gems)).merge(gem_and_pwa_summary(app_path, gems, js_src))
+      end
+
+      def hotwire_and_assets_summary(gems)
+        {
           hotwire: {
             turbo: gems.include?("turbo-rails"),
             stimulus: gems.include?("stimulus-rails"),
@@ -57,6 +62,11 @@ module Master
           app_server: {
             falcon: gems.include?("falcon"),
           },
+        }
+      end
+
+      def gem_and_pwa_summary(app_path, gems, js_src)
+        {
           solid_adapters: subset(gems, SOLID_TRIFECTA),
           trifecta_complete: SOLID_TRIFECTA.all? { |g| gems.include?(g) },
           legacy_gems: subset(gems, GEMS_LEGACY),

@@ -51,36 +51,40 @@ module Master
         path = resolve_app_path(app_name)
         return Result.err("unknown app: #{app_name}", category: :validation) if path == @root
 
-        changes = []
-        offline_view = File.join(path, "app", "views", "pages", "offline.html.erb")
-        unless File.exist?(offline_view)
-          FileUtils.mkdir_p(File.dirname(offline_view))
-          File.write(offline_view, <<~ERB)
-            <% content_for :title, "Offline" %>
-            <main role="main" aria-label="Offline">
-              <h1>Offline</h1>
-              <p>You are offline. Reconnect to sync pending actions.</p>
-            </main>
-          ERB
-          changes << "offline page"
-        end
-
-        sw_path = @pwa.audit(path).fetch(:service_worker)
-        if sw_path && !File.read(File.join(path, sw_path)).match?(/setCatchHandler|NetworkFirst/)
-          shared = File.join(DEPLOY_RAILS, "shared", "pwa", "service_worker.js")
-          if File.file?(shared)
-            target = File.join(path, sw_path)
-            content = File.read(shared).gsub("__APP_NAME__", app_name.to_s).gsub("__CACHE_VERSION__", "v2")
-            File.write(target, content)
-            changes << "service worker"
-          end
-        end
-
+        changes = [fix_offline_view(path), fix_service_worker(path, app_name)].compact
         return Result.err("no changes needed for #{app_name}", category: :validation) if changes.empty?
 
         Result.ok({ app: app_name, path:, changes: })
       rescue StandardError => e
         Result.err("fix_app #{app_name}: #{e.message}", category: :unknown)
+      end
+
+      def fix_offline_view(path)
+        offline_view = File.join(path, "app", "views", "pages", "offline.html.erb")
+        return nil if File.exist?(offline_view)
+
+        FileUtils.mkdir_p(File.dirname(offline_view))
+        File.write(offline_view, <<~ERB)
+          <% content_for :title, "Offline" %>
+          <main role="main" aria-label="Offline">
+            <h1>Offline</h1>
+            <p>You are offline. Reconnect to sync pending actions.</p>
+          </main>
+        ERB
+        "offline page"
+      end
+
+      def fix_service_worker(path, app_name)
+        sw_path = @pwa.audit(path).fetch(:service_worker)
+        return nil unless sw_path && !File.read(File.join(path, sw_path)).match?(/setCatchHandler|NetworkFirst/)
+
+        shared = File.join(DEPLOY_RAILS, "shared", "pwa", "service_worker.js")
+        return nil unless File.file?(shared)
+
+        target = File.join(path, sw_path)
+        content = File.read(shared).gsub("__APP_NAME__", app_name.to_s).gsub("__CACHE_VERSION__", "v2")
+        File.write(target, content)
+        "service worker"
       end
 
       def audit_all_deploy

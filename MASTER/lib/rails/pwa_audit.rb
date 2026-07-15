@@ -33,16 +33,8 @@ module Master
       def audit(app_path = @root)
         manifest_rel = find_manifest(app_path)
         sw_rel = find_sw(app_path)
+        all = gather_pwa_findings(app_path, manifest_rel, sw_rel)
 
-        manifest_findings = manifest_rel ? audit_manifest(app_path, manifest_rel) : [
-          Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical),
-        ]
-        sw_findings = sw_rel ? audit_sw(app_path, sw_rel) : [
-          Finding.new(field: :service_worker, message: "no service worker found (expected app/views/pwa/service-worker.js)", severity: :high),
-        ]
-
-        csrf_findings = audit_csrf(app_path)
-        all = manifest_findings + sw_findings + csrf_findings
         {
           manifest: manifest_rel,
           service_worker: sw_rel,
@@ -54,6 +46,16 @@ module Master
       end
 
       private
+
+      def gather_pwa_findings(app_path, manifest_rel, sw_rel)
+        manifest_findings = manifest_rel ? audit_manifest(app_path, manifest_rel) : [
+          Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical),
+        ]
+        sw_findings = sw_rel ? audit_sw(app_path, sw_rel) : [
+          Finding.new(field: :service_worker, message: "no service worker found (expected app/views/pwa/service-worker.js)", severity: :high),
+        ]
+        manifest_findings + sw_findings + audit_csrf(app_path)
+      end
 
       def find_manifest(root)
         %w[
