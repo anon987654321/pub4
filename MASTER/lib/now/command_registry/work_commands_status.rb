@@ -13,38 +13,49 @@ module Master
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
       def dispatch_status(root:, fix_loop:, bus:, git: Reach::GitOperations.new(File.expand_path("..", root)), trace: nil, ctx: nil)
-        ahead, behind = git.ahead_behind
-        head = git.head || "?"
-        dirty = git.dirty?(".")
-        svc = service_status
-        bg = fix_loop&.background_alive? ? "running" : "stopped"
-        af = ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off"
-        bndl = bundle_status(File.expand_path("..", root))
-        evts = recent_events(root, 5)
-        failures = failure_events(root, 3)
-        branch = git.branch || "?"
-        turn_hint = trace&.last_turn ? "turn=#{trace.last_turn[:id]}" : "turn=none"
-        stage_rec = last_event(root, "pipeline:stage_complete")
-        verdict_rec = last_event(root, "review:verdict")
-        stage_name = stage_rec&.dig("payload", "stage") || "none"
-        verdict_line = format_verdict(verdict_rec)
-        config = Master::Ground::Config.new(root) rescue {}
-        lines = [
-          "status",
-          "mode    #{Master::Now::RuntimeMode.summary(config: config)}",
-          "service master/#{svc[:state]} #{svc[:detail]}",
-          "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
-          "fix     bg=#{bg} autofix=#{af}",
-          "bundle  #{bndl}",
-          "trace   #{turn_hint}  (/replay turn)",
-          "pipeline last=#{stage_name} #{verdict_line}",
-          "events  (last #{evts.size})  (/replay failures)",
-        ]
-        evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
-        failures.each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }
-        lines.join("\n")
+        data = gather_status_data(root:, fix_loop:, git:, trace:)
+        render_status_lines(data).join("\n")
       rescue StandardError => e
         "status: #{e.message}"
+      end
+
+      def gather_status_data(root:, fix_loop:, git:, trace:)
+        stage_rec = last_event(root, "pipeline:stage_complete")
+        verdict_rec = last_event(root, "review:verdict")
+        {
+          ahead_behind: git.ahead_behind,
+          head: git.head || "?",
+          dirty: git.dirty?("."),
+          svc: service_status,
+          bg: fix_loop&.background_alive? ? "running" : "stopped",
+          af: ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off",
+          bndl: bundle_status(File.expand_path("..", root)),
+          evts: recent_events(root, 5),
+          failures: failure_events(root, 3),
+          branch: git.branch || "?",
+          turn_hint: trace&.last_turn ? "turn=#{trace.last_turn[:id]}" : "turn=none",
+          stage_name: stage_rec&.dig("payload", "stage") || "none",
+          verdict_line: format_verdict(verdict_rec),
+          config: (Master::Ground::Config.new(root) rescue {}),
+        }
+      end
+
+      def render_status_lines(d)
+        ahead, behind = d[:ahead_behind]
+        lines = [
+          "status",
+          "mode    #{Master::Now::RuntimeMode.summary(config: d[:config])}",
+          "service master/#{d[:svc][:state]} #{d[:svc][:detail]}",
+          "git     #{d[:branch]}@#{d[:head]} ahead=#{ahead} behind=#{behind} #{d[:dirty] ? "dirty" : "clean"}",
+          "fix     bg=#{d[:bg]} autofix=#{d[:af]}",
+          "bundle  #{d[:bndl]}",
+          "trace   #{d[:turn_hint]}  (/replay turn)",
+          "pipeline last=#{d[:stage_name]} #{d[:verdict_line]}",
+          "events  (last #{d[:evts].size})  (/replay failures)",
+        ]
+        d[:evts].each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
+        d[:failures].each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }
+        lines
       end
 
       def last_event(root, pattern)
@@ -155,25 +166,28 @@ end
         arg = arg || arg_for(ctx)
         sub, rest = arg.split(/\s+/, 2)
         case sub
-        when "--dry-run"
-          result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
-          return "fix dry-run: #{result.message}" unless result.ok?
-          FixPreviewReport.new(result.value!).render
-        when "loop"
-          "fix loop: use /watch on for background watching"
-        when "stop"
-          "fix stop: use /watch off for background watching"
-        when "preview"
-          result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
-          return "fix preview: #{result.message}" unless result.ok?
-          FixPreviewReport.new(result.value!).render
+        when "--dry-run" then preview_fix(fix_loop, rest, root, "fix dry-run")
+        when "loop" then "fix loop: use /watch on for background watching"
+        when "stop" then "fix stop: use /watch off for background watching"
+        when "preview" then preview_fix(fix_loop, rest, root, "fix preview")
         else
-          target = expand_or_root(arg, root)
-          prescan = anti_sprawl_prescan(scanner: scanner, target: target, root: root)
-          result = fix_loop.run(target)
-          output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
-          [prescan, output].reject(&:empty?).join("\n")
+          run_fix_and_prescan(fix_loop, scanner, arg, root)
         end
+      end
+
+      def preview_fix(fix_loop, rest, root, label)
+        result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
+        return "#{label}: #{result.message}" unless result.ok?
+
+        FixPreviewReport.new(result.value!).render
+      end
+
+      def run_fix_and_prescan(fix_loop, scanner, arg, root)
+        target = expand_or_root(arg, root)
+        prescan = anti_sprawl_prescan(scanner: scanner, target: target, root: root)
+        result = fix_loop.run(target)
+        output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
+        [prescan, output].reject(&:empty?).join("\n")
       end
 
       def anti_sprawl_prescan(scanner:, target:, root:)

@@ -25,17 +25,21 @@ module Master
           return "review: lean boot (deliberation tribunal available)" unless council_stage
           "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
         else
-          target = arg.empty? ? "." : arg
-          crew_result = review_crew&.run(target: target)
-          artifact = snapshot_artifact(expand_or_root(target, root))
-          crew_text = if crew_result&.ok?
-                        crew_result.value![:summary].to_s
-                      elsif crew_result
-                        crew_result.message.to_s
-                      end
-          review_text = run_tribunal(deliberation:, artifact:, target:, bus:)
-          [crew_text, review_text].compact.reject(&:empty?).join("\n\n")
+          review_target(arg, root:, deliberation:, bus:, review_crew:)
         end
+      end
+
+      def review_target(arg, root:, deliberation:, bus:, review_crew:)
+        target = arg.empty? ? "." : arg
+        crew_result = review_crew&.run(target: target)
+        artifact = snapshot_artifact(expand_or_root(target, root))
+        crew_text = if crew_result&.ok?
+                      crew_result.value![:summary].to_s
+                    elsif crew_result
+                      crew_result.message.to_s
+                    end
+        review_text = run_tribunal(deliberation:, artifact:, target:, bus:)
+        [crew_text, review_text].compact.reject(&:empty?).join("\n\n")
       end
 
       # Scan → fix dry-run → council deliberation. Invoked via infer/workflow intent, not user-facing /triad.

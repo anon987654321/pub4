@@ -32,44 +32,58 @@ module Master
       SCAN_RULE_GROUP_LIMIT = 10
 
       def work_commands(ai:, root:, infra:)
-        scanner = ai[:scanner]
-        fix_loop = ai[:fix_loop]
-        ecology = ai[:ecology]
-        deliberation = ai[:deliberation]
-        council_stage = ai[:council_stage]
-        agent = ai[:agent]
-        session = infra[:session]
-        bus = infra[:bus]
-        review_crew = Judge::ReviewCrew.new(agent: agent, event_bus: bus, root: root, code_index: ai[:code_index], reference_graph: ai[:reference_graph])
-        propose_tree = ai[:propose_tree]
-        config = infra[:config]
-        metrics = infra[:metrics]
-        learnings = infra[:learnings]
-        git = ai[:git] || Reach::GitOperations.new(File.expand_path("..", root))
+        build_work_command_table(work_command_deps(ai:, root:, infra:))
+      end
+
+      def work_command_deps(ai:, root:, infra:)
         {
-          "scan" => command(:dispatch_scan, scanner, root),
-          "self" => command(:dispatch_self, scanner, root, bus),
-          "core" => command(:dispatch_core, root),
-          "fix" => command(:dispatch_fix, fix_loop, root, scanner),
-          "status" => command(:dispatch_status, root, fix_loop, bus, git, infra[:trace]),
-          "replay" => command(:dispatch_replay, root, infra[:trace]),
-          "graph" => command(:dispatch_graph, root, ai[:code_index], ai[:reference_graph]),
-          "resync" => command(:dispatch_resync, root, fix_loop, git, bus),
-          "tail" => command(:dispatch_tail, root),
-          "review" => command(:dispatch_review, council_stage, deliberation, root, bus, review_crew),
-          "critique" => command(:dispatch_critique, deliberation, root),
-          "workflow" => command(:dispatch_workflow, scanner, fix_loop, deliberation, root, bus),
-          "triad" => command(:dispatch_triad, scanner, fix_loop, deliberation, root, bus),
-          "model" => command(:dispatch_model, agent, config, metrics, root),
-          "why" => command(:dispatch_why, agent, root),
-          "axioms" => command(:dispatch_axioms, scanner, root),
+          scanner: ai[:scanner],
+          fix_loop: ai[:fix_loop],
+          ecology: ai[:ecology],
+          deliberation: ai[:deliberation],
+          council_stage: ai[:council_stage],
+          agent: ai[:agent],
+          session: infra[:session],
+          bus: infra[:bus],
+          review_crew: Judge::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root: root,
+                                             code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
+          propose_tree: ai[:propose_tree],
+          config: infra[:config],
+          metrics: infra[:metrics],
+          learnings: infra[:learnings],
+          git: ai[:git] || Reach::GitOperations.new(File.expand_path("..", root)),
+          trace: infra[:trace],
+          code_index: ai[:code_index],
+          reference_graph: ai[:reference_graph],
+          root: root,
+        }
+      end
+
+      def build_work_command_table(d)
+        {
+          "scan" => command(:dispatch_scan, d[:scanner], d[:root]),
+          "self" => command(:dispatch_self, d[:scanner], d[:root], d[:bus]),
+          "core" => command(:dispatch_core, d[:root]),
+          "fix" => command(:dispatch_fix, d[:fix_loop], d[:root], d[:scanner]),
+          "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
+          "replay" => command(:dispatch_replay, d[:root], d[:trace]),
+          "graph" => command(:dispatch_graph, d[:root], d[:code_index], d[:reference_graph]),
+          "resync" => command(:dispatch_resync, d[:root], d[:fix_loop], d[:git], d[:bus]),
+          "tail" => command(:dispatch_tail, d[:root]),
+          "review" => command(:dispatch_review, d[:council_stage], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
+          "critique" => command(:dispatch_critique, d[:deliberation], d[:root]),
+          "workflow" => command(:dispatch_workflow, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus]),
+          "triad" => command(:dispatch_triad, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus]),
+          "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
+          "why" => command(:dispatch_why, d[:agent], d[:root]),
+          "axioms" => command(:dispatch_axioms, d[:scanner], d[:root]),
           "rules" => command(:dispatch_rules),
-          "edge-cases" => command(:dispatch_edge_cases, root),
-          "analyze-self" => command(:dispatch_analyze_self, learnings),
-          "topic" => command(:dispatch_topic, session),
+          "edge-cases" => command(:dispatch_edge_cases, d[:root]),
+          "analyze-self" => command(:dispatch_analyze_self, d[:learnings]),
+          "topic" => command(:dispatch_topic, d[:session]),
           "process" => command(:dispatch_process),
-          "propose-tree" => command(:dispatch_propose_tree, propose_tree),
-          "ecology" => command(:dispatch_ecology, ecology),
+          "propose-tree" => command(:dispatch_propose_tree, d[:propose_tree]),
+          "ecology" => command(:dispatch_ecology, d[:ecology]),
         }
       end
 

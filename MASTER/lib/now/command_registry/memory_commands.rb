@@ -19,15 +19,7 @@ module Master
         arg = arg_for(ctx)
         case arg
         when /\Aforget (.+)/ then memory.forget($1.strip); "forgot: #{$1.strip}"
-        when /\Aremember (.+)/
-          body, type = parse_remember($1)
-          key, value = body.split("=", 2).map(&:strip)
-          if value
-            memory.remember(key, value, type:)
-            "remembered [#{type}]: #{key}"
-          else
-            "usage: /memory remember [type=user|feedback|project|reference] key=value"
-          end
+        when /\Aremember (.+)/ then handle_remember(memory, $1)
         when /\Asearch (.+)/ then memory_search(memory, $1.strip)
         when /\Atype (\S+)/ then list_by_type(memory, $1.strip)
         when "types"
@@ -38,6 +30,15 @@ module Master
         else
           (r = memory.recall(arg)) ? "#{arg}: #{r}" : "(not found: #{arg})"
         end
+      end
+
+      def handle_remember(memory, rest)
+        body, type = parse_remember(rest)
+        key, value = body.split("=", 2).map(&:strip)
+        return "usage: /memory remember [type=user|feedback|project|reference] key=value" unless value
+
+        memory.remember(key, value, type:)
+        "remembered [#{type}]: #{key}"
       end
 
       def dispatch_dreams(memory, agent, ctx: nil)

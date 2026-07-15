@@ -34,6 +34,15 @@ module Master
       end
 
       def build(infra:, ai:, root:)
+        commands = build_core_commands(infra:, ai:, root:)
+        commands.merge!(build_agent_and_system_commands(infra:, ai:, root:))
+        commands["help"] = command(:help_text, nil)
+        commands["restart"] = commands["rebuild"] if commands["rebuild"]
+        commands["principles"] = commands["axioms"] if commands["axioms"]
+        commands
+      end
+
+      def build_core_commands(infra:, ai:, root:)
         commands = {}
         commands.merge!(session_commands(infra))
         commands.merge!(mode_commands(infra[:config]))
@@ -43,23 +52,24 @@ module Master
         commands.merge!(core_commands(root:, bus: infra[:bus], model_id: ai[:agent]&.model))
         commands.merge!(domain_commands(root:))
         commands.merge!(reach_commands(root:))
+        commands
+      end
+
+      def build_agent_and_system_commands(infra:, ai:, root:)
         shell_tool = Array(ai[:tools]).find { |t| t.is_a?(Reach::Shell) }
-        commands.merge!(agent_commands(
+        commands = agent_commands(
           agent: ai[:agent],
           agent_pool: ai[:agent_pool],
           shell: shell_tool,
           root:,
           bus: infra[:bus],
           session: infra[:session]
-        ))
+        )
         commands.merge!(control_commands(ai[:standing], ai[:soul]))
         commands.merge!(system_commands(
           agent: ai[:agent], diag: infra[:diag], root:,
           session: infra[:session], bus: infra[:bus], scanner: ai[:scanner], ai: ai
         ))
-        commands["help"] = command(:help_text, nil)
-        commands["restart"] = commands["rebuild"] if commands["rebuild"]
-        commands["principles"] = commands["axioms"] if commands["axioms"]
         commands
       end
 

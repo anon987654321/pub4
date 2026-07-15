@@ -59,6 +59,11 @@ module Master
           return Master::Ground::AgentMap.patch_brief(rel) || "no patch brief for #{rel} — try /orient agent_map"
         end
         return cat_orient(root, arg) unless arg.empty?
+
+        orient_overview_lines(root).join("\n")
+      end
+
+      def orient_overview_lines(root)
         [
           "MASTER — constitutional AI runtime for any text artifact",
           "modules: now · loop · judge · voice · ground · reach · trace",
@@ -76,7 +81,7 @@ module Master
           "",
           "constitution:",
           *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{(path || "runtime").ljust(28)} #{desc}" },
-        ].join("\n")
+        ]
       end
 
       def relative_or_absolute(root, path)
