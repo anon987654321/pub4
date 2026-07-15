@@ -44,13 +44,21 @@ module Master
             yaml_files = extract_loaded_yamls(code)
             return [] if yaml_files.empty?
 
-            loaded = yaml_files.filter_map do |yml_name|
+            loaded = load_referenced_yamls(yaml_files)
+            return [] if loaded.empty?
+
+            phantom_dig_findings(code, loaded)
+          end
+
+          def load_referenced_yamls(yaml_files)
+            yaml_files.filter_map do |yml_name|
               yml_path = File.join(@data_dir, yml_name)
               next unless File.exist?(yml_path)
               YAML.safe_load(File.read(yml_path), aliases: true) rescue nil
             end
-            return [] if loaded.empty?
+          end
 
+          def phantom_dig_findings(code, loaded)
             findings = []
             extract_dig_paths(code).each do |path_keys|
               next if loaded.any? { |y| y.respond_to?(:dig) && y.dig(*path_keys) }
@@ -72,26 +80,27 @@ module Master
 
             depths = data["scan_depths"] || {}
             rules_dir = File.join(@root, "lib", "judge", "scan", "rules")
-            findings = []
-            depths.each_value do |class_names|
-              next unless class_names.is_a?(Array)
-              class_names.each do |name|
-                next if name == "all"
-                next if registered_scan_names.include?(name.to_s.downcase)
+            depths.each_value.flat_map do |class_names|
+              next [] unless class_names.is_a?(Array)
 
-                next unless name.to_s.match?(/\A[A-Z]/)
-                snake = name.gsub(/([A-Z])(?=[A-Z][a-z])|([a-z\d])([A-Z])/) { "#{$1 || $2}_#{$3}" }
-                           .downcase
-                file = File.join(rules_dir, "#{snake}.rb")
-                next if File.exist?(file)
-                line_num = code.each_line.with_index(1).find { |l, _| l.include?(name) }&.last || 1
-                findings << finding(
-                  line: line_num,
-                  message: "scan_depths references phantom class #{name} — #{snake}.rb not found in judge/scan/rules/"
-                )
-              end
+              class_names.filter_map { |name| phantom_class_finding(name, code, rules_dir) }
             end
-            findings
+          end
+
+          def phantom_class_finding(name, code, rules_dir)
+            return if name == "all"
+            return if registered_scan_names.include?(name.to_s.downcase)
+            return unless name.to_s.match?(/\A[A-Z]/)
+
+            snake = name.gsub(/([A-Z])(?=[A-Z][a-z])|([a-z\d])([A-Z])/) { "#{$1 || $2}_#{$3}" }.downcase
+            file = File.join(rules_dir, "#{snake}.rb")
+            return if File.exist?(file)
+
+            line_num = code.each_line.with_index(1).find { |l, _| l.include?(name) }&.last || 1
+            finding(
+              line: line_num,
+              message: "scan_depths references phantom class #{name} — #{snake}.rb not found in judge/scan/rules/"
+            )
           end
 
           def registered_scan_names
