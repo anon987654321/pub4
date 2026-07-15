@@ -46,7 +46,8 @@ module Master
 
       def tail(limit, pattern: nil)
         recent(limit, pattern: pattern)
-      rescue RegexpError
+      rescue RegexpError => e
+        Master::Ground::Swallow.log(e, context: "EventLog.tail")
         []
       end
 
@@ -69,7 +70,8 @@ module Master
 
       def parse_line(line)
         JSON.parse(line)
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        Master::Ground::Swallow.log(e, context: "EventLog.parse_line")
         nil
       end
     end

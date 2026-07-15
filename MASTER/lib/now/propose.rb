@@ -243,7 +243,8 @@ module Master
 
         File.readlines(ledger_path, chomp: true).filter_map do |line|
           JSON.parse(line)
-        rescue JSON::ParserError
+        rescue JSON::ParserError => e
+          Master::Ground::Swallow.log(e, context: "Propose.ledger_entries")
           nil
         end
       end

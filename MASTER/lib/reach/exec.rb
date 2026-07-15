@@ -67,7 +67,8 @@ module Master
       def feed(stdin, data)
         stdin.write(data) if data
         stdin.close
-      rescue Errno::EPIPE, IOError
+      rescue Errno::EPIPE, IOError => e
+        Master::Ground::Swallow.log(e, context: "Exec.feed")
         nil
       end
 
@@ -84,7 +85,8 @@ module Master
         Process.kill("TERM", -pgid)
         sleep GRACE_S
         Process.kill("KILL", -pgid)
-      rescue Errno::ESRCH, Errno::EPERM
+      rescue Errno::ESRCH, Errno::EPERM => e
+        Master::Ground::Swallow.log(e, context: "Exec.kill_group")
         nil
       end
 

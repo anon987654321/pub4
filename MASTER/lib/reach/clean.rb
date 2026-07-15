@@ -71,7 +71,8 @@ module Master
         Process.kill("TERM", -pgid)
         sleep 0.2
         Process.kill("KILL", -pgid)
-      rescue Errno::ESRCH, Errno::EPERM
+      rescue Errno::ESRCH, Errno::EPERM => e
+        Master::Ground::Swallow.log(e, context: "Clean.terminate")
         nil
       end
     end

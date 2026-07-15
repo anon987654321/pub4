@@ -66,7 +66,8 @@ module Master
         def parse_tool_calls(text)
           text.scan(TOOL_CALL_RE).filter_map do |match|
             JSON.parse(match.first.strip)
-          rescue JSON::ParserError
+          rescue JSON::ParserError => e
+            Master::Ground::Swallow.log(e, context: "ReactLoop.parse_tool_calls")
             nil
           end
         end

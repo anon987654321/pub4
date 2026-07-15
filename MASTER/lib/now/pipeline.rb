@@ -73,7 +73,8 @@ module Master
 
         def next_job(jobs)
           jobs.pop(true)
-        rescue ThreadError
+        rescue ThreadError => e
+          Master::Ground::Swallow.log(e, context: "ParallelGroup.next_job")
           nil
         end
 

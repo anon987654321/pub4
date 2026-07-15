@@ -113,7 +113,8 @@ module Master
             e = JSON.parse(line)
             next if workflow_id && e["workflow_id"] != workflow_id.to_s
             e
-          rescue JSON::ParserError
+          rescue JSON::ParserError => e
+            Master::Ground::Swallow.log(e, context: "EventSequenceOrchestrator.stream_events")
             nil
           end
         end

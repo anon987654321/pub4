@@ -187,7 +187,8 @@ module Master
         return if wait_thr.join(0.5)
         begin
           Process.kill("KILL", wait_thr.pid)
-        rescue Errno::ESRCH
+        rescue Errno::ESRCH => e
+          Master::Ground::Swallow.log(e, context: "LLMDispatcher.terminate_subprocess")
           nil
         end
       end

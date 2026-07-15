@@ -2,7 +2,8 @@
 
 begin
   require "sqlite3"
-rescue LoadError
+rescue LoadError => e
+  Master::Ground::Swallow.log(e, context: "search")
   nil
 end
 

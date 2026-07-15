@@ -229,7 +229,8 @@ module Master
           tree_lines << "#{"  " * (level - 1)}#{name}#{File.directory?(path) ? "/" : ""}"
           walk_tree(path, level + 1, depth:, cap:, tree_lines:) if File.directory?(path)
         end
-      rescue Errno::EACCES, Errno::ENOENT
+      rescue Errno::EACCES, Errno::ENOENT => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.walk_tree")
         nil
       end
 

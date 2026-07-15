@@ -60,7 +60,8 @@ module Master
 
       def parse_reflection(line)
         JSON.parse(line)["reflection"]
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        Master::Ground::Swallow.log(e, context: "ReflexionLedger.parse_reflection")
         nil
       end
     end

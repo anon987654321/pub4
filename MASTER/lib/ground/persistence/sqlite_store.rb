@@ -62,7 +62,8 @@ module Master
           clear_wal_sidecars(path)
           database.execute(statement)
           true
-        rescue KeyError, SQLite3::Exception
+        rescue KeyError, SQLite3::Exception => e
+          Master::Ground::Swallow.log(e, context: "SqliteStore.set_journal_mode")
           false
         end
 

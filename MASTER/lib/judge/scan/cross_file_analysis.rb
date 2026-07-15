@@ -36,7 +36,8 @@ module Master
         def readable_files(paths)
           paths.select { |path| File.file?(path) && !File.binary?(path) }
                .to_h { |path| [path, File.read(path, encoding: "UTF-8")] }
-        rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
+        rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError => e
+          Master::Ground::Swallow.log(e, context: "CrossFileAnalysis.readable_files")
           {}
         end
 

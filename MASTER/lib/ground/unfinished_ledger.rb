@@ -42,7 +42,8 @@ module Master
         return [] unless File.exist?(@path)
         parsed = JSON.parse(File.read(@path), symbolize_names: true)
         Array(parsed)
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        Master::Ground::Swallow.log(e, context: "UnfinishedLedger.load")
         []
       end
 

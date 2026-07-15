@@ -98,7 +98,8 @@ module Master
         return [] unless File.exist?(@journal)
         File.readlines(@journal).filter_map do |line|
           JSON.parse(line.strip)
-        rescue JSON::ParserError
+        rescue JSON::ParserError => e
+          Master::Ground::Swallow.log(e, context: "Undo.load_journal")
           nil
         end
       rescue StandardError => e

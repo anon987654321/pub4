@@ -84,7 +84,8 @@ module Master
         body = text.sub(/\A.*?(?=^- |\A- )/m, "").sub(/\n```.*\z/m, "").sub(/\A```ya?ml\n/, "")
         data = YAML.safe_load(body, aliases: false)
         data.is_a?(Array) ? data.select { |e| e.is_a?(Hash) && e["name"] } : []
-      rescue Psych::Exception
+      rescue Psych::Exception => e
+        Master::Ground::Swallow.log(e, context: "ProposeTree.parse")
         []
       end
 

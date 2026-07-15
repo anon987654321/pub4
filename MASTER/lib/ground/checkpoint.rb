@@ -28,7 +28,8 @@ module Master
       def list
         Dir.glob(File.join(dir, "*", "manifest.json")).filter_map do |path|
           JSON.parse(File.read(path, encoding: "utf-8"))
-        rescue JSON::ParserError
+        rescue JSON::ParserError => e
+          Master::Ground::Swallow.log(e, context: "Checkpoint.list")
           nil
         end.sort_by { |row| row.fetch("created_at", "") }
       end

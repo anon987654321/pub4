@@ -60,7 +60,8 @@ module Master
           File.readlines(path, chomp: true).filter_map do |line|
             next if line.strip.empty?
             JSON.parse(line)
-          rescue JSON::ParserError
+          rescue JSON::ParserError => e
+            Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for")
             nil
           end.select { |event| event["model"].to_s == model_id }
         end

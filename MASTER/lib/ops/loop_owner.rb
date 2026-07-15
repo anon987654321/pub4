@@ -19,7 +19,8 @@ module Master
         Dir.mkdir(DIR)
         File.write(INFO, JSON.generate(loop: name.to_s, pid: Process.pid, at: Time.now.utc.iso8601))
         true
-      rescue Errno::EEXIST
+      rescue Errno::EEXIST => e
+        Master::Ground::Swallow.log(e, context: "LoopOwner.claim")
         false
       end
 
@@ -51,7 +52,8 @@ module Master
       def process_alive?(pid)
         Process.kill(0, pid)
         true
-      rescue Errno::ESRCH
+      rescue Errno::ESRCH => e
+        Master::Ground::Swallow.log(e, context: "LoopOwner.process_alive?")
         false
       rescue Errno::EPERM
         true

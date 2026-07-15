@@ -8,7 +8,8 @@ module RubyLLM
       def read_from_json(file = RubyLLM.config.model_registry_file)
         data = File.exist?(file) ? File.read(file, encoding: "utf-8") : "[]"
         JSON.parse(data, symbolize_names: true).map { |model| Model::Info.new(model) }
-      rescue JSON::ParserError; []
+      rescue JSON::ParserError; Master::Ground::Swallow.log(e, context: "Models.read_from_json")
+      rescue JSON::ParserError => e; []
       end
     end
 

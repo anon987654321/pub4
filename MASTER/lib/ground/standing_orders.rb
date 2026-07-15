@@ -195,7 +195,8 @@ module Master
         return {} unless File.exist?(STATE_PATH)
         raw = Master.load_yaml(STATE_PATH)
         raw.is_a?(Hash) ? raw : {}
-      rescue Psych::Exception, Errno::ENOENT, TypeError
+      rescue Psych::Exception, Errno::ENOENT, TypeError => e
+        Master::Ground::Swallow.log(e, context: "StandingOrders.read_state")
         {}
       end
 

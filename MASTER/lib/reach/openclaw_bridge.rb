@@ -13,7 +13,8 @@ module Master
       def parse_body(raw)
         data = raw.is_a?(Hash) ? raw : JSON.parse(raw.to_s)
         deep_symbolize(data)
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        Master::Ground::Swallow.log(e, context: "OpenclawBridge.parse_body")
         {}
       end
 

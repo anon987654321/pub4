@@ -36,7 +36,8 @@ module Master
 
       def background_control_message
         @bg_control.pop(true)
-      rescue ThreadError
+      rescue ThreadError => e
+        Master::Ground::Swallow.log(e, context: "CLI.background_control_message")
         nil
       end
 

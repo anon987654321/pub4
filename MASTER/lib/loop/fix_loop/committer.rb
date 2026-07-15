@@ -131,7 +131,8 @@ module Master
 
           RubyVM::InstructionSequence.compile(File.read(absolute_path))
           true
-        rescue SyntaxError
+        rescue SyntaxError => e
+          Master::Ground::Swallow.log(e, context: "Committer.ruby_parses?")
           false
         end
       end

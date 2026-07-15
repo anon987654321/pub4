@@ -121,7 +121,8 @@ module Master
 
           return socket.gets.to_s.strip == "ok"
         end
-      rescue SystemCallError, EOFError, IOError
+      rescue SystemCallError, EOFError, IOError => e
+        Master::Ground::Swallow.log(e, context: "TtsSupervisor.socket_alive?")
         false
       end
 
@@ -152,7 +153,8 @@ module Master
       def lock_directory(path)
         Dir.mkdir(path, 0o700)
         true
-      rescue Errno::EEXIST
+      rescue Errno::EEXIST => e
+        Master::Ground::Swallow.log(e, context: "TtsSupervisor.lock_directory")
         false
       end
 

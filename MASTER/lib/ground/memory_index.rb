@@ -48,7 +48,8 @@ module Master
         return {} unless File.file?(index_path)
 
         JSON.parse(File.read(index_path, encoding: "utf-8"))
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        Master::Ground::Swallow.log(e, context: "MemoryIndex.load_index")
         {}
       end
 

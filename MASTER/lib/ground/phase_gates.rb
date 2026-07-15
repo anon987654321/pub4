@@ -194,7 +194,8 @@ module Master
       def master_service_running?
         _, _, status = Master::Reach::Exec.capture3("/usr/sbin/rcctl", "check", "master")
         status.success?
-      rescue Errno::ENOENT
+      rescue Errno::ENOENT => e
+        Master::Ground::Swallow.log(e, context: "PhaseGates.master_service_running?")
         false
       end
 

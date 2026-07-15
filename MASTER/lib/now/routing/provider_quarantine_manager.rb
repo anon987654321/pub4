@@ -40,7 +40,8 @@ module Master
           entry = active_quarantine(model.to_s)
           return false unless entry
           Time.parse(entry["expires_at"]) > @now.call
-        rescue ArgumentError
+        rescue ArgumentError => e
+          Master::Ground::Swallow.log(e, context: "ProviderQuarantineManager.quarantined?")
           false
         end
 
