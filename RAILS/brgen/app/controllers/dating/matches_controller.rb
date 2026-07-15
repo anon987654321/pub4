@@ -7,7 +7,10 @@ class Dating::MatchesController < Dating::BaseController
     @pagy, @matches = pagy(
       Dating::Match.active
         .where("initiator_id = ? OR receiver_id = ?", Current.user.id, Current.user.id)
-        .includes(:initiator, :receiver)
+        .includes(
+          initiator: { dating_profile: { photos_attachments: :blob } },
+          receiver: { dating_profile: { photos_attachments: :blob } }
+        )
     )
   end
 end

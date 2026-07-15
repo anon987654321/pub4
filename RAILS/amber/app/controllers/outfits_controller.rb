@@ -8,7 +8,7 @@ class OutfitsController < ApplicationController
   before_action :authorize!, only: %i[edit update destroy share wear]
 
   def index
-    scope = Current.user.outfits.order(created_at: :desc)
+    scope = Current.user.outfits.with_attached_image.includes(items: { photos_attachments: :blob }).order(created_at: :desc)
     if live_search_query.present?
       scope = apply_live_search(scope, columns: %w[name season category occasion], vertical: "outfits")
       item_ids = Current.user.items.where("title LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%").pluck(:id)

@@ -4,6 +4,10 @@
 require "open3"
 require "rbconfig"
 require "timeout"
+require_relative "gates/lib/domain_alignment_gate_logic"
+require_relative "gates/lib/frontend_production_gate_logic"
+require_relative "gates/lib/frontend_auditor_gate_logic"
+require_relative "gates/lib/stimulus_components_gate"
 
 ROOT = File.expand_path(__dir__)
 APPS = %w[amber brgen bsdports].freeze
@@ -110,12 +114,18 @@ end
   run(test, [*RUBY, test], chdir: ROOT)
 end
 
-run("domain_alignment_gate", [*RUBY, "domain_alignment_gate.rb"], chdir: ROOT)
+[
+  ["domain_alignment_gate", Deploy::DomainAlignmentGate.run],
+  ["frontend_production_gate", Deploy::FrontendProductionGate.run],
+  ["frontend_auditor", Deploy::FrontendAuditorGate.run],
+  ["stimulus_components", Deploy::StimulusComponentsGate.run]
+].each do |label, runner|
+  puts "release gate: #{label}"
+  result = runner.call
+  next if result.ok?
 
-run("frontend_production_gate", [*RUBY, "frontend_production_gate.rb"], chdir: ROOT)
-
-run("frontend_auditor", [*RUBY, "frontend_auditor_gate.rb"], chdir: ROOT)
-run("stimulus_components", [*RUBY, "stimulus_components_adoption_gate.rb"], chdir: ROOT)
+  result.failures.each { |failure| FAILURES << "#{label}: #{failure}" }
+end
 
 if FAILURES.any?
   warn "Release gate failures:"

@@ -56,6 +56,14 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes source, "gates/apps_yml_validator.rb"
   end
 
+  def test_deploy_at_scripts_are_thin_shims
+    %w[@core.sh @database.sh @runtime_gate.sh @scaffold.sh @service.sh @sync.sh].each do |name|
+      source = File.read(File.join(ROOT, name))
+      assert_includes source, "_#{name.delete_prefix('@')}"
+      refute_includes source, "need_cmd ruby34"
+    end
+  end
+
   def test_integrity_gate_wires_new_gates
     integrity = File.read(File.join(OPENBSD_ROOT, "integrity_gate.rb"))
     gates = File.read(File.join(OPENBSD_ROOT, "lib", "gate_environment.rb"))

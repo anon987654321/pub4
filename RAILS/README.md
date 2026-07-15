@@ -76,6 +76,11 @@ ruby RAILS/gates/runner.rb visual_contract --capture ...
 | `Deploy::ProductionGate` | Production config, CI, deploy contract; optionally nests master asset/TTS checks |
 | `Deploy::MasterWebAssetsGate` | MASTER/web precompiled face assets + deploy-script wiring |
 | `Deploy::MasterTtsGate` | TTS worker/supervisor contract |
+| `Deploy::DomainAlignmentGate` | DNS/registry/master.json/relayd alignment |
+| `Deploy::FrontendProductionGate` | Layout/CSS contract + MASTER/web face wiring |
+| `Deploy::FrontendAuditorGate` | Shared frontend auditor (0 warnings) |
+| `Deploy::StimulusComponentsGate` | Stimulus-components adoption + importmap pins |
+| `Deploy::SharedWiringGate` | Per-app shared routes, importmap, public assets, Stimulus |
 
 `check_production_gate.rb`, `master_web_assets_gate.rb`, and `master_tts_gate.rb` are thin CLI wrappers. `rails_runtime_gate.rb` calls `Deploy::ProductionGate.run(skip_nested: true)` in-process (avoids re-running nested master gates when `production` and `rails_runtime` both run under `--all`). Set `GATE_SKIP_NESTED=1` when shelling out to `check_production_gate.rb` if you need the same skip from a subprocess.
 
@@ -192,12 +197,15 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 
 ## Recent changes (2026-07-15)
 
-- **Gates:** `gates/runner.rb` + `apps_yml` in `GATE_MAP`; production/master gates callable in-process via `gates/lib/` and `Deploy::GateResult`.
-- **Shared wiring:** social routes eval in all three apps; Stimulus compose/save controllers promoted to `shared/frontend/`.
-- **Design/PWA:** line-height and touch-target fixes; reduced-motion guards; error pages deployed per app.
-- **Tests:** `shared_social_routes_test.rb`, `bsdports/test/models/user_test.rb`, gate contract tests in `RAILS/test/`.
+- **Gates:** `gates/runner.rb` registers `apps_yml` and `shared_wiring`; production/master/domain/frontend/stimulus gates callable in-process via `gates/lib/` and `Deploy::GateResult`. `release_gate.rb` no longer subprocesses those four gates.
+- **Shared wiring gate:** `ruby RAILS/gates/shared_wiring_gate.rb` — verifies all apps eval shared routes/importmap, ship error pages, and register shared Stimulus controllers.
+- **Shared wiring:** social routes eval in all three apps; Stimulus compose/save controllers in `shared/frontend/`.
+- **Design/PWA:** line-height and touch-target fixes; reduced-motion guards; error pages in each app `public/`.
+- **Performance:** Active Storage preload on posts, deals, outfits, demo wardrobe, user profiles, dating matches, and TV channels.
+- **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
+- **Deploy scripts:** `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` are thin shims over `_*.sh` (same pattern as `@deploy.sh`).
 
-**Still open** (see `TODO.md` for detail): flatten `release_gate.rb` nesting; broader model/controller coverage; `@core.sh` / `_core.sh` deploy-script dedup in OPENBSD.
+**Still open** (see `TODO.md`): `runner.rb --all` still subprocesses each gate; broader controller coverage; `apps.yml` `planned` features marked `agent: ignore` (pgvector, live streaming, monetization).
 
 ## Deploy scripts
 
