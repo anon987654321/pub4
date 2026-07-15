@@ -62,7 +62,7 @@ module Master
       def format_dmesg(line) = @p.dim(line.to_s)
 
       def closing
-        lines = (Master.load_yaml(Master.data_path("closings.yml")) || {})["closings"]
+        lines = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["closings"]
         return unless lines.is_a?(Array) && lines.any?
 
         @p.dim(lines.sample)

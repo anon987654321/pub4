@@ -8,7 +8,7 @@ module Master
       class RuleOrder
         TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
         DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
-        PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+        PRIORS_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
         AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
 
@@ -123,7 +123,7 @@ module Master
         def load_priors
           @priors_cache ||=
             begin
-              Master.load_yaml(PRIORS_PATH) || {}
+              (Master.load_yaml(PRIORS_PATH) || {})["violation_priors"] || {}
             rescue StandardError => e
               Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
               {}

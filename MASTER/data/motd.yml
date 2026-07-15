@@ -1,8 +1,0 @@
-# Rotating capability spotlight for boot dmesg (S1407).
-spots:
-  - "scan: %{rule_count} rules, self-test on boot"
-  - "face: WebGL particle UI at /chat"
-  - "council: multi-persona deliberation"
-  - "engine: pub4-shared across active Rails apps"
-  - "deploy: relayd health + OPERATOR.sh gates"
-  - "core: 5-file spine smoke in core/"

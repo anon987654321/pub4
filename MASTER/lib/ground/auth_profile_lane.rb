@@ -5,12 +5,12 @@ module Master
     # OAuth-before-key ordering (OpenCrabs/OpenClaw): prefer subscription/CLI lanes
     # before burning API keys on the same turn's fallback chain.
     module AuthProfileLane
-      CONFIG_PATH = File.join(Master::ROOT, "data", "auth_profiles.yml").freeze
+      CONFIG_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
 
       module_function
 
       def load_lanes
-        raw = Master.load_yaml(CONFIG_PATH)
+        raw = (Master.load_yaml(CONFIG_PATH) || {})["auth_profiles"]
         return [] unless raw.is_a?(Hash)
 
         Array(raw["lanes"]).select { |row| row.is_a?(Hash) && row["enabled"] != false }

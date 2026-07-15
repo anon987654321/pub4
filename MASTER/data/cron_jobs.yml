@@ -1,9 +1,0 @@
-# Cron ingress jobs — trigger via POST /ingress/cron/:name (Bearer MASTER_INGRESS_TOKEN).
-# Wire system crontab: curl -fsS -X POST -H "Authorization: Bearer $TOKEN" https://ai.brgen.no/ingress/cron/self_test
-
-- name: self_test
-  kind: cron
-  enabled: true
-  elevated: true
-  message: "/doctor"
-  description: Periodic health scan via ingress

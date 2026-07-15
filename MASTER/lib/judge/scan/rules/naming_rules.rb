@@ -3,7 +3,7 @@
 module Master
   module Judge
     module Scan
-      stale_config = Master.load_yaml(Master.data_path("stale_namespaces.yml"))
+      stale_config = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["stale_namespaces"] || {}
       stale_constants = Array(stale_config["stale_constants"]).filter_map { |row| row["old"] if row.is_a?(Hash) }
       stale_pattern = Regexp.union(stale_constants.map { |name| /\b#{Regexp.escape(name)}\b/ })
 
@@ -14,7 +14,7 @@ module Master
         description: "retired constants must not return" do |source, path:|
           next [] if stale_constants.empty? || path.end_with?("stale_namespace_rule.rb")
 
-          scan_lines(source, stale_pattern, message: "retired constant — use data/stale_namespaces.yml replacement")
+          scan_lines(source, stale_pattern, message: "retired constant — use data/patterns.yml#stale_namespaces replacement")
         end
     end
   end
