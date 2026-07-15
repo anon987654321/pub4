@@ -1,9 +1,0 @@
-<div class="nav_swiper" data-controller="nav-swiper" data-nav-swiper-target="root">
-  <nav class="nav_swiper_bar" aria-label="Sections">
-    <% brgen_nav_items.each do |label, href| %>
-      <%= link_to label, href, class: "nav_link#{" active" if label.downcase == (active_vertical.to_s.presence || "front")}" %>
-    <% end %>
-  </nav>
-  <button type="button" class="nav_swiper_grip" data-action="click->nav-swiper#toggle"
-          aria-label="Show sections" aria-expanded="false" data-nav-swiper-target="grip"></button>
-</div>

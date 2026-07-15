@@ -1,71 +1,7 @@
-@media (max-width: 1265px) {
-  .layout {
-    grid-template-columns: 120px minmax(0, 1fr) minmax(240px, 320px);
-  }
-
-  .sidebar {
-    width: 120px;
-    align-items: flex-start;
-  }
-
-  .nav-item {
-    width: 100%;
-    gap: var(--space-3);
-    justify-content: flex-start;
-    padding-inline: var(--space-2);
-    font-size: var(--text-base);
-  }
-
-  .nav-item svg {
-    width: var(--space-5);
-    height: var(--space-5);
-  }
-
-  .compose-btn {
-    width: 100%;
-    min-height: 46px;
-    padding-inline: var(--space-3);
-    font-size: var(--text-sm);
-  }
-
-  .widgets {
-    width: 320px;
-  }
-}
-
-@media (max-width: 1000px) {
-  .widgets {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .layout {
-    grid-template-areas: "main";
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    display: none;
-  }
-
-  .widgets {
-    display: none;
-  }
-
-  .tab-bar {
-    display: flex;
-  }
-
-  .compose-fab {
-    display: flex;
-  }
-
-  main#main-content,
-  main[role="main"] {
-    max-width: 100%;
-    border-left: none;
-    border-right: none;
-    padding-bottom: calc(60px + var(--safe-bottom, 0px));
-  }
+// Single column at every width (see _x_shell.scss) — nothing left here to
+// gate behind a breakpoint. main just needs bottom clearance for the fixed
+// .tab-bar/.compose-fab, unconditionally, at every width.
+main#main-content,
+main[role="main"] {
+  padding-bottom: calc(60px + var(--safe-bottom, 0px));
 }

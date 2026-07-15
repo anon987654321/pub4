@@ -34,37 +34,24 @@
   overscroll-behavior: contain;
   touch-action: manipulation;
 }
-.app-shell::-webkit-scrollbar,
-.sidebar::-webkit-scrollbar,
-.widgets::-webkit-scrollbar { width: 8px; }
-.app-shell::-webkit-scrollbar-thumb,
-.sidebar::-webkit-scrollbar-thumb,
-.widgets::-webkit-scrollbar-thumb { background: var(--x-hover); }
+.app-shell::-webkit-scrollbar { width: 8px; }
+.app-shell::-webkit-scrollbar-thumb { background: var(--x-hover); }
+
+// Single column at every width. No sidebar/widgets rail, no grid — the
+// remaining .sidebar/.widgets rules below are a plain-block fallback for
+// apps (amber, bsdports) that still emit that markup; brgen's own layout
+// is rewritten separately to drop these asides entirely.
 .layout {
-  display: grid;
-  grid-template-areas: "sidebar main widgets";
-  grid-template-columns: var(--x-sidebar) minmax(0, 1fr) var(--x-widgets);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
   max-width: var(--x-layout-max);
   min-height: 100%;
   margin: 0 auto;
 }
-.sidebar {
-  grid-area: sidebar;
-  width: var(--x-sidebar);
-  flex-shrink: 0;
-  align-self: flex-start;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0 0.75rem 16px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--x-hover) transparent;
+.sidebar,
+.widgets {
+  width: 100%;
+  padding: var(--space-3) clamp(16px, 5vw, 48px);
 }
 .brand {
   display: flex;
@@ -73,14 +60,12 @@
   width: 52px;
   height: 52px;
   border-radius: 0;
-  border: 1px solid var(--x-border);
   color: var(--x-text);
   margin: 4px 0 8px;
-  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms);
 }
 .brand:hover {
   background: var(--x-hover);
-  border-color: var(--x-accent);
   text-decoration: none;
 }
 .brand-wordmark {
@@ -106,21 +91,21 @@
   gap: 20px;
   padding: 0.75rem;
   border-radius: var(--x-radius-pill);
-  border-inline-start: 2px solid transparent;
-  color: var(--x-text);
+  color: var(--x-text-secondary);
   font-size: 20px;
   font-weight: var(--x-weight-normal);
-  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms), color var(--transition-fast, 180ms);
   width: fit-content;
   white-space: nowrap;
 }
 .nav-item:hover {
   background: var(--x-hover);
+  color: var(--x-text);
   text-decoration: none;
 }
 .nav-item.active {
+  color: var(--x-text);
   font-weight: var(--x-weight-bold);
-  border-inline-start-color: var(--x-accent);
 }
 .nav-item svg {
   flex-shrink: 0;
@@ -161,7 +146,7 @@
   width: 54px;
   height: 54px;
   border-radius: var(--x-radius-pill);
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   background: var(--x-accent);
@@ -179,38 +164,20 @@
 }
 main#main-content,
 main[role="main"] {
-  grid-area: main;
   flex: 1;
   min-width: 0;
   max-width: var(--x-feed-max);
   min-height: 100vh;
   margin-inline: auto;
   padding-inline: clamp(16px, 5vw, 48px);
-  border-left: 1px solid var(--x-border);
-  border-right: 1px solid var(--x-border);
-}
-.widgets {
-  grid-area: widgets;
-  width: var(--x-widgets);
-  flex-shrink: 0;
-  align-self: flex-start;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  padding: 0.75rem 16px;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--x-hover) transparent;
 }
 .tab-bar {
   position: fixed;
   bottom: 0;
   inset-inline: 0;
-  display: none;
+  display: flex;
   min-height: 54px;
-  background: var(--x-bg);
-  border-top: 1px solid var(--x-border);
+  background: var(--x-surface-elevated);
   z-index: var(--z-nav, 80);
   padding-bottom: var(--safe-bottom, 0px);
 }

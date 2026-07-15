@@ -1,0 +1,8 @@
+<div class="topbar" data-turbo-permanent>
+  <%= link_to "brgen", root_path, class: "topbar-brand", aria: { label: "Brgen" } %>
+  <nav class="topbar-links" aria-label="Sections">
+    <% brgen_nav_items.each do |key, label, href| %>
+      <%= link_to label, href, class: "topbar-link#{" active" if key.downcase == (active_vertical.to_s.presence || "front")}" %>
+    <% end %>
+  </nav>
+</div>

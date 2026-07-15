@@ -1,6 +1,5 @@
 .sidebar-card {
   background: var(--x-surface-elevated);
-  border: 1px solid var(--x-border);
   border-radius: var(--x-radius-card);
   padding: 16px;
   margin-bottom: 16px;
@@ -19,11 +18,6 @@
 
 .sidebar-card li {
   padding: 10px 0;
-  border-bottom: 1px solid var(--x-border);
-}
-
-.sidebar-card li:last-child {
-  border-bottom: none;
 }
 
 .widget-search {
@@ -31,16 +25,14 @@
   align-items: center;
   gap: 0.75rem;
   background: var(--x-search-bg);
-  border: 1px solid transparent;
   border-radius: var(--x-radius-pill);
   padding: 10px 16px;
   margin-bottom: 16px;
-  transition: border-color var(--transition-fast, 180ms), background var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms);
 }
 
 .widget-search:focus-within {
-  background: var(--x-bg);
-  border-color: var(--x-text-secondary);
+  background: var(--x-hover);
 }
 
 .widget-search input {
@@ -63,7 +55,6 @@
   justify-content: space-between;
   padding: 0 16px;
   height: 53px;
-  border-bottom: 1px solid var(--x-border);
   position: sticky;
   top: 0;
   background: var(--x-bg);
@@ -83,7 +74,6 @@
 .flash-notice {
   background: var(--x-hover);
   color: var(--x-text);
-  border: 1px solid var(--x-border);
   border-radius: var(--x-radius-card);
   padding: 0.75rem 16px;
   margin: 0.75rem 16px;
@@ -92,7 +82,6 @@
 .flash-alert {
   background: var(--x-hover-subtle);
   color: var(--x-text-secondary);
-  border: 1px solid var(--x-border);
   border-radius: var(--x-radius-card);
   padding: 0.75rem 16px;
   margin: 0.75rem 16px;
@@ -117,9 +106,8 @@
   border-radius: var(--x-radius-pill);
   background: var(--x-surface-elevated);
   color: var(--x-text);
-  border: 1px solid var(--x-border);
   cursor: pointer;
-  transition: background var(--transition-fast, 180ms), color var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+  transition: background var(--transition-fast, 180ms), color var(--transition-fast, 180ms);
 }
 
 .theme-toggle:hover {

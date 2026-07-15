@@ -1,14 +1,13 @@
 /* Post cards — x.com flat feed style, token aligned */
 .post-card {
   display: flex;
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
-  border-inline-start: 2px solid transparent;
+  padding: var(--space-4);
+  margin-bottom: var(--space-2);
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
-.post-card:hover { background: var(--x-hover-subtle); border-inline-start-color: var(--x-accent); }
+.post-card:hover { background: var(--x-hover-subtle); }
 
 .vote-col {
   width: 36px;
@@ -69,8 +68,7 @@
    Uses --x- tokens for presentability. */
 .post_show {
   display: block;
-  padding: 20px var(--space-4);
-  border-bottom: 1px solid var(--x-border);
+  padding: 20px var(--space-4) var(--space-8);
 }
 .post_show:hover { background: none; }
 .post_vote {
@@ -99,18 +97,17 @@
 .post_show .post-image { display: block; max-width: 100%; border-radius: var(--x-radius-card); margin: 0 0 1.2em; }
 
 /* Comments — x.com style nested, editorial. */
-.comment-form-wrap { padding: var(--space-4); border-bottom: 1px solid var(--x-border); }
+.comment-form-wrap { padding: var(--space-4) var(--space-4) var(--space-6); }
 .comment_item {
   display: block;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
 }
 .comment_item:hover { background: none; }
 .comment_item header { font: var(--text-sm) / 1.4 var(--x-font); color: var(--x-text-secondary); margin-bottom: 4px; }
 .comment_item header span:first-child { color: var(--x-text); font-weight: 700; }
 .comment_item p { color: var(--x-text); line-height: 1.6; font-size: var(--text-sm); margin: 0; }
 .comment_item a { text-decoration: underline; }
-.comment_item .comment_item { padding-inline-end: 0; padding-inline-start: 40px; border-bottom: 0; }
+.comment_item .comment_item { padding-inline-end: 0; padding-inline-start: 40px; }
 
 /* Forms — x.com minimal */
 .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }
@@ -123,14 +120,14 @@ label { display: block; font-size: var(--text-sm); color: var(--x-text-secondary
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=url], input[type=search], textarea, select {
   width: 100%;
   padding: var(--space-2);
-  background: var(--x-bg);
-  border: 1px solid var(--x-border);
+  background: var(--x-surface-elevated);
+  border: 0;
   border-radius: var(--x-radius-sm);
   color: var(--x-text);
   font-size: var(--text-sm);
   font-family: inherit;
   outline: none;
-  transition: border-color var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 input[type=file] {
@@ -143,12 +140,12 @@ input[type=file]::file-selector-button {
   min-height: 40px;
   margin-inline-end: var(--space-2);
   padding-inline: var(--space-3);
-  border: 1px solid var(--x-border);
+  border: 0;
   border-radius: var(--x-radius-pill);
-  background: var(--x-bg);
+  background: var(--x-surface-elevated);
   color: var(--x-text);
   cursor: pointer;
 }
 
-input:focus, textarea:focus, select:focus { border-color: var(--text-dim); }
+input:focus, textarea:focus, select:focus { background: var(--x-hover); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }

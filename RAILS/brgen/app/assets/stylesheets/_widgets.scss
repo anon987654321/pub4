@@ -7,7 +7,7 @@
 .sidebar-card__head h3 { margin-bottom: 0; }
 .inherit { color: inherit; text-decoration: underline; }
 
-.sort-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.sort-tabs { display: flex; padding-bottom: var(--space-2); }
 
 .sort-tab {
   padding: 14px 16px; /* mobile tighter */
@@ -15,8 +15,7 @@
   font: 0.875rem/1 var(--x-font);
   font-weight: 500;
   color: var(--text-dim);
-  border-bottom: 2px solid transparent;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   white-space: nowrap;
 }
 
@@ -28,7 +27,7 @@
 }
 
 .sort-tab:hover { background: var(--hover); color: var(--text); text-decoration: none; }
-.sort-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
+.sort-tab.active { color: var(--text); font-weight: 700; }
 
 .empty { color: var(--text-dim); padding: 32px 12px; text-align: center; font-size: 0.875rem; }
 @media (min-width: 768px) {
@@ -56,7 +55,7 @@
 .post-grid article,
 .deal-card,
 .store-card {
-  border: 1px solid var(--border);
+  background: var(--surface2);
   border-radius: var(--radius);
   overflow: hidden;
   padding: 12px;
@@ -75,8 +74,7 @@
   display: block;
 }
 .post-feed .x-post {
-  border-bottom: 1px solid var(--border);
-  margin: 0;
+  margin: 0 0 2px;
   padding: 10px 12px; /* mobile dense */
 }
 
@@ -135,6 +133,6 @@ article h2 { font-size: 0.9375rem; font-weight: 500; margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: .9375rem; }
 article mark { background: var(--hover); color: var(--text-dim); padding: 1px 4px; font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius); }
 
-.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); border: 1px solid var(--border); font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: var(--radius); margin-inline-end: 6px; }
+.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); font: 0.6875rem/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: var(--radius); margin-inline-end: 6px; }
 
 .video-player { width: 100%; max-height: 420px; background: #000; display: block; }

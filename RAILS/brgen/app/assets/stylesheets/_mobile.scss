@@ -4,10 +4,9 @@
   bottom: 0;
   inset-inline-start: 0;
   inset-inline-end: 0;
-  display: none;
+  display: flex;
   min-height: 54px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
+  background: var(--surface2);
   z-index: var(--z-nav);
   padding-bottom: var(--safe-bottom);
 }
@@ -75,10 +74,9 @@
   min-height: 220px;
   max-height: 72vh;
   padding: var(--space-2) var(--space-4) calc(18px + var(--safe-bottom));
-  background: var(--x-bg);
+  background: var(--surface2);
   border-top-left-radius: var(--x-radius-card);
   border-top-right-radius: var(--x-radius-card);
-  border-top: 1px solid var(--x-border);
   transform: translateY(100%);
   transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
   z-index: calc(var(--z-nav) + 2);

@@ -1,0 +1,52 @@
+/* Persistent top bar — logo + vertical switcher. Always visible, no
+   swipe-to-reveal (superseded the old pull-down nav_swiper drawer).
+   Separation from page content is whitespace only, no border. */
+.topbar {
+  position: sticky;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--z-nav, 80);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: var(--space-4);
+  padding-inline: clamp(16px, 5vw, 48px);
+  background: var(--bg);
+  mask-image: linear-gradient(to right, #000 94%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 94%, transparent 100%);
+}
+
+.topbar::-webkit-scrollbar { display: none; }
+
+.topbar-brand {
+  flex: 0 0 auto;
+  font-weight: var(--x-weight-bold);
+  font-size: 1.0625rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.topbar-brand:hover { text-decoration: none; }
+
+.topbar-links {
+  display: flex;
+  gap: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.topbar-link {
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-4);
+  font: var(--text-sm)/1 var(--x-font);
+  font-weight: 500;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.topbar-link:hover { color: var(--text); background: var(--hover); text-decoration: none; }
+.topbar-link.active { color: var(--text); font-weight: 700; }

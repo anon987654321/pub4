@@ -74,20 +74,22 @@ module ApplicationHelper
     marketplace_marketplace_root_url(subdomain: marketplace_subdomain, host: Current.domain, **options)
   end
 
-  # Primary vertical navigation for the pull-down swiper. front → home feed;
-  # AI → the shared MASTER face; the rest are per-city verticals on subdomains.
+  # Primary vertical-switcher nav for the persistent top bar. front → home
+  # feed; AI → the shared MASTER face; the rest are per-city verticals on
+  # subdomains. Each entry is [key, label, href] — key is what active_vertical
+  # is matched against (stable, matches inferred_vertical_from_controller),
+  # label is the display text (may diverge from key, e.g. playlist → "radio").
   def brgen_nav_items
     domain = Current.domain
     [
-      ["front", root_path],
-      ["AI", "https://ai.brgen.no"],
-      ["marketplace", "//#{marketplace_host}/"],
-      ["dating", "//dating.#{domain}/"],
-      ["playlist", "//playlist.#{domain}/"],
-      ["TV", "//tv.#{domain}/"],
-      ["takeaway", "//takeaway.#{domain}/"],
-      ["maps", "//maps.#{domain}/"],
-      ["messenger", "//messenger.#{domain}/"]
+      ["front", "Main", root_path],
+      ["AI", "AI", "https://ai.brgen.no"],
+      ["marketplace", "marketplace", "//#{marketplace_host}/"],
+      ["playlist", "radio", "//playlist.#{domain}/"],
+      ["TV", "TV", "//tv.#{domain}/"],
+      ["dating", "dating", "//dating.#{domain}/"],
+      ["takeaway", "takeaway", "//takeaway.#{domain}/"],
+      ["maps", "maps", "//maps.#{domain}/"]
     ]
   end
 
