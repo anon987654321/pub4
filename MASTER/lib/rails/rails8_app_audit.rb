@@ -104,7 +104,7 @@ module Master
 
       def detect_rails_version(path)
         File.readlines(File.join(path, "Gemfile"), chomp: true)
-            .find { |l| l.match?(/gem\s+['"]rails['"]/) }
+            .find { |l| !l.strip.start_with?("#") && l.match?(/gem\s+['"]rails['"]/) }
             &.scan(/\d+\.\d+/)&.first
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rails8_app_audit.detect_rails_version", path:)
