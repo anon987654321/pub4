@@ -33,19 +33,7 @@ module Master
           return Result.err("agent_pool: governor denied spawn", category: :policy)
         end
 
-        thread = Thread.new do
-          Thread.current.report_on_exception = false
-          Ground::SubagentContext.run(type: parsed, allowed:) do
-            @bus&.publish("agent:start", type: parsed, tag:, tools: allowed)
-            block.call
-          rescue StandardError => err
-            @bus&.publish("agent:error", type: parsed, tag:, error: err.message)
-            raise
-          ensure
-            @bus&.publish("agent:end", type: parsed, tag:)
-          end
-        end
-
+        thread = spawn_worker_thread(parsed, allowed, tag, &block)
         @mutex.synchronize { @workers << Worker.new(type: parsed, thread:, started_at: Time.now, tag:, tools: allowed) }
         Result.ok(thread)
       end
@@ -59,6 +47,21 @@ module Master
       end
 
       private
+
+      def spawn_worker_thread(parsed, allowed, tag, &block)
+        Thread.new do
+          Thread.current.report_on_exception = false
+          Ground::SubagentContext.run(type: parsed, allowed:) do
+            @bus&.publish("agent:start", type: parsed, tag:, tools: allowed)
+            block.call
+          rescue StandardError => err
+            @bus&.publish("agent:error", type: parsed, tag:, error: err.message)
+            raise
+          ensure
+            @bus&.publish("agent:end", type: parsed, tag:)
+          end
+        end
+      end
 
       def spawn_permitted?(type, tag)
         ctx = "spawn #{type}#{tag ? " #{tag}" : ""}"
