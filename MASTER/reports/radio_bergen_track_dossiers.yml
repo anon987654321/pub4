@@ -1,0 +1,901 @@
+---
+meta:
+  generated_at: '2026-07-16T06:12:50Z'
+  manifest: "/Users/mac/Documents/GitHub/pub4/MASTER/tools/audio/radio_bergen_tracks.yml"
+  tracks: 29
+  measured_local: 7
+  reference_curated: 29
+cross_track_learnings:
+  bergen_local:
+    drum_pattern: madlib_dusty / mpc3000 hybrid; kicks 0,6,10; swung 8th hats; AKMD
+      chain HPF 60 LPF 11.5k
+    texture: bergen_night_rain pad wash; vinyl 0.07–0.08; bass shelf +9; master LP
+      2.7–3.1 kHz
+    harmony: erykah_minor (F#m9–Bm7–Emaj7–C#m7); bill_evans voicing; swing 58%
+    bpm_cluster: 84–90
+  dilla_canon:
+    drum_pattern: MPC swing 54–62%; kick late-3 anchor; snare early on 4/12; ghost
+      on 2/10
+    texture: donuts_lowpass_warmth; vinyl 0.06; never harsh above 3.4 kHz on pads
+    harmony: maj7_minor_cycle + minor_iv_loop family
+    bpm_cluster: 86–94
+  flylo_canon:
+    drum_pattern: flylo_abstract broken 16ths; kick 0,5,8,13; displaced snares
+    texture: sidechain pump + jazz haze; quartal voicings; stereo pan hats
+    harmony: quartal_west_coast / glasper_quartal
+    bpm_cluster: 82–88
+  slum_canon:
+    drum_pattern: neo_soul_pocket / mpc3000; players progression Dm7–Eb7–Gm7–Am7
+    texture: cleaner punch than Donuts; bass sustain 0.92
+    bpm_cluster: 90–96
+tracks:
+- id: akmd_stailings
+  artist: AKMD
+  title: Stailings
+  source: local_mp3
+  youtube_id:
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 87
+    key: F# minor
+    drum_preset: :madlib_dusty
+    groove_dna: donuts
+    drums: Bergen lofi grid; kick 0,4,8,12 with humanize; swung hats; sparse clap.
+    texture: AKMD mastering chain; night-rain pad; vinyl 0.08; LP 3.1 kHz.
+    harmony: erykah_minor bill-evans voicing.
+    dilla_engine:
+      track: erykah_minor
+      performer: yancey
+      mix: akmd_lofi_mastering
+  engine_recommendation:
+    track: erykah_minor
+    performer: yancey
+    mix: akmd_lofi_mastering
+- id: akmd_mike_t_alt_kan_skje
+  artist: AKMD & Mike T
+  title: Alt Kan Skje
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/mike_t_and_johann-alt_kan_skje.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 33.85
+    bit_rate: 128207
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick: 75.0
+    bpm_estimate_snare: 70.6
+    bpm_estimate: 72.8
+    loudness:
+      full_rms_db: -9.48
+      full_peak_db: -4.82
+      sub_rms_db: -23.09
+      kick_rms_db: -15.39
+      snare_rms_db: -21.02
+      hats_rms_db: -36.6
+    dynamics:
+      crest_factor_db: 4.66
+      swing_hint: laid_back
+    drum_density:
+      kick_transients_per_min: 205.20000000000002
+      snare_transients_per_min: 93.60000000000001
+    spectral_balance:
+      sub_kick_ratio: -7.7
+      snare_kick_ratio: -5.67
+      hats_kick_ratio: -20.49
+      brightness: dark
+    texture_hints:
+    - lofi_rolled
+    - compressed_glue
+  production_dossier:
+    bpm: 88
+    key: F# minor
+    drum_preset: :madlib_dusty
+    groove_dna: donuts
+    drums: Same family as Stailings; slightly busier hat 16ths.
+    texture: Lo-fi warmth; boosted 80/200 Hz per AKMD chain.
+    harmony: erykah_minor cycle.
+    dilla_engine:
+      track: erykah_minor
+      performer: yancey
+  engine_recommendation:
+    track: erykah_minor
+    performer: yancey
+  calibration_notes:
+  - BPM delta 15.2 (72.8 measured vs 88 curated)
+  - 'Swing: laid_back'
+- id: akmd_mike_t_jan_hakim_diverse
+  artist: AKMD, Mike T & Jan Hakim
+  title: Diverse
+  source: local_mp3
+  youtube_id:
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 86
+    key: C minor
+    drum_preset: :mpc3000
+    groove_dna: donuts
+    drums: Neo-IV pocket; kick 0,6,10; ghost snares.
+    texture: Diverse arrangement — filter sweeps between sections.
+    harmony: Cm9–Fm7–Bbmaj7–Ebmaj9 neo_iv_cycle.
+    dilla_engine:
+      track: neo_iv_cycle
+      performer: yancey
+  engine_recommendation:
+    track: neo_iv_cycle
+    performer: yancey
+- id: angelo_reira_johann_sandviken_hotell_a
+  artist: Angelo Reira & Johann
+  title: Sandviken Hotell A
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/angelo_reira_and_johann-sandviken_hotell_a.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 39.81
+    bit_rate: 128180
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick: 66.7
+    bpm_estimate_snare: 85.7
+    bpm_estimate: 76.2
+    loudness:
+      full_rms_db: -7.56
+      full_peak_db: -4.62
+      sub_rms_db: -10.94
+      kick_rms_db: -13.58
+      snare_rms_db: -24.95
+      hats_rms_db: -36.45
+    dynamics:
+      crest_factor_db: 2.94
+      swing_hint: laid_back
+    drum_density:
+      kick_transients_per_min: 165.0
+      snare_transients_per_min: 22.5
+    spectral_balance:
+      sub_kick_ratio: 2.68
+      snare_kick_ratio: -11.41
+      hats_kick_ratio: -22.4
+      brightness: dark
+    texture_hints:
+    - heavy_sub
+    - lofi_rolled
+    - compressed_glue
+  production_dossier:
+    bpm: 85
+    key: F# minor
+    drum_preset: :madlib_dusty
+    groove_dna: donuts
+    drums: Slow bergen swing; long kick sustain; rim ghosts.
+    texture: Hotel-room ambience; heavy reverb on pad; AKMD LP.
+    harmony: erykah_minor / keys_woman blend.
+    dilla_engine:
+      track: erykah_minor
+      performer: yancey
+  engine_recommendation:
+    track: erykah_minor
+    performer: yancey
+  calibration_notes:
+  - BPM delta 8.8 (76.2 measured vs 85 curated)
+  - 'Swing: laid_back'
+- id: angelo_reira_johann_sandviken_hotell_b
+  artist: Angelo Reira & Johann
+  title: Sandviken Hotell B
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/angelo_reira_and_johann-sandviken_hotell_b.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 45.95
+    bit_rate: 128153
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick: 88.7
+    bpm_estimate_snare: 66.7
+    bpm_estimate: 77.7
+    loudness:
+      full_rms_db: -8.49
+      full_peak_db: -5.0
+      sub_rms_db: -32.88
+      kick_rms_db: -19.84
+      snare_rms_db: -18.04
+      hats_rms_db: -43.48
+    dynamics:
+      crest_factor_db: 3.49
+      swing_hint:
+    drum_density:
+      kick_transients_per_min: 6.5
+      snare_transients_per_min: 154.70000000000002
+    spectral_balance:
+      sub_kick_ratio: -13.04
+      snare_kick_ratio: 1.79
+      hats_kick_ratio: -23.27
+      brightness: dark
+    texture_hints:
+    - lofi_rolled
+    - compressed_glue
+  production_dossier:
+    bpm: 84
+    key: Eb
+    drum_preset: :madlib_dusty
+    groove_dna: donuts
+    drums: Companion to A; softer kick velocity; more pad-forward.
+    texture: Warmer, less drum-forward than A.
+    harmony: keys_woman Ebmaj9–Cm9–Fm7–Bb7.
+    dilla_engine:
+      track: keys_woman
+      performer: yancey
+  engine_recommendation:
+    track: keys_woman
+    performer: yancey
+  calibration_notes:
+  - BPM delta 6.3 (77.7 measured vs 84 curated)
+- id: chase_swayze_traffic
+  artist: Chase Swayze
+  title: Traffic
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/chase_swayze-underated.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 190.52
+    bit_rate: 128056
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick:
+    bpm_estimate_snare:
+    bpm_estimate:
+    loudness:
+      full_rms_db: -67.27
+      full_peak_db: -8.35
+      sub_rms_db: -117.02
+      kick_rms_db: -101.84
+      snare_rms_db: -69.09
+      hats_rms_db: -73.87
+    dynamics:
+      crest_factor_db: 58.92
+      swing_hint:
+    drum_density:
+      kick_transients_per_min: 0.5
+      snare_transients_per_min: 0.0
+    spectral_balance:
+      sub_kick_ratio: -2.23
+      snare_kick_ratio: -11.45
+      hats_kick_ratio: -9.37
+      brightness: bright
+    texture_hints:
+    - lofi_rolled
+    - punchy_transients
+  production_dossier:
+    bpm: 88
+    key: G
+    drum_preset: :mpc3000
+    groove_dna: donuts
+    drums: Minor turnaround grid; kick 0,6,10; snare 4/12; steady 8th hats.
+    texture: Bergen night rain pad; vinyl 0.07; pad LP 3.3 kHz.
+    harmony: Bm7–Bm7–Cmaj9–Em7.
+    dilla_engine:
+      track: minor_turnaround
+      performer: yancey
+  engine_recommendation:
+    track: minor_turnaround
+    performer: yancey
+- id: haisam_johann_pb1
+  artist: Haisam & Johann
+  title: PB1
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/haisam_and_johann-pb1.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 108.28
+    bit_rate: 128064
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick:
+    bpm_estimate_snare: 80.0
+    bpm_estimate: 80.0
+    loudness:
+      full_rms_db: -21.21
+      full_peak_db: 0.0
+      sub_rms_db: -40.44
+      kick_rms_db: -36.51
+      snare_rms_db: -23.37
+      hats_rms_db: -37.21
+    dynamics:
+      crest_factor_db: 21.21
+      swing_hint:
+    drum_density:
+      kick_transients_per_min: 0.6
+      snare_transients_per_min: 99.6
+    spectral_balance:
+      sub_kick_ratio: -3.72
+      snare_kick_ratio: 13.13
+      hats_kick_ratio: 0.78
+      brightness: bright
+    texture_hints:
+    - lofi_rolled
+    - punchy_transients
+  production_dossier:
+    bpm: 89
+    key: F# minor
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: PB-series pocket; crisp snare; tight hats.
+    texture: Cleaner top than Sandviken; still AKMD-mastered body.
+    harmony: erykah_minor with iv_borrow_minor color.
+    dilla_engine:
+      track: erykah_minor
+      performer: yancey
+  engine_recommendation:
+    track: erykah_minor
+    performer: yancey
+  calibration_notes:
+  - BPM delta 9.0 (80.0 measured vs 89 curated)
+- id: jan_hakim_johann_stailings_a
+  artist: Jan Hakim & Johann
+  title: Stailings A
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/jan_hakim_and_johann-stailings_a.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 31.2
+    bit_rate: 128312
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick: 54.5
+    bpm_estimate_snare: 75.0
+    bpm_estimate: 64.8
+    loudness:
+      full_rms_db: -8.26
+      full_peak_db: -3.54
+      sub_rms_db: -16.26
+      kick_rms_db: -11.29
+      snare_rms_db: -20.42
+      hats_rms_db: -30.01
+    dynamics:
+      crest_factor_db: 4.72
+      swing_hint: pushed
+    drum_density:
+      kick_transients_per_min: 134.9
+      snare_transients_per_min: 176.7
+    spectral_balance:
+      sub_kick_ratio: -4.93
+      snare_kick_ratio: -9.06
+      hats_kick_ratio: -18.61
+      brightness: dark
+    texture_hints:
+    - heavy_sub
+    - lofi_rolled
+    - compressed_glue
+  production_dossier:
+    bpm: 87
+    key: F# minor
+    drum_preset: :madlib_dusty
+    groove_dna: donuts
+    drums: Stailings variant; drunk hat stagger on 3,9,15.
+    texture: Canonical Bergen stailings timbre — reference for local rotation.
+    harmony: erykah_minor.
+    dilla_engine:
+      track: erykah_minor
+      performer: yancey
+  engine_recommendation:
+    track: erykah_minor
+    performer: yancey
+  calibration_notes:
+  - BPM delta 22.2 (64.8 measured vs 87 curated)
+  - 'Swing: pushed'
+- id: mike_t_jr_rauingar
+  artist: Mike T Jr
+  title: Rauingar
+  source: local_mp3
+  youtube_id:
+  audio_file: "/Users/mac/Documents/GitHub/pub2/johann-rauingar.mp3"
+  analysis:
+    measured: true
+    duration_seconds: 19.26
+    bit_rate: 128481
+    sample_rate: 44100
+    channels: 2
+    bpm_estimate_kick: 57.1
+    bpm_estimate_snare: 80.0
+    bpm_estimate: 68.6
+    loudness:
+      full_rms_db: -8.38
+      full_peak_db: 0.0
+      sub_rms_db: -47.2
+      kick_rms_db: -41.59
+      snare_rms_db: -57.43
+      hats_rms_db: -70.61
+    dynamics:
+      crest_factor_db: 8.38
+      swing_hint: pushed
+    drum_density:
+      kick_transients_per_min: 68.2
+      snare_transients_per_min: 83.7
+    spectral_balance:
+      sub_kick_ratio: -4.95
+      snare_kick_ratio: -12.68
+      hats_kick_ratio: -21.47
+      brightness: dark
+    texture_hints:
+    - lofi_rolled
+  production_dossier:
+    bpm: 90
+    key: A minor
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: Rauingar drive; kick syncopation 0,4,7,10; open hat on 14.
+    texture: Slightly brighter hats; more energy in 4–8 kHz.
+    harmony: iv_borrow_minor Am9–Dm9–Fmaj9–Em7.
+    dilla_engine:
+      track: iv_borrow_minor
+      performer: yancey
+  engine_recommendation:
+    track: iv_borrow_minor
+    performer: yancey
+  calibration_notes:
+  - BPM delta 21.4 (68.6 measured vs 90 curated)
+  - 'Swing: pushed'
+- id: j_dilla_microphone_master
+  artist: J Dilla
+  title: Microphone Master
+  source: youtube_reference
+  youtube_id: 9EGHwkDix78
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 90
+    key: Fm / Ab
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: MPC3000 swing ~57%; kick anchors 1 + late 3 (steps 0,6,10); snare 4/12
+      with early push; 8th-note hats with lazy upbeats; ghost snares on 2/10.
+    texture: Dusty vinyl crackle, low-passed sample chop, warm sub; Donuts-era mono-stacked
+      sample + live kit hybrid.
+    harmony: Minor 7 → IV → bVII loop; sample-led melody with horn stab punctuation.
+    mix: Soft clip + gentle compression; hats sit behind sample; kick/sub unified
+      ~80–120 Hz.
+    dilla_engine:
+      track: maj7_minor_cycle
+      performer: yancey
+      kicks: '1'
+      speak: '0'
+  engine_recommendation:
+    track: maj7_minor_cycle
+    performer: yancey
+    kicks: '1'
+    speak: '0'
+- id: j_dilla_in_space
+  artist: J Dilla
+  title: In Space
+  source: youtube_reference
+  youtube_id: vO2nWXCVt6o
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 88
+    key: Dm
+    drum_preset: :dilla_drunk
+    groove_dna: donuts
+    drums: Sparse pocket; kick drift on 0,3,6,13; snare 4/12 + ghost 7; hats staggered
+      16ths with wide humanize.
+    texture: Spacey reverb tail on sample; filtered noise bed; minimal low end until
+      hook.
+    harmony: Two-chord hypnosis (Ebm7–Bbm7 feel); modal vamps with pitch-bent sample.
+    mix: Wide stereo sample, dry center kick; high shelf rolled ~9 kHz.
+    dilla_engine:
+      track: two_chord_hypnosis
+      performer: yancey
+  engine_recommendation:
+    track: two_chord_hypnosis
+    performer: yancey
+- id: j_dilla_timeless
+  artist: J Dilla
+  title: Timeless
+  source: youtube_reference
+  youtube_id: dbbfo9_7D8g
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 86
+    key: Fm9
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: Canonical Dilla swing; kick 0,6,10; snare 4/12 early; 8th hats; occasional
+      open hat on 14.
+    texture: Timeless sample warmth, vinyl noise, bass shelf +9 dB; pad lowpass ~3.4
+      kHz.
+    harmony: Fm9–Dbmaj9–Cm9 cycle; melody chop on 5th/9th tones.
+    mix: Donuts lowpass warmth; integrated ~-19 LUFS feel; never harsh top.
+    dilla_engine:
+      track: maj7_minor_cycle
+      performer: yancey
+      sonic_key: dilla_timeless
+  engine_recommendation:
+    track: maj7_minor_cycle
+    performer: yancey
+    sonic_key: dilla_timeless
+- id: afta_1_due_time
+  artist: AFTA-1
+  title: Due Time
+  source: youtube_reference
+  youtube_id: WC09qDzU9y4
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 91
+    key: Bb
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: Neo-soul slash grid; kick syncopated on 0,4,8; snare 4/12; clap layer;
+      shaker on off-16ths.
+    texture: Clean but swung; Rhodes-like midrange; round bass.
+    harmony: Slash voicings Dm7/F–Fmaj9/A–Gm7/Bb; so-what voicing family.
+    mix: Chris Dave pocket — drums slightly late, bass ahead.
+    dilla_engine:
+      track: slash_neo_soul
+      performer: chris_dave
+  engine_recommendation:
+    track: slash_neo_soul
+    performer: chris_dave
+- id: flying_lotus_massage_situation
+  artist: Flying Lotus
+  title: Massage Situation
+  source: youtube_reference
+  youtube_id: 6oUx6wGCekM
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 85
+    key: Cm
+    drum_preset: :flylo_abstract
+    groove_dna: wonky
+    drums: Broken 16ths; kicks on 0,5,8,13; snares displaced 2,6,10,15; heavy ghost
+      layer.
+    texture: Glitch clicks, sidechain pump, stereo pan on hats; sub drops out for
+      air.
+    harmony: Quartal stacks; chromatic mediant drift.
+    mix: Jazz haze sidechain; master lowpass ~3.6 kHz; vinyl 0.08.
+    dilla_engine:
+      track: quartal_west_coast
+      performer: glasper
+      groove_dna: wonky
+  engine_recommendation:
+    track: quartal_west_coast
+    performer: glasper
+    groove_dna: wonky
+- id: madlib_eye
+  artist: Madlib
+  title: Eye
+  source: youtube_reference
+  youtube_id: ScVz2mntmCE
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 96
+    key: Dm
+    drum_preset: :sp303
+    groove_dna: dust
+    drums: SP-303 grit; straight-ish 8th hats; kick four-on-floor variant 0,4,8,12;
+      snare 4/12.
+    texture: Bitcrush 35% mix; vinyl 0.10; accordion/sample midrange dominant.
+    harmony: Minor triad walk Dm–Gm–Am; simple loop hypnosis.
+    mix: Dusty, mid-forward; limited highs; SP-1200 punch.
+    dilla_engine:
+      track: minor_triad_walk
+      performer: karriem_riggins
+  engine_recommendation:
+    track: minor_triad_walk
+    performer: karriem_riggins
+- id: slum_village_players
+  artist: Slum Village
+  title: Players
+  source: youtube_reference
+  youtube_id: KsULjOCYdnY
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 93
+    key: Dm
+    drum_preset: :mpc3000
+    groove_dna: donuts
+    drums: 'Players pocket: kick 0,6,10; snare 4/12; 8th hats; ghost 2/9; MPC swing
+      62%.'
+    texture: Neo-soul clean punch; bass sustain 0.92 bar; pad lowpass 3.3 kHz.
+    harmony: Dm7–Eb7–Gm7–Am7; measured players progression.
+    mix: Slum pocket — snare slightly early, hats late.
+    dilla_engine:
+      track: neo_soul_pocket
+      performer: questlove
+      sonic_key: slum_players
+  engine_recommendation:
+    track: neo_soul_pocket
+    performer: questlove
+    sonic_key: slum_players
+- id: jay_electronica_exhibit_a
+  artist: Jay Electronica
+  title: Exhibit A
+  source: youtube_reference
+  youtube_id: H3UIHZshNQ0
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 86
+    key: Bb / Dm
+    drum_preset: :madlib_dusty
+    groove_dna: donuts
+    drums: Slow drunk swing; kick 0,3,6,10,13; snare 4/7/12; sparse hats.
+    texture: Cinematic strings sample + warm minor arc; vinyl 0.07.
+    harmony: Dm7–Cm7–Fmaj9–Gm7 warm minor arc.
+    mix: Wide sample, centered drums; long release tails.
+    dilla_engine:
+      track: warm_minor_arc
+      performer: yancey
+  engine_recommendation:
+    track: warm_minor_arc
+    performer: yancey
+- id: slum_village_la_la_instrumental
+  artist: Slum Village
+  title: La La (Instrumental)
+  source: youtube_reference
+  youtube_id: EYJxxHQ7sX0
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 94
+    key: F minor
+    drum_preset: :dilla_drunk
+    groove_dna: donuts
+    drums: Donda-style drunk grid; kick 0,3,6,10,13; dense hat 16ths.
+    texture: Dark minor loop; heavy bass shelf.
+    harmony: Fm7–Abmaj7–Bbm7 loop.
+    dilla_engine:
+      track: donda_minor
+      performer: questlove
+  engine_recommendation:
+    track: donda_minor
+    performer: questlove
+- id: slum_village_get_it_together
+  artist: Slum Village
+  title: Get It Together
+  source: youtube_reference
+  youtube_id: t6T-Q6HMbEo
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 92
+    key: C minor
+    drum_preset: :mpc3000
+    groove_dna: donuts
+    drums: Classic boom-bap; kick four-on; snare 4/12; clap double.
+    texture: Soul sample flip; filtered intro.
+    harmony: Cm9–Fm7–Bbmaj7–Ebmaj9 neo-IV cycle.
+    dilla_engine:
+      track: neo_iv_cycle
+      performer: questlove
+  engine_recommendation:
+    track: neo_iv_cycle
+    performer: questlove
+- id: slum_village_fantastic
+  artist: Slum Village
+  title: Fantastic
+  source: youtube_reference
+  youtube_id: a3ISYWWYgz8
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 95
+    key: Ab
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: Upbeat swing; kick syncopated; open hat accents.
+    texture: Bright soul sample; less vinyl than Donuts.
+    harmony: Maj7 minor cycle variant.
+    dilla_engine:
+      track: maj7_minor_cycle
+      performer: questlove
+  engine_recommendation:
+    track: maj7_minor_cycle
+    performer: questlove
+- id: flying_lotus_me_yesterday_corded
+  artist: Flying Lotus
+  title: me Yesterday//Corded
+  source: youtube_reference
+  youtube_id: 8DgAhgmpXNA
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 83
+    key: D
+    drum_preset: :flylo_abstract
+    groove_dna: wonky
+    drums: Broken beat; irregular kick; snare clusters; glitch percussion.
+    texture: Chopped vocal fragments; heavy stereo motion.
+    harmony: Suspended ballad / chromatic drift.
+    dilla_engine:
+      track: suspended_ballad
+      performer: glasper
+  engine_recommendation:
+    track: suspended_ballad
+    performer: glasper
+- id: flying_lotus_camel
+  artist: Flying Lotus
+  title: Camel
+  source: youtube_reference
+  youtube_id: fU9YRGLPDQ8
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 84
+    key: C
+    drum_preset: :flylo_abstract
+    groove_dna: wonky
+    drums: Off-kilter 16ths; kick 0,5,8,13; snare 2,6,10,15; sidechain pump.
+    texture: Quartal jazz haze; sidechain; vinyl 0.08; pan on arps.
+    harmony: Cmaj9–Am9–Fmaj9–G6 quartal west coast.
+    mix: FlyLo camel preset — master LP 3.6 kHz.
+    dilla_engine:
+      track: quartal_west_coast
+      performer: glasper
+      sonic_key: flylo_camel
+  engine_recommendation:
+    track: quartal_west_coast
+    performer: glasper
+    sonic_key: flylo_camel
+- id: flying_lotus_golden_diva
+  artist: Flying Lotus
+  title: Golden Diva
+  source: youtube_reference
+  youtube_id: iu4FVvR2QQs
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 82
+    key: Eb
+    drum_preset: :flylo_abstract
+    groove_dna: wonky
+    drums: Slow loose pocket; minimal kick; brush-like hats.
+    texture: Glasper quartal keys; long reverb.
+    harmony: Ebmaj9–Cm9–Abmaj9–Bb6.
+    dilla_engine:
+      track: glasper_quartal
+      performer: glasper
+  engine_recommendation:
+    track: glasper_quartal
+    performer: glasper
+- id: slum_village_worlds_full_of_sadness
+  artist: Slum Village
+  title: Worlds Full of Sadness
+  source: youtube_reference
+  youtube_id: MU3nfxsz2XA
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 88
+    key: G minor
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: Melancholy swing; sparse kicks; rimshot ghosts.
+    texture: Waterfall pad wash; minor soul loop.
+    harmony: Gm9–Cm7–Fmaj9–Bbm7 watermelon turn.
+    dilla_engine:
+      track: watermelon_turn
+      performer: questlove
+  engine_recommendation:
+    track: watermelon_turn
+    performer: questlove
+- id: a_mochi_takaaki_itoh_sarria_s_mind
+  artist: A. Mochi & Takaaki Itoh
+  title: Sarria's Mind
+  source: youtube_reference
+  youtube_id: gFKArkiz8vU
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 124
+    key: D mixolydian
+    drum_preset: :mpc3000
+    groove_dna: wonky
+    drums: Techno-influenced 4/4 with swing overlay; driving hats.
+    texture: Modal safe loop; cleaner digital top.
+    harmony: Dmaj9–Cm9–Gmaj9–A7 modal safe.
+    dilla_engine:
+      track: modal_safe
+      performer: glasper
+      bpm: 124
+  engine_recommendation:
+    track: modal_safe
+    performer: glasper
+    bpm: 124
+- id: samiyam_rounded
+  artist: Samiyam
+  title: Rounded
+  source: youtube_reference
+  youtube_id: oeaY2h_cKsg
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 96
+    key: Dm
+    drum_preset: :sp303
+    groove_dna: donuts
+    drums: Dry modern punch; kick 0,4,8,12; tight snare; minimal ghosts.
+    texture: Rounded sub; low vinyl; modern dry punch texture.
+    harmony: Dm9–Em7–Ebmaj7–Dm.
+    dilla_engine:
+      track: minor_iv_loop
+      performer: yancey
+      sonic_key: samiyam_rounded
+  engine_recommendation:
+    track: minor_iv_loop
+    performer: yancey
+    sonic_key: samiyam_rounded
+- id: chase_swayze_traffic
+  artist: Chase Swayze
+  title: Traffic
+  source: youtube_reference
+  youtube_id: bH-30pDoQdo
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 88
+    key: G
+    drum_preset: :mpc3000
+    groove_dna: donuts
+    drums: Minor turnaround grid; kick 0,6,10; snare 4/12; steady 8th hats.
+    texture: Bergen night rain pad; vinyl 0.07; pad LP 3.3 kHz.
+    harmony: Bm7–Bm7–Cmaj9–Em7.
+    dilla_engine:
+      track: minor_turnaround
+      performer: yancey
+  engine_recommendation:
+    track: minor_turnaround
+    performer: yancey
+- id: chase_swayze_underrated
+  artist: Chase Swayze
+  title: Underrated
+  source: youtube_reference
+  youtube_id: 1jjFk2Vp5ok
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 90
+    key: F minor
+    drum_preset: :dilla_slight
+    groove_dna: donuts
+    drums: Slightly drunk hat pattern; kick syncopation.
+    texture: Lo-fi crunch; AKMD-family mastering.
+    harmony: Minor IV loop.
+    dilla_engine:
+      track: minor_iv_loop
+      performer: yancey
+  engine_recommendation:
+    track: minor_iv_loop
+    performer: yancey
+- id: flying_lotus_bts_radio_2006
+  artist: Flying Lotus
+  title: BTS Radio 2006
+  source: youtube_reference
+  youtube_id: 6nWdggkulHk
+  audio_file:
+  analysis:
+  production_dossier:
+    bpm: 86
+    key: varies
+    drum_preset: :flylo_abstract
+    groove_dna: wonky
+    drums: 'Live mix: long blends; percussion overdubs; tempo drift.'
+    texture: Radio collage; reverb throws; DJ-style filter sweeps.
+    harmony: Multi-track medley — quartal + suspended ballads.
+    note: Manifest start offset 1364s — deep in mix; treat as texture reference not
+      grid template.
+    dilla_engine:
+      track: quartal_west_coast
+      performer: glasper
+  engine_recommendation:
+    track: quartal_west_coast
+    performer: glasper
