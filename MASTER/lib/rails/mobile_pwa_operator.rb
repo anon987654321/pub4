@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "sw_strategy"
 
 module Master
   module Rails
@@ -72,7 +73,10 @@ module Master
 
       def fix_service_worker(path, app_name)
         sw_path = @pwa.audit(path).fetch(:service_worker)
-        return nil unless sw_path && !File.read(File.join(path, sw_path)).match?(/setCatchHandler|NetworkFirst/)
+        return nil unless sw_path
+
+        sw_source = File.read(File.join(path, sw_path))
+        return nil unless SwStrategy.cache_first_only?(sw_source)
 
         shared = File.join(DEPLOY_RAILS, "shared", "pwa", "service_worker.js")
         return nil unless File.file?(shared)

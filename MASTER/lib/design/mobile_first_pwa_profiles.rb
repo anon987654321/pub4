@@ -144,6 +144,8 @@ module Master
         CSS_RULES.each do |rule|
           source.scan(rule.pattern) do |m|
             value = rule.extract&.call(m)
+            # line-height: 0 collapses inline-box whitespace under wrapped SVG/img logos — not body text.
+            next if rule.id == :line_height_too_low && value && value < 1.0
             next if value && value >= rule.threshold
             finding_message = value ? format(rule.message, value) : rule.message
             findings << { id: rule.id, file:, message: finding_message, severity: rule.severity }

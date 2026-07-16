@@ -7,6 +7,46 @@ to `/rails-pwa-audit` in the MASTER CLI — rather than a manual eyeball pass.
 See `MASTER/TODO.md` for the equivalent backlog on MASTER's own codebase and
 for the shared-worktree git hazard notes (they apply here too).
 
+## Status (2026-07-16)
+
+**Deployable apps: all green.** Latest audit run reports 0 real design
+violations and no PWA strategy findings for `amber`, `brgen`, and `bsdports`.
+`shared` still shows red in the auditor (not a deployable app — see caveat
+below).
+
+### Done
+
+| Area | What shipped |
+|---|---|
+| **shared SCSS** | Touch targets (44px), `prefers-reduced-motion` guards, line-height fixes in `_minimal.scss`, `_zen_shell.scss`, `_animations.scss`, `_x_shell.scss`, `_x_widgets.scss` |
+| **bsdports SCSS** | `application.scss` line-height + reduced-motion |
+| **amber SCSS** | All real findings fixed; logo `line-height: 0` idiom excluded from audit (not a readability bug) |
+| **brgen SCSS** | Batch reduced-motion across ~20 partials; touch targets in `_forms`, `_posts`; line-height pass |
+| **PWA** | Workbox 7.4.1 workers in all three apps — network-first for HTML (`navigate`), cache-first for static assets, offline fallback, background sync, push/badge handlers |
+| **PWA audit** | `SwStrategy` module recognizes minified Workbox output (no false "cache-first-only" on compiled workers) |
+| **bsdports routes** | Evals `shared/config/routes/social.rb` — notifications/reactions/reports live |
+| **brgen routes** | Evals shared `social.rb` (inline duplicate removed); scoped roots use single-prefixed helpers (`maps_root_path`, `marketplace_root_path`) |
+| **bsdports User** | `validates :email_address, presence: true, uniqueness: true` |
+| **Stimulus** | `draft_store`, `autosave`, `media_picker`, `feed_compose`, `scroll_reveal` promoted to `shared/frontend/`; per-app drift deleted |
+| **brgen ReactionsController** | `< Shared::ReactionsController` (one-liner, same as amber/bsdports) |
+| **dating_swipe_controller.js** | Deleted (orphaned; `swipe_controller.js` + offline queue is canonical) |
+| **N+1** | `with_attached_photos` / `photos_attachments: :blob` on index actions that render `.attached?` in partials |
+| **Error pages** | `404.html`, `422.html`, `500.html`, `styles/errors.css` in each app's `public/`; enforced by `Deploy::SharedWiringGate` |
+| **Gates** | `apps_yml` in `GATE_MAP`; `GATE_COVERED_BY` dedup on `--all`; `ProductionGate`/`ReleaseGate` compose leaf gates in-process via `Deploy::GateResult`; duplicate `fail!` helpers removed |
+| **Contract tests** | `deploy_gates_contract_test.rb`, `shared_wiring_gate_test.rb`, `shared_social_routes_test.rb`, `pwa_design_contract_test.rb` |
+
+### Backlog (not blocking deploy readiness)
+
+| Area | Notes |
+|---|---|
+| **Model/controller test coverage** | amber 2/32 models, brgen 4/90 — concentrated in services/jobs, not spread across models/controllers. Pair with feature tracker when adding tests. |
+| **OPENBSD deploy-script duplication** | `@core.sh` vs `_core.sh` etc. — full detail in `OPENBSD/TODO.md` |
+| **Missing-view/route auditor** | No tool yet checks routes without views, dead `*_path` refs, orphaned partials — worth a fourth check in `MobilePwaOperator#audit` |
+| **Shared-wiring gate extension** | Optional: walk `shared/` for artifacts meant to be per-app-wired and confirm all three apps reference/copy them |
+| **visual_contract `--capture`** | `runner.rb --all` without `--capture` is structural-only (documented in `RAILS/README.md`) — manual `--capture --app --base` for real visual regression |
+
+---
+
 ## Fixed in the audit tool itself before trusting its output
 
 Sampling the raw findings before trusting them at scale (same discipline as
@@ -35,17 +75,20 @@ and `MASTER/lib/rails/rails8_app_audit.rb`, all now fixed and pushed:
    commented-out alternate `gem "rails", github: ...` line above the real
    `gem "rails", "~> 8.1.2"`, so it reported `nil` for an app actually on
    Rails 8.1.
+5. **`line-height: 0` on logo/icon wrappers** — standard CSS idiom for
+   collapsing inline-box whitespace under wrapped `<svg>`/`<img>` logos
+   (amber `_brand.scss`). Audit now skips values below 1.0 for
+   `line_height_too_low`.
+6. **Workbox-compiled service workers** — minified bundles omit the literal
+   string `NetworkFirst`; `Master::Rails::SwStrategy` detects
+   `networkTimeoutSeconds`, `setCatchHandler`, and `navigate` route
+   registration instead.
 
-Numbers below are **after** all four fixes — this is the real signal.
+Numbers in the historical sections below are **after** fixes 1–4 — the
+original audit snapshot before the CSS/PWA pass.
 
 ## Known audit-tool limitations (read before "fixing" these)
 
-- **`line-height: 0` findings are very likely a false positive**, not a
-  readability bug: it's a standard CSS idiom for collapsing the inline-box
-  whitespace under a wrapped `<svg>`/`<img>` logo (confirmed in amber's
-  `_brand.scss:59,92` — both are logo/icon wrapper selectors, not body
-  text). The rule doesn't distinguish selector context. Values in the
-  1.0–1.4 range are more likely genuine and worth a quick look each.
 - **`public/lightgallery.css` is a vendored third-party library**, not
   hand-authored — same file, same findings, appears identically in both
   `brgen` and `shared`. Don't hand-edit it; if the findings matter, look
@@ -81,123 +124,57 @@ end
 ```
 Or per-app: `Master::Rails::MobilePwaOperator.new.call(intent: :audit_rails_pwa, app: "brgen")`.
 
-## amber — 12 design findings, PWA: cache-first-only strategy
+---
+
+# Historical audit snapshot (pre-fix baseline)
+
+The tables below describe the state **before** the 2026-07-16 completion
+pass. Kept for context; do not treat open counts as current.
+
+## amber — was 12 design findings
 
 | Rule | Count | File(s) |
 |---|---|---|
-| line_height_too_low | 8 | `_base.scss`, `_brand.scss`(×2, likely the logo idiom above), `_dressing_room.scss`, `_editorial.scss`, `_guest_compose.scss`, `_items_luxury.scss`(×2) |
+| line_height_too_low | 8 | `_base.scss`, `_brand.scss`(×2, logo idiom), `_dressing_room.scss`, `_editorial.scss`, `_guest_compose.scss`, `_items_luxury.scss`(×2) |
 | animation_no_reduced_motion | 3 | `_dressing_room.scss`, `_editorial.scss`, `_items_luxury.scss` |
 | touch_target_too_small | 1 | `_items.scss` — 36px, needs 44px |
 
-PWA: service worker applies cache-first to all GET requests (medium) — see
-`RAILS/shared/pwa/service_worker.js` for the network-first-for-HTML pattern
-other apps should converge on.
-
-## brgen — 47 design findings, PWA: cache-first-only strategy
+## brgen — was 47 design findings
 
 | Rule | Count | Notes |
 |---|---|---|
-| animation_no_reduced_motion | 22 | Widest spread of any app — `_canvas`, `_communities`, `_dating_actions`, `_dating_stack`, `_feed_post`, `_forms`, `_maps`, `_marketplace`, `_media`, `_mobile`, `_nav`, `_nav_swiper`, `_nearby`, `_posts`, `_share`, `_tiptap`, `_vertical_dating_shell`, `_vertical_marketplace`, `_vertical_messenger_list`, `_vertical_tv`, `_widgets`, `public/lightgallery.css` (vendor, skip) |
-| line_height_too_low | 19 | `_affiliate`, `_canvas`, `_chrome_polish`(×2), `_dating_actions`, `_feed_post`(×2), `_forms`, `_nav`, `_posts`(×2), `_share`, `_tiptap`, `_vertical_dating_intro`, `_vertical_messenger_thread`, `_vertical_playlist`, `_x_card_modifiers`(×2), `public/lightgallery.css` (vendor, skip) |
-| font_size_too_small | 3 | all in `public/lightgallery.css` — vendor, skip |
-| touch_target_too_small | 2 | `_forms.scss` (36px), `_posts.scss` (40px) — both need 44px |
-| linear_timing | 1 | `public/lightgallery.css` — vendor, skip |
+| animation_no_reduced_motion | 22 | ~20 SCSS files + vendor `lightgallery.css` (skip) |
+| line_height_too_low | 19 | multiple partials + vendor (skip) |
+| touch_target_too_small | 2 | `_forms.scss`, `_posts.scss` |
 
-With the vendor file excluded: **~20 real animation findings + ~17 real
-line-height findings + 2 real touch-target findings** — brgen is the
-biggest real opportunity here, and `animation_no_reduced_motion` alone
-(add `@media (prefers-reduced-motion: reduce) { ... }` guards) is
-mechanical enough to batch across all ~20 files in one pass.
-
-## bsdports — 3 design findings, PWA: cache-first-only strategy
+## bsdports — was 3 design findings
 
 | Rule | Count | File |
 |---|---|---|
-| line_height_too_low | 2 | `application.scss` (1.2, 1.1) |
+| line_height_too_low | 2 | `application.scss` |
 | animation_no_reduced_motion | 1 | `application.scss` |
 
-Smallest surface by far — good candidate to fix first end-to-end as a
-template for the other two apps.
+## shared — was 23 design findings (library, not deployable)
 
-## shared — 23 design findings (not a real app, see caveat above)
-
-| Rule | Count | File(s) |
-|---|---|---|
-| line_height_too_low | 9 | `_minimal.scss`(×4), `_zen_shell.scss`(×3), `public/lightgallery.css` (vendor), `public/styles/errors.css` |
-| touch_target_too_small | 4 | `_minimal.scss`(×3: 36px, 36px, 28px), `_zen_shell.scss`(36px) |
-| animation_no_reduced_motion | 6 | `_animations.scss`, `_minimal.scss`, `_x_shell.scss`, `_x_widgets.scss`, `public/lightgallery.css` (vendor), `public/styles/animations.css` |
-| font_size_too_small | 3 | all in `public/lightgallery.css` — vendor, skip |
-| linear_timing | 1 | `public/lightgallery.css` — vendor, skip |
-
-Since `shared` is inherited by all three real apps, fixes here (especially
-`_minimal.scss`'s touch targets — three separate below-44px buttons) likely
-fix the same visual element across `amber`/`brgen`/`bsdports` at once.
-Worth doing *before* the per-app passes above, not after.
-
-## Cross-cutting: `animation_no_reduced_motion` (38 real findings total)
-
-The single largest real category once vendor noise is excluded. Mechanical
-fix, same shape everywhere:
-```scss
-.thing { animation: spin 1s linear infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .thing { animation: none; }
-}
-```
-(or add `transition: none` for `transition:`-based findings). `amber`'s
-`_dressing_room.scss` already has this pattern for a sibling class
-(`.amber-swoosh-line`, see the audit dump above) — copy that shape rather
-than inventing a new one.
+Fixes here (especially `_minimal.scss` touch targets) propagated to all
+three apps at once.
 
 ---
 
-# Beyond CSS/PWA: routing, coverage, wiring, and gate gaps
+# Beyond CSS/PWA: routing, coverage, wiring (historical notes)
 
-Everything below was found by manually reading source (2026-07-15 audit) —
-routes, controllers, models, JS, gates — not by the design/PWA auditor
-above. Doesn't overlap it; don't re-run that tool looking for these.
+Everything below was found by manually reading source (2026-07-15 audit).
+**Routing, Stimulus, N+1, gates, and error pages are resolved** — see Done
+table above. Remaining gaps are test coverage and OPENBSD script
+duplication.
 
-## bsdports is missing a whole route file — dead controller + guaranteed PWA 404s
+## bsdports missing social routes — FIXED
 
-`bsdports/config/routes.rb` only evals `shared/config/routes/auth.rb` and
-`shared/config/routes/fleet.rb` — never `shared/config/routes/social.rb`
-(which defines `resources :notifications`, `resources :reactions, only:
-:create`, `resources :reports, only: :create`). amber evals all three
-(`amber/config/routes.rb:15-17`); brgen doesn't eval `social.rb` either but
-hand-reimplements the same three resources inline
-(`brgen/config/routes.rb:32-39`) — so bsdports alone ends up with none of
-it. Consequences, both confirmed:
+`bsdports/config/routes.rb` now evals `shared/config/routes/social.rb`
+alongside `auth.rb` and `fleet.rb`. `ReactionsController` is reachable;
+`/notifications/badge` no longer 404s for PWA badge sync.
 
-- `bsdports/app/controllers/reactions_controller.rb`
-  (`< Shared::ReactionsController`) has **zero route** — fully dead,
-  unreachable code.
-- `shared/pwa/service_worker.js` (compiled into bsdports' service worker
-  too) unconditionally `fetch("/notifications/badge")` on its
-  `badge-refresh` periodicsync handler and calls
-  `self.registration.showNotification(...)` on `push` — both hit a route
-  that doesn't exist in bsdports. amber and brgen have it live; bsdports'
-  installed PWA clients with background sync will fail/404 silently.
-
-bsdports' `apps.yml` entry has no notifications feature listed, so the
-missing feature itself is intentional — the dead controller and the
-doomed fetch call are the anomaly. Fix by adding the same
-`instance_eval(File.read(...))` for `social.rb` bsdports is missing, or by
-deleting `reactions_controller.rb` and stripping the notification-badge/
-push code paths from bsdports' compiled service worker if bsdports really
-has no notifications feature. See "Aggressive restructuring" below for the
-better fix (one routing pattern, not three).
-
-Everything else on the missing-view/broken-link front came back **clean**:
-every controller `index|show|new|edit` action across all three apps has a
-matching view (one false-positive: brgen's `robots_controller#show` renders
-text directly, needs no template); every `*_path`/`*_url` helper in
-views/helpers resolves to a real route including renamed/nested/scoped
-helpers. One likely-dead route, low priority: amber's `resources
-:declutter` generates `complete_challenge_declutter_path`, unused in any
-view (`amber/config/routes.rb:72-82`).
-
-## Test/model coverage — not "some gaps," the default state
+## Test/model coverage — backlog
 
 | App | Models tested | Controllers tested |
 |---|---|---|
@@ -205,238 +182,63 @@ view (`amber/config/routes.rb:72-82`).
 | brgen | 4/90 | 3/76 |
 | bsdports | 1/13 | 1/9 |
 
-Real coverage is concentrated in `test/services`, `test/jobs`, `test/lib`,
-and a handful of integration/system tests — not spread across
-models/controllers at all.
-
 Concrete `apps.yml`-labeled `status: done` features with **zero** direct
-test coverage: brgen `Dating::Match` (MatchmakingService), brgen
-`Marketplace::Order` (state machine), brgen `Takeaway::Order`
-(placed→delivered state machine), brgen `Vote`/`Votable` (karma
-side-effect), amber `Outfit`, `WardrobeItem`, `Connection`. These are the
-"does it actually work" counterpart to the CSS audit's "is it styled
-correctly" — worth pairing up in whatever tracker consumes this backlog.
+test coverage: brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`,
+`Vote`/`Votable`; amber `Outfit`, `WardrobeItem`, `Connection`.
 
-**Concrete validation gap**, not just missing tests: `bsdports/app/models/
-user.rb` has **no `validates` at all**, unlike `amber/app/models/user.rb:37`
-and `brgen/app/models/user.rb:15-16` (both `validates :email_address,
-presence: true, uniqueness: true`). The DB has a unique index + `NOT NULL`
-(`bsdports/db/schema.rb:146,156`) so data integrity is safe, but bsdports'
-registration flow surfaces a raw `ActiveRecord::RecordNotUnique`/
-`NotNullViolation` instead of the friendly validation error amber/brgen
-users get for the identical mistake. Add the matching `validates` line.
+**bsdports User validation — FIXED.** `validates :email_address, presence: true, uniqueness: true`.
 
-Other models with zero `validates`/`validate` (excluding association-only/
-marker classes that legitimately don't need them — confirm before
-treating as gaps): amber's `privacy_setting.rb`; brgen's `tagging.rb`,
-`mention.rb`, `typing_indicator.rb`, `message_receipt.rb`,
-`conversation_participant.rb`, `tv/view_event.rb`, `playlist/listen.rb`.
+## Stimulus controllers — FIXED
 
-## Stimulus controllers — dead code, drift, and a broken inheritance chain
+- Shared promotion: `pub4_draft_store`, `pub4_autosave`, `pub4_media_picker`,
+  `pub4_feed_compose`, `pub4_scroll_reveal` in `shared/frontend/`
+- `dating_swipe_controller.js` deleted
+- `brgen/reactions_controller.rb` subclasses `Shared::ReactionsController`
 
-- **`brgen/app/javascript/controllers/dating_swipe_controller.js`** (69
-  lines, pointer-drag + offline-queue via `pwa/offline_store`) is never
-  referenced by any view — `dating/home/index.html.erb:49` uses the
-  generic `swipe_controller.js` instead. The more sophisticated
-  offline-aware controller is orphaned.
-- **`draft_store_controller.js`, `autosave_controller.js`,
-  `media_picker_controller.js`, `feed_compose_controller.js`** each exist
-  independently in both `amber/app/javascript/controllers/` and
-  `brgen/app/javascript/controllers/`, confirmed **not identical** —
-  drifted since being copy-pasted (amber's `autosave_controller.js` still
-  sends an explicit CSRF header block brgen's dropped; brgen's
-  `media_picker_controller.js` has an extra `filters` target amber's
-  doesn't). `application_controller.js`/`hello_controller.js` are
-  byte-identical scaffolding stubs across both apps — lower priority but
-  still literal duplication.
-- **`brgen/app/javascript/controllers/scroll_reveal_controller.js`**
-  reimplements (with drift) `shared/frontend/pub4_scroll_reveal_controller.js`,
-  which already exists. brgen should consume the shared one directly.
-- **`brgen/app/controllers/reactions_controller.rb`** does **not**
-  subclass `Shared::ReactionsController` (unlike amber's and bsdports'
-  one-liner `< Shared::ReactionsController`) — it reimplements `create`
-  inline with a different auth-guard name (`require_real_user` vs. the
-  shared class's `require_current_user`) and `Current.user` instead of
-  `current_user`. Functionally equivalent today; any future security fix
-  to `Shared::ReactionsController` silently won't reach brgen.
+## N+1 queries — FIXED
 
-## N+1 queries — one consistent gap: Active Storage collections
+`with_attached_photos` / attachment preloads on index actions rendering
+`.attached?` in partials.
 
-The codebase is generally careful about eager loading (`posts_controller.rb:22`,
-`communities_controller.rb:11,18`, `bsdports/ports_controller.rb:13` all
-correctly `.includes`) — the one recurring miss is `has_many_attached`:
+## Gates architecture — FIXED (core items)
 
-- `amber/app/controllers/items_controller.rb:12` — no attachment preload;
-  `_item.html.erb:4-5` calls `item.photos.attached?`/`.first` per row. Fix:
-  `.with_attached_photos`.
-- `brgen/app/controllers/marketplace/listings_controller.rb:15` —
-  `.includes(:user, :category)` but not photos; `_card.html.erb:14` calls
-  `listing.photos.attached?`/`.first` per row. Same fix.
+- `Deploy::GateResult` adopted across composite gates
+- `runner.rb --all` deduplicates via `GATE_COVERED_BY`
+- `apps_yml` wired into `GATE_MAP`
+- `ProductionGate`/`ReleaseGate` call nested gates in-process
+- `shared_wiring` gate validates routes, importmap, public error pages, Stimulus pins
 
-Likely present anywhere else a `has_many_attached` collection renders in
-an index view — worth a repo-wide grep for `.attached?` in `_*.html.erb`
-partials cross-referenced against their controller's `.includes`.
+`visual_contract_gate.rb` without `--capture` only validates route/lens data
+shapes — documented in `RAILS/README.md`.
 
-## Gates architecture
+## Deploy-script duplication — see OPENBSD/TODO.md
 
-A shared base already exists — **`Deploy::GateResult`**
-(`OPENBSD/lib/gate_result.rb`) + **`Deploy::Inventory`**
-(`OPENBSD/lib/deploy_inventory.rb`) — used by 5 of 14 gates
-(`port_inventory`, `human_walkthrough`, `stimulus_components_adoption`,
-`generated_asset_freshness`, `schema_migration`). README's "future Base
-class" framing undersells this: the class exists, it's just not adopted
-everywhere. **Not using it**: `check_production_gate.rb` and
-`domain_alignment_gate.rb` each independently define an **identical**
-local `def fail!(failures, message); failures << message; end` helper
-(`check_production_gate.rb:16-18`, `domain_alignment_gate.rb:24-26`) —
-textbook duplicate boilerplate. Also not using it: `master_tts_gate.rb`,
-`master_web_assets_gate.rb`, `rails_runtime_gate.rb`,
-`frontend_production_gate.rb`, `release_gate.rb`.
-
-**Real bug: `runner.rb --all` executes several gates 2-3× each**, because
-some gates shell out to *other* gates internally and the flat `GATE_MAP`
-doesn't know it:
-- `check_production_gate.rb:141-157` shells out to `master_web_assets_gate.rb`
-  and `master_tts_gate.rb`.
-- `rails_runtime_gate.rb:30-33` shells out to `check_production_gate.rb` —
-  which itself re-shells to the same two gates again.
-- `release_gate.rb:113-118` shells out to `domain_alignment_gate.rb`,
-  `frontend_production_gate.rb`, `frontend_auditor_gate.rb`,
-  `stimulus_components_adoption_gate.rb`.
-
-Net effect: `master_web_assets`/`master_tts` each actually run 3× under
-`--all`; four other gates run 2×; `check_production` runs 2×. Beyond
-wasted time, a failure inside a nested gate surfaces under the *outer*
-gate's name in the runner's summary (a `master_tts` failure triggered via
-`rails_runtime` prints as `[gates] rails_runtime FAILED`), actively
-misleading whoever's reading the output.
-
-**`apps_yml_validator.rb` isn't wired into `runner.rb` at all** — absent
-from the 15-key `GATE_MAP` despite README.md documenting it as part of the
-consolidated gates system. `runner.rb --all` silently never runs it.
-
-`visual_contract_gate.rb` run with no `--capture` flag only validates its
-own `ROUTES`/`LENSES` data-structure shape and prints "ok: N seeded visual
-contract cells" — it does not crawl or screenshot anything unless invoked
-manually with `--capture --app --base`. Running it via `runner.rb --all`
-is a no-op sanity check, not a real regression test — worth a doc note so
-nobody assumes `--all` visually verifies anything.
-
-## Deploy-script duplication — full detail lives in OPENBSD/TODO.md
-
-Found while auditing `OPENBSD/`, not this tree, but the affected files are
-here: RAILS' own `@core.sh`/`@database.sh`/`@runtime_gate.sh`/
-`@scaffold.sh`/`@service.sh`/`@sync.sh` are still byte-for-byte duplicates
-of their `_`-prefixed replacements — only `@deploy.sh` was correctly
-converted to a thin shim sourcing `_deploy.sh`. `BPLAN/rails/bplan.sh`
-still sources the old `@`-prefixed versions directly, so two silently
-diverging copies of the same deploy logic are now live with two different
-callers. Full detail and the fix are in `OPENBSD/TODO.md`'s item 2 and its
-"Aggressive restructuring" section — not repeated here. It's the same
-underlying pattern as the "shared-engine artifacts silently fail to reach
-every consumer" note at the end of this document's own restructuring
-section, one layer down at the shell-script level instead of routes/
-Stimulus/CSS.
+`@core.sh`/`_core.sh` byte-identical copies — not repeated here.
 
 ## TODO/FIXME/pending/pry sweep — clean
 
-Repo-wide grep (excluding tmp/log/node_modules/vendor/storage/public
-assets) across amber/brgen/bsdports/shared: zero real hits. `byebug`/`pry`
-aren't even in the Gemfiles. The only `skip`/`pending` hits are false
-positives (`a.skip-link` CSS selector in accessibility tests, and the
-literal string `"pending"` inside a `STATUSES = %w[...]` array).
+Repo-wide grep across amber/brgen/bsdports/shared: zero real hits.
 
-## Micro-refinement / polish
+## Micro-refinement — FIXED except cosmetic notes
 
-- **Styled 404/422/500 pages exist but are unreachable in production.**
-  `shared/public/{404,422,500}.html` + `shared/public/styles/errors.css`
-  exist, but Rails' `ActionDispatch::PublicExceptions` only ever reads from
-  the *host app's own* `Rails.public_path` — never a mounted engine's
-  `public/`. None of `amber/public/`, `brgen/public/`, `bsdports/public/`
-  contain these files, and no build/deploy step copies them across. A
-  genuinely unhandled exception (anything not
-  `ActiveRecord::RecordNotFound`/`ActionController::ParameterMissing`/
-  `Pundit::NotAuthorizedError`, which *are* handled via
-  `shared/app/controllers/concerns/shared/rescue_handlers.rb:9-11`) falls
-  through to Rails' bare hardcoded fallback text in all three apps instead
-  of the pages clearly designed for this.
-- **Root-scope naming wart**: `brgen/config/routes.rb` redundantly
-  re-specifies `as:` on `root` inside already-named scopes (`root
-  "home#index", as: :maps_root` inside `scope as: "maps"`, line 179; same
-  for `marketplace`, line 160) producing double-prefixed helpers
-  `maps_maps_root_path`/`marketplace_marketplace_root_url`. `tv`, `dating`,
-  `takeaway` scopes don't do this (single-prefixed `tv_root_url` etc.).
-  Views already use the double-prefixed forms correctly — nothing's
-  broken, just inconsistent.
+- **Error pages** — copied to each app's `public/`; `SharedWiringGate` enforces
+- **brgen route helpers** — single-prefixed `maps_root_path`, `marketplace_root_path`
+- **`/offline` + service worker** — network-first-for-HTML live in all three apps
 
-`/offline` and the shared service worker are in good shape — `Rails::PwaController#offline`
-renders a genuine shared partial (`shared/app/views/shared/_offline_page.html.erb`),
-and the network-first-for-HTML pattern this doc's PWA section above says
-"other apps should converge on" is **already live in all three apps**
-(compiled service workers are byte-identical in logic, confirmed by diff) —
-correcting the framing above: this isn't aspirational, it's done. The one
-real gap in this area is bsdports' missing `/notifications/badge` route,
-already covered above.
+## Aggressive restructuring — outcome
 
-## Aggressive restructuring (renaming, flattening, decoupling, merging)
+| Proposal | Result |
+|---|---|
+| One routing pattern for social resources | All three apps eval `shared/config/routes/social.rb` |
+| Promote drifted Stimulus controllers to shared | Done — `shared/frontend/pub4_*` |
+| brgen ReactionsController inheritance | Done |
+| Delete orphaned dating_swipe | Done |
+| Flatten gate subprocess nesting | Composite gates in-process; `GATE_COVERED_BY` dedup on `--all` |
+| Wire apps_yml_validator | Done |
+| Copy error pages at deploy | Done (present in `public/`; gate-checked) |
+| Drop redundant `as:` on brgen scoped roots | Done |
+| Shared-wiring auditor gate | `Deploy::SharedWiringGate` shipped; optional extension for broader shared/ walk |
 
-- **One routing pattern for shared resources, not three.** Right now
-  amber evals `shared/config/routes/social.rb` directly, brgen
-  hand-reimplements the same three resources inline, and bsdports has
-  neither. Make every app eval the shared file — delete brgen's inline
-  duplicate, add the missing eval to bsdports (or delete its dead
-  `ReactionsController` if bsdports really has no notifications feature).
-  One source of truth for `notifications`/`reactions`/`reports` routes,
-  not a copy plus a gap plus a duplicate.
-- **Promote the four drifted duplicate Stimulus controllers
-  (`draft_store`, `autosave`, `media_picker`, `feed_compose`) into
-  `shared/frontend/` for real**, the same way `pub4_scroll_reveal_controller.js`
-  already lives there. Use Stimulus targets/values to parameterize the
-  per-app differences (the CSRF-header block, the extra `filters` target)
-  rather than forking the file — then delete both per-app copies. This
-  also fixes brgen's `scroll_reveal_controller.js` duplicate in the same
-  pass (delete it, point brgen at the shared one).
-- **Fix `brgen/app/controllers/reactions_controller.rb`'s broken
-  inheritance chain** — make it `< Shared::ReactionsController` like its
-  amber/bsdports siblings, delete the inline reimplementation. One
-  implementation of "create a reaction," not two with different
-  auth-guard names.
-- **Delete `brgen/app/javascript/controllers/dating_swipe_controller.js`**
-  (orphaned, superseded by the generic `swipe_controller.js`) — or, if the
-  offline-queue behavior it has is actually wanted, merge that behavior
-  into `swipe_controller.js`/`shared/frontend` instead of keeping two
-  competing swipe implementations where one is silently dead.
-- **Flatten the gate-calls-gate nesting** behind the 2-3× re-run bug
-  above — the fix isn't dedup-by-flag, it's that gates shouldn't shell out
-  to each other as subprocesses at all. Convert each gate script into a
-  callable class/method (`GateName.call(...)` returning a
-  `Deploy::GateResult`), have `runner.rb` compose them **in-process**, and
-  have `release_gate.rb`/`rails_runtime_gate.rb`/`check_production_gate.rb`
-  call those same methods instead of re-invoking the gate as a subprocess.
-  This also finishes the migration to `Deploy::GateResult`/`Deploy::Inventory`
-  that 5 of 14 gates already started — get the other 9 onto it and delete
-  the two duplicate `fail!` helpers.
-- **Wire `apps_yml_validator.rb` into `runner.rb`'s `GATE_MAP`** — small,
-  mechanical, closes a real "documented but not actually run" gap.
-- **Copy `shared/public/{404,422,500}.html` + `errors.css` into each app's
-  `public/` at build/deploy time** (a step in `_deploy.sh`/`build_all_css.rb`,
-  or a symlink if the deploy model tolerates it) rather than leaving them
-  built-but-orphaned in `shared/`.
-- **Drop the redundant `as:` on brgen's `maps`/`marketplace` scoped
-  `root`** so all subdomain scopes produce single-prefixed helpers
-  consistently (`maps_root_path` not `maps_maps_root_path`) — cosmetic,
-  but it's the kind of inconsistency that makes the next dev guess wrong.
-- **Underlying pattern across most of the findings above**: shared-engine
-  artifacts (routes, Stimulus controllers, error pages, service-worker
-  assumptions) get built correctly once and then silently fail to reach
-  one or more of the three apps that are supposed to consume them. Rather
-  than fixing each instance ad hoc, consider a gate (or an extension of
-  `apps_yml_validator.rb`) that walks `shared/` for anything meant to be
-  per-app-wired — routes files, Stimulus controllers referenced in
-  `pub4_stimulus_boot.js`, `public/` assets — and confirms all three apps
-  actually reference/copy it, catching the next instance of this class of
-  bug automatically instead of by manual audit. The deploy-script
-  duplication noted above (`@core.sh` etc. vs. `_core.sh` etc., detailed in
-  `OPENBSD/TODO.md`) is the same failure mode one layer down — worth
-  keeping in mind as the same class of bug if this gate ever gets built,
-  rather than treating the two as unrelated.
+**Underlying pattern** (shared artifacts silently failing to reach every
+consumer) is what `SharedWiringGate` now guards against for routes,
+importmap, public assets, and Stimulus registrations.

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "sw_strategy"
+
 module Master
   module Rails
     class Rails8AppAudit
@@ -131,12 +133,10 @@ module Master
         signals
       end
 
-      # cache-first pattern: serve cached unconditionally; network only for misses
       def cache_first_sw?(path)
         sw_rel = find_file(path, SW_CANDIDATES)
         return false unless sw_rel
-        src = File.read(File.join(path, sw_rel))
-        src.match?(/caches\.match.*\|\|.*fetch/m)
+        SwStrategy.cache_first_only?(File.read(File.join(path, sw_rel)))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "rails8_app_audit.cache_first_sw", path:)
         false

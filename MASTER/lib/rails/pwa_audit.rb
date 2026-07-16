@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "sw_strategy"
 
 module Master
   module Rails
@@ -16,10 +17,6 @@ module Master
 
       # Never cache — auth, session, checkout, user-specific routes
       PRIVATE_PATTERNS = %w[/auth /login /logout /session /account /checkout /payment /admin].freeze
-
-      # Current OPERATOR apps use plain cache-first (cached || fetch)
-      # This is fine for static assets but wrong for dynamic content
-      CACHE_FIRST_ONLY_SIGNAL = /caches\.match.*\|\|.*fetch(?!\s*\(request,\s*\{)/m
 
       # Rails 8.1: new Sec-Fetch-Site CSRF strategy; apps using null_session default should migrate
       CSRF_LEGACY_SIGNAL = /protect_from_forgery.*:null_session/
@@ -146,8 +143,7 @@ module Master
       end
 
       def strategy_findings(source)
-        cache_only = source.match?(CACHE_FIRST_ONLY_SIGNAL) && !source.match?(/network.?first|NetworkFirst/i)
-        return [] unless cache_only
+        return [] unless SwStrategy.cache_first_only?(source)
 
         [Finding.new(field: :strategy, message: "cache-first applied to all GET requests", severity: :medium)]
       end
