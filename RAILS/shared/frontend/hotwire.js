@@ -1,7 +1,6 @@
-// Shared Hotwire baseline — Turbo Drive config, PWA shell, nav reveal (Rails 8 + Hotwire handbook).
+// Shared Hotwire baseline — Turbo Drive config, PWA shell (Rails 8 + Hotwire handbook).
 import "@hotwired/turbo-rails"
 import { bootThemeMeta } from "pub4/theme_meta"
-import { bootNavReveal } from "pub4/nav_reveal"
 
 bootThemeMeta()
 
@@ -31,7 +30,4 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker")
 }
 
-document.addEventListener("turbo:load", () => {
-  bootNavReveal()
-})
-bootNavReveal()
+

@@ -38,7 +38,7 @@ class AmberBacklogTest < Minitest::Test
     generator = read("app/services/outfit_generation_service.rb")
     routes = read("config/routes.rb")
     item_form = read("app/views/items/_form.html.erb")
-    media_picker = File.read(File.join(ROOT, "..", "shared", "frontend", "pub4_media_picker_controller.js"))
+    media_picker = File.read(File.join(ROOT, "..", "shared", "frontend", "media_picker_controller.js"))
 
     assert_includes migration, "analysis_status"
     assert_includes analytics, "never_worn"

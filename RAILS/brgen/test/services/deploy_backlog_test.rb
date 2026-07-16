@@ -347,7 +347,7 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_turbo_navigation_and_cache_controls_are_explicit
-    hotwire = File.read(File.join(ROOT, 'shared/frontend/pub4_hotwire.js'))
+    hotwire = File.read(File.join(ROOT, 'shared/frontend/hotwire.js'))
     assert_includes hotwire, 'Turbo.config.drive.progressBarDelay = 100'
 
     %w[
@@ -406,7 +406,7 @@ class DeployBacklogTest < Minitest::Test
     source = File.read(File.join(ROOT, 'shared/config/environments/development.rb'))
     assert_includes source, 'strict_loading_by_default = true'
 
-    source = File.read(File.join(ROOT, 'shared/frontend/pub4_stimulus_boot.js'))
+    source = File.read(File.join(ROOT, 'shared/frontend/stimulus_boot.js'))
     %w[
       Clipboard
       Dialog

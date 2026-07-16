@@ -38,6 +38,7 @@ import Autosave from "pub4/autosave"
 import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
 import FeedCompose from "pub4/feed_compose"
+import EdgeSwiper from "pub4/edge_swiper"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -82,6 +83,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("draft-store", DraftStore)
   application.register("media-picker", MediaPicker)
   application.register("feed-compose", FeedCompose)
+  application.register("edge-swiper", EdgeSwiper)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     application.register(name, component)

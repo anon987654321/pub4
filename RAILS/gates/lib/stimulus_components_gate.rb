@@ -6,7 +6,7 @@ module Deploy
   class StimulusComponentsGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
-    BOOT = File.join(RAILS_ROOT, "shared/frontend/pub4_stimulus_boot.js")
+    BOOT = File.join(RAILS_ROOT, "shared/frontend/stimulus_boot.js")
     BASELINE = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
     VENDOR = File.join(RAILS_ROOT, "shared/vendor/javascript")
 
@@ -32,7 +32,7 @@ module Deploy
       result = GateResult.new
 
       unless File.file?(BOOT)
-        result.fail("missing pub4_stimulus_boot.js")
+        result.fail("missing stimulus_boot.js")
       else
         boot = File.read(BOOT)
         REQUIRED_BOOT.each do |name|

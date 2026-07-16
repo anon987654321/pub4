@@ -20,7 +20,7 @@ class PwaDesignContractTest < Minitest::Test
   end
 
   def test_all_apps_register_service_worker_via_pub4_hotwire
-    hotwire = read(SHARED_ROOT, "frontend/pub4_hotwire.js")
+    hotwire = read(SHARED_ROOT, "frontend/hotwire.js")
     assert_includes hotwire, 'serviceWorker.register("/service-worker")'
 
     each_app do |_app, root|

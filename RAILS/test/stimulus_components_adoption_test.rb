@@ -10,7 +10,7 @@ class StimulusComponentsAdoptionTest < Minitest::Test
   end
 
   def test_boot_registers_password_visibility_and_nested_form
-    boot = File.read(File.join(ROOT, "shared/frontend/pub4_stimulus_boot.js"))
+    boot = File.read(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
     %w[password-visibility nested-form carousel].each do |name|
       assert_includes boot, %("#{name}")
     end

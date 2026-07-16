@@ -19,10 +19,10 @@ module Deploy
     def run
       result = GateResult.new
       baseline = File.join(RAILS_ROOT, "shared/config/importmap_baseline.rb")
-      boot = File.join(RAILS_ROOT, "shared/frontend/pub4_stimulus_boot.js")
+      boot = File.join(RAILS_ROOT, "shared/frontend/stimulus_boot.js")
 
       result.fail("missing shared importmap baseline") unless File.file?(baseline)
-      result.fail("missing pub4_stimulus_boot.js") unless File.file?(boot)
+      result.fail("missing stimulus_boot.js") unless File.file?(boot)
 
       baseline_text = File.read(baseline)
       boot_text = File.read(boot)
