@@ -13,19 +13,19 @@ module Master
           ui: ["User Advocate", "Accessibility", "NNGroup UX Researcher", "Web Designer", "Typographer", "Cognitive Psychologist", "Graphic Designer"],
           auth_mutation: ["Security", "Reliability", "Maintainer", "Ethics & Policy"],
           security_audit: ["Security", "Reliability", "Maintainer", "Skeptic"],
-          architecture: ["Architect", "Maintainer", "Reliability", "Skeptic"],
+          architecture: ["Architect", "Maintainer", "Reliability", "Skeptic", "Minimalist"],
           migration: ["Architect", "Maintainer", "Data Steward", "Reliability"],
           performance: ["Performance", "Maintainer", "QA Engineer"],
           data: ["Data Steward", "Maintainer", "Reliability"],
           sonic: ["Hip-Hop Producer", "Electronic Music Producer", "Pragmatist"],
           product: ["Product Strategist", "User Advocate", "Pragmatist"],
           docs: ["Maintainer", "Layperson", "QA Engineer"],
-          code_review: ["Maintainer", "Skeptic", "QA Engineer", "Architect"],
-          destructive: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic"],
+          code_review: ["Maintainer", "Skeptic", "QA Engineer", "Architect", "Minimalist"],
+          destructive: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic", "Chaos"],
         }.freeze
 
         RISK_PERSONAS = {
-          critical: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic"],
+          critical: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic", "Chaos"],
           high: ["Security", "Reliability", "Maintainer"],
           medium: ["Maintainer", "Skeptic"],
           low: ["Maintainer"],

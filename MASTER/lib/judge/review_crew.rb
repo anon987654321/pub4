@@ -35,6 +35,8 @@ module Master
           PerformanceAgent.new,
           StyleAgent.new,
           ArchitectureAgent.new(root: @root, code_index: @code_index, reference_graph: @reference_graph),
+          MinimalistAgent.new,
+          ChaosAgent.new,
         ]
       end
 
