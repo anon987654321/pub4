@@ -263,6 +263,19 @@ test("face.css keeps primer and prompt layering stable", () => {
   assert.match(css, /body\[data-runtime-profile="calm"\]/);
 });
 
+test("face.css meets MASTER design_rules typography and touch baselines", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  assert.match(css, /font:\s*16px\/1\.5/);
+  assert.match(css, /"ss03"/);
+  assert.match(css, /--face-bar-height:\s*44px/);
+  assert.match(css, /\.tool[\s\S]*min-height:\s*44px/);
+  assert.match(css, /#spin-btn[\s\S]*min-height:\s*44px/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /#chat-log[\s\S]*font:\s*12px\/1\.42/);
+  assert.match(css, /body\.face-loading #zsh:not\(\.live\)/);
+  assert.match(css, /body\[data-boot-state="ERROR"\] #zsh-status/);
+});
+
 test("face3d_engine imports use import-map paths", () => {
   const engine = readFileSync(join(publicDir, "face3d_engine.js"), "utf8");
   assert.match(engine, /from '\/face3d_geometry\.js'/);

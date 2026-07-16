@@ -22,7 +22,7 @@ function bootFace3d() {
   let last = performance.now();
   const t0 = last;
   let maskIdx = 0;
-  const masks = ['sepik', 'asmat', 'baining', 'tolai', 'neutral'];
+  const masks = ['homo_futura', 'sepik', 'asmat', 'baining', 'tolai', 'neutral'];
   let reportedNonblank = false;
   const speech = { active: false, text: '', startedAt: 0, duration: 2.0, energy: 0.55 };
 

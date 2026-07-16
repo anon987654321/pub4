@@ -4,7 +4,7 @@ import { deriveBlendFromEmotion, ParticleField3D, SpatialHash2D, QualityControll
 class Face3DEngine {
   constructor({ count } = {}) {
     this.quality = new QualityController();
-    this.topology = buildCanonicalMask("sepik");
+    this.topology = buildCanonicalMask("homo_futura");
     this.particles = new ParticleField3D(count || this.quality.particles);
     this.particles.assignStable(this.topology);
     this.blend = { ...DEFAULT_BLEND };

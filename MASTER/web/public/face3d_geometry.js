@@ -105,13 +105,15 @@ function normalize3(v) {
   return [v[0] / len, v[1] / len, v[2] / len];
 }
 
-function buildCanonicalMask(kind = "sepik") {
+function buildCanonicalMask(kind = "homo_futura") {
   switch (kind) {
     case "asmat": return buildAsmatMask();
     case "baining": return buildBainingMask();
     case "tolai": return buildTolaiMask();
     case "neutral": return buildNeutralMask();
-    default: return buildSepikMask();
+    case "sepik": return buildSepikMask();
+    case "homo_futura": return buildHomoFuturaMask();
+    default: return buildHomoFuturaMask();
   }
 }
 
@@ -147,6 +149,36 @@ function buildNeutralMask() {
   a.push(...line3(-0.14, 0.80, 0.18, 0.14, 0.80, 0.18, 12, "chin"));
   a.push(...disc3(-0.38, 0.22, 0.26, 0.055, 10, "cheekL"));
   a.push(...disc3(0.38, 0.22, 0.26, 0.055, 10, "cheekR"));
+  return zoneMap(a);
+}
+
+function buildHomoFuturaMask() {
+  const a = [];
+  for (let i = 0; i < 80; i++) {
+    const t = i / 79;
+    const y = -1.02 + t * 1.92;
+    const w = 0.14 + 0.46 * Math.sin(t * Math.PI);
+    const z = 0.06 * Math.sin(t * Math.PI);
+    a.push(makeAnchor(-w, y, z, "outlineL", t));
+    a.push(makeAnchor(w, y, z, "outlineR", t));
+  }
+  for (let i = 0; i < 14; i++) {
+    const t = (i - 6.5) / 6.5;
+    a.push(...line3(t * 0.06, -0.82, 0.16, t * 0.14, -1.18 - Math.abs(t) * 0.10, 0.08, 8, "crown"));
+  }
+  a.push(...line3(-0.36, -0.26, 0.20, -0.10, -0.20, 0.30, 12, "browL"));
+  a.push(...line3(0.10, -0.20, 0.30, 0.36, -0.26, 0.20, 12, "browR"));
+  a.push(...ring3(-0.27, -0.12, 0.40, 0.15, 0.09, 32, "eyeL", 0.012));
+  a.push(...ring3(0.27, -0.12, 0.40, 0.15, 0.09, 32, "eyeR", 0.012));
+  a.push(...disc3(-0.27, -0.12, 0.48, 0.048, 10, "pupilL"));
+  a.push(...disc3(0.27, -0.12, 0.48, 0.048, 10, "pupilR"));
+  a.push(...line3(0, -0.30, 0.42, 0, 0.28, 0.52, 24, "noseRidge"));
+  a.push(...ring3(-0.05, 0.34, 0.50, 0.030, 0.018, 6, "noseFlare"));
+  a.push(...ring3(0.05, 0.34, 0.50, 0.030, 0.018, 6, "noseFlare"));
+  a.push(...mouthAnchors("neutral", 28));
+  a.push(...line3(-0.10, 0.68, 0.14, 0.10, 0.68, 0.14, 8, "chin"));
+  a.push(...disc3(-0.34, 0.20, 0.22, 0.042, 8, "cheekL"));
+  a.push(...disc3(0.34, 0.20, 0.22, 0.042, 8, "cheekR"));
   return zoneMap(a);
 }
 
@@ -300,4 +332,4 @@ function applyBlendshape(anchor, blend) {
   return { ...anchor, x, y, z };
 }
 
-export { ZONES, ZONE_NAMES, DEFAULT_BLEND, DEFAULT_EMOTION, clamp, lerp, damp, zoneId, makeAnchor, line3, ring3, disc3, normalize3, buildCanonicalMask, zoneMap, buildNeutralMask, buildSepikMask, buildAsmatMask, buildBainingMask, buildTolaiMask, diamondEye, spiralEye, maskAnchors2D, mouthAnchors, applyBlendshape };
+export { ZONES, ZONE_NAMES, DEFAULT_BLEND, DEFAULT_EMOTION, clamp, lerp, damp, zoneId, makeAnchor, line3, ring3, disc3, normalize3, buildCanonicalMask, zoneMap, buildNeutralMask, buildHomoFuturaMask, buildSepikMask, buildAsmatMask, buildBainingMask, buildTolaiMask, diamondEye, spiralEye, maskAnchors2D, mouthAnchors, applyBlendshape };
