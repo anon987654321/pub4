@@ -749,7 +749,7 @@ def enhanced_resolve_config
     intro_bars: preset.fetch(:intro_bars, family == :flylo ? 8 : 4),
     master_lufs: resolve_master_lufs(family, sonic),
     master_lra: resolve_master_lra(family, sonic),
-    mood_darken_strength: family == :dilla ? 0.55 : 1.0
+    mood_darken_strength: family == :dilla ? (deep_render? ? 0.36 : 0.55) : 1.0
   }
 end
 
@@ -1298,10 +1298,16 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
   # renders would otherwise produce a negative afade start, which ffmpeg
   # rejects as out of range.
   outro_fade = [(beat_p * 4.0 * 4).round(2), duration].min
-  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || "1.68"
+  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || (deep_render? ? "1.82" : "1.68")
+  deep = deep_render?
+  sub_cut = deep ? "-1.8" : "-2.2"
+  body_boost = deep ? "3.2" : "2.8"
+  mid_boost = deep ? "2.9" : "2.6"
   "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
-    "highpass=f=110,equalizer=f=95:t=h:w=120:g=-2.2," \
-    "equalizer=f=420:t=o:w=1.1:g=2.8,equalizer=f=680:t=h:w=900:g=2.6,equalizer=f=1400:t=h:w=1200:g=2.4," \
+    "highpass=f=#{deep ? 95 : 110},equalizer=f=72:t=o:w=1.2:g=#{deep ? 2.2 : 1.4}," \
+    "equalizer=f=95:t=h:w=120:g=#{sub_cut}," \
+    "equalizer=f=420:t=o:w=1.1:g=#{body_boost},equalizer=f=680:t=h:w=900:g=#{mid_boost}," \
+    "equalizer=f=1400:t=h:w=1200:g=2.4," \
     "equalizer=f=2800:t=h:w=1800:g=1.2,equalizer=f=#{lp}:t=o:w=1.0:g=0.8," \
     "afade=t=in:st=#{harm_fade_start}:d=#{harm_fade_dur}," \
     "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}," \
@@ -3667,7 +3673,10 @@ def mix_bass_chord_balance_filter(input_tag, out_tag: "balanced")
   # A dry mix needed -7/+6dB here; Sonitex needs noticeably more.
   cut = sonitex_enabled? ? -11.0 : -7.0
   boost = sonitex_enabled? ? 8.0 : 6.0
-  "[#{input_tag}]bass=g=#{cut}:f=95:width_type=h:w=170,equalizer=f=300:t=h:w=360:g=#{boost}[#{out_tag}]"
+  cut -= 1.5 if deep_render?
+  boost += 1.2 if deep_render?
+  "[#{input_tag}]bass=g=#{cut}:f=95:width_type=h:w=170,equalizer=f=300:t=h:w=360:g=#{boost}," \
+    "equalizer=f=68:t=o:w=1.1:g=#{deep_render? ? 2.4 : 1.6}[#{out_tag}]"
 end
 
 # Real mix-engineering technique: sum everything below ~120Hz to mono.
@@ -3956,7 +3965,7 @@ def play(preset_name = nil, bars_count = 8)
   tmp = scratch_path("play_tmp.mp3")
   prev = ENV["BARS"]
   ENV["BARS"] = bars_count.to_s
-  attempts = ENV["DILLA_STREAMING"] == "1" ? [STREAM_MAX_RETRIES, 0].max + 1 : 1
+  attempts = quality_gate_enabled? ? [STREAM_MAX_RETRIES, (ENV["RENDER_RETRIES"] || "2").to_i].max + 1 : 1
   attempts.times do |try|
     pick_render_seed! if try.positive?
     if preset_name == "dilla"
@@ -3964,10 +3973,10 @@ def play(preset_name = nil, bars_count = 8)
     else
       render(tmp)
     end
-    break if stream_render_acceptable?(tmp)
-    warn "stream retry #{try + 1}/#{attempts}" if try + 1 < attempts
+    break if render_quality_acceptable?(tmp)
+    warn "render retry #{try + 1}/#{attempts}" if try + 1 < attempts
   end
-  log_stream_render_meta(tmp) if ENV["DILLA_STREAMING"] == "1"
+  log_render_meta(tmp) if quality_gate_enabled? || ENV["DILLA_STREAMING"] == "1"
   play_audio(tmp)
 ensure
   prev ? ENV["BARS"] = prev : ENV.delete("BARS")
@@ -4087,9 +4096,9 @@ STREAM_MAX_RETRIES = (ENV["STREAM_MAX_RETRIES"] || "2").to_i
 DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 
 # Best-track defaults — applied on every invocation unless already set (or
-# DILLA_RAW=1). Bare `ruby dilla.rb` uses these to render a full soul beat.
+# DILLA_RAW=1). Bare `ruby dilla.rb` uses deep mode on top of these.
 DILLA_BEST_DEFAULTS = {
-  "TRACK" => "minor_iv_loop",
+  "DILLA_DEEP" => "1",
   "PAD_VOICE" => "blend",
   "PAD_ARP_MODE" => "blend",
   "LEAD_ARP" => "1",
@@ -4112,9 +4121,27 @@ DILLA_BEST_DEFAULTS = {
   "VINYL" => "35",
   "KICK_GAIN" => "0.34",
   "KICKS" => "1",
+  "BASS_SLIDE" => "1",
   "SPECTRAL_ARP" => "0",
   "INDUSTRIAL_DARK" => "0",
   "MASTER_HEURISTICS" => "0"
+}.freeze
+
+# Deep render — quality gate, soul rotation, long pads, pocket jitter, mix refine.
+DILLA_DEEP_DEFAULTS = {
+  "DILLA_QUALITY_GATE" => "1",
+  "RENDER_RETRIES" => "2",
+  "LISTEN_PASSES" => "1",
+  "QUALITY_REPORT" => "1",
+  "RENDER_BEAUTY_MIN" => "70",
+  "PAD_ATTACK" => "920",
+  "PAD_RELEASE" => "2600",
+  "PAD_VOL" => "52",
+  "QUINTUPLET" => "1",
+  "SWING_JITTER" => "1",
+  "LONG_STRIPDOWN" => "1",
+  "EVOLVE_HARMONY_W" => "0.18",
+  "CONV_REVERB" => "chamber"
 }.freeze
 
 STREAM_EXTRA_DEFAULTS = {
@@ -4122,11 +4149,36 @@ STREAM_EXTRA_DEFAULTS = {
   "DILLA_STREAMING" => "1"
 }.freeze
 
+def deep_render?
+  ENV.fetch("DILLA_DEEP", "0") != "0"
+end
+
+def quality_gate_enabled?
+  ENV["DILLA_QUALITY_GATE"] == "1" || ENV["DILLA_STREAMING"] == "1"
+end
+
+def pick_default_track!
+  return if ENV["TRACK"] && !ENV["TRACK"].empty?
+  if deep_render?
+    pool = DillaLofiMachine::STREAM_ROTATION
+    seed = Time.now.to_i + Process.pid + (@render_seed || 0)
+    ENV["TRACK"] = pool[Random.new(seed).rand(pool.length)]
+  else
+    ENV["TRACK"] = DillaLofiMachine::DEFAULT_PROFILE.to_s
+  end
+end
+
 def apply_best_defaults!
   return if ENV["DILLA_RAW"] == "1"
   DILLA_BEST_DEFAULTS.each do |key, value|
     ENV[key] = value if ENV[key].nil? || ENV[key].empty?
   end
+  if deep_render?
+    DILLA_DEEP_DEFAULTS.each do |key, value|
+      ENV[key] = value if ENV[key].nil? || ENV[key].empty?
+    end
+  end
+  pick_default_track!
 end
 
 def apply_stream_listenability_defaults!
@@ -4134,6 +4186,102 @@ def apply_stream_listenability_defaults!
   STREAM_EXTRA_DEFAULTS.each do |key, value|
     ENV[key] = value if ENV[key].nil? || ENV[key].empty?
   end
+end
+
+def render_spectrum(path)
+  {
+    low: band_rms(path, highpass: 28, lowpass: 180),
+    mid: band_rms(path, highpass: 180, lowpass: 3_500),
+    high: band_rms(path, highpass: 3_500, lowpass: 16_000)
+  }
+end
+
+def render_quality_acceptable?(path)
+  return true unless quality_gate_enabled?
+  return true unless File.file?(path)
+  chords = DillaHarmony.last_progression_chords
+  beauty = DillaHarmony.score_beauty(chords)
+  spectrum = render_spectrum(path)
+  harsh = DillaMaster.analyze_harshness(spectrum)
+  sk = DillaMaster.sub_kick_balance(spectrum, beauty)
+  min_beauty = if ENV["DILLA_STREAMING"] == "1"
+                 STREAM_BEAUTY_MIN
+               else
+                 (ENV["RENDER_BEAUTY_MIN"] || "70").to_f
+               end
+  ok = beauty >= min_beauty && !harsh[:needs_notch]
+  if deep_render? && sk[:recommendation] == "boost_sub" && sk[:low_mid_delta].to_f < -9.0
+    ok = false
+  end
+  unless ok
+    warn "quality gate: beauty=#{beauty} (min #{min_beauty}), harsh=#{harsh[:harshness]}, " \
+         "sub=#{sk[:recommendation]} — retrying"
+  end
+  ok
+end
+
+def stream_render_acceptable?(path)
+  render_quality_acceptable?(path)
+end
+
+def refine_deep_mix_env!(path)
+  return unless File.file?(path)
+  spectrum = render_spectrum(path)
+  beauty = DillaHarmony.score_beauty(DillaHarmony.last_progression_chords)
+  sk = DillaMaster.sub_kick_balance(spectrum, beauty)
+  changed = false
+  if sk[:recommendation] == "boost_sub"
+    kg = [(ENV["KICK_GAIN"] || "0.34").to_f + 0.05, 0.48].min
+    ENV["KICK_GAIN"] = kg.round(2).to_s
+    changed = true
+  elsif sk[:recommendation] == "reduce_sub"
+    kg = [(ENV["KICK_GAIN"] || "0.34").to_f - 0.04, 0.12].max
+    ENV["KICK_GAIN"] = kg.round(2).to_s
+    changed = true
+  end
+  harm_w = (ENV["DEBUG_HARM_WEIGHT"] || "1.68").to_f
+  if beauty < 72 && harm_w < 2.0
+    ENV["DEBUG_HARM_WEIGHT"] = (harm_w + 0.12).round(2).to_s
+    changed = true
+  end
+  changed
+end
+
+def log_render_meta(path)
+  chords = DillaHarmony.last_progression_chords
+  beauty = DillaHarmony.score_beauty(chords)
+  patches = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id)].compact.join("/")
+  leads = [@render_scale_lead_patch&.dig(:id), @render_lead_patch&.dig(:id)].compact.join("+")
+  prog = chords&.map { |c| c[:name] }&.join(" → ")
+  depth = deep_render? ? "deep" : "standard"
+  puts "track=#{ENV['TRACK']} mode=#{depth} patches=#{patches || 'native'} pad_arp=#{pad_arp_mode} " \
+       "leads=#{leads} beauty=#{beauty}"
+  puts "progression: #{prog}" if prog
+  puts "quality: ruby dilla.rb beauty #{path}" if File.file?(path)
+end
+
+def log_stream_render_meta(path)
+  log_render_meta(path)
+end
+
+def deep_default_render!(dest, n_bars)
+  ensure_external_assets_lazy!
+  retries = [(ENV["RENDER_RETRIES"] || "2").to_i, 0].max
+  listen_passes = [(ENV["LISTEN_PASSES"] || "0").to_i, 0].max
+  (retries + 1).times do |try|
+    pick_render_seed! if try.positive?
+    render_dilla(dest, n_bars)
+    break if render_quality_acceptable?(dest)
+    warn "deep render retry #{try + 1}/#{retries + 1}"
+  end
+  listen_passes.times do |pass|
+    break unless refine_deep_mix_env!(dest)
+    warn "deep mix refine pass #{pass + 1}/#{listen_passes}"
+    pick_render_seed!
+    render_dilla(dest, n_bars)
+  end
+  log_render_meta(dest)
+  dilla_quality(dest) if ENV["QUALITY_REPORT"] == "1" && File.file?(dest)
 end
 
 def default_render!(argv = ARGV)
@@ -4144,35 +4292,11 @@ def default_render!(argv = ARGV)
          end
   n_bars = argv[0]&.match?(/\A\d+\z/) ? argv.shift.to_i : nil
   FileUtils.mkdir_p(File.dirname(dest))
-  render_dilla(dest, n_bars)
-end
-
-def stream_render_acceptable?(path)
-  return true unless ENV["DILLA_STREAMING"] == "1"
-  return true unless File.file?(path)
-  chords = DillaHarmony.last_progression_chords
-  beauty = DillaHarmony.score_beauty(chords)
-  spectrum = {
-    low: band_rms(path, highpass: 28, lowpass: 180),
-    mid: band_rms(path, highpass: 180, lowpass: 3_500),
-    high: band_rms(path, highpass: 3_500, lowpass: 16_000)
-  }
-  harsh = DillaMaster.analyze_harshness(spectrum)
-  ok = beauty >= STREAM_BEAUTY_MIN && !harsh[:needs_notch]
-  unless ok
-    warn "stream gate: beauty=#{beauty} (min #{STREAM_BEAUTY_MIN}), harsh=#{harsh[:harshness]} — retrying"
+  if deep_render?
+    deep_default_render!(dest, n_bars)
+  else
+    render_dilla(dest, n_bars)
   end
-  ok
-end
-
-def log_stream_render_meta(path)
-  chords = DillaHarmony.last_progression_chords
-  beauty = DillaHarmony.score_beauty(chords)
-  patches = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id)].compact.join("/")
-  leads = [@render_scale_lead_patch&.dig(:id), @render_lead_patch&.dig(:id)].compact.join("+")
-  prog = chords&.map { |c| c[:name] }&.join(" → ")
-  puts "patches=#{patches || 'native'} pad_arp=#{pad_arp_mode} leads=#{leads} beauty=#{beauty} progression=#{prog}"
-  puts "quality: ruby dilla.rb beauty #{path}" if File.file?(path)
 end
 
 # Non-stop chord/pad showcase: renders and plays each track once (full
@@ -6333,7 +6457,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     self_sample_idx = idx
     idx += 1
   end
-  ir_path = DillaMaster.club_ir_path || synth_impulse_response!(CONVOLUTION_ROOMS.keys.sample)
+  ir_room = ENV["CONV_REVERB"]&.to_sym
+  ir_room = :chamber if deep_render? && (!ir_room || !CONVOLUTION_ROOMS.key?(ir_room))
+  ir_room ||= CONVOLUTION_ROOMS.keys.sample
+  ir_path = DillaMaster.club_ir_path || synth_impulse_response!(ir_room)
   command += ["-i", ir_path]
   ir_input_idx = idx
   idx += 1
@@ -6753,10 +6880,11 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
-    DEFAULT (no command — best soul settings applied automatically)
-      ruby dilla.rb                    Full beat → #{DEFAULT_RENDER_OUTPUT} (#{DEFAULT_BARS} bars)
-      ruby dilla.rb out.wav [bars]     Render to path (optional bar count)
-      DILLA_RAW=1                      Skip best-default ENV (legacy bare settings)
+    DEFAULT (no command — deep soul render, best settings on)
+      ruby dilla.rb                    Deep beat → #{DEFAULT_RENDER_OUTPUT} (#{DEFAULT_BARS} bars)
+      ruby dilla.rb out.wav [bars]     Optional path / length; rotates soul profiles
+      DILLA_DEEP=0                     Standard render (no quality gate / refine)
+      DILLA_RAW=1                      Skip all best-default ENV
 
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
@@ -7807,7 +7935,9 @@ FLAG_ENV = {
   "evolve-harmony-w" => "EVOLVE_HARMONY_W",
   "pad-voice" => "PAD_VOICE", "pad-arp-mode" => "PAD_ARP_MODE", "experimental-leads" => "EXPERIMENTAL_LEADS",
   "kick-gain" => "KICK_GAIN", "vinyl" => "VINYL", "external-kit" => "EXTERNAL_KIT",
-  "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW"
+  "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW",
+  "deep" => "DILLA_DEEP", "quality-gate" => "DILLA_QUALITY_GATE", "render-retries" => "RENDER_RETRIES",
+  "pad-vol" => "PAD_VOL", "conv-reverb" => "CONV_REVERB", "render-beauty-min" => "RENDER_BEAUTY_MIN"
 }.freeze
 
 def apply_flags!(argv)
