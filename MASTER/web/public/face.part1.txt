@@ -26,6 +26,7 @@ const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn = document.getElementById('zin');
 const micBtn = document.querySelector('[data-act="mic"]');
+const face3dToggleBtn = document.querySelector('[data-act="face3d-toggle"]');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;

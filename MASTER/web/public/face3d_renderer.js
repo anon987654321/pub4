@@ -45,15 +45,19 @@ class Face3DCanvasRenderer {
 
   resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    // Size from the canvas's own CSS box, not window.innerWidth/Height --
+    // this renderer used to be bound to the full-viewport #face canvas, but
+    // now runs on a small fixed-size overlay (#face3d-overlay); forcing
+    // style.width/height here would blow the overlay back up to fullscreen
+    // and fight the CSS that positions it as a corner picture-in-picture.
+    const rect = this.canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width) || this.canvas.clientWidth || 1);
+    const h = Math.max(1, Math.round(rect.height) || this.canvas.clientHeight || 1);
     this.width = w;
     this.height = h;
     this.dpr = dpr;
     this.canvas.width = Math.max(1, Math.floor(w * dpr));
     this.canvas.height = Math.max(1, Math.floor(h * dpr));
-    this.canvas.style.width = `${w}px`;
-    this.canvas.style.height = `${h}px`;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const lw = this.lowRes ? Math.max(1, w >> 1) : w;

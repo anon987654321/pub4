@@ -387,6 +387,40 @@ function handleFaceNamedEvent(event, data) {
   return false;
 }
 
+let _welcomeGreetingSent = false;
+const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 3-4 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Briefly mention your real capabilities: constitutional self-governing reasoning, live two-way voice conversation, an animated face, coding and tool use, and multi-persona council deliberation for hard questions. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, or headers.";
+function sendWelcomeGreeting() {
+  if (_welcomeGreetingSent || !window.MASTERChat?.startChatStream) return;
+  _welcomeGreetingSent = true;
+  let pending = '';
+  window.MASTERChat.startChatStream({
+    message: WELCOME_GREETING_PROMPT,
+    state: window.collectFeltState?.() || '',
+    preEnhanced: true
+  }, {
+    onMessage: (rawData) => {
+      const raw = rawData || '';
+      if (raw.length < 200 && raw.startsWith('{')) {
+        try { const parsed = JSON.parse(raw); if (parsed && parsed.type === 'trace') return; } catch (_) { /* not JSON */ }
+      }
+      if (raw === '[DONE]') {
+        if (pending.trim()) {
+          tts.lastText = pending.trim();
+          flushStreamTts(pending, { prependTimestamp: false });
+        }
+        window._chatOnDone?.();
+        return;
+      }
+      if (raw.startsWith('ERROR:')) { window._chatOnError?.(); return; }
+      const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+      window._chatOnChunk?.(chunk);
+      pending += chunk;
+    },
+    onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data),
+    onError: () => {}
+  }).catch((err) => { window.MASTER_LOG?.warn?.("face_runtime:welcome_greeting", err); });
+}
+
 let _firstChatSent = false;
 async function sendMessage(text) {
   const trimmed = text.trim();
@@ -941,6 +975,7 @@ function startEverything() {
   requestMotionPermission(); acquireWakeLock();
   wireTtsStyleChips();
   armWakeWord();
+  setTimeout(sendWelcomeGreeting, 700);
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
@@ -1094,6 +1129,28 @@ if (micBtn) {
   micBtn.addEventListener('pointerdown', micPressStart);
   micBtn.addEventListener('pointerup', micPressEnd);
   micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });
+}
+
+// Evolved-human overlay toggle: reads/writes the same localStorage flag
+// face3d_preview.js checks at boot. That module computes FACE3D_ACTIVE once
+// at load time and wires its own rAF loop from scratch, so flipping it live
+// without restarting that whole boot sequence isn't worth the complexity --
+// a reload is simple, correct, and rare enough (a deliberate opt-in toggle,
+// not a per-turn action) that the cost is negligible.
+if (face3dToggleBtn) {
+  const FACE3D_KEY = 'master_face3d';
+  try {
+    if (localStorage.getItem(FACE3D_KEY) === '1') {
+      face3dToggleBtn.setAttribute('aria-pressed', 'true');
+      rootBody.dataset.face3d = '1';
+    }
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_read", err); }
+  face3dToggleBtn.addEventListener('click', () => {
+    let enabled = false;
+    try { enabled = localStorage.getItem(FACE3D_KEY) === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_click_read", err); }
+    try { localStorage.setItem(FACE3D_KEY, enabled ? '0' : '1'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_write", err); }
+    location.reload();
+  });
 }
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 
