@@ -1814,7 +1814,7 @@ def resolve_midi_fx_for(patch, role:)
     when :ep then MIDI_FX_PAD_EP
     when :warm, :texture then MIDI_FX_PAD_WARM
     when :scale_lead then MIDI_FX_SCALE_LEAD
-    when :lead then MIDI_FX_LEAD
+    when :lead, :lead_arp then MIDI_FX_LEAD
     end
 end
 
@@ -1846,8 +1846,8 @@ def lead_arp_section_density(section, progress)
 end
 
 # Continuous lead arpeggiator — chord-tone figures on the lead voice (8th/16th
-# subdivisions, patch-specific pattern + MIDI FX). Layers under sparse
-# creative-lead bursts; distinct from scale-locked scale_lead layer.
+# subdivisions, patch-specific pattern + MIDI FX). Rendered on its own FluidSynth
+# stem (lead_arp.wav); distinct from scale_lead and creative-lead bursts.
 def lead_arp_events(pad_events, cfg, arp_cfg)
   return [] if pad_events.empty? || arp_cfg.nil?
   beat_p = 60.0 / cfg[:bpm]
@@ -4507,15 +4507,22 @@ STREAM_EXTRA_DEFAULTS = {
   "SPEECH_TALK_STREAM" => "14"
 }.freeze
 
-# Light auto-iterate during stream — one beauty retry + mix/groove nudges per track.
+# Light auto-iterate during stream — beauty retry, mix/groove nudges, lead freedom.
 STREAM_ITERATE_TUNING = {
   "RENDER_RETRIES" => "1",
-  "RENDER_BEAUTY_MIN" => "65",
-  "EVOLVE_EVERY" => "3"
+  "RENDER_BEAUTY_MIN" => "60",
+  "EVOLVE_EVERY" => "2",
+  "LEAD_ARP" => "1",
+  "EXPERIMENTAL_LEADS" => "1",
+  "STREAM_EVOLVE_PERFORMER" => "1",
+  "STREAM_CREATIVE_FREEDOM" => "1"
 }.freeze
 
 # STREAM_FAST_DEFAULTS must not clobber these when iterate is on.
-STREAM_ITERATE_OVERRIDE_KEYS = %w[RENDER_RETRIES LISTEN_PASSES RENDER_BEAUTY_MIN EVOLVE_EVERY].freeze
+STREAM_ITERATE_OVERRIDE_KEYS = %w[
+  RENDER_RETRIES LISTEN_PASSES RENDER_BEAUTY_MIN EVOLVE_EVERY
+  LEAD_ARP EXPERIMENTAL_LEADS STREAM_EVOLVE_PERFORMER STREAM_CREATIVE_FREEDOM
+].freeze
 
 STREAM_ITERATE_LOG = File.join(ROOT, "stream_iterate.log").freeze
 
@@ -4545,6 +4552,10 @@ end
 
 def stream_iterate_enabled?
   ENV.fetch("STREAM_ITERATE", "1") != "0" && ENV["DILLA_STREAMING"] == "1"
+end
+
+def stream_creative_freedom_enabled?
+  stream_iterate_enabled? && ENV.fetch("STREAM_CREATIVE_FREEDOM", "1") != "0"
 end
 
 def play_render_attempts
@@ -4593,6 +4604,9 @@ def stream_iterate_after_render!(path)
     stream_evolve_composition!
     notes << "evolved"
   end
+  if stream_creative_freedom_enabled?
+    notes.concat(stream_iterate_creative_freedom!)
+  end
   line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
          "sub=#{sk[:recommendation]} harsh=#{harsh[:harshness]} #{notes.join(' ')}"
   File.open(STREAM_ITERATE_LOG, "a") { |f| f.puts(line) }
@@ -4621,6 +4635,38 @@ def stream_evolve_composition!
   ENV["SWING"] = cfg[:swing].round(1).to_s if cfg[:swing]
   sess.save!
   puts "stream evolve gen=#{sess.generation} performer=#{ENV['PERFORMER']} groove=#{ENV['GROOVE_DNA']}"
+end
+
+# Per-track creative rotation: new lead/scale patches, arp figures, stem balance.
+def stream_iterate_creative_freedom!
+  return [] unless stream_creative_freedom_enabled?
+  pick_render_seed!
+  @render_lead_patch = nil
+  @render_scale_lead_patch = nil
+  @render_arp_style = nil
+  @render_scale_arp_style = nil
+  cfg = dilla_resolve_config
+  pick_synth_patches!(cfg, bar: (@stream_iterate_count || 0) * 4)
+  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + (@render_seed || 0))
+  styles = (@render_lead_patch&.dig(:arp_styles) || ARP_PATTERN_BUILDERS.keys).to_a
+  @render_arp_style = styles.sample(random: rng)
+  scale_styles = (@render_scale_lead_patch&.dig(:arp_styles) || styles).to_a
+  @render_scale_arp_style = scale_styles.sample(random: rng)
+  nudge = ->(key, field, delta) {
+    base = harmonic_stem_mix_value(key, field)
+    lo, hi = field == :weight ? [0.08, 1.6] : [0.4, 1.4]
+    ENV["HARMONIC_#{key.to_s.upcase}_#{field.to_s.upcase}"] = (base + delta).clamp(lo, hi).round(3).to_s
+  }
+  nudge.call(:lead_arp, :weight, rng.rand(-0.06..0.08))
+  nudge.call(:lead, :weight, rng.rand(-0.05..0.07))
+  nudge.call(:scale_lead, :weight, rng.rand(-0.05..0.06))
+  lead_id = @render_lead_patch&.dig(:id) || "lead"
+  scale_id = @render_scale_lead_patch&.dig(:id) || "scale"
+  [
+    "creative=#{@render_arp_style}/#{@render_scale_arp_style}",
+    "leads=#{scale_id}+#{lead_id}",
+    "stem_w=#{ENV['HARMONIC_LEAD_ARP_WEIGHT']}/#{ENV['HARMONIC_LEAD_WEIGHT']}"
+  ]
 end
 
 def phone_preview_gate_enabled?
@@ -6491,7 +6537,7 @@ def lead_events_from_pads(pad_events, duration: nil, n_bars: nil)
   arp_cfg = lead_arp_cfg_for(@render_lead_patch)
   arp = lead_arp_events(pad_events, cfg, arp_cfg)
   creative = lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars)
-  (scale + arp + creative).sort_by { |e| e[0] }
+  { scale: scale, lead_arp: arp, creative: creative }
 end
 
 def resolve_scale_lead_voice
@@ -6509,6 +6555,48 @@ def lead_post_fx_chain(patch, duration, boost_db)
   patch_fx = patch&.dig(:fx)
   default_fx = "lowpass=f=2800:width_type=q:width=0.9,aecho=0.35:0.4:120|220:0.18|0.08"
   [base, patch_fx || default_fx, "apad=whole_dur=#{duration}", "alimiter=limit=0.95:level_out=0.96"].join(",")
+end
+
+HARMONIC_STEM_MIX = {
+  pads:       { volume: 1.18, weight: 1.45 },
+  tones:      { volume: 0.72, weight: 0.55 },
+  scale_lead: { volume: 0.82, weight: 0.38 },
+  lead_arp:   { volume: 0.74, weight: 0.24 },
+  lead:       { volume: 0.66, weight: 0.14 }
+}.freeze
+
+def harmonic_stem_mix_value(key, field)
+  env_key = "HARMONIC_#{key.to_s.upcase}_#{field.to_s.upcase}"
+  raw = ENV[env_key]
+  return raw.to_f if raw && !raw.empty?
+  HARMONIC_STEM_MIX.dig(key, field) || 1.0
+end
+
+def mix_harmonic_wav_stems(destination, duration, **stem_paths)
+  lanes = HARMONIC_STEM_MIX.filter_map do |key, _mix|
+    path = stem_paths[key]
+    next unless path && File.exist?(path)
+    [key, path, harmonic_stem_mix_value(key, :volume), harmonic_stem_mix_value(key, :weight)]
+  end
+  return false if lanes.length < 2
+
+  filter_labels = []
+  mix_in = []
+  lanes.each_with_index do |(_key, _path, volume, _weight), idx|
+    label = "h#{idx}"
+    filter_labels << "[#{idx}:a]volume=#{volume}[#{label}]"
+    mix_in << "[#{label}]"
+  end
+  weights = lanes.map { |l| l[3] }.join(" ")
+  filter = "#{filter_labels.join(';')};" \
+             "#{mix_in.join}amix=inputs=#{lanes.length}:weights=#{weights}:duration=longest:normalize=0," \
+             "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]"
+  args = ["ffmpeg", "-y"]
+  lanes.each { |(_, path)| args << "-i" << path }
+  sh!(*args, "-filter_complex", filter, "-map", "[harmonic]",
+      "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", destination)
+  lanes.drop(2).each { |(_, path)| FileUtils.rm_f(path) }
+  true
 end
 
 def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
@@ -6539,6 +6627,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   tones_path = "#{path}.tones.wav"
   pads_path = "#{path}.pads.wav"
   lead_path = "#{path}.lead.wav"
+  lead_arp_path = "#{path}.lead_arp.wav"
   scale_lead_path = "#{path}.scale_lead.wav"
   if fluidsynth_pad_available?
     render_pad_via_fluidsynth(pads_path, pad_events, duration)
@@ -6551,8 +6640,8 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   lead_arp_ev = lead_arp_enabled? ? lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
   creative_events = lead_arp_enabled? ? lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
-  combined_lead = (lead_arp_ev + creative_events).sort_by { |e| e[0] }
-  lead_rendered = combined_lead.any? ? render_lead_via_fluidsynth(lead_path, combined_lead, duration) : nil
+  lead_arp_rendered = lead_arp_ev.any? ? render_lead_via_fluidsynth(lead_arp_path, lead_arp_ev, duration) : nil
+  lead_rendered = creative_events.any? ? render_lead_via_fluidsynth(lead_path, creative_events, duration) : nil
   # Karplus-Strong plucked-string accent on each chord's root — a genuinely
   # new instrument timbre (real physical-modeling algorithm, not another
   # oscillator/soundfont voice), pre-rendered per chord since the algorithm
@@ -6638,43 +6727,11 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # didn't already cover. One limiter at the combine stage remains as the
   # actual safety net; master_bus_filters is the real mastering-stage limit
   # downstream.
-  if scale_lead_rendered && lead_rendered
-    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", scale_lead_path, "-i", lead_path,
-        "-filter_complex", "[0:a]volume=1.18[padsl];" \
-                           "[1:a]volume=0.72[tonesl];" \
-                           "[2:a]volume=0.82[scalel];" \
-                           "[3:a]volume=0.68[leadl];" \
-                           "[padsl][tonesl][scalel][leadl]amix=inputs=4:weights=1.45 0.55 0.38 0.18:duration=longest:normalize=0," \
-                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
-        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
-    FileUtils.rm_f(scale_lead_path)
-    FileUtils.rm_f(lead_path)
-  elsif scale_lead_rendered
-    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", scale_lead_path,
-        "-filter_complex", "[0:a]volume=1.18[padsl];" \
-                           "[1:a]volume=0.72[tonesl];" \
-                           "[2:a]volume=0.82[scalel];" \
-                           "[padsl][tonesl][scalel]amix=inputs=3:weights=1.45 0.55 0.38:duration=longest:normalize=0," \
-                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
-        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
-    FileUtils.rm_f(scale_lead_path)
-  elsif lead_rendered
-    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path, "-i", lead_path,
-        "-filter_complex", "[0:a]volume=1.18[padsl];" \
-                           "[1:a]volume=0.72[tonesl];" \
-                           "[2:a]volume=0.75[leadl];" \
-                           "[padsl][tonesl][leadl]amix=inputs=3:weights=1.45 0.55 0.22:duration=longest:normalize=0," \
-                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
-        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
-    FileUtils.rm_f(lead_path)
-  else
-    sh! "ffmpeg", "-y", "-i", pads_path, "-i", tones_path,
-        "-filter_complex", "[0:a]volume=1.18[padsl];" \
-                           "[1:a]volume=0.72[tonesl];" \
-                           "[padsl][tonesl]amix=inputs=2:weights=1.45 0.55:duration=longest:normalize=0," \
-                           "aresample=#{SAMPLE_RATE},alimiter=limit=0.96:level_out=0.98[harmonic]",
-        "-map", "[harmonic]", "-t", duration.to_s, "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
-  end
+  mix_harmonic_wav_stems(path, duration,
+                         pads: pads_path, tones: tones_path,
+                         scale_lead: (scale_lead_rendered ? scale_lead_path : nil),
+                         lead_arp: (lead_arp_rendered ? lead_arp_path : nil),
+                         lead: (lead_rendered ? lead_path : nil))
   FileUtils.rm_f(pads_path)
   FileUtils.rm_f(tones_path)
   if dfam_events&.any?
@@ -7432,6 +7489,7 @@ def help
     STREAM (non-stop rotation — speakers via ffplay)
       stream [bars]                    Fast render+play per profile (#{STREAM_BARS_COUNT} bars default)
       STREAM_ITERATE=1 (default)       Auto-refine mix/groove each track; log stream_iterate.log
+      STREAM_CREATIVE_FREEDOM=1        Rotate lead/scale arp patches + stem weights every track
       STREAM_DEEP=1 stream [bars]      Full deep pipeline + quality gate per track (~1–2 min)
       DILLA_FORCE_TERMINAL=1         macOS: open Terminal.app for speaker playback
       KICKS=1 (default in stream)      Layered 808-style kicks in the drum bus
@@ -8498,7 +8556,8 @@ FLAG_ENV = {
   "stream-deep" => "STREAM_DEEP", "phone-preview-gate" => "PHONE_PREVIEW_GATE",
   "speak" => "SPEAK", "speak-voice" => "SPEAK_VOICE", "speak-rate" => "SPEAK_RATE",
   "speak-pitch" => "SPEAK_PITCH", "speak-vol" => "SPEAK_VOL", "radio-bergen" => "RADIO_BERGEN",
-  "stream-iterate" => "STREAM_ITERATE", "evolve-every" => "EVOLVE_EVERY"
+  "stream-iterate" => "STREAM_ITERATE", "evolve-every" => "EVOLVE_EVERY",
+  "stream-creative-freedom" => "STREAM_CREATIVE_FREEDOM", "stream-evolve-performer" => "STREAM_EVOLVE_PERFORMER"
 }.freeze
 
 def apply_flags!(argv)
