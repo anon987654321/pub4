@@ -254,6 +254,8 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:rhodes_mark1, role: :ep, program: 4, weight: 3.2, mix: 1.15, fs_gain: 1.65,
               color: "Mark I warm tine",
               midi_fx: MIDI_FX_PAD_EP,
+              arp_styles: %i[skip_up euclidean quint_spread],
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.78, vel: 0.16 },
               fx: "tremolo=f=0.28:d=0.04,aecho=0.32:0.42:55|95:0.18|0.1,lowpass=f=4800,equalizer=f=280:t=o:w=1:g=1.6"),
   synth_patch(:rhodes_stage73, role: :ep, program: 4, weight: 2.8, mix: 1.1, fs_gain: 1.7,
               color: "stage Rhodes bark",
@@ -292,6 +294,8 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:moog_model_d, role: :warm, program: 91, weight: 3.0, mix: 0.72, fs_gain: 1.42,
               color: "Minimoog ladder pad",
               midi_fx: MIDI_FX_PAD_WARM,
+              arp_styles: %i[up downup quint_spread],
+              midi_arp: { style: :up, subdiv: 4, gate: 0.88, vel: 0.26 },
               fx: "lowpass=f=2800:width_type=q:width=0.75,tremolo=f=0.18:d=0.06,chorus=0.32:0.52:30|40:0.12|0.1:0.16|0.14:0.85|1.1,equalizer=f=180:t=o:w=1:g=1.4"),
   synth_patch(:moog_sub37_pad, role: :warm, program: 38, weight: 2.4, mix: 0.78, fs_gain: 1.4,
               color: "Moog sub harmonic pad",
@@ -302,6 +306,8 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.68, fs_gain: 1.45,
               color: "Prophet-5 poly",
               midi_fx: MIDI_FX_PAD_WARM,
+              arp_styles: %i[updown pingpong coltrane],
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24 },
               fx: "chorus=0.38:0.58:32|42:0.16|0.12:0.2|0.18:0.95|1.2,vibrato=f=0.2:d=0.01,lowpass=f=4000"),
   synth_patch(:prophet_6_warm, role: :warm, program: 90, weight: 2.5, mix: 0.76, fs_gain: 1.45,
               color: "Prophet-6 stereo wash",
@@ -446,12 +452,66 @@ def prefer_galaxy_ep(patch)
   patch
 end
 
-def pad_chord_arp_enabled?
-  ENV.fetch("PAD_CHORD_ARP", "0") != "0"
-end
-
 def pad_texture_enabled?
   ENV.fetch("PAD_TEXTURE", "0") == "1"
+end
+
+def experimental_leads_enabled?
+  ENV.fetch("EXPERIMENTAL_LEADS", "1") != "0"
+end
+
+# Per-layer pad arp routing — EP and warm render as separate FluidSynth passes,
+# so arp never stacks on the same layer the way the old merge did (that sounded
+# horrible). :shimmer = held body + whisper arp; :arp = figure only.
+PAD_ARP_LAYER_MODES = {
+  held:   { ep: :held,    warm: :held },
+  shimmer: { ep: :shimmer, warm: :held },
+  pulse:  { ep: :held,    warm: :arp },
+  blend:  { ep: :shimmer, warm: :arp },
+  duo:    { ep: :arp,     warm: :arp },
+  wash:   { ep: :held,    warm: :arp },
+  figure: { ep: :arp,     warm: :held }
+}.freeze
+
+PAD_ARP_PRESETS = {
+  ep_shimmer: { style: :skip_up, subdiv: 8, gate: 0.78, vel: 0.16,
+                arp_styles: %i[skip_up euclidean quint_spread] },
+  ep_figure:  { style: :fibonacci, subdiv: 6, gate: 0.74, vel: 0.22,
+                arp_styles: %i[fibonacci spiral coltrane] },
+  warm_pulse: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24,
+                arp_styles: %i[updown pingpong] },
+  warm_wash:  { style: :pingpong, subdiv: 3, gate: 0.9, vel: 0.28,
+                arp_styles: %i[pingpong coltrane quint_spread] },
+  warm_moog:  { style: :up, subdiv: 4, gate: 0.88, vel: 0.26,
+                arp_styles: %i[up downup quint_spread] }
+}.freeze
+
+def pad_arp_mode
+  raw = ENV["PAD_ARP_MODE"]&.downcase
+  sym = raw&.to_sym
+  return sym if sym && PAD_ARP_LAYER_MODES.key?(sym)
+  return :blend if ENV.fetch("PAD_CHORD_ARP", "0") != "0"
+  fallback = (ENV["PAD_ARP"] || "blend").to_s.downcase.to_sym
+  PAD_ARP_LAYER_MODES.key?(fallback) ? fallback : :blend
+end
+
+def pad_arp_layer_mode(role)
+  PAD_ARP_LAYER_MODES.fetch(pad_arp_mode, PAD_ARP_LAYER_MODES[:blend])[role] || :held
+end
+
+def pad_arp_cfg_for(patch, role:, mode: nil)
+  mode ||= pad_arp_mode
+  patch_arp = patch&.dig(:midi_arp)
+  preset = case [mode, role]
+           when [:shimmer, :ep], [:blend, :ep] then :ep_shimmer
+           when [:figure, :ep], [:duo, :ep] then :ep_figure
+           when [:pulse, :warm], [:blend, :warm], [:duo, :warm] then :warm_pulse
+           when [:wash, :warm] then :warm_wash
+           else role == :warm ? :warm_pulse : :ep_shimmer
+           end
+  preset = :warm_moog if role == :warm && patch&.dig(:id).to_s.start_with?("moog")
+  base = PAD_ARP_PRESETS[preset].dup
+  base.merge(patch_arp || {}).merge(arp_styles: patch&.dig(:arp_styles) || base[:arp_styles])
 end
 
 def apply_pad_voice_preset!(seed: 0)
@@ -476,8 +536,18 @@ BEAUTIFUL_PATCH_IDS = {
   ep: %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli galaxy_ep1 galaxy_ep2 organ_drawbar],
   warm: %i[moog_model_d prophet_5_pad juno_strings moog_pad solina_ensemble string_orchestra],
   scale_lead: %i[scale_arp_rhodes],
-  lead: %i[soft_synth_lead],
+  lead: %i[soft_synth_lead prophet_lead minimoog_lead],
   texture: %i[soft_synth_str]
+}.freeze
+
+# Experimental but musical leads — Flylo/Prophet/Moog/FM; not horror/novelty.
+EXPERIMENTAL_LEAD_IDS = {
+  lead: %i[
+    prophet_lead big_lead_prophet5 prophet_bleeding_lead minimoog_lead moog_ladder_lead
+    saw_lead fifths_lead fm_lead_bell flute_airy oboe_solo cs_lead charang_bite
+    pluck_synth supersaw_1 supersaw_2 soft_synth_lead
+  ],
+  scale_lead: %i[scale_arp_prophet scale_arp_moog scale_arp_supersaw scale_arp_rhodes]
 }.freeze
 
 CREEPY_PATCH_IDS = %i[
@@ -487,12 +557,22 @@ CREEPY_PATCH_IDS = %i[
   choir_aahs voice_oohs bowed_glass harpsi_pluck
 ].freeze
 
+def lead_patch_allowlist(role)
+  return nil if ENV["CREEPY_PATCHES"] == "1"
+  base = BEAUTIFUL_PATCH_IDS[role] || []
+  if experimental_leads_enabled? && EXPERIMENTAL_LEAD_IDS[role]
+    (base + EXPERIMENTAL_LEAD_IDS[role]).uniq
+  else
+    base
+  end
+end
+
 def weighted_patch_pick(role, seed: nil, soulful: true)
   pool = SYNTH_PATCH_BY_ROLE.fetch(role, [])
   return nil if pool.empty?
   if soulful && ENV["CREEPY_PATCHES"] != "1"
-    allowed = BEAUTIFUL_PATCH_IDS[role]
-    if allowed
+    allowed = %i[lead scale_lead].include?(role) ? lead_patch_allowlist(role) : BEAUTIFUL_PATCH_IDS[role]
+    if allowed&.any?
       pool = pool.select { |p| allowed.include?(p[:id]) }
       pool = SYNTH_PATCH_BY_ROLE.fetch(role, []).select { |p| allowed.include?(p[:id]) } if pool.empty?
     end
@@ -1382,31 +1462,48 @@ def scale_arp_section_density(section, progress)
   base * (progress < 0.1 ? 0.7 : 1.0)
 end
 
-# Pad-layer arpeggiator — chord-tone figures under held pads (EP shimmer,
-# warm analog movement) rendered as real MIDI note streams.
-def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0)
+def pad_arp_section_density(section, progress)
+  base = case section
+         when :intro then 0.42
+         when :breakdown then 0.55
+         when :build then 0.92
+         when :outro then 0.62
+         else 0.78
+         end
+  base * (progress < 0.12 ? 0.75 : 1.0)
+end
+
+# Pad-layer arpeggiator — chord-tone figures on EP/warm layers (separate
+# FluidSynth passes; never merged with full held chords on the same layer).
+def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0, vel_mul: 1.0)
   return [] if pad_events.empty? || arp_cfg.nil?
   beat_p = 60.0 / cfg[:bpm]
+  bar_p = beat_p * 4.0
+  n_bars_est = pad_events.empty? ? 32 : ((pad_events.last[0] / bar_p).ceil + 1)
   events = []
   pad_events.each_with_index do |(time, velocity, chord, sustain), i|
     next unless chord && chord[:hz]&.any?
+    bar_approx = (time / bar_p).floor.clamp(0, [n_bars_est - 1, 0].max)
+    section = dilla_section(bar_approx, n_bars_est)
+    progress = i.to_f / [pad_events.length - 1, 1].max
+    density = pad_arp_section_density(section, progress)
     variation = arp_variation_for_chord(i, chord, cfg, arp_cfg, role: :pad)
     subdiv = variation[:subdiv]
     step_p = beat_p / subdiv.to_f
     gate = variation[:gate]
-    vel_scale = variation[:vel]
+    vel_scale = variation[:vel] * vel_mul
     rng = chord_variation_rng(cfg, i, chord, salt: seed_offset)
-    swing = cfg[:swing].to_f / 100.0 * step_p * 0.28
+    swing = cfg[:swing].to_f / 100.0 * step_p * 0.22
     tones = chord[:hz].sort
     pattern = arp_pattern_for_chord(chord, variation, tones.length, rng)
-    n_steps = [((sustain / step_p).floor * variation[:n_steps_mul]).to_i, 2].max
+    n_steps = [((sustain / step_p).floor * variation[:n_steps_mul] * density).to_i, 2].max
     step_dur = step_p * gate
     n_steps.times do |step|
       next if arp_rest_step?(step, variation[:rest_prob], i)
       hz = tones[pattern[step % pattern.length] % tones.length]
       t = arp_step_time(time, step, step_p, swing, variation[:step_jitter], variation)
       break if t >= time + sustain - step_dur * 0.35
-      vel = (velocity * vel_scale * (step.zero? ? 1.0 : 0.82 - step * 0.02)).clamp(0.1, 0.55)
+      vel = (velocity * vel_scale * (step.zero? ? 1.0 : 0.86 - step * 0.015)).clamp(0.08, 0.48)
       events << [t, vel, { name: "pad_arp", hz: [hz] }, step_dur]
     end
   end
@@ -1414,10 +1511,21 @@ def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0)
 end
 
 def pad_midi_events_for_layer(pad_events, cfg, patch, role:, duration:)
-  return pad_events unless pad_chord_arp_enabled?
-  arp_cfg = patch&.dig(:midi_arp)
-  return pad_events unless arp_cfg && role == :texture
-  pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: role.hash.abs % 5000)
+  layer = pad_arp_layer_mode(role)
+  return pad_events if layer == :held
+  arp_cfg = pad_arp_cfg_for(patch, role: role)
+  arp = pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: role.hash.abs % 5000,
+                        vel_mul: layer == :shimmer ? 0.72 : 1.0)
+  case layer
+  when :shimmer
+    merged = pad_events.dup
+    arp.each { |e| merged << e }
+    merged.sort_by { |e| e[0] }
+  when :arp
+    arp.empty? ? pad_events : arp
+  else
+    pad_events
+  end
 end
 
 def resolve_midi_fx_for(patch, role:)
@@ -1562,8 +1670,24 @@ end
 # Each pad/lead chord gets its own arp style, subdiv, gate, swing, and pattern shape.
 def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role: :lead)
   rng = chord_variation_rng(cfg, chord_i, chord, salt: role.hash.abs)
-  styles = arp_styles_for_patch(patch, base_arp_cfg[:style])
+  styles = base_arp_cfg[:arp_styles] || arp_styles_for_patch(patch, base_arp_cfg[:style])
   style = styles[chord_i % styles.length]
+  if role == :pad
+    subdiv_pool = [base_arp_cfg.fetch(:subdiv, 8), 4, 6, 8].uniq
+    pattern_modes = %i[style motif sparse stagger call]
+    return {
+      style: style,
+      subdiv: subdiv_pool[chord_i % subdiv_pool.length],
+      gate: base_arp_cfg.fetch(:gate, 0.75) * rng.rand(0.92..1.06),
+      vel: base_arp_cfg.fetch(:vel, 0.22) * rng.rand(0.88..1.1),
+      time_offset: rng.rand(-0.02..0.05),
+      step_jitter: rng.rand(0.0..0.012),
+      rest_prob: rng.rand(0.0..0.06),
+      pattern_mode: pattern_modes[chord_i % pattern_modes.length],
+      swing_mul: rng.rand(0.75..1.15),
+      n_steps_mul: rng.rand(0.72..1.0)
+    }
+  end
   style = ARP_PATTERN_BUILDERS.keys.sample(random: rng) if rng.rand < 0.3
   subdiv_pool = [base_arp_cfg.fetch(:subdiv, 8), 3, 4, 6, 8, 12].uniq
   {
@@ -3966,10 +4090,11 @@ STREAM_MAX_RETRIES = (ENV["STREAM_MAX_RETRIES"] || "2").to_i
 # keys upfront, experimental layers off, quality gate before speaker playback.
 STREAM_LISTENABILITY_DEFAULTS = {
   "PAD_VOICE" => "blend",
+  "PAD_ARP_MODE" => "blend",
   "LEAD_ARP" => "1",
+  "EXPERIMENTAL_LEADS" => "1",
   "SOUL_ENRICH" => "1",
   "PAD_TEXTURE" => "0",
-  "PAD_CHORD_ARP" => "0",
   "CREEPY_PATCHES" => "0",
   "VINYL" => "35",
   "KICK_GAIN" => "0.34",
@@ -4005,8 +4130,9 @@ def log_stream_render_meta(path)
   chords = DillaHarmony.last_progression_chords
   beauty = DillaHarmony.score_beauty(chords)
   patches = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id)].compact.join("/")
+  leads = [@render_scale_lead_patch&.dig(:id), @render_lead_patch&.dig(:id)].compact.join("+")
   prog = chords&.map { |c| c[:name] }&.join(" → ")
-  puts "patches=#{patches || 'native'} beauty=#{beauty} progression=#{prog}"
+  puts "patches=#{patches || 'native'} pad_arp=#{pad_arp_mode} leads=#{leads} beauty=#{beauty} progression=#{prog}"
   puts "quality: ruby dilla.rb beauty #{path}" if File.file?(path)
 end
 
