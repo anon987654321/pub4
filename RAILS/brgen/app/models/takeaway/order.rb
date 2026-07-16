@@ -41,7 +41,10 @@ class Takeaway::Order < ApplicationRecord
   end
 
   def transition_to!(next_status)
-    return false unless may_transition_to?(next_status)
+    unless may_transition_to?(next_status)
+      errors.add(:status, "cannot transition from #{status} to #{next_status}")
+      return false
+    end
 
     update!(status: next_status)
     deliver_notification(user, title: "Order #{status.humanize.downcase}", body: "Your order from #{restaurant.name} is now #{status.humanize.downcase}.", source: self)

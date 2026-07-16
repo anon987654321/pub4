@@ -8,6 +8,7 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
     @city = City.find_by!(domain: "brgen.no")
     @seller = User.strict_loading(false).create!(email_address: "seller@brgen.no", password: "password123", city: @city)
     @buyer = User.strict_loading(false).create!(email_address: "buyer@brgen.no", password: "password123", city: @city)
+    @category = Marketplace::Category.find_or_create_by!(name: "Test category", slug: "test-category-#{SecureRandom.hex(4)}")
   end
 
   teardown do
@@ -16,7 +17,7 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
 
   test "accept transitions pending to accepted" do
     ActsAsTenant.with_tenant(@city) do
-      listing = Marketplace::Listing.create!(user: @seller, title: "Jacket", price_cents: 12_000, currency: "NOK")
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Jacket", price_cents: 12_000, currency: "NOK")
       order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "pending")
 
       order.accept!
@@ -27,7 +28,7 @@ class Marketplace::OrderTest < ActiveSupport::TestCase
 
   test "decline transitions pending to declined" do
     ActsAsTenant.with_tenant(@city) do
-      listing = Marketplace::Listing.create!(user: @seller, title: "Boots", price_cents: 8_000, currency: "NOK")
+      listing = Marketplace::Listing.create!(user: @seller, category: @category, title: "Boots", price_cents: 8_000, currency: "NOK")
       order = Marketplace::Order.create!(buyer: @buyer, listing: listing, status: "pending")
 
       order.decline!

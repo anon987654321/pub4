@@ -33,7 +33,7 @@ class VoteTest < ActiveSupport::TestCase
       duplicate = Vote.new(user: @voter, votable: post, value: -1)
 
       assert_not duplicate.valid?
-      assert_includes duplicate.errors[:user_id], "has already been taken"
+      assert_includes duplicate.errors[:user_id], I18n.t("errors.messages.taken")
     end
   end
 end

@@ -20,7 +20,7 @@ class Dating::MatchTest < ActiveSupport::TestCase
       duplicate = Dating::Match.new(initiator: @initiator, receiver: @receiver, status: "matched")
 
       assert_not duplicate.valid?
-      assert_includes duplicate.errors[:initiator_id], "has already been taken"
+      assert_includes duplicate.errors[:initiator_id], I18n.t("errors.messages.taken")
     end
   end
 
