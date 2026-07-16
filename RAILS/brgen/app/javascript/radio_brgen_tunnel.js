@@ -1,19 +1,5 @@
 'use strict'
 
-class SimpleCarousel {
-  constructor(e, i = 2800) {
-    this.slides = Array.from(e.querySelectorAll(".carousel-slide"))
-    this.i = 0
-    this.n = this.slides.length
-    if (this.n > 1) this.t = setInterval(() => this.next(), i)
-  }
-  next() {
-    this.slides[this.i].classList.remove("active")
-    this.i = (this.i + 1) % this.n
-    this.slides[this.i].classList.add("active")
-  }
-}
-
 const DEFAULT_TRACKS = [
   { title: "Microphone Master", id: "9EGHwkDix78", artist: "J Dilla" },
   { title: "In Space", id: "vO2nWXCVt6o", artist: "J Dilla" },
@@ -375,24 +361,7 @@ export class RadioBrgen {
     this.visualEngine = new VisualEngine(this.canvas)
 
     if (options.heading && options.headingText) {
-      const hasCarousel = options.heading.id === "cityCarousel" || (options.heading.querySelector && options.heading.querySelector(".carousel-container"))
-      if (!hasCarousel) {
-        options.heading.textContent = options.headingText
-      }
-    }
-
-    // Reintegrated SimpleCarousel from historical best (c7c8effcd)
-    const cityCarousel = document.getElementById("cityCarousel")
-    if (cityCarousel && !cityCarousel.__carouselInit) {
-      cityCarousel.__carouselInit = true
-      new SimpleCarousel(cityCarousel)
-      // Inject historical carousel styles to avoid inline <style> auditor flag
-      const style = document.createElement('style')
-      style.textContent = `h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
-    .carousel-container{width:100%;height:100%;position:relative;overflow:hidden}
-    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform .3s ease,opacity .3s ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap}
-    .carousel-slide.active{opacity:1;transform:translateY(0%)}`
-      document.head.appendChild(style)
+      options.heading.textContent = options.headingText
     }
 
     this.setupGUI()
@@ -536,10 +505,23 @@ export class RadioBrgen {
   }
 
   startAnimation() {
+    // A single throw inside update()/render() previously killed the entire
+    // animation forever -- requestAnimationFrame is never rescheduled once
+    // an exception unwinds past this closure, and canvas particle math is
+    // exactly the kind of code that hits a rare NaN/divide-by-zero after a
+    // few seconds of continuous audio-driven motion. Skip the bad frame,
+    // keep the loop alive, so a transient glitch reads as a stutter, not
+    // a dead animation.
     const loop = () => {
-      const audioData = this.audioEngine.getAudioData()
-      this.visualEngine.update(audioData)
-      this.visualEngine.render()
+      try {
+        const audioData = this.audioEngine.getAudioData()
+        this.visualEngine.update(audioData)
+        this.visualEngine.render()
+      } catch (error) {
+        if (typeof console !== "undefined" && console.warn) {
+          console.warn("radio_brgen_tunnel: animation frame failed, continuing", error)
+        }
+      }
       this._raf = requestAnimationFrame(loop)
     }
     loop()

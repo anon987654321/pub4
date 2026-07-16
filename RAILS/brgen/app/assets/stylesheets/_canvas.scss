@@ -1,7 +1,6 @@
-/* City carousel — decorative element reused as the radio tunnel's now-playing
-   header (see _vertical_playlist.scss, which restores display: block for
-   .radio-tunnel/.radio-header). Hidden by default everywhere else: it
-   duplicated the .brand-wordmark logo at equal visual weight beside it. */
+/* City carousel — decorative element beside the sidebar. Hidden by default:
+   it duplicated the .brand-wordmark logo at equal visual weight beside it.
+   No longer reused for the radio tunnel heading (plain "brgen" text there). */
 .city-carousel {
   display: none;
   position: fixed;
