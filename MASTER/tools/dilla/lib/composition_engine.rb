@@ -434,8 +434,9 @@ module DillaComposition
         report = render_fn.respond_to?(:quality) ? render_fn.quality(path) : {}
         critique = Critique.analyze(report, session: session,
                                     progression_chords: DillaHarmony.last_progression_chords)
-        harmony_w = (critique[:scores][:harmony] || 70) * 0.12
-        total = (score * 44 + critique[:overall] * 0.44 + harmony_w).round(2)
+        hw = (ENV["EVOLVE_HARMONY_W"] || 0.12).to_f
+        harmony_w = (critique[:scores][:harmony] || 70) * hw
+        total = (score * (50 - hw * 50) + critique[:overall] * 0.44 + harmony_w).round(2)
         session.critique_log << { gen: gen, score: total, critique: critique[:scores] }
         if total > best[:score]
           best = { score: total, session: session, path: path, critique: critique }

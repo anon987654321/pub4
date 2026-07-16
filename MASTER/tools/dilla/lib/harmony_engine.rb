@@ -151,9 +151,109 @@ module DillaHarmony
     { name: chord[:name], hz: hz, bass_hz: chord[:bass_hz] || chord[:hz].min }
   end
 
+  KEY_ALIASES = {
+    /f minor/i => :f_minor, /c minor/i => :f_minor, /c# minor/i => :f_minor,
+    /d minor/i => :d_minor, /bb/i => :d_minor, /dm/i => :d_minor,
+    /c major/i => :c_major, /g major/i => :g_major, /e major/i => :g_major,
+    /eb/i => :eb_major, /ab/i => :ab_major
+  }.freeze
+
+  def key_sym_for(cfg)
+    key = DillaLofiMachine.profile_entry(cfg[:track])&.dig(:key).to_s
+    KEY_ALIASES.each { |rx, sym| return sym if key.match?(rx) }
+    :f_minor
+  end
+
+  def substitute_symbol(sym)
+    SUBSTITUTIONS.fetch(sym.to_s, sym.to_s)
+  end
+
+  def apply_key_borrow(pads, cfg)
+    return pads unless soul_profile?(cfg[:track])
+    pool = KEY_BORROW[key_sym_for(cfg)]
+    return pads unless pool&.any?
+    rng = Random.new(cfg[:track].to_s.hash.abs + pads.length)
+    pads.map.with_index do |ch, i|
+      next ch unless (i % 8) == 6 && rng.rand < 0.45
+      borrowed = pool[rng.rand(pool.length)]
+      DillaLofiMachine.chord_from_symbol(borrowed).merge(name: borrowed)
+    rescue StandardError
+      ch
+    end
+  end
+
+  def apply_recap_substitutions(pads, cfg, phases)
+    return pads unless soul_profile?(cfg[:track])
+    pads.map.with_index do |ch, i|
+      phase = phases[i]
+      next ch unless phase == :recapitulation
+      sym = ch[:name].to_s
+      sub = substitute_symbol(sym)
+      next ch if sub == sym
+      DillaLofiMachine.chord_from_symbol(sub).merge(name: sub, bass_hz: ch[:bass_hz])
+    rescue StandardError
+      ch
+    end
+  end
+
+  def insert_secondary_dominants(pads, cfg)
+    return pads if pads.length < 4 || !soul_profile?(cfg[:track])
+    rng = Random.new(cfg[:track].to_s.hash.abs + 99)
+    out = pads.dup
+    [6, 7].each do |idx|
+      next if idx >= out.length
+      next unless rng.rand < 0.35
+      root = hz_to_midi(out[idx][:hz].min)
+      dom = { name: "V7/ii", hz: apply_voicing([midi_to_hz(root + 2)], style: :spread) }
+      dom[:hz] = apply_voicing([midi_to_hz(root + 2)], style: :spread)
+      out[idx] = dom
+    rescue StandardError
+      next
+    end
+    out
+  end
+
+  def insert_backdoor(pads, cfg)
+    return pads unless soul_profile?(cfg[:track]) && ENV["BACKDOOR"] != "0"
+    return pads if pads.length < 8
+    idx = 7
+    root = hz_to_midi(pads[idx][:hz].min)
+    bk = { name: "bVII7", hz: apply_voicing([midi_to_hz(root - 2)], style: :rootless) }
+    pads = pads.dup
+    pads[idx] = bk
+    pads
+  end
+
+  def reharm_every_fourth_loop(pads, cfg)
+    return pads unless soul_profile?(cfg[:track]) && ENV["REHARM_LOOP"] == "1"
+    return pads if pads.length < 4
+    rng = Random.new(cfg[:track].to_s.hash.abs)
+    pads.map.with_index do |ch, i|
+      next ch unless (i % 4) == 3 && rng.rand < 0.4
+      sym = ch[:name].to_s
+      tritone = sym.sub(/7\z/, "7alt").sub(/maj7/, "7#11")
+      DillaLofiMachine.chord_from_symbol(tritone)
+    rescue StandardError
+      ch
+    end
+  end
+
+  def pad_overlap_mul(prev, curr)
+    return 1.0 unless prev && curr
+    motion = root_motion_semitones(prev, curr)
+    motion <= 2 ? 1.12 : 1.0
+  end
+
+  def stereo_pan_for_voice(voice_i, voices, soul: false)
+    return 0.0 unless soul
+    spread = 0.28
+    (voice_i.to_f / [voices - 1, 1].max - 0.5) * spread * 2.0
+  end
+
   def enrich_progression(pads, cfg, phases: [])
     return [pads, phases] if pads.empty?
-    return [pads, phases] if soul_profile?(cfg[:track]) && ENV["SOUL_ENRICH"] != "1"
+    soul = soul_profile?(cfg[:track])
+    skip_passing = soul && ENV["SOUL_ENRICH"] != "1"
 
     rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + pads.length)
     voicing = cfg[:voicing] || :spread
@@ -168,9 +268,12 @@ module DillaHarmony
                       when :breakdown then :rootless
                       else voicing
                       end
-      out << decorate_chord(chord, voicing: chord_voicing, rootless: soul_profile?(cfg[:track]))
+      sym = chord[:name].to_s
+      sym = substitute_symbol(sym) if soul && phase == :recapitulation && rng.rand < 0.5
+      ch = sym != chord[:name].to_s ? (DillaLofiMachine.chord_from_symbol(sym) rescue chord) : chord
+      out << decorate_chord(ch, voicing: chord_voicing, rootless: soul)
       phases_out << phase
-      next if soul_profile?(cfg[:track])
+      next if skip_passing
       next_chord = pads[(i + 1) % pads.length]
       motion = root_motion_semitones(chord, next_chord)
       if phase == :development && i < pads.length - 1 && motion <= 4 && rng.rand < 0.04
@@ -239,6 +342,7 @@ module DillaHarmony
       step = target - prev_bass
       step = step - 12 if step > 7
       step = step + 12 if step < -7
+      step = -step.clamp(-5, 5) if ENV["BASS_CONTRARY"] == "1" && step.abs > 4
       bass_midi = prev_bass + step
       bass_midi += 12.0 while bass_midi < 36.0
       bass_midi -= 12.0 while bass_midi > 60.0
@@ -363,12 +467,24 @@ module DillaHarmony
     rescue StandardError
       c
     end
+    pads = apply_key_borrow(pads, cfg)
+    pads = reharm_every_fourth_loop(pads, cfg)
+    pads = insert_backdoor(pads, cfg)
     pads = validate_and_fix(pads)
     pads, phases = enrich_progression(pads, cfg, phases: phases)
+    pads = apply_recap_substitutions(pads, cfg, phases)
+    pads = insert_secondary_dominants(pads, cfg)
     pads = voice_lead_chords(pads)
     pads = bass_voice_lead(pads)
     pads = validate_and_fix(pads)
+    pads = add_turnaround_tags(pads, cfg)
     [pads, phases]
+  end
+
+  def fix_chord_for_schedule(chord, prev_chord)
+    return chord unless prev_chord
+    return decorate_chord(chord, voicing: :rootless) if mid_register_clash?(prev_chord, chord)
+    chord
   end
 
   def block_generated?(track, style)
