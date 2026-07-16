@@ -2725,6 +2725,30 @@ def dilla_render_tmp(tag)
   File.join(ROOT, ".dilla_#{tag}.#{Process.pid}.wav")
 end
 
+STREAM_LOCK_PATH = File.join(ROOT, ".dilla_stream.lock").freeze
+
+def acquire_stream_lock!
+  if File.exist?(STREAM_LOCK_PATH)
+    holder = File.read(STREAM_LOCK_PATH).strip.to_i
+    if holder.positive?
+      begin
+        Process.kill(0, holder)
+        warn "stream lock held by pid #{holder} — exit (run only one stream)"
+        exit 0
+      rescue Errno::ESRCH
+        FileUtils.rm_f(STREAM_LOCK_PATH)
+      end
+    end
+  end
+  File.write(STREAM_LOCK_PATH, Process.pid.to_s)
+  at_exit do
+    FileUtils.rm_f(STREAM_LOCK_PATH) if File.exist?(STREAM_LOCK_PATH) &&
+                                        File.read(STREAM_LOCK_PATH).strip.to_i == Process.pid
+  rescue StandardError
+    nil
+  end
+end
+
 def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
   unless File.file?(drum_path)
     warn "flylo merge: missing drum bus — skipping overlay"
@@ -6862,6 +6886,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
   end
   $stdout.sync = true
   $stderr.sync = true
+  acquire_stream_lock!
   prev_track = ENV["TRACK"]
   user_pad_locked = (ENV["PAD_VOICE"] && !ENV["PAD_VOICE"].empty?) ||
                     (ENV["PAD_ARP_MODE"] && !ENV["PAD_ARP_MODE"].empty?)
@@ -9384,8 +9409,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   bar_p = beat_p * 4.0
   schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
 
-  drum_tmp     = File.join(ROOT, ".dilla_drums.wav")
-  harmonic_tmp = File.join(ROOT, ".dilla_harmonic.wav")
+  drum_tmp     = dilla_render_tmp("drums")
+  harmonic_tmp = dilla_render_tmp("harmonic")
   render_sample_bus_wav(drum_tmp, events, duration, kit, drum_bus_mapping)
   if flylo_drum_overlay_enabled?
     flylo_sub_tmp = dilla_render_tmp("flylo_sub")
