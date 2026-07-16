@@ -779,8 +779,8 @@ class DeployBacklogTest < Minitest::Test
 
     assert_includes layout, 'yield :splash'
     assert_includes layout, 'id="splash"'
-    assert_includes layout, '#17161c'
-    assert_includes manifest, '"theme_color": "#17161c"'
+    assert_includes layout, '#000000'
+    assert_includes manifest, '"theme_color": "#000000"'
     assert_includes scss, '_x_card_modifiers'
     assert_includes scss, '_chrome_polish'
     assert_includes scss, 'offline_page'

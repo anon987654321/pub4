@@ -1,4 +1,4 @@
-@use "pub4_stack" as *;
+@use "stack" as *;
 @use "x_widgets";
 @use "x_base" as x;
 
@@ -129,7 +129,7 @@ article > section,
   background-size: contain;
 }
 
-/* x_widgets' .page-header (a slim sticky 53px section bar) and pub4_stack's
+/* x_widgets' .page-header (a slim sticky 53px section bar) and stack's
    .page-header (a generic unconstrained-height flex intro) both compile in
    here and collide. This page's header is the intro-block kind — h1 +
    description + search — so its height needs to fit that content instead

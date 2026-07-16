@@ -39,13 +39,13 @@ instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb",
 
 Defines `notifications`, `reactions`, and `reports`. Contract test: `ruby RAILS/test/shared_social_routes_test.rb`.
 
-**Shared Stimulus** — compose/save/upload controllers live in `shared/frontend/` and register via `pub4_stimulus_boot.js` + `shared/config/importmap_baseline.rb`:
+**Shared Stimulus** — compose/save/upload controllers live in `shared/frontend/` and register via `stimulus_boot.js` + `shared/config/importmap_baseline.rb`:
 
-- `pub4_autosave_controller.js`
-- `pub4_draft_store_controller.js`
-- `pub4_media_picker_controller.js`
-- `pub4_feed_compose_controller.js` (per-app expanded class via `feed_compose_expanded_class_value`)
-- `pub4_scroll_reveal_controller.js`
+- `autosave_controller.js`
+- `draft_store_controller.js`
+- `media_picker_controller.js`
+- `feed_compose_controller.js` (per-app expanded class via `feed_compose_expanded_class_value`)
+- `scroll_reveal_controller.js`
 
 Per-app copies of these controllers were removed from amber/brgen.
 

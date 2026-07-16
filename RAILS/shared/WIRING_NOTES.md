@@ -6,17 +6,17 @@
 
 Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass. No separate `tokens.css`, `animations.css`, or `minimal-ui*.css` links in layouts.
 
-**Protected file:** only `application.scss` per `limits.yml` → `frontend_protection`. Prefer `@use "pub4_stack"` plus existing domain partials (brgen pattern); avoid new `_appname.scss` sprawl when product CSS fits the entry or an existing partial.
+**Protected file:** only `application.scss` per `limits.yml` → `frontend_protection`. Prefer `@use "stack"` plus existing domain partials (brgen pattern); avoid new `_appname.scss` sprawl when product CSS fits the entry or an existing partial.
 
 **Stack entry** (top of every `application.scss`):
 
 ```scss
-@use "pub4_stack" as *;
+@use "stack" as *;
 ```
 
-`pub4_stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_shell` (offline page, install prompt, x.com-shell primitives).
+`stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_shell` (offline page, install prompt, x.com-shell primitives).
 
-**Brgen** adds product partials after the stack (`_root`, `_canvas`, `_shell`, …). **Standalone apps** add a thin product block below `@use "pub4_stack"`.
+**Brgen** adds product partials after the stack (`_root`, `_canvas`, `_shell`, …). **Standalone apps** add a thin product block below `@use "stack"`.
 
 **Static exceptions:**
 - `shared/public/styles/errors.css` — Rails default error pages only
@@ -28,11 +28,11 @@ Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass
 ## Hotwire / Stimulus baseline
 
 **JS entrypoints** (`shared/frontend/`):
-- `pub4_hotwire.js` — Turbo, theme-meta, PWA SW, nav-reveal (idempotent), minimal-gesture boot
-- `pub4_stimulus_boot.js` — full @stimulus-components fleet (incl. password-visibility, nested-form, carousel, read-more, checkbox-select-all), StimulusReflex, Futurism, live-search, offline-page, install-prompt, theme-toggle
+- `hotwire.js` — Turbo, theme-meta, PWA SW, nav-reveal (idempotent), minimal-gesture boot
+- `stimulus_boot.js` — full @stimulus-components fleet (incl. password-visibility, nested-form, carousel, read-more, checkbox-select-all), StimulusReflex, Futurism, live-search, offline-page, install-prompt, theme-toggle
 - `Shared::StimulusFormHelper` — `character_counter_field`, `password_visibility_field`, `read_more`
 - Gate: `ruby RAILS/stimulus_components_adoption_gate.rb` (no legacy `char-counter` / duplicate controllers)
-- `pub4_theme_meta.js`, `pub4_nav_reveal.js`, `pub4_live_search_controller.js`, …
+- `theme_meta.js`, `nav_reveal.js`, `live_search_controller.js`, …
 
 **Per-app wiring:**
 
@@ -83,7 +83,7 @@ Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/sh
 
 ## Visual design system (2026-07-15)
 
-**Reference:** x.com's layout and interaction patterns; pub4's graphite/indigo palette on the shared token layer. Source of truth is code: `shared/app/assets/stylesheets/_x_base.scss`, `shared/design_tokens.yml`, and `shared/app/assets/stylesheets/_x_shell.scss` for the three-column grid. amber and brgen inherit via `pub4_stack` / `pub4_stack_brgen` → `_tokens.scss` → `_x_base.scss`.
+**Reference:** x.com's layout and interaction patterns; pub4's graphite/indigo palette on the shared token layer. Source of truth is code: `shared/app/assets/stylesheets/_x_base.scss`, `shared/design_tokens.yml`, and `shared/app/assets/stylesheets/_x_shell.scss` for the three-column grid. amber and brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_x_base.scss`.
 
 **Shared palette (dark, `_x_base.scss` / `design_tokens.yml`):**
 - Accent `#7c6fd6`, danger `#d1594a`

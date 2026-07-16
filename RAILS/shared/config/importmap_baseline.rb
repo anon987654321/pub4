@@ -20,7 +20,7 @@ pin "@rails/request.js", to: "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0
 pin "stimulus-use"
 pin "stimulus_reflex"
 pin "cable_ready"
-# pub4_stimulus_boot.js imports the scoped npm name (@stimulus_reflex/futurism),
+# stimulus_boot.js imports the scoped npm name (@stimulus_reflex/futurism),
 # but the futurism gem's own importmap pins the bare "futurism" specifier to
 # futurism.min.js — without `to:` here, importmap-rails looked for a literal
 # "@stimulus_reflex/futurism.js" asset that doesn't exist, so the browser

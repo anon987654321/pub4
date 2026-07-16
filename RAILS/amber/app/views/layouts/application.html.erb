@@ -52,20 +52,28 @@
 
 <div class="app-shell">
   <div class="layout">
-    <aside class="sidebar" data-turbo-permanent>
+    <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
+    <aside class="sidebar" data-edge-swiper-target="root">
       <nav role="navigation" aria-label="Primary navigation">
         <%= render "shared/sidebar_nav" %>
       </nav>
     </aside>
+    <button type="button" class="edge-grip edge-grip-left" data-edge-swiper-target="grip"
+            data-action="click->edge-swiper#toggle" aria-label="Show sidebar" aria-expanded="false"></button>
+    </div>
 
     <main id="main-content" role="main" aria-label="Main content">
       <%= render "shared/flash" %>
       <%= yield %>
     </main>
 
-    <aside class="widgets" aria-label="Sidebar widgets">
+    <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
+    <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
+            data-action="click->edge-swiper#toggle" aria-label="Show widgets" aria-expanded="false"></button>
+    <aside class="widgets" aria-label="Sidebar widgets" data-edge-swiper-target="root">
       <%= render "shared/widgets" %>
     </aside>
+    </div>
   </div>
 
   <%= render "shared/footer" %>

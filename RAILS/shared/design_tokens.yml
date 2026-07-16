@@ -106,7 +106,7 @@ openbsd_wscons:
   x_radius_pill: "0"
   x_radius_card: "0"
 
-# Dark flat SGI-IRIX/8-bit chrome — used by pub4_stack social apps (_x_base.scss), not MASTER face.
+# Dark flat SGI-IRIX/8-bit chrome — used by the shared stack social apps (_x_base.scss), not MASTER face.
 # Flat: no bevels, no box-shadow. Subtle radii for cards and controls. Cool
 # graphite/indigo palette in place of x.com's black/blue.
 social:

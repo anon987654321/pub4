@@ -37,130 +37,75 @@
 .app-shell::-webkit-scrollbar { width: 8px; }
 .app-shell::-webkit-scrollbar-thumb { background: var(--x-hover); }
 
-// X-style three-column shell: full sidebar at 1265px+, icon rail 769–1264px,
-// single-column feed with tab bar below 769px. amber + brgen emit this markup;
-// bsdports uses its own layout and is unaffected.
+// Single-column shell at every width: the tab bar is the one always-reachable
+// nav (mirrors mobile at desktop widths too, since sidebar/widgets are no
+// longer static columns). Sidebar and widgets are off-canvas overlay panels,
+// swiped in from their edge or opened via their grip button
+// (pub4/edge_swiper) -- never permanently occupying feed width. amber +
+// brgen emit this markup; bsdports uses its own layout and is unaffected.
 .layout {
   display: flex;
   flex-direction: column;
-  max-width: var(--x-layout-max);
+  max-width: var(--x-feed-max);
   min-height: 100%;
   margin: 0 auto;
 }
+
+main#main-content,
+main[role="main"] {
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
+  min-height: 100vh;
+}
+
+.sidebar-swiper,
+.widgets-swiper {
+  position: fixed;
+  top: 0;
+  z-index: var(--z-overlay, 100);
+  height: 100dvh;
+  pointer-events: none;
+}
+.sidebar-swiper { inset-inline-start: 0; }
+.widgets-swiper { inset-inline-end: 0; }
+
 .sidebar,
 .widgets {
-  width: 100%;
-  padding: var(--space-3) clamp(16px, 5vw, 48px);
+  position: fixed;
+  top: 0;
+  height: 100dvh;
+  width: min(300px, 85vw);
+  overflow-y: auto;
+  padding: var(--space-3) 16px;
+  background: var(--x-bg);
+  transition: transform var(--transition-normal, 300ms) var(--ease-out, cubic-bezier(0.32, 0.72, 0, 1));
+  pointer-events: auto;
+}
+.sidebar { inset-inline-start: 0; transform: translateX(-100%); }
+.widgets { inset-inline-end: 0; transform: translateX(100%); }
+.sidebar-swiper.revealed .sidebar,
+.widgets-swiper.revealed .widgets {
+  transform: translateX(0);
 }
 
-@media (min-width: 1265px) {
-  :root { --sidebar-width: var(--x-sidebar); }
-
-  .layout {
-    display: grid;
-    grid-template-columns: var(--x-sidebar) minmax(0, var(--x-feed-max)) var(--x-widgets);
-    align-items: start;
-  }
-
-  .sidebar,
-  .widgets {
-    position: sticky;
-    top: 0;
-    align-self: start;
-    height: 100vh;
-    overflow-y: auto;
-    width: auto;
-    padding: 0 12px;
-  }
-
-  .widgets {
-    padding: 0 16px;
-  }
-
-  main#main-content,
-  main[role="main"] {
-    max-width: none;
-    margin-inline: 0;
-    padding-inline: 0;
-    border-inline: 1px solid var(--x-border);
-    min-height: 100vh;
-  }
-
-  .tab-bar,
-  .compose-fab {
-    display: none;
-  }
+.edge-grip {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 64px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-hover);
+  pointer-events: auto;
+  z-index: 1;
 }
-
-@media (min-width: 769px) and (max-width: 1264px) {
-  :root { --sidebar-width: 120px; }
-
-  .layout {
-    display: grid;
-    grid-template-columns: 120px minmax(0, 1fr) var(--x-widgets);
-    align-items: start;
-  }
-
-  .sidebar,
-  .widgets {
-    position: sticky;
-    top: 0;
-    align-self: start;
-    height: 100vh;
-    overflow-y: auto;
-    width: auto;
-    padding: 0 8px;
-  }
-
-  .widgets {
-    padding: 0 12px;
-  }
-
-  .sidebar .nav-item span,
-  .sidebar .brand-text,
-  .sidebar .compose-label,
-  .sidebar .sidebar-dropdown {
-    display: none;
-  }
-
-  .sidebar .brand-wordmark {
-    width: 52px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .sidebar .compose-btn {
-    width: 52px;
-    min-width: 52px;
-    padding: 0;
-  }
-
-  .sidebar .compose-icon {
-    display: block;
-  }
-
-  main#main-content,
-  main[role="main"] {
-    max-width: none;
-    margin-inline: 0;
-    padding-inline: 0;
-    border-inline: 1px solid var(--x-border);
-    min-height: 100vh;
-  }
-
-  .tab-bar,
-  .compose-fab {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  :root { --sidebar-width: 0px; }
-
-  .sidebar,
-  .widgets {
-    display: none;
-  }
+.edge-grip-left { inset-inline-start: 4px; }
+.edge-grip-right { inset-inline-end: 4px; }
+.sidebar-swiper.revealed .edge-grip-left,
+.widgets-swiper.revealed .edge-grip-right {
+  opacity: 0;
+  pointer-events: none;
 }
 .brand {
   display: flex;

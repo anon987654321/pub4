@@ -103,7 +103,8 @@
 
   <div class="app-shell">
     <div class="layout">
-      <aside class="sidebar" aria-label="Sidebar" data-turbo-permanent>
+      <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
+      <aside class="sidebar" aria-label="Sidebar" data-edge-swiper-target="root">
         <%= link_to root_path, class: "brand brand-wordmark", aria: { label: "Brgen" } do %>
           <span class="brand-text">brgen</span>
         <% end %>
@@ -162,6 +163,9 @@
           <span class="compose-label">Post</span>
         </a>
       </aside>
+      <button type="button" class="edge-grip edge-grip-left" data-edge-swiper-target="grip"
+              data-action="click->edge-swiper#toggle" aria-label="Show sidebar" aria-expanded="false"></button>
+      </div>
 
       <main id="main-content" role="main" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(root_path) %>
@@ -186,7 +190,10 @@
         <%= yield %>
       </main>
 
-      <aside class="widgets" aria-label="Widgets">
+      <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
+      <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
+              data-action="click->edge-swiper#toggle" aria-label="Show widgets" aria-expanded="false"></button>
+      <aside class="widgets" aria-label="Widgets" data-edge-swiper-target="root">
         <%= form_with url: global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
           <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5 4.694 0 8.5 3.806 8.5 8.5 0 1.986-.682 3.815-1.814 5.262l4.776 4.776-1.414 1.414-4.776-4.776A8.461 8.461 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
           <%= form.search_field :q, value: params[:q], placeholder: "Search Brgen", aria: { label: "Search Brgen" } %>
@@ -196,6 +203,7 @@
         <%= render "shared/sidebar_discovery" %>
         <%= render "shared/newsletter_cta" %>
       </aside>
+      </div>
     </div>
 
     <nav role="navigation" class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
