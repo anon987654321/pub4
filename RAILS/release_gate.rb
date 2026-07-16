@@ -115,13 +115,13 @@ end
 end
 
 [
-  ["domain_alignment_gate", Deploy::DomainAlignmentGate.run],
-  ["frontend_production_gate", Deploy::FrontendProductionGate.run],
-  ["frontend_auditor", Deploy::FrontendAuditorGate.run],
-  ["stimulus_components", Deploy::StimulusComponentsGate.run]
-].each do |label, runner|
+  ["domain_alignment_gate", Deploy::DomainAlignmentGate],
+  ["frontend_production_gate", Deploy::FrontendProductionGate],
+  ["frontend_auditor", Deploy::FrontendAuditorGate],
+  ["stimulus_components", Deploy::StimulusComponentsGate]
+].each do |label, gate|
   puts "release gate: #{label}"
-  result = runner.call
+  result = gate.run
   next if result.ok?
 
   result.failures.each { |failure| FAILURES << "#{label}: #{failure}" }

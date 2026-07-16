@@ -3,6 +3,7 @@
 require "open3"
 require "yaml"
 require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "apps_yml_validator"
 require_relative "master_web_assets_gate"
 require_relative "master_tts_gate"
 
@@ -23,6 +24,10 @@ module Deploy
     end
 
     def run
+      apps_result = AppsYmlValidator.run
+      apps_result.failures.each { |failure| @result.fail(failure) }
+      apps_result.warnings.each { |warning| @result.warn(warning) }
+
       apps = load_yaml(APPS_YML).fetch("apps")
       env_sample = File.join(RAILS_ROOT, "env.sample")
 

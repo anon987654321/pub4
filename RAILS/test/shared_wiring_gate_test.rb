@@ -12,7 +12,8 @@ class SharedWiringGateTest < Minitest::Test
 
   def test_release_gate_calls_domain_alignment_in_process
     source = File.read(File.join(ROOT, "release_gate.rb"))
-    assert_includes source, "Deploy::DomainAlignmentGate.run"
+    assert_includes source, "Deploy::DomainAlignmentGate"
+    assert_includes source, "gate.run"
     refute_includes source, '"domain_alignment_gate.rb"'
   end
 

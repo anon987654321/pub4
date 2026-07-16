@@ -9,8 +9,8 @@
 #   ruby RAILS/gates/runner.rb production domain_alignment
 #   ruby RAILS/gates/runner.rb --list
 #
-# This is the start of the consolidated gates module. Individual gates remain in RAILS/ for now
-# (backward compat with existing Gate definitions and bin/check scripts). Future: move gate files into gates/ subdir.
+# Composite gates (production, release) already run their leaf checks in-process.
+# --all deduplicates those leaves so each logical gate runs once.
 
 require "optparse"
 
@@ -34,8 +34,36 @@ GATE_MAP = {
   shared_wiring:         "gates/shared_wiring_gate.rb",
 }.freeze
 
+# Leaf gates already executed inside a composite gate on the same runner invocation.
+GATE_COVERED_BY = {
+  apps_yml:          :production,
+  master_web_assets: :production,
+  master_tts:        :production,
+  domain_alignment:  :release,
+  frontend_production: :release,
+  frontend_auditor:  :release,
+  stimulus_components: :release,
+}.freeze
+
 def gate_path(name)
   File.expand_path("../../#{GATE_MAP[name]}", __FILE__)
+end
+
+def ruby_cmd
+  ruby_runner = File.expand_path("../../../MASTER/lib/pub4/ruby_runner.rb", __FILE__)
+  if File.file?(ruby_runner)
+    require ruby_runner
+    Pub4::RubyRunner.gate_ruby
+  else
+    ENV.fetch("RUBY_CMD", "ruby").split
+  end
+end
+
+def resolve_gates(keys)
+  keys.reject do |key|
+    parent = GATE_COVERED_BY[key]
+    parent && keys.include?(parent)
+  end
 end
 
 def run_one(key)
@@ -45,14 +73,7 @@ def run_one(key)
     return false
   end
   puts "\n==> [gates] Running #{key} (#{File.basename(path)})"
-  ruby_runner = File.expand_path("../../../MASTER/lib/pub4/ruby_runner.rb", __FILE__)
-  ruby = if File.file?(ruby_runner)
-           require ruby_runner
-           Pub4::RubyRunner.gate_ruby
-         else
-           ENV.fetch("RUBY_CMD", "ruby").split
-         end
-  system(*ruby, path)
+  system(*ruby_cmd, path)
   success = $?.success?
   puts success ? "[gates] #{key} PASSED" : "[gates] #{key} FAILED"
   success
@@ -61,6 +82,12 @@ end
 def list_gates
   puts "Available gates (use short name with runner.rb):"
   GATE_MAP.each { |k, v| puts "  #{k.to_s.ljust(22)} -> #{v}" }
+  puts
+  puts "Composite gates (skip these leaves when the parent is also selected):"
+  GATE_COVERED_BY.group_by(&:last).each do |parent, pairs|
+    leaves = pairs.map(&:first).join(", ")
+    puts "  #{parent} includes: #{leaves}"
+  end
 end
 
 options = {}
@@ -81,7 +108,7 @@ end
 
 ARGV.map!(&:to_sym)
 
-gates_to_run = if options[:all] || ARGV.empty?
+requested = if options[:all] || ARGV.empty?
   GATE_MAP.keys
 elsif ARGV.any?
   ARGV.select { |k| GATE_MAP.key?(k) }
@@ -89,14 +116,18 @@ else
   []
 end
 
-if gates_to_run.empty? && !options[:all]
+if requested.empty? && !options[:all]
   warn "No valid gates specified. Use --list or --all or specific names."
   exit 1
 end
 
-results = gates_to_run.map do |key|
-  run_one(key)
+gates_to_run = resolve_gates(requested)
+skipped = requested - gates_to_run
+if skipped.any?
+  puts "[gates] Skipping #{skipped.join(', ')} (covered by composite gates in this run)"
 end
+
+results = gates_to_run.map { |key| run_one(key) }
 
 overall = results.all?
 

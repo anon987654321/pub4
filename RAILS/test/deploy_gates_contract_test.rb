@@ -56,6 +56,21 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes source, "gates/apps_yml_validator.rb"
   end
 
+  def test_runner_deduplicates_leaf_gates_under_composites
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    assert_includes source, "GATE_COVERED_BY"
+    assert_includes source, "resolve_gates"
+    assert_includes source, "master_web_assets: :production"
+    assert_includes source, "apps_yml:          :production"
+    assert_includes source, "domain_alignment:  :release"
+  end
+
+  def test_production_gate_runs_apps_yml_validator_in_process
+    source = File.read(File.join(ROOT, "gates", "lib", "production_gate.rb"))
+    assert_includes source, "AppsYmlValidator.run"
+    assert File.file?(File.join(ROOT, "gates", "lib", "apps_yml_validator.rb"))
+  end
+
   def test_deploy_at_scripts_are_thin_shims
     %w[@core.sh @database.sh @runtime_gate.sh @scaffold.sh @service.sh @sync.sh].each do |name|
       source = File.read(File.join(ROOT, name))
