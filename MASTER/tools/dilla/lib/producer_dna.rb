@@ -471,7 +471,13 @@ module DillaLofiMachine
   end
 
   def native_wave_for_pad
-    { sine: :triangle, triangle: :warm_pad, square: :organ, sawtooth: :pwm }[pad_waveform]
+    case ENV["PAD_VOICE"]&.downcase
+    when "rhodes", "blend" then :rhodes
+    when "moog" then :moog
+    when "prophet" then :prophet
+    else
+      { sine: :rhodes, triangle: :prophet, square: :organ, sawtooth: :moog }[pad_waveform]
+    end
   end
 
   def machine_status(track = nil)

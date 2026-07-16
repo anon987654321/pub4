@@ -226,15 +226,16 @@ end
 
 # MIDI CC automation baked into SMF before FluidSynth — mod wheel, expression,
 # filter, chorus, pan, and pitch-bend LFO (hardware-synth style movement).
+# Held chord pads — gentle movement only; aggressive filter sweeps read as
+# "horrible" on Rhodes/Moog/Prophet voicings (arp belongs on the lead layer).
 MIDI_FX_PAD_EP = [
-  { cc: 1, rate_hz: 0.32, depth: 26, base: 20, curve: :sine },
-  { cc: 11, curve: :swell, depth: 50, base: 42 },
-  { cc: 74, curve: :slow_open, start: 68, end: 108 }
+  { cc: 1, rate_hz: 0.14, depth: 10, base: 22, curve: :sine },
+  { cc: 11, curve: :swell, depth: 22, base: 78 },
+  { cc: 74, curve: :slow_open, start: 98, end: 108 }
 ].freeze
 MIDI_FX_PAD_WARM = [
-  { cc: 1, rate_hz: 0.2, depth: 32, base: 22, curve: :sine },
-  { cc: 91, rate_hz: 0.16, depth: 28, base: 38, curve: :sine },
-  { cc: 93, rate_hz: 0.38, depth: 18, base: 12, curve: :sine }
+  { cc: 1, rate_hz: 0.1, depth: 14, base: 24, curve: :sine },
+  { cc: 91, rate_hz: 0.08, depth: 12, base: 44, curve: :sine }
 ].freeze
 MIDI_FX_LEAD = [
   { cc: 1, rate_hz: 0.48, depth: 42, base: 28, curve: :sine },
@@ -252,8 +253,8 @@ SYNTH_PATCH_CATALOG = [
   # --- Electric keys (EP / Rhodes family) ---
   synth_patch(:rhodes_mark1, role: :ep, program: 4, weight: 3.2, mix: 1.15, fs_gain: 1.65,
               color: "Mark I warm tine",
-              midi_fx: MIDI_FX_PAD_EP, midi_arp: { style: :skip_up, subdiv: 8, gate: 0.52, vel: 0.26 },
-              fx: "tremolo=f=0.42:d=0.06,aecho=0.38:0.48:55|95:0.22|0.12,lowpass=f=4200,equalizer=f=280:t=o:w=1:g=2.5"),
+              midi_fx: MIDI_FX_PAD_EP,
+              fx: "tremolo=f=0.28:d=0.04,aecho=0.32:0.42:55|95:0.18|0.1,lowpass=f=4800,equalizer=f=280:t=o:w=1:g=1.6"),
   synth_patch(:rhodes_stage73, role: :ep, program: 4, weight: 2.8, mix: 1.1, fs_gain: 1.7,
               color: "stage Rhodes bark",
               fx: "chorus=0.42:0.62:28|38:0.18|0.14:0.22|0.18:0.95|1.25,aecho=0.32:0.4:70|130:0.2|0.1,equalizer=f=3200:t=h:w=1800:g=1.2"),
@@ -288,20 +289,20 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:organ_drawbar, role: :ep, program: 16, color: "drawbar soul"),
   synth_patch(:organ_perc, role: :ep, program: 17, color: "perc organ"),
   # --- Warm analog pads (Moog / Prophet / Juno) ---
-  synth_patch(:moog_model_d, role: :warm, program: 91, weight: 3.0, mix: 0.82, fs_gain: 1.45,
+  synth_patch(:moog_model_d, role: :warm, program: 91, weight: 3.0, mix: 0.72, fs_gain: 1.42,
               color: "Minimoog ladder pad",
-              midi_fx: MIDI_FX_PAD_WARM, midi_arp: { style: :updown, subdiv: 4, gate: 0.7, vel: 0.34 },
-              fx: "lowpass=f=2400:width_type=q:width=0.85,tremolo=f=0.28:d=0.1,chorus=0.38:0.58:32|42:0.16|0.12:0.2|0.18:0.9|1.2,equalizer=f=180:t=o:w=1:g=2.2"),
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "lowpass=f=2800:width_type=q:width=0.75,tremolo=f=0.18:d=0.06,chorus=0.32:0.52:30|40:0.12|0.1:0.16|0.14:0.85|1.1,equalizer=f=180:t=o:w=1:g=1.4"),
   synth_patch(:moog_sub37_pad, role: :warm, program: 38, weight: 2.4, mix: 0.78, fs_gain: 1.4,
               color: "Moog sub harmonic pad",
               fx: "lowpass=f=2200,equalizer=f=95:t=o:w=0.8:g=3.5,aphaser=speed=0.1:decay=0.55"),
   synth_patch(:moog_bleeding_edge, role: :warm, program: 91, weight: 1.8, mix: 0.85, fs_gain: 1.5,
               color: "Moog + tape drift",
               fx: "vibrato=f=0.18:d=0.014,tremolo=f=0.55:d=0.12,aecho=0.42:0.52:100|190:0.28|0.14,lowpass=f=3000"),
-  synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.8, fs_gain: 1.5,
+  synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.68, fs_gain: 1.45,
               color: "Prophet-5 poly",
-              midi_fx: MIDI_FX_PAD_WARM, midi_arp: { style: :pingpong, subdiv: 4, gate: 0.66, vel: 0.32 },
-              fx: "chorus=0.48:0.68:34|44:0.22|0.18:0.26|0.22:1.05|1.35,vibrato=f=0.3:d=0.016,lowpass=f=3600"),
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.38:0.58:32|42:0.16|0.12:0.2|0.18:0.95|1.2,vibrato=f=0.2:d=0.01,lowpass=f=4000"),
   synth_patch(:prophet_6_warm, role: :warm, program: 90, weight: 2.5, mix: 0.76, fs_gain: 1.45,
               color: "Prophet-6 stereo wash",
               fx: "chorus=0.52:0.72:38|48:0.24|0.2:0.28|0.24:1.1|1.4,aecho=0.35:0.45:90|170:0.25|0.12"),
@@ -422,6 +423,53 @@ SYNTH_PATCH_CATALOG = [
 ].freeze
 
 SYNTH_PATCH_BY_ROLE = SYNTH_PATCH_CATALOG.group_by { |p| p[:role] }.freeze
+SYNTH_PATCH_BY_ID = SYNTH_PATCH_CATALOG.each_with_object({}) { |p, h| h[p[:id]] = p }.freeze
+
+PAD_VOICE_PRESETS = {
+  rhodes:  { ep: :rhodes_mark1, warm: nil },
+  moog:    { ep: :rhodes_mark1, warm: :moog_model_d },
+  prophet: { ep: :rhodes_mark1, warm: :prophet_5_pad },
+  blend:   { ep: :rhodes_mark1, warm: :prophet_5_pad }
+}.freeze
+
+def synth_patch_by_id(id)
+  SYNTH_PATCH_BY_ID[id]
+end
+
+def galaxy_ep_available?
+  File.exist?(patch_sf2_path(:galaxy))
+end
+
+def prefer_galaxy_ep(patch)
+  return patch unless patch && galaxy_ep_available?
+  return synth_patch_by_id(:galaxy_ep1) if %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli].include?(patch[:id])
+  patch
+end
+
+def pad_chord_arp_enabled?
+  ENV.fetch("PAD_CHORD_ARP", "0") != "0"
+end
+
+def pad_texture_enabled?
+  ENV.fetch("PAD_TEXTURE", "0") == "1"
+end
+
+def apply_pad_voice_preset!(seed: 0)
+  voice = ENV["PAD_VOICE"]&.downcase&.to_sym
+  if voice && PAD_VOICE_PRESETS[voice]
+    preset = PAD_VOICE_PRESETS[voice]
+    @render_ep_patch = prefer_galaxy_ep(synth_patch_by_id(preset[:ep])) if preset[:ep]
+    @render_warm_patch = synth_patch_by_id(preset[:warm]) if preset[:warm]
+    @render_skip_warm_pad = preset[:warm].nil?
+    return
+  end
+  # Soul defaults: Rhodes + Prophet/Moog — not random GM lottery.
+  return if ENV["CREEPY_PATCHES"] == "1"
+  @render_ep_patch = prefer_galaxy_ep(synth_patch_by_id(:rhodes_mark1))
+  warm_id = seed.even? ? :prophet_5_pad : :moog_model_d
+  @render_warm_patch = synth_patch_by_id(warm_id)
+  @render_skip_warm_pad = false
+end
 
 # Soulful EP/pad palette — no voices, supersaws, music boxes, or horror textures.
 BEAUTIFUL_PATCH_IDS = {
@@ -463,21 +511,38 @@ end
 
 def pick_synth_patches!(cfg, bar: 0, n_bars: nil)
   seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0)
+  @render_skip_warm_pad = false
   roles = nil
   if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
     section = @composition_session.section_at(bar)
     roles = @composition_session.ensemble_roles(section)
   end
   pick_role = ->(role) { roles.nil? || roles.include?(role) }
-  @render_ep_patch = weighted_patch_pick(:ep, seed: seed) if pick_role.call(:ep)
-  @render_warm_patch = weighted_patch_pick(:warm, seed: seed + 17) if pick_role.call(:warm)
-  @render_texture_patch = weighted_patch_pick(:texture, seed: seed + 29) if pick_role.call(:texture)
+  if pick_role.call(:ep) || pick_role.call(:warm)
+    apply_pad_voice_preset!(seed: seed)
+  end
+  unless ENV["PAD_VOICE"] || ENV["CREEPY_PATCHES"] == "1"
+    @render_ep_patch = weighted_patch_pick(:ep, seed: seed) if pick_role.call(:ep) && !@render_ep_patch
+    @render_warm_patch = weighted_patch_pick(:warm, seed: seed + 17) if pick_role.call(:warm) && !@render_warm_patch
+  end
+  @render_texture_patch = nil
+  if pad_texture_enabled? && pick_role.call(:texture)
+    @render_texture_patch = weighted_patch_pick(:texture, seed: seed + 29)
+  end
   @render_lead_patch = weighted_patch_pick(:lead, seed: seed + 41) if pick_role.call(:lead)
   if pick_role.call(:scale_lead)
     @render_scale_lead_patch = weighted_patch_pick(:scale_lead, seed: seed + 79) ||
                                weighted_patch_pick(:lead, seed: seed + 79)
   end
-  @render_native_patch = weighted_patch_pick(:native, seed: seed + 53)
+  voice = ENV["PAD_VOICE"]&.downcase
+  native_id = case voice
+              when "moog" then :native_moog
+              when "prophet" then :native_prophet
+              when "rhodes", "blend", nil then :native_rhodes
+              else nil
+              end
+  @render_native_patch = (native_id && synth_patch_by_id(native_id)) ||
+                         weighted_patch_pick(:native, seed: seed + 53)
   @render_ep_patch ||= weighted_patch_pick(:ep, seed: seed)
   @render_warm_patch ||= weighted_patch_pick(:warm, seed: seed + 17)
   @render_lead_patch ||= weighted_patch_pick(:lead, seed: seed + 41)
@@ -1349,19 +1414,10 @@ def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0)
 end
 
 def pad_midi_events_for_layer(pad_events, cfg, patch, role:, duration:)
-  held = pad_events
+  return pad_events unless pad_chord_arp_enabled?
   arp_cfg = patch&.dig(:midi_arp)
-  arp = pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: role.hash.abs % 5000) if arp_cfg
-  case role
-  when :warm
-    arp && !arp.empty? ? arp : held
-  when :ep
-    merged = held.dup
-    arp&.each { |e| merged << e }
-    merged.sort_by { |e| e[0] }
-  else
-    held
-  end
+  return pad_events unless arp_cfg && role == :texture
+  pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: role.hash.abs % 5000)
 end
 
 def resolve_midi_fx_for(patch, role:)
@@ -1697,25 +1753,38 @@ def warm_dilla_pad_post_enhanced(path, sonic, cfg)
   return path unless tool_available?("ffmpeg")
   lp = sonic_pad_lowpass(sonic)
   tmp = "#{path}.pad_tmp.wav"
-  patch_fx = @render_warm_patch&.dig(:fx) || @render_ep_patch&.dig(:fx)
-  filt = [
-    "aformat=channel_layouts=stereo",
-    "lowpass=f=#{lp}:width_type=q:width=0.88",
-    "equalizer=f=260:t=o:w=1.0:g=2.6",
-    "equalizer=f=520:t=h:w=700:g=2.4",
-    "equalizer=f=1100:t=o:w=0.9:g=-0.8",
-    "equalizer=f=3200:t=h:w=1600:g=1.4",
-    "equalizer=f=4800:t=o:w=1.4:g=-1.8",
-    ("tremolo=f=4.5:d=0.08" if cfg[:style_family] == :dilla),
-    "aecho=0.38:0.48:120|200:0.26|0.12",
-    "chorus=0.42:0.62:32|42:0.2|0.16:0.24|0.2:1.05|1.35",
-    "vibrato=f=0.22:d=0.011",
-    patch_fx,
-    "acompressor=threshold=-24dB:ratio=1.7:attack=55:release=240:makeup=1.9",
-    "volume=1.18",
-    "alimiter=limit=0.96:level_out=0.98"
-  ].compact.join(",")
-  sh! "ffmpeg", "-y", "-i", path, "-af", filt, "-c:a", "pcm_s16le", tmp
+  fluidsynth = defined?(@render_used_fluidsynth_pad) && @render_used_fluidsynth_pad
+  filt = if fluidsynth
+           [
+             "aformat=channel_layouts=stereo",
+             "lowpass=f=#{lp}:width_type=q:width=0.82",
+             "equalizer=f=260:t=o:w=1.0:g=1.2",
+             "equalizer=f=900:t=h:w=800:g=0.8",
+             "equalizer=f=3200:t=h:w=1400:g=0.6",
+             "aecho=0.28:0.38:90|160:0.16|0.08",
+             "acompressor=threshold=-22dB:ratio=1.5:attack=65:release=280:makeup=1.4",
+             "volume=1.06",
+             "alimiter=limit=0.96:level_out=0.98"
+           ]
+         else
+           patch_fx = @render_warm_patch&.dig(:fx) || @render_ep_patch&.dig(:fx)
+           [
+             "aformat=channel_layouts=stereo",
+             "lowpass=f=#{lp}:width_type=q:width=0.88",
+             "equalizer=f=260:t=o:w=1.0:g=2.0",
+             "equalizer=f=520:t=h:w=700:g=1.8",
+             "equalizer=f=1100:t=o:w=0.9:g=-0.6",
+             "equalizer=f=3200:t=h:w=1600:g=1.0",
+             ("tremolo=f=3.2:d=0.06" if cfg[:style_family] == :dilla),
+             "aecho=0.32:0.42:100|180:0.2|0.1",
+             "chorus=0.36:0.56:30|40:0.16|0.12:0.2|0.18:0.95|1.2",
+             patch_fx,
+             "acompressor=threshold=-24dB:ratio=1.6:attack=60:release=260:makeup=1.6",
+             "volume=1.12",
+             "alimiter=limit=0.96:level_out=0.98"
+           ]
+         end
+  sh! "ffmpeg", "-y", "-i", path, "-af", filt.compact.join(","), "-c:a", "pcm_s16le", tmp
   FileUtils.mv(tmp, path)
   path
 end
@@ -5114,18 +5183,26 @@ def native_waveform_body(frequency, wave:, bloom: 0.2, drift: "1", detune: 0.004
     "#{bloom.round(3)}*sin(2*PI*#{f * 2.0}*#{drift}*t)"
   when :moog
     sub = (frequency * 0.5).round(4)
-    "0.58*(2*mod(#{f}*#{drift}*t,1)-1)+0.22*(2*mod(#{det_up}*#{drift}*t,1)-1)+" \
+    f2 = (frequency * 2.0).round(4)
+    # Ladder-ish: saw stack + sub octave, soft triangle body for warmth.
+    "0.46*(2*mod(#{f}*#{drift}*t,1)-1)+0.20*(2*mod(#{det_up}*#{drift}*t,1)-1)+" \
     "0.14*(2*mod(#{det_dn}*#{drift}*t,1)-1)+#{bloom.round(3)}*(2*mod(#{sub}*#{drift}*t,1)-1)+" \
-    "0.10*sin(2*PI*#{f}*#{drift}*t)"
+    "0.12*(2*abs(2*mod(#{f}*#{drift}*t,1)-1)-1)+0.08*sin(2*PI*#{f2}*#{drift}*t)"
   when :prophet
-    det2 = (frequency * (1.0 + detune * 1.6)).round(4)
-    det3 = (frequency * (1.0 - detune * 1.6)).round(4)
-    "0.38*(2*mod(#{f}*#{drift}*t,1)-1)+0.24*(2*mod(#{det_up}*#{drift}*t,1)-1)+" \
-    "0.24*(2*mod(#{det_dn}*#{drift}*t,1)-1)+0.14*(2*mod(#{det2}*#{drift}*t,1)-1)+" \
-    "0.12*(2*mod(#{det3}*#{drift}*t,1)-1)+#{bloom.round(3)}*sin(2*PI*#{f * 2.0}*#{drift}*t)"
-  else # :rhodes default
-    "0.72*sin(2*PI*#{f}*#{drift}*t)+#{bloom.round(3)}*sin(2*PI*#{f * 3.0}*#{drift}*t)+" \
-    "0.08*sin(2*PI*#{f * 2.0}*#{drift}*t)+0.30*sin(2*PI*#{det_up}*#{drift}*t)+0.30*sin(2*PI*#{det_dn}*#{drift}*t)"
+    det2 = (frequency * (1.0 + detune * 1.8)).round(4)
+    det3 = (frequency * (1.0 - detune * 1.8)).round(4)
+    # Prophet-5 unison: five slightly detuned saws + gentle 2nd harmonic.
+    "0.30*(2*mod(#{f}*#{drift}*t,1)-1)+0.20*(2*mod(#{det_up}*#{drift}*t,1)-1)+" \
+    "0.20*(2*mod(#{det_dn}*#{drift}*t,1)-1)+0.14*(2*mod(#{det2}*#{drift}*t,1)-1)+" \
+    "0.12*(2*mod(#{det3}*#{drift}*t,1)-1)+#{bloom.round(3)}*sin(2*PI*#{f * 2.0}*#{drift}*t)+" \
+    "0.06*sin(2*PI*#{f}*#{drift}*t)"
+  else # :rhodes default — tine fundamental + odd harmonics + stereo detune
+    f3 = (frequency * 3.0).round(4)
+    f5 = (frequency * 5.0).round(4)
+    bell = "exp(-t*18)*sin(2*PI*#{f * 4.0}*t)"
+    "0.58*sin(2*PI*#{f}*#{drift}*t)+#{bloom.round(3)}*sin(2*PI*#{f3}*#{drift}*t)+" \
+    "0.06*sin(2*PI*#{f5}*#{drift}*t)+0.22*sin(2*PI*#{det_up}*#{drift}*t)+" \
+    "0.22*sin(2*PI*#{det_dn}*#{drift}*t)+0.12*#{bell}"
   end
 end
 
@@ -5391,6 +5468,7 @@ end
 # also has a 40% chance of pulling from the fetched Galaxy Electric Pianos
 # soundfont instead of GeneralUser-GS's single Rhodes patch.
 def render_pad_via_fluidsynth(path, pad_events, duration)
+  @render_used_fluidsynth_pad = true
   ep_path = "#{path}.ep.wav"
   warm_path = "#{path}.warm.wav"
   texture_path = "#{path}.texture.wav"
@@ -5398,8 +5476,11 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   warm_voice = resolve_warm_voice
   texture_voice = resolve_texture_voice
   ep_mix = ep_voice[:patch]&.fetch(:mix, 1.0) || 1.0
-  warm_mix = warm_voice[:patch]&.fetch(:mix, 0.7) || 0.7
-  layers = [[ep_path, ep_voice, ep_mix, :ep], [warm_path, warm_voice, warm_mix, :warm]]
+  warm_mix = warm_voice[:patch]&.fetch(:mix, 0.68) || 0.68
+  layers = [[ep_path, ep_voice, ep_mix, :ep]]
+  unless @render_skip_warm_pad
+    layers << [warm_path, warm_voice, warm_mix, :warm]
+  end
   if texture_voice
     tex_mix = @render_texture_patch&.fetch(:mix, 0.15) || 0.15
     layers << [texture_path, texture_voice, tex_mix, :texture]
@@ -5422,21 +5503,27 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
       end
     end
   end
-  # Classic analog-synth unison detune on warm layer (Juno/Prophet chorus).
-  filt = "[0:a]apad=whole_dur=#{duration}[ep];" \
-         "[1:a]apad=whole_dur=#{duration}[warmsrc];" \
-         "[warmsrc]asplit=2[w1][w2];" \
-         "[w1]asetrate=44100*1.0035,aresample=44100[wup];" \
-         "[w2]asetrate=44100*0.9965,aresample=44100[wdown];" \
-         "[wup][wdown]amix=inputs=2:weights=0.55 0.55:duration=first:normalize=0[wdetuned];" \
-         "[ep][wdetuned]amix=inputs=2:weights=#{ep_mix} #{warm_mix}:duration=first:normalize=0[blend]"
-  inputs = ["-i", ep_path, "-i", warm_path]
+  inputs = ["-i", ep_path]
+  if @render_skip_warm_pad
+    filt = "[0:a]apad=whole_dur=#{duration},volume=#{ep_mix}[blend]"
+    map_label = "[blend]"
+  else
+    # Gentle Prophet-style unison on warm layer only.
+    filt = "[0:a]apad=whole_dur=#{duration}[ep];" \
+           "[1:a]apad=whole_dur=#{duration}[warmsrc];" \
+           "[warmsrc]asplit=2[w1][w2];" \
+           "[w1]asetrate=44100*1.0022,aresample=44100[wup];" \
+           "[w2]asetrate=44100*0.9978,aresample=44100[wdown];" \
+           "[wup][wdown]amix=inputs=2:weights=0.52 0.52:duration=first:normalize=0[wdetuned];" \
+           "[ep][wdetuned]amix=inputs=2:weights=#{ep_mix} #{warm_mix}:duration=first:normalize=0[blend]"
+    inputs << "-i" << warm_path
+    map_label = "[blend]"
+  end
   if texture_voice && File.exist?(texture_path)
-    filt += ";[2:a]apad=whole_dur=#{duration}[tex];[blend][tex]amix=inputs=2:weights=1.0 #{layers.last[2]}:duration=first:normalize=0[blend2]"
+    tex_idx = inputs.length / 2
+    filt += ";[#{tex_idx}:a]apad=whole_dur=#{duration}[tex];[blend][tex]amix=inputs=2:weights=1.0 #{layers.last[2]}:duration=first:normalize=0[blend2]"
     map_label = "[blend2]"
     inputs << "-i" << texture_path
-  else
-    map_label = "[blend]"
   end
   sh! "ffmpeg", "-y", *inputs, "-filter_complex", filt, "-map", map_label, "-c:a", "pcm_s16le", path
   FileUtils.rm_f(ep_path)
@@ -5448,9 +5535,9 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   # across different voicings/velocities, so measure and normalize toward a
   # fixed target instead of guessing a static boost.
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
+  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 18.0)
   sh! "ffmpeg", "-y", "-i", path, "-af",
-      "equalizer=f=360:t=o:w=1.1:g=2.2,equalizer=f=2100:t=h:w=1500:g=1.6," \
+      "equalizer=f=280:t=o:w=1:g=1.2,equalizer=f=1800:t=h:w=1200:g=0.7," \
       "volume=#{boost_db.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
       "-c:a", "pcm_s16le", "#{path}.pad.wav"
   FileUtils.mv("#{path}.pad.wav", path)
@@ -5539,6 +5626,7 @@ end
 def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [], cfg: nil, dfam_events: nil)
   cfg ||= dilla_resolve_config
   pick_synth_patches!(cfg) unless @render_ep_patch
+  @render_used_fluidsynth_pad = false
   tones_path = "#{path}.tones.wav"
   pads_path = "#{path}.pads.wav"
   lead_path = "#{path}.lead.wav"
