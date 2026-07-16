@@ -3832,11 +3832,18 @@ def play(preset_name = nil, bars_count = 8)
   tmp = scratch_path("play_tmp.mp3")
   prev = ENV["BARS"]
   ENV["BARS"] = bars_count.to_s
-  if preset_name == "dilla"
-    render_dilla(tmp)
-  else
-    render(tmp)
+  attempts = ENV["DILLA_STREAMING"] == "1" ? [STREAM_MAX_RETRIES, 0].max + 1 : 1
+  attempts.times do |try|
+    pick_render_seed! if try.positive?
+    if preset_name == "dilla"
+      render_dilla(tmp)
+    else
+      render(tmp)
+    end
+    break if stream_render_acceptable?(tmp)
+    warn "stream retry #{try + 1}/#{attempts}" if try + 1 < attempts
   end
+  log_stream_render_meta(tmp) if ENV["DILLA_STREAMING"] == "1"
   play_audio(tmp)
 ensure
   prev ? ENV["BARS"] = prev : ENV.delete("BARS")
@@ -3951,6 +3958,57 @@ STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
 # on every hotswap exec below rather than baked into the original CLI arg,
 # so tuning this constant alone is enough going forward.
 STREAM_BARS_COUNT = 16
+STREAM_BEAUTY_MIN = (ENV["STREAM_BEAUTY_MIN"] || "68").to_f
+STREAM_MAX_RETRIES = (ENV["STREAM_MAX_RETRIES"] || "2").to_i
+
+# Soul-stream defaults — extrapolated from "beauty overhaul", "this better be
+# good", and Rhodes/Moog/Prophet chord complaints: curated harmony + vintage
+# keys upfront, experimental layers off, quality gate before speaker playback.
+STREAM_LISTENABILITY_DEFAULTS = {
+  "PAD_VOICE" => "blend",
+  "LEAD_ARP" => "1",
+  "SOUL_ENRICH" => "1",
+  "PAD_TEXTURE" => "0",
+  "PAD_CHORD_ARP" => "0",
+  "CREEPY_PATCHES" => "0",
+  "VINYL" => "35",
+  "KICK_GAIN" => "0.34",
+  "DRUM_VOL" => "0.34",
+  "DILLA_STREAMING" => "1"
+}.freeze
+
+def apply_stream_listenability_defaults!
+  STREAM_LISTENABILITY_DEFAULTS.each do |key, value|
+    ENV[key] = value if ENV[key].nil? || ENV[key].empty?
+  end
+end
+
+def stream_render_acceptable?(path)
+  return true unless ENV["DILLA_STREAMING"] == "1"
+  return true unless File.file?(path)
+  chords = DillaHarmony.last_progression_chords
+  beauty = DillaHarmony.score_beauty(chords)
+  spectrum = {
+    low: band_rms(path, highpass: 28, lowpass: 180),
+    mid: band_rms(path, highpass: 180, lowpass: 3_500),
+    high: band_rms(path, highpass: 3_500, lowpass: 16_000)
+  }
+  harsh = DillaMaster.analyze_harshness(spectrum)
+  ok = beauty >= STREAM_BEAUTY_MIN && !harsh[:needs_notch]
+  unless ok
+    warn "stream gate: beauty=#{beauty} (min #{STREAM_BEAUTY_MIN}), harsh=#{harsh[:harshness]} — retrying"
+  end
+  ok
+end
+
+def log_stream_render_meta(path)
+  chords = DillaHarmony.last_progression_chords
+  beauty = DillaHarmony.score_beauty(chords)
+  patches = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id)].compact.join("/")
+  prog = chords&.map { |c| c[:name] }&.join(" → ")
+  puts "patches=#{patches || 'native'} beauty=#{beauty} progression=#{prog}"
+  puts "quality: ruby dilla.rb beauty #{path}" if File.file?(path)
+end
 
 # Non-stop chord/pad showcase: renders and plays each track once (full
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
@@ -3967,6 +4025,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
     return
   end
   prev_track = ENV["TRACK"]
+  apply_stream_listenability_defaults!
   # Every restart (and there have been many, iterating on this live) reset
   # the rotation to index 0 — meaning repeated restarts kept replaying the
   # same first track/pattern over and over regardless of what else was in
@@ -4761,7 +4820,22 @@ def pick_render_seed!
 end
 
 def pick_external_drum_kit!
-  @current_external_kit = ensure_external_assets_lazy! && rand < 0.35 ? EXTERNAL_DRUM_KITS.sample : nil
+  @current_external_kit = nil
+  return unless ensure_external_assets_lazy!
+  track = (ENV["TRACK"] || "").to_s
+  soul = DillaHarmony.soul_profile?(track) || ENV["DILLA_STREAMING"] == "1"
+  roll = rand
+  @current_external_kit = if soul
+                            if roll < 0.72
+                              "03-soulful-vintage"
+                            elsif roll < 0.88
+                              "02-bounce"
+                            else
+                              EXTERNAL_DRUM_KITS.sample
+                            end
+                          elsif roll < 0.35
+                            EXTERNAL_DRUM_KITS.sample
+                          end
 end
 
 def drum_sample_path(name)
