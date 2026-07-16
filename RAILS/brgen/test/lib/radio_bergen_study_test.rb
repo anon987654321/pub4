@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../../../../MASTER/tools/audio/radio_bergen_study"
+require "pub4/deploy_paths"
+
+script = Pub4::DeployPaths.radio_bergen_study_script
+raise LoadError, "radio_bergen_study.rb not found in #{Pub4::DeployPaths.radio_bergen_study_candidates.map(&:expand_path)}" unless script
+require script.to_s
 
 class RadioBergenStudyTest < ActiveSupport::TestCase
   test "studies all manifest tracks" do

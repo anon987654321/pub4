@@ -12,6 +12,7 @@ module Pub4
 
     def postpro_script = first_file(postpro_candidates)
     def repligen_script = first_file(repligen_candidates)
+    def radio_bergen_study_script = first_file(radio_bergen_study_candidates)
 
     def postpro_candidates
       [
@@ -26,6 +27,14 @@ module Pub4
         repo_join("MASTER/tools/repligen.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/repligen.rb"),
         rails_root.join("../../MASTER/tools/repligen.rb")
+      ]
+    end
+
+    def radio_bergen_study_candidates
+      [
+        repo_join("MASTER/tools/audio/radio_bergen_study.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_study.rb"),
+        rails_root.join("../../MASTER/tools/audio/radio_bergen_study.rb")
       ]
     end
 
