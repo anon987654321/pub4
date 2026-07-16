@@ -27,6 +27,7 @@ let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn = document.getElementById('zin');
+const micBtn = document.querySelector('[data-act="mic"]');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
@@ -390,6 +391,7 @@ const State = {
   modelSwitch: 0,
   questionPulse: 0,
   sleeping: false, sleepMuted: false,
+  voiceMode: false, wakeArmed: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
@@ -2871,7 +2873,18 @@ function scheduleTtsTick(delay) {
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
 
+function highQualityVoiceEnabled() {
+  if (new URLSearchParams(window.location.search).get('hq_voice') === '1') return true;
+  try { return localStorage.getItem('master:voice-mode-hq') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_read", err); }
+  return false;
+}
 function browserTtsFallbackAllowed() {
+  // Inside Voice Mode, browser speechSynthesis is the deliberate default
+  // (instant, zero server load) rather than an opt-in fallback — the VPS's
+  // server-TTS latency floor is incompatible with a live conversation. The
+  // "high-quality voice" toggle opts back into server TTS and accepts the
+  // latency. Outside Voice Mode, normal chat keeps server TTS as primary.
+  if (State.voiceMode && !highQualityVoiceEnabled()) return true;
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
@@ -2929,6 +2942,10 @@ function ttsTick() {
   const wdMs = 200000 + Math.min(120000, Math.max(20000, text.length * 180));
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
+  // Voice Mode default: speak instantly via the browser, skip the Edge
+  // round-trip entirely. Opt into server TTS quality via the "high-quality
+  // voice" toggle if the latency is acceptable for this conversation.
+  if (State.voiceMode && !highQualityVoiceEnabled() && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
   if (tts.serverUnavailable) tts.serverUnavailable = false;
@@ -3049,6 +3066,9 @@ window.MASTER_SPEECH_RUNTIME = Object.freeze({
   ttsTick,
   loadTTSBlob,
   emitTtsEvent,
+  browserTtsFallbackAllowed,
+  highQualityVoiceEnabled,
+  speakWithBrowserTTS,
 });
 window.MASTER = window.MASTER || {};
 window.MASTER.speechRuntime = window.MASTER_SPEECH_RUNTIME;
@@ -3218,6 +3238,22 @@ function cancelStream() {
   State.flash = 0.2;
 }
 
+// Voice Mode: continuous hands-free conversation loop (one tap in, spoken
+// phrase or tap out). Wake-word is a foreground-only, opt-in convenience —
+// no backgrounded/locked-screen detection is possible from a browser tab.
+const WAKE_PHRASE_RE = /\bhey,?\s*master\b/i;
+const EXIT_PHRASE_RE = /^\s*(stop listening|exit voice mode|voice mode off|stop voice mode)\.?\s*$/i;
+function wakeWordEnabled() {
+  if (new URLSearchParams(window.location.search).get('wake_word') === '1') return true;
+  try { return localStorage.getItem('master:wake-word') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_word_enabled_read", err); }
+  return false;
+}
+// Guards the re-arm loop against a tight onend/onstart cycle (seen on iOS
+// Safari, which frequently drops `continuous` recognition after one
+// utterance) draining battery/CPU forever with no speech ever detected.
+let _voiceModeRearmFails = 0;
+let _voiceModeArmedAt = 0;
+
 let recognition = null;
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3230,15 +3266,97 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
-    if (final.trim()) { sttPartial = ''; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } State.sttActive = false; recognition.stop(); sendMessage(final.trim()); return; }
+    if (State.wakeArmed && !State.voiceMode) {
+      const heard = (final || interim).trim();
+      if (heard && WAKE_PHRASE_RE.test(heard)) {
+        sttPartial = '';
+        if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+        State.sttActive = false;
+        try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
+        enterVoiceMode({ fromWake: true });
+      }
+      return;
+    }
+    if (final.trim()) {
+      sttPartial = '';
+      if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+      State.sttActive = false;
+      recognition.stop();
+      const heard = final.trim();
+      if (State.voiceMode && EXIT_PHRASE_RE.test(heard)) { exitVoiceMode(); return; }
+      _voiceModeRearmFails = 0;
+      sendMessage(heard);
+      return;
+    }
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-      sttSilenceTimer = setTimeout(() => { if (sttPartial) { const t2 = sttPartial; sttPartial = ''; State.sttActive = false; try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); } sendMessage(t2); } }, 1200);
+      sttSilenceTimer = setTimeout(() => {
+        if (sttPartial) {
+          const t2 = sttPartial; sttPartial = ''; State.sttActive = false;
+          try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
+          if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
+          _voiceModeRearmFails = 0;
+          sendMessage(t2);
+        }
+      }, 1200);
     }
   };
-  recognition.onend = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onend = () => {
+    State.sttActive = false; State.sttDuck = 0;
+    if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+    if (State.voiceMode) {
+      const heldMs = performance.now() - _voiceModeArmedAt;
+      if (heldMs < 800) _voiceModeRearmFails += 1; else _voiceModeRearmFails = 0;
+      if (_voiceModeRearmFails >= 5) {
+        exitVoiceMode({ reason: 'unreliable' });
+        return;
+      }
+      setTimeout(() => { if (State.voiceMode) startSTT(); }, 50);
+      return;
+    }
+    if (State.wakeArmed) {
+      setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);
+    }
+  };
   recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+}
+
+function startWakeListening() {
+  if (!recognition || State.sttActive || State.voiceMode) return;
+  State.wakeArmed = true;
+  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); }
+}
+function armWakeWord() {
+  if (!recognition || !wakeWordEnabled() || State.voiceMode) return;
+  startWakeListening();
+}
+function disarmWakeWord() {
+  State.wakeArmed = false;
+  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } }
+}
+
+function enterVoiceMode(opts = {}) {
+  if (!recognition || State.voiceMode) return;
+  State.wakeArmed = false;
+  State.voiceMode = true;
+  _voiceModeRearmFails = 0;
+  rootBody.dataset.voiceMode = '1';
+  if (uiStatus) uiStatus.textContent = 'voice mode — say "stop listening" to exit';
+  if (!opts.fromWake) beep(1100, 0.05);
+  startSTT();
+}
+function exitVoiceMode(opts = {}) {
+  if (!State.voiceMode) return;
+  State.voiceMode = false;
+  delete rootBody.dataset.voiceMode;
+  stopSTT();
+  if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
+  beep(660, 0.05);
+  armWakeWord();
+}
+function toggleVoiceMode() {
+  if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
 }
 function boostEyeAttention(delta = 0.25) {
   const K = window.ParticleKernel;
@@ -3251,6 +3369,7 @@ function boostEyeAttention(delta = 0.25) {
 
 function startSTT() {
   if (!recognition || State.sttActive) return;
+  _voiceModeArmedAt = performance.now();
   wakeFromSleep();
   if (tts.playing) ttsSkip();
   boostEyeAttention(0.25);
@@ -3969,6 +4088,7 @@ function startEverything() {
   document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
   requestMotionPermission(); acquireWakeLock();
   wireTtsStyleChips();
+  armWakeWord();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
@@ -4105,6 +4225,24 @@ window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 
 spinBtn?.addEventListener('click', () => window.MASTER_FACE?.ttsTogglePause?.());
 focusBtn?.addEventListener('click', () => toggleFocusMode());
+
+// Mic button: tap = single-utterance STT (existing behavior); long-press
+// (>=550ms) = enter/exit hands-free Voice Mode. Extends the existing
+// data-act="mic" control rather than adding new chrome.
+if (micBtn) {
+  let micPressTimer = null, micLongPressed = false;
+  const micPressStart = () => {
+    micLongPressed = false;
+    micPressTimer = setTimeout(() => { micLongPressed = true; toggleVoiceMode(); }, 550);
+  };
+  const micPressEnd = () => {
+    if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; }
+    if (!micLongPressed) window.MASTER_FACE?.ttsToggleMic?.();
+  };
+  micBtn.addEventListener('pointerdown', micPressStart);
+  micBtn.addEventListener('pointerup', micPressEnd);
+  micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });
+}
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 
 if (fontScaleInput) {
@@ -4129,6 +4267,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     cancelStream();
     window.MASTER_FACE?.ttsSkip?.();
+    if (State.voiceMode) exitVoiceMode();
     window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });
   }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
@@ -4217,6 +4356,11 @@ window.MASTER_FACE = {
   enterSleep,
   startSTT,
   stopSTT,
+  enterVoiceMode,
+  exitVoiceMode,
+  toggleVoiceMode,
+  armWakeWord,
+  disarmWakeWord,
   sendMessage,
   initAudio,
   setAmbientHum,

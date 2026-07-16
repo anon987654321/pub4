@@ -319,6 +319,81 @@ Real findings:
   (`chat.js:524,563`). Either rename the CSS file to match where its logic
   actually lives, or split the JS out to match the CSS's implied pairing.
 
+## Mobile hands-free Voice Mode (implemented 2026-07-16, needs real-device verification)
+
+Scoped in `/Users/mac/.claude/plans/sunny-leaping-pony.md`, then implemented.
+One tap (or long-press on the mic button) enters a continuous voice
+conversation loop — no screen/keyboard, no further taps until exit.
+**Wake-word is in scope** (user override of the plan's original
+recommendation), implemented as an opt-in, foreground-only convenience — no
+true backgrounded "Hey Siri"-style detection is possible from a browser tab
+without a native app/background-audio entitlement MASTER doesn't have; the
+mic aria-label and this note both say so explicitly.
+
+What shipped (`face.part1.txt`, `face.part5.txt`, `face_speech_runtime.js`,
+`chat/index.html.erb`, `face_boot.test.mjs` — all committed together):
+
+- [x] **Voice Mode toggle + re-arm loop** — `State.voiceMode`; on
+  `recognition.onend`, re-calls `startSTT()` while `voiceMode` is true;
+  exit via spoken phrase ("stop listening" / "exit voice mode" /
+  "voice mode off" / "stop voice mode", client-side regex, no server
+  round-trip), Escape key, or mic long-press again.
+- [x] **Browser-first TTS inside Voice Mode** — `browserTtsFallbackAllowed()`
+  now returns true whenever `State.voiceMode` is on (unless the
+  "high-quality voice" opt-in is set via `?hq_voice=1` or
+  `localStorage['master:voice-mode-hq']`), so `ttsTick()` speaks via
+  `speechSynthesis` instantly instead of round-tripping to Edge TTS. Outside
+  Voice Mode, server TTS stays primary, unchanged.
+- [x] **iOS Safari continuous-recognition degradation handling** — rather
+  than feature-detecting Safari specifically, the re-arm loop tracks
+  `_voiceModeRearmFails` (recognition sessions ending in <800ms with no
+  speech); after 5 consecutive fast-fails it exits Voice Mode with a
+  visible "mic unreliable here" status instead of spinning forever burning
+  battery/CPU — works whether or not `continuous` is honored.
+- [x] **Wake-word** — opt-in via `?wake_word=1` or
+  `localStorage['master:wake-word']` (off by default: always-on mic
+  listening is a real privacy/battery cost, so it doesn't activate
+  silently for everyone). Uses the *same* browser `SpeechRecognition`
+  instance in a low-visual-feedback "armed" listening state
+  (`startWakeListening()`/`armWakeWord()`), matching `/\bhey,?\s*master\b/i`
+  in the transcript, then calls `enterVoiceMode({ fromWake: true })`. This
+  is NOT a WASM neural wake-word engine (no Porcupine/model-binary
+  dependency added) — it's the existing STT reused for a trigger phrase,
+  which is honest about being foreground/tab-open-only and needed no new
+  third-party dependency.
+- [x] Voice Mode entry control — extended the existing `data-act="mic"`
+  button (`chat/index.html.erb`) rather than adding a new element: tap =
+  single-utterance STT (unchanged), long-press ≥550ms = `toggleVoiceMode()`.
+  Note: this also fixed a **pre-existing dead-button bug** discovered while
+  wiring this up — `[data-act="mic"]` had zero click handler left after
+  `face_agent_hud.js` (which used to wire it) was dropped from the boot
+  manifest earlier this session; only the `m` keyboard shortcut still
+  worked. The mic button click/long-press listeners added here are the
+  fix, not just new functionality.
+- [x] Test coverage in `face_boot.test.mjs` (`voice mode: re-arm loop, exit
+  phrase, wake word, and browser-first TTS routing`) — static assertions on
+  the generated `face.runtime.js`, matching this file's existing pattern for
+  the rest of the TTS/runtime contract. `node --test test/*.test.mjs`: 61/61
+  pass. `ruby -Ilib:test test/test_web_ui.rb
+  --name test_public_asset_manifest_matches_source_files` (from `MASTER/`):
+  passes.
+- [ ] **Manual real-device verification — NOT done, still required before
+  calling this shippable.** Per `web/CLAUDE.md`'s tap-test convention: a
+  passing static/generated-source test suite is not proof the boot/voice
+  path works in a real browser — this exact codebase has a documented
+  history of "looks right in source, dead on tap" bugs. Needs: (1) a real
+  mobile browser session — long-press mic, confirm continuous back-and-forth
+  with no further taps, confirm barge-in interrupts mid-reply, confirm all
+  four exit phrases and the Escape/long-press exits work; (2) actual iOS
+  Safari specifically, given its known Web Speech API quirks — the
+  fast-fail counter is untested against real Safari behavior, only reasoned
+  about; (3) wake-word opt-in (`?wake_word=1`) on a real device, since
+  continuous background `recognition.start()` battery/mic-indicator
+  behavior varies by OS and can't be verified from source reading alone.
+  `bundle exec rake assets:build_face_runtime` was run after these edits to
+  regenerate `face.runtime.js`, but the generated-file tests only prove the
+  concatenation is syntactically valid, not that it behaves correctly live.
+
 ## `bin/` discoverability
 
 30 executables in `bin/`, but **26 of 30 aren't mentioned in any top-level

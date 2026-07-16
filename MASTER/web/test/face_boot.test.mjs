@@ -375,6 +375,33 @@ test("tts defaults to server style inference and recovers after fallback cooldow
   assert.match(controller, /Voice::Policy\.single_voice_key/);
 });
 
+test("voice mode: re-arm loop, exit phrase, wake word, and browser-first TTS routing", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  // Continuous re-arm loop keyed off recognition.onend, not a fixed interval —
+  // must re-check State.voiceMode each cycle rather than assuming it stays on.
+  assert.match(runtime, /if \(State\.voiceMode\) \{[\s\S]{0,400}startSTT\(\);/);
+  // Exit phrase is checked client-side before sendMessage, no server round-trip.
+  assert.match(runtime, /EXIT_PHRASE_RE/);
+  assert.match(runtime, /stop listening/);
+  // Wake word is opt-in (URL param or localStorage), not on by default.
+  assert.match(runtime, /WAKE_PHRASE_RE/);
+  assert.match(runtime, /function wakeWordEnabled/);
+  assert.match(runtime, /master:wake-word/);
+  // iOS Safari degradation guard: bail out of the loop rather than spinning
+  // forever if recognition keeps ending near-instantly with no speech.
+  assert.match(runtime, /_voiceModeRearmFails/);
+  // Voice Mode defaults to instant browser TTS; high-quality voice is opt-in
+  // and explicitly does NOT change behavior outside Voice Mode.
+  assert.match(runtime, /function highQualityVoiceEnabled/);
+  assert.match(runtime, /State\.voiceMode && !highQualityVoiceEnabled\(\)/);
+  assert.match(runtime, /master:voice-mode-hq/);
+  // Mic button: tap-vs-long-press disambiguation, no new UI element added.
+  assert.match(runtime, /toggleVoiceMode\(\); \}, 550\)/);
+  assert.match(index, /data-act="mic"/);
+  assert.match(index, /hold to start hands-free voice mode/);
+});
+
 test("service worker avoids stale undigested precache", () => {
   const sw = readFileSync(join(publicDir, "sw.js"), "utf8");
   assert.doesNotMatch(sw, /\/face\.js'/);

@@ -677,7 +677,18 @@ function scheduleTtsTick(delay) {
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
 
+function highQualityVoiceEnabled() {
+  if (new URLSearchParams(window.location.search).get('hq_voice') === '1') return true;
+  try { return localStorage.getItem('master:voice-mode-hq') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_read", err); }
+  return false;
+}
 function browserTtsFallbackAllowed() {
+  // Inside Voice Mode, browser speechSynthesis is the deliberate default
+  // (instant, zero server load) rather than an opt-in fallback — the VPS's
+  // server-TTS latency floor is incompatible with a live conversation. The
+  // "high-quality voice" toggle opts back into server TTS and accepts the
+  // latency. Outside Voice Mode, normal chat keeps server TTS as primary.
+  if (State.voiceMode && !highQualityVoiceEnabled()) return true;
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
@@ -735,6 +746,10 @@ function ttsTick() {
   const wdMs = 200000 + Math.min(120000, Math.max(20000, text.length * 180));
   tts.watchdog = setTimeout(() => { if (tts.playing && token === tts.cancelToken) { console.warn('tts watchdog: requeue'); requeueChunk(text); finishTTSPlayback(null, true); } }, wdMs);
   State.mode = 'speaking'; setAmbientHum(false);
+  // Voice Mode default: speak instantly via the browser, skip the Edge
+  // round-trip entirely. Opt into server TTS quality via the "high-quality
+  // voice" toggle if the latency is acceptable for this conversation.
+  if (State.voiceMode && !highQualityVoiceEnabled() && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0) && speakWithBrowserTTS(text, token)) return;
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) { tts.playing = false; tts.current = null; setTTSLoading(false); ttsTick(); return; }
   if (tts.serverUnavailable) tts.serverUnavailable = false;
@@ -855,6 +870,9 @@ window.MASTER_SPEECH_RUNTIME = Object.freeze({
   ttsTick,
   loadTTSBlob,
   emitTtsEvent,
+  browserTtsFallbackAllowed,
+  highQualityVoiceEnabled,
+  speakWithBrowserTTS,
 });
 window.MASTER = window.MASTER || {};
 window.MASTER.speechRuntime = window.MASTER_SPEECH_RUNTIME;

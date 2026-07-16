@@ -25,6 +25,7 @@ let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn = document.getElementById('zin');
+const micBtn = document.querySelector('[data-act="mic"]');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;
@@ -388,6 +389,7 @@ const State = {
   modelSwitch: 0,
   questionPulse: 0,
   sleeping: false, sleepMuted: false,
+  voiceMode: false, wakeArmed: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
