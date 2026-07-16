@@ -9556,6 +9556,18 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   command += ["-filter_complex", filt.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
   File.write("/tmp/last_filter_graph.txt", filt.join(";\n")) if ENV["DEBUG_FILTER_DUMP"]
   sh!(*command)
+  if (rap_slug = ENV["RAP_VOCAL"]) && !rap_slug.strip.empty?
+    begin
+      fit = rap_vocal_fit!(rap_slug.strip, beat_bpm: cfg[:bpm], n_bars: n_bars)
+      if fit && File.file?(fit)
+        rap_tmp = "#{destination}.rap#{File.extname(destination)}"
+        mix_rap_vocal_layer!(destination, fit, rap_tmp)
+        FileUtils.mv(rap_tmp, destination)
+      end
+    rescue StandardError => e
+      warn "rap-vocal: skipped (#{e.class}) — #{e.message}"
+    end
+  end
   export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, cfg,
                        use_stem_harmony: use_stem_harmony)
   keep_stems ||= ENV["KEEP_STEMS"] == "1"
@@ -9947,6 +9959,11 @@ def help
       learn-promote                  Merge catalog copyable_dna → learned_engine.json (runtime)
       learn-calibrate [--audio-root] Measured dossiers → global BPM/swing calibration
       learn-diff [--audio-root]      Curated vs measured vs learned diff report
+      rap-vocal ingest <artist> <url|path>
+                                   yt-dlp → demucs → isolated vocals + phrase/BPM catalog
+      rap-vocal fit <slug>         Time-stretch + bar-align vocals to current BPM/BARS
+      rap-vocal list               Show ingested vocal catalog
+      RAP_VOCAL=<slug> on render/stream  Auto-fit + mix rapper over beat (RAP_VOCAL_MIX, RAP_VOCAL_DUCK)
       clean <in> [out]             Denoise + loudnorm
 
     STEM RACK (stems/manifest.json)
@@ -10860,6 +10877,166 @@ rescue StandardError => e
   { path: path, stem: stem_name, error: e.message }
 end
 
+RAP_VOCAL_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "vocals").freeze
+RAP_VOCAL_CATALOG = File.join(RAP_VOCAL_DIR, "catalog.json").freeze
+
+def rap_vocal_slug(artist)
+  artist.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+end
+
+def rap_vocal_load_catalog
+  return { "vocals" => [], "updated_at" => nil } unless File.file?(RAP_VOCAL_CATALOG)
+  JSON.parse(File.read(RAP_VOCAL_CATALOG))
+rescue StandardError
+  { "vocals" => [], "updated_at" => nil }
+end
+
+def rap_vocal_save_catalog!(cat)
+  DillaSourceLearn.ensure_dir!
+  FileUtils.mkdir_p(RAP_VOCAL_DIR)
+  cat["updated_at"] = Time.now.utc.iso8601
+  File.write(RAP_VOCAL_CATALOG, JSON.pretty_generate(cat) + "\n")
+end
+
+def rap_vocal_phrase_onsets(path)
+  rhythm = frame_energy(path, highpass: 300, lowpass: 6000)
+  peaks = peak_frames(rhythm[:frames], rhythm[:hop_seconds])
+  return [] if peaks.empty?
+  phrases = []
+  cluster = [peaks.first]
+  peaks[1..].each do |pk|
+    if pk[:time] - cluster.last[:time] < 0.35
+      cluster << pk
+    else
+      phrases << { "start" => cluster.first[:time].round(3), "end" => cluster.last[:time].round(3),
+                   "strength" => cluster.map { |p| p[:strength] }.max.round(4) }
+      cluster = [pk]
+    end
+  end
+  phrases << { "start" => cluster.first[:time].round(3), "end" => cluster.last[:time].round(3),
+               "strength" => cluster.map { |p| p[:strength] }.max.round(4) }
+  phrases
+end
+
+def rap_vocal_atempo_chain(ratio)
+  r = ratio.to_f.clamp(0.25, 4.0)
+  parts = []
+  while r > 2.0
+    parts << 2.0
+    r /= 2.0
+  end
+  while r < 0.5
+    parts << 0.5
+    r /= 0.5
+  end
+  parts << r
+  parts.map { |t| "atempo=#{t.round(4)}" }.join(",")
+end
+
+def rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases: nil)
+  phrase_times = Array(phrases).filter_map { |p| p["start"] || p[:start] }
+  if phrase_times.empty?
+    rhythm = frame_energy(vocal_path, highpass: 300, lowpass: 6000)
+    phrase_times = peak_frames(rhythm[:frames], rhythm[:hop_seconds]).map { |p| p[:time] }
+  end
+  return 0.0 if phrase_times.empty?
+  bar_sec = (60.0 / beat_bpm.to_f) * 4.0
+  best = 0.0
+  best_score = -1
+  (0..(bar_sec * 40)).each do |i|
+    offset = i * 0.025
+    score = phrase_times.count do |t|
+      rel = (t - offset) % bar_sec
+      rel < 0.06 || (bar_sec - rel) < 0.06 || (rel - bar_sec / 2.0).abs < 0.06
+    end
+    next unless score > best_score
+    best_score = score
+    best = offset
+  end
+  best.round(3)
+end
+
+def rap_vocal_resolve(slug_or_path)
+  raw = slug_or_path.to_s
+  return raw if raw.end_with?(".wav", ".mp3", ".m4a") && File.file?(raw)
+  cat = rap_vocal_load_catalog
+  Array(cat["vocals"]).find do |v|
+    v["slug"] == raw || v["artist"].to_s.casecmp(raw).zero?
+  end
+end
+
+def rap_vocal_ingest!(artist, src)
+  DillaSourceLearn.ensure_dir!
+  slug = rap_vocal_slug(artist)
+  out_dir = File.join(RAP_VOCAL_DIR, slug)
+  FileUtils.mkdir_p(out_dir)
+  stem_dir = demux_six(src)
+  vocal_src = File.join(stem_dir, "vocals.wav")
+  abort "rap-vocal ingest: demucs produced no vocals.wav" unless File.file?(vocal_src)
+  vocal_dest = File.join(out_dir, "vocals.wav")
+  FileUtils.cp(vocal_src, vocal_dest)
+  analysis = RadioBergenStudy::DeepAudio.analyze(vocal_dest)
+  phrases = rap_vocal_phrase_onsets(vocal_dest)
+  entry = {
+    "slug" => slug, "artist" => artist.to_s, "source" => src.to_s,
+    "vocal_path" => vocal_dest, "stem_dir" => stem_dir,
+    "bpm_estimate" => analysis[:bpm_estimate],
+    "phrases" => phrases, "ingested_at" => Time.now.utc.iso8601
+  }
+  cat = rap_vocal_load_catalog
+  cat["vocals"] = Array(cat["vocals"]).reject { |v| v["slug"] == slug } + [entry]
+  rap_vocal_save_catalog!(cat)
+  File.write(File.join(out_dir, "meta.json"), JSON.pretty_generate(entry) + "\n")
+  puts "rap-vocal ingest: #{artist} → #{vocal_dest} bpm=#{analysis[:bpm_estimate]} phrases=#{phrases.length}"
+  entry
+end
+
+def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
+  entry = rap_vocal_resolve(slug_or_path)
+  vocal_path = entry.is_a?(Hash) ? entry["vocal_path"] : entry
+  abort "rap-vocal fit: unknown slug #{slug_or_path}" unless vocal_path && File.file?(vocal_path)
+  beat_bpm = beat_bpm.to_f
+  vocal_bpm = if entry.is_a?(Hash)
+                entry["bpm_estimate"].to_f
+              else
+                RadioBergenStudy::DeepAudio.analyze(vocal_path)&.dig(:bpm_estimate).to_f
+              end
+  vocal_bpm = beat_bpm unless vocal_bpm.positive?
+  ratio = beat_bpm / vocal_bpm
+  duration = (60.0 / beat_bpm) * 4.0 * n_bars
+  phrases = entry.is_a?(Hash) ? entry["phrases"] : nil
+  offset = bar_offset || rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases: phrases)
+  out_dir = File.dirname(vocal_path)
+  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars.wav")
+  delay_ms = (offset * 1000).round
+  sh! "ffmpeg", "-y", "-i", vocal_path,
+      "-af", "#{rap_vocal_atempo_chain(ratio)},adelay=#{delay_ms}|#{delay_ms}," \
+             "atrim=0:#{duration.round(3)},asetpts=PTS-STARTPTS," \
+             "highpass=f=120,acompressor=threshold=-20dB:ratio=3:attack=5:release=80:makeup=4",
+      "-c:a", "pcm_s16le", fit_path
+  if entry.is_a?(Hash)
+    entry["last_fit"] = { "path" => fit_path, "beat_bpm" => beat_bpm, "n_bars" => n_bars,
+                          "offset_sec" => offset, "tempo_ratio" => ratio.round(4) }
+    cat = rap_vocal_load_catalog
+    cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
+    rap_vocal_save_catalog!(cat)
+  end
+  puts "rap-vocal fit: #{fit_path} ratio=#{ratio.round(3)} offset=#{offset}s bars=#{n_bars}"
+  fit_path
+end
+
+def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
+  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "1.25").to_f
+  duck = ENV.fetch("RAP_VOCAL_DUCK", "0.72").to_f
+  sh! "ffmpeg", "-y", "-i", beat_path, "-i", vocal_path,
+      "-filter_complex",
+      "[0:a]volume=#{duck}[bed];[1:a]aformat=channel_layouts=stereo," \
+      "equalizer=f=200:t=o:w=1:g=-8,equalizer=f=3000:t=o:w=2:g=5," \
+      "acompressor=threshold=-18dB:ratio=4:attack=3:release=60:makeup=5,volume=#{vocal_vol}[v];" \
+      "[bed][v]amix=inputs=2:duration=first:dropout_transition=0[out]",
+      "-map", "[out]", *codec_for(dest), dest
+end
+
 def learn_source!(src, apply: false, deep: false, start_sec: nil, meta: nil)
   DillaMusicGems.bootstrap! if defined?(DillaMusicGems)
   audio_path = if File.exist?(src.to_s)
@@ -11611,6 +11788,24 @@ DISPATCH = {
       audio_root = ARGV[idx + 1]
     end
     learn_diff_dossiers!(audio_root: audio_root)
+  end,
+  "rap-vocal" => lambda do
+    sub = ARGV.shift or abort "usage: ruby dilla.rb rap-vocal ingest|fit|list ..."
+    case sub
+    when "ingest"
+      artist = ARGV.shift or abort "usage: rap-vocal ingest <artist> <youtube-url-or-path>"
+      src = ARGV.shift or abort "usage: rap-vocal ingest <artist> <youtube-url-or-path>"
+      rap_vocal_ingest!(artist, src)
+    when "fit"
+      slug = ARGV.shift or abort "usage: rap-vocal fit <slug>"
+      cfg = dilla_resolve_config
+      n_bars = (ENV["BARS"] || bars).to_i
+      rap_vocal_fit!(slug, beat_bpm: cfg[:bpm], n_bars: n_bars)
+    when "list"
+      puts JSON.pretty_generate(rap_vocal_load_catalog)
+    else
+      abort "usage: ruby dilla.rb rap-vocal ingest|fit|list"
+    end
   end,
   "liveset" => lambda do
     set = ARGV.shift || stems_load_manifest["active"] || "default"

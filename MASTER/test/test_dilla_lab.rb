@@ -514,6 +514,18 @@ class TestDillaLab < Minitest::Test
     assert_operator result.fetch("chords").length, :>=, 2
   end
 
+  def test_rap_vocal_slug_and_atempo_chain
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        slug: rap_vocal_slug("MF DOOM"),
+        chain: rap_vocal_atempo_chain(0.92),
+        offset: rap_vocal_best_bar_offset("/dev/null", 88, phrases: [{ "start" => 0.0 }, { "start" => 2.0 }])
+      )
+    RUBY
+    assert_equal "mf_doom", result.fetch("slug")
+    assert_includes result.fetch("chain"), "atempo="
+  end
+
   def test_flylo_drum_overlay_schedules_dual_bus_events
     result = eval_in_engine(<<~RUBY)
       ENV["FLYLO_DRUM_OVERLAY"] = "1"
