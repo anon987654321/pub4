@@ -4084,28 +4084,67 @@ STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
 STREAM_BARS_COUNT = 16
 STREAM_BEAUTY_MIN = (ENV["STREAM_BEAUTY_MIN"] || "68").to_f
 STREAM_MAX_RETRIES = (ENV["STREAM_MAX_RETRIES"] || "2").to_i
+DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 
-# Soul-stream defaults — extrapolated from "beauty overhaul", "this better be
-# good", and Rhodes/Moog/Prophet chord complaints: curated harmony + vintage
-# keys upfront, experimental layers off, quality gate before speaker playback.
-STREAM_LISTENABILITY_DEFAULTS = {
+# Best-track defaults — applied on every invocation unless already set (or
+# DILLA_RAW=1). Bare `ruby dilla.rb` uses these to render a full soul beat.
+DILLA_BEST_DEFAULTS = {
+  "TRACK" => "minor_iv_loop",
   "PAD_VOICE" => "blend",
   "PAD_ARP_MODE" => "blend",
   "LEAD_ARP" => "1",
   "EXPERIMENTAL_LEADS" => "1",
   "SOUL_ENRICH" => "1",
+  "REHARM_LOOP" => "1",
   "PAD_TEXTURE" => "0",
   "CREEPY_PATCHES" => "0",
+  "SONITEX" => "donuts_warm",
+  "SONITEX_PRESET" => "donuts_warm",
+  "ANALOG_CHAIN" => "acetate",
+  "DRUM_PRESET" => "dilla_slight",
+  "EXTERNAL_KIT" => "03-soulful-vintage",
+  "PERFORMER" => "yancey",
+  "GROOVE_DNA" => "donuts",
+  "COMPOSITION" => "1",
+  "MARKOV_DRUMS" => "1",
+  "FLAM" => "1",
+  "GROOVE_LOCK" => "kick",
   "VINYL" => "35",
   "KICK_GAIN" => "0.34",
+  "KICKS" => "1",
+  "SPECTRAL_ARP" => "0",
+  "INDUSTRIAL_DARK" => "0",
+  "MASTER_HEURISTICS" => "0"
+}.freeze
+
+STREAM_EXTRA_DEFAULTS = {
   "DRUM_VOL" => "0.34",
   "DILLA_STREAMING" => "1"
 }.freeze
 
-def apply_stream_listenability_defaults!
-  STREAM_LISTENABILITY_DEFAULTS.each do |key, value|
+def apply_best_defaults!
+  return if ENV["DILLA_RAW"] == "1"
+  DILLA_BEST_DEFAULTS.each do |key, value|
     ENV[key] = value if ENV[key].nil? || ENV[key].empty?
   end
+end
+
+def apply_stream_listenability_defaults!
+  apply_best_defaults!
+  STREAM_EXTRA_DEFAULTS.each do |key, value|
+    ENV[key] = value if ENV[key].nil? || ENV[key].empty?
+  end
+end
+
+def default_render!(argv = ARGV)
+  dest = if argv[0] && argv[0] =~ /\.(wav|mp3|flac|ogg|m4a|aiff?)\z/i
+           argv.shift
+         else
+           DEFAULT_RENDER_OUTPUT
+         end
+  n_bars = argv[0]&.match?(/\A\d+\z/) ? argv.shift.to_i : nil
+  FileUtils.mkdir_p(File.dirname(dest))
+  render_dilla(dest, n_bars)
 end
 
 def stream_render_acceptable?(path)
@@ -4948,6 +4987,13 @@ end
 def pick_external_drum_kit!
   @current_external_kit = nil
   return unless ensure_external_assets_lazy!
+  if (kit = ENV["EXTERNAL_KIT"]) && !kit.empty?
+    kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit)
+    if Dir.exist?(kit_dir)
+      @current_external_kit = kit
+      return
+    end
+  end
   track = (ENV["TRACK"] || "").to_s
   soul = DillaHarmony.soul_profile?(track) || ENV["DILLA_STREAMING"] == "1"
   roll = rand
@@ -6707,6 +6753,11 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
+    DEFAULT (no command — best soul settings applied automatically)
+      ruby dilla.rb                    Full beat → #{DEFAULT_RENDER_OUTPUT} (#{DEFAULT_BARS} bars)
+      ruby dilla.rb out.wav [bars]     Render to path (optional bar count)
+      DILLA_RAW=1                      Skip best-default ENV (legacy bare settings)
+
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
       loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
@@ -7753,7 +7804,10 @@ FLAG_ENV = {
   "soul-enrich" => "SOUL_ENRICH", "seed-text" => "SEED_TEXT", "tempo-ramp" => "TEMPO_RAMP",
   "markov-drums" => "MARKOV_DRUMS", "groove-lock" => "GROOVE_LOCK", "spectral-arp" => "SPECTRAL_ARP",
   "industrial-dark" => "INDUSTRIAL_DARK", "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
-  "evolve-harmony-w" => "EVOLVE_HARMONY_W"
+  "evolve-harmony-w" => "EVOLVE_HARMONY_W",
+  "pad-voice" => "PAD_VOICE", "pad-arp-mode" => "PAD_ARP_MODE", "experimental-leads" => "EXPERIMENTAL_LEADS",
+  "kick-gain" => "KICK_GAIN", "vinyl" => "VINYL", "external-kit" => "EXTERNAL_KIT",
+  "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW"
 }.freeze
 
 def apply_flags!(argv)
@@ -7874,9 +7928,19 @@ DISPATCH = {
 COMMAND_ALIASES = { "midi" => "electronium", "beat" => "dilla" }.freeze
 COMMANDS = (DISPATCH.keys + COMMAND_ALIASES.keys).sort.freeze
 
+def render_output_path?(token)
+  token =~ /\.(wav|mp3|flac|ogg|m4a|aiff?)\z/i
+end
+
 if __FILE__ == $PROGRAM_NAME
+  apply_best_defaults!
   apply_flags!(ARGV)
   cmd = ARGV.shift
-  handler = DISPATCH[COMMAND_ALIASES.fetch(cmd, cmd)]
-  handler ? handler.call : help
+  if cmd.nil? || (render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd))
+    ARGV.unshift(cmd) if cmd
+    default_render!
+  else
+    handler = DISPATCH[COMMAND_ALIASES.fetch(cmd, cmd)]
+    handler ? handler.call : help
+  end
 end
