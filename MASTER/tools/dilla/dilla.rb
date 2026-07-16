@@ -2721,8 +2721,20 @@ def flylo_top_bus_mapping
   { flylo_hat: :hat, flylo_quint: :hat, flylo_rim: :rim, flylo_glitch: :ind_stab }
 end
 
+def dilla_render_tmp(tag)
+  File.join(ROOT, ".dilla_#{tag}.#{Process.pid}.wav")
+end
+
 def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
-  merged = "#{drum_path}.merged.wav"
+  unless File.file?(drum_path)
+    warn "flylo merge: missing drum bus — skipping overlay"
+    return
+  end
+  unless File.file?(sub_path) && File.file?(top_path)
+    warn "flylo merge: overlay bus missing (sub=#{File.file?(sub_path)} top=#{File.file?(top_path)}) — skipping"
+    return
+  end
+  merged = "#{drum_path}.merged.#{Process.pid}.wav"
   sub_vol = ENV.fetch("FLYLO_SUB_MIX", "0.38")
   top_vol = ENV.fetch("FLYLO_TOP_MIX", "0.32")
   sh! "ffmpeg", "-y", "-i", drum_path, "-i", sub_path, "-i", top_path,
@@ -9376,13 +9388,17 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   harmonic_tmp = File.join(ROOT, ".dilla_harmonic.wav")
   render_sample_bus_wav(drum_tmp, events, duration, kit, drum_bus_mapping)
   if flylo_drum_overlay_enabled?
-    flylo_sub_tmp = File.join(ROOT, ".dilla_flylo_sub.wav")
-    flylo_top_tmp = File.join(ROOT, ".dilla_flylo_top.wav")
-    render_sample_bus_wav(flylo_sub_tmp, events, duration, kit, flylo_sub_bus_mapping)
-    render_sample_bus_wav(flylo_top_tmp, events, duration, kit, flylo_top_bus_mapping)
-    merge_flylo_dual_bus!(drum_tmp, flylo_sub_tmp, flylo_top_tmp)
-    FileUtils.rm_f(flylo_sub_tmp)
-    FileUtils.rm_f(flylo_top_tmp)
+    flylo_sub_tmp = dilla_render_tmp("flylo_sub")
+    flylo_top_tmp = dilla_render_tmp("flylo_top")
+    begin
+      render_sample_bus_wav(flylo_sub_tmp, events, duration, kit, flylo_sub_bus_mapping)
+      render_sample_bus_wav(flylo_top_tmp, events, duration, kit, flylo_top_bus_mapping)
+      merge_flylo_dual_bus!(drum_tmp, flylo_sub_tmp, flylo_top_tmp)
+    ensure
+      FileUtils.rm_f(flylo_sub_tmp)
+      FileUtils.rm_f(flylo_top_tmp)
+      FileUtils.rm_f("#{drum_tmp}.merged.#{Process.pid}.wav")
+    end
   end
 
   chop_gate = gate_expr(events[:chop], hold: 0.32, scale: 0.95)
