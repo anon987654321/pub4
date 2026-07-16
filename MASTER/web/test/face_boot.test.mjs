@@ -248,7 +248,9 @@ test("face.css includes subtle visual polish layers", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
   assert.doesNotMatch(css, /body::after/);
   assert.match(css, /--face-glow-scale:\s*1\.22/);
-  assert.match(css, /mood-sparkline i[\s\S]*--mood-accent/);
+  assert.match(css, /mood-sparkline i[\s\S]*--canvas-mood-accent/);
+  assert.match(css, /--mood-accent:\s*var\(--c-accent\)/);
+  assert.doesNotMatch(css, /speaking.*#zsh \.pp.*--mood-accent/);
 });
 
 test("face.css keeps primer and prompt layering stable", () => {

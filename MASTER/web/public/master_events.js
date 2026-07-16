@@ -24,12 +24,12 @@
   };
 
   const PROVIDER_PALETTES = {
-    claude: { accent: "#c9a227", topology: "face" },
+    claude: { accent: "#9686e8", topology: "face" },
     openai: { accent: "#10a37f", topology: "face" },
     gpt: { accent: "#10a37f", topology: "face" },
     gemini: { accent: "#4285f4", topology: "ecology" },
     deepseek: { accent: "#5b8def", topology: "ecology" },
-    mistral: { accent: "#ff7000", topology: "ecology" },
+    mistral: { accent: "#7c6fd6", topology: "ecology" },
     openrouter: { accent: "#8b5cf6", topology: "neural" }
   };
 
@@ -48,7 +48,7 @@
 
   function paletteForProvider(provider) {
     const key = (provider || "").toString().toLowerCase();
-    return PROVIDER_PALETTES[key] || window.MASTERTopology?.palette?.("operator") || { accent: "#f5f0e8", topology: "face" };
+    return PROVIDER_PALETTES[key] || window.MASTERTopology?.palette?.("operator") || { accent: "#d8d6e0", topology: "face" };
   }
 
   function dispatch(normalized) {

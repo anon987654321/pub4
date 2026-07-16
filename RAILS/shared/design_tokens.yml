@@ -53,6 +53,7 @@ face_root:
     face_dim: "color-mix(in srgb, var(--c-text) 18%, transparent)"
     face_soft: "color-mix(in srgb, var(--c-text) 8%, transparent)"
     mood_accent: "var(--c-accent)"
+    canvas_mood_accent: "var(--c-accent)"
     border_faint: "color-mix(in srgb, var(--face-fg) 10%, transparent)"
     border_soft: "color-mix(in srgb, var(--face-fg) 14%, transparent)"
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"

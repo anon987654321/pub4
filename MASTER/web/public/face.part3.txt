@@ -322,7 +322,7 @@ function frame(t) {
     rootBody.style.setProperty('--mood-r', r);
     rootBody.style.setProperty('--mood-g', g);
     rootBody.style.setProperty('--mood-b', b);
-    rootBody.style.setProperty('--mood-accent', `rgb(${r},${g},${b})`);
+    rootBody.style.setProperty('--canvas-mood-accent', `rgb(${r},${g},${b})`);
     rootBody.style.setProperty('--mood-complement', `rgb(${cr},${cg},${cb})`);
     rootBody.style.setProperty('--mood-shadow', `rgba(${r},${g},${b},0.12)`);
     rootBody.style.setProperty('--mood-mid', `rgba(${r},${g},${b},0.45)`);

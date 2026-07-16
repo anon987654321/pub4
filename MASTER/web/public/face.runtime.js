@@ -1718,7 +1718,7 @@ function frame(t) {
     rootBody.style.setProperty('--mood-r', r);
     rootBody.style.setProperty('--mood-g', g);
     rootBody.style.setProperty('--mood-b', b);
-    rootBody.style.setProperty('--mood-accent', `rgb(${r},${g},${b})`);
+    rootBody.style.setProperty('--canvas-mood-accent', `rgb(${r},${g},${b})`);
     rootBody.style.setProperty('--mood-complement', `rgb(${cr},${cg},${cb})`);
     rootBody.style.setProperty('--mood-shadow', `rgba(${r},${g},${b},0.12)`);
     rootBody.style.setProperty('--mood-mid', `rgba(${r},${g},${b},0.45)`);
@@ -2472,8 +2472,11 @@ function _quirkifyTts(text, voice, opts = {}) {
   }
   return text;
 }
-const TTS_FETCH_TIMEOUT_MS = 9000; // abort Edge TTS HTTP fetch after this many ms
+const TTS_FETCH_TIMEOUT_MS = 45000;
+const TTS_SYNTH_MAX = 2;
+const TTS_PREFETCH_MAX = 2;
 let ttsDBPromise = null;
+let ttsPrefetchInFlight = 0;
 
 function setTTSLoading(loading) {
   tts.loading = !!loading;
@@ -2509,6 +2512,7 @@ function applyPersonaAudioDefaults() {
   syncShareStateUrl();
 }
 applyPersonaAudioDefaults();
+prefetchTtsPhraseBank();
 
 function announceTTS(text) {
   if (!ttsLive) return;
@@ -2587,11 +2591,11 @@ async function loadTTSBlob(text, voice, style) {
   const key = await ttsCacheKey(text, voice, style).catch(() => null);
   const cached = key ? await readCachedTTS(key) : null;
   if (cached) return cached;
-  while (tts.synthInFlight > 0) {
-    await new Promise((resolve) => setTimeout(resolve, 120));
+  while ((tts.synthInFlight || 0) >= TTS_SYNTH_MAX) {
+    await new Promise((resolve) => setTimeout(resolve, 40));
     if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');
   }
-  tts.synthInFlight++;
+  tts.synthInFlight = (tts.synthInFlight || 0) + 1;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TTS_FETCH_TIMEOUT_MS);
   try {
@@ -2634,7 +2638,7 @@ function forwardEarlyVisemePlan(visemes) {
 
 async function tryPartialTTSPlay(job, bytes) {
   if (!window.MASTER_RUNTIME?.enhancements?.includes?.('tts_audio_stream')) return;
-  if (bytes < 8192 || tts._partialPlayed) return;
+  if (bytes < 4096 || tts._partialPlayed) return;
   try {
     const res = await fetch(`/chat/tts/stream?job=${encodeURIComponent(job)}`);
     if (!res.ok || res.status === 202) return;
@@ -2662,7 +2666,8 @@ async function pollTTSJob(job, signal) {
   // pre-cached status phrases play instantly; everything real timed out).
   // Late audio is still worth having: ttsTick serializes playback anyway.
   for (let attempt = 0; attempt < 90; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, Math.min(250 + attempt * 150, 2000)));
+    const delay = attempt === 0 ? 40 : Math.min(80 + attempt * 90, 1200);
+    await new Promise((resolve) => setTimeout(resolve, delay));
     const res = await fetch(`/chat/tts/status?job=${encodeURIComponent(job)}`, { signal });
     if (res.status === 202) {
       if (streamChunk) {
@@ -2771,9 +2776,12 @@ function finishTTSPlayback(src, continueQueue = true) {
 function fetchTTS(text, voice, style) {
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) return;
   if (tts.serverUnavailable && Date.now() >= (tts.serverUnavailableUntil || 0)) tts.serverUnavailable = false;
-  if (tts.prefetch.has(text) || (tts.synthInFlight || 0) > 0) return;
+  if (tts.prefetch.has(text) || ttsPrefetchInFlight >= TTS_PREFETCH_MAX) return;
   const meta = tts.meta.get(text) || {};
-  const p = loadTTSBlob(text, voice || meta.voice, style || meta.style).catch(() => null);
+  ttsPrefetchInFlight++;
+  const p = loadTTSBlob(text, voice || meta.voice, style || meta.style)
+    .catch(() => null)
+    .finally(() => { ttsPrefetchInFlight = Math.max(0, ttsPrefetchInFlight - 1); });
   tts.prefetch.set(text, p);
 }
 const PARALINGUISTIC_RE = /\[(chuckle|sigh|laugh|cough)\]/i;
@@ -2939,7 +2947,7 @@ function ttsTick() {
     const baseRate = getTtsRate() * 0.97;
     // Measure duration for beat quantization — 1.5s timeout guards against silent hang
     const dur = await new Promise(resolve => {
-      const t = setTimeout(() => resolve(null), 1500);
+      const t = setTimeout(() => resolve(null), 280);
       audio.onloadedmetadata = () => { clearTimeout(t); resolve(audio.duration); };
       audio.onerror = () => { clearTimeout(t); resolve(null); };
       audio.load();
@@ -2951,15 +2959,15 @@ function ttsTick() {
     tts.audio = audio;
     setTTSLoading(false);
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
-    connectTTSAudio(audio).catch(() => {});
     audio.onplay = () => {
       emitTtsEvent('tts:playback:start', { text, voice, style, duration: dur || audio.duration || null, backend: 'edge' });
       startVisemeAnim(text);
       if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
       rootBody.dataset.ttsWave = 'true';
+      preSpeechInhale(style);
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
-    preSpeechInhale(style);
+    connectTTSAudio(audio).catch(() => {});
     audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });
   }
 
@@ -2968,7 +2976,7 @@ function ttsTick() {
     .catch(() => {
       tts.serverFailureCount = (tts.serverFailureCount || 0) + 1;
       tts.serverUnavailable = true;
-      tts.serverUnavailableUntil = Date.now() + Math.min(120000, 15000 * tts.serverFailureCount);
+      tts.serverUnavailableUntil = Date.now() + Math.min(30000, 5000 * tts.serverFailureCount);
       if (speakWithBrowserTTS(text, token)) return;
       setTtsHealthStatus('tts: unavailable', 12000);
       tts.audio = null; tts.playing = false; tts.current = null; setTTSLoading(false);

@@ -228,7 +228,7 @@
     }
     if (state.provider && window.MASTEREvents?.paletteForProvider) {
       const pal = window.MASTEREvents.paletteForProvider(state.provider);
-      document.documentElement.style.setProperty("--master-accent", pal.accent || "#f5f0e8");
+      document.documentElement.style.setProperty("--master-accent", pal.accent || "#d8d6e0");
       window.dispatchEvent(new CustomEvent("master:palette", { detail: { provider: state.provider, ...pal } }));
     }
   }

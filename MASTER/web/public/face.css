@@ -24,6 +24,8 @@
   --face-dim: color-mix(in srgb, var(--c-text) 18%, transparent);
   --face-soft: color-mix(in srgb, var(--c-text) 8%, transparent);
   --mood-accent: var(--c-accent);
+  --canvas-mood-accent: var(--c-accent);
+  --x-accent: #5b4fc4;
   --border-faint: color-mix(in srgb, var(--face-fg) 10%, transparent);
   --border-soft: color-mix(in srgb, var(--face-fg) 14%, transparent);
   --border-strong: color-mix(in srgb, var(--face-fg) 24%, transparent);
@@ -70,7 +72,7 @@ html, body {
   user-select: none;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: grayscale;
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='7' y='0' width='2' height='6' fill='%23f5f0e8'/%3E%3Crect x='7' y='10' width='2' height='6' fill='%23f5f0e8'/%3E%3Crect x='0' y='7' width='6' height='2' fill='%23f5f0e8'/%3E%3Crect x='10' y='7' width='6' height='2' fill='%23f5f0e8'/%3E%3C/svg%3E") 8 8, crosshair;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='7' y='0' width='2' height='6' fill='%23d8d6e0'/%3E%3Crect x='7' y='10' width='2' height='6' fill='%23d8d6e0'/%3E%3Crect x='0' y='7' width='6' height='2' fill='%23d8d6e0'/%3E%3Crect x='10' y='7' width='6' height='2' fill='%23d8d6e0'/%3E%3C/svg%3E") 8 8, crosshair;
 }
 
 body.face-loading {
@@ -275,7 +277,7 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
   width: 3px;
   height: 4px;
   border-radius: 999px;
-  background: var(--mood-accent);
+  background: var(--c-accent);
   transform-origin: center bottom;
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
 }
@@ -306,15 +308,16 @@ body[data-council-persona]::after {
   display: none !important;
 }
 
-/* Top-left logo — Radio Bergen style */
+/* Top-left logo — brgen wordmark (shared x tokens) */
 .top-left-logo {
   position: fixed;
   top: calc(14px + var(--safe-top));
   left: calc(14px + var(--safe-left));
   z-index: var(--z-ui);
-  font: 700 clamp(15px,3.8vw,24px)/1 "Inter",Helvetica,sans-serif;
+  font: 700 clamp(15px,3.8vw,24px)/1 var(--x-font, "Inter",-apple-system,system-ui,sans-serif);
   letter-spacing: -.03em;
-  color: var(--c-text);
+  text-transform: uppercase;
+  color: var(--x-text, var(--c-text));
   opacity: 1;
   pointer-events: none;
   user-select: none;
@@ -436,7 +439,7 @@ body[data-mode="listening"] #mic-dot {
   display: block;
   width: 4px;
   border-radius: 2px 2px 0 0;
-  background: color-mix(in srgb, var(--mood-accent, var(--face-fg)) 62%, transparent);
+  background: color-mix(in srgb, var(--canvas-mood-accent, var(--c-accent)) 62%, transparent);
   opacity: .82;
   transition: height 320ms var(--ease-out), opacity 320ms var(--ease-out), background 420ms var(--ease-out);
 }
@@ -764,7 +767,7 @@ body[data-tts-error="true"] #zsh-status { opacity: 1; color: var(--c-danger); }
   display: none;
   background: none;
   border: none;
-  color: var(--mood-accent);
+  color: var(--c-accent);
   font: inherit;
   cursor: pointer;
   padding: 0 0 0 8px;
@@ -843,9 +846,6 @@ body[data-mode="thinking"] #spin-btn { will-change: opacity; animation:cancelPul
 /* #49 Idle help trail */
 body[data-long-silence="1"] .ui-status { opacity: .72; letter-spacing: .34em; }
 body[data-long-silence="1"] #cognition-ecology { opacity: .38; }
-
-/* #50 Speaking rainbow prompt */
-body[data-mode="speaking"] #zsh .pp { color:var(--mood-accent); transition:color .8s var(--ease-out); }
 
 /* #51 Disabled state during boot — .live from primer unlocks prompt before WebGL ready */
 body:not(.face-ready) #zsh:not(.live):not(.revealed) { opacity:.3; pointer-events:none; }
