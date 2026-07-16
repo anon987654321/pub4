@@ -90,10 +90,10 @@ function renderNoCanvasFallback() {
       </linearGradient>
     </defs>
     <rect width="320" height="220" fill="#000"/>
-    <ellipse cx="160" cy="112" rx="86" ry="102" fill="url(#fallbackGlow)" opacity="0.88"/>
-    <circle cx="128" cy="96" r="11" fill="#000"/>
-    <circle cx="192" cy="96" r="11" fill="#000"/>
-    <path d="M112 146 Q160 165 208 146" fill="none" stroke="#000" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="160" cy="118" rx="72" ry="112" fill="url(#fallbackGlow)" opacity="0.88"/>
+    <circle cx="126" cy="98" r="14" fill="#000"/>
+    <circle cx="194" cy="98" r="14" fill="#000"/>
+    <path d="M128 152 Q160 160 192 152" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
     <text x="160" y="198" text-anchor="middle" font-family="monospace" font-size="16" fill="#fff">no canvas fallback</text>
   `;
   cv.replaceWith(svg);
@@ -160,8 +160,8 @@ function cycleRuntimeProfile() {
   const tintMap = {
     calm: TINT.idle,
     full: TINT.idle,
-    crt: new Color(0.92, 0.88, 0.78),
-    battery: new Color(0.72, 0.74, 0.78),
+    crt: TINT.idle,
+    battery: TINT.idle,
   };
   if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
   window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
@@ -660,191 +660,200 @@ if ('ResizeObserver' in window && cv) {
 
 // Grayscale depth map: white = near (high Z), black = background (filtered)
 // Phantom.land technique: sample pixel luminance directly as Z, no edge detection
+// Homo futura phenotype (~10k+ yr): gracile domesticated morphology — enlarged cranial
+// vault, reduced brow/jaw, larger eyes, finer nose/mouth (processed diet, low mortality,
+// sexual selection, global admixture; brains smaller but skulls taller per recent trends).
 function generateFaceDepthMap(size) {
   const cv = new OffscreenCanvas(size, size);
   const ctx = cv.getContext('2d');
-  const W = size, H = size, cx = W * 0.493, cy = H * 0.44;
+  const W = size, H = size, cx = W * 0.493, cy = H * 0.46;
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
   let g;
-  // Base face — wider heart-shaped oval
-  g = ctx.createRadialGradient(cx, cy - H*0.04, 0, cx, cy, W * 0.38);
-  g.addColorStop(0,    'rgba(222,222,222,1)');
-  g.addColorStop(0.38, 'rgba(175,175,175,1)');
-  g.addColorStop(0.72, 'rgba(68, 68, 68, 1)');
+  // Base face — tall narrow oval (gracile, elongated stature trend)
+  g = ctx.createRadialGradient(cx, cy - H*0.10, 0, cx, cy, W * 0.36);
+  g.addColorStop(0,    'rgba(228,228,228,1)');
+  g.addColorStop(0.34, 'rgba(182,182,182,1)');
+  g.addColorStop(0.70, 'rgba(72, 72, 72, 1)');
   g.addColorStop(1,    'rgba(0,  0,  0,  1)');
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, W * 0.285, H * 0.44, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, W * 0.255, H * 0.48, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Jaw taper — softer jaw
-  for (const ex of [-0.245, 0.245]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.32, 0, cx + ex*W, cy + H*0.32, W*0.14);
-    g.addColorStop(0,    'rgba(0,0,0,0.94)');
-    g.addColorStop(0.55, 'rgba(0,0,0,0.58)');
+  // Jaw taper — pronounced reduction (smaller mandible, processed food)
+  for (const ex of [-0.215, 0.215]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.28, 0, cx + ex*W, cy + H*0.28, W*0.16);
+    g.addColorStop(0,    'rgba(0,0,0,0.98)');
+    g.addColorStop(0.50, 'rgba(0,0,0,0.72)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Forehead — gently raised plane
-  g = ctx.createRadialGradient(cx, cy - H*0.30, 0, cx, cy - H*0.30, W*0.22);
-  g.addColorStop(0,    'rgba(192,192,192,0.62)');
-  g.addColorStop(0.62, 'rgba(128,128,128,0.28)');
+  // Cranial vault — enlarged high forehead
+  g = ctx.createRadialGradient(cx, cy - H*0.36, 0, cx, cy - H*0.36, W*0.30);
+  g.addColorStop(0,    'rgba(210,210,210,0.78)');
+  g.addColorStop(0.55, 'rgba(150,150,150,0.36)');
   g.addColorStop(1,    'rgba(0,  0,  0,  0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Temple recession — subtle concavity at sides of forehead
-  for (const ex of [-0.22, 0.22]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.24, 0, cx + ex*W, cy - H*0.24, W*0.10);
-    g.addColorStop(0,   'rgba(0,0,0,0.40)');
+  // Crown extension — tall skull cap above brows
+  g = ctx.createRadialGradient(cx, cy - H*0.44, 0, cx, cy - H*0.44, W*0.18);
+  g.addColorStop(0,    'rgba(198,198,198,0.55)');
+  g.addColorStop(0.62, 'rgba(118,118,118,0.18)');
+  g.addColorStop(1,    'rgba(0,  0,  0,  0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // Temple recession — soft lateral concavity
+  for (const ex of [-0.20, 0.20]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.28, 0, cx + ex*W, cy - H*0.28, W*0.09);
+    g.addColorStop(0,   'rgba(0,0,0,0.28)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Supraorbital ridge — dark band above each brow
+  // Supraorbital ridge — nearly flat (reduced aggression selection)
   for (const ex of [-0.112, 0.112]) {
-    g = ctx.createLinearGradient(cx + ex*W - W*0.09, cy - H*0.195, cx + ex*W + W*0.09, cy - H*0.177);
+    g = ctx.createLinearGradient(cx + ex*W - W*0.08, cy - H*0.198, cx + ex*W + W*0.08, cy - H*0.186);
     g.addColorStop(0,   'rgba(0,0,0,0)');
-    g.addColorStop(0.5, 'rgba(0,0,0,0.28)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.09, cy - H*0.205, W*0.18, H*0.018);
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);
   }
-  // Brow ridges — raised shelf above eyes
+  // Brow shelf — minimal neotenic arch
   for (const ex of [-0.112, 0.112]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.162, 0, cx + ex*W, cy - H*0.162, W*0.092);
-    g.addColorStop(0,    'rgba(205,205,205,0.70)');
-    g.addColorStop(0.50, 'rgba(140,140,140,0.32)');
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.168, 0, cx + ex*W, cy - H*0.168, W*0.078);
+    g.addColorStop(0,    'rgba(205,205,205,0.38)');
+    g.addColorStop(0.50, 'rgba(150,150,150,0.16)');
     g.addColorStop(1,    'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Glabella — deeper inter-brow depression
-  g = ctx.createRadialGradient(cx, cy - H*0.155, 0, cx, cy - H*0.155, W*0.026);
-  g.addColorStop(0,   'rgba(0,0,0,0.58)');
+  // Glabella — shallow, open expression
+  g = ctx.createRadialGradient(cx, cy - H*0.160, 0, cx, cy - H*0.160, W*0.022);
+  g.addColorStop(0,   'rgba(0,0,0,0.22)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Eye sockets — wide-set, almond-shaped, heavy-lidded
-  const eyeAlphas = [0.70, 0.65];
+  // Eye sockets — larger, rounder (screen/light-environment selection)
+  const eyeAlphas = [0.66, 0.62];
   for (let ei = 0; ei < 2; ei++) {
-    const ex = ei === 0 ? -0.122 : 0.122;
+    const ex = ei === 0 ? -0.118 : 0.118;
     ctx.save();
-    ctx.translate(cx + ex*W, cy - H*0.085);
-    ctx.scale(1.58, 1.0);
-    g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.088);
+    ctx.translate(cx + ex*W, cy - H*0.088);
+    ctx.scale(1.42, 1.08);
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.106);
     g.addColorStop(0,    `rgba(0,0,0,${eyeAlphas[ei]})`);
-    g.addColorStop(0.45, 'rgba(0,0,0,0.75)');
-    g.addColorStop(0.80, 'rgba(0,0,0,0.28)');
+    g.addColorStop(0.45, 'rgba(0,0,0,0.70)');
+    g.addColorStop(0.80, 'rgba(0,0,0,0.24)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(0, 0, W*0.088, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, W*0.106, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
-  // Corneal specular + iris ring — layered highlights per eye
-  for (const ex of [-0.122, 0.122]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.085, 0, cx + ex*W, cy - H*0.085, W*0.034);
-    g.addColorStop(0,   'rgba(175,175,175,0.38)');
-    g.addColorStop(0.55,'rgba(95,95,95,0.16)');
+  // Corneal specular + iris ring — enlarged pupils
+  for (const ex of [-0.118, 0.118]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.088, 0, cx + ex*W, cy - H*0.088, W*0.044);
+    g.addColorStop(0,   'rgba(185,185,185,0.42)');
+    g.addColorStop(0.55,'rgba(95,95,95,0.18)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    g = ctx.createRadialGradient(cx + ex*W + W*0.013, cy - H*0.100, 0, cx + ex*W + W*0.013, cy - H*0.100, W*0.022);
-    g.addColorStop(0,   'rgba(235,235,235,0.72)');
-    g.addColorStop(0.45,'rgba(185,185,185,0.28)');
+    g = ctx.createRadialGradient(cx + ex*W + W*0.012, cy - H*0.102, 0, cx + ex*W + W*0.012, cy - H*0.102, W*0.028);
+    g.addColorStop(0,   'rgba(240,240,240,0.78)');
+    g.addColorStop(0.45,'rgba(190,190,190,0.30)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Nose bridge — from just below brows to tip, not invading eye area
-  g = ctx.createLinearGradient(cx - W*0.018, 0, cx + W*0.018, 0);
+  // Nose bridge — fine, low projection
+  g = ctx.createLinearGradient(cx - W*0.012, 0, cx + W*0.012, 0);
   g.addColorStop(0,   'rgba(0,0,0,0)');
-  g.addColorStop(0.5, 'rgba(210,210,210,0.68)');
+  g.addColorStop(0.5, 'rgba(205,205,205,0.52)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(cx - W*0.018, cy - H*0.04, W*0.036, H*0.14);
-  // Nose tip — slightly upturned, rounded
-  g = ctx.createRadialGradient(cx, cy + H*0.090, 0, cx, cy + H*0.090, W*0.082);
-  g.addColorStop(0,    'rgba(255,255,255,1.00)');
-  g.addColorStop(0.28, 'rgba(235,235,235,0.85)');
-  g.addColorStop(0.62, 'rgba(162,162,162,0.44)');
+  ctx.fillRect(cx - W*0.012, cy - H*0.02, W*0.024, H*0.12);
+  // Nose tip — small, soft
+  g = ctx.createRadialGradient(cx, cy + H*0.082, 0, cx, cy + H*0.082, W*0.058);
+  g.addColorStop(0,    'rgba(245,245,245,0.92)');
+  g.addColorStop(0.30, 'rgba(220,220,220,0.68)');
+  g.addColorStop(0.62, 'rgba(150,150,150,0.30)');
   g.addColorStop(1,    'rgba(0,  0,  0,  0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Nose ala — more pronounced wings
-  for (const ex of [-0.065, 0.065]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.112, 0, cx + ex*W, cy + H*0.112, W*0.032);
-    g.addColorStop(0,   'rgba(0,0,0,0.52)');
+  // Nose ala — subtle wings
+  for (const ex of [-0.048, 0.048]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.100, 0, cx + ex*W, cy + H*0.100, W*0.022);
+    g.addColorStop(0,   'rgba(0,0,0,0.32)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Cheekbones — wide, high, prominent
-  for (const ex of [-0.205, 0.205]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.005, 0, cx + ex*W, cy + H*0.005, W*0.118);
-    g.addColorStop(0,   'rgba(195,195,195,0.62)');
-    g.addColorStop(0.60,'rgba(105,105,105, 0.22)');
+  // Cheekbones — soft, low relief (gracile skeleton)
+  for (const ex of [-0.188, 0.188]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.012, 0, cx + ex*W, cy + H*0.012, W*0.098);
+    g.addColorStop(0,   'rgba(190,190,190,0.38)');
+    g.addColorStop(0.60,'rgba(100,100,100, 0.14)');
     g.addColorStop(1,   'rgba(0,  0,  0,  0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Nasolabial folds — shadows from nose wings toward mouth corners
-  for (const ex of [-0.082, 0.082]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.155, 0, cx + ex*W, cy + H*0.155, W*0.055);
-    g.addColorStop(0,   'rgba(0,0,0,0.38)');
-    g.addColorStop(0.6, 'rgba(0,0,0,0.14)');
+  // Nasolabial folds — faint (youthful neoteny)
+  for (const ex of [-0.068, 0.068]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy + H*0.142, 0, cx + ex*W, cy + H*0.142, W*0.042);
+    g.addColorStop(0,   'rgba(0,0,0,0.22)');
+    g.addColorStop(0.6, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Philtrum — vertical groove above lips
-  g = ctx.createRadialGradient(cx, cy + H*0.168, 0, cx, cy + H*0.168, W*0.026);
-  g.addColorStop(0,   'rgba(0,0,0,0.42)');
+  // Philtrum — shallow groove
+  g = ctx.createRadialGradient(cx, cy + H*0.158, 0, cx, cy + H*0.158, W*0.018);
+  g.addColorStop(0,   'rgba(0,0,0,0.26)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Upper lip — full, wide, prominent Cupid's bow
+  // Upper lip — narrow mouth (smaller jaw/teeth)
   ctx.save();
-  ctx.translate(cx, cy + H*0.210);
-  ctx.scale(2.5, 1.0);
-  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.064);
-  g.addColorStop(0,    'rgba(222,222,222,0.88)');
-  g.addColorStop(0.38, 'rgba(175,175,175,0.52)');
+  ctx.translate(cx, cy + H*0.198);
+  ctx.scale(1.85, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.050);
+  g.addColorStop(0,    'rgba(215,215,215,0.78)');
+  g.addColorStop(0.38, 'rgba(168,168,168,0.42)');
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(0, 0, W*0.064, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, W*0.050, 0, Math.PI*2); ctx.fill();
   ctx.restore();
-  // Lower lip — fuller, more voluminous
+  // Lower lip — compact
   ctx.save();
-  ctx.translate(cx, cy + H*0.226);
-  ctx.scale(2.6, 1.0);
-  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.074);
-  g.addColorStop(0,    'rgba(210,210,210,0.80)');
-  g.addColorStop(0.38, 'rgba(165,165,165,0.48)');
+  ctx.translate(cx, cy + H*0.212);
+  ctx.scale(1.95, 1.0);
+  g = ctx.createRadialGradient(0, 0, 0, 0, 0, W*0.056);
+  g.addColorStop(0,    'rgba(205,205,205,0.72)');
+  g.addColorStop(0.38, 'rgba(158,158,158,0.38)');
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(0, 0, W*0.074, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, W*0.056, 0, Math.PI*2); ctx.fill();
   ctx.restore();
-  // Lip gap — wider mouth
-  g = ctx.createLinearGradient(cx - W*0.085, 0, cx + W*0.085, 0);
+  // Lip gap — narrow mouth slit
+  g = ctx.createLinearGradient(cx - W*0.062, 0, cx + W*0.062, 0);
   g.addColorStop(0,    'rgba(0,0,0,0)');
-  g.addColorStop(0.10, 'rgba(0,0,0,0.42)');
-  g.addColorStop(0.5,  'rgba(0,0,0,0.52)');
-  g.addColorStop(0.90, 'rgba(0,0,0,0.42)');
+  g.addColorStop(0.10, 'rgba(0,0,0,0.34)');
+  g.addColorStop(0.5,  'rgba(0,0,0,0.42)');
+  g.addColorStop(0.90, 'rgba(0,0,0,0.34)');
   g.addColorStop(1,    'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(cx - W*0.085, cy + H*0.220, W*0.170, H*0.008);
-  // Labiomental crease — chin-lip junction shadow
-  g = ctx.createRadialGradient(cx, cy + H*0.265, 0, cx, cy + H*0.265, W*0.028);
-  g.addColorStop(0,   'rgba(0,0,0,0.44)');
+  ctx.fillRect(cx - W*0.062, cy + H*0.206, W*0.124, H*0.007);
+  // Labiomental crease — soft chin-lip junction
+  g = ctx.createRadialGradient(cx, cy + H*0.238, 0, cx, cy + H*0.238, W*0.022);
+  g.addColorStop(0,   'rgba(0,0,0,0.30)');
   g.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // Chin — tapered point
-  g = ctx.createRadialGradient(cx, cy + H*0.365, 0, cx, cy + H*0.365, W*0.095);
-  g.addColorStop(0,   'rgba(160,160,160,0.68)');
-  g.addColorStop(0.58,'rgba(88, 88, 88, 0.28)');
+  // Chin — small, receding point
+  g = ctx.createRadialGradient(cx, cy + H*0.318, 0, cx, cy + H*0.318, W*0.068);
+  g.addColorStop(0,   'rgba(155,155,155,0.52)');
+  g.addColorStop(0.58,'rgba(82, 82, 82, 0.20)');
   g.addColorStop(1,   'rgba(0,  0,  0,  0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // Ear outlines — faint lateral indicators
-  for (const ex of [-0.38, 0.38]) {
-    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.02, 0, cx + ex*W, cy + H*0.02, W*0.055);
-    g.addColorStop(0,   'rgba(90,90,90,0.12)');
+  for (const ex of [-0.36, 0.36]) {
+    g = ctx.createRadialGradient(cx + ex*W, cy - H*0.04, 0, cx + ex*W, cy + H*0.04, W*0.048);
+    g.addColorStop(0,   'rgba(90,90,90,0.10)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
-  // Neck column — vertical rect fading to transparent
-  const neckGrad = ctx.createLinearGradient(0, cy + H*0.48, 0, H);
-  neckGrad.addColorStop(0,   'rgba(60,60,60,0.35)');
+  // Neck column — slender, elongated
+  const neckGrad = ctx.createLinearGradient(0, cy + H*0.44, 0, H);
+  neckGrad.addColorStop(0,   'rgba(58,58,58,0.30)');
   neckGrad.addColorStop(1,   'rgba(0,0,0,0)');
   ctx.fillStyle = neckGrad;
-  ctx.fillRect(cx - W*0.04, cy + H*0.48, W*0.08, H - (cy + H*0.48));
+  ctx.fillRect(cx - W*0.032, cy + H*0.44, W*0.064, H - (cy + H*0.44));
   return cv;
 }
 
@@ -1248,13 +1257,17 @@ const COUNCIL_VOICE = {
   Security: 'pernille', User: 'pernille', Mentor: 'pernille'
 };
 
+// Pristine chrome: council personas no longer shift the face to a hue
+// (was blue/orange/green/red/purple/yellow per persona) -- only the logo,
+// face, and shell prompt carry visual weight; persona identity is
+// conveyed through text/voice, not an unannounced color change.
 const PERSONA_TINT = {
-  Architect: new Color(0.75, 0.9, 1.0),
-  Skeptic: new Color(1.0, 0.78, 0.62),
-  Pragmatist: new Color(0.74, 1.0, 0.78),
-  Security: new Color(1.0, 0.68, 0.68),
-  User: new Color(0.9, 0.84, 1.0),
-  Mentor: new Color(1.0, 0.92, 0.68)
+  Architect: new Color(1, 1, 1),
+  Skeptic: new Color(1, 1, 1),
+  Pragmatist: new Color(1, 1, 1),
+  Security: new Color(1, 1, 1),
+  User: new Color(1, 1, 1),
+  Mentor: new Color(1, 1, 1)
 };
 
 
@@ -1279,17 +1292,8 @@ function offsetCouncilMouthPool(lane, delta = 0.18) {
     mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);
   }
 }
-const seasonalTintEnabled = new URLSearchParams(window.location.search).get('seasonal') === '1';
 function refreshIdleTint() {
-  if (seasonalTintEnabled) {
-    const month = new Date().getMonth();
-    if (month === 9) TINT.idle.copy(new Color(1.0, 0.72, 0.36));
-    else if (month >= 5 && month <= 6) TINT.idle.copy(new Color(0.98, 0.85, 0.42));
-    else if (month >= 11 || month <= 1) TINT.idle.copy(new Color(0.78, 0.9, 1.0));
-    else TINT.idle.copy(dayNightTint());
-  } else {
-    TINT.idle.copy(dayNightTint());
-  }
+  TINT.idle.copy(dayNightTint());
   colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
 }
 refreshIdleTint();

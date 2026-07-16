@@ -282,13 +282,17 @@ const COUNCIL_VOICE = {
   Security: 'pernille', User: 'pernille', Mentor: 'pernille'
 };
 
+// Pristine chrome: council personas no longer shift the face to a hue
+// (was blue/orange/green/red/purple/yellow per persona) -- only the logo,
+// face, and shell prompt carry visual weight; persona identity is
+// conveyed through text/voice, not an unannounced color change.
 const PERSONA_TINT = {
-  Architect: new Color(0.75, 0.9, 1.0),
-  Skeptic: new Color(1.0, 0.78, 0.62),
-  Pragmatist: new Color(0.74, 1.0, 0.78),
-  Security: new Color(1.0, 0.68, 0.68),
-  User: new Color(0.9, 0.84, 1.0),
-  Mentor: new Color(1.0, 0.92, 0.68)
+  Architect: new Color(1, 1, 1),
+  Skeptic: new Color(1, 1, 1),
+  Pragmatist: new Color(1, 1, 1),
+  Security: new Color(1, 1, 1),
+  User: new Color(1, 1, 1),
+  Mentor: new Color(1, 1, 1)
 };
 
 
@@ -313,17 +317,8 @@ function offsetCouncilMouthPool(lane, delta = 0.18) {
     mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);
   }
 }
-const seasonalTintEnabled = new URLSearchParams(window.location.search).get('seasonal') === '1';
 function refreshIdleTint() {
-  if (seasonalTintEnabled) {
-    const month = new Date().getMonth();
-    if (month === 9) TINT.idle.copy(new Color(1.0, 0.72, 0.36));
-    else if (month >= 5 && month <= 6) TINT.idle.copy(new Color(0.98, 0.85, 0.42));
-    else if (month >= 11 || month <= 1) TINT.idle.copy(new Color(0.78, 0.9, 1.0));
-    else TINT.idle.copy(dayNightTint());
-  } else {
-    TINT.idle.copy(dayNightTint());
-  }
+  TINT.idle.copy(dayNightTint());
   colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
 }
 refreshIdleTint();
