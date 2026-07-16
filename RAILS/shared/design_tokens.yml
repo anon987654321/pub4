@@ -64,7 +64,7 @@ face_root:
     radius-md: "0"
     radius-lg: "0"
     radius-pill: "0"
-    face-bar-height: "36px"
+    face-bar-height: "44px"
     hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"
     hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + 44px)"
     # Additive-blending budget: ~17k points; raising size/glow/decay together

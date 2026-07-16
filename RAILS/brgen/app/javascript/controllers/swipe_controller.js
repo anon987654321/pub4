@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { enqueueSync } from "pwa/offline_store"
 
 export default class extends Controller {
   static values = { likeUrl: String, dislikeUrl: String, listenUrl: String, mode: String }
@@ -143,10 +144,17 @@ export default class extends Controller {
         }
       } catch (err) {
         console.error("swipe commit failed", err)
-        // revert card on error
-        card.style.transition = "transform 300ms"
-        card.style.transform = ""
-        card.style.opacity = ""
+        await enqueueSync({ url, method: "POST", body: { user_id: userId } })
+        setTimeout(() => {
+          if (card && card.parentNode) card.parentNode.removeChild(card)
+          this.cards = this.cards.filter(c => c !== card)
+          this.currentCard = this.cards[this.cards.length - 1]
+          if (this.currentCard) {
+            this.currentCard.style.transition = ""
+            this.currentCard.style.transform = ""
+            this.currentCard.style.opacity = ""
+          }
+        }, 180)
       }
     } else {
       // Spring back
@@ -187,8 +195,17 @@ export default class extends Controller {
     try {
       const formData = new FormData()
       formData.append("user_id", userId)
-      await fetch(url, { method: "POST", body: formData, headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content } })
-    } catch (_) {}
+      await fetch(url, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+          "Accept": "text/vnd.turbo-stream.html, text/html"
+        }
+      })
+    } catch (_) {
+      await enqueueSync({ url, method: "POST", body: { user_id: userId } })
+    }
 
     setTimeout(() => {
       if (this.currentCard) {
