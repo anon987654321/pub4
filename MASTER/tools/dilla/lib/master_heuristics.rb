@@ -88,4 +88,19 @@ module DillaMaster
     system("ffmpeg", "-y", "-i", path, "-af", phone_preview_chain, "-c:a", "pcm_s16le", tmp)
     File.exist?(tmp) ? tmp : path
   end
+
+  # Laptop/phone speaker listenability — mid presence, no mud, no piercing highs.
+  def phone_preview_acceptable?(spectrum)
+    mid = (spectrum[:mid] || spectrum["mid"] || -40.0).to_f
+    low = (spectrum[:low] || spectrum["low"] || -30.0).to_f
+    harsh = analyze_harshness(spectrum)
+    low_mid = low - mid
+    mid_ok = mid > -32.0
+    mud_ok = low_mid < 4.0
+    ok = mid_ok && mud_ok && !harsh[:needs_notch]
+    {
+      ok: ok, mid_db: mid.round(2), low_mid_delta: low_mid.round(2),
+      harshness: harsh[:harshness], needs_notch: harsh[:needs_notch]
+    }
+  end
 end

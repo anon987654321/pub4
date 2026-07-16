@@ -438,6 +438,35 @@ PAD_VOICE_PRESETS = {
   blend:   { ep: :rhodes_mark1, warm: :prophet_5_pad }
 }.freeze
 
+# Per-track pad character — applied on stream rotation and deep renders unless
+# PAD_VOICE / PAD_ARP_MODE were set on the CLI before launch.
+TRACK_SOUL_PAD_PROFILES = {
+  glasper_quartal:     { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100" },
+  slow_ballad_wash:    { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200" },
+  suspended_ballad:    { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3400" },
+  neo_soul_pocket:     { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer" },
+  quartal_west_coast:  { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" },
+  maj7_minor_cycle:    { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "blend" },
+  minor_iv_loop:       { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer" },
+  two_chord_hypnosis:  { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse" },
+  relative_major_turn: { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer" },
+  minor_turnaround:    { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "blend" },
+  warm_minor_arc:      { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer" },
+  minor_triad_walk:    { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "figure" },
+  major_lifting:       { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "blend" },
+  slash_ninth_cycle:   { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "duo" },
+  dorian_iv_loop:      { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" },
+  backdoor_resolve:    { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse" },
+  gospel_bIII:         { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "shimmer" },
+  erykah_minor:        { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1000" },
+  watermelon_turn:     { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer" },
+  church_sus:          { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "held" },
+  jazz_ballad_waltz:   { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1400" },
+  slash_neo_soul:      { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "duo" },
+  modal_safe:          { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse" },
+  minMaj_color:        { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" }
+}.freeze
+
 def synth_patch_by_id(id)
   SYNTH_PATCH_BY_ID[id]
 end
@@ -4130,6 +4159,7 @@ DILLA_BEST_DEFAULTS = {
 # Deep render — quality gate, soul rotation, long pads, pocket jitter, mix refine.
 DILLA_DEEP_DEFAULTS = {
   "DILLA_QUALITY_GATE" => "1",
+  "PHONE_PREVIEW_GATE" => "1",
   "RENDER_RETRIES" => "2",
   "LISTEN_PASSES" => "1",
   "QUALITY_REPORT" => "1",
@@ -4149,12 +4179,40 @@ STREAM_EXTRA_DEFAULTS = {
   "DILLA_STREAMING" => "1"
 }.freeze
 
+# Fast stream — render+play without quality gate / listen refine (~15–30s/track).
+STREAM_FAST_DEFAULTS = {
+  "DILLA_DEEP" => "0",
+  "DILLA_QUALITY_GATE" => "0",
+  "PHONE_PREVIEW_GATE" => "0",
+  "RENDER_RETRIES" => "0",
+  "LISTEN_PASSES" => "0",
+  "QUALITY_REPORT" => "0"
+}.freeze
+
 def deep_render?
   ENV.fetch("DILLA_DEEP", "0") != "0"
 end
 
+def stream_deep?
+  ENV["STREAM_DEEP"] == "1"
+end
+
 def quality_gate_enabled?
-  ENV["DILLA_QUALITY_GATE"] == "1" || ENV["DILLA_STREAMING"] == "1"
+  ENV["DILLA_QUALITY_GATE"] == "1"
+end
+
+def phone_preview_gate_enabled?
+  ENV["PHONE_PREVIEW_GATE"] == "1"
+end
+
+def apply_track_soul_profile!(track, force: false)
+  key = track.to_s.downcase.tr("-", "_").to_sym
+  profile = TRACK_SOUL_PAD_PROFILES[key]
+  return unless profile
+  profile.each do |env_key, value|
+    next if !force && ENV[env_key] && !ENV[env_key].empty?
+    ENV[env_key] = value.to_s
+  end
 end
 
 def pick_default_track!
@@ -4186,6 +4244,15 @@ def apply_stream_listenability_defaults!
   STREAM_EXTRA_DEFAULTS.each do |key, value|
     ENV[key] = value if ENV[key].nil? || ENV[key].empty?
   end
+  if stream_deep?
+    ENV["DILLA_DEEP"] = "1"
+    ENV["DILLA_QUALITY_GATE"] = "1" if ENV["DILLA_QUALITY_GATE"].nil? || ENV["DILLA_QUALITY_GATE"].empty?
+    DILLA_DEEP_DEFAULTS.each do |key, value|
+      ENV[key] = value if ENV[key].nil? || ENV[key].empty?
+    end
+  else
+    STREAM_FAST_DEFAULTS.each { |key, value| ENV[key] = value }
+  end
 end
 
 def render_spectrum(path)
@@ -4209,13 +4276,27 @@ def render_quality_acceptable?(path)
                else
                  (ENV["RENDER_BEAUTY_MIN"] || "70").to_f
                end
-  ok = beauty >= min_beauty && !harsh[:needs_notch]
-  if deep_render? && sk[:recommendation] == "boost_sub" && sk[:low_mid_delta].to_f < -9.0
-    ok = false
+  beauty_ok = beauty >= min_beauty && !harsh[:needs_notch]
+  sub_ok = !(deep_render? && sk[:recommendation] == "boost_sub" && sk[:low_mid_delta].to_f < -9.0)
+  ok = beauty_ok && sub_ok
+  if ok && phone_preview_gate_enabled?
+    phone_path = DillaMaster.apply_phone_preview!(path)
+    phone_spec = render_spectrum(phone_path)
+    phone = DillaMaster.phone_preview_acceptable?(phone_spec)
+    unless phone[:ok]
+      warn "phone preview gate: mid=#{phone[:mid_db]} dB, low-mid=#{phone[:low_mid_delta]} dB, " \
+           "harsh=#{phone[:harshness]} — retrying"
+      ok = false
+    end
+    FileUtils.rm_f(phone_path) if phone_path != path && phone_path.end_with?(".phone.wav")
   end
   unless ok
-    warn "quality gate: beauty=#{beauty} (min #{min_beauty}), harsh=#{harsh[:harshness]}, " \
-         "sub=#{sk[:recommendation]} — retrying"
+    unless beauty_ok
+      warn "quality gate: beauty=#{beauty} (min #{min_beauty}), harsh=#{harsh[:harshness]} — retrying"
+    end
+    unless sub_ok
+      warn "quality gate: sub=#{sk[:recommendation]} (low-mid #{sk[:low_mid_delta]} dB) — retrying"
+    end
   end
   ok
 end
@@ -4314,6 +4395,8 @@ def stream(bars_count = STREAM_BARS_COUNT)
     return
   end
   prev_track = ENV["TRACK"]
+  user_pad_locked = (ENV["PAD_VOICE"] && !ENV["PAD_VOICE"].empty?) ||
+                    (ENV["PAD_ARP_MODE"] && !ENV["PAD_ARP_MODE"].empty?)
   apply_stream_listenability_defaults!
   # Every restart (and there have been many, iterating on this live) reset
   # the rotation to index 0 — meaning repeated restarts kept replaying the
@@ -4328,15 +4411,17 @@ def stream(bars_count = STREAM_BARS_COUNT)
   # again, so edits since the last track take effect automatically between
   # tracks without needing a manual kill+relaunch.
   self_mtime = File.mtime(__FILE__)
-  puts "streaming — cycling #{order.join(', ')} (Ctrl-C to stop)"
+  mode = stream_deep? ? "deep+QC" : "fast"
+  puts "streaming (#{mode}) — cycling #{order.join(', ')} (Ctrl-C to stop)"
   loop do
     order.each do |t|
       if File.mtime(__FILE__) > self_mtime
         puts "=== dilla.rb changed — restarting to pick it up ==="
         exec(Gem.ruby, __FILE__, "stream", STREAM_BARS_COUNT.to_s)
       end
+      apply_track_soul_profile!(t, force: !user_pad_locked)
       ENV["TRACK"] = t
-      puts "=== #{t} ==="
+      puts "=== #{t} (pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode}) ==="
       play("dilla", bars_count)
       sleep DillaSeeds.drift_sleep(0.35)
     end
@@ -6885,6 +6970,12 @@ def help
       ruby dilla.rb out.wav [bars]     Optional path / length; rotates soul profiles
       DILLA_DEEP=0                     Standard render (no quality gate / refine)
       DILLA_RAW=1                      Skip all best-default ENV
+      PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (on in deep mode)
+
+    STREAM (non-stop rotation — speakers via ffplay)
+      stream [bars]                    Fast render+play per profile (#{STREAM_BARS_COUNT} bars default)
+      STREAM_DEEP=1 stream [bars]      Full deep pipeline + quality gate per track (~1–2 min)
+      DILLA_FORCE_TERMINAL=1         macOS: open Terminal.app for speaker playback
 
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
@@ -7937,7 +8028,8 @@ FLAG_ENV = {
   "kick-gain" => "KICK_GAIN", "vinyl" => "VINYL", "external-kit" => "EXTERNAL_KIT",
   "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW",
   "deep" => "DILLA_DEEP", "quality-gate" => "DILLA_QUALITY_GATE", "render-retries" => "RENDER_RETRIES",
-  "pad-vol" => "PAD_VOL", "conv-reverb" => "CONV_REVERB", "render-beauty-min" => "RENDER_BEAUTY_MIN"
+  "pad-vol" => "PAD_VOL", "conv-reverb" => "CONV_REVERB", "render-beauty-min" => "RENDER_BEAUTY_MIN",
+  "stream-deep" => "STREAM_DEEP", "phone-preview-gate" => "PHONE_PREVIEW_GATE"
 }.freeze
 
 def apply_flags!(argv)
@@ -8063,8 +8155,15 @@ def render_output_path?(token)
 end
 
 if __FILE__ == $PROGRAM_NAME
+  pad_voice_before = ENV["PAD_VOICE"]
+  pad_arp_before = ENV["PAD_ARP_MODE"]
   apply_best_defaults!
   apply_flags!(ARGV)
+  unless ENV["DILLA_RAW"] == "1"
+    pad_locked = (pad_voice_before && !pad_voice_before.empty?) ||
+                 (pad_arp_before && !pad_arp_before.empty?)
+    apply_track_soul_profile!(ENV["TRACK"], force: !pad_locked) if ENV["TRACK"] && !ENV["TRACK"].empty?
+  end
   cmd = ARGV.shift
   if cmd.nil? || (render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd))
     ARGV.unshift(cmd) if cmd
