@@ -2796,7 +2796,10 @@ def sh!(*command)
   display = command.flatten.join(" ")
   display = "#{display.byteslice(0, 420)}… (#{display.bytesize} bytes)" if display.bytesize > 460
   puts ">>> #{display}"
-  abort "failed: #{command.flatten.first}" unless system(*command.flatten.map(&:to_s))
+  return if system(*command.flatten.map(&:to_s))
+  msg = "failed: #{command.flatten.first}"
+  raise RuntimeError, msg if ENV["DILLA_STREAMING"] == "1"
+  abort msg
 end
 
 def capture(*command)
@@ -4186,7 +4189,9 @@ STREAM_FAST_DEFAULTS = {
   "PHONE_PREVIEW_GATE" => "0",
   "RENDER_RETRIES" => "0",
   "LISTEN_PASSES" => "0",
-  "QUALITY_REPORT" => "0"
+  "QUALITY_REPORT" => "0",
+  "CONV_REVERB" => "0",
+  "LEAD_ARP" => "0"
 }.freeze
 
 def deep_render?
@@ -4387,13 +4392,18 @@ def stream(bars_count = STREAM_BARS_COUNT)
   require_playback_tool!
   if darwin? && ENV["DILLA_STREAM_LAUNCHED"] != "1" &&
      (ENV["GROK_AGENT"] == "1" || !$stdout.tty? || ENV["DILLA_FORCE_TERMINAL"] == "1")
-    cmd = "cd #{Shellwords.escape(ROOT)} && DILLA_STREAM_LAUNCHED=1 ruby #{Shellwords.escape(__FILE__)} stream #{bars_count.to_i}"
+    stream_log = File.join(ROOT, "stream.log")
+    cmd = "cd #{Shellwords.escape(ROOT)} && while true; do " \
+          "DILLA_STREAM_LAUNCHED=1 ruby #{Shellwords.escape(__FILE__)} stream #{bars_count.to_i} 2>&1 | tee -a #{Shellwords.escape(stream_log)}; " \
+          "c=$?; [ $c -eq 0 ] || [ $c -eq 130 ] && break; echo \"stream exited $c — restart in 3s\"; sleep 3; done"
     puts "agent/background shell — opening Terminal for speaker playback…"
     puts cmd
     system("osascript", "-e", %(tell application "Terminal" to do script "#{cmd.gsub('"', '\\"')}"))
     system("osascript", "-e", 'tell application "Terminal" to activate')
     return
   end
+  $stdout.sync = true
+  $stderr.sync = true
   prev_track = ENV["TRACK"]
   user_pad_locked = (ENV["PAD_VOICE"] && !ENV["PAD_VOICE"].empty?) ||
                     (ENV["PAD_ARP_MODE"] && !ENV["PAD_ARP_MODE"].empty?)
@@ -4422,7 +4432,14 @@ def stream(bars_count = STREAM_BARS_COUNT)
       apply_track_soul_profile!(t, force: !user_pad_locked)
       ENV["TRACK"] = t
       puts "=== #{t} (pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode}) ==="
-      play("dilla", bars_count)
+      begin
+        play("dilla", bars_count)
+      rescue SystemExit
+        raise
+      rescue Exception => e
+        warn "stream: #{t} failed (#{e.class}) — #{e.message}"
+        sleep 1.5
+      end
       sleep DillaSeeds.drift_sleep(0.35)
     end
   end
@@ -6542,13 +6559,16 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     self_sample_idx = idx
     idx += 1
   end
-  ir_room = ENV["CONV_REVERB"]&.to_sym
-  ir_room = :chamber if deep_render? && (!ir_room || !CONVOLUTION_ROOMS.key?(ir_room))
-  ir_room ||= CONVOLUTION_ROOMS.keys.sample
-  ir_path = DillaMaster.club_ir_path || synth_impulse_response!(ir_room)
-  command += ["-i", ir_path]
-  ir_input_idx = idx
-  idx += 1
+  ir_input_idx = nil
+  unless ENV["CONV_REVERB"] == "0"
+    ir_room = ENV["CONV_REVERB"]&.to_sym
+    ir_room = :chamber if deep_render? && (!ir_room || !CONVOLUTION_ROOMS.key?(ir_room))
+    ir_room ||= CONVOLUTION_ROOMS.keys.sample
+    ir_path = DillaMaster.club_ir_path || synth_impulse_response!(ir_room)
+    command += ["-i", ir_path]
+    ir_input_idx = idx
+    idx += 1
+  end
   ghost_n = events[:ghost]&.length || 0
   kick_n = events[:kick]&.length || 1
   vinyl_amp = DillaMl.groove_synced_vinyl(ghost_n, kick_n, base: sonic_vinyl_level(cfg[:sonic]))
