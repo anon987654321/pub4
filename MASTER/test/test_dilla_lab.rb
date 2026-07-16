@@ -94,6 +94,41 @@ class TestDillaLab < Minitest::Test
     assert_equal "8", result.fetch("bars")
   end
 
+  def test_groove_score_rewards_pocket_density_and_timing_bias
+    result = eval_in_engine(<<~RUBY)
+      sparse = {
+        kick: [[0, 0.8], [1, 0.7]], snare: [[0.5, 0.62]], ghost: [[0.3, 0.28]],
+        hat: [[0.1, 0.4], [0.2, 0.38]],
+        _groove_meta: { snare_early_ms: [-4], hat_late_ms: [2], ghost_vel: [0.28] }
+      }
+      pocket = {
+        kick: [[0, 0.82], [0.75, 0.7], [1.5, 0.68]], snare: [[0.5, 0.66], [1.0, 0.58]],
+        ghost: [[0.25, 0.22], [0.35, 0.36], [0.55, 0.31], [0.7, 0.29]],
+        hat: (0..7).map { |i| [i * 0.1, 0.42] },
+        _groove_meta: { snare_early_ms: [-14, -11], hat_late_ms: [9, 7, 8], ghost_vel: [0.22, 0.36, 0.31, 0.29] }
+      }
+      puts JSON.generate(
+        sparse: DillaGrooveScore.analyze(sparse)[:score],
+        pocket: DillaGrooveScore.analyze(pocket)[:score]
+      )
+    RUBY
+    assert_operator result.fetch("pocket"), :>, result.fetch("sparse"),
+                   "pocket-heavy schedule should outscore sparse kicks-only grid"
+  end
+
+  def test_dilla_sidechain_style_selects_fast_duck_for_dilla_family
+    result = eval_in_engine(<<~RUBY)
+      dilla = sidechain_filter_chain({ style_family: :dilla })
+      flylo = sidechain_filter_chain({ style_family: :flylo })
+      puts JSON.generate(
+        dilla_release: dilla.join.include?("release=90"),
+        flylo_release: flylo.join.include?("release=14")
+      )
+    RUBY
+    assert result.fetch("dilla_release"), "dilla sidechain should use tight release"
+    assert result.fetch("flylo_release"), "flylo sidechain unchanged"
+  end
+
   def test_wrapper_style_mapping_produces_engine_flags
     # The wrapper's execution is guarded, so it loads cleanly in-process and
     # only defines the DillaEntrypoint namespace.

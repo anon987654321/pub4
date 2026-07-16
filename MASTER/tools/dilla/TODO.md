@@ -19,7 +19,7 @@ Tier C (M4L, hardware, installations) remains out of scope by design.
 - [x] Harmony breakdown in `quality` JSON
 - [x] 37 semantic profiles + stream rotation
 
-### Groove (`lib/groove_engine.rb`)
+### Groove (`lib/groove_engine.rb`, `lib/groove_score.rb`)
 - [x] Per-16th swing jitter (`SWING_JITTER_TICKS`)
 - [x] Snare early / hats late / hi-hat micro-delay
 - [x] Markov drum steps (`MARKOV_DRUMS=1` default on)
@@ -29,6 +29,13 @@ Tier C (M4L, hardware, installations) remains out of scope by design.
 - [x] Euclidean hats (`EUCLIDEAN_HATS=1`)
 - [x] Prime grid (`PRIME_GRID=1`)
 - [x] Flam offset (`FLAM=1` default)
+- [x] Transient-aware groove score (ghost velocity spread, snare early / hat late bias)
+- [x] Role-based drum velocity (`dilla_role_velocity` + `velocity_curve`)
+- [x] Dilla sidechain preset (`SIDECHAIN_STYLE=dilla` — fast kick duck)
+- [x] Chop-aware drums (`SPECTRAL_ARP=1` thins hats, doubles kicks on chop bars)
+- [x] Evolve pocket weighting (`EVOLVE_GROOVE_W=0.22` for Dilla tracks)
+- [x] Stream pocket rotation (`stream_evolve_pocket!` — swing/groove DNA nudges)
+- [x] Phone-preview gate in stream iterate (`PHONE_PREVIEW_GATE=1`)
 
 ### Seeds (`lib/seed_providers.rb`)
 - [x] `SEED_TEXT` → swing/BPM/seed

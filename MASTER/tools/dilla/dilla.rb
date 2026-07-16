@@ -2117,6 +2117,50 @@ def flylo_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
   ]
 end
 
+# Tight kick-triggered duck — short attack/release for MPC pocket, not wash.
+def dilla_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
+  [
+    "#{drum_label}asplit=2[dr_dry][dr_sc]",
+    "#{harm_label}[dr_sc]sidechaincompress=threshold=-24dB:ratio=5:attack=0.3:release=90:level_sc=0.88[harm_sc]",
+    "[dr_dry][harm_sc]amix=inputs=2:weights=1.0 1.55:duration=first:normalize=0[sc_mix]"
+  ]
+end
+
+def sidechain_filter_chain(cfg)
+  return flylo_sidechain_filters unless cfg[:style_family] == :dilla
+  ENV.fetch("SIDECHAIN_STYLE", "dilla").to_s == "flylo" ? flylo_sidechain_filters : dilla_sidechain_filters
+end
+
+DILLA_ROLE_VELOCITY_BASE = {
+  kick_anchor: 0.56, kick_sync: 0.44, snare_back: 0.66, snare_off: 0.48,
+  ghost: 0.30, hat_down: 0.50, hat_up: 0.40, open: 0.32, clap: 0.42
+}.freeze
+
+def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
+  base = case role
+         when :kick_anchor then DILLA_ROLE_VELOCITY_BASE[:kick_anchor]
+         when :kick_sync then DILLA_ROLE_VELOCITY_BASE[:kick_sync]
+         when :snare then backbeat ? DILLA_ROLE_VELOCITY_BASE[:snare_back] : DILLA_ROLE_VELOCITY_BASE[:snare_off]
+         when :ghost then DILLA_ROLE_VELOCITY_BASE[:ghost]
+         when :hat_down then DILLA_ROLE_VELOCITY_BASE[:hat_down]
+         when :hat_up then DILLA_ROLE_VELOCITY_BASE[:hat_up]
+         when :open then DILLA_ROLE_VELOCITY_BASE[:open]
+         when :clap then DILLA_ROLE_VELOCITY_BASE[:clap]
+         else 0.4
+         end
+  if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
+    perf = @composition_session.performer_profile
+    base *= perf[:ghost_boost] if role == :ghost
+  end
+  spread = role == :ghost ? 0.06 : 0.08
+  dilla_velocity(base, bar, step, spread: spread) * sec_gain
+end
+
+def spectral_arp_chop_bar?(bar, chord_bars, drums_only, section)
+  ENV["SPECTRAL_ARP"] == "1" && !drums_only && (bar % [chord_bars, 4].max).zero? &&
+    !%i[breakdown intro].include?(section)
+end
+
 def build_drum_bus_filter(cfg, sonic, duration: nil)
   crush_mix = sonic&.dig("synth", "crush_mix")&.to_f
   base = if crush_mix&.positive?
@@ -5048,7 +5092,9 @@ STREAM_ITERATE_TUNING = {
   "LEAD_ARP" => "1",
   "EXPERIMENTAL_LEADS" => "1",
   "STREAM_EVOLVE_PERFORMER" => "1",
-  "STREAM_CREATIVE_FREEDOM" => "1"
+  "STREAM_CREATIVE_FREEDOM" => "1",
+  "PHONE_PREVIEW_GATE" => "1",
+  "EVOLVE_GROOVE_W" => "0.22"
 }.freeze
 
 # STREAM_FAST_DEFAULTS must not clobber these when iterate is on.
@@ -5109,7 +5155,18 @@ def stream_iterate_acceptable?(path)
   spectrum = render_spectrum(path)
   harsh = DillaMaster.analyze_harshness(spectrum)
   min = (ENV["RENDER_BEAUTY_MIN"] || "65").to_f
-  beauty >= min && !harsh[:needs_notch]
+  ok = beauty >= min && !harsh[:needs_notch]
+  if ok && phone_preview_gate_enabled?
+    phone_path = DillaMaster.apply_phone_preview!(path)
+    phone_spec = render_spectrum(phone_path)
+    phone = DillaMaster.phone_preview_acceptable?(phone_spec)
+    unless phone[:ok]
+      warn "stream iterate phone gate: mid=#{phone[:mid_db]} dB low-mid=#{phone[:low_mid_delta]} dB"
+      ok = false
+    end
+    FileUtils.rm_f(phone_path) if phone_path != path && phone_path.end_with?(".phone.wav")
+  end
+  ok
 end
 
 def stream_iterate_after_render!(path)
@@ -5135,6 +5192,7 @@ def stream_iterate_after_render!(path)
   every = [(ENV["EVOLVE_EVERY"] || "3").to_i, 1].max
   if composition_enabled? && (@stream_iterate_count % every).zero?
     stream_evolve_composition!
+    stream_evolve_pocket!
     notes << "evolved"
   end
   if stream_creative_freedom_enabled?
@@ -5168,6 +5226,25 @@ def stream_evolve_composition!
   ENV["SWING"] = cfg[:swing].round(1).to_s if cfg[:swing]
   sess.save!
   puts "stream evolve gen=#{sess.generation} performer=#{ENV['PERFORMER']} groove=#{ENV['GROOVE_DNA']}"
+end
+
+def stream_evolve_pocket!
+  return unless stream_iterate_enabled?
+  cfg = dilla_resolve_config
+  return unless DillaComposition::Evolution.dilla_pocket_style?(cfg)
+  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + 17)
+  ENV["SNARE_EARLY"] = "1"
+  ENV["HATS_LATE"] = "1"
+  ENV["GROOVE_LOCK"] = "kick"
+  ENV["FLAM"] = "1"
+  swing = (cfg[:swing] || 57).to_f + rng.rand(-2.0..2.0)
+  ENV["SWING"] = swing.clamp(52, 62).round(1).to_s
+  if rng.rand < 0.45
+    pool = %w[donuts fantastic_vol2 endtroducing madvillainy]
+    ENV["GROOVE_DNA"] = pool.sample(random: rng)
+  end
+  ENV["SIDECHAIN_STYLE"] = "dilla" if cfg[:sidechain]
+  puts "stream pocket: swing=#{ENV['SWING']} groove=#{ENV['GROOVE_DNA']}"
 end
 
 # Per-track creative rotation: new lead/scale patches, arp figures, stem balance.
@@ -5906,6 +5983,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
   bar_p  = (beat_p * 4.0).round(6)
   step_p = (beat_p / 4.0).round(6)
   events = Hash.new { |h, k| h[k] = [] }
+  groove_meta = { snare_early_ms: [], hat_late_ms: [], ghost_vel: [] }
   # Odd-meter/hemiola nod (Aydin Esen's Turkish-modal odd meters, without a
   # full rewrite of the 16-step grid): every 16th bar loses its last 2
   # steps — a real short bar, not a fake accent. Cumulative bar starts
@@ -5934,11 +6012,13 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     sec_gain *= DillaRhythm.stripdown_gain(bar, section)
     sec_gain *= DillaRhythm.element_strip_gain(base)
     phase = chord_phase_at(bar, pad_chords, chord_phases, chord_bars: chord_bars, phrase_bars: phrase_bars)
+    chop_entry = spectral_arp_chop_bar?(bar, chord_bars, drums_only, section)
     pattern = if DillaGroove.kick_snare_swap?
                 dilla_snare_steps(bar, feel, section: section)
               else
                 dilla_kick_pattern(bar, n_bars, feel)
               end
+    pattern = (pattern + [0, 15]).uniq.sort if chop_entry && kicks_enabled?
     pattern = [7, 14] if section == :breakdown
     pattern = [0, 10] if section == :intro && bar < 4
     pattern = pattern.select { |s| s < 14 } if drop_beat_bar.call(bar)
@@ -5981,7 +6061,8 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
              dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
         t = DillaGroove.apply_event_timing!(t, role: :kick, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
         ks = kick_velocity_scale
-        kick_vel = dilla_velocity(step.zero? ? 0.52 : 0.44, bar, step, spread: 0.05) * sec_gain * ks
+        kick_role = step.zero? ? :kick_anchor : :kick_sync
+        kick_vel = dilla_role_velocity(kick_role, bar, step, sec_gain: sec_gain * ks)
         events[:kick] << [t.round(6), kick_vel]
         if step.zero?
           events[:sub_osc] ||= []
@@ -6008,15 +6089,17 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
              DillaGroove.flam_offset_sec, 0.0].max
         t = DillaGroove.apply_event_timing!(t, role: :snare, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
         backbeat = halftime? ? [8].include?(step) : [4, 12].include?(step)
-        snare_vel = backbeat ? (si.zero? ? 0.64 : 0.56) : 0.48
-        events[:snare] << [t.round(6), dilla_velocity(snare_vel, bar, step) * sec_gain]
+        groove_meta[:snare_early_ms] << dilla_timing_ms(:snare, bar, step, timing, beat_p) if backbeat
+        snare_vel = dilla_role_velocity(:snare, bar, step, sec_gain: sec_gain, backbeat: backbeat)
+        events[:snare] << [t.round(6), snare_vel]
         if backbeat && backbeat_clap_enabled? && %i[main build].include?(section)
           events[:clap] ||= []
-          events[:clap] << [t.round(6), dilla_velocity(0.4, bar, step, spread: 0.06) * sec_gain, :clap]
+          events[:clap] << [t.round(6), dilla_role_velocity(:clap, bar, step, sec_gain: sec_gain), :clap]
         end
         if backbeat && si.zero?
-          events[:ghost] << [(t - 0.001).round(6).clamp(0.0, Float::INFINITY),
-                              dilla_velocity(0.22, bar, step, spread: 0.04) * sec_gain]
+          ghost_vel = dilla_role_velocity(:ghost, bar, step, sec_gain: sec_gain) * 0.72
+          groove_meta[:ghost_vel] << ghost_vel
+          events[:ghost] << [(t - 0.001).round(6).clamp(0.0, Float::INFINITY), ghost_vel]
         end
       end
     end
@@ -6028,12 +6111,14 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       next if drop_bar
       t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
            dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
-      vel = feel == :loose_pocket ? 0.34 : 0.28
-      events[:ghost] << [t.round(6), dilla_velocity(vel, bar, step, spread: 0.07) * sec_gain]
+      ghost_vel = dilla_role_velocity(:ghost, bar, step, sec_gain: sec_gain)
+      ghost_vel *= 1.12 if feel == :loose_pocket
+      groove_meta[:ghost_vel] << ghost_vel
+      events[:ghost] << [t.round(6), ghost_vel]
     end
 
     hat_steps = dilla_hat_steps(bar, feel, n_bars:)
-    hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown
+    hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown || chop_entry
     hat_steps.each_with_index do |step, i|
       next if drop_bar
       role = if [3, 11].include?(step) && feel == :syncopated_slash_ninth
@@ -6047,12 +6132,14 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
            dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
            dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
       t = DillaGroove.apply_event_timing!(t, role: role, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
-      events[:hat] << [t.round(6), dilla_velocity(i.even? ? 0.48 : 0.38, bar, step, spread: 0.08) * sec_gain]
+      hat_role = role == :hat_up ? :hat_up : :hat_down
+      groove_meta[:hat_late_ms] << dilla_timing_ms(hat_role, bar, step, timing, beat_p)
+      events[:hat] << [t.round(6), dilla_role_velocity(hat_role, bar, step, sec_gain: sec_gain)]
     end
 
     dilla_open_steps(bar, feel, section:).each do |open_step|
       events[:open] << [[base + open_step * step_p + dilla_swing_offset(open_step, step_p, swing, quintuplet: quintuplet) + 0.008, 0.0].max.round(6),
-                        dilla_velocity(0.32, bar, open_step, spread: 0.05) * sec_gain]
+                        dilla_role_velocity(:open, bar, open_step, sec_gain: sec_gain)]
     end
     if feel == :loose_pocket && section == :main && bar % 6 == 4
       events[:ghost] << [[base + 10 * step_p + dilla_swing_offset(10, step_p, swing, quintuplet: quintuplet), 0.0].max.round(6),
@@ -6126,6 +6213,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     end
   end
   schedule_dfam_events!(events, n_bars, beat_p, swing, quintuplet, timing)
+  events[:_groove_meta] = groove_meta
   events
 end
 
@@ -7532,6 +7620,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     swing: cfg[:swing], feel: cfg[:feel], timing: cfg[:timing], quintuplet: cfg[:quintuplet],
     bass_pads:, chord_phases: fugue_phases
   )
+  @last_drum_events = events
 
   pick_external_drum_kit!
   kit = extended_drum_kit(
@@ -7646,7 +7735,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   unless use_stem_harmony
     filt << build_harm_bus_filter(1, duration, cfg, cfg[:sonic], harm_fade_start, harm_fade_dur, beat_p, n_bars)
     if cfg[:sidechain]
-      filt.concat(flylo_sidechain_filters)
+      filt.concat(sidechain_filter_chain(cfg))
       mix_labels = ["[sc_mix]"]
       mix_weights = ["1.0"]
     else
@@ -7931,6 +8020,7 @@ def composition_evolve(n_bars = 16, generations = 5)
     out
   end
   render_fn.define_singleton_method(:quality) { |path| dilla_quality(path) }
+  render_fn.define_singleton_method(:last_events) { @last_drum_events }
   best = DillaComposition::Evolution.run(session: sess, cfg: cfg, n_bars: n_bars,
                                          generations: generations, render_fn: render_fn)
   FileUtils.cp(best[:path], dest) if best[:path] && File.exist?(best[:path])
@@ -7945,7 +8035,7 @@ def composition_critique(path = nil)
   abort "no render to critique — run: ruby dilla.rb jam" unless File.file?(path)
   report = dilla_quality(path)
   sess = composition_session!(n_bars: bars)
-  critique = DillaComposition::Critique.analyze(report, session: sess)
+  critique = DillaComposition::Critique.analyze(report, session: sess, events: @last_drum_events)
   DillaComposition::Critique.print_report(critique)
   sess.critique_log << { path: path, critique: critique[:scores], overall: critique[:overall] }
   sess.save!
@@ -9101,7 +9191,8 @@ FLAG_ENV = {
   "soul-enrich" => "SOUL_ENRICH", "seed-text" => "SEED_TEXT", "tempo-ramp" => "TEMPO_RAMP",
   "markov-drums" => "MARKOV_DRUMS", "groove-lock" => "GROOVE_LOCK", "spectral-arp" => "SPECTRAL_ARP",
   "industrial-dark" => "INDUSTRIAL_DARK", "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
-  "evolve-harmony-w" => "EVOLVE_HARMONY_W",
+  "evolve-harmony-w" => "EVOLVE_HARMONY_W", "evolve-groove-w" => "EVOLVE_GROOVE_W",
+  "sidechain-style" => "SIDECHAIN_STYLE",
   "pad-voice" => "PAD_VOICE", "pad-arp-mode" => "PAD_ARP_MODE", "experimental-leads" => "EXPERIMENTAL_LEADS",
   "kick-gain" => "KICK_GAIN", "vinyl" => "VINYL", "external-kit" => "EXTERNAL_KIT",
   "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW",

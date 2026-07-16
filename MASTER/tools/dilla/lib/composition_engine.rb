@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require_relative "harmony_engine"
+require_relative "groove_score"
 
 # Composition spine for dilla.rb — memory, arrangement, performers, tension,
 # critique, scoring, evolution, and session persistence.
@@ -337,9 +338,10 @@ module DillaComposition
   module Critique
     module_function
 
-    def analyze(report, session: nil, events: nil, progression_chords: nil)
+    def analyze(report, session: nil, events: nil, progression_chords: nil, groove_meta: nil)
       lufs = report[:integrated_lufs] || report["integrated_lufs"]
-      groove = score_groove(events)
+      meta = groove_meta || events&.dig(:_groove_meta)
+      groove = score_groove(events, meta: meta)
       chords = progression_chords || report[:progression_chords] || DillaHarmony.last_progression_chords
       harmony = if chords&.any?
                   DillaHarmony.score_beauty(chords)
@@ -354,11 +356,8 @@ module DillaComposition
       { scores: scores, recommendations: recs, overall: (scores.values.compact.sum / scores.length).round(1) }
     end
 
-    def score_groove(events)
-      return 70 unless events
-      kicks = events[:kick]&.length || 0
-      ghosts = events[:ghost]&.length || 0
-      (60 + [kicks * 0.5, 20].min + [ghosts * 0.3, 15].min).round.clamp(40, 98)
+    def score_groove(events, meta: nil)
+      DillaGrooveScore.analyze(events, meta: meta)[:score]
     end
 
     def hook_score(session)
@@ -386,6 +385,8 @@ module DillaComposition
       end
       recs << "Move bass entrance earlier in verse sections." if session && session.profile_at(4)[:bass] < 0.7
       recs << "Add ghost-note density for pocket." if scores[:groove] < 75
+      recs << "Push snare early / hats late for MPC pocket." if scores[:groove] < 80
+      recs << "Thin hat grid on chop bars — let kick/snare breathe." if scores[:groove] < 72
       recs << "Widen stereo image on hook — raise lead/EP pan spread." if scores[:stereo] < 80
       recs << "Target LUFS -14..-11 for delivery." if scores[:lufs] && scores[:lufs] < 80
       recs << "Track feels balanced — evolve motifs for next pass." if recs.empty?
@@ -424,19 +425,48 @@ module DillaComposition
   module Evolution
     module_function
 
+    def dilla_pocket_style?(cfg)
+      family = cfg[:style_family]
+      return true if family == :dilla
+      track = (cfg[:track] || ENV["TRACK"]).to_s.downcase
+      track.match?(/dilla|donuts|timeless|slum|jaydee|yancey/)
+    end
+
+    def evolve_weights(cfg)
+      if dilla_pocket_style?(cfg)
+        {
+          plan: (ENV["EVOLVE_PLAN_W"] || 0.32).to_f,
+          critique: (ENV["EVOLVE_CRITIQUE_W"] || 0.34).to_f,
+          harmony: (ENV["EVOLVE_HARMONY_W"] || 0.08).to_f,
+          groove: (ENV["EVOLVE_GROOVE_W"] || 0.22).to_f
+        }
+      else
+        hw = (ENV["EVOLVE_HARMONY_W"] || 0.12).to_f
+        {
+          plan: (50 - hw * 50) / 100.0,
+          critique: 0.44,
+          harmony: hw,
+          groove: (ENV["EVOLVE_GROOVE_W"] || 0.06).to_f
+        }
+      end
+    end
+
     def run(session:, cfg:, n_bars:, generations: 5, render_fn:)
       best = { score: -1.0, session: session, path: nil }
+      weights = evolve_weights(cfg)
       generations.times do |gen|
         session.generation = gen
         session.mutate!
         score = Scorer.score_plan(session, cfg, n_bars)
         path = render_fn.call(session)
         report = render_fn.respond_to?(:quality) ? render_fn.quality(path) : {}
-        critique = Critique.analyze(report, session: session,
+        events = render_fn.respond_to?(:last_events) ? render_fn.last_events : nil
+        critique = Critique.analyze(report, session: session, events: events,
                                     progression_chords: DillaHarmony.last_progression_chords)
-        hw = (ENV["EVOLVE_HARMONY_W"] || 0.12).to_f
-        harmony_w = (critique[:scores][:harmony] || 70) * hw
-        total = (score * (50 - hw * 50) + critique[:overall] * 0.44 + harmony_w).round(2)
+        harmony_w = (critique[:scores][:harmony] || 70) * weights[:harmony]
+        groove_w = (critique[:scores][:groove] || 70) * weights[:groove]
+        total = (score * weights[:plan] * 100 + critique[:overall] * weights[:critique] +
+                   harmony_w + groove_w).round(2)
         session.critique_log << { gen: gen, score: total, critique: critique[:scores] }
         if total > best[:score]
           best = { score: total, session: session, path: path, critique: critique }
