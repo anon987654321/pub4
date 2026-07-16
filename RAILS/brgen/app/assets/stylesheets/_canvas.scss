@@ -1,5 +1,9 @@
-/* City carousel */
+/* City carousel — decorative element reused as the radio tunnel's now-playing
+   header (see _vertical_playlist.scss, which restores display: block for
+   .radio-tunnel/.radio-header). Hidden by default everywhere else: it
+   duplicated the .brand-wordmark logo at equal visual weight beside it. */
 .city-carousel {
+  display: none;
   position: fixed;
   top: calc(10px + var(--safe-top));
   inset-inline-start: calc(var(--sidebar-width) + 16px);

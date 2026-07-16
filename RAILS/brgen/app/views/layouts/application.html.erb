@@ -5,7 +5,7 @@
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
   <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "color-scheme", content: "dark" %>
-  <%= tag.meta name: "theme-color", content: "#17161c", data: { light_color: "#ffffff", dark_color: "#17161c" } %>
+  <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">

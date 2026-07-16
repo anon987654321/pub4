@@ -95,7 +95,8 @@ module ApplicationHelper
       ["TV", "//tv.#{domain}/"],
       ["takeaway", "//takeaway.#{domain}/"],
       ["maps", "//maps.#{domain}/"],
-      ["messenger", "//messenger.#{domain}/"]
+      ["messenger", "//messenger.#{domain}/"],
+      *(authenticated? ? [] : [["sign up", new_session_path]])
     ]
   end
 
