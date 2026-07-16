@@ -25,8 +25,15 @@ ensure_ci_lock() {
 sync_ci_rails_root() {
   local mirror=/home/${app}/pub4-rails
   doas mkdir -p "$mirror"
+  # tar extraction is additive-only: a file removed from the source repo
+  # would otherwise linger in the mirror forever. Wipe each synced subtree
+  # before re-extracting so the mirror actually reflects deletions too --
+  # found the hard way when a controller deleted from git upstream kept
+  # passing CI on the VPS from a stale copy months after removal.
+  doas rm -rf "$mirror/RAILS"
   doas tar cf - -C "$repo" RAILS | doas sh -c "cd ${mirror} && tar xf -"
   if [[ -d ${repo}/MASTER/tools ]]; then
+    doas rm -rf "$mirror/MASTER/tools"
     doas tar cf - -C "$repo" MASTER/tools | doas sh -c "cd ${mirror} && tar xf -"
   fi
   doas chown -R "${app}:${app}" "$mirror"
@@ -45,11 +52,21 @@ sync_from_repo() {
     done
     for rel in ${src}/*.sh(N:t); do existing+=($rel); done
     [[ ${#existing[@]} -eq 0 ]] && return 0
+    # Same additive-tar pitfall as sync_ci_rails_root above: prune the
+    # directory entries before re-extracting so files deleted upstream
+    # (test/app/lib/config/bin/db) actually disappear from the deployed
+    # copy instead of surviving as stale dead code indefinitely.
+    local dir_rel
+    for dir_rel in test app lib config bin db; do
+      [[ -d $src/$dir_rel ]] && doas rm -rf "${app_dir}/${dir_rel}"
+    done
     doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
       "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
       "${app_dir}"/*.sh(N) 2>/dev/null || true
   fi
+  doas mkdir -p "$shared_dir"
+  doas rm -rf "$shared_dir"
   doas mkdir -p "$shared_dir"
   doas tar cf - -C "$shared_src" . | doas sh -c "cd ${shared_dir} && tar xf -"
   doas chown -R "${app}:${app}" "$shared_dir"
