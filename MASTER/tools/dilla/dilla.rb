@@ -519,9 +519,9 @@ def experimental_leads_enabled?
   ENV.fetch("EXPERIMENTAL_LEADS", "1") != "0"
 end
 
-# Per-layer pad arp routing — EP and warm render as separate FluidSynth passes,
-# so arp never stacks on the same layer the way the old merge did (that sounded
-# horrible). :shimmer = held body + whisper arp; :arp = figure only.
+# Arp figure presets — PAD_ARP_MODE selects the lead-arp character; chord pads
+# (EP/warm) always render held. Former per-layer routing (arp on Rhodes/Moog
+# pads) moved to lead_arp.wav so pads stay lush and the figure sits up top.
 PAD_ARP_LAYER_MODES = {
   held:   { ep: :held,    warm: :held },
   shimmer: { ep: :shimmer, warm: :held },
@@ -550,24 +550,30 @@ def pad_arp_mode
   sym = raw&.to_sym
   return sym if sym && PAD_ARP_LAYER_MODES.key?(sym)
   return :blend if ENV.fetch("PAD_CHORD_ARP", "0") != "0"
-  fallback = (ENV["PAD_ARP"] || "blend").to_s.downcase.to_sym
-  PAD_ARP_LAYER_MODES.key?(fallback) ? fallback : :blend
+  fallback = (ENV["PAD_ARP"] || "held").to_s.downcase.to_sym
+  PAD_ARP_LAYER_MODES.key?(fallback) ? fallback : :held
 end
 
-def pad_arp_layer_mode(role)
-  PAD_ARP_LAYER_MODES.fetch(pad_arp_mode, PAD_ARP_LAYER_MODES[:blend])[role] || :held
+# Maps legacy PAD_ARP_MODE names to the preset that now drives lead_arp.
+def lead_arp_preset_for_pad_mode(mode = nil)
+  mode ||= pad_arp_mode
+  case mode
+  when :held then nil
+  when :shimmer then :ep_shimmer
+  when :pulse then :warm_pulse
+  when :blend then :warm_pulse
+  when :duo then :ep_figure
+  when :wash then :warm_wash
+  when :figure then :ep_figure
+  else :warm_pulse
+  end
 end
 
 def pad_arp_cfg_for(patch, role:, mode: nil)
   mode ||= pad_arp_mode
   patch_arp = patch&.dig(:midi_arp)
-  preset = case [mode, role]
-           when [:shimmer, :ep], [:blend, :ep] then :ep_shimmer
-           when [:figure, :ep], [:duo, :ep] then :ep_figure
-           when [:pulse, :warm], [:blend, :warm], [:duo, :warm] then :warm_pulse
-           when [:wash, :warm] then :warm_wash
-           else role == :warm ? :warm_pulse : :ep_shimmer
-           end
+  preset = lead_arp_preset_for_pad_mode(mode) ||
+           (role == :warm ? :warm_pulse : :ep_shimmer)
   preset = :warm_moog if role == :warm && patch&.dig(:id).to_s.start_with?("moog")
   base = PAD_ARP_PRESETS[preset].dup
   base.merge(patch_arp || {}).merge(arp_styles: patch&.dig(:arp_styles) || base[:arp_styles])
@@ -2355,22 +2361,8 @@ def pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: 0, vel_mul: 1.0)
   events.sort_by { |e| e[0] }
 end
 
-def pad_midi_events_for_layer(pad_events, cfg, patch, role:, duration:)
-  layer = pad_arp_layer_mode(role)
-  return pad_events if layer == :held
-  arp_cfg = pad_arp_cfg_for(patch, role: role)
-  arp = pad_arp_events(pad_events, cfg, arp_cfg, seed_offset: role.hash.abs % 5000,
-                        vel_mul: layer == :shimmer ? 0.72 : 1.0)
-  case layer
-  when :shimmer
-    merged = pad_events.dup
-    arp.each { |e| merged << e }
-    merged.sort_by { |e| e[0] }
-  when :arp
-    arp.empty? ? pad_events : arp
-  else
-    pad_events
-  end
+def pad_midi_events_for_layer(pad_events, _cfg, _patch, role:, duration:)
+  pad_events
 end
 
 def resolve_midi_fx_for(patch, role:)
@@ -2384,19 +2376,26 @@ def resolve_midi_fx_for(patch, role:)
 end
 
 def lead_arp_enabled?
+  return true if pad_arp_mode != :held
   ENV.fetch("LEAD_ARP", "0") != "0"
 end
 
-# Per-patch lead arp figure — explicit midi_arp on the patch, or a default
-# derived from its arp_styles (continuous chord-tone movement, lead register).
+# Lead arp figure — PAD_ARP_MODE preset (migrated off chord pads) or patch midi_arp.
 def lead_arp_cfg_for(patch)
   return nil unless lead_arp_enabled?
-  patch&.dig(:midi_arp) || {
-    style: @render_arp_style || :updown,
-    subdiv: 8,
-    gate: (patch&.fetch(:gate, 0.72) || 0.72) * 0.88,
-    vel: 0.5
-  }
+  preset_key = lead_arp_preset_for_pad_mode
+  if preset_key && PAD_ARP_PRESETS[preset_key]
+    base = PAD_ARP_PRESETS[preset_key].dup
+    base.merge(patch&.dig(:midi_arp) || {})
+        .merge(arp_styles: patch&.dig(:arp_styles) || base[:arp_styles])
+  else
+    patch&.dig(:midi_arp) || {
+      style: @render_arp_style || :updown,
+      subdiv: 8,
+      gate: (patch&.fetch(:gate, 0.72) || 0.72) * 0.88,
+      vel: 0.5
+    }
+  end
 end
 
 def lead_arp_section_density(section, progress)
@@ -4790,7 +4789,7 @@ end
 
 def stream_track_banner(extra = nil)
   tag = ENV["TRACK"] || "?"
-  meta = "pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode} kicks=#{ENV.fetch('KICKS', '1')} " \
+  meta = "pad=#{ENV['PAD_VOICE']} lead_arp=#{pad_arp_mode} kicks=#{ENV.fetch('KICKS', '1')} " \
          "speak=#{ENV.fetch('SPEAK', '1')} voice=#{speech_tts_voice}"
   meta = "#{meta} #{extra}" if extra
   puts "=== #{tag} (#{meta}) ==="
@@ -5014,7 +5013,7 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 DILLA_BEST_DEFAULTS = {
   "DILLA_DEEP" => "1",
   "PAD_VOICE" => "blend",
-  "PAD_ARP_MODE" => "blend",
+  "PAD_ARP_MODE" => "wash",
   "LEAD_ARP" => "1",
   "EXPERIMENTAL_LEADS" => "1",
   "SOUL_ENRICH" => "1",

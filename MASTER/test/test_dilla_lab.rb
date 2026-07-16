@@ -116,6 +116,28 @@ class TestDillaLab < Minitest::Test
                    "pocket-heavy schedule should outscore sparse kicks-only grid"
   end
 
+  def test_pad_layers_stay_held_and_arp_routes_to_lead_cfg
+    result = eval_in_engine(<<~RUBY)
+      pads = [[0.0, 0.9, { name: "Fm9", hz: [174.61, 261.63] }, 3.8]]
+      cfg = { bpm: 94, swing: 57, track: :erykah_minor }
+      patch = { id: :prophet_5_pad, arp_styles: %i[updown pingpong] }
+      ENV["PAD_ARP_MODE"] = "wash"
+      ENV["LEAD_ARP"] = "0"
+      held = pad_midi_events_for_layer(pads, cfg, patch, role: :ep, duration: 16)
+      lead_cfg = lead_arp_cfg_for(patch)
+      puts JSON.generate(
+        held_only: held == pads,
+        lead_enabled: lead_arp_enabled?,
+        lead_style: lead_cfg&.dig(:style),
+        lead_subdiv: lead_cfg&.dig(:subdiv)
+      )
+    RUBY
+    assert result.fetch("held_only"), "pad layers must stay held — no chord-layer arp"
+    assert result.fetch("lead_enabled"), "non-held PAD_ARP_MODE must enable lead arp"
+    assert_equal "pingpong", result.fetch("lead_style").to_s
+    assert_equal 3, result.fetch("lead_subdiv")
+  end
+
   def test_dilla_sidechain_style_selects_fast_duck_for_dilla_family
     result = eval_in_engine(<<~RUBY)
       dilla = sidechain_filter_chain({ style_family: :dilla })

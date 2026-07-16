@@ -70,6 +70,7 @@ Tier C (M4L, hardware, installations) remains out of scope by design.
 ### Composition
 - [x] `EVOLVE_HARMONY_W` tuning
 - [x] Counter-melody offset via groove lock + conversation
+- [x] Arp on lead layer only — `PAD_ARP_MODE` presets drive `lead_arp.wav`; EP/warm pads held
 
 ---
 
