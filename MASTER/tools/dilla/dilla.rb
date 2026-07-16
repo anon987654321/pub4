@@ -8,6 +8,7 @@
 
 require "fileutils"
 require "json"
+require "yaml"
 require "shellwords"
 require_relative "../../lib/reach/analog_capabilities"
 require "open3"
@@ -114,6 +115,34 @@ INLINE_SONIC_PROFILES = {
       "bass_sustain_bar" => 0.85, "bass_shelf_db" => 10, "vinyl_noise" => 0.05,
       "texture" => "modern_dry_punch"
     }
+  },
+  bergen_akmd_local: {
+    "harmonic" => { "engine_progression" => "erykah_minor", "texture" => "bergen_night_rain" },
+    "synth" => {
+      "bpm" => 87, "swing" => 0.17, "pad_lowpass_hz" => 3100, "master_lowpass_hz" => 2700,
+      "bass_shelf_db" => 9, "vinyl_noise" => 0.08, "texture" => "akmd_lofi_mastering"
+    }
+  },
+  chase_swayze_traffic: {
+    "harmonic" => { "engine_progression" => "minor_turnaround" },
+    "synth" => { "bpm" => 88, "swing" => 0.16, "pad_lowpass_hz" => 3300, "vinyl_noise" => 0.07 }
+  }
+}.freeze
+
+# playlist.brgen.no study output — inlined so stream mode works without sidecar YAML.
+INLINE_RADIO_BERGEN_LEARNINGS = {
+  "stream_rotation_weights" => {
+    "erykah_minor" => 16, "quartal_west_coast" => 5, "neo_soul_pocket" => 5,
+    "minor_turnaround" => 4, "maj7_minor_cycle" => 3, "slash_neo_soul" => 1,
+    "minor_triad_walk" => 1, "warm_minor_arc" => 1, "modal_safe" => 1, "minor_iv_loop" => 1
+  },
+  "stream_env_defaults" => {
+    "PERFORMER" => "yancey", "GROOVE_DNA" => "donuts", "SONITEX_PRESET" => "donuts_warm",
+    "KICKS" => "1", "SPEAK" => "1"
+  },
+  "sonic_profiles" => {
+    "bergen_akmd_local" => INLINE_SONIC_PROFILES[:bergen_akmd_local],
+    "chase_swayze_traffic" => INLINE_SONIC_PROFILES[:chase_swayze_traffic]
   }
 }.freeze
 
@@ -684,9 +713,225 @@ def patch_voice_for(patch)
   { sf2: path, bank: patch[:bank], program: patch[:program], patch: patch }
 end
 
+RADIO_BERGEN_SONIC_PATH = File.expand_path("../audio/radio_bergen_sonic.yml", ROOT).freeze
+RADIO_BERGEN_MANIFEST_PATH = File.expand_path("../audio/radio_bergen_tracks.yml", ROOT).freeze
+
+# Study playlist.brgen.no manifest → sonic learnings (also: ruby dilla.rb radio-bergen-study).
+module RadioBergenStudy
+  AUDIO_ROOT = File.expand_path("../audio", ROOT).freeze
+
+  ARTIST_AFFINITY = {
+    /j dilla/i => { producer: "dilla", performer: "yancey", groove_dna: "donuts",
+                    dilla_track: "maj7_minor_cycle", sonic_key: "dilla_timeless", bpm: 86..92 },
+    /slum village/i => { producer: "dilla", performer: "questlove", groove_dna: "donuts",
+                         dilla_track: "neo_soul_pocket", sonic_key: "slum_players", bpm: 90..96 },
+    /flying lotus/i => { producer: "flylo", performer: "glasper", groove_dna: "wonky",
+                         dilla_track: "quartal_west_coast", sonic_key: "flylo_camel", bpm: 82..88 },
+    /madlib/i => { producer: "madlib", performer: "karriem_riggins", groove_dna: "dust",
+                   dilla_track: "minor_triad_walk", sonic_key: "madlib_eye", bpm: 92..98 },
+    /samiyam/i => { producer: "dilla", performer: "yancey", groove_dna: "donuts",
+                    dilla_track: "minor_iv_loop", sonic_key: "samiyam_rounded", bpm: 94..98 },
+    /jay electronica/i => { producer: "dilla", performer: "yancey", groove_dna: "donuts",
+                            dilla_track: "warm_minor_arc", sonic_key: "dilla_timeless", bpm: 84..90 },
+    /afta-?1/i => { producer: "dilla", performer: "chris_dave", groove_dna: "donuts",
+                    dilla_track: "slash_neo_soul", sonic_key: "slum_players", bpm: 88..94 },
+    /chase swayze/i => { producer: "dilla", performer: "yancey", groove_dna: "donuts",
+                         dilla_track: "minor_turnaround", sonic_key: "dilla_timeless", bpm: 86..92 },
+    /akmd|mike t|angelo reira|jan hakim|haisam|johann/i => {
+      producer: "bergen", performer: "yancey", groove_dna: "donuts",
+      dilla_track: "erykah_minor", sonic_key: "dilla_timeless", bpm: 84..90,
+      mix: "akmd_lofi_mastering"
+    },
+    /mochi|itoh/i => { producer: "flylo", performer: "glasper", groove_dna: "wonky",
+                       dilla_track: "modal_safe", sonic_key: "flylo_camel", bpm: 120..128 }
+  }.freeze
+
+  module_function
+
+  def load_manifest
+    YAML.safe_load(File.read(RADIO_BERGEN_MANIFEST_PATH), permitted_classes: [Symbol], aliases: true) || {}
+  end
+
+  def catalog_rows(manifest = load_manifest)
+    local = Array(manifest["local_mp3"]).map do |row|
+      { artist: row["artist"].to_s, title: row["title"].to_s, source: "local_mp3",
+        src: row["src"].to_s, youtube_id: nil }
+    end
+    youtube = Array(manifest.dig("external_reference", "youtube")).map do |row|
+      { artist: row["artist"].to_s, title: row["title"].to_s, source: "youtube_reference",
+        src: nil, youtube_id: row["id"].to_s, start: row["start"] }
+    end
+    local + youtube
+  end
+
+  def affinity_for(artist)
+    ARTIST_AFFINITY.each { |pattern, profile| return profile if artist.match?(pattern) }
+    { producer: "dilla", performer: "yancey", groove_dna: "donuts",
+      dilla_track: "maj7_minor_cycle", sonic_key: "dilla_timeless", bpm: 86..92 }
+  end
+
+  def slug(artist, title)
+    "#{artist}-#{title}".downcase.gsub(/[^a-z0-9]+/, "_").gsub(/^_|_$/, "")
+  end
+
+  def analyze_audio(path)
+    return nil unless path && File.file?(path)
+    return nil unless system("which", "ffprobe", out: File::NULL, err: File::NULL)
+
+    duration_out, = Open3.capture2(
+      "ffprobe", "-v", "error", "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1", path
+    )
+    duration = duration_out.to_f
+    return { duration_seconds: duration.round(2) } if duration <= 0
+
+    stats, = Open3.capture2(
+      "ffmpeg", "-hide_banner", "-nostats", "-i", path,
+      "-af", "astats=metadata=1:reset=1,ametadata=print:file=-",
+      "-f", "null", "-", err: File::NULL
+    )
+    rms = stats.scan(/RMS level dB:\s*([-\d.]+)/).flatten.map(&:to_f)
+    peak = stats.scan(/Peak level dB:\s*([-\d.]+)/).flatten.map(&:to_f)
+    {
+      duration_seconds: duration.round(2),
+      rms_db: rms.empty? ? nil : (rms.sum / rms.length).round(2),
+      peak_db: peak.empty? ? nil : peak.max.round(2)
+    }
+  rescue StandardError
+    nil
+  end
+
+  def resolve_local_path(row, audio_root: nil)
+    src = row[:src].to_s
+    return nil if src.empty?
+    candidates = []
+    candidates << File.join(audio_root, src.delete_prefix("/")) if audio_root
+    candidates << File.expand_path("../../../pub2/public#{src}", AUDIO_ROOT)
+    candidates << File.expand_path("../../public#{src}", AUDIO_ROOT)
+    candidates.find { |p| File.file?(p) }
+  end
+
+  def study!(audio_root: nil)
+    manifest = load_manifest
+    rows = catalog_rows(manifest)
+    studied = rows.map do |row|
+      aff = affinity_for(row[:artist])
+      audio_path = resolve_local_path(row, audio_root: audio_root)
+      analysis = analyze_audio(audio_path)
+      {
+        id: slug(row[:artist], row[:title]), artist: row[:artist], title: row[:title],
+        source: row[:source], youtube_id: row[:youtube_id], local_src: row[:src],
+        audio_analyzed: audio_path, analysis: analysis,
+        learnings: {
+          producer: aff[:producer], performer: aff[:performer], groove_dna: aff[:groove_dna],
+          dilla_track: aff[:dilla_track], sonic_key: aff[:sonic_key],
+          bpm_range: aff[:bpm] ? "#{aff[:bpm].begin}-#{aff[:bpm].end}" : nil, mix: aff[:mix]
+        }.compact
+      }
+    end
+
+    weights = Hash.new(0)
+    studied.each do |row|
+      track = row.dig(:learnings, :dilla_track)
+      weights[track] += 1 if track
+    end
+    studied.select { |r| r[:source] == "local_mp3" }.each do |row|
+      track = row.dig(:learnings, :dilla_track)
+      weights[track] += 1 if track
+    end
+
+    {
+      "meta" => {
+        "source" => "playlist.brgen.no", "manifest" => RADIO_BERGEN_MANIFEST_PATH,
+        "studied_at" => Time.now.utc.iso8601, "track_count" => studied.length,
+        "local_count" => studied.count { |r| r[:source] == "local_mp3" },
+        "youtube_count" => studied.count { |r| r[:source] == "youtube_reference" },
+        "policy" => manifest.dig("external_reference", "policy"),
+        "note" => "Reference metadata + optional local ffprobe analysis. YouTube rows are lineage only until rights review."
+      },
+      "artist_counts" => studied.group_by { |r| r[:artist] }.transform_values(&:length)
+                                .sort_by { |_, c| -c }.to_h,
+      "playlist_tracks" => studied,
+      "stream_rotation_weights" => weights.sort_by { |_, c| -c }.to_h,
+      "stream_env_defaults" => INLINE_RADIO_BERGEN_LEARNINGS["stream_env_defaults"],
+      "mix_notes" => [
+        "AKMD local_mp3 rows use pub2 lofi mastering chain (60Hz HPF, 11.5kHz LPF, 80/200Hz boosts, soft clip).",
+        "Playlist rotation is Dilla/Slum/FlyLo weighted — bias stream TRACK toward stream_rotation_weights.",
+        "Bergen local artists → erykah_minor / warm pad wash; beat references → mapped producer DNA.",
+        "Never autoplay YouTube in production without rights review — manifest is reference_only_until_rights_review."
+      ],
+      "sonic_profiles" => INLINE_RADIO_BERGEN_LEARNINGS["sonic_profiles"]
+    }
+  end
+
+  def stringify_keys(obj)
+    case obj
+    when Hash then obj.each_with_object({}) { |(k, v), h| h[k.to_s] = stringify_keys(v) }
+    when Array then obj.map { |v| stringify_keys(v) }
+    else obj
+    end
+  end
+
+  def write!(audio_root: nil, path: RADIO_BERGEN_SONIC_PATH)
+    data = stringify_keys(study!(audio_root: audio_root))
+    File.write(path, data.to_yaml)
+    path
+  end
+end
+
+def load_radio_bergen_learnings
+  return @radio_bergen_learnings if defined?(@radio_bergen_learnings)
+  base = Marshal.load(Marshal.dump(INLINE_RADIO_BERGEN_LEARNINGS))
+  if File.file?(RADIO_BERGEN_SONIC_PATH)
+    file_data = YAML.safe_load(File.read(RADIO_BERGEN_SONIC_PATH), permitted_classes: [Symbol], aliases: true)
+    base = merge_sonic_profile_hashes(base, file_data) if file_data.is_a?(Hash)
+  end
+  @radio_bergen_learnings = base
+rescue StandardError => e
+  warn "radio bergen learnings: #{e.message}"
+  @radio_bergen_learnings = Marshal.load(Marshal.dump(INLINE_RADIO_BERGEN_LEARNINGS))
+end
+
+def merge_sonic_profile_hashes(base, extra)
+  return extra if base.nil?
+  return base if extra.nil?
+  base.merge(extra) do |_k, left, right|
+    left.is_a?(Hash) && right.is_a?(Hash) ? merge_sonic_profile_hashes(left, right) : right
+  end
+end
+
 def load_sonic_profiles
   return @sonic_profiles if defined?(@sonic_profiles) && @sonic_profiles
-  @sonic_profiles = INLINE_SONIC_PROFILES
+  merged = INLINE_SONIC_PROFILES.transform_keys(&:to_sym).transform_values(&:dup)
+  extras = load_radio_bergen_learnings["sonic_profiles"]
+  if extras.is_a?(Hash)
+    extras.each do |key, profile|
+      sym = key.to_sym
+      merged[sym] = merge_sonic_profile_hashes(merged[sym], profile)
+    end
+  end
+  @sonic_profiles = merged.freeze
+end
+
+def radio_bergen_stream_enabled?
+  ENV.fetch("RADIO_BERGEN", "1") != "0" && ENV["DILLA_STREAMING"] == "1"
+end
+
+def pick_radio_bergen_stream_track!
+  return unless radio_bergen_stream_enabled?
+  weights = load_radio_bergen_learnings["stream_rotation_weights"]
+  return unless weights.is_a?(Hash) && weights.any?
+  pool = weights.flat_map { |track, count| Array.new(count.to_i.clamp(1, 12), track.to_s) }
+  return if pool.empty?
+  picked = pool.sample
+  ENV["TRACK"] = picked
+  defaults = load_radio_bergen_learnings["stream_env_defaults"]
+  if defaults.is_a?(Hash)
+    defaults.each do |key, value|
+      ENV[key] = value.to_s if ENV[key].nil? || ENV[key].empty?
+    end
+  end
+  picked
 end
 
 def sonic_profile_for(track)
@@ -3835,7 +4080,9 @@ end
 
 # Render a short preview and play it immediately via ffplay.
 TTS_WORKER = File.expand_path("../../bin/tts-worker", ROOT)
-SPEECH_VOICES = %w[en-US-GuyNeural en-US-AndrewNeural en-US-EricNeural en-GB-RyanNeural en-AU-WilliamNeural].freeze
+# Funny-but-clear Edge voices — avoid heavy pitch/effects that hurt intelligibility.
+SPEECH_VOICES = %w[en-US-AndrewNeural en-US-GuyNeural en-US-BrianMultilingualNeural].freeze
+SPEECH_VOICE_DEFAULT = "en-US-AndrewNeural"
 # MASTER's own TTS (MASTER/bin/tts-worker, Edge TTS one-shot mode) speaking
 # over the beat — real speech, not a stub, mixed in quiet. Original pickup
 # lines, not lyrics from any real song (those are copyrighted).
@@ -3926,7 +4173,7 @@ def continuous_speech_text(duration, seed: nil)
         when 0.28...0.40 then ARCHETYPE_LINES.sample(random: rng)
         else filler_sentence(rng)
         end
-    s = quirkify(s, rng) if rng.rand < 0.4
+    s = quirkify(s, rng) if rng.rand < speech_quirk_probability
     sentences << s
     word_count += s.split.length
   end
@@ -3937,45 +4184,97 @@ end
 # real silence, repeating — actual separately-synthesized segments placed
 # at their own start times, not a tremolo faking it (tremolo's 0.1Hz floor
 # can't reach a cycle this slow anyway).
-SPEECH_TALK_SEC = 25.0
-SPEECH_CYCLE_SEC = 50.0
+SPEECH_TALK_SEC = 22.0
+SPEECH_CYCLE_SEC = 62.0
+
+def speech_quirk_probability
+  ENV.fetch("SPEAK_QUIRK", "0.12").to_f.clamp(0.0, 1.0)
+end
+
+def speech_tts_voice
+  v = ENV["SPEAK_VOICE"].to_s.strip
+  return v if !v.empty? && SPEECH_VOICES.include?(v)
+  SPEECH_VOICE_DEFAULT
+end
+
+def speech_tts_rate
+  ENV.fetch("SPEAK_RATE", "-48%")
+end
+
+def speech_tts_pitch
+  ENV.fetch("SPEAK_PITCH", "+8Hz")
+end
+
+def speech_talk_length
+  base = if ENV["DILLA_STREAMING"] == "1"
+           (ENV["SPEECH_TALK_STREAM"] || "14").to_f
+         else
+           SPEECH_TALK_SEC
+         end
+  base + (ENV["DILLA_STREAMING"] == "1" ? 0.0 : (rand - 0.5) * 6.0)
+end
+
+def speech_max_segments
+  return nil unless ENV["DILLA_STREAMING"] == "1"
+  [(ENV["SPEECH_MAX_SEGMENTS"] || "1").to_i, 1].max
+end
+
+def stream_track_banner(extra = nil)
+  tag = ENV["TRACK"] || "?"
+  meta = "pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode} kicks=#{ENV.fetch('KICKS', '1')} " \
+         "speak=#{ENV.fetch('SPEAK', '1')} voice=#{speech_tts_voice}"
+  meta = "#{meta} #{extra}" if extra
+  puts "=== #{tag} (#{meta}) ==="
+end
+
+def speech_over_track_enabled?
+  return false if ENV["SPEAK"] == "0"
+  ENV["SPEAK"] == "1" || ENV["DILLA_STREAMING"] == "1"
+end
 
 def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   return mp3_path unless File.executable?(TTS_WORKER) && tool_available?("ffmpeg")
-  voice = SPEECH_VOICES.sample
+  voice = speech_tts_voice
+  rate = speech_tts_rate
+  pitch = speech_tts_pitch
   segments = []
   # Never talk right at t=0 — that reads as a scripted "intro" every time a
   # track starts/loops. Let the track establish itself first.
   t = 10.0 + rand * 14.0
   idx = 0
+  max_seg = speech_max_segments
   while t < duration
-    talk_len = SPEECH_TALK_SEC + (rand - 0.5) * 6.0
+    break if max_seg && idx >= max_seg
+    talk_len = speech_talk_length
     text = continuous_speech_text(talk_len, seed: idx + rand(100_000))
     seg_path = "#{mp3_path}.voice#{idx}.mp3"
-    Open3.popen2(Gem.ruby, TTS_WORKER, voice, "-35%", "-90Hz", seg_path) { |stdin, _stdout, wait|
+    ok = false
+    Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, seg_path) { |stdin, _stdout, wait|
       stdin.write(text)
       stdin.close
-      wait.value
+      ok = wait.value.success?
     }
+    unless ok
+      warn "speech: TTS segment #{idx} failed (#{voice})"
+      break
+    end
     segments << { path: seg_path, start: t } if File.exist?(seg_path) && File.size(seg_path) > 500
     t += SPEECH_CYCLE_SEC + (rand - 0.5) * 8.0
     idx += 1
   end
   return mp3_path if segments.empty?
 
-  # "Otherworldly / powerful AI" character: a heavy pitch drop, a fast
-  # tremolo for a ring-modulator-ish metallic edge, and a big echo+chorus
-  # for scale — not a person talking, something announcing itself.
+  # Dry, intelligible speech over the beat — no echo/delay/chorus; timing only.
+  vol = (ENV["SPEAK_VOL"] || "0.82").to_f
   inputs = []
   filter_parts = []
   labels = []
   segments.each_with_index do |seg, i|
     inputs += ["-i", seg[:path]]
     delay_ms = (seg[:start] * 1000).round
-    filter_parts << "[#{i + 1}:a]asetrate=44100*0.75,aresample=44100," \
-                     "tremolo=f=32:d=0.15,aecho=0.7:0.6:250|450:0.4|0.28," \
-                     "chorus=0.6:0.8:40|55:0.3|0.25:0.35|0.3:1.4|1.8," \
-                     "adelay=#{delay_ms}|#{delay_ms},volume=1.35[voice#{i}]"
+    filter_parts << "[#{i + 1}:a]aformat=channel_layouts=stereo," \
+                     "highpass=f=90,lowpass=f=11000," \
+                     "adelay=#{delay_ms}|#{delay_ms},volume=#{vol}[voice#{i}]"
     labels << "[voice#{i}]"
   end
   filter_parts << "#{labels.join}amix=inputs=#{labels.length}:duration=first:normalize=0[voicemix]"
@@ -3997,7 +4296,7 @@ def play(preset_name = nil, bars_count = 8)
   tmp = scratch_path("play_tmp.mp3")
   prev = ENV["BARS"]
   ENV["BARS"] = bars_count.to_s
-  attempts = quality_gate_enabled? ? [STREAM_MAX_RETRIES, (ENV["RENDER_RETRIES"] || "2").to_i].max + 1 : 1
+  attempts = play_render_attempts
   attempts.times do |try|
     pick_render_seed! if try.positive?
     if preset_name == "dilla"
@@ -4005,10 +4304,24 @@ def play(preset_name = nil, bars_count = 8)
     else
       render(tmp)
     end
-    break if render_quality_acceptable?(tmp)
+    ok = if quality_gate_enabled?
+           render_quality_acceptable?(tmp)
+         elsif stream_iterate_enabled?
+           stream_iterate_acceptable?(tmp)
+         else
+           true
+         end
+    break if ok
     warn "render retry #{try + 1}/#{attempts}" if try + 1 < attempts
   end
+  stream_iterate_after_render!(tmp) if stream_iterate_enabled? && File.file?(tmp)
   log_render_meta(tmp) if quality_gate_enabled? || ENV["DILLA_STREAMING"] == "1"
+  if speech_over_track_enabled?
+    cfg = dilla_resolve_config
+    track_duration = (60.0 / cfg[:bpm]) * 4.0 * bars_count.to_i
+    puts "speech overlay (#{speech_tts_voice} @ #{speech_tts_rate}, dry)…"
+    speak_over_track!(tmp, track_duration, cfg[:bpm])
+  end
   play_audio(tmp)
 ensure
   prev ? ENV["BARS"] = prev : ENV.delete("BARS")
@@ -4178,9 +4491,33 @@ DILLA_DEEP_DEFAULTS = {
 }.freeze
 
 STREAM_EXTRA_DEFAULTS = {
-  "DRUM_VOL" => "0.34",
-  "DILLA_STREAMING" => "1"
+  "DRUM_VOL" => "0.38",
+  "DILLA_STREAMING" => "1",
+  "SPEAK" => "1",
+  "SPEAK_VOICE" => "en-US-AndrewNeural",
+  "SPEAK_RATE" => "-48%",
+  "SPEAK_PITCH" => "+8Hz",
+  "SPEAK_VOL" => "0.82",
+  "SPEAK_QUIRK" => "0.12",
+  "KICKS" => "1",
+  "KICK_GAIN" => "0.42",
+  "RADIO_BERGEN" => "1",
+  "STREAM_ITERATE" => "1",
+  "SPEECH_MAX_SEGMENTS" => "1",
+  "SPEECH_TALK_STREAM" => "14"
 }.freeze
+
+# Light auto-iterate during stream — one beauty retry + mix/groove nudges per track.
+STREAM_ITERATE_TUNING = {
+  "RENDER_RETRIES" => "1",
+  "RENDER_BEAUTY_MIN" => "65",
+  "EVOLVE_EVERY" => "3"
+}.freeze
+
+# STREAM_FAST_DEFAULTS must not clobber these when iterate is on.
+STREAM_ITERATE_OVERRIDE_KEYS = %w[RENDER_RETRIES LISTEN_PASSES RENDER_BEAUTY_MIN EVOLVE_EVERY].freeze
+
+STREAM_ITERATE_LOG = File.join(ROOT, "stream_iterate.log").freeze
 
 # Fast stream — render+play without quality gate / listen refine (~15–30s/track).
 STREAM_FAST_DEFAULTS = {
@@ -4204,6 +4541,86 @@ end
 
 def quality_gate_enabled?
   ENV["DILLA_QUALITY_GATE"] == "1"
+end
+
+def stream_iterate_enabled?
+  ENV.fetch("STREAM_ITERATE", "1") != "0" && ENV["DILLA_STREAMING"] == "1"
+end
+
+def play_render_attempts
+  if quality_gate_enabled?
+    [STREAM_MAX_RETRIES, (ENV["RENDER_RETRIES"] || "2").to_i].max + 1
+  elsif stream_iterate_enabled?
+    retries = [(ENV["RENDER_RETRIES"] || "1").to_i, 1].max
+    retries + 1
+  else
+    1
+  end
+end
+
+def stream_iterate_acceptable?(path)
+  return true unless stream_iterate_enabled?
+  return true unless File.file?(path)
+  beauty = DillaHarmony.score_beauty(DillaHarmony.last_progression_chords)
+  spectrum = render_spectrum(path)
+  harsh = DillaMaster.analyze_harshness(spectrum)
+  min = (ENV["RENDER_BEAUTY_MIN"] || "65").to_f
+  beauty >= min && !harsh[:needs_notch]
+end
+
+def stream_iterate_after_render!(path)
+  return unless File.file?(path)
+  @stream_iterate_count = (@stream_iterate_count || 0) + 1
+  beauty = DillaHarmony.score_beauty(DillaHarmony.last_progression_chords)
+  spectrum = render_spectrum(path)
+  harsh = DillaMaster.analyze_harshness(spectrum)
+  sk = DillaMaster.sub_kick_balance(spectrum, beauty)
+  notes = []
+  if refine_deep_mix_env!(path)
+    notes << "kick=#{ENV['KICK_GAIN']} harm=#{ENV['DEBUG_HARM_WEIGHT']}"
+  end
+  if harsh[:needs_notch]
+    dv = [(ENV["DRUM_VOL"] || "0.38").to_f - 0.03, 0.22].max
+    ENV["DRUM_VOL"] = dv.round(2).to_s
+    notes << "drum_vol=#{ENV['DRUM_VOL']}"
+  end
+  if sk[:recommendation] == "boost_sub" && (ENV["PAD_VOL"] || "52").to_i < 58
+    ENV["PAD_VOL"] = ((ENV["PAD_VOL"] || "52").to_i + 2).to_s
+    notes << "pad_vol=#{ENV['PAD_VOL']}"
+  end
+  every = [(ENV["EVOLVE_EVERY"] || "3").to_i, 1].max
+  if composition_enabled? && (@stream_iterate_count % every).zero?
+    stream_evolve_composition!
+    notes << "evolved"
+  end
+  line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
+         "sub=#{sk[:recommendation]} harsh=#{harsh[:harshness]} #{notes.join(' ')}"
+  File.open(STREAM_ITERATE_LOG, "a") { |f| f.puts(line) }
+  puts "stream iterate: beauty=#{beauty} #{notes.join(', ')}"
+end
+
+def stream_evolve_composition!
+  return unless composition_enabled?
+  bars = (ENV["BARS"] || STREAM_BARS_COUNT).to_i
+  track = ENV["TRACK"].to_s
+  sess = composition_session!(n_bars: bars, track: track)
+  keep_performer = ENV["PERFORMER"]
+  keep_groove = ENV["GROOVE_DNA"]
+  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0))
+  sess.motifs.each { |m| m.evolve! if rng.rand < 0.35 }
+  if ENV.fetch("STREAM_EVOLVE_PERFORMER", "0") == "1"
+    sess.mutate!
+    ENV["PERFORMER"] = sess.performer.to_s
+    ENV["GROOVE_DNA"] = sess.groove_dna.to_s
+  else
+    ENV["PERFORMER"] = keep_performer if keep_performer && !keep_performer.empty?
+    ENV["GROOVE_DNA"] = keep_groove if keep_groove && !keep_groove.empty?
+    sess.instance_variable_set(:@generation, sess.generation + 1)
+  end
+  cfg = dilla_resolve_config
+  ENV["SWING"] = cfg[:swing].round(1).to_s if cfg[:swing]
+  sess.save!
+  puts "stream evolve gen=#{sess.generation} performer=#{ENV['PERFORMER']} groove=#{ENV['GROOVE_DNA']}"
 end
 
 def phone_preview_gate_enabled?
@@ -4256,8 +4673,14 @@ def apply_stream_listenability_defaults!
       ENV[key] = value if ENV[key].nil? || ENV[key].empty?
     end
   else
-    STREAM_FAST_DEFAULTS.each { |key, value| ENV[key] = value }
+    fast = STREAM_FAST_DEFAULTS.dup
+    if stream_iterate_enabled?
+      STREAM_ITERATE_OVERRIDE_KEYS.each { |key| fast.delete(key) }
+    end
+    fast.each { |key, value| ENV[key] = value }
   end
+  return unless stream_iterate_enabled?
+  STREAM_ITERATE_TUNING.each { |key, value| ENV[key] = value }
 end
 
 def render_spectrum(path)
@@ -4421,23 +4844,37 @@ def stream(bars_count = STREAM_BARS_COUNT)
   # again, so edits since the last track take effect automatically between
   # tracks without needing a manual kill+relaunch.
   self_mtime = File.mtime(__FILE__)
-  mode = stream_deep? ? "deep+QC" : "fast"
+  mode = if stream_deep?
+           "deep+QC"
+         elsif stream_iterate_enabled?
+           "fast+iterate"
+         else
+           "fast"
+         end
   puts "streaming (#{mode}) — cycling #{order.join(', ')} (Ctrl-C to stop)"
+  puts "iterate log: #{STREAM_ITERATE_LOG}" if stream_iterate_enabled?
   loop do
     order.each do |t|
       if File.mtime(__FILE__) > self_mtime
         puts "=== dilla.rb changed — restarting to pick it up ==="
         exec(Gem.ruby, __FILE__, "stream", STREAM_BARS_COUNT.to_s)
       end
-      apply_track_soul_profile!(t, force: !user_pad_locked)
-      ENV["TRACK"] = t
-      puts "=== #{t} (pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode}) ==="
+      track = t
+      apply_track_soul_profile!(track, force: !user_pad_locked)
+      ENV["TRACK"] = track
+      if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
+        track = rb
+        apply_track_soul_profile!(track, force: !user_pad_locked)
+        stream_track_banner("← playlist.brgen.no (rotation #{t})")
+      else
+        stream_track_banner
+      end
       begin
         play("dilla", bars_count)
       rescue SystemExit
         raise
       rescue Exception => e
-        warn "stream: #{t} failed (#{e.class}) — #{e.message}"
+        warn "stream: #{ENV['TRACK'] || track} failed (#{e.class}) — #{e.message}"
         sleep 1.5
       end
       sleep DillaSeeds.drift_sleep(0.35)
@@ -6994,8 +7431,17 @@ def help
 
     STREAM (non-stop rotation — speakers via ffplay)
       stream [bars]                    Fast render+play per profile (#{STREAM_BARS_COUNT} bars default)
+      STREAM_ITERATE=1 (default)       Auto-refine mix/groove each track; log stream_iterate.log
       STREAM_DEEP=1 stream [bars]      Full deep pipeline + quality gate per track (~1–2 min)
       DILLA_FORCE_TERMINAL=1         macOS: open Terminal.app for speaker playback
+      KICKS=1 (default in stream)      Layered 808-style kicks in the drum bus
+      KICK_GAIN=0.42 (stream default)  Kick/sub level — lower if still loud
+      SPEAK=1 (default in stream)      TTS pickup lines over the beat (dry, no echo)
+      SPEAK_VOICE=en-US-AndrewNeural   Funny-clear voice (GuyNeural also works)
+      SPEAK_RATE=-48%                  Slower speech (default in stream)
+      SPEAK=0                          Beat only — skip speech overlay
+      RADIO_BERGEN=1 (stream default)  Bias TRACK from playlist.brgen.no learnings
+      radio-bergen-study [--audio-root PATH]  Refresh learnings YAML from manifest
 
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
@@ -8049,7 +8495,10 @@ FLAG_ENV = {
   "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW",
   "deep" => "DILLA_DEEP", "quality-gate" => "DILLA_QUALITY_GATE", "render-retries" => "RENDER_RETRIES",
   "pad-vol" => "PAD_VOL", "conv-reverb" => "CONV_REVERB", "render-beauty-min" => "RENDER_BEAUTY_MIN",
-  "stream-deep" => "STREAM_DEEP", "phone-preview-gate" => "PHONE_PREVIEW_GATE"
+  "stream-deep" => "STREAM_DEEP", "phone-preview-gate" => "PHONE_PREVIEW_GATE",
+  "speak" => "SPEAK", "speak-voice" => "SPEAK_VOICE", "speak-rate" => "SPEAK_RATE",
+  "speak-pitch" => "SPEAK_PITCH", "speak-vol" => "SPEAK_VOL", "radio-bergen" => "RADIO_BERGEN",
+  "stream-iterate" => "STREAM_ITERATE", "evolve-every" => "EVOLVE_EVERY"
 }.freeze
 
 def apply_flags!(argv)
@@ -8081,6 +8530,21 @@ DISPATCH = {
   "clean" => -> { clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav")) },
   "stems" => -> { stems(*ARGV) },
   "study" => -> { study(ARGV.shift, ARGV.shift) },
+  "radio-bergen-study" => lambda {
+    audio_root = nil
+    if (idx = ARGV.index("--audio-root"))
+      audio_root = ARGV[idx + 1]
+      ARGV.delete_at(idx + 1)
+      ARGV.delete_at(idx)
+    end
+    path = RadioBergenStudy.write!(audio_root: audio_root)
+    data = RadioBergenStudy.study!(audio_root: audio_root)
+    remove_instance_variable(:@radio_bergen_learnings) if instance_variable_defined?(:@radio_bergen_learnings)
+    remove_instance_variable(:@sonic_profiles) if instance_variable_defined?(:@sonic_profiles)
+    load_radio_bergen_learnings
+    puts "wrote #{path} (#{data.dig('meta', 'track_count')} tracks)"
+    puts "rotation weights: #{load_radio_bergen_learnings['stream_rotation_weights']&.keys&.first(6)&.join(', ')}"
+  },
   "rhythm" => -> { rhythm(ARGV.shift) },
   "melody" => -> { melody(ARGV.shift) },
   "harmony" => -> { harmony(ARGV.shift) },

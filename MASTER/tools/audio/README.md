@@ -41,6 +41,28 @@ ruby OPENBSD/audio/akmd_mastering_chain.rb input.wav output.mp3 --bitrate 192k
 `radio_bergen_tracks.yml` is data only. It does not assert licensing or host
 media. Production code must check:
 
+## Playlist learnings (study pipeline)
+
+`radio_bergen_study.rb` reads the full playlist.brgen.no manifest (local AKMD
+MP3 metadata + YouTube reference rows), maps each artist to Dilla producer DNA,
+and writes `radio_bergen_sonic.yml` for the stream engine.
+
+```sh
+ruby MASTER/tools/audio/radio_bergen_study.rb
+ruby MASTER/tools/dilla/dilla.rb radio-bergen-study
+```
+
+With local audio files on disk (optional ffprobe analysis):
+
+```sh
+ruby MASTER/tools/audio/radio_bergen_study.rb --audio-root /path/to/audio
+```
+
+Dilla stream uses `RADIO_BERGEN=1` (default) to bias `TRACK` rotation from
+`stream_rotation_weights` in the learnings file.
+
+Production code must still check:
+
 - source ownership
 - public performance rights
 - takedown process

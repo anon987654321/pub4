@@ -75,8 +75,21 @@ window._endlessWhite = (() => {
 })();
 
 window._dillaBg = (() => {
-  let ctx, master, padFilt, padGain, bassBus, shelf, hatGain, conv, convGain;
-  let playing = false, barIv = null, duckIv = null;
+  let ctx, master, padFilt, padGain, bassBus, kickBus, shelf, hatGain, conv, convGain;
+  let playing = false, barIv = null, duckIv = null, speakIv = null;
+  const PICKUP_LINES = [
+    "is your name Google? because you're everything I've been searching for",
+    "are you made of copper and tellurium? because you're Cu-Te",
+    "do you have a map? I just keep getting lost in your eyes",
+    "if you were a vegetable, you'd be a cute-cumber",
+    "are you a parking ticket? because you've got fine written all over you",
+    "do you believe in love at first sight, or should I walk by again",
+    "are you a magician? because whenever I look at you, everyone else disappears",
+    "excuse me, I think you dropped something: my jaw",
+    "are you French? because Eiffel for you",
+    "is it hot in here, or is it just you",
+    "I'm not a photographer, but I can picture us together"
+  ];
   const CHORDS = [
     [123.47, 146.83, 185.00, 220.00, 277.18],
     [82.41,  123.47, 196.00, 246.94, 329.63],
@@ -125,6 +138,27 @@ window._dillaBg = (() => {
     o.connect(g).connect(bassBus);
     o.start(when); o.stop(when + 1.7);
   }
+  function kick(when, vel = 1.0) {
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf(0.05);
+    const clickHp = ctx.createBiquadFilter();
+    clickHp.type = 'highpass'; clickHp.frequency.value = 2200;
+    const clickG = ctx.createGain();
+    clickG.gain.setValueAtTime(0.22 * vel, when);
+    clickG.gain.exponentialRampToValueAtTime(0.001, when + 0.018);
+    src.connect(clickHp).connect(clickG).connect(kickBus);
+    src.start(when); src.stop(when + 0.05);
+    const body = ctx.createOscillator();
+    body.type = 'sine';
+    body.frequency.setValueAtTime(150, when);
+    body.frequency.exponentialRampToValueAtTime(42, when + 0.055);
+    const bodyG = ctx.createGain();
+    bodyG.gain.setValueAtTime(0, when);
+    bodyG.gain.linearRampToValueAtTime(0.78 * vel, when + 0.004);
+    bodyG.gain.exponentialRampToValueAtTime(0.001, when + 0.42);
+    body.connect(bodyG).connect(kickBus);
+    body.start(when); body.stop(when + 0.45);
+  }
   function hat(when) {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.06);
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7800;
@@ -153,7 +187,9 @@ window._dillaBg = (() => {
     hatGain = ctx.createGain(); hatGain.gain.value = 0.45;
     hatGain.connect(master);
     shelf = ctx.createBiquadFilter(); shelf.type = 'lowshelf'; shelf.frequency.value = 80; shelf.gain.value = 9;
-    bassBus = ctx.createGain(); bassBus.gain.value = 0.92;
+    kickBus = ctx.createGain(); kickBus.gain.value = 0.88;
+    kickBus.connect(shelf).connect(master);
+    bassBus = ctx.createGain(); bassBus.gain.value = 0.72;
     bassBus.connect(shelf).connect(master);
     conv = ctx.createConvolver(); conv.buffer = impulse(2.4, 2.6);
     convGain = ctx.createGain(); convGain.gain.value = 0.20;
@@ -162,17 +198,40 @@ window._dillaBg = (() => {
   function scheduleBar(bar, when) {
     const chord = CHORDS[(bar >> 1) % CHORDS.length];
     pad(chord, when, BAR + 0.2);
+    kick(when, 1.0);
+    kick(when + BEAT * 2 + BEAT * SWING * 0.35, 0.82);
     sub(when);
     sub(when + BEAT * 2);
-    if (bar % 2 === 1) rim(when + BEAT * 2 + BEAT * SWING);
+    if (bar % 2 === 1) {
+      kick(when + BEAT + BEAT * SWING * 0.6, 0.58);
+      rim(when + BEAT * 2 + BEAT * SWING);
+    }
     for (let i = 0; i < 8; i++) {
       const isOff = (i & 1) === 1;
       const t = when + (i * BEAT / 2) + (isOff ? BEAT * SWING * 0.5 : 0);
       if (Math.random() > (isOff ? 0.30 : 0.58)) hat(t);
     }
   }
+  function speakPickup() {
+    if (!playing) return;
+    if (F_FACE_TTS?.muted) return;
+    if (F_FACE_TTS?.playing) return;
+    if (F_FACE_TTS?.queue && F_FACE_TTS.queue.length >= 2) return;
+    const line = PICKUP_LINES[Math.floor(Math.random() * PICKUP_LINES.length)];
+    if (!line) return;
+    try {
+      if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true, lane: 'nudge' });
+      else window.MASTER_FACE?.speak?.(line);
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:speak_pickup", err); }
+  }
   return () => {
-    if (playing) return;
+    if (playing) {
+      playing = false;
+      try { clearInterval(barIv); clearInterval(duckIv); clearInterval(speakIv); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:stop", err); }
+      try { master?.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:fade_out", err); }
+      setTimeout(() => { try { ctx?.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:close", err); } }, 900);
+      return false;
+    }
     try {
       ctx = (F_FACE_LOOPS.actx || window.MASTER_FACE?.actx || window.actx) || new (window.AudioContext || window.webkitAudioContext)();
       if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
@@ -188,8 +247,11 @@ window._dillaBg = (() => {
         const target = speaking ? 0.025 : 0.14;
         try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:duck_ramp", err); }
       }, 500);
+      speakIv = setInterval(speakPickup, 48000);
+      setTimeout(speakPickup, 12000);
       master.gain.setValueAtTime(0, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 5);
-    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:start", err); }
+      return true;
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:start", err); return false; }
   };
 })();

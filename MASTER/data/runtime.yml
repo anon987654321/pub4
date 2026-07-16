@@ -2812,6 +2812,18 @@ tts_phrases:
   - text: Scan complete.
     voice: pernille
     style: clear
+  - text: Are you made of copper and tellurium? Because you're Cu-Te.
+    voice: pernille
+    style: quirky
+  - text: Do you have a map? I just keep getting lost in your eyes.
+    voice: pernille
+    style: quirky
+  - text: Is it hot in here, or is it just you?
+    voice: pernille
+    style: quirky
+  - text: Are you a magician? Because whenever I look at you, everyone else disappears.
+    voice: pernille
+    style: quirky
 ui_philosophy:
   id: runtime_ui_direction
   tier: ui
