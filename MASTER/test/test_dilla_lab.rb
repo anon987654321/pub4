@@ -135,7 +135,39 @@ class TestDillaLab < Minitest::Test
     assert result.fetch("held_only"), "pad layers must stay held — no chord-layer arp"
     assert result.fetch("lead_enabled"), "non-held PAD_ARP_MODE must enable lead arp"
     assert_equal "pingpong", result.fetch("lead_style").to_s
-    assert_equal 3, result.fetch("lead_subdiv")
+    assert_equal 4, result.fetch("lead_subdiv"), "wash PAD_ARP_MODE maps to soul_wash lead preset"
+  end
+
+  def test_lead_voice_and_arp_mode_presets_resolve
+    result = eval_in_engine(<<~RUBY)
+      ENV["LEAD_VOICE"] = "erykah"
+      ENV["LEAD_ARP_MODE"] = "soul_wash"
+      ENV["LEAD_ARP"] = "1"
+      apply_lead_voice_preset!
+      patch = @render_lead_patch
+      cfg = lead_arp_cfg_for({ arp_styles: %i[updown] })
+      arp_mode = lead_arp_mode
+      preset_key = lead_arp_preset_key
+      ENV.delete("LEAD_VOICE")
+      ENV.delete("LEAD_ARP_MODE")
+      apply_track_soul_profile!(:erykah_minor)
+      puts JSON.generate(
+        voice_id: patch&.dig(:id),
+        arp_mode: arp_mode,
+        preset_key: preset_key,
+        lead_style: cfg&.dig(:style),
+        lead_subdiv: cfg&.dig(:subdiv),
+        track_voice: ENV["LEAD_VOICE"],
+        track_arp: ENV["LEAD_ARP_MODE"]
+      )
+    RUBY
+    assert_equal "erykah_dust_lead", result.fetch("voice_id").to_s
+    assert_equal "soul_wash", result.fetch("arp_mode").to_s
+    assert_equal "soul_wash", result.fetch("preset_key").to_s
+    assert_equal "pingpong", result.fetch("lead_style").to_s
+    assert_equal 4, result.fetch("lead_subdiv")
+    assert_equal "erykah", result.fetch("track_voice")
+    assert_equal "erykah_dust", result.fetch("track_arp")
   end
 
   def test_dilla_sidechain_style_selects_fast_duck_for_dilla_family

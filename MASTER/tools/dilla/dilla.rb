@@ -432,6 +432,43 @@ SYNTH_PATCH_CATALOG = [
               fx: "lowpass=f=2800,tremolo=f=3.5:d=0.14,chorus=0.35:0.55:28|36:0.14|0.1:0.18|0.14:0.85|1.1"),
   synth_patch(:cs_lead, role: :lead, program: 82, arp_styles: %i[downup quint_spread], octave: 2,
               fx: "chorus=0.4:0.6:35|45:0.2|0.15:0.2|0.2:0.9|1.2"),
+  # --- Soul lead arp voices (LEAD_ARP stem — chord-tone figures up top) ---
+  synth_patch(:donuts_wurli_lead, role: :lead, program: 5, weight: 3.0, fs_gain: 1.32, gate: 0.68, octave: 2,
+              arp_styles: %i[skip_up euclidean quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.64, vel: 0.5 },
+              fx: "tremolo=f=0.28:d=0.04,aecho=0.48:0.42:100|180:0.24|0.12,lowpass=f=5200"),
+  synth_patch(:soul_prophet_arp, role: :lead, program: 81, weight: 3.2, fs_gain: 1.36, gate: 0.62, octave: 2,
+              arp_styles: %i[pingpong skip_up updown], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :pingpong, subdiv: 6, gate: 0.6, vel: 0.52 },
+              fx: "chorus=0.44:0.64:32|42:0.2|0.16:0.22|0.2:1.0|1.25,aecho=0.5:0.4:160|280:0.28|0.16,lowpass=f=4600"),
+  synth_patch(:moog_dilla_pocket, role: :lead, program: 38, weight: 2.8, fs_gain: 1.34, gate: 0.66, octave: 1,
+              arp_styles: %i[up downup quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 4, gate: 0.68, vel: 0.54 },
+              fx: "lowpass=f=2600,tremolo=f=2.8:d=0.11,equalizer=f=180:t=o:w=1:g=2.8,aecho=0.38:0.32:90|160:0.18|0.1"),
+  synth_patch(:neo_soul_pluck, role: :lead, program: 24, weight: 2.6, fs_gain: 1.28, gate: 0.58, octave: 2,
+              arp_styles: %i[skip_up fibonacci donda_stab], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.54, vel: 0.48 },
+              fx: "aecho=0.42:0.38:70|130:0.22|0.1,highpass=f=220,lowpass=f=4200"),
+  synth_patch(:flylo_fm_shimmer, role: :lead, program: 98, weight: 2.4, fs_gain: 1.3, gate: 0.56, octave: 3,
+              arp_styles: %i[spiral fibonacci random_walk], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :spiral, subdiv: 8, gate: 0.56, vel: 0.46 },
+              fx: "aecho=0.5:0.45:110|200:0.3|0.16,aphaser=speed=0.12:decay=0.55,lowpass=f=5800"),
+  synth_patch(:jazz_ballad_lead, role: :lead, program: 73, weight: 2.5, fs_gain: 1.26, gate: 0.7, octave: 2,
+              arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.72, vel: 0.44 },
+              fx: "vibrato=f=0.45:d=0.012,aecho=0.55:0.48:200|360:0.28|0.14,lowpass=f=4000"),
+  synth_patch(:gospel_brass_lead, role: :lead, program: 62, weight: 2.2, fs_gain: 1.3, gate: 0.64, octave: 1,
+              arp_styles: %i[coltrane up quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :coltrane, subdiv: 6, gate: 0.62, vel: 0.5 },
+              fx: "acompressor=threshold=-22dB:ratio=2.5:attack=12:release=100,lowpass=f=3600"),
+  synth_patch(:erykah_dust_lead, role: :lead, program: 4, weight: 2.9, fs_gain: 1.3, gate: 0.6, octave: 2,
+              arp_styles: %i[euclidean skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :euclidean, subdiv: 8, gate: 0.7, vel: 0.42 },
+              fx: "tremolo=f=0.22:d=0.03,acrusher=bits=12:samples=2:mix=0.08,lowpass=f=4800"),
+  synth_patch(:watermelon_glass, role: :lead, program: 88, weight: 2.7, fs_gain: 1.28, gate: 0.64, octave: 2,
+              arp_styles: %i[updown quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :quint_spread, subdiv: 6, gate: 0.66, vel: 0.46 },
+              fx: "aecho=0.52:0.46:140|260:0.26|0.14,lowpass=f=3800"),
   # --- Scale-locked arp lead (continuous, same scale as each pad chord) ---
   synth_patch(:scale_arp_prophet, role: :scale_lead, program: 81, weight: 3.2, fs_gain: 1.28, gate: 0.62,
               arp_styles: %i[updown skip_up pingpong], octave: 2, midi_fx: MIDI_FX_SCALE_LEAD,
@@ -497,6 +534,80 @@ TRACK_SOUL_PAD_PROFILES = {
   minMaj_color:        { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" }
 }.freeze
 
+# Per-track lead voice + arp figure — pairs with TRACK_SOUL_PAD_PROFILES.
+TRACK_SOUL_LEAD_PROFILES = {
+  glasper_quartal:     { "LEAD_VOICE" => "cs", "LEAD_ARP_MODE" => "neo_quartal" },
+  slow_ballad_wash:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
+  suspended_ballad:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "soul_wash" },
+  neo_soul_pocket:     { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "moog_funk" },
+  quartal_west_coast:  { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral" },
+  maj7_minor_cycle:    { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "prophet_glass" },
+  minor_iv_loop:       { "LEAD_VOICE" => "donuts", "LEAD_ARP_MODE" => "donuts_shimmer" },
+  two_chord_hypnosis:  { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "pocket_stab" },
+  relative_major_turn: { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "donuts_shimmer" },
+  minor_turnaround:    { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
+  warm_minor_arc:      { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "soul_wash" },
+  minor_triad_walk:    { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "flylo_spiral" },
+  major_lifting:       { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "neo_quartal" },
+  slash_ninth_cycle:   { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "prophet_glass" },
+  dorian_iv_loop:      { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "soul_wash" },
+  backdoor_resolve:    { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "moog_funk" },
+  gospel_bIII:         { "LEAD_VOICE" => "gospel", "LEAD_ARP_MODE" => "gospel_lift" },
+  erykah_minor:        { "LEAD_VOICE" => "erykah", "LEAD_ARP_MODE" => "erykah_dust" },
+  watermelon_turn:     { "LEAD_VOICE" => "watermelon", "LEAD_ARP_MODE" => "donuts_shimmer" },
+  church_sus:          { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
+  jazz_ballad_waltz:   { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
+  slash_neo_soul:      { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
+  modal_safe:          { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "pocket_stab" },
+  minMaj_color:        { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash" }
+}.freeze
+
+LEAD_VOICE_PRESETS = {
+  donuts: :donuts_wurli_lead,
+  soul_prophet: :soul_prophet_arp,
+  prophet: :soul_prophet_arp,
+  moog: :moog_dilla_pocket,
+  neo_pluck: :neo_soul_pluck,
+  flylo: :flylo_fm_shimmer,
+  ballad: :jazz_ballad_lead,
+  gospel: :gospel_brass_lead,
+  erykah: :erykah_dust_lead,
+  watermelon: :watermelon_glass,
+  soft: :soft_synth_lead,
+  cs: :cs_lead,
+  minimoog: :minimoog_lead,
+  pluck: :neo_soul_pluck
+}.freeze
+
+# Named lead-arp figures — tuned for lead register (louder/clearer than legacy pad arp).
+LEAD_ARP_PRESETS = {
+  donuts_shimmer: { style: :skip_up, subdiv: 8, gate: 0.66, vel: 0.48,
+                    arp_styles: %i[skip_up euclidean quint_spread] },
+  soul_wash:      { style: :pingpong, subdiv: 4, gate: 0.74, vel: 0.5,
+                    arp_styles: %i[pingpong coltrane quint_spread] },
+  moog_funk:      { style: :up, subdiv: 4, gate: 0.7, vel: 0.54,
+                    arp_styles: %i[up downup quint_spread] },
+  prophet_glass:  { style: :pingpong, subdiv: 6, gate: 0.62, vel: 0.52,
+                    arp_styles: %i[pingpong skip_up updown] },
+  flylo_spiral:   { style: :spiral, subdiv: 8, gate: 0.58, vel: 0.46,
+                    arp_styles: %i[spiral fibonacci random_walk] },
+  neo_quartal:    { style: :quint_spread, subdiv: 6, gate: 0.68, vel: 0.46,
+                    arp_styles: %i[quint_spread updown coltrane] },
+  ballad_bloom:   { style: :updown, subdiv: 4, gate: 0.76, vel: 0.44,
+                    arp_styles: %i[updown coltrane] },
+  pocket_stab:    { style: :donda_stab, subdiv: 8, gate: 0.52, vel: 0.56,
+                    arp_styles: %i[donda_stab skip_up euclidean] },
+  erykah_dust:    { style: :euclidean, subdiv: 8, gate: 0.72, vel: 0.42,
+                    arp_styles: %i[euclidean skip_up] },
+  gospel_lift:    { style: :coltrane, subdiv: 6, gate: 0.64, vel: 0.5,
+                    arp_styles: %i[coltrane up quint_spread] }
+}.freeze
+
+PAD_TO_LEAD_ARP = {
+  wash: :soul_wash, shimmer: :donuts_shimmer, pulse: :moog_funk, blend: :neo_quartal,
+  duo: :prophet_glass, figure: :flylo_spiral, held: nil
+}.freeze
+
 def synth_patch_by_id(id)
   SYNTH_PATCH_BY_ID[id]
 end
@@ -554,8 +665,20 @@ def pad_arp_mode
   PAD_ARP_LAYER_MODES.key?(fallback) ? fallback : :held
 end
 
-# Maps legacy PAD_ARP_MODE names to the preset that now drives lead_arp.
-def lead_arp_preset_for_pad_mode(mode = nil)
+def lead_arp_mode
+  raw = ENV["LEAD_ARP_MODE"]&.downcase
+  sym = raw&.to_sym
+  return sym if sym && LEAD_ARP_PRESETS.key?(sym)
+  PAD_TO_LEAD_ARP[pad_arp_mode]
+end
+
+def lead_arp_preset_key
+  lead_arp_mode ||
+    (lead_arp_preset_for_pad_mode_legacy if pad_arp_mode != :held)
+end
+
+# Legacy PAD_ARP_MODE → PAD_ARP_PRESETS key (fallback when LEAD_ARP_MODE unset).
+def lead_arp_preset_for_pad_mode_legacy(mode = nil)
   mode ||= pad_arp_mode
   case mode
   when :held then nil
@@ -567,6 +690,13 @@ def lead_arp_preset_for_pad_mode(mode = nil)
   when :figure then :ep_figure
   else :warm_pulse
   end
+end
+
+def apply_lead_voice_preset!
+  voice = ENV["LEAD_VOICE"]&.downcase&.to_sym
+  return unless voice
+  id = LEAD_VOICE_PRESETS[voice]
+  @render_lead_patch = synth_patch_by_id(id) if id
 end
 
 def pad_arp_cfg_for(patch, role:, mode: nil)
@@ -601,16 +731,21 @@ BEAUTIFUL_PATCH_IDS = {
   ep: %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli galaxy_ep1 galaxy_ep2 organ_drawbar],
   warm: %i[moog_model_d prophet_5_pad juno_strings moog_pad solina_ensemble string_orchestra],
   scale_lead: %i[scale_arp_rhodes],
-  lead: %i[soft_synth_lead prophet_lead minimoog_lead],
+  lead: %i[
+    soul_prophet_arp donuts_wurli_lead moog_dilla_pocket neo_soul_pluck
+    jazz_ballad_lead erykah_dust_lead soft_synth_lead prophet_lead minimoog_lead
+  ],
   texture: %i[soft_synth_str]
 }.freeze
 
 # Experimental but musical leads — Flylo/Prophet/Moog/FM; not horror/novelty.
 EXPERIMENTAL_LEAD_IDS = {
   lead: %i[
-    prophet_lead big_lead_prophet5 prophet_bleeding_lead minimoog_lead moog_ladder_lead
-    saw_lead fifths_lead fm_lead_bell flute_airy oboe_solo cs_lead charang_bite
-    pluck_synth supersaw_1 supersaw_2 soft_synth_lead
+    soul_prophet_arp donuts_wurli_lead moog_dilla_pocket neo_soul_pluck flylo_fm_shimmer
+    jazz_ballad_lead gospel_brass_lead erykah_dust_lead watermelon_glass
+    prophet_lead big_lead_prophet5 minimoog_lead moog_ladder_lead cs_lead
+    saw_lead fifths_lead fm_lead_bell flute_airy oboe_solo pluck_synth
+    supersaw_1 supersaw_2 soft_synth_lead
   ],
   scale_lead: %i[scale_arp_prophet scale_arp_moog scale_arp_supersaw scale_arp_rhodes]
 }.freeze
@@ -674,7 +809,8 @@ def pick_synth_patches!(cfg, bar: 0, n_bars: nil)
   if pad_texture_enabled? && pick_role.call(:texture)
     @render_texture_patch = weighted_patch_pick(:texture, seed: seed + 29)
   end
-  @render_lead_patch = weighted_patch_pick(:lead, seed: seed + 41) if pick_role.call(:lead)
+  apply_lead_voice_preset! if ENV["LEAD_VOICE"] && !ENV["LEAD_VOICE"].empty?
+  @render_lead_patch = weighted_patch_pick(:lead, seed: seed + 41) if pick_role.call(:lead) && !@render_lead_patch
   if pick_role.call(:scale_lead)
     @render_scale_lead_patch = weighted_patch_pick(:scale_lead, seed: seed + 79) ||
                                weighted_patch_pick(:lead, seed: seed + 79)
@@ -2380,12 +2516,16 @@ def lead_arp_enabled?
   ENV.fetch("LEAD_ARP", "0") != "0"
 end
 
-# Lead arp figure — PAD_ARP_MODE preset (migrated off chord pads) or patch midi_arp.
+# Lead arp figure — LEAD_ARP_MODE preset, PAD fallback, or patch midi_arp.
 def lead_arp_cfg_for(patch)
   return nil unless lead_arp_enabled?
-  preset_key = lead_arp_preset_for_pad_mode
-  if preset_key && PAD_ARP_PRESETS[preset_key]
-    base = PAD_ARP_PRESETS[preset_key].dup
+  key = lead_arp_preset_key
+  base = if key && LEAD_ARP_PRESETS[key]
+           LEAD_ARP_PRESETS[key].dup
+         elsif key && PAD_ARP_PRESETS[key]
+           PAD_ARP_PRESETS[key].dup.tap { |h| h[:vel] = (h[:vel] * 1.85).clamp(0.38, 0.58) }
+         end
+  if base
     base.merge(patch&.dig(:midi_arp) || {})
         .merge(arp_styles: patch&.dig(:arp_styles) || base[:arp_styles])
   else
@@ -4789,7 +4929,9 @@ end
 
 def stream_track_banner(extra = nil)
   tag = ENV["TRACK"] || "?"
-  meta = "pad=#{ENV['PAD_VOICE']} lead_arp=#{pad_arp_mode} kicks=#{ENV.fetch('KICKS', '1')} " \
+  lead_tag = ENV["LEAD_VOICE"] || @render_lead_patch&.dig(:id) || "?"
+  arp_tag = ENV["LEAD_ARP_MODE"] || lead_arp_mode || pad_arp_mode
+  meta = "pad=#{ENV['PAD_VOICE']} lead=#{lead_tag}/#{arp_tag} kicks=#{ENV.fetch('KICKS', '1')} " \
          "speak=#{ENV.fetch('SPEAK', '1')} voice=#{speech_tts_voice}"
   meta = "#{meta} #{extra}" if extra
   puts "=== #{tag} (#{meta}) ==="
@@ -5014,6 +5156,8 @@ DILLA_BEST_DEFAULTS = {
   "DILLA_DEEP" => "1",
   "PAD_VOICE" => "blend",
   "PAD_ARP_MODE" => "wash",
+  "LEAD_VOICE" => "soul_prophet",
+  "LEAD_ARP_MODE" => "soul_wash",
   "LEAD_ARP" => "1",
   "EXPERIMENTAL_LEADS" => "1",
   "SOUL_ENRICH" => "1",
@@ -5284,11 +5428,11 @@ end
 
 def apply_track_soul_profile!(track, force: false)
   key = track.to_s.downcase.tr("-", "_").to_sym
-  profile = TRACK_SOUL_PAD_PROFILES[key]
-  return unless profile
-  profile.each do |env_key, value|
-    next if !force && ENV[env_key] && !ENV[env_key].empty?
-    ENV[env_key] = value.to_s
+  [TRACK_SOUL_PAD_PROFILES[key], TRACK_SOUL_LEAD_PROFILES[key]].compact.each do |profile|
+    profile.each do |env_key, value|
+      next if !force && ENV[env_key] && !ENV[env_key].empty?
+      ENV[env_key] = value.to_s
+    end
   end
 end
 
@@ -7197,7 +7341,7 @@ HARMONIC_STEM_MIX = {
   pads:       { volume: 1.18, weight: 1.45 },
   tones:      { volume: 0.72, weight: 0.55 },
   scale_lead: { volume: 0.82, weight: 0.38 },
-  lead_arp:   { volume: 0.74, weight: 0.24 },
+  lead_arp:   { volume: 0.8, weight: 0.3 },
   lead:       { volume: 0.66, weight: 0.14 }
 }.freeze
 
@@ -9192,6 +9336,7 @@ FLAG_ENV = {
   "industrial-dark" => "INDUSTRIAL_DARK", "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
   "evolve-harmony-w" => "EVOLVE_HARMONY_W", "evolve-groove-w" => "EVOLVE_GROOVE_W",
   "sidechain-style" => "SIDECHAIN_STYLE",
+  "lead-voice" => "LEAD_VOICE", "lead-arp-mode" => "LEAD_ARP_MODE",
   "pad-voice" => "PAD_VOICE", "pad-arp-mode" => "PAD_ARP_MODE", "experimental-leads" => "EXPERIMENTAL_LEADS",
   "kick-gain" => "KICK_GAIN", "vinyl" => "VINYL", "external-kit" => "EXTERNAL_KIT",
   "creepy-patches" => "CREEPY_PATCHES", "lead-arp" => "LEAD_ARP", "raw" => "DILLA_RAW",
