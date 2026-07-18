@@ -31,7 +31,20 @@ const FACE_TEXT = await runtimeRes.text();
 
 const ASSET_PATHS = window.MASTER_ASSET_PATHS || {};
 const absoluteAsset = (path) => path ? new URL(path, document.baseURI).href : null;
-if (ASSET_PATHS.threeModule) ASSET_PATHS.threeModule = absoluteAsset(ASSET_PATHS.threeModule);
+// Systematic hardening: the face runtime is imported from a blob: URL where a
+// root-relative specifier ("/assets/…") can't resolve. Absolutize EVERY asset
+// path once here — threeModule, faceRuntime, face, and each faceModules entry —
+// so threeModule, the deferred imports (_deferFaceMod), and any future consumer
+// get resolvable URLs at the source instead of per-call. (Blank/black-face root
+// cause on 2026-07-18 was two such specifiers slipping through.)
+["threeModule", "faceRuntime", "face"].forEach((k) => {
+  if (ASSET_PATHS[k]) ASSET_PATHS[k] = absoluteAsset(ASSET_PATHS[k]);
+});
+if (ASSET_PATHS.faceModules) {
+  for (const name of Object.keys(ASSET_PATHS.faceModules)) {
+    ASSET_PATHS.faceModules[name] = absoluteAsset(ASSET_PATHS.faceModules[name]);
+  }
+}
 const MODULE_PATHS = {
   "/three.face.module.js?v=1": absoluteAsset(ASSET_PATHS.threeModule),
   ...Object.fromEntries(Object.entries(ASSET_PATHS.faceModules || {}).map(([name, path]) => [`/${name}`, absoluteAsset(path)]))

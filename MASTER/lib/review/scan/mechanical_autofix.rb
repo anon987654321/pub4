@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "shellwords"
 require_relative "ast_fixer"
 
 module Master
@@ -29,6 +30,11 @@ module Master
 
         def fix_path(path)
           return unless File.file?(path)
+          # Shared-worktree safety: never rewrite a file that already has
+          # uncommitted MODIFICATIONS — autofixing on top of another agent's
+          # in-progress edits silently entangles them and can't be cleanly split
+          # at commit time. Untracked-new files are fine to fix (nothing to clobber).
+          return if uncommitted_modification?(path)
 
           result = AstFixer.fix(path, File.read(path, encoding: "UTF-8"), event_bus: @bus)
           return unless result&.changed
@@ -39,6 +45,14 @@ module Master
           # Back-compat event name used by SelfScan consumers/tests
           @bus&.publish("self_autofix:applied", path: rel, transforms: result.transforms)
           applied
+        end
+
+        def uncommitted_modification?(path)
+          out = `git -C #{Shellwords.escape(@root)} status --porcelain -- #{Shellwords.escape(path.to_s)} 2>/dev/null`
+          # XY porcelain codes: skip tracked-modified (" M", "MM", "AM", "RM").
+          out.to_s.lines.any? { |line| line =~ /\A(\sM|MM|AM|RM)/ }
+        rescue StandardError
+          false
         end
 
         def relative_path(path)

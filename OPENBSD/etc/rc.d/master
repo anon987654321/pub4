@@ -23,6 +23,12 @@ rc_pre() {
 		BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
 		(cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' \
 			BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
+	# The tts-worker + media tools use MASTER/Gemfile (root), NOT web's. A drifted
+	# root lock (e.g. new dilla gems never installed) crashes tts-worker at
+	# Bundler.setup on every spawn -> silent TTS outage / degraded /health. Ensure
+	# it here too so a restart self-heals the exact recurring failure.
+	(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
+		(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
 	pkill -f "falcon.*${PORT}" 2>/dev/null
 	pkill -f "ruby34.*${PORT}" 2>/dev/null
 	pkill -f "pub4/MASTER/web" 2>/dev/null
