@@ -104,6 +104,31 @@ install_static() {
   cp "$src" "$dst"
 }
 
+install_tracked_crontab() {
+  typeset tracked=${SCRIPT_DIR}/etc/crontab.vm23
+  [[ -f $tracked ]] || return 0
+
+  typeset root_cron=/tmp/root_crontab.$$
+  TMPFILES+=($root_cron)
+  crontab -l 2>/dev/null > $root_cron || :
+
+  while IFS= read -r line; do
+    [[ -z $line || $line == \#* ]] && continue
+    typeset -a fields=(${=line})
+    [[ ${#fields[@]} -lt 6 ]] && continue
+    typeset cmdpath=$fields[6]
+    typeset tag=${cmdpath:t}
+    grep -q "$tag" $root_cron 2>/dev/null && continue
+    [[ $cmdpath == /* && ! -x $cmdpath ]] && continue
+
+    print -r -- "$line" >> $root_cron
+    log INFO "installed root cron: $tag"
+  done < $tracked
+
+  crontab $root_cron || { log ERROR "Crontab update failed"; return 1 }
+  return 0
+}
+
 is_step_completed()  { [[ -f "${STATE_FILE}.steps" ]] && [[ $(<"${STATE_FILE}.steps") == *"$1"* ]] }
 mark_step_completed() { print -r -- "$1" >> "${STATE_FILE}.steps" }
 
@@ -147,20 +172,7 @@ install_root_configs() {
     log INFO "doas validation passed after config install"
   fi
 
-  if [[ -x /usr/local/bin/relayd-watchdog ]] || [[ -x /usr/local/bin/config-drift-check ]]; then
-    typeset root_cron=/tmp/root_crontab.$$
-    crontab -l 2>/dev/null > $root_cron || :
-    if [[ -x /usr/local/bin/relayd-watchdog ]] && ! grep -q relayd-watchdog $root_cron 2>/dev/null; then
-      print -r -- "*/5 * * * * /usr/local/bin/relayd-watchdog" >> $root_cron
-      log INFO "installed root cron: relayd-watchdog (every 5 min)"
-    fi
-    if [[ -x /usr/local/bin/config-drift-check ]] && ! grep -q config-drift-check $root_cron 2>/dev/null; then
-      print -r -- "*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1" >> $root_cron
-      log INFO "installed root cron: config-drift-check"
-    fi
-    crontab $root_cron
-    rm -f $root_cron
-  fi
+  install_tracked_crontab || return 1
 
   if [[ -f $src/etc/.zshrc ]]; then
     install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
@@ -220,16 +232,7 @@ sync_openbsd_apply() {
   # (In per-app: before bundle, check Gemfile etc.)
 
   install -m 755 "${SCRIPT_DIR}/resource_guard.sh" /usr/local/bin/resource_guard.sh 2>/dev/null || true
-  if [[ -x /usr/local/bin/resource_guard.sh ]]; then
-    typeset guard_cron=/tmp/root_crontab.$$
-    crontab -l 2>/dev/null > $guard_cron || :
-    if ! grep -q resource_guard $guard_cron 2>/dev/null; then
-      print -r -- "*/5 * * * * /usr/local/bin/resource_guard.sh" >> $guard_cron
-      crontab $guard_cron
-      log INFO "installed root cron: resource_guard (every 5 min)"
-    fi
-    rm -f $guard_cron
-  fi
+  install_tracked_crontab || return 1
 
   typeset -a svcs=(nsd httpd relayd smtpd master)
   for svc in $svcs; do
@@ -531,11 +534,7 @@ stage_1() {
 
   install_static usr/local/bin/renew-certs.sh /usr/local/bin/renew-certs.sh
   chmod 755 /usr/local/bin/renew-certs.sh
-  typeset crontab_tmp=/tmp/crontab_tmp
-  crontab -l 2>/dev/null > $crontab_tmp || :
-  print -r -- "0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1" >> $crontab_tmp
-  crontab $crontab_tmp || { log ERROR "Crontab update failed"; exit 1 }
-  rm $crontab_tmp
+  install_tracked_crontab || exit 1
 
   log INFO "Stage 1 complete. ns.brgen.no ($BRGEN_IP) authoritative with DNSSEC."
   log INFO "DS records: /var/nsd/zones/master/*.ds — submit each to your registrar (Domeneshop: domain settings → DNSSEC)."

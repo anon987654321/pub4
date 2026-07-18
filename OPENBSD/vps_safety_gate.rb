@@ -14,28 +14,33 @@ else
   failures << "missing tracked etc/doas.conf"
 end
 
-validate_doas = File.join(TOOLING, "sh", "validate_doas.ksh")
+validate_doas = File.join(TOOLING, "validate_doas.ksh")
 failures << "missing OPENBSD/validate_doas.ksh" unless File.file?(validate_doas)
 
-console_common = File.join(TOOLING, "sh", "vps_console_common.exp")
+console_common = File.join(TOOLING, "vps_console_common.exp")
 failures << "missing OPENBSD/vps_console_common.exp" unless File.file?(console_common)
 
-Dir.glob(File.join(TOOLING, "sh", "vps_console*.exp")).sort.each do |path|
-  rel = path.delete_prefix("#{ROOT}/")
-  text = File.read(path)
+console_main = File.join(TOOLING, "vps_console.exp")
+if File.file?(console_main)
+  text = File.read(console_main)
   unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
-    failures << "#{rel} must source vps_console_common.exp and call require_console_risk_ack"
+    failures << "OPENBSD/vps_console.exp must source vps_console_common.exp and call require_console_risk_ack"
   end
-  if text.include?("vm27")
-    failures << "#{rel} must target vm23 only (found vm27)"
-  end
+  failures << "OPENBSD/vps_console.exp must target vm23 only (found vm27)" if text.include?("vm27")
+else
+  failures << "missing OPENBSD/vps_console.exp"
 end
 
-drop_install = File.join(TOOLING, "sh", "vps_drop_install.exp")
-if File.file?(drop_install)
-  text = File.read(drop_install)
-  unless text.include?("vps_console_common.exp") && text.include?("require_console_risk_ack")
-    failures << "OPENBSD/vps_drop_install.exp must source vps_console_common.exp"
+%w[vps_console_short vps_console_status vps_console_probe vps_console_fix_key
+   vps_console_start_install vps_console_poll_install vps_console_install
+   vps_console_sync_and_install vps_drop_install].each do |name|
+  path = File.join(TOOLING, "#{name}.exp")
+  failures << "missing OPENBSD/#{name}.exp" unless File.file?(path)
+  next unless File.file?(path)
+
+  text = File.read(path)
+  unless text.include?("vps_console.exp")
+    failures << "OPENBSD/#{name}.exp must delegate to vps_console.exp"
   end
 end
 

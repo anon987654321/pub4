@@ -1,7 +1,11 @@
 # Actionable deploy debt — open items agents should work unless blocked.
+# Operator deploy debt. Narrative ops notes: OPENBSD/RUNBOOK.md, OPENBSD/DECISIONS.md.
 # Feature inventory: RAILS/apps.yml. Deferred features: apps.horizon.yml (agent: ignore).
 
-open: []
+open:
+  - id: off_host_dr
+    tag: operator-priority
+    summary: Litestream replicas are same-disk only; off-host replica still needed
 
 closed:
   - id: solid_queue_worker_proof
@@ -14,3 +18,17 @@ closed:
     resolution: amber items.scss split + timeline BEM removed
   - id: web_asset_discipline
     resolution: vps-deploy master path runs precompile + master_web_assets_gate
+  - id: vps_safety_gate_paths
+    resolution: fixed OPENBSD/ top-level paths; gate passes on clean checkout (2026-07-16)
+  - id: shadow_deploy_scripts
+    resolution: deleted .deploy_now.sh and .deploy_manual.sh (2026-07-16)
+  - id: restore_backups_misname
+    resolution: split into restore_backups.sh (litestream) + extract_legacy_installers.sh (2026-07-16)
+  - id: vps_console_collapse
+    resolution: vps_console.exp modes + thin wrapper .exp files (2026-07-16)
+  - id: ops_personal_scripts
+    resolution: moved laptop utilities to OPENBSD/dev/ (2026-07-16)
+  - id: external_alerting
+    resolution: OPENBSD/bin/uptime-check.sh curls /up on all apps; documented in RUNBOOK.md (2026-07-16)
+  - id: ssh_helper_dry
+    resolution: OPENBSD/lib/ssh_vm23.sh; deploy_all.sh and vps_deploy_master.sh wired (2026-07-16)

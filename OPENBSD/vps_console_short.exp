@@ -1,15 +1,2 @@
 #!/usr/bin/expect -f
-source [file join [file dirname $argv0] vps_console_common.exp]
-require_console_risk_ack
-set timeout 15
-set keyfile $env(HOME)/.ssh/id_ed25519_brgen
-set cmd [lindex $argv 0]
-if {$cmd eq ""} { set cmd "uptime" }
-spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
-expect -re {Connected to /dev/ttypx}
-send "\r"
-expect -re {brgen\$ }
-send "$cmd\r"
-expect -re {brgen\$ }
-send "~.\r"
-expect eof
+exec [file join [file dirname $argv0] vps_console.exp] short {*}$argv

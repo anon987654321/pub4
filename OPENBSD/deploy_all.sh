@@ -24,13 +24,14 @@ PUB4_ROOT=${PUB4_ROOT:-${DEPLOY_ROOT:h:h}}
 : "${RUN_REMOTE_HEALTH:=1}"
 : "${ALLOW_PARTIAL_DEPLOY:=0}"
 
-typeset -a ssh_opts=(-o StrictHostKeyChecking=no -o ConnectTimeout=15)
-[[ -f $SSH_KEY ]] && ssh_opts+=(-i "$SSH_KEY")
+source "${SCRIPT_DIR}/lib/ssh_vm23.sh"
+SSH_HOST=$VPS_HOST
+SSH_USER=$VPS_USER
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 error() { log "ERROR: $*"; exit 1 }
 
-vssh() { ssh "${ssh_opts[@]}" "${VPS_USER}@${VPS_HOST}" "$@" }
+vssh() { vm23_ssh "$@" }
 
 typeset run_per_app=0
 [[ ${1:-} == --per-app ]] && run_per_app=1
@@ -56,8 +57,8 @@ else
   command -v rsync >/dev/null 2>&1 || error "rsync required when USE_GIT_PULL=0"
   log "Rsync OPENBSD/ → ${REMOTE_PUB4}/OPENBSD/ ..."
   rsync -az --delete \
-    -e "ssh ${(j: :)ssh_opts}" \
-    "${DEPLOY_ROOT}/" "${VPS_USER}@${VPS_HOST}:${REMOTE_PUB4}/OPENBSD/" \
+    -e "ssh ${(j: :)VM23_SSH_OPTS}" \
+    "${DEPLOY_ROOT}/" "${SSH_USER}@${SSH_HOST}:${REMOTE_PUB4}/OPENBSD/" \
     || error "rsync failed"
 fi
 
@@ -110,5 +111,5 @@ if [[ $RUN_REMOTE_HEALTH == 1 ]]; then
 fi
 
 log "Deploy finished."
-log "VPS: ssh ${ssh_opts[*]} ${VPS_USER}@${VPS_HOST}"
+log "VPS: ssh ${VM23_SSH_OPTS[*]} ${SSH_USER}@${SSH_HOST}"
 log "Health: ${REMOTE_RUBY} ${REMOTE_PUB4}/OPENBSD/health_check.rb --public --all-ready-apps (on VPS)"

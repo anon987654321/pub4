@@ -1,27 +1,2 @@
 #!/usr/bin/expect -f
-source [file join [file dirname $argv0] vps_console_common.exp]
-require_console_risk_ack
-set timeout 30
-set pubkey "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E dev@brgen.no vm23 server4"
-set keyfile $env(HOME)/.ssh/id_ed25519_brgen
-
-proc at_prompt {} {
-  expect -re {brgen\$ $}
-}
-
-spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
-expect -re {Connected to /dev/ttypx}
-send "\r"
-at_prompt
-send "whoami; hostname; uname -a\r"
-at_prompt
-send "mkdir -p /home/dev/.ssh && chmod 700 /home/dev/.ssh\r"
-at_prompt
-send "grep -q 'AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E' /home/dev/.ssh/authorized_keys 2>/dev/null || echo '$pubkey' >> /home/dev/.ssh/authorized_keys\r"
-at_prompt
-send "chown -R dev:dev /home/dev/.ssh && chmod 600 /home/dev/.ssh/authorized_keys\r"
-at_prompt
-send "doas pfctl -t bruteforce -T flush 2>/dev/null || true\r"
-at_prompt
-send "~.\r"
-expect eof
+exec [file join [file dirname $argv0] vps_console.exp] fix_key {*}$argv

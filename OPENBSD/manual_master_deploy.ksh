@@ -6,6 +6,7 @@
 LOG=/tmp/master_manual.log
 exec >"$LOG" 2>&1
 set -x
+_fail=0
 echo "START $(date -u)"
 
 pkill -9 -f vps_deploy_master 2>/dev/null
@@ -27,10 +28,14 @@ if [ -f "$MANIFEST" ] && [ "${FORCE_PRECOMPILE:-0}" != "1" ]; then
   echo precompile_skip manifest_exists
 else
   echo precompile_start
-  bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle
-  bundle34 exec rails assets:precompile
+  bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle || _fail=1
+  bundle34 exec rails assets:precompile || _fail=1
 fi
-ruby34 /home/dev/pub4/RAILS/master_web_assets_gate.rb
+ruby34 /home/dev/pub4/RAILS/master_web_assets_gate.rb || _fail=1
+if [ "$_fail" -ne 0 ]; then
+  echo FAILED precompile_or_gate
+  exit 1
+fi
 
 echo restart_master
 # rc_pre skips face/precompile when artifacts exist (patched /etc/rc.d/master).

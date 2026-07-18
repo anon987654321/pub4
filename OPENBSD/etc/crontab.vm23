@@ -1,0 +1,15 @@
+# Tracked mirror of vm23 root crontab lines installed by OPERATOR.sh.
+# Merge idempotently on deploy. Hand-edits on vm23 should be copied back here.
+# nsd-resign runs from etc/daily.local, not this crontab.
+
+# relayd-watchdog — restart relayd when unhealthy or backends stale
+*/5 * * * * /usr/local/bin/relayd-watchdog
+
+# config-drift-check — relayd/acme/NSD drift detection
+*/15 * * * * /usr/local/bin/config-drift-check >> /var/log/config_drift.log 2>&1
+
+# resource_guard — load shedding when vm23 is overloaded
+*/5 * * * * /usr/local/bin/resource_guard.sh
+
+# renew-certs — weekly ACME renewal (stage-1 installs renew-certs.sh)
+0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1

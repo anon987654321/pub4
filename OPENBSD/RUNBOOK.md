@@ -154,6 +154,65 @@ Default installs `OPENBSD/{etc,usr,var}`, validates pf/relayd, and restarts serv
 
 After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-reload.
 
+## Deploy-all disambiguation
+
+Two “deploy everything” paths on vm23 — pick deliberately:
+
+| Script | CI | Scope | When |
+|--------|----|-------|------|
+| `zsh OPENBSD/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
+| `zsh OPENBSD/vps_production_push.sh` | **No** — sets `SKIP_CI=1` | master + brgen + amber | Fast hotfix; skips test gate |
+
+`vps_production_push.sh` is the footgun under pressure: it restarts production without running CI.
+Use `vps_ci_all.sh` unless you explicitly need the fast path and accept the risk.
+
+## Self-healing cron (vm23)
+
+Tracked mirror: `OPENBSD/etc/crontab.vm23` (installed idempotently by `OPERATOR.sh`). Hand-edits
+on vm23 should be copied back to that file.
+
+| Job | Schedule | Log / signal |
+|-----|----------|--------------|
+| `relayd-watchdog` | `*/5 * * * *` | syslog tag `relayd-watchdog` — restarts relayd when unhealthy or backend table stale; heals `doas.conf` trailing newline |
+| `config-drift-check` | `*/15 * * * *` | `/var/log/config_drift.log` — relayd Host routes vs acme SANs vs NSD zones vs DNSSEC paths |
+| `resource_guard.sh` | `*/5 * * * *` | load shedding when vm23 is overloaded |
+| `renew-certs.sh` | `0 2 * * 1` | `/var/log/cert-renewal.log` |
+
+`nsd-resign` is **not** in root crontab — it runs from `etc/daily.local` (daily DNSSEC re-sign +
+backup pass). Failures surface in syslog (`daily.local` tag) and `/var/log/nsd-resign` if present.
+
+## External uptime check
+
+Off-box detection (no alerting pipeline yet):
+
+```sh
+sh OPENBSD/bin/uptime-check.sh
+```
+
+Curls `https://ai.brgen.no/up`, `https://brgen.no/up`, `https://amber.brgen.no/up`,
+`https://bsdports.org/up`. Runs from a laptop or vm23; exit 0 only when all four respond.
+Complements `health_check.rb` (which also checks services, certs, relayd locally on vm23).
+
+## vps_console.exp modes
+
+Recovery-only — requires `I_UNDERSTAND_CONSOLE_RISK=1`. Thin wrappers:
+`vps_console_<mode>.exp`, `vps_drop_install.exp`.
+
+| Mode | Purpose |
+|------|---------|
+| `short [cmd]` | One console command (default `uptime`); 15s timeout |
+| `status` | Tail install log + `rcctl check` master/brgen/amber/bsdports |
+| `probe` | Raw console banner/login probe (debug connectivity) |
+| `fix_key` | Install vm23 `authorized_keys` + flush pf `bruteforce` |
+| `start_install` | `nohup /tmp/vps_on_vm_install.sh` from console |
+| `poll_install` | Tail on-vm install log + process/rcctl snapshot |
+| `install` | Full MASTER bundle + per-app deploy from console (long) |
+| `sync_and_install` | Base64 tarball sync to `/home/dev/pub4` then on-vm install |
+| `drop_install` | Base64-embed `vps_on_vm_install.sh` only (no full tree) |
+
+Laptop SSH to vm23: `source OPENBSD/lib/ssh_vm23.sh` or `zsh OPENBSD/lib/ssh_vm23.sh <cmd>`.
+Long deploys: `vm23_tmux deploy 'doas zsh OPENBSD/OPERATOR.sh …'`.
+
 ## Rails deploy
 
 ```zsh

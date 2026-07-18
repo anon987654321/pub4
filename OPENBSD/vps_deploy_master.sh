@@ -1,7 +1,14 @@
 #!/bin/sh
 # Deploy MASTER web + lib to vm23 after git pull.
 # Usage (from dev laptop):
-#   ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226 'zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh'
+#   zsh OPENBSD/lib/ssh_vm23.sh exec 'zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh'
+#   zsh OPENBSD/vps_deploy_master.sh --from-laptop
+
+if [ "${1:-}" = "--from-laptop" ]; then
+  shift
+  _lib="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/lib/ssh_vm23.sh"
+  exec zsh "$_lib" exec "zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh" "$@"
+fi
 
 set -e
 ROOT="${ROOT:-/home/dev/pub4}"

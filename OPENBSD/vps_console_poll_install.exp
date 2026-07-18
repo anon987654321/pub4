@@ -1,23 +1,2 @@
 #!/usr/bin/expect -f
-source [file join [file dirname $argv0] vps_console_common.exp]
-require_console_risk_ack
-set timeout 25
-set keyfile $env(HOME)/.ssh/id_ed25519_brgen
-
-proc at_prompt {} {
-  expect -re {brgen\$ $}
-}
-
-spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
-expect -re {Connected to /dev/ttypx}
-send "\r"
-at_prompt
-
-send "tail -25 /tmp/pub4_on_vm_install.log 2>/dev/null; echo ---; ps aux | egrep 'bundle|vps_on_vm|brgen.sh|amber.sh|bsdports.sh' | grep -v grep | head -6\r"
-at_prompt
-
-send "doas rcctl check master brgen amber bsdports 2>&1\r"
-at_prompt
-
-send "~.\r"
-expect eof
+exec [file join [file dirname $argv0] vps_console.exp] poll_install {*}$argv

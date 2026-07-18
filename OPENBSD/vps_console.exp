@@ -1,0 +1,172 @@
+#!/usr/bin/expect -f
+# Parameterized vm23 console automation. Modes:
+#   short [cmd]  status  probe  fix_key  start_install  poll_install
+#   install  sync_and_install  drop_install
+#
+# Thin wrappers: vps_console_<mode>.exp and vps_drop_install.exp exec this file.
+
+source [file join [file dirname $argv0] vps_console_common.exp]
+require_console_risk_ack
+
+set mode [lindex $argv 0]
+if {$mode eq ""} {
+  puts "usage: vps_console.exp <mode> \[args...\]"
+  exit 1
+}
+
+set keyfile $env(HOME)/.ssh/id_ed25519_brgen
+set pubkey "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E dev@brgen.no vm23 server4"
+
+proc at_prompt {} {
+  expect -re {brgen\$ $}
+}
+
+proc at_prompt_loose {} {
+  expect -re {brgen\$ }
+}
+
+proc console_open {} {
+  global keyfile
+  spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+  expect -re {Connected to /dev/ttypx}
+  send "\r"
+}
+
+proc console_close {} {
+  send "~.\r"
+  expect eof
+}
+
+switch -- $mode {
+  short {
+    set timeout 15
+    set cmd [lindex $argv 1]
+    if {$cmd eq ""} { set cmd "uptime" }
+    console_open
+    at_prompt_loose
+    send "$cmd\r"
+    at_prompt_loose
+    console_close
+  }
+  status {
+    set timeout 20
+    console_open
+    at_prompt_loose
+    send "tail -15 /tmp/pub4_install_latest.log 2>/dev/null; ps aux | grep bundle | grep -v grep | head -3\r"
+    at_prompt_loose
+    send "doas rcctl check master brgen amber bsdports 2>/dev/null\r"
+    at_prompt_loose
+    console_close
+  }
+  probe {
+    set timeout 60
+    spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
+    sleep 2
+    send "\r\r\r"
+    expect {
+      -re {login:} { puts "LOGIN_PROMPT"; send "dev\r"; exp_continue }
+      -re {OpenBSD} { puts "OPENBSD_BANNER\n$expect_out(buffer)"; exp_continue }
+      -re {password:} { puts "PASSWORD_PROMPT"; exp_continue }
+      timeout { puts "TIMEOUT_BUF:\n$expect_out(buffer)" }
+      eof { puts "EOF" }
+    }
+  }
+  fix_key {
+    set timeout 30
+    console_open
+    at_prompt
+    send "whoami; hostname; uname -a\r"
+    at_prompt
+    send "mkdir -p /home/dev/.ssh && chmod 700 /home/dev/.ssh\r"
+    at_prompt
+    send "grep -q 'AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E' /home/dev/.ssh/authorized_keys 2>/dev/null || echo '$pubkey' >> /home/dev/.ssh/authorized_keys\r"
+    at_prompt
+    send "chown -R dev:dev /home/dev/.ssh && chmod 600 /home/dev/.ssh/authorized_keys\r"
+    at_prompt
+    send "doas pfctl -t bruteforce -T flush 2>/dev/null || true\r"
+    at_prompt
+    console_close
+  }
+  start_install {
+    set timeout 20
+    console_open
+    at_prompt_loose
+    send "doas pfctl -t bruteforce -T flush 2>/dev/null\r"
+    at_prompt_loose
+    send "nohup /tmp/vps_on_vm_install.sh >/tmp/pub4_on_vm_install.log 2>&1 &\r"
+    at_prompt_loose
+    send "sleep 1; head -3 /tmp/pub4_on_vm_install.log\r"
+    at_prompt_loose
+    console_close
+  }
+  poll_install {
+    set timeout 25
+    console_open
+    at_prompt
+    send "tail -25 /tmp/pub4_on_vm_install.log 2>/dev/null; echo ---; ps aux | egrep 'bundle|vps_on_vm|brgen.sh|amber.sh|bsdports.sh' | grep -v grep | head -6\r"
+    at_prompt
+    send "doas rcctl check master brgen amber bsdports 2>&1\r"
+    at_prompt
+    console_close
+  }
+  install {
+    set timeout 600
+    console_open
+    at_prompt
+    send "cd /home/dev/pub4/MASTER && bundle install\r"
+    at_prompt
+    send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SECRET_KEY_BASE=\${SECRET_KEY_BASE:-dummy} bundle exec rails assets:precompile && bundle exec ruby /home/dev/pub4/RAILS/master_web_assets_gate.rb && doas rcctl restart master\r"
+    at_prompt
+    send "for a in brgen amber bsdports; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/RAILS/\$a/\$a.sh; done\r"
+    at_prompt
+    send "for a in brgen amber bsdports; do echo ====\$a====; zsh /home/dev/pub4/RAILS/\$a/\$a.sh || echo FAIL_\$a; done 2>&1 | tee /tmp/console_install.log\r"
+    set timeout 3600
+    expect {
+      timeout { puts "INSTALL_TIMEOUT"; }
+    }
+    at_prompt
+    send "doas rcctl check master brgen amber bsdports 2>&1\r"
+    at_prompt
+    send "tail -20 /tmp/console_install.log\r"
+    at_prompt
+    console_close
+  }
+  sync_and_install {
+    set timeout 30
+    set tgzfile /tmp/pub4_deploy_sync.tgz
+    set b64 [exec base64 -i $tgzfile]
+    console_open
+    at_prompt
+    send "doas pfctl -t bruteforce -T flush 2>/dev/null; echo PF_FLUSH_OK\r"
+    at_prompt
+    send "echo $b64 | base64 -d > /tmp/pub4_deploy_sync.tgz && tar xzf /tmp/pub4_deploy_sync.tgz -C /home/dev/pub4 && echo SYNC_OK\r"
+    at_prompt
+    send "chmod +x /home/dev/pub4/OPENBSD/vps_on_vm_install.sh /home/dev/pub4/OPENBSD/vps_install_all.sh\r"
+    at_prompt
+    send "pkill -f vps_on_vm_install.sh 2>/dev/null; pkill -f vps_install_all.sh 2>/dev/null; true\r"
+    at_prompt
+    send "nohup zsh /home/dev/pub4/OPENBSD/vps_on_vm_install.sh > /tmp/pub4_on_vm_install.log 2>&1 & echo INSTALL_PID:\$!\r"
+    at_prompt
+    send "sleep 2; head -8 /tmp/pub4_on_vm_install.log\r"
+    at_prompt
+    console_close
+  }
+  drop_install {
+    set timeout 30
+    set scriptfile [file join [file dirname $argv0] vps_on_vm_install.sh]
+    set b64 [exec base64 < $scriptfile]
+    console_open
+    at_prompt_loose
+    send "doas pfctl -t bruteforce -T flush 2>/dev/null; echo PF_FLUSH_OK\r"
+    at_prompt_loose
+    send "echo $b64 | base64 -d > /tmp/vps_on_vm_install.sh && chmod +x /tmp/vps_on_vm_install.sh && echo SCRIPT_OK\r"
+    at_prompt_loose
+    send "nohup /tmp/vps_on_vm_install.sh > /tmp/on_vm_install.log 2>&1 & echo STARTED\r"
+    at_prompt_loose
+    console_close
+  }
+  default {
+    puts "unknown mode: $mode"
+    exit 1
+  }
+}

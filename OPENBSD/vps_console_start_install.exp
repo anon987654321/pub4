@@ -1,17 +1,2 @@
 #!/usr/bin/expect -f
-source [file join [file dirname $argv0] vps_console_common.exp]
-require_console_risk_ack
-set timeout 20
-set keyfile $env(HOME)/.ssh/id_ed25519_brgen
-spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=no dev@server4.openbsd.amsterdam vmctl console vm23
-expect -re {Connected to /dev/ttypx}
-send "\r"
-expect -re {brgen\$ }
-send "doas pfctl -t bruteforce -T flush 2>/dev/null\r"
-expect -re {brgen\$ }
-send "nohup /tmp/vps_on_vm_install.sh >/tmp/pub4_on_vm_install.log 2>&1 &\r"
-expect -re {brgen\$ }
-send "sleep 1; head -3 /tmp/pub4_on_vm_install.log\r"
-expect -re {brgen\$ }
-send "~.\r"
-expect eof
+exec [file join [file dirname $argv0] vps_console.exp] start_install {*}$argv
