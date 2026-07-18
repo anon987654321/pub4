@@ -193,6 +193,26 @@ Curls `https://ai.brgen.no/up`, `https://brgen.no/up`, `https://amber.brgen.no/u
 `https://bsdports.org/up`. Runs from a laptop or vm23; exit 0 only when all four respond.
 Complements `health_check.rb` (which also checks services, certs, relayd locally on vm23).
 
+## Post-deploy smoke (one page)
+
+After `vps-deploy` / rcctl restarts, run:
+
+```sh
+# on vm23 — local ports + public + brgen HTML checks (no splash, nav tablist)
+sh OPENBSD/bin/deploy-smoke.sh
+
+# laptop / public only
+sh OPENBSD/bin/deploy-smoke.sh --public
+
+# policy: amber optional on 1GB hosts
+ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh
+```
+
+Checks `rcctl` (when present), localhost `/up` ports (master 53187, brgen 38182,
+amber 61352), public HTTPS, free-RAM warning, and brgen homepage regressions.
+See `OPENBSD/data/debt.yml` → `multi_app_ram` for the three-app memory ceiling.
+Restart order when recovering: **master → brgen → amber → relayd**.
+
 ## vps_console.exp modes
 
 Recovery-only — requires `I_UNDERSTAND_CONSOLE_RISK=1`. Thin wrappers:

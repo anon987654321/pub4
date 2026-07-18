@@ -13,6 +13,7 @@ Next (serial — one app at a time):
   2. zsh OPENBSD/bin/vps-deploy <app>     # or: zsh OPENBSD/vps_ci.sh <app>
   3. ruby34 OPENBSD/integrity_gate.rb
   4. ruby34 OPENBSD/health_check.rb --public --all-ready-apps
+  5. sh OPENBSD/bin/deploy-smoke.sh       # fast local+public smoke (ALLOW_AMBER_DOWN=1 if needed)
 
 MASTER web changes also need:
   zsh OPENBSD/bin/vps-deploy master

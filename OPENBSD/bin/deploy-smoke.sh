@@ -1,0 +1,174 @@
+#!/usr/bin/env sh
+# One-page post-deploy smoke — run on vm23 after vps-deploy / restarts, or from a laptop.
+#
+# Usage:
+#   sh OPENBSD/bin/deploy-smoke.sh              # auto: local+public if rcctl present
+#   sh OPENBSD/bin/deploy-smoke.sh --public     # public HTTPS only
+#   sh OPENBSD/bin/deploy-smoke.sh --local      # localhost ports + rcctl only
+#   ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh   # don't fail if amber is down
+#
+# Exit 0 only when required checks pass.
+
+set -eu
+
+CURL=${CURL:-curl}
+TIMEOUT=${SMOKE_TIMEOUT:-20}
+MODE=${1:-auto}
+ALLOW_AMBER_DOWN=${ALLOW_AMBER_DOWN:-0}
+
+failed=0
+warns=0
+
+ok()   { printf 'ok   %s\n' "$*"; }
+fail() { printf 'FAIL %s\n' "$*" >&2; failed=$((failed + 1)); }
+warn() { printf 'WARN %s\n' "$*" >&2; warns=$((warns + 1)); }
+
+have_rcctl() {
+  command -v rcctl >/dev/null 2>&1 || [ -x /usr/sbin/rcctl ]
+}
+
+curl_code() {
+  url=$1
+  code=$($CURL -sS -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" "$url" 2>/dev/null || printf '000')
+  printf '%s' "$code"
+}
+
+check_http() {
+  name=$1
+  url=$2
+  required=${3:-1}
+  code=$(curl_code "$url")
+  case "$code" in
+    2??|3??)
+      ok "$name $url ($code)"
+      ;;
+    *)
+      if [ "$required" = "0" ]; then
+        warn "$name $url ($code) optional"
+      else
+        fail "$name $url ($code)"
+      fi
+      ;;
+  esac
+}
+
+check_rcctl() {
+  svc=$1
+  required=${2:-1}
+  if ! have_rcctl; then
+    return 0
+  fi
+  if doas -n rcctl check "$svc" >/dev/null 2>&1 || rcctl check "$svc" >/dev/null 2>&1; then
+    ok "rcctl $svc"
+  else
+    if [ "$required" = "0" ]; then
+      warn "rcctl $svc failed (optional)"
+    else
+      fail "rcctl $svc"
+    fi
+  fi
+}
+
+mem_hint() {
+  if ! have_rcctl; then
+    return 0
+  fi
+  # OpenBSD: free pages × page size is awkward; top -b one-liner when present
+  if command -v top >/dev/null 2>&1; then
+    line=$(top -b 2>/dev/null | sed -n 's/^Memory: //p' | head -1)
+    if [ -n "$line" ]; then
+      printf 'info memory: %s\n' "$line"
+      case "$line" in
+        *Free:\ [0-9]M*|*Free:\ [1-9][0-9]M*)
+          # crude: free under ~80M is tight for a third Rails app
+          free_m=$(printf '%s' "$line" | sed -n 's/.*Free: \([0-9]*\)M.*/\1/p')
+          if [ -n "$free_m" ] && [ "$free_m" -lt 80 ] 2>/dev/null; then
+            warn "low free RAM (~${free_m}M) — amber+brgen+master may OOM (see debt.yml multi_app_ram)"
+          fi
+          ;;
+      esac
+    fi
+  fi
+}
+
+brgen_html_smoke() {
+  url=${BRGEN_SMOKE_URL:-https://brgen.no/}
+  html=$($CURL -sS --max-time "$TIMEOUT" "$url" 2>/dev/null || true)
+  if [ -z "$html" ]; then
+    fail "brgen html empty $url"
+    return
+  fi
+  case "$html" in
+    *'id="splash"'*|*'splash-title'*)
+      fail "brgen splash still present on $url"
+      ;;
+    *)
+      ok "brgen no guest splash"
+      ;;
+  esac
+  case "$html" in
+    *'role="tablist"'*)
+      ok "brgen nav tablist present"
+      ;;
+    *)
+      warn "brgen nav tablist not found (cache or partial HTML?)"
+      ;;
+  esac
+}
+
+printf 'deploy-smoke: mode=%s timeout=%ss\n' "$MODE" "$TIMEOUT"
+
+run_local=0
+run_public=0
+case "$MODE" in
+  --local)  run_local=1 ;;
+  --public) run_public=1 ;;
+  auto|"")
+    if have_rcctl; then run_local=1; run_public=1
+    else run_public=1
+    fi
+    ;;
+  -h|--help)
+    sed -n '2,12p' "$0"
+    exit 0
+    ;;
+  *)
+    printf 'usage: deploy-smoke.sh [--local|--public|auto]\n' >&2
+    exit 2
+    ;;
+esac
+
+amber_req=1
+if [ "$ALLOW_AMBER_DOWN" = "1" ]; then
+  amber_req=0
+fi
+
+if [ "$run_local" = "1" ]; then
+  printf '\n== local (vm23) ==\n'
+  mem_hint
+  check_rcctl master 1
+  check_rcctl brgen 1
+  check_rcctl amber "$amber_req"
+  check_rcctl relayd 1
+  check_http master_local  "http://127.0.0.1:53187/up" 1
+  check_http brgen_local   "http://127.0.0.1:38182/up" 1
+  check_http amber_local   "http://127.0.0.1:61352/up" "$amber_req"
+fi
+
+if [ "$run_public" = "1" ]; then
+  printf '\n== public ==\n'
+  check_http master_public  "https://ai.brgen.no/up" 1
+  check_http brgen_public   "https://brgen.no/up" 1
+  check_http amber_public   "https://amber.brgen.no/up" "$amber_req"
+  # bsdports optional in multi-app tight hosts
+  check_http bsdports_public "https://bsdports.org/up" 0
+  brgen_html_smoke
+fi
+
+printf '\n'
+if [ "$failed" -ne 0 ]; then
+  printf 'deploy-smoke: FAILED (%s hard, %s warn)\n' "$failed" "$warns" >&2
+  exit 1
+fi
+printf 'deploy-smoke: ok (%s warnings)\n' "$warns"
+exit 0

@@ -6,6 +6,13 @@ open:
   - id: off_host_dr
     tag: operator-priority
     summary: Litestream replicas are same-disk only; off-host replica still needed
+  - id: multi_app_ram
+    tag: operator-priority
+    summary: >
+      vm23 ~1GB cannot reliably keep master + brgen + amber resident;
+      UVM out-of-swap kills ruby34 when all three boot. Raise RAM (≥2GB)
+      or run amber on-demand. After restarts: master → brgen → amber → relayd.
+      Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional).
 
 closed:
   - id: solid_queue_worker_proof
