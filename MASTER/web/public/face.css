@@ -320,7 +320,7 @@ body[data-council-persona]::after {
   z-index: var(--z-ui);
   font: 700 clamp(15px,3.8vw,24px)/1 var(--x-font, "Inter",-apple-system,system-ui,sans-serif);
   letter-spacing: -.03em;
-  text-transform: uppercase;
+  text-transform: none; /* brgen wordmark is lowercase */
   color: var(--x-text, var(--c-text));
   opacity: 1;
   pointer-events: none;

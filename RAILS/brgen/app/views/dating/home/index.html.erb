@@ -1,9 +1,8 @@
 <% content_for :title, "dating" %>
 
 <% content_for :head do %>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <%# Inter is self-hosted (see _fonts_brand.scss). %>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-600-normal.woff2" crossorigin>
   <script src="https://cdn.jsdelivr.net/npm/css-doodle@0.38.2/css-doodle.min.js" defer></script>
 <% end %>
 

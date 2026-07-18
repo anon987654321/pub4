@@ -4,6 +4,30 @@ body[class*="vertical-"] .compose-box {
   display: none;
 }
 
+/* Per-vertical accent identity. Overriding --x-accent cascades to --accent,
+   --upvote, --focus-ring and the turbo bar, so each vertical's buttons, links,
+   and active states read as its own place rather than the shared indigo. The
+   second selector carries the accent into light mode on browsable verticals
+   (immersive ones hide #dark-toggle, so it simply never matches there). */
+/* Values align with each vertical's existing brand token where one exists
+   (--dating-accent #00d4aa, --maps-accent #3b82f6, --tv-accent red) so the
+   shared chrome matches the vertical's own surface instead of fighting it. */
+$vertical-accents: (
+  marketplace: (#b06a3a, #96592f),
+  tv:          (#d6473f, #b83a33),
+  dating:      (#00d4aa, #00b391),
+  takeaway:    (#e07b39, #c26a30),
+  playlist:    (#12b6c4, #0f9aa6),
+  maps:        (#3b82f6, #2f6fd8),
+);
+@each $v, $c in $vertical-accents {
+  body.vertical-#{$v},
+  body.vertical-#{$v} #dark-toggle:checked ~ .theme-root {
+    --x-accent: #{nth($c, 1)};
+    --x-accent-hover: #{nth($c, 2)};
+  }
+}
+
 body[class*="vertical-"] main {
   padding-top: 0;
 }

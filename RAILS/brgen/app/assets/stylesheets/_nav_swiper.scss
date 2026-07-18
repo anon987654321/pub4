@@ -18,7 +18,11 @@
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   transform: translateY(-100%);
-  transition: transform var(--transition-normal) cubic-bezier(0.32, 0.72, 0, 1);
+  /* Hidden while closed so the off-screen section links leave the tab order;
+     visibility flips only after the slide-up finishes (delay = transform time). */
+  visibility: hidden;
+  transition: transform var(--transition-normal) cubic-bezier(0.32, 0.72, 0, 1),
+              visibility 0s linear var(--transition-normal);
   pointer-events: auto;
   mask-image: linear-gradient(to right, #000 86%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, #000 86%, transparent 100%);
@@ -26,7 +30,12 @@
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
 
-.nav_swiper.revealed .nav_swiper_bar { transform: translateY(0); }
+.nav_swiper.revealed .nav_swiper_bar {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform var(--transition-normal) cubic-bezier(0.32, 0.72, 0, 1),
+              visibility 0s;
+}
 
 .nav_link {
   flex: 0 0 auto;
@@ -63,6 +72,7 @@
 }
 
 .nav_swiper_grip:hover { opacity: 0.9; }
+.nav_swiper_grip:focus-visible { opacity: 0.9; outline: 2px solid var(--accent); outline-offset: 3px; }
 .nav_swiper.revealed .nav_swiper_grip { transform: translate(-50%, 52px); opacity: 0.35; }
 
 @media (prefers-reduced-motion: reduce) {

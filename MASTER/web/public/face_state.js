@@ -18,7 +18,13 @@
     const state = classify(el.textContent, el.dataset.runtimeStatus, detail);
     el.dataset.runtimeStatus = state;
     document.body.dataset.masterState = state;
-    document.body.dataset.visualRuntime = state === "fail" ? "frozen" : "face";
+    // Do NOT freeze the render on a "fail" status. A fail here is usually a
+    // backend health blip (TTS/replicate down, SSE disconnect) that has nothing
+    // to do with the GPU — freezing blacked the whole face out (see /health 503
+    // → masterState=fail → frozen). Keep rendering; masterState still carries
+    // "fail" so expression/color bridges can *react* to the fault. Visuals now
+    // pause only on tab-hidden (visual_governor).
+    document.body.dataset.visualRuntime = "face";
   }
 
   function apply(detail = {}) {

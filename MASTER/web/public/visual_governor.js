@@ -11,7 +11,10 @@
   let hiddenWaiters = [];
 
   function frozen() {
-    return document.body?.dataset.visualRuntime === "frozen" || document.body?.dataset.masterState === "fail";
+    // Visuals freeze only on an explicit visualRuntime=frozen signal — NOT on
+    // masterState=fail. A backend "fail" (TTS/replicate/health) must not black
+    // out the face; it renders through the fault and reacts to it instead.
+    return document.body?.dataset.visualRuntime === "frozen";
   }
 
   function particleLike(value) {
@@ -34,7 +37,7 @@
     maxParticles,
     reducedMotionParticles,
     pauseWhenHidden: true,
-    freezeOnFail: true
+    freezeOnFail: false
   });
 
   document.addEventListener("visibilitychange", () => {

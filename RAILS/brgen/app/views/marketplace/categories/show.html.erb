@@ -10,7 +10,10 @@
   <%= render "marketplace/listings/card", listing: %>
 <% end %>
 <% if @listings.empty? %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No listings in this category.</p></div>
+  <div class="empty empty-state" role="status" aria-live="polite">
+    <p>Nothing in this category yet.</p>
+    <% if authenticated? %><p><%= link_to "Sell something", new_marketplace_listing_path, class: "btn btn-primary" %></p><% end %>
+  </div>
 <% end %>
 </div>
 

@@ -49,6 +49,23 @@ Defines `notifications`, `reactions`, and `reports`. Contract test: `ruby RAILS/
 
 Per-app copies of these controllers were removed from amber/brgen.
 
+## Constitutional command chain
+
+RAILS is also passed through MASTER's chain of commands — the same
+`/scan → /fix → /scan → /critique → /review` loop MASTER runs on itself. Drive
+it from the MASTER tree:
+
+```zsh
+cd MASTER && ruby bin/gate
+```
+
+`bin/gate` runs two command sets through `bin/cli`: `:master` scans `.`, then
+`:deploy` scans `../RAILS` and `../OPENBSD`. Each set ends with
+`git diff --exit-code` on `RAILS`, `OPENBSD`, `MASTER`, so the chain fails if a
+`/fix` pass left the tree dirty. Run it whenever RAILS changes materially — it
+is the constitutional counterpart to `gates/runner.rb` (which validates deploy
+contract/config) and per-app `bin/ci` (RuboCop/Brakeman/tests).
+
 ## Gates
 
 Unified runner:

@@ -1,4 +1,5 @@
 @use "fonts";
+@use "fonts_brand";
 @use "x_base" as x;
 
 :root {
@@ -20,6 +21,7 @@
   --z-carousel: 5;
   --z-splash: 1000;
   --turbo-progress-bar-color: var(--accent);
+  --focus-ring: 2px solid var(--accent);
 }
 
 .theme-root {
@@ -56,6 +58,14 @@ html, body {
 
 a { color: var(--text); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* Keyboard focus floor: fills any interactive element that lacks its own
+   focus style. :where() keeps specificity at 0, so every existing
+   :focus-visible / :focus rule (compose input, tiptap, buttons) still wins. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 

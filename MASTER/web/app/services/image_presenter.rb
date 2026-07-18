@@ -120,7 +120,7 @@ class ImagePresenter
   end
 
   def postpro_photo(input_path, output_path)
-    script = Rails.root.join("..", "tools", "postpro.rb").to_s
+    script = Rails.root.join("..", "tools", "postpro", "postpro.rb").to_s
     return false unless File.file?(script)
 
     out, status = Open3.capture2e(

@@ -22,13 +22,15 @@
     document.documentElement.style.setProperty("--transition-fast", "0ms");
     document.documentElement.style.setProperty("--transition-normal", "0ms");
     document.documentElement.style.setProperty("--ease-out", "steps(2,end)");
-    document.documentElement.style.setProperty("--face-phosphor-decay", "0.55");
+    // Flat: no phosphor afterimage trail, no glow-halo expansion.
+    document.documentElement.style.setProperty("--face-phosphor-decay", "0");
+    document.documentElement.style.setProperty("--face-glow-scale", "1.0");
     document.body.classList.add("brutalist-mode");
   }
 
-  const aesthetic = window.MASTER_RUNTIME?.aesthetic || document.documentElement.dataset.aesthetic;
+  const aesthetic = window.MASTER_RUNTIME?.aesthetic || document.documentElement.dataset.aesthetic || "brutalist";
   if (aesthetic === "wscons") applyWscons();
-  else if (hasBrutalist || new URLSearchParams(location.search).get("brutalist") === "1") applyBrutalist();
+  else if (aesthetic !== "phosphor") applyBrutalist(); // brutalist (flat) default; phosphor keeps its glow CSS
 
   let strip = document.getElementById("brutalist-strip");
   if (!strip) {

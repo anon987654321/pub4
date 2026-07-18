@@ -9,7 +9,7 @@ class DeployPathsTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Pub4::DeployPaths.postpro_script
       assert script, "expected postpro script"
-      assert_includes script.to_s, "/MASTER/tools/postpro.rb"
+      assert_includes script.to_s, "/MASTER/tools/postpro/postpro.rb"
       assert File.file?(script)
     end
   end

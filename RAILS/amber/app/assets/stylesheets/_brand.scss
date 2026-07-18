@@ -60,7 +60,7 @@
   --amber-logo-height: clamp(4.5rem, 14vw, 8rem);
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  line-height: 0;
+  line-height: 0; // intentional: collapses inline-SVG descender gap (not a text block)
   background: var(--bg);
   position: sticky;
   top: 0;
@@ -92,7 +92,7 @@
 .amber-guest-hero .logo {
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  line-height: 0;
+  line-height: 0; // intentional: collapses inline-SVG descender gap (not a text block)
 
   svg {
     width: 100%;

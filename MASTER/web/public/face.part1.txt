@@ -228,7 +228,7 @@ const VOICE_IDLE_SIGNATURES = {
   'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
-  'nb-NO-PernilleNeural': { breath: 1.05, saccade: 0.22, pulse_floor: 0.11, blink_ms: 3100 },
+  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
   'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
 };
@@ -470,7 +470,7 @@ window.addEventListener('unhandledrejection', event => {
     const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
-    if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
+    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
 })();
 

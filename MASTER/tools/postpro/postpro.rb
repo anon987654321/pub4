@@ -10,7 +10,7 @@ require "json"
 require "time"
 require "fileutils"
 require "digest"
-require_relative "../lib/reach/analog_capabilities"
+require_relative "../lib/io/analog_capabilities"
 
 BOOT_TIME = Time.now.freeze
 
@@ -2391,7 +2391,7 @@ def write_grade_sidecar(input_path, output_path, preset_name, original, processe
     seed: $postpro_seed,
     output_sha256: Digest::SHA256.file(output_path).hexdigest,
     quality: report,
-    capabilities: Master::Reach::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] }
+    capabilities: Master::Io::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] }
   }
   File.write("#{output_path}.json", JSON.pretty_generate(data) + "\n")
   data
@@ -2422,7 +2422,7 @@ end
 
 def run_introspect
   if ARGV.include?("--capabilities")
-    puts Master::Reach::AnalogCapabilities.report(:postpro)
+    puts Master::Io::AnalogCapabilities.report(:postpro)
   elsif ARGV.include?("--list-presets")
     puts list_presets
   elsif ARGV.include?("--list-stocks")

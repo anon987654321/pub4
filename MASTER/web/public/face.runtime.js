@@ -230,7 +230,7 @@ const VOICE_IDLE_SIGNATURES = {
   'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
   'nb-NO-FinnNeural': { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
-  'nb-NO-PernilleNeural': { breath: 1.05, saccade: 0.22, pulse_floor: 0.11, blink_ms: 3100 },
+  'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
   'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
 };
@@ -472,7 +472,7 @@ window.addEventListener('unhandledrejection', event => {
     const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
-    if (pd > 0.1 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
+    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
 })();
 
@@ -1136,7 +1136,7 @@ void main(){
   vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
   vAlpha=max(vAlpha,0.08);
   float shade=mix(0.14,1.0,depth);
-  vec3 warmCool=mix(vec3(0.62,0.64,0.86),vec3(1.0,0.96,0.84),depth);
+  vec3 warmCool=mix(vec3(0.62,0.64,0.86),vec3(1.0,1.0,1.0),depth);
   vColor=(hc>0.0?vec3(1.0,1.0,1.0):uColor*warmCool*shade);
   vec3 viewDir=normalize(-mv.xyz);
   vec3 flatNorm=normalize(vec3(p.xy*1.8,1.0));
@@ -1189,7 +1189,7 @@ if (_hasWebGL && THREE) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.10}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
     },
     // Normal (not additive) blending on the main point layer so individual
     // pixels stay crisp and discrete instead of bleeding into neighbors —
@@ -1360,7 +1360,7 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.10}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
     },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });

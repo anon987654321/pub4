@@ -47,7 +47,7 @@
   font-size: 0.9375rem;
 }
 .x-handle { color: var(--text); opacity: 0.75; }
-.x-time { color: var(--text-dim); }
+.x-time { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .x-text {
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -61,6 +61,11 @@
 .post-feed .x-post {
   margin: 0;
   padding: 10px 12px;
+  /* Skip rendering off-screen feed cards; the browser remembers each card's
+     real height after first paint (auto), falling back to ~320px before then.
+     Scoped to .post-feed so grid/match contexts keep normal sizing. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 
 @media (min-width: 768px) {
@@ -93,7 +98,8 @@
   gap: 4px;
   padding: 8px 10px;
   border-radius: var(--x-radius-pill);
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast),
+              transform var(--transition-fast) cubic-bezier(0.32, 0.72, 0, 1);
   cursor: pointer;
   min-height: 44px;
   min-width: 44px;
@@ -103,12 +109,15 @@
   font-size: 0.8125rem;
 }
 .x-act:hover { color: var(--accent); background: var(--hover); }
+/* Tactile press feedback; reduced-motion users get the instant state (the
+   global guard drops the transition, the transform still reads as a press). */
+.x-act:active { transform: scale(0.9); }
 .x-act.active { color: var(--accent); }
 .x-act:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.x-count { font-size: 0.8125rem; }
+.x-count { font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
 .x-act-icon {
   flex-shrink: 0;
   width: 1.125rem;

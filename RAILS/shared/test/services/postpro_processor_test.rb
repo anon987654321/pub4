@@ -9,7 +9,7 @@ class PostproProcessorTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Shared::PostproProcessor.script
       assert script, "postpro script not found"
-      assert_includes script.to_s, "/MASTER/tools/postpro.rb"
+      assert_includes script.to_s, "/MASTER/tools/postpro/postpro.rb"
       assert File.file?(script), "expected postpro at #{script}"
     end
   end
