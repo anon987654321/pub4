@@ -918,15 +918,17 @@
       "title": "Get Dis Money",
       "album": "Fantastic, Vol. 2",
       "note": "Slum Village / Dilla production — real rapping for Camel stream",
+      "isolated": true,
       "last_fit": {
         "path": "/Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/project/learnings/vocals/slum_village/fit_86_32bars.wav",
         "beat_bpm": 86.0,
         "n_bars": 32,
-        "offset_sec": 0.55,
+        "offset_sec": 18.53,
+        "phrase_start": 18.53,
         "tempo_ratio": 0.86,
-        "rms_db": -16.044
+        "rms_db": -18.44
       }
     }
   ],
-  "updated_at": "2026-07-18T12:52:35Z"
+  "updated_at": "2026-07-18T13:06:50Z"
 }

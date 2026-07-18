@@ -425,7 +425,7 @@ module DillaLofiMachine
     slash_neo_soul erykah_minor aydin_modal_quartal aydin_jazz_turn
     bach_circle_descent bach_descending_bass jazz_ballad_waltz ii_v_i_major
     ii_v_i_minor glasper_quartal timeless_authentic minor_turnaround
-    relative_major_turn slow_ballad_wash two_chord_hypnosis quartal_west_coast
+    relative_major_turn slow_ballad_wash two_chord_hypnosis
     minor_triad_walk major_lifting slash_ninth_cycle dorian_iv_loop backdoor_resolve
     iv_borrow_minor gospel_bIII stevie_bVII watermelon_turn church_sus
     dominant_turn deceptive_turn plagal_jazz suspended_ballad minor_line_cliche

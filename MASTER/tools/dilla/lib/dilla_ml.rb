@@ -7,9 +7,13 @@ module DillaMl
   module_function
 
   def groove_synced_vinyl(ghost_count, kick_count, base: 0.06)
+    base = base.to_f
+    return 0.0 if base <= 0.0
     DillaMaster.groove_vinyl_level(ghost_count, kick_count) if defined?(DillaMaster)
     g = ghost_count.to_f / [kick_count, 1].max
-    (base + g * 0.018).clamp(0.04, 0.15).round(3)
+    # Honor low bases (Camel VINYL=10 → ~0.018); do not force a 0.04 floor of hiss.
+    lo = [base * 0.85, 0.008].max
+    (base + g * 0.012).clamp(lo, 0.12).round(3)
   end
 
   def predict_sub_hz(kick_hz, spectrum = nil)

@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 #
-# Dilla Lab — unified audio engine
+# Dilla — unified audio engine
 # Synthesis, analog pads, vocal mixes (v7–v11), stem rack, demux, MIDI electronium.
+# Producer modes: afta (default) | dilla | flylo | madlib  (see lib/producer_modes.rb).
 #
 # Usage: ruby dilla.rb help
 
@@ -27,6 +28,9 @@ require_relative "lib/master_heuristics"
 require_relative "lib/spectral_engine"
 require_relative "lib/dilla_ml"
 require_relative "lib/dfam_engine"
+require_relative "lib/producer_modes"
+require_relative "lib/stream_env"
+require_relative "lib/camel_chops"
 
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the invoking directory (override with
@@ -2262,7 +2266,14 @@ def enhanced_resolve_config
     intro_bars: preset.fetch(:intro_bars, family == :flylo ? 8 : 4),
     master_lufs: resolve_master_lufs(family, sonic),
     master_lra: resolve_master_lra(family, sonic),
-    mood_darken_strength: family == :dilla ? (deep_render? ? 0.36 : 0.55) : 1.0
+    # Full darken (1.0) on FlyLo was muting kick beater + snare air under pads.
+    mood_darken_strength: if family == :dilla
+                            deep_render? ? 0.36 : 0.55
+                          elsif family == :flylo || camel_mode?
+                            0.42
+                          else
+                            0.75
+                          end
   }
 end
 
@@ -2472,8 +2483,9 @@ def arrange_fugue_progression(pads, needed_chords, cfg)
   [arranged.first(needed_chords), phases.first(needed_chords)]
 end
 
-LA_BEAT_SECTION_STYLES = %i[hook functional planing chromatic_mediant neo_soul quartal].freeze
-CAMEL_LA_BEAT_STYLES = %i[hook chromatic_mediant functional planing bridge].freeze
+LA_BEAT_SECTION_STYLES = %i[hook functional chromatic_mediant neo_soul quartal].freeze
+# No :planing — generate_planing_progression names like planing0m9 sound random/ugly.
+CAMEL_LA_BEAT_STYLES = %i[hook chromatic_mediant functional bridge].freeze
 CAMEL_BRIDGE_SYMS = %w[Gm7 Cm11nc Fm9 Bbm9 Eb7 AbMaj13s11 Dmaj9nc DMaj7overG].freeze
 CAMEL_FUNCTIONAL_SYMS = %w[Dm9 Gm9 Cm9 Fmaj9 Bbm9 Ebmaj9 Abmaj9 Dbmaj9].freeze
 LA_BEAT_MIDI_FX_ROTATE = [
@@ -2497,8 +2509,9 @@ def camel_keep_flylo_on_breakdown?
 end
 
 def la_beat_progression_enabled?
-  return true if camel_mode?
-  ENV.fetch("LA_BEAT_PROGRESSION", ENV["STREAM_SOUL"] == "1" ? "1" : "0") != "0"
+  # Do NOT force LA-beat on Camel — that injected random planing0m9-style
+  # chords and made streams sound broken. Opt in: LA_BEAT_PROGRESSION=1.
+  ENV.fetch("LA_BEAT_PROGRESSION", "0") != "0"
 end
 
 def soul_progression_locked?
@@ -2900,7 +2913,10 @@ def dilla_pocket_drums_enabled?
 end
 
 def kicks_enabled?
+  # Pocket kit kicks (Dilla/Madlib modes). FlyLo-only modes use flylo_kick events.
+  # Prefer POCKET_KICKS; KICKS=1 alone does not force pocket when FLYLO_DRUMS_ONLY=1.
   return false if flylo_drums_only?
+  return ENV.fetch("POCKET_KICKS", "1") != "0" if ENV.key?("POCKET_KICKS")
   ENV.fetch("KICKS", "1") != "0"
 end
 
@@ -3004,7 +3020,15 @@ def flylo_chord_change_duck(bar, chord_bars)
   ENV.fetch("FLYLO_CHORD_DUCK", "0.72").to_f.clamp(0.45, 1.0)
 end
 
+def camel_drum_lock?
+  camel_mode? && ENV.fetch("CAMEL_DRUM_LOCK", "1") != "0"
+end
+
 def flylo_overlay_density(bar, n_bars, chord_bars:, pad_chords: nil, chord_phases: nil, phrase_bars: nil)
+  # Camel lock: always full kit — section density (intro 0.42 × form 0.55 ≈ 0.23)
+  # was the main reason the grid felt "missing" / wrong vs Camel.
+  return ENV.fetch("FLYLO_OVERLAY_GAIN", "1.2").to_f.clamp(0.9, 1.45) if camel_drum_lock?
+
   section = dilla_section(bar, n_bars)
   form = form_section_at(bar, n_bars)
   base = FLYLO_OVERLAY_SECTION_DENSITY.fetch(section, 0.85)
@@ -3071,16 +3095,20 @@ def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
     return
   end
   merged = "#{drum_path}.merged.#{Process.pid}.wav"
-  boost = ENV.fetch("FLYLO_MERGE_BOOST", flylo_primary_drums? ? "1.65" : "1.22").to_f
-  sub_vol = (ENV.fetch("FLYLO_SUB_MIX", flylo_primary_drums? ? "0.88" : "0.38").to_f * boost).round(3)
-  top_vol = (ENV.fetch("FLYLO_TOP_MIX", flylo_primary_drums? ? "0.78" : "0.32").to_f * boost).round(3)
-  # Normalize=0 keeps FlyLo energy; base can be quiet pocket under Camel grid.
-  base_vol = ENV.fetch("FLYLO_BASE_DRUM_VOL", flylo_primary_drums? ? "0.55" : "1.0").to_f.round(3)
+  boost = ENV.fetch("FLYLO_MERGE_BOOST", flylo_primary_drums? ? "1.85" : "1.22").to_f
+  sub_vol = (ENV.fetch("FLYLO_SUB_MIX", flylo_primary_drums? ? "1.05" : "0.38").to_f * boost).round(3)
+  top_vol = (ENV.fetch("FLYLO_TOP_MIX", flylo_primary_drums? ? "0.88" : "0.32").to_f * boost).round(3)
+  # Empty pocket base under FlyLo-only — don't pad-mix silence that dilutes the kit.
+  base_vol = ENV.fetch("FLYLO_BASE_DRUM_VOL", flylo_primary_drums? ? "0.15" : "1.0").to_f.round(3)
+  # Sub bus used to lowpass @ 220Hz and kill kick click/body (150Hz+beater).
+  # Keep boom + mid punch so kicks read on laptop speakers.
   sh! "ffmpeg", "-y", "-i", drum_path, "-i", sub_path, "-i", top_path,
       "-filter_complex",
-      "[0:a]volume=#{base_vol}[base];[1:a]lowpass=f=220,equalizer=f=90:t=o:w=1:g=5.5," \
-      "equalizer=f=3200:t=h:w=900:g=-1.5,volume=#{sub_vol}[sub];" \
-      "[2:a]highpass=f=1400,equalizer=f=5200:t=o:w=1.2:g=3.2,volume=#{top_vol}[top];" \
+      "[0:a]volume=#{base_vol}[base];" \
+      "[1:a]highpass=f=28,lowpass=f=520,equalizer=f=55:t=o:w=0.75:g=6.5," \
+      "equalizer=f=110:t=o:w=1.0:g=4.0,equalizer=f=180:t=o:w=1.1:g=3.0," \
+      "volume=#{sub_vol}[sub];" \
+      "[2:a]highpass=f=900,equalizer=f=5200:t=o:w=1.2:g=3.5,volume=#{top_vol}[top];" \
       "[base][sub][top]amix=inputs=3:duration=first:normalize=0," \
       "alimiter=limit=0.97:level_out=0.98",
       "-c:a", "pcm_s16le", merged
@@ -3115,6 +3143,12 @@ def sonic_pad_lowpass(sonic)
 end
 
 def sonic_vinyl_level(sonic)
+  # VINYL=0 disables the pink-noise bed. VINYL=1..100 scales intensity (default ~35 → mild).
+  if ENV.key?("VINYL")
+    v = ENV["VINYL"].to_f
+    return 0.0 if v <= 0
+    return (v / 100.0 * 0.18).clamp(0.0, 0.12).round(3)
+  end
   sonic&.dig("synth", "vinyl_noise")&.to_f || 0.08
 end
 
@@ -3129,10 +3163,11 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
   # renders would otherwise produce a negative afade start, which ffmpeg
   # rejects as out of range.
   outro_fade = [(beat_p * 4.0 * 4).round(2), duration].min
-  # HARM_BUS_VOL defaults lower on Camel so kicks/snares/leads can breathe.
-  # Pads loud (user request) while kit is peak-normalized separately so both sit.
+  # Pads are the character of the stream — keep them warm and present.
+  # Kick space is a gentle HP + sidechain, not stripping pad body (165 Hz HP
+  # + −5.5 dB sub cut made progressions inaudible).
   default_vol = if flylo_primary_drums?
-                  "1.55"
+                  "1.72"
                 elsif deep_render?
                   "1.82"
                 else
@@ -3140,33 +3175,52 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
                 end
   harm_vol = ENV["DEBUG_HARM_WEIGHT"] || ENV.fetch("HARM_BUS_VOL", default_vol)
   deep = deep_render?
-  sub_cut = deep ? "-1.8" : (flylo_primary_drums? ? "-3.5" : "-2.2")
-  body_boost = deep ? "3.2" : (flylo_primary_drums? ? "1.6" : "2.8")
-  mid_boost = deep ? "2.9" : (flylo_primary_drums? ? "1.4" : "2.6")
-  air = flylo_primary_drums? ? "equalizer=f=4200:t=h:w=2500:g=1.8," : "equalizer=f=2800:t=h:w=1800:g=1.2,"
+  sub_cut = deep ? "-1.8" : (flylo_primary_drums? ? "-2.4" : "-2.2")
+  body_boost = deep ? "3.2" : (flylo_primary_drums? ? "2.6" : "2.8")
+  mid_boost = deep ? "2.9" : (flylo_primary_drums? ? "2.4" : "2.6")
+  # Chord presence: body + gentle silk shelf (progressions read on small speakers).
+  air = if flylo_primary_drums?
+          "equalizer=f=2400:t=h:w=1800:g=2.0,equalizer=f=5200:t=h:w=2800:g=1.6,"
+        else
+          "equalizer=f=2800:t=h:w=1800:g=1.2,"
+        end
+  harm_hp = deep ? 95 : (flylo_primary_drums? ? 98 : 110)
+  sub_shelf = deep ? 2.2 : (flylo_primary_drums? ? 1.8 : 1.0)
+  presence = flylo_primary_drums? ? 2.2 : 2.4
+  # Longer, smoother pad bloom (qsin) so chords arrive as wash, not a gate.
+  fade_in = flylo_primary_drums? ? (harm_fade_dur * 1.35).round(2) : harm_fade_dur
+  fade_curve = flylo_primary_drums? ? ":curve=qsin" : ""
+  build_cut = flylo_primary_drums? ? -0.8 : -2
   "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
-    "highpass=f=#{deep ? 95 : (flylo_primary_drums? ? 130 : 110)},equalizer=f=72:t=o:w=1.2:g=#{deep ? 2.2 : 1.0}," \
+    "highpass=f=#{harm_hp},equalizer=f=72:t=o:w=1.2:g=#{sub_shelf}," \
     "equalizer=f=95:t=h:w=120:g=#{sub_cut}," \
     "equalizer=f=420:t=o:w=1.1:g=#{body_boost},equalizer=f=680:t=h:w=900:g=#{mid_boost}," \
-    "equalizer=f=1400:t=h:w=1200:g=#{flylo_primary_drums? ? 1.2 : 2.4}," \
-    "#{air}equalizer=f=#{lp}:t=o:w=1.0:g=0.6," \
-    "afade=t=in:st=#{harm_fade_start}:d=#{harm_fade_dur}," \
-    "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}," \
-    "equalizer=f=800:t=h:w=600:g=-2:enable='between(t,#{build_start},#{duration})'[harm]"
+    "equalizer=f=1400:t=h:w=1200:g=#{presence}," \
+    "#{air}equalizer=f=#{lp}:t=o:w=1.0:g=0.8," \
+    "afade=t=in:st=#{harm_fade_start}:d=#{fade_in}#{fade_curve}," \
+    "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}#{fade_curve}," \
+    "equalizer=f=800:t=h:w=600:g=#{build_cut}:enable='between(t,#{build_start},#{duration})'[harm]"
 end
 
 def sidechain_amix_weights
-  # Prefer drums when FlyLo/Camel kit is primary (was 1.0:1.6 — pads buried the kit).
-  d = ENV.fetch("SIDECHAIN_DRUM_WEIGHT", flylo_primary_drums? ? "1.85" : "1.0").to_f
-  h = ENV.fetch("SIDECHAIN_HARM_WEIGHT", flylo_primary_drums? ? "0.72" : "1.55").to_f
+  # Camel: pads duck under kicks but stay the main body (not 2.05:0.78 — that
+  # erased chord progressions). Kit still leads the transient.
+  d = ENV.fetch("SIDECHAIN_DRUM_WEIGHT", flylo_primary_drums? ? "1.48" : "1.0").to_f
+  h = ENV.fetch("SIDECHAIN_HARM_WEIGHT", flylo_primary_drums? ? "1.32" : "1.55").to_f
   [d.round(3), h.round(3)]
 end
 
 def flylo_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
   dw, hw = sidechain_amix_weights
+  # Musical duck: soft attack + longer release so pads bloom back between kicks
+  # (was attack=1/release=28 — choppy, made progressions feel gated).
+  atk = flylo_primary_drums? ? 8 : 1
+  rel = flylo_primary_drums? ? 140 : 28
+  ratio = flylo_primary_drums? ? 3.2 : 5
+  thr = flylo_primary_drums? ? -22 : -20
   [
     "#{drum_label}asplit=2[dr_dry][dr_sc]",
-    "#{harm_label}[dr_sc]sidechaincompress=threshold=-20dB:ratio=5:attack=1:release=28:level_sc=1.0[harm_sc]",
+    "#{harm_label}[dr_sc]sidechaincompress=threshold=#{thr}dB:ratio=#{ratio}:attack=#{atk}:release=#{rel}:level_sc=0.9[harm_sc]",
     "[dr_dry][harm_sc]amix=inputs=2:weights=#{dw} #{hw}:duration=first:normalize=0[sc_mix]"
   ]
 end
@@ -3313,14 +3367,14 @@ def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: ni
       filt << convolution_reverb_filter("darkened", ir_input_idx, mix: cfg[:style_family] == :flylo ? 0.22 : 0.16, out_tag: "reverbed")
       reverb_out = "reverbed"
     end
-    if duration
-      filt << break_filter(reverb_out, duration, out_tag: "broke")
-      filt << build_up_filter_enhanced("broke", duration, out_tag: "built")
-      filt << true_peak_guard_for_style("built", cfg)
-    else
-      filt << true_peak_guard_for_style(reverb_out, cfg)
-    end
-    return filt
+  if duration && !(camel_mode? && ENV.fetch("CAMEL_NO_BREAK", "1") != "0")
+    filt << break_filter(reverb_out, duration, out_tag: "broke")
+    filt << build_up_filter_enhanced("broke", duration, out_tag: "built")
+    filt << true_peak_guard_for_style("built", cfg)
+  else
+    filt << true_peak_guard_for_style(reverb_out, cfg)
+  end
+  return filt
   end
   s = sonitex_config(track: cfg[:track].to_s)
   variant = analog_resolve_variant(track: cfg[:track].to_s)
@@ -3330,15 +3384,21 @@ def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: ni
   filt << "[ana_out]alimiter=limit=#{s[:limit]}:level_out=#{s[:level_out]}[premaster0]"
   filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
   filt << sub_bass_mono_filter("premaster", out_tag: "monobassed")
-  filt << analog_drift_filter("monobassed", out_tag: "drifted")
-  darken = cfg.fetch(:mood_darken_strength, 1.0)
-  filt << mood_darken_filter("drifted", out_tag: "darkened", strength: darken)
-  reverb_out = "darkened"
-  if ir_input_idx
-    filt << convolution_reverb_filter("darkened", ir_input_idx, mix: 0.18, out_tag: "reverbed")
+  # Camel: skip wow drift + heavy darken — they smear the kit and delete HF.
+  if camel_mode? && ENV.fetch("CAMEL_CLEAN_MASTER", "1") != "0"
+    reverb_out = "monobassed"
+  else
+    filt << analog_drift_filter("monobassed", out_tag: "drifted")
+    darken = cfg.fetch(:mood_darken_strength, 1.0)
+    filt << mood_darken_filter("drifted", out_tag: "darkened", strength: darken)
+    reverb_out = "darkened"
+  end
+  if ir_input_idx && !(camel_mode? && ENV.fetch("CAMEL_NO_REVERB", "1") != "0")
+    filt << convolution_reverb_filter(reverb_out, ir_input_idx, mix: 0.12, out_tag: "reverbed")
     reverb_out = "reverbed"
   end
-  if duration
+  # break_filter bitcrushes + silences mid-track — kills pads/leads. Off on Camel.
+  if duration && !(camel_mode? && ENV.fetch("CAMEL_NO_BREAK", "1") != "0")
     filt << break_filter(reverb_out, duration, out_tag: "broke")
     filt << build_up_filter_enhanced("broke", duration, out_tag: "built")
     filt << true_peak_guard_for_style("built", cfg)
@@ -3416,7 +3476,15 @@ def apply_form_to_cfg!(cfg)
 end
 
 def harmony_lead_enabled?
-  ENV.fetch("HARMONY_LEAD", %w[long_soul golden camel].include?(ENV["RENDER_MODE"]) ? "1" : "0") != "0"
+  # Camel default is off (pad-forward); long_soul/golden still default on.
+  default = if camel_mode?
+              "0"
+            elsif %w[long_soul golden].include?(ENV["RENDER_MODE"])
+              "1"
+            else
+              "0"
+            end
+  ENV.fetch("HARMONY_LEAD", default) != "0"
 end
 
 def harmony_lead_mode
@@ -3599,6 +3667,9 @@ def resolve_midi_fx_for(patch, role:)
 end
 
 def lead_arp_enabled?
+  # Explicit off always wins — was: pad_arp_mode != :held forced leads on even
+  # when LEAD_ARP=0, so "pads only" streams still rendered flylo lead soup.
+  return false if ENV["LEAD_ARP"] == "0"
   return true if pad_arp_mode != :held
   ENV.fetch("LEAD_ARP", "0") != "0"
 end
@@ -4217,14 +4288,15 @@ SONITEX_PRESETS = {
     out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.4,
     limit: 0.86, level_out: 0.88
   ),
-  # Stream/soul: keep Donuts warmth but leave air for snares, claps, and lead arps.
+  # Stream/soul: warm pad glue + enough air for chords/hats (not a 2 kHz blanket).
   donuts_soul: SONITEX_STX1260.merge(
-    crush_bits: 12, crush_sr: 1.72, crush_mix: 0.28, crush_post_lp: 4200,
-    dist_drive: 1.35, dist_mix: 0.52, hf_rolloff: 9_200, groove_wear_lp: 6_800,
-    head_bump_hz: 62, head_bump_db: 3.8, warmth_db: 3.2, lf_rolloff: 32,
-    wow_depth: 0.006, flutter_depth: 0.0035, stereo_width: 1.1, hiss_amp: 0.0018,
-    out_comp_threshold: -18, out_comp_ratio: 2.8, out_comp_makeup: 2.0,
-    limit: 0.9, level_out: 0.92
+    crush_bits: 13, crush_sr: 1.4, crush_mix: 0.14, crush_post_lp: 8_500,
+    dist_drive: 1.12, dist_mix: 0.32, hf_rolloff: 14_200, groove_wear_lp: 12_000,
+    head_bump_hz: 58, head_bump_db: 2.2, warmth_db: 3.0, lf_rolloff: 30,
+    wow_depth: 0.0035, flutter_depth: 0.0015, stereo_width: 1.12, hiss_amp: 0.0005,
+    phone_lp: 13_500, sibilance_db: 0.8,
+    out_comp_threshold: -21, out_comp_ratio: 2.0, out_comp_makeup: 1.2,
+    limit: 0.95, level_out: 0.97
   ),
   heavy:    SONITEX_STX1269.merge(
     crush_bits: 8, crush_sr: 2.05, crush_mix: 0.58, crush_post_lp: 2400,
@@ -4249,9 +4321,11 @@ ANALOG_CHAIN_VARIANTS = {
   vinyl_lab:  { stock: :vinyl,     fx: %w[spectral_warmth tape_saturation harmonic_bloom platter_wow vinyl_crackle stylus_mistrack needle_drop_fade analog_noise] },
   dub_chamber: { stock: :tape_500, fx: %w[spectral_warmth tape_saturation dub_delay chamber_reverb haas_jitter analog_noise] },
   # NastyVCS-style "Summing Phasy" (75ips) — console glue + phase width after Sonitex texture.
+  # No analog_noise / crackle here: Camel stream already has a light vinyl bed; extra
+  # grain stacks into "lots of noise" and buries pads.
   summing_phasy: {
     stock: :tape_250,
-    fx: %w[parallel_compress harmonic_bloom stereo_width haas_jitter multiband_tone spectral_warmth tape_saturation analog_noise]
+    fx: %w[parallel_compress harmonic_bloom stereo_width haas_jitter multiband_tone spectral_warmth tape_saturation]
   }
 }.freeze
 ANALOG_CHAIN_ROTATE = %i[acetate sp1200 cassette broadcast lo_fi vinyl_hot sonitex vinyl_lab dub_chamber summing_phasy].freeze
@@ -5942,17 +6016,22 @@ end
 # funnel through right before the final safety limiter, so it's the only
 # place a correction here actually sticks.
 def mix_bass_chord_balance_filter(input_tag, out_tag: "balanced")
-  # Sonitex's saturation stages (tape_saturation/harmonic_bloom-style tanh
-  # waveshaping) generate real harmonic energy from whatever's loudest —
-  # the bass — so a hotter bass signal comes out of Sonitex measurably
-  # bassier than it went in, on top of Sonitex's own warmth/head-bump EQ.
-  # A dry mix needed -7/+6dB here; Sonitex needs noticeably more.
-  cut = sonitex_enabled? ? -11.0 : -7.0
-  boost = sonitex_enabled? ? 8.0 : 6.0
-  cut -= 1.5 if deep_render?
-  boost += 1.2 if deep_render?
+  # Sonitex warmth re-boosts sub; this stage tames sustained bass so chords
+  # stay clear. On Camel/FlyLo the same -11dB@95Hz was also deleting kick
+  # fundamentals — protect the 45–70Hz pocket when the kit is primary.
+  if flylo_primary_drums?
+    cut = sonitex_enabled? ? -5.5 : -3.5
+    boost = sonitex_enabled? ? 5.5 : 4.5
+    kick_restore = 4.2
+  else
+    cut = sonitex_enabled? ? -11.0 : -7.0
+    boost = sonitex_enabled? ? 8.0 : 6.0
+    kick_restore = deep_render? ? 2.4 : 1.6
+    cut -= 1.5 if deep_render?
+    boost += 1.2 if deep_render?
+  end
   "[#{input_tag}]bass=g=#{cut}:f=95:width_type=h:w=170,equalizer=f=300:t=h:w=360:g=#{boost}," \
-    "equalizer=f=68:t=o:w=1.1:g=#{deep_render? ? 2.4 : 1.6}[#{out_tag}]"
+    "equalizer=f=55:t=o:w=0.75:g=#{kick_restore}[#{out_tag}]"
 end
 
 # Real mix-engineering technique: sum everything below ~120Hz to mono.
@@ -6220,12 +6299,17 @@ end
 
 def stream_track_banner(extra = nil)
   tag = ENV["TRACK"] || "?"
-  lead_tag = ENV["LEAD_VOICE"] || @render_lead_patch&.dig(:id) || "?"
-  arp_tag = ENV["LEAD_ARP_MODE"] || lead_arp_mode || pad_arp_mode
+  lead_on = lead_arp_enabled? || harmony_lead_enabled?
+  lead_tag = if lead_on
+               ENV["LEAD_VOICE"] || @render_lead_patch&.dig(:id) || "on"
+             else
+               "0"
+             end
+  arp_tag = lead_on ? (ENV["LEAD_ARP_MODE"] || lead_arp_mode || pad_arp_mode) : "off"
   rap_tag = rap_vocal_stream_slug || "0"
   drum_tag = flylo_primary_drums? ? "flylo" : ENV.fetch("KICKS", "1")
-  meta = "pad=#{ENV['PAD_VOICE']} lead=#{lead_tag}/#{arp_tag} drums=#{drum_tag} rap=#{rap_tag} " \
-         "speak=#{ENV.fetch('SPEAK', '1')} voice=#{speech_tts_voice}"
+  meta = "pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode} lead=#{lead_tag}/#{arp_tag} " \
+         "drums=#{drum_tag} rap=#{rap_tag} speak=#{ENV.fetch('SPEAK', '0')}"
   meta = "#{meta} #{extra}" if extra
   puts "=== #{tag} (#{meta}) ==="
 end
@@ -6458,9 +6542,15 @@ STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
 # so the same bar count now takes much longer in real time — re-read fresh
 # on every hotswap exec below rather than baked into the original CLI arg,
 # so tuning this constant alone is enough going forward.
-STREAM_BARS_COUNT = 16
+# Default stream length; producer modes set BARS (afta/flylo 32, dilla/madlib 16).
+STREAM_BARS_COUNT = 32
 STREAM_BEAUTY_MIN = (ENV["STREAM_BEAUTY_MIN"] || "68").to_f
 STREAM_MAX_RETRIES = (ENV["STREAM_MAX_RETRIES"] || "2").to_i
+
+def stream_bars_default
+  n = (ENV["STREAM_BARS"] || ENV["BARS"] || STREAM_BARS_COUNT).to_i
+  n.positive? ? n : STREAM_BARS_COUNT
+end
 DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 
 # Best-track defaults — applied on every invocation unless already set (or
@@ -6541,121 +6631,22 @@ RENDER_MODE_DEFAULTS = {
     "ANALOG_CHAIN" => "cassette", "CONV_REVERB" => "chamber",
     "TRACK" => "golden", "BARS" => "32"
   },
-  camel: {
-    "FORM" => "camel_32", "COMPOSITION" => "1", "VOICING" => "quartal",
-    "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200",
-    "LEAD_ARP" => "1", "HARMONY_LEAD" => "1", "HARMONY_LEP_MODE" => "hybrid",
-    "LUSH_SYNTH" => "1", "LONG_STRIPDOWN" => "1", "MOTIF_RECALL" => "1",
-    "GROOVE_DNA" => "wonky", "PERFORMER" => "glasper",
-    "CONV_REVERB" => "chamber",
-    "TRACK" => "chromatic_mediant_drift", "PROGRESSION" => "chromatic_mediant_drift",
-    "BPM" => "86", "BARS" => "32",
-    "KICKS" => "1", "KICK_GAIN" => "0.95", "FLYLO_KICK_GAIN" => "1.35",
-    "FLYLO_DRUMS_ONLY" => "1", "KICK_SAMPLE_GAIN" => "0.95",
-    # Get Dis Money (Fantastic Vol. 2) — never Timeless / Microphone Master / sirkel_sag.
-    "RAP_VOCAL" => "slum_village", "RAP_VOCAL_STYLE" => "chop",
-    "RAP_VOCAL_MIX" => "1.15", "RAP_VOCAL_DUCK" => "0.62",
-    "LA_BEAT_PROGRESSION" => "1", "LINEAR_CHORD_INDEX" => "1",
-    "FLYLO_DRUM_OVERLAY" => "1", "FLYLO_QUINT_HATS" => "1",
-    "CAMEL_DRUM_ENTRY_BAR" => "0", "CAMEL_KEEP_FLYLO" => "1",
-    "SIDECHAIN_STYLE" => "flylo", "DRUM_PRESET" => "flylo_abstract",
-    "SONITEX" => "donuts_soul", "SONITEX_PRESET" => "donuts_soul",
-    "ANALOG_CHAIN" => "summing_phasy",
-    "SIDECHAIN_DRUM_WEIGHT" => "1.65", "SIDECHAIN_HARM_WEIGHT" => "1.15",
-    "HARM_BUS_VOL" => "1.55",
-    "DRUM_BUS_VOL" => "1.4", "DRUM_BUS_GAIN" => "1.5", "DRUM_MIX_WEIGHT" => "1.6",
-    "HARMONIC_PADS_WEIGHT" => "1.15", "HARMONIC_PADS_VOLUME" => "1.2",
-    "HARMONIC_SCALE_LEAD_WEIGHT" => "1.25", "HARMONIC_SCALE_LEAD_VOLUME" => "1.45",
-    "HARMONIC_LEAD_ARP_WEIGHT" => "1.35", "HARMONIC_LEAD_ARP_VOLUME" => "1.5",
-    "HARMONIC_XLEAD_WEIGHT" => "1.15", "HARMONIC_XLEAD_VOLUME" => "1.35",
-    "HARMONIC_HARMONY_LEAD_WEIGHT" => "1.0", "HARMONIC_HARMONY_LEAD_VOLUME" => "1.25",
-    "HARMONIC_LEAD_WEIGHT" => "0.9", "HARMONIC_LEAD_VOLUME" => "1.2"
-  }
+  # camel: single source is CAMEL_MODE_DEFAULTS (applied via apply_render_mode! / apply_camel_profile!).
+  camel: {}
 }.freeze
 
-CAMEL_MODE_DEFAULTS = {
-  "TRACK" => "chromatic_mediant_drift",
-  "PROGRESSION" => "chromatic_mediant_drift",
-  "BPM" => "86",
-  "BARS" => "32",
-  "FORM" => "camel_32",
-  "GROOVE_DNA" => "wonky",
-  "PERFORMER" => "glasper",
-  "KICKS" => "1",
-  "KICK_GAIN" => "0.95",
-  "FLYLO_KICK_GAIN" => "1.35",
-  "FLYLO_DRUMS_ONLY" => "1",
-  # Get Dis Money (Fantastic Vol. 2) — never Timeless / Microphone Master / sirkel_sag.
-  "RAP_VOCAL" => "slum_village",
-  "RAP_VOCAL_STYLE" => "chop",
-  "LA_BEAT_PROGRESSION" => "1",
-  "LINEAR_CHORD_INDEX" => "1",
-  "PAD_LEGATO_VAR" => "1",
-  "FLYLO_DRUM_OVERLAY" => "1",
-  "FLYLO_QUINT_HATS" => "1",
-  "CAMEL_DRUM_ENTRY_BAR" => "0",
-  "CAMEL_KEEP_FLYLO" => "1",
-  "VOICING" => "quartal",
-  "HARMONY_LEAD" => "1",
-  "HARMONY_LEP_MODE" => "hybrid",
-  "LEAD_ARP" => "1",
-  "SIDECHAIN_STYLE" => "flylo",
-  "SONITEX" => "donuts_soul",
-  "SONITEX_PRESET" => "donuts_soul",
-  "ANALOG_CHAIN" => "summing_phasy",
-  "DRUM_PRESET" => "flylo_abstract",
-  # Pad-forward mix (the “I love the pads” baseline) with kit that still punches.
-  "FLYLO_OVERLAY_GAIN" => "1.15",
-  "FLYLO_SUB_MIX" => "0.95",
-  "FLYLO_TOP_MIX" => "0.88",
-  "FLYLO_MERGE_BOOST" => "1.75",
-  "FLYLO_BASE_DRUM_VOL" => "0.85",
-  "KICK_SAMPLE_GAIN" => "0.95",
-  "DRUM_BUS_VOL" => "1.25",
-  "DRUM_BUS_GAIN" => "1.35",
-  "DRUM_MIX_WEIGHT" => "1.45",
-  "DRUM_PEAK_DB" => "-1.5",
-  "HARM_MIX_WEIGHT" => "1.25",
-  "HARM_BUS_VOL" => "1.72",
-  "SIDECHAIN_DRUM_WEIGHT" => "1.45",
-  "SIDECHAIN_HARM_WEIGHT" => "1.25",
-  "FLYLO_CHORD_DUCK" => "0.92",
-  "RAP_VOCAL_MIX" => "1.15",
-  "RAP_VOCAL_DUCK" => "0.62",
-  "HARMONIC_PADS_WEIGHT" => "1.35",
-  "HARMONIC_PADS_VOLUME" => "1.28",
-  "HARMONIC_SCALE_LEAD_WEIGHT" => "0.85",
-  "HARMONIC_SCALE_LEAD_VOLUME" => "1.05",
-  "HARMONIC_LEAD_ARP_WEIGHT" => "0.95",
-  "HARMONIC_LEAD_ARP_VOLUME" => "1.1",
-  "HARMONIC_XLEAD_WEIGHT" => "0.7",
-  "HARMONIC_XLEAD_VOLUME" => "0.95",
-  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.75",
-  "HARMONIC_HARMONY_LEAD_VOLUME" => "1.0",
-  "HARMONIC_LEAD_WEIGHT" => "0.55",
-  "HARMONIC_LEAD_VOLUME" => "0.85",
-  "LUSH_SYNTH" => "1",
-  "MOTIF_RECALL" => "1",
-  "SYNTH_MORPH" => "1",
-  "LEAD_MORPH" => "1",
-  "FM_NATIVE" => "1",
-  "EXPERIMENTAL_LEADS" => "1",
-  "STREAM_CONTINUOUS" => "1",
-  "STREAM_DEMO" => "demo.wav"
-}.freeze
+# Alias of Afta-1 seat (lib/producer_modes.rb) — kept for CAMEL_MODE_DEFAULTS call sites.
+CAMEL_MODE_DEFAULTS = DillaProducerModes::AFTA.freeze
 
 STREAM_SOUL_DEFAULTS = {
   "STREAM_SOUL" => "1",
   "FORM" => "soul_32",
   "BARS" => "32",
-  "LA_BEAT_PROGRESSION" => "1",
+  "LA_BEAT_PROGRESSION" => "0",
   "LINEAR_CHORD_INDEX" => "1",
   "PAD_LEGATO_VAR" => "1",
-  "HARMONY_LEAD" => "1",
-  "HARMONY_LEP_MODE" => "hybrid",
-  "HARMONIC_HARMONY_LEAD_VOLUME" => "0.48",
-  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.14",
-  "LEAD_ARP" => "1",
+  "HARMONY_LEAD" => "0",
+  "LEAD_ARP" => "0",
   "VOICING" => "kenny_barron",
   "STREAM_LOCK" => "0",
   "TRACK" => "maj7_minor_cycle",
@@ -6664,34 +6655,25 @@ STREAM_SOUL_DEFAULTS = {
   "SPEAK" => "0",
   "MOTIF_RECALL" => "1",
   "LUSH_SYNTH" => "1",
-  "PAD_ATTACK" => "820",
-  "PAD_RELEASE" => "2200",
-  "LONG_STRIPDOWN" => "1",
-  "STREAM_LEARN_BIAS" => "1",
+  "PAD_ATTACK" => "1400",
+  "PAD_RELEASE" => "3600",
+  "LONG_STRIPDOWN" => "0",
+  "STREAM_LEARN_BIAS" => "0",
   "PROMOTION_BEAUTY_MIN" => "85",
   "FLYLO_DRUM_OVERLAY" => "1",
-  "FLYLO_QUINT_HATS" => "1",
-  "FLYLO_OVERLAY_GAIN" => "0.78",
-  "FLYLO_SUB_MIX" => "0.52",
-  "FLYLO_TOP_MIX" => "0.48",
-  "FLYLO_MERGE_BOOST" => "1.28",
-  "DRUM_BUS_GAIN" => "1.55",
-  "DRUM_MIX_WEIGHT" => "1.22",
-  "HARM_MIX_WEIGHT" => "1.38",
-  "RAP_VOCAL" => "slum_village",
-  "RAP_VOCAL_MIX" => "1.15",
-  "RAP_VOCAL_DUCK" => "0.62",
-  "FLYLO_CHORD_DUCK" => "0.82",
+  "FLYLO_QUINT_HATS" => "0",
+  "FLYLO_OVERLAY_GAIN" => "1.0",
+  "RAP_VOCAL" => "0",
   "SIDECHAIN_STYLE" => "flylo",
-  "SYNTH_MORPH" => "1",
-  "SYNTH_CYCLE" => "1",
-  "LEAD_MORPH" => "1",
-  "FM_NATIVE" => "1",
-  "EXPERIMENTAL_LEADS" => "1",
-  "HARMONIC_PADS_WEIGHT" => "1.18",
-  "HARMONIC_PADS_VOLUME" => "1.02",
-  "HARMONIC_XLEAD_WEIGHT" => "0.28",
-  "HARMONIC_XLEAD_VOLUME" => "0.62"
+  "SYNTH_MORPH" => "0",
+  "SYNTH_CYCLE" => "0",
+  "LEAD_MORPH" => "0",
+  "FM_NATIVE" => "0",
+  "EXPERIMENTAL_LEADS" => "0",
+  "HARMONIC_PADS_WEIGHT" => "1.5",
+  "HARMONIC_PADS_VOLUME" => "1.35",
+  "HARMONIC_XLEAD_WEIGHT" => "0.15",
+  "HARMONIC_XLEAD_VOLUME" => "0.35"
 }.freeze
 
 GHOST_TIERS = {
@@ -6769,8 +6751,9 @@ STREAM_ITERATE_TUNING = {
   "GROOVE_SCORE_MIN" => "75",
   "MOTIF_RECALL" => "1",
   "STREAM_HARMONY_EVERY" => "2",
-  "STREAM_ANALOG_EVERY" => "1",
-  "STREAM_ANALOG_WILD" => "1",
+  # Default: do not rotate color every track (was the main “sounds bad” regression).
+  "STREAM_ANALOG_EVERY" => "0",
+  "STREAM_ANALOG_WILD" => "0",
   "STREAM_LEARN_BIAS" => "0"
 }.freeze
 
@@ -6847,6 +6830,34 @@ def stream_iterate_acceptable?(path)
   ok
 end
 
+# Keys that define the “beautiful pads + Camel kit” character — reassert after
+# iterate/track-soul so stream doesn't drift into thin/harsh mixes again.
+CAMEL_BEAUTY_LOCK_KEYS = %w[
+  HARM_BUS_VOL HARM_MIX_WEIGHT SIDECHAIN_DRUM_WEIGHT SIDECHAIN_HARM_WEIGHT
+  HARMONIC_PADS_WEIGHT HARMONIC_PADS_VOLUME HARMONIC_SCALE_LEAD_WEIGHT
+  HARMONIC_SCALE_LEAD_VOLUME HARMONIC_LEAD_ARP_WEIGHT HARMONIC_LEAD_ARP_VOLUME
+  HARMONIC_XLEAD_WEIGHT HARMONIC_XLEAD_VOLUME HARMONIC_HARMONY_LEAD_WEIGHT
+  HARMONIC_HARMONY_LEAD_VOLUME HARMONIC_LEAD_WEIGHT HARMONIC_LEAD_VOLUME
+  SONITEX SONITEX_PRESET ANALOG_CHAIN CAMEL_DRY_DRUMS CAMEL_DRY_DRUM_WEIGHT
+  CAMEL_BED_WEIGHT PAD_ATTACK PAD_RELEASE PAD_VOICE PAD_ARP_MODE
+  FLYLO_QUINT_HATS CAMEL_DRUM_LOCK CAMEL_NO_BREAK CAMEL_CLEAN_MASTER
+  STREAM_CREATIVE_FREEDOM SYNTH_MORPH LEAD_MORPH LEAD_ARP HARMONY_LEAD
+  EXPERIMENTAL_LEADS FM_NATIVE LA_BEAT_PROGRESSION STREAM_ITERATE LONG_STRIPDOWN
+].freeze
+
+def reassert_camel_beauty_locks!
+  return unless camel_mode?
+  CAMEL_BEAUTY_LOCK_KEYS.each do |key|
+    next unless CAMEL_MODE_DEFAULTS.key?(key)
+    ENV[key] = CAMEL_MODE_DEFAULTS[key].to_s
+  end
+  # Keep envelope lush even when track soul profiles set shorter attacks.
+  atk = [ENV["PAD_ATTACK"].to_i, CAMEL_MODE_DEFAULTS["PAD_ATTACK"].to_i].max
+  rel = [ENV["PAD_RELEASE"].to_i, CAMEL_MODE_DEFAULTS["PAD_RELEASE"].to_i].max
+  ENV["PAD_ATTACK"] = atk.to_s
+  ENV["PAD_RELEASE"] = rel.to_s
+end
+
 def stream_iterate_after_render!(path)
   return unless File.file?(path)
   @stream_iterate_count = (@stream_iterate_count || 0) + 1
@@ -6855,6 +6866,23 @@ def stream_iterate_after_render!(path)
   harsh = DillaMaster.analyze_harshness(spectrum)
   sk = DillaMaster.sub_kick_balance(spectrum, beauty)
   notes = []
+  # Camel beauty stream: only soft mix nudges — no morph / grid rewrite / analog roulette.
+  if camel_mode?
+    if sk[:recommendation] == "boost_sub"
+      notes << "sub_ok"
+    end
+    if harsh[:needs_notch]
+      notes << "harsh_soft"
+    end
+    promote_progression_hook!(ENV["TRACK"].to_s, beauty)
+    notes.concat(stream_iterate_evolve_harmony!) if (@stream_iterate_count % 4).zero?
+    reassert_camel_beauty_locks!
+    line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
+           "camel_beauty #{notes.join(' ')}"
+    File.open(STREAM_ITERATE_LOG, "a") { |f| f.puts(line) }
+    puts "stream iterate: beauty=#{beauty} camel_lock #{notes.join(', ')}"
+    return
+  end
   if refine_deep_mix_env!(path)
     notes << "kick=#{ENV['KICK_GAIN']} harm=#{ENV['DEBUG_HARM_WEIGHT']}"
   end
@@ -7054,7 +7082,11 @@ end
 # Rotate Sonitex + analog grade stacks; wild random FX mashups for authentic chaos.
 def stream_iterate_analog_emulation!
   return [] unless stream_iterate_enabled?
-  every = [(ENV["STREAM_ANALOG_EVERY"] || "1").to_i, 1].max
+  # Camel “full sound” locks donuts_soul + summing_phasy; rotating to acetate/scuzz
+  # re-introduces wall-of-noise and killed the pad character people liked.
+  return [] if camel_mode? && ENV.fetch("CAMEL_LOCK_COLOR", "1") != "0"
+  every = (ENV["STREAM_ANALOG_EVERY"] || "0").to_i
+  return [] if every <= 0
   return [] unless (@stream_iterate_count % every).zero?
 
   rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + 53)
@@ -7174,8 +7206,15 @@ end
 
 def apply_render_mode!
   mode = ENV["RENDER_MODE"]&.downcase&.to_sym
-  return unless mode && RENDER_MODE_DEFAULTS.key?(mode)
-  RENDER_MODE_DEFAULTS[mode].each do |key, value|
+  return unless mode
+  # Camel: one table only (CAMEL_MODE_DEFAULTS). Avoid dual-table drift.
+  table = if mode == :camel
+            CAMEL_MODE_DEFAULTS
+          else
+            RENDER_MODE_DEFAULTS[mode]
+          end
+  return unless table
+  table.each do |key, value|
     next if value.nil?
     ENV[key] = value if ENV[key].nil? || ENV[key].empty?
   end
@@ -7306,14 +7345,20 @@ end
 
 def apply_camel_profile!(force: false)
   ENV["RENDER_MODE"] = "camel" if ENV["RENDER_MODE"].nil? || ENV["RENDER_MODE"].empty?
+  mode = ENV["PRODUCER_MODE"].to_s
+  mode = "afta" if mode.empty? || mode == "camel"
+  DillaProducerModes.apply!(mode, force: force)
   apply_render_mode!
   CAMEL_MODE_DEFAULTS.each do |key, value|
     next if !force && ENV[key] && !ENV[key].empty?
     ENV[key] = value.to_s
   end
-  apply_track_soul_profile!("chromatic_mediant_drift", force: force)
+  track = ENV["TRACK"].to_s
+  track = "chromatic_mediant_drift" if track.empty?
+  apply_track_soul_profile!(track, force: force)
+  reassert_camel_beauty_locks! if force
   ensure_learned_engine_seeded!
-  apply_learned_env_for_track!("chromatic_mediant_drift")
+  apply_learned_env_for_track!(track)
 end
 
 def pick_default_track!
@@ -7343,30 +7388,31 @@ end
 
 def apply_stream_listenability_defaults!
   apply_best_defaults!
-  STREAM_EXTRA_DEFAULTS.each do |key, value|
-    ENV[key] = value if ENV[key].nil? || ENV[key].empty?
+  iterate = ENV.fetch("STREAM_ITERATE", "1") != "0"
+  soul = ENV.fetch("STREAM_SOUL", "1") != "0"
+  mode = DillaStreamEnv.resolve_stream_env!(
+    best_defaults: DILLA_BEST_DEFAULTS,
+    deep_defaults: DILLA_DEEP_DEFAULTS,
+    extra_defaults: STREAM_EXTRA_DEFAULTS,
+    fast_defaults: STREAM_FAST_DEFAULTS,
+    iterate_tuning: STREAM_ITERATE_TUNING,
+    iterate_override_keys: STREAM_ITERATE_OVERRIDE_KEYS,
+    soul_defaults: STREAM_SOUL_DEFAULTS,
+    deep: stream_deep?,
+    iterate: iterate && ENV["DILLA_STREAMING"] == "1",
+    soul: soul
+  )
+  # Mode tables force-fill; reassert beauty locks for afta/camel/flylo pad seats.
+  if %w[afta camel flylo].include?(mode.to_s) || camel_mode?
+    apply_camel_profile!(force: true) if camel_mode? || mode.to_s == "afta"
+    reassert_camel_beauty_locks! if camel_mode? || %w[afta flylo].include?(mode.to_s)
   end
-  if stream_deep?
-    ENV["DILLA_DEEP"] = "1"
-    ENV["DILLA_QUALITY_GATE"] = "1" if ENV["DILLA_QUALITY_GATE"].nil? || ENV["DILLA_QUALITY_GATE"].empty?
-    DILLA_DEEP_DEFAULTS.each do |key, value|
-      ENV[key] = value if ENV[key].nil? || ENV[key].empty?
-    end
-  else
-    fast = STREAM_FAST_DEFAULTS.dup
-    if stream_iterate_enabled?
-      STREAM_ITERATE_OVERRIDE_KEYS.each { |key| fast.delete(key) }
-    end
-    fast.each { |key, value| ENV[key] = value }
+  ensure_learned_engine_seeded! if soul
+  apply_learned_env_for_track!(ENV["TRACK"]) if soul && ENV["TRACK"] && !ENV["TRACK"].empty?
+  # Soft-fill again so mode wins over learned env on beauty keys.
+  if %w[afta camel flylo dilla madlib].include?(mode.to_s)
+    DillaProducerModes.apply!(mode, force: true)
   end
-  return unless stream_iterate_enabled?
-  STREAM_ITERATE_TUNING.each { |key, value| ENV[key] = value }
-  if ENV.fetch("STREAM_SOUL", "1") != "0"
-    ensure_learned_engine_seeded!
-    STREAM_SOUL_DEFAULTS.each { |key, value| ENV[key] = value }
-    apply_learned_env_for_track!(ENV["TRACK"])
-  end
-  apply_camel_profile!(force: true) if camel_mode?
 end
 
 def render_spectrum(path)
@@ -7506,6 +7552,14 @@ end
 # Non-stop chord/pad showcase: renders and plays each track once (full
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
+# Soulful pad-first rotation (curated progressions that read as chord music).
+CAMEL_STREAM_PRIORITY = %w[
+  chromatic_mediant_drift maj7_minor_cycle neo_soul erykah_minor time_donut
+  warm_minor_arc electronium_loop quartal_west_coast slow_ballad_wash
+  minor_iv_loop neo_soul_pocket slash_neo_soul aydin_modal_quartal
+  glasper_quartal timeless_authentic relative_major_turn
+].freeze
+
 def stream_track_order
   lock = ENV["STREAM_TRACK"] || (ENV["STREAM_LOCK"] == "1" ? ENV["TRACK"] : nil)
   if lock && !lock.to_s.empty?
@@ -7514,6 +7568,12 @@ def stream_track_order
             TRACK_PRESETS.key?(key)
     return [key] if known
     warn "stream: unknown lock #{lock} — falling back to full rotation"
+  end
+  if camel_mode?
+    priority = CAMEL_STREAM_PRIORITY.select { |t| STREAM_TRACKS.include?(t) }
+    rest = STREAM_TRACKS - priority
+    # Always soulful pad tracks first (rotated for variety), then the rest.
+    return priority.rotate(rand([priority.length, 1].max)) + rest.shuffle
   end
   STREAM_TRACKS.rotate(rand(STREAM_TRACKS.length))
 end
@@ -7580,10 +7640,12 @@ def stream(bars_count = STREAM_BARS_COUNT)
       end
       track = t.to_s
       apply_track_soul_profile!(track, force: !user_pad_locked)
+      reassert_camel_beauty_locks! if camel_mode?
       ENV["TRACK"] = track
       if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
         track = rb
         apply_track_soul_profile!(track, force: !user_pad_locked)
+        reassert_camel_beauty_locks! if camel_mode?
         stream_track_banner("← playlist.brgen.no (rotation #{t})")
       else
         stream_track_banner
@@ -7599,8 +7661,10 @@ def stream(bars_count = STREAM_BARS_COUNT)
         warn "stream: #{ENV['TRACK'] || track} failed (#{e.class}) — #{e.message}"
         sleep 1.0
       end
-      gap = (ENV["STREAM_GAP"] || "0.15").to_f
-      sleep DillaSeeds.drift_sleep(gap) if gap.positive?
+      gap = (ENV["STREAM_GAP"] || "0.55").to_f
+      xfade = (ENV["STREAM_CROSSFADE"] || "0.12").to_f
+      # Soft silence between tracks (crossfade is intentional gap, not sample morph).
+      sleep DillaSeeds.drift_sleep([gap + xfade, 0.05].max) if gap.positive? || xfade.positive?
     end
   end
 ensure
@@ -7770,20 +7834,23 @@ def curated_progression_pads(key)
 end
 
 # Baked-in learnings — engine works without project/learnings/*.json.
-# yt-dlp "Flying Lotus - Camel" → htdemucs_6s drums.wav → adaptive 16-step grid @ 86 BPM.
+# yt-dlp "Flying Lotus - Camel" → htdemucs_6s drums.wav → 16-step grid.
 FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=t6SXXx1Fu_4".freeze
-# Learned from Camel demucs stems, then pocket-anchored so the kit grooves:
-# downbeat kick + classic 2/4 snare, with FlyLo syncopation around them.
-# Raw onset-only grid (kicks only on offs, snares every odd) sounded broken alone.
+# Transcribed from samples/demux/htdemucs_6s/flylo_camel_source/drums.wav
+# (peak-count @ ~85–86 BPM on kick/snare bands). Keep this grid LOCKED —
+# density/rotation/quint hats were rewriting it into something unrecognizable.
 FLYLO_CAMEL_DRUM_GRID = {
   "bpm" => 86,
-  "swing" => 54,
-  "source" => "Flying Lotus - Camel (anchored)",
+  "swing" => 52,
+  "source" => "Flying Lotus - Camel (stem-locked)",
   "source_url" => FLYLO_CAMEL_SOURCE_URL,
-  "flylo_kicks" => [0, 3, 7, 10, 13],
-  "flylo_snares" => [4, 12, 7, 15],
+  # Kick: downbeat + syncopated cluster (matches ~85 BPM kick-band peaks).
+  "flylo_kicks" => [0, 3, 7, 10, 11, 14],
+  # Snare: backbeats only (4 & 12). Extra 7/15 were ghosted as full snares → wrong.
+  "flylo_snares" => [4, 12],
+  # Closed 8ths — not dense 16ths + quintuplet wash.
   "flylo_hats" => [0, 2, 4, 6, 8, 10, 12, 14],
-  "flylo_perc" => [3, 9, 11]
+  "flylo_perc" => [5, 9, 13]
 }.freeze
 CAMEL_PROGRESSION_SYMS = %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG].freeze
 
@@ -8356,14 +8423,15 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_
                                  sec_gain, section, pad_chords, chord_bars:, phrase_bars:, chord_phases:)
   return unless flylo_drum_overlay_enabled?
   return if camel_mode? && bar < camel_drum_entry_bar
-  return if drum_drop_bar?(bar, section)
+  # Camel lock never drops bars — drum_drop rewrote the Camel pattern.
+  return if !camel_drum_lock? && drum_drop_bar?(bar, section)
 
   density = flylo_overlay_density(bar, n_bars, chord_bars: chord_bars, pad_chords: pad_chords,
                                   chord_phases: chord_phases, phrase_bars: phrase_bars)
-  # Floor density so intro/breakdown never silences the FlyLo kit.
   density = density.clamp(flylo_primary_drums? ? 0.55 : 0.12, 1.35)
   bar_bpm = DillaRhythm.bar_bpm(bar)
-  overlay_gain = sec_gain * density
+  # Lock: ignore section sec_gain so intro isn't a whisper of the kit.
+  overlay_gain = camel_drum_lock? ? density : (sec_gain * density)
   chord_lens = instance_variable_defined?(:@render_chord_bar_lens) ? @render_chord_bar_lens : nil
   chord = if pad_chords&.any?
             pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars,
@@ -8371,63 +8439,74 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_
           end
   perc_hz = flylo_chord_perc_hz(chord)
 
-  flylo_overlay_steps(bar, section, :kicks).each do |step|
-    t = [base + step * step_p +
-         dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
-         dilla_timing_ms(:kick_sync, bar, step, timing, beat_p) / 1000.0, 0.0].max
-    wobble = flylo_wobble_velocity_mul(bar, step)
-    vel = dilla_velocity(0.72, bar, step, spread: 0.08) * overlay_gain * wobble * flylo_kick_velocity_scale
-    events[:flylo_kick] << [t.round(6), vel.clamp(0.08, 0.98)]
+  # Lock: grid-quantized only — no Dilla ms offsets / swing push that smears the Camel pocket.
+  place = lambda do |step, role_timing|
+    if camel_drum_lock?
+      base + step * step_p
+    else
+      [base + step * step_p +
+       dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
+       dilla_timing_ms(role_timing, bar, step, timing, beat_p) / 1000.0, 0.0].max
+    end
   end
 
-  return if section == :breakdown && !camel_keep_flylo_on_breakdown?
+  flylo_overlay_steps(bar, section, :kicks).each do |step|
+    t = place.call(step, :kick_sync)
+    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step)
+    base_vel = camel_drum_lock? ? 0.92 : 0.88
+    vel = dilla_velocity(base_vel, bar, step, spread: camel_drum_lock? ? 0.02 : 0.06) *
+          overlay_gain * wobble * flylo_kick_velocity_scale
+    events[:flylo_kick] << [t.round(6), vel.clamp(camel_drum_lock? ? 0.55 : 0.42, 0.98)]
+  end
+
+  return if section == :breakdown && !camel_keep_flylo_on_breakdown? && !camel_drum_lock?
   flylo_overlay_steps(bar, section, :snares).each do |step|
-    t = [base + step * step_p +
-         dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
-         dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
-    wobble = flylo_wobble_velocity_mul(bar, step)
-    snare_boost = flylo_primary_drums? ? 1.35 : 1.0
-    vel = dilla_velocity(0.62, bar, step, spread: 0.1) * overlay_gain * wobble * snare_boost
-    events[:flylo_snare] << [t.round(6), vel.clamp(0.08, 0.95)]
+    t = place.call(step, :snare)
+    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step)
+    snare_boost = flylo_primary_drums? ? 1.55 : 1.0
+    vel = dilla_velocity(camel_drum_lock? ? 0.78 : 0.62, bar, step, spread: camel_drum_lock? ? 0.03 : 0.1) *
+          overlay_gain * wobble * snare_boost
+    events[:flylo_snare] << [t.round(6), vel.clamp(0.45, 0.95)]
   end
 
   flylo_overlay_steps(bar, section, :hats).each do |step|
     role = step.odd? ? :hat_up : :hat_down
-    t = [base + step * step_p +
-         dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
-         dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
-    wobble = flylo_wobble_velocity_mul(bar, step, n: 5)
-    vel = dilla_velocity(0.42, bar, step, spread: 0.12) * overlay_gain * wobble
-    events[:flylo_hat] << [t.round(6), vel]
+    t = place.call(step, role)
+    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step, n: 5)
+    vel = dilla_velocity(camel_drum_lock? ? 0.52 : 0.42, bar, step, spread: camel_drum_lock? ? 0.04 : 0.12) *
+          overlay_gain * wobble
+    events[:flylo_hat] << [t.round(6), vel.clamp(0.2, 0.75)]
   end
 
-  # Quint hats only every other bar in Camel mode — constant 5/bar + 8th hats = hiss bed.
-  if ENV.fetch("FLYLO_QUINT_HATS", "1") != "0" && !(flylo_drums_only? && bar.odd?)
-    quint_p = bar_p / 5.0
-    quint_mul = flylo_drums_only? ? 0.55 : 1.0
-    5.times do |i|
-      t = (base + i * quint_p).round(6)
-      wobble = flylo_wobble_velocity_mul(bar, i + 16, n: 5)
-      vel = dilla_velocity(0.28, bar, i, spread: 0.14) * overlay_gain * wobble * quint_mul
-      events[:flylo_quint] << [t, vel.clamp(0.05, 0.55)]
+  # Quint hats are NOT in Camel — they turn the kit into a polyrhythmic hiss bed.
+  unless camel_drum_lock?
+    if ENV.fetch("FLYLO_QUINT_HATS", "1") != "0" && !(flylo_drums_only? && bar.odd?)
+      quint_p = bar_p / 5.0
+      quint_mul = flylo_drums_only? ? 0.55 : 1.0
+      5.times do |i|
+        t = (base + i * quint_p).round(6)
+        wobble = flylo_wobble_velocity_mul(bar, i + 16, n: 5)
+        vel = dilla_velocity(0.28, bar, i, spread: 0.14) * overlay_gain * wobble * quint_mul
+        events[:flylo_quint] << [t, vel.clamp(0.05, 0.55)]
+      end
     end
   end
 
   flylo_overlay_steps(bar, section, :perc).each do |step|
-    t = [base + step * step_p +
-         dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
-         dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
-    wobble = flylo_wobble_velocity_mul(bar, step, n: 5)
-    vel = dilla_velocity(0.26, bar, step, spread: 0.1) * overlay_gain * wobble
-    events[:flylo_perc] << [t.round(6), vel, perc_hz, 0.0]
+    t = place.call(step, :ghost)
+    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step, n: 5)
+    vel = dilla_velocity(0.22, bar, step, spread: 0.08) * overlay_gain * wobble
+    events[:flylo_perc] << [t.round(6), vel.clamp(0.08, 0.4), perc_hz, 0.0]
   end
 
-  if section == :main && bar % 8 == 5
-    events[:flylo_rim] << [(base + 10 * step_p).round(6), dilla_velocity(0.24, bar, 10) * overlay_gain, 0.4]
-  end
-  if bar % 16 == 11 && density > 0.5
-    events[:flylo_glitch] << [(base + 14 * step_p).round(6),
-                              dilla_velocity(0.3, bar, 14, spread: 0.08) * overlay_gain, :ind_stab]
+  unless camel_drum_lock?
+    if section == :main && bar % 8 == 5
+      events[:flylo_rim] << [(base + 10 * step_p).round(6), dilla_velocity(0.24, bar, 10) * overlay_gain, 0.4]
+    end
+    if bar % 16 == 11 && density > 0.5
+      events[:flylo_glitch] << [(base + 14 * step_p).round(6),
+                                dilla_velocity(0.3, bar, 14, spread: 0.08) * overlay_gain, :ind_stab]
+    end
   end
 end
 
@@ -10407,6 +10486,7 @@ SELF_SAMPLE_CACHE = File.join(SCRATCH_DIR, "self_sample.wav")
 # slice back in as texture, a real feedback loop across renders rather
 # than each one starting from nothing.
 def cache_self_sample!(destination)
+  return if ENV.fetch("SELF_SAMPLE", "1") == "0"
   return unless File.exist?(destination) && tool_available?("ffprobe")
   # Not media_metadata: it calls abort() on failure, which would kill the
   # whole render for what's meant to be a best-effort optional step.
@@ -10526,6 +10606,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     shaker: synth_shaker_sample,
     cowbell: synth_cowbell_sample
   )
+  # FlyLo mode: replace kit oneshots with Camel demucs chops when available.
+  if ENV.fetch("CAMEL_CHOPS", "0") != "0"
+    DillaCamelChops.apply_to_kit!(kit, ROOT)
+  end
   unless dilla_pocket_drums_enabled?
     bar_p = beat_p * 4.0
   else
@@ -10574,10 +10658,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # Peak lift only — full loudnorm on the drum bus killed punch and made kicks
   # sound flat/wrong. Keep transient dynamics, just prevent digi-clip.
   if File.file?(drum_tmp)
-    peak_db = ENV.fetch("DRUM_PEAK_DB", flylo_primary_drums? ? "-1.0" : "-3.0")
+    # DRUM_PEAK_DB was fetched but ignored (always +3.5dB). Peak-normalize to target.
+    peak_db = ENV.fetch("DRUM_PEAK_DB", flylo_primary_drums? ? "-1.0" : "-3.0").to_f
+    lift_db = flylo_primary_drums? ? 5.5 : 3.5
     normed = "#{drum_tmp}.norm.wav"
     sh! "ffmpeg", "-y", "-i", drum_tmp,
-        "-af", "volume=3.5dB,alimiter=limit=0.96:level_out=0.97:attack=1:release=40",
+        "-af", "volume=#{lift_db}dB,alimiter=limit=#{(10**(peak_db / 20.0)).round(4)}:level_out=0.97:attack=1:release=50",
         "-c:a", "pcm_s16le", normed
     FileUtils.mv(normed, drum_tmp) if File.file?(normed)
   end
@@ -10606,7 +10692,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     idx += 1
   end
   self_sample_idx = nil
-  if File.exist?(SELF_SAMPLE_CACHE)
+  # Previous-render feedback can re-inject full Get Dis Money / prior mix as a "sample".
+  if File.exist?(SELF_SAMPLE_CACHE) && ENV.fetch("SELF_SAMPLE", "1") != "0"
     command += ["-stream_loop", "-1", "-i", SELF_SAMPLE_CACHE]
     self_sample_idx = idx
     idx += 1
@@ -10623,9 +10710,13 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   end
   ghost_n = events[:ghost]&.length || 0
   kick_n = events[:kick]&.length || 1
-  vinyl_amp = DillaMl.groove_synced_vinyl(ghost_n, kick_n, base: sonic_vinyl_level(cfg[:sonic]))
-  command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=#{vinyl_amp}:d=#{duration}"]
-  turntable_rumble = sonitex_enabled? && TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
+  vinyl_base = sonic_vinyl_level(cfg[:sonic])
+  vinyl_amp = vinyl_base.positive? ? DillaMl.groove_synced_vinyl(ghost_n, kick_n, base: vinyl_base) : 0.0
+  if vinyl_amp.positive?
+    command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=#{vinyl_amp}:d=#{duration}"]
+  end
+  turntable_rumble = vinyl_amp.positive? && sonitex_enabled? &&
+                     TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
   command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.02:d=#{duration}"] if turntable_rumble
 
   # Every attempt to fix chord audibility by tuning EQ/weights/sidechain
@@ -10690,21 +10781,23 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     mix_weights << "0.75"
   end
 
-  filt << "[#{idx}:a]highpass=f=120,lowpass=f=6000,volume=0.07[vinyl]"
-  mix_labels << "[vinyl]"
-  mix_weights << "0.6"
-  if turntable_rumble
-    filt << "[#{idx + 1}:a]lowpass=f=40,highpass=f=22,volume=0.05[rumble]"
-    mix_labels << "[rumble]"
+  if vinyl_amp.positive?
+    filt << "[#{idx}:a]highpass=f=120,lowpass=f=6000,volume=0.045[vinyl]"
+    mix_labels << "[vinyl]"
     mix_weights << "0.35"
   end
+  if turntable_rumble
+    rumble_idx = vinyl_amp.positive? ? idx + 1 : idx
+    filt << "[#{rumble_idx}:a]lowpass=f=40,highpass=f=22,volume=0.04[rumble]"
+    mix_labels << "[rumble]"
+    mix_weights << "0.25"
+  end
   if self_sample_idx
-    # The previous render, looped and buried quiet underneath this one — a
-    # genuine feedback loop across renders, not a fresh start every time.
+    # Previous render feedback — off by default on Camel (re-injects prior vocals/sample).
     filt << "[#{self_sample_idx}:a]atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-             "lowpass=f=2200,areverse,volume=0.1[selfsample]"
+             "lowpass=f=1800,areverse,volume=0.06[selfsample]"
     mix_labels << "[selfsample]"
-    mix_weights << "1.0"
+    mix_weights << "0.55"
   end
   filt << "#{mix_labels.join}amix=inputs=#{mix_labels.length}:weights=#{mix_weights.join(' ')}:duration=first:normalize=0[mix]"
   filt.concat(master_bus_filters("mix", track: cfg[:track].to_s, duration:, ir_input_idx:, cfg:))
@@ -10712,6 +10805,28 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   command += ["-filter_complex", filt.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
   File.write("/tmp/last_filter_graph.txt", filt.join(";\n")) if ENV["DEBUG_FILTER_DUMP"]
   sh!(*command)
+  # Parallel dry kit after Sonitex — measured demo was peak 0.27 with flat 16ths
+  # (pattern erased). Blend pre-master drums back so Camel grid is audible.
+  if camel_mode? && ENV.fetch("CAMEL_DRY_DRUMS", "1") != "0" && File.file?(drum_tmp) && File.file?(destination)
+    # Default dry kit quiet under pads (0.55); raise CAMEL_DRY_DRUM_WEIGHT for kit-forward.
+    dry_w = ENV.fetch("CAMEL_DRY_DRUM_WEIGHT", "0.55").to_f
+    bed_w = ENV.fetch("CAMEL_BED_WEIGHT", "1.3").to_f
+    dry_mix = "#{destination}.drykit#{File.extname(destination)}"
+    begin
+      sh! "ffmpeg", "-y", "-i", destination, "-i", drum_tmp,
+          "-filter_complex",
+          "[1:a]aformat=channel_layouts=stereo,equalizer=f=55:t=o:w=0.8:g=2.5," \
+          "equalizer=f=200:t=o:w=1:g=1.5,equalizer=f=4500:t=o:w=1.5:g=3,volume=#{dry_w}[dk];" \
+          "[0:a]volume=#{bed_w}[bed];" \
+          "[bed][dk]amix=inputs=2:weights=1.25 0.75:duration=first:normalize=0," \
+          "alimiter=limit=0.97:level_out=0.98[out]",
+          "-map", "[out]", *codec_for(dry_mix), dry_mix
+      FileUtils.mv(dry_mix, destination) if File.file?(dry_mix)
+    rescue StandardError => e
+      warn "camel dry drums: #{e.message}"
+      FileUtils.rm_f(dry_mix)
+    end
+  end
   if (rap_slug = rap_vocal_stream_slug)
     begin
       fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars: n_bars)
@@ -12236,6 +12351,41 @@ def rap_vocal_atempo_chain(ratio)
   parts.map { |t| "atempo=#{t.round(4)}" }.join(",")
 end
 
+# Kill demucs bleed (kick/bass/kit) so we only hear voice, not the source beat.
+def rap_vocal_isolation_filter
+  [
+    "aformat=sample_rates=#{SAMPLE_RATE}:channel_layouts=stereo",
+    "highpass=f=160",
+    "lowpass=f=7800",
+    "equalizer=f=70:t=h:w=1.2:g=-18",
+    "equalizer=f=120:t=o:w=1.5:g=-10",
+    "equalizer=f=220:t=o:w=1.4:g=-5",
+    "equalizer=f=3500:t=o:w=1.6:g=2.5",
+    "agate=threshold=0.018:ratio=4:attack=3:release=90:makeup=3",
+    "acompressor=threshold=-26dB:ratio=2.2:attack=5:release=110:makeup=5"
+  ].join(",")
+end
+
+# First substantial phrase — skip instrumental intro left in the "vocals" stem.
+def rap_vocal_phrase_start(phrases, min_strength: 0.14)
+  Array(phrases).filter_map do |p|
+    s = (p["start"] || p[:start]).to_f
+    st = (p["strength"] || p[:strength]).to_f
+    next if s < 0.5
+    next if st.positive? && st < min_strength
+    s
+  end.min
+end
+
+def rap_vocal_clean_stem!(src, dest = nil)
+  dest ||= src.sub(/\.wav\z/i, ".clean.wav")
+  dest = "#{src}.clean.wav" if dest == src
+  sh! "ffmpeg", "-y", "-i", src,
+      "-af", "#{rap_vocal_isolation_filter},loudnorm=I=-16:TP=-2:LRA=8,alimiter=limit=0.94:level_out=0.95",
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
+  dest
+end
+
 def rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases: nil)
   phrase_times = Array(phrases).filter_map { |p| p["start"] || p[:start] }
   if phrase_times.empty?
@@ -12318,14 +12468,16 @@ def rap_vocal_ingest!(artist, src)
     return nil
   end
   vocal_dest = File.join(out_dir, "vocals.wav")
-  FileUtils.cp(vocal_src, vocal_dest)
+  # Demucs "vocals" still carries kit/bass bleed — isolate before catalog use.
+  rap_vocal_clean_stem!(vocal_src, vocal_dest)
   analysis = RadioBergenStudy::DeepAudio.analyze(vocal_dest)
   phrases = rap_vocal_phrase_onsets(vocal_dest)
   entry = {
     "slug" => slug, "artist" => artist.to_s, "source" => src.to_s,
     "vocal_path" => vocal_dest, "stem_dir" => stem_dir,
     "bpm_estimate" => analysis[:bpm_estimate],
-    "phrases" => phrases, "ingested_at" => Time.now.utc.iso8601
+    "phrases" => phrases, "ingested_at" => Time.now.utc.iso8601,
+    "isolated" => true
   }
   cat = rap_vocal_load_catalog
   cat["vocals"] = Array(cat["vocals"]).reject { |v| v["slug"] == slug } + [entry]
@@ -12342,6 +12494,17 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
     warn "rap-vocal fit: unknown or missing slug #{slug_or_path}"
     return nil
   end
+  # Re-isolate uncleaned catalog stems (older Get Dis Money ingest kept full bleed).
+  if entry.is_a?(Hash) && entry["isolated"] != true
+    cleaned = File.join(File.dirname(vocal_path), "vocals.clean.wav")
+    rap_vocal_clean_stem!(vocal_path, cleaned)
+    FileUtils.mv(cleaned, vocal_path)
+    entry["isolated"] = true
+    entry["phrases"] = rap_vocal_phrase_onsets(vocal_path)
+    cat = rap_vocal_load_catalog
+    cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
+    rap_vocal_save_catalog!(cat)
+  end
   beat_bpm = beat_bpm.to_f
   vocal_bpm = if entry.is_a?(Hash)
                 entry["bpm_estimate"].to_f
@@ -12352,31 +12515,33 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   ratio = beat_bpm / vocal_bpm
   duration = (60.0 / beat_bpm) * 4.0 * n_bars
   phrases = entry.is_a?(Hash) ? entry["phrases"] : nil
+  phrase_start = rap_vocal_phrase_start(phrases) || 0.0
   offset = bar_offset || rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases: phrases)
+  # Prefer starting near real speech, not the instrumental intro demucs left in.
+  ss = [offset, phrase_start].max
   out_dir = File.dirname(vocal_path)
   fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars.wav")
-  delay_ms = (offset * 1000).round
-  # loudnorm + peak ceiling: demucs stems vary wildly (Timeless was ~-87 dBFS mean).
-  sh! "ffmpeg", "-y", "-i", vocal_path,
-      "-af", "#{rap_vocal_atempo_chain(ratio)},adelay=#{delay_ms}|#{delay_ms}," \
+  delay_ms = 0
+  # Isolate again on fit (idempotent EQ/gate) — never re-boost kit bleed via makeup=10.
+  sh! "ffmpeg", "-y", "-ss", ss.round(3).to_s, "-i", vocal_path,
+      "-af", "#{rap_vocal_isolation_filter},#{rap_vocal_atempo_chain(ratio)}," \
+             "adelay=#{delay_ms}|#{delay_ms}," \
              "atrim=0:#{duration.round(3)},asetpts=PTS-STARTPTS," \
-             "highpass=f=100,acompressor=threshold=-24dB:ratio=2.5:attack=5:release=100:makeup=10," \
-             "loudnorm=I=-14:TP=-1.5:LRA=9,alimiter=limit=0.95:level_out=0.97",
-      "-c:a", "pcm_s16le", fit_path
-  # If still whispering (empty demucs stem), bail so stream can fall back.
-  peak = band_rms(fit_path, highpass: 80, lowpass: 8_000) rescue -90.0
+             "loudnorm=I=-16:TP=-2:LRA=8,alimiter=limit=0.94:level_out=0.95",
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
+  peak = band_rms(fit_path, highpass: 120, lowpass: 8_000) rescue -90.0
   if peak < -50.0
     warn "rap-vocal fit: stem too quiet (rms≈#{peak.round(1)} dB) — #{fit_path}"
   end
   if entry.is_a?(Hash)
     entry["last_fit"] = { "path" => fit_path, "beat_bpm" => beat_bpm, "n_bars" => n_bars,
-                          "offset_sec" => offset, "tempo_ratio" => ratio.round(4),
-                          "rms_db" => peak }
+                          "offset_sec" => ss, "phrase_start" => phrase_start,
+                          "tempo_ratio" => ratio.round(4), "rms_db" => peak }
     cat = rap_vocal_load_catalog
     cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
     rap_vocal_save_catalog!(cat)
   end
-  puts "rap-vocal fit: #{fit_path} ratio=#{ratio.round(3)} offset=#{offset}s bars=#{n_bars} rms≈#{peak.round(1)}dB"
+  puts "rap-vocal fit: #{fit_path} ratio=#{ratio.round(3)} start=#{ss}s bars=#{n_bars} rms≈#{peak.round(1)}dB"
   fit_path
 end
 
@@ -12391,17 +12556,20 @@ end
 
 def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
   mix = rap_vocal_mix_params
-  # asplit: sidechain + amix both need the vocal pad (reusing [v] twice breaks ffmpeg).
+  # Bed stays primary. Prior mix used aggressive sidechain + loud vocal and left
+  # demo.wav ~identical to the Get Dis Money fit (corr≈0.97) — no pads/drums.
+  bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "1.35").to_f
+  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "0.55").to_f
   sh! "ffmpeg", "-y", "-i", beat_path, "-i", vocal_path,
       "-filter_complex",
-      "[1:a]aformat=channel_layouts=stereo,highpass=f=90," \
-      "equalizer=f=220:t=o:w=1:g=-4,#{mix[:presence]}#{mix[:top_eq]}," \
-      "acompressor=threshold=-22dB:ratio=2.5:attack=4:release=90:makeup=8," \
-      "loudnorm=I=-14:TP=-1.5:LRA=9,volume=#{mix[:vocal_vol]}[v0];" \
-      "[v0]asplit=2[v_sc][v_mix];" \
-      "[0:a][v_sc]sidechaincompress=threshold=0.02:ratio=2.8:attack=12:release=200:level_sc=0.85," \
-      "volume=#{mix[:duck]}[bed];" \
-      "[bed][v_mix]amix=inputs=2:weights=1 1.35:duration=first:dropout_transition=0:normalize=0," \
+      "[1:a]aformat=channel_layouts=stereo,highpass=f=180,lowpass=f=7000," \
+      "equalizer=f=100:t=h:w=1:g=-12,equalizer=f=200:t=o:w=1.2:g=-6," \
+      "#{mix[:presence]}#{mix[:top_eq]}," \
+      "agate=threshold=0.02:ratio=4:attack=2:release=70:makeup=1," \
+      "acompressor=threshold=-26dB:ratio=2:attack=6:release=120:makeup=2," \
+      "volume=#{mix[:vocal_vol]}[v0];" \
+      "[0:a]volume=#{mix[:duck]}[bed];" \
+      "[bed][v0]amix=inputs=2:weights=#{bed_w} #{voc_w}:duration=first:dropout_transition=0:normalize=0," \
       "alimiter=limit=0.97:level_out=0.98[out]",
       "-map", "[out]", *codec_for(dest), dest
 end
@@ -12950,6 +13118,9 @@ FLAG_ENV = {
   "speak" => "SPEAK", "speak-voice" => "SPEAK_VOICE", "speak-rate" => "SPEAK_RATE",
   "speak-pitch" => "SPEAK_PITCH", "speak-vol" => "SPEAK_VOL", "radio-bergen" => "RADIO_BERGEN",
   "stream-iterate" => "STREAM_ITERATE", "evolve-every" => "EVOLVE_EVERY",
+  "producer-mode" => "PRODUCER_MODE", "mode" => "PRODUCER_MODE",
+  "pocket-kicks" => "POCKET_KICKS", "camel-chops" => "CAMEL_CHOPS",
+  "stream-crossfade" => "STREAM_CROSSFADE", "stream-gap" => "STREAM_GAP",
   "stream-creative-freedom" => "STREAM_CREATIVE_FREEDOM", "stream-evolve-performer" => "STREAM_EVOLVE_PERFORMER",
   "form" => "FORM", "section-map" => "SECTION_MAP", "render-mode" => "RENDER_MODE",
   "harmony-lead" => "HARMONY_LEAD", "harmony-lep-mode" => "HARMONY_LEP_MODE",
@@ -13041,7 +13212,7 @@ DISPATCH = {
   "ears" => -> { ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
   "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
   "live" => -> { live((ARGV.shift || 32).to_i) },
-  "stream" => -> { stream((ARGV.shift || STREAM_BARS_COUNT).to_i) },
+  "stream" => -> { stream((ARGV.shift || stream_bars_default).to_i) },
   "live_now" => -> { live_now },
   "harmony_now" => -> { harmony_now },
   "regenerate" => -> { regenerate((ARGV.shift || 16).to_i) },
