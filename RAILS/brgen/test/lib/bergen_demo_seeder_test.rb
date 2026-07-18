@@ -81,6 +81,26 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     assert_includes hot_titles, "Radio Bergen-playlisten er oppe — hvem lager neste?"
   end
 
+  test "seeds bergen places takeaway and tv verticals" do
+    skip "places table missing" unless Place.table_exists?
+
+    ActsAsTenant.with_tenant(@city) do
+      Brgen::BergenDemoSeeder.new(@city, attach_media: false).seed!
+    end
+
+    assert Place.exists?(city: @city, slug: "bryggen")
+    assert Place.exists?(city: @city, slug: "floybanen")
+    assert Neighborhood.exists?(city: @city, slug: "nordnes")
+
+    assert Takeaway::Restaurant.exists?(name: "Colonialen")
+    assert Takeaway::Restaurant.exists?(name: "Fish Me")
+    assert Takeaway::MenuItem.joins(:restaurant).exists?(takeaway_restaurants: { name: "Colonialen" }, name: "Kanelbolle")
+
+    channel = Tv::Channel.find_by!(slug: "bergen-live")
+    assert_equal "Bergen Live", channel.name
+    assert Tv::Video.exists?(channel: channel, title: "Open mic på Logen — høydepunkter")
+  end
+
   test "is idempotent on re-run" do
     seeder = Brgen::BergenDemoSeeder.new(@city, attach_media: false)
 

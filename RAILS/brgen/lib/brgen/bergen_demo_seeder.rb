@@ -365,6 +365,113 @@ module Brgen
       %w[marte_kode24 live_bergenlive]
     ].freeze
 
+    NEIGHBORHOODS = [
+      ["Sentrum", "sentrum"],
+      ["Nordnes", "nordnes"],
+      ["Sandviken", "sandviken"],
+      ["Kalfaret", "kalfaret"],
+      ["Møhlenpris", "mohlenpris"],
+      ["Laksevåg", "laksevag"],
+      ["Fyllingsdalen", "fyllingsdalen"],
+      ["Fana", "fana"]
+    ].freeze
+
+    PLACES = [
+      { slug: "floybanen", name: "Fløibanen", kind: "attraction", neighborhood: "sentrum",
+        latitude: 60.3963, longitude: 5.3284, address: "Vetrlidsallmenningen 23", image: "bergen-place-floybanen" },
+      { slug: "bryggen", name: "Bryggen", kind: "attraction", neighborhood: "sentrum",
+        latitude: 60.3974, longitude: 5.3244, address: "Bryggen", image: "bergen-place-bryggen" },
+      { slug: "fisketorget", name: "Fisketorget", kind: "market", neighborhood: "sentrum",
+        latitude: 60.3945, longitude: 5.3251, address: "Torget", image: "bergen-place-fisketorget" },
+      { slug: "grieghallen", name: "Grieghallen", kind: "venue", neighborhood: "sentrum",
+        latitude: 60.3892, longitude: 5.3293, address: "Edvard Griegs plass 1", image: "bergen-place-grieghallen" },
+      { slug: "ulriken", name: "Ulriken", kind: "trail", neighborhood: "kalfaret",
+        latitude: 60.3721, longitude: 5.3512, address: "Ulriken 640", image: "bergen-place-ulriken" },
+      { slug: "lungegaardsvann", name: "Store Lungegårdsvann", kind: "park", neighborhood: "sentrum",
+        latitude: 60.3896, longitude: 5.3362, address: "Lungegårdsvannet", image: "bergen-place-lungegaardsvann" },
+      { slug: "nordnesparken", name: "Nordnesparken", kind: "park", neighborhood: "nordnes",
+        latitude: 60.3998, longitude: 5.3078, address: "Nordnes", image: "bergen-place-nordnesparken" },
+      { slug: "vilvite", name: "VilVite", kind: "museum", neighborhood: "sentrum",
+        latitude: 60.3814, longitude: 5.3321, address: "Thormøhlens gate 51", image: "bergen-place-vilvite" }
+    ].freeze
+
+    RESTAURANTS = [
+      {
+        user: "ola_nordnes", name: "Colonialen", cuisine_type: "Norwegian",
+        address: "Nordnes 33", neighborhood: "nordnes",
+        latitude: 60.3991, longitude: 5.3082,
+        delivery_fee_cents: 4_900, min_order_cents: 15_000, rating: 4.6,
+        menu: [
+          { name: "Eggerøre med spekeskinke", description: "Søndagsbrunch-klassiker fra Nordnes.", price_cents: 16_500, image: "bergen-brunch" },
+          { name: "Kanelbolle", description: "Bakt samme morgen — best med kaffe.", price_cents: 4_500, image: "bergen-bakery" },
+          { name: "Fiskesuppe", description: "Dagens fangst, brød og smør.", price_cents: 18_900, image: "bergen-fish-market" }
+        ]
+      },
+      {
+        user: "anders_fisketorget", name: "Fish Me", cuisine_type: "Norwegian",
+        address: "Zachariasbryggen 6", neighborhood: "sentrum",
+        latitude: 60.3948, longitude: 5.3249,
+        delivery_fee_cents: 5_900, min_order_cents: 18_000, rating: 4.8,
+        menu: [
+          { name: "Reker på briks", description: "Ferske reker med sitron og aioli.", price_cents: 22_900, image: "bergen-takeaway-fishme" },
+          { name: "Blåskjell i hvitvin", description: "Løk, persille og brød.", price_cents: 19_500, image: "bergen-fish-market" },
+          { name: "Fisk og chips", description: "Torsk, remoulade og pommes.", price_cents: 17_500, image: "bergen-takeaway-fishme" }
+        ]
+      },
+      {
+        user: "henrik_vestland", name: "Potetkjelleren", cuisine_type: "Pizza",
+        address: "Kong Oscars gate 1A", neighborhood: "sentrum",
+        latitude: 60.3936, longitude: 5.3258,
+        delivery_fee_cents: 3_900, min_order_cents: 12_000, rating: 4.4,
+        menu: [
+          { name: "Margherita", description: "San Marzano, fior di latte, basilikum.", price_cents: 14_900, image: "bergen-takeaway-potetkjelleren" },
+          { name: "Pepperoni", description: "Klassisk, litt chili.", price_cents: 16_500, image: "bergen-takeaway-potetkjelleren" },
+          { name: "Quattro formaggi", description: "Fire oster, hvitløkolje.", price_cents: 17_900, image: "bergen-takeaway-potetkjelleren" }
+        ]
+      },
+      {
+        user: "sofie_regnby", name: "Dyvekes", cuisine_type: "Norwegian",
+        address: "Øvre Fossgård 1", neighborhood: "sentrum",
+        latitude: 60.3968, longitude: 5.3271,
+        delivery_fee_cents: 5_500, min_order_cents: 20_000, rating: 4.7,
+        menu: [
+          { name: "Bergensk fiskesuppe", description: "Kremet, med reker og pynt.", price_cents: 21_500, image: "bergen-takeaway-dyvekes" },
+          { name: "Pinnekjøtt", description: "Sesong — bestill i god tid.", price_cents: 24_900, image: "bergen-takeaway-dyvekes" },
+          { name: "Rømmegrøt", description: "Med sukker og kanel.", price_cents: 9_900, image: "bergen-takeaway-colonialen" }
+        ]
+      }
+    ].freeze
+
+    TV_CHANNELS = [
+      {
+        user: "live_bergenlive", name: "Bergen Live", slug: "bergen-live",
+        description: "Konsert, klubb og nattbuss — direkte fra sentrum.",
+        avatar: "bergen-tv-live-avatar", banner: "bergen-tv-live-banner",
+        videos: [
+          { title: "Open mic på Logen — høydepunkter", thumbnail: "bergen-logen", duration_seconds: 248, views_count: 1_240 },
+          { title: "Radio Bergen nattbuss mix", thumbnail: "bergen-radio-night", duration_seconds: 312, views_count: 890 }
+        ]
+      },
+      {
+        user: "sofie_regnby", name: "Bergen Kultur", slug: "bergen-kultur",
+        description: "Grieghallen, teater og byens kulturkalender.",
+        avatar: "bergen-tv-kultur-avatar", banner: "bergen-tv-kultur-banner",
+        videos: [
+          { title: "Bak scenen: Bergen Filharmoniske", thumbnail: "bergen-concert-hall", duration_seconds: 420, views_count: 2_100 },
+          { title: "Pepperkakebyen — familietips", thumbnail: "bergen-pepperkakebyen", duration_seconds: 185, views_count: 3_400 }
+        ]
+      },
+      {
+        user: "kari_bybanen", name: "Bybanen Bergen", slug: "bybanen-bergen",
+        description: "Linjekart, forsinkelser og reisetips for Skyss.",
+        avatar: "bergen-tv-bybanen-avatar", banner: "bergen-lungegaardsvann",
+        videos: [
+          { title: "Florida → Byparken på 4 min", thumbnail: "bergen-lungegaardsvann", duration_seconds: 96, views_count: 5_600 },
+          { title: "Regnvær og bybane — vinterdrift", thumbnail: "bergen-bryggen-rain", duration_seconds: 210, views_count: 1_780 }
+        ]
+      }
+    ].freeze
+
     def initialize(city, attach_media: !DemoMedia.skip_attach?)
       @city = city
       @attach_media = attach_media
@@ -373,6 +480,7 @@ module Brgen
 
     def seed!
       ActsAsTenant.with_tenant(@city) do
+        neighborhoods = ensure_neighborhoods
         communities = ensure_communities
         seed_users
         seed_posts(communities)
@@ -380,10 +488,19 @@ module Brgen
         seed_playlists
         seed_dating
         seed_dating_likes
+        seed_places(neighborhoods)
+        seed_takeaway
+        seed_tv
       end
     end
 
     private
+
+    def ensure_neighborhoods
+      NEIGHBORHOODS.index_with do |name, slug|
+        Neighborhood.find_or_create_by!(city: @city, slug: slug) { |row| row.name = name }
+      end
+    end
 
     def ensure_communities
       admin = User.strict_loading(false).find_by(email_address: "admin@#{@city.domain}") ||
@@ -589,6 +706,99 @@ module Brgen
         track.privacy = "public"
         track.duration_seconds = rand(150..320)
         track.genre = row[:source_type] == "direct" ? "bergen" : "beats"
+      end
+    end
+
+    def seed_places(neighborhoods)
+      return unless defined?(Place) && Place.table_exists?
+
+      PLACES.each do |row|
+        next if Place.exists?(city: @city, slug: row[:slug])
+
+        place = Place.create!(
+          city: @city,
+          neighborhood: neighborhoods[row[:neighborhood]],
+          name: row[:name],
+          slug: row[:slug],
+          kind: row[:kind],
+          address: row[:address],
+          latitude: row[:latitude],
+          longitude: row[:longitude]
+        )
+        next unless @attach_media && row[:image]
+
+        DemoMedia.attach_remote_postpro!(place, :photo, seed: row[:image], preset: "landscape")
+      end
+    end
+
+    def seed_takeaway
+      RESTAURANTS.each do |row|
+        next if Takeaway::Restaurant.exists?(name: row[:name])
+
+        user = @users_by_username.fetch(row[:user])
+        restaurant = Takeaway::Restaurant.create!(
+          user: user,
+          name: row[:name],
+          cuisine_type: row[:cuisine_type],
+          address: row[:address],
+          active: true,
+          delivery_fee_cents: row[:delivery_fee_cents],
+          min_order_cents: row[:min_order_cents],
+          latitude: row[:latitude],
+          longitude: row[:longitude],
+          rating: row[:rating]
+        )
+        restaurant.update_column(:city, @city.name) if restaurant.has_attribute?(:city)
+
+        Array(row[:menu]).each do |item_row|
+          menu_item = Takeaway::MenuItem.create!(
+            restaurant: restaurant,
+            name: item_row[:name],
+            description: item_row[:description],
+            price_cents: item_row[:price_cents],
+            available: true
+          )
+          next unless @attach_media && item_row[:image]
+
+          DemoMedia.attach_remote_postpro!(menu_item, :photo, seed: item_row[:image], preset: "portrait", width: 720, height: 540)
+        end
+      end
+    end
+
+    def seed_tv
+      TV_CHANNELS.each do |row|
+        user = @users_by_username.fetch(row[:user])
+        channel = Tv::Channel.find_or_initialize_by(slug: row[:slug])
+        channel.assign_attributes(
+          user: user,
+          name: row[:name],
+          description: row[:description],
+          subscribers_count: channel.subscribers_count.to_i.positive? ? channel.subscribers_count : rand(120..2400)
+        )
+        channel.save!
+
+        if @attach_media
+          DemoMedia.attach_remote_postpro!(channel, :avatar, seed: row[:avatar], preset: "portrait", width: 480, height: 480) unless channel.avatar.attached?
+          DemoMedia.attach_remote_postpro!(channel, :banner, seed: row[:banner], preset: "landscape", width: 1280, height: 480) unless channel.banner.attached?
+        end
+
+        Array(row[:videos]).each do |video_row|
+          next if channel.videos.exists?(title: video_row[:title])
+
+          video = Tv::Video.create!(
+            user: user,
+            channel: channel,
+            title: video_row[:title],
+            description: "Demo fra #{@city.name}.",
+            status: "published",
+            duration_seconds: video_row[:duration_seconds],
+            views_count: video_row[:views_count],
+            published_at: rand(2..45).days.ago
+          )
+          next unless @attach_media && video_row[:thumbnail]
+
+          DemoMedia.attach_remote_postpro!(video, :thumbnail, seed: video_row[:thumbnail], preset: "landscape", width: 1280, height: 720)
+        end
       end
     end
 

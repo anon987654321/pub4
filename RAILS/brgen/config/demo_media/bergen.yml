@@ -1,0 +1,144 @@
+# Bergen demo photography — Wikimedia Commons (CC-licensed). Keys match BergenDemoSeeder seed names.
+# Refresh broken links: bundle exec rails brgen:demo_media:verify
+meta:
+  city: Bergen
+  domain: brgen.no
+  source: Wikimedia Commons
+
+images:
+  bergen-floyen-morning:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/1280px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-bryggen-rain:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-fog-vagen:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/1280px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-fish-market:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/1280px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
+    credit: Wikimedia Commons
+  bergen-concert-hall:
+    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
+    credit: Wikimedia Commons
+  bergen-ulriken-trail:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/1280px-Ulriken_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-hiking:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/1280px-Ulriken_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-damsgardsfjellet:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg/1280px-Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg
+    credit: Wikimedia Commons
+  bergen-lungegaardsvann:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/1280px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
+  bergen-pepperkakebyen:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-bakery:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
+    credit: Wikimedia Commons
+  bergen-brunch:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
+    credit: Wikimedia Commons
+  bergen-radio-night:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/1280px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-logen:
+    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
+    credit: Wikimedia Commons
+  bergen-dog-park:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/1280px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
+
+  bergen-place-floybanen:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/1280px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-place-bryggen:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-place-fisketorget:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/1280px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
+    credit: Wikimedia Commons
+  bergen-place-grieghallen:
+    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
+    credit: Wikimedia Commons
+  bergen-place-ulriken:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/1280px-Ulriken_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-place-lungegaardsvann:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/1280px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
+  bergen-place-nordnesparken:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg/1280px-Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg
+    credit: Wikimedia Commons
+  bergen-place-vilvite:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
+    credit: Wikimedia Commons
+
+  bergen-takeaway-colonialen:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/1280px-Bergen_Fish_market_-_FlowerSection.JPG
+    credit: Wikimedia Commons
+  bergen-takeaway-fishme:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/1280px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
+    credit: Wikimedia Commons
+  bergen-takeaway-potetkjelleren:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-takeaway-dyvekes:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/1280px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+
+  bergen-tv-live-avatar:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-tv-live-banner:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/1280px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-tv-kultur-avatar:
+    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
+    credit: Wikimedia Commons
+  bergen-tv-kultur-banner:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/1280px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-tv-bybanen-avatar:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
+
+  bergen-dating-emilie:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/480px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-dating-magnus:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bryggen_in_Bergen.jpg/480px-Bryggen_in_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-dating-silje:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-dating-jonas:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Ulriken_Bergen.jpg/480px-Ulriken_Bergen.jpg
+    credit: Wikimedia Commons
+  bergen-dating-henrik:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg/480px-Norwegen_1998_%28117%29_Bergen-_Fisketorget_%2834160728933%29.jpg
+    credit: Wikimedia Commons
+  bergen-dating-ingrid:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
+  bergen-dating-sofie:
+    url: https://upload.wikimedia.org/wikipedia/commons/4/4c/Grieghallen.jpg
+    credit: Wikimedia Commons
+  bergen-dating-anders:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Bergen_Fish_market_-_FlowerSection.JPG/480px-Bergen_Fish_market_-_FlowerSection.JPG
+    credit: Wikimedia Commons
+  bergen-dating-hanne:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg/480px-Store_Lungeg%C3%A5rdsvann%2C_Kronstad_etc%2C_wide_wiev_from_road_to_Fl%C3%B8yen%2C_Bergen_02.jpg
+    credit: Wikimedia Commons
+  bergen-dating-per:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg/480px-Vista_de_Bergen_desde_la_monta%C3%B1a_Fl%C3%B8yen%2C_Noruega%2C_2019-09-08%2C_DD_48.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-dating-live:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg/480px-Bryggen%2C_Bergen%2C_Noruega%2C_2019-09-08%2C_DD_115-117_PAN.jpg
+    credit: Diego Delso / CC BY-SA 4.0
+  bergen-dating-marte:
+    url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg/480px-00_4400_View_over_the_store_Lungeg%C3%A5rdsvann_-_Bergen_%28Norway%29.jpg
+    credit: Wikimedia Commons
