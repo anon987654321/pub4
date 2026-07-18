@@ -10,12 +10,12 @@ class HealthController < ActionController::API
       git: git_healthy?,
       container: container_healthy?,
     }
-    # TTS (audio) and replicate (media) are optional subsystems — their being
-    # down is "degraded", not "unavailable". Only git (repo/deploy integrity) is
-    # critical to serving the face + chat. Marking tts critical returned 503,
-    # which cascaded to masterState=fail and froze/stalled the face for users who
-    # never asked for audio. Keep them in `checks` for monitoring, out of `critical`.
-    critical = %i[git]
+    # TTS (Pernille) is mandatory, so it stays critical — a genuine TTS-capability
+    # outage (worker missing or EventMachine without SSL) should 503 and alert.
+    # replicate (media) stays non-critical (degraded). tts_healthy? now checks
+    # capability rather than transient socket liveness, so this no longer
+    # false-503s while the on-demand daemon is between syntheses.
+    critical = %i[tts git]
     critical_ok = critical.all? { |key| checks[key] }
     status = critical_ok ? (checks.values.all? ? "ok" : "degraded") : "unavailable"
     http = critical_ok ? :ok : :service_unavailable
@@ -27,7 +27,12 @@ class HealthController < ActionController::API
   def tts_healthy?
     return true if Rails.env.test?
 
-    tts_socket_alive? && Master::Voice::Speech.edge_tts_available?
+    # Capability check, not socket liveness. The worker + EventMachine-with-SSL
+    # are what make Pernille synthesis possible; the daemon socket is spun up on
+    # demand (and can be reaped under load on the 1-vCPU host), so requiring a
+    # live socket here produced a false negative — tts reported down between
+    # syntheses while synthesis worked fine, 503'ing /health.
+    Master::Voice::Speech.edge_tts_available?
   rescue StandardError => _
     false
   end
