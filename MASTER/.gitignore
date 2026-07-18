@@ -3,6 +3,7 @@ web/config/master.key
 *.bak2
 *.orig
 .master/
+/log/
 vendor/bundle/
 web/vendor/bundle/
 web/tmp/

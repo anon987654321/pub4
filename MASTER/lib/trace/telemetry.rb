@@ -6,7 +6,7 @@ module Master
   module Trace
   # Soft-optional OpenTelemetry wrapper; span() degrades to plain yield when SDK absent.
     module Telemetry
-      TRACE_PATH = ".master/traces.log".freeze
+      TRACE_PATH = "log/traces.log".freeze
 
       @enabled = false
       @tracer = nil
