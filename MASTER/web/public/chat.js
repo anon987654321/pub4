@@ -560,7 +560,7 @@ window._chatOnDmesg = (line) => {
       photoBtn.dataset.state = 'ready';
       window.MASTERVisual?.event?.('photo:ready', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, mode: 'ready' });
     } catch (err) {
-      window.MASTER_LOG?.warn?.("chat:photo_upload", err);
+      window.MASTER_LOG?.warn?.("chat:upload", err);
       photoBtn.dataset.state = '';
       setTimeout(() => photoBtn.classList.add('photo-fail'), 200);
       setTimeout(() => photoBtn.classList.remove('photo-fail'), 1200);

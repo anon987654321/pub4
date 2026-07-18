@@ -662,6 +662,42 @@ body.brutalist-mode * { border-radius: 0 !important; }
 body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; }
 body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08); transition: filter 0ms steps(2,end); }
 
+body.mission-control {
+  overflow: auto;
+  padding: 1.25rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+}
+body.mission-control h1 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  letter-spacing: 0.04em;
+}
+body.mission-control .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+body.mission-control .panel {
+  border: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent);
+  padding: 10px 12px;
+  background: #000;
+}
+body.mission-control .panel h2 {
+  font-size: 11px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 8px;
+}
+body.mission-control pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.9;
+}
+body.mission-control .meta { opacity: 0.65; margin-bottom: 6px; }
+body.mission-control a { color: var(--c-text); }
+
 .tool-progress-chip {
   font: 9px/1.2 var(--font-label);
   color: var(--c-code);

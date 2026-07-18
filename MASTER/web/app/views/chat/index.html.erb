@@ -77,13 +77,13 @@
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
-  <%# photo-upload widget CSS isn't needed for the initial primer/face paint --
+  <%# chat upload widget CSS isn't needed for the initial primer/face paint --
       defer it off the render-blocking path the same CSP-safe way as the Inter
       font above (inline onload= is blocked by CSP here). %>
-  <link rel="preload" as="style" id="photo-upload-css" href="<%= asset_path("photo_upload.css") %>">
-  <noscript><link rel="stylesheet" href="<%= asset_path("photo_upload.css") %>"></noscript>
+  <link rel="preload" as="style" id="chat-upload-css" href="<%= asset_path("chat_upload.css") %>">
+  <noscript><link rel="stylesheet" href="<%= asset_path("chat_upload.css") %>"></noscript>
   <script nonce="<%= content_security_policy_nonce %>">
-    (function(){var f=document.getElementById('photo-upload-css');if(!f)return;
+    (function(){var f=document.getElementById('chat-upload-css');if(!f)return;
       var on=function(){f.rel='stylesheet';};
       f.addEventListener('load',on);if(f.sheet)on();})();
   </script>

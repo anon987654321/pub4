@@ -189,7 +189,7 @@ test("chat index includes photo attach", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /id="photo-button"/);
   assert.match(index, /id="photo"/);
-  assert.match(index, /photo_upload\.css/);
+  assert.match(index, /chat_upload\.css/);
   assert.doesNotMatch(index, /face_agent_hud/);
 });
 
@@ -226,11 +226,9 @@ test("chat index wires digested assets around lazy face boot", () => {
   assert.ok(particleIdx > 0 && bootIdx > 0, "particle_kernel and inline boot must be present");
 });
 
-test("application layout does not eagerly parse face or THREE", () => {
-  const layout = readFileSync(join(viewsDir, "layouts", "application.html.erb"), "utf8");
-  assert.doesNotMatch(layout, /modulepreload[^>]+three\.face\.module\.js/);
-  assert.doesNotMatch(layout, /modulepreload[^>]+face\.js/);
-  assert.doesNotMatch(layout, /type="module"[^>]+face\.js/);
+test("default application layout removed — chat/index owns boot shell", () => {
+  const layoutPath = join(viewsDir, "layouts", "application.html.erb");
+  assert.equal(existsSync(layoutPath), false, "dead application layout should stay deleted");
 });
 
 test("face3d preview consumes TTS events and reports nonblank frames", () => {

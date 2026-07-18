@@ -5,29 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MASTER — mission control</title>
   <link rel="stylesheet" href="/face.css">
-  <style>
-    body { overflow: auto; padding: 1.25rem; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; }
-    h1 { font-size: 14px; font-weight: 600; margin-bottom: 1rem; letter-spacing: 0.04em; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-    .panel { border: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent); padding: 10px 12px; background: #000; }
-    .panel h2 { font-size: 11px; text-transform: uppercase; opacity: 0.55; margin-bottom: 8px; }
-    pre { white-space: pre-wrap; word-break: break-word; opacity: 0.9; }
-    .meta { opacity: 0.65; margin-bottom: 6px; }
-    a { color: var(--c-text); }
-  </style>
 </head>
-<body>
+<body class="mission-control">
   <h1><a href="/">← chat</a> · mission control</h1>
   <div class="grid" id="mission-grid">
-    <div class="panel"><h2>status</h2><pre id="status">loading…</pre></div>
-    <div class="panel"><h2>rtk savings</h2><pre id="rtk">loading…</pre></div>
-    <div class="panel"><h2>active plan</h2><pre id="plan">loading…</pre></div>
-    <div class="panel"><h2>rsi inbox</h2><pre id="rsi">loading…</pre></div>
-    <div class="panel"><h2>skills</h2><pre id="skills">loading…</pre></div>
-    <div class="panel"><h2>context pressure</h2><pre id="pressure">loading…</pre></div>
-    <div class="panel"><h2>provider health</h2><pre id="providers">loading…</pre></div>
-    <div class="panel"><h2>repair queue</h2><pre id="repair">loading…</pre></div>
-    <div class="panel"><h2>recent bus</h2><pre id="bus">loading…</pre></div>
+    <div class="panel"><h2>status</h2><pre id="status" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>rtk savings</h2><pre id="rtk" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>active plan</h2><pre id="plan" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>rsi inbox</h2><pre id="rsi" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>skills</h2><pre id="skills" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>context pressure</h2><pre id="pressure" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>provider health</h2><pre id="providers" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>repair queue</h2><pre id="repair" aria-live="polite">loading…</pre></div>
+    <div class="panel"><h2>recent bus</h2><pre id="bus" aria-live="polite">loading…</pre></div>
   </div>
   <script>
     async function refresh() {
