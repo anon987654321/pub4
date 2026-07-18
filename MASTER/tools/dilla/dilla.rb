@@ -3249,6 +3249,19 @@ def dilla_render_tmp(tag)
   File.join(ROOT, ".dilla_#{tag}.#{Process.pid}.wav")
 end
 
+# PID-scoped temp files (drums/harmonic/flylo_*/pads.wav.L0/.smf.mid/etc.)
+# are reused across every track iteration within one long-running stream
+# process, not just within a single render. If a write is ever interrupted
+# (disk full, a signal mid-write) a stale/corrupt derived file can silently
+# survive and poison a later, otherwise-unrelated track's render — a
+# multi-minute stream then starts failing its final ffmpeg mixdown on every
+# track. Wiping this process's own scratch files at the top of every render
+# makes each track start from a guaranteed-clean slate instead of trusting
+# leftovers from whatever the last track did.
+def cleanup_render_scratch!
+  Dir.glob(File.join(ROOT, ".dilla_*.#{Process.pid}.*")).each { |f| FileUtils.rm_f(f) }
+end
+
 STREAM_LOCK_PATH = File.join(ROOT, ".dilla_stream.lock").freeze
 
 def acquire_stream_lock!
@@ -11337,6 +11350,7 @@ end
 
 def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
   require_tools! "ffmpeg"
+  cleanup_render_scratch!
   pick_render_seed!
   remove_instance_variable(:@resolve_form_map) if instance_variable_defined?(:@resolve_form_map)
   @chord_motif_cache = {}
