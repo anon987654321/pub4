@@ -3,12 +3,13 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  single_voice: pernille
-  neural: nb-NO-PernilleNeural
+  # English with British accent (edge-tts / Azure neural).
+  single_voice: ryan
+  neural: en-GB-RyanNeural
   persona_affects_text_only: true
   stream_live_default: false
   default_rate: "-8%"
-  default_pitch: "+8Hz"
+  default_pitch: "-20Hz"
 
 voice:
   style: openbsd_dmesg

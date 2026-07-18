@@ -8,11 +8,20 @@ export default class extends Controller {
 
   connect() {
     if (!navigator.geolocation || !this.hasUrlValue) return
-    this.#watch = navigator.geolocation.watchPosition(
-      pos => this.#send(pos.coords.latitude, pos.coords.longitude),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 30_000, timeout: 10_000 }
-    )
+    // Skip when document Permissions-Policy denies geolocation (no console spam).
+    try {
+      if (document.featurePolicy?.allowsFeature && !document.featurePolicy.allowsFeature("geolocation")) return
+    } catch (_) { /* older browsers */ }
+
+    try {
+      this.#watch = navigator.geolocation.watchPosition(
+        pos => this.#send(pos.coords.latitude, pos.coords.longitude),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 30_000, timeout: 10_000 }
+      )
+    } catch (_) {
+      // SecurityError when policy blocks geolocation
+    }
   }
 
   disconnect() {

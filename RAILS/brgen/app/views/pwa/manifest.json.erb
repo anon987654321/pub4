@@ -1,6 +1,96 @@
+<%
+  # Web App Manifest scope is this origin only. Cross-subdomain absolute URLs
+  # (protocol-relative vertical hosts, AI URL, marketplace root) are ignored by
+  # Chrome and then reported as "property 'url' of 'shortcut' not present".
+  # Keep shortcuts as same-origin relative paths for the active vertical surface.
+  vertical = Current.subapp.to_s
+  app_name, short_name, description, shortcuts =
+    case vertical
+    when "playlist"
+      [
+        "Brgen Playlist",
+        "Playlist",
+        "Playlists, sets, and radio for #{Current.city}.",
+        [
+          { "name" => "Playlists", "short_name" => "Home", "url" => "/" },
+          { "name" => "New playlist", "short_name" => "New", "url" => "/playlists/new" },
+          { "name" => "Sets", "short_name" => "Sets", "url" => "/sets" },
+        ],
+      ]
+    when "dating"
+      [
+        "Brgen Dating",
+        "Dating",
+        "Dating in #{Current.city}.",
+        [
+          { "name" => "Discover", "short_name" => "Home", "url" => "/" },
+          { "name" => "Matches", "short_name" => "Matches", "url" => "/matches" },
+          { "name" => "Profile", "short_name" => "Profile", "url" => "/profile" },
+        ],
+      ]
+    when "tv"
+      [
+        "Brgen TV",
+        "TV",
+        "Live streams and channels for #{Current.city}.",
+        [
+          { "name" => "Home", "short_name" => "Home", "url" => "/" },
+          { "name" => "Live", "short_name" => "Live", "url" => "/live_streams" },
+        ],
+      ]
+    when "marketplace"
+      [
+        "Brgen Marketplace",
+        "Shop",
+        "Marketplace for #{Current.city}.",
+        [
+          { "name" => "Listings", "short_name" => "Home", "url" => "/" },
+          { "name" => "New listing", "short_name" => "New", "url" => "/listings/new" },
+        ],
+      ]
+    when "takeaway"
+      [
+        "Brgen Takeaway",
+        "Food",
+        "Takeaway for #{Current.city}.",
+        [
+          { "name" => "Restaurants", "short_name" => "Home", "url" => "/" },
+        ],
+      ]
+    when "maps"
+      [
+        "Brgen Maps",
+        "Maps",
+        "Maps for #{Current.city}.",
+        [
+          { "name" => "Map", "short_name" => "Home", "url" => "/" },
+        ],
+      ]
+    when "messenger"
+      [
+        "Brgen Messenger",
+        "Chat",
+        "Messages for #{Current.city}.",
+        [
+          { "name" => "Inbox", "short_name" => "Home", "url" => "/" },
+        ],
+      ]
+    else
+      [
+        "Brgen",
+        "Brgen",
+        "City communities across Scandinavia and Europe. Connect, post, and discover your city.",
+        [
+          { "name" => "New post", "short_name" => "Post", "url" => "/posts/new" },
+          { "name" => "New listing", "short_name" => "Listing", "url" => "/listings/new" },
+          { "name" => "Activity", "short_name" => "Feed", "url" => "/activity_events" },
+        ],
+      ]
+    end
+%>
 {
-  "name": "Brgen",
-  "short_name": "Brgen",
+  "name": <%= app_name.to_json %>,
+  "short_name": <%= short_name.to_json %>,
   "icons": [
     {
       "src": "/icon-192.png",
@@ -22,46 +112,12 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "City communities across Scandinavia and Europe. Connect, post, and discover your city.",
+  "id": "/",
+  "description": <%= description.to_json %>,
   "theme_color": "#000000",
   "background_color": "#000000",
-  "shortcuts": [
-    {
-      "name": "AI assistant",
-      "short_name": "AI",
-      "url": "<%= brgen_ai_url %>"
-    },
-    {
-      "name": "New post",
-      "short_name": "Post",
-      "url": "/posts/new"
-    },
-    {
-      "name": "New listing",
-      "short_name": "Listing",
-      "url": "/listings/new"
-    },
-    {
-      "name": "Dating swipe",
-      "short_name": "Dating",
-      "url": "//dating.<%= Current.domain %>/"
-    },
-    {
-      "name": "Marketplace",
-      "short_name": "Shop",
-      "url": "<%= marketplace_root_url %>"
-    },
-    {
-      "name": "TV",
-      "short_name": "TV",
-      "url": "//tv.<%= Current.domain %>/"
-    },
-    {
-      "name": "Playlist",
-      "short_name": "Radio",
-      "url": "//playlist.<%= Current.domain %>/"
-    }
-  ],
+  "lang": <%= (Current.locale.presence || "en").to_s.to_json %>,
+  "shortcuts": <%= shortcuts.to_json %>,
   "share_target": {
     "action": "/share",
     "method": "POST",

@@ -12,11 +12,11 @@ module Master
       AXIOM_DISPLAY_LIMIT = 10
 
       FALLBACK_PERSONA = {
-        "voice" => "nb-NO-PernilleNeural",
+        "voice" => "en-GB-RyanNeural",
         "tts_rate" => "-8%",
-        "tts_pitch" => "+8Hz",
+        "tts_pitch" => "-20Hz",
         "style" => "clear",
-        "description" => "Norwegian. Clear. Curious. Warm editorial voice.",
+        "description" => "English (UK). Clear. Curious. Warm editorial voice.",
       }.freeze
 
       MOOD_LINES = {

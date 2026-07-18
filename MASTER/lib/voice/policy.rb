@@ -8,12 +8,12 @@ module Master
     # Persona YAML may list other voices for LLM style; synthesis always uses this policy.
     module Policy
       FALLBACK = {
-        "single_voice" => "pernille",
-        "neural" => "nb-NO-PernilleNeural",
+        "single_voice" => "ryan",
+        "neural" => "en-GB-RyanNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => false,
         "default_rate" => "-8%",
-        "default_pitch" => "+8Hz",
+        "default_pitch" => "-20Hz",
       }.freeze
 
       module_function
@@ -32,12 +32,12 @@ module Master
 
       def single_voice_key
         sym = data["single_voice"].to_s.strip.downcase.to_sym
-        sym = :pernille if sym == :""
+        sym = :ryan if sym == :""
         sym
       end
 
       def neural_voice
-        data["neural"].to_s.strip.empty? ? "nb-NO-PernilleNeural" : data["neural"].to_s
+        data["neural"].to_s.strip.empty? ? "en-GB-RyanNeural" : data["neural"].to_s
       end
 
       def persona_affects_text_only?

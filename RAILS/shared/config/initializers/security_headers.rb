@@ -7,6 +7,8 @@ Rails.application.config.action_dispatch.default_headers.merge!(
   "Referrer-Policy" => "strict-origin-when-cross-origin",
   "Cross-Origin-Opener-Policy" => "same-origin",
   "X-Permitted-Cross-Domain-Policies" => "none",
-  "Permissions-Policy" => "accelerometer=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()",
+  # geolocation=(self) — nearby/dating radius controllers call navigator.geolocation.
+  # Blocking it with geolocation=() surfaces Permissions-Policy violations in console.
+  "Permissions-Policy" => "accelerometer=(), camera=(), geolocation=(self), gyroscope=(), microphone=(), payment=(), usb=()",
   "X-XSS-Protection" => "0"
 )

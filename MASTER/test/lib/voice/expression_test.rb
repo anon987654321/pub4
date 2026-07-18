@@ -110,7 +110,7 @@ class TestExpression < Minitest::Test
 
   def test_warm_erratic_pick_for_voice_keeps_voice
     result = Master::Voice::WarmErratic.pick_for_voice(:ryan, "Great, all done!")
-    assert_equal :pernille, result[:voice]
+    assert_equal :ryan, result[:voice]
     assert result[:rate].match?(/%/)
     assert result[:pitch].match?(/Hz/)
   end

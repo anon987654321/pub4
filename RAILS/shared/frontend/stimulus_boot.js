@@ -86,7 +86,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("edge-swiper", EdgeSwiper)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
-    application.register(name, component)
+    if (component) application.register(name, component)
   })
 
   StimulusReflex.initialize(application, {
@@ -95,8 +95,16 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   })
 
   if (futurism) {
-    import("@stimulus_reflex/futurism").then(({ default: Futurism }) => {
-      application.register("futurism", Futurism)
-    })
+    import("@stimulus_reflex/futurism")
+      .then((mod) => {
+        const Futurism = mod?.default || mod?.Futurism || mod
+        // Stimulus Application.load reads definition.identifier / shouldLoad — undefined crashes boot.
+        if (Futurism && (typeof Futurism === "function" || Futurism.shouldLoad !== undefined || Futurism.prototype)) {
+          application.register("futurism", Futurism)
+        }
+      })
+      .catch(() => {
+        /* optional dependency — vertical surfaces still boot without Futurism */
+      })
   }
 }

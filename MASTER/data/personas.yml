@@ -1,5 +1,5 @@
 # MASTER personas — LLM style descriptor and legacy voice fields.
-# TTS synthesis always uses data/voice.yml (single_voice: pernille) — persona affects text only.
+# TTS synthesis always uses data/voice.yml (single_voice: ryan / en-GB) — persona affects text only.
 # Add a new persona here, restart MASTER (or wait for hot-reload).
 # style: deep | heavy | slow | normal | natural — see lib/voice/speech.rb STYLES.
 

@@ -603,7 +603,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     { cmd: '/status', hint: 'service and repo health' },
     { cmd: '/self', hint: 'scan MASTER itself' },
     { cmd: 'ping', hint: 'smoke test connection' },
-    { cmd: '/voice last', hint: 'replay last reply (Pernille)' },
+    { cmd: '/voice last', hint: 'replay last reply (Ryan en-GB)' },
     { cmd: '/voice stream on', hint: 'sentence TTS during stream' },
     { action: 'dashboard', label: 'mission control', hint: 'open /dashboard' },
     { action: 'history', label: 'toggle history', hint: 'sidebar · Ctrl+Shift+H' },

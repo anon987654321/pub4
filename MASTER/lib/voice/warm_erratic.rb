@@ -5,12 +5,12 @@ require "fileutils"
 
 module Master
   module Voice
-    # Single-voice policy: Pernille only; style still varies.
+    # Single-voice policy: Ryan (en-GB) only; style still varies.
     module WarmErratic
       STATE = File.join(Master::ROOT, ".master", "tts_voice_state.json")
 
       VOICES = [
-        [:pernille, 100],
+        [:ryan, 100],
       ].freeze
 
       STYLES = {
@@ -75,11 +75,11 @@ module Master
       end
 
       def pick_voice(style, _text)
-        [:pernille, style]
+        [:ryan, style]
       end
 
       def surprise_guest
-        [:pernille, FAST_STYLES.sample]
+        [:ryan, FAST_STYLES.sample]
       end
 
       def weighted_choice(items)

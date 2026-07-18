@@ -21,7 +21,8 @@ class PwaDesignContractTest < Minitest::Test
 
   def test_all_apps_register_service_worker_via_pub4_hotwire
     hotwire = read(SHARED_ROOT, "frontend/hotwire.js")
-    assert_includes hotwire, 'serviceWorker.register("/service-worker")'
+    assert_match(/serviceWorker\.register/, hotwire)
+    assert_includes hotwire, "/service-worker"
 
     each_app do |_app, root|
       routes = read(root, "config/routes.rb")
@@ -33,8 +34,21 @@ class PwaDesignContractTest < Minitest::Test
   end
 
   def test_all_manifests_are_installable
-    each_app do |_app, root|
-      manifest = JSON.parse(read(root, "app/views/pwa/manifest.json.erb"))
+    each_app do |app, root|
+      raw = read(root, "app/views/pwa/manifest.json.erb")
+      # brgen manifest is ERB (vertical-scoped shortcuts); other apps stay pure JSON.
+      if app == "brgen"
+        assert_includes raw, '"start_url"'
+        assert_includes raw, '"scope"'
+        assert_includes raw, "standalone"
+        assert_includes raw, "#000000"
+        assert_includes raw, "when \"playlist\""
+        refute_includes raw, "//dating."
+        refute_includes raw, "brgen_ai_url"
+        next
+      end
+
+      manifest = JSON.parse(raw)
       assert_equal "/", manifest.fetch("start_url")
       assert_equal "/", manifest.fetch("scope")
       assert_includes %w[standalone fullscreen minimal-ui], manifest.fetch("display")

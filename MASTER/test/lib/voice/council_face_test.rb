@@ -11,9 +11,9 @@ class TestCouncilFace < Minitest::Test
     assert face[:blendshapes].is_a?(Hash)
   end
 
-  def test_for_skeptic_has_right_lane_and_pernille_voice
+  def test_for_skeptic_has_right_lane_and_ryan_voice
     face = Master::Voice::CouncilFace.for_persona("Skeptic")
-    assert_equal :pernille, face[:voice]
+    assert_equal :ryan, face[:voice]
     assert_equal :right, face[:viseme_lane]
   end
 

@@ -252,7 +252,8 @@ function setVoiceName(voice, opts = {}) {
     return;
   }
   let raw = String(voice || '').trim();
-  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
+  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'ryan';
+  if (raw.toLowerCase() === 'pernille' || raw === 'nb-NO-PernilleNeural') raw = 'ryan';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -1259,8 +1260,8 @@ if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
 const COUNCIL_VOICE = {
-  Architect: 'pernille', Skeptic: 'pernille', Pragmatist: 'pernille',
-  Security: 'pernille', User: 'pernille', Mentor: 'pernille'
+  Architect: 'ryan', Skeptic: 'ryan', Pragmatist: 'ryan',
+  Security: 'ryan', User: 'ryan', Mentor: 'ryan'
 };
 
 // Pristine chrome: council personas no longer shift the face to a hue
@@ -2251,7 +2252,7 @@ const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVI
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
 const TTS_STORE = 'blobs';
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'nb-NO-PernilleNeural';
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-GB-RyanNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -2897,7 +2898,7 @@ function speakWithBrowserTTS(text, token) {
   if (!browserTtsFallbackAllowed()) return false;
   if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
+  utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-GB';
   utterance.rate = getTtsRate();
   utterance.onstart = () => {
     emitTtsEvent('tts:playback:start', { text, backend: 'browser', duration: null });

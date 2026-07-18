@@ -458,9 +458,15 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, '"shortcuts"'
     end
 
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), 'New listing'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), '"protocol_handlers"'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), 'web+brgen'
+    brgen_manifest = File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb'))
+    assert_includes brgen_manifest, 'New listing'
+    assert_includes brgen_manifest, 'protocol_handlers'
+    assert_includes brgen_manifest, 'web+brgen'
+    # Same-origin shortcuts only (cross-subdomain urls break Chrome scope checks)
+    assert_includes brgen_manifest, 'when "playlist"'
+    assert_includes brgen_manifest, '/playlists/new'
+    refute_includes brgen_manifest, 'brgen_ai_url'
+    refute_includes brgen_manifest, '//dating.'
     assert_includes File.read(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
                     'navigator.setAppBadge'
     assert_includes File.read(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
@@ -473,8 +479,6 @@ class DeployBacklogTest < Minitest::Test
     assert_includes brgen_layout, 'brgen_ai_url'
     refute_includes brgen_layout, 'javascript_include_tag "face"'
     refute_includes brgen_layout, 'javascript_include_tag "particle_kernel"'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), 'AI assistant'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb')), 'brgen_ai_url'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'Create outfit'
     assert_includes File.read(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')), 'Search ports'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'

@@ -8,12 +8,12 @@ class ChatService
   SMOKE_MESSAGES = %w[ping pong health up].freeze
 
   COUNCIL_PERSONA_VOICE = {
-    "Architect" => :pernille,
-    "Skeptic" => :pernille,
-    "Pragmatist" => :pernille,
-    "Security" => :pernille,
-    "User" => :pernille,
-    "Mentor" => :pernille
+    "Architect" => :ryan,
+    "Skeptic" => :ryan,
+    "Pragmatist" => :ryan,
+    "Security" => :ryan,
+    "User" => :ryan,
+    "Mentor" => :ryan
   }.freeze
 
   WRITE_TOOLS = %w[Write Edit Create FilePatch].freeze

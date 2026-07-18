@@ -27,7 +27,11 @@ if (displayModeQuery.addEventListener) {
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker")
+  // Prefer .js path (MIME-stable); fall back to extensionless Rails route.
+  const register = (path) =>
+    navigator.serviceWorker.register(path, { scope: "/", updateViaCache: "none" })
+
+  register("/service-worker.js").catch(() => register("/service-worker").catch(() => {}))
 }
 
 

@@ -6,42 +6,42 @@ module Master
     module CouncilFace
       PERSONAS = {
         "Architect" => {
-          voice: :pernille,
+          voice: :ryan,
           position: :left,
           label: "Architect",
           blendshape_bias: { brow: 0.72, jaw: 0.42, lid_open: 0.78 },
           viseme_lane: :left,
         },
         "Skeptic" => {
-          voice: :pernille,
+          voice: :ryan,
           position: :right,
           label: "Skeptic",
           blendshape_bias: { brow: 0.82, jaw: 0.28, lid_open: 0.62 },
           viseme_lane: :right,
         },
         "Pragmatist" => {
-          voice: :pernille,
+          voice: :ryan,
           position: :center,
           label: "Pragmatist",
           blendshape_bias: { brow: 0.48, jaw: 0.55, smile: 0.32 },
           viseme_lane: :center,
         },
         "Security" => {
-          voice: :pernille,
+          voice: :ryan,
           position: :right,
           label: "Security",
           blendshape_bias: { brow: 0.76, jaw: 0.35, lid_open: 0.58 },
           viseme_lane: :right,
         },
         "User" => {
-          voice: :pernille,
+          voice: :ryan,
           position: :center,
           label: "User",
           blendshape_bias: { brow: 0.44, jaw: 0.5, smile: 0.36 },
           viseme_lane: :center,
         },
         "Mentor" => {
-          voice: :pernille,
+          voice: :ryan,
           position: :left,
           label: "Mentor",
           blendshape_bias: { brow: 0.38, jaw: 0.48, smile: 0.42 },
