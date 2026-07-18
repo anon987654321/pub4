@@ -25,14 +25,15 @@ module DillaComposition
     outro:     { drums: 0.38, harmony: 0.48, lead: 0.18, bass: 0.5, swing_delta: -3, stereo: 0.45, saturation: 0.14, melodic_density: 0.22, fill_rate: 0.12 }
   }.freeze
 
+  # Lead + scale_lead always available after intro so chord-tone arps can sit on top.
   ENSEMBLE_TIMELINE = {
-    intro:     %i[ep],
-    verse:     %i[ep warm],
-    hook:      %i[ep warm],
-    bridge:    %i[ep warm],
-    solo:      %i[ep warm],
-    breakdown: %i[warm],
-    outro:     %i[ep warm]
+    intro:     %i[ep warm texture],
+    verse:     %i[ep warm texture lead scale_lead],
+    hook:      %i[ep warm texture lead scale_lead],
+    bridge:    %i[ep warm texture lead scale_lead],
+    solo:      %i[ep warm lead scale_lead],
+    breakdown: %i[warm texture lead],
+    outro:     %i[ep warm texture lead scale_lead]
   }.freeze
 
   PERFORMERS = {
@@ -369,10 +370,15 @@ module DillaComposition
       (45 + session.generation * 3 + session.tension_curve.uniq.length * 0.5).round.clamp(30, 92)
     end
 
-    def lufs_score(lufs)
+    # House target is quiet/warm (-20..-16 LUFS, per MASTER_LUFS_BY_STYLE),
+    # not broadcast-loud (-14..-11) — that range was pulled down after direct
+    # "way too loud" feedback (see dilla.rb MASTER_LUFS_BY_STYLE comment).
+    # Scoring against the old broadcast target penalized correctly-mastered
+    # output on every generation.
+    def lufs_score(lufs, target: -20.0..-16.0)
       return 70 unless lufs
       lufs = lufs.to_f
-      (-14.0..-11.0).cover?(lufs) ? 95 : 65
+      target.cover?(lufs) ? 95 : 65
     end
 
     def recommendations(scores, session, chords: nil)

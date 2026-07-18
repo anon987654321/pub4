@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 # Lo-fi machine semantics — timing, drum grids, chord voicings, and harmony
 # profiles (no song titles). Ported from RG-69 reference + production DNA.
 module DillaLofiMachine
@@ -56,8 +58,19 @@ module DillaLofiMachine
     "Eb9" => [155.56, 196.00, 233.08, 311.13, 349.23],
     "Eb7" => [155.56, 196.00, 233.08, 311.13],
     "Cm7b5" => [130.81, 155.56, 184.99, 233.08],
+    # Root+m3+b5+m7 in D — same shape as Cm7b5 above. Precomputed to bypass a
+    # DillaMusicGems.chord_from_symbol hang on "Dm7b5" (the gem adapter never
+    # returns for this exact symbol; root cause not chased, this sidesteps it).
+    "Dm7b5" => [146.83, 174.61, 207.65, 261.63],
     "C7" => [261.63, 329.63, 392.00, 466.16],
     "C7alt" => [130.81, 164.81, 233.08, 277.18, 311.13],
+    # root+3rd+b7+b9+#9 in G — same altered-dominant shape as C7alt above.
+    "G7alt" => [196.00, 246.94, 349.23, 415.30, 466.16],
+    # Root+3rd+5th+maj7+9th in C — precomputed for the same reason as Dm7b5:
+    # DillaMusicGems (coltrane gem) hangs on this exact symbol too, cold or
+    # warm process. Worth a real fix in lib/music_gems.rb at some point —
+    # this only sidesteps the two symbols the new catalog entries need.
+    "Cmaj9" => [130.81, 164.81, 196.00, 246.94, 293.66],
     "Dm" => [146.83, 174.61, 220.00],
     "Am" => [110.00, 130.81, 164.81],
     # Researched voicings used in soul / Donuts progressions (Hz from PAD_CHORD_LOOKUP).
@@ -131,14 +144,48 @@ module DillaLofiMachine
 
   DEFAULT_DRUM_PRESET = :dilla_slight
   DEFAULT_PAD_WAVE = :sine
-  DEFAULT_PROFILE = :maj7_minor_cycle
+  DEFAULT_PROFILE = :get_dis_money
 
   # Semantic harmony profiles — chord chemistry + groove family, no song names.
-  HARMONY_PROFILES = {
-    # Donuts "Time" core — Dbmaj7–Cm7–Fm7–Bbm7 (RG-69 researched).
+  BASE_HARMONY_PROFILES = {
+    # Slum Village / Dilla — Get Dis Money (Ethan Hein exact E-pedal slash cycle).
+    get_dis_money: {
+      producer: :dilla, key: "E pedal", bpm: 92, swing: 54,
+      chord_bars: 1, phrase_bars: 6, feel: :mpc3000, voicing: :rootless, quintuplet: true,
+      drum_preset: :dilla_slight, chords: %w[D/E Db/E C/E Bm/E Bbm/E Am/E], timing: DILLA_TIMING
+    },
+    # Donuts "Time" researched core — IV–iii–vi–ii in Ab (clean 7ths).
+    time_donut: {
+      producer: :dilla, key: "Ab / Fm", bpm: 90, swing: 56,
+      chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
+      drum_preset: :dilla_slight, chords: %w[Dbmaj7 Cm7 Fm7 Bbm7], timing: DILLA_TIMING
+    },
+    # Fall in Love = Diana in the Autumn Wind sample (Ebm7–Bbm7).
+    fall_in_love: {
+      producer: :dilla, key: "Eb minor", bpm: 91, swing: 57,
+      chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :rootless, quintuplet: true,
+      drum_preset: :dilla_slight, chords: %w[Ebm7fil Bbm7fil], timing: DILLA_TIMING
+    },
+    climax: {
+      producer: :dilla, key: "E major", bpm: 88, swing: 57,
+      chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless,
+      drum_preset: :dilla_slight, chords: %w[Emaj7 G#m7 C#m7 E7climax], timing: DILLA_TIMING
+    },
+    untitled_how_does_it_feel: {
+      producer: :dilla, key: "D major", bpm: 92, swing: 56,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :rootless,
+      drum_preset: :dilla_slight, chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9], timing: DILLA_TIMING
+    },
+    # Classic Fm soul loop — i–iv–bVII–bVI (NOT artist-verified; experimental).
+    soul: {
+      producer: :dilla, key: "F minor", bpm: 88, swing: 56,
+      chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
+      drum_preset: :dilla_slight, chords: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9], timing: DILLA_TIMING
+    },
+    # Same Time cycle with ninths.
     maj7_minor_cycle: {
       producer: :dilla, key: "Ab / Fm", bpm: 94, swing: 54,
-      chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :spread, quintuplet: true,
+      chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
       drum_preset: :dilla_slight, chords: %w[Dbmaj9 Cm9 Fm9 Bbm9], timing: DILLA_TIMING
     },
     # Hooktheory Donuts "Time" — full IV–iii–vi–ii–V turnaround (8 bars).
@@ -395,18 +442,152 @@ module DillaLofiMachine
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :kenny_barron,
       drum_preset: :dilla_slight,
       chords: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9], timing: DILLA_TIMING
+    },
+    # --- Expansion pack ---
+    # Informed by functional voice-leading (common tones, stepwise outer voices),
+    # Donuts-era harmonic economy (short loops, borrowed color, human pocket),
+    # and analog pad craft (Prophet/Moog sustain, Crane-Song-style soft saturation).
+    # "Good progression" criteria: home-away-home, ≤2–3 shared tones between
+    # neighbors when possible, one surprise per 4 bars, return by bar 8–16.
+    lydian_glass_cycle: {
+      producer: :dilla, key: "F Lydian-leaning", bpm: 88, swing: 54,
+      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      stereo_pan: true, sidechain: true,
+      drum_preset: :flylo_abstract,
+      chords: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7], timing: FLYLO_TIMING
+    },
+    pedal_upper_structures: {
+      producer: :dilla, key: "C pedal", bpm: 84, swing: 55,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
+      drum_preset: :dilla_slight,
+      chords: %w[Cm9 C7sus Ab/C F/C Bbmaj9/C Gm7/C Dbmaj9/C Cm9], timing: DILLA_TIMING
+    },
+    bossa_major9_turn: {
+      producer: :dilla, key: "F major", bpm: 92, swing: 56,
+      chord_bars: 2, phrase_bars: 16, feel: :dilla_slight, voicing: :bill_evans,
+      drum_preset: :dilla_slight,
+      chords: %w[Fmaj9 Em7b5 A7b9 Dm9 Gm9 C7sus Fmaj9 D7], timing: DILLA_TIMING
+    },
+    phrygian_gold_arc: {
+      producer: :dilla, key: "E minor / Phrygian color", bpm: 90, swing: 55,
+      chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :spread,
+      drum_preset: :mpc3000,
+      chords: %w[Em9 Fmaj9 Gmaj9 Am9 Fmaj7 G7sus Bm7b5 Em9], timing: DILLA_TIMING
+    },
+    two_chord_luminous: {
+      producer: :dilla, key: "Db / Fm", bpm: 78, swing: 54,
+      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      stereo_pan: true, sidechain: true,
+      drum_preset: :flylo_abstract,
+      chords: %w[Dbmaj9 Fm9], timing: FLYLO_TIMING
+    },
+    mixo_sus_loop: {
+      producer: :dilla, key: "D Mixolydian", bpm: 96, swing: 53,
+      chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :quartal,
+      drum_preset: :mpc3000,
+      chords: %w[Dmaj9 Cmaj9 Gmaj9 Dmaj9 F#m9 Em9 A7sus Dmaj9], timing: DILLA_TIMING
+    },
+    common_tone_drift: {
+      producer: :flylo, key: "E common-tone field", bpm: 86, swing: 54,
+      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
+      stereo_pan: true, sidechain: true,
+      drum_preset: :flylo_abstract,
+      chords: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9], timing: FLYLO_TIMING
+    },
+    coltrane_lite_triad: {
+      producer: :dilla, key: "F minor stations", bpm: 82, swing: 54,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
+      drum_preset: :dilla_slight,
+      chords: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9], timing: DILLA_TIMING
+    },
+    drone_quartal_wash: {
+      producer: :flylo, key: "D drone", bpm: 80, swing: 52,
+      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
+      stereo_pan: true, sidechain: true,
+      drum_preset: :flylo_abstract,
+      chords: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9], timing: FLYLO_TIMING
+    },
+    waltz_relative_lift: {
+      producer: :dilla, key: "C minor → Eb", bpm: 72, swing: 52,
+      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :bill_evans,
+      stereo_pan: true,
+      drum_preset: :flylo_abstract,
+      chords: %w[Cm9 Abmaj9 Bb7 Ebmaj9 Fm9 Bb7 Ebmaj9 G7], timing: FLYLO_TIMING
+    },
+    half_time_gospel_plagal: {
+      producer: :dilla, key: "Bb major", bpm: 74, swing: 54,
+      chord_bars: 4, phrase_bars: 16, feel: :dilla_slight, voicing: :spread,
+      drum_preset: :dilla_slight,
+      chords: %w[Bbmaj9 Ebmaj9 Abmaj9 F7sus Bbmaj9 Ebmaj9 F7sus Bbmaj9], timing: DILLA_TIMING
+    },
+    double_time_pocket: {
+      producer: :dilla, key: "E minor", bpm: 108, swing: 56,
+      chord_bars: 1, phrase_bars: 8, feel: :dilla_drunk, voicing: :spread,
+      drum_preset: :dilla_drunk,
+      chords: %w[Em9 Am9 D7 Gmaj9 Em9 Am9 D7 Gmaj9], timing: DILLA_TIMING
+    },
+    whole_tone_bridge: {
+      producer: :flylo, key: "whole-tone → F minor", bpm: 88, swing: 54,
+      chord_bars: 1, phrase_bars: 8, feel: :flylo_abstract, voicing: :cluster,
+      drum_preset: :flylo_abstract,
+      chords: %w[C7 D7 E7 F#7 Fm9 Dbmaj9 Ebmaj9 Fm9], timing: FLYLO_TIMING
+    },
+    upper_triad_tower: {
+      producer: :dilla, key: "Bb tower", bpm: 90, swing: 55,
+      chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :so_what,
+      drum_preset: :mpc3000,
+      chords: %w[Bbmaj9 D/Bb F/Bb G/Bb Bbmaj9 Eb/Bb F/Bb Bbmaj9], timing: DILLA_TIMING
+    },
+    minor_add9_lullaby: {
+      producer: :dilla, key: "G minor", bpm: 70, swing: 53,
+      chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
+      stereo_pan: true, sidechain: true,
+      drum_preset: :flylo_abstract,
+      chords: %w[Gm9 Ebmaj9 Cm9 D7sus Gm9 Ebmaj9 Fmaj9 Gm9], timing: FLYLO_TIMING
+    },
+    dominant_chain_home: {
+      producer: :dilla, key: "circle of fifths 7ths", bpm: 94, swing: 54,
+      chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :drop2,
+      drum_preset: :mpc3000,
+      chords: %w[C7 F7 Bb7 Eb7 Abmaj9 Dbmaj9 Cm9 F7], timing: DILLA_TIMING
     }
   }.freeze
 
+  # Additive entries sourced from dilla_reference.yml (documented Slum
+  # Village / Flying Lotus track analysis) — merged in rather than hand-typed
+  # here so the sourcing/citation stays in one place. Existing named profiles
+  # above are never overwritten by this.
+  def self.load_documented_progressions
+    path = File.expand_path("../dilla_reference.yml", __dir__)
+    return {} unless File.file?(path)
+
+    entries = YAML.safe_load_file(path)["documented_progressions"] || {}
+    entries.each_with_object({}) do |(key, e), out|
+      producer = e["producer"].to_sym
+      flylo = producer == :flylo
+      out[key.to_sym] = {
+        producer: producer, key: e["key"], bpm: e["bpm"], swing: e["swing"],
+        chord_bars: e["chord_bars"], phrase_bars: e["phrase_bars"],
+        voicing: e["voicing"].to_sym,
+        feel: flylo ? :flylo_abstract : :timeless,
+        drum_preset: flylo ? :flylo_abstract : :dilla_slight,
+        chords: e["chords"],
+        timing: flylo ? FLYLO_TIMING : DILLA_TIMING
+      }
+    end
+  rescue StandardError, Psych::Exception => e
+    warn "dilla_reference.yml: documented progressions not loaded (#{e.message})"
+    {}
+  end
+
+  HARMONY_PROFILES = BASE_HARMONY_PROFILES.merge(load_documented_progressions).freeze
+
   # Old track ids → semantic profile (backward compat only).
   LEGACY_ALIASES = {
-    timeless: :fourth_third_sixth_second_turn,
-    time_donut: :maj7_minor_cycle,
-    fall_in_love: :minor_iv_loop,
+    timeless: :time_donut,
     players: :neo_soul_pocket,
     neo_soul: :neo_soul,
-    climax: :major_lifting,
-    get_dis_money: :slash_ninth_cycle,
+    slash_ninth_cycle: :get_dis_money,
     thelonious: :two_chord_hypnosis,
     selfish: :relative_major_turn,
     look_of_love: :minor_turnaround,
@@ -418,19 +599,11 @@ module DillaLofiMachine
     golden: :neo_soul
   }.freeze
 
-  # Dilla + neo-soul + Aydin + Bach first — extended Donuts turnaround later in rotation.
+  # Artist-verified song harmony only (exact Dilla / SV / D'Angelo changes).
   STREAM_ROTATION = %w[
-    chromatic_mediant_drift quartal_west_coast maj7_minor_cycle time_donut minor_iv_loop neo_soul neo_soul_pocket
-    electronium_loop electronium_classic players_measured warm_minor_arc
-    slash_neo_soul erykah_minor aydin_modal_quartal aydin_jazz_turn
-    bach_circle_descent bach_descending_bass jazz_ballad_waltz ii_v_i_major
-    ii_v_i_minor glasper_quartal timeless_authentic minor_turnaround
-    relative_major_turn slow_ballad_wash two_chord_hypnosis
-    minor_triad_walk major_lifting slash_ninth_cycle dorian_iv_loop backdoor_resolve
-    iv_borrow_minor gospel_bIII stevie_bVII watermelon_turn church_sus
-    dominant_turn deceptive_turn plagal_jazz suspended_ballad minor_line_cliche
-    donda_minor keys_woman turnaround_ii_v modal_safe neo_iv_cycle minMaj_color
-    bvi_bvii_minor fourth_third_sixth_second_turn
+    get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
+    maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
+    major7_relative_minor_turn sus_add9_ballad
   ].freeze
 
   CURATED_PROGRESSIONS = HARMONY_PROFILES.keys.freeze

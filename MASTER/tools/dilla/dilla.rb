@@ -10,11 +10,12 @@ require "fileutils"
 require "json"
 require "yaml"
 require "shellwords"
-require_relative "../../lib/reach/analog_capabilities"
+require_relative "../../lib/io/analog_capabilities"
 require "open3"
 require "timeout"
 require_relative "lib/music_gems"
 DillaMusicGems.bootstrap!
+require_relative "lib/dilla_dmesg"
 require_relative "lib/composition_engine"
 require_relative "lib/groove_score"
 require_relative "lib/producer_dna"
@@ -27,6 +28,21 @@ require_relative "lib/master_heuristics"
 require_relative "lib/spectral_engine"
 require_relative "lib/dilla_ml"
 require_relative "lib/dfam_engine"
+require_relative "lib/automation_lane"
+
+# Terse OpenBSD-style console log (see lib/dilla_dmesg.rb). Prefer dmesg over
+# decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
+def dmesg(msg, unit: "dilla0", parent: nil)
+  DillaDmesg.ok(msg, unit: unit, parent: parent)
+end
+
+def dmesg_warn(msg)
+  DillaDmesg.warn(msg)
+end
+
+def dmesg_error(msg)
+  DillaDmesg.error(msg)
+end
 
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the invoking directory (override with
@@ -766,33 +782,102 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:native_organ, role: :native, program: 0, native: { wave: :organ, detune: 0.003, bloom: 0.12 }),
   synth_patch(:native_warm_pad, role: :native, program: 0, native: { wave: :triangle, detune: 0.007, bloom: 0.15 }),
   synth_patch(:native_string, role: :native, program: 0, native: { wave: :bowed, detune: 0.004, bloom: 0.2 }),
-  synth_patch(:native_pwm, role: :native, program: 0, native: { wave: :pwm, detune: 0.008, bloom: 0.25 })
+  synth_patch(:native_pwm, role: :native, program: 0, native: { wave: :pwm, detune: 0.008, bloom: 0.25 }),
+  # --- Experimental electronic pads (musical, not noise) ---
+  synth_patch(:glass_fm_pad, role: :warm, program: 98, weight: 2.6, mix: 0.72, fs_gain: 1.38,
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.08:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
+  synth_patch(:vapor_supersaw, role: :warm, program: 0, sf2: :supersaw, weight: 2.4, mix: 0.68, fs_gain: 1.36,
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.55:0.75:40|50:0.28|0.24:0.32|0.28:1.2|1.5,lowpass=f=4800,aecho=0.4:0.36:140|260:0.22|0.12"),
+  synth_patch(:crystal_pwm, role: :warm, program: 90, weight: 2.2, mix: 0.7, fs_gain: 1.34,
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "tremolo=f=0.22:d=0.06,chorus=0.4:0.58:28|38:0.16|0.12:0.2|0.16:0.95|1.2,lowpass=f=4600"),
+  synth_patch(:ice_string_pad, role: :warm, program: 50, weight: 2.3, mix: 0.66, fs_gain: 1.32,
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "highpass=f=180,chorus=0.48:0.68:36|46:0.22|0.18:0.26|0.22:1.1|1.35,lowpass=f=4000"),
+  synth_patch(:neon_ladder, role: :warm, program: 38, weight: 2.5, mix: 0.74, fs_gain: 1.4,
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "lowpass=f=2400:width_type=q:width=0.85,tremolo=f=0.18:d=0.05,equalizer=f=160:t=o:w=1:g=2.4,aecho=0.36:0.3:80|150:0.16|0.08"),
+  synth_patch(:acid_pluck_lead, role: :lead, program: 38, weight: 2.2, fs_gain: 1.3, gate: 0.48, octave: 1,
+              arp_styles: %i[up skip_up euclidean], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 8, gate: 0.45, vel: 0.52 },
+              fx: "lowpass=f=1800:width_type=q:width=1.1,tremolo=f=0.0:d=0,equalizer=f=400:t=o:w=1.2:g=2.0"),
+  synth_patch(:glass_arp_lead, role: :lead, program: 98, weight: 2.6, fs_gain: 1.28, gate: 0.55, octave: 3,
+              arp_styles: %i[spiral quint_spread pingpong], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :spiral, subdiv: 6, gate: 0.58, vel: 0.46 },
+              fx: "aecho=0.5:0.44:100|190:0.28|0.14,highpass=f=400,lowpass=f=6200"),
+  synth_patch(:vapor_lead, role: :lead, program: 3, sf2: :supersaw, weight: 2.3, fs_gain: 1.3, gate: 0.6, octave: 2,
+              arp_styles: %i[updown flylo_wobble], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.62, vel: 0.48 },
+              fx: "chorus=0.5:0.7:38|48:0.26|0.22:0.3|0.26:1.15|1.4,lowpass=f=5000"),
+  synth_patch(:crystal_scale_lead, role: :scale_lead, program: 98, weight: 2.4, fs_gain: 1.24, gate: 0.58,
+              arp_styles: %i[spiral updown], octave: 2,
+              fx: "aecho=0.46:0.4:110|200:0.24|0.12,lowpass=f=5400")
 ].freeze
 
 SYNTH_PATCH_BY_ROLE = SYNTH_PATCH_CATALOG.group_by { |p| p[:role] }.freeze
 SYNTH_PATCH_BY_ID = SYNTH_PATCH_CATALOG.each_with_object({}) { |p, h| h[p[:id]] = p }.freeze
 
+# Pad voice stacks — classic analog + curated experimental electronic.
+# stack_soul = multi-preset layer (EP + Moog + Prophet + texture) for rich beds.
 PAD_VOICE_PRESETS = {
-  rhodes:  { ep: :rhodes_mark1, warm: nil },
-  moog:    { ep: :rhodes_mark1, warm: :moog_model_d },
+  rhodes:  { ep: :rhodes_mark1, warm: :juno_chorus_wash },
+  moog:    { ep: :rhodes_cafe_warm, warm: :moog_model_d },
   prophet: { ep: :rhodes_mark1, warm: :prophet_5_pad },
-  blend:   { ep: :rhodes_mark1, warm: :prophet_5_pad }
+  blend:   { ep: :rhodes_stage73, warm: :moog_sub37_pad },
+  glass:   { ep: :dx7_bell_ep, warm: :glass_fm_pad },
+  vapor:   { ep: :rhodes_cafe_warm, warm: :vapor_supersaw },
+  crystal: { ep: :galaxy_ep2, warm: :crystal_pwm },
+  ice:     { ep: :rhodes_dx_blend, warm: :ice_string_pad },
+  neon:    { ep: :rhodes_mark1, warm: :neon_ladder },
+  pulse:   { ep: :clav_neo_funk, warm: :pwm_sweep_pad },
+  # Multi-layer stacks (rendered as 3–4 FluidSynth passes when PAD_LAYERS=1).
+  stack_soul: { ep: :rhodes_cafe_warm, warm: :moog_model_d, warm2: :prophet_5_pad, texture: :juno_chorus_wash },
+  stack_glass: { ep: :dx7_bell_ep, warm: :glass_fm_pad, warm2: :prophet_6_warm, texture: :ice_string_pad },
+  stack_vapor: { ep: :rhodes_mark1, warm: :vapor_supersaw, warm2: :moog_sub37_pad, texture: :soft_synth_str }
 }.freeze
 
-# Rhodes / Prophet / Moog families — rotated per chord (morph) and per stream iteration.
-PAD_VOICE_MORPH_VOICES = %i[rhodes prophet moog blend].freeze
+# Explicit multi-layer pad stacks: id + amix weight. Order = mix order.
+# Weights favor distinct timbres (EP attack, Moog body, Prophet air, Juno sheen).
+PAD_LAYER_STACKS = {
+  stack_soul: [
+    { id: :rhodes_cafe_warm, mix: 1.22, role: :ep },
+    { id: :moog_model_d, mix: 0.95, role: :warm },
+    { id: :prophet_5_pad, mix: 0.72, role: :warm },
+    { id: :juno_chorus_wash, mix: 0.42, role: :texture }
+  ],
+  stack_glass: [
+    { id: :dx7_bell_ep, mix: 1.08, role: :ep },
+    { id: :glass_fm_pad, mix: 0.95, role: :warm },
+    { id: :prophet_6_warm, mix: 0.62, role: :warm },
+    { id: :ice_string_pad, mix: 0.38, role: :texture }
+  ],
+  stack_vapor: [
+    { id: :rhodes_mark1, mix: 1.12, role: :ep },
+    { id: :vapor_supersaw, mix: 0.88, role: :warm },
+    { id: :moog_sub37_pad, mix: 0.62, role: :warm },
+    { id: :soft_synth_str, mix: 0.36, role: :texture }
+  ]
+}.freeze
 
-# Experimental hard lead layer (xlead stem) — morphing timbres + arp figures per chord.
-LEAD_MORPH_VOICES = %i[hard flylo glitch prophet moog shred].freeze
+# Morph rotation includes experimental families (good-sounding only).
+PAD_VOICE_MORPH_VOICES = %i[moog prophet glass vapor rhodes neon crystal].freeze
+
+# Soft experimental lead morph — avoid shred/hard noise walls by default.
+LEAD_MORPH_VOICES = %i[flylo prophet moog glass vapor soft].freeze
 MORPH_LEAD_PATCH_POOL = {
   hard: %i[saw_lead square_lead dist_guitar charang_bite fm_lead_bell minimoog_lead fifths_lead],
-  flylo: %i[flylo_fm_shimmer fm_lead_bell square_lead flute_airy prophet_bleeding_lead],
+  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead flute_airy prophet_bleeding_lead],
   glitch: %i[square_lead voice_lead whistle_hook charang_bite banjo_pluck koto_pluck],
   prophet: %i[prophet_lead big_lead_prophet5 soul_prophet_arp warm_prophet_hook prophet_bleeding_lead],
-  moog: %i[moog_ladder_lead minimoog_lead moog_dilla_pocket questlove_moog_lead],
-  shred: %i[dist_guitar charang_bite saw_lead square_lead brass_synth pluck_synth]
+  moog: %i[moog_ladder_lead minimoog_lead moog_dilla_pocket questlove_moog_lead acid_pluck_lead],
+  shred: %i[dist_guitar charang_bite saw_lead square_lead brass_synth pluck_synth],
+  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell],
+  vapor: %i[vapor_lead supersaw_1 supersaw_2 tame_wobble_lead],
+  soft: %i[soft_synth_lead jazz_ballad_lead nord_stage_lead watermelon_glass]
 }.freeze
-MORPH_LEAD_ARP_CYCLE = %i[hard_stab flylo_spiral glitch_walk prophet_saw moog_rip shred_burst stutter_gate ratchet_funk].freeze
+MORPH_LEAD_ARP_CYCLE = %i[flylo_spiral prophet_saw moog_rip soul_wash glass_spin vapor_wave neo_quartal].freeze
 
 # FM synthesis — integer C:M = musical; irrational→rational morph stabilizes metallic timbres.
 FM_RATIO_POOL = [
@@ -819,7 +904,7 @@ TRACK_SOUL_PAD_PROFILES = {
   suspended_ballad:    { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3400" },
   neo_soul_pocket:     { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer" },
   quartal_west_coast:  { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" },
-  maj7_minor_cycle:    { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1050", "PAD_RELEASE" => "2800" },
+  maj7_minor_cycle:    { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1050", "PAD_RELEASE" => "2800" },
   minor_iv_loop:       { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer" },
   two_chord_hypnosis:  { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse" },
   relative_major_turn: { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer" },
@@ -838,17 +923,34 @@ TRACK_SOUL_PAD_PROFILES = {
   slash_neo_soul:      { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "duo" },
   modal_safe:          { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse" },
   minMaj_color:        { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" },
-  electronium_loop:    { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1050", "PAD_RELEASE" => "2800" },
+  electronium_loop:    { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100", "PAD_RELEASE" => "3200" },
   electronium_classic: { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer", "PAD_ATTACK" => "980", "PAD_RELEASE" => "2600" },
-  fourth_third_sixth_second_turn: { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1400", "PAD_RELEASE" => "3800" },
+  fourth_third_sixth_second_turn: { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1400", "PAD_RELEASE" => "3800" },
   aydin_modal_quartal: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200", "VOICING" => "quartal" },
   aydin_jazz_turn:     { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer", "PAD_ATTACK" => "1050", "PAD_RELEASE" => "2800", "VOICING" => "bill_evans" },
   bach_circle_descent: { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "figure", "PAD_ATTACK" => "900", "PAD_RELEASE" => "2400", "VOICING" => "drop2" },
   bach_descending_bass: { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100", "PAD_RELEASE" => "3000", "VOICING" => "kenny_barron" },
-  timeless_authentic:  { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3600" },
-  long_soul:           { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "58" },
-  golden:              { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "58" },
-  chromatic_mediant_drift: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200" }
+  timeless_authentic:  { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3600" },
+  long_soul:           { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "74" },
+  golden:              { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "74" },
+  chromatic_mediant_drift: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200" },
+  # Expansion pack — Rhodes / Prophet / Moog pairings for new progressions.
+  lydian_glass_cycle:      { "PAD_VOICE" => "glass", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3400" },
+  pedal_upper_structures:  { "PAD_VOICE" => "neon", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3600" },
+  bossa_major9_turn:       { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer", "PAD_ATTACK" => "900", "PAD_RELEASE" => "2600" },
+  phrygian_gold_arc:       { "PAD_VOICE" => "vapor", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100", "PAD_RELEASE" => "3000" },
+  two_chord_luminous:      { "PAD_VOICE" => "crystal", "PAD_ARP_MODE" => "held", "PAD_ATTACK" => "1600", "PAD_RELEASE" => "4200" },
+  mixo_sus_loop:           { "PAD_VOICE" => "pulse", "PAD_ARP_MODE" => "pulse", "PAD_ATTACK" => "800", "PAD_RELEASE" => "2200" },
+  common_tone_drift:       { "PAD_VOICE" => "glass", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1150", "PAD_RELEASE" => "3200" },
+  coltrane_lite_triad:     { "PAD_VOICE" => "ice", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1000", "PAD_RELEASE" => "2800" },
+  drone_quartal_wash:      { "PAD_VOICE" => "vapor", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "VOICING" => "quartal" },
+  waltz_relative_lift:     { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200" },
+  half_time_gospel_plagal: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "held", "PAD_ATTACK" => "1400", "PAD_RELEASE" => "3800" },
+  double_time_pocket:      { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse", "PAD_ATTACK" => "700", "PAD_RELEASE" => "1800" },
+  whole_tone_bridge:       { "PAD_VOICE" => "glass", "PAD_ARP_MODE" => "figure", "PAD_ATTACK" => "900", "PAD_RELEASE" => "2400" },
+  upper_triad_tower:       { "PAD_VOICE" => "crystal", "PAD_ARP_MODE" => "duo", "PAD_ATTACK" => "1000", "PAD_RELEASE" => "2800" },
+  minor_add9_lullaby:      { "PAD_VOICE" => "ice", "PAD_ARP_MODE" => "held", "PAD_ATTACK" => "1700", "PAD_RELEASE" => "4500" },
+  dominant_chain_home:     { "PAD_VOICE" => "neon", "PAD_ARP_MODE" => "pulse", "PAD_ATTACK" => "850", "PAD_RELEASE" => "2200" }
 }.freeze
 
 # Per-track lead voice + arp figure — pairs with TRACK_SOUL_PAD_PROFILES.
@@ -858,7 +960,7 @@ TRACK_SOUL_LEAD_PROFILES = {
   suspended_ballad:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "soul_wash" },
   neo_soul_pocket:     { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "moog_funk" },
   quartal_west_coast:  { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral" },
-  maj7_minor_cycle:    { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "prophet_glass" },
+  maj7_minor_cycle:    { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "LEAD_ARP" => "1", "HARMONY_LEAD" => "1" },
   minor_iv_loop:       { "LEAD_VOICE" => "donuts", "LEAD_ARP_MODE" => "donuts_shimmer" },
   two_chord_hypnosis:  { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "pocket_stab" },
   relative_major_turn: { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "donuts_shimmer" },
@@ -877,7 +979,7 @@ TRACK_SOUL_LEAD_PROFILES = {
   slash_neo_soul:      { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
   modal_safe:          { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "pocket_stab" },
   minMaj_color:        { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash" },
-  electronium_loop:    { "LEAD_VOICE" => "donuts", "LEAD_ARP_MODE" => "donuts_shimmer" },
+  electronium_loop:    { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "LEAD_ARP" => "1", "HARMONY_LEAD" => "1" },
   electronium_classic: { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
   fourth_third_sixth_second_turn: { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1" },
   aydin_modal_quartal: { "LEAD_VOICE" => "cs", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1" },
@@ -887,7 +989,23 @@ TRACK_SOUL_LEAD_PROFILES = {
   timeless_authentic:  { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "prophet_glass", "HARMONY_LEAD" => "1" },
   long_soul:           { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   golden:              { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
-  chromatic_mediant_drift: { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" }
+  chromatic_mediant_drift: { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  lydian_glass_cycle:      { "LEAD_VOICE" => "glass", "LEAD_ARP_MODE" => "glass_spin", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  pedal_upper_structures:  { "LEAD_VOICE" => "neon", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  bossa_major9_turn:       { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  phrygian_gold_arc:       { "LEAD_VOICE" => "vapor", "LEAD_ARP_MODE" => "vapor_wave", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  two_chord_luminous:      { "LEAD_VOICE" => "crystal", "LEAD_ARP_MODE" => "crystal_scatter", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  mixo_sus_loop:           { "LEAD_VOICE" => "acid", "LEAD_ARP_MODE" => "acid_run", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  common_tone_drift:       { "LEAD_VOICE" => "glass", "LEAD_ARP_MODE" => "glass_spin", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  coltrane_lite_triad:     { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  drone_quartal_wash:      { "LEAD_VOICE" => "vapor", "LEAD_ARP_MODE" => "vapor_wave", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  waltz_relative_lift:     { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  half_time_gospel_plagal: { "LEAD_VOICE" => "gospel", "LEAD_ARP_MODE" => "gospel_lift", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  double_time_pocket:      { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "pocket_stab", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  whole_tone_bridge:       { "LEAD_VOICE" => "glass", "LEAD_ARP_MODE" => "crystal_scatter", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  upper_triad_tower:       { "LEAD_VOICE" => "crystal", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  minor_add9_lullaby:      { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "ballad_bloom", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  dominant_chain_home:     { "LEAD_VOICE" => "acid", "LEAD_ARP_MODE" => "acid_run", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" }
 }.freeze
 
 LEAD_VOICE_PRESETS = {
@@ -904,22 +1022,39 @@ LEAD_VOICE_PRESETS = {
   soft: :soft_synth_lead,
   cs: :cs_lead,
   minimoog: :minimoog_lead,
-  pluck: :neo_soul_pluck
+  pluck: :neo_soul_pluck,
+  glass: :glass_arp_lead,
+  vapor: :vapor_lead,
+  crystal: :glass_arp_lead,
+  acid: :acid_pluck_lead,
+  neon: :moog_ladder_lead
 }.freeze
 
-# Lush soul palette — Rhodes/Prophet/Moog anchors only (stream default when SYNTH_CYCLE=1).
+# Lush + experimental electronic cycles (SYNTH_CYCLE=1).
 LUSH_PATCH_CYCLE_EP = {
   rhodes: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1],
   moog: %i[rhodes_mark1 rhodes_vintage_tape rhodes_bleeding_edge galaxy_ep1],
   prophet: %i[rhodes_mark1 rhodes_cafe_warm rhodes_bleeding_edge galaxy_ep1 galaxy_ep2],
-  blend: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1 galaxy_ep2]
+  blend: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1 galaxy_ep2],
+  glass: %i[dx7_bell_ep galaxy_ep2 rhodes_dx_blend celeste_dust],
+  vapor: %i[rhodes_cafe_warm galaxy_ep1 ep_mark1_dark],
+  crystal: %i[galaxy_ep2 dx_ep_glass vibes_mallet],
+  ice: %i[rhodes_dx_blend galaxy_ep1 celeste_dust],
+  neon: %i[rhodes_mark1 clav_neo_funk],
+  pulse: %i[clav_neo_funk wurli_bite dx7_bell_ep]
 }.freeze
 
 LUSH_PATCH_CYCLE_WARM = {
   rhodes: %i[juno_chorus_wash prophet_6_warm tape_string_pad polysynth_soul memorymoon_pad string_orchestra],
-  moog: %i[moog_model_d moog_sub37_pad moog_pad moog_bleeding_edge warm_analog_duo],
+  moog: %i[moog_model_d moog_sub37_pad moog_pad moog_bleeding_edge warm_analog_duo neon_ladder],
   prophet: %i[prophet_5_pad prophet_6_warm prophet_pad polysynth_soul juno_chorus_wash cs80_ensemble],
-  blend: %i[prophet_5_pad moog_model_d prophet_6_warm moog_sub37_pad juno_chorus_wash polysynth_soul memorymoon_pad tape_string_pad]
+  blend: %i[prophet_5_pad moog_model_d prophet_6_warm moog_sub37_pad juno_chorus_wash polysynth_soul],
+  glass: %i[glass_fm_pad crystal_pwm ice_string_pad],
+  vapor: %i[vapor_supersaw prophet_rev2_bleeding juno_chorus_wash],
+  crystal: %i[crystal_pwm glass_fm_pad pwm_sweep_pad],
+  ice: %i[ice_string_pad solina_ensemble tape_string_pad],
+  neon: %i[neon_ladder moog_bleeding_edge analog_hollow],
+  pulse: %i[pwm_sweep_pad crystal_pwm analog_pad1]
 }.freeze
 
 LUSH_LEAD_VOICE_POOLS = {
@@ -928,7 +1063,7 @@ LUSH_LEAD_VOICE_POOLS = {
   prophet: %i[soul_prophet_arp prophet_lead warm_prophet_hook glasper_ep_lead],
   moog: %i[moog_dilla_pocket questlove_moog_lead minimoog_lead moog_ladder_lead],
   neo_pluck: %i[neo_soul_pluck dangelo_clav_lead rhodes_skank_lead],
-  flylo: %i[flylo_fm_shimmer fm_lead_bell],
+  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead],
   ballad: %i[jazz_ballad_lead nord_stage_lead glasper_ep_lead soft_synth_lead],
   gospel: %i[gospel_brass_lead stevie_organ_lead],
   erykah: %i[erykah_dust_lead rhodes_lead_comp mark1_soul_lead],
@@ -936,7 +1071,12 @@ LUSH_LEAD_VOICE_POOLS = {
   soft: %i[soft_synth_lead nord_stage_lead rhodes_lead_comp],
   cs: %i[glasper_ep_lead soul_prophet_arp rhodes_lead_comp],
   minimoog: %i[minimoog_lead moog_ladder_lead questlove_moog_lead],
-  pluck: %i[neo_soul_pluck dangelo_clav_lead]
+  pluck: %i[neo_soul_pluck dangelo_clav_lead],
+  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell],
+  vapor: %i[vapor_lead supersaw_1 tame_wobble_lead],
+  crystal: %i[glass_arp_lead fm_lead_bell],
+  acid: %i[acid_pluck_lead moog_ladder_lead],
+  neon: %i[moog_ladder_lead minimoog_lead acid_pluck_lead]
 }.freeze
 
 # Per-voice families — random cycle picks within these pools each render (SYNTH_CYCLE=1).
@@ -958,7 +1098,13 @@ PATCH_CYCLE_EP = {
     rhodes_mark1 rhodes_stage73 rhodes_tine_wurli rhodes_dx_blend rhodes_vintage_tape
     rhodes_cafe_warm wurli_soul_bite clav_neo_funk dx7_bell_ep galaxy_ep1 galaxy_ep2
     galaxy_ep_bleeding organ_drawbar organ_perc vibes_mallet soul_piano_tack
-  ]
+  ],
+  glass: %i[dx7_bell_ep galaxy_ep2 rhodes_dx_blend celeste_dust],
+  vapor: %i[rhodes_cafe_warm galaxy_ep1 ep_mark1_dark],
+  crystal: %i[galaxy_ep2 dx_ep_glass vibes_mallet],
+  ice: %i[rhodes_dx_blend galaxy_ep1 celeste_dust],
+  neon: %i[rhodes_mark1 clav_neo_funk],
+  pulse: %i[clav_neo_funk wurli_bite dx7_bell_ep]
 }.freeze
 
 PATCH_CYCLE_WARM = {
@@ -969,7 +1115,7 @@ PATCH_CYCLE_WARM = {
   ],
   moog: %i[
     moog_model_d moog_sub37_pad moog_pad moog_bleeding_edge prophet_rev2_bleeding
-    warm_analog_duo analog_hollow analog_pad2 prophet_brass_wash
+    warm_analog_duo analog_hollow analog_pad2 prophet_brass_wash neon_ladder
   ],
   prophet: %i[
     prophet_5_pad prophet_6_warm prophet_pad prophet_rev2_bleeding cs80_ensemble
@@ -981,7 +1127,13 @@ PATCH_CYCLE_WARM = {
     prophet_pad moog_pad cs80_ensemble solina_ensemble string_orchestra warm_analog_duo
     memorymoon_pad tape_string_pad polysynth_soul mellotron_flute_pad analog_hollow
     slow_attack_pad oberheim_pad
-  ]
+  ],
+  glass: %i[glass_fm_pad crystal_pwm ice_string_pad],
+  vapor: %i[vapor_supersaw prophet_rev2_bleeding juno_chorus_wash],
+  crystal: %i[crystal_pwm glass_fm_pad pwm_sweep_pad],
+  ice: %i[ice_string_pad solina_ensemble tape_string_pad],
+  neon: %i[neon_ladder moog_bleeding_edge analog_hollow],
+  pulse: %i[pwm_sweep_pad crystal_pwm analog_pad1]
 }.freeze
 
 LEAD_VOICE_POOLS = {
@@ -990,7 +1142,7 @@ LEAD_VOICE_POOLS = {
   prophet: %i[soul_prophet_arp prophet_lead warm_prophet_hook big_lead_prophet5 minimoog_lead],
   moog: %i[moog_dilla_pocket moog_ladder_lead questlove_moog_lead minimoog_lead],
   neo_pluck: %i[neo_soul_pluck pluck_synth dangelo_clav_lead rhodes_skank_lead],
-  flylo: %i[flylo_fm_shimmer tame_wobble_lead fm_lead_bell saw_lead],
+  flylo: %i[flylo_fm_shimmer tame_wobble_lead fm_lead_bell glass_arp_lead],
   ballad: %i[jazz_ballad_lead flute_airy oboe_solo nord_stage_lead soft_synth_lead],
   gospel: %i[gospel_brass_lead brass_synth stevie_organ_lead],
   erykah: %i[erykah_dust_lead portishead_dust_lead rhodes_lead_comp mark1_soul_lead],
@@ -998,22 +1150,32 @@ LEAD_VOICE_POOLS = {
   soft: %i[soft_synth_lead flute_airy nord_stage_lead rhodes_lead_comp],
   cs: %i[cs_lead glasper_ep_lead soul_prophet_arp rhodes_lead_comp],
   minimoog: %i[minimoog_lead moog_ladder_lead questlove_moog_lead moog_dilla_pocket],
-  pluck: %i[neo_soul_pluck pluck_synth dangelo_clav_lead guitar_muted]
+  pluck: %i[neo_soul_pluck pluck_synth dangelo_clav_lead guitar_muted],
+  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell],
+  vapor: %i[vapor_lead supersaw_1 supersaw_2 tame_wobble_lead],
+  crystal: %i[glass_arp_lead fm_lead_bell],
+  acid: %i[acid_pluck_lead moog_ladder_lead],
+  neon: %i[moog_ladder_lead minimoog_lead acid_pluck_lead]
 }.freeze
 
-PATCH_CYCLE_TEXTURE = %i[soft_synth_str shimmer_organ ethnic_flute kalimba_dust].freeze
+PATCH_CYCLE_TEXTURE = %i[
+  soft_synth_str shimmer_organ ethnic_flute kalimba_dust space_voice reverse_pad_ghost music_box
+].freeze
 
 PATCH_CYCLE_SCALE_LEAD = %i[
-  scale_arp_rhodes scale_arp_prophet scale_arp_moog scale_arp_supersaw
-  rhodes_lead_comp glasper_ep_lead soul_prophet_arp
+  scale_arp_rhodes scale_arp_prophet scale_arp_moog scale_arp_supersaw crystal_scale_lead
+  rhodes_lead_comp glasper_ep_lead soul_prophet_arp glass_arp_lead
 ].freeze
 
 # Named lead-arp figures — tuned for lead register (louder/clearer than legacy pad arp).
 LEAD_ARP_PRESETS = {
   donuts_shimmer: { style: :skip_up, subdiv: 8, gate: 0.66, vel: 0.48,
                     arp_styles: %i[skip_up euclidean quint_spread] },
-  soul_wash:      { style: :pingpong, subdiv: 4, gate: 0.74, vel: 0.5,
-                    arp_styles: %i[pingpong coltrane quint_spread] },
+  soul_wash:      { style: :updown, subdiv: 2, gate: 0.88, vel: 0.48,
+                    arp_styles: %i[updown motif] },
+  # Sparse chord-tone melody (quarter / half notes) — not dense random soup.
+  melodic_soul:   { style: :motif, subdiv: 1, gate: 0.92, vel: 0.52,
+                    arp_styles: %i[motif updown] },
   moog_funk:      { style: :up, subdiv: 4, gate: 0.7, vel: 0.54,
                     arp_styles: %i[up downup quint_spread] },
   prophet_glass:  { style: :pingpong, subdiv: 6, gate: 0.62, vel: 0.52,
@@ -1029,7 +1191,16 @@ LEAD_ARP_PRESETS = {
   erykah_dust:    { style: :euclidean, subdiv: 8, gate: 0.72, vel: 0.42,
                     arp_styles: %i[euclidean skip_up] },
   gospel_lift:    { style: :coltrane, subdiv: 6, gate: 0.64, vel: 0.5,
-                    arp_styles: %i[coltrane up quint_spread] }
+                    arp_styles: %i[coltrane up quint_spread] },
+  # Experimental electronic figures (musical, not chaotic).
+  glass_spin:     { style: :spiral, subdiv: 6, gate: 0.58, vel: 0.46,
+                    arp_styles: %i[spiral quint_spread pingpong] },
+  vapor_wave:     { style: :updown, subdiv: 4, gate: 0.7, vel: 0.44,
+                    arp_styles: %i[updown flylo_wobble] },
+  acid_run:       { style: :up, subdiv: 8, gate: 0.42, vel: 0.52,
+                    arp_styles: %i[up skip_up euclidean] },
+  crystal_scatter: { style: :fibonacci, subdiv: 6, gate: 0.55, vel: 0.45,
+                     arp_styles: %i[fibonacci spiral skip_up] }
 }.freeze
 
 # Aggressive xlead arp figures — per-chord morph when LEAD_MORPH=1.
@@ -1171,7 +1342,7 @@ end
 def morph_patch_for_chord(event_idx, role:)
   voice = morph_voice_at(event_idx)
   pool = morph_patch_pool(role: role, voice: voice)
-  preset = PAD_VOICE_PRESETS[voice]
+  preset = PAD_VOICE_PRESETS[voice] || PAD_VOICE_PRESETS[:moog]
   fallback_id = role == :ep ? preset[:ep] : preset[:warm]
   pick_patch_from_pool(pool, seed: event_idx * 311 + (role == :ep ? 0 : 17)) ||
     (fallback_id && synth_patch_by_id(fallback_id))
@@ -1257,9 +1428,19 @@ end
 
 def apply_pad_voice_preset!(seed: 0)
   voice = ENV["PAD_VOICE"]&.downcase&.to_sym
+  # Multi-layer stacks pin patches from PAD_LAYER_STACKS (rendered together).
+  if voice && PAD_LAYER_STACKS[voice] && ENV.fetch("PAD_LAYERS", "1") != "0"
+    stack = PAD_LAYER_STACKS[voice]
+    @render_ep_patch = prefer_galaxy_ep(synth_patch_by_id(stack[0][:id])) if stack[0]
+    @render_warm_patch = synth_patch_by_id(stack[1][:id]) if stack[1]
+    @render_warm2_patch = synth_patch_by_id(stack[2][:id]) if stack[2]
+    @render_texture_patch = synth_patch_by_id(stack[3][:id]) if stack[3]
+    @render_skip_warm_pad = false
+    return
+  end
   if voice && PAD_VOICE_PRESETS[voice]
     preset = PAD_VOICE_PRESETS[voice]
-    if pad_synth_cycle_enabled?
+    if pad_synth_cycle_enabled? && !PAD_LAYER_STACKS.key?(voice)
       ep_pool = ep_patch_pool(voice)
       warm_pool = warm_patch_pool(voice)
       if ep_pool&.any?
@@ -1277,18 +1458,20 @@ def apply_pad_voice_preset!(seed: 0)
       else
         @render_skip_warm_pad = true
       end
+      @render_warm2_patch = synth_patch_by_id(preset[:warm2]) if preset[:warm2]
     else
       @render_ep_patch = prefer_galaxy_ep(synth_patch_by_id(preset[:ep])) if preset[:ep]
       @render_warm_patch = synth_patch_by_id(preset[:warm]) if preset[:warm]
+      @render_warm2_patch = synth_patch_by_id(preset[:warm2]) if preset[:warm2]
       @render_skip_warm_pad = preset[:warm].nil?
     end
     return
   end
-  # Soul defaults: Rhodes + Prophet/Moog — not random GM lottery.
+  # Soul defaults: Rhodes + Moog + Prophet stack
   return if ENV["CREEPY_PATCHES"] == "1"
-  @render_ep_patch = prefer_galaxy_ep(synth_patch_by_id(:rhodes_mark1))
-  warm_id = seed.even? ? :prophet_5_pad : :moog_model_d
-  @render_warm_patch = synth_patch_by_id(warm_id)
+  @render_ep_patch = prefer_galaxy_ep(synth_patch_by_id(:rhodes_cafe_warm))
+  @render_warm_patch = synth_patch_by_id(:moog_model_d)
+  @render_warm2_patch = synth_patch_by_id(:prophet_5_pad)
   @render_skip_warm_pad = false
 end
 
@@ -2984,21 +3167,29 @@ def flylo_drum_grid_for(track)
     (alias_key && BUILTIN_LEARNED_ENGINE.dig("drum_grids", alias_key))
 end
 
-def learned_flylo_overlay_steps(role)
-  # Camel mode always uses the baked anchored grid — project JSON used to
-  # override with the raw onset-only pattern (no downbeat, snares every odd).
+def flylo_overlay_grid_hash
+  # Camel/dilla style always uses the hip-hop pocket reduction of the Camel stem.
+  # Project JSON may supply per-track grids when not in camel/dilla mode.
   grid = if camel_mode?
            FLYLO_CAMEL_DRUM_GRID
          else
            flylo_drum_grid_for(ENV["TRACK"] || "")
          end
   grid = FLYLO_CAMEL_DRUM_GRID if (grid.nil? || !grid.is_a?(Hash)) && flylo_drum_overlay_enabled?
-  return nil unless grid.is_a?(Hash)
+  grid.is_a?(Hash) ? grid : nil
+end
+
+def learned_flylo_overlay_steps(role)
+  grid = flylo_overlay_grid_hash
+  return nil unless grid
   case role
   when :kicks then Array(grid["flylo_kicks"] || grid["kicks"] || grid[:kicks])
   when :snares then Array(grid["flylo_snares"] || grid["snares"] || grid[:snares])
+  when :ghost_snares then Array(grid["flylo_ghost_snares"] || grid["ghost_snares"] || [])
   when :hats then Array(grid["flylo_hats"] || grid["hats"] || grid[:hats])
+  when :hat_ghosts then Array(grid["flylo_hat_ghosts"] || grid["hat_ghosts"] || [])
   when :perc then Array(grid["flylo_perc"] || grid["perc"] || grid[:perc])
+  when :claps then Array(grid["flylo_claps"] || grid["claps"] || [])
   end
 end
 
@@ -3066,7 +3257,7 @@ def acquire_stream_lock!
     if holder.positive?
       begin
         Process.kill(0, holder)
-        warn "stream lock held by pid #{holder} — exit (run only one stream)"
+        dmesg_warn("stream lock held by pid #{holder} — exit")
         exit 0
       rescue Errno::ESRCH
         FileUtils.rm_f(STREAM_LOCK_PATH)
@@ -3172,18 +3363,21 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
                 end
   harm_vol = ENV["DEBUG_HARM_WEIGHT"] || ENV.fetch("HARM_BUS_VOL", default_vol)
   deep = deep_render?
-  sub_cut = deep ? "-1.8" : (flylo_primary_drums? ? "-2.4" : "-2.2")
-  body_boost = deep ? "3.2" : (flylo_primary_drums? ? "2.6" : "2.8")
-  mid_boost = deep ? "2.9" : (flylo_primary_drums? ? "2.4" : "2.6")
+  sub_cut = ENV.fetch("HARM_SUB_CUT_DB", deep ? "-1.8" : (flylo_primary_drums? ? "-2.4" : "-2.2"))
+  body_boost = ENV.fetch("HARM_BODY_DB", deep ? "3.2" : (flylo_primary_drums? ? "2.6" : "2.8"))
+  mid_boost = ENV.fetch("HARM_MID_DB", deep ? "2.9" : (flylo_primary_drums? ? "2.4" : "2.6"))
   # Chord presence: body + gentle silk shelf (progressions read on small speakers).
+  # HARM_PRESENCE_DB / HARM_AIR_DB are crit cherry-pick knobs (defaults keep prior character).
+  presence = ENV.fetch("HARM_PRESENCE_DB", flylo_primary_drums? ? "2.2" : "2.4").to_f
+  air_g = ENV.fetch("HARM_AIR_DB", flylo_primary_drums? ? "1.6" : "1.2").to_f
+  silk_g = flylo_primary_drums? ? [presence * 0.9, 2.0].min : [presence * 0.55, 1.2].min
   air = if flylo_primary_drums?
-          "equalizer=f=2400:t=h:w=1800:g=2.0,equalizer=f=5200:t=h:w=2800:g=1.6,"
+          "equalizer=f=2400:t=h:w=1800:g=#{silk_g.round(1)},equalizer=f=5200:t=h:w=2800:g=#{air_g.round(1)},"
         else
-          "equalizer=f=2800:t=h:w=1800:g=1.2,"
+          "equalizer=f=2800:t=h:w=1800:g=#{air_g.round(1)},"
         end
-  harm_hp = deep ? 95 : (flylo_primary_drums? ? 98 : 110)
-  sub_shelf = deep ? 2.2 : (flylo_primary_drums? ? 1.8 : 1.0)
-  presence = flylo_primary_drums? ? 2.2 : 2.4
+  harm_hp = ENV.fetch("HARM_HP_HZ", deep ? "95" : (flylo_primary_drums? ? "98" : "110")).to_i
+  sub_shelf = ENV.fetch("HARM_SUB_SHELF_DB", deep ? "2.2" : (flylo_primary_drums? ? "1.8" : "1.0")).to_f
   # Longer, smoother pad bloom (qsin) so chords arrive as wash, not a gate.
   fade_in = flylo_primary_drums? ? (harm_fade_dur * 1.35).round(2) : harm_fade_dur
   fade_curve = flylo_primary_drums? ? ":curve=qsin" : ""
@@ -3321,9 +3515,15 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
              end
   bus_gain = ENV.fetch("DRUM_BUS_GAIN", flylo_primary_drums? ? "1.4" : "1.0").to_f
   drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (base_vol * bus_gain).round(2)).to_s
+  drum_air = ENV.fetch("DRUM_AIR_DB", "2.5").to_f
+  drum_pres = ENV.fetch("DRUM_PRESENCE_DB", "2.5").to_f
   flylo_eq = if flylo_drum_overlay_enabled?
                "equalizer=f=70:t=o:w=0.9:g=5.0,equalizer=f=200:t=o:w=1:g=2.5," \
-                 "equalizer=f=4200:t=o:w=1.2:g=4.0,equalizer=f=6500:t=o:w=1.5:g=2.5,"
+                 "equalizer=f=4200:t=o:w=1.2:g=#{(4.0 + drum_pres * 0.35).round(1)}," \
+                 "equalizer=f=6500:t=o:w=1.5:g=#{(2.5 + drum_air * 0.4).round(1)},"
+             elsif drum_air.positive? || drum_pres.positive?
+               "equalizer=f=3500:t=h:w=1600:g=#{drum_pres.round(1)}," \
+                 "equalizer=f=7000:t=h:w=2200:g=#{drum_air.round(1)},"
              else
                ""
              end
@@ -3715,41 +3915,122 @@ def xlead_arp_section_density(section, progress)
   base * (progress < 0.05 ? 0.88 : 1.0)
 end
 
+def melodic_lead_mode?
+  return false if ENV["MELODIC_LEAD"] == "0"
+  return true if ENV.fetch("MELODIC_LEAD", "1") != "0"
+  mode = (ENV["LEAD_ARP_MODE"] || lead_arp_mode || "").to_s
+  %w[soul_wash melodic_soul melodic donuts_shimmer ballad_bloom].include?(mode)
+end
+
+# Upper chord tones only, clamped to a singable register (no doubled bass mud).
+def lead_chord_tones_hz(chord, lead_patch: nil)
+  return [] unless chord && chord[:hz]&.any?
+  midis = chord[:hz].map { |h| hz_to_midi(h) }.sort
+  # Drop the lowest (bass/root) — pads already own the foundation.
+  midis = midis.drop(1) if midis.length >= 4
+  midis = midis.last(4)
+  # Prefer the 3rd / 5th / 7th / 9th area around C4–A5.
+  midis = midis.map do |m|
+    m += 12 while m < 58
+    m -= 12 while m > 81
+    m
+  end.uniq.sort
+  midis.map { |m| midi_to_hz(m) }
+end
+
+# Melodic phrase: 1 note/beat, motif 0-2-1-3, voice-led from previous phrase.
+def lead_melodic_phrase_for_chord(time, velocity, chord, sustain, chord_i, cfg, lead_patch,
+                                  role: :lead, prev_end_hz: nil)
+  tones = lead_chord_tones_hz(chord, lead_patch: lead_patch)
+  return [] if tones.empty?
+  beat_p = 60.0 / cfg[:bpm]
+  # Quarter notes (subdiv 1 per beat) — readable top line, not arp soup.
+  step_p = beat_p
+  gate = 0.9
+  step_dur = step_p * gate
+  n_steps = [(sustain / step_p).floor, 2].max
+  n_steps = [n_steps, 6].min
+  # Motif over chord tones; rotate per chord so the line breathes.
+  base = [0, 2, 1, 3, 1, 0]
+  rot = chord_i % [tones.length, 3].max
+  pattern = base.map { |d| (d + rot) % tones.length }
+  # Voice-lead start: pick tone nearest previous phrase end.
+  if prev_end_hz
+    start_i = tones.each_with_index.min_by { |hz, _| (hz - prev_end_hz).abs }&.last || 0
+    pattern = [start_i] + pattern.reject.with_index { |_, i| i.zero? }
+  end
+  vel_base = (velocity * 0.62).clamp(0.38, 0.78)
+  events = []
+  n_steps.times do |step|
+    # Leave air every other chord on the last beat.
+    next if step == n_steps - 1 && (chord_i % 2).zero? && n_steps > 2
+    idx = pattern[step % pattern.length] % tones.length
+    hz = tones[idx]
+    t = time + step * step_p
+    break if t >= time + sustain - step_dur * 0.25
+    accent = step.zero?
+    vel = (vel_base * (accent ? 1.05 : 0.88)).clamp(0.34, 0.82)
+    tag = role == :xlead ? "xlead" : "lead_arp"
+    events << [t, vel, { name: tag, hz: [hz] }, step_dur]
+  end
+  events
+end
+
 def lead_arp_events_for_chord(time, velocity, chord, sustain, chord_i, cfg, arp_cfg, lead_patch,
-                              role: :lead, n_bars_est: nil, skip_intro: true, progress: nil)
+                              role: :lead, n_bars_est: nil, skip_intro: false, progress: nil,
+                              prev_end_hz: nil)
   return [] unless chord && chord[:hz]&.any? && arp_cfg
+  if role != :xlead && melodic_lead_mode?
+    return lead_melodic_phrase_for_chord(time, velocity, chord, sustain, chord_i, cfg, lead_patch,
+                                         role: role, prev_end_hz: prev_end_hz)
+  end
   beat_p = 60.0 / cfg[:bpm]
   bar_p = beat_p * 4.0
   n_bars_est ||= ((time / bar_p).ceil + 4)
   bar_approx = (time / bar_p).floor.clamp(0, [n_bars_est - 1, 0].max)
   section = dilla_section(bar_approx, n_bars_est)
-  if skip_intro && section == :intro && bar_approx < (role == :xlead ? 0 : 1)
+  # Keep lead present from bar 0 so streams always have a top line.
+  if skip_intro && section == :intro && bar_approx < 1 && role != :xlead
     return []
   end
-  octave_mul = 2.0**((lead_patch&.fetch(:octave, 2) || 2) - 1)
   progress ||= chord_i.to_f / [n_bars_est, 1].max
   density = role == :xlead ? xlead_arp_section_density(section, progress) : lead_arp_section_density(section, progress)
+  density = [density, 0.75].max if role != :xlead
   variation = arp_variation_for_chord(chord_i, chord, cfg, arp_cfg, patch: lead_patch, role: role)
+  # Melodic roles: no random style roulette / wild subdivs.
+  if role != :xlead
+    variation = variation.merge(
+      style: arp_cfg[:style] || :updown,
+      subdiv: [arp_cfg.fetch(:subdiv, 2), 4].min,
+      rest_prob: [variation[:rest_prob].to_f, 0.22].max,
+      pattern_mode: :motif,
+      n_steps_mul: 0.55,
+      step_jitter: [variation[:step_jitter].to_f, 0.008].min
+    )
+  end
   subdiv = variation[:subdiv]
   step_p = beat_p / subdiv.to_f
   gate = variation[:gate]
-  vel_scale = variation[:vel]
+  vel_scale = (variation[:vel] * 1.2).clamp(0.4, 0.68)
   rng = chord_variation_rng(cfg, chord_i, chord, salt: role == :xlead ? 12_007 : 9907)
-  swing = cfg[:swing].to_f / 100.0 * step_p * (role == :xlead ? 0.42 : 0.32)
-  tones = chord[:hz].sort.map { |hz| hz * octave_mul }
+  swing = cfg[:swing].to_f / 100.0 * step_p * (role == :xlead ? 0.42 : 0.28)
+  tones = lead_chord_tones_hz(chord, lead_patch: lead_patch)
+  tones = chord[:hz].sort.map { |hz| hz * 2.0 } if tones.empty?
   pattern = arp_pattern_for_chord(chord, variation, tones.length, rng)
-  n_steps = [((sustain / step_p).floor * variation[:n_steps_mul]).to_i, role == :xlead ? 3 : 2].max
+  n_steps = [((sustain / step_p).floor * variation[:n_steps_mul]).to_i, role == :xlead ? 3 : 3].max
+  n_steps = [n_steps, 8].min if role != :xlead
   step_dur = step_p * gate
-  vel_lo = role == :xlead ? 0.28 : 0.2
-  vel_hi = role == :xlead ? 0.88 : 0.78
+  vel_lo = role == :xlead ? 0.32 : 0.34
+  vel_hi = role == :xlead ? 0.9 : 0.85
   events = []
   n_steps.times do |step|
-    next if arp_rest_step?(step, variation[:rest_prob], chord_i)
+    rest_p = role == :xlead ? [variation[:rest_prob].to_f * 0.35, 0.08].min : [variation[:rest_prob].to_f, 0.18].max
+    next if arp_rest_step?(step, rest_p, chord_i)
     hz = tones[pattern[step % pattern.length] % tones.length]
     t = arp_step_time(time, step, step_p, swing, variation[:step_jitter], variation)
     break if t >= time + sustain - step_dur * 0.3
     accent = step.zero? || (step % 4).zero?
-    vel = (velocity * vel_scale * (accent ? 1.0 : 0.86) * density).clamp(vel_lo, vel_hi)
+    vel = (velocity * vel_scale * (accent ? 1.08 : 0.9) * density).clamp(vel_lo, vel_hi)
     tag = role == :xlead ? "xlead" : "lead_arp"
     events << [t, vel, { name: tag, hz: [hz] }, step_dur]
   end
@@ -3765,11 +4046,17 @@ def lead_arp_events(pad_events, cfg, arp_cfg)
   bar_p = beat_p * 4.0
   lead_patch = @render_lead_patch
   n_bars_est = pad_events.empty? ? 32 : ((pad_events.last[0] / bar_p).ceil + 1)
-  pad_events.each_with_index.flat_map do |(time, velocity, chord, sustain), i|
+  prev_end = nil
+  events = []
+  pad_events.each_with_index do |(time, velocity, chord, sustain), i|
     progress = i.to_f / [pad_events.length - 1, 1].max
-    lead_arp_events_for_chord(time, velocity, chord, sustain, i, cfg, arp_cfg, lead_patch,
-                              role: :lead, n_bars_est: n_bars_est, progress: progress).to_a
-  end.sort_by { |e| e[0] }
+    chunk = lead_arp_events_for_chord(time, velocity, chord, sustain, i, cfg, arp_cfg, lead_patch,
+                                      role: :lead, n_bars_est: n_bars_est, progress: progress,
+                                      prev_end_hz: prev_end).to_a
+    prev_end = chunk.last&.dig(2, :hz)&.first if chunk.any?
+    events.concat(chunk)
+  end
+  events.sort_by { |e| e[0] }
 end
 
 # Continuous scale-locked arp on every pad chord — same root/mode as the pad,
@@ -4179,6 +4466,8 @@ EXTENDED_NINTH_CHORDS = [
   # Real E9sus4 (root E, 4th A, 5th B, b7 D, 9th F#), keeping the same E
   # pedal bass as every other chord in this table.
   { name: "E9sus4/D", hz: [82.41, 220.00, 246.94, 293.66, 369.99] },
+  # Ethan Hein: D/E functions as E9sus4 (Get Dis Money / Come Running To Me).
+  { name: "D/E", hz: [82.41, 146.83, 220.00, 246.94, 293.66] },
   { name: "Db/E", hz: [82.41, 277.18, 311.13, 349.23, 415.30] },
   { name: "C/E", hz: [82.41, 261.63, 329.63, 392.00, 493.88] },
   { name: "Bm/E", hz: [82.41, 246.94, 293.66, 369.99, 440.00] },
@@ -4411,14 +4700,18 @@ INDUSTRIAL_TECHNO_BARS = 128
 #   Ethan Hein — Get Dis Money, Thelonius transcriptions
 #   jdillabasslines.wordpress.com — Fantastic Vol. 2 BPM + bass phrasing
 #   Hooktheory — Donuts "Time" Ab major IV–iii–vi–ii–V
+# Independent micro-timing layers (ms): snare early, kick late, hats later.
+# Ranges are cyclic (repeating pocket), not random drunk-slop.
 MICROTIMING_MS = {
-  kick_anchor: 0..5,
-  kick_sync: 4..16,
-  snare: -24..-8,
-  ghost: -14..12,
-  hat_down: -4..6,
-  hat_up: 10..28,
-  bass: 20..36,
+  kick_anchor: 1..6,
+  kick_sync: 6..18,
+  snare: -28..-10,
+  ghost: -10..6,
+  hat_down: -2..8,
+  hat_up: 12..32,
+  open: 8..20,
+  clap: -22..-8,
+  bass: 18..34,
   pad: 4..16
 }.freeze
 # Curated 16-step drum phrases per feel — rotated bar-to-bar instead of
@@ -4649,12 +4942,121 @@ EXTENDED_TENSION_CHORDS = [
 PAD_CHORD_LOOKUP = (
   PAD_CHORDS + EXTENDED_NINTH_CHORDS + MODAL_MINOR_CHORDS + EXTENDED_TENSION_CHORDS
 ).each_with_object({}) { |c, m| m[c[:name]] = c unless m[c[:name]] }.freeze
-# Album / track progressions — Fantastic Vol. 1 & 2 + Donuts.
+# ---------------------------------------------------------------------------
+# ARTIST-VERIFIED progressions only (exact artist/sample harmony).
+# Sources checked against public discussions + published transcriptions:
+#   r/jdilla — Fall in Love = Gap Mangione "Diana in the Autumn Wind" sample
+#   Ethan Hein — Get Dis Money / Herbie "Come Running To Me" slash loop
+#   Hooktheory / RG-69 — Donuts "Time" Ab IV–iii–vi–ii
+#   ChordU — Climax, Untitled (How Does It Feel)
+# Non-verified invented loops stay in CHORD_PROGRESSIONS below but are blocked
+# from stream/default when ARTIST_VERIFIED_ONLY=1 (default).
+# ---------------------------------------------------------------------------
+ARTIST_VERIFIED_PROGRESSIONS = {
+  # J Dilla — Donuts: "Time (The Donut of the Heart)" — Ab major IV–iii–vi–ii.
+  time_donut: {
+    artist: "J Dilla", title: "Time (The Donut of the Heart)", album: "Donuts",
+    chords: %w[Dbmaj7 Cm7 Fm7 Bbm7],
+    sources: [
+      "Hooktheory / Ab IV–iii–vi–ii (Dbmaj7–Cm7–Fm7–Bbm7)",
+      "RG-69 researched Donuts symbols"
+    ]
+  },
+  # Same harmonic cycle with 9ths (pad color variant of Time, not a different song).
+  maj7_minor_cycle: {
+    artist: "J Dilla", title: "Time (The Donut of the Heart)", album: "Donuts",
+    chords: %w[Dbmaj9 Cm9 Fm9 Bbm9],
+    sources: ["Same Time cycle with maj9/m9 extensions"]
+  },
+  # Slum Village — Fall in Love (prod. Dilla) samples Gap Mangione.
+  # r/jdilla (bzaiif): "Gap Mangione - Diana in the Autumn Wind".
+  # ChordU / engine: two-chord Ebm7–Bbm7 vamp (not the old fabricated Bbm–Ab–Fm).
+  fall_in_love: {
+    artist: "Slum Village", title: "Fall in Love", producer: "J Dilla",
+    sample: "Gap Mangione — Diana in the Autumn Wind",
+    chords: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+    sources: [
+      "r/jdilla: chords for Fall in love? — sample ID Diana in the Autumn Wind",
+      "ChordU Ebm7/Bbm7 loop transcription"
+    ]
+  },
+  # Slum Village — Get Dis Money. Ethan Hein full transcription of Herbie sample.
+  get_dis_money: {
+    artist: "Slum Village", title: "Get Dis Money", producer: "J Dilla",
+    sample: "Herbie Hancock — Come Running To Me (Sunlight, 2:08)",
+    chords: %w[D/E Db/E C/E Bm/E Bbm/E Am/E],
+    sources: [
+      "Ethan Hein 2022 transcription https://ethanhein.com/wp/2022/get-dis-money/",
+      "D/E = E9sus4; then Db/E C/E Bm/E Bbm/E Am/E over E pedal"
+    ]
+  },
+  # Alias used historically in engine for the same GDM slash cycle.
+  syncopated_slash_ninth: {
+    artist: "Slum Village", title: "Get Dis Money", producer: "J Dilla",
+    sample: "Herbie Hancock — Come Running To Me",
+    chords: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
+    sources: ["Ethan Hein Get Dis Money (E9sus4/D naming of D/E)"]
+  },
+  # Slum Village — Climax (ChordU; was previously wrong-key Fm loop).
+  climax: {
+    artist: "Slum Village", title: "Climax", producer: "J Dilla",
+    chords: %w[Emaj7 G#m7 C#m7 E7climax],
+    sources: ["ChordU Climax transcription"]
+  },
+  major7_relative_minor_turn: {
+    artist: "Slum Village", title: "Climax", producer: "J Dilla",
+    chords: %w[Emaj7 G#m7 C#m7 E7climax],
+    sources: ["ChordU Climax (alias)"]
+  },
+  # D'Angelo — Untitled (How Does It Feel), Voodoo (Soulquarians / Dilla era).
+  untitled_how_does_it_feel: {
+    artist: "D'Angelo", title: "Untitled (How Does It Feel)", album: "Voodoo",
+    chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
+    sources: ["ChordU / Voodoo published chord analysis"]
+  },
+  sus_add9_ballad: {
+    artist: "D'Angelo", title: "Untitled (How Does It Feel)", album: "Voodoo",
+    chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
+    sources: ["ChordU Untitled (alias)"]
+  },
+  # Alternating minor-7 pair = Fall in Love / Diana vamp (explicit name).
+  alternating_minor7_pair: {
+    artist: "Slum Village", title: "Fall in Love", producer: "J Dilla",
+    sample: "Gap Mangione — Diana in the Autumn Wind",
+    chords: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+    sources: ["Same as fall_in_love"]
+  }
+}.freeze
+
+ARTIST_VERIFIED_TRACKS = ARTIST_VERIFIED_PROGRESSIONS.keys.freeze
+
+def artist_verified_only?
+  ENV.fetch("ARTIST_VERIFIED_ONLY", "1") != "0"
+end
+
+def artist_verified_chords(key)
+  entry = ARTIST_VERIFIED_PROGRESSIONS[key&.to_sym]
+  entry && entry[:chords]
+end
+
+def artist_verified_meta(key)
+  ARTIST_VERIFIED_PROGRESSIONS[key&.to_sym]
+end
+
+# Album / track progressions — verified first; rest are experimental / theory pack.
 CHORD_PROGRESSIONS = {
-  # RG-69 researched symbols (Donuts "Time" + Fantastic Vol. 2).
+  # --- Artist-verified (see ARTIST_VERIFIED_PROGRESSIONS) ---
   time_donut: %w[Dbmaj7 Cm7 Fm7 Bbm7],
-  fall_in_love: %w[Bbm Ab Fm7 Fm],
   maj7_minor_cycle: %w[Dbmaj9 Cm9 Fm9 Bbm9],
+  fall_in_love: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+  get_dis_money: %w[D/E Db/E C/E Bm/E Bbm/E Am/E],
+  syncopated_slash_ninth: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
+  climax: %w[Emaj7 G#m7 C#m7 E7climax],
+  major7_relative_minor_turn: %w[Emaj7 G#m7 C#m7 E7climax],
+  untitled_how_does_it_feel: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
+  sus_add9_ballad: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
+  alternating_minor7_pair: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+  # --- Experimental / theory (blocked when ARTIST_VERIFIED_ONLY=1) ---
   soul: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9],
   # Smoother minor turn — same key as timeless, less harsh dominant clutter.
   chromatic_minor_descent: %w[Fm9 Dbmaj9 Cm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Bb7sus],
@@ -4681,7 +5083,7 @@ CHORD_PROGRESSIONS = {
   chromatic_mediant: %w[Dm9 Fm9 AbMaj13s11 Bbm9 Ebmaj9 Cm9 Dbmaj9 Fm9],
   neo_soul: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9],
   tritone: %w[Cm9 Gbmaj9 Bbm9 Fm9],
-  syncopated_slash_ninth: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
+  # (syncopated_slash_ninth / climax / untitled / fall_in_love: artist-verified block above)
   chromatic_planing: %w[Fm9 Bbm9 Fm9 Bbm9],
   ascending_minor_stack: %w[Am9 Dm9 Gm9 Cm9],
   minor_soul_loop: %w[Bbm9 Ebmaj9 Abmaj9 Fm9],
@@ -4691,21 +5093,48 @@ CHORD_PROGRESSIONS = {
   syncopated_slash_alt: %w[E9sus4/D C/E Bbm/E Am/E Db/E Bm/E E9sus4],
   minor_cycle_descent: %w[Gm9 Cm9 Fm9 Bbm9],
   minor_stepwise_cycle: %w[Am9 Dm9 Gm9 Cm9],
-  # Real Climax changes (ChordU) — was a fabricated Fm9/Dbmaj9/Ebmaj9/Bbm9
-  # loop in a completely different key from the actual track.
-  major7_relative_minor_turn: %w[Emaj7 G#m7 C#m7 E7climax],
   minor_major_ninth_pair: %w[Fm9 Bbm9 Ebmaj9 Abmaj9],
   minor_stepwise_ascent: %w[Dm9 Gm9 Cm9 Fmaj9],
   suspended_minor_close: %w[Cm9 Fm9 Bbm9 Ebmaj9],
-  alternating_minor7_pair: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
-  # D'Angelo — Untitled (How Does It Feel), Voodoo. Verse then bridge.
-  sus_add9_ballad: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
   # Tritone-sub modulation after main loop.
   chromatic_mediant_drift: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
   aydin_modal_quartal: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9],
   aydin_jazz_turn: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9],
   bach_circle_descent: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9],
-  bach_descending_bass: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9]
+  bach_descending_bass: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9],
+  # --- Expansion pack (voice-led / modal / form variety) ---
+  # Bright Lydian-leaning major cycle (common-tone + stepwise top voices).
+  lydian_glass_cycle: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7],
+  # Pedal C with changing upper structure (electronium-style color without root thrash).
+  pedal_upper_structures: %w[Cm9 C7sus Ab/C F/C Bbmaj9/C Gm7/C Dbmaj9/C Cm9],
+  # Brazilian major9 ii–V turn with soft 7b9 spice.
+  bossa_major9_turn: %w[Fmaj9 Em7b5 A7b9 Dm9 Gm9 C7sus Fmaj9 D7],
+  # Phrygian-flavored rise that still resolves (E minor home).
+  phrygian_gold_arc: %w[Em9 Fmaj9 Gmaj9 Am9 Fmaj7 G7sus Bm7b5 Em9],
+  # Two-chord luminous pad showcase (long holds).
+  two_chord_luminous: %w[Dbmaj9 Fm9],
+  # Mixolydian sus pocket — short chords, lead-readable.
+  mixo_sus_loop: %w[Dmaj9 Cmaj9 Gmaj9 Dmaj9 F#m9 Em9 A7sus Dmaj9],
+  # Chromatic-mediant family with shared E common tone (cleaner than raw planing).
+  common_tone_drift: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9],
+  # Three-tonic lite (major-third stations) — short spiral, home to Fm.
+  coltrane_lite_triad: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9],
+  # Quartal/open drone over D — atmosphere + lead space.
+  drone_quartal_wash: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9],
+  # 3/4 relative-major lift waltz (distinct from jazz_ballad_waltz).
+  waltz_relative_lift: %w[Cm9 Abmaj9 Bb7 Ebmaj9 Fm9 Bb7 Ebmaj9 G7],
+  # Slow plagal gospel stack.
+  half_time_gospel_plagal: %w[Bbmaj9 Ebmaj9 Abmaj9 F7sus Bbmaj9 Ebmaj9 F7sus Bbmaj9],
+  # Double-time pocket stress-test (short cycle).
+  double_time_pocket: %w[Em9 Am9 D7 Gmaj9 Em9 Am9 D7 Gmaj9],
+  # Whole-tone bridge colors then settle home (Fm).
+  whole_tone_bridge: %w[C7 D7 E7 F#7 Fm9 Dbmaj9 Ebmaj9 Fm9],
+  # Upper-structure slash colors over Bb bass.
+  upper_triad_tower: %w[Bbmaj9 D/Bb F/Bb G/Bb Bbmaj9 Eb/Bb F/Bb Bbmaj9],
+  # Softest lullaby minor-add9 family.
+  minor_add9_lullaby: %w[Gm9 Ebmaj9 Cm9 D7sus Gm9 Ebmaj9 Fmaj9 Gm9],
+  # Dominant chain of fifths home to Ab/Db/Cm.
+  dominant_chain_home: %w[C7 F7 Bb7 Eb7 Abmaj9 Dbmaj9 Cm9 F7]
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
@@ -4760,14 +5189,27 @@ TRACK_PRESETS = {
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
   },
   time_donut: {
-    bpm: 94, progression: :maj7_minor_cycle, chord_bars: 2, phrase_bars: 8, swing: 54,
-    feel: :timeless, quintuplet: true, voicing: :spread,
+    bpm: 94, progression: :time_donut, chord_bars: 2, phrase_bars: 8, swing: 54,
+    feel: :timeless, quintuplet: true, voicing: :rootless,
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
+  },
+  get_dis_money: {
+    bpm: 92, progression: :get_dis_money, chord_bars: 1, phrase_bars: 6, swing: 54,
+    feel: :syncopated_slash_ninth, stereo_pan: true, quintuplet: true, voicing: :rootless,
+    timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 }
   },
   fall_in_love: {
     bpm: 91, progression: :fall_in_love, chord_bars: 2, phrase_bars: 8, swing: 57,
-    feel: :dilla_slight, voicing: :spread,
+    feel: :dilla_slight, voicing: :rootless, quintuplet: true,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
+  },
+  climax: {
+    bpm: 88, progression: :climax, chord_bars: 2, phrase_bars: 8, swing: 57,
+    feel: :timeless, quintuplet: true, voicing: :rootless
+  },
+  untitled_how_does_it_feel: {
+    bpm: 92, progression: :untitled_how_does_it_feel, chord_bars: 2, phrase_bars: 16, swing: 56,
+    feel: :timeless, stereo_pan: true, voicing: :rootless
   },
   timeless_authentic: {
     bpm: 86, progression: :timeless_authentic, chord_bars: 2, phrase_bars: 16, swing: 56,
@@ -5040,11 +5482,26 @@ def generate_neapolitan_progression(root_hz: 130.81, length: 8, seed: nil)
 end
 
 def sh!(*command)
-  display = command.flatten.join(" ")
+  argv = command.flatten.map(&:to_s)
+  display = argv.join(" ")
   display = "#{display.byteslice(0, 420)}… (#{display.bytesize} bytes)" if display.bytesize > 460
-  puts ">>> #{display}"
-  return if system(*command.flatten.map(&:to_s))
-  msg = "failed: #{command.flatten.first}"
+  bin = File.basename(argv.first.to_s)
+  t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  ok = if DillaDmesg.interactive_bin?(argv)
+         DillaDmesg.play!(bin, argv.last.to_s) if argv.length > 1
+         system(*argv)
+       elsif DillaDmesg.verbose?
+         # Full tool chatter (ffmpeg banners, fluidsynth) when debugging.
+         system(*argv)
+       else
+         # Quiet tools: OpenBSD dmesg only — no ffmpeg version spam.
+         system(*argv, out: File::NULL, err: File::NULL)
+       end
+  sec = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
+  DillaDmesg.run!(display, exitstatus: ok ? 0 : ($?.exitstatus || 1), seconds: sec)
+  return if ok
+  msg = "failed: #{bin}"
+  dmesg_error(msg)
   raise RuntimeError, msg if ENV["DILLA_STREAMING"] == "1"
   abort msg
 end
@@ -5107,7 +5564,7 @@ def play_audio(path, loop: false)
   case tool
   when "afplay"
     if loop
-      puts "looping #{path} via afplay (Ctrl-C to stop)"
+      dmesg("loop #{File.basename(path)} via afplay (ctrl-c stop)", unit: "play0", parent: "dilla0")
       trap("INT") { exit 0 }
       loop { sh! "afplay", "-v", format("%.3f", vol), path }
     else
@@ -5393,7 +5850,7 @@ def dilla_quality(path, baseline_path = nil)
     ml_notes: (ENV["DILLA_ML"] == "1" ? [DillaMl.ddsp_stub_note] : nil),
     loudness_range_lu: loudness["input_lra"]&.to_f, mono_rms_db: mono, spectral_rms_db: spectrum,
     target: { integrated_lufs: -14.0..-11.0, true_peak_max_dbtp: -1.0 }, warnings: [],
-    capabilities: Master::Reach::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
+    capabilities: Master::Io::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
   )
   report[:warnings] << "true peak exceeds -1 dBTP" if report[:true_peak_dbtp] && report[:true_peak_dbtp] > -1.0
   report[:warnings] << "master is outside radio-ready -14..-11 LUFS range" if report[:integrated_lufs] && !(-14.0..-11.0).cover?(report[:integrated_lufs])
@@ -6308,7 +6765,7 @@ def stream_track_banner(extra = nil)
   meta = "pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode} lead=#{lead_tag}/#{arp_tag} " \
          "drums=#{drum_tag} rap=#{rap_tag} speak=#{ENV.fetch('SPEAK', '0')}"
   meta = "#{meta} #{extra}" if extra
-  puts "=== #{tag} (#{meta}) ==="
+  DillaDmesg.track!(tag, meta)
 end
 
 def speech_over_track_enabled?
@@ -6413,17 +6870,17 @@ def play(preset_name = nil, bars_count = 8)
            true
          end
     break if ok
-    warn "render retry #{try + 1}/#{attempts}" if try + 1 < attempts
+    dmesg_warn("render retry #{try + 1}/#{attempts}") if try + 1 < attempts
   end
   stream_iterate_after_render!(out) if stream_iterate_enabled? && File.file?(out)
   log_render_meta(out) if quality_gate_enabled? || ENV["DILLA_STREAMING"] == "1"
   if speech_over_track_enabled?
     cfg = dilla_resolve_config
     track_duration = (60.0 / cfg[:bpm]) * 4.0 * bars_count.to_i
-    puts "speech overlay (#{speech_tts_voice} @ #{speech_tts_rate}, dry)…"
+    dmesg("speech overlay #{speech_tts_voice} rate=#{speech_tts_rate}", unit: "speech0", parent: "dilla0")
     speak_over_track!(out, track_duration, cfg[:bpm])
   end
-  puts "demo: #{out}" if keep_demo && File.file?(out)
+  DillaDmesg.write!(out) if keep_demo && File.file?(out)
   play_audio(out)
 ensure
   if defined?(prev)
@@ -6439,9 +6896,9 @@ def play_loop(path)
   cfg = dilla_resolve_config
   prog = CHORD_PROGRESSIONS[cfg[:progression]]
   prog_names = prog.is_a?(Array) ? prog.join(" → ") : cfg[:progression].to_s
-  puts "looping #{path} (#{File.size(path)} bytes, #{cfg[:bpm].to_i} BPM)"
-  puts "progression: #{prog_names}"
-  puts "Ctrl-C to stop"
+  dmesg("loop #{File.basename(path)} #{File.size(path)}B bpm=#{cfg[:bpm].to_i}", unit: "play0", parent: "dilla0")
+  dmesg("progression #{prog_names}", unit: "harm0", parent: "dilla0")
+  dmesg("ctrl-c to stop", unit: "play0", parent: "dilla0")
   play_audio(path, loop: true)
 end
 
@@ -6635,20 +7092,28 @@ RENDER_MODE_DEFAULTS = {
 
 # Single stream/render style — pad-forward curated progressions + locked 16-step kit.
 DILLA_STYLE_DEFAULTS = {
-  "TRACK" => "chromatic_mediant_drift",
-  "PROGRESSION" => "chromatic_mediant_drift",
-  "BPM" => "86",
+  # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
+  "TRACK" => "get_dis_money",
+  "PROGRESSION" => "get_dis_money",
+  "BPM" => "92",
   "BARS" => "32",
   "FORM" => "camel_32",
   "COMPOSITION" => "1",
-  "GROOVE_DNA" => "wonky",
-  "PERFORMER" => "glasper",
-  "VOICING" => "quartal",
-  "PAD_VOICE" => "blend",
-  "PAD_ARP_MODE" => "wash",
-  "PAD_ATTACK" => "1600",
-  "PAD_RELEASE" => "4200",
+  "GROOVE_DNA" => "donuts",
+  "PERFORMER" => "yancey",
+  "VOICING" => "rootless",
+  "VOICE_LEAD_PADS" => "1",
+  "LEARNED_PROGRESSION" => "0",
+  "ARTIST_VERIFIED_ONLY" => "1",
+  # Stacked pad: Rhodes + Moog + Prophet + texture (see PAD_LAYER_STACKS).
+  "PAD_VOICE" => "stack_soul",
+  # Held pads + single melodic lead (wash arp + multi-lead soup sounded wrong).
+  "PAD_ARP_MODE" => "held",
+  "PAD_ATTACK" => "1100",
+  "PAD_RELEASE" => "3400",
   "PAD_LEGATO_VAR" => "1",
+  "PAD_VOL" => "74",
+  "PAD_LAYERS" => "1",
   "LUSH_SYNTH" => "1",
   "LONG_STRIPDOWN" => "0",
   "MOTIF_RECALL" => "1",
@@ -6657,49 +7122,80 @@ DILLA_STYLE_DEFAULTS = {
   "FLYLO_DRUMS_ONLY" => "1",
   "FLYLO_DRUM_OVERLAY" => "1",
   "FLYLO_QUINT_HATS" => "0",
-  "FLYLO_KICK_GAIN" => "1.35",
-  "KICK_SAMPLE_GAIN" => "0.95",
-  "KICK_GAIN" => "0.9",
+  "FLYLO_KICK_GAIN" => "1.45",
+  "KICK_SAMPLE_GAIN" => "1.05",
+  "KICK_GAIN" => "1.0",
+  "POCKET_DNA" => "1",
+  "POCKET_SIMPLE" => "1",
+  "POCKET_GHOSTS" => "1",
+  "POCKET_OPEN_HAT" => "1",
+  "SNARE_EARLY" => "1",
+  "HATS_LATE" => "1",
+  "KICK_LATE" => "1",
+  "KICK_FREEHAND" => "1",
+  "HAT_MICRO" => "1",
+  "SWING_JITTER" => "1",
+  "GROOVE_ENGINE" => "1",
+  "DRUM_CHOPS" => "1",
+  "NO_QUANTIZE" => "1",
+  "BACKBEAT_CLAP" => "1",
   "RAP_VOCAL" => "0",
   "LA_BEAT_PROGRESSION" => "0",
   "LINEAR_CHORD_INDEX" => "1",
   "HARMONY_LEAD" => "0",
-  "LEAD_ARP" => "0",
+  "SCALE_LEAD" => "0",
+  "CREATIVE_LEAD" => "0",
+  "MELODIC_LEAD" => "1",
+  "LEAD_ARP" => "1",
+  "LEAD_ARP_MODE" => "melodic_soul",
+  "LEAD_VOICE" => "soul_prophet",
   "EXPERIMENTAL_LEADS" => "0",
+  # SYNTH_MORPH off: morph path skips multi-layer pad stack. Cycle within family only.
   "SYNTH_MORPH" => "0",
+  "SYNTH_CYCLE" => "1",
   "LEAD_MORPH" => "0",
-  "FM_NATIVE" => "0",
+  "FM_NATIVE" => "1",
+  "PAD_TEXTURE" => "1",
   "SIDECHAIN_STYLE" => "flylo",
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
-  "DRUM_PRESET" => "flylo_abstract",
-  "FLYLO_OVERLAY_GAIN" => "1.15",
-  "FLYLO_SUB_MIX" => "0.95",
-  "FLYLO_TOP_MIX" => "0.75",
-  "FLYLO_MERGE_BOOST" => "1.55",
-  "FLYLO_BASE_DRUM_VOL" => "0.12",
-  "DRUM_BUS_VOL" => "1.2",
-  "DRUM_BUS_GAIN" => "1.25",
-  "DRUM_MIX_WEIGHT" => "1.25",
-  "DRUM_PEAK_DB" => "-2.0",
-  "HARM_MIX_WEIGHT" => "1.55",
-  "HARM_BUS_VOL" => "1.85",
-  "SIDECHAIN_DRUM_WEIGHT" => "1.35",
-  "SIDECHAIN_HARM_WEIGHT" => "1.4",
-  "FLYLO_CHORD_DUCK" => "0.97",
-  "HARMONIC_PADS_WEIGHT" => "1.7",
-  "HARMONIC_PADS_VOLUME" => "1.55",
-  "HARMONIC_SCALE_LEAD_WEIGHT" => "0.12",
-  "HARMONIC_SCALE_LEAD_VOLUME" => "0.35",
-  "HARMONIC_LEAD_ARP_WEIGHT" => "0.12",
-  "HARMONIC_LEAD_ARP_VOLUME" => "0.35",
-  "HARMONIC_XLEAD_WEIGHT" => "0.08",
-  "HARMONIC_XLEAD_VOLUME" => "0.25",
-  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.15",
-  "HARMONIC_HARMONY_LEAD_VOLUME" => "0.4",
-  "HARMONIC_LEAD_WEIGHT" => "0.12",
-  "HARMONIC_LEAD_VOLUME" => "0.35",
+  "DRUM_PRESET" => "dilla_slight",
+  "FLYLO_OVERLAY_GAIN" => "1.35",
+  "FLYLO_SUB_MIX" => "0.9",
+  "FLYLO_TOP_MIX" => "1.15",
+  "FLYLO_MERGE_BOOST" => "1.75",
+  "FLYLO_BASE_DRUM_VOL" => "0.18",
+  "DRUM_BUS_VOL" => "1.4",
+  "DRUM_BUS_GAIN" => "1.45",
+  "DRUM_MIX_WEIGHT" => "1.35",
+  "DRUM_PEAK_DB" => "-1.5",
+  "DRUM_AIR_DB" => "3.5",
+  "DRUM_PRESENCE_DB" => "3.0",
+  "HARM_MIX_WEIGHT" => "1.75",
+  "HARM_BUS_VOL" => "2.55",
+  "HARM_BODY_DB" => "4.0",
+  "HARM_MID_DB" => "3.4",
+  "HARM_PRESENCE_DB" => "3.8",
+  "HARM_AIR_DB" => "2.4",
+  "HARM_SUB_CUT_DB" => "-2.6",
+  "HARM_SUB_SHELF_DB" => "1.6",
+  "SIDECHAIN_DRUM_WEIGHT" => "1.22",
+  "SIDECHAIN_HARM_WEIGHT" => "1.72",
+  "FLYLO_CHORD_DUCK" => "0.99",
+  "HARMONIC_PADS_WEIGHT" => "1.85",
+  "HARMONIC_PADS_VOLUME" => "1.85",
+  # Lead must cut over the stacked pad bed.
+  "HARMONIC_SCALE_LEAD_WEIGHT" => "1.05",
+  "HARMONIC_SCALE_LEAD_VOLUME" => "1.45",
+  "HARMONIC_LEAD_ARP_WEIGHT" => "1.55",
+  "HARMONIC_LEAD_ARP_VOLUME" => "1.85",
+  "HARMONIC_XLEAD_WEIGHT" => "0.12",
+  "HARMONIC_XLEAD_VOLUME" => "0.35",
+  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.95",
+  "HARMONIC_HARMONY_LEAD_VOLUME" => "1.35",
+  "HARMONIC_LEAD_WEIGHT" => "1.0",
+  "HARMONIC_LEAD_VOLUME" => "1.45",
   "STREAM_CREATIVE_FREEDOM" => "0",
   "STREAM_ANALOG_WILD" => "0",
   "STREAM_ANALOG_EVERY" => "0",
@@ -6711,7 +7207,6 @@ DILLA_STYLE_DEFAULTS = {
   "CAMEL_CLEAN_MASTER" => "1",
   "CAMEL_NO_REVERB" => "1",
   "CAMEL_DRY_DRUMS" => "0",
-  "DRUM_CHOPS" => "0",
   "CONV_REVERB" => "0",
   "VINYL" => "0",
   "SELF_SAMPLE" => "0",
@@ -6720,8 +7215,15 @@ DILLA_STYLE_DEFAULTS = {
   "STREAM_GAP" => "0.55",
   "STREAM_CROSSFADE" => "0.12",
   "STREAM_DEMO" => "demo.wav",
-  "NO_QUANTIZE" => "0",
-  "SWING" => "54"
+  # Dilla's documented MPC sweet spot is 54-58% (Dilla Time + producer
+  # consensus); 60+ reads as over-swung rather than the authentic pocket.
+  "SWING" => "56",
+  "MASTER_HEURISTICS" => "1",
+  # Slow tempo-breathe over a phrase (not per-hit noise) + periodic full-layer
+  # drop-out for arrangement contrast — see DillaGroove.phrase_drift_sec and
+  # DillaRhythm.periodic_layer_drop_gain.
+  "PHRASE_DRIFT" => "1",
+  "ARRANGEMENT_VARIATION" => "1"
 }.freeze
 
 # Back-compat name used by camel_mode paths.
@@ -6734,12 +7236,24 @@ STREAM_SOUL_DEFAULTS = {
   "LA_BEAT_PROGRESSION" => "0",
   "LINEAR_CHORD_INDEX" => "1",
   "PAD_LEGATO_VAR" => "1",
+  "LEAD_ARP" => "1",
+  "LEAD_ARP_MODE" => "melodic_soul",
+  "LEAD_VOICE" => "soul_prophet",
+  "MELODIC_LEAD" => "1",
+  "SCALE_LEAD" => "0",
+  "CREATIVE_LEAD" => "0",
   "HARMONY_LEAD" => "0",
-  "LEAD_ARP" => "0",
-  "VOICING" => "kenny_barron",
+  "PAD_VOICE" => "stack_soul",
+  "PAD_ARP_MODE" => "held",
+  "PAD_LAYERS" => "1",
+  "PAD_VOL" => "74",
+  "VOICING" => "rootless",
+  "VOICE_LEAD_PADS" => "1",
+  "LEARNED_PROGRESSION" => "0",
   "STREAM_LOCK" => "0",
-  "TRACK" => "maj7_minor_cycle",
-  "PROGRESSION" => "maj7_minor_cycle",
+  "TRACK" => "get_dis_money",
+  "PROGRESSION" => "get_dis_money",
+  "ARTIST_VERIFIED_ONLY" => "1",
   "RADIO_BERGEN" => "0",
   "SPEAK" => "0",
   "MOTIF_RECALL" => "1",
@@ -6755,12 +7269,14 @@ STREAM_SOUL_DEFAULTS = {
   "RAP_VOCAL" => "0",
   "SIDECHAIN_STYLE" => "flylo",
   "SYNTH_MORPH" => "0",
-  "SYNTH_CYCLE" => "0",
+  "SYNTH_CYCLE" => "1",
   "LEAD_MORPH" => "0",
-  "FM_NATIVE" => "0",
+  "FM_NATIVE" => "1",
   "EXPERIMENTAL_LEADS" => "0",
-  "HARMONIC_PADS_WEIGHT" => "1.5",
-  "HARMONIC_PADS_VOLUME" => "1.35",
+  "HARMONIC_PADS_WEIGHT" => "1.85",
+  "HARMONIC_PADS_VOLUME" => "1.85",
+  "HARMONIC_LEAD_ARP_WEIGHT" => "1.55",
+  "HARMONIC_LEAD_ARP_VOLUME" => "1.85",
   "HARMONIC_XLEAD_WEIGHT" => "0.15",
   "HARMONIC_XLEAD_VOLUME" => "0.35"
 }.freeze
@@ -6922,6 +7438,20 @@ end
 # Style-lock keys — reassert after track soul / iterate so the mix doesn't drift.
 DILLA_STYLE_LOCK_KEYS = DILLA_STYLE_DEFAULTS.keys.freeze
 
+# Pad stack + lead must survive per-track soul profiles (those used to force single-voice "blend").
+DILLA_PAD_LEAD_LOCK_KEYS = %w[
+  PAD_VOICE PAD_LAYERS PAD_VOL PAD_ARP_MODE
+  LEAD_ARP LEAD_ARP_MODE LEAD_VOICE HARMONY_LEAD
+  MELODIC_LEAD SCALE_LEAD CREATIVE_LEAD LEARNED_PROGRESSION VOICE_LEAD_PADS VOICING
+  ARTIST_VERIFIED_ONLY
+  SYNTH_MORPH SYNTH_CYCLE LEAD_MORPH EXPERIMENTAL_LEADS
+  HARMONIC_PADS_WEIGHT HARMONIC_PADS_VOLUME
+  HARMONIC_LEAD_ARP_WEIGHT HARMONIC_LEAD_ARP_VOLUME
+  HARMONIC_SCALE_LEAD_WEIGHT HARMONIC_SCALE_LEAD_VOLUME
+  HARMONIC_HARMONY_LEAD_WEIGHT HARMONIC_HARMONY_LEAD_VOLUME
+  HARMONIC_LEAD_WEIGHT HARMONIC_LEAD_VOLUME
+].freeze
+
 def soft_fill_env!(table)
   table.each do |key, value|
     next if value.nil?
@@ -6936,6 +7466,14 @@ def soft_fill_iterate!(tuning, locked_keys: [])
     next if locked.include?(key.to_s)
     next if ENV[key] && !ENV[key].empty?
     ENV[key] = value.to_s
+  end
+end
+
+def reassert_pad_lead_locks!
+  return unless camel_mode? || ENV["RENDER_MODE"].to_s.downcase == "dilla"
+  DILLA_PAD_LEAD_LOCK_KEYS.each do |key|
+    next unless DILLA_STYLE_DEFAULTS.key?(key)
+    ENV[key] = DILLA_STYLE_DEFAULTS[key].to_s
   end
 end
 
@@ -6971,7 +7509,8 @@ def stream_iterate_after_render!(path)
     if harsh[:needs_notch]
       notes << "harsh_soft"
     end
-    promote_progression_hook!(ENV["TRACK"].to_s, beauty)
+    promote_progression_hook!(ENV["TRACK"].to_s, beauty,
+                               report: (analyze_audio(path) if DillaMaster.loss_gates.any?))
     notes.concat(stream_iterate_evolve_harmony!) if (@stream_iterate_count % 4).zero?
     reassert_camel_beauty_locks!
     line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
@@ -6998,7 +7537,8 @@ def stream_iterate_after_render!(path)
     @last_groove_score = groove_score
     notes << "groove=#{groove_score}"
   end
-  promote_progression_hook!(ENV["TRACK"].to_s, beauty)
+  promote_progression_hook!(ENV["TRACK"].to_s, beauty,
+                             report: (analyze_audio(path) if DillaMaster.loss_gates.any?))
   every = [(ENV["EVOLVE_EVERY"] || "3").to_i, 1].max
   evolve_due = composition_enabled? && (@stream_iterate_count % every).zero?
   groove_low = groove_score && groove_score < (ENV["GROOVE_SCORE_MIN"] || "75").to_f
@@ -7311,7 +7851,7 @@ def apply_render_mode!
           end
   return unless table
   soft_fill_env!(table)
-  puts "render mode: #{mode}" if ENV["DILLA_STREAMING"] != "1"
+  DillaDmesg.style!("mode=#{mode}") if ENV["DILLA_STREAMING"] != "1"
 end
 
 def motif_recall_enabled?
@@ -7328,10 +7868,15 @@ def apply_motif_recall!(bar)
   sess.record_callback!(bar, "hook", state)
 end
 
-def promote_progression_hook!(track, beauty)
+def promote_progression_hook!(track, beauty, report: nil)
   return if track.to_s.empty?
   min = (ENV["PROMOTION_BEAUTY_MIN"] || "85").to_f
   return unless beauty >= min
+  gate = DillaMaster.passes_loss_gates?(report)
+  unless gate[:pass]
+    warn "progression promotion blocked (loss gates): #{gate[:failures].join('; ')}"
+    return
+  end
   chords = DillaHarmony.last_progression_chords
   distinct = chords ? chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }.uniq.length : 0
   return unless distinct >= 6
@@ -7431,6 +7976,10 @@ def apply_track_soul_profile!(track, force: false)
   [TRACK_SOUL_PAD_PROFILES[key], TRACK_SOUL_LEAD_PROFILES[key]].compact.each do |profile|
     profile.each do |env_key, value|
       next if !force && ENV[env_key] && !ENV[env_key].empty?
+      # Never demote multi-layer stacks to single-voice presets mid-stream.
+      if env_key == "PAD_VOICE" && ENV["PAD_VOICE"].to_s.start_with?("stack_")
+        next
+      end
       ENV[env_key] = value.to_s
     end
   end
@@ -7446,9 +7995,10 @@ def apply_dilla_style!(force: false)
     ENV[key] = value.to_s
   end
   track = ENV["TRACK"].to_s
-  track = "chromatic_mediant_drift" if track.empty?
+  track = "get_dis_money" if track.empty?
   apply_track_soul_profile!(track, force: force)
   reassert_dilla_style_locks! if force
+  reassert_pad_lead_locks!
   ensure_learned_engine_seeded!
   apply_learned_env_for_track!(track)
 end
@@ -7515,6 +8065,53 @@ def render_spectrum(path)
     mid: band_rms(path, highpass: 180, lowpass: 3_500),
     high: band_rms(path, highpass: 3_500, lowpass: 16_000)
   }
+end
+
+# Objective mix meters for piping into MASTER council (not a parallel critique stack).
+# Persona panel, multi-solution ideation, and cherry-pick:
+#   MASTER /dilla crit [path]  or  /dilla-critique  or  /sound-critique
+def mix_metrics(path)
+  return nil unless path && File.file?(path)
+  peak_db = -90.0
+  rms_db = -90.0
+  duration = 0.0
+  begin
+    out, err, = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                               "-af", "volumedetect", "-f", "null", "-")
+    blob = err.to_s + out.to_s
+    peak_db = Regexp.last_match(1).to_f if blob =~ /max_volume:\s*([-\d.]+)/
+    rms_db = Regexp.last_match(1).to_f if blob =~ /mean_volume:\s*([-\d.]+)/
+    out2, = Open3.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                           "-of", "default=noprint_wrappers=1:nokey=1", path)
+    duration = out2.to_s.strip.to_f
+  rescue StandardError
+    nil
+  end
+  crest = (peak_db > -80 && rms_db > -80) ? (10**((peak_db - rms_db) / 20.0)).round(3) : 0.0
+  {
+    peak_db: peak_db, rms_db: rms_db, crest: crest,
+    duration_sec: duration.round(2),
+    sub_db: band_rms(path, highpass: 40, lowpass: 100),
+    pad_body_db: band_rms(path, highpass: 100, lowpass: 300),
+    mids_db: band_rms(path, highpass: 300, lowpass: 1200),
+    presence_db: band_rms(path, highpass: 1200, lowpass: 4000),
+    air_db: band_rms(path, highpass: 4000, lowpass: 12_000)
+  }
+end
+
+def crit_session_cli!(path = nil)
+  path ||= File.join(OUTPUT_DIR, "demo.wav")
+  path = File.join(ROOT, "demo.wav") unless File.file?(path)
+  abort "crit: missing #{path} — render first, then perfect via MASTER" unless File.file?(path)
+  DillaDmesg.boot!(cmd: "crit")
+  DillaDmesg.read!(path)
+  m = mix_metrics(path)
+  DillaDmesg.metrics!(m)
+  puts JSON.pretty_generate(m)
+  dmesg("meters only — multi-persona cherry-pick via master /dilla crit", unit: "meter0", parent: "dilla0")
+  dmesg("master: /dilla crit #{File.basename(path)} or /dilla-critique", unit: "meter0", parent: "dilla0")
+  abort "crit: unusable levels" if m[:peak_db].to_f > -0.2 || (m[:rms_db] && m[:rms_db] < -40)
+  dmesg("meters ok — run master council to perfect", unit: "meter0", parent: "dilla0")
 end
 
 def render_quality_acceptable?(path)
@@ -7647,11 +8244,10 @@ end
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
 # Pad-first rotation (curated progressions that read as chord music).
+# Stream only artist-verified song harmony (see ARTIST_VERIFIED_PROGRESSIONS).
 DILLA_STREAM_PRIORITY = %w[
-  chromatic_mediant_drift maj7_minor_cycle neo_soul erykah_minor time_donut
-  warm_minor_arc electronium_loop quartal_west_coast slow_ballad_wash
-  minor_iv_loop neo_soul_pocket slash_neo_soul aydin_modal_quartal
-  glasper_quartal timeless_authentic relative_major_turn
+  get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
+  maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
 ].freeze
 
 def stream_track_order
@@ -7661,7 +8257,7 @@ def stream_track_order
     known = STREAM_TRACKS.include?(key) || DillaLofiMachine.harmony_profile?(key) ||
             TRACK_PRESETS.key?(key)
     return [key] if known
-    warn "stream: unknown lock #{lock} — falling back to full rotation"
+    dmesg_warn("stream unknown lock #{lock} — full rotation")
   end
   if camel_mode?
     priority = DILLA_STREAM_PRIORITY.select { |t| STREAM_TRACKS.include?(t) }
@@ -7687,8 +8283,8 @@ def stream(bars_count = STREAM_BARS_COUNT)
           "sleep 2; done"
     if darwin? && ENV["DILLA_STREAM_LAUNCHED"] != "1" &&
        (ENV["GROK_AGENT"] == "1" || !$stdout.tty? || ENV["DILLA_FORCE_TERMINAL"] == "1")
-      puts "agent/background shell — opening Terminal for continuous stream…"
-      puts cmd
+      dmesg("agent shell — open terminal for continuous stream", unit: "stream0", parent: "dilla0")
+      DillaDmesg.emit("exec0", "osascript terminal stream", parent: "dilla0") if DillaDmesg.verbose?
       system("osascript", "-e", %(tell application "Terminal" to do script "#{cmd.gsub('"', '\\"')}"))
       system("osascript", "-e", 'tell application "Terminal" to activate')
       return
@@ -7723,22 +8319,30 @@ def stream(bars_count = STREAM_BARS_COUNT)
          else
            "fast"
          end
-  puts "streaming (#{mode}) — cycling #{order.join(', ')} (Ctrl-C to stop)"
-  puts "iterate log: #{STREAM_ITERATE_LOG}" if stream_iterate_enabled?
+  DillaDmesg.boot!(mode: ENV["RENDER_MODE"] || "dilla", cmd: "stream")
+  DillaDmesg.stream!(mode: mode, bars: bars_count, order_n: order.length)
+  dmesg("cycle #{order.first(8).join(',')}#{order.length > 8 ? '…' : ''} (ctrl-c stop)", unit: "stream0", parent: "dilla0")
+  dmesg("iterate log #{File.basename(STREAM_ITERATE_LOG.to_s)}", unit: "stream0", parent: "dilla0") if stream_iterate_enabled?
   loop do
     order.each do |t|
       if File.mtime(__FILE__) > self_mtime
-        puts "=== dilla.rb changed — restarting to pick it up ==="
+        dmesg("dilla.rb mtime changed — exec restart", unit: "stream0", parent: "dilla0")
         exec(Gem.ruby, __FILE__, "stream", STREAM_BARS_COUNT.to_s)
       end
       track = t.to_s
       apply_track_soul_profile!(track, force: !user_pad_locked)
-      reassert_camel_beauty_locks! if camel_mode?
+      reassert_pad_lead_locks! unless user_pad_locked
+      # Keep progression aligned with the track id (style lock would pin TRACK forever).
       ENV["TRACK"] = track
+      ENV["PROGRESSION"] = track unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
+      reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
       if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
         track = rb
         apply_track_soul_profile!(track, force: !user_pad_locked)
-        reassert_camel_beauty_locks! if camel_mode?
+        reassert_pad_lead_locks! unless user_pad_locked
+        ENV["TRACK"] = track
+        ENV["PROGRESSION"] = track
+        reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
         stream_track_banner("← playlist.brgen.no (rotation #{t})")
       else
         stream_track_banner
@@ -7918,30 +8522,42 @@ GENERATED_STYLES = %i[
   coltrane backdoor slash modal_interchange
 ].freeze
 
-def curated_progression_pads(key)
-  sym = key&.to_sym
-  return nil unless sym && CHORD_PROGRESSIONS.key?(sym)
-  CHORD_PROGRESSIONS.fetch(sym).map do |n|
-    PAD_CHORD_LOOKUP[n] || MODAL_MINOR_CHORDS.find { |c| c[:name] == n }
-  end.compact
+def resolve_pad_chord_symbol(n)
+  PAD_CHORD_LOOKUP[n] || MODAL_MINOR_CHORDS.find { |c| c[:name] == n } ||
+    begin
+      DillaLofiMachine.chord_from_symbol(n)
+    rescue StandardError
+      nil
+    end
 end
 
-# Baked-in learnings — engine works without project/learnings/*.json.
-# Baked 16-step kit grid (from demucs drums stem peak-count @ ~86 BPM). Locked
-# so density/rotation cannot rewrite the pocket into noise.
+def curated_progression_pads(key)
+  sym = key&.to_sym
+  return nil unless sym
+  if artist_verified_only? && !ARTIST_VERIFIED_PROGRESSIONS.key?(sym)
+    return nil
+  end
+  names = artist_verified_chords(sym) || CHORD_PROGRESSIONS[sym]
+  return nil unless names.is_a?(Array) && names.length >= 2
+  pads = names.filter_map { |n| resolve_pad_chord_symbol(n) }
+  pads.length >= 2 ? pads : nil
+end
+
+# Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
+# POCKET_DNA=1. Keep this simple — dense grids are why the kit sounded wrong.
 FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=t6SXXx1Fu_4".freeze
 FLYLO_CAMEL_DRUM_GRID = {
   "bpm" => 86,
-  "swing" => 52,
-  "source" => "stem_locked_grid",
+  "swing" => 60,
+  "source" => "pocket_dna_simple",
   "source_url" => FLYLO_CAMEL_SOURCE_URL,
-  # Kick: downbeat + syncopated cluster (matches ~85 BPM kick-band peaks).
-  "flylo_kicks" => [0, 3, 7, 10, 11, 14],
-  # Snare: backbeats only (4 & 12). Extra 7/15 were ghosted as full snares → wrong.
+  "flylo_kicks" => [0, 6, 10],
   "flylo_snares" => [4, 12],
-  # Closed 8ths — not dense 16ths + quintuplet wash.
+  "flylo_ghost_snares" => [7],
   "flylo_hats" => [0, 2, 4, 6, 8, 10, 12, 14],
-  "flylo_perc" => [5, 9, 13]
+  "flylo_hat_ghosts" => [],
+  "flylo_perc" => [],
+  "flylo_claps" => [4, 12]
 }.freeze
 CAMEL_PROGRESSION_SYMS = %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG].freeze
 
@@ -8035,11 +8651,19 @@ def apply_learned_env_for_track!(track)
   eng = load_learned_engine
   t = track.to_s
   alias_key = eng.dig("track_aliases", t)
-  prog_keys = [alias_key, t, eng["top_track"]].compact.uniq
-  prog_keys.each do |pk|
-    next unless eng.dig("progressions", pk.to_s)&.length.to_i >= 2
-    ENV["PROGRESSION"] = pk.to_s unless ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
-    break
+  # Never remap a curated catalog TRACK onto a learned promo progression.
+  # Opt in with LEARNED_PROGRESSION=1 when you want that behavior.
+  allow_learned_prog = ENV.fetch("LEARNED_PROGRESSION", "0") != "0"
+  has_catalog = CHORD_PROGRESSIONS.key?(t.to_sym) ||
+                DillaLofiMachine.harmony_profile?(t.to_sym) ||
+                CHORD_PROGRESSIONS.key?(ENV["PROGRESSION"].to_s.downcase.tr("-", "_").to_sym)
+  if allow_learned_prog && !has_catalog
+    prog_keys = [alias_key, t, eng["top_track"]].compact.uniq
+    prog_keys.each do |pk|
+      next unless eng.dig("progressions", pk.to_s)&.length.to_i >= 2
+      ENV["PROGRESSION"] = pk.to_s if ENV["PROGRESSION"].nil? || ENV["PROGRESSION"].empty?
+      break
+    end
   end
   grid = eng.dig("drum_grids", t) || (alias_key && eng.dig("drum_grids", alias_key))
   if grid.is_a?(Hash)
@@ -8190,22 +8814,41 @@ end
 def dilla_progression(mode = :maj7_minor_cycle)
   track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
   mode_sym = mode.to_sym
-  eng = load_learned_engine
-  learned_keys = [eng.dig("track_aliases", track.to_s), track.to_s, mode_sym.to_s].compact.uniq
-  learned_keys.each do |key|
-    pads = learned_progression_pads(key)
-    return pads if pads&.length.to_i >= 2
+  prog_env = ENV["PROGRESSION"].to_s.downcase.tr("-", "_")
+  prog_sym = prog_env.empty? ? nil : prog_env.to_sym
+  # Catalog first. Learned aliases were collapsing every TRACK into a truncated
+  # 6-chord promo loop (Dbmaj9…Abmaj9low) — theory and sound both suffered.
+  prefer_learned = ENV.fetch("LEARNED_PROGRESSION", "0") != "0"
+  catalog_keys = [prog_sym, mode_sym, track].compact.uniq
+  unless prefer_learned
+    catalog_keys.each do |key|
+      pads = curated_progression_pads(key)
+      return voice_led_pad_progression(pads) if pads&.length.to_i >= 2
+      pads = safe_producer_progression(key)
+      return voice_led_pad_progression(pads) if pads&.length.to_i >= 2
+    end
   end
-  [mode_sym, track].uniq.each do |key|
-    pads = curated_progression_pads(key)
-    return pads if pads&.length.to_i >= 2
+  eng = load_learned_engine
+  learned_keys = [eng.dig("track_aliases", track.to_s), track.to_s, mode_sym.to_s, prog_env].compact.uniq
+  learned_keys.each do |key|
+    next if key.to_s.empty?
+    pads = learned_progression_pads(key)
+    return voice_led_pad_progression(pads) if pads&.length.to_i >= 2
+  end
+  if prefer_learned
+    catalog_keys.each do |key|
+      pads = curated_progression_pads(key)
+      return voice_led_pad_progression(pads) if pads&.length.to_i >= 2
+      pads = safe_producer_progression(key)
+      return voice_led_pad_progression(pads) if pads&.length.to_i >= 2
+    end
   end
   if (producer_pads = safe_producer_progression(track))&.length.to_i >= 2
-    return producer_pads
+    return voice_led_pad_progression(producer_pads)
   end
   sonic = sonic_profile_for(track)
   engine_pads = progression_from_engine(sonic, mode)
-  return engine_pads if engine_pads&.any?
+  return voice_led_pad_progression(engine_pads) if engine_pads&.any?
 
   if GENERATED_STYLES.include?(mode.to_sym) || mode.to_sym == :generated
     root_hz = (ENV["GEN_ROOT"] || 130.81).to_f
@@ -8215,18 +8858,36 @@ def dilla_progression(mode = :maj7_minor_cycle)
     style = mode.to_sym == :generated ? (ENV["GEN_STYLE"] || "functional").to_sym : mode.to_sym
     style = :functional if DillaHarmony.block_generated?(track, style)
     routed = route_generated_style(style, root_hz:, mode: gen_mode, length:, seed:)
-    return routed if routed
+    return voice_led_pad_progression(routed) if routed
     case style
-    when :planing then return generate_planing_progression(root_hz:, mode: gen_mode, length:, seed:)
-    when :chromatic_mediant then return generate_chromatic_mediant_progression(root_hz:, length:, seed:)
-    when :polytonal then return generate_polytonal_progression(root_hz:, mode: gen_mode, length:, seed:)
-    when :negative_harmony then return generate_negative_harmony_progression(root_hz:, mode: gen_mode, length:, seed:)
-    when :neapolitan then return generate_neapolitan_progression(root_hz:, length:, seed:)
-    else return generate_progression(root_hz:, mode: gen_mode, length:, seed:)
+    when :planing then return voice_led_pad_progression(generate_planing_progression(root_hz:, mode: gen_mode, length:, seed:))
+    when :chromatic_mediant then return voice_led_pad_progression(generate_chromatic_mediant_progression(root_hz:, length:, seed:))
+    when :polytonal then return voice_led_pad_progression(generate_polytonal_progression(root_hz:, mode: gen_mode, length:, seed:))
+    when :negative_harmony then return voice_led_pad_progression(generate_negative_harmony_progression(root_hz:, mode: gen_mode, length:, seed:))
+    when :neapolitan then return voice_led_pad_progression(generate_neapolitan_progression(root_hz:, length:, seed:))
+    else return voice_led_pad_progression(generate_progression(root_hz:, mode: gen_mode, length:, seed:))
     end
   end
-  names = CHORD_PROGRESSIONS.fetch(mode.to_sym, CHORD_PROGRESSIONS.fetch(:maj7_minor_cycle))
-  names.map { |n| PAD_CHORD_LOOKUP[n] || MODAL_MINOR_CHORDS.find { |c| c[:name] == n } }.compact
+  names = CHORD_PROGRESSIONS.fetch(mode.to_sym, CHORD_PROGRESSIONS.fetch(:soul))
+  voice_led_pad_progression(names.filter_map { |n| resolve_pad_chord_symbol(n) })
+end
+
+# Closest-tone voice leading + close jazz voicing so pads don't thrash register.
+def voice_led_pad_progression(pads)
+  return pads if pads.nil? || pads.length < 2
+  return pads if ENV.fetch("VOICE_LEAD_PADS", "1") == "0"
+  style = (ENV["VOICING"] || "rootless").to_s.downcase.tr("-", "_").to_sym
+  style = :rootless unless DillaHarmony::VOICING_STYLES.include?(style)
+  led = DillaHarmony.voice_lead_chords(pads, rootless: style != :cluster)
+  return pads if led.nil? || led.empty?
+  led.map.with_index do |ch, i|
+    src = pads[i] || pads.last
+    name = ch.is_a?(Hash) ? (ch[:name] || src[:name]) : src[:name]
+    hz = ch.is_a?(Hash) ? ch[:hz] : ch
+    { name: name, hz: hz, bass_hz: src[:bass_hz] || src[:hz]&.min }
+  end
+rescue StandardError
+  pads
 end
 
 def dilla_chord_bass_hz(chord)
@@ -8514,91 +9175,83 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_
                                  sec_gain, section, pad_chords, chord_bars:, phrase_bars:, chord_phases:)
   return unless flylo_drum_overlay_enabled?
   return if camel_mode? && bar < camel_drum_entry_bar
-  # Camel lock never drops bars — drum_drop rewrote the Camel pattern.
   return if !camel_drum_lock? && drum_drop_bar?(bar, section)
 
   density = flylo_overlay_density(bar, n_bars, chord_bars: chord_bars, pad_chords: pad_chords,
                                   chord_phases: chord_phases, phrase_bars: phrase_bars)
-  density = density.clamp(flylo_primary_drums? ? 0.55 : 0.12, 1.35)
+  density = density.clamp(flylo_primary_drums? ? 0.7 : 0.2, 1.35)
   bar_bpm = DillaRhythm.bar_bpm(bar)
-  # Lock: ignore section sec_gain so intro isn't a whisper of the kit.
   overlay_gain = camel_drum_lock? ? density : (sec_gain * density)
-  chord_lens = instance_variable_defined?(:@render_chord_bar_lens) ? @render_chord_bar_lens : nil
-  chord = if pad_chords&.any?
-            pad_chords[dilla_chord_index(bar, pad_chords, chord_bars: chord_bars, phrase_bars: phrase_bars,
-                                         chord_bar_lens: chord_lens)]
-          end
-  perc_hz = flylo_chord_perc_hz(chord)
+  timing_use = timing || DillaLofiMachine::DILLA_TIMING
+  swing_use = [swing.to_f, 60.0].max
 
-  # Lock: grid-quantized only — no Dilla ms offsets / swing push that smears the Camel pocket.
-  place = lambda do |step, role_timing|
-    if camel_drum_lock?
-      base + step * step_p
-    else
-      [base + step * step_p +
-       dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
-       dilla_timing_ms(role_timing, bar, step, timing, beat_p) / 1000.0, 0.0].max
-    end
+  # --- Simplicity: sparse rotating phrases (not dense onset dumps) ---
+  if DillaGroove.pocket_dna?
+    kicks = DillaGroove.pocket_kicks(bar)
+    hard_snares = DillaGroove.pocket_snares_hard(bar)
+    ghost_snares = DillaGroove.pocket_snares_ghost(bar)
+    hat_steps = DillaGroove.pocket_hats(bar)
+  else
+    kicks = flylo_overlay_steps(bar, section, :kicks)
+    hard_snares = flylo_overlay_steps(bar, section, :snares)
+    ghost_snares = Array(learned_flylo_overlay_steps(:ghost_snares)).map(&:to_i)
+    hat_steps = flylo_overlay_steps(bar, section, :hats)
   end
 
-  flylo_overlay_steps(bar, section, :kicks).each do |step|
-    t = place.call(step, :kick_sync)
-    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step)
-    base_vel = camel_drum_lock? ? 0.92 : 0.88
-    vel = dilla_velocity(base_vel, bar, step, spread: camel_drum_lock? ? 0.02 : 0.06) *
-          overlay_gain * wobble * flylo_kick_velocity_scale
-    events[:flylo_kick] << [t.round(6), vel.clamp(camel_drum_lock? ? 0.55 : 0.42, 0.98)]
+  # --- Micro-timing: swing + snare-early / kick-late / hats-late + freehand kick ---
+  place = lambda do |step, role_timing|
+    t = base + step * step_p
+    t += dilla_swing_offset(step, step_p, swing_use, quintuplet: false, bar: bar, bpm: bar_bpm)
+    t += dilla_timing_ms(role_timing, bar, step, timing_use, beat_p) / 1000.0
+    t = DillaGroove.apply_pocket_place(t, role: role_timing, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
+    [t, 0.0].max
+  end
+
+  kicks.each do |step|
+    role = step.zero? ? :kick_anchor : :kick_sync
+    t = place.call(step, role)
+    base_vel = step.zero? ? 0.98 : 0.78
+    vel = dilla_velocity(base_vel, bar, step, spread: 0.03) *
+          overlay_gain * flylo_kick_velocity_scale
+    vel *= 0.75 unless step.zero? || step == 10
+    sk = DillaGroove.kick_sample_key(bar, step)
+    events[:flylo_kick] << [t.round(6), vel.clamp(0.55, 0.99), sk]
   end
 
   return if section == :breakdown && !camel_keep_flylo_on_breakdown? && !camel_drum_lock?
-  flylo_overlay_steps(bar, section, :snares).each do |step|
-    t = place.call(step, :snare)
-    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step)
-    snare_boost = flylo_primary_drums? ? 1.55 : 1.0
-    vel = dilla_velocity(camel_drum_lock? ? 0.78 : 0.62, bar, step, spread: camel_drum_lock? ? 0.03 : 0.1) *
-          overlay_gain * wobble * snare_boost
-    events[:flylo_snare] << [t.round(6), vel.clamp(0.45, 0.95)]
+
+  (hard_snares | ghost_snares).each do |step|
+    ghost = ghost_snares.include?(step) && !hard_snares.include?(step)
+    t = place.call(step, ghost ? :ghost : :snare)
+    base_vel = ghost ? 0.22 : 0.9
+    vel = dilla_velocity(base_vel, bar, step, spread: 0.04) *
+          overlay_gain * (ghost ? 1.0 : 1.75)
+    sk = DillaGroove.snare_sample_key(ghost: ghost)
+    events[:flylo_snare] << [t.round(6), vel.clamp(ghost ? 0.1 : 0.6, ghost ? 0.32 : 0.98), sk]
   end
 
-  flylo_overlay_steps(bar, section, :hats).each do |step|
-    role = step.odd? ? :hat_up : :hat_down
+  if backbeat_clap_enabled?
+    hard_snares.each do |step|
+      t = place.call(step, :clap)
+      vel = dilla_velocity(0.32, bar, step, spread: 0.03) * overlay_gain
+      events[:clap] << [t.round(6), vel.clamp(0.14, 0.48), :clap]
+    end
+  end
+
+  hat_steps.each do |step|
+    role = step.even? ? :hat_down : :hat_up
     t = place.call(step, role)
-    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step, n: 5)
-    vel = dilla_velocity(camel_drum_lock? ? 0.52 : 0.42, bar, step, spread: camel_drum_lock? ? 0.04 : 0.12) *
-          overlay_gain * wobble
-    events[:flylo_hat] << [t.round(6), vel.clamp(0.2, 0.75)]
+    base_vel = step.even? ? 0.46 : 0.32
+    vel = dilla_velocity(base_vel, bar, step, spread: 0.06) * overlay_gain
+    events[:flylo_hat] << [t.round(6), vel.clamp(0.16, 0.68), :hat]
   end
 
-  # Quint hats are NOT in Camel — they turn the kit into a polyrhythmic hiss bed.
-  unless camel_drum_lock?
-    if ENV.fetch("FLYLO_QUINT_HATS", "1") != "0" && !(flylo_drums_only? && bar.odd?)
-      quint_p = bar_p / 5.0
-      quint_mul = flylo_drums_only? ? 0.55 : 1.0
-      5.times do |i|
-        t = (base + i * quint_p).round(6)
-        wobble = flylo_wobble_velocity_mul(bar, i + 16, n: 5)
-        vel = dilla_velocity(0.28, bar, i, spread: 0.14) * overlay_gain * wobble * quint_mul
-        events[:flylo_quint] << [t, vel.clamp(0.05, 0.55)]
-      end
-    end
+  if DillaGroove.pocket_open_hat?(bar)
+    t = place.call(14, :open)
+    vel = dilla_velocity(0.38, bar, 14, spread: 0.04) * overlay_gain
+    events[:flylo_hat] << [t.round(6), vel.clamp(0.18, 0.5), :open_hat]
   end
-
-  flylo_overlay_steps(bar, section, :perc).each do |step|
-    t = place.call(step, :ghost)
-    wobble = camel_drum_lock? ? 1.0 : flylo_wobble_velocity_mul(bar, step, n: 5)
-    vel = dilla_velocity(0.22, bar, step, spread: 0.08) * overlay_gain * wobble
-    events[:flylo_perc] << [t.round(6), vel.clamp(0.08, 0.4), perc_hz, 0.0]
-  end
-
-  unless camel_drum_lock?
-    if section == :main && bar % 8 == 5
-      events[:flylo_rim] << [(base + 10 * step_p).round(6), dilla_velocity(0.24, bar, 10) * overlay_gain, 0.4]
-    end
-    if bar % 16 == 11 && density > 0.5
-      events[:flylo_glitch] << [(base + 14 * step_p).round(6),
-                                dilla_velocity(0.3, bar, 14, spread: 0.08) * overlay_gain, :ind_stab]
-    end
-  end
+  # No perc / quint / rim spam — simplicity is the trick.
 end
 
 def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, drums_only: false,
@@ -8637,6 +9290,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                                   chord_bars: chord_bars, phrase_bars: phrase_bars)
     sec_gain *= DillaRhythm.stripdown_gain(bar, section)
     sec_gain *= DillaRhythm.element_strip_gain(base)
+    sec_gain *= DillaRhythm.periodic_layer_drop_gain(bar)
     phase = chord_phase_at(bar, pad_chords, chord_phases, chord_bars: chord_bars, phrase_bars: phrase_bars)
     chop_entry = spectral_arp_chop_bar?(bar, chord_bars, drums_only, section)
     pattern = if DillaGroove.kick_snare_swap?
@@ -8936,7 +9590,7 @@ def dilla_drum_filter(snare_env, hat_env, open_env, duration, sample_input: nil)
   filter << "[ns]volume='(#{snare_env})':eval=frame,highpass=f=160,bandpass=f=1600:w=2600[snare]"
   filter << "[nh]volume='(#{hat_env})':eval=frame,highpass=f=6500[hats]"
   filter << "[no]volume='(#{open_env})':eval=frame,bandpass=f=5600:w=5200[open]"
-  filter << "[4:a]aformat=channel_layouts=stereo,lowpass=f=2800,aphaser=speed=0.12:decay=0.35,adelay=9|13,aecho=0.18:0.22:120:0.22[pads]"
+  filter << "[4:a]aformat=channel_layouts=stereo,#{DillaAutomation.pad_character_filter(cutoff_hz: 2800, phaser_speed: 0.12, phaser_decay: 0.35)},adelay=9|13,aecho=0.18:0.22:120:0.22[pads]"
   filter << "[5:a]aformat=channel_layouts=stereo,highpass=f=120,lowpass=f=5000,aecho=0.18:0.22:90:0.28[chop]"
   labels  = %w[[kick] [bass] [snare] [hats] [open] [pads] [chop]]
   weights = %w[1.15 0.88 0.82 0.42 0.35 0.90 0.55]
@@ -9114,14 +9768,39 @@ def ensure_drum_chops!
   File.file?(File.join(dest, "kick.wav")) ? dest : nil
 end
 
+def load_kit_wav(path)
+  return nil unless path && File.file?(path)
+  if defined?(DillaMusicGems) && DillaMusicGems.respond_to?(:read_mono_wav)
+    samples = DillaMusicGems.read_mono_wav(path)
+    return samples if samples && !samples.empty?
+  end
+  # ffmpeg fallback — no wavefile gem required
+  raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", path,
+                        "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
+  return nil if raw.nil? || raw.empty?
+  raw.unpack("e*")
+rescue StandardError
+  nil
+end
+
 def apply_drum_chops_to_kit!(kit)
-  dest = ensure_drum_chops!
-  return kit unless dest
-  { kick: "kick.wav", snare: "snare.wav", hat: "hat.wav" }.each do |role, file|
-    path = File.join(dest, file)
-    next unless File.file?(path)
-    samples = defined?(DillaMusicGems) ? DillaMusicGems.read_mono_wav(path) : nil
-    kit[role] = samples if samples && !samples.empty?
+  # Prefer pre-cut Camel oneshots, then grid_chops from demucs stem.
+  dirs = [
+    File.join(CUSTOM_DRUM_DIR, "camel_chops"),
+    File.join(ROOT, DRUM_CHOP_DIR),
+    ensure_drum_chops!
+  ].compact.uniq
+  dirs.each do |dest|
+    next unless dest && Dir.exist?(dest)
+    { kick: "kick.wav", snare: "snare.wav", hat: "hat.wav" }.each do |role, file|
+      path = File.join(dest, file)
+      samples = load_kit_wav(path)
+      kit[role] = samples if samples && !samples.empty?
+    end
+    # Keep a second kick body for alternation (MPC two-kick habit).
+    alt = load_kit_wav(File.join(dest, "kick.wav"))
+    kit[:ind_kick] = alt if alt && !alt.empty? && kit[:ind_kick].nil?
+    break if kit[:kick] && kit[:snare]
   end
   kit
 end
@@ -10108,79 +10787,100 @@ def render_pad_morph_fluidsynth(path, pad_events, duration)
   path
 end
 
+def pad_layer_specs_for_voice(voice)
+  stack = PAD_LAYER_STACKS[voice]
+  return stack if stack && ENV.fetch("PAD_LAYERS", "1") != "0"
+  preset = PAD_VOICE_PRESETS[voice] || PAD_VOICE_PRESETS[:stack_soul]
+  layers = []
+  layers << { id: preset[:ep], mix: 1.15, role: :ep } if preset[:ep]
+  layers << { id: preset[:warm], mix: 0.85, role: :warm } if preset[:warm]
+  layers << { id: preset[:warm2], mix: 0.55, role: :warm } if preset[:warm2]
+  layers << { id: preset[:texture], mix: 0.3, role: :texture } if preset[:texture]
+  layers
+end
+
+def render_one_pad_layer!(voice_path, pad_events, duration, voice, role)
+  midi_path = "#{voice_path}.smf.mid"
+  write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank],
+                duration: duration, patch: voice[:patch], role: role)
+  fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
+  sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", voice_path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
+  FileUtils.rm_f(midi_path)
+  return unless voice[:patch]&.dig(:fx) && tool_available?("ffmpeg")
+  fx_tmp = "#{voice_path}.fx.wav"
+  begin
+    sh! "ffmpeg", "-y", "-i", voice_path, "-af", voice[:patch][:fx], "-c:a", "pcm_s16le", fx_tmp
+    FileUtils.mv(fx_tmp, voice_path)
+  rescue StandardError => e
+    warn "patch fx skipped (#{voice[:patch][:id]}): #{e.message}"
+    FileUtils.rm_f(fx_tmp)
+  end
+end
+
 def render_pad_via_fluidsynth(path, pad_events, duration)
-  return render_pad_morph_fluidsynth(path, pad_events, duration) if synth_morph_enabled?
+  # Morph path is opt-in only — multi-layer stack is the quality default.
+  return render_pad_morph_fluidsynth(path, pad_events, duration) if synth_morph_enabled? && ENV["PAD_LAYERS"] == "0"
   @render_used_fluidsynth_pad = true
-  ep_path = "#{path}.ep.wav"
-  warm_path = "#{path}.warm.wav"
-  texture_path = "#{path}.texture.wav"
-  ep_voice = resolve_ep_voice
-  warm_voice = resolve_warm_voice
-  texture_voice = resolve_texture_voice
-  ep_mix = ep_voice[:patch]&.fetch(:mix, 1.0) || 1.0
-  warm_mix = warm_voice[:patch]&.fetch(:mix, 0.68) || 0.68
-  layers = [[ep_path, ep_voice, ep_mix, :ep]]
-  unless @render_skip_warm_pad
-    layers << [warm_path, warm_voice, warm_mix, :warm]
+  voice_key = ENV["PAD_VOICE"]&.downcase&.to_sym
+  specs = pad_layer_specs_for_voice(voice_key)
+  if specs.nil? || specs.empty?
+    # Fallback 2-layer
+    specs = [
+      { id: :rhodes_cafe_warm, mix: 1.15, role: :ep },
+      { id: :moog_model_d, mix: 0.85, role: :warm },
+      { id: :prophet_5_pad, mix: 0.55, role: :warm }
+    ]
   end
-  if texture_voice
-    tex_mix = @render_texture_patch&.fetch(:mix, 0.15) || 0.15
-    layers << [texture_path, texture_voice, tex_mix, :texture]
+  # Always force at least EP + two warm beds when stack requested.
+  if ENV.fetch("PAD_LAYERS", "1") != "0" && specs.length < 3
+    specs = PAD_LAYER_STACKS[:stack_soul]
   end
-  layers.each do |voice_path, voice, _w, role|
-    midi_path = "#{voice_path}.smf.mid"
-    write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank],
-                  duration: duration, patch: voice[:patch], role: role)
-    fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
-    sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", voice_path, "-r", SAMPLE_RATE.to_s, voice[:sf2], midi_path
-    FileUtils.rm_f(midi_path)
-    if voice[:patch]&.dig(:fx) && tool_available?("ffmpeg")
-      fx_tmp = "#{voice_path}.fx.wav"
-      begin
-        sh! "ffmpeg", "-y", "-i", voice_path, "-af", voice[:patch][:fx], "-c:a", "pcm_s16le", fx_tmp
-        FileUtils.mv(fx_tmp, voice_path)
-      rescue StandardError => e
-        warn "patch fx skipped (#{voice[:patch][:id]}): #{e.message}"
-        FileUtils.rm_f(fx_tmp)
-      end
+
+  rendered = []
+  specs.each_with_index do |spec, i|
+    patch = synth_patch_by_id(spec[:id])
+    next unless patch
+    voice = patch_voice_for(patch) || resolve_ep_voice
+    voice = voice.merge(patch: patch) if voice[:patch].nil?
+    layer_path = "#{path}.L#{i}.wav"
+    render_one_pad_layer!(layer_path, pad_events, duration, voice, spec[:role] || :warm)
+    next unless File.file?(layer_path)
+    # Unison detune on warm layers only (width without mush).
+    if spec[:role] == :warm && i.positive?
+      det = "#{layer_path}.det.wav"
+      sh! "ffmpeg", "-y", "-i", layer_path, "-filter_complex",
+          "[0:a]asplit=2[a][b];[a]asetrate=#{SAMPLE_RATE}*1.0018,aresample=#{SAMPLE_RATE}[u];" \
+          "[b]asetrate=#{SAMPLE_RATE}*0.9982,aresample=#{SAMPLE_RATE}[d];" \
+          "[u][d]amix=inputs=2:weights=0.5 0.5:normalize=0",
+          "-c:a", "pcm_s16le", det
+      FileUtils.mv(det, layer_path) if File.file?(det)
     end
+    rendered << [layer_path, spec[:mix].to_f]
   end
-  inputs = ["-i", ep_path]
-  if @render_skip_warm_pad
-    filt = "[0:a]apad=whole_dur=#{duration},volume=#{ep_mix}[blend]"
-    map_label = "[blend]"
+  if rendered.empty?
+    return render_native_pad_wav(path, pad_events, duration)
+  end
+  if rendered.length == 1
+    FileUtils.mv(rendered[0][0], path)
   else
-    # Gentle Prophet-style unison on warm layer only.
-    filt = "[0:a]apad=whole_dur=#{duration}[ep];" \
-           "[1:a]apad=whole_dur=#{duration}[warmsrc];" \
-           "[warmsrc]asplit=2[w1][w2];" \
-           "[w1]asetrate=44100*1.0022,aresample=44100[wup];" \
-           "[w2]asetrate=44100*0.9978,aresample=44100[wdown];" \
-           "[wup][wdown]amix=inputs=2:weights=0.52 0.52:duration=first:normalize=0[wdetuned];" \
-           "[ep][wdetuned]amix=inputs=2:weights=#{ep_mix} #{warm_mix}:duration=first:normalize=0[blend]"
-    inputs << "-i" << warm_path
-    map_label = "[blend]"
+    inputs = rendered.flat_map { |(p, _)| ["-i", p] }
+    labels = rendered.each_index.map { |i| "p#{i}" }
+    filt_parts = rendered.each_with_index.map do |(_, mix), i|
+      "[#{i}:a]apad=whole_dur=#{duration},volume=#{mix}[#{labels[i]}]"
+    end
+    weights = rendered.map { |(_, m)| m }.join(" ")
+    filt = "#{filt_parts.join(';')};" \
+           "#{labels.map { |l| "[#{l}]" }.join}amix=inputs=#{rendered.length}:weights=#{weights}:" \
+           "duration=first:normalize=0[blend]"
+    sh! "ffmpeg", "-y", *inputs, "-filter_complex", filt, "-map", "[blend]", "-c:a", "pcm_s16le", path
+    rendered.each { |(p, _)| FileUtils.rm_f(p) }
   end
-  if texture_voice && File.exist?(texture_path)
-    tex_idx = inputs.length / 2
-    filt += ";[#{tex_idx}:a]apad=whole_dur=#{duration}[tex];[blend][tex]amix=inputs=2:weights=1.0 #{layers.last[2]}:duration=first:normalize=0[blend2]"
-    map_label = "[blend2]"
-    inputs << "-i" << texture_path
-  end
-  sh! "ffmpeg", "-y", *inputs, "-filter_complex", filt, "-map", map_label, "-c:a", "pcm_s16le", path
-  FileUtils.rm_f(ep_path)
-  FileUtils.rm_f(warm_path)
-  FileUtils.rm_f(texture_path)
-  # GeneralUser GS's EP patch renders far quieter than the old additive-synth
-  # pad engine did (measured ~-35dB RMS vs the tones bus's ~-27dB at equal
-  # amix weight, which buried the chords entirely) — a fixed -g wasn't enough
-  # across different voicings/velocities, so measure and normalize toward a
-  # fixed target instead of guessing a static boost.
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 18.0)
+  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 20.0)
   sh! "ffmpeg", "-y", "-i", path, "-af",
-      "equalizer=f=280:t=o:w=1:g=1.2,equalizer=f=1800:t=h:w=1200:g=0.7," \
-      "volume=#{boost_db.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
+      "equalizer=f=280:t=o:w=1:g=1.6,equalizer=f=900:t=o:w=1.2:g=0.8," \
+      "equalizer=f=2200:t=h:w=1400:g=1.0,volume=#{boost_db.round(2)}dB," \
+      "alimiter=limit=0.95:level_out=0.97",
       "-c:a", "pcm_s16le", "#{path}.pad.wav"
   FileUtils.mv("#{path}.pad.wav", path)
   path
@@ -10191,7 +10891,8 @@ end
 # archetype), 84 Lead 5 Charang (aggressive/bright, cuts through), 86 Lead 7
 # Fifths (built-in parallel fifths give arps instant harmonic width free).
 LEAD_GM_PROGRAMS = [81, 87, 84, 86].freeze
-LEAD_TARGET_RMS_DB = -26.0
+# Hotter lead target so arps cut over multi-layer pads.
+LEAD_TARGET_RMS_DB = -16.5
 
 def invert_motif(motif)
   top = motif.max
@@ -10245,12 +10946,12 @@ def lead_post_fx_chain(patch, duration, boost_db)
 end
 
 HARMONIC_STEM_MIX = {
-  pads:          { volume: 1.18, weight: 1.45 },
+  pads:          { volume: 1.35, weight: 1.7 },
   tones:         { volume: 0.72, weight: 0.55 },
-  harmony_lead:  { volume: 0.88, weight: 0.28 },
-  scale_lead:    { volume: 0.82, weight: 0.22 },
-  lead_arp:      { volume: 0.8, weight: 0.3 },
-  lead:          { volume: 0.66, weight: 0.14 },
+  harmony_lead:  { volume: 1.15, weight: 0.72 },
+  scale_lead:    { volume: 1.2, weight: 0.78 },
+  lead_arp:      { volume: 1.45, weight: 1.05 },
+  lead:          { volume: 1.1, weight: 0.55 },
   xlead:         { volume: 0.74, weight: 0.36 }
 }.freeze
 
@@ -10326,13 +11027,17 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     render_native_pad_wav(pads_path, pad_events, duration)
   end
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
-  scale_events = lead_arp_enabled? ? lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
+  # One clean melodic lead by default — scale/creative layers turned the top line into soup.
+  scale_on = lead_arp_enabled? && ENV.fetch("SCALE_LEAD", "0") != "0"
+  creative_on = lead_arp_enabled? && ENV.fetch("CREATIVE_LEAD", "0") != "0"
+  scale_events = scale_on ? lead_events_scale_arp(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
   lead_arp_cfg = lead_arp_cfg_for(@render_lead_patch)
   lead_arp_ev = lead_arp_enabled? ? lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
   harmony_lead_cfg = harmony_lead_cfg_for(@render_scale_lead_patch)
   insight = instance_variable_defined?(:@progression_insight) ? @progression_insight : nil
-  harmony_lead_ev = harmony_lead_enabled? ? harmony_lead_events(pad_events, cfg, harmony_lead_cfg, progression_insight: insight) : []
-  creative_events = lead_arp_enabled? ? lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
+  harmony_lead_ev = harmony_lead_enabled? && ENV.fetch("HARMONY_LEAD", "0") != "0" ?
+                    harmony_lead_events(pad_events, cfg, harmony_lead_cfg, progression_insight: insight) : []
+  creative_events = creative_on ? lead_events_creative(pad_events, cfg, duration: duration, n_bars: n_bars_est) : []
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
   harmony_lead_rendered = harmony_lead_ev.any? ? render_lead_via_fluidsynth(harmony_lead_path, harmony_lead_ev, duration, scale_arp: true) : nil
   lead_arp_rendered = lead_arp_ev.any? ? render_lead_via_fluidsynth(lead_arp_path, lead_arp_ev, duration) : nil
@@ -10733,7 +11438,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     shaker: synth_shaker_sample,
     cowbell: synth_cowbell_sample
   )
-  apply_drum_chops_to_kit!(kit) if ENV.fetch("DRUM_CHOPS", ENV.fetch("CAMEL_CHOPS", "0")) != "0"
+  # Always prefer real chopped one-shots when available (pocket DNA default).
+  apply_drum_chops_to_kit!(kit) if ENV.fetch("DRUM_CHOPS", "1") != "0"
   unless dilla_pocket_drums_enabled?
     bar_p = beat_p * 4.0
   else
@@ -11578,7 +12284,7 @@ def render_analog(destination, bar_count: bars)
     [ns]volume='#{safe_volume_env(snare + ghost)}':eval=frame,highpass=f=160,bandpass=f=1600:w=2600[sn];
     [nh]volume='#{safe_volume_env(hat)}':eval=frame,highpass=f=6500[hh];
     [no]volume='#{safe_volume_env(open_hat)}':eval=frame,bandpass=f=5600:w=5200[op];
-    [4:a]aformat=channel_layouts=stereo,lowpass=f=#{ANALOG_CFG[:lowpass_hz]},aphaser=speed=0.1:decay=0.35,adelay=#{ANALOG_CFG[:chorus_delay_l_ms]}|#{ANALOG_CFG[:chorus_delay_r_ms]},aecho=0.18:0.22:120:0.22[pad];
+    [4:a]aformat=channel_layouts=stereo,#{DillaAutomation.pad_character_filter(cutoff_hz: ANALOG_CFG[:lowpass_hz], phaser_speed: 0.1, phaser_decay: 0.35)},adelay=#{ANALOG_CFG[:chorus_delay_l_ms]}|#{ANALOG_CFG[:chorus_delay_r_ms]},aecho=0.18:0.22:120:0.22[pad];
     [5:a]aformat=channel_layouts=stereo,highpass=f=120,lowpass=f=5000,aecho=0.18:0.22:90:0.28[chop];
     [6:a]aformat=channel_layouts=stereo,highpass=f=900,lowpass=f=9000[fx];
     [k][bs][sn][hh][op][pad][chop][fx]amix=inputs=8:weights=1.25 0.9 0.9 0.48 0.42 0.95 0.65 0.35:duration=longest[music];
@@ -13268,7 +13974,7 @@ def apply_flags!(argv)
 end
 
 DISPATCH = {
-  "capabilities" => -> { puts Master::Reach::AnalogCapabilities.report(:dilla) },
+  "capabilities" => -> { puts Master::Io::AnalogCapabilities.report(:dilla) },
   "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
   "help" => -> { help },
   "scan" => -> { scan },
@@ -13330,6 +14036,7 @@ DISPATCH = {
   "melody" => -> { melody(ARGV.shift) },
   "harmony" => -> { harmony(ARGV.shift) },
   "beauty" => -> { beauty_report(ARGV.shift) },
+  "crit" => -> { crit_session_cli!(ARGV.shift) },
   "phone-preview" => -> { phone_preview(ARGV.shift) },
   "semantics" => -> { semantics(ARGV.shift) },
   "ears" => -> { ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },

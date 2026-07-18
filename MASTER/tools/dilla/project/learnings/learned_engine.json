@@ -197,9 +197,9 @@
   "track_aliases": {
     "flylo_camel": "quartal_west_coast",
     "quartal_west_coast": "chromatic_mediant_drift",
-    "fourth_third_sixth_second_turn": "learned_promo_test",
-    "promo_test": "learned_promo_test"
+    "promo_test": "learned_promo_test",
+    "fourth_third_sixth_second_turn": "learned_promo_test"
   },
-  "top_track": "fourth_third_sixth_second_turn",
-  "promoted_at": "2026-07-18T15:43:22Z"
+  "top_track": "time_donut",
+  "promoted_at": "2026-07-18T17:18:09Z"
 }

@@ -88,4 +88,14 @@ module DillaRhythm
   def long_form_stripdown?(n_bars)
     macro_enabled? && ENV["LONG_STRIPDOWN"] == "1" && n_bars >= 80
   end
+
+  # Periodic full-layer drop-out — "remove elements periodically for
+  # contrast" rather than stripdown's one-way fade to silence. Ducks (not
+  # mutes) for `span` bars every `period` bars; never on bar 0, so the
+  # arrangement is fully established before the first variation.
+  def periodic_layer_drop_gain(bar, period: 8, span: 1)
+    return 1.0 unless macro_enabled? && ENV["ARRANGEMENT_VARIATION"] != "0"
+    return 1.0 if period <= 0 || bar.zero?
+    (bar % period) < span ? 0.12 : 1.0
+  end
 end

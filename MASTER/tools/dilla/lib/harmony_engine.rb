@@ -20,6 +20,10 @@ module DillaHarmony
     plagal_jazz slash_neo_soul suspended_ballad minor_line_cliche donda_minor keys_woman
     jazz_ballad_waltz turnaround_ii_v modal_safe neo_iv_cycle
     aydin_modal_quartal aydin_jazz_turn bach_circle_descent bach_descending_bass
+    lydian_glass_cycle pedal_upper_structures bossa_major9_turn phrygian_gold_arc
+    two_chord_luminous mixo_sus_loop common_tone_drift coltrane_lite_triad
+    drone_quartal_wash waltz_relative_lift half_time_gospel_plagal double_time_pocket
+    whole_tone_bridge upper_triad_tower minor_add9_lullaby dominant_chain_home
   ].freeze
 
   BLOCKED_GENERATED = %i[polytonal negative_harmony neapolitan chromatic_mediant].freeze

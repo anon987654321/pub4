@@ -1,13 +1,68 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 # Mastering/mix heuristics — harshness, club IR, phone preview, cassette, balance.
+# Multi-persona critique + multi-solution cherry-pick live in MASTER council:
+#   /sound-critique  and  /dilla crit
+# Do not reimplement Council::Critique / Ideation here.
 module DillaMaster
   IR_DIR = File.join(File.expand_path("..", __dir__), "samples", "irs")
+  REFERENCE_PATH = File.expand_path("../dilla_reference.yml", __dir__)
 
   module_function
 
   def enabled?
     ENV["MASTER_HEURISTICS"] == "1"
+  end
+
+  def loss_gates
+    return {} unless File.file?(REFERENCE_PATH)
+
+    YAML.safe_load_file(REFERENCE_PATH)["loss_gates"] || {}
+  rescue StandardError, Psych::Exception
+    {}
+  end
+
+  # Hard pre-flight reject, not an advisory score — a take failing this
+  # should not be promoted regardless of beauty/groove. Only checks metrics
+  # actually present in `report` (crest_factor_db from analyze_audio's
+  # `dynamics` block is real; kick/bass timing correlation and the 200-400Hz
+  # mud-zone level aren't measured anywhere in this engine yet, so those two
+  # gates are honest no-ops — `skipped`, not silently passed — until that
+  # analysis exists).
+  def passes_loss_gates?(report)
+    gates = loss_gates
+    return { pass: true, failures: [], skipped: [] } if gates.empty? || !report
+
+    failures = []
+    skipped = []
+
+    crest = report.dig(:dynamics, :crest_factor_db) || report.dig("dynamics", "crest_factor_db")
+    if crest
+      min = gates["crest_factor_min_db"]
+      failures << "crest_factor #{crest.round(1)}dB < #{min}dB (over-compressed)" if min && crest < min
+    else
+      skipped << "crest_factor (not present in report)"
+    end
+
+    corr = report[:kick_bass_correlation] || report["kick_bass_correlation"]
+    if corr
+      max = gates["kick_bass_correlation_max"]
+      failures << "kick_bass_correlation #{corr.round(2)} > #{max} (reads quantized)" if max && corr > max
+    else
+      skipped << "kick_bass_correlation (not measured by this engine yet)"
+    end
+
+    mud = report[:mud_db_200_400hz] || report["mud_db_200_400hz"]
+    if mud
+      max = gates["mud_max_db_200_400hz"]
+      failures << "mud #{mud.round(1)}dB > #{max}dB (200-400Hz masking snare body)" if max && mud > max
+    else
+      skipped << "mud_db_200_400hz (not measured by this engine yet)"
+    end
+
+    { pass: failures.empty?, failures: failures, skipped: skipped }
   end
 
   def club_ir_path
@@ -45,7 +100,7 @@ module DillaMaster
 
   def radio_club_morph(cfg, duration, _section_fn)
     mid = (duration * 0.5).round(2)
-    ",volume='if(lt(t,#{mid}),0.92,1.08)':eval=frame"
+    ",#{DillaAutomation.volume_filter([[0, 0.92], [mid, 1.08]])}"
   end
 
   def phone_preview_chain

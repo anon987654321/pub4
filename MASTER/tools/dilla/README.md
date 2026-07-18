@@ -41,6 +41,11 @@ ruby dilla.rb dilla out.wav 32
 | **Master** | `donuts_soul` + `broadcast` |
 | **Vocals** | Off by default (`RAP_VOCAL=0`); opt-in with isolation + blocklist |
 | **Iterate / vinyl bed** | Off |
+| **Swing** | `56%` (Dilla's documented 54-58% MPC sweet spot; was 60%) |
+| **Micro-timing** | Gaussian-clustered jitter (`DillaGroove.gaussian_jitter`), not uniform random |
+| **Phrase drift** | Slow tempo/timing breathe over a 6-bar sine LFO (`PHRASE_DRIFT=1`) |
+| **Arrangement** | Full-layer drop-out every 8 bars for contrast (`ARRANGEMENT_VARIATION=1`) |
+| **Mastering heuristics** | On (`MASTER_HEURISTICS=1`) — harshness notch, sub/kick balance, perceptual limiter |
 
 ### Signal flow
 
@@ -110,8 +115,49 @@ cd MASTER && bundle install
 bundle exec ruby tools/dilla/dilla.rb debug
 ```
 
+### Known issue: coltrane adapter hangs on some chord symbols
+
+`DillaMusicGems.chord_from_symbol` (the `coltrane` gem path in
+`lib/music_gems.rb`, tried before the built-in parser in
+`DillaLofiMachine.chord_from_symbol`) hangs indefinitely — not slow, no
+timeout, no output — on at least `"Dm7b5"` and `"Cmaj9"`, reproduced cold and
+warm. Root cause not chased. Workaround in place: both are precomputed in
+`CHORD_VOICINGS` (`lib/producer_dna.rb`) so the fast path resolves them
+before the gem ever runs. If a new progression hangs on load, add its chord
+symbol to `CHORD_VOICINGS` the same way rather than debugging the gem call.
+
+## Reference material: `dilla_reference.yml`
+
+Sourced Slum Village / Flying Lotus progressions (documented track analysis,
+not ear-transcribed) and hard mastering reject-gate thresholds (crest
+factor, mud-zone level, kick/bass timing correlation), each with a
+`source`/`source_note`. Loaded at boot:
+
+- `documented_progressions` merge additively into `HARMONY_PROFILES`
+  (`producer_dna.rb`) — existing named profiles are never overwritten, since
+  some (`chromatic_mediant_drift`, `quartal_west_coast`) are original
+  Dilla/FlyLo-inspired compositions, not transcriptions.
+- `loss_gates` are checked by `DillaMaster.passes_loss_gates?` before a take
+  is promoted into `project/promoted_profiles.json` — a high-beauty take
+  that's still over-compressed gets rejected regardless of its score. Only
+  `crest_factor_db` is currently measured (`analyze_audio`'s `dynamics`
+  block); the mud-zone and kick/bass-correlation gates are wired but report
+  as `skipped`, not fabricated, until that analysis exists.
+
+Chord symbols are limited to what the engine's own parser understands — a
+few entries simplify the historically-documented voicing (e.g. `Bb13` →
+`Bb7`) either because that extension isn't in `CHORD_SUFFIXES`, or to avoid
+the coltrane hang above. See `source_note` per entry.
+
 ## Tests
 
 ```sh
 cd MASTER && bundle exec ruby -Itest test/test_dilla.rb
 ```
+
+`eval_in_engine`'s per-test subprocess probe (`Open3.capture3`, no timeout)
+can hang independent of the coltrane issue above — a stuck `dilla_test_probe`
+process pegged near 100% CPU with no output is that, not a real test
+failure. Verify a change directly instead:
+`ruby -e '$PROGRAM_NAME = "dilla_test_probe"; load "dilla.rb"; ...'` with a
+shell `timeout` wrapper.

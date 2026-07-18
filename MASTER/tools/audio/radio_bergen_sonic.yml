@@ -2,7 +2,7 @@
 meta:
   source: playlist.brgen.no
   manifest: "/Users/mac/Documents/GitHub/pub4/MASTER/tools/audio/radio_bergen_tracks.yml"
-  studied_at: '2026-07-16T05:40:54Z'
+  studied_at: '2026-07-18T12:40:42Z'
   track_count: 29
   local_count: 9
   youtube_count: 20
@@ -49,8 +49,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/akmd_mike_t-alt_kan_skje.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/mike_t_and_johann-alt_kan_skje.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: bergen
     performer: yancey
@@ -81,8 +82,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/angelo_reira_and_johann-sandviken_hotell_a.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/angelo_reira_and_johann-sandviken_hotell_a.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: bergen
     performer: yancey
@@ -97,8 +99,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/angelo_reira_and_johann-sandviken_hotell_b.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/angelo_reira_and_johann-sandviken_hotell_b.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: bergen
     performer: yancey
@@ -113,8 +116,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/chase_swayze-traffic.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/chase_swayze-underated.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: dilla
     performer: yancey
@@ -128,8 +132,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/haisam_and_johann-pb1.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/haisam_and_johann-pb1.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: bergen
     performer: yancey
@@ -144,8 +149,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/jan_hakim_and_johann-stailings_a.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/jan_hakim_and_johann-stailings_a.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: bergen
     performer: yancey
@@ -160,8 +166,9 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/mike_t_jr-rauingar.mp3"
-  audio_analyzed:
+  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/johann-rauingar.mp3"
   analysis:
+    duration_seconds: 180.0
   learnings:
     producer: bergen
     performer: yancey
@@ -486,7 +493,7 @@ stream_env_defaults:
   GROOVE_DNA: donuts
   SONITEX_PRESET: donuts_warm
   KICKS: '1'
-  SPEAK: '1'
+  SPEAK: '0'
 mix_notes:
 - AKMD local_mp3 rows use pub2 lofi mastering chain (60Hz HPF, 11.5kHz LPF, 80/200Hz
   boosts, soft clip).

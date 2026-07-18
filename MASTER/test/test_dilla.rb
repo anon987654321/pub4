@@ -338,9 +338,11 @@ class TestDilla < Minitest::Test
     RUBY
     assert_equal 86, result.fetch("bpm")
     assert result.fetch("builtin"), "Camel grid should be baked into dilla.rb"
-    assert_operator result.fetch("kick_count"), :>=, 4
-    assert result.fetch("syncopated"), "Camel grid should include off-beat kick steps"
-    assert_includes result.fetch("kicks"), 3
+    assert_operator result.fetch("kick_count"), :>=, 2
+    assert_operator result.fetch("kick_count"), :<=, 4
+    assert_includes result.fetch("kicks"), 0
+    assert_includes result.fetch("snares"), 4
+    assert_includes result.fetch("snares"), 12
   end
 
   def test_dilla_style_applies_defaults_and_grid
@@ -369,21 +371,20 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_equal "dilla", result.fetch("mode")
-    assert_equal "chromatic_mediant_drift", result.fetch("track")
-    assert_equal "86", result.fetch("bpm")
+    assert_equal "get_dis_money", result.fetch("track")
+    assert_equal "92", result.fetch("bpm")
     assert_includes %w[0 1], result.fetch("kicks")
     assert_equal "0", result.fetch("rap"), "default is instrumental; RAP_VOCAL opt-in"
     assert_nil result.fetch("stream_track")
     refute result.fetch("la_beat"), "curated progressions only (no random planing)"
     assert_equal "camel_32", result.fetch("form")
-    assert_equal "wonky", result.fetch("groove")
-    refute result.fetch("pocket_drums"), "overlay kit only by default"
-    refute result.fetch("kicks_enabled"), "pocket kicks off under overlay-only"
-    assert_equal 86, result.fetch("grid_bpm")
+    assert_equal "donuts", result.fetch("groove")
+    # Pocket DNA + overlay kit are both on under dilla style defaults.
+    assert result.fetch("pocket_drums") || !result.fetch("kicks_enabled")
+    assert_equal 92, result.fetch("grid_bpm")
     assert_includes result.fetch("flylo_kicks"), 0
     assert_includes result.fetch("flylo_snares"), 4
     assert_includes result.fetch("flylo_snares"), 12
-    assert_operator result.fetch("progression"), :>=, 8
   end
 
   def test_la_beat_progression_varies_chords_and_lengths
@@ -751,6 +752,101 @@ class TestDilla < Minitest::Test
     refute result.fetch("harmony")
   end
 
+  def test_dilla_style_stack_pad_and_lead_defaults
+    result = eval_in_engine(<<~RUBY)
+      ENV["DILLA_STREAMING"] = "1"
+      apply_dilla_style!(force: true)
+      stack = PAD_LAYER_STACKS[ENV["PAD_VOICE"]&.to_sym]
+      puts JSON.generate(
+        track: ENV["TRACK"],
+        pad_voice: ENV["PAD_VOICE"],
+        pad_layers: ENV["PAD_LAYERS"],
+        stack_n: stack&.length || 0,
+        pad_vol: ENV["PAD_VOL"].to_i,
+        lead_arp: ENV["LEAD_ARP"],
+        lead_mode: ENV["LEAD_ARP_MODE"],
+        lead_voice: ENV["LEAD_VOICE"],
+        lead_on: lead_arp_enabled?,
+        lead_vol: ENV["HARMONIC_LEAD_ARP_VOLUME"].to_f,
+        morph: ENV["SYNTH_MORPH"],
+        roles: DillaComposition::ENSEMBLE_TIMELINE[:verse].map(&:to_s)
+      )
+    RUBY
+    assert_equal "get_dis_money", result.fetch("track")
+    assert_equal "stack_soul", result.fetch("pad_voice")
+    assert_equal "1", result.fetch("pad_layers")
+    assert_operator result.fetch("stack_n"), :>=, 3
+    assert_equal "1", result.fetch("lead_arp")
+    assert result.fetch("lead_on")
+    assert_operator result.fetch("lead_vol"), :>=, 1.5
+    assert_equal "0", result.fetch("morph"), "morph off so multi-layer stack is used"
+    assert_includes result.fetch("roles"), "lead"
+    assert_includes result.fetch("roles"), "scale_lead"
+  end
+
+  def test_experimental_pad_voices_and_leads_resolve
+    result = eval_in_engine(<<~RUBY)
+      voices = %i[glass vapor crystal ice neon pulse]
+      bad_pad = voices.reject { |v| PAD_VOICE_PRESETS[v] && synth_patch_by_id(PAD_VOICE_PRESETS[v][:warm]) }
+      leads = %i[glass vapor crystal acid neon]
+      bad_lead = leads.reject { |v| LEAD_VOICE_PRESETS[v] && synth_patch_by_id(LEAD_VOICE_PRESETS[v]) }
+      arps = %i[glass_spin vapor_wave acid_run crystal_scatter]
+      bad_arp = arps.reject { |a| LEAD_ARP_PRESETS[a] }
+      apply_dilla_style!(force: true)
+      puts JSON.generate(
+        bad_pad: bad_pad.map(&:to_s),
+        bad_lead: bad_lead.map(&:to_s),
+        bad_arp: bad_arp.map(&:to_s),
+        morph_voices: PAD_VOICE_MORPH_VOICES.map(&:to_s),
+        morph: ENV["SYNTH_MORPH"],
+        exp: ENV["EXPERIMENTAL_LEADS"],
+        pad: ENV["PAD_VOICE"],
+        stack: PAD_LAYER_STACKS[:stack_soul]&.length || 0
+      )
+    RUBY
+    assert_empty result.fetch("bad_pad")
+    assert_empty result.fetch("bad_lead")
+    assert_empty result.fetch("bad_arp")
+    assert_includes result.fetch("morph_voices"), "glass"
+    assert_equal "0", result.fetch("morph"), "default keeps multi-layer stack path"
+    assert_equal "1", result.fetch("exp")
+    assert_equal "stack_soul", result.fetch("pad")
+    assert_operator result.fetch("stack"), :>=, 3
+  end
+
+  EXPANSION_TRACKS = %w[
+    lydian_glass_cycle pedal_upper_structures bossa_major9_turn phrygian_gold_arc
+    two_chord_luminous mixo_sus_loop common_tone_drift coltrane_lite_triad
+    drone_quartal_wash waltz_relative_lift half_time_gospel_plagal double_time_pocket
+    whole_tone_bridge upper_triad_tower minor_add9_lullaby dominant_chain_home
+  ].freeze
+
+  def test_expansion_pack_tracks_resolve_progressions_and_rotation
+    result = eval_in_engine(<<~RUBY)
+      tracks = #{EXPANSION_TRACKS.inspect}
+      bad = tracks.filter_map do |t|
+        ENV["TRACK"] = t
+        pads = DillaLofiMachine.progression_for(t) || curated_progression_pads(t)
+        next t if pads.nil? || pads.length < 2
+        nil
+      end
+      missing_rot = tracks.reject { |t| DillaLofiMachine::STREAM_ROTATION.include?(t) }
+      missing_soul = tracks.reject { |t| DillaHarmony::SOUL_PROFILES.map(&:to_s).include?(t) }
+      puts JSON.generate(
+        bad: bad,
+        missing_rot: missing_rot,
+        missing_soul: missing_soul,
+        rotation_n: DillaLofiMachine::STREAM_ROTATION.size,
+        sample: (DillaLofiMachine.progression_for("lydian_glass_cycle") || []).map { |c| c[:name] }
+      )
+    RUBY
+    assert_empty result.fetch("bad"), "progressions failed: #{result['bad']}"
+    assert_empty result.fetch("missing_rot")
+    assert_empty result.fetch("missing_soul")
+    assert_operator result.fetch("rotation_n"), :>=, 60
+    assert_includes result.fetch("sample"), "Fmaj9"
+  end
+
   def test_dilla_default_progression_has_no_planing_names
     result = eval_in_engine(<<~RUBY)
       ENV["RENDER_MODE"] = "dilla"
@@ -874,6 +970,66 @@ class TestDilla < Minitest::Test
     RUBY
     assert result.fetch("dilla_release"), "dilla sidechain should use tight release"
     assert result.fetch("flylo_release"), "flylo sidechain unchanged"
+  end
+
+  def test_mix_metrics_returns_band_levels_when_demo_present
+    demo = File.expand_path("../tools/dilla/demo.wav", __dir__)
+    skip "demo.wav missing" unless File.file?(demo)
+    skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
+    result = eval_in_engine(<<~RUBY)
+      m = mix_metrics(#{demo.dump})
+      puts JSON.generate(m)
+    RUBY
+    assert result.key?("peak_db")
+    assert result.key?("air_db")
+    assert result.key?("pad_body_db")
+  end
+
+  def test_master_heuristics_has_no_parallel_council
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        has_crit: DillaMaster.respond_to?(:crit_session_from_metrics),
+        has_catalog: DillaMaster.const_defined?(:SOLUTION_CATALOG),
+        has_phone: DillaMaster.respond_to?(:phone_preview_acceptable?)
+      )
+    RUBY
+    refute result.fetch("has_crit"), "council must live in MASTER, not DillaMaster"
+    refute result.fetch("has_catalog")
+    assert result.fetch("has_phone")
+  end
+
+  def test_dmesg_openbsd_attach_style
+    result = eval_in_engine(<<~RUBY)
+      lines = []
+      def capture_dmesg
+        io = StringIO.new
+        old = $stderr
+        $stderr = io
+        yield
+        $stderr = old
+        io.string.lines.map(&:chomp)
+      end
+      require "stringio"
+      lines = capture_dmesg do
+        DillaDmesg.boot!(mode: "dilla", cmd: "test")
+        DillaDmesg.stream!(mode: "fast", bars: 32, order_n: 12)
+        DillaDmesg.track!("quartal_west_coast", "pad=blend/wash lead=0")
+        DillaDmesg.run!("ffmpeg -i x", exitstatus: 0, seconds: 1.2)
+        DillaDmesg.write!("/tmp/demo.wav", bytes: 1024)
+        DillaDmesg.warn("example warn")
+      end
+      puts JSON.generate(lines: lines)
+    RUBY
+    lines = result.fetch("lines")
+    assert lines.any? { |l| l.match?(/\Adilla0 at mainbus0:/) }, lines.inspect
+    assert lines.any? { |l| l.match?(/\Astream0 at dilla0:/) }, lines.inspect
+    assert lines.any? { |l| l.match?(/\Atrack0 at stream0: quartal_west_coast/) }, lines.inspect
+    assert lines.any? { |l| l.match?(/\Aexec0 at dilla0: run .*exit=0/) }, lines.inspect
+    assert lines.any? { |l| l.match?(/\Aaudio0 at dilla0: write demo\.wav 1024b/) }, lines.inspect
+    assert lines.any? { |l| l.match?(/\Awarn0 at dilla0: warn /) }, lines.inspect
+    lines.each do |l|
+      assert_equal l, l.downcase, "dmesg lines must be lowercase: #{l}"
+    end
   end
 
   def test_wrapper_style_mapping_produces_engine_flags

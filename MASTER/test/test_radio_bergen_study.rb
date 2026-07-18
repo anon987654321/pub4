@@ -2,13 +2,18 @@
 
 require "yaml"
 require "minitest/autorun"
+require "tmpdir"
 require_relative "../tools/dilla/dilla"
 
 class RadioBergenStudyUnitTest < Minitest::Test
   FAST_AUDIO = ->(path) { path ? { duration_seconds: 180.0 } : nil }.freeze
 
   def with_fast_audio_analysis
-    RadioBergenStudy.stub(:analyze_audio, FAST_AUDIO) { yield }
+    original = RadioBergenStudy.method(:analyze_audio)
+    RadioBergenStudy.define_singleton_method(:analyze_audio, &FAST_AUDIO)
+    yield
+  ensure
+    RadioBergenStudy.define_singleton_method(:analyze_audio, original) if original
   end
 
   def test_studies_all_manifest_tracks
@@ -37,10 +42,12 @@ class RadioBergenStudyUnitTest < Minitest::Test
   end
 
   def test_yaml_output_uses_string_keys
-    path = with_fast_audio_analysis { RadioBergenStudy.write! }
-    data = YAML.safe_load(File.read(path))
+    Dir.mktmpdir("radio-bergen-study") do |dir|
+      path = with_fast_audio_analysis { RadioBergenStudy.write!(path: File.join(dir, "sonic.yml")) }
+      data = YAML.safe_load(File.read(path))
 
-    assert data["playlist_tracks"].first.key?("title")
-    refute data["playlist_tracks"].first.key?(:title)
+      assert data["playlist_tracks"].first.key?("title")
+      refute data["playlist_tracks"].first.key?(:title)
+    end
   end
 end
