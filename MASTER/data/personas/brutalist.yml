@@ -1,8 +1,0 @@
-name: brutalist
-voice:
-  enabled: false
-face:
-  enabled: false
-web:
-  enabled: true
-  port: 3737

@@ -1,6 +1,6 @@
 # Absorption Map
 
-How `lib/` (43.6k lines, 14 subsystems) folds into `core/` (662 lines, 4 concepts).
+How `lib/` (43.6k lines, 14 subsystems) folds into `core/` (764 lines, 4 concepts).
 This is the chart for the core-first rebuild: every migration slice moves one
 piece of essential behaviour into the fold and deletes the subsystem it came from.
 
