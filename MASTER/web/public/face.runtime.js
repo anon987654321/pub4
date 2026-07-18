@@ -12,7 +12,10 @@ const _dbgEl = document.getElementById('_dbg');
 if (_dbgEl) _dbgEl.textContent = _hasWebGL ? 'loading three...' : '2d mode';
 
 // Only import THREE on WebGL-capable devices — saves 10-20s parse on low-end hardware
-const THREE = _hasWebGL ? await import(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1') : null;
+// Absolutize the specifier: this module runs from a blob: URL, where a
+// root-relative path (MASTER_ASSET_PATHS.threeModule = /assets/three…js) fails
+// "Failed to resolve module specifier" — the real root cause of the black face.
+const THREE = _hasWebGL ? await import(new URL(window.MASTER_ASSET_PATHS?.threeModule || '/three.face.module.js?v=1', document.baseURI).href) : null;
 
 // Minimal Color stub for no-WebGL path
 class _Color {
