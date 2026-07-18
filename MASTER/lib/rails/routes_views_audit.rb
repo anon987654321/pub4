@@ -1,18 +1,23 @@
 # frozen_string_literal: true
 
+require_relative "routes_views_helpers"
+
 module Master
   module Rails
     class RoutesViewsAudit
+      include RoutesViewsHelpers
+
       DEPLOY_RAILS = Master::DEPLOY_RAILS
 
       RESOURCE_ACTIONS = %i[index show new create edit update destroy].freeze
+      SINGULAR_RESOURCE_ACTIONS = %i[show new create edit update destroy].freeze
       MUTATING_ACTIONS = %w[create update destroy].freeze
       VIEW_OPTIONAL_CONTROLLERS = %w[rails/pwa rails/health].freeze
       ROUTE_TO_PATTERN = /to:\s*["']([^"']+)["']/
       ROUTE_HASH_TARGET_PATTERN = /["'][^"']+["']\s*=>\s*["']([^"']+)["']/
-      RESOURCES_PATTERN = /resources\s+:(\w+)(?:,\s*only:\s*%w\[([^\]]+)\])?/
-      AS_PATTERN = /\bas:\s*:(\w+)/
-      PATH_HELPER_PATTERN = /\b([a-z][a-z0-9_]*_(?:path|url))\b/
+      RESOURCES_PATTERN = /^\s*(resources|resource)\s+:(\w+)(.*)$/
+      AS_PATTERN = /\bas:\s*(?::(\w+)|["'](\w+)["'])/
+      PATH_HELPER_PATTERN = /\b([a-z][a-z0-9_]*_path)\b/
       EXPLICIT_RENDER_PATTERN = /render\s+(?:partial|json|js|xml|plain|head|inline)|redirect_to|respond_to/m
 
       Finding = Struct.new(:id, :severity, :file, :message, keyword_init: true)
@@ -55,7 +60,7 @@ module Master
         main = File.join(app_path, "config", "routes.rb")
         sources << [main, File.read(main)] if File.file?(main)
 
-        sources.last&.last.to_s.scan(/instance_eval\(File\.read\(File\.expand_path\(["']([^"']+)["']/).each do |relative|
+        sources.last&.last.to_s.scan(/instance_eval\(File\.read\(File\.expand_path\(["']([^"']+)["']/).flatten.each do |relative|
           shared_path = File.expand_path(relative, File.dirname(main))
           sources << [shared_path, File.read(shared_path)] if File.file?(shared_path)
         rescue StandardError
@@ -69,40 +74,58 @@ module Master
       end
 
       def explicit_routes(routes_text)
-        routes_text.lines.filter_map do |line|
+        route_lines(routes_text).filter_map do |line, module_prefix|
           next if line.strip.start_with?("#")
 
           verb = line[/\b(get|post|put|patch|delete)\b/i, 1]&.downcase
-          next unless verb
-
-          target = line[ROUTE_TO_PATTERN, 1] || line[ROUTE_HASH_TARGET_PATTERN, 1]
+          target = if verb
+                     line[ROUTE_TO_PATTERN, 1] || line[ROUTE_HASH_TARGET_PATTERN, 1]
+                   else
+                     line[/\broot\s+["']([^"']+)["']/, 1]
+                   end
           next unless target
 
           controller, action = target.split("#", 2)
           next unless controller && action && !action.empty?
 
-          [verb, controller, action]
+          controller = [module_prefix, controller].compact.reject(&:empty?).join("/")
+          [verb || "get", controller, action]
         end.uniq
       end
 
       def resources_routes(routes_text)
-        routes_text.scan(RESOURCES_PATTERN).map do |resource, only_list|
-          name = resource.to_s
-          controller = name.end_with?("s") ? name : "#{name}s"
-          actions = if only_list
-                      only_list.split(/\s+/).map(&:strip)
-                    else
-                      RESOURCE_ACTIONS.map(&:to_s)
-                    end
-          [controller, actions]
-        end
+        route_lines(routes_text).filter_map do |line, module_prefix|
+          next if line.strip.start_with?("#")
+
+          kind, resource, options = line.match(RESOURCES_PATTERN)&.captures
+          next unless resource
+
+          controller = controller_option(options) || (kind == "resource" ? pluralize(resource) : resource)
+          controller = [module_prefix, controller].compact.reject(&:empty?).join("/")
+          [controller, resource_actions(options, kind == "resource")]
+        end.uniq
       end
 
       def extract_route_names(routes_text)
-        names = routes_text.scan(AS_PATTERN).flatten
-        routes_text.scan(RESOURCES_PATTERN).each do |resource, only_list|
-          names << resource.to_s
-          names << "#{resource}_index" unless only_list && !only_list.include?("index")
+        names = routes_text.scan(AS_PATTERN).flatten.compact
+        names << "root" if routes_text.match?(/\broot\s+["']/)
+        resources = routes_text.scan(RESOURCES_PATTERN).map { |_kind, resource, options|
+          names << "#{resource}_index" if resource_actions(options, false).include?("index")
+          resource
+        }
+        names.concat(routes_text.scan(/\b(?:get|post|put|patch|delete)\s+["']([^"']+)["']/).flatten.map { |path| path.tr("-", "_") })
+        terms = resources.flat_map { |resource| [resource, singularize(resource)] }
+        names.concat(terms)
+
+        resources.each do |parent|
+          resources.each do |child|
+            names << "#{singularize(parent)}_#{child}"
+            names << "#{singularize(parent)}_#{singularize(child)}"
+          end
+        end
+
+        route_actions(routes_text).each do |action|
+          terms.each { |resource| names << "#{action}_#{resource}" }
         end
         names.uniq
       end
@@ -112,6 +135,8 @@ module Master
       end
 
       def check_route_target(app_path, controller, action, violations, require_view:)
+        return if VIEW_OPTIONAL_CONTROLLERS.include?(controller)
+
         controller_path = controller_file(app_path, controller)
         unless File.file?(controller_path)
           violations << finding(:missing_controller, :high, "config/routes.rb",
@@ -120,36 +145,42 @@ module Master
         end
 
         source = File.read(controller_path)
-        unless source.match?(/^\s*def\s+#{Regexp.escape(action)}\b/m)
+        sources = [source, *included_sources(app_path, source)]
+        controller = controller_from_path(app_path, controller_path, fallback: controller)
+        unless sources.any? { |item| action_source(item, action) }
           violations << finding(:missing_action, :medium, relative(app_path, controller_path),
                                 "controller lacks ##{action} referenced by routes")
         end
 
         return unless require_view
         return if VIEW_OPTIONAL_CONTROLLERS.include?(controller)
-        return if source.match?(EXPLICIT_RENDER_PATTERN)
+        return if sources.filter_map { |item| action_source(item, action) }.any? { |body| body.match?(EXPLICIT_RENDER_PATTERN) }
 
-        view = view_path(app_path, controller, action)
-        return if File.file?(view)
-        return if alternate_templates?(app_path, controller, action)
+        return if template_exists?(app_path, controller, action)
 
         violations << finding(:missing_view, :medium, "app/views/#{controller}/#{action}",
                               "no HTML template for #{controller}##{action}")
       end
 
-      def alternate_templates?(app_path, controller, action)
-        %w[html.erb json.erb json.jbuilder turbo_stream.erb].any? do |ext|
-          File.file?(File.join(app_path, "app", "views", controller, "#{action}.#{ext}"))
+      def template_exists?(app_path, controller, action)
+        [app_path, File.join(File.dirname(app_path), "shared")].any? do |root|
+          %w[html.erb json.erb json.jbuilder turbo_stream.erb].any? do |ext|
+            File.file?(File.join(root, "app", "views", controller, "#{action}.#{ext}"))
+          end
         end
       end
 
       def scan_path_helpers(app_path, route_names, violations)
+        local_helpers = view_helper_names(app_path)
         Dir.glob(File.join(app_path, "app", "views", "**", "*.{erb,html}")).each do |path|
           rel = relative(app_path, path)
           body = File.read(path)
+          local_paths = body.scan(/^\s*([a-z]\w*_path)\s*=/).flatten
           body.scan(PATH_HELPER_PATTERN).flatten.uniq.each do |helper|
             base = helper.sub(/_(?:path|url)\z/, "")
-            next if route_names.include?(base)
+            next if known_route_name?(base, route_names)
+            next if local_paths.include?(helper)
+            next if local_helpers.include?(helper)
             next if known_rails_helper?(base)
 
             violations << finding(:unknown_path_helper, :low, rel,
@@ -197,27 +228,56 @@ module Master
       end
 
       def known_rails_helper?(base)
-        %w[root rails root_url rails_url].include?(base) ||
+        %w[root rails asset image stylesheet javascript].include?(base) ||
           base.end_with?("_offline", "pwa_offline") ||
           base.start_with?("new_", "edit_")
       end
 
       def controller_file(app_path, controller)
-        File.join(app_path, "app", "controllers", "#{controller}_controller.rb")
-      end
+        direct = File.join(app_path, "app", "controllers", "#{controller}_controller.rb")
+        return direct if File.file?(direct)
 
-      def view_path(app_path, controller, action)
-        File.join(app_path, "app", "views", controller, "#{view_basename(controller, action)}")
-      end
+        shared = File.join(File.dirname(app_path), "shared", "app", "controllers", "#{controller}_controller.rb")
+        return shared if File.file?(shared)
 
-      def view_basename(_controller, action)
-        return "index.html.erb" if action == "index"
-
-        "#{action}.html.erb"
+        candidates = Dir.glob(File.join(app_path, "app", "controllers", "**", "#{controller}_controller.rb"))
+        candidates.one? ? candidates.first : direct
       end
 
       def relative(app_path, path)
         path.delete_prefix("#{app_path}/")
+      end
+
+      def action_source(source, action)
+        source[/^\s*def\s+#{Regexp.escape(action)}\b.*?(?=^\s*def\s+\w+\b|^\s*(?:private|protected)\b|\z)/m]
+      end
+
+      def included_sources(app_path, source)
+        includes = source.scan(/^\s*include\s+([A-Z]\w*(?:::[A-Z]\w*)*)/).flatten
+        parents = source.scan(/^\s*class\s+\w+(?:::\w+)*\s*<\s*([A-Z]\w*(?:::[A-Z]\w*)*)/).flatten
+        includes.filter_map { |name| source_for(app_path, name, "concerns") } +
+          parents.filter_map { |name| source_for(app_path, name) }
+      end
+
+      def source_for(app_path, name, directory = nil)
+        relative = name.gsub("::", "/").gsub(/([a-z])([A-Z])/, "\\1_\\2").downcase
+        roots = [File.join(app_path, "app", "controllers"), File.join(File.dirname(app_path), "shared", "app", "controllers")]
+        path = roots.map { |root| File.join(root, directory.to_s, "#{relative}.rb") }.find { |candidate| File.file?(candidate) }
+        File.read(path) if path
+      end
+
+      def controller_from_path(app_path, path, fallback:)
+        return fallback unless path.start_with?(File.join(app_path, "app", "controllers"))
+
+        relative(app_path, path).delete_prefix("app/controllers/").delete_suffix("_controller.rb")
+      end
+
+      def view_helper_names(app_path)
+        Dir.glob(File.join(app_path, "app", "helpers", "**", "*.rb")).flat_map do |path|
+          File.read(path).scan(/^\s*def\s+([a-z]\w*[!?=]?)/).flatten
+        rescue StandardError
+          []
+        end
       end
 
       def finding(id, severity, file, message)
