@@ -125,7 +125,7 @@ class ChatController < ApplicationController
     msg = params[:message].to_s.strip
     return render(json: { changed: false }) if msg.empty?
 
-    result = Master::Now::Stages::Enhance.run(msg, agent: container[:agent], event_bus: container[:bus])
+    result = Master::CLI::Stages::Enhance.run(msg, agent: container[:agent], event_bus: container[:bus])
     render json: result
   rescue StandardError => e
     render json: { changed: false, error: e.message }

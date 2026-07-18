@@ -8,9 +8,9 @@ require "json"
 require "time"
 require "digest"
 require "securerandom"
-require_relative "../lib/reach/replicate_client"
-require_relative "../lib/reach/script_dispatch"
-require_relative "../lib/reach/analog_capabilities"
+require_relative "../lib/io/replicate_client"
+require_relative "../lib/io/script_dispatch"
+require_relative "../lib/io/analog_capabilities"
 require_relative "../lib/master_paths"
 
 # Structured fields compose onto the free-text --prompt; each is optional and
@@ -173,7 +173,7 @@ end
 # Content-addressed so repeated downloads of the same output collapse to one
 # blob; the sidecar records everything needed to reproduce or audit the call.
 def cache_blob(path, cache_dir)
-  digest = Master::Reach::ReplicateClient.checksum(path)
+  digest = Master::Io::ReplicateClient.checksum(path)
   FileUtils.mkdir_p(cache_dir)
   blob_path = File.join(cache_dir, "#{digest}#{File.extname(path)}")
   FileUtils.cp(path, blob_path) unless File.exist?(blob_path)
@@ -204,7 +204,7 @@ end
 def maybe_handoff_postpro(output, preset)
   return output unless preset
 
-  result = Master::Reach::ScriptDispatch.run(
+  result = Master::Io::ScriptDispatch.run(
     root: MasterPaths.root,
     tool: "postpro",
     arg: ["--input", output, "--output", output, "--preset", preset].map { |v| Shellwords.escape(v) }.join(" ")
@@ -247,12 +247,12 @@ if command == "help"
 end
 case command
 when "capabilities"
-  puts Master::Reach::AnalogCapabilities.report(:repligen)
+  puts Master::Io::AnalogCapabilities.report(:repligen)
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
   options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLIGEN_MODEL") && !options[:model_explicit]
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio])
-  client = options[:dry_run] ? nil : Master::Reach::ReplicateClient.new
+  client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
 
   outputs = (0...options[:batch]).map do |index|
     compiled = compile_prompt(options[:prompt], options)
@@ -292,10 +292,10 @@ when "generate"
 when "search"
   query = ARGV.join(" ").strip
   abort "usage: repligen.rb search QUERY [--limit N]" if query.empty?
-  rows = Master::Reach::ReplicateClient.new.models(limit: options[:limit], query: query)
+  rows = Master::Io::ReplicateClient.new.models(limit: options[:limit], query: query)
   puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
 when "sync"
-  rows = Master::Reach::ReplicateClient.new.models(limit: options[:limit])
+  rows = Master::Io::ReplicateClient.new.models(limit: options[:limit])
   FileUtils.mkdir_p(File.dirname(cache))
   File.write(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
   puts "ok: repligen synced #{rows.length} models to #{cache}"

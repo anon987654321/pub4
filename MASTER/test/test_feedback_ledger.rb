@@ -70,7 +70,7 @@ class TestFeedbackLedger < Minitest::Test
     learnings = Master::Ground::KnowledgeStore.new(root: root)
     3.times { learnings.record_event(event_type: "provider_error", dimension: "flaky-model") }
 
-    output = Master::Now::CommandRegistry.dispatch_analyze_self(learnings: learnings)
+    output = Master::CLI::CommandRegistry.dispatch_analyze_self(learnings: learnings)
 
     assert_includes output, "provider_errors flaky-model count=3"
   ensure

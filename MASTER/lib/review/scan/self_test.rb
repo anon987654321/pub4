@@ -1,0 +1,254 @@
+# frozen_string_literal: true
+
+require_relative "rule_dsl"
+require_relative "self_test/deploy_checks"
+
+module Master
+  module Review
+    module Scan
+      class SelfTest
+        include DeployChecks
+
+        Check = Data.define(:law, :description, :findings) do
+          def ok? = findings.empty?
+        end
+
+        Summary = Data.define(:checks) do
+          def violation_count = checks.sum { |check| check.findings.size }
+          def ok? = violation_count.zero?
+          def line = "self-test: #{violation_count} violations"
+          def to_h = checks.to_h { |check| [check.law, { ok: check.ok?, findings: check.findings }] }
+        end
+
+        def initialize(root:, event_bus: nil)
+          @root = root
+          @bus = event_bus
+          rules = Master.load_yaml(File.join(root, "data", "rules.yml")) || {}
+          @checks = rules.dig("self_test", "laws_apply_to_self") || {}
+        end
+
+        def call(laws: nil)
+          summary = Summary.new(checks: build_checks(laws:))
+          @bus&.publish("self_test:complete", violations: summary.violation_count, checks: summary.to_h)
+          @bus&.publish("self_violation", violations: summary.violation_count, checks: summary.to_h) unless summary.ok?
+          Result.ok(summary)
+        rescue StandardError => e
+          @bus&.publish("self_test:error", error: e.message)
+          Result.err("self-test failed: #{e.message}", category: :infrastructure)
+        end
+
+        private
+
+        def read_lines(path)
+          File.readlines(path, chomp: true, encoding: "UTF-8", invalid: :replace, undef: :replace)
+        end
+
+        def read_text(path)
+          File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+        end
+
+        def build_checks(laws: nil)
+          selected_laws = laws&.to_set
+          law_checks.filter_map do |law, body|
+            next if selected_laws && !selected_laws.include?(law)
+            check(law, &body)
+          end
+        end
+
+        def law_checks
+          [
+            ["ROBUSTNESS", lambda {
+              bare_rescue_findings + deploy_bare_rescue_findings + timeout_findings +
+                js_silent_catch_findings + library_verify_findings
+            }],
+            ["SINGULARITY", lambda { duplicate_rule_id_findings + cross_yaml_duplicate_key_findings + deploy_duplicate_id_findings }],
+            ["LINEARITY", lambda { structural_findings(Rules::NestingDepthRule.new) + deploy_nesting_findings }],
+            ["PROXIMITY", lambda { rule_test_proximity_findings }],
+            ["ABSTRACTION", lambda { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings }],
+            ["DENSITY", lambda { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings + face_pool_findings }],
+            ["KERNEL_ADHERENCE", lambda { kernel_wiring_findings }],
+          ]
+        end
+
+        def check(law)
+          Check.new(law:, description: @checks[law].to_s, findings: yield)
+        end
+
+        def ruby_lib_paths
+          Dir.glob(File.join(@root, "lib", "**", "*.rb")).sort
+        end
+
+        def bare_rescue_findings
+          ruby_lib_paths.flat_map do |path|
+            read_lines(path).each_with_index.filter_map do |line, index|
+              next unless line.match?(/^\s*rescue\s*(?:$|=>)/)
+              finding(path:, line: index + 1, message: "bare rescue — use rescue StandardError")
+            end
+          end
+        end
+
+        def timeout_findings
+          targets = ruby_lib_paths.select { |p| p.include?("/reach/") || p.include?("/judge/llm") }
+          targets.flat_map do |path|
+            # Strip full-line comments first -- a file that only *mentions*
+            # Open3/Net::HTTP in prose (e.g. explaining a caller's behavior)
+            # is not itself making an unbounded call.
+            code = read_text(path).lines.reject { |line| line.match?(/\A\s*#/) }.join
+            next [] unless code.match?(/\b(?:Open3\.|Net::HTTP)\b/)
+            # wait_thr.join(timeout_s) is a legitimate bounded-wait idiom (join
+            # returns nil on timeout without raising, so the code must check it
+            # and kill the process) -- same guarantee as Timeout.timeout, just
+            # spelled differently. Matched narrowly so plain Array#join(", ")
+            # elsewhere in the file can't produce a false "it's bounded".
+            next [] if code.match?(/Timeout\.|read_timeout|open_timeout|block_until_ms|\b\w*thr\w*\.join\(/i)
+            [finding(path:, line: 1, message: "HTTP/Open3 without bounded timeout (ROBUSTNESS)")]
+          rescue StandardError
+            []
+          end
+        end
+
+        def js_silent_catch_findings
+          web = File.join(@root, "web", "public")
+          return [] unless File.directory?(web)
+          Dir.glob(File.join(web, "**", "*.js"))
+            .reject { |path| Scanner.skip_path?(path, root: @root) }
+            .flat_map do |path|
+              read_lines(path).each_with_index.filter_map do |line, index|
+                next unless line.match?(/catch\s*\([^)]*\)\s*\{\s*\}/)
+                finding(path:, line: index + 1, message: "silent catch {} in web JS — fail visibly")
+              end
+            end
+        end
+
+        def duplicate_rule_id_findings
+          path = File.join(@root, "data", "rules.yml")
+          ids = rule_ids(Master.load_rules(root: @root))
+          ids.group_by(&:itself).filter_map do |id, values|
+            finding(path:, line: 1, message: "duplicate rule id #{id}") if values.size > 1
+          end
+        end
+
+        def cross_yaml_duplicate_key_findings
+          data_dir = File.join(@root, "data")
+          top_keys = Hash.new { |h, k| h[k] = [] }
+          singularity_yaml_paths(data_dir).each do |path|
+            top_level_yaml_keys(path).each { |key| top_keys[key] << path }
+          end
+          top_keys.flat_map do |key, paths|
+            next [] if paths.size < 2
+            paths.drop(1).map do |path|
+              finding(path:, line: 1, message: "top-level key #{key} also defined in #{paths.first} (SINGULARITY)")
+            end
+          end
+        end
+
+        def singularity_yaml_paths(data_dir)
+          Dir.glob(File.join(data_dir, "**", "*.yml")).sort.reject do |path|
+            rel = path.delete_prefix("#{data_dir}/")
+            rel.start_with?("agents/", "council/", "harnesses/", "lessons/", "ops/", "personas/",
+                            "prompts/", "rules/", "runtime/", "security/")
+          end
+        end
+
+        def top_level_yaml_keys(path)
+          document = Psych.parse_file(path)
+          return [] unless document
+          root = document.root
+          return [] unless root.is_a?(Psych::Nodes::Mapping)
+
+          root.children.each_slice(2).filter_map do |key_node, _value_node|
+            next unless key_node.respond_to?(:value)
+            key = key_node.value.to_s
+            next if %w[schema meta version].include?(key)
+            next if duplicate_top_level_key_allowed?(path, key)
+            key
+          end
+        rescue Psych::Exception
+          []
+        end
+
+        def duplicate_top_level_key_allowed?(path, key)
+          relative = path.delete_prefix("#{File.join(@root, "data")}/")
+          {
+            "clusters" => %w[mobile_web_opportunities.yml visual_clusters.yml],
+            "defaults" => %w[mcp_servers.yml models.yml],
+            "openrouter" => %w[models.yml providers.yml],
+            "thresholds" => %w[load.yml rules.yml],
+            "typography" => %w[design_rules.yml style.yml],
+            "voice" => %w[soul.yml voice.yml],
+          }.fetch(key, []).include?(relative)
+        end
+
+        def rule_ids(value, ids = [])
+          case value
+          when Hash
+            ids << value["id"].to_s if value.key?("id")
+            value.each_value { |child| rule_ids(child, ids) }
+          when Array
+            value.each { |child| rule_ids(child, ids) }
+          end
+          ids.reject(&:empty?)
+        end
+
+        def structural_findings(rule)
+          ruby_lib_paths.flat_map do |path|
+            code = read_text(path)
+            rule.check(code, path:).map { |result| finding(path:, line: result.line, message: result.message) }
+          end
+        end
+
+        def rule_test_proximity_findings
+          Dir.glob(File.join(@root, "lib", "judge", "scan", "rules", "*_rule.rb")).sort.filter_map do |path|
+            base = File.basename(path, ".rb")
+            test_path = File.join(@root, "test", "test_#{base}.rb")
+            next if File.exist?(test_path)
+            finding(path:, line: 1, message: "missing nearby test #{File.basename(test_path)}")
+          end
+        end
+
+        def face_pool_findings
+          semantics = File.join(@root, "web", "public", "face_semantics.js")
+          return [] unless File.file?(semantics)
+          body = read_text(semantics)
+          return [] unless body.match?(/mouthPool\.cells|eyePool\.cells/)
+          [finding(path: semantics, line: 1, message: "face_semantics still mutates mouthPool/eyePool — use MASTER_FACE_BLEND")]
+        end
+
+        def library_verify_findings
+          verify = Ground::LibraryVerify.new(root: @root)
+          lock = File.join(@root, "Gemfile.lock")
+          return [] unless File.file?(lock)
+
+          %w[zeitwerk psych yaml].filter_map do |gem|
+            result = verify.verify_gem!(gem)
+            next if result.ok?
+
+            finding(path: lock, line: 1, message: result.message.to_s)
+          end
+        end
+
+        def kernel_wiring_findings
+          return [] unless @root == Master::ROOT
+
+          findings = []
+          infra = File.join(@root, "lib", "judge", "scan", "infra_helpers.rb")
+          unless File.file?(infra)
+            findings << finding(path: infra, line: 1, message: "missing infra_helpers.rb wiring layer")
+          end
+          audit = RuleRegistryAudit.new(root: @root).call
+          if audit.adherence_pct < 35.0
+            findings << finding(
+              path: File.join(@root, "data", "rules.yml"), line: 1,
+              message: "rule adherence #{audit.adherence_pct}% below 35% — wire lexical/structural adapters"
+            )
+          end
+          findings
+        end
+
+        def finding(path:, line:, message:)
+          { path:, line:, message: }
+        end
+      end
+    end
+  end
+end

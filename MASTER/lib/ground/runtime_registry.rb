@@ -5,8 +5,8 @@ module Master
   # Collapses ProviderRegistry, ProviderHealth, and ProviderQuarantineManager into one call site (#396 item 2).
     class RuntimeRegistry
       def initialize(
-        health: Now::Routing::ProviderHealth.new,
-        quarantine: Now::Routing::ProviderQuarantineManager.new,
+        health: CLI::Routing::ProviderHealth.new,
+        quarantine: CLI::Routing::ProviderQuarantineManager.new,
         event_bus: nil
       )
         @health = health

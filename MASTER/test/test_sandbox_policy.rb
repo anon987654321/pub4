@@ -39,13 +39,13 @@ end
 
 class TestHomeostatHealth < Minitest::Test
   def test_fresh_homeostat_is_healthy
-    homeostat = Master::Loop::Homeostat.new
+    homeostat = Master::Fix::Homeostat.new
     assert homeostat.healthy?
     assert_equal :healthy, homeostat.health_status
   end
 
   def test_degraded_between_thresholds_without_name_error
-    homeostat = Master::Loop::Homeostat.new
+    homeostat = Master::Fix::Homeostat.new
     homeostat.instance_variable_get(:@state)[:error_rate] = 0.30
     assert homeostat.degraded?
     refute homeostat.critical?
@@ -54,7 +54,7 @@ class TestHomeostatHealth < Minitest::Test
   end
 
   def test_critical_wins_over_degraded
-    homeostat = Master::Loop::Homeostat.new
+    homeostat = Master::Fix::Homeostat.new
     homeostat.instance_variable_get(:@state)[:error_rate] = 0.60
     assert homeostat.critical?
     refute homeostat.degraded?

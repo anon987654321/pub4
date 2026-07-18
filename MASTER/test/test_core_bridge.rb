@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "now/core_bridge"
+require "cli/core_bridge"
 require "tmpdir"
 
 # The bridge runs one goal through the core Fold from inside the CLI and streams
@@ -37,7 +37,7 @@ class CoreBridgeTest < Minitest::Test
       model = ScriptedModel.new(
         *evidence_then_done(Master::Core::Effect.write("note.txt", "hello\n"), summary: "wrote the note")
       )
-      result = Master::Now::CoreBridge.run("write a note", root:, bus:, model:)
+      result = Master::CLI::CoreBridge.run("write a note", root:, bus:, model:)
 
       assert_equal :complete, result[:reason]
       assert_equal "wrote the note", result[:summary]
@@ -49,21 +49,21 @@ class CoreBridgeTest < Minitest::Test
   def test_run_string_renders_a_transcript
     Dir.mktmpdir do |root|
       model = ScriptedModel.new(*evidence_then_done(summary: "all clear"))
-      out = Master::Now::CoreBridge.run_string("check", root:, model:)
+      out = Master::CLI::CoreBridge.run_string("check", root:, model:)
       assert_match(/core: complete/, out)
       assert_match(/all clear/, out)
     end
   end
 
   def test_empty_goal_is_refused
-    assert_equal "core: no goal", Master::Now::CoreBridge.run_string("   ", root: Dir.pwd)
+    assert_equal "core: no goal", Master::CLI::CoreBridge.run_string("   ", root: Dir.pwd)
   end
 
   def test_on_turn_callback_fires_per_turn
     Dir.mktmpdir do |root|
       lines = []
       model = ScriptedModel.new(*evidence_then_done(summary: "done"))
-      Master::Now::CoreBridge.run("goal", root:, model:, on_turn: ->(line) { lines << line })
+      Master::CLI::CoreBridge.run("goal", root:, model:, on_turn: ->(line) { lines << line })
       refute_empty lines
       assert(lines.all? { |line| line.match?(/\A\d+:/) })
     end

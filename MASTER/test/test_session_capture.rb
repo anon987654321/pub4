@@ -28,7 +28,7 @@ class TestSessionCapture < Minitest::Test
   end
 
   def test_capture_command_is_registered
-    commands = Master::Now::CommandRegistry.memory_commands(nil, nil, root: Dir.pwd)
+    commands = Master::CLI::CommandRegistry.memory_commands(nil, nil, root: Dir.pwd)
 
     assert_includes commands.keys, "capture"
   end

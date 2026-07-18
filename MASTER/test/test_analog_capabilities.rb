@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../lib/reach/analog_capabilities"
+require_relative "../lib/io/analog_capabilities"
 
 class AnalogCapabilitiesTest < Minitest::Test
-  Contract = Master::Reach::AnalogCapabilities
+  Contract = Master::Io::AnalogCapabilities
 
   def test_contract_covers_every_original_direction
     assert_equal((1..200).to_a, Contract.all.map { |entry| entry[:id] })

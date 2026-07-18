@@ -22,7 +22,7 @@ sections:
   replicate: |-
     Cloud media via Replicate API (data/providers.yml). Token: REPLICATE_API_TOKEN or ~/.config/repligen/config.json.
     Grade stills: MASTER/tools/postpro.rb, /postpro.
-    Motion critique: lib/judge/council/motion_critique.rb. Env: MOTION_CRITIQUE_VISION, COMFYUI_URL, COMFYUI_WRAPPER_URL.
+    Motion critique: lib/review/council/motion_critique.rb. Env: MOTION_CRITIQUE_VISION, COMFYUI_URL, COMFYUI_WRAPPER_URL.
   conventions: |-
     Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.
     Ruby 3.3+ on OpenBSD. Style: frozen_string_literal, double quotes, no bare rescue, guard clauses, Result monad, files ≤300 lines, methods ≤10 lines.

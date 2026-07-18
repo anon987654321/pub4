@@ -6,7 +6,7 @@ class PathGuardTest < Minitest::Test
   def setup
     @root = Master::ROOT
     @tool = Class.new do
-      include Master::Reach::PathGuard
+      include Master::Io::PathGuard
       def initialize(root) = @root = root
     end.new(@root)
   end
@@ -18,7 +18,7 @@ class PathGuardTest < Minitest::Test
   end
 
   def test_accepts_paths_inside_root
-    result = @tool.resolve("lib/reach/path_guard.rb")
+    result = @tool.resolve("lib/io/path_guard.rb")
     assert result.ok?
     assert result.value!.start_with?(@root)
   end

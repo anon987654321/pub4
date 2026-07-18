@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "judge/scan/rule_dsl"
-require "judge/scan/rules/structural_rules"
+require "review/scan/rule_dsl"
+require "review/scan/rules/structural_rules"
 
 class TestScanRuleContracts < Minitest::Test
-  Rules = Master::Judge::Scan::Rules
+  Rules = Master::Review::Scan::Rules
 
   def test_small_files_rule_flags_files_over_limit
     code = Array.new(Rules::SmallFilesRule::LIMIT + 1, "puts :x").join("\n")
@@ -143,7 +143,7 @@ class TestScanRuleContracts < Minitest::Test
   private
 
   def rule(id, path: nil)
-    candidates = Master::Judge::Scan::Rule.registry.filter_map do |klass|
+    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
       instance = klass.new
       instance if instance.id == id
     rescue ArgumentError

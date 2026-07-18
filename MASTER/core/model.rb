@@ -5,7 +5,7 @@ require "json"
 module Master::Core
   # Model — the entire LLM surface of the agent, reduced to one method: given the
   # conversation Memory and the closed verb set, emit exactly one Effect. Whatever
-  # the old lib/judge dispatcher did — routing, tool schemas, ReAct loops, council
+  # the old lib/review dispatcher did — routing, tool schemas, ReAct loops, council
   # — collapses to "ask for the next effect and parse it." The Constitution, not
   # the model, decides whether the effect happens; the Core, not the model,
   # sequences the turns. So the model stays thin and replaceable.

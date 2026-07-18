@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "judge/scan/rule_dsl"
+require "review/scan/rule_dsl"
 
 class TestCosmeticRules < Minitest::Test
   def rule(id)
-    candidates = Master::Judge::Scan::Rule.registry.filter_map do |klass|
+    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
       instance = klass.new
       instance if instance.id == id
     rescue ArgumentError

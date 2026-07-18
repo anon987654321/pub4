@@ -13,11 +13,11 @@ class TestChitchatAgentRouting < Minitest::Test
   end
 
   def setup
-    @router = Master::Now::Routing::ModelRouter.new(
+    @router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new,
       root: Master::ROOT
     )
-    @agent = Master::Judge::Agent.allocate
+    @agent = Master::Review::Agent.allocate
     @agent.instance_variable_set(:@model_router, @router)
     @agent.instance_variable_set(:@config, FakeConfig.new)
     @agent.instance_variable_set(:@homeostat, nil)

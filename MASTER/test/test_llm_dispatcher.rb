@@ -67,7 +67,7 @@ class TestLLMDispatcher < Minitest::Test
 
   def test_active_file_types_collects_extensions_from_session_context
     dispatcher, session, _bus = build_dispatcher
-    session.topic = "editing MASTER/lib/judge/scan/rules/js_rules.rb and config/routes.json"
+    session.topic = "editing MASTER/lib/review/scan/rules/js_rules.rb and config/routes.json"
     session.messages << { content: "also touch RAILS/brgen/app/jobs/postpro_job.rb" }
 
     assert_equal [".json", ".rb"], dispatcher.send(:active_file_types).sort
@@ -131,7 +131,7 @@ class TestLLMDispatcher < Minitest::Test
   private
 
   def build_dispatcher
-    dispatcher = Master::Judge::LLMDispatcher.allocate
+    dispatcher = Master::Review::LLMDispatcher.allocate
     session = FakeSession.new
     bus = FakeBus.new
     dispatcher.instance_variable_set(:@session, session)

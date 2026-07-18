@@ -3,7 +3,7 @@
 require "minitest/autorun"
 $LOAD_PATH.unshift File.expand_path("../../lib", __dir__)
 require_relative "../../core/master"
-require "now/fold_risk"
+require "cli/fold_risk"
 
 class FoldDeliberationTest < Minitest::Test
   class ScriptedModel
@@ -58,7 +58,7 @@ class FoldDeliberationTest < Minitest::Test
   end
 
   def test_fold_risk_assess_bumps_ship_to_high
-    assessment = Master::Now::FoldRisk.assess("commit the auth fix")
+    assessment = Master::CLI::FoldRisk.assess("commit the auth fix")
     assert_equal :high, assessment[:risk]
   end
 end

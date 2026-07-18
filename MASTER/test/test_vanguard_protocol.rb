@@ -8,12 +8,12 @@ class TestVanguardProtocol < Minitest::Test
 
   def test_command_guard_rejects_banned_tokens
     assert_raises(Master::SecurityError) do
-      Judge::Security::CommandGuard.validate_command!(["grep", "-R", "foo", "."])
+      Review::Security::CommandGuard.validate_command!(["grep", "-R", "foo", "."])
     end
   end
 
   def test_command_guard_secure_execute_returns_result
-    result = Judge::Security::CommandGuard.secure_execute(["echo", "ok"])
+    result = Review::Security::CommandGuard.secure_execute(["echo", "ok"])
     assert result.ok?
     assert_includes result.value!, "ok"
   end
@@ -21,7 +21,7 @@ class TestVanguardProtocol < Minitest::Test
   def test_autonomous_repairer_heals_trailing_whitespace
     path = File.join(Dir.mktmpdir, "sample.rb")
     File.write(path, "def ok\n  1\nend  \n")
-    result = Judge::Scan::AutonomousRepairer.heal(path: path, source: File.read(path))
+    result = Review::Scan::AutonomousRepairer.heal(path: path, source: File.read(path))
     assert result.ok?
     refute_includes result.value!, "  \n"
   end
@@ -45,7 +45,7 @@ class TestVanguardProtocol < Minitest::Test
       end
     RUBY
     ast = Prism.parse(source).value
-    visitor = Judge::CodeIndex::SymbolVisitor.new(file: "demo.rb", root: Dir.pwd)
+    visitor = Review::CodeIndex::SymbolVisitor.new(file: "demo.rb", root: Dir.pwd)
     ast.accept(visitor)
     assert_equal 1, visitor.metrics[:modules]
     assert_equal 1, visitor.metrics[:classes]

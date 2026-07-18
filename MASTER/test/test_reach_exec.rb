@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../lib/reach/exec"
+require_relative "../lib/io/exec"
 
 class TestReachExec < Minitest::Test
-  E = Master::Reach::Exec
+  E = Master::Io::Exec
 
   def test_capture2e_merges_streams_and_reports_success
     out, status = E.capture2e("sh", "-c", "echo out; echo err 1>&2")

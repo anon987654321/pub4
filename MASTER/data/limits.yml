@@ -538,9 +538,9 @@ test_generation:
 # Source: cross-cutting reunification (#100).
 self_rewrite_throttle:
   sensitive_paths:
-    - lib/loop/
+    - lib/fix/
     - lib/ground/
-    - lib/judge/security/
+    - lib/review/security/
     - bin/cli
     - data/state.yml
   autoloop_action: "skip with publish autoloop:throttled event; surface to user"

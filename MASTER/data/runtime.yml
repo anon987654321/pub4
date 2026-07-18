@@ -2530,14 +2530,14 @@ routing_architecture:
   current_path:
   - Master.default_model
   - Ground::Config stored default
-  - Now::Routing::ModelRouter#fallback_chain
-  - Judge::Agent::ModelSelector#routed_models
-  - Judge::Agent::FallbackChain#attempt_chat_with_fallbacks
-  - Judge::LLMDispatcher#send_with_cache
+  - CLI::Routing::ModelRouter#fallback_chain
+  - Review::Agent::ModelSelector#routed_models
+  - Review::Agent::FallbackChain#attempt_chat_with_fallbacks
+  - Review::LLMDispatcher#send_with_cache
   confirmed_gaps:
   - id: webchat_undefined
     issue: WebChat constant was undefined — free web-chat path dead
-    fix: lib/reach/web_chat.rb Master::Reach::WebChat
+    fix: lib/io/web_chat.rb Master::Io::WebChat
   - id: ferrum_config_missing
     issue: model_router dig for ferrum_web_chat block did not resolve
     fix: added ferrum_web_chat block to data/models.yml
@@ -2606,7 +2606,7 @@ routing_architecture:
   - rotate by least-recently-used within tier
   - skip models in cooldown or over daily quota
   applied_changes:
-  - Reach::WebChat Ferrum-backed opt-in web chat
+  - Io::WebChat Ferrum-backed opt-in web chat
   - ferrum_web_chat block in models.yml
   - free tier wired into routes
   - vision routing fixed with vision tier

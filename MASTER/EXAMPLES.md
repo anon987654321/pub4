@@ -44,8 +44,8 @@ Scanner false positive: SQL detector flagged as SQL injection; needs scanner exe
 
 ```markdown
 - [x] Add `data/rules/README.md` mapping rule shards to consumers.
-      Verified by reading live consumers in `lib/judge/output_check.rb`,
-      `lib/loop/fix_loop/rule_order.rb`, and scanner rule loading.
+      Verified by reading live consumers in `lib/review/output_check.rb`,
+      `lib/fix/fix_loop/rule_order.rb`, and scanner rule loading.
 ```
 
 ## Bad TODO Update

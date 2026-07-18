@@ -71,7 +71,7 @@ class TestAgent < Minitest::Test
   end
 
   def test_public_method_count_stays_below_god_class_threshold
-    assert_operator Master::Judge::Agent.public_instance_methods(false).size, :<=, 12
+    assert_operator Master::Review::Agent.public_instance_methods(false).size, :<=, 12
   end
 
   def test_prompt_filter_removes_anti_simulation_words_outside_code_fences

@@ -9,21 +9,21 @@ class TurnPipelineTest < Minitest::Test
     {
       agent: Struct.new(:model).new("test"),
       renderer:,
-      commands: { "status" => Master::Now::CommandRegistry::Command.new { "ok-status" } },
+      commands: { "status" => Master::CLI::CommandRegistry::Command.new { "ok-status" } },
       root: Dir.pwd,
       bus: nil
     }
   end
 
   def test_call_dispatches_slash_via_turn_router
-    pipeline = Master::Now::TurnPipeline.new(container: build_container)
+    pipeline = Master::CLI::TurnPipeline.new(container: build_container)
     result = pipeline.call(Master::Result.ok(user_message: "/status"))
     assert result.ok?
     assert_match(/ok-status/, result.value[:rendered].to_s)
   end
 
   def test_last_timings_empty
-    pipeline = Master::Now::TurnPipeline.new(container: build_container)
+    pipeline = Master::CLI::TurnPipeline.new(container: build_container)
     assert_equal({}, pipeline.last_timings)
   end
 end

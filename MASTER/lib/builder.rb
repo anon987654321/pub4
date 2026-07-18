@@ -3,7 +3,7 @@
 require "fileutils"
 require_relative "builder/boot_phases"
 require_relative "builder/ai_boot"
-require_relative "loop/rollback"
+require_relative "fix/rollback"
 require_relative "trace/feedback_ledger"
 require_relative "trace/reflexion_ledger"
 require_relative "trace/snapshot_publisher"
@@ -16,40 +16,40 @@ module Master
     # Default tool factories. Override via data/tools.yml or register_tool().
     DEFAULT_TOOL_MAP = {
       "ReadFile"        => ->(r, i) {
-        Reach::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
+        Io::ReadFile.new(root: r, undo: i[:undo], event_bus: i[:bus], ground_truth: i[:ground_truth])
       },
       "WriteFile"       => ->(r, i) {
-        Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
+        Io::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
       "StrReplace"      => ->(r, i) {
-        Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
+        Io::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
           event_bus: i[:bus], diff_stager: i[:diff_stager])
       },
-      "BatchReplace"    => ->(r, i) { Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "BatchReplace"    => ->(r, i) { Io::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "AstEdit"         => ->(r, i) {
-        Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
+        Io::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus])
       },
-      "MemoryRecord"    => ->(r, i) { Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) },
-      "Tree"            => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
-      "ListDir"         => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
-      "SearchFiles"     => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },
-      "SearchKnowledge" => ->(r, i) { Reach::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
-      "SymbolLookup"    => ->(r, i) { Reach::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]) },
+      "MemoryRecord"    => ->(r, i) { Io::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) },
+      "Tree"            => ->(r, i) { Io::Tree.new(root: r, event_bus: i[:bus]) },
+      "ListDir"         => ->(r, i) { Io::ListDir.new(root: r, event_bus: i[:bus]) },
+      "SearchFiles"     => ->(r, i) { Io::SearchFiles.new(root: r, event_bus: i[:bus]) },
+      "SearchKnowledge" => ->(r, i) { Io::SearchKnowledge.new(root: r, event_bus: i[:bus]) },
+      "SymbolLookup"    => ->(r, i) { Io::SymbolLookup.new(code_index: i[:code_index], event_bus: i[:bus]) },
       "Shell"           => ->(r, i) {
-        Reach::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus], library_verify: i[:library_verify])
+        Io::Shell.new(root: r, governor: i[:governor], event_bus: i[:bus], library_verify: i[:library_verify])
       },
-      "GitContext"      => ->(r, i) { Reach::GitContext.new(root: r, event_bus: i[:bus]) },
-      "WebFetch"        => ->(r, i) { Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
-      "WebSearch"       => ->(r, i) { Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
-      "Clean"           => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "FeedbackRecord"  => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
+      "GitContext"      => ->(r, i) { Io::GitContext.new(root: r, event_bus: i[:bus]) },
+      "WebFetch"        => ->(r, i) { Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "WebSearch"       => ->(r, i) { Io::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
+      "Clean"           => ->(r, i) { Io::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "FeedbackRecord"  => ->(r, i) { Io::FeedbackRecord.new(learnings: i[:learnings]) },
       "SubdomainOrchestrator" => ->(r, i) {
-        Reach::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
-          web_fetch: Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]))
+        Io::SubdomainOrchestrator.new(root: r, event_bus: i[:bus],
+          web_fetch: Io::WebFetch.new(governor: i[:governor], event_bus: i[:bus]))
       },
       "DynamicHttp" => ->(_r, i) {
-        Reach::DynamicHttp.new(governor: i[:governor], event_bus: i[:bus])
+        Io::DynamicHttp.new(governor: i[:governor], event_bus: i[:bus])
       },
     }.freeze
 
@@ -98,7 +98,7 @@ module Master
       boot_config = config.freeze_boot
       trace = boot_trace(root:, config:)
       bus = trace[:bus]
-      code_index = Judge::CodeIndex.new(root:, event_bus: bus)
+      code_index = Review::CodeIndex.new(root:, event_bus: bus)
       scanner = build_scanner(root:, bus:)
       trace.merge(config:, boot_config:, code_index:, scanner:, root:)
     end
@@ -111,16 +111,16 @@ module Master
       trace = boot_trace(root:, config:)
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
-      output_check = Judge::OutputCheck.load(root:)
+      output_check = Review::OutputCheck.load(root:)
       scanner = build_scanner(root:, bus:)
-      code_index = Judge::CodeIndex.new(root:, event_bus: bus)
+      code_index = Review::CodeIndex.new(root:, event_bus: bus)
       ai = { scanner:, code_index: }
       infra = trace.merge(config:, boot_config:, renderer:, output_check:, root:)
-      commands = Now::CommandRegistry.build_fast(infra:, ai:, root:)
+      commands = CLI::CommandRegistry.build_fast(infra:, ai:, root:)
       agent = fast_agent_stub
       ai[:agent] = agent
       runtime = infra.merge(ai).merge(commands:, scanner:, root:)
-      pipeline = Now::TurnPipeline.new(container: runtime)
+      pipeline = CLI::TurnPipeline.new(container: runtime)
       runtime.merge(pipeline:)
     end
 
@@ -156,11 +156,11 @@ module Master
     def build_analysis_services(root:, config:, trace:, loop_c:, reach:)
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
-      output_check = Judge::OutputCheck.load(root:)
-      code_index = Judge::CodeIndex.new(root:, event_bus: bus)
+      output_check = Review::OutputCheck.load(root:)
+      code_index = Review::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
-      reference_graph = Judge::ReferenceGraph.new(root:, event_bus: bus)
-      ecology = Judge::RepoEcology.new(root:, event_bus: bus, code_index:)
+      reference_graph = Review::ReferenceGraph.new(root:, event_bus: bus)
+      ecology = Review::RepoEcology.new(root:, event_bus: bus, code_index:)
       subscribe_ecology_reindex(bus:, ecology:)
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
       pressure = PressureEngine.new(event_bus: bus)
@@ -220,12 +220,12 @@ module Master
 
     def build_runtime(root:, infra:, ai:)
       bus = infra[:bus]
-      commands = Now::CommandRegistry.build(infra:, ai:, root:)
+      commands = CLI::CommandRegistry.build(infra:, ai:, root:)
       runtime = infra.merge(ai).merge(commands:, root:)
       ai[:standing].wire_container(runtime)
-      pipeline = Now::TurnPipeline.new(container: runtime)
+      pipeline = CLI::TurnPipeline.new(container: runtime)
       runtime = runtime.merge(pipeline:)
-      gateway = Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus, container: runtime)
+      gateway = Io::Gateway.new(pipeline:, session: infra[:session], event_bus: bus, container: runtime)
       commands["gateway"] = ->(_ctx) { gateway.channels }
       runtime = runtime.merge(gateway:)
       [pipeline, gateway, runtime]

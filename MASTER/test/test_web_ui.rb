@@ -278,7 +278,7 @@ class TestWebUI < Minitest::Test
     actions = File.read(File.expand_path("../web/public/chat_actions.js", __dir__))
     part5 = File.read(File.expand_path("../web/public/face.part5.txt", __dir__))
     service = File.read(File.expand_path("../web/app/services/chat_service.rb", __dir__))
-    agent = File.read(File.expand_path("../lib/judge/agent.rb", __dir__))
+    agent = File.read(File.expand_path("../lib/review/agent.rb", __dir__))
     index = File.read(File.expand_path("../web/app/views/chat/index.html.erb", __dir__))
 
     assert_includes actions, "window.collectFeltState = collectFeltState"
@@ -293,7 +293,7 @@ class TestWebUI < Minitest::Test
     assert_includes service, "felt_sense:"
     assert_includes service, '"felt:sense"'
     assert_includes agent, "felt_sense"
-    assert_includes File.read(File.expand_path("../lib/judge/agent/prompt_builder.rb", __dir__)), "felt_sense_section"
+    assert_includes File.read(File.expand_path("../lib/review/agent/prompt_builder.rb", __dir__)), "felt_sense_section"
     assert_includes File.read(File.expand_path("../web/public/chat.js", __dir__)), "mood-sparkline"
   end
 
@@ -501,15 +501,15 @@ class TestWebUI < Minitest::Test
   # SwarmCoordinator
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents
-    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
-    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :coder
-    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :reviewer
-    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :researcher
+    assert_includes Master::Review::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
+    assert_includes Master::Review::Swarm::Coordinator::WORKER_CLASSES.keys, :coder
+    assert_includes Master::Review::Swarm::Coordinator::WORKER_CLASSES.keys, :reviewer
+    assert_includes Master::Review::Swarm::Coordinator::WORKER_CLASSES.keys, :researcher
   end
 
   def test_swarm_coordinator_unknown_role
     mock_agent = Minitest::Mock.new
-    coord = Master::Judge::Swarm::Coordinator.new(agent: mock_agent)
+    coord = Master::Review::Swarm::Coordinator.new(agent: mock_agent)
     result = coord.dispatch(:nonexistent, task: "foo")
     assert result.err?
     assert_includes result.message, "unknown role"

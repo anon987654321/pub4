@@ -7,7 +7,7 @@ module Master
     module Orders
       class RestartMaster < Base
         def call
-          _, status = Master::Reach::Exec.capture2e("doas", "rcctl", "restart", "master")
+          _, status = Master::Io::Exec.capture2e("doas", "rcctl", "restart", "master")
           status.success? ? Result.ok(restarted: true) : Result.err("rcctl restart failed")
         rescue StandardError => e
           Result.err(e.message)

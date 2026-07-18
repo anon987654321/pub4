@@ -72,7 +72,7 @@ module Master
 
         def entry_for(key:, value:, type:)
           entry = { "value" => value.to_s, "ts" => Time.now.to_i, "type" => type }
-          entry["vec"] = vec if (vec = Judge::Embeddings.embed("#{key} #{value}"))
+          entry["vec"] = vec if (vec = Review::Embeddings.embed("#{key} #{value}"))
           entry
         end
 

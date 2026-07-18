@@ -54,7 +54,7 @@ topics:
       - data/rules/unit.yml
       - data/rules/codebase.yml
       - data/limits.yml
-      - lib/judge/scan/
+      - lib/review/scan/
       - lib/ground/rules.rb
     tests:
       - bin/check --profile=agent
@@ -117,19 +117,19 @@ patch_briefs:
     check: bin/check --profile=full
     tests: [bin/check --profile=full, rake test:core]
     note: runtime loader and Zeitwerk setup
-  lib/now/:
+  lib/cli/:
     check: bin/check --profile=agent
     tests: [bin/check --profile=agent, rake test:core]
     note: CLI, TurnRouter, commands, web adapters
-  lib/judge/:
+  lib/review/:
     check: bin/check --profile=agent
     tests: [bin/check --profile=agent]
     note: scanners, agent, council, routing
-  lib/loop/:
+  lib/fix/:
     check: bin/check --profile=agent
     tests: [bin/check --profile=agent]
     note: fix/watch loops — env-gated by default
-  lib/reach/:
+  lib/io/:
     check: bin/check --profile=agent
     tests: [bin/check --profile=agent]
     note: tools and external actions; MediaIntent for creative routing

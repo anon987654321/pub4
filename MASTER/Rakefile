@@ -34,12 +34,12 @@ task :constitution do
   require "judge/scan/constitution_triage"
 
   root    = __dir__
-  scanner = Master::Judge::Scan::InfraHelpers.build_scanner(root:)
+  scanner = Master::Review::Scan::InfraHelpers.build_scanner(root:)
   scanner.rules.reject! { |rule| rule.id.to_s == "ast_omission" }
   timeout = Integer(ENV.fetch("MASTER_CONSTITUTION_FILE_TIMEOUT", "4"))
   lib     = File.join(root, "lib")
-  paths   = Dir.glob(File.join(lib, Master::Judge::Scan::Scanner::SCAN_GLOB))
-               .select { |path| File.file?(path) && !Master::Judge::Scan::Scanner.skip_path?(path, root:) }
+  paths   = Dir.glob(File.join(lib, Master::Review::Scan::Scanner::SCAN_GLOB))
+               .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
 
   violations = paths.each_with_index.flat_map do |path, index|
     puts "constitution: scanned #{index}/#{paths.size}" if index.positive? && (index % 25).zero?
@@ -51,7 +51,7 @@ task :constitution do
     [{ rule: "SCAN_TIMEOUT", rule_id: "SCAN_TIMEOUT", severity: :error, line: 1,
        message: "scan exceeded #{timeout}s per-file budget", file: path }]
   end
-  triage = Master::Judge::Scan::ConstitutionTriage.new(root:)
+  triage = Master::Review::Scan::ConstitutionTriage.new(root:)
   buckets = triage.buckets(violations)
   actionable = triage.actionable_count(violations)
   budget = Integer(ENV.fetch("MASTER_CONSTITUTION_MAX_ACTIONABLE", "1500"))
@@ -77,7 +77,7 @@ desc "Run rules.yml self_test laws against MASTER itself"
 task :selftest do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"
-  result = Master::Judge::Scan::SelfTest.new(root: __dir__).call
+  result = Master::Review::Scan::SelfTest.new(root: __dir__).call
   abort result.message unless result.ok?
 
   summary = result.value!
@@ -153,7 +153,7 @@ namespace :lint do
   task :data_singularity do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
     require "master"
-    result = Master::Judge::Scan::SelfTest.new(root: __dir__).call(laws: ["SINGULARITY"])
+    result = Master::Review::Scan::SelfTest.new(root: __dir__).call(laws: ["SINGULARITY"])
     abort result.message unless result.ok?
 
     check = result.value!.checks.fetch(0)
@@ -180,7 +180,7 @@ namespace :constitution do
     root = __dir__
     lib = File.join(root, "lib")
     paths = Dir.glob(File.join(lib, "**", "*.rb"))
-               .select { |path| File.file?(path) && !Master::Judge::Scan::Scanner.skip_path?(path, root:) }
+               .select { |path| File.file?(path) && !Master::Review::Scan::Scanner.skip_path?(path, root:) }
 
     fixed = { final_newline: 0, consecutive_blank_lines: 0, percent_literal: 0 }
     percent_re = /\[:([a-z_]+),\s*(:[a-z_]+(?:,\s*:[a-z_]+)+)\]/

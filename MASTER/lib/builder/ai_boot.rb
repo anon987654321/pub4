@@ -29,10 +29,10 @@ module Master
       agent.wire_constitution(Ground::Constitution.new)
       scanner = build_scanner(root:, agent:, bus:, ecology: infra[:ecology])
       lean_boot = ENV["MASTER_FULL_BOOT"] != "1"
-      swarm = lean_boot ? nil : Judge::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
+      swarm = lean_boot ? nil : Review::Swarm::Coordinator.new(agent:, event_bus: bus, parent_tools: tools)
       council = build_council(infra:, agent:, bus:, root:, lean_boot:)
       # Permissive for user chat (CLI + web); strict guard remains in ToolContract for shell/git.
-      guard = Judge::Security::InjectionGuard.new(mode: :permissive)
+      guard = Review::Security::InjectionGuard.new(mode: :permissive)
       { scanner:, lean_boot:, swarm:, council:, guard: }
     end
 
@@ -43,47 +43,47 @@ module Master
       subscribe_graph_retriever(bus:, infra:, root:) unless lean_boot
       return if ENV["MASTER_SKIP_SELF_TEST"] == "1"
 
-      publish_self_test(bus, Judge::Scan::SelfTest.new(root:, event_bus: bus).call)
+      publish_self_test(bus, Review::Scan::SelfTest.new(root:, event_bus: bus).call)
     end
 
     def build_agent_bundle(root:, infra:, bus:)
       tools = build_tools(root:, infra:) + infra[:mcp].tools
-      deps = Judge::Agent::Dependencies.from_kwargs(
+      deps = Review::Agent::Dependencies.from_kwargs(
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
-        model_router: Now::Routing::ModelRouter.new(config: infra[:config]),
-        reasoning_modes: Judge::Modes.new,
+        model_router: CLI::Routing::ModelRouter.new(config: infra[:config]),
+        reasoning_modes: Review::Modes.new,
         memory: infra[:memory], personality: infra[:personality],
         code_index: infra[:code_index], homeostat: infra[:homeostat]
       )
-      agent = Judge::Agent.new(deps:)
+      agent = Review::Agent.new(deps:)
       soul_doc = Voice::Soul.new(root:, agent:)
-      tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
+      tools << Io::AskLlm.new(agent:, governor: infra[:governor],
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
-      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: Master.context_window(agent.model),
+      ctx = CLI::ContextWindow.new(session: infra[:session], agent:, model_context: Master.context_window(agent.model),
         event_bus: bus, root:)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
-      agent_pool = Judge::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
+      agent_pool = Review::AgentPool.new(governor: infra[:governor], tools:, event_bus: bus)
       { agent:, tools:, soul: soul_doc, context_window: ctx, agent_pool: }
     end
 
     def build_council(infra:, agent:, bus:, root:, lean_boot:)
-      personas = Judge::Council::Personas.load(Master::COUNCIL_PATH)
+      personas = Review::Council::Personas.load(Master::COUNCIL_PATH)
       axioms = Ground::Rules.new(root:)
-      deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
-      ideation = Judge::Council::Ideation.new(agent:, event_bus: bus)
+      deliberation = Review::Council::Deliberation.new(personas:, agent:, event_bus: bus, axioms:)
+      ideation = Review::Council::Ideation.new(agent:, event_bus: bus)
       council_stage = if lean_boot
                         nil
                       else
-                        Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus,
+                        CLI::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus,
                                                  ground_truth: infra[:ground_truth])
                       end
       { axioms:, deliberation:, ideation:, council_stage: }
     end
 
     def subscribe_graph_retriever(bus:, infra:, root:)
-      Judge::GraphRetriever.new(reference_graph: infra[:reference_graph], root:).tap do |graph_retriever|
+      Review::GraphRetriever.new(reference_graph: infra[:reference_graph], root:).tap do |graph_retriever|
         bus.subscribe("tool:after") do |event|
           path = event[:path] || event["path"]
           next unless path
@@ -108,7 +108,7 @@ module Master
     end
 
     def build_scanner(root:, agent: nil, bus: nil, ecology: nil)
-      Judge::Scan::InfraHelpers.build_scanner(root:, agent:, bus:, ecology:)
+      Review::Scan::InfraHelpers.build_scanner(root:, agent:, bus:, ecology:)
     end
 
     def boot_autonomous(root:, infra:, agent:, scanner:, axioms: nil)
@@ -122,21 +122,21 @@ module Master
 
     def build_autonomous_core(root:, infra:, agent:, scanner:, axioms:, bus:)
       standing = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
-      git = Reach::GitOperations.new(root)
+      git = Io::GitOperations.new(root)
       rules = scanner.instance_variable_get(:@rules)
       learnings = infra[:learnings]
-      rollback = Loop::Rollback.new(root:, bus:)
+      rollback = Fix::Rollback.new(root:, bus:)
       fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
       watch_loop = build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:)
       { standing:, git:, rollback:, fix_loop:, watch_loop: }
     end
 
     def build_autonomous_monitors(root:, infra:, agent:, scanner:, bus:, lean_boot:, fix_loop:, rollback:)
-      heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
+      heartbeat = Fix::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
         event_bus: bus, homeostat: infra[:homeostat])
       triggers = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
-      propose_tree = lean_boot ? nil : Loop::ProposeTree.new(root:, agent:, event_bus: bus)
+      propose_tree = lean_boot ? nil : Fix::ProposeTree.new(root:, agent:, event_bus: bus)
       subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
       watcher = build_watcher(bus:, root:)
       { heartbeat:, triggers:, propose_tree:, watcher: }
@@ -144,7 +144,7 @@ module Master
 
     # MASTER_AUTOFIX=1 enables in-process convergence; off by default to avoid autocommits racing deploys.
     def build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
-      fix_loop = Loop::FixLoop.new(
+      fix_loop = Fix::FixLoop.new(
         rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
         incremental: ENV["MASTER_INCREMENTAL"] == "1",
         ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
@@ -158,7 +158,7 @@ module Master
     def build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:)
       return unless ENV["MASTER_WATCH"] == "1"
 
-      wl = Loop::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:)
+      wl = Fix::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:)
       Thread.new { wl.run }.tap { |t| t.abort_on_exception = false }
       wl
     end
@@ -176,7 +176,7 @@ module Master
 
     # MASTER_WATCHER=0 disables the OpenBSD load watcher; on by default.
     def build_watcher(bus:, root:)
-      watcher = Loop::Watcher.new(bus:, root:)
+      watcher = Fix::Watcher.new(bus:, root:)
       if ENV["MASTER_WATCHER"] != "0"
         Thread.new { watcher.run_forever }.tap { |t| t.abort_on_exception = false }
       end
@@ -184,7 +184,7 @@ module Master
     end
 
     def boot_skills(root, bus)
-      skills = Now::Skills.new(root:, event_bus: bus)
+      skills = CLI::Skills.new(root:, event_bus: bus)
       skills.discover!
       skills
     end

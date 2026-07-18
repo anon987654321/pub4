@@ -34,7 +34,7 @@ On failure, use structured hints: `bin/check --profile=agent --format=brief`
 2. Do not fold `data/rules/*.yml` into `rules.yml` without retuning scanners.
 3. Do not commit `knowledge/`, `output/`, `.master/`.
 4. No WebGL before primer tap (`web/app/views/chat/index.html.erb`).
-5. `tools.yml` lists Repligen/Postpro for slash commands — not LLM-native tools; media routes via `Reach::MediaIntent`.
+5. `tools.yml` lists Repligen/Postpro for slash commands — not LLM-native tools; media routes via `Io::MediaIntent`.
 
 ## Patch closeout
 

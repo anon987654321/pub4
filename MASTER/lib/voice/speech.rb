@@ -394,7 +394,7 @@ module Master
 
       def run_edge_worker(text, voice_name, style_config, audio_path, timeout)
         Timeout.timeout(timeout) do
-          _out, err, status = Master::Reach::Exec.capture3(
+          _out, err, status = Master::Io::Exec.capture3(
             TtsSupervisor.daemon_env(Master::ROOT),
             Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
             stdin_data: text.to_s,

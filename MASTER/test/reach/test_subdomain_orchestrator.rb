@@ -5,13 +5,13 @@ require_relative "../../lib/master"
 
 class TestSubdomainOrchestrator < Minitest::Test
   def setup
-    @tool = Master::Reach::SubdomainOrchestrator.new
+    @tool = Master::Io::SubdomainOrchestrator.new
   end
 
   def test_detect_intent
-    assert_equal "maps", Master::Reach::SubdomainOrchestrator.detect_intent("check maps viewport")
-    assert_equal "bsdports", Master::Reach::SubdomainOrchestrator.detect_intent("sync bsdports index")
-    assert_nil Master::Reach::SubdomainOrchestrator.detect_intent("hello world")
+    assert_equal "maps", Master::Io::SubdomainOrchestrator.detect_intent("check maps viewport")
+    assert_equal "bsdports", Master::Io::SubdomainOrchestrator.detect_intent("sync bsdports index")
+    assert_nil Master::Io::SubdomainOrchestrator.detect_intent("hello world")
   end
 
   def test_brgen_cluster_payload

@@ -112,7 +112,7 @@ class TestRuleLoopPolicy < Minitest::Test
   def test_preamble_loads_soul_once_across_rule_loops
     original = Master.method(:load_yaml)
     count = 0
-    Master::Loop::RuleLoop.clear_preamble_cache!
+    Master::Fix::RuleLoop.clear_preamble_cache!
     Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
       if path.end_with?("soul.yml")
         count += 1
@@ -135,7 +135,7 @@ class TestRuleLoopPolicy < Minitest::Test
     Master.define_singleton_method(:load_yaml) do |path, symbolize_names: false, default: {}|
       original.call(path, symbolize_names:, default:)
     end
-    Master::Loop::RuleLoop.clear_preamble_cache!
+    Master::Fix::RuleLoop.clear_preamble_cache!
   end
 
   def test_rescan_candidate_preserves_original_file_extension
@@ -168,7 +168,7 @@ class TestRuleLoopPolicy < Minitest::Test
   private
 
   def build_loop(root:, bus:, scanner:, agent:)
-    Master::Loop::RuleLoop.new(
+    Master::Fix::RuleLoop.new(
       rule: Rule.new("TEST_RULE", :warning),
       agent:,
       scanner:,

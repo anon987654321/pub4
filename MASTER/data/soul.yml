@@ -44,7 +44,7 @@ absolute:
     - data/SOUL.md
     - data/operator_principles.yml
     - data/project_context.yml
-    - lib/judge/scan/
+    - lib/review/scan/
     - bin/cli
   anti_simulation:
     forbidden: [will, would, could, might]

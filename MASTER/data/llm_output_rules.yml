@@ -1,4 +1,4 @@
-# Runtime quality patterns loaded by Master::Judge::OutputCheck.
+# Runtime quality patterns loaded by Master::Review::OutputCheck.
 schema: 1
 
 hallucination:

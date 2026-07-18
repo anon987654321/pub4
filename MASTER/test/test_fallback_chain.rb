@@ -32,7 +32,7 @@ class TestFallbackChain < Minitest::Test
   end
 
   def build_agent(dispatcher)
-    agent = Master::Judge::Agent.allocate
+    agent = Master::Review::Agent.allocate
     agent.instance_variable_set(:@dispatcher, dispatcher)
     agent.instance_variable_set(:@model_router, FakeRouter.new)
     agent.instance_variable_set(:@config,

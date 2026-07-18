@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/judge/scan/rules/structural_rules"
+require_relative "../lib/review/scan/rules/structural_rules"
 
 class TestPatternExtractionRule < Minitest::Test
   def setup
-    @rule = Master::Judge::Scan::Rules::PatternExtractionRule.new
+    @rule = Master::Review::Scan::Rules::PatternExtractionRule.new
   end
 
   def test_detects_strategy_opportunity

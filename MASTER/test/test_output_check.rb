@@ -12,7 +12,7 @@ class TestOutputCheck < Minitest::Test
     }
   end
 
-  def check = Master::Judge::OutputCheck.new(rules)
+  def check = Master::Review::OutputCheck.new(rules)
 
   def test_detects_error_and_warning_categories
     errors = check.check("I created `lib/imaginary.rb`.")
@@ -36,7 +36,7 @@ class TestOutputCheck < Minitest::Test
   end
 
   def test_invalid_regex_does_not_crash
-    checker = Master::Judge::OutputCheck.new("hallucination" => ["[unclosed"])
+    checker = Master::Review::OutputCheck.new("hallucination" => ["[unclosed"])
     assert_empty checker.check("anything")
   end
 end

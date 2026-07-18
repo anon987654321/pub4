@@ -2,7 +2,7 @@
 
 require "fileutils"
 require_relative "test_helper"
-require "judge/scan/rule_dsl"
+require "review/scan/rule_dsl"
 
 class TestAstFixerTransforms < Minitest::Test
   class FakeBus
@@ -201,12 +201,12 @@ class TestAstFixerTransforms < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "space.rb")
       File.write(path, "def call  \n  :ok\t\nend\n")
-      scanner = Master::Judge::Scan::Scanner.new(rules: [rule("TRAILING_WHITESPACE")])
+      scanner = Master::Review::Scan::Scanner.new(rules: [rule("TRAILING_WHITESPACE")])
 
       first_scan = scanner.scan(path)
-      first_fix = Master::Judge::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
+      first_fix = Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
       second_scan = scanner.scan(path)
-      second_fix = Master::Judge::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
+      second_fix = Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
       third_scan = scanner.scan(path)
 
       assert_operator first_scan.value!.size, :>, 0
@@ -223,7 +223,7 @@ class TestAstFixerTransforms < Minitest::Test
       File.write(path, "def call  \n  :ok\nend\n")
       bus = FakeBus.new
 
-      Master::Judge::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"), event_bus: bus)
+      Master::Review::Scan::AstFixer.fix(path, File.read(path, encoding: "UTF-8"), event_bus: bus)
 
       event = bus.events.find { |name, _payload| name == "ast_fixer:transform" }
       assert event
@@ -239,13 +239,13 @@ class TestAstFixerTransforms < Minitest::Test
       path = File.join(dir, filename)
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
-      result = Master::Judge::Scan::AstFixer.fix(path, content)
+      result = Master::Review::Scan::AstFixer.fix(path, content)
       { content: File.read(path), transforms: result.transforms }
     end
   end
 
   def rule(id)
-    Master::Judge::Scan::Rule.registry.each do |klass|
+    Master::Review::Scan::Rule.registry.each do |klass|
       instance = klass.new
       return instance if instance.id == id
     rescue ArgumentError

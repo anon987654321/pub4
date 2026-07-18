@@ -181,7 +181,7 @@ module Master
           d("imports0: #{imports_loaded.join(' ')}"),
           d("orders0: #{active_orders_count} active"), d("security0: #{pledge_status}"),
           d("web0: #{context[:web]}"), d("modules0: ground trace voice now loop judge reach ok"),
-          d("mode0: #{Master::Now::RuntimeMode.summary(config: @config)}"),
+          d("mode0: #{Master::CLI::RuntimeMode.summary(config: @config)}"),
           d("boot0: #{elapsed}ms")
         ]
       end

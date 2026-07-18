@@ -5,25 +5,25 @@ require_relative "test_helper"
 class TestOpenCrabsFeatures < Minitest::Test
   def test_hashline_format_and_validate
     lines = ["foo\n", "bar\n"]
-    formatted = Master::Reach::Hashline.format_lines(lines)
+    formatted = Master::Io::Hashline.format_lines(lines)
     assert_match(/\A1#[0-9a-f]{2}\tfoo/, formatted)
 
-    id = Master::Reach::Hashline.line_id("foo")
-    anchor = Master::Reach::Hashline.parse_anchor("1##{id}")
+    id = Master::Io::Hashline.line_id("foo")
+    anchor = Master::Io::Hashline.parse_anchor("1##{id}")
     content = lines.join
-    assert Master::Reach::Hashline.valid?(content, line_no: anchor[:line], id: anchor[:id])
+    assert Master::Io::Hashline.valid?(content, line_no: anchor[:line], id: anchor[:id])
   end
 
   def test_hashline_stale_anchor_rejects
     content = "alpha\nbeta\n"
-    id = Master::Reach::Hashline.line_id("alpha")
-    result = Master::Reach::Hashline.replace_line(content, line_no: 1, id: "ff", new_line: "gamma")
+    id = Master::Io::Hashline.line_id("alpha")
+    result = Master::Io::Hashline.replace_line(content, line_no: 1, id: "ff", new_line: "gamma")
     assert result.err?
   end
 
   def test_output_filter_truncates_long_listing
     output = (1..60).map { |n| "line #{n}" }.join("\n")
-    filtered = Master::Reach::OutputFilter.filter(command: "ls -la", output:)
+    filtered = Master::Io::OutputFilter.filter(command: "ls -la", output:)
     assert filtered.bytesize < output.bytesize
     assert_includes filtered, "omitted"
   end
@@ -79,7 +79,7 @@ class TestOpenCrabsFeatures < Minitest::Test
     skill_dir = File.join(dir, "data", "skills", "demo")
     FileUtils.mkdir_p(skill_dir)
     File.write(File.join(skill_dir, "SKILL.md"), "---\nname: demo\ndescription: demo skill\ntriggers:\n  - fix loop\n---\n\nDo the thing.\n")
-    skills = Master::Now::Skills.new(root: dir)
+    skills = Master::CLI::Skills.new(root: dir)
     skills.discover!
     body = skills.body_for("demo")
     assert_includes body, "Do the thing"
@@ -88,13 +88,13 @@ class TestOpenCrabsFeatures < Minitest::Test
   end
 
   def test_dispatch_rtk_command
-    out = Master::Now::CommandRegistry.dispatch_rtk(Master::ROOT)
+    out = Master::CLI::CommandRegistry.dispatch_rtk(Master::ROOT)
     assert_includes out, "RTK output filter stats"
   end
 
   def test_agent_pool_capacity
     bus = Master::Trace::EventBus.new
-    pool = Master::Judge::AgentPool.new(governor: nil, event_bus: bus,
+    pool = Master::Review::AgentPool.new(governor: nil, event_bus: bus,
       taxonomy_path: File.join(Master::ROOT, "data", "agent_taxonomy.yml"))
     hold = Queue.new
     4.times do |i|

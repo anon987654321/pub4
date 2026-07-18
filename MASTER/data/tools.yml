@@ -33,4 +33,4 @@
 - { name: Postpro,        tier: dangerous, visitor: false, default: true,  description: Cinematic film post-processing on images (kodak etc) }
 - { name: SubdomainOrchestrator, tier: safe, visitor: true, default: true, description: Inspect or synchronize a pub4 subdomain cluster (marketplace, maps, amber, bsdports, etc.) }
 - { name: DynamicHttp, tier: safe, visitor: false, default: true, description: Call HTTP endpoints declared in data/tools.dynamic.yml (name + params) }
-# CLI slash commands (not Master::Tools adapters): /postpro /repligen — lib/now/command_registry/reach_commands.rb
+# CLI slash commands (not Master::Tools adapters): /postpro /repligen — lib/cli/command_registry/reach_commands.rb

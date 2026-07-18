@@ -10,7 +10,7 @@ class TurnRouterTest < Minitest::Test
       session: Struct.new(:budget_max, :cost).new(0, 0.0),
       agent: Struct.new(:model).new("test-model"),
       renderer:,
-      commands: commands || { "status" => Master::Now::CommandRegistry::Command.new { "status-ok" } },
+      commands: commands || { "status" => Master::CLI::CommandRegistry::Command.new { "status-ok" } },
       root: Dir.pwd,
       bus: nil
     }
@@ -19,8 +19,8 @@ class TurnRouterTest < Minitest::Test
   def test_plain_language_routes_to_fold
     fold = { reason: :complete, turns: 1, summary: "done", transcript: [] }
     Master.stub(:any_api_key_present?, true) do
-      Master::Now::CoreBridge.stub(:run, fold) do
-        result = Master::Now::TurnRouter.call(message: "fix the bug", container: build_container)
+      Master::CLI::CoreBridge.stub(:run, fold) do
+        result = Master::CLI::TurnRouter.call(message: "fix the bug", container: build_container)
         assert result.ok?
         assert_match(/core: complete/, result.value[:rendered])
       end
@@ -31,12 +31,12 @@ class TurnRouterTest < Minitest::Test
     calls = []
     pipeline = Object.new
     pipeline.define_singleton_method(:call) { |*| calls << :pipeline }
-    Master::Now::TurnRouter.call(message: "/status", container: build_container)
+    Master::CLI::TurnRouter.call(message: "/status", container: build_container)
     assert_empty calls
   end
 
   def test_slash_status_renders_command_output
-    result = Master::Now::TurnRouter.call(message: "/status", container: build_container)
+    result = Master::CLI::TurnRouter.call(message: "/status", container: build_container)
     assert result.ok?
     assert_match(/status-ok/, result.value[:rendered].to_s)
   end
@@ -44,8 +44,8 @@ class TurnRouterTest < Minitest::Test
   def test_run_promotes_to_fold
     fold = { reason: :complete, turns: 1, summary: "shipped", transcript: [] }
     Master.stub(:any_api_key_present?, true) do
-      Master::Now::CoreBridge.stub(:run, fold) do
-        result = Master::Now::TurnRouter.call(message: "/run add tests", container: build_container)
+      Master::CLI::CoreBridge.stub(:run, fold) do
+        result = Master::CLI::TurnRouter.call(message: "/run add tests", container: build_container)
         assert result.ok?
         assert_match(/shipped/, result.value[:rendered])
       end

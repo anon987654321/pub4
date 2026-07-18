@@ -18,7 +18,7 @@ Namespace tooling should treat `bin/master-core` as the core load entrypoint.
 
 ## Local Knowledge Stays Local
 
-`knowledge/` is gitignored and skipped by scanners/snapshots, but it still powers `Master::Reach::SearchKnowledge`. Do not move it unless the search tool learns the new location first.
+`knowledge/` is gitignored and skipped by scanners/snapshots, but it still powers `Master::Io::SearchKnowledge`. Do not move it unless the search tool learns the new location first.
 
 ## Deferred WebGL Boot Is Sacred
 

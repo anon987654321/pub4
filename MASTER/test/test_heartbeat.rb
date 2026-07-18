@@ -23,7 +23,7 @@ class TestHeartbeat < Minitest::Test
           enabled: true
       YAML
 
-      heartbeat = Master::Loop::Heartbeat.new(root:)
+      heartbeat = Master::Fix::Heartbeat.new(root:)
 
       assert_includes heartbeat.list, "self_test: every 60m"
     end
@@ -36,7 +36,7 @@ class TestHeartbeat < Minitest::Test
           laws_apply_to_self: {}
       YAML
       bus = FakeBus.new
-      heartbeat = Master::Loop::Heartbeat.new(root:, scanner: Object.new, event_bus: bus)
+      heartbeat = Master::Fix::Heartbeat.new(root:, scanner: Object.new, event_bus: bus)
 
       heartbeat.run_due!
 
@@ -61,7 +61,7 @@ class TestHeartbeat < Minitest::Test
       FileUtils.mkdir_p(File.join(root, ".master"))
       File.write(File.join(root, ".master", "heartbeat_state.yml"), { "self_test" => { "last_fixed" => 123 } }.to_yaml)
       bus = FakeBus.new
-      heartbeat = Master::Loop::Heartbeat.new(root:, scanner: Object.new, event_bus: bus)
+      heartbeat = Master::Fix::Heartbeat.new(root:, scanner: Object.new, event_bus: bus)
 
       heartbeat.run_due!
 

@@ -29,7 +29,7 @@ class ReachPrimitivesTest < Minitest::Test
     path = File.join(@dir, "sample.txt")
     File.write(path, "alpha\nbeta\n")
 
-    tool = Master::Reach::ReadFile.new(root: @dir, undo: @undo)
+    tool = Master::Io::ReadFile.new(root: @dir, undo: @undo)
     result = tool.call(path: "sample.txt")
 
     assert result.ok?
@@ -38,7 +38,7 @@ class ReachPrimitivesTest < Minitest::Test
   end
 
   def test_write_file_creates_file
-    tool = Master::Reach::WriteFile.new(root: @dir, undo: @undo, governor: @governor)
+    tool = Master::Io::WriteFile.new(root: @dir, undo: @undo, governor: @governor)
     result = tool.call(path: "out.txt", content: "hello\n")
 
     assert result.ok?
@@ -49,7 +49,7 @@ class ReachPrimitivesTest < Minitest::Test
     FileUtils.mkdir_p(File.join(@dir, "nested"))
     File.write(File.join(@dir, "nested", "child.txt"), "x")
 
-    tool = Master::Reach::ListDir.new(root: @dir)
+    tool = Master::Io::ListDir.new(root: @dir)
     result = tool.call(path: ".", depth: 2)
 
     assert result.ok?
@@ -61,7 +61,7 @@ class ReachPrimitivesTest < Minitest::Test
     FileUtils.mkdir_p(File.join(@dir, "a"))
     File.write(File.join(@dir, "a", "needle.txt"), "findme")
 
-    tool = Master::Reach::SearchFiles.new(root: @dir)
+    tool = Master::Io::SearchFiles.new(root: @dir)
     result = tool.call(pattern: "findme")
 
     assert result.ok?
@@ -72,7 +72,7 @@ class ReachPrimitivesTest < Minitest::Test
     path = File.join(@dir, "edit.txt")
     File.write(path, "hello world\n")
 
-    tool = Master::Reach::StrReplace.new(root: @dir, undo: @undo, governor: @governor)
+    tool = Master::Io::StrReplace.new(root: @dir, undo: @undo, governor: @governor)
     result = tool.call(path: "edit.txt", old_string: "world", new_string: "universe")
 
     assert result.ok?
@@ -83,7 +83,7 @@ class ReachPrimitivesTest < Minitest::Test
     path = File.join(@dir, "dup.txt")
     File.write(path, "foo bar foo\n")
 
-    tool = Master::Reach::StrReplace.new(root: @dir, undo: @undo, governor: @governor)
+    tool = Master::Io::StrReplace.new(root: @dir, undo: @undo, governor: @governor)
     result = tool.call(path: "dup.txt", old_string: "foo", new_string: "baz")
 
     assert result.err?
@@ -91,7 +91,7 @@ class ReachPrimitivesTest < Minitest::Test
   end
 
   def test_shell_runs_permitted_command
-    tool = Master::Reach::Shell.new(root: @dir, governor: @governor)
+    tool = Master::Io::Shell.new(root: @dir, governor: @governor)
     result = tool.call(command: "echo reach-smoke")
 
     assert result.ok?
@@ -99,7 +99,7 @@ class ReachPrimitivesTest < Minitest::Test
   end
 
   def test_shell_blocks_destructive_command
-    tool = Master::Reach::Shell.new(root: @dir, governor: @governor)
+    tool = Master::Io::Shell.new(root: @dir, governor: @governor)
     result = tool.call(command: "rm -rf /tmp/master-reach-smoke-should-never-run")
 
     assert result.err?

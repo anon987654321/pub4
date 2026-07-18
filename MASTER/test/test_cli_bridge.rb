@@ -12,7 +12,7 @@ class CLIBridgeTest < Minitest::Test
     renderer.define_singleton_method(:speaker_tag) { "agent> " }
     agent = Struct.new(:model).new("test-model")
     session = Struct.new(:budget_max, :cost, :token_est, :phase, :messages).new(0, 0.0, 0, :work, [])
-    Master::Now::CLI.new(
+    Master::CLI::CLI.new(
       container: {
         session:,
         agent:,
@@ -22,7 +22,7 @@ class CLIBridgeTest < Minitest::Test
         config: {},
         pipeline:,
         commands: commands || {
-          "status" => Master::Now::CommandRegistry::Command.new { "status-ok" },
+          "status" => Master::CLI::CommandRegistry::Command.new { "status-ok" },
         },
         root: Dir.pwd,
         bus: nil
@@ -37,7 +37,7 @@ class CLIBridgeTest < Minitest::Test
     fold = { reason: :complete, turns: 2, summary: "ok", transcript: ["1: done -> ok"] }
 
     Master.stub(:any_api_key_present?, true) do
-      Master::Now::TurnRouter.stub(:call, Master::Result.ok(output: "core: complete turns=2\nok", rendered: "core: complete turns=2\nok", core: fold)) do
+      Master::CLI::TurnRouter.stub(:call, Master::Result.ok(output: "core: complete turns=2\nok", rendered: "core: complete turns=2\nok", core: fold)) do
         out, = capture_io { cli.run_input("write a note") }
         assert_match(/core: complete turns=2/, out)
         assert_match(/ok/, out)

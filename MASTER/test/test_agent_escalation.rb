@@ -21,7 +21,7 @@ class AgentEscalationTest < Minitest::Test
   end
 
   def test_escalation_uses_stronger_model
-    agent = Master::Judge::Agent.allocate
+    agent = Master::Review::Agent.allocate
     agent.instance_variable_set(:@dispatcher,    FakeDispatcher.new)
     agent.instance_variable_set(:@model_router,  FakeRouter.new)
     agent.instance_variable_set(:@config,
@@ -43,7 +43,7 @@ class AgentEscalationTest < Minitest::Test
   end
 
   def test_no_infinite_escalation_same_model
-    agent = Master::Judge::Agent.allocate
+    agent = Master::Review::Agent.allocate
     router = FakeRouter.new
     router.define_singleton_method(:escalate_if_low_confidence) { |*| "cheap-model" }
     agent.instance_variable_set(:@model_router, router)

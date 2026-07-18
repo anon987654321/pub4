@@ -38,9 +38,9 @@ module Master
       end
 
       def call
-        homeostat = Loop::Homeostat.new(event_bus: @bus)
-        governor = Loop::Governor.new(config: @config, event_bus: @bus)
-        diff_stager = @config["staging_enabled"] ? Loop::DiffStager.new(root: @root, event_bus: @bus) : nil
+        homeostat = Fix::Homeostat.new(event_bus: @bus)
+        governor = Fix::Governor.new(config: @config, event_bus: @bus)
+        diff_stager = @config["staging_enabled"] ? Fix::DiffStager.new(root: @root, event_bus: @bus) : nil
         phase_gates = Ground::PhaseGates.new(root: @root, event_bus: @bus)
         { homeostat:, governor:, diff_stager:, phase_gates: }
       end
@@ -54,15 +54,15 @@ module Master
       end
 
       def call
-        breaker = Reach::CircuitBreakerRegistry.new(
+        breaker = Io::CircuitBreakerRegistry.new(
           budget_max: @config.budget_max,
           req_max: @config.req_max,
           warn_at: @config.warn_at,
           max_per_file: @config.max_per_file,
           event_bus: @bus,
         )
-        cache = Reach::SemanticCache.new(root: @root, ttl: @config["cache_ttl"], event_bus: @bus)
-        mcp = Reach::McpCoordinator.new(root: @root, event_bus: @bus)
+        cache = Io::SemanticCache.new(root: @root, ttl: @config["cache_ttl"], event_bus: @bus)
+        mcp = Io::McpCoordinator.new(root: @root, event_bus: @bus)
         mcp.connect_all
         { breaker:, cache:, mcp: }
       end

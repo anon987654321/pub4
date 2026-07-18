@@ -17,10 +17,10 @@ MASTER is a constitutional AI runtime in Ruby. Models propose; the runtime valid
 
 ```text
 bin/cli → Master.bootstrap_container
-       → lib/now (pipeline, commands, web adapters)
-       → lib/judge (scanners, council, routing, review)
-       → lib/loop (fix/watch/self-check)
-       → lib/reach (tools, external actions)
+       → lib/cli (pipeline, commands, web adapters)
+       → lib/review (scanners, council, routing, review)
+       → lib/fix (fix/watch/self-check)
+       → lib/io (tools, external actions)
        → lib/trace (evidence, session, telemetry)
        → lib/ground (constitution, memory, policy)
        → lib/voice (persona, TTS, SOUL evolution)
@@ -28,7 +28,7 @@ bin/cli → Master.bootstrap_container
 core/ — isolated constitutional fold spine (separate load path; do not merge with lib/ casually)
 ```
 
-High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `lib/master.rb`, `web/app/views/chat/index.html.erb`, `web/public/face*`, `lib/reach/`, `.master/`.
+High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `lib/master.rb`, `web/app/views/chat/index.html.erb`, `web/public/face*`, `lib/io/`, `.master/`.
 
 ## Agent Contract
 

@@ -20,12 +20,12 @@ class TestEnforcementWiring < Minitest::Test
       },
       root: Dir.pwd,
     )
-    stage = Master::Now::Stages::Guard.new(
+    stage = Master::CLI::Stages::Guard.new(
       governor: nil,
       injection_guard: FakeInjectionGuard.new(Master::Result.ok(:clean)),
       evidence:,
     )
-    ctx = Master::Now::PipelineContext.build(
+    ctx = Master::CLI::PipelineContext.build(
       user_message: "change it",
       message: "change it",
       metadata: { evidence_action: "modification", evidence_sources: [{ type: "test_pass" }] },
@@ -35,10 +35,10 @@ class TestEnforcementWiring < Minitest::Test
   end
 
   def test_render_annotates_blocking_findings
-    checker = Master::Judge::OutputCheck.new("hallucination" => ["created phantom"])
+    checker = Master::Review::OutputCheck.new("hallucination" => ["created phantom"])
     renderer = FakeRenderer.new([])
-    stage = Master::Now::Stages::Render.new(renderer:, output_check: checker)
-    ctx = Master::Now::PipelineContext.build(user_message: "x", output: "created phantom")
+    stage = Master::CLI::Stages::Render.new(renderer:, output_check: checker)
+    ctx = Master::CLI::PipelineContext.build(user_message: "x", output: "created phantom")
     result = stage.call(ctx)
 
     assert result.ok?

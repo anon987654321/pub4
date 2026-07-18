@@ -10,17 +10,17 @@ class SourceLoopGuardsSpec < Minitest::Test
   end
 
   def test_heartbeat_source_requires_explicit_env
-    source = read("lib/loop/heartbeat.rb")
+    source = read("lib/fix/heartbeat.rb")
     assert_includes source, 'return unless ENV["MASTER_HEARTBEAT"] == "1"'
   end
 
   def test_watcher_source_requires_explicit_env
-    source = read("lib/loop/watcher.rb")
+    source = read("lib/fix/watcher.rb")
     assert_includes source, 'return unless ENV["MASTER_WATCHER"] == "1"'
   end
 
   def test_watch_loop_source_requires_explicit_env
-    source = read("lib/loop/watch_loop.rb")
+    source = read("lib/fix/watch_loop.rb")
     assert_includes source, 'return unless ENV["MASTER_WATCH"] == "1"'
   end
 end

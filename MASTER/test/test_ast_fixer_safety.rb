@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 require "master"
-require "judge/scan/ast_fixer"
+require "review/scan/ast_fixer"
 
 # Guards AstFixer against the regression where line-heuristic transforms
 # (add_trailing_commas) turned valid multi-line Ruby into unparseable code and
@@ -26,7 +26,7 @@ class TestAstFixerSafety < Minitest::Test
   def fix(source)
     file = File.join(Dir.mktmpdir("astfixer"), "demo.rb")
     File.write(file, source)
-    Master::Judge::Scan::AstFixer.fix(file, source)
+    Master::Review::Scan::AstFixer.fix(file, source)
     File.read(file)
   ensure
     FileUtils.remove_entry(File.dirname(file)) if file

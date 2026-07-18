@@ -1,6 +1,6 @@
 # load.yml — Watcher thresholds.
 # OS-level pressure that should make MASTER back off scans, defer autofix, or alert.
-# Read by lib/loop/watcher.rb. Crossings publish system:warn / system:crit.
+# Read by lib/fix/watcher.rb. Crossings publish system:warn / system:crit.
 
 interval_seconds: 30
 

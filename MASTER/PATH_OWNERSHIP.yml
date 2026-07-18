@@ -30,19 +30,19 @@ ownership:
     purpose: runtime loader and namespace setup
     risk: high
     check: bin/check --profile=full
-  lib/now/:
+  lib/cli/:
     purpose: CLI, commands, pipeline, web adapters
     risk: high
     check: bin/check --profile=agent
-  lib/judge/:
+  lib/review/:
     purpose: scanners, verdicts, routing, review and output checks
     risk: high
     check: bin/check --profile=agent
-  lib/loop/:
+  lib/fix/:
     purpose: fix loop, watcher, rollback, self-check
     risk: high
     check: bin/check --profile=agent
-  lib/reach/:
+  lib/io/:
     purpose: tools and external actions
     risk: high
     check: bin/check --profile=agent

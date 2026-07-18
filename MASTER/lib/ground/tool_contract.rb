@@ -90,7 +90,7 @@ module Master
 
         if %i[shell_exec git_op].include?(name.to_sym)
           shell_input = args.fetch(:command) { Array(args[:args]).join(" ") }
-          guard = Master::Judge::Security::InjectionGuard.new(mode: :strict)
+          guard = Master::Review::Security::InjectionGuard.new(mode: :strict)
           check = guard.safe?(shell_input.to_s)
           return Result.err("#{name}: injection detected in input", category: :policy) unless check
         end

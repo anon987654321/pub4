@@ -36,7 +36,7 @@ class TestSelfScan < Minitest::Test
     scanner = FakeScanner.new([finding("NO_PUTS"), finding("LONG_LINE")])
     bus = FakeBus.new
 
-    result = Master::Judge::Scan::SelfScan.new(scanner:, root: "/tmp/master", event_bus: bus).call
+    result = Master::Review::Scan::SelfScan.new(scanner:, root: "/tmp/master", event_bus: bus).call
 
     assert result.ok?
     assert_equal "judge: lib/ 2 rules, 2 violations", result.value!.line
@@ -47,7 +47,7 @@ class TestSelfScan < Minitest::Test
   def test_clean_scan_does_not_publish_self_violation
     bus = FakeBus.new
 
-    result = Master::Judge::Scan::SelfScan.new(
+    result = Master::Review::Scan::SelfScan.new(
       scanner: FakeScanner.new([]),
       root: "/tmp/master",
       event_bus: bus
@@ -66,7 +66,7 @@ class TestSelfScan < Minitest::Test
       scanner = FakeScanner.new([finding("FROZEN_LITERAL")], rules: [FakeRule.new("FROZEN_LITERAL", true)])
       bus = FakeBus.new
 
-      result = Master::Judge::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(autofix: true)
+      result = Master::Review::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(autofix: true)
 
       assert result.ok?
       assert_includes File.read(path), "# frozen_string_literal: true"
@@ -89,7 +89,7 @@ class TestSelfScan < Minitest::Test
       YAML
       scanner = FakeScanner.new([])
 
-      result = Master::Judge::Scan::SelfScan.new(scanner:, root:).call
+      result = Master::Review::Scan::SelfScan.new(scanner:, root:).call
 
       assert result.ok?
       assert_equal 1, result.value!.violation_count
@@ -101,7 +101,7 @@ class TestSelfScan < Minitest::Test
     skip "full lib scan exceeds unit-test budget — run MASTER_SAFE_MODE=1 bin/cli /self" unless ENV["MASTER_INTEGRATION"]
 
     scanner = Master.bootstrap_container(root: Master::ROOT)[:scanner]
-    result = Master::Judge::Scan::SelfScan.new(scanner:, root: Master::ROOT).call
+    result = Master::Review::Scan::SelfScan.new(scanner:, root: Master::ROOT).call
 
     assert result.ok?
     assert_equal 0, result.value!.violation_count, format_self_scan_failures(result.value!.pairs)

@@ -40,7 +40,7 @@ class TestMasterLoop < Minitest::Test
   end
 
   def test_council_prompts_load_from_council_yml
-    prompts = Master::Judge::Council::Deliberation.prompts
+    prompts = Master::Review::Council::Deliberation.prompts
     assert prompts["judge"].to_s.include?("Council judge")
     assert prompts["juror"].to_s.include?("persona_name")
   end

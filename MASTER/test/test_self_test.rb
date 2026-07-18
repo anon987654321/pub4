@@ -21,7 +21,7 @@ class TestSelfTest < Minitest::Test
       write_fixture_tree(root)
       bus = FakeBus.new
 
-      result = Master::Judge::Scan::SelfTest.new(root:, event_bus: bus).call
+      result = Master::Review::Scan::SelfTest.new(root:, event_bus: bus).call
 
       assert result.ok?
       laws = result.value!.checks.map(&:law)
@@ -41,7 +41,7 @@ class TestSelfTest < Minitest::Test
           - id: DUPLICATE_PATTERN
       YAML
 
-      result = Master::Judge::Scan::SelfTest.new(root:).call
+      result = Master::Review::Scan::SelfTest.new(root:).call
       singularity = result.value!.checks.find { |check| check.law == "SINGULARITY" }
 
       assert singularity.findings.any? { |finding| finding[:message].include?("duplicate rule id DUPLICATE_RULE") }
@@ -55,7 +55,7 @@ class TestSelfTest < Minitest::Test
       File.write(File.join(root, "data", "one.yml"), "alpha:\n  one: true\n")
       File.write(File.join(root, "data", "two.yml"), "alpha:\n  two: true\n")
 
-      result = Master::Judge::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
+      result = Master::Review::Scan::SelfTest.new(root:).call(laws: ["SINGULARITY"])
       singularity = result.value!.checks.fetch(0)
 
       assert singularity.findings.any? { |finding| finding[:message].include?("top-level key alpha") }

@@ -26,7 +26,7 @@ class TestCouncilDeliberation < Minitest::Test
     ]
     agent = StubAgent.new("You are Security" => "VETO: unsafe eval path")
 
-    result = Master::Judge::Council::Deliberation.new(personas:, agent:, judge_enabled: false)
+    result = Master::Review::Council::Deliberation.new(personas:, agent:, judge_enabled: false)
                                         .review("eval(params[:x])")
 
     assert result.err?
@@ -35,7 +35,7 @@ class TestCouncilDeliberation < Minitest::Test
   end
 
   def test_empty_personas_fails_validation
-    result = Master::Judge::Council::Deliberation.new(personas: [], agent: StubAgent.new, judge_enabled: false)
+    result = Master::Review::Council::Deliberation.new(personas: [], agent: StubAgent.new, judge_enabled: false)
                                         .review("puts :ok")
 
     assert result.err?

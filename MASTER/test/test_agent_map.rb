@@ -12,8 +12,8 @@ class TestAgentMap < Minitest::Test
   end
 
   def test_patch_brief_directory_prefix
-    brief = Master::Ground::AgentMap.patch_brief("lib/now/turn_router.rb")
-    assert_includes brief, "patch brief: lib/now/turn_router.rb"
+    brief = Master::Ground::AgentMap.patch_brief("lib/cli/turn_router.rb")
+    assert_includes brief, "patch brief: lib/cli/turn_router.rb"
     assert_includes brief, "check: bin/check --profile=agent"
   end
 

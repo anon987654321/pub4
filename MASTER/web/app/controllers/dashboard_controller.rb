@@ -34,7 +34,7 @@ class DashboardController < ApplicationController
       cost: session.respond_to?(:cost) ? session.cost : 0.0,
       open_breakers: c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : [],
       agent_pool: c[:agent_pool]&.active_count || 0,
-      rtk: Master::Reach::OutputFilter.stats(root),
+      rtk: Master::Io::OutputFilter.stats(root),
       rsi_inbox: rsi_inbox(root),
       active_plan: Master::Ground::ActivePlan.read(root),
       skills: Array(c[:skills]&.loaded).map { |s| s[:name] },

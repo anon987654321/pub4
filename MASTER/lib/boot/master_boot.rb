@@ -49,12 +49,12 @@ module Master
       ensure_services!(root:)
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
-      Now::CLI.new(container:)
+      CLI::CLI.new(container:)
     end
 
     def boot_fast(root: Dir.pwd)
       prepare_runtime!
-      Now::CLI.new(container: Builder.build_fast(root:))
+      CLI::CLI.new(container: Builder.build_fast(root:))
     end
   end
 end

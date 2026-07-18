@@ -35,7 +35,7 @@ class TestKeylessRouting < Minitest::Test
 
   def test_router_injects_web_chat_models_when_keyless
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
-    router = Master::Now::Routing::ModelRouter.new(
+    router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new("web-chat:grok"), root: Master::ROOT,
     )
     assert router.web_chat_enabled?
@@ -48,7 +48,7 @@ class TestKeylessRouting < Minitest::Test
 
   def test_router_prefers_free_chain_when_openrouter_key_present
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
-    router = Master::Now::Routing::ModelRouter.new(
+    router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
     )
     refute router.keyless_mode?
@@ -58,7 +58,7 @@ class TestKeylessRouting < Minitest::Test
 
   def test_web_chat_disabled_when_keys_present_without_opt_in
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
-    router = Master::Now::Routing::ModelRouter.new(
+    router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
     )
     refute router.web_chat_enabled?
@@ -68,7 +68,7 @@ class TestKeylessRouting < Minitest::Test
   def test_web_chat_enabled_with_master_web_chat_even_when_keys_present
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     ENV["MASTER_WEB_CHAT"] = "1"
-    router = Master::Now::Routing::ModelRouter.new(
+    router = Master::CLI::Routing::ModelRouter.new(
       config: FakeConfig.new(Master::FREE_PRIMARY_MODEL), root: Master::ROOT,
     )
     assert router.web_chat_enabled?

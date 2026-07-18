@@ -6,8 +6,8 @@ class TestReachToolCoverage < Minitest::Test
   TIERS = %i[safe open guarded dangerous].freeze
 
   def test_every_registered_reach_tool_has_a_valid_tier
-    classes = Master::Reach.constants.filter_map do |constant|
-      candidate = Master::Reach.const_get(constant)
+    classes = Master::Io.constants.filter_map do |constant|
+      candidate = Master::Io.const_get(constant)
       candidate if candidate.is_a?(Class) && candidate.const_defined?(:NAME, false)
     end
     refute_empty classes

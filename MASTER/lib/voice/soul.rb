@@ -40,7 +40,7 @@ module Master
         previous = previous_revision
         return "no git history for data/SOUL.md" unless previous
 
-        restored, status = Master::Reach::Exec.capture2e("git", "-C", @root, "show", "#{previous}:data/SOUL.md")
+        restored, status = Master::Io::Exec.capture2e("git", "-C", @root, "show", "#{previous}:data/SOUL.md")
         return "rollback error: #{restored.strip}" unless status.success?
 
         persist(@soul_path, restored)
@@ -107,17 +107,17 @@ module Master
 
       def commit_approval(version)
         relative = Pathname.new(@soul_path).relative_path_from(Pathname.new(@root)).to_s
-        _, add_status = Master::Reach::Exec.capture2e("git", "-C", @root, "add", "--", relative)
+        _, add_status = Master::Io::Exec.capture2e("git", "-C", @root, "add", "--", relative)
         return false unless add_status.success?
 
-        _, commit_status = Master::Reach::Exec.capture2e(
+        _, commit_status = Master::Io::Exec.capture2e(
           "git", "-C", @root, "commit", "-m", "soul: v#{version} — evolution protocol update"
         )
         commit_status.success?
       end
 
       def previous_revision
-        output, status = Master::Reach::Exec.capture2e("git", "-C", @root, "log", "--format=%H", "--", "data/SOUL.md")
+        output, status = Master::Io::Exec.capture2e("git", "-C", @root, "log", "--format=%H", "--", "data/SOUL.md")
         status.success? ? output.lines[1]&.strip : nil
       end
 

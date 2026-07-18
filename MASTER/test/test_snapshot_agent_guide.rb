@@ -19,7 +19,7 @@ class TestSnapshotAgentGuide < Minitest::Test
       Dir.mktmpdir do |downloads|
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
-        Master::Now::CommandRegistry.publish_snapshot_digest(target, "TEST")
+        Master::CLI::CommandRegistry.publish_snapshot_digest(target, "TEST")
         body = File.read(File.join(downloads, "TEST_snapshot.md"))
 
         assert_includes body, "## Agent analysis protocol"

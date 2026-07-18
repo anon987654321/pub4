@@ -651,8 +651,8 @@ prompt_archaeology:
   - MASTER/data/attention_context.yml
   - MASTER/data/runtime.yml#provider_economy
   - MASTER/data/runtime.yml#cognitive_spine
-  - MASTER/lib/now/routing/model_router.rb
-  - MASTER/lib/reach/circuit_breaker.rb
+  - MASTER/lib/cli/routing/model_router.rb
+  - MASTER/lib/io/circuit_breaker.rb
 repo_topics:
   clusters:
   - id: token_efficiency
@@ -685,8 +685,8 @@ repo_topics:
     - MASTER/data/models.yml
     - MASTER/data/runtime.yml#provider_economy
     - MASTER/data/budget.yml
-    - MASTER/lib/now/routing/model_router.rb
-    - MASTER/lib/reach/circuit_breaker.rb
+    - MASTER/lib/cli/routing/model_router.rb
+    - MASTER/lib/io/circuit_breaker.rb
     pattern: 'Treat providers as competing infrastructure. Use free/local/cheap models
       for low-risk work, escalate only for irreversible synthesis, and quarantine
       weak providers.
@@ -793,7 +793,7 @@ repo_topics:
     status: mirrored_research
     confidence: high
     local_evidence:
-    - MASTER/lib/judge/agent.rb
+    - MASTER/lib/review/agent.rb
     - MASTER/data/runtime.yml#cognitive_spine
     # (external awesome-ai-agents reference removed 2026-05 during bloat cleanup)
     pattern: 'The repo contains a mirrored agent landscape plus internal agent/council/runtime
@@ -1209,21 +1209,21 @@ stale_namespaces:
       new: data/patterns.yml#zsh
   stale_constants:
     - old: Master::CLI
-      new: Master::Now::CLI
+      new: Master::CLI::CLI
     - old: Master::Pipeline
-      new: Master::Now::Pipeline
+      new: Master::CLI::Pipeline
     - old: Master::Stages
-      new: Master::Now::Stages
+      new: Master::CLI::Stages
     - old: Master::Speech
       new: Master::Voice::Speech
     - old: Master::Personality
       new: Master::Voice::Personality
     - old: Master::Swarm
-      new: Master::Judge::Swarm
+      new: Master::Review::Swarm
     - old: Master::Scan
-      new: Master::Judge::Scan
+      new: Master::Review::Scan
     - old: Master::Council
-      new: Master::Judge::Council
+      new: Master::Review::Council
     - old: Master::Session
       new: Master::Trace::Session
     - old: Master::Axioms

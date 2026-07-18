@@ -5,7 +5,7 @@ require "tmpdir"
 require_relative "../../lib/master"
 require_relative "../../lib/ops/runtime_loop_guards"
 
-# RuntimeLoopGuards.install! monkey-patches the *real* Master::Loop::Heartbeat
+# RuntimeLoopGuards.install! monkey-patches the *real* Master::Fix::Heartbeat
 # via class_eval (see lib/ops/runtime_loop_guards.rb) — it is not designed to
 # work against a test double, so this spec exercises the real class directly.
 # Guard against double-aliasing across repeated `install!` calls in one
@@ -20,7 +20,7 @@ class RuntimeLoopGuardsSpec < Minitest::Test
   end
 
   def build_heartbeat
-    Dir.mktmpdir { |dir| return Master::Loop::Heartbeat.new(root: dir) }
+    Dir.mktmpdir { |dir| return Master::Fix::Heartbeat.new(root: dir) }
   end
 
   def test_heartbeat_start_is_blocked_without_explicit_env

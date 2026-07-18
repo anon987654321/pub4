@@ -17,7 +17,7 @@ class TestRelayd < Minitest::Test
         forward to <brgen> port 38182 check http "/up" code 200
       }
     CONF
-    @tool = Master::Reach::Relayd.new
+    @tool = Master::Io::Relayd.new
   end
 
   def teardown

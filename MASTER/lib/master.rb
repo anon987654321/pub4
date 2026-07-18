@@ -120,15 +120,15 @@ module Master
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
 
   ignored_files = %w[
-    reach/ruby_llm_patch.rb reach/bedrock_stub.rb now/cli/signals.rb now/cli/command_ops.rb
-    now/cli/thinking_indicator.rb now/cli/background_scan.rb now/cli/command_handlers.rb
-    now/cli/repl_flow.rb now/cli/result_display.rb now/cli/bridge_run.rb judge/review_crew/agents.rb
+    io/ruby_llm_patch.rb io/bedrock_stub.rb cli/cli/signals.rb cli/cli/command_ops.rb
+    cli/cli/thinking_indicator.rb cli/cli/background_scan.rb cli/cli/command_handlers.rb
+    cli/cli/repl_flow.rb cli/cli/result_display.rb cli/cli/bridge_run.rb review/review_crew/agents.rb
   ]
   ignored_files.each { |relative| loader.ignore(File.join(__dir__, relative)) }
   # command_ops is both a file and a helper directory; we require the file manually.
-  loader.ignore(File.join(__dir__, "now", "cli", "command_ops"))
+  loader.ignore(File.join(__dir__, "cli", "cli", "command_ops"))
 
-  Dir.glob(File.join(__dir__, "now", "command_registry", "*.rb")).each do |path|
+  Dir.glob(File.join(__dir__, "cli", "command_registry", "*.rb")).each do |path|
     loader.ignore(path) unless %w[command.rb formatter.rb].include?(File.basename(path))
   end
   rule_fragments = %w[
@@ -136,11 +136,11 @@ module Master
     meta_rules.rb naming_rules.rb ruby_rules.rb semantic_rules.rb structural_question_rules.rb
     structural_rules.rb universal_rules.rb web_rules.rb yaml_bridge_rules.rb
   ]
-  rule_fragments.each { |name| loader.ignore(File.join(__dir__, "judge", "scan", "rules", name)) }
+  rule_fragments.each { |name| loader.ignore(File.join(__dir__, "review", "scan", "rules", name)) }
   %w[
     master_paths.rb master_data.rb master_runtime.rb master_boot.rb pub4
     providers/catalog_index.rb providers/fallback_chain.rb
-    builder/boot_phases.rb builder/ai_boot.rb judge/llm_dispatcher
+    builder/boot_phases.rb builder/ai_boot.rb review/llm_dispatcher
   ].each { |relative| loader.ignore(File.join(__dir__, relative)) }
   loader.ignore(File.join(__dir__, "boot"))
 
@@ -157,7 +157,7 @@ module Master
   def self.eager_load! = LOADER.eager_load
 
   def self.const_missing(symbol)
-    return Judge::Agent if symbol == :Agent
+    return Review::Agent if symbol == :Agent
 
     super
   end

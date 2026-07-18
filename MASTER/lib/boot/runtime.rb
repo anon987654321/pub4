@@ -17,9 +17,9 @@ module Master
     }.freeze
 
     def configure_providers!
-      require_relative "../reach/bedrock_stub"
+      require_relative "../io/bedrock_stub"
       require "ruby_llm"
-      require_relative "../reach/ruby_llm_patch"
+      require_relative "../io/ruby_llm_patch"
       RubyLLM.configure { |config| apply_api_keys(config) }
       Ground::KeyRotator.configure_current!
       [Ground::ModelQuota, Trace::CacheEfficiency].each(&:name)

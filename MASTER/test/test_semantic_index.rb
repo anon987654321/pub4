@@ -22,7 +22,7 @@ class TestSemanticIndex < Minitest::Test
 
   def make_semantic_index(vectors, enabled: true, threshold: 0.92)
     embedder = FakeEmbedder.new(vectors, enabled: enabled)
-    Master::Reach::SemanticIndex.new(embedder: embedder, threshold: threshold)
+    Master::Io::SemanticIndex.new(embedder: embedder, threshold: threshold)
   end
 
   def test_paraphrase_is_a_near_hit

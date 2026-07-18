@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "master"
 
-# Guards Master::Now::Stages::Memory against the silent-death regression where
+# Guards Master::CLI::Stages::Memory against the silent-death regression where
 # `text` was undefined in #call, raising NameError on every turn and swallowing
 # it as a memory:error event so nothing was ever remembered.
 class TestMemoryStage < Minitest::Test
@@ -26,11 +26,11 @@ class TestMemoryStage < Minitest::Test
   def setup
     @memory = FakeMemory.new
     @bus    = FakeBus.new
-    @stage  = Master::Now::Stages::Memory.new(memory: @memory, event_bus: @bus)
+    @stage  = Master::CLI::Stages::Memory.new(memory: @memory, event_bus: @bus)
   end
 
   def test_extracts_and_remembers_user_text
-    ctx = Master::Now::PipelineContext.build(user_message: "I prefer terse replies.")
+    ctx = Master::CLI::PipelineContext.build(user_message: "I prefer terse replies.")
     result = @stage.call(ctx)
     assert result.ok?
     refute_includes @bus.events.map(&:first), "memory:error"
@@ -38,12 +38,12 @@ class TestMemoryStage < Minitest::Test
   end
 
   def test_no_error_event_on_plain_message
-    @stage.call(Master::Now::PipelineContext.build(user_message: "what is the time"))
+    @stage.call(Master::CLI::PipelineContext.build(user_message: "what is the time"))
     assert_empty @bus.events.select { |event, _| event == "memory:error" }
   end
 
   def test_records_episode_when_voice_present
-    ctx = Master::Now::PipelineContext.build(user_message: "hello there", voice: "ms-MY-OsmanNeural", rendered: "hi back")
+    ctx = Master::CLI::PipelineContext.build(user_message: "hello there", voice: "ms-MY-OsmanNeural", rendered: "hi back")
     @stage.call(ctx)
     assert @memory.saved.any? { |m| m[:key].start_with?("episode_") }, "expected voice episode recorded"
   end

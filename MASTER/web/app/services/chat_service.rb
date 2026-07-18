@@ -47,7 +47,7 @@ class ChatService
     prepare_turn
     subscribe_to_events
     publish_canvas_state
-    result = Master::Now::TurnRouter.call(
+    result = Master::CLI::TurnRouter.call(
       message: @params[:message].to_s.strip,
       container: @container,
       felt_sense: felt_sense_payload,

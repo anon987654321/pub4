@@ -47,4 +47,4 @@ Recent: Voice Mode re-arm, wake-word, browser-first TTS (`face.part1.txt`, `face
   2026-07-15. `core/ABSORPTION.md` is the source of truth. If the Ragnhild
   LoRA training loop needs generation capability again, express it as
   `core/world.rb` handlers per the original absorption plan — do not restore
-  `lib/reach/lora_pipeline.rb`/`video_chain.rb`.
+  `lib/io/lora_pipeline.rb`/`video_chain.rb`.

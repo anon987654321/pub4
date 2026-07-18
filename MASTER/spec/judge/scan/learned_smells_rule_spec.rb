@@ -6,7 +6,7 @@ require "fileutils"
 
 $LOAD_PATH.unshift(File.expand_path("../../../lib", __dir__))
 require "master"
-require "judge/scan/rules/meta_rules"
+require "review/scan/rules/meta_rules"
 
 class LearnedSmellsRuleSpec < Minitest::Test
   def test_learned_smell_rules_are_loaded_from_rules_yml
@@ -25,7 +25,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
         YAML
       )
 
-      rule = Master::Judge::Scan::Rules::LearnedSmellsRule.new(root: dir)
+      rule = Master::Review::Scan::Rules::LearnedSmellsRule.new(root: dir)
       findings = rule.check("guard clause\n", path: File.join(dir, "app", "demo.rb"))
 
       assert_equal 1, findings.size
@@ -49,7 +49,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
         YAML
       )
 
-      rule = Master::Judge::Scan::Rules::LearnedSmellsRule.new(root: dir)
+      rule = Master::Review::Scan::Rules::LearnedSmellsRule.new(root: dir)
       findings = rule.check("needle\n", path: File.join(dir, "app", "demo.js"))
 
       assert_equal [], findings

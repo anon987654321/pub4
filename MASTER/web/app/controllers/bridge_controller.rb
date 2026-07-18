@@ -28,10 +28,10 @@ class BridgeController < ApplicationController
     message = body[:message].to_s.strip
     return render(json: { error: "empty message" }, status: :bad_request) if message.empty?
 
-    metadata = Master::Reach::OpenclawBridge.gateway_metadata(body)
-    elevated = Master::Reach::OpenclawBridge.elevated?(body)
+    metadata = Master::Io::OpenclawBridge.gateway_metadata(body)
+    elevated = Master::Io::OpenclawBridge.elevated?(body)
 
-    result = Master::Reach::IngressRunner.run_turn(
+    result = Master::Io::IngressRunner.run_turn(
       container: container,
       message: message,
       metadata: metadata,
@@ -49,7 +49,7 @@ class BridgeController < ApplicationController
     if raw.nil? || raw.empty?
       raw = JSON.parse(request.body.read) if request.content_type.to_s.include?("json")
     end
-    Master::Reach::OpenclawBridge.parse_body(raw || {})
+    Master::Io::OpenclawBridge.parse_body(raw || {})
   rescue JSON::ParserError
     {}
   end

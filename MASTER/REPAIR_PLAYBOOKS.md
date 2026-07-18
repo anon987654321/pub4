@@ -30,7 +30,7 @@ Symptom: model routing fails, provider unavailable, or keyless route misbehaves.
 
 First command: `ruby -Ilib:test test/test_provider_config.rb`.
 
-Check `data/providers.yml`, `data/models.yml`, and `lib/now/routing/model_router.rb`. Preserve fallback order and do not print secrets.
+Check `data/providers.yml`, `data/models.yml`, and `lib/cli/routing/model_router.rb`. Preserve fallback order and do not print secrets.
 
 ## Namespace Audit Failure
 

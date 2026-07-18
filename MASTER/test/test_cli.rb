@@ -26,7 +26,7 @@ class TestCLI < Minitest::Test
       pipeline: @pipeline
     }
 
-    @cli = Master::Now::CLI.new(container: @container)
+    @cli = Master::CLI::CLI.new(container: @container)
   end
 
   # container accessor
@@ -46,7 +46,7 @@ class TestCLI < Minitest::Test
       { rule: "STYLE", line: 3, message: "another style issue" },
       { rule: "SECURITY", line: 8, message: "security issue" }
     ]
-    output = Master::Now::CommandRegistry.format_scan_results(
+    output = Master::CLI::CommandRegistry.format_scan_results(
       pairs: [["sample.rb", Master::Result.ok(findings)]],
       profile: nil,
       rule_filter: nil
@@ -61,7 +61,7 @@ class TestCLI < Minitest::Test
   def test_scan_dry_run_report_says_no_changes_made
     findings = [{ rule: "STYLE", line: 2, message: "style issue" }]
 
-    output = Master::Now::CommandRegistry.format_scan_results(
+    output = Master::CLI::CommandRegistry.format_scan_results(
       pairs: [["sample.rb", Master::Result.ok(findings)]],
       profile: nil,
       rule_filter: nil,
@@ -80,7 +80,7 @@ class TestCLI < Minitest::Test
       raise "dry-run should not run fixer"
     end
 
-    output = Master::Now::CommandRegistry.dispatch_fix(
+    output = Master::CLI::CommandRegistry.dispatch_fix(
       fix_loop: fix_loop,
       root: Dir.pwd,
       arg: "--dry-run ."
@@ -97,14 +97,14 @@ class TestCLI < Minitest::Test
         "#{root}:#{ctx[:args]}"
       end
     end
-    command = Master::Now::CommandRegistry::Command.new(receiver, :dispatch_example, "/tmp/root")
+    command = Master::CLI::CommandRegistry::Command.new(receiver, :dispatch_example, "/tmp/root")
 
     assert_equal "/tmp/root:ok", command.call(args: "ok")
   end
 
   def test_help_uses_progressive_disclosure
-    summary = Master::Now::CommandRegistry.help_text
-    detail = Master::Now::CommandRegistry.help_text("scan")
+    summary = Master::CLI::CommandRegistry.help_text
+    detail = Master::CLI::CommandRegistry.help_text("scan")
 
     assert_includes summary, "/scan - deep-scan files or directories"
     refute_includes summary, "Report filters"
@@ -120,7 +120,7 @@ class TestCLI < Minitest::Test
     renderer.expect(:prompt_token, "master$")
     renderer.expect(:render, "master$ ", ["master$ "], mode: :dim)
 
-    cli = Master::Now::CLI.new(
+    cli = Master::CLI::CLI.new(
       container: {
         session: Object.new,
         agent: Object.new,
@@ -146,7 +146,7 @@ class TestCLI < Minitest::Test
     config = Minitest::Mock.new
     config.expect(:save!, nil)
 
-    output = Master::Now::CommandRegistry.dispatch_model(
+    output = Master::CLI::CommandRegistry.dispatch_model(
       agent: agent,
       config: config,
       metrics: nil,
@@ -174,28 +174,28 @@ class TestCLI < Minitest::Test
       end
     end.new("malay")
 
-    output = Master::Now::CommandRegistry.dispatch_persona(config, ctx: { args: "ronin" })
+    output = Master::CLI::CommandRegistry.dispatch_persona(config, ctx: { args: "ronin" })
 
     assert_equal "persona: ronin", output
     assert_equal "ronin", config.persona
   end
 
   def test_scan_profile_uses_explicit_keyword
-    profile, = Master::Now::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
-    plain, = Master::Now::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)
+    profile, = Master::CLI::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
+    plain, = Master::CLI::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)
 
     assert_equal "critical", profile
     assert_nil plain
   end
 
   def test_legacy_quick_scan_profile_resolves_to_core_report_filter
-    profile, = Master::Now::CommandRegistry.resolve_scan_profile("quick lib", Master::ROOT)
+    profile, = Master::CLI::CommandRegistry.resolve_scan_profile("quick lib", Master::ROOT)
 
     assert_equal "core", profile
   end
 
   def test_orient_reports_generated_rule_count_and_authority_paths
-    output = Master::Now::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
+    output = Master::CLI::CommandRegistry.dispatch_orient(Master::ROOT, ctx: { args: "" })
 
     assert_includes output, "rules: #{Master.rule_count(root: Master::ROOT)} registered"
     assert_includes output, "authority:"
@@ -212,7 +212,7 @@ class TestCLI < Minitest::Test
       Dir.mktmpdir do |downloads|
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
-        output = Master::Now::CommandRegistry.publish_snapshot(target, "TEST")
+        output = Master::CLI::CommandRegistry.publish_snapshot(target, "TEST")
         archive = Dir.glob(File.join(downloads, "TEST_snapshot_*.md")).first
         body = File.read(archive)
 
@@ -242,7 +242,7 @@ class TestCLI < Minitest::Test
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
         digest = File.join(downloads, "TEST_snapshot.md")
-        output = Master::Now::CommandRegistry.publish_snapshot_digest(target, "TEST")
+        output = Master::CLI::CommandRegistry.publish_snapshot_digest(target, "TEST")
 
         assert_includes output, "snapshot:test:"
         body = File.read(digest)
@@ -281,12 +281,12 @@ class TestCLI < Minitest::Test
     bus = Object.new
     renderer = Object.new
     renderer.define_singleton_method(:render) { |text, mode:| "#{mode}:#{text}" }
-    cli = Master::Now::CLI.new(container: @container.merge(config: {}, scanner:, bus:, renderer:, root: "/tmp/master"))
+    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, scanner:, bus:, renderer:, root: "/tmp/master"))
     summary = Struct.new(:violation_count, :line).new(1, "judge: lib/ 1 rules, 1 violations")
     scan = Minitest::Mock.new
     scan.expect(:call, Master::Result.ok(summary), stream: true, autofix: true)
 
-    Master::Judge::Scan::SelfScan.stub(:new, ->(scanner:, root:, event_bus:) {
+    Master::Review::Scan::SelfScan.stub(:new, ->(scanner:, root:, event_bus:) {
       assert_same scanner, cli.container[:scanner]
       assert_equal "/tmp/master", root
       assert_same bus, event_bus

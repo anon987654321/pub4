@@ -2,9 +2,9 @@
 
 require "minitest/autorun"
 require_relative "../../lib/master"
-require_relative "../../lib/now/pipeline"
-require_relative "../../lib/now/pipeline_context"
-require_relative "../../lib/now/stages/intake"
+require_relative "../../lib/cli/pipeline"
+require_relative "../../lib/cli/pipeline_context"
+require_relative "../../lib/cli/stages/intake"
 
 class PipelineE2eSpec < Minitest::Test
   class EchoStage
@@ -23,11 +23,11 @@ class PipelineE2eSpec < Minitest::Test
   end
 
   def build_pipeline(*stages)
-    Master::Now::Pipeline.new(stages)
+    Master::CLI::Pipeline.new(stages)
   end
 
   def ctx(message = "hello")
-    Master::Now::PipelineContext.build(user_message: message)
+    Master::CLI::PipelineContext.build(user_message: message)
   end
 
   def test_result_chain_propagates_ok_through_all_stages
@@ -52,7 +52,7 @@ class PipelineE2eSpec < Minitest::Test
   end
 
   def test_intake_parses_slash_command
-    result = build_pipeline(Master::Now::Stages::Intake.new).call(ctx("/scan lib/"))
+    result = build_pipeline(Master::CLI::Stages::Intake.new).call(ctx("/scan lib/"))
     assert result.ok?, result.inspect
     assert_equal :command, result.value[:intent]
     assert_equal "scan",   result.value[:command]
@@ -60,19 +60,19 @@ class PipelineE2eSpec < Minitest::Test
   end
 
   def test_intake_parses_plain_text_as_llm_intent
-    result = build_pipeline(Master::Now::Stages::Intake.new).call(ctx("what is fix_loop for?"))
+    result = build_pipeline(Master::CLI::Stages::Intake.new).call(ctx("what is fix_loop for?"))
     assert result.ok?, result.inspect
     assert_equal :llm, result.value[:intent]
   end
 
   def test_intake_rejects_empty_message
-    result = build_pipeline(Master::Now::Stages::Intake.new).call(ctx("   "))
+    result = build_pipeline(Master::CLI::Stages::Intake.new).call(ctx("   "))
     refute result.ok?
     assert_match(/empty/, result.message)
   end
 
   def test_intake_followed_by_echo_stage
-    result = build_pipeline(Master::Now::Stages::Intake.new, EchoStage.new).call(ctx("hello world"))
+    result = build_pipeline(Master::CLI::Stages::Intake.new, EchoStage.new).call(ctx("hello world"))
     assert result.ok?, result.inspect
     assert_equal :llm,          result.value[:intent]
     assert_equal "echo: hello world", result.value[:output]

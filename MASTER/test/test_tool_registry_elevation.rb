@@ -4,12 +4,12 @@ require "test_helper"
 
 class ToolRegistryElevationTest < Minitest::Test
   class RegistryHarness
-    include Master::Judge::LLMDispatcher::ToolRegistry
+    include Master::Review::LLMDispatcher::ToolRegistry
 
     attr_accessor :tools, :tool_registry, :config, :model_router, :session, :bus
 
     def initialize
-      @tools = [Master::Reach::Shell.allocate, Master::Reach::ReadFile.allocate]
+      @tools = [Master::Io::Shell.allocate, Master::Io::ReadFile.allocate]
       @tool_registry = {
         "Shell" => { "tier" => "dangerous" },
         "ReadFile" => { "tier" => "safe" }
@@ -35,9 +35,9 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_elevated] = false
     standard = harness.send(:llm_tools, "test/model").map { |tool| tool.class.name }
 
-    assert_includes elevated, "Master::Reach::LLM::Shell"
-    refute_includes standard, "Master::Reach::LLM::Shell"
-    assert_includes standard, "Master::Reach::LLM::ReadFile"
+    assert_includes elevated, "Master::Io::LLM::Shell"
+    refute_includes standard, "Master::Io::LLM::Shell"
+    assert_includes standard, "Master::Io::LLM::ReadFile"
   ensure
     Fiber[:master_visitor] = nil
     Fiber[:master_elevated] = nil

@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestPrune < Minitest::Test
   def stage
-    Master::Now::Stages::Prune.new
+    Master::CLI::Stages::Prune.new
   end
 
   def call(text)

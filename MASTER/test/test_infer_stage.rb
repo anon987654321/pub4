@@ -17,11 +17,11 @@ class InferStageTest < Minitest::Test
 
   def setup
     @bus = FakeBus.new
-    @infer = Master::Now::Stages::Infer.new(bus: @bus)
+    @infer = Master::CLI::Stages::Infer.new(bus: @bus)
   end
 
   def ctx(message, intent: :llm, **extra)
-    Master::Now::PipelineContext.build(user_message: message, intent: intent, message: message, **extra)
+    Master::CLI::PipelineContext.build(user_message: message, intent: intent, message: message, **extra)
   end
 
   def test_promotes_scan_natural_language

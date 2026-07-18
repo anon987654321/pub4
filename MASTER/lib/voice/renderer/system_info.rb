@@ -52,7 +52,7 @@ module Master
                 elsif RUBY_PLATFORM.include?("darwin")
                   macos_hw_lines
                 else
-                  stdout, = Master::Reach::Exec.capture3("dmesg")
+                  stdout, = Master::Io::Exec.capture3("dmesg")
                   stdout.lines(chomp: true)
                 end
           filtered = raw.reject { |l| l.match?(/\A(?:OpenBSD\s+\d|Copyright\s|The Regents)/) }
@@ -79,7 +79,7 @@ module Master
         end
 
         def sysctl_value(key)
-          stdout, status = Master::Reach::Exec.capture3("sysctl", "-n", key)
+          stdout, status = Master::Io::Exec.capture3("sysctl", "-n", key)
           return unless status.success?
 
           stdout.strip.presence

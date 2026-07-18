@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestWatcher < Minitest::Test
   def test_openbsd_vmm_memory_pressure_without_swap
-    watcher = Master::Loop::Watcher.allocate
+    watcher = Master::Fix::Watcher.allocate
     vmstat = <<~VMSTAT
       procs    memory       page                    disks    traps          cpu
        r b w    avm    fre  flt  re  pi  po  fr  sr sd0  int   sys   cs us sy id
@@ -19,7 +19,7 @@ class TestWatcher < Minitest::Test
   end
 
   def test_memory_pressure_participates_in_warn_classification
-    watcher = Master::Loop::Watcher.allocate
+    watcher = Master::Fix::Watcher.allocate
     watcher.instance_variable_set(
       :@thresholds,
       "mem_free_pct" => { "warn" => 30.0, "crit" => 5.0 }
@@ -38,7 +38,7 @@ class TestWatcher < Minitest::Test
   end
 
   def test_shell_output_parsers_return_numeric_pressure_values
-    watcher = Master::Loop::Watcher.allocate
+    watcher = Master::Fix::Watcher.allocate
     df = <<~DF
       Filesystem  1K-blocks     Used    Avail Capacity  Mounted on
       /dev/sd0a     1032454   812345   158012    84%    /

@@ -3,10 +3,10 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "../../lib/master_paths"
-require_relative "../../lib/reach/media_intent"
+require_relative "../../lib/io/media_intent"
 
 class MediaIntentSpec < Minitest::Test
-  MediaIntent = Master::Reach::MediaIntent
+  MediaIntent = Master::Io::MediaIntent
 
   def test_recognizes_explicit_image_requests
     assert MediaIntent.handles?("generate a photo of Bergen at the fjord")
@@ -37,7 +37,7 @@ class MediaIntentSpec < Minitest::Test
         Master::Result.ok("processed")
       end
 
-      Master::Reach::ScriptDispatch.stub(:run, runner) do
+      Master::Io::ScriptDispatch.stub(:run, runner) do
         result = MediaIntent.dispatch(%(give "#{source}" a VHS tape look))
         assert result.ok?
       end
@@ -52,7 +52,7 @@ class MediaIntentSpec < Minitest::Test
       styles << kwargs[:arg]
       Master::Result.ok("rendered")
     end
-    Master::Reach::ScriptDispatch.stub(:run, runner) do
+    Master::Io::ScriptDispatch.stub(:run, runner) do
       assert MediaIntent.dispatch("create a Bach-inspired instrumental").ok?
       assert MediaIntent.dispatch("make a Flying Lotus beat").ok?
     end
@@ -67,7 +67,7 @@ class MediaIntentSpec < Minitest::Test
       Master::Result.ok("rendered")
     end
 
-    Master::Reach::ScriptDispatch.stub(:run, runner) do
+    Master::Io::ScriptDispatch.stub(:run, runner) do
       result = MediaIntent.dispatch("generate a photo of Bergen at the fjord")
       assert result.ok?
       assert_equal :repligen, result.value![:media]

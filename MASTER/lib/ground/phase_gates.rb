@@ -184,15 +184,14 @@ module Master
 
       def monitoring_configured?
         truthy?(@state["monitoring_configured"]) ||
-          File.exist?(File.join(@root, "data", "openbsd.yml")) &&
-            File.read(File.join(@root, "data", "openbsd.yml")).include?("system_health_checks")
+          Master::Ground::OpenbsdConfig.load(root: @root).health_checks.any?
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "PhaseGates.monitoring_configured?")
         false
       end
 
       def master_service_running?
-        _, _, status = Master::Reach::Exec.capture3("/usr/sbin/rcctl", "check", "master")
+        _, _, status = Master::Io::Exec.capture3("/usr/sbin/rcctl", "check", "master")
         status.success?
       rescue Errno::ENOENT => e
         Master::Ground::Swallow.log(e, context: "PhaseGates.master_service_running?")

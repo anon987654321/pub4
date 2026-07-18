@@ -4,11 +4,11 @@ require_relative "test_helper"
 
 class TestConstitutionTriage < Minitest::Test
   def test_buckets_scanner_self_and_rule_retune_findings
-    triage = Master::Judge::Scan::ConstitutionTriage.new(root: Master::ROOT)
+    triage = Master::Review::Scan::ConstitutionTriage.new(root: Master::ROOT)
     findings = [
       { rule: "EMPTY_RESCUE", file: File.join(Master::ROOT, "lib/ground/config.rb") },
       { rule: "magic_number", file: File.join(Master::ROOT, "lib/ground/config.rb") },
-      { rule: "SQL_INJECTION", file: File.join(Master::ROOT, "lib/judge/scan/rules/yaml_bridge_rules.rb") },
+      { rule: "SQL_INJECTION", file: File.join(Master::ROOT, "lib/review/scan/rules/yaml_bridge_rules.rb") },
       { rule: "SCAN_TIMEOUT", file: File.join(Master::ROOT, "lib/slow.rb") }
     ]
 

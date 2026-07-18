@@ -50,7 +50,7 @@ class IngressController < ApplicationController
       trust: elevated ? :owner : :untrusted,
     }
 
-    result = Master::Reach::IngressRunner.run_turn(
+    result = Master::Io::IngressRunner.run_turn(
       container: container,
       message: message,
       metadata: metadata,
@@ -66,7 +66,7 @@ class IngressController < ApplicationController
     if raw.nil? || raw.empty?
       raw = JSON.parse(request.body.read) if request.content_type.to_s.include?("json")
     end
-    Master::Reach::OpenclawBridge.parse_body(raw || {})
+    Master::Io::OpenclawBridge.parse_body(raw || {})
   rescue JSON::ParserError
     {}
   end

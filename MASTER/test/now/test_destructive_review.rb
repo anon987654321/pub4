@@ -46,7 +46,7 @@ class TestDestructiveReview < Minitest::Test
   end
 
   def build_ctx(command: "shell", args: "ls")
-    Master::Now::PipelineContext.build(
+    Master::CLI::PipelineContext.build(
       user_message: "/#{command} #{args}",
       intent: :command,
       command: command,
@@ -57,7 +57,7 @@ class TestDestructiveReview < Minitest::Test
 
   def test_pre_execute_blocks_low_confidence_council
     bus = FakeBus.new
-    stage = Master::Now::Stages::DestructiveReview.new(
+    stage = Master::CLI::Stages::DestructiveReview.new(
       deliberation: FakeDeliberation.new(outcome: :low),
       event_bus: bus
     )
@@ -71,7 +71,7 @@ class TestDestructiveReview < Minitest::Test
 
   def test_pre_execute_passes_high_confidence_council
     bus = FakeBus.new
-    stage = Master::Now::Stages::DestructiveReview.new(
+    stage = Master::CLI::Stages::DestructiveReview.new(
       deliberation: FakeDeliberation.new(outcome: :pass),
       event_bus: bus
     )
@@ -85,11 +85,11 @@ class TestDestructiveReview < Minitest::Test
 
   def test_skips_non_destructive_commands
     deliberation = FakeDeliberation.new
-    stage = Master::Now::Stages::DestructiveReview.new(
+    stage = Master::CLI::Stages::DestructiveReview.new(
       deliberation: deliberation,
       event_bus: FakeBus.new
     )
-    ctx = Master::Now::PipelineContext.build(user_message: "/status", intent: :command, command: "status")
+    ctx = Master::CLI::PipelineContext.build(user_message: "/status", intent: :command, command: "status")
 
     result = stage.call(ctx)
 

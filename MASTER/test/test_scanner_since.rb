@@ -26,7 +26,7 @@ class TestScannerSince < Minitest::Test
       git(repo, "add", ".")
       git(repo, "commit", "-m", "change")
 
-      scanner = Master::Judge::Scan::Scanner.new(rules: [EmptyRule.new("EMPTY")])
+      scanner = Master::Review::Scan::Scanner.new(rules: [EmptyRule.new("EMPTY")])
       result = scanner.scan_since("HEAD~1", dir: app_dir)
 
       assert result.ok?

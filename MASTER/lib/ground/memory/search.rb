@@ -25,7 +25,7 @@ module Master
 
           keyword_hits = keyword_hits(query: query, top_n: top_n * 3, store: store_snap)
           vector_hits = []
-          if Judge::Embeddings.enabled? && (qvec = Judge::Embeddings.embed(query))
+          if Review::Embeddings.enabled? && (qvec = Review::Embeddings.embed(query))
             vector_hits = vector_recall(qvec: qvec, top_n: top_n * 3, store: store_snap)
           end
 
@@ -63,8 +63,8 @@ module Master
           store.filter_map do |key, data|
             next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
 
-            score = Judge::Embeddings.cosine(qvec, data["vec"])
-            next if score < Judge::Embeddings::MIN_SIM
+            score = Review::Embeddings.cosine(qvec, data["vec"])
+            next if score < Review::Embeddings::MIN_SIM
 
             { key: key, value: data["value"].to_s, score: score }
           end.sort_by { |e| -e[:score] }.first(top_n)

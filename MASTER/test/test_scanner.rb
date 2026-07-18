@@ -15,7 +15,7 @@ class TestScanner < Minitest::Test
     end
   end
 
-  class BoomScanner < Master::Judge::Scan::Scanner
+  class BoomScanner < Master::Review::Scan::Scanner
     private
 
     def scan_one(dir:, path:, depth:, stream:, index: nil)
@@ -23,7 +23,7 @@ class TestScanner < Minitest::Test
     end
   end
 
-  class PathScanner < Master::Judge::Scan::Scanner
+  class PathScanner < Master::Review::Scan::Scanner
     attr_reader :seen
 
     def initialize(*args, **kwargs)
@@ -44,7 +44,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       bus = FakeBus.new
-      scanner = Master::Judge::Scan::Scanner.new(rules: [build_rule], event_bus: bus)
+      scanner = Master::Review::Scan::Scanner.new(rules: [build_rule], event_bus: bus)
 
       result = scanner.scan(path)
 
@@ -56,7 +56,7 @@ class TestScanner < Minitest::Test
   end
 
   def test_scan_documents_and_enforces_preconditions
-    scanner = Master::Judge::Scan::Scanner.new(rules: [build_rule])
+    scanner = Master::Review::Scan::Scanner.new(rules: [build_rule])
 
     missing = scanner.scan("/tmp/master-missing-file.rb")
 
@@ -70,7 +70,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       bus = FakeBus.new
-      scanner = Master::Judge::Scan::Scanner.new(rules: [build_rule(findings: [
+      scanner = Master::Review::Scan::Scanner.new(rules: [build_rule(findings: [
         { rule: "Style/One" },
         { rule_id: "Lint/Two" },
         { "rule" => "Style/One" },
@@ -108,7 +108,7 @@ class TestScanner < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
-      scanner = Master::Judge::Scan::Scanner.new(
+      scanner = Master::Review::Scan::Scanner.new(
         rules: [build_rule(findings: [{ rule: "STYLE", line: 1, message: "issue" }])]
       )
 
@@ -150,7 +150,7 @@ class TestScanner < Minitest::Test
       3.times do |idx|
         File.write(File.join(dir, "sample#{idx}.rb"), "DATA = File.read(\"config/app.yml\")\n")
       end
-      scanner = Master::Judge::Scan::Scanner.new(rules: [])
+      scanner = Master::Review::Scan::Scanner.new(rules: [])
 
       result = scanner.scan_dir(dir)
       findings = result.value!.flat_map { |_path, file_result| Master::Result.wrap(file_result).value_or([]) }
@@ -168,7 +168,7 @@ class TestScanner < Minitest::Test
         def check(_code, path:) = raise "semantic should not run"
       end.new
       static_error = build_rule(findings: [{ rule: "STATIC", severity: :error, line: 1, message: "stop" }])
-      scanner = Master::Judge::Scan::Scanner.new(rules: [static_error, semantic])
+      scanner = Master::Review::Scan::Scanner.new(rules: [static_error, semantic])
 
       result = scanner.scan(path)
 

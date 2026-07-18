@@ -1,0 +1,44 @@
+# frozen_string_literal: true
+
+module Master
+  module Io
+    # TextHygiene — deterministic pre-write normalization.
+    # Strips BOM, zero-width characters, CRLF, and trailing spaces.
+    # Called by WriteFile and StrReplace tools before writing.
+    module TextHygiene
+      BINARY_EXTS = %w[.png .jpg .jpeg .gif .webp .pdf .zip .gz .tgz .mp3 .mp4 .mov .woff .woff2].freeze
+
+      module_function
+
+      def normalize(content, filename: nil, ensure_final_newline: true)
+        return content unless content.is_a?(String)
+
+        out = content.dup
+        out.gsub!("\r\n", "\n")
+        out.gsub!("\r", "\n")
+        out.sub!(/\A\xEF\xBB\xBF/, "")
+        out.gsub!(/[\u200B\u200C\u200D\uFEFF]/, "")
+        out.gsub!(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/, "")
+        out.gsub!(/[ \t]+$/, "")
+        out.gsub!(/([^\n\t ]) {2,}/, '\1 ')
+        out.gsub!("\u00A0", " ")
+        out.gsub!(/^\t+$/, "")
+        out.gsub!(/\n{3,}/, "\n\n")
+
+        append_final_newline(out, filename) if ensure_final_newline
+      end
+
+      def text_like?(filename)
+        return true if filename.nil?
+
+        ext = File.extname(filename.to_s).downcase
+        !BINARY_EXTS.include?(ext)
+      end
+
+      def append_final_newline(content, filename)
+        content << "\n" if text_like?(filename) && !content.empty? && !content.end_with?("\n")
+        content
+      end
+    end
+  end
+end

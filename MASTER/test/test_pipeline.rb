@@ -56,15 +56,15 @@ class TestPipeline < Minitest::Test
   end
 
   def test_happy_path_passes_context_through
-    pipe = Master::Now::Pipeline.new([OkStage.new, OkStage.new])
+    pipe = Master::CLI::Pipeline.new([OkStage.new, OkStage.new])
     result = pipe.call(Master::Result.ok(user_message: "hi"))
     assert result.ok?
     assert_equal "ok", result.value![:output]
   end
 
   def test_call_accepts_already_wrapped_pipeline_context
-    pipe = Master::Now::Pipeline.new([OkStage.new])
-    ctx = Master::Now::PipelineContext.build(user_message: "hi")
+    pipe = Master::CLI::Pipeline.new([OkStage.new])
+    ctx = Master::CLI::PipelineContext.build(user_message: "hi")
 
     result = pipe.call(ctx)
 
@@ -74,7 +74,7 @@ class TestPipeline < Minitest::Test
 
   def test_pipeline_complete_event_publishes_timings
     bus = FakeBus.new
-    pipe = Master::Now::Pipeline.new([OkStage.new], bus:)
+    pipe = Master::CLI::Pipeline.new([OkStage.new], bus:)
 
     result = pipe.call(Master::Result.ok(user_message: "hi"))
 
@@ -86,31 +86,31 @@ class TestPipeline < Minitest::Test
   end
 
   def test_pipeline_context_caps_large_output_on_merge
-    ctx = Master::Now::PipelineContext.build(user_message: "hi")
+    ctx = Master::CLI::PipelineContext.build(user_message: "hi")
     merged = ctx.merge(output: "x" * 10_000)
 
-    assert_equal Master::Now::PipelineContext::MAX_OUTPUT_BYTES, merged[:output].bytesize
+    assert_equal Master::CLI::PipelineContext::MAX_OUTPUT_BYTES, merged[:output].bytesize
   end
 
   def test_pipeline_context_caps_timing_entries_on_merge
-    ctx = Master::Now::PipelineContext.build(user_message: "hi")
+    ctx = Master::CLI::PipelineContext.build(user_message: "hi")
     timings = 25.times.to_h { |i| ["stage#{i}", i] }
     merged = ctx.merge(_timings: timings)
 
-    assert_equal Master::Now::PipelineContext::MAX_TIMINGS, merged[:_timings].size
+    assert_equal Master::CLI::PipelineContext::MAX_TIMINGS, merged[:_timings].size
     refute_includes merged[:_timings].keys, "stage0"
     assert_includes merged[:_timings].keys, "stage24"
   end
 
   def test_first_error_short_circuits
-    pipe = Master::Now::Pipeline.new([OkStage.new, ErrStage.new, OkStage.new])
+    pipe = Master::CLI::Pipeline.new([OkStage.new, ErrStage.new, OkStage.new])
     result = pipe.call(Master::Result.ok(user_message: "hi"))
     refute result.ok?
     assert_equal "boom", result.message
   end
 
   def test_raise_in_stage_becomes_err
-    pipe = Master::Now::Pipeline.new([OkStage.new, RaiseStage.new])
+    pipe = Master::CLI::Pipeline.new([OkStage.new, RaiseStage.new])
     result = pipe.call(Master::Result.ok(user_message: "hi"))
     refute result.ok?
     assert_match(/exploded/, result.message)
@@ -119,7 +119,7 @@ class TestPipeline < Minitest::Test
   def test_rollback_skipped_outside_git_workspace
     # In /tmp (no .git), rollback is a no-op — must not crash.
     Dir.mktmpdir do |dir|
-      pipe = Master::Now::Pipeline.new([ErrStage.new(:validation)], root: dir)
+      pipe = Master::CLI::Pipeline.new([ErrStage.new(:validation)], root: dir)
       result = pipe.call(Master::Result.ok(user_message: "hi"))
       refute result.ok?
       # No exception raised = success for this test.
@@ -131,7 +131,7 @@ class TestPipeline < Minitest::Test
       write_rules(dir)
       bus = FakeBus.new
       scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
-      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
+      pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
 
@@ -147,7 +147,7 @@ class TestPipeline < Minitest::Test
       write_rules(dir)
       bus = FakeBus.new
       scanner = FakeScanner.new([{ rule: "PRESERVE_FIRST", rule_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
-      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
+      pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
 
@@ -169,7 +169,7 @@ class TestPipeline < Minitest::Test
       File.write(File.join(dir, "lib", "tracked.rb"), "puts :dirty\n")
       bus = FakeBus.new
       scanner = FakeScanner.new([{ rule: "PRESERVE_FIRST", rule_id: "PRESERVE_FIRST", line: 1, message: "breaks behavior" }])
-      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
+      pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:, bus:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
 
@@ -183,7 +183,7 @@ class TestPipeline < Minitest::Test
     Dir.mktmpdir do |dir|
       write_rules(dir)
       scanner = FakeScanner.new([])
-      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:)
+      pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:)
 
       result = pipe.call(Master::Result.ok(user_message: "deploy now"))
 
@@ -197,7 +197,7 @@ class TestPipeline < Minitest::Test
     Dir.mktmpdir do |dir|
       write_rules(dir)
       scanner = FakeScanner.new([])
-      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:)
+      pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:)
 
       result = pipe.call(Master::Result.ok(
         user_message: "deploy now",
@@ -212,7 +212,7 @@ class TestPipeline < Minitest::Test
   def test_deploy_gate_skips_non_deploy_messages
     Dir.mktmpdir do |dir|
       scanner = FakeScanner.new([{ rule: "SELF_RULE", line: 1, message: "violation" }])
-      pipe = Master::Now::Pipeline.new([OkStage.new], root: dir, scanner:)
+      pipe = Master::CLI::Pipeline.new([OkStage.new], root: dir, scanner:)
 
       result = pipe.call(Master::Result.ok(user_message: "scan the project"))
 
@@ -222,7 +222,7 @@ class TestPipeline < Minitest::Test
   end
 
   def test_parallel_group_merges_successes_and_errors_in_one_pass
-    group = Master::Now::Pipeline::ParallelGroup.new(AddStage.new(:a, 1), ErrStage.new)
+    group = Master::CLI::Pipeline::ParallelGroup.new(AddStage.new(:a, 1), ErrStage.new)
 
     result = group.call({ base: true })
 

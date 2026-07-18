@@ -188,7 +188,7 @@ class TestSpeech < Minitest::Test
     status = Struct.new(:success?).new(true)
     Master::Voice::Speech.stub(:edge_tts_available?, true) do
       Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
-        Master::Reach::Exec.stub(:capture3, lambda { |*_args, **_kwargs|
+        Master::Io::Exec.stub(:capture3, lambda { |*_args, **_kwargs|
           File.binwrite(path, "fake-mp3-data")
           ["", "", status]
         }) do
@@ -210,7 +210,7 @@ class TestSpeech < Minitest::Test
     status = Struct.new(:success?).new(false)
     _out, err = capture_io do
       Master::Voice::Speech.stub(:synthesize_edge_socket, nil) do
-        Master::Reach::Exec.stub(:capture3, ["", "worker failed", status]) do
+        Master::Io::Exec.stub(:capture3, ["", "worker failed", status]) do
           assert_nil Master::Voice::Speech.synthesize_edge(
             "hello",
             voice: :ryan,

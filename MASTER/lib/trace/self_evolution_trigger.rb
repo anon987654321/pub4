@@ -37,7 +37,7 @@ module Master
       end
 
       def changed_master_lib_lines
-        out, status = Master::Reach::Exec.capture2e("git", "-C", root, "diff", "--numstat", "HEAD", "--", "MASTER/lib")
+        out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--numstat", "HEAD", "--", "MASTER/lib")
         return 0 unless status.success?
 
         out.lines.sum do |line|
@@ -47,7 +47,7 @@ module Master
       end
 
       def diff_stat
-        out, status = Master::Reach::Exec.capture2e("git", "-C", root, "diff", "--stat", "HEAD", "--", "MASTER/lib")
+        out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--stat", "HEAD", "--", "MASTER/lib")
         status.success? ? out.strip : "diff unavailable"
       end
 
@@ -60,7 +60,7 @@ module Master
           "MASTER_HEARTBEAT" => "0",
           "MASTER_SELF_EVOLUTION" => "0",
         }
-        out, status = Master::Reach::Exec.capture2e(env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", "--message", message, chdir: root)
+        out, status = Master::Io::Exec.capture2e(env, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", "--message", message, chdir: root)
         { status: status.success? ? :ok : :failed, output: out.to_s.lines.last(80).join }
       end
 

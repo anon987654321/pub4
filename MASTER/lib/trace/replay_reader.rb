@@ -130,7 +130,7 @@ module Master
 
       def commit_info(sha)
         repo = File.expand_path("..", @root)
-        out, _, status = Master::Reach::Exec.capture3(
+        out, _, status = Master::Io::Exec.capture3(
           "git", "-C", repo, "show", "-s", "--format=%H|%h|%an|%aI|%s", sha
         )
         return "replay: commit not found: #{sha}" unless status.success? && !out.strip.empty?

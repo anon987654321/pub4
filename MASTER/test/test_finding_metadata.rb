@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestFindingMetadata < Minitest::Test
   def test_finding_exposes_rule_id_and_schema_metadata
-    finding = Master::Judge::Scan::Finding.build(
+    finding = Master::Review::Scan::Finding.build(
       rule: "SECRET_PROXIMITY",
       message: "hardcoded secret",
       line: 4,
@@ -20,7 +20,7 @@ class TestFindingMetadata < Minitest::Test
   end
 
   def test_semantic_findings_keep_exact_rule_id
-    rule = Master::Judge::Scan::Rules::SemanticRule.new
+    rule = Master::Review::Scan::Rules::SemanticRule.new
     rule.instance_variable_set(:@rules, {
       "PATTERN_EXTRACTION" => {
         severity: :info,

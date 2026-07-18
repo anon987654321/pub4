@@ -149,7 +149,7 @@ module Master
           return Result.err("unknown callable: #{callable_key}") unless klass
           return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT, event: event)).call
         end
-        return Master::Now::TurnRouter.call(message: order["command"].to_s, container: @container) if @container[:commands]
+        return Master::CLI::TurnRouter.call(message: order["command"].to_s, container: @container) if @container[:commands]
 
         return @pipeline.call(Result.ok(user_message: order["command"].to_s)) if @pipeline
 

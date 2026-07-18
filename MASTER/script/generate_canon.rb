@@ -6,7 +6,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
 root = Master::ROOT
-audit = Master::Judge::Scan::RuleRegistryAudit.new(root:).call
+audit = Master::Review::Scan::RuleRegistryAudit.new(root:).call
 data = Master.load_rules(root:)
 laws = data.fetch("laws", {}).keys.sort
 kernel = (data["rules"] || {}).values.flatten.select { |r| r["tier"] == "kernel" }.map { |r| r["id"] }.sort

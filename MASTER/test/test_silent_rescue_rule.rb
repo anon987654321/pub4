@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-Master::Judge::Scan::RuleDSL # trigger autoload → rule files registered
+Master::Review::Scan::RuleDSL # trigger autoload → rule files registered
 
 
 # SILENT_RESCUE (:error) flags blanket rescues that discard the error.
@@ -10,7 +10,7 @@ Master::Judge::Scan::RuleDSL # trigger autoload → rule files registered
 # Both are RuleDSL rules — anonymous Rule subclasses found via the registry by id.
 class TestSilentRescueRule < Minitest::Test
   def setup
-    reg     = Master::Judge::Scan::Rule.registry
+    reg     = Master::Review::Scan::Rule.registry
     @silent = reg.find { |k| k.new.id == "SILENT_RESCUE" }&.new
     @narrow = reg.find { |k| k.new.id == "NARROW_SILENT_RESCUE" }&.new
     refute_nil @silent, "SILENT_RESCUE must be registered"
@@ -118,7 +118,7 @@ class TestSilentRescueRule < Minitest::Test
 
   def test_both_rules_skip_rule_source_files
     code = "def f\n  go\nrescue StandardError\n  nil\nend\n"
-    assert_empty @silent.check(code, path: "lib/judge/scan/rules/lexical_rules.rb")
-    assert_empty @narrow.check(code, path: "lib/judge/scan/rules/lexical_rules.rb")
+    assert_empty @silent.check(code, path: "lib/review/scan/rules/lexical_rules.rb")
+    assert_empty @narrow.check(code, path: "lib/review/scan/rules/lexical_rules.rb")
   end
 end

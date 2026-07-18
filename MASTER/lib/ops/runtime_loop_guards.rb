@@ -21,10 +21,10 @@ module Master
       end
 
       def guard_heartbeat
-        return unless defined?(Master::Loop::Heartbeat)
-        return if Master::Loop::Heartbeat.method_defined?(:start_without_runtime_guard!)
+        return unless defined?(Master::Fix::Heartbeat)
+        return if Master::Fix::Heartbeat.method_defined?(:start_without_runtime_guard!)
 
-        Master::Loop::Heartbeat.class_eval do
+        Master::Fix::Heartbeat.class_eval do
           alias_method :start_without_runtime_guard!, :start!
 
           def start!
@@ -36,10 +36,10 @@ module Master
       end
 
       def guard_watcher
-        return unless defined?(Master::Loop::Watcher)
-        return if Master::Loop::Watcher.method_defined?(:run_forever_without_runtime_guard!)
+        return unless defined?(Master::Fix::Watcher)
+        return if Master::Fix::Watcher.method_defined?(:run_forever_without_runtime_guard!)
 
-        Master::Loop::Watcher.class_eval do
+        Master::Fix::Watcher.class_eval do
           alias_method :run_forever_without_runtime_guard!, :run_forever
 
           def run_forever
@@ -51,10 +51,10 @@ module Master
       end
 
       def guard_watch_loop
-        return unless defined?(Master::Loop::WatchLoop)
-        return if Master::Loop::WatchLoop.method_defined?(:run_without_runtime_guard!)
+        return unless defined?(Master::Fix::WatchLoop)
+        return if Master::Fix::WatchLoop.method_defined?(:run_without_runtime_guard!)
 
-        Master::Loop::WatchLoop.class_eval do
+        Master::Fix::WatchLoop.class_eval do
           alias_method :run_without_runtime_guard!, :run
 
           def run(*args, **kwargs, &block)

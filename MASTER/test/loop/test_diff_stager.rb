@@ -14,12 +14,12 @@ class TestDiffStager < Minitest::Test
   end
 
   def test_reload_pending_restores_content_after_restart
-    stager = Master::Loop::DiffStager.new(root: @root)
+    stager = Master::Fix::DiffStager.new(root: @root)
     result = stager.stage(path: @target, new_content: "after\n", tool: "WriteFile")
     assert result.ok?
     id = result.value![:id]
 
-    reloaded = Master::Loop::DiffStager.new(root: @root)
+    reloaded = Master::Fix::DiffStager.new(root: @root)
     assert_equal 1, reloaded.size
     entry = reloaded.pending.first
     assert_equal id, entry.id
@@ -28,7 +28,7 @@ class TestDiffStager < Minitest::Test
   end
 
   def test_apply_removes_persisted_sidecars
-    stager = Master::Loop::DiffStager.new(root: @root)
+    stager = Master::Fix::DiffStager.new(root: @root)
     stager.stage(path: @target, new_content: "applied\n", tool: "WriteFile")
     stager.apply
     assert_equal "applied\n", File.read(@target)

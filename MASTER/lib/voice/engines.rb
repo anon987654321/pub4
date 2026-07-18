@@ -49,12 +49,12 @@ module Master
       end
 
       def replicate_token?
-        !Reach::ReplicateClient.load_token.to_s.strip.empty?
+        !Io::ReplicateClient.load_token.to_s.strip.empty?
       end
 
       def synth_replicate_kokoro(text, out_path, cfg, emotion)
         enriched = Enrich.apply(text, emotion)
-        client = Reach::ReplicateClient.new
+        client = Io::ReplicateClient.new
         url = predict_kokoro_url(client, cfg, enriched)
         return false unless url
 
@@ -113,12 +113,12 @@ module Master
 
         return true if system("which", "mlx_audio.tts.generate", out: File::NULL, err: File::NULL)
 
-        _out, status = Master::Reach::Exec.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
+        _out, status = Master::Io::Exec.capture2(py, "-c", "import mlx_audio.tts", err: File::NULL)
         status.success?
       end
 
       def chatterbox_cli?
-        _out, status = Master::Reach::Exec.capture2("python3", "-c", "import chatterbox", err: File::NULL)
+        _out, status = Master::Io::Exec.capture2("python3", "-c", "import chatterbox", err: File::NULL)
         status.success?
       end
 
@@ -171,7 +171,7 @@ module Master
           if audio is None:
               raise RuntimeError("mlx generated no audio")
         PY
-        _out, _err, status = Master::Reach::Exec.capture3(py, "-c", py_script)
+        _out, _err, status = Master::Io::Exec.capture3(py, "-c", py_script)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false
@@ -186,7 +186,7 @@ module Master
         exag = emotion.fetch(:exaggeration) { cfg["exaggeration"] || 0.55 }
 
         py = chatterbox_py_script(enriched, device, ref, wav)
-        _out, _err, status = Master::Reach::Exec.capture3("python3", "-c", py)
+        _out, _err, status = Master::Io::Exec.capture3("python3", "-c", py)
         return convert_to_mp3(wav, out_path) if status.success? && File.size?(wav)
 
         false

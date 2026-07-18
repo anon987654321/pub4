@@ -8,7 +8,7 @@ module Master
       RING_LINES = 8
       CACHE_EVENT_LIMIT = 12
 
-      def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Judge::Scan::Rule, event_bus: nil)
+      def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Review::Scan::Rule, event_bus: nil)
         @homeostat = homeostat
         @breaker = breaker
         @logging = logging

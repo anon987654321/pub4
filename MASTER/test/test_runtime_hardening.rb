@@ -29,9 +29,9 @@ class RuntimeHardeningTest < Minitest::Test
   end
 
   def test_execute_propagates_handler_error
-    stage = Master::Now::Stages::Execute.new
+    stage = Master::CLI::Stages::Execute.new
     err = Master::Result.err("boom", category: :provider_error)
-    ctx = Master::Now::PipelineContext.build(user_message: "test", handler: ->(_ctx) { err })
+    ctx = Master::CLI::PipelineContext.build(user_message: "test", handler: ->(_ctx) { err })
     result = stage.call(ctx)
 
     assert_instance_of Master::Result::Err, result
@@ -40,29 +40,29 @@ class RuntimeHardeningTest < Minitest::Test
   end
 
   def test_circuit_breaker_honors_configured_rate_limit_category
-    breaker = Master::Reach::CircuitBreaker.new(budget_max: 0, req_max: 1, rate_window_s: 60)
+    breaker = Master::Io::CircuitBreaker.new(budget_max: 0, req_max: 1, rate_window_s: 60)
 
     breaker.check_rate!
-    error = assert_raises(Master::Reach::CircuitBreaker::CircuitError) { breaker.check_rate! }
+    error = assert_raises(Master::Io::CircuitBreaker::CircuitError) { breaker.check_rate! }
 
     assert_equal :rate_limit, error.category
     assert_match(/1 req\/min/, error.message)
   end
 
   def test_circuit_breaker_registry_does_not_increment_unselected_model_bucket
-    registry = Master::Reach::CircuitBreakerRegistry.new(budget_max: 0, req_max: 1)
+    registry = Master::Io::CircuitBreakerRegistry.new(budget_max: 0, req_max: 1)
     model_a = registry.for("model-a")
     model_b = registry.for("model-b")
 
     registry.check_rate!("model-a")
 
-    assert_raises(Master::Reach::CircuitBreaker::CircuitError) { model_a.check_rate! }
+    assert_raises(Master::Io::CircuitBreaker::CircuitError) { model_a.check_rate! }
     model_b.check_rate!
   end
 
   def test_semantic_cache_restores_error_category_as_symbol
     Dir.mktmpdir do |dir|
-      cache = Master::Reach::SemanticCache.new(root: dir, ttl: 60)
+      cache = Master::Io::SemanticCache.new(root: dir, ttl: 60)
       first = cache.fetch("prompt", "model") { Master::Result.err("upstream", category: :provider_error) }
       second = cache.fetch("prompt", "model") { Master::Result.ok("should not run") }
 
@@ -75,7 +75,7 @@ class RuntimeHardeningTest < Minitest::Test
 
   def test_semantic_cache_does_not_cache_transient_timeout_errors
     Dir.mktmpdir do |dir|
-      cache = Master::Reach::SemanticCache.new(root: dir, ttl: 60)
+      cache = Master::Io::SemanticCache.new(root: dir, ttl: 60)
       calls = 0
       first = cache.fetch("prompt", "model") do
         calls += 1
@@ -93,9 +93,9 @@ class RuntimeHardeningTest < Minitest::Test
   end
 
   def test_semantic_cache_uses_five_minute_default_and_expires_stale_entries
-    assert_equal 300, Master::Reach::SemanticCache::DEFAULT_TTL
+    assert_equal 300, Master::Io::SemanticCache::DEFAULT_TTL
     Dir.mktmpdir do |dir|
-      cache = Master::Reach::SemanticCache.new(root: dir)
+      cache = Master::Io::SemanticCache.new(root: dir)
       calls = 0
       first = cache.fetch("prompt", "model") { calls += 1; "first" }
       second = cache.fetch("prompt", "model") { calls += 1; "cached miss" }
@@ -115,7 +115,7 @@ class RuntimeHardeningTest < Minitest::Test
 
   def test_semantic_cache_survives_restart_from_llm_cache_yml
     Dir.mktmpdir do |dir|
-      cache = Master::Reach::SemanticCache.new(root: dir)
+      cache = Master::Io::SemanticCache.new(root: dir)
       key = cache.send(:cache_key, "prompt", "model")
       path = cache.send(:cache_path, key)
       first = cache.fetch("prompt", "model") { "persisted" }
@@ -124,7 +124,7 @@ class RuntimeHardeningTest < Minitest::Test
       assert File.exist?(File.join(dir, ".master", "llm_cache.yml"))
       File.delete(path)
 
-      reloaded = Master::Reach::SemanticCache.new(root: dir)
+      reloaded = Master::Io::SemanticCache.new(root: dir)
       calls = 0
       second = reloaded.fetch("prompt", "model") { calls += 1; "miss" }
 
@@ -135,7 +135,7 @@ class RuntimeHardeningTest < Minitest::Test
 
   def test_shell_blocks_destructive_commands_without_force_sentinel
     Dir.mktmpdir do |dir|
-      shell = Master::Reach::Shell.new(root: dir, governor: PermitAll.new)
+      shell = Master::Io::Shell.new(root: dir, governor: PermitAll.new)
 
       result = shell.call(command: "rm -rf tmp")
 
@@ -147,7 +147,7 @@ class RuntimeHardeningTest < Minitest::Test
   def test_shell_warns_on_doas_escalation
     Dir.mktmpdir do |dir|
       bus = EventBus.new
-      shell = Master::Reach::Shell.new(root: dir, governor: PermitAll.new, event_bus: bus)
+      shell = Master::Io::Shell.new(root: dir, governor: PermitAll.new, event_bus: bus)
 
       shell.call(command: "doas vim /tmp/example")
 
@@ -175,10 +175,10 @@ class RuntimeHardeningTest < Minitest::Test
             - id: steady-free
               score: { quality: 0.8, speed: 1.0, cost: 1.0 }
       YAML
-      health = Master::Now::Routing::ProviderHealth.new(path: File.join(dir, "provider_health.ndjson"))
+      health = Master::CLI::Routing::ProviderHealth.new(path: File.join(dir, "provider_health.ndjson"))
       4.times { health.record(model: "flaky-free", status: :provider_error) }
 
-      router = Master::Now::Routing::ModelRouter.new(
+      router = Master::CLI::Routing::ModelRouter.new(
         config: FakeConfig.new("fallback-model"), root: dir, provider_health: health
       )
 

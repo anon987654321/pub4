@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestCoChangeCouplingRule < Minitest::Test
   def setup
-    @rule = Master::Judge::Scan::Rules::CoChangeCouplingRule.new
+    @rule = Master::Review::Scan::Rules::CoChangeCouplingRule.new
   end
 
   def test_responds_to_check

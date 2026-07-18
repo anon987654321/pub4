@@ -141,14 +141,14 @@ Corrections to earlier assumptions found while severing:
   RubyLLM Bedrock constant so ruby_llm never autoloads `openssl.so`. Load-bearing.
 - **`semantic_cache`/`semantic_index`/`embeddings` and `mcp_coordinator` are not
   standalone** — they are wired into the live agent stack (`ai_boot` adds
-  `infra[:mcp].tools`; `cache:` flows into `Judge::Agent`). They drop *with* the
+  `infra[:mcp].tools`; `cache:` flows into `Review::Agent`). They drop *with* the
   runtime cutover, not before it.
 
 ## The runtime cutover is a reimplementation, not a deletion
 
 What remains is the hard core: `now/` (pipeline, stages, cli — an interactive,
 streaming REPL), `loop/` (background fix/watch loops), and `judge/`'s agent stack
-(Judge::Agent + council/swarm/consensus/graph over ruby_llm tool-calling). This is
+(Review::Agent + council/swarm/consensus/graph over ruby_llm tool-calling). This is
 the **deployed product**: the interactive CLI, the web dashboard at ai.brgen.no,
 sessions, streaming, TTS, standing orders, the event bus.
 
@@ -178,14 +178,14 @@ high-risk requires `critique` verb (in-process `Deliberation` tribunal) before
 
 **Slice 5** (2026-07-09): `build_runtime` replaces `build_pipeline` — container
 `:pipeline` is a `TurnPipeline` adapter over `TurnRouter`; legacy stages no longer
-boot. `lib/now/pipeline.rb` remains for smoke tests only.
+boot. `lib/cli/pipeline.rb` remains for smoke tests only.
 
 **Slice 6** (2026-07-09): lean boot by default (`MASTER_FULL_BOOT=1` for full
 swarm/council_stage/graph fan-out/propose_tree). VPS rc.d already sets
 `MASTER_WATCHER=0`, `MASTER_AUTOFIX=0`, etc.
 
 Optional later: migrate slash `Stages::*` in TurnRouter to thin handlers; delete
-`lib/now/pipeline.rb` when smoke tests no longer need it.
+`lib/cli/pipeline.rb` when smoke tests no longer need it.
 
 ## Done
 

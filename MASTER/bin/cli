@@ -29,8 +29,8 @@ end
 require "set"
 require "optparse"
 require "master"
-require "now/boot_banner"
-require "now/web_server"
+require "cli/boot_banner"
+require "cli/web_server"
 Master.prepare_runtime!(unsafe: ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1")
 
 def initial_message_from_argv(argv)
@@ -98,7 +98,7 @@ Master::Ground::HostBudget.warn_or_reap_suspended!
 # Wire new tracker (from kimi patch)
 config = Master::Ground::Config.new(Dir.pwd) rescue nil
 tracker = Master::Ground::HostBudgetTracker.new(config) if config
-Master::Now::BootBanner.print unless fast_boot
+Master::CLI::BootBanner.print unless fast_boot
 if $stdin.tty? && !fast_boot
   cli = Master.boot(root: Dir.pwd)
 elsif $stdin.tty? && fast_boot
@@ -116,7 +116,7 @@ Master::Ops::RuntimeLoopGuards.install!
 if ENV["MASTER_FOLD"] == "1"
   goal = initial_message_from_argv(ARGV)
   container = cli.container
-  puts Master::Now::CoreBridge.run_string(
+  puts Master::CLI::CoreBridge.run_string(
     goal, root: Dir.pwd, bus: container[:bus], model_id: container[:agent]&.model
   )
   save_cli_session_safely(cli)
@@ -124,7 +124,7 @@ if ENV["MASTER_FOLD"] == "1"
 end
 
 if $stdin.tty?
-  Master::Now::WebServer.start(cli.container[:config]) unless fast_boot
+  Master::CLI::WebServer.start(cli.container[:config]) unless fast_boot
 
   message = initial_message_from_argv(ARGV)
   message = "/status" if fast_boot && message.empty?

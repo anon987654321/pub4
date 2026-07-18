@@ -86,7 +86,7 @@ class TestFixLoopOscillation < Minitest::Test
     end
   end
 
-  class CountingFixLoop < Master::Loop::FixLoop
+  class CountingFixLoop < Master::Fix::FixLoop
     attr_reader :run_count
 
     def initialize(*args, **kwargs)
@@ -100,7 +100,7 @@ class TestFixLoopOscillation < Minitest::Test
     end
   end
 
-  class CrashThenHaltFixLoop < Master::Loop::FixLoop
+  class CrashThenHaltFixLoop < Master::Fix::FixLoop
     attr_reader :run_count
 
     def initialize(*args, **kwargs)
@@ -129,7 +129,7 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def build_loop(violations, rollback: nil)
-    Master::Loop::FixLoop.new(
+    Master::Fix::FixLoop.new(
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner: ConstantScanner.new(violations),
@@ -141,7 +141,7 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   def build_loop_with_scanner(scanner)
-    Master::Loop::FixLoop.new(
+    Master::Fix::FixLoop.new(
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
       scanner: scanner,

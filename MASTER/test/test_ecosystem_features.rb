@@ -39,7 +39,7 @@ class TestEcosystemFeatures < Minitest::Test
   def test_doctor_command_registered
     infra = { session: Master::Trace::Session.new, config: {}, root: Master::ROOT, bus: nil }
     ai = { agent: nil }
-    registry = Master::Now::CommandRegistry.build(infra:, ai:, root: Master::ROOT)
+    registry = Master::CLI::CommandRegistry.build(infra:, ai:, root: Master::ROOT)
     assert registry.key?("doctor")
   end
 end

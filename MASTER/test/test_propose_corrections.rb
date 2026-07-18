@@ -4,7 +4,7 @@ require "json"
 require "fileutils"
 require "tmpdir"
 require_relative "test_helper"
-require_relative "../lib/now/propose"
+require_relative "../lib/cli/propose"
 
 class TestProposeCorrections < Minitest::Test
   class FakeBus
@@ -34,7 +34,7 @@ class TestProposeCorrections < Minitest::Test
   def test_reject_appends_corrections_ledger_and_emits_user_correction
     root = Dir.mktmpdir("propose_corrections")
     bus = FakeBus.new
-    propose = Master::Now::Propose.new(
+    propose = Master::CLI::Propose.new(
       container: {
         root: root,
         bus: bus,

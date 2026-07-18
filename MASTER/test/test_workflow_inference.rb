@@ -11,7 +11,7 @@ class WorkflowInferenceTest < Minitest::Test
   def test_dispatch_workflow_runs_deliberation_not_review_toggle
     root = File.expand_path("../..", __dir__)
     fake = FakeDeliberation.new
-    out = Master::Now::CommandRegistry.dispatch_workflow(
+    out = Master::CLI::CommandRegistry.dispatch_workflow(
       scanner: FakeScanner.new,
       fix_loop: FakeFixLoop.new,
       deliberation: fake,

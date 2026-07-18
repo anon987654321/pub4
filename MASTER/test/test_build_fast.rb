@@ -23,6 +23,6 @@ class TestBuildFast < Minitest::Test
 
   def test_fast_pipeline_is_turn_adapter
     container = Master::Builder.build_fast(root: Master::ROOT)
-    assert_instance_of Master::Now::TurnPipeline, container[:pipeline]
+    assert_instance_of Master::CLI::TurnPipeline, container[:pipeline]
   end
 end

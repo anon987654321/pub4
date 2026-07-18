@@ -35,7 +35,7 @@ class TestReviewBlocking < Minitest::Test
   end
 
   def test_post_execute_blocks_destructive_route_on_lint_errors
-    review = Master::Now::Stages::Review.new(
+    review = Master::CLI::Stages::Review.new(
       council: nil,
       scanner: nil,
       config: {},
@@ -44,7 +44,7 @@ class TestReviewBlocking < Minitest::Test
     review.instance_variable_set(:@lint, FakeLint.new)
     review.instance_variable_set(:@prune, FakePrune.new)
 
-    ctx = Master::Now::PipelineContext.build(
+    ctx = Master::CLI::PipelineContext.build(
       user_message: "/shell ls",
       intent: :command,
       command: "shell",

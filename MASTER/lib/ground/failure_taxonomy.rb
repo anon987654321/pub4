@@ -44,7 +44,7 @@ module Master
         [2**attempt, 60].min
       end
 
-      # Back-compat with Loop::Constants regex consumers.
+      # Back-compat with Fix::Constants regex consumers.
       def transient_pattern = @patterns["transient"]
       def permanent_pattern = @patterns["permanent"]
       def ambiguous_pattern = @patterns["ambiguous"]
@@ -53,9 +53,9 @@ module Master
 
       def build_patterns
         {
-          "transient" => build_category_re("transient", Master::Loop::Constants::TRANSIENT_RE),
-          "permanent" => build_category_re("permanent", Master::Loop::Constants::PERMANENT_RE),
-          "ambiguous" => build_category_re("ambiguous", Master::Loop::Constants::AMBIGUOUS_RE),
+          "transient" => build_category_re("transient", Master::Fix::Constants::TRANSIENT_RE),
+          "permanent" => build_category_re("permanent", Master::Fix::Constants::PERMANENT_RE),
+          "ambiguous" => build_category_re("ambiguous", Master::Fix::Constants::AMBIGUOUS_RE),
         }
       end
 
