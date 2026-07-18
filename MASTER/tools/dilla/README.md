@@ -94,7 +94,7 @@ drums (pocket kit + FlyLo Camel overlay, dual-bus merge)
 | **Bass** | Root / slash bass on harmonic bus (not doubled on drum bus) | `BASS_SLIDE`, slash bass when enabled |
 | **Leads** | Scale-locked arp + chord-tone harmony lead + figure lead + optional xlead morph | `LEAD_ARP=1`, `HARMONY_LEAD=1`, `LEAD_MORPH=1`, `HARMONIC_*_WEIGHT` / `VOLUME` |
 | **Drums** | Hybrid: Dilla pocket kicks/snares/hats **plus** FlyLo 16-step overlay (Camel grid) | `FLYLO_DRUM_OVERLAY=1`, `KICKS=1`, `FLYLO_KICK_GAIN`, `DRUM_BUS_GAIN`, `DRUM_MIX_WEIGHT` |
-| **Vocals** | Catalog acapella (default `j_dilla`) fit to BPM/bars, mixed with duck/sidechain | `RAP_VOCAL=j_dilla`, `RAP_VOCAL_MIX`, `RAP_VOCAL_DUCK`, `project/learnings/vocals/` |
+| **Vocals** | Get Dis Money (Fantastic Vol. 2) demucs stem; sirkel/Timeless never auto-fallback | `RAP_VOCAL=slum_village`, `RAP_VOCAL_MIX`, `RAP_VOCAL_DUCK` |
 | **Master color** | STX-1260-style chain + NastyVCS-ish summing | `SONITEX=donuts_soul`, `ANALOG_CHAIN=summing_phasy` |
 
 ### Pad + filter chain (keep this)
@@ -127,13 +127,12 @@ Preset tables live in `dilla.rb`: `SONITEX_STX1260`, `SONITEX_PRESETS`,
 
 ### Drums (FlyLo Camel)
 
-- Measured grid baked in: `FLYLO_CAMEL_DRUM_GRID` (86 BPM, syncopated kicks).
-- Registered under `chromatic_mediant_drift` / `flylo_camel` in
-  `BUILTIN_LEARNED_ENGINE`; optional override
-  `project/learnings/flylo_drums/flylo_camel.json`.
-- Re-learn: `ruby dilla.rb learn-flylo <url-or-path> [track] [apply] [shallow]`.
-- Hybrid kit: pocket drums stay on unless `FLYLO_DRUMS_ONLY=1`.
-- Overlay from bar 0 (`CAMEL_DRUM_ENTRY_BAR=0`).
+- Anchored Camel grid: kicks `[0, 3, 7, 10, 13]`, snares `[4, 12, 7, 15]`,
+  8th hats — pocket downbeat + FlyLo syncopation (raw onset-only grid was unmusical).
+- Default **`FLYLO_DRUMS_ONLY=1`** (no double pocket+overlay machine-gun kit).
+- Snare on top bus only (was dual-bussed / flammed).
+- Drum bus: peak lift, not full loudnorm (keeps kick punch).
+- Camel mode always uses baked `FLYLO_CAMEL_DRUM_GRID` (JSON cannot re-poison).
 
 ### Vocals (J Dilla chops)
 
@@ -150,7 +149,11 @@ ruby dilla.rb rap-vocal list
 - Fit: atempo to track BPM + best bar-phase offset, then
   `mix_rap_vocal_layer!` (sidechain-ish duck of the bed under the vocal).
 
-Default slug under Camel: **`j_dilla`**. Set `RAP_VOCAL=0` to disable.
+Default slug under Camel: **`slum_village`** = Get Dis Money (Fantastic Vol. 2).
+
+Do **not** use Timeless or Microphone Master (instrumentals; demucs “vocals”
+are empty). Sirkel Sag is blocklisted. Quiet/missing stems skip vocals — no
+random catalog fallback. Set `RAP_VOCAL=0` for pads/kit only.
 
 ### Stream outputs
 

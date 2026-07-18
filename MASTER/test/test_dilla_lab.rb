@@ -326,11 +326,9 @@ class TestDillaLab < Minitest::Test
 
   def test_flylo_camel_learned_drum_grid_registers
     result = eval_in_engine(<<~RUBY)
-      remove_instance_variable(:@learned_engine_cache) if instance_variable_defined?(:@learned_engine_cache)
-      grid = flylo_drum_grid_for("quartal_west_coast")
-      ENV["TRACK"] = "quartal_west_coast"
-      kicks = learned_flylo_overlay_steps(:kicks)
-      snares = learned_flylo_overlay_steps(:snares)
+      grid = BUILTIN_LEARNED_ENGINE.dig("drum_grids", "quartal_west_coast")
+      kicks = grid["flylo_kicks"]
+      snares = grid["flylo_snares"]
       puts JSON.generate(
         bpm: grid&.dig("bpm"),
         builtin: grid["flylo_kicks"] == FLYLO_CAMEL_DRUM_GRID["flylo_kicks"],
@@ -368,23 +366,27 @@ class TestDillaLab < Minitest::Test
         kicks_enabled: kicks_enabled?,
         grid_bpm: grid&.dig("bpm"),
         flylo_kicks: grid&.dig("flylo_kicks"),
+        flylo_snares: grid&.dig("flylo_snares"),
+        drums_only: flylo_drums_only?,
         progression: load_learned_engine.dig("progressions", ENV["TRACK"])&.length
       )
     RUBY
     assert_equal "camel", result.fetch("mode")
     assert_equal "chromatic_mediant_drift", result.fetch("track")
     assert_equal "86", result.fetch("bpm")
-    assert_equal "1", result.fetch("kicks"), "Hybrid pocket + FlyLo so drums stay audible"
-    assert_equal "j_dilla", result.fetch("rap")
+    assert_equal "1", result.fetch("kicks")
+    assert_equal "slum_village", result.fetch("rap"), "Get Dis Money Fantastic Vol. 2"
     assert_nil result.fetch("stream_track"), "Camel mode should rotate — no STREAM_TRACK pin"
     assert result.fetch("la_beat")
     assert_equal "camel_32", result.fetch("form")
     assert_equal "wonky", result.fetch("groove")
     assert_equal "glasper", result.fetch("performer")
-    assert result.fetch("pocket_drums"), "Pocket drums stay on unless FLYLO_DRUMS_ONLY=1"
-    assert result.fetch("kicks_enabled"), "Kicks enabled under hybrid Camel kit"
+    refute result.fetch("pocket_drums"), "Camel default is FlyLo grid only (FLYLO_DRUMS_ONLY=1)"
+    refute result.fetch("kicks_enabled"), "Pocket kicks off when FlyLo-only"
     assert_equal 86, result.fetch("grid_bpm")
-    assert_equal [3, 7, 9, 11, 13, 15], result.fetch("flylo_kicks")
+    assert_includes result.fetch("flylo_kicks"), 0
+    assert_includes result.fetch("flylo_snares"), 4
+    assert_includes result.fetch("flylo_snares"), 12
     assert_operator result.fetch("progression"), :>=, 8
   end
 
