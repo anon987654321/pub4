@@ -15,7 +15,7 @@ class Marketplace::Order < ApplicationRecord
   def seller = listing.user
 
   # Cart-like helpers (pending orders act as the buyer's cart)
-  def total_cents = listing.price_cents || 0
+  def total_cents = (listing.price_cents || 0) * (quantity.presence || 1).to_i
   def total_display = "#{total_cents / 100.0} #{listing.currency || 'NOK'}"
 
   def accept!

@@ -164,7 +164,9 @@ Rails.application.routes.draw do
       resources :orders, only: %i[show update]
 
       # Amazon-like cart (pending orders act as cart items for the buyer)
-      resource :cart, only: :show, controller: "carts"
+      resource :cart, only: :show, controller: "carts" do
+        post :send_offers
+      end
       resources :categories, only: :show, param: :id
       resources :saved_searches, only: %i[index create destroy]
     end

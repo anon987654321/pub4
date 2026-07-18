@@ -10,7 +10,11 @@ Rails.application.routes.draw do
 
   resource :session
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
-  instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
+  # Social stack (notifications/reactions/reports/fingerprint) needs tables bsdports
+  # does not have. Opt in with BSDPORTS_SOCIAL=1 only after migrations land.
+  if ENV["BSDPORTS_SOCIAL"] == "1"
+    instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
+  end
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
   resources :passwords, param: :token
 

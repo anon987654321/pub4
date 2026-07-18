@@ -22,10 +22,16 @@
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional">
-  <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=optional" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/caprasimo-latin-400-normal.woff2" crossorigin>
+  <style>
+    @font-face {
+      font-family: "Caprasimo";
+      src: url("/fonts/caprasimo-latin-400-normal.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: optional;
+    }
+  </style>
   <link rel="stylesheet" href="/swiper-bundle.min.css">
   <link rel="stylesheet" href="/lightgallery.css">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>

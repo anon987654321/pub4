@@ -1,6 +1,6 @@
 # Rails apps
 
-3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Backlog: `MASTER/DEBT.md`, operator debt in `OPENBSD/data/debt.yml` (successor to retired `BACKLOG.yml`).
+3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Debt: `MASTER/DEBT.md`, operator debt in `OPENBSD/data/debt.yml`.
 
 ## Apps
 
@@ -56,15 +56,16 @@ RAILS is also passed through MASTER's chain of commands — the same
 it from the MASTER tree:
 
 ```zsh
-cd MASTER && ruby bin/gate
+cd MASTER && ruby bin/gate                 # full scan→fix→scan→critique→review
+cd MASTER && MASTER_GATE_SCAN_ONLY=1 ruby bin/gate   # CI/preflight (no /fix)
+# or: ruby bin/gate --scan-only
 ```
 
 `bin/gate` runs two command sets through `bin/cli`: `:master` scans `.`, then
-`:deploy` scans `../RAILS` and `../OPENBSD`. Each set ends with
-`git diff --exit-code` on `RAILS`, `OPENBSD`, `MASTER`, so the chain fails if a
-`/fix` pass left the tree dirty. Run it whenever RAILS changes materially — it
-is the constitutional counterpart to `gates/runner.rb` (which validates deploy
-contract/config) and per-app `bin/ci` (RuboCop/Brakeman/tests).
+`:deploy` scans `../RAILS` and `../OPENBSD`. Full mode ends with
+`git diff --exit-code` so a `/fix` pass cannot leave a dirty tree. Scan-only
+mode is safe for CI (no autonomous edits). Counterpart to `gates/runner.rb`
+(deploy contract) and per-app `bin/ci` (RuboCop/Brakeman/tests).
 
 ## Gates
 
@@ -73,6 +74,7 @@ Unified runner:
 ```zsh
 ruby RAILS/gates/runner.rb --all          # every registered gate
 ruby RAILS/gates/runner.rb production     # or domain_alignment apps_yml …
+ruby RAILS/gates/runner.rb constitutional_scan   # MASTER /scan --no-autofix preflight
 ruby RAILS/gates/runner.rb --list
 ```
 
@@ -98,10 +100,11 @@ VISUAL_CAPTURE=1 VISUAL_CAPTURE_APP=brgen VISUAL_CAPTURE_BASE=http://127.0.0.1:3
 | `Deploy::FrontendAuditorGate` | Shared frontend auditor (0 warnings) |
 | `Deploy::StimulusComponentsGate` | Stimulus-components adoption + importmap pins |
 | `Deploy::SharedWiringGate` | Per-app shared routes, importmap, public assets, Stimulus |
+| `Deploy::ConstitutionalScanGate` | MASTER `/scan --no-autofix` preflight on RAILS apps |
 
 `check_production_gate.rb`, `master_web_assets_gate.rb`, and `master_tts_gate.rb` are thin CLI wrappers. `rails_runtime_gate.rb` calls `Deploy::ProductionGate.run(skip_nested: true)` in-process (avoids re-running nested master gates when `production` and `rails_runtime` both run under `--all`). Set `GATE_SKIP_NESTED=1` when shelling out to `check_production_gate.rb` if you need the same skip from a subprocess.
 
-`domain_alignment_gate.rb` already uses `Deploy::GateResult`; other gates are migrating incrementally. `release_gate.rb` still shells out to several gates — see `MASTER/DEBT.md` and `OPENBSD/data/debt.yml`.
+`domain_alignment_gate.rb` and most leaf gates use `Deploy::GateResult`. `runner.rb --all` still subprocesses each gate script (thin wrappers). Horizon `apps.yml` features remain `agent: ignore` — see `MASTER/DEBT.md` / `OPENBSD/data/debt.yml`.
 
 `visual_contract_gate.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. `runner.rb` forwards `--capture` when `VISUAL_CAPTURE=1` (optional `VISUAL_CAPTURE_APP`, `VISUAL_CAPTURE_BASE`). Running via `runner.rb --all` without capture only validates route/lens data shapes — not a visual regression pass.
 
@@ -222,7 +225,7 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 - **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
 - **Deploy scripts:** `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` are thin shims over `_*.sh` (same pattern as `@deploy.sh`).
 
-**Still open** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`): `runner.rb --all` still subprocesses each gate; broader controller coverage; `apps.yml` `planned` features marked `agent: ignore` (pgvector, live streaming, monetization).
+**Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): residual subprocess gate wrappers; broader controller coverage still thin; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization).
 
 ## Deploy scripts
 

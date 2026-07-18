@@ -54,7 +54,7 @@ structurally validated (braces/ERB balanced; no local boot — Ruby mismatch).
 
 Not yet started: broader focus-ring rollout audit of `outline:none` sites,
 tv/takeaway per-component treatments, self-host remaining CDNs (maplibre,
-css-doodle — `TODO.md §4`).
+css-doodle — self-hosted at `/vendor/css-doodle.min.js`).
 
 ### Governing principles (from MASTER's constitution)
 
@@ -359,7 +359,7 @@ Utility search app — different register: fast, dense, terminal-adjacent.
     the Google Fonts round-trip + the render-blocking `@import`; `display:
     optional` is already set — pair with `preload` on the woff2.
 85. **[M][perf]** Vendor or documented-exception the remaining CDNs (maplibre,
-    css-doodle) per `TODO.md §4`, so the critical path has no third-party host.
+    css-doodle) self-hosted under `/vendor/`, so the critical path has no third-party host.
 86. **[S][perf]** Add `content-visibility: auto` + `contain-intrinsic-size` to
     off-screen feed cards and wardrobe tiles to cut layout/paint on long lists.
 87. **[S][perf]** `loading="lazy"` + explicit `width`/`height` (or aspect-ratio)

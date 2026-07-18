@@ -104,7 +104,7 @@ apps:
         - { name: "Playlist::Listen", status: done, notes: "playlist_listens + ListensController swipe tracking" }
         - { name: embeddable player,                                        status: done, notes: "playlists#embed iframe route + playlist_player Stimulus + external embed URLs" }
         - { name: Spotify/YouTube/SoundCloud import,                        status: done, notes: "Playlist::TrackImportService + playlist/imports#create" }
-        - { name: city-scoped trending feed,                                status: done, notes: "Playlist::Playlist.city_trending + playlists#index trending section" }
+        - { name: city-scoped trending feed,                                status: done, notes: "Playlist::Playlist.city_trending used where listed; playlists#index is deliberate radio_tunnel immersive home (trending elsewhere)" }
         - { name: expiration dates on tracks,                               status: done, notes: "expires_at on playlist_tracks + unexpired scope + hosted_tracks form" }
         - { name: creator donations / ad-free tier,                         status: planned, agent: ignore }
       subapp_takeaway:

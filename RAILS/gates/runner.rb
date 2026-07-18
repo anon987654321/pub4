@@ -32,6 +32,7 @@ GATE_MAP = {
   visual_contract:       "visual_contract_gate.rb",
   apps_yml:              "gates/apps_yml_validator.rb",
   shared_wiring:         "gates/shared_wiring_gate.rb",
+  constitutional_scan:   "gates/constitutional_scan_gate.rb",
 }.freeze
 
 # Leaf gates already executed inside a composite gate on the same runner invocation.

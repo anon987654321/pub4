@@ -14,19 +14,32 @@ SAFE_ENV = {
   "MASTER_HEARTBEAT" => "0"
 }.freeze
 
+# Full chain mutates the tree via /fix. Prefer SCAN_ONLY=1 in CI/preflight.
+SCAN_ONLY = ENV["MASTER_GATE_SCAN_ONLY"] == "1" || ARGV.include?("--scan-only")
+
 COMMANDS = {
-  master: [
-    "/scan .",
-    "/fix .",
-    "/scan .",
-    "/critique .",
-    "/review ."
-  ].freeze,
+  master: (
+    if SCAN_ONLY
+      ["/scan --no-autofix .", "/critique ."].freeze
+    else
+      [
+        "/scan .",
+        "/fix .",
+        "/scan .",
+        "/critique .",
+        "/review ."
+      ].freeze
+    end
+  ),
   # DEPLOY was renamed to RAILS + OPENBSD (OPERATOR was later folded into
   # OPENBSD). /scan takes one path per invocation, so each former DEPLOY
   # child gets its own pass.
   deploy: %w[../RAILS ../OPENBSD].flat_map { |path|
-    ["/scan #{path}", "/fix #{path}", "/scan #{path}", "/critique #{path}", "/review #{path}"]
+    if SCAN_ONLY
+      ["/scan --no-autofix #{path}", "/critique #{path}"]
+    else
+      ["/scan #{path}", "/fix #{path}", "/scan #{path}", "/critique #{path}", "/review #{path}"]
+    end
   }.freeze
 }.freeze
 
@@ -52,12 +65,14 @@ def assert_clean(*paths)
   run_command("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
 end
 
+puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'}"
+
 COMMANDS[:master].each { |line| run_master_line(line) }
 git_diff("MASTER")
-assert_clean("MASTER")
+assert_clean("MASTER") unless SCAN_ONLY
 
 COMMANDS[:deploy].each { |line| run_master_line(line) }
 git_diff("RAILS", "OPENBSD", "MASTER")
-assert_clean("RAILS", "OPENBSD", "MASTER")
+assert_clean("RAILS", "OPENBSD", "MASTER") unless SCAN_ONLY
 
-puts "ok: MASTER gate clean"
+puts SCAN_ONLY ? "ok: MASTER gate scan-only complete" : "ok: MASTER gate clean"

@@ -28,8 +28,10 @@
     <p><strong>Total: <%= @cart_total / 100.0 %> NOK</strong></p>
     <p class="dim">This will send offers to the sellers. They can accept or decline individually.</p>
 
-    <%= button_to "Send all offers", "#", class: "btn btn-primary", disabled: true %>
-    <p class="hint mt-8">(One-click checkout coming soon)</p>
+    <%= button_to "Send all offers", send_offers_marketplace_cart_path,
+          method: :post, class: "btn btn-primary",
+          data: { turbo_confirm: "Notify all sellers about your pending offers?" } %>
+    <p class="hint mt-8">Sellers get a notification for each pending offer. They accept or decline individually.</p>
   </div>
 <% else %>
   <p>Your cart is empty. <%= link_to "Browse the marketplace", marketplace_root_path %>.</p>

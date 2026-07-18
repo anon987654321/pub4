@@ -1,7 +1,7 @@
 <% content_for :title, "Map" %>
 <% content_for :head do %>
-  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
+  <link href="/vendor/maplibre-gl.css" rel="stylesheet">
+  <script src="/vendor/maplibre-gl.js"></script>
 <% end %>
 
 <section role="application" aria-label="Interactive map for business discovery" data-controller="map" data-map-points-value="<%= json_escape(@places_json) %>" data-map-center-lat-value="60.39" data-map-center-lng-value="5.33" data-map-zoom-value="12" data-map-style-url-value="https://tiles.openfreemap.org/styles/liberty">
