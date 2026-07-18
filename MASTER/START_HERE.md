@@ -103,7 +103,7 @@ OPENBSD mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate
 ## Repo shape (run before big refactors)
 
 ```bash
-ruby OPENBSD/tools/tree.rb . --pub4-overview
+zsh OPENBSD/tree.sh . --pub4-overview
 ```
 
 Far-away visual tree with noise pruned and alignment notes. Do this before merging YAML/MD or restructuring folders.

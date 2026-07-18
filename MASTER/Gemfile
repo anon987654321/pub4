@@ -50,3 +50,13 @@ if RUBY_PLATFORM =~ /bsd|dragonfly/i
 elsif RUBY_PLATFORM =~ /linux/ && !RUBY_PLATFORM.include?("android")
   gem "rb-inotify", "~> 0.10", require: false
 end
+
+# Dilla Lab — outsourced to GitHub gems (coltrane, midilib, wavefile, head_music).
+# Auto-loaded from tools/dilla via DillaMusicGems.bootstrap! when bundle is present.
+group :dilla do
+  gem "coltrane", "~> 2.1"
+  gem "midilib", "~> 4.0"
+  gem "wavefile", "~> 1.1"
+  gem "head_music", "~> 15.1"
+  gem "ostruct", "~> 0.6" # coltrane on Ruby 4.0
+end

@@ -97,6 +97,11 @@ task :autoload do
   puts "autoload: clean"
 end
 
+desc "Run core/spec/core_smoke.rb — Effect → Constitution → World loop"
+task :core_smoke do
+  sh RbConfig.ruby, File.join(__dir__, "core", "spec", "core_smoke.rb")
+end
+
 namespace :test do
   desc "Core spine tests (isolated from lib/master Zeitwerk load)"
   task :core do
@@ -108,7 +113,7 @@ namespace :test do
 
   desc "Live web HTTP/browser tests (requires Falcon on MASTER_WEB_PORT)"
   task :integration_web do
-    sh "ruby -Itest test/test_web_http.rb test/test_browser.rb"
+    %w[test/test_web_http.rb test/test_browser.rb].each { |file| ruby "-Itest", file }
   end
 
   desc "Rails web integration tests (MASTER/web)"
@@ -164,4 +169,60 @@ end
 desc "Full audit: constitution + selftest + lint:frozen + lint:data_singularity"
 task audit: %i[constitution selftest lint:frozen lint:data_singularity] do
   puts "audit: passed"
+end
+
+namespace :constitution do
+  desc "Autofix Group C hygiene: FINAL_NEWLINE, CONSECUTIVE_BLANK_LINES, PERCENT_LITERAL (safe cases)"
+  task :autofix_group_c do
+    $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+    require "master"
+
+    root = __dir__
+    lib = File.join(root, "lib")
+    paths = Dir.glob(File.join(lib, "**", "*.rb"))
+               .select { |path| File.file?(path) && !Master::Judge::Scan::Scanner.skip_path?(path, root:) }
+
+    fixed = { final_newline: 0, consecutive_blank_lines: 0, percent_literal: 0 }
+    percent_re = /\[:([a-z_]+),\s*(:[a-z_]+(?:,\s*:[a-z_]+)+)\]/
+
+    paths.each do |path|
+      bytes = File.binread(path)
+      next if bytes.empty?
+
+      updated = bytes.dup
+      changed = false
+
+      unless updated.end_with?("\n")
+        updated << "\n"
+        changed = true
+        fixed[:final_newline] += 1
+      end
+
+      collapsed = updated.gsub(/\n{3,}/, "\n\n")
+      if collapsed != updated
+        updated = collapsed
+        changed = true
+        fixed[:consecutive_blank_lines] += 1
+      end
+
+      text = updated.force_encoding("UTF-8")
+      text = text.gsub(percent_re) do
+        symbols = Regexp.last_match(0).scan(/:[a-z_]+/).map { |sym| sym.delete_prefix(":") }.join(" ")
+        fixed[:percent_literal] += 1
+        "%i[#{symbols}]"
+      end
+
+      if text != updated
+        updated = text
+        changed = true
+      end
+
+      next unless changed
+
+      File.binwrite(path, updated)
+      abort "constitution:autofix_group_c: syntax error in #{path}" unless system(RbConfig.ruby, "-c", path)
+    end
+
+    puts "constitution:autofix_group_c: #{fixed.values.sum} fix(es) — #{fixed.map { |k, v| "#{k}=#{v}" }.join(", ")}"
+  end
 end

@@ -11,15 +11,35 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (8.1.3)
+      base64
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.3.1)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      json
+      logger (>= 1.4.2)
+      minitest (>= 5.1)
+      securerandom (>= 0.3)
+      tzinfo (~> 2.0, >= 2.0.5)
+      uri (>= 0.13.1)
     addressable (2.8.9)
       public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
     base64 (0.3.0)
     bigdecimal (4.0.1)
+    color (1.8)
+    coltrane (2.1.5)
+      color (~> 1.8)
+      paint (~> 2.0)
+      pedrozath-mercenary (~> 0.3)
     concurrent-ruby (1.3.6)
+    connection_pool (3.0.2)
     date (3.5.1)
     diffy (3.4.4)
     docile (1.4.1)
+    drb (2.2.3)
     dry-configurable (1.3.0)
       dry-core (~> 1.1)
       zeitwerk (~> 2.6)
@@ -77,9 +97,16 @@ GEM
       path_expander (~> 2.0)
       prism (~> 1.7)
       sexp_processor (~> 4.0)
+    head_music (15.1.0)
+      activesupport (>= 7.0, < 10)
+      humanize (~> 2.0)
+      i18n (~> 1.8)
     http-2 (1.1.3)
     httpx (1.7.3)
       http-2 (>= 1.1.3)
+    humanize (2.5.1)
+    i18n (1.15.2)
+      concurrent-ruby (~> 1.0)
     io-console (0.8.2)
     json (2.19.1)
     json-schema (6.2.0)
@@ -93,6 +120,7 @@ GEM
     marcel (1.1.0)
     mcp (0.8.0)
       json-schema (>= 4.1)
+    midilib (4.0.2)
     mini_portile2 (2.8.9)
     minitest (5.27.0)
     multipart-post (2.4.1)
@@ -112,6 +140,8 @@ GEM
       opentelemetry-semantic_conventions
     opentelemetry-semantic_conventions (1.37.0)
       opentelemetry-api (~> 1.0)
+    ostruct (0.6.3)
+    paint (2.3.0)
     parallel (1.27.0)
     parser (3.3.10.2)
       ast (~> 2.4.1)
@@ -119,6 +149,7 @@ GEM
     pastel (0.8.0)
       tty-color (~> 0.5)
     path_expander (2.0.1)
+    pedrozath-mercenary (0.3.8)
     prism (1.9.0)
     psych (5.4.0)
       date
@@ -172,6 +203,7 @@ GEM
       ruby_llm (~> 1.3)
       zeitwerk (~> 2)
     ruby_llm-schema (0.3.0)
+    securerandom (0.4.1)
     sexp_processor (4.17.5)
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -229,9 +261,12 @@ GEM
       strings (~> 0.2.0)
       tty-screen (~> 0.8)
     tty-tree (0.4.0)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
     unicode-display_width (2.6.0)
     unicode_utils (1.4.0)
     uri (1.1.1)
+    wavefile (1.1.2)
     webrick (1.9.2)
     websocket-driver (0.8.0)
       base64
@@ -247,12 +282,16 @@ PLATFORMS
   x86_64-openbsd
 
 DEPENDENCIES
+  coltrane (~> 2.1)
   diffy (~> 3.4)
   ferrum (~> 0.15)
   fiddle
   flay
+  head_music (~> 15.1)
+  midilib (~> 4.0)
   minitest (>= 5.25)
   opentelemetry-sdk (~> 1.11)
+  ostruct (~> 0.6)
   pastel (~> 0.8)
   psych
   rack-test (~> 2.1)
@@ -279,19 +318,25 @@ DEPENDENCIES
   tty-spinner (~> 0.9)
   tty-table (~> 0.12)
   tty-tree (~> 0.4)
+  wavefile (~> 1.1)
   wisper (~> 2.0)
   yaml
   zeitwerk (~> 2.7)
 
 CHECKSUMS
+  activesupport (8.1.3)
   addressable (2.8.9) sha256=cc154fcbe689711808a43601dee7b980238ce54368d23e127421753e46895485
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
+  color (1.8)
+  coltrane (2.1.5)
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
+  connection_pool (3.0.2)
   date (3.5.1)
   diffy (3.4.4) sha256=79384ab5ca82d0e115b2771f0961e27c164c456074bd2ec46b637ebf7b6e47e3
   docile (1.4.1) sha256=96159be799bfa73cdb721b840e9802126e4e03dfc26863db73647204c727f21e
+  drb (2.2.3)
   dry-configurable (1.3.0) sha256=882d862858567fc1210d2549d4c090f34370fc1bb7c5c1933de3fe792e18afa8
   dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
   dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
@@ -310,8 +355,11 @@ CHECKSUMS
   ferrum (0.17.1) sha256=51d591120fc593e5a13b5d9d6474389f5145bb92a91e36eab147b5d096c8cbe7
   fiddle (1.1.8) sha256=7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee
   flay (2.14.4) sha256=a62d96a51d1da185aa41ba95b696966df9f7d1d91a457709277f24515895de77
+  head_music (15.1.0)
   http-2 (1.1.3) sha256=1b2f379d35a11dbae94f8a1a52c053d8c161eb4a0c98b5d1605ff1b2bf171c9c
   httpx (1.7.3) sha256=126914109a58350e5ad0c13786092f35e2419857dad15745f31fc81c371f93a8
+  humanize (2.5.1)
+  i18n (1.15.2)
   io-console (0.8.2)
   json (2.19.1) sha256=dd94fdc59e48bff85913829a32350b3148156bc4fd2a95a2568a78b11344082d
   json-schema (6.2.0) sha256=e8bff46ed845a22c1ab2bd0d7eccf831c01fe23bb3920caa4c74db4306813666
@@ -321,6 +369,7 @@ CHECKSUMS
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
   mcp (0.8.0) sha256=ae8bd146bb8e168852866fd26f805f52744f6326afb3211e073f78a95e0c34fb
+  midilib (4.0.2)
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289
   minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
   multipart-post (2.4.1)
@@ -330,10 +379,13 @@ CHECKSUMS
   opentelemetry-registry (0.5.0) sha256=726ca58ada93a23efaa5f7bb81b8ab7a8a1e14602935c9c65dfa2e597a19fb4f
   opentelemetry-sdk (1.11.0) sha256=427c6708f4732105ffa46c11afecb91807085c59e92538eaa6cf46b97b1850c6
   opentelemetry-semantic_conventions (1.37.0) sha256=1e2dc5ad649e19ba2fb0fa7c6f9303e5cdd8d3952511415cb07efe28a0f8f4c3
+  ostruct (0.6.3)
+  paint (2.3.0)
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.2) sha256=6f60c84aa4bdcedb6d1a2434b738fe8a8136807b6adc8f7f53b97da9bc4e9357
   pastel (0.8.0) sha256=481da9fb7d2f6e6b1a08faf11fa10363172dc40fd47848f096ae21209f805a75
   path_expander (2.0.1) sha256=2de201164bff4719cc4d0b3767286e9977cc832a59c4d70abab571ec86cb41e4
+  pedrozath-mercenary (0.3.8)
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
   psych (5.4.0)
   public_suffix (7.0.5) sha256=1a8bb08f1bbea19228d3bed6e5ed908d1cb4f7c2726d18bd9cadf60bc676f623
@@ -354,6 +406,7 @@ CHECKSUMS
   ruby_llm (1.13.2) sha256=f8bd7fa0e3c486368b318167775eac086896e3477986ad5ca2c3b38b1e2913c5
   ruby_llm-mcp (0.5.1) sha256=07de990440e9c916b83c3c8a56ff595268ad1f24dfcf454867da14f80e2beba4
   ruby_llm-schema (0.3.0) sha256=a591edc5ca1b7f0304f0e2261de61ba4b3bea17be09f5cf7558153adfda3dec6
+  securerandom (0.4.1)
   sexp_processor (4.17.5) sha256=ae2b48ba98353d5d465ce8759836b7a05f2e12c5879fcd14d7815b026de32f0e
   simplecov (0.22.0) sha256=fe2622c7834ff23b98066bb0a854284b2729a569ac659f82621fc22ef36213a5
   simplecov-html (0.13.2) sha256=bd0b8e54e7c2d7685927e8d6286466359b6f16b18cb0df47b508e8d73c777246
@@ -379,9 +432,11 @@ CHECKSUMS
   tty-spinner (0.9.3) sha256=0e036f047b4ffb61f2aa45f5a770ec00b4d04130531558a94bfc5b192b570542
   tty-table (0.12.0) sha256=fdc27a4750835c1a16efe19a0b857e3ced3652cc7aceafe6dca94908965b9939
   tty-tree (0.4.0) sha256=faad9c38fbd9c92a9ebfbba326472b9f98691cb430b5a3b856ffac7b7d827670
+  tzinfo (2.0.6)
   unicode-display_width (2.6.0) sha256=12279874bba6d5e4d2728cef814b19197dbb10d7a7837a869bab65da943b7f5a
   unicode_utils (1.4.0) sha256=b922d0cf2313b6b7136ada6645ce7154ffc86418ca07d53b058efe9eb72f2a40
   uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
+  wavefile (1.1.2)
   webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
   websocket-driver (0.8.0) sha256=ed0dba4b943c22f17f9a734817e808bc84cdce6a7e22045f5315aa57676d4962
   websocket-extensions (0.1.5) sha256=1c6ba63092cda343eb53fc657110c71c754c56484aad42578495227d717a8241

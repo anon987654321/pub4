@@ -13,7 +13,7 @@ This file separates known debt from ordinary TODO work.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` currently fails on known ROBUSTNESS, LINEARITY, ABSTRACTION, and DENSITY findings. `SINGULARITY` is clean. Triage each finding as:
+`rake selftest` is clean (0 findings as of 2026-07-16). Triage each new finding as:
 
 - true violation to fix
 - scanner false positive
@@ -27,9 +27,9 @@ This file separates known debt from ordinary TODO work.
 
 ### Web Face Verification
 
-The WebGL primer guard has source/test coverage, but the recurring "tap to start does nothing" class still needs manual real-browser verification when boot assets change.
+Voice Mode and boot contracts are covered by `web/test/face_boot.test.mjs` (static assertions on `face.runtime.js`). The WebGL primer guard has the same pattern. Manual iOS Safari tap-testing remains operator-priority when boot assets change materially.
 
-Recent: small improvements to fallback diagnostics and boot comments (see web/app/views/chat/index.html.erb).
+Recent: Voice Mode re-arm, wake-word, browser-first TTS (`face.part1.txt`, `face.part5.txt`, `face_speech_runtime.js`).
 
 ### Host TTS Binaries
 
