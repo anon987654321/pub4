@@ -17,8 +17,6 @@ require_relative "../../review/scan/mechanical_autofix"
 require_relative "../tribunal_feedback"
 require_relative "work_commands_extra"
 require_relative "work_commands_status"
-require_relative "work_commands_replay"
-require_relative "work_commands_graph"
 
 module Master
   module CLI
@@ -355,6 +353,48 @@ module Master
 
       def dispatch_propose_tree(propose_tree, ctx: nil)
         propose_tree&.call || "propose-tree: not wired"
+      end
+
+      # --- /replay (was work_commands_replay.rb) ---
+
+      def dispatch_replay(root:, trace: nil, ctx: nil)
+        Trace::ReplayReader.new(root: root, recorder: trace).render(arg: arg_for(ctx))
+      rescue StandardError => e
+        "replay: #{e.message}"
+      end
+
+      # --- /graph (was work_commands_graph.rb) ---
+
+      def dispatch_graph(root:, code_index:, reference_graph:, ctx: nil)
+        arg = arg_for(ctx)
+        return "graph: usage: /graph <file>" if arg.empty?
+
+        abs = expand_or_root(arg, root)
+        return "graph: not found: #{arg}" unless File.file?(abs)
+
+        data = gather_graph_data(abs, root:, code_index:, reference_graph:)
+        render_graph_lines(abs.delete_prefix("#{root}/"), data).join("\n")
+      rescue StandardError => e
+        "graph: #{e.message}"
+      end
+
+      def gather_graph_data(abs, root:, code_index:, reference_graph:)
+        reference_graph.build if reference_graph&.nodes&.empty?
+        radius = reference_graph.blast_radius(abs)
+        neighbors = Review::GraphRetriever.new(reference_graph: reference_graph, root: root)
+                                           .neighbors([abs], hops: 2, limit: 10)
+        symbols = code_index ? code_index.symbols_in(abs) : []
+        { radius:, neighbors:, symbols: }
+      end
+
+      def render_graph_lines(rel, data)
+        radius, neighbors, symbols = data[:radius], data[:neighbors], data[:symbols]
+        lines = ["graph #{rel}", "  inbound (#{radius[:inbound].size}): #{radius[:inbound].first(6).join(", ")}"]
+        lines << "  outbound (#{radius[:outbound].size}): #{radius[:outbound].first(6).join(", ")}"
+        lines << "  neighbors (#{neighbors.size}): #{neighbors.join(", ")}" if neighbors.any?
+        symbol_line = symbols.first(8).map { |sym| "#{sym.fqn}:#{sym.line}" }.join(", ")
+        lines << "  symbols (#{symbols.size}): #{symbol_line}" unless symbols.empty?
+        lines
       end
     end
   end

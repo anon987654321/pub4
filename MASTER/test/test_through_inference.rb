@@ -52,7 +52,8 @@ class TestThroughInference < Minitest::Test
       )
       result = pipe.call(target: "rails", apply: false, critique: false, aesthetic: false)
       assert result.target == Master::RAILS_ROOT || result.target.to_s.end_with?("RAILS")
-      assert_includes result.render, "through:"
+      # dmesg-style unit id (through0), not a literal "through:" label
+      assert_match(/through\d+:\s*complete/, result.render)
     end
   end
 
