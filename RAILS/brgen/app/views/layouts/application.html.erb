@@ -64,7 +64,7 @@
   <div id="match-overlays" data-turbo-permanent aria-live="polite"></div>
   <div data-controller="geolocation"
        data-geolocation-url-value="<%= location_path %>"
-       data-geolocation-radius-km-value="2"
+       data-geolocation-radius-km-value="10"
        data-turbo-permanent></div>
   <% if Current.user %>
     <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>

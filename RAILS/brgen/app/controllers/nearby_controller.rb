@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class NearbyController < ApplicationController
-  DEFAULT_RADIUS_KM = 2.0
+  DEFAULT_RADIUS_KM = 10.0
   MAX_RADIUS_KM = 25.0
 
   def index
