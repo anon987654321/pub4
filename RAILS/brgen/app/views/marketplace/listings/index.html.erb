@@ -1,22 +1,6 @@
 <% content_for :title, "Markedsplass" %>
 <% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "Markedsplass")) if @listings.any? %>
 
-<% unless authenticated? %>
-  <% content_for :splash do %>
-    <div data-visitor-orientation>
-      <h2>Markedsplass</h2>
-      <p class="tagline">Buy and sell in your neighbourhood. Local listings in every city, in every language.</p>
-      <div class="chips" role="navigation" aria-label="Marketplace quick actions">
-        <span class="chip"><%= link_to "list a product", new_marketplace_listing_path, class: "link-inherit" %></span>
-        <span class="chip">browse categories</span>
-        <span class="chip">buyer–seller chat</span>
-        <span class="chip">geo listings</span>
-      </div>
-      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, class: "link-inherit" %> to sell</p>
-    </div>
-  <% end %>
-<% end %>
-
 <div class="page-header" role="banner" aria-label="Markedsplass header">
   <h1>Markedsplass</h1>
   <nav role="navigation" aria-label="Marketplace actions">

@@ -78,7 +78,10 @@ apps:
         - { name: photos on profile,                                        status: done, notes: "has_many_attached photos, edit purge, ProfileMediaJob variants" }
         - { name: premium memberships / boost purchases,                    status: planned, agent: ignore }
       subapp_marketplace:
-        notes: Old impl used Solidus — pub4 needs native Rails 8 models instead
+        notes: >
+          Native Marketplace::* is live. Solidus path (solidus + solidus_starter_frontend
+          + solidus_marketplace) is the Amazon-parity target; enable with SOLIDUS_MARKETPLACE=1.
+          See brgen/docs/SOLIDUS_MARKETPLACE.md.
         items:
         - { name: "Marketplace::Product (name, description, price, image)", status: done, notes: "Marketplace::Listing native Rails 8" }
         - { name: "Marketplace::Category", status: done }
@@ -89,6 +92,10 @@ apps:
         - { name: geo-localized listings,                                   status: done, notes: "listing lat/lng + GeoLocatable near scope + radius_km filter in listings#index" }
         - { name: locale subdomain routing (markedsplass/markadur/…),      status: done, notes: "DomainRegistry aliases + routes derived from SUBAPP_ALIASES + marketplace_root_url helper" }
         - { name: FTS filtering,                                            status: done, notes: "live_search on listings/stores/deals + saved searches" }
+        - { name: solidus core mount (catalog/cart/checkout/admin),         status: planned, notes: "gem solidus ~> 4.7 behind SOLIDUS_MARKETPLACE=1" }
+        - { name: solidus_starter_frontend storefront,                     status: planned, notes: "Amazon-like PDP/cart/checkout UI" }
+        - { name: solidus_marketplace multi-seller,                        status: planned, notes: "3P sellers; gem 0.1.0 legacy — validate on Solidus 4.7" }
+        - { name: Amazon feature parity map,                               status: planned, notes: "PDP, search facets, cart, multi-seller, reviews, order history — see SOLIDUS_MARKETPLACE.md" }
         - { name: AI recommendations,                                       status: planned, agent: ignore }
       subapp_playlist:
         - { name: "Playlist::Set (name, description, user)", status: done }

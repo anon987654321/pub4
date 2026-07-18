@@ -59,11 +59,6 @@
   <% end %>
 
   <div class="theme-root" data-controller="bottom-sheet">
-  <% if content_for?(:splash) %>
-    <div id="splash" class="splash" role="dialog" aria-modal="true" aria-labelledby="splash-title" tabindex="0">
-      <%= yield :splash %>
-    </div>
-  <% end %>
   <%= render "shared/nav_swiper" %>
   <div id="nearby-alerts" class="nearby-alerts" data-turbo-permanent aria-live="polite"></div>
   <div id="match-overlays" data-turbo-permanent aria-live="polite"></div>

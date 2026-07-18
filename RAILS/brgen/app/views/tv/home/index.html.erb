@@ -1,21 +1,5 @@
 <% content_for :title, "Brgen TV" %>
 
-<% unless authenticated? %>
-  <% content_for :splash do %>
-    <div>
-      <h2>Brgen TV</h2>
-      <p class="tagline">Live streams and videos from your city. Channels, broadcasts, subscriptions.</p>
-      <div class="chips">
-        <span class="chip">live stream</span>
-        <span class="chip">city channels</span>
-        <span class="chip">subscribe</span>
-        <span class="chip">stream key</span>
-      </div>
-      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to broadcast</p>
-    </div>
-  <% end %>
-<% end %>
-
 <div class="page-header" role="banner" aria-label="TV header">
   <h1>Brgen TV</h1>
   <div>

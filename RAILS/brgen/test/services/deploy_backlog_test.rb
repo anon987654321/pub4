@@ -781,8 +781,9 @@ class DeployBacklogTest < Minitest::Test
     show = read_brgen('app/views/posts/show.html.erb')
     app_js = read_brgen('app/javascript/application.js')
 
-    assert_includes layout, 'yield :splash'
-    assert_includes layout, 'id="splash"'
+    # Guest splash removed — home lands on feed without modal overlay
+    refute_includes layout, 'yield :splash'
+    refute_includes layout, 'id="splash"'
     assert_includes layout, '#000000'
     assert_includes manifest, '"theme_color": "#000000"'
     assert_includes scss, '_x_card_modifiers'

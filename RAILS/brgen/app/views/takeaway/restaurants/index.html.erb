@@ -1,20 +1,5 @@
 <% content_for :title, "Takeaway" %>
 
-<% unless authenticated? %>
-  <% content_for :splash do %>
-    <div>
-      <h2>Brgen Takeaway</h2>
-      <p class="tagline">Order food from local restaurants. City-native delivery, neighbourhood by neighbourhood.</p>
-      <div class="chips">
-        <span class="chip">browse restaurants</span>
-        <span class="chip">filter by cuisine</span>
-        <span class="chip">track order</span>
-      </div>
-      <p class="hint">tap anywhere to browse</p>
-    </div>
-  <% end %>
-<% end %>
-
 <div class="page-header" role="banner" aria-label="Takeaway header">
   <h1>Order food</h1>
   <nav role="navigation" aria-label="Takeaway actions">

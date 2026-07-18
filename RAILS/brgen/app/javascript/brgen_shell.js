@@ -1,4 +1,4 @@
-// Carousel prefix, guest splash dismiss, standalone PWA chrome — layout shell only.
+// Carousel prefix + standalone PWA chrome — layout shell only (no guest splash).
 
 class SimpleCarousel {
   constructor(el, ms = 2800) {
@@ -32,28 +32,6 @@ function initCarousel() {
   updateCarouselPrefix()
 }
 
-function initSplash() {
-  const splash = document.getElementById("splash")
-  if (!splash || splash.__splashInit) return
-  splash.__splashInit = true
-
-  const dismiss = () => {
-    if (splash.hidden) return
-    splash.style.pointerEvents = "none"
-    splash.classList.add("ack")
-    const h2 = splash.querySelector("h2")
-    if (h2) h2.classList.add("clicked")
-    setTimeout(() => { splash.hidden = true; splash.classList.remove("ack") }, 220)
-    navigator.vibrate?.(8)
-  }
-
-  splash.addEventListener("click", e => { e.stopPropagation(); dismiss() })
-  splash.addEventListener("keydown", e => {
-    if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); dismiss() }
-  })
-  splash.focus()
-}
-
 function syncStandaloneMode() {
   const standalone = window.matchMedia("(display-mode: standalone)").matches
   document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser"
@@ -62,7 +40,6 @@ function syncStandaloneMode() {
 
 function bootShell() {
   initCarousel()
-  initSplash()
   syncStandaloneMode()
   updateCarouselPrefix()
 }
