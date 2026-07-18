@@ -10,7 +10,12 @@ class HealthController < ActionController::API
       git: git_healthy?,
       container: container_healthy?,
     }
-    critical = %i[tts git]
+    # TTS (audio) and replicate (media) are optional subsystems — their being
+    # down is "degraded", not "unavailable". Only git (repo/deploy integrity) is
+    # critical to serving the face + chat. Marking tts critical returned 503,
+    # which cascaded to masterState=fail and froze/stalled the face for users who
+    # never asked for audio. Keep them in `checks` for monitoring, out of `critical`.
+    critical = %i[git]
     critical_ok = critical.all? { |key| checks[key] }
     status = critical_ok ? (checks.values.all? ? "ok" : "degraded") : "unavailable"
     http = critical_ok ? :ok : :service_unavailable
