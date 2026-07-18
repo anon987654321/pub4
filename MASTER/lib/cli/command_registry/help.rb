@@ -15,6 +15,8 @@ module Master
           detail: [
             "/scan [--dry-run] [--no-autofix] [report-filter] [path]",
             "Always runs at deep depth. Mechanical autofix (AstFixer) runs by default on auto_fix rules, then re-scans.",
+            "Live output: pass1 brief → autofix → pass2/delta → full report. Checkpoints include top rules.",
+            "Snapshots: .master/scan_last.txt and /tmp/master_scan_last.txt (also written on interrupt).",
             "Report-only: --dry-run. Skip writes but keep full rule set: --no-autofix. Disable via MASTER_SCAN_AUTOFIX=0.",
             "Report filters / profiles: full, core, critical, cosmetic, aesthetic (aliases: pixel, ui, ux, design).",
             "Path aliases: rails, rails/brgen, face, web, self, master. Also RAILS/<app> from repo root.",

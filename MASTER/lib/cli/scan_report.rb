@@ -5,20 +5,26 @@ require_relative "../fix/conflict_resolver"
 module Master
   module CLI
     class ScanReport
-      def initialize(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false, autofixes: [])
+      def initialize(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false, autofixes: [],
+                     phase: nil, prior_total: nil)
         @pairs = pairs
         @profile = profile
         @rule_filter = rule_filter
         @severity_filter = severity_filter
         @dry_run = dry_run
         @autofixes = Array(autofixes)
+        @phase = phase
+        @prior_total = prior_total
         @conflicts = Master::Fix::ConflictResolver.new(root: Master::ROOT)
       end
 
       def render
         return render_clean if total.zero?
 
-        lines = ["#{prefix}#{header}#{total} total violations#{suffix}"]
+        lines = []
+        lines << phase_line if phase_line
+        lines << "#{prefix}#{header}#{total} total violations#{suffix}"
+        lines << delta_line if delta_line
         lines << autofix_line if autofix_line
         histogram_line = confidence_histogram_line
         lines << histogram_line if histogram_line
@@ -33,13 +39,53 @@ module Master
         lines.join("\n")
       end
 
+      # Compact one-screen summary for checkpoints / interrupt dumps / pass1.
+      def brief
+        if total.zero?
+          parts = ["#{prefix}#{header}clean -- no violations#{suffix}"]
+          parts << autofix_line if autofix_line
+          parts << delta_line if delta_line
+          return parts.compact.join(" | ")
+        end
+
+        top = ranked.first(8).map { |rule, vs| "#{rule}=#{vs.size}" }.join(" ")
+        parts = ["#{prefix}#{header}#{total} violations"]
+        parts << "top #{top}" unless top.empty?
+        parts << autofix_line if autofix_line
+        parts << delta_line if delta_line
+        parts.compact.join(" | ")
+      end
+
+      def total_count
+        total
+      end
+
       private
 
-      attr_reader :pairs, :profile, :rule_filter, :severity_filter, :dry_run, :autofixes, :conflicts
+      attr_reader :pairs, :profile, :rule_filter, :severity_filter, :dry_run, :autofixes, :conflicts,
+                  :phase, :prior_total
 
       def render_clean
-        base = "#{prefix}#{header}clean -- no violations#{suffix}"
-        autofix_line ? "#{base}\n#{autofix_line}" : base
+        lines = []
+        lines << phase_line if phase_line
+        lines << "#{prefix}#{header}clean -- no violations#{suffix}"
+        lines << delta_line if delta_line
+        lines << autofix_line if autofix_line
+        lines.join("\n")
+      end
+
+      def phase_line
+        return unless phase
+
+        "phase: #{phase}"
+      end
+
+      def delta_line
+        return if prior_total.nil?
+
+        delta = total - prior_total.to_i
+        sign = delta.positive? ? "+" : ""
+        "delta: #{prior_total} → #{total} (#{sign}#{delta})"
       end
 
       def autofix_line

@@ -224,40 +224,107 @@ module Master
             total: total,
             done: 0,
             violations: 0,
+            dirty_files: 0,
+            rules: Hash.new(0),
             unit: name,
             started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
           }
+          $stdout.sync = true
           Master::Trace::Dmesg.attach(name, "mainbus0", "files=#{total} stream=on")
         end
 
         def emit_scan_progress(dir:, path:, file_result:)
           return unless @scan_progress
 
-          done = @mutex.synchronize { @scan_progress[:done] += 1 }
-          total = @scan_progress[:total]
+          findings = file_result.ok? ? Array(file_result.value!) : []
+          count = findings.size
+          rel = path.sub(dir, "").delete_prefix("/")
+          rule_hits = findings.filter_map { |f| finding_rule_id(f) }
+
+          done, total, viol_total, dirty, top = @mutex.synchronize do
+            sp = @scan_progress
+            sp[:done] += 1
+            sp[:violations] = sp[:violations].to_i + count
+            sp[:dirty_files] = sp[:dirty_files].to_i + 1 if count.positive?
+            rule_hits.each { |rid| sp[:rules][rid] += 1 }
+            [
+              sp[:done],
+              sp[:total],
+              sp[:violations],
+              sp[:dirty_files],
+              sp[:rules].sort_by { |_, n| -n }.first(6),
+            ]
+          end
+
           elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @scan_progress[:started_at]
           eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
-          count = file_result.ok? ? file_result.value!.size : 0
-          rel = path.sub(dir, "").delete_prefix("/")
           unit = @scan_progress[:unit] || "scan0"
-          viol_total = @mutex.synchronize {
-            @scan_progress[:violations] = @scan_progress[:violations].to_i + count
-          }
-          # OpenBSD dmesg: "scan0: file N/M path violations=K eta=Ns"
-          Master::Trace::Dmesg.status(
-            unit,
-            "file #{done}/#{total} #{rel} violations=#{count}" \
-            "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
-            " elapsed=#{elapsed.round}s"
-          )
-          step = [50, (total / 10.0).ceil].max
+
+          # Per-file: only dirty files (signal), not clean-file spam.
+          if count.positive?
+            Master::Trace::Dmesg.status(
+              unit,
+              "hit #{done}/#{total} #{rel} +#{count}" \
+              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}"
+            )
+          end
+
+          # Decision-grade checkpoints: progress + top rules so far.
+          step = checkpoint_step(total)
           if done == total || (done % step).zero?
-            Master::Trace::Dmesg.kv(unit, progress: "#{done}/#{total}", violations: viol_total, eta_s: eta_s)
+            top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(",")
+            Master::Trace::Dmesg.status(
+              unit,
+              "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
+              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
+              " elapsed=#{elapsed.round}s" \
+              "#{top_s.empty? ? "" : " top=#{top_s}"}"
+            )
+            write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           end
+
           if done == total
-            Master::Trace::Dmesg.kv(unit, complete: true, files: total, violations: viol_total, elapsed_s: elapsed.round)
+            Master::Trace::Dmesg.kv(
+              unit,
+              complete: true, files: total, violations: viol_total,
+              dirty_files: dirty, elapsed_s: elapsed.round
+            )
           end
-          @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:)
+          @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
+        end
+
+        def checkpoint_step(total)
+          return 1 if total <= 10
+          return 5 if total <= 50
+          return 10 if total <= 100
+
+          [25, (total / 10.0).ceil].max
+        end
+
+        def finding_rule_id(finding)
+          return finding.rule.to_s if finding.respond_to?(:rule)
+          return finding[:rule].to_s if finding.respond_to?(:[]) && finding[:rule]
+
+          nil
+        end
+
+        def write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
+          root = defined?(Master::ROOT) ? Master::ROOT : Dir.pwd
+          top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(" ")
+          text = [
+            "phase: streaming #{unit}",
+            "progress: #{done}/#{total} files",
+            "violations: #{viol_total} dirty_files=#{dirty}",
+            "elapsed_s: #{elapsed.round} eta_s: #{eta_s || "-"}",
+            ("top: #{top_s}" unless top_s.empty?),
+            "note: partial — full report lands after pass completes",
+          ].compact.join("\n")
+          # Quiet write — checkpoints already print top rules; avoid spam.
+          if defined?(Master::CLI::ScanLive)
+            Master::CLI::ScanLive.snapshot!(text, root: root, note: "streaming checkpoint", announce: false)
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Scanner.write_progress_snapshot")
         end
 
         def active_rules(_depth)

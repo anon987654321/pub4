@@ -10,6 +10,7 @@ require_relative "../fix_preview_report"
 require_relative "../resync_service"
 require_relative "../scan_report"
 require_relative "../scan_request"
+require_relative "../scan_live"
 require_relative "../../review/review_crew"
 require_relative "../../review/scan/cross_file_analysis"
 require_relative "../../review/scan/edge_case_stub_generator"
@@ -286,33 +287,78 @@ module Master
       end
 
       def dispatch_scan(scanner:, root:, ctx: nil)
+        ScanLive.ensure_sync!
         arg = arg_for(ctx)
         dry_run = dry_run_arg?(arg)
         no_autofix = no_autofix_arg?(arg)
         clean_arg = strip_scan_flags(arg)
-        request = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
-        return request.pairs if request.pairs.is_a?(String)
+        do_autofix = !dry_run && !no_autofix && Master::Review::Scan::MechanicalAutofix.enabled?
 
-        pairs = request.pairs
-        autofixes = []
-        if pairs.any? && !dry_run && !no_autofix && Master::Review::Scan::MechanicalAutofix.enabled?
-          autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
-          if autofixes.any?
-            rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
-            pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
+        ScanLive.with_interrupt_dump(root: root) do |holder|
+          ScanLive.banner(
+            target: clean_arg.empty? ? root : clean_arg,
+            profile: nil,
+            dry_run: dry_run,
+            autofix: do_autofix
+          )
+
+          request = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+          return request.pairs if request.pairs.is_a?(String)
+
+          pairs = request.pairs
+          profile = request.profile
+          rule_filter = request.rule_filter
+          severity_filter = request.severity_filter
+
+          pass1 = ScanReport.new(
+            pairs: pairs,
+            profile: profile,
+            rule_filter: rule_filter,
+            severity_filter: severity_filter,
+            dry_run: dry_run,
+            phase: "pass1"
+          )
+          pass1_total = pass1.total_count
+          pass1_brief = pass1.brief
+          ScanLive.emit("pass1 #{pass1_brief}")
+          holder[:text] = pass1.render
+          ScanLive.snapshot!(holder[:text], root: root, note: "pass1 before autofix")
+
+          autofixes = []
+          if pairs.any? && do_autofix
+            ScanLive.emit("autofix applying on auto_fix findings…")
+            autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
+            if autofixes.any?
+              transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(",")
+              ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
+              ScanLive.emit("pass2 re-scan after autofix…")
+              rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+              pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
+            else
+              ScanLive.emit("autofix none applied (no auto_fix hits or no transforms)")
+            end
+          elsif dry_run
+            ScanLive.emit("autofix skipped dry_run=yes")
+          elsif no_autofix
+            ScanLive.emit("autofix skipped --no-autofix")
           end
+
+          final = ScanReport.new(
+            pairs: pairs,
+            profile: profile,
+            rule_filter: rule_filter,
+            severity_filter: severity_filter,
+            dry_run: dry_run,
+            autofixes: autofixes,
+            phase: do_autofix && autofixes.any? ? "pass2" : "final",
+            prior_total: do_autofix ? pass1_total : nil
+          )
+          text = pairs.empty? && autofixes.empty? ? clean_scan_line(dry_run:, autofixes:) : final.render
+          holder[:text] = text
+          ScanLive.emit("done #{final.brief}")
+          ScanLive.snapshot!(text, root: root, note: "final")
+          text
         end
-
-        return clean_scan_line(dry_run:, autofixes:) if pairs.empty?
-
-        ScanReport.new(
-          pairs: pairs,
-          profile: request.profile,
-          rule_filter: request.rule_filter,
-          severity_filter: request.severity_filter,
-          dry_run: dry_run,
-          autofixes: autofixes
-        ).render
       end
 
       def apply_scan_autofixes(scanner:, root:, pairs:)
@@ -327,7 +373,8 @@ module Master
           profile: nil,
           rule_filter: nil,
           dry_run: dry_run,
-          autofixes: autofixes
+          autofixes: autofixes,
+          phase: "final"
         ).render
       end
 
