@@ -6,8 +6,13 @@ require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
-BACKLOG = File.join(REPO, "BACKLOG.yml")
-LEGACY = [File.join(ROOT, "TODO.md"), File.join(REPO, "OPENBSD", "TODO.md")]
+DEBT = File.join(REPO, "OPENBSD", "data", "debt.yml")
+LEGACY = [
+  File.join(ROOT, "TODO.md"),
+  File.join(REPO, "OPENBSD", "TODO.md"),
+  File.join(REPO, "RAILS", "TODO.md"),
+  File.join(ROOT, "tools", "dilla", "TODO.md"),
+].freeze
 
 def run_step(name, *cmd, chdir:)
   print "todo-retire: #{name.ljust(20)} "
@@ -18,8 +23,8 @@ def run_step(name, *cmd, chdir:)
 end
 
 open_items = []
-if File.file?(BACKLOG)
-  data = YAML.safe_load(File.read(BACKLOG)) || {}
+if File.file?(DEBT)
+  data = YAML.safe_load(File.read(DEBT)) || {}
   open_items = Array(data["open"])
 end
 
@@ -28,7 +33,7 @@ legacy_open = LEGACY.any? do |path|
 end
 
 if open_items.any? || legacy_open
-  warn "todo-retire: blocked — open items remain in BACKLOG.yml or legacy TODO.md files"
+  warn "todo-retire: blocked — open items remain in OPENBSD/data/debt.yml or legacy TODO.md files"
   warn "todo-retire: run bin/handoff or bin/pub4 status"
   exit 1
 end
@@ -51,4 +56,4 @@ unless ENV["TODO_RETIRE_CONFIRM"] == "1"
 end
 
 LEGACY.each { |path| File.delete(path) if File.file?(path) }
-puts "todo-retire: deleted legacy MASTER/TODO.md and OPENBSD/TODO.md (BACKLOG.yml is canonical)"
+puts "todo-retire: deleted legacy TODO.md files (OPENBSD/data/debt.yml is canonical)"
