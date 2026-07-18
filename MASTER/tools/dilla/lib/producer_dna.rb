@@ -599,11 +599,19 @@ module DillaLofiMachine
     golden: :neo_soul
   }.freeze
 
-  # Artist-verified song harmony only (exact Dilla / SV / D'Angelo changes).
+  # Full stream rotation — verified Dilla/SV/D'Angelo songs first, then the
+  # broader curated harmony pack so stream/demo cycles progressions + colors.
   STREAM_ROTATION = %w[
     get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
     maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
     major7_relative_minor_turn sus_add9_ballad
+    neo_soul_pocket erykah_minor warm_minor_arc minor_turnaround
+    quartal_west_coast slash_ninth_cycle dorian_iv_loop gospel_bIII
+    minor_iv_loop two_chord_hypnosis relative_major_turn
+    electronium_loop fourth_third_sixth_second_turn
+    chromatic_mediant_drift lydian_glass_cycle pedal_upper_structures
+    bossa_major9_turn phrygian_gold_arc mixo_sus_loop common_tone_drift
+    glasper_quartal minMaj_color church_sus jazz_ballad_waltz
   ].freeze
 
   CURATED_PROGRESSIONS = HARMONY_PROFILES.keys.freeze

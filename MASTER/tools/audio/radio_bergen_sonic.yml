@@ -2,7 +2,7 @@
 meta:
   source: playlist.brgen.no
   manifest: "/Users/mac/Documents/GitHub/pub4/MASTER/tools/audio/radio_bergen_tracks.yml"
-  studied_at: '2026-07-18T12:40:42Z'
+  studied_at: '2026-07-18T19:42:57Z'
   track_count: 29
   local_count: 9
   youtube_count: 20
@@ -49,9 +49,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/akmd_mike_t-alt_kan_skje.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/mike_t_and_johann-alt_kan_skje.mp3"
+  audio_analyzed: "/audio/akmd/akmd_mike_t-alt_kan_skje.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 33.85
+    rms_db:
+    peak_db:
   learnings:
     producer: bergen
     performer: yancey
@@ -82,9 +84,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/angelo_reira_and_johann-sandviken_hotell_a.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/angelo_reira_and_johann-sandviken_hotell_a.mp3"
+  audio_analyzed: "/audio/akmd/angelo_reira_and_johann-sandviken_hotell_a.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 39.81
+    rms_db:
+    peak_db:
   learnings:
     producer: bergen
     performer: yancey
@@ -99,9 +103,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/angelo_reira_and_johann-sandviken_hotell_b.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/angelo_reira_and_johann-sandviken_hotell_b.mp3"
+  audio_analyzed: "/audio/akmd/angelo_reira_and_johann-sandviken_hotell_b.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 45.95
+    rms_db:
+    peak_db:
   learnings:
     producer: bergen
     performer: yancey
@@ -116,9 +122,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/chase_swayze-traffic.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/chase_swayze-underated.mp3"
+  audio_analyzed: "/audio/akmd/chase_swayze-traffic.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 190.52
+    rms_db:
+    peak_db:
   learnings:
     producer: dilla
     performer: yancey
@@ -132,9 +140,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/haisam_and_johann-pb1.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/haisam_and_johann-pb1.mp3"
+  audio_analyzed: "/audio/akmd/haisam_and_johann-pb1.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 108.28
+    rms_db:
+    peak_db:
   learnings:
     producer: bergen
     performer: yancey
@@ -149,9 +159,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/jan_hakim_and_johann-stailings_a.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/jan_hakim_and_johann-stailings_a.mp3"
+  audio_analyzed: "/audio/akmd/jan_hakim_and_johann-stailings_a.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 31.2
+    rms_db:
+    peak_db:
   learnings:
     producer: bergen
     performer: yancey
@@ -166,9 +178,11 @@ playlist_tracks:
   source: local_mp3
   youtube_id:
   local_src: "/audio/akmd/mike_t_jr-rauingar.mp3"
-  audio_analyzed: "/Users/mac/Documents/GitHub/pub2/johann-rauingar.mp3"
+  audio_analyzed: "/audio/akmd/mike_t_jr-rauingar.mp3"
   analysis:
-    duration_seconds: 180.0
+    duration_seconds: 19.26
+    rms_db:
+    peak_db:
   learnings:
     producer: bergen
     performer: yancey

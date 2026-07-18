@@ -72,35 +72,56 @@ module DillaMaster
     File.join(IR_DIR, "club.wav") if File.file?(File.join(IR_DIR, "club.wav"))
   end
 
+  # Build a single labeled chain: [in]filter1,filter2[out]
+  # Never prefix the first filter with a comma — ffmpeg 8 treats
+  # "[pad],alimiter=..." as an empty filter name and fails with exit 8
+  # ("No such filter: ''"), which silently kills every stream track.
   def extra_filters(input_tag, cfg:, duration:, section_fn: nil)
     return [] unless enabled?
-    out = []
+    parts = []
+    parts.concat(perceptual_limiter_parts) if ENV["PERCEPTUAL_LIMIT"] != "0"
+    parts.concat(harshness_notch_parts) if ENV["HARSHNESS_NOTCH"] != "0"
+    parts.concat(cassette_wow_parts) if ENV["CASSETTE_PRINT"] == "1"
+    if ENV["RADIO_CLUB_MORPH"] == "1"
+      parts.concat(radio_club_morph_parts(cfg, duration, section_fn))
+    end
+    return [] if parts.empty?
     tag = "#{input_tag}_mh"
-    chain = "[#{input_tag}]"
-    chain += perceptual_limiter if ENV["PERCEPTUAL_LIMIT"] != "0"
-    chain += harshness_notch if ENV["HARSHNESS_NOTCH"] != "0"
-    chain += cassette_wow if ENV["CASSETTE_PRINT"] == "1"
-    chain += radio_club_morph(cfg, duration, section_fn) if ENV["RADIO_CLUB_MORPH"] == "1"
-    return [] if chain == "[#{input_tag}]"
-    out << "#{chain}[#{tag}]"
-    out
+    ["[#{input_tag}]#{parts.join(',')}[#{tag}]"]
   end
 
+  def perceptual_limiter_parts
+    %w[alimiter=limit=0.92:level_out=0.94 equalizer=f=3500:t=o:w=1.2:g=-1.5]
+  end
+
+  def harshness_notch_parts
+    %w[equalizer=f=4200:t=h:w=800:g=-2.5 equalizer=f=6800:t=h:w=1200:g=-1.8]
+  end
+
+  def cassette_wow_parts
+    %w[vibrato=f=0.25:d=0.003 acrusher=bits=11:samples=2:mix=0.12]
+  end
+
+  def radio_club_morph_parts(cfg, duration, _section_fn)
+    mid = (duration.to_f * 0.5).round(2)
+    [DillaAutomation.volume_filter([[0, 0.92], [mid, 1.08]])]
+  end
+
+  # Back-compat aliases (leading comma form is intentional for mid-chain append).
   def perceptual_limiter
-    ",alimiter=limit=0.92:level_out=0.94, equalizer=f=3500:t=o:w=1.2:g=-1.5"
+    ",#{perceptual_limiter_parts.join(',')}"
   end
 
   def harshness_notch
-    ",equalizer=f=4200:t=h:w=800:g=-2.5,equalizer=f=6800:t=h:w=1200:g=-1.8"
+    ",#{harshness_notch_parts.join(',')}"
   end
 
   def cassette_wow
-    ",vibrato=f=0.25:d=0.003,acrusher=bits=11:samples=2:mix=0.12"
+    ",#{cassette_wow_parts.join(',')}"
   end
 
-  def radio_club_morph(cfg, duration, _section_fn)
-    mid = (duration * 0.5).round(2)
-    ",#{DillaAutomation.volume_filter([[0, 0.92], [mid, 1.08]])}"
+  def radio_club_morph(cfg, duration, section_fn = nil)
+    ",#{radio_club_morph_parts(cfg, duration, section_fn).join(',')}"
   end
 
   def phone_preview_chain
