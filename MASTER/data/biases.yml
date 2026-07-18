@@ -1,11 +1,26 @@
-# Decision-proposal biases, read by Ground::BiasGuard when annotating self-improvement
-# proposals. Distinct from rules.yml's biases: section (output-text scanning,
-# hallucination/sycophancy/simulation) — same word, two different pipeline stages.
 confirmation_bias:
-  countermeasure: "Generate three counter-arguments before accepting a fix that only confirms the scanner result."
+  countermeasure: Generate three counter-arguments before accepting a fix that only confirms the scanner
+    result.
 sunk_cost_bias:
-  countermeasure: "Compare the current path against a simpler rollback or rewrite before investing more effort."
+  countermeasure: Compare the current path against a simpler rollback or rewrite before investing more
+    effort.
 authority_bias:
-  countermeasure: "Treat named tools and models as fallible; require local evidence before accepting their output."
+  countermeasure: Treat named tools and models as fallible; require local evidence before accepting their
+    output.
 recency_bias:
-  countermeasure: "Prioritize severity x frequency x age, not most-recent findings alone."
+  countermeasure: Prioritize severity x frequency x age, not most-recent findings alone.
+sycophancy:
+  countermeasure: Disagree when evidence conflicts with the operator preference; state the conflict and
+    the safer path.
+simulation_bias:
+  countermeasure: Replace future-tense promises with executed commands, diffs, or test output before claiming
+    done.
+anchoring_bias:
+  countermeasure: Regenerate at least one alternative fix that ignores the first proposed patch shape.
+availability_bias:
+  countermeasure: Search the repo for similar settled patterns before inventing a new structure.
+premature_optimization:
+  countermeasure: Prove a measured bottleneck before complexity for speed.
+aesthetic_neglect:
+  countermeasure: For UI/views/CSS changes, run aesthetic profile scan and check spacing, type, flatness,
+    and touch targets before ship.

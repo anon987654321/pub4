@@ -42,25 +42,52 @@ module Master
         [crew_text, review_text].compact.reject(&:empty?).join("\n\n")
       end
 
-      # Scan → fix dry-run → council deliberation. Invoked via infer/workflow intent, not user-facing /triad.
-      def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, **_legacy)
-        target = arg_for(ctx).to_s.strip.empty? ? "." : arg_for(ctx).to_s.strip
-        abs = expand_or_root(target, root)
-        artifact = snapshot_artifact(abs)
-        [
-          "workflow: scan",
-          dispatch_scan(scanner:, root:, ctx: { args: target }),
-          "",
-          "workflow: fix dry-run",
-          dispatch_fix(fix_loop:, root:, ctx: { args: "--dry-run #{target}" }),
-          "",
-          "workflow: deliberation",
-          run_tribunal(deliberation:, artifact:, target:, bus:),
-        ].join("\n")
+      # Full singularity sequence (aesthetic → scan → fix → re-scan → critique).
+      # Invoked by natural-language inference, /workflow, /through, /triad — users need not memorize stages.
+      def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
+        raw = arg_for(ctx).to_s.strip
+        apply, critique, aesthetic, target = parse_through_flags(raw)
+        Master::CLI::ThroughPipeline.new(
+          scanner: scanner,
+          fix_loop: fix_loop,
+          root: root,
+          deliberation: deliberation,
+          bus: bus,
+          review_crew: review_crew
+        ).call(target: target, apply: apply, critique: critique, aesthetic: aesthetic).render
       end
 
-      def dispatch_triad(**kwargs)
-        dispatch_workflow(**kwargs)
+      def dispatch_through(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
+        dispatch_workflow(
+          scanner: scanner, fix_loop: fix_loop, deliberation: deliberation,
+          root: root, bus: bus, ctx: ctx, review_crew: review_crew
+        )
+      end
+
+      def dispatch_triad(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
+        dispatch_workflow(
+          scanner: scanner, fix_loop: fix_loop, deliberation: deliberation,
+          root: root, bus: bus, ctx: ctx, review_crew: review_crew
+        )
+      end
+
+      def parse_through_flags(raw)
+        apply = nil
+        critique = nil
+        aesthetic = true
+        tokens = raw.split(/\s+/)
+        path_bits = []
+        tokens.each do |tok|
+          case tok.downcase
+          when "--dry-run", "preview", "dry" then apply = false
+          when "--apply", "apply", "fix" then apply = true
+          when "--no-critique", "no-critique" then critique = false
+          when "--critique", "critique" then critique = true
+          when "--no-aesthetic", "no-aesthetic" then aesthetic = false
+          else path_bits << tok
+          end
+        end
+        [apply, critique, aesthetic, path_bits.join(" ")]
       end
 
       def run_tribunal(deliberation:, artifact:, target:, bus: nil)

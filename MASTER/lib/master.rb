@@ -134,7 +134,7 @@ module Master
   rule_fragments = %w[
     cosmetic_rules.rb external_linter_rules.rb graph_rules.rb js_rules.rb lexical_rules.rb
     meta_rules.rb naming_rules.rb ruby_rules.rb semantic_rules.rb structural_question_rules.rb
-    structural_rules.rb universal_rules.rb web_rules.rb yaml_bridge_rules.rb
+    structural_rules.rb surface_rules.rb universal_rules.rb web_rules.rb yaml_bridge_rules.rb
   ]
   rule_fragments.each { |name| loader.ignore(File.join(__dir__, "review", "scan", "rules", name)) }
   %w[

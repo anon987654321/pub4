@@ -1,0 +1,1492 @@
+schema: 1
+version: v110.0-restored
+source: merged master.yml fossil → MASTER runtime principle_map
+clusters:
+  security:
+  - secrets_encryption
+  - security
+  - no_privilege_escalation
+  - explicit_error_handling
+  structure:
+  - no_god_files
+  - complexity_budget
+  - single_responsibility
+  - dont_repeat_yourself
+  - composition_over_inheritance
+  - dependency_inversion
+  - law_of_demeter
+  - command_query_separation
+  errors:
+  - fail_fast
+  - observability
+  - operational_logging
+  - error_prevention
+  aesthetic:
+  - venustas
+  - ma
+  - kanso
+  - shibui
+  - less_is_more
+  - less_but_better
+  - rejection_of_ornament
+  - negative_space
+  - form_follows_function
+  - signal_noise
+  - hierarchy
+  - contrast
+  - rhythm
+  - balance
+  - flat_ui
+  - wabi_sabi
+  - kaizen
+  ux:
+  - accessibility
+  - fitts_law
+  - hicks_law
+  - progressive_disclosure
+  - affordance
+  - user_control
+  - chunking
+  - human_scale
+  - clarity
+  - consistency
+  design_rams:
+  - good_design_is_useful
+  - good_design_is_understandable
+  - good_design_is_unobtrusive
+  - good_design_is_honest
+  - good_design_is_thorough
+  ops:
+  - carrying_capacity
+  - idempotency
+  - durability
+  rails:
+  - thin_controllers
+  - view_purity
+  - stimulus_progressive
+principles:
+  accessibility:
+    meaning: usable by people with diverse abilities
+    detects: accessibility_violation
+    severity: critical
+    confidence: 0.9
+    operation: fix_accessibility
+    rule_ids:
+    - ARIA_INTERACTIVE
+    - ARIA_LABELS
+    - IMG_ALT
+    - FORM_LABEL
+    - SKIP_TO_MAIN
+    - HTML_LANG
+    status: covered
+    tags:
+    - ui
+  adaptive_reuse:
+    meaning: 'Transform existing structures for new purposes  '
+    detects: weak_structure
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  affordance:
+    meaning: visual clues to functionality
+    detects: unclear_affordance
+    severity: medium
+    confidence: 0.75
+    operation: clarify_affordance
+    rule_ids:
+    - AFFORDANCE_CLARITY
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  arrange_act_assert:
+    meaning: 'Structure tests clearly in three phases  '
+    detects: unclear_test
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  audit_logging:
+    meaning: record who did what when
+    detects: unaudited_actions
+    severity: high
+    confidence: 0.85
+    operation: add_logging
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  avoid_side_effects:
+    meaning: functions shouldn't cause hidden changes
+    detects: hidden_side_effects
+    severity: high
+    confidence: 0.8
+    operation: make_explicit
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  balance:
+    meaning: equal visual weight distribution
+    detects: unbalanced_layout
+    severity: low
+    confidence: 0.7
+    operation: rebalance
+    rule_ids:
+    - EIGHT_PX_RHYTHM
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  bold_graphic_intentional:
+    meaning: 'Deliberate, purposeful visuals  '
+    detects: visual_clutter
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  boy_scout_rule:
+    meaning: leave code better than you found it
+    detects: no_improvement
+    severity: high
+    confidence: 0.9
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  building_enhances_site:
+    meaning: 'Architecture improves its natural context  '
+    detects: weak_structure
+    severity: high
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  carrying_capacity:
+    meaning: respect limits
+    detects: over_capacity
+    severity: critical
+    confidence: 0.95
+    operation: emergency_reduce
+    rule_ids:
+    - HOST_CAPACITY
+    status: covered
+    tags:
+    - code
+  chroot_isolation:
+    meaning: restrict filesystem view for daemons
+    detects: full_filesystem_access
+    severity: high
+    confidence: 0.85
+    operation: isolate
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  chunking:
+    meaning: 7±2 items - respect cognitive limits
+    detects: too_many_items
+    severity: medium
+    confidence: 0.8
+    operation: categorize
+    rule_ids:
+    - CHOICE_OVERLOAD
+    status: covered
+    tags:
+    - ui
+  circuit_breaker:
+    meaning: fail fast and recover gracefully under load
+    detects: cascade_failure
+    severity: critical
+    confidence: 0.85
+    operation: add_recovery
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  clarity:
+    meaning: obvious intent
+    detects: unclear_naming
+    severity: high
+    confidence: 0.7
+    operation: rename
+    rule_ids:
+    - MEANINGFUL_NAMES
+    status: covered
+    tags:
+    - ui
+  command_query_separation:
+    meaning: separate actions from queries
+    detects: mixed_concerns
+    severity: medium
+    confidence: 0.75
+    operation: separate
+    rule_ids:
+    - CQS
+    status: covered
+    tags:
+    - code
+  complexity_budget:
+    meaning: cyclomatic complexity under 10 per function
+    detects: high_complexity
+    severity: high
+    confidence: 0.9
+    operation: simplify
+    rule_ids:
+    - SMALL_FUNCTIONS
+    status: covered
+    tags:
+    - code
+  composition_over_inheritance:
+    meaning: prefer object composition to class inheritance
+    detects: inheritance_abuse
+    severity: medium
+    confidence: 0.75
+    operation: compose
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  connectivity:
+    meaning: 'Link spaces, communities, and systems  '
+    detects: isolated_components
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  consistency:
+    meaning: predictable patterns throughout
+    detects: inconsistent_naming
+    severity: high
+    confidence: 0.85
+    operation: standardize
+    rule_ids: []
+    status: gap
+    tags:
+    - ui
+  consistent_visual_language:
+    meaning: 'Unified design system  '
+    detects: visual_clutter
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  content_driven_design:
+    meaning: 'Content determines structure  '
+    detects: weak_structure
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  contrast:
+    meaning: emphasize differences to create interest
+    detects: low_contrast
+    severity: low
+    confidence: 0.75
+    operation: increase_contrast
+    rule_ids:
+    - CONTRAST_TOKENS
+    status: covered
+    tags:
+    - ui
+  correlation_ids:
+    meaning: trace requests across service boundaries
+    detects: untraceable_requests
+    severity: high
+    confidence: 0.8
+    operation: add_tracing
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  database_constraints:
+    meaning: enforce integrity at database level, not just application
+    detects: app_only_validation
+    severity: high
+    confidence: 0.85
+    operation: add_constraints
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  datsuzoku:
+    meaning: freedom from convention
+    detects: cargo_cult
+    severity: high
+    confidence: 0.7
+    operation: question_pattern
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  dependency_inversion:
+    meaning: depend on abstractions, not concretions
+    detects: concrete_dependency
+    severity: high
+    confidence: 0.8
+    operation: introduce_interface
+    rule_ids:
+    - DEPENDENCY_INVERSION
+    status: covered
+    tags:
+    - code
+  design_invisibility:
+    meaning: 'Design serves content  '
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  deterministic_tests:
+    meaning: same input always produces same result
+    detects: flaky_tests
+    severity: high
+    confidence: 0.9
+    operation: remove_randomness
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  direct_nature_connection:
+    meaning: 'Visual and physical access to natural elements  '
+    detects: artificial_environment
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  dont_repeat_yourself:
+    meaning: avoid duplication, extract commonality
+    detects: duplication
+    severity: high
+    confidence: 0.9
+    operation: extract
+    rule_ids:
+    - DEAD_CODE
+    status: covered
+    tags:
+    - code
+  durability:
+    meaning: tested, backed up, recoverable
+    detects: no_tests
+    severity: critical
+    confidence: 0.95
+    operation: add_tests
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+    immutable: true
+  eager_loading:
+    meaning: avoid N+1 queries by loading associations upfront
+    detects: n_plus_one
+    severity: high
+    confidence: 0.85
+    operation: optimize_queries
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  edge_to_edge_imagery:
+    meaning: 'Full-bleed visuals  '
+    detects: visual_clutter
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  emphasis_on_volume:
+    meaning: 'Space itself as the primary design element  '
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  error_prevention:
+    meaning: design to prevent mistakes
+    detects: error_prone
+    severity: high
+    confidence: 0.85
+    operation: add_constraints
+    rule_ids:
+    - FORM_LABEL
+    status: covered
+    tags:
+    - aesthetic
+  explicit_error_handling:
+    meaning: handle errors explicitly, never swallow
+    detects: no_error_handling
+    severity: critical
+    confidence: 0.95
+    operation: add_guards
+    rule_ids:
+    - SILENT_RESCUE
+    status: covered
+    tags:
+    - code
+  extensibility:
+    meaning: open for extension
+    detects: modification_required
+    severity: high
+    confidence: 0.75
+    operation: introduce_seam
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  fail_fast:
+    meaning: report errors immediately
+    detects: silent_errors
+    severity: critical
+    confidence: 0.95
+    operation: add_validation
+    rule_ids:
+    - SILENT_RESCUE
+    status: covered
+    tags:
+    - code
+  feedback:
+    meaning: system communicates state and actions
+    detects: silent_operation
+    severity: high
+    confidence: 0.85
+    operation: add_feedback
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  firmitas:
+    meaning: structural strength and durability
+    detects: weak_structure
+    severity: high
+    confidence: 0.85
+    operation: reinforce
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  fitts_law:
+    meaning: larger, closer targets are faster to acquire
+    detects: small_target
+    severity: medium
+    confidence: 0.85
+    operation: enlarge_target
+    rule_ids:
+    - TOUCH_TARGET_MIN
+    status: covered
+    tags:
+    - ui
+  flexibility_and_adaptability:
+    meaning: 'Design for change over time  '
+    detects: rigid_structure
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  form_follows_function:
+    meaning: design prioritizes purpose over decoration
+    detects: decorative_code
+    severity: medium
+    confidence: 0.75
+    operation: remove_decoration
+    rule_ids:
+    - FORM_FOLLOWS_FUNCTION
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  formal_legibility:
+    meaning: 'Clear reading of structure  '
+    detects: weak_structure
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  free_facade:
+    meaning: 'Exterior walls independent of structure  '
+    detects: tight_coupling
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  free_plan:
+    meaning: 'Interior walls independent of structure  '
+    detects: tight_coupling
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  function_over_decoration:
+    meaning: 'Utility drives aesthetic  '
+    detects: decorative_code
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  good_design_is_honest:
+    meaning: doesn't manipulate or make false promises
+    detects: misleading_interface
+    severity: high
+    confidence: 0.85
+    operation: make_honest
+    rule_ids:
+    - RAMS_HONEST
+    status: covered
+    tags:
+    - ui
+  good_design_is_thorough:
+    meaning: attention to every detail
+    detects: incomplete_implementation
+    severity: medium
+    confidence: 0.75
+    operation: complete
+    rule_ids:
+    - RAMS_THOROUGH
+    status: covered
+    tags:
+    - ui
+  good_design_is_understandable:
+    meaning: self-explanatory structure
+    detects: confusing_interface
+    severity: medium
+    confidence: 0.75
+    operation: clarify
+    rule_ids:
+    - RAMS_UNDERSTANDABLE
+    status: covered
+    tags:
+    - ui
+  good_design_is_unobtrusive:
+    meaning: tools, not decoration
+    detects: decorative_code
+    severity: low
+    confidence: 0.7
+    operation: remove_decoration
+    rule_ids:
+    - RAMS_UNOBTRUSIVE
+    status: covered
+    tags:
+    - ui
+  good_design_is_useful:
+    meaning: serves a purpose
+    detects: useless_feature
+    severity: medium
+    confidence: 0.8
+    operation: remove_or_fix
+    rule_ids:
+    - RAMS_USEFUL
+    status: covered
+    tags:
+    - ui
+  harmony_of_parts:
+    meaning: all elements work together cohesively
+    detects: inconsistent_patterns
+    severity: high
+    confidence: 0.8
+    operation: standardize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  hicks_law:
+    meaning: more choices increase decision time
+    detects: choice_overload
+    severity: medium
+    confidence: 0.8
+    operation: reduce_choices
+    rule_ids:
+    - CHOICE_OVERLOAD
+    status: covered
+    tags:
+    - ui
+  hierarchy:
+    meaning: clear structure and organization
+    detects: flat_hierarchy
+    severity: medium
+    confidence: 0.75
+    operation: establish_hierarchy
+    rule_ids:
+    - TYPE_HIERARCHY
+    status: covered
+    tags:
+    - ui
+  high_contrast_elements:
+    meaning: 'Bold visual distinctions  '
+    detects: visual_clutter
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  human_scale:
+    meaning: proportioned to human comprehension - debuggable at 3am
+    detects: long_function
+    severity: medium
+    confidence: 0.9
+    operation: extract
+    rule_ids:
+    - SMALL_FUNCTIONS
+    status: covered
+    tags:
+    - ui
+  idempotency:
+    meaning: safely repeatable
+    detects: non_idempotent
+    severity: high
+    confidence: 0.75
+    operation: add_idempotency
+    rule_ids:
+    - CONST_BY_DEFAULT
+    status: covered
+    tags:
+    - code
+  immutability_preference:
+    meaning: prefer immutable data structures, mutate explicitly
+    detects: hidden_side_effects
+    severity: high
+    confidence: 0.8
+    operation: make_explicit
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  information_architecture:
+    meaning: 'Logical content organization  '
+    detects: disorganized_content
+    severity: high
+    confidence: 0.8
+    operation: refactor
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  information_hiding:
+    meaning: hide design decisions that may change
+    detects: exposed_internals
+    severity: medium
+    confidence: 0.75
+    operation: encapsulate
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  internalize_before_writing:
+    meaning: understand existing code before modifying
+    detects: blind_modification
+    severity: high
+    confidence: 0.85
+    operation: analyze_first
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  job_idempotency:
+    meaning: background jobs safe to retry
+    detects: non_idempotent_job
+    severity: high
+    confidence: 0.85
+    operation: add_idempotency
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  kaizen:
+    meaning: continuous improvement
+    detects: stagnation
+    severity: medium
+    confidence: 0.85
+    operation: improve
+    rule_ids:
+    - DEAD_CODE
+    status: covered
+    tags:
+    - ui
+  kanso:
+    meaning: simplicity, elimination of clutter
+    detects: unnecessary_complexity
+    severity: high
+    confidence: 0.8
+    operation: simplify
+    rule_ids:
+    - AESTHETIC_MINIMALISM
+    - NO_DECORATIVE_FX
+    status: covered
+    tags:
+    - ui
+  keep_it_simple:
+    meaning: simplest solution that works
+    detects: over_engineering
+    severity: medium
+    confidence: 0.85
+    operation: simplify
+    rule_ids:
+    - DEAD_CODE
+    status: covered
+    tags:
+    - code
+  knowledge_biases:
+    meaning: null
+    detects: null
+    severity: critical
+    confidence: 0.7
+    operation: null
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  law_of_demeter:
+    meaning: only talk to immediate friends
+    detects: train_wreck
+    severity: high
+    confidence: 0.85
+    operation: introduce_intermediary
+    rule_ids:
+    - LAW_OF_DEMETER
+    status: covered
+    tags:
+    - code
+  least_privilege:
+    meaning: grant minimum permissions required
+    detects: excessive_permissions
+    severity: critical
+    confidence: 0.9
+    operation: reduce_permissions
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  less_but_better:
+    meaning: focus on quality over quantity
+    detects: low_quality_abundance
+    severity: medium
+    confidence: 0.75
+    operation: reduce_and_refine
+    rule_ids:
+    - AESTHETIC_MINIMALISM
+    status: covered
+    tags:
+    - ui
+  less_is_more:
+    meaning: simplicity and restraint create elegance
+    detects: over_engineering
+    severity: medium
+    confidence: 0.8
+    operation: simplify
+    rule_ids:
+    - AESTHETIC_MINIMALISM
+    - UTILITY_CLASS_SOUP
+    status: covered
+    tags:
+    - ui
+  liskov_substitution:
+    meaning: subtypes must be substitutable for base types
+    detects: broken_inheritance
+    severity: high
+    confidence: 0.8
+    operation: fix_hierarchy
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  locality:
+    meaning: behavior near trigger
+    detects: action_at_distance
+    severity: high
+    confidence: 0.75
+    operation: inline
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  loose_coupling:
+    meaning: minimize dependencies between modules
+    detects: tight_coupling
+    severity: high
+    confidence: 0.8
+    operation: introduce_interface
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  ma:
+    meaning: negative space, pause, interval between things
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids:
+    - WHITESPACE_RHYTHM
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  mass_production_design:
+    meaning: 'Design for industrial production  '
+    detects: one_off_design
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  mathematical_grids:
+    meaning: 'Systematic layout structure  '
+    detects: weak_structure
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  metrics_and_alerting:
+    meaning: measure what matters, alert on anomalies
+    detects: blind_operation
+    severity: high
+    confidence: 0.8
+    operation: add_feedback
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  modularity:
+    meaning: depend on abstractions
+    detects: concrete_dependency
+    severity: high
+    confidence: 0.8
+    operation: introduce_interface
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  negative_space:
+    meaning: breathing room
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.7
+    operation: add_whitespace
+    rule_ids:
+    - MEASURE_OPTIMUM
+    - WHITESPACE_RHYTHM
+    status: covered
+    tags:
+    - ui
+  negative_space_emphasis:
+    meaning: 'Empty space as active design element  '
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  no_god_files:
+    meaning: split monolithic files into focused modules
+    detects: god_file
+    severity: critical
+    confidence: 0.95
+    operation: split
+    rule_ids:
+    - NO_GOD_CLASS
+    status: covered
+    tags:
+    - code
+  no_privilege_escalation:
+    meaning: prevent unauthorized elevation of access
+    detects: privilege_escalation
+    severity: critical
+    confidence: 0.95
+    operation: add_guards
+    rule_ids: []
+    status: unmapped
+    tags:
+    - code
+  null_safety:
+    meaning: handle absence explicitly, avoid null references
+    detects: null_pointer_risk
+    severity: high
+    confidence: 0.85
+    operation: add_guards
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  observability:
+    meaning: errors visible, debuggable, traceable
+    detects: silent_errors
+    severity: critical
+    confidence: 0.95
+    operation: fail_fast
+    rule_ids:
+    - SILENT_RESCUE
+    status: covered
+    tags:
+    - code
+    immutable: true
+  open_closed_principle:
+    meaning: open for extension, closed for modification
+    detects: modification_required
+    severity: high
+    confidence: 0.75
+    operation: introduce_seam
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  open_floor_plan:
+    meaning: 'Flexible space without fixed partitions  '
+    detects: modification_required
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  operational_logging:
+    meaning: log operations for debugging and audit
+    detects: no_logging
+    severity: high
+    confidence: 0.9
+    operation: add_logging
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  orthogonality:
+    meaning: changes in one area don't affect others
+    detects: hidden_coupling
+    severity: high
+    confidence: 0.8
+    operation: decouple
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  output_biases:
+    meaning: null
+    detects: null
+    severity: critical
+    confidence: 0.7
+    operation: null
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  pattern:
+    meaning: repeated design elements
+    detects: pattern_violation
+    severity: low
+    confidence: 0.75
+    operation: apply_pattern
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  patterns:
+    meaning: null
+    detects: null
+    severity: critical
+    confidence: 0.7
+    operation: null
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  pilotis:
+    meaning: 'Elevated structure on columns, freeing ground level  '
+    detects: ground_level_obstruction
+    severity: high
+    confidence: 0.8
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  pledge_unveil:
+    meaning: restrict syscalls and filesystem access
+    detects: unrestricted_process
+    severity: critical
+    confidence: 0.9
+    operation: add_restrictions
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  principle_of_least_knowledge:
+    meaning: minimize dependencies and interactions
+    detects: excessive_dependencies
+    severity: high
+    confidence: 0.8
+    operation: reduce_deps
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  privilege_separation:
+    meaning: split process into privileged and unprivileged parts
+    detects: monolithic_privileges
+    severity: high
+    confidence: 0.85
+    operation: separate
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  progressive_disclosure:
+    meaning: show only necessary information at each step
+    detects: information_overload
+    severity: medium
+    confidence: 0.8
+    operation: hide_advanced
+    rule_ids:
+    - PROGRESSIVE_DISCLOSURE
+    status: covered
+    tags:
+    - ui
+  rate_limiting:
+    meaning: protect resources from abuse
+    detects: unbounded_requests
+    severity: high
+    confidence: 0.85
+    operation: add_constraints
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  rejection_of_ornament:
+    meaning: eliminate unnecessary decoration
+    detects: decorative_code
+    severity: low
+    confidence: 0.85
+    operation: delete
+    rule_ids:
+    - NO_DECORATIVE_FX
+    - FLAT_PIXELS
+    status: covered
+    tags:
+    - ui
+  reversible_changes:
+    meaning: every change should be undoable
+    detects: irreversible_change
+    severity: high
+    confidence: 0.85
+    operation: add_recovery
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  rhythm:
+    meaning: visual tempo through recurring elements
+    detects: arrhythmic_layout
+    severity: low
+    confidence: 0.7
+    operation: establish_rhythm
+    rule_ids:
+    - EIGHT_PX_RHYTHM
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  roof_garden:
+    meaning: 'Reclaimed green space atop buildings  '
+    detects: weak_structure
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  secrets_encryption:
+    meaning: never store secrets in plaintext
+    detects: plaintext_secrets
+    severity: critical
+    confidence: 1.0
+    operation: encrypt
+    rule_ids:
+    - SECRET_PROXIMITY
+    status: covered
+    tags:
+    - code
+  secrets_rotation:
+    meaning: credentials expire and rotate automatically
+    detects: stale_secrets
+    severity: critical
+    confidence: 0.85
+    operation: add_rotation
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  secure_by_default:
+    meaning: safe configuration out of the box
+    detects: insecure_defaults
+    severity: critical
+    confidence: 0.9
+    operation: harden
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  security:
+    meaning: null
+    detects: null
+    severity: medium
+    confidence: 0.7
+    operation: null
+    rule_ids:
+    - SECRET_PROXIMITY
+    status: covered
+    tags:
+    - code
+  seijaku:
+    meaning: tranquility, energized calm
+    detects: noisy_code
+    severity: high
+    confidence: 0.7
+    operation: quiet
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  sense_of_shelter:
+    meaning: 'Creating protected, comfortable spaces  '
+    detects: exposed_feeling
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  separation_of_concerns:
+    meaning: divide program into distinct features
+    detects: tangled_concerns
+    severity: high
+    confidence: 0.8
+    operation: separate
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  shibui:
+    meaning: simple, subtle beauty
+    detects: garish_design
+    severity: high
+    confidence: 0.65
+    operation: refine
+    rule_ids:
+    - AESTHETIC_MINIMALISM
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  shizen:
+    meaning: naturalness without pretense
+    detects: artificial_abstraction
+    severity: high
+    confidence: 0.7
+    operation: naturalize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  signal_noise:
+    meaning: maximize signal
+    detects: high_noise
+    severity: medium
+    confidence: 0.75
+    operation: remove_cruft
+    rule_ids:
+    - SIGNAL_NOISE
+    status: covered
+    tags:
+    - ui
+  single_responsibility:
+    meaning: each module does one thing well
+    detects: god_class
+    severity: high
+    confidence: 0.9
+    operation: split
+    rule_ids:
+    - NO_GOD_CLASS
+    status: covered
+    tags:
+    - code
+  sovereignty:
+    meaning: user controls, can undo
+    detects: unrecoverable_error
+    severity: critical
+    confidence: 0.95
+    operation: add_recovery
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  strong_parameters:
+    meaning: whitelist permitted attributes explicitly
+    detects: mass_assignment_risk
+    severity: critical
+    confidence: 0.9
+    operation: add_guards
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  structural_honesty:
+    meaning: reveal how system actually works
+    detects: hidden_complexity
+    severity: high
+    confidence: 0.75
+    operation: expose_structure
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  symmetry_and_balance:
+    meaning: visual/logical equilibrium through composition
+    detects: asymmetric_structure
+    severity: high
+    confidence: 0.65
+    operation: align
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  tactile_surfaces:
+    meaning: 'Physical qualities in digital space  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  test_driven_development:
+    meaning: 'Write tests before implementation  '
+    detects: no_tests
+    severity: high
+    confidence: 0.75
+    operation: add_tests
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  test_isolation:
+    meaning: tests independent, no shared state
+    detects: flaky_tests
+    severity: high
+    confidence: 0.9
+    operation: isolate
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  transparency:
+    meaning: 'Visual and conceptual openness  '
+    detects: visual_clutter
+    severity: low
+    confidence: 0.75
+    operation: improve
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  universal_design:
+    meaning: 'Accessible to people of all abilities  '
+    detects: accessibility_violation
+    severity: critical
+    confidence: 0.75
+    operation: add_guards
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  user_centered_design:
+    meaning: 'Design for actual user needs  '
+    detects: designer_centered
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  user_control:
+    meaning: users can undo, navigate freely
+    detects: no_undo
+    severity: high
+    confidence: 0.85
+    operation: add_undo
+    rule_ids: []
+    status: gap
+    tags:
+    - ui
+  venustas:
+    meaning: beauty and aesthetic delight
+    detects: visual_clutter
+    severity: low
+    confidence: 0.7
+    operation: beautify
+    rule_ids:
+    - PIXEL_EXACT
+    - AESTHETIC_MINIMALISM
+    status: covered
+    tags:
+    - aesthetic
+    - ui
+  wa:
+    meaning: harmony, balance
+    detects: chaotic_structure
+    severity: high
+    confidence: 0.7
+    operation: organize
+    rule_ids: []
+    status: gap
+    tags:
+    - code
+  wabi_sabi:
+    meaning: beauty in imperfection and impermanence
+    detects: over_polishing
+    severity: low
+    confidence: 0.7
+    operation: accept_imperfection
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+    - ui
+  walkability:
+    meaning: 'Design that encourages pedestrian movement  '
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: simplify
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  white_space:
+    meaning: empty space that gives design breathing room
+    detects: visual_clutter
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  yohaku_no_bi:
+    meaning: 'Beauty of blank space  '
+    detects: unclear_intent
+    severity: medium
+    confidence: 0.75
+    operation: add_whitespace
+    rule_ids: []
+    status: gap
+    tags:
+    - aesthetic
+  you_arent_gonna_need_it:
+    meaning: don't build features prematurely
+    detects: speculative_code
+    severity: medium
+    confidence: 0.8
+    operation: delete
+    rule_ids:
+    - DEAD_CODE
+    status: covered
+    tags:
+    - code
+  thin_controllers:
+    meaning: thin controllers, fat models
+    detects: fat_controller
+    severity: high
+    confidence: 0.85
+    operation: extract
+    rule_ids:
+    - THIN_CONTROLLER
+    - RAILS_THIN_CONTROLLER_SEMANTIC
+    status: covered
+    tags:
+    - rails
+    - code
+  view_purity:
+    meaning: views present; helpers and models compute
+    detects: logic_in_view
+    severity: medium
+    confidence: 0.8
+    operation: extract
+    rule_ids:
+    - NO_LOGIC_IN_VIEW
+    - RAILS_VIEW_PURITY
+    - RAILS_TAG_HELPER
+    status: covered
+    tags:
+    - rails
+    - ui
+  stimulus_progressive:
+    meaning: Stimulus progressive enhancement, focused controllers
+    detects: js_soup
+    severity: medium
+    confidence: 0.75
+    operation: split
+    rule_ids:
+    - STIMULUS_CONTROLLER_SIZE
+    - STIMULUS_PROGRESSIVE
+    status: covered
+    tags:
+    - rails
+    - ui

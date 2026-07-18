@@ -20,7 +20,12 @@ module Master
         continue_prior_plan: %w[go ahead continue land it proceed ship],
         write_repo_changes: %w[land write commit save push apply],
         prefer_ruby: %w[ruby not markdown no yaml keep ruby],
-        run_full_workflow: %w[through master tribunal full pass review deliberate deliberation deliberating deliberations],
+        run_full_workflow: %w[
+          through master tribunal full pass review deliberate deliberation deliberating deliberations
+          singularity selfapply self-apply improve sweep rails itself autofix converge
+        ],
+        run_rails_through: %w[rails apps brgen amber bsdports through improve scan fix],
+        run_master_through: %w[itself self master singularity dogfood selfscan],
       }.freeze
 
       STANDING_SEMANTICS = {
@@ -32,6 +37,11 @@ module Master
         "yes" => :continue_prior_plan,
         "ship" => :write_repo_changes,
         "proceed" => :continue_prior_plan,
+        "through master" => :run_full_workflow,
+        "run through master" => :run_full_workflow,
+        "through itself" => :run_master_through,
+        "through rails" => :run_rails_through,
+        "singularity" => :run_full_workflow,
       }.freeze
 
       RISK_TIERS = {
@@ -39,7 +49,10 @@ module Master
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
           run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
         ],
-        medium: %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app run_full_workflow],
+        medium: %i[
+          wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app
+          run_full_workflow run_rails_through run_master_through
+        ],
         high: %i[write_repo_changes delete_redundant_config],
         critical: [],
       }.freeze

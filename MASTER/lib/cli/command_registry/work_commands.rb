@@ -77,6 +77,8 @@ module Master
           "self" => command(:dispatch_self, d[:scanner], d[:root], d[:bus]),
           "core" => command(:dispatch_core, d[:root]),
           "fix" => command(:dispatch_fix, d[:fix_loop], d[:root], d[:scanner]),
+          "mode" => command(:dispatch_mode, d[:root]),
+          "map" => command(:dispatch_map, d[:root]),
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
           "replay" => command(:dispatch_replay, d[:root], d[:trace]),
           "graph" => command(:dispatch_graph, d[:root], d[:code_index], d[:reference_graph]),
@@ -89,8 +91,9 @@ module Master
 
       def build_review_and_meta_commands(d)
         {
-          "workflow" => command(:dispatch_workflow, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus]),
-          "triad" => command(:dispatch_triad, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus]),
+          "workflow" => command(:dispatch_workflow, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
+          "through" => command(:dispatch_through, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
+          "triad" => command(:dispatch_triad, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "axioms" => command(:dispatch_axioms, d[:scanner], d[:root]),
@@ -109,6 +112,58 @@ module Master
         return result.message unless result.ok?
 
         result.value!.line
+      end
+
+      def dispatch_mode(root:, ctx: nil)
+        arg = arg_for(ctx).to_s.strip
+        posture = Master::Ground::ModePosture.new(root: root)
+        return posture.line if arg.empty? || arg == "status"
+
+        if arg == "list"
+          return Master::Ground::ModePosture::MODES.map { |m|
+            cfg = (Master.load_yaml(Master.limits_path) || {}).dig("session_modes", "modes", m) || {}
+            "#{m.ljust(10)} #{cfg["description"]}"
+          }.join("\n")
+        end
+
+        mode = arg.split(/\s+/).first
+        c = posture.set!(mode)
+        "#{posture.line} — #{c[:description]}"
+      rescue ArgumentError => e
+        "mode: #{e.message}"
+      end
+
+      def dispatch_map(root:, ctx: nil)
+        arg = arg_for(ctx).to_s.strip
+        map = Master::Ground::PrincipleMap.load(root: root)
+        case arg
+        when "", "status"
+          map.summary_line
+        when "gaps"
+          map.gaps.first(40).map { |id, e| "#{id.ljust(28)} #{e.severity.ljust(8)} #{e.operation || "-"}  #{e.meaning}" }.join("\n")
+        when "aesthetic", "ui"
+          map.aesthetic.first(60).map { |id, e|
+            "#{id.ljust(28)} #{e.status.ljust(8)} rules=#{e.rule_ids.join(",")}"
+          }.join("\n")
+        when "covered"
+          map.covered.first(40).map { |id, e| "#{id.ljust(28)} → #{e.rule_ids.join(", ")}" }.join("\n")
+        when "integrity"
+          registered = Master::Review::Scan::Rule.registry.map { |k| k.new.id.to_s }
+          hits = map.integrity(registered_rule_ids: registered)
+          hits.empty? ? "principle_map integrity: clean" : hits.join("\n")
+        else
+          entry = map[arg]
+          return "map: unknown principle #{arg.inspect} (try /map gaps|aesthetic|covered|integrity)" unless entry
+
+          [
+            entry.id,
+            "status=#{entry.status} severity=#{entry.severity} conf=#{entry.confidence}",
+            "detects=#{entry.detects} operation=#{entry.operation}",
+            "rules=#{entry.rule_ids.join(", ")}",
+            "tags=#{entry.tags.join(", ")}",
+            entry.meaning,
+          ].join("\n")
+        end
       end
 
       def dispatch_core(root:, ctx: nil)

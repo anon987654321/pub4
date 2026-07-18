@@ -217,12 +217,17 @@ module Master
           pairs
         end
 
-        def reset_scan_progress(total)
+        def reset_scan_progress(total, unit: nil)
+          @scan_unit_seq = (@scan_unit_seq || -1) + 1
+          name = unit || @through_scan_unit || "scan#{@scan_unit_seq}"
           @scan_progress = {
             total: total,
             done: 0,
+            violations: 0,
+            unit: name,
             started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
           }
+          Master::Trace::Dmesg.attach(name, "mainbus0", "files=#{total} stream=on")
         end
 
         def emit_scan_progress(dir:, path:, file_result:)
@@ -234,9 +239,24 @@ module Master
           eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
           count = file_result.ok? ? file_result.value!.size : 0
           rel = path.sub(dir, "").delete_prefix("/")
-          eta_str = eta_s && eta_s.positive? ? " ~#{eta_s}s left" : ""
-          $stdout.puts "scan: [#{done}/#{total}] #{rel} #{count} violation(s)#{eta_str}"
-          $stdout.flush
+          unit = @scan_progress[:unit] || "scan0"
+          viol_total = @mutex.synchronize {
+            @scan_progress[:violations] = @scan_progress[:violations].to_i + count
+          }
+          # OpenBSD dmesg: "scan0: file N/M path violations=K eta=Ns"
+          Master::Trace::Dmesg.status(
+            unit,
+            "file #{done}/#{total} #{rel} violations=#{count}" \
+            "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
+            " elapsed=#{elapsed.round}s"
+          )
+          step = [50, (total / 10.0).ceil].max
+          if done == total || (done % step).zero?
+            Master::Trace::Dmesg.kv(unit, progress: "#{done}/#{total}", violations: viol_total, eta_s: eta_s)
+          end
+          if done == total
+            Master::Trace::Dmesg.kv(unit, complete: true, files: total, violations: viol_total, elapsed_s: elapsed.round)
+          end
           @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:)
         end
 

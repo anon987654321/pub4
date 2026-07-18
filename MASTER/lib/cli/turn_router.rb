@@ -17,11 +17,87 @@ module Master
           dispatch_slash(text, container:, felt_sense:, on_turn:)
         elsif Master::Io::MediaIntent.handles?(text)
           Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd))
+        elsif (inferred = infer_operator_command(text, container:))
+          dispatch_inferred(inferred, container:, felt_sense:, on_turn:)
+        elsif full_workflow_intent?(text)
+          dispatch_inferred({ command: "through", args: through_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
         elsif casual?(text)
           casual_reply(text, container:, felt_sense:, on_chunk:)
         else
           run_fold(text, container:, on_turn:)
         end
+      end
+
+      # Promote plain language to operator commands via Infer (scan/fix/through/…).
+      # Users should not need to memorize slash commands for the singularity loop.
+      THROUGH_COMMANDS = %w[through workflow triad sweep scan fix self].freeze
+      INFER_MIN_CONFIDENCE = 0.62
+
+      def infer_operator_command(text, container:)
+        ctx = PipelineContext.build(user_message: text, intent: :llm, message: text)
+        inferred = Stages::Infer.new(bus: container[:bus], session: container[:session]).call(ctx)
+        return nil unless inferred.ok?
+
+        value = inferred.value!
+        return nil unless value.intent == :command
+
+        command = value.command.to_s
+        conf = value.infer_confidence.to_f
+        # Always accept through-class commands; other commands need confidence floor.
+        unless THROUGH_COMMANDS.include?(command)
+          return nil if conf < INFER_MIN_CONFIDENCE
+        end
+
+        # Broad improve/sweep language becomes full through-pass (apply), not a single fix.
+        if command == "sweep" || (command == "fix" && text.match?(/\b(?:all|every|rails|master|codebase|through|itself)\b/i))
+          command = "through"
+        end
+        command = "through" if command == "workflow"
+
+        args = value.args.to_s
+        if command == "through"
+          refined = through_args_from(text)
+          # Prefer refined path when Infer only captured a coarse alias (rails without app).
+          args = refined if !refined.empty? && (args.empty? || refined.start_with?("#{args}/") || refined != args && refined.include?("/"))
+          args = refined if args.empty?
+          args = "master" if args.match?(/\A(?:itself|self)\z/i) && text.match?(/\bmaster\b/i)
+          args = "master" if args.match?(/\Aitself\z/i)
+        end
+
+        { command: command, args: args, confidence: conf }
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "TurnRouter.infer_operator_command")
+        nil
+      end
+
+      def full_workflow_intent?(text)
+        route = Ground::IntentRouter.new.route(text)
+        route[:intent] == :run_full_workflow ||
+          text.match?(/\b(?:through\s+(?:master|itself|rails)|singularity|self[-\s]?apply|run\s+(?:master|rails)\s+through)\b/i)
+      end
+
+      def through_args_from(text)
+        if (m = text.match(%r{\brails(?:[:/]([\w./-]+))?}i))
+          return m[1] ? "rails/#{m[1]}" : "rails"
+        end
+        if (m = text.match(%r{\bthrough\s+rails(?:[:/]([\w./-]+))?}i))
+          return m[1] ? "rails/#{m[1]}" : "rails"
+        end
+        if text.match?(/\b(?:itself|self)\b/i) && !text.match?(/\brails\b/i)
+          return text.match?(/\blib\b/i) ? "self" : "master"
+        end
+        return "master" if text.match?(/\bmaster\b/i) && !text.match?(/\brails\b/i)
+        return "face" if text.match?(/\bface\b|\bweb\s*ui\b/i)
+
+        ""
+      end
+
+      def dispatch_inferred(inferred, container:, felt_sense: nil, on_turn: nil)
+        command = inferred[:command].to_s
+        args = inferred[:args].to_s
+        container[:bus]&.publish("infer:auto", command: command, args: args, confidence: inferred[:confidence])
+        slash = args.empty? ? "/#{command}" : "/#{command} #{args}"
+        dispatch_slash(slash, container:, felt_sense:, on_turn:)
       end
 
       # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,

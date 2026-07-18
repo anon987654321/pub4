@@ -320,13 +320,24 @@ infer:
       capture: none
     scan:
       patterns:
-      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full))?\\b"
+      - "\\b(?:scan|lint|check\\s+(?:code|violations?)|run\\s+scan)(?:\\s+(cosmetic|style|hygiene|perfection|core|axioms|solid|critical|full|aesthetic|pixel|ui|ux|design))?\\b"
       - "\\b(?:review\\s+my\\s+changes?|check\\s+what\\s+I\\s+edited|what\\s+did\\s+I\\s+change|scan\\s+my\\s+edits?)\\b"
       capture: scan_profile
     fix:
       patterns:
       - "\\b(?:fix|repair|correct)\\s+(?:the\\s+)?([\\w./-]+(?:\\.[\\w]+)?)?"
       - "\\b(?:fiks|reparer)\\s+(?:([\\w./-]+(?:\\.[\\w]+)?)|(?:den|det))?\\b"
+      capture: path
+    through:
+      patterns:
+      - "\\b(?:run|put|send|take|feed)\\s+(?:this|it|that|master|rails|the\\s+code(?:base)?)?\\s*through\\s+(?:master|itself|singularity)?\\b"
+      - "\\bthrough\\s+(master|itself|rails|face|self)(?:[:/]([\\w./-]+))?\\b"
+      - "\\b(?:full\\s+)?(?:pass|tribunal|singularity)\\b(?:\\s+(?:on|over)\\s+)?([\\w./-]+)?"
+      - "\\bfix\\s+(?:and\\s+)?review\\s+([\\w./-]+)"
+      - "\\b(?:improve|clean\\s*up|polish|converge)\\s+(?:all\\s+of\\s+)?(rails|master|itself|self|face|web|the\\s+codebase)(?:[:/]([\\w./-]+))?\\b"
+      - "\\b(?:run\\s+)?(?:master|rails)\\s+through\\s+(?:it\\s*)?self\\b"
+      - "\\bself[\\s-]?apply\\b(?:\\s+(?:on|to)\\s+([\\w./-]+))?"
+      - "\\bkj[øo]r\\s+(?:dette\\s+)?gjennom\\s+master\\b"
       capture: path
     workflow:
       patterns:

@@ -67,6 +67,7 @@ module Master
             ["ABSTRACTION", lambda { structural_findings(Rules::GodClassRule.new) + deploy_god_class_findings }],
             ["DENSITY", lambda { structural_findings(Rules::SmallFunctionsRule.new) + deploy_small_files_findings + face_pool_findings }],
             ["KERNEL_ADHERENCE", lambda { kernel_wiring_findings }],
+            ["PRINCIPLE_MAP", lambda { principle_map_findings }],
           ]
         end
 
@@ -243,6 +244,19 @@ module Master
             )
           end
           findings
+        end
+
+        def principle_map_findings
+          path = File.join(@root, "data", "principle_map.yml")
+          return [finding(path: path, line: 1, message: "missing data/principle_map.yml")] unless File.file?(path)
+
+          map = Master::Ground::PrincipleMap.load(root: @root)
+          registered = Master::Review::Scan::Rule.registry.map { |klass| klass.new.id.to_s.upcase }
+          map.integrity(registered_rule_ids: registered).map do |msg|
+            finding(path: path, line: 1, message: msg)
+          end
+        rescue StandardError => e
+          [finding(path: path, line: 1, message: "principle_map integrity failed: #{e.class}: #{e.message}")]
         end
 
         def finding(path:, line:, message:)

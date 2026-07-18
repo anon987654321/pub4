@@ -10,7 +10,15 @@ module Master
       module ConvergenceConfig
         def convergence_cfg = @convergence ||= (@axioms&.thresholds&.[]("convergence") || {})
 
-        def max_passes_default     = convergence_cfg["max_iterations"]                          || MAX_PASSES
+        def max_passes_default
+          configured = convergence_cfg["max_iterations"] || MAX_PASSES
+          mode_cap = begin
+            Master::Ground::ModePosture.current(root: @root)[:max_fix_passes]
+          rescue StandardError
+            nil
+          end
+          [mode_cap, configured].compact.map(&:to_i).min
+        end
         def clean_runs_required    = convergence_cfg["consecutive_clean_runs_required"]          || CLEAN_RUNS
         def plateau_window         = convergence_cfg["stagnant_threshold"]                       || PLATEAU_WINDOW
         def max_cycles_default     = workflow_cfg.dig("autoloop", "max_cycles")                 || max_passes_default

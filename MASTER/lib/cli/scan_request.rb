@@ -38,13 +38,45 @@ module Master
 
       def target_arg
         raw = raw_target_arg
-        raw.empty? ? nil : File.expand_path(raw)
+        return nil if raw.empty?
+
+        expand_scan_target(raw)
+      end
+
+      def expand_scan_target(raw)
+        # Path aliases so MASTER can target pub4/RAILS and face without ceremony.
+        aliases = {
+          "rails" => Master::RAILS_ROOT,
+          "RAILS" => Master::RAILS_ROOT,
+          "face" => File.join(Master::ROOT, "web", "public"),
+          "web" => File.join(Master::ROOT, "web"),
+          "master" => Master::ROOT,
+          "self" => File.join(Master::ROOT, "lib"),
+        }
+        if aliases.key?(raw)
+          return aliases[raw]
+        end
+        if raw.match?(%r{\Arails[:/]}i)
+          rest = raw.sub(%r{\Arails[:/]}i, "")
+          return File.join(Master::RAILS_ROOT, rest)
+        end
+        if raw.match?(%r{\ARAILS/})
+          return File.expand_path(raw, Master::REPO_ROOT)
+        end
+
+        File.expand_path(raw)
       end
 
       def raw_target_arg
         parts = arg_parts.dup
         return parts[2..]&.join(" ").to_s.strip if parts.first == EXPLICIT_PROFILE_FLAG
         return parts[1..]&.join(" ").to_s.strip if profile_keyword?(parts.first)
+
+        # When only a profile keyword is given, default target is empty (root).
+        # Strip profile from multi-word args: "aesthetic rails/brgen"
+        if profile_keyword?(parts.first) && parts.size > 1
+          return parts[1..].join(" ")
+        end
 
         arg
       end

@@ -28,6 +28,13 @@ module Master
         hits << "confirmation_bias" if text.match?(/\b(fix|violation|same fix|still carries|scanner result)\b/) && !text.match?(/\b(alternative|tradeoff|counter|review|why)\b/)
         hits << "sunk_cost_bias" if text.match?(/\b(continue|more|again|retry)\b/) && !text.match?(/\brollback|simpler|stop\b/)
         hits << "authority_bias" if text.match?(/\b(llm|model|scanner|rubocop|reek)\b/) && !text.match?(/\bevidence|local|test|scan:/)
+        hits << "sycophancy" if text.match?(/\b(great idea|absolutely|of course|as you wish)\b/) && !text.match?(/\brisk|tradeoff|however|but\b/)
+        hits << "simulation_bias" if text.match?(/\b(will fix|would work|should pass|going to|plan to)\b/) && !text.match?(/\bdiff|passed|exit|sha256|applied\b/)
+        hits << "anchoring_bias" if text.match?(/\b(first approach|initial fix|as before)\b/) && !text.match?(/\balternative|option b|second pass\b/)
+        hits << "availability_bias" if text.match?(/\b(new (file|class|module|pattern))\b/) && !text.match?(/\bexisting|reuse|search|found\b/)
+        hits << "premature_optimization" if text.match?(/\b(cache|optimize|perf|benchmark)\b/) && !text.match?(/\bmeasured|profile|hot path|n\+\s*1\b/)
+        hits << "aesthetic_neglect" if text.match?(/\b(view|scss|css|ui|erb|face)\b/) && !text.match?(/\baesthetic|spacing|contrast|touch|flat|token\b/)
+        hits << "recency_bias" if text.match?(/\b(latest|just added|newest)\b/) && !text.match?(/\bseverity|age|frequency\b/)
         hits.uniq
       end
 

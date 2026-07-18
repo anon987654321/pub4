@@ -100,9 +100,9 @@ unit:
   tier: solid
   severity: warning
   autofix: false
-  detect_structural: module with 8+ public methods included by 2+ classes in the
-    same file — see InterfaceSegregationRule (same-file heuristic; cross-file
-    inclusion stays semantic-only)
+  detect_structural: module with 8+ public methods included by 2+ classes in the same
+    file — see InterfaceSegregationRule (same-file heuristic; cross-file inclusion
+    stays semantic-only)
   detect_semantic: Does this interface force implementors to stub unused methods?
   fix: Split into smaller role-based interfaces.
 - id: DEPENDENCY_INVERSION
@@ -273,10 +273,9 @@ unit:
   tier: refactoring
   severity: info
   autofix: false
-  detect_structural: method with 4+ params matching common primitive-hint names
-    (id/name/type/status/count/...) — see PrimitiveObsessionRule (single-method
-    heuristic; genuine false-positive risk on generic-but-unrelated primitives,
-    semantic check is the real filter)
+  detect_structural: method with 4+ params matching common primitive-hint names (id/name/type/status/count/...)
+    — see PrimitiveObsessionRule (single-method heuristic; genuine false-positive
+    risk on generic-but-unrelated primitives, semantic check is the real filter)
   detect_semantic: Are primitives used where a value object would be clearer?
   fix: Create a value object.
 - id: FEATURE_ENVY
@@ -285,11 +284,11 @@ unit:
   tier: refactoring
   severity: warning
   autofix: false
-  detect_structural: method's dominant receiver is called 4+ times, more than
-    local (@ivar/self) access — see FeatureEnvyRule (single-method heuristic,
-    same-file only)
-  detect_semantic: Is this method more interested in another object's data than
-    its own?
+  detect_structural: method's dominant receiver is called 4+ times, more than local
+    (@ivar/self) access — see FeatureEnvyRule (single-method heuristic, same-file
+    only)
+  detect_semantic: Is this method more interested in another object's data than its
+    own?
   fix: Move the method (or the envious part of it) to the object it talks to most.
 - id: MESSAGE_CHAIN
   source: 'Refactoring code smell: Message Chains (Fowler)'
@@ -405,8 +404,8 @@ unit:
   tier: ux
   severity: info
   autofix: false
-  detect_semantic: If the user gets stuck here, is there searchable, concrete,
-    task-focused help nearby?
+  detect_semantic: If the user gets stuck here, is there searchable, concrete, task-focused
+    help nearby?
   fix: Add context-sensitive help with concrete steps; keep it easy to search.
 - id: CONSISTENCY
   source: 'Nielsen Heuristic #4 — Consistency and standards (NN/g)'
@@ -433,13 +432,12 @@ unit:
   detect_semantic: Is the same prompt sent multiple times without caching?
   fix: Hash prompt, cache response with bounded TTL.
 - id: GUARD_EXPENSIVE_OPS
-  source: MASTER-native (guard expensive operations); Nielsen heuristic 5, error
-    prevention
+  source: MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention
   name: Confirm before costly or destructive operations
   tier: safety
   severity: error
   autofix: true
-  detect_lexical: \b(delete_all|destroy_all|drop_table|truncate)\b|rm\s+-rf\b
+  detect_lexical: "\\b(delete_all|destroy_all|drop_table|truncate)\\b|rm\\s+-rf\\b"
   detect_semantic: Does this execute an expensive or destructive operation without
     confirmation?
   fix: Cost estimate before execution. Require opt-in for danger.
@@ -643,3 +641,45 @@ unit:
   - prose
   - markdown
   - ruby
+- id: RAILS_THIN_CONTROLLER_SEMANTIC
+  severity: warning
+  tier: solid
+  mode: violation
+  languages:
+  - ruby
+  detect_semantic: If this is a Rails controller, flag actions that own business rules,
+    multi-model orchestration, or heavy queries instead of delegating to models/services.
+    Cite method names. If not a controller or already thin, CLEAN.
+- id: RAILS_VIEW_PURITY
+  severity: warning
+  tier: solid
+  mode: violation
+  languages:
+  - html
+  - erb
+  detect_semantic: If this is a Rails view/partial, flag non-presentation logic (queries,
+    persistence, multi-step condition trees that belong in helpers/models). Prefer
+    CLEAN when the view only presents assigns.
+- id: AESTHETIC_FLAT_SEMANTIC
+  severity: info
+  tier: cosmetic
+  mode: opportunity
+  languages:
+  - css
+  - scss
+  - html
+  - javascript
+  detect_semantic: 'Score pixel-perfect flat UI: reject ornamental shadow/blur/glow,
+    uneven spacing off 8px rhythm, weak hierarchy, and decorative particles. Propose
+    concrete token/spacing/type fixes. If already flat and rhythmic, CLEAN.'
+- id: AESTHETIC_RAMS_SEMANTIC
+  severity: info
+  tier: cosmetic
+  mode: opportunity
+  languages:
+  - html
+  - css
+  - scss
+  detect_semantic: Apply Dieter Rams useful/understandable/unobtrusive/honest/thorough
+    to this UI surface. Flag dishonest progress, missing empty/error states, chrome
+    that competes with content. CLEAN if solid.

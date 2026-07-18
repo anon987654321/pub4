@@ -12,7 +12,31 @@ module Master
         },
         "scan" => {
           summary: "deep-scan files or directories",
-          detail: ["/scan [--dry-run] [report-filter] [path]", "Always runs at deep depth (DEEP_SCAN_ONLY). Report filters only — not depth tiers: full, core, axioms, solid, critical, cosmetic (aliases: style, hygiene, perfection). Use --profile NAME for explicit selection. Dry-run reports findings without changes."],
+          detail: [
+            "/scan [--dry-run] [report-filter] [path]",
+            "Deep scan only. Profiles: full, core, critical, cosmetic, aesthetic (aliases: pixel, ui, ux, design).",
+            "Path aliases: rails, rails/brgen, face, web, self, master. Also RAILS/<app> from repo root.",
+          ],
+        },
+        "mode" => {
+          summary: "session adherence posture (loose|balanced|strict)",
+          detail: ["/mode", "/mode list", "/mode balanced", "Usually inferred; caps fix passes and default scan profile."],
+        },
+        "map" => {
+          summary: "principle_map: fossil→runtime rule coverage",
+          detail: ["/map", "/map gaps|aesthetic|covered|integrity", "/map <principle_id>"],
+        },
+        "through" => {
+          summary: "full singularity pass (auto-sequenced)",
+          detail: [
+            "Natural language preferred: \"run master through itself\", \"improve rails/brgen\", \"through rails\".",
+            "Sequence: mode → aesthetic scan → deep scan → fix → re-scan → critique.",
+            "Optional slash: /through [rails|master|face|path] [--dry-run] [--no-critique]",
+          ],
+        },
+        "workflow" => {
+          summary: "alias of through (inferred full pass)",
+          detail: ["Same as /through — prefer plain language over slash commands."],
         },
         "self" => {
           summary: "scan MASTER itself",
@@ -73,10 +97,6 @@ module Master
         "analyze-self" => {
           summary: "summarize recurring self-improvement signals",
           detail: ["/analyze-self", "Reads the feedback ledger and reports repeated corrections, provider errors, and failing tools."],
-        },
-        "workflow" => {
-          summary: "scan, preview fix, and deliberation (usually inferred)",
-          detail: ["Say: run this through MASTER, or: full pass on lib/foo.rb", "/workflow <path> — explicit escape hatch only."],
         },
         "rollback" => {
           summary: "revert the last recorded change",
@@ -194,7 +214,7 @@ module Master
 
       COMMAND_CATEGORIES = {
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
-        "work" => %w[scan fix workflow review critique self kernel status replay graph resync tail edge-cases],
+        "work" => %w[scan fix through workflow review critique self kernel status mode map replay graph resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway plan rebuild],
         "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain fold],
         "infer" => [],
