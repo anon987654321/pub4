@@ -21,7 +21,8 @@ module Master
       def initialize(rules: nil)
         @rules = rules || Ground::Rules.new
         @preserve = @rules.preserve
-        @evidence = @rules.data(:soul).dig("anti_simulation", "require_evidence") || {}
+        soul = @rules.data(:soul) || {}
+        @evidence = soul.dig("anti_simulation", "require_evidence") || {}
       end
 
       def sanitize(text, context: :routine)

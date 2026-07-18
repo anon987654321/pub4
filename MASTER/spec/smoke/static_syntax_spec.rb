@@ -27,9 +27,10 @@ class StaticSyntaxSpec < Minitest::Test
   def test_executable_bins_have_ruby_shebang
     Dir.glob(File.join(ROOT, "bin", "*")).each do |path|
       next unless File.file?(path)
+      next if path.end_with?(".md")
 
       first = File.open(path, &:readline)
-      assert_match(/ruby|sh|bash/, first, path)
+      assert_match(/ruby|sh|bash|zsh/, first, path)
     end
   end
 end

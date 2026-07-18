@@ -107,8 +107,8 @@ rescue Timeout::Error
 end
 
 if ARGV.include?("--tts")
-  failures << "tts" unless step("tts_e2e poll") do
-    exe = File.expand_path("tts_e2e", __dir__)
+  failures << "tts" unless step("tts-e2e poll") do
+    exe = File.expand_path("tts-e2e", __dir__)
     out, st = Open3.capture2e(exe)
     puts out unless out.empty?
     [st.success?, st.success? ? nil : out.lines.last&.strip]

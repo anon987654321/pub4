@@ -33,7 +33,7 @@ module Master
       def self.deploy_apps
         return [] unless Dir.exist?(DEPLOY_RAILS)
         Dir.entries(DEPLOY_RAILS)
-           .reject { |e| e.start_with?(".", "_") }
+           .reject { |e| e.start_with?(".", "_") || e == "shared" }
            .select { |e| Dir.exist?(File.join(DEPLOY_RAILS, e, "app")) }
            .sort
       end

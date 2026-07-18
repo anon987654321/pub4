@@ -187,12 +187,12 @@ module Master
       end
 
       def over?(v, key, level)
-        t = @thresholds.dig(key, level)
+        t = (@thresholds || {}).dig(key, level)
         v && t && v.to_f >= t.to_f
       end
 
       def under?(v, key, level)
-        t = @thresholds.dig(key, level)
+        t = (@thresholds || {}).dig(key, level)
         v && t && v.to_f <= t.to_f
       end
 

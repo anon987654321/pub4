@@ -21,6 +21,41 @@ module Master
           magic_number
           message_chain
           veto_patterns
+          KEYWORD_ARGS
+          FEW_ARGUMENTS
+          LONG_PARAMETER_LIST
+          FEATURE_ENVY
+          PATTERN_EXTRACTION
+          LAZY_CLASS
+          prose_active_voice
+          future_tense
+          RUBY_TERNARY_NOT_NESTED
+          SIMULATION
+          CYCLOMATIC_COMPLEXITY
+          prose_omit_qualifiers
+          sycophancy
+          NO_MULTIPLE_LANGUAGES
+          COMPLETION_THEATER
+          PARAMETERIZED_SLUG
+          duplicate_code
+          guard_expensive_ops
+          SMALL_FILES
+          MAGIC_COLOR
+          DEBUG_OUTPUT
+          EXPLICIT
+          TRAILING_COMMENT
+          FINAL_NEWLINE
+          RUBY_NUMERIC_UNDERSCORE
+          RUBY_SYMBOL_TO_PROC
+          TYPOGRAPHIC_EXCELLENCE
+          RESCUE_ON_DEF
+          PERCENT_LITERAL
+          CONSECUTIVE_BLANK_LINES
+          SINGLE_PRIVATE_SECTION
+          TRANSFORM_KEYS
+          SMALL_FUNCTIONS
+          LAW_OF_DEMETER
+          CQS
         ].freeze
 
         Bucket = Data.define(:name, :findings)

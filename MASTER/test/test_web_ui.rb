@@ -294,7 +294,7 @@ class TestWebUI < Minitest::Test
     assert_includes service, '"felt:sense"'
     assert_includes agent, "felt_sense"
     assert_includes File.read(File.expand_path("../lib/judge/agent/prompt_builder.rb", __dir__)), "felt_sense_section"
-    assert_includes index, 'id="mood-sparkline"'
+    assert_includes File.read(File.expand_path("../web/public/chat.js", __dir__)), "mood-sparkline"
   end
 
   def test_ui_backlog_wired

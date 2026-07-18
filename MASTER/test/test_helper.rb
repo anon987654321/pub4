@@ -22,6 +22,8 @@ require "timeout"
 # Load MASTER without booting the CLI
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
+require_relative "../lib/boot/hash_dig_compat"
+Master.install_hash_dig_compat!
 
 # Bound individual tests to prevent hangs, while leaving integration fixtures
 # enough room on slower local runs.
@@ -33,5 +35,10 @@ Minitest::Test.class_eval do
   rescue Timeout::Error
     failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{MASTER_TEST_TIMEOUT}s"))
     self
+  end
+
+  def before_setup
+    Master.install_hash_dig_compat!
+    super
   end
 end

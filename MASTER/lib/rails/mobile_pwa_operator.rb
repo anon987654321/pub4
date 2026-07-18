@@ -27,6 +27,7 @@ module Master
         @hotwire = HotwireRefactorPolicy.new
         @pwa = PwaAudit.new(root:)
         @design = Master::Design::MobileFirstPwaProfiles.new
+        @routes_views = RoutesViewsAudit.new(root:)
         @catalog = Master::Ground::RepoMining::MobileWebClusterCatalog.new
       end
 
@@ -92,11 +93,13 @@ module Master
           next app_state if app_state[:error]
           pwa_result = @pwa.audit(app_state[:path])
           design_result = @design.audit(app_state[:path])
+          routes_result = @routes_views.audit(app_state[:path])
           {
             app: app_state[:app],
             state: app_state,
             pwa: pwa_result,
             design: design_result,
+            routes: routes_result,
             verdict: verdict(pwa_result, design_result),
           }
         end
@@ -116,12 +119,14 @@ module Master
         app_state = @audit.scan(app_path)
         pwa_result = @pwa.audit(app_path)
         design_result = @design.audit(app_path)
+        routes_result = @routes_views.audit(app_path)
         refs = @catalog.for_intent(:audit_rails_pwa)
 
         Result.ok({
           app: app_state,
           pwa: pwa_result,
           design: design_result,
+          routes: routes_result,
           references: refs.map { |r| "#{r.repo} — #{r.why}" },
           verdict: verdict(pwa_result, design_result),
           plan: @hotwire.plan_for(app_state),

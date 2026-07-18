@@ -5,8 +5,14 @@ require "minitest/autorun"
 require_relative "../tools/dilla/dilla"
 
 class RadioBergenStudyUnitTest < Minitest::Test
+  FAST_AUDIO = ->(path) { path ? { duration_seconds: 180.0 } : nil }.freeze
+
+  def with_fast_audio_analysis
+    RadioBergenStudy.stub(:analyze_audio, FAST_AUDIO) { yield }
+  end
+
   def test_studies_all_manifest_tracks
-    data = RadioBergenStudy.study!
+    data = with_fast_audio_analysis { RadioBergenStudy.study! }
 
     assert_operator data.dig("meta", "track_count").to_i, :>=, 25
     assert_equal 9, data.dig("meta", "local_count")
@@ -23,7 +29,7 @@ class RadioBergenStudyUnitTest < Minitest::Test
   end
 
   def test_stream_weights_cover_bergen_and_beat_references
-    weights = RadioBergenStudy.study!["stream_rotation_weights"]
+    weights = with_fast_audio_analysis { RadioBergenStudy.study! }["stream_rotation_weights"]
 
     assert weights.key?("erykah_minor")
     assert weights.key?("quartal_west_coast")
@@ -31,7 +37,7 @@ class RadioBergenStudyUnitTest < Minitest::Test
   end
 
   def test_yaml_output_uses_string_keys
-    path = RadioBergenStudy.write!
+    path = with_fast_audio_analysis { RadioBergenStudy.write! }
     data = YAML.safe_load(File.read(path))
 
     assert data["playlist_tracks"].first.key?("title")

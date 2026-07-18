@@ -6,8 +6,8 @@ class BootSafetySpec < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   # apply_process_defaults!/install_process_guards! moved out of master.rb into
   # these focused modules (extend MasterRuntime / extend MasterBoot in master.rb).
-  MASTER_RUNTIME = File.join(ROOT, "lib", "master_runtime.rb")
-  MASTER_BOOT = File.join(ROOT, "lib", "master_boot.rb")
+  MASTER_RUNTIME = File.join(ROOT, "lib", "boot", "runtime.rb")
+  MASTER_BOOT = File.join(ROOT, "lib", "boot", "master_boot.rb")
   CLI = File.join(ROOT, "bin", "cli")
 
   def test_master_boot_sets_safe_defaults

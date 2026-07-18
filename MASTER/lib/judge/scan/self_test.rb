@@ -23,8 +23,8 @@ module Master
         def initialize(root:, event_bus: nil)
           @root = root
           @bus = event_bus
-          @checks = Master.load_yaml(File.join(root, "data", "rules.yml"))
-                          .dig("self_test", "laws_apply_to_self") || {}
+          rules = Master.load_yaml(File.join(root, "data", "rules.yml")) || {}
+          @checks = rules.dig("self_test", "laws_apply_to_self") || {}
         end
 
         def call(laws: nil)
