@@ -53,4 +53,43 @@ module DillaGrooveScore
     mean = values.sum / values.length
     values.sum { |v| (v - mean)**2 } / values.length
   end
+
+  # Pocket-evolution hints for stream_evolve_pocket! — driven by last render's drum grid.
+  def evolve_recommendations(analysis)
+    breakdown = analysis[:breakdown] || {}
+    score = analysis[:score] || 70
+    recs = { score: score }
+
+    gd = breakdown[:ghost_density].to_f
+    if gd < 0.2
+      recs[:ghost_tier] = :accent
+      recs[:ghost_boost_nudge] = 0.1
+    elsif gd > 0.85
+      recs[:ghost_tier] = :whisper
+      recs[:ghost_boost_nudge] = -0.06
+    else
+      recs[:ghost_tier] = :pocket
+    end
+
+    recs[:velocity_spread_nudge] = 0.04 if breakdown[:ghost_var].to_f < 0.002
+    recs[:snare_early] = true if breakdown[:snare_early_avg_ms].to_f > -4
+    recs[:hats_late] = true if breakdown[:hat_late_avg_ms].to_f < 4
+
+    if score < 72
+      recs[:swing_delta] = 2.5
+      recs[:jitter_ticks] = 4
+      recs[:groove_pool] = %w[donuts madvillainy fantastic_vol2]
+    elsif score < 78
+      recs[:swing_delta] = 1.2
+      recs[:jitter_ticks] = 3
+      recs[:groove_pool] = %w[donuts fantastic_vol2 endtroducing]
+    else
+      recs[:swing_delta] = 0.5
+      recs[:jitter_ticks] = 3
+      recs[:groove_pool] = %w[donuts fantastic_vol2 madvillainy cosmogramma]
+    end
+
+    recs[:markov_ghosts] = score < 80
+    recs
+  end
 end

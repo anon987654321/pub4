@@ -49,7 +49,8 @@ module DillaMaster
   end
 
   def phone_preview_chain
-    "highpass=f=180,lowpass=f=3800,pan=mono|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1,alimiter=limit=0.9"
+    # mono output has only c0 — c1= is invalid on ffmpeg 8.x pan=mono
+    "highpass=f=180,lowpass=f=3800,pan=mono|c0=0.5*c0+0.5*c1,alimiter=limit=0.9"
   end
 
   def analyze_harshness(spectrum)

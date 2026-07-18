@@ -6,18 +6,20 @@ module DillaHarmony
   SOUL_QUALITIES = %w[maj9 m9 maj7 m7 m11 maj6 6 13 7sus 7alt 7#11 m7b5 sus4].freeze
   PAD_MIDI_MIN = 50.0
   PAD_MIDI_MAX = 76.0
-  MAX_PAD_VOICES = 4
+  MAX_PAD_VOICES = 5
 
   VOICING_STYLES = %i[spread quartal drop2 drop3 rootless so_what kenny_barron bill_evans cluster].freeze
 
   SOUL_PROFILES = %i[
-    maj7_minor_cycle minor_iv_loop major_lifting slash_ninth_cycle two_chord_hypnosis
-    relative_major_turn minor_turnaround warm_minor_arc quartal_west_coast slow_ballad_wash
-    minor_triad_walk neo_soul_pocket dorian_iv_loop backdoor_resolve iv_borrow_minor
+    maj7_minor_cycle fourth_third_sixth_second_turn timeless_authentic minor_iv_loop
+    major_lifting slash_ninth_cycle two_chord_hypnosis relative_major_turn minor_turnaround
+    warm_minor_arc quartal_west_coast slow_ballad_wash minor_triad_walk neo_soul_pocket neo_soul
+    dorian_iv_loop backdoor_resolve iv_borrow_minor electronium_loop electronium_classic
     bvi_bvii_minor ii_v_i_major ii_v_i_minor gospel_bIII stevie_bVII erykah_minor
     glasper_quartal watermelon_turn church_sus minMaj_color dominant_turn deceptive_turn
     plagal_jazz slash_neo_soul suspended_ballad minor_line_cliche donda_minor keys_woman
     jazz_ballad_waltz turnaround_ii_v modal_safe neo_iv_cycle
+    aydin_modal_quartal aydin_jazz_turn bach_circle_descent bach_descending_bass
   ].freeze
 
   BLOCKED_GENERATED = %i[polytonal negative_harmony neapolitan chromatic_mediant].freeze
@@ -70,6 +72,12 @@ module DillaHarmony
   def soul_profile?(track)
     sym = DillaLofiMachine.normalize_profile(track)
     SOUL_PROFILES.include?(sym) || DillaLofiMachine.harmony_profile?(sym)
+  end
+
+  def progression_insight(chords)
+    return nil unless defined?(DillaMusicGems) && DillaMusicGems.coltrane?
+    symbols = chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }
+    DillaMusicGems.progression_analysis(symbols)
   end
 
   def hz_to_midi(hz)
@@ -250,10 +258,11 @@ module DillaHarmony
     (voice_i.to_f / [voices - 1, 1].max - 0.5) * spread * 2.0
   end
 
-  def enrich_progression(pads, cfg, phases: [])
+  def enrich_progression(pads, cfg, phases: [], curated: false)
     return [pads, phases] if pads.empty?
     soul = soul_profile?(cfg[:track])
-    skip_passing = soul && ENV["SOUL_ENRICH"] != "1"
+    skip_passing = curated || (soul && ENV["SOUL_ENRICH"] != "1")
+    use_rootless = !curated && soul
 
     rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + pads.length)
     voicing = cfg[:voicing] || :spread
@@ -264,19 +273,29 @@ module DillaHarmony
       phase = phases[i]
       chord_voicing = case phase
                       when :recapitulation then recap_voicing
-                      when :development then (voicing == :spread ? :rootless : voicing)
-                      when :breakdown then :rootless
+                      when :development
+                        if curated
+                          voicing == :spread ? :drop2 : voicing
+                        else
+                          voicing == :spread ? :rootless : voicing
+                        end
+                      when :breakdown then curated ? voicing : :rootless
                       else voicing
                       end
       sym = chord[:name].to_s
-      sym = substitute_symbol(sym) if soul && phase == :recapitulation && rng.rand < 0.5
+      sym = substitute_symbol(sym) if soul && !curated && phase == :recapitulation && rng.rand < 0.5
       ch = sym != chord[:name].to_s ? (DillaLofiMachine.chord_from_symbol(sym) rescue chord) : chord
-      out << decorate_chord(ch, voicing: chord_voicing, rootless: soul)
+      out << if curated
+               preserve_chord_register(ch)
+             else
+               decorate_chord(ch, voicing: chord_voicing, rootless: use_rootless)
+             end
       phases_out << phase
       next if skip_passing
       next_chord = pads[(i + 1) % pads.length]
       motion = root_motion_semitones(chord, next_chord)
-      if phase == :development && i < pads.length - 1 && motion <= 4 && rng.rand < 0.04
+      passing_rate = curated ? 0.06 : 0.04
+      if phase == :development && i < pads.length - 1 && motion <= 4 && rng.rand < passing_rate
         out << passing_cluster(chord, next_chord)
         phases_out << :development
       end
@@ -305,9 +324,64 @@ module DillaHarmony
     { name: "pass_#{mid}", hz: cluster.uniq.first(3) }
   end
 
-  def voice_lead_chords(chords)
+  def preserve_chord_register(chord)
+    hz = clamp_register(chord[:hz].map { |h| hz_to_midi(h) }).map { |m| midi_to_hz(m) }.uniq
+    chord.merge(hz: hz.first(MAX_PAD_VOICES))
+  end
+
+  def chord_pitch_classes(chord)
+    root_pc = hz_to_midi(chord[:hz].min).round % 12
+    chord[:hz].map { |h| ((hz_to_midi(h).round - root_pc) % 12) }.uniq.sort
+  end
+
+  def expected_pitch_classes(sym)
+    ref = DillaLofiMachine.chord_from_symbol(sym.to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, ""))
+    chord_pitch_classes(ref)
+  rescue StandardError
+    []
+  end
+
+  def chord_tones_preserved?(chord)
+    sym = chord[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "")
+    ref = DillaLofiMachine.chord_from_symbol(sym)
+    ref_pcs = ref[:hz].map { |h| hz_to_midi(h).round % 12 }.uniq.sort
+    voiced_pcs = chord[:hz].map { |h| hz_to_midi(h).round % 12 }.uniq.sort
+    return true if ref_pcs.empty?
+    return false unless (voiced_pcs - ref_pcs).empty?
+    (voiced_pcs & ref_pcs).length >= [ref_pcs.length - 1, 3].min
+  rescue StandardError
+    true
+  end
+
+  # SATB-style voice leading — bottom voice stays bottom, chord identity intact.
+  def voice_lead_chords_indexed(chords, rootless: false)
     return chords if chords.length <= 1
-    led = [decorate_chord(chords.first, voicing: :spread)]
+    first_hz = chords.first[:hz].map { |h| hz_to_midi(h) }.sort
+    first_hz = first_hz.drop(1) if rootless && first_hz.length > 3
+    led = [preserve_chord_register(chords.first.merge(hz: clamp_register(first_hz).map { |m| midi_to_hz(m) }))]
+    prev = led.first[:hz].map { |h| hz_to_midi(h) }.sort
+    chords.drop(1).each do |nxt|
+      targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
+      targets = targets.drop(1) if rootless && targets.length > 3
+      n_voices = [prev.length, targets.length, MAX_PAD_VOICES].min
+      voiced = n_voices.times.map do |vi|
+        target = targets[vi] || targets.last
+        anchor = prev[vi] || prev.last
+        midi = target + (((anchor - target) / 12.0).round * 12.0)
+        midi += 12.0 while midi < PAD_MIDI_MIN
+        midi -= 12.0 while midi > PAD_MIDI_MAX
+        midi
+      end.sort
+      prev = voiced
+      hz = voiced.map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
+      led << { name: nxt[:name], hz: hz, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
+    end
+    led
+  end
+
+  def voice_lead_chords(chords, rootless: false)
+    return chords if chords.length <= 1
+    led = [decorate_chord(chords.first, voicing: :spread, rootless: rootless)]
     prev = led.first[:hz].map { |h| hz_to_midi(h) }.sort
     chords.drop(1).each do |nxt|
       targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
@@ -460,13 +534,32 @@ module DillaHarmony
     [100 - clashes * 15, 0].max
   end
 
-  def beautify_pipeline(pads, cfg, phases: [])
-    pads = pads.map do |c|
+  def normalize_chord_pads(pads)
+    pads.map do |c|
       next c if c[:hz]&.any?
       DillaLofiMachine.chord_from_symbol(c[:name])
     rescue StandardError
       c
     end
+  end
+
+  # Researched soul loops — voicing + voice-leading only; no random reharm/borrow.
+  def beautify_curated_pipeline(pads, cfg, phases: [])
+    pads = normalize_chord_pads(pads)
+    pads, phases = enrich_progression(pads, cfg, phases: phases, curated: true)
+    pads = voice_lead_chords_indexed(pads, rootless: false)
+    pads = pads.map do |ch|
+      next ch if chord_tones_preserved?(ch)
+      sym = ch[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "")
+      preserve_chord_register(DillaLofiMachine.chord_from_symbol(sym).merge(name: ch[:name], bass_hz: ch[:bass_hz]))
+    rescue StandardError
+      ch
+    end
+    [pads, phases]
+  end
+
+  def beautify_pipeline(pads, cfg, phases: [])
+    pads = normalize_chord_pads(pads)
     pads = apply_key_borrow(pads, cfg)
     pads = reharm_every_fourth_loop(pads, cfg)
     pads = insert_backdoor(pads, cfg)
@@ -474,15 +567,16 @@ module DillaHarmony
     pads, phases = enrich_progression(pads, cfg, phases: phases)
     pads = apply_recap_substitutions(pads, cfg, phases)
     pads = insert_secondary_dominants(pads, cfg)
-    pads = voice_lead_chords(pads)
+    pads = voice_lead_chords(pads, rootless: soul_profile?(cfg[:track]))
     pads = bass_voice_lead(pads)
     pads = validate_and_fix(pads)
     pads = add_turnaround_tags(pads, cfg)
     [pads, phases]
   end
 
-  def fix_chord_for_schedule(chord, prev_chord)
+  def fix_chord_for_schedule(chord, prev_chord, curated: false)
     return chord unless prev_chord
+    return preserve_chord_register(chord) if curated
     return decorate_chord(chord, voicing: :rootless) if mid_register_clash?(prev_chord, chord)
     chord
   end

@@ -56,10 +56,11 @@ class TestDillaLab < Minitest::Test
       puts JSON.generate(
         commands: COMMANDS,
         dispatch_keys: DISPATCH.keys,
+        alias_keys: COMMAND_ALIASES.keys,
         bad_aliases: COMMAND_ALIASES.reject { |_, target| DISPATCH.key?(target) }.keys
       )
     RUBY
-    expected = (result.fetch("dispatch_keys") + %w[midi beat ingest download]).sort
+    expected = (result.fetch("dispatch_keys") + result.fetch("alias_keys")).sort
     assert_equal expected, result.fetch("commands").sort
     assert_empty result.fetch("bad_aliases"), "aliases pointing at nonexistent commands"
   end
@@ -136,6 +137,72 @@ class TestDillaLab < Minitest::Test
     assert result.fetch("lead_enabled"), "non-held PAD_ARP_MODE must enable lead arp"
     assert_equal "pingpong", result.fetch("lead_style").to_s
     assert_equal 4, result.fetch("lead_subdiv"), "wash PAD_ARP_MODE maps to soul_wash lead preset"
+  end
+
+  def test_lead_morph_xlead_varies_patches_and_arp
+    result = eval_in_engine(<<~RUBY)
+      ENV["LEAD_MORPH"] = "1"
+      ENV["SYNTH_MORPH"] = "1"
+      ENV["LEAD_MORPH_VOICE"] = "hard"
+      patches = 8.times.map { |i| morph_lead_patch_for_chord(i)&.dig(:id) }.compact.uniq
+      arp_styles = 8.times.map { |i| morph_lead_arp_cfg_for_chord(i, synth_patch_by_id(:saw_lead))[:style] }.uniq
+      voices = 6.times.map do |i|
+        @stream_iterate_count = i
+        stream_iterate_morph_synth!
+        ENV["LEAD_MORPH_VOICE"]
+      end
+      puts JSON.generate(patch_count: patches.length, arp_count: arp_styles.length, voices: voices.uniq)
+    RUBY
+    assert_operator result.fetch("patch_count"), :>=, 3, "xlead should morph lead patches per chord"
+    assert_operator result.fetch("arp_count"), :>=, 3, "xlead should morph arp figures per chord"
+    assert_operator result.fetch("voices").length, :>=, 3, "stream should rotate lead morph voices"
+  end
+
+  def test_fm_native_ratio_pool_velocity_and_morph_expr
+    result = eval_in_engine(<<~RUBY)
+      ENV["FM_NATIVE"] = "1"
+      ratios = 8.times.map { |i| fm_ratio_for_chord(i)[:m] }.uniq
+      irrational = FM_RATIO_POOL.count { |r| r[:irrational] }
+      idx_soft = fm_index_from_velocity(0.3, base_index: 2.0, role: :xlead)
+      idx_hard = fm_index_from_velocity(0.9, base_index: 2.0, role: :xlead)
+      morph = fm_mod_ratio_expr(1.37, 1.0, 8.0, irrational: true)
+      body = native_fm_waveform_body(220.0, index_expr: "(2.1)*exp(-t*0.3)", mod_ratio_expr: "2")
+      puts JSON.generate(
+        ratio_count: ratios.length,
+        irrational: irrational,
+        idx_soft: idx_soft,
+        idx_hard: idx_hard,
+        morph: morph,
+        body_includes_phase: body.include?("sin(2*PI*220"),
+        fm_enabled: fm_native_enabled?
+      )
+    RUBY
+    assert result.fetch("fm_enabled"), "FM_NATIVE should be enabled in soul stream defaults"
+    assert_operator result.fetch("ratio_count"), :>=, 4, "FM ratio pool should vary per chord"
+    assert_operator result.fetch("irrational"), :>=, 2, "pool should include irrational→rational morph ratios"
+    assert_operator result.fetch("idx_hard"), :>, result.fetch("idx_soft"), "velocity should raise mod index"
+    assert_includes result.fetch("morph"), "1.37", "irrational ratio should morph toward integer target"
+    assert result.fetch("body_includes_phase"), "native FM body should use phase-modulated carrier"
+  end
+
+  def test_synth_morph_cycles_voices_and_patches_per_chord
+    result = eval_in_engine(<<~RUBY)
+      ENV["SYNTH_MORPH"] = "1"
+      ENV["SYNTH_CYCLE"] = "1"
+      ENV["PAD_VOICE"] = "blend"
+      @stream_iterate_count = 0
+      voices = 4.times.map do |i|
+        @stream_iterate_count = i
+        stream_iterate_morph_synth!
+        ENV["PAD_VOICE"]
+      end
+      ep_ids = 8.times.map { |i| morph_patch_for_chord(i, role: :ep)&.dig(:id) }.compact.uniq
+      warm_ids = 8.times.map { |i| morph_patch_for_chord(i, role: :warm)&.dig(:id) }.compact.uniq
+      puts JSON.generate(voices: voices.uniq, ep_count: ep_ids.length, warm_count: warm_ids.length)
+    RUBY
+    assert_operator result.fetch("voices").length, :>=, 3, "stream morph should rotate pad voice families"
+    assert_operator result.fetch("ep_count"), :>=, 3, "per-chord EP morph should vary presets"
+    assert_operator result.fetch("warm_count"), :>=, 3, "per-chord warm morph should vary presets"
   end
 
   def test_synth_cycle_picks_from_expanded_voice_pools
@@ -257,6 +324,126 @@ class TestDillaLab < Minitest::Test
     assert_equal "55", result.fetch("beauty_min")
   end
 
+  def test_flylo_camel_learned_drum_grid_registers
+    result = eval_in_engine(<<~RUBY)
+      remove_instance_variable(:@learned_engine_cache) if instance_variable_defined?(:@learned_engine_cache)
+      grid = flylo_drum_grid_for("quartal_west_coast")
+      ENV["TRACK"] = "quartal_west_coast"
+      kicks = learned_flylo_overlay_steps(:kicks)
+      snares = learned_flylo_overlay_steps(:snares)
+      puts JSON.generate(
+        bpm: grid&.dig("bpm"),
+        builtin: grid["flylo_kicks"] == FLYLO_CAMEL_DRUM_GRID["flylo_kicks"],
+        kicks: kicks,
+        snares: snares,
+        kick_count: kicks&.length,
+        syncopated: kicks&.any? { |s| s.odd? }
+      )
+    RUBY
+    assert_equal 86, result.fetch("bpm")
+    assert result.fetch("builtin"), "Camel grid should be baked into dilla.rb"
+    assert_operator result.fetch("kick_count"), :>=, 4
+    assert result.fetch("syncopated"), "Camel grid should include off-beat kick steps"
+    assert_includes result.fetch("kicks"), 3
+  end
+
+  def test_camel_mode_applies_defaults_and_grid
+    result = eval_in_engine(<<~RUBY)
+      ENV["DILLA_STREAMING"] = "1"
+      remove_instance_variable(:@learned_engine_cache) if instance_variable_defined?(:@learned_engine_cache)
+      apply_camel_profile!(force: true)
+      grid = flylo_drum_grid_for(ENV["TRACK"])
+      puts JSON.generate(
+        mode: ENV["RENDER_MODE"],
+        track: ENV["TRACK"],
+        bpm: ENV["BPM"],
+        kicks: ENV["KICKS"],
+        rap: ENV["RAP_VOCAL"],
+        la_beat: la_beat_progression_enabled?,
+        form: ENV["FORM"],
+        groove: ENV["GROOVE_DNA"],
+        performer: ENV["PERFORMER"],
+        stream_track: ENV["STREAM_TRACK"],
+        pocket_drums: dilla_pocket_drums_enabled?,
+        kicks_enabled: kicks_enabled?,
+        grid_bpm: grid&.dig("bpm"),
+        flylo_kicks: grid&.dig("flylo_kicks"),
+        progression: load_learned_engine.dig("progressions", ENV["TRACK"])&.length
+      )
+    RUBY
+    assert_equal "camel", result.fetch("mode")
+    assert_equal "chromatic_mediant_drift", result.fetch("track")
+    assert_equal "86", result.fetch("bpm")
+    assert_equal "1", result.fetch("kicks"), "Hybrid pocket + FlyLo so drums stay audible"
+    assert_equal "j_dilla", result.fetch("rap")
+    assert_nil result.fetch("stream_track"), "Camel mode should rotate — no STREAM_TRACK pin"
+    assert result.fetch("la_beat")
+    assert_equal "camel_32", result.fetch("form")
+    assert_equal "wonky", result.fetch("groove")
+    assert_equal "glasper", result.fetch("performer")
+    assert result.fetch("pocket_drums"), "Pocket drums stay on unless FLYLO_DRUMS_ONLY=1"
+    assert result.fetch("kicks_enabled"), "Kicks enabled under hybrid Camel kit"
+    assert_equal 86, result.fetch("grid_bpm")
+    assert_equal [3, 7, 9, 11, 13, 15], result.fetch("flylo_kicks")
+    assert_operator result.fetch("progression"), :>=, 8
+  end
+
+  def test_la_beat_progression_varies_chords_and_lengths
+    result = eval_in_engine(<<~RUBY)
+      ENV["LA_BEAT_PROGRESSION"] = "1"
+      ENV["LINEAR_CHORD_INDEX"] = "1"
+      ENV["TRACK"] = "maj7_minor_cycle"
+      ENV["DILLA_RAW"] = "1"
+      cfg = enhanced_resolve_config
+      n_bars = 32
+      needed = (n_bars.to_f / cfg[:chord_bars]).ceil + 1
+      pads = dilla_progression(cfg[:progression])
+      arranged, phases, lens = arrange_la_beat_progression(pads, needed, cfg)
+      names = arranged.map { |c| c[:name] }
+      beat_p = 60.0 / cfg[:bpm]
+      @render_chord_bar_lens = lens
+      ENV["FLYLO_DRUM_OVERLAY"] = "1"
+      events = dilla_schedule(n_bars, beat_p, arranged, chord_bars: cfg[:chord_bars],
+                              phrase_bars: cfg[:phrase_bars], swing: cfg[:swing], feel: cfg[:feel],
+                              timing: cfg[:timing], quintuplet: cfg[:quintuplet], chord_phases: phases)
+      pad_names = events[:pad].map { |e| e[2][:name] }
+      indices = (0...n_bars).map { |b|
+        dilla_chord_index(b, arranged, chord_bars: cfg[:chord_bars], phrase_bars: cfg[:phrase_bars],
+                          chord_bar_lens: lens)
+      }
+      puts JSON.generate(
+        chord_count: names.length,
+        unique_names: names.uniq.length,
+        lens_variety: lens.uniq.length,
+        pad_events: events[:pad].length,
+        pad_unique: pad_names.uniq.length,
+        index_unique: indices.uniq.length,
+        flylo_kick: events[:flylo_kick]&.length || 0
+      )
+    RUBY
+    assert_operator result.fetch("chord_count"), :>=, 12
+    assert_operator result.fetch("unique_names"), :>=, 5
+    assert_operator result.fetch("lens_variety"), :>=, 2
+    assert_operator result.fetch("pad_unique"), :>=, 4
+    assert_operator result.fetch("index_unique"), :>=, 5
+    assert_operator result.fetch("flylo_kick"), :>, 0
+  end
+
+  def test_dilla_neosoul_aydin_bach_progressions_resolve
+    %i[maj7_minor_cycle neo_soul electronium_loop aydin_modal_quartal aydin_jazz_turn
+       bach_circle_descent bach_descending_bass].each do |track|
+      result = eval_in_engine(<<~RUBY)
+        ENV["TRACK"] = #{track.to_s.dump}
+        ENV["DILLA_RAW"] = "1"
+        pads = dilla_progression(#{track.inspect})
+        names = pads.map { |c| c[:name] }
+        puts JSON.generate(track: #{track.to_s.dump}, count: names.length, names: names)
+      RUBY
+      assert_operator result.fetch("count"), :>=, 4, "#{track} should resolve at least 4 chords"
+      assert_equal result.fetch("count"), result.fetch("names").length
+    end
+  end
+
   def test_curated_progression_preserves_chord_tones_through_voice_lead
     result = eval_in_engine(<<~RUBY)
       ENV["TRACK"] = "maj7_minor_cycle"
@@ -294,6 +481,7 @@ class TestDillaLab < Minitest::Test
 
   def test_lead_voice_and_arp_mode_presets_resolve
     result = eval_in_engine(<<~RUBY)
+      ENV["SYNTH_CYCLE"] = "0"
       ENV["LEAD_VOICE"] = "erykah"
       ENV["LEAD_ARP_MODE"] = "soul_wash"
       ENV["LEAD_ARP"] = "1"
@@ -512,6 +700,21 @@ class TestDillaLab < Minitest::Test
     RUBY
     assert result.fetch("found")
     assert_operator result.fetch("chords").length, :>=, 2
+  end
+
+  def test_rap_vocal_resolve_sirkel_sag_slug
+    result = eval_in_engine(<<~RUBY)
+      ENV["RAP_VOCAL"] = "sirkel_sag"
+      entry = rap_vocal_resolve("sirkel_sag")
+      puts JSON.generate(
+        slug: entry&.dig("slug"),
+        stream: rap_vocal_stream_slug,
+        has_path: !!(entry && entry["vocal_path"])
+      )
+    RUBY
+    assert_equal "sirkel_sag", result.fetch("slug")
+    assert_equal "sirkel_sag", result.fetch("stream")
+    assert result.fetch("has_path"), "catalog should resolve sirkel_sag vocal path"
   end
 
   def test_rap_vocal_slug_and_atempo_chain

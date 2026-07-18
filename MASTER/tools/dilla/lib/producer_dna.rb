@@ -47,11 +47,33 @@ module DillaLofiMachine
     "Ebmaj7" => [155.56, 196.00, 233.08, 293.66],
     "Db" => [138.59, 174.61, 207.65],
     "Dbmaj7" => [138.59, 174.61, 207.65, 261.63],
+    "Dbmaj9" => [138.59, 174.61, 207.65, 261.63, 311.13],
     "Cm7" => [130.81, 155.56, 196.00, 233.08],
+    "Cm9" => [130.81, 155.56, 196.00, 233.08, 293.66],
+    "Fm9" => [174.61, 207.65, 261.63, 311.13, 392.00],
     "Bbm7" => [116.54, 138.59, 174.61, 207.65],
+    "Bbm9" => [116.54, 138.59, 174.61, 207.65, 261.63],
+    "Eb9" => [155.56, 196.00, 233.08, 311.13, 349.23],
+    "Eb7" => [155.56, 196.00, 233.08, 311.13],
+    "Cm7b5" => [130.81, 155.56, 184.99, 233.08],
+    "C7" => [261.63, 329.63, 392.00, 466.16],
+    "C7alt" => [130.81, 164.81, 233.08, 277.18, 311.13],
     "Dm" => [146.83, 174.61, 220.00],
-    "Am" => [110.00, 130.81, 164.81]
+    "Am" => [110.00, 130.81, 164.81],
+    # Researched voicings used in soul / Donuts progressions (Hz from PAD_CHORD_LOOKUP).
+    "Abmaj9low" => [103.83, 130.81, 155.56, 196.00, 233.08],
+    "Bb7sus" => [116.54, 155.56, 174.61, 207.65, 261.63],
+    "C7b9" => [130.81, 138.59, 164.81, 196.00, 233.08],
+    "Fm/C" => [130.81, 174.61, 207.65, 261.63, 311.13],
+    "Fmaj9" => [174.61, 220.00, 261.63, 329.63, 392.00],
+    "Bbmaj7" => [116.54, 146.83, 174.61, 207.65, 293.66],
+    "Bbmaj9" => [116.54, 138.59, 174.61, 207.65, 261.63],
+    "Abmaj7" => [207.65, 261.63, 311.13, 392.00, 466.16]
   }.freeze
+
+  CHORD_SUFFIXES = %w[
+    maj9low maj9 maj7 m11 m9 m7 m7b5 7b9 7sus4 7sus 7alt 7 6 m
+  ].freeze
 
   PAD_WAVEFORMS = %i[sine square sawtooth triangle].freeze
 
@@ -109,14 +131,29 @@ module DillaLofiMachine
 
   DEFAULT_DRUM_PRESET = :dilla_slight
   DEFAULT_PAD_WAVE = :sine
-  DEFAULT_PROFILE = :minor_iv_loop
+  DEFAULT_PROFILE = :maj7_minor_cycle
 
   # Semantic harmony profiles — chord chemistry + groove family, no song names.
   HARMONY_PROFILES = {
+    # Donuts "Time" core — Dbmaj7–Cm7–Fm7–Bbm7 (RG-69 researched).
     maj7_minor_cycle: {
       producer: :dilla, key: "Ab / Fm", bpm: 94, swing: 54,
-      chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[Dbmaj7 Cm7 Fm7 Bbm7], timing: DILLA_TIMING
+      chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :spread, quintuplet: true,
+      drum_preset: :dilla_slight, chords: %w[Dbmaj9 Cm9 Fm9 Bbm9], timing: DILLA_TIMING
+    },
+    # Hooktheory Donuts "Time" — full IV–iii–vi–ii–V turnaround (8 bars).
+    fourth_third_sixth_second_turn: {
+      producer: :dilla, key: "Ab / Fm", bpm: 86, swing: 56,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, quintuplet: true,
+      drum_preset: :dilla_slight,
+      chords: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9], timing: DILLA_TIMING
+    },
+    # Measured Fm engine loop — i–IV–iii–vi–ii–V–bVI–IV.
+    timeless_authentic: {
+      producer: :dilla, key: "F minor", bpm: 86, swing: 56,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, quintuplet: true,
+      drum_preset: :dilla_slight,
+      chords: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9], timing: DILLA_TIMING
     },
     minor_iv_loop: {
       producer: :dilla, key: "F minor", bpm: 91, swing: 57,
@@ -154,10 +191,19 @@ module DillaLofiMachine
       drum_preset: :madlib_dusty, chords: %w[Dm7 Cm7 Fmaj9 Gm7], timing: DILLA_TIMING
     },
     quartal_west_coast: {
-      producer: :flylo, key: "C major", bpm: 84, swing: 54,
-      chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
+      producer: :flylo, key: "C major", bpm: 86, swing: 54,
+      chord_bars: 2, phrase_bars: 32, feel: :flylo_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true, intro_bars: 8,
       drum_preset: :flylo_abstract, chords: %w[Cmaj9 Am9 Fmaj9 G6], timing: FLYLO_TIMING
+    },
+    # Flying Lotus "Camel" — chromatic mediant drift (Los Angeles).
+    chromatic_mediant_drift: {
+      producer: :flylo, key: "D minor", bpm: 86, swing: 54,
+      chord_bars: 2, phrase_bars: 32, feel: :flylo_abstract, voicing: :quartal,
+      stereo_pan: true, sidechain: true, intro_bars: 8,
+      drum_preset: :flylo_abstract,
+      chords: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
+      timing: FLYLO_TIMING
     },
     slow_ballad_wash: {
       producer: :flylo, key: "G major", bpm: 81, swing: 55,
@@ -172,8 +218,14 @@ module DillaLofiMachine
     },
     neo_soul_pocket: {
       producer: :dilla, key: "Dm", bpm: 93, swing: 55,
-      chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :spread,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
       drum_preset: :mpc3000, chords: %w[Dm7 Eb7 Gm7 Am7], timing: DILLA_TIMING
+    },
+    neo_soul: {
+      producer: :dilla, key: "F minor", bpm: 84, swing: 58,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, stereo_pan: true,
+      drum_preset: :dilla_slight,
+      chords: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9], timing: DILLA_TIMING
     },
     dorian_iv_loop: {
       producer: :dilla, key: "G dorian", bpm: 90, swing: 56,
@@ -302,42 +354,97 @@ module DillaLofiMachine
       producer: :dilla, key: "C minor", bpm: 90, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
       drum_preset: :dilla_slight, chords: %w[Cm9 Fm7 Bbmaj7 Ebmaj9], timing: DILLA_TIMING
+    },
+    # Raymond Scott Electronium × Dilla — Common "The Light" neo-soul cycle.
+    electronium_loop: {
+      producer: :dilla, key: "F minor", bpm: 86, swing: 57,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, quintuplet: true,
+      drum_preset: :dilla_slight, chords: %w[Fm9 Dbmaj9 Eb9 Bbm9 Cm7b5 Fm9 C7alt Fm9],
+      timing: DILLA_TIMING
+    },
+    electronium_classic: {
+      producer: :dilla, key: "F minor", bpm: 86, swing: 57,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
+      drum_preset: :mpc3000, chords: %w[Fm7 Dbmaj7 Eb7 Bbm7 Cm7b5 Fm7 C7 Fm7],
+      timing: DILLA_TIMING
+    },
+    # Aydin Esen — quartal modal wash (Bill Evans / Turkish jazz lineage).
+    aydin_modal_quartal: {
+      producer: :dilla, key: "C minor", bpm: 82, swing: 54,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :quartal,
+      drum_preset: :dilla_slight,
+      chords: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9], timing: DILLA_TIMING
+    },
+    # Aydin Esen — ii–V chains with altered dominants and rich extensions.
+    aydin_jazz_turn: {
+      producer: :dilla, key: "Bb major", bpm: 88, swing: 53,
+      chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :bill_evans,
+      drum_preset: :mpc3000,
+      chords: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9], timing: DILLA_TIMING
+    },
+    # Bach — circle-of-fifths descent (functional voice-leading).
+    bach_circle_descent: {
+      producer: :dilla, key: "A minor", bpm: 76, swing: 52,
+      chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :drop2,
+      drum_preset: :mpc3000,
+      chords: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9], timing: DILLA_TIMING
+    },
+    # Bach — descending bass (passacaglia motion) in neo-soul voicings.
+    bach_descending_bass: {
+      producer: :dilla, key: "D minor", bpm: 80, swing: 54,
+      chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :kenny_barron,
+      drum_preset: :dilla_slight,
+      chords: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9], timing: DILLA_TIMING
     }
   }.freeze
 
   # Old track ids → semantic profile (backward compat only).
   LEGACY_ALIASES = {
-    timeless: :maj7_minor_cycle,
+    timeless: :fourth_third_sixth_second_turn,
     time_donut: :maj7_minor_cycle,
     fall_in_love: :minor_iv_loop,
+    players: :neo_soul_pocket,
+    neo_soul: :neo_soul,
     climax: :major_lifting,
     get_dis_money: :slash_ninth_cycle,
     thelonious: :two_chord_hypnosis,
     selfish: :relative_major_turn,
     look_of_love: :minor_turnaround,
     so_far_to_go: :warm_minor_arc,
-    flylo_camel: :quartal_west_coast,
+    flylo_camel: :chromatic_mediant_drift,
     flylo_roberta: :slow_ballad_wash,
-    madlib_accordion: :minor_triad_walk
+    madlib_accordion: :minor_triad_walk,
+    long_soul: :maj7_minor_cycle,
+    golden: :neo_soul
   }.freeze
 
+  # Dilla + neo-soul + Aydin + Bach first — extended Donuts turnaround later in rotation.
   STREAM_ROTATION = %w[
-    maj7_minor_cycle minor_iv_loop slow_ballad_wash two_chord_hypnosis relative_major_turn
-    minor_turnaround warm_minor_arc quartal_west_coast minor_triad_walk
-    major_lifting slash_ninth_cycle neo_soul_pocket dorian_iv_loop backdoor_resolve
-    iv_borrow_minor ii_v_i_major ii_v_i_minor gospel_bIII stevie_bVII erykah_minor
-    glasper_quartal watermelon_turn church_sus dominant_turn deceptive_turn plagal_jazz
-    slash_neo_soul suspended_ballad minor_line_cliche donda_minor keys_woman
-    turnaround_ii_v modal_safe neo_iv_cycle jazz_ballad_waltz minMaj_color bvi_bvii_minor
+    chromatic_mediant_drift quartal_west_coast maj7_minor_cycle time_donut minor_iv_loop neo_soul neo_soul_pocket
+    electronium_loop electronium_classic players_measured warm_minor_arc
+    slash_neo_soul erykah_minor aydin_modal_quartal aydin_jazz_turn
+    bach_circle_descent bach_descending_bass jazz_ballad_waltz ii_v_i_major
+    ii_v_i_minor glasper_quartal timeless_authentic minor_turnaround
+    relative_major_turn slow_ballad_wash two_chord_hypnosis quartal_west_coast
+    minor_triad_walk major_lifting slash_ninth_cycle dorian_iv_loop backdoor_resolve
+    iv_borrow_minor gospel_bIII stevie_bVII watermelon_turn church_sus
+    dominant_turn deceptive_turn plagal_jazz suspended_ballad minor_line_cliche
+    donda_minor keys_woman turnaround_ii_v modal_safe neo_iv_cycle minMaj_color
+    bvi_bvii_minor fourth_third_sixth_second_turn
   ].freeze
 
   CURATED_PROGRESSIONS = HARMONY_PROFILES.keys.freeze
+
+  PROFILE_KEY_INDEX = HARMONY_PROFILES.keys.each_with_object({}) do |key, index|
+    index[key.to_s.downcase.tr("-", "_").to_sym] = key
+  end.freeze
 
   module_function
 
   def normalize_profile(track)
     sym = track.to_s.downcase.tr("-", "_").to_sym
-    LEGACY_ALIASES.fetch(sym, sym)
+    sym = LEGACY_ALIASES.fetch(sym, sym)
+    PROFILE_KEY_INDEX.fetch(sym, sym)
   end
 
   def harmony_profile?(track)
@@ -366,7 +473,12 @@ module DillaLofiMachine
   def progression_for(track)
     entry = profile_entry(track)
     return nil unless entry
-    entry[:chords].map { |sym| chord_from_symbol(sym) }
+    pads = entry[:chords].filter_map do |sym|
+      chord_from_symbol(sym)
+    rescue ArgumentError
+      nil
+    end
+    pads.length >= 2 ? pads : nil
   end
 
   def drum_pattern_set(preset_key)
@@ -398,6 +510,9 @@ module DillaLofiMachine
     if (hz = CHORD_VOICINGS[sym])
       return { name: sym, hz: hz.dup }
     end
+    if defined?(DillaMusicGems) && (gem_chord = DillaMusicGems.chord_from_symbol(sym))
+      return gem_chord
+    end
     if sym.include?("/")
       upper, bass_note = sym.split("/", 2)
       ch = chord_from_symbol(upper.strip)
@@ -406,24 +521,27 @@ module DillaLofiMachine
       hz[hz.index(hz.min)] = bass_hz
       return ch.merge(name: sym, hz: hz.sort.uniq, bass_hz: bass_hz)
     end
-    m = sym.match(/\A([A-G][#b]?)(m9|m7|m11|maj9|maj7|m|7|6)?\z/i)
-    raise ArgumentError, "bad chord symbol: #{sym}" unless m
-    root_name = m[1][0].upcase + m[1][1..]
-    suffix = m[2].to_s.downcase
-    quality = case suffix
-              when "" then "maj9"
-              when "m" then "m9"
+    low_register = sym.match?(/low\z/i)
+    base = sym.sub(/low\z/i, "")
+    suffix = CHORD_SUFFIXES.find { |sfx| base.match?(/\A[A-G][#b]?#{sfx}\z/i) }
+    raise ArgumentError, "bad chord symbol: #{sym}" unless suffix
+
+    root_name = base.match(/\A([A-G][#b]?)/i)[1]
+    root_name = root_name[0].upcase + root_name[1..]
+    quality = case suffix.downcase
+              when "maj9low", "maj9" then "maj9"
               when "maj7" then "maj7"
-              when "maj9" then "maj9"
-              when "m7" then "m7"
-              when "m9" then "m9"
-              when "7" then "7"
-              when "6" then "6"
               when "m11" then "m11"
-              when "7sus", "sus4" then "maj7"
+              when "m9" then "m9"
+              when "m7", "m7b5" then "m7"
+              when "7b9", "7alt", "7" then "7"
+              when "7sus4", "7sus" then "7"
+              when "6" then "6"
+              when "m" then "m9"
               else "maj9"
               end
-    root_hz = note_hz(root_name, octave: 3)
+    octave = low_register ? 2 : 3
+    root_hz = note_hz(root_name, octave: octave)
     hz = build_voicing(root_hz, quality)
     { name: sym, hz: hz }
   end
@@ -442,7 +560,7 @@ module DillaLofiMachine
     hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
     extra = intervals.max + 2
     hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
-    voiced = hz.sort.first(voices)
+    voiced = hz.sort.last(voices)
     midis = voiced.map { |h| 69.0 + 12.0 * Math.log2(h / 440.0) }
     midis = midis.map { |m| m + 12.0 while m < 50.0; m -= 12.0 while m > 76.0; m }
     midis.map { |m| (440.0 * (2.0**((m - 69.0) / 12.0))).round(2) }.uniq.first(voices)

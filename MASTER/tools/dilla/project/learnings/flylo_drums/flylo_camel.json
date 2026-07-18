@@ -1,0 +1,38 @@
+{
+  "bpm": 86,
+  "swing": 54,
+  "source_stem": "samples/demux/htdemucs_6s/flylo_camel_source/drums.wav",
+  "flylo_kicks": [
+    3,
+    7,
+    9,
+    11,
+    13,
+    15
+  ],
+  "flylo_snares": [
+    1,
+    3,
+    5,
+    9,
+    13,
+    15
+  ],
+  "flylo_hats": [
+    1,
+    3,
+    9,
+    13,
+    15
+  ],
+  "flylo_perc": [
+    1,
+    3,
+    5,
+    9,
+    13
+  ],
+  "source": "https://www.youtube.com/watch?v=t6SXXx1Fu_4",
+  "slug": "flylo_camel",
+  "learned_at": "2026-07-16T14:01:04Z"
+}

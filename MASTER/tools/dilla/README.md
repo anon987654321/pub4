@@ -22,7 +22,7 @@ Two entry points:
 | Sample pipeline | `prepare`, `sample`, `source`, `separate`, `demux`, `clean` |
 | Stem rack / live | `stems`, `liveset`, `live`, `stream`, `live_now`, `livestream` |
 | Analysis | `scan`, `ears`, `verify`, `study`, `grade`, `chords`, `rhythm`, `melody`, `harmony`, `semantics`, `quality`, `debug`, `sweep`, `council` |
-| MIDI | `electronium`/`midi` (needs `gem install midilib`) |
+| MIDI | `electronium`/`midi` (uses `midilib` gem via `bundle install`) |
 | Assets | `fetch-assets`, `use-external-kit` (opt-in; engine is pure-Ruby/ffmpeg by default) |
 
 The dispatch table (`DISPATCH` at the bottom of `dilla.rb`) is the single
@@ -54,11 +54,31 @@ recording SHA256s (and the kit repo's HEAD) into `checksums.json` on first
 fetch; later runs warn if upstream content drifted, since that changes how
 renders sound. Delete a manifest entry to accept a new upstream version.
 
+## Ruby gems (outsourced logic)
+
+Harmony, MIDI, and WAV I/O delegate to community gems when `bundle install`
+has been run in `MASTER/` (the `:dilla` Bundler group):
+
+| Gem | Source | Used for |
+|---|---|---|
+| [coltrane](https://github.com/pedrozath/coltrane) | pedrozath/coltrane | Chord parsing, voicings, roman-numeral progression analysis |
+| [midilib](https://github.com/jimm/midilib) | jimm/midilib | Electronium MIDI export |
+| [wavefile](https://github.com/jstrait/wavefile) | jstrait/wavefile | Mono WAV sample load (ffmpeg fallback) |
+| [head_music](https://github.com/roberthead/head_music) | roberthead/head_music | Pitch-class sets in `harmony` study |
+
+Adapter: `lib/music_gems.rb` (`DillaMusicGems`). Researched `CHORD_VOICINGS`
+still win over gem parsing; gems fill generic symbols and analysis.
+
+```sh
+cd MASTER && bundle install
+bundle exec ruby tools/dilla/dilla.rb debug   # shows gem load status
+```
+
 ## Tests
 
 `MASTER/test/test_dilla_lab.rb` — table integrity (grade presets ↔ filter
 arms, dispatch ↔ COMMANDS), voicing bounds, flag parsing, wrapper→engine
-contract. The whole-pipeline render smoke is opt-in:
+contract, coltrane chord/progression adapter. The whole-pipeline render smoke is opt-in:
 
 ```sh
 DILLA_SMOKE=1 bundle exec ruby -Itest test/test_dilla_lab.rb

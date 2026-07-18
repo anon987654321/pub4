@@ -1,0 +1,209 @@
+{
+  "progressions": {
+    "chromatic_mediant_drift": [
+      "Dm9",
+      "Cm11nc",
+      "AbMaj13s11",
+      "Gm7",
+      "Eb7",
+      "A7nc",
+      "Dmaj9nc",
+      "DMaj7overG"
+    ],
+    "quartal_west_coast": [
+      "Dm9",
+      "Cm11nc",
+      "AbMaj13s11",
+      "Gm7",
+      "Eb7",
+      "A7nc",
+      "Dmaj9nc",
+      "DMaj7overG"
+    ],
+    "flylo_camel": [
+      "Dm9",
+      "Cm11nc",
+      "AbMaj13s11",
+      "Gm7",
+      "Eb7",
+      "A7nc",
+      "Dmaj9nc",
+      "DMaj7overG"
+    ],
+    "camel_bridge": [
+      "Gm7",
+      "Cm11nc",
+      "Fm9",
+      "Bbm9",
+      "Eb7",
+      "AbMaj13s11",
+      "Dmaj9nc",
+      "DMaj7overG"
+    ],
+    "camel_functional": [
+      "Dm9",
+      "Gm9",
+      "Cm9",
+      "Fmaj9",
+      "Bbm9",
+      "Ebmaj9",
+      "Abmaj9",
+      "Dbmaj9"
+    ],
+    "learned_promo_test": [
+      "Dbmaj9",
+      "Cm9",
+      "Fm9",
+      "Bbm9",
+      "Ebmaj9",
+      "Abmaj9low"
+    ]
+  },
+  "drum_grids": {
+    "chromatic_mediant_drift": {
+      "bpm": 86,
+      "swing": 54,
+      "source": "Flying Lotus - Camel",
+      "source_url": "https://www.youtube.com/watch?v=t6SXXx1Fu_4",
+      "flylo_kicks": [
+        3,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      "flylo_snares": [
+        1,
+        3,
+        5,
+        9,
+        13,
+        15
+      ],
+      "flylo_hats": [
+        1,
+        3,
+        9,
+        13,
+        15
+      ],
+      "flylo_perc": [
+        1,
+        3,
+        5,
+        9,
+        13
+      ]
+    },
+    "quartal_west_coast": {
+      "bpm": 86,
+      "swing": 54,
+      "source_stem": "samples/demux/htdemucs_6s/flylo_camel_source/drums.wav",
+      "flylo_kicks": [
+        3,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      "flylo_snares": [
+        1,
+        3,
+        5,
+        9,
+        13,
+        15
+      ],
+      "flylo_hats": [
+        1,
+        3,
+        9,
+        13,
+        15
+      ],
+      "flylo_perc": [
+        1,
+        3,
+        5,
+        9,
+        13
+      ],
+      "source": "https://www.youtube.com/watch?v=t6SXXx1Fu_4",
+      "slug": "flylo_camel",
+      "learned_at": "2026-07-16T14:01:04Z"
+    },
+    "flylo_camel": {
+      "bpm": 86,
+      "swing": 54,
+      "source_stem": "samples/demux/htdemucs_6s/flylo_camel_source/drums.wav",
+      "flylo_kicks": [
+        3,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      "flylo_snares": [
+        1,
+        3,
+        5,
+        9,
+        13,
+        15
+      ],
+      "flylo_hats": [
+        1,
+        3,
+        9,
+        13,
+        15
+      ],
+      "flylo_perc": [
+        1,
+        3,
+        5,
+        9,
+        13
+      ],
+      "source": "https://www.youtube.com/watch?v=t6SXXx1Fu_4",
+      "slug": "flylo_camel",
+      "learned_at": "2026-07-16T14:01:04Z"
+    },
+    "fourth_third_sixth_second_turn": {
+      "kicks": [
+        0,
+        6,
+        10
+      ],
+      "snares": [
+        4,
+        12
+      ],
+      "bpm": 88
+    },
+    "promo_test": {
+      "kicks": [
+        0,
+        6,
+        10
+      ],
+      "snares": [
+        4,
+        12
+      ],
+      "bpm": 88
+    }
+  },
+  "calibrations": {},
+  "track_aliases": {
+    "flylo_camel": "quartal_west_coast",
+    "quartal_west_coast": "chromatic_mediant_drift",
+    "fourth_third_sixth_second_turn": "learned_promo_test",
+    "promo_test": "learned_promo_test"
+  },
+  "top_track": "fourth_third_sixth_second_turn",
+  "promoted_at": "2026-07-16T14:43:31Z"
+}
