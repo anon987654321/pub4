@@ -1389,3 +1389,73 @@ html[data-aesthetic="wscons"] #face-phosphor-trail,
 body.wscons-mode #face-phosphor-trail {
   display: none !important;
 }
+
+/* UI_REFINEMENTS pass — face chrome only; does not touch WebGL boot path */
+#primer {
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  color: var(--face-fg);
+  font-family: var(--x-font-mono, ui-monospace, monospace);
+}
+#primer-title {
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--c-accent) 45%, transparent);
+}
+#primer .tagline,
+.primer-consent {
+  color: var(--face-muted);
+  max-width: 28rem;
+  font-size: 0.85rem;
+}
+#hud-tier-status,
+#hud-tier-caption,
+.hud-tier-status,
+.hud-tier-caption {
+  border-top: 1px solid var(--border-faint);
+}
+.hud-tier-caption,
+#hud-tier-caption {
+  max-width: 66ch;
+}
+#chat-input,
+.chat-input,
+textarea.chat-input {
+  border-top: 1px solid var(--border-faint);
+  caret-color: var(--c-accent);
+  font-family: var(--x-font-mono, ui-monospace, monospace);
+}
+#face-canvas,
+canvas#face,
+[data-face-canvas] {
+  outline: none;
+}
+.face-status-live[aria-live] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.face-bar button,
+.face-bar a,
+.bar-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+#push-enable-btn,
+.permission-prompt button {
+  font-family: var(--x-font-mono, ui-monospace, monospace);
+  border-radius: 0;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--face-fg);
+  min-height: 44px;
+  padding: 0 1rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  #primer-title { text-shadow: none; }
+}

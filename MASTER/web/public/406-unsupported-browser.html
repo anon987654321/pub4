@@ -11,24 +11,34 @@
     html, body {
       min-height: 100dvh;
       background: #000;
-      color: #f5f0e8;
-      font: 400 16px/1.5 "Inter", system-ui, sans-serif;
+      color: #d8d6e0;
+      font: 400 15px/1.5 ui-monospace, "JetBrains Mono", Menlo, monospace;
       display: grid;
       place-items: center;
       padding: 24px;
       text-align: center;
     }
-    main { max-width: 28rem; display: grid; gap: 12px; }
-    h1 { font-weight: 200; font-size: clamp(1.4rem, 4vw, 2rem); letter-spacing: -.04em; }
-    p { opacity: .55; font-size: .95rem; }
-    a { color: inherit; opacity: .8; }
+    main { max-width: 28rem; display: grid; gap: 14px; }
+    h1 { font-weight: 400; font-size: clamp(1.1rem, 3.5vw, 1.4rem); letter-spacing: .04em; text-transform: lowercase; }
+    p { opacity: .62; font-size: .9rem; }
+    a.btn {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 12px 18px;
+      min-height: 44px;
+      border: 1px solid color-mix(in srgb, #d8d6e0 24%, transparent);
+      color: inherit;
+      text-decoration: none;
+      border-radius: 0;
+    }
+    a.btn:focus-visible { outline: 2px solid oklch(78% 0.10 300); outline-offset: 2px; }
   </style>
 </head>
 <body>
   <main>
-    <h1>update your browser</h1>
-    <p>MASTER needs a modern browser with modules, WebSocket, and import maps. Try the latest Safari, Chrome, Firefox, or Edge.</p>
-    <p><a href="/">retry anyway</a></p>
+    <h1>open in safari or chrome</h1>
+    <p>MASTER needs modules, WebSocket, and import maps. Update Safari, Chrome, Firefox, or Edge — then retry.</p>
+    <p><a class="btn" href="/">retry</a></p>
   </main>
 </body>
 </html>

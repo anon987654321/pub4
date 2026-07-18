@@ -1,0 +1,259 @@
+/* UI_REFINEMENTS pass — tokens, a11y floor, motion, empty/loading, vertical polish.
+   Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
+
+:root {
+  --space-2xs: 0.25rem;
+  --color-success: #00ba7c;
+  --color-warning: #c9a227;
+  --color-info: #5b9fd4;
+  --elev-1: 1px solid var(--x-border, var(--border));
+  --elev-2: 1px solid var(--x-border, var(--border));
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --measure-body: 66ch;
+  --tap-min: 44px;
+  --transition-fast: 180ms;
+  --transition-normal: 300ms;
+}
+
+/* G · a11y floor + touch targets */
+:where(button, .btn, .x-act, .nav-item, .nav_link, a.chip, .push-enable-btn) {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+
+.x-count,
+.x-time,
+.price,
+.duration-chip,
+[data-count],
+time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* H · list perf */
+.x-card,
+.feed-post,
+.restaurant-card,
+.listing-card,
+.item-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
+
+/* Flash / toast flat card */
+.flash-notice,
+.flash-alert,
+.toast,
+.nearby-alerts > * {
+  border: var(--elev-1);
+  border-radius: var(--x-radius-sm, 8px);
+  background: var(--x-surface-elevated, var(--surface));
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  z-index: var(--z-toast, 1100);
+}
+
+.flash-notice { border-color: color-mix(in srgb, var(--color-success) 40%, var(--x-border)); }
+.flash-alert { border-color: color-mix(in srgb, var(--x-danger) 50%, var(--x-border)); }
+
+/* Post body measure */
+.x-card .body,
+.post-body,
+.article-body {
+  max-width: var(--measure-body);
+}
+
+/* Nav swiper active underline already present — strengthen + peek */
+.nav_link.active {
+  border-bottom-width: 2px;
+  border-bottom-color: var(--x-accent, var(--accent));
+  font-weight: 700;
+}
+
+.nav_swiper_bar {
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--space-2xs);
+}
+
+.nav_link {
+  scroll-snap-align: start;
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* City carousel as interactive links */
+.city-carousel a.carousel-slide {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.55;
+}
+.city-carousel a.carousel-slide.active,
+.city-carousel a.carousel-slide:focus-visible {
+  opacity: 1;
+  outline: var(--focus-ring, 2px solid var(--accent));
+  outline-offset: 2px;
+}
+
+/* Vote punch */
+.x-act:active {
+  transform: scale(0.94);
+  transition: transform var(--transition-fast) var(--ease-out);
+}
+
+/* Marketplace storefront */
+body.vertical-marketplace {
+  --x-accent: #8c7a5e;
+  --x-accent-hover: #6f6149;
+}
+body.vertical-marketplace h1,
+body.vertical-marketplace .page-header h1 {
+  font-family: "Libre Baskerville", Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+/* Dating warmer accent */
+body.vertical-dating {
+  --x-accent: oklch(62% 0.14 20);
+  --x-accent-hover: oklch(55% 0.14 20);
+}
+
+/* TV 16:9 + duration chip */
+body.vertical-tv .video-card,
+body.vertical-tv .channel-card {
+  position: relative;
+}
+body.vertical-tv .video-card img,
+body.vertical-tv .channel-card img,
+body.vertical-tv .tv-poster {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  width: 100%;
+  border-radius: var(--x-radius-sm);
+}
+body.vertical-tv .duration-chip {
+  position: absolute;
+  inset-block-end: var(--space-2xs);
+  inset-inline-end: var(--space-2xs);
+  padding: 0.1rem 0.35rem;
+  font: 700 0.7rem/1 var(--x-font-mono, ui-monospace, monospace);
+  background: color-mix(in srgb, #000 72%, transparent);
+  border-radius: 2px;
+}
+body.vertical-tv .live-badge::before {
+  content: "● ";
+  color: var(--x-danger, #f4212e);
+}
+
+/* Takeaway sold out — text badge, not color-only */
+body.vertical-takeaway .sold-out,
+body.vertical-takeaway [data-available="false"] {
+  opacity: 0.55;
+}
+body.vertical-takeaway .sold-out-badge,
+body.vertical-takeaway [data-available="false"]::after {
+  content: "Sold out";
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--x-border);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--x-radius-xs, 4px);
+  color: var(--x-text-secondary);
+}
+
+/* Playlist embed controls */
+body.vertical-playlist .playlist-player button,
+body.vertical-playlist [data-controller="playlist-player"] button {
+  color: var(--x-accent);
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+body.vertical-playlist input[type="range"] {
+  accent-color: var(--x-accent);
+}
+
+/* Forms — reserved error slot */
+.field {
+  display: grid;
+  gap: var(--space-2xs);
+}
+.field .error,
+.field .helper {
+  min-height: 1.1em;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--x-text-secondary);
+}
+.field .error { color: var(--x-danger); }
+
+/* Empty state CTA */
+.empty-state {
+  padding: var(--space-6, 2rem) var(--space-4, 1rem);
+  text-align: center;
+  border: var(--elev-1);
+  border-radius: var(--x-radius-md, 12px);
+  max-width: 28rem;
+  margin-inline: auto;
+}
+.empty-state .btn { margin-block-start: var(--space-3, 0.75rem); }
+
+/* Skeleton */
+.skeleton {
+  border-radius: var(--x-radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--x-hover-subtle) 0%,
+    var(--x-hover) 50%,
+    var(--x-hover-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  min-height: 1rem;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Safe area + tap highlight */
+.sidebar,
+.nav_swiper,
+.push-enable-btn {
+  padding-inline: max(0px, env(safe-area-inset-left));
+}
+html {
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--x-accent, var(--accent)) 18%, transparent);
+}
+
+/* High contrast */
+@media (prefers-contrast: more) {
+  :root {
+    --x-border: var(--x-text-secondary);
+    --x-text-secondary: var(--x-text);
+  }
+  a { text-decoration: underline; }
+}
+
+/* Reduced motion — keep identity, kill ambient */
+@media (prefers-reduced-motion: reduce) {
+  .city-carousel,
+  .skeleton {
+    animation: none !important;
+  }
+  .x-act:active { transform: none; }
+}
+
+/* prefers-contrast + link affordance in body text */
+.x-card .body a,
+.post-body a,
+.article-body a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.x-card .body a:hover,
+.post-body a:hover {
+  color: var(--x-accent);
+}

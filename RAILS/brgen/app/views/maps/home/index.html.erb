@@ -14,4 +14,7 @@
     </div>
     <div id="place-popup" class="map-place-popup" data-map-target="popup" hidden role="status" aria-live="polite"></div>
   </div>
+  <noscript>
+    <p class="empty-state">Map needs JavaScript. <%= link_to "Browse places as a list", maps_places_path, class: "btn" %>.</p>
+  </noscript>
 </section>

@@ -1,5 +1,39 @@
 # Canonical design token anchors — keep in sync with _x_base.scss defaults and face.css :root.
 # Regenerate face :root: ruby RAILS/scripts/generate_face_root_css.rb
+#
+# Dialect → consumer map (do not merge casually):
+#   social       → brgen + shared x_shell (IRIX flat dark/light)
+#   light        → light-mode overlay for social apps (theme toggle)
+#   luxury       → amber wardrobe (Aesop/Toteme warm neutrals)
+#   openbsd_wscons → bsdports terminal green (opt-in via body class)
+#   face_root    → MASTER web face.css :root only (CRT-flat, all radii 0)
+# Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
+
+# Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.
+shared_chrome:
+  space_2xs: "0.25rem"
+  space_xs: "0.5rem"
+  space_sm: "0.875rem"
+  space_md: "1.5rem"
+  space_lg: "2.25rem"
+  space_xl: "3rem"
+  space_2xl: "4rem"
+  color_success: "#00ba7c"
+  color_warning: "#c9a227"
+  color_info: "#5b9fd4"
+  color_danger: "#d1594a"
+  focus_ring: "2px solid var(--x-accent, var(--accent, currentColor))"
+  elev_1: "1px solid var(--x-border)"
+  elev_2: "1px solid var(--x-border)"
+  transition_fast: "180ms"
+  transition_normal: "300ms"
+  ease_out: "cubic-bezier(0.25,0.1,0.25,1)"
+  ease_spring: "cubic-bezier(0.32,0.72,0,1)"
+  font_size_meta: "0.8125rem"
+  font_size_body: "1rem"
+  font_size_title: "1.25rem"
+  font_size_display: "1.75rem"
+  measure_body: "66ch"
 
 # Luxury minimalist additions for wardrobe/product UIs (Aesop/Toteme/Nécessaire inspired)
 # Warm neutrals, generous spacing, refined typography. Use in amber + shared product views.
@@ -18,13 +52,17 @@ luxury:
   dark_muted: "#8a8278"
   dark_border: "#3a3630"
   dark_accent: "#a38b6f"
-  # Shared luxury scale (more breathing room than minimal)
+  # Shared luxury scale (more breathing room than minimal); includes 2xs for dense chrome
+  space_2xs: "0.25rem"
   space_xs: "0.5rem"
   space_sm: "0.875rem"
   space_md: "1.5rem"
   space_lg: "2.25rem"
   space_xl: "3rem"
   space_2xl: "4rem"
+  color_success: "#00ba7c"
+  color_warning: "#c9a227"
+  color_info: "#5b9fd4"
   radius_sm: "6px"
   radius_md: "10px"
   radius_lg: "14px"
@@ -131,6 +169,20 @@ social:
   x_radius_pill: "9999px"
   x_radius_card: "16px"
   x_radius_lg: "16px"
+  # social = soft (not CRT-flat zeros — those are face_root / openbsd_wscons)
+  space_2xs: "0.25rem"
+  space_xs: "0.5rem"
+  space_sm: "0.75rem"
+  space_md: "1rem"
+  space_lg: "1.5rem"
+  space_xl: "2rem"
+  color_success: "#00ba7c"
+  color_warning: "#c9a227"
+  color_info: "#5b9fd4"
+  transition_fast: "180ms"
+  transition_normal: "300ms"
+  ease_out: "cubic-bezier(0.25,0.1,0.25,1)"
+  ease_spring: "cubic-bezier(0.32,0.72,0,1)"
   x_sidebar: "275px"
   x_feed_max: "600px"
   x_widgets: "350px"

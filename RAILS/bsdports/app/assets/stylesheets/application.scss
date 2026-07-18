@@ -2,13 +2,68 @@
 @use "x_widgets";
 @use "x_base" as x;
 
+/* openbsd_wscons — green terminal identity (UI_REFINEMENTS §E) */
 :root {
   @include x.x-app-root-tokens;
-  --turbo-progress-bar-color: var(--accent);
+  --x-bg: #000000;
+  --x-surface: #000000;
+  --x-surface-elevated: #0a140a;
+  --x-search-bg: #0f1a0f;
+  --x-text: #63c363;
+  --x-text-secondary: #3d7a3d;
+  --x-border: #1a3a1a;
+  --x-hover: rgba(99, 195, 99, 0.1);
+  --x-accent: #63c363;
+  --x-accent-hover: #4fa34f;
+  --x-danger: #ff6b6b;
+  --x-font: "JetBrains Mono", ui-monospace, monospace;
+  --x-font-size: 12px;
+  --x-line-height: 16px;
+  --x-radius-pill: 0;
+  --x-radius-card: 0;
+  --x-radius-sm: 0;
+  --x-radius-md: 0;
+  --focus-ring: 2px solid var(--x-accent);
+  --turbo-progress-bar-color: var(--x-accent);
+  color-scheme: dark;
+  background: var(--x-bg);
+  color: var(--x-text);
+  font-family: var(--x-font);
+  font-size: var(--x-font-size);
+  line-height: var(--x-line-height);
 }
 
 body {
   padding-block-start: 58px;
+  background: var(--x-bg);
+  color: var(--x-text);
+  font-family: var(--x-font);
+}
+
+/* Secondary green is non-essential meta only (contrast ~3:1) */
+.meta, .dim, .text-secondary, time {
+  color: var(--x-text-secondary);
+}
+
+.port-row,
+.search-result {
+  font-family: var(--x-font);
+  font-size: var(--x-font-size);
+  border-bottom: 1px solid var(--x-border);
+  padding: 0.35rem 0;
+}
+
+.advisory-tag {
+  font-family: var(--x-font);
+  font-size: 11px;
+  color: var(--x-danger);
+  border: 1px solid var(--x-border);
+  padding: 0 0.3rem;
+}
+
+main#main-content :is(button, input, select, textarea, a):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 body > nav[aria-label="Primary navigation"] {
