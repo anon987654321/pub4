@@ -138,14 +138,16 @@ module Master
   ]
   rule_fragments.each { |name| loader.ignore(File.join(__dir__, "judge", "scan", "rules", name)) }
   %w[
-    master_paths.rb pub4
+    master_paths.rb master_data.rb master_runtime.rb master_boot.rb pub4
     providers/catalog_index.rb providers/fallback_chain.rb
     builder/boot_phases.rb builder/ai_boot.rb judge/llm_dispatcher
   ].each { |relative| loader.ignore(File.join(__dir__, relative)) }
+  loader.ignore(File.join(__dir__, "boot"))
 
   loader.setup
   LOADER = loader
 
+  require_relative "boot/boot"
   extend MasterData
   extend MasterRuntime
   extend MasterBoot
