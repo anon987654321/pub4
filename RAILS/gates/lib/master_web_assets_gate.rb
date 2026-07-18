@@ -16,7 +16,7 @@ module Deploy
       "OPENBSD/OPERATOR.sh" => :start_or_restart,
       "OPENBSD/vps_install_all.sh" => :start_or_restart,
       "OPENBSD/vps_on_vm_install.sh" => :start_or_restart,
-      "OPENBSD/vps_console_install.exp" => :restart,
+      "OPENBSD/vps_console.exp" => :restart,
       "OPENBSD/vps_deploy_master.sh" => :restart
     }.freeze
 

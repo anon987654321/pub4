@@ -23,8 +23,8 @@ module Deploy
         "BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }"
       ],
       "MASTER/bin/smoke" => [
-        "tts_e2e poll",
-        "tts_e2e"
+        "tts-e2e poll",
+        "tts-e2e"
       ],
       "OPENBSD/OPERATOR.sh" => [
         "espeak"

@@ -66,14 +66,29 @@ def resolve_gates(keys)
   end
 end
 
+def visual_contract_capture_args
+  return [] unless ENV["VISUAL_CAPTURE"] == "1"
+
+  args = %w[--capture]
+  args += %w[--app] + [ENV.fetch("VISUAL_CAPTURE_APP", "brgen")]
+  args += %w[--base] + [ENV.fetch("VISUAL_CAPTURE_BASE", "http://127.0.0.1:38182")]
+  args
+end
+
+def gate_extra_args(key)
+  key == :visual_contract ? visual_contract_capture_args : []
+end
+
 def run_one(key)
   path = gate_path(key)
   unless File.file?(path)
     warn "[gates] Missing gate file for #{key}: #{path}"
     return false
   end
+  extra = gate_extra_args(key)
   puts "\n==> [gates] Running #{key} (#{File.basename(path)})"
-  system(*ruby_cmd, path)
+  puts "[gates] visual_contract capture enabled (VISUAL_CAPTURE=1)" if key == :visual_contract && extra.include?("--capture")
+  system(*ruby_cmd, path, *extra)
   success = $?.success?
   puts success ? "[gates] #{key} PASSED" : "[gates] #{key} FAILED"
   success

@@ -19,4 +19,11 @@ class VisualContractGateTest < Minitest::Test
     end
     assert_equal 5, VisualContractGate::LENSES.length
   end
+
+  def test_runner_forwards_visual_capture_env_to_gate
+    source = File.read(File.expand_path("../gates/runner.rb", __dir__))
+    %w[VISUAL_CAPTURE VISUAL_CAPTURE_APP VISUAL_CAPTURE_BASE visual_contract_capture_args].each do |needle|
+      assert_includes source, needle
+    end
+  end
 end

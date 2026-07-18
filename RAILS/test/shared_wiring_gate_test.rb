@@ -22,4 +22,11 @@ class SharedWiringGateTest < Minitest::Test
     assert_includes source, "shared_wiring:"
     assert_includes source, "gates/shared_wiring_gate.rb"
   end
+
+  def test_shared_wiring_gate_checks_extended_shared_artifacts
+    source = File.read(File.join(ROOT, "gates/lib/shared_wiring_gate.rb"))
+    %w[omniauth.rb auth_extensions.rb Shared::ReactionsController production_baseline.rb REQUIRED_SHARED_CONTROLLERS].each do |needle|
+      assert_includes source, needle
+    end
+  end
 end
