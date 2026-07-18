@@ -3,8 +3,15 @@
 class Place < ApplicationRecord
   include Shared::ActivityTrackable
   include Shared::GeoLocatable
+  include Shared::MediaProcessable
   belongs_to :city
   belongs_to :neighborhood, optional: true
+
+  has_one_attached :photo
+  process_media_variants :photo, variants: {
+    card: { resize_to_limit: [ 720, 480 ], format: :webp },
+    thumb: { resize_to_limit: [ 320, 240 ], format: :webp }
+  }
 
   validates :kind, presence: true
   validates :latitude, presence: true

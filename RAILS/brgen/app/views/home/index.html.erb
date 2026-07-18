@@ -1,8 +1,12 @@
 <% unless authenticated? %>
   <% content_for :splash do %>
     <div data-visitor-orientation>
-      <h2 id="splash-title">Brgen</h2>
-      <p class="tagline">City-native social. Post, vote, discover local communities across Europe and beyond.</p>
+      <h2 id="splash-title"><%= Current.city_record&.name.presence || "Brgen" %></h2>
+      <% if Current.city_record&.domain == "brgen.no" %>
+        <p class="tagline">Bergen sitt hyperlokale nett — fra Bryggen til Bybanen. Finn mat, steder, dating og det som skjer i byen din.</p>
+      <% else %>
+        <p class="tagline">City-native social. Post, vote, discover local communities across Europe and beyond.</p>
+      <% end %>
       <nav role="navigation" class="chips" aria-label="Quick links">
         <span class="chip"><%= link_to "sign in", new_session_path %></span>
         <span class="chip"><%= link_to marketplace_subdomain, marketplace_root_url %></span>

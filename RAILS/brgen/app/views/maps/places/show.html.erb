@@ -8,7 +8,16 @@
 </div>
 
 <article class="place" role="article" aria-label="Place information">
+  <% if @place.photo.attached? %>
+    <figure class="place-hero">
+      <%= responsive_image_tag(@place.photo, alt: @place.name, class: "place-hero__image") %>
+    </figure>
+  <% end %>
   <dl role="list">
+    <% if @place.address.present? %>
+      <dt>Address</dt>
+      <dd><%= @place.address %></dd>
+    <% end %>
     <dt>Type</dt>
     <dd><%= @place.kind %></dd>
     <% if @place.city %>

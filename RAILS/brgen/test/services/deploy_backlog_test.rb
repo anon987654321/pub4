@@ -805,6 +805,10 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, "shared/app/services/shared/demo_media.rb")), "attach_remote_postpro!"
     assert_includes File.read(File.join(ROOT, "shared/app/services/shared/postpro_processor.rb")), "PostproProcessor"
     assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "attach_remote_postpro!"
+    assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "seed_places"
+    assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "seed_takeaway"
+    assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "seed_tv"
+    assert File.exist?(File.join(ROOT, "brgen/config/demo_media/bergen.yml")), "bergen demo media catalog"
     assert_includes File.read(File.join(ROOT, "amber/lib/amber/amber_demo_seeder.rb")), "attach_remote_postpro!"
     assert_includes File.read(File.join(ROOT, "amber/app/jobs/wardrobe_media_job.rb")), "PostproProcessor.apply_to_record!"
   end

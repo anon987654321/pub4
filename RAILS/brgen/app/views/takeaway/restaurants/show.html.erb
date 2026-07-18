@@ -44,6 +44,9 @@
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
         <article class="menu-row">
+          <% if item.photo.attached? %>
+            <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
+          <% end %>
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
             <% if item.vegetarian? %><span class="chip">Vegetarian</span><% end %>
@@ -67,6 +70,17 @@
       <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
     <% end %>
   <% else %>
+    <% @menu_items.each do |item| %>
+      <article class="menu-row">
+        <% if item.photo.attached? %>
+          <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
+        <% end %>
+        <div>
+          <strong><%= item.name %></strong> · <%= item.price_display %>
+          <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
+        </div>
+      </article>
+    <% end %>
     <p><%= link_to "Sign in to order", new_session_path %></p>
   <% end %>
 </section>
