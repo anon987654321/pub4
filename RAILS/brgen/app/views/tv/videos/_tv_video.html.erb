@@ -1,7 +1,16 @@
-<%= render "shared/x_card",
-  avatar_url: (tv_video.thumbnail.attached? ? url_for(tv_video.thumbnail) : nil),
-  name: tv_video.title,
-  handle: tv_video.channel.name,
-  meta: "#{tv_video.views_count} views · #{tv_video.duration_formatted}",
-  url: tv_video_path(tv_video),
-  class: "x-tv" %>
+<article class="tv-card">
+  <%= link_to tv_video_path(tv_video), class: "tv-poster-link", aria: { label: tv_video.title } do %>
+    <div class="tv-poster<%= " tv-poster--empty" unless tv_video.thumbnail.attached? %>">
+      <% if tv_video.thumbnail.attached? %>
+        <%= responsive_image_tag(tv_video.thumbnail, alt: tv_video.title, loading: "lazy", class: "tv-poster-img") %>
+      <% end %>
+      <% if tv_video.duration_formatted.present? %>
+        <span class="tv-duration"><%= tv_video.duration_formatted %></span>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="tv-card-meta">
+    <%= link_to tv_video.title, tv_video_path(tv_video), class: "tv-card-title" %>
+    <p class="tv-card-sub"><%= tv_video.channel.name %> · <span class="tv-views"><%= tv_video.views_count %></span> views</p>
+  </div>
+</article>
