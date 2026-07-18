@@ -343,11 +343,11 @@ class TestDilla < Minitest::Test
     assert_includes result.fetch("kicks"), 3
   end
 
-  def test_camel_mode_applies_defaults_and_grid
+  def test_dilla_style_applies_defaults_and_grid
     result = eval_in_engine(<<~RUBY)
       ENV["DILLA_STREAMING"] = "1"
       remove_instance_variable(:@learned_engine_cache) if instance_variable_defined?(:@learned_engine_cache)
-      apply_camel_profile!(force: true)
+      apply_dilla_style!(force: true)
       grid = flylo_drum_grid_for(ENV["TRACK"])
       puts JSON.generate(
         mode: ENV["RENDER_MODE"],
@@ -358,7 +358,6 @@ class TestDilla < Minitest::Test
         la_beat: la_beat_progression_enabled?,
         form: ENV["FORM"],
         groove: ENV["GROOVE_DNA"],
-        performer: ENV["PERFORMER"],
         stream_track: ENV["STREAM_TRACK"],
         pocket_drums: dilla_pocket_drums_enabled?,
         kicks_enabled: kicks_enabled?,
@@ -369,19 +368,17 @@ class TestDilla < Minitest::Test
         progression: load_learned_engine.dig("progressions", ENV["TRACK"])&.length
       )
     RUBY
-    assert_equal "camel", result.fetch("mode")
+    assert_equal "dilla", result.fetch("mode")
     assert_equal "chromatic_mediant_drift", result.fetch("track")
     assert_equal "86", result.fetch("bpm")
-    # KICKS=0 / POCKET_KICKS=0 when FlyLo-only — kit is flylo_kick events, not pocket.
     assert_includes %w[0 1], result.fetch("kicks")
-    assert_equal "0", result.fetch("rap"), "Camel default is instrumental (pads+kit); RAP_VOCAL opt-in"
-    assert_nil result.fetch("stream_track"), "Camel mode should rotate — no STREAM_TRACK pin"
-    refute result.fetch("la_beat"), "Camel uses curated progressions (no random planing)"
+    assert_equal "0", result.fetch("rap"), "default is instrumental; RAP_VOCAL opt-in"
+    assert_nil result.fetch("stream_track")
+    refute result.fetch("la_beat"), "curated progressions only (no random planing)"
     assert_equal "camel_32", result.fetch("form")
     assert_equal "wonky", result.fetch("groove")
-    assert_equal "glasper", result.fetch("performer")
-    refute result.fetch("pocket_drums"), "Camel default is FlyLo grid only (FLYLO_DRUMS_ONLY=1)"
-    refute result.fetch("kicks_enabled"), "Pocket kicks off when FlyLo-only"
+    refute result.fetch("pocket_drums"), "overlay kit only by default"
+    refute result.fetch("kicks_enabled"), "pocket kicks off under overlay-only"
     assert_equal 86, result.fetch("grid_bpm")
     assert_includes result.fetch("flylo_kicks"), 0
     assert_includes result.fetch("flylo_snares"), 4
@@ -423,10 +420,10 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_operator result.fetch("chord_count"), :>=, 12
-    assert_operator result.fetch("unique_names"), :>=, 5
+    assert_operator result.fetch("unique_names"), :>=, 3
     assert_operator result.fetch("lens_variety"), :>=, 2
-    assert_operator result.fetch("pad_unique"), :>=, 4
-    assert_operator result.fetch("index_unique"), :>=, 5
+    assert_operator result.fetch("pad_unique"), :>=, 3
+    assert_operator result.fetch("index_unique"), :>=, 4
     assert_operator result.fetch("flylo_kick"), :>, 0
   end
 
@@ -715,12 +712,13 @@ class TestDilla < Minitest::Test
     assert_nil result.fetch("stream"), "blocklisted slugs never auto-mix on stream"
   end
 
-  def test_camel_locks_color_and_disables_self_sample
+  def test_dilla_style_locks_color_and_disables_self_sample
     result = eval_in_engine(<<~RUBY)
       ENV["DILLA_STREAMING"] = "1"
-      ENV["RENDER_MODE"] = "camel"
-      apply_camel_profile!(force: true)
+      ENV["RENDER_MODE"] = "dilla"
+      apply_dilla_style!(force: true)
       puts JSON.generate(
+        mode: ENV["RENDER_MODE"],
         sonitex: ENV["SONITEX"],
         analog: ENV["ANALOG_CHAIN"],
         vinyl: ENV["VINYL"],
@@ -728,19 +726,18 @@ class TestDilla < Minitest::Test
         lock: ENV["CAMEL_LOCK_COLOR"],
         wild: ENV["STREAM_ANALOG_WILD"],
         morph: ENV["SYNTH_MORPH"],
-        creative: ENV["STREAM_CREATIVE_FREEDOM"],
-        producer: ENV["PRODUCER_MODE"]
+        creative: ENV["STREAM_CREATIVE_FREEDOM"]
       )
     RUBY
+    assert_equal "dilla", result.fetch("mode")
     assert_equal "donuts_soul", result.fetch("sonitex")
-    assert_equal "broadcast", result.fetch("analog"), "lighter glue — less mud than summing_phasy"
-    assert_equal "0", result.fetch("vinyl"), "vinyl noise bed off so kit is clear"
+    assert_equal "broadcast", result.fetch("analog")
+    assert_equal "0", result.fetch("vinyl")
     assert_equal "0", result.fetch("self_sample")
     assert_equal "1", result.fetch("lock")
     assert_equal "0", result.fetch("wild")
     assert_equal "0", result.fetch("morph")
     assert_equal "0", result.fetch("creative")
-    assert_equal "afta", result.fetch("producer")
   end
 
   def test_lead_arp_zero_wins_even_when_pad_arp_is_wash
@@ -754,60 +751,26 @@ class TestDilla < Minitest::Test
     refute result.fetch("harmony")
   end
 
-  def test_producer_modes_apply_distinct_tables
+  def test_dilla_default_progression_has_no_planing_names
     result = eval_in_engine(<<~RUBY)
-      modes = %w[afta dilla flylo madlib].map do |m|
-        %w[PRODUCER_MODE SONITEX ANALOG_CHAIN VINYL FLYLO_DRUMS_ONLY CAMEL_CHOPS BARS LEAD_ARP].each { |k| ENV.delete(k) }
-        DillaProducerModes.apply!(m, force: true)
-        {
-          mode: m,
-          producer: ENV["PRODUCER_MODE"],
-          sonitex: ENV["SONITEX"],
-          analog: ENV["ANALOG_CHAIN"],
-          vinyl: ENV["VINYL"],
-          flylo_only: ENV["FLYLO_DRUMS_ONLY"],
-          chops: ENV["CAMEL_CHOPS"],
-          bars: ENV["BARS"],
-          lead: ENV["LEAD_ARP"]
-        }
-      end
-      puts JSON.generate(modes)
-    RUBY
-    by = result.each_with_object({}) { |h, acc| acc[h["mode"]] = h }
-    assert_equal "afta", by["afta"]["producer"]
-    assert_equal "donuts_soul", by["afta"]["sonitex"]
-    assert_equal "0", by["afta"]["vinyl"]
-    assert_equal "dilla", by["dilla"]["producer"]
-    assert_equal "donuts_warm", by["dilla"]["sonitex"]
-    assert_equal "0", by["dilla"]["flylo_only"]
-    assert_equal "16", by["dilla"]["bars"]
-    assert_equal "1", by["flylo"]["chops"]
-    assert_equal "1", by["flylo"]["flylo_only"]
-    assert_equal "acetate", by["madlib"]["analog"]
-    assert_operator by["madlib"]["vinyl"].to_i, :>=, 30
-  end
-
-  def test_camel_default_progression_has_no_planing_names
-    result = eval_in_engine(<<~RUBY)
-      ENV["RENDER_MODE"] = "camel"
+      ENV["RENDER_MODE"] = "dilla"
       ENV["LA_BEAT_PROGRESSION"] = "0"
-      ENV["DILLA_STREAMING"] = "1" # quiet apply_render_mode prints
-      apply_camel_profile!(force: true)
+      ENV["DILLA_STREAMING"] = "1"
+      apply_dilla_style!(force: true)
       pads = dilla_progression(ENV["PROGRESSION"] || ENV["TRACK"])
       names = pads.map { |c| c[:name].to_s }
       puts JSON.generate(names: names, planing: names.any? { |n| n.start_with?("planing") })
     RUBY
-    refute result.fetch("planing"), "default Camel progression must not use planing* chords"
+    refute result.fetch("planing"), "default progression must not use planing* chords"
     assert_operator result.fetch("names").length, :>=, 4
   end
 
-  def test_stream_iterate_tuning_soft_fill_does_not_clobber_mode
+  def test_stream_iterate_tuning_soft_fill_does_not_clobber_style
     result = eval_in_engine(<<~RUBY)
-      ENV.clear
       ENV["DILLA_STREAMING"] = "1"
-      ENV["PRODUCER_MODE"] = "afta"
       ENV["SONITEX"] = "donuts_soul"
-      DillaStreamEnv.soft_fill_iterate!(
+      ENV.delete("STREAM_CREATIVE_FREEDOM")
+      soft_fill_iterate!(
         { "SONITEX" => "heavy", "STREAM_CREATIVE_FREEDOM" => "1" },
         locked_keys: %w[SONITEX]
       )

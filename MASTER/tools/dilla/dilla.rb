@@ -3,7 +3,6 @@
 #
 # Dilla — unified audio engine
 # Synthesis, analog pads, vocal mixes (v7–v11), stem rack, demux, MIDI electronium.
-# Producer modes: afta (default) | dilla | flylo | madlib  (see lib/producer_modes.rb).
 #
 # Usage: ruby dilla.rb help
 
@@ -28,9 +27,6 @@ require_relative "lib/master_heuristics"
 require_relative "lib/spectral_engine"
 require_relative "lib/dilla_ml"
 require_relative "lib/dfam_engine"
-require_relative "lib/producer_modes"
-require_relative "lib/stream_env"
-require_relative "lib/camel_chops"
 
 ROOT = File.expand_path(__dir__)
 # Finished renders default to the invoking directory (override with
@@ -2497,7 +2493,8 @@ LA_BEAT_MIDI_FX_ROTATE = [
 ].freeze
 
 def camel_mode?
-  ENV["RENDER_MODE"]&.downcase == "camel"
+  m = ENV["RENDER_MODE"]&.downcase
+  m == "camel" || m == "dilla"
 end
 
 def camel_drum_entry_bar
@@ -2913,8 +2910,8 @@ def dilla_pocket_drums_enabled?
 end
 
 def kicks_enabled?
-  # Pocket kit kicks (Dilla/Madlib modes). FlyLo-only modes use flylo_kick events.
-  # Prefer POCKET_KICKS; KICKS=1 alone does not force pocket when FLYLO_DRUMS_ONLY=1.
+  # Pocket kit kicks when overlay-only is off. Prefer POCKET_KICKS;
+  # KICKS=1 alone does not force pocket when FLYLO_DRUMS_ONLY=1.
   return false if flylo_drums_only?
   return ENV.fetch("POCKET_KICKS", "1") != "0" if ENV.key?("POCKET_KICKS")
   ENV.fetch("KICKS", "1") != "0"
@@ -3465,7 +3462,7 @@ end
 def apply_form_to_cfg!(cfg)
   form = ENV["FORM"]&.to_sym
   preset = FORM_PRESETS[form] if form && FORM_PRESETS.key?(form)
-  preset ||= FORM_PRESETS[:camel_32] if ENV["RENDER_MODE"] == "camel"
+  preset ||= FORM_PRESETS[:camel_32] if %w[camel dilla].include?(ENV["RENDER_MODE"].to_s.downcase)
   preset ||= FORM_PRESETS[:soul_16] if ENV["RENDER_MODE"] == "long_soul" || ENV["RENDER_MODE"] == "golden"
   return cfg unless preset
   cfg.merge(
@@ -4426,7 +4423,7 @@ MICROTIMING_MS = {
 }.freeze
 # Curated 16-step drum phrases per feel — rotated bar-to-bar instead of
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
-# separately so each voice has its own pocket (Dilla/Madlib research).
+# separately so each voice has its own pocket.
 DRUM_PATTERN_SETS = {
   timeless: {
     kicks: [
@@ -4703,7 +4700,7 @@ CHORD_PROGRESSIONS = {
   alternating_minor7_pair: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
   # D'Angelo — Untitled (How Does It Feel), Voodoo. Verse then bridge.
   sus_add9_ballad: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
-  # Flying Lotus — Never Catch Me. Main loop then the tritone-sub modulation.
+  # Tritone-sub modulation after main loop.
   chromatic_mediant_drift: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
   aydin_modal_quartal: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9],
   aydin_jazz_turn: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9],
@@ -4949,7 +4946,7 @@ def generate_planing_progression(root_hz: 130.81, mode: :minor, length: 8, seed:
   end
 end
 
-# Flying Lotus's language (per "Never Catch Me" chord analysis): root
+# Chromatic-mediant language (chord analysis): root
 # motion by thirds (chromatic mediants) rather than fifths, with an
 # occasional tritone substitution standing in for a dominant resolution.
 MEDIANT_STEP_WEIGHTS = { 3 => 3, -3 => 3, 4 => 2, -4 => 2, 6 => 1 }.freeze
@@ -6542,7 +6539,7 @@ STREAM_TRACKS = DillaLofiMachine::STREAM_ROTATION
 # so the same bar count now takes much longer in real time — re-read fresh
 # on every hotswap exec below rather than baked into the original CLI arg,
 # so tuning this constant alone is enough going forward.
-# Default stream length; producer modes set BARS (afta/flylo 32, dilla/madlib 16).
+# Default stream length (style table may set BARS).
 STREAM_BARS_COUNT = 32
 STREAM_BEAUTY_MIN = (ENV["STREAM_BEAUTY_MIN"] || "68").to_f
 STREAM_MAX_RETRIES = (ENV["STREAM_MAX_RETRIES"] || "2").to_i
@@ -6631,12 +6628,104 @@ RENDER_MODE_DEFAULTS = {
     "ANALOG_CHAIN" => "cassette", "CONV_REVERB" => "chamber",
     "TRACK" => "golden", "BARS" => "32"
   },
-  # camel: single source is CAMEL_MODE_DEFAULTS (applied via apply_render_mode! / apply_camel_profile!).
-  camel: {}
+  # camel / dilla style: single table DILLA_STYLE_DEFAULTS below.
+  camel: {},
+  dilla: {}
 }.freeze
 
-# Alias of Afta-1 seat (lib/producer_modes.rb) — kept for CAMEL_MODE_DEFAULTS call sites.
-CAMEL_MODE_DEFAULTS = DillaProducerModes::AFTA.freeze
+# Single stream/render style — pad-forward curated progressions + locked 16-step kit.
+DILLA_STYLE_DEFAULTS = {
+  "TRACK" => "chromatic_mediant_drift",
+  "PROGRESSION" => "chromatic_mediant_drift",
+  "BPM" => "86",
+  "BARS" => "32",
+  "FORM" => "camel_32",
+  "COMPOSITION" => "1",
+  "GROOVE_DNA" => "wonky",
+  "PERFORMER" => "glasper",
+  "VOICING" => "quartal",
+  "PAD_VOICE" => "blend",
+  "PAD_ARP_MODE" => "wash",
+  "PAD_ATTACK" => "1600",
+  "PAD_RELEASE" => "4200",
+  "PAD_LEGATO_VAR" => "1",
+  "LUSH_SYNTH" => "1",
+  "LONG_STRIPDOWN" => "0",
+  "MOTIF_RECALL" => "1",
+  "KICKS" => "0",
+  "POCKET_KICKS" => "0",
+  "FLYLO_DRUMS_ONLY" => "1",
+  "FLYLO_DRUM_OVERLAY" => "1",
+  "FLYLO_QUINT_HATS" => "0",
+  "FLYLO_KICK_GAIN" => "1.35",
+  "KICK_SAMPLE_GAIN" => "0.95",
+  "KICK_GAIN" => "0.9",
+  "RAP_VOCAL" => "0",
+  "LA_BEAT_PROGRESSION" => "0",
+  "LINEAR_CHORD_INDEX" => "1",
+  "HARMONY_LEAD" => "0",
+  "LEAD_ARP" => "0",
+  "EXPERIMENTAL_LEADS" => "0",
+  "SYNTH_MORPH" => "0",
+  "LEAD_MORPH" => "0",
+  "FM_NATIVE" => "0",
+  "SIDECHAIN_STYLE" => "flylo",
+  "SONITEX" => "donuts_soul",
+  "SONITEX_PRESET" => "donuts_soul",
+  "ANALOG_CHAIN" => "broadcast",
+  "DRUM_PRESET" => "flylo_abstract",
+  "FLYLO_OVERLAY_GAIN" => "1.15",
+  "FLYLO_SUB_MIX" => "0.95",
+  "FLYLO_TOP_MIX" => "0.75",
+  "FLYLO_MERGE_BOOST" => "1.55",
+  "FLYLO_BASE_DRUM_VOL" => "0.12",
+  "DRUM_BUS_VOL" => "1.2",
+  "DRUM_BUS_GAIN" => "1.25",
+  "DRUM_MIX_WEIGHT" => "1.25",
+  "DRUM_PEAK_DB" => "-2.0",
+  "HARM_MIX_WEIGHT" => "1.55",
+  "HARM_BUS_VOL" => "1.85",
+  "SIDECHAIN_DRUM_WEIGHT" => "1.35",
+  "SIDECHAIN_HARM_WEIGHT" => "1.4",
+  "FLYLO_CHORD_DUCK" => "0.97",
+  "HARMONIC_PADS_WEIGHT" => "1.7",
+  "HARMONIC_PADS_VOLUME" => "1.55",
+  "HARMONIC_SCALE_LEAD_WEIGHT" => "0.12",
+  "HARMONIC_SCALE_LEAD_VOLUME" => "0.35",
+  "HARMONIC_LEAD_ARP_WEIGHT" => "0.12",
+  "HARMONIC_LEAD_ARP_VOLUME" => "0.35",
+  "HARMONIC_XLEAD_WEIGHT" => "0.08",
+  "HARMONIC_XLEAD_VOLUME" => "0.25",
+  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.15",
+  "HARMONIC_HARMONY_LEAD_VOLUME" => "0.4",
+  "HARMONIC_LEAD_WEIGHT" => "0.12",
+  "HARMONIC_LEAD_VOLUME" => "0.35",
+  "STREAM_CREATIVE_FREEDOM" => "0",
+  "STREAM_ANALOG_WILD" => "0",
+  "STREAM_ANALOG_EVERY" => "0",
+  "STREAM_ITERATE" => "0",
+  "PHONE_PREVIEW_GATE" => "0",
+  "CAMEL_LOCK_COLOR" => "1",
+  "CAMEL_DRUM_LOCK" => "1",
+  "CAMEL_NO_BREAK" => "1",
+  "CAMEL_CLEAN_MASTER" => "1",
+  "CAMEL_NO_REVERB" => "1",
+  "CAMEL_DRY_DRUMS" => "0",
+  "DRUM_CHOPS" => "0",
+  "CONV_REVERB" => "0",
+  "VINYL" => "0",
+  "SELF_SAMPLE" => "0",
+  "RADIO_BERGEN" => "0",
+  "STREAM_CONTINUOUS" => "1",
+  "STREAM_GAP" => "0.55",
+  "STREAM_CROSSFADE" => "0.12",
+  "STREAM_DEMO" => "demo.wav",
+  "NO_QUANTIZE" => "0",
+  "SWING" => "54"
+}.freeze
+
+# Back-compat name used by camel_mode paths.
+CAMEL_MODE_DEFAULTS = DILLA_STYLE_DEFAULTS
 
 STREAM_SOUL_DEFAULTS = {
   "STREAM_SOUL" => "1",
@@ -6830,32 +6919,40 @@ def stream_iterate_acceptable?(path)
   ok
 end
 
-# Keys that define the “beautiful pads + Camel kit” character — reassert after
-# iterate/track-soul so stream doesn't drift into thin/harsh mixes again.
-CAMEL_BEAUTY_LOCK_KEYS = %w[
-  HARM_BUS_VOL HARM_MIX_WEIGHT SIDECHAIN_DRUM_WEIGHT SIDECHAIN_HARM_WEIGHT
-  HARMONIC_PADS_WEIGHT HARMONIC_PADS_VOLUME HARMONIC_SCALE_LEAD_WEIGHT
-  HARMONIC_SCALE_LEAD_VOLUME HARMONIC_LEAD_ARP_WEIGHT HARMONIC_LEAD_ARP_VOLUME
-  HARMONIC_XLEAD_WEIGHT HARMONIC_XLEAD_VOLUME HARMONIC_HARMONY_LEAD_WEIGHT
-  HARMONIC_HARMONY_LEAD_VOLUME HARMONIC_LEAD_WEIGHT HARMONIC_LEAD_VOLUME
-  SONITEX SONITEX_PRESET ANALOG_CHAIN CAMEL_DRY_DRUMS CAMEL_DRY_DRUM_WEIGHT
-  CAMEL_BED_WEIGHT PAD_ATTACK PAD_RELEASE PAD_VOICE PAD_ARP_MODE
-  FLYLO_QUINT_HATS CAMEL_DRUM_LOCK CAMEL_NO_BREAK CAMEL_CLEAN_MASTER
-  STREAM_CREATIVE_FREEDOM SYNTH_MORPH LEAD_MORPH LEAD_ARP HARMONY_LEAD
-  EXPERIMENTAL_LEADS FM_NATIVE LA_BEAT_PROGRESSION STREAM_ITERATE LONG_STRIPDOWN
-].freeze
+# Style-lock keys — reassert after track soul / iterate so the mix doesn't drift.
+DILLA_STYLE_LOCK_KEYS = DILLA_STYLE_DEFAULTS.keys.freeze
 
-def reassert_camel_beauty_locks!
-  return unless camel_mode?
-  CAMEL_BEAUTY_LOCK_KEYS.each do |key|
-    next unless CAMEL_MODE_DEFAULTS.key?(key)
-    ENV[key] = CAMEL_MODE_DEFAULTS[key].to_s
+def soft_fill_env!(table)
+  table.each do |key, value|
+    next if value.nil?
+    ENV[key] = value.to_s if ENV[key].nil? || ENV[key].empty?
   end
-  # Keep envelope lush even when track soul profiles set shorter attacks.
-  atk = [ENV["PAD_ATTACK"].to_i, CAMEL_MODE_DEFAULTS["PAD_ATTACK"].to_i].max
-  rel = [ENV["PAD_RELEASE"].to_i, CAMEL_MODE_DEFAULTS["PAD_RELEASE"].to_i].max
+end
+
+def soft_fill_iterate!(tuning, locked_keys: [])
+  locked = locked_keys.map(&:to_s)
+  tuning.each do |key, value|
+    next if value.nil?
+    next if locked.include?(key.to_s)
+    next if ENV[key] && !ENV[key].empty?
+    ENV[key] = value.to_s
+  end
+end
+
+def reassert_dilla_style_locks!
+  return unless camel_mode? || ENV["RENDER_MODE"].to_s.downcase == "dilla"
+  DILLA_STYLE_LOCK_KEYS.each do |key|
+    next unless DILLA_STYLE_DEFAULTS.key?(key)
+    ENV[key] = DILLA_STYLE_DEFAULTS[key].to_s
+  end
+  atk = [ENV["PAD_ATTACK"].to_i, DILLA_STYLE_DEFAULTS["PAD_ATTACK"].to_i].max
+  rel = [ENV["PAD_RELEASE"].to_i, DILLA_STYLE_DEFAULTS["PAD_RELEASE"].to_i].max
   ENV["PAD_ATTACK"] = atk.to_s
   ENV["PAD_RELEASE"] = rel.to_s
+end
+
+def reassert_camel_beauty_locks!
+  reassert_dilla_style_locks!
 end
 
 def stream_iterate_after_render!(path)
@@ -6866,7 +6963,7 @@ def stream_iterate_after_render!(path)
   harsh = DillaMaster.analyze_harshness(spectrum)
   sk = DillaMaster.sub_kick_balance(spectrum, beauty)
   notes = []
-  # Camel beauty stream: only soft mix nudges — no morph / grid rewrite / analog roulette.
+  # Dilla-style stream: soft mix nudges only — no morph / grid rewrite / analog roulette.
   if camel_mode?
     if sk[:recommendation] == "boost_sub"
       notes << "sub_ok"
@@ -7207,17 +7304,13 @@ end
 def apply_render_mode!
   mode = ENV["RENDER_MODE"]&.downcase&.to_sym
   return unless mode
-  # Camel: one table only (CAMEL_MODE_DEFAULTS). Avoid dual-table drift.
-  table = if mode == :camel
-            CAMEL_MODE_DEFAULTS
+  table = if %i[camel dilla].include?(mode)
+            DILLA_STYLE_DEFAULTS
           else
             RENDER_MODE_DEFAULTS[mode]
           end
   return unless table
-  table.each do |key, value|
-    next if value.nil?
-    ENV[key] = value if ENV[key].nil? || ENV[key].empty?
-  end
+  soft_fill_env!(table)
   puts "render mode: #{mode}" if ENV["DILLA_STREAMING"] != "1"
 end
 
@@ -7343,22 +7436,25 @@ def apply_track_soul_profile!(track, force: false)
   end
 end
 
-def apply_camel_profile!(force: false)
-  ENV["RENDER_MODE"] = "camel" if ENV["RENDER_MODE"].nil? || ENV["RENDER_MODE"].empty?
-  mode = ENV["PRODUCER_MODE"].to_s
-  mode = "afta" if mode.empty? || mode == "camel"
-  DillaProducerModes.apply!(mode, force: force)
+def apply_dilla_style!(force: false)
+  raw = ENV["RENDER_MODE"].to_s.downcase
+  ENV["RENDER_MODE"] = "dilla" if raw.empty? || raw == "camel"
+  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.downcase == "camel"
   apply_render_mode!
-  CAMEL_MODE_DEFAULTS.each do |key, value|
+  DILLA_STYLE_DEFAULTS.each do |key, value|
     next if !force && ENV[key] && !ENV[key].empty?
     ENV[key] = value.to_s
   end
   track = ENV["TRACK"].to_s
   track = "chromatic_mediant_drift" if track.empty?
   apply_track_soul_profile!(track, force: force)
-  reassert_camel_beauty_locks! if force
+  reassert_dilla_style_locks! if force
   ensure_learned_engine_seeded!
   apply_learned_env_for_track!(track)
+end
+
+def apply_camel_profile!(force: false)
+  apply_dilla_style!(force: force)
 end
 
 def pick_default_track!
@@ -7388,31 +7484,29 @@ end
 
 def apply_stream_listenability_defaults!
   apply_best_defaults!
-  iterate = ENV.fetch("STREAM_ITERATE", "1") != "0"
-  soul = ENV.fetch("STREAM_SOUL", "1") != "0"
-  mode = DillaStreamEnv.resolve_stream_env!(
-    best_defaults: DILLA_BEST_DEFAULTS,
-    deep_defaults: DILLA_DEEP_DEFAULTS,
-    extra_defaults: STREAM_EXTRA_DEFAULTS,
-    fast_defaults: STREAM_FAST_DEFAULTS,
-    iterate_tuning: STREAM_ITERATE_TUNING,
-    iterate_override_keys: STREAM_ITERATE_OVERRIDE_KEYS,
-    soul_defaults: STREAM_SOUL_DEFAULTS,
-    deep: stream_deep?,
-    iterate: iterate && ENV["DILLA_STREAMING"] == "1",
-    soul: soul
-  )
-  # Mode tables force-fill; reassert beauty locks for afta/camel/flylo pad seats.
-  if %w[afta camel flylo].include?(mode.to_s) || camel_mode?
-    apply_camel_profile!(force: true) if camel_mode? || mode.to_s == "afta"
-    reassert_camel_beauty_locks! if camel_mode? || %w[afta flylo].include?(mode.to_s)
+  soft_fill_env!(STREAM_EXTRA_DEFAULTS)
+  if stream_deep?
+    ENV["DILLA_DEEP"] = "1" if ENV["DILLA_DEEP"].to_s.empty?
+    soft_fill_env!(DILLA_DEEP_DEFAULTS)
+  else
+    fast = STREAM_FAST_DEFAULTS.dup
+    if stream_iterate_enabled?
+      STREAM_ITERATE_OVERRIDE_KEYS.each { |key| fast.delete(key) }
+    end
+    soft_fill_env!(fast)
   end
-  ensure_learned_engine_seeded! if soul
-  apply_learned_env_for_track!(ENV["TRACK"]) if soul && ENV["TRACK"] && !ENV["TRACK"].empty?
-  # Soft-fill again so mode wins over learned env on beauty keys.
-  if %w[afta camel flylo dilla madlib].include?(mode.to_s)
-    DillaProducerModes.apply!(mode, force: true)
+  if stream_iterate_enabled?
+    soft_fill_iterate!(STREAM_ITERATE_TUNING, locked_keys: DILLA_STYLE_LOCK_KEYS)
   end
+  if ENV.fetch("STREAM_SOUL", "1") != "0"
+    soft_fill_env!(STREAM_SOUL_DEFAULTS)
+    ensure_learned_engine_seeded!
+    apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
+  end
+  # Single style for stream: dilla (RENDER_MODE camel stays as alias).
+  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty? ||
+                                  ENV["RENDER_MODE"].to_s.downcase == "camel"
+  apply_dilla_style!(force: true)
 end
 
 def render_spectrum(path)
@@ -7552,8 +7646,8 @@ end
 # Non-stop chord/pad showcase: renders and plays each track once (full
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
-# Soulful pad-first rotation (curated progressions that read as chord music).
-CAMEL_STREAM_PRIORITY = %w[
+# Pad-first rotation (curated progressions that read as chord music).
+DILLA_STREAM_PRIORITY = %w[
   chromatic_mediant_drift maj7_minor_cycle neo_soul erykah_minor time_donut
   warm_minor_arc electronium_loop quartal_west_coast slow_ballad_wash
   minor_iv_loop neo_soul_pocket slash_neo_soul aydin_modal_quartal
@@ -7570,9 +7664,8 @@ def stream_track_order
     warn "stream: unknown lock #{lock} — falling back to full rotation"
   end
   if camel_mode?
-    priority = CAMEL_STREAM_PRIORITY.select { |t| STREAM_TRACKS.include?(t) }
+    priority = DILLA_STREAM_PRIORITY.select { |t| STREAM_TRACKS.include?(t) }
     rest = STREAM_TRACKS - priority
-    # Always soulful pad tracks first (rotated for variety), then the rest.
     return priority.rotate(rand([priority.length, 1].max)) + rest.shuffle
   end
   STREAM_TRACKS.rotate(rand(STREAM_TRACKS.length))
@@ -7834,15 +7927,13 @@ def curated_progression_pads(key)
 end
 
 # Baked-in learnings — engine works without project/learnings/*.json.
-# yt-dlp "Flying Lotus - Camel" → htdemucs_6s drums.wav → 16-step grid.
+# Baked 16-step kit grid (from demucs drums stem peak-count @ ~86 BPM). Locked
+# so density/rotation cannot rewrite the pocket into noise.
 FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=t6SXXx1Fu_4".freeze
-# Transcribed from samples/demux/htdemucs_6s/flylo_camel_source/drums.wav
-# (peak-count @ ~85–86 BPM on kick/snare bands). Keep this grid LOCKED —
-# density/rotation/quint hats were rewriting it into something unrecognizable.
 FLYLO_CAMEL_DRUM_GRID = {
   "bpm" => 86,
   "swing" => 52,
-  "source" => "Flying Lotus - Camel (stem-locked)",
+  "source" => "stem_locked_grid",
   "source_url" => FLYLO_CAMEL_SOURCE_URL,
   # Kick: downbeat + syncopated cluster (matches ~85 BPM kick-band peaks).
   "flylo_kicks" => [0, 3, 7, 10, 11, 14],
@@ -8999,6 +9090,42 @@ def ensure_drum_kit!
   generate_drum_kit! unless drum_kit_ready?
 end
 
+# Optional one-shots sliced from demucs drums (path under samples/) for DRUM_CHOPS=1.
+DRUM_CHOP_SOURCE = "samples/demux/htdemucs_6s/flylo_camel_source/drums.wav"
+DRUM_CHOP_DIR = "samples/drums/custom/grid_chops"
+DRUM_CHOP_BPM = 86.0
+
+def ensure_drum_chops!
+  dest = File.join(ROOT, DRUM_CHOP_DIR)
+  return dest if %w[kick.wav snare.wav hat.wav].all? { |n| File.file?(File.join(dest, n)) }
+  src = File.join(ROOT, DRUM_CHOP_SOURCE)
+  return nil unless File.file?(src)
+  FileUtils.mkdir_p(dest)
+  step = 60.0 / DRUM_CHOP_BPM / 4.0
+  bar8 = 8 * 4 * step
+  { "kick.wav" => 0, "snare.wav" => 4, "hat.wav" => 2 }.each do |name, step_i|
+    t0 = (bar8 + step_i * step + 0.5).round(3)
+    dur = name.start_with?("kick") ? 0.28 : (name.start_with?("snare") ? 0.22 : 0.12)
+    out = File.join(dest, name)
+    system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
+           "-af", "aformat=sample_rates=44100:channel_layouts=mono,highpass=f=30,alimiter=limit=0.95",
+           "-c:a", "pcm_s16le", out, out: File::NULL, err: File::NULL)
+  end
+  File.file?(File.join(dest, "kick.wav")) ? dest : nil
+end
+
+def apply_drum_chops_to_kit!(kit)
+  dest = ensure_drum_chops!
+  return kit unless dest
+  { kick: "kick.wav", snare: "snare.wav", hat: "hat.wav" }.each do |role, file|
+    path = File.join(dest, file)
+    next unless File.file?(path)
+    samples = defined?(DillaMusicGems) ? DillaMusicGems.read_mono_wav(path) : nil
+    kit[role] = samples if samples && !samples.empty?
+  end
+  kit
+end
+
 # Explicit, opt-in external asset fetch (never runs on its own — the whole
 # engine is otherwise pure-Ruby/ffmpeg synthesis with zero external assets).
 # Caches into the same ~/.cache/dilla-soundfonts dir GeneralUser-GS already
@@ -9083,7 +9210,7 @@ def load_mono_sample(path)
   pipe_floats(path, "aformat=channel_layouts=mono:sample_fmts=flt")
 end
 
-# LA beat-scene kicks (Brainfeeder/Flying Lotus lineage) are never one thin
+# Abstract-kit kicks are never one thin
 # sample — they stack a pitch-dropping sub body for weight, a short
 # broadband click for attack/definition, and mild saturation for character.
 # Layers on top of the existing sample rather than replacing it.
@@ -10606,10 +10733,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     shaker: synth_shaker_sample,
     cowbell: synth_cowbell_sample
   )
-  # FlyLo mode: replace kit oneshots with Camel demucs chops when available.
-  if ENV.fetch("CAMEL_CHOPS", "0") != "0"
-    DillaCamelChops.apply_to_kit!(kit, ROOT)
-  end
+  apply_drum_chops_to_kit!(kit) if ENV.fetch("DRUM_CHOPS", ENV.fetch("CAMEL_CHOPS", "0")) != "0"
   unless dilla_pocket_drums_enabled?
     bar_p = beat_p * 4.0
   else
@@ -11204,7 +11328,7 @@ def help
       radio-bergen-librosa            Librosa deep analysis (optional .venv)
 
     SYNTHESIS
-      loose_pocket [out.wav|mp3]         Dirty Madlib drums — Delicious pocket + VLC FX (default on)
+      loose_pocket [out.wav|mp3]         Dirty pocket drums + VLC FX (default on)
       loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
       DELICIOUS=1 (default)        0.72x pocket BPM | VLC=1 (default) all audio effects
       dilla | beat [out.mp3]       J Dilla beat — TRACK= preset (default chromatic_minor_descent)
@@ -11549,7 +11673,7 @@ def madlib_master_filters(input_tag = "bed")
   filt
 end
 
-# Pure drums: MPC one-shots + Madlib pockets + Dilla microtiming + SP-1200 dirt.
+# Pure drums: MPC one-shots + pocket microtiming + SP-1200 dirt.
 def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.wav"), bars_count = nil)
   require_tools! "ffmpeg"
   ensure_drum_kit!
@@ -13118,8 +13242,7 @@ FLAG_ENV = {
   "speak" => "SPEAK", "speak-voice" => "SPEAK_VOICE", "speak-rate" => "SPEAK_RATE",
   "speak-pitch" => "SPEAK_PITCH", "speak-vol" => "SPEAK_VOL", "radio-bergen" => "RADIO_BERGEN",
   "stream-iterate" => "STREAM_ITERATE", "evolve-every" => "EVOLVE_EVERY",
-  "producer-mode" => "PRODUCER_MODE", "mode" => "PRODUCER_MODE",
-  "pocket-kicks" => "POCKET_KICKS", "camel-chops" => "CAMEL_CHOPS",
+  "pocket-kicks" => "POCKET_KICKS", "drum-chops" => "DRUM_CHOPS", "camel-chops" => "DRUM_CHOPS",
   "stream-crossfade" => "STREAM_CROSSFADE", "stream-gap" => "STREAM_GAP",
   "stream-creative-freedom" => "STREAM_CREATIVE_FREEDOM", "stream-evolve-performer" => "STREAM_EVOLVE_PERFORMER",
   "form" => "FORM", "section-map" => "SECTION_MAP", "render-mode" => "RENDER_MODE",
@@ -13395,12 +13518,13 @@ if __FILE__ == $PROGRAM_NAME
   end
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: continuous Camel stream (one-shot via `dilla` / `out.wav` / `camel`).
-    ENV["RENDER_MODE"] = "camel" if ENV["RENDER_MODE"].to_s.empty?
+    # Bare invoke: continuous dilla-style stream.
+    ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty? ||
+                                    ENV["RENDER_MODE"].to_s.downcase == "camel"
     ENV["STREAM_SOUL"] = "1" if ENV["STREAM_SOUL"].to_s.empty?
     ENV["SPEAK"] = "0" if ENV["SPEAK"].to_s.empty?
     ENV["STREAM_CONTINUOUS"] = "1" if ENV["STREAM_CONTINUOUS"].to_s.empty?
-    apply_camel_profile!(force: false) if camel_mode?
+    apply_dilla_style!(force: false)
     stream((ENV["BARS"] || "32").to_i)
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd)
     ARGV.unshift(cmd)

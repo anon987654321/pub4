@@ -1,101 +1,89 @@
 # Dilla
 
 Unified audio engine — synthesis, analog pads, vocal mixes, stem rack,
-demux, MIDI electronium. Core logic lives in `dilla.rb` plus focused libs
-under `lib/` (`producer_modes`, `stream_env`, `camel_chops`, harmony, DNA).
-Tests: `MASTER/test/test_dilla.rb`.
+demux, MIDI electronium. Logic lives in `dilla.rb` plus small helpers under
+`lib/` (harmony, DNA, gems, groove). Tests: `MASTER/test/test_dilla.rb`.
 
 Two entry points:
 
-- `MASTER/tools/dilla.rb` — chat wrapper (`generate --style …`). **Not** the
-  Camel/Afta stream defaults (older sonitex/cassette maps).
+- `MASTER/tools/dilla.rb` — chat wrapper (`generate --style …`). Older
+  style maps for one-shot exports; not the live stream defaults.
 - `MASTER/tools/dilla/dilla.rb` — engine. `ruby dilla.rb help` for commands.
 
 ---
 
-## Producer modes (research-backed)
+## Single style: `dilla`
 
-Forum / Reddit / KVR consensus distilled into **one mode at a time**
-(`lib/producer_modes.rb`). Do not stack all four.
-
-| Mode | Seat | Hallmarks (from production communities) |
-|---|---|---|
-| **`afta`** (default) | Afta-1 / post-Dilla beat tape | Patient chords, warm EP/Rhodes wash, kit supports the loop, restraint over maximalism |
-| **`dilla`** | J Dilla | Unquantized / light quant feel, early snare–late hat pocket, soul extensions (m7/m9/maj7), shorter dusty loops, light vinyl |
-| **`flylo`** | Flying Lotus | Off-grid Dilla-inspired kit + denser perc, **overt sidechain** pump, abstract keys optional, Camel-grid + demucs **stem chops** |
-| **`madlib`** | Madlib | Sample/dust bias, SP-303-ish color (`donuts_warm` + acetate), higher vinyl, short loops, imperfect glue |
-| **`camel`** | alias of **afta** | Compatibility for `RENDER_MODE=camel` |
+One stream/render profile (`DILLA_STYLE_DEFAULTS`). `RENDER_MODE=camel` is a
+compat alias for the same table.
 
 ```sh
 cd MASTER/tools/dilla
 
-# Default stream = afta (pad-first, curated progressions, FlyLo grid only)
-PRODUCER_MODE=afta ruby dilla.rb stream 32
-# or bare:
+# Continuous stream (default bare invoke)
 ruby dilla.rb
+# same:
+RENDER_MODE=dilla STREAM_SOUL=1 SPEAK=0 ruby dilla.rb stream 32
 
-# Explicit seats
-PRODUCER_MODE=dilla  ruby dilla.rb stream 16
-PRODUCER_MODE=flylo  ruby dilla.rb stream 32   # Camel chops when source wav present
-PRODUCER_MODE=madlib ruby dilla.rb stream 16
+# One-shot
+ruby dilla.rb dilla out.wav 32
+# or: ruby dilla.rb camel out.wav 32
 ```
 
-Flags: `--mode=afta` / `--producer-mode=flylo` (see `FLAG_ENV`).
+### What you get
 
-### Current afta / camel “full sound” (truth)
+| Layer | Behavior |
+|---|---|
+| **Harmony** | Curated progressions only (`LA_BEAT_PROGRESSION=0`) |
+| **Pads** | Blend/wash, long attack/release, high harm bus |
+| **Leads** | Off (`LEAD_ARP=0` wins even if pad arp is wash) |
+| **Drums** | 16-step overlay kit only (`FLYLO_DRUMS_ONLY=1`); pocket kicks need `POCKET_KICKS=1` |
+| **Master** | `donuts_soul` + `broadcast` |
+| **Vocals** | Off by default (`RAP_VOCAL=0`); opt-in with isolation + blocklist |
+| **Iterate / vinyl bed** | Off |
 
-- **Harmony:** curated `CHORD_PROGRESSIONS` only — **no** random `planing*` LA-beat
-- **Pads:** blend/wash, long attack/release, high harm bus
-- **Leads:** off (`LEAD_ARP=0` wins even when pad arp is wash)
-- **Drums:** FlyLo-only grid (`FLYLO_DRUMS_ONLY=1`); pocket kicks via `POCKET_KICKS` in dilla/madlib modes
-- **Master:** `donuts_soul` + `broadcast` (not summing_phasy)
-- **Vocals:** off by default (`RAP_VOCAL=0`); opt-in slug with isolation + blocklist
-- **Iterate / dry-kit re-amp / vinyl bed:** off
-
-### Signal flow (afta)
+### Signal flow
 
 ```
 curated progression → pad wash + bass
         │
-FlyLo 16-step grid (locked Camel steps)
+16-step drum grid (locked baked steps)
         │
- sidechain amix (musical duck)
+ sidechain amix
         │
  Sonitex donuts_soul → analog broadcast → loudnorm
         │
  demo.wav + afplay
 ```
 
-### FlyLo Camel grid (baked)
+### Grid
 
-Kicks `[0, 3, 7, 10, 11, 14]`, snares `[4, 12]`, 8th hats.
-JSON cannot re-poison in camel/flylo drum lock.
-With `CAMEL_CHOPS=1` (flylo mode), one-shots are sliced from
-`samples/demux/htdemucs_6s/flylo_camel_source/drums.wav` when present.
+Baked steps: kicks `[0, 3, 7, 10, 11, 14]`, snares `[4, 12]`, 8th hats.
+`DRUM_CHOPS=1` optionally replaces kit oneshots with slices from demucs
+drums under `samples/demux/...` when that file exists.
 
-### Vocals (optional)
+### ENV resolve
+
+`soft_fill_env!` layers best/stream/soul defaults, then `apply_dilla_style!(force: true)`
+locks the single style. `reassert_dilla_style_locks!` after track soul.
+
+| ENV | Role |
+|---|---|
+| `RENDER_MODE=dilla` | Apply `DILLA_STYLE_DEFAULTS` |
+| `STREAM_SOUL=1` | Soul stream soft-fills |
+| `STREAM_TRACK=...` | Pin one progression |
+| `STREAM_GAP` / `STREAM_CROSSFADE` | Silence between tracks |
+| `POCKET_KICKS` | Pocket kit kicks (default off under overlay-only) |
+| `DRUM_CHOPS` | Use demucs-sliced oneshots when available |
+| `RAP_VOCAL` | slug or `0` |
+| `BARS` | Default 32 |
+
+### Optional vocals
 
 ```sh
-ruby dilla.rb rap-vocal ingest "Slum Village" "https://www.youtube.com/watch?v=tah5UC2hdrk"
-RAP_VOCAL=slum_village ruby dilla.rb camel out.wav 32
+ruby dilla.rb rap-vocal ingest "Artist" "https://..."
+RAP_VOCAL=slug ruby dilla.rb dilla out.wav 32
 ```
-
-Never Timeless/Microphone Master (empty demucs vocals). `sirkel_sag` blocklisted.
-
-### ENV resolve (B14)
-
-`DillaStreamEnv.resolve_stream_env!` soft-fills layers then **force-applies**
-`PRODUCER_MODE` table so iterate/soul defaults cannot clobber the seat.
-
-Beauty locks: `reassert_camel_beauty_locks!` after track soul on afta/camel/flylo.
-
-### Bars / kicks (B12–B13)
-
-| Concept | ENV |
-|---|---|
-| Stream length | `BARS` / `STREAM_BARS` (default **32** for afta/flylo; **16** for dilla/madlib) |
-| Pocket kit kicks | `POCKET_KICKS=1` (dilla/madlib). `KICKS` alone does not force pocket under FlyLo-only |
-| Stream gap | `STREAM_GAP` + `STREAM_CROSSFADE` (soft silence between tracks) |
 
 ---
 
@@ -111,18 +99,11 @@ Beauty locks: `reassert_camel_beauty_locks!` after track soul on afta/camel/flyl
 | MIDI | `electronium`/`midi` |
 | Assets | `fetch-assets`, `use-external-kit` |
 
-`DISPATCH` at the bottom of `dilla.rb` is the source of truth.
-
----
+`DISPATCH` in `dilla.rb` is the source of truth.
 
 ## Gems
 
-| Gem | Used for |
-|---|---|
-| [coltrane](https://github.com/pedrozath/coltrane) | Chords / progressions |
-| [midilib](https://github.com/jimm/midilib) | MIDI export |
-| [wavefile](https://github.com/jstrait/wavefile) | WAV load |
-| [head_music](https://github.com/roberthead/head_music) | Pitch-class study |
+coltrane, midilib, wavefile, head_music via `lib/music_gems.rb` (`:dilla` group).
 
 ```sh
 cd MASTER && bundle install
@@ -133,8 +114,4 @@ bundle exec ruby tools/dilla/dilla.rb debug
 
 ```sh
 cd MASTER && bundle exec ruby -Itest test/test_dilla.rb
-DILLA_SMOKE=1 bundle exec ruby -Itest test/test_dilla.rb -n test_smoke
 ```
-
-Covers dispatch, voicing, Camel/afta locks, producer modes, lead-off,
-no-planing progressions, soft-fill iterate, FlyLo schedule, rap blocklist.

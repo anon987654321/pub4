@@ -196,7 +196,7 @@ module DillaLofiMachine
       stereo_pan: true, sidechain: true, intro_bars: 8,
       drum_preset: :flylo_abstract, chords: %w[Cmaj9 Am9 Fmaj9 G6], timing: FLYLO_TIMING
     },
-    # Flying Lotus "Camel" — chromatic mediant drift (Los Angeles).
+    # Chromatic mediant drift profile.
     chromatic_mediant_drift: {
       producer: :flylo, key: "D minor", bpm: 86, swing: 54,
       chord_bars: 2, phrase_bars: 32, feel: :flylo_abstract, voicing: :quartal,
