@@ -3117,36 +3117,54 @@ def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade
   # renders would otherwise produce a negative afade start, which ffmpeg
   # rejects as out of range.
   outro_fade = [(beat_p * 4.0 * 4).round(2), duration].min
-  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || (deep_render? ? "1.82" : "1.68")
+  # HARM_BUS_VOL defaults lower on Camel so kicks/snares/leads can breathe.
+  default_vol = if flylo_primary_drums?
+                  "0.95"
+                elsif deep_render?
+                  "1.82"
+                else
+                  "1.68"
+                end
+  harm_vol = ENV["DEBUG_HARM_WEIGHT"] || ENV.fetch("HARM_BUS_VOL", default_vol)
   deep = deep_render?
-  sub_cut = deep ? "-1.8" : "-2.2"
-  body_boost = deep ? "3.2" : "2.8"
-  mid_boost = deep ? "2.9" : "2.6"
+  sub_cut = deep ? "-1.8" : (flylo_primary_drums? ? "-3.5" : "-2.2")
+  body_boost = deep ? "3.2" : (flylo_primary_drums? ? "1.6" : "2.8")
+  mid_boost = deep ? "2.9" : (flylo_primary_drums? ? "1.4" : "2.6")
+  air = flylo_primary_drums? ? "equalizer=f=4200:t=h:w=2500:g=1.8," : "equalizer=f=2800:t=h:w=1800:g=1.2,"
   "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
-    "highpass=f=#{deep ? 95 : 110},equalizer=f=72:t=o:w=1.2:g=#{deep ? 2.2 : 1.4}," \
+    "highpass=f=#{deep ? 95 : (flylo_primary_drums? ? 130 : 110)},equalizer=f=72:t=o:w=1.2:g=#{deep ? 2.2 : 1.0}," \
     "equalizer=f=95:t=h:w=120:g=#{sub_cut}," \
     "equalizer=f=420:t=o:w=1.1:g=#{body_boost},equalizer=f=680:t=h:w=900:g=#{mid_boost}," \
-    "equalizer=f=1400:t=h:w=1200:g=2.4," \
-    "equalizer=f=2800:t=h:w=1800:g=1.2,equalizer=f=#{lp}:t=o:w=1.0:g=0.8," \
+    "equalizer=f=1400:t=h:w=1200:g=#{flylo_primary_drums? ? 1.2 : 2.4}," \
+    "#{air}equalizer=f=#{lp}:t=o:w=1.0:g=0.6," \
     "afade=t=in:st=#{harm_fade_start}:d=#{harm_fade_dur}," \
     "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}," \
-    "equalizer=f=800:t=h:w=600:g=-3:enable='between(t,#{build_start},#{duration})'[harm]"
+    "equalizer=f=800:t=h:w=600:g=-2:enable='between(t,#{build_start},#{duration})'[harm]"
+end
+
+def sidechain_amix_weights
+  # Prefer drums when FlyLo/Camel kit is primary (was 1.0:1.6 — pads buried the kit).
+  d = ENV.fetch("SIDECHAIN_DRUM_WEIGHT", flylo_primary_drums? ? "1.85" : "1.0").to_f
+  h = ENV.fetch("SIDECHAIN_HARM_WEIGHT", flylo_primary_drums? ? "0.72" : "1.55").to_f
+  [d.round(3), h.round(3)]
 end
 
 def flylo_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
+  dw, hw = sidechain_amix_weights
   [
     "#{drum_label}asplit=2[dr_dry][dr_sc]",
-    "#{harm_label}[dr_sc]sidechaincompress=threshold=-22dB:ratio=6:attack=0.75:release=14:level_sc=0.9[harm_sc]",
-    "[dr_dry][harm_sc]amix=inputs=2:weights=1.0 1.6:duration=first:normalize=0[sc_mix]"
+    "#{harm_label}[dr_sc]sidechaincompress=threshold=-20dB:ratio=5:attack=1:release=28:level_sc=1.0[harm_sc]",
+    "[dr_dry][harm_sc]amix=inputs=2:weights=#{dw} #{hw}:duration=first:normalize=0[sc_mix]"
   ]
 end
 
 # Tight kick-triggered duck — short attack/release for MPC pocket, not wash.
 def dilla_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
+  dw, hw = sidechain_amix_weights
   [
     "#{drum_label}asplit=2[dr_dry][dr_sc]",
     "#{harm_label}[dr_sc]sidechaincompress=threshold=-24dB:ratio=5:attack=0.3:release=90:level_sc=0.88[harm_sc]",
-    "[dr_dry][harm_sc]amix=inputs=2:weights=1.0 1.55:duration=first:normalize=0[sc_mix]"
+    "[dr_dry][harm_sc]amix=inputs=2:weights=#{dw} #{hw}:duration=first:normalize=0[sc_mix]"
   ]
 end
 
@@ -3180,7 +3198,18 @@ def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
     end
   end
   spread = role == :ghost ? 0.06 : 0.08
-  dilla_velocity(base, bar, step, spread: spread) * sec_gain
+  vel = dilla_velocity(base, bar, step, spread: spread) * sec_gain
+  # Camel/FlyLo primary: pocket kicks/snares/claps need headroom over warm pads.
+  if flylo_primary_drums?
+    mul = case role
+          when :kick_anchor, :kick_sync then 1.45
+          when :snare, :clap then 1.55
+          when :hat_down, :hat_up, :open then 1.2
+          else 1.0
+          end
+    vel = (vel * mul).clamp(0.05, 0.98)
+  end
+  vel
 end
 
 def spectral_arp_chop_bar?(bar, chord_bars, drums_only, section)
@@ -4173,6 +4202,15 @@ SONITEX_PRESETS = {
     wow_depth: 0.009, flutter_depth: 0.005, stereo_width: 1.12, hiss_amp: 0.0022,
     out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.4,
     limit: 0.86, level_out: 0.88
+  ),
+  # Stream/soul: keep Donuts warmth but leave air for snares, claps, and lead arps.
+  donuts_soul: SONITEX_STX1260.merge(
+    crush_bits: 12, crush_sr: 1.72, crush_mix: 0.28, crush_post_lp: 4200,
+    dist_drive: 1.35, dist_mix: 0.52, hf_rolloff: 9_200, groove_wear_lp: 6_800,
+    head_bump_hz: 62, head_bump_db: 3.8, warmth_db: 3.2, lf_rolloff: 32,
+    wow_depth: 0.006, flutter_depth: 0.0035, stereo_width: 1.1, hiss_amp: 0.0018,
+    out_comp_threshold: -18, out_comp_ratio: 2.8, out_comp_makeup: 2.0,
+    limit: 0.9, level_out: 0.92
   ),
   heavy:    SONITEX_STX1269.merge(
     crush_bits: 8, crush_sr: 2.05, crush_mix: 0.58, crush_post_lp: 2400,
@@ -6507,8 +6545,16 @@ RENDER_MODE_DEFAULTS = {
     "FLYLO_DRUM_OVERLAY" => "1", "FLYLO_QUINT_HATS" => "1",
     "CAMEL_DRUM_ENTRY_BAR" => "0", "CAMEL_KEEP_FLYLO" => "1",
     "SIDECHAIN_STYLE" => "flylo", "DRUM_PRESET" => "flylo_abstract",
-    "SONITEX" => "donuts_warm", "SONITEX_PRESET" => "donuts_warm",
-    "ANALOG_CHAIN" => "summing_phasy"
+    "SONITEX" => "donuts_soul", "SONITEX_PRESET" => "donuts_soul",
+    "ANALOG_CHAIN" => "summing_phasy",
+    "SIDECHAIN_DRUM_WEIGHT" => "1.9", "SIDECHAIN_HARM_WEIGHT" => "0.68",
+    "HARM_BUS_VOL" => "0.9",
+    "HARMONIC_PADS_WEIGHT" => "0.72", "HARMONIC_PADS_VOLUME" => "0.78",
+    "HARMONIC_SCALE_LEAD_WEIGHT" => "0.95", "HARMONIC_SCALE_LEAD_VOLUME" => "1.15",
+    "HARMONIC_LEAD_ARP_WEIGHT" => "1.05", "HARMONIC_LEAD_ARP_VOLUME" => "1.2",
+    "HARMONIC_XLEAD_WEIGHT" => "0.85", "HARMONIC_XLEAD_VOLUME" => "1.05",
+    "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.7", "HARMONIC_HARMONY_LEAD_VOLUME" => "0.95",
+    "HARMONIC_LEAD_WEIGHT" => "0.55", "HARMONIC_LEAD_VOLUME" => "0.9"
   }
 }.freeze
 
@@ -6522,7 +6568,7 @@ CAMEL_MODE_DEFAULTS = {
   "PERFORMER" => "glasper",
   "KICKS" => "1",
   "KICK_GAIN" => "0.88",
-  "FLYLO_KICK_GAIN" => "1.2",
+  "FLYLO_KICK_GAIN" => "1.35",
   "FLYLO_DRUMS_ONLY" => "0",
   "RAP_VOCAL" => "j_dilla",
   "RAP_VOCAL_STYLE" => "chop",
@@ -6540,25 +6586,34 @@ CAMEL_MODE_DEFAULTS = {
   "HARMONY_LEP_MODE" => "hybrid",
   "LEAD_ARP" => "1",
   "SIDECHAIN_STYLE" => "flylo",
-  "SONITEX" => "donuts_warm",
-  "SONITEX_PRESET" => "donuts_warm",
+  "SONITEX" => "donuts_soul",
+  "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "summing_phasy",
   "DRUM_PRESET" => "flylo_abstract",
-  "FLYLO_OVERLAY_GAIN" => "1.12",
-  "FLYLO_SUB_MIX" => "0.88",
-  "FLYLO_TOP_MIX" => "0.78",
-  "FLYLO_MERGE_BOOST" => "1.65",
-  "FLYLO_BASE_DRUM_VOL" => "0.7",
-  "DRUM_BUS_GAIN" => "1.85",
-  "DRUM_MIX_WEIGHT" => "1.48",
-  "HARM_MIX_WEIGHT" => "0.82",
-  "FLYLO_CHORD_DUCK" => "0.9",
-  "HARMONIC_PADS_WEIGHT" => "0.92",
-  "HARMONIC_PADS_VOLUME" => "0.86",
-  "HARMONIC_XLEAD_WEIGHT" => "0.18",
-  "HARMONIC_XLEAD_VOLUME" => "0.48",
-  "HARMONIC_HARMONY_LEAD_VOLUME" => "0.36",
-  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.1",
+  "FLYLO_OVERLAY_GAIN" => "1.25",
+  "FLYLO_SUB_MIX" => "0.95",
+  "FLYLO_TOP_MIX" => "0.9",
+  "FLYLO_MERGE_BOOST" => "1.85",
+  "FLYLO_BASE_DRUM_VOL" => "0.85",
+  "DRUM_BUS_GAIN" => "2.1",
+  "DRUM_MIX_WEIGHT" => "1.75",
+  "HARM_MIX_WEIGHT" => "0.7",
+  "HARM_BUS_VOL" => "0.88",
+  "SIDECHAIN_DRUM_WEIGHT" => "1.9",
+  "SIDECHAIN_HARM_WEIGHT" => "0.65",
+  "FLYLO_CHORD_DUCK" => "0.95",
+  "HARMONIC_PADS_WEIGHT" => "0.72",
+  "HARMONIC_PADS_VOLUME" => "0.78",
+  "HARMONIC_SCALE_LEAD_WEIGHT" => "0.95",
+  "HARMONIC_SCALE_LEAD_VOLUME" => "1.15",
+  "HARMONIC_LEAD_ARP_WEIGHT" => "1.05",
+  "HARMONIC_LEAD_ARP_VOLUME" => "1.2",
+  "HARMONIC_XLEAD_WEIGHT" => "0.85",
+  "HARMONIC_XLEAD_VOLUME" => "1.05",
+  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.7",
+  "HARMONIC_HARMONY_LEAD_VOLUME" => "0.95",
+  "HARMONIC_LEAD_WEIGHT" => "0.55",
+  "HARMONIC_LEAD_VOLUME" => "0.9",
   "LUSH_SYNTH" => "1",
   "MOTIF_RECALL" => "1",
   "SYNTH_MORPH" => "1",
@@ -10949,10 +11004,12 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
-    DEFAULT (no command — deep soul render, best settings on)
-      ruby dilla.rb                    Deep beat → #{DEFAULT_RENDER_OUTPUT} (#{DEFAULT_BARS} bars)
-      ruby dilla.rb out.wav [bars]     Optional path / length; rotates soul profiles
-      DILLA_DEEP=0                     Standard render (no quality gate / refine)
+    DEFAULT (no command — continuous Camel stream)
+      ruby dilla.rb                    Start non-stop stream (RENDER_MODE=camel, STREAM_SOUL=1)
+      ruby dilla.rb stream [bars]      Same as bare default (#{STREAM_BARS_COUNT}/BARS bars)
+      ruby dilla.rb out.wav [bars]     One-shot render to path (not stream)
+      ruby dilla.rb dilla [out] [bars] One-shot Dilla render → #{DEFAULT_RENDER_OUTPUT}
+      DILLA_DEEP=0                     One-shot: standard render (no quality gate / refine)
       DILLA_RAW=1                      Skip all best-default ENV
       PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (on in deep mode)
 
@@ -13089,8 +13146,16 @@ if __FILE__ == $PROGRAM_NAME
     apply_track_soul_profile!(ENV["TRACK"], force: !pad_locked) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
   cmd = ARGV.shift
-  if cmd.nil? || (render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd))
-    ARGV.unshift(cmd) if cmd
+  if cmd.nil?
+    # Bare invoke: continuous Camel stream (one-shot via `dilla` / `out.wav` / `camel`).
+    ENV["RENDER_MODE"] = "camel" if ENV["RENDER_MODE"].to_s.empty?
+    ENV["STREAM_SOUL"] = "1" if ENV["STREAM_SOUL"].to_s.empty?
+    ENV["SPEAK"] = "0" if ENV["SPEAK"].to_s.empty?
+    ENV["STREAM_CONTINUOUS"] = "1" if ENV["STREAM_CONTINUOUS"].to_s.empty?
+    apply_camel_profile!(force: false) if camel_mode?
+    stream((ENV["BARS"] || "32").to_i)
+  elsif render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd)
+    ARGV.unshift(cmd)
     default_render!
   else
     handler = DISPATCH[COMMAND_ALIASES.fetch(cmd, cmd)]
