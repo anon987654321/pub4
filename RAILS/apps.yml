@@ -9,7 +9,7 @@
 #
 # Stack default: Rails 8.1, Ruby 3.4, SQLite, Falcon, Solid Queue/Cache, relayd TLS
 #
-# Reconciled: 2026-07-07 — feature statuses verified against landed code + BACKLOG.yml.
+# Reconciled: 2026-07-07 — feature statuses verified against landed code + OPENBSD/data/debt.yml.
 # Planned/aspirational work lives in apps.horizon.yml (agent: ignore). Active apps: 0 port/missing gaps.
 
 apps:

@@ -1,6 +1,6 @@
 # Rails apps
 
-3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Backlog: `TODO.md`.
+3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Backlog: `MASTER/DEBT.md`, operator debt in `OPENBSD/data/debt.yml` (successor to retired `BACKLOG.yml`).
 
 ## Apps
 
@@ -66,7 +66,7 @@ ruby RAILS/check_production_gate.rb
 ruby RAILS/rails_runtime_gate.rb          # static production checks; add --runtime for bundle/db/ci
 cd RAILS/<app> && bin/ci                  # per-app RuboCop, Brakeman, bundler-audit, test
 MASTER/bin/probe rails
-ruby RAILS/gates/runner.rb visual_contract --capture ...
+VISUAL_CAPTURE=1 VISUAL_CAPTURE_APP=brgen VISUAL_CAPTURE_BASE=http://127.0.0.1:38182 ruby RAILS/gates/runner.rb visual_contract
 ```
 
 **In-process gate library** (`gates/lib/`, `Deploy::GateResult` from `OPENBSD/lib/gate_result.rb`):
@@ -84,9 +84,9 @@ ruby RAILS/gates/runner.rb visual_contract --capture ...
 
 `check_production_gate.rb`, `master_web_assets_gate.rb`, and `master_tts_gate.rb` are thin CLI wrappers. `rails_runtime_gate.rb` calls `Deploy::ProductionGate.run(skip_nested: true)` in-process (avoids re-running nested master gates when `production` and `rails_runtime` both run under `--all`). Set `GATE_SKIP_NESTED=1` when shelling out to `check_production_gate.rb` if you need the same skip from a subprocess.
 
-`domain_alignment_gate.rb` already uses `Deploy::GateResult`; other gates are migrating incrementally. `release_gate.rb` still shells out to several gates — see `TODO.md`.
+`domain_alignment_gate.rb` already uses `Deploy::GateResult`; other gates are migrating incrementally. `release_gate.rb` still shells out to several gates — see `MASTER/DEBT.md` and `OPENBSD/data/debt.yml`.
 
-`visual_contract_gate.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. Running via `runner.rb --all` without `--capture` only validates route/lens data shapes — not a visual regression pass.
+`visual_contract_gate.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. `runner.rb` forwards `--capture` when `VISUAL_CAPTURE=1` (optional `VISUAL_CAPTURE_APP`, `VISUAL_CAPTURE_BASE`). Running via `runner.rb --all` without capture only validates route/lens data shapes — not a visual regression pass.
 
 On OpenBSD, use the package-qualified Ruby 3.4 commands:
 
@@ -205,7 +205,7 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 - **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
 - **Deploy scripts:** `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` are thin shims over `_*.sh` (same pattern as `@deploy.sh`).
 
-**Still open** (see `TODO.md`): `runner.rb --all` still subprocesses each gate; broader controller coverage; `apps.yml` `planned` features marked `agent: ignore` (pgvector, live streaming, monetization).
+**Still open** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`): `runner.rb --all` still subprocesses each gate; broader controller coverage; `apps.yml` `planned` features marked `agent: ignore` (pgvector, live streaming, monetization).
 
 ## Deploy scripts
 

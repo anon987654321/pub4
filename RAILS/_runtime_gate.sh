@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
-# @runtime_gate.sh — MASTER rules scan and the full CI gate (bundle + db:prepare
+# _runtime_gate.sh — MASTER rules scan and the full CI gate (bundle + db:prepare
 # + bin/ci) that must pass before a deploy is allowed to restart the service.
-# Source this file; do not execute directly. Requires @core.sh sourced first.
+# Source this file; do not execute directly. Requires _core.sh sourced first.
 
 # master_scan_dep APP_NAME — rules.yml gate via MASTER CLI (requires bundle exec in MASTER/).
 master_scan_dep() {

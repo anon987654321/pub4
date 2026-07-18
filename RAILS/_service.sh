@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # @service.sh — rc.d service installation and relayd routing for copy-tree deploy.
-# Source this file; do not execute directly. Requires @core.sh sourced first.
+# Source this file; do not execute directly. Requires _core.sh sourced first.
 
 # retire_legacy_rails_rcd APP_NAME — stop duplicate *_rails services from older bootstrap.
 retire_legacy_rails_rcd() {

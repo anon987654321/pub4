@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
-# @scaffold.sh — bootstrap a brand-new Rails app (rails new, Solid stack,
+# _scaffold.sh — bootstrap a brand-new Rails app (rails new, Solid stack,
 # auth, storage, action text, security tools, production config). Distinct
-# from deploying an already-tracked app — see @deploy.sh for that.
-# Source this file; do not execute directly. Requires @core.sh, @bundle.sh sourced first.
+# from deploying an already-tracked app — see _deploy.sh for that.
+# Source this file; do not execute directly. Requires _core.sh, _bundle.sh sourced first.
 
 create_rails_app() {
   local app_dir=$1

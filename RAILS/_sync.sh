@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# @sync.sh — copy-tree sync and shared-file overlays for copy-tree deploy.
-# Source this file; do not execute directly. Requires @core.sh sourced first.
+# _sync.sh — copy-tree sync and shared-file overlays for copy-tree deploy.
+# Source this file; do not execute directly. Requires _core.sh sourced first.
 
 sync_tree() {
   local src=$1 dst=$2
