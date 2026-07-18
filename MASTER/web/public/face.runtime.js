@@ -4435,7 +4435,9 @@ window.enqueueSpeech = enqueueSpeech;
 window.mouthPool = mouthPool;
 window.eyePool = eyePool;
 function _deferFaceMod(name) {
-  return window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`;
+  // Absolutize: this runs inside a blob: module where a root-relative specifier
+  // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
+  return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
 }
 await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));

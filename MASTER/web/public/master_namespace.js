@@ -25,10 +25,22 @@
 
   namespaces.forEach(([name, resolve]) => {
     if (Object.prototype.hasOwnProperty.call(root, name)) return;
+    let shim;
     Object.defineProperty(root, name, {
       configurable: true,
       enumerable: true,
-      get: resolve,
+      // Prefer the resolved canonical global; fall back to a value assigned by a
+      // legacy `window.MASTER.<name> = …` shim. Without the setter, those legacy
+      // assignments (attention_model.js, face.runtime.js, face_speech_runtime.js)
+      // threw "Cannot set property … which has only a getter" in strict mode when
+      // they loaded AFTER this facade — which killed the entire face boot
+      // (attention_model is the first FACE_MODULE loadFace imports). This was the
+      // real black-face root cause.
+      get: () => {
+        const v = resolve();
+        return (v === undefined || v === null) ? shim : v;
+      },
+      set: (v) => { shim = v; },
     });
   });
 
