@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "mechanical_autofix"
+
 module Master
   module Review
     module Scan
@@ -69,50 +71,14 @@ module Master
           Array(@scanner.instance_variable_get(:@rules)).size
         end
 
-        def rules_by_id
-          @rules_by_id ||= scanner_rules.to_h { |rule| [rule.id.to_s, rule] }
-        end
-
-        def scanner_rules
-          return @scanner.rules if @scanner.respond_to?(:rules)
-
-          Array(@scanner.instance_variable_get(:@rules))
-        end
-
         def count_violations(pairs)
           pairs.sum { |_, file_result| Result.wrap(file_result).value_or([]).size }
         end
 
         def apply_autofixes(pairs)
-          paths = autofixable_paths(pairs)
-          paths.filter_map do |path|
-            next unless File.file?(path)
-
-            result = AstFixer.fix(path, File.read(path, encoding: "UTF-8"))
-            next unless result&.changed
-
-            rel = path.delete_prefix("#{@root}/")
-            @bus&.publish("self_autofix:applied", path: rel, transforms: result.transforms)
-            { path: rel, transforms: result.transforms }
+          MechanicalAutofix.new(scanner: @scanner, root: @root, event_bus: @bus).apply(pairs).map do |applied|
+            { path: applied.path, transforms: applied.transforms }
           end
-        end
-
-        def autofixable_paths(pairs)
-          pairs.filter_map do |path, file_result|
-            findings = Result.wrap(file_result).value_or([])
-            path if findings.any? { |finding| autofixable_finding?(finding) }
-          end.uniq
-        end
-
-        def autofixable_finding?(finding)
-          rule = rules_by_id[finding_rule_id(finding).to_s]
-          rule&.auto_fix
-        end
-
-        def finding_rule_id(finding)
-          return finding[:rule] if finding.respond_to?(:[])
-
-          finding.rule if finding.respond_to?(:rule)
         end
 
         def publish(summary)

@@ -13,8 +13,10 @@ module Master
         "scan" => {
           summary: "deep-scan files or directories",
           detail: [
-            "/scan [--dry-run] [report-filter] [path]",
-            "Deep scan only. Profiles: full, core, critical, cosmetic, aesthetic (aliases: pixel, ui, ux, design).",
+            "/scan [--dry-run] [--no-autofix] [report-filter] [path]",
+            "Always runs at deep depth. Mechanical autofix (AstFixer) runs by default on auto_fix rules, then re-scans.",
+            "Report-only: --dry-run. Skip writes but keep full rule set: --no-autofix. Disable via MASTER_SCAN_AUTOFIX=0.",
+            "Report filters / profiles: full, core, critical, cosmetic, aesthetic (aliases: pixel, ui, ux, design).",
             "Path aliases: rails, rails/brgen, face, web, self, master. Also RAILS/<app> from repo root.",
           ],
         },

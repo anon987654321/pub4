@@ -108,7 +108,7 @@ class TestCLI < Minitest::Test
 
     assert_includes summary, "/scan - deep-scan files or directories"
     refute_includes summary, "Report filters"
-    assert_includes detail, "/scan [--dry-run] [report-filter] [path]"
+    assert_includes detail, "/scan [--dry-run] [--no-autofix] [report-filter] [path]"
     assert_includes detail, "Always runs at deep depth"
     assert_includes detail, "Report filters"
   end

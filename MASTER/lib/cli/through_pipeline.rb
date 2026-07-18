@@ -30,6 +30,7 @@ module Master
         apply = default_apply?(posture) if apply.nil?
         critique = default_critique?(posture, resolved) if critique.nil?
         shell = shell_target(resolved)
+        @apply = apply
 
         dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
         @bus&.publish("through:start", target: resolved, mode: posture[:name], apply: apply)
@@ -189,10 +190,12 @@ module Master
         if @scanner.respond_to?(:instance_variable_set)
           @scanner.instance_variable_set(:@through_scan_unit, unit)
         end
+        # Preview/dry-run through must not write files via scan-phase mechanical autofix.
+        scan_arg = @apply == false ? "#{arg} --dry-run".strip : arg
         Master::CLI::CommandRegistry.dispatch_scan(
           scanner: @scanner,
           root: @root,
-          ctx: { args: arg }
+          ctx: { args: scan_arg }
         )
       rescue StandardError => e
         Master::Trace::Dmesg.status(unit, "error #{e.class}: #{e.message}")

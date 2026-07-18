@@ -13,6 +13,7 @@ require_relative "../scan_request"
 require_relative "../../review/review_crew"
 require_relative "../../review/scan/cross_file_analysis"
 require_relative "../../review/scan/edge_case_stub_generator"
+require_relative "../../review/scan/mechanical_autofix"
 require_relative "../tribunal_feedback"
 require_relative "work_commands_extra"
 require_relative "work_commands_status"
@@ -289,31 +290,63 @@ module Master
       def dispatch_scan(scanner:, root:, ctx: nil)
         arg = arg_for(ctx)
         dry_run = dry_run_arg?(arg)
-        request = ScanRequest.new(scanner: scanner, root: root, arg: strip_dry_run(arg)).call
+        no_autofix = no_autofix_arg?(arg)
+        clean_arg = strip_scan_flags(arg)
+        request = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
         return request.pairs if request.pairs.is_a?(String)
-        return clean_scan_line(dry_run:) if request.pairs.empty?
+
+        pairs = request.pairs
+        autofixes = []
+        if pairs.any? && !dry_run && !no_autofix && Master::Review::Scan::MechanicalAutofix.enabled?
+          autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
+          if autofixes.any?
+            rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+            pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
+          end
+        end
+
+        return clean_scan_line(dry_run:, autofixes:) if pairs.empty?
 
         ScanReport.new(
-          pairs: request.pairs,
+          pairs: pairs,
           profile: request.profile,
           rule_filter: request.rule_filter,
           severity_filter: request.severity_filter,
-          dry_run: dry_run
+          dry_run: dry_run,
+          autofixes: autofixes
         ).render
       end
 
-      def clean_scan_line(dry_run:)
-        return "clean -- no violations" unless dry_run
+      def apply_scan_autofixes(scanner:, root:, pairs:)
+        Master::Review::Scan::MechanicalAutofix.new(scanner: scanner, root: root).apply(pairs).map do |applied|
+          { path: applied.path, transforms: applied.transforms }
+        end
+      end
 
-        "dry-run: clean -- no violations (no changes made)"
+      def clean_scan_line(dry_run:, autofixes: [])
+        ScanReport.new(
+          pairs: [],
+          profile: nil,
+          rule_filter: nil,
+          dry_run: dry_run,
+          autofixes: autofixes
+        ).render
       end
 
       def dry_run_arg?(arg)
         arg.to_s.split(/\s+/).include?("--dry-run")
       end
 
+      def no_autofix_arg?(arg)
+        arg.to_s.split(/\s+/).include?("--no-autofix")
+      end
+
+      def strip_scan_flags(arg)
+        arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" || part == "--no-autofix" }.join(" ")
+      end
+
       def strip_dry_run(arg)
-        arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" }.join(" ")
+        strip_scan_flags(arg)
       end
 
       def dispatch_process(ctx: nil)

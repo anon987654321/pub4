@@ -5,19 +5,21 @@ require_relative "../fix/conflict_resolver"
 module Master
   module CLI
     class ScanReport
-      def initialize(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false)
+      def initialize(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false, autofixes: [])
         @pairs = pairs
         @profile = profile
         @rule_filter = rule_filter
         @severity_filter = severity_filter
         @dry_run = dry_run
+        @autofixes = Array(autofixes)
         @conflicts = Master::Fix::ConflictResolver.new(root: Master::ROOT)
       end
 
       def render
-        return "#{prefix}#{header}clean -- no violations#{suffix}" if total.zero?
+        return render_clean if total.zero?
 
         lines = ["#{prefix}#{header}#{total} total violations#{suffix}"]
+        lines << autofix_line if autofix_line
         histogram_line = confidence_histogram_line
         lines << histogram_line if histogram_line
         lines << evidence_line
@@ -33,7 +35,27 @@ module Master
 
       private
 
-      attr_reader :pairs, :profile, :rule_filter, :severity_filter, :dry_run, :conflicts
+      attr_reader :pairs, :profile, :rule_filter, :severity_filter, :dry_run, :autofixes, :conflicts
+
+      def render_clean
+        base = "#{prefix}#{header}clean -- no violations#{suffix}"
+        autofix_line ? "#{base}\n#{autofix_line}" : base
+      end
+
+      def autofix_line
+        return if autofixes.empty?
+
+        transforms = autofixes.flat_map { |item| autofix_transforms(item) }.uniq
+        detail = transforms.empty? ? "" : " (#{transforms.first(6).join(", ")})"
+        "autofixed: #{autofixes.size} file#{'s' unless autofixes.size == 1}#{detail}"
+      end
+
+      def autofix_transforms(item)
+        return Array(item[:transforms]) if item.respond_to?(:[]) && item[:transforms]
+        return Array(item.transforms) if item.respond_to?(:transforms)
+
+        []
+      end
 
       def by_rule
         @by_rule ||= clustered_violations.each_with_object(Hash.new { |h, k| h[k] = [] }) do |violation, groups|
