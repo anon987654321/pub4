@@ -24,9 +24,23 @@ module DillaGroove
     [0, 6, 10, 13],
     [0, 3, 10],
     [0, 6, 11],
-    [0, 10, 14]
+    [0, 10, 14],
+    [3, 10],
+    [0, 6, 9, 10]
+  ].freeze
+  # Sparse shapes for the occasional breathing bar -- real Dilla pockets
+  # loosen up periodically, but never repeat the same two notes on a
+  # robotic every-4th-bar wall (that's what made a "sequenced" bar).
+  POCKET_KICK_SPARSE_PHRASES = [
+    [0, 10],
+    [6, 10],
+    [0, 6]
   ].freeze
   POCKET_SNARE_HARD = [4, 12].freeze
+  # Documented Dilla off-kilter device: the backbeat snare occasionally
+  # pushed a full 16th early rather than sitting on 4/12 -- a placement
+  # choice, distinct from the ms-level micro-timing in role_timing_offset.
+  POCKET_SNARE_RUSH = [4, 11].freeze
   POCKET_SNARE_GHOST_PHRASES = [
     [7],
     [2, 10],
@@ -36,8 +50,10 @@ module DillaGroove
   ].freeze
   POCKET_HAT_PHRASES = [
     [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 13, 14]
+    [0, 2, 4, 6, 8, 10, 13, 14],
+    [0, 2, 4, 6, 8, 10, 12, 13, 14],
+    [0, 3, 4, 6, 8, 10, 12, 14],
+    [0, 2, 4, 7, 8, 10, 12, 14]
   ].freeze
 
   # Freehand nudge ranges in MPC ticks (1/96 beat) — cyclic, not random chaos.
@@ -239,13 +255,19 @@ module DillaGroove
   def pocket_kicks(bar)
     return POCKET_KICK_PHRASES[0] unless pocket_dna?
     phrase = POCKET_KICK_PHRASES[bar % POCKET_KICK_PHRASES.length]
-    # Every 4 bars: drop to two-kick simplicity (0 + 10).
-    return [0, 10] if (bar % 4).zero? && ENV.fetch("POCKET_SIMPLE", "1") != "0"
+    # Breathing bar: ~22% chance, seeded per bar (reproducible, not a
+    # metronomic every-4th-bar wall), drop to a sparser shape drawn from
+    # a small pool instead of always the same [0, 10].
+    if ENV.fetch("POCKET_SIMPLE", "1") != "0" && Random.new((bar * 733) + 41).rand < 0.22
+      return POCKET_KICK_SPARSE_PHRASES[Random.new((bar * 911) + 17).rand(POCKET_KICK_SPARSE_PHRASES.length)]
+    end
     phrase
   end
 
-  def pocket_snares_hard(_bar)
-    POCKET_SNARE_HARD
+  def pocket_snares_hard(bar)
+    return POCKET_SNARE_HARD unless pocket_dna?
+    return POCKET_SNARE_HARD if ENV["POCKET_RUSH"] == "0"
+    Random.new((bar * 619) + 83).rand < 0.12 ? POCKET_SNARE_RUSH : POCKET_SNARE_HARD
   end
 
   def pocket_snares_ghost(bar)
