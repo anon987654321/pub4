@@ -252,8 +252,7 @@ function setVoiceName(voice, opts = {}) {
     return;
   }
   let raw = String(voice || '').trim();
-  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'ryan';
-  if (raw.toLowerCase() === 'pernille' || raw === 'nb-NO-PernilleNeural') raw = 'ryan';
+  if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -1260,8 +1259,8 @@ if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
 const COUNCIL_VOICE = {
-  Architect: 'ryan', Skeptic: 'ryan', Pragmatist: 'ryan',
-  Security: 'ryan', User: 'ryan', Mentor: 'ryan'
+  Architect: 'pernille', Skeptic: 'pernille', Pragmatist: 'pernille',
+  Security: 'pernille', User: 'pernille', Mentor: 'pernille'
 };
 
 // Pristine chrome: council personas no longer shift the face to a hue
@@ -2247,7 +2246,6 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
 const TTS_DB_NAME = 'master-tts-v1';
@@ -2934,7 +2932,7 @@ function ttsTick() {
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
-  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+  if (actx?.state === 'suspended') actx.resume().catch(() => {});
   if (tts.watchdog) clearTimeout(tts.watchdog);
   // The watchdog arms BEFORE the blob fetch, so its timeout must cover the
   // whole synthesis queue wait (pollTTSJob is allowed ~3 minutes on the
@@ -3151,6 +3149,7 @@ window.MASTER_SPEECH_PLAYBACK = Object.freeze({
 });
 window.MASTER = window.MASTER || {};
 window.MASTER.speechPlayback = window.MASTER_SPEECH_PLAYBACK;
+
 // Viseme playback moved to face_speech_playback.js — concatenated by assets:build_face_runtime.
 
 function fadeTtsAudio(ms = 80) {
@@ -3259,6 +3258,16 @@ function wakeWordEnabled() {
 let _voiceModeRearmFails = 0;
 let _voiceModeArmedAt = 0;
 
+// Implicit-mic preference: default ON, so a fresh visitor drops into hands-free
+// Voice Mode after the primer tap. A deliberate opt-out ("stop listening" / mic
+// tap / a denied permission) persists so we don't force a hot mic every reload.
+function voiceAutoEnabled() {
+  try { return localStorage.getItem('master:voice-auto') !== '0'; } catch (err) { return true; }
+}
+function setVoiceAuto(on) {
+  try { localStorage.setItem('master:voice-auto', on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:voice_auto_write", err); }
+}
+
 let recognition = null;
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3324,7 +3333,16 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);
     }
   };
-  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = (e) => {
+    State.sttActive = false; State.sttDuck = 0;
+    if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+    if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
+      // Mic denied/blocked — don't loop retries or auto-listen on future loads.
+      setVoiceAuto(false);
+      if (State.voiceMode) exitVoiceMode({ reason: 'denied' });
+      if (uiStatus) uiStatus.textContent = 'mic blocked — allow it, then long-press the mic';
+    }
+  };
 }
 
 function startWakeListening() {
@@ -3346,8 +3364,11 @@ function enterVoiceMode(opts = {}) {
   State.wakeArmed = false;
   State.voiceMode = true;
   _voiceModeRearmFails = 0;
+  // Deliberate entry (mic long-press / wake word) re-opts-in for future loads.
+  // Auto entry must not touch the pref — it only reads it.
+  if (!opts.fromAuto) setVoiceAuto(true);
   rootBody.dataset.voiceMode = '1';
-  if (uiStatus) uiStatus.textContent = 'voice mode — say "stop listening" to exit';
+  if (uiStatus) uiStatus.textContent = 'listening — say "stop listening" to exit';
   if (!opts.fromWake) beep(1100, 0.05);
   startSTT();
 }
@@ -3356,12 +3377,31 @@ function exitVoiceMode(opts = {}) {
   State.voiceMode = false;
   delete rootBody.dataset.voiceMode;
   stopSTT();
+  // Any exit that isn't the device-unreliable safety bail is a user choice —
+  // remember it so we don't force the mic back on next reload.
+  if (opts.reason !== 'unreliable') setVoiceAuto(false);
   if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
   beep(660, 0.05);
   armWakeWord();
 }
 function toggleVoiceMode() {
   if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
+}
+// Implicit mic: after the primer tap (a real user gesture that also unlocks
+// audio) and once the welcome greeting has finished speaking, slide straight
+// into hands-free Voice Mode so a natural conversation needs no button press.
+function maybeAutoVoice() {
+  if (!recognition || State.voiceMode || !voiceAutoEnabled()) return;
+  let waited = 0;
+  const enterWhenQuiet = () => {
+    if (State.voiceMode || !voiceAutoEnabled()) return;
+    // Hold off while the greeting is still speaking so we don't hear ourselves.
+    if ((tts.playing || State.mode === 'speaking') && waited < 12000) {
+      waited += 400; setTimeout(enterWhenQuiet, 400); return;
+    }
+    enterVoiceMode({ fromAuto: true });
+  };
+  setTimeout(enterWhenQuiet, 1200);
 }
 function boostEyeAttention(delta = 0.25) {
   const K = window.ParticleKernel;
@@ -4129,6 +4169,7 @@ function startEverything() {
   wireTtsStyleChips();
   armWakeWord();
   setTimeout(sendWelcomeGreeting, 700);
+  maybeAutoVoice();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});

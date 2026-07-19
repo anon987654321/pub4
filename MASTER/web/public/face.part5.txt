@@ -106,6 +106,16 @@ function wakeWordEnabled() {
 let _voiceModeRearmFails = 0;
 let _voiceModeArmedAt = 0;
 
+// Implicit-mic preference: default ON, so a fresh visitor drops into hands-free
+// Voice Mode after the primer tap. A deliberate opt-out ("stop listening" / mic
+// tap / a denied permission) persists so we don't force a hot mic every reload.
+function voiceAutoEnabled() {
+  try { return localStorage.getItem('master:voice-auto') !== '0'; } catch (err) { return true; }
+}
+function setVoiceAuto(on) {
+  try { localStorage.setItem('master:voice-auto', on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:voice_auto_write", err); }
+}
+
 let recognition = null;
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -171,7 +181,16 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);
     }
   };
-  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = (e) => {
+    State.sttActive = false; State.sttDuck = 0;
+    if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
+    if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
+      // Mic denied/blocked — don't loop retries or auto-listen on future loads.
+      setVoiceAuto(false);
+      if (State.voiceMode) exitVoiceMode({ reason: 'denied' });
+      if (uiStatus) uiStatus.textContent = 'mic blocked — allow it, then long-press the mic';
+    }
+  };
 }
 
 function startWakeListening() {
@@ -193,8 +212,11 @@ function enterVoiceMode(opts = {}) {
   State.wakeArmed = false;
   State.voiceMode = true;
   _voiceModeRearmFails = 0;
+  // Deliberate entry (mic long-press / wake word) re-opts-in for future loads.
+  // Auto entry must not touch the pref — it only reads it.
+  if (!opts.fromAuto) setVoiceAuto(true);
   rootBody.dataset.voiceMode = '1';
-  if (uiStatus) uiStatus.textContent = 'voice mode — say "stop listening" to exit';
+  if (uiStatus) uiStatus.textContent = 'listening — say "stop listening" to exit';
   if (!opts.fromWake) beep(1100, 0.05);
   startSTT();
 }
@@ -203,12 +225,31 @@ function exitVoiceMode(opts = {}) {
   State.voiceMode = false;
   delete rootBody.dataset.voiceMode;
   stopSTT();
+  // Any exit that isn't the device-unreliable safety bail is a user choice —
+  // remember it so we don't force the mic back on next reload.
+  if (opts.reason !== 'unreliable') setVoiceAuto(false);
   if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
   beep(660, 0.05);
   armWakeWord();
 }
 function toggleVoiceMode() {
   if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
+}
+// Implicit mic: after the primer tap (a real user gesture that also unlocks
+// audio) and once the welcome greeting has finished speaking, slide straight
+// into hands-free Voice Mode so a natural conversation needs no button press.
+function maybeAutoVoice() {
+  if (!recognition || State.voiceMode || !voiceAutoEnabled()) return;
+  let waited = 0;
+  const enterWhenQuiet = () => {
+    if (State.voiceMode || !voiceAutoEnabled()) return;
+    // Hold off while the greeting is still speaking so we don't hear ourselves.
+    if ((tts.playing || State.mode === 'speaking') && waited < 12000) {
+      waited += 400; setTimeout(enterWhenQuiet, 400); return;
+    }
+    enterVoiceMode({ fromAuto: true });
+  };
+  setTimeout(enterWhenQuiet, 1200);
 }
 function boostEyeAttention(delta = 0.25) {
   const K = window.ParticleKernel;
@@ -976,6 +1017,7 @@ function startEverything() {
   wireTtsStyleChips();
   armWakeWord();
   setTimeout(sendWelcomeGreeting, 700);
+  maybeAutoVoice();
   setTimeout(() => { morphTarget = 1.0; }, 600);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js?v=' + encodeURIComponent(window.MASTER_CACHE_VERSION || 'v2')).catch(() => {});
