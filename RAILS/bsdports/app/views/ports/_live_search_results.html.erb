@@ -8,7 +8,9 @@
   <% end %>
 </ul>
 <% if @ports.empty? %>
-  <div class="empty" role="status" aria-live="polite"><p>No ports found.</p></div>
+  <%= render "shared/empty_state",
+        title: "No ports found",
+        body: "Try another query — e.g. git, python, or a category." %>
 <% end %>
 <%= render "shared/infinite_scroll_sentinel",
            pagy: @pagy,

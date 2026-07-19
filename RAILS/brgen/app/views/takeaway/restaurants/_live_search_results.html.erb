@@ -4,7 +4,14 @@
     <%= render "takeaway/restaurants/card", restaurant: r %>
   <% end %>
   <% if @restaurants.empty? %>
-    <div class="empty empty-state" role="status" aria-live="polite"><p>No restaurants yet. <%= link_to("Add one", new_takeaway_restaurant_path) if authenticated? %></p></div>
+    <% if authenticated? %>
+      <%= render "shared/empty_state",
+            title: "No restaurants yet",
+            body: "Add the first restaurant for this area.",
+            action: { label: "Add one", path: new_takeaway_restaurant_path } %>
+    <% else %>
+      <%= render "shared/empty_state", title: "No restaurants yet", body: "Restaurants will appear here." %>
+    <% end %>
   <% end %>
 </section>
 

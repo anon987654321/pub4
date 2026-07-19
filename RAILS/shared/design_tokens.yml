@@ -8,6 +8,7 @@
 #   openbsd_wscons → bsdports terminal green (opt-in via body class)
 #   face_root    → MASTER web face.css :root only (CRT-flat, all radii 0)
 # Intent: social = soft radii; face/bsdports = CRT-flat zeros; luxury = calm product.
+# Light social = indigo on cool paper (not Twitter #1d9bf0). Vertical accents: vertical_accents: below.
 
 # Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.
 shared_chrome:

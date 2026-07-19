@@ -24,5 +24,5 @@
            sentinel_id: "marketplace-deals-sentinel",
            q: params[:q] %>
 <% else %>
- <p class="empty empty-state">No deals match this search.</p>
+ <%= render "shared/empty_state", title: "No deals", body: "No deals match this search." %>
 <% end %>

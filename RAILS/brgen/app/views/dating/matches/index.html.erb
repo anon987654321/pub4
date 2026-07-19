@@ -9,7 +9,10 @@
 
 <turbo-frame id="dating-matches" data-turbo-action="replace">
 <% if @matches.none? %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No matches yet.</p></div>
+  <%= render "shared/empty_state",
+        title: "No matches yet",
+        body: "Keep discovering — mutual likes show up here.",
+        action: { label: "Discover", path: dating_root_path } %>
 <% else %>
   <section id="dating-matches-list" class="match-list" role="list" aria-label="Matches">
     <% @matches.each do |match| %>

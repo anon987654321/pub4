@@ -35,5 +35,7 @@
     </section>
   <% end %>
 <% else %>
-  <div class="empty" role="status" aria-live="polite"><p>Add more items to your wardrobe first.</p></div>
+  <%= render "shared/empty_state",
+        title: "Wardrobe too thin",
+        body: "Add more items to your wardrobe first." %>
 <% end %>

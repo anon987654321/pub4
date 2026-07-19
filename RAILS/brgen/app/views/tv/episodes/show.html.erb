@@ -10,6 +10,6 @@
     <%= render "tv/videos/tv_video", video: @video %>
   </div>
 <% else %>
-  <div class="empty empty-state"><p>Video coming soon.</p></div>
+  <%= render "shared/empty_state", title: "Video coming soon", body: "This episode is not ready to play." %>
 <% end %>
 

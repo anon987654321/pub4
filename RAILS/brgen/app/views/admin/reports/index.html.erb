@@ -37,5 +37,5 @@
     <% end %>
   </div>
 <% else %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No reports yet.</p></div>
+  <%= render "shared/empty_state", title: "No reports yet", body: "Moderation queue is clear." %>
 <% end %>

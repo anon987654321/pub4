@@ -17,6 +17,8 @@
         <% end %>
       </article>
     <% end %>
-    <% if @connections.empty? %><p class="dim">No connections yet.</p><% end %>
+    <% if @connections.empty? %>
+      <%= render "shared/empty_state", title: "No connections yet", body: "Follow creators to build your circle." %>
+    <% end %>
   </section>
 <% end %>

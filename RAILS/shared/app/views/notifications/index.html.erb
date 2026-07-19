@@ -16,6 +16,6 @@
       <%= render "notifications/notification", notification: notification %>
     <% end %>
   <% else %>
-    <div class="empty" role="status" aria-live="polite"><p>No notifications yet.</p></div>
+    <%= render "shared/empty_state", title: "No notifications yet", body: "Updates will appear here." %>
   <% end %>
 <% end %>

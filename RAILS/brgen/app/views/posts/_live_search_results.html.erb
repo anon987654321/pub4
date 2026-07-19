@@ -22,5 +22,7 @@
              sort: params[:sort],
              q: params[:q] %>
 <% else %>
-  <p class="empty empty-state">No posts match this search.</p>
+  <%= render "shared/empty_state",
+        title: "No posts",
+        body: live_search_query.present? ? "No posts match this search." : "Nothing here yet." %>
 <% end %>

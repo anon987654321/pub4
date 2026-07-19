@@ -19,11 +19,17 @@
             sort: params[:sort] %>
  <% end %>
 <% else %>
- <section class="empty empty-state">
  <% if live_search_query.present? %>
- <p>No posts match this search.</p>
+   <%= render "shared/empty_state", title: "No posts", body: "No posts match this search." %>
+ <% elsif authenticated? %>
+   <%= render "shared/empty_state",
+         title: "No posts yet",
+         body: "Start the conversation for your city.",
+         action: { label: "Create one", path: new_post_path } %>
  <% else %>
- <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
+   <%= render "shared/empty_state",
+         title: "No posts yet",
+         body: "Sign in to post.",
+         action: { label: "Sign in", path: new_session_path } %>
  <% end %>
- </section>
 <% end %>

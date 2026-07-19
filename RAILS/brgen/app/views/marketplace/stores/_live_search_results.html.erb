@@ -16,5 +16,5 @@
            q: params[:q],
            vertical: params[:vertical] %>
 <% else %>
- <p class="empty empty-state">No stores match this search.</p>
+ <%= render "shared/empty_state", title: "No stores", body: "No stores match this search." %>
 <% end %>

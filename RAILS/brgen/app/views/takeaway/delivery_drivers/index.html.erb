@@ -20,5 +20,5 @@
     <% end %>
   </div>
 <% else %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No available drivers.</p></div>
+  <%= render "shared/empty_state", title: "No available drivers", body: "Check back when drivers come online." %>
 <% end %>

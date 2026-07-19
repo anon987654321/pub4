@@ -14,6 +14,6 @@
 </ul>
 
 <% if @maintainers.empty? %>
- <p class="empty">No maintainers match this search.</p>
+ <%= render "shared/empty_state", title: "No maintainers", body: "No maintainers match this search." %>
 <% end %>
 <% end %>

@@ -14,6 +14,6 @@
 </ul>
 
 <% if @categories.empty? %>
- <p class="empty">No categories match this search.</p>
+ <%= render "shared/empty_state", title: "No categories", body: "No categories match this search." %>
 <% end %>
 <% end %>

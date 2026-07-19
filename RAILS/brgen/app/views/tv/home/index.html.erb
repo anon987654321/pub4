@@ -27,7 +27,7 @@
   <% if @trending.any? %>
     <%= render "tv/home/trending_videos" %>
   <% else %>
-    <div class="empty empty-state"><p>No trending videos yet.</p></div>
+    <%= render "shared/empty_state", title: "No trending videos", body: "Check back as channels publish." %>
   <% end %>
 </section>
 

@@ -24,6 +24,6 @@
     </article>
   <% end %>
 <% else %>
-  <div class="empty empty-state"><p>No activity yet.</p></div>
+  <%= render "shared/empty_state", title: "No activity yet", body: "Events from your network show up here." %>
 <% end %>
 <% end %>

@@ -57,7 +57,17 @@
           <% end %>
         </div>
         <% if @profiles.empty? %>
-          <div class="empty empty-state"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
+          <% if authenticated? %>
+            <%= render "shared/empty_state",
+                  title: "No profiles nearby",
+                  body: "Widen your range or update your profile.",
+                  action: { label: "Edit profile", path: edit_dating_profile_path } %>
+          <% else %>
+            <%= render "shared/empty_state",
+                  title: "No profiles nearby",
+                  body: "Sign in to discover people nearby.",
+                  action: { label: "Sign in", path: new_session_path } %>
+          <% end %>
         <% end %>
         <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
       </section>

@@ -10,10 +10,16 @@
   <%= render "marketplace/listings/card", listing: %>
 <% end %>
 <% if @listings.empty? %>
-  <div class="empty empty-state" role="status" aria-live="polite">
-    <p>Nothing in this category yet.</p>
-    <% if authenticated? %><p><%= link_to "Sell something", new_marketplace_listing_path, class: "btn btn-primary" %></p><% end %>
-  </div>
+  <% if authenticated? %>
+    <%= render "shared/empty_state",
+          title: "Nothing in this category yet",
+          body: "Be the first to list something here.",
+          action: { label: "Sell something", path: new_marketplace_listing_path } %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: "Nothing in this category yet",
+          body: "Listings will show up here." %>
+  <% end %>
 <% end %>
 </div>
 

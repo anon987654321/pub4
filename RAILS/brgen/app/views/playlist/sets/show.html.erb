@@ -132,7 +132,7 @@
     </article>
   <% end %>
 <% else %>
-  <div class="empty empty-state"><p>No tracks in this set yet.</p></div>
+  <%= render "shared/empty_state", title: "No tracks yet", body: "Add a track to build this set." %>
 <% end %>
 
 <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>

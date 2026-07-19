@@ -21,10 +21,17 @@
     <%= render "posts/post", post: post %>
   <% end %>
 <% else %>
-  <div class="empty empty-state" role="status">
-    <p>No posts in <%= @community.name %> yet — start the conversation.</p>
-    <p><%= authenticated? ? link_to("New post", new_community_post_path(@community), class: "btn btn-primary") : link_to("Sign in to post", new_session_path, class: "btn btn-primary") %></p>
-  </div>
+  <% if authenticated? %>
+    <%= render "shared/empty_state",
+          title: "No posts yet",
+          body: "Start the conversation in #{@community.name}.",
+          action: { label: "New post", path: new_community_post_path(@community) } %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: "No posts yet",
+          body: "Start the conversation in #{@community.name}.",
+          action: { label: "Sign in to post", path: new_session_path } %>
+  <% end %>
 <% end %>
 
 <aside>

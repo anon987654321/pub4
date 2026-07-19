@@ -19,5 +19,5 @@
                channel_slug: @channel&.slug %>
   <% end %>
 <% else %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No shows yet.</p></div>
+  <%= render "shared/empty_state", title: "No shows yet", body: "Published shows will appear here." %>
 <% end %>

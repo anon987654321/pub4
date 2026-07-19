@@ -10,5 +10,7 @@
     </section>
   <% end %>
 <% else %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
+  <%= render "shared/empty_state",
+        title: "No notifications",
+        body: "Offers, orders, and local updates will appear here." %>
 <% end %>

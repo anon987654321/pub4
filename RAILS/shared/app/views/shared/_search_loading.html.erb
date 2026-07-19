@@ -1,3 +1,19 @@
-<div id="live_search_results">
-  <%= yield if block_given? %>
+<div id="live_search_results" aria-busy="true" aria-live="polite">
+  <% if block_given? %>
+    <%= yield %>
+  <% else %>
+    <div class="search-skeleton" role="status">
+      <span class="visually-hidden">Loading results…</span>
+      <% 4.times do %>
+        <div class="search-skeleton-card" aria-hidden="true">
+          <div class="skeleton search-skeleton-avatar"></div>
+          <div class="search-skeleton-lines">
+            <div class="skeleton search-skeleton-line"></div>
+            <div class="skeleton search-skeleton-line search-skeleton-line--short"></div>
+            <div class="skeleton search-skeleton-line search-skeleton-line--mid"></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>

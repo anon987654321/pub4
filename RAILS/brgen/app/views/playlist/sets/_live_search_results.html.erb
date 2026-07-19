@@ -17,5 +17,5 @@
                q: params[:q] %>
   <% end %>
 <% else %>
-  <div class="empty empty-state" role="status" aria-live="polite"><p>No sets yet.</p></div>
+  <%= render "shared/empty_state", title: "No sets yet", body: "Create or import a set to get started." %>
 <% end %>

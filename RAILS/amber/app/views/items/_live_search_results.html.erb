@@ -20,9 +20,9 @@
 </div>
 
 <% if @items.empty? %>
-  <div class="empty" role="status" aria-live="polite">
-    <p>No wardrobe items yet. Add your first item to start recommendations, capsules, and decluttering.</p>
-  </div>
+  <%= render "shared/empty_state",
+        title: "No wardrobe items yet",
+        body: "Add your first item to start recommendations, capsules, and decluttering." %>
 <% end %>
 
 <%= render "shared/infinite_scroll_sentinel",

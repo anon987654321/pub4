@@ -29,5 +29,5 @@
     <% end %>
   </div>
 <% else %>
-  <div class="empty empty-state"><p>No saved searches. Search the marketplace, then save the search.</p></div>
+  <%= render "shared/empty_state", title: "No saved searches", body: "Search the marketplace, then save the search." %>
 <% end %>

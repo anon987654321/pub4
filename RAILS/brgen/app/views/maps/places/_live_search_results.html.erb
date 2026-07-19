@@ -14,5 +14,5 @@
                kind: params[:kind] %>
   <% end %>
 <% else %>
-  <p class="empty empty-state" role="status">No places match this search.</p>
+  <%= render "shared/empty_state", title: "No places", body: "No places match this search." %>
 <% end %>

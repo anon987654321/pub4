@@ -3,11 +3,22 @@
 
 html { font-size: 16px; }
 
+/* Dialect defaults: graphite/indigo social (apps may override via inline :root) */
+:root {
+  --x-bg: #17161c;
+  --x-text: #d8d6e0;
+  --x-text-secondary: #8a879c;
+  --x-border: #46435a;
+  --x-accent: #5b4fc4;
+  --x-danger: #d1594a;
+  --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+}
+
 body {
-  background: var(--x-bg, #000000);
-  color: var(--x-text, #e7e9ea);
+  background: var(--x-bg);
+  color: var(--x-text);
   display: grid;
-  font-family: var(--x-font, "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace);
+  font-family: var(--x-font);
   font-size: clamp(0.9375rem, 2.5vw, 1.25rem);
   line-height: 1.5;
   min-height: 100dvh;
@@ -16,11 +27,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-#error-description { fill: var(--x-danger, #f4212e); }
-#error-id { fill: var(--x-border, #2f3336); }
+#error-description { fill: var(--x-danger); }
+#error-id { fill: var(--x-border); }
 
 a {
-  color: var(--x-accent, #1d9bf0);
+  color: var(--x-accent);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 0.0925em;
@@ -40,7 +51,7 @@ main {
 main header { width: min(100%, 12em); }
 main header svg { height: auto; max-width: 100%; width: 100%; }
 main article { width: min(100%, 30em); }
-main article p { font-size: 87.5%; color: var(--x-text-secondary, #71767b); }
+main article p { font-size: 87.5%; color: var(--x-text-secondary); }
 
 main article br {
   display: none;

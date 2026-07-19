@@ -21,8 +21,8 @@
       </article>
     <% end %>
   <% else %>
-    <div class="empty empty-state"><p>No one nearby right now. Check back later.</p></div>
+    <%= render "shared/empty_state", title: "No one nearby", body: "Check back later." %>
   <% end %>
 <% else %>
-  <div class="empty empty-state"><p>Waiting for your location…</p></div>
+  <%= render "shared/empty_state", title: "Waiting for location", body: "Allow location to see people nearby." %>
 <% end %>

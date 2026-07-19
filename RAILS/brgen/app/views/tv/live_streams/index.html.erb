@@ -16,7 +16,7 @@
         class: "x-tv" %>
     <% end %>
     <% if @live_streams.empty? %>
-      <div class="empty empty-state" role="status" aria-live="polite"><p>No live streams yet.</p></div>
+      <%= render "shared/empty_state", title: "No live streams", body: "Nothing live right now." %>
     <% end %>
   <% end %>
   </turbo-frame>

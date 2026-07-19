@@ -38,5 +38,12 @@
                radius_km: @radius_km %>
   <% end %>
 <% else %>
-  <div class="empty empty-state"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
+  <% if authenticated? %>
+    <%= render "shared/empty_state",
+          title: "No listings",
+          body: "No listings match this search.",
+          action: { label: "Sell something", path: new_marketplace_listing_path } %>
+  <% else %>
+    <%= render "shared/empty_state", title: "No listings", body: "No listings match this search." %>
+  <% end %>
 <% end %>
