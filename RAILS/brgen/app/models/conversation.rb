@@ -43,6 +43,10 @@ class Conversation < ApplicationRecord
       ChannelBot.welcome!(channel)
       channel
     end
+  rescue ActiveRecord::RecordNotUnique
+    # Two visitors opened the same fresh channel at once — the slug is unique,
+    # so the loser just adopts the winner's row.
+    find_by!(slug: slug)
   end
 
   def channel? = slug.present?
