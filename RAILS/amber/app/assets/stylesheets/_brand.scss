@@ -1,9 +1,12 @@
+/* Amber logo — Caprasimo swoosh + animated radial gradient + white retro lines.
+   Geometry and motion match the canonical logo HTML (viewBox 1000×500). */
+
 @font-face {
   font-family: "Caprasimo";
   src: url("/fonts/caprasimo-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: optional;
+  font-display: swap;
 }
 
 @property --gradient-x {
@@ -18,14 +21,40 @@
   initial-value: 50%;
 }
 
+/* Mobile-first type sizes (logo HTML base) */
+.amber-logo-svg .amber-logo-word {
+  font-size: 60px;
+}
+
+.amber-logo-svg .amber-logo-mark {
+  font-size: 12px;
+}
+
+@media (min-width: 768px) {
+  .amber-logo-svg .amber-logo-word {
+    font-size: 120px;
+  }
+
+  .amber-logo-svg .amber-logo-mark {
+    font-size: 24px;
+  }
+}
+
+.animated-gradient,
 .amber-logo-gradient {
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at var(--gradient-x) var(--gradient-y), #ffb999 0%, #e6cce6 33%, #cce6cc 66%, #99e6e6 100%);
-  animation: amberGradientMove 20s infinite linear;
+  background: radial-gradient(
+    circle at var(--gradient-x) var(--gradient-y),
+    #ffb999 0%,
+    #e6cce6 33%,
+    #cce6cc 66%,
+    #99e6e6 100%
+  );
+  animation: moveGradient 20s infinite linear;
 }
 
-@keyframes amberGradientMove {
+@keyframes moveGradient {
   0% { --gradient-x: 0%; --gradient-y: 0%; }
   25% { --gradient-x: 100%; --gradient-y: 0%; }
   50% { --gradient-x: 100%; --gradient-y: 100%; }
@@ -33,61 +62,60 @@
   100% { --gradient-x: 0%; --gradient-y: 0%; }
 }
 
-.amber-swoosh-lines {
-  color: var(--text);
-}
-
-.amber-swoosh-line {
-  opacity: 0.55;
-  animation: amberSwooshDrift 6s ease-in-out infinite;
-}
-
-.amber-swoosh-lines .amber-swoosh-line:nth-child(1) { animation-delay: 0s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(2) { animation-delay: 0.12s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(3) { animation-delay: 0.24s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(4) { animation-delay: 0.36s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(5) { animation-delay: 0.48s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(6) { animation-delay: 0.6s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(7) { animation-delay: 0.72s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(8) { animation-delay: 0.84s; }
-.amber-swoosh-lines .amber-swoosh-line:nth-child(9) { animation-delay: 0.96s; }
-
-@keyframes amberSwooshDrift {
-  0%, 100% { opacity: 0.45; }
-  50% { opacity: 0.95; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .amber-logo-gradient,
-  .amber-swoosh-line {
+  .animated-gradient,
+  .amber-logo-gradient {
     animation: none;
+    --gradient-x: 50%;
+    --gradient-y: 50%;
   }
 }
 
+/* Banner: full-bleed, proportional height like logo HTML (#container) */
 .amber-logo-banner {
-  --amber-logo-height: clamp(4.5rem, 14vw, 8rem);
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  line-height: 0; // intentional: collapses inline-SVG descender gap (not a text block)
-  background: var(--bg);
+  line-height: 0; // intentional: collapses inline-SVG descender gap
+  background: #ffffff;
   position: sticky;
   top: 0;
   z-index: calc(var(--z-nav) + 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   a {
     display: block;
     width: 100%;
+    max-width: 1000px;
     text-decoration: none;
+    line-height: 0;
+  }
+
+  .amber-instance {
+    width: 100%;
+    height: 33.33vw; /* mobile: height = width/3 */
+    max-height: 500px;
+    overflow: hidden;
   }
 
   .amber-logo-svg {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
-    max-height: var(--amber-logo-height);
   }
 }
 
+@media (min-width: 768px) {
+  .amber-logo-banner .amber-instance {
+    width: min(100vw, 1000px);
+    height: 500px;
+    max-height: 500px;
+    margin-inline: auto;
+  }
+}
+
+/* Guest hero still uses the same logo mark full-bleed */
 .amber-guest-hero {
   display: flex;
   flex-direction: column;
@@ -100,12 +128,27 @@
 .amber-guest-hero .logo {
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  line-height: 0; // intentional: collapses inline-SVG descender gap (not a text block)
+  line-height: 0;
+  background: #ffffff;
+
+  .amber-instance {
+    width: 100%;
+    height: 33.33vw;
+    max-height: 500px;
+  }
 
   svg {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .amber-guest-hero .logo .amber-instance {
+    width: min(100vw, 1000px);
+    height: 500px;
+    margin-inline: auto;
   }
 }
 
