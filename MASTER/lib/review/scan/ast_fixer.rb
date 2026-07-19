@@ -20,14 +20,26 @@ module Master
         Result = Struct.new(:path, :changed, :transforms, keyword_init: true)
         Strategy = Struct.new(:predicate, :transforms, keyword_init: true)
         STRATEGIES = [
-          Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants]),
+          Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code add_trailing_commas]),
           Strategy.new(predicate: :sql_context?, transforms: %i[normalise_null_comparison]),
           Strategy.new(predicate: :shell?, transforms: %i[add_strict_mode]),
           Strategy.new(predicate: :html?, transforms: %i[add_html_lang add_meta_charset add_viewport_fit add_skip_to_main add_lazy_loading]),
           Strategy.new(predicate: :javascript?, transforms: %i[replace_unreassigned_var convert_for_in_arrays convert_string_concat convert_optional_chaining]),
           Strategy.new(predicate: :style?, transforms: %i[logical_properties])
         ].freeze
-        UNIVERSAL_TRANSFORMS = %i[expand_tabs collapse_blank_lines strip_trailing_whitespace remove_immediate_dead_code add_trailing_commas ensure_final_newline].freeze
+        # remove_immediate_dead_code/add_trailing_commas are Ruby-AST heuristics
+        # (Prism-based literal-line protection, Ruby hash/array trailing-comma
+        # convention) -- they used to sit here and run against every file type.
+        # On non-Ruby source, Prism.parse fails, literal_lines comes back empty,
+        # the heuristics run fully unguarded, AND apply_transforms's own
+        # parses?-before/after safety net only fires `if ruby?` -- so a broken
+        # transform on a .js/.css file had zero backstop. Confirmed in production:
+        # add_trailing_commas turned every CSS rule's closing `}` into a trailing
+        # `,` (e.g. `--z-skip: 2000;` + `}` -> `--z-skip: 2000;,`), and
+        # remove_immediate_dead_code deleted live sibling if-branches in chat.js
+        # that only *looked* unreachable without real block-scope analysis.
+        # Now Ruby-only, via the ruby? strategy above.
+        UNIVERSAL_TRANSFORMS = %i[expand_tabs collapse_blank_lines strip_trailing_whitespace ensure_final_newline].freeze
 
         include WebTransforms
         include DeadCodeAndCommas

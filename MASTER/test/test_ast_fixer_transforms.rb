@@ -62,6 +62,48 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :dead_code
   end
 
+  # Regression: remove_immediate_dead_code and add_trailing_commas are
+  # Ruby-AST heuristics (Prism-based literal-line protection, Ruby
+  # hash/array trailing-comma convention). They used to run as UNIVERSAL_
+  # TRANSFORMS against every file type. On CSS this turned every rule's
+  # closing brace into a trailing comma on the prior declaration; on JS it
+  # deleted live sibling if-branches after an unrelated early return --
+  # confirmed in production against MASTER's own web/public assets. Both
+  # transforms must now be Ruby-only (see the ruby? strategy in ast_fixer.rb).
+  def test_trailing_comma_transform_skips_css
+    source = <<~CSS
+      .box {
+        --z-skip: 2000;
+      }
+    CSS
+    result = fix("style.css", source)
+
+    assert_includes result[:content], "--z-skip: 2000;\n"
+    refute_includes result[:content], "--z-skip: 2000;,"
+    refute_includes result[:transforms], :trailing_commas
+  end
+
+  def test_dead_code_transform_skips_javascript_sibling_branches
+    source = <<~JS
+      function onClick(action) {
+        if (action === 'retry') {
+          const last = window._lastUserMessageText || '';
+          if (last) window.sendMessage(last);
+          return;
+        }
+        if (action === 'delete') {
+          el.remove();
+          return;
+        }
+      }
+    JS
+    result = fix("actions.js", source)
+
+    assert_includes result[:content], "const last = window._lastUserMessageText || '';"
+    assert_includes result[:content], "el.remove();"
+    refute_includes result[:transforms], :dead_code
+  end
+
   def test_collapse_blank_lines_transform
     result = fix("blank.rb", "def call\n\n\n  :ok\nend\n")
 
