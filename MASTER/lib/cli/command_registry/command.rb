@@ -31,11 +31,21 @@ module Master
         end
 
         def dependency_kwargs(ctx)
-          keys = @receiver.method(@method_name).parameters.filter_map do |type, name|
-            name if %i[key keyreq].include?(type) && name != :ctx
-          end
-          mapped = keys.zip(@args).to_h.compact.merge(@kwargs)
-          accepts_ctx = @receiver.method(@method_name).parameters.any? { |type, name| %i[key keyreq].include?(type) && name == :ctx }
+          parameters = @receiver.method(@method_name).parameters
+          keys = parameters.filter_map { |type, name| name if %i[key keyreq].include?(type) && name != :ctx }
+          # A dependency can legitimately *be* nil (e.g. council_stage in lean
+          # boot) -- compacting those away alongside genuinely-absent optional
+          # args used to drop required keywords too, turning a working nil
+          # dependency into a "missing keyword" crash. Only optional (:key)
+          # params may fall back to their own default when nil; required
+          # (:keyreq) params must always be passed through, nil or not.
+          required = parameters.filter_map { |type, name| name if type == :keyreq }
+          mapped = keys.zip(@args).each_with_object({}) do |(name, value), acc|
+            next if value.nil? && !required.include?(name)
+
+            acc[name] = value
+          end.merge(@kwargs)
+          accepts_ctx = parameters.any? { |type, name| %i[key keyreq].include?(type) && name == :ctx }
           accepts_ctx ? mapped.merge(ctx:) : mapped
         end
       end
