@@ -97,11 +97,15 @@ module Master
           @bus&.publish("ast_fixer:transform", path: @path, transforms: @transforms)
         end
 
+        # Ruby only honors the magic comment on line 1, or line 2 when line 1 is
+        # a shebang -- start_with?(FROZEN_HEADER) alone misses that second case
+        # and re-inserted a duplicate on every fix cycle for every shebang'd
+        # script (confirmed: several tools/*.rb accreted 2, then 3 copies).
         def add_frozen_header(src)
-          return src if src.start_with?(FROZEN_HEADER)
+          lines = src.lines
+          return src if lines.first(2).any? { |l| l.strip == FROZEN_HEADER.strip }
 
           if src.start_with?("#!")
-            lines = src.lines
             lines.insert(1, FROZEN_HEADER)
             @transforms << :frozen_string_literal
             lines.join

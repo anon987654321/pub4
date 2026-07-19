@@ -104,6 +104,27 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :dead_code
   end
 
+  # Regression: add_frozen_header only checked start_with?(FROZEN_HEADER),
+  # which never matches a shebang'd file (line 1 is "#!...", the magic
+  # comment is line 2) -- so it re-inserted a duplicate on every fix cycle.
+  # Confirmed in production: several tools/*.rb scripts had accreted 2, then
+  # 3 copies of "# frozen_string_literal: true" over repeated /fix runs.
+  def test_frozen_header_not_duplicated_after_shebang
+    source = "#!/usr/bin/env ruby\n# frozen_string_literal: true\nputs :ok\n"
+    result = fix("shebang_tool.rb", source)
+
+    assert_equal 1, result[:content].scan("frozen_string_literal: true").length
+    refute_includes result[:transforms], :frozen_string_literal
+  end
+
+  def test_frozen_header_added_once_for_shebang_file_missing_it
+    source = "#!/usr/bin/env ruby\nputs :ok\n"
+    result = fix("shebang_tool2.rb", source)
+
+    assert_equal 1, result[:content].scan("frozen_string_literal: true").length
+    assert_includes result[:transforms], :frozen_string_literal
+  end
+
   def test_collapse_blank_lines_transform
     result = fix("blank.rb", "def call\n\n\n  :ok\nend\n")
 
