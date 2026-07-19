@@ -136,6 +136,16 @@ module DillaGroove
     rng.rand(0.0004..hi)
   end
 
+  # A finger-drummer occasionally misses a hat, or leaves space on purpose —
+  # a pattern that never drops a single 16th over 32 bars reads as sequenced.
+  # Rare (~4%), deterministic per bar/step, and never the downbeat.
+  def hat_should_drop?(bar, step)
+    return false unless enabled? && pocket_dna?
+    return false if ENV["HAT_DROP"] == "0"
+    return false if step.zero?
+    Random.new((bar * 787) + (step * 53) + 191).rand < 0.04
+  end
+
   def freehand_kick_sec(bar, step, beat_p)
     return 0.0 unless pocket_dna? && ENV.fetch("KICK_FREEHAND", "1") != "0"
     # Unquantized kick nudges (time-shift feel) — cyclic by bar/step.

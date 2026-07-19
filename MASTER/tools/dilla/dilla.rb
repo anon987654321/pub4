@@ -7370,9 +7370,13 @@ DILLA_STYLE_DEFAULTS = {
   "FLYLO_DRUMS_ONLY" => "0",
   "FLYLO_DRUM_OVERLAY" => "1",
   "FLYLO_QUINT_HATS" => "1",
-  "FLYLO_KICK_GAIN" => "1.55",
-  "KICK_SAMPLE_GAIN" => "1.25",
-  "KICK_GAIN" => "1.15",
+  # These three gains stack multiplicatively on the same kick signal —
+  # 1.55*1.25*1.15 ~= 2.23x (+7dB) compounded was the likely cause of
+  # "drums too loud" direct feedback. ~1.26x (+2dB) keeps the kit-forward
+  # intent (kick was previously buried under pads) without the overshoot.
+  "FLYLO_KICK_GAIN" => "1.2",
+  "KICK_SAMPLE_GAIN" => "1.05",
+  "KICK_GAIN" => "1.0",
   "POCKET_DNA" => "1",
   "POCKET_SIMPLE" => "1",
   "POCKET_GHOSTS" => "1",
@@ -9905,6 +9909,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown || chop_entry
       hat_steps.each_with_index do |step, i|
         next if drop_bar
+        next if DillaGroove.hat_should_drop?(bar, step)
         role = if [3, 11].include?(step) && feel == :syncopated_slash_ninth
                  :hat_up
                elsif feel == :loose_pocket && step.odd?
@@ -10161,15 +10166,27 @@ def pick_external_drum_kit!
                           end
 end
 
+# Hats/snares/claps synthesized from a bandpassed noise burst (generate_drum_kit!)
+# are thin/harsh by construction — pure noise decaying in ~20ms has no body.
+# pick_external_drum_kit! rolls a real-sample kit only 35-88% of the time
+# (track-dependent); these three roles matter enough to the drum sound that
+# they should reach for real samples whenever the (already-fetched) kit
+# cache exists, not just when the roll happened to land on it.
+ALWAYS_SAMPLED_DRUM_ROLES = %w[hat.wav open_hat.wav snare.wav ghost.wav].freeze
+
 def drum_sample_path(name)
   custom = File.join(CUSTOM_DRUM_DIR, name)
   return custom if File.exist?(custom)
 
   subdir = DRUM_SAMPLE_SUBDIR[name]
-  if subdir && @current_external_kit
-    kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", @current_external_kit, subdir)
-    picked = Dir.glob(File.join(kit_dir, "*.wav")).sample
-    return picked if picked
+  if subdir
+    kit = @current_external_kit
+    kit ||= "03-soulful-vintage" if ALWAYS_SAMPLED_DRUM_ROLES.include?(name) && Dir.exist?(EXTERNAL_DRUM_KIT_CACHE)
+    if kit
+      kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit, subdir)
+      picked = Dir.glob(File.join(kit_dir, "*.wav")).sample
+      return picked if picked
+    end
   end
 
   File.join(DRUM_DIR, name)
@@ -10264,13 +10281,28 @@ def ensure_drum_chops!
   File.file?(File.join(dest, "kick.wav")) ? dest : nil
 end
 
+def wav_sample_rate(path)
+  out, = Open3.capture2("ffprobe", "-v", "error", "-show_entries", "stream=sample_rate",
+                        "-of", "default=noprint_wrappers=1:nokey=1", path)
+  out.to_s.strip.to_i
+rescue StandardError
+  0
+end
+
 def load_kit_wav(path)
   return nil unless path && File.file?(path)
-  if defined?(DillaMusicGems) && DillaMusicGems.respond_to?(:read_mono_wav)
+  # DillaMusicGems.read_mono_wav (wavefile gem) decodes raw samples with NO
+  # resample — fine for our own kit (already SAMPLE_RATE-native), wrong for
+  # external samples at a different native rate (free-drum-samples ships
+  # 22050Hz). Loaded at the wrong rate, a hit plays back half-speed and an
+  # octave low — this was making the whole external-kit drum sound "horrible".
+  # ffprobe first; only take the no-resample fast path when the rate already
+  # matches, otherwise force the ffmpeg fallback below which does resample.
+  if defined?(DillaMusicGems) && DillaMusicGems.respond_to?(:read_mono_wav) && wav_sample_rate(path) == SAMPLE_RATE
     samples = DillaMusicGems.read_mono_wav(path)
     return samples if samples && !samples.empty?
   end
-  # ffmpeg fallback — no wavefile gem required
+  # ffmpeg fallback — resamples to SAMPLE_RATE, no wavefile gem required
   raw, = Open3.capture2("ffmpeg", "-v", "error", "-i", path,
                         "-f", "f32le", "-ac", "1", "-ar", SAMPLE_RATE.to_s, "pipe:1")
   return nil if raw.nil? || raw.empty?
@@ -10279,24 +10311,42 @@ rescue StandardError
   nil
 end
 
+# True if drum_sample_path(name) resolved to a real sample (custom dir or
+# the external free-drum-samples kit) rather than the synthesized fallback
+# in DRUM_DIR — used to stop the camel/grid one-shot chops below from
+# silently clobbering a better sample that already won.
+def external_sample_used?(name)
+  !drum_sample_path(name).start_with?(DRUM_DIR)
+end
+
 def apply_drum_chops_to_kit!(kit)
-  # Prefer pre-cut Camel oneshots, then grid_chops from demucs stem.
+  # Prefer pre-cut Camel oneshots, then grid_chops from demucs stem — but
+  # only for roles that didn't already resolve to a real external-kit
+  # sample. These one-shots are all sliced from a single FlyLo Camel
+  # render (camel_chops and grid_chops are literally byte-identical files),
+  # so they were unconditionally overwriting the hat/snare fix above with
+  # the same narrow, zero-variety source every render.
   dirs = [
     File.join(CUSTOM_DRUM_DIR, "camel_chops"),
     File.join(ROOT, DRUM_CHOP_DIR),
     ensure_drum_chops!
   ].compact.uniq
+  roles = { kick: "kick.wav", snare: "snare.wav", hat: "hat.wav" }
+           .reject { |_, file| external_sample_used?(file) }
+  return kit if roles.empty?
   dirs.each do |dest|
     next unless dest && Dir.exist?(dest)
-    { kick: "kick.wav", snare: "snare.wav", hat: "hat.wav" }.each do |role, file|
+    roles.each do |role, file|
       path = File.join(dest, file)
       samples = load_kit_wav(path)
       kit[role] = samples if samples && !samples.empty?
     end
     # Keep a second kick body for alternation (MPC two-kick habit).
-    alt = load_kit_wav(File.join(dest, "kick.wav"))
-    kit[:ind_kick] = alt if alt && !alt.empty? && kit[:ind_kick].nil?
-    break if kit[:kick] && kit[:snare]
+    if roles.key?(:kick)
+      alt = load_kit_wav(File.join(dest, "kick.wav"))
+      kit[:ind_kick] = alt if alt && !alt.empty? && kit[:ind_kick].nil?
+    end
+    break if (!roles.key?(:kick) || kit[:kick]) && (!roles.key?(:snare) || kit[:snare])
   end
   kit
 end
