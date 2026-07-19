@@ -7462,12 +7462,17 @@ DILLA_COMFORT_DEFAULTS = {
   "STREAM_COMFORT" => "1",
   "STREAM_SOUL" => "1",
   "SPEAK" => "0",
-  # Fresh harmony — Players-style minor ii–V family (not get_dis_money slash cycle).
-  "TRACK" => "mixo_sus_loop",
-  "PROGRESSION" => "mixo_sus_loop",
-  "STREAM_TRACK" => "mixo_sus_loop",
+  # Let the real track/progression pool cycle -- a single forced progression
+  # ("mixo_sus_loop" pinned via TRACK/PROGRESSION/STREAM_TRACK) previously
+  # sat here, which is exactly the monotony the render-seed/pocket variety
+  # work elsewhere in this file exists to prevent. Comfort should mean
+  # calmer mixing, not one repeating track forever.
   "STREAM_LOCK" => "0",
-  # Industrial techno kit: ind_* samples + four-on-floor pocket (not dusty soul).
+  # Dusty/Madlib-leaning pocket (warm, soulful) -- NOT the industrial techno
+  # kit that was here before. That swap (128 BPM, swing=50/no-swing at all,
+  # four-on-floor kick, full 16-step hats, ghosts/rush/open-hat all forced
+  # off) fought against the entire Dilla-pocket direction this file has
+  # been tuned toward all session and was the direct cause of "too harsh".
   "KICKS" => "1",
   "POCKET_KICKS" => "1",
   "FLYLO_DRUMS_ONLY" => "0",
@@ -7475,32 +7480,29 @@ DILLA_COMFORT_DEFAULTS = {
   "FLYLO_QUINT_HATS" => "0",
   "DRUM_CHOPS" => "0",
   "BACKBEAT_CLAP" => "1",
-  "DRUM_PRESET" => "industrial_techno",
-  "EXTERNAL_KIT" => "industrial",
-  "POCKET_SET" => "industrial",
-  "RAW_KICK" => "1",
-  "DRUM_SAMPLE_RAW" => "1",
-  "KICK_GAIN" => "0.55",
-  "FLYLO_KICK_GAIN" => "0.5",
-  "KICK_SAMPLE_GAIN" => "0.6",
-  "FLYLO_OVERLAY_GAIN" => "0.6",
-  "FLYLO_SUB_MIX" => "0.85",
-  "FLYLO_TOP_MIX" => "0.5",
-  "FLYLO_MERGE_BOOST" => "0.8",
-  "FLYLO_BASE_DRUM_VOL" => "0.7",
-  # Kit sits under voice; still readable four-on-floor.
-  "DRUM_BUS_VOL" => "0.68",
-  "DRUM_BUS_GAIN" => "0.82",
-  "DRUM_MIX_WEIGHT" => "0.78",
-  "DRUM_AIR_DB" => "0.8",
-  "DRUM_PRESENCE_DB" => "1.0",
-  "DRUM_PEAK_DB" => "-5.0",
+  "DRUM_PRESET" => "dilla_slight",
+  "POCKET_SET" => "dusty",
+  "KICK_GAIN" => "1.0",
+  "FLYLO_KICK_GAIN" => "0.9",
+  "KICK_SAMPLE_GAIN" => "1.0",
+  "FLYLO_OVERLAY_GAIN" => "0.9",
+  "FLYLO_SUB_MIX" => "1.0",
+  "FLYLO_TOP_MIX" => "0.65",
+  "FLYLO_MERGE_BOOST" => "1.0",
+  "FLYLO_BASE_DRUM_VOL" => "0.9",
+  # Kit sits under voice; still readable.
+  "DRUM_BUS_VOL" => "1.05",
+  "DRUM_BUS_GAIN" => "1.0",
+  "DRUM_MIX_WEIGHT" => "0.9",
+  "DRUM_AIR_DB" => "1.2",
+  "DRUM_PRESENCE_DB" => "1.2",
+  "DRUM_PEAK_DB" => "-3.0",
   "DRUM_PEAK_LIFT_DB" => "0",
   "POCKET_DNA" => "1",
-  "POCKET_SIMPLE" => "0",
-  "POCKET_GHOSTS" => "0",
-  "POCKET_OPEN_HAT" => "0",
-  "POCKET_RUSH" => "0",
+  "POCKET_SIMPLE" => "1",
+  "POCKET_GHOSTS" => "1",
+  "POCKET_OPEN_HAT" => "1",
+  "POCKET_RUSH" => "1",
   # Jonas V — loud enough to hear (previous 1.35 left voice ≈−18dB under bed).
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
@@ -7509,12 +7511,13 @@ DILLA_COMFORT_DEFAULTS = {
   "RAP_VOCAL_BED_WEIGHT" => "0.52",
   "RAP_VOCAL_DUCK" => "0.42",
   "RAP_VOCAL_SIDECHAIN" => "1",
-  # Held pad bed under techno kit + voice.
+  # Held pad bed, real attack/release (not the tightened 900/2200 techno
+  # values that were here -- neo-soul pads need room to bloom).
   "PAD_VOICE" => "stack_soul",
   "PAD_ARP_MODE" => "held",
-  "PAD_ATTACK" => "900",
-  "PAD_RELEASE" => "2200",
-  "PAD_VOL" => "58",
+  "PAD_ATTACK" => "1500",
+  "PAD_RELEASE" => "3800",
+  "PAD_VOL" => "70",
   "HARM_MIX_WEIGHT" => "0.95",
   "HARM_BUS_VOL" => "1.15",
   "HARM_BODY_DB" => "2.5",
@@ -7578,12 +7581,16 @@ DILLA_COMFORT_DEFAULTS = {
   "CONV_REVERB" => "0",
   "CAMEL_CLEAN_MASTER" => "1",
   "CAMEL_NO_REVERB" => "1",
-  "SWING" => "50",
+  # Dilla pocket range (documented at the top of lib/groove_engine.rb),
+  # not the 128 BPM / swing=50 (i.e. literally no swing) techno values
+  # that were here -- those alone made anything feel generic regardless
+  # of drum EQ. Leave BPM unset so per-track tempo picks its own value
+  # in the real hip-hop range instead of forcing house/techno tempo.
+  "SWING" => "56",
   "FORM" => "soul_32",
   "BARS" => "16",
   "STREAM_BARS" => "16",
   "ARTIST_VERIFIED_ONLY" => "0",
-  "BPM" => "128",
   "QUINTUPLET" => "0"
 }.freeze
 
