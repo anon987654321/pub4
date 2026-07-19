@@ -3568,17 +3568,20 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
                else
                  0.58
                end
-  # After peak-normalize, keep bus fader hot (no quiet 0.24*KICK_GAIN path).
-  base_vol = if flylo_primary_drums?
-               ENV.fetch("DRUM_BUS_VOL", "1.35").to_f.round(2)
+  # Bus fader. Comfort / explicit DRUM_BUS_VOL wins over the old hot FlyLo path.
+  base_vol = if ENV["DRUM_BUS_VOL"] && !ENV["DRUM_BUS_VOL"].empty?
+               ENV["DRUM_BUS_VOL"].to_f.round(3)
+             elsif flylo_primary_drums?
+               1.35
              else
                (0.24 * kick_velocity_scale + 0.1).round(2)
              end
   bus_gain = ENV.fetch("DRUM_BUS_GAIN", flylo_primary_drums? ? "1.4" : "1.0").to_f
-  drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (base_vol * bus_gain).round(2)).to_s
+  drum_vol = (ENV["DEBUG_DRUM_WEIGHT"] || (base_vol * bus_gain).round(3)).to_s
   drum_air = ENV.fetch("DRUM_AIR_DB", "2.5").to_f
   drum_pres = ENV.fetch("DRUM_PRESENCE_DB", "2.5").to_f
-  flylo_eq = if flylo_drum_overlay_enabled?
+  kick_boost = comfort_mode? ? [kick_boost, 1.2].min : kick_boost
+  flylo_eq = if flylo_drum_overlay_enabled? && !comfort_mode?
                # Was stacking +5/+2.5/+4.9/+3.5dB across bass, low-mid, presence,
                # and air all at once -- direct feedback that the drums sound
                # "too hard" pointed at this chain. Presence/air were the biggest
@@ -7510,49 +7513,68 @@ DILLA_COMFORT_DEFAULTS = {
   "STREAM_COMFORT" => "1",
   "STREAM_SOUL" => "1",
   "SPEAK" => "0",
-  # One kit — pocket only.
+  # Fresh harmony — Players-style minor ii–V family (not get_dis_money slash cycle).
+  "TRACK" => "mixo_sus_loop",
+  "PROGRESSION" => "mixo_sus_loop",
+  "STREAM_TRACK" => "mixo_sus_loop",
+  "STREAM_LOCK" => "0",
+  # Industrial techno kit: ind_* samples + four-on-floor pocket (not dusty soul).
   "KICKS" => "1",
   "POCKET_KICKS" => "1",
   "FLYLO_DRUMS_ONLY" => "0",
   "FLYLO_DRUM_OVERLAY" => "0",
   "FLYLO_QUINT_HATS" => "0",
   "DRUM_CHOPS" => "0",
-  "BACKBEAT_CLAP" => "0",
-  "KICK_GAIN" => "1.05",
-  "FLYLO_KICK_GAIN" => "1.0",
-  "KICK_SAMPLE_GAIN" => "1.0",
-  "FLYLO_OVERLAY_GAIN" => "1.0",
-  "FLYLO_SUB_MIX" => "1.15",
-  "FLYLO_TOP_MIX" => "0.72",
-  "FLYLO_MERGE_BOOST" => "1.1",
-  "FLYLO_BASE_DRUM_VOL" => "1.0",
-  "DRUM_BUS_VOL" => "1.15",
-  "DRUM_BUS_GAIN" => "1.1",
-  "DRUM_MIX_WEIGHT" => "1.2",
-  "DRUM_AIR_DB" => "1.0",
+  "BACKBEAT_CLAP" => "1",
+  "DRUM_PRESET" => "industrial_techno",
+  "EXTERNAL_KIT" => "industrial",
+  "POCKET_SET" => "industrial",
+  "RAW_KICK" => "1",
+  "DRUM_SAMPLE_RAW" => "1",
+  "KICK_GAIN" => "0.55",
+  "FLYLO_KICK_GAIN" => "0.5",
+  "KICK_SAMPLE_GAIN" => "0.6",
+  "FLYLO_OVERLAY_GAIN" => "0.6",
+  "FLYLO_SUB_MIX" => "0.85",
+  "FLYLO_TOP_MIX" => "0.5",
+  "FLYLO_MERGE_BOOST" => "0.8",
+  "FLYLO_BASE_DRUM_VOL" => "0.7",
+  # Kit sits under voice; still readable four-on-floor.
+  "DRUM_BUS_VOL" => "0.68",
+  "DRUM_BUS_GAIN" => "0.82",
+  "DRUM_MIX_WEIGHT" => "0.78",
+  "DRUM_AIR_DB" => "0.8",
   "DRUM_PRESENCE_DB" => "1.0",
-  "DRUM_PEAK_DB" => "-2.0",
+  "DRUM_PEAK_DB" => "-5.0",
+  "DRUM_PEAK_LIFT_DB" => "0",
   "POCKET_DNA" => "1",
-  "POCKET_SIMPLE" => "1",
+  "POCKET_SIMPLE" => "0",
   "POCKET_GHOSTS" => "0",
-  "POCKET_OPEN_HAT" => "1",
-  # No rap bed fight.
-  "RAP_VOCAL" => "0",
-  # Held pad bed, single calm lead.
+  "POCKET_OPEN_HAT" => "0",
+  "POCKET_RUSH" => "0",
+  # Jonas V — loud enough to hear (previous 1.35 left voice ≈−18dB under bed).
+  "RAP_VOCAL" => "jonas_v",
+  "RAP_VOCAL_STYLE" => "rap",
+  "RAP_VOCAL_MIX" => "3.2",
+  "RAP_VOCAL_WEIGHT" => "2.6",
+  "RAP_VOCAL_BED_WEIGHT" => "0.52",
+  "RAP_VOCAL_DUCK" => "0.42",
+  "RAP_VOCAL_SIDECHAIN" => "1",
+  # Held pad bed under techno kit + voice.
   "PAD_VOICE" => "stack_soul",
   "PAD_ARP_MODE" => "held",
-  "PAD_ATTACK" => "1500",
-  "PAD_RELEASE" => "3800",
-  "PAD_VOL" => "74",
-  "HARM_MIX_WEIGHT" => "1.15",
-  "HARM_BUS_VOL" => "1.45",
+  "PAD_ATTACK" => "900",
+  "PAD_RELEASE" => "2200",
+  "PAD_VOL" => "58",
+  "HARM_MIX_WEIGHT" => "0.95",
+  "HARM_BUS_VOL" => "1.15",
   "HARM_BODY_DB" => "2.5",
   "HARM_MID_DB" => "1.4",
   "HARM_PRESENCE_DB" => "0.8",
   "HARM_AIR_DB" => "0.3",
   "HARM_SUB_CUT_DB" => "-3.0",
-  "HARMONIC_PADS_WEIGHT" => "1.2",
-  "HARMONIC_PADS_VOLUME" => "1.3",
+  "HARMONIC_PADS_WEIGHT" => "1.15",
+  "HARMONIC_PADS_VOLUME" => "1.25",
   "LEAD_ARP" => "1",
   "LEAD_ARP_MODE" => "melodic_soul",
   "LEAD_VOICE" => "soul_prophet",
@@ -7563,21 +7585,21 @@ DILLA_COMFORT_DEFAULTS = {
   "EXPERIMENTAL_LEADS" => "0",
   "LEAD_FORCE_ARP" => "0",
   "STREAM_LEAD_MIDI_RICH" => "0",
-  "HARMONIC_LEAD_ARP_WEIGHT" => "1.1",
-  "HARMONIC_LEAD_ARP_VOLUME" => "1.15",
+  "HARMONIC_LEAD_ARP_WEIGHT" => "1.05",
+  "HARMONIC_LEAD_ARP_VOLUME" => "1.1",
   "HARMONIC_SCALE_LEAD_WEIGHT" => "0.85",
   "HARMONIC_SCALE_LEAD_VOLUME" => "0.9",
   "HARMONIC_LEAD_WEIGHT" => "1.0",
-  "HARMONIC_LEAD_VOLUME" => "1.1",
+  "HARMONIC_LEAD_VOLUME" => "1.05",
   "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.7",
   "HARMONIC_HARMONY_LEAD_VOLUME" => "0.85",
   "HARMONIC_XLEAD_WEIGHT" => "0.1",
   "HARMONIC_XLEAD_VOLUME" => "0.2",
   # Gentle pump + warm master.
   "SIDECHAIN_STYLE" => "dilla",
-  "SIDECHAIN_DRUM_WEIGHT" => "1.2",
-  "SIDECHAIN_HARM_WEIGHT" => "1.15",
-  "FLYLO_CHORD_DUCK" => "0.95",
+  "SIDECHAIN_DRUM_WEIGHT" => "1.25",
+  "SIDECHAIN_HARM_WEIGHT" => "1.1",
+  "FLYLO_CHORD_DUCK" => "0.92",
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
@@ -7585,10 +7607,10 @@ DILLA_COMFORT_DEFAULTS = {
   "HARSHNESS_NOTCH" => "1",
   "PERCEPTUAL_LIMIT" => "1",
   "STREAM_NORMALIZE" => "1",
-  "STREAM_LUFS" => "-18.0",
+  "STREAM_LUFS" => "-17.5",
   "STREAM_TRUE_PEAK" => "-2.0",
   "STREAM_LRA" => "9",
-  # Less chaos between tracks.
+  # Less chaos between tracks; rotate a short comfort progression pack.
   "STREAM_ROTATE_LEAD" => "0",
   "STREAM_ROTATE_SYNTH" => "0",
   "SYNTH_MORPH" => "0",
@@ -7607,11 +7629,13 @@ DILLA_COMFORT_DEFAULTS = {
   "CONV_REVERB" => "0",
   "CAMEL_CLEAN_MASTER" => "1",
   "CAMEL_NO_REVERB" => "1",
-  "SWING" => "56",
+  "SWING" => "50",
   "FORM" => "soul_32",
   "BARS" => "16",
   "STREAM_BARS" => "16",
-  "ARTIST_VERIFIED_ONLY" => "1"
+  "ARTIST_VERIFIED_ONLY" => "0",
+  "BPM" => "128",
+  "QUINTUPLET" => "0"
 }.freeze
 
 # Back-compat name used by camel_mode paths.
@@ -7651,9 +7675,10 @@ STREAM_SOUL_DEFAULTS = {
   "LONG_STRIPDOWN" => "0",
   "STREAM_LEARN_BIAS" => "0",
   "PROMOTION_BEAUTY_MIN" => "85",
-  "FLYLO_DRUM_OVERLAY" => "1",
+  # Soft only — comfort force sets overlay 0; do not re-hot kit here.
+  "FLYLO_DRUM_OVERLAY" => "0",
   "FLYLO_QUINT_HATS" => "0",
-  "FLYLO_OVERLAY_GAIN" => "1.0",
+  "FLYLO_OVERLAY_GAIN" => "0.85",
   # Jonas V acapella (rap-vocal ingest) — tempo-fit per track BPM.
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
@@ -8832,14 +8857,32 @@ DILLA_STREAM_PRIORITY = %w[
   maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
 ].freeze
 
+# Comfort stream: rotate a short pack (modal / minor — works at techno BPM).
+COMFORT_STREAM_ROTATION = %w[
+  mixo_sus_loop
+  phrygian_gold_arc
+  chromatic_mediant_drift
+  glasper_quartal
+  quartal_west_coast
+  neo_soul_pocket
+  warm_minor_arc
+  minor_turnaround
+].freeze
+
 def stream_track_order
   lock = ENV["STREAM_TRACK"] || (ENV["STREAM_LOCK"] == "1" ? ENV["TRACK"] : nil)
-  if lock && !lock.to_s.empty?
+  if lock && !lock.to_s.empty? && ENV["STREAM_LOCK"] == "1"
     key = lock.to_s.downcase.tr("-", "_").to_sym
     known = STREAM_TRACKS.include?(key) || DillaLofiMachine.harmony_profile?(key) ||
             TRACK_PRESETS.key?(key)
     return [key] if known
     dmesg_warn("stream unknown lock #{lock} — full rotation")
+  end
+  if comfort_mode?
+    pack = COMFORT_STREAM_ROTATION.select { |t|
+      DillaLofiMachine.harmony_profile?(t) || STREAM_TRACKS.include?(t.to_sym) || STREAM_TRACKS.include?(t)
+    }
+    return pack.shuffle if pack.any?
   end
   # Full progression pack: priority verified songs first, then shuffle the rest.
   all = STREAM_TRACKS.map(&:to_s).uniq
@@ -10660,6 +10703,78 @@ def karplus_strong_pluck(freq, duration_sec, seed: nil, stretch: 0.996, damping:
   out
 end
 
+def raw_kick_samples?
+  return true if ENV["RAW_KICK"] == "1" || ENV["DRUM_SAMPLE_RAW"] == "1"
+  return true if comfort_mode?
+  return true if ENV["EXTERNAL_KIT"] && !ENV["EXTERNAL_KIT"].empty?
+
+  path = drum_sample_path("kick.wav")
+  path && path.start_with?(CUSTOM_DRUM_DIR)
+end
+
+def normalize_drum_sample(samples, peak: 0.7)
+  return samples if samples.nil? || samples.empty?
+
+  max = samples.map(&:abs).max || 1.0
+  return samples if max < 1.0e-6
+
+  mul = peak / max
+  samples.map { |s| s * mul }
+end
+
+# Install EXTERNAL_KIT oneshots into samples/drums/custom/ once so
+# drum_sample_path prefers them over synthesized DRUM_DIR files.
+def ensure_external_kit_installed!
+  kit = ENV["EXTERNAL_KIT"].to_s
+  return if kit.empty?
+
+  marker = File.join(CUSTOM_DRUM_DIR, ".external_kit")
+  if File.file?(marker) && File.read(marker).strip == kit && File.file?(File.join(CUSTOM_DRUM_DIR, "kick.wav"))
+    return
+  end
+
+  FileUtils.mkdir_p(CUSTOM_DRUM_DIR)
+
+  if kit == "industrial" || kit == "industrial_techno"
+    # Built-in industrial one-shots under samples/drums/ind_*.
+    mapping = {
+      "kick.wav" => "ind_kick.wav",
+      "snare.wav" => "ind_clap.wav",
+      "ghost.wav" => "ind_clap.wav",
+      "hat.wav" => "ind_hat.wav",
+      "open_hat.wav" => "ind_hat.wav",
+      "bass_43.wav" => "ind_bass_e.wav"
+    }
+    mapping.each do |dest_name, src_name|
+      src = File.join(DRUM_DIR, src_name)
+      next unless File.file?(src)
+
+      FileUtils.cp(src, File.join(CUSTOM_DRUM_DIR, dest_name))
+    end
+    File.write(marker, kit)
+    dmesg("industrial kit → custom/", unit: "drums0", parent: "dilla0") if respond_to?(:dmesg)
+    return
+  end
+
+  src_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit)
+  return unless Dir.exist?(src_dir)
+
+  {
+    "kick.wav" => "kicks", "snare.wav" => "snares", "hat.wav" => "hi-hats",
+    "open_hat.wav" => "open-hats", "ghost.wav" => "claps", "bass_43.wav" => "808s"
+  }.each do |dest_name, subdir|
+    candidates = Dir.glob(File.join(src_dir, subdir, "*.wav")).sort_by { |f| File.size(f) }
+    src = candidates[candidates.length / 2] || candidates.first
+    next unless src
+
+    FileUtils.cp(src, File.join(CUSTOM_DRUM_DIR, dest_name))
+  end
+  File.write(marker, kit)
+  dmesg("external kit #{kit} → custom/", unit: "drums0", parent: "dilla0") if respond_to?(:dmesg)
+rescue StandardError => e
+  warn "ensure_external_kit_installed!: #{e.message}"
+end
+
 def layered_kick_sample(base_sample, seed: 7)
   # True 808-style envelope, not a short punch: a fast pitch drop (150Hz ->
   # 42Hz over ~55ms, the "pluck") into a genuinely sustained low tone
@@ -12184,18 +12299,29 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   @last_drum_events = events
 
   pick_external_drum_kit!
+  ensure_external_kit_installed!
+  kick_raw = load_mono_sample(drum_sample_path("kick.wav"))
+  # RAW_KICK / comfort / custom oneshot: use the sample as-is (normalized).
+  # layered_kick_sample was re-coating every kit with the same 808 synth so
+  # "different drums" still sounded identical.
+  kick_sample = if raw_kick_samples?
+                  normalize_drum_sample(kick_raw, peak: 0.62)
+                else
+                  layered_kick_sample(kick_raw)
+                end
   kit = extended_drum_kit(
-    kick: layered_kick_sample(load_mono_sample(drum_sample_path("kick.wav"))),
-    snare: load_mono_sample(drum_sample_path("snare.wav")),
-    ghost: load_mono_sample(drum_sample_path("ghost.wav")),
-    hat: load_mono_sample(drum_sample_path("hat.wav")),
-    open_hat: load_mono_sample(drum_sample_path("open_hat.wav")),
-    bass_43: load_mono_sample(drum_sample_path("bass_43.wav")),
+    kick: kick_sample,
+    snare: normalize_drum_sample(load_mono_sample(drum_sample_path("snare.wav")), peak: 0.72),
+    ghost: normalize_drum_sample(load_mono_sample(drum_sample_path("ghost.wav")), peak: 0.45),
+    hat: normalize_drum_sample(load_mono_sample(drum_sample_path("hat.wav")), peak: 0.48),
+    open_hat: normalize_drum_sample(load_mono_sample(drum_sample_path("open_hat.wav")), peak: 0.5),
+    bass_43: normalize_drum_sample(load_mono_sample(drum_sample_path("bass_43.wav")), peak: 0.55),
     shaker: synth_shaker_sample,
     cowbell: synth_cowbell_sample
   )
-  # Always prefer real chopped one-shots when available (pocket DNA default).
-  apply_drum_chops_to_kit!(kit) if ENV.fetch("DRUM_CHOPS", "1") != "0"
+  # Chop override off by default in comfort (DRUM_CHOPS=0); camel chops are
+  # always the same FlyLo slice and undo EXTERNAL_KIT character.
+  apply_drum_chops_to_kit!(kit) if ENV.fetch("DRUM_CHOPS", comfort_mode? ? "0" : "1") != "0"
   unless dilla_pocket_drums_enabled?
     bar_p = beat_p * 4.0
   else
@@ -12242,15 +12368,26 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     end
   end
   # Peak lift only — full loudnorm on the drum bus killed punch and made kicks
-  # sound flat/wrong. Keep transient dynamics, just prevent digi-clip.
+  # sound flat/wrong. Comfort / DRUM_PEAK_LIFT_DB=0 skips the old always-hot lift
+  # that made every mix's drums equally loud regardless of bus fader.
   if File.file?(drum_tmp)
-    # DRUM_PEAK_DB was fetched but ignored (always +3.5dB). Peak-normalize to target.
     peak_db = ENV.fetch("DRUM_PEAK_DB", flylo_primary_drums? ? "-1.0" : "-3.0").to_f
-    lift_db = flylo_primary_drums? ? 5.5 : 3.5
+    lift_db = if ENV["DRUM_PEAK_LIFT_DB"] && !ENV["DRUM_PEAK_LIFT_DB"].empty?
+                ENV["DRUM_PEAK_LIFT_DB"].to_f
+              elsif comfort_mode?
+                0.0
+              elsif flylo_primary_drums?
+                5.5
+              else
+                3.5
+              end
     normed = "#{drum_tmp}.norm.wav"
-    sh! "ffmpeg", "-y", "-i", drum_tmp,
-        "-af", "volume=#{lift_db}dB,alimiter=limit=#{(10**(peak_db / 20.0)).round(4)}:level_out=0.97:attack=1:release=50",
-        "-c:a", "pcm_s16le", normed
+    af = if lift_db.abs < 0.05
+           "alimiter=limit=#{(10**(peak_db / 20.0)).round(4)}:level_out=0.92:attack=1:release=50"
+         else
+           "volume=#{lift_db}dB,alimiter=limit=#{(10**(peak_db / 20.0)).round(4)}:level_out=0.97:attack=1:release=50"
+         end
+    sh! "ffmpeg", "-y", "-i", drum_tmp, "-af", af, "-c:a", "pcm_s16le", normed
     FileUtils.mv(normed, drum_tmp) if File.file?(normed)
   end
 
@@ -14218,30 +14355,32 @@ end
 def rap_vocal_mix_params
   style = ENV.fetch("RAP_VOCAL_STYLE", "rap")
   # Voice-forward: pads/kit stay under speech so Jonas V is obvious on speakers.
-  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", style == "chop" ? "1.45" : "1.55").to_f
-  duck = ENV.fetch("RAP_VOCAL_DUCK", "0.72").to_f
-  top_eq = style == "chop" ? "equalizer=f=2800:t=o:w=2:g=3.5" : "equalizer=f=2900:t=o:w=1.6:g=4.5"
-  presence = style == "chop" ? "equalizer=f=3600:t=o:w=1.4:g=2.5," : "equalizer=f=3200:t=o:w=1.2:g=3.5,"
+  # Defaults raised — isolation leaves voice ≈−18 dBFS; mix 1.3 left it inaudible.
+  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", style == "chop" ? "2.4" : "2.8").to_f
+  duck = ENV.fetch("RAP_VOCAL_DUCK", "0.55").to_f
+  top_eq = style == "chop" ? "equalizer=f=2800:t=o:w=2:g=4.5" : "equalizer=f=2900:t=o:w=1.6:g=5.5"
+  presence = style == "chop" ? "equalizer=f=3600:t=o:w=1.4:g=3.5," : "equalizer=f=3200:t=o:w=1.2:g=4.5,"
   { vocal_vol: vocal_vol, duck: duck, top_eq: top_eq, presence: presence }
 end
 
 def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
   mix = rap_vocal_mix_params
-  bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "0.92").to_f
-  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "1.35").to_f
-  # Voice-only path: HPF kills residual kit; light gate (not so hard it mutes speech);
+  bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "0.65").to_f
+  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "2.2").to_f
+  # Voice-only path: HPF kills residual kit; soft gate so speech is not clipped out;
   # sidechain ducks bed under voice so rap sits on top of pads/drums.
   sc = ENV.fetch("RAP_VOCAL_SIDECHAIN", "1") != "0"
   # Keep filter graph as one line — empty segments from heredoc joins break ffmpeg.
   v_chain = [
     "[1:a]aformat=channel_layouts=stereo",
-    "highpass=f=175:width_type=q:width=0.707",
-    "equalizer=f=70:t=h:w=1:g=-18",
-    "equalizer=f=120:t=h:w=1.2:g=-10",
-    "lowpass=f=7200",
+    "highpass=f=140:width_type=q:width=0.707",
+    "equalizer=f=70:t=h:w=1:g=-14",
+    "equalizer=f=120:t=h:w=1.2:g=-6",
+    "lowpass=f=7800",
     "#{mix[:presence]}#{mix[:top_eq]}".sub(/,\z/, ""),
-    "agate=threshold=0.012:ratio=3:attack=3:release=80:range=0.002:makeup=1.5",
-    "acompressor=threshold=-22dB:ratio=2:attack=5:release=100:makeup=3",
+    # Softer gate — previous 0.012 threshold + range killed quiet syllables.
+    "agate=threshold=0.006:ratio=2:attack=2:release=100:range=0.01:makeup=2.5",
+    "acompressor=threshold=-20dB:ratio=2:attack=4:release=90:makeup=5",
     "volume=#{mix[:vocal_vol]}[v0]"
   ].join(",")
   if sc
@@ -14249,7 +14388,7 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
       v_chain,
       "[0:a]volume=#{mix[:duck]}[bed0]",
       # Duck bed when voice present (main=bed0, sidechain=v0).
-      "[bed0][v0]sidechaincompress=threshold=0.04:ratio=2.8:attack=6:release=140:makeup=1:mix=0.7[bed]",
+      "[bed0][v0]sidechaincompress=threshold=0.025:ratio=3.5:attack=5:release=160:makeup=1:mix=0.85[bed]",
       "[bed][v0]amix=inputs=2:weights=#{bed_w} #{voc_w}:duration=first:dropout_transition=0:normalize=0," \
       "alimiter=limit=0.96:level_out=0.97[out]"
     ].join(";")

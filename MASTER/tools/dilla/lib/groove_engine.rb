@@ -28,6 +28,17 @@ module DillaGroove
     [3, 10],
     [0, 6, 9, 10]
   ].freeze
+  # Dusty / Madlib-leaning: more four-on-floor anchors + late-bar push.
+  POCKET_KICK_PHRASES_DUSTY = [
+    [0, 4, 10],
+    [0, 8, 11],
+    [0, 5, 10, 14],
+    [0, 4, 8, 12],
+    [0, 7, 10],
+    [2, 8, 12],
+    [0, 4, 11],
+    [0, 6, 8, 12]
+  ].freeze
   # Sparse shapes for the occasional breathing bar -- real Dilla pockets
   # loosen up periodically, but never repeat the same two notes on a
   # robotic every-4th-bar wall (that's what made a "sequenced" bar).
@@ -36,11 +47,17 @@ module DillaGroove
     [6, 10],
     [0, 6]
   ].freeze
+  POCKET_KICK_SPARSE_PHRASES_DUSTY = [
+    [0, 8],
+    [4, 12],
+    [0, 4]
+  ].freeze
   POCKET_SNARE_HARD = [4, 12].freeze
   # Documented Dilla off-kilter device: the backbeat snare occasionally
   # pushed a full 16th early rather than sitting on 4/12 -- a placement
   # choice, distinct from the ms-level micro-timing in role_timing_offset.
   POCKET_SNARE_RUSH = [4, 11].freeze
+  POCKET_SNARE_RUSH_DUSTY = [3, 12].freeze
   POCKET_SNARE_GHOST_PHRASES = [
     [7],
     [2, 10],
@@ -48,12 +65,59 @@ module DillaGroove
     [10],
     []
   ].freeze
+  POCKET_SNARE_GHOST_PHRASES_DUSTY = [
+    [6],
+    [2, 6, 14],
+    [6, 14],
+    [14],
+    [2, 10]
+  ].freeze
   POCKET_HAT_PHRASES = [
     [0, 2, 4, 6, 8, 10, 12, 14],
     [0, 2, 4, 6, 8, 10, 13, 14],
     [0, 2, 4, 6, 8, 10, 12, 13, 14],
     [0, 3, 4, 6, 8, 10, 12, 14],
     [0, 2, 4, 7, 8, 10, 12, 14]
+  ].freeze
+  # Offbeat-biased hats (1,3,5…) — different ride from straight 8ths.
+  POCKET_HAT_PHRASES_DUSTY = [
+    [1, 3, 5, 7, 9, 11, 13, 15],
+    [1, 3, 5, 7, 9, 11, 12, 15],
+    [0, 1, 3, 5, 7, 9, 11, 13, 15],
+    [1, 3, 4, 7, 9, 11, 13, 15],
+    [1, 3, 5, 8, 9, 11, 13, 15]
+  ].freeze
+  # Industrial techno: four-on-floor kick, solid 2+4 snare/clap, 16th hats.
+  POCKET_KICK_PHRASES_INDUSTRIAL = [
+    [0, 4, 8, 12],
+    [0, 4, 8, 12],
+    [0, 4, 8, 10, 12],
+    [0, 4, 8, 12, 14],
+    [0, 4, 6, 8, 12],
+    [0, 4, 8, 12],
+    [0, 2, 4, 8, 12],
+    [0, 4, 8, 11, 12]
+  ].freeze
+  POCKET_KICK_SPARSE_PHRASES_INDUSTRIAL = [
+    [0, 4, 8, 12],
+    [0, 8],
+    [0, 4, 12]
+  ].freeze
+  POCKET_SNARE_HARD_INDUSTRIAL = [4, 12].freeze
+  POCKET_SNARE_RUSH_INDUSTRIAL = [4, 12].freeze
+  POCKET_SNARE_GHOST_PHRASES_INDUSTRIAL = [
+    [],
+    [10],
+    [],
+    [6],
+    []
+  ].freeze
+  POCKET_HAT_PHRASES_INDUSTRIAL = [
+    (0..15).to_a,
+    (0..15).to_a,
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    [0, 2, 4, 6, 8, 10, 12, 14],
+    [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
   ].freeze
 
   # Freehand nudge ranges in MPC ticks (1/96 beat) — cyclic, not random chaos.
@@ -90,6 +154,60 @@ module DillaGroove
 
   def pocket_dna?
     ENV.fetch("POCKET_DNA", "1") != "0"
+  end
+
+  # dusty | industrial | classic
+  def pocket_set
+    set = ENV.fetch("POCKET_SET", "classic").to_s.downcase
+    preset = ENV["DRUM_PRESET"].to_s.downcase
+    return "dusty" if set == "dusty" || preset.include?("madlib")
+    return "industrial" if set == "industrial" || preset.include?("industrial") || preset.include?("boom_808")
+
+    set
+  end
+
+  def dusty_pocket? = pocket_set == "dusty"
+  def industrial_pocket? = pocket_set == "industrial"
+
+  def kick_phrases
+    return POCKET_KICK_PHRASES_INDUSTRIAL if industrial_pocket?
+    return POCKET_KICK_PHRASES_DUSTY if dusty_pocket?
+
+    POCKET_KICK_PHRASES
+  end
+
+  def kick_sparse_phrases
+    return POCKET_KICK_SPARSE_PHRASES_INDUSTRIAL if industrial_pocket?
+    return POCKET_KICK_SPARSE_PHRASES_DUSTY if dusty_pocket?
+
+    POCKET_KICK_SPARSE_PHRASES
+  end
+
+  def snare_rush_steps
+    return POCKET_SNARE_RUSH_INDUSTRIAL if industrial_pocket?
+    return POCKET_SNARE_RUSH_DUSTY if dusty_pocket?
+
+    POCKET_SNARE_RUSH
+  end
+
+  def snare_hard_steps
+    return POCKET_SNARE_HARD_INDUSTRIAL if industrial_pocket?
+
+    POCKET_SNARE_HARD
+  end
+
+  def snare_ghost_phrases
+    return POCKET_SNARE_GHOST_PHRASES_INDUSTRIAL if industrial_pocket?
+    return POCKET_SNARE_GHOST_PHRASES_DUSTY if dusty_pocket?
+
+    POCKET_SNARE_GHOST_PHRASES
+  end
+
+  def hat_phrases
+    return POCKET_HAT_PHRASES_INDUSTRIAL if industrial_pocket?
+    return POCKET_HAT_PHRASES_DUSTY if dusty_pocket?
+
+    POCKET_HAT_PHRASES
   end
 
   # Bridged from main's @render_seed by pick_render_seed! (dilla.rb) so the
@@ -262,31 +380,36 @@ module DillaGroove
   # --- Simplicity: sparse rotating phrases ---
 
   def pocket_kicks(bar)
-    return POCKET_KICK_PHRASES[0] unless pocket_dna?
-    phrase = POCKET_KICK_PHRASES[(bar + render_seed) % POCKET_KICK_PHRASES.length]
+    phrases = kick_phrases
+    return phrases[0] unless pocket_dna?
+    phrase = phrases[(bar + render_seed) % phrases.length]
     # Breathing bar: ~22% chance, seeded per bar+render (reproducible within
     # a render, but not the same every render), drop to a sparser shape
     # drawn from a small pool instead of always the same [0, 10].
     if ENV.fetch("POCKET_SIMPLE", "1") != "0" && Random.new((bar * 733) + 41 + render_seed).rand < 0.22
-      return POCKET_KICK_SPARSE_PHRASES[Random.new((bar * 911) + 17 + render_seed).rand(POCKET_KICK_SPARSE_PHRASES.length)]
+      sparse = kick_sparse_phrases
+      return sparse[Random.new((bar * 911) + 17 + render_seed).rand(sparse.length)]
     end
     phrase
   end
 
   def pocket_snares_hard(bar)
-    return POCKET_SNARE_HARD unless pocket_dna?
-    return POCKET_SNARE_HARD if ENV["POCKET_RUSH"] == "0"
-    Random.new((bar * 619) + 83 + render_seed).rand < 0.12 ? POCKET_SNARE_RUSH : POCKET_SNARE_HARD
+    hard = snare_hard_steps
+    return hard unless pocket_dna?
+    return hard if ENV["POCKET_RUSH"] == "0" || industrial_pocket?
+    Random.new((bar * 619) + 83 + render_seed).rand < 0.12 ? snare_rush_steps : hard
   end
 
   def pocket_snares_ghost(bar)
     return [] unless pocket_dna?
     return [] if ENV["POCKET_GHOSTS"] == "0"
-    POCKET_SNARE_GHOST_PHRASES[(bar + render_seed) % POCKET_SNARE_GHOST_PHRASES.length]
+    ghosts = snare_ghost_phrases
+    ghosts[(bar + render_seed) % ghosts.length]
   end
 
   def pocket_hats(bar)
-    POCKET_HAT_PHRASES[(bar + render_seed) % POCKET_HAT_PHRASES.length]
+    phrases = hat_phrases
+    phrases[(bar + render_seed) % phrases.length]
   end
 
   def pocket_open_hat?(bar)

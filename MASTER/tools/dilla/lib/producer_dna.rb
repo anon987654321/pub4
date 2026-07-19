@@ -135,6 +135,12 @@ module DillaLofiMachine
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: (0..15).to_a,
       ghosts: [], claps: [4, 12], perc: [],
     },
+    # Industrial techno: four-on-floor, hard clap 2+4, busy hats, little swing.
+    industrial_techno: {
+      swing: 50, humanize: 1, bpm: 128, mode: :straight_sixteenth,
+      kicks: [0, 4, 8, 12], snares: [4, 12], hats: (0..15).to_a,
+      ghosts: [], claps: [4, 12], perc: [2, 6, 10, 14],
+    },
   }.freeze
 
   LOFI_DEFAULTS = {
