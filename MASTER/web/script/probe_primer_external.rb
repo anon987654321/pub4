@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 
 require "ferrum"
 require "json"
@@ -18,7 +15,7 @@ CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
   "/usr/local/bin/chromium",
-  "/usr/local/bin/chrome",
+  "/usr/local/bin/chrome"
 ].compact.freeze
 
 chrome = CHROME_PATHS.find { |path| File.executable?(path) }

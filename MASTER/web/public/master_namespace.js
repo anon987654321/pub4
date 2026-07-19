@@ -38,8 +38,11 @@
       // real black-face root cause.
       get: () => {
         const v = resolve();
-        return (v === undefined || v === null) ? shim : v;,
+        return (v === undefined || v === null) ? shim : v;
+      },
+      set: (v) => { shim = v; },
+    });
   });
 
-  window.MASTER = root;,
+  window.MASTER = root;
 })();

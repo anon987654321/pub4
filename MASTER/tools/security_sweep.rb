@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 
 require "open3"
 
@@ -15,7 +12,7 @@ SECRET_PATTERNS = [
   /AKIA[0-9A-Z]{16}/,
   /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/,
   /password\s*[:=]\s*["'][^"'\[\]]{8,}["']/i,
-  /(?<![a-z_])api_key\s*[:=]\s*["'][^"']{8,}["']/i,
+  /(?<![a-z_])api_key\s*[:=]\s*["'][^"']{8,}["']/i
 ].freeze
 
 SKIP_PATH_RE = %r{
@@ -32,7 +29,7 @@ TRACKED_DENY_GLOBS = [
   "RAILS/*/storage/**/*.sqlite3",
   "RAILS/*/db/**/*.sqlite3",
   "**/.env",
-  "**/credentials/*.key",
+  "**/credentials/*.key"
 ].freeze
 
 def git_ls_files(pattern)

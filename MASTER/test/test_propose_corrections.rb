@@ -40,7 +40,7 @@ class TestProposeCorrections < Minitest::Test
         bus: bus,
         git: StubGit.new,
         session: Struct.new(:messages).new([]),
-        config: StubConfig.new,
+        config: StubConfig.new
       }
     )
 

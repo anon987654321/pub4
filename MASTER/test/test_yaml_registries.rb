@@ -10,13 +10,13 @@ YAML_SPECS = {
   "attention_context.yml"        => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
   "mobile_web_opportunities.yml" => { required_keys: %w[clusters mining_queries],                arrays: %w[clusters] },
   "visual_clusters.yml"          => { required_keys: %w[clusters],                                arrays: %w[clusters] },
-  "patterns.yml"                 => { required_keys: %w[gh openbsd zsh infer prompt_archaeology repo_topics], arrays: [] },
+  "patterns.yml"                 => { required_keys: %w[gh openbsd zsh infer prompt_archaeology repo_topics], arrays: [] }
 }.freeze
 
 PATTERNS_NAMESPACES = {
   "infer"              => %w[commands],
   "prompt_archaeology" => %w[policy clusters orchestration_blueprint risk_tiers],
-  "repo_topics"        => %w[clusters],
+  "repo_topics"        => %w[clusters]
 }.freeze
 
 DELETED_FILES = %w[

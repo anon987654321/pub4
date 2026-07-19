@@ -7,7 +7,7 @@ class ToolHonestySpec < Minitest::Test
     write_success_requires: %w[commit_sha verification_fetch],
     workflow_success_requires: %w[run_id conclusion],
     blocked_write_words: ["blocked", "not landed", "retry", "fallback"],
-    missing_ci_words: ["no runs visible", "not verified", "unknown"],
+    missing_ci_words: ["no runs visible", "not verified", "unknown"]
   }.freeze
 
   def test_write_success_requires_commit_and_verification

@@ -13,7 +13,7 @@ clone_or_pull() {
     git -C "$name" pull --ff-only
   else
     git clone --depth 1 "$url" "$name"
-  fi,
+  fi
 }
 
 clone_or_pull https://github.com/rubocop/ruby-style-guide.git ruby-style-guide

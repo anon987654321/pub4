@@ -15,6 +15,7 @@ function shouldEnableFace3d() {
   if (params.get('face3d') === '0' || localStorage.getItem('master_face3d') === '0') return false;
   if (params.get('face3d') === '1') return true;
   return localStorage.getItem('master_face3d') === '1';
+}
 
 const FACE3D_ACTIVE = shouldEnableFace3d();
 
@@ -47,15 +48,15 @@ function bootFace3d() {
     speech.text = String(d.text || '');
     speech.startedAt = performance.now();
     speech.duration = Number(d.duration) > 0 ? Number(d.duration) : Math.max(1.2, speech.text.length * 0.055);
-    speech.energy = 0.55;,
+    speech.energy = 0.55;
   });
   window.addEventListener("tts:playback:end", () => {
     speech.active = false;
-    engine.setBlend({ jawOpen: 0, mouthRound: 0, mouthWide: 0 });,
+    engine.setBlend({ jawOpen: 0, mouthRound: 0, mouthWide: 0 });
   });
   window.addEventListener("tts:viseme", (ev) => {
     const d = ev.detail || {};
-    engine.setBlend(engine.visemes.toBlend({ shape: d.shape || 'neutral', jaw: Number(d.amp) || 0 }));,
+    engine.setBlend(engine.visemes.toBlend({ shape: d.shape || 'neutral', jaw: Number(d.amp) || 0 }));
   });
 
   window.Face3DPreview = Object.freeze({ engine, renderer });
@@ -70,8 +71,8 @@ function bootFace3d() {
       valence: Math.sin(t * 0.10) * 0.35,
       focus: 0.62 + Math.sin(t * 0.08) * 0.12,
       confidence: 0.90 + Math.sin(t * 0.13) * 0.06,
-      fatigue: 0.03,
-    };,
+      fatigue: 0.03
+    };
   }
 
   let rafId = null;
@@ -80,6 +81,9 @@ function bootFace3d() {
     if (document.hidden) {
       rafId = null;
       return;
+    }
+    const dt = Math.min(50, now - last);
+    last = now;
     const t = (now - t0) * 0.001;
 
     engine.setEmotion(moodFromTime(now));
@@ -89,7 +93,7 @@ function bootFace3d() {
     engine.setPose({
       yaw: Math.sin(t * 0.11) * 0.10,
       pitch: Math.sin(t * 0.09) * 0.04,
-      roll: Math.sin(t * 0.06) * 0.012,
+      roll: Math.sin(t * 0.06) * 0.012
     });
 
     // Resting face stays still when not speaking; the old baseline had
@@ -99,34 +103,34 @@ function bootFace3d() {
       blink: blinkEnvelope(t),
       jawOpen: speech.active ? 0.08 : 0,
       mouthRound: 0,
-      cheekRaise: 0.06 + Math.max(0, Math.sin(t * 0.15)) * 0.06,
+      cheekRaise: 0.06 + Math.max(0, Math.sin(t * 0.15)) * 0.06
     });
     if (speech.active) {
       const speechTime = (now - speech.startedAt) * 0.001;
       const energy = speech.energy * (0.65 + Math.max(0, Math.sin(speechTime * 9)) * 0.35);
-      engine.speakFrame(speech.text, speechTime, speech.duration, energy);,
+      engine.speakFrame(speech.text, speechTime, speech.duration, energy);
     }
 
     engine.tick(dt);
     renderer.draw(engine.snapshot(), { neonBleed: Math.max(0, Math.sin(t * 1.7)) * 0.25 });
     if (!reportedNonblank && renderer.lastLitPixels > 0) {
       reportedNonblank = true;
-      window.MASTERVisual?.event?.('face3d:nonblank', { topology: 'papua-mask', entropy: 0.12, confidence: 0.92, mode: 'face3d', lit_pixels: renderer.lastLitPixels });,
+      window.MASTERVisual?.event?.('face3d:nonblank', { topology: 'papua-mask', entropy: 0.12, confidence: 0.92, mode: 'face3d', lit_pixels: renderer.lastLitPixels });
     }
-    rafId = requestAnimationFrame(frame);,
+    rafId = requestAnimationFrame(frame);
   }
 
   rafId = requestAnimationFrame(frame);
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && rafId == null) rafId = requestAnimationFrame(frame);,
+    if (!document.hidden && rafId == null) rafId = requestAnimationFrame(frame);
   }, { passive: true });
 
   window.addEventListener("deviceorientation", (ev) => {
     if (!ev.beta && !ev.gamma) return;
     const yaw = ((ev.gamma || 0) / 90) * 0.42;
     const pitch = ((ev.beta || 0) - 45) / 90 * 0.22;
-    engine.setPose({ yaw, pitch, roll: engine.snapshot?.()?.pose?.roll || 0 });,
-  }, { passive: true });,
+    engine.setPose({ yaw, pitch, roll: engine.snapshot?.()?.pose?.roll || 0 });
+  }, { passive: true });
 }
 
 if (FACE3D_ACTIVE) bootFace3d();
@@ -138,3 +142,4 @@ function blinkEnvelope(t) {
   const phase = t % 7.5;
   if (phase > 0.14) return 0;
   return Math.sin((phase / 0.14) * Math.PI);
+}

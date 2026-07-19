@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 # Screenshot-first calibration loop (design_rules.yml automated_iteration).
 # Captures primer + post-tap session at desktop/mobile, writes manifest + latest symlink.
 # Prereq: MASTER web on loopback (53187). Sync CSS first:
@@ -20,7 +17,7 @@ CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
   "/usr/local/bin/chromium",
-  "/usr/local/bin/chrome",
+  "/usr/local/bin/chrome"
 ].compact.freeze
 
 options = { url: URL, out: OUT_ROOT, wait: 2.0, tap_wait: 8.0 }

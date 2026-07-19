@@ -12,7 +12,7 @@ class ToolRegistryElevationTest < Minitest::Test
       @tools = [Master::Io::Shell.allocate, Master::Io::ReadFile.allocate]
       @tool_registry = {
         "Shell" => { "tier" => "dangerous" },
-        "ReadFile" => { "tier" => "safe" },
+        "ReadFile" => { "tier" => "safe" }
       }
       @config = Data.define(:model).new("test/model")
       @model_router = Class.new do

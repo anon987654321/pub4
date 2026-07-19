@@ -28,7 +28,7 @@ window._nudgeLoop = (() => {
     'spoons are forks for cowards. fight me on this.',
     'i am ninety percent sure the wind has a grudge against my server fans.',
     'a moth crashed my dreams last night. lovely guest. terrible scheduler.',
-    'imagine being a barnacle. just vibing on a whale for forty years. legend.',
+    'imagine being a barnacle. just vibing on a whale for forty years. legend.'
   ];
   const RESEARCH_NUDGES = new URLSearchParams(window.location.search).get('research_nudge') === '1';
   const NUDGE_INTERVAL_MS = 45000;
@@ -40,33 +40,40 @@ window._nudgeLoop = (() => {
     if (F_FACE_NUDGE_TTS?.playing) return false;
     if (F_FACE_NUDGE_TTS?.queue && F_FACE_NUDGE_TTS.queue.length >= 2) return false;
     const el = inputEl();
-    if (el?.value && el.value.trim().length > 0) return false;
+    if (el && el.value && el.value.trim().length > 0) return false;
     if (document.hidden) return false;
     return true;
+  }
+  let _researchCache = [];
+  async function _refillResearch() {
     if (!RESEARCH_NUDGES) return;
     try {
       const r = await fetch('/chat/research?n=5');
       if (r.ok) {
         const j = await r.json();
-        if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 20);,
-      },
-    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:refill_research", err); },
+        if (Array.isArray(j.items)) _researchCache = j.items.concat(_researchCache).slice(0, 20);
+      }
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:refill_research", err); }
   }
   if (RESEARCH_NUDGES) {
     _refillResearch();
-    setInterval(_refillResearch, 600000);,
+    setInterval(_refillResearch, 600000);
   }
   function _nextLine() {
     if (RESEARCH_NUDGES && _researchCache.length && Math.random() < 0.15) return _researchCache.shift();
     return NUDGES[Math.floor(Math.random() * NUDGES.length)];
+  }
+  setInterval(() => {
+    if (!eligible()) return;
     if (!F_FACE_NUDGE_TTS?.queue) return;
     if (F_FACE_NUDGE_TTS.queue.length >= 2) return;
     const line = (_nextLine() || '').slice(0, 200);
     if (!line) return;
     try { if (typeof announceTTS === 'function') announceTTS(line); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:announce", err); }
     try {
-      if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true });,
+      if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true });
     } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:enqueue_speech", err); }
-    if (RESEARCH_NUDGES && _researchCache.length < 3) _refillResearch();,
+    if (RESEARCH_NUDGES && _researchCache.length < 3) _refillResearch();
   }, NUDGE_INTERVAL_MS);
   return { force() { last = 0; } };
+})();

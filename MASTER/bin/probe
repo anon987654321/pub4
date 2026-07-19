@@ -60,7 +60,7 @@ CHECKS = {
     needs_ruby3: true,
     skip: lambda {
       out, = Open3.capture2e("git", "diff", "--cached", "--name-only", chdir: REPO_ROOT)
-      out.lines.none? { |line| !line.strip.empty? },
+      out.lines.none? { |line| !line.strip.empty? }
     },
     skip_reason: "no staged files",
   },
@@ -117,7 +117,7 @@ CHECKS = {
     skip: lambda {
       return true if ENV["MASTER_CRAWL_BROWSER"] == "0"
       return false if ENV["MASTER_CRAWL_BROWSER"] == "1" || ENV["PROBE_FORCE_BROWSER"] == "1"
-      RUBY_PLATFORM.include?("darwin"),
+      RUBY_PLATFORM.include?("darwin")
     },
     skip_reason: "set MASTER_CRAWL_BROWSER=1 or PROBE_FORCE_BROWSER=1 (skipped on macOS by default)",
   },

@@ -70,7 +70,7 @@ module Master
         data = result.value!
         lines = [
           "dilla crit: #{Array(data[:cherry_picks]).size} cherry-pick(s) (MASTER council)",
-          metrics_line,
+          metrics_line
         ]
         Array(data[:feedback]).each do |f|
           first = f[:feedback].to_s.lines.first.to_s.strip

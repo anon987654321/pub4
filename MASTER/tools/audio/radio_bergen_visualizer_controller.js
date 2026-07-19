@@ -7,7 +7,7 @@ export default class extends Controller {
   static targets = ["canvas", "audio", "label"]
   static values = {
     speed: { type: Number, default: 0.75 },
-    reducedSpeed: { type: Number, default: 0.35 },
+    reducedSpeed: { type: Number, default: 0.35 }
   }
 
   connect() {
@@ -24,34 +24,34 @@ export default class extends Controller {
     this.resize()
     window.addEventListener("resize", this.resize, { passive: true })
     window.addEventListener("pointermove", (event) => this.pointerMove(event), { passive: true })
-    this.raf = requestAnimationFrame(this.frame),
+    this.raf = requestAnimationFrame(this.frame)
   }
 
   disconnect() {
     cancelAnimationFrame(this.raf)
     window.removeEventListener("resize", this.resize)
     if (this.audioContext && this.audioContext.state !== "closed") {
-      this.audioContext.close().catch(() => {}),
-    },
+      this.audioContext.close().catch(() => {})
+    }
   }
 
   start() {
     this.setupAudio()
     this.audioTarget.play().then(() => {
       this.started = true
-      this.setLabel("Streaming"),
+      this.setLabel("Streaming")
     }).catch((error) => {
-      this.setLabel(`Audio blocked: ${error.message}`),
-    }),
+      this.setLabel(`Audio blocked: ${error.message}`)
+    })
   }
 
   toggle() {
     if (!this.started || this.audioTarget.paused) {
-      this.start(),
+      this.start()
     } else {
       this.audioTarget.pause()
-      this.setLabel("Paused"),
-    },
+      this.setLabel("Paused")
+    }
   }
 
   setupAudio() {
@@ -61,6 +61,7 @@ export default class extends Controller {
     if (!AudioContextClass) {
       this.setLabel("Web Audio unavailable")
       return
+    }
 
     this.audioContext = new AudioContextClass()
     this.analyser = this.audioContext.createAnalyser()
@@ -77,7 +78,7 @@ export default class extends Controller {
     this.source = this.audioContext.createMediaElementSource(this.audioTarget)
     this.source.connect(this.analyser)
     this.analyser.connect(this.compressor)
-    this.compressor.connect(this.audioContext.destination),
+    this.compressor.connect(this.audioContext.destination)
   }
 
   resize() {
@@ -88,7 +89,7 @@ export default class extends Controller {
     this.canvasTarget.width = this.width
     this.canvasTarget.height = this.height
     this.ctx.setTransform(1, 0, 0, 1, 0, 0)
-    this.buildScene(),
+    this.buildScene()
   }
 
   buildScene() {
@@ -96,21 +97,21 @@ export default class extends Controller {
       x: (Math.random() - 0.5) * 2,
       y: (Math.random() - 0.5) * 2,
       z: Math.random(),
-      b: 0.35 + Math.random() * 0.65,
+      b: 0.35 + Math.random() * 0.65
     }))
 
     this.rings = Array.from({ length: 52 }, (_, index) => ({
       z: index / 52,
       sides: 48,
-      twist: Math.random() * Math.PI * 2,
-    })),
+      twist: Math.random() * Math.PI * 2
+    }))
   }
 
   pointerMove(event) {
     const rect = this.canvasTarget.getBoundingClientRect()
     this.pointer.x = ((event.clientX - rect.left) / rect.width - 0.5) * 2
     this.pointer.y = ((event.clientY - rect.top) / rect.height - 0.5) * 2
-    this.pointer.active = true,
+    this.pointer.active = true
   }
 
   frame(now) {
@@ -120,13 +121,14 @@ export default class extends Controller {
 
     this.phase += 0.014 * speed
     this.draw(energy, speed)
-    this.raf = requestAnimationFrame(this.frame),
+    this.raf = requestAnimationFrame(this.frame)
   }
 
   audioEnergy() {
     if (!this.analyser || !this.frequencyData) {
       const fallback = 0.5 + Math.sin(this.phase * 3) * 0.2
       return { bass: fallback, mid: fallback * 0.8, high: fallback * 0.6, average: fallback, beat: 0.1 }
+    }
 
     this.analyser.getByteFrequencyData(this.frequencyData)
     const n = this.frequencyData.length
@@ -147,6 +149,7 @@ export default class extends Controller {
     const beat = Math.max(0, bass - 0.45)
 
     return { bass, mid, high, average, beat }
+  }
 
   draw(energy, speed) {
     const ctx = this.ctx
@@ -158,7 +161,7 @@ export default class extends Controller {
     ctx.fillRect(0, 0, this.width, this.height)
 
     this.drawStars(ctx, cx, cy, min, energy, speed)
-    this.drawTunnel(ctx, cx, cy, min, energy, speed),
+    this.drawTunnel(ctx, cx, cy, min, energy, speed)
   }
 
   drawStars(ctx, cx, cy, min, energy, speed) {
@@ -168,7 +171,7 @@ export default class extends Controller {
       if (star.z <= 0) {
         star.z = 1
         star.x = (Math.random() - 0.5) * 2
-        star.y = (Math.random() - 0.5) * 2,
+        star.y = (Math.random() - 0.5) * 2
       }
 
       const scale = 1 / Math.max(0.04, star.z)
@@ -177,9 +180,9 @@ export default class extends Controller {
       const light = Math.floor((70 + energy.high * 160) * star.b)
 
       ctx.fillStyle = `rgb(${Math.floor(light * 0.45)},${Math.floor(light * 0.65)},${light})`
-      ctx.fillRect(x, y, 1.5, 1.5),
+      ctx.fillRect(x, y, 1.5, 1.5)
     }
-    ctx.restore(),
+    ctx.restore()
   }
 
   drawTunnel(ctx, cx, cy, min, energy, speed) {
@@ -211,16 +214,16 @@ export default class extends Controller {
         const px = x + Math.cos(angle) * radius * wobble
         const py = y + Math.sin(angle) * radius * wobble
         if (i === 0) ctx.moveTo(px, py)
-        else ctx.lineTo(px, py),
+        else ctx.lineTo(px, py)
       }
 
-      ctx.stroke(),
+      ctx.stroke()
     }
 
-    ctx.restore(),
+    ctx.restore()
   }
 
   setLabel(text) {
-    if (this.hasLabelTarget) this.labelTarget.textContent = text,
-  },
+    if (this.hasLabelTarget) this.labelTarget.textContent = text
+  }
 }

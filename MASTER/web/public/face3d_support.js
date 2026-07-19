@@ -10,8 +10,8 @@ function deriveBlendFromEmotion(emotion, previous = DEFAULT_BLEND) {
     smile: clamp(Math.max(0, e.valence) * 0.55),
     frown: clamp(Math.max(0, -e.valence) * 0.45),
     squint: clamp(e.focus * 0.18 + e.fatigue * 0.20),
-    cheekRaise: clamp(Math.max(0, e.valence) * 0.30),
-  };,
+    cheekRaise: clamp(Math.max(0, e.valence) * 0.30)
+  };
 }
 
 class ParticleField3D {
@@ -39,8 +39,8 @@ class ParticleField3D {
       this.z[i] = 0;
       this.mass[i] = 0.75 + Math.random() * 0.75;
       this.u[i] = Math.random();
-      this.seed[i] = (Math.random() * 0xFFFFFFFF) >>> 0;,
-    },
+      this.seed[i] = (Math.random() * 0xFFFFFFFF) >>> 0;
+    }
   }
 
   assignStable(topology) {
@@ -49,7 +49,7 @@ class ParticleField3D {
     const density = { pupilL: 5, pupilR: 5, eyeL: 3, eyeR: 3, mouth: 2, noseRidge: 2, browL: 2, browR: 2 };
     for (const name of zoneNames) {
       const repeats = density[name] || 1;
-      for (let r = 0; r < repeats; r++) weighted.push(name);,
+      for (let r = 0; r < repeats; r++) weighted.push(name);
     }
 
     for (let i = 0; i < this.count; i++) {
@@ -60,15 +60,15 @@ class ParticleField3D {
       const a = list[idx];
       this.zone[i] = a.zoneId;
       this.u[i] = u;
-      this.setHome(i, a);,
-    },
+      this.setHome(i, a);
+    }
   }
 
   setHome(i, anchor) {
     const jitter = seededJitter(this.seed[i]);
     this.homeX[i] = anchor.x + jitter[0] * 0.008;
     this.homeY[i] = anchor.y + jitter[1] * 0.008;
-    this.homeZ[i] = anchor.z + jitter[2] * 0.006;,
+    this.homeZ[i] = anchor.z + jitter[2] * 0.006;
   }
 
   updateHomes(topology, blend) {
@@ -76,8 +76,8 @@ class ParticleField3D {
       const name = ZONE_NAMES[this.zone[i]];
       const list = topology.zones[name] || topology.anchors;
       const idx = Math.min(list.length - 1, Math.floor(this.u[i] * list.length));
-      this.setHome(i, applyBlendshape(list[idx], blend));,
-    },
+      this.setHome(i, applyBlendshape(list[idx], blend));
+    }
   }
 
   tick(dtMs, pose, quality) {
@@ -114,9 +114,9 @@ class ParticleField3D {
       this.x[i] += this.vx[i] * dtMs * 0.06;
       this.y[i] += this.vy[i] * dtMs * 0.06;
       this.depth[i] = z;
-      this.brightness[i] = clamp(0.25 + z * 0.35 + ps * 0.25, 0.05, 1);,
+      this.brightness[i] = clamp(0.25 + z * 0.35 + ps * 0.25, 0.05, 1);
     }
-    if (quality?.effects?.spatialRepulsion) this.repelNeighbors();,
+    if (quality?.effects?.spatialRepulsion) this.repelNeighbors();
   }
 
   repelNeighbors(strength = 0.012) {
@@ -133,10 +133,10 @@ class ParticleField3D {
         if (dist > 0.07 || dist < 0.0005) continue;
         const push = strength / dist;
         this.vx[i] += (dx / dist) * push;
-        this.vy[i] += (dy / dist) * push;,
-      },
-    },
-  },
+        this.vy[i] += (dy / dist) * push;
+      }
+    }
+  }
 }
 
 function seededJitter(seed) {
@@ -144,23 +144,27 @@ function seededJitter(seed) {
   const next = () => {
     s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
     return ((s >>> 0) / 0xFFFFFFFF) * 2 - 1;
+  };
+  return [next(), next(), next()];
+}
 
 class SpatialHash2D {
   constructor(cellSize = 0.025) {
     this.cellSize = cellSize;
-    this.cells = new Map();,
+    this.cells = new Map();
   }
 
   clear() { this.cells.clear(); }
 
   key(x, y) {
     return `${Math.floor(x / this.cellSize)},${Math.floor(y / this.cellSize)}`;
+  }
 
   add(index, x, y) {
     const key = this.key(x, y);
     let bucket = this.cells.get(key);
     if (!bucket) this.cells.set(key, bucket = []);
-    bucket.push(index);,
+    bucket.push(index);
   }
 
   nearby(x, y) {
@@ -170,10 +174,12 @@ class SpatialHash2D {
     for (let yy = cy - 1; yy <= cy + 1; yy++) {
       for (let xx = cx - 1; xx <= cx + 1; xx++) {
         const bucket = this.cells.get(`${xx},${yy}`);
-        if (bucket) out.push(...bucket);,
-      },
+        if (bucket) out.push(...bucket);
+      }
     }
-    return out;,
+    return out;
+  }
+}
 
 class QualityController {
   constructor() {
@@ -187,28 +193,28 @@ class QualityController {
       phosphor: true,
       bloom: true,
       oscilloscope: true,
-      spatialRepulsion: !matchMedia('(pointer: coarse)').matches,
+      spatialRepulsion: !matchMedia('(pointer: coarse)').matches
     };
-    this.avgFrameMs = 16.7;,
+    this.avgFrameMs = 16.7;
   }
 
   observeFrame(dtMs) {
     this.avgFrameMs = damp(this.avgFrameMs, dtMs, 2.0, dtMs);
     if (this.avgFrameMs > 24) this.drop();
-    else if (this.avgFrameMs < 13) this.raise();,
+    else if (this.avgFrameMs < 13) this.raise();
   }
 
   drop() {
     if (this.tier === "battery") return;
     this.fpsCap = 30;
     this.effects.bloom = false;
-    this.effects.spatialRepulsion = false;,
+    this.effects.spatialRepulsion = false;
   }
 
   raise() {
     if (this.tier === "battery") return;
     this.fpsCap = 60;
-    this.effects.bloom = true;,
+    this.effects.bloom = true;
   }
 
   battery() {
@@ -216,14 +222,14 @@ class QualityController {
     this.fpsCap = 30;
     this.effects.bloom = false;
     this.effects.oscilloscope = false;
-    this.effects.spatialRepulsion = false;,
-  },
+    this.effects.spatialRepulsion = false;
+  }
 }
 
 class VisemeDriver {
   constructor() {
     this.shape = "neutral";
-    this.jaw = 0;,
+    this.jaw = 0;
   }
 
   shapeAt(text, audioTime, duration, energy = 0) {
@@ -238,6 +244,7 @@ class VisemeDriver {
     else this.shape = "E";
     this.jaw = clamp(energy * 1.4);
     return { shape: this.shape, jaw: this.jaw };
+  }
 
   toBlend(viseme) {
     return {
@@ -245,10 +252,11 @@ class VisemeDriver {
       mouthRound: viseme.shape === "O" || viseme.shape === "U" ? 0.85 : 0,
       mouthWide: viseme.shape === "E" ? 0.55 : 0,
       smile: 0,
-      frown: 0,
-    };,
-  },
+      frown: 0
+    };
+  }
 }
+
 
 export {
   deriveBlendFromEmotion,
@@ -256,5 +264,5 @@ export {
   seededJitter,
   SpatialHash2D,
   QualityController,
-  VisemeDriver,
+  VisemeDriver
 };

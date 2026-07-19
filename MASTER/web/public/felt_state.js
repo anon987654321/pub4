@@ -6,16 +6,18 @@ function feltCssNumber(name, fallback) {
   const raw = document.documentElement.style.getPropertyValue(name);
   const parsed = parseFloat(raw);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
 
 function emotionHistoryEntropy(fallback) {
   let history = [];
   try {
-    history = JSON.parse(localStorage.getItem("master:emotion_history") || "[]");,
+    history = JSON.parse(localStorage.getItem("master:emotion_history") || "[]");
   } catch (err) {
-    window.MASTER_LOG?.warn?.("felt_state:history", err);,
+    window.MASTER_LOG?.warn?.("felt_state:history", err);
   }
   if (!history.length) return fallback;
   return history.reduce((sum, entry) => sum + Number(entry.entropy ?? 0.2), 0) / history.length;
+}
 
 function collectFeltState() {
   const st = window.MASTER_FACE?.State || {};
@@ -34,8 +36,8 @@ function collectFeltState() {
     confidence.toFixed(2),
     arousal.toFixed(2),
     valence.toFixed(2),
-    histEntropy.toFixed(2),
-  ].join("|");,
+    histEntropy.toFixed(2)
+  ].join("|");
 }
 
 function validateFeltState(state) {
@@ -44,17 +46,19 @@ function validateFeltState(state) {
   if (parts.length < 4 || parts.length > FELT_FIELD_COUNT) return false;
   if (!parts[0] || !parts[1]) return false;
   return parts.slice(2).every((part) => Number.isFinite(parseFloat(part)));
+}
 
 function feltStateOrFallback(fallback) {
   const state = collectFeltState();
   if (validateFeltState(state)) return state;
   if (validateFeltState(fallback)) return fallback;
   return null;
+}
 
 window.MASTERFeltState = {
   collectFeltState,
   validateFeltState,
   feltStateOrFallback,
-  FIELD_COUNT: FELT_FIELD_COUNT,
+  FIELD_COUNT: FELT_FIELD_COUNT
 };
 window.collectFeltState = collectFeltState;

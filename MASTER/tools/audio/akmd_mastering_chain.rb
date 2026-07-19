@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
-# frozen_string_literal: true
 
 require "fileutils"
 require "open3"
@@ -19,7 +16,7 @@ module Pub4Audio
       "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=4",
       "asoftclip=type=tanh",
       "volume=1.5",
-      "alimiter=limit=0.92:attack=3:release=50",
+      "alimiter=limit=0.92:attack=3:release=50"
     ].freeze
 
     DEFAULT_BITRATE = "128k"
@@ -55,7 +52,7 @@ module Pub4Audio
         "-ac", "2",
         "-codec:a", "libmp3lame",
         "-b:a", bitrate,
-        output,
+        output
       ]
     end
 
@@ -79,7 +76,7 @@ end
 if $PROGRAM_NAME == __FILE__
   options = {
     bitrate: Pub4Audio::AkmdMasteringChain::DEFAULT_BITRATE,
-    sample_rate: Pub4Audio::AkmdMasteringChain::DEFAULT_RATE,
+    sample_rate: Pub4Audio::AkmdMasteringChain::DEFAULT_RATE
   }
 
   parser = OptionParser.new do |opts|

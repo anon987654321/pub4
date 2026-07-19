@@ -14,28 +14,28 @@ module DillaLofiMachine
     "m9" => [0, 3, 7, 10, 2],
     "maj9" => [0, 4, 7, 11, 2],
     "6" => [0, 4, 7, 9],
-    "m11" => [0, 3, 7, 10, 5],
+    "m11" => [0, 3, 7, 10, 5]
   }.freeze
 
   NOTE_PC = {
     "C" => 0, "B#" => 0, "Db" => 1, "C#" => 1, "D" => 2, "Eb" => 3, "D#" => 3,
     "E" => 4, "Fb" => 4, "F" => 5, "Gb" => 6, "F#" => 6, "G" => 7, "Ab" => 8,
-    "G#" => 8, "A" => 9, "Bb" => 10, "A#" => 10, "B" => 11, "Cb" => 11,
+    "G#" => 8, "A" => 9, "Bb" => 10, "A#" => 10, "B" => 11, "Cb" => 11
   }.freeze
 
   DILLA_TIMING = {
     snare: -22..-10, ghost: -12..10, hat_down: -2..4, hat_up: 12..24,
-    kick_anchor: 4..10, kick_sync: 8..18, bass: 24..38, pad: 4..14,
+    kick_anchor: 4..10, kick_sync: 8..18, bass: 24..38, pad: 4..14
   }.freeze
 
   FLYLO_TIMING = {
     snare: -26..-12, ghost: -8..14, hat_down: 4..10, hat_up: 16..32,
-    kick_anchor: 2..8, kick_sync: 6..16, bass: 22..42, pad: 6..18,
+    kick_anchor: 2..8, kick_sync: 6..16, bass: 22..42, pad: 6..18
   }.freeze
 
   MADLIB_TIMING = {
     snare: -20..-8, ghost: -6..16, hat_down: 0..8, hat_up: 10..22,
-    kick_anchor: 3..9, kick_sync: 7..16, bass: 20..36, pad: 2..12,
+    kick_anchor: 3..9, kick_sync: 7..16, bass: 20..36, pad: 2..12
   }.freeze
 
   # Warm mid-register voicings (Hz) — chord palette, not song references.
@@ -81,7 +81,7 @@ module DillaLofiMachine
     "Fmaj9" => [174.61, 220.00, 261.63, 329.63, 392.00],
     "Bbmaj7" => [116.54, 146.83, 174.61, 207.65, 293.66],
     "Bbmaj9" => [116.54, 138.59, 174.61, 207.65, 261.63],
-    "Abmaj7" => [207.65, 261.63, 311.13, 392.00, 466.16],
+    "Abmaj7" => [207.65, 261.63, 311.13, 392.00, 466.16]
   }.freeze
 
   CHORD_SUFFIXES = %w[
@@ -95,51 +95,51 @@ module DillaLofiMachine
     dilla_slight: {
       swing: 57, humanize: 2, bpm: 95, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
-      ghosts: [2, 10], claps: [4, 12], perc: [3, 11],
+      ghosts: [2, 10], claps: [4, 12], perc: [3, 11]
     },
     dilla_drunk: {
       swing: 62, humanize: 4, bpm: 92, mode: :dilla_time,
       kicks: [0, 3, 6, 10, 13], snares: [4, 7, 12],
       hats: [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15],
-      ghosts: [5, 14], claps: [12], perc: [2, 10, 15],
+      ghosts: [5, 14], claps: [12], perc: [2, 10, 15]
     },
     madlib_dusty: {
       swing: 60, humanize: 3, bpm: 93, mode: :dilla_time,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [1, 3, 5, 7, 9, 11, 13, 15],
-      ghosts: [6, 14], claps: [4, 12], perc: [6, 14],
+      ghosts: [6, 14], claps: [4, 12], perc: [6, 14]
     },
     flylo_abstract: {
       swing: 54, humanize: 5, bpm: 84, mode: :straight_sixteenth,
       kicks: [0, 5, 8, 13], snares: [2, 6, 10, 15],
       hats: [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
-      ghosts: [7, 13], claps: [7, 13], perc: [1, 5, 8, 12],
+      ghosts: [7, 13], claps: [7, 13], perc: [1, 5, 8, 12]
     },
     mpc3000: {
       swing: 62, humanize: 2, bpm: 90, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
-      ghosts: [2, 9], claps: [4, 12], perc: [3, 11],
+      ghosts: [2, 9], claps: [4, 12], perc: [3, 11]
     },
     sp303: {
       swing: 58, humanize: 2, bpm: 96, mode: :dilla_time,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [1, 3, 5, 7, 9, 11, 13, 15],
-      ghosts: [], claps: [], perc: [6, 14],
+      ghosts: [], claps: [], perc: [6, 14]
     },
     sp1200: {
       swing: 54, humanize: 1, bpm: 90, mode: :dilla_time,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
-      ghosts: [2, 10], claps: [4, 12], perc: [],
+      ghosts: [2, 10], claps: [4, 12], perc: []
     },
     boom_808: {
       swing: 50, humanize: 1, bpm: 90, mode: :straight_sixteenth,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: (0..15).to_a,
-      ghosts: [], claps: [4, 12], perc: [],
-    },
+      ghosts: [], claps: [4, 12], perc: []
+    }
   }.freeze
 
   LOFI_DEFAULTS = {
     bit_depth: 12, vinyl: 0.40, pad_lowpass_hz: 3200, master_lowpass_hz: 2800,
     pad_attack_ms: 800, pad_release_ms: 2000, pad_volume_pct: 40,
-    filter_cutoff_hz: 12_000,
+    filter_cutoff_hz: 12_000
   }.freeze
 
   DEFAULT_DRUM_PRESET = :dilla_slight
@@ -152,96 +152,96 @@ module DillaLofiMachine
     get_dis_money: {
       producer: :dilla, key: "E pedal", bpm: 92, swing: 54,
       chord_bars: 1, phrase_bars: 6, feel: :mpc3000, voicing: :rootless, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[D/E Db/E C/E Bm/E Bbm/E Am/E], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[D/E Db/E C/E Bm/E Bbm/E Am/E], timing: DILLA_TIMING
     },
     # Donuts "Time" researched core — IV–iii–vi–ii in Ab (clean 7ths).
     time_donut: {
       producer: :dilla, key: "Ab / Fm", bpm: 90, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[Dbmaj7 Cm7 Fm7 Bbm7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Dbmaj7 Cm7 Fm7 Bbm7], timing: DILLA_TIMING
     },
     # Fall in Love = Diana in the Autumn Wind sample (Ebm7–Bbm7).
     fall_in_love: {
       producer: :dilla, key: "Eb minor", bpm: 91, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :rootless, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[Ebm7fil Bbm7fil], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Ebm7fil Bbm7fil], timing: DILLA_TIMING
     },
     climax: {
       producer: :dilla, key: "E major", bpm: 88, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless,
-      drum_preset: :dilla_slight, chords: %w[Emaj7 G#m7 C#m7 E7climax], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Emaj7 G#m7 C#m7 E7climax], timing: DILLA_TIMING
     },
     untitled_how_does_it_feel: {
       producer: :dilla, key: "D major", bpm: 92, swing: 56,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :rootless,
-      drum_preset: :dilla_slight, chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9], timing: DILLA_TIMING
     },
     # Classic Fm soul loop — i–iv–bVII–bVI (NOT artist-verified; experimental).
     soul: {
       producer: :dilla, key: "F minor", bpm: 88, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9], timing: DILLA_TIMING
     },
     # Same Time cycle with ninths.
     maj7_minor_cycle: {
       producer: :dilla, key: "Ab / Fm", bpm: 94, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[Dbmaj9 Cm9 Fm9 Bbm9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Dbmaj9 Cm9 Fm9 Bbm9], timing: DILLA_TIMING
     },
     # Hooktheory Donuts "Time" — full IV–iii–vi–ii–V turnaround (8 bars).
     fourth_third_sixth_second_turn: {
       producer: :dilla, key: "Ab / Fm", bpm: 86, swing: 56,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, quintuplet: true,
       drum_preset: :dilla_slight,
-      chords: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9], timing: DILLA_TIMING,
+      chords: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9], timing: DILLA_TIMING
     },
     # Measured Fm engine loop — i–IV–iii–vi–ii–V–bVI–IV.
     timeless_authentic: {
       producer: :dilla, key: "F minor", bpm: 86, swing: 56,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, quintuplet: true,
       drum_preset: :dilla_slight,
-      chords: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9], timing: DILLA_TIMING,
+      chords: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9], timing: DILLA_TIMING
     },
     minor_iv_loop: {
       producer: :dilla, key: "F minor", bpm: 91, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Bbm Ab Fm7 Fm], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Bbm Ab Fm7 Fm], timing: DILLA_TIMING
     },
     major_lifting: {
       producer: :dilla, key: "E major", bpm: 96, swing: 53,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :spread,
-      drum_preset: :mpc3000, chords: %w[Emaj7 G#m7 G#m7 G#maj7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Emaj7 G#m7 G#m7 G#maj7], timing: DILLA_TIMING
     },
     slash_ninth_cycle: {
       producer: :dilla, key: "C# minor", bpm: 90, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread, quintuplet: true,
-      drum_preset: :dilla_slight, chords: %w[C#m9 G#m9 A#7 C#maj9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[C#m9 G#m9 A#7 C#maj9], timing: DILLA_TIMING
     },
     two_chord_hypnosis: {
       producer: :dilla, key: "Eb minor", bpm: 92, swing: 57,
       chord_bars: 4, phrase_bars: 8, feel: :dilla_drunk, voicing: :spread,
-      drum_preset: :dilla_drunk, chords: %w[Ebm7 Bbm7], timing: DILLA_TIMING,
+      drum_preset: :dilla_drunk, chords: %w[Ebm7 Bbm7], timing: DILLA_TIMING
     },
     relative_major_turn: {
       producer: :dilla, key: "G major", bpm: 88, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Cmaj9 Bm7 Am7 D7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Cmaj9 Bm7 Am7 D7], timing: DILLA_TIMING
     },
     minor_turnaround: {
       producer: :dilla, key: "G major", bpm: 90, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :spread,
-      drum_preset: :mpc3000, chords: %w[Bm7 Bm7 Cmaj9 Em7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Bm7 Bm7 Cmaj9 Em7], timing: DILLA_TIMING
     },
     warm_minor_arc: {
       producer: :dilla, key: "Bb / Dm", bpm: 86, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :madlib_dusty, voicing: :spread,
-      drum_preset: :madlib_dusty, chords: %w[Dm7 Cm7 Fmaj9 Gm7], timing: DILLA_TIMING,
+      drum_preset: :madlib_dusty, chords: %w[Dm7 Cm7 Fmaj9 Gm7], timing: DILLA_TIMING
     },
     quartal_west_coast: {
       producer: :flylo, key: "C major", bpm: 86, swing: 54,
       chord_bars: 2, phrase_bars: 32, feel: :flylo_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true, intro_bars: 8,
-      drum_preset: :flylo_abstract, chords: %w[Cmaj9 Am9 Fmaj9 G6], timing: FLYLO_TIMING,
+      drum_preset: :flylo_abstract, chords: %w[Cmaj9 Am9 Fmaj9 G6], timing: FLYLO_TIMING
     },
     # Chromatic mediant drift profile.
     chromatic_mediant_drift: {
@@ -250,198 +250,198 @@ module DillaLofiMachine
       stereo_pan: true, sidechain: true, intro_bars: 8,
       drum_preset: :flylo_abstract,
       chords: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
-      timing: FLYLO_TIMING,
+      timing: FLYLO_TIMING
     },
     slow_ballad_wash: {
       producer: :flylo, key: "G major", bpm: 81, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract, chords: %w[G6 Em9 Cmaj9 Dmaj9], timing: FLYLO_TIMING,
+      drum_preset: :flylo_abstract, chords: %w[G6 Em9 Cmaj9 Dmaj9], timing: FLYLO_TIMING
     },
     minor_triad_walk: {
       producer: :madlib, key: "D minor", bpm: 96, swing: 58,
       chord_bars: 2, phrase_bars: 8, feel: :sp303, voicing: :spread,
-      drum_preset: :sp303, chords: %w[Dm Gm Am], timing: MADLIB_TIMING,
+      drum_preset: :sp303, chords: %w[Dm Gm Am], timing: MADLIB_TIMING
     },
     neo_soul_pocket: {
       producer: :dilla, key: "Dm", bpm: 93, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
-      drum_preset: :mpc3000, chords: %w[Dm7 Eb7 Gm7 Am7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Dm7 Eb7 Gm7 Am7], timing: DILLA_TIMING
     },
     neo_soul: {
       producer: :dilla, key: "F minor", bpm: 84, swing: 58,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, stereo_pan: true,
       drum_preset: :dilla_slight,
-      chords: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9], timing: DILLA_TIMING,
+      chords: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9], timing: DILLA_TIMING
     },
     dorian_iv_loop: {
       producer: :dilla, key: "G dorian", bpm: 90, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Gm9 Cmaj9 Fmaj9 Bbmaj7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Gm9 Cmaj9 Fmaj9 Bbmaj7], timing: DILLA_TIMING
     },
     backdoor_resolve: {
       producer: :dilla, key: "C minor", bpm: 88, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :rootless,
-      drum_preset: :mpc3000, chords: %w[Fm7 Bb7 Ebmaj7 Abmaj7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Fm7 Bb7 Ebmaj7 Abmaj7], timing: DILLA_TIMING
     },
     iv_borrow_minor: {
       producer: :dilla, key: "A minor", bpm: 89, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :drop2,
-      drum_preset: :dilla_slight, chords: %w[Am9 Dm9 Fmaj9 Em7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Am9 Dm9 Fmaj9 Em7], timing: DILLA_TIMING
     },
     bvi_bvii_minor: {
       producer: :dilla, key: "E minor", bpm: 91, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_drunk, voicing: :spread,
-      drum_preset: :dilla_drunk, chords: %w[Em7 Cmaj7 Dmaj7 Em7], timing: DILLA_TIMING,
+      drum_preset: :dilla_drunk, chords: %w[Em7 Cmaj7 Dmaj7 Em7], timing: DILLA_TIMING
     },
     ii_v_i_major: {
       producer: :dilla, key: "Bb major", bpm: 92, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :drop2,
-      drum_preset: :mpc3000, chords: %w[Cm9 F7 Bbmaj9 Gm7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Cm9 F7 Bbmaj9 Gm7], timing: DILLA_TIMING
     },
     ii_v_i_minor: {
       producer: :dilla, key: "D minor", bpm: 90, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :rootless,
-      drum_preset: :dilla_slight, chords: %w[Gm7 A7 Dm9 Cm7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Gm7 A7 Dm9 Cm7], timing: DILLA_TIMING
     },
     gospel_bIII: {
       producer: :dilla, key: "F major", bpm: 94, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Fmaj9 Abmaj7 Bbmaj7 Fmaj9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Fmaj9 Abmaj7 Bbmaj7 Fmaj9], timing: DILLA_TIMING
     },
     stevie_bVII: {
       producer: :dilla, key: "C major", bpm: 93, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :kenny_barron,
-      drum_preset: :mpc3000, chords: %w[Cmaj9 Bbmaj7 Fmaj9 G6], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Cmaj9 Bbmaj7 Fmaj9 G6], timing: DILLA_TIMING
     },
     erykah_minor: {
       producer: :dilla, key: "F# minor", bpm: 87, swing: 58,
       chord_bars: 2, phrase_bars: 16, feel: :madlib_dusty, voicing: :bill_evans,
-      drum_preset: :madlib_dusty, chords: %w[F#m9 Bm7 Emaj7 C#m7], timing: MADLIB_TIMING,
+      drum_preset: :madlib_dusty, chords: %w[F#m9 Bm7 Emaj7 C#m7], timing: MADLIB_TIMING
     },
     glasper_quartal: {
       producer: :flylo, key: "Eb major", bpm: 82, swing: 52,
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract, chords: %w[Ebmaj9 Cm9 Abmaj9 Bb6], timing: FLYLO_TIMING,
+      drum_preset: :flylo_abstract, chords: %w[Ebmaj9 Cm9 Abmaj9 Bb6], timing: FLYLO_TIMING
     },
     watermelon_turn: {
       producer: :dilla, key: "G minor", bpm: 88, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Gm9 Cm7 Fmaj9 Bbmaj7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Gm9 Cm7 Fmaj9 Bbmaj7], timing: DILLA_TIMING
     },
     church_sus: {
       producer: :dilla, key: "Db major", bpm: 86, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :spread,
-      drum_preset: :mpc3000, chords: %w[Dbmaj9 Gbmaj7 Ab6 Dbmaj9], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Dbmaj9 Gbmaj7 Ab6 Dbmaj9], timing: DILLA_TIMING
     },
     minMaj_color: {
       producer: :madlib, key: "C minor", bpm: 85, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :sp303, voicing: :cluster,
-      drum_preset: :sp303, chords: %w[Cm7 Abmaj7 G7 Ebmaj7], timing: MADLIB_TIMING,
+      drum_preset: :sp303, chords: %w[Cm7 Abmaj7 G7 Ebmaj7], timing: MADLIB_TIMING
     },
     dominant_turn: {
       producer: :dilla, key: "A minor", bpm: 92, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :drop3,
-      drum_preset: :dilla_slight, chords: %w[Am9 D7 Gmaj7 E7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Am9 D7 Gmaj7 E7], timing: DILLA_TIMING
     },
     deceptive_turn: {
       producer: :dilla, key: "E minor", bpm: 89, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :rootless,
-      drum_preset: :mpc3000, chords: %w[Em9 B7 Cmaj9 Am9], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Em9 B7 Cmaj9 Am9], timing: DILLA_TIMING
     },
     plagal_jazz: {
       producer: :dilla, key: "F major", bpm: 90, swing: 53,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Fmaj9 Bbmaj7 Cmaj9 Fmaj9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Fmaj9 Bbmaj7 Cmaj9 Fmaj9], timing: DILLA_TIMING
     },
     slash_neo_soul: {
       producer: :dilla, key: "Bb major", bpm: 91, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :so_what,
-      drum_preset: :dilla_slight, chords: %w[Dm7/F Fmaj9/A Gm7/Bb Cmaj9/E], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Dm7/F Fmaj9/A Gm7/Bb Cmaj9/E], timing: DILLA_TIMING
     },
     suspended_ballad: {
       producer: :flylo, key: "D major", bpm: 78, swing: 55,
       chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
-      drum_preset: :flylo_abstract, chords: %w[Dmaj9 Am9 Gmaj9], timing: FLYLO_TIMING,
+      drum_preset: :flylo_abstract, chords: %w[Dmaj9 Am9 Gmaj9], timing: FLYLO_TIMING
     },
     minor_line_cliche: {
       producer: :dilla, key: "A minor", bpm: 88, swing: 54,
       chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :spread,
-      drum_preset: :mpc3000, chords: %w[Am Am/G Fmaj7 E7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Am Am/G Fmaj7 E7], timing: DILLA_TIMING
     },
     donda_minor: {
       producer: :dilla, key: "F minor", bpm: 95, swing: 58,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_drunk, voicing: :drop2,
-      drum_preset: :dilla_drunk, chords: %w[Fm7 Abmaj7 Bbm7 Fm7], timing: DILLA_TIMING,
+      drum_preset: :dilla_drunk, chords: %w[Fm7 Abmaj7 Bbm7 Fm7], timing: DILLA_TIMING
     },
     keys_woman: {
       producer: :dilla, key: "Eb major", bpm: 84, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :madlib_dusty, voicing: :kenny_barron,
-      drum_preset: :madlib_dusty, chords: %w[Ebmaj9 Cm9 Fm7 Bb7], timing: MADLIB_TIMING,
+      drum_preset: :madlib_dusty, chords: %w[Ebmaj9 Cm9 Fm7 Bb7], timing: MADLIB_TIMING
     },
     jazz_ballad_waltz: {
       producer: :flylo, key: "Ab major", bpm: 72, swing: 52,
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :bill_evans,
       stereo_pan: true,
-      drum_preset: :flylo_abstract, chords: %w[Abmaj9 Fm7 Bbm7 Eb7], timing: FLYLO_TIMING,
+      drum_preset: :flylo_abstract, chords: %w[Abmaj9 Fm7 Bbm7 Eb7], timing: FLYLO_TIMING
     },
     turnaround_ii_v: {
       producer: :dilla, key: "G major", bpm: 91, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :drop2,
-      drum_preset: :dilla_slight, chords: %w[Am7 D7 Gmaj9 Bm7], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Am7 D7 Gmaj9 Bm7], timing: DILLA_TIMING
     },
     modal_safe: {
       producer: :dilla, key: "D Mixolydian", bpm: 89, swing: 54,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :quartal,
-      drum_preset: :mpc3000, chords: %w[Dmaj9 Cmaj9 Gmaj9 A7], timing: DILLA_TIMING,
+      drum_preset: :mpc3000, chords: %w[Dmaj9 Cmaj9 Gmaj9 A7], timing: DILLA_TIMING
     },
     neo_iv_cycle: {
       producer: :dilla, key: "C minor", bpm: 90, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
-      drum_preset: :dilla_slight, chords: %w[Cm9 Fm7 Bbmaj7 Ebmaj9], timing: DILLA_TIMING,
+      drum_preset: :dilla_slight, chords: %w[Cm9 Fm7 Bbmaj7 Ebmaj9], timing: DILLA_TIMING
     },
     # Raymond Scott Electronium × Dilla — Common "The Light" neo-soul cycle.
     electronium_loop: {
       producer: :dilla, key: "F minor", bpm: 86, swing: 57,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread, quintuplet: true,
       drum_preset: :dilla_slight, chords: %w[Fm9 Dbmaj9 Eb9 Bbm9 Cm7b5 Fm9 C7alt Fm9],
-      timing: DILLA_TIMING,
+      timing: DILLA_TIMING
     },
     electronium_classic: {
       producer: :dilla, key: "F minor", bpm: 86, swing: 57,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
       drum_preset: :mpc3000, chords: %w[Fm7 Dbmaj7 Eb7 Bbm7 Cm7b5 Fm7 C7 Fm7],
-      timing: DILLA_TIMING,
+      timing: DILLA_TIMING
     },
     # Aydin Esen — quartal modal wash (Bill Evans / Turkish jazz lineage).
     aydin_modal_quartal: {
       producer: :dilla, key: "C minor", bpm: 82, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :quartal,
       drum_preset: :dilla_slight,
-      chords: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9], timing: DILLA_TIMING,
+      chords: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9], timing: DILLA_TIMING
     },
     # Aydin Esen — ii–V chains with altered dominants and rich extensions.
     aydin_jazz_turn: {
       producer: :dilla, key: "Bb major", bpm: 88, swing: 53,
       chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :bill_evans,
       drum_preset: :mpc3000,
-      chords: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9], timing: DILLA_TIMING,
+      chords: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9], timing: DILLA_TIMING
     },
     # Bach — circle-of-fifths descent (functional voice-leading).
     bach_circle_descent: {
       producer: :dilla, key: "A minor", bpm: 76, swing: 52,
       chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :drop2,
       drum_preset: :mpc3000,
-      chords: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9], timing: DILLA_TIMING,
+      chords: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9], timing: DILLA_TIMING
     },
     # Bach — descending bass (passacaglia motion) in neo-soul voicings.
     bach_descending_bass: {
       producer: :dilla, key: "D minor", bpm: 80, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :kenny_barron,
       drum_preset: :dilla_slight,
-      chords: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9], timing: DILLA_TIMING,
+      chords: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9], timing: DILLA_TIMING
     },
     # --- Expansion pack ---
     # Informed by functional voice-leading (common tones, stepwise outer voices),
@@ -454,103 +454,103 @@ module DillaLofiMachine
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
       drum_preset: :flylo_abstract,
-      chords: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7], timing: FLYLO_TIMING,
+      chords: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7], timing: FLYLO_TIMING
     },
     pedal_upper_structures: {
       producer: :dilla, key: "C pedal", bpm: 84, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
       drum_preset: :dilla_slight,
-      chords: %w[Cm9 C7sus Ab/C F/C Bbmaj9/C Gm7/C Dbmaj9/C Cm9], timing: DILLA_TIMING,
+      chords: %w[Cm9 C7sus Ab/C F/C Bbmaj9/C Gm7/C Dbmaj9/C Cm9], timing: DILLA_TIMING
     },
     bossa_major9_turn: {
       producer: :dilla, key: "F major", bpm: 92, swing: 56,
       chord_bars: 2, phrase_bars: 16, feel: :dilla_slight, voicing: :bill_evans,
       drum_preset: :dilla_slight,
-      chords: %w[Fmaj9 Em7b5 A7b9 Dm9 Gm9 C7sus Fmaj9 D7], timing: DILLA_TIMING,
+      chords: %w[Fmaj9 Em7b5 A7b9 Dm9 Gm9 C7sus Fmaj9 D7], timing: DILLA_TIMING
     },
     phrygian_gold_arc: {
       producer: :dilla, key: "E minor / Phrygian color", bpm: 90, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :spread,
       drum_preset: :mpc3000,
-      chords: %w[Em9 Fmaj9 Gmaj9 Am9 Fmaj7 G7sus Bm7b5 Em9], timing: DILLA_TIMING,
+      chords: %w[Em9 Fmaj9 Gmaj9 Am9 Fmaj7 G7sus Bm7b5 Em9], timing: DILLA_TIMING
     },
     two_chord_luminous: {
       producer: :dilla, key: "Db / Fm", bpm: 78, swing: 54,
       chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
       drum_preset: :flylo_abstract,
-      chords: %w[Dbmaj9 Fm9], timing: FLYLO_TIMING,
+      chords: %w[Dbmaj9 Fm9], timing: FLYLO_TIMING
     },
     mixo_sus_loop: {
       producer: :dilla, key: "D Mixolydian", bpm: 96, swing: 53,
       chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :quartal,
       drum_preset: :mpc3000,
-      chords: %w[Dmaj9 Cmaj9 Gmaj9 Dmaj9 F#m9 Em9 A7sus Dmaj9], timing: DILLA_TIMING,
+      chords: %w[Dmaj9 Cmaj9 Gmaj9 Dmaj9 F#m9 Em9 A7sus Dmaj9], timing: DILLA_TIMING
     },
     common_tone_drift: {
       producer: :flylo, key: "E common-tone field", bpm: 86, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
       drum_preset: :flylo_abstract,
-      chords: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9], timing: FLYLO_TIMING,
+      chords: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9], timing: FLYLO_TIMING
     },
     coltrane_lite_triad: {
       producer: :dilla, key: "F minor stations", bpm: 82, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
       drum_preset: :dilla_slight,
-      chords: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9], timing: DILLA_TIMING,
+      chords: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9], timing: DILLA_TIMING
     },
     drone_quartal_wash: {
       producer: :flylo, key: "D drone", bpm: 80, swing: 52,
       chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
       drum_preset: :flylo_abstract,
-      chords: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9], timing: FLYLO_TIMING,
+      chords: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9], timing: FLYLO_TIMING
     },
     waltz_relative_lift: {
       producer: :dilla, key: "C minor → Eb", bpm: 72, swing: 52,
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :bill_evans,
       stereo_pan: true,
       drum_preset: :flylo_abstract,
-      chords: %w[Cm9 Abmaj9 Bb7 Ebmaj9 Fm9 Bb7 Ebmaj9 G7], timing: FLYLO_TIMING,
+      chords: %w[Cm9 Abmaj9 Bb7 Ebmaj9 Fm9 Bb7 Ebmaj9 G7], timing: FLYLO_TIMING
     },
     half_time_gospel_plagal: {
       producer: :dilla, key: "Bb major", bpm: 74, swing: 54,
       chord_bars: 4, phrase_bars: 16, feel: :dilla_slight, voicing: :spread,
       drum_preset: :dilla_slight,
-      chords: %w[Bbmaj9 Ebmaj9 Abmaj9 F7sus Bbmaj9 Ebmaj9 F7sus Bbmaj9], timing: DILLA_TIMING,
+      chords: %w[Bbmaj9 Ebmaj9 Abmaj9 F7sus Bbmaj9 Ebmaj9 F7sus Bbmaj9], timing: DILLA_TIMING
     },
     double_time_pocket: {
       producer: :dilla, key: "E minor", bpm: 108, swing: 56,
       chord_bars: 1, phrase_bars: 8, feel: :dilla_drunk, voicing: :spread,
       drum_preset: :dilla_drunk,
-      chords: %w[Em9 Am9 D7 Gmaj9 Em9 Am9 D7 Gmaj9], timing: DILLA_TIMING,
+      chords: %w[Em9 Am9 D7 Gmaj9 Em9 Am9 D7 Gmaj9], timing: DILLA_TIMING
     },
     whole_tone_bridge: {
       producer: :flylo, key: "whole-tone → F minor", bpm: 88, swing: 54,
       chord_bars: 1, phrase_bars: 8, feel: :flylo_abstract, voicing: :cluster,
       drum_preset: :flylo_abstract,
-      chords: %w[C7 D7 E7 F#7 Fm9 Dbmaj9 Ebmaj9 Fm9], timing: FLYLO_TIMING,
+      chords: %w[C7 D7 E7 F#7 Fm9 Dbmaj9 Ebmaj9 Fm9], timing: FLYLO_TIMING
     },
     upper_triad_tower: {
       producer: :dilla, key: "Bb tower", bpm: 90, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :so_what,
       drum_preset: :mpc3000,
-      chords: %w[Bbmaj9 D/Bb F/Bb G/Bb Bbmaj9 Eb/Bb F/Bb Bbmaj9], timing: DILLA_TIMING,
+      chords: %w[Bbmaj9 D/Bb F/Bb G/Bb Bbmaj9 Eb/Bb F/Bb Bbmaj9], timing: DILLA_TIMING
     },
     minor_add9_lullaby: {
       producer: :dilla, key: "G minor", bpm: 70, swing: 53,
       chord_bars: 4, phrase_bars: 16, feel: :flylo_abstract, voicing: :spread,
       stereo_pan: true, sidechain: true,
       drum_preset: :flylo_abstract,
-      chords: %w[Gm9 Ebmaj9 Cm9 D7sus Gm9 Ebmaj9 Fmaj9 Gm9], timing: FLYLO_TIMING,
+      chords: %w[Gm9 Ebmaj9 Cm9 D7sus Gm9 Ebmaj9 Fmaj9 Gm9], timing: FLYLO_TIMING
     },
     dominant_chain_home: {
       producer: :dilla, key: "circle of fifths 7ths", bpm: 94, swing: 54,
       chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :drop2,
       drum_preset: :mpc3000,
-      chords: %w[C7 F7 Bb7 Eb7 Abmaj9 Dbmaj9 Cm9 F7], timing: DILLA_TIMING,
-    },
+      chords: %w[C7 F7 Bb7 Eb7 Abmaj9 Dbmaj9 Cm9 F7], timing: DILLA_TIMING
+    }
   }.freeze
 
   # Additive entries sourced from dilla_reference.yml (documented Slum
@@ -572,7 +572,7 @@ module DillaLofiMachine
         feel: flylo ? :flylo_abstract : :timeless,
         drum_preset: flylo ? :flylo_abstract : :dilla_slight,
         chords: e["chords"],
-        timing: flylo ? FLYLO_TIMING : DILLA_TIMING,
+        timing: flylo ? FLYLO_TIMING : DILLA_TIMING
       }
     end
   rescue StandardError, Psych::Exception => e
@@ -596,7 +596,7 @@ module DillaLofiMachine
     flylo_roberta: :slow_ballad_wash,
     madlib_accordion: :minor_triad_walk,
     long_soul: :maj7_minor_cycle,
-    golden: :neo_soul,
+    golden: :neo_soul
   }.freeze
 
   # Full stream rotation — verified Dilla/SV/D'Angelo songs first, then the
@@ -668,7 +668,7 @@ module DillaLofiMachine
     {
       kicks: [p[:kicks]], snares: [p[:snares]], hats: [p[:hats]],
       ghosts: [p[:ghosts]], opens: [6, 14], claps: [p[:claps]], perc: [p[:perc]],
-      swing: p[:swing], humanize: p[:humanize],
+      swing: p[:swing], humanize: p[:humanize]
     }
   end
 

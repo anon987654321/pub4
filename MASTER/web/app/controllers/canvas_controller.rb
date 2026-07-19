@@ -14,7 +14,7 @@ class CanvasController < ApplicationController
     "spring" => "ecology",
     "summer" => "face",
     "autumn" => "codebase",
-    "winter" => "ecology",
+    "winter" => "ecology"
   }.freeze
 
   # GET /canvas/topology?season=summer — seasonal accent hint for the pixel
@@ -58,7 +58,7 @@ class CanvasController < ApplicationController
       palette:    params[:palette].to_i,
       confidence: params[:confidence].to_f,
       tilt_x:     params[:tilt_x].to_f,
-      tilt_y:     params[:tilt_y].to_f,
+      tilt_y:     params[:tilt_y].to_f
     }
     container[:bus].publish(:canvas_state, **payload) rescue nil
     head :accepted

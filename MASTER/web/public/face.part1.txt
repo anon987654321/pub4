@@ -20,7 +20,7 @@ class _Color {
   constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
   clone(){return new _Color(this.r,this.g,this.b);}
   copy(c){this.r=c.r;this.g=c.g;this.b=c.b;return this;}
-  lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;},
+  lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;}
 }
 const Color = _hasWebGL ? THREE.Color : _Color;
 
@@ -45,9 +45,11 @@ const modelBadge = (() => {
     el = document.createElement('div');
     el.id = 'model-badge';
     el.className = 'model-badge';
-    document.body.appendChild(el);,
+    document.body.appendChild(el);
   }
   return el;
+})();
+let modelBadgeTimer = null;
 const moodHistory = [];
 function showModelBadge(text) {
   if (!modelBadge) return;
@@ -55,11 +57,13 @@ function showModelBadge(text) {
   if (!text) {
     modelBadge.dataset.visible = '0';
     return;
+  }
+  modelBadge.dataset.visible = '1';
   if (modelBadgeTimer) clearTimeout(modelBadgeTimer);
   modelBadgeTimer = setTimeout(() => {
     modelBadge.dataset.visible = '0';
-    modelBadgeTimer = null;,
-  }, 3000);,
+    modelBadgeTimer = null;
+  }, 3000);
 }
 function updateMoodHistory(mood) {
   if (!mood) return;
@@ -67,7 +71,7 @@ function updateMoodHistory(mood) {
   while (moodHistory.length > 20) moodHistory.shift();
   const bar = document.getElementById('mood-sparkline');
   if (!bar) return;
-  bar.innerHTML = moodHistory.map(entry => `<i data-mood="${entry}"></i>`).join('');,
+  bar.innerHTML = moodHistory.map(entry => `<i data-mood="${entry}"></i>`).join('');
 }
 
 function renderNoCanvasFallback() {
@@ -100,6 +104,7 @@ function renderNoCanvasFallback() {
   rootBody.dataset.faceFallback = "svg";
   if (_dbgEl) _dbgEl.textContent = 'svg fallback';
   return true;
+}
 
 renderNoCanvasFallback();
 
@@ -111,22 +116,22 @@ const SCALE_KEY = 'master:ui-scale';
   if (localStorage.getItem(THEME_KEY) === 'light') localStorage.removeItem(THEME_KEY);
   rootBody.dataset.theme = 'dark';
   const themeBtn = document.getElementById('theme-btn');
-  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');,
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
 })();
 (function initFont() {
   const root = rootBody || document.documentElement;
-  if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');,
+  if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');
 })();
 function applyUiScale(scale, persist = true) {
   const value = Math.max(0.85, Math.min(1.4, Number(scale) || 1));
   document.documentElement.style.fontSize = `${(value * 100).toFixed(0)}%`;
   if (persist) localStorage.setItem(SCALE_KEY, String(value));
   const slider = document.getElementById('font-scale');
-  if (slider && slider.value !== String(value)) slider.value = String(value);,
+  if (slider && slider.value !== String(value)) slider.value = String(value);
 }
 function initUiScale() {
   const stored = parseFloat(localStorage.getItem(SCALE_KEY));
-  applyUiScale(Number.isFinite(stored) ? stored : 1, false);,
+  applyUiScale(Number.isFinite(stored) ? stored : 1, false);
 }
 function applyTheme(_theme, persist = true) {
   rootBody.dataset.theme = 'dark';
@@ -134,15 +139,19 @@ function applyTheme(_theme, persist = true) {
   const themeBtn = document.getElementById('theme-btn');
   if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', '#000000');,
+  if (meta) meta.setAttribute('content', '#000000');
 }
 const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
 function runtimeProfile() {
   return rootBody.dataset.runtimeProfile || 'calm';
+}
+function isRichMotionProfile() {
   const p = runtimeProfile();
   return p === 'full' || p === 'crt';
+}
+function applyShake(intensity) {
   const cap = isRichMotionProfile() ? intensity : Math.min(intensity, 0.22);
-  State.shake = Math.max(State.shake || 0, cap);,
+  State.shake = Math.max(State.shake || 0, cap);
 }
 function cycleRuntimeProfile() {
   const current = runtimeProfile();
@@ -159,18 +168,18 @@ function cycleRuntimeProfile() {
   };
   if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
   window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
-  resize?.();,
+  resize?.();
 }
 function toggleTheme() {
   applyTheme('dark');
-  cycleRuntimeProfile();,
+  cycleRuntimeProfile();
 }
 try {
   const savedProfile = localStorage.getItem('master:runtime_profile');
   if (savedProfile && RUNTIME_PROFILES.includes(savedProfile)) {
     State.profileOverride = savedProfile;
-    rootBody.dataset.runtimeProfile = savedProfile;,
-  },
+    rootBody.dataset.runtimeProfile = savedProfile;
+  }
 } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_profile", err); }
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
@@ -179,13 +188,13 @@ function applyFocusMode(enabled, persist = true) {
   const btn = document.getElementById('focus-btn');
   if (btn) btn.setAttribute('aria-pressed', value ? 'true' : 'false');
   const input = document.getElementById('zin');
-  if (value && input) input.focus();,
+  if (value && input) input.focus();
 }
 function toggleFocusMode() {
-  applyFocusMode(rootBody.dataset.focusMode !== '1');,
+  applyFocusMode(rootBody.dataset.focusMode !== '1');
 }
 function initFocusMode() {
-  applyFocusMode(localStorage.getItem(FOCUS_KEY) === '1', false);,
+  applyFocusMode(localStorage.getItem(FOCUS_KEY) === '1', false);
 }
 initUiScale();
 initFocusMode();
@@ -195,11 +204,13 @@ const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
 function getTtsRate() {
   const v = parseFloat(localStorage.getItem(RATE_KEY));
   return Number.isFinite(v) && v > 0 ? v : 1.25;
+}
+function setTtsRate(r) {
   const rate = Number.isFinite(r) && r > 0 ? r : 1.25;
   localStorage.setItem(RATE_KEY, rate);
   if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
   const el = document.getElementById('tts-rate');
-  if (el) el.textContent = rate.toFixed(2) + 'x';,
+  if (el) el.textContent = rate.toFixed(2) + 'x';
 }
 const VOICE_ALIASES = {
   osman: 'ms-MY-OsmanNeural',
@@ -213,7 +224,7 @@ const VOICE_ALIASES = {
   pernille: 'nb-NO-PernilleNeural',
   wayne: 'en-SG-WayneNeural',
   ezinne: 'en-NG-EzinneNeural',
-  jenny: 'en-US-JennyNeural',
+  jenny: 'en-US-JennyNeural'
 };
 const VOICE_IDLE_SIGNATURES = {
   'ms-MY-OsmanNeural': { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
@@ -222,10 +233,10 @@ const VOICE_IDLE_SIGNATURES = {
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
   'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
-  'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 },
+  'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
 };
 function applyIdleSignature(voice) {
-  State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };,
+  State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
 }
 function setVoiceName(voice, opts = {}) {
   const locked = TTS_DEFAULT_VOICE;
@@ -234,9 +245,11 @@ function setVoiceName(voice, opts = {}) {
     if (prev !== locked) {
       State.voiceName = locked;
       applyIdleSignature(locked);
-      if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;,
+      if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;
     }
     return;
+  }
+  let raw = String(voice || '').trim();
   if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
@@ -248,10 +261,10 @@ function setVoiceName(voice, opts = {}) {
   const picker = document.getElementById('voice-picker');
   if (picker) {
     const alias = Object.entries(VOICE_ALIASES).find(([, v]) => v === next)?.[0] || raw.toLowerCase();
-    if (picker.value !== alias) picker.value = alias;,
+    if (picker.value !== alias) picker.value = alias;
   }
   syncShareStateUrl();
-  void opts.speakBlurb;,
+  void opts.speakBlurb;
 }
 function nearestRateIndex(rate) {
   const value = Number.isFinite(rate) && rate > 0 ? rate : 1.25;
@@ -259,19 +272,22 @@ function nearestRateIndex(rate) {
   let bestDelta = Infinity;
   for (let i = 0; i < RATES.length; i++) {
     const delta = Math.abs(RATES[i] - value);
-    if (delta < bestDelta) { best = i; bestDelta = delta; },
+    if (delta < bestDelta) { best = i; bestDelta = delta; }
   }
   return best;
+}
+
 
 const GOLD = new Color(1, 1, 1);
 const TINT = {
   idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,
   tense: GOLD, curious: GOLD, focused: GOLD, weary: GOLD,
-  pass: GOLD, veto: GOLD, unclear: GOLD,
+  pass: GOLD, veto: GOLD, unclear: GOLD
 };
 
 function dayNightTint() {
   return new Color(1, 1, 1);
+}
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 const TTS_CHUNK_MAX = 220;
@@ -283,17 +299,23 @@ function pullStreamingTtsChunk(pending) {
   if (sentBreak) {
     const cut = sentBreak.index + sentBreak[0].length;
     return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+  }
+  if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
   const slice = pending.slice(0, TTS_CHUNK_MAX);
   let cut = TTS_CHUNK_MAX;
   const lastSpace = slice.lastIndexOf(' ');
   if (lastSpace > 48) cut = lastSpace + 1;
   return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
+}
+function shouldEnqueueTtsChunk(text, opts = {}) {
   const t = String(text || '').trim();
   if (!t) return false;
   if (opts.flush) return true;
   if (t.length >= TTS_MIN_CHUNK) return true;
   if (/[.!?…]["'\u201D]?$/.test(t)) return true;
   return false;
+}
+function looksLikeListingStream(text) {
   const t = String(text || '');
   if (looksLikeProse(t)) return false;
   const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
@@ -303,19 +325,25 @@ function pullStreamingTtsChunk(pending) {
     const times = tokens.filter((tok) => /^\d{1,2}:\d{2}$/.test(tok)).length;
     const paths = tokens.filter((tok) => /[./\\]/.test(tok)).length;
     const nums = tokens.filter((tok) => /^\d+$/.test(tok)).length;
-    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;,
+    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;
   }
   if (lines.length < 3) return false;
   const tabular = lines.filter((l) => /^\d+\s+\d+\s+/.test(l) || /^[\d.:+\-]+\s+[\w./-]+$/.test(l)).length;
   return tabular / lines.length >= 0.6;
+}
+function looksLikeProse(text) {
   const t = String(text || '').trim();
   if (t.length < 64) return false;
   const sentences = (t.match(/[^.!?…]+[.!?…]+/g) || []).length;
   return sentences >= 2 || /\b(the|this|that|you|we|I|here|there|because|however)\b/i.test(t);
+}
+function shouldSpeakStreamReply(text, ttsSuppressed) {
   const t = String(text || '').trim();
   if (!t) return false;
   if (!ttsSuppressed) return true;
   return looksLikeProse(t);
+}
+function pushLiveStreamTts(pending, spokenLen) {
   if (!ttsStreamLiveEnabled?.()) return spokenLen;
   const slice = String(pending || '').slice(spokenLen);
   if (!slice || looksLikeListingStream(pending)) return spokenLen;
@@ -325,6 +353,8 @@ function pullStreamingTtsChunk(pending) {
   if (chunk.length < TTS_MIN_CHUNK) return spokenLen;
   enqueueSpeech(chunk, { flush: true });
   return spokenLen + m[0].length;
+}
+function flushStreamTts(pending, opts = {}) {
   const text = String(pending || '').trim();
   if (!text || looksLikeListingStream(text)) return;
   let rest = text;
@@ -338,13 +368,14 @@ function pullStreamingTtsChunk(pending) {
     rest = pulled.rest;
     const prefix = first ? tsPrefix : '';
     first = false;
-    enqueueSpeech(prefix + pulled.chunk, speakOpts);,
+    enqueueSpeech(prefix + pulled.chunk, speakOpts);
   }
-  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);,
+  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
 }
 function detectLang(text) {
   if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
   return 'en';
+}
 
 const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
@@ -366,7 +397,7 @@ const State = {
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
-  contrastMore: matchMedia("(prefers-contrast: more)").matches,
+  contrastMore: matchMedia("(prefers-contrast: more)").matches
 };
 State.expressionCurrent = {};
 State.expressionTarget = {};
@@ -376,7 +407,7 @@ State.mood = _shareParams.get('mood') || State.mood;
 State.mode = _shareParams.get('mode') || State.mode;
 try {
   if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
-  if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;,
+  if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
 } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_share_state", err); }
 const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
 rootBody.dataset.faceRenderMode = _faceMode;
@@ -393,8 +424,8 @@ function syncShareStateUrl() {
     url.searchParams.set('mode', State.mode || 'idle');
     if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
     if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
-    history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);,
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sync_share_url", err); },
+    history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sync_share_url", err); }
 }
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
@@ -411,24 +442,25 @@ function enterDegradedTextUI(reason) {
     banner = document.createElement('div');
     banner.id = 'face-error-banner';
     banner.className = 'face-error-banner';
-    document.body.appendChild(banner);,
+    document.body.appendChild(banner);
   }
-  banner.textContent = reason || 'Degraded text mode';,
+  banner.textContent = reason || 'Degraded text mode';
 }
 
 function isFaceRuntimeError(source) {
   const text = String(source || '');
   return /face|three\.face|particle_kernel|cognition_ecology|visual_bridge/i.test(text);
+}
 
 window.addEventListener('error', event => {
   if (!isFaceRuntimeError(event?.filename)) return;
-  enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');,
+  enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');
 });
 window.addEventListener('unhandledrejection', event => {
   const reason = event?.reason;
   const source = reason?.stack || reason?.message || '';
   if (!isFaceRuntimeError(source)) return;
-  enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');,
+  enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');
 });
 
 // Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
@@ -441,8 +473,8 @@ window.addEventListener('unhandledrejection', event => {
     const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
-    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;,
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); },
+    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
@@ -465,25 +497,25 @@ function _scheduleStar() {
     const ch = STAR_FRAMES[_starIdx];
     const co = STAR_COLORS[_starColorIdx];
     if (asciiStarEl) { asciiStarEl.textContent = ch; asciiStarEl.style.color = co; }
-    _scheduleStar();,
-  }, speed);,
+    _scheduleStar();
+  }, speed);
 }
 function startStar() {
   if (_starTimer) return;
   _starIdx = 0; _starColorIdx = 0;
-  _scheduleStar();,
+  _scheduleStar();
 }
 function stopStar() {
   if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
-  if (asciiStarEl) asciiStarEl.textContent = '';,
+  if (asciiStarEl) asciiStarEl.textContent = '';
 }
 
 voicePicker?.addEventListener('change', () => {
   const voice = voicePicker.value.trim();
   if (voice) {
     State.voiceLocked = true;
-    setVoiceName(voice);,
-  },
+    setVoiceName(voice);
+  }
 });
 voicePreviewBtn?.addEventListener('click', () => window.MASTER_FACE?.previewVoice?.());
 
@@ -495,9 +527,9 @@ Object.defineProperty(State, 'mode', {
     rootBody.dataset.mode = v;
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();,
+    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();
   },
-  configurable: true,
+  configurable: true
 });
 
 function updateRuntimeProfile() {
@@ -505,9 +537,9 @@ function updateRuntimeProfile() {
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
   if (!State.profileOverride) {
-    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';,
+    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';
   }
-  rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';,
+  rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
 }
 
 updateRuntimeProfile();
@@ -516,7 +548,7 @@ window.addEventListener('master:emotion', (ev) => {
   const em = ev.detail || {};
   if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
   if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.42);
-  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';,
+  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';
 });
 
 window.addEventListener('master:clusters', (ev) => {
@@ -524,26 +556,26 @@ window.addEventListener('master:clusters', (ev) => {
   if (!em) return;
   if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
   if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.38);
-  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));,
+  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));
 });
 
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
   State.reducedMotion = event.matches;
-  updateRuntimeProfile();,
+  updateRuntimeProfile();
 });
 matchMedia('(pointer: coarse)').addEventListener('change', event => {
   State.coarsePointer = event.matches;
-  updateRuntimeProfile();,
+  updateRuntimeProfile();
 });
 matchMedia("(prefers-contrast: more)").addEventListener('change', event => {
   State.contrastMore = event.matches;
-  updateRuntimeProfile();,
+  updateRuntimeProfile();
 });
 document.addEventListener('visibilitychange', () => {
   updateRuntimeProfile();
   if (!document.hidden) ensureFrameLoop?.();
   if (!document.hidden && window.MASTER_FACE?.tts && !window.MASTER_FACE.tts.muted && window.MASTER_FACE.tts.queue && window.MASTER_FACE.tts.queue.length && !window.MASTER_FACE.tts.playing) window.MASTER_FACE.ttsTick?.();
-  if (!document.hidden && window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume().catch(() => {});,
+  if (!document.hidden && window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume().catch(() => {});
 }, { passive: true });
 
 let faceReadyMarked = false;
@@ -553,7 +585,7 @@ function markFaceReady() {
   rootBody.classList.add('face-ready');
   rootBody.classList.remove('face-loading');
   window.MASTER?.boot?.signal?.('face_ready', { source: 'markFaceReady' });
-  window.dispatchEvent(new CustomEvent('master:face-ready'));,
+  window.dispatchEvent(new CustomEvent('master:face-ready'));
 }
 
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
@@ -561,7 +593,7 @@ if (_hasWebGL && THREE) {
   try {
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
-    renderer.autoClear = true;,
+    renderer.autoClear = true;
   } catch (e) {
     // A silently-swallowed failure here left `renderer` undefined forever:
     // frame() keeps rescheduling itself via requestAnimationFrame but bails
@@ -572,7 +604,7 @@ if (_hasWebGL && THREE) {
     // primerFired alone.
     console.error('MASTER face: WebGLRenderer construction failed', e);
     window.__MASTER_RENDERER_FAILED__ = true;
-    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });,
+    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
   }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
@@ -593,10 +625,10 @@ if (_hasWebGL && THREE) {
     transparent: true,
     opacity: 1 - FACE_PHOSPHOR_DECAY,
     depthTest: false,
-    depthWrite: false,
+    depthWrite: false
   });
   phosphorFadeMesh = new THREE.Mesh(fadeGeom, fadeMat);
-  phosphorFadeScene.add(phosphorFadeMesh);,
+  phosphorFadeScene.add(phosphorFadeMesh);
 }
 if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode');
 
@@ -611,7 +643,7 @@ function resize() {
   const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
   const scaleMin = typeof FACE_RENDER_SCALE_MIN !== 'undefined' ? FACE_RENDER_SCALE_MIN : 0.48;
   if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
-    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);,
+    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
   }
   const internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
   const internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
@@ -623,11 +655,11 @@ function resize() {
 
   // Ensure the canvas element itself is styled for crisp upscale (already in CSS)
   const cv = renderer.domElement;
-  if (cv) cv.style.imageRendering = "pixelated";,
+  if (cv) cv.style.imageRendering = "pixelated";
 }
 window.addEventListener('resize', resize, { passive: true });
 if ('ResizeObserver' in window && cv) {
-  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);,
+  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);
 }
 
 // Grayscale depth map: white = near (high Z), black = background (filtered)
@@ -658,7 +690,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,    'rgba(0,0,0,0.98)');
     g.addColorStop(0.50, 'rgba(0,0,0,0.72)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Cranial vault — enlarged high forehead
   g = ctx.createRadialGradient(cx, cy - H*0.36, 0, cx, cy - H*0.36, W*0.30);
@@ -677,7 +709,7 @@ function generateFaceDepthMap(size) {
     g = ctx.createRadialGradient(cx + ex*W, cy - H*0.28, 0, cx + ex*W, cy - H*0.28, W*0.09);
     g.addColorStop(0,   'rgba(0,0,0,0.28)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Supraorbital ridge — nearly flat (reduced aggression selection)
   for (const ex of [-0.112, 0.112]) {
@@ -685,7 +717,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(0,0,0,0)');
     g.addColorStop(0.5, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);,
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);
   }
   // Brow shelf — minimal neotenic arch
   for (const ex of [-0.112, 0.112]) {
@@ -693,7 +725,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,    'rgba(205,205,205,0.38)');
     g.addColorStop(0.50, 'rgba(150,150,150,0.16)');
     g.addColorStop(1,    'rgba(0,  0,  0,  0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Glabella — shallow, open expression
   g = ctx.createRadialGradient(cx, cy - H*0.160, 0, cx, cy - H*0.160, W*0.022);
@@ -714,7 +746,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(0, 0, W*0.106, 0, Math.PI*2); ctx.fill();
-    ctx.restore();,
+    ctx.restore();
   }
   // Corneal specular + iris ring — enlarged pupils
   for (const ex of [-0.118, 0.118]) {
@@ -727,7 +759,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(240,240,240,0.78)');
     g.addColorStop(0.45,'rgba(190,190,190,0.30)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Nose bridge — fine, low projection
   g = ctx.createLinearGradient(cx - W*0.012, 0, cx + W*0.012, 0);
@@ -748,7 +780,7 @@ function generateFaceDepthMap(size) {
     g = ctx.createRadialGradient(cx + ex*W, cy + H*0.100, 0, cx + ex*W, cy + H*0.100, W*0.022);
     g.addColorStop(0,   'rgba(0,0,0,0.32)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Cheekbones — soft, low relief (gracile skeleton)
   for (const ex of [-0.188, 0.188]) {
@@ -756,7 +788,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(190,190,190,0.38)');
     g.addColorStop(0.60,'rgba(100,100,100, 0.14)');
     g.addColorStop(1,   'rgba(0,  0,  0,  0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Nasolabial folds — faint (youthful neoteny)
   for (const ex of [-0.068, 0.068]) {
@@ -764,7 +796,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(0,0,0,0.22)');
     g.addColorStop(0.6, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Philtrum — shallow groove
   g = ctx.createRadialGradient(cx, cy + H*0.158, 0, cx, cy + H*0.158, W*0.018);
@@ -818,7 +850,7 @@ function generateFaceDepthMap(size) {
     g = ctx.createRadialGradient(cx + ex*W, cy - H*0.04, 0, cx + ex*W, cy + H*0.04, W*0.048);
     g.addColorStop(0,   'rgba(90,90,90,0.10)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   // Neck column — slender, elongated
   const neckGrad = ctx.createLinearGradient(0, cy + H*0.44, 0, H);
@@ -827,6 +859,7 @@ function generateFaceDepthMap(size) {
   ctx.fillStyle = neckGrad;
   ctx.fillRect(cx - W*0.032, cy + H*0.44, W*0.064, H - (cy + H*0.44));
   return cv;
+}
 
 // Hex-grid topology: particles sit at lattice vertices projected onto face surface.
 // Edge list connects adjacent occupied cells — the wire mesh substrate.
@@ -853,8 +886,8 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       const nz = lum * 0.78;
       positions.push(nx, ny, nz);
       scatters.push(nx, ny, 0);
-      seeds.push(Math.random() * 6.28318);,
-    },
+      seeds.push(Math.random() * 6.28318);
+    }
   }
 
   for (let row = 0; row < rows; row++) {
@@ -864,8 +897,8 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       if (row + 1 < rows)       { const b = cell[(row + 1) * cols + col];            if (b >= 0) { edgeIdx.push(a, b); } }
       const dc = (row & 1) ? -1 : 1;
       const nc = col + dc;
-      if (row + 1 < rows && nc >= 0 && nc < cols) { const b = cell[(row + 1) * cols + nc]; if (b >= 0) { edgeIdx.push(a, b); } },
-    },
+      if (row + 1 < rows && nc >= 0 && nc < cols) { const b = cell[(row + 1) * cols + nc]; if (b >= 0) { edgeIdx.push(a, b); } }
+    }
   }
 
   const home = new Float32Array(positions);
@@ -886,7 +919,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     edgeLengthArr[ei >> 1] = len;
     edgeDepthDiffArr[ei >> 1] = dd;
     neighborZSum[a] += home[bi+2]; neighborCount[a]++;
-    neighborZSum[b] += home[ai+2]; neighborCount[b]++;,
+    neighborZSum[b] += home[ai+2]; neighborCount[b]++;
   }
 
   const curvature = new Float32Array(n);
@@ -896,10 +929,10 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     const nc = neighborCount[i];
     if (nc > 0) {
       const avgNZ = neighborZSum[i] / nc;
-      curvature[i] = Math.abs(home[i*3+2] - avgNZ);,
+      curvature[i] = Math.abs(home[i*3+2] - avgNZ);
     }
     if (curvature[i] > maxCurv) maxCurv = curvature[i];
-    boundary[i] = nc < 4 ? 1.0 : 0.0;,
+    boundary[i] = nc < 4 ? 1.0 : 0.0;
   }
   if (maxCurv > 0) { for (let i = 0; i < n; i++) curvature[i] /= maxCurv; }
 
@@ -912,28 +945,31 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     else if (anx < 0.06 && ny >= -0.02 && ny <= 0.14) zone[i] = 0.4;
     else if (anx >= 0.06 && anx <= 0.18 && ny >= 0.03 && ny <= 0.14) zone[i] = 0.6;
     else if (ny > 0.14) zone[i] = 0.8;
-    else zone[i] = 0.5;,
+    else zone[i] = 0.5;
   }
 
   const edgePosData = new Float32Array(edgeIdx.length * 3);
   const edgeAlpha = new Float32Array(edgeIdx.length / 2);
   for (let i = 0; i < edgeIdx.length; i++) {
     const vi = edgeIdx[i] * 3;
-    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];,
+    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];
   }
   for (let ei = 0; ei < edgeIdx.length / 2; ei++) {
     const len = edgeLengthArr[ei], dd = edgeDepthDiffArr[ei];
     const la = Math.max(0.2, Math.min(1.0, 1.0 - len * 2.5));
     const da = Math.max(0.3, Math.min(1.0, 1.0 - dd * 4.0));
-    edgeAlpha[ei] = la * da;,
+    edgeAlpha[ei] = la * da;
   }
 
   return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData, curvature, boundary, zone, edgeAlpha };
+}
 
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
+}
+const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
 const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
 let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;

@@ -7,14 +7,17 @@ window._endlessWhite = (() => {
     [220.00, 261.63, 329.63, 392.00, 493.88],
     [293.66, 349.23, 440.00, 523.25, 659.25],
     [349.23, 440.00, 523.25, 659.25, 783.99],
-    [329.63, 392.00, 493.88, 587.33, 698.46],
+    [329.63, 392.00, 493.88, 587.33, 698.46]
   ];
   const BPM = 75, BEAT = 60 / BPM;
   function impulse(d=2.6, k=2.4) {
     const sr = ctx.sampleRate, n = sr * d, buf = ctx.createBuffer(2, n, sr);
     for (let c = 0; c < 2; c++) { const x = buf.getChannelData(c); for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1-i/n, k); }
     return buf;
-    const x = buf.getChannelData(0); for (let i = 0; i < n; i++) x[i] = Math.random()*2-1; return buf;,
+  }
+  function noise(d=1.0) {
+    const sr = ctx.sampleRate, n = sr * d, buf = ctx.createBuffer(1, n, sr);
+    const x = buf.getChannelData(0); for (let i = 0; i < n; i++) x[i] = Math.random()*2-1; return buf;
   }
   function pad(freqs, t, len) {
     freqs.forEach((f, i) => [0,-7,7].forEach(c => {
@@ -24,26 +27,26 @@ window._endlessWhite = (() => {
       const peak = 0.06 / (i+1) / 3;
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t+0.6);
       g.gain.setValueAtTime(peak, t+len-0.8); g.gain.linearRampToValueAtTime(0, t+len);
-      o.connect(bp).connect(g).connect(m.pad); o.start(t); o.stop(t+len+0.1);,
-    }));,
+      o.connect(bp).connect(g).connect(m.pad); o.start(t); o.stop(t+len+0.1);
+    }));
   }
   function sub(t) {
     const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = 55;
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.42, t+0.02);
     g.gain.exponentialRampToValueAtTime(0.001, t+0.55);
-    o.connect(g).connect(m.dry); o.start(t); o.stop(t+0.6);,
+    o.connect(g).connect(m.dry); o.start(t); o.stop(t+0.6);
   }
   function hat(t) {
     const s = ctx.createBufferSource(); s.buffer = m.noise;
     const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7000 + Math.random()*2000;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.04);
-    s.connect(hp).connect(g).connect(m.dry); s.start(t, Math.random()*0.4);,
+    s.connect(hp).connect(g).connect(m.dry); s.start(t, Math.random()*0.4);
   }
   function snare(t) {
     const s = ctx.createBufferSource(); s.buffer = m.noise;
     const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1800; bp.Q.value = 0.6;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12);
-    s.connect(bp).connect(g).connect(m.verb); s.start(t, Math.random()*0.3);,
+    s.connect(bp).connect(g).connect(m.verb); s.start(t, Math.random()*0.3);
   }
   function bar(idx) {
     const t0 = ctx.currentTime + 0.05, chord = CHORDS[idx % CHORDS.length], barLen = BEAT*4;
@@ -52,8 +55,8 @@ window._endlessWhite = (() => {
       const tb = t0 + b * BEAT;
       if (b === 0 || b === 2) sub(tb);
       if (b === 1 || b === 3) snare(tb + (Math.random()-0.5)*0.04);
-      for (let s = 0; s < 4; s++) if (Math.random() < 0.55) hat(tb + s*BEAT/4);,
-    },
+      for (let s = 0; s < 4; s++) if (Math.random() < 0.55) hat(tb + s*BEAT/4);
+    }
   }
   return () => {
     if (playing) { try { clearInterval(iv); ctx.close(); } catch(err){ window.MASTER_LOG?.warn?.("face_loops_music:stop", err); } playing = false; return false; }
@@ -66,9 +69,9 @@ window._endlessWhite = (() => {
       m.pad.connect(m.conv); m.verb.connect(m.conv); m.conv.connect(wet).connect(ctx.destination);
       m.dry.connect(ctx.destination); m.pad.connect(ctx.destination);
       let i = 0; bar(i++); iv = setInterval(() => bar(i++), BEAT*4*1000);
-      playing = true; return true;,
-    } catch (_) { return false; },
-  };,
+      playing = true; return true;
+    } catch (_) { return false; }
+  };
 })();
 
 window._dillaBg = (() => {
@@ -85,25 +88,31 @@ window._dillaBg = (() => {
     "excuse me, I think you dropped something: my jaw",
     "are you French? because Eiffel for you",
     "is it hot in here, or is it just you",
-    "I'm not a photographer, but I can picture us together",
+    "I'm not a photographer, but I can picture us together"
   ];
   const CHORDS = [
     [123.47, 146.83, 185.00, 220.00, 277.18],
     [82.41,  123.47, 196.00, 246.94, 329.63],
     [130.81, 164.81, 196.00, 246.94, 293.66],
-    [92.50,  138.59, 184.99, 233.08, 277.18],
+    [92.50,  138.59, 184.99, 233.08, 277.18]
   ];
   const BPM = 88, BEAT = 60 / BPM, BAR = BEAT * 4, SWING = 0.16;
   function impulse(d, k) {
     const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(2, n, sr);
     for (let c = 0; c < 2; c++) {
       const x = b.getChannelData(c);
-      for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1 - i/n, k);,
+      for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1 - i/n, k);
     }
     return b;
+  }
+  function noiseBuf(d) {
+    const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(1, n, sr);
     const x = b.getChannelData(0);
     for (let i = 0; i < n; i++) x[i] = Math.random()*2 - 1;
     return b;
+  }
+  function pad(freqs, when, len) {
+    freqs.forEach(f => {
       [-7, 7].forEach(det => {
         const o = ctx.createOscillator();
         o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
@@ -113,9 +122,9 @@ window._dillaBg = (() => {
         g.gain.linearRampToValueAtTime(0.04, when + len - 0.4);
         g.gain.linearRampToValueAtTime(0, when + len);
         o.connect(g).connect(padFilt);
-        o.start(when); o.stop(when + len + 0.1);,
-      });,
-    });,
+        o.start(when); o.stop(when + len + 0.1);
+      });
+    });
   }
   function sub(when) {
     const o = ctx.createOscillator();
@@ -127,7 +136,7 @@ window._dillaBg = (() => {
     g.gain.linearRampToValueAtTime(0.95, when + 0.02);
     g.gain.exponentialRampToValueAtTime(0.001, when + 1.6);
     o.connect(g).connect(bassBus);
-    o.start(when); o.stop(when + 1.7);,
+    o.start(when); o.stop(when + 1.7);
   }
   function kick(when, vel = 1.0) {
     const src = ctx.createBufferSource();
@@ -148,7 +157,7 @@ window._dillaBg = (() => {
     bodyG.gain.linearRampToValueAtTime(0.78 * vel, when + 0.004);
     bodyG.gain.exponentialRampToValueAtTime(0.001, when + 0.42);
     body.connect(bodyG).connect(kickBus);
-    body.start(when); body.stop(when + 0.45);,
+    body.start(when); body.stop(when + 0.45);
   }
   function hat(when) {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.06);
@@ -157,7 +166,7 @@ window._dillaBg = (() => {
     g.gain.setValueAtTime(0.04, when);
     g.gain.exponentialRampToValueAtTime(0.001, when + 0.05);
     src.connect(hp).connect(g).connect(hatGain);
-    src.start(when); src.stop(when + 0.08);,
+    src.start(when); src.stop(when + 0.08);
   }
   function rim(when) {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf(0.04);
@@ -166,7 +175,7 @@ window._dillaBg = (() => {
     g.gain.setValueAtTime(0.05, when);
     g.gain.exponentialRampToValueAtTime(0.001, when + 0.09);
     src.connect(bp).connect(g).connect(hatGain);
-    src.start(when); src.stop(when + 0.1);,
+    src.start(when); src.stop(when + 0.1);
   }
   function setupBus() {
     master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
@@ -184,7 +193,7 @@ window._dillaBg = (() => {
     bassBus.connect(shelf).connect(master);
     conv = ctx.createConvolver(); conv.buffer = impulse(2.4, 2.6);
     convGain = ctx.createGain(); convGain.gain.value = 0.20;
-    padGain.connect(conv); conv.connect(convGain).connect(master);,
+    padGain.connect(conv); conv.connect(convGain).connect(master);
   }
   function scheduleBar(bar, when) {
     const chord = CHORDS[(bar >> 1) % CHORDS.length];
@@ -195,13 +204,13 @@ window._dillaBg = (() => {
     sub(when + BEAT * 2);
     if (bar % 2 === 1) {
       kick(when + BEAT + BEAT * SWING * 0.6, 0.58);
-      rim(when + BEAT * 2 + BEAT * SWING);,
+      rim(when + BEAT * 2 + BEAT * SWING);
     }
     for (let i = 0; i < 8; i++) {
       const isOff = (i & 1) === 1;
       const t = when + (i * BEAT / 2) + (isOff ? BEAT * SWING * 0.5 : 0);
-      if (Math.random() > (isOff ? 0.30 : 0.58)) hat(t);,
-    },
+      if (Math.random() > (isOff ? 0.30 : 0.58)) hat(t);
+    }
   }
   function speakPickup() {
     if (!playing) return;
@@ -212,8 +221,8 @@ window._dillaBg = (() => {
     if (!line) return;
     try {
       if (typeof enqueueSpeech === 'function') enqueueSpeech(line, { quirky: true, lane: 'nudge' });
-      else window.MASTER_FACE?.speak?.(line);,
-    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:speak_pickup", err); },
+      else window.MASTER_FACE?.speak?.(line);
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:speak_pickup", err); }
   }
   return () => {
     if (playing) {
@@ -222,6 +231,9 @@ window._dillaBg = (() => {
       try { master?.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:fade_out", err); }
       setTimeout(() => { try { ctx?.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:close", err); } }, 900);
       return false;
+    }
+    try {
+      ctx = (F_FACE_LOOPS.actx || window.MASTER_FACE?.actx || window.actx) || new (window.AudioContext || window.webkitAudioContext)();
       if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
       setupBus();
       playing = true;
@@ -231,12 +243,15 @@ window._dillaBg = (() => {
       barIv = setInterval(() => { if (!playing) return; scheduleBar(bar++, ctx.currentTime + 0.05); }, BAR * 1000);
       duckIv = setInterval(() => {
         if (!playing) return;
-        const speaking = !!(F_FACE_TTS?.playing);
+        const speaking = !!(F_FACE_TTS && F_FACE_TTS.playing);
         const target = speaking ? 0.025 : 0.14;
-        try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:duck_ramp", err); },
+        try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:duck_ramp", err); }
       }, 500);
       speakIv = setInterval(speakPickup, 48000);
       setTimeout(speakPickup, 12000);
       master.gain.setValueAtTime(0, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 5);
-      return true;,
+      return true;
+    } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:start", err); return false; }
+  };
+})();

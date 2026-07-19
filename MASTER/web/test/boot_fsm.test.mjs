@@ -16,11 +16,14 @@ function loadBootFsm(now = 1000) {
   const sandbox = {
     window: {
       addEventListener(type, fn) {
-        (listeners[type] ||= []).push(fn);,
+        (listeners[type] ||= []).push(fn);
       },
       dispatchEvent(ev) {
         (listeners[ev.type] || []).forEach((fn) => fn(ev));
         return true;
+      },
+      MASTER: {},
+      MASTER_LOG: null,
       performance: { now: () => clock },
     },
     document: {
@@ -33,8 +36,8 @@ function loadBootFsm(now = 1000) {
     CustomEvent: class CustomEvent {
       constructor(type, opts = {}) {
         this.type = type;
-        this.detail = opts.detail;,
-      },
+        this.detail = opts.detail;
+      }
     },
   };
   sandbox.window.window = sandbox.window;
@@ -45,6 +48,7 @@ function loadBootFsm(now = 1000) {
   runInContext(fsmSource, createContext(sandbox));
   const boot = sandbox.window.MASTER.boot;
   return { boot, body, html, advance: (ms) => { clock += ms; } };
+}
 
 test("boot fsm happy path reaches READY when all gates signal", () => {
   const { boot, body } = loadBootFsm();
@@ -58,14 +62,14 @@ test("boot fsm happy path reaches READY when all gates signal", () => {
   boot.signal("face_ready", { source: "test" });
   boot.signal("container_ready", { source: "test" });
   assert.equal(boot.state(), "READY");
-  assert.equal(body.dataset.bootState, "READY");,
+  assert.equal(body.dataset.bootState, "READY");
 });
 
 test("boot fsm rejects illegal transitions", () => {
   const { boot } = loadBootFsm();
   assert.equal(boot.state(), "INIT");
   assert.equal(boot.transition("FACE", { source: "test" }), false);
-  assert.equal(boot.state(), "INIT");,
+  assert.equal(boot.state(), "INIT");
 });
 
 test("boot fsm retry path uses RECOVERING", () => {
@@ -74,7 +78,7 @@ test("boot fsm retry path uses RECOVERING", () => {
   boot.transition("ASSETS");
   assert.ok(boot.transition("RECOVERING", { source: "retry" }));
   assert.ok(boot.transition("ASSETS", { source: "retry" }));
-  assert.equal(boot.state(), "ASSETS");,
+  assert.equal(boot.state(), "ASSETS");
 });
 
 test("boot fsm renderer_failed enters ERROR from any phase", () => {
@@ -82,7 +86,7 @@ test("boot fsm renderer_failed enters ERROR from any phase", () => {
   boot.transition("PRIMER");
   boot.transition("ASSETS");
   boot.signal("renderer_failed", { source: "test" });
-  assert.equal(boot.state(), "ERROR");,
+  assert.equal(boot.state(), "ERROR");
 });
 
 test("boot fsm does not reach READY until all gates are set", () => {
@@ -95,5 +99,5 @@ test("boot fsm does not reach READY until all gates are set", () => {
   boot.signal("face_ready");
   assert.equal(boot.state(), "VOICE");
   boot.signal("container_ready");
-  assert.equal(boot.state(), "READY");,
+  assert.equal(boot.state(), "READY");
 });

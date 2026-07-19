@@ -34,20 +34,20 @@ module DillaHarmony
     d_minor: %w[Am7 Bbmaj7 Cmaj9 Fmaj9 Eb7 Gm7],
     eb_major: %w[Cm9 Fm7 Bb7 Abmaj9 Gm7],
     g_major: %w[Em9 Am9 Cmaj9 D13 Bm7],
-    ab_major: %w[Fm7 Bbm7 Ebmaj7 Cm9 Dbmaj7],
+    ab_major: %w[Fm7 Bbm7 Ebmaj7 Cm9 Dbmaj7]
   }.freeze
 
   SUBSTITUTIONS = {
     "m" => "m9", "maj" => "maj9", "7" => "13", "m7" => "m9", "maj7" => "maj9",
     "Fm" => "Fm9", "Ab" => "Abmaj9", "Db" => "Dbmaj7", "Dbmaj7" => "Dbmaj9",
     "Bbm" => "Bbm7", "Cm" => "Cm7", "Dm" => "Dm9", "Gm" => "Gm9", "Am" => "Am9",
-    "Cmaj" => "Cmaj9", "Fmaj" => "Fmaj9", "Gmaj" => "Gmaj9", "Ebmaj7" => "Ebmaj9",
+    "Cmaj" => "Cmaj9", "Fmaj" => "Fmaj9", "Gmaj" => "Gmaj9", "Ebmaj7" => "Ebmaj9"
   }.freeze
 
   CONTRAST_VOICINGS = {
     quartal: :drop2, drop2: :rootless, rootless: :spread, cluster: :spread,
     spread: :quartal, drop3: :spread, so_what: :quartal, kenny_barron: :drop2,
-    bill_evans: :rootless,
+    bill_evans: :rootless
   }.freeze
 
   @last_progression_chords = nil

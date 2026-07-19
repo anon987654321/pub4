@@ -20,18 +20,22 @@ const html = `<!doctype html>
     var original = proto.getContext;
     proto.getContext = function (type) {
       if (!window._primerFired && /webgl/i.test(String(type))) return null;
-      return original.apply(this, arguments);,
+      return original.apply(this, arguments);
+    };
+  })();
+</script>
 <button id="primer">tap to start</button>
 <canvas id="face" width="64" height="64"></canvas>
 <script>
   document.getElementById("primer").addEventListener("click", function () {
     window._primerFired = true;
-    document.body.classList.add("face-session");,
+    document.body.classList.add("face-session");
   });
 </script>`;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function waitFor(fn, label) {
   const deadline = Date.now() + timeoutMs;
@@ -39,24 +43,26 @@ async function waitFor(fn, label) {
   while (Date.now() < deadline) {
     try {
       const value = await fn();
-      if (value) return value;,
+      if (value) return value;
     } catch (error) {
-      lastError = error;,
+      lastError = error;
     }
-    await sleep(100);,
+    await sleep(100);
   }
   throw new Error(`${label} timed out${lastError ? `: ${lastError.message}` : ""}`);
+}
 
 async function requestJson(url, options = {}) {
   const response = await fetch(url, options);
   if (!response.ok) throw new Error(`${url} returned ${response.status}`);
   return response.json();
+}
 
 async function connect(wsUrl) {
   const ws = new WebSocket(wsUrl);
   await new Promise((resolve, reject) => {
     ws.addEventListener("open", resolve, { once: true });
-    ws.addEventListener("error", reject, { once: true });,
+    ws.addEventListener("error", reject, { once: true });
   });
 
   let id = 0;
@@ -68,10 +74,10 @@ async function connect(wsUrl) {
       const { resolve, reject } = pending.get(message.id);
       pending.delete(message.id);
       if (message.error) reject(new Error(message.error.message));
-      else resolve(message.result);,
+      else resolve(message.result);
     } else if (message.method) {
-      events.push(message);,
-    },
+      events.push(message);
+    }
   });
 
   return {
@@ -79,22 +85,25 @@ async function connect(wsUrl) {
       const requestId = ++id;
       ws.send(JSON.stringify({ id: requestId, method, params }));
       return new Promise((resolve, reject) => pending.set(requestId, { resolve, reject }));
+    },
+    waitEvent(method) {
+      const existing = events.findIndex((event) => event.method === method);
       if (existing >= 0) return Promise.resolve(events.splice(existing, 1)[0]);
       return new Promise((resolve) => {
         const listener = (event) => {
           const message = JSON.parse(event.data);
           if (message.method === method) {
             ws.removeEventListener("message", listener);
-            resolve(message);,
-          },
+            resolve(message);
+          }
         };
-        ws.addEventListener("message", listener);,
-      });,
+        ws.addEventListener("message", listener);
+      });
     },
     close() {
-      ws.close();,
-    },
-  };,
+      ws.close();
+    }
+  };
 }
 
 async function main() {
@@ -115,20 +124,26 @@ async function main() {
     "--enable-webgl",
     "--use-gl=swiftshader",
     "--enable-unsafe-swiftshader",
-    "about:blank",
+    "about:blank"
   ], { stdio: ["ignore", "ignore", "pipe"] });
   proc.stderr.on("data", (chunk) => {
-    stderr += chunk.toString();,
+    stderr += chunk.toString();
   });
   proc.on("exit", (code, signal) => {
-    exited = { code, signal };,
+    exited = { code, signal };
   });
 
   try {
     await waitFor(async () => {
       if (exited) throw new Error(`Chrome exited code=${exited.code} signal=${exited.signal}`);
       return requestJson(`http://127.0.0.1:${port}/json/version`);
+    }, "Chrome DevTools endpoint")
+      .catch((error) => {
+        const detail = stderr.trim().split(/\n/).slice(-6).join("\n");
         throw new Error(`${error.message}${detail ? `\n${detail}` : ""}`);
+      });
+    const target = await requestJson(`http://127.0.0.1:${port}/json/new`, { method: "PUT" });
+    const cdp = await connect(target.webSocketDebuggerUrl);
     try {
       await cdp.send("Page.enable");
       await cdp.send("Runtime.enable");
@@ -140,10 +155,11 @@ async function main() {
         const result = await cdp.send("Runtime.evaluate", {
           expression,
           returnByValue: true,
-          awaitPromise: true,
+          awaitPromise: true
         });
         if (result.exceptionDetails) throw new Error(result.exceptionDetails.text);
         return result.result.value;
+      };
 
       const before = await evaluate(`(function () {
         var canvas = document.getElementById("face");
@@ -151,8 +167,8 @@ async function main() {
           primer: !!document.getElementById("primer"),
           primerFired: !!window._primerFired,
           webgl: !!canvas.getContext("webgl"),
-          webgl2: !!canvas.getContext("webgl2"),
-        };,
+          webgl2: !!canvas.getContext("webgl2")
+        };
       })()`);
 
       await evaluate(`document.getElementById("primer").click()`);
@@ -163,8 +179,8 @@ async function main() {
           primerFired: !!window._primerFired,
           faceSession: document.body.classList.contains("face-session"),
           webgl: !!canvas.getContext("webgl"),
-          webgl2: !!canvas.getContext("webgl2"),
-        };,
+          webgl2: !!canvas.getContext("webgl2")
+        };
       })()`);
 
       const failures = [];
@@ -182,17 +198,17 @@ async function main() {
       if (failures.length > 0) {
         console.log("probe_webgl_guard: FAIL");
         for (const failure of failures) console.log(`  - ${failure}`);
-        process.exitCode = 1;,
+        process.exitCode = 1;
       } else {
-        console.log("probe_webgl_guard: PASS");,
-      },
+        console.log("probe_webgl_guard: PASS");
+      }
     } finally {
-      cdp.close();,
-    },
+      cdp.close();
+    }
   } finally {
     proc.kill("SIGTERM");
-    await rm(profile, { recursive: true, force: true });,
-  },
+    await rm(profile, { recursive: true, force: true });
+  }
 }
 
 main().catch((error) => {
@@ -201,8 +217,8 @@ main().catch((error) => {
   if (launchBlocked && !requireBrowser) {
     console.log(`probe_webgl_guard: SKIP (${error.message.split("\n")[0]})`);
     console.log("set PROBE_REQUIRE_BROWSER=1 to make browser launch failures fatal");
-    process.exit(0);,
+    process.exit(0);
   }
   console.error(`probe_webgl_guard: FAIL (${error.message})`);
-  process.exit(1);,
+  process.exit(1);
 });

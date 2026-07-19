@@ -13,7 +13,7 @@ const ZONES = Object.freeze({
   noseRidge: 9, noseFlare: 10,
   mouth: 11, chin: 12,
   crown: 13, cheekL: 14, cheekR: 15,
-  sideL: 16, sideR: 17,
+  sideL: 16, sideR: 17
 });
 
 const ZONE_NAMES = Object.freeze(Object.fromEntries(
@@ -34,7 +34,7 @@ const DEFAULT_BLEND = Object.freeze({
   nostrilFlare: 0,
   cheekRaise: 0,
   shock: 0,
-  chibi: 0,
+  chibi: 0
 });
 
 const DEFAULT_EMOTION = Object.freeze({
@@ -42,32 +42,38 @@ const DEFAULT_EMOTION = Object.freeze({
   valence: 0,
   focus: 0,
   confidence: 1,
-  fatigue: 0,
+  fatigue: 0
 });
 
 function clamp(v, lo = 0, hi = 1) {
   return Math.max(lo, Math.min(hi, v));
+}
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
+}
 
 function damp(current, target, lambda, dtMs) {
   const t = 1 - Math.exp(-lambda * dtMs * 0.001);
   return lerp(current, target, t);
+}
 
 function zoneId(zone) {
   return ZONES[zone] || 0;
+}
 
 function makeAnchor(x, y, z, zone, u = 0, normal = [0, 0, 1]) {
   return { x, y, z, zone, zoneId: zoneId(zone), u, normal };
+}
 
 function line3(x0, y0, z0, x1, y1, z1, n, zone) {
   const out = [];
   for (let i = 0; i < n; i++) {
     const t = n > 1 ? i / (n - 1) : 0;
-    out.push(makeAnchor(lerp(x0, x1, t), lerp(y0, y1, t), lerp(z0, z1, t), zone, t));,
+    out.push(makeAnchor(lerp(x0, x1, t), lerp(y0, y1, t), lerp(z0, z1, t), zone, t));
   }
   return out;
+}
 
 function ring3(cx, cy, cz, rx, ry, n, zone, zWave = 0) {
   const out = [];
@@ -77,9 +83,10 @@ function ring3(cx, cy, cz, rx, ry, n, zone, zWave = 0) {
     const x = cx + Math.cos(a) * rx;
     const y = cy + Math.sin(a) * ry;
     const z = cz + Math.sin(a * 2) * zWave;
-    out.push(makeAnchor(x, y, z, zone, t, normalize3([x - cx, y - cy, 0.7])));,
+    out.push(makeAnchor(x, y, z, zone, t, normalize3([x - cx, y - cy, 0.7])));
   }
   return out;
+}
 
 function disc3(cx, cy, cz, r, n, zone) {
   const out = [];
@@ -88,13 +95,15 @@ function disc3(cx, cy, cz, r, n, zone) {
     const t = (i + 0.5) / n;
     const rr = r * Math.sqrt(t);
     const a = i * golden;
-    out.push(makeAnchor(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz, zone, t));,
+    out.push(makeAnchor(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz, zone, t));
   }
   return out;
+}
 
 function normalize3(v) {
   const len = Math.hypot(v[0], v[1], v[2]) || 1;
   return [v[0] / len, v[1] / len, v[2] / len];
+}
 
 function buildCanonicalMask(kind = "homo_futura") {
   switch (kind) {
@@ -104,17 +113,18 @@ function buildCanonicalMask(kind = "homo_futura") {
     case "neutral": return buildNeutralMask();
     case "sepik": return buildSepikMask();
     case "homo_futura": return buildHomoFuturaMask();
-    default: return buildHomoFuturaMask();,
-  },
+    default: return buildHomoFuturaMask();
+  }
 }
 
 function zoneMap(anchors) {
   const zones = {};
   for (const a of anchors) {
     if (!zones[a.zone]) zones[a.zone] = [];
-    zones[a.zone].push(a);,
+    zones[a.zone].push(a);
   }
   return { anchors, zones };
+}
 
 function buildNeutralMask() {
   const a = [];
@@ -124,7 +134,7 @@ function buildNeutralMask() {
     const w = 0.18 + 0.54 * Math.sin(t * Math.PI);
     const z = 0.08 * Math.sin(t * Math.PI);
     a.push(makeAnchor(-w, y, z, "outlineL", t));
-    a.push(makeAnchor(w, y, z, "outlineR", t));,
+    a.push(makeAnchor(w, y, z, "outlineR", t));
   }
   a.push(...line3(-0.42, -0.30, 0.22, -0.12, -0.24, 0.34, 16, "browL"));
   a.push(...line3(0.12, -0.24, 0.34, 0.42, -0.30, 0.22, 16, "browR"));
@@ -140,6 +150,7 @@ function buildNeutralMask() {
   a.push(...disc3(-0.38, 0.22, 0.26, 0.055, 10, "cheekL"));
   a.push(...disc3(0.38, 0.22, 0.26, 0.055, 10, "cheekR"));
   return zoneMap(a);
+}
 
 function buildHomoFuturaMask() {
   const a = [];
@@ -149,11 +160,11 @@ function buildHomoFuturaMask() {
     const w = 0.14 + 0.46 * Math.sin(t * Math.PI);
     const z = 0.06 * Math.sin(t * Math.PI);
     a.push(makeAnchor(-w, y, z, "outlineL", t));
-    a.push(makeAnchor(w, y, z, "outlineR", t));,
+    a.push(makeAnchor(w, y, z, "outlineR", t));
   }
   for (let i = 0; i < 14; i++) {
     const t = (i - 6.5) / 6.5;
-    a.push(...line3(t * 0.06, -0.82, 0.16, t * 0.14, -1.18 - Math.abs(t) * 0.10, 0.08, 8, "crown"));,
+    a.push(...line3(t * 0.06, -0.82, 0.16, t * 0.14, -1.18 - Math.abs(t) * 0.10, 0.08, 8, "crown"));
   }
   a.push(...line3(-0.36, -0.26, 0.20, -0.10, -0.20, 0.30, 12, "browL"));
   a.push(...line3(0.10, -0.20, 0.30, 0.36, -0.26, 0.20, 12, "browR"));
@@ -169,16 +180,18 @@ function buildHomoFuturaMask() {
   a.push(...disc3(-0.34, 0.20, 0.22, 0.042, 8, "cheekL"));
   a.push(...disc3(0.34, 0.20, 0.22, 0.042, 8, "cheekR"));
   return zoneMap(a);
+}
 
 function buildSepikMask() {
   const base = buildNeutralMask().anchors.slice();
   const crown = [];
   for (let i = 0; i < 16; i++) {
     const t = (i - 7.5) / 7.5;
-    crown.push(...line3(t * 0.09, -0.78, 0.18, t * 0.28, -1.28 - Math.abs(t) * 0.16, 0.05, 9, "crown"));,
+    crown.push(...line3(t * 0.09, -0.78, 0.18, t * 0.28, -1.28 - Math.abs(t) * 0.16, 0.05, 9, "crown"));
   }
   const noseHook = line3(0, 0.28, 0.58, 0.15, 0.44, 0.54, 8, "noseRidge");
   return zoneMap(base.concat(crown, noseHook));
+}
 
 function buildAsmatMask() {
   const a = buildNeutralMask().anchors.filter(anchor => !anchor.zone.startsWith("eye"));
@@ -189,9 +202,10 @@ function buildAsmatMask() {
   for (let r = 0; r < 3; r++) {
     const y = -0.58 - r * 0.12;
     a.push(...line3(-0.34, y, 0.14, 0, y - 0.08, 0.20, 8, "crown"));
-    a.push(...line3(0, y - 0.08, 0.20, 0.34, y, 0.14, 8, "crown"));,
+    a.push(...line3(0, y - 0.08, 0.20, 0.34, y, 0.14, 8, "crown"));
   }
   return zoneMap(a);
+}
 
 function buildBainingMask() {
   const a = buildNeutralMask().anchors.filter(anchor => !["eyeL", "eyeR", "pupilL", "pupilR", "mouth"].includes(anchor.zone));
@@ -201,6 +215,7 @@ function buildBainingMask() {
   a.push(...spiralEye(0.36, -0.18, 0.51, "pupilR"));
   a.push(...ring3(0, 0.48, 0.42, 0.38, 0.16, 40, "mouth", 0.02));
   return zoneMap(a);
+}
 
 function buildTolaiMask() {
   const a = buildNeutralMask().anchors.filter(anchor => !["outlineL", "outlineR", "mouth"].includes(anchor.zone));
@@ -209,20 +224,21 @@ function buildTolaiMask() {
     const y = -1.05 + t * 1.95;
     const w = 0.12 + t * 0.60;
     a.push(makeAnchor(-w, y, 0.02, "outlineL", t));
-    a.push(makeAnchor(w, y, 0.02, "outlineR", t));,
+    a.push(makeAnchor(w, y, 0.02, "outlineR", t));
   }
   a.push(...mouthAnchors("O", 32));
   a.push(...line3(-0.72, -0.05, 0.00, -0.84, 0.66, -0.05, 16, "sideL"));
   a.push(...line3(0.72, -0.05, 0.00, 0.84, 0.66, -0.05, 16, "sideR"));
   return zoneMap(a);
+}
 
 function diamondEye(cx, cy, cz, zone) {
   return [
     ...line3(cx, cy - 0.10, cz, cx + 0.18, cy, cz, 8, zone),
     ...line3(cx + 0.18, cy, cz, cx, cy + 0.10, cz, 8, zone),
     ...line3(cx, cy + 0.10, cz, cx - 0.18, cy, cz, 8, zone),
-    ...line3(cx - 0.18, cy, cz, cx, cy - 0.10, cz, 8, zone),
-  ];,
+    ...line3(cx - 0.18, cy, cz, cx, cy - 0.10, cz, 8, zone)
+  ];
 }
 
 function spiralEye(cx, cy, cz, zone) {
@@ -231,9 +247,10 @@ function spiralEye(cx, cy, cz, zone) {
     const t = i / 25;
     const ang = t * Math.PI * 4;
     const r = t * 0.15;
-    out.push(makeAnchor(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * 0.82, cz, zone, t));,
+    out.push(makeAnchor(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r * 0.82, cz, zone, t));
   }
   return out;
+}
 
 function maskAnchors2D(kind = "sepik", zone = "mouth") {
   const topo = buildCanonicalMask(kind);
@@ -243,8 +260,8 @@ function maskAnchors2D(kind = "sepik", zone = "mouth") {
     y: 0.5 - anchor.y * 0.5,
     z: anchor.z,
     zoneId: anchor.zoneId,
-    u: anchor.u,
-  }));,
+    u: anchor.u
+  }));
 }
 
 function mouthAnchors(shape = "neutral", n = 34) {
@@ -258,9 +275,10 @@ function mouthAnchors(shape = "neutral", n = 34) {
     if (shape === "smile") y -= Math.sin(t * Math.PI) * 0.12;
     if (shape === "frown") y += Math.sin(t * Math.PI) * 0.12;
     if (shape === "O") { y += Math.sin(t * Math.PI) * 0.18; z += 0.04; }
-    out.push(makeAnchor(x, y, z, "mouth", t));,
+    out.push(makeAnchor(x, y, z, "mouth", t));
   }
   return out;
+}
 
 function applyBlendshape(anchor, blend) {
   let x = anchor.x;
@@ -273,18 +291,18 @@ function applyBlendshape(anchor, blend) {
   if (zone === "browL" || zone === "browR") {
     y += blend.browDown * 0.07;
     y -= blend.browInnerUp * centerWeight * 0.10;
-    z += blend.focus * 0.02 || 0;,
+    z += blend.focus * 0.02 || 0;
   }
 
   if (zone === "eyeL" || zone === "eyeR") {
     y *= 1 - blend.blink * 0.72 - blend.squint * 0.20;
-    x += side * blend.shock * 0.035;,
+    x += side * blend.shock * 0.035;
   }
 
   if (zone === "pupilL" || zone === "pupilR") {
     x += side * blend.shock * 0.025;
     y -= blend.shock * 0.010;
-    z += blend.pupilDilate * 0.030;,
+    z += blend.pupilDilate * 0.030;
   }
 
   if (zone === "mouth") {
@@ -293,24 +311,25 @@ function applyBlendshape(anchor, blend) {
     y -= blend.smile * Math.sin(anchor.u * Math.PI) * 0.11;
     y += blend.frown * Math.sin(anchor.u * Math.PI) * 0.10;
     x *= 1 + blend.mouthWide * 0.22 - blend.mouthRound * 0.22;
-    z += blend.mouthRound * 0.08;,
+    z += blend.mouthRound * 0.08;
   }
 
   if (zone === "noseFlare") {
     x += side * blend.nostrilFlare * 0.035;
-    z += blend.nostrilFlare * 0.035;,
+    z += blend.nostrilFlare * 0.035;
   }
 
   if (zone === "cheekL" || zone === "cheekR") {
     y -= blend.cheekRaise * 0.07;
-    z += blend.cheekRaise * 0.04;,
+    z += blend.cheekRaise * 0.04;
   }
 
   if (blend.chibi > 0) {
     y *= 1 - blend.chibi * 0.28;
-    x *= 1 + blend.chibi * 0.10;,
+    x *= 1 + blend.chibi * 0.10;
   }
 
   return { ...anchor, x, y, z };
+}
 
 export { ZONES, ZONE_NAMES, DEFAULT_BLEND, DEFAULT_EMOTION, clamp, lerp, damp, zoneId, makeAnchor, line3, ring3, disc3, normalize3, buildCanonicalMask, zoneMap, buildNeutralMask, buildHomoFuturaMask, buildSepikMask, buildAsmatMask, buildBainingMask, buildTolaiMask, diamondEye, spiralEye, maskAnchors2D, mouthAnchors, applyBlendshape };

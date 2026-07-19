@@ -20,7 +20,7 @@
     "face3d:ready": { targets: ["face"], fields: ["topology", "mode"] },
     "face3d:nonblank": { targets: ["face"], fields: ["lit_pixels"] },
     "face3d:error": { targets: ["face"], fields: ["raw"] },
-    "self_violation": { targets: ["face"], fields: [] },
+    "self_violation": { targets: ["face"], fields: [] }
   };
 
   const PROVIDER_PALETTES = {
@@ -30,7 +30,7 @@
     gemini: { accent: "#4285f4", topology: "ecology" },
     deepseek: { accent: "#5b8def", topology: "ecology" },
     mistral: { accent: "#7c6fd6", topology: "ecology" },
-    openrouter: { accent: "#8b5cf6", topology: "neural" },
+    openrouter: { accent: "#8b5cf6", topology: "neural" }
   };
 
   function normalize(raw) {
@@ -42,22 +42,23 @@
       ts: Date.now(),
       payload,
       visual: classified,
-      schema: CANONICAL[type] || null,
-    };,
+      schema: CANONICAL[type] || null
+    };
   }
 
   function paletteForProvider(provider) {
     const key = (provider || "").toString().toLowerCase();
     return PROVIDER_PALETTES[key] || window.MASTERTopology?.palette?.("operator") || { accent: "#d8d6e0", topology: "face" };
+  }
 
   function dispatch(normalized) {
     window.dispatchEvent(new CustomEvent("master:bus", { detail: normalized }));
     if (normalized.visual && Object.keys(normalized.visual).length) {
       window.dispatchEvent(new CustomEvent("master:visual", {
-        detail: { name: normalized.type, ...normalized.visual, raw: normalized.payload },
-      }));,
-    },
+        detail: { name: normalized.type, ...normalized.visual, raw: normalized.payload }
+      }));
+    }
   }
 
-  window.MASTEREvents = { CANONICAL, normalize, dispatch, paletteForProvider, PROVIDER_PALETTES };,
+  window.MASTEREvents = { CANONICAL, normalize, dispatch, paletteForProvider, PROVIDER_PALETTES };
 })();

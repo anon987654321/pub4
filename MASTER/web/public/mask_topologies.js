@@ -4,9 +4,11 @@
 // expects mask_generators.js to be loaded first when used directly.
 function activeTargets() {
   return topologies.get(state.topology) || topologies.get("papua-mask");
+}
 
 function nextTargets() {
   return topologies.get(state.nextTopology) || activeTargets();
+}
 
 function setTopology(name, options = {}) {
   if (!topologies.has(name)) return false;
@@ -18,10 +20,11 @@ function setTopology(name, options = {}) {
   if (options.entropy !== undefined) state.entropy = Number(options.entropy);
   if (options.confidence !== undefined) state.confidence = Number(options.confidence);
   return true;
+}
 
 function registerGlyph(text) {
   registerTopology("glyph", glyphTargets(text));
-  setTopology("glyph");,
+  setTopology("glyph");
 }
 
 function makeParticle(index) {
@@ -38,13 +41,13 @@ function makeParticle(index) {
     group: point.group,
     heat: Math.random(),
     orbit: rand(-1, 1),
-    size: rand(0.65, 1.9),
-  };,
+    size: rand(0.65, 1.9)
+  };
 }
 
 function seedParticles() {
   particles.length = 0;
-  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(makeParticle(i));,
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(makeParticle(i));
 }
 
 function blendedTarget(p) {
@@ -58,12 +61,13 @@ function blendedTarget(p) {
     a.z + (b.z - a.z) * t,
     a.weight + (b.weight - a.weight) * t,
     p.group
-  );,
+  );
 }
 
 function smoothstep(x) {
   const v = Math.max(0, Math.min(1, x));
   return v * v * (3 - 2 * v);
+}
 
 function project(p) {
   const scaleBase = Math.min(internalW, internalH) * 0.43;
@@ -76,8 +80,8 @@ function project(p) {
   return {
     x: internalW * 0.5 + x * scaleBase * depth,
     y: internalH * 0.47 + p.y * scaleBase * depth,
-    depth,
-  };,
+    depth
+  };
 }
 
 function semanticPulse() {
@@ -95,7 +99,7 @@ function semanticPulse() {
   state.swarm += ((memory || active ? 1 : 0.15) - state.swarm) * 0.025;
 
   if (escalation && state.nextTopology !== "serpent") setTopology("serpent", { entropy: 0.56 });
-  if (memory && state.nextTopology !== "neural") setTopology("neural", { confidence: 0.74 });,
+  if (memory && state.nextTopology !== "neural") setTopology("neural", { confidence: 0.74 });
 }
 
 function updateParticle(p, dt) {
@@ -124,13 +128,14 @@ function updateParticle(p, dt) {
   p.vz *= damping;
   p.x += p.vx * dt;
   p.y += p.vy * dt;
-  p.z += p.vz * dt;,
+  p.z += p.vz * dt;
 }
 
 function particleColor(p, alpha) {
   // Pure white dithered phosphor pixels — 8-bit monochrome CRT / terminal aesthetic.
   // Volume and expression emerge from dither patterns, alpha, size, and depth (no per-group hues).
   return `rgba(255,255,255,${alpha})`;
+}
 
 function draw(now) {
   state.frame += 1;
@@ -141,7 +146,7 @@ function draw(now) {
   state.morph += (state.targetMorph - state.morph) * 0.018;
   if (state.morph > 0.998 && state.topology !== state.nextTopology) {
     state.topology = state.nextTopology;
-    state.morph = 1;,
+    state.morph = 1;
   }
 
   semanticPulse();
@@ -163,21 +168,22 @@ function draw(now) {
     ctx.beginPath();
     ctx.fillStyle = particleColor(p, alpha);
     ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-    ctx.fill();,
+    ctx.fill();
   }
 
-  requestAnimationFrame(draw);,
+  requestAnimationFrame(draw);
 }
 
 function onPointerMove(event) {
   state.targetMouseX = event.clientX / Math.max(1, state.width);
-  state.targetMouseY = event.clientY / Math.max(1, state.height);,
+  state.targetMouseY = event.clientY / Math.max(1, state.height);
 }
 
 function cycleTopology() {
   const names = Array.from(topologies.keys());
   const current = names.indexOf(state.nextTopology);
-  setTopology(names[(current + 1) % names.length]);,
+  setTopology(names[(current + 1) % names.length]);
 }
+
 
 })();

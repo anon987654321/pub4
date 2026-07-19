@@ -126,7 +126,7 @@ module Master
             ideas: ideation_value(ideation_result),
             cherry_picks: cherry,
             metrics: payload[:metrics],
-            mode: @mode[:preset_key],
+            mode: @mode[:preset_key]
           })
         end
 

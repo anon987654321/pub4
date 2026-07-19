@@ -9,6 +9,9 @@
     if (/warn|risk|careful|retry|fallback/i.test(`${attr} ${text}`)) return "warn";
     if (MODE_BUSY.test(mode) || /busy|thinking|running|loading|stream|agent|model|working|stage/i.test(`${attr} ${text}`)) {
       return "busy";
+    }
+    return "idle";
+  }
 
   function applyFrom(el, detail = {}) {
     if (!el) return;
@@ -21,7 +24,7 @@
     // → masterState=fail → frozen). Keep rendering; masterState still carries
     // "fail" so expression/color bridges can *react* to the fault. Visuals now
     // pause only on tab-hidden (visual_governor).
-    document.body.dataset.visualRuntime = "face";,
+    document.body.dataset.visualRuntime = "face";
   }
 
   function apply(detail = {}) {
@@ -30,7 +33,7 @@
     const stage = document.getElementById("pipeline-stage");
     if (stage?.textContent) applyFrom(stage, detail);
     const st = window.MASTER_FACE?.State;
-    if (st?.mode) document.body.dataset.mode = st.mode;,
+    if (st?.mode) document.body.dataset.mode = st.mode;
   }
 
   function observe(el) {
@@ -43,26 +46,26 @@
     // runtimeStatus is only ever written by this file, so there is no external
     // attribute change worth observing; the real external signal is status text.
     new MutationObserver(() => apply()).observe(el, {
-      childList: true, subtree: true, characterData: true,
-    });,
+      childList: true, subtree: true, characterData: true
+    });
   }
 
   window.addEventListener("master:visual", (ev) => apply(ev.detail || {}));
   document.addEventListener("visibilitychange", () => apply());
 
   window.addEventListener("tts:playback:start", () => {
-    document.body.dataset.masterState = "speaking";,
+    document.body.dataset.masterState = "speaking";
   });
 
   window.addEventListener("tts:playback:end", () => {
     document.body.dataset.masterState = "idle";
-    apply();,
+    apply();
   });
 
   window.addEventListener("DOMContentLoaded", () => {
     observe(document.getElementById("status"));
     observe(document.getElementById("ui-status"));
     observe(document.getElementById("pipeline-stage"));
-    apply();,
-  });,
+    apply();
+  });
 })();

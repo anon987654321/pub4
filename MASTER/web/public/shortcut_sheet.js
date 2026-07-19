@@ -12,7 +12,7 @@
     ["t", "Toggle TTS mute"],
     ["m", "Toggle microphone"],
     ["f", "Focus face canvas"],
-    ["Ctrl+[ / ]", "TTS playback rate"],
+    ["Ctrl+[ / ]", "TTS playback rate"]
   ];
 
   function ensureDialog() {
@@ -27,22 +27,23 @@
     SHORTCUTS.forEach(([key, desc]) => {
       const row = document.createElement("tr");
       row.innerHTML = `<td><kbd>${key}</kbd></td><td>${desc}</td>`;
-      table.appendChild(row);,
+      table.appendChild(row);
     });
     return el;
+  }
 
   function openSheet() {
     const dialog = ensureDialog();
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "open");
-    window.MASTERVisual?.event?.("shortcuts:open", { topology: "neural", entropy: 0.1, confidence: 0.92, mode: "help" });,
+    window.MASTERVisual?.event?.("shortcuts:open", { topology: "neural", entropy: 0.1, confidence: 0.92, mode: "help" });
   }
 
   function closeSheet() {
     const dialog = document.getElementById("shortcut-sheet");
     if (!dialog) return;
     if (typeof dialog.close === "function") dialog.close();
-    else dialog.removeAttribute("open");,
+    else dialog.removeAttribute("open");
   }
 
   function faceAck(kind) {
@@ -51,7 +52,7 @@
     if (!st) return;
     st.pulse = Math.max(st.pulse || 0, 0.32);
     st.questionPulse = Math.max(st.questionPulse || 0, 0.4);
-    window.MASTERVisual?.event?.(`shortcut:${kind}`, { topology: "papua-mask", entropy: 0.14, confidence: 0.9, mode: "ack" });,
+    window.MASTERVisual?.event?.(`shortcut:${kind}`, { topology: "papua-mask", entropy: 0.14, confidence: 0.9, mode: "ack" });
   }
 
   document.addEventListener("keydown", (ev) => {
@@ -62,6 +63,9 @@
       openSheet();
       faceAck("help");
       return;
+    }
+    if (inInput) return;
+    if (ev.key === "t" || ev.key === "T") { faceAck("mute"); return; }
     if (ev.key === "m" || ev.key === "M") { faceAck("mic"); return; }
     if (ev.key === "f" || ev.key === "F") {
       const canvas = document.getElementById("face");
@@ -69,8 +73,11 @@
       faceAck("focus");
       window.MASTERVisual?.event?.("shortcut:focus", { topology: "papua-mask", entropy: 0.1, confidence: 0.92, mode: "focus" });
       return;
-    if ((ev.metaKey || ev.ctrlKey) && ev.key === "]") { faceAck("rate_up"); return; },
+    }
+    if (ev.key === "Escape") { faceAck("escape"); return; }
+    if ((ev.metaKey || ev.ctrlKey) && ev.key === "[") { faceAck("rate_down"); return; }
+    if ((ev.metaKey || ev.ctrlKey) && ev.key === "]") { faceAck("rate_up"); return; }
   });
 
-  window.MASTERShortcuts = { open: openSheet, close: closeSheet, list: SHORTCUTS };,
+  window.MASTERShortcuts = { open: openSheet, close: closeSheet, list: SHORTCUTS };
 })();

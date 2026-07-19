@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MASTER — mission control</title>
   <link rel="stylesheet" href="/face.css">
 </head>
@@ -29,13 +29,13 @@
         `ctx: ${d.tokens} tokens`,
         `cost: $${Number(d.cost || 0).toFixed(4)}`,
         `agent pool: ${d.agent_pool} active`,
-        `breakers: ${(d.open_breakers || []).join(', ') || 'none'}`,
+        `breakers: ${(d.open_breakers || []).join(', ') || 'none'}`
       ].join('\n');
       const rtk = d.rtk || {};
       document.getElementById('rtk').textContent = [
         `commands: ${rtk.commands || 0}`,
         `saved: ${rtk.saved_pct || 0}%`,
-        `bytes: ${rtk.bytes_out || 0} / ${rtk.bytes_in || 0}`,
+        `bytes: ${rtk.bytes_out || 0} / ${rtk.bytes_in || 0}`
       ].join('\n');
       document.getElementById('plan').textContent = d.active_plan || '(none)';
       document.getElementById('rsi').textContent = (d.rsi_inbox || []).map(i => `${i.path}\n${i.excerpt}`).join('\n\n') || '(empty)';
@@ -45,17 +45,20 @@
         `band: ${p.band || 'ok'}`,
         `tokens: ${p.tokens || 0} / ${p.limit || 0}`,
         `pct: ${p.pct || 0}%`,
-        `headroom: ${p.headroom || 0}`,
+        `headroom: ${p.headroom || 0}`
       ].join('\n');
       const ph = d.provider_health || {};
       document.getElementById('providers').textContent = [
         `status: ${ph.status || 'unknown'}`,
         `open breakers: ${(ph.open_breakers || []).join(', ') || 'none'}`,
-        `agent pool: ${ph.agent_pool || 0}`,
+        `agent pool: ${ph.agent_pool || 0}`
       ].join('\n');
       document.getElementById('repair').textContent = (d.repair_queue || []).map((item) => {
         const recent = (item.recent || []).join('\n  ');
-        return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;,
+        return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;
+      }).join('\n\n') || '(empty)';
+      document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || '(quiet)';
+    }
     refresh();
     setInterval(refresh, 8000);
   </script>

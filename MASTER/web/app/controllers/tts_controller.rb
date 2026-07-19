@@ -46,7 +46,7 @@ class TtsController < ApplicationController
       {
         text: row["text"].to_s,
         voice: row["voice"].to_s,
-        style: row["style"].to_s,
+        style: row["style"].to_s
       }
     end
     render json: { phrases: list }

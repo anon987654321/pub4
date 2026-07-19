@@ -7,6 +7,6 @@
     "OH": { "mouthRound": 0.62, "jaw": 0.28 },
     "MM": { "mouthRound": 0.22, "jaw": 0.08 },
     "CH": { "mouthWide": 0.22, "jaw": 0.18 },
-    "rest": { "jaw": 0.04, "mouthRound": 0.02 },
-  },
+    "rest": { "jaw": 0.04, "mouthRound": 0.02 }
+  }
 }

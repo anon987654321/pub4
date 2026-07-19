@@ -20,7 +20,7 @@ module Master
           sonic: [
             "Electronic Music Producer", "Sound Engineer", "Label Executive",
             "Graphic Designer", "Web Designer", "Sound Designer", "Organ Composer",
-            "Hip-Hop Producer", "Skeptic",
+            "Hip-Hop Producer", "Skeptic"
           ],
           product: ["Product Strategist", "User Advocate", "Pragmatist"],
           docs: ["Maintainer", "Layperson", "QA Engineer"],

@@ -10,7 +10,7 @@ OUT="$PUB/face_vision.bundle.js"
     test -f "$path" || { echo "missing $path" >&2; exit 1; }
     cat "$path"
     echo ""
-  done,
+  done
 } > "$OUT"
 RAW=$(wc -c < "$OUT" | tr -d ' ')
 GZ=$(gzip -c "$OUT" | wc -c | tr -d ' ')

@@ -15,13 +15,14 @@
       trailCanvas.id = "face-phosphor-trail";
       trailCanvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0.46;mix-blend-mode:screen;image-rendering:pixelated";
       document.body.appendChild(trailCanvas);
-      trailCtx = trailCanvas.getContext("2d");,
+      trailCtx = trailCanvas.getContext("2d");
     }
     if (trailCanvas.width !== w || trailCanvas.height !== h) {
       trailCanvas.width = w;
-      trailCanvas.height = h;,
+      trailCanvas.height = h;
     }
     return trailCtx;
+  }
 
   function capturePhosphorTrail(sourceCanvas) {
     if (!sourceCanvas || window.State?.reducedMotion) return;
@@ -37,8 +38,8 @@
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "lighter";
     ctx.fillStyle = "rgba(0,0,0,0.08)";
-    ctx.fillRect(0, 0, w, h);,
+    ctx.fillRect(0, 0, w, h);
   }
 
-  window.MASTER_PHOSPHOR_TRAIL = Object.freeze({ capture: capturePhosphorTrail });,
+  window.MASTER_PHOSPHOR_TRAIL = Object.freeze({ capture: capturePhosphorTrail });
 })();

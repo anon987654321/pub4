@@ -11,7 +11,7 @@
   const FIELD = {
     x: 0, y: 1, vx: 2, vy: 3,
     kind: 4, zone: 5, confidence: 6, pressure: 7,
-    valence: 8, arousal: 9, attention: 10, age: 11,
+    valence: 8, arousal: 9, attention: 10, age: 11
   };
 
   function createPool(capacity) {
@@ -19,6 +19,7 @@
     const decay = new Float32Array(capacity);
     const alive = new Uint8Array(capacity);
     return { cells, decay, alive, capacity, count: 0 };
+  }
 
   function spawn(pool, x, y, props = {}) {
     if (pool.count >= pool.capacity) return -1;
@@ -39,6 +40,7 @@
     pool.decay[i] = props.decay || 0.01;
     pool.alive[i] = 1;
     return i;
+  }
 
   function spatialRepel(pool, strength = 0.006) {
     const cell = 0.04;
@@ -50,7 +52,7 @@
       const k = key(pool.cells[base + FIELD.x], pool.cells[base + FIELD.y]);
       let bucket = buckets.get(k);
       if (!bucket) buckets.set(k, bucket = []);
-      bucket.push(i);,
+      bucket.push(i);
     }
     for (let i = 0; i < pool.count; i++) {
       if (!pool.alive[i]) continue;
@@ -73,11 +75,11 @@
             if (dist > 0.06 || dist < 0.0004) continue;
             const push = strength / dist;
             pool.cells[base + FIELD.vx] += (dx / dist) * push;
-            pool.cells[base + FIELD.vy] += (dy / dist) * push;,
-          },
-        },
-      },
-    },
+            pool.cells[base + FIELD.vy] += (dy / dist) * push;
+          }
+        }
+      }
+    }
   }
 
   function step(pool, dt, ctx = {}) {
@@ -99,9 +101,9 @@
       pool.cells[base + FIELD.attention] = Math.max(0, (pool.cells[base + FIELD.attention] || 0) - attnDecay * dt);
       const cellDecay = pool.decay[i] * decayScale * (1.0 + (1 - confidence) * 0.12);
       pool.cells[base + FIELD.confidence] -= cellDecay * dt;
-      if (pool.cells[base + FIELD.confidence] <= 0) pool.alive[i] = 0;,
+      if (pool.cells[base + FIELD.confidence] <= 0) pool.alive[i] = 0;
     }
-    if (ctx.spatialRepulsion) spatialRepel(pool, Number(ctx.repelStrength) || 0.006);,
+    if (ctx.spatialRepulsion) spatialRepel(pool, Number(ctx.repelStrength) || 0.006);
   }
 
   function compact(pool) {
@@ -113,44 +115,47 @@
         const dst = write * FIELDS_PER_CELL;
         for (let f = 0; f < FIELDS_PER_CELL; f++) pool.cells[dst + f] = pool.cells[src + f];
         pool.decay[write] = pool.decay[read];
-        pool.alive[write] = 1;,
+        pool.alive[write] = 1;
       }
-      write++;,
+      write++;
     }
-    pool.count = write;,
+    pool.count = write;
   }
 
   function configureContext(ctx) {
     ctx.imageSmoothingEnabled = false;
     if ("webkitImageSmoothingEnabled" in ctx) ctx.webkitImageSmoothingEnabled = false;
-    if ("mozImageSmoothingEnabled" in ctx) ctx.mozImageSmoothingEnabled = false;,
+    if ("mozImageSmoothingEnabled" in ctx) ctx.mozImageSmoothingEnabled = false;
   }
 
   function fitInternalResolution(canvas, resolution) {
     canvas.width = resolution.w;
     canvas.height = resolution.h;
-    canvas.style.imageRendering = "pixelated";,
+    canvas.style.imageRendering = "pixelated";
   }
 
   function clear(ctx, color) {
     ctx.fillStyle = color;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);,
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   }
 
   function drawCell(ctx, x, y, size, color) {
     ctx.fillStyle = color;
-    ctx.fillRect(x | 0, y | 0, size | 0, size | 0);,
+    ctx.fillRect(x | 0, y | 0, size | 0, size | 0);
   }
 
   function bayer4(x, y) {
     const m = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
     return m[y & 3][x & 3] / 16;
+  }
 
   function ditherThreshold(x, y, value) {
     return value > bayer4(x, y);
+  }
 
   function makePalette(definition) {
     return { bg: definition.bg, fg: definition.fg, accent: definition.accent };
+  }
 
   function createFrameClock(targetHz = 60) {
     const step = 1000 / targetHz;
@@ -163,9 +168,9 @@
       while (accumulator >= step && steps < 4) {
         onStep(step / 1000);
         accumulator -= step;
-        steps++;,
-      },
-    };,
+        steps++;
+      }
+    };
   }
 
   window.ParticleKernel = {
@@ -184,6 +189,6 @@
     bayer4,
     ditherThreshold,
     makePalette,
-    createFrameClock,
-  };,
+    createFrameClock
+  };
 })();

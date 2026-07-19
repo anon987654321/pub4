@@ -12,10 +12,12 @@
     c.setAttribute("aria-hidden", "true");
     c.style.cssText = [
       "position:fixed", "inset:0", "width:100vw", "height:100vh",
-      "z-index:-2", "pointer-events:none", "mix-blend-mode:screen",
+      "z-index:-2", "pointer-events:none", "mix-blend-mode:screen"
     ].join(";");
     document.body.prepend(c);
     return c;
+  })();
+  const ctx = canvas.getContext("2d", { alpha: true });
 
   // ── Layout ──────────────────────────────────────────────────────────────
   let W = innerWidth, H = innerHeight;
@@ -26,7 +28,7 @@
     canvas.width = Math.floor(W * DPR);
     canvas.height = Math.floor(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    layoutModules();,
+    layoutModules();
   }
   addEventListener("resize", resize, { passive: true });
 
@@ -45,14 +47,15 @@
     "lib/trace": [180, 220, 255],   // sky   — telemetry
     "web/app":          [255, 140, 140],   // rose  — web layer
     "data":             [200, 200, 200],   // grey  — config
-    "unknown":          [120, 120, 120],   // dim   — unmapped,
+    "unknown":          [120, 120, 120],   // dim   — unmapped
   };
 
   function colorFor(path) {
     for (const [prefix, rgb] of Object.entries(MODULE_PALETTE)) {
-      if (path.startsWith(prefix)) return rgb;,
+      if (path.startsWith(prefix)) return rgb;
     }
     return MODULE_PALETTE["unknown"];
+  }
 
   function layoutModules() {
     const keys = [...modules.keys()];
@@ -68,9 +71,9 @@
         const angle = (2 * Math.PI * i) / perRing;
         const mod = modules.get(keys[idx]);
         mod.home = [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
-        mod.particles.forEach(p => { p.tx = mod.home[0]; p.ty = mod.home[1]; });,
-      },
-    },
+        mod.particles.forEach(p => { p.tx = mod.home[0]; p.ty = mod.home[1]; });
+      }
+    }
   }
 
   function ensureModule(path) {
@@ -87,9 +90,10 @@
         agitation: 0,
       }));
       modules.set(path, { id: path, path, home, particles, violations: 0, status: "clean", rgb });
-      layoutModules();,
+      layoutModules();
     }
     return modules.get(path);
+  }
 
   // ── Event handlers ───────────────────────────────────────────────────────
   addEventListener("master:codebase", (e) => {
@@ -100,8 +104,8 @@
       mod.status     = m.status || (mod.violations > 0 ? "dirty" : "clean");
       // Agitation = violation density, capped at 1.
       const agitation = Math.min(mod.violations / 20, 1.0);
-      mod.particles.forEach(p => { p.agitation = agitation; });,
-    });,
+      mod.particles.forEach(p => { p.agitation = agitation; });
+    });
   });
 
   addEventListener("master:rule_event", (e) => {
@@ -109,14 +113,14 @@
     // A rule loop fixed something: reduce agitation on relevant clusters.
     if (data.status === "clean") {
       modules.forEach(mod => {
-        mod.particles.forEach(p => { p.agitation = Math.max(0, p.agitation - 0.15); });,
-      });,
+        mod.particles.forEach(p => { p.agitation = Math.max(0, p.agitation - 0.15); });
+      });
     }
     if (data.status === "converged") {
       modules.forEach(mod => {
-        mod.particles.forEach(p => { p.agitation = Math.max(0, p.agitation - 0.05); });,
-      });,
-    },
+        mod.particles.forEach(p => { p.agitation = Math.max(0, p.agitation - 0.05); });
+      });
+    }
   });
 
   // ── Physics ──────────────────────────────────────────────────────────────
@@ -146,9 +150,9 @@
         p.vx *= DAMPING;
         p.vy *= DAMPING;
         p.x  += p.vx;
-        p.y  += p.vy;,
-      });,
-    });,
+        p.y  += p.vy;
+      });
+    });
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -169,7 +173,7 @@
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(hx, hy, 28, 0, Math.PI * 2);
-        ctx.fill();,
+        ctx.fill();
       }
 
       // Draw particles.
@@ -180,7 +184,7 @@
         ctx.fillStyle = `rgba(${r},${g},${b},${baseAlpha.toFixed(3)})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();,
+        ctx.fill();
       });
 
       // Draw edges between nearby dirty modules (violation coupling).
@@ -196,10 +200,10 @@
           ctx.beginPath();
           ctx.moveTo(hx, hy);
           ctx.lineTo(ox, oy);
-          ctx.stroke();,
-        });,
-      },
-    });,
+          ctx.stroke();
+        });
+      }
+    });
   }
 
   // ── Loop ─────────────────────────────────────────────────────────────────
@@ -208,11 +212,11 @@
     if (!reducedMotion || t - lastT > 500) {
       tick(t);
       draw(t);
-      lastT = t;,
+      lastT = t;
     }
-    requestAnimationFrame(frame);,
+    requestAnimationFrame(frame);
   }
 
   resize();
-  requestAnimationFrame(frame);,
+  requestAnimationFrame(frame);
 })();

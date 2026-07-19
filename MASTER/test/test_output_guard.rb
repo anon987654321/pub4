@@ -44,7 +44,7 @@ class TestOutputGuard < Minitest::Test
       "master: background=0 watch=0",
       "master: loop=none owner=none",
       "master: budget valid=true slot=unknown",
-      "master: ready dmesg=preserved",
+      "master: ready dmesg=preserved"
     ].join("\n")
 
     assert @guard.validate(text, context: :boot).ok?

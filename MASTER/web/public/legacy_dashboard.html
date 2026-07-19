@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MASTER particle face</title>
 <style>
 :root { --bg: #0a0a0a; --text: #c0c0c0; }
@@ -33,7 +33,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
       float dynamicBias = u_bias + u_freq * 0.1;
       vec2 ring = vec2(cos(a_pos.x + u_time * 0.002), sin(a_pos.x + u_time * 0.002)) * (0.5 + dynamicBias * 0.1);
       gl_Position = vec4(mix(a_pos, ring, 0.6), 0.0, 1.0);
-      gl_PointSize = 1.8;,
+      gl_PointSize = 1.8;
     }`;
 
   const fragmentSource = `#version 300 es
@@ -49,6 +49,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
     gl.compileShader(compiled);
     if (!gl.getShaderParameter(compiled, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(compiled));
     return compiled;
+  }
 
   const program = gl.createProgram();
   gl.attachShader(program, shader(vertexSource, gl.VERTEX_SHADER));
@@ -62,7 +63,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
   const velocities = new Float32Array(particleCount * 2);
   for (let index = 0; index < particleCount; index += 1) {
     positions[index * 2] = (Math.random() - 0.5) * 2.0;
-    positions[index * 2 + 1] = (Math.random() - 0.5) * 2.0;,
+    positions[index * 2 + 1] = (Math.random() - 0.5) * 2.0;
   }
 
   const buffer = gl.createBuffer();
@@ -89,7 +90,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
       const y = positions[index * 2 + 1];
       const cellX = Math.max(0, Math.min(gridResolution - 1, Math.floor((x + 1) * 0.5 * gridResolution)));
       const cellY = Math.max(0, Math.min(gridResolution - 1, Math.floor((y + 1) * 0.5 * gridResolution)));
-      grid[cellY * gridResolution + cellX].push(index);,
+      grid[cellY * gridResolution + cellX].push(index);
     }
 
     for (let index = 0; index < particleCount; index += 1) {
@@ -111,19 +112,19 @@ canvas { width: 100vw; height: 100vh; display: block; }
             const distance2 = dx * dx + dy * dy;
             if (distance2 > 0.0 && distance2 < 0.0009) {
               velocities[index * 2] += dx * 0.0008 / distance2;
-              velocities[index * 2 + 1] += dy * 0.0008 / distance2;,
-            },
-          },
-        },
-      },
-    },
+              velocities[index * 2 + 1] += dy * 0.0008 / distance2;
+            }
+          }
+        }
+      }
+    }
   }
 
   function resize() {
     if (canvas.width === window.innerWidth && canvas.height === window.innerHeight) return;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);,
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
   function draw(time) {
@@ -137,7 +138,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
       positions[px] += velocities[px];
       positions[py] += velocities[py];
       if (positions[px] < -1 || positions[px] > 1) velocities[px] *= -1;
-      if (positions[py] < -1 || positions[py] > 1) velocities[py] *= -1;,
+      if (positions[py] < -1 || positions[py] > 1) velocities[py] *= -1;
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
@@ -148,7 +149,7 @@ canvas { width: 100vw; height: 100vh; display: block; }
     gl.uniform1f(uFreq, 0.0);
     gl.uniform3fv(uColor, color);
     gl.drawArrays(gl.POINTS, 0, particleCount);
-    requestAnimationFrame(draw);,
+    requestAnimationFrame(draw);
   }
 
   statusEl.textContent = "ok: swarm linked with spatial repulsion";
@@ -158,10 +159,10 @@ canvas { width: 100vw; height: 100vh; display: block; }
     statusEl.textContent = data.state || "idle";
     if (data.state === "speaking") color = [0.0, 0.7, 0.9];
     else if (data.state === "error") color = [0.9, 0.1, 0.1];
-    else color = [0.0, 0.9, 0.4];,
+    else color = [0.0, 0.9, 0.4];
   });
   events.onerror = () => { statusEl.textContent = "err: stream disconnected"; };
-  requestAnimationFrame(draw);,
+  requestAnimationFrame(draw);
 })();
 </script>
 </body>
