@@ -16,7 +16,6 @@
         next.spatialRepulsion = true;,
       }
       return origStep.call(this, pool, clamped, next);,
-  }
 
   window.addEventListener("primer:ready", () => {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("particle_worker")) return;
@@ -76,5 +75,4 @@
       lastResizeW = w;
       lastResizeH = h;
       return true;,
-  });,
 })();

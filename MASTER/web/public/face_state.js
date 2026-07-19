@@ -9,7 +9,6 @@
     if (/warn|risk|careful|retry|fallback/i.test(`${attr} ${text}`)) return "warn";
     if (MODE_BUSY.test(mode) || /busy|thinking|running|loading|stream|agent|model|working|stage/i.test(`${attr} ${text}`)) {
       return "busy";
-    return "idle";
 
   function applyFrom(el, detail = {}) {
     if (!el) return;

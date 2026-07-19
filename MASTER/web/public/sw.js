@@ -66,6 +66,5 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE_NAME).then(c => c.put(e.request, clone));,
         }
         return resp;
-      .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
   );,
 });

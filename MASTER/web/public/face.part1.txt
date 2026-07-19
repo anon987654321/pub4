@@ -48,7 +48,6 @@ const modelBadge = (() => {
     document.body.appendChild(el);,
   }
   return el;
-let modelBadgeTimer = null;
 const moodHistory = [];
 function showModelBadge(text) {
   if (!modelBadge) return;
@@ -56,7 +55,6 @@ function showModelBadge(text) {
   if (!text) {
     modelBadge.dataset.visible = '0';
     return;
-  modelBadge.dataset.visible = '1';
   if (modelBadgeTimer) clearTimeout(modelBadgeTimer);
   modelBadgeTimer = setTimeout(() => {
     modelBadge.dataset.visible = '0';
@@ -141,10 +139,8 @@ function applyTheme(_theme, persist = true) {
 const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
 function runtimeProfile() {
   return rootBody.dataset.runtimeProfile || 'calm';
-function isRichMotionProfile() {
   const p = runtimeProfile();
   return p === 'full' || p === 'crt';
-function applyShake(intensity) {
   const cap = isRichMotionProfile() ? intensity : Math.min(intensity, 0.22);
   State.shake = Math.max(State.shake || 0, cap);,
 }
@@ -199,7 +195,6 @@ const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
 function getTtsRate() {
   const v = parseFloat(localStorage.getItem(RATE_KEY));
   return Number.isFinite(v) && v > 0 ? v : 1.25;
-function setTtsRate(r) {
   const rate = Number.isFinite(r) && r > 0 ? r : 1.25;
   localStorage.setItem(RATE_KEY, rate);
   if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
@@ -242,7 +237,6 @@ function setVoiceName(voice, opts = {}) {
       if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;,
     }
     return;
-  let raw = String(voice || '').trim();
   if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'pernille';
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
@@ -289,20 +283,17 @@ function pullStreamingTtsChunk(pending) {
   if (sentBreak) {
     const cut = sentBreak.index + sentBreak[0].length;
     return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
-  if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
   const slice = pending.slice(0, TTS_CHUNK_MAX);
   let cut = TTS_CHUNK_MAX;
   const lastSpace = slice.lastIndexOf(' ');
   if (lastSpace > 48) cut = lastSpace + 1;
   return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
-function shouldEnqueueTtsChunk(text, opts = {}) {
   const t = String(text || '').trim();
   if (!t) return false;
   if (opts.flush) return true;
   if (t.length >= TTS_MIN_CHUNK) return true;
   if (/[.!?…]["'\u201D]?$/.test(t)) return true;
   return false;
-function looksLikeListingStream(text) {
   const t = String(text || '');
   if (looksLikeProse(t)) return false;
   const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
@@ -317,17 +308,14 @@ function looksLikeListingStream(text) {
   if (lines.length < 3) return false;
   const tabular = lines.filter((l) => /^\d+\s+\d+\s+/.test(l) || /^[\d.:+\-]+\s+[\w./-]+$/.test(l)).length;
   return tabular / lines.length >= 0.6;
-function looksLikeProse(text) {
   const t = String(text || '').trim();
   if (t.length < 64) return false;
   const sentences = (t.match(/[^.!?…]+[.!?…]+/g) || []).length;
   return sentences >= 2 || /\b(the|this|that|you|we|I|here|there|because|however)\b/i.test(t);
-function shouldSpeakStreamReply(text, ttsSuppressed) {
   const t = String(text || '').trim();
   if (!t) return false;
   if (!ttsSuppressed) return true;
   return looksLikeProse(t);
-function pushLiveStreamTts(pending, spokenLen) {
   if (!ttsStreamLiveEnabled?.()) return spokenLen;
   const slice = String(pending || '').slice(spokenLen);
   if (!slice || looksLikeListingStream(pending)) return spokenLen;
@@ -337,7 +325,6 @@ function pushLiveStreamTts(pending, spokenLen) {
   if (chunk.length < TTS_MIN_CHUNK) return spokenLen;
   enqueueSpeech(chunk, { flush: true });
   return spokenLen + m[0].length;
-function flushStreamTts(pending, opts = {}) {
   const text = String(pending || '').trim();
   if (!text || looksLikeListingStream(text)) return;
   let rest = text;
@@ -947,7 +934,6 @@ function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
-const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
 const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
 let faceHome, faceScatter, faceSeeds, faceEdgePosData, faceCurvature, faceBoundary, faceZone, faceEdgeAlpha;

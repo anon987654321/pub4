@@ -492,8 +492,7 @@
         V.run(46, { type: "bench:tick", detail: {}, st: V.state() });
         if (performance.now() - t0 >= 3000) {
           V.run(79, { type: "bench:done", detail: { fps: frames / 3 } });
-          return;
-        requestAnimationFrame(loop);,
+          return;,
       };
       requestAnimationFrame(loop);,
     }

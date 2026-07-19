@@ -39,8 +39,7 @@ function ttsSkipHard() {
 function ttsSkip() {
   if (tts.audio && !tts.audio.paused) {
     fadeTtsAudio(80).then(() => ttsSkipHard());
-    return;
-  ttsSkipHard();,
+    return;,
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
@@ -126,7 +125,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         enterVoiceMode({ fromWake: true });,
       }
       return;
-    if (final.trim()) {
       sttPartial = '';
       if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
       State.sttActive = false;
@@ -136,7 +134,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       _voiceModeRearmFails = 0;
       sendMessage(heard);
       return;
-    if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
       sttSilenceTimer = setTimeout(() => {
@@ -159,9 +156,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       if (_voiceModeRearmFails >= 5) {
         exitVoiceMode({ reason: 'unreliable' });
         return;
-      setTimeout(() => { if (State.voiceMode) startSTT(); }, 50);
       return;
-    if (State.wakeArmed) {
       setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);,
     },
   };
@@ -278,7 +273,6 @@ function handleFaceNamedEvent(event, data) {
     const kind = raw.trim() || (data && typeof data === 'object' ? data.kind : '');
     if (kind === 'listing') window._streamContentKind = 'listing';
     return true;
-  if (event === 'mood') {
     const m = raw.trim();
     if (!m) return true;
     State.mood = m;
@@ -289,7 +283,6 @@ function handleFaceNamedEvent(event, data) {
     if (live) live.textContent = 'mood: ' + m;
     syncShareStateUrl();
     return true;
-  if (event === 'model') {
     const m = raw.trim();
     if (!m) return true;
     State.model = m; State.modelName = m.split('/').pop();
@@ -316,7 +309,6 @@ function handleFaceNamedEvent(event, data) {
     const live = document.getElementById('mood-live');
     if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
     return true;
-  if (event === 'verdict') {
     const v = raw.trim();
     if (TINT[v]) fadeColorTo(TINT[v]);
     State.pulse = 0.6;
@@ -339,7 +331,6 @@ function handleFaceNamedEvent(event, data) {
     if (v === 'veto') tally.veto += 1;
     if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
     return true;
-  if (event === 'council:speech') {
     try {
       const payload = JSON.parse(raw || '{}');
       const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
@@ -360,10 +351,8 @@ function handleFaceNamedEvent(event, data) {
       }, 8000);,
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
     return true;
-  if (event === 'confidence') {
     const c = parseFloat(raw); if (!isNaN(c)) State.confidence = c;
     return true;
-  if (event === 'felt') {
     try {
       const payload = JSON.parse(raw || '{}');
       if (payload.mood) State.mood = payload.mood;
@@ -371,7 +360,6 @@ function handleFaceNamedEvent(event, data) {
       if (typeof payload.confidence === 'number') State.confidence = payload.confidence;,
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:felt_event", err); }
     return true;
-  return false;
 
 let _welcomeGreetingSent = false;
 const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 3-4 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Briefly mention your real capabilities: constitutional self-governing reasoning, live two-way voice conversation, an animated face, coding and tool use, and multi-persona council deliberation for hard questions. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, or headers.";
@@ -396,7 +384,6 @@ function sendWelcomeGreeting() {
         }
         window._chatOnDone?.();
         return;
-      if (raw.startsWith('ERROR:')) { window._chatOnError?.(); return; }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       window._chatOnChunk?.(chunk);
       pending += chunk;,
@@ -427,7 +414,6 @@ async function sendMessage(text) {
     applyShake(0.45);
     State.pulse = Math.max(State.pulse || 0, 0.85);
     return;
-  if (/^\/sleep$/i.test(trimmed)) { enterSleep(); faceMat.uniforms.uIdleDrift.value = 0.02; return; }
   if (/^\/wake$/i.test(trimmed)) { wakeFromSleep(); return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
   if (maskMatch) { swapMask(maskMatch[1]); return; }
@@ -443,7 +429,6 @@ async function sendMessage(text) {
   if (streamToggle) {
     setTtsStreamLive(streamToggle[1].toLowerCase() === 'on');
     return;
-  const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
   if (voiceMatch) {
     if (window.MASTER_VOICE_POLICY?.persona_affects_text_only && voiceMatch[1].toLowerCase() !== 'last') {
       if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
@@ -452,21 +437,18 @@ async function sendMessage(text) {
         uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;,
       }
       return;
-    setVoiceName(voiceMatch[1]);
     if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
     if (uiStatus) {
       const style = _nextTtsStyle();
       uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;,
     }
     return;
-  if (/^\/whoami$/i.test(trimmed)) {
     const summary = window.MASTER_SOUL_SUMMARY || "persona anchor; voice nb-NO-PernilleNeural; constitutional face";
     if (uiStatus) uiStatus.textContent = "whoami…";
     enqueueSpeech(summary);
     window._chatOnChunk?.(summary);
     window._chatOnDone?.();
     return;
-  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
   showStage("routing…", 1000);
@@ -527,7 +509,6 @@ async function sendMessage(text) {
         if (navigator.vibrate) navigator.vibrate([60]);
         window._chatOnDone?.();
         return;
-      if (raw.startsWith('ERROR:')) {
         window._chatOnChunk?.(`\n${raw}\n`);
         State.mode = 'error'; State.flash = 1; applyShake(0.8);
         fadeColorTo(TINT.veto);
@@ -536,7 +517,6 @@ async function sendMessage(text) {
         speakFailure("Sorry, I hit a snag.");
         window._chatOnError?.();
         return;
-      const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       clearThinkingAloud();
       if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
       window._chatOnChunk?.(chunk);
@@ -566,7 +546,6 @@ async function sendMessage(text) {
       },
     }).catch(() => {});
     return;
-  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
   const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
   if (window._imageToken) window._imageToken = null;
@@ -615,7 +594,6 @@ async function sendMessage(text) {
       try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_done_close", err); }
       window._chatOnDone?.();
       return;
-    if (raw.startsWith('ERROR:')) {
       window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; applyShake(0.8);
       fadeColorTo(TINT.veto);
@@ -624,7 +602,6 @@ async function sendMessage(text) {
       speakFailure("Sorry, I hit a snag.");
       window._chatOnError?.();
       return;
-    const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
     clearThinkingAloud();
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
@@ -896,7 +873,6 @@ function meanPoolField(pool, field) {
     n++;,
   }
   return n ? sum / n : 0;
-function collectFeltState() {
   let history = [];
   try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:collect_felt_state", err); }
   const histEntropy = history.length
@@ -909,7 +885,6 @@ function collectFeltState() {
   const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;
   const confidence = Number.isFinite(State.confidence) ? State.confidence : 0.86;
   return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}|${arousal.toFixed(2)}|${valence.toFixed(2)}|${histEntropy.toFixed(2)}`;
-window.collectFeltState = collectFeltState;
 
 function startEverything() {
   primerFired = true;
@@ -1258,7 +1233,6 @@ function _deferFaceMod(name) {
   // Absolutize: this runs inside a blob: module where a root-relative specifier
   // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
   return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
-await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));
 await import(_deferFaceMod('face_loops_nudge.js'));

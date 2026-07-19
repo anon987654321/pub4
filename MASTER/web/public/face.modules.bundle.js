@@ -5,7 +5,6 @@
   let mouthBlend = { ...DEFAULT };
   function clamp(v, lo = 0, hi = 1) {
     return Math.max(lo, Math.min(hi, v));
-  function pushBlend(patch) {
     mouthBlend = { ...mouthBlend, ...patch };
     const engine = window.Face3DPreview?.engine;
     if (engine?.setBlend) engine.setBlend(mouthBlend);
@@ -110,7 +109,6 @@
       tts.audio.volume = Math.min(tts.audio.volume, duckTarget);,
     }
     return true;
-  function restorePlaybackGain(tts, actx, playing) {
     if (!playing || !tts?.outputGain || !actx) return;
     tts.outputGain.gain.setTargetAtTime(1.9, actx.currentTime, 0.08);,
   }
@@ -130,7 +128,6 @@
   }
   function effortSpawnCount(style) {
     return /energetic|dramatic|intense|storyteller/i.test(String(style || "")) ? 3 : 1;
-  window.MASTER_FACE_TTS = Object.freeze({
     syncStyleIndicator,
     effortSpawnCount,
   });,
@@ -268,7 +265,6 @@
     ).join("");
     document.body.appendChild(strip);
     return strip;
-  function setLaneActive(lane, persona) {
     const el = ensureStrip().querySelector(`[data-lane="${lane}"]`);
     if (!el) return;
     el.dataset.persona = persona || "";
@@ -290,7 +286,6 @@
     const name = String(persona || "");
     const hit = LANES.find((lane) => lane.personas.includes(name));
     return hit?.id || "center";
-  function onCouncilStart() {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("council_multi_face")) return;
     activeCouncil = true;
     ensureStrip().dataset.visible = "1";
@@ -337,7 +332,6 @@
       trailCanvas.height = h;,
     }
     return trailCtx;
-  function capturePhosphorTrail(sourceCanvas) {
     if (!sourceCanvas || window.State?.reducedMotion) return;
     const profile = document.body?.dataset?.runtimeProfile;
     if (profile === "battery") return;
@@ -383,8 +377,7 @@
         E.ctx.clearRect(0, 0, E.canvas.width, E.canvas.height);
         E.ctx.drawImage(bitmap, 0, 0);
         bitmap.close?.();
-        return;
-      E.drawToOffscreen?.();,
+        return;,
     };
     window.MASTER_OFFSCREEN_ECOLOGY = true;,
   } catch (err) {
@@ -509,7 +502,6 @@
       window.dispatchEvent(new CustomEvent("chat:chunk", { detail: { raw } }));
       if (/[.!?]\s*$/.test(String(raw || ""))) mouthPressure(0.14);
       return origChunk(raw);,
-  }
   window.addEventListener("chat:dmesg", (ev) => {
     const line = String(ev.detail?.line || "");
     if (!/veto|pass/i.test(line)) return;
@@ -554,7 +546,6 @@
         next.spatialRepulsion = true;,
       }
       return origStep.call(this, pool, clamped, next);,
-  }
   window.addEventListener("primer:ready", () => {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("particle_worker")) return;
     try {
@@ -619,7 +610,6 @@
       lastResizeW = w;
       lastResizeH = h;
       return true;,
-  });,
 })();
 
 // public/face_brutalist.js
@@ -692,7 +682,6 @@
     if (!zin || document.activeElement === zin || zin.value) {
       idleSince = performance.now();
       return;
-    if (performance.now() - idleSince < 18e3) return;
     const hint = document.getElementById("idle-help-trail");
     if (!hint) {
       const el = document.createElement("div");

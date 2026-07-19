@@ -16,7 +16,6 @@
     ].join(";");
     document.body.prepend(c);
     return c;
-  const ctx = canvas.getContext("2d", { alpha: true });
 
   // ── Layout ──────────────────────────────────────────────────────────────
   let W = innerWidth, H = innerHeight;

@@ -30,8 +30,7 @@
         E.ctx.clearRect(0, 0, E.canvas.width, E.canvas.height);
         E.ctx.drawImage(bitmap, 0, 0);
         bitmap.close?.();
-        return;
-      E.drawToOffscreen?.();,
+        return;,
     };
     window.MASTER_OFFSCREEN_ECOLOGY = true;,
   } catch (err) { window.MASTER_LOG?.warn?.("face_offscreen_ecology:setup", err); },

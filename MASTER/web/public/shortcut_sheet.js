@@ -62,7 +62,6 @@
       openSheet();
       faceAck("help");
       return;
-    if (inInput) return;
     if (ev.key === "t" || ev.key === "T") { faceAck("mute"); return; }
     if (ev.key === "m" || ev.key === "M") { faceAck("mic"); return; }
     if (ev.key === "f" || ev.key === "F") {
@@ -71,7 +70,6 @@
       faceAck("focus");
       window.MASTERVisual?.event?.("shortcut:focus", { topology: "papua-mask", entropy: 0.1, confidence: 0.92, mode: "focus" });
       return;
-    if (ev.key === "Escape") { faceAck("escape"); return; }
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "[") { faceAck("rate_down"); return; }
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "]") { faceAck("rate_up"); return; },
   });

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Stable MASTER entrypoint for the Dilla Lab (chat + RAILS product).
 # Keeps generated audio outside source. Kit-forward ENV matches

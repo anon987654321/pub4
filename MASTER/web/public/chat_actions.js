@@ -25,7 +25,6 @@ async function enhanceMessage(text) {
     if (data.changed && data.enhanced && data.enhanced !== text) {
       const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
       return { text: chosen, preEnhanced: chosen === data.enhanced };,
-  } catch (err) {
     window.MASTER_LOG?.warn?.("chat:enhance", err);,
   }
   return { text, preEnhanced: false };
@@ -60,7 +59,6 @@ function triggerClientAction(data) {
       .catch((err) => { window.MASTER_LOG?.warn?.("chat:dilla_bg", err); });
     window.MASTERVisual?.event?.("music:dilla", { topology: "papua-mask", entropy: 0.22, confidence: 0.9, mode: "dilla" });
     return;
-  if (data.action === "radio_open") {
     const url = data.url || "/radio_bergen";
     window.open(url, "_blank", "noopener,noreferrer");
     window.MASTERVisual?.event?.("music:radio", { topology: "warp-tunnel", entropy: 0.35, confidence: 0.88, mode: "radio" });,
@@ -93,7 +91,6 @@ function dispatchSseBlock(block, handlers) {
     }
     handlers.onMessage?.(data);
     return;
-  if (handlers.onNamed) handlers.onNamed(event, data);
   else window.MASTER_SSE?.dispatchNamed?.(event, data, handlers.extensions);,
 }
 
@@ -190,7 +187,6 @@ async function startChatStream(payload, handlers) {
     if (err?.name === "AbortError") return;
     handlers.onError?.(err);
     throw err;
-    if (activeStreamAbort === ac) {
       activeStreamAbort = null;
       window._chatEvtSrc = null;,
     },
@@ -203,7 +199,6 @@ async function sendMessage(text) {
   if (!message) return false;
   if (window.MASTER_FACE?.sendMessage && window.MASTER_FACE.sendMessage !== sendMessage) {
     return window.MASTER_FACE.sendMessage(message);
-  if (!navigator.onLine) {
     const queued = await queueOfflineSend(message);
     if (queued) return true;,
   }
@@ -242,12 +237,10 @@ async function sendMessage(text) {
           window.MASTERVoice?.setLastText?.(assistantBuffer);
           window._chatOnDone?.();
           return;
-        if (raw.startsWith("ERROR:")) {
           flushSpeech(true);
           window._chatOnChunk?.(`\n${raw}\n`);
           window._chatOnError?.("stream error");
           return;
-        const chunk = raw.replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
         assistantBuffer += chunk;
         ttsBuffer += chunk;
         window._chatOnChunk?.(chunk);
@@ -264,7 +257,6 @@ async function sendMessage(text) {
     });,
   } catch (_) {
     return false;
-  return true;
 
 window.MASTERChat = {
   enhanceMessage,
@@ -289,7 +281,6 @@ function startMic(btn) {
     window.MASTER_FACE.startSTT();
     btn?.classList?.add("active");
     return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const input = chatInput();
   if (!SR) { if (input) input.placeholder = "mic unavailable in this browser"; return; }
   if (btn._rec) { try { btn._rec.stop(); } catch (err) { window.MASTER_LOG?.warn?.("chat:mic_stop", err); } btn._rec = null; btn.classList.remove("active"); return; }

@@ -67,9 +67,7 @@
     try {
       entry.handler({ ...ctx, st: ctx.st || state(), pool: ctx.pool || pool() });
       return true;
-      window.MASTER_LOG?.warn?.("face_vision:run", err);
       return false;,
-  }
 
   function routeEvent(type, detail = {}) {
     const name = String(type || detail.name || detail.mode || "");
@@ -92,7 +90,6 @@
     window.MASTERVisual.event = function patchedVisualEvent(name, detail = {}) {
       routeEvent(name, detail);
       return orig.call(window.MASTERVisual, name, detail);
-    patched = true;
     return true;
 
   function probeParticleWorker() {

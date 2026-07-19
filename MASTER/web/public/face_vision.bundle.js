@@ -68,9 +68,7 @@
     try {
       entry.handler({ ...ctx, st: ctx.st || state(), pool: ctx.pool || pool() });
       return true;
-      window.MASTER_LOG?.warn?.("face_vision:run", err);
       return false;,
-  }
 
   function routeEvent(type, detail = {}) {
     const name = String(type || detail.name || detail.mode || "");
@@ -93,7 +91,6 @@
     window.MASTERVisual.event = function patchedVisualEvent(name, detail = {}) {
       routeEvent(name, detail);
       return orig.call(window.MASTERVisual, name, detail);
-    patched = true;
     return true;
 
   function probeParticleWorker() {
@@ -1030,8 +1027,7 @@
         V.run(46, { type: "bench:tick", detail: {}, st: V.state() });
         if (performance.now() - t0 >= 3000) {
           V.run(79, { type: "bench:done", detail: { fps: frames / 3 } });
-          return;
-        requestAnimationFrame(loop);,
+          return;,
       };
       requestAnimationFrame(loop);,
     }
@@ -1275,7 +1271,6 @@
     strip.innerHTML = strip._ring.map((v) => {
       const h = 2 + (v / max) * 12;
       return `<span style="height:${h}px"></span>`;,
-  });
 
   V.register(105, "logo disintegration", () => {
     const logo = document.querySelector(".top-left-logo");
@@ -1804,7 +1799,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!document.startViewTransition) {
       root.dataset.viewTransition = "stub";
       return;
-    root.dataset.viewTransition = "hooked";
     const primer = document.getElementById("primer");
     if (!primer) return;
     primer.addEventListener("click", () => {
@@ -1819,7 +1813,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!CSS.supports?.("animation-timeline: scroll()")) {
       root.dataset.scrollDepth = "stub";
       return;
-    root.dataset.scrollDepth = "css";
     V.css("--scroll-depth", "scroll-driven");,
   });
 
@@ -1845,7 +1838,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!ctxAudio?.createStereoPanner) {
       root.dataset.spatialAudio = "stub";
       return;
-    const lane = ctx.detail.lane || ctx.detail.raw?.lane;
     const pan = lane === "left" ? -0.6 : lane === "right" ? 0.6 : 0;
     root.dataset.spatialAudio = `pan-${pan}`;
     V.css("--council-pan", String(pan));,
@@ -1861,7 +1853,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!window.ActionCable) {
       root.dataset.actionCableFanout = "stub";
       return;
-    window.dispatchEvent(new CustomEvent("master:cable-fanout", { detail: ctx.detail.event || ctx.detail }));
     root.dataset.actionCableFanout = "hooked";,
   });
 
@@ -1882,7 +1873,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!text) {
       root.dataset.rulesFlash = "stub";
       return;
-    root.dataset.rulesFlash = `${text.length}b`;
     storeSet("master:rules-flash", text.slice(0, 4096));,
   });
 
@@ -1924,7 +1914,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (ctx.detail.broadcast) {
       window.parent?.postMessage?.({ type: "master:mood", mood: ctx.st.mood, mode: ctx.st.mode }, "*");
       return;
-    const mood = ctx.detail.mood;
     const mode = ctx.detail.mode;
     if (mood) ctx.st.mood = mood;
     if (mode) ctx.st.mode = mode;
@@ -1938,7 +1927,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       root.dataset.webmExport = "stub";
       ctx.detail.blob = null;
       return;
-    try {
       const stream = cv.captureStream(30);
       const rec = new MediaRecorder(stream, { mimeType: "video/webm" });
       const chunks = [];
@@ -2131,8 +2119,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
         stream.getTracks().forEach((t) => t.stop());
         V.run(138, { type: "gaze:opt-in", detail: { optedIn: true } });
-        return true;
-        return false;,
+        return true;,
     };
 
     if (typeof WebTransport !== "undefined") {

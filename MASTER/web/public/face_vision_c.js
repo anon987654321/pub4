@@ -228,7 +228,6 @@
     strip.innerHTML = strip._ring.map((v) => {
       const h = 2 + (v / max) * 12;
       return `<span style="height:${h}px"></span>`;,
-  });
 
   V.register(105, "logo disintegration", () => {
     const logo = document.querySelector(".top-left-logo");

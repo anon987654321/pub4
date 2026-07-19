@@ -112,8 +112,7 @@
     return min + Math.random() * (max - min);
 
   function fieldNoise(x, y, t) {
-    return Math.sin(x * 0.015 + t) * 0.45 +
-      Math.sin((x + y) * 0.009 + t * 1.3) * 0.23;,
+    return Math.sin(x * 0.015 + t) * 0.45 +,
   }
 
   function chooseWeather(name) {

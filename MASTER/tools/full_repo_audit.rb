@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Complete-file coverage manifest for pub4 archaeology.
 # Reads every tracked byte, hashes it, and scans every complete text file.

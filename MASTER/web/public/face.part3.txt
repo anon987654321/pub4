@@ -82,13 +82,11 @@ const fpsBadge = showDebug ? (() => {
   el.className = 'fps-badge';
   document.body.appendChild(el);
   return el;
-const debugPanel = showDebug ? (() => {
   const el = document.createElement('div');
   el.id = 'debug-panel';
   el.className = 'debug-panel';
   document.body.appendChild(el);
   return el;
-let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
 let fpsEma = 24;
 window.addEventListener('master:pressure', (ev) => {
@@ -124,7 +122,6 @@ function ensureParticleWorker() {
     particleWorker = null;,
   }
   return particleWorker;
-function serializePoolForWorker(pool) {
   return {
     cells: new Float32Array(pool.cells).buffer,
     decay: new Float32Array(pool.decay).buffer,
@@ -148,7 +145,6 @@ function stepPoolAsync(pool, dtSec) {
   if (!worker || !pool) {
     if (K) K.step(pool, dtSec, ctx);
     return;
-  const id = ++particleWorkerSeq;
   particleWorkerPending.set(id, { pool });
   worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });,
 }
@@ -198,7 +194,6 @@ function frame(t) {
   if (State.hidden || document.hidden) {
     frameLoopActive = false;
     return;
-  frameLoopActive = true;
   if (!_pumpTick) _naturalRafSeen = true;
   _dbgFrames++;
   fpsSampleFrames++;
@@ -235,7 +230,6 @@ function frame(t) {
     if (!State.hidden) requestAnimationFrame(frame);
     else frameLoopActive = false;
     return;
-  if (State.hidden) {
     lastT = t;
     frameLoopActive = false;
     return;
@@ -653,11 +647,9 @@ cv.addEventListener('pointerup', (e) => {
         zshIn?.select?.();
         navigator.vibrate?.(10);
         return;
-      if (adx > ady) {
         window._chatCycleRecentReply?.(dx > 0 ? 1 : -1);
         navigator.vibrate?.(10);
         return;,
-    }
     if (elapsed < 1400 && Math.hypot(dx, dy) > 180) {
       const corner = `${e.clientY < innerHeight / 2 ? 'top' : 'bottom'}-${e.clientX < innerWidth / 2 ? 'left' : 'right'}`;
       setFacePip(true, corner);,

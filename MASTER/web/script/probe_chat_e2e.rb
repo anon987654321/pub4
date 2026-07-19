@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Ferrum e2e — primer, face session, felt state, ping/pong chat.
 

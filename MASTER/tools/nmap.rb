@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 # nmap.rb - Network security scanner with sensible defaults
 
 #

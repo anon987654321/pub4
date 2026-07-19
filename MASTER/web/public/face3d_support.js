@@ -144,7 +144,6 @@ function seededJitter(seed) {
   const next = () => {
     s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
     return ((s >>> 0) / 0xFFFFFFFF) * 2 - 1;
-  return [next(), next(), next()];
 
 class SpatialHash2D {
   constructor(cellSize = 0.025) {
@@ -175,7 +174,6 @@ class SpatialHash2D {
       },
     }
     return out;,
-}
 
 class QualityController {
   constructor() {

@@ -55,8 +55,7 @@
       ].join('\n');
       document.getElementById('repair').textContent = (d.repair_queue || []).map((item) => {
         const recent = (item.recent || []).join('\n  ');
-        return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;
-      document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || '(quiet)';,
+        return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;,
     }
     refresh();
     setInterval(refresh, 8000);

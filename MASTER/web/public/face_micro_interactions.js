@@ -133,7 +133,6 @@
       window.dispatchEvent(new CustomEvent("chat:chunk", { detail: { raw } }));
       if (/[.!?]\s*$/.test(String(raw || ""))) mouthPressure(0.14);
       return origChunk(raw);,
-  }
 
   // web_021 — sentence-end mouthPool pressure handled in chunk wrapper above
 

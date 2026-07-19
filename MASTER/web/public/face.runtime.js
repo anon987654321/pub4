@@ -22,7 +22,7 @@ class _Color {
   constructor(r=0,g=0,b=0){this.r=r;this.g=g;this.b=b;}
   clone(){return new _Color(this.r,this.g,this.b);}
   copy(c){this.r=c.r;this.g=c.g;this.b=c.b;return this;}
-  lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;}
+  lerp(c,t){this.r+=(c.r-this.r)*t;this.g+=(c.g-this.g)*t;this.b+=(c.b-this.b)*t;return this;},
 }
 const Color = _hasWebGL ? THREE.Color : _Color;
 
@@ -47,10 +47,9 @@ const modelBadge = (() => {
     el = document.createElement('div');
     el.id = 'model-badge';
     el.className = 'model-badge';
-    document.body.appendChild(el);
+    document.body.appendChild(el);,
   }
   return el;
-})();
 let modelBadgeTimer = null;
 const moodHistory = [];
 function showModelBadge(text) {
@@ -59,13 +58,12 @@ function showModelBadge(text) {
   if (!text) {
     modelBadge.dataset.visible = '0';
     return;
-  }
   modelBadge.dataset.visible = '1';
   if (modelBadgeTimer) clearTimeout(modelBadgeTimer);
   modelBadgeTimer = setTimeout(() => {
     modelBadge.dataset.visible = '0';
-    modelBadgeTimer = null;
-  }, 3000);
+    modelBadgeTimer = null;,
+  }, 3000);,
 }
 function updateMoodHistory(mood) {
   if (!mood) return;
@@ -73,7 +71,7 @@ function updateMoodHistory(mood) {
   while (moodHistory.length > 20) moodHistory.shift();
   const bar = document.getElementById('mood-sparkline');
   if (!bar) return;
-  bar.innerHTML = moodHistory.map(entry => `<i data-mood="${entry}"></i>`).join('');
+  bar.innerHTML = moodHistory.map(entry => `<i data-mood="${entry}"></i>`).join('');,
 }
 
 function renderNoCanvasFallback() {
@@ -106,7 +104,6 @@ function renderNoCanvasFallback() {
   rootBody.dataset.faceFallback = "svg";
   if (_dbgEl) _dbgEl.textContent = 'svg fallback';
   return true;
-}
 
 renderNoCanvasFallback();
 
@@ -118,22 +115,22 @@ const SCALE_KEY = 'master:ui-scale';
   if (localStorage.getItem(THEME_KEY) === 'light') localStorage.removeItem(THEME_KEY);
   rootBody.dataset.theme = 'dark';
   const themeBtn = document.getElementById('theme-btn');
-  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');,
 })();
 (function initFont() {
   const root = rootBody || document.documentElement;
-  if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');
+  if (localStorage.getItem(FONT_KEY) === 'mono') root.classList.add('font-mono');,
 })();
 function applyUiScale(scale, persist = true) {
   const value = Math.max(0.85, Math.min(1.4, Number(scale) || 1));
   document.documentElement.style.fontSize = `${(value * 100).toFixed(0)}%`;
   if (persist) localStorage.setItem(SCALE_KEY, String(value));
   const slider = document.getElementById('font-scale');
-  if (slider && slider.value !== String(value)) slider.value = String(value);
+  if (slider?.value !== String(value)) slider.value = String(value);,
 }
 function initUiScale() {
   const stored = parseFloat(localStorage.getItem(SCALE_KEY));
-  applyUiScale(Number.isFinite(stored) ? stored : 1, false);
+  applyUiScale(Number.isFinite(stored) ? stored : 1, false);,
 }
 function applyTheme(_theme, persist = true) {
   rootBody.dataset.theme = 'dark';
@@ -141,19 +138,17 @@ function applyTheme(_theme, persist = true) {
   const themeBtn = document.getElementById('theme-btn');
   if (themeBtn) themeBtn.setAttribute('aria-pressed', 'false');
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', '#000000');
+  if (meta) meta.setAttribute('content', '#000000');,
 }
 const RUNTIME_PROFILES = ['calm', 'full', 'crt', 'battery'];
 function runtimeProfile() {
   return rootBody.dataset.runtimeProfile || 'calm';
-}
 function isRichMotionProfile() {
   const p = runtimeProfile();
   return p === 'full' || p === 'crt';
-}
 function applyShake(intensity) {
   const cap = isRichMotionProfile() ? intensity : Math.min(intensity, 0.22);
-  State.shake = Math.max(State.shake || 0, cap);
+  State.shake = Math.max(State.shake || 0, cap);,
 }
 function cycleRuntimeProfile() {
   const current = runtimeProfile();
@@ -170,18 +165,18 @@ function cycleRuntimeProfile() {
   };
   if (typeof fadeColorTo === 'function' && tintMap[next]) fadeColorTo(tintMap[next]);
   window.MASTERVisual?.event?.('theme:profile', { topology: 'papua-mask', entropy: next === 'battery' ? 0.12 : 0.2, confidence: 0.88, mode: next });
-  resize?.();
+  resize?.();,
 }
 function toggleTheme() {
   applyTheme('dark');
-  cycleRuntimeProfile();
+  cycleRuntimeProfile();,
 }
 try {
   const savedProfile = localStorage.getItem('master:runtime_profile');
   if (savedProfile && RUNTIME_PROFILES.includes(savedProfile)) {
     State.profileOverride = savedProfile;
-    rootBody.dataset.runtimeProfile = savedProfile;
-  }
+    rootBody.dataset.runtimeProfile = savedProfile;,
+  },
 } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_profile", err); }
 function applyFocusMode(enabled, persist = true) {
   const value = !!enabled;
@@ -190,13 +185,13 @@ function applyFocusMode(enabled, persist = true) {
   const btn = document.getElementById('focus-btn');
   if (btn) btn.setAttribute('aria-pressed', value ? 'true' : 'false');
   const input = document.getElementById('zin');
-  if (value && input) input.focus();
+  if (value && input) input.focus();,
 }
 function toggleFocusMode() {
-  applyFocusMode(rootBody.dataset.focusMode !== '1');
+  applyFocusMode(rootBody.dataset.focusMode !== '1');,
 }
 function initFocusMode() {
-  applyFocusMode(localStorage.getItem(FOCUS_KEY) === '1', false);
+  applyFocusMode(localStorage.getItem(FOCUS_KEY) === '1', false);,
 }
 initUiScale();
 initFocusMode();
@@ -206,13 +201,12 @@ const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
 function getTtsRate() {
   const v = parseFloat(localStorage.getItem(RATE_KEY));
   return Number.isFinite(v) && v > 0 ? v : 1.25;
-}
 function setTtsRate(r) {
   const rate = Number.isFinite(r) && r > 0 ? r : 1.25;
   localStorage.setItem(RATE_KEY, rate);
   if (window.MASTER_FACE?.tts?.audio) window.MASTER_FACE.tts.audio.playbackRate = rate;
   const el = document.getElementById('tts-rate');
-  if (el) el.textContent = rate.toFixed(2) + 'x';
+  if (el) el.textContent = rate.toFixed(2) + 'x';,
 }
 const VOICE_ALIASES = {
   osman: 'ms-MY-OsmanNeural',
@@ -226,7 +220,7 @@ const VOICE_ALIASES = {
   pernille: 'nb-NO-PernilleNeural',
   wayne: 'en-SG-WayneNeural',
   ezinne: 'en-NG-EzinneNeural',
-  jenny: 'en-US-JennyNeural'
+  jenny: 'en-US-JennyNeural',
 };
 const VOICE_IDLE_SIGNATURES = {
   'ms-MY-OsmanNeural': { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
@@ -235,10 +229,10 @@ const VOICE_IDLE_SIGNATURES = {
   'en-US-AndrewNeural': { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
   'nb-NO-PernilleNeural': { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 }, // future-human: composed, steady gaze, still baseline, slow deliberate blink
   'en-NG-EzinneNeural': { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
-  'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 }
+  'en-SG-WayneNeural': { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 },
 };
 function applyIdleSignature(voice) {
-  State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };
+  State.idleSignature = VOICE_IDLE_SIGNATURES[voice] || { breath: 1, saccade: 0.2, pulse_floor: 0.1, blink_ms: 3000 };,
 }
 function setVoiceName(voice, opts = {}) {
   const locked = TTS_DEFAULT_VOICE;
@@ -247,10 +241,9 @@ function setVoiceName(voice, opts = {}) {
     if (prev !== locked) {
       State.voiceName = locked;
       applyIdleSignature(locked);
-      if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;
+      if (window.MASTER_FACE?.tts) window.MASTER_FACE.tts.voice = locked;,
     }
     return;
-  }
   let raw = String(voice || '').trim();
   if (raw.toLowerCase() === 'davis' || raw === 'en-US-DavisNeural') raw = 'ryan';
   if (raw.toLowerCase() === 'pernille' || raw === 'nb-NO-PernilleNeural') raw = 'ryan';
@@ -264,10 +257,10 @@ function setVoiceName(voice, opts = {}) {
   const picker = document.getElementById('voice-picker');
   if (picker) {
     const alias = Object.entries(VOICE_ALIASES).find(([, v]) => v === next)?.[0] || raw.toLowerCase();
-    if (picker.value !== alias) picker.value = alias;
+    if (picker.value !== alias) picker.value = alias;,
   }
   syncShareStateUrl();
-  void opts.speakBlurb;
+  void opts.speakBlurb;,
 }
 function nearestRateIndex(rate) {
   const value = Number.isFinite(rate) && rate > 0 ? rate : 1.25;
@@ -275,22 +268,19 @@ function nearestRateIndex(rate) {
   let bestDelta = Infinity;
   for (let i = 0; i < RATES.length; i++) {
     const delta = Math.abs(RATES[i] - value);
-    if (delta < bestDelta) { best = i; bestDelta = delta; }
+    if (delta < bestDelta) { best = i; bestDelta = delta; },
   }
   return best;
-}
-
 
 const GOLD = new Color(1, 1, 1);
 const TINT = {
   idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,
   tense: GOLD, curious: GOLD, focused: GOLD, weary: GOLD,
-  pass: GOLD, veto: GOLD, unclear: GOLD
+  pass: GOLD, veto: GOLD, unclear: GOLD,
 };
 
 function dayNightTint() {
   return new Color(1, 1, 1);
-}
 
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
 const TTS_CHUNK_MAX = 220;
@@ -302,14 +292,12 @@ function pullStreamingTtsChunk(pending) {
   if (sentBreak) {
     const cut = sentBreak.index + sentBreak[0].length;
     return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
-  }
   if (pending.length <= TTS_CHUNK_MAX) return { chunk: '', rest: pending };
   const slice = pending.slice(0, TTS_CHUNK_MAX);
   let cut = TTS_CHUNK_MAX;
   const lastSpace = slice.lastIndexOf(' ');
   if (lastSpace > 48) cut = lastSpace + 1;
   return { chunk: pending.slice(0, cut).trim(), rest: pending.slice(cut) };
-}
 function shouldEnqueueTtsChunk(text, opts = {}) {
   const t = String(text || '').trim();
   if (!t) return false;
@@ -317,7 +305,6 @@ function shouldEnqueueTtsChunk(text, opts = {}) {
   if (t.length >= TTS_MIN_CHUNK) return true;
   if (/[.!?…]["'\u201D]?$/.test(t)) return true;
   return false;
-}
 function looksLikeListingStream(text) {
   const t = String(text || '');
   if (looksLikeProse(t)) return false;
@@ -328,24 +315,21 @@ function looksLikeListingStream(text) {
     const times = tokens.filter((tok) => /^\d{1,2}:\d{2}$/.test(tok)).length;
     const paths = tokens.filter((tok) => /[./\\]/.test(tok)).length;
     const nums = tokens.filter((tok) => /^\d+$/.test(tok)).length;
-    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;
+    if (short / tokens.length >= 0.85 && times >= 3 && (paths >= 3 || nums / tokens.length >= 0.4)) return true;,
   }
   if (lines.length < 3) return false;
   const tabular = lines.filter((l) => /^\d+\s+\d+\s+/.test(l) || /^[\d.:+\-]+\s+[\w./-]+$/.test(l)).length;
   return tabular / lines.length >= 0.6;
-}
 function looksLikeProse(text) {
   const t = String(text || '').trim();
   if (t.length < 64) return false;
   const sentences = (t.match(/[^.!?…]+[.!?…]+/g) || []).length;
   return sentences >= 2 || /\b(the|this|that|you|we|I|here|there|because|however)\b/i.test(t);
-}
 function shouldSpeakStreamReply(text, ttsSuppressed) {
   const t = String(text || '').trim();
   if (!t) return false;
   if (!ttsSuppressed) return true;
   return looksLikeProse(t);
-}
 function pushLiveStreamTts(pending, spokenLen) {
   if (!ttsStreamLiveEnabled?.()) return spokenLen;
   const slice = String(pending || '').slice(spokenLen);
@@ -356,7 +340,6 @@ function pushLiveStreamTts(pending, spokenLen) {
   if (chunk.length < TTS_MIN_CHUNK) return spokenLen;
   enqueueSpeech(chunk, { flush: true });
   return spokenLen + m[0].length;
-}
 function flushStreamTts(pending, opts = {}) {
   const text = String(pending || '').trim();
   if (!text || looksLikeListingStream(text)) return;
@@ -371,14 +354,13 @@ function flushStreamTts(pending, opts = {}) {
     rest = pulled.rest;
     const prefix = first ? tsPrefix : '';
     first = false;
-    enqueueSpeech(prefix + pulled.chunk, speakOpts);
+    enqueueSpeech(prefix + pulled.chunk, speakOpts);,
   }
-  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);
+  if (rest.trim()) enqueueSpeech((first ? tsPrefix : '') + rest.trim(), speakOpts);,
 }
 function detectLang(text) {
   if (/[æøåÆØÅ]/.test(text) || /\b(ikke|jeg|deg|seg|eller|dette|disse|skal|dette|vil|kan)\b/i.test(text)) return 'nb';
   return 'en';
-}
 
 const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
@@ -400,7 +382,7 @@ const State = {
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches,
   highContrast: new URLSearchParams(window.location.search).get('hc') === '1',
-  contrastMore: matchMedia("(prefers-contrast: more)").matches
+  contrastMore: matchMedia("(prefers-contrast: more)").matches,
 };
 State.expressionCurrent = {};
 State.expressionTarget = {};
@@ -410,7 +392,7 @@ State.mood = _shareParams.get('mood') || State.mood;
 State.mode = _shareParams.get('mode') || State.mode;
 try {
   if (!_shareParams.get('mood')) State.mood = localStorage.getItem('master:mood') || State.mood;
-  if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;
+  if (!_shareParams.get('mode')) State.mode = localStorage.getItem('master:mode') || State.mode;,
 } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:restore_share_state", err); }
 const _faceMode = (_shareParams.get('face_mode') || 'auto').toLowerCase();
 rootBody.dataset.faceRenderMode = _faceMode;
@@ -427,8 +409,8 @@ function syncShareStateUrl() {
     url.searchParams.set('mode', State.mode || 'idle');
     if (State.model) url.searchParams.set('model', State.model); else url.searchParams.delete('model');
     if (State.voiceName) url.searchParams.set('voice', State.voiceName); else url.searchParams.delete('voice');
-    history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sync_share_url", err); }
+    history.replaceState(null, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sync_share_url", err); },
 }
 
 rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
@@ -438,32 +420,31 @@ function enterDegradedTextUI(reason) {
   rootBody.dataset.errorBoundary = '1';
   rootBody.dataset.runtimeProfile = 'text';
   rootBody.dataset.runtimeVisible = 'true';
-  try { if (renderer && renderer.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:degraded_dispose", err); }
-  if (cv && cv.style) cv.style.display = 'none';
+  try { if (renderer?.dispose) renderer.dispose(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:degraded_dispose", err); }
+  if (cv?.style) cv.style.display = 'none';
   let banner = document.getElementById('face-error-banner');
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'face-error-banner';
     banner.className = 'face-error-banner';
-    document.body.appendChild(banner);
+    document.body.appendChild(banner);,
   }
-  banner.textContent = reason || 'Degraded text mode';
+  banner.textContent = reason || 'Degraded text mode';,
 }
 
 function isFaceRuntimeError(source) {
   const text = String(source || '');
   return /face|three\.face|particle_kernel|cognition_ecology|visual_bridge/i.test(text);
-}
 
 window.addEventListener('error', event => {
   if (!isFaceRuntimeError(event?.filename)) return;
-  enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');
+  enterDegradedTextUI(event?.message ? `Degraded text mode: ${event.message}` : 'Degraded text mode');,
 });
 window.addEventListener('unhandledrejection', event => {
   const reason = event?.reason;
   const source = reason?.stack || reason?.message || '';
   if (!isFaceRuntimeError(source)) return;
-  enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');
+  enterDegradedTextUI(reason?.message ? `Degraded text mode: ${reason.message}` : 'Degraded text mode');,
 });
 
 // Read particle sizing from CSS vars (web-ui-improvements.md:97) for theming/CRT profiles.
@@ -476,8 +457,8 @@ window.addEventListener('unhandledrejection', event => {
     const gs = parseFloat(cs.getPropertyValue('--face-glow-scale'));
     if (gs > 0.5) FACE_GLOW_SCALE = gs;
     const pd = parseFloat(cs.getPropertyValue('--face-phosphor-decay'));
-    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); }
+    if (pd >= 0 && pd < 1) FACE_PHOSPHOR_DECAY = pd;,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:apply_css_vars", err); },
 })();
 
 const STAR_FRAMES = ['\u2736', '\u2738', '\u2737', '\u273B', '\u2722', '\u2724', '\u2733', '\u2735'];
@@ -500,25 +481,25 @@ function _scheduleStar() {
     const ch = STAR_FRAMES[_starIdx];
     const co = STAR_COLORS[_starColorIdx];
     if (asciiStarEl) { asciiStarEl.textContent = ch; asciiStarEl.style.color = co; }
-    _scheduleStar();
-  }, speed);
+    _scheduleStar();,
+  }, speed);,
 }
 function startStar() {
   if (_starTimer) return;
   _starIdx = 0; _starColorIdx = 0;
-  _scheduleStar();
+  _scheduleStar();,
 }
 function stopStar() {
   if (_starTimer) { clearTimeout(_starTimer); _starTimer = null; }
-  if (asciiStarEl) asciiStarEl.textContent = '';
+  if (asciiStarEl) asciiStarEl.textContent = '';,
 }
 
 voicePicker?.addEventListener('change', () => {
   const voice = voicePicker.value.trim();
   if (voice) {
     State.voiceLocked = true;
-    setVoiceName(voice);
-  }
+    setVoiceName(voice);,
+  },
 });
 voicePreviewBtn?.addEventListener('click', () => window.MASTER_FACE?.previewVoice?.());
 
@@ -530,9 +511,9 @@ Object.defineProperty(State, 'mode', {
     rootBody.dataset.mode = v;
     const s = document.getElementById('zsh-status');
     if (s) s.textContent = '';
-    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();
+    if (v === 'thinking' && isRichMotionProfile()) startStar(); else stopStar();,
   },
-  configurable: true
+  configurable: true,
 });
 
 function updateRuntimeProfile() {
@@ -540,9 +521,9 @@ function updateRuntimeProfile() {
   rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
   rootBody.dataset.hiddenTab = State.hidden ? '1' : '';
   if (!State.profileOverride) {
-    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';
+    rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'calm';,
   }
-  rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';
+  rootBody.dataset.highContrast = (State.highContrast || State.contrastMore) ? '1' : '';,
 }
 
 updateRuntimeProfile();
@@ -551,7 +532,7 @@ window.addEventListener('master:emotion', (ev) => {
   const em = ev.detail || {};
   if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
   if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.42);
-  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';
+  if (Number.isFinite(em.fatigue) && em.fatigue > 0.35) State.mood = 'weary';,
 });
 
 window.addEventListener('master:clusters', (ev) => {
@@ -559,26 +540,26 @@ window.addEventListener('master:clusters', (ev) => {
   if (!em) return;
   if (Number.isFinite(em.confidence)) State.confidence = em.confidence;
   if (Number.isFinite(em.arousal)) State.pulse = Math.max(State.pulse || 0, em.arousal * 0.38);
-  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));
+  State.entropy = Math.max(0.08, Math.min(0.92, 1 - (em.confidence || 0.75) * 0.55 + (em.fatigue || 0) * 0.2));,
 });
 
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
   State.reducedMotion = event.matches;
-  updateRuntimeProfile();
+  updateRuntimeProfile();,
 });
 matchMedia('(pointer: coarse)').addEventListener('change', event => {
   State.coarsePointer = event.matches;
-  updateRuntimeProfile();
+  updateRuntimeProfile();,
 });
 matchMedia("(prefers-contrast: more)").addEventListener('change', event => {
   State.contrastMore = event.matches;
-  updateRuntimeProfile();
+  updateRuntimeProfile();,
 });
 document.addEventListener('visibilitychange', () => {
   updateRuntimeProfile();
   if (!document.hidden) ensureFrameLoop?.();
   if (!document.hidden && window.MASTER_FACE?.tts && !window.MASTER_FACE.tts.muted && window.MASTER_FACE.tts.queue && window.MASTER_FACE.tts.queue.length && !window.MASTER_FACE.tts.playing) window.MASTER_FACE.ttsTick?.();
-  if (!document.hidden && window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume().catch(() => {});
+  if (!document.hidden && window.MASTER_FACE?.actx && window.MASTER_FACE.actx.state === 'suspended') window.MASTER_FACE.actx.resume().catch(() => {});,
 }, { passive: true });
 
 let faceReadyMarked = false;
@@ -588,7 +569,7 @@ function markFaceReady() {
   rootBody.classList.add('face-ready');
   rootBody.classList.remove('face-loading');
   window.MASTER?.boot?.signal?.('face_ready', { source: 'markFaceReady' });
-  window.dispatchEvent(new CustomEvent('master:face-ready'));
+  window.dispatchEvent(new CustomEvent('master:face-ready'));,
 }
 
 let renderer, scene, camera, phosphorFadeMesh, phosphorFadeScene, phosphorFadeCam;
@@ -596,7 +577,7 @@ if (_hasWebGL && THREE) {
   try {
     renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 1);
-    renderer.autoClear = true;
+    renderer.autoClear = true;,
   } catch (e) {
     // A silently-swallowed failure here left `renderer` undefined forever:
     // frame() keeps rescheduling itself via requestAnimationFrame but bails
@@ -607,7 +588,7 @@ if (_hasWebGL && THREE) {
     // primerFired alone.
     console.error('MASTER face: WebGLRenderer construction failed', e);
     window.__MASTER_RENDERER_FAILED__ = true;
-    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });
+    window.MASTER?.boot?.signal?.('renderer_failed', { source: 'WebGLRenderer' });,
   }
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
@@ -628,10 +609,10 @@ if (_hasWebGL && THREE) {
     transparent: true,
     opacity: 1 - FACE_PHOSPHOR_DECAY,
     depthTest: false,
-    depthWrite: false
+    depthWrite: false,
   });
   phosphorFadeMesh = new THREE.Mesh(fadeGeom, fadeMat);
-  phosphorFadeScene.add(phosphorFadeMesh);
+  phosphorFadeScene.add(phosphorFadeMesh);,
 }
 if (_dbgEl) _dbgEl.textContent = renderer ? 'webgl ok' : (_hasWebGL ? 'webgl FAIL' : '2d mode');
 
@@ -646,7 +627,7 @@ function resize() {
   const scaleMax = typeof FACE_RENDER_SCALE_MAX !== 'undefined' ? FACE_RENDER_SCALE_MAX : 0.72;
   const scaleMin = typeof FACE_RENDER_SCALE_MIN !== 'undefined' ? FACE_RENDER_SCALE_MIN : 0.48;
   if (FACE_RENDER_SCALE > scaleMax || FACE_RENDER_SCALE < scaleMin) {
-    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);
+    FACE_RENDER_SCALE = State.coarsePointer ? 0.55 : (State.reducedMotion || profile === 'battery' ? 0.62 : scaleMax);,
   }
   const internalW = Math.max(280, Math.floor(W * FACE_RENDER_SCALE));
   const internalH = Math.max(200, Math.floor(H * FACE_RENDER_SCALE));
@@ -658,11 +639,11 @@ function resize() {
 
   // Ensure the canvas element itself is styled for crisp upscale (already in CSS)
   const cv = renderer.domElement;
-  if (cv) cv.style.imageRendering = "pixelated";
+  if (cv) cv.style.imageRendering = "pixelated";,
 }
 window.addEventListener('resize', resize, { passive: true });
 if ('ResizeObserver' in window && cv) {
-  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);
+  new ResizeObserver(() => resize()).observe(cv.parentElement || cv);,
 }
 
 // Grayscale depth map: white = near (high Z), black = background (filtered)
@@ -693,7 +674,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,    'rgba(0,0,0,0.98)');
     g.addColorStop(0.50, 'rgba(0,0,0,0.72)');
     g.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Cranial vault — enlarged high forehead
   g = ctx.createRadialGradient(cx, cy - H*0.36, 0, cx, cy - H*0.36, W*0.30);
@@ -712,7 +693,7 @@ function generateFaceDepthMap(size) {
     g = ctx.createRadialGradient(cx + ex*W, cy - H*0.28, 0, cx + ex*W, cy - H*0.28, W*0.09);
     g.addColorStop(0,   'rgba(0,0,0,0.28)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Supraorbital ridge — nearly flat (reduced aggression selection)
   for (const ex of [-0.112, 0.112]) {
@@ -720,7 +701,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(0,0,0,0)');
     g.addColorStop(0.5, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);
+    ctx.fillStyle = g; ctx.fillRect(cx + ex*W - W*0.08, cy - H*0.206, W*0.16, H*0.014);,
   }
   // Brow shelf — minimal neotenic arch
   for (const ex of [-0.112, 0.112]) {
@@ -728,7 +709,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,    'rgba(205,205,205,0.38)');
     g.addColorStop(0.50, 'rgba(150,150,150,0.16)');
     g.addColorStop(1,    'rgba(0,  0,  0,  0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Glabella — shallow, open expression
   g = ctx.createRadialGradient(cx, cy - H*0.160, 0, cx, cy - H*0.160, W*0.022);
@@ -749,7 +730,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(0, 0, W*0.106, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
+    ctx.restore();,
   }
   // Corneal specular + iris ring — enlarged pupils
   for (const ex of [-0.118, 0.118]) {
@@ -762,7 +743,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(240,240,240,0.78)');
     g.addColorStop(0.45,'rgba(190,190,190,0.30)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Nose bridge — fine, low projection
   g = ctx.createLinearGradient(cx - W*0.012, 0, cx + W*0.012, 0);
@@ -783,7 +764,7 @@ function generateFaceDepthMap(size) {
     g = ctx.createRadialGradient(cx + ex*W, cy + H*0.100, 0, cx + ex*W, cy + H*0.100, W*0.022);
     g.addColorStop(0,   'rgba(0,0,0,0.32)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Cheekbones — soft, low relief (gracile skeleton)
   for (const ex of [-0.188, 0.188]) {
@@ -791,7 +772,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(190,190,190,0.38)');
     g.addColorStop(0.60,'rgba(100,100,100, 0.14)');
     g.addColorStop(1,   'rgba(0,  0,  0,  0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Nasolabial folds — faint (youthful neoteny)
   for (const ex of [-0.068, 0.068]) {
@@ -799,7 +780,7 @@ function generateFaceDepthMap(size) {
     g.addColorStop(0,   'rgba(0,0,0,0.22)');
     g.addColorStop(0.6, 'rgba(0,0,0,0.08)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Philtrum — shallow groove
   g = ctx.createRadialGradient(cx, cy + H*0.158, 0, cx, cy + H*0.158, W*0.018);
@@ -853,7 +834,7 @@ function generateFaceDepthMap(size) {
     g = ctx.createRadialGradient(cx + ex*W, cy - H*0.04, 0, cx + ex*W, cy + H*0.04, W*0.048);
     g.addColorStop(0,   'rgba(90,90,90,0.10)');
     g.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);,
   }
   // Neck column — slender, elongated
   const neckGrad = ctx.createLinearGradient(0, cy + H*0.44, 0, H);
@@ -862,7 +843,6 @@ function generateFaceDepthMap(size) {
   ctx.fillStyle = neckGrad;
   ctx.fillRect(cx - W*0.032, cy + H*0.44, W*0.064, H - (cy + H*0.44));
   return cv;
-}
 
 // Hex-grid topology: particles sit at lattice vertices projected onto face surface.
 // Edge list connects adjacent occupied cells — the wire mesh substrate.
@@ -889,8 +869,8 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       const nz = lum * 0.78;
       positions.push(nx, ny, nz);
       scatters.push(nx, ny, 0);
-      seeds.push(Math.random() * 6.28318);
-    }
+      seeds.push(Math.random() * 6.28318);,
+    },
   }
 
   for (let row = 0; row < rows; row++) {
@@ -900,8 +880,8 @@ function sampleDepthMapGrid(canvas, cols, rows) {
       if (row + 1 < rows)       { const b = cell[(row + 1) * cols + col];            if (b >= 0) { edgeIdx.push(a, b); } }
       const dc = (row & 1) ? -1 : 1;
       const nc = col + dc;
-      if (row + 1 < rows && nc >= 0 && nc < cols) { const b = cell[(row + 1) * cols + nc]; if (b >= 0) { edgeIdx.push(a, b); } }
-    }
+      if (row + 1 < rows && nc >= 0 && nc < cols) { const b = cell[(row + 1) * cols + nc]; if (b >= 0) { edgeIdx.push(a, b); } },
+    },
   }
 
   const home = new Float32Array(positions);
@@ -922,7 +902,7 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     edgeLengthArr[ei >> 1] = len;
     edgeDepthDiffArr[ei >> 1] = dd;
     neighborZSum[a] += home[bi+2]; neighborCount[a]++;
-    neighborZSum[b] += home[ai+2]; neighborCount[b]++;
+    neighborZSum[b] += home[ai+2]; neighborCount[b]++;,
   }
 
   const curvature = new Float32Array(n);
@@ -932,10 +912,10 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     const nc = neighborCount[i];
     if (nc > 0) {
       const avgNZ = neighborZSum[i] / nc;
-      curvature[i] = Math.abs(home[i*3+2] - avgNZ);
+      curvature[i] = Math.abs(home[i*3+2] - avgNZ);,
     }
     if (curvature[i] > maxCurv) maxCurv = curvature[i];
-    boundary[i] = nc < 4 ? 1.0 : 0.0;
+    boundary[i] = nc < 4 ? 1.0 : 0.0;,
   }
   if (maxCurv > 0) { for (let i = 0; i < n; i++) curvature[i] /= maxCurv; }
 
@@ -948,30 +928,28 @@ function sampleDepthMapGrid(canvas, cols, rows) {
     else if (anx < 0.06 && ny >= -0.02 && ny <= 0.14) zone[i] = 0.4;
     else if (anx >= 0.06 && anx <= 0.18 && ny >= 0.03 && ny <= 0.14) zone[i] = 0.6;
     else if (ny > 0.14) zone[i] = 0.8;
-    else zone[i] = 0.5;
+    else zone[i] = 0.5;,
   }
 
   const edgePosData = new Float32Array(edgeIdx.length * 3);
   const edgeAlpha = new Float32Array(edgeIdx.length / 2);
   for (let i = 0; i < edgeIdx.length; i++) {
     const vi = edgeIdx[i] * 3;
-    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];
+    edgePosData[i * 3] = home[vi]; edgePosData[i * 3 + 1] = home[vi + 1]; edgePosData[i * 3 + 2] = home[vi + 2];,
   }
   for (let ei = 0; ei < edgeIdx.length / 2; ei++) {
     const len = edgeLengthArr[ei], dd = edgeDepthDiffArr[ei];
     const la = Math.max(0.2, Math.min(1.0, 1.0 - len * 2.5));
     const da = Math.max(0.3, Math.min(1.0, 1.0 - dd * 4.0));
-    edgeAlpha[ei] = la * da;
+    edgeAlpha[ei] = la * da;,
   }
 
   return { home, scatter: new Float32Array(scatters), seeds: new Float32Array(seeds), edgePosData, curvature, boundary, zone, edgeAlpha };
-}
 
 function particleScale() {
   const area = Math.max(320 * 480, window.innerWidth * window.innerHeight);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   return Math.max(0.7, Math.min(1.35, Math.sqrt((area * dpr) / (1280 * 720))));
-}
 const FACE_GRID_COLS = Math.round((State.coarsePointer ? 32 : 52) * particleScale());
 const FACE_GRID_ROWS = Math.round((State.coarsePointer ? 40 : 66) * particleScale());
 const FACE_N_2D = Math.round(480 * particleScale());
@@ -1005,7 +983,6 @@ float snoise(vec3 v){
   p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
   vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);m=m*m;
   return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-}
 vec3 curlNoise(vec3 p){
   const float e=.07;
   float n1,n2,n3,n4;
@@ -1021,7 +998,6 @@ vec3 curlNoise(vec3 p){
   n3=snoise(r+vec3(0,e,0));n4=snoise(r-vec3(0,e,0));
   float cz=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
   return vec3(cx,cy,cz);
-}
 uniform float uMorph;
 uniform float uTime;
 uniform float uSize;
@@ -1089,7 +1065,7 @@ void main(){
   // FA10 send ripple — radial wave from center
   if(uRipple > 0.0) {
     float rwave = sin(radial * 10.0 - uRipple * 18.0) * exp(-uRipple * 2.5) * 0.035;
-    p.xy += normalize(p.xy + vec2(0.001)) * rwave;
+    p.xy += normalize(p.xy + vec2(0.001)) * rwave;,
   }
   // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
   float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
@@ -1100,11 +1076,11 @@ void main(){
   if(uFracture > 0.0) {
     float ang = atan(position.y, position.x);
     float shardAng = floor(ang * 4.0 / 3.14159 + 0.5) * 3.14159 / 4.0;
-    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);
+    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);,
   }
   if(uModelSwitch > 0.0) {
     float dissolve = smoothstep(0.0, 0.45, uModelSwitch) * (1.0 - smoothstep(0.55, 1.0, uModelSwitch));
-    p += curlNoise(position * 0.9 + seed + vec3(uTime * 0.2)) * dissolve * 0.045;
+    p += curlNoise(position * 0.9 + seed + vec3(uTime * 0.2)) * dissolve * 0.045;,
   }
   if(uQuestion > 0.0) {
     float qt = clamp(uQuestion, 0.0, 1.0);
@@ -1113,7 +1089,7 @@ void main(){
     vec2 qHook = vec2(0.11 * cos(qSeed * 6.2831), 0.12 + 0.10 * sin(qSeed * 6.2831));
     vec2 qTarget = qSeed < 0.62 ? qHook : qStem;
     p.xy = mix(p.xy, qTarget, qt * 0.88);
-    p.z += qt * 0.02 * sin(seed * 6.2831);
+    p.z += qt * 0.02 * sin(seed * 6.2831);,
   }
   // FA20 pass bloom — brief outward radial spring then snap back
   if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
@@ -1147,7 +1123,7 @@ void main(){
   vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
   vFresnel=pow(1.0-abs(dot(viewDir,vn)),1.8);
   vDepth=depth;
-  vZoneVal=zone;
+  vZoneVal=zone;,
 }`;
 
 const FRAG_SHADER = `
@@ -1167,7 +1143,7 @@ void main(){
   float zoneDim=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
   alpha*=zoneDim;
   vec3 col=clamp(vColor+vFresnel*vColor*0.50,0.0,1.0);
-  gl_FragColor=vec4(col,max(0.0,alpha));
+  gl_FragColor=vec4(col,max(0.0,alpha));,
 }`;
 
 let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
@@ -1193,39 +1169,38 @@ if (_hasWebGL && THREE) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0},
     },
     // Normal (not additive) blending on the main point layer so individual
     // pixels stay crisp and discrete instead of bleeding into neighbors —
     // the glow layer below still uses additive blending for its soft halo.
-    transparent: true, depthWrite: false, blending: THREE.NormalBlending
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending,
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
 
-  if (faceEdgePosData && faceEdgePosData.length > 0 && faceEdgeAlpha) {
+  if (faceEdgePosData?.length > 0 && faceEdgeAlpha) {
     const edgeCount = faceEdgeAlpha.length;
     const strongIdxArr = [], weakIdxArr = [];
     for (let ei = 0; ei < edgeCount; ei++) {
       if (faceEdgeAlpha[ei] > 0.65) { strongIdxArr.push(ei*2, ei*2+1); }
-      else { weakIdxArr.push(ei*2, ei*2+1); }
+      else { weakIdxArr.push(ei*2, ei*2+1); },
     }
     function buildEdgeLines(idxArr, opacity) {
       if (!idxArr.length) return null;
       const posArr = new Float32Array(idxArr.length * 3);
       for (let i = 0; i < idxArr.length; i++) {
         const vi = idxArr[i] * 3;
-        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];
+        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];,
       }
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
       const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       return new THREE.LineSegments(geom, mat);
-    }
     faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.14);
     faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.065);
     // Legacy single-line ref kept null — two-tier replaces it
-    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
-  }
+    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;,
+  },
 }
 
 let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
@@ -1239,29 +1214,29 @@ function initSemanticPools() {
   for (let i = 0; i < n; i++) {
     const z = faceZone[i];
     if (z >= 0.68) mouthIdx.push(i);
-    if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);
+    if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);,
   }
   mouthPool = K.createPool(Math.min(140, Math.max(16, mouthIdx.length)));
   eyePool = K.createPool(Math.min(96, Math.max(14, eyeIdx.length)));
   for (let mi = 0; mi < mouthIdx.length && mouthPool.count < mouthPool.capacity; mi++) {
     const i = mouthIdx[mi];
     K.spawn(mouthPool, faceHome[i * 3], faceHome[i * 3 + 1], {
-      kind: 1, zone: faceZone[i], confidence: 0.88, arousal: 0.25, valence: 0.5, attention: 0.6, decay: 0.006
-    });
+      kind: 1, zone: faceZone[i], confidence: 0.88, arousal: 0.25, valence: 0.5, attention: 0.6, decay: 0.006,
+    });,
   }
   for (let ei = 0; ei < eyeIdx.length && eyePool.count < eyePool.capacity; ei++) {
     const i = eyeIdx[ei];
     K.spawn(eyePool, faceHome[i * 3], faceHome[i * 3 + 1], {
-      kind: 2, zone: faceZone[i], confidence: 0.92, arousal: 0.2, valence: 0.5, attention: 0.75, decay: 0.012
-    });
-  }
+      kind: 2, zone: faceZone[i], confidence: 0.92, arousal: 0.2, valence: 0.5, attention: 0.75, decay: 0.012,
+    });,
+  },
 }
 if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
 const COUNCIL_VOICE = {
   Architect: 'ryan', Skeptic: 'ryan', Pragmatist: 'ryan',
-  Security: 'ryan', User: 'ryan', Mentor: 'ryan'
+  Security: 'ryan', User: 'ryan', Mentor: 'ryan',
 };
 
 // Pristine chrome: council personas no longer shift the face to a hue
@@ -1274,10 +1249,8 @@ const PERSONA_TINT = {
   Pragmatist: new Color(1, 1, 1),
   Security: new Color(1, 1, 1),
   User: new Color(1, 1, 1),
-  Mentor: new Color(1, 1, 1)
+  Mentor: new Color(1, 1, 1),
 };
-
-
 
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
@@ -1286,7 +1259,7 @@ function applyPersonaVisual(persona) {
   const tint = PERSONA_TINT[persona];
   if (!tint) return;
   fadeColorTo(tint);
-  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);,
 }
 const COUNCIL_LANE_OFFSET = { left: -0.22, center: 0, right: 0.22 };
 function offsetCouncilMouthPool(lane, delta = 0.18) {
@@ -1296,12 +1269,12 @@ function offsetCouncilMouthPool(lane, delta = 0.18) {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     mouthPool.cells[b + K.FIELD.x] += shift * delta;
-    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);
-  }
+    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);,
+  },
 }
 function refreshIdleTint() {
   TINT.idle.copy(dayNightTint());
-  colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
+  colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);,
 }
 refreshIdleTint();
 setInterval(() => { if (!State.mood || State.mood === 'idle') { refreshIdleTint(); fadeColorTo(TINT.idle); } }, 60000);
@@ -1328,18 +1301,17 @@ function dollyZoom(intensity) {
       camera.fov = targetFOV + (38 - targetFOV) * p2;
       camera.position.z = targetZ + (4.6 - targetZ) * p2;
       camera.updateProjectionMatrix();
-      if (p2 < 1) requestAnimationFrame(back);
+      if (p2 < 1) requestAnimationFrame(back);,
     }
-    requestAnimationFrame(back);
+    requestAnimationFrame(back);,
   }
-  requestAnimationFrame(forward);
+  requestAnimationFrame(forward);,
 }
 
 const _photoEl = document.getElementById('photo');
 if (_photoEl) _photoEl.addEventListener('change', () => {
-  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
+  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; },
 });
-
 
 let lastT = performance.now();
 let _attnEyeClose = 0;
@@ -1364,15 +1336,15 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0},
     },
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
   glowPoints = new THREE.Points(faceGeom, glowMat);
   glowPoints.renderOrder = -1;
   head.add(glowPoints);
   if (faceEdgeLinesWeak) { faceEdgeLinesWeak.renderOrder = -3; head.add(faceEdgeLinesWeak); }
-  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); }
+  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); },
 }
 
 async function swapMask(imageUrl) {
@@ -1399,10 +1371,10 @@ async function swapMask(imageUrl) {
     mouthPool = null; eyePool = null;
     initSemanticPools();
     State.flash = 0.5; State.pulse = 0.8;
-    if (uiStatus) uiStatus.textContent = 'mask loaded';
+    if (uiStatus) uiStatus.textContent = 'mask loaded';,
   } catch (_) {
-    if (uiStatus) uiStatus.textContent = 'mask load failed';
-  }
+    if (uiStatus) uiStatus.textContent = 'mask load failed';,
+  },
 }
 
 let frameLoopActive = false;
@@ -1414,7 +1386,7 @@ function ensureFrameLoop() {
   // dbgFrames stuck at 0, canvas black ("face not showing").
   frameLoopActive = true;
   requestAnimationFrame(frame);
-  armFrameLoopWatchdog();
+  armFrameLoopWatchdog();,
 }
 
 // Self-healing for the render loop. frame() only continues if its own last
@@ -1437,13 +1409,13 @@ function _startFramePump() {
     if (State.hidden || document.hidden) return;
     _pumpTick = true;
     try { frame(performance.now()); } finally { _pumpTick = false; }
-    requestAnimationFrame(frame); // keep offering control back to rAF
-  }, 40);
+    requestAnimationFrame(frame); // keep offering control back to rAF,
+  }, 40);,
 }
 function _stopFramePump() {
   if (!_pumpTimer) return;
   clearInterval(_pumpTimer);
-  _pumpTimer = null;
+  _pumpTimer = null;,
 }
 function armFrameLoopWatchdog() {
   if (_watchdogTimer) return;
@@ -1451,13 +1423,13 @@ function armFrameLoopWatchdog() {
     if (State.hidden || document.hidden) { _watchdogLastFrames = _dbgFrames; return; }
     if (_naturalRafSeen) {
       _naturalRafSeen = false;
-      _stopFramePump();
+      _stopFramePump();,
     } else if (_dbgFrames === _watchdogLastFrames) {
       requestAnimationFrame(frame);
-      _startFramePump();
+      _startFramePump();,
     }
-    _watchdogLastFrames = _dbgFrames;
-  }, 2000);
+    _watchdogLastFrames = _dbgFrames;,
+  }, 2000);,
 }
 
 // WebGL context loss is the silent permanent-black-canvas case: the browser
@@ -1470,13 +1442,13 @@ function armFrameLoopWatchdog() {
 if (typeof cv !== 'undefined' && cv?.addEventListener) {
   cv.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
-    if (uiStatus) uiStatus.textContent = 'gpu context lost — recovering…';
+    if (uiStatus) uiStatus.textContent = 'gpu context lost — recovering…';,
   }, false);
   cv.addEventListener('webglcontextrestored', () => {
-    if (uiStatus && uiStatus.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
+    if (uiStatus?.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
     try { resize(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:webgl_context_restored", err); }
-    ensureFrameLoop();
-  }, false);
+    ensureFrameLoop();,
+  }, false);,
 }
 
 let _dbgFrames = 0;
@@ -1489,14 +1461,12 @@ const fpsBadge = showDebug ? (() => {
   el.className = 'fps-badge';
   document.body.appendChild(el);
   return el;
-})() : null;
 const debugPanel = showDebug ? (() => {
   const el = document.createElement('div');
   el.id = 'debug-panel';
   el.className = 'debug-panel';
   document.body.appendChild(el);
   return el;
-})() : null;
 let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
 let fpsEma = 24;
@@ -1509,8 +1479,8 @@ window.addEventListener('master:pressure', (ev) => {
     entropy: d.entropy ?? State.entropy ?? 0,
     turbulence: d.turbulence ?? 0,
     gravity: d.gravity ?? 0,
-    valence: d.valence ?? 0
-  };
+    valence: d.valence ?? 0,
+  };,
 });
 const FACE_RENDER_SCALE_MIN = 0.62;
 const FACE_RENDER_SCALE_MAX = 0.92;
@@ -1527,29 +1497,28 @@ function ensureParticleWorker() {
       const pending = particleWorkerPending.get(msg.id);
       if (!pending) return;
       particleWorkerPending.delete(msg.id);
-      applyWorkerPoolResult(pending.pool, msg.pool);
-    };
+      applyWorkerPoolResult(pending.pool, msg.pool);,
+    };,
   } catch (_) {
-    particleWorker = null;
+    particleWorker = null;,
   }
   return particleWorker;
-}
 function serializePoolForWorker(pool) {
   return {
     cells: new Float32Array(pool.cells).buffer,
     decay: new Float32Array(pool.decay).buffer,
     alive: new Uint8Array(pool.alive).buffer,
     capacity: pool.capacity,
-    count: pool.count
-  };
+    count: pool.count,
+  };,
 }
 function kernelStepContext() {
   return window.MASTER_FACE_PARTICLES?.kernelStepContext?.(State) || {
     entropy: State.entropy || 0,
     pressure: 0,
     confidence: State.confidence ?? 0.75,
-    decayScale: 1
-  };
+    decayScale: 1,
+  };,
 }
 function stepPoolAsync(pool, dtSec) {
   const worker = ensureParticleWorker();
@@ -1558,20 +1527,19 @@ function stepPoolAsync(pool, dtSec) {
   if (!worker || !pool) {
     if (K) K.step(pool, dtSec, ctx);
     return;
-  }
   const id = ++particleWorkerSeq;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });,
 }
 function spawnEmotionalGhost(mood) {
   if (!isRichMotionProfile()) return;
-  window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
+  window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);,
 }
 function applyWorkerPoolResult(pool, payload) {
   if (!pool || !payload) return;
   pool.cells.set(new Float32Array(payload.cells));
   pool.decay.set(new Float32Array(payload.decay));
-  pool.alive.set(new Uint8Array(payload.alive));
+  pool.alive.set(new Uint8Array(payload.alive));,
 }
 function syncSemanticPools(dtSec) {
   const K = window.ParticleKernel;
@@ -1583,12 +1551,12 @@ function syncSemanticPools(dtSec) {
       if (!mouthPool.alive[i]) continue;
       const b = i * K.FIELDS_PER_CELL;
       arousal += mouthPool.cells[b + K.FIELD.arousal];
-      n++;
+      n++;,
     }
     if (n > 0) {
       const target = arousal / n;
-      faceMat.uniforms.uVowel.value += (target - faceMat.uniforms.uVowel.value) * 0.08;
-    }
+      faceMat.uniforms.uVowel.value += (target - faceMat.uniforms.uVowel.value) * 0.08;,
+    },
   }
   if (eyePool) {
     stepPoolAsync(eyePool, dtSec);
@@ -1597,19 +1565,18 @@ function syncSemanticPools(dtSec) {
       if (!eyePool.alive[i]) continue;
       const b = i * K.FIELDS_PER_CELL;
       conf += eyePool.cells[b + K.FIELD.confidence];
-      n++;
+      n++;,
     }
     if (n > 0) {
       const close = Math.max(0, 1.0 - conf / n);
-      faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;
-    }
-  }
+      faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;,
+    },
+  },
 }
 function frame(t) {
   if (State.hidden || document.hidden) {
     frameLoopActive = false;
     return;
-  }
   frameLoopActive = true;
   if (!_pumpTick) _naturalRafSeen = true;
   _dbgFrames++;
@@ -1629,30 +1596,28 @@ function frame(t) {
         `mood ${State.mood}`,
         `particles ${count}`,
         `conf ${(State.confidence ?? 0).toFixed(2)}`,
-        pressureLine
-      ].filter(Boolean).join(' · ');
+        pressureLine,
+      ].filter(Boolean).join(' · ');,
     }
     if (!State.reducedMotion && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
       FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.03);
-      resize();
+      resize();,
     } else if (fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
       FACE_RENDER_SCALE = Math.min(FACE_RENDER_SCALE_MAX, FACE_RENDER_SCALE + 0.02);
-      resize();
+      resize();,
     }
     fpsLastSample = t;
-    fpsSampleFrames = 0;
+    fpsSampleFrames = 0;,
   }
   if (!renderer) {
     lastT = t;
     if (!State.hidden) requestAnimationFrame(frame);
     else frameLoopActive = false;
     return;
-  }
   if (State.hidden) {
     lastT = t;
     frameLoopActive = false;
     return;
-  }
 
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
@@ -1660,10 +1625,10 @@ function frame(t) {
 
   if (State.sleeping) {
     rootBody.style.opacity = '0.05';
-    rootBody.dataset.sleeping = '1';
+    rootBody.dataset.sleeping = '1';,
   } else if (rootBody.dataset.sleeping) {
     rootBody.style.opacity = '';
-    delete rootBody.dataset.sleeping;
+    delete rootBody.dataset.sleeping;,
   }
 
   if (hasAnalyserBuffers()) {
@@ -1695,15 +1660,15 @@ function frame(t) {
         State.audioMids || 0,
         State.audioHighs || 0,
         Math.max(State.audioBass || 0, State.audioMids || 0),
-        Math.max(State.audioMids || 0, State.audioHighs || 0)
+        Math.max(State.audioMids || 0, State.audioHighs || 0),
       ];
       bars.forEach((bar, i) => {
         const level = levels[i] || 0;
         const h = Math.max(3, Math.min(14, 3 + level * 12));
         bar.style.height = `${h}px`;
-        bar.style.opacity = String(0.25 + level * 0.65);
-      });
-    }
+        bar.style.opacity = String(0.25 + level * 0.65);,
+      });,
+    },
   } else {
     State.voiceRMS = (State.voiceRMS || 0) * 0.9;
     State.audioBass  = (State.audioBass  || 0) * 0.88;
@@ -1715,9 +1680,9 @@ function frame(t) {
         const current = parseFloat(bar.style.height || '4') || 4;
         const next = Math.max(3, current * 0.92);
         bar.style.height = `${next}px`;
-        bar.style.opacity = String(Math.max(0.15, (parseFloat(bar.style.opacity || '0.25') || 0.25) * 0.95));
-      });
-    }
+        bar.style.opacity = String(Math.max(0.15, (parseFloat(bar.style.opacity || '0.25') || 0.25) * 0.95));,
+      });,
+    },
   }
 
   const idleCalm = State.mode === 'idle' && !tts.playing ? 0.028 : 0.04;
@@ -1742,12 +1707,12 @@ function frame(t) {
       applyShake(1.5);
       State.pulse = 0.9;
       State.flash = 1.0;
-      setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);
-    }
+      setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);,
+    },
   }
 
   if (!window.MASTER_FACE_AUDIO?.applySttDuck?.(State, tts, actx)) {
-    window.MASTER_FACE_AUDIO?.restorePlaybackGain?.(tts, actx, tts.playing && !State.sttActive);
+    window.MASTER_FACE_AUDIO?.restorePlaybackGain?.(tts, actx, tts.playing && !State.sttActive);,
   }
 
   if (head) {
@@ -1778,7 +1743,7 @@ function frame(t) {
       State.parY += (pInput.y * 0.032 - State.parY) * 0.04;
       const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
       camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.04;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;,
     }
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
@@ -1802,14 +1767,14 @@ function frame(t) {
       head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.z = State.lean;
-      State.shake *= 0.86;
+      State.shake *= 0.86;,
     } else {
-      head.position.set(0, 0, State.lean);
-    }
+      head.position.set(0, 0, State.lean);,
+    },
   }
   if (State.personaPulse > 0.01) {
     State.pulse = Math.max(State.pulse, State.personaPulse);
-    State.personaPulse *= 0.88;
+    State.personaPulse *= 0.88;,
   }
   State.pulse *= 0.92;
 
@@ -1877,9 +1842,9 @@ function frame(t) {
     if (State.ripplePhase >= 0) {
       State.ripplePhase = Math.min(1, State.ripplePhase + 0.04);
       faceMat.uniforms.uRipple.value = State.ripplePhase;
-      if (State.ripplePhase >= 1) State.ripplePhase = -1;
+      if (State.ripplePhase >= 1) State.ripplePhase = -1;,
     } else {
-      faceMat.uniforms.uRipple.value = 0;
+      faceMat.uniforms.uRipple.value = 0;,
     }
     const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
     faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
@@ -1920,15 +1885,15 @@ function frame(t) {
     const beatEdge = (State.audioBeat || 0) * 0.06 + (State.audioBass || 0) * 0.04;
     if (faceEdgeLinesStrong) {
       const edgeStrong = 0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04 + beatEdge;
-      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;
+      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;,
     }
     if (faceEdgeLinesWeak) {
       const edgeWeak = 0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0) + beatEdge * 0.5;
-      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;
+      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;,
     }
     const driftEl = document.getElementById('soul-drift');
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
-      driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
+      driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;,
     }
     if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
     State._heartbeat = (State._heartbeat || 0) * 0.94;
@@ -1953,10 +1918,10 @@ function frame(t) {
         uGridAngle: faceMat.uniforms.uGridAngle, uHeartbeat: faceMat.uniforms.uHeartbeat,
         uPulseRing: faceMat.uniforms.uPulseRing, uExposure: faceMat.uniforms.uExposure,
         uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft,
-        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime
+        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime,
       });
-      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
-    }
+      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;,
+    },
   }
 
   State.flash *= 0.9;
@@ -1979,20 +1944,20 @@ function frame(t) {
     // material construction in face.part1.txt for why not MultiplyBlending.
     phosphorFadeMesh.material.opacity = 1 - decay;
     renderer.autoClear = false;
-    renderer.render(phosphorFadeScene, phosphorFadeCam);
+    renderer.render(phosphorFadeScene, phosphorFadeCam);,
   } else {
     renderer.autoClear = true;
     renderer.setClearColor(0x000000, 1);
-    if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;
+    if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;,
   }
   if (window.MASTER_PHOSPHOR_TRAIL?.capture && renderer?.domElement && phosphorOn) {
-    window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);
+    window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);,
   }
   renderer.render(scene, camera);
   markFaceReady();
 
   if (!State.hidden) requestAnimationFrame(frame);
-  else frameLoopActive = false;
+  else frameLoopActive = false;,
 }
 
 let pressTimer = null, pressStart = 0;
@@ -2002,39 +1967,39 @@ let gestureStart = null;
 function setFacePip(enabled, corner = 'bottom-right') {
   if (enabled) {
     rootBody.dataset.facePip = '1';
-    rootBody.dataset.facePipCorner = corner;
+    rootBody.dataset.facePipCorner = corner;,
   } else {
     delete rootBody.dataset.facePip;
-    delete rootBody.dataset.facePipCorner;
-  }
+    delete rootBody.dataset.facePipCorner;,
+  },
 }
 function updateCursor(e) {
   State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
   State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
-  cursorActive = true;
+  cursorActive = true;,
 }
 function onPointerMove(e) {
   if (State.coarsePointer && dragOrigin) {
     const dx = (e.clientX - dragOrigin.x) / innerWidth;
     const dy = (e.clientY - dragOrigin.y) / innerHeight;
     State.tiltX = Math.max(-1, Math.min(1, dx * 2.8));
-    State.tiltY = Math.max(-1, Math.min(1, dy * 2.0));
+    State.tiltY = Math.max(-1, Math.min(1, dy * 2.0));,
   } else {
-    updateCursor(e);
-  }
+    updateCursor(e);,
+  },
 }
 document.addEventListener('pointermove', onPointerMove, { passive: true });
 document.addEventListener('pointerdown', e => {
   dragOrigin = { x: e.clientX, y: e.clientY };
-  updateCursor(e);
+  updateCursor(e);,
 }, { passive: true });
 document.addEventListener('pointerup', () => {
   dragOrigin = null;
-  if (State.coarsePointer) cursorActive = false;
+  if (State.coarsePointer) cursorActive = false;,
 }, { passive: true });
 document.addEventListener('pointercancel', () => {
   dragOrigin = null;
-  if (State.coarsePointer) cursorActive = false;
+  if (State.coarsePointer) cursorActive = false;,
 }, { passive: true });
 
 cv.addEventListener('pointerdown', (e) => {
@@ -2043,13 +2008,13 @@ cv.addEventListener('pointerdown', (e) => {
   State.pressureTension = 0;
   gestureStart = { x: e.clientX, y: e.clientY, t: pressStart };
   const sttDelay = State.coarsePointer ? 520 : 420;
-  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), sttDelay);
+  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), sttDelay);,
 });
 cv.addEventListener('pointermove', (e) => {
   if (!gestureStart) return;
   const dx = e.clientX - gestureStart.x;
   const dy = e.clientY - gestureStart.y;
-  if (Math.hypot(dx, dy) > 12) gestureStart.moved = true;
+  if (Math.hypot(dx, dy) > 12) gestureStart.moved = true;,
 }, { passive: true });
 cv.addEventListener('pointerup', (e) => {
   if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
@@ -2067,47 +2032,45 @@ cv.addEventListener('pointerup', (e) => {
         zshIn?.select?.();
         navigator.vibrate?.(10);
         return;
-      }
       if (adx > ady) {
         window._chatCycleRecentReply?.(dx > 0 ? 1 : -1);
         navigator.vibrate?.(10);
-        return;
-      }
+        return;,
     }
     if (elapsed < 1400 && Math.hypot(dx, dy) > 180) {
       const corner = `${e.clientY < innerHeight / 2 ? 'top' : 'bottom'}-${e.clientX < innerWidth / 2 ? 'left' : 'right'}`;
-      setFacePip(true, corner);
+      setFacePip(true, corner);,
     }
     if (gesture.moved && Math.hypot(dx, dy) > 48 && elapsed < 900) {
       const expression = {
         valence: Math.max(-1, Math.min(1, dx / innerWidth)),
         arousal: Math.max(0, Math.min(1, 0.35 + Math.abs(dy) / innerHeight)),
-        attention: Math.max(0.4, Math.min(1, 0.55 + Math.hypot(dx, dy) / 400))
+        attention: Math.max(0.4, Math.min(1, 0.55 + Math.hypot(dx, dy) / 400)),
       };
-      window.MASTER_FACE_EXPRESSION?.postUserExpression?.(expression, 'face_drag');
-    }
+      window.MASTER_FACE_EXPRESSION?.postUserExpression?.(expression, 'face_drag');,
+    },
   }
   if (State.sttActive) { window.MASTER_FACE?.stopSTT?.(); return; }
-  if (performance.now() - pressStart < 240) window.MASTER_FACE?.ttsSkip?.();
+  if (performance.now() - pressStart < 240) window.MASTER_FACE?.ttsSkip?.();,
 });
 cv.addEventListener('pointercancel', () => {
   if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  gestureStart = null;
+  gestureStart = null;,
 });
 
 function bindOrientation() {
   window.addEventListener('deviceorientation', (e) => {
     if (e.gamma != null) State.tiltX = e.gamma / 90;
-    if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
-  }, { passive: true });
+    if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;,
+  }, { passive: true });,
 }
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); }
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); },
   } else if (window.DeviceOrientationEvent) {
-    bindOrientation();
-  }
+    bindOrientation();,
+  },
 }
 
 let lastShake = 0, lastAccel = [0, 0, 0];
@@ -2121,9 +2084,9 @@ if (window.DeviceMotionEvent) {
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) {
       lastShake = now; window.MASTER_FACE?.ttsSkip?.(); applyShake(1.2);
-      morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
-    }
-  }, { passive: true });
+      morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;,
+    },
+  }, { passive: true });,
 }
 
 // FA24 pinch-to-zoom
@@ -2132,8 +2095,8 @@ cv.addEventListener('touchstart', (e) => {
   if (e.touches.length === 2) {
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
-    pinchDist0 = Math.hypot(dx, dy);
-  }
+    pinchDist0 = Math.hypot(dx, dy);,
+  },
 }, { passive: true });
 cv.addEventListener('touchmove', (e) => {
   if (e.touches.length === 2 && pinchDist0) {
@@ -2142,8 +2105,8 @@ cv.addEventListener('touchmove', (e) => {
     const d = Math.hypot(dx, dy);
     State.pinchScale = Math.max(0.5, Math.min(2.0, State.pinchScale * (d / pinchDist0)));
     pinchDist0 = d;
-    if (head) head.scale.setScalar(State.pinchScale);
-  }
+    if (head) head.scale.setScalar(State.pinchScale);,
+  },
 }, { passive: true });
 cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
 
@@ -2158,12 +2121,12 @@ cv.addEventListener('pointerup', () => {
     rootBody.dataset.runtimeProfile = next;
     State.profileOverride = next;
     if (window.ParticleKernel && eyePool) {
-      window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });
+      window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });,
     }
     window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: next });
-    resize();
+    resize();,
   }
-  lastTapT = now;
+  lastTapT = now;,
 }, { passive: true });
 
 // FA27 long-press mood demo (1400ms, distinct from 420ms STT trigger)
@@ -2181,10 +2144,10 @@ cv.addEventListener('pointerdown', () => {
       if (m === 'pass') State.bloom = 1.0;
       if (m === 'veto') State.fracture = 1.0;
       if (m === 'weary') State.rain = 1.0;
-      setTimeout(step, 1100);
+      setTimeout(step, 1100);,
     };
-    step();
-  }, 1400);
+    step();,
+  }, 1400);,
 });
 cv.addEventListener('pointerup', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
 cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
@@ -2195,8 +2158,8 @@ if ('getBattery' in navigator) {
     const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.013; else FACE_PIXEL_SIZE = 0.022; };
     check();
     b.addEventListener('levelchange', check);
-    b.addEventListener('chargingchange', check);
-  }).catch(() => {});
+    b.addEventListener('chargingchange', check);,
+  }).catch(() => {});,
 }
 
 // Speech / TTS runtime — concatenated into face.runtime.js by assets:build_face_runtime.
@@ -2207,7 +2170,6 @@ function initAudio() {
   if (actx) {
     if (actx.state === 'suspended') actx.resume().catch(() => {});
     return;
-  }
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     actx = window.__MASTER_AUDIO_PRIME__ || (Ctx ? new Ctx() : null);
@@ -2228,13 +2190,13 @@ function initAudio() {
     humOsc.type = 'sine'; humOsc.frequency.value = 40;
     humOsc.connect(ambientHumGain);
     ambientHumGain.connect(actx.destination);
-    humOsc.start();
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:init_audio", err); }
+    humOsc.start();,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:init_audio", err); },
 }
 function setAmbientHum(active) {
   if (!ambientHumGain || !actx) return;
   const target = active ? 0.03 : 0;
-  ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);
+  ambientHumGain.gain.setTargetAtTime(target, actx.currentTime, 0.5);,
 }
 
 function beep(freq, dur) {
@@ -2244,9 +2206,8 @@ function beep(freq, dur) {
   g.gain.setValueAtTime(0.08, actx.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
   o.connect(g); g.connect(actx.destination);
-  o.start(); o.stop(actx.currentTime + dur);
+  o.start(); o.stop(actx.currentTime + dur);,
 }
-
 
 const LOW_POWER = (/SMART[-_ ]?TV|SmartTV|Tizen|Web0?S|HbbTV|VIDAA|NetCast|BRAVIA|Sharp|TCL|Hisense|Vizio|Roku|AppleTV|HiSilicon|MTK|AMLogic/i.test(navigator.userAgent) || (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency < 4));
 const tts = { lanes: { error: [], nudge: [], response: [] }, queue: [], prefetch: new Map(), attempts: new Map(), meta: new Map(), retryTimer: null, muted: false, playing: false, paused: false, loading: false, cancelToken: 0, current: null, audio: null, visemeTimer: null, serverUnavailable: false, serverUnavailableUntil: 0, serverFailureCount: 0, synthInFlight: 0, analyser: null, analyserBuf: null, analyserFreqBuf: null, pitchOffset: 0, lang: 'en', resumeTime: null, resumeWordIndex: null };
@@ -2257,13 +2218,12 @@ const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '1') return true;
-    if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;
+    if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;,
   } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_live_read", err); }
   return !!window.MASTER_VOICE_POLICY?.stream_live_default;
-}
 function setTtsStreamLive(on) {
   try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_live_store", err); }
-  if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;
+  if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;,
 }
 function setTtsHealthStatus(msg, ttlMs = 8000) {
   const el = ttsLive || document.getElementById('tts-live');
@@ -2272,13 +2232,12 @@ function setTtsHealthStatus(msg, ttlMs = 8000) {
     delete el.dataset.health;
     if (!tts.loading && !tts.playing) el.textContent = '';
     return;
-  }
   el.textContent = msg;
   el.dataset.health = '1';
   clearTimeout(setTtsHealthStatus._timer);
   setTtsHealthStatus._timer = setTimeout(() => {
-    if (el.dataset.health === '1') setTtsHealthStatus('');
-  }, ttlMs);
+    if (el.dataset.health === '1') setTtsHealthStatus('');,
+  }, ttlMs);,
 }
 function emitTtsEvent(type, detail = {}) {
   const payload = { ...detail, type };
@@ -2286,23 +2245,21 @@ function emitTtsEvent(type, detail = {}) {
   if (window.MASTEREvents?.normalize && window.MASTEREvents?.dispatch) {
     window.MASTEREvents.dispatch(window.MASTEREvents.normalize(payload));
     return;
-  }
   window.MASTERVisual?.event?.(type, {
     topology: 'papua-mask',
     entropy: detail.entropy ?? 0.18,
     confidence: detail.confidence ?? 0.86,
     mode: detail.mode || type,
-    raw: payload
-  });
+    raw: payload,
+  });,
 }
 function _activeTtsVoice() {
   return TTS_DEFAULT_VOICE;
-}
 function _nextTtsVoice() { return _activeTtsVoice(); }
 const TTS_STYLE_KEY = 'master:tts_style';
 const TTS_STYLE_DEFAULT = 'auto';
 function _readStoredTtsStyle() {
-  try { return localStorage.getItem(TTS_STYLE_KEY) || TTS_STYLE_DEFAULT; } catch (_) { return TTS_STYLE_DEFAULT; }
+  try { return localStorage.getItem(TTS_STYLE_KEY) || TTS_STYLE_DEFAULT; } catch (_) { return TTS_STYLE_DEFAULT; },
 }
 window.MASTER_TTS_STYLE = _readStoredTtsStyle();
 State.ttsStyleLocked = window.MASTER_TTS_STYLE !== 'auto';
@@ -2312,21 +2269,19 @@ function _ttsStyleDecayRate(style) {
   if (/whispered|intimate|calm|ethereal/.test(s)) return 0.58;
   if (/energetic/.test(s)) return 0.75;
   return 0.82;
-}
 function _nextTtsStyle(_voice) {
   const locked = String(window.MASTER_TTS_STYLE || '').trim();
   if (locked && locked !== 'auto') return locked;
   const persona = window.MASTER_PERSONA || {};
   const style = String(persona.style || 'auto').trim();
   return style && style !== 'auto' ? style : TTS_STYLE_DEFAULT;
-}
 function syncTtsStyleUi() {
   const style = _nextTtsStyle();
   document.querySelectorAll('.style-chip').forEach((chip) => {
-    chip.classList.toggle('active', chip.dataset.style === style);
+    chip.classList.toggle('active', chip.dataset.style === style);,
   });
   const indicator = document.getElementById('tts-style-indicator');
-  if (indicator) indicator.textContent = style;
+  if (indicator) indicator.textContent = style;,
 }
 function setTtsStyle(style, opts = {}) {
   const next = String(style || '').trim().toLowerCase() || TTS_STYLE_DEFAULT;
@@ -2336,8 +2291,8 @@ function setTtsStyle(style, opts = {}) {
   syncTtsStyleUi();
   if (!opts.silent) {
     emitTtsEvent('tts:style:active', { style: next });
-    window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.22, confidence: 0.86, mode: next, style: next });
-  }
+    window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.22, confidence: 0.86, mode: next, style: next });,
+  },
 }
 syncTtsStyleUi();
 function preSpeechInhale(style) {
@@ -2347,15 +2302,15 @@ function preSpeechInhale(style) {
   if (mouthPool && K) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) + 0.28);
-    }
+      mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) + 0.28);,
+    },
   }
   if (eyePool && K) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + 0.15);
-    }
-  }
+      eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + 0.15);,
+    },
+  },
 }
 function _applyLocalPostSpeechDecay(decayRate) {
   const rate = Number.isFinite(Number(decayRate)) ? Number(decayRate) : 0.82;
@@ -2364,9 +2319,9 @@ function _applyLocalPostSpeechDecay(decayRate) {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.12, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * rate);
-    mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * rate);
+    mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.08, (mouthPool.cells[b + K.FIELD.pressure] || 0) * rate);,
   }
-  State.pulse = Math.max(0, (State.pulse || 0) * rate);
+  State.pulse = Math.max(0, (State.pulse || 0) * rate);,
 }
 function _parseTtsVisemeHeader(res) {
   const raw = res?.headers?.get?.('X-TTS-Visemes');
@@ -2374,14 +2329,12 @@ function _parseTtsVisemeHeader(res) {
   try {
     let plan;
     if (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 80) {
-      plan = JSON.parse(atob(raw));
+      plan = JSON.parse(atob(raw));,
     } else {
-      plan = JSON.parse(raw);
+      plan = JSON.parse(raw);,
     }
     return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || plan.viseme_plan || plan.viseme_hints || null);
-  } catch (_) {
-    return null;
-  }
+    return null;,
 }
 function _parseTtsMetaHeader(res) {
   const raw = res?.headers?.get?.('X-TTS-Meta');
@@ -2389,9 +2342,7 @@ function _parseTtsMetaHeader(res) {
   try {
     const text = (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 80) ? atob(raw) : raw;
     return JSON.parse(text);
-  } catch (_) {
-    return null;
-  }
+    return null;,
 }
 const EMOTION_HISTORY_KEY = 'master:emotion_history';
 const EMOTION_HISTORY_CAP = 50;
@@ -2407,8 +2358,7 @@ function pushEmotionHistory(entry) {
   bar.innerHTML = ring.slice(-20).map((e) => {
     const h = Math.max(3, Math.round((e.entropy ?? 0.2) * 18));
     return `<i data-mood="${e.mood || e.mode || 'idle'}" style="height:${h}px"></i>`;
-  }).join('');
-  window.MASTEREmotionHistory = ring;
+  window.MASTEREmotionHistory = ring;,
 }
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
@@ -2417,8 +2367,8 @@ window.addEventListener('master:visual', (ev) => {
     mode: d.mode || d.name || State.mode,
     entropy: d.entropy ?? State.entropy ?? 0.2,
     valence: d.expression?.valence ?? 0,
-    arousal: d.expression?.arousal ?? 0
-  });
+    arousal: d.expression?.arousal ?? 0,
+  });,
 });
 async function prefetchTtsPhraseBank() {
   if (!window.MASTER_RUNTIME?.enhancements?.includes?.('tts_phrase_bank')) return;
@@ -2430,9 +2380,9 @@ async function prefetchTtsPhraseBank() {
     phrases.slice(0, 6).forEach((row) => {
       const voice = guardVoice(row.voice) || _nextTtsVoice();
       const style = row.style || _nextTtsStyle(voice);
-      fetchTTS(row.text, voice, style);
-    });
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:prefetch_phrase_bank", err); }
+      fetchTTS(row.text, voice, style);,
+    });,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:prefetch_phrase_bank", err); },
 }
 function _quirkifyTts(text, voice, opts = {}) {
   if (!opts.quirky) return text;
@@ -2440,49 +2390,48 @@ function _quirkifyTts(text, voice, opts = {}) {
   const r = Math.random;
   if (voice === 'ezinne' && r() < 0.55) {
     const dim = ['uh... ', 'duh, ', 'hmm... me think... ', 'brain hurt. ', 'oh! oh! ', 'okay um... ', 'wait... what? ', 'ohhh, ', 'me confuse. ', 'numbers? me no like numbers. '];
-    text = dim[(r() * dim.length) | 0] + text;
+    text = dim[(r() * dim.length) | 0] + text;,
   }
   if (voice === 'ezinne' && r() < 0.4) {
-    text = text.replace(/\b(the|a|of|and|is|are|was|were)\b/gi, '').replace(/\s+/g, ' ').trim() + '. ugh.';
+    text = text.replace(/\b(the|a|of|and|is|are|was|were)\b/gi, '').replace(/\s+/g, ' ').trim() + '. ugh.';,
   }
   if (r() < 0.06) {
     const mid = Math.max(20, Math.floor(text.length * 0.55));
     const cut = text.indexOf(' ', mid);
     if (cut > 0 && cut < text.length - 8) {
       const fillers = ['... uh, wait — where was I? oh, right. ', '... hmm, lost my train of thought. ', '... um, sorry — anyway. '];
-      text = text.slice(0, cut) + fillers[(r() * fillers.length) | 0] + text.slice(cut + 1);
-    }
+      text = text.slice(0, cut) + fillers[(r() * fillers.length) | 0] + text.slice(cut + 1);,
+    },
   }
   if (r() < 0.08) {
     const m = text.match(/^(\w)(\w*)(.*)/s);
-    if (m && /[a-zA-Z]/.test(m[1])) text = `${m[1]}-${m[1]}-${m[1]}${m[2]}${m[3]}`;
+    if (m && /[a-zA-Z]/.test(m[1])) text = `${m[1]}-${m[1]}-${m[1]}${m[2]}${m[3]}`;,
   }
   if (r() < 0.05) {
     const laughs = ['ha ha. ', 'heh, ', 'ha. okay, ', 'pff, '];
-    text = laughs[(r() * laughs.length) | 0] + text;
+    text = laughs[(r() * laughs.length) | 0] + text;,
   }
   if (r() < 0.04) {
-    text = `... ${text}. sorry.`;
+    text = `... ${text}. sorry.`;,
   }
   if (r() < 0.05) {
     const mid = Math.floor(text.length * 0.4);
     const cut = text.indexOf(' ', mid);
-    if (cut > 0) text = text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1);
+    if (cut > 0) text = text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1);,
   }
   if (r() < 0.04) {
     const words = text.split(' ');
     for (let i = 0; i < words.length; i++) if (r() < 0.35 && words[i].length > 3) words[i] = words[i].split('').join("'");
-    text = words.join(' ') + " — sorry, mouth full.";
+    text = words.join(' ') + " — sorry, mouth full.";,
   }
   if (r() < 0.03) {
-    text = "wait — wait. okay. okay. *breathe* — " + text.replace(/\./g, "...") + " — sorry, panicking.";
+    text = "wait — wait. okay. okay. *breathe* — " + text.replace(/\./g, "...") + " — sorry, panicking.";,
   }
   if (r() < 0.18) {
     const fillers = ['uh, ', 'hmm, ', 'so, ', 'well, ', 'like, ', 'i mean, ', 'okay so, '];
-    text = fillers[(r() * fillers.length) | 0] + text;
+    text = fillers[(r() * fillers.length) | 0] + text;,
   }
   return text;
-}
 const TTS_FETCH_TIMEOUT_MS = 45000;
 const TTS_SYNTH_MAX = 2;
 const TTS_PREFETCH_MAX = 2;
@@ -2491,7 +2440,7 @@ let ttsPrefetchInFlight = 0;
 
 function setTTSLoading(loading) {
   tts.loading = !!loading;
-  rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';
+  rootBody.dataset.ttsLoading = tts.loading ? 'true' : 'false';,
 }
 
 function parsePersonaRate(rate) {
@@ -2500,17 +2449,14 @@ function parsePersonaRate(rate) {
   if (/%$/.test(text)) {
     const pct = parseFloat(text);
     return Number.isFinite(pct) ? Math.max(0.5, Math.min(2.0, 1 + (pct / 100))) : null;
-  }
   const value = parseFloat(text);
   return Number.isFinite(value) && value > 0 ? Math.max(0.5, Math.min(2.0, value)) : null;
-}
 
 function parsePersonaPitch(pitch) {
   const text = String(pitch || "").trim();
   if (!text) return null;
   const value = parseFloat(text);
   return Number.isFinite(value) ? value : null;
-}
 
 function applyPersonaAudioDefaults() {
   const persona = window.MASTER_PERSONA || {};
@@ -2520,14 +2466,14 @@ function applyPersonaAudioDefaults() {
   if (pitch != null) tts.pitchOffset = pitch;
   if (State.voiceName) setVoiceName(State.voiceName, { speakBlurb: false });
   else if (persona.voice) setVoiceName(persona.voice, { speakBlurb: false });
-  syncShareStateUrl();
+  syncShareStateUrl();,
 }
 applyPersonaAudioDefaults();
 prefetchTtsPhraseBank();
 
 function announceTTS(text) {
   if (!ttsLive) return;
-  ttsLive.textContent = text.toString().slice(0, 500);
+  ttsLive.textContent = text.toString().slice(0, 500);,
 }
 
 function ttsURL(text, voice, style) {
@@ -2537,13 +2483,12 @@ function ttsURL(text, voice, style) {
   if (voice) qs.set('voice', voice);
   if (State.ttsStyleLocked && resolvedStyle && resolvedStyle !== 'auto') {
     qs.set('style', resolvedStyle);
-    qs.set('style_locked', '1');
+    qs.set('style_locked', '1');,
   }
   if (State.voiceLocked) qs.set('voice_locked', '1');
   if (persona.tts_rate) qs.set('rate', String(persona.tts_rate));
   if (persona.tts_pitch) qs.set('pitch', String(persona.tts_pitch));
   return `/chat/tts?${qs.toString()}`;
-}
 
 async function ttsCacheKey(text, voice, style) {
   if (!window.crypto || !crypto.subtle || !window.TextEncoder) return null;
@@ -2551,7 +2496,6 @@ async function ttsCacheKey(text, voice, style) {
   const material = `${voice || TTS_DEFAULT_VOICE}|${style || 'auto'}|${persona.tts_rate || ''}|${persona.tts_pitch || ''}|${text}`;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 function openTTSDB() {
   if (!window.indexedDB) return Promise.resolve(null);
@@ -2560,14 +2504,13 @@ function openTTSDB() {
     const req = indexedDB.open(TTS_DB_NAME, 1);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(TTS_STORE)) db.createObjectStore(TTS_STORE);
+      if (!db.objectStoreNames.contains(TTS_STORE)) db.createObjectStore(TTS_STORE);,
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => resolve(null);
-    req.onblocked = () => resolve(null);
+    req.onblocked = () => resolve(null);,
   });
   return ttsDBPromise;
-}
 
 async function readCachedTTS(key) {
   const db = await openTTSDB();
@@ -2576,8 +2519,8 @@ async function readCachedTTS(key) {
     const tx = db.transaction(TTS_STORE, 'readonly');
     const req = tx.objectStore(TTS_STORE).get(key);
     req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => resolve(null);
-  });
+    req.onerror = () => resolve(null);,
+  });,
 }
 
 async function writeCachedTTS(key, blob) {
@@ -2585,8 +2528,8 @@ async function writeCachedTTS(key, blob) {
   if (!db || !key || !blob) return;
   try {
     const tx = db.transaction(TTS_STORE, 'readwrite');
-    tx.objectStore(TTS_STORE).put(blob, key);
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:write_cached_tts", err); }
+    tx.objectStore(TTS_STORE).put(blob, key);,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:write_cached_tts", err); },
 }
 
 function latchTtsRateLimit(res) {
@@ -2595,7 +2538,7 @@ function latchTtsRateLimit(res) {
   tts.serverUnavailable = true;
   tts.serverUnavailableUntil = Date.now() + retryAfter;
   tts.prefetch.clear();
-  setTtsHealthStatus(`tts: waiting ${Math.ceil(retryAfter / 1000)}s (rate limit)`);
+  setTtsHealthStatus(`tts: waiting ${Math.ceil(retryAfter / 1000)}s (rate limit)`);,
 }
 async function loadTTSBlob(text, voice, style) {
   if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');
@@ -2604,7 +2547,7 @@ async function loadTTSBlob(text, voice, style) {
   if (cached) return cached;
   while ((tts.synthInFlight || 0) >= TTS_SYNTH_MAX) {
     await new Promise((resolve) => setTimeout(resolve, 40));
-    if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');
+    if (tts.serverUnavailable && Date.now() < (tts.serverUnavailableUntil || 0)) throw new Error('429');,
   }
   tts.synthInFlight = (tts.synthInFlight || 0) + 1;
   const controller = new AbortController();
@@ -2617,14 +2560,12 @@ async function loadTTSBlob(text, voice, style) {
       if (!job) throw new Error('tts pending without job');
       if (window.MASTER_RUNTIME?.enhancements?.includes?.('tts_stream_chunk')) {
         const early = _parseTtsVisemeHeader(res);
-        if (early) forwardEarlyVisemePlan(early);
+        if (early) forwardEarlyVisemePlan(early);,
       }
       return pollTTSJob(job, controller.signal);
-    }
     if (res.status === 429) {
       latchTtsRateLimit(res);
       throw new Error('429');
-    }
     if (!res.ok) throw new Error(res.status);
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
@@ -2632,19 +2573,17 @@ async function loadTTSBlob(text, voice, style) {
     const blob = await res.blob();
     writeCachedTTS(key, blob);
     return blob;
-  } catch (e) {
     clearTimeout(timer);
     throw e;
-  } finally {
-    tts.synthInFlight = Math.max(0, (tts.synthInFlight || 0) - 1);
-  }
+    tts.synthInFlight = Math.max(0, (tts.synthInFlight || 0) - 1);,
+  },
 }
 
 function forwardEarlyVisemePlan(visemes) {
   if (!visemes?.length) return;
   tts.visemePlan = visemes;
   window.dispatchEvent(new CustomEvent('tts:viseme:plan', { detail: { viseme_plan: visemes, frames: visemes } }));
-  if (typeof startVisemeAnim === 'function' && tts.current) startVisemeAnim(tts.current);
+  if (typeof startVisemeAnim === 'function' && tts.current) startVisemeAnim(tts.current);,
 }
 
 async function tryPartialTTSPlay(job, bytes) {
@@ -2663,8 +2602,8 @@ async function tryPartialTTSPlay(job, bytes) {
     partial.volume = Math.min(1, (tts.volume || 1) * 0.85);
     partial.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
     partial.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
-    if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));
-  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_partial", err); }
+    if (!tts.playing) partial.play().catch(() => URL.revokeObjectURL(url));,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_partial", err); },
 }
 
 async function pollTTSJob(job, signal) {
@@ -2684,37 +2623,34 @@ async function pollTTSJob(job, signal) {
       if (streamChunk) {
         const visemes = _parseTtsVisemeHeader(res) || _parseTtsMetaHeader(res)?.viseme_plan;
         if (visemes) forwardEarlyVisemePlan(visemes);
-        emitTtsEvent('tts:chunk:wait', { job, attempt });
+        emitTtsEvent('tts:chunk:wait', { job, attempt });,
       }
       if (audioStream) {
         const avail = Number(res.headers.get('X-TTS-Bytes') || 0);
-        if (avail > 0) tryPartialTTSPlay(job, avail);
+        if (avail > 0) tryPartialTTSPlay(job, avail);,
       }
-      continue;
+      continue;,
     }
     if (res.status === 429) {
       latchTtsRateLimit(res);
       await new Promise((resolve) => setTimeout(resolve, Math.min(15000, (tts.serverUnavailableUntil || 0) - Date.now() || 5000)));
-      continue;
+      continue;,
     }
     if (!res.ok) throw new Error(res.status);
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
     return res.blob();
-  }
   throw new Error('tts timeout');
-}
 
 function buildRoomIR(ctx) {
   const sr = ctx.sampleRate, len = Math.floor(sr * 0.28);
   const ir = ctx.createBuffer(2, len, sr);
   for (let ch = 0; ch < 2; ch++) {
     const d = ir.getChannelData(ch);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4.2);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4.2);,
   }
   return ir;
-}
 
 async function connectTTSAudio(audio, boostValue = 1.35) {
   if (LOW_POWER) return;
@@ -2750,19 +2686,18 @@ async function connectTTSAudio(audio, boostValue = 1.35) {
   tts.analyser = analyser;
   tts.outputGain = masterGain;
   tts.analyserBuf = new Uint8Array(analyser.fftSize);
-  tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);
+  tts.analyserFreqBuf = new Uint8Array(analyser.frequencyBinCount);,
 }
 
 function hasAnalyserBuffers() {
   return !!(tts.playing && tts.analyser && tts.analyserBuf && tts.analyserFreqBuf);
-}
 
 function finishTTSPlayback(src, continueQueue = true) {
   const finishedText = tts.current || tts.lastText || '';
   const style = State.currentSpeechStyle || _nextTtsStyle();
   const decay_rate = _ttsStyleDecayRate(style);
   if (tts.playing || finishedText) {
-    emitTtsEvent('tts:playback:end', { text: finishedText, interrupted: !continueQueue, backend: 'edge', style, decay_rate });
+    emitTtsEvent('tts:playback:end', { text: finishedText, interrupted: !continueQueue, backend: 'edge', style, decay_rate });,
   }
   _applyLocalPostSpeechDecay(decay_rate);
   tts.visemePlan = null;
@@ -2781,7 +2716,7 @@ function finishTTSPlayback(src, continueQueue = true) {
   if (ttsLive) ttsLive.textContent = '';
   if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause or resume'); }
   tts.current = null;
-  if (continueQueue) ttsTick();
+  if (continueQueue) ttsTick();,
 }
 
 function fetchTTS(text, voice, style) {
@@ -2793,7 +2728,7 @@ function fetchTTS(text, voice, style) {
   const p = loadTTSBlob(text, voice || meta.voice, style || meta.style)
     .catch(() => null)
     .finally(() => { ttsPrefetchInFlight = Math.max(0, ttsPrefetchInFlight - 1); });
-  tts.prefetch.set(text, p);
+  tts.prefetch.set(text, p);,
 }
 const PARALINGUISTIC_RE = /\[(chuckle|sigh|laugh|cough)\]/i;
 function applyParalinguisticState(text) {
@@ -2803,31 +2738,28 @@ function applyParalinguisticState(text) {
   if (tag === 'chuckle' || tag === 'laugh') {
     State.laughter = Math.min(1, (State.laughter || 0) + 0.65);
     rootBody.dataset.laughter = '1';
-    setTimeout(() => { delete rootBody.dataset.laughter; State.laughter = 0; }, 2400);
+    setTimeout(() => { delete rootBody.dataset.laughter; State.laughter = 0; }, 2400);,
   }
   if (tag === 'sigh') {
     State.breath = Math.max(0.45, (State.breath || 1) * 0.72);
-    State.mood = 'weary';
-  }
+    State.mood = 'weary';,
+  },
 }
 
 function dropQueuedSpeech(text) {
   const index = tts.queue.indexOf(text);
-  if (index >= 0) tts.queue.splice(index, 1);
+  if (index >= 0) tts.queue.splice(index, 1);,
 }
 
 function nextQueuedSpeech() {
   return tts.lanes.error[0] || tts.lanes.nudge[0] || tts.lanes.response[0] || tts.queue[0];
-}
 
 function dequeueTtsLane() {
   const text = tts.lanes.error.shift() || tts.lanes.nudge.shift() || tts.lanes.response.shift();
   if (text) {
     dropQueuedSpeech(text);
     return text;
-  }
   return tts.queue.shift();
-}
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
@@ -2862,7 +2794,7 @@ function enqueueSpeech(text, opts = {}) {
   tts.lanes[lane].push(decorated);
   tts.queue.push(decorated);
   nodImpulse += 0.022;
-  ttsTick();
+  ttsTick();,
 }
 
 function requeueChunk(text) {
@@ -2872,17 +2804,15 @@ function requeueChunk(text) {
   tts.attempts.set(text, n);
   tts.queue.unshift(text);
   return true;
-}
 function scheduleTtsTick(delay) {
   if (tts.retryTimer) clearTimeout(tts.retryTimer);
-  tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
+  tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);,
 }
 
 function highQualityVoiceEnabled() {
   if (new URLSearchParams(window.location.search).get('hq_voice') === '1') return true;
   try { return localStorage.getItem('master:voice-mode-hq') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_read", err); }
   return false;
-}
 function browserTtsFallbackAllowed() {
   // Inside Voice Mode, browser speechSynthesis is the deliberate default
   // (instant, zero server load) rather than an opt-in fallback — the VPS's
@@ -2893,7 +2823,6 @@ function browserTtsFallbackAllowed() {
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
-}
 function speakWithBrowserTTS(text, token) {
   if (!browserTtsFallbackAllowed()) return false;
   if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
@@ -2903,7 +2832,7 @@ function speakWithBrowserTTS(text, token) {
   utterance.onstart = () => {
     emitTtsEvent('tts:playback:start', { text, backend: 'browser', duration: null });
     startVisemeAnim(text);
-    setTTSLoading(false);
+    setTTSLoading(false);,
   };
   utterance.onend = utterance.onerror = () => {
     if (token !== tts.cancelToken) return;
@@ -2915,15 +2844,13 @@ function speakWithBrowserTTS(text, token) {
     tts.current = null;
     if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
     if (State.mode === 'speaking') State.mode = 'idle';
-    ttsTick();
+    ttsTick();,
   };
   try {
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
     return true;
-  } catch (_) {
-    return false;
-  }
+    return false;,
 }
 
 function ttsTick() {
@@ -2934,7 +2861,7 @@ function ttsTick() {
   tts.playing = true;
   const token = ++tts.cancelToken;
   setTTSLoading(true);
-  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+  if (actx?.state === 'suspended') actx.resume().catch(() => {});
   if (tts.watchdog) clearTimeout(tts.watchdog);
   // The watchdog arms BEFORE the blob fetch, so its timeout must cover the
   // whole synthesis queue wait (pollTTSJob is allowed ~3 minutes on the
@@ -2976,7 +2903,7 @@ function ttsTick() {
       const t = setTimeout(() => resolve(null), 280);
       audio.onloadedmetadata = () => { clearTimeout(t); resolve(audio.duration); };
       audio.onerror = () => { clearTimeout(t); resolve(null); };
-      audio.load();
+      audio.load();,
     });
     if (token !== tts.cancelToken) { URL.revokeObjectURL(src); return; }
     audio.playbackRate = LOW_POWER ? 1.0 : baseRate;
@@ -2990,11 +2917,11 @@ function ttsTick() {
       startVisemeAnim(text);
       if (navigator.vibrate) navigator.vibrate([35, 55, 35]);
       rootBody.dataset.ttsWave = 'true';
-      preSpeechInhale(style);
+      preSpeechInhale(style);,
     };
     audio.onended = audio.onerror = () => finishTTSPlayback(src);
     connectTTSAudio(audio).catch(() => {});
-    audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });
+    audio.play().catch(() => { requeueChunk(text); finishTTSPlayback(src); });,
   }
 
   edgeBlob
@@ -3016,12 +2943,12 @@ function ttsTick() {
         setTimeout(() => {
           rootBody.dataset.ttsError = '';
           if (s.textContent === 'tts fail') s.textContent = '';
-          if (errLive?.textContent === 'speech unavailable') errLive.textContent = '';
-        }, 2500);
+          if (errLive?.textContent === 'speech unavailable') errLive.textContent = '';,
+        }, 2500);,
       }
       const retryMs = Math.max(800, (tts.serverUnavailableUntil || 0) - Date.now() || 0);
-      if (token === tts.cancelToken) scheduleTtsTick(retryMs);
-    });
+      if (token === tts.cancelToken) scheduleTtsTick(retryMs);,
+    });,
 }
 
 function ttsTogglePause() {
@@ -3029,24 +2956,23 @@ function ttsTogglePause() {
   if (tts.audio.paused) {
     if (tts.resumeTime != null && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
       const seek = Math.max(0, Math.min(tts.audio.duration, tts.resumeTime));
-      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:seek_resume", err); }
+      try { tts.audio.currentTime = seek; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:seek_resume", err); },
     }
     tts.audio.play().catch(() => {});
     tts.paused = false;
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
     return;
-  }
   if (typeof tts.audio.currentTime === 'number' && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
     const text = tts.lastText || '';
     const words = text.split(/\s+/).filter(Boolean);
     const ratio = Math.max(0, Math.min(1, tts.audio.currentTime / tts.audio.duration));
     const idx = words.length ? Math.max(0, Math.min(words.length - 1, Math.floor(ratio * words.length))) : 0;
     tts.resumeWordIndex = idx;
-    tts.resumeTime = words.length ? (idx / words.length) * tts.audio.duration : tts.audio.currentTime;
+    tts.resumeTime = words.length ? (idx / words.length) * tts.audio.duration : tts.audio.currentTime;,
   }
   tts.audio.pause();
   tts.paused = true;
-  if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); }
+  if (spinBtn) { spinBtn.textContent = '▶'; spinBtn.setAttribute('aria-label', 'Resume current response'); },
 }
 
 (function pollDeployHealth() {
@@ -3056,12 +2982,12 @@ function ttsTogglePause() {
       .then((body) => {
         if (!body) return;
         if (body.deploy?.tts_socket === false) setTtsHealthStatus('tts: socket down', 12000);
-        else if (body.checks?.tts === false) setTtsHealthStatus('tts: unavailable', 12000);
+        else if (body.checks?.tts === false) setTtsHealthStatus('tts: unavailable', 12000);,
       })
-      .catch(() => {});
+      .catch(() => {});,
   };
   refresh();
-  setInterval(refresh, 60000);
+  setInterval(refresh, 60000);,
 })();
 
 window.MASTER_SPEECH_RUNTIME = Object.freeze({
@@ -3089,14 +3015,14 @@ function setViseme(ch) {
   const previous = State.viseme;
   State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
   State.visemeAmp = 1.0;
-  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
+  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });,
 }
 
 function clearViseme() {
   const previous = State.viseme;
   State.viseme = 'neutral';
   State.visemeAmp = 0;
-  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
+  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });,
 }
 
 function startVisemeAnim(text) {
@@ -3112,11 +3038,10 @@ function startVisemeAnim(text) {
         const amp = Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1;
         State.viseme = shape;
         State.visemeAmp = amp;
-        emitTtsEvent('tts:viseme', { shape, amp });
-      }, at);
+        emitTtsEvent('tts:viseme', { shape, amp });,
+      }, at);,
     });
     return;
-  }
   const words = text.split(/\s+/);
   let lastWordIdx = -1;
   let i = 0;
@@ -3132,14 +3057,14 @@ function startVisemeAnim(text) {
         lastWordIdx = wIdx;
         const from = Math.max(0, wIdx - 2);
         const to = Math.min(words.length, wIdx + 3);
-        ttsLive.textContent = words.slice(from, to).join(' ');
-      }
-    }
-  }, VISEME_STEP_MS);
+        ttsLive.textContent = words.slice(from, to).join(' ');,
+      },
+    },
+  }, VISEME_STEP_MS);,
 }
 
 function stopVisemeAnim() {
-  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
+  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; },
 }
 
 window.MASTER_SPEECH_PLAYBACK = Object.freeze({
@@ -3168,10 +3093,10 @@ function fadeTtsAudio(ms = 80) {
       if (gain && actx) gain.gain.setValueAtTime(Math.max(0, v), actx.currentTime);
       else audio.volume = Math.max(0, v);
       if (step >= steps) resolve();
-      else setTimeout(tick, stepMs);
+      else setTimeout(tick, stepMs);,
     };
-    tick();
-  });
+    tick();,
+  });,
 }
 function ttsSkipHard() {
   tts.cancelToken++;
@@ -3187,24 +3112,23 @@ function ttsSkipHard() {
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
   if (State.mode === 'speaking') State.mode = 'idle';
-  emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });
+  emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });,
 }
 function ttsSkip() {
   if (tts.audio && !tts.audio.paused) {
     fadeTtsAudio(80).then(() => ttsSkipHard());
     return;
-  }
-  ttsSkipHard();
+  ttsSkipHard();,
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
   if (tts.muted) ttsSkip();
-  beep(tts.muted ? 220 : 880, 0.05);
+  beep(tts.muted ? 220 : 880, 0.05);,
 }
 
 function ttsToggleMic() {
   if (State.sttActive) stopSTT();
-  else startSTT();
+  else startSTT();,
 }
 
 function wakeFromSleep() {
@@ -3212,10 +3136,10 @@ function wakeFromSleep() {
   State.sleeping = false;
   if (State.sleepMuted) {
     State.sleepMuted = false;
-    ttsToggleMute();
+    ttsToggleMute();,
   }
   rootBody.style.opacity = '';
-  delete rootBody.dataset.sleeping;
+  delete rootBody.dataset.sleeping;,
 }
 
 function enterSleep() {
@@ -3224,7 +3148,7 @@ function enterSleep() {
   if (!tts.muted) ttsToggleMute();
   State.sleeping = true;
   rootBody.dataset.sleeping = '1';
-  rootBody.style.opacity = '0.05';
+  rootBody.style.opacity = '0.05';,
 }
 
 function flashViolation() {
@@ -3232,7 +3156,7 @@ function flashViolation() {
   applyShake(0.8);
   State.mode = 'error';
   rootBody.dataset.violationFlash = '1';
-  setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);
+  setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);,
 }
 
 function cancelStream() {
@@ -3240,7 +3164,7 @@ function cancelStream() {
   window._chatCancel?.();
   ttsSkip();
   State.mode = 'idle';
-  State.flash = 0.2;
+  State.flash = 0.2;,
 }
 
 // Voice Mode: continuous hands-free conversation loop (one tap in, spoken
@@ -3252,7 +3176,6 @@ function wakeWordEnabled() {
   if (new URLSearchParams(window.location.search).get('wake_word') === '1') return true;
   try { return localStorage.getItem('master:wake-word') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_word_enabled_read", err); }
   return false;
-}
 // Guards the re-arm loop against a tight onend/onstart cycle (seen on iOS
 // Safari, which frequently drops `continuous` recognition after one
 // utterance) draining battery/CPU forever with no speech ever detected.
@@ -3269,7 +3192,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;,
     }
     if (State.wakeArmed && !State.voiceMode) {
       const heard = (final || interim).trim();
@@ -3278,10 +3201,9 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
         State.sttActive = false;
         try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
-        enterVoiceMode({ fromWake: true });
+        enterVoiceMode({ fromWake: true });,
       }
       return;
-    }
     if (final.trim()) {
       sttPartial = '';
       if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
@@ -3292,7 +3214,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       _voiceModeRearmFails = 0;
       sendMessage(heard);
       return;
-    }
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
@@ -3302,10 +3223,10 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
           try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
           if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
           _voiceModeRearmFails = 0;
-          sendMessage(t2);
-        }
-      }, 1200);
-    }
+          sendMessage(t2);,
+        },
+      }, 1200);,
+    },
   };
   recognition.onend = () => {
     State.sttActive = false; State.sttDuck = 0;
@@ -3316,29 +3237,27 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       if (_voiceModeRearmFails >= 5) {
         exitVoiceMode({ reason: 'unreliable' });
         return;
-      }
       setTimeout(() => { if (State.voiceMode) startSTT(); }, 50);
       return;
-    }
     if (State.wakeArmed) {
-      setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);
-    }
+      setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);,
+    },
   };
-  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };,
 }
 
 function startWakeListening() {
   if (!recognition || State.sttActive || State.voiceMode) return;
   State.wakeArmed = true;
-  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); }
+  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); },
 }
 function armWakeWord() {
   if (!recognition || !wakeWordEnabled() || State.voiceMode) return;
-  startWakeListening();
+  startWakeListening();,
 }
 function disarmWakeWord() {
   State.wakeArmed = false;
-  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } }
+  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } },
 }
 
 function enterVoiceMode(opts = {}) {
@@ -3349,7 +3268,7 @@ function enterVoiceMode(opts = {}) {
   rootBody.dataset.voiceMode = '1';
   if (uiStatus) uiStatus.textContent = 'voice mode — say "stop listening" to exit';
   if (!opts.fromWake) beep(1100, 0.05);
-  startSTT();
+  startSTT();,
 }
 function exitVoiceMode(opts = {}) {
   if (!State.voiceMode) return;
@@ -3358,18 +3277,18 @@ function exitVoiceMode(opts = {}) {
   stopSTT();
   if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
   beep(660, 0.05);
-  armWakeWord();
+  armWakeWord();,
 }
 function toggleVoiceMode() {
-  if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
+  if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();,
 }
 function boostEyeAttention(delta = 0.25) {
   const K = window.ParticleKernel;
   if (!eyePool || !K) return;
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);
-  }
+    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);,
+  },
 }
 
 function startSTT() {
@@ -3386,16 +3305,16 @@ function startSTT() {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
       mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * 0.35);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);
-    }
+      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);,
+    },
   }
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); }
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); },
 }
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
-  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); },
 }
 
 let evtSrc = null;
@@ -3407,14 +3326,14 @@ function showStage(label, ms = 1200) {
   uiStatus.style.opacity = "1";
   if (stageTimer) clearTimeout(stageTimer);
   stageTimer = setTimeout(() => {
-    if (uiStatus.textContent === label) uiStatus.textContent = "";
-  }, ms);
+    if (uiStatus.textContent === label) uiStatus.textContent = "";,
+  }, ms);,
 }
 
 function clearThinkingAloud() {
   if (!thinkingAloudTimer) return;
   clearTimeout(thinkingAloudTimer);
-  thinkingAloudTimer = null;
+  thinkingAloudTimer = null;,
 }
 
 function scheduleThinkingAloud(stage = "thinking") {
@@ -3423,12 +3342,12 @@ function scheduleThinkingAloud(stage = "thinking") {
   // it competed with real replies in the serial TTS queue and, on slow
   // turns, was the most-heard utterance ("it only says scanning"). The
   // visual status (showStage) still shows progress silently. The timer
-  // machinery stays so clearThinkingAloud callers remain valid.
+  // machinery stays so clearThinkingAloud callers remain valid.,
 }
 
 function speakFailure(reason = "Sorry, I hit a snag.") {
   announceTTS(reason);
-  if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });
+  if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });,
 }
 
 function handleFaceNamedEvent(event, data) {
@@ -3437,7 +3356,6 @@ function handleFaceNamedEvent(event, data) {
     const kind = raw.trim() || (data && typeof data === 'object' ? data.kind : '');
     if (kind === 'listing') window._streamContentKind = 'listing';
     return true;
-  }
   if (event === 'mood') {
     const m = raw.trim();
     if (!m) return true;
@@ -3449,7 +3367,6 @@ function handleFaceNamedEvent(event, data) {
     if (live) live.textContent = 'mood: ' + m;
     syncShareStateUrl();
     return true;
-  }
   if (event === 'model') {
     const m = raw.trim();
     if (!m) return true;
@@ -3460,15 +3377,15 @@ function handleFaceNamedEvent(event, data) {
       const K = window.ParticleKernel;
       for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
         const b = i * K.FIELDS_PER_CELL;
-        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);,
       }
       setTimeout(() => {
         if (!mouthPool) return;
         for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
           const b = i * K.FIELDS_PER_CELL;
-          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
-        }
-      }, 1000);
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);,
+        },
+      }, 1000);,
     }
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
@@ -3477,7 +3394,6 @@ function handleFaceNamedEvent(event, data) {
     const live = document.getElementById('mood-live');
     if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
     return true;
-  }
   if (event === 'verdict') {
     const v = raw.trim();
     if (TINT[v]) fadeColorTo(TINT[v]);
@@ -3487,21 +3403,20 @@ function handleFaceNamedEvent(event, data) {
     if (v === 'pass') {
       beep(880, 0.06);
       morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-      State.bloom = 1.0;
+      State.bloom = 1.0;,
     }
     if (v === 'veto') {
       beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); },
     }
     const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
     if (v === 'pass') tally.pass += 1;
     if (v === 'veto') tally.veto += 1;
     if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
     return true;
-  }
   if (event === 'council:speech') {
     try {
       const payload = JSON.parse(raw || '{}');
@@ -3509,36 +3424,32 @@ function handleFaceNamedEvent(event, data) {
       if (persona) {
         rootBody.dataset.councilPersona = persona;
         applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;,
       }
       if (lane) offsetCouncilMouthPool?.(lane, 0.22);
       if (plan?.length) tts.visemePlan = plan;
       if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
       if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });,
       }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-      }, 8000);
+        if (uiStatus?.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';,
+      }, 8000);,
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
     return true;
-  }
   if (event === 'confidence') {
     const c = parseFloat(raw); if (!isNaN(c)) State.confidence = c;
     return true;
-  }
   if (event === 'felt') {
     try {
       const payload = JSON.parse(raw || '{}');
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;,
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:felt_event", err); }
     return true;
-  }
   return false;
-}
 
 let _welcomeGreetingSent = false;
 const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 3-4 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Briefly mention your real capabilities: constitutional self-governing reasoning, live two-way voice conversation, an animated face, coding and tool use, and multi-persona council deliberation for hard questions. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, or headers.";
@@ -3549,29 +3460,28 @@ function sendWelcomeGreeting() {
   window.MASTERChat.startChatStream({
     message: WELCOME_GREETING_PROMPT,
     state: window.collectFeltState?.() || '',
-    preEnhanced: true
+    preEnhanced: true,
   }, {
     onMessage: (rawData) => {
       const raw = rawData || '';
       if (raw.length < 200 && raw.startsWith('{')) {
-        try { const parsed = JSON.parse(raw); if (parsed && parsed.type === 'trace') return; } catch (_) { /* not JSON */ }
+        try { const parsed = JSON.parse(raw); if (parsed?.type === 'trace') return; } catch (_) { /* not JSON */ },
       }
       if (raw === '[DONE]') {
         if (pending.trim()) {
           tts.lastText = pending.trim();
-          flushStreamTts(pending, { prependTimestamp: false });
+          flushStreamTts(pending, { prependTimestamp: false });,
         }
         window._chatOnDone?.();
         return;
-      }
       if (raw.startsWith('ERROR:')) { window._chatOnError?.(); return; }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       window._chatOnChunk?.(chunk);
-      pending += chunk;
+      pending += chunk;,
     },
     onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data),
-    onError: () => {}
-  }).catch((err) => { window.MASTER_LOG?.warn?.("face_runtime:welcome_greeting", err); });
+    onError: () => {},
+  }).catch((err) => { window.MASTER_LOG?.warn?.("face_runtime:welcome_greeting", err); });,
 }
 
 let _firstChatSent = false;
@@ -3586,7 +3496,7 @@ async function sendMessage(text) {
   window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });
   if (navigator.vibrate) navigator.vibrate(30);
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
-      if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
+      if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;,
   }
   if (/^wow!?$/i.test(trimmed)) {
     State.mode = 'pass';
@@ -3595,7 +3505,6 @@ async function sendMessage(text) {
     applyShake(0.45);
     State.pulse = Math.max(State.pulse || 0, 0.85);
     return;
-  }
   if (/^\/sleep$/i.test(trimmed)) { enterSleep(); faceMat.uniforms.uIdleDrift.value = 0.02; return; }
   if (/^\/wake$/i.test(trimmed)) { wakeFromSleep(); return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
@@ -3612,25 +3521,22 @@ async function sendMessage(text) {
   if (streamToggle) {
     setTtsStreamLive(streamToggle[1].toLowerCase() === 'on');
     return;
-  }
   const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
   if (voiceMatch) {
     if (window.MASTER_VOICE_POLICY?.persona_affects_text_only && voiceMatch[1].toLowerCase() !== 'last') {
       if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
       if (uiStatus) {
         const style = _nextTtsStyle();
-        uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;
+        uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;,
       }
       return;
-    }
     setVoiceName(voiceMatch[1]);
     if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
     if (uiStatus) {
       const style = _nextTtsStyle();
-      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;
+      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;,
     }
     return;
-  }
   if (/^\/whoami$/i.test(trimmed)) {
     const summary = window.MASTER_SOUL_SUMMARY || "persona anchor; voice nb-NO-PernilleNeural; constitutional face";
     if (uiStatus) uiStatus.textContent = "whoami…";
@@ -3638,7 +3544,6 @@ async function sendMessage(text) {
     window._chatOnChunk?.(summary);
     window._chatOnDone?.();
     return;
-  }
   if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
@@ -3651,8 +3556,8 @@ async function sendMessage(text) {
     if (data.changed && data.enhanced && data.enhanced !== text) {
       const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
       preEnhanced = chosen === data.enhanced;
-      finalText = chosen;
-    }
+      finalText = chosen;,
+    },
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:enhance_message", err); }
 
   tts.lang = detectLang(text);
@@ -3666,7 +3571,7 @@ async function sendMessage(text) {
   const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
   if (!_firstChatSent) {
     _firstChatSent = true;
-    window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
+    window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });,
   }
   if (window.MASTERChat?.startChatStream) {
     const imageToken = window._imageToken || null;
@@ -3676,7 +3581,7 @@ async function sendMessage(text) {
     const stallTimer = setTimeout(() => {
       rootBody.dataset.networkStall = '1';
       window._chatOnDmesg?.('link thinking');
-      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);,
     }, 4000);
     const onMessage = (rawData) => {
       const raw = rawData || '';
@@ -3685,13 +3590,13 @@ async function sendMessage(text) {
       if (raw.length < 200 && raw.startsWith('{')) {
         try {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.type === 'trace') return;
-        } catch (_) { /* not JSON, fall through to normal content handling */ }
+          if (parsed?.type === 'trace') return;,
+        } catch (_) { /* not JSON, fall through to normal content handling */ },
       }
       if (raw === '[DONE]') {
         if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
           tts.lastText = pending.trim();
-          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });,
         }
         pending = '';
         State.mode = 'idle';
@@ -3700,7 +3605,6 @@ async function sendMessage(text) {
         if (navigator.vibrate) navigator.vibrate([60]);
         window._chatOnDone?.();
         return;
-      }
       if (raw.startsWith('ERROR:')) {
         window._chatOnChunk?.(`\n${raw}\n`);
         State.mode = 'error'; State.flash = 1; applyShake(0.8);
@@ -3710,23 +3614,22 @@ async function sendMessage(text) {
         speakFailure("Sorry, I hit a snag.");
         window._chatOnError?.();
         return;
-      }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       clearThinkingAloud();
-      if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+      if (uiStatus?.textContent !== "speaking…") showStage("speaking…", 900);
       window._chatOnChunk?.(chunk);
       pending += chunk;
       totalTTSChars += chunk.length;
       State.pulse = Math.min(0.6, State.pulse + 0.05);
       if (window._streamContentKind === 'listing') ttsSuppressed = true;
       if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
-      if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
+      if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);,
     };
     window.MASTERChat.startChatStream({
       message: finalText,
       state: window.collectFeltState?.() || feltFallback,
       preEnhanced,
-      imageToken
+      imageToken,
     }, {
       onMessage,
       onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
@@ -3737,11 +3640,10 @@ async function sendMessage(text) {
         clearThinkingAloud();
         window._chatOnDmesg?.('link quiet');
         window._chatOnError?.('stream interrupted');
-        speakFailure("Sorry, I hit a snag.");
-      }
+        speakFailure("Sorry, I hit a snag.");,
+      },
     }).catch(() => {});
     return;
-  }
   const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
   const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
@@ -3752,7 +3654,7 @@ async function sendMessage(text) {
   let _stallTimer = setTimeout(() => {
     rootBody.dataset.networkStall = '1';
     window._chatOnDmesg?.('link thinking');
-    State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+    State.breath = Math.max(0.5, (State.breath || 1) * 0.7);,
   }, 4000);
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
@@ -3769,19 +3671,19 @@ async function sendMessage(text) {
     if (raw.length < 200 && raw.startsWith('{')) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.type === 'trace') return;
-      } catch (_) { /* not JSON, fall through to normal content handling */ }
+        if (parsed?.type === 'trace') return;,
+      } catch (_) { /* not JSON, fall through to normal content handling */ },
     }
     if (raw === '[DONE]') {
       if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
-        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });,
       }
       if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
         rootBody.dataset.uncertain = '1';
         State.questionPulse = 1.0;
         State.surpriseY = Math.max(State.surpriseY || 0, 0.4);
-        setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);
+        setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);,
       }
       pending = '';
       State.mode = 'idle';
@@ -3791,7 +3693,6 @@ async function sendMessage(text) {
       try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_done_close", err); }
       window._chatOnDone?.();
       return;
-    }
     if (raw.startsWith('ERROR:')) {
       window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; applyShake(0.8);
@@ -3801,21 +3702,20 @@ async function sendMessage(text) {
       speakFailure("Sorry, I hit a snag.");
       window._chatOnError?.();
       return;
-    }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
     clearThinkingAloud();
-    if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
+    if (uiStatus?.textContent !== "speaking…") showStage("speaking…", 900);
     window._chatOnChunk?.(chunk);
     pending += chunk;
     totalTTSChars += chunk.length;
     State.pulse = Math.min(0.6, State.pulse + 0.05);
     if (window._streamContentKind === 'listing') ttsSuppressed = true;
     if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
-    if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
+    if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);,
   };
   evtSrc.addEventListener('content_kind', (ev) => {
     const kind = (ev.data || '').trim();
-    if (kind === 'listing') window._streamContentKind = 'listing';
+    if (kind === 'listing') window._streamContentKind = 'listing';,
   });
   evtSrc.addEventListener('mood', (ev) => {
     const m = (ev.data || '').trim();
@@ -3826,7 +3726,7 @@ async function sendMessage(text) {
     if (TINT[m]) fadeColorTo(TINT[m]);
     const live = document.getElementById('mood-live');
     if (live) live.textContent = 'mood: ' + m;
-    syncShareStateUrl();
+    syncShareStateUrl();,
   });
   evtSrc.addEventListener('model', (ev) => {
     const m = (ev.data || '').trim();
@@ -3838,22 +3738,22 @@ async function sendMessage(text) {
       const K = window.ParticleKernel;
       for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
         const b = i * K.FIELDS_PER_CELL;
-        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);,
       }
       setTimeout(() => {
         if (!mouthPool) return;
         for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
           const b = i * K.FIELDS_PER_CELL;
-          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
-        }
-      }, 1000);
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);,
+        },
+      }, 1000);,
     }
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
     syncShareStateUrl();
     const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
     const live = document.getElementById('mood-live');
-    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
+    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;,
   });
   evtSrc.addEventListener('verdict', (ev) => {
     const v = (ev.data || '').trim();
@@ -3864,19 +3764,19 @@ async function sendMessage(text) {
     if (v === 'pass') {
       beep(880, 0.06);
       morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-      State.bloom = 1.0;
+      State.bloom = 1.0;,
     }
     if (v === 'veto') {
       beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); },
     }
     const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
     if (v === 'pass') tally.pass += 1;
     if (v === 'veto') tally.veto += 1;
-    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
+    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;,
   });
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
@@ -3885,52 +3785,52 @@ async function sendMessage(text) {
       if (persona) {
         rootBody.dataset.councilPersona = persona;
         applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;,
       }
       if (lane) offsetCouncilMouthPool?.(lane, 0.22);
       if (plan?.length) tts.visemePlan = plan;
       if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
       if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });,
       }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-      }, 8000);
-    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); }
+        if (uiStatus?.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';,
+      }, 8000);,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); },
   });
   evtSrc.addEventListener('confidence', (ev) => {
     const c = parseFloat(ev.data); if (isNaN(c)) return;
-    State.confidence = c;
+    State.confidence = c;,
   });
   evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); }
+    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); },
   });
   evtSrc.addEventListener('compaction', (ev) => {
-    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); }
+    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); },
   });
   evtSrc.addEventListener('ctx_footer', (ev) => {
-    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); }
+    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); },
   });
   evtSrc.addEventListener('phantom', (ev) => {
-    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); }
+    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); },
   });
   evtSrc.addEventListener('tool_stack', (ev) => {
-    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); }
+    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); },
   });
   evtSrc.addEventListener('stage', (ev) => {
-    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); }
+    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); },
   });
   evtSrc.addEventListener('btw', (ev) => {
-    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); }
+    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); },
   });
   evtSrc.addEventListener('felt', (ev) => {
     try {
       const payload = JSON.parse(ev.data || '{}');
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); }
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); },
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);
@@ -3940,8 +3840,8 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
-    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); }
-  };
+    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); },
+  };,
 }
 
 setInterval(() => {
@@ -3950,15 +3850,15 @@ setInterval(() => {
   if (idleS < 10 && rootBody.dataset.longSilence === '1') delete rootBody.dataset.longSilence;
   if (idleS > 90 && rootBody.dataset.longSilence !== '1' && !State.sleeping) {
     rootBody.dataset.longSilence = '1';
-    if (!tts.playing && !tts.muted) enqueueSpeech('still here');
+    if (!tts.playing && !tts.muted) enqueueSpeech('still here');,
   }
   const body = new URLSearchParams({
     mood: State.mood, mode: State.mode, idle: String(idleS),
     palette: '0', confidence: State.confidence.toFixed(2),
-    tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
+    tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2),
   });
   syncShareStateUrl();
-  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); }
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); },
 }, 8000);
 
 let wakeLock = null;
@@ -3966,14 +3866,13 @@ async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
   async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_lock_request", err); } }
   await req();
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });,
 }
 
 function guardVoice(v, opts = {}) {
   void v;
   void opts;
   return TTS_DEFAULT_VOICE;
-}
 
 function previewVoice(voice) {
   const chosen = guardVoice(voice || State.voiceName, { explicit: true }) || TTS_DEFAULT_VOICE;
@@ -3996,11 +3895,11 @@ function previewVoice(voice) {
         tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         tts.outputGain = null;
         URL.revokeObjectURL(src);
-        clearViseme();
+        clearViseme();,
       };
-      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });
+      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });,
     })
-    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));
+    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));,
 }
 
 function wireTtsStyleChips() {
@@ -4012,14 +3911,14 @@ function wireTtsStyleChips() {
       if (State.mode === 'speaking' || tts.playing) return;
       const style = chip.dataset.style;
       emitTtsEvent('tts:style:active', { style, preview: true });
-      window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.18, confidence: 0.82, mode: style, style });
+      window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.18, confidence: 0.82, mode: style, style });,
     });
     chip.addEventListener('mouseleave', () => {
       if (State.mode === 'speaking' || tts.playing) return;
-      State.pulse = Math.max(0, (State.pulse || 0) * 0.6);
-    });
+      State.pulse = Math.max(0, (State.pulse || 0) * 0.6);,
+    });,
   });
-  syncTtsStyleUi();
+  syncTtsStyleUi();,
 }
 function playDuo(lines, onDone, style, councilOpts = {}) {
   if (!lines.length) { onDone?.(); return; }
@@ -4035,12 +3934,12 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
       personaBadge = document.createElement('div');
       personaBadge.id = 'council-persona-badge';
       personaBadge.className = 'council-persona-badge';
-      document.body.appendChild(personaBadge);
+      document.body.appendChild(personaBadge);,
     }
     personaBadge.textContent = councilOpts.persona;
     personaBadge.dataset.lane = councilOpts.lane || 'center';
     personaBadge.dataset.visible = '1';
-    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);
+    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);,
   }
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
@@ -4058,11 +3957,11 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
         tts.outputGain = null;
         URL.revokeObjectURL(src);
         clearViseme();
-        playDuo(rest, onDone, useStyle);
+        playDuo(rest, onDone, useStyle);,
       };
-      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });
+      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });,
     })
-    .catch(() => playDuo(rest, onDone, useStyle));
+    .catch(() => playDuo(rest, onDone, useStyle));,
 }
 
 function meanPoolField(pool, field) {
@@ -4072,10 +3971,9 @@ function meanPoolField(pool, field) {
   for (let i = 0; i < pool.count; i++) {
     if (!pool.alive[i]) continue;
     sum += pool.cells[i * K.FIELDS_PER_CELL + field];
-    n++;
+    n++;,
   }
   return n ? sum / n : 0;
-}
 function collectFeltState() {
   let history = [];
   try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:collect_felt_state", err); }
@@ -4089,7 +3987,6 @@ function collectFeltState() {
   const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;
   const confidence = Number.isFinite(State.confidence) ? State.confidence : 0.86;
   return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}|${arousal.toFixed(2)}|${valence.toFixed(2)}|${histEntropy.toFixed(2)}`;
-}
 window.collectFeltState = collectFeltState;
 
 function startEverything() {
@@ -4116,12 +4013,12 @@ function startEverything() {
   if (logo) {
     logo.style.transition = 'none';
     logo.style.transform = 'translateX(3px)';
-    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);
+    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);,
   }
   let _logoDimTimer = null;
   function _schedLogoDim() {
     clearTimeout(_logoDimTimer);
-    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);
+    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);,
   }
   _schedLogoDim();
   document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
@@ -4135,13 +4032,13 @@ function startEverything() {
     navigator.serviceWorker.addEventListener('message', (ev) => {
       if (ev.data?.type !== 'sw:updated') return;
       if (uiStatus) uiStatus.textContent = 'new version — reload';
-      window._chatOnDmesg?.('sw updated');
-    });
+      window._chatOnDmesg?.('sw updated');,
+    });,
   }
   window.addEventListener('beforeinstallprompt', (ev) => {
     ev.preventDefault();
-    if (uiStatus) uiStatus.textContent = 'install available';
-  });
+    if (uiStatus) uiStatus.textContent = 'install available';,
+  });,
 }
 window.addEventListener('master:self_violation', () => flashViolation());
 let primerFired = false;
@@ -4152,7 +4049,7 @@ primer?.addEventListener('click', firePrimer);
 primer?.addEventListener('keydown', event => {
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
-  firePrimer();
+  firePrimer();,
 });
 
 zshBar.addEventListener('submit', (e) => {
@@ -4164,12 +4061,12 @@ zshBar.addEventListener('submit', (e) => {
   State.ripplePhase = 0;
   beep(1320, 0.018);
   navigator.vibrate?.(30);
-  window.MASTER_FACE?.sendMessage?.(v);
+  window.MASTER_FACE?.sendMessage?.(v);,
 });
 zshIn.addEventListener('focus', () => {
   State.lastTouch = performance.now();
   boostEyeAttention(0.07);
-  window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
+  window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });,
 });
 
 const PLACEHOLDERS = [
@@ -4179,7 +4076,7 @@ const PLACEHOLDERS = [
   'paste code — ask for review or explain',
   'what are you trying to accomplish?',
   'challenge me — show your work',
-  'explain simply — then go deeper'
+  'explain simply — then go deeper',
 ];
 let _phIdx = 0;
 function _cyclePlaceholder() {
@@ -4187,7 +4084,7 @@ function _cyclePlaceholder() {
   const research = window.MASTER_AGENT_PLACEHOLDERS;
   const pool = Array.isArray(research) && research.length ? research : PLACEHOLDERS;
   _phIdx = (_phIdx + 1) % pool.length;
-  zshIn.placeholder = pool[_phIdx];
+  zshIn.placeholder = pool[_phIdx];,
 }
 setInterval(_cyclePlaceholder, 8000);
 window.addEventListener('master:runtime-config', () => _cyclePlaceholder());
@@ -4200,20 +4097,20 @@ try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch 
 function _resizeZin() {
   if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
   zshIn.style.height = 'auto';
-  zshIn.style.height = Math.min(120, zshIn.scrollHeight) + 'px';
+  zshIn.style.height = Math.min(120, zshIn.scrollHeight) + 'px';,
 }
 zshIn.addEventListener('input', () => {
   const len = zshIn.value.length;
   if (_charCount) { _charCount.textContent = len > 120 ? len : ''; _charCount.style.opacity = len > 120 ? '0.5' : '0'; }
   if (len > 180) document.documentElement.dataset.inputDense = '1';
   else delete document.documentElement.dataset.inputDense;
-  _resizeZin();
+  _resizeZin();,
 });
 zshIn.addEventListener('paste', () => {
   setTimeout(() => {
     if ((zshIn.value || '').length > 180) document.documentElement.dataset.inputDense = '1';
-    _resizeZin();
-  }, 0);
+    _resizeZin();,
+  }, 0);,
 });
 zshIn.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); const s = zshIn.selectionStart; const v = zshIn.value; zshIn.value = v.slice(0, s) + '\n' + v.slice(zshIn.selectionEnd); zshIn.selectionStart = zshIn.selectionEnd = s + 1; _resizeZin(); return; }
@@ -4222,14 +4119,14 @@ zshIn.addEventListener('keydown', (e) => {
     e.preventDefault();
     _cmdHistIdx = Math.max(0, (_cmdHistIdx < 0 ? _cmdHist.length : _cmdHistIdx) - 1);
     zshIn.value = _cmdHist[_cmdHistIdx] || '';
-    _resizeZin();
+    _resizeZin();,
   }
   if (e.key === 'ArrowDown' && !e.shiftKey && _cmdHist.length && _cmdHistIdx >= 0) {
     e.preventDefault();
     _cmdHistIdx = Math.min(_cmdHist.length, _cmdHistIdx + 1);
     zshIn.value = _cmdHistIdx >= _cmdHist.length ? '' : (_cmdHist[_cmdHistIdx] || '');
-    _resizeZin();
-  }
+    _resizeZin();,
+  },
 });
 
 let _swipeStartX = 0, _swipeStartY = 0;
@@ -4242,12 +4139,12 @@ if (chatShell) {
       cancelStream();
       window.MASTER_FACE?.ttsSkip?.();
       window.MASTEREcology?.burst?.(8, 0.3);
-      window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.38, confidence: 0.5, mode: 'interrupt' });
-    }, 420);
+      window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.38, confidence: 0.5, mode: 'interrupt' });,
+    }, 420);,
   }, { passive: true });
   const clearShellPress = () => { if (shellPress) { clearTimeout(shellPress); shellPress = null; } };
   chatShell.addEventListener('pointerup', clearShellPress, { passive: true });
-  chatShell.addEventListener('pointercancel', clearShellPress, { passive: true });
+  chatShell.addEventListener('pointercancel', clearShellPress, { passive: true });,
 }
 
 const chatLog = document.getElementById('chat-log');
@@ -4256,8 +4153,8 @@ if (chatLog) {
   chatLog.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - _swipeStartX;
     const dy = Math.abs(e.changedTouches[0].clientY - _swipeStartY);
-    if (dx > 72 && dy < 40) cancelStream();
-  }, { passive: true });
+    if (dx > 72 && dy < 40) cancelStream();,
+  }, { passive: true });,
 }
 
 const _origHaptic = enqueueSpeech;
@@ -4273,15 +4170,15 @@ if (micBtn) {
   let micPressTimer = null, micLongPressed = false;
   const micPressStart = () => {
     micLongPressed = false;
-    micPressTimer = setTimeout(() => { micLongPressed = true; toggleVoiceMode(); }, 550);
+    micPressTimer = setTimeout(() => { micLongPressed = true; toggleVoiceMode(); }, 550);,
   };
   const micPressEnd = () => {
     if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; }
-    if (!micLongPressed) window.MASTER_FACE?.ttsToggleMic?.();
+    if (!micLongPressed) window.MASTER_FACE?.ttsToggleMic?.();,
   };
   micBtn.addEventListener('pointerdown', micPressStart);
   micBtn.addEventListener('pointerup', micPressEnd);
-  micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });
+  micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });,
 }
 
 // Evolved-human overlay toggle: reads/writes the same localStorage flag
@@ -4295,32 +4192,32 @@ if (face3dToggleBtn) {
   try {
     if (localStorage.getItem(FACE3D_KEY) === '1') {
       face3dToggleBtn.setAttribute('aria-pressed', 'true');
-      rootBody.dataset.face3d = '1';
-    }
+      rootBody.dataset.face3d = '1';,
+    },
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_read", err); }
   face3dToggleBtn.addEventListener('click', () => {
     let enabled = false;
     try { enabled = localStorage.getItem(FACE3D_KEY) === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_click_read", err); }
     try { localStorage.setItem(FACE3D_KEY, enabled ? '0' : '1'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_write", err); }
-    location.reload();
-  });
+    location.reload();,
+  });,
 }
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 
 if (fontScaleInput) {
   const storedScale = parseFloat(localStorage.getItem(SCALE_KEY));
-  if (Number.isFinite(storedScale)) fontScaleInput.value = String(storedScale);
+  if (Number.isFinite(storedScale)) fontScaleInput.value = String(storedScale);,
 }
 
 // FA62 push-to-talk: hold space = record, release = submit (unless input focused)
 let pttActive = false;
 document.addEventListener('keydown', (e) => {
   if (e.key === ' ' && !e.repeat && document.activeElement !== zshIn && primerFired) {
-    e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();
-  }
+    e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();,
+  },
 });
 document.addEventListener('keyup', (e) => {
-  if (e.key === ' ' && pttActive) { pttActive = false; window.MASTER_FACE?.stopSTT?.(); }
+  if (e.key === ' ' && pttActive) { pttActive = false; window.MASTER_FACE?.stopSTT?.(); },
 });
 
 document.addEventListener('keydown', (e) => {
@@ -4330,7 +4227,7 @@ document.addEventListener('keydown', (e) => {
     cancelStream();
     window.MASTER_FACE?.ttsSkip?.();
     if (State.voiceMode) exitVoiceMode();
-    window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });
+    window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });,
   }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
   if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
@@ -4339,14 +4236,14 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     const cur = getTtsRate();
     const i = nearestRateIndex(cur);
-    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);
+    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);,
   }
   if (e.ctrlKey && (e.key === ']' || e.key === '.')) {
     e.preventDefault();
     const cur = getTtsRate();
     const i = nearestRateIndex(cur);
-    setTtsRate(RATES[(i + 1) % RATES.length]);
-  }
+    setTtsRate(RATES[(i + 1) % RATES.length]);,
+  },
 });
 
 document.addEventListener('pointerdown', wakeFromSleep, { passive: true });
@@ -4377,7 +4274,7 @@ window.MASTERVoice = {
 };
 window._chatSpeakLast = () => {
   const text = window.MASTER_FACE?.tts?.lastText || "";
-  if (text) enqueueSpeech(text);
+  if (text) enqueueSpeech(text);,
 };
 
 window.MASTER_FACE = {
@@ -4429,7 +4326,7 @@ window.MASTER_FACE = {
   collectFeltState,
   offsetCouncilMouthPool,
   updateMoodHistory,
-  spawnEmotionalGhost
+  spawnEmotionalGhost,
 };
 window.announceTTS = announceTTS;
 window.enqueueSpeech = enqueueSpeech;
@@ -4439,7 +4336,6 @@ function _deferFaceMod(name) {
   // Absolutize: this runs inside a blob: module where a root-relative specifier
   // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
   return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
-}
 await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));

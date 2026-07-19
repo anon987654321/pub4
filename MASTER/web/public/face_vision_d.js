@@ -199,7 +199,6 @@
     if (!document.startViewTransition) {
       root.dataset.viewTransition = "stub";
       return;
-    root.dataset.viewTransition = "hooked";
     const primer = document.getElementById("primer");
     if (!primer) return;
     primer.addEventListener("click", () => {
@@ -214,7 +213,6 @@
     if (!CSS.supports?.("animation-timeline: scroll()")) {
       root.dataset.scrollDepth = "stub";
       return;
-    root.dataset.scrollDepth = "css";
     V.css("--scroll-depth", "scroll-driven");,
   });
 
@@ -240,7 +238,6 @@
     if (!ctxAudio?.createStereoPanner) {
       root.dataset.spatialAudio = "stub";
       return;
-    const lane = ctx.detail.lane || ctx.detail.raw?.lane;
     const pan = lane === "left" ? -0.6 : lane === "right" ? 0.6 : 0;
     root.dataset.spatialAudio = `pan-${pan}`;
     V.css("--council-pan", String(pan));,
@@ -256,7 +253,6 @@
     if (!window.ActionCable) {
       root.dataset.actionCableFanout = "stub";
       return;
-    window.dispatchEvent(new CustomEvent("master:cable-fanout", { detail: ctx.detail.event || ctx.detail }));
     root.dataset.actionCableFanout = "hooked";,
   });
 
@@ -277,7 +273,6 @@
     if (!text) {
       root.dataset.rulesFlash = "stub";
       return;
-    root.dataset.rulesFlash = `${text.length}b`;
     storeSet("master:rules-flash", text.slice(0, 4096));,
   });
 
@@ -319,7 +314,6 @@
     if (ctx.detail.broadcast) {
       window.parent?.postMessage?.({ type: "master:mood", mood: ctx.st.mood, mode: ctx.st.mode }, "*");
       return;
-    const mood = ctx.detail.mood;
     const mode = ctx.detail.mode;
     if (mood) ctx.st.mood = mood;
     if (mode) ctx.st.mode = mode;
@@ -333,7 +327,6 @@
       root.dataset.webmExport = "stub";
       ctx.detail.blob = null;
       return;
-    try {
       const stream = cv.captureStream(30);
       const rec = new MediaRecorder(stream, { mimeType: "video/webm" });
       const chunks = [];
@@ -526,8 +519,7 @@
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
         stream.getTracks().forEach((t) => t.stop());
         V.run(138, { type: "gaze:opt-in", detail: { optedIn: true } });
-        return true;
-        return false;,
+        return true;,
     };
 
     if (typeof WebTransport !== "undefined") {

@@ -23,7 +23,6 @@ float snoise(vec3 v){
   p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
   vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);m=m*m;
   return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-vec3 curlNoise(vec3 p){
   const float e=.07;
   float n1,n2,n3,n4;
   n1=snoise(p+vec3(0,e,0));n2=snoise(p-vec3(0,e,0));
@@ -38,7 +37,6 @@ vec3 curlNoise(vec3 p){
   n3=snoise(r+vec3(0,e,0));n4=snoise(r-vec3(0,e,0));
   float cz=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
   return vec3(cx,cy,cz);
-uniform float uMorph;
 uniform float uTime;
 uniform float uSize;
 uniform vec3 uColor;
@@ -236,7 +234,6 @@ if (_hasWebGL && THREE) {
       geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
       const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       return new THREE.LineSegments(geom, mat);
-    faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.14);
     faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.065);
     // Legacy single-line ref kept null — two-tier replaces it
     faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;,

@@ -21,7 +21,6 @@ const html = `<!doctype html>
     proto.getContext = function (type) {
       if (!window._primerFired && /webgl/i.test(String(type))) return null;
       return original.apply(this, arguments);,
-  })();
 </script>
 <button id="primer">tap to start</button>
 <canvas id="face" width="64" height="64"></canvas>
@@ -81,7 +80,6 @@ async function connect(wsUrl) {
       const requestId = ++id;
       ws.send(JSON.stringify({ id: requestId, method, params }));
       return new Promise((resolve, reject) => pending.set(requestId, { resolve, reject }));
-    waitEvent(method) {
       const existing = events.findIndex((event) => event.method === method);
       if (existing >= 0) return Promise.resolve(events.splice(existing, 1)[0]);
       return new Promise((resolve) => {
@@ -132,10 +130,8 @@ async function main() {
     await waitFor(async () => {
       if (exited) throw new Error(`Chrome exited code=${exited.code} signal=${exited.signal}`);
       return requestJson(`http://127.0.0.1:${port}/json/version`);
-      .catch((error) => {
         const detail = stderr.trim().split(/\n/).slice(-6).join("\n");
         throw new Error(`${error.message}${detail ? `\n${detail}` : ""}`);
-    const target = await requestJson(`http://127.0.0.1:${port}/json/new`, { method: "PUT" });
     const cdp = await connect(target.webSocketDebuggerUrl);
     try {
       await cdp.send("Page.enable");

@@ -32,7 +32,6 @@
       proto.getContext = function (type) {
         if (!window._primerFired && /webgl/i.test(String(type))) return null;
         return original.apply(this, arguments);,
-    })();
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
       faceModulesList: <%= raw(%w[
@@ -156,7 +155,6 @@
           started=true;
           window.MASTER_FACE.startEverything();
           return true;
-        return false;
       function clearWatch(){
         clearTimeout(hintT);clearTimeout(retryT);clearTimeout(fallback);
         clearInterval(timer);timerIS NULL;

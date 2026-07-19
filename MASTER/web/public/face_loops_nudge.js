@@ -43,7 +43,6 @@ window._nudgeLoop = (() => {
     if (el?.value && el.value.trim().length > 0) return false;
     if (document.hidden) return false;
     return true;
-  let _researchCache = [];
   async function _refillResearch() {
     if (!RESEARCH_NUDGES) return;
     try {
@@ -61,7 +60,6 @@ window._nudgeLoop = (() => {
   function _nextLine() {
     if (RESEARCH_NUDGES && _researchCache.length && Math.random() < 0.15) return _researchCache.shift();
     return NUDGES[Math.floor(Math.random() * NUDGES.length)];
-  setInterval(() => {
     if (!eligible()) return;
     if (!F_FACE_NUDGE_TTS?.queue) return;
     if (F_FACE_NUDGE_TTS.queue.length >= 2) return;

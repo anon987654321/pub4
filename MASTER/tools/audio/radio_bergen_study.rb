@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Thin wrapper — study logic lives in MASTER/tools/dilla/dilla.rb (RadioBergenStudy).
 require_relative "../dilla/dilla"

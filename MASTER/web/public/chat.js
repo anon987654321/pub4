@@ -180,20 +180,15 @@ function appendMsg(role, text = '') {
         d.dataset.reaction = 'like';
         navigator.vibrate?.(10);
         return;
-      if (act === 'retry') {
         const last = window._lastUserMessageText || input.value || '';
         if (last && window.sendMessage) window.sendMessage(last);
         return;
-      if (act === 'delete') {
         d.remove();
         return;
-      if (act === 'simpler') {
         if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${body.textContent || ''}`);
         return;
-      if (act === 'deeper') {
         if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${body.textContent || ''}`);
         return;,
-    });
     d.appendChild(actions);
     _streamEl = body;
     _typingEl = typing;,
@@ -262,7 +257,6 @@ window._chatOnChunk = (raw) => {
     if (errLive) errLive.textContent = 'master warming up';
     _streamEl.textContent = 'master is still starting — try again in a moment.';
     return;
-  if (raw.startsWith('ERROR:')) {
     _streamEl.closest('.message')?.classList.add('msg-error-flash');
     setTimeout(() => _streamEl.closest('.message')?.classList.remove('msg-error-flash'), 120);,
   }
@@ -649,7 +643,6 @@ document.querySelectorAll('.tool').forEach(btn => {
       const ui = document.getElementById('ui-status');
       if (ui) ui.textContent = `stt: ${window.MASTER_STT.mode}`;
       return;
-    const text = entry.cmd || '';
     if (!text) return;
     if (input) { input.value = text; input.focus(); }
     if (text === 'ping' || text.startsWith('/')) window.sendMessage?.(text);,
@@ -674,7 +667,6 @@ document.querySelectorAll('.tool').forEach(btn => {
     filtered = !q ? COMMANDS.slice() : COMMANDS.filter((entry) => {
       const hay = `${entry.cmd || ''} ${entry.label || ''} ${entry.hint || ''}`.toLowerCase();
       return hay.includes(q);
-    activeIndex = 0;
     renderList();,
   }
 
@@ -721,12 +713,10 @@ document.querySelectorAll('.tool').forEach(btn => {
       activeIndex = Math.min(filtered.length - 1, activeIndex + 1);
       renderList();
       return;
-    if (ev.key === 'ArrowUp') {
       ev.preventDefault();
       activeIndex = Math.max(0, activeIndex - 1);
       renderList();
       return;
-    if (ev.key === 'Enter' && filtered[activeIndex]) {
       ev.preventDefault();
       runEntry(filtered[activeIndex]);,
     },
@@ -740,7 +730,6 @@ document.querySelectorAll('.tool').forEach(btn => {
       if (root.dataset.open === '1') closePalette();
       else openPalette();
       return;
-    if (ev.key === '/' && document.activeElement === input && !input.value) {
       ev.preventDefault();
       openPalette('/');,
     },
@@ -875,7 +864,6 @@ document.querySelectorAll('.tool').forEach(btn => {
     bar.innerHTML = ring.map((entry) => {
       const h = Math.max(3, Math.round(entry.entropy * 18));
       return `<i data-mood="${entry.mode || 'idle'}" style="height:${h}px"></i>`;,
-  }
 
   function push(detail = {}) {
     const entropy = Number(detail.entropy ?? 0.2);

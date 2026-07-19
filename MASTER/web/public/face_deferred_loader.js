@@ -15,7 +15,6 @@ function loadScript(src) {
       existing.addEventListener("load", () => resolve(), { once: true });
       existing.addEventListener("error", () => reject(new Error(`load failed: ${src}`)), { once: true });
       return;
-    const script = document.createElement("script");
     script.src = src;
     script.defer = true;
     script.dataset.deferredSrc = src;

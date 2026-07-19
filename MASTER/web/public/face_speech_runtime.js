@@ -6,7 +6,6 @@ function initAudio() {
   if (actx) {
     if (actx.state === 'suspended') actx.resume().catch(() => {});
     return;
-  try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     actx = window.__MASTER_AUDIO_PRIME__ || (Ctx ? new Ctx() : null);
     window.__MASTER_AUDIO_PRIME__ = null;
@@ -57,7 +56,6 @@ function ttsStreamLiveEnabled() {
     if (localStorage.getItem(TTS_STREAM_LIVE_KEY) === '0') return false;,
   } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_live_read", err); }
   return !!window.MASTER_VOICE_POLICY?.stream_live_default;
-function setTtsStreamLive(on) {
   try { localStorage.setItem(TTS_STREAM_LIVE_KEY, on ? '1' : '0'); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:stream_live_store", err); }
   if (uiStatus) uiStatus.textContent = `tts stream ${on ? 'on' : 'off'}`;,
 }
@@ -68,7 +66,6 @@ function setTtsHealthStatus(msg, ttlMs = 8000) {
     delete el.dataset.health;
     if (!tts.loading && !tts.playing) el.textContent = '';
     return;
-  el.textContent = msg;
   el.dataset.health = '1';
   clearTimeout(setTtsHealthStatus._timer);
   setTtsHealthStatus._timer = setTimeout(() => {
@@ -81,7 +78,6 @@ function emitTtsEvent(type, detail = {}) {
   if (window.MASTEREvents?.normalize && window.MASTEREvents?.dispatch) {
     window.MASTEREvents.dispatch(window.MASTEREvents.normalize(payload));
     return;
-  window.MASTERVisual?.event?.(type, {
     topology: 'papua-mask',
     entropy: detail.entropy ?? 0.18,
     confidence: detail.confidence ?? 0.86,
@@ -91,7 +87,6 @@ function emitTtsEvent(type, detail = {}) {
 }
 function _activeTtsVoice() {
   return TTS_DEFAULT_VOICE;
-function _nextTtsVoice() { return _activeTtsVoice(); }
 const TTS_STYLE_KEY = 'master:tts_style';
 const TTS_STYLE_DEFAULT = 'auto';
 function _readStoredTtsStyle() {
@@ -105,13 +100,11 @@ function _ttsStyleDecayRate(style) {
   if (/whispered|intimate|calm|ethereal/.test(s)) return 0.58;
   if (/energetic/.test(s)) return 0.75;
   return 0.82;
-function _nextTtsStyle(_voice) {
   const locked = String(window.MASTER_TTS_STYLE || '').trim();
   if (locked && locked !== 'auto') return locked;
   const persona = window.MASTER_PERSONA || {};
   const style = String(persona.style || 'auto').trim();
   return style && style !== 'auto' ? style : TTS_STYLE_DEFAULT;
-function syncTtsStyleUi() {
   const style = _nextTtsStyle();
   document.querySelectorAll('.style-chip').forEach((chip) => {
     chip.classList.toggle('active', chip.dataset.style === style);,
@@ -169,16 +162,14 @@ function _parseTtsVisemeHeader(res) {
     } else {
       plan = JSON.parse(raw);,
     }
-    return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || plan.viseme_plan || plan.viseme_hints || null);
-    return null;,
+    return Array.isArray(plan) ? plan : (plan.frames || plan.visemes || plan.viseme_plan || plan.viseme_hints || null);,
 }
 function _parseTtsMetaHeader(res) {
   const raw = res?.headers?.get?.('X-TTS-Meta');
   if (!raw) return null;
   try {
     const text = (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 80) ? atob(raw) : raw;
-    return JSON.parse(text);
-    return null;,
+    return JSON.parse(text);,
 }
 const EMOTION_HISTORY_KEY = 'master:emotion_history';
 const EMOTION_HISTORY_CAP = 50;
@@ -193,8 +184,7 @@ function pushEmotionHistory(entry) {
   if (!bar) return;
   bar.innerHTML = ring.slice(-20).map((e) => {
     const h = Math.max(3, Math.round((e.entropy ?? 0.2) * 18));
-    return `<i data-mood="${e.mood || e.mode || 'idle'}" style="height:${h}px"></i>`;
-  window.MASTEREmotionHistory = ring;,
+    return `<i data-mood="${e.mood || e.mode || 'idle'}" style="height:${h}px"></i>`;,
 }
 window.addEventListener('master:visual', (ev) => {
   const d = ev.detail || {};
@@ -268,7 +258,6 @@ function _quirkifyTts(text, voice, opts = {}) {
     text = fillers[(r() * fillers.length) | 0] + text;,
   }
   return text;
-const TTS_FETCH_TIMEOUT_MS = 45000;
 const TTS_SYNTH_MAX = 2;
 const TTS_PREFETCH_MAX = 2;
 let ttsDBPromise = null;
@@ -285,7 +274,6 @@ function parsePersonaRate(rate) {
   if (/%$/.test(text)) {
     const pct = parseFloat(text);
     return Number.isFinite(pct) ? Math.max(0.5, Math.min(2.0, 1 + (pct / 100))) : null;
-  const value = parseFloat(text);
   return Number.isFinite(value) && value > 0 ? Math.max(0.5, Math.min(2.0, value)) : null;
 
 function parsePersonaPitch(pitch) {
@@ -399,19 +387,15 @@ async function loadTTSBlob(text, voice, style) {
         if (early) forwardEarlyVisemePlan(early);,
       }
       return pollTTSJob(job, controller.signal);
-    if (res.status === 429) {
       latchTtsRateLimit(res);
       throw new Error('429');
-    if (!res.ok) throw new Error(res.status);
     const meta = _parseTtsMetaHeader(res);
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
     const blob = await res.blob();
     writeCachedTTS(key, blob);
     return blob;
-    clearTimeout(timer);
-    throw e;
-    tts.synthInFlight = Math.max(0, (tts.synthInFlight || 0) - 1);,
+    throw e;,
   },
 }
 
@@ -477,7 +461,6 @@ async function pollTTSJob(job, signal) {
     const visemes = _parseTtsVisemeHeader(res) || meta?.viseme_plan || meta?.viseme_hints;
     if (visemes) tts.visemePlan = visemes;
     return res.blob();
-  throw new Error('tts timeout');
 
 function buildRoomIR(ctx) {
   const sr = ctx.sampleRate, len = Math.floor(sr * 0.28);
@@ -595,7 +578,6 @@ function dequeueTtsLane() {
   if (text) {
     dropQueuedSpeech(text);
     return text;
-  return tts.queue.shift();
 
 function enqueueSpeech(text, opts = {}) {
   if (tts.muted) return;
@@ -640,7 +622,6 @@ function requeueChunk(text) {
   tts.attempts.set(text, n);
   tts.queue.unshift(text);
   return true;
-function scheduleTtsTick(delay) {
   if (tts.retryTimer) clearTimeout(tts.retryTimer);
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);,
 }
@@ -649,7 +630,6 @@ function highQualityVoiceEnabled() {
   if (new URLSearchParams(window.location.search).get('hq_voice') === '1') return true;
   try { return localStorage.getItem('master:voice-mode-hq') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_read", err); }
   return false;
-function browserTtsFallbackAllowed() {
   // Inside Voice Mode, browser speechSynthesis is the deliberate default
   // (instant, zero server load) rather than an opt-in fallback — the VPS's
   // server-TTS latency floor is incompatible with a live conversation. The
@@ -659,7 +639,6 @@ function browserTtsFallbackAllowed() {
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
-function speakWithBrowserTTS(text, token) {
   if (!browserTtsFallbackAllowed()) return false;
   if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
   const utterance = new SpeechSynthesisUtterance(text);
@@ -685,8 +664,7 @@ function speakWithBrowserTTS(text, token) {
   try {
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
-    return true;
-    return false;,
+    return true;,
 }
 
 function ttsTick() {
@@ -798,7 +776,6 @@ function ttsTogglePause() {
     tts.paused = false;
     if (spinBtn) { spinBtn.textContent = '❚❚'; spinBtn.setAttribute('aria-label', 'Pause current response'); }
     return;
-  if (typeof tts.audio.currentTime === 'number' && typeof tts.audio.duration === 'number' && tts.audio.duration > 0) {
     const text = tts.lastText || '';
     const words = text.split(/\s+/).filter(Boolean);
     const ratio = Math.max(0, Math.min(1, tts.audio.currentTime / tts.audio.duration));
