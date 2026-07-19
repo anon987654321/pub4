@@ -69,8 +69,7 @@
 
 .luxury-card nav .btn-sm,
 .item-card--luxury nav .btn-sm {
-  background: color-mix(in srgb, var(--luxury-surface) 92%, transparent);
-  backdrop-filter: blur(4px);
+  background: var(--luxury-surface);
 }
 
 /* Luxury PDP */

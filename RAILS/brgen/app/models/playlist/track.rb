@@ -25,7 +25,7 @@ class Playlist::Track < ApplicationRecord
     cover: { resize_to_limit: [ 1_024, 1_024 ], format: :webp }
   }
 
-  SOURCE_TYPES = %w[upload youtube spotify soundcloud whyp direct].freeze
+  SOURCE_TYPES = %w[upload youtube spotify soundcloud whyp direct dilla].freeze
   PRIVACY_LEVELS = %w[private unlisted public].freeze
 
   validates :title, presence: true

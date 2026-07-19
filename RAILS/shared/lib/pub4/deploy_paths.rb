@@ -12,6 +12,7 @@ module Pub4
 
     def postpro_script = first_file(postpro_candidates)
     def repligen_script = first_file(repligen_candidates)
+    def dilla_script = first_file(dilla_candidates)
     def radio_bergen_study_script = first_file(radio_bergen_study_candidates)
 
     def postpro_candidates
@@ -30,12 +31,27 @@ module Pub4
       ]
     end
 
+    def dilla_candidates
+      [
+        repo_join("MASTER/tools/dilla.rb"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/dilla.rb"),
+        rails_root.join("../../MASTER/tools/dilla.rb")
+      ]
+    end
+
     def radio_bergen_study_candidates
       [
         repo_join("MASTER/tools/audio/radio_bergen_study.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_study.rb"),
         rails_root.join("../../MASTER/tools/audio/radio_bergen_study.rb")
       ]
+    end
+
+    # MASTER web bridge (ai.brgen.no / loopback :53187) for constitutional turns.
+    def master_bridge_base
+      env_value("MASTER_BRIDGE_URL") ||
+        env_value("MASTER_WEB_URL") ||
+        (File.file?("/etc/relayd.conf") ? "http://127.0.0.1:53187" : "http://127.0.0.1:53187")
     end
 
     def rails_root

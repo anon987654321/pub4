@@ -75,3 +75,5 @@ loss_gates:
   mud_source: "sustained energy above -12dBFS in the 200-400Hz 'mud zone' masks snare body"
   kick_bass_correlation_max: 0.95
   correlation_source: "kick/bass micro-timing correlation above 0.95 reads as quantized/robotic"
+  stereo_phase_correlation_min: 0.30
+  phase_source: "L/R phase correlation below 0.30 anywhere risks cancellation when summed to mono (phone/laptop speakers, club mono sends)"

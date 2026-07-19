@@ -33,6 +33,7 @@ module Shared
       (?:^|/)(?:vendor|node_modules|tmp|log|storage|coverage)(?:/|$)
       |(?:^|/)app/assets/builds/
       |lightgallery\.css
+      |swiper-bundle(?:\.min)?\.css
       |actiontext\.css
       |frontend/layouts/visualizer
       |public/assets/layouts/visualizer

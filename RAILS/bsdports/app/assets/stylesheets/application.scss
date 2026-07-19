@@ -17,8 +17,9 @@
   --x-accent-hover: #4fa34f;
   --x-danger: #ff6b6b;
   --x-font: "JetBrains Mono", ui-monospace, monospace;
-  --x-font-size: 12px;
-  --x-line-height: 16px;
+  /* rem (not px) so CRT density keeps auditor body_font_px floor */
+  --x-font-size: 0.75rem;
+  --x-line-height: 1rem;
   --x-radius-pill: 0;
   --x-radius-card: 0;
   --x-radius-sm: 0;
@@ -55,7 +56,7 @@ body {
 
 .advisory-tag {
   font-family: var(--x-font);
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--x-danger);
   border: 1px solid var(--x-border);
   padding: 0 0.3rem;

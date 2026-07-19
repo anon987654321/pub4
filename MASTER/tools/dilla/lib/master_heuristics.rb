@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "open3"
 
 # Mastering/mix heuristics — harshness, club IR, phone preview, cassette, balance.
 # Multi-persona critique + multi-solution cherry-pick live in MASTER council:
@@ -31,7 +32,7 @@ module DillaMaster
   # mud-zone level aren't measured anywhere in this engine yet, so those two
   # gates are honest no-ops — `skipped`, not silently passed — until that
   # analysis exists).
-  def passes_loss_gates?(report)
+  def passes_loss_gates?(report, path: nil)
     gates = loss_gates
     return { pass: true, failures: [], skipped: [] } if gates.empty? || !report
 
@@ -55,14 +56,55 @@ module DillaMaster
     end
 
     mud = report[:mud_db_200_400hz] || report["mud_db_200_400hz"]
+    mud ||= mud_db_200_400hz(path) if path && File.file?(path)
     if mud
       max = gates["mud_max_db_200_400hz"]
       failures << "mud #{mud.round(1)}dB > #{max}dB (200-400Hz masking snare body)" if max && mud > max
     else
-      skipped << "mud_db_200_400hz (not measured by this engine yet)"
+      skipped << "mud_db_200_400hz (no audio path or report value given)"
+    end
+
+    phase = path && File.file?(path) ? min_phase_correlation(path) : nil
+    if phase
+      min = gates["stereo_phase_correlation_min"]
+      failures << "stereo_phase_correlation #{phase.round(2)} < #{min} (mono cancellation risk)" if min && phase < min
+    else
+      skipped << "stereo_phase_correlation (no audio path given)"
     end
 
     { pass: failures.empty?, failures: failures, skipped: skipped }
+  end
+
+  # Minimum L/R phase correlation across the whole file — 1.0 is mono-identical
+  # (perfectly safe), 0.0 is fully decorrelated, negative cancels when summed
+  # to mono. Reports the worst moment, not the average, since a single bad
+  # section is what actually breaks on a mono sum.
+  def min_phase_correlation(path)
+    out, = Open3.capture2(
+      "ffmpeg", "-hide_banner", "-v", "error", "-i", path, "-af",
+      "aphasemeter=video=0,ametadata=print:key=lavfi.aphasemeter.phase:file=-",
+      "-f", "null", "-"
+    )
+    values = out.scan(/lavfi\.aphasemeter\.phase=(-?[\d.]+)/).flatten.map(&:to_f)
+    values.min
+  rescue StandardError
+    nil
+  end
+
+  # Average level in the 200-400Hz "mud zone" (center 283Hz, ~1 octave wide)
+  # — sustained energy here masks snare body and reads as boxy/undefined.
+  def mud_db_200_400hz(path)
+    out, = Open3.capture2(
+      "ffmpeg", "-hide_banner", "-v", "error", "-i", path, "-af",
+      "bandpass=f=283:w=200,astats=metadata=1:reset=0,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
+      "-f", "null", "-"
+    )
+    values = out.scan(/lavfi\.astats\.Overall\.RMS_level=(-?[\d.]+)/).flatten.map(&:to_f)
+    return nil if values.empty?
+
+    (values.sum / values.length).round(2)
+  rescue StandardError
+    nil
   end
 
   def club_ir_path

@@ -4318,10 +4318,32 @@ def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role:
     time_offset: rng.rand(-0.035..0.09),
     step_jitter: rng.rand(0.0..0.022),
     rest_prob: rng.rand(0.0..0.14),
-    pattern_mode: %i[style motif retrograde sparse call stagger].sample(random: rng),
+    pattern_mode: lead_pattern_mode(chord_i, cfg, rng),
     swing_mul: rng.rand(0.6..1.4),
     n_steps_mul: rng.rand(0.5..1.0)
   }
+end
+
+# Every arp pattern was picked fresh per chord with no thread between phrases
+# — a melody that never restates or develops an idea, just cycles shapes.
+# chord_motif_for already gives a stable, chord-symbol-consistent figure and
+# :motif already exists as a pattern_mode; this just deliberately reaches for
+# it at phrase openings (not every chord — variation still matters) so a
+# phrase can actually be recognized as "the same idea" when it returns.
+def phrase_start_chord?(chord_i, cfg)
+  chord_bars = cfg[:chord_bars]
+  phrase_bars = cfg[:phrase_bars]
+  return chord_i.zero? unless chord_bars && phrase_bars && chord_bars.positive?
+  chords_per_phrase = (phrase_bars / chord_bars.to_f).round
+  return chord_i.zero? if chords_per_phrase <= 0
+  (chord_i % chords_per_phrase).zero?
+end
+
+def lead_pattern_mode(chord_i, cfg, rng)
+  modes = %i[style motif retrograde sparse call stagger]
+  return modes.sample(random: rng) unless motif_recall_enabled?
+  return :motif if phrase_start_chord?(chord_i, cfg) && rng.rand < 0.7
+  modes.sample(random: rng)
 end
 
 def arp_pattern_for_chord(chord, variation, tone_count, rng)
@@ -6477,7 +6499,13 @@ def sonitex_resolve_preset(track: nil)
   track ||= (ENV["TRACK"] || ENV["PROGRESSION"] || "chromatic_minor_descent").to_s.downcase.tr("-", "_")
   raw = (ENV["SONITEX_PRESET"] || ENV["SONITEX"]).to_s.strip.downcase
   if raw.empty?
-    return :donuts_warm
+    # Was :donuts_warm — that preset's hf_rolloff/groove_wear_lp sit at
+    # 2200/2600Hz (see its "not a 2 kHz blanket" sibling comment above
+    # donuts_soul) and its out_comp_ratio is a full point hotter, burying
+    # presence/air and sitting crest factor right at the reject-gate floor.
+    # DILLA_STYLE_DEFAULTS/DILLA_BEST_DEFAULTS both already target
+    # donuts_soul; this fallback had drifted out of sync with them.
+    return :donuts_soul
   end
   return nil if raw =~ /\A(?:0|false|off)\z/
   return :heavy if %w[1 true on heavy].include?(raw)
@@ -7215,8 +7243,13 @@ DILLA_BEST_DEFAULTS = {
   "REHARM_LOOP" => "0",
   "PAD_TEXTURE" => "0",
   "CREEPY_PATCHES" => "0",
-  "SONITEX" => "donuts_warm",
-  "SONITEX_PRESET" => "donuts_warm",
+  # donuts_warm's hf_rolloff/groove_wear_lp sit at 2200/2600Hz (see the
+  # "not a 2 kHz blanket" comment on its donuts_soul sibling) and its
+  # out_comp_ratio runs a full point hotter — buries presence/air and
+  # sits crest factor right at the reject-gate floor. DILLA_STYLE_DEFAULTS
+  # already uses donuts_soul; this table (applied first) was overriding it.
+  "SONITEX" => "donuts_soul",
+  "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "acetate",
   "DRUM_PRESET" => "dilla_slight",
   "EXTERNAL_KIT" => "03-soulful-vintage",
@@ -7837,7 +7870,8 @@ def stream_iterate_after_render!(path)
       notes << "harsh_soft"
     end
     promote_progression_hook!(ENV["TRACK"].to_s, beauty,
-                               report: (stream_analyze_for_gates(path) if DillaMaster.loss_gates.any?))
+                               report: (stream_analyze_for_gates(path) if DillaMaster.loss_gates.any?),
+                               path: path)
     notes.concat(stream_iterate_evolve_harmony!) if (@stream_iterate_count % 4).zero?
     reassert_camel_beauty_locks!
     line = "[#{Time.now.utc.iso8601}] ##{@stream_iterate_count} track=#{ENV['TRACK']} beauty=#{beauty} " \
@@ -7865,7 +7899,8 @@ def stream_iterate_after_render!(path)
     notes << "groove=#{groove_score}"
   end
   promote_progression_hook!(ENV["TRACK"].to_s, beauty,
-                             report: (stream_analyze_for_gates(path) if DillaMaster.loss_gates.any?))
+                             report: (stream_analyze_for_gates(path) if DillaMaster.loss_gates.any?),
+                             path: path)
   every = [(ENV["EVOLVE_EVERY"] || "3").to_i, 1].max
   evolve_due = composition_enabled? && (@stream_iterate_count % every).zero?
   groove_low = groove_score && groove_score < (ENV["GROOVE_SCORE_MIN"] || "75").to_f
@@ -8195,11 +8230,11 @@ def apply_motif_recall!(bar)
   sess.record_callback!(bar, "hook", state)
 end
 
-def promote_progression_hook!(track, beauty, report: nil)
+def promote_progression_hook!(track, beauty, report: nil, path: nil)
   return if track.to_s.empty?
   min = (ENV["PROMOTION_BEAUTY_MIN"] || "85").to_f
   return unless beauty >= min
-  gate = DillaMaster.passes_loss_gates?(report)
+  gate = DillaMaster.passes_loss_gates?(report, path: path)
   unless gate[:pass]
     warn "progression promotion blocked (loss gates): #{gate[:failures].join('; ')}"
     return

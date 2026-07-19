@@ -13,6 +13,8 @@ Rails.application.routes.draw do
   # Loopback-only in practice (see InternalController's shared-secret gate);
   # not subdomain-constrained since MASTER calls it directly by IP:port.
   get "internal/status" => "internal#status", as: :internal_status
+  post "internal/dilla_publish" => "internal#dilla_publish", as: :internal_dilla_publish
+  get "sso/from_master" => "sso#from_master", as: :sso_from_master
 
   jobs_constraint = lambda { |request|
     session_id = request.cookie_jar.signed[:session_id]
@@ -121,12 +123,16 @@ Rails.application.routes.draw do
         resources :imports, only: :create
         resources :tracks, only: %i[create destroy]
         resources :collaborations, only: %i[create destroy]
-        resources :dilla_sketches, only: %i[create update destroy]
+        resources :dilla_sketches, only: %i[create update destroy] do
+          member { post :render_audio }
+        end
       end
       resources :sets do
         resources :tracks, only: %i[create destroy]
         resources :collaborations, only: %i[create destroy]
-        resources :dilla_sketches, only: %i[create update destroy]
+        resources :dilla_sketches, only: %i[create update destroy] do
+          member { post :render_audio }
+        end
         resource :like, only: %i[create destroy]
         resource :listening_party, only: %i[create show update destroy], controller: "listening_parties" do
           resources :party_messages, only: :create

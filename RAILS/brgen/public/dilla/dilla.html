@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dilla Lab — brgen</title>
+  <style>
+    :root { color-scheme: dark; --bg: #17161c; --fg: #d8d6e0; --accent: #5b4fc4; --border: #46435a; --muted: #8a879c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+    main { max-width: 720px; margin: 0 auto; padding: 1.5rem; }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 0.25rem; }
+    p.lead { color: var(--muted); margin: 0 0 1.25rem; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin: 0.75rem 0 0.25rem; }
+    input, select, textarea { width: 100%; background: #211f28; border: 1px solid var(--border); color: var(--fg); padding: 0.55rem 0.65rem; border-radius: 0; }
+    textarea { min-height: 120px; font-family: ui-monospace, monospace; font-size: 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+    button, .btn { appearance: none; border: 1px solid var(--border); background: #211f28; color: var(--fg); padding: 0.55rem 0.9rem; cursor: pointer; text-decoration: none; font: inherit; }
+    button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .status { margin-top: 1rem; padding: 0.75rem; border: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; white-space: pre-wrap; }
+    .ok { color: #8fdfb0; }
+    .err { color: #e08a7a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Dilla Lab</h1>
+    <p class="lead">Sketch state for playlist collabs. Render runs the MASTER Dilla engine (queue) and can publish a playlist track.</p>
+
+    <label for="name">Name</label>
+    <input id="name" value="New sketch" />
+
+    <div class="row">
+      <div>
+        <label for="style">Style</label>
+        <select id="style">
+          <option value="dilla">dilla</option>
+          <option value="flylo">flylo</option>
+          <option value="baroque">baroque</option>
+          <option value="neo-soul">neo-soul</option>
+          <option value="jazz">jazz</option>
+        </select>
+      </div>
+      <div>
+        <label for="bars">Bars (4–64)</label>
+        <input id="bars" type="number" min="4" max="64" value="12" />
+      </div>
+    </div>
+
+    <label for="notes">Notes</label>
+    <textarea id="notes" placeholder="Pocket, swing, vocal idea…"></textarea>
+
+    <label for="state">Lab state (JSON — pat_ / aud_ / mix_)</label>
+    <textarea id="state">{
+  "pat_": {},
+  "aud_": {},
+  "mix_": { "style": "dilla", "bars": 12 }
+}</textarea>
+
+    <div class="actions">
+      <button type="button" class="primary" id="btn-copy">Copy state hash</button>
+      <button type="button" id="btn-decode">Load from URL hash</button>
+      <a class="btn" id="link-playlist" href="/">Back to playlist</a>
+    </div>
+
+    <p class="lead" style="margin-top:1.25rem">
+      Save / render from the playlist page (authenticated). Paste the JSON into the sketch form, or open this lab from a sketch link with <code>?playlist_id=…</code>.
+      Engine path: <code>MASTER/tools/dilla.rb generate</code> via Solid Queue <code>DillaRenderJob</code>.
+    </p>
+
+    <div class="status" id="status">Ready.</div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+
+    function buildState() {
+      let state = {};
+      try { state = JSON.parse($("state").value); } catch (e) { state = {}; }
+      state.mix_ = Object.assign({}, state.mix_ || {}, {
+        style: $("style").value,
+        bars: Number($("bars").value) || 12
+      });
+      return {
+        name: $("name").value,
+        style: $("style").value,
+        bars: Number($("bars").value) || 12,
+        notes: $("notes").value,
+        state
+      };
+    }
+
+    function encodeHash() {
+      const payload = buildState();
+      return btoa(unescape(encodeURIComponent(JSON.stringify({
+        pat_: payload.state.pat_ || {},
+        aud_: payload.state.aud_ || {},
+        mix_: payload.state.mix_ || {},
+        name: payload.name,
+        style: payload.style,
+        bars: payload.bars
+      }))));
+    }
+
+    $("btn-copy").addEventListener("click", () => {
+      try {
+        const hash = encodeHash();
+        history.replaceState(null, "", location.pathname + location.search + "#" + hash);
+        navigator.clipboard.writeText(hash).then(() => {
+          $("status").textContent = "Hash copied and set in URL.\nPaste JSON into the playlist sketch form, then Render.";
+          $("status").className = "status ok";
+        });
+      } catch (e) {
+        $("status").textContent = "Encode failed: " + e.message;
+        $("status").className = "status err";
+      }
+    });
+
+    $("btn-decode").addEventListener("click", () => {
+      const raw = location.hash.replace(/^#/, "");
+      if (!raw) { $("status").textContent = "No hash in URL."; return; }
+      try {
+        const json = JSON.parse(decodeURIComponent(escape(atob(raw))));
+        if (json.name) $("name").value = json.name;
+        if (json.style) $("style").value = json.style;
+        if (json.bars) $("bars").value = json.bars;
+        $("state").value = JSON.stringify({
+          pat_: json.pat_ || {},
+          aud_: json.aud_ || {},
+          mix_: json.mix_ || { style: json.style || "dilla", bars: json.bars || 12 }
+        }, null, 2);
+        $("status").textContent = "Loaded state from URL hash.";
+        $("status").className = "status ok";
+      } catch (e) {
+        $("status").textContent = "Decode failed: " + e.message;
+        $("status").className = "status err";
+      }
+    });
+
+    if (params.get("playlist_id")) {
+      $("link-playlist").href = "/playlists/" + params.get("playlist_id");
+      $("link-playlist").textContent = "Open playlist #" + params.get("playlist_id");
+    }
+    if (location.hash) $("btn-decode").click();
+  </script>
+</body>
+</html>

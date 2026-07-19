@@ -37,11 +37,11 @@ body.vertical-dating .app-shell {
   background: var(--dating-bg);
 }
 
-body.vertical-dating .match-list .x-post.x-match {
+body.vertical-dating .x-match {
   border-bottom: 1px solid var(--dating-border);
 }
 
-body.vertical-dating .match-list .x-post.x-match .x-avatar-img {
+body.vertical-dating .x-match .x-avatar-img {
   border-radius: var(--x-radius-pill);
   object-fit: cover;
 }

@@ -24,7 +24,8 @@ module Deploy
     end
 
     def initialize(targets: nil)
-      @targets = Array(targets).presence || default_targets
+      list = Array(targets).compact
+      @targets = list.empty? ? default_targets : list
       @result = GateResult.new
     end
 

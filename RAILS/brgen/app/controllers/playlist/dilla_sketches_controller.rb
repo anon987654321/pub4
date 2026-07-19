@@ -2,12 +2,13 @@
 
 class Playlist::DillaSketchesController < Playlist::BaseController
   before_action :set_parent
-  before_action :authorize_editor, only: %i[create update destroy]
+  before_action :authorize_editor, only: %i[create update destroy render_audio]
 
   def create
-    sketch = @parent.dilla_sketches.build(dilla_sketch_params.merge(user: Current.user))
+    sketch = @parent.dilla_sketches.build(dilla_sketch_params.merge(user: Current.user, render_status: "idle"))
     if sketch.save
-      redirect_to(parent_path, notice: t("dilla.sketch_saved", default: "Dilla sketch saved to collab"))
+      sketch.enqueue_render!(publish: truthy?(params[:publish])) if truthy?(params[:render_now])
+      redirect_to(parent_path, notice: t("dilla.sketch_saved", default: "Dilla sketch saved"))
     else
       redirect_to(parent_path, alert: sketch.errors.full_messages.to_sentence)
     end
@@ -26,6 +27,12 @@ class Playlist::DillaSketchesController < Playlist::BaseController
     sketch = @parent.dilla_sketches.find(params[:id])
     sketch.destroy
     redirect_to(parent_path, notice: t("dilla.sketch_removed", default: "Sketch removed"))
+  end
+
+  def render_audio
+    sketch = @parent.dilla_sketches.find(params[:id])
+    sketch.enqueue_render!(publish: truthy?(params.fetch(:publish, "1")))
+    redirect_to(parent_path, notice: t("dilla.render_queued", default: "Dilla render queued — refresh for audio"))
   end
 
   private
@@ -53,16 +60,15 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   end
 
   def dilla_sketch_params
-    params.require(:playlist_dilla_sketch).permit(:name, :state, :notes).tap do |p|
-      # state can come as JSON string from form or already hash
+    params.require(:playlist_dilla_sketch).permit(:name, :state, :notes, :style, :bars).tap do |p|
       if p[:state].is_a?(String) && p[:state].present?
         begin
           p[:state] = JSON.parse(p[:state])
-        rescue JSON::ParserError => e
-          Ground::Swallow.log(e, context: "DillaSketchesController.dilla_sketch_params")
+        rescue JSON::ParserError
           p[:state] = {}
         end
       end
+      p[:state] = {} if p[:state].blank?
     end
   end
 
@@ -76,5 +82,9 @@ class Playlist::DillaSketchesController < Playlist::BaseController
     unless owner || editor
       redirect_to(parent_path, alert: t("dilla.not_allowed", default: "Not allowed to edit dilla sketches in this collab"))
     end
+  end
+
+  def truthy?(value)
+    %w[1 true yes on].include?(value.to_s.downcase)
   end
 end

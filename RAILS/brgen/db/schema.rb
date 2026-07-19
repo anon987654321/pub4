@@ -540,18 +540,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_14_164502) do
   end
 
   create_table "playlist_dilla_sketches", force: :cascade do |t|
+    t.integer "bars", default: 12
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.text "notes"
     t.integer "playlist_id"
+    t.text "render_error"
+    t.string "render_status", default: "idle", null: false
+    t.datetime "rendered_at"
     t.integer "set_id"
     t.json "state", default: {}, null: false
+    t.string "style", default: "dilla"
+    t.integer "track_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["playlist_id", "created_at"], name: "index_playlist_dilla_sketches_on_playlist_id_and_created_at"
     t.index ["playlist_id"], name: "index_playlist_dilla_sketches_on_playlist_id"
     t.index ["set_id", "created_at"], name: "index_playlist_dilla_sketches_on_set_id_and_created_at"
     t.index ["set_id"], name: "index_playlist_dilla_sketches_on_set_id"
+    t.index ["track_id"], name: "index_playlist_dilla_sketches_on_track_id"
     t.index ["user_id"], name: "index_playlist_dilla_sketches_on_user_id"
   end
 
