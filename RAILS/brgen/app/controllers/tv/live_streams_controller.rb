@@ -57,7 +57,7 @@ module Tv
     private
 
     def set_live_stream
-      @live_stream = Tv::LiveStream.find(params[:id])
+      @live_stream = Tv::LiveStream.includes(:user).find(params[:id])
     end
 
     def resolve_channel(id_or_slug)
@@ -65,7 +65,7 @@ module Tv
     end
 
     def require_live_stream_owner!
-      return if @live_stream.user == Current.user
+      return if @live_stream.user_id == Current.user&.id
 
       redirect_to tv_live_stream_path(@live_stream), alert: "Not authorized"
     end

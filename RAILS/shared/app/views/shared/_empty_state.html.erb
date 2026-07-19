@@ -1,0 +1,28 @@
+<%#
+  Shared empty state — title + body + optional CTA.
+  Usage:
+    render "shared/empty_state",
+      title: "No posts",
+      body: "Try another search.",
+      action: { label: "Compose", path: new_post_path }
+%>
+<% title = local_assigns[:title] %>
+<% body = local_assigns[:body] || local_assigns[:message] %>
+<% action = local_assigns[:action] %>
+<% live = local_assigns.fetch(:live, true) %>
+<section class="empty empty-state<%= " #{local_assigns[:class]}" if local_assigns[:class].present? %>"
+  role="status"
+  <%= "aria-live=\"polite\"".html_safe if live %>>
+  <span class="empty-state-icon" aria-hidden="true">○</span>
+  <% if title.present? %>
+    <h2 class="empty-state-title"><%= title %></h2>
+  <% end %>
+  <% if body.present? %>
+    <p class="empty-state-body"><%= body %></p>
+  <% end %>
+  <% if action.is_a?(Hash) && action[:label].present? && action[:path].present? %>
+    <%= link_to action[:label], action[:path], class: "btn btn-primary empty-state-action" %>
+  <% elsif local_assigns[:actions].present? %>
+    <div class="empty-state-actions"><%= local_assigns[:actions] %></div>
+  <% end %>
+</section>

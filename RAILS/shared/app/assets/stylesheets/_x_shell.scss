@@ -8,7 +8,7 @@
   position: fixed;
   inset-block-start: -3rem;
   inset-inline-start: 0.75rem;
-  z-index: 1000;
+  z-index: var(--z-skip, 2000);
   padding: 0.5rem 0.75rem;
   background: var(--x-text);
   color: var(--x-bg);
@@ -16,6 +16,23 @@
   font-size: 0.875rem;
   border-radius: var(--x-radius-pill);
   transition: inset-block-start 150ms ease;
+}
+
+/* Forced colors (Windows High Contrast) — ported from zen_shell */
+@media (forced-colors: active) {
+  .skip-link,
+  .btn,
+  .edge-grip,
+  .tab-bar a,
+  .nav_link {
+    forced-color-adjust: none;
+    border: 1px solid ButtonText;
+  }
+  .x-card,
+  .empty-state,
+  .offline-page-item {
+    border: 1px solid CanvasText;
+  }
 }
 
 .skip-link:focus {
@@ -93,15 +110,21 @@ main[role="main"] {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
+  /* Visual bar stays slim; hit area expanded to 44px (Fitts) via padding */
+  width: 12px;
   height: 64px;
+  padding: 0 16px;
+  box-sizing: content-box;
   border-radius: var(--x-radius-pill);
   background: var(--x-hover);
+  background-clip: content-box;
   pointer-events: auto;
   z-index: 1;
+  min-width: 44px;
+  min-height: 44px;
 }
-.edge-grip-left { inset-inline-start: 4px; }
-.edge-grip-right { inset-inline-end: 4px; }
+.edge-grip-left { inset-inline-start: 0; }
+.edge-grip-right { inset-inline-end: 0; }
 .sidebar-swiper.revealed .edge-grip-left,
 .widgets-swiper.revealed .edge-grip-right {
   opacity: 0;

@@ -1,12 +1,13 @@
 /* Maps — immersive vertical branding (Inter, MapLibre HUD). Core x shell hidden via _vertical_shell. */
 body.vertical-maps {
-  --maps-bg: #0b0f14;
-  --maps-ink: #f4f7fb;
-  --maps-muted: rgba(244, 247, 251, 0.62);
-  --maps-accent: #3b82f6;
-  --maps-accent-soft: rgba(59, 130, 246, 0.18);
-  --maps-surface: rgba(12, 18, 28, 0.82);
-  --maps-border: rgba(255, 255, 255, 0.1);
+  /* Cool graphite cartography — aligns with vertical_accents.maps */
+  --maps-bg: #12151c;
+  --maps-ink: var(--x-text, #d8d6e0);
+  --maps-muted: var(--x-text-secondary, #8a879c);
+  --maps-accent: var(--x-accent, #5b8fd4);
+  --maps-accent-soft: color-mix(in srgb, var(--maps-accent) 18%, transparent);
+  --maps-surface: color-mix(in srgb, var(--x-surface-elevated, #211f28) 92%, transparent);
+  --maps-border: var(--x-border, #46435a);
   --font-primary: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--maps-bg);
   color: var(--maps-ink);

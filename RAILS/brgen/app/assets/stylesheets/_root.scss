@@ -10,8 +10,10 @@
      reads as brgen rather than a generic clone of the other apps. */
   --x-accent: #5b4fc4;
   --x-accent-hover: #4a3fb0;
-  --x-bg: black;
-  --x-surface: black;
+  /* Graphite base (social dialect) so elevated surface stays visible */
+  --x-bg: #17161c;
+  --x-surface: #17161c;
+  --x-surface-elevated: #211f28;
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;

@@ -80,35 +80,4 @@
   margin-top: var(--space-2);
 }
 
-.empty,
-.empty-state {
-  padding: var(--space-8) var(--space-4);
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 0.9375rem;
-  line-height: 1.5;
-}
-
-.empty-state::before {
-  content: "○";
-  display: block;
-  margin: 0 auto var(--space-3);
-  width: 2.5rem;
-  height: 2.5rem;
-  line-height: 2.5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--x-radius-pill);
-  font-size: 0.75rem;
-  color: var(--text-dim);
-}
-
-.empty-state p {
-  margin: 0;
-  max-width: 28em;
-  margin-inline: auto;
-}
-
-.empty-state a {
-  color: var(--accent);
-  font-weight: 600;
-}
+/* Empty state styles live in shared/_empty_state.scss */

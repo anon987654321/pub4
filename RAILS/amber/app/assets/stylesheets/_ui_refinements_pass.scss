@@ -40,9 +40,25 @@ h1, .display, .wordmark {
   grid-row: span 2;
 }
 
+@media (max-width: 36rem) {
+  .items-grid > :first-child,
+  .wardrobe-grid > :first-child {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
 .item-photo--placeholder,
 .item-card.is-empty {
-  background: var(--x-surface-elevated, #f0ebe3);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 6px,
+      color-mix(in srgb, var(--x-border) 55%, transparent) 6px,
+      color-mix(in srgb, var(--x-border) 55%, transparent) 7px
+    ),
+    var(--x-surface-elevated, #f0ebe3);
   color: var(--x-text-secondary);
   display: grid;
   place-items: center;
@@ -50,7 +66,43 @@ h1, .display, .wordmark {
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   min-height: 8rem;
+  aspect-ratio: 3 / 4;
   border: var(--elev-1);
+}
+
+/* Empty / skeleton floor for wardrobe */
+.empty-state {
+  max-width: 24rem;
+}
+
+.skeleton {
+  border-radius: var(--x-radius-sm, 6px);
+  background: linear-gradient(
+    90deg,
+    var(--x-hover-subtle) 0%,
+    var(--x-hover) 50%,
+    var(--x-hover-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: amber-skeleton 1.2s ease-in-out infinite;
+  min-height: 1rem;
+}
+
+@keyframes amber-skeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --x-border: var(--x-text-secondary);
+    --x-text-secondary: var(--x-text);
+  }
+  a { text-decoration: underline; }
 }
 
 /* Edge swiper grips */

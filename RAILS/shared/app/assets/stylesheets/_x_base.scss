@@ -53,17 +53,18 @@
   --x-layout-max: 1265px;
 }
 
+// Indigo light (not Twitter blue) — matches design_tokens.yml light: palette.
 @mixin x-light-tokens(
-  $bg: #ffffff,
+  $bg: #f7f6fa,
   $surface: #ffffff,
-  $surface-elevated: #f7f9f9,
-  $search-bg: #eff3f4,
-  $text: #0f1419,
-  $text-secondary: #536471,
-  $border: #eff3f4,
-  $accent: #1d9bf0,
-  $accent-hover: #1a8cd8,
-  $danger: #f4212e
+  $surface-elevated: #eeedf3,
+  $search-bg: #e8e6ef,
+  $text: #1a1824,
+  $text-secondary: #5c586e,
+  $border: #d4d1de,
+  $accent: #5b4fc4,
+  $accent-hover: #4a3fb0,
+  $danger: #d1594a
 ) {
   --x-bg: #{$bg};
   --x-surface: #{$surface};
@@ -77,6 +78,41 @@
   --x-accent: #{$accent};
   --x-accent-hover: #{$accent-hover};
   --x-danger: #{$danger};
+}
+
+// Amber luxury dialect (Aesop/Toteme warm paper) — design_tokens.yml luxury:
+@mixin x-luxury-light-tokens {
+  --x-bg: #f8f5f0;
+  --x-surface: #ffffff;
+  --x-surface-elevated: #f0ebe3;
+  --x-search-bg: #ebe4da;
+  --x-text: #2c2824;
+  --x-text-secondary: #6b665f;
+  --x-border: #e6e0d8;
+  --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
+  --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
+  --x-accent: #8c7a5e;
+  --x-accent-hover: #6f6149;
+  --x-danger: #d1594a;
+  --x-radius-sm: 6px;
+  --x-radius-md: 10px;
+  --x-radius-card: 14px;
+  --x-radius-lg: 14px;
+}
+
+@mixin x-luxury-dark-tokens {
+  --x-bg: #1a1816;
+  --x-surface: #1a1816;
+  --x-surface-elevated: #24221f;
+  --x-search-bg: #2a2622;
+  --x-text: #e8e4dc;
+  --x-text-secondary: #8a8278;
+  --x-border: #3a3630;
+  --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
+  --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
+  --x-accent: #a38b6f;
+  --x-accent-hover: #8c7a5e;
+  --x-danger: #d1594a;
 }
 
 // Stable application aliases layered over either x token theme.

@@ -9,16 +9,16 @@ body[class*="vertical-"] .compose-box {
    and active states read as its own place rather than the shared indigo. The
    second selector carries the accent into light mode on browsable verticals
    (immersive ones hide #dark-toggle, so it simply never matches there). */
-/* Values align with each vertical's existing brand token where one exists
-   (--dating-accent #00d4aa, --maps-accent #3b82f6, --tv-accent red) so the
-   shared chrome matches the vertical's own surface instead of fighting it. */
+/* Single accent map — keep in sync with design_tokens.yml vertical_accents.
+   Do not re-set --x-accent in ui_refinements or vertical-local sheets. */
 $vertical-accents: (
-  marketplace: (#b06a3a, #96592f),
+  marketplace: (#8c7a5e, #6f6149),
   tv:          (#d6473f, #b83a33),
   dating:      (#00d4aa, #00b391),
   takeaway:    (#e07b39, #c26a30),
   playlist:    (#12b6c4, #0f9aa6),
-  maps:        (#3b82f6, #2f6fd8),
+  maps:        (#5b8fd4, #4a7ab8),
+  messenger:   (#6b7fd7, #5566c4),
 );
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v},

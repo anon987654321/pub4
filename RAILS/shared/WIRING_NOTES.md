@@ -81,23 +81,33 @@ bin/rails test
 
 Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
 
-## Visual design system (2026-07-15)
+## Visual design system (2026-07-19)
 
-**Reference:** x.com's layout and interaction patterns; pub4's graphite/indigo palette on the shared token layer. Source of truth is code: `shared/app/assets/stylesheets/_x_base.scss`, `shared/design_tokens.yml`, and `shared/app/assets/stylesheets/_x_shell.scss` for the three-column grid. amber and brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_x_base.scss`.
+**Reference:** x.com interaction patterns; pub4 graphite/indigo palette. Source of truth: `shared/design_tokens.yml`, `shared/app/assets/stylesheets/_x_base.scss`, `_x_shell.scss`. amber/brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_x_base.scss`.
 
-**Shared palette (dark, `_x_base.scss` / `design_tokens.yml`):**
-- Accent `#7c6fd6`, danger `#d1594a`
+**Dialects (do not merge casually):**
+| Dialect | Apps | Radius | Notes |
+|---------|------|--------|-------|
+| `social` | brgen (+ verticals) | soft 4/8/12/16 | Graphite/indigo |
+| `luxury` | amber | soft 6/10/14 | Warm paper (`x-luxury-*-tokens`) |
+| `openbsd_wscons` | bsdports | **0** CRT-flat | Green mono terminal |
+| `face_root` | MASTER web face | **0** CRT-flat | Operator face only |
+
+**Shared social palette (dark):**
+- Accent default `#7c6fd6`; brgen `#5b4fc4`; danger `#d1594a`
 - bg/surface `#17161c`, elevated `#211f28`, search `#232030`
 - text `#d8d6e0`, secondary `#8a879c`, border `#46435a`
-- Layout: 275px sidebar / 600px feed / 350px widgets / 1265px max — implemented in `_x_shell.scss` at `min-width: 1265px`; icon-only sidebar rail (120px) at 769–1264px; mobile hides sidebar/widgets and shows tab bar
-- Radius: **0** on shared tokens (`--x-radius-*` all 0) — hard edges, no rounded cards
-- Type: `--x-font` is the system UI stack; `--x-font-mono` (JetBrains Mono Nerd Font stack) for code/data surfaces only
+- Light mode: indigo `#5b4fc4` on cool gray paper — **not** Twitter blue
 
-**Per-app accent overrides (phase 2 branding):** brgen sets `--x-accent: #5b4fc4` in `brgen/app/assets/stylesheets/_root.scss`. amber/bsdports use the shared indigo default unless they add their own override.
+**Layout:** single-column feed (`--x-feed-max: 600px`) with edge-swiper sidebar/widgets panels (`_x_shell.scss`). Tab bar is the always-reachable nav. Verticals may hide chrome via `_vertical_shell.scss`.
 
-**Flat rule, no exceptions:** no `box-shadow`, `text-shadow`, `backdrop-filter`, or `filter: blur()/drop-shadow()` in app CSS. Separation comes from 1px hairline borders (`var(--x-border)`) or solid backgrounds.
+**Vertical accents:** single map in `design_tokens.yml` → `vertical_accents` and `_vertical_shell.scss` only. Do not re-set `--x-accent` in ui_refinements or vertical-local sheets.
 
-**Feed actions:** use `shared/_x_feed_icon.html.erb` SVG icons in post cards — not emoji.
+**Empty states:** `shared/app/views/shared/_empty_state.html.erb` + `_empty_state.scss`.
+
+**Flat rule, no exceptions:** no `box-shadow`, `text-shadow`, `backdrop-filter`, or `filter: blur()/drop-shadow()` in app CSS. Separation = 1px hairline borders or solid backgrounds.
+
+**Feed actions:** use `shared/_x_feed_icon.html.erb` SVG icons — not emoji.
 
 ## Engine extraction (done)
 

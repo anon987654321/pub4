@@ -31,7 +31,9 @@ class Takeaway::Order < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   def calculate_totals!
-    sub = order_items.sum { |oi| oi.unit_price_cents * oi.quantity }
+    # Use in-memory association target so create-with-build works under strict_loading.
+    items = order_items.target
+    sub = items.sum { |oi| oi.unit_price_cents.to_i * oi.quantity.to_i }
     fee = restaurant.delivery_fee_cents.to_i
     update!(subtotal_cents: sub, delivery_fee_cents: fee, total_cents: sub + fee)
   end

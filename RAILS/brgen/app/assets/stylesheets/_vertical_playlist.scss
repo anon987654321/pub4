@@ -1,21 +1,24 @@
 /* Playlist — immersive vertical branding (SF Pro, radio tunnel). Core x shell hidden via _vertical_shell. */
 body.vertical-playlist {
   --font-primary: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
+  --font-mono: var(--x-font-mono, "SF Mono", Monaco, "Cascadia Code", monospace);
   --font-size-base: clamp(16px, 4vw, 18px);
   --font-size-large: clamp(20px, 5vw, 28px);
   --font-size-small: clamp(14px, 3.5vw, 16px);
-  --color-bg: #000000;
-  --color-text: #ffffff;
-  --color-accent: #4ecdc4;
-  --color-muted: rgba(255, 255, 255, 0.7);
-  --color-overlay: rgba(0, 0, 0, 0.9);
+  /* Token-backed — vertical shell sets --x-accent to playlist teal */
+  --color-bg: var(--x-bg, #17161c);
+  --color-text: var(--x-text, #d8d6e0);
+  --color-accent: var(--x-accent, #12b6c4);
+  --color-muted: var(--x-text-secondary, #8a879c);
+  --color-overlay: color-mix(in srgb, var(--x-bg) 92%, transparent);
+  --color-elevated: var(--x-surface-elevated, #211f28);
+  --playlist-success: #00ba7c;
   --space-xs: clamp(0.25rem, 1vw, 0.5rem);
   --space-sm: clamp(0.5rem, 2vw, 1rem);
   --space-md: clamp(1rem, 3vw, 1.5rem);
   --space-lg: clamp(1.5rem, 4vw, 2rem);
   --border-radius: 0;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--color-bg);
   color: var(--color-text);
 }
@@ -182,7 +185,7 @@ body.vertical-playlist .app-shell {
   font: 10px/1.4 var(--font-mono);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #0f0;
+  color: var(--color-accent);
   pointer-events: none;
 }
 
@@ -209,11 +212,11 @@ body.vertical-playlist .app-shell {
   z-index: 12;
   max-width: min(420px, 72vw);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(0, 255, 0, 0.18);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
   border-radius: var(--border-radius);
   font: 10px/1.45 var(--font-mono);
-  color: #0c0;
+  color: var(--color-accent);
   pointer-events: none;
 }
 
@@ -412,7 +415,7 @@ body.vertical-playlist .playlist-index {
 
 .playlist-scrub-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 65%, white));
+  background: var(--color-accent);
 }
 
 .playlist-embed-frame {
@@ -420,7 +423,7 @@ body.vertical-playlist .playlist-index {
   min-height: 180px;
   border: 0;
   border-radius: var(--x-radius-sm);
-  background: #101010;
+  background: var(--color-elevated);
 }
 
 .playlist-queue-item {
@@ -484,11 +487,12 @@ body.vertical-playlist .playlist-index {
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: var(--x-radius-card);
-  background: #101010;
+  background: var(--color-elevated);
+  border: 1px solid var(--x-border, #46435a);
 }
 
 .playlist-artwork--fallback {
-  background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+  background: var(--color-elevated);
 }
 
 .playlist-now-playing {
@@ -568,7 +572,7 @@ body.vertical-playlist .playlist-index {
   height: 48px;
   object-fit: cover;
   border-radius: var(--x-radius-sm);
-  background: #101010;
+  background: var(--color-elevated);
 }
 
 .playlist-queue-meta {

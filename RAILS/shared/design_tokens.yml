@@ -189,15 +189,26 @@ social:
   x_layout_max: "1265px"
 
 light:
-  x_bg: "#ffffff"
+  # Indigo/graphite light — not Twitter blue. Keeps brand across dark/light.
+  x_bg: "#f7f6fa"
   x_surface: "#ffffff"
-  x_surface_elevated: "#f7f9f9"
-  x_search_bg: "#eff3f4"
-  x_text: "#0f1419"
-  x_text_secondary: "#536471"
-  x_border: "#eff3f4"
-  x_hover: "rgba(15, 20, 25, 0.1)"
-  x_hover_subtle: "rgba(15, 20, 25, 0.03)"
-  x_accent: "#1d9bf0"
-  x_accent_hover: "#1a8cd8"
-  x_danger: "#f4212e"
+  x_surface_elevated: "#eeedf3"
+  x_search_bg: "#e8e6ef"
+  x_text: "#1a1824"
+  x_text_secondary: "#5c586e"
+  x_border: "#d4d1de"
+  x_hover: "rgba(26, 24, 36, 0.1)"
+  x_hover_subtle: "rgba(26, 24, 36, 0.03)"
+  x_accent: "#5b4fc4"
+  x_accent_hover: "#4a3fb0"
+  x_danger: "#d1594a"
+
+# brgen vertical accent map (single source — mirrored in _vertical_shell.scss)
+vertical_accents:
+  marketplace: { accent: "#8c7a5e", hover: "#6f6149" }  # taupe storefront + serif
+  tv: { accent: "#d6473f", hover: "#b83a33" }
+  dating: { accent: "#00d4aa", hover: "#00b391" }       # Nordic teal (not warm coral)
+  takeaway: { accent: "#e07b39", hover: "#c26a30" }
+  playlist: { accent: "#12b6c4", hover: "#0f9aa6" }
+  maps: { accent: "#5b8fd4", hover: "#4a7ab8" }         # cool cartography blue-gray
+  messenger: { accent: "#6b7fd7", hover: "#5566c4" }    # soft slate-indigo chat

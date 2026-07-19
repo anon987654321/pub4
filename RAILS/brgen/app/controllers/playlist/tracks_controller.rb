@@ -37,7 +37,7 @@ class Playlist::TracksController < Playlist::BaseController
     if params[:set_id]
       @set = Playlist::Set.find(params[:set_id])
     elsif params[:playlist_id]
-      @playlist = Playlist::Playlist.find(params[:playlist_id])
+      @playlist = ::Playlist::Playlist.find(params[:playlist_id])
     else
       redirect_to playlist_playlists_path
     end

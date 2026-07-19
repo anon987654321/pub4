@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_14_164502) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_19_020000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -332,6 +332,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_14_164502) do
     t.integer "listing_id", null: false
     t.text "message"
     t.integer "price_cents"
+    t.integer "quantity", default: 1, null: false
     t.string "status"
     t.datetime "updated_at", null: false
     t.index ["buyer_id"], name: "index_marketplace_orders_on_buyer_id"

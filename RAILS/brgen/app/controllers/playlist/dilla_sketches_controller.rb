@@ -39,7 +39,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
 
   def set_parent
     if params[:playlist_id]
-      @parent = Playlist::Playlist.find(params[:playlist_id])
+      @parent = ::Playlist::Playlist.find(params[:playlist_id])
       @playlist = @parent
       return
     end

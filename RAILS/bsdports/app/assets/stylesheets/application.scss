@@ -1,6 +1,8 @@
 @use "stack" as *;
 @use "x_widgets";
 @use "x_base" as x;
+@use "empty_state";
+@use "offline_page";
 
 /* openbsd_wscons — green terminal identity (UI_REFINEMENTS §E) */
 :root {
@@ -448,6 +450,57 @@ kbd { padding: 0.12rem 0.35rem; border: 1px solid var(--x-border); border-bottom
   background: var(--x-hover);
   color: var(--x-text);
   text-decoration: none;
+}
+
+/* Empty / search miss — terminal tone */
+.empty-state {
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--x-font);
+  max-width: 36rem;
+}
+
+.empty-state-icon {
+  border-radius: 0;
+  font-family: var(--x-font);
+}
+
+.empty-state-title {
+  font-family: var(--x-font);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Mono skeleton blocks */
+.skeleton {
+  border-radius: 0;
+  min-height: 0.75rem;
+  background: color-mix(in srgb, var(--x-accent) 12%, transparent);
+  border: 1px solid var(--x-border);
+}
+
+.port-row,
+.search-result {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sticky meta strip on port detail */
+article > header {
+  position: sticky;
+  top: 52px;
+  z-index: 5;
+  padding-block: 0.5rem;
+  background: var(--x-bg);
+  border-bottom: 1px solid var(--x-border);
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --x-border: var(--x-text-secondary);
+    --x-text-secondary: var(--x-text);
+  }
+  a { text-decoration: underline; }
 }
 
 @media (prefers-reduced-motion: reduce) {

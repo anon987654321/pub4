@@ -23,7 +23,7 @@ module Playlist
 
     def import_line(line)
       attrs = attributes_for(line)
-      track = Playlist::Track.find_or_initialize_by(source_url: attrs[:source_url])
+      track = ::Playlist::Track.find_or_initialize_by(source_url: attrs[:source_url])
       created = track.new_record?
       track.assign_attributes(attrs) if created
       track.save!

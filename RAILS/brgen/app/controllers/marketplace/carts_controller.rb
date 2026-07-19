@@ -20,7 +20,7 @@ class Marketplace::CartsController < Marketplace::BaseController
     @cart_items.find_each do |order|
       next unless order.status == "pending"
 
-      Shared::Notifiable.deliver_notification(
+      order.deliver_notification(
         order.seller,
         title: "Marketplace offer reminder",
         body: "#{Current.user.display_name} is waiting on an offer for #{order.listing.title}.",
@@ -44,7 +44,7 @@ class Marketplace::CartsController < Marketplace::BaseController
   def load_cart
     @cart_items = Current.user.marketplace_orders
                          .where(status: "pending")
-                         .includes(:listing)
+                         .includes(listing: :user)
                          .order(created_at: :desc)
 
     @cart_total = @cart_items.sum(&:total_cents)

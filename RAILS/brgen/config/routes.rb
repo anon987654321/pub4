@@ -176,6 +176,12 @@ Rails.application.routes.draw do
       resources :categories, only: :show, param: :id
       resources :saved_searches, only: %i[index create destroy]
     end
+
+    # Solidus engines mount only when gems are loaded (SOLIDUS_MARKETPLACE=1 + install).
+    # Native Marketplace::* stays the public storefront until explicit cutover.
+    if defined?(Brgen::SolidusMarketplace) && Brgen::SolidusMarketplace.mountable?
+      mount Spree::Core::Engine, at: "/solidus"
+    end
   end
 
   constraints(subdomain: MAPS_SUBDOMAINS) do

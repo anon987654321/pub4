@@ -38,9 +38,9 @@ body.vertical-maps article.place dd {
 
 body.vertical-maps .btn,
 body.vertical-maps .btn-primary {
-  background: linear-gradient(90deg, var(--maps-accent), #60a5fa);
+  background: var(--maps-accent);
   color: var(--maps-ink);
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--maps-accent) 40%, var(--maps-border));
   border-radius: var(--radius-pill);
   font-weight: 600;
 }

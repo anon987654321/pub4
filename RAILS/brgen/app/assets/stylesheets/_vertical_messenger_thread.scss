@@ -52,6 +52,7 @@ body.vertical-messenger #messages article[data-from="self"] {
   align-self: flex-end;
   background: var(--msg-bubble-self);
   color: var(--x-text);
+  border: 1px solid color-mix(in srgb, var(--x-accent) 40%, var(--msg-border));
   border-bottom-right-radius: var(--x-radius-sm);
 }
 
@@ -59,7 +60,7 @@ body.vertical-messenger #messages article[data-from="peer"] {
   align-self: flex-start;
   background: var(--msg-bubble-peer);
   border-color: var(--msg-border);
-  border-bottom-left-radius: 6px;
+  border-bottom-left-radius: var(--x-radius-sm);
 }
 
 body.vertical-messenger #messages article header {
@@ -68,6 +69,8 @@ body.vertical-messenger #messages article header {
   gap: var(--space-1) var(--space-2);
   margin-bottom: var(--space-1);
   font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--x-font-mono, ui-monospace, monospace);
   opacity: 0.78;
 }
 
@@ -112,6 +115,7 @@ body.vertical-messenger #new_message textarea {
 body.vertical-messenger #new_message input[type="submit"] {
   margin-top: var(--space-2);
   width: 100%;
+  min-height: 44px;
   padding: var(--space-2) var(--space-3);
   border: none;
   border-radius: var(--radius-pill);
@@ -126,6 +130,29 @@ body.vertical-messenger #typing-indicator {
   color: var(--msg-muted);
   font-size: var(--text-xs);
   font-style: italic;
+}
+
+body.vertical-messenger #typing-indicator[data-active="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 2rem;
+  height: 2px;
+  margin-inline-end: 0.35rem;
+  vertical-align: middle;
+  background: var(--msg-accent);
+  animation: msg-type-bar 1s ease-in-out infinite;
+}
+
+@keyframes msg-type-bar {
+  0%, 100% { opacity: 0.35; transform: scaleX(0.6); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-messenger #typing-indicator[data-active="true"]::before {
+    animation: none;
+    opacity: 0.7;
+  }
 }
 
 body.vertical-messenger p[role="status"] {

@@ -32,6 +32,28 @@
   max-width: 36em;
 }
 
+.offline-page-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  margin-block-start: var(--space-4, 1rem);
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--x-border, var(--border));
+  border-radius: var(--x-radius-pill, 9999px);
+  background: var(--x-accent, var(--accent, #5b4fc4));
+  color: var(--x-bg, #17161c);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.offline-page-retry:focus-visible {
+  outline: 2px solid var(--x-accent, var(--accent));
+  outline-offset: 2px;
+}
+
 .offline-page-list {
   list-style: none;
   margin: 0;

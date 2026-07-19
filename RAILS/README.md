@@ -225,7 +225,7 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 - **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
 - **Deploy scripts:** `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` are thin shims over `_*.sh` (same pattern as `@deploy.sh`).
 
-**Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): `release`/`rails_runtime`/`visual_contract` still subprocess; deeper request/integration specs beyond static controller contracts; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization); Solidus marketplace mount remains planned (feature-flagged, staging-only).
+**Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): `release`/`rails_runtime`/`visual_contract` still subprocess; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization). Solidus: Gemfile flag + mount stub ready — full `solidus:install` is staging-only (not on 1GB vm23). Deploy smoke: `sh OPENBSD/bin/deploy-smoke.sh` (+ contract tests). Vertical mutation request specs: `brgen/test/integration/vertical_mutations_test.rb`.
 
 ## Deploy scripts
 

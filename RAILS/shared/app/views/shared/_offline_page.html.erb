@@ -6,6 +6,9 @@
     <p class="offline-page-meta">Offline</p>
     <h1><%= app_name %> is offline</h1>
     <p class="offline-page-lead">We’ll show the last cached items from this device when they’re available.</p>
+    <button type="button" class="offline-page-retry btn btn-primary" data-action="offline-page#retry">
+      Retry
+    </button>
   </div>
 
   <ul class="offline-page-list" data-offline-page-target="list" role="list" aria-label="Offline content list">

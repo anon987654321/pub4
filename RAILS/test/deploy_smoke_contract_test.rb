@@ -4,9 +4,40 @@ require "minitest/autorun"
 
 class DeploySmokeContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  OPENBSD_ROOT = File.expand_path("../../openbsd", __dir__)
+  OPENBSD_ROOT = File.expand_path("../../OPENBSD", __dir__)
   APPS = %w[amber brgen bsdports].freeze
   RAILS_APPS = APPS
+  SMOKE = File.join(OPENBSD_ROOT, "bin", "deploy-smoke.sh")
+
+  def test_deploy_smoke_script_exists_and_covers_apps
+    assert File.file?(SMOKE), "missing OPENBSD/bin/deploy-smoke.sh"
+    body = File.read(SMOKE)
+    assert_includes body, "ALLOW_AMBER_DOWN"
+    assert_includes body, "http://127.0.0.1:38182/up"
+    assert_includes body, "http://127.0.0.1:61352/up"
+    assert_includes body, "http://127.0.0.1:53187/up"
+    assert_includes body, "https://brgen.no/up"
+    assert_includes body, "https://amber.brgen.no/up"
+    assert_includes body, "https://ai.brgen.no/up"
+    assert_includes body, "https://bsdports.org/up"
+    assert_includes body, "brgen_html_smoke"
+    assert_includes body, "rcctl"
+  end
+
+  def test_deploy_smoke_gate_static_contract
+    gate = File.join(OPENBSD_ROOT, "deploy_smoke_gate.rb")
+    assert File.file?(gate)
+    body = File.read(gate)
+    assert_includes body, "relayd.conf"
+    assert_includes body, 'check http "/up"'
+    assert_includes body, "assume_ssl"
+  end
+
+  def test_debt_yml_points_at_deploy_smoke
+    debt = File.read(File.join(OPENBSD_ROOT, "data", "debt.yml"))
+    assert_includes debt, "deploy-smoke.sh"
+    assert_includes debt, "multi_app_ram"
+  end
 
   def test_all_deployed_apps_expose_rails_health_up_route
     APPS.each do |app|
@@ -35,7 +66,7 @@ class DeploySmokeContractTest < Minitest::Test
   end
 
   def test_rails_runtime_gate_precompiles_assets
-    shared = read(File.join(ROOT, "@assets.sh"))
+    shared = read(File.join(ROOT, "_assets.sh"))
     assert_includes shared, "rails_assets_precompile_as_app"
     assert_includes shared, "assets:precompile"
   end

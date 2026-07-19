@@ -10,6 +10,14 @@ export default class extends Controller {
     this.load()
   }
 
+  retry() {
+    if (navigator.onLine) {
+      window.location.reload()
+      return
+    }
+    this.load()
+  }
+
   async load() {
     if (!("indexedDB" in window)) {
       this.renderEmpty()

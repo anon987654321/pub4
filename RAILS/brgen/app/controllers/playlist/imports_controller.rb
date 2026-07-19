@@ -9,18 +9,19 @@ module Playlist
       authorize_editor!
       return if performed?
 
-      results = Playlist::TrackImportService.new(user: Current.user, playlist: @playlist).call(params[:urls])
+      results = ::Playlist::TrackImportService.new(user: Current.user, playlist: @playlist).call(params[:urls])
       redirect_to playlist_playlist_path(@playlist), notice: "#{results.size} track imports queued"
     end
 
     private
 
     def set_playlist
-      @playlist = Playlist::Playlist.find(params[:playlist_id])
+      # Absolute constant — nested under module Playlist, relative Playlist::Playlist nests again.
+      @playlist = ::Playlist::Playlist.includes(:user).find(params[:playlist_id])
     end
 
     def authorize_editor!
-      return if Current.user == @playlist.user
+      return if Current.user&.id == @playlist.user_id
       return if @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor])
 
       redirect_to playlist_playlist_path(@playlist), alert: "Not allowed"

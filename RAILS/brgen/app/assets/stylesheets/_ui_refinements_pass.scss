@@ -31,14 +31,21 @@ time {
   font-variant-numeric: tabular-nums;
 }
 
-/* H · list perf */
+/* H · list perf — taller intrinsic for media cards to reduce scroll jump */
 .x-card,
 .feed-post,
 .restaurant-card,
 .listing-card,
 .item-card {
   content-visibility: auto;
-  contain-intrinsic-size: auto 120px;
+  contain-intrinsic-size: auto 160px;
+}
+.video-card,
+.channel-card,
+.listing-card:has(img),
+.feed-post:has(.x-media),
+.x-card:has(.x-media) {
+  contain-intrinsic-size: auto 280px;
 }
 
 /* Flash / toast flat card */
@@ -101,21 +108,11 @@ time {
   transition: transform var(--transition-fast) var(--ease-out);
 }
 
-/* Marketplace storefront */
-body.vertical-marketplace {
-  --x-accent: #8c7a5e;
-  --x-accent-hover: #6f6149;
-}
+/* Marketplace storefront type (accent from _vertical_shell only) */
 body.vertical-marketplace h1,
 body.vertical-marketplace .page-header h1 {
   font-family: "Libre Baskerville", Georgia, serif;
   letter-spacing: -0.02em;
-}
-
-/* Dating warmer accent */
-body.vertical-dating {
-  --x-accent: oklch(62% 0.14 20);
-  --x-accent-hover: oklch(55% 0.14 20);
 }
 
 /* TV 16:9 + duration chip */

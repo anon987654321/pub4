@@ -1,8 +1,7 @@
 /* TV — Odyssey-style cinematic watch + postpro/repligen media polish */
 body.vertical-tv {
   --tv-stage: var(--x-bg);
-  --tv-glow: rgba(255, 255, 255, 0.06);
-  --tv-accent: oklch(54% 0.2 27);
+  --tv-accent: var(--x-accent, #d6473f);
 }
 
 body.vertical-tv main {
@@ -24,16 +23,12 @@ body.vertical-tv .video-player {
   background: var(--tv-stage);
 }
 
-/* postpro.rb cinematic grade hook — applied when thumbnail/video processed */
-body.vertical-tv .postpro-grade,
-body.vertical-tv .tv-media-image.postpro-grade {
-  filter: contrast(1.06) saturate(1.08);
-}
-
+/* Grade is server-side (postpro); no CSS filter ornament (flat rule) */
 body.vertical-tv .repligen-hero,
 body.vertical-tv .tv-media-image.repligen-hero {
   object-fit: cover;
-  background: radial-gradient(ellipse at 50% 20%, var(--tv-glow), var(--tv-stage));
+  background: var(--tv-stage);
+  border: 1px solid var(--x-border);
 }
 
 body.vertical-tv .live-badge {

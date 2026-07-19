@@ -5,7 +5,8 @@ body.vertical-messenger {
   --msg-muted: var(--x-text-secondary);
   --msg-surface: var(--x-surface-elevated);
   --msg-border: var(--x-border);
-  --msg-bubble-self: linear-gradient(135deg, oklch(60% 0.18 255), oklch(50% 0.2 293));
+  /* Flat solid bubbles — no gradient (pixel_perfection) */
+  --msg-bubble-self: color-mix(in srgb, var(--x-accent) 22%, var(--x-surface-elevated));
   --msg-bubble-peer: var(--x-surface-elevated);
   --msg-accent: var(--x-accent);
   --font-primary: "Inter", var(--x-font);

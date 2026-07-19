@@ -3517,15 +3517,16 @@ def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
   end
   spread = role == :ghost ? 0.06 : 0.08
   vel = dilla_velocity(base, bar, step, spread: spread) * sec_gain
-  # Camel/FlyLo primary: pocket kicks/snares/claps need headroom over warm pads.
+  # FlyLo primary: kick-forward; snares/hats sit under kick (tops were piercing).
   if flylo_primary_drums?
     mul = case role
-          when :kick_anchor, :kick_sync then 1.45
-          when :snare, :clap then 1.55
-          when :hat_down, :hat_up, :open then 1.2
+          when :kick_anchor, :kick_sync then 1.4
+          when :snare, :clap then 1.05
+          when :hat_down, :hat_up, :open then 0.88
+          when :rim, :ghost then 0.75
           else 1.0
           end
-    vel = (vel * mul).clamp(0.05, 0.98)
+    vel = (vel * mul).clamp(0.05, 0.95)
   end
   vel
 end
@@ -7400,18 +7401,19 @@ DILLA_STYLE_DEFAULTS = {
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
   "DRUM_PRESET" => "dilla_slight",
-  # Kit-forward bus — demo analysis had hats ~-56 dBFS and kick ~-35 under pads.
-  "FLYLO_OVERLAY_GAIN" => "1.85",
-  "FLYLO_SUB_MIX" => "1.45",
-  "FLYLO_TOP_MIX" => "2.15",
-  "FLYLO_MERGE_BOOST" => "2.4",
-  "FLYLO_BASE_DRUM_VOL" => "1.05",
-  "DRUM_BUS_VOL" => "1.95",
-  "DRUM_BUS_GAIN" => "1.85",
-  "DRUM_MIX_WEIGHT" => "2.05",
-  "DRUM_PEAK_DB" => "-1.0",
-  "DRUM_AIR_DB" => "9.0",
-  "DRUM_PRESENCE_DB" => "7.5",
+  # Kit-forward but not snare/shaker walls — tops (hats/snares/claps) sat ~2×
+  # over kicks when TOP_MIX/MERGE and air EQ were maxed for laptop speakers.
+  "FLYLO_OVERLAY_GAIN" => "1.35",
+  "FLYLO_SUB_MIX" => "1.55",
+  "FLYLO_TOP_MIX" => "0.95",
+  "FLYLO_MERGE_BOOST" => "1.55",
+  "FLYLO_BASE_DRUM_VOL" => "1.0",
+  "DRUM_BUS_VOL" => "1.45",
+  "DRUM_BUS_GAIN" => "1.35",
+  "DRUM_MIX_WEIGHT" => "1.55",
+  "DRUM_PEAK_DB" => "-1.5",
+  "DRUM_AIR_DB" => "3.5",
+  "DRUM_PRESENCE_DB" => "3.0",
   # Pads step back so kick/hat/vocal occupy the mix.
   "HARM_MIX_WEIGHT" => "1.05",
   "HARM_BUS_VOL" => "1.35",
@@ -7575,25 +7577,25 @@ STREAM_EXTRA_DEFAULTS = {
   "SPEAK_PITCH" => "+8Hz",
   "SPEAK_VOL" => "0.82",
   "SPEAK_QUIRK" => "0.12",
-  # Kit audible on laptop speakers (force after style table).
+  # Kit balanced for speakers (force after style table) — tops quieter than kicks.
   "KICKS" => "1",
   "POCKET_KICKS" => "1",
   "FLYLO_DRUMS_ONLY" => "0",
   "FLYLO_DRUM_OVERLAY" => "1",
   "FLYLO_QUINT_HATS" => "1",
   "BACKBEAT_CLAP" => "1",
-  "KICK_GAIN" => "1.15",
-  "FLYLO_KICK_GAIN" => "1.55",
-  "FLYLO_OVERLAY_GAIN" => "1.85",
-  "FLYLO_SUB_MIX" => "1.45",
-  "FLYLO_TOP_MIX" => "2.15",
-  "FLYLO_MERGE_BOOST" => "2.4",
-  "FLYLO_BASE_DRUM_VOL" => "1.05",
-  "DRUM_BUS_VOL" => "1.95",
-  "DRUM_BUS_GAIN" => "1.85",
-  "DRUM_MIX_WEIGHT" => "2.05",
-  "DRUM_AIR_DB" => "9.0",
-  "DRUM_PRESENCE_DB" => "7.5",
+  "KICK_GAIN" => "1.2",
+  "FLYLO_KICK_GAIN" => "1.45",
+  "FLYLO_OVERLAY_GAIN" => "1.35",
+  "FLYLO_SUB_MIX" => "1.55",
+  "FLYLO_TOP_MIX" => "0.95",
+  "FLYLO_MERGE_BOOST" => "1.55",
+  "FLYLO_BASE_DRUM_VOL" => "1.0",
+  "DRUM_BUS_VOL" => "1.45",
+  "DRUM_BUS_GAIN" => "1.35",
+  "DRUM_MIX_WEIGHT" => "1.55",
+  "DRUM_AIR_DB" => "3.5",
+  "DRUM_PRESENCE_DB" => "3.0",
   "HARM_MIX_WEIGHT" => "1.05",
   "HARM_BUS_VOL" => "1.35",
   "HARMONIC_PADS_WEIGHT" => "1.05",
@@ -8707,8 +8709,12 @@ def stream(bars_count = STREAM_BARS_COUNT)
   # Non-stop outer supervisor: any exit except Ctrl-C restarts stream (agent + interactive).
   if ENV.fetch("STREAM_CONTINUOUS", "1") != "0" && ENV["DILLA_STREAM_SUPERVISOR"] != "1"
     stream_log = File.join(ROOT, "stream.log")
-    env_pass = %w[RENDER_MODE STREAM_SOUL SPEAK RAP_VOCAL STREAM_DEMO STREAM_TRACK STREAM_LOCK]
-                 .filter_map { |k| ENV[k] && !ENV[k].empty? ? "#{k}=#{Shellwords.escape(ENV[k])}" : nil }
+    env_pass = %w[
+      RENDER_MODE STREAM_SOUL SPEAK RAP_VOCAL STREAM_DEMO STREAM_TRACK STREAM_LOCK
+      FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN
+      DRUM_BUS_VOL DRUM_BUS_GAIN DRUM_MIX_WEIGHT DRUM_AIR_DB DRUM_PRESENCE_DB
+      KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY
+    ].filter_map { |k| ENV[k] && !ENV[k].empty? ? "#{k}=#{Shellwords.escape(ENV[k])}" : nil }
                  .join(" ")
     cmd = "cd #{Shellwords.escape(ROOT)} && while true; do " \
           "DILLA_STREAM_LAUNCHED=1 DILLA_STREAM_SUPERVISOR=1 #{env_pass} " \

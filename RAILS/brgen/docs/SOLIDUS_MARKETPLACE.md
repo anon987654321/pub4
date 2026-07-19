@@ -42,17 +42,26 @@ Solidus tables are populated and cut over on the marketplace subdomain only.
 6. Multi-vendor: prefer modern Solidus multi-seller approach if marketplace 0.1.0
    fails on Solidus 4.7; otherwise implement Seller → Spree::Product ownership.
 
-## Local enable
+## Staging enable (safe path)
+
+Gems are **already declared** in `Gemfile` behind `SOLIDUS_MARKETPLACE=1`.
+Initializer: `config/initializers/solidus_marketplace.rb` (`Brgen::SolidusMarketplace`).
+Routes mount `Spree::Core::Engine` at `/solidus` under marketplace subdomains only
+when `Brgen::SolidusMarketplace.mountable?` (flag + gems loaded).
 
 ```bash
 cd RAILS/brgen
 export SOLIDUS_MARKETPLACE=1
 bundle install
-# bin/rails g solidus:install   # interactive — run on staging, commit migrations
+# Staging host only — not on hot 1GB vm23 with all apps up:
+bin/rails g solidus:install
+# Commit spree_* migrations; dual-run native listings until cutover.
 ```
+
+Contract: `ruby RAILS/test/solidus_staging_contract_test.rb` (no gems required).
 
 ## Production caution
 
 1 GB OpenBSD VPS cannot run Solidus install/migrate while master+brgen+amber are
 hot. Do Solidus schema work on a larger host or during a maintenance window with
-amber stopped.
+amber stopped (`ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh` after).

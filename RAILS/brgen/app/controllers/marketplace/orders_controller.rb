@@ -23,7 +23,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
       quantity: quantity
     )
     if @order.save
-      Shared::Notifiable.deliver_notification(@listing.user, title: "New marketplace offer", body: "#{Current.user.display_name} sent an offer for #{@listing.title}.", source: @order)
+      @order.deliver_notification(@listing.user, title: "New marketplace offer", body: "#{Current.user.display_name} sent an offer for #{@listing.title}.", source: @order)
       @order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace", locality: @listing.location)
       redirect_to marketplace_listing_path(@listing), notice: "Offer sent"
     else
@@ -42,7 +42,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
 
   private
 
-  def set_listing = (@listing = Marketplace::Listing.find(params[:listing_id]))
+  def set_listing = (@listing = Marketplace::Listing.includes(:user).find(params[:listing_id]))
 
-  def set_order = (@order = Marketplace::Order.find(params[:id]))
+  def set_order = (@order = Marketplace::Order.includes(listing: :user, buyer: {}).find(params[:id]))
 end

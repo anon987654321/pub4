@@ -13,16 +13,7 @@
 }
 .field .error { color: var(--x-danger); }
 
-/* Empty state CTA */
-.empty-state {
-  padding: var(--space-6, 2rem) var(--space-4, 1rem);
-  text-align: center;
-  border: var(--elev-1);
-  border-radius: var(--x-radius-md, 12px);
-  max-width: 28rem;
-  margin-inline: auto;
-}
-.empty-state .btn { margin-block-start: var(--space-3, 0.75rem); }
+/* Empty state styles live in shared/_empty_state.scss */
 
 /* Skeleton */
 .skeleton {
