@@ -26,6 +26,11 @@ class Conversation < ApplicationRecord
     "maps"        => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] }
   }.freeze
 
+  # Channels are ephemeral: messages fade so a room reads as "what's happening
+  # now" rather than an endless scrollback. Reuses the disappearing-message
+  # machinery (Message#schedule_expiration + MessageExpirationJob).
+  CHANNEL_TTL = ENV.fetch("BRGEN_CHANNEL_TTL_SECONDS", (6 * 3600).to_s).to_i
+
   def self.channel_slug?(slug) = CHANNELS.key?(slug.to_s)
 
   # Idempotently resolve a channel by slug, seeding its bots + a welcome line
@@ -38,7 +43,8 @@ class Conversation < ApplicationRecord
 
   def self.create_channel!(slug, spec)
     transaction do
-      channel = create!(conversation_type: "group", slug: slug, name: spec[:name], vertical: spec[:vertical])
+      channel = create!(conversation_type: "group", slug: slug, name: spec[:name], vertical: spec[:vertical],
+                        disappearing_duration: CHANNEL_TTL)
       ChannelBot.seat_bots(channel, spec[:bots])
       ChannelBot.welcome!(channel)
       channel
@@ -50,6 +56,15 @@ class Conversation < ApplicationRecord
   end
 
   def channel? = slug.present?
+
+  # A cheap "is this room alive right now" signal: distinct voices (people +
+  # bots) that spoke in the last 20 minutes. Not real-time presence — it
+  # refreshes on load, but it's enough to steer people toward a live room.
+  ACTIVE_WINDOW_SECONDS = 20 * 60
+
+  def recent_active_count
+    messages.where(created_at: (Time.current - ACTIVE_WINDOW_SECONDS)..).distinct.count(:sender_id)
+  end
 
   def join!(user)
     return if participants.exists?(user.id)

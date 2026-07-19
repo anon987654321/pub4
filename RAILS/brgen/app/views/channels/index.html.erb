@@ -14,7 +14,10 @@
           <span class="channel-name"><%= spec[:name] %></span>
           <span class="channel-blurb"><%= spec[:blurb] %></span>
           <span class="channel-meta dim">
-            <% if room %><%= pluralize(room.messages.size, "message") %><% else %>new room<% end %>
+            <% if room %>
+              <% active = room.recent_active_count %>
+              <% if active.positive? %><span class="channel-live">● <%= pluralize(active, "active") %></span><% else %><%= pluralize(room.messages.size, "message") %><% end %>
+            <% else %>new room<% end %>
           </span>
         <% end %>
       </li>

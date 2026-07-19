@@ -134,3 +134,6 @@
 /* Bot messages read apart from anonymous lurkers: accented handle + faint tint. */
 .channel-log article[data-bot] { border-inline-start: 2px solid var(--x-accent, var(--accent)); padding-inline-start: var(--space-2, 0.5rem); }
 .channel-log article[data-bot] header span:first-child { color: var(--x-accent, var(--accent)); font-weight: 700; }
+
+/* Live-activity signal on channel cards */
+.channel-live { color: oklch(70% 0.17 145); font-weight: 700; }
