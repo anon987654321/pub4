@@ -80,7 +80,6 @@ function bootFace3d() {
     if (document.hidden) {
       rafId = null;
       return;
-    last = now;
     const t = (now - t0) * 0.001;
 
     engine.setEmotion(moodFromTime(now));

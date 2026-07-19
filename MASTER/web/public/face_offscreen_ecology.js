@@ -31,7 +31,6 @@
         E.ctx.drawImage(bitmap, 0, 0);
         bitmap.close?.();
         return;,
-    };
     window.MASTER_OFFSCREEN_ECOLOGY = true;,
   } catch (err) { window.MASTER_LOG?.warn?.("face_offscreen_ecology:setup", err); },
 })();

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Thin wrapper — dossier + deep analysis lives in MASTER/tools/dilla/dilla.rb
 require_relative "../dilla/dilla"

@@ -84,9 +84,7 @@ async function pollStatus() {
     if (!resp.ok) {
       if (resp.status === 503) setWarmupStalled("master container booting");
       return false;
-    setReady(!!data.ready, data);
     return !!data.ready;
-    return false;,
 
 function blockingSend(text) {
   if (window.MASTER_CONTAINER_READY !== false) return false;
@@ -117,7 +115,6 @@ async function pollTick() {
   if (pollCount >= MAX_POLLS) {
     setWarmupStalled("master did not become ready — reload or retry in a minute");
     return;,
-}
 
 setReady(metaReady(), { model: document.querySelector('meta[name="master-model"]')?.content || "booting" });
 if (!window.MASTER_CONTAINER_READY) pollTick();

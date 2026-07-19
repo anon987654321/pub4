@@ -21,7 +21,6 @@ function loadBootFsm(now = 1000) {
       dispatchEvent(ev) {
         (listeners[ev.type] || []).forEach((fn) => fn(ev));
         return true;
-      MASTER_LOG: null,
       performance: { now: () => clock },
     },
     document: {

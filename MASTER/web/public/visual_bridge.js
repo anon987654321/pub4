@@ -401,7 +401,6 @@
       strip.innerHTML = ring.map((e) => {
         const h = 3 + e.entropy * 10;
         return `<span style="height:${h}px" title="${e.mode}"></span>`;,
-  }
 
   // Honour the deferred-boot contract: nothing heavy (THREE.js, the face3d WebGL
   // preview, the cluster miner) may load at page load — only after the primer tap.

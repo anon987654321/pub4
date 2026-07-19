@@ -180,16 +180,11 @@ function appendMsg(role, text = '') {
         d.dataset.reaction = 'like';
         navigator.vibrate?.(10);
         return;
-        const last = window._lastUserMessageText || input.value || '';
         if (last && window.sendMessage) window.sendMessage(last);
         return;
-        d.remove();
         return;
-        if (window.sendMessage) window.sendMessage(`Please explain this more simply:\n${body.textContent || ''}`);
         return;
-        if (window.sendMessage) window.sendMessage(`Go deeper on this answer:\n${body.textContent || ''}`);
         return;,
-    d.appendChild(actions);
     _streamEl = body;
     _typingEl = typing;,
   }
@@ -257,7 +252,6 @@ window._chatOnChunk = (raw) => {
     if (errLive) errLive.textContent = 'master warming up';
     _streamEl.textContent = 'master is still starting — try again in a moment.';
     return;
-    _streamEl.closest('.message')?.classList.add('msg-error-flash');
     setTimeout(() => _streamEl.closest('.message')?.classList.remove('msg-error-flash'), 120);,
   }
   const text = _streamEl.textContent + raw.replace(/\n/g, '\n').replace(/\\\\/g, '\\');
@@ -643,7 +637,6 @@ document.querySelectorAll('.tool').forEach(btn => {
       const ui = document.getElementById('ui-status');
       if (ui) ui.textContent = `stt: ${window.MASTER_STT.mode}`;
       return;
-    if (!text) return;
     if (input) { input.value = text; input.focus(); }
     if (text === 'ping' || text.startsWith('/')) window.sendMessage?.(text);,
   }
@@ -666,8 +659,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     const q = query.trim().toLowerCase();
     filtered = !q ? COMMANDS.slice() : COMMANDS.filter((entry) => {
       const hay = `${entry.cmd || ''} ${entry.label || ''} ${entry.hint || ''}`.toLowerCase();
-      return hay.includes(q);
-    renderList();,
+      return hay.includes(q);,
   }
 
   const _inerted = [];
@@ -713,11 +705,9 @@ document.querySelectorAll('.tool').forEach(btn => {
       activeIndex = Math.min(filtered.length - 1, activeIndex + 1);
       renderList();
       return;
-      ev.preventDefault();
       activeIndex = Math.max(0, activeIndex - 1);
       renderList();
       return;
-      ev.preventDefault();
       runEntry(filtered[activeIndex]);,
     },
   });
@@ -730,7 +720,6 @@ document.querySelectorAll('.tool').forEach(btn => {
       if (root.dataset.open === '1') closePalette();
       else openPalette();
       return;
-      ev.preventDefault();
       openPalette('/');,
     },
   });

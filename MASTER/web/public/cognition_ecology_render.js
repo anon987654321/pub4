@@ -218,10 +218,8 @@
       if (!document.hidden) requestAnimationFrame(frame);
       else ecologyFrameActive = false;
       return;
-      previous = now;
       ecologyFrameActive = false;
       return;
-    previous = now;
     E.state.time = now;
     E.state.activity += (((now - E.state.lastEventAt) < 3200 ? 0.72 : 0.16) - E.state.activity) * 0.012;
 

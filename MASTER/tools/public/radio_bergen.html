@@ -287,7 +287,6 @@
           const r=Math.sin(this.beatPhase)>.8?1:0;
           this._beatEnv=(this._beatEnv||0)+(r-(this._beatEnv||0))*(r?.4:.06);
           return{bass:b,mid:i,high:h,average:a,beat:this._beatEnv,energy:this.energyLevel,subBass:b,vocals:i,treble:h};
-        const len=this.dataArray.length;
         // Enhanced frequency bands (more granular)
         const subBassEnd=Math.floor(len*0.05);  // 20-60Hz
         const bassEnd=Math.floor(len*0.2);      // 60-250Hz
@@ -480,7 +479,6 @@
           const wobble=(this.bassWobble||0)*0.1;
           const a=i*(Math.PI*2/s)+this.time+wobble;
           return{x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r};
-        colorForRow32(i,l,a){
           const b=Math.max(0,Math.min(1,a?.bass??.5));
           const v=Math.max(0,Math.min(1,a?.average??.45));
           const h=Math.max(0,Math.min(1,a?.high??.35));
@@ -493,7 +491,6 @@
           const g=Math.round((60*v+d*30+beatPulse*0.3)/16)*16;
           const u=Math.round((180+b*60+hueShift*20)/16)*16;
           return pack32(r,g,u,255);
-        frame(a){
           const m=motionScale();
           // Bass wobble accumulator
           this.bassWobble=(this.bassWobble||0)*0.92+(a?.bass||0)*(a?.beat||0)*0.08;
@@ -607,13 +604,11 @@
           const ct = this.__rbTrig.ct, st = this.__rbTrig.st;
           const cosAT = cosA * ct - sinA * st; const sinAT = sinA * ct + cosA * st;
           return { x: cx + cosAT * r, y: cy + sinAT * r };
-        const verifyOnce = () => { try { const idxs = [0, Math.max(1, (tr.segments/3)|0), Math.max(2, (tr.segments/2)|0)]; const cx=100, cy=80, r=50; for (const k of idxs) { const aOld = k*(Math.PI*2/tr.segments)+tr.time; const ox = cx + Math.cos(aOld)*r; const oy = cy + Math.sin(aOld)*r; const p = tr.getCirclePos(cx, cy, r, k, tr.segments); const dx = Math.abs(ox - p.x); const dy = Math.abs(oy - p.y); if (dx > 1e-6 || dy > 1e-6) { /* optional rollback; keep silent */ } } } catch {} };
         const scheduleVerify = window.requestIdleCallback ?
           (() => window.requestIdleCallback(verifyOnce)) :
           (() => window.setTimeout(verifyOnce, 0));
         scheduleVerify();
-        return true;
-        if (applyPatch()) return; let tries = 0; const iv = setInterval(() => { tries++; if (applyPatch() || tries > 200) clearInterval(iv); }, 25);,
+        return true;,
       }
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();,
     })();
@@ -681,7 +676,6 @@
         canvas.style.opacity="1";
         canvas.style.transform="";
         return;
-      if(mode===1){
         const trail=0.95-Math.abs(a?.flux||0)*0.15;
         canvas.style.opacity=String(trail);,
       }else if(mode===2){

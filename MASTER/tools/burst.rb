@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 # frozen_string_literal: true
 # frozen_string_literal: true
+# frozen_string_literal: true
 # Burst - Industrial Techno Generator
 #
 # Pure SoX synthesis for aggressive Berghain-style industrial techno

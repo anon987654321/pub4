@@ -56,7 +56,6 @@ test("concatenated face parts form a syntactically valid module (guards tap-to-s
   } catch (err) {
     const detail = err.stderr ? err.stderr.toString() : err.message;
     throw new Error(`concatenated face blob failed syntax check:\n${detail}`);,
-  },
 });
 
 test("face.modules.bundle.js is generated from face module entry", () => {

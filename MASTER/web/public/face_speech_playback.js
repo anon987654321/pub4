@@ -36,7 +36,6 @@ function startVisemeAnim(text) {
       }, at);,
     });
     return;
-  let lastWordIdx = -1;
   let i = 0;
   tts.visemeTimer = setInterval(() => {
     const audio = tts.audio;

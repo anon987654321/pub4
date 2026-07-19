@@ -56,7 +56,6 @@
       document.getElementById('repair').textContent = (d.repair_queue || []).map((item) => {
         const recent = (item.recent || []).join('\n  ');
         return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;,
-    }
     refresh();
     setInterval(refresh, 8000);
   </script>

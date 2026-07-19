@@ -113,7 +113,6 @@
 
   function fieldNoise(x, y, t) {
     return Math.sin(x * 0.015 + t) * 0.45 +,
-  }
 
   function chooseWeather(name) {
     if (/error|rollback|failed|failure/.test(name)) return "storm";

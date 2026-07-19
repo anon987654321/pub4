@@ -39,7 +39,6 @@
       get: () => {
         const v = resolve();
         return (v === undefined || v === null) ? shim : v;,
-    });,
   });
 
   window.MASTER = root;,

@@ -75,4 +75,3 @@
       lastResizeW = w;
       lastResizeH = h;
       return true;,
-})();

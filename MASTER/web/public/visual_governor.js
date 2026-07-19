@@ -18,7 +18,6 @@
 
   function particleLike(value) {
     return value &&
-      typeof value.vy === "number" &&
       typeof value.vz === "number" &&
       typeof value.index === "number" &&
       typeof value.group === "string";,
@@ -50,8 +49,7 @@
 
     return nativeRaf((now) => {
       if (now - last < minFrameMs) {
-        return window.requestAnimationFrame(callback);
-      callback(now);,
+        return window.requestAnimationFrame(callback);,
     });,
   };,
 })();

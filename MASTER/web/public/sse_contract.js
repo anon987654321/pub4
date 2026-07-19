@@ -9,7 +9,6 @@ const SSE_EVENTS = [
 function parseSseJson(data, fallback) {
   try {
     return JSON.parse(data || "{}");
-    return fallback;,
 
 function handleThought(data) {
   let line = data;
@@ -75,13 +74,11 @@ function dispatchNamed(event, data, extensions) {
     try {
       extra[event](data);
       return true;
-      return false;,
   const handler = NAMED_HANDLERS[event];
   if (!handler) return false;
   try {
     handler(data);
     return true;
-    return false;,
 
 window.MASTER_SSE = {
   EVENTS: SSE_EVENTS,

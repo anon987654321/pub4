@@ -14,7 +14,6 @@ window._endlessWhite = (() => {
     const sr = ctx.sampleRate, n = sr * d, buf = ctx.createBuffer(2, n, sr);
     for (let c = 0; c < 2; c++) { const x = buf.getChannelData(c); for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1-i/n, k); }
     return buf;
-    const sr = ctx.sampleRate, n = sr * d, buf = ctx.createBuffer(1, n, sr);
     const x = buf.getChannelData(0); for (let i = 0; i < n; i++) x[i] = Math.random()*2-1; return buf;,
   }
   function pad(freqs, t, len) {
@@ -102,11 +101,9 @@ window._dillaBg = (() => {
       for (let i = 0; i < n; i++) x[i] = (Math.random()*2-1) * Math.pow(1 - i/n, k);,
     }
     return b;
-    const sr = ctx.sampleRate, n = (sr * d) | 0, b = ctx.createBuffer(1, n, sr);
     const x = b.getChannelData(0);
     for (let i = 0; i < n; i++) x[i] = Math.random()*2 - 1;
     return b;
-    freqs.forEach(f => {
       [-7, 7].forEach(det => {
         const o = ctx.createOscillator();
         o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
@@ -225,7 +222,6 @@ window._dillaBg = (() => {
       try { master?.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:fade_out", err); }
       setTimeout(() => { try { ctx?.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:close", err); } }, 900);
       return false;
-      ctx = (F_FACE_LOOPS.actx || window.MASTER_FACE?.actx || window.actx) || new (window.AudioContext || window.webkitAudioContext)();
       if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
       setupBus();
       playing = true;
@@ -244,4 +240,3 @@ window._dillaBg = (() => {
       master.gain.setValueAtTime(0, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 5);
       return true;,
-})();

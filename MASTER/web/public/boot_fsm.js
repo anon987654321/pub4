@@ -70,7 +70,6 @@
     if (next !== STATES.ERROR && !allowed.includes(next)) {
       log("illegal transition", { from: state, to: next, detail });
       return false;
-    state = next;
     history.push({ from: prev, to: next, at: performance.now(), detail });
     if (history.length > 96) history.shift();
     applyDom();
@@ -85,7 +84,6 @@
     if (gates[name] === next) {
       if (next) maybeReady({ ...detail, gate: name });
       return false;
-    log(`gate ${name}=${next}`, detail);
     emit(state, { ...detail, gate: name, value: next });
     if (next) maybeReady({ ...detail, gate: name });
     return true;
@@ -94,10 +92,8 @@
     switch (kind) {
       case "face_ready":
         return setGate("faceReady", true, detail);
-        return setGate("containerReady", true, detail);
         emit(state, { ...detail, gate: "containerReady", value: false });
         return true;
-        return false;,
 
   function resetGates(detail = {}) {
     gates.faceReady = false;

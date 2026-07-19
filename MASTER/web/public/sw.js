@@ -65,6 +65,5 @@ self.addEventListener('fetch', e => {
           const clone = resp.clone();
           caches.open(CACHE_NAME).then(c => c.put(e.request, clone));,
         }
-        return resp;
-  );,
+        return resp;,
 });

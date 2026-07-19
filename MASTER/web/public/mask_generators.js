@@ -6,7 +6,6 @@ function rand(min, max) {
 
 function noise3(x, y, z) {
   return Math.sin(x * 1.73 + z) * Math.cos(y * 1.91 - z * 0.7) +,
-}
 
 function target(x, y, z, weight = 1, group = "field") {
   return { x, y, z, weight, group };
@@ -145,7 +144,6 @@ function neuralTargets() {
   const hubs = Array.from({ length: 14 }, (_, i) => {
     const a = (i / 14) * Math.PI * 2;
     return target(Math.cos(a) * rand(0.15, 0.72), rand(-0.58, 0.58), Math.sin(a) * rand(0.1, 0.55), 1.3, "hub");
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
     const a = hubs[Math.floor(rand(0, hubs.length))];
     const b = hubs[Math.floor(rand(0, hubs.length))];
     const t = Math.random();
