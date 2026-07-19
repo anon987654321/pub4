@@ -393,15 +393,18 @@ module Master
       end
 
       def run_edge_worker(text, voice_name, style_config, audio_path, timeout)
-        Timeout.timeout(timeout) do
-          _out, err, status = Master::Io::Exec.capture3(
-            TtsSupervisor.daemon_env(Master::ROOT),
-            Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
-            stdin_data: text.to_s,
-            chdir: Master::ROOT
-          )
-          [err, status]
-        end
+        # Delegate the timeout to Exec.capture3, which spawns in its own process
+        # group and TERM/KILLs it on expiry. A previous outer Timeout.timeout
+        # here fired first and bypassed that kill, orphaning a hung tts-worker
+        # (and a retry then spawned a duplicate on the same output file).
+        _out, err, status = Master::Io::Exec.capture3(
+          TtsSupervisor.daemon_env(Master::ROOT),
+          Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+          stdin_data: text.to_s,
+          chdir: Master::ROOT,
+          timeout: timeout
+        )
+        [err, status]
       end
 
       def synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:, on_chunk: nil)
