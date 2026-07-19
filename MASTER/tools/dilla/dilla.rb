@@ -7562,18 +7562,21 @@ DILLA_COMFORT_DEFAULTS = {
   "STREAM_LUFS" => "-17.5",
   "STREAM_TRUE_PEAK" => "-2.0",
   "STREAM_LRA" => "9",
-  # Less chaos between tracks; rotate a short comfort progression pack.
-  "STREAM_ROTATE_LEAD" => "0",
-  "STREAM_ROTATE_SYNTH" => "0",
-  "SYNTH_MORPH" => "0",
-  "LEAD_MORPH" => "0",
-  "SYNTH_CYCLE" => "0",
+  # Autorotate progressions/patches/leads between tracks so a stream session
+  # actually surfaces variety instead of settling on one sound -- these were
+  # all forced off ("less chaos"), which is exactly why a listening session
+  # kept landing on the same handful of textures.
+  "STREAM_ROTATE_LEAD" => "1",
+  "STREAM_ROTATE_SYNTH" => "1",
+  "SYNTH_MORPH" => "1",
+  "LEAD_MORPH" => "1",
+  "SYNTH_CYCLE" => "1",
   "STREAM_CREATIVE_FREEDOM" => "0",
   "STREAM_ANALOG_WILD" => "0",
   "STREAM_ANALOG_EVERY" => "0",
   "STREAM_ITERATE" => "0",
-  "EVOLVE_EVERY" => "0",
-  "STREAM_HARMONY_EVERY" => "0",
+  "EVOLVE_EVERY" => "2",
+  "STREAM_HARMONY_EVERY" => "2",
   "STREAM_EVOLVE_PERFORMER" => "0",
   "LA_BEAT_PROGRESSION" => "0",
   "VINYL" => "0",
