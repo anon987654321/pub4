@@ -12,8 +12,8 @@ module Ports
 
     def summarize
       lines = []
-      lines << "#{port.name} (#{port.version}) in #{port.category&.name} — #{port.comment.presence || 'no comment recorded'}."
-      lines << "Maintainer: #{port.maintainer.presence || 'unknown'}."
+      lines << "#{port.name} (#{port.version}) in #{category_name} — #{port.comment.presence || 'no comment recorded'}."
+      lines << "Maintainer: #{maintainer_label}."
       lines << "Pkgpath: #{port.pkgpath}."
       lines << dependency_summary
       lines << advisory_summary
@@ -25,30 +25,52 @@ module Ports
 
     attr_reader :port
 
+    def category_name
+      # Prefer preloaded association; fall back without raising under strict_loading.
+      if port.association(:category).loaded?
+        port.category&.name || "uncategorized"
+      else
+        Category.where(id: port.category_id).pick(:name) || "uncategorized"
+      end
+    end
+
+    def maintainer_label
+      if port.association(:maintainer).loaded?
+        port.maintainer.presence || "unknown"
+      elsif port.maintainer_id.present?
+        Maintainer.where(id: port.maintainer_id).pick(:name) || "unknown"
+      else
+        "unknown"
+      end
+    end
+
     def dependency_summary
-      deps = port.dependencies.includes(:depends_on)
+      deps = Dependency.where(port_id: port.id).includes(:depends_on).to_a
       return "No recorded dependencies." if deps.empty?
 
-      runtime = deps.select { |dep| dep.dep_type == "run" }.map { |dep| dep.depends_on.name }
-      build = deps.select { |dep| dep.dep_type == "build" }.map { |dep| dep.depends_on.name }
+      runtime = deps.select { |dep| dep.dep_type == "run" }.filter_map { |dep| dep.depends_on&.name }
+      build = deps.select { |dep| dep.dep_type == "build" }.filter_map { |dep| dep.depends_on&.name }
       parts = []
       parts << "Runtime deps: #{runtime.first(6).join(', ')}" if runtime.any?
       parts << "Build deps: #{build.first(4).join(', ')}" if build.any?
-      parts.join(". ")
+      parts.join(". ").presence || "No recorded dependencies."
     end
 
     def advisory_summary
-      advisories = port.security_advisories.recent.limit(3)
+      advisories = SecurityAdvisory.where(port_id: port.id).order(created_at: :desc).limit(3).to_a
       return "No recent security advisories in local DB." if advisories.empty?
 
       "Security notes: #{advisories.map { |adv| "#{adv.identifier} (#{adv.severity})" }.join(', ')}."
     end
 
     def exploration_hint
-      reverse = port.reverse_deps.limit(3).map(&:name)
-      return if reverse.empty?
+      reverse_ids = Dependency.where(depends_on_id: port.id).limit(3).pluck(:port_id)
+      return if reverse_ids.empty?
 
-      "Other ports depending on this: #{reverse.join(', ')}."
+      names = Port.where(id: reverse_ids).pluck(:name)
+      return if names.empty?
+
+      "Other ports depending on this: #{names.join(', ')}."
     end
   end
 end

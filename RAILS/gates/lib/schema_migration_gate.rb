@@ -29,7 +29,7 @@ module Deploy
         route_controllers(app_dir, result, app.name)
 
         schema = File.join(app_dir, "db", "schema.rb")
-        duplicate_columns_per_table(File.read(schema), result, app.name) if File.file?(schema)
+        duplicate_columns_per_table(read_utf8(schema), result, app.name) if File.file?(schema)
       end
       result
     end
@@ -46,13 +46,19 @@ module Deploy
       schema = File.join(app_dir, "db", "schema.rb")
       return nil unless File.file?(schema)
 
-      File.read(schema)[/define\(version:\s*(\d+)\)/, 1]&.to_i
+      read_utf8(schema)[/define\(version:\s*(\d+)\)/, 1]&.to_i
+    end
+
+    def read_utf8(path)
+      File.read(path, encoding: "UTF-8")
+    rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+      File.read(path).force_encoding("UTF-8").scrub
     end
 
     def duplicate_create_tables(app_dir, result, app_name)
       seen = {}
       Dir.glob(File.join(app_dir, "db", "migrate", "*.rb")).sort.each do |path|
-        tables = File.read(path).scan(/create_table\s+["':](\w+)["']/)
+        tables = read_utf8(path).scan(/create_table\s+["':](\w+)["']/)
         tables.each do |table|
           key = table.first
           if seen[key]
@@ -80,7 +86,7 @@ module Deploy
       routes = File.join(app_dir, "config", "routes.rb")
       return unless File.file?(routes)
 
-      File.read(routes).scan(/to:\s*["']([\w#\/]+)["']/).flatten.each do |target|
+      read_utf8(routes).scan(/to:\s*["']([\w#\/]+)["']/).flatten.each do |target|
         next if target.start_with?("rails/")
 
         controller = target.split("#").first

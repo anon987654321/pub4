@@ -68,7 +68,8 @@ class PortsController < ApplicationController
 
   def unwatch
     require_authentication
-    @port.watches.find_by(user: Current.user)&.destroy!
+    # delete_all avoids Reactable association load (no Reaction model on bsdports).
+    @port.watches.where(user_id: Current.user.id).delete_all
     @watching = false
     @port.record_activity!("PortUnwatched", source_vertical: "bsdports", actor: Current.user)
     respond_to do |format|
@@ -105,6 +106,7 @@ class PortsController < ApplicationController
   private
 
   def set_port
-    @port = Port.find_by(pkgpath: params[:id].tr("-", "/")) || Port.find(params[:id])
+    scope = Port.includes(:category, :platform, :maintainer)
+    @port = scope.find_by(pkgpath: params[:id].to_s.tr("-", "/")) || scope.find(params[:id])
   end
 end

@@ -103,7 +103,9 @@ class DeploySmokeContractTest < Minitest::Test
   private
 
   def read(path)
-    File.read(path)
+    File.read(path, encoding: "UTF-8")
+  rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+    File.read(path).force_encoding("UTF-8").scrub
   rescue Errno::ENOENT
     flunk "missing file: #{path}"
   end

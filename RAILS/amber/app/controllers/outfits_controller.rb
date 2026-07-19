@@ -110,11 +110,11 @@ class OutfitsController < ApplicationController
   private
 
   def set_outfit
-    @outfit = Outfit.find(params[:id])
+    @outfit = Outfit.includes(:user).find(params[:id])
   end
 
   def authorize!
-    redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user == Current.user
+    redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user_id == Current.user&.id
   end
 
   def outfit_params

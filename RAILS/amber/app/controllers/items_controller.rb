@@ -116,10 +116,10 @@ class ItemsController < ApplicationController
 
   private
 
-  def set_item = @item = Item.find(params[:id])
+  def set_item = @item = Item.includes(:user).find(params[:id])
 
   def authorize!
-    redirect_to(items_path, alert: "Unauthorized") unless @item.user == Current.user
+    redirect_to(items_path, alert: "Unauthorized") unless @item.user_id == Current.user&.id
   end
 
   def item_params

@@ -32,6 +32,10 @@ source_gates.each do |name, path|
   failures << key unless runner.run(name, RUBY, path)
 end
 
+# Static family contracts (no app boot / Ruby 3.4 required).
+contract_loader = 'Dir["RAILS/test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
+failures << "rails_contracts" unless runner.run("rails contracts", RUBY, "-e", contract_loader)
+
 if profile == "contributor"
   puts "deploy-rails: auditor            skip — contributor profile"
   puts "deploy-rails: runtime              skip — contributor profile"
