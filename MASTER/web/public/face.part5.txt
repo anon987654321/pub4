@@ -15,10 +15,10 @@ function fadeTtsAudio(ms = 80) {
       if (gain && actx) gain.gain.setValueAtTime(Math.max(0, v), actx.currentTime);
       else audio.volume = Math.max(0, v);
       if (step >= steps) resolve();
-      else setTimeout(tick, stepMs);
+      else setTimeout(tick, stepMs);,
     };
-    tick();
-  });
+    tick();,
+  });,
 }
 function ttsSkipHard() {
   tts.cancelToken++;
@@ -34,24 +34,23 @@ function ttsSkipHard() {
   clearViseme();
   if (ttsLive) ttsLive.textContent = '';
   if (State.mode === 'speaking') State.mode = 'idle';
-  emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });
+  emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });,
 }
 function ttsSkip() {
   if (tts.audio && !tts.audio.paused) {
     fadeTtsAudio(80).then(() => ttsSkipHard());
     return;
-  }
-  ttsSkipHard();
+  ttsSkipHard();,
 }
 function ttsToggleMute() {
   tts.muted = !tts.muted;
   if (tts.muted) ttsSkip();
-  beep(tts.muted ? 220 : 880, 0.05);
+  beep(tts.muted ? 220 : 880, 0.05);,
 }
 
 function ttsToggleMic() {
   if (State.sttActive) stopSTT();
-  else startSTT();
+  else startSTT();,
 }
 
 function wakeFromSleep() {
@@ -59,10 +58,10 @@ function wakeFromSleep() {
   State.sleeping = false;
   if (State.sleepMuted) {
     State.sleepMuted = false;
-    ttsToggleMute();
+    ttsToggleMute();,
   }
   rootBody.style.opacity = '';
-  delete rootBody.dataset.sleeping;
+  delete rootBody.dataset.sleeping;,
 }
 
 function enterSleep() {
@@ -71,7 +70,7 @@ function enterSleep() {
   if (!tts.muted) ttsToggleMute();
   State.sleeping = true;
   rootBody.dataset.sleeping = '1';
-  rootBody.style.opacity = '0.05';
+  rootBody.style.opacity = '0.05';,
 }
 
 function flashViolation() {
@@ -79,7 +78,7 @@ function flashViolation() {
   applyShake(0.8);
   State.mode = 'error';
   rootBody.dataset.violationFlash = '1';
-  setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);
+  setTimeout(() => { delete rootBody.dataset.violationFlash; }, 700);,
 }
 
 function cancelStream() {
@@ -87,7 +86,7 @@ function cancelStream() {
   window._chatCancel?.();
   ttsSkip();
   State.mode = 'idle';
-  State.flash = 0.2;
+  State.flash = 0.2;,
 }
 
 // Voice Mode: continuous hands-free conversation loop (one tap in, spoken
@@ -99,7 +98,6 @@ function wakeWordEnabled() {
   if (new URLSearchParams(window.location.search).get('wake_word') === '1') return true;
   try { return localStorage.getItem('master:wake-word') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_word_enabled_read", err); }
   return false;
-}
 // Guards the re-arm loop against a tight onend/onstart cycle (seen on iOS
 // Safari, which frequently drops `continuous` recognition after one
 // utterance) draining battery/CPU forever with no speech ever detected.
@@ -116,7 +114,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;,
     }
     if (State.wakeArmed && !State.voiceMode) {
       const heard = (final || interim).trim();
@@ -125,10 +123,9 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
         State.sttActive = false;
         try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
-        enterVoiceMode({ fromWake: true });
+        enterVoiceMode({ fromWake: true });,
       }
       return;
-    }
     if (final.trim()) {
       sttPartial = '';
       if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
@@ -139,7 +136,6 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       _voiceModeRearmFails = 0;
       sendMessage(heard);
       return;
-    }
     if (interim.trim()) {
       sttPartial = interim.trim();
       if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
@@ -149,10 +145,10 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
           try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
           if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
           _voiceModeRearmFails = 0;
-          sendMessage(t2);
-        }
-      }, 1200);
-    }
+          sendMessage(t2);,
+        },
+      }, 1200);,
+    },
   };
   recognition.onend = () => {
     State.sttActive = false; State.sttDuck = 0;
@@ -163,29 +159,27 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       if (_voiceModeRearmFails >= 5) {
         exitVoiceMode({ reason: 'unreliable' });
         return;
-      }
       setTimeout(() => { if (State.voiceMode) startSTT(); }, 50);
       return;
-    }
     if (State.wakeArmed) {
-      setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);
-    }
+      setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);,
+    },
   };
-  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };
+  recognition.onerror = () => { State.sttActive = false; State.sttDuck = 0; if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; } };,
 }
 
 function startWakeListening() {
   if (!recognition || State.sttActive || State.voiceMode) return;
   State.wakeArmed = true;
-  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); }
+  try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); },
 }
 function armWakeWord() {
   if (!recognition || !wakeWordEnabled() || State.voiceMode) return;
-  startWakeListening();
+  startWakeListening();,
 }
 function disarmWakeWord() {
   State.wakeArmed = false;
-  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } }
+  if (recognition && State.sttActive) { try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_disarm", err); } },
 }
 
 function enterVoiceMode(opts = {}) {
@@ -196,7 +190,7 @@ function enterVoiceMode(opts = {}) {
   rootBody.dataset.voiceMode = '1';
   if (uiStatus) uiStatus.textContent = 'voice mode — say "stop listening" to exit';
   if (!opts.fromWake) beep(1100, 0.05);
-  startSTT();
+  startSTT();,
 }
 function exitVoiceMode(opts = {}) {
   if (!State.voiceMode) return;
@@ -205,18 +199,18 @@ function exitVoiceMode(opts = {}) {
   stopSTT();
   if (uiStatus) uiStatus.textContent = opts.reason === 'unreliable' ? 'voice mode: mic unreliable here' : '';
   beep(660, 0.05);
-  armWakeWord();
+  armWakeWord();,
 }
 function toggleVoiceMode() {
-  if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();
+  if (State.voiceMode) exitVoiceMode(); else enterVoiceMode();,
 }
 function boostEyeAttention(delta = 0.25) {
   const K = window.ParticleKernel;
   if (!eyePool || !K) return;
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);
-  }
+    eyePool.cells[b + K.FIELD.attention] = Math.min(1, (eyePool.cells[b + K.FIELD.attention] || 0.5) + delta);,
+  },
 }
 
 function startSTT() {
@@ -233,16 +227,16 @@ function startSTT() {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
       mouthPool.cells[b + K.FIELD.arousal] = Math.max(0.1, (mouthPool.cells[b + K.FIELD.arousal] || 0.5) * 0.35);
-      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);
-    }
+      mouthPool.cells[b + K.FIELD.pressure] = Math.max(0.05, (mouthPool.cells[b + K.FIELD.pressure] || 0) * 0.4);,
+    },
   }
   window.MASTERVisual?.event?.('stt:start', { topology: 'papua-mask', entropy: 0.18, confidence: 0.86, mode: 'listening' });
   window.MASTEREcology?.terrain?.('stt:listening', { confidence: 0.82, entropy: 0.16 });
-  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); }
+  try { recognition.start(); State.sttActive = true; State.mode = 'listening'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_start", err); },
 }
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
-  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
+  try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); },
 }
 
 let evtSrc = null;
@@ -254,14 +248,14 @@ function showStage(label, ms = 1200) {
   uiStatus.style.opacity = "1";
   if (stageTimer) clearTimeout(stageTimer);
   stageTimer = setTimeout(() => {
-    if (uiStatus.textContent === label) uiStatus.textContent = "";
-  }, ms);
+    if (uiStatus.textContent === label) uiStatus.textContent = "";,
+  }, ms);,
 }
 
 function clearThinkingAloud() {
   if (!thinkingAloudTimer) return;
   clearTimeout(thinkingAloudTimer);
-  thinkingAloudTimer = null;
+  thinkingAloudTimer = null;,
 }
 
 function scheduleThinkingAloud(stage = "thinking") {
@@ -270,12 +264,12 @@ function scheduleThinkingAloud(stage = "thinking") {
   // it competed with real replies in the serial TTS queue and, on slow
   // turns, was the most-heard utterance ("it only says scanning"). The
   // visual status (showStage) still shows progress silently. The timer
-  // machinery stays so clearThinkingAloud callers remain valid.
+  // machinery stays so clearThinkingAloud callers remain valid.,
 }
 
 function speakFailure(reason = "Sorry, I hit a snag.") {
   announceTTS(reason);
-  if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });
+  if (!tts.muted) enqueueSpeech(reason, { priority: 'error' });,
 }
 
 function handleFaceNamedEvent(event, data) {
@@ -284,7 +278,6 @@ function handleFaceNamedEvent(event, data) {
     const kind = raw.trim() || (data && typeof data === 'object' ? data.kind : '');
     if (kind === 'listing') window._streamContentKind = 'listing';
     return true;
-  }
   if (event === 'mood') {
     const m = raw.trim();
     if (!m) return true;
@@ -296,7 +289,6 @@ function handleFaceNamedEvent(event, data) {
     if (live) live.textContent = 'mood: ' + m;
     syncShareStateUrl();
     return true;
-  }
   if (event === 'model') {
     const m = raw.trim();
     if (!m) return true;
@@ -307,15 +299,15 @@ function handleFaceNamedEvent(event, data) {
       const K = window.ParticleKernel;
       for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
         const b = i * K.FIELDS_PER_CELL;
-        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);,
       }
       setTimeout(() => {
         if (!mouthPool) return;
         for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
           const b = i * K.FIELDS_PER_CELL;
-          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
-        }
-      }, 1000);
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);,
+        },
+      }, 1000);,
     }
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
@@ -324,7 +316,6 @@ function handleFaceNamedEvent(event, data) {
     const live = document.getElementById('mood-live');
     if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
     return true;
-  }
   if (event === 'verdict') {
     const v = raw.trim();
     if (TINT[v]) fadeColorTo(TINT[v]);
@@ -334,21 +325,20 @@ function handleFaceNamedEvent(event, data) {
     if (v === 'pass') {
       beep(880, 0.06);
       morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-      State.bloom = 1.0;
+      State.bloom = 1.0;,
     }
     if (v === 'veto') {
       beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); },
     }
     const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
     if (v === 'pass') tally.pass += 1;
     if (v === 'veto') tally.veto += 1;
     if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
     return true;
-  }
   if (event === 'council:speech') {
     try {
       const payload = JSON.parse(raw || '{}');
@@ -356,36 +346,32 @@ function handleFaceNamedEvent(event, data) {
       if (persona) {
         rootBody.dataset.councilPersona = persona;
         applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;,
       }
       if (lane) offsetCouncilMouthPool?.(lane, 0.22);
       if (plan?.length) tts.visemePlan = plan;
       if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
       if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });,
       }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-      }, 8000);
+        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';,
+      }, 8000);,
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:council_speech_event", err); }
     return true;
-  }
   if (event === 'confidence') {
     const c = parseFloat(raw); if (!isNaN(c)) State.confidence = c;
     return true;
-  }
   if (event === 'felt') {
     try {
       const payload = JSON.parse(raw || '{}');
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;,
     } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:felt_event", err); }
     return true;
-  }
   return false;
-}
 
 let _welcomeGreetingSent = false;
 const WELCOME_GREETING_PROMPT = "Introduce yourself to a new visitor in 3-4 warm, confident sentences. State that you are MASTER, and that you are the world's first AI built entirely in pure Ruby -- no Python, no external ML frameworks, genuinely unique among AI systems. Briefly mention your real capabilities: constitutional self-governing reasoning, live two-way voice conversation, an animated face, coding and tool use, and multi-persona council deliberation for hard questions. This will be read aloud, so write it as natural spoken prose with no markdown, bullets, or headers.";
@@ -396,29 +382,28 @@ function sendWelcomeGreeting() {
   window.MASTERChat.startChatStream({
     message: WELCOME_GREETING_PROMPT,
     state: window.collectFeltState?.() || '',
-    preEnhanced: true
+    preEnhanced: true,
   }, {
     onMessage: (rawData) => {
       const raw = rawData || '';
       if (raw.length < 200 && raw.startsWith('{')) {
-        try { const parsed = JSON.parse(raw); if (parsed && parsed.type === 'trace') return; } catch (_) { /* not JSON */ }
+        try { const parsed = JSON.parse(raw); if (parsed && parsed.type === 'trace') return; } catch (_) { /* not JSON */ },
       }
       if (raw === '[DONE]') {
         if (pending.trim()) {
           tts.lastText = pending.trim();
-          flushStreamTts(pending, { prependTimestamp: false });
+          flushStreamTts(pending, { prependTimestamp: false });,
         }
         window._chatOnDone?.();
         return;
-      }
       if (raw.startsWith('ERROR:')) { window._chatOnError?.(); return; }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       window._chatOnChunk?.(chunk);
-      pending += chunk;
+      pending += chunk;,
     },
     onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data),
-    onError: () => {}
-  }).catch((err) => { window.MASTER_LOG?.warn?.("face_runtime:welcome_greeting", err); });
+    onError: () => {},
+  }).catch((err) => { window.MASTER_LOG?.warn?.("face_runtime:welcome_greeting", err); });,
 }
 
 let _firstChatSent = false;
@@ -433,7 +418,7 @@ async function sendMessage(text) {
   window.MASTERVisual?.event?.('chat:submit', { topology: 'papua-mask', entropy: 0.2, confidence: State.confidence || 0.86, mode: 'submit' });
   if (navigator.vibrate) navigator.vibrate(30);
   if (/^(repeat that|say that again|repeat|again)\.?$/i.test(trimmed)) {
-      if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;
+      if (window.MASTER_FACE?.tts?.lastText) { window.MASTER_FACE.tts.queue = [window.MASTER_FACE.tts.lastText]; window.MASTER_FACE.ttsTick?.(); } return;,
   }
   if (/^wow!?$/i.test(trimmed)) {
     State.mode = 'pass';
@@ -442,7 +427,6 @@ async function sendMessage(text) {
     applyShake(0.45);
     State.pulse = Math.max(State.pulse || 0, 0.85);
     return;
-  }
   if (/^\/sleep$/i.test(trimmed)) { enterSleep(); faceMat.uniforms.uIdleDrift.value = 0.02; return; }
   if (/^\/wake$/i.test(trimmed)) { wakeFromSleep(); return; }
   const maskMatch = trimmed.match(/^\/mask\s+(\S+)$/i);
@@ -459,25 +443,22 @@ async function sendMessage(text) {
   if (streamToggle) {
     setTtsStreamLive(streamToggle[1].toLowerCase() === 'on');
     return;
-  }
   const voiceMatch = trimmed.match(/^\/voice(?:\s+last)?\s+(\S+)(?:\s+(\S+))?$/i);
   if (voiceMatch) {
     if (window.MASTER_VOICE_POLICY?.persona_affects_text_only && voiceMatch[1].toLowerCase() !== 'last') {
       if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
       if (uiStatus) {
         const style = _nextTtsStyle();
-        uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;
+        uiStatus.textContent = `tts: Pernille only${style ? ` · ${style}` : ''}`;,
       }
       return;
-    }
     setVoiceName(voiceMatch[1]);
     if (voiceMatch[2]) setTtsStyle(voiceMatch[2]);
     if (uiStatus) {
       const style = _nextTtsStyle();
-      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;
+      uiStatus.textContent = `voice ${State.voiceName || voiceMatch[1]}${style ? ` · ${style}` : ''}`;,
     }
     return;
-  }
   if (/^\/whoami$/i.test(trimmed)) {
     const summary = window.MASTER_SOUL_SUMMARY || "persona anchor; voice nb-NO-PernilleNeural; constitutional face";
     if (uiStatus) uiStatus.textContent = "whoami…";
@@ -485,7 +466,6 @@ async function sendMessage(text) {
     window._chatOnChunk?.(summary);
     window._chatOnDone?.();
     return;
-  }
   if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
@@ -498,8 +478,8 @@ async function sendMessage(text) {
     if (data.changed && data.enhanced && data.enhanced !== text) {
       const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
       preEnhanced = chosen === data.enhanced;
-      finalText = chosen;
-    }
+      finalText = chosen;,
+    },
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:enhance_message", err); }
 
   tts.lang = detectLang(text);
@@ -513,7 +493,7 @@ async function sendMessage(text) {
   const feltFallback = `${State.mood}|${State.mode}|${(State.entropy ?? 0.2).toFixed(2)}|${(State.confidence ?? 0.86).toFixed(2)}`;
   if (!_firstChatSent) {
     _firstChatSent = true;
-    window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
+    window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });,
   }
   if (window.MASTERChat?.startChatStream) {
     const imageToken = window._imageToken || null;
@@ -523,7 +503,7 @@ async function sendMessage(text) {
     const stallTimer = setTimeout(() => {
       rootBody.dataset.networkStall = '1';
       window._chatOnDmesg?.('link thinking');
-      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);,
     }, 4000);
     const onMessage = (rawData) => {
       const raw = rawData || '';
@@ -532,13 +512,13 @@ async function sendMessage(text) {
       if (raw.length < 200 && raw.startsWith('{')) {
         try {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.type === 'trace') return;
-        } catch (_) { /* not JSON, fall through to normal content handling */ }
+          if (parsed && parsed.type === 'trace') return;,
+        } catch (_) { /* not JSON, fall through to normal content handling */ },
       }
       if (raw === '[DONE]') {
         if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
           tts.lastText = pending.trim();
-          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });,
         }
         pending = '';
         State.mode = 'idle';
@@ -547,7 +527,6 @@ async function sendMessage(text) {
         if (navigator.vibrate) navigator.vibrate([60]);
         window._chatOnDone?.();
         return;
-      }
       if (raw.startsWith('ERROR:')) {
         window._chatOnChunk?.(`\n${raw}\n`);
         State.mode = 'error'; State.flash = 1; applyShake(0.8);
@@ -557,7 +536,6 @@ async function sendMessage(text) {
         speakFailure("Sorry, I hit a snag.");
         window._chatOnError?.();
         return;
-      }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       clearThinkingAloud();
       if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
@@ -567,13 +545,13 @@ async function sendMessage(text) {
       State.pulse = Math.min(0.6, State.pulse + 0.05);
       if (window._streamContentKind === 'listing') ttsSuppressed = true;
       if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
-      if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
+      if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);,
     };
     window.MASTERChat.startChatStream({
       message: finalText,
       state: window.collectFeltState?.() || feltFallback,
       preEnhanced,
-      imageToken
+      imageToken,
     }, {
       onMessage,
       onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
@@ -584,11 +562,10 @@ async function sendMessage(text) {
         clearThinkingAloud();
         window._chatOnDmesg?.('link quiet');
         window._chatOnError?.('stream interrupted');
-        speakFailure("Sorry, I hit a snag.");
-      }
+        speakFailure("Sorry, I hit a snag.");,
+      },
     }).catch(() => {});
     return;
-  }
   const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
   const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
   const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
@@ -599,7 +576,7 @@ async function sendMessage(text) {
   let _stallTimer = setTimeout(() => {
     rootBody.dataset.networkStall = '1';
     window._chatOnDmesg?.('link thinking');
-    State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
+    State.breath = Math.max(0.5, (State.breath || 1) * 0.7);,
   }, 4000);
   evtSrc.onmessage = (ev) => {
     const raw = ev.data || '';
@@ -616,19 +593,19 @@ async function sendMessage(text) {
     if (raw.length < 200 && raw.startsWith('{')) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.type === 'trace') return;
-      } catch (_) { /* not JSON, fall through to normal content handling */ }
+        if (parsed && parsed.type === 'trace') return;,
+      } catch (_) { /* not JSON, fall through to normal content handling */ },
     }
     if (raw === '[DONE]') {
       if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
         tts.lastText = pending.trim();
-        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
+        flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });,
       }
       if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
         rootBody.dataset.uncertain = '1';
         State.questionPulse = 1.0;
         State.surpriseY = Math.max(State.surpriseY || 0, 0.4);
-        setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);
+        setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);,
       }
       pending = '';
       State.mode = 'idle';
@@ -638,7 +615,6 @@ async function sendMessage(text) {
       try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_done_close", err); }
       window._chatOnDone?.();
       return;
-    }
     if (raw.startsWith('ERROR:')) {
       window._chatOnChunk?.(`\n${raw}\n`);
       State.mode = 'error'; State.flash = 1; applyShake(0.8);
@@ -648,7 +624,6 @@ async function sendMessage(text) {
       speakFailure("Sorry, I hit a snag.");
       window._chatOnError?.();
       return;
-    }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
     clearThinkingAloud();
     if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
@@ -658,11 +633,11 @@ async function sendMessage(text) {
     State.pulse = Math.min(0.6, State.pulse + 0.05);
     if (window._streamContentKind === 'listing') ttsSuppressed = true;
     if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
-    if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
+    if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);,
   };
   evtSrc.addEventListener('content_kind', (ev) => {
     const kind = (ev.data || '').trim();
-    if (kind === 'listing') window._streamContentKind = 'listing';
+    if (kind === 'listing') window._streamContentKind = 'listing';,
   });
   evtSrc.addEventListener('mood', (ev) => {
     const m = (ev.data || '').trim();
@@ -673,7 +648,7 @@ async function sendMessage(text) {
     if (TINT[m]) fadeColorTo(TINT[m]);
     const live = document.getElementById('mood-live');
     if (live) live.textContent = 'mood: ' + m;
-    syncShareStateUrl();
+    syncShareStateUrl();,
   });
   evtSrc.addEventListener('model', (ev) => {
     const m = (ev.data || '').trim();
@@ -685,22 +660,22 @@ async function sendMessage(text) {
       const K = window.ParticleKernel;
       for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
         const b = i * K.FIELDS_PER_CELL;
-        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
+        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);,
       }
       setTimeout(() => {
         if (!mouthPool) return;
         for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
           const b = i * K.FIELDS_PER_CELL;
-          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
-        }
-      }, 1000);
+          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);,
+        },
+      }, 1000);,
     }
     showModelBadge(State.modelName || m);
     State.modelSwitch = 1.0;
     syncShareStateUrl();
     const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
     const live = document.getElementById('mood-live');
-    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
+    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;,
   });
   evtSrc.addEventListener('verdict', (ev) => {
     const v = (ev.data || '').trim();
@@ -711,19 +686,19 @@ async function sendMessage(text) {
     if (v === 'pass') {
       beep(880, 0.06);
       morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-      State.bloom = 1.0;
+      State.bloom = 1.0;,
     }
     if (v === 'veto') {
       beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); },
     }
     const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
     if (v === 'pass') tally.pass += 1;
     if (v === 'veto') tally.veto += 1;
-    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
+    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;,
   });
   evtSrc.addEventListener('council:speech', (ev) => {
     try {
@@ -732,52 +707,52 @@ async function sendMessage(text) {
       if (persona) {
         rootBody.dataset.councilPersona = persona;
         applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
+        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;,
       }
       if (lane) offsetCouncilMouthPool?.(lane, 0.22);
       if (plan?.length) tts.visemePlan = plan;
       if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
       if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
+        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });,
       }
       setTimeout(() => {
         if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-      }, 8000);
-    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); }
+        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';,
+      }, 8000);,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); },
   });
   evtSrc.addEventListener('confidence', (ev) => {
     const c = parseFloat(ev.data); if (isNaN(c)) return;
-    State.confidence = c;
+    State.confidence = c;,
   });
   evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); }
+    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); },
   });
   evtSrc.addEventListener('compaction', (ev) => {
-    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); }
+    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); },
   });
   evtSrc.addEventListener('ctx_footer', (ev) => {
-    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); }
+    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); },
   });
   evtSrc.addEventListener('phantom', (ev) => {
-    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); }
+    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); },
   });
   evtSrc.addEventListener('tool_stack', (ev) => {
-    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); }
+    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); },
   });
   evtSrc.addEventListener('stage', (ev) => {
-    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); }
+    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); },
   });
   evtSrc.addEventListener('btw', (ev) => {
-    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); }
+    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); },
   });
   evtSrc.addEventListener('felt', (ev) => {
     try {
       const payload = JSON.parse(ev.data || '{}');
       if (payload.mood) State.mood = payload.mood;
       if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); }
+      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); },
   });
   evtSrc.onerror = () => {
     clearTimeout(_stallTimer);
@@ -787,8 +762,8 @@ async function sendMessage(text) {
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
-    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); }
-  };
+    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); },
+  };,
 }
 
 setInterval(() => {
@@ -797,15 +772,15 @@ setInterval(() => {
   if (idleS < 10 && rootBody.dataset.longSilence === '1') delete rootBody.dataset.longSilence;
   if (idleS > 90 && rootBody.dataset.longSilence !== '1' && !State.sleeping) {
     rootBody.dataset.longSilence = '1';
-    if (!tts.playing && !tts.muted) enqueueSpeech('still here');
+    if (!tts.playing && !tts.muted) enqueueSpeech('still here');,
   }
   const body = new URLSearchParams({
     mood: State.mood, mode: State.mode, idle: String(idleS),
     palette: '0', confidence: State.confidence.toFixed(2),
-    tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
+    tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2),
   });
   syncShareStateUrl();
-  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); }
+  try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:post_canvas_state", err); },
 }, 8000);
 
 let wakeLock = null;
@@ -813,14 +788,13 @@ async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
   async function req() { try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_lock_request", err); } }
   await req();
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });,
 }
 
 function guardVoice(v, opts = {}) {
   void v;
   void opts;
   return TTS_DEFAULT_VOICE;
-}
 
 function previewVoice(voice) {
   const chosen = guardVoice(voice || State.voiceName, { explicit: true }) || TTS_DEFAULT_VOICE;
@@ -843,11 +817,11 @@ function previewVoice(voice) {
         tts.analyser = null; tts.analyserBuf = null; tts.analyserFreqBuf = null;
         tts.outputGain = null;
         URL.revokeObjectURL(src);
-        clearViseme();
+        clearViseme();,
       };
-      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });
+      audio.play().catch(() => { URL.revokeObjectURL(src); clearViseme(); });,
     })
-    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));
+    .catch(() => playDuo([[chosen, "Let's work now."]], null, style));,
 }
 
 function wireTtsStyleChips() {
@@ -859,14 +833,14 @@ function wireTtsStyleChips() {
       if (State.mode === 'speaking' || tts.playing) return;
       const style = chip.dataset.style;
       emitTtsEvent('tts:style:active', { style, preview: true });
-      window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.18, confidence: 0.82, mode: style, style });
+      window.MASTERVisual?.event?.('tts:style:active', { topology: 'papua-mask', entropy: 0.18, confidence: 0.82, mode: style, style });,
     });
     chip.addEventListener('mouseleave', () => {
       if (State.mode === 'speaking' || tts.playing) return;
-      State.pulse = Math.max(0, (State.pulse || 0) * 0.6);
-    });
+      State.pulse = Math.max(0, (State.pulse || 0) * 0.6);,
+    });,
   });
-  syncTtsStyleUi();
+  syncTtsStyleUi();,
 }
 function playDuo(lines, onDone, style, councilOpts = {}) {
   if (!lines.length) { onDone?.(); return; }
@@ -882,12 +856,12 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
       personaBadge = document.createElement('div');
       personaBadge.id = 'council-persona-badge';
       personaBadge.className = 'council-persona-badge';
-      document.body.appendChild(personaBadge);
+      document.body.appendChild(personaBadge);,
     }
     personaBadge.textContent = councilOpts.persona;
     personaBadge.dataset.lane = councilOpts.lane || 'center';
     personaBadge.dataset.visible = '1';
-    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);
+    setTimeout(() => { if (personaBadge) personaBadge.dataset.visible = '0'; }, 4200);,
   }
   loadTTSBlob(text, voice, useStyle)
     .then(async blob => {
@@ -905,11 +879,11 @@ function playDuo(lines, onDone, style, councilOpts = {}) {
         tts.outputGain = null;
         URL.revokeObjectURL(src);
         clearViseme();
-        playDuo(rest, onDone, useStyle);
+        playDuo(rest, onDone, useStyle);,
       };
-      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });
+      audio.play().catch(() => { URL.revokeObjectURL(src); playDuo(rest, onDone, useStyle); });,
     })
-    .catch(() => playDuo(rest, onDone, useStyle));
+    .catch(() => playDuo(rest, onDone, useStyle));,
 }
 
 function meanPoolField(pool, field) {
@@ -919,10 +893,9 @@ function meanPoolField(pool, field) {
   for (let i = 0; i < pool.count; i++) {
     if (!pool.alive[i]) continue;
     sum += pool.cells[i * K.FIELDS_PER_CELL + field];
-    n++;
+    n++;,
   }
   return n ? sum / n : 0;
-}
 function collectFeltState() {
   let history = [];
   try { history = JSON.parse(localStorage.getItem('master:emotion_history') || '[]'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:collect_felt_state", err); }
@@ -936,7 +909,6 @@ function collectFeltState() {
   const entropy = Number.isFinite(State.entropy) ? State.entropy : histEntropy;
   const confidence = Number.isFinite(State.confidence) ? State.confidence : 0.86;
   return `${mood}|${mode}|${entropy.toFixed(2)}|${confidence.toFixed(2)}|${arousal.toFixed(2)}|${valence.toFixed(2)}|${histEntropy.toFixed(2)}`;
-}
 window.collectFeltState = collectFeltState;
 
 function startEverything() {
@@ -963,12 +935,12 @@ function startEverything() {
   if (logo) {
     logo.style.transition = 'none';
     logo.style.transform = 'translateX(3px)';
-    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);
+    setTimeout(() => { logo.style.transition = 'transform 80ms ease'; logo.style.transform = ''; }, 80);,
   }
   let _logoDimTimer = null;
   function _schedLogoDim() {
     clearTimeout(_logoDimTimer);
-    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);
+    _logoDimTimer = setTimeout(() => { if (logo) logo.classList.add('dim'); }, 4000);,
   }
   _schedLogoDim();
   document.addEventListener('pointerdown', () => { if (logo) logo.classList.remove('dim'); _schedLogoDim(); }, { passive: true });
@@ -982,13 +954,13 @@ function startEverything() {
     navigator.serviceWorker.addEventListener('message', (ev) => {
       if (ev.data?.type !== 'sw:updated') return;
       if (uiStatus) uiStatus.textContent = 'new version — reload';
-      window._chatOnDmesg?.('sw updated');
-    });
+      window._chatOnDmesg?.('sw updated');,
+    });,
   }
   window.addEventListener('beforeinstallprompt', (ev) => {
     ev.preventDefault();
-    if (uiStatus) uiStatus.textContent = 'install available';
-  });
+    if (uiStatus) uiStatus.textContent = 'install available';,
+  });,
 }
 window.addEventListener('master:self_violation', () => flashViolation());
 let primerFired = false;
@@ -999,7 +971,7 @@ primer?.addEventListener('click', firePrimer);
 primer?.addEventListener('keydown', event => {
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
-  firePrimer();
+  firePrimer();,
 });
 
 zshBar.addEventListener('submit', (e) => {
@@ -1011,12 +983,12 @@ zshBar.addEventListener('submit', (e) => {
   State.ripplePhase = 0;
   beep(1320, 0.018);
   navigator.vibrate?.(30);
-  window.MASTER_FACE?.sendMessage?.(v);
+  window.MASTER_FACE?.sendMessage?.(v);,
 });
 zshIn.addEventListener('focus', () => {
   State.lastTouch = performance.now();
   boostEyeAttention(0.07);
-  window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
+  window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });,
 });
 
 const PLACEHOLDERS = [
@@ -1026,7 +998,7 @@ const PLACEHOLDERS = [
   'paste code — ask for review or explain',
   'what are you trying to accomplish?',
   'challenge me — show your work',
-  'explain simply — then go deeper'
+  'explain simply — then go deeper',
 ];
 let _phIdx = 0;
 function _cyclePlaceholder() {
@@ -1034,7 +1006,7 @@ function _cyclePlaceholder() {
   const research = window.MASTER_AGENT_PLACEHOLDERS;
   const pool = Array.isArray(research) && research.length ? research : PLACEHOLDERS;
   _phIdx = (_phIdx + 1) % pool.length;
-  zshIn.placeholder = pool[_phIdx];
+  zshIn.placeholder = pool[_phIdx];,
 }
 setInterval(_cyclePlaceholder, 8000);
 window.addEventListener('master:runtime-config', () => _cyclePlaceholder());
@@ -1047,20 +1019,20 @@ try { _cmdHist = JSON.parse(localStorage.getItem(_cmdHistKey) || '[]'); } catch 
 function _resizeZin() {
   if (!zshIn || zshIn.tagName !== 'TEXTAREA') return;
   zshIn.style.height = 'auto';
-  zshIn.style.height = Math.min(120, zshIn.scrollHeight) + 'px';
+  zshIn.style.height = Math.min(120, zshIn.scrollHeight) + 'px';,
 }
 zshIn.addEventListener('input', () => {
   const len = zshIn.value.length;
   if (_charCount) { _charCount.textContent = len > 120 ? len : ''; _charCount.style.opacity = len > 120 ? '0.5' : '0'; }
   if (len > 180) document.documentElement.dataset.inputDense = '1';
   else delete document.documentElement.dataset.inputDense;
-  _resizeZin();
+  _resizeZin();,
 });
 zshIn.addEventListener('paste', () => {
   setTimeout(() => {
     if ((zshIn.value || '').length > 180) document.documentElement.dataset.inputDense = '1';
-    _resizeZin();
-  }, 0);
+    _resizeZin();,
+  }, 0);,
 });
 zshIn.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); const s = zshIn.selectionStart; const v = zshIn.value; zshIn.value = v.slice(0, s) + '\n' + v.slice(zshIn.selectionEnd); zshIn.selectionStart = zshIn.selectionEnd = s + 1; _resizeZin(); return; }
@@ -1069,14 +1041,14 @@ zshIn.addEventListener('keydown', (e) => {
     e.preventDefault();
     _cmdHistIdx = Math.max(0, (_cmdHistIdx < 0 ? _cmdHist.length : _cmdHistIdx) - 1);
     zshIn.value = _cmdHist[_cmdHistIdx] || '';
-    _resizeZin();
+    _resizeZin();,
   }
   if (e.key === 'ArrowDown' && !e.shiftKey && _cmdHist.length && _cmdHistIdx >= 0) {
     e.preventDefault();
     _cmdHistIdx = Math.min(_cmdHist.length, _cmdHistIdx + 1);
     zshIn.value = _cmdHistIdx >= _cmdHist.length ? '' : (_cmdHist[_cmdHistIdx] || '');
-    _resizeZin();
-  }
+    _resizeZin();,
+  },
 });
 
 let _swipeStartX = 0, _swipeStartY = 0;
@@ -1089,12 +1061,12 @@ if (chatShell) {
       cancelStream();
       window.MASTER_FACE?.ttsSkip?.();
       window.MASTEREcology?.burst?.(8, 0.3);
-      window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.38, confidence: 0.5, mode: 'interrupt' });
-    }, 420);
+      window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.38, confidence: 0.5, mode: 'interrupt' });,
+    }, 420);,
   }, { passive: true });
   const clearShellPress = () => { if (shellPress) { clearTimeout(shellPress); shellPress = null; } };
   chatShell.addEventListener('pointerup', clearShellPress, { passive: true });
-  chatShell.addEventListener('pointercancel', clearShellPress, { passive: true });
+  chatShell.addEventListener('pointercancel', clearShellPress, { passive: true });,
 }
 
 const chatLog = document.getElementById('chat-log');
@@ -1103,8 +1075,8 @@ if (chatLog) {
   chatLog.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - _swipeStartX;
     const dy = Math.abs(e.changedTouches[0].clientY - _swipeStartY);
-    if (dx > 72 && dy < 40) cancelStream();
-  }, { passive: true });
+    if (dx > 72 && dy < 40) cancelStream();,
+  }, { passive: true });,
 }
 
 const _origHaptic = enqueueSpeech;
@@ -1120,15 +1092,15 @@ if (micBtn) {
   let micPressTimer = null, micLongPressed = false;
   const micPressStart = () => {
     micLongPressed = false;
-    micPressTimer = setTimeout(() => { micLongPressed = true; toggleVoiceMode(); }, 550);
+    micPressTimer = setTimeout(() => { micLongPressed = true; toggleVoiceMode(); }, 550);,
   };
   const micPressEnd = () => {
     if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; }
-    if (!micLongPressed) window.MASTER_FACE?.ttsToggleMic?.();
+    if (!micLongPressed) window.MASTER_FACE?.ttsToggleMic?.();,
   };
   micBtn.addEventListener('pointerdown', micPressStart);
   micBtn.addEventListener('pointerup', micPressEnd);
-  micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });
+  micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });,
 }
 
 // Evolved-human overlay toggle: reads/writes the same localStorage flag
@@ -1142,32 +1114,32 @@ if (face3dToggleBtn) {
   try {
     if (localStorage.getItem(FACE3D_KEY) === '1') {
       face3dToggleBtn.setAttribute('aria-pressed', 'true');
-      rootBody.dataset.face3d = '1';
-    }
+      rootBody.dataset.face3d = '1';,
+    },
   } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_read", err); }
   face3dToggleBtn.addEventListener('click', () => {
     let enabled = false;
     try { enabled = localStorage.getItem(FACE3D_KEY) === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_click_read", err); }
     try { localStorage.setItem(FACE3D_KEY, enabled ? '0' : '1'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_write", err); }
-    location.reload();
-  });
+    location.reload();,
+  });,
 }
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 
 if (fontScaleInput) {
   const storedScale = parseFloat(localStorage.getItem(SCALE_KEY));
-  if (Number.isFinite(storedScale)) fontScaleInput.value = String(storedScale);
+  if (Number.isFinite(storedScale)) fontScaleInput.value = String(storedScale);,
 }
 
 // FA62 push-to-talk: hold space = record, release = submit (unless input focused)
 let pttActive = false;
 document.addEventListener('keydown', (e) => {
   if (e.key === ' ' && !e.repeat && document.activeElement !== zshIn && primerFired) {
-    e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();
-  }
+    e.preventDefault(); pttActive = true; window.MASTER_FACE?.startSTT?.();,
+  },
 });
 document.addEventListener('keyup', (e) => {
-  if (e.key === ' ' && pttActive) { pttActive = false; window.MASTER_FACE?.stopSTT?.(); }
+  if (e.key === ' ' && pttActive) { pttActive = false; window.MASTER_FACE?.stopSTT?.(); },
 });
 
 document.addEventListener('keydown', (e) => {
@@ -1177,7 +1149,7 @@ document.addEventListener('keydown', (e) => {
     cancelStream();
     window.MASTER_FACE?.ttsSkip?.();
     if (State.voiceMode) exitVoiceMode();
-    window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });
+    window.MASTERVisual?.event?.('user:interrupt', { topology: 'serpent', entropy: 0.42, confidence: 0.55, mode: 'interrupt' });,
   }
   if (e.ctrlKey && e.key === 'm') { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
   if (e.key === 't' && document.activeElement !== zshIn && !e.ctrlKey) { e.preventDefault(); window.MASTER_FACE?.ttsToggleMute?.(); }
@@ -1186,14 +1158,14 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     const cur = getTtsRate();
     const i = nearestRateIndex(cur);
-    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);
+    setTtsRate(RATES[(i - 1 + RATES.length) % RATES.length]);,
   }
   if (e.ctrlKey && (e.key === ']' || e.key === '.')) {
     e.preventDefault();
     const cur = getTtsRate();
     const i = nearestRateIndex(cur);
-    setTtsRate(RATES[(i + 1) % RATES.length]);
-  }
+    setTtsRate(RATES[(i + 1) % RATES.length]);,
+  },
 });
 
 document.addEventListener('pointerdown', wakeFromSleep, { passive: true });
@@ -1224,7 +1196,7 @@ window.MASTERVoice = {
 };
 window._chatSpeakLast = () => {
   const text = window.MASTER_FACE?.tts?.lastText || "";
-  if (text) enqueueSpeech(text);
+  if (text) enqueueSpeech(text);,
 };
 
 window.MASTER_FACE = {
@@ -1276,7 +1248,7 @@ window.MASTER_FACE = {
   collectFeltState,
   offsetCouncilMouthPool,
   updateMoodHistory,
-  spawnEmotionalGhost
+  spawnEmotionalGhost,
 };
 window.announceTTS = announceTTS;
 window.enqueueSpeech = enqueueSpeech;
@@ -1286,7 +1258,6 @@ function _deferFaceMod(name) {
   // Absolutize: this runs inside a blob: module where a root-relative specifier
   // ("/assets/…") can't resolve — same class of bug that blocked the THREE import.
   return new URL(window.MASTER_ASSET_PATHS?.faceModules?.[name] || `/${name}`, document.baseURI).href;
-}
 await import(_deferFaceMod('face_semantics.js'));
 await import(_deferFaceMod('face_minimal_ui.js'));
 await import(_deferFaceMod('face_loops_music.js'));

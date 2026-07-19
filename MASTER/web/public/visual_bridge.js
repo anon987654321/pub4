@@ -13,7 +13,7 @@
     confidence: 0.86,
     topology: "papua-mask",
     provider: "unknown",
-    active: false
+    active: false,
   };
 
   const FALLBACK_CLASSIFIER = [
@@ -31,7 +31,7 @@
     [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
     [/rule_loop:cycle|rule_loop:clean/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
     [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
-    [/rule_loop:converged/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
+    [/rule_loop:converged/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }],
   ];
 
   function classify(type, payload = {}) {
@@ -43,7 +43,6 @@
     if (provider) mapped.provider = provider;
 
     return mapped;
-  }
   // handleRuntimeEvent (live SSE path to watched face/ecology) prefers registry
   // classifyEvent for ONE_SOURCE alignment with data/topologies.yml.
   // This reduces signal fragmentation so particle reactions (kernel arousal/pressure,
@@ -57,15 +56,15 @@
     if (!_visualBatch || !_visualBatch.length) return;
     const items = _visualBatch.splice(0, _visualBatch.length);
     const last = items[items.length - 1];
-    emitVisualNow(last.name, last.detail);
+    emitVisualNow(last.name, last.detail);,
   }
 
   function emitVisual(name, detail = {}) {
     if (!_visualBatch) _visualBatch = [];
     _visualBatch.push({ name, detail });
     if (!_visualBatchTimer) {
-      _visualBatchTimer = requestAnimationFrame(flushVisualBatch);
-    }
+      _visualBatchTimer = requestAnimationFrame(flushVisualBatch);,
+    },
   }
 
   function emitVisualNow(name, detail = {}) {
@@ -73,7 +72,7 @@
     window.MASTER_FACE_EXPRESSION?.pushSignal?.({ ...detail, name });
     const blended = window.MASTER_FACE_EXPRESSION?.blendSignals?.();
     if (blended) {
-      detail = { ...detail, entropy: blended.entropy, confidence: blended.confidence, arousal: blended.arousal, valence: blended.valence };
+      detail = { ...detail, entropy: blended.entropy, confidence: blended.confidence, arousal: blended.arousal, valence: blended.valence };,
     }
     state.entropy = clamp(detail.entropy ?? state.entropy, 0, 1);
     state.confidence = clamp(detail.confidence ?? state.confidence, 0, 1);
@@ -90,7 +89,7 @@
       confidence: state.confidence,
       provider: state.provider,
       mode: detail.mode || name,
-      raw: detail.raw || null
+      raw: detail.raw || null,
     };
 
     window.dispatchEvent(new CustomEvent("master:visual", { detail: visual }));
@@ -101,25 +100,25 @@
       confidence: state.confidence,
       fatigue: clamp(detail.fatigue ?? Math.max(0, state.entropy - 0.35) * 0.4, 0, 1),
       mode: visual.mode,
-      source: name
+      source: name,
     };
     window.dispatchEvent(new CustomEvent("master:emotion", { detail: emotion }));
     if (canonical && canonical !== state.canonicalTopology) {
       state.canonicalTopology = canonical;
       window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: canonical, source: name } }));
       document.documentElement.dataset.topologyFlash = "1";
-      setTimeout(() => { delete document.documentElement.dataset.topologyFlash; }, 90);
+      setTimeout(() => { delete document.documentElement.dataset.topologyFlash; }, 90);,
     }
 
     if (window.MASTERMask && typeof window.MASTERMask.event === "function") {
-      window.MASTERMask.event(name, visual);
+      window.MASTERMask.event(name, visual);,
     }
 
     if (window.MASTER_FACE && typeof window.MASTER_FACE.event === "function") {
-      window.MASTER_FACE.event(name, visual);
+      window.MASTER_FACE.event(name, visual);,
     }
 
-    reflectToDom(visual);
+    reflectToDom(visual);,
   }
 
   function reflectToDom(visual) {
@@ -128,18 +127,17 @@
     document.documentElement.style.setProperty("--master-entropy", String(visual.entropy));
     document.documentElement.style.setProperty("--master-confidence", String(visual.confidence));
 
-    if (face) face.style.filter = "";
+    if (face) face.style.filter = "";,
   }
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, Number(value)));
-  }
 
   let _visemePlanTimers = [];
 
   function clearVisemePlanTimers() {
     _visemePlanTimers.forEach((id) => clearTimeout(id));
-    _visemePlanTimers = [];
+    _visemePlanTimers = [];,
   }
 
   function forwardVisemePlan(plan) {
@@ -156,12 +154,12 @@
         window.dispatchEvent(new CustomEvent("tts:viseme", {
           detail: {
             shape: frame.shape || frame.v || "neutral",
-            amp: Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1
-          }
-        }));
+            amp: Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1,
+          },
+        }));,
       }, at);
-      _visemePlanTimers.push(id);
-    });
+      _visemePlanTimers.push(id);,
+    });,
   }
 
   function handleRuntimeEvent(event) {
@@ -173,64 +171,64 @@
     emitVisual(type, mapped);
     // Architecture #15: forward codebase topology to particle system.
     if (/codebase:topology/i.test(type) && event.modules) {
-      window.dispatchEvent(new CustomEvent("master:codebase", { detail: event }));
+      window.dispatchEvent(new CustomEvent("master:codebase", { detail: event }));,
     }
     if (/rule_loop:(cycle|clean|converged)/i.test(type)) {
-      window.dispatchEvent(new CustomEvent("master:rule_event", { detail: event }));
+      window.dispatchEvent(new CustomEvent("master:rule_event", { detail: event }));,
     }
     if (type === "self_violation") {
-      window.dispatchEvent(new CustomEvent("master:self_violation", { detail: event }));
+      window.dispatchEvent(new CustomEvent("master:self_violation", { detail: event }));,
     }
     if (type === "tts:anticipate") {
-      window.dispatchEvent(new CustomEvent("tts:anticipate", { detail: event }));
+      window.dispatchEvent(new CustomEvent("tts:anticipate", { detail: event }));,
     }
     if (type === "tts:style:active") {
       window.dispatchEvent(new CustomEvent("tts:style:active", { detail: event }));
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));,
     }
     if (/^tts:playback:/.test(type)) {
-      window.dispatchEvent(new CustomEvent(type, { detail: event }));
+      window.dispatchEvent(new CustomEvent(type, { detail: event }));,
     }
     if (type === "tts:viseme:plan") {
       forwardVisemePlan(event);
-      window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: event }));
+      window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: event }));,
     }
     if (type === "tts:job_cancelled") {
       clearVisemePlanTimers();
       window.dispatchEvent(new CustomEvent("tts:job_cancelled", { detail: event }));
-      window.MASTER_FACE?.ttsSkip?.();
+      window.MASTER_FACE?.ttsSkip?.();,
     }
     if (type === "user:expression") {
       window.dispatchEvent(new CustomEvent("user:expression", { detail: event }));
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, expression: event.expression, raw: event } }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, expression: event.expression, raw: event } }));,
     }
     if (/pressure:updated|ctx:footer/i.test(type)) {
       const pct = event.pct ?? event.value ?? 0;
-      window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));
+      window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));,
     }
     if (/council:deliberation|council:start/i.test(type)) {
       startCouncilRotator();
       const spiritRadius = event.spirit_radius ?? event.spiritRadius ?? 1.14;
       window.dispatchEvent(new CustomEvent("master:visual", {
-        detail: { name: type, mode: "council", entropy: 0.42, confidence: 0.62, spirit_radius: spiritRadius, raw: event }
+        detail: { name: type, mode: "council", entropy: 0.42, confidence: 0.62, spirit_radius: spiritRadius, raw: event },
       }));
-      document.documentElement.dataset.councilBreath = "1";
+      document.documentElement.dataset.councilBreath = "1";,
     }
     if (/phantom:detected|phantom:retry/i.test(type)) {
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));,
     }
     if (/council:(?:vote|speech|end)|tribunal:rendered/i.test(type)) {
       stopCouncilRotator();
-      delete document.documentElement.dataset.councilBreath;
+      delete document.documentElement.dataset.councilBreath;,
     }
     if (/infer:resolved|infer:confidence|route:resolved|llm:routed/i.test(type)) {
-      window.dispatchEvent(new CustomEvent("master:visual", { detail: mapped }));
+      window.dispatchEvent(new CustomEvent("master:visual", { detail: mapped }));,
     }
     if (state.provider && window.MASTEREvents?.paletteForProvider) {
       const pal = window.MASTEREvents.paletteForProvider(state.provider);
       document.documentElement.style.setProperty("--master-accent", pal.accent || "#d8d6e0");
-      window.dispatchEvent(new CustomEvent("master:palette", { detail: { provider: state.provider, ...pal } }));
-    }
+      window.dispatchEvent(new CustomEvent("master:palette", { detail: { provider: state.provider, ...pal } }));,
+    },
   }
 
   let eventSource = null;
@@ -248,14 +246,14 @@
       if (!ui) return;
       const name = COUNCIL_ROTATOR[councilRotatorIdx % COUNCIL_ROTATOR.length];
       councilRotatorIdx += 1;
-      ui.textContent = `council · ${name}`;
-    }, 1800);
+      ui.textContent = `council · ${name}`;,
+    }, 1800);,
   }
 
   function stopCouncilRotator() {
     if (!councilRotatorTimer) return;
     clearInterval(councilRotatorTimer);
-    councilRotatorTimer = null;
+    councilRotatorTimer = null;,
   }
 
   function connectCableFallback() {
@@ -265,7 +263,7 @@
     cableIdent = JSON.stringify({ channel: "MasterChannel" });
     cableSocket.onopen = () => {
       cableSocket.send(JSON.stringify({ command: "subscribe", identifier: cableIdent }));
-      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "cable" });
+      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "cable" });,
     };
     cableSocket.onmessage = (message) => {
       try {
@@ -274,20 +272,20 @@
         if (frame.type === "confirm_subscription") return;
         const payload = frame.message;
         if (!payload) return;
-        handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);
+        handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);,
       } catch (_error) {
-        window.MASTER_LOG?.warn?.("visual_bridge:cable_frame", _error);
-      }
+        window.MASTER_LOG?.warn?.("visual_bridge:cable_frame", _error);,
+      },
     };
     cableSocket.onclose = () => { cableSocket = null; };
-    cableSocket.onerror = () => { try { cableSocket.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:cable_close", err); } cableSocket = null; };
+    cableSocket.onerror = () => { try { cableSocket.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:cable_close", err); } cableSocket = null; };,
   }
 
   function disconnectSse() {
     if (!eventSource) return;
     try { eventSource.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:sse_close", err); }
     eventSource = null;
-    state.connected = false;
+    state.connected = false;,
   }
 
   function connectSse() {
@@ -298,15 +296,15 @@
       state.connected = true;
       sseErrorCount = 0;
       delete document.body.dataset.linkQuiet;
-      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
+      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });,
     };
     eventSource.onmessage = (message) => {
       try {
-        handleRuntimeEvent(JSON.parse(message.data));
+        handleRuntimeEvent(JSON.parse(message.data));,
       } catch (_error) {
         window.MASTER_LOG?.warn?.("visual_bridge:sse_frame", _error);
-        emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });
-      }
+        emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });,
+      },
     };
     eventSource.onerror = () => {
       state.connected = false;
@@ -317,11 +315,11 @@
       window._chatOnDmesg?.("link quiet");
       disconnectSse();
       if (sseErrorCount >= 3 && window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback")) {
-        connectCableFallback();
+        connectCableFallback();,
       } else {
-        setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));
-      }
-    };
+        setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));,
+      },
+    };,
   }
 
   function observeDomSignals() {
@@ -331,16 +329,16 @@
           topology: "papua-mask",
           entropy: 0.14,
           confidence: 0.88,
-          mode: "attending"
-        });
+          mode: "attending",
+        });,
       }, { passive: true });
       input.addEventListener("paste", () => {
         emitVisual("input:paste", {
           topology: "papua-mask",
           entropy: 0.25,
           confidence: 0.82,
-          mode: "paste"
-        });
+          mode: "paste",
+        });,
       }, { passive: true });
       input.addEventListener("input", () => {
         const length = input.value.length;
@@ -351,9 +349,9 @@
           topology: length > 120 ? "neural" : "papua-mask",
           entropy: Math.min(0.55, length / 360),
           confidence: length ? 0.66 : 0.86,
-          mode: dense ? "dense" : "typing"
-        });
-      }, { passive: true });
+          mode: dense ? "dense" : "typing",
+        });,
+      }, { passive: true });,
     }
 
     if (status) {
@@ -361,9 +359,9 @@
         const text = status.textContent || "";
         if (!text.trim()) return;
         const mapped = classify(text, { status: text });
-        emitVisual(`status:${mapped.mode}`, mapped);
+        emitVisual(`status:${mapped.mode}`, mapped);,
       });
-      observer.observe(status, { childList: true, characterData: true, subtree: true });
+      observer.observe(status, { childList: true, characterData: true, subtree: true });,
     }
 
     if (log) {
@@ -376,12 +374,12 @@
           queueMicrotask(() => {
             const n = appendQueue;
             appendQueue = 0;
-            if (n > 0) emitVisual("chat:append", { topology: "papua-mask", entropy: 0.18, confidence: 0.88, mode: "response", count: n });
-          });
-        }
+            if (n > 0) emitVisual("chat:append", { topology: "papua-mask", entropy: 0.18, confidence: 0.88, mode: "response", count: n });,
+          });,
+        },
       });
-      observer.observe(log, { childList: true, subtree: true });
-    }
+      observer.observe(log, { childList: true, subtree: true });,
+    },
   }
 
   function bootEmotionalTimeline() {
@@ -393,7 +391,7 @@
       strip.id = "emotional-timeline";
       strip.className = "emotional-timeline";
       strip.setAttribute("aria-hidden", "true");
-      document.body.appendChild(strip);
+      document.body.appendChild(strip);,
     }
     const ring = [];
     window.addEventListener("master:visual", (ev) => {
@@ -402,9 +400,8 @@
       while (ring.length > 24) ring.shift();
       strip.innerHTML = ring.map((e) => {
         const h = 3 + e.entropy * 10;
-        return `<span style="height:${h}px" title="${e.mode}"></span>`;
-      }).join("");
-    });
+        return `<span style="height:${h}px" title="${e.mode}"></span>`;,
+    });,
   }
 
   // Honour the deferred-boot contract: nothing heavy (THREE.js, the face3d WebGL
@@ -417,10 +414,10 @@
     const fire = () => { if (done) return; done = true; clearInterval(poll); run(); };
     const primer = document.getElementById("primer");
     if (primer) {
-      ["pointerdown", "touchend", "click"].forEach(ev => primer.addEventListener(ev, fire, { once: true, passive: true }));
+      ["pointerdown", "touchend", "click"].forEach(ev => primer.addEventListener(ev, fire, { once: true, passive: true }));,
     }
     addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") fire(); }, { once: true });
-    const poll = setInterval(() => { if (window._primerFired) fire(); }, 200);
+    const poll = setInterval(() => { if (window._primerFired) fire(); }, 200);,
   }
 
   function bootExperimentalVisuals() {
@@ -438,31 +435,31 @@
       script.defer = true;
       script.onload = () => emitVisual("clusters:ready", { topology: "neural", entropy: 0.18, confidence: 0.86, mode: "clusters" });
       script.onerror = () => emitVisual("clusters:error", { topology: "serpent", entropy: 0.62, confidence: 0.36, mode: "error" });
-      document.head.appendChild(script);
+      document.head.appendChild(script);,
     }
 
     if (face3d) {
       import(window.MASTER_ASSET_PATHS?.face3dPreview || "/face3d_preview.js")
         .then(() => emitVisual("face3d:ready", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "face3d" }))
-        .catch(error => emitVisual("face3d:error", { topology: "serpent", entropy: 0.70, confidence: 0.30, mode: "error", raw: String(error?.message || error) }));
-    }
+        .catch(error => emitVisual("face3d:error", { topology: "serpent", entropy: 0.70, confidence: 0.30, mode: "error", raw: String(error?.message || error) }));,
+    },
   }
 
   window.MASTERVisual = {
     state,
     event: emitVisualNow,
     runtime: handleRuntimeEvent,
-    classify
+    classify,
   };
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) disconnectSse();
-    else connectSse();
+    else connectSse();,
   }, { passive: true });
 
   observeDomSignals();
   connectSse();
   bootEmotionalTimeline();
   whenPrimed(bootExperimentalVisuals);
-  emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });
+  emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });,
 })();

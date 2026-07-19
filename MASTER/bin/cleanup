@@ -50,7 +50,7 @@ puts "OK wrote #{write_report('inventory_before.json', inventory)}"
 puts "OK wrote #{write_report('history_before.txt', history)}"
 
 candidates = Dir.glob(File.join(REPO, "test_*.jpg")).map { |path| path.sub(REPO + "/", "") }
-puts candidates.empty? ? "OK no root test_*.jpg candidates" : "WARN cleanup candidates:\n#{candidates.map { |c| "  #{c}" }.join("\n")}" 
+puts candidates.empty? ? "OK no root test_*.jpg candidates" : "WARN cleanup candidates:\n#{candidates.map { |c| "  #{c}" }.join("\n")}"
 
 if options[:apply]
   candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) }

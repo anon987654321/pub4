@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover">
 <title>swarm</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -15,7 +15,7 @@ body::after{
   background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0,rgba(0,0,0,.22) 1px,transparent 1px,transparent 3px);
   mix-blend-mode:multiply;
   z-index:9;
-  animation:scan 24s linear infinite;
+  animation:scan 24s linear infinite;,
 }
 @keyframes scan{0%{background-position:0 0}100%{background-position:0 200px}}
 </style>
@@ -32,7 +32,7 @@ ctx.imageSmoothingEnabled = false;
 function resize(){
   const dpr = Math.min(devicePixelRatio||1, 2);
   cv.width = Math.floor(innerWidth * dpr);
-  cv.height = Math.floor(innerHeight * dpr);
+  cv.height = Math.floor(innerHeight * dpr);,
 }
 resize();
 addEventListener("resize", resize);
@@ -45,10 +45,10 @@ for (let i=0; i<N; i++){
     x: Math.random()*W, y: Math.random()*H,
     px: 0, py: 0, z,
     speed: 0.55 + z*0.95,
-    jitter: (Math.random()-0.5)*0.3
+    jitter: (Math.random()-0.5)*0.3,
   };
   ps[i].px = ps[i].x;
-  ps[i].py = ps[i].y;
+  ps[i].py = ps[i].y;,
 }
 
 // Fibonacci sphere → head ellipsoid (taller than wide, slightly compressed depth).
@@ -59,10 +59,9 @@ const headAnchors = (() => {
     const y = 1 - (i/(N-1))*2;
     const r = Math.sqrt(1 - y*y);
     const t = golden*i;
-    out[i] = { x: Math.cos(t)*r, y: 1.25*y, z: 0.85*Math.sin(t)*r };
+    out[i] = { x: Math.cos(t)*r, y: 1.25*y, z: 0.85*Math.sin(t)*r };,
   }
   return out;
-})();
 for (let i=0;i<N;i++) ps[i].a = headAnchors[i];
 let headTheta = 0;
 
@@ -84,13 +83,13 @@ const PAL = {
   burst:  ["#3a1808","#8a3812","#d56830"],
   ripple: ["#2e1a3e","#603a72","#9a5cb0"],
   slow:   ["#202c40","#3e4c66","#5e6c88"],
-  face:   ["#1c1612","#4a3a2c","#a89070"]
+  face:   ["#1c1612","#4a3a2c","#a89070"],
 };
 
 addEventListener("pointermove", e => {
   pointer.x = (e.clientX / innerWidth) * W;
   pointer.y = (e.clientY / innerHeight) * H;
-  pointer.active = true;
+  pointer.active = true;,
 });
 addEventListener("pointerout", () => { pointer.active = false; });
 
@@ -115,11 +114,11 @@ addEventListener("message", e => {
       pulses.push({
         x: typeof p.x === "number" ? p.x : Math.random()*W,
         y: typeof p.y === "number" ? p.y : Math.random()*H,
-        until: performance.now() + PULSE_MS
+        until: performance.now() + PULSE_MS,
       });
-      break;
-    }
-  }
+      break;,
+    },
+  },
 });
 
 // Curl-noise-ish field. Two harmonics, divergence-free shape, slight upward bias.
@@ -131,7 +130,6 @@ function field(x, y, t){
            + 0.55*Math.cos(x*0.054 + t*0.00091)
            - 0.18;
   return [fx*0.95, fy*0.95];
-}
 
 const buf = document.createElement("canvas");
 buf.width = W; buf.height = H;
@@ -150,7 +148,7 @@ function step(now){
   bctx.fillRect(0,0,W,H);
 
   for (let p=pulses.length-1; p>=0; p--){
-    if (now > pulses[p].until) pulses.splice(p,1);
+    if (now > pulses[p].until) pulses.splice(p,1);,
   }
 
   const palette  = PAL[mode] || PAL.idle;
@@ -164,7 +162,7 @@ function step(now){
   if (inFace){
     headTheta += 0.006;
     hc = Math.cos(headTheta); hs = Math.sin(headTheta);
-    hcx = W*0.5; hcy = H*0.5; hsc = 55;
+    hcx = W*0.5; hcy = H*0.5; hsc = 55;,
   }
 
   for (let i=0; i<N; i++){
@@ -187,12 +185,12 @@ function step(now){
         bctx.beginPath();
         bctx.moveTo(p.px, p.py);
         bctx.lineTo(p.x, p.y);
-        bctx.stroke();
+        bctx.stroke();,
       } else {
         p.x += (Math.random()-0.5)*0.4;
-        p.y += (Math.random()-0.5)*0.4;
+        p.y += (Math.random()-0.5)*0.4;,
       }
-      continue;
+      continue;,
     }
 
     let [fx, fy] = field(p.x, p.y, now);
@@ -204,8 +202,8 @@ function step(now){
         const r = Math.sqrt(r2);
         const k = (1 - r2/1100) * 0.65 * p.z;
         fx += dx/r * k;
-        fy += dy/r * k;
-      }
+        fy += dy/r * k;,
+      },
     }
 
     for (const pl of pulses){
@@ -215,8 +213,8 @@ function step(now){
         const rp = Math.sqrt(r2p);
         const kp = (1 - r2p/PULSE_R2) * PULSE_K * p.z;
         fx += dxp/rp * kp;
-        fy += dyp/rp * kp;
-      }
+        fy += dyp/rp * kp;,
+      },
     }
 
     fx += p.jitter * (Math.random()-0.5);
@@ -236,20 +234,20 @@ function step(now){
     bctx.beginPath();
     bctx.moveTo(p.px, p.py);
     bctx.lineTo(p.x,  p.y);
-    bctx.stroke();
+    bctx.stroke();,
   }
 
   if (pointer.active){
     bctx.fillStyle = "#cdc5b6";
     const px = pointer.x|0, py = pointer.y|0;
     bctx.fillRect(px-1, py, 3, 1);
-    bctx.fillRect(px, py-1, 1, 3);
+    bctx.fillRect(px, py-1, 1, 3);,
   }
 
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(buf, 0, 0, cv.width, cv.height);
 
-  requestAnimationFrame(step);
+  requestAnimationFrame(step);,
 }
 
 requestAnimationFrame(step);

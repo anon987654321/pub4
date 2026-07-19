@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Stable MASTER entrypoint for the Dilla Lab (chat + RAILS product).
 # Keeps generated audio outside source. Kit-forward ENV matches
@@ -21,7 +22,7 @@ module DillaEntrypoint
     "baroque" => "baroque",
     "neo_soul" => "neo_soul",
     "neo-soul" => "neo_soul",
-    "jazz" => "aydin_jazz_turn"
+    "jazz" => "aydin_jazz_turn",
   }.freeze
 
   SETTINGS_FOR_TRACK = {
@@ -31,7 +32,7 @@ module DillaEntrypoint
     "neo_soul" => { "sonitex" => "donuts_soul", "analog-chain" => "broadcast" },
     "get_dis_money" => { "sonitex" => "donuts_soul", "analog-chain" => "broadcast", "sidechain" => "1" },
     "timeless" => { "sonitex" => "donuts_soul", "analog-chain" => "broadcast" },
-    "aydin_jazz_turn" => { "sonitex" => "donuts_soul", "analog-chain" => "broadcast" }
+    "aydin_jazz_turn" => { "sonitex" => "donuts_soul", "analog-chain" => "broadcast" },
   }.freeze
   DEFAULT_SETTINGS = { "sonitex" => "donuts_soul", "analog-chain" => "broadcast" }.freeze
 
@@ -80,7 +81,7 @@ module DillaEntrypoint
     "ANALOG_CHAIN" => "broadcast",
     "MASTER_HEURISTICS" => "1",
     "STREAM_NORMALIZE" => "1",
-    "STREAM_LUFS" => "-14.5"
+    "STREAM_LUFS" => "-14.5",
   }.freeze
 
   module_function

@@ -23,7 +23,6 @@ float snoise(vec3 v){
   p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
   vec4 m=max(.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.);m=m*m;
   return 42.*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-}
 vec3 curlNoise(vec3 p){
   const float e=.07;
   float n1,n2,n3,n4;
@@ -39,7 +38,6 @@ vec3 curlNoise(vec3 p){
   n3=snoise(r+vec3(0,e,0));n4=snoise(r-vec3(0,e,0));
   float cz=(n1-n2)/(2.*e)-(n3-n4)/(2.*e);
   return vec3(cx,cy,cz);
-}
 uniform float uMorph;
 uniform float uTime;
 uniform float uSize;
@@ -107,7 +105,7 @@ void main(){
   // FA10 send ripple — radial wave from center
   if(uRipple > 0.0) {
     float rwave = sin(radial * 10.0 - uRipple * 18.0) * exp(-uRipple * 2.5) * 0.035;
-    p.xy += normalize(p.xy + vec2(0.001)) * rwave;
+    p.xy += normalize(p.xy + vec2(0.001)) * rwave;,
   }
   // FA05/FA04 vowel jaw — viseme amplitude extends jaw opening
   float jawRgnV = smoothstep(0.0,0.15,-position.y-0.05) * smoothstep(0.0,0.18,0.30-abs(position.x));
@@ -118,11 +116,11 @@ void main(){
   if(uFracture > 0.0) {
     float ang = atan(position.y, position.x);
     float shardAng = floor(ang * 4.0 / 3.14159 + 0.5) * 3.14159 / 4.0;
-    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);
+    p.xy += vec2(cos(shardAng), sin(shardAng)) * uFracture * (0.22 + seed * 0.32);,
   }
   if(uModelSwitch > 0.0) {
     float dissolve = smoothstep(0.0, 0.45, uModelSwitch) * (1.0 - smoothstep(0.55, 1.0, uModelSwitch));
-    p += curlNoise(position * 0.9 + seed + vec3(uTime * 0.2)) * dissolve * 0.045;
+    p += curlNoise(position * 0.9 + seed + vec3(uTime * 0.2)) * dissolve * 0.045;,
   }
   if(uQuestion > 0.0) {
     float qt = clamp(uQuestion, 0.0, 1.0);
@@ -131,7 +129,7 @@ void main(){
     vec2 qHook = vec2(0.11 * cos(qSeed * 6.2831), 0.12 + 0.10 * sin(qSeed * 6.2831));
     vec2 qTarget = qSeed < 0.62 ? qHook : qStem;
     p.xy = mix(p.xy, qTarget, qt * 0.88);
-    p.z += qt * 0.02 * sin(seed * 6.2831);
+    p.z += qt * 0.02 * sin(seed * 6.2831);,
   }
   // FA20 pass bloom — brief outward radial spring then snap back
   if(uBloom > 0.0) p.xy += normalize(p.xy + vec2(0.001)) * uBloom * 0.30 * (1.0 - radial * 0.6);
@@ -165,7 +163,7 @@ void main(){
   vec3 vn=normalize(mat3(modelViewMatrix)*flatNorm);
   vFresnel=pow(1.0-abs(dot(viewDir,vn)),1.8);
   vDepth=depth;
-  vZoneVal=zone;
+  vZoneVal=zone;,
 }`;
 
 const FRAG_SHADER = `
@@ -185,7 +183,7 @@ void main(){
   float zoneDim=mix(1.0,mix(0.82,0.96,mouthRgn),eyeRgn*0.48);
   alpha*=zoneDim;
   vec3 col=clamp(vColor+vFresnel*vColor*0.50,0.0,1.0);
-  gl_FragColor=vec4(col,max(0.0,alpha));
+  gl_FragColor=vec4(col,max(0.0,alpha));,
 }`;
 
 let faceGeom, faceMat, facePoints, faceEdgeGeom, faceEdgeMat, faceEdgeLines;
@@ -211,12 +209,12 @@ if (_hasWebGL && THREE) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0},
     },
     // Normal (not additive) blending on the main point layer so individual
     // pixels stay crisp and discrete instead of bleeding into neighbors —
     // the glow layer below still uses additive blending for its soft halo.
-    transparent: true, depthWrite: false, blending: THREE.NormalBlending
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending,
   });
   facePoints = new THREE.Points(faceGeom, faceMat);
 
@@ -225,25 +223,24 @@ if (_hasWebGL && THREE) {
     const strongIdxArr = [], weakIdxArr = [];
     for (let ei = 0; ei < edgeCount; ei++) {
       if (faceEdgeAlpha[ei] > 0.65) { strongIdxArr.push(ei*2, ei*2+1); }
-      else { weakIdxArr.push(ei*2, ei*2+1); }
+      else { weakIdxArr.push(ei*2, ei*2+1); },
     }
     function buildEdgeLines(idxArr, opacity) {
       if (!idxArr.length) return null;
       const posArr = new Float32Array(idxArr.length * 3);
       for (let i = 0; i < idxArr.length; i++) {
         const vi = idxArr[i] * 3;
-        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];
+        posArr[i*3] = faceEdgePosData[vi]; posArr[i*3+1] = faceEdgePosData[vi+1]; posArr[i*3+2] = faceEdgePosData[vi+2];,
       }
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
       const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
       return new THREE.LineSegments(geom, mat);
-    }
     faceEdgeLinesStrong = buildEdgeLines(strongIdxArr, 0.14);
     faceEdgeLinesWeak = buildEdgeLines(weakIdxArr, 0.065);
     // Legacy single-line ref kept null — two-tier replaces it
-    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;
-  }
+    faceEdgeGeom = null; faceEdgeMat = null; faceEdgeLines = null;,
+  },
 }
 
 let morphCurrent = 0.0, morphTarget = 0.88, morphGhost = 0.0;
@@ -257,29 +254,29 @@ function initSemanticPools() {
   for (let i = 0; i < n; i++) {
     const z = faceZone[i];
     if (z >= 0.68) mouthIdx.push(i);
-    if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);
+    if (z >= 0.30 && z <= 0.55) eyeIdx.push(i);,
   }
   mouthPool = K.createPool(Math.min(140, Math.max(16, mouthIdx.length)));
   eyePool = K.createPool(Math.min(96, Math.max(14, eyeIdx.length)));
   for (let mi = 0; mi < mouthIdx.length && mouthPool.count < mouthPool.capacity; mi++) {
     const i = mouthIdx[mi];
     K.spawn(mouthPool, faceHome[i * 3], faceHome[i * 3 + 1], {
-      kind: 1, zone: faceZone[i], confidence: 0.88, arousal: 0.25, valence: 0.5, attention: 0.6, decay: 0.006
-    });
+      kind: 1, zone: faceZone[i], confidence: 0.88, arousal: 0.25, valence: 0.5, attention: 0.6, decay: 0.006,
+    });,
   }
   for (let ei = 0; ei < eyeIdx.length && eyePool.count < eyePool.capacity; ei++) {
     const i = eyeIdx[ei];
     K.spawn(eyePool, faceHome[i * 3], faceHome[i * 3 + 1], {
-      kind: 2, zone: faceZone[i], confidence: 0.92, arousal: 0.2, valence: 0.5, attention: 0.75, decay: 0.012
-    });
-  }
+      kind: 2, zone: faceZone[i], confidence: 0.92, arousal: 0.2, valence: 0.5, attention: 0.75, decay: 0.012,
+    });,
+  },
 }
 if (window.ParticleKernel) initSemanticPools();
 else window.addEventListener('DOMContentLoaded', () => { if (window.ParticleKernel) initSemanticPools(); }, { once: true });
 
 const COUNCIL_VOICE = {
   Architect: 'pernille', Skeptic: 'pernille', Pragmatist: 'pernille',
-  Security: 'pernille', User: 'pernille', Mentor: 'pernille'
+  Security: 'pernille', User: 'pernille', Mentor: 'pernille',
 };
 
 // Pristine chrome: council personas no longer shift the face to a hue
@@ -292,10 +289,8 @@ const PERSONA_TINT = {
   Pragmatist: new Color(1, 1, 1),
   Security: new Color(1, 1, 1),
   User: new Color(1, 1, 1),
-  Mentor: new Color(1, 1, 1)
+  Mentor: new Color(1, 1, 1),
 };
-
-
 
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
@@ -304,7 +299,7 @@ function applyPersonaVisual(persona) {
   const tint = PERSONA_TINT[persona];
   if (!tint) return;
   fadeColorTo(tint);
-  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);
+  if (isRichMotionProfile()) State.personaPulse = Math.min(1, (State.personaPulse || 0) + 0.35);,
 }
 const COUNCIL_LANE_OFFSET = { left: -0.22, center: 0, right: 0.22 };
 function offsetCouncilMouthPool(lane, delta = 0.18) {
@@ -314,12 +309,12 @@ function offsetCouncilMouthPool(lane, delta = 0.18) {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     mouthPool.cells[b + K.FIELD.x] += shift * delta;
-    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);
-  }
+    mouthPool.cells[b + K.FIELD.arousal] = Math.min(1, (mouthPool.cells[b + K.FIELD.arousal] || 0.4) + delta * 0.35);,
+  },
 }
 function refreshIdleTint() {
   TINT.idle.copy(dayNightTint());
-  colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);
+  colorCurrent.copy(TINT.idle); colorTarget.copy(TINT.idle);,
 }
 refreshIdleTint();
 setInterval(() => { if (!State.mood || State.mood === 'idle') { refreshIdleTint(); fadeColorTo(TINT.idle); } }, 60000);
@@ -346,18 +341,17 @@ function dollyZoom(intensity) {
       camera.fov = targetFOV + (38 - targetFOV) * p2;
       camera.position.z = targetZ + (4.6 - targetZ) * p2;
       camera.updateProjectionMatrix();
-      if (p2 < 1) requestAnimationFrame(back);
+      if (p2 < 1) requestAnimationFrame(back);,
     }
-    requestAnimationFrame(back);
+    requestAnimationFrame(back);,
   }
-  requestAnimationFrame(forward);
+  requestAnimationFrame(forward);,
 }
 
 const _photoEl = document.getElementById('photo');
 if (_photoEl) _photoEl.addEventListener('change', () => {
-  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
+  if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; },
 });
-
 
 let lastT = performance.now();
 let _attnEyeClose = 0;
@@ -382,15 +376,15 @@ if (_hasWebGL && THREE && scene && facePoints) {
       uRain:{value:0}, uModelSwitch:{value:0}, uEarPulse:{value:0}, uRipple:{value:0},
       uVowel:{value:0}, uSurpriseY:{value:0},
       uFracture:{value:0}, uBloom:{value:0}, uIdleDrift:{value:0}, uEyeClose:{value:0}, uGridAngle:{value:0}, uHeartbeat:{value:0}, uExposure:{value:1.0}, uQuestion:{value:0},
-      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0}
+      uFocusDim:{value:1.0}, uPhosphorSoft:{value:0.68}, uScanline:{value:0.0}, uTime:{value:0},
     },
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
   glowPoints = new THREE.Points(faceGeom, glowMat);
   glowPoints.renderOrder = -1;
   head.add(glowPoints);
   if (faceEdgeLinesWeak) { faceEdgeLinesWeak.renderOrder = -3; head.add(faceEdgeLinesWeak); }
-  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); }
+  if (faceEdgeLinesStrong) { faceEdgeLinesStrong.renderOrder = -2; head.add(faceEdgeLinesStrong); },
 }
 
 async function swapMask(imageUrl) {
@@ -417,8 +411,8 @@ async function swapMask(imageUrl) {
     mouthPool = null; eyePool = null;
     initSemanticPools();
     State.flash = 0.5; State.pulse = 0.8;
-    if (uiStatus) uiStatus.textContent = 'mask loaded';
+    if (uiStatus) uiStatus.textContent = 'mask loaded';,
   } catch (_) {
-    if (uiStatus) uiStatus.textContent = 'mask load failed';
-  }
+    if (uiStatus) uiStatus.textContent = 'mask load failed';,
+  },
 }

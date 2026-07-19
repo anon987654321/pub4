@@ -19,7 +19,7 @@ module Master
             sprawl: sprawl(records),
             large_files: large_files(records),
             extension_mix: extension_mix(records),
-            co_change_pairs: co_change_pairs(graph)
+            co_change_pairs: co_change_pairs(graph),
           }
         end
 

@@ -8,7 +8,7 @@
 #   3. SAMPLE CHOICE — alternate kicks, soft ghost snare, closed vs open hat
 module DillaGroove
   PRIMES = [3, 5, 7, 11].freeze
-  MARKOV_CACHE = {}
+  MARKOV_CACHE = {}.freeze
   # Tempo/timing should breathe over a multi-bar phrase, not sit dead-locked
   # to the grid — a slow sine LFO, period within the 4-8 bar range documented
   # for this kind of groove-breathing.
@@ -22,7 +22,7 @@ module DillaGroove
     [0, 6, 10, 13],
     [0, 3, 10],
     [0, 6, 11],
-    [0, 10, 14]
+    [0, 10, 14],
   ].freeze
   POCKET_SNARE_HARD = [4, 12].freeze
   POCKET_SNARE_GHOST_PHRASES = [
@@ -30,12 +30,12 @@ module DillaGroove
     [2, 10],
     [7, 15],
     [10],
-    []
+    [],
   ].freeze
   POCKET_HAT_PHRASES = [
     [0, 2, 4, 6, 8, 10, 12, 14],
     [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 12, 13, 14]
+    [0, 2, 4, 6, 8, 10, 12, 13, 14],
   ].freeze
 
   # Freehand nudge ranges in MPC ticks (1/96 beat) — cyclic, not random chaos.
@@ -47,7 +47,7 @@ module DillaGroove
     hat_down: -1..4,
     hat_up: 6..16,
     open: 4..12,
-    clap: -12..-4
+    clap: -12..-4,
   }.freeze
 
   KICK_SAMPLE_CYCLE = %i[kick ind_kick kick kick].freeze

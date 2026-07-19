@@ -6,7 +6,7 @@
   const FIELD = {
     x: 0, y: 1, vx: 2, vy: 3,
     kind: 4, zone: 5, confidence: 6, pressure: 7,
-    valence: 8, arousal: 9, attention: 10, age: 11
+    valence: 8, arousal: 9, attention: 10, age: 11,
   };
 
   function hydratePool(payload) {
@@ -15,10 +15,9 @@
       decay: new Float32Array(payload.decay),
       alive: new Uint8Array(payload.alive),
       capacity: payload.capacity,
-      count: payload.count
+      count: payload.count,
     };
     return pool;
-  }
 
   function serializePool(pool) {
     return {
@@ -26,8 +25,8 @@
       decay: pool.decay.buffer,
       alive: pool.alive.buffer,
       capacity: pool.capacity,
-      count: pool.count
-    };
+      count: pool.count,
+    };,
   }
 
   function step(pool, dt, ctx = {}) {
@@ -49,8 +48,8 @@
       pool.cells[base + FIELD.attention] = Math.max(0, (pool.cells[base + FIELD.attention] || 0) - attnDecay * dt);
       const cellDecay = pool.decay[i] * decayScale * (1.0 + (1 - confidence) * 0.12);
       pool.cells[base + FIELD.confidence] -= cellDecay * dt;
-      if (pool.cells[base + FIELD.confidence] <= 0) pool.alive[i] = 0;
-    }
+      if (pool.cells[base + FIELD.confidence] <= 0) pool.alive[i] = 0;,
+    },
   }
 
   self.onmessage = (ev) => {
@@ -61,7 +60,7 @@
     self.postMessage({ id: msg.id, pool: serializePool(pool) }, [
       pool.cells.buffer,
       pool.decay.buffer,
-      pool.alive.buffer
-    ]);
-  };
+      pool.alive.buffer,
+    ]);,
+  };,
 })();

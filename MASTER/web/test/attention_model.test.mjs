@@ -21,7 +21,7 @@ function loadAttention(now = 0) {
   return {
     attn,
     advance: (ms) => { clock += ms; },
-  };
+  };,
 }
 
 test("attention model varies blink intervals by cognitive mode", () => {
@@ -29,7 +29,7 @@ test("attention model varies blink intervals by cognitive mode", () => {
   const thinking = attn.policyFor("thinking", false);
   const listening = attn.policyFor("listening", false);
   assert.ok(listening.blinkInterval[0] > thinking.blinkInterval[0]);
-  assert.ok(thinking.fixationPitch < 0);
+  assert.ok(thinking.fixationPitch < 0);,
 });
 
 test("attention tick returns gaze offsets and eye close envelope", () => {
@@ -47,14 +47,14 @@ test("attention tick returns gaze offsets and eye close envelope", () => {
     assert.equal(typeof out.saccadeX, "number");
     assert.equal(typeof out.microJitter, "number");
     assert.equal(typeof out.eyeCloseTarget, "number");
-    if (out.eyeCloseTarget > 0.2) sawBlink = true;
+    if (out.eyeCloseTarget > 0.2) sawBlink = true;,
   }
-  assert.ok(sawBlink, "expected at least one blink envelope in idle simulation");
+  assert.ok(sawBlink, "expected at least one blink envelope in idle simulation");,
 });
 
 test("attention suppresses saccades less in listening than thinking", () => {
   const { attn } = loadAttention();
   const listen = attn.policyFor("listening", false);
   const think = attn.policyFor("thinking", false);
-  assert.ok(listen.saccadeAmp > think.saccadeAmp);
+  assert.ok(listen.saccadeAmp > think.saccadeAmp);,
 });

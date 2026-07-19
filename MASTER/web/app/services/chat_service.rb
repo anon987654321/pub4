@@ -13,7 +13,7 @@ class ChatService
     "Pragmatist" => :ryan,
     "Security" => :ryan,
     "User" => :ryan,
-    "Mentor" => :ryan
+    "Mentor" => :ryan,
   }.freeze
 
   WRITE_TOOLS = %w[Write Edit Create FilePatch].freeze

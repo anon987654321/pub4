@@ -19,7 +19,7 @@ module Master::Core
       scan_clean: 25,
       code_review: 20,
       log_analysis: 10,
-      profiling_data: 10
+      profiling_data: 10,
     }.freeze
     PASS_THRESHOLD = 80
 

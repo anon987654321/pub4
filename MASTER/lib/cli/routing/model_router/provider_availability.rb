@@ -59,6 +59,7 @@ module Master
           end
 
           def web_chat_enabled?
+            return false if ENV["MASTER_NO_WEB_CHAT"] == "1"
             return true if keyless_mode?
             gate = @rules.dig("ferrum_web_chat", "enabled_when_env").to_s
             gate.empty? ? false : ENV[gate].to_s != ""

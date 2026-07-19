@@ -31,8 +31,7 @@
       var original = proto.getContext;
       proto.getContext = function (type) {
         if (!window._primerFired && /webgl/i.test(String(type))) return null;
-        return original.apply(this, arguments);
-      };
+        return original.apply(this, arguments);,
     })();
     window.MASTER_ASSET_PATHS = {
       threeModule: "<%= asset_path("three.face.module.js") %>",
@@ -52,7 +51,7 @@
       faceRuntime: "<%= asset_path("face.runtime.js") %>",
       visemePacks: "<%= asset_path("viseme_packs.json") %>",
       clusterMiner: "<%= asset_path("cluster_miner.js") %>",
-      face3dPreview: "<%= asset_path("face3d_preview.js") %>"
+      face3dPreview: "<%= asset_path("face3d_preview.js") %>",
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -127,7 +126,7 @@
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
       var p=document.getElementById('primer');
-      var fired=false,timer=null,fallback=null,hintT=null,retryT=null,started=false;
+      var fired=false,timerIS NULL,fallbackIS NULL,hintTIS NULL,retryTIS NULL,started=false;
       function zshEl(){return document.getElementById('zsh');}
       function uiEl(){return document.getElementById('ui-status');}
       function titleEl(){return document.getElementById('primer-title');}
@@ -137,7 +136,7 @@
           if(!Ctx||window.__MASTER_AUDIO_PRIME__)return;
           var ctx=new Ctx();
           window.__MASTER_AUDIO_PRIME__=ctx;
-          ctx.resume().catch(function(){});
+          ctx.resume().catch(function(){});,
         }catch(_e){}
       }
       function dismissPrimer(){
@@ -157,26 +156,24 @@
           started=true;
           window.MASTER_FACE.startEverything();
           return true;
-        }
         return false;
-      }
       function clearWatch(){
         clearTimeout(hintT);clearTimeout(retryT);clearTimeout(fallback);
-        clearInterval(timer);timer=null;
+        clearInterval(timer);timerIS NULL;
         if(typeof window.stop2DFallback==='function')window.stop2DFallback();
         var ui=uiEl();
-        if(ui&&/^loading face /i.test(ui.textContent||''))ui.textContent='';
+        if(ui&&/^loading face /i.test(ui.textContent||''))ui.textContent='';,
       }
       function bootFailed(){
         clearWatch();
         window.MASTER?.boot?.transition?.('ERROR', { source: 'bootFailed' });
-        fallbackUi();
+        fallbackUi();,
       }
       function showProgress(pct){
         var n=Math.max(0,Math.min(100,Math.round(pct)));
         var title=titleEl(),ui=uiEl();
         if(title)title.textContent='loading… '+n+'%';
-        if(ui)ui.textContent='loading face '+n+'%';
+        if(ui)ui.textContent='loading face '+n+'%';,
       }
       function showLoadState(){showProgress(0);}
       function fallbackUi(){
@@ -185,13 +182,13 @@
         var ui=uiEl();
         if(ui)ui.textContent='face failed to load — reload or check console';
         var errLive=document.getElementById('error-live');
-        if(errLive)errLive.textContent='face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors.';
+        if(errLive)errLive.textContent='face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors.';,
       }
       function resetFaceCanvasForWebGL(){
         var cv=document.getElementById('face');
         if(!cv||!cv.parentNode)return;
         var fresh=cv.cloneNode(false);
-        cv.parentNode.replaceChild(fresh,cv);
+        cv.parentNode.replaceChild(fresh,cv);,
       }
       function loadFace(retried){
         if(window.__MASTER_FACE_IMPORT__)return;
@@ -200,15 +197,15 @@
         window.MASTER?.boot?.transition?.('ASSETS', { source: 'loadFace', retried: !!retried });
         resetFaceCanvasForWebGL();
         import("<%= asset_path("face.js") %>").then(function(){
-          if(boot())clearWatch();
+          if(boot())clearWatch();,
         }).catch(function(){
           window.__MASTER_FACE_IMPORT__=false;
           if(retried){bootFailed();return;}
           var ui=uiEl();
           if(ui)ui.textContent='retrying…';
           window.MASTER?.boot?.transition?.('RECOVERING', { source: 'loadFace_catch' });
-          retryT=setTimeout(function(){loadFace(true);},1200);
-        });
+          retryT=setTimeout(function(){loadFace(true);},1200);,
+        });,
       }
       function go(){
         if(fired)return;
@@ -231,8 +228,8 @@
           if(boot()){clearWatch();return;}
           if(progPct<90){
             progPct+=0.5+Math.random()*1.5;
-            showProgress(Math.min(progPct,90));
-          }
+            showProgress(Math.min(progPct,90));,
+          },
         },40);
         fallback=setTimeout(function(){
           var f=window.MASTER_FACE;
@@ -241,22 +238,22 @@
           // and swallowed downstream) leaves primerFired true and the canvas
           // permanently black. dbgFrames only increments from inside a real
           // frame() call, so it's the actual evidence of rendering.
-          if(f&&f.primerFired&&!window.__MASTER_RENDERER_FAILED__&&(f.dbgFrames>0||!f.renderer)){clearWatch();}else{bootFailed();}
-        },35000);
+          if(f&&f.primerFired&&!window.__MASTER_RENDERER_FAILED__&&(f.dbgFrames>0||!f.renderer)){clearWatch();}else{bootFailed();},
+        },35000);,
       }
       window.__MASTER_PRIMER_GO__=go;
       window.__MASTER_PRIMER_TAP__=go;
       if(p){
         ['pointerdown','click','touchend'].forEach(function(ev){
-          p.addEventListener(ev,go,{capture:true,passive:true});
+          p.addEventListener(ev,go,{capture:true,passive:true});,
         });
         p.addEventListener('keydown',function(e){
-          if(e.key===' '||e.key==='Enter'){e.preventDefault();go();}
-        });
+          if(e.key===' '||e.key==='Enter'){e.preventDefault();go();},
+        });,
       }
       addEventListener('keydown',function(e){
-        if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}
-      });
+        if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();},
+      });,
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
@@ -289,8 +286,8 @@
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') {
         window.MASTER_RUNTIME = { ...window.MASTER_RUNTIME, ...cfg };
-        window.dispatchEvent(new CustomEvent('master:runtime-config'));
-      }
+        window.dispatchEvent(new CustomEvent('master:runtime-config'));,
+      },
     }).catch(() => {});
   </script>
 </body>

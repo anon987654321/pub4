@@ -30,11 +30,11 @@
     [/stt:/i, [34]], [/tts:error|tts:job_cancelled/i, [35]],
     [/face3d|visual:ready|compositor/i, [36]],
     [/face-ready|boot|primer/i, [37, 40]],
-    [/blend|user:expression|face:mouth/i, [38]], [/phosphor|trail/i, [39]]
+    [/blend|user:expression|face:mouth/i, [38]], [/phosphor|trail/i, [39]],
   ];
   const TTS_EVENTS = [
     "tts:viseme", "tts:playback:start", "tts:playback:end", "tts:anticipate", "tts:style:active",
-    "master:tts:viseme", "master:tts:playback:start", "master:tts:playback:end"
+    "master:tts:viseme", "master:tts:playback:start", "master:tts:playback:end",
   ];
   let primerReadyAt = 0;
   let faceBootMs = 0;
@@ -51,10 +51,9 @@
     const p = pool();
     if (!kernel || !p || p.count >= p.capacity) return -1;
     return kernel.spawn(p, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.03, { zone: zone || 0, ...props });
-  }
 
   function css(name, value) {
-    if (name) document.documentElement.style.setProperty(name, String(value));
+    if (name) document.documentElement.style.setProperty(name, String(value));,
   }
 
   function register(id, summary, handler) {
@@ -62,7 +61,6 @@
     if (!Number.isFinite(fid) || fid < 1 || fid > MAX_FEATURES) return false;
     features.set(fid, { id: fid, summary: String(summary || ""), handler: typeof handler === "function" ? handler : null });
     return true;
-  }
 
   function run(id, ctx = {}) {
     const entry = features.get(Number(id));
@@ -70,10 +68,8 @@
     try {
       entry.handler({ ...ctx, st: ctx.st || state(), pool: ctx.pool || pool() });
       return true;
-    } catch (err) {
       window.MASTER_LOG?.warn?.("face_vision:run", err);
-      return false;
-    }
+      return false;,
   }
 
   function routeEvent(type, detail = {}) {
@@ -83,12 +79,11 @@
     ROUTES.forEach(([re, ids, cond]) => {
       if (re && !re.test(name)) return;
       if (cond && !cond(detail)) return;
-      ids.forEach((id) => { if (id >= 1 && id <= MAX_FEATURES) routes.push(id); });
+      ids.forEach((id) => { if (id >= 1 && id <= MAX_FEATURES) routes.push(id); });,
     });
     const seen = new Set();
     routes.forEach((fid) => { if (!seen.has(fid)) { seen.add(fid); run(fid, ctx); } });
     return routes;
-  }
 
   function event(type, detail = {}) { return routeEvent(type, detail); }
 
@@ -98,10 +93,8 @@
     window.MASTERVisual.event = function patchedVisualEvent(name, detail = {}) {
       routeEvent(name, detail);
       return orig.call(window.MASTERVisual, name, detail);
-    };
     patched = true;
     return true;
-  }
 
   function probeParticleWorker() {
     if (!window.Worker || !window.MASTER_RUNTIME?.enhancements?.includes?.("particle_worker")) return;
@@ -114,23 +107,23 @@
         particleWorkerAlive = true;
         document.documentElement.dataset.particleWorker = "alive";
         window.clearTimeout(timer);
-        worker.terminate();
+        worker.terminate();,
       };
       worker.onerror = () => { particleWorkerAlive = false; delete document.documentElement.dataset.particleWorker; };
       worker.postMessage({
         op: "step", id: 0, dt: 0.016, ctx: {}, compact: false,
-        pool: { cells: new Float32Array(12).buffer, decay: new Float32Array(1).buffer, alive: new Uint8Array(1).buffer, capacity: 1, count: 0 }
-      });
+        pool: { cells: new Float32Array(12).buffer, decay: new Float32Array(1).buffer, alive: new Uint8Array(1).buffer, capacity: 1, count: 0 },
+      });,
     } catch (err) {
       window.MASTER_LOG?.warn?.("face_vision:worker_ping", err);
-      particleWorkerAlive = false;
-    }
+      particleWorkerAlive = false;,
+    },
   }
 
   function onVisual(ev) {
     patchMasterVisual();
     const d = ev.detail || {};
-    routeEvent(String(d.name || d.mode || "master:visual"), d);
+    routeEvent(String(d.name || d.mode || "master:visual"), d);,
   }
 
   function onTts(ev) { routeEvent(ev.type, ev.detail || {}); }
@@ -144,45 +137,45 @@
     window.addEventListener("primer:ready", () => {
       primerReadyAt = performance.now();
       probeParticleWorker();
-      run(40, { type: "primer:ready", detail: {} });
+      run(40, { type: "primer:ready", detail: {} });,
     }, { once: true });
     window.addEventListener("master:face-ready", () => {
       if (primerReadyAt > 0) {
         faceBootMs = Math.round(performance.now() - primerReadyAt);
         document.documentElement.dataset.faceBootMs = String(faceBootMs);
-        css("--face-boot-ms", faceBootMs);
+        css("--face-boot-ms", faceBootMs);,
       }
-      run(37, { type: "master:face-ready", detail: { faceBootMs } });
+      run(37, { type: "master:face-ready", detail: { faceBootMs } });,
     }, { once: true });
     window.addEventListener("master:face-stage", (ev) => {
       const stage = ev.detail?.stage || "";
       document.documentElement.dataset.faceStage = String(stage).slice(0, 32);
-      routeEvent("pipeline:stage", { mode: stage, stage });
+      routeEvent("pipeline:stage", { mode: stage, stage });,
     });
     window.addEventListener("master:container-timeout", (ev) => {
       document.documentElement.dataset.containerTimeout = ev.detail?.reason || "1";
-      run(12, { type: "master:container-timeout", detail: ev.detail || {} });
+      run(12, { type: "master:container-timeout", detail: ev.detail || {} });,
     });
     document.addEventListener("visibilitychange", () => {
       document.documentElement.dataset.faceHidden = document.hidden ? "1" : "";
-      if (document.hidden) run(19, { type: "visibility:hidden", detail: {} });
+      if (document.hidden) run(19, { type: "visibility:hidden", detail: {} });,
     });
     if (window._primerFired && !primerReadyAt) primerReadyAt = performance.now();
-    window.setTimeout(patchMasterVisual, 0);
+    window.setTimeout(patchMasterVisual, 0);,
   }
 
   const impl = {
     get faceBootMs() { return faceBootMs; },
     get particleWorkerAlive() { return particleWorkerAlive; },
-    get primerReadyAt() { return primerReadyAt; }
+    get primerReadyAt() { return primerReadyAt; },
   };
 
   window.MASTER_FACE_VISION = {
     register, run, routeEvent, features,
     get featureCount() { return features.size; },
-    event, boot, impl, pool, state, K, spawn, css
+    event, boot, impl, pool, state, K, spawn, css,
   };
-  boot();
+  boot();,
 })();
 // MASTER particle face 2026 — vision features 1–40 (semantic, TTS, fusion).
 (() => {
@@ -193,7 +186,7 @@
 
   const STAGE_KINDS = {
     intake: 0, enhance: 1, infer: 2, route: 3, guard: 4, execute: 5,
-    council: 6, lint: 7, prune: 8, memo: 9, render: 10
+    council: 6, lint: 7, prune: 8, memo: 9, render: 10,
   };
 
   const VISEME_CORNERS = { A: 0.42, E: 0.28, I: 0.55, O: 0.18, M: 0.08, U: 0.14, neutral: 0.12 };
@@ -201,12 +194,10 @@
 
   function blend() {
     return window.MASTER_FACE_BLEND;
-  }
 
   function providerAccent(provider) {
     const palette = window.MASTEREvents?.paletteForProvider?.(provider);
     return palette?.accent || "#f5f0e8";
-  }
 
   // 1–20 semantic
   V.register(1, "pipeline stage kinds", (ctx) => {
@@ -215,17 +206,17 @@
     ctx.st.pipelineStage = label;
     document.documentElement.dataset.pipelineStage = label.slice(0, 24);
     document.documentElement.dataset.pipelineKind = String(kind);
-    V.spawn(2, { kind, zone: 2, confidence: 0.7, attention: 0.5, decay: 0.018 });
+    V.spawn(2, { kind, zone: 2, confidence: 0.7, attention: 0.5, decay: 0.018 });,
   });
 
   V.register(2, "council burst", (ctx) => {
     const entropy = Number(ctx.detail.entropy ?? ctx.st.entropy ?? 0.35);
     ctx.st.pulse = Math.max(ctx.st.pulse || 0, 0.42 + entropy * 0.2);
     for (let n = 0; n < 3; n++) {
-      V.spawn(3, { kind: 3, arousal: 0.55, valence: 0.1, pressure: entropy, vx: (n - 1) * 0.014, decay: 0.016 });
+      V.spawn(3, { kind: 3, arousal: 0.55, valence: 0.1, pressure: entropy, vx: (n - 1) * 0.014, decay: 0.016 });,
     }
     document.documentElement.dataset.councilBurst = "1";
-    window.setTimeout(() => { delete document.documentElement.dataset.councilBurst; }, 480);
+    window.setTimeout(() => { delete document.documentElement.dataset.councilBurst; }, 480);,
   });
 
   V.register(3, "pressure radial flow", (ctx) => {
@@ -233,14 +224,14 @@
     const radial = Math.min(1, pct / 100);
     ctx.st.pressureFields = { ...(ctx.st.pressureFields || {}), pct, radial };
     V.css("--master-pressure-radial", radial.toFixed(3));
-    V.spawn(4, { kind: 4, pressure: radial, vy: -radial * 0.02, confidence: 0.6, decay: 0.02 });
+    V.spawn(4, { kind: 4, pressure: radial, vy: -radial * 0.02, confidence: 0.6, decay: 0.02 });,
   });
 
   V.register(4, "valence zone tint", (ctx) => {
     const valence = Number(ctx.detail.valence ?? ctx.st.expressionCurrent?.valence ?? 0);
     const tint = valence >= 0 ? `rgba(180,220,160,${0.08 + valence * 0.12})` : `rgba(220,140,140,${0.08 + Math.abs(valence) * 0.12})`;
     V.css("--face-valence-tint", tint);
-    document.documentElement.dataset.valenceSign = valence >= 0 ? "pos" : "neg";
+    document.documentElement.dataset.valenceSign = valence >= 0 ? "pos" : "neg";,
   });
 
   V.register(5, "confidence size", (ctx) => {
@@ -248,21 +239,21 @@
     ctx.st.confidence = conf;
     const scale = 0.72 + conf * 0.42;
     V.css("--face-confidence-scale", scale.toFixed(3));
-    document.documentElement.dataset.confidenceBand = conf > 0.85 ? "high" : conf < 0.35 ? "low" : "mid";
+    document.documentElement.dataset.confidenceBand = conf > 0.85 ? "high" : conf < 0.35 ? "low" : "mid";,
   });
 
   V.register(6, "attention pull", (ctx) => {
     const attn = Number(ctx.detail.attention ?? 0.65);
     ctx.st.expressionTarget = { ...(ctx.st.expressionTarget || {}), attention: attn };
     V.spawn(2, { kind: 6, attention: attn, vx: -attn * 0.01, vy: attn * 0.006, confidence: 0.8, decay: 0.014 });
-    document.documentElement.dataset.attentionPull = "1";
+    document.documentElement.dataset.attentionPull = "1";,
   });
 
   V.register(7, "arousal repel", (ctx) => {
     const arousal = Number(ctx.detail.arousal ?? ctx.st.pulse ?? 0.4);
     ctx.st.spatialRepel = arousal > 0.45;
     V.spawn(1, { kind: 7, arousal, vy: arousal * 0.018, vx: (Math.random() - 0.5) * arousal * 0.02, decay: 0.013 });
-    V.css("--face-arousal-repel", (arousal * 0.65).toFixed(3));
+    V.css("--face-arousal-repel", (arousal * 0.65).toFixed(3));,
   });
 
   V.register(8, "event ts decay", (ctx) => {
@@ -270,7 +261,7 @@
     const age = Math.min(1, (Date.now() - ts) / 6000);
     ctx.st.lastEventAt = ts;
     V.css("--face-event-decay", (1 - age).toFixed(3));
-    V.spawn(0, { kind: 8, confidence: 1 - age, decay: 0.02 + age * 0.01 });
+    V.spawn(0, { kind: 8, confidence: 1 - age, decay: 0.02 + age * 0.01 });,
   });
 
   V.register(9, "zone bitmask", (ctx) => {
@@ -278,22 +269,22 @@
     const bits = mask > 0 ? mask : (ctx.st.zoneMask || 7);
     ctx.st.zoneMask = bits;
     document.documentElement.dataset.zoneMask = String(bits);
-    V.spawn(bits & 1 ? 1 : 2, { kind: 9, zone: bits & 3, attention: 0.4, decay: 0.016 });
+    V.spawn(bits & 1 ? 1 : 2, { kind: 9, zone: bits & 3, attention: 0.4, decay: 0.016 });,
   });
 
   V.register(10, "lint needles", (ctx) => {
     document.documentElement.dataset.lintActive = "1";
     for (let n = 0; n < 4; n++) {
-      V.spawn(5, { kind: 10, vy: -0.022, vx: (n - 1.5) * 0.008, valence: -0.2, confidence: 0.55, decay: 0.019 });
+      V.spawn(5, { kind: 10, vy: -0.022, vx: (n - 1.5) * 0.008, valence: -0.2, confidence: 0.55, decay: 0.019 });,
     }
-    window.setTimeout(() => { delete document.documentElement.dataset.lintActive; }, 900);
+    window.setTimeout(() => { delete document.documentElement.dataset.lintActive; }, 900);,
   });
 
   V.register(11, "scan depth cap", (ctx) => {
     const depth = Math.min(6, Number(ctx.detail.depth ?? ctx.detail.raw?.depth ?? 3));
     ctx.st.scanDepth = depth;
     document.documentElement.dataset.scanDepth = String(depth);
-    V.css("--face-scan-depth", depth);
+    V.css("--face-scan-depth", depth);,
   });
 
   V.register(12, "error dead cells", (ctx) => {
@@ -303,12 +294,12 @@
       for (let i = 0; i < p.count; i++) {
         if (!p.alive[i]) continue;
         const b = i * kernel.FIELDS_PER_CELL;
-        if ((p.cells[b + kernel.FIELD.confidence] || 0) < 0.22) p.alive[i] = 0;
-      }
+        if ((p.cells[b + kernel.FIELD.confidence] || 0) < 0.22) p.alive[i] = 0;,
+      },
     }
     ctx.st.mode = ctx.st.mode === "speaking" ? ctx.st.mode : "error";
     document.documentElement.dataset.errorCells = "1";
-    document.body.dataset.errorInstrument = "1";
+    document.body.dataset.errorInstrument = "1";,
   });
 
   V.register(13, "felt_state spawn", (ctx) => {
@@ -318,7 +309,7 @@
     const arousal = parseFloat(parts[4]) || 0.4;
     const valence = parseFloat(parts[5]) || 0;
     V.spawn(2, { kind: 13, arousal, valence, confidence: parseFloat(parts[3]) || 0.7, decay: 0.015 });
-    document.documentElement.dataset.feltState = felt.slice(0, 48);
+    document.documentElement.dataset.feltState = felt.slice(0, 48);,
   });
 
   V.register(14, "topology morph", (ctx) => {
@@ -327,7 +318,7 @@
     document.documentElement.dataset.masterTopology = topo;
     document.documentElement.dataset.topologyFlash = "1";
     window.setTimeout(() => { delete document.documentElement.dataset.topologyFlash; }, 120);
-    window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: topo, source: ctx.type } }));
+    window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: topo, source: ctx.type } }));,
   });
 
   V.register(15, "provider hue", (ctx) => {
@@ -335,31 +326,31 @@
     const accent = providerAccent(provider);
     V.css("--master-accent", accent);
     document.documentElement.dataset.providerHue = provider;
-    V.spawn(2, { kind: 15, valence: 0.2, confidence: 0.75, decay: 0.017 });
+    V.spawn(2, { kind: 15, valence: 0.2, confidence: 0.75, decay: 0.017 });,
   });
 
   V.register(16, "token rate spawn", (ctx) => {
     const rate = Number(ctx.detail.rate ?? ctx.detail.raw?.tokens ?? 1);
     const n = Math.min(4, Math.max(1, Math.round(rate / 40)));
     for (let i = 0; i < n; i++) {
-      V.spawn(3, { kind: 16, vx: 0.01 + i * 0.003, confidence: 0.62, decay: 0.02 });
+      V.spawn(3, { kind: 16, vx: 0.01 + i * 0.003, confidence: 0.62, decay: 0.02 });,
     }
-    ctx.st.tokenBurst = (ctx.st.tokenBurst || 0) + n;
+    ctx.st.tokenBurst = (ctx.st.tokenBurst || 0) + n;,
   });
 
   V.register(17, "tool tracers", (ctx) => {
     const tool = String(ctx.detail.tool || ctx.detail.mode || ctx.type).slice(0, 20);
     document.documentElement.dataset.activeTool = tool;
     V.spawn(4, { kind: 17, attention: 0.7, vx: 0.016, vy: -0.008, decay: 0.018 });
-    window.dispatchEvent(new CustomEvent("face:tool-tracer", { detail: { tool } }));
+    window.dispatchEvent(new CustomEvent("face:tool-tracer", { detail: { tool } }));,
   });
 
   V.register(18, "council braids", (ctx) => {
     const persona = ctx.detail.persona || ctx.detail.raw?.persona || "council";
     for (let n = 0; n < 2; n++) {
-      V.spawn(3, { kind: 18, vx: n ? 0.012 : -0.012, vy: 0.006, arousal: 0.48, decay: 0.017 });
+      V.spawn(3, { kind: 18, vx: n ? 0.012 : -0.012, vy: 0.006, arousal: 0.48, decay: 0.017 });,
     }
-    document.documentElement.dataset.councilBraid = String(persona).slice(0, 16);
+    document.documentElement.dataset.councilBraid = String(persona).slice(0, 16);,
   });
 
   V.register(19, "memo freeze", (ctx) => {
@@ -369,8 +360,8 @@
     V.css("--face-decay-scale", "0.35");
     window.setTimeout(() => {
       ctx.st.memoFrozen = false;
-      delete document.documentElement.dataset.memoFreeze;
-    }, 1400);
+      delete document.documentElement.dataset.memoFreeze;,
+    }, 1400);,
   });
 
   V.register(20, "prune cull", (ctx) => {
@@ -378,7 +369,7 @@
     if (kernel?.compact && ctx.pool) kernel.compact(ctx.pool);
     ctx.st.pruneCull = (ctx.st.pruneCull || 0) + 1;
     document.documentElement.dataset.pruneCull = String(ctx.st.pruneCull);
-    V.spawn(0, { kind: 20, confidence: 0.4, decay: 0.025 });
+    V.spawn(0, { kind: 20, confidence: 0.4, decay: 0.025 });,
   });
 
   // 21–35 TTS
@@ -387,14 +378,14 @@
     const amp = Number(ctx.detail.amp ?? ctx.st.visemeAmp ?? 0.5);
     const wide = (VISEME_CORNERS[shape] ?? 0.12) * amp;
     blend()?.pushBlend?.({ mouthWide: wide, mouthRound: Math.max(0, 0.35 - wide) });
-    V.spawn(1, { kind: 21, zone: 1, valence: wide * 0.5, arousal: amp * 0.7, decay: 0.014 });
+    V.spawn(1, { kind: 21, zone: 1, valence: wide * 0.5, arousal: amp * 0.7, decay: 0.014 });,
   });
 
   V.register(22, "inhale 200ms", (ctx) => {
     document.documentElement.dataset.ttsInhale = "1";
     window.MASTER_FACE_PARTICLES?.anticipateSpeech?.(ctx.pool, 2);
     ctx.st.pulse = Math.max(ctx.st.pulse || 0, 0.32);
-    window.setTimeout(() => { delete document.documentElement.dataset.ttsInhale; }, 200);
+    window.setTimeout(() => { delete document.documentElement.dataset.ttsInhale; }, 200);,
   });
 
   V.register(23, "post-speech decay by style", (ctx) => {
@@ -402,34 +393,34 @@
     const decay = STYLE_DECAY[style] ?? Number(ctx.detail.decay_rate) ?? 0.85;
     blend()?.resetMouth?.(decay);
     ctx.st.pulse = Math.max(0, (ctx.st.pulse || 0) * decay);
-    V.css("--face-tts-decay", decay.toFixed(3));
+    V.css("--face-tts-decay", decay.toFixed(3));,
   });
 
   V.register(24, "RMS density", (ctx) => {
     const rms = Number(ctx.detail.rms ?? ctx.detail.amp ?? ctx.st.visemeAmp ?? 0.4);
     const n = Math.min(5, Math.max(1, Math.round(rms * 4)));
     for (let i = 0; i < n; i++) {
-      V.spawn(1, { kind: 24, zone: 1, arousal: rms, confidence: 0.55 + rms * 0.3, decay: 0.013 });
+      V.spawn(1, { kind: 24, zone: 1, arousal: rms, confidence: 0.55 + rms * 0.3, decay: 0.013 });,
     }
-    document.body.dataset.ttsWave = "1";
+    document.body.dataset.ttsWave = "1";,
   });
 
   V.register(25, "pitch spray", (ctx) => {
     const pitch = Number(ctx.detail.pitch ?? ctx.detail.raw?.pitch ?? 0);
     const spray = Math.min(1, Math.abs(pitch) / 80);
     for (let n = 0; n < 1 + Math.round(spray * 2); n++) {
-      V.spawn(1, { kind: 25, vy: pitch > 0 ? 0.014 : -0.014, vx: (Math.random() - 0.5) * spray * 0.02, decay: 0.012 });
+      V.spawn(1, { kind: 25, vy: pitch > 0 ? 0.014 : -0.014, vx: (Math.random() - 0.5) * spray * 0.02, decay: 0.012 });,
     }
-    V.css("--face-pitch-spray", spray.toFixed(3));
+    V.css("--face-pitch-spray", spray.toFixed(3));,
   });
 
   V.register(26, "word-boundary bursts", (ctx) => {
     const frames = ctx.detail.frames || ctx.detail.visemes || [];
     const count = Array.isArray(frames) ? Math.min(frames.length, 6) : 1;
     for (let i = 0; i < count; i++) {
-      V.spawn(1, { kind: 26, zone: 1, arousal: 0.5, vx: (i % 2 ? 1 : -1) * 0.01, decay: 0.016 });
+      V.spawn(1, { kind: 26, zone: 1, arousal: 0.5, vx: (i % 2 ? 1 : -1) * 0.01, decay: 0.016 });,
     }
-    document.documentElement.dataset.wordBurst = String(count);
+    document.documentElement.dataset.wordBurst = String(count);,
   });
 
   V.register(27, "queue lip band", (ctx) => {
@@ -438,7 +429,7 @@
     if (ui && depth > 1) ui.dataset.ttsQueue = String(depth);
     else if (ui) delete ui.dataset.ttsQueue;
     V.css("--face-lip-band", Math.min(1, depth / 5).toFixed(3));
-    document.documentElement.dataset.ttsQueueBand = depth > 0 ? "1" : "";
+    document.documentElement.dataset.ttsQueueBand = depth > 0 ? "1" : "";,
   });
 
   V.register(28, "browser TTS viseme synth", (ctx) => {
@@ -446,7 +437,7 @@
     if (!synth) return;
     const shape = ctx.detail.shape || "neutral";
     document.documentElement.dataset.browserTts = synth.speaking ? "active" : "idle";
-    window.dispatchEvent(new CustomEvent("tts:viseme", { detail: { shape, amp: 0.6, source: "browser" } }));
+    window.dispatchEvent(new CustomEvent("tts:viseme", { detail: { shape, amp: 0.6, source: "browser" } }));,
   });
 
   V.register(29, "synthesizing shimmer", (ctx) => {
@@ -455,22 +446,22 @@
     ctx.st.pulse = Math.max(ctx.st.pulse || 0, 0.25);
     window.setTimeout(() => {
       delete document.documentElement.dataset.ttsSynth;
-      V.css("--face-tts-shimmer", "0");
-    }, 600);
+      V.css("--face-tts-shimmer", "0");,
+    }, 600);,
   });
 
   V.register(30, "partial TTS fill", (ctx) => {
     const partial = String(ctx.detail.text || ctx.detail.partial || "").slice(0, 40);
     if (!partial) return;
     document.documentElement.dataset.ttsPartial = partial;
-    V.spawn(1, { kind: 30, zone: 1, confidence: 0.5, attention: 0.55, decay: 0.02 });
+    V.spawn(1, { kind: 30, zone: 1, confidence: 0.5, attention: 0.55, decay: 0.02 });,
   });
 
   V.register(31, "multilingual tables", (ctx) => {
     const locale = String(ctx.detail.locale || ctx.detail.raw?.locale || navigator.language || "en").slice(0, 8);
     document.documentElement.dataset.ttsLocale = locale;
     document.documentElement.lang = locale.split("-")[0];
-    V.css("--face-locale-hue", locale.startsWith("en") ? "0.02" : "0.12");
+    V.css("--face-locale-hue", locale.startsWith("en") ? "0.02" : "0.12");,
   });
 
   V.register(32, "whispered grain", (ctx) => {
@@ -478,22 +469,22 @@
     if (!/whisper|ethereal|intimate/i.test(style)) return;
     V.css("--face-whisper-grain", "0.18");
     V.spawn(1, { kind: 32, zone: 1, arousal: 0.22, confidence: 0.45, decay: 0.01 });
-    document.documentElement.dataset.whisperGrain = "1";
+    document.documentElement.dataset.whisperGrain = "1";,
   });
 
   V.register(33, "council duo vortices", (ctx) => {
     V.spawn(3, { kind: 33, vx: -0.015, vy: 0.01, arousal: 0.5, decay: 0.015 });
     V.spawn(3, { kind: 33, vx: 0.015, vy: -0.01, arousal: 0.5, decay: 0.015 });
-    document.documentElement.dataset.councilDuo = "1";
+    document.documentElement.dataset.councilDuo = "1";,
   });
 
   V.register(34, "STT inward flow", (ctx) => {
     ctx.st.mode = "listening";
     for (let n = 0; n < 3; n++) {
-      V.spawn(2, { kind: 34, vx: -0.008, vy: 0.004, attention: 0.65, decay: 0.017 });
+      V.spawn(2, { kind: 34, vx: -0.008, vy: 0.004, attention: 0.65, decay: 0.017 });,
     }
     document.documentElement.dataset.sttFlow = "inward";
-    document.body.dataset.masterState = "listening";
+    document.body.dataset.masterState = "listening";,
   });
 
   V.register(35, "TTS error invert", (ctx) => {
@@ -502,7 +493,7 @@
     V.css("--face-valence-tint", "rgba(200,80,80,0.22)");
     document.documentElement.dataset.ttsError = "1";
     blend()?.pushBlend?.({ frown: 0.35, smile: 0 });
-    window.dispatchEvent(new CustomEvent("face:tts-error", { detail: ctx.detail }));
+    window.dispatchEvent(new CustomEvent("face:tts-error", { detail: ctx.detail }));,
   });
 
   // 36–40 fusion
@@ -510,7 +501,7 @@
     const hint = window.FACE3D_ACTIVE ? "face3d" : "particle2d";
     document.documentElement.dataset.compositor = hint;
     V.css("--face-compositor", hint === "face3d" ? "1" : "0");
-    window.dispatchEvent(new CustomEvent("face:compositor", { detail: { hint } }));
+    window.dispatchEvent(new CustomEvent("face:compositor", { detail: { hint } }));,
   });
 
   V.register(37, "bootBoost sync", (ctx) => {
@@ -518,23 +509,23 @@
     const boost = ms > 0 ? Math.max(0.4, 1 - ms / 8000) : 1;
     V.css("--face-boot-boost", boost.toFixed(3));
     document.documentElement.dataset.bootBoost = boost.toFixed(2);
-    blend()?.boostEye?.(0.08);
+    blend()?.boostEye?.(0.08);,
   });
 
   V.register(38, "blendshape dual-write", (ctx) => {
     const ex = ctx.detail.expression || ctx.detail;
     if (ex.arousal != null || ex.valence != null) blend()?.applyExpression?.(ex);
     if (ctx.detail.blendshapes && window.Face3DPreview?.engine?.setBlend) {
-      window.Face3DPreview.engine.setBlend(ctx.detail.blendshapes);
+      window.Face3DPreview.engine.setBlend(ctx.detail.blendshapes);,
     }
-    window.dispatchEvent(new CustomEvent("face:blend-dual", { detail: ex }));
+    window.dispatchEvent(new CustomEvent("face:blend-dual", { detail: ex }));,
   });
 
   V.register(39, "phosphor layer split", (ctx) => {
     const speaking = ctx.st.mode === "speaking";
     document.documentElement.dataset.phosphorSplit = speaking ? "mouth" : "face";
     V.css("--face-phosphor-decay", speaking ? "0.68" : "0.82");
-    if (window.MASTER_PHOSPHOR_TRAIL) document.documentElement.dataset.phosphorActive = "1";
+    if (window.MASTER_PHOSPHOR_TRAIL) document.documentElement.dataset.phosphorActive = "1";,
   });
 
   V.register(40, "primer preview", (ctx) => {
@@ -542,8 +533,8 @@
     V.spawn(2, { kind: 40, attention: 0.8, confidence: 0.85, arousal: 0.35, decay: 0.012 });
     blend()?.boostEye?.(0.1);
     V.css("--face-primer-glow", "0.28");
-    window.dispatchEvent(new CustomEvent("face:primer-preview", { detail: { ts: performance.now() } }));
-  });
+    window.dispatchEvent(new CustomEvent("face:primer-preview", { detail: { ts: performance.now() } }));,
+  });,
 })();
 // MASTER particle face 2026 — vision features 41–80 (fusion, SSE cinema, perf).
 (() => {
@@ -557,7 +548,7 @@
   const qs = (k) => new URLSearchParams(location.search).get(k);
 
   function emit(type, detail = {}) {
-    window.MASTERVisual?.event?.(type, detail);
+    window.MASTERVisual?.event?.(type, detail);,
   }
 
   /* 41–50 fusion */
@@ -568,7 +559,7 @@
     const alpha = ease(0.08);
     ctx.st.morphEase += (tgt - ctx.st.morphEase) * alpha;
     V.css("--face-morph-ease", ctx.st.morphEase.toFixed(3));
-    root.dataset.morphEasing = "cubic-out";
+    root.dataset.morphEasing = "cubic-out";,
   });
 
   V.register(42, "OLED black", (ctx) => {
@@ -578,16 +569,16 @@
     root.dataset.oledBlack = oled ? "1" : "";
     if (oled) {
       body.style.backgroundColor = "#000";
-      V.css("--face-bg", "#000");
+      V.css("--face-bg", "#000");,
     }
-    V.spawn(0, { kind: 42, confidence: oled ? 0.9 : 0.5, decay: 0.02 });
+    V.spawn(0, { kind: 42, confidence: oled ? 0.9 : 0.5, decay: 0.02 });,
   });
 
   V.register(43, "CRT block", (ctx) => {
     const crt = root.dataset.runtimeProfile === "crt" || qs("crt") === "1";
     root.dataset.crtBlock = crt ? "1" : "";
     V.css("--face-scanline", crt ? "0.42" : "0.12");
-    if (crt) V.spawn(2, { kind: 43, vy: 0.008, confidence: 0.7, decay: 0.018 });
+    if (crt) V.spawn(2, { kind: 43, vy: 0.008, confidence: 0.7, decay: 0.018 });,
   });
 
   V.register(44, "battery cap", (ctx) => {
@@ -596,14 +587,14 @@
       const cap = Math.floor((navigator.hardwareConcurrency || 4) * 120);
       ctx.st.particleCap = cap;
       root.dataset.batteryCap = String(cap);
-      V.css("--face-particle-cap", cap);
-    }
+      V.css("--face-particle-cap", cap);,
+    },
   });
 
   V.register(45, "pip mode", (ctx) => {
     const pip = body.classList.contains("face-pip") || ctx.detail.pip;
     root.dataset.pipMode = pip ? "1" : "";
-    if (pip) V.css("--face-pip-scale", "0.38");
+    if (pip) V.css("--face-pip-scale", "0.38");,
   });
 
   V.register(46, "LOD metaballs", (ctx) => {
@@ -611,14 +602,14 @@
     const lod = fps < 28 ? 0.45 : fps < 45 ? 0.72 : 1;
     ctx.st.metaballLod = lod;
     root.dataset.metaballLod = lod.toFixed(2);
-    V.css("--face-metaball-lod", lod.toFixed(2));
+    V.css("--face-metaball-lod", lod.toFixed(2));,
   });
 
   V.register(47, "logo dim", () => {
     const logo = document.querySelector(".top-left-logo");
     if (!logo) return;
     logo.classList.add("dim");
-    root.dataset.logoDim = "1";
+    root.dataset.logoDim = "1";,
   });
 
   V.register(48, "council badge pulse", (ctx) => {
@@ -630,8 +621,8 @@
     badge.dataset.pulse = "1";
     window.setTimeout(() => {
       badge.dataset.pulse = "";
-      badge.dataset.visible = "0";
-    }, 900);
+      badge.dataset.visible = "0";,
+    }, 900);,
   });
 
   V.register(49, "violation shockwave", (ctx) => {
@@ -640,9 +631,9 @@
     ctx.st.ripplePhase = (ctx.st.ripplePhase || 0) + 1;
     root.dataset.violationShock = String(Date.now());
     for (let n = 0; n < 5; n++) {
-      V.spawn(4, { kind: 49, vx: (n - 2) * 0.02, vy: 0.012, arousal: 0.8, decay: 0.01 });
+      V.spawn(4, { kind: 49, vx: (n - 2) * 0.02, vy: 0.012, arousal: 0.8, decay: 0.01 });,
     }
-    emit("violation:shockwave", { topology: "serpent", entropy: 0.92, confidence: 0.15, mode: "violation" });
+    emit("violation:shockwave", { topology: "serpent", entropy: 0.92, confidence: 0.15, mode: "violation" });,
   });
 
   V.register(50, "sleeping dim", (ctx) => {
@@ -650,17 +641,17 @@
     root.dataset.sleepingDim = sleeping ? "1" : "";
     if (sleeping) {
       body.style.opacity = "0.05";
-      V.css("--face-sleep-opacity", "0.05");
+      V.css("--face-sleep-opacity", "0.05");,
     } else if (body.style.opacity === "0.05") {
       body.style.opacity = "";
-      V.css("--face-sleep-opacity", "1");
-    }
+      V.css("--face-sleep-opacity", "1");,
+    },
   });
 
   /* 51–65 SSE cinema */
   V.register(51, "visual grammar flag", () => {
     root.dataset.visualGrammar = "sse-v2";
-    root.dataset.visualGrammarReady = "1";
+    root.dataset.visualGrammarReady = "1";,
   });
 
   V.register(52, "SSE backpressure priority", (ctx) => {
@@ -669,7 +660,7 @@
     const idx = PRIORITY.indexOf(name);
     ctx.st.ssePriority = idx < 0 ? 99 : idx;
     root.dataset.sseBackpressure = "priority-queue";
-    V.css("--sse-priority", ctx.st.ssePriority);
+    V.css("--sse-priority", ctx.st.ssePriority);,
   });
 
   V.register(53, "council rotator overlay", (ctx) => {
@@ -679,26 +670,26 @@
       rot.id = "council-rotator-overlay";
       rot.className = "council-rotator-overlay";
       rot.setAttribute("aria-hidden", "true");
-      body.appendChild(rot);
+      body.appendChild(rot);,
     }
     const p = ctx.detail.persona || ctx.detail.raw?.persona || ctx.detail.mode || "council";
     rot.textContent = String(p).slice(0, 48);
     rot.dataset.visible = "1";
-    window.setTimeout(() => { rot.dataset.visible = "0"; }, 2400);
+    window.setTimeout(() => { rot.dataset.visible = "0"; }, 2400);,
   });
 
   V.register(54, "codebase graph layout", (ctx) => {
     const topo = ctx.detail.topology || "neural";
     root.dataset.codebaseGraph = "force-directed";
     root.dataset.graphLayout = topo;
-    V.spawn(4, { kind: 54, attention: 0.6, vx: 0.01, decay: 0.02 });
+    V.spawn(4, { kind: 54, attention: 0.6, vx: 0.01, decay: 0.02 });,
   });
 
   V.register(55, "scheduler ripple", (ctx) => {
     ctx.st.ripplePhase = (ctx.st.ripplePhase || 0) + 0.35;
     root.dataset.schedulerRipple = String(performance.now() | 0);
     V.css("--scheduler-ripple", ctx.st.ripplePhase.toFixed(2));
-    V.spawn(2, { kind: 55, vy: 0.01, confidence: 0.65, decay: 0.017 });
+    V.spawn(2, { kind: 55, vy: 0.01, confidence: 0.65, decay: 0.017 });,
   });
 
   V.register(56, "face-stage ASCII", (ctx) => {
@@ -708,16 +699,16 @@
       strip.id = "face-stage-ascii";
       strip.className = "face-stage-ascii";
       strip.setAttribute("aria-hidden", "true");
-      body.appendChild(strip);
+      body.appendChild(strip);,
     }
     const FRAMES = ["(◉_◉)", "(◔_◔)", "(◕‿◕)", "(⌐■_■)", "(•̀ᴗ•́)"];
     const stage = String(ctx.detail.stage || ctx.type || "…");
-    strip.textContent = `${FRAMES[Math.floor(Math.random() * FRAMES.length)]} ${stage}`;
+    strip.textContent = `${FRAMES[Math.floor(Math.random() * FRAMES.length)]} ${stage}`;,
   });
 
   V.register(57, "smoke heartbeat", () => {
     root.dataset.smokeHeartbeat = root.dataset.smokeHeartbeat === "on" ? "off" : "on";
-    V.spawn(0, { kind: 57, arousal: 0.3, decay: 0.025 });
+    V.spawn(0, { kind: 57, arousal: 0.3, decay: 0.025 });,
   });
 
   V.register(58, "429 stutter", (ctx) => {
@@ -726,8 +717,8 @@
     V.css("--face-stutter", "0.4");
     window.setTimeout(() => {
       delete root.dataset.stutter429;
-      V.css("--face-stutter", "0");
-    }, 600);
+      V.css("--face-stutter", "0");,
+    }, 600);,
   });
 
   V.register(59, "visitor tier kinds", (ctx) => {
@@ -737,7 +728,7 @@
       || qs("tier")
       || "guest";
     root.dataset.visitorTier = String(tier);
-    body.dataset.visitorTier = String(tier);
+    body.dataset.visitorTier = String(tier);,
   });
 
   V.register(60, "elevated gold edge", (ctx) => {
@@ -747,37 +738,37 @@
     if (elevated) {
       root.dataset.goldEdge = "1";
       V.css("--face-edge-gold", "1");
-      V.spawn(2, { kind: 60, valence: 0.4, confidence: 0.85, decay: 0.016 });
-    }
+      V.spawn(2, { kind: 60, valence: 0.4, confidence: 0.85, decay: 0.016 });,
+    },
   });
 
   V.register(61, "token entropy nudge", (ctx) => {
     ctx.st.streamTokens = (ctx.st.streamTokens || 0) + 1;
     ctx.st.entropy = Math.min(1, (ctx.st.entropy ?? 0.2) + 0.002);
     if (ctx.st.streamTokens % 40 === 0) {
-      emit("token:entropy", { topology: "terrain", entropy: ctx.st.entropy, confidence: ctx.st.confidence || 0.7, mode: "stream" });
+      emit("token:entropy", { topology: "terrain", entropy: ctx.st.entropy, confidence: ctx.st.confidence || 0.7, mode: "stream" });,
     }
-    V.spawn(3, { kind: 61, confidence: ctx.st.entropy, decay: 0.02 });
+    V.spawn(3, { kind: 61, confidence: ctx.st.entropy, decay: 0.02 });,
   });
 
   V.register(62, "DONE archive spiral", (ctx) => {
     ctx.st.spiralPhase = (ctx.st.spiralPhase || 0) + 1.2;
     root.dataset.archiveSpiral = String(ctx.st.spiralPhase);
     V.css("--archive-spiral", ctx.st.spiralPhase.toFixed(2));
-    V.spawn(3, { kind: 62, vx: Math.sin(ctx.st.spiralPhase) * 0.02, vy: Math.cos(ctx.st.spiralPhase) * 0.02, decay: 0.015 });
+    V.spawn(3, { kind: 62, vx: Math.sin(ctx.st.spiralPhase) * 0.02, vy: Math.cos(ctx.st.spiralPhase) * 0.02, decay: 0.015 });,
   });
 
   V.register(63, "replay scrub hook", (ctx) => {
     const t = Math.max(0, Number(ctx.detail.t ?? ctx.detail.scrub ?? 0));
     root.dataset.replayScrub = String(t);
     emit("replay:scrub", { topology: "warp-tunnel", entropy: 0.3, confidence: 0.8, mode: "replay", t });
-    V.css("--replay-scrub", t.toFixed(2));
+    V.css("--replay-scrub", t.toFixed(2));,
   });
 
   V.register(64, "why branching trees", (ctx) => {
     root.dataset.whyTree = ctx.detail.topology || "branch";
     V.spawn(4, { kind: 64, vx: 0.012, vy: -0.006, attention: 0.55, decay: 0.019 });
-    emit("why:branch", { topology: "neural", entropy: 0.28, confidence: 0.75, mode: "why", node: ctx.detail.node });
+    emit("why:branch", { topology: "neural", entropy: 0.28, confidence: 0.75, mode: "why", node: ctx.detail.node });,
   });
 
   V.register(65, "metrics HUD", (ctx) => {
@@ -788,24 +779,24 @@
       hud.id = "face-metrics-hud";
       hud.className = "face-metrics-hud";
       hud.setAttribute("aria-hidden", "true");
-      body.appendChild(hud);
+      body.appendChild(hud);,
     }
     const fps = ctx.st.fps ? ctx.st.fps.toFixed(0) : "—";
     const mode = ctx.st.mode || "idle";
     const ent = (ctx.st.entropy ?? 0.2).toFixed(2);
-    hud.textContent = `fps ${fps} · ${mode} · H ${ent}`;
+    hud.textContent = `fps ${fps} · ${mode} · H ${ent}`;,
   });
 
   /* 66–80 perf */
   V.register(66, "worker owns step flag", () => {
     const owns = !!(window.MASTER_RUNTIME?.enhancements?.includes?.("particle_worker") && window.Worker);
-    root.dataset.workerOwnsStep = owns ? "1" : "";
+    root.dataset.workerOwnsStep = owns ? "1" : "";,
   });
 
   V.register(67, "WebGPU stub detect", (ctx) => {
     const supported = !!ctx.detail.webgpu;
     root.dataset.webgpu = supported ? "ready" : "stub";
-    root.dataset.webgpuStub = supported ? "" : "1";
+    root.dataset.webgpuStub = supported ? "" : "1";,
   });
 
   V.register(68, "adaptive pool cap from hardwareConcurrency/deviceMemory", (ctx) => {
@@ -814,7 +805,7 @@
     const cap = Math.min(8192, Math.max(512, cores * 160 * Math.min(2, mem / 4)));
     ctx.st.poolCap = cap | 0;
     root.dataset.poolCap = String(cap | 0);
-    V.css("--face-pool-cap", cap | 0);
+    V.css("--face-pool-cap", cap | 0);,
   });
 
   V.register(69, "compact on hidden+tts end", (ctx) => {
@@ -822,21 +813,21 @@
     if (document.hidden && tts && !tts.playing) {
       root.dataset.compactHidden = "1";
       emit("compaction:done", { topology: "terrain", entropy: 0.35, confidence: 0.7, mode: "compact" });
-      V.K()?.compact?.(ctx.pool);
+      V.K()?.compact?.(ctx.pool);,
     } else {
-      delete root.dataset.compactHidden;
-    }
+      delete root.dataset.compactHidden;,
+    },
   });
 
   V.register(70, "double-buffer flag", () => {
     const dbl = typeof OffscreenCanvas !== "undefined" || qs("dblbuf") === "1";
-    root.dataset.doubleBuffer = dbl ? "1" : "";
+    root.dataset.doubleBuffer = dbl ? "1" : "";,
   });
 
   V.register(71, "WASM stub", () => {
     const wasm = typeof WebAssembly !== "undefined";
     root.dataset.wasm = wasm ? "available" : "stub";
-    root.dataset.wasmStub = wasm ? "" : "1";
+    root.dataset.wasmStub = wasm ? "" : "1";,
   });
 
   V.register(72, "luminance cull", (ctx) => {
@@ -851,8 +842,8 @@
       const g = p.cells[b + 1] || 0;
       const bl = p.cells[b + 2] || 0;
       const lum = 0.2126 * r + 0.7152 * g + 0.0722 * bl;
-      if (lum < 0.04) p.alive[i] = 0;
-    }
+      if (lum < 0.04) p.alive[i] = 0;,
+    },
   });
 
   V.register(73, "audio sync step", (ctx) => {
@@ -860,13 +851,13 @@
     if (!tts?.playing || !tts.audio) return;
     const t = tts.audio.currentTime || 0;
     ctx.st.audioSyncStep = Math.sin(t * 12) * 0.02;
-    V.css("--audio-sync-step", ctx.st.audioSyncStep.toFixed(4));
+    V.css("--audio-sync-step", ctx.st.audioSyncStep.toFixed(4));,
   });
 
   V.register(74, "rvfc TV hook", (ctx) => {
     const t = Number(ctx.detail.frame ?? ctx.detail.t ?? 0);
     root.dataset.rvfcTv = t ? String(t | 0) : "stub";
-    ctx.st.tvFrame = t;
+    ctx.st.tvFrame = t;,
   });
 
   V.register(75, "prewarm worker on primer", () => {
@@ -876,15 +867,15 @@
       const worker = new Worker(url);
       worker.postMessage({ type: "warm", dt: 0.016 });
       window.setTimeout(() => worker.terminate(), 120);
-      root.dataset.workerPrewarm = "1";
+      root.dataset.workerPrewarm = "1";,
     } catch (err) {
-      window.MASTER_LOG?.warn?.("vision:worker-prewarm", err);
-    }
+      window.MASTER_LOG?.warn?.("vision:worker-prewarm", err);,
+    },
   });
 
   V.register(76, "static import flag", () => {
     const statik = !!(window.MASTER_ASSET_PATHS?.faceModulesBundle || window.MASTER_FACE);
-    root.dataset.staticImport = statik ? "1" : "";
+    root.dataset.staticImport = statik ? "1" : "";,
   });
 
   V.register(77, "RAF governor hook", (ctx) => {
@@ -895,14 +886,14 @@
     const ok = now - ctx.st._rafLast >= min;
     if (ok) ctx.st._rafLast = now;
     root.dataset.rafGovernor = ok ? "tick" : "skip";
-    ctx.st.rafGovernorOk = ok;
+    ctx.st.rafGovernorOk = ok;,
   });
 
   V.register(78, "thermal throttle 50%", (ctx) => {
     const throttle = !!ctx.detail.throttle;
     root.dataset.thermalThrottle = throttle ? "0.5" : "0";
     if (throttle) ctx.st.particlePressure = 0.5;
-    V.css("--thermal-throttle", throttle ? "0.5" : "1");
+    V.css("--thermal-throttle", throttle ? "0.5" : "1");,
   });
 
   V.register(79, "bench mode ?bench=1", (ctx) => {
@@ -913,15 +904,15 @@
     if (fps > 0) {
       root.dataset.benchFps = fps.toFixed(1);
       try {
-        localStorage.setItem("master:bench:last", JSON.stringify({ fps, at: Date.now() }));
-      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_b:bench_store", err); }
-    }
+        localStorage.setItem("master:bench:last", JSON.stringify({ fps, at: Date.now() }));,
+      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_b:bench_store", err); },
+    },
   });
 
   V.register(80, "Cache-Control note via dataset", () => {
     const ver = window.MASTER_CACHE_VERSION || "v2";
     root.dataset.cacheControl = `immutable; v=${ver}`;
-    root.dataset.masterCacheVersion = String(ver);
+    root.dataset.masterCacheVersion = String(ver);,
   });
 
   /* wiring — init listeners + one-shot probes */
@@ -937,10 +928,10 @@
 
     if (navigator.gpu?.requestAdapter) {
       navigator.gpu.requestAdapter().then((a) => {
-        V.run(67, { type: "webgpu:probe", detail: { webgpu: !!a } });
-      }).catch(() => V.run(67, { type: "webgpu:probe", detail: { webgpu: false } }));
+        V.run(67, { type: "webgpu:probe", detail: { webgpu: !!a } });,
+      }).catch(() => V.run(67, { type: "webgpu:probe", detail: { webgpu: false } }));,
     } else {
-      V.run(67, { type: "webgpu:probe", detail: { webgpu: false } });
+      V.run(67, { type: "webgpu:probe", detail: { webgpu: false } });,
     }
 
     const logo = document.querySelector(".top-left-logo");
@@ -948,14 +939,14 @@
       let timer = null;
       const sched = () => {
         window.clearTimeout(timer);
-        timer = window.setTimeout(() => V.run(47, { type: "logo:idle", detail: {} }), 4000);
+        timer = window.setTimeout(() => V.run(47, { type: "logo:idle", detail: {} }), 4000);,
       };
       sched();
       document.addEventListener("pointerdown", () => {
         logo.classList.remove("dim");
         delete root.dataset.logoDim;
-        sched();
-      }, { passive: true });
+        sched();,
+      }, { passive: true });,
     }
 
     const cv = document.getElementById("face") || document.getElementById("mask");
@@ -963,17 +954,17 @@
       cv.addEventListener("keydown", (e) => {
         if (e.altKey && e.key === "p") {
           body.classList.toggle("face-pip");
-          V.run(45, { type: "pip:toggle", detail: { pip: body.classList.contains("face-pip") } });
-        }
-      });
+          V.run(45, { type: "pip:toggle", detail: { pip: body.classList.contains("face-pip") } });,
+        },
+      });,
     }
 
     window.addEventListener("master:self_violation", () => {
-      V.run(49, { type: "master:self_violation", detail: {} });
+      V.run(49, { type: "master:self_violation", detail: {} });,
     });
 
     window.addEventListener("master:face-stage", (ev) => {
-      V.run(56, { type: "master:face-stage", detail: ev.detail || {} });
+      V.run(56, { type: "master:face-stage", detail: ev.detail || {} });,
     });
 
     window.addEventListener("master:visual", (ev) => {
@@ -986,7 +977,7 @@
       V.run(77, { type: name, detail: d });
       if (/council/i.test(name)) {
         V.run(48, { type: name, detail: d });
-        V.run(53, { type: name, detail: d });
+        V.run(53, { type: name, detail: d });,
       }
       if (/stage|scheduler|pipeline/i.test(name)) V.run(55, { type: name, detail: d });
       if (/scan|graph|codebase/i.test(name)) V.run(54, { type: name, detail: d });
@@ -995,14 +986,14 @@
       if (/429|rate.?limit/i.test(name)) V.run(58, { type: name, detail: d });
       if (/replay|scrub/i.test(name)) V.run(63, { type: name, detail: d });
       V.run(52, { type: name, detail: d });
-      V.run(60, { type: name, detail: d });
+      V.run(60, { type: name, detail: d });,
     });
 
     window.addEventListener("chat:chunk", () => V.run(61, { type: "chat:chunk", detail: {} }));
     window.addEventListener("chat:error", () => V.run(58, { type: "chat:error", detail: {} }));
 
     document.addEventListener("visibilitychange", () => {
-      V.run(69, { type: "visibilitychange", detail: {} });
+      V.run(69, { type: "visibilitychange", detail: {} });,
     }, { passive: true });
 
     window.addEventListener("primer:ready", () => V.run(75, { type: "primer:ready", detail: {} }));
@@ -1012,23 +1003,23 @@
       const loop = () => {
         video.requestVideoFrameCallback((now) => {
           V.run(74, { type: "rvfc", detail: { frame: now } });
-          loop();
-        });
+          loop();,
+        });,
       };
       video.addEventListener("play", loop, { once: true });
-      root.dataset.rvfcTv = "hooked";
+      root.dataset.rvfcTv = "hooked";,
     }
 
     if ("PressureObserver" in window) {
       try {
         const obs = new PressureObserver((records) => {
           const serious = records.some((r) => r.state === "serious" || r.state === "critical");
-          V.run(78, { type: "pressure", detail: { throttle: serious } });
+          V.run(78, { type: "pressure", detail: { throttle: serious } });,
         }, { sampleRate: 0.5 });
-        obs.observe("cpu").catch(() => {});
+        obs.observe("cpu").catch(() => {});,
       } catch (_) {
-        root.dataset.thermalThrottle = "stub";
-      }
+        root.dataset.thermalThrottle = "stub";,
+      },
     }
 
     if (qs("bench") === "1") {
@@ -1040,10 +1031,9 @@
         if (performance.now() - t0 >= 3000) {
           V.run(79, { type: "bench:done", detail: { fps: frames / 3 } });
           return;
-        }
-        requestAnimationFrame(loop);
+        requestAnimationFrame(loop);,
       };
-      requestAnimationFrame(loop);
+      requestAnimationFrame(loop);,
     }
 
     window.setInterval(() => V.run(57, { type: "heartbeat", detail: {} }), 8000);
@@ -1051,9 +1041,9 @@
       const st = V.state();
       st.fps = st.fps || 60;
       V.run(46, { type: "fps:tick", detail: {} });
-      V.run(72, { type: "cull:tick", detail: {}, pool: V.pool() });
-    }, 1000);
-  })();
+      V.run(72, { type: "cull:tick", detail: {}, pool: V.pool() });,
+    }, 1000);,
+  })();,
 })();
 // MASTER particle face 2026 — vision features 81–118 (interaction, aesthetic, a11y).
 (() => {
@@ -1067,7 +1057,7 @@
   const qs = (k) => new URLSearchParams(location.search).get(k);
 
   function emit(type, detail = {}) {
-    window.MASTERVisual?.event?.(type, detail);
+    window.MASTERVisual?.event?.(type, detail);,
   }
 
   const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
@@ -1080,8 +1070,8 @@
     if (on) {
       ctx.st.pulse = Math.min(1, (ctx.st.pulse || 0) + 0.35);
       emit("input:accelerate", { topology: "papua-mask", entropy: 0.35, confidence: 0.8, mode: "accelerate" });
-      V.spawn(2, { kind: 81, arousal: 0.6, vy: 0.014, decay: 0.012 });
-    }
+      V.spawn(2, { kind: 81, arousal: 0.6, vy: 0.014, decay: 0.012 });,
+    },
   });
 
   V.register(82, "gyro gravity", (ctx) => {
@@ -1091,13 +1081,13 @@
     ctx.st.gravityY = Math.max(-1, Math.min(1, (beta - 45) / 45));
     root.dataset.gyroGravity = `${ctx.st.gravityX.toFixed(2)},${ctx.st.gravityY.toFixed(2)}`;
     V.css("--gyro-x", ctx.st.gravityX.toFixed(3));
-    V.css("--gyro-y", ctx.st.gravityY.toFixed(3));
+    V.css("--gyro-y", ctx.st.gravityY.toFixed(3));,
   });
 
   V.register(83, "chat scroll parallax", (ctx) => {
     const y = Number(ctx.detail.scrollTop ?? 0);
     V.css("--chat-parallax", `${(y * 0.02) | 0}px`);
-    root.dataset.chatParallax = String(y);
+    root.dataset.chatParallax = String(y);,
   });
 
   V.register(84, "pinch mouth zoom dev", (ctx) => {
@@ -1105,7 +1095,7 @@
     ctx.st.mouthZoom = zoom;
     root.dataset.mouthZoom = zoom.toFixed(2);
     V.css("--mouth-zoom", zoom.toFixed(2));
-    window.MASTER_FACE_BLEND?.pushBlend?.({ mouthWide: zoom * 0.1 });
+    window.MASTER_FACE_BLEND?.pushBlend?.({ mouthWide: zoom * 0.1 });,
   });
 
   V.register(85, "long-press felt inspector", () => {
@@ -1116,11 +1106,11 @@
       panel.id = "felt-inspector";
       panel.className = "felt-inspector";
       panel.setAttribute("aria-live", "polite");
-      body.appendChild(panel);
+      body.appendChild(panel);,
     }
     panel.textContent = felt ? String(felt) : "no felt";
     panel.dataset.visible = "1";
-    window.setTimeout(() => { panel.dataset.visible = "0"; }, 3200);
+    window.setTimeout(() => { panel.dataset.visible = "0"; }, 3200);,
   });
 
   V.register(86, "space council pulse", (ctx) => {
@@ -1128,8 +1118,8 @@
     root.dataset.spaceCouncilPulse = String(Date.now());
     emit("council:pulse", { topology: "papua-mask", entropy: 0.32, confidence: 0.7, mode: "council" });
     for (let n = 0; n < 3; n++) {
-      V.spawn(3, { kind: 86, vx: (n - 1) * 0.012, arousal: 0.5, decay: 0.014 });
-    }
+      V.spawn(3, { kind: 86, vx: (n - 1) * 0.012, arousal: 0.5, decay: 0.014 });,
+    },
   });
 
   V.register(87, "photograph supernova", (ctx) => {
@@ -1137,9 +1127,9 @@
     ctx.st.pulse = 1;
     root.dataset.photoSupernova = "1";
     for (let n = 0; n < 6; n++) {
-      V.spawn(2, { kind: 87, vx: (Math.random() - 0.5) * 0.04, vy: (Math.random() - 0.5) * 0.04, arousal: 0.9, decay: 0.01 });
+      V.spawn(2, { kind: 87, vx: (Math.random() - 0.5) * 0.04, vy: (Math.random() - 0.5) * 0.04, arousal: 0.9, decay: 0.01 });,
     }
-    window.setTimeout(() => delete root.dataset.photoSupernova, 800);
+    window.setTimeout(() => delete root.dataset.photoSupernova, 800);,
   });
 
   V.register(88, "zin focus beam", (ctx) => {
@@ -1148,27 +1138,27 @@
     V.css("--zin-beam", focused ? "1" : "0");
     if (focused) {
       emit("input:focus", { topology: "papua-mask", entropy: 0.14, confidence: 0.88, mode: "attending" });
-      V.spawn(2, { kind: 88, attention: 0.75, decay: 0.013 });
-    }
+      V.spawn(2, { kind: 88, attention: 0.75, decay: 0.013 });,
+    },
   });
 
   V.register(89, "viseme haptics", (ctx) => {
     const shape = ctx.detail.shape || ctx.detail.viseme || "rest";
     const amp = Number(ctx.detail.amp ?? 0.5);
     if (navigator.vibrate) navigator.vibrate(Math.min(40, 8 + amp * 20));
-    root.dataset.visemeHaptic = String(shape).slice(0, 8);
+    root.dataset.visemeHaptic = String(shape).slice(0, 8);,
   });
 
   V.register(90, "gamepad OK primer", () => {
     const primer = document.getElementById("primer");
     primer?.click?.();
-    root.dataset.gamepadPrimer = "1";
+    root.dataset.gamepadPrimer = "1";,
   });
 
   V.register(91, "double-tap focus dim", (ctx) => {
     body.classList.toggle("focus-dim", !!ctx.detail.active);
     root.dataset.doubleTapFocus = "1";
-    window.MASTER_FACE?.toggleFocusMode?.();
+    window.MASTER_FACE?.toggleFocusMode?.();,
   });
 
   V.register(92, "URL mood restore", (ctx) => {
@@ -1176,27 +1166,27 @@
     const mode = ctx.detail.mode || qs("mode");
     if (mood) ctx.st.mood = mood;
     if (mode && ctx.st.mode === "idle") ctx.st.mode = mode;
-    if (mood || mode) root.dataset.urlMoodRestore = `${mood || ""}/${mode || ""}`;
+    if (mood || mode) root.dataset.urlMoodRestore = `${mood || ""}/${mode || ""}`;,
   });
 
   V.register(93, "share card hook", async (ctx) => {
     const data = {
       title: "MASTER face",
       text: ctx.detail.text || `mood ${V.state().mood || "idle"}`,
-      url: location.href
+      url: location.href,
     };
     if (navigator.share) {
-      try { await navigator.share(data); return; } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:share", err); }
+      try { await navigator.share(data); return; } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:share", err); },
     }
     await navigator.clipboard?.writeText?.(data.url).catch(() => {});
-    emit("share:card", { topology: "papua-mask", entropy: 0.1, confidence: 0.9, mode: "share" });
+    emit("share:card", { topology: "papua-mask", entropy: 0.1, confidence: 0.9, mode: "share" });,
   });
 
   V.register(94, "describe face TTS", (ctx) => {
     const st = ctx.st;
     const line = `mode ${st.mode || "idle"}, mood ${st.mood || "idle"}, confidence ${(st.confidence ?? 0.86).toFixed(2)}`;
     window.MASTER_FACE?.ttsSpeak?.(line) || window.MASTER_FACE?.speak?.(line);
-    emit("face:describe", { topology: "papua-mask", entropy: 0.12, confidence: st.confidence || 0.86, mode: "describe" });
+    emit("face:describe", { topology: "papua-mask", entropy: 0.12, confidence: st.confidence || 0.86, mode: "describe" });,
   });
 
   V.register(95, "Konami CRT", () => {
@@ -1204,14 +1194,14 @@
     root.dataset.konamiCrt = "1";
     V.css("--face-scanline", "0.42");
     emit("konami:crt", { topology: "papua-mask", entropy: 0.2, confidence: 0.95, mode: "crt" });
-    V.spawn(2, { kind: 95, confidence: 0.9, decay: 0.02 });
+    V.spawn(2, { kind: 95, confidence: 0.9, decay: 0.02 });,
   });
 
   /* 96–108 aesthetic */
   V.register(96, "Inter 200 typography", () => {
     V.css("--face-font", '"Inter", system-ui, sans-serif');
     V.css("--face-font-weight", "200");
-    root.dataset.typography = "Inter-200";
+    root.dataset.typography = "Inter-200";,
   });
 
   V.register(97, "brutalist flag", () => {
@@ -1219,8 +1209,8 @@
       || window.MASTER_RUNTIME?.enhancements?.includes?.("brutalist_profile");
     if (brutal) {
       root.dataset.brutalist = "1";
-      body.classList.add("brutalist-mode");
-    }
+      body.classList.add("brutalist-mode");,
+    },
   });
 
   V.register(98, "film stock grade per city", (ctx) => {
@@ -1228,35 +1218,35 @@
     const grades = { default: "neutral", kl: "warm-teal", nyc: "cool-contrast", tokyo: "high-key", london: "desaturated" };
     const grade = grades[city] || grades.default;
     root.dataset.filmStock = grade;
-    V.css("--film-grade", grade);
+    V.css("--film-grade", grade);,
   });
 
   V.register(99, "nav wipe fade", () => {
     body.classList.add("nav-wipe-ready");
     body.dataset.navWipe = "1";
-    window.setTimeout(() => delete body.dataset.navWipe, 400);
+    window.setTimeout(() => delete body.dataset.navWipe, 400);,
   });
 
   V.register(100, "Malay warm core", () => {
     const warm = qs("locale") === "ms" || qs("malay") === "1" || navigator.language?.startsWith?.("ms");
     if (warm) {
       root.dataset.malayWarm = "1";
-      V.css("--face-warm-core", "#e8c4a0");
-    }
+      V.css("--face-warm-core", "#e8c4a0");,
+    },
   });
 
   V.register(101, "ABSOLUTE freeze", (ctx) => {
     ctx.st.frozen = true;
     ctx.st.idleAlphaDrift = 0;
     root.dataset.absoluteFreeze = "1";
-    V.css("--face-motion-scale", "0");
+    V.css("--face-motion-scale", "0");,
   });
 
   V.register(102, "seasonal topology fetch hook", (ctx) => {
     const month = new Date().getMonth();
     const season = month < 3 ? "winter" : month < 6 ? "spring" : month < 9 ? "summer" : "autumn";
     root.dataset.season = season;
-    if (ctx.detail.topology) root.dataset.seasonalTopology = ctx.detail.topology;
+    if (ctx.detail.topology) root.dataset.seasonalTopology = ctx.detail.topology;,
   });
 
   V.register(103, "minimal UI particles-only", () => {
@@ -1264,8 +1254,8 @@
     body.classList.add("particles-only");
     document.querySelectorAll(".prompt-bar, #chat-log, .status-bar").forEach((el) => {
       el.style.opacity = "0";
-      el.style.pointerEvents = "none";
-    });
+      el.style.pointerEvents = "none";,
+    });,
   });
 
   V.register(104, "sparkline baseline", (ctx) => {
@@ -1275,7 +1265,7 @@
       strip.id = "mood-sparkline";
       strip.className = "mood-sparkline";
       strip.setAttribute("aria-hidden", "true");
-      body.appendChild(strip);
+      body.appendChild(strip);,
     }
     const ent = Number(ctx.detail.entropy ?? 0.2);
     if (!strip._ring) strip._ring = [];
@@ -1284,27 +1274,26 @@
     const max = Math.max(...strip._ring, 0.01);
     strip.innerHTML = strip._ring.map((v) => {
       const h = 2 + (v / max) * 12;
-      return `<span style="height:${h}px"></span>`;
-    }).join("");
+      return `<span style="height:${h}px"></span>`;,
   });
 
   V.register(105, "logo disintegration", () => {
     const logo = document.querySelector(".top-left-logo");
     if (!logo) return;
     logo.classList.add("disintegrate");
-    window.setTimeout(() => logo.classList.remove("disintegrate"), 1200);
+    window.setTimeout(() => logo.classList.remove("disintegrate"), 1200);,
   });
 
   V.register(106, "noir R-only", () => {
     root.dataset.noir = "r-only";
     V.css("--face-color-mode", "r-only");
-    body.classList.add("noir-mode");
+    body.classList.add("noir-mode");,
   });
 
   V.register(107, "aurora hue cycle", (ctx) => {
     const hue = Number(ctx.detail.hue ?? 0) % 360;
     V.css("--aurora-hue", `${hue}`);
-    root.dataset.auroraHue = String(hue | 0);
+    root.dataset.auroraHue = String(hue | 0);,
   });
 
   V.register(108, "print SVG export", () => {
@@ -1319,21 +1308,20 @@
     a.click();
     URL.revokeObjectURL(a.href);
     return svg;
-  });
 
   /* 109–118 a11y */
   V.register(109, "reduced-motion constellation", (ctx) => {
     const rm = !!ctx.detail.reducedMotion;
     ctx.st.reducedMotion = rm;
     root.dataset.reducedMotion = rm ? "1" : "";
-    V.css("--face-motion-scale", rm ? "0.2" : "1");
+    V.css("--face-motion-scale", rm ? "0.2" : "1");,
   });
 
   V.register(110, "contrast 2x luminance", (ctx) => {
     const on = !!ctx.detail.on;
     root.dataset.contrast2x = on ? "1" : "";
     root.dataset.highContrast = on ? "1" : "";
-    V.css("--face-luminance-mul", on ? "2" : "1");
+    V.css("--face-luminance-mul", on ? "2" : "1");,
   });
 
   V.register(111, "aria-live mode announce", (ctx) => {
@@ -1346,12 +1334,12 @@
       live.className = "sr-only";
       live.setAttribute("aria-live", "polite");
       live.setAttribute("aria-atomic", "true");
-      body.appendChild(live);
+      body.appendChild(live);,
     }
     if (live._last !== mode) {
       live._last = mode;
-      live.textContent = `mode ${mode}`;
-    }
+      live.textContent = `mode ${mode}`;,
+    },
   });
 
   V.register(112, "particle legend text", () => {
@@ -1360,9 +1348,9 @@
       legend = document.createElement("p");
       legend.id = "particle-legend";
       legend.className = "particle-legend sr-only";
-      body.appendChild(legend);
+      body.appendChild(legend);,
     }
-    legend.textContent = "Particle face: eyes attend, mouth speaks, terrain reflects mood.";
+    legend.textContent = "Particle face: eyes attend, mouth speaks, terrain reflects mood.";,
   });
 
   V.register(113, "tts-live viseme highlight", (ctx) => {
@@ -1373,11 +1361,11 @@
       el.id = "tts-viseme-live";
       el.className = "sr-only";
       el.setAttribute("aria-live", "off");
-      body.appendChild(el);
+      body.appendChild(el);,
     }
     el.textContent = `viseme ${shape}`;
     el.dataset.active = "1";
-    window.setTimeout(() => delete el.dataset.active, 120);
+    window.setTimeout(() => delete el.dataset.active, 120);,
   });
 
   V.register(114, "sound-on chip", (ctx) => {
@@ -1389,27 +1377,27 @@
       chip.className = "sound-on-chip";
       chip.addEventListener("click", () => {
         window.MASTER_FACE?.ttsToggleMute?.();
-        V.run(114, { type: "sound:toggle", detail: {} });
+        V.run(114, { type: "sound:toggle", detail: {} });,
       });
-      body.appendChild(chip);
+      body.appendChild(chip);,
     }
     const muted = window.MASTER_FACE?.tts?.muted;
     chip.textContent = muted ? "sound off" : "sound on";
-    chip.setAttribute("aria-pressed", muted ? "false" : "true");
+    chip.setAttribute("aria-pressed", muted ? "false" : "true");,
   });
 
   V.register(115, "color-blind shape motion", (ctx) => {
     body.classList.add("cb-shape-motion");
     root.dataset.colorBlindShapes = "1";
     ctx.st.shapeMotion = (ctx.st.shapeMotion || 0) + (ctx.st.reducedMotion ? 0.01 : 0.04);
-    V.css("--shape-motion", ctx.st.shapeMotion.toFixed(3));
+    V.css("--shape-motion", ctx.st.shapeMotion.toFixed(3));,
   });
 
   V.register(116, "font-scale HUD", (ctx) => {
     const scale = Math.max(0.8, Math.min(1.6, Number(ctx.detail.scale ?? 1)));
     V.css("--font-scale", String(scale));
     root.dataset.fontScale = scale.toFixed(2);
-    try { localStorage.setItem("master:font-scale", String(scale)); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:font_scale_store", err); }
+    try { localStorage.setItem("master:font-scale", String(scale)); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:font_scale_store", err); },
   });
 
 V.register(118, "degraded WebGL UI trigger", (ctx) => {
@@ -1422,9 +1410,9 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       banner = document.createElement("div");
       banner.id = "face-error-banner";
       banner.className = "face-error-banner";
-      body.appendChild(banner);
+      body.appendChild(banner);,
     }
-    banner.textContent = reason;
+    banner.textContent = reason;,
   });
 
   /* wiring */
@@ -1447,31 +1435,31 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     V.run(109, { type: "init", detail: { reducedMotion: !!mq?.matches } });
     mq?.addEventListener?.("change", () => {
-      V.run(109, { type: "motion:change", detail: { reducedMotion: !!mq.matches } });
+      V.run(109, { type: "motion:change", detail: { reducedMotion: !!mq.matches } });,
     });
 
     const st = V.state();
     if (st.highContrast || st.contrastMore || qs("contrast") === "2") {
-      V.run(110, { type: "init", detail: { on: true } });
+      V.run(110, { type: "init", detail: { on: true } });,
     }
 
     const fontInput = document.getElementById("font-scale");
     if (fontInput) {
       V.run(116, { type: "init", detail: { scale: fontInput.value } });
       fontInput.addEventListener("input", () => {
-        V.run(116, { type: "font:input", detail: { scale: fontInput.value } });
-      });
+        V.run(116, { type: "font:input", detail: { scale: fontInput.value } });,
+      });,
     }
 
     const cv = document.getElementById("face") || document.getElementById("mask");
     if (cv) {
       let holdTimer = null;
       cv.addEventListener("pointerdown", () => {
-        holdTimer = window.setTimeout(() => V.run(81, { type: "tap:hold", detail: { accelerate: true } }), 420);
+        holdTimer = window.setTimeout(() => V.run(81, { type: "tap:hold", detail: { accelerate: true } }), 420);,
       }, { passive: true });
       const up = () => {
         window.clearTimeout(holdTimer);
-        V.run(81, { type: "tap:release", detail: { accelerate: false } });
+        V.run(81, { type: "tap:release", detail: { accelerate: false } });,
       };
       cv.addEventListener("pointerup", up, { passive: true });
       cv.addEventListener("pointercancel", up, { passive: true });
@@ -1482,7 +1470,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
           if (e.touches.length !== 2) return;
           const dx = e.touches[0].clientX - e.touches[1].clientX;
           const dy = e.touches[0].clientY - e.touches[1].clientY;
-          pinch0 = Math.hypot(dx, dy);
+          pinch0 = Math.hypot(dx, dy);,
         }, { passive: true });
         cv.addEventListener("touchmove", (e) => {
           if (e.touches.length !== 2 || !pinch0) return;
@@ -1491,14 +1479,14 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
           const d = Math.hypot(dx, dy);
           const zoom = (V.state().mouthZoom || 1) * (d / pinch0);
           pinch0 = d;
-          V.run(84, { type: "pinch", detail: { zoom } });
+          V.run(84, { type: "pinch", detail: { zoom } });,
         }, { passive: true });
-        cv.addEventListener("touchend", () => { pinch0 = null; }, { passive: true });
+        cv.addEventListener("touchend", () => { pinch0 = null; }, { passive: true });,
       }
 
       let lpTimer = null;
       cv.addEventListener("pointerdown", () => {
-        lpTimer = window.setTimeout(() => V.run(85, { type: "felt:inspect", detail: {} }), 1400);
+        lpTimer = window.setTimeout(() => V.run(85, { type: "felt:inspect", detail: {} }), 1400);,
       }, { passive: true });
       const lpUp = () => window.clearTimeout(lpTimer);
       cv.addEventListener("pointerup", lpUp, { passive: true });
@@ -1508,30 +1496,30 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       cv.addEventListener("pointerup", () => {
         const now = performance.now();
         if (now - lastTap < 320) V.run(91, { type: "double-tap", detail: { active: true } });
-        lastTap = now;
-      }, { passive: true });
+        lastTap = now;,
+      }, { passive: true });,
     }
 
     const bindGyro = () => {
       window.addEventListener("deviceorientation", (e) => {
-        V.run(82, { type: "gyro", detail: { beta: e.beta, gamma: e.gamma } });
+        V.run(82, { type: "gyro", detail: { beta: e.beta, gamma: e.gamma } });,
       }, { passive: true });
-      root.dataset.gyroGravity = "bound";
+      root.dataset.gyroGravity = "bound";,
     };
     if (typeof DeviceOrientationEvent !== "undefined"
         && typeof DeviceOrientationEvent.requestPermission === "function") {
       window.addEventListener("primer:ready", async () => {
         try {
-          if ((await DeviceOrientationEvent.requestPermission()) === "granted") bindGyro();
-        } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:gyro_permission", err); }
-      }, { once: true });
+          if ((await DeviceOrientationEvent.requestPermission()) === "granted") bindGyro();,
+        } catch (err) { window.MASTER_LOG?.warn?.("face_vision_c:gyro_permission", err); },
+      }, { once: true });,
     } else if (window.DeviceOrientationEvent) {
-      bindGyro();
+      bindGyro();,
     }
 
     const log = document.getElementById("chat-log");
     log?.addEventListener("scroll", () => {
-      V.run(83, { type: "chat:scroll", detail: { scrollTop: log.scrollTop } });
+      V.run(83, { type: "chat:scroll", detail: { scrollTop: log.scrollTop } });,
     }, { passive: true });
 
     const zin = document.getElementById("zin") || document.getElementById("input");
@@ -1540,16 +1528,16 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
 
     window.addEventListener("tts:viseme", (ev) => {
       V.run(89, { type: "tts:viseme", detail: ev.detail || {} });
-      V.run(113, { type: "tts:viseme", detail: ev.detail || {} });
+      V.run(113, { type: "tts:viseme", detail: ev.detail || {} });,
     });
 
     if ("getGamepads" in navigator) {
       const poll = () => {
         const pad = (navigator.getGamepads() || []).find((p) => p?.buttons?.[0]?.pressed);
         if (pad && !window._primerFired) V.run(90, { type: "gamepad", detail: {} });
-        requestAnimationFrame(poll);
+        requestAnimationFrame(poll);,
       };
-      requestAnimationFrame(poll);
+      requestAnimationFrame(poll);,
     }
 
     window.addEventListener("keydown", (e) => {
@@ -1557,8 +1545,8 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
           && !document.activeElement?.matches?.("input,textarea,[contenteditable]")
           && (window._primerFired || window.MASTER_FACE?.primerFired)) {
         e.preventDefault();
-        V.run(86, { type: "space", detail: {} });
-      }
+        V.run(86, { type: "space", detail: {} });,
+      },
     });
 
     let konamiPos = 0;
@@ -1568,11 +1556,11 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
         konamiPos++;
         if (konamiPos >= KONAMI.length) {
           konamiPos = 0;
-          V.run(95, { type: "konami", detail: {} });
-        }
+          V.run(95, { type: "konami", detail: {} });,
+        },
       } else {
-        konamiPos = key === KONAMI[0] ? 1 : 0;
-      }
+        konamiPos = key === KONAMI[0] ? 1 : 0;,
+      },
     });
 
     window.addEventListener("master:visual", (ev) => {
@@ -1582,17 +1570,17 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       V.run(111, { type: name, detail: { mode: d.mode || name } });
       if (/nav|palette|route/i.test(name)) V.run(99, { type: name, detail: d });
       if (/photo:ready|photo:capture/i.test(name)) V.run(87, { type: name, detail: d });
-      if (/error|veto|violation/i.test(name)) V.run(105, { type: name, detail: d });
+      if (/error|veto|violation/i.test(name)) V.run(105, { type: name, detail: d });,
     });
 
     document.getElementById("describe-face-btn")?.addEventListener("click", () => {
-      V.run(94, { type: "describe", detail: {} });
+      V.run(94, { type: "describe", detail: {} });,
     });
 
     fetch(`/canvas/topology?season=${root.dataset.season || "summer"}`, { credentials: "same-origin" })
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
-        if (json) V.run(102, { type: "topology:seasonal", detail: { topology: json.id || json.topology } });
+        if (json) V.run(102, { type: "topology:seasonal", detail: { topology: json.id || json.topology } });,
       })
       .catch(() => V.run(102, { type: "topology:seasonal", detail: {} }));
 
@@ -1600,20 +1588,20 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     window.setInterval(() => {
       hue = (hue + 0.15) % 360;
       V.run(107, { type: "aurora", detail: { hue } });
-      if (root.dataset.colorBlindShapes === "1") V.run(115, { type: "shape:tick", detail: {} });
+      if (root.dataset.colorBlindShapes === "1") V.run(115, { type: "shape:tick", detail: {} });,
     }, 50);
 
     window.addEventListener("master:face-error", (ev) => {
-      V.run(118, { type: "face:error", detail: ev.detail || {} });
+      V.run(118, { type: "face:error", detail: ev.detail || {} });,
     });
     window.addEventListener("webglcontextlost", () => {
-      V.run(118, { type: "webgl:lost", detail: { reason: "WebGL context lost — text mode" } });
+      V.run(118, { type: "webgl:lost", detail: { reason: "WebGL context lost — text mode" } });,
     }, { passive: true });
 
     window.MASTER_FACE_VISION.shareCard = (p) => V.run(93, { type: "share", detail: p || {} });
     window.MASTER_FACE_VISION.exportSvg = () => V.run(108, { type: "export:svg", detail: {} });
-    window.MASTER_FACE_VISION.describeTts = () => V.run(94, { type: "describe:api", detail: {} });
-  })();
+    window.MASTER_FACE_VISION.describeTts = () => V.run(94, { type: "describe:api", detail: {} });,
+  })();,
 })();
 // MASTER particle face 2026 — vision features 119–150 (reliability, frontier).
 (() => {
@@ -1627,23 +1615,23 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
   const qs = (k) => new URLSearchParams(location.search).get(k);
 
   function emit(type, detail = {}) {
-    window.MASTERVisual?.event?.(type, detail);
+    window.MASTERVisual?.event?.(type, detail);,
   }
 
   function sessionGet(key) {
-    try { return sessionStorage.getItem(key); } catch (_) { return null; }
+    try { return sessionStorage.getItem(key); } catch (_) { return null; },
   }
 
   function sessionSet(key, val) {
-    try { sessionStorage.setItem(key, val); return true; } catch (_) { return false; }
+    try { sessionStorage.setItem(key, val); return true; } catch (_) { return false; },
   }
 
   function storeGet(key) {
-    try { return localStorage.getItem(key); } catch (_) { return null; }
+    try { return localStorage.getItem(key); } catch (_) { return null; },
   }
 
   function storeSet(key, val) {
-    try { localStorage.setItem(key, val); return true; } catch (_) { return false; }
+    try { localStorage.setItem(key, val); return true; } catch (_) { return false; },
   }
 
   /* 119–130 reliability */
@@ -1655,22 +1643,22 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       badge.id = "build-badge";
       badge.className = "build-badge";
       badge.setAttribute("aria-hidden", "true");
-      body.appendChild(badge);
+      body.appendChild(badge);,
     }
     badge.textContent = ver;
     badge.title = `build ${ver}`;
-    root.dataset.buildBadge = ver;
+    root.dataset.buildBadge = ver;,
   });
 
   V.register(120, "PROBE_STRICT note", () => {
     const strict = window.MASTER_RUNTIME?.probe_strict
       || window.PROBE_STRICT
       || qs("probe_strict") === "1";
-    root.dataset.probeStrict = strict ? "1" : "0";
+    root.dataset.probeStrict = strict ? "1" : "0";,
   });
 
   V.register(121, "relayctl health dataset", (ctx) => {
-    root.dataset.relayctlHealth = ctx.detail.health || "unknown";
+    root.dataset.relayctlHealth = ctx.detail.health || "unknown";,
   });
 
   V.register(122, "sw:updated auto-reload once if primer fired", (ctx) => {
@@ -1679,7 +1667,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const key = `master:sw-reload:${version}`;
     if (sessionGet(key)) return;
     sessionSet(key, "1");
-    location.reload();
+    location.reload();,
   });
 
   V.register(123, "retry boot button in container timeout", () => {
@@ -1697,11 +1685,11 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
         delete body.dataset.faceBooting;
         btn.remove();
         window.dispatchEvent(new CustomEvent("primer:ready"));
-        window.MASTER_FACE_VISION?.boot?.({ force: true });
+        window.MASTER_FACE_VISION?.boot?.({ force: true });,
       });
-      container.appendChild(btn);
+      container.appendChild(btn);,
     }
-    root.dataset.bootRetry = "1";
+    root.dataset.bootRetry = "1";,
   });
 
   V.register(124, "face boot error module name in showBootError hook via master:face-error detail", (ctx) => {
@@ -1712,13 +1700,13 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       banner = document.createElement("div");
       banner.id = "face-error-banner";
       banner.className = "face-error-banner";
-      body.appendChild(banner);
+      body.appendChild(banner);,
     }
     banner.textContent = `${mod}: ${msg}`;
     root.dataset.bootErrorModule = mod;
     window.dispatchEvent(new CustomEvent("master:face-error", {
-      detail: { message: msg, module: mod, stage: ctx.detail.stage || "boot" }
-    }));
+      detail: { message: msg, module: mod, stage: ctx.detail.stage || "boot" },
+    }));,
   });
 
   V.register(125, "offline queue hook", (ctx) => {
@@ -1730,15 +1718,15 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: item.body,
-          keepalive: true
+          keepalive: true,
         }).catch(() => {
-          window._offlineQueue.unshift(item);
-        });
-      }
+          window._offlineQueue.unshift(item);,
+        });,
+      },
     } else if (ctx.detail.body) {
-      window._offlineQueue.push({ body: ctx.detail.body, at: Date.now() });
+      window._offlineQueue.push({ body: ctx.detail.body, at: Date.now() });,
     }
-    root.dataset.offlineQueue = String(window._offlineQueue.length);
+    root.dataset.offlineQueue = String(window._offlineQueue.length);,
   });
 
   V.register(126, "PWA install after 3 sessions", (ctx) => {
@@ -1747,15 +1735,15 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     root.dataset.pwaSessions = String(n);
     if (n >= 3 && window._deferredInstallPrompt) {
       window._deferredInstallPrompt.prompt?.();
-      root.dataset.pwaInstallPrompt = "shown";
-    }
+      root.dataset.pwaInstallPrompt = "shown";,
+    },
   });
 
   V.register(127, "falcon worker budget note", () => {
     const budget = window.MASTER_RUNTIME?.falcon_worker_budget
       || window.MASTER_RUNTIME?.worker_budget
       || "default";
-    root.dataset.falconWorkerBudget = String(budget);
+    root.dataset.falconWorkerBudget = String(budget);,
   });
 
   V.register(128, "TTS queue metrics", (ctx) => {
@@ -1763,7 +1751,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const len = tts?.queue?.length ?? 0;
     const playing = tts?.playing ? 1 : 0;
     root.dataset.ttsQueue = `${len}/${playing}`;
-    V.css("--tts-queue-depth", len);
+    V.css("--tts-queue-depth", len);,
   });
 
   V.register(129, "POST face metrics to /canvas/event topic face:metrics", (ctx) => {
@@ -1774,72 +1762,70 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       "payload[face_boot_ms]": String(impl.faceBootMs || root.dataset.faceBootMs || 0),
       "payload[particle_worker_alive]": String(!!impl.particleWorkerAlive),
       "payload[feature_count]": String(V.featureCount || 0),
-      "payload[bench_fps]": String(st.fps || root.dataset.benchFps || 0)
+      "payload[bench_fps]": String(st.fps || root.dataset.benchFps || 0),
     });
     fetch("/canvas/event", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: bodyParams,
-      keepalive: true
+      keepalive: true,
     }).catch(() => {});
-    root.dataset.faceMetricsPosted = String(Date.now());
+    root.dataset.faceMetricsPosted = String(Date.now());,
   });
 
   V.register(130, "dogfood note", () => {
     const dogfood = location.hostname === "localhost"
       || qs("dogfood") === "1"
       || window.MASTER_RUNTIME?.dogfood;
-    root.dataset.dogfood = dogfood ? "1" : "0";
+    root.dataset.dogfood = dogfood ? "1" : "0";,
   });
 
   /* 131–150 frontier */
   V.register(131, "WebNN viseme stub", (ctx) => {
     const has = !!(navigator.ml || window.MLContext);
     root.dataset.webnnViseme = has ? "available" : "stub";
-    ctx.detail.result = has ? { stub: true } : null;
+    ctx.detail.result = has ? { stub: true } : null;,
   });
 
   V.register(132, "SharedArrayBuffer tab sync stub", () => {
     const sab = typeof SharedArrayBuffer !== "undefined" && crossOriginIsolated;
-    root.dataset.sabTabSync = sab ? "ready" : "stub";
+    root.dataset.sabTabSync = sab ? "ready" : "stub";,
   });
 
   V.register(133, "WebTransport stub", (ctx) => {
     const has = typeof WebTransport !== "undefined";
     root.dataset.webTransport = has ? "available" : "stub";
     if (has && ctx.detail.url) {
-      try { ctx.detail.transport = new WebTransport(ctx.detail.url); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:web_transport", err); }
-    }
+      try { ctx.detail.transport = new WebTransport(ctx.detail.url); } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:web_transport", err); },
+    },
   });
 
   V.register(134, "View Transitions primer morph", () => {
     if (!document.startViewTransition) {
       root.dataset.viewTransition = "stub";
       return;
-    }
     root.dataset.viewTransition = "hooked";
     const primer = document.getElementById("primer");
     if (!primer) return;
     primer.addEventListener("click", () => {
       document.startViewTransition(() => {
         primer.classList.add("gone");
-        body.classList.add("face-session");
-      });
-    }, { once: true });
+        body.classList.add("face-session");,
+      });,
+    }, { once: true });,
   });
 
   V.register(135, "scroll-driven depth stub", () => {
     if (!CSS.supports?.("animation-timeline: scroll()")) {
       root.dataset.scrollDepth = "stub";
       return;
-    }
     root.dataset.scrollDepth = "css";
-    V.css("--scroll-depth", "scroll-driven");
+    V.css("--scroll-depth", "scroll-driven");,
   });
 
   V.register(136, "interest invokers lazy load note", () => {
     const invokers = !!HTMLScriptElement?.supports?.("interact-invokers");
-    root.dataset.interestInvokers = invokers ? "supported" : "lazy-note";
+    root.dataset.interestInvokers = invokers ? "supported" : "lazy-note";,
   });
 
   V.register(137, "Compute Pressure downgrade", (ctx) => {
@@ -1847,11 +1833,11 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     root.dataset.computePressure = "downgrade";
     root.dataset.runtimeProfile = "battery";
     emit("perf:downgrade", { topology: "terrain", entropy: 0.4, confidence: 0.6, mode: "downgrade" });
-    V.run(78, { type: "compute-pressure", detail: { throttle: true } });
+    V.run(78, { type: "compute-pressure", detail: { throttle: true } });,
   });
 
   V.register(138, "ML gaze opt-in stub", (ctx) => {
-    root.dataset.mlGaze = ctx.detail.optedIn ? "opted-in" : "opt-in-stub";
+    root.dataset.mlGaze = ctx.detail.optedIn ? "opted-in" : "opt-in-stub";,
   });
 
   V.register(139, "spatial audio council", (ctx) => {
@@ -1859,26 +1845,24 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!ctxAudio?.createStereoPanner) {
       root.dataset.spatialAudio = "stub";
       return;
-    }
     const lane = ctx.detail.lane || ctx.detail.raw?.lane;
     const pan = lane === "left" ? -0.6 : lane === "right" ? 0.6 : 0;
     root.dataset.spatialAudio = `pan-${pan}`;
-    V.css("--council-pan", String(pan));
+    V.css("--council-pan", String(pan));,
   });
 
   V.register(140, "WebXR stub", (ctx) => {
     const has = !!navigator.xr;
     root.dataset.webxr = has ? "available" : "stub";
-    if (has && ctx.detail.vr != null) root.dataset.webxrVr = ctx.detail.vr ? "1" : "0";
+    if (has && ctx.detail.vr != null) root.dataset.webxrVr = ctx.detail.vr ? "1" : "0";,
   });
 
   V.register(141, "collaborative ActionCable fanout hook", (ctx) => {
     if (!window.ActionCable) {
       root.dataset.actionCableFanout = "stub";
       return;
-    }
     window.dispatchEvent(new CustomEvent("master:cable-fanout", { detail: ctx.detail.event || ctx.detail }));
-    root.dataset.actionCableFanout = "hooked";
+    root.dataset.actionCableFanout = "hooked";,
   });
 
   V.register(142, "generative topology JSON", (ctx) => {
@@ -1886,22 +1870,20 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const nodes = Array.from({ length: 8 }, (_, i) => ({
       id: i,
       x: Math.sin(s * 0.001 + i) * 0.5,
-      y: Math.cos(s * 0.0013 + i) * 0.5
+      y: Math.cos(s * 0.0013 + i) * 0.5,
     }));
     const json = { seed: s, nodes, edges: nodes.slice(0, -1).map((n, i) => [n.id, nodes[i + 1].id]) };
     root.dataset.genTopology = String(s);
     ctx.detail.topology = json;
     return json;
-  });
 
   V.register(143, "on-device rules.yml flash", (ctx) => {
     const text = ctx.detail.text || "";
     if (!text) {
       root.dataset.rulesFlash = "stub";
       return;
-    }
     root.dataset.rulesFlash = `${text.length}b`;
-    storeSet("master:rules-flash", text.slice(0, 4096));
+    storeSet("master:rules-flash", text.slice(0, 4096));,
   });
 
   V.register(144, "benchmark leaderboard localStorage", (ctx) => {
@@ -1913,19 +1895,19 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       list.push({ ...entry, at: Date.now() });
       list.sort((a, b) => (b.fps || 0) - (a.fps || 0));
       storeSet(KEY, JSON.stringify(list.slice(0, 20)));
-      ctx.detail.leaderboard = list;
-    } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:leaderboard_store", err); }
+      ctx.detail.leaderboard = list;,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:leaderboard_store", err); },
   });
 
   V.register(145, "plugin viseme packs JSON", (ctx) => {
     const packs = ctx.detail.packs;
     if (packs) {
       V.visemePacks = packs;
-      root.dataset.visemePacks = String(Object.keys(packs).length);
+      root.dataset.visemePacks = String(Object.keys(packs).length);,
     } else {
       V.visemePacks = { default: ["AA", "EE", "OH", "MM", "rest"] };
-      root.dataset.visemePacks = "stub";
-    }
+      root.dataset.visemePacks = "stub";,
+    },
   });
 
   V.register(146, "time-travel trace scrub", (ctx) => {
@@ -1933,22 +1915,21 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     const target = Number(ctx.detail.t) || 0;
     const hit = trace.filter((e) => e.t <= target).pop();
     if (hit) {
-      emit("trace:scrub", { topology: "warp-tunnel", entropy: 0.25, confidence: 0.8, mode: hit.mode || "trace", t: target });
+      emit("trace:scrub", { topology: "warp-tunnel", entropy: 0.25, confidence: 0.8, mode: hit.mode || "trace", t: target });,
     }
-    ctx.detail.hit = hit || null;
+    ctx.detail.hit = hit || null;,
   });
 
   V.register(147, "cross-app postMessage mood", (ctx) => {
     if (ctx.detail.broadcast) {
       window.parent?.postMessage?.({ type: "master:mood", mood: ctx.st.mood, mode: ctx.st.mode }, "*");
       return;
-    }
     const mood = ctx.detail.mood;
     const mode = ctx.detail.mode;
     if (mood) ctx.st.mood = mood;
     if (mode) ctx.st.mode = mode;
     root.dataset.crossAppMood = ctx.st.mood || "";
-    emit("mood:cross-app", { topology: "papua-mask", entropy: 0.15, confidence: 0.85, mode: ctx.st.mode });
+    emit("mood:cross-app", { topology: "papua-mask", entropy: 0.15, confidence: 0.85, mode: ctx.st.mode });,
   });
 
   V.register(148, "WebM moment export", async (ctx) => {
@@ -1957,7 +1938,6 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       root.dataset.webmExport = "stub";
       ctx.detail.blob = null;
       return;
-    }
     try {
       const stream = cv.captureStream(30);
       const rec = new MediaRecorder(stream, { mimeType: "video/webm" });
@@ -1968,11 +1948,11 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       rec.stop();
       await new Promise((r) => { rec.onstop = r; });
       ctx.detail.blob = new Blob(chunks, { type: "video/webm" });
-      root.dataset.webmExport = "ok";
+      root.dataset.webmExport = "ok";,
     } catch (_) {
       root.dataset.webmExport = "stub";
-      ctx.detail.blob = null;
-    }
+      ctx.detail.blob = null;,
+    },
   });
 
   V.register(149, "zero-JS shell note", () => {
@@ -1981,8 +1961,8 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     if (!noscript) {
       const el = document.createElement("noscript");
       el.textContent = "MASTER particle face requires JavaScript.";
-      body.appendChild(el);
-    }
+      body.appendChild(el);,
+    },
   });
 
   V.register(150, "public API MASTERVisual.event documented on MASTER_FACE_VISION", () => {
@@ -1992,9 +1972,9 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
      * @param {Object} [detail] - { topology, entropy, confidence, mode, ... }
      */
     if (!V.event.doc) {
-      V.event.doc = "Proxy to MASTERVisual.event(type, detail) — canonical visual bus.";
+      V.event.doc = "Proxy to MASTERVisual.event(type, detail) — canonical visual bus.";,
     }
-    root.dataset.publicApi = "MASTERVisual.event";
+    root.dataset.publicApi = "MASTERVisual.event";,
   });
 
   /* wiring */
@@ -2018,32 +1998,32 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     window.setInterval(() => {
       fetch("/health", { credentials: "same-origin", cache: "no-store" })
         .then((r) => V.run(121, { type: "health", detail: { health: r.ok ? "ok" : `err-${r.status}` } }))
-        .catch(() => V.run(121, { type: "health", detail: { health: "offline" } }));
+        .catch(() => V.run(121, { type: "health", detail: { health: "offline" } }));,
     }, 60000);
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener("message", (ev) => {
         if (ev.data?.type !== "sw:updated") return;
-        V.run(122, { type: "sw:updated", detail: { version: ev.data.version } });
-      });
+        V.run(122, { type: "sw:updated", detail: { version: ev.data.version } });,
+      });,
     }
 
     window.setTimeout(() => {
       if (!window.MASTER_FACE && body.dataset.faceBooting === "1") {
-        V.run(123, { type: "container-timeout", detail: {} });
-      }
+        V.run(123, { type: "container-timeout", detail: {} });,
+      },
     }, 12000);
 
     window.addEventListener("master:container-timeout", () => {
-      V.run(123, { type: "master:container-timeout", detail: {} });
+      V.run(123, { type: "master:container-timeout", detail: {} });,
     });
 
     window.addEventListener("master:face-error", (ev) => {
-      if (ev.detail?.module) root.dataset.bootErrorModule = ev.detail.module;
+      if (ev.detail?.module) root.dataset.bootErrorModule = ev.detail.module;,
     });
 
     window.addEventListener("online", () => {
-      V.run(125, { type: "offline:flush", detail: { flush: true } });
+      V.run(125, { type: "offline:flush", detail: { flush: true } });,
     });
 
     const PWA_KEY = "master:pwa:sessions";
@@ -2051,7 +2031,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     storeSet(PWA_KEY, String(sessions));
     window.addEventListener("beforeinstallprompt", (ev) => {
       ev.preventDefault();
-      window._deferredInstallPrompt = ev;
+      window._deferredInstallPrompt = ev;,
     });
     V.run(126, { type: "init", detail: { sessions } });
 
@@ -2063,22 +2043,22 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       try {
         const obs = new PressureObserver((records) => {
           const bad = records.some((r) => r.state === "serious" || r.state === "critical");
-          if (bad) V.run(137, { type: "pressure", detail: { downgrade: true } });
+          if (bad) V.run(137, { type: "pressure", detail: { downgrade: true } });,
         });
-        obs.observe("cpu").catch(() => {});
-      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:pressure_observer", err); }
+        obs.observe("cpu").catch(() => {});,
+      } catch (err) { window.MASTER_LOG?.warn?.("face_vision_d:pressure_observer", err); },
     }
 
     if (document.startViewTransition) {
-      window.addEventListener("primer:ready", () => V.run(134, { type: "primer:ready", detail: {} }), { once: true });
+      window.addEventListener("primer:ready", () => V.run(134, { type: "primer:ready", detail: {} }), { once: true });,
     }
 
     if (navigator.xr?.isSessionSupported) {
       navigator.xr.isSessionSupported("immersive-vr")
         .then((ok) => V.run(140, { type: "webxr:probe", detail: { vr: ok } }))
-        .catch(() => V.run(140, { type: "webxr:probe", detail: { vr: false } }));
+        .catch(() => V.run(140, { type: "webxr:probe", detail: { vr: false } }));,
     } else {
-      V.run(140, { type: "init", detail: {} });
+      V.run(140, { type: "init", detail: {} });,
     }
 
     window._faceTrace = [];
@@ -2087,13 +2067,13 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       window._faceTrace.push({ t: performance.now(), name: d.name, mode: d.mode });
       while (window._faceTrace.length > 200) window._faceTrace.shift();
       if (/council/i.test(String(d.name || ""))) {
-        V.run(139, { type: String(d.name), detail: d });
-      }
+        V.run(139, { type: String(d.name), detail: d });,
+      },
     });
 
     window.addEventListener("message", (ev) => {
       if (ev.data?.type !== "master:mood") return;
-      V.run(147, { type: "postMessage", detail: { mood: ev.data.mood, mode: ev.data.mode } });
+      V.run(147, { type: "postMessage", detail: { mood: ev.data.mood, mode: ev.data.mode } });,
     });
 
     fetch(window.MASTER_ASSET_PATHS?.visemePacks || "/viseme_packs.json", { credentials: "same-origin" })
@@ -2103,34 +2083,32 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
 
     window.MASTER_FACE_VISION.offlineQueue = {
       enqueue(bodyStr) {
-        V.run(125, { type: "offline:enqueue", detail: { body: bodyStr } });
+        V.run(125, { type: "offline:enqueue", detail: { body: bodyStr } });,
       },
       flush() {
-        V.run(125, { type: "offline:flush", detail: { flush: true } });
-      }
+        V.run(125, { type: "offline:flush", detail: { flush: true } });,
+      },
     };
 
     window.MASTER_FACE_VISION.showBootError = (err, meta) => {
       V.run(124, {
         type: "boot:error",
-        detail: { message: err?.message || String(err), module: meta?.module, stage: meta?.stage }
-      });
+        detail: { message: err?.message || String(err), module: meta?.module, stage: meta?.stage },
+      });,
     };
 
     window.MASTER_FACE_VISION.generateTopology = (seed) => {
       const ctx = { type: "topology:gen", detail: { seed } };
       V.run(142, ctx);
       return ctx.detail.topology;
-    };
 
     window.MASTER_FACE_VISION.scrubTrace = (t) => {
       const ctx = { type: "trace:scrub", detail: { t } };
       V.run(146, ctx);
       return ctx.detail.hit;
-    };
 
     window.MASTER_FACE_VISION.broadcastMood = () => {
-      V.run(147, { type: "mood:broadcast", detail: { broadcast: true }, st: V.state() });
+      V.run(147, { type: "mood:broadcast", detail: { broadcast: true }, st: V.state() });,
     };
 
     window.MASTER_FACE_VISION.exportWebm = async (ms) => {
@@ -2138,14 +2116,13 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
       const handler = V.features.get(148)?.handler;
       if (handler) await handler(ctx);
       return ctx.detail.blob;
-    };
 
     window.MASTER_FACE_VISION.cableFanout = (event) => {
-      V.run(141, { type: "cable:fanout", detail: { event } });
+      V.run(141, { type: "cable:fanout", detail: { event } });,
     };
 
     window.MASTER_FACE_VISION.recordBench = (entry) => {
-      V.run(144, { type: "bench:record", detail: { entry } });
+      V.run(144, { type: "bench:record", detail: { entry } });,
     };
 
     window.MASTER_FACE_VISION.gazeOptIn = async () => {
@@ -2155,27 +2132,25 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
         stream.getTracks().forEach((t) => t.stop());
         V.run(138, { type: "gaze:opt-in", detail: { optedIn: true } });
         return true;
-      } catch (_) {
-        return false;
-      }
+        return false;,
     };
 
     if (typeof WebTransport !== "undefined") {
-      root.dataset.webTransport = "available";
+      root.dataset.webTransport = "available";,
     }
 
     window.addEventListener("master:visual", (ev) => {
       const fps = Number(root.dataset.benchFps);
-      if (fps > 0) V.run(144, { type: "bench:auto", detail: { entry: { fps } } });
+      if (fps > 0) V.run(144, { type: "bench:auto", detail: { entry: { fps } } });,
     });
 
     // Patch face.js dispatchFaceError if loaded later
     const patchFaceError = () => {
       if (window._faceErrorPatched) return;
-      window._faceErrorPatched = true;
+      window._faceErrorPatched = true;,
     };
-    patchFaceError();
+    patchFaceError();,
   })();
 
-  window.MASTER_FACE_VISION?.boot?.();
+  window.MASTER_FACE_VISION?.boot?.();,
 })();

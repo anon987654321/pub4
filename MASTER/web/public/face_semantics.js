@@ -30,12 +30,12 @@ function applyVerticalTimbre() {
       const b = i * K.FIELDS_PER_CELL;
       if (VERTICAL_BIAS.arousal != null) mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.4) + VERTICAL_BIAS.arousal * 0.08);
       if (VERTICAL_BIAS.pressure != null) mouthCells()[b + K.FIELD.pressure] = Math.min(1, (mouthCells()[b + K.FIELD.pressure] || 0) + VERTICAL_BIAS.pressure * 0.06);
-      if (VERTICAL_BIAS.valence != null) mouthCells()[b + K.FIELD.valence] = (mouthCells()[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;
-    }
+      if (VERTICAL_BIAS.valence != null) mouthCells()[b + K.FIELD.valence] = (mouthCells()[b + K.FIELD.valence] || 0) + VERTICAL_BIAS.valence * 0.05;,
+    },
   }
   if (VERTICAL_BIAS.scanline != null && F_FACE_SEM.faceMat?.uniforms?.uScanline) {
-    F_FACE_SEM.faceMat.uniforms.uScanline.value = Math.min(0.5, VERTICAL_BIAS.scanline);
-  }
+    F_FACE_SEM.faceMat.uniforms.uScanline.value = Math.min(0.5, VERTICAL_BIAS.scanline);,
+  },
 }
 applyVerticalTimbre();
 
@@ -49,12 +49,12 @@ function crossPoolInfluence() {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     mouthArousal += mouthCells()[b + K.FIELD.arousal];
-    mn++;
+    mn++;,
   }
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     eyeAttn += eyeCells()[b + K.FIELD.attention];
-    en++;
+    en++;,
   }
   if (!mn || !en) return;
   const share = 0.04 * density;
@@ -62,12 +62,12 @@ function crossPoolInfluence() {
   const targetE = eyeAttn / en;
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyeCells()[b + K.FIELD.arousal] = Math.min(1, (eyeCells()[b + K.FIELD.arousal] || 0) * (1 - share) + targetA * share);
+    eyeCells()[b + K.FIELD.arousal] = Math.min(1, (eyeCells()[b + K.FIELD.arousal] || 0) * (1 - share) + targetA * share);,
   }
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    mouthCells()[b + K.FIELD.attention] = Math.min(1, (mouthCells()[b + K.FIELD.attention] || 0) * (1 - share) + targetE * share);
-  }
+    mouthCells()[b + K.FIELD.attention] = Math.min(1, (mouthCells()[b + K.FIELD.attention] || 0) * (1 - share) + targetE * share);,
+  },
 }
 setInterval(crossPoolInfluence, 480);
 // Semantic reaction — now primarily driven by server Expression payloads
@@ -81,15 +81,14 @@ function boostEyePool(delta, field = 'attention') {
   const key = K.FIELD[field] ?? K.FIELD.attention;
   for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
-    eyeCells()[b + key] = Math.min(1, (eyeCells()[b + key] || 0.5) + delta);
-  }
+    eyeCells()[b + key] = Math.min(1, (eyeCells()[b + key] || 0.5) + delta);,
+  },
 }
 
 function payloadConfidence(d) {
   const raw = d.raw || d.payload || {};
   const v = raw.confidence ?? d.confidence;
   return typeof v === 'number' ? v : null;
-}
 
 window.addEventListener('master:pressure', (ev) => {
   const d = ev.detail || {};
@@ -107,13 +106,13 @@ window.addEventListener('master:pressure', (ev) => {
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * K.FIELDS_PER_CELL;
     mouthCells()[b + K.FIELD.pressure] = Math.min(1, push + turb);
-    if (grav > 0) mouthCells()[b + K.FIELD.valence] = Math.max(-0.2, (mouthCells()[b + K.FIELD.valence] || 0) - grav * 0.12);
-  }
+    if (grav > 0) mouthCells()[b + K.FIELD.valence] = Math.max(-0.2, (mouthCells()[b + K.FIELD.valence] || 0) - grav * 0.12);,
+  },
 });
 
 window.addEventListener('master:palette', (ev) => {
   const accent = ev.detail?.accent;
-  if (accent) document.documentElement.style.setProperty('--master-accent', accent);
+  if (accent) document.documentElement.style.setProperty('--master-accent', accent);,
 });
 
 function dropMouthConfidence(drop) {
@@ -125,12 +124,12 @@ function dropMouthConfidence(drop) {
     if (!mouthPool.alive[i]) continue;
     const b = i * K.FIELDS_PER_CELL;
     mouthCells()[b + K.FIELD.confidence] = Math.max(0.15, (mouthCells()[b + K.FIELD.confidence] || 0.8) - drop);
-    dropped++;
-  }
+    dropped++;,
+  },
 }
 
 function pushMoodArcSample(detail) {
-  window.MASTER_FACE_EXPRESSION?.pushMoodArcSample?.(State, detail);
+  window.MASTER_FACE_EXPRESSION?.pushMoodArcSample?.(State, detail);,
 }
 window.MASTER_FACE_EXPRESSION?.restoreMood?.(State);
 
@@ -144,7 +143,7 @@ window.addEventListener('master:visual', (ev) => {
   if (/input:paste/.test(name)) boostEyePool(0.04, 'attention');
   if (/user:interrupt/.test(name)) {
     State.shake = Math.max(State.shake || 0, 0.35);
-    State.pulse = Math.max(State.pulse || 0, 0.2);
+    State.pulse = Math.max(State.pulse || 0, 0.2);,
   }
   if ((d.confidence ?? State.confidence) > 0.85) State.calmStareUntil = performance.now() + 900;
   if ((d.confidence ?? State.confidence) < 0.3) State.nervousUntil = performance.now() + 2500;
@@ -157,41 +156,41 @@ window.addEventListener('master:visual', (ev) => {
     dropMouthConfidence(0.35);
     if (F_FACE_SEM.faceMat?.uniforms?.uChroma) F_FACE_SEM.faceMat.uniforms.uChroma.value = 0.28;
     rootBody.dataset.errorInstrument = '1';
-    setTimeout(() => { delete rootBody.dataset.errorInstrument; }, 2200);
+    setTimeout(() => { delete rootBody.dataset.errorInstrument; }, 2200);,
   }
   if (/phantom:detected|phantom:retry|flinch/.test(name) || d.flinch) {
     State.shake = Math.max(State.shake || 0, 0.65);
     State.surpriseY = Math.max(State.surpriseY || 0, 0.42);
-    State.pulse = Math.max(State.pulse || 0, 0.38);
+    State.pulse = Math.max(State.pulse || 0, 0.38);,
   }
   if (/complete|success|done|pass/.test(name)) {
     State.bloom = Math.max(State.bloom || 0, 0.65);
     State.mood = /pass/.test(name) ? 'pass' : State.mood;
-    if (/pass/.test(name)) window._chatPassHairline?.();
+    if (/pass/.test(name)) window._chatPassHairline?.();,
   }
   const prevMood = State.mood;
   if (d.mood && d.mood !== prevMood) {
     State.mood = d.mood;
     window.MASTER_FACE?.updateMoodHistory?.(d.mood);
     window.MASTER_FACE?.spawnEmotionalGhost?.(d.mood);
-    window.MASTER_FACE_EXPRESSION?.persistMood?.(State);
+    window.MASTER_FACE_EXPRESSION?.persistMood?.(State);,
   }
   if (/chat:first/.test(name) && mouthPool && window.ParticleKernel) {
     const K = window.ParticleKernel;
-    for (let i = 0; i < 5; i++) K.spawn(mouthPool, 0, 0.55, { kind: 4, zone: 1, valence: 0.7, confidence: 0.85, decay: 0.004, label: d.provider || 'seed' });
+    for (let i = 0; i < 5; i++) K.spawn(mouthPool, 0, 0.55, { kind: 4, zone: 1, valence: 0.7, confidence: 0.85, decay: 0.004, label: d.provider || 'seed' });,
   }
   if (/photo:preview/.test(name)) boostEyePool(0.12);
   if (/photo:ready/.test(name) && mouthPool && window.ParticleKernel) {
     const K = window.ParticleKernel;
-    K.spawn(mouthPool, 0, 0.5, { kind: 4, zone: 1, valence: 0.6, attention: 0.8, decay: 0.006 });
+    K.spawn(mouthPool, 0, 0.5, { kind: 4, zone: 1, valence: 0.6, attention: 0.8, decay: 0.006 });,
   }
   if (/council:deliberation|council:start/.test(name)) {
     State.pulse = Math.max(State.pulse || 0, 0.48);
-    State.mode = State.mode === 'speaking' ? State.mode : 'thinking';
+    State.mode = State.mode === 'speaking' ? State.mode : 'thinking';,
   }
   if (/llm:request|pipeline:start|thinking/.test(name) && State.mode !== 'speaking') {
     State.mode = 'thinking';
-    State.pulse = Math.max(State.pulse || 0, 0.32);
+    State.pulse = Math.max(State.pulse || 0, 0.32);,
   }
   const K = window.ParticleKernel;
   if (/infer:resolved|infer:confidence|route:resolved|llm:routed/.test(name) && mouthPool && K) {
@@ -199,33 +198,33 @@ window.addEventListener('master:visual', (ev) => {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
       mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.3) + bump);
-      mouthCells()[b + K.FIELD.pressure] = Math.min(1, (mouthCells()[b + K.FIELD.pressure] || 0) + bump * 0.45);
+      mouthCells()[b + K.FIELD.pressure] = Math.min(1, (mouthCells()[b + K.FIELD.pressure] || 0) + bump * 0.45);,
     }
-    State.pulse = Math.max(State.pulse || 0, 0.28);
+    State.pulse = Math.max(State.pulse || 0, 0.28);,
   }
   if (/infer:rejected/.test(name)) {
     State.tremor = Math.max(State.tremor || 0, 0.25);
-    dropMouthConfidence(0.12);
+    dropMouthConfidence(0.12);,
   }
   if (/escalat|fallback|retry/.test(name)) {
     State.tremor = Math.max(State.tremor || 0, 0.4);
-    State.mood = 'tense';
+    State.mood = 'tense';,
   }
   if (/memory|retriev|context/.test(name)) {
-    State.ripplePhase = State.ripplePhase < 0 ? 0 : State.ripplePhase;
+    State.ripplePhase = State.ripplePhase < 0 ? 0 : State.ripplePhase;,
   }
   if (mouthPool && K) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
       if (/speaking|tts/.test(name)) mouthCells()[b + K.FIELD.arousal] = Math.min(1, (mouthCells()[b + K.FIELD.arousal] || 0.3) + 0.2);
-      if (d.expression?.arousal != null) mouthCells()[b + K.FIELD.arousal] = d.expression.arousal;
-    }
+      if (d.expression?.arousal != null) mouthCells()[b + K.FIELD.arousal] = d.expression.arousal;,
+    },
   }
   if (eyePool && K && /council:deliberation|council:start|error|veto/.test(name)) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
-      eyeCells()[b + K.FIELD.confidence] = Math.max(0.25, (eyeCells()[b + K.FIELD.confidence] || 0.9) - 0.18);
-    }
+      eyeCells()[b + K.FIELD.confidence] = Math.max(0.25, (eyeCells()[b + K.FIELD.confidence] || 0.9) - 0.18);,
+    },
   }
   if (!mouthPool || !eyePool) return;
 
@@ -240,8 +239,8 @@ window.addEventListener('master:visual', (ev) => {
   if ((d.entropy || 0) > 0.6 || d.mode === 'veto' || /veto|error|failure/.test(d.name || '')) {
     for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-      eyeCells()[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));
-    }
+      eyeCells()[b + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[b + window.ParticleKernel.FIELD.confidence] || 0.9) - (ex.eye_confidence_drop || 0.3));,
+    },
   }
 
   if (/tts:style|style:active/i.test(d.name || '')) {
@@ -255,29 +254,29 @@ window.addEventListener('master:visual', (ev) => {
       if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
 
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
-      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyeCells()[b + window.ParticleKernel.FIELD.confidence] = 0.6);
+      if (Math.abs(pitch) > 20) eyePool?.alive && (eyeCells()[b + window.ParticleKernel.FIELD.confidence] = 0.6);,
     }
 
-    if (hi) State.creativeBleed = (State.creativeBleed || 0) + 0.9;
+    if (hi) State.creativeBleed = (State.creativeBleed || 0) + 0.9;,
   }
 
   if (/council:deliberation|council:start/i.test(d.name || '')) {
     const cDrop  = ex.eye_confidence_drop || 0.25;
     if (eyePool) for (let i = 0; i < eyePool.count; i++) if (eyePool.alive[i])
-      eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);
+      eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence] = Math.max(0.2, (eyeCells()[i*window.ParticleKernel.FIELDS_PER_CELL + window.ParticleKernel.FIELD.confidence]||0.9) - cDrop);,
   }
 
   if (/input:long|cmd:long/i.test(d.name || '')) {
-    State.jitter = Math.max(State.jitter || 0.2, 0.55);
+    State.jitter = Math.max(State.jitter || 0.2, 0.55);,
   }
 
   if (ex && (ex.arousal != null || ex.valence != null || ex.attention != null)) {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * window.ParticleKernel.FIELDS_PER_CELL;
       if (ex.arousal != null) mouthCells()[b + window.ParticleKernel.FIELD.arousal] = smoothExpressionValue('arousal', ex.arousal);
-      if (ex.valence != null) mouthCells()[b + window.ParticleKernel.FIELD.valence] = smoothExpressionValue('valence', ex.valence);
-    }
-  }
+      if (ex.valence != null) mouthCells()[b + window.ParticleKernel.FIELD.valence] = smoothExpressionValue('valence', ex.valence);,
+    },
+  },
 });
 
 function smoothExpressionValue(key, target) {
@@ -286,10 +285,9 @@ function smoothExpressionValue(key, target) {
   const next = current + (target - current) * (State.reducedMotion ? 0.35 : 0.18);
   State.expressionCurrent[key] = next;
   return next;
-}
 
 setInterval(() => {
-  if (State.creativeBleed > 0.01) State.creativeBleed *= 0.82;
+  if (State.creativeBleed > 0.01) State.creativeBleed *= 0.82;,
 }, 420);
 
 window.addEventListener('tts:anticipate', (ev) => {
@@ -298,9 +296,9 @@ window.addEventListener('tts:anticipate', (ev) => {
   boostEyePool(0.15);
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
     const b = i * window.ParticleKernel.FIELDS_PER_CELL;
-    mouthCells()[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthCells()[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));
+    mouthCells()[b + window.ParticleKernel.FIELD.arousal] = Math.min(1.0, (mouthCells()[b + window.ParticleKernel.FIELD.arousal] || 0.6) + (ex.arousal || 0.25));,
   }
-  State.pulse = Math.max(State.pulse || 0, 0.35);
+  State.pulse = Math.max(State.pulse || 0, 0.35);,
 });
 
 window.addEventListener('tts:style:active', (ev) => {
@@ -309,7 +307,7 @@ window.addEventListener('tts:style:active', (ev) => {
   State.currentSpeechStyle = d.style || State.currentSpeechStyle;
   if (ex.emotion) window.Face3DPreview?.engine?.setEmotion?.(ex.emotion);
   if (d.blendshapes && window.Face3DPreview?.engine?.setBlend) {
-    window.Face3DPreview.engine.setBlend(d.blendshapes);
+    window.Face3DPreview.engine.setBlend(d.blendshapes);,
   }
   if (mouthPool && window.ParticleKernel) {
     const K = window.ParticleKernel;
@@ -318,10 +316,10 @@ window.addEventListener('tts:style:active', (ev) => {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
       mouthCells()[b + K.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
-      if (ex.pressure != null) mouthCells()[b + K.FIELD.pressure] = ex.pressure;
+      if (ex.pressure != null) mouthCells()[b + K.FIELD.pressure] = ex.pressure;,
     }
-    if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
-  }
+    if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));,
+  },
 });
 
 window.addEventListener('tts:playback:start', (ev) => {
@@ -335,10 +333,10 @@ window.addEventListener('tts:playback:start', (ev) => {
   if (mouthPool && K && effort > 1) {
     for (let n = 0; n < effort; n++) {
       K.spawn(mouthPool, (Math.random() - 0.5) * 0.2, 0.48, {
-        kind: 4, zone: 1, arousal: 0.75, pressure: 0.42, confidence: 0.55, decay: 0.005
-      });
-    }
-  }
+        kind: 4, zone: 1, arousal: 0.75, pressure: 0.42, confidence: 0.55, decay: 0.005,
+      });,
+    },
+  },
 });
 
 window.addEventListener('tts:playback:end', (ev) => {
@@ -349,8 +347,8 @@ window.addEventListener('tts:playback:end', (ev) => {
     for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
       const b = i * K.FIELDS_PER_CELL;
       mouthCells()[b + K.FIELD.arousal] = Math.max(0.12, (mouthCells()[b + K.FIELD.arousal] || 0.5) * decay);
-      mouthCells()[b + K.FIELD.pressure] = Math.max(0.08, (mouthCells()[b + K.FIELD.pressure] || 0) * decay);
-    }
+      mouthCells()[b + K.FIELD.pressure] = Math.max(0.08, (mouthCells()[b + K.FIELD.pressure] || 0) * decay);,
+    },
   }
   State.pulse = Math.max(0, (State.pulse || 0) * decay);
   if (State.mode === 'speaking') State.mode = 'idle';
@@ -361,13 +359,13 @@ window.addEventListener('tts:playback:end', (ev) => {
   // identifier), so the mouth shape never relaxed to neutral between speech
   // segments. Reset State directly, mirroring face.runtime.js's clearViseme().
   State.viseme = 'neutral';
-  State.visemeAmp = 0;
+  State.visemeAmp = 0;,
 });
 
 window.addEventListener('tts:viseme', (ev) => {
   const d = ev.detail || {};
   State.viseme = d.shape || State.viseme || 'neutral';
-  State.visemeAmp = Number.isFinite(Number(d.amp)) ? Number(d.amp) : State.visemeAmp;
+  State.visemeAmp = Number.isFinite(Number(d.amp)) ? Number(d.amp) : State.visemeAmp;,
 });
 
 resize();
@@ -376,11 +374,11 @@ if (renderer) {
   if (_dbgEl) {
     const _dbgTimer = setInterval(() => {
       if (!_dbgEl.isConnected) { clearInterval(_dbgTimer); return; }
-      _dbgEl.textContent = `webgl ok · f:${F_FACE_SEM.dbgFrames ?? 0} m:${Number(F_FACE_SEM.morphCurrent ?? 0).toFixed(2)}`;
+      _dbgEl.textContent = `webgl ok · f:${F_FACE_SEM.dbgFrames ?? 0} m:${Number(F_FACE_SEM.morphCurrent ?? 0).toFixed(2)}`;,
     }, 500);
-    setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);
+    setTimeout(() => { clearInterval(_dbgTimer); _dbgEl.remove(); }, 30000);,
   }
-  if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); }
+  if (window._primerFired && !F_FACE_SEM.primerFired) { window._primerFired = true; F_FACE_SEM.startEverything?.(); },
 } else {
   (function start2D() {
     const cv2 = document.createElement('canvas');
@@ -396,13 +394,13 @@ if (renderer) {
     for (let i = 0; i < N2; i++) {
       pts[i*7]   = faceHome[i*3];   pts[i*7+1] = faceHome[i*3+1];   pts[i*7+2] = faceHome[i*3+2];
       pts[i*7+3] = faceScatter[i*3]; pts[i*7+4] = faceScatter[i*3+1]; pts[i*7+5] = faceScatter[i*3+2];
-      pts[i*7+6] = faceSeeds[i];
+      pts[i*7+6] = faceSeeds[i];,
     }
 
     let cw2 = 0, ch2 = 0;
     function resize2() {
       cw2 = window.innerWidth; ch2 = window.innerHeight;
-      cv2.width = cw2; cv2.height = ch2;
+      cv2.width = cw2; cv2.height = ch2;,
     }
     resize2();
     window.addEventListener('resize', resize2, { passive: true });
@@ -455,17 +453,17 @@ if (renderer) {
         const pxI = (px - sz * 0.5) | 0;
         const pyI = (py - sz * 0.5) | 0;
         const lum = (_r2 + _g2 + _b2) / (255 * 3);
-        if (K2 && K2.ditherThreshold(pxI, pyI, lum)) {
+        if (K2?.ditherThreshold(pxI, pyI, lum)) {
           ctx2.fillStyle = `rgb(${_r2},${_g2},${_b2})`;
-          ctx2.fillRect(pxI, pyI, Math.ceil(sz), Math.ceil(sz));
-        }
+          ctx2.fillRect(pxI, pyI, Math.ceil(sz), Math.ceil(sz));,
+        },
       }
       ctx2.globalAlpha = 1.0;
 
       F_FACE_SEM.incrementDbgFrames?.();
       markFaceReady();
-      requestAnimationFrame(frame2);
+      requestAnimationFrame(frame2);,
     }
-    requestAnimationFrame(frame2);
-  })();
+    requestAnimationFrame(frame2);,
+  })();,
 }

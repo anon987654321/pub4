@@ -29,11 +29,11 @@
     [/stt:/i, [34]], [/tts:error|tts:job_cancelled/i, [35]],
     [/face3d|visual:ready|compositor/i, [36]],
     [/face-ready|boot|primer/i, [37, 40]],
-    [/blend|user:expression|face:mouth/i, [38]], [/phosphor|trail/i, [39]]
+    [/blend|user:expression|face:mouth/i, [38]], [/phosphor|trail/i, [39]],
   ];
   const TTS_EVENTS = [
     "tts:viseme", "tts:playback:start", "tts:playback:end", "tts:anticipate", "tts:style:active",
-    "master:tts:viseme", "master:tts:playback:start", "master:tts:playback:end"
+    "master:tts:viseme", "master:tts:playback:start", "master:tts:playback:end",
   ];
   let primerReadyAt = 0;
   let faceBootMs = 0;
@@ -50,10 +50,9 @@
     const p = pool();
     if (!kernel || !p || p.count >= p.capacity) return -1;
     return kernel.spawn(p, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.03, { zone: zone || 0, ...props });
-  }
 
   function css(name, value) {
-    if (name) document.documentElement.style.setProperty(name, String(value));
+    if (name) document.documentElement.style.setProperty(name, String(value));,
   }
 
   function register(id, summary, handler) {
@@ -61,7 +60,6 @@
     if (!Number.isFinite(fid) || fid < 1 || fid > MAX_FEATURES) return false;
     features.set(fid, { id: fid, summary: String(summary || ""), handler: typeof handler === "function" ? handler : null });
     return true;
-  }
 
   function run(id, ctx = {}) {
     const entry = features.get(Number(id));
@@ -69,10 +67,8 @@
     try {
       entry.handler({ ...ctx, st: ctx.st || state(), pool: ctx.pool || pool() });
       return true;
-    } catch (err) {
       window.MASTER_LOG?.warn?.("face_vision:run", err);
-      return false;
-    }
+      return false;,
   }
 
   function routeEvent(type, detail = {}) {
@@ -82,12 +78,11 @@
     ROUTES.forEach(([re, ids, cond]) => {
       if (re && !re.test(name)) return;
       if (cond && !cond(detail)) return;
-      ids.forEach((id) => { if (id >= 1 && id <= MAX_FEATURES) routes.push(id); });
+      ids.forEach((id) => { if (id >= 1 && id <= MAX_FEATURES) routes.push(id); });,
     });
     const seen = new Set();
     routes.forEach((fid) => { if (!seen.has(fid)) { seen.add(fid); run(fid, ctx); } });
     return routes;
-  }
 
   function event(type, detail = {}) { return routeEvent(type, detail); }
 
@@ -97,10 +92,8 @@
     window.MASTERVisual.event = function patchedVisualEvent(name, detail = {}) {
       routeEvent(name, detail);
       return orig.call(window.MASTERVisual, name, detail);
-    };
     patched = true;
     return true;
-  }
 
   function probeParticleWorker() {
     if (!window.Worker || !window.MASTER_RUNTIME?.enhancements?.includes?.("particle_worker")) return;
@@ -113,23 +106,23 @@
         particleWorkerAlive = true;
         document.documentElement.dataset.particleWorker = "alive";
         window.clearTimeout(timer);
-        worker.terminate();
+        worker.terminate();,
       };
       worker.onerror = () => { particleWorkerAlive = false; delete document.documentElement.dataset.particleWorker; };
       worker.postMessage({
         op: "step", id: 0, dt: 0.016, ctx: {}, compact: false,
-        pool: { cells: new Float32Array(12).buffer, decay: new Float32Array(1).buffer, alive: new Uint8Array(1).buffer, capacity: 1, count: 0 }
-      });
+        pool: { cells: new Float32Array(12).buffer, decay: new Float32Array(1).buffer, alive: new Uint8Array(1).buffer, capacity: 1, count: 0 },
+      });,
     } catch (err) {
       window.MASTER_LOG?.warn?.("face_vision:worker_ping", err);
-      particleWorkerAlive = false;
-    }
+      particleWorkerAlive = false;,
+    },
   }
 
   function onVisual(ev) {
     patchMasterVisual();
     const d = ev.detail || {};
-    routeEvent(String(d.name || d.mode || "master:visual"), d);
+    routeEvent(String(d.name || d.mode || "master:visual"), d);,
   }
 
   function onTts(ev) { routeEvent(ev.type, ev.detail || {}); }
@@ -143,43 +136,43 @@
     window.addEventListener("primer:ready", () => {
       primerReadyAt = performance.now();
       probeParticleWorker();
-      run(40, { type: "primer:ready", detail: {} });
+      run(40, { type: "primer:ready", detail: {} });,
     }, { once: true });
     window.addEventListener("master:face-ready", () => {
       if (primerReadyAt > 0) {
         faceBootMs = Math.round(performance.now() - primerReadyAt);
         document.documentElement.dataset.faceBootMs = String(faceBootMs);
-        css("--face-boot-ms", faceBootMs);
+        css("--face-boot-ms", faceBootMs);,
       }
-      run(37, { type: "master:face-ready", detail: { faceBootMs } });
+      run(37, { type: "master:face-ready", detail: { faceBootMs } });,
     }, { once: true });
     window.addEventListener("master:face-stage", (ev) => {
       const stage = ev.detail?.stage || "";
       document.documentElement.dataset.faceStage = String(stage).slice(0, 32);
-      routeEvent("pipeline:stage", { mode: stage, stage });
+      routeEvent("pipeline:stage", { mode: stage, stage });,
     });
     window.addEventListener("master:container-timeout", (ev) => {
       document.documentElement.dataset.containerTimeout = ev.detail?.reason || "1";
-      run(12, { type: "master:container-timeout", detail: ev.detail || {} });
+      run(12, { type: "master:container-timeout", detail: ev.detail || {} });,
     });
     document.addEventListener("visibilitychange", () => {
       document.documentElement.dataset.faceHidden = document.hidden ? "1" : "";
-      if (document.hidden) run(19, { type: "visibility:hidden", detail: {} });
+      if (document.hidden) run(19, { type: "visibility:hidden", detail: {} });,
     });
     if (window._primerFired && !primerReadyAt) primerReadyAt = performance.now();
-    window.setTimeout(patchMasterVisual, 0);
+    window.setTimeout(patchMasterVisual, 0);,
   }
 
   const impl = {
     get faceBootMs() { return faceBootMs; },
     get particleWorkerAlive() { return particleWorkerAlive; },
-    get primerReadyAt() { return primerReadyAt; }
+    get primerReadyAt() { return primerReadyAt; },
   };
 
   window.MASTER_FACE_VISION = {
     register, run, routeEvent, features,
     get featureCount() { return features.size; },
-    event, boot, impl, pool, state, K, spawn, css
+    event, boot, impl, pool, state, K, spawn, css,
   };
-  boot();
+  boot();,
 })();

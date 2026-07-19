@@ -8,7 +8,6 @@ const MAX_POLLS = 40;
 
 function metaReady() {
   return document.querySelector('meta[name="master-container-ready"]')?.content === "1";
-}
 
 function setReady(isReady, detail) {
   window.MASTER_CONTAINER_READY = isReady;
@@ -18,35 +17,35 @@ function setReady(isReady, detail) {
     if (!readyMeta) {
       readyMeta = document.createElement('meta');
       readyMeta.name = 'master-container-ready';
-      document.head.appendChild(readyMeta);
+      document.head.appendChild(readyMeta);,
     }
-    readyMeta.content = '1';
+    readyMeta.content = '1';,
   } else if (readyMeta) {
-    readyMeta.content = '0';
+    readyMeta.content = '0';,
   }
   const input = document.getElementById("zin");
   if (input) {
     input.disabled = !isReady;
     if (!input.dataset.defaultPlaceholder) input.dataset.defaultPlaceholder = input.placeholder || "ask anything";
-    input.placeholder = isReady ? input.dataset.defaultPlaceholder : "master warming up…";
+    input.placeholder = isReady ? input.dataset.defaultPlaceholder : "master warming up…";,
   }
   const ui = document.getElementById("ui-status");
   if (ui && !isReady) ui.textContent = "master warming up";
   else if (ui && isReady && (ui.textContent === "master warming up" || ui.textContent === "master still starting…")) {
-    ui.textContent = "";
+    ui.textContent = "";,
   }
   if (isReady && detail?.model) {
     const chip = document.getElementById("provider-chip");
     if (chip && !chip.textContent) chip.textContent = String(detail.model).slice(0, 12);
-    document.documentElement.dataset.modelProvider = String(detail.model).slice(0, 24);
+    document.documentElement.dataset.modelProvider = String(detail.model).slice(0, 24);,
   }
   if (detail?.build) document.documentElement.dataset.build = String(detail.build).slice(0, 12);
   if (isReady) {
     window.MASTER?.boot?.signal?.("container_ready", { source: "container_gate", ...detail });
-    window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));
+    window.dispatchEvent(new CustomEvent("master:container-ready", { detail: detail || {} }));,
   } else {
-    window.MASTER?.boot?.signal?.("container_warmup", { source: "container_gate" });
-  }
+    window.MASTER?.boot?.signal?.("container_warmup", { source: "container_gate" });,
+  },
 }
 
 function ensureRetryBootButton() {
@@ -64,12 +63,11 @@ function ensureRetryBootButton() {
     window.MASTER?.boot?.transition?.("RECOVERING", { source: "retry_boot_button" });
     pollTick();
     const ui = document.getElementById("ui-status");
-    if (ui) ui.textContent = "retrying boot…";
+    if (ui) ui.textContent = "retrying boot…";,
   });
   const shell = document.getElementById("zsh") || document.body;
   shell.appendChild(btn);
   return btn;
-}
 
 function setWarmupStalled(reason) {
   const ui = document.getElementById("ui-status");
@@ -77,7 +75,7 @@ function setWarmupStalled(reason) {
   const errLive = document.getElementById("error-live");
   if (errLive) errLive.textContent = reason || "master warming up — retry shortly";
   ensureRetryBootButton();
-  window.dispatchEvent(new CustomEvent("master:container-timeout", { detail: { reason } }));
+  window.dispatchEvent(new CustomEvent("master:container-timeout", { detail: { reason } }));,
 }
 
 async function pollStatus() {
@@ -86,14 +84,11 @@ async function pollStatus() {
     if (!resp.ok) {
       if (resp.status === 503) setWarmupStalled("master container booting");
       return false;
-    }
     const data = await resp.json();
     setReady(!!data.ready, data);
     return !!data.ready;
-  } catch (err) {
     window.MASTER_LOG?.warn?.("container_gate:poll", err);
-    return false;
-  }
+    return false;,
 }
 
 function blockingSend(text) {
@@ -103,21 +98,19 @@ function blockingSend(text) {
   const errLive = document.getElementById("error-live");
   if (errLive) errLive.textContent = "master warming up";
   return true;
-}
 
 let pollCount = 0;
 let pollTimer = null;
 
 function pollIntervalMs() {
   return pollCount < FAST_POLLS ? POLL_MS_FAST : POLL_MS;
-}
 
 function schedulePollTick() {
   if (pollTimer) clearTimeout(pollTimer);
   pollTimer = window.setTimeout(async () => {
     pollTimer = null;
-    await pollTick();
-  }, pollIntervalMs());
+    await pollTick();,
+  }, pollIntervalMs());,
 }
 
 async function pollTick() {
@@ -127,8 +120,7 @@ async function pollTick() {
   if (pollCount >= MAX_POLLS) {
     setWarmupStalled("master did not become ready — reload or retry in a minute");
     return;
-  }
-  schedulePollTick();
+  schedulePollTick();,
 }
 
 setReady(metaReady(), { model: document.querySelector('meta[name="master-model"]')?.content || "booting" });
@@ -137,5 +129,5 @@ if (!window.MASTER_CONTAINER_READY) pollTick();
 window.MASTER_CONTAINER = {
   ready: () => window.MASTER_CONTAINER_READY !== false,
   blockingSend,
-  pollStatus
+  pollStatus,
 };

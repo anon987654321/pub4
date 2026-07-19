@@ -17,7 +17,7 @@
     provider: "unknown",
     lastEventAt: performance.now(),
     terrainPhase: 0,
-    time: 0
+    time: 0,
   };
 
   const agents = [
@@ -27,7 +27,7 @@
     { name: "critic", angle: 2.7, radius: 0.36, charge: 0.4, hue: "195,175,148" },
     { name: "memory", angle: 3.6, radius: 0.48, charge: 0.9, hue: "240,220,188" },
     { name: "judge", angle: 4.5, radius: 0.31, charge: 0.55, hue: "205,185,155" },
-    { name: "safety", angle: 5.4, radius: 0.44, charge: 0.65, hue: "225,205,172" }
+    { name: "safety", angle: 5.4, radius: 0.44, charge: 0.65, hue: "225,205,172" },
   ];
 
   // Start of ecology habitats port to ParticleKernel (visual_clusters.yml + topologies.yml).
@@ -43,9 +43,9 @@
         confidence: a.charge,
         arousal: a.charge * 0.8,
         attention: 0.7,
-        decay: 0.02
-      });
-    });
+        decay: 0.02,
+      });,
+    });,
   }
 
   const memories = [];
@@ -63,7 +63,6 @@
     node.setAttribute("aria-hidden", "true");
     document.body.prepend(node);
     return node;
-  }
 
   let internalW = 640, internalH = 360;
 
@@ -82,12 +81,12 @@
 
     if (window.ParticleKernel) {
       window.ParticleKernel.fitInternalResolution(canvas, res);
-      window.ParticleKernel.configureContext(ctx);
+      window.ParticleKernel.configureContext(ctx);,
     } else {
       canvas.width = res.w;
       canvas.height = res.h;
       canvas.style.imageRendering = "pixelated";
-      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = false;,
     }
 
     canvas.style.cssText = [
@@ -98,27 +97,23 @@
       "z-index:2",
       "pointer-events:none",
       "mix-blend-mode:screen",
-      "image-rendering:pixelated"
+      "image-rendering:pixelated",
     ].join(";");
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);,
   }
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, Number(value)));
-  }
 
   function center() {
     return [internalW * 0.5, internalH * 0.48];
-  }
 
   function rand(min, max) {
     return min + Math.random() * (max - min);
-  }
 
   function fieldNoise(x, y, t) {
     return Math.sin(x * 0.015 + t) * 0.45 +
-      Math.cos(y * 0.019 - t * 0.7) * 0.32 +
-      Math.sin((x + y) * 0.009 + t * 1.3) * 0.23;
+      Math.sin((x + y) * 0.009 + t * 1.3) * 0.23;,
   }
 
   function chooseWeather(name) {
@@ -128,7 +123,6 @@
     if (/tool|scan|sweep|audit/.test(name)) return "orbit";
     if (/complete|success|done|idle/.test(name)) return "calm";
     return "thinking";
-  }
 
   let lastBurstAt = 0;
 
@@ -147,7 +141,7 @@
     spawnTerrainImpact(name, detail);
     if (/memory|retriev|context|compact|chat:append|complete|success/.test(name)) spawnMemory(detail);
     if (/error|rollback|failed|failure|escalat|fallback|retry/.test(name)) spawnWeatherBurst(18, 1.0);
-    else spawnWeatherBurst(6, 0.35);
+    else spawnWeatherBurst(6, 0.35);,
   }
 
   function pulseAgents(name, detail = {}) {
@@ -162,18 +156,18 @@
         agent._radiusBase = base;
         const spiritScale = Number(detail?.spirit_radius) || 1.14;
         agent.radius = base * spiritScale;
-        setTimeout(() => { agent.radius = base; }, spiritScale > 1.2 ? 1200 : 800);
+        setTimeout(() => { agent.radius = base; }, spiritScale > 1.2 ? 1200 : 800);,
       }
-      else agent.charge = Math.max(agent.charge, 0.55);
+      else agent.charge = Math.max(agent.charge, 0.55);,
     }
     // Mirror charges into the kernel cells (ecology habitats port).
     if (agentsPool) {
       for (let i = 0; i < agentsPool.count; i++) if (agentsPool.alive[i]) {
         const b = i * window.ParticleKernel.FIELDS_PER_CELL;
         const a = agents[i];
-        if (a) agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] = a.charge;
-      }
-    }
+        if (a) agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] = a.charge;,
+      },
+    },
   }
 
   function spawnTrail(name, detail) {
@@ -188,9 +182,9 @@
       life: 1,
       width: rand(0.6, 2.2),
       color: colorFor(name, detail),
-      name
+      name,
     });
-    while (trails.length > MAX_TRAILS) trails.shift();
+    while (trails.length > MAX_TRAILS) trails.shift();,
   }
 
   function spawnTerrainImpact(name, detail = {}) {
@@ -209,9 +203,9 @@
       life: 1,
       force: kind === "fracture" || kind === "rift" ? 1.0 : 0.55,
       color: colorFor(name, detail),
-      kind
+      kind,
     });
-    while (terrainImpacts.length > MAX_IMPACTS) terrainImpacts.shift();
+    while (terrainImpacts.length > MAX_IMPACTS) terrainImpacts.shift();,
   }
 
   function spawnMemory(detail) {
@@ -222,9 +216,9 @@
       z: rand(0.2, 1),
       life: 1,
       pulse: rand(0, Math.PI * 2),
-      label: String(detail.provider || state.provider || "memory")
+      label: String(detail.provider || state.provider || "memory"),
     });
-    while (memories.length > MAX_MEMORIES) memories.shift();
+    while (memories.length > MAX_MEMORIES) memories.shift();,
   }
 
   function spawnWeatherBurst(count, force) {
@@ -243,9 +237,9 @@
           life: rand(0.5, 1),
           spin: 0,
           radius: rand(1, 2),
-          kind: "streak"
+          kind: "streak",
         });
-        continue;
+        continue;,
       }
       const a = rand(0, Math.PI * 2);
       const speed = rand(0.2, 2.8) * force;
@@ -257,10 +251,10 @@
         life: rand(0.4, 1),
         spin: rand(-0.04, 0.04),
         radius: rand(1, 4 + force * 4),
-        kind: "square"
-      });
+        kind: "square",
+      });,
     }
-    while (weather.length > MAX_WEATHER) weather.shift();
+    while (weather.length > MAX_WEATHER) weather.shift();,
   }
 
   function colorFor(name, detail) {
@@ -273,7 +267,6 @@
     if (/tool|scan|sweep|audit/.test(name)) return `${Math.round(base * 0.88)},${warm},${cool}`;
     if (/complete|success|done/.test(name)) return `${base},${base},${Math.round(base * 0.94)}`;
     return `${base},${warm},${cool}`;
-  }
 
   window.addEventListener("resize", resize, { passive: true });
 
@@ -285,10 +278,10 @@
       const classified = (window.MASTERTopology && typeof window.MASTERTopology.classifyEvent === "function")
         ? window.MASTERTopology.classifyEvent(detail.name || "event", detail)
         : {};
-      ingestVisual({ ...classified, ...detail });
+      ingestVisual({ ...classified, ...detail });,
     } catch (_) {
-      ingestVisual(event?.detail || {});
-    }
+      ingestVisual(event?.detail || {});,
+    },
   }
   window.addEventListener("master:visual", onMasterVisual);
 
@@ -312,9 +305,9 @@
     event: (name, detail = {}) => ingestVisual({ ...detail, name }),
     memory: spawnMemory,
     terrain: spawnTerrainImpact,
-    burst: spawnWeatherBurst
+    burst: spawnWeatherBurst,
   };
 
   resize();
-  for (let i = 0; i < 12; i++) spawnMemory({ provider: "seed" });
+  for (let i = 0; i < 12; i++) spawnMemory({ provider: "seed" });,
 })();

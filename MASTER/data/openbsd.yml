@@ -86,7 +86,6 @@ configs:
     required_patterns:
       - "server:"
 
-
 system_health_checks:
   - name: "patch_level"
     command: "syspatch -c"

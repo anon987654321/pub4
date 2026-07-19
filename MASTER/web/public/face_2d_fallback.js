@@ -7,10 +7,10 @@ let fallbackFrame = null;
 function stop2DFallback() {
   if (fallbackFrame) {
     cancelAnimationFrame(fallbackFrame);
-    fallbackFrame = null;
+    fallbackFrame = null;,
   }
   const canvas = document.getElementById("face-2d-fallback");
-  if (canvas) canvas.remove();
+  if (canvas) canvas.remove();,
 }
 
 function ensureFallbackCanvas() {
@@ -24,7 +24,6 @@ function ensureFallbackCanvas() {
   if (face?.parentNode) face.parentNode.insertBefore(canvas, face.nextSibling);
   else document.body.appendChild(canvas);
   return canvas;
-}
 
 function start2DFallback() {
   const canvas = ensureFallbackCanvas();
@@ -36,7 +35,7 @@ function start2DFallback() {
   const resize = () => {
     const ratio = window.devicePixelRatio || 1;
     canvas.width = Math.max(1, Math.floor(canvas.clientWidth * ratio));
-    canvas.height = Math.max(1, Math.floor(canvas.clientHeight * ratio));
+    canvas.height = Math.max(1, Math.floor(canvas.clientHeight * ratio));,
   };
   resize();
   window.addEventListener("resize", resize);
@@ -47,7 +46,6 @@ function start2DFallback() {
     if (window.MASTER_FACE?.startEverything) {
       stop2DFallback();
       return;
-    }
 
     const w = canvas.width;
     const h = canvas.height;
@@ -81,7 +79,7 @@ function start2DFallback() {
       ctx.beginPath();
       ctx.arc(pupilX, pupilY, w * 0.012, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(200,200,200,0.3)";
-      ctx.fill();
+      ctx.fill();,
     });
 
     const mouthY = cy + h * 0.14;
@@ -94,10 +92,10 @@ function start2DFallback() {
     ctx.stroke();
 
     phase += 0.02;
-    if (!document.hidden) fallbackFrame = requestAnimationFrame(draw);
+    if (!document.hidden) fallbackFrame = requestAnimationFrame(draw);,
   };
 
-  draw();
+  draw();,
 }
 
 window.start2DFallback = start2DFallback;

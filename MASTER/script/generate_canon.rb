@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Regenerate data/CANON.md index from live rules.yml + scanner registry.
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)

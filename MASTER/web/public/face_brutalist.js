@@ -14,7 +14,7 @@
     document.documentElement.style.setProperty("--face-phosphor-decay", "0");
     document.documentElement.style.setProperty("--c-text", "#63c363");
     document.documentElement.style.setProperty("--x-text", "#63c363");
-    document.body.classList.add("wscons-mode");
+    document.body.classList.add("wscons-mode");,
   }
 
   function applyBrutalist() {
@@ -25,7 +25,7 @@
     // Flat: no phosphor afterimage trail, no glow-halo expansion.
     document.documentElement.style.setProperty("--face-phosphor-decay", "0");
     document.documentElement.style.setProperty("--face-glow-scale", "1.0");
-    document.body.classList.add("brutalist-mode");
+    document.body.classList.add("brutalist-mode");,
   }
 
   const aesthetic = window.MASTER_RUNTIME?.aesthetic || document.documentElement.dataset.aesthetic || "brutalist";
@@ -38,29 +38,29 @@
     strip.id = "brutalist-strip";
     strip.className = "brutalist-strip";
     strip.setAttribute("aria-hidden", "true");
-    document.body.appendChild(strip);
+    document.body.appendChild(strip);,
   }
 
   const ring = [];
   function pushLine(tag, val) {
     ring.push(`${tag}=${val}`);
     while (ring.length > 6) ring.shift();
-    strip.textContent = ring.join(" ");
+    strip.textContent = ring.join(" ");,
   }
 
   window.addEventListener("master:visual", (ev) => {
     const d = ev.detail || {};
     pushLine("mode", (d.mode || "idle").toString().slice(0, 12));
     if (d.entropy != null) pushLine("H", Number(d.entropy).toFixed(2));
-    if (d.confidence != null) pushLine("C", Number(d.confidence).toFixed(2));
+    if (d.confidence != null) pushLine("C", Number(d.confidence).toFixed(2));,
   });
 
   const primer = document.getElementById("primer");
   if (primer) {
     primer.addEventListener("pointerdown", () => {
       document.body.dataset.primerFlash = "1";
-      setTimeout(() => delete document.body.dataset.primerFlash, 180);
-    }, { passive: true });
+      setTimeout(() => delete document.body.dataset.primerFlash, 180);,
+    }, { passive: true });,
   }
 
   const cursor = document.querySelector("#zin, #input");
@@ -71,8 +71,8 @@
       const blink = document.querySelector(".cursor");
       if (!blink) return;
       const primerLive = document.getElementById("primer")?.classList.contains("gone");
-      if (primerLive) blink.style.animationDuration = primerPulse ? "600ms" : "900ms";
-    }, 450);
+      if (primerLive) blink.style.animationDuration = primerPulse ? "600ms" : "900ms";,
+    }, 450);,
   }
 
   let idleSince = performance.now();
@@ -86,10 +86,10 @@
       el.id = "idle-help-trail";
       el.className = "idle-help-trail";
       el.textContent = "↓ ask";
-      document.body.appendChild(el);
+      document.body.appendChild(el);,
     }
-    document.body.dataset.longSilence = "1";
+    document.body.dataset.longSilence = "1";,
   }, 2000);
 
-  window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist, pushLine });
+  window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist, pushLine });,
 })();

@@ -4,7 +4,6 @@ require_relative "test_helper"
 
 Master::Review::Scan::RuleDSL # trigger autoload → rule files registered
 
-
 # SILENT_RESCUE (:error) flags blanket rescues that discard the error.
 # NARROW_SILENT_RESCUE (:warning) flags narrow-class rescues that do the same.
 # Both are RuleDSL rules — anonymous Rule subclasses found via the registry by id.

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover">
 <style>body{background:#000;color:#ff0;font:14px monospace;padding:16px;word-break:break-all}</style>
 </head><body>
 <pre id="out">running...</pre>
@@ -16,7 +16,7 @@ log('screen: ' + screen.width + 'x' + screen.height + ' dpr:' + devicePixelRatio
 var cv = document.getElementById('cv');
 var gl = cv.getContext('webgl2') || cv.getContext('webgl') || cv.getContext('experimental-webgl');
 if (!gl) {
-  log('webgl: NONE');
+  log('webgl: NONE');,
 } else {
   log('webgl: ' + (cv.getContext('webgl2') ? 'webgl2' : 'webgl1'));
   log('renderer: ' + (gl.getParameter(gl.RENDERER)||'?'));
@@ -36,7 +36,7 @@ if (!gl) {
   var prog = gl.createProgram();
   gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    log('shader: FAIL ' + gl.getProgramInfoLog(prog));
+    log('shader: FAIL ' + gl.getProgramInfoLog(prog));,
   } else {
     gl.useProgram(prog);
     var buf = gl.createBuffer();
@@ -47,8 +47,8 @@ if (!gl) {
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    log('triangle: drawn (see canvas below)');
-  }
+    log('triangle: drawn (see canvas below)');,
+  },
 }
 
 log('modules: ' + (typeof Symbol !== "undefined" && typeof Promise !== "undefined" ? 'likely ok' : 'NO'));

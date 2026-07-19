@@ -27,7 +27,7 @@ class CoreBridgeTest < Minitest::Test
       Master::Core::Effect.exec(["true"], evidence: :test_pass),
       Master::Core::Effect.exec(["true"], evidence: :scan_clean),
       Master::Core::Effect.exec(["true"], evidence: :code_review),
-      Master::Core::Effect.done(summary)
+      Master::Core::Effect.done(summary),
     ]
   end
 

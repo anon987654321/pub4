@@ -9,14 +9,14 @@ function setViseme(ch) {
   const previous = State.viseme;
   State.viseme = VOWEL_VISEME[c] || (('mbpfwv'.indexOf(c) >= 0) ? 'M' : 'E');
   State.visemeAmp = 1.0;
-  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
+  if (previous !== State.viseme) emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });,
 }
 
 function clearViseme() {
   const previous = State.viseme;
   State.viseme = 'neutral';
   State.visemeAmp = 0;
-  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });
+  if (previous !== 'neutral') emitTtsEvent('tts:viseme', { shape: State.viseme, amp: State.visemeAmp });,
 }
 
 function startVisemeAnim(text) {
@@ -32,11 +32,10 @@ function startVisemeAnim(text) {
         const amp = Number.isFinite(Number(frame.amp)) ? Number(frame.amp) : 1;
         State.viseme = shape;
         State.visemeAmp = amp;
-        emitTtsEvent('tts:viseme', { shape, amp });
-      }, at);
+        emitTtsEvent('tts:viseme', { shape, amp });,
+      }, at);,
     });
     return;
-  }
   const words = text.split(/\s+/);
   let lastWordIdx = -1;
   let i = 0;
@@ -52,14 +51,14 @@ function startVisemeAnim(text) {
         lastWordIdx = wIdx;
         const from = Math.max(0, wIdx - 2);
         const to = Math.min(words.length, wIdx + 3);
-        ttsLive.textContent = words.slice(from, to).join(' ');
-      }
-    }
-  }, VISEME_STEP_MS);
+        ttsLive.textContent = words.slice(from, to).join(' ');,
+      },
+    },
+  }, VISEME_STEP_MS);,
 }
 
 function stopVisemeAnim() {
-  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; }
+  if (tts.visemeTimer) { clearInterval(tts.visemeTimer); tts.visemeTimer = null; },
 }
 
 window.MASTER_SPEECH_PLAYBACK = Object.freeze({

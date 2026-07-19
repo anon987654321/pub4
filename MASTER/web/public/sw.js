@@ -6,7 +6,7 @@ const OFFLINE_URL = '/offline.html';
 // URLs are cached opportunistically on successful fetch (network-first below).
 const STATIC_ASSETS = [
   OFFLINE_URL,
-  '/manifest.json'
+  '/manifest.json',
 ];
 const DYNAMIC_PREFIXES = ['/chat/', '/canvas/', '/events/', '/runtime/', '/bridge/', '/dashboard/'];
 
@@ -15,7 +15,7 @@ self.addEventListener('install', e => {
     caches.open(CACHE_NAME)
       .then(cache => Promise.allSettled(STATIC_ASSETS.map(url => cache.add(url))))
       .then(() => self.skipWaiting())
-  );
+  );,
 });
 
 self.addEventListener('activate', e => {
@@ -26,9 +26,9 @@ self.addEventListener('activate', e => {
       ))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => client.postMessage({ type: 'sw:updated', version: CACHE_VERSION }));
+        clients.forEach(client => client.postMessage({ type: 'sw:updated', version: CACHE_VERSION }));,
       }))
-  );
+  );,
 });
 
 self.addEventListener('fetch', e => {
@@ -42,13 +42,11 @@ self.addEventListener('fetch', e => {
         .catch(() => caches.match('/') || caches.match(OFFLINE_URL))
     );
     return;
-  }
 
   // Never cache digested /assets/* — stale hashes wedge primer/face boot after deploy.
   if (url.pathname.startsWith('/assets/')) {
     e.respondWith(fetch(e.request));
     return;
-  }
 
   // Dynamic API/SSE endpoints: passthrough only, never cache. chat/message,
   // chat/tts/stream, and events/stream are long-lived streams that never
@@ -59,17 +57,15 @@ self.addEventListener('fetch', e => {
   if (DYNAMIC_PREFIXES.some(p => url.pathname.startsWith(p))) {
     e.respondWith(fetch(e.request).catch(() => Response.error()));
     return;
-  }
 
   e.respondWith(
     fetch(e.request)
       .then(resp => {
         if (resp.ok) {
           const clone = resp.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));,
         }
         return resp;
-      })
       .catch(() => caches.match(e.request).then(cached => cached || caches.match(OFFLINE_URL)))
-  );
+  );,
 });

@@ -11,12 +11,12 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     if (e.changedTouches[0].clientY - startY < -90) {
       const zsh = document.getElementById('zsh');
       if (zsh) zsh.classList.add('revealed');
-      if (window.ParticleKernel && window.mouthPool) F_FACE_STATE.pulse = 0.7;
-    }
+      if (window.ParticleKernel && window.mouthPool) F_FACE_STATE.pulse = 0.7;,
+    },
   }, { passive: true });
 
   document.addEventListener('touchstart', e => {
-    if (innerWidth - e.touches[0].clientX < 55) body.dataset.edgeSwipe = '1';
+    if (innerWidth - e.touches[0].clientX < 55) body.dataset.edgeSwipe = '1';,
   }, { passive: true });
   document.addEventListener('touchend', () => delete body.dataset.edgeSwipe);
 
@@ -24,7 +24,7 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     if (!body.classList.contains('zen')) return;
     if (innerHeight - e.clientY < 56) body.dataset.edgeHover = '1';
     else delete body.dataset.edgeHover;
-    resetZenHide();
+    resetZenHide();,
   }, { passive: true });
 
   let zenIdleTimer = null;
@@ -33,8 +33,8 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     body.classList.remove('zen-hidden');
     zenIdleTimer = setTimeout(() => {
       if (!body.classList.contains('zen') || body.dataset.edgeHover === '1') return;
-      body.classList.add('zen-hidden');
-    }, 4500);
+      body.classList.add('zen-hidden');,
+    }, 4500);,
   }
   ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => document.addEventListener(ev, resetZenHide, { passive: true }));
   resetZenHide();
@@ -46,16 +46,16 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       t = setTimeout(() => {
         if (window._chatSpeakLast) window._chatSpeakLast();
         else if (window.sendMessage) window.sendMessage('/voice last dramatic');
-        F_FACE_STATE.pulse = 1.1;
-      }, 480);
+        F_FACE_STATE.pulse = 1.1;,
+      }, 480);,
     });
-    ['pointerup', 'pointerleave'].forEach(ev => cvEl.addEventListener(ev, () => clearTimeout(t)));
+    ['pointerup', 'pointerleave'].forEach(ev => cvEl.addEventListener(ev, () => clearTimeout(t)));,
   }
 
   async function enableCamTracking() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 240, height: 180 }
+        video: { facingMode: 'user', width: 240, height: 180 },
       });
       const v = document.createElement('video');
       v.srcObject = stream; v.play();
@@ -73,8 +73,8 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
             const p = i / 4;
             sx += p % c.width;
             sy += (p / c.width) | 0;
-            n++;
-          }
+            n++;,
+          },
         }
         if (n > 40) {
           const nx = (sx / n / c.width - 0.5) * 2.1;
@@ -82,11 +82,11 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
           F_FACE_STATE.mouseX = nx;
           F_FACE_STATE.mouseY = ny;
           if (Math.abs(nx) < 0.3 && Math.abs(ny) < 0.3) {
-            F_FACE_STATE.pulse = Math.max(F_FACE_STATE.pulse || 0, 0.5);
-          }
-        }
-      }, 160);
-    } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:cam_tracking", err); }
+            F_FACE_STATE.pulse = Math.max(F_FACE_STATE.pulse || 0, 0.5);,
+          },
+        },
+      }, 160);,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:cam_tracking", err); },
   }
   if (F_FACE_STATE.coarsePointer) setTimeout(enableCamTracking, 900);
 
@@ -94,11 +94,11 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     enableCam: enableCamTracking,
     revealConsole: () => {
       const z = document.getElementById('zsh');
-      if (z) z.classList.add('revealed');
+      if (z) z.classList.add('revealed');,
     },
     triggerVoice: (text) => {
-      if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'}`);
-    }
+      if (window.sendMessage) window.sendMessage(`/voice ${text || 'last'}`);,
+    },
   };
 
   if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -110,8 +110,8 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       const t = ev.results[0][0].transcript.toLowerCase();
       if (/\b(voice|speak|say)\b/.test(t)) {
         const cmd = t.replace(/\b(voice|speak|say|hey|ok)\b/gi, '').trim();
-        if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd}`);
-      }
+        if (cmd && window.sendMessage) window.sendMessage(`/voice ${cmd}`);,
+      },
     };
     // rec.start() throws InvalidStateError when recognition is already
     // running (including the main STT mic), and a bare keydown listener
@@ -121,14 +121,14 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
     rec.onerror = () => { voiceRecActive = false; };
     const safeStart = () => {
       if (voiceRecActive) return;
-      try { rec.start(); voiceRecActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:voice_rec_start", err); }
+      try { rec.start(); voiceRecActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:voice_rec_start", err); },
     };
     document.addEventListener('keydown', e => {
       const t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      if (e.key === '?') { e.preventDefault(); safeStart(); }
+      if (e.key === '?') { e.preventDefault(); safeStart(); },
     });
     window.startVoiceRec = safeStart;
-    window.startOsmanVoice = safeStart;
-  }
+    window.startOsmanVoice = safeStart;,
+  },
 })();

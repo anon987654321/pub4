@@ -42,7 +42,7 @@ class DashboardController < ApplicationController
       provider_health: provider_health(c),
       cache_efficiency: Master::Trace::CacheEfficiency.snapshot,
       model_quota: Master::Ground::ModelQuota.snapshot,
-      repair_queue: repair_queue(root)
+      repair_queue: repair_queue(root),
     }
   end
 
@@ -52,7 +52,7 @@ class DashboardController < ApplicationController
     {
       open_breakers: open,
       status: open.empty? ? "healthy" : "degraded",
-      agent_pool: c[:agent_pool]&.active_count || 0
+      agent_pool: c[:agent_pool]&.active_count || 0,
     }
   end
 

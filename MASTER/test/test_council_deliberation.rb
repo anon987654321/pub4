@@ -22,7 +22,7 @@ class TestCouncilDeliberation < Minitest::Test
 
   def test_veto_blocks_review
     personas = [
-      Persona.new(name: "Security", role: "Attacker", bias: "paranoid", prompt: "be strict", veto_role: true)
+      Persona.new(name: "Security", role: "Attacker", bias: "paranoid", prompt: "be strict", veto_role: true),
     ]
     agent = StubAgent.new("You are Security" => "VETO: unsafe eval path")
 

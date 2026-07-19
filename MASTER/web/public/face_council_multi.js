@@ -5,7 +5,7 @@
   const LANES = [
     { id: "left", personas: ["Architect", "Mentor"], x: "18%" },
     { id: "center", personas: ["Pragmatist", "User"], x: "50%" },
-    { id: "right", personas: ["Skeptic", "Security"], x: "82%" }
+    { id: "right", personas: ["Skeptic", "Security"], x: "82%" },
   ];
 
   let strip = null;
@@ -22,7 +22,6 @@
     ).join("");
     document.body.appendChild(strip);
     return strip;
-  }
 
   function setLaneActive(lane, persona) {
     const el = ensureStrip().querySelector(`[data-lane="${lane}"]`);
@@ -30,51 +29,50 @@
     el.dataset.persona = persona || "";
     el.dataset.active = "1";
     el.classList.add("pulse");
-    setTimeout(() => el.classList.remove("pulse"), 900);
+    setTimeout(() => el.classList.remove("pulse"), 900);,
   }
 
   function clearLanes() {
     if (!strip) return;
     strip.querySelectorAll(".council-lane").forEach((el) => {
       delete el.dataset.active;
-      delete el.dataset.persona;
+      delete el.dataset.persona;,
     });
     strip.dataset.visible = "0";
     activeCouncil = false;
-    document.body.dataset.councilMulti = "";
+    document.body.dataset.councilMulti = "";,
   }
 
   function personaLane(persona) {
     const name = String(persona || "");
     const hit = LANES.find((lane) => lane.personas.includes(name));
     return hit?.id || "center";
-  }
 
   function onCouncilStart() {
     if (!window.MASTER_RUNTIME?.enhancements?.includes?.("council_multi_face")) return;
     activeCouncil = true;
     ensureStrip().dataset.visible = "1";
     document.body.dataset.councilMulti = "1";
-    window.MASTERVisual?.event?.("council:multi:start", { topology: "papua-mask", entropy: 0.38, confidence: 0.62, mode: "council" });
+    window.MASTERVisual?.event?.("council:multi:start", { topology: "papua-mask", entropy: 0.38, confidence: 0.62, mode: "council" });,
   }
 
   window.addEventListener("master:visual", (ev) => {
     const d = ev.detail || {};
     const name = String(d.name || d.mode || "");
     if (/council:deliberation|council:start/i.test(name)) onCouncilStart();
-    if (/council:(?:vote|speech|end)|tribunal:rendered/i.test(name)) clearLanes();
+    if (/council:(?:vote|speech|end)|tribunal:rendered/i.test(name)) clearLanes();,
   });
 
   window.addEventListener("tts:style:active", (ev) => {
     const persona = ev.detail?.persona;
     if (!persona || !activeCouncil) return;
-    setLaneActive(personaLane(persona), persona);
+    setLaneActive(personaLane(persona), persona);,
   });
 
   window.MASTERCouncilMulti = Object.freeze({
     personaLane,
     setLaneActive,
     clearLanes,
-    onCouncilStart
-  });
+    onCouncilStart,
+  });,
 })();

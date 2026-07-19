@@ -60,7 +60,7 @@ class TestReplayReader < Minitest::Test
     path = File.join(@events_dir, "activity.jsonl")
     File.write(path, [
       "{\"timestamp\":\"2026-06-25T10:00:00Z\",\"event\":\"scan:complete\",\"payload\":{}}",
-      "{\"timestamp\":\"2026-06-25T10:00:01Z\",\"event\":\"scan:error\",\"payload\":{\"error\":\"boom\"}}"
+      "{\"timestamp\":\"2026-06-25T10:00:01Z\",\"event\":\"scan:error\",\"payload\":{\"error\":\"boom\"}}",
     ].join("\n") + "\n")
     output = Trace::ReplayReader.new(root: @dir).render(arg: "failures")
     assert_includes output, "scan:error"

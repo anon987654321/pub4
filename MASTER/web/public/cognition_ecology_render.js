@@ -3,7 +3,6 @@
 
   function eco() {
     return window.MASTEREcology;
-  }
 
   function terrainHeight(x, y, t, E) {
     const base = E.fieldNoise(x, y, t) * (0.35 + E.state.entropy * 0.75);
@@ -16,10 +15,9 @@
       const shape = falloff * falloff * (3 - 2 * falloff) * impact.life * impact.force;
       if (impact.kind === "basin") impacts -= shape * 0.9;
       else if (impact.kind === "stabilize") impacts += shape * 0.25;
-      else impacts += shape;
+      else impacts += shape;,
     }
     return base + impacts;
-  }
 
   function drawSemanticTerrain(dt, E) {
     const { state, ctx, internalW, internalH, reducedMotion } = E;
@@ -48,13 +46,13 @@
         const px = x + Math.sin(t + v * 6) * jagged;
         const py = y + h * 34 * perspective + Math.cos(t * 1.7 + u * 4) * 5 * (1 - calm);
         if (c === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+        else ctx.lineTo(px, py);,
       }
       const storm = state.weather === "storm" || state.weather === "serpent";
       const color = storm ? "180,140,120" : "228,206,176";
       ctx.strokeStyle = `rgba(${color},${alphaBase * (0.5 + v) * (0.65 + state.confidence * 0.45)})`;
       ctx.lineWidth = 0.65 + state.entropy * 1.0;
-      ctx.stroke();
+      ctx.stroke();,
     }
 
     for (let c = 0; c < cols; c += 2) {
@@ -68,11 +66,11 @@
         const px = x + Math.sin(t + v * 6) * 10 * state.entropy;
         const py = y + h * 28 * (0.55 + v * 0.45);
         if (r === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+        else ctx.lineTo(px, py);,
       }
       ctx.strokeStyle = `rgba(210,188,158,${alphaBase * 0.45})`;
       ctx.lineWidth = 0.55;
-      ctx.stroke();
+      ctx.stroke();,
     }
 
     for (let i = E.terrainImpacts.length - 1; i >= 0; i--) {
@@ -80,15 +78,15 @@
       impact.life -= dt * 0.00036;
       if (impact.life <= 0) {
         E.terrainImpacts.splice(i, 1);
-        continue;
+        continue;,
       }
       const radius = impact.radius * (1.15 - impact.life * 0.15);
       ctx.beginPath();
       ctx.strokeStyle = `rgba(${impact.color},${impact.life * 0.10})`;
       ctx.lineWidth = impact.kind === "fracture" || impact.kind === "rift" ? 1.7 : 0.9;
       ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+      ctx.stroke();,
+    },
   }
 
   function drawAgentSpirits(dt, E) {
@@ -98,9 +96,9 @@
     for (let idx = 0; idx < agents.length; idx++) {
       const agent = agents[idx];
       let kCharge = agent.charge;
-      if (agentsPool && agentsPool.alive[idx]) {
+      if (agentsPool?.alive[idx]) {
         const b = idx * window.ParticleKernel.FIELDS_PER_CELL;
-        kCharge = agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] || agent.charge;
+        kCharge = agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] || agent.charge;,
       }
       agent.angle += dt * (0.00008 + kCharge * 0.00022) * (reducedMotion ? 0.25 : 1);
       agent.charge += (0.42 - agent.charge) * 0.006;
@@ -116,8 +114,8 @@
 
       ctx.strokeStyle = `rgba(${agent.hue},${0.06 + kCharge * 0.12})`;
       ctx.lineWidth = 1;
-      ctx.strokeRect((x - 6 - kCharge * 8) | 0, (y - 6 - kCharge * 8) | 0, (12 + kCharge * 16) | 0, (12 + kCharge * 16) | 0);
-    }
+      ctx.strokeRect((x - 6 - kCharge * 8) | 0, (y - 6 - kCharge * 8) | 0, (12 + kCharge * 16) | 0, (12 + kCharge * 16) | 0);,
+    },
   }
 
   function drawTrails(dt, E) {
@@ -131,15 +129,15 @@
       trail.vy += Math.cos(state.time * 0.001 + trail.x * 0.01) * 0.012;
       if (trail.life <= 0) {
         trails.splice(i, 1);
-        continue;
+        continue;,
       }
       ctx.beginPath();
       ctx.strokeStyle = `rgba(${trail.color},${trail.life * 0.34})`;
       ctx.lineWidth = trail.width;
       ctx.moveTo(trail.x, trail.y);
       ctx.lineTo(trail.x - trail.vx * 16, trail.y - trail.vy * 16);
-      ctx.stroke();
-    }
+      ctx.stroke();,
+    },
   }
 
   function drawMemories(dt, E) {
@@ -150,7 +148,7 @@
       memory.pulse += dt * 0.002;
       if (memory.life <= 0) {
         memories.splice(i, 1);
-        continue;
+        continue;,
       }
       const alpha = memory.life * (0.16 + Math.sin(memory.pulse) * 0.05);
       const sz = (2 + memory.z * 3) | 0;
@@ -169,10 +167,10 @@
           ctx.lineWidth = 1;
           ctx.moveTo(memory.x, memory.y);
           ctx.lineTo(other.x, other.y);
-          ctx.stroke();
-        }
-      }
-    }
+          ctx.stroke();,
+        },
+      },
+    },
   }
 
   function drawWeather(dt, E) {
@@ -187,7 +185,7 @@
       bit.y += bit.vy * dt * 0.12;
       if (bit.life <= 0) {
         weather.splice(i, 1);
-        continue;
+        continue;,
       }
       const color = storm ? "170,130,115" : "215,192,162";
       const alpha = bit.life * (storm ? 0.20 : 0.09);
@@ -197,13 +195,13 @@
         ctx.beginPath();
         ctx.moveTo(bit.x, bit.y);
         ctx.lineTo(bit.x - bit.vx * 8, bit.y - bit.vy * 2);
-        ctx.stroke();
+        ctx.stroke();,
       } else {
         const sz = Math.max(1, (bit.radius * 2) | 0);
         ctx.fillStyle = `rgba(${color},${alpha})`;
-        ctx.fillRect((bit.x - sz * 0.5) | 0, (bit.y - sz * 0.5) | 0, sz, sz);
-      }
-    }
+        ctx.fillRect((bit.x - sz * 0.5) | 0, (bit.y - sz * 0.5) | 0, sz, sz);,
+      },
+    },
   }
 
   let previous = performance.now();
@@ -211,7 +209,7 @@
   function ensureEcologyFrame() {
     if (ecologyFrameActive || document.hidden) return;
     ecologyFrameActive = true;
-    requestAnimationFrame(frame);
+    requestAnimationFrame(frame);,
   }
 
   function frame(now) {
@@ -220,12 +218,10 @@
       if (!document.hidden) requestAnimationFrame(frame);
       else ecologyFrameActive = false;
       return;
-    }
     if (document.hidden) {
       previous = now;
       ecologyFrameActive = false;
       return;
-    }
     const dt = Math.min(48, now - previous);
     previous = now;
     E.state.time = now;
@@ -247,15 +243,15 @@
     drawAgentSpirits(dt, E);
 
     if (!E.reducedMotion && !speaking && Math.random() < 0.025 + E.state.activity * 0.025) {
-      E.spawnWeatherBurst(1, 0.25 + E.state.activity * 0.5);
+      E.spawnWeatherBurst(1, 0.25 + E.state.activity * 0.5);,
     }
     if (!document.hidden) requestAnimationFrame(frame);
-    else ecologyFrameActive = false;
+    else ecologyFrameActive = false;,
   }
 
   ensureEcologyFrame();
   window.addEventListener("master:visual", () => ensureEcologyFrame(), { passive: true });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) ensureEcologyFrame();
-  }, { passive: true });
+    if (!document.hidden) ensureEcologyFrame();,
+  }, { passive: true });,
 })();

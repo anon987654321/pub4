@@ -7,7 +7,7 @@ function ensureFrameLoop() {
   // dbgFrames stuck at 0, canvas black ("face not showing").
   frameLoopActive = true;
   requestAnimationFrame(frame);
-  armFrameLoopWatchdog();
+  armFrameLoopWatchdog();,
 }
 
 // Self-healing for the render loop. frame() only continues if its own last
@@ -30,13 +30,13 @@ function _startFramePump() {
     if (State.hidden || document.hidden) return;
     _pumpTick = true;
     try { frame(performance.now()); } finally { _pumpTick = false; }
-    requestAnimationFrame(frame); // keep offering control back to rAF
-  }, 40);
+    requestAnimationFrame(frame); // keep offering control back to rAF,
+  }, 40);,
 }
 function _stopFramePump() {
   if (!_pumpTimer) return;
   clearInterval(_pumpTimer);
-  _pumpTimer = null;
+  _pumpTimer = null;,
 }
 function armFrameLoopWatchdog() {
   if (_watchdogTimer) return;
@@ -44,13 +44,13 @@ function armFrameLoopWatchdog() {
     if (State.hidden || document.hidden) { _watchdogLastFrames = _dbgFrames; return; }
     if (_naturalRafSeen) {
       _naturalRafSeen = false;
-      _stopFramePump();
+      _stopFramePump();,
     } else if (_dbgFrames === _watchdogLastFrames) {
       requestAnimationFrame(frame);
-      _startFramePump();
+      _startFramePump();,
     }
-    _watchdogLastFrames = _dbgFrames;
-  }, 2000);
+    _watchdogLastFrames = _dbgFrames;,
+  }, 2000);,
 }
 
 // WebGL context loss is the silent permanent-black-canvas case: the browser
@@ -63,13 +63,13 @@ function armFrameLoopWatchdog() {
 if (typeof cv !== 'undefined' && cv?.addEventListener) {
   cv.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
-    if (uiStatus) uiStatus.textContent = 'gpu context lost — recovering…';
+    if (uiStatus) uiStatus.textContent = 'gpu context lost — recovering…';,
   }, false);
   cv.addEventListener('webglcontextrestored', () => {
     if (uiStatus && uiStatus.textContent.startsWith('gpu context lost')) uiStatus.textContent = '';
     try { resize(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:webgl_context_restored", err); }
-    ensureFrameLoop();
-  }, false);
+    ensureFrameLoop();,
+  }, false);,
 }
 
 let _dbgFrames = 0;
@@ -82,14 +82,12 @@ const fpsBadge = showDebug ? (() => {
   el.className = 'fps-badge';
   document.body.appendChild(el);
   return el;
-})() : null;
 const debugPanel = showDebug ? (() => {
   const el = document.createElement('div');
   el.id = 'debug-panel';
   el.className = 'debug-panel';
   document.body.appendChild(el);
   return el;
-})() : null;
 let fpsLastSample = performance.now();
 let fpsSampleFrames = 0;
 let fpsEma = 24;
@@ -102,8 +100,8 @@ window.addEventListener('master:pressure', (ev) => {
     entropy: d.entropy ?? State.entropy ?? 0,
     turbulence: d.turbulence ?? 0,
     gravity: d.gravity ?? 0,
-    valence: d.valence ?? 0
-  };
+    valence: d.valence ?? 0,
+  };,
 });
 const FACE_RENDER_SCALE_MIN = 0.62;
 const FACE_RENDER_SCALE_MAX = 0.92;
@@ -120,29 +118,28 @@ function ensureParticleWorker() {
       const pending = particleWorkerPending.get(msg.id);
       if (!pending) return;
       particleWorkerPending.delete(msg.id);
-      applyWorkerPoolResult(pending.pool, msg.pool);
-    };
+      applyWorkerPoolResult(pending.pool, msg.pool);,
+    };,
   } catch (_) {
-    particleWorker = null;
+    particleWorker = null;,
   }
   return particleWorker;
-}
 function serializePoolForWorker(pool) {
   return {
     cells: new Float32Array(pool.cells).buffer,
     decay: new Float32Array(pool.decay).buffer,
     alive: new Uint8Array(pool.alive).buffer,
     capacity: pool.capacity,
-    count: pool.count
-  };
+    count: pool.count,
+  };,
 }
 function kernelStepContext() {
   return window.MASTER_FACE_PARTICLES?.kernelStepContext?.(State) || {
     entropy: State.entropy || 0,
     pressure: 0,
     confidence: State.confidence ?? 0.75,
-    decayScale: 1
-  };
+    decayScale: 1,
+  };,
 }
 function stepPoolAsync(pool, dtSec) {
   const worker = ensureParticleWorker();
@@ -151,20 +148,19 @@ function stepPoolAsync(pool, dtSec) {
   if (!worker || !pool) {
     if (K) K.step(pool, dtSec, ctx);
     return;
-  }
   const id = ++particleWorkerSeq;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });,
 }
 function spawnEmotionalGhost(mood) {
   if (!isRichMotionProfile()) return;
-  window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);
+  window.MASTER_FACE_PARTICLES?.spawnEmotionalGhost?.(State, mouthPool, mood);,
 }
 function applyWorkerPoolResult(pool, payload) {
   if (!pool || !payload) return;
   pool.cells.set(new Float32Array(payload.cells));
   pool.decay.set(new Float32Array(payload.decay));
-  pool.alive.set(new Uint8Array(payload.alive));
+  pool.alive.set(new Uint8Array(payload.alive));,
 }
 function syncSemanticPools(dtSec) {
   const K = window.ParticleKernel;
@@ -176,12 +172,12 @@ function syncSemanticPools(dtSec) {
       if (!mouthPool.alive[i]) continue;
       const b = i * K.FIELDS_PER_CELL;
       arousal += mouthPool.cells[b + K.FIELD.arousal];
-      n++;
+      n++;,
     }
     if (n > 0) {
       const target = arousal / n;
-      faceMat.uniforms.uVowel.value += (target - faceMat.uniforms.uVowel.value) * 0.08;
-    }
+      faceMat.uniforms.uVowel.value += (target - faceMat.uniforms.uVowel.value) * 0.08;,
+    },
   }
   if (eyePool) {
     stepPoolAsync(eyePool, dtSec);
@@ -190,19 +186,18 @@ function syncSemanticPools(dtSec) {
       if (!eyePool.alive[i]) continue;
       const b = i * K.FIELDS_PER_CELL;
       conf += eyePool.cells[b + K.FIELD.confidence];
-      n++;
+      n++;,
     }
     if (n > 0) {
       const close = Math.max(0, 1.0 - conf / n);
-      faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;
-    }
-  }
+      faceMat.uniforms.uEyeClose.value += (close * 0.35 - faceMat.uniforms.uEyeClose.value) * 0.05;,
+    },
+  },
 }
 function frame(t) {
   if (State.hidden || document.hidden) {
     frameLoopActive = false;
     return;
-  }
   frameLoopActive = true;
   if (!_pumpTick) _naturalRafSeen = true;
   _dbgFrames++;
@@ -222,30 +217,28 @@ function frame(t) {
         `mood ${State.mood}`,
         `particles ${count}`,
         `conf ${(State.confidence ?? 0).toFixed(2)}`,
-        pressureLine
-      ].filter(Boolean).join(' · ');
+        pressureLine,
+      ].filter(Boolean).join(' · ');,
     }
     if (!State.reducedMotion && fpsEma < 16 && FACE_RENDER_SCALE > FACE_RENDER_SCALE_MIN + 0.02) {
       FACE_RENDER_SCALE = Math.max(FACE_RENDER_SCALE_MIN, FACE_RENDER_SCALE - 0.03);
-      resize();
+      resize();,
     } else if (fpsEma > 26 && FACE_RENDER_SCALE < FACE_RENDER_SCALE_MAX - 0.02) {
       FACE_RENDER_SCALE = Math.min(FACE_RENDER_SCALE_MAX, FACE_RENDER_SCALE + 0.02);
-      resize();
+      resize();,
     }
     fpsLastSample = t;
-    fpsSampleFrames = 0;
+    fpsSampleFrames = 0;,
   }
   if (!renderer) {
     lastT = t;
     if (!State.hidden) requestAnimationFrame(frame);
     else frameLoopActive = false;
     return;
-  }
   if (State.hidden) {
     lastT = t;
     frameLoopActive = false;
     return;
-  }
 
   const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
@@ -253,10 +246,10 @@ function frame(t) {
 
   if (State.sleeping) {
     rootBody.style.opacity = '0.05';
-    rootBody.dataset.sleeping = '1';
+    rootBody.dataset.sleeping = '1';,
   } else if (rootBody.dataset.sleeping) {
     rootBody.style.opacity = '';
-    delete rootBody.dataset.sleeping;
+    delete rootBody.dataset.sleeping;,
   }
 
   if (hasAnalyserBuffers()) {
@@ -288,15 +281,15 @@ function frame(t) {
         State.audioMids || 0,
         State.audioHighs || 0,
         Math.max(State.audioBass || 0, State.audioMids || 0),
-        Math.max(State.audioMids || 0, State.audioHighs || 0)
+        Math.max(State.audioMids || 0, State.audioHighs || 0),
       ];
       bars.forEach((bar, i) => {
         const level = levels[i] || 0;
         const h = Math.max(3, Math.min(14, 3 + level * 12));
         bar.style.height = `${h}px`;
-        bar.style.opacity = String(0.25 + level * 0.65);
-      });
-    }
+        bar.style.opacity = String(0.25 + level * 0.65);,
+      });,
+    },
   } else {
     State.voiceRMS = (State.voiceRMS || 0) * 0.9;
     State.audioBass  = (State.audioBass  || 0) * 0.88;
@@ -308,9 +301,9 @@ function frame(t) {
         const current = parseFloat(bar.style.height || '4') || 4;
         const next = Math.max(3, current * 0.92);
         bar.style.height = `${next}px`;
-        bar.style.opacity = String(Math.max(0.15, (parseFloat(bar.style.opacity || '0.25') || 0.25) * 0.95));
-      });
-    }
+        bar.style.opacity = String(Math.max(0.15, (parseFloat(bar.style.opacity || '0.25') || 0.25) * 0.95));,
+      });,
+    },
   }
 
   const idleCalm = State.mode === 'idle' && !tts.playing ? 0.028 : 0.04;
@@ -335,12 +328,12 @@ function frame(t) {
       applyShake(1.5);
       State.pulse = 0.9;
       State.flash = 1.0;
-      setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);
-    }
+      setTimeout(() => { delete rootBody.dataset.moodCold; }, 1800);,
+    },
   }
 
   if (!window.MASTER_FACE_AUDIO?.applySttDuck?.(State, tts, actx)) {
-    window.MASTER_FACE_AUDIO?.restorePlaybackGain?.(tts, actx, tts.playing && !State.sttActive);
+    window.MASTER_FACE_AUDIO?.restorePlaybackGain?.(tts, actx, tts.playing && !State.sttActive);,
   }
 
   if (head) {
@@ -371,7 +364,7 @@ function frame(t) {
       State.parY += (pInput.y * 0.032 - State.parY) * 0.04;
       const camOffX = 0.015 + State.parX, camOffY = 0.008 + State.parY;
       camera.position.x += (Math.sin(sec * 0.11) * 0.018 + camOffX - camera.position.x) * 0.04;
-      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;
+      camera.position.y += (Math.cos(sec * 0.09) * 0.012 + camOffY - camera.position.y) * 0.04;,
     }
     head.rotation.y += (yaw   - head.rotation.y) * 0.06;
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
@@ -395,14 +388,14 @@ function frame(t) {
       head.position.x = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.y = (Math.random() - 0.5) * State.shake * 0.18;
       head.position.z = State.lean;
-      State.shake *= 0.86;
+      State.shake *= 0.86;,
     } else {
-      head.position.set(0, 0, State.lean);
-    }
+      head.position.set(0, 0, State.lean);,
+    },
   }
   if (State.personaPulse > 0.01) {
     State.pulse = Math.max(State.pulse, State.personaPulse);
-    State.personaPulse *= 0.88;
+    State.personaPulse *= 0.88;,
   }
   State.pulse *= 0.92;
 
@@ -470,9 +463,9 @@ function frame(t) {
     if (State.ripplePhase >= 0) {
       State.ripplePhase = Math.min(1, State.ripplePhase + 0.04);
       faceMat.uniforms.uRipple.value = State.ripplePhase;
-      if (State.ripplePhase >= 1) State.ripplePhase = -1;
+      if (State.ripplePhase >= 1) State.ripplePhase = -1;,
     } else {
-      faceMat.uniforms.uRipple.value = 0;
+      faceMat.uniforms.uRipple.value = 0;,
     }
     const vowelAmp = (State.visemeAmp || 0) * (['A','E','I','O','U'].includes(State.viseme) ? 1.0 : 0.3);
     faceMat.uniforms.uVowel.value += (vowelAmp - faceMat.uniforms.uVowel.value) * 0.15;
@@ -513,15 +506,15 @@ function frame(t) {
     const beatEdge = (State.audioBeat || 0) * 0.06 + (State.audioBass || 0) * 0.04;
     if (faceEdgeLinesStrong) {
       const edgeStrong = 0.05 + morphCurrent * 0.09 + (State._heartbeat || 0) * 0.05 + (State.pulse || 0) * 0.04 + beatEdge;
-      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;
+      faceEdgeLinesStrong.material.opacity += (edgeStrong - faceEdgeLinesStrong.material.opacity) * 0.08;,
     }
     if (faceEdgeLinesWeak) {
       const edgeWeak = 0.02 + morphCurrent * 0.035 + (State.mode === 'thinking' ? 0.02 : 0) + beatEdge * 0.5;
-      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;
+      faceEdgeLinesWeak.material.opacity += (edgeWeak - faceEdgeLinesWeak.material.opacity) * 0.06;,
     }
     const driftEl = document.getElementById('soul-drift');
     if (driftEl && (_dbgFrames % 30 === 0 || !driftEl.textContent)) {
-      driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;
+      driftEl.textContent = `drift ${(soulDrift * 100).toFixed(0)}%`;,
     }
     if (!State._lastBeat || t - State._lastBeat > (3000 + Math.random() * 2000)) { State._lastBeat = t; State._heartbeat = 1.0; }
     State._heartbeat = (State._heartbeat || 0) * 0.94;
@@ -546,10 +539,10 @@ function frame(t) {
         uGridAngle: faceMat.uniforms.uGridAngle, uHeartbeat: faceMat.uniforms.uHeartbeat,
         uPulseRing: faceMat.uniforms.uPulseRing, uExposure: faceMat.uniforms.uExposure,
         uFocusDim: faceMat.uniforms.uFocusDim, uPhosphorSoft: faceMat.uniforms.uPhosphorSoft,
-        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime
+        uScanline: faceMat.uniforms.uScanline, uTime: faceMat.uniforms.uTime,
       });
-      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;
-    }
+      gm.uniforms.uSize.value = faceMat.uniforms.uSize.value * FACE_GLOW_SCALE;,
+    },
   }
 
   State.flash *= 0.9;
@@ -572,20 +565,20 @@ function frame(t) {
     // material construction in face.part1.txt for why not MultiplyBlending.
     phosphorFadeMesh.material.opacity = 1 - decay;
     renderer.autoClear = false;
-    renderer.render(phosphorFadeScene, phosphorFadeCam);
+    renderer.render(phosphorFadeScene, phosphorFadeCam);,
   } else {
     renderer.autoClear = true;
     renderer.setClearColor(0x000000, 1);
-    if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;
+    if (faceMat && phosphorOn) faceMat._phosphorPrimed = true;,
   }
   if (window.MASTER_PHOSPHOR_TRAIL?.capture && renderer?.domElement && phosphorOn) {
-    window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);
+    window.MASTER_PHOSPHOR_TRAIL.capture(renderer.domElement);,
   }
   renderer.render(scene, camera);
   markFaceReady();
 
   if (!State.hidden) requestAnimationFrame(frame);
-  else frameLoopActive = false;
+  else frameLoopActive = false;,
 }
 
 let pressTimer = null, pressStart = 0;
@@ -595,39 +588,39 @@ let gestureStart = null;
 function setFacePip(enabled, corner = 'bottom-right') {
   if (enabled) {
     rootBody.dataset.facePip = '1';
-    rootBody.dataset.facePipCorner = corner;
+    rootBody.dataset.facePipCorner = corner;,
   } else {
     delete rootBody.dataset.facePip;
-    delete rootBody.dataset.facePipCorner;
-  }
+    delete rootBody.dataset.facePipCorner;,
+  },
 }
 function updateCursor(e) {
   State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
   State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
-  cursorActive = true;
+  cursorActive = true;,
 }
 function onPointerMove(e) {
   if (State.coarsePointer && dragOrigin) {
     const dx = (e.clientX - dragOrigin.x) / innerWidth;
     const dy = (e.clientY - dragOrigin.y) / innerHeight;
     State.tiltX = Math.max(-1, Math.min(1, dx * 2.8));
-    State.tiltY = Math.max(-1, Math.min(1, dy * 2.0));
+    State.tiltY = Math.max(-1, Math.min(1, dy * 2.0));,
   } else {
-    updateCursor(e);
-  }
+    updateCursor(e);,
+  },
 }
 document.addEventListener('pointermove', onPointerMove, { passive: true });
 document.addEventListener('pointerdown', e => {
   dragOrigin = { x: e.clientX, y: e.clientY };
-  updateCursor(e);
+  updateCursor(e);,
 }, { passive: true });
 document.addEventListener('pointerup', () => {
   dragOrigin = null;
-  if (State.coarsePointer) cursorActive = false;
+  if (State.coarsePointer) cursorActive = false;,
 }, { passive: true });
 document.addEventListener('pointercancel', () => {
   dragOrigin = null;
-  if (State.coarsePointer) cursorActive = false;
+  if (State.coarsePointer) cursorActive = false;,
 }, { passive: true });
 
 cv.addEventListener('pointerdown', (e) => {
@@ -636,13 +629,13 @@ cv.addEventListener('pointerdown', (e) => {
   State.pressureTension = 0;
   gestureStart = { x: e.clientX, y: e.clientY, t: pressStart };
   const sttDelay = State.coarsePointer ? 520 : 420;
-  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), sttDelay);
+  pressTimer = setTimeout(() => window.MASTER_FACE?.startSTT?.(), sttDelay);,
 });
 cv.addEventListener('pointermove', (e) => {
   if (!gestureStart) return;
   const dx = e.clientX - gestureStart.x;
   const dy = e.clientY - gestureStart.y;
-  if (Math.hypot(dx, dy) > 12) gestureStart.moved = true;
+  if (Math.hypot(dx, dy) > 12) gestureStart.moved = true;,
 }, { passive: true });
 cv.addEventListener('pointerup', (e) => {
   if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
@@ -660,47 +653,45 @@ cv.addEventListener('pointerup', (e) => {
         zshIn?.select?.();
         navigator.vibrate?.(10);
         return;
-      }
       if (adx > ady) {
         window._chatCycleRecentReply?.(dx > 0 ? 1 : -1);
         navigator.vibrate?.(10);
-        return;
-      }
+        return;,
     }
     if (elapsed < 1400 && Math.hypot(dx, dy) > 180) {
       const corner = `${e.clientY < innerHeight / 2 ? 'top' : 'bottom'}-${e.clientX < innerWidth / 2 ? 'left' : 'right'}`;
-      setFacePip(true, corner);
+      setFacePip(true, corner);,
     }
     if (gesture.moved && Math.hypot(dx, dy) > 48 && elapsed < 900) {
       const expression = {
         valence: Math.max(-1, Math.min(1, dx / innerWidth)),
         arousal: Math.max(0, Math.min(1, 0.35 + Math.abs(dy) / innerHeight)),
-        attention: Math.max(0.4, Math.min(1, 0.55 + Math.hypot(dx, dy) / 400))
+        attention: Math.max(0.4, Math.min(1, 0.55 + Math.hypot(dx, dy) / 400)),
       };
-      window.MASTER_FACE_EXPRESSION?.postUserExpression?.(expression, 'face_drag');
-    }
+      window.MASTER_FACE_EXPRESSION?.postUserExpression?.(expression, 'face_drag');,
+    },
   }
   if (State.sttActive) { window.MASTER_FACE?.stopSTT?.(); return; }
-  if (performance.now() - pressStart < 240) window.MASTER_FACE?.ttsSkip?.();
+  if (performance.now() - pressStart < 240) window.MASTER_FACE?.ttsSkip?.();,
 });
 cv.addEventListener('pointercancel', () => {
   if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  gestureStart = null;
+  gestureStart = null;,
 });
 
 function bindOrientation() {
   window.addEventListener('deviceorientation', (e) => {
     if (e.gamma != null) State.tiltX = e.gamma / 90;
-    if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
-  }, { passive: true });
+    if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;,
+  }, { passive: true });,
 }
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); }
+    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); },
   } else if (window.DeviceOrientationEvent) {
-    bindOrientation();
-  }
+    bindOrientation();,
+  },
 }
 
 let lastShake = 0, lastAccel = [0, 0, 0];
@@ -714,9 +705,9 @@ if (window.DeviceMotionEvent) {
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) {
       lastShake = now; window.MASTER_FACE?.ttsSkip?.(); applyShake(1.2);
-      morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
-    }
-  }, { passive: true });
+      morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;,
+    },
+  }, { passive: true });,
 }
 
 // FA24 pinch-to-zoom
@@ -725,8 +716,8 @@ cv.addEventListener('touchstart', (e) => {
   if (e.touches.length === 2) {
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
-    pinchDist0 = Math.hypot(dx, dy);
-  }
+    pinchDist0 = Math.hypot(dx, dy);,
+  },
 }, { passive: true });
 cv.addEventListener('touchmove', (e) => {
   if (e.touches.length === 2 && pinchDist0) {
@@ -735,8 +726,8 @@ cv.addEventListener('touchmove', (e) => {
     const d = Math.hypot(dx, dy);
     State.pinchScale = Math.max(0.5, Math.min(2.0, State.pinchScale * (d / pinchDist0)));
     pinchDist0 = d;
-    if (head) head.scale.setScalar(State.pinchScale);
-  }
+    if (head) head.scale.setScalar(State.pinchScale);,
+  },
 }, { passive: true });
 cv.addEventListener('touchend', () => { pinchDist0 = null; }, { passive: true });
 
@@ -751,12 +742,12 @@ cv.addEventListener('pointerup', () => {
     rootBody.dataset.runtimeProfile = next;
     State.profileOverride = next;
     if (window.ParticleKernel && eyePool) {
-      window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });
+      window.ParticleKernel.spawn(eyePool, 0, 0.2, { kind: 2, zone: 2, valence: 0.7, confidence: 0.9, decay: 0.08 });,
     }
     window.MASTERVisual?.event?.('profile:cycle', { topology: 'papua-mask', entropy: 0.12, confidence: 0.9, mode: next });
-    resize();
+    resize();,
   }
-  lastTapT = now;
+  lastTapT = now;,
 }, { passive: true });
 
 // FA27 long-press mood demo (1400ms, distinct from 420ms STT trigger)
@@ -774,10 +765,10 @@ cv.addEventListener('pointerdown', () => {
       if (m === 'pass') State.bloom = 1.0;
       if (m === 'veto') State.fracture = 1.0;
       if (m === 'weary') State.rain = 1.0;
-      setTimeout(step, 1100);
+      setTimeout(step, 1100);,
     };
-    step();
-  }, 1400);
+    step();,
+  }, 1400);,
 });
 cv.addEventListener('pointerup', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
 cv.addEventListener('pointercancel', () => { if (demoTimer) { clearTimeout(demoTimer); demoTimer = null; } }, { passive: true });
@@ -788,6 +779,6 @@ if ('getBattery' in navigator) {
     const check = () => { if (!b.charging && b.level < 0.15) FACE_PIXEL_SIZE = 0.013; else FACE_PIXEL_SIZE = 0.022; };
     check();
     b.addEventListener('levelchange', check);
-    b.addEventListener('chargingchange', check);
-  }).catch(() => {});
+    b.addEventListener('chargingchange', check);,
+  }).catch(() => {});,
 }

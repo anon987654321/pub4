@@ -57,7 +57,7 @@ class TestSwarm < Minitest::Test
     # Fake a results hash as coordinator would build it
     results = {
       reviewer: Master::Result.ok({ "approved" => true }),
-      analyst:  Master::Result.ok({ "summary" => "ok", "issues" => [] })
+      analyst:  Master::Result.ok({ "summary" => "ok", "issues" => [] }),
     }
     sr = coord.send(:build_swarm_result, results)
     assert_equal 1, sr.votes[:approved]

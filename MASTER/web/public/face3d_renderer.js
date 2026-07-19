@@ -4,22 +4,19 @@ import { ZONE_NAMES } from '/face3d_geometry.js';
 
 function clamp(v, lo = 0, hi = 1) {
   return Math.max(lo, Math.min(hi, v));
-}
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
-}
 
 function parseRGB(rgb) {
   if (Array.isArray(rgb)) return rgb;
   return String(rgb || '255,255,255').split(',').map(Number).slice(0, 3);
-}
 
 const DEFAULT_PALETTE = Object.freeze({
   shadow: '0,0,0',
   midtone: '90,90,90',
   highlight: '255,255,255',
-  accent: '170,210,255'
+  accent: '170,210,255',
 });
 
 class Face3DCanvasRenderer {
@@ -40,7 +37,7 @@ class Face3DCanvasRenderer {
     this.dither = 'atkinson';
     this.phosphor = true;
     this.lastLitPixels = 0;
-    this.resize();
+    this.resize();,
   }
 
   resize() {
@@ -64,15 +61,15 @@ class Face3DCanvasRenderer {
     const lh = this.lowRes ? Math.max(1, h >> 1) : h;
     this.lpx.width = lw;
     this.lpx.height = lh;
-    this._ensureBuffers(lw * lh);
+    this._ensureBuffers(lw * lh);,
   }
 
   setPalette(palette) {
-    this.palette = { ...DEFAULT_PALETTE, ...palette };
+    this.palette = { ...DEFAULT_PALETTE, ...palette };,
   }
 
   setDither(mode) {
-    this.dither = mode === 'bayer' ? 'bayer' : 'atkinson';
+    this.dither = mode === 'bayer' ? 'bayer' : 'atkinson';,
   }
 
   draw(snapshot, state = {}) {
@@ -86,7 +83,7 @@ class Face3DCanvasRenderer {
     const drain = this.phosphor ? 0.004 : 1.0;
     for (let i = 0; i < fbuf.length; i++) {
       fbuf[i] = Math.max(0, fbuf[i] * decay - drain);
-      zbuf[i] = 0;
+      zbuf[i] = 0;,
     }
 
     const cx = lw * 0.5;
@@ -111,15 +108,15 @@ class Face3DCanvasRenderer {
       if (bright > 0.72) {
         fbuf[idx + 1] = Math.min(1, fbuf[idx + 1] + val * 0.32);
         fbuf[idx - 1] = Math.min(1, fbuf[idx - 1] + val * 0.18);
-        fbuf[idx + lw] = Math.min(1, fbuf[idx + lw] + val * 0.20);
-      }
+        fbuf[idx + lw] = Math.min(1, fbuf[idx + lw] + val * 0.20);,
+      },
     }
 
     this._rasterize(state);
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.fillStyle = '#000';
     this.ctx.fillRect(0, 0, this.width, this.height);
-    this.ctx.drawImage(this.lpx, 0, 0, this.width, this.height);
+    this.ctx.drawImage(this.lpx, 0, 0, this.width, this.height);,
   }
 
   _ensureBuffers(size) {
@@ -127,7 +124,7 @@ class Face3DCanvasRenderer {
     this.bufSize = size;
     this.fbuf = new Float32Array(size);
     this.ebuf = new Float32Array(size);
-    this.zbuf = new Uint8Array(size);
+    this.zbuf = new Uint8Array(size);,
   }
 
   _rasterize(state) {
@@ -150,9 +147,9 @@ class Face3DCanvasRenderer {
         const v = clamp(fbuf[idx] + (this.dither === 'atkinson' ? this.ebuf[idx] : 0));
         let on;
         if (this.dither === 'bayer') {
-          on = v > bayer[(y & 3) * 4 + (x & 3)] / 16;
+          on = v > bayer[(y & 3) * 4 + (x & 3)] / 16;,
         } else {
-          on = v >= 0.5;
+          on = v >= 0.5;,
         }
 
         const out = idx * 4;
@@ -163,12 +160,12 @@ class Face3DCanvasRenderer {
           data[out] = 255;
           data[out + 1] = 255;
           data[out + 2] = 255;
-          data[out + 3] = 255;
+          data[out + 3] = 255;,
         } else {
           data[out] = 0;
           data[out + 1] = 0;
           data[out + 2] = 0;
-          data[out + 3] = 255;
+          data[out + 3] = 255;,
         }
 
         if (this.dither === 'atkinson') {
@@ -178,16 +175,16 @@ class Face3DCanvasRenderer {
           if (y + 1 < lh) {
             if (x > 0) this.ebuf[idx + lw - 1] += err;
             this.ebuf[idx + lw] += err;
-            if (x + 1 < lw) this.ebuf[idx + lw + 1] += err;
+            if (x + 1 < lw) this.ebuf[idx + lw + 1] += err;,
           }
-          if (y + 2 < lh) this.ebuf[idx + lw * 2] += err;
-        }
-      }
+          if (y + 2 < lh) this.ebuf[idx + lw * 2] += err;,
+        },
+      },
     }
 
     this.lctx.putImageData(img, 0, 0);
-    this.lastLitPixels = lit;
-  }
+    this.lastLitPixels = lit;,
+  },
 }
 
 window.MasterFace3DRenderer = Object.freeze({ Face3DCanvasRenderer });

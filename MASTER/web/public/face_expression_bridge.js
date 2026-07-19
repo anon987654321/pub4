@@ -12,9 +12,9 @@
       confidence: Number(detail.confidence ?? 0.75),
       arousal: Number(detail.arousal ?? detail.expression?.arousal ?? 0.4),
       valence: Number(detail.valence ?? detail.expression?.valence ?? 0),
-      mode: detail.mode || detail.name || "event"
+      mode: detail.mode || detail.name || "event",
     });
-    while (signalStack.length > 8) signalStack.shift();
+    while (signalStack.length > 8) signalStack.shift();,
   }
 
   function blendSignals(now = performance.now()) {
@@ -28,15 +28,15 @@
       out.entropy += row.entropy * w;
       out.confidence += row.confidence * w;
       out.arousal += row.arousal * w;
-      out.valence += row.valence * w;
+      out.valence += row.valence * w;,
     });
     if (wSum <= 0) return null;
     return {
       entropy: out.entropy / wSum,
       confidence: out.confidence / wSum,
       arousal: out.arousal / wSum,
-      valence: out.valence / wSum
-    };
+      valence: out.valence / wSum,
+    };,
   }
 
   function pushMoodArcSample(State, detail) {
@@ -44,7 +44,7 @@
     State.moodArcSamples.push({
       entropy: detail.entropy ?? State.entropy ?? 0.2,
       valence: detail.valence ?? detail.expression?.valence ?? 0,
-      arousal: detail.arousal ?? detail.expression?.arousal ?? State.pulse ?? 0.4
+      arousal: detail.arousal ?? detail.expression?.arousal ?? State.pulse ?? 0.4,
     });
     if (State.moodArcSamples.length > 16) State.moodArcSamples.shift();
 
@@ -54,8 +54,8 @@
       State.sessionBaseline = {
         entropy: mean("entropy"),
         valence: mean("valence"),
-        arousal: mean("arousal")
-      };
+        arousal: mean("arousal"),
+      };,
     }
 
     const samples = State.moodArcSamples;
@@ -67,15 +67,15 @@
       entropy: meanEntropy * (1 - drift) + (base?.entropy ?? meanEntropy) * drift,
       valence: mean("valence") * (1 - drift) + (base?.valence ?? 0) * drift,
       arousal: mean("arousal") * (1 - drift) + (base?.arousal ?? 0.45) * drift,
-      decay_rate: meanEntropy > 0.55 ? 0.32 : 0.68
-    };
+      decay_rate: meanEntropy > 0.55 ? 0.32 : 0.68,
+    };,
   }
 
   function persistMood(State) {
     try {
       localStorage.setItem("master:mood", State.mood || "idle");
-      localStorage.setItem("master:mode", State.mode || "idle");
-    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:persist_mood", err); }
+      localStorage.setItem("master:mode", State.mode || "idle");,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:persist_mood", err); },
   }
 
   function restoreMood(State) {
@@ -83,8 +83,8 @@
       const mood = localStorage.getItem("master:mood");
       const mode = localStorage.getItem("master:mode");
       if (mood) State.mood = mood;
-      if (mode && State.mode === "idle") State.mode = mode;
-    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:restore_mood", err); }
+      if (mode && State.mode === "idle") State.mode = mode;,
+    } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:restore_mood", err); },
   }
 
   async function postUserExpression(expression, source = "face_drag") {
@@ -93,14 +93,14 @@
       "payload[source]": source,
       "payload[valence]": String(expression.valence ?? 0),
       "payload[arousal]": String(expression.arousal ?? 0),
-      "payload[attention]": String(expression.attention ?? 0.5)
+      "payload[attention]": String(expression.attention ?? 0.5),
     });
     try {
-      await fetch("/canvas/event", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, keepalive: true });
+      await fetch("/canvas/event", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, keepalive: true });,
     } catch (err) { window.MASTER_LOG?.warn?.("face_expression_bridge:post_expression", err); }
     window.dispatchEvent(new CustomEvent("user:expression", {
-      detail: { expression, source, blendshapes: expression.blendshapes || null }
-    }));
+      detail: { expression, source, blendshapes: expression.blendshapes || null },
+    }));,
   }
 
   window.MASTER_FACE_EXPRESSION = Object.freeze({
@@ -109,6 +109,6 @@
     pushMoodArcSample,
     persistMood,
     restoreMood,
-    postUserExpression
-  });
+    postUserExpression,
+  });,
 })();

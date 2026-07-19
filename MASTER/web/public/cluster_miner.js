@@ -9,60 +9,56 @@
     marketplace: { face_particle_body: 1.18, cognition_ecology: 0.92, repo_ecology: 1.08 },
     dating: { face_particle_body: 1.05, speech_audio_body: 1.12, cognition_ecology: 0.88 },
     tv: { speech_audio_body: 1.15, cognition_ecology: 1.06, codebase_topology: 0.95 },
-    default: { face_particle_body: 1.0, cognition_ecology: 1.0, speech_audio_body: 1.0 }
+    default: { face_particle_body: 1.0, cognition_ecology: 1.0, speech_audio_body: 1.0 },
   });
 
   function verticalHint() {
     return (document.documentElement.dataset.appHint || window.MASTER_RUNTIME?.app_hint || "default").toString().toLowerCase();
-  }
 
   function verticalBiasFor(clusterId) {
     const hint = verticalHint();
     const table = VERTICAL_CLUSTER_BIAS[hint] || VERTICAL_CLUSTER_BIAS.default;
     return table[clusterId] || 1.0;
-  }
 
   const CLUSTERS = Object.freeze({
     face_particle_body: {
       match: /mood|model|verdict|confidence|tool|tts|speech|stt|gesture|face/i,
       layer: "embodiment",
-      emotion: { arousal: 0.35, focus: 0.25 }
+      emotion: { arousal: 0.35, focus: 0.25 },
     },
     cognition_ecology: {
       match: /memory|retriev|context|compact|entropy|provider|visual|ecology/i,
       layer: "background_world",
-      emotion: { arousal: 0.22, focus: 0.18 }
+      emotion: { arousal: 0.22, focus: 0.18 },
     },
     codebase_topology: {
       match: /codebase|rule_loop|fix_loop|violation|clean|converged|topology/i,
       layer: "repository_body",
-      emotion: { arousal: 0.32, focus: 0.45 }
+      emotion: { arousal: 0.32, focus: 0.45 },
     },
     speech_audio_body: {
       match: /speak|speech|tts|voice|audio|viseme|sentence/i,
       layer: "voice",
-      emotion: { arousal: 0.30, focus: 0.18, valence: 0.10 }
+      emotion: { arousal: 0.30, focus: 0.18, valence: 0.10 },
     },
     repo_ecology: {
       match: /scan|classify|cluster|score|simulate|critique|apply|rollback/i,
       layer: "repository_mining",
-      emotion: { arousal: 0.28, focus: 0.38 }
-    }
+      emotion: { arousal: 0.28, focus: 0.38 },
+    },
   });
 
   const state = {
     clusters: new Map(),
     evidence: [],
-    lastEmissionAt: 0
+    lastEmissionAt: 0,
   };
 
   function now() {
     return performance.now();
-  }
 
   function clamp(v, lo = 0, hi = 1) {
     return Math.max(lo, Math.min(hi, Number(v)));
-  }
 
   function ensureCluster(id, spec) {
     if (!state.clusters.has(id)) {
@@ -73,22 +69,20 @@
         confidence: 0.5,
         evidence: [],
         lastSeenAt: 0,
-        count: 0
-      });
+        count: 0,
+      });,
     }
     return state.clusters.get(id);
-  }
 
   function classify(detail = {}) {
     const text = `${detail.name || ""} ${detail.mode || ""} ${detail.topology || ""} ${detail.provider || ""} ${JSON.stringify(detail.raw || {})}`;
     const found = [];
     for (const [id, spec] of Object.entries(CLUSTERS)) {
       if (!spec.match.test(text)) continue;
-      found.push({ id, spec });
+      found.push({ id, spec });,
     }
     if (!found.length) found.push({ id: "cognition_ecology", spec: CLUSTERS.cognition_ecology });
     return found;
-  }
 
   function ingest(detail = {}) {
     const t = now();
@@ -102,7 +96,7 @@
       topology: detail.topology || "unknown",
       provider: detail.provider || "unknown",
       entropy,
-      confidence
+      confidence,
     };
 
     const vBias = verticalBiasFor;
@@ -114,12 +108,12 @@
       cluster.lastSeenAt = t;
       cluster.count += 1;
       cluster.evidence.push(evidence);
-      if (cluster.evidence.length > 12) cluster.evidence.shift();
+      if (cluster.evidence.length > 12) cluster.evidence.shift();,
     }
 
     state.evidence.push(evidence);
     if (state.evidence.length > 80) state.evidence.shift();
-    emitClusterState();
+    emitClusterState();,
   }
 
   function tick() {
@@ -128,10 +122,10 @@
       const age = Math.max(0, t - cluster.lastSeenAt);
       const decay = age > 1200 ? 0.985 : 0.995;
       cluster.heat *= decay;
-      if (cluster.heat < 0.002) cluster.heat = 0;
+      if (cluster.heat < 0.002) cluster.heat = 0;,
     }
     if (t - state.lastEmissionAt > 1000) emitClusterState();
-    requestAnimationFrame(tick);
+    requestAnimationFrame(tick);,
   }
 
   function emotionFromClusters() {
@@ -149,7 +143,7 @@
       focus += (e.focus || 0) * heat;
       valence += (e.valence || 0) * heat;
       confidence += cluster.confidence * heat;
-      heatTotal += heat;
+      heatTotal += heat;,
     }
 
     if (heatTotal <= 0) return { arousal: 0, valence: 0, focus: 0, confidence: 0.88, fatigue: 0 };
@@ -158,8 +152,8 @@
       valence: clamp(valence / heatTotal, -1, 1),
       focus: clamp(focus / heatTotal + heatTotal * 0.05),
       confidence: clamp(confidence / heatTotal),
-      fatigue: clamp(Math.max(0, heatTotal - 2.0) * 0.12)
-    };
+      fatigue: clamp(Math.max(0, heatTotal - 2.0) * 0.12),
+    };,
   }
 
   function snapshot() {
@@ -170,11 +164,11 @@
         heat: Number(cluster.heat.toFixed(3)),
         confidence: Number(cluster.confidence.toFixed(3)),
         count: cluster.count,
-        evidence: cluster.evidence.slice(-4)
+        evidence: cluster.evidence.slice(-4),
       })),
       emotion: emotionFromClusters(),
-      evidence: state.evidence.slice(-8)
-    };
+      evidence: state.evidence.slice(-8),
+    };,
   }
 
   function emitClusterState() {
@@ -183,8 +177,8 @@
     window.dispatchEvent(new CustomEvent("master:clusters", { detail }));
 
     if (window.Face3DPreview?.engine && detail.emotion) {
-      window.Face3DPreview.engine.setEmotion(detail.emotion);
-    }
+      window.Face3DPreview.engine.setEmotion(detail.emotion);,
+    },
   }
 
   window.addEventListener("master:visual", event => ingest(event.detail || {}));
@@ -196,8 +190,8 @@
     classify,
     ingest,
     snapshot,
-    emotion: emotionFromClusters
+    emotion: emotionFromClusters,
   });
 
-  requestAnimationFrame(tick);
+  requestAnimationFrame(tick);,
 })();

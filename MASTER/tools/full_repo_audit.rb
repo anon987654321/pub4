@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Complete-file coverage manifest for pub4 archaeology.
 # Reads every tracked byte, hashes it, and scans every complete text file.
@@ -15,7 +16,7 @@ DEFAULT_ROOTS = [
   Pathname.new(__dir__).join("../../../pub").expand_path,
   Pathname.new(__dir__).join("../../../pub-compare/pub").expand_path,
   Pathname.new(__dir__).join("../../../pub-compare/pub2").expand_path,
-  Pathname.new(__dir__).join("../../../pub-compare/pub3").expand_path
+  Pathname.new(__dir__).join("../../../pub-compare/pub3").expand_path,
 ].freeze
 
 SIGNALS = {
@@ -23,7 +24,7 @@ SIGNALS = {
   stub: /\b(?:not wired|not implemented|NotImplementedError|stub)\b/i,
   shell: /(?:Open3\.|system\s*\(|`[^`]+`|Kernel\.exec)/,
   secret_shape: /(?:api[_-]?key|access[_-]?token|private[_-]?key|password)\s*[:=]/i,
-  swallowed_error: /rescue\s+(?:StandardError\s*)?(?:=>\s*\w+\s*)?\n\s*(?:nil|false|true|end)/
+  swallowed_error: /rescue\s+(?:StandardError\s*)?(?:=>\s*\w+\s*)?\n\s*(?:nil|false|true|end)/,
 }.freeze
 
 def repository_files(root)
@@ -46,7 +47,7 @@ def inspect_file(root, relative)
     path: relative,
     bytes: bytes.bytesize,
     sha256: Digest::SHA256.hexdigest(bytes),
-    binary: binary?(bytes)
+    binary: binary?(bytes),
   }
   return row if row[:binary]
 

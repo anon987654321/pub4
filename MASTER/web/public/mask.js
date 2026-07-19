@@ -26,7 +26,7 @@ const state = {
   targetMorph: 1,
   rotation: 0,
   swarm: 0,
-  frame: 0
+  frame: 0,
 };
 
 const internalW = 480, internalH = 270;
@@ -48,12 +48,12 @@ function resize() {
 
   if (window.ParticleKernel) {
     window.ParticleKernel.fitInternalResolution(canvas, res);
-    window.ParticleKernel.configureContext(ctx);
+    window.ParticleKernel.configureContext(ctx);,
   } else {
     canvas.width = res.w;
     canvas.height = res.h;
     canvas.style.imageRendering = "pixelated";
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = false;,
   }
 
   canvas.style.cssText = [
@@ -64,9 +64,9 @@ function resize() {
     "z-index:-1",
     "pointer-events:none",
     "background:radial-gradient(circle at 50% 40%, #17110d 0%, #080605 55%, #020202 100%)",
-    "image-rendering:pixelated"
+    "image-rendering:pixelated",
   ].join(";");
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);,
 }
 
 window.MASTERMask = {
@@ -80,15 +80,15 @@ window.MASTERMask = {
     if (payload.topology) setTopology(payload.topology);
     if (/memory|retrieval|context/.test(name)) setTopology("neural");
     if (/escalation|fallback|retry/.test(name)) setTopology("serpent");
-    if (/idle|complete|done/.test(name)) setTopology("papua-mask");
-  }
+    if (/idle|complete|done/.test(name)) setTopology("papua-mask");,
+  },
 };
 
 window.addEventListener("resize", resize, { passive: true });
 window.addEventListener("pointermove", onPointerMove, { passive: true });
 window.addEventListener("master:visual", (event) => window.MASTERMask.event(event.detail?.name || "event", event.detail || {}));
 window.addEventListener("keydown", (event) => {
-  if (event.altKey && event.key.toLowerCase() === "m") cycleTopology();
+  if (event.altKey && event.key.toLowerCase() === "m") cycleTopology();,
 });
 
 resize();

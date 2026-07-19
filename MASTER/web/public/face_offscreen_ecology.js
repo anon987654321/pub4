@@ -21,7 +21,7 @@
     E.offscreenCtx = offCtx;
     E.drawToOffscreen = () => {
       if (!E.offscreenCtx) return;
-      E.offscreenCtx.drawImage(E.canvas, 0, 0);
+      E.offscreenCtx.drawImage(E.canvas, 0, 0);,
     };
     E.blitOffscreen = () => {
       if (!E.offscreen || !E.ctx) return;
@@ -31,9 +31,8 @@
         E.ctx.drawImage(bitmap, 0, 0);
         bitmap.close?.();
         return;
-      }
-      E.drawToOffscreen?.();
+      E.drawToOffscreen?.();,
     };
-    window.MASTER_OFFSCREEN_ECOLOGY = true;
-  } catch (err) { window.MASTER_LOG?.warn?.("face_offscreen_ecology:setup", err); }
+    window.MASTER_OFFSCREEN_ECOLOGY = true;,
+  } catch (err) { window.MASTER_LOG?.warn?.("face_offscreen_ecology:setup", err); },
 })();

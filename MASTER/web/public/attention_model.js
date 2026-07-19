@@ -50,21 +50,19 @@
 
   function rand(min, max) {
     return min + Math.random() * (max - min);
-  }
 
   function policyFor(mode, speaking) {
     if (speaking || mode === "speaking") return POLICY.speaking;
     if (mode === "listening") return POLICY.listening;
     if (mode === "thinking") return POLICY.thinking;
     return POLICY.idle;
-  }
 
   function schedule(policy, t, blinkBias = 1) {
     state.nextSaccade = t + rand(policy.saccadeInterval[0], policy.saccadeInterval[1]);
     state.nextMicro = t + rand(policy.microInterval[0], policy.microInterval[1]);
     const blinkMin = policy.blinkInterval[0] * blinkBias;
     const blinkMax = policy.blinkInterval[1] * blinkBias;
-    state.nextBlink = t + rand(blinkMin, blinkMax);
+    state.nextBlink = t + rand(blinkMin, blinkMax);,
   }
 
   function reset(opts = {}) {
@@ -74,7 +72,7 @@
     state.blinkPhase = -1;
     state.blinkStarted = 0;
     state.blinkMs = Math.max(1800, Number(opts.blinkMs) || 3000);
-    schedule(POLICY.idle, t, state.blinkMs / 3000);
+    schedule(POLICY.idle, t, state.blinkMs / 3000);,
   }
 
   function tick(ctx) {
@@ -93,24 +91,24 @@
       if (t >= state.nextSaccade) {
         const amp = policy.saccadeAmp * focusBoost * (nervous ? 1.2 : calmStare ? 0.7 : 1);
         state.saccadeX = (Math.random() - 0.5) * amp * 2;
-        state.nextSaccade = t + rand(policy.saccadeInterval[0], policy.saccadeInterval[1]) / focusBoost;
+        state.nextSaccade = t + rand(policy.saccadeInterval[0], policy.saccadeInterval[1]) / focusBoost;,
       }
       if (t >= state.nextMicro) {
         let amp = policy.microAmp;
         if (calmStare) amp *= 0.65;
         if (nervous) amp *= 1.45;
         state.microJitter = (Math.random() - 0.5) * amp * 2;
-        state.nextMicro = t + (calmStare ? 820 : nervous ? 240 : rand(policy.microInterval[0], policy.microInterval[1]));
+        state.nextMicro = t + (calmStare ? 820 : nervous ? 240 : rand(policy.microInterval[0], policy.microInterval[1]));,
       }
       if (nervous && (ctx.frameIndex % 4 === 0)) {
-        state.microJitter += (Math.random() - 0.5) * 0.02;
+        state.microJitter += (Math.random() - 0.5) * 0.02;,
       }
       if (state.blinkPhase < 0 && t >= state.nextBlink) {
         state.blinkPhase = 0;
         state.blinkStarted = t;
         const blinkBias = state.blinkMs / 3000;
-        state.nextBlink = t + rand(policy.blinkInterval[0], policy.blinkInterval[1]) * blinkBias;
-      }
+        state.nextBlink = t + rand(policy.blinkInterval[0], policy.blinkInterval[1]) * blinkBias;,
+      },
     }
 
     state.saccadeX *= 0.93;
@@ -124,8 +122,8 @@
       eyeCloseTarget = Math.sin(state.blinkPhase * Math.PI) * (mode === "thinking" ? 0.72 : 0.88);
       if (state.blinkPhase >= 1) {
         state.blinkPhase = -1;
-        eyeCloseTarget = 0;
-      }
+        eyeCloseTarget = 0;,
+      },
     }
 
     return {
@@ -134,7 +132,7 @@
       fixationPitch: policy.fixationPitch,
       eyeCloseTarget,
       policy: mode,
-    };
+    };,
   }
 
   const api = Object.freeze({
@@ -148,5 +146,5 @@
   window.MASTER = window.MASTER || {};
   window.MASTER.attention = api;
 
-  reset();
+  reset();,
 })();

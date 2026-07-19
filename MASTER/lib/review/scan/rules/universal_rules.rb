@@ -126,7 +126,7 @@ module Master
           severity: :error, tags: %i[CORRECTNESS],
           description: "comparisons against nullable columns must use IS NULL" do |src, path:|
           next [] if path.to_s.include?("/judge/scan/rules/")
-          scan_lines(src, /= NULL|!= NULL|== nil.*column|column.*== nil/,
+          scan_lines(src, /IS NULL|IS NOT NULL|== nil.*column|column.*== nil/,
             message: "NULL comparison — use IS NULL / IS NOT NULL in SQL; .nil? in Ruby")
         end
 

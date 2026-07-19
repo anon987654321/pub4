@@ -16,7 +16,7 @@ module Master
             last_inferred_args: @last_inferred_args,
             messages: pruned_messages,
             cost: @cost,
-            ts: Time.now.to_i
+            ts: Time.now.to_i,
           }
           File.write(@path, JSON.generate(data))
         end
