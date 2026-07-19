@@ -15,27 +15,39 @@ Product path (brgen): `Shared::DillaProcessor` → wrapper → engine → Active
 
 ---
 
-## Single style: `dilla`
+## Styles: `dilla` (punch) vs `comfort` (sofa)
 
-One stream/render profile (`DILLA_STYLE_DEFAULTS`). `RENDER_MODE=camel` is a
-compat alias for the same table. Stream re-forces kit/vocal/creative keys via
-`STREAM_EXTRA_DEFAULTS` / `STREAM_CREATIVE_MAX` after style lock.
+| Profile | Activate | Character |
+|---------|----------|-----------|
+| **comfort** (stream default) | bare `ruby dilla.rb`, `STREAM_COMFORT=1`, `ruby dilla.rb comfort …` | One pocket kit, held pads, single melodic lead, no rap, LUFS −18, no lead rotation |
+| **punch / kit-forward** | `STREAM_PUNCH=1` or `STREAM_COMFORT=0` | Hybrid FlyLo kit, hot vox, multi-lead, creative rotate |
+
+`DILLA_STYLE_DEFAULTS` remains the kit-forward DNA table. Comfort is
+`DILLA_COMFORT_DEFAULTS`, forced **after** style on stream so
+`STREAM_CREATIVE_MAX` does not re-hot the mix. `RENDER_MODE=camel` is a
+compat alias for dilla.
 
 ```sh
 cd MASTER/tools/dilla
 
-# Continuous stream (default bare invoke) — one supervisor only
+# Continuous comfort stream (default bare invoke) — one supervisor only
 ruby dilla.rb
-# explicit short cycle:
-SPEAK=0 ruby dilla.rb stream 12
+# explicit:
+SPEAK=0 STREAM_COMFORT=1 ruby dilla.rb stream 16
 
-# One-shot (kit-forward profile)
+# Old punch stream
+STREAM_PUNCH=1 SPEAK=0 ruby dilla.rb stream 12
+
+# One-shot comfort
+ruby dilla.rb comfort out.wav 16
+# One-shot kit-forward
 ruby dilla.rb dilla out.wav 12
-# or: ruby dilla.rb camel out.wav 12
 
-# Chat / product wrapper (outside tools/dilla/)
+# Chat / product wrapper
 cd MASTER
-ruby tools/dilla.rb generate --style dilla --bars 12 --output /tmp/beat.mp3
+ruby tools/dilla.rb generate --style comfort --bars 16 --output /tmp/sofa.mp3
+ruby tools/dilla.rb generate --comfort --bars 16 --output /tmp/sofa.mp3
+DILLA_COMFORT=1 ruby tools/dilla.rb generate --style dilla --bars 16 --output /tmp/sofa.mp3
 ```
 
 ### What you get (code truth — `DILLA_STYLE_DEFAULTS`)

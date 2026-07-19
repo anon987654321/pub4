@@ -92,6 +92,15 @@ module DillaGroove
     ENV.fetch("POCKET_DNA", "1") != "0"
   end
 
+  # Bridged from main's @render_seed by pick_render_seed! (dilla.rb) so the
+  # phrase-rotation and probabilistic pocket choices below vary by render
+  # instead of being a pure function of bar number -- without this, bar N
+  # picks the identical kick/hat/ghost-snare shape on every single render
+  # of every single track, which read as "the same drums every time".
+  def render_seed
+    ENV["DILLA_RENDER_SEED"].to_i
+  end
+
   def swing_jitter_ms(bpm, step, bar)
     return 0.0 unless enabled?
     return 0.0 if ENV["SWING_JITTER"] == "0"
@@ -159,7 +168,7 @@ module DillaGroove
     return false unless enabled? && pocket_dna?
     return false if ENV["HAT_DROP"] == "0"
     return false if step.zero?
-    Random.new((bar * 787) + (step * 53) + 191).rand < 0.04
+    Random.new((bar * 787) + (step * 53) + 191 + render_seed).rand < 0.04
   end
 
   def freehand_kick_sec(bar, step, beat_p)
@@ -254,12 +263,12 @@ module DillaGroove
 
   def pocket_kicks(bar)
     return POCKET_KICK_PHRASES[0] unless pocket_dna?
-    phrase = POCKET_KICK_PHRASES[bar % POCKET_KICK_PHRASES.length]
-    # Breathing bar: ~22% chance, seeded per bar (reproducible, not a
-    # metronomic every-4th-bar wall), drop to a sparser shape drawn from
-    # a small pool instead of always the same [0, 10].
-    if ENV.fetch("POCKET_SIMPLE", "1") != "0" && Random.new((bar * 733) + 41).rand < 0.22
-      return POCKET_KICK_SPARSE_PHRASES[Random.new((bar * 911) + 17).rand(POCKET_KICK_SPARSE_PHRASES.length)]
+    phrase = POCKET_KICK_PHRASES[(bar + render_seed) % POCKET_KICK_PHRASES.length]
+    # Breathing bar: ~22% chance, seeded per bar+render (reproducible within
+    # a render, but not the same every render), drop to a sparser shape
+    # drawn from a small pool instead of always the same [0, 10].
+    if ENV.fetch("POCKET_SIMPLE", "1") != "0" && Random.new((bar * 733) + 41 + render_seed).rand < 0.22
+      return POCKET_KICK_SPARSE_PHRASES[Random.new((bar * 911) + 17 + render_seed).rand(POCKET_KICK_SPARSE_PHRASES.length)]
     end
     phrase
   end
@@ -267,17 +276,17 @@ module DillaGroove
   def pocket_snares_hard(bar)
     return POCKET_SNARE_HARD unless pocket_dna?
     return POCKET_SNARE_HARD if ENV["POCKET_RUSH"] == "0"
-    Random.new((bar * 619) + 83).rand < 0.12 ? POCKET_SNARE_RUSH : POCKET_SNARE_HARD
+    Random.new((bar * 619) + 83 + render_seed).rand < 0.12 ? POCKET_SNARE_RUSH : POCKET_SNARE_HARD
   end
 
   def pocket_snares_ghost(bar)
     return [] unless pocket_dna?
     return [] if ENV["POCKET_GHOSTS"] == "0"
-    POCKET_SNARE_GHOST_PHRASES[bar % POCKET_SNARE_GHOST_PHRASES.length]
+    POCKET_SNARE_GHOST_PHRASES[(bar + render_seed) % POCKET_SNARE_GHOST_PHRASES.length]
   end
 
   def pocket_hats(bar)
-    POCKET_HAT_PHRASES[bar % POCKET_HAT_PHRASES.length]
+    POCKET_HAT_PHRASES[(bar + render_seed) % POCKET_HAT_PHRASES.length]
   end
 
   def pocket_open_hat?(bar)

@@ -7503,6 +7503,117 @@ DILLA_STYLE_DEFAULTS = {
   "ARRANGEMENT_VARIATION" => "1"
 }.freeze
 
+# Comfortable listening: fewer layers, warmer bed, quieter tops/vox, calmer master.
+# Activate via STREAM_COMFORT=1 (stream default), DILLA_COMFORT=1, RENDER_MODE=comfort,
+# or `ruby dilla.rb comfort …`. Opt out: STREAM_COMFORT=0 or STREAM_PUNCH=1.
+DILLA_COMFORT_DEFAULTS = {
+  "STREAM_COMFORT" => "1",
+  "STREAM_SOUL" => "1",
+  "SPEAK" => "0",
+  # One kit — pocket only.
+  "KICKS" => "1",
+  "POCKET_KICKS" => "1",
+  "FLYLO_DRUMS_ONLY" => "0",
+  "FLYLO_DRUM_OVERLAY" => "0",
+  "FLYLO_QUINT_HATS" => "0",
+  "DRUM_CHOPS" => "0",
+  "BACKBEAT_CLAP" => "0",
+  "KICK_GAIN" => "1.05",
+  "FLYLO_KICK_GAIN" => "1.0",
+  "KICK_SAMPLE_GAIN" => "1.0",
+  "FLYLO_OVERLAY_GAIN" => "1.0",
+  "FLYLO_SUB_MIX" => "1.15",
+  "FLYLO_TOP_MIX" => "0.72",
+  "FLYLO_MERGE_BOOST" => "1.1",
+  "FLYLO_BASE_DRUM_VOL" => "1.0",
+  "DRUM_BUS_VOL" => "1.15",
+  "DRUM_BUS_GAIN" => "1.1",
+  "DRUM_MIX_WEIGHT" => "1.2",
+  "DRUM_AIR_DB" => "1.0",
+  "DRUM_PRESENCE_DB" => "1.0",
+  "DRUM_PEAK_DB" => "-2.0",
+  "POCKET_DNA" => "1",
+  "POCKET_SIMPLE" => "1",
+  "POCKET_GHOSTS" => "0",
+  "POCKET_OPEN_HAT" => "1",
+  # No rap bed fight.
+  "RAP_VOCAL" => "0",
+  # Held pad bed, single calm lead.
+  "PAD_VOICE" => "stack_soul",
+  "PAD_ARP_MODE" => "held",
+  "PAD_ATTACK" => "1500",
+  "PAD_RELEASE" => "3800",
+  "PAD_VOL" => "74",
+  "HARM_MIX_WEIGHT" => "1.15",
+  "HARM_BUS_VOL" => "1.45",
+  "HARM_BODY_DB" => "2.5",
+  "HARM_MID_DB" => "1.4",
+  "HARM_PRESENCE_DB" => "0.8",
+  "HARM_AIR_DB" => "0.3",
+  "HARM_SUB_CUT_DB" => "-3.0",
+  "HARMONIC_PADS_WEIGHT" => "1.2",
+  "HARMONIC_PADS_VOLUME" => "1.3",
+  "LEAD_ARP" => "1",
+  "LEAD_ARP_MODE" => "melodic_soul",
+  "LEAD_VOICE" => "soul_prophet",
+  "MELODIC_LEAD" => "1",
+  "SCALE_LEAD" => "0",
+  "HARMONY_LEAD" => "0",
+  "CREATIVE_LEAD" => "0",
+  "EXPERIMENTAL_LEADS" => "0",
+  "LEAD_FORCE_ARP" => "0",
+  "STREAM_LEAD_MIDI_RICH" => "0",
+  "HARMONIC_LEAD_ARP_WEIGHT" => "1.1",
+  "HARMONIC_LEAD_ARP_VOLUME" => "1.15",
+  "HARMONIC_SCALE_LEAD_WEIGHT" => "0.85",
+  "HARMONIC_SCALE_LEAD_VOLUME" => "0.9",
+  "HARMONIC_LEAD_WEIGHT" => "1.0",
+  "HARMONIC_LEAD_VOLUME" => "1.1",
+  "HARMONIC_HARMONY_LEAD_WEIGHT" => "0.7",
+  "HARMONIC_HARMONY_LEAD_VOLUME" => "0.85",
+  "HARMONIC_XLEAD_WEIGHT" => "0.1",
+  "HARMONIC_XLEAD_VOLUME" => "0.2",
+  # Gentle pump + warm master.
+  "SIDECHAIN_STYLE" => "dilla",
+  "SIDECHAIN_DRUM_WEIGHT" => "1.2",
+  "SIDECHAIN_HARM_WEIGHT" => "1.15",
+  "FLYLO_CHORD_DUCK" => "0.95",
+  "SONITEX" => "donuts_soul",
+  "SONITEX_PRESET" => "donuts_soul",
+  "ANALOG_CHAIN" => "broadcast",
+  "MASTER_HEURISTICS" => "1",
+  "HARSHNESS_NOTCH" => "1",
+  "PERCEPTUAL_LIMIT" => "1",
+  "STREAM_NORMALIZE" => "1",
+  "STREAM_LUFS" => "-18.0",
+  "STREAM_TRUE_PEAK" => "-2.0",
+  "STREAM_LRA" => "9",
+  # Less chaos between tracks.
+  "STREAM_ROTATE_LEAD" => "0",
+  "STREAM_ROTATE_SYNTH" => "0",
+  "SYNTH_MORPH" => "0",
+  "LEAD_MORPH" => "0",
+  "SYNTH_CYCLE" => "0",
+  "STREAM_CREATIVE_FREEDOM" => "0",
+  "STREAM_ANALOG_WILD" => "0",
+  "STREAM_ANALOG_EVERY" => "0",
+  "STREAM_ITERATE" => "0",
+  "EVOLVE_EVERY" => "0",
+  "STREAM_HARMONY_EVERY" => "0",
+  "STREAM_EVOLVE_PERFORMER" => "0",
+  "LA_BEAT_PROGRESSION" => "0",
+  "VINYL" => "0",
+  "SELF_SAMPLE" => "0",
+  "CONV_REVERB" => "0",
+  "CAMEL_CLEAN_MASTER" => "1",
+  "CAMEL_NO_REVERB" => "1",
+  "SWING" => "56",
+  "FORM" => "soul_32",
+  "BARS" => "16",
+  "STREAM_BARS" => "16",
+  "ARTIST_VERIFIED_ONLY" => "1"
+}.freeze
+
 # Back-compat name used by camel_mode paths.
 CAMEL_MODE_DEFAULTS = DILLA_STYLE_DEFAULTS
 
@@ -7840,6 +7951,27 @@ end
 def record_config_provenance!(key, label, verb)
   return unless label
   config_provenance[key] = "#{label} (#{verb})"
+end
+
+def comfort_mode?
+  return false if ENV["STREAM_PUNCH"] == "1"
+  return false if ENV["STREAM_COMFORT"] == "0" || ENV["DILLA_COMFORT"] == "0"
+  return true if ENV["STREAM_COMFORT"] == "1" || ENV["DILLA_COMFORT"] == "1"
+  return true if ENV["RENDER_MODE"].to_s.downcase == "comfort"
+
+  false
+end
+
+def apply_comfort_style!(force: true)
+  return unless comfort_mode?
+
+  verb = force ? "force" : "fill"
+  DILLA_COMFORT_DEFAULTS.each do |key, value|
+    next if !force && ENV[key] && !ENV[key].empty?
+
+    ENV[key] = value.to_s
+    record_config_provenance!(key, "DILLA_COMFORT_DEFAULTS", verb)
+  end
 end
 
 def soft_fill_env!(table, label: nil)
@@ -8410,7 +8542,13 @@ end
 
 def apply_dilla_style!(force: false)
   raw = ENV["RENDER_MODE"].to_s.downcase
-  ENV["RENDER_MODE"] = "dilla" if raw.empty? || raw == "camel"
+  if raw == "comfort"
+    ENV["STREAM_COMFORT"] = "1" if ENV["STREAM_COMFORT"].to_s.empty?
+    ENV["DILLA_COMFORT"] = "1" if ENV["DILLA_COMFORT"].to_s.empty?
+    ENV["RENDER_MODE"] = "dilla"
+  elsif raw.empty? || raw == "camel"
+    ENV["RENDER_MODE"] = "dilla"
+  end
   ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.downcase == "camel"
   apply_render_mode!
   verb = force ? "force" : "fill"
@@ -8426,6 +8564,7 @@ def apply_dilla_style!(force: false)
   reassert_pad_lead_locks!
   ensure_learned_engine_seeded!
   apply_learned_env_for_track!(track)
+  apply_comfort_style!(force: force)
 end
 
 def apply_camel_profile!(force: false)
@@ -8453,6 +8592,13 @@ end
 
 def apply_stream_listenability_defaults!
   apply_best_defaults!
+  # Stream defaults to comfort listening unless punch is requested.
+  if ENV["STREAM_PUNCH"] == "1"
+    ENV["STREAM_COMFORT"] = "0" if ENV["STREAM_COMFORT"].to_s.empty?
+  elsif ENV["STREAM_COMFORT"].to_s.empty? && ENV["DILLA_COMFORT"].to_s.empty?
+    ENV["STREAM_COMFORT"] = "1"
+    record_config_provenance!("STREAM_COMFORT", "stream_default_comfort", "soft")
+  end
   soft_fill_env!(STREAM_EXTRA_DEFAULTS, label: "STREAM_EXTRA_DEFAULTS")
   if stream_deep?
     ENV["DILLA_DEEP"] = "1" if ENV["DILLA_DEEP"].to_s.empty?
@@ -8464,22 +8610,32 @@ def apply_stream_listenability_defaults!
     end
     soft_fill_env!(fast, label: "STREAM_FAST_DEFAULTS")
   end
-  if stream_iterate_enabled?
+  if stream_iterate_enabled? && !comfort_mode?
     soft_fill_iterate!(STREAM_ITERATE_TUNING, locked_keys: DILLA_STYLE_LOCK_KEYS)
   end
-  if ENV.fetch("STREAM_SOUL", "1") != "0"
+  if ENV.fetch("STREAM_SOUL", "1") != "0" || comfort_mode?
     soft_fill_env!(STREAM_SOUL_DEFAULTS, label: "STREAM_SOUL_DEFAULTS")
     ensure_learned_engine_seeded!
     apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
   # Single style for stream: dilla (RENDER_MODE camel stays as alias).
-  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty? ||
-                                  ENV["RENDER_MODE"].to_s.downcase == "camel"
+  raw_mode = ENV["RENDER_MODE"].to_s.downcase
+  if raw_mode == "comfort"
+    ENV["STREAM_COMFORT"] = "1"
+    ENV["RENDER_MODE"] = "dilla"
+  elsif raw_mode.empty? || raw_mode == "camel"
+    ENV["RENDER_MODE"] = "dilla"
+  end
   apply_dilla_style!(force: true)
-  # Critical: apply_dilla_style(force) was wiping STREAM_ITERATE / RAP_VOCAL /
-  # creative flags back to the conservative style table — re-force stream layer.
-  force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
-  force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
+  if comfort_mode?
+    # Do not re-force STREAM_CREATIVE_MAX (kit/vox/rotate) — that undoes comfort.
+    force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
+  else
+    # Critical: apply_dilla_style(force) was wiping STREAM_ITERATE / RAP_VOCAL /
+    # creative flags back to the conservative style table — re-force stream layer.
+    force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
+    force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
+  end
   ENV["PLAY_VOL"] = "1" if ENV["PLAY_VOL"].to_s.empty?
   ENV["DILLA_STREAMING"] = "1"
   record_config_provenance!("DILLA_STREAMING", "apply_stream_listenability_defaults!", "force")
@@ -8766,10 +8922,12 @@ def stream(bars_count = STREAM_BARS_COUNT)
   if ENV.fetch("STREAM_CONTINUOUS", "1") != "0" && ENV["DILLA_STREAM_SUPERVISOR"] != "1"
     stream_log = File.join(ROOT, "stream.log")
     env_pass = %w[
-      RENDER_MODE STREAM_SOUL SPEAK RAP_VOCAL STREAM_DEMO STREAM_TRACK STREAM_LOCK
-      FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN
+      RENDER_MODE STREAM_SOUL STREAM_COMFORT STREAM_PUNCH DILLA_COMFORT SPEAK RAP_VOCAL
+      STREAM_DEMO STREAM_TRACK STREAM_LOCK
+      FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN FLYLO_DRUM_OVERLAY
       DRUM_BUS_VOL DRUM_BUS_GAIN DRUM_MIX_WEIGHT DRUM_AIR_DB DRUM_PRESENCE_DB
-      KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY
+      KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY PAD_VOL STREAM_LUFS
+      STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH
     ].filter_map { |k| ENV[k] && !ENV[k].empty? ? "#{k}=#{Shellwords.escape(ENV[k])}" : nil }
                  .join(" ")
     cmd = "cd #{Shellwords.escape(ROOT)} && while true; do " \
@@ -10142,6 +10300,10 @@ EXTERNAL_DRUM_KITS = %w[01-hard-trap 02-bounce 03-soulful-vintage].freeze
 def pick_render_seed!
   DillaSeeds.apply!
   @render_seed = DillaSeeds.render_seed
+  # Bridge into ENV so lib modules (DillaGroove) that don't share this
+  # top-level instance variable can still vary their per-bar phrase/pattern
+  # choices by render instead of being purely a function of bar number.
+  ENV["DILLA_RENDER_SEED"] = @render_seed.to_s
 end
 
 def pick_external_drum_kit!
@@ -14796,6 +14958,18 @@ DISPATCH = {
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
     # Soft-apply kit-forward style so one-shots match stream (empty ENV only).
     apply_dilla_style!(force: false) unless ENV["DILLA_RAW"] == "1"
+    apply_comfort_style!(force: true) if comfort_mode?
+    render_dilla(dest, n_bars)
+  end,
+  "comfort" => lambda do
+    dest = ARGV.shift || File.join(OUTPUT_DIR, "comfort.wav")
+    n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : 16
+    ENV["STREAM_COMFORT"] = "1"
+    ENV["DILLA_COMFORT"] = "1"
+    ENV["RENDER_MODE"] = "dilla"
+    apply_best_defaults! unless ENV["DILLA_RAW"] == "1"
+    apply_dilla_style!(force: true)
+    force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
     render_dilla(dest, n_bars)
   end,
   "camel" => lambda do
@@ -14906,6 +15080,8 @@ DISPATCH = {
 COMMAND_ALIASES = {
   "midi" => "electronium",
   "beat" => "dilla",
+  "sofa" => "comfort",
+  "smooth" => "comfort",
   "ingest" => "learn",
   "download" => "source",
   "flylo-learn" => "learn-flylo"
@@ -14928,14 +15104,21 @@ if __FILE__ == $PROGRAM_NAME
   end
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: continuous dilla-style stream.
-    ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty? ||
-                                    ENV["RENDER_MODE"].to_s.downcase == "camel"
+    # Bare invoke: continuous comfort stream (STREAM_PUNCH=1 for old kit-forward).
+    if ENV["RENDER_MODE"].to_s.downcase == "comfort"
+      ENV["STREAM_COMFORT"] = "1"
+      ENV["RENDER_MODE"] = "dilla"
+    elsif ENV["RENDER_MODE"].to_s.empty? || ENV["RENDER_MODE"].to_s.downcase == "camel"
+      ENV["RENDER_MODE"] = "dilla"
+    end
     ENV["STREAM_SOUL"] = "1" if ENV["STREAM_SOUL"].to_s.empty?
     ENV["SPEAK"] = "0" if ENV["SPEAK"].to_s.empty?
     ENV["STREAM_CONTINUOUS"] = "1" if ENV["STREAM_CONTINUOUS"].to_s.empty?
+    if ENV["STREAM_PUNCH"] != "1" && ENV["STREAM_COMFORT"].to_s.empty?
+      ENV["STREAM_COMFORT"] = "1"
+    end
     apply_dilla_style!(force: false)
-    stream((ENV["BARS"] || "32").to_i)
+    stream((ENV["BARS"] || ENV["STREAM_BARS"] || "16").to_i)
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

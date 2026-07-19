@@ -31,19 +31,26 @@ chat/RAILS one-shots match stream character without going through stream force.
 ```
 1. apply_stream_listenability_defaults!
      apply_best_defaults!           soft best (+ deep if STREAM deep)
+     STREAM_COMFORT=1 soft default   unless STREAM_PUNCH=1 or STREAM_COMFORT=0
      STREAM_EXTRA_DEFAULTS          soft (SPEAK, kit gains, RAP_VOCAL, LUFS, …)
      STREAM_FAST or DILLA_DEEP      soft
-     STREAM_ITERATE_TUNING          soft iterate (if enabled)
-     STREAM_SOUL_DEFAULTS           soft (STREAM_SOUL≠0)
-     apply_dilla_style!(force:true) force full STYLE table
-     STREAM_CREATIVE_MAX            force  (= STREAM_EXTRA_DEFAULTS — re-assert after style wipe)
-     STREAM_ITERATE_TUNING          force  (if iterate)
-2. per-track voice rotation (STREAM_ROTATE_*)
+     STREAM_ITERATE_TUNING          soft iterate (if enabled and not comfort)
+     STREAM_SOUL_DEFAULTS           soft (STREAM_SOUL≠0 or comfort)
+     apply_dilla_style!(force:true) force full STYLE table (+ comfort soft if on)
+     if comfort_mode?
+       DILLA_COMFORT_DEFAULTS       force  (no STREAM_CREATIVE_MAX — keeps sofa mix)
+     else
+       STREAM_CREATIVE_MAX          force  (= STREAM_EXTRA — re-assert after style wipe)
+       STREAM_ITERATE_TUNING        force  (if iterate)
+2. per-track voice rotation (only if STREAM_ROTATE_*=1; comfort sets 0)
 3. play("dilla", bars) → render_dilla
 ```
 
-**Why force twice:** `apply_dilla_style!(force: true)` used to wipe stream creativity
-(RAP_VOCAL, kit boosts, iterate). `STREAM_CREATIVE_MAX` re-applies the creative kit layer.
+**Why force twice (punch):** `apply_dilla_style!(force: true)` used to wipe stream
+creativity. `STREAM_CREATIVE_MAX` re-applies the creative kit layer.
+
+**Comfort:** stream defaults to sofa mix. Opt out with `STREAM_PUNCH=1` or
+`STREAM_COMFORT=0`. One-shot: `ruby dilla.rb comfort out.wav 16`.
 
 ### `DILLA_RAW=1`
 
@@ -59,8 +66,9 @@ Skips `apply_best_defaults!` soft fills — operator ENV only (+ style if still 
 | `RENDER_MODE_DEFAULTS` | soft | Mode sketch/record/perform/long_soul/golden/**warp**/camel/dilla | mode-specific |
 | `DILLA_BEST_DEFAULTS` | soft | Baseline soulful production knobs | 36 |
 | `DILLA_DEEP_DEFAULTS` | soft | Quality gates, pad envelope, retries when deep | 14 |
-| `DILLA_STYLE_DEFAULTS` | fill/force | Canonical **dilla** stream/render character | 135 |
-| `STREAM_EXTRA_DEFAULTS` | soft then force as `STREAM_CREATIVE_MAX` | Stream kit/vox/normalize/speak | 81 |
+| `DILLA_STYLE_DEFAULTS` | fill/force | Canonical **dilla** kit-forward DNA | 135 |
+| `DILLA_COMFORT_DEFAULTS` | force when comfort | Sofa: one kit, held pads, no vox, −18 LUFS | ~90 |
+| `STREAM_EXTRA_DEFAULTS` | soft then force as `STREAM_CREATIVE_MAX` (punch only) | Stream kit/vox/normalize/speak | 81 |
 | `STREAM_ITERATE_TUNING` | soft/force | Auto beauty/evolve during stream | 20 |
 | `STREAM_SOUL_DEFAULTS` / `STREAM_FAST_DEFAULTS` | soft | Soul vs fast stream tradeoffs | varies |
 
@@ -73,7 +81,10 @@ Turns on already-built knobs: spectral arp/stack, `ARP_IDM_BIAS`, drum chops,
 
 | ENV | Layer | Role |
 |-----|-------|------|
-| `RENDER_MODE` | mode/style | `dilla` (default), `warp`, `sketch`, …; `camel`→dilla |
+| `RENDER_MODE` | mode/style | `dilla` (default), `comfort`→dilla+comfort, `warp`, `sketch`, …; `camel`→dilla |
+| `STREAM_COMFORT` | stream | `1` sofa (stream default); `0` off |
+| `STREAM_PUNCH` | stream | `1` force kit-forward creative stream |
+| `DILLA_COMFORT` | any | `1` apply comfort on one-shot / product |
 | `TRACK` / `STREAM_TRACK` | style/stream | Progression lock |
 | `BARS` / `STREAM_BARS` | style/stream | Length |
 | `KICKS` / `POCKET_KICKS` | kit | Pocket kicks on |
