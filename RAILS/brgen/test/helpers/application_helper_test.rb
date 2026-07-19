@@ -86,4 +86,50 @@ class ApplicationHelperTest < ActionView::TestCase
     def helper.controller_path = "channels"
     assert_equal :messenger, helper.inferred_vertical_from_controller
   end
+
+  test "brgen_nav_items includes channels" do
+    Current.domain = "brgen.no"
+    # authenticated? is mixed in from Authentication in controllers; stub for helper unit tests.
+    def authenticated? = true
+    items = brgen_nav_items
+    labels = items.map(&:first)
+    assert_includes labels, "channels"
+    channels = items.find { |label, _| label == "channels" }
+    assert_equal channels_path, channels.last
+  end
+
+  test "notification_href opens match and follow targets" do
+    user = User.strict_loading(false).create!(
+      email_address: "n-#{SecureRandom.hex(4)}@example.com",
+      password: "password123",
+      username: "n#{SecureRandom.hex(3)}",
+      city: @city
+    )
+    actor = User.strict_loading(false).create!(
+      email_address: "a-#{SecureRandom.hex(4)}@example.com",
+      password: "password123",
+      username: "a#{SecureRandom.hex(3)}",
+      city: @city
+    )
+
+    match_n = Notification.new(user: user, actor: actor, kind: "match")
+    href = notification_href(match_n)
+    assert href.present?
+    assert_match %r{dating\.brgen\.no}, href
+
+    follow_n = Notification.new(user: user, actor: actor, kind: "follow", notifiable: nil)
+    assert_equal user_path(actor), notification_href(follow_n)
+  end
+
+  test "notification_href uses notifiable post" do
+    user = User.strict_loading(false).create!(
+      email_address: "p-#{SecureRandom.hex(4)}@example.com",
+      password: "password123",
+      username: "p#{SecureRandom.hex(3)}",
+      city: @city
+    )
+    post = Post.create!(user: user, title: "Ping", content: "pong", city: @city)
+    n = Notification.new(user: user, actor: user, kind: "like", notifiable: post)
+    assert_equal post_path(post), notification_href(n)
+  end
 end

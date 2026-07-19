@@ -1,17 +1,27 @@
-<article id="notification-<%= notification.id %>" role="article" aria-label="Notification">
- <h3><%= notification.title %></h3>
- <% if notification.body.present? %><p><%= notification.body %></p><% end %>
- <p class="dim">
- <span data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</span>
- <% if notification.read? %> · read<% end %>
- </p>
- <% unless notification.read? %>
- <button type="button"
- class="btn btn-ghost btn-sm"
- data-reflex="click->NotificationRead#mark_read"
- data-notification-id="<%= notification.id %>"
- aria-label="Mark notification as read">
- Mark as read
- </button>
- <% end %>
+<% href = notification_href(notification) %>
+<article id="notification-<%= notification.id %>" role="article" aria-label="Notification" class="notification-card">
+  <% if href.present? %>
+    <h3><%= link_to notification.title, href, class: "notification-title-link" %></h3>
+  <% else %>
+    <h3><%= notification.title %></h3>
+  <% end %>
+  <% if notification.body.present? %><p><%= notification.body %></p><% end %>
+  <p class="dim">
+    <span data-controller="timeago"><%= time_ago_in_words(notification.created_at) %> ago</span>
+    <% if notification.read? %> · read<% end %>
+  </p>
+  <div class="notification-actions cluster">
+    <% if href.present? %>
+      <%= link_to "Open", href, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+    <% unless notification.read? %>
+      <button type="button"
+        class="btn btn-ghost btn-sm"
+        data-reflex="click->NotificationRead#mark_read"
+        data-notification-id="<%= notification.id %>"
+        aria-label="Mark notification as read">
+        Mark as read
+      </button>
+    <% end %>
+  </div>
 </article>

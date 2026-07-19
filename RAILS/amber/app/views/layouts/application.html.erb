@@ -18,9 +18,11 @@
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  <link rel="preload" href="/icon.png" as="image">
-  <link rel="icon" href="/icon.png" type="image/png">
-  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+  <link rel="preload" href="/icon-192.png" as="image">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <link rel="preload" as="font" type="font/woff2" href="/fonts/caprasimo-latin-400-normal.woff2" crossorigin>
   <link rel="stylesheet" href="/swiper-bundle.min.css">

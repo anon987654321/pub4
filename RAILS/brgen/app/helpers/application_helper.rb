@@ -96,6 +96,7 @@ module ApplicationHelper
       ["takeaway", "//takeaway.#{domain}/"],
       ["maps", "//maps.#{domain}/"],
       ["messenger", "//messenger.#{domain}/"],
+      ["channels", channels_path],
       *(authenticated? ? [] : [["sign up", new_session_path]])
     ]
   end
@@ -132,24 +133,20 @@ module ApplicationHelper
     end
   end
 
-  # Deep link for an ActivityEvent row (object_type + object_id). Returns nil when
-  # the record is gone or has no public surface. Vertical records use absolute
-  # subdomain URLs so apex /activity_events can open the right host.
-  def activity_event_href(event)
-    return if event.blank? || event.object_type.blank? || event.object_id.blank?
+  # Public href for a domain record. Vertical models use absolute subdomain URLs
+  # so apex surfaces (activity, notifications) can open the right host.
+  def record_public_href(record)
+    return if record.blank?
 
-    klass = event.object_type.to_s.safe_constantize
-    return unless klass
-
-    record = klass.find_by(id: event.object_id)
-    return unless record
-
-    domain = Current.domain.presence || request.host
+    domain = Current.domain.presence || (respond_to?(:request) ? request.host : nil) || "brgen.no"
     case record
     when Post then post_path(record)
     when Community then community_path(record)
     when Comment then record.commentable.present? ? polymorphic_path(record.commentable) : nil
     when User then user_path(record)
+    when Message then conversation_path(record.conversation) if record.try(:conversation)
+    when Conversation
+      record.channel? ? channel_path(record.slug) : conversation_path(record)
     when Marketplace::Listing
       marketplace_listing_url(record, host: domain, subdomain: marketplace_subdomain)
     when Marketplace::Store
@@ -181,6 +178,8 @@ module ApplicationHelper
       dating_matches_url(host: domain, subdomain: "dating")
     when Dating::Profile
       dating_profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
+    when Follow
+      user_path(record.follower) if record.try(:follower)
     else
       polymorphic_path(record) if respond_to?(:polymorphic_path)
     end
@@ -188,8 +187,53 @@ module ApplicationHelper
     nil
   end
 
+  # Deep link for an ActivityEvent row (object_type + object_id).
+  def activity_event_href(event)
+    return if event.blank? || event.object_type.blank? || event.object_id.blank?
+
+    klass = event.object_type.to_s.safe_constantize
+    return unless klass
+
+    record = klass.find_by(id: event.object_id)
+    record_public_href(record)
+  end
+
   def activity_event_title(event)
     event.event_name.to_s.humanize
+  end
+
+  # Deep link for a Notification — prefers notifiable, then source_*, then kind.
+  def notification_href(notification)
+    return if notification.blank?
+
+    domain = Current.domain.presence || (respond_to?(:request) ? request.host : nil) || "brgen.no"
+
+    case notification.kind.to_s
+    when "match"
+      return dating_matches_url(host: domain, subdomain: "dating")
+    when "follow"
+      return user_path(notification.actor) if notification.actor
+    when "message"
+      if notification.notifiable.is_a?(Message)
+        return conversation_path(notification.notifiable.conversation)
+      elsif notification.notifiable.is_a?(Conversation)
+        return record_public_href(notification.notifiable)
+      end
+    end
+
+    href = record_public_href(notification.notifiable)
+    return href if href.present?
+
+    if notification.respond_to?(:source_type) && notification.source_type.present?
+      klass = notification.source_type.to_s.safe_constantize
+      src = klass&.find_by(id: notification.source_id)
+      href = record_public_href(src)
+      return href if href.present?
+    end
+
+    user_path(notification.actor) if notification.actor
+  rescue StandardError
+    nil
   end
 
   POSTPRO_PRESETS = PostproJob::VALID_PRESETS.freeze
