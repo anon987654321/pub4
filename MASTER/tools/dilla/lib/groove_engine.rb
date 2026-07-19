@@ -9,7 +9,9 @@
 module DillaGroove
   PRIMES = [3, 5, 7, 11].freeze
   # Mutable memoization cache (markov_steps writes to it via ||=) — must not
-  # be frozen. Broke every render with FrozenError until fixed here.
+  # be frozen. Broke every render with FrozenError until fixed here. This is
+  # the second time an automated pass has re-added .freeze here despite this
+  # comment; if it recurs again, the freezer needs an explicit exception list.
   MARKOV_CACHE = {}
   # Tempo/timing should breathe over a multi-bar phrase, not sit dead-locked
   # to the grid — a slow sine LFO, period within the 4-8 bar range documented
@@ -26,7 +28,7 @@ module DillaGroove
     [0, 6, 11],
     [0, 10, 14],
     [3, 10],
-    [0, 6, 9, 10]
+    [0, 6, 9, 10],
   ].freeze
   # Dusty / Madlib-leaning: more four-on-floor anchors + late-bar push.
   POCKET_KICK_PHRASES_DUSTY = [
@@ -37,7 +39,7 @@ module DillaGroove
     [0, 7, 10],
     [2, 8, 12],
     [0, 4, 11],
-    [0, 6, 8, 12]
+    [0, 6, 8, 12],
   ].freeze
   # Sparse shapes for the occasional breathing bar -- real Dilla pockets
   # loosen up periodically, but never repeat the same two notes on a
@@ -45,12 +47,12 @@ module DillaGroove
   POCKET_KICK_SPARSE_PHRASES = [
     [0, 10],
     [6, 10],
-    [0, 6]
+    [0, 6],
   ].freeze
   POCKET_KICK_SPARSE_PHRASES_DUSTY = [
     [0, 8],
     [4, 12],
-    [0, 4]
+    [0, 4],
   ].freeze
   POCKET_SNARE_HARD = [4, 12].freeze
   # Documented Dilla off-kilter device: the backbeat snare occasionally
@@ -63,21 +65,21 @@ module DillaGroove
     [2, 10],
     [7, 15],
     [10],
-    []
+    [],
   ].freeze
   POCKET_SNARE_GHOST_PHRASES_DUSTY = [
     [6],
     [2, 6, 14],
     [6, 14],
     [14],
-    [2, 10]
+    [2, 10],
   ].freeze
   POCKET_HAT_PHRASES = [
     [0, 2, 4, 6, 8, 10, 12, 14],
     [0, 2, 4, 6, 8, 10, 13, 14],
     [0, 2, 4, 6, 8, 10, 12, 13, 14],
     [0, 3, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 7, 8, 10, 12, 14]
+    [0, 2, 4, 7, 8, 10, 12, 14],
   ].freeze
   # Offbeat-biased hats (1,3,5…) — different ride from straight 8ths.
   POCKET_HAT_PHRASES_DUSTY = [
@@ -85,7 +87,7 @@ module DillaGroove
     [1, 3, 5, 7, 9, 11, 12, 15],
     [0, 1, 3, 5, 7, 9, 11, 13, 15],
     [1, 3, 4, 7, 9, 11, 13, 15],
-    [1, 3, 5, 8, 9, 11, 13, 15]
+    [1, 3, 5, 8, 9, 11, 13, 15],
   ].freeze
   # Industrial techno: four-on-floor kick, solid 2+4 snare/clap, 16th hats.
   POCKET_KICK_PHRASES_INDUSTRIAL = [
@@ -96,12 +98,12 @@ module DillaGroove
     [0, 4, 6, 8, 12],
     [0, 4, 8, 12],
     [0, 2, 4, 8, 12],
-    [0, 4, 8, 11, 12]
+    [0, 4, 8, 11, 12],
   ].freeze
   POCKET_KICK_SPARSE_PHRASES_INDUSTRIAL = [
     [0, 4, 8, 12],
     [0, 8],
-    [0, 4, 12]
+    [0, 4, 12],
   ].freeze
   POCKET_SNARE_HARD_INDUSTRIAL = [4, 12].freeze
   POCKET_SNARE_RUSH_INDUSTRIAL = [4, 12].freeze
@@ -110,14 +112,14 @@ module DillaGroove
     [10],
     [],
     [6],
-    []
+    [],
   ].freeze
   POCKET_HAT_PHRASES_INDUSTRIAL = [
     (0..15).to_a,
     (0..15).to_a,
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
+    [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14],
   ].freeze
 
   # Freehand nudge ranges in MPC ticks (1/96 beat) — cyclic, not random chaos.
@@ -129,7 +131,7 @@ module DillaGroove
     hat_down: -1..4,
     hat_up: 6..16,
     open: 4..12,
-    clap: -12..-4
+    clap: -12..-4,
   }.freeze
 
   KICK_SAMPLE_CYCLE = %i[kick ind_kick kick kick].freeze

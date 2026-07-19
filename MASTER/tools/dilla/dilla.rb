@@ -2527,50 +2527,6 @@ def chord_intervals_from_hz(hz)
   midis.map { |m| ((m - root) % 12).round }.uniq
 end
 
-def apply_voicing(hz, style)
-  midis = hz.map { |h| hz_to_midi(h) }.sort
-  case style
-  when :quartal
-    base = midis.first
-    [base, base + 5, base + 10, base + 15, base + 17].map { |m| midi_to_hz(m) }
-  when :drop2
-    return hz if midis.length < 4
-    ordered = midis
-    drop = ordered.dup
-    drop[-2] = ordered[-2] - 12.0 if ordered[-2] > 48
-    drop.map { |m| midi_to_hz(m) }
-  when :drop3
-    return hz if midis.length < 4
-    ordered = midis
-    drop = ordered.dup
-    drop[-3] = ordered[-3] - 12.0 if ordered[-3] > 48
-    drop.map { |m| midi_to_hz(m) }
-  when :spread
-    return hz if midis.length < 2
-    root = midis.first
-    ivs = chord_intervals_from_hz(hz)
-    third_iv = ivs.find { |i| [3, 4].include?(i) } || 4
-    fifth_iv = ivs.find { |i| [7, 6].include?(i) } || 7
-    seventh_iv = ivs.find { |i| [10, 11].include?(i) }
-    ninth_iv = ivs.find { |i| [2, 14].include?(i) }
-    voiced = [root, root + fifth_iv, root + third_iv + 12]
-    voiced << (root + seventh_iv + 12) if seventh_iv
-    voiced << (root + (ninth_iv == 2 ? 14 : ninth_iv) + 12) if ninth_iv
-    voiced = [root, root + fifth_iv, root + third_iv + 12, root + (seventh_iv || 10) + 12, root + 14] if voiced.length < 4
-    voiced.map { |m| midi_to_hz(m) }.uniq.first(5)
-  when :cluster
-    base = midis.first
-    [base, base + 1, base + 2, base + 6, base + 7].map { |m| midi_to_hz(m) }
-  else
-    hz
-  end.uniq.first(5)
-end
-
-def decorate_chord(chord, voicing: :spread)
-  hz = apply_voicing(chord[:hz], voicing)
-  { name: chord[:name], hz: hz }
-end
-
 def generate_coltrane_changes(root_hz:, length: 8, seed: nil)
   rng = seed ? Random.new(seed) : Random.new
   offsets = [0, 4, 8] # major thirds
@@ -6792,13 +6748,6 @@ def break_filter(input_tag, duration, out_tag: "broke")
     "[#{out_tag}]"
 end
 
-# A real build-up: rising loudness + rising brightness across the final
-# stretch of the track (last ~18%), landing right as the hook returns
-# (fugue recapitulation) — structural energy, not just a static mix.
-def build_up_filter(input_tag, duration, out_tag: "built")
-  build_up_filter_enhanced(input_tag, duration, out_tag:)
-end
-
 def master_bus_filters(input_tag = "mix", track: nil, duration: nil, ir_input_idx: nil, cfg: nil)
   cfg ||= dilla_resolve_config
   filt = master_bus_filters_enhanced(input_tag, cfg:, duration:, ir_input_idx:)
@@ -7637,9 +7586,6 @@ DILLA_COMFORT_DEFAULTS = {
   "BPM" => "128",
   "QUINTUPLET" => "0"
 }.freeze
-
-# Back-compat name used by camel_mode paths.
-CAMEL_MODE_DEFAULTS = DILLA_STYLE_DEFAULTS
 
 STREAM_SOUL_DEFAULTS = {
   "STREAM_SOUL" => "1",
