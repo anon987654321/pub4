@@ -3579,9 +3579,13 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   drum_air = ENV.fetch("DRUM_AIR_DB", "2.5").to_f
   drum_pres = ENV.fetch("DRUM_PRESENCE_DB", "2.5").to_f
   flylo_eq = if flylo_drum_overlay_enabled?
-               "equalizer=f=70:t=o:w=0.9:g=5.0,equalizer=f=200:t=o:w=1:g=2.5," \
-                 "equalizer=f=4200:t=o:w=1.2:g=#{(4.0 + drum_pres * 0.35).round(1)}," \
-                 "equalizer=f=6500:t=o:w=1.5:g=#{(2.5 + drum_air * 0.4).round(1)},"
+               # Was stacking +5/+2.5/+4.9/+3.5dB across bass, low-mid, presence,
+               # and air all at once -- direct feedback that the drums sound
+               # "too hard" pointed at this chain. Presence/air were the biggest
+               # offenders (harsh hat/snare crack); eased all four back.
+               "equalizer=f=70:t=o:w=0.9:g=3.2,equalizer=f=200:t=o:w=1:g=1.6," \
+                 "equalizer=f=4200:t=o:w=1.2:g=#{(2.2 + drum_pres * 0.25).round(1)}," \
+                 "equalizer=f=6500:t=o:w=1.5:g=#{(1.3 + drum_air * 0.25).round(1)},"
              elsif drum_air.positive? || drum_pres.positive?
                "equalizer=f=3500:t=h:w=1600:g=#{drum_pres.round(1)}," \
                  "equalizer=f=7000:t=h:w=2200:g=#{drum_air.round(1)},"
