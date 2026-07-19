@@ -349,7 +349,7 @@
         this.audioContext=null;this.analyser=null;this.compressor=null;this.dataArray=null;
         try{
           this.audioContext=new(window.AudioContext||window.webkitAudioContext)();
-          
+
           // Add compressor/limiter for volume normalization
           this.compressor=this.audioContext.createDynamicsCompressor();
           this.compressor.threshold.setValueAtTime(-24,this.audioContext.currentTime);
@@ -357,11 +357,11 @@
           this.compressor.ratio.setValueAtTime(12,this.audioContext.currentTime);
           this.compressor.attack.setValueAtTime(0.003,this.audioContext.currentTime);
           this.compressor.release.setValueAtTime(0.25,this.audioContext.currentTime);
-          
+
           this.analyser=this.audioContext.createAnalyser();
           this.analyser.fftSize=256;
           this.dataArray=new Uint8Array(this.analyser.frequencyBinCount);
-          
+
           // Chain: source → analyser → compressor → destination
           this.compressor.connect(this.audioContext.destination);
         }catch{}

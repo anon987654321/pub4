@@ -5,12 +5,12 @@
 module DfamEngine
   DEFAULT_PATCH = {
     osc1_hz: 80, osc2_hz: 120, fm_pct: 30, noise_pct: 20,
-    filter_hz: 2000, res_pct: 40, decay_ms: 200
+    filter_hz: 2000, res_pct: 40, decay_ms: 200,
   }.freeze
 
   DEFAULT_PATTERN = {
     pitch: [50, 30, 60, 20, 55, 35, 65, 25],
-    velocity: [80, 60, 90, 50, 85, 65, 95, 55]
+    velocity: [80, 60, 90, 50, 85, 65, 95, 55],
   }.freeze
 
   STEPS = 8

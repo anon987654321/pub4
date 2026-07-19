@@ -37,7 +37,7 @@ module Master
           mids_db: mids,
           presence_db: presence,
           air_db: air,
-          pad_vs_sub_db: (pad_body && sub ? (pad_body - sub).round(2) : nil)
+          pad_vs_sub_db: (pad_body && sub ? (pad_body - sub).round(2) : nil),
         }
       end
 
@@ -59,7 +59,7 @@ module Master
         [
           File.join(root, "tools/dilla/demo.wav"),
           File.join(root, ".master/media/dilla_beat.mp3"),
-          File.join(Dir.pwd, "demo.wav")
+          File.join(Dir.pwd, "demo.wav"),
         ]
       end
 

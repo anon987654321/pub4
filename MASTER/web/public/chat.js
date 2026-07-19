@@ -40,7 +40,6 @@ let recentReplyCursor = -1;
 let _streamEl = null;
 let _typingEl = null;
 
-
 // ARIA live region for streamed text (FA137) — announce new tokens to SR
 const streamLive = (() => {
   let el = document.getElementById('stream-live');

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
 # Version: 20.0.0 - Photo quality research: adaptive contrast, filmic shoulder/toe,
@@ -195,7 +196,7 @@ module PostproBootstrap
     {
       gems: gems,
       camera_profiles: camera_profiles,
-      config: config
+      config: config,
     }
   end
 end
@@ -306,11 +307,11 @@ GRAIN_LOGNORM_MEAN = Math.exp(GRAIN_LOGNORM_SIGMA**2 / 2.0)
 PRINT_STOCKS = {
   kodak_2383: {
     hd: { r: [0.03, 0.98, 0.18, 1.38], g: [0.02, 0.97, 0.18, 1.34], b: [0.04, 0.96, 0.18, 1.28] },
-    grain: 3, warmth: 0.055, cool_shadow: 0.042
+    grain: 3, warmth: 0.055, cool_shadow: 0.042,
   },
   kodak_2302: {
     hd: { r: [0.05, 0.95, 0.18, 1.50], g: [0.05, 0.95, 0.18, 1.50], b: [0.05, 0.95, 0.18, 1.50] },
-    grain: 5
+    grain: 5,
   },
 }.freeze
 
@@ -533,7 +534,7 @@ end
 # from neutral creates the colour cast that defines a stock's look.
 # One maplut at runtime; CPU spent only on cache miss.
 module HD
-  CACHE = {}
+  CACHE = {}.freeze
 
   module_function
 
@@ -703,7 +704,7 @@ module Spectral
   D65_KELVIN = 6504.0
   PRIMARY_CENTERS = [611.0, 549.0, 464.0].freeze
   PRIMARY_SIGMA = 30.0
-  CACHE = {}
+  CACHE = {}.freeze
 
   module_function
 

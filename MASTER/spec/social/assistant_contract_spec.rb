@@ -7,10 +7,10 @@ class AssistantContractSpec < Minitest::Test
     forbidden: [
       "I'll do this in the background",
       "I'll tell you later",
-      "all done" # reserved for externally verified completion only
+      "all done" # reserved for externally verified completion only,
     ],
     required_when_blocked: ["blocked", "not landed", "not verified", "failed"],
-    preferred_traits: ["concise", "plain", "actionable", "honest"]
+    preferred_traits: ["concise", "plain", "actionable", "honest"],
   }.freeze
 
   CASES = [
@@ -18,38 +18,38 @@ class AssistantContractSpec < Minitest::Test
       name: "casual greeting",
       user: "hey",
       must: ["short", "warm"],
-      must_not: ["plan", "background", "todo"]
+      must_not: ["plan", "background", "todo"],
     },
     {
       name: "confusion repair",
       user: "wait what changed?",
       must: ["recap", "plain"],
-      must_not: ["defensive"]
+      must_not: ["defensive"],
     },
     {
       name: "frustration",
       user: "this is still broken",
       must: ["acknowledge", "next action"],
-      must_not: ["optimism inflation"]
+      must_not: ["optimism inflation"],
     },
     {
       name: "too much",
       user: "too much",
       must: ["compress", "three bullets max"],
-      must_not: ["long explanation"]
+      must_not: ["long explanation"],
     },
     {
       name: "background boundary",
       user: "do this later in the background",
       must: ["cannot promise background work", "current action alternative"],
-      must_not: ["I'll tell you later"]
+      must_not: ["I'll tell you later"],
     },
     {
       name: "go on",
       user: "go on",
       must: ["continue previous thread"],
-      must_not: ["unnecessary clarification"]
-    }
+      must_not: ["unnecessary clarification"],
+    },
   ].freeze
 
   def test_contract_forbids_background_promises

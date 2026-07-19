@@ -257,7 +257,6 @@ class VisemeDriver {
   }
 }
 
-
 export {
   deriveBlendFromEmotion,
   ParticleField3D,

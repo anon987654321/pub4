@@ -34,7 +34,7 @@ class TestPrune < Minitest::Test
     {
       "I believe this works." => "this works.",
       "This seems correct." => "This correct.",
-      "This appears stable." => "This stable."
+      "This appears stable." => "This stable.",
     }.each do |input, expected|
       assert_equal expected, call(input).value![:output]
     end

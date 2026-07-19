@@ -243,7 +243,7 @@ window._dillaBg = (() => {
       barIv = setInterval(() => { if (!playing) return; scheduleBar(bar++, ctx.currentTime + 0.05); }, BAR * 1000);
       duckIv = setInterval(() => {
         if (!playing) return;
-        const speaking = !!(F_FACE_TTS && F_FACE_TTS.playing);
+        const speaking = !!(F_FACE_TTS?.playing);
         const target = speaking ? 0.025 : 0.14;
         try { master.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.5); } catch (err) { window.MASTER_LOG?.warn?.("face_loops_music:duck_ramp", err); }
       }, 500);

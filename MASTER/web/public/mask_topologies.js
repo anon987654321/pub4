@@ -185,5 +185,4 @@ function cycleTopology() {
   setTopology(names[(current + 1) % names.length]);
 }
 
-
 })();

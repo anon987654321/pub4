@@ -255,7 +255,7 @@ window.addEventListener('master:visual', (ev) => {
       if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
 
       const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
-      if (Math.abs(pitch) > 20) eyePool && eyePool.alive && (eyeCells()[b + window.ParticleKernel.FIELD.confidence] = 0.6);
+      if (Math.abs(pitch) > 20) eyePool?.alive && (eyeCells()[b + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
 
     if (hi) State.creativeBleed = (State.creativeBleed || 0) + 0.9;
@@ -455,7 +455,7 @@ if (renderer) {
         const pxI = (px - sz * 0.5) | 0;
         const pyI = (py - sz * 0.5) | 0;
         const lum = (_r2 + _g2 + _b2) / (255 * 3);
-        if (K2 && K2.ditherThreshold(pxI, pyI, lum)) {
+        if (K2?.ditherThreshold(pxI, pyI, lum)) {
           ctx2.fillStyle = `rgb(${_r2},${_g2},${_b2})`;
           ctx2.fillRect(pxI, pyI, Math.ceil(sz), Math.ceil(sz));
         }

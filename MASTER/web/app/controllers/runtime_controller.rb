@@ -29,7 +29,7 @@ class RuntimeController < ApplicationController
       tier: request.env["master.tier"].to_s,
       build: ENV.fetch("CACHE_VERSION", "dev"),
       face_boot_ms: metrics[:face_boot_ms] || metrics["face_boot_ms"],
-      particle_worker_alive: metrics[:particle_worker_alive] || metrics["particle_worker_alive"]
+      particle_worker_alive: metrics[:particle_worker_alive] || metrics["particle_worker_alive"],
     })
   end
 

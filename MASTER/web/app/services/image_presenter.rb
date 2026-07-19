@@ -15,7 +15,7 @@ class ImagePresenter
     "image/png" => ".png",
     "image/webp" => ".webp",
     "image/heic" => ".heic",
-    "image/heif" => ".heif"
+    "image/heif" => ".heif",
   }.freeze
   DEFAULT_POSTPRO_PRESET = ENV.fetch("MASTER_POSTPRO_PRESET", "portrait")
 
@@ -54,7 +54,7 @@ class ImagePresenter
       data: Base64.strict_encode64(File.binread(disk_path)),
       mime: meta["mime"].to_s.empty? ? "image/jpeg" : meta["mime"].to_s,
       name: meta["name"].to_s.empty? ? File.basename(disk_path) : meta["name"].to_s,
-      path: disk_path
+      path: disk_path,
     }
   rescue StandardError => e
     @logger.warn("uploaded_image_payload failed: #{e.class}: #{e.message}")
@@ -90,7 +90,7 @@ class ImagePresenter
       "mime" => mime,
       "processed" => final_path == processed_path,
       "preset" => DEFAULT_POSTPRO_PRESET,
-      "created_at" => Time.now.utc.iso8601
+      "created_at" => Time.now.utc.iso8601,
     }
   end
 

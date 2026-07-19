@@ -23,7 +23,7 @@ class TestCLI < Minitest::Test
       logging:  @logging,
       undo:     @undo,
       config:   @config,
-      pipeline: @pipeline
+      pipeline: @pipeline,
     }
 
     @cli = Master::CLI::CLI.new(container: @container)
@@ -44,7 +44,7 @@ class TestCLI < Minitest::Test
     findings = [
       { rule: "STYLE", line: 2, message: "style issue" },
       { rule: "STYLE", line: 3, message: "another style issue" },
-      { rule: "SECURITY", line: 8, message: "security issue" }
+      { rule: "SECURITY", line: 8, message: "security issue" },
     ]
     output = Master::CLI::CommandRegistry.format_scan_results(
       pairs: [["sample.rb", Master::Result.ok(findings)]],

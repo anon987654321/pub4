@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 require "json"
 require "open3"
@@ -13,7 +14,7 @@ WEIGHTS = {
   static: 0.25,
   complexity: 0.15,
   architecture: 0.15,
-  security: 0.10
+  security: 0.10,
 }.freeze
 
 TEXT_EXTENSIONS = %w[
@@ -41,7 +42,7 @@ class EvidenceGate
       static: static_score,
       complexity: complexity_score,
       architecture: architecture_score,
-      security: security_score
+      security: security_score,
     }
 
     weighted = scores.sum { |key, value| value * WEIGHTS.fetch(key) }

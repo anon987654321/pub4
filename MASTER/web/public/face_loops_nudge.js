@@ -40,7 +40,7 @@ window._nudgeLoop = (() => {
     if (F_FACE_NUDGE_TTS?.playing) return false;
     if (F_FACE_NUDGE_TTS?.queue && F_FACE_NUDGE_TTS.queue.length >= 2) return false;
     const el = inputEl();
-    if (el && el.value && el.value.trim().length > 0) return false;
+    if (el?.value && el.value.trim().length > 0) return false;
     if (document.hidden) return false;
     return true;
   }

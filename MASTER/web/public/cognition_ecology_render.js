@@ -98,7 +98,7 @@
     for (let idx = 0; idx < agents.length; idx++) {
       const agent = agents[idx];
       let kCharge = agent.charge;
-      if (agentsPool && agentsPool.alive[idx]) {
+      if (agentsPool?.alive[idx]) {
         const b = idx * window.ParticleKernel.FIELDS_PER_CELL;
         kCharge = agentsPool.cells[b + window.ParticleKernel.FIELD.arousal] || agent.charge;
       }

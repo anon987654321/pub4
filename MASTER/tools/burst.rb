@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 # Burst - Industrial Techno Generator
 #
 # Pure SoX synthesis for aggressive Berghain-style industrial techno
@@ -24,7 +25,7 @@ def find_sox
     "/usr/local/bin/sox",                             # OpenBSD
     "/usr/bin/sox",                                   # Linux
     File.join(__dir__, "dilla", "effects", "sox", "sox.exe"),  # Cygwin relative
-    "G:/pub/dilla/effects/sox/sox.exe"                # Absolute Cygwin
+    "G:/pub/dilla/effects/sox/sox.exe"                # Absolute Cygwin,
   ]
 
   candidates.each do |path|
@@ -44,7 +45,7 @@ SOX = find_sox
 options = {
   output: "industrial/berghain_135bpm.wav",
   rate: 135,
-  bars: 16
+  bars: 16,
 }
 
 OptionParser.new do |opts|

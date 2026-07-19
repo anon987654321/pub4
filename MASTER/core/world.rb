@@ -36,7 +36,7 @@ module Master::Core
     def checkpoint
       {
         id: SecureRandom.hex(8),
-        patch: worktree_patch
+        patch: worktree_patch,
       }
     end
 

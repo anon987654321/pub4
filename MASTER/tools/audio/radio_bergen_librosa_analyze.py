@@ -40,11 +40,9 @@ LOCAL_ALIASES = {
 
 PITCH_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
-
 def slug(artist: str, title: str) -> str:
     s = f"{artist}-{title}".lower()
     return re.sub(r"[^a-z0-9]+", "_", s).strip("_")
-
 
 def resolve_local(src: str | None) -> Path | None:
     if not src:
@@ -56,7 +54,6 @@ def resolve_local(src: str | None) -> Path | None:
             if p.is_file():
                 return p
     return None
-
 
 def yt_audio_path(video_id: str, start: int | None = None) -> Path | None:
     SCRATCH.mkdir(parents=True, exist_ok=True)
@@ -76,7 +73,6 @@ def yt_audio_path(video_id: str, start: int | None = None) -> Path | None:
         return None
     return out if out.is_file() else None
 
-
 def estimate_key(chroma: np.ndarray) -> dict:
     chroma_mean = np.mean(chroma, axis=1)
     major = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
@@ -88,7 +84,6 @@ def estimate_key(chroma: np.ndarray) -> dict:
         scores.append((PITCH_NAMES[i] + " minor", float(np.dot(rotated, minor))))
     scores.sort(key=lambda x: -x[1])
     return {"top": scores[0][0], "runner_up": scores[1][0]}
-
 
 def analyze_file(path: Path) -> dict:
     y, sr = librosa.load(path, sr=22050, mono=True, duration=90.0)
@@ -110,7 +105,6 @@ def analyze_file(path: Path) -> dict:
         "onset_count": int(len(onset_times)),
         "spectral": {"centroid_hz_mean": round(cent, 1), "rolloff_hz_mean": round(rolloff, 1)},
     }
-
 
 def main() -> int:
     manifest = yaml.safe_load(MANIFEST.read_text())
@@ -162,7 +156,6 @@ def main() -> int:
     print(f"\nwrote {OUT}")
     print(json.dumps(report["meta"], indent=2))
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())
