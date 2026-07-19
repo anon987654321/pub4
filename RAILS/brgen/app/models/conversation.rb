@@ -3,6 +3,7 @@
 class Conversation < ApplicationRecord
   # Engine-ize Shared
   include Shared::Notifiable
+  belongs_to :city, optional: true
   has_many :conversation_participants, dependent: :destroy
   has_many :participants, through: :conversation_participants, source: :user
   has_many :messages, dependent: :destroy
@@ -35,25 +36,28 @@ class Conversation < ApplicationRecord
 
   # Idempotently resolve a channel by slug, seeding its bots + a welcome line
   # the first time it is opened.
-  def self.find_or_create_channel(slug)
+  def self.find_or_create_channel(slug, city: nil)
     slug = slug.to_s
     spec = CHANNELS[slug] or return nil
-    find_by(slug: slug) || create_channel!(slug, spec)
+    find_by(slug: slug, city_id: city&.id) || create_channel!(slug, spec, city)
   end
 
-  def self.create_channel!(slug, spec)
+  def self.create_channel!(slug, spec, city)
     transaction do
-      channel = create!(conversation_type: "group", slug: slug, name: spec[:name], vertical: spec[:vertical],
-                        disappearing_duration: CHANNEL_TTL)
+      channel = create!(conversation_type: "group", slug: slug, city_id: city&.id,
+                        name: spec[:name], vertical: spec[:vertical], disappearing_duration: CHANNEL_TTL)
       ChannelBot.seat_bots(channel, spec[:bots])
       ChannelBot.welcome!(channel)
       channel
     end
   rescue ActiveRecord::RecordNotUnique
-    # Two visitors opened the same fresh channel at once — the slug is unique,
-    # so the loser just adopts the winner's row.
-    find_by!(slug: slug)
+    # Two visitors opened the same fresh city channel at once — (slug, city) is
+    # unique, so the loser just adopts the winner's row.
+    find_by!(slug: slug, city_id: city&.id)
   end
+
+  # "#takeaway · Bergen" once a room is city-scoped; plain "#takeaway" otherwise.
+  def channel_title = city ? "#{name} · #{city.name}" : name
 
   def channel? = slug.present?
 

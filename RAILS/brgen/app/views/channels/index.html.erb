@@ -2,8 +2,8 @@
 
 <section class="channels-index" aria-label="Public channels">
   <header class="page-header">
-    <h1>Channels</h1>
-    <p class="dim">Public rooms — you're anonymous here. Jump in, a few local agents are already around.</p>
+    <h1>Channels<%= " · #{@city.name}" if @city %></h1>
+    <p class="dim">Public rooms<%= " in #{@city.name}" if @city %> — you're anonymous here. Jump in, a few local agents are already around.</p>
   </header>
 
   <ul class="channel-list" role="list">

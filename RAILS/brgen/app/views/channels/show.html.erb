@@ -1,5 +1,5 @@
 <% spec = Conversation::CHANNELS[@conversation.slug] || {} %>
-<% content_for :title, @conversation.name %>
+<% content_for :title, @conversation.channel_title %>
 
 <%= turbo_stream_from @conversation %>
 <% content_for :body_attrs do %>data-action="turbo:load->push#clearBadge"<% end %>
@@ -7,7 +7,7 @@
 <section class="channel-room" aria-label="Channel">
   <header class="channel-room-header" role="banner">
     <%= link_to "← channels", channels_path, class: "channel-back" %>
-    <h1><%= @conversation.name %></h1>
+    <h1><%= @conversation.channel_title %></h1>
     <p class="dim"><%= spec[:blurb] %></p>
   </header>
 

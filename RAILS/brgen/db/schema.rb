@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_19_030000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_010000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -135,6 +135,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_030000) do
   end
 
   create_table "conversations", force: :cascade do |t|
+    t.integer "city_id"
     t.string "conversation_type"
     t.datetime "created_at", null: false
     t.integer "disappearing_duration"
@@ -142,7 +143,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_030000) do
     t.string "slug"
     t.datetime "updated_at", null: false
     t.string "vertical"
-    t.index ["slug"], name: "index_conversations_on_slug", unique: true
+    t.index ["city_id"], name: "index_conversations_on_city_id"
+    t.index ["slug", "city_id"], name: "index_conversations_on_slug_and_city", unique: true
   end
 
   create_table "dating_dislikes", force: :cascade do |t|

@@ -6,11 +6,12 @@
 # persona name.
 class ChannelsController < ApplicationController
   def index
-    @channels = Conversation.channels.index_by(&:slug)
+    @city = Current.city_record
+    @channels = Conversation.channels.where(city_id: @city&.id).index_by(&:slug)
   end
 
   def show
-    @conversation = Conversation.find_or_create_channel(params[:slug])
+    @conversation = Conversation.find_or_create_channel(params[:slug], city: Current.city_record)
     return redirect_to(channels_path, alert: "No such channel.") unless @conversation
 
     if authenticated?
