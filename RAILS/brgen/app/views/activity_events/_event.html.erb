@@ -1,0 +1,16 @@
+<% href = activity_event_href(event) %>
+<article class="activity-event">
+  <% if href.present? %>
+    <h2><%= link_to activity_event_title(event), href, class: "activity-event-link" %></h2>
+  <% else %>
+    <h2><%= activity_event_title(event) %></h2>
+  <% end %>
+  <p class="dim">
+    <%= event.source_vertical %> · <%= event.object_type.to_s.demodulize %>
+    · <span data-controller="timeago"><%= time_ago_in_words(event.created_at) %> ago</span>
+  </p>
+  <% if event.locality.present? %><p class="dim"><%= event.locality %></p><% end %>
+  <% if href.present? %>
+    <p class="activity-event-cta"><%= link_to "Open", href, class: "btn btn-ghost btn-sm" %></p>
+  <% end %>
+</article>

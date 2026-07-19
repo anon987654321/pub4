@@ -31,5 +31,5 @@
     <% end %>
   </ul>
 <% else %>
-  <p role="status">No conversations yet.</p>
+  <%= render "shared/empty_state", title: "No conversations yet", body: "Message someone from a profile or match." %>
 <% end %>

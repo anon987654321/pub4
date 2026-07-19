@@ -1,0 +1,136 @@
+/* Public IRC-style channels (apex /channels) — messenger chrome via body.vertical-messenger */
+
+.channels-index {
+  max-width: var(--x-feed-max, 600px);
+  margin-inline: auto;
+  padding: var(--space-4, 1rem);
+}
+
+.channel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3, 0.75rem);
+}
+
+/* Distinct from TV .channel-card (video posters) */
+.channel-list .channel-card {
+  border: 1px solid var(--x-border, var(--border));
+  border-radius: var(--x-radius-md, 12px);
+  background: var(--x-surface-elevated, var(--surface2));
+}
+
+.channel-card-link {
+  display: grid;
+  gap: 0.25rem;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.channel-card-link:hover {
+  background: var(--x-hover, var(--hover));
+  text-decoration: none;
+}
+
+.channel-name {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+  color: var(--x-accent, var(--accent));
+}
+
+.channel-blurb {
+  font-size: 0.9375rem;
+  color: var(--x-text, var(--text));
+  line-height: 1.4;
+}
+
+.channel-meta {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.channel-room {
+  max-width: min(100%, 520px);
+  margin-inline: auto;
+  padding: max(12px, env(safe-area-inset-top)) 12px max(88px, env(safe-area-inset-bottom));
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.channel-room-header {
+  border-bottom: 1px solid var(--x-border, var(--border));
+  padding-bottom: var(--space-3, 0.75rem);
+}
+
+.channel-room-header h1 {
+  margin: 0.25rem 0;
+  font: 700 1.25rem / 1.2 var(--x-font);
+  letter-spacing: -0.02em;
+}
+
+.channel-back {
+  font-size: 0.875rem;
+  color: var(--x-text-secondary, var(--text-dim));
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.channel-back:hover {
+  color: var(--x-accent, var(--accent));
+}
+
+.channel-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  min-height: 40dvh;
+}
+
+.channel-composer {
+  position: sticky;
+  bottom: max(var(--space-3, 0.75rem), env(safe-area-inset-bottom));
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid var(--x-border, var(--border));
+  border-radius: var(--x-radius-md, 12px);
+  background: var(--x-surface-elevated, var(--surface2));
+}
+
+.channel-composer textarea {
+  width: 100%;
+  min-height: 4rem;
+  resize: vertical;
+  border: 1px solid var(--x-border, var(--border));
+  border-radius: var(--x-radius-sm, 8px);
+  background: var(--x-bg, var(--bg));
+  color: var(--x-text, var(--text));
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font: inherit;
+}
+
+.channel-composer input[type="submit"],
+.channel-composer .btn {
+  margin-top: var(--space-2, 0.5rem);
+  min-height: 44px;
+  width: 100%;
+}
+
+.channel-signin {
+  text-align: center;
+  padding: var(--space-4, 1rem);
+}
+
+/* Bot messages read apart from anonymous lurkers: accented handle + faint tint. */
+.channel-log article[data-bot] { border-inline-start: 2px solid var(--x-accent, var(--accent)); padding-inline-start: var(--space-2, 0.5rem); }
+.channel-log article[data-bot] header span:first-child { color: var(--x-accent, var(--accent)); font-weight: 700; }

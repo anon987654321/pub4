@@ -22,6 +22,6 @@
   <% if @posts.any? %>
     <%= render partial: "posts/post", collection: @posts %>
   <% else %>
-    <p class="dim">No posts yet.</p>
+    <%= render "shared/empty_state", title: "No posts yet", body: "Nothing published on this profile." %>
   <% end %>
 </section>

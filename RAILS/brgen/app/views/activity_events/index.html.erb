@@ -16,13 +16,13 @@
 
 <%= turbo_frame_tag "activity-events" do %>
 <% if @events.any? %>
-  <% @events.each do |event| %>
-    <article>
-      <h2><%= event.event_name.to_s.humanize %></h2>
-      <p class="dim"><%= event.source_vertical %> · <%= event.object_type %> · <span data-controller="timeago"><%= time_ago_in_words(event.created_at) %> ago</span></p>
-      <% if event.locality.present? %><p class="dim"><%= event.locality %></p><% end %>
-    </article>
-  <% end %>
+  <div class="activity-event-list" role="list">
+    <% @events.each do |event| %>
+      <div role="listitem">
+        <%= render "activity_events/event", event: event %>
+      </div>
+    <% end %>
+  </div>
 <% else %>
   <%= render "shared/empty_state", title: "No activity yet", body: "Events from your network show up here." %>
 <% end %>

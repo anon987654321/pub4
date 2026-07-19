@@ -39,21 +39,26 @@
 <section>
   <h2>Menu</h2>
   <% if @menu_items.empty? %>
-    <p class="dim">No items available yet.</p>
+    <%= render "shared/empty_state", title: "No menu items yet", body: "The kitchen has not listed food yet." %>
   <% elsif authenticated? %>
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
-        <article class="menu-row">
+        <article class="menu-row<%= " sold-out" unless item.available? %>" data-available="<%= item.available? %>">
           <% if item.photo.attached? %>
             <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
           <% end %>
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
+            <% unless item.available? %><span class="sold-out-badge">Sold out</span><% end %>
             <% if item.vegetarian? %><span class="chip">Vegetarian</span><% end %>
             <% if item.vegan? %><span class="chip">Vegan</span><% end %>
             <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
           </div>
-          <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: "Quantity for #{item.name}" } %>
+          <% if item.available? %>
+            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, class: "qty-field", aria: { label: "Quantity for #{item.name}" } %>
+          <% else %>
+            <span class="dim" aria-label="<%= item.name %> sold out">—</span>
+          <% end %>
         </article>
       <% end %>
       <div class="field">
@@ -71,12 +76,13 @@
     <% end %>
   <% else %>
     <% @menu_items.each do |item| %>
-      <article class="menu-row">
+      <article class="menu-row<%= " sold-out" unless item.available? %>" data-available="<%= item.available? %>">
         <% if item.photo.attached? %>
           <%= responsive_image_tag(item.photo, alt: item.name, loading: "lazy", class: "menu-row__photo") %>
         <% end %>
         <div>
           <strong><%= item.name %></strong> · <%= item.price_display %>
+          <% unless item.available? %><span class="sold-out-badge">Sold out</span><% end %>
           <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
         </div>
       </article>
@@ -95,7 +101,7 @@
       </article>
     <% end %>
   <% else %>
-    <p class="dim">No reviews from neighbours yet.</p>
+    <%= render "shared/empty_state", title: "No reviews yet", body: "Order, then leave a rating for neighbours." %>
   <% end %>
 </section>
 

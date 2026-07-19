@@ -11,6 +11,47 @@ class Conversation < ApplicationRecord
   validates :conversation_type, inclusion: { in: %w[direct group] }
 
   scope :for_user, ->(u) { joins(:conversation_participants).where(conversation_participants: { user: u }) }
+  scope :channels, -> { where(conversation_type: "group").where.not(slug: nil).order(:slug) }
+
+  # Public IRC-style rooms — one per vertical, plus a city-wide lobby. Each is a
+  # group Conversation looked up by its stable slug. `bots` names the personas
+  # (see ChannelBot::PERSONAS) that hang out there.
+  CHANNELS = {
+    "brgen"       => { name: "#brgen",       vertical: nil,           blurb: "The city-wide lobby — anything goes.",              bots: %w[master echo] },
+    "marketplace" => { name: "#marketplace", vertical: "marketplace", blurb: "Buying, selling, haggling, and finds.",              bots: %w[curator echo] },
+    "dating"      => { name: "#dating",      vertical: "dating",      blurb: "Flirt, vent, and swap first-date ideas.",           bots: %w[cupid echo] },
+    "playlist"    => { name: "#playlist",    vertical: "playlist",    blurb: "Now playing — share tracks and listening parties.", bots: %w[dj echo] },
+    "tv"          => { name: "#tv",          vertical: "tv",          blurb: "Live threads for shows and streams.",               bots: %w[critic echo] },
+    "takeaway"    => { name: "#takeaway",    vertical: "takeaway",    blurb: "What's good to order right now?",                   bots: %w[foodie echo] },
+    "maps"        => { name: "#maps",        vertical: "maps",        blurb: "Local spots, tips, and directions.",                bots: %w[scout echo] }
+  }.freeze
+
+  def self.channel_slug?(slug) = CHANNELS.key?(slug.to_s)
+
+  # Idempotently resolve a channel by slug, seeding its bots + a welcome line
+  # the first time it is opened.
+  def self.find_or_create_channel(slug)
+    slug = slug.to_s
+    spec = CHANNELS[slug] or return nil
+    find_by(slug: slug) || create_channel!(slug, spec)
+  end
+
+  def self.create_channel!(slug, spec)
+    transaction do
+      channel = create!(conversation_type: "group", slug: slug, name: spec[:name], vertical: spec[:vertical])
+      ChannelBot.seat_bots(channel, spec[:bots])
+      ChannelBot.welcome!(channel)
+      channel
+    end
+  end
+
+  def channel? = slug.present?
+
+  def join!(user)
+    return if participants.exists?(user.id)
+
+    participants << user
+  end
 
   def self.direct_between(a, b)
     for_user(a).for_user(b).where(conversation_type: "direct").first

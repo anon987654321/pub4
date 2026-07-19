@@ -1,0 +1,23 @@
+<% content_for :title, "Channels" %>
+
+<section class="channels-index" aria-label="Public channels">
+  <header class="page-header">
+    <h1>Channels</h1>
+    <p class="dim">Public rooms — you're anonymous here. Jump in, a few local agents are already around.</p>
+  </header>
+
+  <ul class="channel-list" role="list">
+    <% Conversation::CHANNELS.each do |slug, spec| %>
+      <% room = @channels[slug] %>
+      <li class="channel-card" role="listitem">
+        <%= link_to channel_path(slug), class: "channel-card-link" do %>
+          <span class="channel-name"><%= spec[:name] %></span>
+          <span class="channel-blurb"><%= spec[:blurb] %></span>
+          <span class="channel-meta dim">
+            <% if room %><%= pluralize(room.messages.size, "message") %><% else %>new room<% end %>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</section>

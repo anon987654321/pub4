@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_19_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_19_030000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -139,7 +139,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_020000) do
     t.datetime "created_at", null: false
     t.integer "disappearing_duration"
     t.string "name"
+    t.string "slug"
     t.datetime "updated_at", null: false
+    t.string "vertical"
+    t.index ["slug"], name: "index_conversations_on_slug", unique: true
   end
 
   create_table "dating_dislikes", force: :cascade do |t|
@@ -1038,6 +1041,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_020000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "bot", default: false, null: false
     t.integer "city_id"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
@@ -1053,6 +1057,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_020000) do
     t.string "magic_link_token"
     t.string "otp_secret"
     t.string "password_digest", null: false
+    t.text "persona"
     t.string "remember_token"
     t.datetime "remember_token_expires_at"
     t.boolean "two_factor_enabled", default: false, null: false

@@ -147,8 +147,20 @@ body.vertical-takeaway .sold-out,
 body.vertical-takeaway [data-available="false"] {
   opacity: 0.55;
 }
-body.vertical-takeaway .sold-out-badge,
-body.vertical-takeaway [data-available="false"]::after {
+body.vertical-takeaway .sold-out-badge {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--x-border);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--x-radius-xs, 4px);
+  color: var(--x-text-secondary);
+}
+/* Fallback when markup only has data-available (no badge span) */
+body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::after {
   content: "Sold out";
   display: inline-block;
   margin-inline-start: 0.35rem;

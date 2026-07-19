@@ -126,9 +126,70 @@ module ApplicationHelper
     when /\Atv/ then :tv
     when /\Adating/ then :dating
     when /\Amaps/ then :maps
-    when /\Aconversations/, /\Amessages/, /\Atyping_indicators/ then :messenger
+    # Public IRC channels share messenger chrome (slate-indigo immersive).
+    when /\Aconversations/, /\Amessages/, /\Atyping_indicators/, /\Achannels/ then :messenger
     else nil
     end
+  end
+
+  # Deep link for an ActivityEvent row (object_type + object_id). Returns nil when
+  # the record is gone or has no public surface. Vertical records use absolute
+  # subdomain URLs so apex /activity_events can open the right host.
+  def activity_event_href(event)
+    return if event.blank? || event.object_type.blank? || event.object_id.blank?
+
+    klass = event.object_type.to_s.safe_constantize
+    return unless klass
+
+    record = klass.find_by(id: event.object_id)
+    return unless record
+
+    domain = Current.domain.presence || request.host
+    case record
+    when Post then post_path(record)
+    when Community then community_path(record)
+    when Comment then record.commentable.present? ? polymorphic_path(record.commentable) : nil
+    when User then user_path(record)
+    when Marketplace::Listing
+      marketplace_listing_url(record, host: domain, subdomain: marketplace_subdomain)
+    when Marketplace::Store
+      marketplace_shop_url(record.try(:slug) || record, host: domain, subdomain: marketplace_subdomain)
+    when Marketplace::Deal
+      marketplace_deal_url(record, host: domain, subdomain: marketplace_subdomain)
+    when Marketplace::Order
+      marketplace_order_url(record, host: domain, subdomain: marketplace_subdomain)
+    when Takeaway::Restaurant
+      takeaway_restaurant_url(record, host: domain, subdomain: "takeaway")
+    when Takeaway::Order
+      takeaway_order_url(record, host: domain, subdomain: "takeaway")
+    when Tv::Channel
+      tv_channel_url(record, host: domain, subdomain: "tv")
+    when Tv::Video
+      tv_video_url(record, host: domain, subdomain: "tv")
+    when Tv::Show
+      ch = record.try(:channel) || record.try(:tv_channel)
+      tv_channel_show_url(ch, record, host: domain, subdomain: "tv") if ch
+    when Tv::LiveStream
+      tv_live_stream_url(record, host: domain, subdomain: "tv")
+    when Playlist::Set
+      playlist_set_url(record, host: domain, subdomain: "playlist")
+    when Playlist::Playlist
+      playlist_playlist_url(record, host: domain, subdomain: "playlist")
+    when Place
+      maps_place_url(record, host: domain, subdomain: "maps")
+    when Dating::Match
+      dating_matches_url(host: domain, subdomain: "dating")
+    when Dating::Profile
+      dating_profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
+    else
+      polymorphic_path(record) if respond_to?(:polymorphic_path)
+    end
+  rescue StandardError
+    nil
+  end
+
+  def activity_event_title(event)
+    event.event_name.to_s.humanize
   end
 
   POSTPRO_PRESETS = PostproJob::VALID_PRESETS.freeze

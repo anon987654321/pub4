@@ -82,7 +82,7 @@
         <%= render "comments/comment", comment: comment %>
       <% end %>
     <% else %>
-      <li class="dim">No comments yet. Be first.</li>
+      <li><%= render "shared/empty_state", title: "No comments yet", body: "Be the first to reply." %></li>
     <% end %>
   </ul>
 </section>

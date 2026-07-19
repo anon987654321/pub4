@@ -23,6 +23,10 @@ class User < ApplicationRecord
 
   def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
 
+  # In public channels humans stay anonymous ("Stranger #A1B2"); bots wear their
+  # persona name so the room can tell an agent from a lurker.
+  def channel_handle = bot? ? (username.presence || "bot") : anon_handle
+
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?
   end

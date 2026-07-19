@@ -151,7 +151,7 @@
       </button>
     <% end %>
     <% if tracks.empty? %>
-      <p class="dim">No tracks in this playlist yet.</p>
+      <%= render "shared/empty_state", title: "No tracks yet", body: "Add or import tracks to play." %>
     <% end %>
   </section>
 

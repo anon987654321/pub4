@@ -1,0 +1,277 @@
+/* Radio tunnel + library drawer (immersive playlist home) */
+.radio-tunnel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  overflow: hidden;
+  cursor: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.radio-skip-link {
+  position: absolute;
+  inset-block-start: -40px;
+  inset-inline-start: var(--space-sm);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  padding: var(--space-xs) var(--space-sm);
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  z-index: 1000;
+}
+
+.radio-skip-link:focus {
+  inset-block-start: var(--space-sm);
+}
+
+.radio-tunnel canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  touch-action: manipulation;
+  background: var(--color-bg);
+}
+
+.radio-header {
+  position: fixed;
+  inset-block-start: var(--space-lg);
+  inset-inline-start: var(--space-lg);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.radio-header h1 {
+  font-size: var(--font-size-large);
+  font-weight: 700;
+  margin: 0;
+}
+
+.radio-nav {
+  position: fixed;
+  inset-block-start: var(--space-lg);
+  inset-inline-end: var(--space-lg);
+  z-index: 11;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.radio-nav a,
+.radio-nav-btn {
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--color-text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: var(--font-size-small);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.radio-now-playing {
+  position: fixed;
+  inset-block-end: var(--space-lg);
+  inset-inline-end: var(--space-lg);
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-small);
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: var(--border-radius);
+  padding: 0.25rem 0.75rem;
+}
+
+.radio-note-icon {
+  font-size: 1.2em;
+  color: var(--color-accent);
+}
+
+.radio-track-display {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(300px, 60vw);
+}
+
+.radio-cursor {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 1000;
+  mix-blend-mode: difference;
+  transition: var(--transition);
+  display: none;
+}
+
+.radio-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-sm);
+  z-index: 200;
+  cursor: pointer;
+  pointer-events: auto;
+  text-align: center;
+  padding: var(--space-md);
+}
+
+.radio-overlay[hidden] {
+  display: none;
+}
+
+.radio-start-eyebrow {
+  margin: 0;
+  font: 10px/1.4 var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+
+.radio-start-message {
+  margin: 0;
+  font-size: var(--font-size-large);
+  font-weight: 300;
+  color: var(--color-text);
+  animation: radio-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.radio-start-hint {
+  margin: 0;
+  font: var(--font-size-small)/1.5 var(--font-mono);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.radio-archaeology {
+  position: fixed;
+  inset-block-end: calc(var(--space-lg) + 3rem);
+  inset-inline-start: var(--space-lg);
+  z-index: 12;
+  max-width: min(420px, 72vw);
+  padding: var(--space-sm) var(--space-md);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  border-radius: var(--border-radius);
+  font: 10px/1.45 var(--font-mono);
+  color: var(--color-accent);
+  pointer-events: none;
+}
+
+.radio-archaeology-line + .radio-archaeology-line {
+  margin-top: 0.2rem;
+}
+
+@keyframes radio-pulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.6; }
+}
+
+.radio-youtube-container {
+  position: fixed;
+  inset-block-start: -1000px;
+  inset-inline-start: -1000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.radio-library {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: min(360px, 92vw);
+  height: 100dvh;
+  z-index: 120;
+  background: rgba(8, 8, 8, 0.94);
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  cursor: auto;
+}
+
+.radio-library[hidden] {
+  display: none;
+}
+
+.radio-library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.radio-library-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.radio-library-close {
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.radio-library-list {
+  overflow: auto;
+  padding: var(--space-sm);
+}
+
+.radio-library-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: inherit;
+  text-decoration: none;
+}
+
+.radio-library-item:hover {
+  background: rgba(78, 205, 196, 0.08);
+}
+
+.radio-library-item span {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

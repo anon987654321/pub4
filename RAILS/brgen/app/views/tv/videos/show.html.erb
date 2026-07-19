@@ -36,7 +36,7 @@
   <% if @video.description.present? %>
     <p class="mt-12"><%= simple_format(@video.description) %></p>
   <% else %>
-    <p class="dim">No description yet.</p>
+    <%= render "shared/empty_state", title: "No description", body: "This video has no write-up yet." %>
   <% end %>
 </article>
 
@@ -102,7 +102,7 @@
       </article>
     <% end %>
   <% else %>
-    <p class="dim">No comments yet.</p>
+    <%= render "shared/empty_state", title: "No comments yet", body: "Start the conversation." %>
   <% end %>
   <% if authenticated? %>
     <%= form_with url: tv_video_comments_path(@video), data: { turbo: true } do |f| %>

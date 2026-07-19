@@ -43,7 +43,7 @@
         </article>
       <% end %>
     <% else %>
-      <p>No menu items are currently available.</p>
+      <%= render "shared/empty_state", title: "Nothing available", body: "No menu items are currently available." %>
     <% end %>
   </section>
 

@@ -1,3 +1,4 @@
+@use "sass:list";
 /* Vertical surfaces — x shell underneath, product chrome on top */
 body[class*="vertical-"] .feed-header,
 body[class*="vertical-"] .compose-box {
@@ -23,8 +24,8 @@ $vertical-accents: (
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v},
   body.vertical-#{$v} #dark-toggle:checked ~ .theme-root {
-    --x-accent: #{nth($c, 1)};
-    --x-accent-hover: #{nth($c, 2)};
+    --x-accent: #{list.nth($c, 1)};
+    --x-accent-hover: #{list.nth($c, 2)};
   }
 }
 

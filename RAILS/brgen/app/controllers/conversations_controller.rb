@@ -4,7 +4,9 @@ class ConversationsController < ApplicationController
   before_action :require_user_session
 
   def index
+    # DMs only — public channels live under /channels, not the messenger list.
     @conversations = Conversation.for_user(Current.user)
+                                 .where(slug: nil)
                                  .includes(:participants, :messages)
                                  .order("messages.created_at DESC")
   end

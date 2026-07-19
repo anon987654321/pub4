@@ -46,71 +46,22 @@
 <% end %>
 
 <% if authenticated? %>
+  <% pl_can_manage = Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
   <details class="playlist-details">
     <summary>Collaborators &amp; dilla sketches</summary>
-    <section role="region" aria-label="Collaborators">
-      <h2>Collaborators</h2>
-      <% if @playlist.collaborations.any? %>
-        <% @playlist.collaborations.includes(:user).each do |c| %>
-          <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
-          <% if Current.user == @playlist.user || c.user == Current.user %>
-            <%= button_to "Remove", playlist_playlist_collaboration_path(@playlist, c), method: :delete, class: "btn btn-ghost btn-sm" %>
-          <% end %>
-        <% end %>
-      <% else %>
-        <p class="dim">No collaborators yet.</p>
-      <% end %>
-
-      <% if Current.user == @playlist.user || @playlist.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
-        <div class="form-wrap">
-          <%= form_with url: playlist_playlist_collaborations_path(@playlist), method: :post do |f| %>
-            <div class="field field--row">
-              <%= f.text_field :username, placeholder: "username", class: "field--grow" %>
-              <%= f.select :role, %w[editor viewer] %>
-              <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-    </section>
-
-    <section role="region" aria-label="Dilla sketches">
-      <h2>Dilla sketches / beats</h2>
-      <p class="dim">Lab: <a href="/dilla/dilla.html?playlist_id=<%= @playlist.id %>" target="_blank" rel="noopener">dilla.html</a> · engine via MASTER <code>tools/dilla.rb</code></p>
-      <% if @dilla_sketches.any? %>
-        <% @dilla_sketches.each do |sk| %>
-          <div class="dilla-sketch">
-            <strong><%= sk.name %></strong>
-            <span class="dim"><%= sk.style.presence || "dilla" %> · <%= sk.bars.presence || 12 %> bars · <%= sk.render_status || "idle" %></span>
-            by <%= sk.user&.try(:display_name) || sk.user&.email || "anon" %>
-            <% if sk.lab_url.present? %>
-              <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">open in lab</a>
-            <% end %>
-            <%= button_to "Render", render_audio_playlist_playlist_dilla_sketch_path(@playlist, sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
-            <% if sk.render.attached? %>
-              <audio controls preload="none" src="<%= url_for(sk.render) %>"></audio>
-            <% end %>
-            <% if sk.track_id.present? %>
-              <span class="dim">track #<%= sk.track_id %></span>
-            <% end %>
-            <% if sk.render_error.present? %>
-              <p class="dim" role="alert"><%= sk.render_error %></p>
-            <% end %>
-          </div>
-        <% end %>
-      <% else %>
-        <p class="dim">No sketches yet.</p>
-      <% end %>
-      <%= form_with model: [:playlist, @playlist, Playlist::DillaSketch.new], url: playlist_playlist_dilla_sketches_path(@playlist), class: "dilla-sketch-form" do |f| %>
-        <%= f.text_field :name, placeholder: "Sketch name", required: true %>
-        <%= f.select :style, %w[dilla flylo baroque neo-soul jazz], selected: "dilla" %>
-        <%= f.number_field :bars, value: 12, min: 4, max: 64 %>
-        <%= f.text_area :state, value: { pat_: {}, aud_: {}, mix_: { style: "dilla", bars: 12 } }.to_json, rows: 3 %>
-        <%= f.text_field :notes, placeholder: "Notes (optional)" %>
-        <label><input type="checkbox" name="render_now" value="1" checked /> Render now</label>
-        <label><input type="checkbox" name="publish" value="1" checked /> Publish as playlist track</label>
-        <%= f.submit "Save sketch", class: "btn btn-primary btn-sm" %>
-      <% end %>
-    </section>
+    <%= render "playlist/shared/collaborators",
+          parent: @playlist,
+          collaborations: @playlist.collaborations,
+          collaborations_path: playlist_playlist_collaborations_path(@playlist),
+          collaboration_path_proc: ->(c) { playlist_playlist_collaboration_path(@playlist, c) },
+          can_manage: pl_can_manage %>
+    <%= render "playlist/shared/dilla_sketches",
+          parent: @playlist,
+          sketches: @dilla_sketches,
+          create_url: playlist_playlist_dilla_sketches_path(@playlist),
+          render_path_proc: ->(sk) { render_audio_playlist_playlist_dilla_sketch_path(@playlist, sk) },
+          can_manage: pl_can_manage,
+          lab_query: "?playlist_id=#{@playlist.id}",
+          rich_form: true %>
   </details>
 <% end %>

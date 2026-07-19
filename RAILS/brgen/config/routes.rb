@@ -213,6 +213,7 @@ Rails.application.routes.draw do
   resources :push_subscriptions, only: %i[create destroy]
   get "nearby" => "nearby#index", as: :nearby
   post "nearby" => "nearby#create"
+  resources :channels, only: %i[index show], param: :slug
   get "search" => "search#index", as: :global_search
   get "sitemap.xml" => "sitemaps#index", as: :sitemap
   get "robots.txt" => "robots#show", as: :robots

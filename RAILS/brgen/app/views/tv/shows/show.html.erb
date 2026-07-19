@@ -20,5 +20,5 @@
     <% end %>
   </ul>
 <% else %>
-  <p class="dim">No episodes yet.</p>
+  <%= render "shared/empty_state", title: "No episodes yet", body: "Episodes will show up when published." %>
 <% end %>

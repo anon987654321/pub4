@@ -39,77 +39,21 @@
 </article>
 
 <% if authenticated? %>
-<section>
-  <h2>Collaborators</h2>
-  <% if @set.collaborations.any? %>
-    <% @set.collaborations.includes(:user).each do |c| %>
-      <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
-      <% if Current.user == @set.user || c.user == Current.user %>
-        <%= button_to "Remove", playlist_set_collaboration_path(@set, c), method: :delete, class: "btn btn-ghost btn-sm" %>
-      <% end %>
-    <% end %>
-  <% else %>
-    <p class="dim">No collaborators yet.</p>
-  <% end %>
-
-  <% if Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
-    <div class="form-wrap">
-      <%= form_with url: playlist_set_collaborations_path(@set), method: :post do |f| %>
-        <div class="field field--row">
-          <%= f.text_field :username, placeholder: "username", class: "field--grow" %>
-          <%= f.select :role, %w[editor viewer] %>
-          <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-</section>
-<% end %>
-
-<% if authenticated? %>
-<section>
-  <h2>Dilla sketches / beats</h2>
-  <p class="dim">Collaborative beat patterns (pat/seq/aud/mix state). Edit in the dilla lab, paste JSON here to persist for the group.</p>
-  <% if @dilla_sketches.any? %>
-    <% @dilla_sketches.each do |sk| %>
-      <div>
-        <strong><%= sk.name %></strong>
-        <span class="dim"><%= sk.render_status || "idle" %></span>
-        by <%= sk.user&.try(:display_name) || "anon" %>
-        <% if sk.lab_url.present? %>
-          <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">open in lab</a>
-        <% end %>
-        <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-          <%= button_to "Render", render_audio_playlist_set_dilla_sketch_path(@set, sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
-          <%= button_to "Remove", playlist_set_dilla_sketch_path(@set, sk), method: :delete, class: "btn btn-ghost btn-sm" %>
-        <% end %>
-        <% if sk.render.attached? %>
-          <audio controls preload="none" src="<%= url_for(sk.render) %>"></audio>
-        <% end %>
-      </div>
-      <% if sk.notes.present? %><p class="dim"><%= sk.notes %></p><% end %>
-    <% end %>
-  <% else %>
-    <p class="dim">No sketches yet. Use the lab at /dilla/dilla.html or save a sketch below.</p>
-  <% end %>
-
-  <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-    <div class="form-wrap">
-      <%= form_with url: playlist_set_dilla_sketches_path(@set), scope: :playlist_dilla_sketch do |f| %>
-        <div class="field"><%= f.text_field :name, placeholder: "Beat name (e.g. dusty flip)", required: true %></div>
-        <div class="field"><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :state, placeholder: 'Paste JSON state from lab (e.g. {"pat_":{...},"aud_":{...},"mix_":{...}} or full from clipboard)', rows: 3 , data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div></div>
-        <div class="field"><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :notes, placeholder: "notes / instructions (optional)", rows: 2 , data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div></div>
-        <div class="field"><%= f.submit "Save sketch for collab", class: "btn btn-primary btn-sm" %></div>
-      <% end %>
-    </div>
-  <% end %>
-</section>
+  <% set_can_manage = Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor]) %>
+  <%= render "playlist/shared/collaborators",
+        parent: @set,
+        collaborations: @set.collaborations,
+        collaborations_path: playlist_set_collaborations_path(@set),
+        collaboration_path_proc: ->(c) { playlist_set_collaboration_path(@set, c) },
+        can_manage: set_can_manage %>
+  <%= render "playlist/shared/dilla_sketches",
+        parent: @set,
+        sketches: @dilla_sketches,
+        create_url: playlist_set_dilla_sketches_path(@set),
+        render_path_proc: ->(sk) { render_audio_playlist_set_dilla_sketch_path(@set, sk) },
+        destroy_path_proc: ->(sk) { playlist_set_dilla_sketch_path(@set, sk) },
+        can_manage: set_can_manage,
+        rich_form: false %>
 <% end %>
 
 <% if @set_tracks.any? %>

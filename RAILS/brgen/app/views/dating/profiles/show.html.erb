@@ -19,7 +19,7 @@
       <% end %>
     </div>
   <% else %>
-    <article><p class="dim">No photos yet.</p></article>
+    <%= render "shared/empty_state", title: "No photos yet", body: "Add photos on your profile edit screen." %>
   <% end %>
 </section>
 

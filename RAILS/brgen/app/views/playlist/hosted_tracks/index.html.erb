@@ -19,6 +19,6 @@
       </article>
     <% end %>
   <% else %>
-    <p class="dim">No hosted tracks yet.</p>
+    <%= render "shared/empty_state", title: "No hosted tracks yet", body: "Upload or link a track to host it." %>
   <% end %>
 </div>

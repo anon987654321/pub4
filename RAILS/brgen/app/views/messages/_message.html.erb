@@ -1,7 +1,9 @@
+<% in_channel = message.conversation.channel? %>
+<% who = in_channel ? message.sender.channel_handle : message.sender.display_name %>
 <li id="<%= dom_id(message) %>" role="listitem">
-<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>" aria-label="Message from <%= message.sender.username %>">
+<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %> aria-label="Message from <%= who %>">
   <header>
-    <span><%= message.sender.display_name %></span>
+    <span><%= who %></span>
     <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>
     <% if message.expires_at %>
       <span class="dim">· disappears <%= time_ago_in_words(message.expires_at) %></span>

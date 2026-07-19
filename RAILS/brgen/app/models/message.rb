@@ -23,6 +23,7 @@ class Message < ApplicationRecord
   after_create :deliver_receipts
   after_create :clear_typing_indicators
   after_create :schedule_expiration, if: :should_expire?
+  after_create_commit :maybe_summon_bot, if: :bot_worthy?
 
   scope :recent, -> { order(created_at: :desc) }
   scope :unexpired, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
@@ -39,6 +40,12 @@ class Message < ApplicationRecord
   def read_by?(user)
     message_receipts.where(user: user).where.not(read_at: nil).exists?
   end
+
+  # Only human messages in a channel can summon a bot — never a bot replying to
+  # a bot (that would loop) and never a plain DM.
+  def bot_worthy? = conversation.channel? && !sender.bot?
+
+  def maybe_summon_bot = ChannelBotReplyJob.set(wait: rand(2..6).seconds).perform_later(id)
 
   private
 

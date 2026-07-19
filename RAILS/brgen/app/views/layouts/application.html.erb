@@ -69,7 +69,8 @@
   <% if Current.user %>
     <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
     <%= turbo_stream_from "brgen:matches:#{Current.user.id}" %>
-    <% unread = Conversation.for_user(Current.user).sum { |c| c.unread_count_for(Current.user) } %>
+    <%# DMs only — public channels are ambient and must not light the badge. %>
+    <% unread = Conversation.for_user(Current.user).where(slug: nil).sum { |c| c.unread_count_for(Current.user) } %>
     <div data-controller="push"
          data-push-vapid-key-value="<%= Shared::Vapid.public_key %>"
          data-push-subscribe-url-value="<%= push_subscriptions_path %>"
@@ -224,6 +225,7 @@
       <div class="mobile-sheet-handle"></div>
       <div class="mobile-sheet-links">
         <%= link_to "AI assistant", brgen_ai_url, data: { turbo: false } %>
+        <%= link_to "Channels", channels_path %>
         <%= link_to "New post", new_post_path %>
         <%= link_to "New community", new_community_path %>
         <% if authenticated? %>
