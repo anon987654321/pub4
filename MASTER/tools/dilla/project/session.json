@@ -407,6 +407,11 @@
       "bar": "16",
       "motif_id": "hook",
       "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
     }
   ],
   "tension_curve": [
@@ -451,22 +456,6 @@
     {
       "bar": "7",
       "section": "verse"
-    },
-    {
-      "bar": "8",
-      "section": "hook"
-    },
-    {
-      "bar": "9",
-      "section": "hook"
-    },
-    {
-      "bar": "10",
-      "section": "hook"
-    },
-    {
-      "bar": "11",
-      "section": "hook"
     }
   ],
   "critique_log": [

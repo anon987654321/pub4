@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "timeout"
 
 # Lo-fi machine semantics — timing, drum grids, chord voicings, and harmony
 # profiles (no song titles). Ported from RG-69 reference + production DNA.
@@ -691,8 +692,18 @@ module DillaLofiMachine
     if (hz = CHORD_VOICINGS[sym])
       return { name: sym, hz: hz.dup }
     end
-    if defined?(DillaMusicGems) && (gem_chord = DillaMusicGems.chord_from_symbol(sym))
-      return gem_chord
+    if defined?(DillaMusicGems)
+      # The coltrane-gem path has hung indefinitely on specific symbols
+      # (Dm7b5, Cmaj9 — see README) with no clear pattern; rather than wait
+      # for the next one to be discovered by a stuck render, bound it and
+      # fall through to the built-in suffix parser below on timeout.
+      gem_chord = begin
+        Timeout.timeout(1.5) { DillaMusicGems.chord_from_symbol(sym) }
+      rescue Timeout::Error
+        warn "chord_from_symbol: DillaMusicGems hung on #{sym.inspect}, falling back" if $VERBOSE
+        nil
+      end
+      return gem_chord if gem_chord
     end
     if sym.include?("/")
       upper, bass_note = sym.split("/", 2)

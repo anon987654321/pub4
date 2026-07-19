@@ -4272,11 +4272,18 @@ def arp_styles_for_patch(patch, fallback_style)
   patch&.dig(:arp_styles) || [fallback_style || :updown]
 end
 
+# Euclidean/ratchet/random_walk/stutter/burst already exist in
+# ARP_PATTERN_BUILDERS but every patch's own arp_styles list sticks to the
+# safe up/down/updown/pingpong shapes — this is the IDM/Warp-leaning
+# opt-in that reaches for the shapes that are already built but unused.
+ARP_IDM_STYLES = %i[euclidean ratchet random_walk stutter burst].freeze
+
 # Each pad/lead chord gets its own arp style, subdiv, gate, swing, and pattern shape.
 def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role: :lead)
   rng = chord_variation_rng(cfg, chord_i, chord, salt: role.hash.abs)
   styles = base_arp_cfg[:arp_styles] || arp_styles_for_patch(patch, base_arp_cfg[:style])
   style = styles[chord_i % styles.length]
+  style = ARP_IDM_STYLES.sample(random: rng) if ENV["ARP_IDM_BIAS"] == "1" && rng.rand < 0.65
   if role == :pad
     subdiv_pool = [base_arp_cfg.fetch(:subdiv, 8), 4, 6, 8].uniq
     pattern_modes = %i[style motif sparse stagger call]
@@ -7311,6 +7318,21 @@ RENDER_MODE_DEFAULTS = {
     "ANALOG_CHAIN" => "cassette", "CONV_REVERB" => "chamber",
     "TRACK" => "golden", "BARS" => "32"
   },
+  # Plug Research / Brainfeeder / Warp-leaning — points already-built,
+  # normally-dormant knobs at each other rather than adding new engineering:
+  # spectral chop/harmonic-stack arps, IDM-shape arp bias (euclidean/ratchet/
+  # random_walk/stutter/burst), demucs-sliced granular chops, cosmogramma
+  # groove DNA + thundercat performer feel, a more damaged analog chain.
+  warp: {
+    "SPECTRAL_ENGINE" => "1", "SPECTRAL_ARP" => "1", "HARMONIC_STACK" => "1",
+    "ARP_IDM_BIAS" => "1", "DRUM_CHOPS" => "1",
+    "GROOVE_DNA" => "cosmogramma", "PERFORMER" => "thundercat",
+    "VOICING" => "quartal", "LEAD_ARP" => "1", "HARMONY_LEAD" => "1",
+    "PAD_ARP_MODE" => "wash", "LUSH_SYNTH" => "1", "SYNTH_MORPH" => "1",
+    "ANALOG_CHAIN" => "dub_chamber", "SONITEX" => "donuts_soul", "SONITEX_PRESET" => "donuts_soul",
+    "STEREO_PAN" => "1", "MOTIF_RECALL" => "1", "COMPOSITION" => "1",
+    "BARS" => "32"
+  },
   # camel / dilla style: single table DILLA_STYLE_DEFAULTS below.
   camel: {},
   dilla: {}
@@ -7796,19 +7818,48 @@ STREAM_LEAD_VOICE_ROTATION = %w[
 
 STREAM_PAD_VOICE_ROTATION = %w[blend rhodes moog prophet].freeze
 
-def soft_fill_env!(table)
+# Which defaults table last touched each ENV key, and how (fill vs force) —
+# multiple tables (DILLA_BEST_DEFAULTS, RENDER_MODE_DEFAULTS,
+# DILLA_STYLE_DEFAULTS, STREAM_EXTRA_DEFAULTS/STREAM_CREATIVE_MAX) apply in
+# sequence, soft-fill only wins races when nothing set the key first, and
+# that ordering has caused real, silent bugs (a style table's setting
+# permanently losing to an earlier table because apply_render_mode! hadn't
+# run yet). See "config-provenance" command.
+def config_provenance
+  @config_provenance ||= {}
+end
+
+def record_config_provenance!(key, label, verb)
+  return unless label
+  config_provenance[key] = "#{label} (#{verb})"
+end
+
+def soft_fill_env!(table, label: nil)
   table.each do |key, value|
     next if value.nil?
-    ENV[key] = value.to_s if ENV[key].nil? || ENV[key].empty?
+    if ENV[key].nil? || ENV[key].empty?
+      ENV[key] = value.to_s
+      record_config_provenance!(key, label, "fill")
+    end
   end
 end
 
 # Overwrite ENV keys (stream creative layer after style force-locks).
-def force_env!(table)
+def force_env!(table, label: nil)
   table.each do |key, value|
     next if value.nil?
     ENV[key.to_s] = value.to_s
+    record_config_provenance!(key.to_s, label, "force")
   end
+end
+
+def print_config_provenance
+  if config_provenance.empty?
+    puts "config-provenance: empty — run a render first (soft_fill_env!/force_env! haven't been called with labels yet)"
+    return
+  end
+  width = config_provenance.keys.map(&:length).max
+  config_provenance.sort.each { |key, source| puts "#{key.ljust(width)}  #{source}  = #{ENV[key].inspect}" }
 end
 
 def soft_fill_iterate!(tuning, locked_keys: [])
@@ -8214,7 +8265,7 @@ def apply_render_mode!
             RENDER_MODE_DEFAULTS[mode]
           end
   return unless table
-  soft_fill_env!(table)
+  soft_fill_env!(table, label: table.equal?(DILLA_STYLE_DEFAULTS) ? "DILLA_STYLE_DEFAULTS" : "RENDER_MODE_DEFAULTS[#{mode}]")
   DillaDmesg.style!("mode=#{mode}") if ENV["DILLA_STREAMING"] != "1"
 end
 
@@ -8354,9 +8405,11 @@ def apply_dilla_style!(force: false)
   ENV["RENDER_MODE"] = "dilla" if raw.empty? || raw == "camel"
   ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.downcase == "camel"
   apply_render_mode!
+  verb = force ? "force" : "fill"
   DILLA_STYLE_DEFAULTS.each do |key, value|
     next if !force && ENV[key] && !ENV[key].empty?
     ENV[key] = value.to_s
+    record_config_provenance!(key, "DILLA_STYLE_DEFAULTS", verb)
   end
   track = ENV["TRACK"].to_s
   track = "get_dis_money" if track.empty?
@@ -8385,35 +8438,29 @@ end
 def apply_best_defaults!
   return if ENV["DILLA_RAW"] == "1"
   apply_render_mode!
-  DILLA_BEST_DEFAULTS.each do |key, value|
-    ENV[key] = value if ENV[key].nil? || ENV[key].empty?
-  end
-  if deep_render?
-    DILLA_DEEP_DEFAULTS.each do |key, value|
-      ENV[key] = value if ENV[key].nil? || ENV[key].empty?
-    end
-  end
+  soft_fill_env!(DILLA_BEST_DEFAULTS, label: "DILLA_BEST_DEFAULTS")
+  soft_fill_env!(DILLA_DEEP_DEFAULTS, label: "DILLA_DEEP_DEFAULTS") if deep_render?
   pick_default_track!
 end
 
 def apply_stream_listenability_defaults!
   apply_best_defaults!
-  soft_fill_env!(STREAM_EXTRA_DEFAULTS)
+  soft_fill_env!(STREAM_EXTRA_DEFAULTS, label: "STREAM_EXTRA_DEFAULTS")
   if stream_deep?
     ENV["DILLA_DEEP"] = "1" if ENV["DILLA_DEEP"].to_s.empty?
-    soft_fill_env!(DILLA_DEEP_DEFAULTS)
+    soft_fill_env!(DILLA_DEEP_DEFAULTS, label: "DILLA_DEEP_DEFAULTS")
   else
     fast = STREAM_FAST_DEFAULTS.dup
     if stream_iterate_enabled?
       STREAM_ITERATE_OVERRIDE_KEYS.each { |key| fast.delete(key) }
     end
-    soft_fill_env!(fast)
+    soft_fill_env!(fast, label: "STREAM_FAST_DEFAULTS")
   end
   if stream_iterate_enabled?
     soft_fill_iterate!(STREAM_ITERATE_TUNING, locked_keys: DILLA_STYLE_LOCK_KEYS)
   end
   if ENV.fetch("STREAM_SOUL", "1") != "0"
-    soft_fill_env!(STREAM_SOUL_DEFAULTS)
+    soft_fill_env!(STREAM_SOUL_DEFAULTS, label: "STREAM_SOUL_DEFAULTS")
     ensure_learned_engine_seeded!
     apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
@@ -8423,10 +8470,11 @@ def apply_stream_listenability_defaults!
   apply_dilla_style!(force: true)
   # Critical: apply_dilla_style(force) was wiping STREAM_ITERATE / RAP_VOCAL /
   # creative flags back to the conservative style table — re-force stream layer.
-  force_env!(STREAM_CREATIVE_MAX)
-  force_env!(STREAM_ITERATE_TUNING) if stream_iterate_enabled?
+  force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
+  force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
   ENV["PLAY_VOL"] = "1" if ENV["PLAY_VOL"].to_s.empty?
   ENV["DILLA_STREAMING"] = "1"
+  record_config_provenance!("DILLA_STREAMING", "apply_stream_listenability_defaults!", "force")
 end
 
 def render_spectrum(path)
@@ -14579,6 +14627,7 @@ DISPATCH = {
   "sweep" => -> { sweep },
   "council" => -> { council },
   "debug" => -> { debug },
+  "config-provenance" => -> { print_config_provenance },
   "sample" => -> { sample },
   "source" => -> { source(ARGV.shift, ARGV.shift) },
   "livestream" => -> { livestream(ARGV.shift, ARGV.shift) },

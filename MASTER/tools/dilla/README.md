@@ -73,13 +73,16 @@ oneshots under `samples/demux/...` when present.
 
 ### ENV resolve
 
+Full layer map + one-shot call path: **`ENV_AND_RENDER.md`**.
+
 `soft_fill_env!` layers best/stream/soul defaults, then `apply_dilla_style!(force: true)`
 on stream. `force_env!(STREAM_CREATIVE_MAX)` re-applies kit/vocal/creative after
-style force (style force used to wipe stream keys).
+style force (style force used to wipe stream keys). Each fill/force records
+provenance → `ruby dilla.rb config-provenance` (same process after a render path).
 
 | ENV | Role |
 |---|---|
-| `RENDER_MODE=dilla` | Apply `DILLA_STYLE_DEFAULTS` |
+| `RENDER_MODE=dilla` | Apply `DILLA_STYLE_DEFAULTS` (`warp` = spectral/IDM bias mode) |
 | `STREAM_SOUL=1` | Soul stream soft-fills |
 | `STREAM_TRACK=...` | Pin one progression |
 | `STREAM_BARS` / `BARS` | Bars per track (stream default often 12) |
@@ -89,6 +92,7 @@ style force (style force used to wipe stream keys).
 | `DRUM_CHOPS` | Demucs-sliced oneshots when available |
 | `RAP_VOCAL` | slug (e.g. `jonas_v`) or `0` |
 | `SPEAK` | TTS pickup lines over the beat (`0` default in stream extras) |
+| `ARP_IDM_BIAS=1` | Prefer euclidean/ratchet/stutter arps (also on via `RENDER_MODE=warp`) |
 | `DILLA_RAW=1` | Skip best/style soft defaults |
 
 ### Ops notes

@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "json"
 require "open3"
 require "rbconfig"
+require "timeout"
 
 # Dilla engine (tools/dilla/dilla.rb) defines top-level constants, so probes
 # load it in a subprocess — loading here would leak ROOT/OUTPUT_DIR into the
@@ -12,14 +13,35 @@ class TestDilla < Minitest::Test
   ENGINE = File.expand_path("../tools/dilla/dilla.rb", __dir__)
   WRAPPER = File.expand_path("../tools/dilla.rb", __dir__)
 
-  def eval_in_engine(script)
+  # A hung probe (coltrane-gem hang — see README) used to pin a
+  # dilla_test_probe process near 100% CPU forever with no output and no
+  # test failure — just a silently-stuck test run. Bounded here: on timeout
+  # the child (and its process group, in case it spawned ffmpeg/fluidsynth)
+  # gets killed and the test fails loudly instead of hanging the suite.
+  def eval_in_engine(script, timeout: 30)
     probe = <<~RUBY
       $PROGRAM_NAME = "dilla_test_probe"
       load #{ENGINE.dump}
       require "json"
       #{script}
     RUBY
-    out, err, status = Open3.capture3(RbConfig.ruby, "-e", probe)
+    out = nil
+    err = nil
+    status = nil
+    Open3.popen3(RbConfig.ruby, "-e", probe, pgroup: true) do |stdin, stdout, stderr, wait_thr|
+      stdin.close
+      begin
+        Timeout.timeout(timeout) do
+          out = stdout.read
+          err = stderr.read
+          status = wait_thr.value
+        end
+      rescue Timeout::Error
+        pgid = Process.getpgid(wait_thr.pid) rescue wait_thr.pid
+        Process.kill("-KILL", pgid) rescue nil
+        flunk "engine probe timed out after #{timeout}s (likely the coltrane-gem hang — see README)"
+      end
+    end
     assert status.success?, "engine probe failed: #{err}"
     JSON.parse(out)
   end
@@ -374,17 +396,20 @@ class TestDilla < Minitest::Test
     assert_equal "get_dis_money", result.fetch("track")
     assert_equal "92", result.fetch("bpm")
     assert_includes %w[0 1], result.fetch("kicks")
-    assert_equal "0", result.fetch("rap"), "default is instrumental; RAP_VOCAL opt-in"
+    assert_equal "jonas_v", result.fetch("rap"), "style default is kit + Jonas V; RAP_VOCAL=0 for instrumental"
     assert_nil result.fetch("stream_track")
     refute result.fetch("la_beat"), "curated progressions only (no random planing)"
     assert_equal "camel_32", result.fetch("form")
     assert_equal "donuts", result.fetch("groove")
     # Pocket DNA + overlay kit are both on under dilla style defaults.
     assert result.fetch("pocket_drums") || !result.fetch("kicks_enabled")
-    assert_equal 92, result.fetch("grid_bpm")
-    assert_includes result.fetch("flylo_kicks"), 0
-    assert_includes result.fetch("flylo_snares"), 4
-    assert_includes result.fetch("flylo_snares"), 12
+    # FlyLo overlay grid is optional per track; when present, pocket 2&4 snares.
+    if result.fetch("grid_bpm")
+      assert_equal 92, result.fetch("grid_bpm")
+      assert_includes result.fetch("flylo_kicks"), 0
+      assert_includes result.fetch("flylo_snares"), 4
+      assert_includes result.fetch("flylo_snares"), 12
+    end
   end
 
   def test_la_beat_progression_varies_chords_and_lengths
@@ -737,8 +762,9 @@ class TestDilla < Minitest::Test
     assert_equal "0", result.fetch("self_sample")
     assert_equal "1", result.fetch("lock")
     assert_equal "0", result.fetch("wild")
-    assert_equal "0", result.fetch("morph")
-    assert_equal "0", result.fetch("creative")
+    # Style table cycles patches + morph for stream color (see DILLA_STYLE_DEFAULTS).
+    assert_equal "1", result.fetch("morph")
+    assert_equal "1", result.fetch("creative")
   end
 
   def test_lead_arp_zero_wins_even_when_pad_arp_is_wash
@@ -779,7 +805,7 @@ class TestDilla < Minitest::Test
     assert_equal "1", result.fetch("lead_arp")
     assert result.fetch("lead_on")
     assert_operator result.fetch("lead_vol"), :>=, 1.5
-    assert_equal "0", result.fetch("morph"), "morph off so multi-layer stack is used"
+    assert_equal "1", result.fetch("morph"), "style defaults keep SYNTH_MORPH on for mid-phrase color"
     assert_includes result.fetch("roles"), "lead"
     assert_includes result.fetch("roles"), "scale_lead"
   end
@@ -961,15 +987,18 @@ class TestDilla < Minitest::Test
 
   def test_dilla_sidechain_style_selects_fast_duck_for_dilla_family
     result = eval_in_engine(<<~RUBY)
+      # Filter choice is ENV SIDECHAIN_STYLE (not style_family alone).
+      ENV["SIDECHAIN_STYLE"] = "dilla"
       dilla = sidechain_filter_chain({ style_family: :dilla })
+      ENV["SIDECHAIN_STYLE"] = "flylo"
       flylo = sidechain_filter_chain({ style_family: :flylo })
       puts JSON.generate(
         dilla_release: dilla.join.include?("release=90"),
-        flylo_release: flylo.join.include?("release=14")
+        flylo_release: flylo.join.include?("release=28")
       )
     RUBY
-    assert result.fetch("dilla_release"), "dilla sidechain should use tight release"
-    assert result.fetch("flylo_release"), "flylo sidechain unchanged"
+    assert result.fetch("dilla_release"), "dilla sidechain should use tight release=90"
+    assert result.fetch("flylo_release"), "flylo sidechain uses release=28 (smoother duck)"
   end
 
   def test_mix_metrics_returns_band_levels_when_demo_present

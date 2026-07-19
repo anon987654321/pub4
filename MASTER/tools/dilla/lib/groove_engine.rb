@@ -8,6 +8,8 @@
 #   3. SAMPLE CHOICE — alternate kicks, soft ghost snare, closed vs open hat
 module DillaGroove
   PRIMES = [3, 5, 7, 11].freeze
+  # Mutable memoization cache (markov_steps writes to it via ||=) — must not
+  # be frozen. Broke every render with FrozenError until fixed here.
   MARKOV_CACHE = {}
   # Tempo/timing should breathe over a multi-bar phrase, not sit dead-locked
   # to the grid — a slow sine LFO, period within the 4-8 bar range documented
