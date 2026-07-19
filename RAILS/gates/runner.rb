@@ -9,10 +9,13 @@
 #   ruby RAILS/gates/runner.rb production domain_alignment
 #   ruby RAILS/gates/runner.rb --list
 #
-# Composite gates (production, release) already run their leaf checks in-process.
+# Most gates run in-process via Deploy::* classes returning GateResult.
+# Composite gates (production, release) already run their leaf checks.
 # --all deduplicates those leaves so each logical gate runs once.
+# release / rails_runtime / visual_contract still subprocess (bundle steps / capture args).
 
 require "optparse"
+require "rbconfig"
 
 GATE_MAP = {
   production:            "check_production_gate.rb",
@@ -45,6 +48,28 @@ GATE_COVERED_BY = {
   frontend_auditor:  :release,
   stimulus_components: :release,
 }.freeze
+
+# In-process Deploy::* callables. Value is [relative require under gates/, class name, optional kwargs].
+IN_PROCESS = {
+  production:            ["lib/production_gate", "Deploy::ProductionGate", {}],
+  domain_alignment:      ["lib/domain_alignment_gate_logic", "Deploy::DomainAlignmentGate", {}],
+  frontend_auditor:      ["lib/frontend_auditor_gate_logic", "Deploy::FrontendAuditorGate", {}],
+  frontend_production:   ["lib/frontend_production_gate_logic", "Deploy::FrontendProductionGate", {}],
+  generated_asset:       ["lib/generated_asset_gate", "Deploy::GeneratedAssetGate", {}],
+  human_walkthrough:     ["lib/human_walkthrough_gate", "Deploy::HumanWalkthroughGate", {}],
+  master_tts:            ["lib/master_tts_gate", "Deploy::MasterTtsGate", {}],
+  master_web_assets:     ["lib/master_web_assets_gate", "Deploy::MasterWebAssetsGate", {}],
+  phantom_foreign_keys:  ["lib/phantom_foreign_keys_gate", "Deploy::PhantomForeignKeysGate", {}],
+  port_inventory:        ["lib/port_inventory_gate", "Deploy::PortInventoryGate", {}],
+  schema_migration:      ["lib/schema_migration_gate", "Deploy::SchemaMigrationGate", {}],
+  stimulus_components:   ["lib/stimulus_components_gate", "Deploy::StimulusComponentsGate", {}],
+  apps_yml:              ["lib/apps_yml_validator", "Deploy::AppsYmlValidator", {}],
+  shared_wiring:         ["lib/shared_wiring_gate", "Deploy::SharedWiringGate", {}],
+  constitutional_scan:   ["lib/constitutional_scan_gate", "Deploy::ConstitutionalScanGate", {}],
+}.freeze
+
+# Keep subprocess for multi-step / arg-forwarding gates.
+SUBPROCESS_ONLY = %i[release rails_runtime visual_contract].freeze
 
 def gate_path(name)
   File.expand_path("../../#{GATE_MAP[name]}", __FILE__)
@@ -80,17 +105,51 @@ def gate_extra_args(key)
   key == :visual_contract ? visual_contract_capture_args : []
 end
 
-def run_one(key)
+def run_in_process(key)
+  rel, class_name, kwargs = IN_PROCESS.fetch(key)
+  require_relative rel
+  klass = Object.const_get(class_name)
+  result = kwargs.empty? ? klass.run : klass.run(**kwargs)
+  emit_gate_result(key, result)
+end
+
+def emit_gate_result(key, result)
+  unless result.respond_to?(:ok?)
+    warn "[gates] #{key}: in-process gate did not return GateResult"
+    return false
+  end
+
+  result.warnings.each { |warning| warn "  - #{warning}" } if result.warnings.any?
+  if result.ok?
+    true
+  else
+    warn "Failures:"
+    result.failures.each { |failure| warn "  - #{failure}" }
+    false
+  end
+end
+
+def run_subprocess(key)
   path = gate_path(key)
   unless File.file?(path)
     warn "[gates] Missing gate file for #{key}: #{path}"
     return false
   end
   extra = gate_extra_args(key)
-  puts "\n==> [gates] Running #{key} (#{File.basename(path)})"
   puts "[gates] visual_contract capture enabled (VISUAL_CAPTURE=1)" if key == :visual_contract && extra.include?("--capture")
   system(*ruby_cmd, path, *extra)
-  success = $?.success?
+  $?.success?
+end
+
+def run_one(key)
+  path = gate_path(key)
+  puts "\n==> [gates] Running #{key} (#{File.basename(path)})"
+  success =
+    if IN_PROCESS.key?(key) && !SUBPROCESS_ONLY.include?(key)
+      run_in_process(key)
+    else
+      run_subprocess(key)
+    end
   puts success ? "[gates] #{key} PASSED" : "[gates] #{key} FAILED"
   success
 end
@@ -98,6 +157,9 @@ end
 def list_gates
   puts "Available gates (use short name with runner.rb):"
   GATE_MAP.each { |k, v| puts "  #{k.to_s.ljust(22)} -> #{v}" }
+  puts
+  puts "In-process (Deploy::GateResult): #{IN_PROCESS.keys.join(', ')}"
+  puts "Subprocess only: #{SUBPROCESS_ONLY.join(', ')}"
   puts
   puts "Composite gates (skip these leaves when the parent is also selected):"
   GATE_COVERED_BY.group_by(&:last).each do |parent, pairs|
@@ -147,6 +209,6 @@ results = gates_to_run.map { |key| run_one(key) }
 
 overall = results.all?
 
-puts "\n#{'='*50}"
+puts "\n#{'=' * 50}"
 puts overall ? "[gates] ALL SELECTED GATES PASSED (#{results.size})" : "[gates] SOME GATES FAILED"
 exit overall ? 0 : 1

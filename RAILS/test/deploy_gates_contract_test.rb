@@ -56,6 +56,29 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes source, "gates/apps_yml_validator.rb"
   end
 
+  def test_runner_runs_leaf_gates_in_process
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    assert_includes source, "IN_PROCESS"
+    assert_includes source, "run_in_process"
+    %w[generated_asset human_walkthrough port_inventory schema_migration phantom_foreign_keys shared_wiring].each do |key|
+      assert_match(/#{key}:\s+\[/, source, "runner IN_PROCESS should include #{key}")
+    end
+    assert_includes source, "SUBPROCESS_ONLY"
+    assert_includes source, ":release"
+  end
+
+  def test_leaf_gate_lib_classes_exist
+    %w[
+      generated_asset_gate
+      human_walkthrough_gate
+      port_inventory_gate
+      schema_migration_gate
+      phantom_foreign_keys_gate
+    ].each do |name|
+      assert File.file?(File.join(ROOT, "gates", "lib", "#{name}.rb")), "missing gates/lib/#{name}.rb"
+    end
+  end
+
   def test_runner_deduplicates_leaf_gates_under_composites
     source = File.read(File.join(ROOT, "gates", "runner.rb"))
     assert_includes source, "GATE_COVERED_BY"

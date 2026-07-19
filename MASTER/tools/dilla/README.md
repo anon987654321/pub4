@@ -6,88 +6,112 @@ demux, MIDI electronium. Logic lives in `dilla.rb` plus small helpers under
 
 Two entry points:
 
-- `MASTER/tools/dilla.rb` — chat wrapper (`generate --style …`). Older
-  style maps for one-shot exports; not the live stream defaults.
+- `MASTER/tools/dilla.rb` — chat / RAILS product wrapper (`generate --style …`).
+  Applies the same **kit-forward** ENV profile as the engine style table so
+  one-shots match stream character (shorter bars by default).
 - `MASTER/tools/dilla/dilla.rb` — engine. `ruby dilla.rb help` for commands.
+
+Product path (brgen): `Shared::DillaProcessor` → wrapper → engine → Active Storage.
 
 ---
 
 ## Single style: `dilla`
 
 One stream/render profile (`DILLA_STYLE_DEFAULTS`). `RENDER_MODE=camel` is a
-compat alias for the same table.
+compat alias for the same table. Stream re-forces kit/vocal/creative keys via
+`STREAM_EXTRA_DEFAULTS` / `STREAM_CREATIVE_MAX` after style lock.
 
 ```sh
 cd MASTER/tools/dilla
 
-# Continuous stream (default bare invoke)
+# Continuous stream (default bare invoke) — one supervisor only
 ruby dilla.rb
-# same:
-RENDER_MODE=dilla STREAM_SOUL=1 SPEAK=0 ruby dilla.rb stream 32
+# explicit short cycle:
+SPEAK=0 ruby dilla.rb stream 12
 
-# One-shot
-ruby dilla.rb dilla out.wav 32
-# or: ruby dilla.rb camel out.wav 32
+# One-shot (kit-forward profile)
+ruby dilla.rb dilla out.wav 12
+# or: ruby dilla.rb camel out.wav 12
+
+# Chat / product wrapper (outside tools/dilla/)
+cd MASTER
+ruby tools/dilla.rb generate --style dilla --bars 12 --output /tmp/beat.mp3
 ```
 
-### What you get
+### What you get (code truth — `DILLA_STYLE_DEFAULTS`)
 
 | Layer | Behavior |
 |---|---|
-| **Harmony** | Curated progressions only (`LA_BEAT_PROGRESSION=0`) |
-| **Pads** | Blend/wash, long attack/release, high harm bus |
-| **Leads** | Off (`LEAD_ARP=0` wins even if pad arp is wash) |
-| **Drums** | 16-step overlay kit only (`FLYLO_DRUMS_ONLY=1`); pocket kicks need `POCKET_KICKS=1` |
-| **Master** | `donuts_soul` + `broadcast` |
-| **Vocals** | Off by default (`RAP_VOCAL=0`); opt-in with isolation + blocklist |
-| **Iterate / vinyl bed** | Off |
-| **Swing** | `56%` (Dilla's documented 54-58% MPC sweet spot; was 60%) |
-| **Micro-timing** | Gaussian-clustered jitter (`DillaGroove.gaussian_jitter`), not uniform random |
-| **Phrase drift** | Slow tempo/timing breathe over a 6-bar sine LFO (`PHRASE_DRIFT=1`) |
-| **Arrangement** | Full-layer drop-out every 8 bars for contrast (`ARRANGEMENT_VARIATION=1`) |
-| **Mastering heuristics** | On (`MASTER_HEURISTICS=1`) — harshness notch, sub/kick balance, perceptual limiter |
+| **Harmony** | Curated progressions; stream rotates `STREAM_ROTATION` (~34 tracks) |
+| **Pads** | `stack_soul` held pads; **stepped back** so kit/vox read (`PAD_VOL` ~58, lower harm bus) |
+| **Leads** | **On** — scale-locked arps (`LEAD_ARP=1`), rotate voice/mode (`STREAM_ROTATE_LEAD`) |
+| **Drums** | **Hybrid** pocket + FlyLo overlay (`FLYLO_DRUMS_ONLY=0`, `KICKS=1`, `POCKET_KICKS=1`) |
+| **Master** | `donuts_soul` + `broadcast`, loudnorm, `MASTER_HEURISTICS=1` |
+| **Vocals** | Default **`RAP_VOCAL=jonas_v`** (isolated stems under `project/learnings/vocals/`); `RAP_VOCAL=0` to mute |
+| **Swing** | `56%` (documented MPC 54–58% pocket) |
+| **Micro-timing** | Gaussian-clustered jitter + phrase drift + arrangement drop-outs |
+| **Stream** | Continuous supervisor, PID temps, single lock, normalize ~−14.5…−16.5 LUFS |
 
 ### Signal flow
 
 ```
-curated progression → pad wash + bass
+curated progression → pads (held) + bass + scale-locked lead arps
         │
-16-step drum grid (locked baked steps)
+pocket kit + FlyLo overlay (+ optional Jonas V rap stem)
         │
  sidechain amix
         │
- Sonitex donuts_soul → analog broadcast → loudnorm
+ Sonitex donuts_soul → analog broadcast → heuristics → loudnorm
         │
- demo.wav + afplay
+ demo.wav + afplay   ·   or product Active Storage attach
 ```
 
 ### Grid
 
-Baked steps: kicks `[0, 3, 7, 10, 11, 14]`, snares `[4, 12]`, 8th hats.
-`DRUM_CHOPS=1` optionally replaces kit oneshots with slices from demucs
-drums under `samples/demux/...` when that file exists.
+Pocket / overlay grids (not overlay-only). `DRUM_CHOPS=1` may slice demucs
+oneshots under `samples/demux/...` when present.
 
 ### ENV resolve
 
 `soft_fill_env!` layers best/stream/soul defaults, then `apply_dilla_style!(force: true)`
-locks the single style. `reassert_dilla_style_locks!` after track soul.
+on stream. `force_env!(STREAM_CREATIVE_MAX)` re-applies kit/vocal/creative after
+style force (style force used to wipe stream keys).
 
 | ENV | Role |
 |---|---|
 | `RENDER_MODE=dilla` | Apply `DILLA_STYLE_DEFAULTS` |
 | `STREAM_SOUL=1` | Soul stream soft-fills |
 | `STREAM_TRACK=...` | Pin one progression |
-| `STREAM_GAP` / `STREAM_CROSSFADE` | Silence between tracks |
-| `POCKET_KICKS` | Pocket kit kicks (default off under overlay-only) |
-| `DRUM_CHOPS` | Use demucs-sliced oneshots when available |
-| `RAP_VOCAL` | slug or `0` |
-| `BARS` | Default 32 |
+| `STREAM_BARS` / `BARS` | Bars per track (stream default often 12) |
+| `STREAM_GAP` / `STREAM_CROSSFADE` | Between tracks |
+| `POCKET_KICKS` / `KICKS` | Pocket kicks (on by default) |
+| `FLYLO_DRUMS_ONLY` | `0` = hybrid kit (default); `1` = overlay-only (can bury kicks) |
+| `DRUM_CHOPS` | Demucs-sliced oneshots when available |
+| `RAP_VOCAL` | slug (e.g. `jonas_v`) or `0` |
+| `SPEAK` | TTS pickup lines over the beat (`0` default in stream extras) |
+| `DILLA_RAW=1` | Skip best/style soft defaults |
+
+### Ops notes
+
+- **One stream process only** — lock file rejects a second continuous stream.
+- Copy `demo.wav` before analysis if stream may overwrite mid-play.
+- Jonas V / ingested vocals: experimental local use; **not rights-cleared** for public ship.
 
 ### Optional vocals
 
 ```sh
 ruby dilla.rb rap-vocal ingest "Artist" "https://..."
-RAP_VOCAL=slug ruby dilla.rb dilla out.wav 32
+RAP_VOCAL=slug ruby dilla.rb dilla out.wav 12
+RAP_VOCAL=0 ruby dilla.rb dilla instrumental.wav 12
+```
+
+### Critique (MASTER, not inside the engine)
+
+```sh
+cd MASTER && bundle exec ruby bin/cli
+# after a render:
+/dilla metrics
+/dilla crit
 ```
 
 ---
@@ -100,7 +124,7 @@ RAP_VOCAL=slug ruby dilla.rb dilla out.wav 32
 | Vocal | `mix`, `v7`–`v11`, `rap-vocal` |
 | Sample | `prepare`, `sample`, `source`, `separate`, `demux`, `learn`, `learn-flylo`, `clean` |
 | Live | `stems`, `liveset`, `live`, `stream`, `live_now`, `livestream` |
-| Analysis | `scan`, `ears`, `verify`, `study`, `grade`, `chords`, `rhythm`, `melody`, `harmony`, `quality`, `debug` |
+| Analysis | `scan`, `ears`, `verify`, `study`, `grade`, `chords`, `rhythm`, `melody`, `harmony`, `quality`, `debug`, `radio-bergen-*` |
 | MIDI | `electronium`/`midi` |
 | Assets | `fetch-assets`, `use-external-kit` |
 

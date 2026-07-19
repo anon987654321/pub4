@@ -84,10 +84,15 @@ module Shared
     end
 
     def run_script(style, output, bars)
+      # Kit-forward profile is applied inside MASTER/tools/dilla.rb (PRODUCT_KIT_ENV).
+      # Only pass process-level overrides here so Solid Queue matches chat renders.
       env = {
         "DILLA_RAW" => ENV.fetch("DILLA_RAW", "0"),
         "STREAM_CONTINUOUS" => "0",
-        "SPEAK" => ENV.fetch("DILLA_SPEAK", "0")
+        "SPEAK" => ENV.fetch("DILLA_SPEAK", "0"),
+        "DILLA_SPEAK" => ENV.fetch("DILLA_SPEAK", "0"),
+        "RAP_VOCAL" => ENV.fetch("RAP_VOCAL", "jonas_v"),
+        "RENDER_MODE" => "dilla"
       }
       cmd = [
         RbConfig.ruby, script.to_s, "generate",

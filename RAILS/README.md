@@ -104,7 +104,7 @@ VISUAL_CAPTURE=1 VISUAL_CAPTURE_APP=brgen VISUAL_CAPTURE_BASE=http://127.0.0.1:3
 
 `check_production_gate.rb`, `master_web_assets_gate.rb`, and `master_tts_gate.rb` are thin CLI wrappers. `rails_runtime_gate.rb` calls `Deploy::ProductionGate.run(skip_nested: true)` in-process (avoids re-running nested master gates when `production` and `rails_runtime` both run under `--all`). Set `GATE_SKIP_NESTED=1` when shelling out to `check_production_gate.rb` if you need the same skip from a subprocess.
 
-`domain_alignment_gate.rb` and most leaf gates use `Deploy::GateResult`. `runner.rb --all` still subprocesses each gate script (thin wrappers). Horizon `apps.yml` features remain `agent: ignore` — see `MASTER/DEBT.md` / `OPENBSD/data/debt.yml`.
+`domain_alignment_gate.rb` and most leaf gates use `Deploy::GateResult`. `runner.rb --all` runs those in-process via `gates/lib/` (`IN_PROCESS`); only `release`, `rails_runtime`, and `visual_contract` still subprocess (bundle steps / capture args). Horizon `apps.yml` features remain `agent: ignore` — see `MASTER/DEBT.md` / `OPENBSD/data/debt.yml`.
 
 `visual_contract_gate.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. `runner.rb` forwards `--capture` when `VISUAL_CAPTURE=1` (optional `VISUAL_CAPTURE_APP`, `VISUAL_CAPTURE_BASE`). Running via `runner.rb --all` without capture only validates route/lens data shapes — not a visual regression pass.
 
@@ -225,11 +225,11 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 - **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
 - **Deploy scripts:** `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` are thin shims over `_*.sh` (same pattern as `@deploy.sh`).
 
-**Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): residual subprocess gate wrappers; broader controller coverage still thin; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization).
+**Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): `release`/`rails_runtime`/`visual_contract` still subprocess; deeper request/integration specs beyond static controller contracts; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization); Solidus marketplace mount remains planned (feature-flagged, staging-only).
 
 ## Deploy scripts
 
 Canonical orchestrator: `_deploy.sh`. `deploy.sh` and `@deploy.sh` are thin entry shims. Per-app `brgen.sh` / `amber.sh` / `bsdports.sh` source the shared contract.
 
 ---
-*Updated 2026-07-15 after RAILS TODO pass (routing, Stimulus, design audit, gate flattening).*
+*Updated 2026-07-19 — in-process gate runner + controller coverage contract.*

@@ -34,6 +34,7 @@ module Shared
       |(?:^|/)app/assets/builds/
       |lightgallery\.css
       |swiper-bundle(?:\.min)?\.css
+      |public/dilla/
       |actiontext\.css
       |frontend/layouts/visualizer
       |public/assets/layouts/visualizer

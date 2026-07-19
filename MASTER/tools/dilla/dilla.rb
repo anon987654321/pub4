@@ -14685,6 +14685,8 @@ DISPATCH = {
   "dilla" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
+    # Soft-apply kit-forward style so one-shots match stream (empty ENV only).
+    apply_dilla_style!(force: false) unless ENV["DILLA_RAW"] == "1"
     render_dilla(dest, n_bars)
   end,
   "camel" => lambda do
