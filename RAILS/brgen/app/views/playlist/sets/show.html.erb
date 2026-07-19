@@ -73,18 +73,24 @@
   <% if @dilla_sketches.any? %>
     <% @dilla_sketches.each do |sk| %>
       <div>
-        <strong><%= sk.name %></strong> by <%= sk.user&.display_name || "anon" %>
+        <strong><%= sk.name %></strong>
+        <span class="dim"><%= sk.render_status || "idle" %></span>
+        by <%= sk.user&.try(:display_name) || "anon" %>
         <% if sk.lab_url.present? %>
-          <a href="<%= sk.lab_url %>" target="_blank" class="btn btn-ghost btn-sm">open in lab</a>
+          <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">open in lab</a>
         <% end %>
         <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
+          <%= button_to "Render", render_audio_playlist_set_dilla_sketch_path(@set, sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
           <%= button_to "Remove", playlist_set_dilla_sketch_path(@set, sk), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <% end %>
+        <% if sk.render.attached? %>
+          <audio controls preload="none" src="<%= url_for(sk.render) %>"></audio>
         <% end %>
       </div>
       <% if sk.notes.present? %><p class="dim"><%= sk.notes %></p><% end %>
     <% end %>
   <% else %>
-    <p class="dim">No sketches yet. Create one by pasting state from dilla.html lab.</p>
+    <p class="dim">No sketches yet. Use the lab at /dilla/dilla.html or save a sketch below.</p>
   <% end %>
 
   <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>

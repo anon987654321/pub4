@@ -2,6 +2,8 @@
 
 Rails.application.routes.draw do
   get "offline" => "rails/pwa#offline", as: :pwa_offline
+  get "internal/status" => "internal#status", as: :internal_status
+  get "sso/from_master" => "sso#from_master", as: :sso_from_master
 
   jobs_constraint = lambda { |request|
     session_id = request.cookie_jar.signed[:session_id]

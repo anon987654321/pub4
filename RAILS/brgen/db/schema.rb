@@ -1128,6 +1128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_14_164502) do
   add_foreign_key "playlist_collaborations", "users"
   add_foreign_key "playlist_dilla_sketches", "playlist_playlists", column: "playlist_id"
   add_foreign_key "playlist_dilla_sketches", "playlist_sets", column: "set_id"
+  add_foreign_key "playlist_dilla_sketches", "playlist_tracks", column: "track_id"
   add_foreign_key "playlist_dilla_sketches", "users"
   add_foreign_key "playlist_likes", "playlist_sets", column: "set_id"
   add_foreign_key "playlist_likes", "users"

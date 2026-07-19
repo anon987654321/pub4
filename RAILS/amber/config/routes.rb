@@ -2,6 +2,8 @@
 
 Rails.application.routes.draw do
   get "offline" => "rails/pwa#offline", as: :pwa_offline
+  get "internal/status" => "internal#status", as: :internal_status
+  get "sso/from_master" => "sso#from_master", as: :sso_from_master
   post "share" => "items#share", as: :share_item
 
   jobs_constraint = lambda { |request|
