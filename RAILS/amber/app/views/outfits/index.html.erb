@@ -9,14 +9,17 @@
   <nav role="navigation" aria-label="Outfit actions">
     <%= link_to "New outfit", new_outfit_path, class: "btn" %>
     <%= link_to "Dressing room", dressing_room_outfits_path, class: "btn" %>
-    <%= link_to t("amber.nav.ai_suggest", default: "AI outfit suggestions (vision)"), ai_suggest_outfits_path, class: "btn" %>
+    <%= link_to t("amber.nav.ai_suggest", default: "Outfit suggestions"), ai_suggest_outfits_path, class: "btn" %>
   </nav>
 </header>
 
 <section class="form-wrap" aria-label="Generate outfit">
+  <% if @weather.present? %>
+    <p class="dim">Bergen now: <%= @weather[:description] %><% if @weather[:temp] %>, <%= @weather[:temp].round %>°C<% end %><% if @weather[:wind] %>, wind <%= @weather[:wind] %> km/h<% end %></p>
+  <% end %>
   <%= form_with url: generate_outfits_path, method: :post do |f| %>
-    <div class="field"><%= f.text_field :weather, placeholder: "Weather" %></div>
-    <div class="field"><%= f.select :season, Item::SEASONS, { include_blank: "Season" } %></div>
+    <div class="field"><%= f.text_field :weather, value: @default_weather, placeholder: "Weather (prefilled from Bergen when available)" %></div>
+    <div class="field"><%= f.select :season, Item::SEASONS, { include_blank: "Season", selected: case Time.current.month when 3..5 then "Spring" when 6..8 then "Summer" when 9..11 then "Autumn" else "Winter" end } %></div>
     <div class="field"><%= f.text_field :occasion, placeholder: "Occasion" %></div>
     <div class="field"><%= f.submit "Generate outfit", class: "btn" %></div>
   <% end %>

@@ -1,12 +1,12 @@
 <% content_for :title, @live_stream.title %>
 
-<header role="banner" aria-label="Live stream header">
+<header role="banner" aria-label="Style session header">
   <div>
-    <p class="dim"><%= @live_stream.status %></p>
+    <p class="dim"><%= @live_stream.status %> · style session (not a video stream)</p>
     <h1><%= @live_stream.title %></h1>
   </div>
 </header>
 
 <p><%= @live_stream.description %></p>
-<p class="dim"><%= pluralize(@live_stream.viewer_count, "viewer") %></p>
-<%= link_to "All live sessions", live_streams_path, class: "btn" %>
+<% if @live_stream.scheduled_at %><p class="dim">Scheduled: <%= @live_stream.scheduled_at %></p><% end %>
+<%= link_to "All style sessions", live_streams_path, class: "btn" %>

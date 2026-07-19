@@ -1,5 +1,21 @@
 <% content_for :title, "Colour Palette" %>
 <h1>Wardrobe Colour Palette</h1>
+<% if @result["source"] %><p class="dim">Source: <%= @result["source"] %></p><% end %>
+
+<% if @swatches.present? %>
+  <section aria-label="Colour swatches from wardrobe">
+    <h2>Swatches from your items</h2>
+    <div class="tag-row" style="display:flex;flex-wrap:wrap;gap:.5rem">
+      <% @swatches.each do |title, color| %>
+        <span class="chip" title="<%= title %>">
+          <span style="display:inline-block;width:1rem;height:1rem;border-radius:999px;background:<%= wardrobe_color_swatch(color) %>;border:1px solid #ccc;vertical-align:middle"></span>
+          <%= color %>
+        </span>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
 <% if @result["palette"] %>
   <div class="ai-card">
     <p><strong>Palette:</strong> <%= @result["palette"] %></p>

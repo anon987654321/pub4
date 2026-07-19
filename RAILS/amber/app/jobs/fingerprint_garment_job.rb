@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+# Stores a local CRC fingerprint for change-detection — not a semantic embedding.
+# Real fashion embeddings (OpenRouter / pgvector) remain planned.
+class FingerprintGarmentJob < ApplicationJob
+  queue_as :default
+
+  def perform(item_id)
+    item = Item.find(item_id)
+    vector = WardrobeAiService.new(item.user).fingerprint_for(item)
+    return if vector.blank?
+
+    item.create_garment_embedding! unless item.garment_embedding
+    item.garment_embedding.update!(
+      provider: "local",
+      model: "crc32-fingerprint-64",
+      dimensions: vector.length,
+      vector: vector,
+      metadata: {
+        kind: "fingerprint_not_embedding",
+        text: item.embedding_text,
+        fingerprinted_at: Time.current.iso8601
+      }
+    )
+  end
+end

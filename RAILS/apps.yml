@@ -141,24 +141,30 @@ apps:
         - { name: LiveStream model,                                        status: done, notes: "live_streams table + scheduled/live/ended states + LiveStreamsController" }
         - { name: Message model,                                           status: done, notes: "messages table + unread scope + MessagesController" }
         - { name: wardrobe upload UI (drag-and-drop),                      status: done, notes: "media-picker Stimulus drop handler + direct_upload on items form" }
-        - { name: garment segmentation / background removal,               status: done, notes: "SegmentGarmentImageJob + RemoveBackgroundJob enqueued from WardrobeMediaJob" }
-        - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGenerationService + outfits#generate action" }
+        - { name: photo polish pipeline (variants + portrait postpro + dominant color), status: done, notes: "WardrobeMediaJob single polish pass; analysis_status photo_polish_*; NOT ML segment/matting" }
+        - { name: local garment fingerprint (not semantic embedding),      status: done, notes: "FingerprintGarmentJob CRC32-64; EmbedGarmentJob alias; pgvector still planned" }
+        - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGenerationService + outfits#generate; weather prefilled from WeatherService Bergen" }
         - { name: style evolution timeline / aesthetic phases,             status: done, notes: "StyleEvolutionService + wardrobe_items#timeline groups life_phase + wear history" }
         - { name: underused item surfacing,                                status: done, notes: "Item#underused? + analytics dashboard + items index chips" }
         - { name: wardrobe analytics dashboard,                            status: done, notes: "WardrobeAnalyticsService + wardrobe_items#analytics" }
-        - { name: closet organisation tips (AI),                           status: done, notes: "WardrobeAnalyticsService#tips rendered in analytics view" }
+        - { name: closet organisation tips (rules),                        status: done, notes: "WardrobeAnalyticsService#tips are heuristics; UI labels source=rules not AI" }
+        - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScoreService, challenges, last-chance→Outfit, 30d box hygiene job" }
+        - { name: AI stylist with offline fallbacks,                       status: done, notes: "WardrobeAiService OpenRouter when OPENROUTER_API_KEY; heuristics/rules otherwise; honest UI" }
         - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
-        - { name: affiliate commerce links,                                status: done, notes: "SeoKit amazon_affiliate_url + affiliate_links model" }
+        - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD" }
+        - { name: style sessions (calendar status, not video),             status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }
       planned:
         - { name: fashion embeddings (pgvector),                           status: planned, agent: ignore }
         - { name: visual similarity search,                                status: planned, agent: ignore }
+        - { name: real garment matting / segmentation,                     status: planned, agent: ignore }
         - { name: virtual fitting room,                                    status: planned, agent: ignore }
         - { name: mood matcher,                                            status: planned, agent: ignore }
         - { name: event outfit planner,                                    status: planned, agent: ignore }
-        - { name: sustainable styles / resale,                             status: planned, agent: ignore }
-        - { name: weather-based suggestions,                               status: planned, agent: ignore }
+        - { name: sustainable styles / resale marketplace,                 status: planned, agent: ignore }
+        - { name: richer weather agent suggestions,                        status: planned, agent: ignore }
         - { name: global trends / local designer highlights,               status: planned, agent: ignore }
         - { name: style agents (MASTER integration),                       status: planned, agent: ignore }
+        - { name: live video streaming,                                    status: planned, agent: ignore }
 
   bsdports:
     title: bsdports

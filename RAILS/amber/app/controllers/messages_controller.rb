@@ -5,7 +5,9 @@ class MessagesController < ApplicationController
 
   def index
     @messages = Message.where(sender: Current.user).or(Message.where(recipient: Current.user)).includes(:sender, :recipient).recent
+    @unread_count = Current.user.received_messages.unread.count
     @message = Current.user.sent_messages.build
+    Current.user.received_messages.unread.find_each(&:read!)
   end
 
   def create
@@ -14,6 +16,7 @@ class MessagesController < ApplicationController
       redirect_to messages_path, notice: "Message sent"
     else
       @messages = Message.where(sender: Current.user).or(Message.where(recipient: Current.user)).includes(:sender, :recipient).recent
+      @unread_count = Current.user.received_messages.unread.count
       render :index, status: :unprocessable_entity
     end
   end

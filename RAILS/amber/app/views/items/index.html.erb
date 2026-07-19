@@ -19,6 +19,7 @@
       <nav role="navigation" aria-label="Wardrobe records and shopping" class="wardrobe-action-group wardrobe-action-group--secondary">
         <h2>Records &amp; genuine gaps</h2>
         <%= link_to "Wear analytics", analytics_wardrobe_items_path, class: "btn" %>
+        <%= link_to "Color palette", ai_palette_path, class: "btn" %>
         <%= link_to "Shop only for a gap", shopping_list_items_path, class: "btn" %>
         <%= button_to "Archive out-of-season", archive_seasonal_items_path, method: :post, class: "btn" %>
         <%= button_to "Resurface this season", resurface_seasonal_items_path, method: :post, class: "btn" %>
@@ -30,8 +31,23 @@
     <span class="chip"><%= @analytics[:active_items] %> active</span>
     <span class="chip"><%= @analytics[:never_worn] %> never worn</span>
     <span class="chip"><%= @analytics[:underused] %> underused</span>
+    <span class="chip"><%= @analytics[:declutter_box] %> box</span>
+    <span class="chip"><%= @analytics[:sentimental_archive] %> memory</span>
     <% if @analytics[:cost_per_wear] %><span class="chip"><%= number_to_currency(@analytics[:cost_per_wear]) %> avg/wear</span><% end %>
   </div>
 
-  <%= live_search_index url: items_path, results_partial: "items/live_search_results", placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
+  <nav class="chips" aria-label="Lifecycle filter">
+    <% [
+      ["active", "Active"],
+      ["box", "Declutter box"],
+      ["memory", "Memory archive"],
+      ["seasonal", "Seasonal"],
+      ["repair", "Repair"],
+      ["all", "All"]
+    ].each do |key, label| %>
+      <%= link_to label, items_path(lifecycle: key), class: "chip#{" chip--active" if @lifecycle_filter == key}" %>
+    <% end %>
+  </nav>
+
+  <%= live_search_index url: items_path(lifecycle: @lifecycle_filter), results_partial: "items/live_search_results", placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
 </section>

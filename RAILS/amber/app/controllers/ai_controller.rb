@@ -11,6 +11,7 @@ class AiController < ApplicationController
     item.update!(spark_joy: result["sparks_joy"]) if result["sparks_joy"].in?([ true, false ])
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("item_#{item.id}_analysis", partial: "ai/analysis", locals: { result: result, item: item }) }
+      format.html { redirect_to item, notice: result["source"] == "heuristic" ? "Heuristic joy analysis applied" : "AI joy analysis applied" }
       format.json { render json: result }
     end
   end
@@ -26,16 +27,19 @@ class AiController < ApplicationController
   end
 
   def suggest_outfits
-    RecommendOutfitsJob.perform_later(Current.user.id, occasion: params[:occasion], season: params[:season])
-    @suggestions = WardrobeAiService.new(Current.user).suggest_outfits(
+    RecommendOutfitsJob.perform_later(Current.user.id, occasion: params[:occasion], season: params[:season]) if defined?(RecommendOutfitsJob)
+    service = WardrobeAiService.new(Current.user)
+    @ai_available = service.available?
+    @suggestions = service.suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
-    # PH03: auto /photograph the combo (styled) using MASTER photograph command, attach postpro'd image to Outfit
-    # reuse DF02 suggest, DF06 postpro pattern (direct script), DF10 outfit create+items
+    @master_photo = WardrobeAiService.master_photograph_available?
+
+    return unless @master_photo
+
     master_root = Rails.root.join("..", "..", "MASTER").to_s
     @suggestions.each do |s|
       next unless s.is_a?(Hash)
-      next if ENV["CI"] == "1" || Rails.env.test?
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
         # brakeman :ignore Execute
@@ -58,7 +62,7 @@ class AiController < ApplicationController
           end
         end
       rescue StandardError => e
-        Rails.logger.warn("PH03 photograph for suggestion failed: #{e.message}")
+        Rails.logger.warn("MASTER photograph for suggestion failed: #{e.message}")
       end
     end
   end
@@ -69,19 +73,23 @@ class AiController < ApplicationController
 
   def capsule
     @result = WardrobeAiService.new(Current.user).capsule_optimizer
+    @ai_available = WardrobeAiService.configured?
   end
 
   def color_palette
     @result = WardrobeAiService.new(Current.user).color_palette_analysis
+    @swatches = Current.user.items.where.not(color: [ nil, "" ]).limit(24).pluck(:title, :color)
   end
 
   def search
     @query = params[:q].to_s.strip
+    @ai_available = WardrobeAiService.configured?
     if @query.present?
       result = WardrobeAiService.new(Current.user).natural_language_search(@query)
       ids = Array(result["item_ids"])
       @items = Current.user.items.where(id: ids)
       @explanation = result["explanation"]
+      @source = result["source"]
     else
       @items = Current.user.items.none
     end
@@ -120,7 +128,6 @@ class AiController < ApplicationController
       @duration = params[:duration].to_i
       @climate = params[:climate].to_s
       @result = WardrobeAiService.new(Current.user).suggest_packing_list(@duration, @climate)
-      # auto create packing list demo
       if @result["outfits"]
         list = Current.user.packing_lists.create!(
           name: "#{@climate} #{@duration}d trip",
@@ -146,16 +153,16 @@ class AiController < ApplicationController
       occasion: params[:occasion], season: params[:season]
     )
     suggestion = Array(suggestions).first
-    return redirect_to(ai_suggest_outfits_path, alert: t("amber.outfits.no_vision", default: "No vision suggestion generated")) unless suggestion
+    return redirect_to(ai_suggest_outfits_path, alert: t("amber.outfits.no_vision", default: "No outfit suggestion generated")) unless suggestion
 
     outfit = create_outfit_from_vision_suggestion(suggestion)
-    redirect_to(outfit, notice: t("amber.outfits.vision_created", default: "Outfit created from MASTER vision"))
+    redirect_to(outfit, notice: t("amber.outfits.vision_created", default: "Outfit created from wardrobe suggestion"))
   end
 
   private
 
   def create_outfit_from_vision_suggestion(suggestion)
-    name = suggestion["name"].presence || "Vision outfit"
+    name = suggestion["name"].presence || "Suggested outfit"
     outfit = Current.user.outfits.create!(
       name: name,
       description: suggestion["description"].to_s,

@@ -1,26 +1,26 @@
 # frozen_string_literal: true
 
-# Garment "segmentation" pass: grade primary photo through shared postpro
-# (portrait crop/polish). Full ML segmentation can replace this later without
-# changing the job contract or analysis_status terminals.
+# Deprecated name kept for in-flight queues. Portrait polish lives in WardrobeMediaJob.
+# Not ML segmentation — marks honest status and no-ops if polish already done.
 class SegmentGarmentImageJob < ApplicationJob
   queue_as :default
 
   def perform(item_id)
     item = Item.find(item_id)
+    status = item.analysis_status.to_s
+    return if status.start_with?("photo_polish")
+
     unless item.photos.attached?
-      item.update!(analysis_status: "segmentation_skipped") if item.respond_to?(:analysis_status=)
+      item.update!(analysis_status: "photo_polish_skipped") if item.respond_to?(:analysis_status=)
       return
     end
 
-    ok = Shared::PostproProcessor.apply_to_record!(item, :photos, preset: "portrait", replace: false)
-    status = ok ? "segmentation_done" : "segmentation_failed"
-    item.update!(analysis_status: status) if item.respond_to?(:analysis_status=)
-    Rails.logger.info("SegmentGarmentImageJob item=#{item.id} status=#{status}")
+    ok = defined?(Shared::PostproProcessor) &&
+      Shared::PostproProcessor.apply_to_record!(item, :photos, preset: "portrait", replace: false)
+    item.update!(analysis_status: ok ? "photo_polish_done" : "photo_polish_failed") if item.respond_to?(:analysis_status=)
   rescue StandardError => e
     Rails.logger.error("SegmentGarmentImageJob item=#{item_id}: #{e.class}: #{e.message}")
-    item = Item.find_by(id: item_id)
-    item&.update(analysis_status: "segmentation_failed") if item.respond_to?(:analysis_status=)
+    Item.find_by(id: item_id)&.update(analysis_status: "photo_polish_failed")
     raise
   end
 end

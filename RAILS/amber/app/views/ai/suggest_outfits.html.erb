@@ -1,39 +1,47 @@
-<% content_for :title, t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %>
+<% content_for :title, "Outfit suggestions" %>
 <header role="banner" aria-label="AI outfit suggestions header">
-<h1><%= t("amber.outfits.suggest_title", default: "Outfit suggestions (MASTER vision)") %></h1>
-<p class="dim"><%= t("amber.outfits.vision_hint", default: "MASTER vision analyses your private item photos and metadata to compose from clothes you already own. Shopping links are not used for ranking.") %></p>
+  <h1>Outfit suggestions</h1>
+  <% if @ai_available %>
+    <p class="dim">OpenRouter + wardrobe metadata<% if Current.user.items.joins(:photos_attachments).exists? %> (vision when photos exist)<% end %>. Shopping links are not used for ranking.</p>
+  <% else %>
+    <p class="dim"><strong>OpenRouter not configured</strong> — suggestions use local rules from your joy/active wardrobe. Set <code>OPENROUTER_API_KEY</code> for LLM + vision styling.</p>
+  <% end %>
+  <% if @master_photo %>
+    <p class="dim">MASTER photograph is enabled (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — look photos may attach when generation succeeds.</p>
+  <% end %>
 </header>
 
 <turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
 <%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": "Generate outfit suggestions" } do |f| %>
   <div class="field">
-    <label><%= t("amber.outfits.occasion", default: "Occasion") %></label>
-    <%= f.text_field :occasion, value: params[:occasion], placeholder: t("amber.outfits.occasion_ph", default: "e.g. date, work, travel") %>
+    <label>Occasion</label>
+    <%= f.text_field :occasion, value: params[:occasion], placeholder: "e.g. date, work, travel" %>
   </div>
   <div class="field">
-    <label><%= t("amber.outfits.season", default: "Season") %></label>
-    <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: t("amber.outfits.any", default: "Any") } %>
+    <label>Season</label>
+    <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: "Any" } %>
   </div>
   <div class="actions">
-    <%= f.submit t("amber.outfits.generate_vision", default: "Generate with MASTER vision"), class: "btn btn--primary" %>
-    <%= button_to t("amber.outfits.save_first", default: "Generate & save first as outfit"), ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
+    <%= f.submit @ai_available ? "Generate suggestions" : "Generate rule-based suggestions", class: "btn btn--primary" %>
+    <%= button_to "Generate & save first as outfit", ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
   </div>
 <% end %>
 
 <% if @suggestions.present? %>
   <% @suggestions.each_with_index do |s, i| %>
     <article class="ai-card">
-      <h2><%= s["name"] || t("amber.outfits.option", default: "Option") + " #{i + 1}" %></h2>
+      <h2><%= s["name"] || "Option #{i + 1}" %></h2>
       <p class="dim"><%= Array(s["items"]).join(", ") %></p>
       <p><%= s["description"] %></p>
-      <p class="pairing-rationale"><strong>Why it works:</strong> <%= s["rationale"].presence || "The pieces share a compatible season and occasion while balancing colour, silhouette and repeat-wear potential." %></p>
+      <% if s["source"] %><p class="dim">Source: <%= s["source"] %></p><% end %>
       <% if s["outfit_id"] %>
-        <p><%= link_to t("amber.outfits.view_generated", default: "View generated Outfit with visual"), outfit_path(s["outfit_id"]), class: "btn" %></p>
+        <p><%= link_to "View generated outfit", outfit_path(s["outfit_id"]), class: "btn" %></p>
       <% end %>
     </article>
   <% end %>
 <% else %>
-  <p class="dim"><%= t("amber.outfits.empty_hint", default: "Submit the form to see vision-suggested outfits from your wardrobe photos.") %></p>
+  <p class="dim">Submit the form to compose from clothes you already own.</p>
 <% end %>
 
-<p><%= link_to t("amber.outfits.back_wardrobe", default: "Back to wardrobe"), items_path %></p>
+<p><%= link_to "Back to wardrobe", items_path %></p>
+</turbo-frame>

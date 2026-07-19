@@ -11,7 +11,13 @@
   </nav>
 </header>
 
-<% if @result["items"] %>
+<% if @result["source"] == "capsule_builder" || !@ai_available %>
+  <p class="dim">Using <strong>local capsule rules</strong><% if !@ai_available %> (OpenRouter not configured)<% end %>. Enable <code>OPENROUTER_API_KEY</code> for LLM optimisation.</p>
+<% elsif @result["source"] %>
+  <p class="dim">Source: <%= @result["source"] %></p>
+<% end %>
+
+<% if @result["items"].present? %>
   <div class="tag-row">
     <span class="tag"><%= pluralize(@result["items"].size, "item reviewed") %></span>
     <span class="tag"><%= pluralize(Array(@result["gap_items"]).size, "gap") %></span>

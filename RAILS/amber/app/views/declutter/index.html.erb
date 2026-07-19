@@ -1,18 +1,86 @@
 <div class="declutter-page">
   <header role="banner" aria-label="Declutter header">
     <h1>Declutter</h1>
-    <p>Review low-use, duplicate, and decision-ready wardrobe items.</p>
+    <p>Marie Kondo loop: joy, one more wear, then a clear release path — not instant trash.</p>
   </header>
 
   <% if @summary.present? %>
     <section role="region" aria-label="Declutter summary">
       <h2>Summary</h2>
-      <dl>
-        <% @summary.each do |key, value| %>
-          <dt><%= key.to_s.humanize %></dt>
-          <dd><%= value %></dd>
+      <div class="chips">
+        <span class="chip"><%= @summary[:active_items] %> active</span>
+        <span class="chip"><%= @summary[:declutter_box] %> in box</span>
+        <span class="chip"><%= @summary[:sentimental_archive] %> memory</span>
+        <span class="chip"><%= @summary[:never_worn] %> never worn</span>
+        <span class="chip"><%= @summary[:released_items] %> released</span>
+        <span class="chip"><%= number_to_currency(@summary[:amount_recovered]) %> recovered</span>
+      </div>
+      <% if @summary[:matrix].present? %>
+        <p class="dim">Joy/use matrix: <%= @summary[:matrix].map { |k, v| "#{k.to_s.humanize}: #{v}" }.join(" · ") %></p>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if @overdue_challenges.present? %>
+    <section role="region" aria-label="Overdue challenges">
+      <h2>Overdue wear challenges</h2>
+      <ul>
+        <% @overdue_challenges.each do |challenge| %>
+          <li>
+            <%= link_to challenge.item.title, review_declutter_path(challenge.item) %>
+            — due <%= challenge.due_on %>
+            <%= button_to "Complete", complete_challenge_declutter_path(challenge.item), method: :post, class: "btn-sm" %>
+          </li>
         <% end %>
-      </dl>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if @active_challenges.present? %>
+    <section role="region" aria-label="Active challenges">
+      <h2>Active wear challenges</h2>
+      <ul>
+        <% @active_challenges.each do |challenge| %>
+          <li><%= link_to challenge.item.title, item_path(challenge.item) %> — due <%= challenge.due_on %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if @aging_box.present? %>
+    <section role="region" aria-label="30-day declutter box">
+      <h2>30-day box — decide now</h2>
+      <p class="dim">These have waited at least a month in the declutter box.</p>
+      <div class="items-grid">
+        <% @aging_box.each do |item| %>
+          <%= render "items/item", item: item %>
+          <%= link_to "Review", review_declutter_path(item), class: "btn-sm" %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @box_items.present? %>
+    <section role="region" aria-label="Declutter box">
+      <h2>Declutter box</h2>
+      <div class="items-grid">
+        <% @box_items.each do |item| %>
+          <%= render "items/item", item: item %>
+          <%= link_to "Review", review_declutter_path(item), class: "btn-sm" %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @summary[:top_candidates].present? %>
+    <section role="region" aria-label="Top release candidates">
+      <h2>Highest release scores</h2>
+      <div class="items-grid">
+        <% @summary[:top_candidates].each do |item| %>
+          <%= render "items/item", item: item %>
+          <%= link_to "Review", review_declutter_path(item), class: "btn-sm" %>
+        <% end %>
+      </div>
     </section>
   <% end %>
 

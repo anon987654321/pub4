@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   resources :items do
     member do
       post :spark_joy
+      post :clear_joy
       post :declutter
       post :archive
       post :restore
@@ -32,6 +33,7 @@ Rails.application.routes.draw do
       post :resurface_seasonal
       get :shopping_list
     end
+    resources :affiliate_links, only: %i[create destroy]
   end
   patch "drafts/:id", to: "drafts#update", as: :draft
 
@@ -76,10 +78,12 @@ Rails.application.routes.draw do
       get  :review
       patch :update_review
       post :move
+      patch :move
       post :challenge
       post :complete_challenge
       post :outcome
       get  :last_chance
+      post :create_last_chance_outfit
     end
   end
 

@@ -9,6 +9,7 @@
     <%= link_to "Wardrobe", items_path, class: "btn" %>
     <%= link_to "Outfits", outfits_path, class: "btn" %>
     <%= link_to "Timeline", timeline_wardrobe_items_path, class: "btn" %>
+    <%= link_to "Color palette", ai_palette_path, class: "btn" %>
   </nav>
 </header>
 
@@ -18,6 +19,8 @@
   <span class="chip"><%= @analytics[:never_worn] %> never worn</span>
   <span class="chip"><%= @analytics[:underused] %> underused</span>
   <span class="chip"><%= @analytics[:repair] %> repair</span>
+  <span class="chip"><%= @analytics[:declutter_box] %> box</span>
+  <span class="chip"><%= @analytics[:sentimental_archive] %> memory</span>
 </section>
 
 <section>
@@ -28,7 +31,8 @@
 </section>
 
 <section>
-  <h2>AI closet tips</h2>
+  <h2>Wardrobe coach tips <span class="tag">rules, not AI</span></h2>
+  <p class="dim">These tips are fixed heuristics from wear and lifecycle signals — not a language model.</p>
   <% if @analytics[:tips].any? %>
     <% @analytics[:tips].each do |tip| %><p><%= tip %></p><% end %>
   <% else %>
@@ -38,10 +42,14 @@
 
 <section>
   <h2>Recommendations</h2>
-  <% @recommendations.each do |recommendation| %>
-    <article>
-      <strong><%= recommendation.kind.humanize %></strong>
-      <p class="dim"><%= recommendation.reason %></p>
-    </article>
+  <% if @recommendations.blank? %>
+    <p class="dim">No recommendations yet.</p>
+  <% else %>
+    <% @recommendations.each do |recommendation| %>
+      <article>
+        <strong><%= recommendation.kind.humanize %></strong>
+        <p class="dim"><%= recommendation.reason %></p>
+      </article>
+    <% end %>
   <% end %>
 </section>

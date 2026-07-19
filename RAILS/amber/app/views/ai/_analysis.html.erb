@@ -5,5 +5,8 @@
     <strong><%= result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %></strong>
     <p><%= result["reason"] %></p>
     <p class="dim"><em><%= result["suggestion"] %></em></p>
+    <% if result["source"] %>
+      <p class="dim">Source: <%= result["source"] == "heuristic" ? "local heuristic (no OpenRouter key or model empty)" : result["source"] %></p>
+    <% end %>
   <% end %>
 </aside>

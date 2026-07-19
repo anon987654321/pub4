@@ -3,6 +3,25 @@
 module ApplicationHelper
   include Pagy::Frontend
 
+  def amber_ai_available?
+    WardrobeAiService.configured?
+  end
+
+  def master_photograph_available?
+    WardrobeAiService.master_photograph_available?
+  end
+
+  def analysis_status_label(status)
+    case status.to_s
+    when "photo_polish_done" then "Photo polished"
+    when "photo_polish_failed" then "Photo polish failed"
+    when "photo_polish_skipped", "no_photos" then "No photo polish"
+    when "pending" then "Pending media"
+    when /segmentation|background/ then "Legacy media status (polish pipeline)"
+    else status.to_s.humanize
+    end
+  end
+
   def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
     image_options = options.dup
     image_options[:loading] ||= loading

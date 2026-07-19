@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Upload pipeline: variants, dominant colour, single portrait polish, local fingerprint, sustainability.
+# Does NOT claim ML garment segmentation or background removal — one postpro portrait pass only.
 class WardrobeMediaJob < ApplicationJob
   queue_as :bulk
 
@@ -26,21 +28,26 @@ class WardrobeMediaJob < ApplicationJob
   def perform(item_id)
     item = Item.find(item_id)
     if defined?(Shared::MediaProcessingJob)
-      # Inline variants — avoids doubling bulk-queue depth per upload on a 1-CPU host.
       Shared::MediaProcessingJob.perform_now("Item", item.id, "photos", variants: VARIANTS)
     end
     Shared::EventEmitter.call("amber.photo.queued", item_id: item.id) if defined?(Shared::EventEmitter)
-    item.extract_dominant_color! if item.photos.attached?
-    enqueue_once(SegmentGarmentImageJob, item.id) if item.photos.attached?
-    enqueue_once(RemoveBackgroundJob, item.id) if item.photos.attached?
-    enqueue_once(EmbedGarmentJob, item.id) if item.photos.attached?
-    enqueue_once(CalculateSustainabilityJob, item.id)
 
     if item.photos.attached?
-      if Shared::PostproProcessor.apply_to_record!(item, :photos, preset: "portrait", replace: true)
-        Rails.logger.info("postpro portrait grade applied to item #{item.id}")
+      item.extract_dominant_color!
+      polish_ok = if defined?(Shared::PostproProcessor)
+        Shared::PostproProcessor.apply_to_record!(item, :photos, preset: "portrait", replace: true)
+      else
+        false
       end
+      status = polish_ok ? "photo_polish_done" : "photo_polish_skipped"
+      item.update!(analysis_status: status) if item.respond_to?(:analysis_status=)
+      Rails.logger.info("WardrobeMediaJob item=#{item.id} photo_polish=#{status}")
+    else
+      item.update!(analysis_status: "no_photos") if item.respond_to?(:analysis_status=)
     end
+
+    enqueue_once(FingerprintGarmentJob, item.id)
+    enqueue_once(CalculateSustainabilityJob, item.id)
   end
 
   private
@@ -52,7 +59,7 @@ class WardrobeMediaJob < ApplicationJob
   end
 
   def job_pending?(job_class, item_id)
-    needle = "Item/#{item_id}"
+    needle = item_id.to_s
     SolidQueue::Job.where(finished_at: nil, class_name: job_class.name)
       .where("arguments LIKE ?", "%#{needle}%").exists?
   rescue StandardError => e

@@ -1,6 +1,6 @@
 <% content_for :title, @item.title %>
-<% content_for :description, meta_description_for(@item) %>
-<% content_for :json_ld, json_ld_for(@item, type: :product) %>
+<% content_for :description, meta_description_for(@item) if respond_to?(:meta_description_for) %>
+<% content_for :json_ld, json_ld_for(@item, type: :product) if respond_to?(:json_ld_for) %>
 
 <article class="item-detail item-detail--luxury">
   <div class="luxury-detail-grid">
@@ -19,14 +19,18 @@
         <h1 class="luxury-title"><%= @item.title %></h1>
       </div>
       <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
+      <% if @item.color.present? %>
+        <span class="color-swatch" style="display:inline-block;width:1.25rem;height:1.25rem;border-radius:999px;background:<%= wardrobe_color_swatch(@item.color) %>;border:1px solid #ccc;vertical-align:middle" title="<%= @item.color %>" aria-label="Color <%= @item.color %>"></span>
+      <% end %>
     </header>
 
   <div class="tag-row luxury-tags">
     <span class="tag"><%= pluralize(@item.times_worn.to_i, "wear") %></span>
     <% if @item.price? && @item.times_worn.to_i.positive? %>
-      <span class="tag"><%= number_to_currency(@item.price / @item.times_worn.to_i) %> per wear</span>
+      <span class="tag"><%= number_to_currency(@item.cost_per_wear || (@item.price / @item.times_worn.to_i)) %> per wear</span>
     <% end %>
     <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
+    <% if @item.analysis_status.present? %><span class="tag"><%= analysis_status_label(@item.analysis_status) %></span><% end %>
   </div>
 
   <dl class="meta luxury-meta-list">
@@ -49,23 +53,53 @@
 
   <section class="luxury-section">
     <h2>Wardrobe intelligence</h2>
-    <p class="dim luxury-dim">Use AI analysis for tags, mood, capsule fit, and declutter decisions.</p>
+    <% if amber_ai_available? %>
+      <p class="dim luxury-dim">OpenRouter is configured — joy analysis and mood tags use Gemini when available, with local heuristics as backup.</p>
+    <% else %>
+      <p class="dim luxury-dim">OpenRouter is not configured. Buttons still run <strong>local heuristics</strong> (wear history, joy flags, capsule rules). Set <code>OPENROUTER_API_KEY</code> for full LLM analysis.</p>
+    <% end %>
     <div id="item_<%= @item.id %>_analysis"></div>
     <div id="item_<%= @item.id %>_tags"></div>
   </section>
 
   <nav role="navigation" aria-label="Item actions" class="luxury-actions">
     <%= button_to "Worn today", wear_item_path(@item), method: :post, class: "btn" %>
-    <%= button_to "AI analyse", ai_analyze_item_path(@item), method: :post, class: "btn" %>
-    <%= button_to "AI tag mood", ai_tag_item_path(@item), method: :post, class: "btn" %>
-    <%= button_to "Declutter review", review_declutter_path(@item), method: :post, class: "btn" %>
+    <% if @item.spark_joy? %>
+      <%= button_to "Doesn't spark joy", clear_joy_item_path(@item), method: :post, class: "btn" %>
+    <% else %>
+      <%= button_to "Sparks joy", spark_joy_item_path(@item), method: :post, class: "btn" %>
+    <% end %>
+    <%= button_to amber_ai_available? ? "AI analyse joy" : "Heuristic joy check", ai_analyze_item_path(@item), method: :post, class: "btn" %>
+    <%= button_to amber_ai_available? ? "AI tag mood" : "Default mood tags", ai_tag_item_path(@item), method: :post, class: "btn" %>
+    <%= link_to "Declutter review", review_declutter_path(@item), class: "btn" %>
     <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
     <% if @item.lifecycle_state == "sentimental_archive" %>
       <%= button_to "Restore to wardrobe", restore_item_path(@item), method: :post, class: "btn" %>
     <% else %>
-      <%= button_to "Archive reversibly", archive_item_path(@item), method: :post, class: "btn" %>
+      <%= button_to "Archive to memory", archive_item_path(@item), method: :post, class: "btn" %>
     <% end %>
   </nav>
+
+  <section class="luxury-section" aria-label="Affiliate link">
+    <h2>Affiliate / commerce link</h2>
+    <p class="dim luxury-dim">Optional resale or shop-similar URL for this piece.</p>
+    <% if @item.affiliate_links.any? %>
+      <ul>
+        <% @item.affiliate_links.each do |link| %>
+          <li>
+            <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank" %>
+            <%= button_to "Remove", item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <%= form_with model: [@item, @affiliate_link], url: item_affiliate_links_path(@item), class: "form-wrap" do |f| %>
+      <div class="field"><%= f.label :merchant %><%= f.text_field :merchant, required: true, placeholder: "e.g. Finn, Vestiaire" %></div>
+      <div class="field"><%= f.label :url %><%= f.url_field :url, required: true, placeholder: "https://…" %></div>
+      <div class="field"><%= f.submit "Save link", class: "btn" %></div>
+    <% end %>
+  </section>
+
   <details class="danger-zone">
     <summary>Permanent removal</summary>
     <p class="dim luxury-dim">Archiving is safer. Permanent deletion removes the item record and its attached photos.</p>

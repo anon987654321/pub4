@@ -1,16 +1,17 @@
-<% content_for :title, "Live wardrobe sessions" %>
+<% content_for :title, "Style sessions" %>
 
-<header role="banner" aria-label="Live streams header">
-  <h1>Live wardrobe sessions</h1>
+<header role="banner" aria-label="Style sessions header">
+  <h1>Style sessions</h1>
+  <p class="dim">Schedule a wardrobe hangout or styling appointment. This is a <strong>calendar and status board</strong> — not live video streaming.</p>
 </header>
 
-<section class="form-wrap" aria-label="Schedule live stream">
+<section class="form-wrap" aria-label="Schedule style session">
   <%= form_with model: @live_stream do |f| %>
-    <%= render "shared/errors", object: @live_stream %>
-    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
+    <%= render "shared/errors", object: @live_stream if lookup_context.exists?("shared/errors", [], true) %>
+    <div class="field"><%= f.label :title, "Session title" %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
     <div class="field"><%= f.label :scheduled_at %><%= f.datetime_field :scheduled_at %></div>
-    <div class="field"><%= f.submit "Schedule", class: "btn" %></div>
+    <div class="field"><%= f.submit "Schedule session", class: "btn" %></div>
   <% end %>
 </section>
 
@@ -21,8 +22,8 @@
         <h2><%= link_to stream.title, live_stream_path(stream) %></h2>
         <p class="dim"><%= stream.status %> · <%= stream.scheduled_at || stream.created_at %></p>
         <% if stream.user == Current.user %>
-          <%= button_to "Start", live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
-          <%= button_to "End", live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
+          <%= button_to "Mark live", live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
+          <%= button_to "Mark ended", live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
         <% end %>
       </article>
     <% end %>

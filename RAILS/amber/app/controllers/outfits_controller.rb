@@ -15,6 +15,8 @@ class OutfitsController < ApplicationController
       scope = scope.joins(:outfit_items).where(outfit_items: { item_id: item_ids }).distinct if item_ids.any?
     end
     @pagy, @outfits = pagy(scope)
+    @weather = WeatherService.today
+    @default_weather = weather_prompt(@weather)
     finish_live_search(partial: "outfits/live_search_results")
   end
 
@@ -29,9 +31,10 @@ class OutfitsController < ApplicationController
   end
 
   def generate
+    weather = params[:weather].presence || weather_prompt(WeatherService.today)
     outfit = OutfitGenerationService.new(Current.user).generate!(
-      weather: params[:weather],
-      season: params[:season],
+      weather: weather,
+      season: params[:season].presence || season_from_month,
       occasion: params[:occasion]
     )
     outfit ? redirect_to(outfit, notice: "Outfit generated") : redirect_to(outfits_path, alert: "Add wardrobe items before generating outfits")
@@ -49,7 +52,7 @@ class OutfitsController < ApplicationController
   def create
     @outfit = Current.user.outfits.build(outfit_params)
     if @outfit.save
-      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.created", subject: @outfit, source_vertical: "amber")
+      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.created", subject: @outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
       redirect_to(@outfit, notice: "Outfit created")
     else
       render(:new, status: :unprocessable_entity)
@@ -62,7 +65,7 @@ class OutfitsController < ApplicationController
 
   def update
     if @outfit.update(outfit_params)
-      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.updated", subject: @outfit, source_vertical: "amber")
+      Shared::DomainEvent.record!(actor: Current.user, action: "outfit.updated", subject: @outfit, source_vertical: "amber") if defined?(Shared::DomainEvent)
       redirect_to(@outfit, notice: "Updated")
     else
       render(:edit, status: :unprocessable_entity)
@@ -119,5 +122,22 @@ class OutfitsController < ApplicationController
 
   def outfit_params
     params.require(:outfit).permit(:name, :description, :category, :season, :occasion, outfit_items_attributes: %i[id item_id position _destroy])
+  end
+
+  def weather_prompt(weather)
+    return nil unless weather.is_a?(Hash)
+
+    parts = [ weather[:description], weather[:temp] ? "#{weather[:temp].round}°C" : nil ].compact
+    parts.join(", ").presence
+  end
+
+  def season_from_month
+    m = Time.current.month
+    case m
+    when 3..5 then "Spring"
+    when 6..8 then "Summer"
+    when 9..11 then "Autumn"
+    else "Winter"
+    end
   end
 end

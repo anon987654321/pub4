@@ -2,11 +2,16 @@
 
 <header role="banner" aria-label="Messages header">
   <h1>Messages</h1>
+  <% if @unread_count.to_i.positive? %>
+    <p class="dim"><%= pluralize(@unread_count, "unread message") %> — marked read when you open this page.</p>
+  <% else %>
+    <p class="dim">Inbox clear.</p>
+  <% end %>
 </header>
 
 <section class="form-wrap" aria-label="New message">
   <%= form_with model: @message do |f| %>
-    <%= render "shared/errors", object: @message %>
+    <%= render "shared/errors", object: @message if lookup_context.exists?("shared/errors", [], true) %>
     <div class="field"><%= f.label :recipient_id %><%= f.collection_select :recipient_id, User.where.not(id: Current.user.id).order(:email_address), :id, :email_address, include_blank: "Choose recipient" %></div>
     <div class="field"><%= f.label :body %><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :body, rows: 3 , data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
@@ -18,10 +23,10 @@
 
 <section>
   <% @messages.each do |message| %>
-    <article>
-      <strong><%= message.sender == Current.user ? "To #{message.recipient.email_address}" : "From #{message.sender.email_address}" %></strong>
+    <article class="<%= "message--unread" if message.read_at.nil? && message.recipient_id == Current.user.id %>">
+      <strong><%= message.sender == Current.user ? "To #{message.recipient.display_name}" : "From #{message.sender.display_name}" %></strong>
       <p><%= message.body %></p>
-      <p class="dim"><%= time_ago_in_words(message.created_at) %> ago</p>
+      <p class="dim"><%= time_ago_in_words(message.created_at) %> ago<% if message.read_at.nil? && message.recipient_id == Current.user.id %> · was unread<% elsif message.read_at %> · read<% end %></p>
     </article>
   <% end %>
 </section>

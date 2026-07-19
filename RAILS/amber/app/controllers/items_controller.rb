@@ -4,20 +4,25 @@ class ItemsController < ApplicationController
   include Shared::LiveSearchable
 
   before_action :require_real_user
-  before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear archive restore]
-  before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear archive restore]
+  before_action :set_item, only: %i[show edit update destroy spark_joy clear_joy declutter wear archive restore]
+  before_action :authorize!, only: %i[edit update destroy spark_joy clear_joy declutter wear archive restore]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
-    scope = Current.user.items.with_attached_photos.recent
+    scope = Current.user.items.with_attached_photos
+    scope = apply_lifecycle_filter(scope)
+    scope = scope.recent
     scope = apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe") if live_search_query.present?
     @pagy, @items = pagy(scope)
     @analytics = WardrobeAnalyticsService.new(Current.user).summary
+    @lifecycle_filter = params[:lifecycle].presence || "active"
     finish_live_search(partial: "items/live_search_results")
   end
 
   def show
     @item.record_activity!("AmberItemViewed", source_vertical: "amber")
+    @ai_available = WardrobeAiService.configured?
+    @affiliate_link = @item.affiliate_links.first || @item.affiliate_links.build
   end
 
   def new
@@ -72,13 +77,19 @@ class ItemsController < ApplicationController
   def spark_joy
     @item.update!(spark_joy: true)
     @item.record_activity!("AmberItemSparkedJoy", source_vertical: "amber")
-    redirect_to items_path, notice: "This item sparks joy!"
+    redirect_back fallback_location: @item, notice: "This item sparks joy!"
+  end
+
+  def clear_joy
+    @item.update!(spark_joy: false)
+    @item.record_activity!("AmberItemDecluttered", source_vertical: "amber")
+    redirect_back fallback_location: @item, notice: "Marked as not sparking joy — open declutter when ready."
   end
 
   def declutter
     @item.update!(spark_joy: false)
     @item.record_activity!("AmberItemDecluttered", source_vertical: "amber")
-    redirect_to items_path, notice: "Marked for declutter"
+    redirect_to review_declutter_path(@item), notice: "Marked for declutter"
   end
 
   def archive
@@ -120,6 +131,17 @@ class ItemsController < ApplicationController
 
   def authorize!
     redirect_to(items_path, alert: "Unauthorized") unless @item.user_id == Current.user&.id
+  end
+
+  def apply_lifecycle_filter(scope)
+    case params[:lifecycle].to_s
+    when "all" then scope
+    when "box", "declutter_box" then scope.declutter_box
+    when "memory", "sentimental" then scope.sentimental
+    when "seasonal" then scope.seasonal_archived
+    when "repair" then scope.where(lifecycle_state: "repair")
+    else scope.active_wardrobe
+    end
   end
 
   def item_params

@@ -11,14 +11,21 @@
   <% if @score.present? %>
     <section role="region" aria-label="Score">
       <h2>Score</h2>
-      <p><%= @score %></p>
+      <dl class="meta">
+        <% @score.each do |key, value| %>
+          <dt><%= key.to_s.humanize %></dt>
+          <dd><%= value.is_a?(Float) ? value.round(3) : value %></dd>
+        <% end %>
+      </dl>
     </section>
   <% end %>
 
   <% if @action.present? %>
     <section role="region" aria-label="Recommended action">
       <h2>Recommended action</h2>
-      <p><%= @action[:recommendation] || @action["recommendation"] || @action %></p>
+      <p><strong><%= (@action[:recommendation] || @action["recommendation"]).to_s.humanize %></strong></p>
+      <p class="dim"><%= @action[:copy] || @action["copy"] %></p>
+      <p class="dim">Destination: <%= (@action[:destination] || @action["destination"]).to_s.humanize %></p>
     </section>
   <% end %>
 
@@ -27,32 +34,30 @@
     <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
       <div>
         <%= form.label :decision %>
-        <%= form.select :decision, %w[keep wear_this_week repair sell donate release], include_blank: true %>
+        <%= form.select :decision, %w[keep wear_this_week repair sell donate release sentimental_archive], include_blank: true %>
       </div>
-
       <div>
         <%= form.label :reason_kept %>
-        <%= form.text_field :reason_kept %>
+        <%= form.text_field :reason_kept, placeholder: "memory, gift, rare, uncomfortable…" %>
       </div>
-
       <div>
         <%= form.label :notes %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= form.text_area :notes, rows: 4 , data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
+          <%= form.text_area :notes, rows: 4, data: { character_counter_target: "input" } %>
+          <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+        </div>
       </div>
-
-      <%= form.submit "Save review" %>
+      <%= form.submit "Save review", class: "btn" %>
     <% end %>
   </section>
 
   <section>
     <h2>Move item</h2>
     <nav role="navigation">
-      <% %w[keep wear_this_week repair sell donate release].each do |target| %>
+      <% %w[keep wear_this_week repair sell donate sentimental_archive release].each do |target| %>
         <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch, class: "btn-sm" %>
       <% end %>
+      <%= button_to "Declutter box", move_declutter_path(@item, target: "declutter_box"), method: :patch, class: "btn-sm" %>
     </nav>
   </section>
 
@@ -61,24 +66,31 @@
     <%= form_with url: challenge_declutter_path(@item), method: :post do |form| %>
       <div>
         <%= form.label :due_on %>
-        <%= form.date_field :due_on %>
+        <%= form.date_field :due_on, value: 7.days.from_now.to_date %>
       </div>
       <div>
         <%= form.label :note %>
-        <%= form.text_field :note %>
+        <%= form.text_field :note, value: "Wear once before deciding." %>
       </div>
-      <%= form.submit "Create challenge" %>
+      <%= form.submit "Create challenge", class: "btn" %>
     <% end %>
   </section>
 
   <% if @last_chance.present? %>
     <section>
-      <h2>Last chance outfits</h2>
+      <h2>Last-chance outfits</h2>
+      <p class="dim">Give this piece one more real role before release.</p>
       <ul>
-        <% @last_chance.each do |suggestion| %>
-          <li><%= suggestion.respond_to?(:title) ? suggestion.title : suggestion %></li>
+        <% @last_chance.each_with_index do |suggestion, index| %>
+          <li>
+            <strong><%= Array(suggestion[:titles] || suggestion["titles"]).join(" · ") %></strong>
+            <p class="dim"><%= suggestion[:reason] || suggestion["reason"] %></p>
+            <%= button_to "Create outfit", create_last_chance_outfit_declutter_path(@item, index: index), method: :post, class: "btn-sm" %>
+          </li>
         <% end %>
       </ul>
     </section>
   <% end %>
+
+  <p><%= link_to "← Declutter dashboard", declutter_index_path %></p>
 </div>
