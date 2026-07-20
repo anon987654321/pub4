@@ -62,6 +62,10 @@ end
 SAMPLE_DIR = File.join(ROOT, "samples")
 DRUM_DIR = File.join(SAMPLE_DIR, "drums")
 CUSTOM_DRUM_DIR = File.join(DRUM_DIR, "custom")
+# Opt-in FM-synthesized kit (FM_DRUMS=1) -- true operator-modulating-operator
+# FM, distinct from the default kit's pitch-swept-sine/filtered-noise
+# synthesis. Separate directory so it never touches the default sound.
+FM_DRUM_DIR = File.join(DRUM_DIR, "fm")
 STEM_DIR = File.join(ROOT, "stems")
 SAMPLE_CLEAN = File.join(SAMPLE_DIR, "clean_harmonic.wav")
 STEM_MIDS = File.join(STEM_DIR, "mids.mp3")
@@ -10340,6 +10344,13 @@ end
 ALWAYS_SAMPLED_DRUM_ROLES = %w[hat.wav open_hat.wav snare.wav ghost.wav].freeze
 
 def drum_sample_path(name)
+  # Explicit opt-in beats the passive custom-dir cache -- FM_DRUMS=1 is a
+  # deliberate whole-kit choice, not a per-role override.
+  if fm_drums_enabled?
+    fm = File.join(FM_DRUM_DIR, name)
+    return fm if File.exist?(fm)
+  end
+
   custom = File.join(CUSTOM_DRUM_DIR, name)
   return custom if File.exist?(custom)
 
@@ -10418,8 +10429,59 @@ def generate_drum_kit!
   end
 end
 
+# True FM (operator modulates operator's frequency at audio rate), not the
+# default kit's pitch-swept-sine/filtered-noise approach. Near-1:1 carrier
+# ratio on the kick keeps it punchy/tonal; inharmonic (non-integer) ratios
+# on hat/open_hat are the classic FM technique for bell/cymbal-like metallic
+# timbre. A decaying mod index (index * exp(-t*k)) gives the bright-transient-
+# collapsing-to-pure-tone character distinctive of FM percussion.
+def generate_fm_drum_kit!
+  require_tools! "ffmpeg"
+  FileUtils.mkdir_p(FM_DRUM_DIR)
+  force = ENV["FORCE_KIT"] == "1"
+  sr = SAMPLE_RATE
+  recipes = [
+    ["kick.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.9*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))':d=0.55:s=#{sr}"],
+     "lowpass=f=220,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
+    ["snare.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.8*exp(-t*18)*sin(2*PI*200*t+7*exp(-t*35)*sin(2*PI*330*t))':d=0.3:s=#{sr}",
+      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9"],
+     "[1:a]highpass=f=1500,lowpass=f=8000,aeval=exprs='val(0)*exp(-t*30)'[crack];" \
+     "[0:a][crack]amix=inputs=2:weights=0.7 0.55,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
+    ["ghost.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.4*exp(-t*35)*sin(2*PI*200*t+4*exp(-t*40)*sin(2*PI*330*t))':d=0.14:s=#{sr}"],
+     "highpass=f=700,volume=0.6"],
+    ["hat.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*90)*sin(2*PI*900*t+5*sin(2*PI*3150*t))':d=0.12:s=#{sr}"],
+     "highpass=f=4000"],
+    ["open_hat.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.75*exp(-t*10)*sin(2*PI*900*t+5*sin(2*PI*3150*t))':d=0.42:s=#{sr}"],
+     "highpass=f=3500"]
+  ]
+  recipes.each do |name, inputs, chain|
+    dest = File.join(FM_DRUM_DIR, name)
+    next if File.exist?(dest) && !force
+    if chain.include?("[") || chain.include?(";")
+      sh! "ffmpeg", "-y", *inputs, "-filter_complex", chain, "-ar", SAMPLE_RATE.to_s, dest
+    else
+      sh! "ffmpeg", "-y", *inputs, "-af", chain, "-ar", SAMPLE_RATE.to_s, dest
+    end
+    puts "fm kit: #{name}"
+  end
+end
+
+def fm_drums_enabled?
+  ENV["FM_DRUMS"] == "1"
+end
+
+def ensure_fm_drum_kit!
+  generate_fm_drum_kit! unless %w[kick.wav snare.wav hat.wav].all? { |n| File.exist?(File.join(FM_DRUM_DIR, n)) }
+end
+
 def ensure_drum_kit!
   generate_drum_kit! unless drum_kit_ready?
+  ensure_fm_drum_kit! if fm_drums_enabled?
 end
 
 # Optional one-shots sliced from demucs drums (path under samples/) for DRUM_CHOPS=1.
@@ -10476,12 +10538,18 @@ rescue StandardError
   nil
 end
 
-# True if drum_sample_path(name) resolved to a real sample (custom dir or
-# the external free-drum-samples kit) rather than the synthesized fallback
-# in DRUM_DIR — used to stop the camel/grid one-shot chops below from
-# silently clobbering a better sample that already won.
+# True if drum_sample_path(name) resolved to a real sample (custom dir,
+# the external free-drum-samples kit, or the FM kit) rather than the plain
+# synthesized fallback directly in DRUM_DIR -- used to stop the camel/grid
+# one-shot chops below from silently clobbering a better sample that
+# already won. FM_DRUM_DIR is a DRUM_DIR subdirectory, so it needs its own
+# check -- a plain start_with?(DRUM_DIR) would treat it as unresolved and
+# let the chops overwrite it, the same bug fixed earlier for external kits.
 def external_sample_used?(name)
-  !drum_sample_path(name).start_with?(DRUM_DIR)
+  path = drum_sample_path(name)
+  return true if path.start_with?(FM_DRUM_DIR)
+
+  !path.start_with?(DRUM_DIR)
 end
 
 def apply_drum_chops_to_kit!(kit)
