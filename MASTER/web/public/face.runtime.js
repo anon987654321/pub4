@@ -30,7 +30,6 @@ let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn = document.getElementById('zin');
-const micBtn = document.querySelector('[data-act="mic"]');
 const face3dToggleBtn = document.querySelector('[data-act="face3d-toggle"]');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
@@ -3273,7 +3272,14 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.continuous = true; recognition.interimResults = true;
-  let sttSilenceTimer = null, sttPartial = '';
+  // How long to wait after speech stops before treating an utterance as
+  // done. Deliberately generous: continuous recognition marks a segment
+  // `isFinal` on any short pause (a breath, a mid-sentence beat), which is
+  // NOT the same as the user being done talking. Sending on the first final
+  // segment cut people off mid-sentence, so final and interim text are both
+  // banked and only committed after this much real quiet.
+  const STT_QUIET_MS = 1600;
+  let sttSilenceTimer = null, sttPartial = '', sttFinalSoFar = '';
   recognition.onresult = (e) => {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -3283,7 +3289,7 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     if (State.wakeArmed && !State.voiceMode) {
       const heard = (final || interim).trim();
       if (heard && WAKE_PHRASE_RE.test(heard)) {
-        sttPartial = '';
+        sttPartial = ''; sttFinalSoFar = '';
         if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
         State.sttActive = false;
         try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_stop", err); }
@@ -3291,30 +3297,19 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       }
       return;
     }
-    if (final.trim()) {
-      sttPartial = '';
-      if (sttSilenceTimer) { clearTimeout(sttSilenceTimer); sttSilenceTimer = null; }
-      State.sttActive = false;
-      recognition.stop();
-      const heard = final.trim();
-      if (State.voiceMode && EXIT_PHRASE_RE.test(heard)) { exitVoiceMode(); return; }
-      _voiceModeRearmFails = 0;
-      sendMessage(heard);
-      return;
-    }
-    if (interim.trim()) {
-      sttPartial = interim.trim();
-      if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
-      sttSilenceTimer = setTimeout(() => {
-        if (sttPartial) {
-          const t2 = sttPartial; sttPartial = ''; State.sttActive = false;
-          try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
-          if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
-          _voiceModeRearmFails = 0;
-          sendMessage(t2);
-        }
-      }, 1200);
-    }
+    if (!final.trim() && !interim.trim()) return;
+    if (final.trim()) sttFinalSoFar = sttFinalSoFar ? `${sttFinalSoFar} ${final.trim()}` : final.trim();
+    sttPartial = `${sttFinalSoFar} ${interim.trim()}`.trim();
+    if (sttSilenceTimer) clearTimeout(sttSilenceTimer);
+    sttSilenceTimer = setTimeout(() => {
+      if (sttPartial) {
+        const t2 = sttPartial; sttPartial = ''; sttFinalSoFar = ''; State.sttActive = false;
+        try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_silence_stop", err); }
+        if (State.voiceMode && EXIT_PHRASE_RE.test(t2)) { exitVoiceMode(); return; }
+        _voiceModeRearmFails = 0;
+        sendMessage(t2);
+      }
+    }, STT_QUIET_MS);
   };
   recognition.onend = () => {
     State.sttActive = false; State.sttDuck = 0;
@@ -3988,9 +3983,13 @@ setInterval(() => {
   if (document.hidden) return;
   const idleS = ((performance.now() - State.lastTouch) / 1000) | 0;
   if (idleS < 10 && rootBody.dataset.longSilence === '1') delete rootBody.dataset.longSilence;
+  // Deliberately silent: this used to speak "still here" as an unprompted
+  // idle nudge. It fired mid-conversation with no relation to anything the
+  // user said, which read as the assistant blurting random sentences. The
+  // dataset flag stays -- other visual layers (ecology alpha, face3 idle
+  // dim) key off it -- only the speech was removed.
   if (idleS > 90 && rootBody.dataset.longSilence !== '1' && !State.sleeping) {
     rootBody.dataset.longSilence = '1';
-    if (!tts.playing && !tts.muted) enqueueSpeech('still here');
   }
   const body = new URLSearchParams({
     mood: State.mood, mode: State.mode, idle: String(idleS),
@@ -4307,23 +4306,10 @@ window.MASTERVoice && (window.MASTERVoice._hapticPatch = true);
 spinBtn?.addEventListener('click', () => window.MASTER_FACE?.ttsTogglePause?.());
 focusBtn?.addEventListener('click', () => toggleFocusMode());
 
-// Mic button: tap = single-utterance STT (existing behavior); long-press
-// (>=550ms) = enter/exit hands-free Voice Mode. Extends the existing
-// data-act="mic" control rather than adding new chrome.
-if (micBtn) {
-  let micPressTimer = null, micLongPressed = false;
-  const micPressStart = () => {
-    micLongPressed = false;
-    micPressTimer = setTimeout(() => { micLongPressed = true; toggleVoiceMode(); }, 550);
-  };
-  const micPressEnd = () => {
-    if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; }
-    if (!micLongPressed) window.MASTER_FACE?.ttsToggleMic?.();
-  };
-  micBtn.addEventListener('pointerdown', micPressStart);
-  micBtn.addEventListener('pointerup', micPressEnd);
-  micBtn.addEventListener('pointercancel', () => { if (micPressTimer) { clearTimeout(micPressTimer); micPressTimer = null; } });
-}
+// Mic button removed: Voice Mode is hands-free by default (maybeAutoVoice),
+// so a dedicated mic control was redundant chrome. Manual mic control is
+// still available via spacebar push-to-talk and the 'm' keyboard shortcut
+// (ttsToggleMic), and via the "hey master" wake phrase when opted in.
 
 // Evolved-human overlay toggle: reads/writes the same localStorage flag
 // face3d_preview.js checks at boot. That module computes FACE3D_ACTIVE once

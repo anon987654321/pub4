@@ -464,17 +464,31 @@ module DillaGroove
     # a render, but not the same every render), drop to a sparser shape
     # drawn from a small pool instead of always the same [0, 10].
     if ENV.fetch("POCKET_SIMPLE", "1") != "0" && Random.new((bar * 733) + 41 + render_seed).rand < 0.22
+      # A slice of those breathing bars go all the way to silence -- a real
+      # producer choice, not just reduced density every time.
+      if ENV["POCKET_KICK_SILENCE"] != "0" && Random.new((bar * 457) + 233 + render_seed).rand < 0.12
+        return []
+      end
       sparse = kick_sparse_phrases
       return sparse[Random.new((bar * 911) + 17 + render_seed).rand(sparse.length)]
     end
     phrase
   end
 
-  def pocket_snares_hard(bar)
+  # Rush is a loosening device -- more of it where a section is meant to
+  # feel open/unlocked (breakdown, development/bridge), rarer where it
+  # should feel locked in (climax/peak/hook/recap).
+  SNARE_RUSH_PROB_BY_SECTION = {
+    breakdown: 0.20, development: 0.18, bridge: 0.18,
+    climax: 0.04, peak: 0.04, hook: 0.04, recapitulation: 0.05
+  }.freeze
+
+  def pocket_snares_hard(bar, section: nil)
     hard = snare_hard_steps
     return hard unless pocket_dna?
     return hard if ENV["POCKET_RUSH"] == "0" || industrial_pocket?
-    Random.new((bar * 619) + 83 + render_seed).rand < 0.12 ? snare_rush_steps : hard
+    prob = SNARE_RUSH_PROB_BY_SECTION.fetch(section.to_s.to_sym, 0.12)
+    Random.new((bar * 619) + 83 + render_seed).rand < prob ? snare_rush_steps : hard
   end
 
   def pocket_snares_ghost(bar)

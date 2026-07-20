@@ -7,7 +7,14 @@ module Master
   module Voice
     # Multi-engine TTS registry — mlx, chatterbox, edge_melodic, edge, say.
     module Engines
-      OPENBSD_CHAIN = %w[replicate_kokoro edge_melodic edge say].freeze
+      # edge_melodic/edge lead the chain: they're a fast local subprocess and
+      # already the configured persona voice (nb-NO-PernilleNeural). Kokoro
+      # used to be forced first via `attempt?`'s always-try-on-OpenBSD gate,
+      # but that's a network round-trip to a third-party inference API on
+      # every single phrase -- on a 1-CPU VPS with a serial synth queue, that
+      # was the dominant source of "TTS is slow." It stays in the chain as a
+      # fallback if edge-tts is ever unavailable.
+      OPENBSD_CHAIN = %w[edge_melodic edge replicate_kokoro say].freeze
       DEFAULT_CHAIN = %w[mlx chatterbox replicate_kokoro edge_melodic edge say].freeze
 
       module_function

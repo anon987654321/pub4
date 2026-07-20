@@ -438,10 +438,10 @@ test("voice mode: re-arm loop, exit phrase, wake word, and browser-first TTS rou
   assert.match(runtime, /function highQualityVoiceEnabled/);
   assert.match(runtime, /State\.voiceMode && !highQualityVoiceEnabled\(\)/);
   assert.match(runtime, /master:voice-mode-hq/);
-  // Mic button: tap-vs-long-press disambiguation, no new UI element added.
-  assert.match(runtime, /toggleVoiceMode\(\); \}, 550\)/);
-  assert.match(index, /data-act="mic"/);
-  assert.match(index, /hold to start hands-free voice mode/);
+  // Mic button was removed: Voice Mode is hands-free by default, so the
+  // dedicated control was redundant chrome. Confirm it's actually gone.
+  assert.doesNotMatch(index, /data-act="mic"/);
+  assert.doesNotMatch(runtime, /data-act="mic"/);
 });
 
 test("service worker avoids stale undigested precache", () => {

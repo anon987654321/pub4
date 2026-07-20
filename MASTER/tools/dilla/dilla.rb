@@ -9879,7 +9879,7 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_
   # --- Simplicity: sparse rotating phrases (not dense onset dumps) ---
   if DillaGroove.pocket_dna?
     kicks = DillaGroove.pocket_kicks(bar)
-    hard_snares = DillaGroove.pocket_snares_hard(bar)
+    hard_snares = DillaGroove.pocket_snares_hard(bar, section: section)
     ghost_snares = DillaGroove.pocket_snares_ghost(bar)
     hat_steps = DillaGroove.pocket_hats(bar)
   else
@@ -10104,7 +10104,16 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       end
 
       hat_steps = dilla_hat_steps(bar, feel, n_bars:)
-      hat_steps = hat_steps.select.with_index { |_, i| i.even? } if section == :breakdown || chop_entry
+      # Breakdowns should thin closer to silence, not just half-density --
+      # real Dilla breakdowns often drop hats almost entirely rather than
+      # keeping a steady (if sparser) pulse.
+      hat_steps = if section == :breakdown
+                    hat_steps.select.with_index { |_, i| (i % 4).zero? }
+                  elsif chop_entry
+                    hat_steps.select.with_index { |_, i| i.even? }
+                  else
+                    hat_steps
+                  end
       hat_steps.each_with_index do |step, i|
         next if drop_bar
         next if DillaGroove.hat_should_drop?(bar, step)
