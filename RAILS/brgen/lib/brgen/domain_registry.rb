@@ -27,7 +27,7 @@ module Brgen
       "marktplaats" => :marketplace,
       "marktplatz" => :marketplace,
       "mercado" => :marketplace,
-      "mercato" => :marketplace
+      "mercato" => :marketplace,
     }.freeze
 
     TV_SUBDOMAINS          = %w[tv].freeze

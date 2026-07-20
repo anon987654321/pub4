@@ -60,7 +60,6 @@ apps:
         - type: selector
           id: main-content
 
-
   bsdports:
     port: 47312
     paths:

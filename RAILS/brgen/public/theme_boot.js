@@ -2,7 +2,7 @@
 (function () {
   try {
     if (localStorage.getItem("brgen-theme") === "light") {
-      var el = document.getElementById("dark-toggle")
+      const el = document.getElementById("dark-toggle")
       if (el) el.checked = true
     }
   } catch (e) {}

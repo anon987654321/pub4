@@ -34,7 +34,7 @@ module Shared
         "display_name" => display_name.to_s.presence,
         "exp" => Time.now.to_i + ttl.to_i,
         "iat" => Time.now.to_i,
-        "v" => 1
+        "v" => 1,
       }
       body = Base64.urlsafe_encode64(JSON.generate(payload), padding: false)
       sig = sign(body)

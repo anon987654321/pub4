@@ -95,7 +95,7 @@ if ENV["SEED_FROM_WEB"] && ENV["OPENROUTER_API_KEY"]
   puts "\nAugmenting Amber with web-scraped fashion data via Ferrum..."
   begin
     Rake::Task["scrape:fashion_seed"].invoke
-  rescue => e
+  rescue StandardError => e
     puts "  fashion_seed skipped: #{e.message}"
   end
   puts "  (Creates Items, Outfits, Posts from Reddit fashion subs like femalefashionadvice.)"

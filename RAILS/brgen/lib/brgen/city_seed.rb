@@ -30,7 +30,7 @@ module Brgen
     ROWS = rows_from_registry.presence || [
       # Fallback minimal set if registry not loaded
       CityRow.new("brgen.no", "Bergen", "NO", "nb", "NOK", "Europe/Oslo", 60.3913, 5.3221),
-      CityRow.new("lsangeles.com", "Los Angeles", "US", "en-US", "USD", "America/Los_Angeles", 34.0522, -118.2437)
+      CityRow.new("lsangeles.com", "Los Angeles", "US", "en-US", "USD", "America/Los_Angeles", 34.0522, -118.2437),
     ].freeze
 
     def self.sync!

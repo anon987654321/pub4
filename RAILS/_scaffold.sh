@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # _scaffold.sh — bootstrap a brand-new Rails app (rails new, Solid stack,
 # auth, storage, action text, security tools, production config). Distinct
 # from deploying an already-tracked app — see _deploy.sh for that.

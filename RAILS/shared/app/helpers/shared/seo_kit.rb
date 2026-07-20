@@ -46,7 +46,7 @@ module Shared
         "@type" => "Organization",
         "name" => site_name,
         "url" => url,
-        "logo" => logo
+        "logo" => logo,
       }.compact
     end
 
@@ -60,8 +60,8 @@ module Shared
         "potentialAction" => {
           "@type" => "SearchAction",
           "target" => "#{url}/search?q={search_term_string}",
-          "query-input" => "required name=search_term_string"
-        }
+          "query-input" => "required name=search_term_string",
+        },
       }.compact
     end
 
@@ -74,9 +74,9 @@ module Shared
             "@type" => "ListItem",
             "position" => index + 1,
             "name" => name,
-            "item" => item_url
+            "item" => item_url,
           }
-        }
+        },
       }
     end
 

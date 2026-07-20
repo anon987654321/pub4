@@ -37,10 +37,10 @@ module SchemaHelper
           "item" => {
             "@type" => "Product",
             "name" => item.try(:title) || item.try(:name),
-            "url" => schema_url_for(item)
-          }
+            "url" => schema_url_for(item),
+          },
         }
-      end
+      end,
     }.compact
   end
 
@@ -94,7 +94,7 @@ module SchemaHelper
       "description" => meta_description_for(post),
       "url" => schema_url_for(post),
       "wordCount" => body.to_s.split.size,
-      "inLanguage" => I18n.locale.to_s
+      "inLanguage" => I18n.locale.to_s,
     }.compact
   end
 
@@ -104,7 +104,7 @@ module SchemaHelper
       "@type" => "Person",
       "name" => user.try(:name) || user.try(:username) || "User",
       "url" => schema_url_for(user),
-      "image" => user.try(:avatar_url)
+      "image" => user.try(:avatar_url),
     }.compact
   end
 
@@ -115,7 +115,7 @@ module SchemaHelper
       "name" => place.try(:name) || place.try(:title),
       "address" => place.try(:address),
       "geo" => geo_snippet(place),
-      "url" => schema_url_for(place)
+      "url" => schema_url_for(place),
     }.compact
   end
 
@@ -135,8 +135,8 @@ module SchemaHelper
         "price" => price,
         "priceCurrency" => listing.try(:currency) || "NOK",
         "availability" => listing.sold? ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-        "url" => schema_url_for(listing)
-      }.compact
+        "url" => schema_url_for(listing),
+      }.compact,
     }
 
     if listing.respond_to?(:photos) && listing.photos.attached?
@@ -153,7 +153,7 @@ module SchemaHelper
       "name" => video.try(:title),
       "description" => video.try(:description)&.truncate(200),
       "uploadDate" => video.created_at&.iso8601,
-      "url" => schema_url_for(video)
+      "url" => schema_url_for(video),
     }.compact
   end
 
@@ -173,9 +173,9 @@ module SchemaHelper
           "@type" => "MusicRecording",
           "name" => track.title,
           "byArtist" => { "@type" => "MusicGroup", "name" => track.artist.presence || "Unknown artist" },
-          "duration" => iso8601_duration(track.duration_seconds.to_i)
+          "duration" => iso8601_duration(track.duration_seconds.to_i),
         }.compact
-      end
+      end,
     }.compact
   end
 
@@ -184,7 +184,7 @@ module SchemaHelper
       "@context" => "https://schema.org",
       "@type" => "Recipe",
       "name" => recipe.try(:title),
-      "description" => recipe.try(:description)&.truncate(200)
+      "description" => recipe.try(:description)&.truncate(200),
     }.compact
   end
 
@@ -193,7 +193,7 @@ module SchemaHelper
       "@context" => "https://schema.org",
       "@type" => "Thing",
       "name" => resource.try(:title) || resource.try(:name) || resource.to_s,
-      "url" => schema_url_for(resource)
+      "url" => schema_url_for(resource),
     }.compact
   end
 
@@ -207,7 +207,7 @@ module SchemaHelper
     {
       "@type" => "GeoCoordinates",
       "latitude" => place.latitude,
-      "longitude" => place.longitude
+      "longitude" => place.longitude,
     }
   end
 

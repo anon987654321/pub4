@@ -28,7 +28,7 @@ module Shared
             title: title,
             body: body,
             source_type: source&.class&.name,
-            source_id: source&.id
+            source_id: source&.id,
           }.merge(extra).compact
           if recipient.respond_to?(:notifications)
             recipient.notifications.create!(attrs)
@@ -44,7 +44,7 @@ module Shared
             notif_klass.create!(attrs.merge(user: recipient).compact)
           end
         end
-      rescue => e
+      rescue StandardError => e
         # KISS: never let notification side-effect crash the main flow
         Rails.logger&.warn("Notification delivery skipped: #{e.class}: #{e.message}") if defined?(Rails)
       end

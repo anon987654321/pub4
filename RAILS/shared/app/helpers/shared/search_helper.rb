@@ -13,7 +13,7 @@ module Shared
           frame_id: frame_id || "#{controller_name.dasherize}-index",
           query: query,
           filter_fields_proc: (block if block_given?),
-          **locals
+          **locals,
         }
       )
     end
@@ -28,7 +28,7 @@ module Shared
           query: query || params[:q],
           turbo_frame: turbo_frame,
           filter_fields_proc: (block if block_given?),
-          **locals
+          **locals,
         }
       )
     end

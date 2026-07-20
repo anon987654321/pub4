@@ -9,13 +9,13 @@ AUTH_COLS = [
   '    t.datetime "deletion_scheduled_at"',
   '    t.datetime "deleted_at"',
   '    t.string "otp_secret"',
-  '    t.boolean "two_factor_enabled", default: false, null: false'
+  '    t.boolean "two_factor_enabled", default: false, null: false',
 ].freeze
 
 AUTH_IDX = [
   '    t.index ["remember_token"], name: "index_users_on_remember_token", unique: true',
   '    t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true',
-  '    t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"'
+  '    t.index ["deletion_scheduled_at"], name: "index_users_on_deletion_scheduled_at"',
 ].freeze
 
 ROOT = File.expand_path("..", __dir__)

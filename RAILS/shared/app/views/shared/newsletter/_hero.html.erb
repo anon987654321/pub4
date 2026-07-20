@@ -1,7 +1,7 @@
 <% if edition.hero_url.present? %>
   <tr>
     <td>
-      <img src="<%= edition.hero_url %>" alt="<%= edition.hero_alt %>" width="620" class="mail-hero">
+      <img loading="lazy" src="<%= edition.hero_url %>" alt="<%= edition.hero_alt %>" width="620" class="mail-hero">
     </td>
   </tr>
   <% if edition.hero_caption.present? %>

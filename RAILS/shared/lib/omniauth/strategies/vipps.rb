@@ -19,7 +19,7 @@ module OmniAuth
         {
           email: raw_info["email"],
           name: raw_info["name"],
-          phone: raw_info["phone_number"] || raw_info["phoneNumber"]
+          phone: raw_info["phone_number"] || raw_info["phoneNumber"],
         }
       end
 

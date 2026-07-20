@@ -195,7 +195,6 @@ apps:
         - { name: infrastructure knowledge graph,                          status: planned, agent: ignore }
         - { name: OpenBSD package intelligence,                            status: planned, agent: ignore }
 
-
 archived_subsystems:
 
   baibl:

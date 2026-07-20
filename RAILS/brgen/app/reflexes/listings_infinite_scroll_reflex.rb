@@ -19,7 +19,7 @@ class ListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
         partial: "marketplace/listings/card",
         locals: {
           listing: listing,
-          distance_km: @listing_distances&.fetch(listing.id, nil)
+          distance_km: @listing_distances&.fetch(listing.id, nil),
         }
       )
     end.join

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # _database.sh — app secrets, migrate/prepare, seeding for copy-tree deploy.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 

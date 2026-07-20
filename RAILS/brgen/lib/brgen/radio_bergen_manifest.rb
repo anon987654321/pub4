@@ -19,7 +19,7 @@ module Brgen
           rails_root.join("config/radio_bergen/tracks.yml"),
           rails_root.join("../../../MASTER/tools/audio/radio_bergen_tracks.yml").expand_path,
           Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_tracks.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_tracks.yml")
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_tracks.yml"),
         ]
       end
 
@@ -28,7 +28,7 @@ module Brgen
           rails_root.join("config/radio_bergen/archive_lessons.yml"),
           rails_root.join("../../../MASTER/data/lessons/pub_archive_restore.yml").expand_path,
           Pub4::DeployPaths.repo_join("MASTER/data/lessons/pub_archive_restore.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/data/lessons/pub_archive_restore.yml")
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/data/lessons/pub_archive_restore.yml"),
         ]
       end
 
@@ -37,7 +37,7 @@ module Brgen
           rails_root.join("config/radio_bergen/sonic.yml"),
           rails_root.join("../../../MASTER/tools/audio/radio_bergen_sonic.yml").expand_path,
           Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_sonic.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_sonic.yml")
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_sonic.yml"),
         ]
       end
 
@@ -78,7 +78,7 @@ module Brgen
           {
             title: row["title"].to_s,
             id: id,
-            artist: row["artist"].presence || "Brgen"
+            artist: row["artist"].presence || "Brgen",
           }
         end
       end
@@ -99,7 +99,7 @@ module Brgen
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "excavated: #{local_count} local_mp3 metadata rows · #{youtube_count} youtube references",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",
-          "surface: radio.brgen.no — tap to boot tunnel (pub4 matrix index.html lineage)"
+          "surface: radio.brgen.no — tap to boot tunnel (pub4 matrix index.html lineage)",
         ]
       end
 

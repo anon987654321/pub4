@@ -17,7 +17,7 @@ class DeployBacklogTest < Minitest::Test
       # silently check month-old file contents instead of failing loudly).
       '/home/dev/pub4/RAILS',
       "/home/#{app}/pub4-rails/RAILS",
-      File.expand_path('../../..', __dir__)
+      File.expand_path('../../..', __dir__),
     ]
     candidates.find { |path| File.readable?(File.join(path, 'shared', 'app')) } ||
       candidates.find { |path| File.directory?(File.join(path, 'shared')) } ||
@@ -179,7 +179,7 @@ class DeployBacklogTest < Minitest::Test
       'brgen/app/models/tv/video_note.rb' => %w[TvVideoNoteCreated tv],
       'brgen/app/models/tv/view_event.rb' => %w[TvVideoViewed tv],
       'brgen/app/models/dating/profile.rb' => %w[DatingProfileCreated dating],
-      'brgen/app/models/dating/dislike.rb' => %w[DatingDislike dating]
+      'brgen/app/models/dating/dislike.rb' => %w[DatingDislike dating],
     }
 
     app_record = File.read(File.join(ROOT, 'shared/app/models/application_record.rb'))
@@ -323,7 +323,7 @@ class DeployBacklogTest < Minitest::Test
 
   def test_queue_failure_summary_and_digest_schedule
     rows = [
-      { class_name: 'ExampleJob', queue_name: 'bulk', failures: 3, last_failed_at: '2026-01-01 04:00:00' }
+      { class_name: 'ExampleJob', queue_name: 'bulk', failures: 3, last_failed_at: '2026-01-01 04:00:00' },
     ]
     summary = Shared::QueueFailureSummary.call(rows, app: 'brgen')
     assert_includes summary, 'ExampleJob (bulk): 3 failure(s)'

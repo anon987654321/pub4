@@ -12,7 +12,7 @@ module Shared
       "wow" => "😮",
       "sad" => "😢",
       "angry" => "😠",
-      "local" => "📍"
+      "local" => "📍",
     }.freeze
 
     def x_icon(name, size: 18)

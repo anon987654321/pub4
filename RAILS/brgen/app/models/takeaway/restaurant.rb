@@ -29,7 +29,6 @@ class Takeaway::Restaurant < ApplicationRecord
   scope :popular, -> { order(rating: :desc) }
   scope :near, ->(lat, lng, radius_km = 5) { nearby(lat, lng, radius_km) }
 
-
   def owner?(account)
     user_id == account&.id
   end

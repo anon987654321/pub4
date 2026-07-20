@@ -35,7 +35,7 @@ class XDesignContractTest < Minitest::Test
     "x_text_secondary" => "text-secondary",
     "x_border" => "border",
     "x_accent" => "accent",
-    "x_danger" => "danger"
+    "x_danger" => "danger",
   }.freeze
 
   def test_social_tokens_match_x_base_defaults

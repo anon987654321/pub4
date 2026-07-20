@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # _bundle.sh — bundler and npm-cache helpers.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 

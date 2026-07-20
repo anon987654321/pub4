@@ -11,7 +11,7 @@ module Shared
       cookies.signed.permanent[:browser_fingerprint] = {
         value: fingerprint,
         httponly: true,
-        same_site: :lax
+        same_site: :lax,
       }
       head :no_content
     end

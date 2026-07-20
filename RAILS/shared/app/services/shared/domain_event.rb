@@ -13,7 +13,7 @@ module Shared
         app: app,
         source_vertical: vertical,
         locality: locality,
-        visibility: visibility
+        visibility: visibility,
       }.merge(metadata || {})
 
       EventEmitter.call("#{app}.#{action}", **payload)

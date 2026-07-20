@@ -65,7 +65,7 @@ export default class extends Controller {
       body: new URLSearchParams(snapshot)
     }).catch(() => null)
 
-    if (response && response.ok) {
+    if (response?.ok) {
       this.dirty = false
       this.setStatus("Saved")
     } else {

@@ -11,7 +11,7 @@ require_relative "gates/lib/stimulus_components_gate"
 
 ROOT = File.expand_path(__dir__)
 APPS = %w[amber brgen bsdports].freeze
-FAILURES = []
+FAILURES = [].freeze
 STEP_TIMEOUT = Integer(ENV.fetch("RELEASE_GATE_STEP_TIMEOUT", "180"))
 
 def command_available?(cmd)
@@ -120,7 +120,7 @@ end
   ["domain_alignment_gate", Deploy::DomainAlignmentGate],
   ["frontend_production_gate", Deploy::FrontendProductionGate],
   ["frontend_auditor", Deploy::FrontendAuditorGate],
-  ["stimulus_components", Deploy::StimulusComponentsGate]
+  ["stimulus_components", Deploy::StimulusComponentsGate],
 ].each do |label, gate|
   puts "release gate: #{label}"
   result = gate.run

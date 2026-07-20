@@ -11,7 +11,7 @@ module Deploy
       "MASTER/lib/voice/speech.rb" => [
         "def edge_tts_available?",
         "def espeak_path",
-        "synthesize_espeak(text_str) if espeak_path"
+        "synthesize_espeak(text_str) if espeak_path",
       ],
       "MASTER/lib/voice/tts_supervisor.rb" => [
         "BUNDLE_ISOLATION_KEYS",
@@ -32,7 +32,7 @@ module Deploy
       "OPENBSD/etc/rc.d/master" => [
         "Master::Voice::TtsSupervisor.ensure_daemon!",
         "MASTER_TTS_TIMEOUT=45"
-      ]
+      ],
     }.freeze
 
     def self.run

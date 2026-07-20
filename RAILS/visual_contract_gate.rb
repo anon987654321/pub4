@@ -14,24 +14,24 @@ module VisualContractGate
   VIEWPORTS = {
     desktop: [1440, 900],
     compact: [1024, 768],
-    mobile: [390, 844]
+    mobile: [390, 844],
   }.freeze
 
   ROUTES = {
     brgen: {
       public: "/", sign_in: "/session/new", empty: "/?q=visual-contract-no-match",
-      results: "/?sort=latest", error: "/404-visual-contract", offline: "/offline"
+      results: "/?sort=latest", error: "/404-visual-contract", offline: "/offline",
     },
     amber: {
       public: "/", sign_in: "/session/new", wardrobe: "/items", item: "/items/1",
       outfit: "/outfits/1", upload: "/items/new", ai_result: "/ai/suggest_outfits",
-      empty: "/items?q=visual-contract-no-match", error: "/404-visual-contract", offline: "/offline"
+      empty: "/items?q=visual-contract-no-match", error: "/404-visual-contract", offline: "/offline",
     },
     bsdports: {
       public: "/", empty: "/ports?q=visual-contract-no-match", results: "/ports?q=git",
       detail: "/ports/1", advisory: "/ports/1#cves-security-advisories",
-      dependency: "/ports/1#this-package-requires", error: "/404-visual-contract", offline: "/offline"
-    }
+      dependency: "/ports/1#this-package-requires", error: "/404-visual-contract", offline: "/offline",
+    },
   }.freeze
 
   LENSES = %w[task_completion accessibility editorial_character system_trust first_use].freeze

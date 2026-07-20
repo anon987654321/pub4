@@ -37,7 +37,7 @@ module Brgen
         fi:    %i[nb en],
         it:    %i[en fr],
         pt:    %i[en fr],
-        pl:    %i[en de]
+        pl:    %i[en de],
       }
     end
   end

@@ -11,7 +11,7 @@ class InternalController < ApplicationController
       outfits: Outfit.count,
       users: User.count,
       wardrobe_items: (defined?(WardrobeItem) ? WardrobeItem.count : 0),
-      master_client: Shared::MasterClient.configured?
+      master_client: Shared::MasterClient.configured?,
     }
   end
 end

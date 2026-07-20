@@ -14,7 +14,7 @@ class Recommendation < ApplicationRecord
     purchase_gap: "purchase_gap",
     repair: "repair",
     resale: "resale",
-    packing: "packing"
+    packing: "packing",
   }
 
   scope :active, -> { where(dismissed_at: nil) }

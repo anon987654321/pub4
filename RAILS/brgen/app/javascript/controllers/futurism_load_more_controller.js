@@ -62,7 +62,7 @@ export default class extends Controller {
 
       // Update sentinel with next page URL if available
       const nextSentinel = doc.querySelector("[data-controller*='futurism-load-more']")
-      if (nextSentinel && nextSentinel.dataset.futurismLoadMoreUrlValue) {
+      if (nextSentinel?.dataset.futurismLoadMoreUrlValue) {
         this.urlValue = nextSentinel.dataset.futurismLoadMoreUrlValue
         this.loading = false
       } else {

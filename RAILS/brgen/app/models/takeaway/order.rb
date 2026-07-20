@@ -17,7 +17,7 @@ class Takeaway::Order < ApplicationRecord
     "preparing" => %w[out_for_delivery cancelled],
     "out_for_delivery" => %w[delivered],
     "delivered" => [],
-    "cancelled" => []
+    "cancelled" => [],
   }.freeze
   CENTS_PER_KRONE = 100.0
 

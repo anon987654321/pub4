@@ -38,7 +38,7 @@ export default class extends Controller {
       errors.push({ field: title, message: "Title is required." })
     }
 
-    if (content && content.hasAttribute("data-validate-nonempty") && !content.value.trim()) {
+    if (content?.hasAttribute("data-validate-nonempty") && !content.value.trim()) {
       errors.push({ field: content, message: "Please add a short description." })
     }
 

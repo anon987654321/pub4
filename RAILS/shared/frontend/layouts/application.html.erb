@@ -2,7 +2,7 @@
 <html lang="<%= html_escape((I18n.locale.presence || I18n.default_locale || 'en').to_s) %>" dir="<%= html_escape(rtl_locale?(I18n.locale) ? 'rtl' : 'ltr') %>">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <% title = content_for?(:title) ? yield(:title) : (t('site.title', default: 'Default Site Title')) %>

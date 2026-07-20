@@ -111,8 +111,8 @@
 }
 
 [dir="rtl"] .sidebar {
-  border-left: 1px solid var(--border);
-  border-right: none;
+  border-inline-start: 1px solid var(--border);
+  border-inline-end: none;
 }
 
 [dir="rtl"] .comment .comment {

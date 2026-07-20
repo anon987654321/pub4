@@ -68,7 +68,7 @@ module Deploy
         expected_apps = {
           "amber" => { domain: "amber.brgen.no", port: 61352 },
           "brgen" => { domain: "brgen.no", port: 38182 },
-          "bsdports" => { domain: "bsdports.org", port: 47312 }
+          "bsdports" => { domain: "bsdports.org", port: 47312 },
         }
         expected_apps.each do |name, exp|
           entry = master[:apps][name]
@@ -122,7 +122,7 @@ module Deploy
         playlist: extract_constant(text, "PLAYLIST_SUBDOMAINS"),
         takeaway: extract_constant(text, "TAKEAWAY_SUBDOMAINS"),
         maps: extract_constant(text, "MAPS_SUBDOMAINS"),
-        messenger: extract_constant(text, "MESSENGER_SUBDOMAINS")
+        messenger: extract_constant(text, "MESSENGER_SUBDOMAINS"),
       }
     end
 

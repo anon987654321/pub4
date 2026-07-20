@@ -11,7 +11,7 @@ class ContentRewriterTest < Minitest::Test
       {
         title: "Local café tip",
         body: "Try the cinnamon bun on Torget.",
-        comments: ["I believe it might be worth the queue.", "Open early on Saturdays."]
+        comments: ["I believe it might be worth the queue.", "Open early on Saturdays."],
       }
     end
 

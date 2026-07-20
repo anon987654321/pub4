@@ -56,4 +56,3 @@ document.addEventListener("turbo:load", () => {
   syncStandaloneMode();
 });
 
-

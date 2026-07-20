@@ -127,7 +127,7 @@ export default class extends Controller {
         if (resp.ok) {
           // Remove immediately
           setTimeout(() => {
-            if (card && card.parentNode) card.parentNode.removeChild(card)
+            if (card?.parentNode) card.parentNode.removeChild(card)
             this.cards = this.cards.filter(c => c !== card)
             this.currentCard = this.cards[this.cards.length - 1]
             if (this.currentCard) {
@@ -146,7 +146,7 @@ export default class extends Controller {
         console.error("swipe commit failed", err)
         await enqueueSync({ url, method: "POST", body: { user_id: userId } })
         setTimeout(() => {
-          if (card && card.parentNode) card.parentNode.removeChild(card)
+          if (card?.parentNode) card.parentNode.removeChild(card)
           this.cards = this.cards.filter(c => c !== card)
           this.currentCard = this.cards[this.cards.length - 1]
           if (this.currentCard) {

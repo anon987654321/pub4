@@ -60,6 +60,6 @@ export default class extends Controller {
       </div>
     `
     document.body.appendChild(help)
-    setTimeout(() => { if (help && help.parentNode) help.parentNode.removeChild(help) }, 1400)
+    setTimeout(() => { if (help?.parentNode) help.parentNode.removeChild(help) }, 1400)
   }
 }

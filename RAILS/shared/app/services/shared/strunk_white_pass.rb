@@ -20,7 +20,7 @@ module Shared
     DEFAULT_RULES = {
       "preambles" => ["In summary,", "Consequently,", "Therefore,", "Notably,", "Importantly,"],
       "hedges" => ["I think that", "I believe", "will", "would", "might", "could", "perhaps", "seems", "appears"],
-      "endings" => ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
+      "endings" => ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."],
     }.freeze
 
     REDDIT_NOISE_RE = /

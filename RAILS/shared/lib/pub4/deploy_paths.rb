@@ -19,7 +19,7 @@ module Pub4
       [
         repo_join("MASTER/tools/postpro/postpro.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro/postpro.rb"),
-        rails_root.join("../../MASTER/tools/postpro/postpro.rb")
+        rails_root.join("../../MASTER/tools/postpro/postpro.rb"),
       ]
     end
 
@@ -27,7 +27,7 @@ module Pub4
       [
         repo_join("MASTER/tools/repligen.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/repligen.rb"),
-        rails_root.join("../../MASTER/tools/repligen.rb")
+        rails_root.join("../../MASTER/tools/repligen.rb"),
       ]
     end
 
@@ -35,7 +35,7 @@ module Pub4
       [
         repo_join("MASTER/tools/dilla.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/dilla.rb"),
-        rails_root.join("../../MASTER/tools/dilla.rb")
+        rails_root.join("../../MASTER/tools/dilla.rb"),
       ]
     end
 
@@ -43,7 +43,7 @@ module Pub4
       [
         repo_join("MASTER/tools/audio/radio_bergen_study.rb"),
         Pathname.new("#{DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_study.rb"),
-        rails_root.join("../../MASTER/tools/audio/radio_bergen_study.rb")
+        rails_root.join("../../MASTER/tools/audio/radio_bergen_study.rb"),
       ]
     end
 

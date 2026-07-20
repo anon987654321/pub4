@@ -11,7 +11,7 @@ class StyleEvolutionService
     {
       phases: phase_groups,
       wear_events: wear_timeline,
-      summary: phase_summary
+      summary: phase_summary,
     }
   end
 

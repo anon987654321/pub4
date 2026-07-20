@@ -29,7 +29,7 @@ class Dependency < ApplicationRecord
         id: dependency.id,
         label: dependency.label,
         pkgpath: child_port&.pkgpath,
-        children: child_port ? tree_for(child_port, seen:, depth: depth + 1) : []
+        children: child_port ? tree_for(child_port, seen:, depth: depth + 1) : [],
       }
     end
   end

@@ -16,7 +16,7 @@ module Deploy
       "OPENBSD/vps_console_poll_install.exp",
       "OPENBSD/usr/local/bin/relayd-watchdog",
       "RAILS/env.sample",
-      "RAILS/scripts/build_workbox.mjs"
+      "RAILS/scripts/build_workbox.mjs",
     ].freeze
     RETIRED_APP_NAMES = %w[baibl blognet].freeze
 

@@ -47,7 +47,7 @@ module Shared
       body = {
         message: message.to_s,
         session_key: session_key.presence || "rails:#{Process.pid}",
-        channel: channel.to_s
+        channel: channel.to_s,
       }
       post("/bridge/turn", body)
     rescue StandardError => e

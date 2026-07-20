@@ -47,7 +47,7 @@ module ApplicationHelper
             srcset: fallback_srcset,
             sizes: sizes,
             **image_options
-          )
+          ),
         ]
       )
     end

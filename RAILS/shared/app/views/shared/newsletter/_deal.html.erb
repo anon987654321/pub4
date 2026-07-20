@@ -2,7 +2,7 @@
   <tr>
     <% if deal.image_url.present? %>
       <td class="mail-deal-img" width="96">
-        <img src="<%= deal.image_url %>" alt="<%= deal.title %>" width="96" height="96">
+        <img loading="lazy" src="<%= deal.image_url %>" alt="<%= deal.title %>" width="96" height="96">
       </td>
     <% end %>
     <td>

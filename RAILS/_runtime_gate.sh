@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # _runtime_gate.sh — MASTER rules scan and the full CI gate (bundle + db:prepare
 # + bin/ci) that must pass before a deploy is allowed to restart the service.
 # Source this file; do not execute directly. Requires _core.sh sourced first.

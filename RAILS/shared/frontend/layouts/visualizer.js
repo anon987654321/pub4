@@ -89,7 +89,7 @@
 
           const m3uTracks=parseM3U(text);
 
-          if(m3uTracks&&m3uTracks.length>0)tracks=tracks.concat(m3uTracks);
+          if(m3uTracks?.length>0)tracks=tracks.concat(m3uTracks);
 
         }
 
@@ -601,7 +601,7 @@
 
       const mp3Tracks=await detectMp3Playlist();
 
-      if(mp3Tracks&&mp3Tracks.length>0){
+      if(mp3Tracks?.length>0){
 
         audio=new Mp3AudioEngine(mp3Tracks);
 
@@ -755,7 +755,7 @@
 
     })();
 
-    const sizeCanvas=()=>{w=Math.floor(window.innerWidth*INTERNAL_SCALE);h=Math.floor(window.innerHeight*INTERNAL_SCALE);canvas.width=w;canvas.height=h;canvas.style.width=window.innerWidth+"px";canvas.style.height=window.innerHeight+"px";window.tunnelRenderer?.resize?.(w,h,INTERNAL_SCALE);if(window.vizRenderers){for(const v of window.vizRenderers){if(v&&v.resize)v.resize(w,h,INTERNAL_SCALE)}}if(window.particleSys)window.particleSys.resize(w,h);if(window.starfield)window.starfield.resize(w,h)};
+    const sizeCanvas=()=>{w=Math.floor(window.innerWidth*INTERNAL_SCALE);h=Math.floor(window.innerHeight*INTERNAL_SCALE);canvas.width=w;canvas.height=h;canvas.style.width=window.innerWidth+"px";canvas.style.height=window.innerHeight+"px";window.tunnelRenderer?.resize?.(w,h,INTERNAL_SCALE);if(window.vizRenderers){for(const v of window.vizRenderers){if(v?.resize)v.resize(w,h,INTERNAL_SCALE)}}if(window.particleSys)window.particleSys.resize(w,h);if(window.starfield)window.starfield.resize(w,h)};
 
     const setScaleAndResize=n=>{const c=Math.max(SCALE_MIN,Math.min(SCALE_MAX,n));if(Math.abs(c-INTERNAL_SCALE)>.01){INTERNAL_SCALE=c;sizeCanvas()}};
 
@@ -779,7 +779,7 @@
 
     const spawnRipple=(x,y)=>{try{const r=document.createElement("div");r.className="tap-ripple";r.style.cssText="position:fixed;left:0;top:0;width:10px;height:10px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0.4);opacity:.85;background:radial-gradient(circle,rgba(220,220,220,0.35) 0%,rgba(220,220,220,0.18) 40%,rgba(220,220,220,0) 70%);mix-blend-mode:screen;filter:blur(0.3px);animation:ripple 680ms ease-out forwards;z-index:999";r.style.setProperty("--x",x+"px");r.style.setProperty("--y",y+"px");document.body.appendChild(r);r.addEventListener("animationend",()=>r.remove(),{once:true})}catch{}};
 
-    const rippleAtEvent=e=>{try{let x=0,y=0;if("touches"in e&&e.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY}else if("changedTouches"in e&&e.changedTouches?.length){x=e.changedTouches[0].clientX;y=e.changedTouches[0].clientY}else{x=e.clientX;y=e.clientY}spawnRipple(x,y)}catch{}};
+    const rippleAtEvent=e=>{try{let x=0,y=0;if("touches"in e?.touches.length){x=e.touches[0].clientX;y=e.touches[0].clientY}else if("changedTouches"in e?.changedTouches?.length){x=e.changedTouches[0].clientX;y=e.changedTouches[0].clientY}else{x=e.clientX;y=e.clientY}spawnRipple(x,y)}catch{}};
 
     const setUIInversion=a=>a?uiEl.classList.add("ui-inverted"):uiEl.classList.remove("ui-inverted");
 

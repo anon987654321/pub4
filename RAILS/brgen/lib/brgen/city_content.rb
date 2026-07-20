@@ -25,7 +25,7 @@ module Brgen
       "frankfrt.de" => %w[frankfurt germany],
       "mrseille.fr" => %w[marseille france],
       "mlan.it" => %w[milan italy],
-      "lisbon.pt" => %w[lisbon portugal]
+      "lisbon.pt" => %w[lisbon portugal],
     }.freeze
 
     COMMUNITY_SLUGS = {
@@ -44,7 +44,7 @@ module Brgen
       "PL" => %w[lokalne wiadomosci],
       "BE" => %w[local actualites],
       "CH" => %w[lokal news],
-      "LI" => %w[lokal news]
+      "LI" => %w[lokal news],
     }.freeze
 
     module_function
