@@ -52,7 +52,13 @@ module Pub4
 
     def with_lock
       FileUtils.mkdir_p(File.dirname(LOCK_PATH))
+      # The 0o666 mode above is masked by the creating process's umask (typically
+      # 022), so a file first created by one app's deploy user ends up 0644 --
+      # writable only by that user. Every other app then gets Errno::EACCES just
+      # opening the file, defeating the whole point of a shared cross-app mutex.
+      # chmod isn't subject to umask, so force it explicitly after creation.
       File.open(LOCK_PATH, File::CREAT | File::RDWR, 0o666) do |file|
+        File.chmod(0o666, LOCK_PATH)
         unless file.flock(File::LOCK_EX | File::LOCK_NB)
           holder = File.exist?(HOLDER_PATH) ? File.read(HOLDER_PATH).strip : "unknown"
           warn "pub4-ci-guard: #{LOCK_PATH} busy (#{holder})"
