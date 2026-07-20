@@ -10014,7 +10014,12 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     bass_root = dilla_chord_bass_hz(bass_chord)
     unless drums_only || section == :breakdown || bass_root.nil?
       slide_from = bass_slide_enabled? && prev_bass_root && (prev_bass_root - bass_root).abs > 0.5 ? prev_bass_root : nil
-      bar_bass = [base + 0.012, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
+      # Was a fixed 0.012s pickup offset, not the tick-authentic system used
+      # everywhere else -- 12ms at 90 BPM is ~1.73 ticks, a value no real
+      # 96-PPQ nudge could produce. Rounded to the nearest whole tick.
+      bass_tick = beat_p / 96.0
+      bass_pickup = bass_tick.positive? ? (0.012 / bass_tick).round * bass_tick : 0.012
+      bar_bass = [base + bass_pickup, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
       bar_bass << slide_from if slide_from
       events[:bass] << bar_bass
       prev_bass_root = bass_root
@@ -10567,7 +10572,12 @@ def ensure_drum_chops!
   step = 60.0 / DRUM_CHOP_BPM / 4.0
   bar8 = 8 * 4 * step
   { "kick.wav" => 0, "snare.wav" => 4, "hat.wav" => 2 }.each do |name, step_i|
-    t0 = (bar8 + step_i * step + 0.5).round(3)
+    # A real chop rarely lands exactly on the transient -- a few ms of
+    # deterministic slop (seeded by name, not random-per-run, so the same
+    # source always chops the same way) instead of an always-exact cut
+    # point is closer to how sample-chopping actually sounds.
+    slop = (Random.new(name.hash.abs).rand(-0.012..0.012)).round(4)
+    t0 = (bar8 + step_i * step + 0.5 + slop).clamp(0.0, Float::INFINITY).round(3)
     dur = name.start_with?("kick") ? 0.28 : (name.start_with?("snare") ? 0.22 : 0.12)
     out = File.join(dest, name)
     system("ffmpeg", "-y", "-ss", t0.to_s, "-t", dur.to_s, "-i", src,
