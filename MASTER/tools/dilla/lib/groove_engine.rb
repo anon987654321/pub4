@@ -310,6 +310,35 @@ module DillaGroove
     [(raw / tick_sec).round, 1].max * tick_sec
   end
 
+  # Real finger-drumming occasionally misses a kick too, not just hats --
+  # rare (~3%) and never the downbeat/anchor.
+  def kick_should_drop?(bar, step)
+    return false unless enabled? && pocket_dna?
+    return false if ENV["KICK_DROP"] == "0"
+    return false if step.zero?
+    Random.new((bar * 971) + (step * 61) + 337 + render_seed).rand < 0.03
+  end
+
+  # Documented Dilla technique: kick doubles that sit off the grid -- a
+  # quick, quieter second hit close behind the main kick, not a clean
+  # quantized repeat. Whole-tick offset (2-4 ticks), same 96-PPQ
+  # authenticity as the rest of the timing system.
+  def kick_double_offset_ticks(bar, step)
+    return nil unless enabled? && pocket_dna?
+    return nil if ENV["KICK_DOUBLE"] == "0"
+    return nil unless Random.new((bar * 883) + (step * 47) + 521 + render_seed).rand < 0.05
+    [2, 3, 4].sample(random: Random.new((bar * 601) + (step * 29) + 71 + render_seed))
+  end
+
+  # A ghost note immediately before the backbeat snare -- a quieter
+  # pickup hit distinct from the scattered ghost phrase pool, which
+  # tends to be a genuine pre-hit ornament rather than mid-bar filler.
+  def snare_prehit_ghost?(bar, step)
+    return false unless enabled? && pocket_dna?
+    return false if ENV["SNARE_PREHIT_GHOST"] == "0"
+    Random.new((bar * 449) + (step * 71) + 883 + render_seed).rand < 0.08
+  end
+
   # A finger-drummer occasionally misses a hat, or leaves space on purpose —
   # a pattern that never drops a single 16th over 32 bars reads as sequenced.
   # Rare (~4%), deterministic per bar/step, and never the downbeat.
