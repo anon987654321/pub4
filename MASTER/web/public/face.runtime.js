@@ -1752,6 +1752,12 @@ function frame(t) {
     const openness = 0.55 + (State.confidence || 0.75) * 0.45;
     const calmStare = State.calmStareUntil && t < State.calmStareUntil;
     const nervous = State.nervousUntil && t < State.nervousUntil;
+    // Composure dial from the active persona's idle signature (VOICE_IDLE_SIGNATURES),
+    // normalized against the 0.2 mid-range value the baseline motion amplitudes below
+    // were tuned against -- a still persona (anchor: 0.10) halves head-wobble amplitude
+    // on top of what attention_model.js already does for gaze jitter.
+    const idleSig = State.idleSignature || { breath: 1, saccade: 0.2, pulse_floor: 0.1 };
+    const composureFactor = Math.max(0.3, Math.min(1.6, (idleSig.saccade ?? 0.2) / 0.2));
     const attn = window.MASTER_ATTENTION?.tick?.({
       t,
       mode: State.mode,
@@ -1761,13 +1767,14 @@ function frame(t) {
       calmStareUntil: State.calmStareUntil,
       nervousUntil: State.nervousUntil,
       blinkMs: State.idleSignature?.blink_ms,
+      saccade: idleSig.saccade,
       frameIndex: _dbgFrames,
     }) || { saccadeX: 0, microJitter: 0, fixationPitch: 0, eyeCloseTarget: 0 };
     const saccadeX = attn.saccadeX || 0;
     const microJitter = attn.microJitter || 0;
     _attnEyeClose = attn.eyeCloseTarget || 0;
-    const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 + saccadeX + microJitter;
-    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03 + (attn.fixationPitch || 0);
+    const yaw   = State.mouseX * 0.7 * openness + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05 * composureFactor + saccadeX + microJitter;
+    const pitch = State.mouseY * 0.4 * openness + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03 * composureFactor + (attn.fixationPitch || 0);
     if (camera) {
       const pInput = State.coarsePointer
         ? { x: State.tiltX, y: -State.tiltY }
@@ -1782,10 +1789,9 @@ function frame(t) {
     head.rotation.x += (pitch - head.rotation.x) * 0.06;
     nodImpulse *= 0.87;
     head.rotation.x += nodImpulse;
-    const microOrbit = Math.sin(sec * 0.157) * 0.014;
+    const microOrbit = Math.sin(sec * 0.157) * 0.014 * composureFactor;
     head.rotation.z = -0.021 + microOrbit * 0.3;
     const silenceScale = (State.mode === 'idle' && !tts.playing) ? 0.982 : 1.0;
-    const idleSig = State.idleSignature || { breath: 1, saccade: 0.2, pulse_floor: 0.1 };
     const hiddenTab = State.hidden || document.hidden;
     const breathHz = hiddenTab ? 0.55 : 1.1;
     const breathAmp = hiddenTab ? 0.018 : (0.009 + (1 - State.confidence) * 0.006 + (State.entropy || 0) * 0.004);

@@ -58,3 +58,29 @@ test("attention suppresses saccades less in listening than thinking", () => {
   const think = attn.policyFor("thinking", false);
   assert.ok(listen.saccadeAmp > think.saccadeAmp);
 });
+
+// Regression: VOICE_IDLE_SIGNATURES declares a per-persona `saccade` value
+// (anchor: 0.10, the most composed; ezinne: 0.26, the most fidgety) meant to
+// read as a "future-human, unhurried" temperament -- but it was only ever
+// wired into breath/blink timing, never into gaze jitter amplitude itself,
+// so every persona actually had identical eye/head restlessness. `saccade`
+// in tick()'s ctx must now scale the resulting jitter magnitude.
+test("attention tick scales jitter magnitude by the persona composure dial", () => {
+  function averageJitterMagnitude(saccade) {
+    const { attn, advance } = loadAttention(0);
+    attn.reset({ blinkMs: 4200 });
+    let total = 0, samples = 0;
+    for (let i = 0; i < 600; i += 1) {
+      advance(50);
+      const out = attn.tick({ t: i * 50, mode: "idle", reducedMotion: false, frameIndex: i, saccade });
+      total += Math.abs(out.saccadeX) + Math.abs(out.microJitter);
+      samples += 1;
+    }
+    return total / samples;
+  }
+
+  const still = averageJitterMagnitude(0.10); // anchor
+  const fidgety = averageJitterMagnitude(0.26); // ezinne
+  assert.ok(still < fidgety, `expected still persona (${still}) to jitter less than fidgety (${fidgety})`);
+  assert.ok(still < averageJitterMagnitude(0.20) * 0.8, "still persona should be meaningfully below the 0.2 baseline");
+});

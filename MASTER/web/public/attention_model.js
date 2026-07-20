@@ -86,17 +86,23 @@
     const focusBoost = mode === "listening" ? 1.25 : (mode === "thinking" ? 0.6 : 1.0);
     const calmStare = ctx.calmStareUntil && t < ctx.calmStareUntil;
     const nervous = ctx.nervousUntil && t < ctx.nervousUntil;
+    // Persona composure dial, normalized against 0.2 -- the mid-range
+    // VOICE_IDLE_SIGNATURES value POLICY.idle's amplitudes were tuned
+    // against. A still persona (anchor: saccade 0.10) halves gaze-jitter
+    // amplitude; a fidgety one (ezinne: 0.26) adds some. This value was
+    // already declared per-persona but never actually wired to anything.
+    const composure = Math.max(0.3, Math.min(1.6, (Number(ctx.saccade) || 0.2) / 0.2));
 
     if (!state.nextBlink) reset({ blinkMs: ctx.blinkMs });
 
     if (!reduced) {
       if (t >= state.nextSaccade) {
-        const amp = policy.saccadeAmp * focusBoost * (nervous ? 1.2 : calmStare ? 0.7 : 1);
+        const amp = policy.saccadeAmp * focusBoost * composure * (nervous ? 1.2 : calmStare ? 0.7 : 1);
         state.saccadeX = (Math.random() - 0.5) * amp * 2;
         state.nextSaccade = t + rand(policy.saccadeInterval[0], policy.saccadeInterval[1]) / focusBoost;
       }
       if (t >= state.nextMicro) {
-        let amp = policy.microAmp;
+        let amp = policy.microAmp * composure;
         if (calmStare) amp *= 0.65;
         if (nervous) amp *= 1.45;
         state.microJitter = (Math.random() - 0.5) * amp * 2;
