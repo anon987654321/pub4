@@ -200,9 +200,25 @@ class ChatService
       if result.category == :no_api_key
         result.message
       else
+        log_turn_failure(result)
         Master::Ground::Redactor.public_error_message
       end
     end
+  end
+
+  # TurnRouter failures reach here as a Result::Err, not a raised exception,
+  # so they never hit ChatService#call's `rescue StandardError` -- without
+  # this, the user sees the generic fallback message while
+  # swallowed_errors.jsonl stays silent (found 2026-07-20: a visitor got the
+  # fallback speech with no trace in the error log to diagnose it from).
+  def log_turn_failure(result)
+    Master::Ground::Swallow.log(
+      StandardError.new(result.message),
+      context: "ChatService.rendered_text",
+      event_bus: @container[:bus],
+      category: result.category,
+      result_context: result.context
+    )
   end
 
   def write_chunk(token)
