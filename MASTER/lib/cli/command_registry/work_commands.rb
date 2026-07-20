@@ -148,7 +148,7 @@ module Master
         when "covered"
           map.covered.first(40).map { |id, e| "#{id.ljust(28)} → #{e.rule_ids.join(", ")}" }.join("\n")
         when "integrity"
-          registered = Master::Review::Scan::Rule.registry.map { |k| k.new.id.to_s }
+          registered = Master::Review::Scan::Rule.registry.filter_map { |k| Master::Review::Scan::RuleFactory.registry_id(k, root:)&.upcase }
           hits = map.integrity(registered_rule_ids: registered)
           hits.empty? ? "principle_map integrity: clean" : hits.join("\n")
         else

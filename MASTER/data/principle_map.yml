@@ -1458,7 +1458,6 @@ principles:
     operation: extract
     rule_ids:
     - THIN_CONTROLLER
-    - RAILS_THIN_CONTROLLER_SEMANTIC
     status: covered
     tags:
     - rails
@@ -1471,7 +1470,6 @@ principles:
     operation: extract
     rule_ids:
     - NO_LOGIC_IN_VIEW
-    - RAILS_VIEW_PURITY
     - RAILS_TAG_HELPER
     status: covered
     tags:

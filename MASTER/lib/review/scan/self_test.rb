@@ -174,6 +174,7 @@ module Master
             "clusters" => %w[mobile_web_opportunities.yml visual_clusters.yml],
             "defaults" => %w[mcp_servers.yml models.yml],
             "openrouter" => %w[models.yml providers.yml],
+            "principles" => %w[operator_principles.yml principle_map.yml],
             "thresholds" => %w[load.yml rules.yml],
             "typography" => %w[design_rules.yml style.yml],
             "voice" => %w[soul.yml voice.yml],
@@ -232,7 +233,7 @@ module Master
           return [] unless @root == Master::ROOT
 
           findings = []
-          infra = File.join(@root, "lib", "judge", "scan", "infra_helpers.rb")
+          infra = File.join(@root, "lib", "review", "scan", "infra_helpers.rb")
           unless File.file?(infra)
             findings << finding(path: infra, line: 1, message: "missing infra_helpers.rb wiring layer")
           end
@@ -251,7 +252,9 @@ module Master
           return [finding(path: path, line: 1, message: "missing data/principle_map.yml")] unless File.file?(path)
 
           map = Master::Ground::PrincipleMap.load(root: @root)
-          registered = Master::Review::Scan::Rule.registry.map { |klass| klass.new.id.to_s.upcase }
+          registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
+            Master::Review::Scan::RuleFactory.registry_id(klass, root: @root)&.upcase
+          end
           map.integrity(registered_rule_ids: registered).map do |msg|
             finding(path: path, line: 1, message: msg)
           end
