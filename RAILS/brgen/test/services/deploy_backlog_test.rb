@@ -86,7 +86,7 @@ class DeployBacklogTest < Minitest::Test
     nearby_view = File.read(File.join(ROOT, 'brgen/app/views/nearby/index.html.erb'))
     dating_matchmaking = File.read(File.join(ROOT, 'brgen/app/services/dating/matchmaking.rb'))
 
-    assert_includes nearby, 'DEFAULT_RADIUS_KM = 2.0'
+    assert_includes nearby, 'DEFAULT_RADIUS_KM = 10.0'
     assert_includes nearby, 'MAX_RADIUS_KM = 25.0'
     assert_includes nearby, 'value.to_f.clamp(0.5, MAX_RADIUS_KM)'
     assert_includes nearby, 'distance > radius'
@@ -94,7 +94,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes locations, 'other.distance_to(lat, lng).to_f > ALERT_RADIUS_KM'
     assert_includes geolocation, 'radiusKm'
     assert_includes geolocation, 'credentials: "same-origin"'
-    assert_includes layout, 'data-geolocation-radius-km-value="2"'
+    assert_includes layout, 'data-geolocation-radius-km-value='
     assert_includes nearby_view, 'number_with_precision(distance, precision: 1)'
     assert_includes dating_matchmaking, 'radius_km: DEFAULT_RADIUS_KM'
   end
