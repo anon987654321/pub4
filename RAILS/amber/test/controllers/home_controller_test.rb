@@ -7,8 +7,8 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
     assert_includes response.body, "amber-guest-hero"
-    assert_includes response.body, "amber-logo-gradient"
-    assert_includes response.body, "amber-swoosh-line"
+    assert_includes response.body, "amber-logo-banner"
+    assert_includes response.body, "animated-gradient"
     assert_includes response.body, "Amber turns your wardrobe into a working system."
     assert_includes response.body, "amber-wardrobe-showcase"
     assert_includes response.body, 'data-controller="carousel"'

@@ -41,12 +41,24 @@ overlay_shared_initializers() {
   log_ok "shared initializers overlaid (merge, app-specific files preserved)"
 }
 
-# overlay_shared_public APP_DIR — merge shared/public (tokens.css, minimal-ui.css, icons)
+# overlay_shared_public APP_DIR — merge shared/public (tokens, error pages, fonts).
+# Never clobber per-app brand icons/manifests (amber palette, etc.).
 overlay_shared_public() {
   local app_dir=$1
   local shared_public=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}/shared/public
+  local entry
   [[ -d $shared_public ]] || return 0
-  sync_tree "$shared_public" "${app_dir}/public" 0
+  ${_PRIV} mkdir -p "${app_dir}/public"
+  for entry in "$shared_public"/*(N) "$shared_public"/.[!.]*(N); do
+    [[ -e $entry ]] || continue
+    local base=${entry:t}
+    case $base in
+      icon.svg|icon.png|icon-192.png|apple-touch-icon.png|favicon.ico|manifest.json|manifest.webmanifest)
+        [[ -e ${app_dir}/public/$base ]] && continue
+        ;;
+    esac
+    ${_PRIV} cp -R "$entry" "${app_dir}/public/"
+  done
   log_ok "shared public assets overlaid"
   overlay_shared_bin "$app_dir"
 }
