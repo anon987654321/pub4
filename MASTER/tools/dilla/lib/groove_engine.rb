@@ -8,11 +8,6 @@
 #   3. SAMPLE CHOICE — alternate kicks, soft ghost snare, closed vs open hat
 module DillaGroove
   PRIMES = [3, 5, 7, 11].freeze
-  # Mutable memoization cache (markov_steps writes to it via ||=) — must not
-  # be frozen. Broke every render with FrozenError until fixed here. This is
-  # the second time an automated pass has re-added .freeze here despite this
-  # comment; if it recurs again, the freezer needs an explicit exception list.
-  MARKOV_CACHE = {}
   # Tempo/timing should breathe over a multi-bar phrase, not sit dead-locked
   # to the grid — a slow sine LFO, period within the 4-8 bar range documented
   # for this kind of groove-breathing.
@@ -221,7 +216,7 @@ module DillaGroove
     ENV["DILLA_RENDER_SEED"].to_i
   end
 
-  def swing_jitter_ms(bpm, step, bar)
+  def swing_jitter_ms(bpm, step, bar, role: nil)
     return 0.0 unless enabled?
     return 0.0 if ENV["SWING_JITTER"] == "0"
     beat_ms = 60_000.0 / bpm
@@ -234,20 +229,38 @@ module DillaGroove
     # discrete positions per beat, so a fractional-tick jitter value is one
     # that could never have been produced by hand on the actual hardware.
     quantized_ticks = (raw / (tick_ms / 1000.0)).round
-    (quantized_ticks * tick_ms / 1000.0) + phrase_drift_sec(bar)
+    (quantized_ticks * tick_ms / 1000.0) + phrase_drift_sec(bar, role: role)
   end
+
+  # Per-role period multiplier + phase offset so kick/snare/hat drift
+  # independently rather than breathing in lockstep -- this is the actual
+  # core of Charnas's "Dilla Time" thesis (multiple simultaneous time-feels
+  # layered against each other), not one groove with uniform noise added.
+  ROLE_DRIFT_PERIOD_MUL = {
+    kick: 1.0, kick_anchor: 1.0, kick_sync: 1.0,
+    snare: 0.78, clap: 0.78,
+    hat: 1.35, hat_down: 1.35, hat_up: 1.35, open: 1.35,
+    ghost: 0.6
+  }.freeze
+  ROLE_DRIFT_PHASE = {
+    kick: 0.0, kick_anchor: 0.0, kick_sync: 0.0,
+    snare: Math::PI * 0.6, clap: Math::PI * 0.6,
+    hat: Math::PI * 1.3, hat_down: Math::PI * 1.3, hat_up: Math::PI * 1.3, open: Math::PI * 1.3,
+    ghost: Math::PI * 0.25
+  }.freeze
 
   # Slow-oscillating timing drift applied on top of per-hit jitter — the
   # difference between a groove that "breathes" over a phrase and one that's
   # merely noisy hit-to-hit. Deterministic (same bar always drifts the same
   # amount), independent of the per-hit RNG.
-  def phrase_drift_sec(bar)
+  def phrase_drift_sec(bar, role: nil)
     return 0.0 unless enabled?
     return 0.0 if ENV["PHRASE_DRIFT"] == "0"
-    period = (ENV["PHRASE_DRIFT_PERIOD_BARS"] || PHRASE_DRIFT_PERIOD_BARS).to_f
+    role_key = role.to_s.to_sym
+    period = (ENV["PHRASE_DRIFT_PERIOD_BARS"] || PHRASE_DRIFT_PERIOD_BARS).to_f * ROLE_DRIFT_PERIOD_MUL.fetch(role_key, 1.0)
     max_ms = (ENV["PHRASE_DRIFT_MAX_MS"] || PHRASE_DRIFT_MAX_MS).to_f
     return 0.0 if period <= 0
-    phase = (bar.to_f / period) * 2.0 * Math::PI
+    phase = (bar.to_f / period) * 2.0 * Math::PI + ROLE_DRIFT_PHASE.fetch(role_key, 0.0)
     (Math.sin(phase) * max_ms) / 1000.0
   end
 
@@ -374,12 +387,22 @@ module DillaGroove
     PRIMES.flat_map { |p| (0...16).step(p).map { |s| s % 16 } }.uniq.sort
   end
 
+  # A lazily-initialized module ivar, not a `NAME = {}` constant -- that
+  # constant-literal pattern is exactly what an automated formatting pass
+  # kept matching and appending .freeze to (three separate times tonight),
+  # each time breaking every render that touches the Markov drum path with
+  # FrozenError. This shape isn't a hash-literal-assigned-to-constant, so
+  # there's nothing for that kind of blanket rule to catch.
+  def markov_cache
+    @markov_cache ||= {}
+  end
+
   def markov_steps(bar, role, pool)
     flat = pool.flatten.uniq
     return flat if flat.empty?
     return flat unless enabled? && ENV["MARKOV_DRUMS"] != "0"
     key = [role, flat.hash].join(":")
-    matrix = MARKOV_CACHE[key] ||= build_markov_from_pool(flat)
+    matrix = markov_cache[key] ||= build_markov_from_pool(flat)
     rng = Random.new((bar * 1009) + role.hash.abs)
     seed_step = flat[bar % flat.length]
     extra = matrix.dig(seed_step)&.sample(random: rng) || flat[(bar + 1) % flat.length]
@@ -397,7 +420,7 @@ module DillaGroove
 
   def apply_event_timing!(t, role:, beat_p:, bar:, step:, bpm: 90)
     t + role_timing_offset(role, beat_p, bar, step) +
-      swing_jitter_ms(bpm, step, bar) +
+      swing_jitter_ms(bpm, step, bar, role: role) +
       (role.to_s.start_with?("hat") ? hat_micro_delay_sec(bar, step, beat_p) : 0.0) +
       (%i[kick kick_anchor kick_sync].include?(role.to_sym) ? freehand_kick_sec(bar, step, beat_p) : 0.0)
   end
