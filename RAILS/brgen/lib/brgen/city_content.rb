@@ -49,26 +49,29 @@ module Brgen
 
     # Faker locales, keyed to the same country codes as COMMUNITY_SLUGS, so
     # seeded users get names that actually sound like they're from the city's
-    # country instead of generic Faker::Name defaults. IS and LI have no
-    # native Faker locale; nb-NO/de-CH are the closest real alternatives
-    # (verified against the live bundled faker gem, not guessed).
+    # country instead of generic Faker::Name defaults.
+    #
+    # Restricted to config.i18n.available_locales (application.rb: nb, en,
+    # nl, de, fr) -- Faker::Config.locale ultimately goes through the app's
+    # own I18n backend when Faker runs inside a booted Rails process, which
+    # raises I18n::InvalidLocale for anything outside that allowlist (region
+    # variants like "nb-NO"/"en-US" included, since available_locales lists
+    # bare :nb/:en, not region tags). Faker itself supports many more locale
+    # files standalone, but this app doesn't declare them as available, and
+    # broadening available_locales is a real app-behavior change this seed-
+    # data fix has no business making. Countries outside this set fall back
+    # to "en", same as community_slugs_for falls back to COMMUNITY_SLUGS["US"].
     LOCALE_BY_COUNTRY = {
-      "NO" => "nb-NO",
-      "US" => "en-US",
+      "NO" => "nb",
+      "US" => "en",
       "NL" => "nl",
-      "GB" => "en-GB",
+      "GB" => "en",
       "DE" => "de",
       "FR" => "fr",
-      "SE" => "sv",
-      "DK" => "da-DK",
-      "FI" => "fi-FI",
-      "IS" => "nb-NO",
-      "IT" => "it",
-      "PT" => "pt",
-      "PL" => "pl",
       "BE" => "fr",
-      "CH" => "de-CH",
-      "LI" => "de-CH",
+      "CH" => "de",
+      "LI" => "de",
+      "IS" => "nb",
     }.freeze
 
     module_function

@@ -20,7 +20,11 @@ class PerCitySeederTest < ActiveSupport::TestCase
   # that country, not a generic Faker default.
   test "seeds users with locale-appropriate real names, not robotic slugs" do
     city = City.find_by!(domain: "brgen.no")
-    users = ActsAsTenant.with_tenant(city) { Brgen::PerCitySeeder.new(city, posts_per_city: 1).seed_users }
+    seeder = Brgen::PerCitySeeder.new(city, posts_per_city: 1)
+    users = ActsAsTenant.with_tenant(city) do
+      Faker::Config.locale = Brgen::CityContent.locale_for(city.country_code)
+      seeder.send(:seed_users)
+    end
 
     assert_equal 5, users.size
     users.each do |user|
@@ -30,25 +34,38 @@ class PerCitySeederTest < ActiveSupport::TestCase
     end
   end
 
-  test "uses the country-appropriate Faker locale while seeding, then restores it" do
+  test "seed! sets the country-appropriate locale during seeding, then restores it" do
     city = City.find_by!(domain: "amstrdam.nl")
     previous_locale = Faker::Config.locale
-    seen_locale = nil
-
-    ActsAsTenant.with_tenant(city) do
-      seeder = Brgen::PerCitySeeder.new(city, posts_per_city: 1)
-      seeder.send(:seed_admin)
-      seeder.seed_users
-      seen_locale = Faker::Config.locale
+    locales_seen = []
+    original_setter = Faker::Config.method(:locale=)
+    Faker::Config.define_singleton_method(:locale=) do |value|
+      locales_seen << value
+      original_setter.call(value)
     end
 
-    assert_equal "nl", seen_locale
+    begin
+      Brgen::PerCitySeeder.new(city, posts_per_city: 1).seed!
+    ensure
+      Faker::Config.define_singleton_method(:locale=, original_setter)
+    end
+
+    assert_includes locales_seen, "nl", "seed! should set the Dutch locale while seeding amstrdam.nl"
     assert_equal previous_locale, Faker::Config.locale, "locale must be restored so other cities/seeders aren't affected"
   end
 
-  test "falls back to a real Faker locale for countries with no native one" do
-    assert_equal "nb-NO", Brgen::CityContent.locale_for("IS")
-    assert_equal "de-CH", Brgen::CityContent.locale_for("LI")
-    assert_equal "en-US", Brgen::CityContent.locale_for("ZZ"), "unknown country codes fall back to US, matching community_slugs_for"
+  test "restricted to config.i18n.available_locales -- falls back to en outside that set" do
+    assert_equal "nb", Brgen::CityContent.locale_for("NO")
+    assert_equal "nb", Brgen::CityContent.locale_for("IS"), "no native Faker+Rails locale for Iceland; falls back to Norwegian"
+    assert_equal "de", Brgen::CityContent.locale_for("CH")
+    assert_equal "en", Brgen::CityContent.locale_for("ZZ"), "unknown country codes fall back to en, matching community_slugs_for's US fallback"
+    # Every mapped locale must actually be one Rails will accept, or seed!
+    # crashes with I18n::InvalidLocale the moment Faker touches I18n inside
+    # a booted app (region variants like "nb-NO" do NOT satisfy this even
+    # though Faker supports them standalone -- see city_content.rb's comment).
+    Brgen::CityContent::LOCALE_BY_COUNTRY.each_value do |locale|
+      assert_includes I18n.available_locales.map(&:to_s), locale,
+        "#{locale} must be in config.i18n.available_locales or Faker::Config.locale= raises inside Rails"
+    end
   end
 end
