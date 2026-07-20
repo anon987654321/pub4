@@ -1,9 +1,22 @@
-# Dilla — ENV layers + one-shot render path
+# Dilla — ENV layers + render path
 
-Source of truth for tables: `dilla.rb` (`DILLA_*`, `STREAM_*`, `RENDER_MODE_DEFAULTS`)
-and product wrapper `MASTER/tools/dilla.rb` (`PRODUCT_KIT_ENV`).
+**One engine. One DNA.** There are no style profiles or command aliases.
+The style is `dilla.rb` itself. Optional ENV knobs only.
 
-Inspect after a render: `ruby dilla.rb config-provenance` (keys → which table filled/forced them).
+Sources of truth:
+
+| Path | Role |
+|------|------|
+| `dilla.rb` | Engine: `DILLA_STYLE_DEFAULTS`, `DILLA_BEST_DEFAULTS`, stream tables, render |
+| `../dilla.rb` | Product wrapper: `PRODUCT_ENV` (kit/vox/mix mirror of style DNA) |
+| `lib/theory_runtime.rb` | Bach + Dilla voicing operators (not styles) |
+| `lib/groove_engine.rb` | Sparse pocket phrases + micro-timing |
+
+Inspect after a path that records provenance:
+
+```sh
+ruby dilla.rb config-provenance
+```
 
 ---
 
@@ -14,158 +27,140 @@ Lower layers only **soft-fill** (set if empty). Later **force** overwrites.
 ### Product one-shot (`tools/dilla.rb generate`)
 
 ```
-1. PRODUCT_KIT_ENV          force via system(env, …)  — kit-forward, RAP_VOCAL, loudnorm
-2. process ENV overrides    operator shell keys win over PRODUCT_KIT_ENV for those keys
+1. PRODUCT_ENV               force via system(env, …) — mirrors style DNA
+2. process ENV overrides     operator shell keys win for product keys
 3. engine boot
-4. apply_best_defaults!     soft: RENDER_MODE table → DILLA_BEST → optional DILLA_DEEP
-5. apply_dilla_style!       soft or force STYLE (product usually soft; RENDER_MODE=dilla)
-6. CLI flags / TRACK        --track= etc. on engine argv
+4. apply_best_defaults!      soft: RENDER_MODE table → DILLA_BEST → optional DILLA_DEEP
+5. apply_dilla_style!        soft STYLE DNA (product path)
+6. CLI flags / TRACK         --track= etc.
 7. render_dilla
 ```
 
-`PRODUCT_KIT_ENV` (~43 keys) mirrors kit/vox/mix from `DILLA_STYLE_DEFAULTS` so
-chat/RAILS one-shots match stream character without going through stream force.
-
-### Stream (`ruby dilla.rb stream` / bare invoke)
+### Stream (`ruby dilla.rb` / `ruby dilla.rb stream`)
 
 ```
 1. apply_stream_listenability_defaults!
-     apply_best_defaults!           soft best (+ deep if STREAM deep)
-     STREAM_COMFORT=1 soft default   unless STREAM_PUNCH=1 or STREAM_COMFORT=0
-     STREAM_EXTRA_DEFAULTS          soft (SPEAK, kit gains, RAP_VOCAL, LUFS, …)
-     STREAM_FAST or DILLA_DEEP      soft
-     STREAM_ITERATE_TUNING          soft iterate (if enabled and not comfort)
-     STREAM_SOUL_DEFAULTS           soft (STREAM_SOUL≠0 or comfort)
-     apply_dilla_style!(force:true) force full STYLE table (+ comfort soft if on)
+     apply_best_defaults!              soft best (+ deep if STREAM deep)
+     STREAM_COMFORT soft default         unless STREAM_PUNCH=1 or STREAM_COMFORT=0
+     STREAM_EXTRA_DEFAULTS             soft (SPEAK, kit gains, RAP_VOCAL, LUFS, …)
+     STREAM_FAST or DILLA_DEEP         soft
+     STREAM_SOUL_DEFAULTS              soft when STREAM_SOUL≠0 or comfort
+     apply_dilla_style!(force:true)    force full STYLE DNA
      if comfort_mode?
-       DILLA_COMFORT_DEFAULTS       force  (no STREAM_CREATIVE_MAX — keeps sofa mix)
+       DILLA_COMFORT_DEFAULTS          force sofa mix (SPEAK excluded from wipe)
      else
-       STREAM_CREATIVE_MAX          force  (= STREAM_EXTRA — re-assert after style wipe)
-       STREAM_ITERATE_TUNING        force  (if iterate)
-2. per-track voice rotation (only if STREAM_ROTATE_*=1; comfort sets 0)
+       STREAM_CREATIVE_MAX             force kit/vox layer after style
+2. stream_rotate_drums! + track order  progressions + DRUM_PRESET/POCKET_SET
 3. play("dilla", bars) → render_dilla
 ```
 
-**Why force twice (punch):** `apply_dilla_style!(force: true)` used to wipe stream
-creativity. `STREAM_CREATIVE_MAX` re-applies the creative kit layer.
+**Comfort vs punch:** stream defaults to sofa when comfort is on. Opt out with
+`STREAM_PUNCH=1` or `STREAM_COMFORT=0`. One-shot comfort: `DILLA_COMFORT=1`.
 
-**Comfort:** stream defaults to sofa mix. Opt out with `STREAM_PUNCH=1` or
-`STREAM_COMFORT=0`. One-shot: `ruby dilla.rb comfort out.wav 16`.
-
-### `DILLA_RAW=1`
-
-Skips `apply_best_defaults!` soft fills — operator ENV only (+ style if still applied by path).
+**`DILLA_RAW=1`:** skip `apply_best_defaults!` soft fills — operator ENV only.
 
 ---
 
 ## Table map
 
-| Table | Verb | Role | ~keys |
-|-------|------|------|-------|
-| `PROFILE_ENV[:dilla\|comfort\|warp]` | force (spawn env) | Product profiles (`PRODUCT_KIT_ENV` = dilla alias) | ~50–70 |
-| `RENDER_MODE_DEFAULTS` | soft | sketch/record/perform/long_soul/golden/**warp** (dilla DNA is separate table) | mode-specific |
-| `DILLA_BEST_DEFAULTS` | soft | Baseline soulful production knobs (aligned with STYLE DNA — no soft-fill conflicts) | ~45 |
-| `DILLA_DEEP_DEFAULTS` | soft | Quality gates + pocket jitter when deep (no pad/mix DNA that would block STYLE) | ~9 |
-| `DILLA_STYLE_DEFAULTS` | fill/force | Canonical **dilla** kit-forward DNA | 135 |
-| `DILLA_COMFORT_DEFAULTS` | force when comfort | Sofa: one kit, held pads, no vox, −18 LUFS | ~90 |
-| `STREAM_EXTRA_DEFAULTS` | soft then force as `STREAM_CREATIVE_MAX` (punch only) | Stream kit/vox/normalize/speak | 81 |
-| `STREAM_ITERATE_TUNING` | soft/force | Auto beauty/evolve during stream | 20 |
-| `STREAM_SOUL_DEFAULTS` / `STREAM_FAST_DEFAULTS` | soft | Soul vs fast stream tradeoffs | varies |
+| Table | Verb | Role |
+|-------|------|------|
+| `PRODUCT_ENV` | force (spawn) | Product kit/vox/mix (wrapper) |
+| `RENDER_MODE_DEFAULTS` | soft | sketch/record/perform/long_soul/golden/**warp** |
+| `DILLA_BEST_DEFAULTS` | soft | Baseline knobs aligned with STYLE (no soft-fill conflicts) |
+| `DILLA_DEEP_DEFAULTS` | soft | Quality gates + pocket jitter when deep |
+| `DILLA_STYLE_DEFAULTS` | fill/force | **Canonical dilla DNA** (the only style) |
+| `DILLA_COMFORT_DEFAULTS` | force when comfort | Sofa: calmer mix, no SPEAK wipe of user SPEAK |
+| `STREAM_EXTRA_DEFAULTS` | soft then force as creative max (punch) | Stream kit/vox/normalize |
+| `STREAM_SOUL_DEFAULTS` / `STREAM_FAST_DEFAULTS` | soft | Soul vs fast tradeoffs |
 
-### `RENDER_MODE=warp` (opt-in)
+### `RENDER_MODE=warp` (opt-in knob, not a style)
 
-Turns on already-built knobs: spectral arp/stack, `ARP_IDM_BIAS`, drum chops,
-`GROOVE_DNA=cosmogramma`, `PERFORMER=thundercat`, quartal voicing, dub_chamber chain.
+Turns on already-built creative knobs: spectral arp/stack, `ARP_IDM_BIAS`,
+drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 
 ### Operator knobs (common)
 
-| ENV | Layer | Role |
-|-----|-------|------|
-| `RENDER_MODE` | mode | `dilla` (default), `warp`, `sketch`…; aliases `camel`/`beat`/`punch`→dilla; `comfort`/`sofa`→dilla+flags |
-| `STREAM_STYLE_SEQUENCE` | stream | `1` (default) cycle dilla→comfort→warp × all tracks; `0` off |
-| `STREAM_COMFORT` | stream | sofa when sequence off / comfort slots |
-| `STREAM_PUNCH` | stream | kit-forward when sequence off |
-| `DILLA_COMFORT` | any | `1` apply comfort on one-shot / product |
-| `TRACK` / `STREAM_TRACK` | style/stream | Progression lock |
-| `BARS` / `STREAM_BARS` | style/stream | Length |
-| `KICKS` / `POCKET_KICKS` | kit | Pocket kicks on |
-| `FLYLO_DRUMS_ONLY` | kit | `0` hybrid (default); `1` overlay-only |
-| `DRUM_CHOPS` | kit | Demucs one-shots |
-| `RAP_VOCAL` | vox | slug or `0` |
-| `PAD_VOL` | mix | Pad level (product ~58) |
-| `LEAD_ARP` / `HARMONY_LEAD` | lead | Arp layers |
-| `SONITEX` / `ANALOG_CHAIN` | master | Character + analog path |
-| `MASTER_HEURISTICS` | master | Mix heuristics + loss-gate hooks |
-| `STREAM_NORMALIZE` / `STREAM_LUFS` | master | Loudnorm target |
-| `SPEAK` | stream | TTS over beat (`0` default product) |
-| `ARP_IDM_BIAS` | warp/creative | Euclidean/ratchet/stutter arp styles |
-| `DILLA_RAW` | meta | Skip best soft defaults |
-| `GROOVE_ENGINE` / `POCKET_DNA` | groove | Pocket humanize (default on) |
-| `FM_DRUMS` | kit | FM oneshot kit (default on; `0` = analog synth kit) |
-| `KICK_DOUBLE` / `KICK_DROP` / `SNARE_PREHIT_GHOST` | pocket | Ornament techniques (default on with pocket DNA) |
-| `POCKET_KICK_SILENCE` / `POCKET_RUSH` | pocket | Kick-silence bars + section-aware snare rush |
+| ENV | Role |
+|-----|------|
+| `TRACK` / `PROGRESSION` | Progression id (e.g. `get_dis_money`, `neo_soul`) |
+| `BARS` / `STREAM_BARS` | Length |
+| `STREAM_COMFORT` / `STREAM_PUNCH` | Sofa vs kit-forward stream |
+| `DILLA_COMFORT` | Sofa overlay on one-shot |
+| `RENDER_MODE` | `dilla` (default) or `warp` / sketch modes |
+| `POCKET_SET` | `neo_soul` (default), `classic`, `dusty`, `industrial` |
+| `KICK_GAIN` / `DRUM_BUS_VOL` | Quiet kit bus (~0.68 / 0.95) |
+| `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah on chord tones (`1` / `0.28` default) |
+| `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
+| `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |
+| `LEAD_ARP` / `HARMONY_LEAD` / `SCALE_LEAD` | Lead layers |
+| `RAP_VOCAL` | Vocal slug or `0` |
+| `SONITEX` / `ANALOG_CHAIN` | Master character |
+| `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |
+| `SPEAK` | TTS over beat (`0` product default) |
+| `STREAM_DRUM_ROTATE` | Cycle drum preset/pocket each stream slot |
+| `FLYLO_DRUM_OVERLAY` / `DRUM_CHOPS` / `FM_DRUMS` | Off by default (sparse soul kit) |
+| `DILLA_RAW` | Skip best soft defaults |
+| `GROOVE_ENGINE` / `POCKET_DNA` | Pocket humanize (default on) |
 
-Full style list is large (mix bus dB, FlyLo gains, harmonic stem weights, camel locks).
-Prefer `config-provenance` after a render over memorizing every key.
+Full DNA is large (mix bus dB, harmonic stem weights). Prefer
+`config-provenance` after a render over memorizing every key.
 
 ---
 
-## One-shot render path (end-to-end)
-
-Example:
+## One-shot render path
 
 ```sh
 cd MASTER
-ruby tools/dilla.rb generate --style dilla --bars 12 --output /tmp/beat.wav
-# equivalent engine:
-# PRODUCT_KIT_* env + ruby tools/dilla/dilla.rb dilla /tmp/beat.wav --track=get_dis_money ... 12
+ruby tools/dilla.rb generate --track get_dis_money --bars 12 --output /tmp/beat.wav
+# engine:
+# PRODUCT_ENV + ruby tools/dilla/dilla.rb dilla /tmp/beat.wav --track=get_dis_money … 12
 ```
 
 ### 1. Wrapper (`tools/dilla.rb`)
 
-1. Parse `--style`, `--bars`, `--output`
-2. `product_env` = `PRODUCT_KIT_ENV` + shell overrides for those keys
-3. `engine_args` → `dilla.rb dilla <out> --sonitex=… --analog-chain=… --track=get_dis_money [bars]`
+1. Parse `--track`, `--bars`, `--output` (no `--style`)
+2. `product_env` = `PRODUCT_ENV` + shell overrides
+3. `engine_args` → `dilla.rb dilla <out> --sonitex=… --analog-chain=… --track=… [bars]`
 4. `system(env, ruby, *args)`
 
 ### 2. Engine CLI (`DISPATCH["dilla"]`)
 
-1. Set destination + bars
-2. Boot path applies best defaults (unless `DILLA_RAW`) + style for `RENDER_MODE=dilla`
+1. Destination + bars
+2. Best defaults (unless `DILLA_RAW`) + style DNA
 3. `render_dilla(dest, bars)`
 
 ### 3. `render_dilla` (core)
 
 ```
-require ffmpeg · cleanup scratch · pick_render_seed!
+require ffmpeg · cleanup · pick_render_seed!
 ensure_drum_kit!
-cfg = dilla_resolve_config  → TRACK, BPM, swing, timing, sonic, chord_bars, feel
-cfg = DillaSeeds.apply_to_cfg!(cfg)
-DillaRhythm.configure!
-composition_session! (arrangement form / performers if COMPOSITION=1)
+cfg = dilla_resolve_config
+composition_session! if COMPOSITION=1
 pick_synth_patches!
-pads = dilla_progression(cfg)     # producer_dna + reference YAML profiles
-arrange_*_progression             # loop / LA-beat / camel / fugue
-beautify_*_pipeline               # DillaHarmony
-events = dilla_schedule(...)      # pocket + groove_engine jitter + poly/shaker
-kit + optional DRUM_CHOPS
+pads = dilla_progression(cfg)
+arrange + beautify (harmony)
+theory_runtime refine (Bach/Dilla operators)
+events = dilla_schedule(...)   # sparse pocket + groove_engine
 render_sample_bus_wav → drums
-optional FlyLo dual-bus merge + peak lift
-render_harmonic_wav OR loop stem mids/highs
-ffmpeg graph: drums + harm + stems + self_sample + IR + vinyl noise
-  → sidechain / sonitex / analog / heuristics
-  → loudnorm (STREAM_NORMALIZE)
-  → destination (+ demo.wav when streaming)
-quality / promote hooks when enabled
+render_harmonic_wav:
+  pads (stack_soul layers)
+  + CHOIR_VOX chord-tone ooh/aah (soft)
+  + tones / leads / pluck
+sidechain amix → sonitex → analog → heuristics → loudnorm
 ```
 
 ### 4. Product attach (RAILS)
 
-`Shared::DillaProcessor.render_to_file!` → same wrapper → Active Storage.
+`Shared::DillaProcessor.render_to_file!` → wrapper → Active Storage.
 
-### 5. Critique (MASTER, outside engine)
+---
 
-`/dilla metrics` · `/dilla crit` — council reviews mix; do not reimplement inside tools/dilla.
+## Stream rotation
+
+- **Progressions:** full pack (priority first: `get_dis_money`, neo-soul, untitled, …)
+- **Drums:** `STREAM_DRUM_ROTATION` — soulful kits only (`dilla_slight`, `mpc3000`, …)
+- **No style sequence** — one DNA every slot; mix knobs only (`STREAM_COMFORT`, etc.)
 
 ---
 
@@ -173,19 +168,13 @@ quality / promote hooks when enabled
 
 ```sh
 cd MASTER/tools/dilla
-# after any render that called soft_fill/force with labels:
 SPEAK=0 BARS=4 ruby -e '
   load "dilla.rb"
   apply_best_defaults!
   apply_dilla_style!(force: true)
-  force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
   print_config_provenance
 '
-# or CLI after stream/render paths that leave process state:
-# ruby dilla.rb config-provenance
 ```
-
-Note: CLI `config-provenance` alone in a fresh process is empty until a path that records provenance runs in the same process.
 
 ---
 
@@ -194,10 +183,12 @@ Note: CLI `config-provenance` alone in a fresh process is empty until a path tha
 | Path | Role |
 |------|------|
 | `dilla.rb` | Monolith + DISPATCH + ENV tables |
-| `lib/producer_dna.rb` | Chords, timing DNA, harmony profiles |
-| `lib/groove_engine.rb` | Pocket, Gaussian jitter, phrase drift |
+| `lib/producer_dna.rb` | Chords, timing DNA |
+| `lib/groove_engine.rb` | Pocket phrases, Gaussian jitter, phrase drift |
 | `lib/harmony_engine.rb` | Beautify / insight |
-| `lib/composition_engine.rb` | Form, performers, session |
+| `lib/theory_runtime.rb` | Bach + Dilla voicing refine |
+| `lib/composition_engine.rb` | Form, performers |
 | `lib/master_heuristics.rb` | Master FX + loss gates |
-| `dilla_reference.yml` | Documented progressions + gate thresholds |
-| `../dilla.rb` | Product/chat entry + PRODUCT_KIT_ENV |
+| `lib/music_gems.rb` | coltrane / head_music / midilib / wavefile |
+| `../dilla.rb` | Product entry + `PRODUCT_ENV` |
+| `README.md` | Usage summary |

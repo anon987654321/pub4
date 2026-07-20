@@ -559,6 +559,10 @@ module DillaHarmony
     rescue StandardError
       ch
     end
+    # Bach/Dilla theory runtime (coltrane/head_music when available).
+    if defined?(DillaTheoryRuntime)
+      pads = DillaTheoryRuntime.refine_progression!(pads, cfg: cfg)
+    end
     [pads, phases]
   end
 
@@ -575,6 +579,9 @@ module DillaHarmony
     pads = bass_voice_lead(pads)
     pads = validate_and_fix(pads)
     pads = add_turnaround_tags(pads, cfg)
+    if defined?(DillaTheoryRuntime)
+      pads = DillaTheoryRuntime.refine_progression!(pads, cfg: cfg)
+    end
     [pads, phases]
   end
 

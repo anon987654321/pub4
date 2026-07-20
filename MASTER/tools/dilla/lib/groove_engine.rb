@@ -14,40 +14,72 @@ module DillaGroove
   PHRASE_DRIFT_PERIOD_BARS = 6.0
   PHRASE_DRIFT_MAX_MS = 5.0
 
-  # Classic sparse pockets (rotate by bar). Not dense machine-gun 16ths.
+  # Classic sparse Dilla / Questlove pockets — FEWER kicks, solid 2&4, space.
+  # Dense 4-kick bars read as house/techno; soul leaves air for Rhodes.
   POCKET_KICK_PHRASES = [
+    [0, 10],
     [0, 6, 10],
-    [0, 10],
-    [0, 6, 10, 13],
-    [0, 3, 10],
-    [0, 6, 11],
     [0, 10, 14],
-    [3, 10],
-    [0, 6, 9, 10],
-  ].freeze
-  # Dusty / Madlib-leaning: more four-on-floor anchors + late-bar push.
-  POCKET_KICK_PHRASES_DUSTY = [
-    [0, 4, 10],
-    [0, 8, 11],
-    [0, 5, 10, 14],
-    [0, 4, 8, 12],
     [0, 7, 10],
-    [2, 8, 12],
-    [0, 4, 11],
-    [0, 6, 8, 12],
-  ].freeze
-  # Sparse shapes for the occasional breathing bar -- real Dilla pockets
-  # loosen up periodically, but never repeat the same two notes on a
-  # robotic every-4th-bar wall (that's what made a "sequenced" bar).
-  POCKET_KICK_SPARSE_PHRASES = [
-    [0, 10],
-    [6, 10],
     [0, 6],
+    [0, 3, 10],
+    [6, 10],
+    [0, 11],
+  ].freeze
+  # Dusty / Madlib — still sparse, occasional four-on-floor half-bar only.
+  POCKET_KICK_PHRASES_DUSTY = [
+    [0, 10],
+    [0, 8, 11],
+    [0, 7, 10],
+    [0, 4, 10],
+    [0, 10, 14],
+    [2, 10],
+    [0, 6, 10],
+    [0, 8],
+  ].freeze
+  # Neo-soul / D'Angelo live-pocket: often just downbeat + one syncopation.
+  # Expanded set rotates across bars so stream/one-shots don't feel looped.
+  POCKET_KICK_PHRASES_NEOSOUL = [
+    [0, 10],
+    [0, 6],
+    [0, 10, 13],
+    [0],
+    [0, 7, 10],
+    [0, 11],
+    [6, 10],
+    [0, 6, 14],
+    [0, 9],
+    [0, 3, 10],
+    [0, 10, 14],
+    [0, 5, 10],
+    [10],
+    [0, 6, 11],
+    [0, 8, 14],
+    [0, 7],
+  ].freeze
+  # Sparse shapes for breathing bars.
+  POCKET_KICK_SPARSE_PHRASES = [
+    [0],
+    [0, 10],
+    [10],
+    [0, 6],
+    [],
   ].freeze
   POCKET_KICK_SPARSE_PHRASES_DUSTY = [
     [0, 8],
-    [4, 12],
-    [0, 4],
+    [0],
+    [0, 10],
+    [8],
+  ].freeze
+  POCKET_KICK_SPARSE_PHRASES_NEOSOUL = [
+    [0],
+    [0, 10],
+    [],
+    [10],
+    [0, 6],
+    [0, 11],
+    [],
+    [0, 7],
   ].freeze
   POCKET_SNARE_HARD = [4, 12].freeze
   # Documented Dilla off-kilter device: the backbeat snare occasionally
@@ -55,34 +87,64 @@ module DillaGroove
   # choice, distinct from the ms-level micro-timing in role_timing_offset.
   POCKET_SNARE_RUSH = [4, 11].freeze
   POCKET_SNARE_RUSH_DUSTY = [3, 12].freeze
+  POCKET_SNARE_RUSH_NEOSOUL = [4, 12].freeze # keep backbeat locked more often
   POCKET_SNARE_GHOST_PHRASES = [
-    [7],
-    [2, 10],
-    [7, 15],
-    [10],
     [],
+    [7],
+    [10],
+    [7, 15],
+    [],
+    [2],
   ].freeze
   POCKET_SNARE_GHOST_PHRASES_DUSTY = [
     [6],
-    [2, 6, 14],
+    [],
     [6, 14],
     [14],
-    [2, 10],
+    [],
   ].freeze
+  # Live neo-soul ghosts: quiet 16th after 2, rarely both — more phrase variety.
+  POCKET_SNARE_GHOST_PHRASES_NEOSOUL = [
+    [],
+    [5],
+    [7],
+    [],
+    [13],
+    [5, 13],
+    [6],
+    [],
+    [15],
+    [5, 7],
+    [13, 15],
+    [],
+  ].freeze
+  # 8th hats, but NOT every bar identical — leave space (real RH pocket).
   POCKET_HAT_PHRASES = [
     [0, 2, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 6, 8, 10, 13, 14],
-    [0, 2, 4, 6, 8, 10, 12, 13, 14],
-    [0, 3, 4, 6, 8, 10, 12, 14],
-    [0, 2, 4, 7, 8, 10, 12, 14],
+    [0, 2, 4, 6, 8, 10, 12],
+    [0, 4, 6, 8, 10, 12, 14],
+    [0, 2, 4, 8, 10, 12, 14],
+    [2, 4, 6, 8, 10, 12, 14],
   ].freeze
-  # Offbeat-biased hats (1,3,5…) — different ride from straight 8ths.
+  # Offbeat-biased dusty hats — thinner than full 16ths.
   POCKET_HAT_PHRASES_DUSTY = [
-    [1, 3, 5, 7, 9, 11, 13, 15],
-    [1, 3, 5, 7, 9, 11, 12, 15],
-    [0, 1, 3, 5, 7, 9, 11, 13, 15],
-    [1, 3, 4, 7, 9, 11, 13, 15],
-    [1, 3, 5, 8, 9, 11, 13, 15],
+    [1, 3, 5, 7, 9, 11, 13],
+    [1, 3, 5, 7, 9, 11, 15],
+    [1, 3, 5, 9, 11, 13],
+    [0, 3, 5, 7, 9, 11, 13],
+  ].freeze
+  # Neo-soul: often quarters or sparse 8ths — never full 16th grid.
+  POCKET_HAT_PHRASES_NEOSOUL = [
+    [0, 4, 8, 12],
+    [0, 2, 4, 8, 12],
+    [0, 4, 8, 10, 12],
+    [0, 4, 6, 8, 12, 14],
+    [2, 4, 8, 12],
+    [0, 4, 8],
+    [0, 4, 10, 12],
+    [0, 2, 8, 12],
+    [4, 8, 12],
+    [0, 6, 8, 12, 14],
   ].freeze
   # Industrial techno: four-on-floor kick, solid 2+4 snare/clap, 16th hats.
   POCKET_KICK_PHRASES_INDUSTRIAL = [
@@ -153,22 +215,26 @@ module DillaGroove
     ENV.fetch("POCKET_DNA", "1") != "0"
   end
 
-  # dusty | industrial | classic
+  # dusty | industrial | neo_soul | classic
   def pocket_set
-    set = ENV.fetch("POCKET_SET", "classic").to_s.downcase
+    set = ENV.fetch("POCKET_SET", "neo_soul").to_s.downcase
     preset = ENV["DRUM_PRESET"].to_s.downcase
     return "dusty" if set == "dusty" || preset.include?("madlib")
     return "industrial" if set == "industrial" || preset.include?("industrial") || preset.include?("boom_808")
+    return "neo_soul" if set == "neo_soul" || set == "soul" || set == "neosoul" ||
+                         preset.include?("dilla") || preset.include?("mpc")
 
     set
   end
 
   def dusty_pocket? = pocket_set == "dusty"
   def industrial_pocket? = pocket_set == "industrial"
+  def neosoul_pocket? = pocket_set == "neo_soul" || pocket_set == "soul"
 
   def kick_phrases
     return POCKET_KICK_PHRASES_INDUSTRIAL if industrial_pocket?
     return POCKET_KICK_PHRASES_DUSTY if dusty_pocket?
+    return POCKET_KICK_PHRASES_NEOSOUL if neosoul_pocket?
 
     POCKET_KICK_PHRASES
   end
@@ -176,6 +242,7 @@ module DillaGroove
   def kick_sparse_phrases
     return POCKET_KICK_SPARSE_PHRASES_INDUSTRIAL if industrial_pocket?
     return POCKET_KICK_SPARSE_PHRASES_DUSTY if dusty_pocket?
+    return POCKET_KICK_SPARSE_PHRASES_NEOSOUL if neosoul_pocket?
 
     POCKET_KICK_SPARSE_PHRASES
   end
@@ -183,6 +250,7 @@ module DillaGroove
   def snare_rush_steps
     return POCKET_SNARE_RUSH_INDUSTRIAL if industrial_pocket?
     return POCKET_SNARE_RUSH_DUSTY if dusty_pocket?
+    return POCKET_SNARE_RUSH_NEOSOUL if neosoul_pocket?
 
     POCKET_SNARE_RUSH
   end
@@ -196,6 +264,7 @@ module DillaGroove
   def snare_ghost_phrases
     return POCKET_SNARE_GHOST_PHRASES_INDUSTRIAL if industrial_pocket?
     return POCKET_SNARE_GHOST_PHRASES_DUSTY if dusty_pocket?
+    return POCKET_SNARE_GHOST_PHRASES_NEOSOUL if neosoul_pocket?
 
     POCKET_SNARE_GHOST_PHRASES
   end
@@ -203,6 +272,7 @@ module DillaGroove
   def hat_phrases
     return POCKET_HAT_PHRASES_INDUSTRIAL if industrial_pocket?
     return POCKET_HAT_PHRASES_DUSTY if dusty_pocket?
+    return POCKET_HAT_PHRASES_NEOSOUL if neosoul_pocket?
 
     POCKET_HAT_PHRASES
   end

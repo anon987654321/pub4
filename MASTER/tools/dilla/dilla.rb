@@ -21,6 +21,7 @@ require_relative "lib/groove_score"
 require_relative "lib/producer_dna"
 require_relative "lib/harmony_engine"
 require_relative "lib/harmony_lead"
+require_relative "lib/theory_runtime"
 require_relative "lib/groove_engine"
 require_relative "lib/seed_providers"
 require_relative "lib/rhythm_macros"
@@ -245,62 +246,62 @@ INLINE_SONIC_PROFILES = {
     "harmonic" => {
       "engine_progression" => "maj7_minor_cycle",
       "engine_chords" => %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9],
-      "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
+      "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23],
     },
     "synth" => {
       "bpm" => 86, "swing" => 0.16, "pad_lowpass_hz" => 3400, "master_lowpass_hz" => 2800,
       "bass_sustain_bar" => 0.94, "bass_shelf_db" => 9, "vinyl_noise" => 0.06,
-      "texture" => "donuts_lowpass_warmth"
+      "texture" => "donuts_lowpass_warmth",
     }
   },
   flylo_camel: {
     "harmonic" => {
       "engine_progression" => "chromatic_mediant_drift",
-      "engine_chords" => %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG]
+      "engine_chords" => %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
     },
     "synth" => {
       "bpm" => 84, "swing" => 0.12, "pad_lowpass_hz" => 3600, "master_lowpass_hz" => 3600,
       "bass_sustain_bar" => 0.88, "bass_shelf_db" => 6, "vinyl_noise" => 0.08,
-      "sidechain_pump" => true, "texture" => "jazz_haze_sidechain"
+      "sidechain_pump" => true, "texture" => "jazz_haze_sidechain",
     }
   },
   madlib_eye: {
     "harmonic" => {
       "engine_chords" => %w[Ebmaj7 Ebm7 Cm7 Eb7],
-      "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23]
+      "melody_chop_hz" => [659.25, 587.33, 523.25, 440.0, 392.00, 349.23],
     },
     "synth" => {
       "bpm" => 96, "swing" => 0.20, "pad_lowpass_hz" => 3200, "master_lowpass_hz" => 3200,
       "bass_sustain_bar" => 0.80, "bass_shelf_db" => 7, "vinyl_noise" => 0.10,
-      "crush_mix" => 0.35, "texture" => "sp303_vinyl_grit"
+      "crush_mix" => 0.35, "texture" => "sp303_vinyl_grit",
     }
   },
   slum_players: {
     "harmonic" => {
       "engine_progression" => "players_measured",
-      "engine_chords" => %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7]
+      "engine_chords" => %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
     },
     "synth" => {
       "bpm" => 93, "swing" => 0.18, "pad_lowpass_hz" => 3300, "master_lowpass_hz" => 3000,
       "bass_sustain_bar" => 0.92, "bass_shelf_db" => 8, "vinyl_noise" => 0.07,
-      "texture" => "neo_soul_pocket"
+      "texture" => "neo_soul_pocket",
     }
   },
   samiyam_rounded: {
     "harmonic" => {
-      "engine_chords" => %w[Dm9 Em7 Ebmaj7 Dm]
+      "engine_chords" => %w[Dm9 Em7 Ebmaj7 Dm],
     },
     "synth" => {
       "bpm" => 96, "swing" => 0.14, "pad_lowpass_hz" => 3000, "master_lowpass_hz" => 2800,
       "bass_sustain_bar" => 0.85, "bass_shelf_db" => 10, "vinyl_noise" => 0.05,
-      "texture" => "modern_dry_punch"
+      "texture" => "modern_dry_punch",
     }
   },
   bergen_akmd_local: {
     "harmonic" => { "engine_progression" => "erykah_minor", "texture" => "bergen_night_rain" },
     "synth" => {
       "bpm" => 87, "swing" => 0.17, "pad_lowpass_hz" => 3100, "master_lowpass_hz" => 2700,
-      "bass_shelf_db" => 9, "vinyl_noise" => 0.08, "texture" => "akmd_lofi_mastering"
+      "bass_shelf_db" => 9, "vinyl_noise" => 0.08, "texture" => "akmd_lofi_mastering",
     }
   },
   chase_swayze_traffic: {
@@ -597,8 +598,11 @@ SYNTH_PATCH_CATALOG = [
               fx: "lowpass=f=2600:width_type=q:width=0.75,tremolo=f=0.35:d=0.1,equalizer=f=160:t=o:w=1:g=2.0"),
   synth_patch(:cs80_ensemble, role: :warm, program: 92, fx: "aecho=0.35:0.45:120|200:0.28|0.14"),
   synth_patch(:pwm_sweep_pad, role: :warm, program: 93, fx: "tremolo=f=0.55:d=0.22,aphaser=speed=0.14:decay=0.55"),
-  synth_patch(:choir_aahs, role: :warm, program: 52, fx: "aecho=0.45:0.55:80|140:0.28|0.14,lowpass=f=4200"),
-  synth_patch(:voice_oohs, role: :warm, program: 53, fx: "vibrato=f=0.45:d=0.012"),
+  # Singers Unlimited–style beds: soft GM choir, slow attack via pad envelope + FX.
+  synth_patch(:choir_aahs, role: :warm, program: 52, weight: 1.4, mix: 0.42, fs_gain: 1.15,
+              fx: "highpass=f=220,aecho=0.5:0.55:100|180:0.32|0.16,lowpass=f=3800:width_type=q:width=0.7,volume=0.85"),
+  synth_patch(:voice_oohs, role: :warm, program: 53, weight: 1.3, mix: 0.38, fs_gain: 1.1,
+              fx: "highpass=f=260,vibrato=f=0.38:d=0.014,chorus=0.4:0.55:28|42:0.16|0.12:0.2|0.16:1.0|1.2,lowpass=f=3600,volume=0.82"),
   synth_patch(:analog_pad1, role: :warm, program: 88),
   synth_patch(:analog_pad2, role: :warm, program: 94),
   synth_patch(:analog_pad3, role: :warm, program: 95),
@@ -1797,7 +1801,6 @@ module RadioBergenStudy
     }
   end
 
-
   AUDIO_SEARCH_ROOTS = [
     File.expand_path("../../../../pub2", AUDIO_ROOT),
     File.expand_path("../../../../pub3/.index.html", AUDIO_ROOT),
@@ -2030,7 +2033,7 @@ module RadioBergenStudy
 
   module DeepAudio
       module_function
-    
+
       def ffprobe(path)
         out, = Open3.capture2(
           "ffprobe", "-v", "error", "-show_entries", "format=duration,bit_rate:stream=sample_rate,channels",
@@ -2040,7 +2043,7 @@ module RadioBergenStudy
       rescue StandardError
         {}
       end
-    
+
       def band_rms(path, filter, window: 0.05, max_sec: 120)
         out, = Open3.capture2(
           "ffmpeg", "-hide_banner", "-loglevel", "error", "-t", max_sec.to_s, "-i", path,
@@ -2053,7 +2056,7 @@ module RadioBergenStudy
           val.finite? ? val : nil
         end.compact
       end
-    
+
       def detect_onsets(rms_series, threshold_db: -18.0, min_gap: 3)
         onsets = []
         rms_series.each_with_index do |rms, i|
@@ -2064,7 +2067,7 @@ module RadioBergenStudy
         end
         onsets
       end
-    
+
       def estimate_bpm(onsets, window_sec: 0.05)
         return nil if onsets.length < 4
         intervals = onsets.each_cons(2).map { |a, b| (b - a) * window_sec }
@@ -2080,36 +2083,36 @@ module RadioBergenStudy
         end
         raw.round(1)
       end
-    
+
       def analyze(path)
         return nil unless path && File.file?(path)
-    
+
         meta = ffprobe(path)
         duration = meta.dig("format", "duration").to_f
         stream = Array(meta["streams"]).first || {}
         analyze_sec = [duration * 0.85, 120].min
         analyze_sec = duration if duration.positive? && duration < 120
-    
+
         full = band_rms(path, "aformat=channel_layouts=stereo", window: 0.05, max_sec: analyze_sec)
         sub = band_rms(path, "lowpass=f=80", window: 0.05, max_sec: analyze_sec)
         kick = band_rms(path, "lowpass=f=200,highpass=f=60", window: 0.05, max_sec: analyze_sec)
         snare = band_rms(path, "lowpass=f=4000,highpass=f=800", window: 0.05, max_sec: analyze_sec)
         hats = band_rms(path, "lowpass=f=12000,highpass=f=4000", window: 0.05, max_sec: analyze_sec)
-    
+
         avg = ->(arr) { arr.empty? ? nil : (arr.sum / arr.length).round(2) }
         max = ->(arr) { arr.empty? ? nil : arr.max.round(2) }
-    
+
         kick_onsets = detect_onsets(kick, threshold_db: -14.0, min_gap: 4)
         bpm_kick = estimate_bpm(kick_onsets)
         snare_onsets = detect_onsets(snare, threshold_db: -16.0, min_gap: 4)
         bpm_snare = estimate_bpm(snare_onsets)
-    
+
         crest = if full.any?
                   peak = full.max
                   rms = avg.call(full)
                   rms ? (peak - rms).round(2) : nil
                 end
-    
+
         swing_hint = if kick_onsets.length >= 8
                        eighths = kick_onsets.each_cons(2).map { |a, b| b - a }
                        even = eighths.each_with_index.filter_map { |v, i| v if i.even? }
@@ -2119,7 +2122,7 @@ module RadioBergenStudy
                          ratio > 1.05 ? "laid_back" : ratio < 0.95 ? "pushed" : "straight"
                        end
                      end
-    
+
         {
           measured: true,
           duration_seconds: duration.round(2),
@@ -2145,14 +2148,14 @@ module RadioBergenStudy
       rescue StandardError => e
         { measured: false, error: e.message }
       end
-    
+
       def spectral_balance(sub, kick, snare, hats)
         sub_a = sub.select { |v| v > -50 }
         kick_a = kick.select { |v| v > -50 }
         snare_a = snare.select { |v| v > -50 }
         hats_a = hats.select { |v| v > -50 }
         return {} if kick_a.empty?
-    
+
         k = kick_a.sum / kick_a.length
         profile = {}
         profile[:sub_kick_ratio] = ratio(sub_a, k)
@@ -2166,13 +2169,13 @@ module RadioBergenStudy
                                end
         profile
       end
-    
+
       def ratio(num_band, kick_avg)
         return nil if num_band.empty? || kick_avg.zero?
         n = num_band.sum / num_band.length
         (n - kick_avg).round(2)
       end
-    
+
       def texture_hints(sub_rms, kick_rms, hats_rms, crest)
         hints = []
         hints << "heavy_sub" if sub_rms && sub_rms > -22
@@ -2621,7 +2624,6 @@ def progression_from_engine(sonic, _fallback_mode)
   chord_names = sonic&.dig("harmonic", "engine_chords")
   if chord_names&.any?
     return chord_names.map do |n|
-      PAD_CHORD_LOOKUP[n] || MODAL_MINOR_CHORDS.find { |c| c[:name] == n }
     end.compact
   end
   name = sonic&.dig("harmonic", "engine_progression")&.to_sym
@@ -2689,20 +2691,10 @@ def dilla_style?
 end
 alias camel_mode? dilla_style?
 
-# Collapse legacy RENDER_MODE aliases onto the flat taxonomy:
-#   camel|beat|punch → dilla
-#   comfort|sofa|smooth → dilla + comfort flags (not a separate mode)
-#   empty → dilla
+# Single engine mode. Empty RENDER_MODE → dilla. Optional knobs stay as ENV
+# (STREAM_COMFORT, RENDER_MODE=warp|long_soul|…), not command aliases.
 def normalize_render_mode!
-  raw = ENV["RENDER_MODE"].to_s.downcase
-  case raw
-  when "", "camel", "beat", "punch"
-    ENV["RENDER_MODE"] = "dilla"
-  when "comfort", "sofa", "smooth"
-    ENV["STREAM_COMFORT"] = "1" if ENV["STREAM_COMFORT"].to_s.empty?
-    ENV["DILLA_COMFORT"] = "1" if ENV["DILLA_COMFORT"].to_s.empty?
-    ENV["RENDER_MODE"] = "dilla"
-  end
+  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.strip.empty?
 end
 
 def camel_drum_entry_bar
@@ -3110,7 +3102,8 @@ end
 # Hybrid pocket+overlay doubled kicks/snares (~10 kicks + ~9 snares/bar) and
 # sounded like broken machine-gun drums — set FLYLO_DRUMS_ONLY=0 to re-enable pocket.
 def flylo_drums_only?
-  flylo_primary_drums? && ENV.fetch("FLYLO_DRUMS_ONLY", "1") != "0"
+  # Default OFF — hybrid double-kit was the #1 "drums suck" failure mode.
+  flylo_primary_drums? && ENV.fetch("FLYLO_DRUMS_ONLY", "0") == "1"
 end
 
 def dilla_pocket_drums_enabled?
@@ -3126,8 +3119,8 @@ def kicks_enabled?
 end
 
 def kick_velocity_scale
-  # FlyLo overlay kicks used to inherit the quiet 808 KICK_GAIN (0.38) and vanish.
-  default = flylo_primary_drums? ? "0.92" : "0.38"
+  # Pocket soul kicks — readable but not dominating (was 0.88–0.92).
+  default = flylo_primary_drums? ? "0.78" : "0.68"
   ENV.fetch("KICK_GAIN", default).to_f.clamp(0.08, 1.35)
 end
 
@@ -6963,7 +6956,12 @@ def stream_track_banner(extra = nil)
              end
   arp_tag = lead_on ? (ENV["LEAD_ARP_MODE"] || lead_arp_mode || pad_arp_mode) : "off"
   rap_tag = rap_vocal_stream_slug || "0"
-  drum_tag = flylo_primary_drums? ? "flylo" : ENV.fetch("KICKS", "1")
+  drum_tag = [
+    ENV["DRUM_PRESET"] || "kit",
+    ENV["POCKET_SET"],
+    (ENV["FM_DRUMS"] == "0" ? "analog" : "fm"),
+    (flylo_primary_drums? || ENV["FLYLO_DRUM_OVERLAY"] == "1" ? "flylo" : nil)
+  ].compact.join("/")
   meta = "pad=#{ENV['PAD_VOICE']}/#{pad_arp_mode} lead=#{lead_tag}/#{arp_tag} " \
          "drums=#{drum_tag} rap=#{rap_tag} speak=#{ENV.fetch('SPEAK', '0')}"
   meta = "#{meta} #{extra}" if extra
@@ -7246,7 +7244,14 @@ DILLA_BEST_DEFAULTS = {
   "ANALOG_CHAIN" => "broadcast",
   "DRUM_PRESET" => "dilla_slight",
   "EXTERNAL_KIT" => "03-soulful-vintage",
-  "FM_DRUMS" => "1",
+  "FM_DRUMS" => "0",
+  "RAW_KICK" => "1",
+  "DRUM_SAMPLE_RAW" => "1",
+  "POCKET_SET" => "neo_soul",
+  "FLYLO_DRUM_OVERLAY" => "0",
+  "DRUM_CHOPS" => "0",
+  "ECLECTIC_PERC" => "0",
+  "BACKBEAT_CLAP" => "0",
   "PERFORMER" => "yancey",
   "GROOVE_DNA" => "donuts",
   "COMPOSITION" => "1",
@@ -7268,7 +7273,10 @@ DILLA_BEST_DEFAULTS = {
   "FM_NATIVE" => "1",
   "MASTER_HEURISTICS" => "1",
   "VINYL" => "0",
-  "KICK_GAIN" => "1.0",
+  "KICK_GAIN" => "0.68",
+  "DRUM_BUS_VOL" => "0.95",
+  "DRUM_BUS_GAIN" => "0.92",
+  "DRUM_MIX_WEIGHT" => "0.95",
   "KICKS" => "1",
   "BASS_SLIDE" => "1",
   "SPECTRAL_ARP" => "0",
@@ -7359,6 +7367,9 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_RELEASE" => "3400",
   "PAD_LEGATO_VAR" => "1",
   "PAD_LAYERS" => "1",
+  # Soft ooh/aah choir on chord tones (Singers Unlimited–like), under the pad bed.
+  "CHOIR_VOX" => "1",
+  "CHOIR_VOX_GAIN" => "0.28",
   "LUSH_SYNTH" => "1",
   "LONG_STRIPDOWN" => "0",
   "MOTIF_RECALL" => "1",
@@ -7366,17 +7377,16 @@ DILLA_STYLE_DEFAULTS = {
   # FLYLO_DRUMS_ONLY=1 + KICKS=0 was "no-kicks" and buried the hat bus under pads.
   "KICKS" => "1",
   "POCKET_KICKS" => "1",
+  # Pocket soul kit first. FlyLo overlay / chops are opt-in — dual-kit mush
+  # was the main "drums suck" report (pocket + FlyLo + poly + shaker + chops).
   "FLYLO_DRUMS_ONLY" => "0",
-  "FLYLO_DRUM_OVERLAY" => "1",
-  "FLYLO_QUINT_HATS" => "1",
-  # These three gains stack multiplicatively on the same kick signal —
-  # 1.55*1.25*1.15 ~= 2.23x (+7dB) compounded was the likely cause of
-  # "drums too loud" direct feedback. ~1.26x (+2dB) keeps the kit-forward
-  # intent (kick was previously buried under pads) without the overshoot.
-  "FLYLO_KICK_GAIN" => "1.2",
-  "KICK_SAMPLE_GAIN" => "1.05",
-  "KICK_GAIN" => "1.0",
+  "FLYLO_DRUM_OVERLAY" => "0",
+  "FLYLO_QUINT_HATS" => "0",
+  "FLYLO_KICK_GAIN" => "0.75",
+  "KICK_SAMPLE_GAIN" => "0.9",
+  "KICK_GAIN" => "0.68",
   "POCKET_DNA" => "1",
+  "POCKET_SET" => "neo_soul",
   "POCKET_SIMPLE" => "1",
   "POCKET_GHOSTS" => "1",
   "POCKET_OPEN_HAT" => "1",
@@ -7392,10 +7402,13 @@ DILLA_STYLE_DEFAULTS = {
   "HAT_MICRO" => "1",
   "SWING_JITTER" => "1",
   "GROOVE_ENGINE" => "1",
-  "FM_DRUMS" => "1",
-  "DRUM_CHOPS" => "1",
+  "FM_DRUMS" => "0",
+  "RAW_KICK" => "1",
+  "DRUM_SAMPLE_RAW" => "1",
+  "DRUM_CHOPS" => "0",
+  "ECLECTIC_PERC" => "0",
   "NO_QUANTIZE" => "1",
-  "BACKBEAT_CLAP" => "1",
+  "BACKBEAT_CLAP" => "0",
   # Jonas V isolated vocals — sit on top of the kit, not under pads.
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
@@ -7432,34 +7445,33 @@ DILLA_STYLE_DEFAULTS = {
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
   "DRUM_PRESET" => "dilla_slight",
-  # Kit-forward but not snare/shaker walls — tops (hats/snares/claps) sat ~2×
-  # over kicks when TOP_MIX/MERGE and air EQ were maxed for laptop speakers.
-  "FLYLO_OVERLAY_GAIN" => "1.35",
-  "FLYLO_SUB_MIX" => "1.55",
-  "FLYLO_TOP_MIX" => "0.95",
-  "FLYLO_MERGE_BOOST" => "1.55",
-  "FLYLO_BASE_DRUM_VOL" => "1.0",
-  "DRUM_BUS_VOL" => "1.45",
-  "DRUM_BUS_GAIN" => "1.35",
-  "DRUM_MIX_WEIGHT" => "1.55",
-  "DRUM_PEAK_DB" => "-1.5",
-  "DRUM_AIR_DB" => "3.5",
-  "DRUM_PRESENCE_DB" => "3.0",
-  # Pads step back so kick/hat/vocal occupy the mix.
-  "HARM_MIX_WEIGHT" => "1.05",
-  "HARM_BUS_VOL" => "1.35",
+  # Quieter drum bus — kit sits under pads/vox (~−3…−4 dB vs previous hot path).
+  "FLYLO_OVERLAY_GAIN" => "0.95",
+  "FLYLO_SUB_MIX" => "1.0",
+  "FLYLO_TOP_MIX" => "0.65",
+  "FLYLO_MERGE_BOOST" => "1.05",
+  "FLYLO_BASE_DRUM_VOL" => "0.85",
+  "DRUM_BUS_VOL" => "0.95",
+  "DRUM_BUS_GAIN" => "0.92",
+  "DRUM_MIX_WEIGHT" => "0.95",
+  "DRUM_PEAK_DB" => "-3.5",
+  "DRUM_AIR_DB" => "1.8",
+  "DRUM_PRESENCE_DB" => "1.5",
+  # Pads a bit more present now that drums are stepped back.
+  "HARM_MIX_WEIGHT" => "1.12",
+  "HARM_BUS_VOL" => "1.4",
   "HARM_BODY_DB" => "2.2",
   "HARM_MID_DB" => "1.8",
   "HARM_PRESENCE_DB" => "1.6",
   "HARM_AIR_DB" => "0.8",
   "HARM_SUB_CUT_DB" => "-4.0",
   "HARM_SUB_SHELF_DB" => "0.6",
-  "SIDECHAIN_DRUM_WEIGHT" => "1.65",
-  "SIDECHAIN_HARM_WEIGHT" => "1.05",
-  "FLYLO_CHORD_DUCK" => "0.88",
-  "HARMONIC_PADS_WEIGHT" => "1.05",
-  "HARMONIC_PADS_VOLUME" => "1.15",
-  "PAD_VOL" => "58",
+  "SIDECHAIN_DRUM_WEIGHT" => "1.2",
+  "SIDECHAIN_HARM_WEIGHT" => "1.15",
+  "FLYLO_CHORD_DUCK" => "0.9",
+  "HARMONIC_PADS_WEIGHT" => "1.12",
+  "HARMONIC_PADS_VOLUME" => "1.2",
+  "PAD_VOL" => "62",
   # Lead must cut over the stacked pad bed.
   "HARMONIC_SCALE_LEAD_WEIGHT" => "1.25",
   "HARMONIC_SCALE_LEAD_VOLUME" => "1.55",
@@ -7501,7 +7513,9 @@ DILLA_STYLE_DEFAULTS = {
   # drop-out for arrangement contrast — see DillaGroove.phrase_drift_sec and
   # DillaRhythm.periodic_layer_drop_gain.
   "PHRASE_DRIFT" => "1",
-  "ARRANGEMENT_VARIATION" => "1"
+  "ARRANGEMENT_VARIATION" => "1",
+  "THEORY_RUNTIME" => "1",
+  "THEORY_DILLA" => "1"
 }.freeze
 
 # Comfortable listening: fewer layers, warmer bed, quieter tops/vox, calmer master.
@@ -7746,25 +7760,25 @@ STREAM_EXTRA_DEFAULTS = {
   "SPEAK_PITCH" => "+8Hz",
   "SPEAK_VOL" => "0.82",
   "SPEAK_QUIRK" => "0.12",
-  # Kit balanced for speakers (force after style table) — tops quieter than kicks.
+  # Stream kit — quieter than before (matches DILLA_STYLE drum step-back).
   "KICKS" => "1",
   "POCKET_KICKS" => "1",
   "FLYLO_DRUMS_ONLY" => "0",
-  "FLYLO_DRUM_OVERLAY" => "1",
-  "FLYLO_QUINT_HATS" => "1",
-  "BACKBEAT_CLAP" => "1",
-  "KICK_GAIN" => "1.2",
-  "FLYLO_KICK_GAIN" => "1.45",
-  "FLYLO_OVERLAY_GAIN" => "1.35",
-  "FLYLO_SUB_MIX" => "1.55",
-  "FLYLO_TOP_MIX" => "0.95",
-  "FLYLO_MERGE_BOOST" => "1.55",
-  "FLYLO_BASE_DRUM_VOL" => "1.0",
-  "DRUM_BUS_VOL" => "1.45",
-  "DRUM_BUS_GAIN" => "1.35",
-  "DRUM_MIX_WEIGHT" => "1.55",
-  "DRUM_AIR_DB" => "3.5",
-  "DRUM_PRESENCE_DB" => "3.0",
+  "FLYLO_DRUM_OVERLAY" => "0",
+  "FLYLO_QUINT_HATS" => "0",
+  "BACKBEAT_CLAP" => "0",
+  "KICK_GAIN" => "0.68",
+  "FLYLO_KICK_GAIN" => "0.75",
+  "FLYLO_OVERLAY_GAIN" => "0.95",
+  "FLYLO_SUB_MIX" => "1.0",
+  "FLYLO_TOP_MIX" => "0.65",
+  "FLYLO_MERGE_BOOST" => "1.05",
+  "FLYLO_BASE_DRUM_VOL" => "0.85",
+  "DRUM_BUS_VOL" => "0.95",
+  "DRUM_BUS_GAIN" => "0.92",
+  "DRUM_MIX_WEIGHT" => "0.95",
+  "DRUM_AIR_DB" => "1.8",
+  "DRUM_PRESENCE_DB" => "1.5",
   "HARM_MIX_WEIGHT" => "1.05",
   "HARM_BUS_VOL" => "1.35",
   "HARMONIC_PADS_WEIGHT" => "1.05",
@@ -7794,8 +7808,6 @@ STREAM_EXTRA_DEFAULTS = {
   "STREAM_LRA" => "9",
   "STREAM_ROTATE_LEAD" => "1",
   "STREAM_ROTATE_SYNTH" => "1",
-  # All style profiles (dilla/comfort/warp) × tracks, sequential by default.
-  "STREAM_STYLE_SEQUENCE" => "1",
   "STREAM_LEAD_MIDI_RICH" => "1",
   "LEAD_FORCE_ARP" => "1",
   "MELODIC_LEAD" => "0",
@@ -7827,7 +7839,9 @@ STREAM_EXTRA_DEFAULTS = {
 }.freeze
 
 # Forced on every stream boot after style locks (force:true was wiping creativity).
-STREAM_CREATIVE_MAX = STREAM_EXTRA_DEFAULTS.freeze
+# Kit/creative force layer — never force SPEAK* (soft default only). Operator
+# SPEAK=1 must survive apply_dilla_style + STREAM_CREATIVE_MAX re-force.
+STREAM_CREATIVE_MAX = STREAM_EXTRA_DEFAULTS.reject { |k, _| k.start_with?("SPEAK") }.freeze
 
 def stream_track_timeout_sec
   sec = (ENV["STREAM_TRACK_TIMEOUT"] || "420").to_i
@@ -7939,6 +7953,7 @@ DILLA_STYLE_LOCK_KEYS = (
     MELODIC_LEAD SCALE_LEAD CREATIVE_LEAD HARMONY_LEAD
     SYNTH_MORPH SYNTH_CYCLE LEAD_MORPH EXPERIMENTAL_LEADS
     ARTIST_VERIFIED_ONLY STREAM_CREATIVE_FREEDOM STREAM_ROTATE_SYNTH STREAM_ROTATE_LEAD
+    DRUM_PRESET POCKET_SET EXTERNAL_KIT FM_DRUMS SWING FLYLO_DRUM_OVERLAY
   ]
 ).freeze
 
@@ -7951,6 +7966,20 @@ DILLA_PAD_LEAD_LOCK_KEYS = %w[
   HARMONIC_SCALE_LEAD_WEIGHT HARMONIC_SCALE_LEAD_VOLUME
   HARMONIC_HARMONY_LEAD_WEIGHT HARMONIC_HARMONY_LEAD_VOLUME
   HARMONIC_LEAD_WEIGHT HARMONIC_LEAD_VOLUME
+].freeze
+
+# Drum DNA cycled each stream slot (preset grid + pocket set + sample kit).
+# Applied after style force so DRUM_PRESET locks cannot pin dilla_slight forever.
+# Soulful hip-hop only — no boom_808 / industrial / hard-trap rotation.
+STREAM_DRUM_ROTATION = [
+  { preset: "dilla_slight", pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "dilla_drunk",  pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "mpc3000",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "madlib_dusty", pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "sp1200",       pocket: "classic",  kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "dilla_slight", pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
+  { preset: "mpc3000",      pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
+  { preset: "dilla_drunk",  pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
 ].freeze
 
 # Lead arp modes cycled each stream track (real figures, not held wash).
@@ -8620,51 +8649,30 @@ end
 
 def apply_stream_listenability_defaults!
   apply_best_defaults!
-  # Style-sequence (default): do NOT lock the whole stream to comfort —
-  # each slot applies dilla/comfort/warp in turn. Legacy single-profile
-  # stream still defaults to comfort unless STREAM_PUNCH=1.
-  if stream_style_sequence_enabled?
-    ENV["STREAM_STYLE_SEQUENCE"] = "1" if ENV["STREAM_STYLE_SEQUENCE"].to_s.empty?
-    record_config_provenance!("STREAM_STYLE_SEQUENCE", "stream_default_all_styles", "soft")
-  elsif ENV["STREAM_PUNCH"] == "1"
-    ENV["STREAM_COMFORT"] = "0" if ENV["STREAM_COMFORT"].to_s.empty?
-  elsif ENV["STREAM_COMFORT"].to_s.empty? && ENV["DILLA_COMFORT"].to_s.empty?
-    ENV["STREAM_COMFORT"] = "1"
-    record_config_provenance!("STREAM_COMFORT", "stream_default_comfort", "soft")
-  end
+  # One engine DNA. Optional mix knobs only (STREAM_COMFORT / RENDER_MODE=warp).
   soft_fill_env!(STREAM_EXTRA_DEFAULTS, label: "STREAM_EXTRA_DEFAULTS")
   if stream_deep?
     ENV["DILLA_DEEP"] = "1" if ENV["DILLA_DEEP"].to_s.empty?
     soft_fill_env!(DILLA_DEEP_DEFAULTS, label: "DILLA_DEEP_DEFAULTS")
   else
     fast = STREAM_FAST_DEFAULTS.dup
-    if stream_iterate_enabled?
-      STREAM_ITERATE_OVERRIDE_KEYS.each { |key| fast.delete(key) }
-    end
+    STREAM_ITERATE_OVERRIDE_KEYS.each { |key| fast.delete(key) } if stream_iterate_enabled?
     soft_fill_env!(fast, label: "STREAM_FAST_DEFAULTS")
   end
-  if stream_iterate_enabled? && !(comfort_mode? && !stream_style_sequence_enabled?)
-    soft_fill_iterate!(STREAM_ITERATE_TUNING, locked_keys: DILLA_STYLE_LOCK_KEYS)
-  end
-  if (ENV.fetch("STREAM_SOUL", "1") != "0" || comfort_mode?) && !stream_style_sequence_enabled?
+  soft_fill_iterate!(STREAM_ITERATE_TUNING, locked_keys: DILLA_STYLE_LOCK_KEYS) if stream_iterate_enabled?
+  if ENV.fetch("STREAM_SOUL", "1") != "0"
     soft_fill_env!(STREAM_SOUL_DEFAULTS, label: "STREAM_SOUL_DEFAULTS")
-    ensure_learned_engine_seeded!
-    apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
+  ensure_learned_engine_seeded!
+  apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
   normalize_render_mode!
   ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
-  # Style-sequence applies per-slot DNA in the stream loop — boot only seeds
-  # learnings + baseline. Single-profile stream still locks full DNA here.
-  if stream_style_sequence_enabled?
-    ensure_learned_engine_seeded!
-  else
-    apply_dilla_style!(force: true)
-    if comfort_mode?
-      force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
-    else
-      force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
-      force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
-    end
+  apply_dilla_style!(force: true)
+  # Optional sofa mix knob — not a separate "style".
+  force_env!(DILLA_COMFORT_DEFAULTS.reject { |k, _| k.start_with?("SPEAK") }, label: "DILLA_COMFORT_DEFAULTS") if comfort_mode?
+  unless comfort_mode?
+    force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
+    force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
   end
   ENV["PLAY_VOL"] = "1" if ENV["PLAY_VOL"].to_s.empty?
   ENV["DILLA_STREAMING"] = "1"
@@ -8852,63 +8860,31 @@ def stream_play_track!(bars_count)
   end
 end
 
-# Non-stop chord/pad showcase: renders and plays each track once (full
-# playback through real speakers, ffplay -autoexit), then moves on, forever.
-# Ctrl-C to stop. No LLM/agent involved — plain local playback.
-#
-# Default: full style matrix, sequential —
-#   for each track (shortcuts → priority → rest):
-#     dilla → comfort → warp
-# So every progression is heard under every profile before moving on.
-# Opt out: STREAM_STYLE_SEQUENCE=0. Pin one track: STREAM_LOCK=1.
+# Non-stop: one engine (dilla.rb DNA). Rotates progressions + drums only.
+# Ctrl-C to stop. Pin one track: STREAM_LOCK=1 + STREAM_TRACK=…
 
 DILLA_STREAM_PRIORITY = %w[
   get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
   maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
+  neo_soul neo_soul_pocket erykah_minor
 ].freeze
 
-STYLE_PROFILE_CYCLE = %i[dilla comfort warp].freeze
-# Named product track shortcuts — always lead the ordered track list.
-STYLE_TRACK_SHORTCUTS = %w[
+STREAM_HEAD_TRACKS = %w[
   get_dis_money
+  untitled_how_does_it_feel
+  neo_soul
+  neo_soul_pocket
   chromatic_mediant_drift
   baroque
-  neo_soul
   aydin_jazz_turn
 ].freeze
 
-# Comfort-only pack when STREAM_STYLE_SEQUENCE=0 and comfort_mode?.
-COMFORT_STREAM_ROTATION = %w[
-  mixo_sus_loop
-  phrygian_gold_arc
-  chromatic_mediant_drift
-  glasper_quartal
-  quartal_west_coast
-  neo_soul_pocket
-  warm_minor_arc
-  minor_turnaround
-].freeze
-
-def stream_style_sequence_enabled?
-  return false if ENV["STREAM_LOCK"] == "1"
-  return false if ENV["STREAM_STYLE_SEQUENCE"] == "0"
-  ENV.fetch("STREAM_STYLE_SEQUENCE", "1") != "0"
-end
-
-# Ordered unique tracks: shortcuts → priority songs → remaining STREAM_ROTATION.
-def style_sequence_tracks
-  head = STYLE_TRACK_SHORTCUTS.map(&:to_s)
+def stream_progression_order
+  head = STREAM_HEAD_TRACKS.map(&:to_s)
   all = STREAM_TRACKS.map(&:to_s).uniq
   priority = DILLA_STREAM_PRIORITY.select { |t| all.include?(t) && !head.include?(t) }
   rest = all.reject { |t| head.include?(t) || priority.include?(t) }
   head + priority + rest
-end
-
-# Full matrix: each track under dilla, then comfort, then warp — deterministic.
-def build_style_sequence
-  style_sequence_tracks.flat_map do |track|
-    STYLE_PROFILE_CYCLE.map { |profile| { profile: profile, track: track } }
-  end
 end
 
 def stream_track_order
@@ -8920,87 +8896,33 @@ def stream_track_order
     return [key] if known
     dmesg_warn("stream unknown lock #{lock} — full rotation")
   end
-  return style_sequence_tracks.map(&:to_sym) if stream_style_sequence_enabled?
-
-  if comfort_mode?
-    pack = COMFORT_STREAM_ROTATION.select { |t|
-      DillaLofiMachine.harmony_profile?(t) || STREAM_TRACKS.include?(t.to_sym) || STREAM_TRACKS.include?(t)
-    }
-    return pack.map(&:to_sym) if pack.any?
-  end
-  style_sequence_tracks.map(&:to_sym)
+  stream_progression_order.map(&:to_sym)
 end
 
-# Wipe profile flags that would poison the next slot, then force DNA.
-def clear_stream_profile_flags!
-  ENV["STREAM_PUNCH"] = "0"
-  ENV["STREAM_COMFORT"] = "0"
-  ENV["DILLA_COMFORT"] = "0"
+def stream_drum_rotate_enabled?
+  ENV.fetch("STREAM_DRUM_ROTATE", "1") != "0"
 end
 
-# Apply one style-sequence slot. Order matters:
-#   1) clear flags  2) force profile DNA  3) pin track  4) rotate only when safe
-# Comfort must not be undone by reassert_pad_lead_locks! or multi-lead rotation.
-def apply_stream_style_slot!(slot, index: 0)
-  profile = slot[:profile].to_sym
-  track = slot[:track].to_s
-  clear_stream_profile_flags!
+# Rotate drum grid / pocket / kit after DNA force so beats actually change.
+def stream_rotate_drums!(index)
+  return unless stream_drum_rotate_enabled?
 
-  case profile
-  when :comfort
-    ENV["STREAM_COMFORT"] = "1"
-    ENV["DILLA_COMFORT"] = "1"
-    ENV["RENDER_MODE"] = "dilla"
-    apply_dilla_style!(force: true)
-    force_env!(DILLA_COMFORT_DEFAULTS, label: "slot:comfort")
-    # Soft voice color only — do not enable multi-lead soup over sofa mix.
-    unless @stream_user_lead_locked
-      ENV["LEAD_ARP"] = "1"
-      ENV["LEAD_ARP_MODE"] = "melodic_soul"
-      ENV["LEAD_VOICE"] = STREAM_LEAD_VOICE_ROTATION[index % STREAM_LEAD_VOICE_ROTATION.length]
-      ENV["MELODIC_LEAD"] = "1"
-      ENV["HARMONY_LEAD"] = "0"
-      ENV["CREATIVE_LEAD"] = "0"
-      ENV["EXPERIMENTAL_LEADS"] = "0"
-      ENV["SCALE_LEAD"] = "0"
-      ENV["LEAD_FORCE_ARP"] = "0"
-    end
-  when :warp
-    # Baseline dilla DNA first (force), then warp table force so soft-fill
-    # cannot leave donuts/yancey from a prior punch slot.
-    ENV["RENDER_MODE"] = "dilla"
-    apply_dilla_style!(force: true)
-    ENV["RENDER_MODE"] = "warp"
-    force_env!(RENDER_MODE_DEFAULTS[:warp], label: "slot:warp")
-    force_env!(STREAM_CREATIVE_MAX, label: "slot:warp/creative")
-    stream_rotate_voices_and_arps!(index) unless @stream_user_lead_locked
-    reassert_pad_lead_locks! unless @stream_user_pad_locked
-  else # :dilla punch
-    ENV["STREAM_PUNCH"] = "1"
-    ENV["RENDER_MODE"] = "dilla"
-    apply_dilla_style!(force: true)
-    force_env!(STREAM_CREATIVE_MAX, label: "slot:dilla/creative")
-    stream_rotate_voices_and_arps!(index) unless @stream_user_lead_locked
-    reassert_pad_lead_locks! unless @stream_user_pad_locked
-  end
-
-  ENV["TRACK"] = track
-  ENV["PROGRESSION"] = track
-  apply_track_soul_profile!(track, force: !@stream_user_pad_locked && !@stream_user_lead_locked)
-  # Track soul may set PAD_VOICE; re-force comfort pad locks if still on comfort.
-  if profile == :comfort
-    force_env!(
-      DILLA_COMFORT_DEFAULTS.slice(
-        "PAD_VOICE", "PAD_ARP_MODE", "PAD_VOL", "MELODIC_LEAD", "HARMONY_LEAD",
-        "CREATIVE_LEAD", "EXPERIMENTAL_LEADS", "SCALE_LEAD", "FLYLO_DRUM_OVERLAY",
-        "DRUM_CHOPS", "STREAM_LUFS"
-      ),
-      label: "slot:comfort/reassert"
-    )
-  end
-  record_config_provenance!("TRACK", "style_sequence[#{index}]=#{profile}", "force")
-  record_config_provenance!("RENDER_MODE", "style_sequence[#{index}]=#{profile}", "force")
-  profile
+  d = STREAM_DRUM_ROTATION[index % STREAM_DRUM_ROTATION.length]
+  ENV["DRUM_PRESET"] = d[:preset]
+  ENV["POCKET_SET"] = d[:pocket]
+  ENV["EXTERNAL_KIT"] = d[:kit] if d[:kit] && !d[:kit].empty?
+  ENV["FM_DRUMS"] = d[:fm] if d[:fm]
+  ENV["FLYLO_DRUM_OVERLAY"] = d[:flylo] || "0"
+  ENV["DRUM_CHOPS"] = "0" unless ENV["FORCE_DRUM_CHOPS"] == "1"
+  ENV["ECLECTIC_PERC"] ||= "0"
+  ENV["RAW_KICK"] = "1"
+  ENV["DRUM_SAMPLE_RAW"] = "1"
+  preset = DillaLofiMachine::DRUM_PRESETS[d[:preset].to_sym]
+  ENV["SWING"] = preset[:swing].to_s if preset
+  ENV["BPM"] = preset[:bpm].to_s if ENV["STREAM_DRUM_BPM"] == "1" && preset&.dig(:bpm)
+  @current_external_kit = nil
+  record_config_provenance!("DRUM_PRESET", "stream_rotate_drums![#{index}]", "force")
+  d
 end
 
 # Per-track variety: rotate lead arp mode, lead/pad voice, force true arps + synth cycle.
@@ -9077,11 +8999,11 @@ def stream(bars_count = STREAM_BARS_COUNT)
     stream_log = File.join(ROOT, "stream.log")
     env_pass = %w[
       RENDER_MODE STREAM_SOUL STREAM_COMFORT STREAM_PUNCH DILLA_COMFORT SPEAK RAP_VOCAL
-      STREAM_DEMO STREAM_TRACK STREAM_LOCK STREAM_STYLE_SEQUENCE
+      STREAM_DEMO STREAM_TRACK STREAM_LOCK SPEAK
       FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN FLYLO_DRUM_OVERLAY
       DRUM_BUS_VOL DRUM_BUS_GAIN DRUM_MIX_WEIGHT DRUM_AIR_DB DRUM_PRESENCE_DB
       KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY PAD_VOL STREAM_LUFS
-      STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH
+      STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH STREAM_DRUM_ROTATE THEORY_RUNTIME THEORY_BACH
     ].filter_map { |k| ENV[k] && !ENV[k].empty? ? "#{k}=#{Shellwords.escape(ENV[k])}" : nil }
                  .join(" ")
     cmd = "cd #{Shellwords.escape(ROOT)} && while true; do " \
@@ -9112,9 +9034,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
   @stream_user_pad_locked = user_pad_locked
   @stream_user_lead_locked = user_lead_locked
   apply_stream_listenability_defaults!
-  # Default: sequential style slots (all profiles + tracks). STREAM_LOCK pins one.
-  style_slots = stream_style_sequence_enabled? ? build_style_sequence : nil
-  order = style_slots ? style_slots.map { |s| s[:track] } : stream_track_order
+  order = stream_track_order
   # Ruby can't safely reload this file in-process (the CLI dispatch at the
   # bottom runs unconditionally, so a mid-run `load` would re-trigger it —
   # risk of recursion). exec-ing a fresh process instead is safe: it fully
@@ -9131,50 +9051,35 @@ def stream(bars_count = STREAM_BARS_COUNT)
          end
   DillaDmesg.boot!(mode: ENV["RENDER_MODE"] || "dilla", cmd: "stream")
   DillaDmesg.stream!(mode: mode, bars: bars_count, order_n: order.length)
-  if style_slots
-    preview = style_slots.first(6).map { |s| "#{s[:profile]}:#{s[:track]}" }.join(",")
-    dmesg("style-seq #{style_slots.length} slots [#{preview}…] (ctrl-c stop)", unit: "stream0", parent: "dilla0")
-  else
-    dmesg("cycle #{order.first(8).join(',')}#{order.length > 8 ? '…' : ''} (ctrl-c stop)", unit: "stream0", parent: "dilla0")
-  end
+  dmesg("cycle #{order.first(8).join(',')}#{order.length > 8 ? '…' : ''} (ctrl-c stop)", unit: "stream0", parent: "dilla0")
   dmesg("iterate log #{File.basename(STREAM_ITERATE_LOG.to_s)}", unit: "stream0", parent: "dilla0") if stream_iterate_enabled?
   loop do
-    (style_slots || order).each_with_index do |item, idx|
+    order.each_with_index do |item, idx|
       if File.mtime(__FILE__) > self_mtime
         dmesg("dilla.rb mtime changed — exec restart", unit: "stream0", parent: "dilla0")
-        # Keep supervisor/lock flags so we do not spawn a nested while-true
-        # loop (or a second Terminal tab) on every mid-stream code reload.
         ENV["DILLA_STREAM_SUPERVISOR"] = "1"
         ENV["DILLA_STREAM_LAUNCHED"] = "1"
         exec(Gem.ruby, __FILE__, "stream", bars_count.to_s)
       end
-      if style_slots
-        slot = item
-        profile = apply_stream_style_slot!(slot, index: idx)
-        track = slot[:track].to_s
-        stream_track_banner("style=#{profile}")
-      else
-        track = item.to_s
-        # Soul profile first, then rotate lead/synth (overrides locked soul lead).
+      track = item.to_s
+      apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
+      stream_rotate_voices_and_arps!(idx) unless user_lead_locked
+      reassert_pad_lead_locks! unless user_pad_locked
+      ENV["TRACK"] = track
+      ENV["PROGRESSION"] = track unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
+      stream_rotate_drums!(idx)
+      reassert_dilla_style_locks! if dilla_style? && ENV["STREAM_LOCK"] == "1"
+      if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
+        track = rb
         apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
         stream_rotate_voices_and_arps!(idx) unless user_lead_locked
         reassert_pad_lead_locks! unless user_pad_locked
-        # Keep progression aligned with the track id (style lock would pin TRACK forever).
         ENV["TRACK"] = track
-        ENV["PROGRESSION"] = track unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
-        reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
-        if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
-          track = rb
-          apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
-          stream_rotate_voices_and_arps!(idx) unless user_lead_locked
-          reassert_pad_lead_locks! unless user_pad_locked
-          ENV["TRACK"] = track
-          ENV["PROGRESSION"] = track
-          reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
-          stream_track_banner("← playlist.brgen.no (rotation #{item})")
-        else
-          stream_track_banner
-        end
+        ENV["PROGRESSION"] = track
+        stream_rotate_drums!(idx)
+        stream_track_banner("← playlist.brgen.no")
+      else
+        stream_track_banner
       end
       begin
         stream_play_track!(bars_count)
@@ -12005,6 +11910,90 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   path
 end
 
+# Soft choir pad on chord tones (Singers Unlimited–like ooh/aah). Default on
+# via CHOIR_VOX=1; set CHOIR_VOX=0 to disable. Gain via CHOIR_VOX_GAIN (0–1).
+def choir_vox_enabled?
+  ENV.fetch("CHOIR_VOX", "1") != "0" && fluidsynth_pad_available?
+end
+
+# Thin full pad voicings to 2–3 mid/upper chord tones so choir reads as
+# airy harmony, not a second dense pad stack.
+def choir_chord_tone_events(pad_events)
+  pad_events.filter_map do |(t, v, chord, sustain)|
+    next unless chord.is_a?(Hash) && chord[:hz].is_a?(Array) && chord[:hz].any?
+
+    sorted = chord[:hz].map(&:to_f).select(&:positive?).sort
+    next if sorted.empty?
+
+    # Prefer 3rd + 5th + 7th/9th when available; drop the bass note if dense.
+    tones =
+      if sorted.length >= 4
+        [sorted[1], sorted[2], sorted[-1]]
+      elsif sorted.length == 3
+        sorted
+      else
+        sorted
+      end
+    # Lift into choir register (~C4–C5) without changing pitch class.
+    lifted = tones.map do |hz|
+      h = hz
+      h *= 2 while h < 220.0
+      h /= 2 while h > 880.0
+      h
+    end.uniq
+    next if lifted.empty?
+
+    soft_v = (v.to_f * 0.72).clamp(0.15, 0.85)
+    [t, soft_v, chord.merge(hz: lifted, name: "#{chord[:name]}·choir"), sustain]
+  end
+end
+
+def render_choir_vox_layer(path, pad_events, duration)
+  events = choir_chord_tone_events(pad_events)
+  return nil if events.empty?
+
+  seed = (@render_seed || 0).to_i
+  patch_id = (seed + events.length) % 2 == 0 ? :choir_aahs : :voice_oohs
+  patch = synth_patch_by_id(patch_id) || synth_patch_by_id(:choir_aahs)
+  return nil unless patch
+
+  voice = patch_voice_for(patch) || { sf2: pad_soundfont_path, bank: 0, program: 52, patch: patch }
+  voice = voice.merge(patch: patch) if voice[:patch].nil?
+  render_one_pad_layer!(path, events, duration, voice, :warm)
+  return nil unless File.file?(path)
+
+  # Extra softness: slow swell + gentle stereo width, low ceiling.
+  soft = "#{path}.soft.wav"
+  gain = (ENV["CHOIR_VOX_GAIN"] || "0.28").to_f.clamp(0.05, 0.65)
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-af",
+        "afade=t=in:st=0:d=0.9,highpass=f=200,lowpass=f=4200," \
+        "aecho=0.55:0.6:120|220:0.28|0.14,volume=#{gain.round(3)}," \
+        "alimiter=limit=0.72:level_out=0.78",
+        "-c:a", "pcm_s16le", soft
+    FileUtils.mv(soft, path) if File.file?(soft)
+  rescue StandardError => e
+    warn "choir_vox soft pass skipped: #{e.message}"
+    FileUtils.rm_f(soft)
+  end
+  path
+end
+
+def mix_choir_into_pads!(pads_path, choir_path, duration)
+  return unless pads_path && choir_path && File.file?(pads_path) && File.file?(choir_path)
+
+  out = "#{pads_path}.choir_mix.wav"
+  # Pads dominate; choir is a soft bed under them.
+  sh! "ffmpeg", "-y", "-i", pads_path, "-i", choir_path,
+      "-filter_complex",
+      "[0:a]apad=whole_dur=#{duration}[p];[1:a]apad=whole_dur=#{duration}[c];" \
+      "[p][c]amix=inputs=2:weights=1.0 0.55:duration=first:normalize=0," \
+      "alimiter=limit=0.96:level_out=0.97[out]",
+      "-map", "[out]", "-t", duration.to_s, "-c:a", "pcm_s16le", out
+  FileUtils.mv(out, pads_path) if File.file?(out)
+  FileUtils.rm_f(choir_path)
+end
+
 # 81 Sawtooth (original), 87 Lead 8 "bass+lead" (GM's own name traces to the
 # classic Prophet-5 "BigLead" patch — literally the historical big-lead
 # archetype), 84 Lead 5 Charang (aggressive/bright, cuts through), 86 Lead 7
@@ -12171,6 +12160,15 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     render_pad_via_fluidsynth(pads_path, pad_events, duration)
   else
     render_native_pad_wav(pads_path, pad_events, duration)
+  end
+  # Soft Singers Unlimited–like ooh/aah on chord tones under the pad bed.
+  if choir_vox_enabled?
+    choir_path = "#{path}.choir_vox.wav"
+    if render_choir_vox_layer(choir_path, pad_events, duration)
+      mix_choir_into_pads!(pads_path, choir_path, duration)
+    else
+      FileUtils.rm_f(choir_path)
+    end
   end
   n_bars_est = (duration / ((60.0 / cfg[:bpm]) * 4.0)).ceil
   # One clean melodic lead by default — scale/creative layers turned the top line into soup.
@@ -12601,30 +12599,28 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   unless dilla_pocket_drums_enabled?
     bar_p = beat_p * 4.0
   else
-    # Polyrhythm layer: a 3-against-4 cycle (bar/3 spacing) independent of the
-    # main 16-grid groove entirely — real polyrhythm, not a variation of the
-    # existing pattern. Reuses the ghost-hit sample at low, varying velocity.
-    poly_beat = (beat_p * 4.0) / 3.0
-    events[:poly] = (0...(duration / poly_beat).floor).map do |i|
-      t = (i * poly_beat).round(6)
-      [t, (0.16 + 0.07 * Math.sin(i * 1.7)).clamp(0.08, 0.3), :ghost]
-    end
-    # Shaker: steady 8th-note pulse (the "shhh" bed real shakers provide),
-    # velocity-humanized. Cowbell: sparse, syncopated, deliberately random —
-    # a real cowbell part is never on a predictable grid.
-    step_p8 = beat_p / 2.0
-    events[:shaker] = (0...(duration / step_p8).floor).map do |i|
-      t = (i * step_p8).round(6)
-      [t, dilla_velocity(0.55, i / 8, i % 8, spread: 0.15)]
-    end
-    cowbell_rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + 41)
-    events[:cowbell] = (0...(duration / beat_p).floor).filter_map do |i|
-      next unless cowbell_rng.rand < 0.07
-      t = (i * beat_p + cowbell_rng.rand(beat_p * 0.6)).round(6)
-      [t, dilla_velocity(0.3, i, 0, spread: 0.1)]
+    # Opt-in only — poly + constant 8th shaker + cowbell turned the pocket into
+    # a kitchen-sink loop. Set ECLECTIC_PERC=1 for experimental clutter.
+    if ENV.fetch("ECLECTIC_PERC", "0") == "1"
+      poly_beat = (beat_p * 4.0) / 3.0
+      events[:poly] = (0...(duration / poly_beat).floor).map do |i|
+        t = (i * poly_beat).round(6)
+        [t, (0.16 + 0.07 * Math.sin(i * 1.7)).clamp(0.08, 0.3), :ghost]
+      end
+      step_p8 = beat_p / 2.0
+      events[:shaker] = (0...(duration / step_p8).floor).map do |i|
+        t = (i * step_p8).round(6)
+        [t, dilla_velocity(0.55, i / 8, i % 8, spread: 0.15)]
+      end
+      cowbell_rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + 41)
+      events[:cowbell] = (0...(duration / beat_p).floor).filter_map do |i|
+        next unless cowbell_rng.rand < 0.07
+        t = (i * beat_p + cowbell_rng.rand(beat_p * 0.6)).round(6)
+        [t, dilla_velocity(0.3, i, 0, spread: 0.1)]
+      end
     end
     bar_p = beat_p * 4.0
-    schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
+    schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars) if ENV.fetch("ECLECTIC_PERC", "0") == "1"
   end
 
   drum_tmp     = dilla_render_tmp("drums")
@@ -15239,6 +15235,8 @@ FLAG_ENV = {
   "harmony-lead" => "HARMONY_LEAD", "harmony-lep-mode" => "HARMONY_LEP_MODE",
   "harmony-arp-style" => "HARMONY_ARP_STYLE", "stream-soul" => "STREAM_SOUL",
   "stream-style-sequence" => "STREAM_STYLE_SEQUENCE",
+  "stream-drum-rotate" => "STREAM_DRUM_ROTATE",
+  "stream-drum-bpm" => "STREAM_DRUM_BPM",
   "electronium-classic" => "ELECTRONIUM_CLASSIC", "electronium-render" => "ELECTRONIUM_RENDER",
   "electronium-septuplet" => "ELECTRONIUM_SEPTUPLET",
   "stream-track" => "STREAM_TRACK", "stream-lock" => "STREAM_LOCK",
@@ -15376,7 +15374,7 @@ DISPATCH = {
     puts "wrote #{path} (#{cfg[:bpm].round} BPM, #{n} bars, DFAM 8-step)"
     play(path) if ARGV.shift != "no-play"
   end,
-  # Canonical render command. Aliases: beat, camel, punch → dilla.
+  # One render path. Mix knobs via ENV (STREAM_COMFORT, RENDER_MODE=…), not command names.
   "dilla" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
@@ -15385,27 +15383,6 @@ DISPATCH = {
       apply_dilla_style!(force: false)
       apply_comfort_style!(force: true) if comfort_mode?
     end
-    render_dilla(dest, n_bars)
-  end,
-  # Sofa overlay on dilla DNA. Aliases: sofa, smooth → comfort.
-  "comfort" => lambda do
-    dest = ARGV.shift || File.join(OUTPUT_DIR, "comfort.wav")
-    n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : 16
-    ENV["STREAM_COMFORT"] = "1"
-    ENV["DILLA_COMFORT"] = "1"
-    ENV["RENDER_MODE"] = "dilla"
-    apply_best_defaults! unless ENV["DILLA_RAW"] == "1"
-    apply_dilla_style!(force: true)
-    force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
-    render_dilla(dest, n_bars)
-  end,
-  # Warp / Brainfeeder bias (RENDER_MODE=warp).
-  "warp" => lambda do
-    dest = ARGV.shift || File.join(OUTPUT_DIR, "warp.wav")
-    n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : 32
-    ENV["RENDER_MODE"] = "warp"
-    apply_best_defaults! unless ENV["DILLA_RAW"] == "1"
-    apply_render_mode!
     render_dilla(dest, n_bars)
   end,
   "hiphop" => -> { render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3")) },
@@ -15507,19 +15484,8 @@ DISPATCH = {
   end
 }.freeze
 
-COMMAND_ALIASES = {
-  "midi" => "electronium",
-  # Style flatten: one DNA path, many names.
-  "beat" => "dilla",
-  "camel" => "dilla",
-  "punch" => "dilla",
-  "sofa" => "comfort",
-  "smooth" => "comfort",
-  "ingest" => "learn",
-  "download" => "source",
-  "flylo-learn" => "learn-flylo"
-}.freeze
-COMMANDS = (DISPATCH.keys + COMMAND_ALIASES.keys).sort.freeze
+# No command aliases — every name is a real DISPATCH key (or help).
+COMMANDS = DISPATCH.keys.sort.freeze
 
 def render_output_path?(token)
   token =~ /\.(wav|mp3|flac|ogg|m4a|aiff?)\z/i
@@ -15537,21 +15503,18 @@ if __FILE__ == $PROGRAM_NAME
   end
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: sequential all-styles stream (dilla→comfort→warp×tracks).
-    # STREAM_STYLE_SEQUENCE=0 + STREAM_COMFORT=1 restores sofa-only cycle.
+    # Bare invoke: continuous stream — one DNA, rotating progressions + drums.
     normalize_render_mode!
     ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
     ENV["STREAM_SOUL"] = "1" if ENV["STREAM_SOUL"].to_s.empty?
-    ENV["SPEAK"] = "0" if ENV["SPEAK"].to_s.empty?
     ENV["STREAM_CONTINUOUS"] = "1" if ENV["STREAM_CONTINUOUS"].to_s.empty?
-    ENV["STREAM_STYLE_SEQUENCE"] = "1" if ENV["STREAM_STYLE_SEQUENCE"].to_s.empty?
-    apply_dilla_style!(force: false) unless stream_style_sequence_enabled?
+    apply_dilla_style!(force: false)
     stream((ENV["BARS"] || ENV["STREAM_BARS"] || "16").to_i)
-  elsif render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd)
+  elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!
   else
-    handler = DISPATCH[COMMAND_ALIASES.fetch(cmd, cmd)]
+    handler = DISPATCH[cmd]
     handler ? handler.call : help
   end
 end

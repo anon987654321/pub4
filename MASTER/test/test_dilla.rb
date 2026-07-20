@@ -71,138 +71,135 @@ class TestDilla < Minitest::Test
     assert_empty result, "AUDIO_STOCKS entries missing parameters grade_filter reads"
   end
 
-  def test_commands_list_matches_dispatch_table_and_aliases_resolve
+  def test_commands_list_is_dispatch_only_no_aliases
     result = eval_in_engine(<<~RUBY)
       puts JSON.generate(
         commands: COMMANDS,
         dispatch_keys: DISPATCH.keys,
-        alias_keys: COMMAND_ALIASES.keys,
-        bad_aliases: COMMAND_ALIASES.reject { |_, target| DISPATCH.key?(target) }.keys
+        has_aliases_const: defined?(COMMAND_ALIASES)
       )
     RUBY
-    expected = (result.fetch("dispatch_keys") + result.fetch("alias_keys")).sort
-    assert_equal expected, result.fetch("commands").sort
-    assert_empty result.fetch("bad_aliases"), "aliases pointing at nonexistent commands"
+    assert_equal result.fetch("dispatch_keys").sort, result.fetch("commands")
+    refute result.fetch("has_aliases_const"), "COMMAND_ALIASES should be gone"
+    assert_includes result.fetch("dispatch_keys"), "dilla"
+    refute_includes result.fetch("dispatch_keys"), "comfort"
+    refute_includes result.fetch("dispatch_keys"), "warp"
+    refute_includes result.fetch("dispatch_keys"), "camel"
   end
 
-  def test_style_aliases_normalize_to_flat_taxonomy
+  def test_single_engine_mode_empty_render_mode_is_dilla
     result = eval_in_engine(<<~RUBY)
-      cases = {}
-      {
-        "camel" => "dilla",
-        "beat" => "dilla",
-        "punch" => "dilla",
-        "comfort" => "dilla",
-        "sofa" => "dilla",
-        "warp" => "warp",
-        "dilla" => "dilla"
-      }.each do |raw, want|
-        ENV["RENDER_MODE"] = raw
-        ENV.delete("STREAM_COMFORT")
-        ENV.delete("DILLA_COMFORT")
-        normalize_render_mode!
-        cases[raw] = {
-          mode: ENV["RENDER_MODE"],
-          comfort: comfort_mode?,
-          dilla_style: dilla_style?,
-          want: want
-        }
-      end
-      puts JSON.generate(cases)
+      ENV.delete("RENDER_MODE")
+      normalize_render_mode!
+      puts JSON.generate(mode: ENV["RENDER_MODE"], dilla: dilla_style?)
     RUBY
-    assert_equal "dilla", result.dig("camel", "mode")
-    assert_equal "dilla", result.dig("beat", "mode")
-    assert_equal "dilla", result.dig("punch", "mode")
-    assert_equal "dilla", result.dig("comfort", "mode")
-    assert result.dig("comfort", "comfort"), "comfort alias should set comfort flags"
-    assert_equal "warp", result.dig("warp", "mode")
-    refute result.dig("warp", "dilla_style")
-    assert result.dig("dilla", "dilla_style")
+    assert_equal "dilla", result.fetch("mode")
+    assert result.fetch("dilla")
   end
 
-  def test_product_style_taxonomy_resolves_profiles_and_tracks
+  def test_product_entry_is_track_only
     require_relative "../tools/dilla"
-    assert_equal :dilla, DillaEntrypoint.resolve_style("camel")[:profile]
-    assert_equal :comfort, DillaEntrypoint.resolve_style("sofa")[:profile]
-    assert_equal :warp, DillaEntrypoint.resolve_style("warp")[:profile]
-    assert_equal "chromatic_mediant_drift", DillaEntrypoint.resolve_style("flylo")[:track]
-    assert_equal :dilla, DillaEntrypoint.resolve_style("flylo")[:profile]
-    assert_equal "neo_soul", DillaEntrypoint.resolve_style("neo-soul")[:track]
-    assert DillaEntrypoint.known_style?("punch")
-    refute DillaEntrypoint.known_style?("bogus")
-    env = DillaEntrypoint.product_env(style: "comfort")
-    assert_equal "1", env["DILLA_COMFORT"]
+    assert_equal "get_dis_money", DillaEntrypoint.track_for(nil)
+    assert_equal "neo_soul", DillaEntrypoint.track_for("neo_soul")
+    env = DillaEntrypoint.product_env(track: "get_dis_money")
     assert_equal "dilla", env["RENDER_MODE"]
-    warp_env = DillaEntrypoint.product_env(style: "warp")
-    assert_equal "warp", warp_env["RENDER_MODE"]
+    assert_equal "get_dis_money", env["TRACK"]
+    assert_equal "1", env["CHOIR_VOX"]
+    assert_equal "0", env["FM_DRUMS"]
+    assert_equal "0.68", env["KICK_GAIN"]
   end
 
-  def test_style_sequence_covers_all_profiles_and_track_shortcuts_sequentially
-    result = eval_in_engine(<<~'RUBY')
-      ENV.delete("STREAM_LOCK")
-      ENV.delete("STREAM_STYLE_SEQUENCE")
-      slots = build_style_sequence
-      tracks = style_sequence_tracks
-      head = slots.first(6)
-      first_track = tracks.first
-      triplet = slots.select { |s| s[:track] == first_track }.map { |s| s[:profile].to_s }
+  def test_choir_chord_tones_are_thinned_mid_upper
+    result = eval_in_engine(<<~RUBY)
+      pads = [
+        [0.0, 0.9, { name: "Fm9", hz: [87.31, 174.61, 207.65, 261.63, 311.13] }, 3.8],
+        [4.0, 0.85, { name: "Cm7", hz: [130.81, 155.56, 196.0] }, 3.8],
+      ]
+      thinned = choir_chord_tone_events(pads)
       puts JSON.generate(
-        enabled: stream_style_sequence_enabled?,
-        n: slots.length,
-        track_n: tracks.length,
-        n_is_tracks_times_profiles: slots.length == tracks.length * STYLE_PROFILE_CYCLE.length,
-        has_shortcuts: STYLE_TRACK_SHORTCUTS.all? { |t| tracks.include?(t) },
-        head: head.map { |s| "#{s[:profile]}:#{s[:track]}" },
-        first_triplet: triplet,
-        no_dups: slots.map { |s| [s[:profile], s[:track]] }.uniq.length == slots.length
+        n: thinned.length,
+        tones0: thinned[0][2][:hz].length,
+        tones1: thinned[1][2][:hz].length,
+        mid_upper0: thinned[0][2][:hz].min > 100.0,
+        name_tag: thinned[0][2][:name].to_s.include?("choir")
       )
     RUBY
-    assert result.fetch("enabled"), "style sequence should be on by default"
-    assert result.fetch("n_is_tracks_times_profiles")
-    assert result.fetch("has_shortcuts")
-    assert result.fetch("no_dups")
-    assert_equal %w[dilla comfort warp], result.fetch("first_triplet")
-    assert_equal "dilla:get_dis_money", result.fetch("head").first
+    assert_equal 2, result.fetch("n")
+    assert_operator result.fetch("tones0"), :<=, 3
+    assert_operator result.fetch("tones1"), :<=, 3
+    assert result.fetch("mid_upper0")
+    assert result.fetch("name_tag")
   end
 
-  def test_style_slot_transitions_do_not_poison_profile_dna
+  def test_neosoul_pocket_has_expanded_phrase_variety
     result = eval_in_engine(<<~RUBY)
-      @stream_user_pad_locked = false
-      @stream_user_lead_locked = false
-      apply_stream_style_slot!({ profile: :comfort, track: "get_dis_money" }, index: 0)
-      after_comfort = {
-        pad_vol: ENV["PAD_VOL"], lufs: ENV["STREAM_LUFS"], harmony: ENV["HARMONY_LEAD"],
-        overlay: ENV["FLYLO_DRUM_OVERLAY"], chops: ENV["DRUM_CHOPS"], melodic: ENV["MELODIC_LEAD"]
-      }
-      apply_stream_style_slot!({ profile: :dilla, track: "get_dis_money" }, index: 1)
-      after_dilla = {
-        pad_vol: ENV["PAD_VOL"], lufs: ENV["STREAM_LUFS"], harmony: ENV["HARMONY_LEAD"],
-        overlay: ENV["FLYLO_DRUM_OVERLAY"], chops: ENV["DRUM_CHOPS"], mode: ENV["RENDER_MODE"]
-      }
-      apply_stream_style_slot!({ profile: :warp, track: "chromatic_mediant_drift" }, index: 2)
-      after_warp = {
-        mode: ENV["RENDER_MODE"], spectral: ENV["SPECTRAL_ARP"], idm: ENV["ARP_IDM_BIAS"],
-        groove: ENV["GROOVE_DNA"], performer: ENV["PERFORMER"]
-      }
-      puts JSON.generate(comfort: after_comfort, dilla: after_dilla, warp: after_warp)
+      ENV["POCKET_SET"] = "neo_soul"
+      kicks = DillaGroove.kick_phrases
+      sparse = DillaGroove.kick_sparse_phrases
+      ghosts = DillaGroove.snare_ghost_phrases
+      hats = DillaGroove.hat_phrases
+      dense = kicks.any? { |p| p.length > 4 }
+      puts JSON.generate(
+        kick_n: kicks.length,
+        sparse_n: sparse.length,
+        ghost_n: ghosts.length,
+        hat_n: hats.length,
+        any_dense_kick: dense,
+        has_empty_sparse: sparse.any?(&:empty?),
+        max_hat: hats.map(&:length).max
+      )
     RUBY
-    c = result.fetch("comfort")
-    assert_equal "70", c.fetch("pad_vol"), "comfort PAD_VOL must survive (was wiped by pad locks)"
-    assert_equal "-17.5", c.fetch("lufs")
-    assert_equal "0", c.fetch("harmony")
-    assert_equal "0", c.fetch("overlay")
-    assert_equal "0", c.fetch("chops")
-    assert_equal "1", c.fetch("melodic")
-    d = result.fetch("dilla")
-    assert_equal "1", d.fetch("overlay")
-    assert_equal "1", d.fetch("chops")
-    assert_equal "dilla", d.fetch("mode")
-    w = result.fetch("warp")
-    assert_equal "warp", w.fetch("mode")
-    assert_equal "1", w.fetch("spectral")
-    assert_equal "1", w.fetch("idm")
-    assert_equal "cosmogramma", w.fetch("groove")
-    assert_equal "thundercat", w.fetch("performer")
+    assert_operator result.fetch("kick_n"), :>=, 12
+    assert_operator result.fetch("sparse_n"), :>=, 6
+    assert_operator result.fetch("ghost_n"), :>=, 8
+    assert_operator result.fetch("hat_n"), :>=, 8
+    refute result.fetch("any_dense_kick"), "neo-soul kicks must stay sparse (≤4 hits)"
+    assert result.fetch("has_empty_sparse"), "breathing bars should include empty kick phrases"
+    assert_operator result.fetch("max_hat"), :<=, 8, "neo-soul hats must not fill the 16th grid"
+  end
+
+  def test_stream_rotates_progressions_and_drums
+    result = eval_in_engine(<<~RUBY)
+      order = stream_track_order
+      stream_rotate_drums!(0)
+      d0 = ENV["DRUM_PRESET"]
+      stream_rotate_drums!(1)
+      d1 = ENV["DRUM_PRESET"]
+      puts JSON.generate(
+        order_n: order.length,
+        head: order.first(3).map(&:to_s),
+        has_untitled: order.map(&:to_s).include?("untitled_how_does_it_feel"),
+        drum0: d0,
+        drum1: d1,
+        drums_differ: d0 != d1
+      )
+    RUBY
+    assert_operator result.fetch("order_n"), :>=, 8
+    assert_equal "get_dis_money", result.fetch("head").first
+    assert result.fetch("has_untitled")
+    assert result.fetch("drums_differ"), "drum rotation should change DRUM_PRESET"
+  end
+
+  def test_theory_runtime_refines_progression_without_dropping_chords
+    result = eval_in_engine(<<~RUBY)
+      chords = [
+        { name: "Fm9", hz: [174.61, 207.65, 261.63, 311.13] },
+        { name: "Bbm9", hz: [233.08, 277.18, 349.23, 415.30] },
+        { name: "Ebmaj9", hz: [155.56, 196.00, 233.08, 311.13] },
+      ]
+      ENV["THEORY_RUNTIME"] = "1"
+      ENV["THEORY_DILLA"] = "1"
+      ENV["THEORY_BACH"] = "1"
+      refined = DillaTheoryRuntime.refine_progression!(chords, cfg: { track: "neo_soul" })
+      puts JSON.generate(
+        n: refined.length,
+        names: refined.map { |c| c[:name] },
+        has_hz: refined.all? { |c| Array(c[:hz]).length >= 2 }
+      )
+    RUBY
+    assert_equal 3, result.fetch("n")
+    assert_equal %w[Fm9 Bbm9 Ebmaj9], result.fetch("names")
+    assert result.fetch("has_hz")
   end
 
   def test_apply_voicing_returns_bounded_playable_chords_for_every_style
@@ -310,6 +307,8 @@ class TestDilla < Minitest::Test
         kick_drop: ENV["KICK_DROP"],
         snare_prehit: ENV["SNARE_PREHIT_GHOST"],
         phone: ENV["PHONE_PREVIEW_GATE"],
+        choir: ENV["CHOIR_VOX"],
+        theory: ENV["THEORY_RUNTIME"],
         dfam: DfamEngine.enabled?,
         spectral: DillaSpectral.enabled?,
         master_on: DillaMaster.enabled?,
@@ -322,7 +321,7 @@ class TestDilla < Minitest::Test
     assert_equal "stack_soul", result.fetch("pad_voice")
     assert_equal "held", result.fetch("pad_arp")
     assert_equal "broadcast", result.fetch("analog")
-    assert_equal "1.0", result.fetch("kick_gain")
+    assert_equal "0.68", result.fetch("kick_gain")
     assert_equal "1", result.fetch("composition")
     assert_equal "1", result.fetch("groove_engine")
     assert_equal "1", result.fetch("pocket_dna")
@@ -331,12 +330,14 @@ class TestDilla < Minitest::Test
     assert_equal "get_dis_money", result.fetch("track")
     assert_equal "1", result.fetch("phrase_drift")
     assert_equal "1", result.fetch("swing_jitter")
-    assert_equal "1", result.fetch("fm_drums")
-    assert result.fetch("fm_on")
+    assert_equal "0", result.fetch("fm_drums"), "soul pocket uses sample kit, not FM synth"
+    refute result.fetch("fm_on")
     assert_equal "1", result.fetch("kick_double")
     assert_equal "1", result.fetch("kick_drop")
     assert_equal "1", result.fetch("snare_prehit")
     assert_equal "0", result.fetch("phone"), "style DNA keeps phone preview off unless forced"
+    assert_equal "1", result.fetch("choir")
+    assert_equal "1", result.fetch("theory")
     assert result.fetch("dfam")
     assert result.fetch("spectral")
     assert result.fetch("master_on")
@@ -1057,7 +1058,8 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("bad_lead")
     assert_empty result.fetch("bad_arp")
     assert_includes result.fetch("morph_voices"), "glass"
-    assert_equal "0", result.fetch("morph"), "default keeps multi-layer stack path"
+    # SYNTH_MORPH=1 is fine: multi-layer stack still wins while PAD_LAYERS=1.
+    assert_equal "1", result.fetch("morph")
     assert_equal "1", result.fetch("exp")
     assert_equal "stack_soul", result.fetch("pad")
     assert_operator result.fetch("stack"), :>=, 3
@@ -1151,16 +1153,17 @@ class TestDilla < Minitest::Test
       puts JSON.generate(
         flylo_kick: events[:flylo_kick]&.length.to_i,
         flylo_hat: events[:flylo_hat]&.length.to_i,
+        flylo_snare: events[:flylo_snare]&.length.to_i,
+        # Quint/perc intentionally omitted (sparse overlay — no spam).
         flylo_quint: events[:flylo_quint]&.length.to_i,
-        flylo_perc: events[:flylo_perc]&.length.to_i,
         enabled: flylo_drum_overlay_enabled?
       )
     RUBY
     assert result.fetch("enabled")
     assert_operator result.fetch("flylo_kick"), :>, 0
     assert_operator result.fetch("flylo_hat"), :>, 0
-    assert_operator result.fetch("flylo_quint"), :>, 0
-    assert_operator result.fetch("flylo_perc"), :>, 0
+    assert_operator result.fetch("flylo_snare"), :>, 0
+    assert_equal 0, result.fetch("flylo_quint"), "sparse overlay skips quint spam"
   end
 
   def test_stream_iterate_evolve_flylo_drums_returns_notes
