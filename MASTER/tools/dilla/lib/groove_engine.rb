@@ -216,13 +216,23 @@ module DillaGroove
     ENV["DILLA_RENDER_SEED"].to_i
   end
 
-  def swing_jitter_ms(bpm, step, bar, role: nil)
+  # Structural use of the humanization system: looser (more jitter) where a
+  # section should feel open/unlocked, tighter where it should feel nailed
+  # down -- not a flat constant across the whole track regardless of what's
+  # happening structurally.
+  SECTION_JITTER_MUL = {
+    breakdown: 1.35, development: 1.2, bridge: 1.2, intro: 1.15,
+    climax: 0.6, peak: 0.6, hook: 0.6, recapitulation: 0.7
+  }.freeze
+
+  def swing_jitter_ms(bpm, step, bar, role: nil, section: nil)
     return 0.0 unless enabled?
     return 0.0 if ENV["SWING_JITTER"] == "0"
     beat_ms = 60_000.0 / bpm
     tick_ms = beat_ms / 96.0
     rng = Random.new((bar * 509) + (step * 97) + 8803)
-    max_ticks = (ENV["SWING_JITTER_TICKS"] || (pocket_dna? ? 4 : 3)).to_i
+    base_ticks = (ENV["SWING_JITTER_TICKS"] || (pocket_dna? ? 4 : 3)).to_i
+    max_ticks = [(base_ticks * SECTION_JITTER_MUL.fetch(section.to_s.to_sym, 1.0)).round, 1].max
     raw = gaussian_jitter(rng, max_ticks * tick_ms / 1000.0)
     # Quantize to a whole tick -- the MPC3000's manual nudge tool (the real
     # mechanism this jitter approximates) can only land on one of 96
@@ -342,11 +352,12 @@ module DillaGroove
   # A finger-drummer occasionally misses a hat, or leaves space on purpose —
   # a pattern that never drops a single 16th over 32 bars reads as sequenced.
   # Rare (~4%), deterministic per bar/step, and never the downbeat.
-  def hat_should_drop?(bar, step)
+  def hat_should_drop?(bar, step, section: nil)
     return false unless enabled? && pocket_dna?
     return false if ENV["HAT_DROP"] == "0"
     return false if step.zero?
-    Random.new((bar * 787) + (step * 53) + 191 + render_seed).rand < 0.04
+    prob = 0.04 * SECTION_JITTER_MUL.fetch(section.to_s.to_sym, 1.0)
+    Random.new((bar * 787) + (step * 53) + 191 + render_seed).rand < prob
   end
 
   def freehand_kick_sec(bar, step, beat_p)
@@ -447,9 +458,9 @@ module DillaGroove
     transitions.transform_values(&:uniq)
   end
 
-  def apply_event_timing!(t, role:, beat_p:, bar:, step:, bpm: 90)
+  def apply_event_timing!(t, role:, beat_p:, bar:, step:, bpm: 90, section: nil)
     t + role_timing_offset(role, beat_p, bar, step) +
-      swing_jitter_ms(bpm, step, bar, role: role) +
+      swing_jitter_ms(bpm, step, bar, role: role, section: section) +
       (role.to_s.start_with?("hat") ? hat_micro_delay_sec(bar, step, beat_p) : 0.0) +
       (%i[kick kick_anchor kick_sync].include?(role.to_sym) ? freehand_kick_sec(bar, step, beat_p) : 0.0)
   end
@@ -526,7 +537,7 @@ module DillaGroove
     open ? :open_hat : :hat
   end
 
-  def apply_pocket_place(t, role:, beat_p:, bar:, step:, bpm:)
-    apply_event_timing!(t, role: role, beat_p: beat_p, bar: bar, step: step, bpm: bpm)
+  def apply_pocket_place(t, role:, beat_p:, bar:, step:, bpm:, section: nil)
+    apply_event_timing!(t, role: role, beat_p: beat_p, bar: bar, step: step, bpm: bpm, section: section)
   end
 end

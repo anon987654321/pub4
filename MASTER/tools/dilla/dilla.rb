@@ -9894,7 +9894,7 @@ def schedule_flylo_drum_overlay!(events, bar, n_bars, base, step_p, bar_p, beat_
     t = base + step * step_p
     t += dilla_swing_offset(step, step_p, swing_use, quintuplet: false, bar: bar, bpm: bar_bpm)
     t += dilla_timing_ms(role_timing, bar, step, timing_use, beat_p) / 1000.0
-    t = DillaGroove.apply_pocket_place(t, role: role_timing, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
+    t = DillaGroove.apply_pocket_place(t, role: role_timing, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm, section: section)
     [t, 0.0].max
   end
 
@@ -10038,7 +10038,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
         t = [base + step * step_p +
              dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
              dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
-        t = DillaGroove.apply_event_timing!(t, role: :kick, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
+        t = DillaGroove.apply_event_timing!(t, role: :kick, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm, section: section)
         ks = kick_velocity_scale
         kick_role = step.zero? ? :kick_anchor : :kick_sync
         kick_vel = dilla_role_velocity(kick_role, bar, step, sec_gain: sec_gain * ks)
@@ -10071,7 +10071,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
              dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
              dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0 +
              DillaGroove.flam_offset_sec(beat_p), 0.0].max
-        t = DillaGroove.apply_event_timing!(t, role: :snare, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
+        t = DillaGroove.apply_event_timing!(t, role: :snare, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm, section: section)
         backbeat = halftime? ? [8].include?(step) : [4, 12].include?(step)
         groove_meta[:snare_early_ms] << dilla_timing_ms(:snare, bar, step, timing, beat_p) if backbeat
         snare_vel = dilla_role_velocity(:snare, bar, step, sec_gain: sec_gain, backbeat: backbeat)
@@ -10116,7 +10116,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                   end
       hat_steps.each_with_index do |step, i|
         next if drop_bar
-        next if DillaGroove.hat_should_drop?(bar, step)
+        next if DillaGroove.hat_should_drop?(bar, step, section: section)
         role = if [3, 11].include?(step) && feel == :syncopated_slash_ninth
                  :hat_up
                elsif feel == :loose_pocket && step.odd?
@@ -10127,7 +10127,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
         t = [base + step * step_p +
              dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
              dilla_timing_ms(role, bar, step, timing, beat_p) / 1000.0, 0.0].max
-        t = DillaGroove.apply_event_timing!(t, role: role, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
+        t = DillaGroove.apply_event_timing!(t, role: role, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm, section: section)
         hat_role = role == :hat_up ? :hat_up : :hat_down
         groove_meta[:hat_late_ms] << dilla_timing_ms(hat_role, bar, step, timing, beat_p)
         events[:hat] << [t.round(6), dilla_role_velocity(hat_role, bar, step, sec_gain: sec_gain)]
