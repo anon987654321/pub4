@@ -18,9 +18,10 @@ class WardrobeAi
     File.directory?(Rails.root.join("..", "..", "MASTER"))
   end
 
-  def initialize(user, client: nil)
+  # Pass client: nil to force offline heuristics (explicit); omit for auto OpenRouter.
+  def initialize(user, client: :auto)
     @user = user
-    @client = client || build_client
+    @client = client == :auto ? build_client : client
   end
 
   def available? = @client.present?

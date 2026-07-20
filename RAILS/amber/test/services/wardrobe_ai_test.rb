@@ -22,7 +22,7 @@ class WardrobeAiTest < ActiveSupport::TestCase
 
   test "analyze_joy uses local heuristic when no API key is configured" do
     item = Item.new(title: "Blue jacket", category: "Outerwear", times_worn: 0)
-    service = WardrobeAi.new(User.new)
+    service = WardrobeAi.new(User.new, client: nil)
 
     result = service.analyze_joy(item)
 
@@ -34,7 +34,7 @@ class WardrobeAiTest < ActiveSupport::TestCase
 
   test "analyze_joy heuristic keeps high-wear items as joy" do
     item = Item.new(title: "Jeans", category: "Bottoms", times_worn: 12)
-    result = WardrobeAi.new(User.new).analyze_joy(item)
+    result = WardrobeAi.new(User.new, client: nil).analyze_joy(item)
 
     assert_equal true, result["sparks_joy"]
     assert_equal "heuristic", result["source"]
