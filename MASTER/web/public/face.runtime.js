@@ -3187,6 +3187,13 @@ function ttsSkipHard() {
   tts.cancelToken++;
   setTTSLoading(false);
   if (tts.audio) { try { tts.audio.pause(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_pause", err); } tts.audio = null; }
+  // Voice Mode defaults to browser speechSynthesis (tts.audio stays null for
+  // that path, see speakWithBrowserTTS), so pausing tts.audio above never
+  // silences it -- cancel() is the only way to actually stop the utterance.
+  // Must happen before resumeSttAfterSpeech() below, or the mic reopens onto
+  // a still-speaking browser voice (the exact echo bug this file's TTS/STT
+  // duck fix targeted).
+  if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:tts_skip_synth_cancel", err); } }
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
@@ -3198,6 +3205,11 @@ function ttsSkipHard() {
   if (ttsLive) ttsLive.textContent = '';
   if (State.mode === 'speaking') State.mode = 'idle';
   emitTtsEvent('tts:playback:end', { interrupted: true, backend: 'edge', decay_rate: 0.55 });
+  // ttsTick() is the usual place resumeSttAfterSpeech() gets called from (its
+  // `!text` branch once the queue drains), but this hard-skip path clears the
+  // queue and flips tts.playing=false directly without ever calling ttsTick(),
+  // so the mic would otherwise stay ducked forever after Escape/mute/cancel.
+  resumeSttAfterSpeech();
 }
 function ttsSkip() {
   if (tts.audio && !tts.audio.paused) {
@@ -3355,6 +3367,11 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
 function startWakeListening() {
   if (!recognition || State.sttActive || State.voiceMode) return;
   State.wakeArmed = true;
+  // Record the intent to listen but don't open the mic yet if TTS is still
+  // speaking (e.g. exitVoiceMode() calling this synchronously right after an
+  // Escape-triggered ttsSkip()) -- resumeSttAfterSpeech() re-checks
+  // State.wakeArmed and finishes arming once playback genuinely ends.
+  if (tts.playing) return;
   try { recognition.start(); State.sttActive = true; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:wake_start", err); }
 }
 function armWakeWord() {
