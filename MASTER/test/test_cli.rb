@@ -180,6 +180,30 @@ class TestCLI < Minitest::Test
     assert_equal "ronin", config.persona
   end
 
+  # Regression: dispatch_persona used to save any word as the persona with
+  # no validation, so a misrouted natural-language message could corrupt the
+  # live persona config -- see production incident 2026-07-20.
+  def test_dispatch_persona_rejects_unknown_name
+    config = Struct.new(:persona) do
+      def [](key)
+        key == "persona" ? persona : nil
+      end
+
+      def []=(key, value)
+        self.persona = value if key == "persona"
+      end
+
+      def save!
+        true
+      end
+    end.new("anchor")
+
+    output = Master::CLI::CommandRegistry.dispatch_persona(config, ctx: { args: "council" })
+
+    assert_includes output, "isn't a known persona"
+    assert_equal "anchor", config.persona
+  end
+
   def test_scan_profile_uses_explicit_keyword
     profile, = Master::CLI::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
     plain, = Master::CLI::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)

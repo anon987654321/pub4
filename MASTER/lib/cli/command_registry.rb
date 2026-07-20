@@ -193,9 +193,14 @@ module Master
         arg = arg_for(ctx)
         return "persona: #{config.persona}" if arg.empty?
 
-        config["persona"] = arg
+        known = Master::Voice::Personality.persona_names.map(&:to_s)
+        unless known.include?(arg.downcase)
+          return "persona: '#{arg}' isn't a known persona (#{known.join(', ')}) -- unchanged, still #{config.persona}"
+        end
+
+        config["persona"] = arg.downcase
         config.save!
-        "persona: #{arg}"
+        "persona: #{arg.downcase}"
       end
 
       def dispatch_flag(config, flag, ctx: nil)

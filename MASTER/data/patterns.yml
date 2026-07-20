@@ -278,7 +278,7 @@ infer:
       capture: cycles
     council:
       patterns:
-      - "\\b(?:council|deliberat|multiple\\s+perspect|second\\s+opinion|peer\\s+review|debate\\s+this|get\\s+(?:another|a\\s+second)\\s+view|multi(?:ple)?\\s+(?:view|agent|model|perspect))\\b"
+      - "\\b(?:(?:run|start|get|convene|use|activate|invoke)\\s+(?:the\\s+)?council|council\\s+(?:review|deliberation|this|on\\s+this)|deliberate\\s+(?:on\\s+)?this|multiple\\s+perspect|second\\s+opinion|peer\\s+review|debate\\s+this|get\\s+(?:another|a\\s+second)\\s+view|multi(?:ple)?\\s+(?:view|agent|model|perspect))\\b"
       - "\\b(?:r[åa]dsl[åa]g|bruk\\s+(?:flere|multiple)\\s+(?:perspektiv|synsvinkler?)|diskuter\\s+(?:dette|det))\\b"
       capture: on_off
     explain:
@@ -287,7 +287,7 @@ infer:
       capture: none
     persona:
       patterns:
-      - "\\b(?:(?:switch|change|set)\\s+persona\\s+(?:to\\s+)?(\\w+)|persona\\s+(\\w+)|use\\s+(\\w+)\\s+persona)\\b"
+      - "\\b(?:(?:switch|change|set)\\s+persona\\s+(?:to\\s+)?(\\w+)|use\\s+(\\w+)\\s+persona)\\b"
       capture: persona_name
     memory:
       patterns:
