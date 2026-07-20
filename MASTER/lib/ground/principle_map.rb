@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "principle_map/queries"
+
 module Master
   module Ground
     # Runtime map of fossil master.yml principles → live scan rule IDs + operations.
     # Loaded from data/principle_map.yml; enforced by SelfTest and /map.
     class PrincipleMap
+      include Queries
+
       PATH = File.join(Master::DATA, "principle_map.yml").freeze
 
       Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :rule_ids, :status, :tags, :immutable)
@@ -28,39 +32,6 @@ module Master
 
       def version
         @data["version"].to_s
-      end
-
-      def [](id)
-        principles[id.to_s]
-      end
-
-      def covered
-        principles.select { |_, e| e.status == "covered" }
-      end
-
-      def gaps
-        principles.select { |_, e| e.status == "gap" }
-      end
-
-      def by_tag(tag)
-        principles.select { |_, e| e.tags.map(&:to_s).include?(tag.to_s) }
-      end
-
-      def aesthetic
-        by_tag("aesthetic").merge(by_tag("ui"))
-      end
-
-      def operation_for(rule_id)
-        rid = rule_id.to_s
-        principles.each_value do |entry|
-          return entry.operation if entry.rule_ids.map(&:to_s).include?(rid) && entry.operation
-        end
-        nil
-      end
-
-      def rules_for(principle_id)
-        entry = self[principle_id]
-        entry ? entry.rule_ids : []
       end
 
       # Integrity: covered entries must resolve to registered RuleDSL ids when registry loaded.
