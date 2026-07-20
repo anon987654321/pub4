@@ -32,6 +32,19 @@ module Master
         route_names = extract_route_names(routes_text)
         violations = []
 
+        check_all_routes(app_path, routes_text, violations)
+        scan_path_helpers(app_path, route_names, violations)
+        scan_orphan_partials(app_path, violations)
+
+        {
+          violations: violations.map { |v| { id: v.id, severity: v.severity, file: v.file, message: v.message } },
+          counts: violations.group_by(&:id).transform_values(&:size),
+        }
+      end
+
+      private
+
+      def check_all_routes(app_path, routes_text, violations)
         explicit_routes(routes_text).each do |verb, controller, action|
           check_route_target(app_path, controller, action, violations, require_view: view_required?(verb, action))
         end
@@ -43,17 +56,7 @@ module Master
             check_route_target(app_path, controller, action, violations, require_view: true)
           end
         end
-
-        scan_path_helpers(app_path, route_names, violations)
-        scan_orphan_partials(app_path, violations)
-
-        {
-          violations: violations.map { |v| { id: v.id, severity: v.severity, file: v.file, message: v.message } },
-          counts: violations.group_by(&:id).transform_values(&:size),
-        }
       end
-
-      private
 
       def collect_routes_sources(app_path)
         sources = []
@@ -116,18 +119,20 @@ module Master
         names.concat(routes_text.scan(/\b(?:get|post|put|patch|delete)\s+["']([^"']+)["']/).flatten.map { |path| path.tr("-", "_") })
         terms = resources.flat_map { |resource| [resource, singularize(resource)] }
         names.concat(terms)
-
-        resources.each do |parent|
-          resources.each do |child|
-            names << "#{singularize(parent)}_#{child}"
-            names << "#{singularize(parent)}_#{singularize(child)}"
-          end
-        end
+        names.concat(nested_resource_names(resources))
 
         route_actions(routes_text).each do |action|
           terms.each { |resource| names << "#{action}_#{resource}" }
         end
         names.uniq
+      end
+
+      def nested_resource_names(resources)
+        resources.flat_map do |parent|
+          resources.flat_map do |child|
+            ["#{singularize(parent)}_#{child}", "#{singularize(parent)}_#{singularize(child)}"]
+          end
+        end
       end
 
       def view_required?(verb, action)
@@ -152,10 +157,12 @@ module Master
                                 "controller lacks ##{action} referenced by routes")
         end
 
-        return unless require_view
+        check_view_present(app_path, controller, action, sources, violations) if require_view
+      end
+
+      def check_view_present(app_path, controller, action, sources, violations)
         return if VIEW_OPTIONAL_CONTROLLERS.include?(controller)
         return if sources.filter_map { |item| action_source(item, action) }.any? { |body| body.match?(EXPLICIT_RENDER_PATTERN) }
-
         return if template_exists?(app_path, controller, action)
 
         violations << finding(:missing_view, :medium, "app/views/#{controller}/#{action}",
@@ -191,11 +198,8 @@ module Master
         end
       end
 
-      def scan_orphan_partials(app_path, violations)
-        partials = Dir.glob(File.join(app_path, "app", "views", "**", "_*.html.erb"))
-        return if partials.empty?
-
-        corpus = Dir.glob(File.join(app_path, "app", "views", "**", "*")).select { |path| File.file?(path) }.map do |path|
+      def orphan_scan_corpus(app_path)
+        views = Dir.glob(File.join(app_path, "app", "views", "**", "*")).select { |path| File.file?(path) }.map do |path|
           File.read(path)
         rescue StandardError
           ""
@@ -207,7 +211,14 @@ module Master
           ""
         end.join("\n")
 
-        render_corpus = "#{corpus}\n#{controllers}"
+        "#{views}\n#{controllers}"
+      end
+
+      def scan_orphan_partials(app_path, violations)
+        partials = Dir.glob(File.join(app_path, "app", "views", "**", "_*.html.erb"))
+        return if partials.empty?
+
+        render_corpus = orphan_scan_corpus(app_path)
 
         partials.each do |path|
           rel = relative(app_path, path)

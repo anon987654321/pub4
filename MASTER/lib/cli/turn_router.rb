@@ -36,40 +36,49 @@ module Master
       INFER_MIN_CONFIDENCE = 0.62
 
       def infer_operator_command(text, container:)
-        ctx = PipelineContext.build(user_message: text, intent: :llm, message: text)
-        inferred = Stages::Infer.new(bus: container[:bus], session: container[:session]).call(ctx)
-        return nil unless inferred.ok?
-
-        value = inferred.value!
-        return nil unless value.intent == :command
+        value = infer_command_value(text, container:)
+        return nil unless value
 
         command = value.command.to_s
         conf = value.infer_confidence.to_f
         # Always accept through-class commands; other commands need confidence floor.
-        unless THROUGH_COMMANDS.include?(command)
-          return nil if conf < INFER_MIN_CONFIDENCE
-        end
+        return nil if !THROUGH_COMMANDS.include?(command) && conf < INFER_MIN_CONFIDENCE
 
-        # Broad improve/sweep language becomes full through-pass (apply), not a single fix.
-        if command == "sweep" || (command == "fix" && text.match?(/\b(?:all|every|rails|master|codebase|through|itself)\b/i))
-          command = "through"
-        end
-        command = "through" if command == "workflow"
-
-        args = value.args.to_s
-        if command == "through"
-          refined = through_args_from(text)
-          # Prefer refined path when Infer only captured a coarse alias (rails without app).
-          args = refined if !refined.empty? && (args.empty? || refined.start_with?("#{args}/") || refined != args && refined.include?("/"))
-          args = refined if args.empty?
-          args = "master" if args.match?(/\A(?:itself|self)\z/i) && text.match?(/\bmaster\b/i)
-          args = "master" if args.match?(/\Aitself\z/i)
-        end
+        command = normalize_inferred_command(command, text)
+        args = command == "through" ? through_command_args(value, text) : value.args.to_s
 
         { command: command, args: args, confidence: conf }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "TurnRouter.infer_operator_command")
         nil
+      end
+
+      def infer_command_value(text, container:)
+        ctx = PipelineContext.build(user_message: text, intent: :llm, message: text)
+        inferred = Stages::Infer.new(bus: container[:bus], session: container[:session]).call(ctx)
+        return nil unless inferred.ok?
+
+        value = inferred.value!
+        value.intent == :command ? value : nil
+      end
+
+      # Broad improve/sweep language becomes full through-pass (apply), not a single fix.
+      def normalize_inferred_command(command, text)
+        if command == "sweep" || (command == "fix" && text.match?(/\b(?:all|every|rails|master|codebase|through|itself)\b/i))
+          return "through"
+        end
+        command == "workflow" ? "through" : command
+      end
+
+      def through_command_args(value, text)
+        args = value.args.to_s
+        refined = through_args_from(text)
+        # Prefer refined path when Infer only captured a coarse alias (rails without app).
+        args = refined if !refined.empty? && (args.empty? || refined.start_with?("#{args}/") || refined != args && refined.include?("/"))
+        args = refined if args.empty?
+        args = "master" if args.match?(/\A(?:itself|self)\z/i) && text.match?(/\bmaster\b/i)
+        args = "master" if args.match?(/\Aitself\z/i)
+        args
       end
 
       def full_workflow_intent?(text)

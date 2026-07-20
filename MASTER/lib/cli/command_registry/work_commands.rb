@@ -148,22 +148,30 @@ module Master
         when "covered"
           map.covered.first(40).map { |id, e| "#{id.ljust(28)} → #{e.rule_ids.join(", ")}" }.join("\n")
         when "integrity"
-          registered = Master::Review::Scan::Rule.registry.filter_map { |k| Master::Review::Scan::RuleFactory.registry_id(k, root:)&.upcase }
-          hits = map.integrity(registered_rule_ids: registered)
-          hits.empty? ? "principle_map integrity: clean" : hits.join("\n")
+          map_integrity_report(map, root:)
         else
-          entry = map[arg]
-          return "map: unknown principle #{arg.inspect} (try /map gaps|aesthetic|covered|integrity)" unless entry
-
-          [
-            entry.id,
-            "status=#{entry.status} severity=#{entry.severity} conf=#{entry.confidence}",
-            "detects=#{entry.detects} operation=#{entry.operation}",
-            "rules=#{entry.rule_ids.join(", ")}",
-            "tags=#{entry.tags.join(", ")}",
-            entry.meaning,
-          ].join("\n")
+          map_principle_detail(map, arg)
         end
+      end
+
+      def map_integrity_report(map, root:)
+        registered = Master::Review::Scan::Rule.registry.filter_map { |k| Master::Review::Scan::RuleFactory.registry_id(k, root:)&.upcase }
+        hits = map.integrity(registered_rule_ids: registered)
+        hits.empty? ? "principle_map integrity: clean" : hits.join("\n")
+      end
+
+      def map_principle_detail(map, arg)
+        entry = map[arg]
+        return "map: unknown principle #{arg.inspect} (try /map gaps|aesthetic|covered|integrity)" unless entry
+
+        [
+          entry.id,
+          "status=#{entry.status} severity=#{entry.severity} conf=#{entry.confidence}",
+          "detects=#{entry.detects} operation=#{entry.operation}",
+          "rules=#{entry.rule_ids.join(", ")}",
+          "tags=#{entry.tags.join(", ")}",
+          entry.meaning,
+        ].join("\n")
       end
 
       def dispatch_core(root:, ctx: nil)
@@ -288,77 +296,90 @@ module Master
 
       def dispatch_scan(scanner:, root:, ctx: nil)
         ScanLive.ensure_sync!
+        arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
+
+        ScanLive.with_interrupt_dump(root: root) do |holder|
+          scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
+        end
+      end
+
+      def parse_scan_args(ctx)
         arg = arg_for(ctx)
         dry_run = dry_run_arg?(arg)
         no_autofix = no_autofix_arg?(arg)
         clean_arg = strip_scan_flags(arg)
         do_autofix = !dry_run && !no_autofix && Master::Review::Scan::MechanicalAutofix.enabled?
+        [arg, dry_run, no_autofix, clean_arg, do_autofix]
+      end
 
-        ScanLive.with_interrupt_dump(root: root) do |holder|
-          ScanLive.banner(
-            target: clean_arg.empty? ? root : clean_arg,
-            profile: nil,
-            dry_run: dry_run,
-            autofix: do_autofix
-          )
+      def scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
+        ScanLive.banner(target: clean_arg.empty? ? root : clean_arg, profile: nil, dry_run:, autofix: do_autofix)
 
-          request = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
-          return request.pairs if request.pairs.is_a?(String)
+        request = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+        return request.pairs if request.pairs.is_a?(String)
 
-          pairs = request.pairs
-          profile = request.profile
-          rule_filter = request.rule_filter
-          severity_filter = request.severity_filter
+        pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.rule_filter, request.severity_filter
+        pass1_total = run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:)
 
-          pass1 = ScanReport.new(
-            pairs: pairs,
-            profile: profile,
-            rule_filter: rule_filter,
-            severity_filter: severity_filter,
-            dry_run: dry_run,
-            phase: "pass1"
-          )
-          pass1_total = pass1.total_count
-          pass1_brief = pass1.brief
-          ScanLive.emit("pass1 #{pass1_brief}")
-          holder[:text] = pass1.render
-          ScanLive.snapshot!(holder[:text], root: root, note: "pass1 before autofix")
+        pairs, autofixes = run_scan_autofix_phase(
+          scanner:, root:, clean_arg:, pairs:, do_autofix:, dry_run:, no_autofix:
+        )
 
-          autofixes = []
-          if pairs.any? && do_autofix
-            ScanLive.emit("autofix applying on auto_fix findings…")
-            autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
-            if autofixes.any?
-              transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(",")
-              ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
-              ScanLive.emit("pass2 re-scan after autofix…")
-              rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
-              pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
-            else
-              ScanLive.emit("autofix none applied (no auto_fix hits or no transforms)")
-            end
-          elsif dry_run
-            ScanLive.emit("autofix skipped dry_run=yes")
-          elsif no_autofix
-            ScanLive.emit("autofix skipped --no-autofix")
+        text = render_final_scan_report(
+          pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:
+        )
+        holder[:text] = text
+        ScanLive.snapshot!(text, root: root, note: "final")
+        text
+      end
+
+      def run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:)
+        pass1 = ScanReport.new(
+          pairs: pairs, profile: profile, rule_filter: rule_filter, severity_filter: severity_filter,
+          dry_run: dry_run, phase: "pass1"
+        )
+        ScanLive.emit("pass1 #{pass1.brief}")
+        holder[:text] = pass1.render
+        ScanLive.snapshot!(holder[:text], root: root, note: "pass1 before autofix")
+        pass1.total_count
+      end
+
+      def run_scan_autofix_phase(scanner:, root:, clean_arg:, pairs:, do_autofix:, dry_run:, no_autofix:)
+        autofixes = []
+        if pairs.any? && do_autofix
+          ScanLive.emit("autofix applying on auto_fix findings…")
+          autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
+          if autofixes.any?
+            transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(",")
+            ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
+            ScanLive.emit("pass2 re-scan after autofix…")
+            rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+            pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
+          else
+            ScanLive.emit("autofix none applied (no auto_fix hits or no transforms)")
           end
-
-          final = ScanReport.new(
-            pairs: pairs,
-            profile: profile,
-            rule_filter: rule_filter,
-            severity_filter: severity_filter,
-            dry_run: dry_run,
-            autofixes: autofixes,
-            phase: do_autofix && autofixes.any? ? "pass2" : "final",
-            prior_total: do_autofix ? pass1_total : nil
-          )
-          text = pairs.empty? && autofixes.empty? ? clean_scan_line(dry_run:, autofixes:) : final.render
-          holder[:text] = text
-          ScanLive.emit("done #{final.brief}")
-          ScanLive.snapshot!(text, root: root, note: "final")
-          text
+        elsif dry_run
+          ScanLive.emit("autofix skipped dry_run=yes")
+        elsif no_autofix
+          ScanLive.emit("autofix skipped --no-autofix")
         end
+        [pairs, autofixes]
+      end
+
+      def render_final_scan_report(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:)
+        final = ScanReport.new(
+          pairs: pairs,
+          profile: profile,
+          rule_filter: rule_filter,
+          severity_filter: severity_filter,
+          dry_run: dry_run,
+          autofixes: autofixes,
+          phase: do_autofix && autofixes.any? ? "pass2" : "final",
+          prior_total: do_autofix ? pass1_total : nil
+        )
+        text = pairs.empty? && autofixes.empty? ? clean_scan_line(dry_run:, autofixes:) : final.render
+        ScanLive.emit("done #{final.brief}")
+        text
       end
 
       def apply_scan_autofixes(scanner:, root:, pairs:)

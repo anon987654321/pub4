@@ -241,7 +241,20 @@ module Master
           rel = path.sub(dir, "").delete_prefix("/")
           rule_hits = findings.filter_map { |f| finding_rule_id(f) }
 
-          done, total, viol_total, dirty, top = @mutex.synchronize do
+          done, total, viol_total, dirty, top = update_scan_progress_state(count, rule_hits)
+
+          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @scan_progress[:started_at]
+          eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
+          unit = @scan_progress[:unit] || "scan0"
+
+          log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
+          log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
+          log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:) if done == total
+          @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
+        end
+
+        def update_scan_progress_state(count, rule_hits)
+          @mutex.synchronize do
             sp = @scan_progress
             sp[:done] += 1
             sp[:violations] = sp[:violations].to_i + count
@@ -255,42 +268,41 @@ module Master
               sp[:rules].sort_by { |_, n| -n }.first(6),
             ]
           end
+        end
 
-          elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @scan_progress[:started_at]
-          eta_s = done.positive? ? ((elapsed / done) * (total - done)).round : nil
-          unit = @scan_progress[:unit] || "scan0"
+        # Per-file: only dirty files (signal), not clean-file spam.
+        def log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
+          return unless count.positive?
 
-          # Per-file: only dirty files (signal), not clean-file spam.
-          if count.positive?
-            Master::Trace::Dmesg.status(
-              unit,
-              "hit #{done}/#{total} #{rel} +#{count}" \
-              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}"
-            )
-          end
+          Master::Trace::Dmesg.status(
+            unit,
+            "hit #{done}/#{total} #{rel} +#{count}" \
+            "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}"
+          )
+        end
 
-          # Decision-grade checkpoints: progress + top rules so far.
+        # Decision-grade checkpoints: progress + top rules so far.
+        def log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           step = checkpoint_step(total)
-          if done == total || (done % step).zero?
-            top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(",")
-            Master::Trace::Dmesg.status(
-              unit,
-              "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
-              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
-              " elapsed=#{elapsed.round}s" \
-              "#{top_s.empty? ? "" : " top=#{top_s}"}"
-            )
-            write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
-          end
+          return unless done == total || (done % step).zero?
 
-          if done == total
-            Master::Trace::Dmesg.kv(
-              unit,
-              complete: true, files: total, violations: viol_total,
-              dirty_files: dirty, elapsed_s: elapsed.round
-            )
-          end
-          @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
+          top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(",")
+          Master::Trace::Dmesg.status(
+            unit,
+            "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
+            "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
+            " elapsed=#{elapsed.round}s" \
+            "#{top_s.empty? ? "" : " top=#{top_s}"}"
+          )
+          write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
+        end
+
+        def log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:)
+          Master::Trace::Dmesg.kv(
+            unit,
+            complete: true, files: total, violations: viol_total,
+            dirty_files: dirty, elapsed_s: elapsed.round
+          )
         end
 
         def checkpoint_step(total)

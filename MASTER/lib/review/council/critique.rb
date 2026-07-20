@@ -108,16 +108,10 @@ module Master
           payload = build_payload(preset)
           @bus&.publish(@mode[:start_event], files: payload[:files], personas: panel.map(&:name))
 
-          delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
-          result = delib.review(payload[:combined], context: build_context)
+          result = deliberate(panel, payload)
           return result unless result.ok?
 
-          ideation_result = Ideation.new(agent: @agent, event_bus: @bus).ideate(
-            @mode[:ideation_prompt],
-            constraints: @mode[:constraints],
-            cycles: (preset["cycles"] || @mode[:cycles_default]).to_i
-          )
-
+          ideation_result = ideate(preset)
           feedback = result.value!
           cherry = cherry_pick_from(feedback, ideation_result)
           @bus&.publish(@mode[:done_event], cherry_picks: cherry.size)
@@ -131,6 +125,19 @@ module Master
         end
 
         private
+
+        def deliberate(panel, payload)
+          delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
+          delib.review(payload[:combined], context: build_context)
+        end
+
+        def ideate(preset)
+          Ideation.new(agent: @agent, event_bus: @bus).ideate(
+            @mode[:ideation_prompt],
+            constraints: @mode[:constraints],
+            cycles: (preset["cycles"] || @mode[:cycles_default]).to_i
+          )
+        end
 
         def load_preset
           return {} unless File.exist?(Master::COUNCIL_PATH)

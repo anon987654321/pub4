@@ -67,7 +67,10 @@ module Master
         result = critic.run
         return "dilla crit: #{result.message}" unless result.ok?
 
-        data = result.value!
+        dilla_crit_report(result.value!, metrics_line)
+      end
+
+      def dilla_crit_report(data, metrics_line)
         lines = [
           "dilla crit: #{Array(data[:cherry_picks]).size} cherry-pick(s) (MASTER council)",
           metrics_line,

@@ -8,6 +8,15 @@ module Master
       EXPLICIT_PROFILE_FLAG = "--profile"
       ALL_RULES = "*"
       EMPTY_WORKFLOW_PROFILES = [{}, {}].freeze
+      # Path aliases so MASTER can target pub4/RAILS and face without ceremony.
+      TARGET_ALIASES = {
+        "rails" => Master::RAILS_ROOT,
+        "RAILS" => Master::RAILS_ROOT,
+        "face" => File.join(Master::ROOT, "web", "public"),
+        "web" => File.join(Master::ROOT, "web"),
+        "master" => Master::ROOT,
+        "self" => File.join(Master::ROOT, "lib"),
+      }.freeze
 
       Result = Struct.new(:pairs, :profile, :rule_filter, :severity_filter, keyword_init: true)
 
@@ -44,18 +53,7 @@ module Master
       end
 
       def expand_scan_target(raw)
-        # Path aliases so MASTER can target pub4/RAILS and face without ceremony.
-        aliases = {
-          "rails" => Master::RAILS_ROOT,
-          "RAILS" => Master::RAILS_ROOT,
-          "face" => File.join(Master::ROOT, "web", "public"),
-          "web" => File.join(Master::ROOT, "web"),
-          "master" => Master::ROOT,
-          "self" => File.join(Master::ROOT, "lib"),
-        }
-        if aliases.key?(raw)
-          return aliases[raw]
-        end
+        return TARGET_ALIASES[raw] if TARGET_ALIASES.key?(raw)
         if raw.match?(%r{\Arails[:/]}i)
           rest = raw.sub(%r{\Arails[:/]}i, "")
           return File.join(Master::RAILS_ROOT, rest)

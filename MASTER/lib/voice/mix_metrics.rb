@@ -15,29 +15,31 @@ module Master
 
         path = path.to_s
         peak_db, rms_db = volume_levels(path)
-        duration = duration_sec(path)
-        crest = if peak_db && rms_db && peak_db > -80 && rms_db > -80
-                  (10**((peak_db - rms_db) / 20.0)).round(3)
-                else
-                  0.0
-                end
-        sub = band_rms(path, 40, 100)
-        pad_body = band_rms(path, 100, 300)
-        mids = band_rms(path, 300, 1200)
-        presence = band_rms(path, 1200, 4000)
-        air = band_rms(path, 4000, 12_000)
+        bands = band_metrics(path)
         {
           path: path,
           peak_db: peak_db,
           rms_db: rms_db,
-          crest: crest,
-          duration_sec: duration,
-          sub_db: sub,
-          pad_body_db: pad_body,
-          mids_db: mids,
-          presence_db: presence,
-          air_db: air,
-          pad_vs_sub_db: (pad_body && sub ? (pad_body - sub).round(2) : nil),
+          crest: crest_factor(peak_db, rms_db),
+          duration_sec: duration_sec(path),
+          **bands,
+          pad_vs_sub_db: (bands[:pad_body_db] && bands[:sub_db] ? (bands[:pad_body_db] - bands[:sub_db]).round(2) : nil),
+        }
+      end
+
+      def crest_factor(peak_db, rms_db)
+        return 0.0 unless peak_db && rms_db && peak_db > -80 && rms_db > -80
+
+        (10**((peak_db - rms_db) / 20.0)).round(3)
+      end
+
+      def band_metrics(path)
+        {
+          sub_db: band_rms(path, 40, 100),
+          pad_body_db: band_rms(path, 100, 300),
+          mids_db: band_rms(path, 300, 1200),
+          presence_db: band_rms(path, 1200, 4000),
+          air_db: band_rms(path, 4000, 12_000),
         }
       end
 

@@ -35,46 +35,7 @@ module Master
         dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
         @bus&.publish("through:start", target: resolved, mode: posture[:name], apply: apply)
 
-        sections = []
-        sections << ["mode", log_phase("mode0", "posture", posture_line(posture)) { posture_line(posture) }]
-
-        if aesthetic
-          sections << ["aesthetic scan", log_phase("scan0", "aesthetic", "path=#{shell}") {
-            run_scan("aesthetic #{shell}", unit: "scan0")
-          }]
-        end
-
-        deep_unit = aesthetic ? "scan1" : "scan0"
-        sections << ["deep scan", log_phase(deep_unit, "deep", "path=#{shell}") {
-          run_scan(shell, unit: deep_unit)
-        }]
-
-        if apply
-          sections << ["fix", log_phase("fix0", "apply", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") {
-            run_fix(resolved)
-          }]
-          re_unit = aesthetic ? "scan2" : "scan1"
-          sections << ["re-scan", log_phase(re_unit, "recheck", "path=#{shell}") {
-            run_scan(shell, unit: re_unit)
-          }]
-          if aesthetic
-            sections << ["aesthetic re-scan", log_phase("scan3", "aesthetic_recheck", "path=#{shell}") {
-              run_scan("aesthetic #{shell}", unit: "scan3")
-            }]
-          end
-        else
-          sections << ["fix preview", log_phase("fix0", "preview", "path=#{shell}") {
-            run_fix_preview(resolved)
-          }]
-        end
-
-        if critique
-          sections << ["critique", log_phase("crit0", "deliberation", "path=#{shell}") {
-            run_critique(resolved)
-          }]
-        end
-
-        sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }]
+        sections = build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
 
         ok = sections.none? { |title, body|
           title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
@@ -86,6 +47,44 @@ module Master
       end
 
       private
+
+      def build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
+        sections = [["mode", log_phase("mode0", "posture", posture_line(posture)) { posture_line(posture) }]]
+        sections << aesthetic_scan_section(shell) if aesthetic
+
+        deep_unit = aesthetic ? "scan1" : "scan0"
+        sections << ["deep scan", log_phase(deep_unit, "deep", "path=#{shell}") { run_scan(shell, unit: deep_unit) }]
+        sections.concat(build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:))
+        sections << critique_section(resolved, shell) if critique
+        sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }]
+        sections
+      end
+
+      def aesthetic_scan_section(shell)
+        ["aesthetic scan", log_phase("scan0", "aesthetic", "path=#{shell}") { run_scan("aesthetic #{shell}", unit: "scan0") }]
+      end
+
+      def critique_section(resolved, shell)
+        ["critique", log_phase("crit0", "deliberation", "path=#{shell}") { run_critique(resolved) }]
+      end
+
+      def build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:)
+        unless apply
+          return [["fix preview", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]]
+        end
+
+        sections = [["fix", log_phase("fix0", "apply", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") {
+          run_fix(resolved)
+        }]]
+        re_unit = aesthetic ? "scan2" : "scan1"
+        sections << ["re-scan", log_phase(re_unit, "recheck", "path=#{shell}") { run_scan(shell, unit: re_unit) }]
+        if aesthetic
+          sections << ["aesthetic re-scan", log_phase("scan3", "aesthetic_recheck", "path=#{shell}") {
+            run_scan("aesthetic #{shell}", unit: "scan3")
+          }]
+        end
+        sections
+      end
 
       def dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
         Master::Trace::Dmesg.attach(@unit, "mainbus0",
@@ -142,10 +141,8 @@ module Master
         false
       end
 
-      def resolve_target(raw)
-        text = raw.to_s.strip
-        text = "." if text.empty? || text.match?(/\A(?:all|everything|the|code|codebase|it|this|that)\z/i)
-        aliases = {
+      def target_aliases
+        {
           "self" => File.join(@root, "lib"),
           "master" => @root,
           "itself" => @root,
@@ -155,6 +152,12 @@ module Master
           "face" => File.join(@root, "web", "public"),
           "web" => File.join(@root, "web"),
         }
+      end
+
+      def resolve_target(raw)
+        text = raw.to_s.strip
+        text = "." if text.empty? || text.match?(/\A(?:all|everything|the|code|codebase|it|this|that)\z/i)
+        aliases = target_aliases
         return aliases[text] if aliases.key?(text)
         if text.match?(%r{\Arails[:/]}i)
           return File.join(Master::RAILS_ROOT, text.sub(%r{\Arails[:/]}i, ""))
