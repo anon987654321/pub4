@@ -245,6 +245,13 @@ module DillaGroove
     (Math.sin(phase) * max_ms) / 1000.0
   end
 
+  # Multipliers are whole ticks, not arbitrary floats: the MPC3000 runs at
+  # 96 PPQ (pulses per quarter note), and its manual time-shift/nudge tool
+  # -- the actual mechanism Dilla used instead of quantization -- can only
+  # place a hit on one of those 96 discrete positions per beat. A fractional
+  # tick offset is a value that could never have existed on the real
+  # hardware; whole-tick multipliers keep every offset authentically
+  # reachable by the tool this feel is modeled on.
   def role_timing_offset(role, beat_p, bar, step)
     return 0.0 unless enabled?
     tick = beat_p / 96.0
@@ -252,21 +259,21 @@ module DillaGroove
     when :snare
       return 0.0 if ENV["SNARE_EARLY"] == "0"
       # Early snare pushes the pocket (classic finger-drum feel).
-      mul = pocket_dna? ? 4.2 : 2.5
+      mul = pocket_dna? ? 4 : 3
       -(tick * mul)
     when :clap
-      ENV["SNARE_EARLY"] == "0" ? 0.0 : -(tick * 3.5)
+      ENV["SNARE_EARLY"] == "0" ? 0.0 : -(tick * 4)
     when :kick_anchor, :kick_sync, :kick
       return 0.0 if ENV["KICK_LATE"] == "0"
       # Late kick vs early snare = laid-back boom-bap tension.
-      mul = pocket_dna? ? (role.to_sym == :kick_anchor ? 1.2 : 2.8) : 0.0
+      mul = pocket_dna? ? (role.to_sym == :kick_anchor ? 1 : 3) : 0
       tick * mul
     when :hat, :hat_down, :hat_up, :open
       return 0.0 if ENV["HATS_LATE"] == "0"
-      mul = pocket_dna? ? (role.to_sym == :hat_up ? 3.2 : 1.6) : 1.8
+      mul = pocket_dna? ? (role.to_sym == :hat_up ? 3 : 2) : 2
       tick * mul
     when :ghost
-      tick * 0.4
+      tick * 1
     else
       0.0
     end
