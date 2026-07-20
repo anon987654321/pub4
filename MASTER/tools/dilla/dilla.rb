@@ -62,9 +62,9 @@ end
 SAMPLE_DIR = File.join(ROOT, "samples")
 DRUM_DIR = File.join(SAMPLE_DIR, "drums")
 CUSTOM_DRUM_DIR = File.join(DRUM_DIR, "custom")
-# Opt-in FM-synthesized kit (FM_DRUMS=1) -- true operator-modulating-operator
-# FM, distinct from the default kit's pitch-swept-sine/filtered-noise
-# synthesis. Separate directory so it never touches the default sound.
+# FM-synthesized kit (default on: FM_DRUMS!=0) -- true operator-modulating-
+# operator FM, distinct from the analog pitch-swept-sine/filtered-noise kit.
+# Separate directory so it never overwrites the analog oneshots.
 FM_DRUM_DIR = File.join(DRUM_DIR, "fm")
 STEM_DIR = File.join(ROOT, "stems")
 SAMPLE_CLEAN = File.join(SAMPLE_DIR, "clean_harmonic.wav")
@@ -2681,9 +2681,28 @@ LA_BEAT_MIDI_FX_ROTATE = [
   { bend: true, rate_hz: 0.14, depth_cents: 18 }
 ].freeze
 
-def camel_mode?
-  m = ENV["RENDER_MODE"]&.downcase
-  m == "camel" || m == "dilla"
+# True when the canonical dilla DNA path is active (RENDER_MODE dilla).
+# Historical name camel_mode? kept as alias — camel was merged into dilla.
+def dilla_style?
+  normalize_render_mode!
+  ENV["RENDER_MODE"].to_s.downcase == "dilla"
+end
+alias camel_mode? dilla_style?
+
+# Collapse legacy RENDER_MODE aliases onto the flat taxonomy:
+#   camel|beat|punch → dilla
+#   comfort|sofa|smooth → dilla + comfort flags (not a separate mode)
+#   empty → dilla
+def normalize_render_mode!
+  raw = ENV["RENDER_MODE"].to_s.downcase
+  case raw
+  when "", "camel", "beat", "punch"
+    ENV["RENDER_MODE"] = "dilla"
+  when "comfort", "sofa", "smooth"
+    ENV["STREAM_COMFORT"] = "1" if ENV["STREAM_COMFORT"].to_s.empty?
+    ENV["DILLA_COMFORT"] = "1" if ENV["DILLA_COMFORT"].to_s.empty?
+    ENV["RENDER_MODE"] = "dilla"
+  end
 end
 
 def camel_drum_entry_bar
@@ -7199,8 +7218,6 @@ def stream_bars_default
 end
 DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 
-# Best-track defaults — applied on every invocation unless already set (or
-# DILLA_RAW=1). Bare `ruby dilla.rb` uses deep mode on top of these.
 # Baseline production knobs applied on every boot (soft-fill). Values that
 # also appear in DILLA_STYLE_DEFAULTS MUST match that table — soft-fill is
 # first-writer-wins, so a conservative BEST entry silently blocks style DNA
@@ -7229,6 +7246,7 @@ DILLA_BEST_DEFAULTS = {
   "ANALOG_CHAIN" => "broadcast",
   "DRUM_PRESET" => "dilla_slight",
   "EXTERNAL_KIT" => "03-soulful-vintage",
+  "FM_DRUMS" => "1",
   "PERFORMER" => "yancey",
   "GROOVE_DNA" => "donuts",
   "COMPOSITION" => "1",
@@ -7237,8 +7255,14 @@ DILLA_BEST_DEFAULTS = {
   "GROOVE_LOCK" => "kick",
   "GROOVE_ENGINE" => "1",
   "POCKET_DNA" => "1",
+  "SWING_JITTER" => "1",
   "PHRASE_DRIFT" => "1",
   "ARRANGEMENT_VARIATION" => "1",
+  "KICK_DOUBLE" => "1",
+  "KICK_DROP" => "1",
+  "SNARE_PREHIT_GHOST" => "1",
+  "POCKET_KICK_SILENCE" => "1",
+  "POCKET_RUSH" => "1",
   "HARMONY_LEAD" => "1",
   "SCALE_LEAD" => "1",
   "FM_NATIVE" => "1",
@@ -7308,12 +7332,12 @@ RENDER_MODE_DEFAULTS = {
     "STEREO_PAN" => "1", "MOTIF_RECALL" => "1", "COMPOSITION" => "1",
     "BARS" => "32"
   },
-  # camel / dilla style: single table DILLA_STYLE_DEFAULTS below.
-  camel: {},
-  dilla: {}
+  # dilla/camel: empty here — DNA lives in DILLA_STYLE_DEFAULTS (applied via
+  # apply_dilla_style! / apply_render_mode! for mode dilla).
 }.freeze
 
-# Single stream/render style — pad-forward curated progressions + locked 16-step kit.
+# Canonical dilla DNA (kit-forward). Comfort is an overlay table, not a mode.
+# RENDER_MODE aliases camel|beat|punch → dilla; comfort|sofa → dilla+flags.
 DILLA_STYLE_DEFAULTS = {
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
   "TRACK" => "get_dis_money",
@@ -7356,6 +7380,11 @@ DILLA_STYLE_DEFAULTS = {
   "POCKET_SIMPLE" => "1",
   "POCKET_GHOSTS" => "1",
   "POCKET_OPEN_HAT" => "1",
+  "POCKET_RUSH" => "1",
+  "POCKET_KICK_SILENCE" => "1",
+  "KICK_DOUBLE" => "1",
+  "KICK_DROP" => "1",
+  "SNARE_PREHIT_GHOST" => "1",
   "SNARE_EARLY" => "1",
   "HATS_LATE" => "1",
   "KICK_LATE" => "1",
@@ -7363,6 +7392,7 @@ DILLA_STYLE_DEFAULTS = {
   "HAT_MICRO" => "1",
   "SWING_JITTER" => "1",
   "GROOVE_ENGINE" => "1",
+  "FM_DRUMS" => "1",
   "DRUM_CHOPS" => "1",
   "NO_QUANTIZE" => "1",
   "BACKBEAT_CLAP" => "1",
@@ -7692,9 +7722,10 @@ PROMOTED_PROFILES_PATH = File.join(DillaComposition::PROJECT_DIR, "promoted_prof
 # Deep render — quality gates + pocket jitter. Do NOT put pad/mix DNA here
 # (attack/release/vol/reverb/stripdown): BEST soft-fills DEEP before style
 # soft-fill, and first-writer-wins would block DILLA_STYLE_DEFAULTS.
+# PHONE_PREVIEW_GATE stays out: STYLE defaults it off; force on with
+# PHONE_PREVIEW_GATE=1 when you want that extra quality pass.
 DILLA_DEEP_DEFAULTS = {
   "DILLA_QUALITY_GATE" => "1",
-  "PHONE_PREVIEW_GATE" => "1",
   "RENDER_RETRIES" => "2",
   "LISTEN_PASSES" => "1",
   "QUALITY_REPORT" => "1",
@@ -7763,6 +7794,8 @@ STREAM_EXTRA_DEFAULTS = {
   "STREAM_LRA" => "9",
   "STREAM_ROTATE_LEAD" => "1",
   "STREAM_ROTATE_SYNTH" => "1",
+  # All style profiles (dilla/comfort/warp) × tracks, sequential by default.
+  "STREAM_STYLE_SEQUENCE" => "1",
   "STREAM_LEAD_MIDI_RICH" => "1",
   "LEAD_FORCE_ARP" => "1",
   "MELODIC_LEAD" => "0",
@@ -8010,7 +8043,7 @@ def soft_fill_iterate!(tuning, locked_keys: [])
 end
 
 def reassert_pad_lead_locks!
-  return unless camel_mode? || ENV["RENDER_MODE"].to_s.downcase == "dilla"
+  return unless dilla_style?
   DILLA_PAD_LEAD_LOCK_KEYS.each do |key|
     next unless DILLA_STYLE_DEFAULTS.key?(key)
     ENV[key] = DILLA_STYLE_DEFAULTS[key].to_s
@@ -8018,7 +8051,7 @@ def reassert_pad_lead_locks!
 end
 
 def reassert_dilla_style_locks!
-  return unless camel_mode? || ENV["RENDER_MODE"].to_s.downcase == "dilla"
+  return unless dilla_style?
   DILLA_STYLE_LOCK_KEYS.each do |key|
     next unless DILLA_STYLE_DEFAULTS.key?(key)
     ENV[key] = DILLA_STYLE_DEFAULTS[key].to_s
@@ -8028,10 +8061,7 @@ def reassert_dilla_style_locks!
   ENV["PAD_ATTACK"] = atk.to_s
   ENV["PAD_RELEASE"] = rel.to_s
 end
-
-def reassert_camel_beauty_locks!
-  reassert_dilla_style_locks!
-end
+alias reassert_camel_beauty_locks! reassert_dilla_style_locks!
 
 # Loss-gate report for stream promote — RadioBergenStudy#analyze_audio is
 # module-private; DeepAudio has the dynamics block gates need.
@@ -8394,9 +8424,10 @@ def phone_preview_gate_enabled?
 end
 
 def apply_render_mode!
+  normalize_render_mode!
   mode = ENV["RENDER_MODE"]&.downcase&.to_sym
   return unless mode
-  table = if %i[camel dilla].include?(mode)
+  table = if mode == :dilla
             DILLA_STYLE_DEFAULTS
           else
             RENDER_MODE_DEFAULTS[mode]
@@ -8538,16 +8569,13 @@ def apply_track_soul_profile!(track, force: false)
 end
 
 def apply_dilla_style!(force: false)
-  raw = ENV["RENDER_MODE"].to_s.downcase
-  if raw == "comfort"
-    ENV["STREAM_COMFORT"] = "1" if ENV["STREAM_COMFORT"].to_s.empty?
-    ENV["DILLA_COMFORT"] = "1" if ENV["DILLA_COMFORT"].to_s.empty?
-    ENV["RENDER_MODE"] = "dilla"
-  elsif raw.empty? || raw == "camel"
-    ENV["RENDER_MODE"] = "dilla"
-  end
-  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.downcase == "camel"
+  normalize_render_mode!
+  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
   apply_render_mode!
+  # Full style DNA only on the dilla path. warp/long_soul/golden/… already
+  # soft-filled their own RENDER_MODE_DEFAULTS tables above.
+  return unless dilla_style?
+
   verb = force ? "force" : "fill"
   DILLA_STYLE_DEFAULTS.each do |key, value|
     next if !force && ENV[key] && !ENV[key].empty?
@@ -8563,10 +8591,7 @@ def apply_dilla_style!(force: false)
   apply_learned_env_for_track!(track)
   apply_comfort_style!(force: force)
 end
-
-def apply_camel_profile!(force: false)
-  apply_dilla_style!(force: force)
-end
+alias apply_camel_profile! apply_dilla_style!
 
 def pick_default_track!
   return if ENV["TRACK"] && !ENV["TRACK"].empty?
@@ -8595,8 +8620,13 @@ end
 
 def apply_stream_listenability_defaults!
   apply_best_defaults!
-  # Stream defaults to comfort listening unless punch is requested.
-  if ENV["STREAM_PUNCH"] == "1"
+  # Style-sequence (default): do NOT lock the whole stream to comfort —
+  # each slot applies dilla/comfort/warp in turn. Legacy single-profile
+  # stream still defaults to comfort unless STREAM_PUNCH=1.
+  if stream_style_sequence_enabled?
+    ENV["STREAM_STYLE_SEQUENCE"] = "1" if ENV["STREAM_STYLE_SEQUENCE"].to_s.empty?
+    record_config_provenance!("STREAM_STYLE_SEQUENCE", "stream_default_all_styles", "soft")
+  elsif ENV["STREAM_PUNCH"] == "1"
     ENV["STREAM_COMFORT"] = "0" if ENV["STREAM_COMFORT"].to_s.empty?
   elsif ENV["STREAM_COMFORT"].to_s.empty? && ENV["DILLA_COMFORT"].to_s.empty?
     ENV["STREAM_COMFORT"] = "1"
@@ -8613,31 +8643,28 @@ def apply_stream_listenability_defaults!
     end
     soft_fill_env!(fast, label: "STREAM_FAST_DEFAULTS")
   end
-  if stream_iterate_enabled? && !comfort_mode?
+  if stream_iterate_enabled? && !(comfort_mode? && !stream_style_sequence_enabled?)
     soft_fill_iterate!(STREAM_ITERATE_TUNING, locked_keys: DILLA_STYLE_LOCK_KEYS)
   end
-  if ENV.fetch("STREAM_SOUL", "1") != "0" || comfort_mode?
+  if (ENV.fetch("STREAM_SOUL", "1") != "0" || comfort_mode?) && !stream_style_sequence_enabled?
     soft_fill_env!(STREAM_SOUL_DEFAULTS, label: "STREAM_SOUL_DEFAULTS")
     ensure_learned_engine_seeded!
     apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
   end
-  # Single style for stream: dilla (RENDER_MODE camel stays as alias).
-  raw_mode = ENV["RENDER_MODE"].to_s.downcase
-  if raw_mode == "comfort"
-    ENV["STREAM_COMFORT"] = "1"
-    ENV["RENDER_MODE"] = "dilla"
-  elsif raw_mode.empty? || raw_mode == "camel"
-    ENV["RENDER_MODE"] = "dilla"
-  end
-  apply_dilla_style!(force: true)
-  if comfort_mode?
-    # Do not re-force STREAM_CREATIVE_MAX (kit/vox/rotate) — that undoes comfort.
-    force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
+  normalize_render_mode!
+  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
+  # Style-sequence applies per-slot DNA in the stream loop — boot only seeds
+  # learnings + baseline. Single-profile stream still locks full DNA here.
+  if stream_style_sequence_enabled?
+    ensure_learned_engine_seeded!
   else
-    # Critical: apply_dilla_style(force) was wiping STREAM_ITERATE / RAP_VOCAL /
-    # creative flags back to the conservative style table — re-force stream layer.
-    force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
-    force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
+    apply_dilla_style!(force: true)
+    if comfort_mode?
+      force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
+    else
+      force_env!(STREAM_CREATIVE_MAX, label: "STREAM_CREATIVE_MAX")
+      force_env!(STREAM_ITERATE_TUNING, label: "STREAM_ITERATE_TUNING") if stream_iterate_enabled?
+    end
   end
   ENV["PLAY_VOL"] = "1" if ENV["PLAY_VOL"].to_s.empty?
   ENV["DILLA_STREAMING"] = "1"
@@ -8828,14 +8855,29 @@ end
 # Non-stop chord/pad showcase: renders and plays each track once (full
 # playback through real speakers, ffplay -autoexit), then moves on, forever.
 # Ctrl-C to stop. No LLM/agent involved — plain local playback.
-# Pad-first rotation (curated progressions that read as chord music).
-# Stream only artist-verified song harmony (see ARTIST_VERIFIED_PROGRESSIONS).
+#
+# Default: full style matrix, sequential —
+#   for each track (shortcuts → priority → rest):
+#     dilla → comfort → warp
+# So every progression is heard under every profile before moving on.
+# Opt out: STREAM_STYLE_SEQUENCE=0. Pin one track: STREAM_LOCK=1.
+
 DILLA_STREAM_PRIORITY = %w[
   get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
   maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
 ].freeze
 
-# Comfort stream: rotate a short pack (modal / minor — works at techno BPM).
+STYLE_PROFILE_CYCLE = %i[dilla comfort warp].freeze
+# Named product track shortcuts — always lead the ordered track list.
+STYLE_TRACK_SHORTCUTS = %w[
+  get_dis_money
+  chromatic_mediant_drift
+  baroque
+  neo_soul
+  aydin_jazz_turn
+].freeze
+
+# Comfort-only pack when STREAM_STYLE_SEQUENCE=0 and comfort_mode?.
 COMFORT_STREAM_ROTATION = %w[
   mixo_sus_loop
   phrygian_gold_arc
@@ -8847,6 +8889,28 @@ COMFORT_STREAM_ROTATION = %w[
   minor_turnaround
 ].freeze
 
+def stream_style_sequence_enabled?
+  return false if ENV["STREAM_LOCK"] == "1"
+  return false if ENV["STREAM_STYLE_SEQUENCE"] == "0"
+  ENV.fetch("STREAM_STYLE_SEQUENCE", "1") != "0"
+end
+
+# Ordered unique tracks: shortcuts → priority songs → remaining STREAM_ROTATION.
+def style_sequence_tracks
+  head = STYLE_TRACK_SHORTCUTS.map(&:to_s)
+  all = STREAM_TRACKS.map(&:to_s).uniq
+  priority = DILLA_STREAM_PRIORITY.select { |t| all.include?(t) && !head.include?(t) }
+  rest = all.reject { |t| head.include?(t) || priority.include?(t) }
+  head + priority + rest
+end
+
+# Full matrix: each track under dilla, then comfort, then warp — deterministic.
+def build_style_sequence
+  style_sequence_tracks.flat_map do |track|
+    STYLE_PROFILE_CYCLE.map { |profile| { profile: profile, track: track } }
+  end
+end
+
 def stream_track_order
   lock = ENV["STREAM_TRACK"] || (ENV["STREAM_LOCK"] == "1" ? ENV["TRACK"] : nil)
   if lock && !lock.to_s.empty? && ENV["STREAM_LOCK"] == "1"
@@ -8856,18 +8920,87 @@ def stream_track_order
     return [key] if known
     dmesg_warn("stream unknown lock #{lock} — full rotation")
   end
+  return style_sequence_tracks.map(&:to_sym) if stream_style_sequence_enabled?
+
   if comfort_mode?
     pack = COMFORT_STREAM_ROTATION.select { |t|
       DillaLofiMachine.harmony_profile?(t) || STREAM_TRACKS.include?(t.to_sym) || STREAM_TRACKS.include?(t)
     }
-    return pack.shuffle if pack.any?
+    return pack.map(&:to_sym) if pack.any?
   end
-  # Full progression pack: priority verified songs first, then shuffle the rest.
-  all = STREAM_TRACKS.map(&:to_s).uniq
-  priority = DILLA_STREAM_PRIORITY.select { |t| all.include?(t) }
-  rest = (all - priority).shuffle
-  start = rand([priority.length, 1].max)
-  priority.rotate(start) + rest
+  style_sequence_tracks.map(&:to_sym)
+end
+
+# Wipe profile flags that would poison the next slot, then force DNA.
+def clear_stream_profile_flags!
+  ENV["STREAM_PUNCH"] = "0"
+  ENV["STREAM_COMFORT"] = "0"
+  ENV["DILLA_COMFORT"] = "0"
+end
+
+# Apply one style-sequence slot. Order matters:
+#   1) clear flags  2) force profile DNA  3) pin track  4) rotate only when safe
+# Comfort must not be undone by reassert_pad_lead_locks! or multi-lead rotation.
+def apply_stream_style_slot!(slot, index: 0)
+  profile = slot[:profile].to_sym
+  track = slot[:track].to_s
+  clear_stream_profile_flags!
+
+  case profile
+  when :comfort
+    ENV["STREAM_COMFORT"] = "1"
+    ENV["DILLA_COMFORT"] = "1"
+    ENV["RENDER_MODE"] = "dilla"
+    apply_dilla_style!(force: true)
+    force_env!(DILLA_COMFORT_DEFAULTS, label: "slot:comfort")
+    # Soft voice color only — do not enable multi-lead soup over sofa mix.
+    unless @stream_user_lead_locked
+      ENV["LEAD_ARP"] = "1"
+      ENV["LEAD_ARP_MODE"] = "melodic_soul"
+      ENV["LEAD_VOICE"] = STREAM_LEAD_VOICE_ROTATION[index % STREAM_LEAD_VOICE_ROTATION.length]
+      ENV["MELODIC_LEAD"] = "1"
+      ENV["HARMONY_LEAD"] = "0"
+      ENV["CREATIVE_LEAD"] = "0"
+      ENV["EXPERIMENTAL_LEADS"] = "0"
+      ENV["SCALE_LEAD"] = "0"
+      ENV["LEAD_FORCE_ARP"] = "0"
+    end
+  when :warp
+    # Baseline dilla DNA first (force), then warp table force so soft-fill
+    # cannot leave donuts/yancey from a prior punch slot.
+    ENV["RENDER_MODE"] = "dilla"
+    apply_dilla_style!(force: true)
+    ENV["RENDER_MODE"] = "warp"
+    force_env!(RENDER_MODE_DEFAULTS[:warp], label: "slot:warp")
+    force_env!(STREAM_CREATIVE_MAX, label: "slot:warp/creative")
+    stream_rotate_voices_and_arps!(index) unless @stream_user_lead_locked
+    reassert_pad_lead_locks! unless @stream_user_pad_locked
+  else # :dilla punch
+    ENV["STREAM_PUNCH"] = "1"
+    ENV["RENDER_MODE"] = "dilla"
+    apply_dilla_style!(force: true)
+    force_env!(STREAM_CREATIVE_MAX, label: "slot:dilla/creative")
+    stream_rotate_voices_and_arps!(index) unless @stream_user_lead_locked
+    reassert_pad_lead_locks! unless @stream_user_pad_locked
+  end
+
+  ENV["TRACK"] = track
+  ENV["PROGRESSION"] = track
+  apply_track_soul_profile!(track, force: !@stream_user_pad_locked && !@stream_user_lead_locked)
+  # Track soul may set PAD_VOICE; re-force comfort pad locks if still on comfort.
+  if profile == :comfort
+    force_env!(
+      DILLA_COMFORT_DEFAULTS.slice(
+        "PAD_VOICE", "PAD_ARP_MODE", "PAD_VOL", "MELODIC_LEAD", "HARMONY_LEAD",
+        "CREATIVE_LEAD", "EXPERIMENTAL_LEADS", "SCALE_LEAD", "FLYLO_DRUM_OVERLAY",
+        "DRUM_CHOPS", "STREAM_LUFS"
+      ),
+      label: "slot:comfort/reassert"
+    )
+  end
+  record_config_provenance!("TRACK", "style_sequence[#{index}]=#{profile}", "force")
+  record_config_provenance!("RENDER_MODE", "style_sequence[#{index}]=#{profile}", "force")
+  profile
 end
 
 # Per-track variety: rotate lead arp mode, lead/pad voice, force true arps + synth cycle.
@@ -8944,7 +9077,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
     stream_log = File.join(ROOT, "stream.log")
     env_pass = %w[
       RENDER_MODE STREAM_SOUL STREAM_COMFORT STREAM_PUNCH DILLA_COMFORT SPEAK RAP_VOCAL
-      STREAM_DEMO STREAM_TRACK STREAM_LOCK
+      STREAM_DEMO STREAM_TRACK STREAM_LOCK STREAM_STYLE_SEQUENCE
       FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN FLYLO_DRUM_OVERLAY
       DRUM_BUS_VOL DRUM_BUS_GAIN DRUM_MIX_WEIGHT DRUM_AIR_DB DRUM_PRESENCE_DB
       KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY PAD_VOL STREAM_LUFS
@@ -8979,8 +9112,9 @@ def stream(bars_count = STREAM_BARS_COUNT)
   @stream_user_pad_locked = user_pad_locked
   @stream_user_lead_locked = user_lead_locked
   apply_stream_listenability_defaults!
-  # Random rotation by default; STREAM_TRACK= or TRACK+STREAM_LOCK=1 pins one profile.
-  order = stream_track_order
+  # Default: sequential style slots (all profiles + tracks). STREAM_LOCK pins one.
+  style_slots = stream_style_sequence_enabled? ? build_style_sequence : nil
+  order = style_slots ? style_slots.map { |s| s[:track] } : stream_track_order
   # Ruby can't safely reload this file in-process (the CLI dispatch at the
   # bottom runs unconditionally, so a mid-run `load` would re-trigger it —
   # risk of recursion). exec-ing a fresh process instead is safe: it fully
@@ -8997,10 +9131,15 @@ def stream(bars_count = STREAM_BARS_COUNT)
          end
   DillaDmesg.boot!(mode: ENV["RENDER_MODE"] || "dilla", cmd: "stream")
   DillaDmesg.stream!(mode: mode, bars: bars_count, order_n: order.length)
-  dmesg("cycle #{order.first(8).join(',')}#{order.length > 8 ? '…' : ''} (ctrl-c stop)", unit: "stream0", parent: "dilla0")
+  if style_slots
+    preview = style_slots.first(6).map { |s| "#{s[:profile]}:#{s[:track]}" }.join(",")
+    dmesg("style-seq #{style_slots.length} slots [#{preview}…] (ctrl-c stop)", unit: "stream0", parent: "dilla0")
+  else
+    dmesg("cycle #{order.first(8).join(',')}#{order.length > 8 ? '…' : ''} (ctrl-c stop)", unit: "stream0", parent: "dilla0")
+  end
   dmesg("iterate log #{File.basename(STREAM_ITERATE_LOG.to_s)}", unit: "stream0", parent: "dilla0") if stream_iterate_enabled?
   loop do
-    order.each do |t|
+    (style_slots || order).each_with_index do |item, idx|
       if File.mtime(__FILE__) > self_mtime
         dmesg("dilla.rb mtime changed — exec restart", unit: "stream0", parent: "dilla0")
         # Keep supervisor/lock flags so we do not spawn a nested while-true
@@ -9009,26 +9148,33 @@ def stream(bars_count = STREAM_BARS_COUNT)
         ENV["DILLA_STREAM_LAUNCHED"] = "1"
         exec(Gem.ruby, __FILE__, "stream", bars_count.to_s)
       end
-      track = t.to_s
-      # Soul profile first, then rotate lead/synth (overrides locked soul lead).
-      apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
-      stream_rotate_voices_and_arps!(order.index(t) || 0) unless user_lead_locked
-      reassert_pad_lead_locks! unless user_pad_locked
-      # Keep progression aligned with the track id (style lock would pin TRACK forever).
-      ENV["TRACK"] = track
-      ENV["PROGRESSION"] = track unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
-      reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
-      if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
-        track = rb
-        apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
-        stream_rotate_voices_and_arps!(order.index(t) || 0) unless user_lead_locked
-        reassert_pad_lead_locks! unless user_pad_locked
-        ENV["TRACK"] = track
-        ENV["PROGRESSION"] = track
-        reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
-        stream_track_banner("← playlist.brgen.no (rotation #{t})")
+      if style_slots
+        slot = item
+        profile = apply_stream_style_slot!(slot, index: idx)
+        track = slot[:track].to_s
+        stream_track_banner("style=#{profile}")
       else
-        stream_track_banner
+        track = item.to_s
+        # Soul profile first, then rotate lead/synth (overrides locked soul lead).
+        apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
+        stream_rotate_voices_and_arps!(idx) unless user_lead_locked
+        reassert_pad_lead_locks! unless user_pad_locked
+        # Keep progression aligned with the track id (style lock would pin TRACK forever).
+        ENV["TRACK"] = track
+        ENV["PROGRESSION"] = track unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
+        reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
+        if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
+          track = rb
+          apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
+          stream_rotate_voices_and_arps!(idx) unless user_lead_locked
+          reassert_pad_lead_locks! unless user_pad_locked
+          ENV["TRACK"] = track
+          ENV["PROGRESSION"] = track
+          reassert_camel_beauty_locks! if camel_mode? && ENV["STREAM_LOCK"] == "1"
+          stream_track_banner("← playlist.brgen.no (rotation #{item})")
+        else
+          stream_track_banner
+        end
       end
       begin
         stream_play_track!(bars_count)
@@ -9669,23 +9815,33 @@ end
 def schedule_drum_fills!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, feel, section)
   return unless dilla_fill_bar?(bar, section)
   seed = drum_pattern_seed(feel) + bar
+  bpm = (60.0 / beat_p)
   DRUM_FILL_SETS[:snare][(bar / 8 + seed) % DRUM_FILL_SETS[:snare].length].each do |step|
-    t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+    t = [base + step * step_p +
+         dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bpm) +
          dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0, 0.0].max
+    t = DillaGroove.apply_event_timing!(t, role: :snare, beat_p: beat_p, bar: bar, step: step,
+                                        bpm: bpm, section: section)
     vel = step >= 10 ? 0.54 : 0.46
     events[:snare] << [t.round(6), dilla_velocity(vel, bar, step, spread: 0.06) * sec_gain]
   end
   if kicks_enabled?
     DRUM_FILL_SETS[:kicks][(bar / 8 + seed) % DRUM_FILL_SETS[:kicks].length].each do |step|
-      t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+      t = [base + step * step_p +
+           dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bpm) +
            dilla_timing_ms(:kick_sync, bar, step, timing, beat_p) / 1000.0, 0.0].max
+      t = DillaGroove.apply_event_timing!(t, role: :kick, beat_p: beat_p, bar: bar, step: step,
+                                          bpm: bpm, section: section)
       events[:kick] << [t.round(6), dilla_velocity(0.4, bar, step, spread: 0.05) * sec_gain * kick_velocity_scale]
     end
   end
   tier = ghost_tier_for(bar, section)
   DRUM_FILL_SETS[:ghosts][(bar / 8 + seed) % DRUM_FILL_SETS[:ghosts].length].each do |step|
-    t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+    t = [base + step * step_p +
+         dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bpm) +
          dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
+    t = DillaGroove.apply_event_timing!(t, role: :ghost, beat_p: beat_p, bar: bar, step: step,
+                                        bpm: bpm, section: section)
     vel = apply_ghost_tier_vel(dilla_velocity(0.32, bar, step, spread: 0.07) * sec_gain, tier)
     events[:ghost] << [t.round(6), vel]
   end
@@ -9693,11 +9849,15 @@ end
 
 def schedule_hat_roll!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, section)
   return unless bar % 8 == 7 && !%i[intro breakdown].include?(section)
+  bpm = (60.0 / beat_p)
   # 32nd-note roll on the last beat of every 8-bar phrase (steps 12–15.75).
   16.times do |sub|
     step = 12.0 + sub * 0.25
-    t = [base + step * step_p + dilla_swing_offset(step.floor, step_p, swing, quintuplet: quintuplet) +
+    t = [base + step * step_p +
+         dilla_swing_offset(step.floor, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bpm) +
          dilla_timing_ms(:hat_up, bar, step.floor, timing, beat_p) / 1000.0, 0.0].max
+    t = DillaGroove.apply_event_timing!(t, role: :hat_up, beat_p: beat_p, bar: bar, step: step.floor,
+                                        bpm: bpm, section: section)
     accel = 0.34 + (sub / 15.0) * 0.22
     events[:hat] << [t.round(6), dilla_velocity(accel, bar, step.floor, spread: 0.1) * sec_gain]
   end
@@ -10100,8 +10260,13 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       ghost_steps += [5] if feel == :loose_pocket && bar.even?
       ghost_steps.uniq.each do |step|
         next if drop_bar
-        t = [base + step * step_p + dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet) +
+        t = [base + step * step_p +
+             dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
              dilla_timing_ms(:ghost, bar, step, timing, beat_p) / 1000.0, 0.0].max
+        # Ghosts must share pocket place + section jitter — previously skipped
+        # apply_event_timing! so they sat on a dead grid while kick/snare breathed.
+        t = DillaGroove.apply_event_timing!(t, role: :ghost, beat_p: beat_p, bar: bar, step: step,
+                                            bpm: bar_bpm, section: section)
         ghost_vel = apply_ghost_tier_vel(dilla_role_velocity(:ghost, bar, step, sec_gain: sec_gain), ghost_tier)
         ghost_vel = (ghost_vel * 1.12).clamp(0.03, 0.72).round(3) if feel == :loose_pocket
         groove_meta[:ghost_vel] << ghost_vel
@@ -10139,12 +10304,19 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       end
 
       dilla_open_steps(bar, feel, section:).each do |open_step|
-        events[:open] << [[base + open_step * step_p + dilla_swing_offset(open_step, step_p, swing, quintuplet: quintuplet) + 0.008, 0.0].max.round(6),
-                          dilla_role_velocity(:open, bar, open_step, sec_gain: sec_gain)]
+        t = [base + open_step * step_p +
+             dilla_swing_offset(open_step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
+             0.008, 0.0].max
+        t = DillaGroove.apply_event_timing!(t, role: :open, beat_p: beat_p, bar: bar, step: open_step,
+                                            bpm: bar_bpm, section: section)
+        events[:open] << [t.round(6), dilla_role_velocity(:open, bar, open_step, sec_gain: sec_gain)]
       end
       if feel == :loose_pocket && section == :main && bar % 6 == 4
-        events[:ghost] << [[base + 10 * step_p + dilla_swing_offset(10, step_p, swing, quintuplet: quintuplet), 0.0].max.round(6),
-                           dilla_velocity(0.22, bar, 10, spread: 0.04) * sec_gain]
+        t = [base + 10 * step_p +
+             dilla_swing_offset(10, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm), 0.0].max
+        t = DillaGroove.apply_event_timing!(t, role: :ghost, beat_p: beat_p, bar: bar, step: 10,
+                                            bpm: bar_bpm, section: section)
+        events[:ghost] << [t.round(6), dilla_velocity(0.22, bar, 10, spread: 0.04) * sec_gain]
       end
 
       schedule_hat_roll!(events, bar, base, step_p, swing, quintuplet, timing, beat_p, sec_gain, section) unless drop_bar
@@ -10550,7 +10722,8 @@ def fm_drums_enabled?
 end
 
 def ensure_fm_drum_kit!
-  generate_fm_drum_kit! unless %w[kick.wav snare.wav hat.wav].all? { |n| File.exist?(File.join(FM_DRUM_DIR, n)) }
+  needed = %w[kick.wav snare.wav hat.wav ghost.wav open_hat.wav ind_kick.wav]
+  generate_fm_drum_kit! unless needed.all? { |n| File.exist?(File.join(FM_DRUM_DIR, n)) }
 end
 
 def ensure_drum_kit!
@@ -12993,14 +13166,17 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
-    DEFAULT (no command — continuous Camel stream)
-      ruby dilla.rb                    Start non-stop stream (RENDER_MODE=camel, STREAM_SOUL=1)
+    DEFAULT (no command — all styles sequential stream)
+      ruby dilla.rb                    Style sequence: dilla→comfort→warp × tracks
       ruby dilla.rb stream [bars]      Same as bare default (#{STREAM_BARS_COUNT}/BARS bars)
+      STREAM_STYLE_SEQUENCE=0          Disable sequence (sofa/punch single-profile)
       ruby dilla.rb out.wav [bars]     One-shot render to path (not stream)
-      ruby dilla.rb dilla [out] [bars] One-shot Dilla render → #{DEFAULT_RENDER_OUTPUT}
+      ruby dilla.rb dilla [out] [bars] One-shot kit-forward (aliases: beat camel punch)
+      ruby dilla.rb comfort [out] [n]  One-shot sofa mix (aliases: sofa smooth)
+      ruby dilla.rb warp [out] [bars]  One-shot spectral/IDM bias
       DILLA_DEEP=0                     One-shot: standard render (no quality gate / refine)
       DILLA_RAW=1                      Skip all best-default ENV
-      PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (on in deep mode)
+      PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (opt-in)
 
     STREAM (non-stop rotation — speakers via afplay/ffplay)
       stream [bars]                    Fast render+play per profile (#{STREAM_BARS_COUNT} bars default)
@@ -13009,13 +13185,14 @@ def help
       STREAM_GAP=0.15                  Pause between tracks (0 = back-to-back)
       STREAM_ITERATE=1 (default)       Auto-refine mix/groove each track; log stream_iterate.log
       STREAM_DEMO=demo.wav (default)   Each stream track overwrites demo.wav (WAV = no mp3 encode)
-      RENDER_MODE=long_soul|golden       Lush 32-bar soul (FORM + HARMONY_LEAD + bill_evans pads)
-      RENDER_MODE=camel                  FlyLo Camel preset (86 BPM, learned drums, no Dilla kicks)
-      camel [out.mp3] [bars]             One-shot Camel render (chromatic_mediant_drift @ 86)
+      RENDER_MODE=dilla                Canonical DNA (aliases: camel beat punch → dilla)
+      RENDER_MODE=warp                 Spectral/IDM bias (Brainfeeder-leaning)
+      RENDER_MODE=long_soul|golden     Lush 32-bar soul (FORM + HARMONY_LEAD + bill_evans pads)
+      STREAM_PUNCH=1                   Kit-forward stream (off comfort sofa mix)
       FORM=soul_16|soul_32|donuts_time|camel_32  Section map for drums/arp density
-      CAMEL_DRUM_ENTRY_BAR=4             Bars before FlyLo drums enter (Camel default)
-      STREAM_TRACK=chromatic_mediant_drift  Pin Camel progression in stream mode
-      CAMEL_KEEP_FLYLO=1                 Keep FlyLo overlay on breakdowns (Camel default)
+      CAMEL_DRUM_ENTRY_BAR=4             Bars before FlyLo drums enter
+      STREAM_TRACK=chromatic_mediant_drift  Pin progression in stream mode
+      CAMEL_KEEP_FLYLO=1                 Keep FlyLo overlay on breakdowns
       HARMONY_LEAD=1                     Chord-tone harmonic arp stem (voiced pads + extensions)
       STREAM_SOUL=1 (stream default)     Locked Donuts turnaround + harmony lead + soul form
       STREAM_HARMONY_EVERY=2           Rotate voicing + soul TRACK family every N tracks
@@ -15053,11 +15230,15 @@ FLAG_ENV = {
   "speak-pitch" => "SPEAK_PITCH", "speak-vol" => "SPEAK_VOL", "radio-bergen" => "RADIO_BERGEN",
   "stream-iterate" => "STREAM_ITERATE", "evolve-every" => "EVOLVE_EVERY",
   "pocket-kicks" => "POCKET_KICKS", "drum-chops" => "DRUM_CHOPS", "camel-chops" => "DRUM_CHOPS",
+  "fm-drums" => "FM_DRUMS", "kick-double" => "KICK_DOUBLE", "kick-drop" => "KICK_DROP",
+  "snare-prehit-ghost" => "SNARE_PREHIT_GHOST", "pocket-kick-silence" => "POCKET_KICK_SILENCE",
+  "pocket-rush" => "POCKET_RUSH",
   "stream-crossfade" => "STREAM_CROSSFADE", "stream-gap" => "STREAM_GAP",
   "stream-creative-freedom" => "STREAM_CREATIVE_FREEDOM", "stream-evolve-performer" => "STREAM_EVOLVE_PERFORMER",
   "form" => "FORM", "section-map" => "SECTION_MAP", "render-mode" => "RENDER_MODE",
   "harmony-lead" => "HARMONY_LEAD", "harmony-lep-mode" => "HARMONY_LEP_MODE",
   "harmony-arp-style" => "HARMONY_ARP_STYLE", "stream-soul" => "STREAM_SOUL",
+  "stream-style-sequence" => "STREAM_STYLE_SEQUENCE",
   "electronium-classic" => "ELECTRONIUM_CLASSIC", "electronium-render" => "ELECTRONIUM_RENDER",
   "electronium-septuplet" => "ELECTRONIUM_SEPTUPLET",
   "stream-track" => "STREAM_TRACK", "stream-lock" => "STREAM_LOCK",
@@ -15195,18 +15376,18 @@ DISPATCH = {
     puts "wrote #{path} (#{cfg[:bpm].round} BPM, #{n} bars, DFAM 8-step)"
     play(path) if ARGV.shift != "no-play"
   end,
+  # Canonical render command. Aliases: beat, camel, punch → dilla.
   "dilla" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
-    # Soft-apply style DNA. BEST is aligned with STYLE so first-writer
-    # soft-fill no longer blocks kit/master/lead wiring. Operator and
-    # PRODUCT_KIT_ENV keys set before boot stay (soft only — no force-lock).
+    normalize_render_mode!
     unless ENV["DILLA_RAW"] == "1"
       apply_dilla_style!(force: false)
       apply_comfort_style!(force: true) if comfort_mode?
     end
     render_dilla(dest, n_bars)
   end,
+  # Sofa overlay on dilla DNA. Aliases: sofa, smooth → comfort.
   "comfort" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "comfort.wav")
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : 16
@@ -15218,10 +15399,13 @@ DISPATCH = {
     force_env!(DILLA_COMFORT_DEFAULTS, label: "DILLA_COMFORT_DEFAULTS")
     render_dilla(dest, n_bars)
   end,
-  "camel" => lambda do
-    dest = ARGV.shift || File.join(OUTPUT_DIR, "camel.mp3")
-    n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
-    apply_camel_profile!(force: false) unless ENV["DILLA_RAW"] == "1"
+  # Warp / Brainfeeder bias (RENDER_MODE=warp).
+  "warp" => lambda do
+    dest = ARGV.shift || File.join(OUTPUT_DIR, "warp.wav")
+    n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : 32
+    ENV["RENDER_MODE"] = "warp"
+    apply_best_defaults! unless ENV["DILLA_RAW"] == "1"
+    apply_render_mode!
     render_dilla(dest, n_bars)
   end,
   "hiphop" => -> { render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3")) },
@@ -15325,7 +15509,10 @@ DISPATCH = {
 
 COMMAND_ALIASES = {
   "midi" => "electronium",
+  # Style flatten: one DNA path, many names.
   "beat" => "dilla",
+  "camel" => "dilla",
+  "punch" => "dilla",
   "sofa" => "comfort",
   "smooth" => "comfort",
   "ingest" => "learn",
@@ -15350,20 +15537,15 @@ if __FILE__ == $PROGRAM_NAME
   end
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: continuous comfort stream (STREAM_PUNCH=1 for old kit-forward).
-    if ENV["RENDER_MODE"].to_s.downcase == "comfort"
-      ENV["STREAM_COMFORT"] = "1"
-      ENV["RENDER_MODE"] = "dilla"
-    elsif ENV["RENDER_MODE"].to_s.empty? || ENV["RENDER_MODE"].to_s.downcase == "camel"
-      ENV["RENDER_MODE"] = "dilla"
-    end
+    # Bare invoke: sequential all-styles stream (dilla→comfort→warp×tracks).
+    # STREAM_STYLE_SEQUENCE=0 + STREAM_COMFORT=1 restores sofa-only cycle.
+    normalize_render_mode!
+    ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
     ENV["STREAM_SOUL"] = "1" if ENV["STREAM_SOUL"].to_s.empty?
     ENV["SPEAK"] = "0" if ENV["SPEAK"].to_s.empty?
     ENV["STREAM_CONTINUOUS"] = "1" if ENV["STREAM_CONTINUOUS"].to_s.empty?
-    if ENV["STREAM_PUNCH"] != "1" && ENV["STREAM_COMFORT"].to_s.empty?
-      ENV["STREAM_COMFORT"] = "1"
-    end
-    apply_dilla_style!(force: false)
+    ENV["STREAM_STYLE_SEQUENCE"] = "1" if ENV["STREAM_STYLE_SEQUENCE"].to_s.empty?
+    apply_dilla_style!(force: false) unless stream_style_sequence_enabled?
     stream((ENV["BARS"] || ENV["STREAM_BARS"] || "16").to_i)
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd) && !COMMAND_ALIASES.key?(cmd)
     ARGV.unshift(cmd)

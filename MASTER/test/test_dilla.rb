@@ -85,6 +85,126 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("bad_aliases"), "aliases pointing at nonexistent commands"
   end
 
+  def test_style_aliases_normalize_to_flat_taxonomy
+    result = eval_in_engine(<<~RUBY)
+      cases = {}
+      {
+        "camel" => "dilla",
+        "beat" => "dilla",
+        "punch" => "dilla",
+        "comfort" => "dilla",
+        "sofa" => "dilla",
+        "warp" => "warp",
+        "dilla" => "dilla"
+      }.each do |raw, want|
+        ENV["RENDER_MODE"] = raw
+        ENV.delete("STREAM_COMFORT")
+        ENV.delete("DILLA_COMFORT")
+        normalize_render_mode!
+        cases[raw] = {
+          mode: ENV["RENDER_MODE"],
+          comfort: comfort_mode?,
+          dilla_style: dilla_style?,
+          want: want
+        }
+      end
+      puts JSON.generate(cases)
+    RUBY
+    assert_equal "dilla", result.dig("camel", "mode")
+    assert_equal "dilla", result.dig("beat", "mode")
+    assert_equal "dilla", result.dig("punch", "mode")
+    assert_equal "dilla", result.dig("comfort", "mode")
+    assert result.dig("comfort", "comfort"), "comfort alias should set comfort flags"
+    assert_equal "warp", result.dig("warp", "mode")
+    refute result.dig("warp", "dilla_style")
+    assert result.dig("dilla", "dilla_style")
+  end
+
+  def test_product_style_taxonomy_resolves_profiles_and_tracks
+    require_relative "../tools/dilla"
+    assert_equal :dilla, DillaEntrypoint.resolve_style("camel")[:profile]
+    assert_equal :comfort, DillaEntrypoint.resolve_style("sofa")[:profile]
+    assert_equal :warp, DillaEntrypoint.resolve_style("warp")[:profile]
+    assert_equal "chromatic_mediant_drift", DillaEntrypoint.resolve_style("flylo")[:track]
+    assert_equal :dilla, DillaEntrypoint.resolve_style("flylo")[:profile]
+    assert_equal "neo_soul", DillaEntrypoint.resolve_style("neo-soul")[:track]
+    assert DillaEntrypoint.known_style?("punch")
+    refute DillaEntrypoint.known_style?("bogus")
+    env = DillaEntrypoint.product_env(style: "comfort")
+    assert_equal "1", env["DILLA_COMFORT"]
+    assert_equal "dilla", env["RENDER_MODE"]
+    warp_env = DillaEntrypoint.product_env(style: "warp")
+    assert_equal "warp", warp_env["RENDER_MODE"]
+  end
+
+  def test_style_sequence_covers_all_profiles_and_track_shortcuts_sequentially
+    result = eval_in_engine(<<~'RUBY')
+      ENV.delete("STREAM_LOCK")
+      ENV.delete("STREAM_STYLE_SEQUENCE")
+      slots = build_style_sequence
+      tracks = style_sequence_tracks
+      head = slots.first(6)
+      first_track = tracks.first
+      triplet = slots.select { |s| s[:track] == first_track }.map { |s| s[:profile].to_s }
+      puts JSON.generate(
+        enabled: stream_style_sequence_enabled?,
+        n: slots.length,
+        track_n: tracks.length,
+        n_is_tracks_times_profiles: slots.length == tracks.length * STYLE_PROFILE_CYCLE.length,
+        has_shortcuts: STYLE_TRACK_SHORTCUTS.all? { |t| tracks.include?(t) },
+        head: head.map { |s| "#{s[:profile]}:#{s[:track]}" },
+        first_triplet: triplet,
+        no_dups: slots.map { |s| [s[:profile], s[:track]] }.uniq.length == slots.length
+      )
+    RUBY
+    assert result.fetch("enabled"), "style sequence should be on by default"
+    assert result.fetch("n_is_tracks_times_profiles")
+    assert result.fetch("has_shortcuts")
+    assert result.fetch("no_dups")
+    assert_equal %w[dilla comfort warp], result.fetch("first_triplet")
+    assert_equal "dilla:get_dis_money", result.fetch("head").first
+  end
+
+  def test_style_slot_transitions_do_not_poison_profile_dna
+    result = eval_in_engine(<<~RUBY)
+      @stream_user_pad_locked = false
+      @stream_user_lead_locked = false
+      apply_stream_style_slot!({ profile: :comfort, track: "get_dis_money" }, index: 0)
+      after_comfort = {
+        pad_vol: ENV["PAD_VOL"], lufs: ENV["STREAM_LUFS"], harmony: ENV["HARMONY_LEAD"],
+        overlay: ENV["FLYLO_DRUM_OVERLAY"], chops: ENV["DRUM_CHOPS"], melodic: ENV["MELODIC_LEAD"]
+      }
+      apply_stream_style_slot!({ profile: :dilla, track: "get_dis_money" }, index: 1)
+      after_dilla = {
+        pad_vol: ENV["PAD_VOL"], lufs: ENV["STREAM_LUFS"], harmony: ENV["HARMONY_LEAD"],
+        overlay: ENV["FLYLO_DRUM_OVERLAY"], chops: ENV["DRUM_CHOPS"], mode: ENV["RENDER_MODE"]
+      }
+      apply_stream_style_slot!({ profile: :warp, track: "chromatic_mediant_drift" }, index: 2)
+      after_warp = {
+        mode: ENV["RENDER_MODE"], spectral: ENV["SPECTRAL_ARP"], idm: ENV["ARP_IDM_BIAS"],
+        groove: ENV["GROOVE_DNA"], performer: ENV["PERFORMER"]
+      }
+      puts JSON.generate(comfort: after_comfort, dilla: after_dilla, warp: after_warp)
+    RUBY
+    c = result.fetch("comfort")
+    assert_equal "70", c.fetch("pad_vol"), "comfort PAD_VOL must survive (was wiped by pad locks)"
+    assert_equal "-17.5", c.fetch("lufs")
+    assert_equal "0", c.fetch("harmony")
+    assert_equal "0", c.fetch("overlay")
+    assert_equal "0", c.fetch("chops")
+    assert_equal "1", c.fetch("melodic")
+    d = result.fetch("dilla")
+    assert_equal "1", d.fetch("overlay")
+    assert_equal "1", d.fetch("chops")
+    assert_equal "dilla", d.fetch("mode")
+    w = result.fetch("warp")
+    assert_equal "warp", w.fetch("mode")
+    assert_equal "1", w.fetch("spectral")
+    assert_equal "1", w.fetch("idm")
+    assert_equal "cosmogramma", w.fetch("groove")
+    assert_equal "thundercat", w.fetch("performer")
+  end
+
   def test_apply_voicing_returns_bounded_playable_chords_for_every_style
     result = eval_in_engine(<<~RUBY)
       hz = [174.61, 207.65, 261.63, 311.13] # Fm7
@@ -155,8 +275,111 @@ class TestDilla < Minitest::Test
     RUBY
     assert result.fetch("held_only"), "pad layers must stay held — no chord-layer arp"
     assert result.fetch("lead_enabled"), "LEAD_ARP=1 + wash pad arp enables lead"
-    assert_equal "pingpong", result.fetch("lead_style").to_s
-    assert_equal 4, result.fetch("lead_subdiv"), "wash PAD_ARP_MODE maps to soul_wash lead preset"
+    # PAD_ARP_MODE=wash → LEAD_ARP_MODE soul_wash (LEAD_ARP_PRESETS).
+    assert_equal "updown", result.fetch("lead_style").to_s
+    assert_equal 2, result.fetch("lead_subdiv"), "wash PAD_ARP_MODE maps to soul_wash lead preset"
+  end
+
+  def test_best_defaults_align_with_style_so_one_shot_wires_full_dna
+    result = eval_in_engine(<<~RUBY)
+      # Simulate clean one-shot path: boot soft BEST then soft STYLE.
+      (DILLA_BEST_DEFAULTS.keys | DILLA_STYLE_DEFAULTS.keys | DILLA_DEEP_DEFAULTS.keys |
+       %w[TRACK PROGRESSION RENDER_MODE]).each { |k| ENV.delete(k) }
+      apply_best_defaults!
+      apply_dilla_style!(force: false)
+      conflicts = DILLA_BEST_DEFAULTS.select { |k, v|
+        DILLA_STYLE_DEFAULTS.key?(k) && v.to_s != DILLA_STYLE_DEFAULTS[k].to_s
+      }
+      puts JSON.generate(
+        master: ENV["MASTER_HEURISTICS"],
+        pad_voice: ENV["PAD_VOICE"],
+        pad_arp: ENV["PAD_ARP_MODE"],
+        analog: ENV["ANALOG_CHAIN"],
+        kick_gain: ENV["KICK_GAIN"],
+        composition: ENV["COMPOSITION"],
+        groove_engine: ENV["GROOVE_ENGINE"],
+        pocket_dna: ENV["POCKET_DNA"],
+        harmony_lead: ENV["HARMONY_LEAD"],
+        lead_arp: ENV["LEAD_ARP"],
+        track: ENV["TRACK"],
+        phrase_drift: ENV["PHRASE_DRIFT"],
+        swing_jitter: ENV["SWING_JITTER"],
+        fm_drums: ENV["FM_DRUMS"],
+        fm_on: fm_drums_enabled?,
+        kick_double: ENV["KICK_DOUBLE"],
+        kick_drop: ENV["KICK_DROP"],
+        snare_prehit: ENV["SNARE_PREHIT_GHOST"],
+        phone: ENV["PHONE_PREVIEW_GATE"],
+        dfam: DfamEngine.enabled?,
+        spectral: DillaSpectral.enabled?,
+        master_on: DillaMaster.enabled?,
+        harmony_on: harmony_lead_enabled?,
+        composition_on: composition_enabled?,
+        conflicts: conflicts
+      )
+    RUBY
+    assert_equal "1", result.fetch("master")
+    assert_equal "stack_soul", result.fetch("pad_voice")
+    assert_equal "held", result.fetch("pad_arp")
+    assert_equal "broadcast", result.fetch("analog")
+    assert_equal "1.0", result.fetch("kick_gain")
+    assert_equal "1", result.fetch("composition")
+    assert_equal "1", result.fetch("groove_engine")
+    assert_equal "1", result.fetch("pocket_dna")
+    assert_equal "1", result.fetch("harmony_lead")
+    assert_equal "1", result.fetch("lead_arp")
+    assert_equal "get_dis_money", result.fetch("track")
+    assert_equal "1", result.fetch("phrase_drift")
+    assert_equal "1", result.fetch("swing_jitter")
+    assert_equal "1", result.fetch("fm_drums")
+    assert result.fetch("fm_on")
+    assert_equal "1", result.fetch("kick_double")
+    assert_equal "1", result.fetch("kick_drop")
+    assert_equal "1", result.fetch("snare_prehit")
+    assert_equal "0", result.fetch("phone"), "style DNA keeps phone preview off unless forced"
+    assert result.fetch("dfam")
+    assert result.fetch("spectral")
+    assert result.fetch("master_on")
+    assert result.fetch("harmony_on")
+    assert result.fetch("composition_on")
+    assert_empty result.fetch("conflicts"), "BEST must not soft-block STYLE DNA"
+  end
+
+  def test_ghost_and_open_events_receive_pocket_timing
+    result = eval_in_engine(<<~RUBY)
+      ENV["DILLA_RAW"] = "1"
+      ENV["GROOVE_ENGINE"] = "1"
+      ENV["POCKET_DNA"] = "1"
+      ENV["SWING_JITTER"] = "1"
+      ENV["PHRASE_DRIFT"] = "1"
+      ENV["DILLA_RENDER_SEED"] = "42"
+      cfg = { track: :get_dis_money, bpm: 92.0, swing: 56.0, feel: :dilla_slight,
+              timing: {}, chord_bars: 4, phrase_bars: 8, quintuplet: false,
+              progression: :get_dis_money, style_family: :dilla }
+      pads = [{ name: "Cm7", hz: [130.81, 155.56, 196.0, 233.08] },
+              { name: "Fm7", hz: [174.61, 207.65, 261.63, 311.13] }]
+      beat_p = 60.0 / 92.0
+      events = dilla_schedule(8, beat_p, pads, chord_bars: 4, phrase_bars: 8,
+                              swing: 56.0, feel: :dilla_slight, timing: {},
+                              quintuplet: false, chord_phases: [])
+      ghosts = Array(events[:ghost])
+      opens = Array(events[:open])
+      # Quantized step times without pocket place would be exact multiples;
+      # pocket timing should introduce non-zero offsets on at least some hits.
+      ghost_offs = ghosts.map { |t, *_| ((t / (beat_p / 4.0)) % 1.0) }
+      puts JSON.generate(
+        ghost_n: ghosts.length,
+        open_n: opens.length,
+        ghost_fractional: ghost_offs.count { |f| f > 0.001 && f < 0.999 },
+        kick_n: Array(events[:kick]).length,
+        snare_n: Array(events[:snare]).length
+      )
+    RUBY
+    assert_operator result.fetch("kick_n"), :>, 0
+    assert_operator result.fetch("snare_n"), :>, 0
+    assert_operator result.fetch("ghost_n"), :>, 0
+    assert_operator result.fetch("ghost_fractional"), :>, 0,
+                   "ghost events should receive pocket micro-timing, not sit on the dead grid"
   end
 
   def test_lead_morph_xlead_varies_patches_and_arp

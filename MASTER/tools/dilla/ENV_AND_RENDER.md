@@ -62,10 +62,10 @@ Skips `apply_best_defaults!` soft fills — operator ENV only (+ style if still 
 
 | Table | Verb | Role | ~keys |
 |-------|------|------|-------|
-| `PRODUCT_KIT_ENV` | force (spawn env) | Chat/RAILS kit-forward profile | 43 |
-| `RENDER_MODE_DEFAULTS` | soft | Mode sketch/record/perform/long_soul/golden/**warp**/camel/dilla | mode-specific |
-| `DILLA_BEST_DEFAULTS` | soft | Baseline soulful production knobs | 36 |
-| `DILLA_DEEP_DEFAULTS` | soft | Quality gates, pad envelope, retries when deep | 14 |
+| `PROFILE_ENV[:dilla\|comfort\|warp]` | force (spawn env) | Product profiles (`PRODUCT_KIT_ENV` = dilla alias) | ~50–70 |
+| `RENDER_MODE_DEFAULTS` | soft | sketch/record/perform/long_soul/golden/**warp** (dilla DNA is separate table) | mode-specific |
+| `DILLA_BEST_DEFAULTS` | soft | Baseline soulful production knobs (aligned with STYLE DNA — no soft-fill conflicts) | ~45 |
+| `DILLA_DEEP_DEFAULTS` | soft | Quality gates + pocket jitter when deep (no pad/mix DNA that would block STYLE) | ~9 |
 | `DILLA_STYLE_DEFAULTS` | fill/force | Canonical **dilla** kit-forward DNA | 135 |
 | `DILLA_COMFORT_DEFAULTS` | force when comfort | Sofa: one kit, held pads, no vox, −18 LUFS | ~90 |
 | `STREAM_EXTRA_DEFAULTS` | soft then force as `STREAM_CREATIVE_MAX` (punch only) | Stream kit/vox/normalize/speak | 81 |
@@ -81,9 +81,10 @@ Turns on already-built knobs: spectral arp/stack, `ARP_IDM_BIAS`, drum chops,
 
 | ENV | Layer | Role |
 |-----|-------|------|
-| `RENDER_MODE` | mode/style | `dilla` (default), `comfort`→dilla+comfort, `warp`, `sketch`, …; `camel`→dilla |
-| `STREAM_COMFORT` | stream | `1` sofa (stream default); `0` off |
-| `STREAM_PUNCH` | stream | `1` force kit-forward creative stream |
+| `RENDER_MODE` | mode | `dilla` (default), `warp`, `sketch`…; aliases `camel`/`beat`/`punch`→dilla; `comfort`/`sofa`→dilla+flags |
+| `STREAM_STYLE_SEQUENCE` | stream | `1` (default) cycle dilla→comfort→warp × all tracks; `0` off |
+| `STREAM_COMFORT` | stream | sofa when sequence off / comfort slots |
+| `STREAM_PUNCH` | stream | kit-forward when sequence off |
 | `DILLA_COMFORT` | any | `1` apply comfort on one-shot / product |
 | `TRACK` / `STREAM_TRACK` | style/stream | Progression lock |
 | `BARS` / `STREAM_BARS` | style/stream | Length |
@@ -100,6 +101,9 @@ Turns on already-built knobs: spectral arp/stack, `ARP_IDM_BIAS`, drum chops,
 | `ARP_IDM_BIAS` | warp/creative | Euclidean/ratchet/stutter arp styles |
 | `DILLA_RAW` | meta | Skip best soft defaults |
 | `GROOVE_ENGINE` / `POCKET_DNA` | groove | Pocket humanize (default on) |
+| `FM_DRUMS` | kit | FM oneshot kit (default on; `0` = analog synth kit) |
+| `KICK_DOUBLE` / `KICK_DROP` / `SNARE_PREHIT_GHOST` | pocket | Ornament techniques (default on with pocket DNA) |
+| `POCKET_KICK_SILENCE` / `POCKET_RUSH` | pocket | Kick-silence bars + section-aware snare rush |
 
 Full style list is large (mix bus dB, FlyLo gains, harmonic stem weights, camel locks).
 Prefer `config-provenance` after a render over memorizing every key.

@@ -50,13 +50,21 @@ n_bars = (ARGV[0] || 16).to_i
 seed = (ARGV[1] || rand(1_000_000)).to_i
 ENV["DILLA_RENDER_SEED"] = seed.to_s
 
+# Cycle sections so grid preview reflects section-aware rush / hat-drop.
+GRID_SECTIONS = %i[intro main development breakdown climax hook].freeze
+
+def section_for_bar(bar)
+  GRID_SECTIONS[bar % GRID_SECTIONS.length]
+end
+
 def print_grid(n_bars, label: nil)
   puts "=== #{label} ===" if label
   (0...n_bars).each do |bar|
+    section = section_for_bar(bar)
     kicks  = DillaGroove.pocket_kicks(bar)
-    snares = DillaGroove.pocket_snares_hard(bar)
+    snares = DillaGroove.pocket_snares_hard(bar, section: section)
     ghosts = DillaGroove.pocket_snares_ghost(bar)
-    hats   = DillaGroove.pocket_hats(bar).reject { |s| DillaGroove.hat_should_drop?(bar, s) }
+    hats   = DillaGroove.pocket_hats(bar).reject { |s| DillaGroove.hat_should_drop?(bar, s, section: section) }
     open_h = DillaGroove.pocket_open_hat?(bar) ? [14] : []
 
     kick_off = DillaGroove.role_timing_offset(:kick_sync, BEAT_P, bar, kicks.first || 0) * 1000.0
@@ -64,7 +72,7 @@ def print_grid(n_bars, label: nil)
     hat_off = DillaGroove.role_timing_offset(:hat_down, BEAT_P, bar, hats.first || 0) * 1000.0
 
     bar_label = format("%3d", bar)
-    puts "#{bar_label} K: #{row(kicks, 'K')}  (#{kick_off.round(1)}ms)"
+    puts "#{bar_label} K: #{row(kicks, 'K')}  (#{kick_off.round(1)}ms)  [#{section}]"
     puts "    S: #{row(snares, 'S')}#{ghosts.any? ? "  ghost:#{ghosts}" : ''}  (#{snare_off.round(1)}ms)"
     puts "    g: #{row(ghosts, 'g')}"
     puts "    H: #{row(hats, 'x')}#{open_h.any? ? '  +open' : ''}  (#{hat_off.round(1)}ms)"
@@ -75,7 +83,7 @@ end
 def repetition_report(n_bars)
   {
     kicks: (0...n_bars).map { |b| DillaGroove.pocket_kicks(b) },
-    snares: (0...n_bars).map { |b| DillaGroove.pocket_snares_hard(b) },
+    snares: (0...n_bars).map { |b| DillaGroove.pocket_snares_hard(b, section: section_for_bar(b)) },
     hats: (0...n_bars).map { |b| DillaGroove.pocket_hats(b) },
     ghosts: (0...n_bars).map { |b| DillaGroove.pocket_snares_ghost(b) }
   }.each do |name, seq|

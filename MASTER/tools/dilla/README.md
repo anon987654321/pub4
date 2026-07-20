@@ -15,39 +15,47 @@ Product path (brgen): `Shared::DillaProcessor` → wrapper → engine → Active
 
 ---
 
-## Styles: `dilla` (punch) vs `comfort` (sofa)
+## Styles (flattened)
 
-| Profile | Activate | Character |
-|---------|----------|-----------|
-| **comfort** (stream default) | bare `ruby dilla.rb`, `STREAM_COMFORT=1`, `ruby dilla.rb comfort …` | One pocket kit, held pads, single melodic lead, no rap, LUFS −18, no lead rotation |
-| **punch / kit-forward** | `STREAM_PUNCH=1` or `STREAM_COMFORT=0` | Hybrid FlyLo kit, hot vox, multi-lead, creative rotate |
+| Kind | Names | Meaning |
+|------|-------|---------|
+| **Profile: dilla** | `dilla`, aliases `punch` `beat` `camel` | Kit-forward DNA (`DILLA_STYLE_DEFAULTS`) |
+| **Profile: comfort** | `comfort`, aliases `sofa` `smooth` | Sofa overlay (`DILLA_COMFORT_DEFAULTS` on dilla) |
+| **Profile: warp** | `warp` | Spectral/IDM bias (`RENDER_MODE=warp`) |
+| **Track shortcut** | `flylo` `baroque` `bach` `neo-soul` `jazz` | Pins `TRACK` under dilla profile |
 
-`DILLA_STYLE_DEFAULTS` remains the kit-forward DNA table. Comfort is
-`DILLA_COMFORT_DEFAULTS`, forced **after** style on stream so
-`STREAM_CREATIVE_MAX` does not re-hot the mix. `RENDER_MODE=camel` is a
-compat alias for dilla.
+Stream defaults to the **full style matrix** (`STREAM_STYLE_SEQUENCE=1`):
+for each track (shortcuts → priority → rest), play `dilla → comfort → warp`.
+Every progression is heard under every profile before moving on. Opt out:
+`STREAM_STYLE_SEQUENCE=0` (then comfort-only or punch).
 
 ```sh
 cd MASTER/tools/dilla
 
-# Continuous comfort stream (default bare invoke) — one supervisor only
+# Continuous all-styles sequence (default bare invoke)
 ruby dilla.rb
-# explicit:
-SPEAK=0 STREAM_COMFORT=1 ruby dilla.rb stream 16
+SPEAK=0 ruby dilla.rb stream 16
 
-# Old punch stream
-STREAM_PUNCH=1 SPEAK=0 ruby dilla.rb stream 12
+# Legacy sofa-only cycle
+STREAM_STYLE_SEQUENCE=0 STREAM_COMFORT=1 SPEAK=0 ruby dilla.rb stream 16
 
-# One-shot comfort
-ruby dilla.rb comfort out.wav 16
-# One-shot kit-forward
+# Punch-only (no sequence)
+STREAM_STYLE_SEQUENCE=0 STREAM_PUNCH=1 SPEAK=0 ruby dilla.rb stream 12
+
+# One-shots
 ruby dilla.rb dilla out.wav 12
+ruby dilla.rb comfort out.wav 16
+ruby dilla.rb warp out.wav 32
+# aliases still work:
+ruby dilla.rb camel out.wav 12   # → dilla
+ruby dilla.rb sofa out.wav 16    # → comfort
 
-# Chat / product wrapper
+# Product wrapper
 cd MASTER
+ruby tools/dilla.rb generate --style dilla --bars 12 --output /tmp/beat.mp3
 ruby tools/dilla.rb generate --style comfort --bars 16 --output /tmp/sofa.mp3
-ruby tools/dilla.rb generate --comfort --bars 16 --output /tmp/sofa.mp3
-DILLA_COMFORT=1 ruby tools/dilla.rb generate --style dilla --bars 16 --output /tmp/sofa.mp3
+ruby tools/dilla.rb generate --style warp --bars 32 --output /tmp/warp.mp3
+ruby tools/dilla.rb generate --style flylo --bars 16 --output /tmp/flylo.mp3
 ```
 
 ### What you get (code truth — `DILLA_STYLE_DEFAULTS`)
@@ -136,7 +144,7 @@ cd MASTER && bundle exec ruby bin/cli
 
 | Group | Commands |
 |---|---|
-| Render | `dilla`/`beat`, `camel`, `hiphop`, `slum`, `industrial`, `techno`, `analog`, `render` |
+| Render | `dilla`/`beat`/`camel`/`punch`, `comfort`/`sofa`, `warp`, `hiphop`, `slum`, `industrial`, `techno`, `analog` |
 | Vocal | `mix`, `v7`–`v11`, `rap-vocal` |
 | Sample | `prepare`, `sample`, `source`, `separate`, `demux`, `learn`, `learn-flylo`, `clean` |
 | Live | `stems`, `liveset`, `live`, `stream`, `live_now`, `livestream` |
