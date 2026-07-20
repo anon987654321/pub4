@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/zsh
+set -euo pipefail
 
 # PounceKeys Installation and Setup Script
 # Purpose: Automates PounceKeys keylogger setup on Android via Termux

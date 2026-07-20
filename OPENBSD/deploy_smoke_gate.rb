@@ -99,7 +99,7 @@ master_web_root = File.join(ROOT, "MASTER", "web")
   File.join(master_web_root, "lib/tasks/face_modules_bundle.rake"),
   File.join(master_web_root, "script/build_face_modules.sh"),
   File.join(master_web_root, "script/probe_http"),
-  File.join(master_web_root, "script/ci_web_probe")
+  File.join(master_web_root, "script/ci_web_probe"),
 ].each do |path|
   failures << "MASTER/web: missing #{path.delete_prefix(ROOT + '/')}" unless File.file?(path)
 end

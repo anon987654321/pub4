@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 # Shared SSH helper for vm23 (dev@46.23.89.226).
 #
 # Source from deploy scripts:

@@ -1,4 +1,5 @@
 #!/bin/ksh
+set -euo pipefail
 # Emergency CPU relief for saturated VPS (vm23).
 # Run: doas ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh
 #

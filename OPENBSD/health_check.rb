@@ -51,8 +51,8 @@ def load_apps
       {
         "domain" => metadata.fetch("domain").to_s,
         "port" => Integer(metadata.fetch("port")),
-        "standalone" => false
-      }
+        "standalone" => false,
+      },
     ]
   end
   load_standalone_apps.each { |name, metadata| merged[name] = metadata }

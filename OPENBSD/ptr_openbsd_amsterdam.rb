@@ -65,7 +65,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   options = {
-    apply: ENV["APPLY_PTR"] == "1"
+    apply: ENV["APPLY_PTR"] == "1",
   }
 
   parser = OptionParser.new do |opts|

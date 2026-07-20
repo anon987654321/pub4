@@ -52,8 +52,8 @@ cmd = [
   [
     "export HOME=/home/#{app}",
     "cd #{Shellwords.escape(app_dir)}",
-    "env RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=#{Shellwords.escape(secret)} bundle34 exec rails runner -e production #{Shellwords.escape(runner)}"
-  ].join(" && ")
+    "env RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=#{Shellwords.escape(secret)} bundle34 exec rails runner -e production #{Shellwords.escape(runner)}",
+  ].join(" && "),
 ]
 
 success = system(*cmd)

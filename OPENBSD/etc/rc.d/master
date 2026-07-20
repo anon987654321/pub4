@@ -19,126 +19,126 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
-	# Production bundle must not require dev-only gems (ferrum, debug).
-	(cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' 2>/dev/null
-		BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
-		(cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' \
-			BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
-	# The tts-worker + media tools use MASTER/Gemfile (root), NOT web's. A drifted
-	# root lock (e.g. new dilla gems never installed) crashes tts-worker at
-	# Bundler.setup on every spawn -> silent TTS outage / degraded /health. Ensure
-	# it here too so a restart self-heals the exact recurring failure.
-	(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
-		(cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
-	pkill -f "falcon.*${PORT}" 2>/dev/null
-	pkill -f "ruby34.*${PORT}" 2>/dev/null
-	pkill -f "pub4/MASTER/web" 2>/dev/null
-	pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
-	rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
-	# Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
-	rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
-	# Deploy-in-progress lock: other tooling (or a future agent) can check this file
-	# before assuming the asset tree is in a stable, servable state.
-	touch /home/dev/pub4/.deploying 2>/dev/null || true
-	_face_ok=1
-	for _f in /home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js; do
-		[ -f "$_f" ] || _face_ok=0
-	done
-	if [ "$_face_ok" = "0" ]; then
-		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle) 2>/dev/null || true
-	fi
-	_manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
-	_stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
-	_digest=$(cksum /home/dev/pub4/MASTER/web/public/face.part*.txt /home/dev/pub4/MASTER/web/public/face.css \
-		/home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/container_gate.js \
-		/home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js \
-		/home/dev/pub4/MASTER/web/public/face_deferred_loader.js \
-		/home/dev/pub4/MASTER/web/public/face_wayfinding.js \
-		/home/dev/pub4/MASTER/web/public/chat.js \
-		/home/dev/pub4/MASTER/web/public/chat_actions.js \
-		/home/dev/pub4/MASTER/web/public/visual_bridge.js \
-		/home/dev/pub4/MASTER/web/public/face_minimal_ui.js \
-		/home/dev/pub4/MASTER/web/public/sw.js \
-		/home/dev/pub4/MASTER/web/public/face_*.js \
-		/home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
-		/home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
-	_skip=0
-	if [ -f "$_manifest" ] && [ -f "$_stamp" ] && [ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]; then
-		_skip=1
-	fi
-	if [ "$_skip" = "0" ]; then
-		(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
-		mkdir -p /home/dev/pub4/MASTER/web/tmp
-		echo "$_digest" > "$_stamp"
-	fi
-	# Load-bearing asset gate: refuse to start serving a broken face.js/manifest
-	# mismatch (the exact class of bug that wedged the primer boot on 2026-07-10).
-	# One self-heal precompile retry before actually blocking the start.
-	_gate=/home/dev/pub4/RAILS/master_web_assets_gate.rb
-	if [ -f "$_gate" ]; then
-		_gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
-		_gate_rc=$?
-		if [ "$_gate_rc" != "0" ]; then
-			logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
-			(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
-			echo "$_digest" > "$_stamp"
-			_gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
-			_gate_rc=$?
-			if [ "$_gate_rc" != "0" ]; then
-				logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"
-				rm -f /home/dev/pub4/.deploying 2>/dev/null || true
-				exit 1
-			fi
-			logger -t master "assets gate passed after retry precompile"
-		fi
-	fi
-	rm -f /home/dev/pub4/.deploying 2>/dev/null || true
-	sleep 1
+  # Production bundle must not require dev-only gems (ferrum, debug).
+  (cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' 2>/dev/null
+    BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
+    (cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' \
+      BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
+  # The tts-worker + media tools use MASTER/Gemfile (root), NOT web's. A drifted
+  # root lock (e.g. new dilla gems never installed) crashes tts-worker at
+  # Bundler.setup on every spawn -> silent TTS outage / degraded /health. Ensure
+  # it here too so a restart self-heals the exact recurring failure.
+  (cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
+    (cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
+  pkill -f "falcon.*${PORT}" 2>/dev/null
+  pkill -f "ruby34.*${PORT}" 2>/dev/null
+  pkill -f "pub4/MASTER/web" 2>/dev/null
+  pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
+  rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
+  # Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).
+  rm -rf /home/dev/pub4/MASTER/web/public/assets/assets 2>/dev/null || true
+  # Deploy-in-progress lock: other tooling (or a future agent) can check this file
+  # before assuming the asset tree is in a stable, servable state.
+  touch /home/dev/pub4/.deploying 2>/dev/null || true
+  _face_ok=1
+  for _f in /home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js; do
+    [ -f "$_f" ] || _face_ok=0
+  done
+  if [ "$_face_ok" = "0" ]; then
+    (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle) 2>/dev/null || true
+  fi
+  _manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
+  _stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
+  _digest=$(cksum /home/dev/pub4/MASTER/web/public/face.part*.txt /home/dev/pub4/MASTER/web/public/face.css \
+    /home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/container_gate.js \
+    /home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js \
+    /home/dev/pub4/MASTER/web/public/face_deferred_loader.js \
+    /home/dev/pub4/MASTER/web/public/face_wayfinding.js \
+    /home/dev/pub4/MASTER/web/public/chat.js \
+    /home/dev/pub4/MASTER/web/public/chat_actions.js \
+    /home/dev/pub4/MASTER/web/public/visual_bridge.js \
+    /home/dev/pub4/MASTER/web/public/face_minimal_ui.js \
+    /home/dev/pub4/MASTER/web/public/sw.js \
+    /home/dev/pub4/MASTER/web/public/face_*.js \
+    /home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
+    /home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
+  _skip=0
+  if [ -f "$_manifest" ] && [ -f "$_stamp" ] && [ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]; then
+    _skip=1
+  fi
+  if [ "$_skip" = "0" ]; then
+    (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
+    mkdir -p /home/dev/pub4/MASTER/web/tmp
+    echo "$_digest" > "$_stamp"
+  fi
+  # Load-bearing asset gate: refuse to start serving a broken face.js/manifest
+  # mismatch (the exact class of bug that wedged the primer boot on 2026-07-10).
+  # One self-heal precompile retry before actually blocking the start.
+  _gate=/home/dev/pub4/RAILS/master_web_assets_gate.rb
+  if [ -f "$_gate" ]; then
+    _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
+    _gate_rc=$?
+    if [ "$_gate_rc" != "0" ]; then
+      logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
+      (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
+      echo "$_digest" > "$_stamp"
+      _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
+      _gate_rc=$?
+      if [ "$_gate_rc" != "0" ]; then
+        logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"
+        rm -f /home/dev/pub4/.deploying 2>/dev/null || true
+        exit 1
+      fi
+      logger -t master "assets gate passed after retry precompile"
+    fi
+  fi
+  rm -f /home/dev/pub4/.deploying 2>/dev/null || true
+  sleep 1
 }
 
 rc_cmd $1
 rc=$?
 if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
-	if [ "$rc" = "0" ]; then
-		ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}/?token=#{t}" : "web: #{u}"' 2>/dev/null
-		# Wait for Falcon /up, then restart relayd so HTTPS does not stay empty after rcctl restart master.
-		_i=0
-		_up_ok=0
-		while [ "$_i" -lt 30 ]; do
-			curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
-			sleep 1
-			_i=$((_i + 1))
-		done
-		# Wait for MASTER container (smoke ping — metrics requires auth since tier gate).
-		_ping_ok=0
-		_j=0
-		while [ "$_j" -lt 120 ]; do
-			curl -fsS "http://127.0.0.1:${PORT}/chat/message?message=ping" 2>/dev/null | grep -q 'pong' && { _ping_ok=1; break; }
-			sleep 2
-			_j=$((_j + 1))
-		done
-		if [ "$_up_ok" = "1" ]; then
-			rcctl restart relayd 2>/dev/null || true
-		else
-			logger -t master "relayd skipped: /up not ready after restart"
-		fi
-		if [ "$_ping_ok" = "0" ]; then
-			logger -t master "container warmup: ping not ready after 240s"
-		fi
-		# Warm TTS with MASTER Gemfile only — never inherit Falcon web/vendor/bundle env.
-		_tts_warm_ok=0
-		if su -m dev -c 'unset BUNDLE_PATH GEM_HOME GEM_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT RUBYOPT; cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile MASTER_TTS_TIMEOUT=45 bundle34 exec ruby -Ilib -e "require \"master\"; exit(Master::Voice::TtsSupervisor.ensure_daemon! ? 0 : 1)"' 2>>/var/log/daemon; then
-			_l=0
-			while [ "$_l" -lt 30 ]; do
-				[ -S /home/dev/pub4/MASTER/.master/tts-0.sock ] && { _tts_warm_ok=1; break; }
-				sleep 1
-				_l=$((_l + 1))
-			done
-		fi
-		if [ "$_tts_warm_ok" = "0" ]; then
-			logger -t master "CRITICAL: TTS sockets missing after ensure_daemon (check .master/tts-worker-*.log)"
-		fi
-		ruby34 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
-	fi
+  if [ "$rc" = "0" ]; then
+    ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}/?token=#{t}" : "web: #{u}"' 2>/dev/null
+    # Wait for Falcon /up, then restart relayd so HTTPS does not stay empty after rcctl restart master.
+    _i=0
+    _up_ok=0
+    while [ "$_i" -lt 30 ]; do
+      curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
+      sleep 1
+      _i=$((_i + 1))
+    done
+    # Wait for MASTER container (smoke ping — metrics requires auth since tier gate).
+    _ping_ok=0
+    _j=0
+    while [ "$_j" -lt 120 ]; do
+      curl -fsS "http://127.0.0.1:${PORT}/chat/message?message=ping" 2>/dev/null | grep -q 'pong' && { _ping_ok=1; break; }
+      sleep 2
+      _j=$((_j + 1))
+    done
+    if [ "$_up_ok" = "1" ]; then
+      rcctl restart relayd 2>/dev/null || true
+    else
+      logger -t master "relayd skipped: /up not ready after restart"
+    fi
+    if [ "$_ping_ok" = "0" ]; then
+      logger -t master "container warmup: ping not ready after 240s"
+    fi
+    # Warm TTS with MASTER Gemfile only — never inherit Falcon web/vendor/bundle env.
+    _tts_warm_ok=0
+    if su -m dev -c 'unset BUNDLE_PATH GEM_HOME GEM_PATH BUNDLE_BIN_PATH BUNDLE_WITHOUT BUNDLE_DEPLOYMENT RUBYOPT; cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=/home/dev/pub4/MASTER/Gemfile MASTER_TTS_TIMEOUT=45 bundle34 exec ruby -Ilib -e "require \"master\"; exit(Master::Voice::TtsSupervisor.ensure_daemon! ? 0 : 1)"' 2>>/var/log/daemon; then
+      _l=0
+      while [ "$_l" -lt 30 ]; do
+        [ -S /home/dev/pub4/MASTER/.master/tts-0.sock ] && { _tts_warm_ok=1; break; }
+        sleep 1
+        _l=$((_l + 1))
+      done
+    fi
+    if [ "$_tts_warm_ok" = "0" ]; then
+      logger -t master "CRITICAL: TTS sockets missing after ensure_daemon (check .master/tts-worker-*.log)"
+    fi
+    ruby34 /home/dev/pub4/MASTER/web/script/probe_http 2>/dev/null || logger -t master "probe_http failed after restart"
+  fi
 fi
 exit $rc

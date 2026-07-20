@@ -27,9 +27,9 @@ dir="${repo%/*}/pub4-${agent}"
 git -C "$repo" fetch -q origin
 
 if git -C "$repo" worktree list --porcelain | grep -q "worktree ${dir}$"; then
-	echo "worktree already exists: ${dir}"
+  echo "worktree already exists: ${dir}"
 else
-	git -C "$repo" worktree add -B "$branch" "$dir" "$base"
+  git -C "$repo" worktree add -B "$branch" "$dir" "$base"
 fi
 
 echo "worktree: ${dir}"
