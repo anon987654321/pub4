@@ -33,8 +33,8 @@ class AmberBacklogTest < Minitest::Test
   end
 
   def test_wardrobe_analytics_upload_pipeline_and_outfit_generation_are_wired
-    analytics = read("app/services/wardrobe_analytics_service.rb")
-    generator = read("app/services/outfit_generation_service.rb")
+    analytics = read("app/services/wardrobe_analytics.rb")
+    generator = read("app/services/outfit_generation.rb")
     routes = read("config/routes.rb")
     item_form = read("app/views/items/_form.html.erb")
     media_picker = File.read(File.join(ROOT, "..", "shared", "frontend", "media_picker_controller.js"))
@@ -64,7 +64,7 @@ class AmberBacklogTest < Minitest::Test
   end
 
   def test_style_evolution_timeline_is_wired
-    service = read("app/services/style_evolution_service.rb")
+    service = read("app/services/style_evolution.rb")
     controller = read("app/controllers/wardrobe_items_controller.rb")
     routes = read("config/routes.rb")
     view = read("app/views/wardrobe_items/timeline.html.erb")
@@ -89,8 +89,8 @@ class AmberBacklogTest < Minitest::Test
     assert_includes media_job, "enqueue_once(CalculateSustainabilityJob"
     assert_includes media_job, "MediaProcessingJob.perform_now"
     assert_includes ai, "packing_list_items.find_or_create_by!"
-    assert_includes read("app/services/wardrobe_ai_service.rb"), "def fingerprint_for"
-    assert_includes read("app/services/wardrobe_ai_service.rb"), "def self.configured?"
+    assert_includes read("app/services/wardrobe_ai.rb"), "def fingerprint_for"
+    assert_includes read("app/services/wardrobe_ai.rb"), "def self.configured?"
   end
 
   def test_konmari_and_honesty_paths_are_wired

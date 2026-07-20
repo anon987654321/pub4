@@ -84,7 +84,7 @@ class DeployBacklogTest < Minitest::Test
     geolocation = File.read(File.join(ROOT, 'brgen/app/javascript/controllers/geolocation_controller.js'))
     layout = File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
     nearby_view = File.read(File.join(ROOT, 'brgen/app/views/nearby/index.html.erb'))
-    dating_matchmaking = File.read(File.join(ROOT, 'brgen/app/services/dating/matchmaking_service.rb'))
+    dating_matchmaking = File.read(File.join(ROOT, 'brgen/app/services/dating/matchmaking.rb'))
 
     assert_includes nearby, 'DEFAULT_RADIUS_KM = 2.0'
     assert_includes nearby, 'MAX_RADIUS_KM = 25.0'
@@ -242,7 +242,7 @@ class DeployBacklogTest < Minitest::Test
     migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707121000_add_playlist_import_embed_and_expiry_fields.rb'))
     playlist = File.read(File.join(ROOT, 'brgen/app/models/playlist/playlist.rb'))
     track = File.read(File.join(ROOT, 'brgen/app/models/playlist/track.rb'))
-    importer = File.read(File.join(ROOT, 'brgen/app/services/playlist/track_import_service.rb'))
+    importer = File.read(File.join(ROOT, 'brgen/app/services/playlist/track_import.rb'))
     imports_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/imports_controller.rb'))
     playlists_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/playlists_controller.rb'))
     tracks_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/tracks_controller.rb'))
@@ -748,7 +748,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_brgen('app/reflexes/playlists_infinite_scroll_reflex.rb'), 'playlist/playlists/row'
     assert_includes read_brgen('app/assets/stylesheets/_vertical_tv.scss'), '.show-grid'
     assert_includes read_brgen('app/assets/stylesheets/_vertical_takeaway.scss'), '.order-list'
-    assert_includes read_brgen('app/assets/stylesheets/_vertical_dating_shell.scss'), '.match-list'
+    assert_includes read_brgen('app/views/dating/matches/index.html.erb'), 'match-list'
   end
 
   def test_satellite_apps_use_infinite_scroll_reflexes
@@ -790,7 +790,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes scss, '_chrome_polish'
     assert_includes scss, 'offline_page'
     assert_includes read_brgen('app/assets/stylesheets/_vertical_playlist.scss'), '.playlist-top'
-    assert_includes read_brgen('app/assets/stylesheets/_vertical_tv.scss'), '.tv-live-streams'
+    assert_includes read_brgen('app/assets/stylesheets/_vertical_tv_cards.scss'), '.tv-live-streams'
     assert_includes show, 'x-post-show'
     assert_includes show, 'x_feed_icon'
     refute_includes show, 'post_show'
