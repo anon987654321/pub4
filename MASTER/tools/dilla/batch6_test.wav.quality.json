@@ -1,0 +1,58 @@
+{
+  "duration_seconds": 20.122,
+  "bit_rate": 1411231,
+  "schema": "dilla.master.v1",
+  "path": "/Users/mac/Documents/GitHub/pub4/MASTER/tools/dilla/batch6_test.wav",
+  "delivery": "wav",
+  "integrated_lufs": -17.06,
+  "true_peak_dbtp": -2.32,
+  "harmony_score": 91,
+  "harmony_breakdown": {
+    "overall": 91,
+    "extension": 100,
+    "register": 100,
+    "motion": 100,
+    "clash": 100
+  },
+  "progression_chord_names": [
+    "D/E",
+    "Db/E",
+    "C/E",
+    "Bm/E",
+    "Bbm/E",
+    "Am/E",
+    "D/E",
+    "Db/E",
+    "C/E"
+  ],
+  "harshness": {
+    "harshness": -17.4,
+    "needs_notch": false
+  },
+  "sub_kick_balance": {
+    "low_mid_delta": -7.34,
+    "recommendation": "ok"
+  },
+  "ml_notes": null,
+  "loudness_range_lu": 9.9,
+  "mono_rms_db": -16.823,
+  "spectral_rms_db": {
+    "low": -24.962,
+    "mid": -17.625,
+    "high": -35.029
+  },
+  "target": {
+    "integrated_lufs": "-14.0..-11.0",
+    "true_peak_max_dbtp": -1.0
+  },
+  "warnings": [
+    "master is outside radio-ready -14..-11 LUFS range"
+  ],
+  "capabilities": [
+    196,
+    197,
+    198,
+    199,
+    200
+  ]
+}
