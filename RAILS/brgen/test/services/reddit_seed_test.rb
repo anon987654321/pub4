@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RedditSeedServiceTest < ActiveSupport::TestCase
+class RedditSeedTest < ActiveSupport::TestCase
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
@@ -38,7 +38,7 @@ class RedditSeedServiceTest < ActiveSupport::TestCase
     end
 
     posts = ActsAsTenant.with_tenant(@city) {
-      RedditSeedService.new(city: @city, domain: "brgen.no", subs: [ "bergen" ], rewriter: rewriter).call
+      RedditSeed.new(city: @city, domain: "brgen.no", subs: [ "bergen" ], rewriter: rewriter).call
     }
 
     assert_equal 1, posts.size

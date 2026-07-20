@@ -48,9 +48,9 @@ class AmberBacklogTest < Minitest::Test
     assert_includes generator, "underused?"
     assert_includes routes, "get :analytics"
     assert_includes routes, "post :generate"
-    assert_includes read("app/controllers/wardrobe_items_controller.rb"), "WardrobeAnalyticsService"
-    assert_includes read("app/controllers/outfits_controller.rb"), "OutfitGenerationService"
-    assert_includes read("app/controllers/outfits_controller.rb"), "WeatherService"
+    assert_includes read("app/controllers/wardrobe_items_controller.rb"), "WardrobeAnalytics"
+    assert_includes read("app/controllers/outfits_controller.rb"), "OutfitGeneration"
+    assert_includes read("app/controllers/outfits_controller.rb"), "Weather"
     media_job = read("app/jobs/wardrobe_media_job.rb")
     assert_includes media_job, "FingerprintGarmentJob"
     assert_includes media_job, "photo_polish"
@@ -71,7 +71,7 @@ class AmberBacklogTest < Minitest::Test
 
     assert_includes service, "phase_groups"
     assert_includes service, "wear_timeline"
-    assert_includes controller, "StyleEvolutionService"
+    assert_includes controller, "StyleEvolution"
     assert_includes controller, "def timeline"
     assert_includes routes, "get :timeline"
     assert_includes view, "Style evolution"

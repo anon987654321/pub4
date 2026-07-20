@@ -4,7 +4,7 @@ Implementations for the 2026-07-18 proposal list plus the 2026-07-19 visual
 opportunity pass. Canonical tokens: `RAILS/shared/design_tokens.yml`.
 Ship verification: visual_contract + deploy.
 
-_Last applied: 2026-07-19 (full visual opportunity land)._
+_Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_controller removed, idb-keyval shared)._
 
 ## Applied clusters
 
@@ -59,6 +59,23 @@ _Last applied: 2026-07-19 (full visual opportunity land)._
 - Search skeleton loading shell
 - WIRING_NOTES dialect truth (soft social / CRT face+bsdports / single-column + edge swiper)
 
+## 2026-07-20 polish wave (landed)
+
+| Item | Status |
+|------|--------|
+| Flat hotkey toast (`_x_shell` `.hotkey-help`, no box-shadow) | Landed |
+| Tokenized hex / no Twitter `#1d9bf0` in app SCSS | Landed |
+| `hello_controller` removed from apps | Landed |
+| `idb-keyval` shared only (hostname DB name) | Landed |
+| Local `bottom_sheet_controller` removed; gate forbids reintroduction | Landed |
+| Visualizer tap-ripple `filter:blur` removed | Landed |
+| Dressing-room 3D = intentional FLAT_UI exception + reduced-motion | Landed |
+| `*Service` POROs renamed (Zeitwerk-safe; AccountMerger / IdentityAssurer / TrustScore) | Landed |
+| Shared wiring gate forbids hello/idb/bottom_sheet local copies | Landed |
+| Domain alignment + crawl/seeds FAIL_VISIBLY logging | Landed |
+| Vertical accent CSS vars exported (`--vertical-*-accent`) | Landed |
+| Amber item wear/cost tests + bsdports dependency cycle tests | Landed |
+
 ## Intentionally residual (product/ops, not pure CSS)
 
 | Item | Why residual |
@@ -71,6 +88,12 @@ _Last applied: 2026-07-19 (full visual opportunity land)._
 | Demo wardrobe seed 6–8 items | Data seed, not layout |
 | Global `/` hotkey search chrome | App already has feed-hotkey; UI partial optional |
 | Per-app PWA monochrome icons | Asset design pass |
+| Full ERB class-soup → bare semantic HTML | Multi-PR product surface; partial via shared primitives |
+| Full i18n of brgen chrome strings | Locale pass separate from this wave |
+| Exhaustive model/request coverage | Expand when touching domains (Boy Scout) |
+| In-process `release` / `rails_runtime` / `visual_contract` | Still subprocess by design |
+| SCSS `_ui_refinements*` merge into domain partials | Next touch Boy Scout |
+| Horizon features (pgvector, live video, Solidus full) | `apps.horizon.yml` agent-ignore |
 
 These are tracked in `MASTER/DEBT.md` / `apps.horizon.yml` when they grow past polish.
 

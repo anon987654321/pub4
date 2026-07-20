@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class IdentityAssuranceService
+class IdentityAssurer
   def initialize(user:)
     @user = user
   end
@@ -21,7 +21,7 @@ class IdentityAssuranceService
       weight: default_weight(level)
     )
 
-    TrustScoreCalculator.new(user: user).call
+    TrustScore.new(user: user).call
 
     assurance
   end

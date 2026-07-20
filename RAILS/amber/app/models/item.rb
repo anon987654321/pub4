@@ -85,11 +85,11 @@ class Item < ApplicationRecord
   end
 
   def declutter_score
-    DeclutterScoreService.new(self).score
+    DeclutterScore.new(self).score
   end
 
   def declutter_recommendation
-    DeclutterScoreService.new(self).recommendation
+    DeclutterScore.new(self).recommendation
   end
 
   def duplicate_key

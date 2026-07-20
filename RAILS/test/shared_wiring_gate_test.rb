@@ -29,4 +29,29 @@ class SharedWiringGateTest < Minitest::Test
       assert_includes source, needle
     end
   end
+
+  def test_shared_wiring_gate_forbids_local_orphan_js_copies
+    source = File.read(File.join(ROOT, "gates/lib/shared_wiring_gate.rb"))
+    %w[
+      FORBIDDEN_APP_JS
+      controllers/hello_controller.js
+      idb-keyval.js
+      controllers/bottom_sheet_controller.js
+    ].each do |needle|
+      assert_includes source, needle
+    end
+  end
+
+  def test_apps_have_no_forbidden_local_js
+    %w[amber brgen bsdports].each do |app|
+      %w[
+        controllers/hello_controller.js
+        idb-keyval.js
+        controllers/bottom_sheet_controller.js
+      ].each do |rel|
+        path = File.join(ROOT, app, "app/javascript", rel)
+        refute File.file?(path), "#{app} still has local #{rel}"
+      end
+    end
+  end
 end

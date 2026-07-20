@@ -1,12 +1,12 @@
 /* Guest wardrobe carousels — Google-clean light band below logo (brgen fade + x spacing). */
 
 .amber-wardrobe-showcase {
-  --showcase-bg: #ffffff;
-  --showcase-text: #202124;
-  --showcase-muted: #5f6368;
-  --showcase-border: #dadce0;
-  --showcase-chip: #f1f3f4;
-  --showcase-accent: #1a73e8;
+  --showcase-bg: var(--x-surface, #ffffff);
+  --showcase-text: var(--x-text, #2c2824);
+  --showcase-muted: var(--x-text-secondary, #6b665f);
+  --showcase-border: var(--x-border, #e6e0d8);
+  --showcase-chip: var(--x-search-bg, #f1f3f4);
+  --showcase-accent: var(--x-accent, #8c7a5e);
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   background: var(--showcase-bg);
@@ -95,7 +95,7 @@
         transparent 1px,
         transparent 5px
       ),
-      color-mix(in srgb, var(--swatch, #e8eaed) 72%, #ffffff);
+      color-mix(in srgb, var(--swatch, var(--x-search-bg, #e8eaed)) 72%, var(--x-surface, #ffffff));
   }
 
   &__img {

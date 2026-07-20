@@ -16,7 +16,12 @@
   width: var(--space-10);
   height: var(--space-10);
   border-radius: var(--x-radius-pill);
-  background: linear-gradient(145deg, #ffe8d6, #f6d6d9 58%, #e8f0fe);
+  background: linear-gradient(
+    145deg,
+    var(--amber-grad-1, color-mix(in srgb, var(--x-accent) 25%, var(--x-surface))),
+    color-mix(in srgb, var(--x-accent) 12%, var(--x-surface)) 58%,
+    var(--x-search-bg, var(--x-surface-elevated))
+  );
   flex-shrink: 0;
   display: grid;
   place-items: center;

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PostModerationService
+class PostModeration
   MODEL = ENV.fetch("MODERATION_MODEL", "groq/llama-3.1-8b-instant")
   TIMEOUT = 2
 
@@ -11,7 +11,7 @@ class PostModerationService
   def approve?
     Timeout.timeout(TIMEOUT) { moderate_sync }
   rescue Timeout::Error, StandardError => error
-    Rails.logger.warn("PostModerationService timeout/error: #{error.class}: #{error.message}")
+    Rails.logger.warn("PostModeration timeout/error: #{error.class}: #{error.message}")
     true
   end
 

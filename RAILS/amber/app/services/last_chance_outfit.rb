@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class LastChanceOutfitService
+class LastChanceOutfit
   def initialize(item)
     @item = item
     @user = item.user

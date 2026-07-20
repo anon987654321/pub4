@@ -4,7 +4,7 @@ namespace :scrape do
   desc "Reddit hot posts via Ferrum + vision LLM (subs: comma-separated, default: norge,bergen,oslo)"
   task :reddit, [ :subs ] => :environment do |_, args|
     subs = (args[:subs] || "norge,bergen,oslo").split(",").map(&:strip)
-    schema = RedditSeedService::POST_SCHEMA
+    schema = RedditSeed::POST_SCHEMA
     subs.each do |sub|
       Scrape.call(
         "https://www.reddit.com/r/#{sub}/hot/",
@@ -18,7 +18,7 @@ namespace :scrape do
   task :reddit_seed, [ :domain ] => :environment do |_, args|
     domain = args[:domain].presence || "brgen.no"
     city = City.find_by!(domain: domain)
-    posts = RedditSeedService.new(city:, domain:).call
+    posts = RedditSeed.new(city:, domain:).call
     puts "Seeded #{posts.size} unique posts for #{domain} (rephrased, no Reddit attribution)."
   end
 end

@@ -87,7 +87,7 @@ class PortsController < ApplicationController
   end
 
   def crossref_cves
-    NvdCveService.crossref(@port)
+    NvdCve.crossref(@port)
     @port.record_activity!("PortCvesCrossreferenced", source_vertical: "bsdports")
     redirect_to @port, notice: "CVE cross-reference complete."
   end

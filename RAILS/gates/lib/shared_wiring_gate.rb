@@ -19,6 +19,13 @@ module Deploy
       "production.rb" => "shared/config/environments/production_baseline.rb",
     }.freeze
 
+    # Orphans that must live in shared/ only (not per-app copies).
+    FORBIDDEN_APP_JS = %w[
+      controllers/hello_controller.js
+      idb-keyval.js
+      controllers/bottom_sheet_controller.js
+    ].freeze
+
     def self.run
       new.run
     end
@@ -83,6 +90,11 @@ module Deploy
         REQUIRED_PUBLIC_FILES.each do |file|
           path = File.join(RAILS_ROOT, app, "public", file)
           result.fail("#{app}: missing public/#{file}") unless File.file?(path)
+        end
+
+        FORBIDDEN_APP_JS.each do |rel|
+          path = File.join(RAILS_ROOT, app, "app/javascript", rel)
+          result.fail("#{app}: remove local #{rel} — use shared copy") if File.file?(path)
         end
       end
 

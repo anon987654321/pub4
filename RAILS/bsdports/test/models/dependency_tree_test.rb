@@ -15,4 +15,24 @@ class DependencyTreeTest < ActiveSupport::TestCase
     assert_equal "build: gettext", tree.first[:label]
     assert tree.first[:children].is_a?(Array)
   end
+
+  test "tree_for terminates on cyclic dependencies" do
+    platform = platforms(:openbsd)
+    category = Category.create!(platform:, name: "cycle", slug: "cycle", description: "cycle")
+    a = Port.create!(platform:, category:, name: "liba", pkgpath: "cycle/liba", comment: "a", version: "1")
+    b = Port.create!(platform:, category:, name: "libb", pkgpath: "cycle/libb", comment: "b", version: "1")
+    Dependency.create!(port: a, depends_on: b, dep_type: "run")
+    Dependency.create!(port: b, depends_on: a, dep_type: "run")
+
+    tree = Dependency.tree_for(a)
+    assert_kind_of Array, tree
+    assert_equal 1, tree.size
+    assert_equal "run: libb", tree.first[:label]
+
+    # Reverse edge appears once; seen set stops further expansion of a.
+    cycle_back = tree.first[:children]
+    assert_equal 1, cycle_back.size
+    assert_equal "run: liba", cycle_back.first[:label]
+    assert_equal [], cycle_back.first[:children]
+  end
 end

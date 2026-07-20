@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class StyleEvolutionService
+class StyleEvolution
   PHASE_ORDER = Item::LIFE_PHASES
 
   def initialize(user)

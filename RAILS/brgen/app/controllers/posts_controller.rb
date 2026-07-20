@@ -35,9 +35,9 @@ class PostsController < ApplicationController
   end
 
   def create
-    anon = Shared::AnonymousPostService.new(request: request, user: Current.user)
+    anon = Shared::AnonymousPost.new(request: request, user: Current.user)
     unless anon.allowed?
-      redirect_to new_session_path, alert: "Sign up to post more (#{Shared::AnonymousPostService::LIMIT} anonymous posts per browser)."
+      redirect_to new_session_path, alert: "Sign up to post more (#{Shared::AnonymousPost::LIMIT} anonymous posts per browser)."
       return
     end
 
@@ -49,7 +49,7 @@ class PostsController < ApplicationController
       @post.title = @post.title.truncate(300)
     end
     @post.community = @community if @community
-    unless PostModerationService.new(@post).approve?
+    unless PostModeration.new(@post).approve?
       redirect_to new_post_path, alert: "Post blocked by moderation."
       return
     end

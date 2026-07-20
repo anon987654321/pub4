@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WeatherService
+class Weather
   BERGEN_LAT  = 60.39
   BERGEN_LNG  = 5.32
   API_URL     = "https://api.open-meteo.com/v1/forecast"
@@ -18,7 +18,7 @@ class WeatherService
       description: decode_weather(current["weathercode"].to_i),
     }
   rescue StandardError => e
-    Rails.logger.warn("WeatherService: #{e.message}")
+    Rails.logger.warn("Weather: #{e.message}")
     nil
   end
 

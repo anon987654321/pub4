@@ -55,11 +55,7 @@ export default class extends Controller {
     const help = document.createElement("div")
     help.className = "hotkey-help"
     help.setAttribute("role", "status")
-    help.innerHTML = `
-      <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);padding:6px 12px;font-size:10px;border-radius:3px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
-        j/k ↓↑: nav &nbsp; n: new &nbsp; esc: clear &nbsp; ?: close
-      </div>
-    `
+    help.textContent = "j/k ↓↑: nav · n: new · esc: clear · ?: close"
     document.body.appendChild(help)
     setTimeout(() => { if (help?.parentNode) help.parentNode.removeChild(help) }, 1400)
   }

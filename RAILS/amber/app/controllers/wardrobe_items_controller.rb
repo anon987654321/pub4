@@ -10,12 +10,12 @@ class WardrobeItemsController < ApplicationController
   end
 
   def analytics
-    @analytics = WardrobeAnalyticsService.new(Current.user).summary
+    @analytics = WardrobeAnalytics.new(Current.user).summary
     @recommendations = Current.user.recommendations.active.recent.limit(12)
   end
 
   def timeline
-    @timeline = StyleEvolutionService.new(Current.user).timeline
+    @timeline = StyleEvolution.new(Current.user).timeline
   end
 
   def show

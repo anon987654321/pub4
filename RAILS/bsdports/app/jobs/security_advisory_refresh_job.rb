@@ -14,7 +14,7 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
     ports = Port.order(:id).limit(batch_size).to_a if ports.empty?
 
     ports.each_with_index do |port, index|
-      advisories = NvdCveService.crossref(port, limit: 3)
+      advisories = NvdCve.crossref(port, limit: 3)
       refreshed += advisories.size
       sleep(SLEEP_SECONDS) if index < ports.length - 1
     rescue StandardError => e

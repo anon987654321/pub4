@@ -3,7 +3,7 @@
 require "zlib"
 require "base64"
 
-class WardrobeAiService
+class WardrobeAi
   OPENROUTER_BASE = "https://openrouter.ai/api/v1"
   MODEL = "google/gemini-2.0-flash-001"
 
@@ -275,8 +275,8 @@ class WardrobeAiService
   end
 
   def offline_capsule
-    built = CapsuleBuilderService.new(@user).build
-    explained = CapsuleBuilderService.new(@user).explain(built)
+    built = CapsuleBuilder.new(@user).build
+    explained = CapsuleBuilder.new(@user).explain(built)
     keep_ids = built.map(&:id)
     items = @user.items.active_wardrobe.map do |item|
       decision = if keep_ids.include?(item.id)
@@ -289,7 +289,7 @@ class WardrobeAiService
       reason = explained.find { |row| row[:id] == item.id }&.dig(:reason) || "Outside primary capsule set."
       { "id" => item.id, "title" => item.title, "decision" => decision, "reason" => reason }
     end
-    gaps = WardrobeGapService.new(@user).gaps.map { |g|
+    gaps = WardrobeGap.new(@user).gaps.map { |g|
       g[:reason].presence || "#{g[:missing]} more #{g[:category]}"
     }
     { "items" => items, "gap_items" => gaps, "source" => "capsule_builder" }

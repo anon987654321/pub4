@@ -32,7 +32,11 @@ module Deploy
       routes = parse_registry_subdomains
 
       if defined?(Pub4::DeployPaths) && Pub4::DeployPaths.respond_to?(:validate_layout!)
-        Pub4::DeployPaths.validate_layout! rescue nil
+        begin
+          Pub4::DeployPaths.validate_layout!
+        rescue StandardError => e
+          result.fail("deploy layout: #{e.message}")
+        end
       end
 
       missing_dns = registry.keys - openbsd.keys

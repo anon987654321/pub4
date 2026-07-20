@@ -43,14 +43,14 @@ apps:
         - { name: reading_time_minutes on posts,                            status: done, notes: "Post#reading_time_minutes on post card + show" }
         - { name: city-scoped subdomain routing,                           status: done, notes: "DomainRegistry + city switcher UI" }
         - { name: proximity / geolocation filtering,                       status: done, notes: "nearby#index, locations#update, geolocation Stimulus, dating radius filter" }
-        - { name: moderation tools,                                        status: done, notes: "ModerationWorkflow, admin/reports, ModerationReport, ModerationFlag, TrustScoreCalculator" }
+        - { name: moderation tools,                                        status: done, notes: "ModerationWorkflow, admin/reports, ModerationReport, ModerationFlag, TrustScore" }
         - { name: media pipeline (Active Storage variants),                status: done, notes: "Shared::MediaProcessable + MediaProcessingJob on post/listing/dating/message/playlist/takeaway/tv; responsive_image_tag + blurhash" }
-        - { name: identity + trust primitives (OAuth subjects, merge, reputation), status: done, notes: "identity_providers, external_identities, account_merges, trust_signals; wired via OmniAuth callbacks + TrustScoreCalculator" }
+        - { name: identity + trust primitives (OAuth subjects, merge, reputation), status: done, notes: "identity_providers, external_identities, account_merges, trust_signals; wired via OmniAuth callbacks + TrustScore" }
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
         - { name: unified Activity graph emission,                         status: done, notes: "ActivityTrackable + EventEmitter across playlist/marketplace/takeaway/tv/dating verticals; see WIRING_NOTES.md" }
         - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
         - { name: MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor), status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
-        - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeedService + ContentRewriter + StrunkWhitePass" }
+        - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeed + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + postpro/repligen hero" }
         - { name: AI feed ranking,                                         status: planned, agent: ignore }
@@ -71,9 +71,9 @@ apps:
         - { name: "Dating::Profile (user, bio, interests)", status: done }
         - { name: "Dating::Like (user, liked_user)", status: done }
         - { name: "Dating::Dislike (user, disliked_user)", status: done }
-        - { name: "Dating::Match (MatchmakingService — mutual likes)", status: done }
+        - { name: "Dating::Match (Matchmaking — mutual likes)", status: done }
         - { name: swipe UI (Turbo Streams, Stimulus),                       status: done }
-        - { name: city + radius filter,                                     status: done, notes: "MatchmakingService radius_km + neighborhood scope" }
+        - { name: city + radius filter,                                     status: done, notes: "Matchmaking radius_km + neighborhood scope" }
         - { name: match → messaging handoff,                                status: done, notes: "Dating::Match#announce_match → Conversation.find_or_create_direct" }
         - { name: photos on profile,                                        status: done, notes: "has_many_attached photos, edit purge, ProfileMediaJob variants" }
         - { name: premium memberships / boost purchases,                    status: planned, agent: ignore }
@@ -103,7 +103,7 @@ apps:
         - { name: schema.org microdata in views,                            status: done, notes: "MusicPlaylist/MusicRecording itemtypes in _player + json_ld_for on show" }
         - { name: "Playlist::Listen", status: done, notes: "playlist_listens + ListensController swipe tracking" }
         - { name: embeddable player,                                        status: done, notes: "playlists#embed iframe route + playlist_player Stimulus + external embed URLs" }
-        - { name: Spotify/YouTube/SoundCloud import,                        status: done, notes: "Playlist::TrackImportService + playlist/imports#create" }
+        - { name: Spotify/YouTube/SoundCloud import,                        status: done, notes: "Playlist::TrackImport + playlist/imports#create" }
         - { name: city-scoped trending feed,                                status: done, notes: "Playlist::Playlist.city_trending used where listed; playlists#index is deliberate radio_tunnel immersive home (trending elsewhere)" }
         - { name: expiration dates on tracks,                               status: done, notes: "expires_at on playlist_tracks + unexpired scope + hosted_tracks form" }
         - { name: creator donations / ad-free tier,                         status: planned, agent: ignore }
@@ -143,13 +143,13 @@ apps:
         - { name: wardrobe upload UI (drag-and-drop),                      status: done, notes: "media-picker Stimulus drop handler + direct_upload on items form" }
         - { name: photo polish pipeline (variants + portrait postpro + dominant color), status: done, notes: "WardrobeMediaJob single polish pass; analysis_status photo_polish_*; NOT ML segment/matting" }
         - { name: local garment fingerprint (not semantic embedding),      status: done, notes: "FingerprintGarmentJob CRC32-64; EmbedGarmentJob alias; pgvector still planned" }
-        - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGenerationService + outfits#generate; weather prefilled from WeatherService Bergen" }
-        - { name: style evolution timeline / aesthetic phases,             status: done, notes: "StyleEvolutionService + wardrobe_items#timeline groups life_phase + wear history" }
+        - { name: outfit generation by weather/season/event,               status: done, notes: "OutfitGeneration + outfits#generate; weather prefilled from Weather Bergen" }
+        - { name: style evolution timeline / aesthetic phases,             status: done, notes: "StyleEvolution + wardrobe_items#timeline groups life_phase + wear history" }
         - { name: underused item surfacing,                                status: done, notes: "Item#underused? + analytics dashboard + items index chips" }
-        - { name: wardrobe analytics dashboard,                            status: done, notes: "WardrobeAnalyticsService + wardrobe_items#analytics" }
-        - { name: closet organisation tips (rules),                        status: done, notes: "WardrobeAnalyticsService#tips are heuristics; UI labels source=rules not AI" }
-        - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScoreService, challenges, last-chance→Outfit, 30d box hygiene job" }
-        - { name: AI stylist with offline fallbacks,                       status: done, notes: "WardrobeAiService OpenRouter when OPENROUTER_API_KEY; heuristics/rules otherwise; honest UI" }
+        - { name: wardrobe analytics dashboard,                            status: done, notes: "WardrobeAnalytics + wardrobe_items#analytics" }
+        - { name: closet organisation tips (rules),                        status: done, notes: "WardrobeAnalytics#tips are heuristics; UI labels source=rules not AI" }
+        - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScore, challenges, last-chance→Outfit, 30d box hygiene job" }
+        - { name: AI stylist with offline fallbacks,                       status: done, notes: "WardrobeAi OpenRouter when OPENROUTER_API_KEY; heuristics/rules otherwise; honest UI" }
         - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
         - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD" }
         - { name: style sessions (calendar status, not video),             status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }

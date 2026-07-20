@@ -1,3 +1,6 @@
+// Intentional FLAT_UI exception: 3D mannequin model uses perspective /
+// preserve-3d so the dressing-room preview can rotate in depth. Do not
+// treat this as a license for decorative CSS 3D elsewhere.
 .dressing-room {
   display: flex;
   flex-direction: column;
@@ -145,5 +148,18 @@
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+
+  .mannequin-stage {
+    perspective: none;
+  }
+
+  .mannequin {
+    transform: none;
+    transform-style: flat;
+
+    &:hover {
+      transform: none;
+    }
   }
 }

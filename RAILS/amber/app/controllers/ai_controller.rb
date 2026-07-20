@@ -7,7 +7,7 @@ class AiController < ApplicationController
 
   def analyze_item
     item = Current.user.items.find(params[:id])
-    result = WardrobeAiService.new(Current.user).analyze_joy(item)
+    result = WardrobeAi.new(Current.user).analyze_joy(item)
     item.update!(spark_joy: result["sparks_joy"]) if result["sparks_joy"].in?([ true, false ])
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("item_#{item.id}_analysis", partial: "ai/analysis", locals: { result: result, item: item }) }
@@ -18,7 +18,7 @@ class AiController < ApplicationController
 
   def tag_item
     item = Current.user.items.find(params[:id])
-    result = WardrobeAiService.new(Current.user).enclothed_cognition_tag(item)
+    result = WardrobeAi.new(Current.user).enclothed_cognition_tag(item)
     item.update!(mood_effect: result["mood_effect"], life_phase: result["life_phase"])
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("item_#{item.id}_tags", partial: "ai/item_tags", locals: { item: item.reload, result: result }) }
@@ -28,12 +28,12 @@ class AiController < ApplicationController
 
   def suggest_outfits
     RecommendOutfitsJob.perform_later(Current.user.id, occasion: params[:occasion], season: params[:season]) if defined?(RecommendOutfitsJob)
-    service = WardrobeAiService.new(Current.user)
+    service = WardrobeAi.new(Current.user)
     @ai_available = service.available?
     @suggestions = service.suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
-    @master_photo = WardrobeAiService.master_photograph_available?
+    @master_photo = WardrobeAi.master_photograph_available?
 
     return unless @master_photo
 
@@ -68,24 +68,24 @@ class AiController < ApplicationController
   end
 
   def declutter_guide
-    @candidates = WardrobeAiService.new(Current.user).declutter_candidates
+    @candidates = WardrobeAi.new(Current.user).declutter_candidates
   end
 
   def capsule
-    @result = WardrobeAiService.new(Current.user).capsule_optimizer
-    @ai_available = WardrobeAiService.configured?
+    @result = WardrobeAi.new(Current.user).capsule_optimizer
+    @ai_available = WardrobeAi.configured?
   end
 
   def color_palette
-    @result = WardrobeAiService.new(Current.user).color_palette_analysis
+    @result = WardrobeAi.new(Current.user).color_palette_analysis
     @swatches = Current.user.items.where.not(color: [ nil, "" ]).limit(24).pluck(:title, :color)
   end
 
   def search
     @query = params[:q].to_s.strip
-    @ai_available = WardrobeAiService.configured?
+    @ai_available = WardrobeAi.configured?
     if @query.present?
-      result = WardrobeAiService.new(Current.user).natural_language_search(@query)
+      result = WardrobeAi.new(Current.user).natural_language_search(@query)
       ids = Array(result["item_ids"])
       @items = Current.user.items.where(id: ids)
       @explanation = result["explanation"]
@@ -98,7 +98,7 @@ class AiController < ApplicationController
   def mood_board
     @description = params[:description].to_s.strip
     if @description.present?
-      result = WardrobeAiService.new(Current.user).mood_board_match(@description)
+      result = WardrobeAi.new(Current.user).mood_board_match(@description)
       ids = Array(result["item_ids"])
       @items = Current.user.items.where(id: ids)
       @outfit_name = result["outfit_name"]
@@ -115,7 +115,7 @@ class AiController < ApplicationController
   def style_profile
     if request.post? || params[:answers].present?
       answers = params[:answers] || {}
-      result = WardrobeAiService.new(Current.user).infer_style_profile(answers)
+      result = WardrobeAi.new(Current.user).infer_style_profile(answers)
       profile = Current.user.style_profile || Current.user.build_style_profile
       aesthetic = result["aesthetic"].presence || "minimal"
       profile.update!(style_preferences: aesthetic, body_type: answers[:body_type])
@@ -127,7 +127,7 @@ class AiController < ApplicationController
     if params[:duration].present?
       @duration = params[:duration].to_i
       @climate = params[:climate].to_s
-      @result = WardrobeAiService.new(Current.user).suggest_packing_list(@duration, @climate)
+      @result = WardrobeAi.new(Current.user).suggest_packing_list(@duration, @climate)
       if @result["outfits"]
         list = Current.user.packing_lists.create!(
           name: "#{@climate} #{@duration}d trip",
@@ -149,7 +149,7 @@ class AiController < ApplicationController
   end
 
   def generate_outfit
-    suggestions = WardrobeAiService.new(Current.user).suggest_outfits(
+    suggestions = WardrobeAi.new(Current.user).suggest_outfits(
       occasion: params[:occasion], season: params[:season]
     )
     suggestion = Array(suggestions).first

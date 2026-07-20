@@ -111,7 +111,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes workflow, 'flag.save!'
     assert_includes workflow, 'update_all(status: status'
     assert_includes workflow, 'kind: "spam_report"'
-    assert_includes workflow, 'TrustScoreCalculator.new(user: user).call'
+    assert_includes workflow, 'TrustScore.new(user: user).call'
     assert_includes workflow, 'accountable_user'
   end
 
@@ -262,7 +262,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes track, 'youtube_embed_url'
     assert_includes track, 'spotify_embed_url'
     assert_includes track, 'w.soundcloud.com/player'
-    assert_includes importer, 'TrackImportService'
+    assert_includes importer, 'TrackImport'
     assert_includes importer, 'youtube.com'
     assert_includes importer, 'spotify.com'
     assert_includes importer, 'soundcloud.com'
@@ -516,7 +516,7 @@ class DeployBacklogTest < Minitest::Test
     job = File.read(File.join(ROOT, 'bsdports/app/jobs/security_advisory_refresh_job.rb'))
     recurring = File.read(File.join(ROOT, 'bsdports/config/recurring.yml'))
 
-    assert_includes job, 'NvdCveService.crossref'
+    assert_includes job, 'NvdCve.crossref'
     assert_includes job, 'CURSOR_KEY'
     assert_includes recurring, 'SecurityAdvisoryRefreshJob'
   end

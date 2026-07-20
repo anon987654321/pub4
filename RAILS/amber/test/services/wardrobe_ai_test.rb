@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class WardrobeAiServiceTest < ActiveSupport::TestCase
+class WardrobeAiTest < ActiveSupport::TestCase
   class FakeClient
     def initialize(content: nil, error: nil)
       @content = content
@@ -22,7 +22,7 @@ class WardrobeAiServiceTest < ActiveSupport::TestCase
 
   test "analyze_joy uses local heuristic when no API key is configured" do
     item = Item.new(title: "Blue jacket", category: "Outerwear", times_worn: 0)
-    service = WardrobeAiService.new(User.new)
+    service = WardrobeAi.new(User.new)
 
     result = service.analyze_joy(item)
 
@@ -34,7 +34,7 @@ class WardrobeAiServiceTest < ActiveSupport::TestCase
 
   test "analyze_joy heuristic keeps high-wear items as joy" do
     item = Item.new(title: "Jeans", category: "Bottoms", times_worn: 12)
-    result = WardrobeAiService.new(User.new).analyze_joy(item)
+    result = WardrobeAi.new(User.new).analyze_joy(item)
 
     assert_equal true, result["sparks_joy"]
     assert_equal "heuristic", result["source"]
@@ -43,7 +43,7 @@ class WardrobeAiServiceTest < ActiveSupport::TestCase
   test "chat-backed methods tolerate invalid JSON" do
     item = Item.new(title: "Blue jacket", category: "Outerwear")
     client = FakeClient.new(content: "not json")
-    service = WardrobeAiService.new(User.new, client: client)
+    service = WardrobeAi.new(User.new, client: client)
 
     result = service.analyze_joy(item)
 
@@ -56,15 +56,15 @@ class WardrobeAiServiceTest < ActiveSupport::TestCase
     user = User.new
     def user.items = Item.none
 
-    service = WardrobeAiService.new(user, client: FakeClient.new(error: StandardError.new("boom")))
+    service = WardrobeAi.new(user, client: FakeClient.new(error: StandardError.new("boom")))
 
     assert_equal [], service.suggest_outfits
   end
 
   test "fingerprint_for is deterministic and not claimed as embedding provider" do
     item = Item.new(title: "Coat", category: "Outerwear", color: "navy")
-    a = WardrobeAiService.new(User.new).fingerprint_for(item)
-    b = WardrobeAiService.new(User.new).fingerprint_for(item)
+    a = WardrobeAi.new(User.new).fingerprint_for(item)
+    b = WardrobeAi.new(User.new).fingerprint_for(item)
 
     assert_equal 64, a.length
     assert_equal a, b
@@ -73,9 +73,9 @@ class WardrobeAiServiceTest < ActiveSupport::TestCase
   test "configured? reflects OPENROUTER_API_KEY" do
     old = ENV["OPENROUTER_API_KEY"]
     ENV["OPENROUTER_API_KEY"] = ""
-    refute WardrobeAiService.configured?
+    refute WardrobeAi.configured?
     ENV["OPENROUTER_API_KEY"] = "sk-test"
-    assert WardrobeAiService.configured?
+    assert WardrobeAi.configured?
   ensure
     ENV["OPENROUTER_API_KEY"] = old
   end

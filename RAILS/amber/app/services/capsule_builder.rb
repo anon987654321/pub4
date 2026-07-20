@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CapsuleBuilderService
+class CapsuleBuilder
   DEFAULT_LIMIT = 12
 
   def initialize(user)

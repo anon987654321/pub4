@@ -13,9 +13,9 @@ module Shared
   end
 end
 
-require_relative "../../app/services/shared/anonymous_post_service"
+require_relative "../../app/services/shared/anonymous_post"
 
-class AnonymousPostServiceTest < Minitest::Test
+class AnonymousPostTest < Minitest::Test
   def setup
     setup_database
     Shared::AnonymousPostQuota.delete_all
@@ -53,7 +53,7 @@ class AnonymousPostServiceTest < Minitest::Test
 
   def build_service(user:, fingerprint:)
     request = RequestStub.new(fingerprint: fingerprint)
-    Shared::AnonymousPostService.new(request: request, user: user)
+    Shared::AnonymousPost.new(request: request, user: user)
   end
 
   def setup_database

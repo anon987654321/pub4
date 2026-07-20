@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Shared
-  class AnonymousPostService
+  class AnonymousPost
     LIMIT = 2
 
     def initialize(request:, user:)

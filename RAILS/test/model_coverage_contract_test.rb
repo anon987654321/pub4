@@ -95,7 +95,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes outfit, "has_many :items, through: :outfit_items"
     assert_includes outfit, "validates :name, presence: true"
     assert_includes outfit, "def context_label"
-    assert_includes controller, "OutfitGenerationService"
+    assert_includes controller, "OutfitGeneration"
     assert_includes routes, "resources :outfits"
     assert File.file?(File.join(ROOT, "amber/test/models/outfit_test.rb"))
   end
@@ -111,7 +111,7 @@ class ModelCoverageContractTest < Minitest::Test
     assert_includes wardrobe_item, "CONDITIONS ="
     assert_includes wardrobe_item, "validates :condition, inclusion:"
     assert_includes wardrobe_item, "validates :user_id, uniqueness:"
-    assert_includes controller, "WardrobeAnalyticsService"
+    assert_includes controller, "WardrobeAnalytics"
     assert_includes routes, "resources :wardrobe_items"
     assert File.file?(File.join(ROOT, "amber/test/models/wardrobe_item_test.rb"))
   end

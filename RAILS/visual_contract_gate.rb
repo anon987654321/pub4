@@ -97,8 +97,10 @@ end
 
 rows = VisualContractGate.validate!
 if ARGV.delete("--capture")
-  app = (ARGV[ARGV.index("--app") + 1] rescue nil) || abort("--app brgen|amber|bsdports required")
-  base = (ARGV[ARGV.index("--base") + 1] rescue nil) || abort("--base URL required")
+  app_i = ARGV.index("--app")
+  base_i = ARGV.index("--base")
+  app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|amber|bsdports required")
+  base = (base_i && ARGV[base_i + 1]) || abort("--base URL required")
   results = VisualContractGate.capture(base:, app:)
   path = File.expand_path("visual_contract/#{app}-manifest.json", __dir__)
   File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")

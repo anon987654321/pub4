@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Dating
-  class MatchmakingService
+  class Matchmaking
     DEFAULT_RADIUS_KM = 50
 
     def self.call(user, radius_km: DEFAULT_RADIUS_KM)

@@ -1,4 +1,4 @@
-const DB_NAME = "brgen-idb-keyval"
+const DB_NAME = `${typeof location !== "undefined" ? location.hostname : "app"}-idb-keyval`
 const DB_VERSION = 1
 
 const openDb = (storeName) => new Promise((resolve, reject) => {

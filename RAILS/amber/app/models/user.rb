@@ -53,7 +53,7 @@ class User < ApplicationRecord
 
   def public_creator? = creator_profile&.public? || false
   def wardrobe_public? = privacy_setting&.public_wardrobe? || false
-  def declutter_summary = DeclutterDashboardService.new(self).summary
+  def declutter_summary = DeclutterDashboard.new(self).summary
 
   private
 

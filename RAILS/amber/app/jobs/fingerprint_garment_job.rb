@@ -7,7 +7,7 @@ class FingerprintGarmentJob < ApplicationJob
 
   def perform(item_id)
     item = Item.find(item_id)
-    vector = WardrobeAiService.new(item.user).fingerprint_for(item)
+    vector = WardrobeAi.new(item.user).fingerprint_for(item)
     return if vector.blank?
 
     item.create_garment_embedding! unless item.garment_embedding

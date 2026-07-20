@@ -26,14 +26,14 @@
 }
 
 .media-picker {
-  border: 1px dashed var(--color-border, #ccc);
+  border: 1px dashed var(--x-border, var(--color-border));
   border-radius: var(--x-radius-sm);
   padding: 1rem;
 }
 
 .media-picker.is-dragging {
-  border-color: var(--color-accent, #1d9bf0);
-  background: var(--x-hover-subtle, rgba(29, 155, 240, 0.08));
+  border-color: var(--x-accent, var(--color-accent));
+  background: var(--x-hover-subtle);
 }
 
 .media-picker-preview {

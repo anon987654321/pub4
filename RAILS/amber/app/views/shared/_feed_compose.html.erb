@@ -1,4 +1,4 @@
-<% anon = Shared::AnonymousPostService.new(request: request, user: Current.user) %>
+<% anon = Shared::AnonymousPost.new(request: request, user: Current.user) %>
 <%= form_with model: Post.new, url: posts_path, class: "amber-compose-box", data: { controller: "feed-compose", feed_compose_target: "box", feed_compose_expanded_class_value: "amber-compose-box--expanded" } do |f| %>
   <div class="amber-compose-avatar" aria-hidden="true"><%= guest? ? "✦" : (Current.user.profile&.display_name&.first&.upcase || "A") %></div>
   <div class="amber-compose-inner">
@@ -26,7 +26,7 @@
     </div>
     <p class="amber-compose-hint">
       <% if guest? %>
-        <%= t("amber.feed.guest_hint", limit: Shared::AnonymousPostService::LIMIT, remaining: anon.remaining) %>
+        <%= t("amber.feed.guest_hint", limit: Shared::AnonymousPost::LIMIT, remaining: anon.remaining) %>
       <% else %>
         <%= link_to t("amber.feed.advanced_post"), new_post_path, class: "link-inherit" %>
       <% end %>

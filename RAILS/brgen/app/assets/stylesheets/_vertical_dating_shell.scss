@@ -5,9 +5,9 @@ body.vertical-dating {
   --dating-muted: var(--x-text-secondary);
   --dating-card: var(--x-surface-elevated);
   --dating-border: var(--x-border);
-  --dating-accent: #00d4aa; /* vertical brand, on top of x */
-  --dating-accent-warm: #ff5500;
-  --dating-pass: #f05a5a;
+  --dating-accent: var(--vertical-dating-accent, #00d4aa);
+  --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
+  --dating-pass: var(--x-danger, #f05a5a);
   --font-primary: "Inter", var(--x-font);
   background: var(--dating-bg);
   color: var(--dating-ink);

@@ -289,6 +289,27 @@ main[role="main"] {
   background: currentColor;
 }
 
+/* Hotkey chrome — flat toast (no shadow/blur) */
+.hotkey-help {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  color: var(--x-text, var(--text));
+  background: var(--x-surface-elevated, var(--surface));
+  border: 1px solid var(--x-border, var(--border));
+  border-radius: var(--x-radius-xs, 3px);
+}
+
+.hotkey-focus {
+  outline: 2px solid var(--x-accent, var(--accent, currentColor));
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

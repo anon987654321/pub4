@@ -46,12 +46,12 @@
   height: 100%;
   background: radial-gradient(
     circle at var(--gradient-x) var(--gradient-y),
-    #ffb999 0%,
-    #e6cce6 33%,
-    #cce6cc 66%,
-    #99e6e6 100%
+    var(--amber-grad-1, #ffb999) 0%,
+    var(--amber-grad-2, #e6cce6) 33%,
+    var(--amber-grad-3, #cce6cc) 66%,
+    var(--amber-grad-4, #99e6e6) 100%
   );
-  animation: moveGradient 20s infinite linear;
+  animation: moveGradient 20s infinite var(--ease-out, cubic-bezier(0.25, 0.1, 0.25, 1));
 }
 
 @keyframes moveGradient {
@@ -76,7 +76,7 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   line-height: 0; // intentional: collapses inline-SVG descender gap
-  background: #ffffff;
+  background: var(--x-surface, #ffffff);
   position: sticky;
   top: 0;
   z-index: calc(var(--z-nav) + 1);
@@ -129,7 +129,7 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   line-height: 0;
-  background: #ffffff;
+  background: var(--x-surface, #ffffff);
 
   .amber-instance {
     width: 100%;

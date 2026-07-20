@@ -9,7 +9,7 @@ module Playlist
       authorize_editor!
       return if performed?
 
-      results = ::Playlist::TrackImportService.new(user: Current.user, playlist: @playlist).call(params[:urls])
+      results = ::Playlist::TrackImport.new(user: Current.user, playlist: @playlist).call(params[:urls])
       redirect_to playlist_playlist_path(@playlist), notice: "#{results.size} track imports queued"
     end
 

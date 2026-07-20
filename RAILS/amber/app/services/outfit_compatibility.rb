@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class OutfitCompatibilityService
+class OutfitCompatibility
   OCCASION_WEIGHTS = {
     "work" => 0.72,
     "formal" => 0.85,

@@ -15,7 +15,7 @@ class OutfitsController < ApplicationController
       scope = scope.joins(:outfit_items).where(outfit_items: { item_id: item_ids }).distinct if item_ids.any?
     end
     @pagy, @outfits = pagy(scope)
-    @weather = WeatherService.today
+    @weather = Weather.today
     @default_weather = weather_prompt(@weather)
     finish_live_search(partial: "outfits/live_search_results")
   end
@@ -31,8 +31,8 @@ class OutfitsController < ApplicationController
   end
 
   def generate
-    weather = params[:weather].presence || weather_prompt(WeatherService.today)
-    outfit = OutfitGenerationService.new(Current.user).generate!(
+    weather = params[:weather].presence || weather_prompt(Weather.today)
+    outfit = OutfitGeneration.new(Current.user).generate!(
       weather: weather,
       season: params[:season].presence || season_from_month,
       occasion: params[:occasion]

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class OutfitGenerationService
+class OutfitGeneration
   def initialize(user)
     @user = user
   end

@@ -43,11 +43,11 @@
 }
 
 .map-marker--food span {
-  background: #22c55e;
+  background: var(--color-success, #00ba7c);
 }
 
 .map-marker--resource span {
-  background: #3b82f6;
+  background: var(--color-info, #5b9fd4);
 }
 
 .map-popup {

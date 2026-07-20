@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DeclutterDashboardService
+class DeclutterDashboard
   def initialize(user)
     @user = user
   end
@@ -17,7 +17,7 @@ class DeclutterDashboardService
       sentimental_archive: items.sentimental.count,
       released_items: released.count,
       never_worn: active.never_worn.count,
-      duplicate_groups: DuplicateDetectorService.new(@user).groups.count,
+      duplicate_groups: DuplicateDetector.new(@user).groups.count,
       amount_recovered: @user.declutter_outcomes.sum(:amount_recovered_cents).to_i / 100.0,
       top_candidates: top_candidates(active),
       matrix: matrix(active)

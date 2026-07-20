@@ -66,10 +66,10 @@ class ModerationWorkflow
       kind: "spam_report",
       source: "moderation_report:#{report.id}"
     ) do |signal|
-      signal.weight = TrustScoreCalculator::SIGNAL_WEIGHTS.fetch("spam_report")
+      signal.weight = TrustScore::SIGNAL_WEIGHTS.fetch("spam_report")
       signal.metadata = { reason: report.reason, reportable: report.reportable.to_global_id.to_s }.to_json
     end
-    TrustScoreCalculator.new(user: user).call
+    TrustScore.new(user: user).call
   end
 
   def accountable_user(record)

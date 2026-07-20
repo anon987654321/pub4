@@ -44,7 +44,11 @@ else
           m = model_name.constantize
           m.delete_all if m.respond_to?(:table_exists?) && m.table_exists?
         rescue NameError, StandardError => e
-          Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
+          begin
+            Master::Ground::Swallow.log(e, context: __FILE__)
+          rescue StandardError
+            # logging must not mask seed cleanup
+          end
         end
       end
       User.where("email_address LIKE 'portuser%' OR email_address LIKE '%@ports.example'").delete_all

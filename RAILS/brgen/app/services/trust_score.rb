@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TrustScoreCalculator
+class TrustScore
   SIGNAL_WEIGHTS = {
     "account_created" => 5,
     "email_verified" => 10,

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class RedditSeedService
+class RedditSeed
   POST_SCHEMA = %w[title url body score author comment_count top_comments].freeze
   COMMENT_SCHEMA = %w[author body score].freeze
 
@@ -57,7 +57,7 @@ class RedditSeedService
       hint: "Extract up to 5 top-level comments visible on the thread. Skip AutoModerator and deleted."
     ).map { |row| row["body"].to_s }.reject(&:blank?)
   rescue StandardError => error
-    Rails.logger.warn("RedditSeedService comment scrape failed: #{error.message}")
+    Rails.logger.warn("RedditSeed comment scrape failed: #{error.message}")
     []
   end
 

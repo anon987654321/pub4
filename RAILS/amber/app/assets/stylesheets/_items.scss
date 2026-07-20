@@ -135,7 +135,7 @@
 }
 
 .btn-joy {
-  background: #c5820a;
+  background: var(--color-warning, var(--x-accent));
 }
 
 .badge {

@@ -4,7 +4,7 @@ require "net/http"
 require "json"
 require "uri"
 
-class NvdCveService
+class NvdCve
   BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
   def self.crossref(port, limit: 5)

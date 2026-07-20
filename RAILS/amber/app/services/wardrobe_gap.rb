@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WardrobeGapService
+class WardrobeGap
   ESSENTIALS = {
     "Tops" => 5,
     "Bottoms" => 3,

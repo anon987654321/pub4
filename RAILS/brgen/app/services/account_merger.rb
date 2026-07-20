@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AccountMergeService
+class AccountMerger
   def initialize(guest_user:, user:)
     @guest_user = guest_user
     @user = user

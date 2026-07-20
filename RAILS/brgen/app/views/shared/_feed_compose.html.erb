@@ -37,7 +37,7 @@
     </div>
     <div class="dim compose-hint">
       <% if guest? %>
-        <details><summary>Posting as a guest</summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPostService::LIMIT) %> The limit slows spam without asking for an account.</p></details>
+        <details><summary>Posting as a guest</summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT) %> The limit slows spam without asking for an account.</p></details>
       <% else %>
         <%= link_to t("feed.advanced_post"), new_post_path, class: "link-inherit" %>
       <% end %>

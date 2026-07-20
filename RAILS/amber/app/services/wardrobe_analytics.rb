@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WardrobeAnalyticsService
+class WardrobeAnalytics
   def initialize(user)
     @user = user
   end

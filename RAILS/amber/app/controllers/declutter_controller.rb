@@ -5,8 +5,8 @@ class DeclutterController < ApplicationController
   before_action :set_item, only: %i[review update_review move challenge complete_challenge outcome last_chance create_last_chance_outfit]
 
   def index
-    @summary = DeclutterDashboardService.new(Current.user).summary
-    @duplicates = DuplicateDetectorService.new(Current.user).ranked_groups
+    @summary = DeclutterDashboard.new(Current.user).summary
+    @duplicates = DuplicateDetector.new(Current.user).ranked_groups
     @overdue_challenges = DeclutterChallenge.where(user: Current.user).overdue.includes(:item)
     @active_challenges = DeclutterChallenge.where(user: Current.user).active.includes(:item)
     @aging_box = Current.user.items.declutter_box.select { |item| box_age_days(item) >= 30 }
@@ -17,7 +17,7 @@ class DeclutterController < ApplicationController
     @review = @item.declutter_review || @item.build_declutter_review(user: Current.user)
     @score = @item.declutter_score
     @action = DeclutterActionRouter.new(@item).action
-    @last_chance = LastChanceOutfitService.new(@item).suggestions
+    @last_chance = LastChanceOutfit.new(@item).suggestions
   end
 
   def update_review
@@ -61,11 +61,11 @@ class DeclutterController < ApplicationController
   end
 
   def last_chance
-    render json: LastChanceOutfitService.new(@item).suggestions
+    render json: LastChanceOutfit.new(@item).suggestions
   end
 
   def create_last_chance_outfit
-    suggestions = LastChanceOutfitService.new(@item).suggestions
+    suggestions = LastChanceOutfit.new(@item).suggestions
     suggestion = suggestions[params[:index].to_i] || suggestions.first
     unless suggestion
       return redirect_to(review_declutter_path(@item), alert: "No last-chance combination available")

@@ -4,11 +4,11 @@ module ApplicationHelper
   include Pagy::Frontend
 
   def amber_ai_available?
-    WardrobeAiService.configured?
+    WardrobeAi.configured?
   end
 
   def master_photograph_available?
-    WardrobeAiService.master_photograph_available?
+    WardrobeAi.master_photograph_available?
   end
 
   def analysis_status_label(status)

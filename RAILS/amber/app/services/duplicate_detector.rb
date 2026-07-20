@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DuplicateDetectorService
+class DuplicateDetector
   def initialize(user)
     @user = user
   end

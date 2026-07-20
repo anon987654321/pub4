@@ -12,7 +12,7 @@ class HomeController < ApplicationController
         @demo_outfits = Amber::DemoWardrobe.preview_outfits
       end
       @pagy, @guest_posts = pagy(Post.public_feed.includes(:outfit, :item, user: :profile))
-      @anon_service = Shared::AnonymousPostService.new(request: request, user: Current.user)
+      @anon_service = Shared::AnonymousPost.new(request: request, user: Current.user)
       return
     end
 
@@ -29,6 +29,6 @@ class HomeController < ApplicationController
     @aging_unworn     = items.aging_unworn.limit(4)
     @recent_items     = items.recent.limit(6)
     @planned_this_week = Current.user.planned_outfits.this_week.includes(:outfit)
-    @weather          = WeatherService.today
+    @weather          = Weather.today
   end
 end

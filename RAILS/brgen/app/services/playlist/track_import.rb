@@ -3,7 +3,7 @@
 require "uri"
 
 module Playlist
-  class TrackImportService
+  class TrackImport
     Result = Struct.new(:track, :line, :created, keyword_init: true)
 
     def initialize(user:, playlist:)

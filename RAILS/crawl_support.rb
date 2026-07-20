@@ -105,7 +105,11 @@ module CrawlSupport
     Socket.tcp(host, port, connect_timeout: timeout).close
     true
   rescue StandardError => e
-    Master::Ground::Swallow.log(e, context: __FILE__) rescue nil
+    begin
+      Master::Ground::Swallow.log(e, context: __FILE__)
+    rescue StandardError
+      # logging must not mask the original error path
+    end
     false
   end
 end

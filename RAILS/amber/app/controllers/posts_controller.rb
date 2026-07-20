@@ -24,10 +24,10 @@ class PostsController < ApplicationController
   end
 
   def create
-    anon = Shared::AnonymousPostService.new(request: request, user: Current.user)
+    anon = Shared::AnonymousPost.new(request: request, user: Current.user)
     unless anon.allowed?
       redirect_to new_registration_path,
-        alert: "Sign up to post more (#{Shared::AnonymousPostService::LIMIT} anonymous posts per browser)."
+        alert: "Sign up to post more (#{Shared::AnonymousPost::LIMIT} anonymous posts per browser)."
       return
     end
 

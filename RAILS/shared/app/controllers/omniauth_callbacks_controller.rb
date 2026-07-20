@@ -94,7 +94,7 @@ class OmniauthCallbacksController < ::ApplicationController
     guest = User.find_by(id: session[:guest_user_id], guest: true)
     return unless guest
 
-    AccountMergeService.new(guest_user: guest, user: user).call if defined?(AccountMergeService)
+    AccountMerger.new(guest_user: guest, user: user).call if defined?(AccountMerger)
   rescue StandardError => error
     Rails.logger.warn("OAuth guest merge failed: #{error.message}")
   end
