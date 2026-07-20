@@ -9,23 +9,25 @@ module Master
     module TurnRouter
       module_function
 
+      # Chained elsif nests one IfNode inside the previous one's else-branch,
+      # so a 6-way route chain reads flat but is 6 deep in the AST. Guard
+      # clauses keep each check a standalone, unnested IfNode.
       def call(message:, container:, felt_sense: nil, on_turn: nil, on_chunk: nil)
         text = message.to_s.strip
         return Master::Result.err("empty message", category: :validation) if text.empty?
+        return dispatch_slash(text, container:, felt_sense:, on_turn:) if text.start_with?("/")
+        return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
-        if text.start_with?("/")
-          dispatch_slash(text, container:, felt_sense:, on_turn:)
-        elsif Master::Io::MediaIntent.handles?(text)
-          Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd))
-        elsif (inferred = infer_operator_command(text, container:))
-          dispatch_inferred(inferred, container:, felt_sense:, on_turn:)
-        elsif full_workflow_intent?(text)
-          dispatch_inferred({ command: "through", args: through_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
-        elsif casual?(text)
-          casual_reply(text, container:, felt_sense:, on_chunk:)
-        else
-          run_fold(text, container:, on_turn:)
-        end
+        inferred = infer_operator_command(text, container:)
+        return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
+        return dispatch_through_workflow(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
+        return casual_reply(text, container:, felt_sense:, on_chunk:) if casual?(text)
+
+        run_fold(text, container:, on_turn:)
+      end
+
+      def dispatch_through_workflow(text, container:, felt_sense: nil, on_turn: nil)
+        dispatch_inferred({ command: "through", args: through_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
       end
 
       # Promote plain language to operator commands via Infer (scan/fix/through/…).

@@ -282,6 +282,21 @@ module Master
           path.to_s.match?(RAILSISH)
         end
 
+        # Line index of the matching `end` for a `def` starting at `start`,
+        # via brace-depth tracking. Own method so its loop's nesting doesn't
+        # compound with the caller's own while/if nesting (NESTING_DEPTH).
+        def method_body_end_line(lines, start)
+          depth = 0
+          j = start
+          while j < lines.size
+            depth += lines[j].scan(/\b(do|def|class|module|if|unless|begin|case)\b/).size
+            depth -= lines[j].scan(/\bend\b/).size
+            j += 1
+            break if depth <= 0 && j > start + 1
+          end
+          j
+        end
+
         RuleDSL.rule :THIN_CONTROLLER,
           severity: :warning, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
           description: "thin controllers — business logic belongs in models/services" do |src, path:|
@@ -295,14 +310,7 @@ module Master
           while i < lines.size
             if lines[i].match?(/^\s*def\s+\w+/)
               start = i
-              depth = 0
-              j = i
-              while j < lines.size
-                depth += lines[j].scan(/\b(do|def|class|module|if|unless|begin|case)\b/).size
-                depth -= lines[j].scan(/\bend\b/).size
-                j += 1
-                break if depth <= 0 && j > start + 1
-              end
+              j = Rules.method_body_end_line(lines, start)
               body_len = j - start
               if body_len > 40
                 findings << finding(line: start + 1, message: "controller action ~#{body_len} lines — thin controllers, fat models/services (rails_conventions)")
