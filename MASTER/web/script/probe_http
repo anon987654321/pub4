@@ -36,7 +36,7 @@ begin
   # test/controllers/chat_controller_test.rb, the authoritative homepage contract).
   %w[id="face" id="primer" tap\ to\ start MASTER_ASSET_PATHS function\ loadFace
      window.__MASTER_FACE_IMPORT__ window._primerFired error-live 35000 clearWatch
-     chat_actions faceRuntime faceModules boot_fsm MASTER.boot].each do |needle|
+     chat_actions faceRuntime faceModules boot_fsm MASTER?.boot].each do |needle|
     failures << "homepage missing #{needle}" unless body.include?(needle)
   end
   failures << "legacy 15s boot timeout still present" if body.include?("15000")
