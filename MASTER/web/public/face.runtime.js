@@ -2926,9 +2926,15 @@ function speakWithBrowserTTS(text, token) {
 function ttsTick() {
   if (tts.muted || tts.playing || tts.paused) return;
   const text = dequeueTtsLane();
-  if (!text) return;
+  if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
   tts.playing = true;
+  // Duck the mic while we speak: continuous SpeechRecognition has no echo
+  // cancellation against this page's own audio output, so an open mic during
+  // playback transcribes the assistant's own reply and resubmits it as if the
+  // user said it, producing an unprompted follow-up reply (reported as the
+  // assistant "randomly saying facts"). See resumeSttAfterSpeech() below.
+  if (State.sttActive) { try { stopSTT(); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:tts_tick_stt_duck", err); } }
   const token = ++tts.cancelToken;
   setTTSLoading(true);
   if (actx?.state === 'suspended') actx.resume().catch(() => {});
@@ -3321,11 +3327,11 @@ if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         exitVoiceMode({ reason: 'unreliable' });
         return;
       }
-      setTimeout(() => { if (State.voiceMode) startSTT(); }, 50);
+      setTimeout(() => { if (State.voiceMode && !tts.playing) startSTT(); }, 50);
       return;
     }
     if (State.wakeArmed) {
-      setTimeout(() => { if (State.wakeArmed && !State.voiceMode) startWakeListening(); }, 50);
+      setTimeout(() => { if (State.wakeArmed && !State.voiceMode && !tts.playing) startWakeListening(); }, 50);
     }
   };
   recognition.onerror = (e) => {
@@ -3431,6 +3437,18 @@ function startSTT() {
 function stopSTT() {
   if (!recognition || !State.sttActive) return;
   try { recognition.stop(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stt_stop", err); }
+}
+
+// Re-open the mic once the TTS queue actually empties -- called from
+// ttsTick()'s !text branch (face_speech_runtime.js) after it ducks the mic
+// for the duration of playback. recognition.onend's own re-arm below is
+// deliberately skipped while tts.playing so this is the one place that
+// resumes listening after a reply finishes, instead of racing the duck and
+// reopening the mic mid-speech (which fed the assistant's own TTS back into
+// itself as if the user had spoken it).
+function resumeSttAfterSpeech() {
+  if (State.voiceMode) { if (!State.sttActive) startSTT(); return; }
+  if (State.wakeArmed && !State.sttActive) startWakeListening();
 }
 
 let evtSrc = null;

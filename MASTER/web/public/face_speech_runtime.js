@@ -727,9 +727,15 @@ function speakWithBrowserTTS(text, token) {
 function ttsTick() {
   if (tts.muted || tts.playing || tts.paused) return;
   const text = dequeueTtsLane();
-  if (!text) return;
+  if (!text) { resumeSttAfterSpeech(); return; }
   tts.current = text;
   tts.playing = true;
+  // Duck the mic while we speak: continuous SpeechRecognition has no echo
+  // cancellation against this page's own audio output, so an open mic during
+  // playback transcribes the assistant's own reply and resubmits it as if the
+  // user said it, producing an unprompted follow-up reply (reported as the
+  // assistant "randomly saying facts"). See resumeSttAfterSpeech() below.
+  if (State.sttActive) { try { stopSTT(); } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:tts_tick_stt_duck", err); } }
   const token = ++tts.cancelToken;
   setTTSLoading(true);
   if (actx?.state === 'suspended') actx.resume().catch(() => {});

@@ -442,6 +442,19 @@ test("voice mode: re-arm loop, exit phrase, wake word, and browser-first TTS rou
   // dedicated control was redundant chrome. Confirm it's actually gone.
   assert.doesNotMatch(index, /data-act="mic"/);
   assert.doesNotMatch(runtime, /data-act="mic"/);
+  // STT/TTS echo regression: continuous SpeechRecognition has no echo
+  // cancellation against this page's own TTS audio, so an open mic during
+  // playback transcribed the assistant's own reply and resubmitted it as a
+  // new user message -- reported as the assistant "randomly saying facts."
+  // ttsTick() must duck the mic while speaking and only resume it via
+  // resumeSttAfterSpeech() once the queue empties -- and that function must
+  // actually be defined (it previously wasn't, only called, which would
+  // throw ReferenceError the first time a reply finished playing).
+  assert.match(runtime, /function resumeSttAfterSpeech/);
+  assert.match(runtime, /if \(!text\) \{ resumeSttAfterSpeech\(\); return; \}/);
+  assert.match(runtime, /tts_tick_stt_duck/);
+  assert.match(runtime, /State\.voiceMode && !tts\.playing/);
+  assert.match(runtime, /State\.wakeArmed && !State\.voiceMode && !tts\.playing/);
 });
 
 test("service worker avoids stale undigested precache", () => {
