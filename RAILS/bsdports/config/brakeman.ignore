@@ -1,8 +1,8 @@
 {
   "ignored_warnings": [
     {
-      "fingerprint": "c1ecbd8c30ae130265aefbef73eb8b48f4e1e0aa612d6dacceefb28e67ea3d21",
-      "note": "pkg_info uses argv array; port names come from indexed DB rows, skipped when CI=1"
+      "fingerprint": "e98f9f1ca59d80f18cbe36f40a6b3e8e7289e8512e581991848c6576b9dc36b3",
+      "note": "pkg_info uses argv array; port names come from indexed DB rows, skipped when CI=1. Fingerprint rotated 2026-07-20 (same file/line/message as the prior c1ecbd8c... entry, which went stale and started hard-failing bin/ci's --exit-on-warn Brakeman step in production)."
     }
   ]
 }
