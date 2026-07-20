@@ -10488,16 +10488,39 @@ def generate_fm_drum_kit!
      # (42Hz, slower decay) for body -- the FM element alone decays too
      # fast to carry real low-end weight now that this is the sole kick,
      # not a niche alternate. Gentle tanh saturation adds analog warmth.
-     ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))+0.35*exp(-t*9)*sin(2*PI*42*t)':d=0.6:s=#{sr}"],
-     "aeval=exprs='tanh(1.8*val(0))/tanh(1.8)',lowpass=f=240,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
+     # A very low-level noise floor under the whole hit (not a burst)
+     # keeps it from sounding too digitally clean for a kit modeled on
+     # dusty analog hardware.
+     ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))+0.35*exp(-t*9)*sin(2*PI*42*t)':d=0.6:s=#{sr}",
+      "-f", "lavfi", "-i", "anoisesrc=d=0.6:color=pink:amplitude=0.02"],
+     "[0:a]aeval=exprs='tanh(1.8*val(0))/tanh(1.8)',lowpass=f=240[voice];" \
+     "[1:a]lowpass=f=2500[floor];" \
+     "[voice][floor]amix=inputs=2:duration=first,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
+    # Alternate kick voice for the kick/ind_kick alternation cycle
+    # (KICK_SAMPLE_CYCLE) -- this was missing for the FM kit entirely, so
+    # 1 in 4 kicks silently fell back to the old analog kit's ind_kick.wav
+    # even with FM_DRUMS=1. Different carrier:modulator ratio (60:46 vs
+    # 55:58) and slightly punchier decay for real per-alternation contrast.
+    ["ind_kick.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*7)*sin(2*PI*60*t+7*exp(-t*34)*sin(2*PI*46*t))+0.32*exp(-t*10)*sin(2*PI*44*t)':d=0.55:s=#{sr}",
+      "-f", "lavfi", "-i", "anoisesrc=d=0.55:color=pink:amplitude=0.02"],
+     "[0:a]aeval=exprs='tanh(2.0*val(0))/tanh(2.0)',lowpass=f=250[voice];" \
+     "[1:a]lowpass=f=2500[floor];" \
+     "[voice][floor]amix=inputs=2:duration=first,acompressor=threshold=-17dB:ratio=3.5:attack=2:release=40"],
     ["snare.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.8*exp(-t*18)*sin(2*PI*200*t+7*exp(-t*35)*sin(2*PI*330*t))':d=0.3:s=#{sr}",
-      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9"],
+      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9",
+      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=pink:amplitude=0.015"],
      "[1:a]highpass=f=1500,lowpass=f=8000,aeval=exprs='val(0)*exp(-t*30)'[crack];" \
-     "[0:a][crack]amix=inputs=2:weights=0.65 0.68,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
+     "[2:a]lowpass=f=3000[floor];" \
+     "[0:a][crack][floor]amix=inputs=3:weights=0.65 0.68 1,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
+    # Genuinely distinct voice, not just a quieter snare -- lower mod
+    # index (more sine-pure, less metallic "ring") and no crack noise at
+    # all, since real ghost notes are soft finger-taps, not scaled-down
+    # backbeat hits.
     ["ghost.wav",
-     ["-f", "lavfi", "-i", "aevalsrc='0.4*exp(-t*35)*sin(2*PI*200*t+4*exp(-t*40)*sin(2*PI*330*t))':d=0.14:s=#{sr}"],
-     "highpass=f=700,volume=0.6"],
+     ["-f", "lavfi", "-i", "aevalsrc='0.4*exp(-t*40)*sin(2*PI*190*t+2.5*exp(-t*45)*sin(2*PI*260*t))':d=0.13:s=#{sr}"],
+     "highpass=f=600,lowpass=f=3500"],
     ["hat.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*90)*sin(2*PI*900*t+5*sin(2*PI*3150*t))':d=0.12:s=#{sr}"],
      "highpass=f=4000"],
