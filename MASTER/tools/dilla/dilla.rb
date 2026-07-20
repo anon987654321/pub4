@@ -10442,13 +10442,17 @@ def generate_fm_drum_kit!
   sr = SAMPLE_RATE
   recipes = [
     ["kick.wav",
-     ["-f", "lavfi", "-i", "aevalsrc='0.9*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))':d=0.55:s=#{sr}"],
-     "lowpass=f=220,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
+     # FM operator for the punch/click transient, plus a plain sub sine
+     # (42Hz, slower decay) for body -- the FM element alone decays too
+     # fast to carry real low-end weight now that this is the sole kick,
+     # not a niche alternate. Gentle tanh saturation adds analog warmth.
+     ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))+0.35*exp(-t*9)*sin(2*PI*42*t)':d=0.6:s=#{sr}"],
+     "aeval=exprs='tanh(1.8*val(0))/tanh(1.8)',lowpass=f=240,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
     ["snare.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.8*exp(-t*18)*sin(2*PI*200*t+7*exp(-t*35)*sin(2*PI*330*t))':d=0.3:s=#{sr}",
       "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9"],
      "[1:a]highpass=f=1500,lowpass=f=8000,aeval=exprs='val(0)*exp(-t*30)'[crack];" \
-     "[0:a][crack]amix=inputs=2:weights=0.7 0.55,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
+     "[0:a][crack]amix=inputs=2:weights=0.65 0.68,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
     ["ghost.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.4*exp(-t*35)*sin(2*PI*200*t+4*exp(-t*40)*sin(2*PI*330*t))':d=0.14:s=#{sr}"],
      "highpass=f=700,volume=0.6"],
@@ -10472,7 +10476,7 @@ def generate_fm_drum_kit!
 end
 
 def fm_drums_enabled?
-  ENV["FM_DRUMS"] == "1"
+  ENV.fetch("FM_DRUMS", "1") != "0"
 end
 
 def ensure_fm_drum_kit!
