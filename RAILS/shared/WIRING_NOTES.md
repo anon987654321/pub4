@@ -79,7 +79,32 @@ bundle exec ruby -e 'require "./config/environment"; require "importmap/commands
 bin/rails test
 ```
 
-Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
+Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/x_design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
+
+## x.com parity recovery (2026-07-20)
+
+Recovered from deleted execute-plan stack (tags: `recover/x-parity-stack`, `recover/x-modal-sheet`) without full merge.
+
+| Piece | Location |
+|-------|----------|
+| Contract tests | `RAILS/test/x_design_contract_test.rb`, `shared/test/lib/design_tokens_test.rb` |
+| Web vitals (1% sample) | `shared/frontend/hotwire.js` → `POST /web_vitals` (`WebVitalsController`, `fleet.rb`) |
+| Bottom sheet | `shared/frontend/bottom_sheet_controller.js` (`pub4/bottom_sheet`) |
+| Modal / sheet CSS | `shared/app/assets/stylesheets/_x_modal.scss` (via `@forward "x_modal"` in `_stack.scss`) |
+| Action bar + icons | `shared/_x_action_bar`, `shared/_x_icon`, `shared/x_icons/*` |
+| UI helper | `Shared::XUiHelper` (engine initializer `shared.x_ui_helper`) |
+| Theme FOUC | `shared/_theme_bootstrap` + `theme_toggle` sets `document.documentElement.dataset.theme` |
+
+**Not recovered wholesale:** full `_x_shell` layout rewrite for all apps (main layouts already diverge). Pull shell partials only when a product explicitly adopts them.
+
+**Gates (from repo root):**
+
+```bash
+ruby RAILS/test/x_design_contract_test.rb
+ruby RAILS/shared/test/lib/design_tokens_test.rb
+ruby RAILS/build_all_css.rb --check
+ruby RAILS/frontend_auditor_gate.rb
+```
 
 ## Visual design system (2026-07-19)
 

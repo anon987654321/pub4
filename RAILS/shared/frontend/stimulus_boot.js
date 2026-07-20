@@ -34,6 +34,7 @@ import CharacterCounter from "pub4/character_counter"
 import LuxuryProduct from "pub4/luxury_product"
 import ScrollReveal from "pub4/scroll_reveal"
 import XAction from "pub4/x_action"
+import BottomSheet from "pub4/bottom_sheet"
 import Autosave from "pub4/autosave"
 import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
@@ -79,6 +80,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("luxury-product", LuxuryProduct)
   application.register("scroll-reveal", ScrollReveal)
   application.register("x-action", XAction)
+  application.register("bottom-sheet", BottomSheet)
   application.register("autosave", Autosave)
   application.register("draft-store", DraftStore)
   application.register("media-picker", MediaPicker)
