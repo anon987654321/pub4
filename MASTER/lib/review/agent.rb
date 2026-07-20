@@ -4,6 +4,7 @@ require_relative "llm_dispatcher"
 require_relative "consensus"
 require_relative "prompt_filter"
 require_relative "agent/model_selector"
+require_relative "agent/model_override"
 require_relative "agent/prompt_builder"
 require_relative "agent/fallback_chain"
 
@@ -12,6 +13,7 @@ module Master
     class Agent
       include PromptFilter
       include ModelSelector
+      include ModelOverride
       include PromptBuilder
       include FallbackChain
 
@@ -96,26 +98,6 @@ module Master
         end
       ensure
         @felt_sense = nil
-      end
-
-      def model = routed_models.first
-      def model=(val)
-        @config["model"] = val
-      end
-
-      def with_model(override, &blk)
-        @model_mutex ||= Mutex.new
-        @model_mutex.synchronize do
-          prev = model
-          self.model = override
-          blk.call
-        ensure
-          self.model = prev
-        end
-      end
-
-      def model_for(operation:)
-        @model_router&.constrained_for(operation:) || model
       end
 
       def wire_context_window(ctx_window)
