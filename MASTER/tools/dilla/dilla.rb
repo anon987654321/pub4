@@ -1292,7 +1292,8 @@ def prefer_galaxy_ep(patch)
 end
 
 def pad_texture_enabled?
-  ENV.fetch("PAD_TEXTURE", "0") == "1"
+  # Style DNA defaults PAD_TEXTURE on; fetch default matches BEST/STYLE tables.
+  ENV.fetch("PAD_TEXTURE", "1") == "1"
 end
 
 def experimental_leads_enabled?
@@ -3701,10 +3702,9 @@ def apply_form_to_cfg!(cfg)
 end
 
 def harmony_lead_enabled?
-  # Camel default is off (pad-forward); long_soul/golden still default on.
-  default = if camel_mode?
-              "0"
-            elsif %w[long_soul golden].include?(ENV["RENDER_MODE"])
+  # Dilla/camel style DNA enables harmony lead (DILLA_STYLE_DEFAULTS /
+  # DILLA_BEST_DEFAULTS). long_soul/golden same. Explicit HARMONY_LEAD=0 wins.
+  default = if camel_mode? || %w[long_soul golden warp].include?(ENV["RENDER_MODE"].to_s.downcase)
               "1"
             else
               "0"
@@ -7197,19 +7197,23 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 
 # Best-track defaults — applied on every invocation unless already set (or
 # DILLA_RAW=1). Bare `ruby dilla.rb` uses deep mode on top of these.
+# Baseline production knobs applied on every boot (soft-fill). Values that
+# also appear in DILLA_STYLE_DEFAULTS MUST match that table — soft-fill is
+# first-writer-wins, so a conservative BEST entry silently blocks style DNA
+# on one-shot `dilla` / product paths that only soft-apply style.
 DILLA_BEST_DEFAULTS = {
   "DILLA_DEEP" => "1",
-  "PAD_VOICE" => "blend",
-  "PAD_ARP_MODE" => "wash",
+  "PAD_VOICE" => "stack_soul",
+  "PAD_ARP_MODE" => "held",
   "LEAD_VOICE" => "soul_prophet",
-  "LEAD_ARP_MODE" => "soul_wash",
+  "LEAD_ARP_MODE" => "flylo_spiral",
   "LEAD_ARP" => "1",
   "EXPERIMENTAL_LEADS" => "1",
   "SOUL_ENRICH" => "1",
-  "SYNTH_CYCLE" => "0",
+  "SYNTH_CYCLE" => "1",
   "LUSH_SYNTH" => "1",
   "REHARM_LOOP" => "0",
-  "PAD_TEXTURE" => "0",
+  "PAD_TEXTURE" => "1",
   "CREEPY_PATCHES" => "0",
   # donuts_warm's hf_rolloff/groove_wear_lp sit at 2200/2600Hz (see the
   # "not a 2 kHz blanket" comment on its donuts_soul sibling) and its
@@ -7218,7 +7222,7 @@ DILLA_BEST_DEFAULTS = {
   # already uses donuts_soul; this table (applied first) was overriding it.
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
-  "ANALOG_CHAIN" => "acetate",
+  "ANALOG_CHAIN" => "broadcast",
   "DRUM_PRESET" => "dilla_slight",
   "EXTERNAL_KIT" => "03-soulful-vintage",
   "PERFORMER" => "yancey",
@@ -7227,13 +7231,20 @@ DILLA_BEST_DEFAULTS = {
   "MARKOV_DRUMS" => "1",
   "FLAM" => "1",
   "GROOVE_LOCK" => "kick",
-  "VINYL" => "35",
-  "KICK_GAIN" => "0.34",
+  "GROOVE_ENGINE" => "1",
+  "POCKET_DNA" => "1",
+  "PHRASE_DRIFT" => "1",
+  "ARRANGEMENT_VARIATION" => "1",
+  "HARMONY_LEAD" => "1",
+  "SCALE_LEAD" => "1",
+  "FM_NATIVE" => "1",
+  "MASTER_HEURISTICS" => "1",
+  "VINYL" => "0",
+  "KICK_GAIN" => "1.0",
   "KICKS" => "1",
   "BASS_SLIDE" => "1",
   "SPECTRAL_ARP" => "0",
   "INDUSTRIAL_DARK" => "0",
-  "MASTER_HEURISTICS" => "0",
   "GHOST_TIER" => "pocket",
   "MOTIF_RECALL" => "1",
   "SLASH_BASS" => "0",
@@ -7674,7 +7685,9 @@ SLASH_BASS_PROFILES = %i[
 
 PROMOTED_PROFILES_PATH = File.join(DillaComposition::PROJECT_DIR, "promoted_profiles.json").freeze
 
-# Deep render — quality gate, soul rotation, long pads, pocket jitter, mix refine.
+# Deep render — quality gates + pocket jitter. Do NOT put pad/mix DNA here
+# (attack/release/vol/reverb/stripdown): BEST soft-fills DEEP before style
+# soft-fill, and first-writer-wins would block DILLA_STYLE_DEFAULTS.
 DILLA_DEEP_DEFAULTS = {
   "DILLA_QUALITY_GATE" => "1",
   "PHONE_PREVIEW_GATE" => "1",
@@ -7682,14 +7695,9 @@ DILLA_DEEP_DEFAULTS = {
   "LISTEN_PASSES" => "1",
   "QUALITY_REPORT" => "1",
   "RENDER_BEAUTY_MIN" => "70",
-  "PAD_ATTACK" => "920",
-  "PAD_RELEASE" => "2600",
-  "PAD_VOL" => "52",
   "QUINTUPLET" => "1",
   "SWING_JITTER" => "1",
-  "LONG_STRIPDOWN" => "1",
-  "EVOLVE_HARMONY_W" => "0.18",
-  "CONV_REVERB" => "chamber"
+  "EVOLVE_HARMONY_W" => "0.18"
 }.freeze
 
 STREAM_EXTRA_DEFAULTS = {
@@ -8558,6 +8566,12 @@ end
 
 def pick_default_track!
   return if ENV["TRACK"] && !ENV["TRACK"].empty?
+  mode = ENV["RENDER_MODE"].to_s.downcase
+  # Leave TRACK empty for dilla/camel/comfort/empty so DILLA_STYLE_DEFAULTS
+  # soft-fill can supply get_dis_money. Random deep rotation is for stream
+  # after style force, or non-style modes only.
+  return if mode.empty? || %w[dilla camel comfort].include?(mode)
+
   if deep_render?
     pool = DillaLofiMachine::STREAM_ROTATION
     seed = Time.now.to_i + Process.pid + (@render_seed || 0)
@@ -9151,9 +9165,16 @@ end
 def dilla_swing_offset(step_index, step_p, swing, quintuplet: false, bar: 0, bpm: 90)
   return 0.0 if swing.to_f <= 0.0 || step_index.even?
   amount = swing.clamp(0.0, 100.0) / 100.0
+  tick_sec = step_p / 24.0 # 96 ticks/beat, step_p is a 16th (1/4 beat) -> 24 ticks/step
+  # NOTE: swing_jitter_ms is intentionally NOT added here -- every caller of
+  # this function separately routes the same (bpm, step, bar) through
+  # DillaGroove.apply_event_timing!/apply_pocket_place right after, which
+  # already adds swing_jitter_ms itself. Adding it here too silently doubled
+  # the jitter magnitude on every single scheduled hit in the whole engine.
   unless quintuplet
-    base = (step_p * amount * 0.5).round(6)
-    return base + DillaGroove.swing_jitter_ms(bpm, step_index, bar)
+    base = (step_p * amount * 0.5)
+    ticks = tick_sec.positive? ? (base / tick_sec).round : 0
+    return ticks * tick_sec
   end
   # Real Dilla technique (Charnas/Hein analysis): the beat divides into 5
   # equal parts, not the standard 4 (16ths) or 6 (triplets) — the "and"
@@ -9162,8 +9183,9 @@ def dilla_swing_offset(step_index, step_p, swing, quintuplet: false, bar: 0, bpm
   beat_p = step_p * 4.0
   quintuplet_pos = beat_p * 3.0 / 5.0
   straight_pos = step_p * 2.0
-  base = ((quintuplet_pos - straight_pos) * amount).round(6)
-  base + DillaGroove.swing_jitter_ms(bpm, step_index, bar)
+  base = (quintuplet_pos - straight_pos) * amount
+  ticks = tick_sec.positive? ? (base / tick_sec).round : 0
+  ticks * tick_sec
 end
 
 def dilla_velocity(base, bar_index, step_index, spread: 0.10)
@@ -10038,7 +10060,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
         t = [base + step * step_p +
              dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
              dilla_timing_ms(:snare, bar, step, timing, beat_p) / 1000.0 +
-             DillaGroove.flam_offset_sec, 0.0].max
+             DillaGroove.flam_offset_sec(beat_p), 0.0].max
         t = DillaGroove.apply_event_timing!(t, role: :snare, beat_p: beat_p, bar: bar, step: step, bpm: bar_bpm)
         backbeat = halftime? ? [8].include?(step) : [4, 12].include?(step)
         groove_meta[:snare_early_ms] << dilla_timing_ms(:snare, bar, step, timing, beat_p) if backbeat
@@ -15123,9 +15145,13 @@ DISPATCH = {
   "dilla" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "beat.mp3")
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
-    # Soft-apply kit-forward style so one-shots match stream (empty ENV only).
-    apply_dilla_style!(force: false) unless ENV["DILLA_RAW"] == "1"
-    apply_comfort_style!(force: true) if comfort_mode?
+    # Soft-apply style DNA. BEST is aligned with STYLE so first-writer
+    # soft-fill no longer blocks kit/master/lead wiring. Operator and
+    # PRODUCT_KIT_ENV keys set before boot stay (soft only — no force-lock).
+    unless ENV["DILLA_RAW"] == "1"
+      apply_dilla_style!(force: false)
+      apply_comfort_style!(force: true) if comfort_mode?
+    end
     render_dilla(dest, n_bars)
   end,
   "comfort" => lambda do
@@ -15142,7 +15168,7 @@ DISPATCH = {
   "camel" => lambda do
     dest = ARGV.shift || File.join(OUTPUT_DIR, "camel.mp3")
     n_bars = ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift.to_i : nil
-    apply_camel_profile!(force: false)
+    apply_camel_profile!(force: false) unless ENV["DILLA_RAW"] == "1"
     render_dilla(dest, n_bars)
   end,
   "hiphop" => -> { render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3")) },

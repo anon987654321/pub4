@@ -225,10 +225,16 @@ module DillaGroove
     return 0.0 unless enabled?
     return 0.0 if ENV["SWING_JITTER"] == "0"
     beat_ms = 60_000.0 / bpm
-    tick = beat_ms / 96.0
+    tick_ms = beat_ms / 96.0
     rng = Random.new((bar * 509) + (step * 97) + 8803)
     max_ticks = (ENV["SWING_JITTER_TICKS"] || (pocket_dna? ? 4 : 3)).to_i
-    gaussian_jitter(rng, max_ticks * tick / 1000.0) + phrase_drift_sec(bar)
+    raw = gaussian_jitter(rng, max_ticks * tick_ms / 1000.0)
+    # Quantize to a whole tick -- the MPC3000's manual nudge tool (the real
+    # mechanism this jitter approximates) can only land on one of 96
+    # discrete positions per beat, so a fractional-tick jitter value is one
+    # that could never have been produced by hand on the actual hardware.
+    quantized_ticks = (raw / (tick_ms / 1000.0)).round
+    (quantized_ticks * tick_ms / 1000.0) + phrase_drift_sec(bar)
   end
 
   # Slow-oscillating timing drift applied on top of per-hit jitter — the
@@ -285,7 +291,10 @@ module DillaGroove
     rng = Random.new((bar * 313) + (step * 17) + 42)
     # Freehand hats: slightly wider when pocket DNA is on.
     hi = pocket_dna? ? 0.0045 : 0.0022
-    rng.rand(0.0004..hi)
+    raw = rng.rand(0.0004..hi)
+    tick_sec = beat_p / 96.0
+    return raw if tick_sec <= 0
+    [(raw / tick_sec).round, 1].max * tick_sec
   end
 
   # A finger-drummer occasionally misses a hat, or leaves space on purpose —
@@ -308,8 +317,15 @@ module DillaGroove
     raw * tick * (step.zero? ? 0.35 : 1.0)
   end
 
-  def flam_offset_sec
-    enabled? && ENV["FLAM"] != "0" ? 0.0012 : 0.0
+  # A flam is a fixed number of MPC ticks, not a fixed ms value -- a fixed-ms
+  # constant means the same flam represents a different (and at fast tempos,
+  # audibly wrong) fraction of a beat as BPM changes. 2 ticks was the
+  # previous ~0.0012s at a typical ~90 BPM (tick ~6.9ms there); express it
+  # as 2 ticks directly so it scales correctly with tempo.
+  def flam_offset_sec(beat_p = nil)
+    return 0.0 unless enabled? && ENV["FLAM"] != "0"
+    return 0.0012 unless beat_p && beat_p.positive?
+    2 * (beat_p / 96.0)
   end
 
   def kick_snare_swap?
