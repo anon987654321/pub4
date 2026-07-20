@@ -58,11 +58,17 @@ end
 
 num_users = (50 * SEED_SCALE).clamp(10, 5000)
 users = num_users.times.map do |i|
+  # A real-sounding name (this app's display_name is just username), not the
+  # old "seed0_xkq3f7" -- first_name+last_name directly (not Faker::Name.name)
+  # avoids odd baked-in prefixes/suffixes ("Prof.", "Esq.", "III") in a
+  # username. The numeric suffix stays for guaranteed uniqueness at up to
+  # 5000 draws, where real-name collisions become plausible.
+  name_slug = "#{Faker::Name.first_name} #{Faker::Name.last_name}".parameterize(separator: '_')
   User.create!(
     email_address: "seed#{i}@#{Faker::Internet.domain_name}",
     password: 'password123',
     password_confirmation: 'password123',
-    username: "seed#{i}_#{Faker::Internet.username(specifier: 3..8)}",
+    username: "#{name_slug}_#{i}",
     latitude: 60.39 + rand(-0.1..0.1),
     longitude: 5.33 + rand(-0.1..0.1)
   )

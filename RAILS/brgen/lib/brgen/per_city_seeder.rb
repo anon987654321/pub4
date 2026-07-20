@@ -18,8 +18,15 @@ module Brgen
       ActsAsTenant.with_tenant(@city) do
         admin = seed_admin
         communities = seed_communities(admin)
+        # Faker::Config.locale is process-global, not scoped to this block --
+        # every city in a seed_all! run shares it, so it must be restored
+        # afterward or the next city inherits whatever locale this one set.
+        previous_locale = Faker::Config.locale
+        Faker::Config.locale = Brgen::CityContent.locale_for(country)
         users = seed_users
         seed_posts(admin, users, communities)
+      ensure
+        Faker::Config.locale = previous_locale
       end
     end
 
@@ -36,8 +43,11 @@ module Brgen
       end
     end
 
+    def country
+      @entry&.country || @city.country_code
+    end
+
     def seed_communities(admin)
-      country = @entry&.country || @city.country_code
       Brgen::CityContent.community_slugs_for(country).map do |slug|
         Community.find_or_create_by!(slug: slug, city: @city) do |community|
           community.name = slug.capitalize
@@ -49,10 +59,19 @@ module Brgen
 
     def seed_users
       5.times.map do |index|
+        # A real-sounding name in the caller's locale (Faker::Config.locale
+        # was set for this city in seed!), not a robotic "lsangeles_3" --
+        # username is this app's actual display_name, so it's user-visible.
+        # first_name+last_name directly (not Faker::Name.name) to avoid the
+        # prefixes/suffixes ("Prof.", "Esq.", "III") name sometimes bakes in,
+        # which read oddly in a username. The city slug keeps it unique
+        # against every other city's users (username uniqueness is global,
+        # not per-city) without the name itself needing to carry an index.
+        name_slug = "#{Faker::Name.first_name} #{Faker::Name.last_name}".parameterize(separator: "_")
         User.strict_loading(false).find_or_create_by!(
           email_address: "seed_#{@city.slug}_#{index}@#{@city.domain}"
         ) do |user|
-          user.username = "#{@city.slug}_#{index}"
+          user.username = "#{name_slug}_#{@city.slug}"
           user.password = user.password_confirmation = "password123"
           user.city = @city
           user.latitude = @city.latitude.to_f + rand(-0.05..0.05)
