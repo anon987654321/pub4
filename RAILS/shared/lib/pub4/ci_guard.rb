@@ -56,9 +56,16 @@ module Pub4
       # 022), so a file first created by one app's deploy user ends up 0644 --
       # writable only by that user. Every other app then gets Errno::EACCES just
       # opening the file, defeating the whole point of a shared cross-app mutex.
-      # chmod isn't subject to umask, so force it explicitly after creation.
+      # chmod isn't subject to umask, so force it explicitly after creation --
+      # but only the file's owner may chmod it at all, so every app after the
+      # first hits Errno::EPERM here and that's fine: it means someone already
+      # fixed the mode (or this app's own creation already got it right).
       File.open(LOCK_PATH, File::CREAT | File::RDWR, 0o666) do |file|
-        File.chmod(0o666, LOCK_PATH)
+        begin
+          File.chmod(0o666, LOCK_PATH)
+        rescue Errno::EPERM
+          nil
+        end
         unless file.flock(File::LOCK_EX | File::LOCK_NB)
           holder = File.exist?(HOLDER_PATH) ? File.read(HOLDER_PATH).strip : "unknown"
           warn "pub4-ci-guard: #{LOCK_PATH} busy (#{holder})"

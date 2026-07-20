@@ -41,6 +41,24 @@ class CiGuardTest < Minitest::Test
     assert_equal 0o666, mode, "lock file should be world read/write regardless of umask"
   end
 
+  # Regression: only a file's owner may chmod it, so the very next app to run
+  # bin/ci after the fix above hit Errno::EPERM on File.chmod (a different
+  # deploy user than whoever created/last-fixed the file) and the whole CI
+  # run crashed before ever reaching flock. Bit bsdports's deploy on the same
+  # incident (2026-07-20), right after the ownership fix landed for amber.
+  # A non-owner's chmod attempt must be tolerated, not fatal -- the mode is
+  # already whatever the owner set it to.
+  def test_with_lock_tolerates_eperm_on_chmod
+    original = File.method(:chmod)
+    File.define_singleton_method(:chmod) { |*| raise Errno::EPERM }
+    begin
+      result = Pub4::CiGuard.with_lock { :yielded }
+      assert_equal :yielded, result
+    ensure
+      File.define_singleton_method(:chmod, original)
+    end
+  end
+
   private
 
   def with_env(vars)
