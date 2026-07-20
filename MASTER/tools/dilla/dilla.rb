@@ -3476,7 +3476,11 @@ def dilla_role_velocity(role, bar, step, sec_gain: 1.0, backbeat: false)
       base *= (perf[:ghost_boost] + nudge).clamp(0.75, 1.65)
     end
   end
-  spread = role == :ghost ? 0.06 : 0.08
+  # Ghost notes were narrower than every other role (0.06 vs 0.08) --
+  # backwards from real finger-drumming, where ghost hits are the LEAST
+  # consistent dynamically (near-inaudible to clearly-present within the
+  # same phrase), not the most locked-in.
+  spread = role == :ghost ? 0.22 : 0.08
   vel = dilla_velocity(base, bar, step, spread: spread) * sec_gain
   # FlyLo primary: kick-forward; snares/hats sit under kick (tops were piercing).
   if flylo_primary_drums?
@@ -10029,6 +10033,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
 
     if dilla_pocket_drums_enabled? && kicks_enabled? && !drop_bar
       pattern.each_with_index do |step, i|
+        next if DillaGroove.kick_should_drop?(bar, step)
         role = (feel == :syncopated_slash_ninth || step.nonzero?) ? :kick_sync : :kick_anchor
         t = [base + step * step_p +
              dilla_swing_offset(step, step_p, swing, quintuplet: quintuplet, bar: bar, bpm: bar_bpm) +
@@ -10038,6 +10043,11 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
         kick_role = step.zero? ? :kick_anchor : :kick_sync
         kick_vel = dilla_role_velocity(kick_role, bar, step, sec_gain: sec_gain * ks)
         events[:kick] << [t.round(6), kick_vel]
+        double_ticks = DillaGroove.kick_double_offset_ticks(bar, step)
+        if double_ticks
+          dbl_t = (t + double_ticks * (beat_p / 96.0)).round(6)
+          events[:kick] << [dbl_t, (kick_vel * 0.55).clamp(0.05, 0.95)]
+        end
         if step.zero?
           events[:sub_osc] ||= []
           events[:sub_osc] << [t.round(6), dilla_velocity(0.06, bar, step, spread: 0.04) * sec_gain * ks, 40.0]
@@ -10070,10 +10080,11 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
           events[:clap] ||= []
           events[:clap] << [t.round(6), dilla_role_velocity(:clap, bar, step, sec_gain: sec_gain), :clap]
         end
-        if backbeat && si.zero?
+        if backbeat && si.zero? && DillaGroove.snare_prehit_ghost?(bar, step)
           ghost_vel = apply_ghost_tier_vel(dilla_role_velocity(:ghost, bar, step, sec_gain: sec_gain) * 0.72, ghost_tier)
           groove_meta[:ghost_vel] << ghost_vel
-          events[:ghost] << [(t - 0.001).round(6).clamp(0.0, Float::INFINITY), ghost_vel]
+          prehit_t = (t - 3 * (beat_p / 96.0)).round(6).clamp(0.0, Float::INFINITY)
+          events[:ghost] << [prehit_t, ghost_vel]
         end
       end
     end
