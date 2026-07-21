@@ -218,11 +218,17 @@ module DillaGroove
   # dusty | industrial | neo_soul | classic
   def pocket_set
     set = ENV.fetch("POCKET_SET", "neo_soul").to_s.downcase
+    return "neo_soul" if set == "soul" || set == "neosoul"
+    # An explicit POCKET_SET wins outright -- DRUM_PRESET-based inference below
+    # is a fallback for when the caller didn't choose a pocket at all, not a
+    # second vote that can overrule one they did (e.g. POCKET_SET=classic with
+    # DRUM_PRESET=dilla_slight silently became neo_soul before this guard).
+    return set if ENV.key?("POCKET_SET") && !set.empty?
+
     preset = ENV["DRUM_PRESET"].to_s.downcase
-    return "dusty" if set == "dusty" || preset.include?("madlib")
-    return "industrial" if set == "industrial" || preset.include?("industrial") || preset.include?("boom_808")
-    return "neo_soul" if set == "neo_soul" || set == "soul" || set == "neosoul" ||
-                         preset.include?("dilla") || preset.include?("mpc")
+    return "dusty" if preset.include?("madlib")
+    return "industrial" if preset.include?("industrial") || preset.include?("boom_808")
+    return "neo_soul" if preset.include?("dilla") || preset.include?("mpc")
 
     set
   end

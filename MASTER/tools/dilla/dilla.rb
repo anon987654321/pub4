@@ -2624,6 +2624,7 @@ def progression_from_engine(sonic, _fallback_mode)
   chord_names = sonic&.dig("harmonic", "engine_chords")
   if chord_names&.any?
     return chord_names.map do |n|
+      PAD_CHORD_LOOKUP[n] || MODAL_MINOR_CHORDS.find { |c| c[:name] == n }
     end.compact
   end
   name = sonic&.dig("harmonic", "engine_progression")&.to_sym
