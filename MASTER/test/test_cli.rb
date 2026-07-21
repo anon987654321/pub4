@@ -54,7 +54,7 @@ class TestCLI < Minitest::Test
     lines = output.lines.map(&:chomp)
 
     assert_equal "3 total violations", lines[0]
-    assert_equal "evidence: STYLE=2, SECURITY=1", lines[1]
+    assert_equal "evidence: STYLE=2 SECURITY=1", lines[1]
     assert_operator lines.index("[STYLE]"), :<, lines.find_index { |l| l.start_with?("  L2") }
   end
 

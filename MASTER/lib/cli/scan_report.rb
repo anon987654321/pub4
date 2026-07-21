@@ -108,7 +108,11 @@ module Master
             next if rule_filter && !rule_filter.include?(violation[:rule].to_s)
             next if severity_filter && !severity_filter.include?(violation[:severity].to_s)
 
-            groups[violation[:rule].to_s] << violation
+            # Canonical RuleDSL ids are uppercase, but some findings carry a
+            # lowercase label (e.g. principle_map.yml's "detects:" taxonomy)
+            # for the same category -- normalize so it doesn't split into a
+            # second entry (see Scanner::ProgressReporter for the same fix).
+            groups[violation[:rule].to_s.upcase] << violation
         end
       end
 
@@ -150,7 +154,7 @@ module Master
       end
 
       def evidence_line
-        "evidence: #{ranked.map { |rule, violations| "#{rule}=#{violations.size}" }.join(", ")}"
+        "evidence: #{ranked.map { |rule, violations| "#{rule}=#{violations.size}" }.join(" ")}"
       end
 
       def violation_line(violation)
@@ -177,7 +181,7 @@ module Master
 
         summary = clusters.first(3).map do |cluster|
           "#{cluster[:rule]}×#{cluster[:count]}#{cluster[:files] > 1 ? " in #{cluster[:files]} files" : ""}"
-        end.join(", ")
+        end.join(" ")
         "cross-file DRY: #{summary}"
       end
 
@@ -185,7 +189,7 @@ module Master
         buckets = confidence_histogram
         return if buckets.empty?
 
-        "confidence: #{buckets.map { |label, count| "#{label}=#{count}" }.join(", ")}"
+        "confidence: #{buckets.map { |label, count| "#{label}=#{count}" }.join(" ")}"
       end
 
       def confidence_histogram
