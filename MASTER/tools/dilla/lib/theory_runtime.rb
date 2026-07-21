@@ -146,7 +146,7 @@ module DillaTheoryRuntime
           while pm - cm > 6
             cm += 12
           end
-          led[vi] = midi_to_hz(cm.clamp(48.0, 84.0))
+          led[vi] = midi_to_hz(cm.clamp(DillaHarmony::PAD_MIDI_MIN, DillaHarmony::PAD_MIDI_MAX))
         end
       end
       led.compact!
@@ -174,7 +174,7 @@ module DillaTheoryRuntime
 
       # Parallel perfect — drop soprano a whole step if possible.
       bs_m = hz_to_midi(bs) - 2
-      b[-1] = midi_to_hz(bs_m.clamp(52.0, 84.0))
+      b[-1] = midi_to_hz(bs_m.clamp(DillaHarmony::PAD_MIDI_MIN, DillaHarmony::PAD_MIDI_MAX))
       chords[i] = chords[i].merge(hz: b.sort)
     end
     chords
@@ -195,13 +195,18 @@ module DillaTheoryRuntime
     chords
   end
 
+  # Delegates to DillaHarmony's canonical conversions (harmony_engine.rb,
+  # required before this file) so the two engines can't drift -- they used
+  # to be reimplemented here with a different midi_to_hz rounding than
+  # DillaHarmony's, so a chord tone processed by each carried different
+  # precision and could fail exact-hz comparisons downstream.
   def hz_to_midi(hz)
     return 60.0 if hz.to_f <= 0
-    69.0 + 12.0 * Math.log2(hz.to_f / 440.0)
+    DillaHarmony.hz_to_midi(hz.to_f)
   end
 
   def midi_to_hz(midi)
-    440.0 * (2.0**((midi.to_f - 69.0) / 12.0))
+    DillaHarmony.midi_to_hz(midi.to_f)
   end
 
   def hz_to_pc(hz)
