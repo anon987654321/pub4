@@ -91,7 +91,7 @@
     // against. A still persona (anchor: saccade 0.10) halves gaze-jitter
     // amplitude; a fidgety one (ezinne: 0.26) adds some. This value was
     // already declared per-persona but never actually wired to anything.
-    const composure = Math.max(0.3, Math.min(1.6, (Number(ctx.saccade) || 0.2) / 0.2));
+    const composure = Math.max(0.3, Math.min(1.6, Number(ctx.saccade ?? 0.2) / 0.2));
 
     if (!state.nextBlink) reset({ blinkMs: ctx.blinkMs });
 
