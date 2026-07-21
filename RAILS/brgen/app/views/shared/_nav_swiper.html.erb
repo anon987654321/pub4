@@ -1,13 +1,17 @@
 <div class="nav_swiper" data-controller="nav-swiper" data-nav-swiper-target="root">
   <nav id="nav_sections" class="nav_swiper_bar" role="tablist" aria-label="Sections">
-    <% brgen_nav_items.each do |label, href| %>
-      <% active = label.downcase == (active_vertical.to_s.presence || "front") %>
-      <%= link_to label, href,
-            class: "nav_link#{" active" if active}",
-            role: "tab",
-            "aria-selected": active,
-            "aria-current": ("page" if active),
-            tabindex: (active ? 0 : -1) %>
+    <% brgen_nav_groups.each do |group_label, items| %>
+      <div class="nav_swiper_group" role="group" aria-label="<%= group_label.capitalize %>">
+        <% items.each do |label, href| %>
+          <% active = label.downcase == (active_vertical.to_s.presence || "front") %>
+          <%= link_to label, href,
+                class: "nav_link#{" active" if active}",
+                role: "tab",
+                "aria-selected": active,
+                "aria-current": ("page" if active),
+                tabindex: (active ? 0 : -1) %>
+        <% end %>
+      </div>
     <% end %>
   </nav>
   <button type="button" class="nav_swiper_grip" data-action="click->nav-swiper#toggle"

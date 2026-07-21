@@ -295,7 +295,9 @@ main[role="main"] {
   bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  /* Was a bare 9999 — outranked even --z-skip (2000). A toast belongs at
+     the toast tier, one step above modals, not above the skip-link. */
+  z-index: var(--z-toast, 1100);
   padding: 0.375rem 0.75rem;
   font-size: 0.625rem;
   line-height: 1.4;

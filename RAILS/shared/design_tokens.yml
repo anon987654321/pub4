@@ -14,9 +14,9 @@
 shared_chrome:
   space_2xs: "0.25rem"
   space_xs: "0.5rem"
-  space_sm: "0.875rem"
+  space_sm: "0.75rem"
   space_md: "1.5rem"
-  space_lg: "2.25rem"
+  space_lg: "2rem"
   space_xl: "3rem"
   space_2xl: "4rem"
   color_success: "#00ba7c"
@@ -56,9 +56,9 @@ luxury:
   # Shared luxury scale (more breathing room than minimal); includes 2xs for dense chrome
   space_2xs: "0.25rem"
   space_xs: "0.5rem"
-  space_sm: "0.875rem"
+  space_sm: "0.75rem"
   space_md: "1.5rem"
-  space_lg: "2.25rem"
+  space_lg: "2rem"
   space_xl: "3rem"
   space_2xl: "4rem"
   color_success: "#00ba7c"

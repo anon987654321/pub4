@@ -15,7 +15,18 @@
       <span class="chip"><%= status.humanize %><%= " ✓" if @order.status == status %></span>
     <% end %>
   </div>
-  <p class="eta-badge">Est. delivery 25–35 min</p>
+  <% if (fraction = @order.progress_fraction) %>
+    <div class="order-progress" role="presentation">
+      <div class="order-progress-fill" style="width: <%= (fraction * 100).round %>%"></div>
+    </div>
+  <% end %>
+  <% if @order.status == "delivered" %>
+    <p class="eta-badge eta-badge--done">Delivered</p>
+  <% elsif @order.status == "cancelled" %>
+    <p class="eta-badge eta-badge--cancelled">Order cancelled</p>
+  <% else %>
+    <p class="eta-badge" data-controller="countdown" data-countdown-target-time-value="<%= @order.estimated_ready_at.iso8601 %>">Est. delivery — calculating…</p>
+  <% end %>
 </div>
 
 <article role="article" aria-label="Order item">

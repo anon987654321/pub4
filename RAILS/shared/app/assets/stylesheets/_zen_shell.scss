@@ -565,7 +565,7 @@ body:has(dialog[data-dialog-target="dialog"][open]) {
 .logo-carousel .swiper-wrapper { align-items: center; }
 .logo-slide {
   font-family: ui-monospace, monospace;
-  color: #aaa;
+  color: var(--text-dim, #aaa);
   white-space: nowrap;
   padding: 0 4px;
   opacity: 0.85;

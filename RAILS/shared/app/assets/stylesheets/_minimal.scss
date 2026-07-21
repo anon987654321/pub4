@@ -123,7 +123,9 @@ nav .brand {
   position: fixed;
   inset-block-start: -3rem;
   inset-inline-start: 0.75rem;
-  z-index: 1000;
+  /* Skip-links get the scale's own top tier (design_tokens' --z-skip: 2000)
+     — was hardcoded to 1000, tying it with modals instead of outranking them. */
+  z-index: var(--z-skip, 2000);
   padding: 0.5rem 0.75rem;
   background: var(--black);
   color: var(--white);

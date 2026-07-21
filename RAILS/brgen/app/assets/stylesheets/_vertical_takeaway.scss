@@ -71,6 +71,38 @@ body.vertical-takeaway .eta-badge {
   color: var(--food-dash);
 }
 
+body.vertical-takeaway .eta-badge--done {
+  background: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
+  color: var(--color-success);
+}
+
+body.vertical-takeaway .eta-badge--cancelled {
+  background: var(--x-surface-elevated);
+  color: var(--x-text-secondary);
+}
+
+/* Real progress fill (order stage / total stages) — not a looping
+   animation, just the actual state rendered as width. */
+body.vertical-takeaway .order-progress {
+  height: 4px;
+  margin-block: var(--space-3);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface-elevated);
+  overflow: hidden;
+}
+
+body.vertical-takeaway .order-progress-fill {
+  height: 100%;
+  background: var(--food-dash);
+  transition: width var(--transition-normal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.vertical-takeaway .order-progress-fill {
+    transition: none;
+  }
+}
+
 body.vertical-takeaway .chip {
   border-color: var(--foodora);
   color: var(--foodora);

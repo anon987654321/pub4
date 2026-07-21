@@ -24,9 +24,14 @@
   margin-bottom: 0.5rem;
 }
 
+/* Editorial credit line — the one place feed prose picks up Amber's own
+   serif register instead of falling back to the shared system stack, so
+   reading a post feels like the same product as the guest hero and logo. */
 .feed-post-meta-author {
   color: var(--text);
-  font-weight: 700;
+  font-family: var(--amber-editorial-serif, var(--x-font));
+  font-style: italic;
+  font-weight: 400;
 }
 
 .newsletter-cta,

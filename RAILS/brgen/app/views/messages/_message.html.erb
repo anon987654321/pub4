@@ -1,12 +1,12 @@
 <% in_channel = message.conversation.channel? %>
 <% who = in_channel ? message.sender.channel_handle : message.sender.display_name %>
 <li id="<%= dom_id(message) %>" role="listitem">
-<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %> aria-label="Message from <%= who %>">
+<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="Message from <%= who %>">
   <header>
     <span><%= who %></span>
     <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>
     <% if message.expires_at %>
-      <span class="dim">· disappears <%= time_ago_in_words(message.expires_at) %></span>
+      <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· disappears <%= time_ago_in_words(message.expires_at) %></span>
     <% end %>
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
     <% if receipt&.read? %><span class="dim">· read</span><% end %>

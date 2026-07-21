@@ -101,6 +101,16 @@ module ApplicationHelper
     ]
   end
 
+  VERTICAL_NAV_LABELS = %w[marketplace dating playlist TV takeaway maps messenger].freeze
+
+  # brgen_nav_items chunked into two Hick's-law-sized groups for the swiper:
+  # platform links, then the seven verticals. Keeps each group at or under 7
+  # peer choices instead of one flat 10-11 item row.
+  def brgen_nav_groups
+    verticals, platform = brgen_nav_items.partition { |label, _| VERTICAL_NAV_LABELS.include?(label) }
+    [["brgen", platform], ["explore", verticals]]
+  end
+
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
   end

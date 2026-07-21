@@ -30,6 +30,20 @@ class Message < ApplicationRecord
 
   def expired? = expires_at&.past?
 
+  # Urgency tier for the fading-bubble treatment in the message thread —
+  # derived from how much of the message's own lifespan is left, not a
+  # fixed clock value, so a 5-minute channel message and a 7-day DM both
+  # read as "soon" at the same relative point.
+  def expiry_urgency
+    return nil unless expires_at
+
+    remaining = expires_at - Time.current
+    return "soon" if remaining <= 0
+    lifespan = expires_at - created_at
+    return "soon" if remaining < lifespan * 0.25
+    remaining < lifespan * 0.6 ? "later" : "fresh"
+  end
+
   def should_expire? = expires_at.present? || conversation.disappearing_messages?
 
   def mark_as_read!(user)

@@ -55,9 +55,9 @@ body.vertical-dating .x-match .x-avatar-img {
   align-items: center;
   justify-content: space-between;
   padding:
-    max(var(--space-7), env(safe-area-inset-top))
+    max(var(--space-8), env(safe-area-inset-top))
     var(--space-5)
-    max(var(--space-9), env(safe-area-inset-bottom));
+    max(var(--space-10), env(safe-area-inset-bottom));
   background: var(--dating-bg);
   color: var(--dating-ink);
   text-align: center;

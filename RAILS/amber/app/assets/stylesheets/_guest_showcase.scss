@@ -5,7 +5,7 @@
   --showcase-text: var(--x-text, #2c2824);
   --showcase-muted: var(--x-text-secondary, #6b665f);
   --showcase-border: var(--x-border, #e6e0d8);
-  --showcase-chip: var(--x-search-bg, #f1f3f4);
+  --showcase-chip: var(--x-search-bg, #ebe4da);
   --showcase-accent: var(--x-accent, #8c7a5e);
   width: 100vw;
   margin-inline: calc(50% - 50vw);
@@ -95,7 +95,7 @@
         transparent 1px,
         transparent 5px
       ),
-      color-mix(in srgb, var(--swatch, var(--x-search-bg, #e8eaed)) 72%, var(--x-surface, #ffffff));
+      color-mix(in srgb, var(--swatch, var(--x-search-bg, #ebe4da)) 72%, var(--x-surface, #ffffff));
   }
 
   &__img {

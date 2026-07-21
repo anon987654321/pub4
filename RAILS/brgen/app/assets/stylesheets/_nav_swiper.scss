@@ -30,6 +30,20 @@
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
 
+.nav_swiper_group {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+/* Visual break between the platform-links group and the seven-vertical
+   group, so the row reads as two chunks (Hick's law) rather than one flat
+   run of peer choices. */
+.nav_swiper_group + .nav_swiper_group {
+  border-inline-start: 1px solid var(--border);
+  margin-inline-start: var(--space-2);
+  padding-inline-start: var(--space-2);
+}
+
 .nav_swiper.revealed .nav_swiper_bar {
   transform: translateY(0);
   visibility: visible;

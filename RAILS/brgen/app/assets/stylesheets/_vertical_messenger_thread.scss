@@ -31,6 +31,38 @@ body.vertical-messenger .disappearing-settings select {
   padding: 0.25rem 0.5rem;
 }
 
+/* Dot communicates the thread's disappearing state at a glance — off by
+   default, lit in the vertical's own accent once a duration is set. */
+body.vertical-messenger .disappearing-badge {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-inline-end: var(--space-2);
+  border-radius: 50%;
+  background: var(--msg-border);
+  vertical-align: middle;
+}
+
+body.vertical-messenger .disappearing-settings--active .disappearing-badge {
+  background: var(--msg-accent);
+}
+
+/* Per-message decay chip — same accent, dims as the thread's own fresh/
+   later/soon tiers instead of a fixed color, so urgency is read from the
+   message's actual remaining lifespan (Message#expiry_urgency). */
+body.vertical-messenger .expiry-chip {
+  color: var(--msg-muted);
+}
+
+body.vertical-messenger .expiry-chip[data-expiry="later"] {
+  color: color-mix(in srgb, var(--msg-accent) 55%, var(--msg-muted));
+}
+
+body.vertical-messenger .expiry-chip[data-expiry="soon"] {
+  color: var(--msg-accent);
+  font-weight: 600;
+}
+
 body.vertical-messenger #messages {
   list-style: none;
   margin: 0 0 1rem;
@@ -61,6 +93,19 @@ body.vertical-messenger #messages article[data-from="peer"] {
   background: var(--msg-bubble-peer);
   border-color: var(--msg-border);
   border-bottom-left-radius: var(--x-radius-sm);
+}
+
+/* Disappearing-thread signature: a bubble's own border visibly erodes as it
+   nears its expiry, so "this will vanish" is legible in the thread itself
+   rather than only as a timestamp in the header. Border-style only — no
+   opacity/blur ornament, so read messages already delivered stay legible. */
+body.vertical-messenger #messages article[data-expiry="later"] {
+  border-style: dashed;
+}
+
+body.vertical-messenger #messages article[data-expiry="soon"] {
+  border-style: dashed;
+  border-color: var(--msg-accent);
 }
 
 body.vertical-messenger #messages article header {

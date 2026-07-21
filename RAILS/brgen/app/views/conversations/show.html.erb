@@ -6,7 +6,9 @@
   <nav role="navigation" aria-label="Conversation nav">
     <%= link_to "← all", conversations_path %>
   </nav>
-  <%= form_with url: conversation_path(@conversation), method: :patch, class: "disappearing-settings" do |form| %>
+  <%= form_with url: conversation_path(@conversation), method: :patch,
+        class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
+    <span class="disappearing-badge" aria-hidden="true"></span>
     <label for="disappearing">Disappearing messages</label>
     <%= form.select :disappearing,
           Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [key, key] },

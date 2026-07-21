@@ -243,7 +243,7 @@ header {
 
     p {
       padding: 0 var(--space-1) var(--space-2);
-      margin-inline-end: var(--space-7);
+      margin-inline-end: var(--space-6);
 
       &.active {
         color: var(--x-text);
@@ -331,7 +331,7 @@ turbo-frame {
 }
 
 .browse-link {
-  margin: var(--space-11) 0 var(--space-3);
+  margin: var(--space-12) 0 var(--space-3);
   font-size: var(--text-sm);
 }
 

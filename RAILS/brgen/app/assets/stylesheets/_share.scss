@@ -64,8 +64,12 @@
   border: none;
   color: var(--text);
   border-radius: var(--x-radius-sm);
-  width: var(--space-3);
-  height: var(--space-3);
+  /* Was 12px (var(--space-3)) — smaller than the WCAG 24px floor, let alone
+     Fitts's 44px. 32px is the largest this can go without eating most of
+     the 80px thumbnail it sits on; still a real improvement, not full
+     compliance (design_rules.yml ux_laws.fitts). */
+  width: 32px;
+  height: 32px;
   font-size: var(--text-xs);
   line-height: 1.5;
   cursor: pointer;

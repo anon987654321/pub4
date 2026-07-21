@@ -62,6 +62,32 @@ class Takeaway::Order < ApplicationRecord
     TRANSITIONS.fetch(status, []).include?(next_status.to_s)
   end
 
+  # Minutes from order placement to the end of each stage. Anchored to
+  # created_at (not "now") so the estimate visibly shrinks as the order
+  # actually advances, instead of a fixed "25-35 min" string that never
+  # reflects what's really happening to this order.
+  ETA_MINUTES_BY_STATUS = {
+    "pending" => 35,
+    "confirmed" => 30,
+    "preparing" => 20,
+    "out_for_delivery" => 10,
+    "delivered" => 0,
+  }.freeze
+
+  def estimated_ready_at
+    return nil if status == "cancelled"
+    created_at + ETA_MINUTES_BY_STATUS.fetch(status, 30).minutes
+  end
+
+  # Fraction of the delivery journey complete, for a real (non-decorative)
+  # progress fill under the status timeline. nil once terminal — there's
+  # nothing left to fill toward.
+  def progress_fraction
+    return nil if TERMINAL_STATUSES.include?(status)
+    stages = STATUSES - TERMINAL_STATUSES
+    (stages.index(status).to_i + 1) / stages.size.to_f
+  end
+
   def next_status = TRANSITIONS.fetch(status, []).first
   def cancel! = transition_to!("cancelled")
   def confirm! = transition_to!("confirmed")
