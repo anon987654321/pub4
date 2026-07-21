@@ -487,16 +487,17 @@ pixel_perfection:
   - 96
   magic_color_hex_ban_inline: true
   image_smoothing_enabled: false
-  documented_exceptions:
-  - scope: RAILS/brgen popover-arrow triangle (post_options/overflow panel)
-    allows: [box-shadow, 'filter: drop-shadow']
-    reason: Faithful port of the real 2014 desktop.css popover arrow; its only depth
-      cue against a same-color panel/page, kept on author's explicit call 2026-07-21
-      overriding the flat default for this one component.
-    precedent: Same pattern as visual_design's dressing-room-mannequin FLAT_UI exception
-      -- one named component, documented at the point of use, everything else stays flat.
+  exception_policy:
+    allowed: true
+    scope: single named component, not a blanket relaxation
+    must_document_at_point_of_use: true
+    must_state_reason: true
+    action: A forbidden pattern may be used for one specific, named element when flatness
+      would remove its only legible depth or affordance cue -- document the reason in
+      a comment where the exception lives, the same way a one-off structural exception
+      gets documented, rather than relaxing the rule generally or leaving it unexplained.
   action: 'Pixel-perfect flat UI: no blur/glow/shadow ornament; spacing on 8px rhythm; tokens over magic
-    colors. Deviations require an entry under documented_exceptions, not a silent one-off.'
+    colors. Exceptions follow exception_policy -- scoped and documented, not silent.'
 rams_checklist:
   useful: Does this control or surface serve a concrete user goal?
   understandable: Is hierarchy and affordance obvious without decoration?
