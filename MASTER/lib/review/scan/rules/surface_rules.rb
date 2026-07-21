@@ -79,6 +79,19 @@ module Master
 
               findings << finding(line: num, message: "#{px}px spacing off 8px rhythm — use #{allowed.select { |n| n.between?(px - 8, px + 8) }.join('/')} (design_rules)")
             end
+            # Token *definitions* (e.g. --space-7: 1.75rem), not just call
+            # sites — a usage-only scan is structurally blind to a bad value
+            # baked into the token itself, and rem needs converting to px
+            # before it can be checked against the rhythm at all. Found
+            # 2026-07-21: 6 of 16 --space-N steps were off-rhythm in rem,
+            # invisible to the px-only usage scan above.
+            line.scan(/--[\w-]*(?:space|gap)[\w-]*\s*:\s*(-?[\d.]+)(px|rem)\b/i) do |value, unit|
+              px = unit.downcase == "rem" ? (value.to_f * 16).round : value.to_i.abs
+              next if allowed.include?(px) || px.zero?
+              next if px % 4 == 0 && px <= 96
+
+              findings << finding(line: num, message: "#{px}px spacing token off 8px rhythm — use #{allowed.select { |n| n.between?(px - 8, px + 8) }.join('/')} (design_rules)")
+            end
           end
           findings.uniq { |f| [f[:line], f[:message]] }
         end
@@ -92,7 +105,10 @@ module Master
           findings = []
           src.each_line.with_index(1) do |line, num|
             next unless line.match?(/min-(?:width|height)|height|width/i)
-            next unless line.match?(/button|\.btn|tap|touch|click|icon-btn|nav__|control/i) ||
+            # `.btn` alone missed hyphenated/underscored class names like
+            # `.carousel-btn` (found 2026-07-21: a real sub-44px button this
+            # exact pattern should have caught). [-_]btn\b catches those too.
+            next unless line.match?(/button|\.btn|[-_]btn\b|tap|touch|click|icon-btn|nav__|control/i) ||
                         (line.match?(/min-height|height/) && path.to_s.include?("button"))
 
             line.scan(/(?:min-)?(?:width|height)\s*:\s*(\d+)px/i) do |raw|
