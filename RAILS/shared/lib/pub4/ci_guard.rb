@@ -52,34 +52,65 @@ module Pub4
 
     def with_lock
       FileUtils.mkdir_p(File.dirname(LOCK_PATH))
-      # The 0o666 mode above is masked by the creating process's umask (typically
-      # 022), so a file first created by one app's deploy user ends up 0644 --
-      # writable only by that user. Every other app then gets Errno::EACCES just
-      # opening the file, defeating the whole point of a shared cross-app mutex.
-      # chmod isn't subject to umask, so force it explicitly after creation --
-      # but only the file's owner may chmod it at all, so every app after the
-      # first hits Errno::EPERM here and that's fine: it means someone already
-      # fixed the mode (or this app's own creation already got it right).
-      File.open(LOCK_PATH, File::CREAT | File::RDWR, 0o666) do |file|
-        begin
-          File.chmod(0o666, LOCK_PATH)
-        rescue Errno::EPERM
-          nil
-        end
+      file = open_shared(LOCK_PATH, File::CREAT | File::RDWR)
+      begin
         unless file.flock(File::LOCK_EX | File::LOCK_NB)
-          holder = File.exist?(HOLDER_PATH) ? File.read(HOLDER_PATH).strip : "unknown"
-          warn "pub4-ci-guard: #{LOCK_PATH} busy (#{holder})"
+          warn "pub4-ci-guard: #{LOCK_PATH} busy (#{safe_read(HOLDER_PATH)})"
           exit 1
         end
-        File.write(HOLDER_PATH, holder_info)
+        write_holder!
         yield
       ensure
+        file.close
         begin
           File.delete(HOLDER_PATH) if File.exist?(HOLDER_PATH)
         rescue Errno::EPERM
           nil
         end
       end
+    end
+
+    # The 0o666 mode passed to File.open/File.write is masked by the creating
+    # process's umask (typically 022), so a file first created by one app's
+    # deploy user ends up 0644 -- writable only by that user. chmod isn't
+    # subject to umask, so force it explicitly after creation -- but only the
+    # file's owner may chmod it at all, so every app after the first hits
+    # Errno::EPERM here and that's fine: it means someone already fixed the
+    # mode (or this app's own creation already got it right).
+    #
+    # None of this helps if the file already exists with a stale restrictive
+    # mode from before this fix (or a stricter umask) -- opening it for
+    # read/write then fails at the OS level with Errno::EACCES, before any
+    # chmod call ever runs. That's a real, separate failure a non-owner
+    # process cannot self-heal (chmod would also raise EPERM), so it's
+    # reported clearly instead of crashing with a raw backtrace.
+    def open_shared(path, mode)
+      file = File.open(path, mode, 0o666)
+      begin
+        File.chmod(0o666, path)
+      rescue Errno::EPERM
+        nil
+      end
+      file
+    rescue Errno::EACCES => e
+      warn "pub4-ci-guard: #{path} not accessible (#{e.message}) -- ask its owner to " \
+           "chmod 666 it, or delete it if stale"
+      exit 1
+    end
+
+    def write_holder!
+      file = open_shared(HOLDER_PATH, File::CREAT | File::WRONLY | File::TRUNC)
+      file.write(holder_info)
+    ensure
+      file&.close
+    end
+
+    def safe_read(path)
+      return "unknown" unless File.exist?(path)
+
+      File.read(path).strip
+    rescue Errno::EACCES, Errno::ENOENT
+      "unknown"
     end
 
     def holder_info
