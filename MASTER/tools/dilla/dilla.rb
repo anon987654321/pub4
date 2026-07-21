@@ -13163,14 +13163,11 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
-    DEFAULT (no command — all styles sequential stream)
-      ruby dilla.rb                    Style sequence: dilla→comfort→warp × tracks
+    DEFAULT (no command — continuous stream, one DNA, rotating progressions + drums)
+      ruby dilla.rb                    Bare invoke: continuous stream (same as `stream` below)
       ruby dilla.rb stream [bars]      Same as bare default (#{STREAM_BARS_COUNT}/BARS bars)
-      STREAM_STYLE_SEQUENCE=0          Disable sequence (sofa/punch single-profile)
       ruby dilla.rb out.wav [bars]     One-shot render to path (not stream)
-      ruby dilla.rb dilla [out] [bars] One-shot kit-forward (aliases: beat camel punch)
-      ruby dilla.rb comfort [out] [n]  One-shot sofa mix (aliases: sofa smooth)
-      ruby dilla.rb warp [out] [bars]  One-shot spectral/IDM bias
+      ruby dilla.rb dilla [out] [bars] One-shot kit-forward render
       DILLA_DEEP=0                     One-shot: standard render (no quality gate / refine)
       DILLA_RAW=1                      Skip all best-default ENV
       PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (opt-in)
@@ -15235,7 +15232,6 @@ FLAG_ENV = {
   "form" => "FORM", "section-map" => "SECTION_MAP", "render-mode" => "RENDER_MODE",
   "harmony-lead" => "HARMONY_LEAD", "harmony-lep-mode" => "HARMONY_LEP_MODE",
   "harmony-arp-style" => "HARMONY_ARP_STYLE", "stream-soul" => "STREAM_SOUL",
-  "stream-style-sequence" => "STREAM_STYLE_SEQUENCE",
   "stream-drum-rotate" => "STREAM_DRUM_ROTATE",
   "stream-drum-bpm" => "STREAM_DRUM_BPM",
   "electronium-classic" => "ELECTRONIUM_CLASSIC", "electronium-render" => "ELECTRONIUM_RENDER",
