@@ -102,13 +102,21 @@ module Master
           next [] unless Rules.ui_path?(path)
 
           min = Rules.thresholds.touch_min_px.to_i
+          button_re = /button|\.btn|[-_]btn\b|tap|touch|click|icon-btn|nav__|control/i
           findings = []
+          current_selector = ""
           src.each_line.with_index(1) do |line, num|
+            # Standard SCSS puts the selector and its width/height on
+            # separate lines (`.carousel-btn {` then `width: 12px;` on the
+            # next) -- a same-line-only check is structurally blind to that
+            # shape, which is the normal one (found 2026-07-21, empirically:
+            # this exact rule missed the exact bug it exists to catch).
+            # Tracks only the innermost selector, not full brace depth --
+            # doesn't handle deep nesting (e.g. `&:hover {}` losing outer
+            # context), but covers the common flat-block case.
+            current_selector = line if line.include?("{")
             next unless line.match?(/min-(?:width|height)|height|width/i)
-            # `.btn` alone missed hyphenated/underscored class names like
-            # `.carousel-btn` (found 2026-07-21: a real sub-44px button this
-            # exact pattern should have caught). [-_]btn\b catches those too.
-            next unless line.match?(/button|\.btn|[-_]btn\b|tap|touch|click|icon-btn|nav__|control/i) ||
+            next unless "#{current_selector}\n#{line}".match?(button_re) ||
                         (line.match?(/min-height|height/) && path.to_s.include?("button"))
 
             line.scan(/(?:min-)?(?:width|height)\s*:\s*(\d+)px/i) do |raw|
@@ -134,10 +142,25 @@ module Master
             count = chunk.scan(/<li\b/i).size
             count = chunk.scan(/<option\b/i).size if count.zero?
             count = chunk.scan(/<a\b/i).size if count.zero?
-            next if count <= max
-
             line = src[0, src.index(chunk) || 0].count("\n") + 1
-            findings << finding(line: line, message: "#{count} peer choices > #{max} (Hick) — group or progressive disclosure")
+
+            if count > max
+              findings << finding(line: line, message: "#{count} peer choices > #{max} (Hick) — group or progressive disclosure")
+              next
+            end
+
+            # A Rails `.each` loop renders exactly one static <a>/<li> in the
+            # source text regardless of runtime item count — the literal
+            # count above is structurally blind to the normal way Rails
+            # renders a nav (found 2026-07-21: brgen's 10-item nav_swiper
+            # was exactly this shape and this rule never saw it). Can't know
+            # the real count statically, so this is advisory, not a hard
+            # count — skip if the block already shows a grouping signal.
+            next unless count <= 1 && chunk.match?(/<%[-=]?\s*[\w."'\[\]]+\.each(?:_with_index)?\s+do\s*\|/)
+            next if chunk.match?(/role=["']group["']|data-controller=["'][^"']*(?:group|collapse|disclosure)/i)
+            next if chunk.scan(/\.each(?:_with_index)?\s+do\s*\|/).size > 1 # already chunked into sub-groups
+
+            findings << finding(line: line, message: "dynamic choice list (.each loop, real count unknown statically) with no grouping signal — verify it can't exceed #{max} peers, or add role=\"group\"/progressive disclosure (Hick)")
           end
           findings
         end
