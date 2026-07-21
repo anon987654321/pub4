@@ -55,7 +55,14 @@ module Master
               sp[:done] += 1
               sp[:violations] = sp[:violations].to_i + count
               sp[:dirty_files] = sp[:dirty_files].to_i + 1 if count.positive?
-              rule_hits.each { |rid| sp[:rules][rid] += 1 }
+              # Canonical RuleDSL ids are uppercase, but some findings arrive
+              # with a lowercase label (e.g. principle_map.yml's "detects:"
+              # taxonomy) for the same underlying category -- tallying both
+              # casings separately split one violation count into two lines
+              # in the live "top=" summary (e.g. "long_line=440,LONG_LINE=440").
+              # Normalize so every distinct violation category earns exactly
+              # one slot.
+              rule_hits.each { |rid| sp[:rules][rid.upcase] += 1 }
               [
                 sp[:done],
                 sp[:total],
