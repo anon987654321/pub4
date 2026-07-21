@@ -27,6 +27,17 @@ Pub4::CiGuard.run! do
     else
       step "Styles: pub4 CSS", "echo 'build_all_css.rb not found in any known location -- skipping' >&2"
     end
+    pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/pub4")
+    pub4_lib ||= File.expand_path("../lib/pub4", __dir__)
+    %w[rhythm_lint fallback_drift_lint empty_state_lint].each do |lint|
+      script = File.join(pub4_lib, "#{lint}.rb")
+      label = lint.split("_").map(&:capitalize).join(" ")
+      if File.readable?(script)
+        step "Design: #{label}", "#{RbConfig.ruby} #{script}"
+      else
+        step "Design: #{label}", "echo '#{lint}.rb not found -- skipping' >&2"
+      end
+    end
     importmap_audit = %(bundle exec #{RbConfig.ruby} -e 'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])')
     step("Security: Importmap audit", importmap_audit) unless vps_host
     rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate; do [ -d "$d" ] && printf "%s " "$d"; done)'

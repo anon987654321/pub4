@@ -1,32 +1,44 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Pub4
-  # Flags var(--token, #hex) fallbacks whose hex literal doesn't match ANY
-  # real definition of that token anywhere in the token-source files. A
-  # token like --x-accent legitimately has many valid values (one per
-  # vertical/app), so this collects every definition site into an allowed
-  # set per token name rather than assuming a single canonical value --
-  # only a fallback matching NONE of them is flagged. Catches the class of
-  # bug found 2026-07-21: --x-danger fallback was a stale Twitter red that
-  # matched no real definition anywhere.
+  # Flags var(--token, #hex) fallbacks whose hex literal matches NO real
+  # definition of that token anywhere in the token sources. Collects the
+  # "known good" set for each token name from three places, since this
+  # codebase spreads real definitions across all of them:
+  #   1. design_tokens.yml dialect blocks (x_search_bg: "#...", etc.)
+  #   2. _x_base.scss mixin parameter defaults ($accent: #... -> --x-accent)
+  #   3. literal `--token: #hex;` CSS declarations anywhere
+  # --x-accent / --x-accent-hover are exempt: by design they legitimately
+  # take a different value per vertical/app, so "matches no known value"
+  # would be noise, not a bug, for those two specifically.
+  #
+  # Catches the class of bug found 2026-07-21: --x-danger's fallback was a
+  # stale Twitter red (#f4212e) that matched none of its real definitions.
   module FallbackDriftLint
     FALLBACK = /var\(\s*--([\w-]+)\s*,\s*#([0-9a-fA-F]{3,8})\s*\)/
-    DEFINITION = /--([\w-]+)\s*:\s*#([0-9a-fA-F]{3,8})/
+    LITERAL_DEF = /--([\w-]+)\s*:\s*#([0-9a-fA-F]{3,8})/
+    MIXIN_PARAM_DEF = /\$([\w-]+)\s*:\s*#([0-9a-fA-F]{3,8})/
+    EXEMPT = %w[x-accent x-accent-hover].freeze
 
     Violation = Struct.new(:file, :line, :token, :fallback_hex)
 
     module_function
 
     def run
-      canonical = collect_definitions(source_root)
+      known = collect_known_values
       violations = []
 
-      scss_files(source_root).each do |path|
+      scss_files.each do |path|
         File.readlines(path).each_with_index do |line, idx|
           line.scan(FALLBACK).each do |token, hex|
-            known = canonical[token.downcase]
-            next if known.nil? || known.empty? # no definition found anywhere -- nothing to compare against
-            next if known.include?(hex.downcase)
+            token = token.downcase
+            next if EXEMPT.include?(token)
+
+            values = known[token]
+            next if values.nil? || values.empty? # no definition found anywhere -- nothing to compare against
+            next if values.include?(hex.downcase)
 
             violations << Violation.new(relative(path), idx + 1, "--#{token}", "##{hex}")
           end
@@ -44,32 +56,50 @@ module Pub4
       end
     end
 
-    def source_root
+    def rails_root
       File.expand_path("../../..", __dir__) # RAILS/
     end
 
     def relative(path)
-      path.sub("#{source_root}/", "")
+      path.sub("#{rails_root}/", "")
     end
 
-    def scss_files(root)
-      Dir.glob(File.join(root, "*/app/assets/stylesheets/**/*.scss")) +
-        Dir.glob(File.join(root, "shared/app/assets/stylesheets/**/*.scss"))
+    def scss_files
+      Dir.glob(File.join(rails_root, "*/app/assets/stylesheets/**/*.scss"))
     end
 
-    # Every --token: #hex declaration anywhere in the tree is a "real"
-    # definition -- including per-vertical/per-app overrides, which is the
-    # point: --x-accent has dozens of legitimate values, one per vertical.
-    def collect_definitions(root)
-      defs = Hash.new { |h, k| h[k] = [] }
-      scss_files(root).each do |path|
-        File.foreach(path) do |line|
-          line.scan(DEFINITION).each do |token, hex|
-            defs[token.downcase] << hex.downcase
+    def collect_known_values
+      known = Hash.new { |h, k| h[k] = [] }
+      collect_from_yaml(known)
+      collect_from_scss(known)
+      known
+    end
+
+    def collect_from_yaml(known)
+      path = File.join(rails_root, "shared/design_tokens.yml")
+      return unless File.readable?(path)
+
+      YAML.safe_load_file(path).each_value do |entries|
+        next unless entries.is_a?(Hash)
+
+        entries.each do |key, value|
+          if value.is_a?(String) && value =~ /\A#([0-9a-fA-F]{3,8})\z/
+            known[key.to_s.tr("_", "-")] << Regexp.last_match(1).downcase
+          elsif value.is_a?(Hash) && value["accent"] # vertical_accents-style nested block
+            known["x-accent"] << value["accent"].to_s.delete("#").downcase
+            known["x-accent-hover"] << value["hover"].to_s.delete("#").downcase if value["hover"]
           end
         end
       end
-      defs
+    end
+
+    def collect_from_scss(known)
+      scss_files.each do |path|
+        File.foreach(path) do |line|
+          line.scan(LITERAL_DEF).each { |name, hex| known[name.downcase] << hex.downcase }
+          line.scan(MIXIN_PARAM_DEF).each { |name, hex| known["x-#{name.downcase}"] << hex.downcase }
+        end
+      end
     end
   end
 end

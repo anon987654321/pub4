@@ -51,7 +51,7 @@ module Pub4
       candidates = [
         ENV["PUB4_RAILS_ROOT"] && File.join(File.dirname(ENV["PUB4_RAILS_ROOT"]), "MASTER/data/design_rules.yml"),
         "/home/dev/pub4/MASTER/data/design_rules.yml",
-        File.expand_path("../../../../MASTER/data/design_rules.yml", __dir__)
+        File.expand_path("../../../../MASTER/data/design_rules.yml", __dir__),
       ].compact
       path = candidates.find { |c| File.readable?(c) }
       path && YAML.safe_load_file(path)
