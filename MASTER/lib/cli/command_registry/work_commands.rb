@@ -350,7 +350,7 @@ module Master
           ScanLive.emit("autofix applying on auto_fix findings…")
           autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
           if autofixes.any?
-            transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(",")
+            transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(" ")
             ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
             ScanLive.emit("pass2 re-scan after autofix…")
             rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call

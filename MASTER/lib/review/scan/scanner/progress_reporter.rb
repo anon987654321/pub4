@@ -89,13 +89,13 @@ module Master
             step = checkpoint_step(total)
             return unless done == total || (done % step).zero?
 
-            top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(",")
+            top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(" ")
             Master::Trace::Dmesg.status(
               unit,
               "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
               "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
               " elapsed=#{elapsed.round}s" \
-              "#{top_s.empty? ? "" : " top=#{top_s}"}"
+              "#{top_s.empty? ? "" : " top #{top_s}"}"
             )
             write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           end

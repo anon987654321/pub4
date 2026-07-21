@@ -63,7 +63,7 @@ module Master
               src = File.read(path, encoding: "UTF-8")
               fixed += ast_result.transforms.size
               @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
-              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast_fix file=#{rel} transforms=#{ast_result.transforms.join(",")}")
+              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast_fix file=#{rel} transforms=#{ast_result.transforms.join(" ")}")
             end
             [fixed, src]
           end
