@@ -6,8 +6,25 @@ module Master
   module Ground
     module SandboxPolicy
       include Policy
+
+      # Found by adversarial testing (matching OpenCrabs' security-eval
+      # corpus pattern), not hypothetically: the original -rf-only pattern
+      # let `rm -fr ~`, `rm --recursive --force ~`, and any other flag
+      # ordering straight through as "ask" instead of "deny" -- same
+      # command, different flag order, real gap. DANGEROUS_RM_TARGET below
+      # replaces the single-regex approach with actual flag parsing so
+      # order/form can't matter. Also added: a classic fork bomb, wget
+      # (curl's pipe-to-shell pattern only covered curl), and truncating a
+      # raw block device via redirection -- none of those had any pattern
+      # at all. The (?<q>["']?)...\k<q> wrapper was added after the
+      # permanent test corpus caught `rm -rf "$HOME"` (quoted, still
+      # expands under bash) slipping through as "ask" -- the bare pattern
+      # only matched an unquoted target.
+      DANGEROUS_RM_TARGET = /\brm\s+(?<flags>[\w-]+(?:\s+[\w-]+)*)\s+(?<q>["']?)(?:\/|~|\$HOME)\k<q>(?=\s|\z)/.freeze
+      FORK_BOMB = /:\s*\(\s*\)\s*\{[^}]*:\s*\|\s*:/.freeze
+      DEVICE_REDIRECT = %r{(?:^|\s):?>\s*/dev/(?:sd|disk|hd|nvme|rdisk)}.freeze
+
       DENY_PATTERNS = [
-        /\brm\s+-rf\s+(?:\/|~|\$HOME)(?=\s|\z)/,
         /\bsudo\b/,
         /\bmkfs\b/,
         /\bdd\s+if=/,
@@ -16,7 +33,9 @@ module Master
         /\bforce-push\b|\bgit\s+push\s+--force/,
         /\b(drop|truncate)\s+(database|table)\b/i,
         /\bshutdown\b|\breboot\b/,
-        /\bcurl\b.*\|\s*(?:sh|bash|zsh)/,
+        /\b(?:curl|wget)\b.*\|\s*(?:sh|bash|zsh)/,
+        FORK_BOMB,
+        DEVICE_REDIRECT,
       ].freeze
 
       ASK_PATTERNS = [
@@ -48,11 +67,26 @@ module Master
       def decide(command)
         source = command.to_s.strip
         return Decision.new(mode: :deny, reason: "empty command") if source.empty?
+        return Decision.new(mode: :deny, reason: "recursive+force rm of a dangerous path") if dangerous_rm?(source)
         return Decision.new(mode: :deny, reason: "matched deny pattern") if DENY_PATTERNS.any? { |re| source.match?(re) }
         return Decision.new(mode: :ask, reason: "matched ask pattern") if ASK_PATTERNS.any? { |re| source.match?(re) }
         return Decision.new(mode: :allow, reason: "matched allow pattern") if ALLOW_PATTERNS.any? { |re| source.match?(re) }
 
         Decision.new(mode: :ask, reason: "unknown command risk")
+      end
+
+      # Flag-parses rather than pattern-matching flag order/form, so
+      # `-rf`, `-fr`, `-Rf`, `--recursive --force`, `--force --recursive`,
+      # and `-r -f` are all equally caught regardless of how they're
+      # written -- see DANGEROUS_RM_TARGET's comment for why this exists.
+      def dangerous_rm?(source)
+        match = source.match(DANGEROUS_RM_TARGET)
+        return false unless match
+
+        flags = match[:flags]
+        recursive = flags.match?(/(?:\A|\s)-\w*[rR]\w*(?:\s|\z)/) || flags.include?("--recursive")
+        force = flags.match?(/(?:\A|\s)-\w*f\w*(?:\s|\z)/) || flags.include?("--force")
+        recursive && force
       end
 
       def allowed?(command)
