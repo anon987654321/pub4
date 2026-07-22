@@ -18,6 +18,7 @@ module Master
           %w[
             CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
             YamlDeclarativeRule VetoPatternRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
+            LibRootDisciplineRule
           ].each do |name|
             klass = Review::Scan::Rules.const_get(name)
             scanner.add_rule(Review::Scan::RuleFactory.build(klass, root:, agent:, ecology:))

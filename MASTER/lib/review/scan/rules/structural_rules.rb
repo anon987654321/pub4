@@ -2,6 +2,7 @@
 
 require "prism"
 require_relative "structural_rules/convention_rules"
+require_relative "structural_rules/lib_root_discipline_rule"
 
 module Master
   module Review
