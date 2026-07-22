@@ -47,15 +47,25 @@ class TestFixLoopOscillation < Minitest::Test
 
   # Agent with an open circuit — forces LLM pass to be skipped so
   # violations never clear, making oscillation observable in two passes.
+  # The breaker only reports open for this agent's own model ("stub-model"),
+  # matching LlmRouter's per-model check rather than a blanket any-model one.
   class OpenCircuitBreaker
     def open_models
       ["stub-model"]
+    end
+
+    def open?(model_id)
+      model_id.to_s == "stub-model"
     end
   end
 
   class OpenCircuitAgent
     def circuit_breaker
       OpenCircuitBreaker.new
+    end
+
+    def model
+      "stub-model"
     end
   end
 

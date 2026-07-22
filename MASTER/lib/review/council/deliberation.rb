@@ -154,7 +154,7 @@ module Master
         def collect_sequential(code:, context:, personas: @personas)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_with_object([]) do |persona, feedback|
-            break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?
+            break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?(persona)
 
             turn_context = feedback.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(feedback)}"
             entry = ask_persona(persona:, code:, context: turn_context)
@@ -162,9 +162,18 @@ module Master
           end
         end
 
-        def circuit_open?
+        # Checks only the model *this persona* would actually call -- an
+        # unrelated fallback model's open breaker elsewhere in the registry
+        # must not abort deliberation for every remaining persona.
+        def circuit_open?(persona = nil)
           breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
-          breaker.respond_to?(:open_models) && !breaker.open_models.empty?
+          return false unless breaker
+
+          model_id = persona&.respond_to?(:model) ? persona.model : nil
+          model_id ||= @agent.respond_to?(:model) ? @agent.model : nil
+          return false unless model_id
+
+          breaker.respond_to?(:open?) && breaker.open?(model_id)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "deliberation.circuit_open", event_bus: @bus)
           false

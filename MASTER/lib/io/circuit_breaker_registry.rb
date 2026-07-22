@@ -55,6 +55,16 @@ module Master
         synchronize { @breakers.filter_map { |id, breaker| id if breaker.state == :open } }
       end
 
+      # Whether a *specific* model's breaker is open. Callers that are about
+      # to invoke one particular model should check this instead of
+      # open_models, which reports every model ever tried in this process --
+      # an unrelated fallback model's outage must not block a healthy one.
+      # Doesn't register a new breaker for an unseen model_id (nothing to
+      # be open yet).
+      def open?(model_id)
+        synchronize { @breakers[model_id.to_s]&.state == :open }
+      end
+
       def state_key(model_id)
         "model:#{model_id.to_s.gsub(/[^a-zA-Z0-9_.-]/, "_")}"
       end
