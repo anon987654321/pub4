@@ -29,7 +29,15 @@ const browser = {
 };
 
 export default [
-  { ignores: ["public/assets/**"] },
+  {
+    ignores: [
+      "public/assets/**",
+      "public/three.face.module.js",
+      "public/face.runtime.js",
+      "public/face.modules.bundle.js",
+      "public/face_vision.bundle.js",
+    ],
+  },
   js.configs.recommended,
   {
     ...browser,

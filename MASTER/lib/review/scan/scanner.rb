@@ -21,6 +21,8 @@ module Master
         ].freeze
         SKIP_RELATIVE_PATHS = %w[
           .master runtime web/public/assets web/script/three_build web/node_modules web/tmp web/log
+          web/public/three.face.module.js web/public/face.runtime.js
+          web/public/face.modules.bundle.js web/public/face_vision.bundle.js
         ].freeze
         REQUIRED_DEPTH = :deep
         GIT_TIMEOUT_SECONDS = 5
