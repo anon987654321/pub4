@@ -78,7 +78,7 @@ module Master
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
-            send_llm_request(selected_model, messages, system:, stream:, image: image, &blk)
+            send_llm_request(selected_model, messages, system:, stream:, image:, &blk)
           end
         end
         record_provider_result(model: selected_model, result:, started:)
@@ -142,9 +142,9 @@ module Master
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:)     if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
-          return react_tool_loop(selected_model, messages, sys:, stream:, image: image, &blk)
+          return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end
-        send_ruby_llm(selected_model, messages, sys:, stream:, image: image, &blk)
+        send_ruby_llm(selected_model, messages, sys:, stream:, image:, &blk)
       end
 
       def send_claude_cli(model_alias, messages, sys:)

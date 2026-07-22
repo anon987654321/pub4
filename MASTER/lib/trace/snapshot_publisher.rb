@@ -104,7 +104,7 @@ module Master
           "",
           SnapshotAgentGuide.render(label: "MASTER"),
           "Files: #{file_count}",
-          ""
+          "",
         ]
       end
 
@@ -188,7 +188,7 @@ module Master
           "",
           "## Recent changes",
           recent_commits(repo_root),
-          ""
+          "",
         ]
       end
 
@@ -207,7 +207,7 @@ module Master
         enhancements = Array(catalog.dig("runtime", "enhancements"))
         [
           "- runtime enhancements: #{implemented} implemented / #{pending} pending",
-          "- active flags: #{enhancements.size} (#{enhancements.last(5).join(", ")})"
+          "- active flags: #{enhancements.size} (#{enhancements.last(5).join(", ")})",
         ]
       end
 

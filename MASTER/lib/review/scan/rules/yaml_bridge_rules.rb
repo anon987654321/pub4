@@ -84,7 +84,7 @@ module Master
                   message: hit.message,
                   line: hit.line,
                   severity: entry[:severity],
-                  tags: [entry[:id].to_s.upcase]
+                  tags: [entry[:id].to_s.upcase],
                 )
               end
             end

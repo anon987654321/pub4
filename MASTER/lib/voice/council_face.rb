@@ -64,8 +64,8 @@ module Master
           label: base[:label],
           blendshapes: Expression.blendshapes_for(:clear).merge(base[:blendshape_bias]),
           viseme_lane: base[:viseme_lane],
-          expression: expression,
-          viseme_plan: viseme_plan,
+          expression:,
+          viseme_plan:,
         }
       end
 

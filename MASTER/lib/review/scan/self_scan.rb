@@ -29,10 +29,10 @@ module Master
           pairs.concat(singularity_pairs)
           summary = Summary.new(
             pairs:,
-            rule_count: rule_count,
+            rule_count:,
             violation_count: count_violations(pairs),
             targets: @targets,
-            autofixes:
+            autofixes:,
           )
           publish(summary)
           Result.ok(summary)

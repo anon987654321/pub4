@@ -129,7 +129,7 @@ module Master
           component: component.to_sym,
           seed: Integer(seed),
           intensity: Float(intensity).clamp(0.0, 1.0),
-          capabilities: self.for(component).to_h { |entry| [entry[:key], true] }
+          capabilities: self.for(component).to_h { |entry| [entry[:key], true] },
         }
       end
 
@@ -139,7 +139,7 @@ module Master
           version: 1,
           count: entries.length,
           complete: entries.all? { |entry| entry[:enabled] },
-          capabilities: entries
+          capabilities: entries,
         )
       end
 

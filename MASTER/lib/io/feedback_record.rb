@@ -25,7 +25,7 @@ module Master
           event_type: event_type.to_s,
           dimension: dimension.to_s,
           value: value&.to_f,
-          metadata: metadata&.to_s
+          metadata: metadata&.to_s,
         )
         Result.ok("recorded: #{event_type} / #{dimension}")
       rescue StandardError => e

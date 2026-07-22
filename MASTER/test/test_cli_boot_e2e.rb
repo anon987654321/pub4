@@ -53,7 +53,7 @@ class TestCliBootE2e < Minitest::Test
       chdir: ROOT,
       in: read_io,
       out: out.path,
-      err: err.path,
+      err: err.path
     )
     read_io.close
     write_io.write(input)

@@ -123,10 +123,10 @@ module Master
         @bus = event_bus
         @amendments = load_amendments
         # Wire chain verification on load (from patch)
-        if @amendments.any?
+        return unless @amendments.any?
           ok, err = verify_chain
           @bus&.publish("parliament:chain_verify", ok:, error: err) if err
-        end
+
       end
 
       def propose(principle_id, new_text, rationale:, proposer:)
@@ -172,7 +172,7 @@ module Master
           return [false, "chain break at #{curr[:id]}: prev_hash mismatch"] if curr[:prev_hash] != prev[:hash]
 
           expected = Digest::SHA256.hexdigest(
-            "#{curr[:principle_id]}:#{curr[:new_text]}:#{curr[:proposer]}:#{curr[:prev_hash]}"
+            "#{curr[:principle_id]}:#{curr[:new_text]}:#{curr[:proposer]}:#{curr[:prev_hash]}",
           )
           return [false, "chain break at #{curr[:id]}: hash mismatch"] if curr[:hash] != expected
         end
@@ -193,7 +193,7 @@ module Master
           votes: {},
           status: "open",
           enacted_at: nil,
-          prev_hash: prev_hash,
+          prev_hash:,
           hash: Digest::SHA256.hexdigest("#{principle_id}:#{new_text}:#{proposer}:#{prev_hash}"),
         }
       end

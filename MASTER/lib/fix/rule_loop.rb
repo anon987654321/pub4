@@ -274,7 +274,7 @@ module Master
         Master::Trace::Dmesg.status(
           "fix0",
           "fix_error rule=#{violation[:rule]} file=#{violation[:file].to_s.delete_prefix("#{@root}/")} " \
-          "category=#{info[:category]} #{error.class}: #{message[0, 160]}"
+          "category=#{info[:category]} #{error.class}: #{message[0, 160]}",
         )
         info[:category] == :transient ? :retry : :stop
       end

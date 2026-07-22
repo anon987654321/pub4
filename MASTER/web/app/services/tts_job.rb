@@ -14,14 +14,14 @@ class TtsJob
 
   def self.enqueue(text:, voice:, style:, rate: nil, pitch: nil, voice_locked: false, style_locked: false, bus: nil)
     job = new(
-      text: text,
-      voice: voice,
-      style: style,
-      rate: rate,
-      pitch: pitch,
-      voice_locked: voice_locked,
-      style_locked: style_locked,
-      bus: bus
+      text:,
+      voice:,
+      style:,
+      rate:,
+      pitch:,
+      voice_locked:,
+      style_locked:,
+      bus:,
     )
     return job if job.ready?
 
@@ -94,10 +94,10 @@ class TtsJob
   end
 
   def self.find(job_id)
-    return nil unless job_id.to_s.match?(/\A[0-9a-f]{32}\z/)
+    return unless job_id.to_s.match?(/\A[0-9a-f]{32}\z/)
 
     token_path = CACHE_DIR.join("#{job_id}.job")
-    return nil unless File.file?(token_path)
+    return unless File.file?(token_path)
 
     data = JSON.parse(File.read(token_path))
     new(
@@ -107,7 +107,7 @@ class TtsJob
       rate: data["rate"],
       pitch: data["pitch"],
       voice_locked: data.fetch("voice_locked", false),
-      style_locked: data.fetch("style_locked", false)
+      style_locked: data.fetch("style_locked", false),
     )
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "TtsJob.find", job_id: job_id.to_s)
@@ -159,7 +159,7 @@ class TtsJob
   end
 
   def error
-    return nil unless failed?
+    return unless failed?
 
     File.read(error_path).strip
   end
@@ -176,7 +176,7 @@ class TtsJob
 
   def partial_bytes
     avail = bytes_available
-    return nil if avail.zero?
+    return if avail.zero?
 
     File.binread(cache_path, avail)
   end
@@ -192,8 +192,8 @@ class TtsJob
         rate: @rate,
         pitch: @pitch,
         voice_locked: @voice_locked,
-        style_locked: @style_locked
-      )
+        style_locked: @style_locked,
+      ),
     )
   end
 
@@ -216,7 +216,7 @@ class TtsJob
   end
 
   def meta
-    return nil unless File.file?(meta_path)
+    return unless File.file?(meta_path)
 
     JSON.parse(File.read(meta_path))
   rescue StandardError
@@ -235,14 +235,14 @@ class TtsJob
       pitch: @pitch,
       voice_locked: @voice_locked,
       style_locked: @style_locked,
-      on_chunk: method(:publish_chunk_progress)
+      on_chunk: method(:publish_chunk_progress),
     )
   end
 
   def publish_chunk_progress(bytes)
     return unless bytes >= 8192
 
-    @bus&.publish("tts:chunk:bytes", job_id: @job_id, bytes: bytes)
+    @bus&.publish("tts:chunk:bytes", job_id: @job_id, bytes:)
   end
 
   def cache_path
@@ -265,8 +265,8 @@ class TtsJob
         job_id: @job_id,
         voice: @voice.to_s,
         style: @style.to_s,
-        **stream.transform_keys(&:to_s)
-      )
+        **stream.transform_keys(&:to_s),
+      ),
     )
   rescue StandardError => e
     Master::Ground::Swallow.log(e, context: "TtsJob.write_meta_json", job_id: @job_id)

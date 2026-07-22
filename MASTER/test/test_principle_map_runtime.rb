@@ -43,13 +43,13 @@ class TestPrincipleMapRuntime < Minitest::Test
 
   def test_aesthetic_rules_register
     require_relative "../lib/review/scan/rule_dsl"
-    ids = Master::Review::Scan::Rule.registry.filter_map { |k|
+    ids = Master::Review::Scan::Rule.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s.upcase : nil
       rescue StandardError
         nil
       end
-    }
+    end
     %w[NO_DECORATIVE_FX FLAT_PIXELS TOUCH_TARGET_MIN EIGHT_PX_RHYTHM RAMS_HONEST].each do |id|
       assert_includes ids, id, "missing aesthetic rule #{id}"
     end
@@ -77,13 +77,13 @@ class TestPrincipleMapRuntime < Minitest::Test
   def test_principle_map_integrity_against_registry
     require_relative "../lib/review/scan/rule_dsl"
     map = Master::Ground::PrincipleMap.load(root: @root)
-    registered = Master::Review::Scan::Rule.registry.filter_map { |k|
+    registered = Master::Review::Scan::Rule.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s : nil
       rescue StandardError
         nil
       end
-    }
+    end
     findings = map.integrity(registered_rule_ids: registered)
     assert map.covered.any?
     assert_operator findings.size, :<, map.principles.size

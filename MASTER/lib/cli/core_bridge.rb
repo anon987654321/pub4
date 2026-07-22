@@ -41,7 +41,7 @@ module Master
           world:       Master::Core::World.new(root:, critique_runner:),
           memory:,
           max_turns:,
-          observer:
+          observer:,
         )
       end
 

@@ -17,7 +17,7 @@ module Master
         def patch_brief(relative_path)
           key = normalize_patch_key(relative_path)
           brief = resolve_patch_brief(key)
-          return nil unless brief
+          return unless brief
 
           lines = ["patch brief: #{key}"]
           lines << "  check: #{brief['check']}" if brief["check"]

@@ -51,10 +51,10 @@ class IngressController < ApplicationController
     }
 
     result = Master::Io::IngressRunner.run_turn(
-      container: container,
-      message: message,
-      metadata: metadata,
-      elevated: elevated
+      container:,
+      message:,
+      metadata:,
+      elevated:,
     )
     render json: ingress_response(result, metadata)
   rescue StandardError => e

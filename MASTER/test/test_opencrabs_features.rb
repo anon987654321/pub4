@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestOpenCrabsFeatures < Minitest::Test
   def test_hashline_format_and_validate
-    lines = ["foo\n", "bar\n"]
+    lines = %W[foo\n bar\n]
     formatted = Master::Io::Hashline.format_lines(lines)
     assert_match(/\A1#[0-9a-f]{2}\tfoo/, formatted)
 

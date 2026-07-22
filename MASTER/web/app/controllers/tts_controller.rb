@@ -11,20 +11,20 @@ class TtsController < ApplicationController
     voice_locked = ActiveModel::Type::Boolean.new.cast(params[:voice_locked]) == true
     style_locked = ActiveModel::Type::Boolean.new.cast(params[:style_locked]) == true
     voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
-    pre = Master::Voice::Expression.for_pre_speech(style: synth_style, text: text)
+    pre = Master::Voice::Expression.for_pre_speech(style: synth_style, text:)
     container[:bus]&.publish("tts:anticipate", style: synth_style.to_s, expression: pre)
-    publish_tts_style(voice_key, synth_style, text: text)
+    publish_tts_style(voice_key, synth_style, text:)
     job = TtsJob.enqueue(
-      text: text,
+      text:,
       voice: voice_key,
       style: synth_style,
-      rate: rate,
-      pitch: pitch,
-      voice_locked: voice_locked,
-      style_locked: style_locked,
-      bus: container[:bus]
+      rate:,
+      pitch:,
+      voice_locked:,
+      style_locked:,
+      bus: container[:bus],
     )
-    stream = Master::Voice::Expression.viseme_stream(text, style: synth_style, rate: rate)
+    stream = Master::Voice::Expression.viseme_stream(text, style: synth_style, rate:)
     etag = %("#{job.job_id}")
     response.headers["X-TTS-Voice"] = voice_key.to_s
     response.headers["X-TTS-Style"] = synth_style.to_s
@@ -89,7 +89,7 @@ class TtsController < ApplicationController
     cancelled = TtsJob.cancel(job_id)
     return head(:not_found) unless cancelled
 
-    container[:bus]&.publish("tts:job_cancelled", job_id: job_id)
+    container[:bus]&.publish("tts:job_cancelled", job_id:)
     head(:no_content)
   end
 
@@ -155,7 +155,7 @@ class TtsController < ApplicationController
     stream = Master::Voice::Expression.viseme_stream(
       data["text"],
       style: data["style"],
-      rate: data["rate"]
+      rate: data["rate"],
     )
     response.headers["X-TTS-Visemes"] = viseme_header(stream[:viseme_plan] || stream[:visemes])
   rescue StandardError
@@ -177,7 +177,7 @@ class TtsController < ApplicationController
       visemes: stream[:visemes] || [],
       viseme_plan: stream[:viseme_plan] || [],
       duration_ms: stream[:duration_ms],
-      blendshapes: blendshapes
+      blendshapes:,
     )
   end
 end

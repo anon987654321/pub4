@@ -199,7 +199,7 @@ class TestWebUI < Minitest::Test
 
     assert_includes source, "ensureFrameLoop"
     assert_includes source, "frameLoopActive = false"
-    assert_includes source, 'dataset.hiddenTab'
+    assert_includes source, "dataset.hiddenTab"
   end
 
   def test_face_state_observer_does_not_watch_its_own_attribute_writes

@@ -23,9 +23,9 @@ module Master
         git = Io::GitOperations.new(File.expand_path("..", root))
         trace = infra[:trace]
         {
-          "status" => Command.new { |ctx|
-            dispatch_status(root: root, fix_loop: nil, bus: bus, git: git, trace: trace, ctx: ctx)
-          },
+          "status" => Command.new do |ctx|
+            dispatch_status(root:, fix_loop: nil, bus:, git:, trace:, ctx:)
+          end,
           "orient" => command(:dispatch_orient, root),
           "explain" => command(:dispatch_orient, root),
           "tools" => command(:dispatch_tools, root, ai),
@@ -51,7 +51,7 @@ module Master
         commands.merge!(media_commands(bus: infra[:bus]))
         commands.merge!(core_commands(root:, bus: infra[:bus], model_id: ai[:agent]&.model))
         commands.merge!(domain_commands(root:))
-        commands.merge!(reach_commands(root: root, agent: ai[:agent], bus: infra[:bus]))
+        commands.merge!(reach_commands(root:, agent: ai[:agent], bus: infra[:bus]))
         commands
       end
 
@@ -63,12 +63,12 @@ module Master
           shell: shell_tool,
           root:,
           bus: infra[:bus],
-          session: infra[:session]
+          session: infra[:session],
         )
         commands.merge!(control_commands(ai[:standing], ai[:soul]))
         commands.merge!(system_commands(
           agent: ai[:agent], diag: infra[:diag], root:,
-          session: infra[:session], bus: infra[:bus], scanner: ai[:scanner], ai: ai
+          session: infra[:session], bus: infra[:bus], scanner: ai[:scanner], ai:
         ))
         commands
       end

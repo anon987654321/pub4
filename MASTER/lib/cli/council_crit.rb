@@ -36,7 +36,7 @@ module Master
             root:,
             deliberation: container[:deliberation],
             scope:,
-            bus: container[:bus]
+            bus: container[:bus],
           )
         end
       end

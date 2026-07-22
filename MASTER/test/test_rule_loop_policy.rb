@@ -159,7 +159,7 @@ class TestRuleLoopPolicy < Minitest::Test
       scanner = RecordingScanner.new
       loop = build_loop(root:, bus: FakeBus.new, scanner:, agent: Agent.new)
 
-      best = loop.__send__(:best_candidate, ["violation\nviolation\n", "clean\n"], path)
+      best = loop.__send__(:best_candidate, %W[violation\nviolation\n clean\n], path)
 
       assert_equal "clean\n", best
     end
@@ -173,7 +173,7 @@ class TestRuleLoopPolicy < Minitest::Test
       agent:,
       scanner:,
       root:,
-      bus:
+      bus:,
     )
   end
 end

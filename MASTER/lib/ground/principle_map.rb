@@ -14,7 +14,7 @@ module Master
       Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :rule_ids, :status, :tags, :immutable)
 
       def self.load(root: Master::ROOT)
-        new(root: root)
+        new(root:)
       end
 
       def initialize(root: Master::ROOT)
@@ -86,7 +86,7 @@ module Master
             rule_ids: Array(body["rule_ids"]).map(&:to_s),
             status: body["status"].to_s,
             tags: Array(body["tags"]).map(&:to_s),
-            immutable: !!body["immutable"]
+            immutable: !!body["immutable"],
           )
         end
       end

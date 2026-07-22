@@ -112,10 +112,10 @@ module Master
       def extract_route_names(routes_text)
         names = routes_text.scan(AS_PATTERN).flatten.compact
         names << "root" if routes_text.match?(/\broot\s+["']/)
-        resources = routes_text.scan(RESOURCES_PATTERN).map { |_kind, resource, options|
+        resources = routes_text.scan(RESOURCES_PATTERN).map do |_kind, resource, options|
           names << "#{resource}_index" if resource_actions(options, false).include?("index")
           resource
-        }
+        end
         names.concat(routes_text.scan(/\b(?:get|post|put|patch|delete)\s+["']([^"']+)["']/).flatten.map { |path| path.tr("-", "_") })
         terms = resources.flat_map { |resource| [resource, singularize(resource)] }
         names.concat(terms)

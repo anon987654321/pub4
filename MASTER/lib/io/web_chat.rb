@@ -17,7 +17,7 @@ module Master
       ProviderError = Class.new(StandardError)
 
       def self.call(provider:, prompt:, system: nil)
-        new(provider: provider).ask(prompt: prompt, system: system)
+        new(provider:).ask(prompt:, system:)
       end
 
       def initialize(provider:)
@@ -67,7 +67,7 @@ module Master
           headless: true,
           timeout: timeout_seconds,
           process_timeout: timeout_seconds,
-          browser_options: { "user-data-dir" => profile_path }
+          browser_options: { "user-data-dir" => profile_path },
         )
         yield browser.create_page
       ensure

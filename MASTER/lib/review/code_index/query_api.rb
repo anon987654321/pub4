@@ -30,7 +30,7 @@ module Master
             refs = references_for(fqn)
             files = refs.map(&:from_file).uniq.map { |f| relativize(f) }
             callers = refs.map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }.uniq
-            { fqn: fqn, reference_count: refs.size, files: files, callers: callers }
+            { fqn:, reference_count: refs.size, files:, callers: }
           end
         end
 

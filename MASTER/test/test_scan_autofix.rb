@@ -15,7 +15,7 @@ class TestScanAutofix < Minitest::Test
       @scan_calls = 0
     end
 
-    def scan(path, depth: :deep)
+    def scan(_path, depth: :deep)
       @scan_calls += 1
       findings = @findings_by_pass.shift || []
       Master::Result.ok(findings)
@@ -30,7 +30,7 @@ class TestScanAutofix < Minitest::Test
 
   def finding(rule)
     {
-      rule: rule,
+      rule:,
       message: "missing frozen",
       line: 1,
       severity: :info,
@@ -55,13 +55,13 @@ class TestScanAutofix < Minitest::Test
       File.write(path, "class Example\nend\n")
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")], []],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)]
+        rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       out = Master::CLI::CommandRegistry.dispatch_scan(
-        scanner: scanner,
-        root: root,
-        ctx: { args: path }
+        scanner:,
+        root:,
+        ctx: { args: path },
       )
 
       assert_includes File.read(path), "# frozen_string_literal: true"
@@ -77,13 +77,13 @@ class TestScanAutofix < Minitest::Test
       File.write(path, original)
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")]],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)]
+        rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       out = Master::CLI::CommandRegistry.dispatch_scan(
-        scanner: scanner,
-        root: root,
-        ctx: { args: "#{path} --dry-run" }
+        scanner:,
+        root:,
+        ctx: { args: "#{path} --dry-run" },
       )
 
       assert_equal original, File.read(path)
@@ -99,13 +99,13 @@ class TestScanAutofix < Minitest::Test
       File.write(path, original)
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")]],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)]
+        rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       out = Master::CLI::CommandRegistry.dispatch_scan(
-        scanner: scanner,
-        root: root,
-        ctx: { args: "#{path} --no-autofix" }
+        scanner:,
+        root:,
+        ctx: { args: "#{path} --no-autofix" },
       )
 
       assert_equal original, File.read(path)

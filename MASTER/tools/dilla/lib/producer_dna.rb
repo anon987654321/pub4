@@ -573,7 +573,7 @@ module DillaLofiMachine
       producer = e["producer"].to_sym
       flylo = producer == :flylo
       out[key.to_sym] = {
-        producer: producer, key: e["key"], bpm: e["bpm"], swing: e["swing"],
+        producer:, key: e["key"], bpm: e["bpm"], swing: e["swing"],
         chord_bars: e["chord_bars"], phrase_bars: e["phrase_bars"],
         voicing: e["voicing"].to_sym,
         feel: flylo ? :flylo_abstract : :timeless,
@@ -645,7 +645,7 @@ module DillaLofiMachine
 
   def profile_preset(track)
     entry = profile_entry(track)
-    return nil unless entry
+    return unless entry
     drum_key = (ENV["DRUM_PRESET"] || entry[:drum_preset] || DEFAULT_DRUM_PRESET).to_s.downcase.tr("-", "_").to_sym
     preset = entry.slice(:bpm, :chord_bars, :phrase_bars, :swing, :feel, :voicing, :quintuplet,
                          :stereo_pan, :sidechain, :intro_bars, :half_time_bars, :timing, :drum_preset)
@@ -660,7 +660,7 @@ module DillaLofiMachine
 
   def progression_for(track)
     entry = profile_entry(track)
-    return nil unless entry
+    return unless entry
     pads = entry[:chords].filter_map do |sym|
       chord_from_symbol(sym)
     rescue ArgumentError
@@ -671,7 +671,7 @@ module DillaLofiMachine
 
   def drum_pattern_set(preset_key)
     p = DRUM_PRESETS[preset_key]
-    return nil unless p
+    return unless p
     {
       kicks: [p[:kicks]], snares: [p[:snares]], hats: [p[:hats]],
       ghosts: [p[:ghosts]], opens: [6, 14], claps: [p[:claps]], perc: [p[:perc]],
@@ -717,7 +717,7 @@ module DillaLofiMachine
       bass_hz = note_hz(bass_note.strip, octave: 2)
       hz = ch[:hz].dup
       hz[hz.index(hz.min)] = bass_hz
-      return ch.merge(name: sym, hz: hz.sort.uniq, bass_hz: bass_hz)
+      return ch.merge(name: sym, hz: hz.sort.uniq, bass_hz:)
     end
     low_register = sym.match?(/low\z/i)
     base = sym.sub(/low\z/i, "")
@@ -739,9 +739,9 @@ module DillaLofiMachine
               else "maj9"
               end
     octave = low_register ? 2 : 3
-    root_hz = note_hz(root_name, octave: octave)
+    root_hz = note_hz(root_name, octave:)
     hz = build_voicing(root_hz, quality)
-    { name: sym, hz: hz }
+    { name: sym, hz: }
   end
 
   def note_hz(name, octave: 3)
@@ -777,7 +777,7 @@ module DillaLofiMachine
       "crush_mix" => ((16 - env_i("BIT_DEPTH", l[:bit_depth])).to_f / 16.0 * 0.35).round(2),
       "pad_attack_ms" => env_i("PAD_ATTACK", l[:pad_attack_ms]),
       "pad_release_ms" => env_i("PAD_RELEASE", l[:pad_release_ms]),
-      "pad_volume_pct" => env_i("PAD_VOL", l[:pad_volume_pct])
+      "pad_volume_pct" => env_i("PAD_VOL", l[:pad_volume_pct]),
     }
   end
 
@@ -807,7 +807,7 @@ module DillaLofiMachine
       pad_wave: pad_waveform,
       dfam: ENV["DFAM"] != "0",
       lofi: LOFI_DEFAULTS,
-      drum_presets: DRUM_PRESETS.keys
+      drum_presets: DRUM_PRESETS.keys,
     }
   end
 
@@ -830,7 +830,7 @@ module DillaLofiMachine
     profile_preset(track)
   end
 
-  RG69_CHORDS = CHORD_VOICINGS.transform_values { |hz| { hz: hz } }.freeze
+  RG69_CHORDS = CHORD_VOICINGS.transform_values { |hz| { hz: } }.freeze
   RG69_DRUM_PRESETS = DRUM_PRESETS
   RG69_LOFI = LOFI_DEFAULTS
   PRODUCER_TRACKS = HARMONY_PROFILES

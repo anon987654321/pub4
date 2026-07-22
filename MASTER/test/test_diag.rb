@@ -13,7 +13,7 @@ class TestDiag < Minitest::Test
     end
 
     def publish(event, payload = {})
-      @handlers[event].each { |handler| handler.call(payload.merge(event: event)) }
+      @handlers[event].each { |handler| handler.call(payload.merge(event:)) }
     end
   end
 
@@ -34,7 +34,7 @@ class TestDiag < Minitest::Test
       breaker: FakeBreaker.new,
       logging: nil,
       scan_registry: nil,
-      event_bus: bus
+      event_bus: bus,
     )
 
     bus.publish("cache:hit", model: "claude", cached: 120, cache_write: 30)

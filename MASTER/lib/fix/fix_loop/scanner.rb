@@ -38,7 +38,7 @@ module Master
           rel = path.delete_prefix("#{@root}/")
           $stdout.puts "scan: #{rel} #{count} violation(s)"
           $stdout.flush
-          @bus&.publish("fix_loop:scan_progress", file: rel, count: count)
+          @bus&.publish("fix_loop:scan_progress", file: rel, count:)
         end
       end
     end

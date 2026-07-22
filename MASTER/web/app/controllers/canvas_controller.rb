@@ -25,7 +25,7 @@ class CanvasController < ApplicationController
   # alone, falling back to it only if the param is one of the four seasons.
   def topology
     season = params[:season].to_s.presence_in(SEASON_TOPOLOGY.keys) || current_season
-    render json: { season: season, id: SEASON_TOPOLOGY.fetch(season) }
+    render json: { season:, id: SEASON_TOPOLOGY.fetch(season) }
   end
 
   def post_event
@@ -34,7 +34,7 @@ class CanvasController < ApplicationController
     raw = params.fetch(:payload, {}).to_unsafe_h
     if topic == "user:expression"
       expression = raw.slice("source", "valence", "arousal", "attention", "pressure").transform_keys(&:to_sym)
-      container[:bus].publish("user:expression", expression: expression, source: expression[:source]) rescue nil
+      container[:bus].publish("user:expression", expression:, source: expression[:source]) rescue nil
       return head :accepted
     end
     if topic == "face:metrics"

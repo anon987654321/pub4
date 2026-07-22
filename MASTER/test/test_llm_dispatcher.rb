@@ -25,7 +25,7 @@ class TestLLMDispatcher < Minitest::Test
     end
 
     def record_cost(amount, model:, tokens:)
-      @costs << { amount: amount, model: model, tokens: tokens }
+      @costs << { amount:, model:, tokens: }
     end
   end
 

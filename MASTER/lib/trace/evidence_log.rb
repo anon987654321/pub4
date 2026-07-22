@@ -6,14 +6,14 @@ module Master
       OPERATIONAL = /\A(?:ops:|pipeline:rollback|fix_loop:commit|resync:|deploy:)/
 
       def initialize(root: Master::ROOT)
-        @log = EventLog.new(root: root, stream: "evidence")
+        @log = EventLog.new(root:, stream: "evidence")
       end
 
       def operational?(event) = event.to_s.match?(OPERATIONAL)
 
       def append(event, payload = {}) = @log.append(event, payload)
 
-      def recent(limit, pattern: nil) = @log.recent(limit, pattern: pattern)
+      def recent(limit, pattern: nil) = @log.recent(limit, pattern:)
     end
   end
 end

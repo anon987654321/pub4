@@ -48,8 +48,8 @@ module Master
 
         def analyse_and_review(file_path:, code:)
           fan_out([
-            { role: :analyst, task: "identify all issues", context_slice: { file: file_path, code: code } },
-            { role: :reviewer, task: "security and correctness review", context_slice: { code: code } },
+            { role: :analyst, task: "identify all issues", context_slice: { file: file_path, code: } },
+            { role: :reviewer, task: "security and correctness review", context_slice: { code: } },
           ]).and_then do |sr|
             analysis = sr.artifacts[:analyst]
             review = sr.artifacts[:reviewer]

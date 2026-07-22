@@ -42,7 +42,7 @@ module Providers
         raise "missing URL for #{source_name}; set REPLICATE_MODELS_INDEX_URL or pass --url"
       end
 
-      payload = fetch_json(source_url, token: token)
+      payload = fetch_json(source_url, token:)
       upsert_snapshot(source: source_name, kind: source.fetch(:kind), url: source_url, payload:)
       rows = normalize(source.fetch(:normalizer), payload)
       replace_models(source_name, rows)
@@ -219,7 +219,7 @@ module Providers
         price_prompt: pricing["prompt"].to_f,
         price_completion: pricing["completion"].to_f,
         tags: [architecture["modality"], architecture["tokenizer"], model["top_provider"]&.dig("context_length")].compact.join(","),
-        raw: model
+        raw: model,
       }
     end
 
@@ -230,7 +230,7 @@ module Providers
       return if id.nil? || id.empty?
 
       {
-        id: id,
+        id:,
         name: name || id,
         description: model["description"] || model["summary"],
         context_length: nil,
@@ -239,7 +239,7 @@ module Providers
         price_prompt: nil,
         price_completion: nil,
         tags: Array(model["tags"] || model["categories"]).join(","),
-        raw: model
+        raw: model,
       }
     end
   end

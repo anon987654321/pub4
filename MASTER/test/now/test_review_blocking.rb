@@ -39,7 +39,7 @@ class TestReviewBlocking < Minitest::Test
       council: nil,
       scanner: nil,
       config: {},
-      event_bus: FakeBus.new
+      event_bus: FakeBus.new,
     )
     review.instance_variable_set(:@lint, FakeLint.new)
     review.instance_variable_set(:@prune, FakePrune.new)
@@ -49,7 +49,7 @@ class TestReviewBlocking < Minitest::Test
       intent: :command,
       command: "shell",
       destructive_route: true,
-      output: "ran"
+      output: "ran",
     )
 
     result = review.call(ctx)

@@ -57,10 +57,10 @@ module Master
       def compact!(tier)
         est = session.token_est
         threshold = tier == :hard ? HARD_THRESHOLD : SOFT_THRESHOLD
-        @bus&.publish("compaction:start", token_est: est, threshold:, tier:, model_context: model_context)
+        @bus&.publish("compaction:start", token_est: est, threshold:, tier:, model_context:)
         summary = agent.ask(
           "Summarize our progress as bullet points. Preserve all file paths, decisions, and remaining tasks.",
-          context: session.messages
+          context: session.messages,
         )
         session.clear!
         body = "[Context compacted — #{tier}]\n\n#{summary}"
@@ -81,7 +81,7 @@ module Master
         bullets = summary.to_s.lines.map(&:strip).reject(&:empty?).map { |line| "- #{line.delete_prefix("- ").strip}" }
         entry = "\n## Compaction #{tier} #{stamp}\n#{bullets.join("\n")}\n"
         File.open(path, "a") { |io| io.write(entry) }
-        @bus&.publish("compaction:logged", path: path, tier:)
+        @bus&.publish("compaction:logged", path:, tier:)
       rescue StandardError => e
         Ground::Swallow.log(e, context: "context_window.daily_log", event_bus: @bus)
       end

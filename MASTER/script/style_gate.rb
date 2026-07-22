@@ -9,12 +9,12 @@ REPO = File.expand_path("../..", ROOT)
 RAILS_ROOT = File.join(REPO, "RAILS")
 
 def run(label, command, chdir: ROOT)
-  out, err, status = Open3.capture3(*command, chdir: chdir)
+  out, err, status = Open3.capture3(*command, chdir:)
   body = [out, err].map(&:strip).reject(&:empty?).join("\n")
-  { label: label, ok: status.success?, body: body, exit: status.exitstatus }
+  { label:, ok: status.success?, body:, exit: status.exitstatus }
 end
 
-def bundle_exec_rubocop(shared_rubocop, app_dir)
+def bundle_exec_rubocop(shared_rubocop, _app_dir)
   if system("which ruby34 >/dev/null 2>&1")
     %w[ruby34 bundle exec] + [shared_rubocop]
   else
@@ -26,7 +26,7 @@ results = []
 results << run(
   "MASTER rubocop (lib test script bin)",
   %w[bundle exec rubocop --format simple lib test script bin],
-  chdir: ROOT
+  chdir: ROOT,
 )
 
 shared_rubocop = File.join(RAILS_ROOT, "shared", "bin", "rubocop")
@@ -39,7 +39,7 @@ if File.executable?(shared_rubocop)
     results << run(
       "OPERATOR #{File.basename(app)} rubocop",
       command,
-      chdir: app
+      chdir: app,
     )
   end
 end
@@ -49,7 +49,7 @@ if File.file?(eslint)
   results << run(
     "MASTER web eslint",
     %w[npx --yes eslint@9 web/public --max-warnings 0],
-    chdir: ROOT
+    chdir: ROOT,
   )
 end
 

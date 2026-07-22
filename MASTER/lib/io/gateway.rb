@@ -32,9 +32,9 @@ module Master
         message_text = message.to_s.strip
         turn_id = "#{Process.pid}-#{Time.now.to_i}-#{rand(36**4).to_s(36)}"
         @bus&.publish("gateway:turn_start", turn_id:, channel:, message: message_text[0, 200])
-        @bus&.publish("gateway:receive", channel: channel, size: message_text.bytesize)
+        @bus&.publish("gateway:receive", channel:, size: message_text.bytesize)
 
-        ctx = { user_message: message_text, channel: channel, metadata: metadata, turn_id: }
+        ctx = { user_message: message_text, channel:, metadata:, turn_id: }
         result = route_message(message_text, ctx)
         render_to_adapter(channel, result, metadata)
 

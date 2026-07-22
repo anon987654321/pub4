@@ -12,7 +12,7 @@ module Master
         {
           tokens: est,
           limit: cap,
-          pct: pct,
+          pct:,
           band: band_for(pct),
           headroom: [cap - est, 0].max,
         }

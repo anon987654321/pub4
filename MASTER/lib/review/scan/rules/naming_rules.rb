@@ -39,7 +39,7 @@ module Master
                       when "merge" then "Flat Hierarchy — #{issue.reason} (#{target})"
                       else "Flat Hierarchy — #{issue.reason}#{" → #{target}" if issue.to != issue.from}"
                       end
-            finding(line: 1, message: message)
+            finding(line: 1, message:)
           end
         end
       end

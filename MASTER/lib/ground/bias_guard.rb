@@ -18,7 +18,7 @@ module Master
         note = hits.map { |name| "#{name}: #{countermeasure(name)}" }.join("; ")
         proposal.to_h.merge(
           reason: "#{proposal.reason} | bias check: #{note}",
-          confidence: [proposal.confidence.to_f - 0.1, 0.1].max
+          confidence: [proposal.confidence.to_f - 0.1, 0.1].max,
         )
       end
 

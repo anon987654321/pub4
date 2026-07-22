@@ -78,7 +78,7 @@ module Master
         def build_and_publish_verdict(ctx, rubric, errors)
           verdict = Master::Review::Verdict.new.call(
             deterministic: { lint: (errors || 0).zero? },
-            rubric_score: rubric || 0.5
+            rubric_score: rubric || 0.5,
           )
           @bus&.publish(
             "review:verdict",
@@ -86,7 +86,7 @@ module Master
             score: verdict.score,
             reasons: verdict.reasons,
             command: ctx.command,
-            phase: "post_execute"
+            phase: "post_execute",
           )
           verdict
         end

@@ -57,8 +57,8 @@ module Master
       end
 
       def brief(query = nil, limit: 20, token_limit: DEFAULT_TOKEN_LIMIT)
-        rows = query ? relevant(query, limit: limit) : files.first(limit)
-        budgeted_rows(rows, token_limit: token_limit)
+        rows = query ? relevant(query, limit:) : files.first(limit)
+        budgeted_rows(rows, token_limit:)
       end
 
       private
@@ -89,7 +89,7 @@ module Master
           language: LANGUAGE_BY_EXT.fetch(File.extname(path), :other),
           bytes: File.size(path),
           mtime: File.mtime(path),
-          score: 0
+          score: 0,
         )
       end
 

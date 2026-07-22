@@ -15,9 +15,9 @@ class WorkflowInferenceTest < Minitest::Test
       scanner: FakeScanner.new,
       fix_loop: FakeFixLoop.new,
       deliberation: fake,
-      root: root,
+      root:,
       bus: nil,
-      ctx: { args: "." }
+      ctx: { args: "." },
     )
     assert_includes out, "workflow: deliberation"
     refute_match(/review:\s+(on|off)/i, out)

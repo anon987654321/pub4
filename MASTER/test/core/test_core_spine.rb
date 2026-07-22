@@ -26,10 +26,10 @@ class TestKernelSpine < Minitest::Test
 
       result = Master::Core::Fold.new(
         model:,
-        constitution: constitution,
+        constitution:,
         world:,
         memory:,
-        max_turns: 1
+        max_turns: 1,
       ).run("finish")
 
       assert_equal :max_turns, result.reason

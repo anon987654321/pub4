@@ -17,7 +17,7 @@ module Master
             if claude_cli_available?
               models.concat(
                 Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
-                  .select { |id| id.to_s.start_with?("claude-cli:") }
+                  .select { |id| id.to_s.start_with?("claude-cli:") },
               )
             end
             models.uniq

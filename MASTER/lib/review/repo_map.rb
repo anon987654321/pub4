@@ -53,7 +53,7 @@ module Master
         nodes = (g.keys | g.values.flat_map(&:to_a)).uniq
         return {} if nodes.empty?
         rank = seed(nodes, focus)
-        ITERATIONS.times { rank = step(g: g, nodes: nodes, rank: rank, focus: focus) }
+        ITERATIONS.times { rank = step(g:, nodes:, rank:, focus:) }
         rank
       end
 

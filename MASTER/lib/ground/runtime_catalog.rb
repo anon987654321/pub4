@@ -73,12 +73,12 @@ module Master
             enhancements: Array(runtime_cfg["enhancements"]),
             vertical_timbre: philosophy["vertical_timbre"] || {},
             ui_philosophy: runtime_cfg["ui_philosophy"] || {},
-            micro_interactions: micro_interactions,
-            event_registry: event_registry,
+            micro_interactions:,
+            event_registry:,
             visual_limits: sources[:visual]["visual"] || sources[:visual],
             tts_config: sources[:tts],
             topologies: sources[:topologies],
-            face_research: face_research,
+            face_research:,
           }
         end
 

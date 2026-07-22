@@ -190,7 +190,7 @@ module Master
           next [] if path.to_s.include?("/judge/scan/rules/")
           next [] unless src.match?(/^\s*def\s+\w+[^\n]*\n\s*begin\b/m)
           line = src.each_line.with_index(1).find { |l, _| l.match?(/^\s*begin\b/) }&.last || 1
-          [finding(line: line, message: "begin/rescue inside def — put rescue on the def line")]
+          [finding(line:, message: "begin/rescue inside def — put rescue on the def line")]
         end
 
       end

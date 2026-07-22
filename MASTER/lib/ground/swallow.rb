@@ -56,7 +56,7 @@ module Master
             error_class: error.class.name,
             error_message: error.message,
             backtrace: error.backtrace&.first(5),
-            meta: meta,
+            meta:,
           }
         end
 

@@ -69,7 +69,7 @@ module Master
         atomic_write(fp, updated)
         Master::Trace::WriteTracker.current&.record(fp)
         @bus&.publish("tool:after", tool: NAME, path: fp)
-        @bus&.publish("tool:ast_edit", op: "rename", from: from, to: to, path: fp)
+        @bus&.publish("tool:ast_edit", op: "rename", from:, to:, path: fp)
         Result.ok("renamed #{from} → #{to} in #{File.basename(fp)}")
       end
 
@@ -127,7 +127,7 @@ module Master
       def kw_token_depth(token, line, stack, depth, ranges)
         case token
         when "def"
-          stack.push({ name: nil, start: line, depth: depth })
+          stack.push({ name: nil, start: line, depth: })
           depth + 1
         when "class", "module", "do", "begin", "for", "if", "unless", "while", "until", "case"
           return depth if token == "if" && !stack.empty? && stack.last[:name]

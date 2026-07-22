@@ -52,7 +52,11 @@ def inspect_file(root, relative)
   return row if row[:binary]
 
   text = bytes.force_encoding(Encoding::UTF_8)
-  row[:lines] = text.empty? ? 0 : text.count("\n") + (text.end_with?("\n") ? 0 : 1)
+  row[:lines] = if text.empty?
+0
+else
+text.count("\n") + (text.end_with?("\n") ? 0 : 1)
+end
   row[:signals] = SIGNALS.each_with_object({}) do |(name, pattern), found|
     count = text.scan(pattern).length
     found[name] = count if count.positive?
@@ -66,7 +70,7 @@ roots = ARGV.empty? ? DEFAULT_ROOTS : ARGV.map { |path| Pathname.new(path).expan
 report = {
   generated_at: Time.now.utc.iso8601,
   contract: "every tracked and non-ignored untracked repository file read in full; binary files hashed; UTF-8 text scanned in full",
-  roots: []
+  roots: [],
 }
 
 roots.uniq.each do |root|
@@ -81,7 +85,7 @@ roots.uniq.each do |root|
     binary_files: rows.count { |row| row[:binary] },
     text_files: rows.count { |row| row[:binary] == false },
     errors: rows.count { |row| row[:error] },
-    entries: rows
+    entries: rows,
   }
   warn "ok: audited #{root} files=#{rows.length} bytes=#{report[:roots].last[:bytes]}"
 end

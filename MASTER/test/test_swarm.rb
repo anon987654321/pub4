@@ -14,8 +14,8 @@ class TestSwarm < Minitest::Test
   class FakeAgent
     attr_reader :calls
     def initialize(responses = {}) = (@responses = responses; @calls = [])
-    def ask_once(prompt, model: nil, system: nil)
-      @calls << { model: model, system: system }
+    def ask_once(_prompt, model: nil, system: nil)
+      @calls << { model:, system: }
       @responses.fetch(model) { @responses[:default] || "ok" }
     end
   end
@@ -23,8 +23,8 @@ class TestSwarm < Minitest::Test
   class FailingAgent
     attr_reader :calls
     def initialize(fallback_response) = (@fallback_response = fallback_response; @calls = []; @fail_count = 0)
-    def ask_once(prompt, model: nil, system: nil)
-      @calls << { model: model }
+    def ask_once(_prompt, model: nil, system: nil)
+      @calls << { model: }
       @fail_count += 1
       raise "preferred model unavailable" if @fail_count == 1
       @fallback_response
@@ -36,7 +36,7 @@ class TestSwarm < Minitest::Test
   end
 
   def build_coordinator(agent)
-    Master::Review::Swarm::Coordinator.new(agent: agent, event_bus: @bus)
+    Master::Review::Swarm::Coordinator.new(agent:, event_bus: @bus)
   end
 
   # Swarm result votes when reviewer casts explicit approved: true
@@ -44,7 +44,7 @@ class TestSwarm < Minitest::Test
     agent = FakeAgent.new(default: '{"approved": true, "violations": []}')
     coord = build_coordinator(agent)
 
-    reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent: agent, event_bus: @bus)
+    reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent:, event_bus: @bus)
     result   = reviewer.call(task: "check code", context_slice: { code: "puts 1" })
     assert result.ok?
     assert result.value!["approved"]
@@ -91,7 +91,7 @@ class TestSwarm < Minitest::Test
 
   def test_worker_fallback_fires_when_preferred_raises
     agent = FailingAgent.new('{"approved": true}')
-    reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent: agent, event_bus: @bus)
+    reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent:, event_bus: @bus)
 
     # Patch FALLBACK_MODEL on this instance's class temporarily
     reviewer.class.stub_const(:FALLBACK_MODEL, "openrouter/auto") do
@@ -110,7 +110,7 @@ class TestSwarm < Minitest::Test
     coord = build_coordinator(FakeAgent.new(default: "ok"))
     results = {
       reviewer: Master::Result.ok({ "approved" => true }),
-      analyst:  Master::Result.ok({ "approved" => true })
+      analyst:  Master::Result.ok({ "approved" => true }),
     }
     sr = coord.send(:build_swarm_result, results)
     assert sr.consensus?
@@ -120,7 +120,7 @@ class TestSwarm < Minitest::Test
     coord = build_coordinator(FakeAgent.new(default: "ok"))
     results = {
       reviewer: Master::Result.ok({ "approved" => false }),
-      analyst:  Master::Result.ok({ "approved" => false })
+      analyst:  Master::Result.ok({ "approved" => false }),
     }
     sr = coord.send(:build_swarm_result, results)
     refute sr.consensus?

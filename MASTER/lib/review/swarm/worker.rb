@@ -10,8 +10,7 @@ module Master
         PREFERRED_MODEL = nil
         FALLBACK_MODEL = nil
 
-        UNCERTAINTY_PHRASES = %w[unclear uncertain not\ sure cannot\ determine
-                                  i\ don't\ know limited\ information probably].freeze
+        UNCERTAINTY_PHRASES = ["unclear", "uncertain", "not sure", "cannot determine", "i don't know", "limited information", "probably"].freeze
 
         attr_reader :role, :result, :confidence
 
@@ -69,7 +68,7 @@ module Master
         end
 
         def ctx_summary(ctx)
-          return "" if ctx.empty?
+          "" if ctx.empty?
         end
       end
     end

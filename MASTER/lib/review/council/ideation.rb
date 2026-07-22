@@ -48,7 +48,7 @@ module Master
 
         def circuit_open?
           breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
-          return false unless breaker.respond_to?(:open_models)
+          false unless breaker.respond_to?(:open_models)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Ideation.circuit_open?")
           false

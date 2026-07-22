@@ -85,7 +85,7 @@ module Master
           refactoring: /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
           architecture: /\b(design|architect|structure|plan|approach|module|boundary|layer|topology)\b/i,
           review: /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
-          explanation: /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
+          explanation: /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i,
         }.freeze
         CHITCHAT_GREETING_RE = /\A(?:hi|hello|hey|yo|sup|howdy|good (?:morning|afternoon|evening))[!?.…\s]*\z/i.freeze
         CHITCHAT_CASUAL_RE = /\b(?:how are you|what'?s up|thanks|thank you|nice to meet|good night)\b/i.freeze

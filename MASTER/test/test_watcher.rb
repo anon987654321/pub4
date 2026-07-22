@@ -22,7 +22,7 @@ class TestWatcher < Minitest::Test
     watcher = Master::Fix::Watcher.allocate
     watcher.instance_variable_set(
       :@thresholds,
-      "mem_free_pct" => { "warn" => 30.0, "crit" => 5.0 }
+      "mem_free_pct" => { "warn" => 30.0, "crit" => 5.0 },
     )
 
     level = watcher.send(
@@ -31,7 +31,7 @@ class TestWatcher < Minitest::Test
       mem_free_pct: 25.0,
       disk_root_pct: nil,
       master_rss_mb: nil,
-      master_alive: true
+      master_alive: true,
     )
 
     assert_equal :warn, level

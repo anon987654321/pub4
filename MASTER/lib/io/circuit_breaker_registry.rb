@@ -13,12 +13,12 @@ module Master
         super()
         @state_path = state_path
         @defaults = {
-          budget_max: budget_max,
-          req_max: req_max,
-          warn_at: warn_at,
-          max_per_file: max_per_file,
-          event_bus: event_bus,
-          state_path: state_path,
+          budget_max:,
+          req_max:,
+          warn_at:,
+          max_per_file:,
+          event_bus:,
+          state_path:,
         }.freeze
         @breakers = {}
         @global = CircuitBreaker.new(**@defaults.merge(state_key: "global"))
@@ -27,7 +27,7 @@ module Master
       def for(model_id)
         synchronize do
           @breakers[model_id.to_s] ||= CircuitBreaker.new(
-            **@defaults.merge(rate_window_s: CircuitBreaker::RATE_WINDOW_S, state_key: state_key(model_id))
+            **@defaults.merge(rate_window_s: CircuitBreaker::RATE_WINDOW_S, state_key: state_key(model_id)),
           )
         end
       end

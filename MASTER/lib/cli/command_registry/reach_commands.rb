@@ -62,7 +62,7 @@ module Master
         return "#{metrics_line}\ndilla crit: agent unavailable — metrics only. Start full CLI and /dilla crit." unless agent
 
         critic = Master::Review::Council::Critique.new(
-          mode: :dilla, agent: agent, event_bus: bus, audio_path: path
+          mode: :dilla, agent:, event_bus: bus, audio_path: path,
         )
         result = critic.run
         return "dilla crit: #{result.message}" unless result.ok?
@@ -85,7 +85,7 @@ module Master
       end
 
       def run_tool(root, tool, args)
-        Master::Io::ScriptDispatch.run_string(root: root, tool: tool, arg: args.to_s)
+        Master::Io::ScriptDispatch.run_string(root:, tool:, arg: args.to_s)
       end
     end
   end

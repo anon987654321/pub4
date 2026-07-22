@@ -25,10 +25,10 @@ class DashboardController < ApplicationController
     agent = c[:agent]
     logging = c[:logging]
     bus_events = logging.respond_to?(:dmesg) ? logging.dmesg(20).to_s.lines.map(&:chomp) : []
-    pressure = Master::Trace::ContextPressure.snapshot(session: session)
+    pressure = Master::Trace::ContextPressure.snapshot(session:)
     {
       events: session.respond_to?(:messages) ? session.messages.last(10) : [],
-      bus_events: bus_events,
+      bus_events:,
       model: agent.model.to_s,
       tokens: pressure[:tokens],
       cost: session.respond_to?(:cost) ? session.cost : 0.0,

@@ -56,7 +56,7 @@ end
         def state_file = File.join(root, STATE_PATH)
 
         def load_previous
-          return { total: 0 } unless File.exist?(state_file)
+          { total: 0 } unless File.exist?(state_file)
         rescue StandardError => e
           Swallow.log(e, context: "constitution_drift.load_previous", event_bus: bus)
           { total: 0 }

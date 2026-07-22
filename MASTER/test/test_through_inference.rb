@@ -7,7 +7,7 @@ class TestThroughInference < Minitest::Test
     ctx = Master::CLI::PipelineContext.build(
       user_message: "run this through master",
       intent: :llm,
-      message: "run this through master"
+      message: "run this through master",
     )
     out = Master::CLI::Stages::Infer.new.call(ctx)
     assert out.ok?
@@ -26,7 +26,7 @@ class TestThroughInference < Minitest::Test
   def test_turn_router_itself_maps_to_master
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "run master through itself",
-      container: { bus: nil, session: nil }
+      container: { bus: nil, session: nil },
     )
     refute_nil inferred
     assert_equal "through", inferred[:command]
@@ -44,11 +44,11 @@ class TestThroughInference < Minitest::Test
     stub_scan = lambda { |*| "scan: clean" }
     Master::CLI::CommandRegistry.stub(:dispatch_scan, stub_scan) do
       pipe = Master::CLI::ThroughPipeline.new(
-        scanner: scanner,
+        scanner:,
         fix_loop: fix,
         root: Master::ROOT,
         deliberation: nil,
-        bus: nil
+        bus: nil,
       )
       result = pipe.call(target: "rails", apply: false, critique: false, aesthetic: false)
       assert result.target == Master::RAILS_ROOT || result.target.to_s.end_with?("RAILS")
@@ -59,13 +59,13 @@ class TestThroughInference < Minitest::Test
 
   def test_rails_rules_registered
     require_relative "../lib/review/scan/rule_dsl"
-    ids = Master::Review::Scan::Rule.registry.filter_map { |k|
+    ids = Master::Review::Scan::Rule.registry.filter_map do |k|
       begin
         k.auto_build? ? k.new.id.to_s.upcase : nil
       rescue StandardError
         nil
       end
-    }
+    end
     %w[THIN_CONTROLLER NO_LOGIC_IN_VIEW STIMULUS_CONTROLLER_SIZE SCSS_NESTING_DEPTH].each do |id|
       assert_includes ids, id
     end

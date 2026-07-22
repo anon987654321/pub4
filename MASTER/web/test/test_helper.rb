@@ -34,9 +34,9 @@ def stub_master_container
   )
   gateway = Class.new do
     def receive(channel:, message:, metadata: {})
-      Master::Result.ok({ rendered: message.to_s, client_actions: [], metadata: metadata })
+      Master::Result.ok({ rendered: message.to_s, client_actions: [], metadata: })
     end
   end.new
   skills = Struct.new(:loaded).new([])
-  { bus: bus, agent: agent, session: session, breaker: breaker, personality: personality, gateway: gateway, skills: skills }
+  { bus:, agent:, session:, breaker:, personality:, gateway:, skills: }
 end

@@ -50,7 +50,7 @@ module Master
       end
 
       def refuse_heavy_prompt?(text)
-        return nil unless constrained?
+        return unless constrained?
 
         body = text.to_s
         return heavy_repo_message if repo_wide_request?(body)

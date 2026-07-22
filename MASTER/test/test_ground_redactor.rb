@@ -12,7 +12,7 @@ class GroundRedactorTest < Minitest::Test
     scrubbed = Master::Ground::Redactor.payload(
       text: "sk-#{'B' * 24}",
       token: "secret-value",
-      tool: "ReadFile"
+      tool: "ReadFile",
     )
 
     assert_equal "[REDACTED]", scrubbed[:text]

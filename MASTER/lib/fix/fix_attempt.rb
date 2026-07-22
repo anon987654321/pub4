@@ -12,7 +12,7 @@ module Master
       end
 
       def first_code(prompt:, ext:, source:, wait_context:)
-        codes(prompt: prompt, ext: ext, source: source, wait_context: wait_context).first
+        codes(prompt:, ext:, source:, wait_context:).first
       end
 
       def codes(prompt:, ext:, source:, wait_context:)

@@ -29,8 +29,8 @@ module Master
 
       def status
         {
-          selected: selected,
-          enabled: enabled,
+          selected:,
+          enabled:,
           valid: valid?,
           flags: flags.transform_values { |env| ENV.fetch(env, "0") },
         }

@@ -201,7 +201,7 @@ class TestPipeline < Minitest::Test
 
       result = pipe.call(Master::Result.ok(
         user_message: "deploy now",
-        metadata: { evidence: { test_pass: true, code_review: true } }
+        metadata: { evidence: { test_pass: true, code_review: true } },
       ))
 
       assert result.ok?

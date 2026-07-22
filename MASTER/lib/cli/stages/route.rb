@@ -39,7 +39,7 @@ module Master
             return Result.err(error_message, category: :validation)
           end
           destructive = DestructiveRoutes.destructive_command?(ctx.command)
-          @bus&.publish("route:resolved", command: ctx.command, handler: cmd.class.name, destructive: destructive)
+          @bus&.publish("route:resolved", command: ctx.command, handler: cmd.class.name, destructive:)
           Result.ok(ctx.merge(handler: cmd, destructive_route: destructive))
         end
 

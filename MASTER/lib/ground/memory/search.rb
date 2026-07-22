@@ -14,19 +14,19 @@ module Master
         RRF_K = 60.0
 
         def semantic_recall(query, top_n: 3)
-          hybrid_recall(query, top_n: top_n)
+          hybrid_recall(query, top_n:)
         end
 
         def hybrid_recall(query, top_n: 3)
           store_snap = @mutex.synchronize { @store.dup }
           return [] if store_snap.empty?
 
-          return fts5_recall_from_store(query: query, top_n: top_n, store: store_snap) if fts5_only?
+          return fts5_recall_from_store(query:, top_n:, store: store_snap) if fts5_only?
 
-          keyword_hits = keyword_hits(query: query, top_n: top_n * 3, store: store_snap)
+          keyword_hits = keyword_hits(query:, top_n: top_n * 3, store: store_snap)
           vector_hits = []
           if Review::Embeddings.enabled? && (qvec = Review::Embeddings.embed(query))
-            vector_hits = vector_recall(qvec: qvec, top_n: top_n * 3, store: store_snap)
+            vector_hits = vector_recall(qvec:, top_n: top_n * 3, store: store_snap)
           end
 
           fused = rrf(keyword_hits, vector_hits)
@@ -35,20 +35,20 @@ module Master
 
         def keyword_recall(query, top_n: 3)
           store_snap = @mutex.synchronize { @store.dup }
-          keyword_hits(query: query, top_n: top_n, store: store_snap)
+          keyword_hits(query:, top_n:, store: store_snap)
         end
 
         def fts5_recall(query, top_n: 3)
           store_snap = @mutex.synchronize { @store.dup }
-          fts5_recall_from_store(query: query, top_n: top_n, store: store_snap)
+          fts5_recall_from_store(query:, top_n:, store: store_snap)
         end
 
         private
 
         def keyword_hits(query:, top_n:, store:)
-          return fts5_recall_from_store(query: query, top_n: top_n, store: store) if fts5_available?
+          return fts5_recall_from_store(query:, top_n:, store:) if fts5_available?
 
-          tfidf_recall(query: query, top_n: top_n, store: store)
+          tfidf_recall(query:, top_n:, store:)
         end
 
         def fts5_only?
@@ -66,7 +66,7 @@ module Master
             score = Review::Embeddings.cosine(qvec, data["vec"])
             next if score < Review::Embeddings::MIN_SIM
 
-            { key: key, value: data["value"].to_s, score: score }
+            { key:, value: data["value"].to_s, score: }
           end.sort_by { |e| -e[:score] }.first(top_n)
         end
 
@@ -79,14 +79,14 @@ module Master
             score = tfidf_score(terms, tokenize("#{key} #{value}"))
             next if score.zero?
 
-            { key: key, value: value, score: score }
+            { key:, value:, score: }
           end.sort_by { |e| -e[:score] }.first(top_n)
         end
 
         def fts5_recall_from_store(query:, top_n:, store:)
           terms = tokenize(query).uniq
           return [] if terms.empty?
-          return tfidf_recall(query: query, top_n: top_n, store: store) unless fts5_available?
+          return tfidf_recall(query:, top_n:, store:) unless fts5_available?
 
           db = build_fts5_memory_db(store)
           db.execute(<<~SQL, [fts5_query(terms), top_n]).map { |row| fts5_row(row) }
@@ -97,7 +97,7 @@ module Master
             LIMIT ?
           SQL
         rescue SQLite3::Exception
-          tfidf_recall(query: query, top_n: top_n, store: store)
+          tfidf_recall(query:, top_n:, store:)
         ensure
           db&.close
         end
@@ -149,7 +149,7 @@ module Master
             end
           end
           scores.sort_by { |key, score| [-score, key.to_s] }.map do |key, score|
-            payloads[key].merge(score: score, fusion: "rrf")
+            payloads[key].merge(score:, fusion: "rrf")
           end
         end
       end

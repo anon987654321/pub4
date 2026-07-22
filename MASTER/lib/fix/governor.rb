@@ -77,7 +77,7 @@ module Master
         choice = @prompt.select("#{tier_icon(tier)} #{label}", [
           { name: "approve", value: :approve },
           { name: "deny", value: :deny },
-          { name: "quit", value: :quit }
+          { name: "quit", value: :quit },
         ])
 
         case choice

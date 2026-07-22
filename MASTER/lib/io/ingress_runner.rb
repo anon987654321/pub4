@@ -11,7 +11,7 @@ module Master
         return Result.err("gateway unavailable", category: :infrastructure) unless gateway
 
         with_fiber(elevated:) do
-          gateway.receive(channel: :api, message: message.to_s, metadata: metadata)
+          gateway.receive(channel: :api, message: message.to_s, metadata:)
         end
       end
 

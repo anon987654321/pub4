@@ -33,7 +33,7 @@ module Master
             text: phrase,
             rate: RHYTHM[i % RHYTHM.length],
             pitch: format("%+dHz", semitone * 7),
-            semitone: semitone,
+            semitone:,
             pause_ms: pause_ms_for(i, arousal),
           }
         end

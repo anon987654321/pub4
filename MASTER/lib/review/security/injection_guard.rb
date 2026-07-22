@@ -66,7 +66,7 @@ module Master
           shell = data.dig("shell_injection", "multiline_pattern")
           {
             prompt_injection: prompt.empty? ? DEFAULTS[:prompt_injection] : prompt.freeze,
-            shell_injection: shell ? Regexp.new(shell, Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection]
+            shell_injection: shell ? Regexp.new(shell, Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection],
           }
         rescue StandardError
           DEFAULTS

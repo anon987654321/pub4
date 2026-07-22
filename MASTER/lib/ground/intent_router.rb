@@ -82,7 +82,7 @@ module Master
 
       def route(text)
         intent = classify(text)
-        { intent: intent, risk: risk(intent) }
+        { intent:, risk: risk(intent) }
       end
     end
   end

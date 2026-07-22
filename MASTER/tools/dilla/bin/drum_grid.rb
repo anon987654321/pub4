@@ -62,9 +62,9 @@ def print_grid(n_bars, label: nil)
   (0...n_bars).each do |bar|
     section = section_for_bar(bar)
     kicks  = DillaGroove.pocket_kicks(bar)
-    snares = DillaGroove.pocket_snares_hard(bar, section: section)
+    snares = DillaGroove.pocket_snares_hard(bar, section:)
     ghosts = DillaGroove.pocket_snares_ghost(bar)
-    hats   = DillaGroove.pocket_hats(bar).reject { |s| DillaGroove.hat_should_drop?(bar, s, section: section) }
+    hats   = DillaGroove.pocket_hats(bar).reject { |s| DillaGroove.hat_should_drop?(bar, s, section:) }
     open_h = DillaGroove.pocket_open_hat?(bar) ? [14] : []
 
     kick_off = DillaGroove.role_timing_offset(:kick_sync, BEAT_P, bar, kicks.first || 0) * 1000.0
@@ -85,7 +85,7 @@ def repetition_report(n_bars)
     kicks: (0...n_bars).map { |b| DillaGroove.pocket_kicks(b) },
     snares: (0...n_bars).map { |b| DillaGroove.pocket_snares_hard(b, section: section_for_bar(b)) },
     hats: (0...n_bars).map { |b| DillaGroove.pocket_hats(b) },
-    ghosts: (0...n_bars).map { |b| DillaGroove.pocket_snares_ghost(b) }
+    ghosts: (0...n_bars).map { |b| DillaGroove.pocket_snares_ghost(b) },
   }.each do |name, seq|
     repeats = seq.each_cons(2).count { |a, b| a == b }
     puts "#{name}: #{seq.uniq.length}/#{n_bars} distinct shapes, #{repeats} consecutive-bar repeats"
@@ -96,7 +96,7 @@ def drift_graph(n_bars)
   puts "phrase drift (ms), one row per role, sparkline across bars:"
   chars = " .:-=+*#%@"
   %i[kick snare hat ghost].each do |role|
-    vals = (0...n_bars).map { |b| DillaGroove.phrase_drift_sec(b, role: role) * 1000.0 }
+    vals = (0...n_bars).map { |b| DillaGroove.phrase_drift_sec(b, role:) * 1000.0 }
     max = vals.map(&:abs).max
     max = 1.0 if max.nil? || max.zero?
     spark = vals.map { |v| chars[(((v / max) + 1.0) / 2.0 * (chars.length - 1)).round.clamp(0, chars.length - 1)] }.join

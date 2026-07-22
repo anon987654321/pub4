@@ -56,11 +56,11 @@ module Master
           s = node.location.start_line
           e = node.location.end_line
           Unit.new(
-            name: name,
-            type: type,
+            name:,
+            type:,
             start_line: s,
             end_line: e,
-            source: @lines[(s - 1)..(e - 1)].join
+            source: @lines[(s - 1)..(e - 1)].join,
           )
         end
 

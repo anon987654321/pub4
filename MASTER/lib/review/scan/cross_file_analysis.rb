@@ -162,7 +162,7 @@ module Master
           visited = Set.new
           stack = []
           graph.each_key do |node|
-            cycle = visit(node, graph: graph, visiting: visiting, visited: visited, stack: stack)
+            cycle = visit(node, graph:, visiting:, visited:, stack:)
             return cycle if cycle
           end
           nil
@@ -177,7 +177,7 @@ module Master
           visiting << node
           stack << node
           graph.fetch(node, []).each do |child|
-            cycle = visit(child, graph: graph, visiting: visiting, visited: visited, stack: stack)
+            cycle = visit(child, graph:, visiting:, visited:, stack:)
             return cycle if cycle
           end
           stack.pop
@@ -187,7 +187,7 @@ module Master
         end
 
         def build(rule, message)
-          Finding.build(rule: rule, line: 1, severity: :warning, message: message, tags: %i[DRY SPRAWL])
+          Finding.build(rule:, line: 1, severity: :warning, message:, tags: %i[DRY SPRAWL])
         end
 
         def rel(path)

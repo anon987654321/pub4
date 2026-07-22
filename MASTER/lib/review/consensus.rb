@@ -22,17 +22,17 @@ module Master
       end
 
       def approve_fix?(prompt:, candidate:, violation:)
-        votes = @models.map { |model| vote(model, prompt: prompt, candidate: candidate, violation: violation) }
+        votes = @models.map { |model| vote(model, prompt:, candidate:, violation:) }
         approvals = votes.count(&:approved)
         approved = approvals >= @quorum
         dissent = votes.reject(&:approved)
         @bus&.publish(
           "consensus:result",
-          approved: approved,
-          approvals: approvals,
+          approved:,
+          approvals:,
           quorum: @quorum,
           models: votes.map(&:model),
-          dissent: dissent.map { |vote| { model: vote.model, reason: vote.reason } }
+          dissent: dissent.map { |vote| { model: vote.model, reason: vote.reason } },
         )
         approved
       end
@@ -40,11 +40,11 @@ module Master
       private
 
       def vote(model, prompt:, candidate:, violation:)
-        response = @agent.ask_once(vote_prompt(prompt, candidate, violation), model: model)
+        response = @agent.ask_once(vote_prompt(prompt, candidate, violation), model:)
         parsed = parse_vote(response)
-        Vote.new(model: model, approved: parsed.fetch("approved", false), reason: parsed.fetch("reason", response.to_s[0, 240]))
+        Vote.new(model:, approved: parsed.fetch("approved", false), reason: parsed.fetch("reason", response.to_s[0, 240]))
       rescue StandardError => e
-        Vote.new(model: model, approved: false, reason: e.message.to_s[0, 240])
+        Vote.new(model:, approved: false, reason: e.message.to_s[0, 240])
       end
 
       def vote_prompt(prompt, candidate, violation)
@@ -75,7 +75,7 @@ module Master
         data = JSON.parse(json)
         {
           "approved" => data["approved"] == true || data["approved"].to_s == "true",
-          "reason" => data["reason"].to_s
+          "reason" => data["reason"].to_s,
         }
       rescue JSON::ParserError
         { "approved" => text.match?(/\bapprove[ds]?\b/i), "reason" => text[0, 240] }

@@ -56,7 +56,7 @@ class TestFixLoopCommitter < Minitest::Test
   end
 
   def run_committer(git, bus, message)
-    committer = Master::Fix::FixLoop::Committer.new(git: git, bus: bus, root: @dir)
+    committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: @dir)
     committer.commit_if_dirty(message)
   end
 

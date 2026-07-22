@@ -35,15 +35,15 @@ module Master
         def try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)
           selected_model = attempt.fetch(:model)
           mode = attempt.fetch(:mode)
-          return nil if skip_fallback_attempt?(selected_model, timed_out_models:, stage_warnings:)
+          return if skip_fallback_attempt?(selected_model, timed_out_models:, stage_warnings:)
 
           response = attempt_model_with_retries(
-            selected_model: selected_model,
-            mode: mode,
-            prompt: prompt,
-            context: context,
-            stream: stream,
-            image: image,
+            selected_model:,
+            mode:,
+            prompt:,
+            context:,
+            stream:,
+            image:,
             &blk
           )
           return response if response.is_a?(Master::Result::Ok)
@@ -88,11 +88,11 @@ module Master
         def dispatch_retry(selected_model:, mode:, prompt:, context:, stream:, image:, retry_index:, retry_count:, &blk)
           @bus&.publish("llm:retry_attempt", model: selected_model, mode:, attempt: retry_index + 1,
                                           max: retry_count + 1)
-          wrapped = filter_prompt(apply_reasoning_mode(prompt, mode: mode))
+          wrapped = filter_prompt(apply_reasoning_mode(prompt, mode:))
           @dispatcher.send_with_cache(
             selected_model,
             context + [{ role: "user", content: wrapped }],
-            stream:, image: image, &blk
+            stream:, image:, &blk
           )
         end
 
@@ -103,7 +103,7 @@ module Master
         def backoff_before_retry(model, mode, retry_index)
           tiers = @model_router&.failover_cooldown_tiers || [30, 60, 300]
           delay = tiers[[retry_index, tiers.size - 1].min]
-          @bus&.publish("llm:failover_backoff", model: model, mode: mode, retry: retry_index + 1, delay: delay,
+          @bus&.publish("llm:failover_backoff", model:, mode:, retry: retry_index + 1, delay:,
                                                 tiered: true)
           sleep delay if ENV["MASTER_STRICT_BACKOFF"] == "1"
         end
@@ -120,10 +120,10 @@ module Master
           modes = if @dispatcher.claude_cli_model?(primary) || @dispatcher.tool_capable?(primary)
                     [@config.reasoning_mode.to_s, "code_agent", "react"]
                   else
-                    ["code_agent", "react", "direct"]
+                    %w[code_agent react direct]
                   end
           chain = models.map { |m| { model: m, mode: modes.first } }
-          chain.concat(modes.drop(1).map { |mode| { model: primary, mode: mode } })
+          chain.concat(modes.drop(1).map { |mode| { model: primary, mode: } })
           chain
         end
 
@@ -140,7 +140,7 @@ module Master
           escalation_model = @model_router.escalate_if_low_confidence(
             last_response.to_s,
             current_model: current,
-            task_type: @config.task_type.to_sym
+            task_type: @config.task_type.to_sym,
           )
           return last_response unless escalation_model
           return last_response if escalation_model.to_s == current.to_s
@@ -155,7 +155,7 @@ module Master
             candidate_models: [escalation_model],
             prompt: original_message,
             context: conversation_context,
-            stream: stream,
+            stream:,
             &blk
           )
         end

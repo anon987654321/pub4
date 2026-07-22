@@ -13,7 +13,7 @@ class TestAgent < Minitest::Test
   end
   FakeSession = Struct.new(:messages) { def add_message(**) = messages << _1 }
   FakeCB      = Struct.new(:out) { def check_rate!; end; def call(_, &b); b.call; end }
-  FakeCache   = Struct.new(:store) { def fetch(k, m, &b); (store[k] ||= b.call); end }
+  FakeCache   = Struct.new(:store) { def fetch(k, _m, &b); (store[k] ||= b.call); end }
 
   def setup
     @agent = Master::Agent.new(deps: Master::Agent::Dependencies.from_kwargs(
@@ -21,7 +21,7 @@ class TestAgent < Minitest::Test
       session:         FakeSession.new([]),
       tools:           [],
       circuit_breaker: FakeCB.new,
-      cache:           FakeCache.new({})
+      cache:           FakeCache.new({}),
     ))
   end
 

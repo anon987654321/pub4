@@ -115,7 +115,7 @@ class ApplicationController < ActionController::Base
   end
 
   def enforce_rate_limit!(key, limit:, window:)
-    count = increment_rate_limit!(key, window: window)
+    count = increment_rate_limit!(key, window:)
     return if count <= limit
 
     response.headers["Retry-After"] = window.to_s

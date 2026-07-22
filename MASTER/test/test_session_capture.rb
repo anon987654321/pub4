@@ -11,7 +11,7 @@ class TestSessionCapture < Minitest::Test
       File.write(File.join(dir, "data", "soul.yml"), "---\n")
 
       result = Master::Trace::SessionCapture.new(root: dir).call(
-        "successful refactor techniques=alias index recurring_patterns=stale TODO automations=batch audit prompts=show evidence providers=OpenBSD rcctl learned_behavior=verify before marking done"
+        "successful refactor techniques=alias index recurring_patterns=stale TODO automations=batch audit prompts=show evidence providers=OpenBSD rcctl learned_behavior=verify before marking done",
       )
 
       assert_match(/capture: recorded/, result)

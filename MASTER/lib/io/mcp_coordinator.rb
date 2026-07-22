@@ -78,10 +78,10 @@ module Master
 
       def build_mcp_client(name, transport, mcp_config)
         ::RubyLLM::MCP::Client.new(
-          name: name,
+          name:,
           transport_type: transport,
           config: mcp_config,
-          start: false
+          start: false,
         )
       end
 

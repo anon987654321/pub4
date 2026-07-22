@@ -179,7 +179,7 @@ class RuntimeHardeningTest < Minitest::Test
       4.times { health.record(model: "flaky-free", status: :provider_error) }
 
       router = Master::CLI::Routing::ModelRouter.new(
-        config: FakeConfig.new("fallback-model"), root: dir, provider_health: health
+        config: FakeConfig.new("fallback-model"), root: dir, provider_health: health,
       )
 
       assert_equal "steady-free", router.preferred(task_type: :exploration)

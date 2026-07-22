@@ -8,7 +8,7 @@ module Master
       module AssetTransfer
         def upload_file(path)
           mime = path.end_with?(".png") ? "image/png" : "image/jpeg"
-          upload_binary(path, mime: mime)
+          upload_binary(path, mime:)
         end
 
         def upload_zip(path)

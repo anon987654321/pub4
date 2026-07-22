@@ -23,9 +23,9 @@ module MasterContainerLoader
 
       root = Rails.root.join("..").to_s
       Master.prepare_runtime!
-      Master::Voice::TtsSupervisor.ensure_daemon!(root: root)
+      Master::Voice::TtsSupervisor.ensure_daemon!(root:)
       TtsJob.ensure_worker!
-      container = Master.bootstrap_container(root: root)
+      container = Master.bootstrap_container(root:)
       config.x.master_container = container
       start_scheduler(container)
       container

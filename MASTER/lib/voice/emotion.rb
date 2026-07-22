@@ -29,12 +29,12 @@ module Master
         mode = emotion_mode(scores)
 
         {
-          primary: primary,
-          mode: mode,
-          scores: scores,
+          primary:,
+          mode:,
+          scores:,
           exaggeration: clamp(0.45 + scores[:expressiveness] * 0.45).round(2),
           cfg_weight: clamp(0.55 - scores[:urgency] * 0.2 - scores[:humor] * 0.1).round(2),
-          warmth: clamp(0.55 + scores[:intimacy] * 0.3 - scores[:urgency] * 0.15).round(2)
+          warmth: clamp(0.55 + scores[:intimacy] * 0.3 - scores[:urgency] * 0.15).round(2),
         }
       end
 

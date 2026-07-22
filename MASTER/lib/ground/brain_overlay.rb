@@ -21,7 +21,7 @@ module Master
 
       DEFAULT_MARKDOWN_DIRS = [
         File.join(Master::ROOT, "data", "claude"),
-        File.join(Master::ROOT, ".master", "memory")
+        File.join(Master::ROOT, ".master", "memory"),
       ].freeze
 
       attr_reader :root

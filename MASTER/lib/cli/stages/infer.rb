@@ -12,13 +12,13 @@ module Master
             '\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|' \
             'decouple|extract\s+(?:a\s+)?(?:module|class|layer|service)|where\s+should|' \
             'how\s+should\s+(?:we|i)\s+organiz|split\s+(?:this\s+)?(?:into|across)|consolidat)',
-            Regexp::IGNORECASE
+            Regexp::IGNORECASE,
           ),
           coding: Regexp.new(
             '\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|' \
             'refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|' \
             'add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))',
-            Regexp::IGNORECASE
+            Regexp::IGNORECASE,
           ),
           research: Regexp.new(
             '\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|' \
@@ -74,8 +74,8 @@ module Master
           publish_infer(resolved, args, msg, best[:confidence], locale)
           remember_inference(resolved, args)
           Result.ok(ctx.merge(
-            intent: :command, command: resolved, args: args, inferred_command: resolved,
-            locale: locale, infer_confidence: best[:confidence], task_type: infer_task_type(msg)
+            intent: :command, command: resolved, args:, inferred_command: resolved,
+            locale:, infer_confidence: best[:confidence], task_type: infer_task_type(msg)
           ))
         end
 
@@ -84,7 +84,7 @@ module Master
         def pass_through(ctx, msg, locale)
           pressure = msg.match?(PRESSURE_PATTERN)
           task_type = infer_task_type(msg)
-          Result.ok(ctx.merge(task_type: task_type, pressure: pressure || ctx.pressure, locale: locale))
+          Result.ok(ctx.merge(task_type:, pressure: pressure || ctx.pressure, locale:))
         end
 
         def promote(ctx, hit, locale)
@@ -92,7 +92,7 @@ module Master
           remember_inference(hit[:command], hit[:args])
           Result.ok(ctx.merge(
             intent: :command, command: hit[:command], args: hit[:args], inferred_command: hit[:command],
-            locale: locale, infer_confidence: hit[:confidence], task_type: infer_task_type(hit[:msg])
+            locale:, infer_confidence: hit[:confidence], task_type: infer_task_type(hit[:msg])
           ))
         end
 
@@ -101,7 +101,7 @@ module Master
           cmd = @session.last_inferred_command.to_s
           return if cmd.empty?
 
-          { command: cmd, args: @session.last_inferred_args.to_s, msg: msg, confidence: 0.92, match: nil, capture: "" }
+          { command: cmd, args: @session.last_inferred_args.to_s, msg:, confidence: 0.92, match: nil, capture: "" }
         end
 
         def find_best_match(msg, locale)
@@ -135,14 +135,14 @@ module Master
           end
         end
 
-        def constitutional_guard(command, args, msg)
+        def constitutional_guard(command, _args, msg)
           return unless @destructive.include?(command)
           return if explicit_destructive_consent?(msg)
 
           publish_rejected(command, msg, "destructive_guard")
           Master::Result.err(
             "infer: /#{command} requires explicit /#{command} — natural language blocked",
-            category: :policy
+            category: :policy,
           )
         end
 
@@ -167,13 +167,13 @@ module Master
         end
 
         def publish_infer(command, args, msg, confidence, locale)
-          payload = { command: command, args: args, preview: msg[0, 80], confidence: confidence, locale: locale }
+          payload = { command:, args:, preview: msg[0, 80], confidence:, locale: }
           @bus&.publish("infer:resolved", **payload)
           @bus&.publish("infer:confidence", **payload)
         end
 
         def publish_rejected(command, msg, reason)
-          @bus&.publish("infer:rejected", command: command, preview: msg[0, 80], reason: reason)
+          @bus&.publish("infer:rejected", command:, preview: msg[0, 80], reason:)
         end
 
         def load_patterns
@@ -183,7 +183,7 @@ module Master
           commands = infer["commands"] || {}
           patterns = commands.each_with_object({}) do |(name, spec), out|
             regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
-            out[name.to_s] = { regexes: regexes, capture: spec["capture"].to_s }
+            out[name.to_s] = { regexes:, capture: spec["capture"].to_s }
           end
           negatives = Array(infer["negative"]).filter_map do |row|
             src = row["pattern"].to_s

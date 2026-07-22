@@ -92,11 +92,9 @@ module Master
         def check_config_valid(root)
           config = Config.new(root)
           errors = config.validate
-          if errors.empty?
+          fail("config_valid", errors.join("; "), severity: :fatal) unless errors.empty?
             ok("config_valid", "all config values within bounds")
-          else
-            fail("config_valid", errors.join("; "), severity: :fatal)
-          end
+
         rescue StandardError => e
           fail("config_valid", "validation error: #{e.message}")
         end
@@ -107,11 +105,9 @@ module Master
 
           required = %w[soul.yml rules.yml limits.yml]
           missing = required.reject { |f| File.exist?(File.join(dir, f)) }
-          if missing.empty?
+          fail("data_dir", "missing required: #{missing.join(", ")}") unless missing.empty?
             ok("data_dir", "required law files present")
-          else
-            fail("data_dir", "missing required: #{missing.join(", ")}")
-          end
+
         end
 
         def check_soul_yaml(root)
@@ -166,15 +162,13 @@ module Master
         end
 
         # Wire constitution Parliament chain integrity (from kimi patches)
-        def check_constitution_chain(root)
+        def check_constitution_chain(_root)
           require "ground/constitution"
           parliament = Master::Ground::Parliament.new
           chain_ok, err = parliament.verify_chain
-          if chain_ok
+          fail("constitution_chain", "chain verification failed: #{err}", severity: :warning) unless chain_ok
             ok("constitution_chain", "cryptographic amendment chain intact")
-          else
-            fail("constitution_chain", "chain verification failed: #{err}", severity: :warning)
-          end
+
         rescue StandardError => e
           warn_check("constitution_chain", "verification failed: #{e.message}")
         end

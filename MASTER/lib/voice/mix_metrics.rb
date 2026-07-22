@@ -17,9 +17,9 @@ module Master
         peak_db, rms_db = volume_levels(path)
         bands = band_metrics(path)
         {
-          path: path,
-          peak_db: peak_db,
-          rms_db: rms_db,
+          path:,
+          peak_db:,
+          rms_db:,
           crest: crest_factor(peak_db, rms_db),
           duration_sec: duration_sec(path),
           **bands,
@@ -95,7 +95,7 @@ module Master
         _out, err, status = Open3.capture3(
           "ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", af, "-f", "null", "-"
         )
-        return nil unless status.success?
+        return unless status.success?
 
         blob = "#{err}#{_out}"
         blob[/mean_volume:\s*([-\d.]+)/, 1]&.to_f

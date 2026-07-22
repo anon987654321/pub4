@@ -12,7 +12,7 @@ class TurnRouterTest < Minitest::Test
       renderer:,
       commands: commands || { "status" => Master::CLI::CommandRegistry::Command.new { "status-ok" } },
       root: Dir.pwd,
-      bus: nil
+      bus: nil,
     }
   end
 

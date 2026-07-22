@@ -48,10 +48,10 @@ class EvidenceGate
     weighted = scores.sum { |key, value| value * WEIGHTS.fetch(key) }
     {
       score: weighted.round(4),
-      threshold: threshold,
+      threshold:,
       pass: weighted >= threshold,
       components: scores.transform_values { |value| value.round(4) },
-      findings: @findings
+      findings: @findings,
     }
   end
 
@@ -153,7 +153,7 @@ class EvidenceGate
       /\.env\z/,
       /id_rsa/,
       /id_ed25519/,
-      /credentials\/.*\.key/
+      /credentials\/.*\.key/,
     ]
 
     files.each do |path|

@@ -90,13 +90,13 @@ module DillaHarmonyLead
   end
 
   def passing_tone_hz(chord, step, rng)
-    return nil unless chord && chord[:hz]&.any?
-    return nil if rng.rand > 0.14
+    return unless chord && chord[:hz]&.any?
+    return if rng.rand > 0.14
     scale = chord_scale_semitones(chord)
     root = DillaHarmony.hz_to_midi(chord[:hz].min).floor
     semi = scale[(step + rng.rand(0..2)) % scale.length]
     midi = root + semi + 12
-    return nil unless midi.between?(LEAD_REGISTER_LOW, LEAD_REGISTER_HIGH)
+    return unless midi.between?(LEAD_REGISTER_LOW, LEAD_REGISTER_HIGH)
     DillaHarmony.midi_to_hz(midi)
   end
 

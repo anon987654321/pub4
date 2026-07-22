@@ -25,7 +25,7 @@ module Master
       SYCOPHANCY_RE = Regexp.new(
         "\\A\\s*(?:#{SYCOPHANCY_PREFIXES.map { |p| Regexp.escape(p) }.join('|')}|" \
         "i(?:'d| would) be (?:happy|glad))[!.,]*\\s*",
-        Regexp::IGNORECASE
+        Regexp::IGNORECASE,
       ).freeze
 
       def self.call(text) = new.call(text)
@@ -40,9 +40,9 @@ module Master
       private
 
       def prune_mixed(text)
-        text.split(FENCE_RE).map { |segment|
+        text.split(FENCE_RE).map do |segment|
           segment.start_with?("```") ? segment : strip_all(segment)
-        }.join
+        end.join
       end
 
       def strip_all(text)

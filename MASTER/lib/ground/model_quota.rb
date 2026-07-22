@@ -71,10 +71,10 @@ module Master
         data = load_data[day] || {}
         tracked = data.select { |model, _| trackable?(model) }
         {
-          day: day,
+          day:,
           limit: daily_limit,
           models: tracked.transform_values(&:to_i),
-          exhausted: tracked.select { |_, used| used.to_i >= daily_limit }.keys
+          exhausted: tracked.select { |_, used| used.to_i >= daily_limit }.keys,
         }
       end
 

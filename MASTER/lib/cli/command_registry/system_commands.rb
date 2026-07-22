@@ -192,7 +192,7 @@ module Master
         "verify: #{e.message}"
       end
 
-      def dispatch_tools(root, ai, ctx: nil)
+      def dispatch_tools(_root, ai, ctx: nil)
         reach = Master::Builder.tool_map.keys.sort
         wired = Array(ai&.dig(:tools)).map { |t| t.class.name.split("::").last }.sort
         [

@@ -31,7 +31,7 @@ module Master
 
       def review_target(arg, root:, deliberation:, bus:, review_crew:)
         target = arg.empty? ? "." : arg
-        crew_result = review_crew&.run(target: target)
+        crew_result = review_crew&.run(target:)
         artifact = snapshot_artifact(expand_or_root(target, root))
         crew_text = if crew_result&.ok?
                       crew_result.value![:summary].to_s
@@ -48,26 +48,26 @@ module Master
         raw = arg_for(ctx).to_s.strip
         apply, critique, aesthetic, target = parse_through_flags(raw)
         Master::CLI::ThroughPipeline.new(
-          scanner: scanner,
-          fix_loop: fix_loop,
-          root: root,
-          deliberation: deliberation,
-          bus: bus,
-          review_crew: review_crew
-        ).call(target: target, apply: apply, critique: critique, aesthetic: aesthetic).render
+          scanner:,
+          fix_loop:,
+          root:,
+          deliberation:,
+          bus:,
+          review_crew:,
+        ).call(target:, apply:, critique:, aesthetic:).render
       end
 
       def dispatch_through(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
         dispatch_workflow(
-          scanner: scanner, fix_loop: fix_loop, deliberation: deliberation,
-          root: root, bus: bus, ctx: ctx, review_crew: review_crew
+          scanner:, fix_loop:, deliberation:,
+          root:, bus:, ctx:, review_crew:
         )
       end
 
       def dispatch_triad(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
         dispatch_workflow(
-          scanner: scanner, fix_loop: fix_loop, deliberation: deliberation,
-          root: root, bus: bus, ctx: ctx, review_crew: review_crew
+          scanner:, fix_loop:, deliberation:,
+          root:, bus:, ctx:, review_crew:
         )
       end
 
@@ -201,7 +201,7 @@ module Master
         arg = arg_for(ctx)
         return "ecology: not wired" unless ecology
         path = arg.to_s.strip.empty? ? nil : File.expand_path(arg.strip)
-        report = ecology.scan(path: path)
+        report = ecology.scan(path:)
         ecology.render(report)
       rescue StandardError => e
         "ecology: #{e.message}"

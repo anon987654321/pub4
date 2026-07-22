@@ -70,7 +70,7 @@ module Master
           original_env = env.keys.to_h { |k| [k, ENV[k]] }
           env.each { |k, v| ENV[k] = v.to_s }
           begin
-            infra = Master::Builder.build(root: root)
+            infra = Master::Builder.build(root:)
             yield infra
           ensure
             original_env.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }

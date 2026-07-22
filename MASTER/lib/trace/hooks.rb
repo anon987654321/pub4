@@ -95,7 +95,7 @@ module Master
           session: Process.pid,
           file: payload[:path].to_s,
           count: payload[:count].to_i,
-          top_rules: payload.fetch(:top_rules, {})
+          top_rules: payload.fetch(:top_rules, {}),
         }
         FileUtils.mkdir_p(File.dirname(path))
         File.write(path, "#{JSON.generate(record)}\n", mode: "a")
@@ -107,7 +107,7 @@ module Master
           type: COST_EVENT,
           message: "session cost crossed #{format('$%.2f', payload[:total_cost].to_f)}",
           total_cost: payload[:total_cost],
-          max_per_session: payload[:max_per_session]
+          max_per_session: payload[:max_per_session],
         )
       end
 

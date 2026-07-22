@@ -32,17 +32,17 @@ class TestFeedbackLedger < Minitest::Test
   def test_attach_records_tool_success_provider_error_user_correction_and_improvement
     root = Dir.mktmpdir("feedback_ledger")
     bus = FakeBus.new
-    learnings = Master::Ground::KnowledgeStore.new(root: root)
+    learnings = Master::Ground::KnowledgeStore.new(root:)
     rollback_calls = []
     rollback = lambda { |result| rollback_calls << result; true }
-    Master::Trace::FeedbackLedger.new(event_bus: bus, learnings: learnings, rollback: rollback).attach
+    Master::Trace::FeedbackLedger.new(event_bus: bus, learnings:, rollback:).attach
     db = nil
 
     bus.publish("tool:after", { tool: "write_file", exit_code: 0 })
     bus.publish("llm:call_complete", model: "gpt-4.1", tokens_out: 42)
     bus.publish("llm:provider_outcome", model: "gpt-4.1", status: "provider_error", error: "boom")
     bus.publish("user_correction", action: "/fix")
-    bus.publish("fix_loop:soul_proposal", root: root, rule: "T205", sample: [{ file: "lib/example.rb" }])
+    bus.publish("fix_loop:soul_proposal", root:, rule: "T205", sample: [{ file: "lib/example.rb" }])
     bus.publish("fix_loop:oscillation", violations: 1)
 
     db = SQLite3::Database.new(File.join(root, ".master", "knowledge.sqlite3"))
@@ -67,10 +67,10 @@ class TestFeedbackLedger < Minitest::Test
 
   def test_analyze_self_command_reports_ledger_opportunities
     root = Dir.mktmpdir("analyze_self")
-    learnings = Master::Ground::KnowledgeStore.new(root: root)
+    learnings = Master::Ground::KnowledgeStore.new(root:)
     3.times { learnings.record_event(event_type: "provider_error", dimension: "flaky-model") }
 
-    output = Master::CLI::CommandRegistry.dispatch_analyze_self(learnings: learnings)
+    output = Master::CLI::CommandRegistry.dispatch_analyze_self(learnings:)
 
     assert_includes output, "provider_errors flaky-model count=3"
   ensure
@@ -80,12 +80,12 @@ class TestFeedbackLedger < Minitest::Test
 
   def test_provider_errors_are_queryable_separately_with_metadata
     root = Dir.mktmpdir("provider_errors")
-    learnings = Master::Ground::KnowledgeStore.new(root: root)
+    learnings = Master::Ground::KnowledgeStore.new(root:)
     learnings.record_event(
       event_type: "provider_error",
       dimension: "flaky-model",
       value: "rate_limit",
-      metadata: { model: "flaky-model", error: "429" }
+      metadata: { model: "flaky-model", error: "429" },
     )
     learnings.record_event(event_type: "tool_failure", dimension: "shell", value: "1")
 

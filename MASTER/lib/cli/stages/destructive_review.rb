@@ -38,14 +38,14 @@ module Master
         private
 
         def check_council_veto(ctx, feedback)
-          return nil unless council_veto?(feedback)
+          return unless council_veto?(feedback)
 
           publish_blocked(ctx, "council_veto")
           Result.err("review: blocked destructive /#{ctx.command}", category: :policy)
         end
 
         def check_verdict_pass(ctx, verdict)
-          return nil if verdict.pass?
+          return if verdict.pass?
 
           publish_blocked(ctx, verdict.reasons.join(", "))
           Result.err("review: blocked destructive /#{ctx.command} — #{verdict.reasons.join(", ")}", category: :policy)
@@ -75,12 +75,12 @@ module Master
             score: verdict.score,
             reasons: verdict.reasons,
             command: ctx.command,
-            phase: phase
+            phase:,
           )
         end
 
         def publish_blocked(ctx, reason)
-          @bus&.publish("review:blocked", command: ctx.command, reason: reason, phase: "pre_execute")
+          @bus&.publish("review:blocked", command: ctx.command, reason:, phase: "pre_execute")
         end
       end
     end

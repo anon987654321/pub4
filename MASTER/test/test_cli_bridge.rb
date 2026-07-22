@@ -25,8 +25,8 @@ class CLIBridgeTest < Minitest::Test
           "status" => Master::CLI::CommandRegistry::Command.new { "status-ok" },
         },
         root: Dir.pwd,
-        bus: nil
-      }
+        bus: nil,
+      },
     )
   end
 

@@ -24,20 +24,20 @@ module Master
 
         def to_h
           {
-            rule: rule,
-            rule_id: rule_id,
-            message: message,
-            line: line,
-            severity: severity,
-            fix: fix,
-            tags: tags,
-            reversibility: reversibility,
-            blast_radius: blast_radius,
-            confidence: confidence,
-            why: why,
-            genealogy: genealogy,
-            dedupe_key: dedupe_key,
-            impact_radius: impact_radius,
+            rule:,
+            rule_id:,
+            message:,
+            line:,
+            severity:,
+            fix:,
+            tags:,
+            reversibility:,
+            blast_radius:,
+            confidence:,
+            why:,
+            genealogy:,
+            dedupe_key:,
+            impact_radius:,
           }.compact
         end
 

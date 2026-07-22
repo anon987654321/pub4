@@ -21,7 +21,7 @@ class InferStageTest < Minitest::Test
   end
 
   def ctx(message, intent: :llm, **extra)
-    Master::CLI::PipelineContext.build(user_message: message, intent: intent, message: message, **extra)
+    Master::CLI::PipelineContext.build(user_message: message, intent:, message:, **extra)
   end
 
   def test_promotes_scan_natural_language

@@ -66,7 +66,7 @@ module Master
           def scan_lines(src, pattern, message:)
             indexed_lines = src.lines.each_with_index
             indexed_lines.filter_map do |line, i|
-              finding(line: i + 1, message: message) if line.match?(pattern)
+              finding(line: i + 1, message:) if line.match?(pattern)
             end
           end
         end
@@ -77,7 +77,7 @@ module Master
           CC_NODES = [
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode, Prism::UntilNode,
             Prism::ForNode, Prism::WhenNode, Prism::RescueNode, Prism::AndNode,
-            Prism::OrNode,
+            Prism::OrNode
           ].freeze
 
           def initialize
@@ -162,12 +162,12 @@ module Master
             if branch_count >= BRANCH_THRESHOLD
               finding(
                 line: node.location.start_line,
-                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — extract named handlers"
+                message: "Strategy opportunity in #{node.name}: #{branch_count} dispatch branches — extract named handlers",
               )
             elsif pipeline_step_count(method_lines) >= PIPELINE_STEP_THRESHOLD
               finding(
                 line: node.location.start_line,
-                message: "Pipeline opportunity in #{node.name}: sequential transformations can be named stages"
+                message: "Pipeline opportunity in #{node.name}: sequential transformations can be named stages",
               )
             end
           end

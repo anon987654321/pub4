@@ -39,8 +39,8 @@ module Master
         model = select_model(risk)
         council = COUNCIL_TIERS.include?(risk)
         {
-          intent: intent,
-          risk: risk,
+          intent:,
+          risk:,
           model_tier: model,
           use_council: council,
           council_roles: council ? roles_for(intent) : [],

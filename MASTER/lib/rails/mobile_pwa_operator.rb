@@ -65,7 +65,7 @@ module Master
 
       def fix_offline_view(path)
         offline_view = File.join(path, "app", "views", "pages", "offline.html.erb")
-        return nil if File.exist?(offline_view)
+        return if File.exist?(offline_view)
 
         FileUtils.mkdir_p(File.dirname(offline_view))
         File.write(offline_view, File.read(OFFLINE_TEMPLATE))
@@ -74,13 +74,13 @@ module Master
 
       def fix_service_worker(path, app_name)
         sw_path = @pwa.audit(path).fetch(:service_worker)
-        return nil unless sw_path
+        return unless sw_path
 
         sw_source = File.read(File.join(path, sw_path))
-        return nil unless SwStrategy.cache_first_only?(sw_source)
+        return unless SwStrategy.cache_first_only?(sw_source)
 
         shared = File.join(DEPLOY_RAILS, "shared", "pwa", "service_worker.js")
-        return nil unless File.file?(shared)
+        return unless File.file?(shared)
 
         target = File.join(path, sw_path)
         content = File.read(shared).gsub("__APP_NAME__", app_name.to_s).gsub("__CACHE_VERSION__", "v2")

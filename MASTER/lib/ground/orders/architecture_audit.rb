@@ -15,7 +15,7 @@ module Master
           overlaps = overlapping_keys(data_dir)
           bus&.publish("architecture_audit:bloated", files: bloated)
           bus&.publish("architecture_audit:overlap", pairs: overlaps)
-          Result.ok(bloated: bloated, overlaps: overlaps)
+          Result.ok(bloated:, overlaps:)
         rescue StandardError => e
           Result.err(e.message)
         end

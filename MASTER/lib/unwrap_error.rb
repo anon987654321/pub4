@@ -36,8 +36,8 @@ module Master
       return if hits.empty?
 
       recovery = Master.load_yaml(Master::RULES_PATH).dig("phantom_recovery", "recovery") || []
-      bus&.publish("phantom:detected", patterns: hits, recovery: recovery)
-      { patterns: hits, recovery: recovery }
+      bus&.publish("phantom:detected", patterns: hits, recovery:)
+      { patterns: hits, recovery: }
     end
 
     def handle(text, bus: nil, session: nil, scope: :default)

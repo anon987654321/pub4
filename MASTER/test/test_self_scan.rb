@@ -50,7 +50,7 @@ class TestSelfScan < Minitest::Test
     result = Master::Review::Scan::SelfScan.new(
       scanner: FakeScanner.new([]),
       root: "/tmp/master",
-      event_bus: bus
+      event_bus: bus,
     ).call
 
     assert result.ok?

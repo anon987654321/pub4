@@ -118,7 +118,7 @@ end
 
 def compile_negative_prompt(options)
   return options[:negative] if options[:negative]
-  return nil if options[:no_negative]
+  return if options[:no_negative]
 
   parts = [PLASTIC_SKIN_NEGATIVE]
   parts << ANTI_BEAUTIFICATION_NEGATIVE unless options[:allow_beautify]
@@ -151,12 +151,12 @@ end
 def build_input(prompt, options, seed:, negative_prompt:)
   cap = capability_for(options[:model])
   full = {
-    prompt: prompt,
+    prompt:,
     aspect_ratio: options[:aspect_ratio],
     output_format: "webp",
     safety_tolerance: 2,
-    seed: seed,
-    negative_prompt: negative_prompt,
+    seed:,
+    negative_prompt:,
     guidance: options[:guidance],
     num_inference_steps: options[:steps],
     cfg_scale: options[:cfg_scale],
@@ -182,13 +182,13 @@ def cache_blob(path, cache_dir)
 end
 
 def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, seed, digest)
-  sidecar = { output: output }.merge(
-    prompt: prompt,
-    compiled_prompt: compiled_prompt,
-    negative_prompt: negative_prompt,
+  sidecar = { output: }.merge(
+    prompt:,
+    compiled_prompt:,
+    negative_prompt:,
     model: options[:model],
     aspect_ratio: options[:aspect_ratio],
-    seed: seed,
+    seed:,
     sha256: digest,
     generated_at: Time.now.utc.iso8601,
   )
@@ -199,7 +199,7 @@ end
 def append_gallery_manifest(sidecar, alt_text)
   manifest = File.join(MasterPaths.repo, ".master", "media", "gallery.jsonl")
   FileUtils.mkdir_p(File.dirname(manifest))
-  File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text: alt_text).to_json) }
+  File.open(manifest, "a") { |f| f.puts(sidecar.merge(alt_text:).to_json) }
 end
 
 def maybe_handoff_postpro(output, preset)
@@ -208,7 +208,7 @@ def maybe_handoff_postpro(output, preset)
   result = Master::Io::ScriptDispatch.run(
     root: MasterPaths.root,
     tool: "postpro",
-    arg: ["--input", output, "--output", output, "--preset", preset].map { |v| Shellwords.escape(v) }.join(" ")
+    arg: ["--input", output, "--output", output, "--preset", preset].map { |v| Shellwords.escape(v) }.join(" "),
   )
   result.ok? ? output : (abort "warn: postpro handoff failed: #{result.message}")
 end
@@ -260,7 +260,7 @@ when "generate"
     varied = diversify(compiled, index, options[:batch])
     seed = options[:seed] ? options[:seed] + index : SecureRandom.random_number(2**31)
     negative_prompt = compile_negative_prompt(options)
-    input = build_input(varied, options, seed: seed, negative_prompt: negative_prompt)
+    input = build_input(varied, options, seed:, negative_prompt:)
 
     if options[:dry_run]
       puts "ok: repligen dry-run model=#{options[:model]} input=#{input.inspect}"
@@ -293,7 +293,7 @@ when "generate"
 when "search"
   query = ARGV.join(" ").strip
   abort "usage: repligen.rb search QUERY [--limit N]" if query.empty?
-  rows = Master::Io::ReplicateClient.new.models(limit: options[:limit], query: query)
+  rows = Master::Io::ReplicateClient.new.models(limit: options[:limit], query:)
   puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
 when "sync"
   rows = Master::Io::ReplicateClient.new.models(limit: options[:limit])

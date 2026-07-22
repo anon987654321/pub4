@@ -36,7 +36,7 @@ class TestSkills < Minitest::Test
               body: beta body
       YAML
 
-      skills = Master::CLI::Skills.new(root: root)
+      skills = Master::CLI::Skills.new(root:)
       loaded = skills.discover!
 
       assert_equal %w[alpha beta], loaded.map { |skill| skill[:name] }
@@ -64,7 +64,7 @@ class TestSkills < Minitest::Test
               body: from registry
       YAML
 
-      skills = Master::CLI::Skills.new(root: root)
+      skills = Master::CLI::Skills.new(root:)
       loaded = skills.discover!
 
       assert_equal ["registry_only"], loaded.map { |skill| skill[:name] }
@@ -87,10 +87,10 @@ class TestSkills < Minitest::Test
               triggers: ["beta"]
       YAML
 
-      skills = Master::CLI::Skills.new(root: root)
+      skills = Master::CLI::Skills.new(root:)
       skills.discover!
       skills.record_used("beta")
-      reloaded = Master::CLI::Skills.new(root: root)
+      reloaded = Master::CLI::Skills.new(root:)
 
       assert_equal "beta", reloaded.discover!.first[:name]
     end

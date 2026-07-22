@@ -37,17 +37,17 @@ module Master
 
       def infer_operator_command(text, container:)
         value = infer_command_value(text, container:)
-        return nil unless value
+        return unless value
 
         command = value.command.to_s
         conf = value.infer_confidence.to_f
         # Always accept through-class commands; other commands need confidence floor.
-        return nil if !THROUGH_COMMANDS.include?(command) && conf < INFER_MIN_CONFIDENCE
+        return if !THROUGH_COMMANDS.include?(command) && conf < INFER_MIN_CONFIDENCE
 
         command = normalize_inferred_command(command, text)
         args = command == "through" ? through_command_args(value, text) : value.args.to_s
 
-        { command: command, args: args, confidence: conf }
+        { command:, args:, confidence: conf }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "TurnRouter.infer_operator_command")
         nil
@@ -56,7 +56,7 @@ module Master
       def infer_command_value(text, container:)
         ctx = PipelineContext.build(user_message: text, intent: :llm, message: text)
         inferred = Stages::Infer.new(bus: container[:bus], session: container[:session]).call(ctx)
-        return nil unless inferred.ok?
+        return unless inferred.ok?
 
         value = inferred.value!
         value.intent == :command ? value : nil
@@ -106,7 +106,7 @@ module Master
       def dispatch_inferred(inferred, container:, felt_sense: nil, on_turn: nil)
         command = inferred[:command].to_s
         args = inferred[:args].to_s
-        container[:bus]&.publish("infer:auto", command: command, args: args, confidence: inferred[:confidence])
+        container[:bus]&.publish("infer:auto", command:, args:, confidence: inferred[:confidence])
         slash = args.empty? ? "/#{command}" : "/#{command} #{args}"
         dispatch_slash(slash, container:, felt_sense:, on_turn:)
       end
@@ -167,7 +167,7 @@ module Master
           on_turn:,
           memory:,
           container:,
-          risk:
+          risk:,
         )
       end
 
@@ -219,7 +219,7 @@ module Master
         Stages::Render.new(
           renderer:,
           output_check: container[:output_check],
-          event_bus: bus
+          event_bus: bus,
         ).call(ctx)
       end
 

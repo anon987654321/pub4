@@ -54,7 +54,7 @@ module Master
         end
 
         def to_h
-          ATTRIBUTES.to_h { |key| [key, public_send(key)] }.merge(rank: rank)
+          ATTRIBUTES.to_h { |key| [key, public_send(key)] }.merge(rank:)
         end
 
         def rank
@@ -121,9 +121,9 @@ module Master
         action = action.to_s.strip
         return "propose: reject requires an action" if action.empty?
 
-        append_ledger(:rejected, action: action)
+        append_ledger(:rejected, action:)
         append_corrections_ledger(action)
-        @bus&.publish("user_correction", action: action, source: "proposal_rejected")
+        @bus&.publish("user_correction", action:, source: "proposal_rejected")
         if @learnings&.respond_to?(:record_event)
           @learnings.record_event(event_type: :proposal_rejected, dimension: action)
         elsif @learnings&.respond_to?(:record)
@@ -140,14 +140,14 @@ module Master
         confidence_value = tuned_confidence(confidence || confidence_for(weight), stats)
         impact_value = tuned_impact(impact || impact_for(action, kind), stats)
         Proposal.new(
-          action: action,
-          reason: reason,
-          weight: weight,
+          action:,
+          reason:,
+          weight:,
           confidence: confidence_value,
           impact: impact_value,
-          kind: kind,
-          estimated_tokens: estimated_tokens,
-          estimated_cost: estimate_cost(estimated_tokens)
+          kind:,
+          estimated_tokens:,
+          estimated_cost: estimate_cost(estimated_tokens),
         )
       end
 

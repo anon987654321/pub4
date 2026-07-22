@@ -40,15 +40,15 @@ class ImagePresenter
   end
 
   def payload(token)
-    return nil unless token.to_s.match?(/\A[0-9a-f]{24}\z/)
+    return unless token.to_s.match?(/\A[0-9a-f]{24}\z/)
 
     meta_path = PHOTO_UPLOAD_DIR.join("#{token}.json")
-    return nil unless File.file?(meta_path)
+    return unless File.file?(meta_path)
 
     meta = JSON.parse(File.read(meta_path))
     disk_path = meta["path"].to_s
-    return nil unless upload_path_allowed?(disk_path)
-    return nil unless File.file?(disk_path)
+    return unless upload_path_allowed?(disk_path)
+    return unless File.file?(disk_path)
 
     {
       data: Base64.strict_encode64(File.binread(disk_path)),
@@ -78,7 +78,7 @@ class ImagePresenter
     final_path = processed && File.file?(processed_path) ? processed_path : original_path
     info = metadata(token, final_path, original_path, safe_name, mime, processed_path)
     File.write(PHOTO_UPLOAD_DIR.join("#{token}.json"), JSON.pretty_generate(info))
-    [:ok, { token: token, name: safe_name, processed: info["processed"], preset: DEFAULT_POSTPRO_PRESET }]
+    [:ok, { token:, name: safe_name, processed: info["processed"], preset: DEFAULT_POSTPRO_PRESET }]
   end
 
   def metadata(token, final_path, original_path, safe_name, mime, processed_path)

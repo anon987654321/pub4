@@ -38,14 +38,14 @@ class CritiqueFoldTest < Minitest::Test
         Master::Core::Effect.exec(["true"], evidence: :scan_clean),
         Master::Core::Effect.exec(["true"], evidence: :code_review),
         Master::Core::Effect.critique,
-        Master::Core::Effect.done("shipped")
+        Master::Core::Effect.done("shipped"),
       )
       runner = lambda do |**_| Master::Result.ok("critique: council pass") end
       done = Master::Core::Fold.new(
         model:,
-        constitution: constitution,
+        constitution:,
         world: Master::Core::World.new(root:, critique_runner: runner),
-        memory:
+        memory:,
       ).run("ship fix")
 
       assert_equal :complete, done.reason

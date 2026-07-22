@@ -47,7 +47,7 @@ class TestFallbackChain < Minitest::Test
     dispatcher = CountingDispatcher.new(
       "claude-cli:claude-opus-4-8" => -> { Master::Result.err("timed out", category: :timeout) },
       "z-ai/glm-4.5-air:free" => -> { Master::Result.ok("fallback ok") },
-      :default => -> { Master::Result.err("unexpected", category: :provider_error) }
+      :default => -> { Master::Result.err("unexpected", category: :provider_error) },
     )
     agent = build_agent(dispatcher)
     models = %w[claude-cli:claude-opus-4-8 z-ai/glm-4.5-air:free]
@@ -57,7 +57,7 @@ class TestFallbackChain < Minitest::Test
       candidate_models: models,
       prompt: "hi",
       context: [],
-      stream: false
+      stream: false,
     )
 
     assert_instance_of Master::Result::Ok, response

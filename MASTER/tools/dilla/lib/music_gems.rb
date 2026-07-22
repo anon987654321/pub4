@@ -71,9 +71,9 @@ module DillaMusicGems
   # Map dilla/Jazz symbols → coltrane names (always use M for major).
   def coltrane_chord_name(sym)
     s = sym.to_s.strip
-    return nil if s.empty?
-    return nil if s.match?(/nc\z|fil\z|climax|over|add9|add11|Maj13|DMaj/i)
-    return nil if s.match?(/7alt|7#11|m7b5|sus|aug|dim/i) && !s.match?(/\A[A-G][#b]?7sus4\z/i)
+    return if s.empty?
+    return if s.match?(/nc\z|fil\z|climax|over|add9|add11|Maj13|DMaj/i)
+    return if s.match?(/7alt|7#11|m7b5|sus|aug|dim/i) && !s.match?(/\A[A-G][#b]?7sus4\z/i)
 
     s = s.sub(/maj9low\z/i, "M9").sub(/maj9\z/i, "M9").sub(/maj7\z/i, "M7")
          .sub(/maj6\z/i, "M6").sub(/maj\z/i, "M")
@@ -84,7 +84,7 @@ module DillaMusicGems
   end
 
   def chord_from_symbol(sym, octave: PAD_OCTAVE, voices: PAD_VOICES)
-    return nil unless coltrane?
+    return unless coltrane?
 
     raw = sym.to_s.strip
     bass_note = nil
@@ -94,7 +94,7 @@ module DillaMusicGems
     end
 
     cname = coltrane_chord_name(raw)
-    return nil unless cname
+    return unless cname
 
     chord = ::Coltrane::Chord.new(name: cname)
     low = raw.match?(/low\z/i)
@@ -114,27 +114,27 @@ module DillaMusicGems
       bass_hz = ::Coltrane::Pitch.new(note: bass_note.strip, octave: 2).frequency.to_f.round(2)
       hz[hz.index(hz.min)] = bass_hz
       hz.sort!
-      return { name: sym.to_s, hz: hz, bass_hz: bass_hz }
+      return { name: sym.to_s, hz:, bass_hz: }
     end
-    { name: sym.to_s, hz: hz }
+    { name: sym.to_s, hz: }
   rescue ::Coltrane::ChordNotFoundError, StandardError
     nil
   end
 
   def progression_analysis(symbols)
-    return nil unless coltrane?
+    return unless coltrane?
     names = symbols.map { |s| coltrane_chord_name(s) }.compact
-    return nil if names.length < 2
+    return if names.length < 2
 
     hits = ::Coltrane::Progression.find(*names)
-    return nil if hits.empty?
+    return if hits.empty?
 
     best = hits.first
     {
       notation: best.notation,
       scale: best.scale&.name || best.scale&.to_s,
       notes_out: best.notes_out_size,
-      chords: names
+      chords: names,
     }
   rescue StandardError
     nil
@@ -158,7 +158,7 @@ module DillaMusicGems
           chord_pcs = chord.notes.map { |n| n.integer % 12 }.uniq.sort
           overlap = (chord_pcs & pcs).length
           next if overlap < 3
-          hits << { name: cname, overlap: overlap, coverage: overlap.to_f / chord_pcs.length }
+          hits << { name: cname, overlap:, coverage: overlap.to_f / chord_pcs.length }
         rescue StandardError
           next
         end
@@ -183,8 +183,8 @@ module DillaMusicGems
 
   # Mono float samples in [-1, 1]; nil → caller uses ffmpeg pipe.
   def read_mono_wav(path)
-    return nil unless wavefile? && path.to_s.downcase.end_with?(".wav")
-    return nil unless File.file?(path)
+    return unless wavefile? && path.to_s.downcase.end_with?(".wav")
+    return unless File.file?(path)
 
     samples = []
     ::WaveFile::Reader.new(path).each_buffer(4096) do |buffer|
@@ -201,7 +201,7 @@ module DillaMusicGems
   end
 
   def pitch_class_set(pitch_classes)
-    return nil unless head_music?
+    return unless head_music?
 
     pcs = pitch_classes.map { |pc| pc.to_i % 12 }
     ::HeadMusic::Analysis::PitchClassSet.new(pcs)
@@ -215,7 +215,7 @@ module DillaMusicGems
       coltrane: coltrane?,
       midilib: midilib?,
       wavefile: wavefile?,
-      head_music: head_music?
+      head_music: head_music?,
     }
   end
 end

@@ -18,12 +18,12 @@ module Master
         def add_finding(severity:, category:, message:, line:, suggestion:, file_path:)
           @findings << Finding.new(
             agent: name,
-            severity: severity,
-            category: category,
-            message: message,
-            line: line,
-            suggestion: suggestion,
-            file: file_path
+            severity:,
+            category:,
+            message:,
+            line:,
+            suggestion:,
+            file: file_path,
           )
         end
       end

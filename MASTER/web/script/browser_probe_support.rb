@@ -12,16 +12,16 @@ module BrowserProbeSupport
     Ferrum::Browser.new(
       browser_path: chrome,
       headless: "new",
-      timeout: timeout,
+      timeout:,
       process_timeout: timeout + 12,
-      pending_connection_errors: pending_connection_errors,
+      pending_connection_errors:,
       browser_options: {
         "no-sandbox" => nil,
         "disable-dev-shm-usage" => nil,
         "disable-gpu" => nil,
         "ignore-certificate-errors" => nil,
-        "remote-allow-origins" => "*"
-      }.merge(extra_options)
+        "remote-allow-origins" => "*",
+      }.merge(extra_options),
     )
   end
 
@@ -109,7 +109,7 @@ module BrowserProbeSupport
     "/usr/local/bin/chromium",
     "/usr/local/bin/chrome",
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium"
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
   ].compact.freeze
 
   BROWSER_TIMEOUT = Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "15"))

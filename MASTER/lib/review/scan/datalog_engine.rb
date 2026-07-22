@@ -22,7 +22,7 @@ module Master
         end
 
         def assert(predicate, *args)
-          @facts << Fact.new(predicate: predicate.to_sym, args: args)
+          @facts << Fact.new(predicate: predicate.to_sym, args:)
           self
         end
 
@@ -30,7 +30,7 @@ module Master
         #   :pred          — fact :pred must exist (positive)
         #   [:not, :pred]  — fact :pred must NOT exist (negation-as-failure)
         def rule(head_pred, *body_preds, &action)
-          @rules << { head: head_pred, body: body_preds, action: action }
+          @rules << { head: head_pred, body: body_preds, action: }
           self
         end
 
@@ -55,7 +55,7 @@ module Master
             next if positive_preds.empty?
             next if positive_preds.drop(1).any? { |bp| query(bp).empty? }
             query(positive_preds.first).each do |fact|
-              findings << Finding.new(rule_id: r[:head], fact: fact,
+              findings << Finding.new(rule_id: r[:head], fact:,
                                       message: r[:action]&.call(fact) || r[:head].to_s)
             end
           end

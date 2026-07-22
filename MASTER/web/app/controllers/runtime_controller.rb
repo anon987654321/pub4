@@ -24,7 +24,7 @@ class RuntimeController < ApplicationController
     metrics = Rails.cache.read("face:metrics:#{request.remote_ip}") || {}
     render_runtime_json({
       ready: !c.nil?,
-      model: model,
+      model:,
       uptime_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
       tier: request.env["master.tier"].to_s,
       build: ENV.fetch("CACHE_VERSION", "dev"),

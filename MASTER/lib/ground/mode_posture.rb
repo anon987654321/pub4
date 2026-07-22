@@ -11,11 +11,11 @@ module Master
       STATE_REL = File.join(".master", "mode").freeze
 
       def self.current(root: Master::ROOT)
-        new(root: root).current
+        new(root:).current
       end
 
       def self.set!(mode, root: Master::ROOT)
-        new(root: root).set!(mode)
+        new(root:).set!(mode)
       end
 
       def initialize(root: Master::ROOT)
@@ -27,7 +27,7 @@ module Master
         name = resolve_name
         spec = modes[name] || modes["balanced"] || {}
         {
-          name: name,
+          name:,
           scan_profile: spec["scan_profile"] || "full",
           council: spec["council"],
           autofix_llm: truthy?(spec.fetch("autofix_llm", true)),

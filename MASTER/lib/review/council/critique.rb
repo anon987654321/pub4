@@ -33,9 +33,8 @@ module Master
           sound: {
             preset_key: "sound_critique",
             max_bytes: 24_576,
-            panel: %w[
-              Electronic\ Music\ Producer Hip-Hop\ Producer Sound\ Designer
-              Sound\ Engineer User\ Advocate Accessibility Layperson Skeptic
+            panel: [
+              "Electronic Music Producer", "Hip-Hop Producer", "Sound Designer", "Sound Engineer", "User Advocate", "Accessibility", "Layperson", "Skeptic"
             ],
             files: %w[
               web/public/chat.js web/public/face.js web/public/visual_bridge.js
@@ -64,10 +63,8 @@ module Master
           dilla: {
             preset_key: "dilla_critique",
             max_bytes: 36_864,
-            panel: %w[
-              Electronic\ Music\ Producer Sound\ Engineer Label\ Executive
-              Graphic\ Designer Web\ Designer Sound\ Designer Organ\ Composer
-              Hip-Hop\ Producer Skeptic
+            panel: [
+              "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer", "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
             ],
             files: %w[
               tools/dilla/dilla.rb tools/dilla/lib/master_heuristics.rb
@@ -116,7 +113,7 @@ module Master
           cherry = cherry_pick_from(feedback, ideation_result)
           @bus&.publish(@mode[:done_event], cherry_picks: cherry.size)
           Master::Result.ok({
-            feedback: feedback,
+            feedback:,
             ideas: ideation_value(ideation_result),
             cherry_picks: cherry,
             metrics: payload[:metrics],
@@ -135,7 +132,7 @@ module Master
           Ideation.new(agent: @agent, event_bus: @bus).ideate(
             @mode[:ideation_prompt],
             constraints: @mode[:constraints],
-            cycles: (preset["cycles"] || @mode[:cycles_default]).to_i
+            cycles: (preset["cycles"] || @mode[:cycles_default]).to_i,
           )
         end
 
@@ -159,7 +156,7 @@ module Master
           combined = files.filter_map { |rel| read_truncated(rel) }.join("\n\n")
           metrics = mix_metrics_block if @mode[:include_mix_metrics]
           combined = [metrics, combined].compact.join("\n\n") if metrics
-          { combined: combined, files: files, metrics: metrics }
+          { combined:, files:, metrics: }
         end
 
         def mix_metrics_block
@@ -189,7 +186,7 @@ module Master
         def domain_context
           return ui_domain_context if @mode[:preset_key] == "ui_critique"
           return sound_domain_context if @mode[:preset_key] == "sound_critique"
-          return dilla_domain_context if @mode[:preset_key] == "dilla_critique"
+          dilla_domain_context if @mode[:preset_key] == "dilla_critique"
         end
 
         def dilla_domain_context
@@ -226,7 +223,7 @@ module Master
 
         def domain_briefs
           return platform_profile_brief if @mode[:preset_key] == "ui_critique"
-          return dilla_brief if %w[sound_critique dilla_critique].include?(@mode[:preset_key])
+          dilla_brief if %w[sound_critique dilla_critique].include?(@mode[:preset_key])
         end
 
         def platform_profile_brief

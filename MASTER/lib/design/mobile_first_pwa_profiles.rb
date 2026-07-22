@@ -18,7 +18,7 @@ module Master
           extract: ->(m) { m[0].to_i },
           threshold: BODY_FONT_MIN_PX,
           message: "font-size %dpx below #{BODY_FONT_MIN_PX}px baseline",
-          severity: :high
+          severity: :high,
         ),
         Rule.new(
           id: :line_height_too_low,
@@ -26,7 +26,7 @@ module Master
           extract: ->(m) { m[0].to_f },
           threshold: LINE_HEIGHT_MIN,
           message: "line-height %.1f below #{LINE_HEIGHT_MIN} — readability baseline",
-          severity: :medium
+          severity: :medium,
         ),
         Rule.new(
           id: :touch_target_too_small,
@@ -34,7 +34,7 @@ module Master
           extract: ->(m) { m[0].to_i },
           threshold: TOUCH_TARGET_MIN_PX,
           message: "min-height %dpx below #{TOUCH_TARGET_MIN_PX}px WCAG touch target (2.5.8)",
-          severity: :high
+          severity: :high,
         ),
       ].freeze
 
@@ -45,7 +45,7 @@ module Master
           extract: nil,
           threshold: nil,
           message: "animation/transition without @media (prefers-reduced-motion: reduce) guard",
-          severity: :medium
+          severity: :medium,
         ),
         Rule.new(
           id: :raw_primary_color,
@@ -53,7 +53,7 @@ module Master
           extract: nil,
           threshold: nil,
           message: "raw primary color — use shadow/midtone/highlight graded triplets",
-          severity: :low
+          severity: :low,
         ),
         Rule.new(
           id: :linear_timing,
@@ -61,7 +61,7 @@ module Master
           extract: nil,
           threshold: nil,
           message: "linear timing function — prefer ease-out or cubic-bezier for perceived smoothness",
-          severity: :low
+          severity: :low,
         ),
       ].freeze
 
@@ -96,7 +96,7 @@ module Master
         linear_timing: :h8_minimalism,
         landmarks: :h4_consistency,
         focus_ring: :h6_recognition,
-        form_labels: :h5_error_prevention
+        form_labels: :h5_error_prevention,
       }.freeze
 
       def heuristic_prefix(violation)

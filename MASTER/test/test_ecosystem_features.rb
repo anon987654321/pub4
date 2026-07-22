@@ -32,7 +32,7 @@ class TestEcosystemFeatures < Minitest::Test
   def test_context_pressure_compacting_band
     session = Object.new
     session.define_singleton_method(:token_est) { 130_000 }
-    snap = Master::Trace::ContextPressure.snapshot(session: session, limit: 200_000)
+    snap = Master::Trace::ContextPressure.snapshot(session:, limit: 200_000)
     assert_equal "compacting", snap[:band]
   end
 

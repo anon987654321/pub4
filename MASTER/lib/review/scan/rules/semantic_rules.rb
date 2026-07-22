@@ -57,12 +57,12 @@ module Master
             return [] unless (lang = language(path))
 
             prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
-                                             lang: lang,
+                                             lang:,
                                              code: code[0, 3_000])
             response = @agent.ask(prompt, operation: :scan_adversarial).to_s
             parse_findings(response)
           rescue StandardError => e
-            return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
           end
 
           private
@@ -124,7 +124,7 @@ module Master
             @cache[cache_key] = findings
             findings
           rescue StandardError => e
-            return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
           end
 
           private
@@ -227,7 +227,7 @@ module Master
                 fix: nil,
                 tags: [match[1].to_sym, axiom[:mode]],
                 reversibility: axiom[:reversibility],
-                blast_radius: axiom[:blast_radius]
+                blast_radius: axiom[:blast_radius],
               )
             end
           end
@@ -292,7 +292,7 @@ module Master
               if comment_lines.any? && i < lines.size && lines[i] =~ /\A\s*def\s/
                 comment_text = comment_lines.map { |l| l.strip.delete_prefix("#").strip }.join(" ")
                 body = lines[i, BODY_SNIPPET].join
-                pairs << { line: comment_start + 1, comment: comment_text, body: body } unless comment_text.empty?
+                pairs << { line: comment_start + 1, comment: comment_text, body: } unless comment_text.empty?
               end
               i += 1
             end

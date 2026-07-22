@@ -47,7 +47,7 @@ puts "probe_chat_e2e: launching Chrome (#{chrome})"
 
 Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
   browser = BrowserProbeSupport.build_browser(
-    chrome: chrome,
+    chrome:,
     timeout: Integer(ENV.fetch("PROBE_BROWSER_TIMEOUT", "12")),
     extra_options: {
       "enable-webgl" => nil,
@@ -55,7 +55,7 @@ Timeout.timeout(BrowserProbeSupport::MAX_PROBE_SECONDS) do
       "enable-unsafe-swiftshader" => nil,
       "disable-extensions" => nil,
       "disable-background-networking" => nil,
-    }
+    },
   )
 
   browser.on(:console) do |msg|

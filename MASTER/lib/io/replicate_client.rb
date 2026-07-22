@@ -48,13 +48,13 @@ module Master
 
       def predict(model_id, input, timeout: 600)
         version = latest_version(model_id)
-        pred = post(URI("#{BASE}/predictions"), { version: version, input: input })
-        wait_for(pred["id"], timeout: timeout)
+        pred = post(URI("#{BASE}/predictions"), { version:, input: })
+        wait_for(pred["id"], timeout:)
       end
 
       def predict_vision(model_id, prompt:, image_urls:, timeout: 600)
-        input = { prompt: prompt, images: Array(image_urls) }
-        predict(model_id, input, timeout: timeout)
+        input = { prompt:, images: Array(image_urls) }
+        predict(model_id, input, timeout:)
       end
 
       # Bounded catalog read used by Repligen search/sync. Replicate returns a
@@ -105,10 +105,10 @@ module Master
         raise ArgumentError, "destination must be owner/name" if owner.to_s.empty? || name.to_s.empty?
 
         post(URI("#{BASE}/models"), {
-          owner: owner,
-          name: name,
-          visibility: visibility,
-          hardware: hardware,
+          owner:,
+          name:,
+          visibility:,
+          hardware:,
         })
       end
 
@@ -119,7 +119,7 @@ module Master
         req = Net::HTTP::Post.new(URI("#{BASE}/files"))
         req["Authorization"] = "Token #{@token}"
         req["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
-        req.body = multipart_body(path, boundary, mime: mime)
+        req.body = multipart_body(path, boundary, mime:)
         data = request(req, URI("#{BASE}/files"))
         data.dig("urls", "get") || data["serving_url"] || data["url"] || raise("upload missing URL")
       end

@@ -24,7 +24,7 @@ module Master
             bus: deps[:bus],
             watch_loop: deps[:watch_loop],
             phase_gates: deps[:phase_gates],
-            skills: deps[:skills]
+            skills: deps[:skills],
           )
         end
       end

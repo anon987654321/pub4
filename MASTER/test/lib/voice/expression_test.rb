@@ -81,7 +81,7 @@ class TestExpression < Minitest::Test
     fused = Master::Voice::Expression.fuse_confidence(
       verdict: 0.9,
       retrieval: { score: 0.8 },
-      council: 0.7
+      council: 0.7,
     )
     assert fused.between?(0.75, 0.85)
     assert_in_delta 0.75, Master::Voice::Expression.fuse_confidence({}), 0.001
@@ -96,7 +96,7 @@ class TestExpression < Minitest::Test
   def test_mood_arc_from_history
     arc = Master::Voice::Expression.mood_arc(history: [
       { entropy: 0.8, valence: -0.2, arousal: 0.7 },
-      { entropy: 0.6, valence: 0.1, arousal: 0.5 }
+      { entropy: 0.6, valence: 0.1, arousal: 0.5 },
     ])
     assert arc[:entropy] > 0.5
     assert arc[:decay_rate] < 0.68

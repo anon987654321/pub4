@@ -68,15 +68,15 @@ module Master
         name = job["name"]
         interval = job["interval_seconds"].to_i
         last_run = @state.dig(name, "last_run").to_i
-        return nil unless now - last_run >= interval
+        return unless now - last_run >= interval
 
         @bus&.publish("heartbeat:run", job: name)
         result = execute_job(job)
         @state[name] = @state.fetch(name, {}).merge(
           "last_run" => now,
-          "result" => result.to_s[0, RESULT_TRUNCATE]
+          "result" => result.to_s[0, RESULT_TRUNCATE],
         )
-        { name: name, result: result }
+        { name:, result: }
       end
 
       def list

@@ -66,8 +66,8 @@ begin
         "ignore-certificate-errors" => nil,
         "remote-allow-origins" => "*",
         "disable-extensions" => nil,
-        "disable-background-networking" => nil
-      }
+        "disable-background-networking" => nil,
+      },
     )
 
     browser.on(:console) do |msg|

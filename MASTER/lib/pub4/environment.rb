@@ -72,7 +72,7 @@ module Pub4
     end
 
     def ruby_mismatch_message
-      return nil if ruby_version_ok?
+      return if ruby_version_ok?
 
       "Ruby #{RUBY_VERSION} detected; pub4 expects ~> 3.4 (use ruby34/bundle34 on OpenBSD or .ruby-version locally)"
     end

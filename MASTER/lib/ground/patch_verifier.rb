@@ -47,7 +47,7 @@ module Master
       def check_reference(file, needle)
         path = File.join(@root, file.to_s)
         ok = File.file?(path) && File.read(path, encoding: "utf-8").include?(needle.to_s)
-        Check.new(kind: :reference, target: "#{file}:#{needle}", ok: ok, detail: nil)
+        Check.new(kind: :reference, target: "#{file}:#{needle}", ok:, detail: nil)
       rescue StandardError => e
         Check.new(kind: :reference, target: "#{file}:#{needle}", ok: false, detail: e.message)
       end

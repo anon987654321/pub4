@@ -44,7 +44,7 @@ module Master
         unmet = unmet_gates(prev)
         if unmet.any?
           return Master::Result.err(
-            "phase blocked: #{prev} -> #{target}; unmet gates: #{unmet.join(", ")}"
+            "phase blocked: #{prev} -> #{target}; unmet gates: #{unmet.join(", ")}",
           )
         end
 

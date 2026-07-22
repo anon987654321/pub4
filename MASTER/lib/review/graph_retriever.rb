@@ -21,14 +21,14 @@ module Master
 
         scores = Hash.new(0.0)
         frontier = seeds
-        hops.times { |depth| frontier = visit(frontier, scores: scores, decay: HOP_DECAY**depth, seeds: seeds) }
+        hops.times { |depth| frontier = visit(frontier, scores:, decay: HOP_DECAY**depth, seeds:) }
         ranked(scores, limit)
       end
 
       private
 
       def visit(frontier, scores:, decay:, seeds:)
-        frontier.flat_map { |file| score_neighbours(file, scores: scores, decay: decay, seeds: seeds) }.uniq
+        frontier.flat_map { |file| score_neighbours(file, scores:, decay:, seeds:) }.uniq
       end
 
       def score_neighbours(file, scores:, decay:, seeds:)

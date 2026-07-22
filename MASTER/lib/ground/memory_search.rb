@@ -22,7 +22,7 @@ module Master
       end
 
       def brief(query, limit: 5)
-        rows = search(query, limit: limit)
+        rows = search(query, limit:)
         return "Memory search: no hits for #{query.inspect}." if rows.empty?
 
         lines = rows.map { |doc| "- #{doc['path']} score=#{format('%.2f', doc['score'])} title=#{doc['title']}" }

@@ -12,7 +12,7 @@ class PipelineE2eSpec < Minitest::Test
   end
 
   class FailStage
-    def call(ctx) = Master::Result.err("deliberate failure", category: :validation)
+    def call(_ctx) = Master::Result.err("deliberate failure", category: :validation)
   end
 
   class RecordStage

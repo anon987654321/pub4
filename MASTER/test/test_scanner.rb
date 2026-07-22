@@ -76,7 +76,7 @@ class TestScanner < Minitest::Test
         { "rule" => "Style/One" },
         { "rule_id" => "Naming/Three" },
         { rule: "Lint/Two" },
-        { rule: "Metrics/Four" }
+        { rule: "Metrics/Four" },
       ])], event_bus: bus)
 
       result = scanner.scan(path)
@@ -109,7 +109,7 @@ class TestScanner < Minitest::Test
       path = File.join(dir, "sample.rb")
       File.write(path, "puts 'ok'\n")
       scanner = Master::Review::Scan::Scanner.new(
-        rules: [build_rule(findings: [{ rule: "STYLE", line: 1, message: "issue" }])]
+        rules: [build_rule(findings: [{ rule: "STYLE", line: 1, message: "issue" }])],
       )
 
       out, = capture_io { scanner.scan_dir(dir, stream: true) }

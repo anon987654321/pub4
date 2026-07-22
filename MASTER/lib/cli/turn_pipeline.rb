@@ -24,7 +24,7 @@ module Master
         TurnRouter.call(
           message:,
           container: @container,
-          felt_sense: ctx[:felt_sense]
+          felt_sense: ctx[:felt_sense],
         )
       end
 

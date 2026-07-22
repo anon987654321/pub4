@@ -68,7 +68,7 @@ module Master
       end
 
       def publish_rendered
-        event_bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?, confidence: confidence)
+        event_bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?, confidence:)
       end
     end
   end

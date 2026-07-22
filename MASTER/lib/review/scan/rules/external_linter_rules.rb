@@ -45,7 +45,7 @@ module Master
             @root = root
           end
 
-          def check(code, path:)
+          def check(_code, path:)
             return [] unless path.end_with?(".rb") && linter_available?("rubocop")
 
             data = linter_json("rubocop", "--format", "json", "--no-color", path)
@@ -75,7 +75,7 @@ module Master
             @root = root
           end
 
-          def check(code, path:)
+          def check(_code, path:)
             return [] unless path.end_with?(".rb") && linter_available?("reek")
 
             smells = linter_json("reek", "--format", "json", path)
@@ -83,7 +83,7 @@ module Master
 
             smells.flat_map do |smell|
               (smell["lines"] || [1]).map do |line|
-                finding(line: line, message: "reek: #{smell["smell_type"]} — #{smell["message"]}")
+                finding(line:, message: "reek: #{smell["smell_type"]} — #{smell["message"]}")
               end
             end
           rescue StandardError => e

@@ -29,7 +29,7 @@ module Master
 
       def call
         profile, rule_filter, severity_filter = resolve_profile
-        Result.new(pairs: collect_pairs, profile: profile, rule_filter: rule_filter, severity_filter: severity_filter)
+        Result.new(pairs: collect_pairs, profile:, rule_filter:, severity_filter:)
       end
 
       private
@@ -38,16 +38,16 @@ module Master
 
       def collect_pairs
         target = target_arg
-        return [[target, scanner.scan(target, depth: depth)]] if target && File.file?(target)
+        return [[target, scanner.scan(target, depth:)]] if target && File.file?(target)
 
         dir = (target && File.directory?(target)) ? target : root
-        scan_dir = scanner.scan_dir(dir, depth: depth, glob: "**/*", stream: true)
+        scan_dir = scanner.scan_dir(dir, depth:, glob: "**/*", stream: true)
         scan_dir.ok? ? scan_dir.value! : "scan failed"
       end
 
       def target_arg
         raw = raw_target_arg
-        return nil if raw.empty?
+        return if raw.empty?
 
         expand_scan_target(raw)
       end
@@ -141,7 +141,7 @@ module Master
 
         data = Master.load_yaml(path)
         value = [data["principle_groups"] || {}, data["scan_profiles"] || {}]
-        @workflow_profiles_cache[path] = { mtime: mtime, value: value }
+        @workflow_profiles_cache[path] = { mtime:, value: }
         value
       rescue StandardError
         EMPTY_WORKFLOW_PROFILES

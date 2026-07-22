@@ -20,7 +20,7 @@ class TestGraphRetriever < Minitest::Test
   def test_ranks_neighbours_by_hop_distance
     root = "/repo"
     graph = FakeGraph.new(root, "a.rb" => ["b.rb"], "b.rb" => ["c.rb"])
-    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root: root)
+    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
 
     result = retriever.neighbors(["#{root}/a.rb"], hops: 2)
     assert_equal %w[b.rb c.rb], result.first(2)
@@ -29,7 +29,7 @@ class TestGraphRetriever < Minitest::Test
   def test_excludes_seeds_and_caps_limit
     root = "/repo"
     graph = FakeGraph.new(root, "a.rb" => %w[b.rb c.rb d.rb])
-    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root: root)
+    retriever = Master::Review::GraphRetriever.new(reference_graph: graph, root:)
 
     result = retriever.neighbors(["#{root}/a.rb"], hops: 1, limit: 2)
     assert_equal 2, result.size

@@ -104,7 +104,7 @@ module Master
           clean_count = consecutive_clean + 1
           @bus&.publish("fix_loop:clean", pass:, consecutive_clean: clean_count)
           status = clean_count >= @clean_runs_required ? :clean : :continue
-          PassResult.new(status: status, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
+          PassResult.new(status:, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
         end
 
         def ground_truth_violations(files)
@@ -136,7 +136,7 @@ module Master
             target: target.delete_prefix("#{@root}/"),
             total_violations: found.size,
             any_dirty: found.any?,
-            modules: by_mod.map { |path, count| { path:, violations: count } }
+            modules: by_mod.map { |path, count| { path:, violations: count } },
           })
         end
 

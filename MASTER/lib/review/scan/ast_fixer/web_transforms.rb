@@ -34,7 +34,7 @@ module Master
             return src if src.match?(/viewport-fit\s*=\s*cover/i)
 
             out = src.gsub(
-              /(<meta\s[^>]*name=["']viewport["'][^>]*content=["'])([^"']*)(["'])/i
+              /(<meta\s[^>]*name=["']viewport["'][^>]*content=["'])([^"']*)(["'])/i,
             ) do
               content = Regexp.last_match(2)
               next Regexp.last_match(0) if content.match?(/viewport-fit\s*=\s*cover/i)
@@ -111,7 +111,7 @@ module Master
               "padding-left" => "padding-inline-start",
               "padding-right" => "padding-inline-end",
               "border-left" => "border-inline-start",
-              "border-right" => "border-inline-end"
+              "border-right" => "border-inline-end",
             }
             out = src.gsub(/\b(?:#{replacements.keys.map { |key| Regexp.escape(key) }.join("|")})\s*:/) do |match|
               changed = true

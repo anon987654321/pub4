@@ -27,7 +27,7 @@ module Master
       def banner(target:, profile:, dry_run:, autofix:)
         emit(
           "begin target=#{target.inspect} profile=#{profile || "full"} " \
-          "dry_run=#{dry_run ? "yes" : "no"} autofix=#{autofix ? "yes" : "no"}"
+          "dry_run=#{dry_run ? "yes" : "no"} autofix=#{autofix ? "yes" : "no"}",
         )
       end
 
@@ -57,7 +57,7 @@ module Master
 
       def with_interrupt_dump(root:)
         ensure_sync!
-        holder = { text: nil, root: root }
+        holder = { text: nil, root: }
         prev_int = trap_soft("INT", holder)
         prev_term = trap_soft("TERM", holder)
         yield holder

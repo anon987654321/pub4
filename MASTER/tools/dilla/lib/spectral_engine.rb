@@ -22,7 +22,7 @@ module DillaSpectral
     [sorted[band]]
   end
 
-  def harmonic_stack_hz(fundamental, t, count: 6)
+  def harmonic_stack_hz(fundamental, _t, count: 6)
     base_midi = DillaHarmony.hz_to_midi(fundamental)
     (1..count).map { |h| DillaHarmony.midi_to_hz(base_midi + (h - 1) * 12) }
   end

@@ -5,7 +5,7 @@ module Master
     class DoneChecker
       REQUIRED_KEYS = %i[files symbols callers].freeze
 
-      def initialize(root: Master::ROOT, verifier: PatchVerifier.new(root: root))
+      def initialize(root: Master::ROOT, verifier: PatchVerifier.new(root:))
         @root = root
         @verifier = verifier
       end
@@ -15,18 +15,18 @@ module Master
         checks = @verifier.verify(
           files: normalized.fetch(:files),
           symbols: normalized.fetch(:symbols),
-          references: normalized.fetch(:callers)
+          references: normalized.fetch(:callers),
         )
         {
           done: @verifier.ok?(checks),
-          checks: checks,
+          checks:,
           report: @verifier.report(checks),
           missing_plan_keys: REQUIRED_KEYS - normalized.keys,
         }
       end
 
       def self.done?(plan, root: Master::ROOT)
-        new(root: root).call(plan).fetch(:done)
+        new(root:).call(plan).fetch(:done)
       end
 
       private

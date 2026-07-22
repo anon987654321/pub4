@@ -46,7 +46,7 @@ module Master
             lexical_unwired: c[:lexical_unwired],
             semantic_only: c[:semantic_only],
             structural_unwired: c[:structural_unwired],
-            dep_graph_gaps: ungraphed_rule_ids(registry)
+            dep_graph_gaps: ungraphed_rule_ids(registry),
           )
         end
 
@@ -90,7 +90,7 @@ module Master
             lexical_wired: lexical_wired.map { |r| r["id"] },
             lexical_unwired: lexical_unwired.map { |r| r["id"] },
             semantic_only: semantic_only.map { |r| r["id"] },
-            structural_unwired: structural_unwired.map { |r| r["id"] },
+            structural_unwired: structural_unwired.map { |r| r["id"] }
           }
         end
       end

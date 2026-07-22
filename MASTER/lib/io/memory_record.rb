@@ -25,8 +25,8 @@ module Master
         return Result.err("memory_record: key must match #{KEY_RE.source}", category: :validation) unless KEY_RE.match?(key)
 
         path = persist_context(key:, description:, type:, body:)
-        @memory&.remember("claude/#{key}", body.to_s.strip, type: type)
-        @bus&.publish("memory:record", key: key, type: type, path: relative(path))
+        @memory&.remember("claude/#{key}", body.to_s.strip, type:)
+        @bus&.publish("memory:record", key:, type:, path: relative(path))
         Result.ok("memory_record: #{relative(path)}")
       rescue StandardError => e
         Result.err("memory_record: #{e.message}", category: :unknown)

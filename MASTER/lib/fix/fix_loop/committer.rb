@@ -43,7 +43,7 @@ module Master
         end
 
         def block_commit(files)
-          @bus&.publish("fix_loop:commit_blocked", reason: "syntax", files: files)
+          @bus&.publish("fix_loop:commit_blocked", reason: "syntax", files:)
           nil
         end
 
@@ -92,7 +92,7 @@ module Master
           if status.success?
             true
           else
-            @bus&.publish("fix_loop:commit_blocked", reason: "rubocop", files: files)
+            @bus&.publish("fix_loop:commit_blocked", reason: "rubocop", files:)
             false
           end
         rescue Timeout::Error

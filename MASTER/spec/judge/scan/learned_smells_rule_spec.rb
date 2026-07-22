@@ -14,7 +14,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(
         File.join(dir, "data", "rules.yml"),
-        <<~YAML
+        <<~YAML,
           learned_smells:
             - id: SESSION_GUARD_CLAUSE
               pattern: 'guard clause'
@@ -40,7 +40,7 @@ class LearnedSmellsRuleSpec < Minitest::Test
       FileUtils.mkdir_p(File.join(dir, "data"))
       File.write(
         File.join(dir, "data", "rules.yml"),
-        <<~YAML
+        <<~YAML,
           learned_smells:
             - id: RUBY_ONLY
               pattern: 'needle'

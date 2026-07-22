@@ -15,7 +15,7 @@ module Master
 
       def add(task:, context: nil)
         items = load
-        items << { task: task, context: context, ts: Time.now.utc.iso8601 }
+        items << { task:, context:, ts: Time.now.utc.iso8601 }
         write(items)
       end
 

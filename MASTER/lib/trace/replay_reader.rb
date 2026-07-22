@@ -12,7 +12,7 @@ module Master
       def initialize(root: Master::ROOT, recorder: nil)
         @root = root
         @recorder = recorder
-        @event_log = EventLog.new(root: root)
+        @event_log = EventLog.new(root:)
       end
 
       def render(arg: "")
@@ -108,11 +108,11 @@ module Master
         return info if info.is_a?(String)
 
         window = 300
-        events = nearby_events(info[:time], window: window)
+        events = nearby_events(info[:time], window:)
         lines = [
           "replay commit #{info[:short]} #{info[:subject]}",
           "  author=#{info[:author]} at=#{info[:time].utc.iso8601}",
-          "  events ±#{window}s (#{events.size})"
+          "  events ±#{window}s (#{events.size})",
         ]
         events.each { |rec| lines << "  #{format_record(rec)}" }
         lines.join("\n")
@@ -136,7 +136,7 @@ module Master
         return "replay: commit not found: #{sha}" unless status.success? && !out.strip.empty?
 
         full, short, author, at, subject = out.strip.split("|", 5)
-        { full: full, short: short, author: author, time: Time.parse(at), subject: subject.to_s }
+        { full:, short:, author:, time: Time.parse(at), subject: subject.to_s }
       rescue StandardError => e
         "replay: commit lookup failed (#{e.message})"
       end

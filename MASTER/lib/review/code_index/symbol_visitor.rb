@@ -18,12 +18,12 @@ module Master
           name = const_name(node.constant_path)
           fqn = qualified(name)
           @symbols << Symbol.new(
-            fqn: fqn,
+            fqn:,
             type: :class,
             file: @file,
             line: node.location.start_line,
             parent: node.superclass ? const_name(node.superclass) : "Object",
-            includes: []
+            includes: [],
           )
           @metrics[:classes] += 1
           @scope.push(name); super; @scope.pop
@@ -33,12 +33,12 @@ module Master
           name = const_name(node.constant_path)
           fqn = qualified(name)
           @symbols << Symbol.new(
-            fqn: fqn,
+            fqn:,
             type: :module,
             file: @file,
             line: node.location.start_line,
             parent: nil,
-            includes: []
+            includes: [],
           )
           @metrics[:modules] += 1
           @scope.push(name); super; @scope.pop
@@ -53,7 +53,7 @@ module Master
             file: @file,
             line: node.location.start_line,
             parent: owner,
-            includes: []
+            includes: [],
           )
           @metrics[:defs] += 1
           super
@@ -67,8 +67,8 @@ module Master
           @references << Reference.new(
             from_file: @file,
             from_line: node.location.start_line,
-            to_fqn: to_fqn,
-            ref_type: :call
+            to_fqn:,
+            ref_type: :call,
           )
           super
         end

@@ -58,9 +58,9 @@ module Master
         {
           ts: Time.now.utc.iso8601,
           load_1m: load_avg_1m,
-          mem_free_pct: mem_free_pct,
-          disk_root_pct: disk_root_pct,
-          master_rss_mb: master_rss_mb,
+          mem_free_pct:,
+          disk_root_pct:,
+          master_rss_mb:,
           master_alive: master_alive?,
         }
       end

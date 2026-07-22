@@ -91,7 +91,7 @@ module Master
       def incremental_build(files)
         (@mtimes.keys - files).each { |gone| purge_file(gone) }
         changed = files.count { |f| reindex_if_stale(f) }
-        @bus&.publish("code_index:incremental", changed: changed, total: files.size) if changed > 0
+        @bus&.publish("code_index:incremental", changed:, total: files.size) if changed > 0
       end
 
       def reindex_if_stale(file)
@@ -159,7 +159,7 @@ module Master
         parse_result = Prism.parse(src)
         return unless parse_result.success?
 
-        visitor = SymbolVisitor.new(file: file, root: @root)
+        visitor = SymbolVisitor.new(file:, root: @root)
         parse_result.value.accept(visitor)
         visitor.symbols.each { |s| @symbols[s.fqn] = s }
         @references.concat(visitor.references)

@@ -33,12 +33,12 @@ module Master
                        :clear
                      end
 
-        face = face_params_for(register: register, style: base_style, risk: risk, reversibility: reversibility)
+        face = face_params_for(register:, style: base_style, risk:, reversibility:)
 
         {
-          register: register,
+          register:,
           style: base_style,
-          face: face,
+          face:,
           breath_boost: register == :creative ? 0.25 : 0.0,
           eye_attention: register == :creative ? 0.15 : 0.0,
         }
@@ -48,7 +48,7 @@ module Master
       def for_council(risk:, reversibility:)
         weight = (reversibility == :low || risk == :critical) ? 0.35 : 0.12
         {
-          emotion: emotion_for(mode: :council, risk: risk, reversibility: reversibility),
+          emotion: emotion_for(mode: :council, risk:, reversibility:),
           spirit_charge_boost: weight,
           mouth_pressure: weight * 0.8,
           eye_confidence_drop: weight * 0.6,
@@ -92,7 +92,7 @@ module Master
 
       # Evidence events carry a rendered emotion patch built from the verdict.
       def for_evidence(verdict:, score: nil)
-        { emotion: emotion_for(verdict: verdict, score: score) }
+        { emotion: emotion_for(verdict:, score:) }
       end
 
       # Rich visual deltas for a specific Osman creative style (used when tts:style:active fires).
@@ -186,7 +186,7 @@ end
           if hints.last && hints.last[:shape] == shape
             hints.last[:ms] += ms
           else
-            hints << { shape: shape, amp: amp, ms: ms }
+            hints << { shape:, amp:, ms: }
           end
         end
         hints
@@ -201,14 +201,14 @@ end
         t = 0
         hints.map do |hint|
           ms = [(hint[:ms] * scale).round, 28].max
-          frame = { shape: hint[:shape], amp: hint[:amp], t: t, ms: ms }
+          frame = { shape: hint[:shape], amp: hint[:amp], t:, ms: }
           t += ms
           frame
         end
       end
 
       def viseme_stream(text, style: nil, rate: nil)
-        plan = viseme_plan(text, style: style, rate: rate)
+        plan = viseme_plan(text, style:, rate:)
         {
           visemes: viseme_hints(text),
           viseme_plan: plan,
@@ -294,7 +294,7 @@ end
           arousal: mean_arousal.clamp(0.0, 1.0),
           valence: mean_valence.clamp(-1.0, 1.0),
           entropy: mean_entropy.clamp(0.0, 1.0),
-          decay_rate: mean_entropy > 0.55 ? 0.32 : 0.68
+          decay_rate: mean_entropy > 0.55 ? 0.32 : 0.68,
         }
       end
 
@@ -306,7 +306,7 @@ end
           emotion: emotion_for(mode: :council),
           viseme_lane: lane,
           viseme_plan: [],
-          eye_confidence_drop: persona_id.to_s == "Skeptic" ? 0.22 : 0.12
+          eye_confidence_drop: persona_id.to_s == "Skeptic" ? 0.22 : 0.12,
         }
       end
 
@@ -328,7 +328,7 @@ end
 
       def confidence_score_for(key, src)
         raw = src[key] || src[key.to_s]
-        return nil if raw.nil?
+        return if raw.nil?
 
         case raw
         when Hash then raw[:score] || raw["score"] || raw[:confidence] || raw["confidence"]

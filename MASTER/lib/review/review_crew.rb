@@ -21,7 +21,7 @@ module Master
         return Result.err("review_crew: no files under #{target}") if files.empty?
 
         collected = dispatch_workers(build_workers, files)
-        synthesized = synthesize(collected, target: target, files: files)
+        synthesized = synthesize(collected, target:, files:)
         Result.ok({ summary: synthesized, agents: collected })
       rescue StandardError => e
         Result.err("review_crew: #{e.message}", category: :infrastructure)
@@ -61,8 +61,8 @@ module Master
         # (which duplicated earlier files' findings quadratically).
         worker_findings = worker.findings
         elapsed = Time.now - started
-        @bus&.publish("review_crew:agent_done", agent: worker.name, findings: worker_findings.size, elapsed: elapsed)
-        queue << { agent: worker.name, findings: worker_findings.map(&:to_h), elapsed: elapsed }
+        @bus&.publish("review_crew:agent_done", agent: worker.name, findings: worker_findings.size, elapsed:)
+        queue << { agent: worker.name, findings: worker_findings.map(&:to_h), elapsed: }
       rescue StandardError => e
         @bus&.publish("review_crew:agent_error", agent: worker.name, error: e.message)
         queue << { agent: worker.name, findings: [], elapsed: 0.0, error: e.message }

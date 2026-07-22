@@ -27,13 +27,13 @@ module Master
 
             ast = parse_ruby(code.value!, path)
             fingerprint = semantic_fingerprint(code.value!, ast)
-            findings = apply_rules(code: code.value!, ast: ast, path: path, rule_set: rules)
-            findings = annotate_findings(findings, fingerprint: fingerprint, ast: ast)
-            publish_scan_result(path: path, depth: depth, findings: findings)
+            findings = apply_rules(code: code.value!, ast:, path:, rule_set: rules)
+            findings = annotate_findings(findings, fingerprint:, ast:)
+            publish_scan_result(path:, depth:, findings:)
             Result.ok(findings)
           end
         rescue StandardError => e
-          @bus&.publish("scan:error", path: path, error: e.message)
+          @bus&.publish("scan:error", path:, error: e.message)
           Result.err("scan failed: #{e.message}", category: :infrastructure)
         end
 
@@ -46,7 +46,7 @@ module Master
           code = File.read(path, encoding: "UTF-8")
           return Result.err("file too long: #{path}", category: :validation) if code.lines.count > MAX_LINES
 
-          @bus&.publish("scan:file_read", path: path, sha256: Digest::SHA256.hexdigest(code))
+          @bus&.publish("scan:file_read", path:, sha256: Digest::SHA256.hexdigest(code))
           Result.ok(code)
         end
 
@@ -103,30 +103,30 @@ module Master
 
           attempt_syntax_repair(path, code, result.errors)
         rescue StandardError => e
-          @bus&.publish("scan:parse_error", path: path, error: e.message)
+          @bus&.publish("scan:parse_error", path:, error: e.message)
           nil
         end
 
         def attempt_syntax_repair(path, code, errors)
-          @bus&.publish("scan:syntax_fault", path: path, error_count: errors.size)
-          repair = AutonomousRepairer.heal(path: path, source: code, event_bus: @bus)
+          @bus&.publish("scan:syntax_fault", path:, error_count: errors.size)
+          repair = AutonomousRepairer.heal(path:, source: code, event_bus: @bus)
           return if repair.err?
 
           re_parse = Prism.parse(repair.value!)
           return re_parse.value if re_parse.success?
 
-          @bus&.publish("scan:syntax_repair_failed", path: path)
+          @bus&.publish("scan:syntax_repair_failed", path:)
           nil
         end
 
         def apply_rules(code:, ast:, path:, rule_set:)
           lexical, structural, semantic = partition_rules(rule_set, ast)
           findings = []
-          findings.concat(run_rule_pass(pass: :lexical, rules: lexical, code: code, ast: ast, path: path))
-          findings.concat(run_rule_pass(pass: :structural, rules: structural, code: code, ast: ast, path: path))
+          findings.concat(run_rule_pass(pass: :lexical, rules: lexical, code:, ast:, path:))
+          findings.concat(run_rule_pass(pass: :structural, rules: structural, code:, ast:, path:))
           return findings if findings.empty? || lexical_error?(findings)
 
-          findings.concat(run_rule_pass(pass: :semantic, rules: semantic, code: code, ast: ast, path: path))
+          findings.concat(run_rule_pass(pass: :semantic, rules: semantic, code:, ast:, path:))
         end
 
         def partition_rules(rule_set, ast)
@@ -146,8 +146,8 @@ module Master
         end
 
         def run_rule_pass(pass:, rules:, code:, ast:, path:)
-          @bus&.publish("scan:pass", path: path, pass: pass, rule_count: rules.size)
-          rules.flat_map { |rule| run_rule(rule: rule, code: code, ast: ast, path: path) }
+          @bus&.publish("scan:pass", path:, pass:, rule_count: rules.size)
+          rules.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
         end
 
         def semantic_rule?(rule)
@@ -157,12 +157,12 @@ module Master
 
         def annotate_findings(findings, fingerprint:, ast:)
           Array(findings).map do |finding|
-            add_fingerprint(finding, fingerprint: fingerprint, ast: ast)
+            add_fingerprint(finding, fingerprint:, ast:)
           end
         end
 
         def add_fingerprint(finding, fingerprint:, ast:)
-          meta = { fingerprint: fingerprint }
+          meta = { fingerprint: }
           return finding.merge(meta) if finding.respond_to?(:merge)
           return finding.to_h.merge(meta) if finding.respond_to?(:to_h)
 
@@ -180,14 +180,14 @@ module Master
 
         def run_rule(rule:, code:, ast:, path:)
           if ast && rule.respond_to?(:check_ast)
-            rule.check_ast(ast, code, path: path)
+            rule.check_ast(ast, code, path:)
           else
-            rule.check(code, path: path)
+            rule.check(code, path:)
           end
         end
 
         def publish_scan_result(path:, depth:, findings:)
-          @bus&.publish("scan:complete", path: path, depth: depth, count: findings.size, top_rules: top_rules(findings))
+          @bus&.publish("scan:complete", path:, depth:, count: findings.size, top_rules: top_rules(findings))
         end
 
         def top_rules(findings, limit: 3)
@@ -217,7 +217,7 @@ module Master
             method_count: code.scan(/^\s*def\s+/).size,
             def_names: code.scan(/^\s*def\s+([a-zA-Z_][\w!?=]*)/).flatten.sort,
             constant_names: code.scan(/\b([A-Z][A-Z0-9_]*(?:::[A-Z][A-Z0-9_]*)*)\b/).flatten.sort,
-            ast_present: !ast.nil?
+            ast_present: !ast.nil?,
           }
           Digest::SHA256.hexdigest(Marshal.dump(counts))
         rescue StandardError

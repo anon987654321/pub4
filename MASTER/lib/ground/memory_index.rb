@@ -35,7 +35,7 @@ module Master
                        old
                      else
                        tokenize(body).merge(
-                         "hash" => hash, "path" => rel, "title" => title(body, path), "bytes" => body.bytesize
+                         "hash" => hash, "path" => rel, "title" => title(body, path), "bytes" => body.bytesize,
                        )
                      end
         end

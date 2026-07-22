@@ -45,7 +45,7 @@ module Master
       end
 
       def tail(limit, pattern: nil)
-        recent(limit, pattern: pattern)
+        recent(limit, pattern:)
       rescue RegexpError => e
         Master::Ground::Swallow.log(e, context: "EventLog.tail")
         []

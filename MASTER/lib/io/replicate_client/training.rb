@@ -30,7 +30,7 @@ module Master
             photos_zip_url, destination, trigger_word:, steps:, lora_rank:, webhook:, webhook_events_filter:, extra_input:
           )
           training = post(trainings_uri, body)
-          wait ? wait_for_training(training["id"], timeout: timeout) : training
+          wait ? wait_for_training(training["id"], timeout:) : training
         end
 
         def get_training(id)
@@ -66,13 +66,13 @@ module Master
 
           input = {
             input_images: photos_zip_url,
-            trigger_word: trigger_word,
+            trigger_word:,
           }
           input[:steps] = steps if steps
           input[:lora_rank] = lora_rank if lora_rank
           input.merge!(extra_input) if extra_input && !extra_input.empty?
 
-          body = { destination: destination, input: input }
+          body = { destination:, input: }
           body[:webhook] = webhook if webhook.to_s.strip != ""
           body[:webhook_events_filter] = Array(webhook_events_filter) if webhook_events_filter
 

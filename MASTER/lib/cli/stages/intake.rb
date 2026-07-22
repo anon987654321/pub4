@@ -32,7 +32,7 @@ module Master
             command = m[1].downcase
             args    = m[2].strip
             args = nil if args.empty?
-            Result.ok(ctx.merge(intent: :command, command: command, args: args, original_message: message_text))
+            Result.ok(ctx.merge(intent: :command, command:, args:, original_message: message_text))
           else
             Result.ok(ctx.merge(intent: :llm, message: expanded_message, original_message: message_text))
           end

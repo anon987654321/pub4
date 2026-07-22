@@ -56,20 +56,20 @@ module DillaDmesg
   end
 
   def ok(msg, unit: "dilla0", parent: nil)
-    emit(unit, msg, parent: parent)
+    emit(unit, msg, parent:)
   end
 
   def warn(msg, unit: "warn0", parent: "dilla0")
-    emit(unit, "warn #{msg}", parent: parent)
+    emit(unit, "warn #{msg}", parent:)
   end
 
   def error(msg, unit: "error0", parent: "dilla0")
-    emit(unit, "error #{msg}", parent: parent)
+    emit(unit, "error #{msg}", parent:)
   end
 
   def attach(unit, parent, msg = nil)
     body = msg.to_s.strip.empty? ? "attached" : msg
-    emit(unit, body, parent: parent)
+    emit(unit, body, parent:)
   end
 
   def boot!(mode: nil, cmd: nil)
@@ -80,7 +80,7 @@ module DillaDmesg
       "pid=#{Process.pid}",
       ("mode=#{mode}" if mode),
       ("cmd=#{cmd}" if cmd),
-      elapsed_tag
+      elapsed_tag,
     ].compact
     emit("dilla0", bits.join(" "), parent: "mainbus0")
   end

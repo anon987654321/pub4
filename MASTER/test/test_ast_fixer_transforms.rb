@@ -25,7 +25,7 @@ class TestAstFixerTransforms < Minitest::Test
       }
     JS
 
-    assert_includes result[:content], 'const label = `Hello ${user.name}!`;'
+    assert_includes result[:content], "const label = `Hello ${user.name}!`;"
     assert_includes result[:content], "for (const item of items)"
     assert_includes result[:content], "item?.name;"
     assert_includes result[:transforms], :no_var

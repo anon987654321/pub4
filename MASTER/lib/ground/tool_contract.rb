@@ -21,7 +21,7 @@ module Master
         :timeout_s,
         :max_retries,
         :side_effects,
-        :category
+        :category,
       )
 
       REGISTRY = {

@@ -37,7 +37,7 @@ require "ferrum"
 
 VIEWPORTS = {
   "desktop" => [1440, 900],
-  "mobile" => [390, 844]
+  "mobile" => [390, 844],
 }.freeze
 
 FileUtils.mkdir_p(options[:out])
@@ -59,8 +59,8 @@ browser = Ferrum::Browser.new(
     "use-gl" => "swiftshader",
     "enable-unsafe-swiftshader" => nil,
     "ignore-certificate-errors" => nil,
-    "remote-allow-origins" => "*"
-  }
+    "remote-allow-origins" => "*",
+  },
 )
 
 manifest = { generated_at: Time.now.utc.iso8601, url: options[:url], shots: [] }

@@ -54,7 +54,7 @@ module Master
 
       def fuzzy_cache_hit(prompt, key)
         near = fuzzy_index.nearest(prompt)
-        return nil unless near
+        return unless near
 
         @bus&.publish("cache:fuzzy_hit", key:)
         near
@@ -206,7 +206,7 @@ module Master
         elsif defined?(Master::Result::Err) && value.is_a?(Master::Result::Err)
           { __master_result: "err", message: value.message, category: value.category }
         else
-          { __master_result: "raw", value: value }
+          { __master_result: "raw", value: }
         end
       end
 
@@ -220,7 +220,7 @@ module Master
         category = :unknown unless Master::Result::CATEGORIES.key?(category)
         case kind
         when "ok" then Result.ok(value)
-        when "err" then Result.err(message, category: category)
+        when "err" then Result.err(message, category:)
         when "raw" then value
         else payload
         end

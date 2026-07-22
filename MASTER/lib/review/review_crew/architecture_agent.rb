@@ -32,7 +32,7 @@ module Master
             message: "many public methods detected",
             line: 1,
             suggestion: "split into smaller collaborating objects",
-            file_path: file_path
+            file_path:,
           )
         end
 
@@ -45,11 +45,11 @@ module Master
             message: "ghost smell detected: guard clause may be hiding a missing abstraction",
             line: 1,
             suggestion: "look for repeated branching that wants a shared object or explicit policy",
-            file_path: file_path
+            file_path:,
           )
         end
 
-        def check_cyclic_dependency(code, file_path)
+        def check_cyclic_dependency(_code, file_path)
           return if @cycle_reported
 
           cycle = detect_cycle
@@ -61,7 +61,7 @@ module Master
             message: "cyclic dependency detected: #{cycle.join(' -> ')}",
             line: 1,
             suggestion: "break the require chain by extracting shared code into a lower-level module",
-            file_path: file_path
+            file_path:,
           )
           @cycle_reported = true
         end
@@ -75,7 +75,7 @@ module Master
             message: "message chain detected",
             line: 1,
             suggestion: "introduce a local variable or delegation",
-            file_path: file_path
+            file_path:,
           )
         end
 

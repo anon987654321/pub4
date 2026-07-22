@@ -12,7 +12,7 @@ module Master
         def from_violations
           return [] if @violations.zero?
           weight = high_violation_weight(@violations)
-          [prop(action: "/polish", reason: "#{@violations} unresolved violation(s)", weight: weight, kind: :violation)]
+          [prop(action: "/polish", reason: "#{@violations} unresolved violation(s)", weight:, kind: :violation)]
         end
 
         def high_violation_weight(count)
@@ -24,7 +24,7 @@ module Master
           return [] unless last && last[:role] == :assistant
           text = last[:content].to_s
           LAST_ASSISTANT_PROPOSALS.filter_map do |pattern, action, reason, weight|
-            prop(action: action, reason: reason, weight: weight) if text.match?(pattern)
+            prop(action:, reason:, weight:) if text.match?(pattern)
           end
         end
 
@@ -133,7 +133,7 @@ module Master
           [prop(
             action: "should I save context and start fresh?",
             reason: "conversation keywords drifted away from current task `#{topic}`; save context before switching domains",
-            weight: 0.57
+            weight: 0.57,
           )]
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_topic_drift", event_bus: @bus)
@@ -142,11 +142,11 @@ module Master
 
         def topic_drift_overlap(topic)
           topic_words = meaningful_words(topic)
-          return nil if topic_words.empty?
+          return if topic_words.empty?
 
           recent_users = @session.messages.last(8).select { |msg| msg[:role].to_s == "user" }.map { |msg| msg[:content].to_s }
           recent_words = meaningful_words(recent_users.join(" "))
-          return nil if recent_words.empty?
+          return if recent_words.empty?
 
           (topic_words & recent_words).size.to_f / [topic_words.size, 1].max
         end
@@ -161,7 +161,7 @@ module Master
           [prop(
             action: "/smoke",
             reason: "recent fix `#{rule_id}` touched a performance smell; run bin/smoke to verify the improvement holds",
-            weight: 0.68
+            weight: 0.68,
           )]
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_benchmark", event_bus: @bus)
@@ -170,13 +170,13 @@ module Master
 
         def benchmark_candidate_rule_id
           event = @bus.tail(30).reverse.find { |entry| entry[:event].to_s == "rule_loop:fix_applied" }
-          return nil unless event
+          return unless event
 
           rule_id = event[:payload].to_h[:rule].to_s
-          return nil if rule_id.empty?
+          return if rule_id.empty?
 
           rule = @scanner.rules.find { |candidate| candidate.id.to_s == rule_id }
-          return nil unless rule
+          return unless rule
 
           tags = Array(rule.rule_tags).map { |tag| tag.to_s.upcase }
           hint = rule.description.to_s.downcase
@@ -195,7 +195,7 @@ module Master
           [prop(
             action: "/review",
             reason: "#{module_name} accumulated #{total} violation(s) across 3 recent scans; architectural attention needed",
-            weight: 0.67
+            weight: 0.67,
           )]
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_entropy_radar", event_bus: @bus)
@@ -204,7 +204,7 @@ module Master
 
         def entropy_hotspot
           scans = @bus.tail(100).select { |entry| entry[:event].to_s == "scan:complete" }
-          return nil if scans.size < 3
+          return if scans.size < 3
 
           grouped = scans.last(3).group_by { |entry| module_bucket(entry[:payload].to_h[:path].to_s) }
           grouped.filter_map do |module_name, entries|
@@ -226,7 +226,7 @@ module Master
           [prop(
             action: "/council",
             reason: "#{new_patterns.first(3).join(', ')} surfaced repeatedly but are not in soul.yml; consider adding a constitutional axiom",
-            weight: 0.64
+            weight: 0.64,
           )]
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_soul_evolution", event_bus: @bus)
@@ -235,10 +235,10 @@ module Master
 
         def soul_evolution_candidates
           scan_events = @bus.tail(100).select { |entry| entry[:event].to_s == "scan:complete" }.last(5)
-          return nil if scan_events.empty?
+          return if scan_events.empty?
 
           surfaced = scan_events.flat_map { |entry| Array(entry[:payload].to_h[:top_rules]).map(&:to_s) }.uniq
-          return nil if surfaced.size < 3
+          return if surfaced.size < 3
 
           known = current_axiom_names
           new_patterns = surfaced.reject { |rule| known.include?(rule) }
@@ -253,7 +253,7 @@ module Master
           [prop(
             action: "/review",
             reason: "#{rel} has grown by #{total} lines across 3 recent commits; warn before it crosses the god_class threshold",
-            weight: 0.66
+            weight: 0.66,
           )]
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_god_class_trajectory", event_bus: @bus)
@@ -281,7 +281,7 @@ module Master
           [prop(
             action: "/refactor",
             reason: "LAW_OF_DEMETER keeps firing between #{pair.join(' and ')}; propose an interface or adapter to cut the back-and-forth",
-            weight: 0.69
+            weight: 0.69,
           )]
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "propose.from_decoupling", event_bus: @bus)
@@ -292,10 +292,10 @@ module Master
           fixes = @bus.tail(100).select do |entry|
             entry[:event].to_s == "rule_loop:fix_applied" && entry[:payload].to_h[:rule].to_s == "LAW_OF_DEMETER"
           end
-          return nil if fixes.size < 2
+          return if fixes.size < 2
 
           modules = fixes.map { |entry| File.dirname(entry[:payload].to_h[:file].to_s) }.reject(&:empty?)
-          return nil if modules.size < 2
+          return if modules.size < 2
 
           pair = modules.first(2)
           pair.uniq.size < 2 ? nil : pair

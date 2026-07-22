@@ -249,17 +249,17 @@ module Master
 
         def principle_map_findings
           path = File.join(@root, "data", "principle_map.yml")
-          return [finding(path: path, line: 1, message: "missing data/principle_map.yml")] unless File.file?(path)
+          return [finding(path:, line: 1, message: "missing data/principle_map.yml")] unless File.file?(path)
 
           map = Master::Ground::PrincipleMap.load(root: @root)
           registered = Master::Review::Scan::Rule.registry.filter_map do |klass|
             Master::Review::Scan::RuleFactory.registry_id(klass, root: @root)&.upcase
           end
           map.integrity(registered_rule_ids: registered).map do |msg|
-            finding(path: path, line: 1, message: msg)
+            finding(path:, line: 1, message: msg)
           end
         rescue StandardError => e
-          [finding(path: path, line: 1, message: "principle_map integrity failed: #{e.class}: #{e.message}")]
+          [finding(path:, line: 1, message: "principle_map integrity failed: #{e.class}: #{e.message}")]
         end
 
         def finding(path:, line:, message:)

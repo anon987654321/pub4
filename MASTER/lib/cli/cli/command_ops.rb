@@ -199,7 +199,7 @@ module Master
 
       def run_critique(mode, label:, intro:)
         puts @refs.renderer.render("#{label}: #{intro}", mode: :dim)
-        critic = Master::Review::Council::Critique.new(mode: mode, agent: @refs.agent, event_bus: @refs.bus)
+        critic = Master::Review::Council::Critique.new(mode:, agent: @refs.agent, event_bus: @refs.bus)
         result = critic.run
         unless result.ok?
           puts @refs.renderer.render("#{label}: #{result.message}", mode: :warning)

@@ -93,7 +93,7 @@ module Master
         def scored_entries(entries, now)
           entries.map do |key, data|
             age_days = (now - entry_timestamp(data)) / 86_400.0
-            { key: key, score: 1.0 / (1.0 + age_days / TTL_DAYS.to_f) }
+            { key:, score: 1.0 / (1.0 + age_days / TTL_DAYS.to_f) }
           end
         end
 

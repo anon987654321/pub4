@@ -16,7 +16,7 @@ module Master
       def install_defaults!
         register(:after_scan) do |ctx|
           count = ctx[:violations].to_i
-          @bus.publish("triggers:violations_found", count: count) if count > 0
+          @bus.publish("triggers:violations_found", count:) if count > 0
         end
 
         register(:on_error) do |ctx|
@@ -32,14 +32,14 @@ module Master
       end
 
       def register(event, &handler)
-        @rules << { event: event.to_sym, handler: handler }
+        @rules << { event: event.to_sym, handler: }
       end
 
       def fire(event, context = {})
         @rules.select { |r| r[:event] == event.to_sym }.each do |rule|
           rule[:handler].call(context)
         rescue StandardError => e
-          @bus.publish("triggers:handler_error", event: event, error: e.message)
+          @bus.publish("triggers:handler_error", event:, error: e.message)
         end
       end
 

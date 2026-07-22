@@ -135,13 +135,13 @@ module Master
         Engines.synth(
           engine,
           text: clean,
-          out_path: out_path,
-          cfg: cfg,
-          emotion: emotion,
-          melody: melody,
+          out_path:,
+          cfg:,
+          emotion:,
+          melody:,
           voice: Speech.resolve_voice(resolved_voice),
           rate: resolved_rate.to_s,
-          pitch: resolved_pitch.to_s
+          pitch: resolved_pitch.to_s,
         )
       end
 
@@ -151,13 +151,13 @@ module Master
         File.write(
           path,
           JSON.generate(
-            engine: engine,
-            voice: voice,
-            rate: rate,
-            pitch: pitch,
+            engine:,
+            voice:,
+            rate:,
+            pitch:,
             primary: emotion[:primary],
-            at: Time.now.to_i
-          )
+            at: Time.now.to_i,
+          ),
         )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Transcendent.log_pick")

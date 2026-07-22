@@ -25,7 +25,7 @@ def find_sox
     "/usr/local/bin/sox",                             # OpenBSD
     "/usr/bin/sox",                                   # Linux
     File.join(__dir__, "dilla", "effects", "sox", "sox.exe"),  # Cygwin relative
-    "G:/pub/dilla/effects/sox/sox.exe"                # Absolute Cygwin,
+    "G:/pub/dilla/effects/sox/sox.exe",                # Absolute Cygwin,
   ]
 
   candidates.each do |path|

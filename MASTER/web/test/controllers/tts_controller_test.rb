@@ -35,11 +35,11 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     text = "hello test"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
-    job = TtsJob.new(text: text, voice: voice, style: style)
+    job = TtsJob.new(text:, voice:, style:)
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
 
-    get "/chat/tts", params: { text: text, voice: voice.to_s, style: style.to_s }
+    get "/chat/tts", params: { text:, voice: voice.to_s, style: style.to_s }
 
     assert_response :success
     assert response.headers["X-TTS-Job"].present?
@@ -52,12 +52,12 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     text = "status ready"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
-    job = TtsJob.new(text: text, voice: voice, style: style)
+    job = TtsJob.new(text:, voice:, style:)
     File.binwrite(@cache_dir.join("#{job.job_id}.mp3"), "ID3\x03\x00fake-mp3")
-    File.write(@cache_dir.join("#{job.job_id}.job"), { text: text, voice: voice, style: style }.to_json)
+    File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
     File.write(
       @cache_dir.join("#{job.job_id}.meta.json"),
-      { job_id: job.job_id, viseme_plan: [{ shape: "E", amp: 0.8, t: 0, ms: 50 }] }.to_json
+      { job_id: job.job_id, viseme_plan: [{ shape: "E", amp: 0.8, t: 0, ms: 50 }] }.to_json,
     )
 
     get "/chat/tts/status", params: { job: job.job_id }
@@ -71,10 +71,10 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     text = "cancel me"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
-    job = TtsJob.new(text: text, voice: voice, style: style)
+    job = TtsJob.new(text:, voice:, style:)
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
-    File.write(@cache_dir.join("#{job.job_id}.job"), { text: text, voice: voice, style: style }.to_json)
+    File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
 
     delete "/chat/tts/status", params: { job: job.job_id }
 

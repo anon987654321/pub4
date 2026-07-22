@@ -37,7 +37,7 @@ log = run_git(
   "--diff-filter=DMR",
   "--patch",
   "--",
-  *PATHS
+  *PATHS,
 )
 
 current_commit = nil
@@ -66,7 +66,7 @@ log.each_line do |line|
   hits << {
     commit: current_commit,
     file: current_file,
-    line: text[0, 220]
+    line: text[0, 220],
   }
 end
 

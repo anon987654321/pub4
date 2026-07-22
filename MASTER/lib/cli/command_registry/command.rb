@@ -15,7 +15,7 @@ module Master
         def call(ctx)
           return @handler.call(ctx) if @handler
 
-          @receiver.public_send(@method_name, *@args, **@kwargs.merge(ctx: ctx))
+          @receiver.public_send(@method_name, *@args, **@kwargs.merge(ctx:))
         rescue ArgumentError => e
           return @receiver.public_send(@method_name, *@args, **@kwargs) if e.message.include?("unknown keyword: :ctx")
           raise unless keyword_dependency_error?(e)

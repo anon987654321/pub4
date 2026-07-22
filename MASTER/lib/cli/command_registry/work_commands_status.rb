@@ -59,7 +59,7 @@ module Master
       end
 
       def last_event(root, pattern)
-        Trace::EventLog.new(root: root).recent(40, pattern: pattern).last
+        Trace::EventLog.new(root:).recent(40, pattern:).last
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.last_event")
         nil
@@ -99,7 +99,7 @@ module Master
       end
 
       def failure_events(root, n)
-        records = Trace::EventLog.new(root: root).recent(40)
+        records = Trace::EventLog.new(root:).recent(40)
         records = records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }
         now = Time.now.utc
         records.last(n).map do |rec|
@@ -121,7 +121,7 @@ end
 
       def recent_events(root, n)
         now = Time.now.utc
-        Trace::EventLog.new(root: root).recent(n).map do |rec|
+        Trace::EventLog.new(root:).recent(n).map do |rec|
           ts = (Time.parse(rec["timestamp"]) rescue now)
           secs = (now - ts).to_i.abs
           ago = if secs < 60
@@ -140,7 +140,7 @@ end
 
       # /resync — divergence repair: tag, fetch, reset, bundle, restart.
       def dispatch_resync(root:, fix_loop:, git:, bus:, ctx: nil)
-        ResyncService.new(root: root, fix_loop: fix_loop, git: git, bus: bus).call(dry_run: arg_for(ctx).include?("--dry-run"))
+        ResyncService.new(root:, fix_loop:, git:, bus:).call(dry_run: arg_for(ctx).include?("--dry-run"))
       end
 
       # /tail [N] [pattern] — last N events matching pattern. Default N=20.
@@ -148,7 +148,7 @@ end
         arg = arg_for(ctx)
         n_arg, pattern = arg.split(/\s+/, 2)
         n = n_arg.to_i.positive? ? n_arg.to_i : 20
-        records = Trace::EventLog.new(root: root).tail(n, pattern: pattern)
+        records = Trace::EventLog.new(root:).tail(n, pattern:)
         return "tail: no events" if records.empty?
 
         records.map do |rec|
@@ -187,7 +187,7 @@ end
 
       def run_fix_and_prescan(fix_loop, scanner, arg, root)
         target = expand_or_root(arg, root)
-        prescan = anti_sprawl_prescan(scanner: scanner, target: target, root: root)
+        prescan = anti_sprawl_prescan(scanner:, target:, root:)
         result = fix_loop.run(target)
         output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
         [prescan, output].reject(&:empty?).join("\n")
@@ -197,7 +197,7 @@ end
         paths = prescan_paths(target)
         return "" if paths.empty?
 
-        pairs = Master::Review::Scan::CrossFileAnalysis.new(root: root).call(paths)
+        pairs = Master::Review::Scan::CrossFileAnalysis.new(root:).call(paths)
         findings = pairs.flat_map { |_path, result| Master::Result.wrap(result).value_or([]) }
         return "Checking for side effects...\nprescan: clean. Moving on." if findings.empty?
 
@@ -224,7 +224,7 @@ end
           "alternatives:",
           "  1. /fix --dry-run #{target} to inspect intended changes without writing",
           "  2. /scan #{target} to isolate the highest-confidence findings first",
-          "  3. /review #{target} to get a council critique before retrying the repair"
+          "  3. /review #{target} to get a council critique before retrying the repair",
         ].join("\n")
       end
     end

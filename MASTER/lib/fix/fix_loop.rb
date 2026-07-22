@@ -40,12 +40,12 @@ module Master
         @halt_reason = nil
         @git         = git || Io::GitOperations.new(root)
 
-        @file_collector = FileCollector.new(root: root, bus: bus)
-        @rule_order     = RuleOrder.new(rules: rules, learnings: learnings, bus: bus, root: root)
+        @file_collector = FileCollector.new(root:, bus:)
+        @rule_order     = RuleOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner    = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
           ground_truth:, preserve_user_intent:, law_resolver:)
         # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
-        @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root: root) if bus
+        @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root:) if bus
       end
 
       def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
@@ -68,7 +68,7 @@ module Master
         Result.ok(
           total: violations.size,
           rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
-          files: by_file.sort_by { |_, n| -n }.first(10).to_h
+          files: by_file.sort_by { |_, n| -n }.first(10).to_h,
         )
       end
 
@@ -84,19 +84,19 @@ module Master
 
       def build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
         ground_truth:, preserve_user_intent:, law_resolver:)
-        committer    = Committer.new(git: @git, bus: bus, root: root,
-                                     ground_truth: ground_truth, preserve_user_intent: preserve_user_intent)
+        committer    = Committer.new(git: @git, bus:, root:,
+                                     ground_truth:, preserve_user_intent:)
         conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
-        loop_scanner = Scanner.new(scanner: scanner, root: root, bus: bus, conflict_resolver:)
+        loop_scanner = Scanner.new(scanner:, root:, bus:, conflict_resolver:)
         llm_router   = LlmRouter.new(agent)
         preamble     = self.class.preamble_from_soul
 
         PassRunner.new(
           bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
           rules:, agent:, scanner:, learnings:, preamble:,
-          clean_runs_required: clean_runs_required,
-          plateau_window:      plateau_window,
-          ground_truth: ground_truth
+          clean_runs_required:,
+          plateau_window:,
+          ground_truth:
         )
       end
 
@@ -120,7 +120,7 @@ module Master
         end
 
         result = @pass_runner.run_pass(
-          files: files, target: target, pass: pass, deadline: deadline,
+          files:, target:, pass:, deadline:,
           history: state[:history], seen_snapshots: state[:seen_snapshots],
           recurring_violations: state[:recurring_violations],
           consecutive_clean: state[:consecutive_clean]

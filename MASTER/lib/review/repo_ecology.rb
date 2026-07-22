@@ -126,10 +126,10 @@ module Master
           bytes: content.bytesize,
           lines: content.lines.size,
           symbol_count: symbol_count_for(rel),
-          tokens: tokens,
+          tokens:,
           digest: Digest::SHA256.hexdigest(content),
           signature: signature(tokens, rel),
-          inbound_refs: 0
+          inbound_refs: 0,
         }
       end
 
@@ -245,7 +245,7 @@ module Master
         {
           max_depth: depths.max || 0,
           avg_depth: depths.empty? ? 0 : (depths.sum.to_f / depths.size).round(2),
-          orphan_dirs: counts.count { |_dir, count| count == 1 }
+          orphan_dirs: counts.count { |_dir, count| count == 1 },
         }
       end
 

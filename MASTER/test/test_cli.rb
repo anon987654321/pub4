@@ -49,7 +49,7 @@ class TestCLI < Minitest::Test
     output = Master::CLI::CommandRegistry.format_scan_results(
       pairs: [["sample.rb", Master::Result.ok(findings)]],
       profile: nil,
-      rule_filter: nil
+      rule_filter: nil,
     )
     lines = output.lines.map(&:chomp)
 
@@ -65,7 +65,7 @@ class TestCLI < Minitest::Test
       pairs: [["sample.rb", Master::Result.ok(findings)]],
       profile: nil,
       rule_filter: nil,
-      dry_run: true
+      dry_run: true,
     )
 
     assert_match(/\Adry-run: 1 total violations \(no changes made\)/, output)
@@ -81,9 +81,9 @@ class TestCLI < Minitest::Test
     end
 
     output = Master::CLI::CommandRegistry.dispatch_fix(
-      fix_loop: fix_loop,
+      fix_loop:,
       root: Dir.pwd,
-      arg: "--dry-run ."
+      arg: "--dry-run .",
     )
 
     assert_equal "preview: clean — no violations", output
@@ -124,13 +124,13 @@ class TestCLI < Minitest::Test
       container: {
         session: Object.new,
         agent: Object.new,
-        renderer: renderer,
+        renderer:,
         logging: Object.new,
         undo: Object.new,
         config: {},
         pipeline: Object.new,
-        skills: skills
-      }
+        skills:,
+      },
     )
     cli.instance_variable_set(:@focus_mode, true)
 
@@ -147,11 +147,11 @@ class TestCLI < Minitest::Test
     config.expect(:save!, nil)
 
     output = Master::CLI::CommandRegistry.dispatch_model(
-      agent: agent,
-      config: config,
+      agent:,
+      config:,
       metrics: nil,
       root: Dir.pwd,
-      arg: "gpt-4o"
+      arg: "gpt-4o",
     )
 
     assert_equal "model: gpt-4o", output

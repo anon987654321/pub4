@@ -28,7 +28,7 @@ module Master
       private
 
       def result(pass, score, reasons)
-        Result.new(pass: pass, score: score, reasons: reasons)
+        Result.new(pass:, score:, reasons:)
       end
     end
   end

@@ -76,25 +76,25 @@ module Master
           host: "brgen.no",
           synchronized: probe_ok?("brgen"),
           timestamp: Time.now.to_i,
-          context: context.strip.empty? ? nil : context.strip[0, 240]
+          context: context.strip.empty? ? nil : context.strip[0, 240],
         }.compact
       end
 
       def fetch_maps_viewport
         url = "https://maps.brgen.no/"
         if @web_fetch
-          fetched = @web_fetch.call(url: url)
-          return { cluster: "maps", url: url, fetch: fetched.ok? ? fetched.value![0, 800] : fetched.message } if fetched.ok?
+          fetched = @web_fetch.call(url:)
+          return { cluster: "maps", url:, fetch: fetched.ok? ? fetched.value![0, 800] : fetched.message } if fetched.ok?
         end
         probe = probe_http(url)
-        { cluster: "maps", url: url, status: probe[:status], synchronized: probe[:ok] }
+        { cluster: "maps", url:, status: probe[:status], synchronized: probe[:ok] }
       end
 
       def probe_app(name, url)
         probe = probe_http(url)
-        return { error: "Upstream system verification delay", app: name, url: url } unless probe[:ok]
+        return { error: "Upstream system verification delay", app: name, url: } unless probe[:ok]
 
-        { status: "synchronized", app: name, url: url, telemetry: probe[:body].to_s[0, 400] }
+        { status: "synchronized", app: name, url:, telemetry: probe[:body].to_s[0, 400] }
       end
 
       def app_url(name)
@@ -123,7 +123,7 @@ module Master
         http.read_timeout = timeout
         res = http.get(uri.request_uri)
         body = res.body.to_s.strip
-        { ok: res.code.to_i < 500, status: res.code.to_i, body: body }
+        { ok: res.code.to_i < 500, status: res.code.to_i, body: }
       rescue StandardError => e
         { ok: false, status: 0, body: e.message }
       end

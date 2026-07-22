@@ -139,7 +139,7 @@ class AuthTier
     return candidate if candidate.length >= MIN_TOKEN_LENGTH
 
     warn "auth_tier: rotating weak web_token (#{candidate.length} chars)" if candidate.length.positive?
-    return nil unless readable
+    return unless readable
 
     seed_token(config_path, cfg)
   end

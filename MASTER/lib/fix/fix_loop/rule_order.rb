@@ -31,8 +31,8 @@ module Master
             frequency = violation_counts[r.id].to_f + adjusted
             density = bias_guard.priority_score(
               severity: rule_severity(r),
-              frequency: frequency,
-              age_days: violation_age_days(r.id)
+              frequency:,
+              age_days: violation_age_days(r.id),
             )
             quality = @learnings&.fix_quality(rule: r.id) || 0.5
             tier2 = tier2?(r.id) ? 1 : 0

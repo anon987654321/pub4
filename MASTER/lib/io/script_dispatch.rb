@@ -23,7 +23,7 @@ module Master
           RbConfig.ruby,
           script,
           *argv,
-          chdir: working_directory(requested_root, script)
+          chdir: working_directory(requested_root, script),
         )
         status.success? ? Result.ok(out.strip) : Result.err("#{tool}: exit=#{status.exitstatus}\n#{out.strip}")
       rescue ArgumentError => e

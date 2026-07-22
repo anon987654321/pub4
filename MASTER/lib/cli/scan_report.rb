@@ -130,14 +130,14 @@ module Master
             confidence: confidences.empty? ? cluster.first[:confidence] : confidences.sum / confidences.size.to_f,
             impact_radius: impact_radius(cluster),
             why: cluster.first.fetch(:why) { default_why(cluster.first) },
-            genealogy: cluster.first.fetch(:genealogy) { default_genealogy(cluster.first) }
+            genealogy: cluster.first.fetch(:genealogy) { default_genealogy(cluster.first) },
           )
         end
       end
 
       def raw_violations
         pairs.flat_map do |(file, file_result)|
-          Result.wrap(file_result).value_or([]).map { |violation| violation.merge(file: file) }
+          Result.wrap(file_result).value_or([]).map { |violation| violation.merge(file:) }
         end
       end
 
@@ -251,9 +251,9 @@ module Master
           next if files.size < 2 && cluster.size < 3
 
           {
-            rule: rule,
-            message: message,
-            fix: fix,
+            rule:,
+            message:,
+            fix:,
             count: cluster.size,
             files: files.size,
           }

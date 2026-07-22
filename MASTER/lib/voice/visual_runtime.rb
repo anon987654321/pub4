@@ -61,7 +61,7 @@ module Master
         fused_confidence = Expression.fuse_confidence(
           verdict: base[:confidence],
           retrieval: history.dig(:retrieval, :score),
-          council: history.dig(:council, :score)
+          council: history.dig(:council, :score),
         )
 
         {
@@ -114,7 +114,7 @@ module Master
         avg = recent_entropy_average(messages)
 
         {
-          turn_count: turn_count,
+          turn_count:,
           recent_entropy_avg: avg.round(3),
           retrieval: session.respond_to?(:retrieval_confidence) ? { score: session.retrieval_confidence } : nil,
           council: session.respond_to?(:council_confidence) ? { score: session.council_confidence } : nil,

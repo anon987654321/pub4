@@ -16,7 +16,7 @@ class TestFixLoopOscillation < Minitest::Test
     end
 
     def publish(event, payload = {})
-      @events << { event: event, payload: payload }
+      @events << { event:, payload: }
       (@subs[event] || []).each { |h| h.call(payload) }
     end
   end
@@ -146,7 +146,7 @@ class TestFixLoopOscillation < Minitest::Test
       root: @root,
       bus: @bus,
       git: StubGit.new,
-      rollback: rollback
+      rollback:,
     )
   end
 
@@ -154,17 +154,17 @@ class TestFixLoopOscillation < Minitest::Test
     Master::Fix::FixLoop.new(
       rules: [StubRule.new("TEST_RULE", :warning)],
       agent: OpenCircuitAgent.new,
-      scanner: scanner,
+      scanner:,
       root: @root,
       bus: @bus,
-      git: StubGit.new
+      git: StubGit.new,
     )
   end
 
   def test_oscillation_fires_when_violation_set_repeats
     # Pass 1: snapshot recorded. Pass 2: same snapshot -> oscillation break.
     rollback = RollbackSpy.new
-    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback: rollback)
+    loop = build_loop([{ rule: "TEST_RULE", file: "dummy.yml", line: 1, message: "osc" }], rollback:)
     result = loop.run(@root)
 
     assert result.ok?
@@ -204,7 +204,7 @@ class TestFixLoopOscillation < Minitest::Test
     scans = [
       [persistent],
       [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 2, message: "new" }],
-      [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 3, message: "newer" }]
+      [persistent, { rule: "TEST_RULE", file: "dummy.yml", line: 3, message: "newer" }],
     ]
     loop = build_loop_with_scanner(SequenceScanner.new(scans))
     loop.run(@root, max_passes: 5)
@@ -222,7 +222,7 @@ class TestFixLoopOscillation < Minitest::Test
       scanner: ConstantScanner.new([]),
       root: @root,
       bus: @bus,
-      git: StubGit.new
+      git: StubGit.new,
     )
     loop.run_forever(@root, max_cycles: 2, startup_delay: 0, idle_sleep: 0)
 
@@ -239,7 +239,7 @@ class TestFixLoopOscillation < Minitest::Test
       scanner: ConstantScanner.new([]),
       root: @root,
       bus: @bus,
-      git: StubGit.new
+      git: StubGit.new,
     )
     loop.run_forever(@root, max_cycles: 3, startup_delay: 0, idle_sleep: 0, cooldown_sleep: 0)
 

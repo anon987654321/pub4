@@ -52,7 +52,7 @@ class ChatService
       container: @container,
       felt_sense: felt_sense_payload,
       on_turn: method(:stream_fold_turn),
-      on_chunk: method(:write_chunk)
+      on_chunk: method(:write_chunk),
     )
     write_fallback(result)
     write_turn_ctx_footer
@@ -217,7 +217,7 @@ class ChatService
       context: "ChatService.rendered_text",
       event_bus: @container[:bus],
       category: result.category,
-      result_context: result.context
+      result_context: result.context,
     )
   end
 
@@ -289,13 +289,13 @@ class ChatService
     write_json_event("council:speech", {
       voice: voice.to_s,
       text: sentence,
-      persona: persona,
+      persona:,
       label: face[:label],
       position: face[:position].to_s,
       viseme_lane: face[:viseme_lane].to_s,
       blendshapes: face[:blendshapes],
-      expression: expression,
-      viseme_plan: viseme_plan
+      expression:,
+      viseme_plan:,
     })
   end
 
@@ -321,7 +321,7 @@ class ChatService
     {
       tool: event[:tool].to_s,
       path: path.empty? ? "" : File.basename(path),
-      command: Master::Ground::Redactor.text(event[:command].to_s)
+      command: Master::Ground::Redactor.text(event[:command].to_s),
     }
   end
 
@@ -338,7 +338,7 @@ class ChatService
       model: event[:model].to_s.split("/").last,
       token_est: event[:token_est],
       limit: event[:limit],
-      pct: event[:pct]
+      pct: event[:pct],
     }
   end
 
@@ -351,7 +351,7 @@ class ChatService
   end
 
   def felt_sense_payload
-    return nil unless @params[:state].present?
+    return unless @params[:state].present?
 
     parts = @params[:state].to_s.split("|")
     {
@@ -361,7 +361,7 @@ class ChatService
       confidence: parts[3].to_f,
       arousal: parts[4].to_f,
       valence: parts[5].to_f,
-      hist_entropy: parts[6].to_f
+      hist_entropy: parts[6].to_f,
     }
   rescue StandardError
     nil
@@ -388,7 +388,11 @@ class ChatService
   end
 
   def verdict_for(event)
-    event[:vetoes].to_i.positive? ? "veto" : (event[:judge] ? "pass" : "unclear")
+    if event[:vetoes].to_i.positive?
+"veto"
+else
+(event[:judge] ? "pass" : "unclear")
+end
   end
 
   def track_mutation(event)
@@ -413,7 +417,7 @@ class ChatService
     @container[:bus].publish(
       "chat:mutation_pending_review",
       count: paths.size,
-      paths: paths.map { |path| File.basename(path) }
+      paths: paths.map { |path| File.basename(path) },
     )
   end
 
@@ -437,7 +441,7 @@ class ChatService
   def dmesg_format(event, payload)
     sub, rest = event.split(":", 2)
     desc = dmesg_description(event, payload, sub, rest)
-    return nil if desc.nil?
+    return if desc.nil?
 
     "#{sub}0 at master0: #{desc}"
   end

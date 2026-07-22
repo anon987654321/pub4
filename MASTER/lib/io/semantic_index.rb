@@ -33,7 +33,7 @@ module Master
         vector = embed(text)
         return value if vector.nil?
 
-        @entries.push(embedding: vector, value: value)
+        @entries.push(embedding: vector, value:)
         @entries.shift while @entries.size > @max_entries
         value
       end

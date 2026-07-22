@@ -32,7 +32,7 @@ module Master
         def secure_execute(args, chdir: Dir.pwd)
           validate_command!(args)
           clean_env = { "LANG" => "C", "LC_ALL" => "C" }
-          stdout_and_stderr, status = Master::Io::Exec.capture2e(clean_env, *Array(args), chdir: chdir)
+          stdout_and_stderr, status = Master::Io::Exec.capture2e(clean_env, *Array(args), chdir:)
           return Result.ok(stdout_and_stderr) if status.success?
 
           Result.err(stdout_and_stderr, category: :infrastructure)

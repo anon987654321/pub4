@@ -189,7 +189,7 @@ module DillaTheoryRuntime
     chords.each_with_index do |c, i|
       c[:theory] = {
         pc: Array(c[:hz]).map { |hz| hz_to_pc(hz) },
-        insight: i.zero? ? insight : nil
+        insight: i.zero? ? insight : nil,
       }
     end
     chords

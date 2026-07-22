@@ -36,8 +36,8 @@ module Pub4
 
     def runtime_skip_reason
       return "SKIP_RUNTIME_GATE=1" if ENV["SKIP_RUNTIME_GATE"] == "1"
-      return nil if Environment.on_vps? || Environment.on_openbsd?
-      return nil if Environment.ruby_version_ok?
+      return if Environment.on_vps? || Environment.on_openbsd?
+      return if Environment.ruby_version_ok?
 
       Environment.ruby_mismatch_message
     end

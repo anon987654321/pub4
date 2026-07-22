@@ -53,7 +53,7 @@ module Master
           decay_drift!
           @state.dup
         end
-        @bus&.publish("homeostat:observe", event: event, state: snap)
+        @bus&.publish("homeostat:observe", event:, state: snap)
         publish_health_transition(snap)
         snap
       end
@@ -64,13 +64,13 @@ module Master
       end
 
       def to_h
-        { state: @state.dup, mood: mood, phase: circadian_phase,
+        { state: @state.dup, mood:, phase: circadian_phase,
           tier: model_tier_bias, health: health_status }
       end
 
       private
 
-      def publish_health_transition(snap)
+      def publish_health_transition(_snap)
         current = health_status
         return if current == @prev_health
         @prev_health = current

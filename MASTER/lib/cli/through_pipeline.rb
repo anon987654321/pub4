@@ -33,17 +33,17 @@ module Master
         @apply = apply
 
         dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
-        @bus&.publish("through:start", target: resolved, mode: posture[:name], apply: apply)
+        @bus&.publish("through:start", target: resolved, mode: posture[:name], apply:)
 
         sections = build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
 
-        ok = sections.none? { |title, body|
+        ok = sections.none? do |title, body|
           title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
-        }
+        end
         elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
-        Master::Trace::Dmesg.kv(@unit, complete: true, ok: ok, elapsed_s: elapsed, target: shell)
-        @bus&.publish("through:complete", target: resolved, apply: apply, ok: ok, elapsed_s: elapsed)
-        Result.new(target: resolved, mode: posture[:name], sections: sections, ok: ok, unit: @unit)
+        Master::Trace::Dmesg.kv(@unit, complete: true, ok:, elapsed_s: elapsed, target: shell)
+        @bus&.publish("through:complete", target: resolved, apply:, ok:, elapsed_s: elapsed)
+        Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit)
       end
 
       private
@@ -73,15 +73,15 @@ module Master
           return [["fix preview", log_phase("fix0", "preview", "path=#{shell}") { run_fix_preview(resolved) }]]
         end
 
-        sections = [["fix", log_phase("fix0", "apply", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") {
+        sections = [["fix", log_phase("fix0", "apply", "path=#{shell} max_passes=#{posture[:max_fix_passes]}") do
           run_fix(resolved)
-        }]]
+        end]]
         re_unit = aesthetic ? "scan2" : "scan1"
         sections << ["re-scan", log_phase(re_unit, "recheck", "path=#{shell}") { run_scan(shell, unit: re_unit) }]
         if aesthetic
-          sections << ["aesthetic re-scan", log_phase("scan3", "aesthetic_recheck", "path=#{shell}") {
+          sections << ["aesthetic re-scan", log_phase("scan3", "aesthetic_recheck", "path=#{shell}") do
             run_scan("aesthetic #{shell}", unit: "scan3")
-          }]
+          end]
         end
         sections
       end
@@ -95,7 +95,7 @@ module Master
         Master::Trace::Dmesg.status(@unit, "abs=#{resolved}")
       end
 
-      def posture_line(posture)
+      def posture_line(_posture)
         Master::Ground::ModePosture.new(root: @root).line
       end
 
@@ -198,7 +198,7 @@ module Master
         Master::CLI::CommandRegistry.dispatch_scan(
           scanner: @scanner,
           root: @root,
-          ctx: { args: scan_arg }
+          ctx: { args: scan_arg },
         )
       rescue StandardError => e
         Master::Trace::Dmesg.status(unit, "error #{e.class}: #{e.message}")
@@ -235,7 +235,7 @@ module Master
         Master::CLI::CommandRegistry.dispatch_critique(
           deliberation: @deliberation,
           root: @root,
-          ctx: { args: abs }
+          ctx: { args: abs },
         )
       rescue StandardError => e
         "critique failed: #{e.class}: #{e.message}"

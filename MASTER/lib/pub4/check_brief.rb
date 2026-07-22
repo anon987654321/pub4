@@ -101,7 +101,7 @@ module Pub4
 
     def output_snippet(output)
       line = output.to_s.lines.map(&:strip).reject(&:empty?).find { |l| !l.start_with?("check:") }
-      return nil unless line
+      return unless line
 
       line.length > 120 ? "#{line[0, 117]}..." : line
     end

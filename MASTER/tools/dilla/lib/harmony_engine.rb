@@ -64,7 +64,7 @@ module DillaHarmony
 
   def strip_voices(chord, count: 2)
     hz = chord[:hz].sort.last(count)
-    chord.merge(hz: hz)
+    chord.merge(hz:)
   end
 
   def chop_tones(chord)
@@ -79,7 +79,7 @@ module DillaHarmony
   end
 
   def progression_insight(chords)
-    return nil unless defined?(DillaMusicGems) && DillaMusicGems.coltrane?
+    return unless defined?(DillaMusicGems) && DillaMusicGems.coltrane?
     symbols = chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }
     DillaMusicGems.progression_analysis(symbols)
   end
@@ -159,8 +159,8 @@ module DillaHarmony
   end
 
   def decorate_chord(chord, voicing: :spread, rootless: true)
-    hz = apply_voicing(chord[:hz], style: voicing, rootless: rootless)
-    { name: chord[:name], hz: hz, bass_hz: chord[:bass_hz] || chord[:hz].min }
+    hz = apply_voicing(chord[:hz], style: voicing, rootless:)
+    { name: chord[:name], hz:, bass_hz: chord[:bass_hz] || chord[:hz].min }
   end
 
   KEY_ALIASES = {
@@ -378,14 +378,14 @@ module DillaHarmony
       end.sort
       prev = voiced
       hz = voiced.map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
-      led << { name: nxt[:name], hz: hz, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
+      led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
     end
     led
   end
 
   def voice_lead_chords(chords, rootless: false)
     return chords if chords.length <= 1
-    led = [decorate_chord(chords.first, voicing: :spread, rootless: rootless)]
+    led = [decorate_chord(chords.first, voicing: :spread, rootless:)]
     prev = led.first[:hz].map { |h| hz_to_midi(h) }.sort
     chords.drop(1).each do |nxt|
       targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
@@ -401,7 +401,7 @@ module DillaHarmony
       end.sort
       prev = voiced
       hz = clamp_register(voiced).map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
-      led << { name: nxt[:name], hz: hz, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
+      led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
     end
     led
   end
@@ -550,7 +550,7 @@ module DillaHarmony
   # Researched soul loops — voicing + voice-leading only; no random reharm/borrow.
   def beautify_curated_pipeline(pads, cfg, phases: [])
     pads = normalize_chord_pads(pads)
-    pads, phases = enrich_progression(pads, cfg, phases: phases, curated: true)
+    pads, phases = enrich_progression(pads, cfg, phases:, curated: true)
     pads = voice_lead_chords_indexed(pads, rootless: false)
     pads = pads.map do |ch|
       next ch if chord_tones_preserved?(ch)
@@ -561,7 +561,7 @@ module DillaHarmony
     end
     # Bach/Dilla theory runtime (coltrane/head_music when available).
     if defined?(DillaTheoryRuntime)
-      pads = DillaTheoryRuntime.refine_progression!(pads, cfg: cfg)
+      pads = DillaTheoryRuntime.refine_progression!(pads, cfg:)
     end
     [pads, phases]
   end
@@ -572,7 +572,7 @@ module DillaHarmony
     pads = reharm_every_fourth_loop(pads, cfg)
     pads = insert_backdoor(pads, cfg)
     pads = validate_and_fix(pads)
-    pads, phases = enrich_progression(pads, cfg, phases: phases)
+    pads, phases = enrich_progression(pads, cfg, phases:)
     pads = apply_recap_substitutions(pads, cfg, phases)
     pads = insert_secondary_dominants(pads, cfg)
     pads = voice_lead_chords(pads, rootless: soul_profile?(cfg[:track]))
@@ -580,7 +580,7 @@ module DillaHarmony
     pads = validate_and_fix(pads)
     pads = add_turnaround_tags(pads, cfg)
     if defined?(DillaTheoryRuntime)
-      pads = DillaTheoryRuntime.refine_progression!(pads, cfg: cfg)
+      pads = DillaTheoryRuntime.refine_progression!(pads, cfg:)
     end
     [pads, phases]
   end
@@ -612,7 +612,7 @@ module DillaHarmony
       extension: extension_score(chords),
       register: register_score(chords),
       motion: motion_score(chords),
-      clash: clash_penalty(chords)
+      clash: clash_penalty(chords),
     }
   end
 end

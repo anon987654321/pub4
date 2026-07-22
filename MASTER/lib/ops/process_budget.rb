@@ -67,8 +67,8 @@ module Master
       def status
         {
           valid: valid_loop_slot?,
-          active_loops: active_loops,
-          max_active_loops: max_active_loops,
+          active_loops:,
+          max_active_loops:,
           owner: LoopOwner.active,
           loops: loop_names.to_h { |name| [name, loop_status(name)] },
         }
@@ -93,7 +93,7 @@ module Master
         {
           enabled: enabled?(name),
           slot: slot_loop?(name, spec),
-          env: env,
+          env:,
           env_value: env ? ENV.fetch(env, "0") : nil,
           cooldown_elapsed: cooldown_elapsed?(name),
           max_run_seconds: spec["max_run_seconds"].to_i,

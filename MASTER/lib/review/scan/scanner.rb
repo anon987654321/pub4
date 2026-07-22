@@ -56,7 +56,7 @@ module Master
           @bus = event_bus
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
-          @file_processor = FileProcessor.new(event_bus: event_bus)
+          @file_processor = FileProcessor.new(event_bus:)
         end
 
         # Preconditions: path must exist and scans must run at depth :deep.
@@ -64,7 +64,7 @@ module Master
         # should filter findings after scanning instead of weakening depth.
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
-          @file_processor.call(path: path, depth: depth, rules: rules || active_rules(depth))
+          @file_processor.call(path:, depth:, rules: rules || active_rules(depth))
         end
 
         def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
@@ -148,7 +148,7 @@ module Master
         end
 
         def scannable_path?(path, root)
-          File.file?(path) && !self.class.skip_path?(path, root: root)
+          File.file?(path) && !self.class.skip_path?(path, root:)
         end
 
         def under_path?(path, root)

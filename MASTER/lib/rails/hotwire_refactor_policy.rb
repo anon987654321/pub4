@@ -12,42 +12,42 @@ module Master
           signal: /DOMContentLoaded/,
           replace_with: "turbo:load or turbo:frame-load event listener",
           severity: :high,
-          guide: "DOMContentLoaded does not fire on Turbo navigations after the first page load"
+          guide: "DOMContentLoaded does not fire on Turbo navigations after the first page load",
         ),
         Rule.new(
           id: :jquery_present,
           signal: /\$\(|\bjQuery\b/,
           replace_with: "Stimulus controller with targets and data-action",
           severity: :high,
-          guide: "jQuery selectors are incompatible with Turbo — Turbo replaces DOM nodes on navigation"
+          guide: "jQuery selectors are incompatible with Turbo — Turbo replaces DOM nodes on navigation",
         ),
         Rule.new(
           id: :remote_true,
           signal: /remote:\s*true|data-remote/,
           replace_with: "Turbo Frame wrapping the target + standard form/link",
           severity: :high,
-          guide: "data-remote is rails-ujs; Turbo handles AJAX forms natively"
+          guide: "data-remote is rails-ujs; Turbo handles AJAX forms natively",
         ),
         Rule.new(
           id: :ujs_confirm,
           signal: /data:\s*\{\s*confirm:|data-confirm=/,
           replace_with: "Stimulus confirm controller (stimulus-components/confirm)",
           severity: :low,
-          guide: "data-confirm is rails-ujs — use a Stimulus controller for modal confirmation"
+          guide: "data-confirm is rails-ujs — use a Stimulus controller for modal confirmation",
         ),
         Rule.new(
           id: :turbo_disabled,
           signal: /data-turbo=["']false["']|turbo:\s*false/,
           replace_with: "investigate and re-enable Turbo unless form has file upload or third-party SDK",
           severity: :low,
-          guide: "data-turbo=false disables Hotwire navigation — usually a crutch for unresolved JS errors"
+          guide: "data-turbo=false disables Hotwire navigation — usually a crutch for unresolved JS errors",
         ),
         Rule.new(
           id: :full_page_link_in_frame,
           signal: /turbo_frame_tag.*src:|<turbo-frame/,
           replace_with: "add data-turbo-frame='_top' to links inside frames that should navigate the full page",
           severity: :low,
-          guide: "Links inside Turbo Frames target the frame by default — add _top for full page navigation"
+          guide: "Links inside Turbo Frames target the frame by default — add _top for full page navigation",
         ),
       ].freeze
 
@@ -57,14 +57,14 @@ module Master
           signal: /render\s+partial:.*locals:/,
           replace_with: "Turbo Frame with lazy src: for independently navigable sections",
           severity: :low,
-          guide: "Partials rendered with locals that power AJAX tabs/panels are better as turbo_frame_tag with src:"
+          guide: "Partials rendered with locals that power AJAX tabs/panels are better as turbo_frame_tag with src:",
         ),
         Rule.new(
           id: :respond_to_js,
           signal: /format\.js\s*\{|\.js\.erb/,
           replace_with: "respond_to(&:turbo_stream) with turbo_stream.replace/append/prepend",
           severity: :high,
-          guide: "format.js with RJS/JS.ERB templates should become Turbo Stream responses"
+          guide: "format.js with RJS/JS.ERB templates should become Turbo Stream responses",
         ),
       ].freeze
 

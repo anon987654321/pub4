@@ -21,7 +21,7 @@ Rails.application.config.after_initialize do
 
       ActionCable.server.broadcast(
         "master:events",
-        ev.merge(event: type, type: type)
+        ev.merge(event: type, type:),
       )
     rescue StandardError => e
       Rails.logger.debug("cable_bridge: #{e.class}: #{e.message}")

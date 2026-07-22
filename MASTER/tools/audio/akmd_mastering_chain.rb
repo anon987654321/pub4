@@ -96,10 +96,10 @@ if $PROGRAM_NAME == __FILE__
   end
 
   chain = Pub4Audio::AkmdMasteringChain.new(
-    input: input,
-    output: output,
+    input:,
+    output:,
     bitrate: options.fetch(:bitrate),
-    sample_rate: options.fetch(:sample_rate)
+    sample_rate: options.fetch(:sample_rate),
   )
 
   if options[:print_command]

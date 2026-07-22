@@ -14,7 +14,7 @@ module Master
                             .uniq { |row| "#{row[:action]}:#{row[:from]}:#{row[:to]}" }
           candidates.each { |row| bus&.publish("aggressive_merge:candidate", **row) }
           bus&.publish("aggressive_merge:scan", count: candidates.size, paths: paths.size)
-          Result.ok(candidates: candidates, paths: paths)
+          Result.ok(candidates:, paths:)
         rescue StandardError => e
           Result.err(e.message)
         end
@@ -98,7 +98,7 @@ module Master
         def fold_target_for(path)
           dir = File.dirname(path)
           stem = File.basename(path, ".rb")
-          return nil if ParameterizedSlug.fold_suffix?(stem)
+          return if ParameterizedSlug.fold_suffix?(stem)
 
           siblings = Dir.glob(File.join(dir, "*.rb")).reject { |entry| entry == path }
           parent = siblings.find { |entry| File.basename(entry, ".rb") == stem.split("_").first }

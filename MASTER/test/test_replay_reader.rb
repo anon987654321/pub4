@@ -39,7 +39,7 @@ class TestReplayReader < Minitest::Test
     FileUtils.mkdir_p(File.join(master_root, "runtime", "events"))
     File.write(
       File.join(master_root, "runtime", "events", "activity.jsonl"),
-      "{\"timestamp\":\"#{committed_at}\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"#{sha}\"}}\n"
+      "{\"timestamp\":\"#{committed_at}\",\"event\":\"ops:commit\",\"payload\":{\"head\":\"#{sha}\"}}\n",
     )
 
     output = Trace::ReplayReader.new(root: master_root).render(arg: "commit #{sha}")

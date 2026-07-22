@@ -194,9 +194,9 @@ module PostproBootstrap
     config = load_master_config
 
     {
-      gems: gems,
-      camera_profiles: camera_profiles,
-      config: config,
+      gems:,
+      camera_profiles:,
+      config:,
     }
   end
 end
@@ -563,9 +563,9 @@ module HD
   end
 
   def build_lut(stock_data)
-    hd = stock_data[:hd] or return nil
+    hd = stock_data[:hd] or return
     bands = %i[r g b].map { |c| Vips::Image.new_from_array([channel_curve(hd[c])]) }
-    Vips::Image.bandjoin(bands).cast('uchar')
+    Vips::Image.bandjoin(bands).cast("uchar")
   end
 
   def lut_for(stock_data)
@@ -578,12 +578,12 @@ module HD
   end
 end
 
-def safe_cast(image, format = 'uchar')
-  if format == 'uchar'
-    f = image.cast('float')
+def safe_cast(image, format = "uchar")
+  if format == "uchar"
+    f = image.cast("float")
     f = (f > 0).ifthenelse(f, 0)
     f = (f < 255).ifthenelse(f, 255)
-    f.cast('uchar')
+    f.cast("uchar")
   else
     image.cast(format)
   end
@@ -598,7 +598,7 @@ def rgb_bands(image, bands = 3)
 end
 
 def load_image(file)
-  return nil unless File.exist?(file) && File.readable?(file)
+  return unless File.exist?(file) && File.readable?(file)
   image = Vips::Image.new_from_file(file, access: :random)
   image = image.colourspace("srgb") if image.bands < 3
   rgb_bands(image)
@@ -608,13 +608,13 @@ rescue StandardError => e
 end
 
 def get_camera_profile(image)
-  return nil if CAMERA_PROFILES.empty?
+  return if CAMERA_PROFILES.empty?
 
   begin
     make = image.get("exif-ifd0-Make")&.strip&.downcase
     model = image.get("exif-ifd0-Model")&.strip&.downcase
 
-    return nil unless make && model
+    return unless make && model
 
     # Try exact model match first
     CAMERA_PROFILES.each do |brand, profiles|
@@ -644,7 +644,7 @@ def apply_camera_profile(image, profile)
     result = image.recomb([
       [matrix[0], matrix[1], matrix[2]],
       [matrix[3], matrix[4], matrix[5]],
-      [matrix[6], matrix[7], matrix[8]]
+      [matrix[6], matrix[7], matrix[8]],
     ])
 
     # Apply optional adjustments
@@ -805,19 +805,19 @@ def color_temp(image, kelvin, intensity = 1.0)
   safe_cast(image.linear([
     1.0 + (r_mult - 1.0) * intensity,
     1.0 + (g_mult - 1.0) * intensity,
-    1.0 + (b_mult - 1.0) * intensity
+    1.0 + (b_mult - 1.0) * intensity,
   ], [0, 0, 0]))
 end
 
 def skin_protect(image, intensity = 1.0)
-  hsv = image.colourspace('hsv')
+  hsv = image.colourspace("hsv")
   h, s, v = hsv.bandsplit
 
   hue_mask = (h > 25.5) & (h < 63.75)
   sat_mask = (s > 51) & (s < 153)
   skin_mask = hue_mask & sat_mask
 
-  protection = skin_mask.cast('float') / 255.0 * (1.0 - intensity * 0.7)
+  protection = skin_mask.cast("float") / 255.0 * (1.0 - intensity * 0.7)
   protection_rgb = protection.bandjoin([protection, protection])
   inv_protection = protection_rgb.linear(-1, 1)
 
@@ -839,7 +839,7 @@ def highlight_roll(image, threshold = 200, intensity = 1.0)
 end
 
 def shadow_lift(image, lift = 0.15, preserve_blacks = true)
-  gray = image.colourspace('b-w').cast('float') / 255.0
+  gray = image.colourspace("b-w").cast("float") / 255.0
   inv_gray    = gray.linear(-1, 1)
   shadow_mask = preserve_blacks ? (inv_gray ** 2.0) * 0.8 : inv_gray * lift
   lift_rgb = shadow_mask.bandjoin([shadow_mask, shadow_mask])
@@ -923,8 +923,8 @@ end
 
 def base_tint(image, color = [252, 248, 240], intensity = 0.08)
   overlay = Vips::Image.black(image.width, image.height, bands: 3) + color
-  overlay_norm = overlay.cast('float') / 255.0
-  image_norm = image.cast('float') / 255.0
+  overlay_norm = overlay.cast("float") / 255.0
+  image_norm = image.cast("float") / 255.0
 
   inv_image   = image_norm.linear(-1, 1)
   inv_overlay = overlay_norm.linear(-1, 1)
@@ -970,7 +970,7 @@ end
 def warmth(image, amount = 0.2)
   image.linear(
     [1.0 + 0.30 * amount, 1.0 + 0.08 * amount, 1.0 - 0.18 * amount],
-    [0, 0, 0]
+    [0, 0, 0],
   ).then { |r| safe_cast(r) }
 rescue StandardError => e
   $logger.error "warmth failed: #{e.message}"
@@ -981,7 +981,7 @@ end
 def green_push(image, amount = 0.15)
   image.linear(
     [1.0 - amount * 0.50, 1.0 + amount, 1.0 - amount * 0.30],
-    [0, 0, 0]
+    [0, 0, 0],
   ).then { |r| safe_cast(r) }
 rescue StandardError => e
   $logger.error "green_push failed: #{e.message}"
@@ -1043,7 +1043,7 @@ def dir_coupler(image, strength = 0.15)
   inhibition = Vips::Image.bandjoin([
     r_d - g_d * (0.08 * strength) - b_d * (0.04 * strength),
     g_d - r_d * (0.12 * strength) - b_d * (0.07 * strength),
-    b_d - r_d * (0.06 * strength) - g_d * (0.10 * strength)
+    b_d - r_d * (0.06 * strength) - g_d * (0.10 * strength),
   ])
   inhibited = clamp01(inhibition) * 255.0
   desatd = inhibited * (1.0 - strength * 0.3) + gray * (strength * 0.3)
@@ -1078,7 +1078,7 @@ def push_pull(image, stops = 1.0, stock = :kodak_portra)
   adj = Vips::Image.bandjoin([
     clamp01(r * factor),
     clamp01(g * factor * resp[:g]),
-    clamp01(b * factor * resp[:b])
+    clamp01(b * factor * resp[:b]),
   ])
   if stops > 0
     shadow_add = adj.linear(-1, 1) ** 2.0 * (stops * 0.04)
@@ -1145,7 +1145,7 @@ def reciprocity_failure(image, exposure_seconds = 10.0, stock = :cinestill_800t)
   result  = Vips::Image.bandjoin([
     r + dark_w * ev * 0.03 + (ev * cs[:r]),
     g + dark_w * ev * 0.02 + (ev * cs[:g]),
-    b + (ev * 0.15) + dark_w * ev * 0.05 + (ev * cs[:b])
+    b + (ev * 0.15) + dark_w * ev * 0.05 + (ev * cs[:b]),
   ])
   safe_cast(clamp01(result).colourspace("srgb"))
 rescue StandardError => e
@@ -1637,7 +1637,7 @@ def orange_mask(image, stock = :kodak_portra, intensity = 1.0)
   result   = Vips::Image.bandjoin([
     clamp01(r + shadow_w * mask * 0.55),
     clamp01(g + shadow_w * mask * 0.18),
-    clamp01(b - shadow_w * mask * 0.35)
+    clamp01(b - shadow_w * mask * 0.35),
   ])
   safe_cast(result * 255.0)
 rescue StandardError => e
@@ -1663,7 +1663,7 @@ def print_film(image, stock = :kodak_2383, intensity = 0.70)
     img_f = Vips::Image.bandjoin([
       clamp01(r + hi_mask * pdata[:warmth] * 0.8),
       clamp01(g + hi_mask * pdata[:warmth] * 0.15),
-      clamp01(b - hi_mask * pdata[:warmth] * 0.35 + sh_mask * (pdata[:cool_shadow] || 0))
+      clamp01(b - hi_mask * pdata[:warmth] * 0.35 + sh_mask * (pdata[:cool_shadow] || 0)),
     ])
   end
   if pdata[:grain].to_i > 0
@@ -2065,18 +2065,18 @@ end
 def random_fx(image, effects, mode)
   result = image
   effects.each do |fx|
-    intensity = mode == 'experimental' ? rand(0.5..1.5) : rand(0.3..0.8)
+    intensity = mode == "experimental" ? rand(0.5..1.5) : rand(0.3..0.8)
     result = case fx
-             when 'grain' then grain_basic(result, intensity)
-             when 'leaks' then leaks_basic(result, intensity)
-             when 'sepia' then sepia_basic(result, intensity)
-             when 'bloom' then bloom_basic(result, intensity)
-             when 'teal_orange' then teal_orange(result, intensity)
-             when 'cross' then cross_basic(result, intensity)
-             when 'vhs' then vhs_basic(result, intensity)
-             when 'chroma' then chroma_basic(result, intensity)
-             when 'glitch' then glitch_basic(result, intensity)
-             when 'flare' then flare_basic(result, intensity)
+             when "grain" then grain_basic(result, intensity)
+             when "leaks" then leaks_basic(result, intensity)
+             when "sepia" then sepia_basic(result, intensity)
+             when "bloom" then bloom_basic(result, intensity)
+             when "teal_orange" then teal_orange(result, intensity)
+             when "cross" then cross_basic(result, intensity)
+             when "vhs" then vhs_basic(result, intensity)
+             when "chroma" then chroma_basic(result, intensity)
+             when "glitch" then glitch_basic(result, intensity)
+             when "flare" then flare_basic(result, intensity)
              else result
              end
   end
@@ -2210,7 +2210,7 @@ def describe_preset(name)
   [
     "#{name}: #{p[:stock]} / #{p.fetch(:temp, "?")}K / intensity #{p[:intensity]}",
     "fx: #{p[:fx].join(" → ")}",
-    stock ? "grain σ=#{stock[:grain]}" : nil
+    stock ? "grain σ=#{stock[:grain]}" : nil,
   ].compact.join("\n")
 end
 
@@ -2224,8 +2224,11 @@ def css_filter(preset_name = :portrait)
   stock = STOCKS[p[:stock]] || {}
   hd = stock[:hd] || {}
   contrast = (1 + ((hd[:r]&.last || 1.0) - 1.0) * 0.25).round(2)
-  saturate  = p[:fx].include?("teal_orange") ? 1.20 :
-              p[:fx].include?("desaturate")  ? 0.65 : 1.0
+  saturate  = if p[:fx].include?("teal_orange")
+1.20
+else
+p[:fx].include?("desaturate")  ? 0.65 : 1.0
+end
   parts = ["contrast(#{contrast})", "saturate(#{saturate})"]
   parts << "sepia(0.12)"    if %i[kodak_portra kodak_vision3_50d].include?(p[:stock])
   parts << "grayscale(0.9)" if p[:stock] == :tri_x
@@ -2236,16 +2239,16 @@ end
 def check_repligen
   return unless REPLIGEN_PRESENT
 
-  $cli_logger.info 'Repligen detected! Auto-processing generated images...'
+  $cli_logger.info "Repligen detected! Auto-processing generated images..."
 
-  recent_files = Dir.glob('*_generated_*.{jpg,jpeg,png,webp}')
+  recent_files = Dir.glob("*_generated_*.{jpg,jpeg,png,webp}")
                     .select { |f| File.mtime(f) > (Time.now - 300) }
 
-  if recent_files.any?
+  return unless recent_files.any?
     $cli_logger.info "Found #{recent_files.count} recent Repligen outputs"
     preset_name = PROMPT ? PROMPT.select("Choose preset for Repligen outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "portrait")
     recent_files.each { |file| process_file(file, 2, preset_name) }
-  end
+
 end
 
 def preset_chain(image, names)
@@ -2313,7 +2316,7 @@ def get_input
     workflow = PROMPT.select("Choose workflow:", [
       "Masterpiece Presets (Recommended)",
       "Random Effects (Experimental)",
-      "Custom JSON Recipe"
+      "Custom JSON Recipe",
     ])
 
     patterns = PROMPT.ask("File patterns:", default: "**/*.{jpg,jpeg,png,webp}").strip.split(",").map(&:strip)
@@ -2325,7 +2328,7 @@ def get_input
       [patterns, variations, { type: :preset, preset: preset_name }]
 
     when "Random Effects (Experimental)"
-      mode = PROMPT.select("Mode:", ["Professional", "Experimental"])
+      mode = PROMPT.select("Mode:", %w[Professional Experimental])
       fx_count = PROMPT.ask("Effects per variation:", convert: :int, default: 4) { |q| q.in("2-8") }
       [patterns, variations, { type: :random, mode: mode.downcase, fx: fx_count }]
 
@@ -2366,7 +2369,7 @@ def postpro_quality_report(original, processed, reference_path = nil)
     mean_rgb_after: after.bandsplit.map { |band| band.avg.round(3) },
     clipped_highlights_percent: (((after >= 254).avg / 255.0) * 100).round(4),
     crushed_blacks_percent: (((after <= 1).avg / 255.0) * 100).round(4),
-    warnings: []
+    warnings: [],
   }
   report[:warnings] << "highlight clipping exceeds 0.5%" if report[:clipped_highlights_percent] > 0.5
   report[:warnings] << "black clipping exceeds 0.5%" if report[:crushed_blacks_percent] > 0.5
@@ -2392,7 +2395,7 @@ def write_grade_sidecar(input_path, output_path, preset_name, original, processe
     seed: $postpro_seed,
     output_sha256: Digest::SHA256.file(output_path).hexdigest,
     quality: report,
-    capabilities: Master::Io::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] }
+    capabilities: Master::Io::AnalogCapabilities.for(:postpro).map { |entry| entry[:id] },
   }
   File.write("#{output_path}.json", JSON.pretty_generate(data) + "\n")
   data
@@ -2402,8 +2405,8 @@ def write_comparison(original, processed, output_path)
   return unless ARGV.include?("--compare")
 
   height = [original.height, processed.height].min
-  left = original.thumbnail_image(height, height: height, size: :down)
-  right = processed.thumbnail_image(height, height: height, size: :down)
+  left = original.thumbnail_image(height, height:, size: :down)
+  right = processed.thumbnail_image(height, height:, size: :down)
   comparison = Vips::Image.arrayjoin([rgb_bands(left), rgb_bands(right)], across: 2, shim: 8,
                                                                        background: [24, 24, 24])
   path = output_path.sub(/(\.[^.]+)\z/, "-comparison\\1")
@@ -2486,7 +2489,7 @@ def downloads_dir
     File.expand_path("~/storage/downloads"),
     "/sdcard/Download",
     File.expand_path("~/Downloads"),
-    Dir.pwd
+    Dir.pwd,
   ]
   candidates.compact.find { |d| File.directory?(d) }
 end
@@ -2640,9 +2643,9 @@ def auto_launch
   duration = (Time.now - start_time).round(2)
   $cli_logger.info "Complete! #{total_processed} files → #{total_variations} masterpieces (#{duration}s)"
 
-  if REPLIGEN_PRESENT && total_variations > 0
+  return unless REPLIGEN_PRESENT && total_variations > 0
     $cli_logger.info "Tip: Run 'ruby repligen.rb' to generate more content!"
-  end
+
 end
 
 auto_launch if __FILE__ == $0

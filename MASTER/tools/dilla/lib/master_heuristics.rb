@@ -72,7 +72,7 @@ module DillaMaster
       skipped << "stereo_phase_correlation (no audio path given)"
     end
 
-    { pass: failures.empty?, failures: failures, skipped: skipped }
+    { pass: failures.empty?, failures:, skipped: }
   end
 
   # Minimum L/R phase correlation across the whole file — 1.0 is mono-identical
@@ -100,7 +100,7 @@ module DillaMaster
       "-f", "null", "-"
     )
     values = out.scan(/lavfi\.astats\.Overall\.RMS_level=(-?[\d.]+)/).flatten.map(&:to_f)
-    return nil if values.empty?
+    return if values.empty?
 
     (values.sum / values.length).round(2)
   rescue StandardError
@@ -108,7 +108,7 @@ module DillaMaster
   end
 
   def club_ir_path
-    return nil unless enabled?
+    return unless enabled?
     custom = ENV["CLUB_IR"]
     return custom if custom && File.file?(custom)
     File.join(IR_DIR, "club.wav") if File.file?(File.join(IR_DIR, "club.wav"))
@@ -144,7 +144,7 @@ module DillaMaster
     %w[vibrato=f=0.25:d=0.003 acrusher=bits=11:samples=2:mix=0.12]
   end
 
-  def radio_club_morph_parts(cfg, duration, _section_fn)
+  def radio_club_morph_parts(_cfg, duration, _section_fn)
     mid = (duration.to_f * 0.5).round(2)
     [DillaAutomation.volume_filter([[0, 0.92], [mid, 1.08]])]
   end
@@ -182,7 +182,11 @@ module DillaMaster
     low = spectrum[:low] || spectrum["low"] || -18.0
     mid = spectrum[:mid] || spectrum["mid"] || -22.0
     ratio = low.to_f - mid.to_f
-    rec = ratio < -8 ? "boost_sub" : ratio > 2 ? "reduce_sub" : "ok"
+    rec = if ratio < -8
+"boost_sub"
+else
+ratio > 2 ? "reduce_sub" : "ok"
+end
     rec = "boost_sub" if harmony_score && harmony_score < 65
     { low_mid_delta: ratio.round(2), recommendation: rec }
   end
@@ -218,7 +222,7 @@ module DillaMaster
     mud_ok = low_mid < 4.0
     ok = mid_ok && mud_ok && !harsh[:needs_notch]
     {
-      ok: ok, mid_db: mid.round(2), low_mid_delta: low_mid.round(2),
+      ok:, mid_db: mid.round(2), low_mid_delta: low_mid.round(2),
       harshness: harsh[:harshness], needs_notch: harsh[:needs_notch],
     }
   end

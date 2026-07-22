@@ -26,7 +26,7 @@ module Master
             ts: at.iso8601,
             model: model.to_s,
             status: status.to_s,
-            latency_ms: latency_ms,
+            latency_ms:,
             error: error&.to_s,
           }.compact
           FileUtils.mkdir_p(File.dirname(path))

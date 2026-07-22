@@ -62,7 +62,7 @@ module Master
             @test_dir = File.join(root, "test")
           end
 
-          def check(code, path:)
+          def check(_code, path:)
             return [] unless path.include?("/judge/scan/rules/") && path.end_with?("_rule.rb")
 
             base = File.basename(path, ".rb")
@@ -108,7 +108,7 @@ module Master
 
           [finding(
             line: 1,
-            message: "runtime docs belong in #{target} — delete #{rel} (see Ground::BootstrapDocs, /orient)"
+            message: "runtime docs belong in #{target} — delete #{rel} (see Ground::BootstrapDocs, /orient)",
           )]
         end
 
@@ -118,7 +118,7 @@ module Master
           def data_relative(path)
             expanded = File.expand_path(path.to_s)
             root = File.expand_path(Master::ROOT)
-            return nil unless expanded.start_with?("#{root}/")
+            return unless expanded.start_with?("#{root}/")
 
             expanded.delete_prefix("#{root}/")
           end
@@ -172,7 +172,7 @@ module Master
                 severity: smell_severity(smell),
                 tags: smell_tags(smell),
                 reversibility: smell["reversibility"],
-                blast_radius: smell["blast_radius"]
+                blast_radius: smell["blast_radius"],
               )
             end
           end

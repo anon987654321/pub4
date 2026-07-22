@@ -35,7 +35,7 @@ class CoreBridgeTest < Minitest::Test
     Dir.mktmpdir do |root|
       bus = FakeBus.new
       model = ScriptedModel.new(
-        *evidence_then_done(Master::Core::Effect.write("note.txt", "hello\n"), summary: "wrote the note")
+        *evidence_then_done(Master::Core::Effect.write("note.txt", "hello\n"), summary: "wrote the note"),
       )
       result = Master::CLI::CoreBridge.run("write a note", root:, bus:, model:)
 

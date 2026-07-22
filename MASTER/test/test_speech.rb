@@ -170,7 +170,7 @@ class TestSpeech < Minitest::Test
           text: "hello",
           voice_name: "en-GB-RyanNeural",
           style_config: { rate: "+0%", pitch: "+0Hz" },
-          audio_path: path
+          audio_path: path,
         )
         assert_equal path, result
         assert_equal audio, File.binread(path)
@@ -196,7 +196,7 @@ class TestSpeech < Minitest::Test
             "hello",
             output_path: path,
             voice: :ryan,
-            style: :neutral
+            style: :neutral,
           )
           assert_equal "fake-mp3-data", File.binread(path)
         end
@@ -214,7 +214,7 @@ class TestSpeech < Minitest::Test
           assert_nil Master::Voice::Speech.synthesize_edge(
             "hello",
             voice: :ryan,
-            style_config: { rate: "+0%", pitch: "+0Hz" }
+            style_config: { rate: "+0%", pitch: "+0Hz" },
           )
         end
       end

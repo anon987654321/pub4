@@ -296,7 +296,7 @@ TRANSLATIONS = {
 
     debug_cleanup: ->(path) { "Cleaning up: #{path}" },
 
-    debug_cleanup_done: "Temp file removed"
+    debug_cleanup_done: "Temp file removed",
 
   },
 
@@ -406,9 +406,9 @@ TRANSLATIONS = {
 
     debug_cleanup: ->(path) { "Rydder opp: #{path}" },
 
-    debug_cleanup_done: "Temp fil fjernet"
+    debug_cleanup_done: "Temp fil fjernet",
 
-  }
+  },
 
 }
 
@@ -462,7 +462,7 @@ def check_requirements
 
   log T[:debug_nmap_found], "validate", "info"
 
-  if RUBY_PLATFORM.include?("openbsd")
+  return unless RUBY_PLATFORM.include?("openbsd")
 
     log T[:debug_doas_check], "validate", "info"
 
@@ -475,8 +475,6 @@ def check_requirements
       log T[:debug_doas_missing], "validate", "warning"
 
     end
-
-  end
 
 end
 
@@ -818,4 +816,3 @@ end
 
 # Run scan
 scan(target, severity, attack_type)
-

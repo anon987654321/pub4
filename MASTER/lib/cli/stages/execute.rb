@@ -13,7 +13,7 @@ module Master
           return raw if raw.is_a?(Result) && raw.err?
 
           output = raw.is_a?(Result) ? raw.value!.to_s : raw.to_s
-          Result.ok(ctx.merge(output: output))
+          Result.ok(ctx.merge(output:))
         rescue StandardError => e
           Result.err("execute: #{e.message}", category: :unknown)
         end

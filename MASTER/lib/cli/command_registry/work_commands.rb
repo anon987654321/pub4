@@ -36,7 +36,7 @@ module Master
       end
 
       def work_command_deps(ai:, root:, infra:)
-        { root: root }.merge(ai_command_deps(ai:, root:, infra:)).merge(infra_command_deps(infra:))
+        { root: }.merge(ai_command_deps(ai:, root:, infra:)).merge(infra_command_deps(infra:))
       end
 
       def ai_command_deps(ai:, root:, infra:)
@@ -50,7 +50,7 @@ module Master
           code_index: ai[:code_index],
           reference_graph: ai[:reference_graph],
           propose_tree: ai[:propose_tree],
-          review_crew: Review::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root: root,
+          review_crew: Review::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root:,
                                              code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
           git: ai.fetch(:git) { Io::GitOperations.new(File.expand_path("..", root)) },
         }
@@ -108,7 +108,7 @@ module Master
       end
 
       def dispatch_self(scanner:, root:, bus:, ctx: nil)
-        result = Master::Review::Scan::SelfScan.new(scanner: scanner, root: root, event_bus: bus).call(stream: true, autofix: true)
+        result = Master::Review::Scan::SelfScan.new(scanner:, root:, event_bus: bus).call(stream: true, autofix: true)
         return result.message unless result.ok?
 
         result.value!.line
@@ -116,14 +116,12 @@ module Master
 
       def dispatch_mode(root:, ctx: nil)
         arg = arg_for(ctx).to_s.strip
-        posture = Master::Ground::ModePosture.new(root: root)
+        posture = Master::Ground::ModePosture.new(root:)
         return posture.line if arg.empty? || arg == "status"
 
         if arg == "list"
-          return Master::Ground::ModePosture::MODES.map { |m|
-            cfg = (Master.load_yaml(Master.limits_path) || {}).dig("session_modes", "modes", m) || {}
-            "#{m.ljust(10)} #{cfg["description"]}"
-          }.join("\n")
+          return Master::Ground::ModePosture::MODES.map do |m|
+          end.join("\n")
         end
 
         mode = arg.split(/\s+/).first
@@ -135,16 +133,16 @@ module Master
 
       def dispatch_map(root:, ctx: nil)
         arg = arg_for(ctx).to_s.strip
-        map = Master::Ground::PrincipleMap.load(root: root)
+        map = Master::Ground::PrincipleMap.load(root:)
         case arg
         when "", "status"
           map.summary_line
         when "gaps"
           map.gaps.first(40).map { |id, e| "#{id.ljust(28)} #{e.severity.ljust(8)} #{e.operation || "-"}  #{e.meaning}" }.join("\n")
         when "aesthetic", "ui"
-          map.aesthetic.first(60).map { |id, e|
+          map.aesthetic.first(60).map do |id, e|
             "#{id.ljust(28)} #{e.status.ljust(8)} rules=#{e.rule_ids.join(",")}"
-          }.join("\n")
+          end.join("\n")
         when "covered"
           map.covered.first(40).map { |id, e| "#{id.ljust(28)} → #{e.rule_ids.join(", ")}" }.join("\n")
         when "integrity"
@@ -245,7 +243,7 @@ module Master
         arg = arg_for(ctx)
         return "usage: /edge-cases <ruby-file>" if arg.empty?
 
-        Master::Review::Scan::EdgeCaseStubGenerator.new(root: root).call(arg).then do |result|
+        Master::Review::Scan::EdgeCaseStubGenerator.new(root:).call(arg).then do |result|
           result.ok? ? result.value! : result.message
         end
       end
@@ -286,8 +284,8 @@ module Master
       end
 
       def format_scan_results(pairs:, profile:, rule_filter:, severity_filter: nil, dry_run: false)
-        ScanReport.new(pairs: pairs, profile: profile, rule_filter: rule_filter,
-                       severity_filter: severity_filter, dry_run: dry_run).render
+        ScanReport.new(pairs:, profile:, rule_filter:,
+                       severity_filter:, dry_run:).render
       end
 
       def resolve_scan_profile(arg, root)
@@ -298,7 +296,7 @@ module Master
         ScanLive.ensure_sync!
         arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
 
-        ScanLive.with_interrupt_dump(root: root) do |holder|
+        ScanLive.with_interrupt_dump(root:) do |holder|
           scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
         end
       end
@@ -315,32 +313,32 @@ module Master
       def scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
         ScanLive.banner(target: clean_arg.empty? ? root : clean_arg, profile: nil, dry_run:, autofix: do_autofix)
 
-        request = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+        request = ScanRequest.new(scanner:, root:, arg: clean_arg).call
         return request.pairs if request.pairs.is_a?(String)
 
         pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.rule_filter, request.severity_filter
         pass1_total = run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:)
 
         pairs, autofixes = run_scan_autofix_phase(
-          scanner:, root:, clean_arg:, pairs:, do_autofix:, dry_run:, no_autofix:
+          scanner:, root:, clean_arg:, pairs:, do_autofix:, dry_run:, no_autofix:,
         )
 
         text = render_final_scan_report(
-          pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:
+          pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:,
         )
         holder[:text] = text
-        ScanLive.snapshot!(text, root: root, note: "final")
+        ScanLive.snapshot!(text, root:, note: "final")
         text
       end
 
       def run_scan_pass1(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, root:, holder:)
         pass1 = ScanReport.new(
-          pairs: pairs, profile: profile, rule_filter: rule_filter, severity_filter: severity_filter,
-          dry_run: dry_run, phase: "pass1"
+          pairs:, profile:, rule_filter:, severity_filter:,
+          dry_run:, phase: "pass1"
         )
         ScanLive.emit("pass1 #{pass1.brief}")
         holder[:text] = pass1.render
-        ScanLive.snapshot!(holder[:text], root: root, note: "pass1 before autofix")
+        ScanLive.snapshot!(holder[:text], root:, note: "pass1 before autofix")
         pass1.total_count
       end
 
@@ -348,12 +346,12 @@ module Master
         autofixes = []
         if pairs.any? && do_autofix
           ScanLive.emit("autofix applying on auto_fix findings…")
-          autofixes = apply_scan_autofixes(scanner: scanner, root: root, pairs: pairs)
+          autofixes = apply_scan_autofixes(scanner:, root:, pairs:)
           if autofixes.any?
             transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(" ")
             ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
             ScanLive.emit("pass2 re-scan after autofix…")
-            rescanned = ScanRequest.new(scanner: scanner, root: root, arg: clean_arg).call
+            rescanned = ScanRequest.new(scanner:, root:, arg: clean_arg).call
             pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
           else
             ScanLive.emit("autofix none applied (no auto_fix hits or no transforms)")
@@ -368,14 +366,14 @@ module Master
 
       def render_final_scan_report(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:)
         final = ScanReport.new(
-          pairs: pairs,
-          profile: profile,
-          rule_filter: rule_filter,
-          severity_filter: severity_filter,
-          dry_run: dry_run,
-          autofixes: autofixes,
+          pairs:,
+          profile:,
+          rule_filter:,
+          severity_filter:,
+          dry_run:,
+          autofixes:,
           phase: do_autofix && autofixes.any? ? "pass2" : "final",
-          prior_total: do_autofix ? pass1_total : nil
+          prior_total: do_autofix ? pass1_total : nil,
         )
         text = pairs.empty? && autofixes.empty? ? clean_scan_line(dry_run:, autofixes:) : final.render
         ScanLive.emit("done #{final.brief}")
@@ -383,7 +381,7 @@ module Master
       end
 
       def apply_scan_autofixes(scanner:, root:, pairs:)
-        Master::Review::Scan::MechanicalAutofix.new(scanner: scanner, root: root).apply(pairs).map do |applied|
+        Master::Review::Scan::MechanicalAutofix.new(scanner:, root:).apply(pairs).map do |applied|
           { path: applied.path, transforms: applied.transforms }
         end
       end
@@ -393,9 +391,9 @@ module Master
           pairs: [],
           profile: nil,
           rule_filter: nil,
-          dry_run: dry_run,
-          autofixes: autofixes,
-          phase: "final"
+          dry_run:,
+          autofixes:,
+          phase: "final",
         ).render
       end
 
@@ -426,7 +424,7 @@ module Master
       # --- /replay (was work_commands_replay.rb) ---
 
       def dispatch_replay(root:, trace: nil, ctx: nil)
-        Trace::ReplayReader.new(root: root, recorder: trace).render(arg: arg_for(ctx))
+        Trace::ReplayReader.new(root:, recorder: trace).render(arg: arg_for(ctx))
       rescue StandardError => e
         "replay: #{e.message}"
       end
@@ -449,7 +447,7 @@ module Master
       def gather_graph_data(abs, root:, code_index:, reference_graph:)
         reference_graph.build if reference_graph&.nodes&.empty?
         radius = reference_graph.blast_radius(abs)
-        neighbors = Review::GraphRetriever.new(reference_graph: reference_graph, root: root)
+        neighbors = Review::GraphRetriever.new(reference_graph:, root:)
                                            .neighbors([abs], hops: 2, limit: 10)
         symbols = code_index ? code_index.symbols_in(abs) : []
         { radius:, neighbors:, symbols: }

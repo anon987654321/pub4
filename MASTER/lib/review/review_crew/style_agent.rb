@@ -27,7 +27,7 @@ module Master
             message: "trailing whitespace",
             line: line_no,
             suggestion: "trim trailing spaces",
-            file_path: file_path
+            file_path:,
           )
         end
 
@@ -40,7 +40,7 @@ module Master
             message: "!important used",
             line: line_no,
             suggestion: "prefer cascade and specificity",
-            file_path: file_path
+            file_path:,
           )
         end
       end

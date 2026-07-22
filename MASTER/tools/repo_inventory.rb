@@ -78,7 +78,7 @@ def low_density_slug_entries
     stem = File.basename(path, ".rb")
     next unless slug.filler_only?(stem) || slug.fold_suffix?(stem) || slug.meaningful_tokens(stem).size < stem.split("_").size
 
-    Entry.new(path: path, kind: "low_density_slug", reason: "not a dense Rails-parameterize slug — merge or rename (Flat Hierarchy)")
+    Entry.new(path:, kind: "low_density_slug", reason: "not a dense Rails-parameterize slug — merge or rename (Flat Hierarchy)")
   end
 end
 
@@ -86,7 +86,7 @@ def suspicious_abbreviation_entries
   repo_paths.filter_map do |path|
     basename = File.basename(path)
     next unless basename.match?(/\A(bp|tmp|misc|old|new|copy|final|final2|test2)(\.|\z|_)/i) || path.match?(%r{/(bp|tmp|misc|old|new|copy|final|final2|test2)(/|\.)}i)
-    Entry.new(path: path, kind: "suspicious_name", reason: "abbreviation or temporary filename")
+    Entry.new(path:, kind: "suspicious_name", reason: "abbreviation or temporary filename")
   end
 end
 

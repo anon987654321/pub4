@@ -13,7 +13,7 @@ module Master
 
       def law_for(rule_id, rules_index: nil)
         entry = rules_index&.dig(rule_id.to_s.upcase) || rules_index&.dig(rule_id.to_s)
-        return nil unless entry
+        return unless entry
 
         tags = Array(entry["violates_law"] || entry["supports_law"] || infer_law(entry))
         tags.first

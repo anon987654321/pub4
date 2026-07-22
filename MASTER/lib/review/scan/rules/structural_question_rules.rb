@@ -247,7 +247,7 @@ module Master
               defs = body.scan(/^\s*def\s+/).size
               delegates = body.scan(/^\s*(?:delegate\b|def\s+\w+[!?=]?\s*;?\s*@?\w+\.\w+)/).size
               if defs.positive? && delegates >= defs && body.lines.size < 50
-                finding(line: line, message: "lazy class only delegates — inline it or give it a real responsibility")
+                finding(line:, message: "lazy class only delegates — inline it or give it a real responsibility")
               end
             end
           end

@@ -38,7 +38,7 @@ class RoutesViewsAuditTest < Minitest::Test
 
   def test_honors_only_actions_and_plural_resource_helpers
     with_app do |app|
-      write_routes(app, 'resources :widgets, only: %i[index show]')
+      write_routes(app, "resources :widgets, only: %i[index show]")
       write_controller(app, "widgets", <<~RUBY)
         class WidgetsController < ApplicationController
           def index; end

@@ -17,7 +17,7 @@ module Master
             @scan_unit_seq = (@scan_unit_seq || -1) + 1
             name = unit || @through_scan_unit || "scan#{@scan_unit_seq}"
             @scan_progress = {
-              total: total,
+              total:,
               done: 0,
               violations: 0,
               dirty_files: 0,
@@ -77,7 +77,7 @@ module Master
             Master::Trace::Dmesg.status(
               unit,
               "hit #{done}/#{total} #{rel} +#{count}" \
-              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}"
+              "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}",
             )
           end
 
@@ -92,7 +92,7 @@ module Master
               "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
               "#{eta_s && eta_s.positive? ? " eta=#{eta_s}s" : ""}" \
               " elapsed=#{elapsed.round}s" \
-              "#{top_s.empty? ? "" : " top #{top_s}"}"
+              "#{top_s.empty? ? "" : " top #{top_s}"}",
             )
             write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           end
@@ -133,7 +133,7 @@ module Master
             ].compact.join("\n")
             # Quiet write — checkpoints already print top rules; avoid spam.
             if defined?(Master::CLI::ScanLive)
-              Master::CLI::ScanLive.snapshot!(text, root: root, note: "streaming checkpoint", announce: false)
+              Master::CLI::ScanLive.snapshot!(text, root:, note: "streaming checkpoint", announce: false)
             end
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "Scanner.write_progress_snapshot")

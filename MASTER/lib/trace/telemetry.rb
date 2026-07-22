@@ -26,7 +26,7 @@ module Master
         OpenTelemetry::SDK.configure do |c|
           c.service_name = service
           c.add_span_processor(
-            OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(JsonlExporter.new(@io))
+            OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(JsonlExporter.new(@io)),
           )
         end
         @tracer = OpenTelemetry.tracer_provider.tracer(service)
@@ -35,8 +35,8 @@ module Master
       rescue StandardError; @enabled = false
       end
 
-      def self.span(name, attrs = {})
-        return yield unless @enabled && @tracer
+      def self.span(_name, _attrs = {})
+        yield unless @enabled && @tracer
       rescue StandardError; yield
       end
 
@@ -62,7 +62,7 @@ module Master
               dur_us: ((s.end_timestamp - s.start_timestamp) / 1000),
               attrs: s.attributes,
               trace: s.hex_trace_id,
-              span: s.hex_span_id
+              span: s.hex_span_id,
             ))
           end
           SUCCESS

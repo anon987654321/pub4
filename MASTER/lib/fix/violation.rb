@@ -6,15 +6,15 @@ module Master
       def self.from_finding(finding, file:, ext: nil)
         data = finding.respond_to?(:to_h) ? finding.to_h : finding
         new(
-          file: file,
+          file:,
           line: data[:line] || data["line"],
           rule: data[:rule] || data[:rule_id] || data["rule"] || data["rule_id"],
           message: data[:message] || data["message"],
           severity: data[:severity] || data["severity"],
           fix: data[:fix] || data["fix"],
           confidence: data[:confidence] || data["confidence"],
-          ext: ext,
-          fingerprint: data[:fingerprint] || data["fingerprint"]
+          ext:,
+          fingerprint: data[:fingerprint] || data["fingerprint"],
         )
       end
 
@@ -24,15 +24,15 @@ module Master
 
       def to_h
         {
-          file: file,
-          line: line,
-          rule: rule,
-          message: message,
-          severity: severity,
-          fix: fix,
-          confidence: confidence,
-          ext: ext,
-          fingerprint: fingerprint,
+          file:,
+          line:,
+          rule:,
+          message:,
+          severity:,
+          fix:,
+          confidence:,
+          ext:,
+          fingerprint:,
         }.compact
       end
     end

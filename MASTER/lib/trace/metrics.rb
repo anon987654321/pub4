@@ -88,7 +88,7 @@ module Master
             model: ev[:model].to_s,
             success: ev[:success] != false,
             tokens_approx: ev[:tokens_approx].to_i,
-            escalated: ev[:escalated] == true
+            escalated: ev[:escalated] == true,
           )
         rescue StandardError => e
           @bus&.publish("metrics:record_error", error: e.message)

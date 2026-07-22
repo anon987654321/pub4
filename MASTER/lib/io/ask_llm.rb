@@ -24,7 +24,7 @@ module Master
 
         result = @circuit_breaker.call(estimate_cost(prompt)) do
           @cache.fetch(prompt, @agent.model) do
-            @agent.ask(prompt, context: context)
+            @agent.ask(prompt, context:)
           end
         end
 

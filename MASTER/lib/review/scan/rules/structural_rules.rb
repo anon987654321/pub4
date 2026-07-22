@@ -95,7 +95,7 @@ module Master
             []
           end
 
-          def check_ast(ast, code, path:)
+          def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
             visit(ast) do |node|
@@ -105,12 +105,12 @@ module Master
               if public_defs > METHOD_LIMIT
                 findings << finding(
                   line: node.location.start_line,
-                  message: "god class #{node.constant_path.slice} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose"
+                  message: "god class #{node.constant_path.slice} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose",
                 )
               elsif line_count > LINE_LIMIT
                 findings << finding(
                   line: node.location.start_line,
-                  message: "god class #{node.constant_path.slice} is #{line_count} lines — split at responsibility boundaries"
+                  message: "god class #{node.constant_path.slice} is #{line_count} lines — split at responsibility boundaries",
                 )
               end
             end
@@ -148,7 +148,7 @@ module Master
           NESTING_TYPES = [
             Prism::IfNode, Prism::UnlessNode, Prism::WhileNode,
             Prism::UntilNode, Prism::ForNode, Prism::CaseNode,
-            Prism::BlockNode,
+            Prism::BlockNode
           ].freeze
 
           def initialize
@@ -365,7 +365,7 @@ module Master
               node.body&.body&.each do |child|
                 methods[child.name] = child if child.is_a?(Prism::DefNode)
               end
-              classes[node.name] = { superclass: node.superclass&.slice&.to_sym, methods: methods }
+              classes[node.name] = { superclass: node.superclass&.slice&.to_sym, methods: }
             end
             classes
           end

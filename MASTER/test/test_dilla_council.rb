@@ -21,9 +21,8 @@ class TestDillaCouncil < Minitest::Test
 
   def test_dilla_panel_personas_exist_in_council_yaml
     names = Master::Review::Council::Personas.load.map(&:name)
-    %w[
-      Electronic\ Music\ Producer Sound\ Engineer Label\ Executive
-      Graphic\ Designer Web\ Designer Sound\ Designer Organ\ Composer
+    [
+      "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer", "Web Designer", "Sound Designer", "Organ Composer",
     ].each do |name|
       assert_includes names, name
     end

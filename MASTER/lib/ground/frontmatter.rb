@@ -17,7 +17,7 @@ module Master
         m = s.match(RE)
         return { meta: {}, body: s.strip } unless m
         meta = (YAML.safe_load(m[1], permitted_classes: [Symbol, Time, Date]) rescue {})
-        { meta: meta, body: m[2].strip }
+        { meta:, body: m[2].strip }
       end
 
       def parse_file(path)

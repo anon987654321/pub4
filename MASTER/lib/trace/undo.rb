@@ -20,7 +20,7 @@ module Master
       end
 
       def snapshot(path)
-        @bus&.publish("voice:catchphrase", phrase: "Backing up first.", path: path)
+        @bus&.publish("voice:catchphrase", phrase: "Backing up first.", path:)
         content = File.exist?(path) ? File.read(path) : nil
         @session.snapshot(path, content)
         @stack << { "path" => path, "content" => content, "ts" => Time.now.to_i }
@@ -120,7 +120,7 @@ module Master
       def delete_tmp_file(path)
         File.delete(path) if path && File.exist?(path)
       rescue StandardError => e
-        @bus&.publish("undo:tmp_delete_error", error: e.message, path: path)
+        @bus&.publish("undo:tmp_delete_error", error: e.message, path:)
       end
     end
   end

@@ -67,7 +67,7 @@ module Master
         SQL
         end
 
-        def rebuild_fts_for(name)
+        def rebuild_fts_for(_name)
           @db.execute("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')")
         end
       end

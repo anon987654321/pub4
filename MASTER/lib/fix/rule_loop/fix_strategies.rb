@@ -64,12 +64,12 @@ module Master
           path = violation[:file]
           return unless File.exist?(path)
           src = File.read(path, encoding: "UTF-8")
-          prompt = build_prompt_for(violation: violation, src: src, path: path, style: :council)
+          prompt = build_prompt_for(violation:, src:, path:, style: :council)
           fix_attempt(violation, event: "rule_loop:council_error").first_code(
-            prompt: prompt,
+            prompt:,
             ext: File.extname(path).downcase,
             source: src,
-            wait_context: { rule: @rule.id, file: path, mode: :council }
+            wait_context: { rule: @rule.id, file: path, mode: :council },
           )
         end
 
@@ -78,21 +78,21 @@ module Master
           return unless File.exist?(path)
           src = File.read(path, encoding: "UTF-8")
           if src.lines.count > 200
-            architect_then_fix(violation: violation, src: src, path: path)
+            architect_then_fix(violation:, src:, path:)
           else
-            src.bytesize > PatchApplier::DIFF_THRESHOLD ? diff_fix(violation: violation, src: src, path: path) : genetic_fix(violation: violation, src: src, path: path)
+            src.bytesize > PatchApplier::DIFF_THRESHOLD ? diff_fix(violation:, src:, path:) : genetic_fix(violation:, src:, path:)
           end
         end
 
         def diff_fix(violation:, src:, path:)
-          prompt = build_prompt_for(violation: violation, src: src, path: path, style: :diff)
+          prompt = build_prompt_for(violation:, src:, path:, style: :diff)
           MAX_FIX_RETRIES.times do |attempt|
             wait_before_retry(attempt, rule: @rule.id, file: path, mode: :diff)
             response = @agent.ask(prompt).to_s
             next if response.strip == "UNCHANGED"
             result = PatchApplier.apply(src, response)
             return result.source if result.is_a?(PatchApplier::Success)
-            return whole_file_fallback(violation: violation, src: src, path: path, reason: result.reason)
+            return whole_file_fallback(violation:, src:, path:, reason: result.reason)
           rescue StandardError => e
             action = handle_fix_exception(e, violation, event: "rule_loop:fix_error")
             next if action == :retry
@@ -103,12 +103,12 @@ module Master
 
         def genetic_fix(violation:, src:, path:)
           ext = File.extname(path).downcase
-          prompt = build_prompt_for(violation: violation, src: src, path: path)
+          prompt = build_prompt_for(violation:, src:, path:)
           candidates = fix_attempt(violation, attempts: genetic_autofix_candidates, event: "rule_loop:fix_error").codes(
-            prompt: prompt,
-            ext: ext,
+            prompt:,
+            ext:,
             source: src,
-            wait_context: { rule: @rule.id, file: path, mode: :genetic }
+            wait_context: { rule: @rule.id, file: path, mode: :genetic },
           )
           best_candidate(Array(candidates), path)
         end
@@ -116,32 +116,32 @@ module Master
         def architect_then_fix(violation:, src:, path:)
           strong_model = routing_model_ids[:strong]
           fast_model = routing_model_ids[:fast]
-          plan = architecture_plan(violation: violation, src: src, path: path, model: strong_model)
-          return whole_file_fallback(violation: violation, src: src, path: path, reason: "no architecture plan") if plan.to_s.strip.empty?
+          plan = architecture_plan(violation:, src:, path:, model: strong_model)
+          return whole_file_fallback(violation:, src:, path:, reason: "no architecture plan") if plan.to_s.strip.empty?
 
           prompt = build_prompt_for(
-            violation: violation,
-            src: src,
-            path: path,
-            style: :file
+            violation:,
+            src:,
+            path:,
+            style: :file,
           ) + "\n\nArchitecture plan:\n#{plan}"
           response = fast_model ? @agent.ask_once(prompt, model: fast_model) : @agent.ask_once(prompt)
           response = extract_code(response.to_s, File.extname(path).downcase)
-          return whole_file_fallback(violation: violation, src: src, path: path, reason: "no code returned") if response.to_s.strip.empty?
+          return whole_file_fallback(violation:, src:, path:, reason: "no code returned") if response.to_s.strip.empty?
 
           response
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RuleLoop.architect_then_fix", rule: @rule.id)
-          whole_file_fallback(violation: violation, src: src, path: path, reason: e.message)
+          whole_file_fallback(violation:, src:, path:, reason: e.message)
         end
 
         def fix_attempt(violation, attempts: MAX_FIX_RETRIES, event:)
           FixAttempt.new(
             agent: @agent,
-            attempts: attempts,
+            attempts:,
             wait: ->(attempt, context) { wait_before_retry(attempt, **context) },
             extractor: ->(response, ext) { extract_code(response, ext) },
-            on_error: ->(error) { handle_fix_exception(error, violation, event: event) }
+            on_error: ->(error) { handle_fix_exception(error, violation, event:) },
           )
         end
 
@@ -149,7 +149,7 @@ module Master
           return unless attempt.positive?
 
           delay = RATE_LIMIT_SLEEP * attempt
-          @bus&.publish("rule_loop:retry_wait", rule: rule, file: file, mode: mode, attempt: attempt, delay: delay)
+          @bus&.publish("rule_loop:retry_wait", rule:, file:, mode:, attempt:, delay:)
           deadline = Time.now + delay
           while (remaining = deadline - Time.now).positive?
             sleep [remaining, RETRY_WAIT_SLICE].min
@@ -185,14 +185,14 @@ module Master
 
         def whole_file_fallback(violation:, src:, path:, reason:)
           @bus&.publish("rule_loop:edit_format_fallback", rule: @rule.id, file: path, reason: reason.to_s[0, 160])
-          prompt = build_prompt_for(violation: violation, src: src, path: path, style: :file)
+          prompt = build_prompt_for(violation:, src:, path:, style: :file)
           model = routing_model_ids[:fast]
-          model ? @agent.ask_once(prompt, model: model).to_s : @agent.ask_once(prompt).to_s
+          model ? @agent.ask_once(prompt, model:).to_s : @agent.ask_once(prompt).to_s
         end
 
         def architecture_plan(violation:, src:, path:, model:)
           prompt = architecture_plan_prompt(violation, src, path)
-          raw = model ? @agent.ask_once(prompt, model: model) : @agent.ask_once(prompt)
+          raw = model ? @agent.ask_once(prompt, model:) : @agent.ask_once(prompt)
           raw.to_s
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "RuleLoop.architecture_plan", rule: @rule.id)

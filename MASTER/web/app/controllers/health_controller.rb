@@ -17,7 +17,11 @@ class HealthController < ActionController::API
     # false-503s while the on-demand daemon is between syntheses.
     critical = %i[tts git]
     critical_ok = critical.all? { |key| checks[key] }
-    status = critical_ok ? (checks.values.all? ? "ok" : "degraded") : "unavailable"
+    status = if critical_ok
+checks.values.all? ? "ok" : "degraded"
+else
+"unavailable"
+end
     http = critical_ok ? :ok : :service_unavailable
     render json: { status:, checks:, deploy: deploy_confidence }, status: http
   end
@@ -61,10 +65,10 @@ class HealthController < ActionController::API
 
   def deploy_confidence
     {
-      git_sha: git_sha,
+      git_sha:,
       voice_policy: Master::Voice::Policy.browser_payload,
       tts_socket: tts_socket_alive?,
-      face_runtime_digest: face_runtime_digest,
+      face_runtime_digest:,
       assets_precompile_at: assets_precompile_stamp,
     }
   rescue StandardError => e
@@ -88,7 +92,7 @@ class HealthController < ActionController::API
 
   def face_runtime_digest
     manifest = Rails.root.join("public", "assets", ".manifest.json")
-    return nil unless File.file?(manifest)
+    return unless File.file?(manifest)
 
     data = JSON.parse(File.read(manifest))
     entry = data["face.runtime.js"]

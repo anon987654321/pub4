@@ -20,7 +20,7 @@ class FoldObserverTest < Minitest::Test
       constitution: Master::Core::Constitution.new(rules: []),
       world: Master::Core::World.new(root:),
       memory: Master::Core::Memory.new,
-      observer:
+      observer:,
     )
   end
 
@@ -29,7 +29,7 @@ class FoldObserverTest < Minitest::Test
       seen = []
       model = ScriptedModel.new(
         Master::Core::Effect.write("a.txt", "hi\n"),
-        Master::Core::Effect.done("built")
+        Master::Core::Effect.done("built"),
       )
       observer = ->(turn:, effect:, observation:) { seen << [turn, effect.verb, observation.ok?] }
       done = build(model, root:, observer:).run("goal")
@@ -52,7 +52,7 @@ class FoldObserverTest < Minitest::Test
         constitution: Master::Core::Constitution.new(rules: [block_writes]),
         world: Master::Core::World.new(root:),
         memory: Master::Core::Memory.new,
-        observer: ->(turn:, effect:, observation:) { seen << [effect.verb, observation.ok?] }
+        observer: ->(turn:, effect:, observation:) { seen << [effect.verb, observation.ok?] },
       )
       fold.run("goal")
       assert_includes seen, [:write, false]

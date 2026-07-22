@@ -7,7 +7,7 @@ class TestChatSseContract < Minitest::Test
 
   def test_chat_service_smoke_messages
     source = File.read(File.join(WEB_ROOT, "app", "services", "chat_service.rb"))
-    assert_includes source, 'SMOKE_MESSAGES = %w[ping pong health up]'
+    assert_includes source, "SMOKE_MESSAGES = %w[ping pong health up]"
     assert_includes source, "data: [DONE]"
   end
 

@@ -7,23 +7,23 @@ class AssistantContractSpec < Minitest::Test
     forbidden: [
       "I'll do this in the background",
       "I'll tell you later",
-      "all done" # reserved for externally verified completion only,
+      "all done", # reserved for externally verified completion only,
     ],
     required_when_blocked: ["blocked", "not landed", "not verified", "failed"],
-    preferred_traits: ["concise", "plain", "actionable", "honest"],
+    preferred_traits: %w[concise plain actionable honest],
   }.freeze
 
   CASES = [
     {
       name: "casual greeting",
       user: "hey",
-      must: ["short", "warm"],
-      must_not: ["plan", "background", "todo"],
+      must: %w[short warm],
+      must_not: %w[plan background todo],
     },
     {
       name: "confusion repair",
       user: "wait what changed?",
-      must: ["recap", "plain"],
+      must: %w[recap plain],
       must_not: ["defensive"],
     },
     {

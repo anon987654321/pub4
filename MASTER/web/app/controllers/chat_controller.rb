@@ -24,7 +24,7 @@ class ChatController < ApplicationController
   def dmesg
     out, = Open3.capture2e("dmesg")
     lines = out.lines.first(20).map(&:chomp)
-    render json: { lines: lines }
+    render json: { lines: }
   end
 
   def metrics
@@ -93,7 +93,7 @@ class ChatController < ApplicationController
       value = result.ok? ? result.value! : nil
       output = value.is_a?(Hash) ? (value[:rendered] || value.to_s) : (value || result.message)
       client_actions = value.is_a?(Hash) ? Array(value[:client_actions]) : []
-      render json: { output: output, client_actions: client_actions }
+      render json: { output:, client_actions: }
     end
   rescue StandardError => e
     render json: { output: "Error: #{e.message}" }, status: 500
@@ -115,7 +115,7 @@ class ChatController < ApplicationController
       next if t.empty?
       "#{t}. #{s}".slice(0, 480)
     end.compact
-    render json: { items: items }
+    render json: { items: }
   rescue StandardError => e
     web_logger.warn("research failed: #{e.class}: #{e.message}")
     render json: { items: [] }
@@ -133,7 +133,7 @@ class ChatController < ApplicationController
 
   def photo
     status, payload = ImagePresenter.new(logger: web_logger).store(params[:photo])
-    render json: payload, status: status
+    render json: payload, status:
   end
 
   def message
@@ -148,13 +148,13 @@ class ChatController < ApplicationController
     response.headers["X-Accel-Buffering"] = "no"
 
     ChatService.new(
-      container: container,
+      container:,
       params: mp,
       stream: response.stream,
       logger: web_logger,
       tier: request.env["master.tier"].to_s,
       unlocked: cookies[:master_unlocked].to_s == "1",
-      author: false
+      author: false,
     ).call
   rescue IOError, ActionController::Live::ClientDisconnected
     nil
@@ -186,7 +186,7 @@ class ChatController < ApplicationController
       open_breakers:    open_models,
       tier:             request.env["master.tier"].to_s,
       cache_efficiency: cache[:efficiency_pct],
-      model_quota:      quota
+      model_quota:      quota,
     }
   end
 

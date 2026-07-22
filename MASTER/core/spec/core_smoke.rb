@@ -58,7 +58,7 @@ Dir.mktmpdir do |root|
     model: ScriptedModel.new(script),
     constitution: Master::Core::Constitution.load(data_dir: DATA),
     world: Master::Core::World.new(root:),
-    memory: Master::Core::Memory.new
+    memory: Master::Core::Memory.new,
   )
 
   done = core.run("create ok.rb and prove it")
@@ -84,7 +84,7 @@ Dir.mktmpdir do |root|
     constitution: Master::Core::Constitution.load(data_dir: DATA),
     world: Master::Core::World.new(root:),
     memory: Master::Core::Memory.new,
-    max_turns: 1
+    max_turns: 1,
   )
   check("done without evidence is blocked") { k.run("x").reason == :max_turns }
 end

@@ -38,19 +38,19 @@ module Master
       Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
       VOICES = {
-        :"ms-MY-OsmanNeural" => "ms-MY-OsmanNeural",
-        :"en-GB-RyanNeural" => "en-GB-RyanNeural",
-        :"nb-NO-FinnNeural" => "nb-NO-FinnNeural",
-        :"en-US-AndrewNeural" => "en-US-AndrewNeural",
-        :"en-US-GuyNeural" => "en-US-GuyNeural",
-        :"en-AU-WilliamNeural" => "en-AU-WilliamNeural",
-        :"en-US-ChristopherNeural" => "en-US-ChristopherNeural",
-        :"en-US-EricNeural" => "en-US-EricNeural",
-        :"nb-NO-PernilleNeural" => "nb-NO-PernilleNeural",
-        :"en-US-DavisNeural" => "en-US-DavisNeural",
-        :"en-SG-WayneNeural" => "en-SG-WayneNeural",
-        :"en-NG-EzinneNeural" => "en-NG-EzinneNeural",
-        :"en-US-JennyNeural" => "en-US-JennyNeural",
+        "ms-MY-OsmanNeural": "ms-MY-OsmanNeural",
+        "en-GB-RyanNeural": "en-GB-RyanNeural",
+        "nb-NO-FinnNeural": "nb-NO-FinnNeural",
+        "en-US-AndrewNeural": "en-US-AndrewNeural",
+        "en-US-GuyNeural": "en-US-GuyNeural",
+        "en-AU-WilliamNeural": "en-AU-WilliamNeural",
+        "en-US-ChristopherNeural": "en-US-ChristopherNeural",
+        "en-US-EricNeural": "en-US-EricNeural",
+        "nb-NO-PernilleNeural": "nb-NO-PernilleNeural",
+        "en-US-DavisNeural": "en-US-DavisNeural",
+        "en-SG-WayneNeural": "en-SG-WayneNeural",
+        "en-NG-EzinneNeural": "en-NG-EzinneNeural",
+        "en-US-JennyNeural": "en-US-JennyNeural",
         osman: "ms-MY-OsmanNeural",
         ryan: "en-GB-RyanNeural",
         finn: "nb-NO-FinnNeural",
@@ -63,7 +63,7 @@ module Master
         davis: "en-US-DavisNeural",
         wayne: "en-SG-WayneNeural",
         ezinne: "en-NG-EzinneNeural",
-        jenny: "en-US-JennyNeural"
+        jenny: "en-US-JennyNeural",
       }.freeze
 
       STYLES = {
@@ -84,7 +84,7 @@ module Master
         robotic:      { rate: "+10%", pitch: "-80Hz" },
         whispered:    { rate: "-25%", pitch: "-10Hz" },
         storyteller:  { rate: "-8%",  pitch: "-15Hz" },
-        energetic:    { rate: "+15%", pitch: "+30Hz" }
+        energetic:    { rate: "+15%", pitch: "+30Hz" },
       }.freeze
 
       DEFAULT_VOICE = Policy.single_voice_key
@@ -140,7 +140,7 @@ module Master
         end
       end
 
-      def style_config_for(voice, style)
+      def style_config_for(_voice, style)
         STYLES.fetch(style.to_sym, STYLES[default_style]).dup
       end
 
@@ -214,7 +214,7 @@ module Master
         voice, style_config = resolve_voice_and_style(text_str, voice:, style:, rate:, pitch:, style_locked:)
 
         if edge_tts_available?
-          path = synthesize_edge(text_str, voice: voice, style_config: style_config)
+          path = synthesize_edge(text_str, voice:, style_config:)
           return path if path
         end
 
@@ -226,8 +226,8 @@ module Master
         return [false, nil] unless use_mode == "transcendent" && Transcendent.enabled?
 
         result = Transcendent.synthesize(
-          text_str, voice: voice, style: style, rate: rate, pitch: pitch,
-          voice_locked: voice_locked, style_locked: style_locked
+          text_str, voice:, style:, rate:, pitch:,
+          voice_locked:, style_locked:
         )
         [true, result]
       end
@@ -324,10 +324,10 @@ module Master
         2.times do |attempt|
           path = synthesize_edge_socket(
             text: text_str,
-            voice_name: voice_name,
-            style_config: style_config,
+            voice_name:,
+            style_config:,
             audio_path: output_path,
-            on_chunk: on_chunk
+            on_chunk:,
           )
           return true if path && File.exist?(output_path) && File.size(output_path) > 0
 
@@ -342,9 +342,9 @@ module Master
       def attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
         path = synthesize_edge_oneshot(
           text: text_str,
-          voice_name: voice_name,
-          style_config: style_config,
-          audio_path: output_path
+          voice_name:,
+          style_config:,
+          audio_path: output_path,
         )
         return false unless path && File.exist?(output_path) && File.size(output_path) > 0
 
@@ -402,7 +402,7 @@ module Master
           Gem.ruby, WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
           stdin_data: text.to_s,
           chdir: Master::ROOT,
-          timeout: timeout
+          timeout:
         )
         [err, status]
       end
@@ -431,7 +431,7 @@ module Master
           voice: voice_name,
           rate: style_config[:rate],
           pitch: style_config[:pitch],
-          text: text.to_s
+          text: text.to_s,
         )
       end
 

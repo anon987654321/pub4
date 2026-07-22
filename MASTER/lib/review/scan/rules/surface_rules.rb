@@ -145,7 +145,7 @@ module Master
             line = src[0, src.index(chunk) || 0].count("\n") + 1
 
             if count > max
-              findings << finding(line: line, message: "#{count} peer choices > #{max} (Hick) — group or progressive disclosure")
+              findings << finding(line:, message: "#{count} peer choices > #{max} (Hick) — group or progressive disclosure")
               next
             end
 
@@ -160,7 +160,7 @@ module Master
             next if chunk.match?(/role=["']group["']|data-controller=["'][^"']*(?:group|collapse|disclosure)/i)
             next if chunk.scan(/\.each(?:_with_index)?\s+do\s*\|/).size > 1 # already chunked into sub-groups
 
-            findings << finding(line: line, message: "dynamic choice list (.each loop, real count unknown statically) with no grouping signal — verify it can't exceed #{max} peers, or add role=\"group\"/progressive disclosure (Hick)")
+            findings << finding(line:, message: "dynamic choice list (.each loop, real count unknown statically) with no grouping signal — verify it can't exceed #{max} peers, or add role=\"group\"/progressive disclosure (Hick)")
           end
           findings
         end

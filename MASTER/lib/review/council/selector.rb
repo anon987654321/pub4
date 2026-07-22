@@ -12,26 +12,26 @@ module Master
           mobile_ui: ["User Advocate", "Accessibility", "Web Designer", "Performance", "Google CSS Engineer"],
           ui: ["User Advocate", "Accessibility", "NNGroup UX Researcher", "Web Designer", "Typographer", "Cognitive Psychologist", "Graphic Designer"],
           auth_mutation: ["Security", "Reliability", "Maintainer", "Ethics & Policy"],
-          security_audit: ["Security", "Reliability", "Maintainer", "Skeptic"],
-          architecture: ["Architect", "Maintainer", "Reliability", "Skeptic", "Minimalist"],
+          security_audit: %w[Security Reliability Maintainer Skeptic],
+          architecture: %w[Architect Maintainer Reliability Skeptic Minimalist],
           migration: ["Architect", "Maintainer", "Data Steward", "Reliability"],
           performance: ["Performance", "Maintainer", "QA Engineer"],
           data: ["Data Steward", "Maintainer", "Reliability"],
           sonic: [
             "Electronic Music Producer", "Sound Engineer", "Label Executive",
             "Graphic Designer", "Web Designer", "Sound Designer", "Organ Composer",
-            "Hip-Hop Producer", "Skeptic",
+            "Hip-Hop Producer", "Skeptic"
           ],
           product: ["Product Strategist", "User Advocate", "Pragmatist"],
           docs: ["Maintainer", "Layperson", "QA Engineer"],
           code_review: ["Maintainer", "Skeptic", "QA Engineer", "Architect", "Minimalist"],
-          destructive: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic", "Chaos"],
+          destructive: %w[Security Reliability Maintainer Architect Skeptic Chaos],
         }.freeze
 
         RISK_PERSONAS = {
-          critical: ["Security", "Reliability", "Maintainer", "Architect", "Skeptic", "Chaos"],
-          high: ["Security", "Reliability", "Maintainer"],
-          medium: ["Maintainer", "Skeptic"],
+          critical: %w[Security Reliability Maintainer Architect Skeptic Chaos],
+          high: %w[Security Reliability Maintainer],
+          medium: %w[Maintainer Skeptic],
           low: ["Maintainer"],
         }.freeze
 
@@ -54,11 +54,11 @@ module Master
         def base_personas(task, risk)
           task_set = task ? TASK_PERSONAS[task.to_sym] : nil
           risk_set = risk ? RISK_PERSONAS[risk.to_sym] : nil
-          return task_set || risk_set || ALWAYS_INCLUDED if task_set.nil? || risk_set.nil?
+          task_set || risk_set || ALWAYS_INCLUDED if task_set.nil? || risk_set.nil?
         end
 
         def normalize_available(available)
-          return unless available
+          nil unless available
         end
       end
     end

@@ -207,7 +207,7 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(domain:, context: nil)
-          result = @tool.call(domain: domain.to_s, context: context)
+          result = @tool.call(domain: domain.to_s, context:)
           result.ok? ? JSON.pretty_generate(result.value!) : "Error: #{result.message}"
         end
       end

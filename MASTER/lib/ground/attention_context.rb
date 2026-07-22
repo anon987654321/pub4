@@ -43,7 +43,7 @@ module Master
           zoom: data["zoom"] || "wide",
           act: data["act"] || "scout",
           target: data["target"] || [],
-          parent: data["parent"] || []
+          parent: data["parent"] || [],
         )
       end
     end

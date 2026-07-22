@@ -80,8 +80,8 @@ module Master
         model = cfg["replicate_model"] || "jaaari/kokoro-82m"
         kokoro_voice = cfg["replicate_voice"] || "af_bella"
         speed = (cfg["replicate_speed"] || 1.18).to_f
-        output = client.predict(model, { text: enriched, voice: kokoro_voice, speed: speed })
-        return nil if output.nil?
+        output = client.predict(model, { text: enriched, voice: kokoro_voice, speed: })
+        return if output.nil?
 
         url = Array(output).flatten.first.to_s
         url.strip.empty? ? nil : url
@@ -251,7 +251,7 @@ module Master
       end
 
       def copy_if_synthesized(text, out_path, voice, rate, pitch)
-        path = Speech.synthesize_edge(text, voice: voice, style_config: { rate: rate, pitch: pitch })
+        path = Speech.synthesize_edge(text, voice:, style_config: { rate:, pitch: })
         return false unless path && File.size?(path)
 
         FileUtils.cp(path, out_path)

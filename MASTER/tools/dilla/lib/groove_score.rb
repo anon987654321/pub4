@@ -45,7 +45,7 @@ module DillaGrooveScore
       hat_late_avg_ms: hat_late_avg.round(2)
     }
 
-    { score: score.round.clamp(40, 98), breakdown: breakdown }
+    { score: score.round.clamp(40, 98), breakdown: }
   end
 
   def variance(values)
@@ -58,7 +58,7 @@ module DillaGrooveScore
   def evolve_recommendations(analysis)
     breakdown = analysis[:breakdown] || {}
     score = analysis[:score] || 70
-    recs = { score: score }
+    recs = { score: }
 
     gd = breakdown[:ghost_density].to_f
     if gd < 0.2

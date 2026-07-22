@@ -20,14 +20,14 @@ module Master
           type = TYPES.include?(type.to_s) ? type.to_s : "general"
           @mutex.synchronize do
             prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-            @store[key.to_s] = entry_for(key: key, value: value, type: type)
+            @store[key.to_s] = entry_for(key:, value:, type:)
             persist
           end
         end
 
         def by_type(type)
           @mutex.synchronize do
-            @store.select { |key, value| typed_entry?(key: key, value: value, type: type.to_s) }
+            @store.select { |key, value| typed_entry?(key:, value:, type: type.to_s) }
           end
         end
 
@@ -89,7 +89,7 @@ module Master
 
           count = @mutex.synchronize { @store.keys.count { |key| key.start_with?("auto/#{type}/") } }
           key = "auto/#{type}/#{count + 1}"
-          remember(key, snippet, type: type)
+          remember(key, snippet, type:)
           key
         end
 
@@ -137,7 +137,7 @@ module Master
 
         def brain_templates
           {
-            "IDENTITY.md" => "# IDENTITY\n\nActive persona, voice, and operator preferences.\n"
+            "IDENTITY.md" => "# IDENTITY\n\nActive persona, voice, and operator preferences.\n",
           }
         end
 
@@ -169,7 +169,7 @@ module Master
           return if @store.key?(key)
 
           type, body = parse_frontmatter(path)
-          remember(key, body, type: type) unless body.empty?
+          remember(key, body, type:) unless body.empty?
         end
 
         def parse_frontmatter(path)

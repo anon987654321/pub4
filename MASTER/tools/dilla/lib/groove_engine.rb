@@ -315,7 +315,7 @@ module DillaGroove
     # discrete positions per beat, so a fractional-tick jitter value is one
     # that could never have been produced by hand on the actual hardware.
     quantized_ticks = (raw / (tick_ms / 1000.0)).round
-    (quantized_ticks * tick_ms / 1000.0) + phrase_drift_sec(bar, role: role)
+    (quantized_ticks * tick_ms / 1000.0) + phrase_drift_sec(bar, role:)
   end
 
   # Per-role period multiplier + phase offset so kick/snare/hat drift
@@ -357,7 +357,7 @@ module DillaGroove
   # tick offset is a value that could never have existed on the real
   # hardware; whole-tick multipliers keep every offset authentically
   # reachable by the tool this feel is modeled on.
-  def role_timing_offset(role, beat_p, bar, step)
+  def role_timing_offset(role, beat_p, _bar, _step)
     return 0.0 unless enabled?
     tick = beat_p / 96.0
     case role.to_sym
@@ -371,11 +371,19 @@ module DillaGroove
     when :kick_anchor, :kick_sync, :kick
       return 0.0 if ENV["KICK_LATE"] == "0"
       # Late kick vs early snare = laid-back boom-bap tension.
-      mul = pocket_dna? ? (role.to_sym == :kick_anchor ? 1 : 3) : 0
+      mul = if pocket_dna?
+role.to_sym == :kick_anchor ? 1 : 3
+else
+0
+end
       tick * mul
     when :hat, :hat_down, :hat_up, :open
       return 0.0 if ENV["HATS_LATE"] == "0"
-      mul = pocket_dna? ? (role.to_sym == :hat_up ? 3 : 2) : 2
+      mul = if pocket_dna?
+role.to_sym == :hat_up ? 3 : 2
+else
+2
+end
       tick * mul
     when :ghost
       tick * 1
@@ -410,9 +418,9 @@ module DillaGroove
   # quantized repeat. Whole-tick offset (2-4 ticks), same 96-PPQ
   # authenticity as the rest of the timing system.
   def kick_double_offset_ticks(bar, step)
-    return nil unless enabled? && pocket_dna?
-    return nil if ENV["KICK_DOUBLE"] == "0"
-    return nil unless Random.new((bar * 883) + (step * 47) + 521 + render_seed).rand < 0.05
+    return unless enabled? && pocket_dna?
+    return if ENV["KICK_DOUBLE"] == "0"
+    return unless Random.new((bar * 883) + (step * 47) + 521 + render_seed).rand < 0.05
     [2, 3, 4].sample(random: Random.new((bar * 601) + (step * 29) + 71 + render_seed))
   end
 
@@ -453,7 +461,7 @@ module DillaGroove
   # as 2 ticks directly so it scales correctly with tempo.
   def flam_offset_sec(beat_p = nil)
     return 0.0 unless enabled? && ENV["FLAM"] != "0"
-    return 0.0012 unless beat_p && beat_p.positive?
+    return 0.0012 unless beat_p&.positive?
     2 * (beat_p / 96.0)
   end
 
@@ -498,7 +506,7 @@ module DillaGroove
     out.uniq.sort
   end
 
-  def prime_poly_steps(bar)
+  def prime_poly_steps(_bar)
     return [] unless enabled? && ENV["PRIME_GRID"] == "1"
     PRIMES.flat_map { |p| (0...16).step(p).map { |s| s % 16 } }.uniq.sort
   end
@@ -536,7 +544,7 @@ module DillaGroove
 
   def apply_event_timing!(t, role:, beat_p:, bar:, step:, bpm: 90, section: nil)
     t + role_timing_offset(role, beat_p, bar, step) +
-      swing_jitter_ms(bpm, step, bar, role: role, section: section) +
+      swing_jitter_ms(bpm, step, bar, role:, section:) +
       (role.to_s.start_with?("hat") ? hat_micro_delay_sec(bar, step, beat_p) : 0.0) +
       (%i[kick kick_anchor kick_sync].include?(role.to_sym) ? freehand_kick_sec(bar, step, beat_p) : 0.0)
   end
@@ -614,6 +622,6 @@ module DillaGroove
   end
 
   def apply_pocket_place(t, role:, beat_p:, bar:, step:, bpm:, section: nil)
-    apply_event_timing!(t, role: role, beat_p: beat_p, bar: bar, step: step, bpm: bpm, section: section)
+    apply_event_timing!(t, role:, beat_p:, bar:, step:, bpm:, section:)
   end
 end

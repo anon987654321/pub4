@@ -39,7 +39,7 @@ module Master
         tokens = @refs.session.token_est
         prompt_lines = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
-          last_ok: @last_ok, violations: violations_count, tokens: tokens, cost: @refs.session.cost
+          last_ok: @last_ok, violations: violations_count, tokens:, cost: @refs.session.cost
         )
         [
           (status if status),

@@ -26,7 +26,7 @@ module Master
             message: "file is #{lines.size} lines",
             line: 1,
             suggestion: "split the file at responsibility boundaries",
-            file_path: file_path
+            file_path:,
           )
         end
 
@@ -40,7 +40,7 @@ module Master
               message: "line #{line.chomp.length} chars",
               line: idx + 1,
               suggestion: "wrap the line or extract a helper",
-              file_path: file_path
+              file_path:,
             )
           end
         end

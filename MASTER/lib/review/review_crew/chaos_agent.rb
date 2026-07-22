@@ -33,7 +33,7 @@ module Master
             message: "external call with no rescue anywhere in the file",
             line: 1,
             suggestion: "the network, the disk, and other processes fail; handle it or let a caller who can",
-            file_path: file_path
+            file_path:,
           )
         end
 
@@ -48,7 +48,7 @@ module Master
               message: "retry with no visible attempt counter",
               line: line_no,
               suggestion: "cap retries; an unbounded retry against a persistently failing dependency is a hang, not resilience",
-              file_path: file_path
+              file_path:,
             )
           end
         end
@@ -63,7 +63,7 @@ module Master
             message: "HTTP client usage with no visible timeout",
             line: 1,
             suggestion: "a hung dependency without a timeout hangs everything waiting on it",
-            file_path: file_path
+            file_path:,
           )
         end
       end

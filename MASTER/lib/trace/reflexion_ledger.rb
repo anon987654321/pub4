@@ -41,7 +41,7 @@ module Master
         files = Array(payload[:files] || payload["files"]).map { |f| File.basename(f.to_s) }.uniq
         append("ts" => Time.now.utc.iso8601, "kind" => kind, "reason" => reason,
                "files" => files, "reflection" => sentence(kind, reason, files))
-        @bus&.publish("reflexion:recorded", reason: reason, files: files)
+        @bus&.publish("reflexion:recorded", reason:, files:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "reflexion_ledger.record", event_bus: @bus)
       end

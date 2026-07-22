@@ -38,7 +38,7 @@ module Master
 
       def block_on_stale_ground_truth(ctx)
         stale = ground_truth_stale_paths(ctx)
-        return nil if stale.empty?
+        return if stale.empty?
 
         @bus&.publish("council:ground_truth_blocked", paths: stale)
         Result.err("council blocked: stale read required for #{stale.join(", ")}", category: :policy)

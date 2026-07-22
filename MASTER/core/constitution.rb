@@ -55,7 +55,7 @@ module Master::Core
         evidence_for_done_rule,
         git_commit_evidence_rule,
         council_for_done_rule,
-        ideation_before_write_rule
+        ideation_before_write_rule,
       ]
     end
 

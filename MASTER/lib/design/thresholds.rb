@@ -15,7 +15,7 @@ module Master
         return hit[:data] if hit && hit[:mtime] == mtime
 
         data = Master.load_yaml(path, default: {}) || {}
-        @cache[path] = { mtime: mtime, data: data }
+        @cache[path] = { mtime:, data: }
         data
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Design::Thresholds.load")
@@ -23,26 +23,26 @@ module Master
       end
 
       def self.dig(*keys, root: Master::ROOT)
-        load(root: root).dig(*keys)
+        load(root:).dig(*keys)
       end
 
       def self.touch_min_px(root: Master::ROOT)
-        dig("ux_laws", "fitts", "target_min_px", root: root) ||
-          dig("layout_rules", "touch", "target_min_px", root: root) || 44
+        dig("ux_laws", "fitts", "target_min_px", root:) ||
+          dig("layout_rules", "touch", "target_min_px", root:) || 44
       end
 
       def self.max_visible_choices(root: Master::ROOT)
-        dig("ux_laws", "hick", "max_visible_choices", root: root) || 7
+        dig("ux_laws", "hick", "max_visible_choices", root:) || 7
       end
 
       def self.eight_px_rhythm(root: Master::ROOT)
-        dig("pixel_perfection", "eight_px_rhythm", root: root) ||
-          dig("layout_rules", "grid", "allowed_spacing_px", root: root) ||
+        dig("pixel_perfection", "eight_px_rhythm", root:) ||
+          dig("layout_rules", "grid", "allowed_spacing_px", root:) ||
           [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96]
       end
 
       def self.forbidden_css_patterns(root: Master::ROOT)
-        patterns = Array(dig("pixel_perfection", "forbidden_patterns", root: root))
+        patterns = Array(dig("pixel_perfection", "forbidden_patterns", root:))
         return patterns unless patterns.empty?
 
         [

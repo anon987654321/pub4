@@ -33,7 +33,7 @@ class TestAggressiveMerge < Minitest::Test
 
   def test_flags_low_density_slug_for_rename
     path = write("lib/misc_util_helper.rb", "# frozen_string_literal: true\nmodule MiscUtilHelper; end\n")
-    @container[:event] = { path: path }
+    @container[:event] = { path: }
 
     result = order.call
     assert result.ok?

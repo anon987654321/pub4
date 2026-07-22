@@ -11,7 +11,7 @@ class TurnPipelineTest < Minitest::Test
       renderer:,
       commands: { "status" => Master::CLI::CommandRegistry::Command.new { "ok-status" } },
       root: Dir.pwd,
-      bus: nil
+      bus: nil,
     }
   end
 

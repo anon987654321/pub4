@@ -15,7 +15,7 @@ class TestProposeCorrections < Minitest::Test
     end
 
     def publish(event, payload = {})
-      @events << { event: event, payload: payload }
+      @events << { event:, payload: }
     end
   end
 
@@ -36,12 +36,12 @@ class TestProposeCorrections < Minitest::Test
     bus = FakeBus.new
     propose = Master::CLI::Propose.new(
       container: {
-        root: root,
-        bus: bus,
+        root:,
+        bus:,
         git: StubGit.new,
         session: Struct.new(:messages).new([]),
         config: StubConfig.new,
-      }
+      },
     )
 
     result = propose.reject("/fix")

@@ -66,7 +66,7 @@ module Master
         @pattern_cache.shift if @pattern_cache.size >= PATTERN_CACHE_MAX
 
         re = @pattern_cache[pattern] ||= Regexp.new(
-          "\\A" + Regexp.escape(pattern).gsub("\\*\\*", ".*").gsub("\\*", "[^:]*") + "\\z"
+          "\\A" + Regexp.escape(pattern).gsub("\\*\\*", ".*").gsub("\\*", "[^:]*") + "\\z",
         )
 
         re.match?(event)

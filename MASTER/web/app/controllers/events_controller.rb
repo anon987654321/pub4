@@ -37,13 +37,13 @@ class EventsController < ApplicationController
     response.headers["X-Accel-Buffering"] = "no"  # nginx passthrough
     trace_id = SecureRandom.hex(8)
     response.stream.write(": connected\n\n")
-    response.stream.write("event: trace\ndata: #{JSON.generate(trace_id: trace_id)}\n\n")
+    response.stream.write("event: trace\ndata: #{JSON.generate(trace_id:)}\n\n")
 
     bus      = container[:bus]
     received = Queue.new
-    sub      = bus.subscribe("*") { |ev|
+    sub      = bus.subscribe("*") do |ev|
       received << { t: Time.now.to_f, type: ev[:event], data: ev }
-    }
+    end
     deadline       = Time.now + MAX_STREAM_S
     next_keepalive = Time.now + KEEPALIVE_EVERY_S
 
@@ -67,7 +67,7 @@ class EventsController < ApplicationController
   rescue IOError, ActionController::Live::ClientDisconnected
     # Client went away — normal. Stop streaming.
   ensure
-    sub.call if sub
+    sub&.call
     response.stream.close rescue nil
   end
 

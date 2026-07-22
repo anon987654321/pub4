@@ -14,7 +14,7 @@ class TestGatewayClientActions < Minitest::Test
     end
 
     def publish(event, payload = {})
-      enriched = payload.merge(event: event)
+      enriched = payload.merge(event:)
       @handlers.each do |pattern, handlers|
         next unless pattern == event || pattern == "client_action"
 
@@ -30,7 +30,7 @@ class TestGatewayClientActions < Minitest::Test
       bus.publish("client_action", action: "dilla_bg", label: "J Dilla pocket")
       Master::Result.ok({ rendered: "Music: Dilla pocket", intent: :command })
     end
-    gateway = Master::Io::Gateway.new(pipeline: pipeline, session: Object.new, event_bus: bus)
+    gateway = Master::Io::Gateway.new(pipeline:, session: Object.new, event_bus: bus)
 
     result = gateway.receive(channel: :cli, message: "/music")
     assert result.ok?
@@ -43,7 +43,7 @@ class TestGatewayClientActions < Minitest::Test
   def test_receive_omits_client_actions_when_none
     bus = FakeBus.new
     pipeline = ->(_input) { Master::Result.ok({ rendered: "ok" }) }
-    gateway = Master::Io::Gateway.new(pipeline: pipeline, session: Object.new, event_bus: bus)
+    gateway = Master::Io::Gateway.new(pipeline:, session: Object.new, event_bus: bus)
 
     result = gateway.receive(channel: :cli, message: "/help")
     assert result.ok?

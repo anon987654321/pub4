@@ -11,7 +11,7 @@ class TestDestructiveReview < Minitest::Test
       @calls = 0
     end
 
-    def review(payload, context:)
+    def review(_payload, context:)
       @calls += 1
       case @outcome
       when :veto
@@ -49,9 +49,9 @@ class TestDestructiveReview < Minitest::Test
     Master::CLI::PipelineContext.build(
       user_message: "/#{command} #{args}",
       intent: :command,
-      command: command,
-      args: args,
-      destructive_route: true
+      command:,
+      args:,
+      destructive_route: true,
     )
   end
 
@@ -59,7 +59,7 @@ class TestDestructiveReview < Minitest::Test
     bus = FakeBus.new
     stage = Master::CLI::Stages::DestructiveReview.new(
       deliberation: FakeDeliberation.new(outcome: :low),
-      event_bus: bus
+      event_bus: bus,
     )
 
     result = stage.call(build_ctx)
@@ -73,7 +73,7 @@ class TestDestructiveReview < Minitest::Test
     bus = FakeBus.new
     stage = Master::CLI::Stages::DestructiveReview.new(
       deliberation: FakeDeliberation.new(outcome: :pass),
-      event_bus: bus
+      event_bus: bus,
     )
 
     result = stage.call(build_ctx)
@@ -86,8 +86,8 @@ class TestDestructiveReview < Minitest::Test
   def test_skips_non_destructive_commands
     deliberation = FakeDeliberation.new
     stage = Master::CLI::Stages::DestructiveReview.new(
-      deliberation: deliberation,
-      event_bus: FakeBus.new
+      deliberation:,
+      event_bus: FakeBus.new,
     )
     ctx = Master::CLI::PipelineContext.build(user_message: "/status", intent: :command, command: "status")
 

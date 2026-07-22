@@ -24,7 +24,7 @@ module DillaSeeds
 
   def render_seed
     base = ENV["GEN_SEED"]&.to_i
-    return base if base && base.positive?
+    return base if base&.positive?
     text = ENV["SEED_TEXT"].to_s
     return text.hash.abs % 1_000_000 if text.length.positive?
     rand(1_000_000)

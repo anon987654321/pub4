@@ -7,7 +7,7 @@ module DillaRhythm
   module_function
 
   def configure!(n_bars:, bpm:, duration: nil)
-    @ctx = { n_bars: n_bars, base_bpm: bpm.to_f, duration: duration || (60.0 / bpm * 4 * n_bars) }
+    @ctx = { n_bars:, base_bpm: bpm.to_f, duration: duration || (60.0 / bpm * 4 * n_bars) }
   end
 
   def ctx
@@ -43,7 +43,7 @@ module DillaRhythm
     base + bar * (180.0 - 60.0) / [(@ctx[:n_bars] - 1), 1].max
   end
 
-  def bar_duration_sec(bar, beat_p)
+  def bar_duration_sec(bar, _beat_p)
     bpm = bar_bpm(bar)
     (60.0 / bpm) * 4.0
   end

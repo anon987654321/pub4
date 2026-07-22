@@ -5,7 +5,7 @@ module Master
     module Scan
       class AutonomousRepairer
         def self.heal(path:, source:, event_bus: nil)
-          fix = AstFixer.fix(path, source, event_bus: event_bus)
+          fix = AstFixer.fix(path, source, event_bus:)
           healed = fix.changed ? File.read(path, encoding: "UTF-8") : source
           Result.ok(healed)
         rescue StandardError => e

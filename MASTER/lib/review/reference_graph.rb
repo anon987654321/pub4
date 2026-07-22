@@ -41,13 +41,13 @@ module Master
         graph = {
           nodes: @nodes.to_a.sort,
           edges: @edges.map(&:to_h),
-          metrics: metrics,
+          metrics:,
         }
 
         @bus&.publish(
           "reference_graph:built",
           nodes: graph[:nodes].size,
-          edges: graph[:edges].size
+          edges: graph[:edges].size,
         )
 
         graph
@@ -97,7 +97,7 @@ module Master
           e,
           context: "reference_graph.analyze",
           event_bus: @bus,
-          path: rel
+          path: rel,
         )
       end
 
@@ -135,7 +135,7 @@ module Master
           type:,
           from:,
           to:,
-          weight:
+          weight:,
         )
       end
 

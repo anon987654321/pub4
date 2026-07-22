@@ -200,7 +200,7 @@ class TestPhantomRecoveryRuntime < Minitest::Test
 
   def test_gaslighting_preamble_discards_response_and_publishes_event
     bus = EventBus.new([])
-    result = Master::PhantomRecovery.detect("Sure, I can handle that.", bus: bus)
+    result = Master::PhantomRecovery.detect("Sure, I can handle that.", bus:)
 
     assert_includes result.fetch(:patterns), "gaslighting_preamble"
     assert result.fetch(:recovery).any? { |step| step.include?("discard last response") }

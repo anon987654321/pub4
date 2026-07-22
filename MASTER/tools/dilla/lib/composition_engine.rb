@@ -165,12 +165,12 @@ module DillaComposition
       ARRANGEMENT_FORM.each do |section|
         bars_per.times do
           break if bar >= n_bars
-          plan << { bar: bar, section: section }
+          plan << { bar:, section: }
           bar += 1
         end
       end
       while bar < n_bars
-        plan << { bar: bar, section: :verse }
+        plan << { bar:, section: :verse }
         bar += 1
       end
       plan
@@ -219,7 +219,7 @@ module DillaComposition
 
     def motif_for_bar(bar)
       cb = @callbacks.select { |c| c[:bar] <= bar }.max_by { |c| c[:bar] }
-      return nil unless cb
+      return unless cb
       m = @motifs.find { |mot| mot.id == cb[:motif_id] }
       return m unless m
       MotifCell.new(id: m.id, degrees: m.degrees, rhythm: m.rhythm, state: cb[:state])
@@ -239,7 +239,7 @@ module DillaComposition
     end
 
     def record_callback!(bar, motif_id, state)
-      @callbacks << { bar: bar, motif_id: motif_id, state: state }
+      @callbacks << { bar:, motif_id:, state: }
       m = @motifs.find { |mot| mot.id == motif_id }
       m&.evolve!
     end
@@ -269,10 +269,10 @@ module DillaComposition
     end
 
     def self.load!(default_track: "timeless", n_bars: 64)
-      return new(track: default_track, n_bars: n_bars) unless File.exist?(SESSION_PATH)
+      return new(track: default_track, n_bars:) unless File.exist?(SESSION_PATH)
       data = JSON.parse(File.read(SESSION_PATH))
       s = new(track: data["track"] || default_track, performer: (data["performer"] || "yancey").to_sym,
-              groove_dna: (data["groove_dna"] || "donuts").to_sym, n_bars: n_bars)
+              groove_dna: (data["groove_dna"] || "donuts").to_sym, n_bars:)
       s.instance_variable_set(:@generation, data["generation"] || 0)
       s.instance_variable_set(:@best_score, data["best_score"] || 0.0)
       s.instance_variable_set(:@motifs, (data["motifs"] || []).map { |h| MotifCell.from_h(h) })
@@ -342,7 +342,7 @@ module DillaComposition
     def analyze(report, session: nil, events: nil, progression_chords: nil, groove_meta: nil)
       lufs = report[:integrated_lufs] || report["integrated_lufs"]
       meta = groove_meta || events&.dig(:_groove_meta)
-      groove = score_groove(events, meta: meta)
+      groove = score_groove(events, meta:)
       chords = progression_chords || report[:progression_chords] || DillaHarmony.last_progression_chords
       harmony = if chords&.any?
                   DillaHarmony.score_beauty(chords)
@@ -352,13 +352,13 @@ module DillaComposition
       hook = session ? hook_score(session) : 55
       variation = session ? variation_score(session) : 50
       stereo = report.dig(:spectral_rms_db, :high) ? 88 : 75
-      scores = { groove: groove, harmony: harmony, hook: hook, variation: variation, stereo: stereo, lufs: lufs_score(lufs) }
-      recs = recommendations(scores, session, chords: chords)
-      { scores: scores, recommendations: recs, overall: (scores.values.compact.sum / scores.length).round(1) }
+      scores = { groove:, harmony:, hook:, variation:, stereo:, lufs: lufs_score(lufs) }
+      recs = recommendations(scores, session, chords:)
+      { scores:, recommendations: recs, overall: (scores.values.compact.sum / scores.length).round(1) }
     end
 
     def score_groove(events, meta: nil)
-      DillaGrooveScore.analyze(events, meta: meta)[:score]
+      DillaGrooveScore.analyze(events, meta:)[:score]
     end
 
     def hook_score(session)
@@ -444,7 +444,7 @@ module DillaComposition
           plan: (ENV["EVOLVE_PLAN_W"] || 0.32).to_f,
           critique: (ENV["EVOLVE_CRITIQUE_W"] || 0.34).to_f,
           harmony: (ENV["EVOLVE_HARMONY_W"] || 0.08).to_f,
-          groove: (ENV["EVOLVE_GROOVE_W"] || 0.22).to_f
+          groove: (ENV["EVOLVE_GROOVE_W"] || 0.22).to_f,
         }
       else
         hw = (ENV["EVOLVE_HARMONY_W"] || 0.12).to_f
@@ -452,13 +452,13 @@ module DillaComposition
           plan: (50 - hw * 50) / 100.0,
           critique: 0.44,
           harmony: hw,
-          groove: (ENV["EVOLVE_GROOVE_W"] || 0.06).to_f
+          groove: (ENV["EVOLVE_GROOVE_W"] || 0.06).to_f,
         }
       end
     end
 
     def run(session:, cfg:, n_bars:, generations: 5, render_fn:)
-      best = { score: -1.0, session: session, path: nil }
+      best = { score: -1.0, session:, path: nil }
       weights = evolve_weights(cfg)
       generations.times do |gen|
         session.generation = gen
@@ -467,15 +467,15 @@ module DillaComposition
         path = render_fn.call(session)
         report = render_fn.respond_to?(:quality) ? render_fn.quality(path) : {}
         events = render_fn.respond_to?(:last_events) ? render_fn.last_events : nil
-        critique = Critique.analyze(report, session: session, events: events,
+        critique = Critique.analyze(report, session:, events:,
                                     progression_chords: DillaHarmony.last_progression_chords)
         harmony_w = (critique[:scores][:harmony] || 70) * weights[:harmony]
         groove_w = (critique[:scores][:groove] || 70) * weights[:groove]
         total = (score * weights[:plan] * 100 + critique[:overall] * weights[:critique] +
                    harmony_w + groove_w).round(2)
-        session.critique_log << { gen: gen, score: total, critique: critique[:scores] }
+        session.critique_log << { gen:, score: total, critique: critique[:scores] }
         if total > best[:score]
-          best = { score: total, session: session, path: path, critique: critique }
+          best = { score: total, session:, path:, critique: }
           session.best_score = total
         end
         puts "gen #{gen}: score=#{total}"

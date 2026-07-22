@@ -103,7 +103,7 @@ module Master
 
       def remember_voice(voice)
         FileUtils.mkdir_p(File.dirname(STATE))
-        File.write(STATE, JSON.generate(voice: voice, at: Time.now.to_i))
+        File.write(STATE, JSON.generate(voice:, at: Time.now.to_i))
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "WarmErratic.remember_voice")
         nil
@@ -129,9 +129,9 @@ module Master
         cfg = STYLES.fetch(style, STYLES[:clear])
         {
           voice: voice.to_sym,
-          style: style,
+          style:,
           rate: jitter_rate(cfg[:rate]),
-          pitch: jitter_pitch(cfg[:pitch])
+          pitch: jitter_pitch(cfg[:pitch]),
         }
       end
       private_class_method :bad_news?, :pick_style, :pick_voice, :surprise_guest, :weighted_choice, :jitter_rate, :jitter_pitch, :prosody_for

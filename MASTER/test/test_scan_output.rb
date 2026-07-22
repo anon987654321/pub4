@@ -15,7 +15,7 @@ class TestScanOutput < Minitest::Test
       @scan_calls = 0
     end
 
-    def scan(path, depth: :deep)
+    def scan(_path, depth: :deep)
       @scan_calls += 1
       findings = @findings_by_pass.shift || []
       Master::Result.ok(findings)
@@ -30,9 +30,9 @@ class TestScanOutput < Minitest::Test
 
   def finding(rule, line: 1)
     {
-      rule: rule,
+      rule:,
       message: "issue #{rule}",
-      line: line,
+      line:,
       severity: :info,
       fix: nil,
       tags: [],
@@ -49,7 +49,7 @@ class TestScanOutput < Minitest::Test
       # Different lines so ConflictResolver does not collapse them
       Master::Result.ok([finding("LONG_LINE", line: 1), finding("DEAD_CODE", line: 2)]),
     ]]
-    r1 = Master::CLI::ScanReport.new(pairs: pairs, profile: "full", rule_filter: nil, phase: "pass1")
+    r1 = Master::CLI::ScanReport.new(pairs:, profile: "full", rule_filter: nil, phase: "pass1")
     assert_match(/2 violations/, r1.brief)
     assert_match(/LONG_LINE|DEAD_CODE/, r1.brief)
 
@@ -59,7 +59,7 @@ class TestScanOutput < Minitest::Test
       rule_filter: nil,
       phase: "pass2",
       prior_total: 2,
-      autofixes: [{ path: "a.rb", transforms: [:frozen_string_literal] }]
+      autofixes: [{ path: "a.rb", transforms: [:frozen_string_literal] }],
     )
     text = r2.render
     assert_includes text, "phase: pass2"
@@ -69,7 +69,7 @@ class TestScanOutput < Minitest::Test
 
   def test_scan_live_snapshot_written
     Dir.mktmpdir do |root|
-      path = Master::CLI::ScanLive.snapshot!("hello findings", root: root, note: "test", announce: false)
+      path = Master::CLI::ScanLive.snapshot!("hello findings", root:, note: "test", announce: false)
       assert_equal File.join(root, ".master", "scan_last.txt"), path
       assert_includes File.read(path), "hello findings"
       assert_includes File.read(path), "test"
@@ -82,13 +82,13 @@ class TestScanOutput < Minitest::Test
       File.write(path, "class Example\nend\n")
       scanner = FakeScanner.new(
         findings_by_pass: [[finding("FROZEN_LITERAL")], []],
-        rules: [FakeRule.new("FROZEN_LITERAL", true)]
+        rules: [FakeRule.new("FROZEN_LITERAL", true)],
       )
 
       out = Master::CLI::CommandRegistry.dispatch_scan(
-        scanner: scanner,
-        root: root,
-        ctx: { args: path }
+        scanner:,
+        root:,
+        ctx: { args: path },
       )
 
       snap = File.join(root, ".master", "scan_last.txt")

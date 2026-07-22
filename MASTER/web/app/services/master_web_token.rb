@@ -8,7 +8,7 @@ class MasterWebToken
   def self.config_path
     ENV.fetch(
       "MASTER_AUTH_CONFIG",
-      Rails.root.join("..", ".master", "config.yml").to_s
+      Rails.root.join("..", ".master", "config.yml").to_s,
     )
   end
 

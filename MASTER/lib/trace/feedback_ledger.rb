@@ -32,7 +32,7 @@ module Master
         dim = payload[:tool] || payload["tool"] || "unknown"
         value = payload[:exit_code] || payload["exit_code"]
         event_type = value.to_i.zero? ? "tool_success" : "tool_failure"
-        record(event_type: event_type, dimension: dim, value: value, metadata: payload)
+        record(event_type:, dimension: dim, value:, metadata: payload)
       end
 
       def record_llm(payload)
@@ -44,7 +44,7 @@ module Master
         status = (payload[:status] || payload["status"]).to_s
         model = payload[:model] || payload["model"] || "unknown"
         event_type = status == "success" ? "tool_success" : "provider_error"
-        record(event_type: event_type, dimension: model, value: status, metadata: payload)
+        record(event_type:, dimension: model, value: status, metadata: payload)
       end
 
       def record_user_correction(payload)
@@ -56,10 +56,10 @@ module Master
         return unless @learnings&.respond_to?(:record_event)
 
         @learnings.record_event(
-          event_type: event_type,
-          dimension: dimension,
-          value: value,
-          metadata: metadata && JSON.generate(metadata)
+          event_type:,
+          dimension:,
+          value:,
+          metadata: metadata && JSON.generate(metadata),
         )
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "feedback_ledger.record", event_bus: @bus)

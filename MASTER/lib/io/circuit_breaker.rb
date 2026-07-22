@@ -164,7 +164,7 @@ module Master
         data[@state_key] = {
           "state" => @state.to_s,
           "failures" => @failures,
-          "opened_wall_at" => @opened_wall_at
+          "opened_wall_at" => @opened_wall_at,
         }
         File.write(@state_path, YAML.dump(data))
       rescue StandardError => e

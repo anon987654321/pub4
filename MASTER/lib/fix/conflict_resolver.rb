@@ -39,7 +39,7 @@ module Master
           rule_b: blocker["rule"],
           resolution: "reject fix: introduced higher-priority #{blocker["severity"]} finding",
           file: path,
-          line: blocker["line"]
+          line: blocker["line"],
         )
         true
       end
@@ -58,7 +58,7 @@ module Master
             rule_b: WET_AHA,
             resolution: "favor WET/AHA below three duplications",
             file: finding["file"],
-            line: finding["line"]
+            line: finding["line"],
           )
         end
         rows - dry_rows
@@ -108,7 +108,7 @@ module Master
           rule_b: rule_b.to_s,
           resolution: resolution.to_s,
           file: file.to_s,
-          line: line.to_i
+          line: line.to_i,
         }
         FileUtils.mkdir_p(File.dirname(log_path))
         File.write(log_path, "#{JSON.generate(payload)}\n", mode: "a")

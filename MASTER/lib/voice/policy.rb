@@ -62,8 +62,8 @@ module Master
           neural: neural_voice,
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
-          default_rate: default_rate,
-          default_pitch: default_pitch,
+          default_rate:,
+          default_pitch:,
         }
       end
     end

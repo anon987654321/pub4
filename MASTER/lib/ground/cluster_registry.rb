@@ -60,7 +60,7 @@ module Master
             source: :visual,
             status: c["status"] || "unknown",
             tags: Array(c["layer"]),
-            raw: c
+            raw: c,
           )
         end
       rescue StandardError => e
@@ -78,7 +78,7 @@ module Master
             source: :mobile_web,
             status: c["confidence"] || "unknown",
             tags: Array(c["tags"]),
-            raw: c
+            raw: c,
           )
         end
       rescue StandardError => e
@@ -97,7 +97,7 @@ module Master
             source: :repo_topics,
             status: c["status"] || "unknown",
             tags: [],
-            raw: c
+            raw: c,
           )
         end
       rescue StandardError => e

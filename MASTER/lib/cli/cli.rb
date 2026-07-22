@@ -151,7 +151,7 @@ module Master
             message: input,
             container: @container,
             felt_sense: cli_felt_sense,
-            on_turn:
+            on_turn:,
           )
         end
       end

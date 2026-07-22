@@ -31,7 +31,7 @@ module Master
               message: "commented-out code",
               line: line_no,
               suggestion: "delete it; git history remembers what removal can't",
-              file_path: file_path
+              file_path:,
             )
           end
         end
@@ -50,7 +50,7 @@ module Master
                 message: "parameter '#{name}' appears unused in its own method body",
                 line: 1,
                 suggestion: "remove it, or use it -- an unused parameter is a promise the method doesn't keep",
-                file_path: file_path
+                file_path:,
               )
             end
           end
@@ -68,7 +68,7 @@ module Master
               message: "'#{name}' has exactly one call site",
               line: 1,
               suggestion: "inline it unless the name alone is carrying real documentation value",
-              file_path: file_path
+              file_path:,
             )
           end
         end

@@ -32,7 +32,7 @@ module Master
 
       def handle(error)
         category = classify(error.message)
-        { category: category, **strategy_for(category).transform_keys(&:to_sym) }
+        { category:, **strategy_for(category).transform_keys(&:to_sym) }
       end
 
       def retry?(error, attempt:)

@@ -30,7 +30,7 @@ module Master
         SYCOPHANCY_RE = Regexp.new(
           "\\A\\s*(?:#{SYCOPHANCY_PREFIXES.map { |p| Regexp.escape(p) }.join('|')}|" \
           "i(?:'d| would) be (?:happy|glad))[!.,]*\\s*",
-          Regexp::IGNORECASE
+          Regexp::IGNORECASE,
         ).freeze
 
         def call(ctx)

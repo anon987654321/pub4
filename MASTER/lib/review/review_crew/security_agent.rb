@@ -30,8 +30,8 @@ module Master
                 category: :security,
                 message: "#{label} detected",
                 line: line_no,
-                suggestion: suggestion,
-                file_path: file_path
+                suggestion:,
+                file_path:,
               )
             end
           end

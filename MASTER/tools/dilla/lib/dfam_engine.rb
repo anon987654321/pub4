@@ -90,15 +90,15 @@ module DfamEngine
   end
 
   def overlap_window(event_frame, total_frames, chunk_start, chunk_frames)
-    return nil if total_frames <= 0
+    return if total_frames <= 0
     chunk_end = chunk_start + chunk_frames
     event_end = event_frame + total_frames
-    return nil if event_end <= chunk_start || event_frame >= chunk_end
+    return if event_end <= chunk_start || event_frame >= chunk_end
     local_start = [event_frame - chunk_start, 0].max
     source_offset = [chunk_start - event_frame, 0].max
     count = [total_frames - source_offset, chunk_end - (event_frame + source_offset)].min
     count = [count, chunk_frames - local_start].min
-    return nil if count <= 0
+    return if count <= 0
     [local_start, source_offset, count]
   end
 
