@@ -4,6 +4,7 @@ module Master
   module Voice
     # Splash and prompt rendering extracted from Renderer.
     module RendererPromptComponents
+      TOKEN_KILO_THRESHOLD = 1000
       PHASE_COLORS = {
         "discover" => :yellow,
         "implement" => :cyan,
@@ -113,7 +114,7 @@ module Master
         return "0" unless tokens&.positive?
 
         value = tokens.to_i
-        value >= 1000 ? format("%.1fk", value / 1000.0) : value.to_s
+        value >= TOKEN_KILO_THRESHOLD ? format("%.1fk", value / 1000.0) : value.to_s
       end
 
       def context_label(tokens)

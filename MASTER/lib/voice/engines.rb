@@ -16,6 +16,8 @@ module Master
       # fallback if edge-tts is ever unavailable.
       OPENBSD_CHAIN = %w[edge_melodic edge replicate_kokoro say].freeze
       DEFAULT_CHAIN = %w[mlx chatterbox replicate_kokoro edge_melodic edge say].freeze
+      # major*10+minor version-code encoding (e.g. Python 3.10 -> 310); MLX needs 3.10+.
+      MIN_MLX_PYTHON_VERSION_CODE = 310
 
       module_function
 
@@ -106,7 +108,7 @@ module Master
           next unless system("which", bin, out: File::NULL, err: File::NULL)
 
           ver = `#{bin} -c 'import sys; print(sys.version_info[:major]*10+sys.version_info[:minor])' 2>/dev/null`.strip.to_i
-          return bin if ver >= 310
+          return bin if ver >= MIN_MLX_PYTHON_VERSION_CODE
         end
         nil
       end

@@ -4,6 +4,7 @@ module Master
   module Voice
     # G09/G10: enforce preserve rules and require_evidence on MASTER's own output.
     class OutputGuard
+      COLLAPSED_DIAGNOSTIC_LINE_LENGTH = 120
       COMPLETION_CLAIM = /\b(fixed|completed|done|applied|updated|removed|added|wired|implemented)\b/i
       MODIFICATION_CLAIM = /\b(changed|modified|edited|patched|replaced|refactored)\b/i
       EVIDENCE_MARKERS = [
@@ -62,7 +63,7 @@ module Master
       def collapsed_diagnostic?(text)
         lines = text.to_s.lines.map(&:strip).reject(&:empty?)
         return false if lines.size >= 2
-        lines.first.to_s.length > 120
+        lines.first.to_s.length > COLLAPSED_DIAGNOSTIC_LINE_LENGTH
       end
 
       def boot_message_collapsed?(text)

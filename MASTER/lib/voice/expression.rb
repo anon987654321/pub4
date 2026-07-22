@@ -18,6 +18,7 @@ module Master
 
       CONFIDENCE_WEIGHTS = { verdict: 0.45, retrieval: 0.30, council: 0.25 }.freeze
       VOWEL_SHAPES = { "a" => "A", "e" => "E", "i" => "I", "o" => "O", "u" => "U" }.freeze
+      CREATIVE_WORD_COUNT_THRESHOLD = 35
 
       module_function
 
@@ -25,7 +26,7 @@ module Master
       # Used by Speech.synthesize and chat paths.
       def for_text(text, risk: nil, reversibility: nil)
         t = text.to_s.strip
-        register = (t.split.size > 35 || t.match?(/\b(grand|beautiful|story|deep|feel|world)\b/i)) ? :creative : :factual
+        register = (t.split.size > CREATIVE_WORD_COUNT_THRESHOLD || t.match?(/\b(grand|beautiful|story|deep|feel|world)\b/i)) ? :creative : :factual
 
         base_style = if register == :creative
                        CREATIVE_STYLES[t.hash % CREATIVE_STYLES.size]
@@ -162,12 +163,12 @@ module Master
 
       STYLE_RATE_SCALE = {
         whispered: 1.35, ethereal: 1.22, dramatic: 1.18, calm: 1.08,
-        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05,
+        energetic: 0.82, brief: 0.88, intense: 0.90, storyteller: 1.05
       }.freeze
 
       CONSONANT_SHAPES = {
         "m" => "M", "b" => "M", "p" => "M",
-        "f" => "M", "v" => "M", "w" => "O",
+        "f" => "M", "v" => "M", "w" => "O"
       }.freeze
 
       def viseme_hints(text)

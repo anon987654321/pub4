@@ -13,6 +13,7 @@ module Master
         urgency: /\b(now|quick|hurry|asap|immediately|watch|listen|important|critical)\b/i,
         lyric: /\b(sing|song|melody|chorus|verse|rhyme|la la|hum|tune|ballad)\b/i,
       }.freeze
+      LYRICAL_SHORT_WORD_COUNT = 14
 
       module_function
 
@@ -23,7 +24,7 @@ module Master
         scores[:valence] = clamp(0.5 + scores[:triumph] * 0.35 - scores[:comfort] * 0.4 + scores[:humor] * 0.15 + scores[:wonder] * 0.2)
         scores[:intimacy] = clamp(0.25 + scores[:intimacy] * 0.45 + scores[:comfort] * 0.25)
         scores[:expressiveness] = clamp(0.4 + scores[:humor] * 0.25 + scores[:wonder] * 0.2 + scores[:triumph] * 0.15)
-        scores[:lyrical] = clamp(scores[:lyric] + (t.match?(/[!?]/) ? 0.12 : 0.0) + (t.split.length <= 14 ? 0.08 : 0.0))
+        scores[:lyrical] = clamp(scores[:lyric] + (t.match?(/[!?]/) ? 0.12 : 0.0) + (t.split.length <= LYRICAL_SHORT_WORD_COUNT ? 0.08 : 0.0))
 
         primary = primary_emotion(scores)
         mode = emotion_mode(scores)

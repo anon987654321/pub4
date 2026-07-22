@@ -9,6 +9,7 @@ module Master
   module Voice
     # Transcendent orchestrator — emotion, melody, multi-engine chain.
     module Transcendent
+      MIN_SYNTHESIZABLE_CHARS = 20
       DEFAULTS = {
         "personality" => "warm_erratic",
         "engine_chain" => "mlx,chatterbox,edge_melodic,edge,say",
@@ -51,7 +52,7 @@ module Master
       def synthesize(text, voice: nil, style: :auto, rate: nil, pitch: nil, voice_locked: false, style_locked: false)
         cfg = load_config
         clean = Speech.clean_text(text)
-        return if clean.empty? || clean.length < 20
+        return if clean.empty? || clean.length < MIN_SYNTHESIZABLE_CHARS
 
         emotion = Emotion.analyze(clean)
         melody = Melody.plan(clean, emotion)

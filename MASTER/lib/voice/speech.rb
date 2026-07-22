@@ -13,6 +13,7 @@ module Master
     module Speech
       WORKER = File.expand_path("../../bin/tts-worker", __dir__)
       EDGE_TTS = File.executable?(WORKER)
+      BRIEF_STYLE_WORD_COUNT = 12
       TTS_SOCKET = File.expand_path("../../.master/tts.sock", __dir__)
       ESPEAK_PATHS = %w[/usr/bin/espeak /usr/local/bin/espeak].freeze
       ESPEAK = ESPEAK_PATHS.find { |p| File.executable?(p) }
@@ -150,7 +151,7 @@ module Master
         return :fail if t.match?(/\b(fail|failed|broken|blocked|error|abort)\b/i)
         return :warn if t.match?(/\b(warn|warning|careful|risk|unsafe)\b/i)
         return :question if t.end_with?("?")
-        return :brief if t.split.size <= 12
+        return :brief if t.split.size <= BRIEF_STYLE_WORD_COUNT
         fallback
       end
 

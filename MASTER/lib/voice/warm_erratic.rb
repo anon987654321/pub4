@@ -12,6 +12,9 @@ module Master
       VOICES = [
         [:ryan, 100],
       ].freeze
+      SHORT_WORD_COUNT = 12
+      MEDIUM_WORD_COUNT = 24
+      LONG_WORD_COUNT = 40
 
       STYLES = {
         calm: { rate: "-3%", pitch: "-10Hz" },
@@ -60,16 +63,16 @@ module Master
         return %i[calm intimate].sample if bad_news?(t)
         return %i[chipper energetic amused brief].sample if t.match?(GOOD_NEWS_RE)
         return FAST_STYLES.sample if t.end_with?("?")
-        return FAST_STYLES.sample if words <= 12
+        return FAST_STYLES.sample if words <= SHORT_WORD_COUNT
 
-        if words <= 24
+        if words <= MEDIUM_WORD_COUNT
           return %i[amused deadpan energetic brief].sample if t.match?(HUMOR_RE)
           return FAST_STYLES.sample if t.match?(CASUAL_RE)
           return FAST_STYLES.sample
         end
 
         return FAST_STYLES.sample if t.match?(HUMOR_RE) || t.match?(/[!]{1,2}/)
-        return %i[clear storyteller amused energetic].sample if words > 40
+        return %i[clear storyteller amused energetic].sample if words > LONG_WORD_COUNT
 
         FAST_STYLES.sample
       end
