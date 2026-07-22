@@ -13,7 +13,7 @@ module Master
         "mi_035" => { event: "master:visual", mode: "link:quiet", entropy: 0.38, confidence: 0.65 },
         "mi_064" => {
           event: "council:deliberation", mode: "start", entropy: 0.45, confidence: 0.58,
-          spirit_radius: Expression.council_spirit_radius(risk: :medium, reversibility: :low),
+          spirit_radius: Expression.council_spirit_radius(risk: :medium, reversibility: :low)
         },
         "mi_062" => { event: "tts:style:active", mode: "style", entropy: 0.22, confidence: 0.80 },
         "user_interrupt" => { event: "master:visual", mode: "user:interrupt", entropy: 0.4 },
@@ -23,7 +23,7 @@ module Master
         "link_thinking" => { event: "master:visual", mode: "link:thinking", entropy: 0.42, confidence: 0.55 },
         "council_deliberation" => {
           event: "council:deliberation", mode: "start", entropy: 0.45, confidence: 0.58,
-          spirit_radius: Expression.council_spirit_radius(risk: :medium, reversibility: :low),
+          spirit_radius: Expression.council_spirit_radius(risk: :medium, reversibility: :low)
         },
         "tts_style_active" => { event: "tts:style:active", mode: "style", entropy: 0.22, confidence: 0.80 },
       }.freeze
@@ -96,13 +96,13 @@ module Master
       def normalize_felt_state(state)
         src = state.is_a?(Hash) ? state : {}
         {
-          mood: (src[:mood] || src["mood"]).to_s.presence || "neutral",
-          mode: (src[:mode] || src["mode"]).to_s.presence || "idle",
+          mood: blank_to_nil((src[:mood] || src["mood"]).to_s) || "neutral",
+          mode: blank_to_nil((src[:mode] || src["mode"]).to_s) || "idle",
           entropy: float_or(src[:entropy] || src["entropy"], 0.35),
           confidence: float_or(src[:confidence] || src["confidence"], 0.75),
           arousal: float_or(src[:arousal] || src["arousal"], 0.5),
           valence: float_or(src[:valence] || src["valence"], 0.05),
-          vertical: (src[:vertical] || src["vertical"]).to_s.presence,
+          vertical: blank_to_nil((src[:vertical] || src["vertical"]).to_s),
         }
       end
 
@@ -138,6 +138,13 @@ module Master
         value.nil? || (num.zero? && value.to_s !~ /\A-?\d/) ? fallback : num
       end
       private_class_method :float_or
+
+      # Pure-Ruby stand-in for ActiveSupport's String#presence -- this file
+      # is reachable from the plain CLI (bin/cli), which never loads Rails.
+      def blank_to_nil(str)
+        str.empty? ? nil : str
+      end
+      private_class_method :blank_to_nil
     end
   end
 end

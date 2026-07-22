@@ -82,7 +82,8 @@ module Master
           stdout, status = Master::Io::Exec.capture3("sysctl", "-n", key)
           return unless status.success?
 
-          stdout.strip.presence
+          trimmed = stdout.strip
+          trimmed.empty? ? nil : trimmed
         end
       end
     end

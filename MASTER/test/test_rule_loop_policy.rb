@@ -79,6 +79,43 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  # A confidence-gated skip was never actually attempted -- recording it as
+  # :stuck (same as a genuine failed fix) would silently poison that rule's
+  # fix_quality every time the gate fires, deprioritizing it further with no
+  # real defect behind it (the OpenCrabs feedback_policy.rs lesson).
+  class RecordingLearnings
+    attr_reader :calls
+
+    def initialize
+      @calls = []
+    end
+
+    def record(**kwargs)
+      @calls << kwargs
+    end
+  end
+
+  def test_confidence_skip_records_skipped_not_stuck
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      learnings = RecordingLearnings.new
+      loop = Master::Fix::RuleLoop.new(
+        rule: Rule.new("TEST_RULE", :warning),
+        agent: Agent.new,
+        scanner: Scanner.new(allow_autofix: false),
+        root:,
+        bus: FakeBus.new,
+        learnings:,
+      )
+
+      result = loop.run_once([path])
+
+      assert_equal :skipped, result[:status]
+      assert_equal [{ rule: "TEST_RULE", file_type: "rb", outcome: :skipped }], learnings.calls
+    end
+  end
+
   def test_permanent_failure_uses_fail_fast_branch
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")

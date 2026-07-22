@@ -104,8 +104,8 @@ module Master
         return { fixed: 0, status: :clean } if violations.empty?
 
         fixed = fix_batch(violations)
-        status = fixed > 0 ? :fixed : :stuck
-        record_outcomes(files, fixed > 0 ? :fixed : :stuck)
+        status = pass_outcome(fixed)
+        record_outcomes(files, status)
         @bus&.publish("rule_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
         { fixed:, status: }
       rescue StandardError => e
@@ -127,12 +127,30 @@ module Master
         end
       end
 
+      # Only a genuine, attempted-and-failed fix should count as :stuck for
+      # fix_quality's purposes -- a violation skipped by policy (confidence
+      # gate, stale fingerprint) was never actually attempted, and counting
+      # it the same as a real defect silently poisons that rule's quality
+      # score, which then deprioritizes it further next round: exactly the
+      # "banned a working tool over recoverable failures" trap OpenCrabs
+      # documented (feedback_policy.rs, issue #236) after making the same
+      # mistake. :skipped is still recorded (queryable) but excluded from
+      # fix_quality's denominator entirely.
       def fix_batch(violations)
-        violations.uniq { |violation| violation[:file] }.count { |violation| fix_violation(violation) }
+        results = violations.uniq { |violation| violation[:file] }.map { |violation| fix_violation(violation) }
+        @all_skipped = results.any? && results.all? { |r| r == :skipped }
+        results.count { |r| r == true }
+      end
+
+      def pass_outcome(fixed)
+        return :fixed if fixed.positive?
+        return :skipped if @all_skipped
+
+        :stuck
       end
 
       def fix_violation(violation)
-        return false unless autofix_allowed?(violation) && fingerprint_matches?(violation)
+        return :skipped unless autofix_allowed?(violation) && fingerprint_matches?(violation)
 
         note_unverified_fix(violation)
         source = violation[:severity].to_sym == :error ? council_fix(violation) : request_fix(violation)
@@ -290,7 +308,10 @@ module Master
       def record_outcomes(files, outcome)
         return unless @learnings
 
-        extensions = files.filter_map { |file| File.extname(file).downcase.delete(".").presence }
+        extensions = files.filter_map do |file|
+          ext = File.extname(file).downcase.delete(".")
+          ext unless ext.empty?
+        end
         ext = extensions.tally.max_by { |_, count| count }&.first || "unknown"
         @learnings.record(rule: @rule.id, file_type: ext, outcome:)
       rescue StandardError => e

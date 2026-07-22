@@ -66,7 +66,8 @@ end)
           temp_file.write(Base64.strict_decode64(image[:data]))
           temp_file.rewind
           temp_file.close
-          attachment = RubyLLM::Attachment.new(temp_file.path, filename: (image[:name].to_s.presence || "photo#{ext}"))
+          name = image[:name].to_s
+          attachment = RubyLLM::Attachment.new(temp_file.path, filename: name.empty? ? "photo#{ext}" : name)
           [attachment, temp_file]
         end
 

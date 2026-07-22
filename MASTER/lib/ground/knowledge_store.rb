@@ -43,11 +43,17 @@ module Master
         warn "knowledge_store: #{e.message}"
       end
 
+      # A violation the rule never actually attempted (confidence gate,
+      # stale fingerprint) is recorded as 'skipped' and excluded here --
+      # only genuine attempt outcomes ('fixed'/'stuck') count toward
+      # quality. See fix_batch's comment in rule_loop.rb for why: counting
+      # policy skips as failures deprioritizes a rule further every time
+      # it's skipped, without it ever having actually failed a fix.
       def fix_quality(rule:, file_type: nil)
         cutoff = Time.now.to_i - QUALITY_WINDOW_DAYS * 86_400
         rows = fix_quality_rows(rule, file_type, cutoff)
         tally = rows.each_with_object(Hash.new(0)) { |r, h| h[r["outcome"]] = r["n"].to_i }
-        total = tally.values.sum
+        total = tally["fixed"] + tally["stuck"]
         return 0.5 if total.zero?
 
         tally["fixed"].to_f / total
@@ -58,8 +64,9 @@ module Master
         @db.execute(<<~SQL, [cutoff, min_attempts, limit])
         SELECT rule,
                SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS fixed,
-               COUNT(*) AS total,
-               CAST(SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) AS quality
+               SUM(CASE WHEN outcome IN ('fixed', 'stuck') THEN 1 ELSE 0 END) AS total,
+               CAST(SUM(CASE WHEN outcome = 'fixed' THEN 1 ELSE 0 END) AS REAL)
+                 / NULLIF(SUM(CASE WHEN outcome IN ('fixed', 'stuck') THEN 1 ELSE 0 END), 0) AS quality
         FROM fix_outcomes WHERE ts >= ?
         GROUP BY rule HAVING total >= ?
         ORDER BY quality DESC LIMIT ?
@@ -164,7 +171,33 @@ module Master
       end
 
       def ensure_schema
+        migrate_fix_outcomes_skipped_value!
         KnowledgeSchema::STATEMENTS.each { |statement| @db.execute_batch(statement) }
+      end
+
+      # fix_outcomes' CHECK constraint originally only allowed ('fixed',
+      # 'stuck') -- SQLite can't ALTER a CHECK constraint in place, so an
+      # existing DB from before 'skipped' was added needs its table rebuilt.
+      # CREATE TABLE IF NOT EXISTS alone would silently leave old databases
+      # on the old constraint forever, rejecting every 'skipped' insert.
+      def migrate_fix_outcomes_skipped_value!
+        row = @db.execute(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'fix_outcomes'",
+        ).first
+        return unless row
+        return if row["sql"].to_s.include?("skipped")
+
+        @db.execute_batch(<<~SQL)
+          ALTER TABLE fix_outcomes RENAME TO fix_outcomes_pre_skipped;
+        SQL
+        KnowledgeSchema::STATEMENTS.first.then { |statement| @db.execute_batch(statement) }
+        @db.execute_batch(<<~SQL)
+          INSERT INTO fix_outcomes (id, ts, rule, file_type, outcome)
+            SELECT id, ts, rule, file_type, outcome FROM fix_outcomes_pre_skipped;
+          DROP TABLE fix_outcomes_pre_skipped;
+        SQL
+      rescue SQLite3::Exception => e
+        warn "knowledge_store: fix_outcomes migration failed — #{e.message}"
       end
     end
   end

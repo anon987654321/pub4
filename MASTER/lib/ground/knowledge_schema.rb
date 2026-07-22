@@ -10,7 +10,7 @@ module Master
             ts INTEGER NOT NULL,
             rule TEXT NOT NULL,
             file_type TEXT NOT NULL,
-            outcome TEXT NOT NULL CHECK (outcome IN ('fixed', 'stuck'))
+            outcome TEXT NOT NULL CHECK (outcome IN ('fixed', 'stuck', 'skipped'))
           );
           CREATE INDEX IF NOT EXISTS idx_fix_rule ON fix_outcomes(rule);
           CREATE INDEX IF NOT EXISTS idx_fix_ts ON fix_outcomes(ts);
