@@ -11,7 +11,7 @@ module Master
 
       PATH = File.join(Master::DATA, "principle_map.yml").freeze
 
-      Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :rule_ids, :status, :tags, :immutable)
+      Entry = Data.define(:id, :meaning, :detects, :severity, :confidence, :operation, :rule_ids, :status, :tags, :immutable, :source)
 
       def self.load(root: Master::ROOT)
         new(root:)
@@ -60,6 +60,17 @@ module Master
         "principle_map #{version}: #{principles.size} principles (#{c} covered, #{g} gap, #{a} aesthetic/ui)"
       end
 
+      # Entries with no `source:` (why this principle exists -- what
+      # incident, review, or design decision motivated it) can't be told
+      # apart from a stale or accidental addition later. Informational
+      # only -- unlike #integrity, never wired into SelfTest, so an
+      # existing backlog of unattributed entries can't halt /fix the way
+      # a DENSITY regression did earlier this session. Matches OpenClaw's
+      # check-rule-metadata.mjs (enforced there; advisory here for now).
+      def provenance_gaps
+        principles.values.select { |entry| entry.source.to_s.strip.empty? }
+      end
+
       private
 
       def load_data
@@ -87,6 +98,7 @@ module Master
             status: body["status"].to_s,
             tags: Array(body["tags"]).map(&:to_s),
             immutable: !!body["immutable"],
+            source: body["source"],
           )
         end
       end

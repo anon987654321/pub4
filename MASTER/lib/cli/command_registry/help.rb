@@ -28,7 +28,7 @@ module Master
         },
         "map" => {
           summary: "principle_map: fossil→runtime rule coverage",
-          detail: ["/map", "/map gaps|aesthetic|covered|integrity", "/map <principle_id>"],
+          detail: ["/map", "/map gaps|aesthetic|covered|integrity|provenance", "/map <principle_id>"],
         },
         "through" => {
           summary: "full singularity pass (auto-sequenced)",

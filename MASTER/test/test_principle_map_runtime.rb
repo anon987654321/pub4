@@ -74,6 +74,40 @@ class TestPrincipleMapRuntime < Minitest::Test
     assert_includes hits, "aesthetic_neglect"
   end
 
+  # Advisory-only (see PrincipleMap#provenance_gaps) -- must never be wired
+  # into SelfTest, so a real fixture with a mix of attributed/unattributed
+  # entries confirms it just reports, it doesn't gate anything.
+  def test_provenance_gaps_flags_entries_missing_source
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "data"))
+      File.write(File.join(dir, "data", "principle_map.yml"), <<~YAML)
+        principles:
+          attributed_one:
+            meaning: has a reason
+            severity: high
+            confidence: 0.8
+            operation: fix
+            rule_ids: []
+            status: gap
+            tags: []
+            source: added 2026-01-01 after incident #42
+          unattributed_one:
+            meaning: no reason given
+            severity: high
+            confidence: 0.8
+            operation: fix
+            rule_ids: []
+            status: gap
+            tags: []
+      YAML
+
+      map = Master::Ground::PrincipleMap.load(root: dir)
+      gaps = map.provenance_gaps
+
+      assert_equal ["unattributed_one"], gaps.map(&:id)
+    end
+  end
+
   def test_principle_map_integrity_against_registry
     require_relative "../lib/review/scan/rule_dsl"
     map = Master::Ground::PrincipleMap.load(root: @root)

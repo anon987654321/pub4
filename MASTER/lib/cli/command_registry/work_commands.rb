@@ -135,27 +135,42 @@ module Master
         arg = arg_for(ctx).to_s.strip
         map = Master::Ground::PrincipleMap.load(root:)
         case arg
-        when "", "status"
-          map.summary_line
-        when "gaps"
-          map.gaps.first(40).map { |id, e| "#{id.ljust(28)} #{e.severity.ljust(8)} #{e.operation || "-"}  #{e.meaning}" }.join("\n")
-        when "aesthetic", "ui"
-          map.aesthetic.first(60).map do |id, e|
-            "#{id.ljust(28)} #{e.status.ljust(8)} rules=#{e.rule_ids.join(",")}"
-          end.join("\n")
-        when "covered"
-          map.covered.first(40).map { |id, e| "#{id.ljust(28)} → #{e.rule_ids.join(", ")}" }.join("\n")
-        when "integrity"
-          map_integrity_report(map, root:)
-        else
-          map_principle_detail(map, arg)
+        when "", "status" then map.summary_line
+        when "gaps" then map_gaps_report(map)
+        when "aesthetic", "ui" then map_aesthetic_report(map)
+        when "covered" then map_covered_report(map)
+        when "integrity" then map_integrity_report(map, root:)
+        when "provenance" then map_provenance_report(map)
+        else map_principle_detail(map, arg)
         end
+      end
+
+      def map_gaps_report(map)
+        map.gaps.first(40).map { |id, e| "#{id.ljust(28)} #{e.severity.ljust(8)} #{e.operation || "-"}  #{e.meaning}" }.join("\n")
+      end
+
+      def map_aesthetic_report(map)
+        map.aesthetic.first(60).map { |id, e| "#{id.ljust(28)} #{e.status.ljust(8)} rules=#{e.rule_ids.join(",")}" }.join("\n")
+      end
+
+      def map_covered_report(map)
+        map.covered.first(40).map { |id, e| "#{id.ljust(28)} → #{e.rule_ids.join(", ")}" }.join("\n")
       end
 
       def map_integrity_report(map, root:)
         registered = Master::Review::Scan::Rule.registry.filter_map { |k| Master::Review::Scan::RuleFactory.registry_id(k, root:)&.upcase }
         hits = map.integrity(registered_rule_ids: registered)
         hits.empty? ? "principle_map integrity: clean" : hits.join("\n")
+      end
+
+      # Advisory, not enforced -- see PrincipleMap#provenance_gaps for why
+      # this stays out of SelfTest's gating path.
+      def map_provenance_report(map)
+        gaps = map.provenance_gaps
+        return "principle_map provenance: all #{map.principles.size} entries attributed" if gaps.empty?
+
+        header = "principle_map provenance: #{gaps.size}/#{map.principles.size} entries missing source:"
+        ([header] + gaps.first(40).map { |entry| "  #{entry.id}" }).join("\n")
       end
 
       def map_principle_detail(map, arg)
