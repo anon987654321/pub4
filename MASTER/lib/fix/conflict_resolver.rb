@@ -9,6 +9,10 @@ module Master
   module Fix
     class ConflictResolver
       LOG_PATH = "runtime/conflict_log.jsonl"
+      # Append-only with no cap previously ran unbounded -- reached 890MB
+      # alongside activity.jsonl's 1.2GB, together filling the disk and
+      # crashing an in-progress /fix round. Same rotate-not-truncate fix.
+      LOG_MAX_BYTES = 25 * 1024 * 1024
       DRY_RULES = %w[DRY duplicate_code].freeze
       WET_AHA = "WET/AHA".freeze
       DUPLICATION_THRESHOLD = 3
@@ -111,6 +115,7 @@ module Master
           line: line.to_i,
         }
         FileUtils.mkdir_p(File.dirname(log_path))
+        rotate_log_if_oversized!
         File.write(log_path, "#{JSON.generate(payload)}\n", mode: "a")
         bus&.publish("conflict:resolved", payload)
       rescue StandardError => e
@@ -124,6 +129,14 @@ module Master
 
       def log_path
         File.join(root, LOG_PATH)
+      end
+
+      def rotate_log_if_oversized!
+        return unless File.exist?(log_path) && File.size(log_path) > LOG_MAX_BYTES
+
+        File.rename(log_path, "#{log_path}.1")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "ConflictResolver.rotate_log_if_oversized")
       end
 
       def load_config

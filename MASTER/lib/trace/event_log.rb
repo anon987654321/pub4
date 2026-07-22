@@ -10,6 +10,12 @@ module Master
     class EventLog
       DEFAULT_STREAM = "activity"
       STREAM_PATTERN = /\A[a-z0-9_\-]+\z/
+      # Append-only with no cap previously ran unbounded -- activity.jsonl
+      # reached 1.2GB and filled the disk, crashing an in-progress /fix
+      # round with no warning beyond a swallowed ENOSPC on every event.
+      # Rotate (rename to .1, start fresh) rather than truncate-in-place --
+      # avoids ever reading a multi-GB file into memory just to keep a tail.
+      MAX_BYTES = 25 * 1024 * 1024
 
       def initialize(root: Master::ROOT, stream: DEFAULT_STREAM)
         @root = root
@@ -20,6 +26,7 @@ module Master
       def append(event, payload = {})
         record = build_record(event, payload)
         FileUtils.mkdir_p(File.dirname(@path))
+        rotate_if_oversized!
         File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
         record
       rescue SystemCallError, JSON::GeneratorError => e
@@ -61,6 +68,14 @@ module Master
           event: event.to_s,
           payload: payload || {},
         }
+      end
+
+      def rotate_if_oversized!
+        return unless File.exist?(@path) && File.size(@path) > MAX_BYTES
+
+        File.rename(@path, "#{@path}.1")
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "EventLog.rotate_if_oversized")
       end
 
       def normalize_stream(stream)
