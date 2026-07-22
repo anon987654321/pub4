@@ -1,6 +1,6 @@
 # Provider catalog
 
-`Providers::CatalogIndex` (`catalog_index.rb`) indexes external model catalogs into
+`Master::Providers::CatalogIndex` (`catalog_index.rb`) indexes external model catalogs into
 `~/.master/provider_catalog.sqlite3`.
 
 ## Add a source

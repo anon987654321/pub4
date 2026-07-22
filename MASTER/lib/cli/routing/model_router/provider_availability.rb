@@ -75,9 +75,9 @@ module Master
           def live_free_models
             return [] unless @rules.dig("openrouter", "use_live_catalog")
             require_relative "../../../providers/catalog_index"
-            db = Providers::CatalogIndex::DEFAULT_DB
+            db = Master::Providers::CatalogIndex::DEFAULT_DB
             return [] unless File.exist?(db)
-            rows = Providers::CatalogIndex.new(db_path: db).search(":free", source: "openrouter", limit: 40)
+            rows = Master::Providers::CatalogIndex.new(db_path: db).search(":free", source: "openrouter", limit: 40)
             rows.filter_map { |row| row["id"] }.select { |id| id.to_s.end_with?(":free") }
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "model_router.live_free_models")

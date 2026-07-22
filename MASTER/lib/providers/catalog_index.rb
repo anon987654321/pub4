@@ -8,7 +8,12 @@ require "time"
 require "uri"
 require_relative "../master_paths"
 
-module Providers
+# Zeitwerk-ignored (see lib/master.rb's ignore list) and required directly by
+# bin/provider-catalog, which doesn't load the full Master boot chain --
+# ensure the Master namespace shell exists before reopening it below.
+module Master; end
+
+module Master::Providers
   class CatalogIndex
     DEFAULT_DB = MasterPaths.state("provider_catalog.sqlite3")
     SOURCES = {

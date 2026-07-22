@@ -8,7 +8,7 @@ require_relative "../../lib/providers/catalog_index"
 class ProviderCatalogIndexSpec < Minitest::Test
   def with_index
     Dir.mktmpdir do |dir|
-      yield Providers::CatalogIndex.new(db_path: File.join(dir, "catalog.sqlite3")), dir
+      yield Master::Providers::CatalogIndex.new(db_path: File.join(dir, "catalog.sqlite3")), dir
     end
   end
 
@@ -21,8 +21,8 @@ class ProviderCatalogIndexSpec < Minitest::Test
           "name" => "GPT Test",
           "context_length" => 128_000,
           "pricing" => { "prompt" => "0.1", "completion" => "0.2" },
-          "architecture" => { "input_modalities" => ["text"], "output_modalities" => ["text"], "tokenizer" => "test" }
-        }]
+          "architecture" => { "input_modalities" => ["text"], "output_modalities" => ["text"], "tokenizer" => "test" },
+        }],
       }))
 
       assert_equal 1, index.import_file("openrouter", path, normalizer: "openrouter")
@@ -40,8 +40,8 @@ class ProviderCatalogIndexSpec < Minitest::Test
           "owner" => "black-forest-labs",
           "name" => "flux-schnell",
           "description" => "fast image model",
-          "tags" => ["image", "fast"]
-        }]
+          "tags" => %w[image fast],
+        }],
       }))
 
       assert_equal 1, index.import_file("replicate", path, normalizer: "replicate")
