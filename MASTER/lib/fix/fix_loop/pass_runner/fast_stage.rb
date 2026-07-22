@@ -52,14 +52,14 @@ module Master
           def rubocop_pass(files, root)
             rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect files=#{files.size} root=#{rel_root}")
-            _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *files, chdir: root)
+            _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", *files, chdir: root)
             Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{status.success? ? "ok" : "partial"} files=#{files.size}")
             status.success? ? files.size : rubocop_each_file(files, root)
           end
 
           def rubocop_each_file(files, root)
             files.count do |path|
-              _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: root)
+              _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", path, chdir: root)
               rel = path.delete_prefix("#{@root}/")
               if status.success?
                 Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop file=#{rel} ok")
