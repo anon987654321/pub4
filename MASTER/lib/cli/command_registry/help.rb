@@ -30,6 +30,10 @@ module Master
           summary: "principle_map: fossil→runtime rule coverage",
           detail: ["/map", "/map gaps|aesthetic|covered|integrity|provenance", "/map <principle_id>"],
         },
+        "maturity" => {
+          summary: "maturity scorecard: what's proven working, not just claimed",
+          detail: ["/maturity", "/maturity verified|smoke|broken", "/maturity <subsystem_id>"],
+        },
         "through" => {
           summary: "full singularity pass (auto-sequenced)",
           detail: [
@@ -222,7 +226,7 @@ module Master
 
       COMMAND_CATEGORIES = {
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
-        "work" => %w[scan fix through workflow review critique self kernel status mode map replay graph resync tail edge-cases],
+        "work" => %w[scan fix through workflow review critique self kernel status mode map maturity replay graph resync tail edge-cases],
         "agent" => %w[run mode task persona btw shell gateway plan rebuild],
         "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain fold],
         "infer" => [],

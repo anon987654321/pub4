@@ -229,6 +229,35 @@ module Master
         end
       end
 
+      # Maturity scorecard (OpenClaw's taxonomy.yaml pattern) -- what's
+      # actually proven to work, not just claimed. See data/maturity.yml.
+      def dispatch_maturity(root:, ctx: nil)
+        arg = arg_for(ctx).to_s.strip
+        card = Master::Ground::MaturityScorecard.load(root:)
+        return card.summary_line if arg.empty?
+        return maturity_status_report(card, arg) if Master::Ground::MaturityScorecard::STATUSES.include?(arg)
+
+        entry = card.subsystems.find { |e| e.id == arg }
+        return "unknown subsystem #{arg.inspect} — try /maturity, or /maturity verified|smoke|broken" unless entry
+
+        maturity_entry_detail(entry)
+      end
+
+      def maturity_status_report(card, status)
+        entries = card.by_status(status)
+        return "no subsystems with status=#{status}" if entries.empty?
+
+        entries.map { |e| "#{e.id.ljust(36)} #{e.last_checked}  #{e.meaning}" }.join("\n")
+      end
+
+      def maturity_entry_detail(entry)
+        <<~TEXT.strip
+          #{entry.id} — #{entry.status}
+          #{entry.meaning}
+          last checked: #{entry.last_checked}
+          evidence: #{entry.evidence}
+        TEXT
+      end
     end
   end
 end

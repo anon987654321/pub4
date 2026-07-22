@@ -1,0 +1,59 @@
+schema: 1
+# Maturity scorecard, matching OpenClaw's taxonomy.yaml -- what's actually
+# PROVEN to work, and how, distinguishing smoke-tested (mocks/unit tests
+# only) from verified (exercised live, end to end, with a real record of
+# when and how). A concrete embodiment of soul.yml's own SURFACE_ERRORS_FIRST
+# / anti_simulation rules: don't claim completion, prove it.
+#
+# status: smoke | verified | broken
+# evidence: the specific test/commit/session that backs the status
+# last_checked: date of the evidence, not the date this entry was written
+subsystems:
+  fix_loop.circuit_breaker:
+    status: verified
+    meaning: LLM fix stage only skips when every fallback-chain model is exhausted, not any one
+    evidence: 'commits 2caa7e7ac, d0f488c77 -- was blocking on any unrelated model (e.g. a dead
+      free-tier fallback) even when the actually-used model was healthy; found live via round 22-26 gate output'
+    last_checked: '2026-07-22'
+  fix_loop.self_test_gate:
+    status: verified
+    meaning: constitutional self-violation gate (8 laws) halts /fix only on a genuine violation
+    evidence: 'commit bf02780f7 -- a DENSITY regression from an earlier same-session fix was
+      silently halting /fix entirely; SelfTest confirmed 0 violations after the fix'
+    last_checked: '2026-07-22'
+  fix_loop.fast_stage_rubocop:
+    status: verified
+    meaning: deterministic rubocop autocorrect pass actually runs and fixes files
+    evidence: 'commits 5c622e919, eb576bf8d -- was failing on every single file for two
+      independent reasons (wrong Gemfile root for RAILS multi-app layout, and a -q flag that
+      does not exist in rubocop 1.85.1); round 26 committed 308 real files once both were fixed'
+    last_checked: '2026-07-22'
+  fix_loop.learnings_recording:
+    status: verified
+    meaning: per-rule fix outcomes actually reach the KnowledgeStore from the CLI-driven /fix path
+    evidence: 'commit a77b3fb22 -- record_outcomes used String#presence (ActiveSupport-only);
+      bin/cli never loads Rails, so every call silently NoMethodError''d, swallowed by the
+      surrounding rescue. fix_quality had been returning the hardcoded 0.5 default for every
+      rule since this code was written.'
+    last_checked: '2026-07-22'
+  review.council_deliberation:
+    status: verified
+    meaning: /critique's persona deliberation actually reaches a quorum instead of failing every persona
+    evidence: 'commit 7e93b526e -- snapshot_artifact byte-truncated file content via String#b,
+      leaving it tagged BINARY; concatenating that into every persona''s UTF-8 prompt raised
+      Encoding::CompatibilityError identically for all 26, every round, until traced live'
+    last_checked: '2026-07-22'
+  runtime.event_log_rotation:
+    status: verified
+    meaning: activity.jsonl and conflict_log.jsonl stay bounded instead of growing forever
+    evidence: 'commit 42d8b9405 -- both were plain append-only with no cap; grew to 1.2GB and
+      890MB respectively, together filling the disk completely mid-session and crashing an
+      in-progress /fix round with no warning beyond a swallowed ENOSPC'
+    last_checked: '2026-07-22'
+  fix_loop.rule_outcome_classification:
+    status: verified
+    meaning: a policy-skipped violation (confidence gate, stale fingerprint) doesn't count against
+      a rule's fix_quality the same way a genuine failed attempt does
+    evidence: 'commit a77b3fb22 -- matches OpenCrabs feedback_policy.rs (issue #236): treating
+      every non-fix as a defect risked deprioritizing rules that were never actually attempted'
+    last_checked: '2026-07-22'

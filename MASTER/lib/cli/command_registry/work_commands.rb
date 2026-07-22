@@ -79,6 +79,7 @@ module Master
           "fix" => command(:dispatch_fix, d[:fix_loop], d[:root], d[:scanner]),
           "mode" => command(:dispatch_mode, d[:root]),
           "map" => command(:dispatch_map, d[:root]),
+          "maturity" => command(:dispatch_maturity, d[:root]),
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
           "replay" => command(:dispatch_replay, d[:root], d[:trace]),
           "graph" => command(:dispatch_graph, d[:root], d[:code_index], d[:reference_graph]),
