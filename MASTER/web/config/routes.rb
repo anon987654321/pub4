@@ -31,8 +31,6 @@ Rails.application.routes.draw do
   get  "manifest" => "pwa#manifest", as: :pwa_manifest
   get  "up" => "rails/health#show", as: :rails_health_check
   get  "health" => "health#show"
-  get  "bridge/health", to: "bridge#health"
-  post "bridge/turn",   to: "bridge#turn"
   get  "ingress/health", to: "ingress#health"
   post "ingress/cron/:name", to: "ingress#cron"
   post "ingress/webhook/:name", to: "ingress#webhook"

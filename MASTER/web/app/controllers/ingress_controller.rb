@@ -2,7 +2,7 @@
 
 require "json"
 
-# Webhook + cron ingress (OpenCrabs cron / OpenClaw hooks parity).
+# Webhook + cron ingress: scheduled/external triggers into MASTER TurnRouter.
 # Auth: Authorization: Bearer <MASTER_INGRESS_TOKEN>
 class IngressController < ApplicationController
   skip_before_action :verify_authenticity_token
@@ -66,9 +66,20 @@ class IngressController < ApplicationController
     if raw.nil? || raw.empty?
       raw = JSON.parse(request.body.read) if request.content_type.to_s.include?("json")
     end
-    Master::Io::OpenclawBridge.parse_body(raw || {})
+    deep_symbolize(raw.is_a?(Hash) ? raw : {})
   rescue JSON::ParserError
     {}
+  end
+
+  def deep_symbolize(obj)
+    case obj
+    when Hash
+      obj.each_with_object({}) { |(key, value), out| out[key.to_sym] = deep_symbolize(value) }
+    when Array
+      obj.map { |item| deep_symbolize(item) }
+    else
+      obj
+    end
   end
 
   def ingress_response(result, metadata)
