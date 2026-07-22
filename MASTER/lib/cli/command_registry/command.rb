@@ -4,15 +4,26 @@ module Master
   module CLI
     module CommandRegistry
       class Command
-        def initialize(receiver = nil, method_name = nil, *args, **kwargs, &handler)
+        # Matches OpenCrabs' skill-level `review_gate: true`: a command
+        # opts in to requiring an explicit, deliberate confirmation before
+        # its side effects run, even under otherwise-autonomous operation.
+        # /commit is the first consumer -- it currently runs `git add -u`
+        # + `git commit` with an LLM-written message and zero confirmation.
+        CONFIRM_FLAG = "--confirm"
+
+        def initialize(receiver = nil, method_name = nil, *args, review_gate: false, **kwargs, &handler)
           @receiver = receiver
           @method_name = method_name
           @args = args
           @kwargs = kwargs
           @handler = handler
+          @review_gate = review_gate
         end
 
         def call(ctx)
+          return review_gate_notice if @review_gate && !confirmed?(ctx)
+
+          ctx = strip_confirm_flag(ctx) if @review_gate
           return @handler.call(ctx) if @handler
 
           @receiver.public_send(@method_name, *@args, **@kwargs.merge(ctx:))
@@ -24,6 +35,21 @@ module Master
         end
 
         private
+
+        def confirmed?(ctx)
+          ctx.to_h.fetch(:args, "").to_s.strip.split(/\s+/).include?(CONFIRM_FLAG)
+        end
+
+        def strip_confirm_flag(ctx)
+          hash = ctx.to_h
+          cleaned = hash.fetch(:args, "").to_s.strip.split(/\s+/).reject { |tok| tok == CONFIRM_FLAG }.join(" ")
+          hash.merge(args: cleaned)
+        end
+
+        def review_gate_notice
+          "review_gate: this command has side effects and needs explicit confirmation — " \
+            "re-run with #{CONFIRM_FLAG} to proceed"
+        end
 
         def keyword_dependency_error?(error)
           error.message.include?("wrong number of arguments") ||

@@ -170,7 +170,11 @@ module Master
         },
         "doctor" => {
           summary: "run bin/doctor health checks",
-          detail: ["/doctor", "Provider keys, disk, git, web smoke hints."],
+          detail: ["/doctor", "Provider keys, disk, git, web smoke hints.", "/doctor --fix repairs known config drift (e.g. dangling principle_map.yml rule_ids)."],
+        },
+        "commit" => {
+          summary: "LLM-authored git commit of the current diff (review-gated)",
+          detail: ["/commit", "Shows this notice first -- re-run as /commit --confirm to actually run git add -u + git commit."],
         },
         "reap" => {
           summary: "kill suspended bin/cli and tts-worker processes",

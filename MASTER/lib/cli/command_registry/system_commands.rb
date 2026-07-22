@@ -20,7 +20,7 @@ module Master
           "tools" => command(:dispatch_tools, root, ai),
           "tree" => command(:dispatch_tree, root),
           "diff" => command(:dispatch_diff, root),
-          "commit" => command(:dispatch_commit, agent, root),
+          "commit" => command(:dispatch_commit, agent, root, review_gate: true),
           "snapshot" => command(:dispatch_snapshot, root),
           "diag" => command(:dispatch_diag, diag),
           "reload" => command(:dispatch_reload),
