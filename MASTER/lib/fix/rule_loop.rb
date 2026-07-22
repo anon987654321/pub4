@@ -218,7 +218,8 @@ module Master
 
         lang = ext ? ext_language(ext) : "text"
         langs_re = Regexp.union(lang, "text", "")
-        return match[1].strip if (match = text.match(/```(?:#{langs_re})?\n(.*?)```/m))
+        match = text.match(/```(?:#{langs_re})?\n(.*?)```/m)
+        return match[1].strip if match
 
         text.strip
       end

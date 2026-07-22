@@ -202,6 +202,35 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  # Regression: `return match[1].strip if (match = text.match(...))` raised
+  # NameError every time the regex actually matched -- Ruby's parser hadn't
+  # seen the `match =` assignment yet at the point `match[1]` is read
+  # (textually earlier on the same line), so it tried to call a `match`
+  # method instead of using the local var. This meant extract_code crashed
+  # on every LLM response containing a real fenced code block -- the normal
+  # case -- silently swallowed by the callers' rescue StandardError, so
+  # genetic_fix/architect_then_fix degraded to whole_file_fallback (or
+  # exhausted retries) even when the LLM behaved correctly.
+  def test_extract_code_handles_fenced_response_without_nameerror
+    Dir.mktmpdir do |root|
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
+
+      result = loop.__send__(:extract_code, "here is the fix:\n```ruby\nputs 1\n```\n", ".rb")
+
+      assert_equal "puts 1", result
+    end
+  end
+
+  def test_extract_code_passes_through_unfenced_response
+    Dir.mktmpdir do |root|
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
+
+      result = loop.__send__(:extract_code, "plain response, no code fence")
+
+      assert_equal "plain response, no code fence", result
+    end
+  end
+
   private
 
   def build_loop(root:, bus:, scanner:, agent:)
