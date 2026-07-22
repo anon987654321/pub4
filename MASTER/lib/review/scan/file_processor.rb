@@ -4,6 +4,7 @@ require "digest"
 require "fileutils"
 require "prism"
 require "timeout"
+require_relative "semantic_fingerprint"
 
 module Master
   module Review
@@ -26,9 +27,9 @@ module Master
             return code if code.err?
 
             ast = parse_ruby(code.value!, path)
-            fingerprint = semantic_fingerprint(code.value!, ast)
+            fingerprint = Master::Review::Scan::SemanticFingerprint.for(code.value!)
             findings = apply_rules(code: code.value!, ast:, path:, rule_set: rules)
-            findings = annotate_findings(findings, fingerprint:, ast:)
+            findings = annotate_findings(findings, fingerprint:)
             publish_scan_result(path:, depth:, findings:)
             Result.ok(findings)
           end
@@ -155,13 +156,11 @@ module Master
             (rule.respond_to?(:id) && rule.id.to_s == "semantic")
         end
 
-        def annotate_findings(findings, fingerprint:, ast:)
-          Array(findings).map do |finding|
-            add_fingerprint(finding, fingerprint:, ast:)
-          end
+        def annotate_findings(findings, fingerprint:)
+          Array(findings).map { |finding| add_fingerprint(finding, fingerprint:) }
         end
 
-        def add_fingerprint(finding, fingerprint:, ast:)
+        def add_fingerprint(finding, fingerprint:)
           meta = { fingerprint: }
           return finding.merge(meta) if finding.respond_to?(:merge)
           return finding.to_h.merge(meta) if finding.respond_to?(:to_h)
@@ -210,19 +209,6 @@ module Master
           rule.to_s unless rule.nil? || rule.to_s.empty?
         end
 
-        def semantic_fingerprint(code, ast)
-          counts = {
-            line_count: code.lines.count,
-            class_count: code.scan(/^\s*class\s+/).size,
-            method_count: code.scan(/^\s*def\s+/).size,
-            def_names: code.scan(/^\s*def\s+([a-zA-Z_][\w!?=]*)/).flatten.sort,
-            constant_names: code.scan(/\b([A-Z][A-Z0-9_]*(?:::[A-Z][A-Z0-9_]*)*)\b/).flatten.sort,
-            ast_present: !ast.nil?,
-          }
-          Digest::SHA256.hexdigest(Marshal.dump(counts))
-        rescue StandardError
-          Digest::SHA256.hexdigest(code.to_s)
-        end
       end
     end
   end

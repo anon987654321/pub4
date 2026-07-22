@@ -32,16 +32,16 @@ module Master
           nil
         end
 
+        # Must match Review::Scan::SemanticFingerprint.for exactly -- it's
+        # what stamped the fingerprint being compared against here. These
+        # used to be two separately-maintained copies of the same formula
+        # that quietly drifted apart (one included an extra field the
+        # other didn't), so every comparison failed permanently regardless
+        # of whether the file had actually changed. See that module's own
+        # comment for the full story.
         def semantic_fingerprint_for(path)
           src = File.read(path, encoding: "UTF-8")
-          counts = {
-            line_count: src.lines.count,
-            class_count: src.scan(/^\s*class\s+/).size,
-            method_count: src.scan(/^\s*def\s+/).size,
-            def_names: src.scan(/^\s*def\s+([a-zA-Z_][\w!?=]*)/).flatten.sort,
-            constant_names: src.scan(/\b([A-Z][A-Z0-9_]*(?:::[A-Z][A-Z0-9_]*)*)\b/).flatten.sort,
-          }
-          Digest::SHA256.hexdigest(Marshal.dump(counts))
+          Master::Review::Scan::SemanticFingerprint.for(src)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "rule_loop.semantic_fingerprint", event_bus: @bus, path:)
           ""
