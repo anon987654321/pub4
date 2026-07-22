@@ -16,11 +16,12 @@ module Master
           def fast_pass(files)
             fixed = 0
             rb = files.select { |f| f.end_with?(".rb") }
-            if rb.any?
-              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect files=#{rb.size}")
-              _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
-              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{status.success? ? "ok" : "partial"} files=#{rb.size}")
-              fixed += status.success? ? rb.size : rubocop_each_file(rb)
+            # @root isn't always a bundle root -- RAILS has no top-level
+            # Gemfile, only amber/brgen/bsdports each have their own, so a
+            # single `bundle exec rubocop` chdir'd to @root fails outright
+            # for every file. Group by the nearest ancestor Gemfile instead.
+            rb.group_by { |f| gemfile_root(f) }.each do |root, group|
+              fixed += rubocop_pass(group, root) if root
             end
             rb.each do |path|
               next unless File.exist?(path)
@@ -32,9 +33,33 @@ module Master
             fixed
           end
 
-          def rubocop_each_file(files)
+          def gemfile_root(path)
+            @gemfile_root_cache ||= {}
+            dir = File.dirname(File.expand_path(path))
+            @gemfile_root_cache.fetch(dir) { @gemfile_root_cache[dir] = find_gemfile_root(dir) }
+          end
+
+          def find_gemfile_root(dir)
+            root_prefix = File.expand_path(@root)
+            while dir.start_with?(root_prefix)
+              return dir if File.exist?(File.join(dir, "Gemfile"))
+              break if dir == root_prefix
+              dir = File.dirname(dir)
+            end
+            nil
+          end
+
+          def rubocop_pass(files, root)
+            rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect files=#{files.size} root=#{rel_root}")
+            _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *files, chdir: root)
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{status.success? ? "ok" : "partial"} files=#{files.size}")
+            status.success? ? files.size : rubocop_each_file(files, root)
+          end
+
+          def rubocop_each_file(files, root)
             files.count do |path|
-              _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: @root)
+              _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", path, chdir: root)
               rel = path.delete_prefix("#{@root}/")
               if status.success?
                 Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop file=#{rel} ok")
