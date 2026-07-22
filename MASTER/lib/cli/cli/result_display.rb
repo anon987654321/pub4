@@ -41,9 +41,9 @@ module Master
         hint = playbook_hint_for(err)
         parts << hint if hint
         error_text = parts.join(" ")
-        return error_text if error_text.bytesize <= 200
+        return error_text if error_text.bytesize <= ERROR_TEXT_MAX_BYTES
 
-        error_text[0, 197] + "…"
+        error_text[0, ERROR_TEXT_MAX_BYTES - 3] + "…"
       end
 
       def playbook_hint_for(err)
@@ -117,7 +117,7 @@ module Master
 
       def routine_success?(text)
         text = text.to_s
-        !text.empty? && text.lines.size == 1 && text.length <= 120
+        !text.empty? && text.lines.size == 1 && text.length <= ROUTINE_SUCCESS_MAX_LENGTH
       end
 
       def output_text(text)

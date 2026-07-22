@@ -9,6 +9,10 @@ module Master
     module OutputFilter
       REL_STATS = "runtime/rtk_stats.json".freeze
       GIT_STATUS_RE = /\A(?:##[^\n]*\n)?(?:[ MADRCU?!]{1,3} .+\n)+\z/m.freeze
+      GENERIC_COMPRESS_LINE_COUNT = 80
+      GIT_COMPRESS_LINE_COUNT = 24
+      DIFF_COMPRESS_BYTES = 2_000
+      LISTING_COMPRESS_LINE_COUNT = 30
 
       module_function
 
@@ -22,7 +26,7 @@ module Master
             compress_git(text, cmd)
           elsif cmd.match?(/\b(?:ls|tree)\b/)
             compress_listing(text)
-          elsif text.lines.size > 80
+          elsif text.lines.size > GENERIC_COMPRESS_LINE_COUNT
             head_tail(text, keep: 40)
           else
             text
@@ -47,9 +51,9 @@ module Master
 
       def compress_git(text, command)
         lines = text.lines
-        return text if lines.size <= 24
+        return text if lines.size <= GIT_COMPRESS_LINE_COUNT
 
-        if command.include?("diff") && text.bytesize > 2_000
+        if command.include?("diff") && text.bytesize > DIFF_COMPRESS_BYTES
           return "#{lines.first(12).join}[...diff truncated #{lines.size} lines / #{text.bytesize}B...]\n#{lines.last(4).join}"
         end
 
@@ -58,7 +62,7 @@ module Master
 
       def compress_listing(text)
         lines = text.lines
-        return text if lines.size <= 30
+        return text if lines.size <= LISTING_COMPRESS_LINE_COUNT
 
         "#{lines.first(20).join}[...#{lines.size - 25} lines omitted...]\n#{lines.last(5).join}"
       end

@@ -19,9 +19,9 @@ module Master
           def chitchat_intent?(text)
             trimmed = text.to_s.strip
             return true if CHITCHAT_GREETING_RE.match?(trimmed)
-            return true if CHITCHAT_CASUAL_RE.match?(trimmed) && trimmed.length <= 120
+            return true if CHITCHAT_CASUAL_RE.match?(trimmed) && trimmed.length <= CHITCHAT_CASUAL_MAX_LENGTH
             return false if MEDIA_PLAY_RE.match?(trimmed) || MEDIA_ARTIST_RE.match?(trimmed)
-            return false if trimmed.length > 80
+            return false if trimmed.length > CHITCHAT_MAX_LENGTH
             return false if trimmed.match?(%r{/|\b(?:implement|refactor|fix|deploy|scan|code|build)\b}i)
             return false if INTENT_PATTERNS.values.any? { |re| re.match?(trimmed) }
 

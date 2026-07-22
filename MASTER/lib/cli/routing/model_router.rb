@@ -21,7 +21,7 @@ module Master
           "unclear", "uncertain", "migh#{?t} be", "possibly",
           "probably not", "limited information", "i cannot",
           "i am unable", "i lack the", "not enough information",
-          "i need more",
+          "i need more"
         ].freeze
 
         ESCALATION_CHAIN = %w[cheap default strong].freeze
@@ -91,6 +91,8 @@ module Master
         CHITCHAT_CASUAL_RE = /\b(?:how are you|what'?s up|thanks|thank you|nice to meet|good night)\b/i.freeze
         MEDIA_PLAY_RE = /\b(?:play|start|put on|spin|queue|open)\s+(?:some\s+)?(?:(?:j\s*)?dilla|radio(?:\s+bergen)?|warp\s+tunnel)\b/i.freeze
         MEDIA_ARTIST_RE = /\b(?:j\s*dilla|dilla\s+beats?|radio\s+bergen|flying\s+lotus|madlib)\b/i.freeze
+        CHITCHAT_CASUAL_MAX_LENGTH = 120
+        CHITCHAT_MAX_LENGTH = 80
 
         private
 

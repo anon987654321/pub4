@@ -19,6 +19,9 @@ module Master
       HIGH_VIOLATION_BASE_WEIGHT = 0.9
       HIGH_VIOLATION_SCALE = 50.0
       HIGH_VIOLATION_BONUS_CAP = 0.1
+      IDLE_SUGGESTION_AGE_SECONDS = 600
+      ENTROPY_HOTSPOT_MIN_COUNT = 10
+      GOD_CLASS_HOTSPOT_MIN_DELTA = 20
       LAST_ASSISTANT_PROPOSALS = [
         [/violation[s]? found|need(s)? fixing|to fix/i, "/polish", "assistant flagged violations", 0.85],
         [/\bunchanged\b|\balready\b/i, "/undo", "assistant says nothing changed", 0.75],

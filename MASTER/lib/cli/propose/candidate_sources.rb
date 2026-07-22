@@ -54,7 +54,7 @@ module Master
           return [] unless timestamp
 
           age = (Time.now - timestamp).to_i
-          return [] if age < 600
+          return [] if age < IDLE_SUGGESTION_AGE_SECONDS
           [prop(action: "/history", reason: "idle #{age / 60} min — review what happened", weight: 0.3 + [age / 7200.0, 0.2].min)]
         end
 
@@ -211,7 +211,7 @@ module Master
             next if module_name.empty? || entries.size < 3
 
             total = entries.sum { |entry| entry[:payload].to_h[:count].to_i }
-            next if total <= 10
+            next if total <= ENTROPY_HOTSPOT_MIN_COUNT
 
             [module_name, total]
           end.max_by { |_, total| total }
@@ -266,7 +266,7 @@ module Master
             next unless File.file?(path)
 
             deltas = commit_line_deltas(path)
-            next unless deltas.size >= 3 && deltas.all? { |delta| delta > 20 }
+            next unless deltas.size >= 3 && deltas.all? { |delta| delta > GOD_CLASS_HOTSPOT_MIN_DELTA }
 
             [path.delete_prefix("#{@root}/"), deltas.sum]
           end.max_by { |_, total| total }

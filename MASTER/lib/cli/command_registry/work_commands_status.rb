@@ -98,41 +98,31 @@ module Master
         "unknown (#{e.class})"
       end
 
+      def format_ago(secs)
+        return "#{secs}s" if secs < 60
+
+        secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h"
+      end
+
+      def event_summary(rec, key_count)
+        pay = rec["payload"]
+        sum = pay.is_a?(Hash) ? pay.first(key_count).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
+        now = Time.now.utc
+        ts = (Time.parse(rec["timestamp"]) rescue now)
+        { ago: format_ago((now - ts).to_i.abs).rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
+      end
+
       def failure_events(root, n)
         records = Trace::EventLog.new(root:).recent(40)
         records = records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }
-        now = Time.now.utc
-        records.last(n).map do |rec|
-          ts = (Time.parse(rec["timestamp"]) rescue now)
-          secs = (now - ts).to_i.abs
-          ago = if secs < 60
-"#{secs}s"
-else
-(secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
-end
-          pay = rec["payload"]
-          sum = pay.is_a?(Hash) ? pay.first(2).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
-          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
-        end
+        records.last(n).map { |rec| event_summary(rec, 2) }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.failure_events")
         []
       end
 
       def recent_events(root, n)
-        now = Time.now.utc
-        Trace::EventLog.new(root:).recent(n).map do |rec|
-          ts = (Time.parse(rec["timestamp"]) rescue now)
-          secs = (now - ts).to_i.abs
-          ago = if secs < 60
-"#{secs}s"
-else
-(secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
-end
-          pay = rec["payload"]
-          sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
-          { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
-        end.compact
+        Trace::EventLog.new(root:).recent(n).map { |rec| event_summary(rec, 3) }.compact
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.recent_events")
         []
