@@ -112,7 +112,7 @@ module Master
     severity: :error, tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],
     description: "debug output left in lib/" do |src, path:|
     next [] unless path.to_s.include?("/lib/")
-    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("/scan/rules/")
     findings = scan_lines(src, /^\s*pp?\s+(?!self\b)/, message: "p/pp debug call — remove or publish via event bus")
     findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts — use @bus.publish or $stdout")
     findings
