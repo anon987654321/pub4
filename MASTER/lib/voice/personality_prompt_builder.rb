@@ -4,20 +4,44 @@ module Master
   module Voice
     # Builds Personality's system prompt from small, independently readable sections.
     module PersonalityPromptBuilder
+      # Every persona (lawyer, medic, trader, architect...) got the same
+      # unconditional block of Ruby/CSS/HTML/Nielsen/accessibility code-style
+      # rules stapled onto its prompt regardless of domain -- pure token
+      # bloat on a "not legal advice" or "not medical advice" turn, and
+      # attention-diluting noise besides. CORE_SECTIONS is what every prompt
+      # needs regardless of task (identity, constitution, output contract,
+      # refusal policy); CONTEXTUAL_SECTIONS is code/design style, only
+      # actually load-bearing when the turn is about code. Default
+      # (context: :full) is byte-for-byte what every prompt produced before
+      # this split -- :core is strictly additive, opt-in, currently unused
+      # by the sole call site (Personality is built once at boot, before any
+      # turn's topic is known) but real and tested for the day a caller can
+      # narrow per-turn.
+      CORE_SECTIONS = %w[
+        master_identity master_meta_instruction master_constitution_absolute
+        master_constitution_kernel master_priority master_output_format
+        master_medical_disclaimer master_special_disclaimer master_refusal_policy
+      ].freeze
+
       private
 
-      def build_system_prompt
+      def build_system_prompt(context: :full)
         soul = @rules.data(:soul)
         sections = base_prompt_sections
         add_runtime_state(sections)
         add_constitution(sections, soul)
         add_priority(sections)
         add_output_format(sections)
-        add_code_rules(sections)
-        add_language_style(sections)
+        add_contextual_sections(sections) unless context == :core
         add_disclaimer(sections)
         add_refusal_policy(sections)
-        ordered_sections(sections, soul)
+        ordered_sections(sections, soul, context:)
+      end
+
+      def add_contextual_sections(sections)
+        add_code_rules(sections)
+        add_language_style(sections)
+        add_design_rules(sections)
       end
 
       def base_prompt_sections
@@ -242,6 +266,62 @@ module Master
         sections["master_priority"] += "\n#{label}: #{directives.join(' / ')}" unless directives.empty?
       end
 
+      # design_rules.yml's numeric thresholds and rules.yml's beauty
+      # touchstones previously only reached anything via an explicit /scan
+      # -- this is the same mechanism style.yml already uses to reach every
+      # session automatically, extended to cover the rest of the design
+      # constitution rather than leaving it scan-only. Kept to one line per
+      # concern, matching the terse style of the sections above; the full
+      # detail stays in design_rules.yml/rules.yml for /scan to read.
+      def add_design_rules(sections)
+        design = Master::Design::Thresholds.load
+        lines = [
+          eight_px_rhythm_line(design),
+          touch_target_line(design),
+          hick_line(design),
+          forbidden_css_line(design),
+          beauty_line,
+        ].compact
+        return if lines.empty?
+
+        sections["master_style"] = [sections["master_style"], lines.join("\n")].compact.join("\n")
+      end
+
+      def eight_px_rhythm_line(design)
+        allowed = design.dig("pixel_perfection", "eight_px_rhythm")
+        return if Array(allowed).empty?
+
+        "Spacing rhythm: #{Array(allowed).join('/')}px only, including token definitions in rem (design_rules.pixel_perfection)."
+      end
+
+      def touch_target_line(design)
+        min = design.dig("ux_laws", "fitts", "target_min_px")
+        return unless min
+
+        "Touch targets: >=#{min}px, 48px preferred for primary actions (Fitts, design_rules.ux_laws)."
+      end
+
+      def hick_line(design)
+        max = design.dig("ux_laws", "hick", "max_visible_choices")
+        return unless max
+
+        "Peer choices: group or progressively disclose past #{max} (Hick, design_rules.ux_laws)."
+      end
+
+      def forbidden_css_line(design)
+        forbidden = design.dig("pixel_perfection", "forbidden_css")
+        return if Array(forbidden).empty?
+
+        "Forbidden CSS: #{Array(forbidden).join(', ')} -- flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
+      end
+
+      def beauty_line
+        beauty = @rules.data(:rules)["beauty"]
+        return unless beauty.is_a?(Hash) && !beauty.empty?
+
+        "Aesthetic touchstones: #{beauty.keys.join(', ')} (rules.beauty) -- cite these for conceptual design judgment design_rules.yml can't measure lexically."
+      end
+
       def add_disclaimer(sections)
         if @name == :medic
           sections["master_medical_disclaimer"] = medical_disclaimer
@@ -274,9 +354,10 @@ module Master
         XML
       end
 
-      def ordered_sections(sections, soul)
+      def ordered_sections(sections, soul, context: :full)
         ordering = Array(soul["prompt_ordering"])
         ordering = sections.keys if ordering.empty?
+        ordering = ordering & CORE_SECTIONS if context == :core
         ordering.filter_map { |key| sections[key] }.join("\n\n")
       end
     end

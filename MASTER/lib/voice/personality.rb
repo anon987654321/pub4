@@ -53,8 +53,9 @@ module Master
         @homeostat = homeostat
       end
 
-      def system_prompt
-        @system_prompt ||= build_system_prompt
+      def system_prompt(context: :full)
+        @system_prompt_cache ||= {}
+        @system_prompt_cache[context] ||= build_system_prompt(context:)
       end
 
       def browser_profile
