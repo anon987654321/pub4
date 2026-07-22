@@ -13,8 +13,15 @@ module Master
 
           def llm_pass(violations:, files:, pass:, deadline: nil)
             rule_violations = violations.group_by { |v| v[:rule].to_s }
-            runnable = @rule_order.ordered(violation_counts: @violation_counts)
-                                  .select { |rule| rule_violations.key?(rule.id.to_s) }
+            ordered = @rule_order.ordered(violation_counts: @violation_counts)
+            runnable = ordered.select { |rule| rule_violations.key?(rule.id.to_s) }
+            if runnable.empty? && rule_violations.any?
+              Master::Trace::Dmesg.status(
+                "fix0",
+                "runnable_empty violation_rule_ids=#{rule_violations.keys.first(5).join(" ")} " \
+                "registered_rule_ids=#{ordered.map { |r| r.id.to_s }.first(5).join(" ")}",
+              )
+            end
             fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
             publish_llm_pass_status(pass:, deadline:)
             fixed
