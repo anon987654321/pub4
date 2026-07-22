@@ -51,6 +51,19 @@ def check_yaml
   Check.new(name: "yaml", ok: errors.empty?, detail: errors.empty? ? "ok" : errors.join("; "))
 end
 
+# Advisory only, matching PrincipleMapRepair's dangling-reference check --
+# which duplicate is "correct" when two differ even slightly isn't safe to
+# guess, so this reports rather than fixes (see ContentDedupScan's header).
+def check_content_dedup
+  require "ground/content_dedup_scan"
+  dups = Master::Ground::ContentDedupScan.scan(root: ROOT)
+  detail = dups.empty? ? "no duplicate lines" : "#{dups.size} duplicate line(s), top: #{dups.first.text[0, 50]} (x#{dups.first.count})"
+  # ok: true unconditionally -- advisory only, never fails doctor's exit code.
+  Check.new(name: "content-dedup", ok: true, detail:)
+rescue StandardError => e
+  Check.new(name: "content-dedup", ok: false, detail: "#{e.class}: #{e.message}")
+end
+
 def check_api_keys
   keys = %w[XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY DEEPSEEK_API_KEY GEMINI_API_KEY]
   present = keys.select { |var| ENV[var].to_s.length >= 16 }
@@ -135,6 +148,7 @@ checks = [
   check_command("sqlite3", "ruby", "-e", "require 'sqlite3'; puts SQLite3::SQLITE_VERSION"),
   check_bundle,
   check_yaml,
+  check_content_dedup,
   check_api_keys,
   check_tts_socket,
   check_web_token,
