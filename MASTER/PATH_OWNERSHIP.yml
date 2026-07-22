@@ -62,6 +62,46 @@ ownership:
     purpose: isolated constitutional fold spine
     risk: high
     check: rake test:core
+  lib/boot/:
+    purpose: paths, data, runtime setup consumed before Zeitwerk is live
+    risk: high
+    check: bin/check --profile=agent
+  lib/builder/:
+    purpose: boot-phase assembly (ground, io, personality wiring)
+    risk: high
+    check: bin/check --profile=agent
+  lib/deploy/:
+    purpose: operator-facing deploy documentation generation
+    risk: medium
+    check: bin/check
+  lib/design/:
+    purpose: design thresholds and platform/mobile profile data
+    risk: medium
+    check: bin/check
+  lib/grok/:
+    purpose: transcript ingestion for the Grok LoRA pipeline
+    risk: medium
+    check: bin/check
+  lib/ops/:
+    purpose: loop ownership, process budget, runtime loop guards
+    risk: high
+    check: bin/check --profile=agent
+  lib/providers/:
+    purpose: external model/provider catalog indexing
+    risk: medium
+    check: ruby -Ilib:spec spec/providers/catalog_index_spec.rb
+  lib/pub4/:
+    purpose: pub4-level (multi-repo) check/status tooling, separate namespace from Master
+    risk: medium
+    check: bin/pub4 status
+  lib/rails/:
+    purpose: Rails-app audits (PWA, routes/views, Hotwire, face3d policy) for the RAILS/ tree
+    risk: medium
+    check: bin/check
+  lib/result/:
+    purpose: Result::Ok/Err chaining and error classification helpers
+    risk: high
+    check: bin/check --profile=agent
   data/soul.yml:
     purpose: constitutional identity
     risk: critical

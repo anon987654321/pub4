@@ -45,7 +45,7 @@ module Master
         end
 
         def tool_available_for_context?(meta)
-          required = Array(meta["file_types"]).map { |ext| normalize_file_type(ext) }.compact
+          required = Array(meta["file_types"]).filter_map { |ext| normalize_file_type(ext) }
           return true if required.empty?
 
           active = active_file_types

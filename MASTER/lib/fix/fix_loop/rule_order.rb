@@ -49,7 +49,7 @@ module Master
           until remaining.empty?
             ready = remaining.select { |id| Array(deps[id]).none? { |dep| remaining.include?(dep) } }
             ready = [remaining.first] if ready.empty?
-            levels << ready.map { |id| id_map[id] }.compact
+            levels << ready.filter_map { |id| id_map[id] }
             ready.each { |id| remaining.delete(id) }
           end
           levels

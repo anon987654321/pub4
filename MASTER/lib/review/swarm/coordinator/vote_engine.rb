@@ -41,7 +41,7 @@ module Master
           end
 
           def conflict?(artifacts)
-            signals = artifacts.map { |_role, v| conflict_signal(v) }.compact
+            signals = artifacts.filter_map { |_role, v| conflict_signal(v) }
             return false if signals.size < 2
             signals.include?(:approve) && signals.include?(:reject)
           end

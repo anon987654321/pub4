@@ -1,0 +1,6 @@
+# Rule-id => age-in-days map consulted by Fix::FixLoop::RuleOrder#violation_age_days
+# to weight fix priority toward long-standing violations. Never existed until now;
+# RuleOrder silently rescued the missing-file error every round and fell back to
+# age_days: 0.0 for every rule (correct default, just noisily re-derived each pass).
+# Populated over time as violations age; empty is a valid starting state.
+schema: 1

@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# encoding: utf-8
 # frozen_string_literal: true
 
 # master-smoke — boot + wire-check + (optional) web ping. Exits 0 clean, 1 on

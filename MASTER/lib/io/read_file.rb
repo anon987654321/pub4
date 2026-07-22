@@ -37,6 +37,8 @@ module Master
         result
       end
 
+      private
+
       def format_file_slice(full_path, offset:, limit:, hashline:)
         lines = File.readlines(full_path)
         @ground_truth&.record_read!(full_path, content: lines.join)
@@ -52,9 +54,6 @@ module Master
         suffix = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
         numbered + suffix
       end
-
-      private
-
     end
   end
 end
