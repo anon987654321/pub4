@@ -162,21 +162,32 @@ module Master
           end
         end
 
-        # Checks only the model *this persona* would actually call -- an
-        # unrelated fallback model's open breaker elsewhere in the registry
-        # must not abort deliberation for every remaining persona.
+        # Only genuinely blocked if every model this call could fall back to
+        # has an open breaker. A persona with its own fixed model override
+        # has no fallback of its own; a persona without one shares the
+        # agent's full fallback chain -- an unrelated model at the front of
+        # that chain being down must not abort deliberation for every
+        # persona when a healthy fallback further down is still usable.
         def circuit_open?(persona = nil)
           breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
           return false unless breaker
+          return false unless breaker.respond_to?(:open?)
 
-          model_id = persona&.respond_to?(:model) ? persona.model : nil
-          model_id ||= @agent.respond_to?(:model) ? @agent.model : nil
-          return false unless model_id
+          models = candidate_models_for(persona)
+          return false if models.empty?
 
-          breaker.respond_to?(:open?) && breaker.open?(model_id)
+          models.all? { |m| breaker.open?(m) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "deliberation.circuit_open", event_bus: @bus)
           false
+        end
+
+        def candidate_models_for(persona)
+          override = persona&.respond_to?(:model) ? persona.model : nil
+          return [override] if override
+          return Array(@agent.candidate_models) if @agent.respond_to?(:candidate_models)
+
+          @agent.respond_to?(:model) ? Array(@agent.model) : []
         end
 
         def ask_persona(persona:, code:, context:)
@@ -188,6 +199,7 @@ module Master
           entry
         rescue StandardError => e
           @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
+          Master::Trace::Dmesg.status("council0", "persona_error persona=#{persona.name} #{e.class}: #{e.message}")
           nil
         end
 

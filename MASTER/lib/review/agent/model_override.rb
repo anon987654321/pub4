@@ -27,6 +27,12 @@ module Master
         def model_for(operation:)
           @model_router&.constrained_for(operation:) || model
         end
+
+        # The full fallback chain (cheap-first/strong-first as configured),
+        # not just the first candidate -- callers checking circuit-breaker
+        # health need every candidate this dispatch could actually fall
+        # back to, not only the one at the front of the chain.
+        def candidate_models(message = nil, task_type: nil) = routed_models(message, task_type:)
       end
     end
   end
