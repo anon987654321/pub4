@@ -57,3 +57,17 @@ subsystems:
     evidence: 'commit a77b3fb22 -- matches OpenCrabs feedback_policy.rs (issue #236): treating
       every non-fix as a defect risked deprioritizing rules that were never actually attempted'
     last_checked: '2026-07-22'
+  fix_loop.semantic_fingerprint:
+    status: verified
+    meaning: the LLM-driven fix stage actually attempts and applies fixes, not just deterministic
+      rubocop/AST passes -- the single biggest fix of this session
+    evidence: 'commit 858080be9 -- FileProcessor and RuleLoop::FixVerification each maintained
+      their own copy of the "has this file changed since the violation was found" fingerprint
+      formula; the two had quietly drifted (one included an extra field the other didn''t), so
+      every comparison failed permanently regardless of whether the file had actually changed.
+      This alone made fix_violation''s fingerprint_matches? check reject every violation, every
+      rule, every round -- found live via skip_breakdown showing confidence=0 fingerprint=N
+      identically across dozens of rules in a full-repo pass. Traced back through five other
+      real, necessary, but ultimately not-the-answer fixes first (circuit breaker x2, self-test
+      DENSITY regression, fast_stage rubocop, learnings recording).'
+    last_checked: '2026-07-22'
