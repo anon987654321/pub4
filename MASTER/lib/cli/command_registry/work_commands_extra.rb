@@ -107,12 +107,23 @@ module Master
 
       def snapshot_artifact(abs_path)
         return "not found: #{abs_path}" unless File.exist?(abs_path)
-        return File.read(abs_path).b[0, SNAPSHOT_FILE_BYTES] if File.file?(abs_path)
+        return snapshot_truncate(File.read(abs_path), SNAPSHOT_FILE_BYTES) if File.file?(abs_path)
 
         files = snapshot_files(abs_path)
         files.map do |f|
-          "--- #{f.sub(abs_path + "/", "")} ---\n#{File.read(f).b[0, SNAPSHOT_DIR_FILE_BYTES]}"
+          "--- #{f.sub(abs_path + "/", "")} ---\n#{snapshot_truncate(File.read(f), SNAPSHOT_DIR_FILE_BYTES)}"
         end.join("\n\n")[0, SNAPSHOT_DIR_TOTAL_BYTES]
+      end
+
+      # Byte-truncate via .b (so a byte limit can't be exceeded by a
+      # multi-byte char) but re-tag as UTF-8 and scrub afterward -- callers
+      # concatenate this into UTF-8 prompt text, and a truncation boundary
+      # landing mid-character otherwise raises Encoding::CompatibilityError
+      # the moment it's joined with anything not itself forced to BINARY
+      # (confirmed live: every /critique persona failing with exactly that
+      # error, tracing back to this truncation never restoring the tag).
+      def snapshot_truncate(text, byte_limit)
+        text.b[0, byte_limit].force_encoding("UTF-8").scrub
       end
 
       def snapshot_files(abs_path)
