@@ -73,15 +73,18 @@ module Master
         def run_llm_stage(found, files, pass, deadline)
           if circuit_open?
             @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
+            Master::Trace::Dmesg.status("fix0", "llm_skipped pass=#{pass} reason=circuit_open open=#{open_breakers.join(" ")}")
             return 0
           end
           if (avg = system_load_avg) && avg > Ops::ProcessBudget.config.dig("load", "load_avg_1m", "crit").to_f
             @bus&.publish("fix_loop:llm_skipped", pass:, reason: "load_shed", load: avg)
+            Master::Trace::Dmesg.status("fix0", "llm_skipped pass=#{pass} reason=load_shed load=#{avg}")
             sleep 60
             return 0
           end
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline)
+          Master::Trace::Dmesg.status("fix0", "llm_pass pass=#{pass} violations=#{found.size} fixed=#{llm_fixed}")
           @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
           track_recurrence(found)
           llm_fixed

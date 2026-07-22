@@ -260,7 +260,10 @@ module Master
 
         confidence = violation[:confidence] || violation["confidence"] || 1.0
         allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence)
-        @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:) unless allowed
+        unless allowed
+          @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:)
+          Master::Trace::Dmesg.status("fix0", "autofix_skipped rule=#{violation[:rule]} confidence=#{confidence}")
+        end
         allowed
       end
 
@@ -268,6 +271,11 @@ module Master
         message = error.message.to_s
         info = (@failure_taxonomy || Ground::FailureTaxonomy.new).handle(error)
         publish_fix_failure(info[:category], event, violation, message)
+        Master::Trace::Dmesg.status(
+          "fix0",
+          "fix_error rule=#{violation[:rule]} file=#{violation[:file].to_s.delete_prefix("#{@root}/")} " \
+          "category=#{info[:category]} #{error.class}: #{message[0, 160]}"
+        )
         info[:category] == :transient ? :retry : :stop
       end
 
