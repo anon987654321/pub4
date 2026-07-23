@@ -123,7 +123,7 @@ Registered in `gates/runner.rb` as `apps_yml`:
 
 ```zsh
 ruby RAILS/gates/runner.rb apps_yml
-ruby RAILS/gates/apps_yml_validator.rb   # standalone, same checks
+ruby RAILS/apps_yml_validator.rb   # standalone, same checks
 ```
 
 Validates: app directories exist, deploy scripts present, unique ports/domains, feature `status: done|planned`.
@@ -218,18 +218,18 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 ## Recent changes (2026-07-15)
 
 - **Gates:** `gates/runner.rb` registers `apps_yml` and `shared_wiring`; production/master/domain/frontend/stimulus gates callable in-process via `gates/lib/` and `Deploy::GateResult`. `release_gate.rb` no longer subprocesses those four gates.
-- **Shared wiring gate:** `ruby RAILS/gates/shared_wiring_gate.rb` — verifies all apps eval shared routes/importmap, ship error pages, and register shared Stimulus controllers.
+- **Shared wiring gate:** `ruby RAILS/shared_wiring_gate.rb` — verifies all apps eval shared routes/importmap, ship error pages, and register shared Stimulus controllers.
 - **Shared wiring:** social routes eval in all three apps; Stimulus compose/save controllers in `shared/frontend/`.
 - **Design/PWA:** line-height and touch-target fixes; reduced-motion guards; error pages in each app `public/`.
 - **Performance:** Active Storage preload on posts, deals, outfits, demo wardrobe, user profiles, dating matches, and TV channels.
 - **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
-- **Deploy scripts:** `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` are thin shims over `_*.sh` (same pattern as `@deploy.sh`).
+- **Deploy scripts:** the `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` / `@deploy.sh` backward-compat shims have been retired; `_*.sh` are the canonical scripts.
 
 **Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): `release`/`rails_runtime`/`visual_contract` still subprocess; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization). Solidus: Gemfile flag + mount stub ready — full `solidus:install` is staging-only (not on 1GB vm23). Deploy smoke: `sh OPENBSD/bin/deploy-smoke.sh`. Mutation request specs: brgen `vertical_mutations_test`, amber `wardrobe_mutations_test`, bsdports `port_mutations_test`. Family contracts run via `OPENBSD/bin/check-rails` and `check-full`.
 
 ## Deploy scripts
 
-Canonical orchestrator: `_deploy.sh`. `deploy.sh` and `@deploy.sh` are thin entry shims. Per-app `brgen.sh` / `amber.sh` / `bsdports.sh` source the shared contract.
+Canonical orchestrator: `_deploy.sh`. `deploy.sh` is a thin entry shim. Per-app `brgen.sh` / `amber.sh` / `bsdports.sh` source the shared contract.
 
 ---
 *Updated 2026-07-19 — in-process gate runner + controller coverage contract.*

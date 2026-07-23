@@ -33,9 +33,9 @@ GATE_MAP = {
   schema_migration:      "schema_migration_gate.rb",
   stimulus_components:   "stimulus_components_adoption_gate.rb",
   visual_contract:       "visual_contract_gate.rb",
-  apps_yml:              "gates/apps_yml_validator.rb",
-  shared_wiring:         "gates/shared_wiring_gate.rb",
-  constitutional_scan:   "gates/constitutional_scan_gate.rb",
+  apps_yml:              "apps_yml_validator.rb",
+  shared_wiring:         "shared_wiring_gate.rb",
+  constitutional_scan:   "constitutional_scan_gate.rb",
 }.freeze
 
 # Leaf gates already executed inside a composite gate on the same runner invocation.

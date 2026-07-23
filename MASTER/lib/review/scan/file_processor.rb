@@ -54,7 +54,7 @@ module Master
         def validate_file(path)
           return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
           return Result.err("symlink not allowed: #{path}", category: :validation) if File.symlink?(path)
-          return Result.err("binary file skipped: #{path}", category: :validation) if File.binary?(path)
+          return Result.err("binary file skipped: #{path}", category: :validation) if Master.binary_file?(path)
           return Result.err("file too large: #{path}", category: :validation) if File.size(path) > MAX_FILE_BYTES
 
           Result.ok(path)

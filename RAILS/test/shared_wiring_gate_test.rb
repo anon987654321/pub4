@@ -20,7 +20,7 @@ class SharedWiringGateTest < Minitest::Test
   def test_runner_registers_shared_wiring_gate
     source = File.read(File.join(ROOT, "gates/runner.rb"))
     assert_includes source, "shared_wiring:"
-    assert_includes source, "gates/shared_wiring_gate.rb"
+    assert_includes source, %q{"shared_wiring_gate.rb"}
   end
 
   def test_shared_wiring_gate_checks_extended_shared_artifacts

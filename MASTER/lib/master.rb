@@ -12,18 +12,6 @@ rescue LoadError => e
   warn "openssl: #{e.message} — LLM calls fail"
 end
 
-unless File.respond_to?(:binary?)
-  def File.binary?(path)
-    return false unless File.file?(path)
-
-    chunk = File.open(path, "rb") { |io| io.read(4096) } || ""
-    chunk.include?("\x00")
-  rescue StandardError => e
-    warn("binary_check: #{path}: #{e.message}")
-    true
-  end
-end
-
 module Master
   # Constitutional automation runtime and governed repository-work pipeline.
   ROOT = File.expand_path("..", __dir__).freeze
@@ -64,6 +52,19 @@ module Master
     ".html" => "html", ".htm" => "html", ".erb" => "html", ".css" => "css",
     ".scss" => "scss", ".sass" => "scss"
   }.freeze
+
+  # NUL-byte sniff on the first 4KB. Errs on the side of "binary" so scanners
+  # skip unreadable files instead of choking on them. Module function, not a
+  # File monkeypatch — core classes stay untouched (PoLA).
+  def self.binary_file?(path)
+    return false unless File.file?(path)
+
+    chunk = File.open(path, "rb") { |io| io.read(4096) } || ""
+    chunk.include?("\x00")
+  rescue StandardError => e
+    warn("binary_check: #{path}: #{e.message}")
+    true
+  end
 
   def self.repo_root = REPO_ROOT
   def self.operator_path(*parts) = File.join(OPENBSD_ROOT, *parts)

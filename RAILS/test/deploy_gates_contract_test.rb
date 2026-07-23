@@ -53,7 +53,7 @@ class DeployGatesContractTest < Minitest::Test
   def test_runner_registers_apps_yml_validator
     source = File.read(File.join(ROOT, "gates", "runner.rb"))
     assert_includes source, "apps_yml:"
-    assert_includes source, "gates/apps_yml_validator.rb"
+    assert_includes source, %q{"apps_yml_validator.rb"}
   end
 
   def test_runner_runs_leaf_gates_in_process
@@ -94,11 +94,10 @@ class DeployGatesContractTest < Minitest::Test
     assert File.file?(File.join(ROOT, "gates", "lib", "apps_yml_validator.rb"))
   end
 
-  def test_deploy_at_scripts_are_thin_shims
-    %w[@core.sh @database.sh @runtime_gate.sh @scaffold.sh @service.sh @sync.sh].each do |name|
-      source = File.read(File.join(ROOT, name))
-      assert_includes source, "_#{name.delete_prefix('@')}"
-      refute_includes source, "need_cmd ruby34"
+  def test_deploy_at_aliases_are_retired
+    %w[@core.sh @database.sh @deploy.sh @runtime_gate.sh @scaffold.sh @service.sh @sync.sh].each do |name|
+      refute File.exist?(File.join(ROOT, name)),
+             "#{name} resurrected — canonical scripts are the _*.sh files"
     end
   end
 

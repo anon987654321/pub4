@@ -74,7 +74,7 @@ module Master
         end
 
         def binary?(path)
-          File.file?(path) && File.binary?(path)
+          File.file?(path) && Master.binary_file?(path)
         rescue StandardError
           true
         end

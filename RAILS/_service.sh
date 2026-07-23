@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @service.sh — rc.d service installation and relayd routing for copy-tree deploy.
+# _service.sh — rc.d service installation and relayd routing for copy-tree deploy.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
 # retire_legacy_rails_rcd APP_NAME — stop duplicate *_rails services from older bootstrap.
@@ -48,7 +48,7 @@ install_rcd() {
 # relayd_add_relay DOMAIN PORT
 # Idempotently adds a table + host-routing entry to /etc/relayd.conf for a new app,
 # then restarts relayd if anything actually changed. Fails loudly (non-zero, caught
-# by @deploy.sh's set -euo pipefail) on a sed insert that doesn't land -- a silently
+# by _deploy.sh's set -euo pipefail) on a sed insert that doesn't land -- a silently
 # missing route is worse than an aborted deploy.
 relayd_add_relay() {
   local domain=$1 port=$2
