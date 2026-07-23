@@ -31,7 +31,7 @@ module Pub4
       violations = []
 
       scss_files.each do |path|
-        File.readlines(path).each_with_index do |line, idx|
+        File.readlines(path, encoding: "UTF-8").each_with_index do |line, idx|
           line.scan(FALLBACK).each do |token, hex|
             token = token.downcase
             next if EXEMPT.include?(token)
@@ -95,7 +95,7 @@ module Pub4
 
     def collect_from_scss(known)
       scss_files.each do |path|
-        File.foreach(path) do |line|
+        File.foreach(path, encoding: "UTF-8") do |line|
           line.scan(LITERAL_DEF).each { |name, hex| known[name.downcase] << hex.downcase }
           line.scan(MIXIN_PARAM_DEF).each { |name, hex| known["x-#{name.downcase}"] << hex.downcase }
         end

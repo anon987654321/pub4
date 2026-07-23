@@ -1,0 +1,50 @@
+/* Popover-arrow tooltip — ported from the real 2014 desktop.css
+   .trigger_description component (pub/__OLD_BACKUPS/BRGEN_OLD). Original
+   was pure CSS, hover-only, stacking two triangle pseudo-elements to fake
+   a drop-shadow behind the visible one since filter: drop-shadow() wasn't
+   reliably supported in 2014.
+
+   Rebuilt on @stimulus-components/popover (already vendored) instead of
+   a custom attr()-content trick: the controller's show() appends the
+   <template data-popover-target="content"> markup as a real child of the
+   trigger, so this file only has to style that injected
+   [data-popover-target="card"] node and its arrow -- one element, one
+   filter: drop-shadow(), same shadowed-arrow look as the original.
+   mouseenter/focus + mouseleave/blur triggers mean it works for touch too
+   (tapping a button focuses it), no @media (hover: none) exclusion needed.
+
+   Shadow kept intentionally: the card and page share the same background,
+   so the shadow is the arrow's only depth cue. Author's explicit call
+   2026-07-21, overriding the flat default for this one component only
+   (design_rules.yml pixel_perfection.exception_policy). */
+
+.x-act {
+  position: relative;
+}
+
+[data-popover-target="card"] {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: calc(100% + 10px);
+  transform: translateX(-50%);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 4px 6px;
+  border-radius: 2px;
+  z-index: var(--z-ui, 90);
+  pointer-events: none;
+}
+
+[data-popover-target="card"]::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--surface2);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}

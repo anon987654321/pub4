@@ -94,7 +94,7 @@ module Pub4
       scss_paths.each do |path|
         next unless File.readable?(path)
 
-        File.readlines(path).each do |line|
+        File.readlines(path, encoding: "UTF-8").each do |line|
           next unless (m = line.match(SPACE_CSS_VAR))
 
           px = to_px(m[2], m[3])

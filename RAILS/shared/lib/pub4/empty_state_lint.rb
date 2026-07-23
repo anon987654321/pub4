@@ -52,7 +52,7 @@ module Pub4
     def scan
       findings = []
       view_files.each do |path|
-        content = File.read(path)
+        content = File.read(path, encoding: "UTF-8")
         content.to_enum(:scan, RENDER_CALL).each do
           match = Regexp.last_match
           call = match[0]
