@@ -253,4 +253,24 @@ class TestSpeech < Minitest::Test
   ensure
     ENV.delete("MASTER_TTS_TIMEOUT")
   end
+
+  # StrunkPass (lib/voice/strunk_pass.rb) had zero callers anywhere until
+  # wired into clean_text here -- the actual enforcement for
+  # master_output_format's "never use: Certainly, Of course..." prompt rule,
+  # which nothing previously verified on the TTS output side.
+  def test_clean_text_strips_sycophancy_prefix
+    result = Master::Voice::Speech.clean_text("Certainly! Here is the answer.")
+    refute_match(/\Acertainly/i, result)
+    assert_includes result, "Here is the answer"
+  end
+
+  def test_clean_text_strips_hedge_words
+    result = Master::Voice::Speech.clean_text("This will improve performance.")
+    refute_includes result, "will"
+  end
+
+  def test_clean_text_preserves_newline_to_period_pacing
+    result = Master::Voice::Speech.clean_text("First line no period\nSecond line no period")
+    assert_equal "First line no period. Second line no period", result
+  end
 end

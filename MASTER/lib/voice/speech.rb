@@ -7,6 +7,7 @@ require "socket"
 require "json"
 require "timeout"
 require_relative "policy"
+require_relative "strunk_pass"
 
 module Master
   module Voice
@@ -159,17 +160,24 @@ module Master
         Master::Voice::Expression.for_text(text)[:register]
       end
 
+      # StrunkPass runs after newline->period conversion (preserves TTS pacing
+      # for lines with no trailing punctuation) but before the final
+      # whitespace collapse, stripping sycophancy/hedges/preambles/endings
+      # (data/voice.yml voice.strunk) that the markdown-symbol gsubs below
+      # never touched -- enforces master_output_format's "never use:
+      # Certainly, Of course..." on the output side, which nothing did before.
       def clean_text(text)
-        text.to_s
+        StrunkPass.call(
+          text.to_s
             .gsub(/```.*?```/m, " code omitted. ")
             .gsub(/`([^`]+)`/, "\\1")
             .gsub(/https?:\/\/\S+/, " link omitted ")
             .gsub(/[•●▪▫◦]/, ". ")
             .gsub(/[\t\r\n]+/, ". ")
-            .gsub(/[*_#>\[\]{}|]/, " ")
-            .gsub(/\s+/, " ")
-            .gsub(/\.{3,}/, ".")
-            .strip[0, MAX_CHARS]
+            .gsub(/[*_#>\[\]{}|]/, " "),
+        )
+          .gsub(/\.{3,}/, ".")
+          .strip[0, MAX_CHARS]
       end
 
       def chunks(text, max: CHUNK_CHARS)
