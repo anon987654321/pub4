@@ -12,6 +12,14 @@
 <% end %>
 
 <% if @located %>
+  <article class="row-between section-divider--24">
+    <div>
+      <strong>Nearby chat room</strong>
+      <p class="dim">Everyone within <%= Conversation::GEO_ROOM_RADIUS_KM.to_i %> km, one shared room, anonymous.</p>
+    </div>
+    <%= link_to "Join", nearby_room_path, class: "btn btn-primary btn-sm" %>
+  </article>
+
   <% if @nearby.any? %>
     <% @nearby.each do |u, distance| %>
       <article class="row-between">

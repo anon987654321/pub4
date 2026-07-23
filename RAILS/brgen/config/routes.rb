@@ -212,6 +212,8 @@ Rails.application.routes.draw do
   patch "location" => "locations#update", as: :location
   resources :push_subscriptions, only: %i[create destroy]
   get "nearby" => "nearby#index", as: :nearby
+  get "nearby/room" => "nearby#room", as: :nearby_room
+  get "nearby/widget" => "nearby#widget", as: :nearby_widget
   post "nearby" => "nearby#create"
   resources :channels, only: %i[index show], param: :slug
   get "search" => "search#index", as: :global_search

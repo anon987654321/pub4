@@ -11,7 +11,14 @@ class ChannelsController < ApplicationController
   end
 
   def show
-    @conversation = Conversation.find_or_create_channel(params[:slug], city: Current.city_record)
+    @conversation = if Conversation.geo_room_slug?(params[:slug])
+                      # Never create from a URL-guessed slug -- geo rooms are only
+                      # created by NearbyController#room from the visitor's own
+                      # real stored location.
+                      Conversation.find_by(slug: params[:slug], city_id: nil)
+                    else
+                      Conversation.find_or_create_channel(params[:slug], city: Current.city_record)
+                    end
     return redirect_to(channels_path, alert: "No such channel.") unless @conversation
 
     if authenticated?

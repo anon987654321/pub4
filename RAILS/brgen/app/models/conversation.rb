@@ -56,6 +56,28 @@ class Conversation < ApplicationRecord
     find_by!(slug: slug, city_id: city&.id)
   end
 
+  # Anonymous, radius-scoped group room — same public/anonymous/disappearing
+  # machinery as CHANNELS above, but bucketed by a ~10km geo grid cell instead
+  # of by city. Deliberately not seeded with bots (NearbyController#room, which
+  # calls this, only ever passes a real signed-in user's own stored lat/lng —
+  # this is meant to read as actual nearby people, not an always-on lobby).
+  GEO_ROOM_RADIUS_KM = 10.0
+  GEO_ROOM_SLUG_PREFIX = "nearby-"
+
+  def self.geo_room_slug?(slug) = slug.to_s.start_with?(GEO_ROOM_SLUG_PREFIX)
+
+  def self.find_or_create_geo_room(lat:, lng:)
+    slug = "#{GEO_ROOM_SLUG_PREFIX}#{Shared::GeoLocatable.cell_id(lat: lat, lng: lng, km: GEO_ROOM_RADIUS_KM)}"
+    find_by(slug: slug, city_id: nil) || create_geo_room!(slug)
+  end
+
+  def self.create_geo_room!(slug)
+    create!(conversation_type: "group", slug: slug, name: "Nearby chat", disappearing_duration: CHANNEL_TTL)
+  rescue ActiveRecord::RecordNotUnique
+    # Two nearby visitors opened a fresh room in the same cell at once.
+    find_by!(slug: slug, city_id: nil)
+  end
+
   # "#takeaway · Bergen" once a room is city-scoped; plain "#takeaway" otherwise.
   def channel_title = city ? "#{name} · #{city.name}" : name
 

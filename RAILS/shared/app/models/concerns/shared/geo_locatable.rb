@@ -17,6 +17,21 @@ module Shared
       # Models should have decimal latitude, longitude columns (or override lat/lng readers).
     end
 
+    module_function
+
+    # Stable grid-cell id for "everyone roughly within `km` of each other" grouping
+    # (e.g. a shared geo-scoped chat room) -- not for precise membership, since two
+    # points on opposite sides of a cell edge can be `km` apart yet land in
+    # different cells. Same lat-corrected bbox math as `nearby` above, just used
+    # to bucket instead of to filter. Deterministic and pure Ruby (no geohash gem).
+    def cell_id(lat:, lng:, km: 10.0)
+      d_lat = km / EARTH_KM * (180.0 / Math::PI)
+      d_lng = d_lat / Math.cos([lat.to_f.abs, 0.0001].max * Math::PI / 180.0)
+      cell_lat = (lat.to_f / d_lat).floor
+      cell_lng = (lng.to_f / d_lng).floor
+      "#{cell_lat}:#{cell_lng}"
+    end
+
     class_methods do
       # Bbox-filtered nearby (fast, chainable like .nearby(lat, lng, 5).limit(20).includes(...) ).
       # For high precision on small result sets, post-filter with haversine or call .select.

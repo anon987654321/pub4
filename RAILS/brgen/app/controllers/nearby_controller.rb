@@ -16,6 +16,37 @@ class NearbyController < ApplicationController
     @nearby = @located ? nearby_users(lat, lng, @radius_km) : []
   end
 
+  # Shared, anonymous, radius-scoped group room -- everyone currently within
+  # ~10km lands in the same room (grid-cell bucketed; see
+  # Shared::GeoLocatable.cell_id), unlike #create's 1:1 direct chats.
+  def room
+    lat = Current.user&.latitude
+    lng = Current.user&.longitude
+    return redirect_to(nearby_path, alert: "Enable location to join the nearby chat room.") unless lat && lng
+
+    conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)
+    conversation.join!(Current.user)
+    redirect_to channel_path(conversation.slug)
+  end
+
+  # Compact turbo-frame body for the floating widget (see shared/_nearby_chat_widget).
+  # Same join as #room, but renders in place instead of redirecting to the full
+  # channel page -- the widget IS the frame, there's nowhere to navigate to.
+  def widget
+    lat = Current.user&.latitude
+    lng = Current.user&.longitude
+    @located = authenticated? && lat && lng
+    return unless @located
+
+    @conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)
+    @conversation.join!(Current.user)
+    @conversation.mark_read_for!(Current.user)
+    ActsAsTenant.without_tenant do
+      @messages = @conversation.messages.unexpired.includes(:sender).order(:created_at).last(50).to_a
+    end
+    @message = Message.new
+  end
+
   def create
     other = User.find(params[:user_id])
     return redirect_to(nearby_path, alert: "That's you.") if other == Current.user

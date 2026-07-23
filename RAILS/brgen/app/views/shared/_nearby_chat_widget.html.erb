@@ -1,0 +1,16 @@
+<div class="nearby-chat-widget" data-controller="reveal">
+  <button type="button" class="nearby-chat-widget-tab" data-action="reveal#toggle" aria-expanded="false" aria-controls="nearby-chat-widget-panel">
+    <%= icon :messages, size: 16 %>
+    <span>nearby</span>
+  </button>
+
+  <div id="nearby-chat-widget-panel" class="nearby-chat-widget-panel hidden" data-reveal-target="item">
+    <header class="nearby-chat-widget-header">
+      <span>#nearby</span>
+      <button type="button" class="nearby-chat-widget-close" data-action="reveal#toggle" aria-label="Close">&times;</button>
+    </header>
+    <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path, loading: "lazy" do %>
+      <p class="dim nearby-chat-widget-empty">Loading…</p>
+    <% end %>
+  </div>
+</div>
