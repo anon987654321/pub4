@@ -127,6 +127,21 @@ module Master
           findings
         end
 
+        SIMPLE_WRAPPER_TAG_RE = %r{
+          <(p|div|span|li|h[1-6]|strong|em|small|label|td|th|dt|dd|caption)(?:\s[^>]*)?>
+          \s*<%=\s*[^%<]+?\s*%>\s*
+          </\1>
+        }ix.freeze
+
+        RuleDSL.rule :PREFER_TAG_HELPERS,
+          severity: :info, tags: %i[DESIGN RAILS_IDIOM], applies_to: %i[html],
+          description: "prefer Rails tag helpers over raw HTML wrapping a single ERB expression" do |src, path:|
+          next [] unless path.include?("/app/views/")
+          scan_lines(src, SIMPLE_WRAPPER_TAG_RE,
+            message: "<tag><%= … %></tag> — prefer tag.tagname(…) (e.g. tag.p t(\"hello_world\")) so the " \
+              "element and its content stay in one Ruby expression instead of splitting across ERB/HTML")
+        end
+
         RuleDSL.rule :BEM_IN_VIEWS,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
           description: "bare tag targeting — no BEM class soup in views" do |src, path:|
