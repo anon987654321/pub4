@@ -49,6 +49,7 @@ module Master
       ensure_services!(root:)
       container = bootstrap_container(root:)
       Ground::Pledge.stage2_lock!
+      CLI::BootBanner.print
       CLI::CLI.new(container:)
     end
 
