@@ -508,6 +508,18 @@ principles:
     status: covered
     tags:
     - ui
+  flat_ui:
+    meaning: 'Uniform size at rest; depth only when pixels collectively resemble a 3D model'
+    detects: decorative_depth
+    severity: medium
+    confidence: 0.8
+    operation: flatten_ui
+    rule_ids:
+    - NO_DECORATIVE_FX
+    - FLAT_PIXELS
+    status: covered
+    tags:
+    - aesthetic
   flexibility_and_adaptability:
     meaning: 'Design for change over time  '
     detects: rigid_structure

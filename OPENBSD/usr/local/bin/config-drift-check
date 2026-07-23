@@ -83,8 +83,8 @@ Dir["/var/nsd/zones/master/*.zone"].each do |path|
   end
 end
 
-ok, out = Open3.capture2e("/usr/sbin/rcctl", "check", "relayd")
-failures << "relayd not ok: #{out.strip}" unless ok && out.include?("(ok)")
+out, status = Open3.capture2e("/usr/sbin/rcctl", "check", "relayd")
+failures << "relayd not ok: #{out.strip}" unless status.success? && out.include?("(ok)")
 
 if failures.any?
   failures.each { |msg| warn "config-drift: #{msg}" }

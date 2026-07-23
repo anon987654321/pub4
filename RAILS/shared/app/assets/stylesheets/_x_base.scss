@@ -115,6 +115,35 @@
   --x-danger: #d1594a;
 }
 
+// BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
+// (see pub/__OLD_BACKUPS/BRGEN_OLD): true neutral grayscale, zero accent hue,
+// Arial. Bar/chrome sits darker than body, mirroring the original's dark
+// #333 utility bar against a white page — same tonal relationship, extended
+// to the dark end instead of collapsed into it. Kept in sync with
+// design_tokens.yml brgen_old_dark:.
+@mixin x-brgen-old-dark-tokens {
+  --x-bg: #1a1a1a;
+  --x-surface: #1a1a1a;
+  --x-surface-elevated: #1a1a1a;
+  --x-search-bg: #222222;
+  --x-text: #e0e0e0;
+  --x-text-secondary: #969696;
+  --x-border: #333333;
+  --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
+  --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
+  --x-accent: #f2f2f2;
+  --x-accent-hover: #d0d0d0;
+  --x-danger: #d1594a;
+  --x-font: Arial, Helvetica, sans-serif;
+  --x-chrome-bg: #0d0d0d;
+  --x-radius-xs: 4px;
+  --x-radius-sm: 8px;
+  --x-radius-md: 12px;
+  --x-radius-pill: 9999px;
+  --x-radius-card: 8px;
+  --x-radius-lg: 8px;
+}
+
 // Stable application aliases layered over either x token theme.
 @mixin x-app-root-tokens {
   --safe-top: env(safe-area-inset-top, 0px);

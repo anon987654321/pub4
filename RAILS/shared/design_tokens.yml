@@ -126,6 +126,30 @@ face_root:
     z-toast: "1100"
     z-skip: "2000"
 
+# BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
+# from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
+# Arial. x_chrome_bg is the utility-bar tone (darker than x_bg), mirroring
+# the original's dark #333 bar against a white page.
+brgen_old_dark:
+  x_bg: "#1a1a1a"
+  x_surface: "#1a1a1a"
+  x_surface_elevated: "#1a1a1a"
+  x_search_bg: "#222222"
+  x_text: "#e0e0e0"
+  x_text_secondary: "#969696"
+  x_border: "#333333"
+  x_accent: "#f2f2f2"
+  x_accent_hover: "#d0d0d0"
+  x_danger: "#d1594a"
+  x_font: "Arial, Helvetica, sans-serif"
+  x_chrome_bg: "#0d0d0d"
+  x_radius_xs: "4px"
+  x_radius_sm: "8px"
+  x_radius_md: "12px"
+  x_radius_pill: "9999px"
+  x_radius_card: "8px"
+  x_radius_lg: "8px"
+
 openbsd_wscons:
   x_bg: "#000000"
   x_surface: "#000000"

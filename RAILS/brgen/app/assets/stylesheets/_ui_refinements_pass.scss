@@ -139,7 +139,9 @@ body.vertical-tv .duration-chip {
 }
 body.vertical-tv .live-badge::before {
   content: "● ";
-  color: var(--x-danger, #f4212e);
+  /* Fallback must match the real --x-danger token (#d1594a in every dialect)
+     — this was a stale Twitter-red (#f4212e) leftover, not this app's color. */
+  color: var(--x-danger, #d1594a);
 }
 
 /* Takeaway sold out — text badge, not color-only */

@@ -29,7 +29,7 @@ Pub4::CiGuard.run! do
     end
     pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/pub4")
     pub4_lib ||= File.expand_path("../lib/pub4", __dir__)
-    %w[rhythm_lint fallback_drift_lint empty_state_lint].each do |lint|
+    %w[rhythm_lint fallback_drift_lint empty_state_lint dialect_token_drift_check].each do |lint|
       script = File.join(pub4_lib, "#{lint}.rb")
       label = lint.split("_").map(&:capitalize).join(" ")
       if File.readable?(script)
