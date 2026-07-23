@@ -33,6 +33,7 @@ import DirectUpload from "pub4/direct_upload"
 import CharacterCounter from "pub4/character_counter"
 import LuxuryProduct from "pub4/luxury_product"
 import ScrollReveal from "pub4/scroll_reveal"
+import ScrollChrome from "pub4/scroll_chrome"
 import XAction from "pub4/x_action"
 import BottomSheet from "pub4/bottom_sheet"
 import Autosave from "pub4/autosave"
@@ -79,6 +80,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("direct-upload", DirectUpload)
   application.register("luxury-product", LuxuryProduct)
   application.register("scroll-reveal", ScrollReveal)
+  application.register("scroll-chrome", ScrollChrome)
   application.register("x-action", XAction)
   application.register("bottom-sheet", BottomSheet)
   application.register("autosave", Autosave)

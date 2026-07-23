@@ -10,6 +10,9 @@
   @include x.x-app-root-tokens;
   color-scheme: dark;
   --chrome-bg: var(--x-chrome-bg);
+  // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
+  // own deliberate size, distinct from the 16px shared default.
+  --x-font-size: 18px;
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -35,6 +38,7 @@
   @include x.x-app-root-tokens;
   color-scheme: dark;
   --chrome-bg: var(--x-chrome-bg);
+  --x-font-size: 18px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

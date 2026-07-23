@@ -106,25 +106,49 @@ main[role="main"] {
   transform: translateX(0);
 }
 
+/* Edge-reveal grip — ported from the real 2014 mobile.css `nav .arrow`
+   (pub/__OLD_BACKUPS/BRGEN_OLD): a fade-to-background gradient with a
+   chevron overlaid, rather than a floating rounded pill. Chevron direction
+   mirrors which column it reveals: "›" at the left edge points in toward
+   the hidden sidebar, "‹" at the right edge points in toward the hidden
+   widgets column. Still a real 44px-min touch target (Fitts). */
 .edge-grip {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  /* Visual bar stays slim; hit area expanded to 44px (Fitts) via padding */
-  width: 12px;
+  width: 44px;
   height: 64px;
-  padding: 0 16px;
-  box-sizing: content-box;
-  border-radius: var(--x-radius-pill);
-  background: var(--x-hover);
-  background-clip: content-box;
+  padding: 0;
+  border: 0;
+  background: none;
   pointer-events: auto;
   z-index: 1;
-  min-width: 44px;
-  min-height: 44px;
+  cursor: pointer;
 }
-.edge-grip-left { inset-inline-start: 0; }
-.edge-grip-right { inset-inline-end: 0; }
+.edge-grip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  transform: translateY(-50%);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--x-text-secondary);
+  transition: color var(--transition-fast, 180ms);
+}
+.edge-grip-left {
+  inset-inline-start: 0;
+  background: linear-gradient(to right, var(--x-bg) 55%, transparent 100%);
+}
+.edge-grip-left::after { content: "\203A"; text-align: start; padding-inline-start: 6px; }
+.edge-grip-right {
+  inset-inline-end: 0;
+  background: linear-gradient(to left, var(--x-bg) 55%, transparent 100%);
+}
+.edge-grip-right::after { content: "\2039"; text-align: end; padding-inline-end: 6px; }
+.edge-grip:hover::after { color: var(--x-text); }
+.edge-grip:focus-visible { outline: 2px solid var(--x-accent); outline-offset: -2px; }
 .sidebar-swiper.revealed .edge-grip-left,
 .widgets-swiper.revealed .edge-grip-right {
   opacity: 0;
@@ -255,8 +279,15 @@ main[role="main"] {
   display: flex;
   min-height: 54px;
   background: var(--x-surface-elevated);
+  border-top: 1px solid var(--x-border);
   z-index: var(--z-nav, 80);
   padding-bottom: var(--safe-bottom, 0px);
+  /* "Hide bars on scroll to free up space" -- ported from the real 2014
+     mobile.css footer.slide_down, driven by pub4/scroll_chrome. */
+  transition: transform 0.25s ease;
+}
+html.chrome-hidden .tab-bar {
+  transform: translateY(100%);
 }
 .tab-item {
   position: relative;
