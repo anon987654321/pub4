@@ -7,3 +7,22 @@ FLUX.1-dev er valgt fordi den treffer et sjeldent punkt mellom fotorealisme og k
 Teknisk sett starter vi med 17 kuraterte referansebilder av Ragnhild med tekstcaptions, trener en lav-rang LoRA-adapter (rank 32, triggerord `ragnhild`) oppå diffusjonsmodellen `black-forest-labs/FLUX.1-dev` via flow-matching og ai-toolkit på lokal MPS, slik at modellen lærer en personspesifikk representasjon i vektrommet i stedet for å gjette ansikt fra prompt alene; under trening caches latenter til disk, LoRA-vektene oppdateres over 1800 steg med AdamW 8-bit og EMA, validering skjer med 12 faste fotografiske prompts fra `prompts.yaml`, og hele kjeden styres av Ruby (`check_hf_flux_access.rb`, `render_config.rb`, `postpro_samples.rb`) via `run_generate.sh` — kun ai-toolkit sin `run.py` er Python-grensen — før eventuell `portrait`-postpro. Det skiller seg fra generiske bildegeneratorer som Grok Imagine, GPT-image eller Google Imagen fordi de er generalistiske tekst-til-bilde-modeller uten persistent, personbundet finjustering: de kan lage plausible portretter fra beskrivelse, men holder sjelden stabil identitet på tvers av lys, vinkel, antrekk og stil, og de kan ikke trenes på godkjente kildebilder med en eksplisitt likeness-sløyfe. Her eies hele kjeden lokalt, kan reproduseres og forbedres iterativt, og skiller bevisst mellom kildebaserte portretter, prompt-only forhåndsvisning og ekte LoRA-generering.
 
 Alle ferdige bilder ligger flatt i denne mappen. Det eneste versjonerte treningsdatasettet er den caption-bærende mappen `training/ragnhild/ai_toolkit/dataset/`; uttrukne videoframes, latent-cache, råkopier og ZIP-bunter regenereres lokalt og versjoneres ikke. Originalvideoer ligger i `training/ragnhild/sources/`, trening og skript i `training/ragnhild/ai_toolkit/`, og ferdige vekter/eksporter i `ragnhild/`. Start med `./run_generate.sh --check` eller `--train`. Prompt-only HF-forhåndsvisninger ble forkastet fordi de ikke ga identitetslikhet. Spørsmålet er alltid det samme: er det Ragnhild?
+
+## Dual-track train (RunPod / local *or* Replicate)
+
+Same dataset and trigger (`ragnhild`); pick the lane that fits ops cost.
+
+| Lane | Command | When |
+|------|---------|------|
+| **Local / RunPod** | `training/ragnhild/ai_toolkit/run_generate.sh --train` | Full ai-toolkit control (rank 32, 1800 steps, multi-res YAML) |
+| **Replicate API** | `training/ragnhild/ai_toolkit/run_generate.sh --train-replicate` | No SSH/tmux; ~1000 steps on hosted H100s; private destination model |
+
+Replicate path (`run_train_replicate.rb`):
+
+1. Zips `dataset/` → `exports/ragnhild_dataset.zip`
+2. Uploads via Replicate Files API
+3. Trains `ostris/flux-dev-lora-trainer` → destination `$user/ragnhild-flux` (override with `RAGNHILD_REPLICATE_DEST`)
+4. Polls until done (or `--async` + `REPLICATE_WEBHOOK_URL`)
+5. Pulls `output.weights` into `weights/ragnhild_v2/` when downloadable
+
+Requires `REPLICATE_API_TOKEN`. Dry-run: `./run_train_replicate.sh --dry-run`. Keep the private model private; do not publish person LoRAs publicly.
