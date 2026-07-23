@@ -79,7 +79,7 @@ body.face-loading {
 }
 
 body.font-mono {
-  font-family: var(--x-font-mono);
+  font-family: var(--font-mono);
 }
 
 body[data-high-contrast="1"] {
@@ -1371,7 +1371,7 @@ body.wscons-mode {
 
 html[data-aesthetic="wscons"] body,
 body.wscons-mode {
-  font-family: var(--x-font-mono);
+  font-family: var(--font-mono);
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: auto;
@@ -1397,7 +1397,7 @@ body.wscons-mode #face-phosphor-trail {
   gap: 0.75rem;
   text-align: center;
   color: var(--face-fg);
-  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono, ui-monospace, monospace);
 }
 #primer-title {
   font-weight: 400;
@@ -1426,7 +1426,7 @@ body.wscons-mode #face-phosphor-trail {
 textarea.chat-input {
   border-top: 1px solid var(--border-faint);
   caret-color: var(--c-accent);
-  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono, ui-monospace, monospace);
 }
 #face-canvas,
 canvas#face,
@@ -1448,7 +1448,7 @@ canvas#face,
 }
 #push-enable-btn,
 .permission-prompt button {
-  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono, ui-monospace, monospace);
   border-radius: 0;
   border: 1px solid var(--border-strong);
   background: transparent;

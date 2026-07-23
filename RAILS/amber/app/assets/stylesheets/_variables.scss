@@ -4,8 +4,6 @@
   @include x.luxury-light-tokens;
   @include x.app-root-tokens;
   color-scheme: light;
-  --accent: var(--accent);
-  --accent-hover: var(--accent-hover);
   --color-black: var(--bg);
   --color-white: var(--text);
   --color-extra-light-grey: var(--border);
@@ -45,8 +43,6 @@
   @include x.luxury-dark-tokens;
   @include x.app-root-tokens;
   color-scheme: dark;
-  --accent: var(--accent);
-  --accent-hover: var(--accent-hover);
   --color-black: var(--bg);
   --color-white: var(--text);
   --color-extra-light-grey: var(--border);

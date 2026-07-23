@@ -90,12 +90,12 @@ Recovered from deleted execute-plan stack (tags: `recover/x-parity-stack`, `reco
 | Contract tests | `RAILS/test/design_contract_test.rb`, `shared/test/lib/design_tokens_test.rb` |
 | Web vitals (1% sample) | `shared/frontend/hotwire.js` → `POST /web_vitals` (`WebVitalsController`, `fleet.rb`) |
 | Bottom sheet | `shared/frontend/bottom_sheet_controller.js` (`pub4/bottom_sheet`) |
-| Modal / sheet CSS | `shared/app/assets/stylesheets/_x_modal.scss` (via `@forward "x_modal"` in `_stack.scss`) |
-| Action bar + icons | `shared/_x_action_bar`, `shared/_x_icon`, `shared/x_icons/*` |
-| UI helper | `Shared::XUiHelper` (engine initializer `shared.x_ui_helper`) |
+| Modal / sheet CSS | `shared/app/assets/stylesheets/_modal.scss` (via `@forward "modal"` in `_stack.scss`) |
+| Action bar + icons | `shared/_action_bar`, `shared/_icon`, `shared/icons/*` |
+| UI helper | `Shared::UiHelper` (engine initializer `shared.ui_helper`) |
 | Theme FOUC | `shared/_theme_bootstrap` + `theme_toggle` sets `document.documentElement.dataset.theme` |
 
-**Not recovered wholesale:** full `_x_shell` layout rewrite for all apps (main layouts already diverge). Pull shell partials only when a product explicitly adopts them.
+**Not recovered wholesale:** full `_shell` layout rewrite for all apps (main layouts already diverge). Pull shell partials only when a product explicitly adopts them.
 
 **Gates (from repo root):**
 
@@ -108,7 +108,7 @@ ruby RAILS/frontend_auditor_gate.rb
 
 ## Visual design system (2026-07-19)
 
-**Reference:** x.com interaction patterns; pub4 graphite/indigo palette. Source of truth: `shared/design_tokens.yml`, `shared/app/assets/stylesheets/_x_base.scss`, `_x_shell.scss`. amber/brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_x_base.scss`.
+**Reference:** x.com interaction patterns; pub4 graphite/indigo palette. Source of truth: `shared/design_tokens.yml`, `shared/app/assets/stylesheets/_dialect_tokens.scss`, `_shell.scss`. amber/brgen inherit via `stack` / `stack_brgen` → `_tokens.scss` → `_dialect_tokens.scss`.
 
 **Dialects (do not merge casually):**
 | Dialect | Apps | Radius | Notes |
@@ -124,7 +124,7 @@ ruby RAILS/frontend_auditor_gate.rb
 - text `#d8d6e0`, secondary `#8a879c`, border `#46435a`
 - Light mode: indigo `#5b4fc4` on cool gray paper — **not** Twitter blue
 
-**Layout:** single-column feed (`--feed-max: 600px`) with edge-swiper sidebar/widgets panels (`_x_shell.scss`). Tab bar is the always-reachable nav. Verticals may hide chrome via `_vertical_shell.scss`.
+**Layout:** single-column feed (`--feed-max: 600px`) with edge-swiper sidebar/widgets panels (`_shell.scss`). Tab bar is the always-reachable nav. Verticals may hide chrome via `_vertical_shell.scss`.
 
 **Vertical accents:** single map in `design_tokens.yml` → `vertical_accents` and `_vertical_shell.scss` only. Do not re-set `--accent` in ui_refinements or vertical-local sheets.
 

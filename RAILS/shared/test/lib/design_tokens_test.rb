@@ -73,7 +73,7 @@ class DesignTokensTest < Minitest::Test
 
   def test_social_tokens_yaml_present
     social = DesignTokens.load.fetch("social")
-    %w[x_bg x_surface x_text x_accent x_border].each do |key|
+    %w[bg surface text accent border].each do |key|
       assert social.key?(key), "design_tokens.yml#social missing #{key}"
     end
   end

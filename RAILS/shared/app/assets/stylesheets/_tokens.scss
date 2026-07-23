@@ -14,7 +14,6 @@
   --gradient-hero: linear-gradient(135deg, var(--bg) 0%, var(--surface-elevated) 100%);
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
   --text-primary: var(--text);
-  --text-secondary: var(--text-secondary);
 }
 
 :root {
@@ -33,7 +32,6 @@
   --gradient-hero: linear-gradient(135deg, var(--bg) 0%, var(--surface-elevated) 100%);
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
   --text-primary: var(--text);
-  --text-secondary: var(--text-secondary);
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;

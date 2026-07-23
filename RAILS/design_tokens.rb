@@ -121,8 +121,8 @@ module DesignTokens
       drifted << "#{key}=#{value}" unless scss.include?(needle)
     end
 
-    social_text = social.fetch("x_text")
-    drifted << "x_text=#{social_text}" unless scss.include?("$text: #{social_text}")
+    social_text = social.fetch("text")
+    drifted << "text=#{social_text}" unless scss.include?("$text: #{social_text}")
 
     return nil if drifted.empty?
 

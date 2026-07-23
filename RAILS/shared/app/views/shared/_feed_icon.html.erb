@@ -4,4 +4,4 @@
     same icon source. %>
 <% size = local_assigns.fetch(:size, 18) %>
 <% icon_name = { "comment" => :messages, "repost" => :repost, "upvote" => :upvote, "downvote" => :downvote, "more" => :more, "share" => :share }.fetch(local_assigns[:name].to_s) %>
-<%= icon icon_name, size: size, css_class: "act-icon" %>
+<%= icon icon_name, size: size, css_class: "feed-action-icon" %>
