@@ -49,18 +49,24 @@ module Master
         end
       end
 
-      def partition(paths)
+      # cap: nil disables the size cap entirely -- every text file is inlined
+      # in full, no matter how large. Used by bin/snapshot (the full-repo LLM
+      # share pack); SnapshotPublisher's boot-context digest keeps the default
+      # cap since that one is meant to stay small, not exhaustive.
+      def partition(paths, cap: MAX_INLINE_BYTES)
         text = paths.select { |path| File.file?(path) && text_file?(path) }
+        return { inlined: text.sort, large: [] } if cap.nil?
+
         {
-          inlined: text.select { |path| File.size(path) <= MAX_INLINE_BYTES }.sort,
-          large: text.select { |path| File.size(path) > MAX_INLINE_BYTES }.sort,
+          inlined: text.select { |path| File.size(path) <= cap }.sort,
+          large: text.select { |path| File.size(path) > cap }.sort,
         }
       end
 
-      def file_section(path)
+      def file_section(path, cap: MAX_INLINE_BYTES)
         size = File.size(path)
         return [["_binary: #{size} bytes (not inlined)_"], 0] unless text_file?(path)
-        return [["_text: #{size} bytes over #{MAX_INLINE_BYTES} cap (not inlined)_"], 0] if size > MAX_INLINE_BYTES
+        return [["_text: #{size} bytes over #{cap} cap (not inlined)_"], 0] if cap && size > cap
 
         text = File.read(path, encoding: "UTF-8", invalid: :replace)
         lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(path).downcase, "text")

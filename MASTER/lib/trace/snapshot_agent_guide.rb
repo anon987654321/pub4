@@ -7,9 +7,12 @@ module Master
     module SnapshotAgentGuide
       module_function
 
-      def lines(label: "MASTER")
+      # full_inline: true describes a pack with no per-file size cap (bin/snapshot);
+      # false describes SnapshotPublisher's boot-context digest, which still lists
+      # oversized files rather than pasting them (kept small on purpose).
+      def lines(label: "MASTER", full_inline: false)
         header_lines(label) + orient_lines + cross_reference_lines +
-          execution_trace_lines + architecture_assessment_lines + rehydrate_lines
+          execution_trace_lines + architecture_assessment_lines + rehydrate_lines(full_inline:)
       end
 
       def header_lines(label)
@@ -25,7 +28,7 @@ module Master
       def orient_lines
         [
           "### 1. Orient",
-          "- Read **Summary**, **Recent changes**, and **Tree** before opening any file block.",
+          "- Read the header (generation metadata, file count, policy) and **Tree** before opening any file block.",
           "- Note topology: where boot, routing, data, UI, deploy, and tests live relative to each other.",
           "",
         ]
@@ -68,7 +71,17 @@ module Master
         ]
       end
 
-      def rehydrate_lines
+      def rehydrate_lines(full_inline: false)
+        binary_note = if full_inline
+                        "4. Every git-tracked **text** file is inlined in full — no size cap, no " \
+                        "\"large file, not inlined\" placeholders. Binaries (images, fonts, archives) " \
+                        "are still not base64-inlined (that once produced multi-GB snapshots); their " \
+                        "path just doesn't appear as a fenced block — read them from the real repo if needed."
+                      else
+                        "4. This is the small boot-context digest: binaries and files over the size cap " \
+                        "are **listed only** (not inlined) — do not expect base64 blocks. For a full, " \
+                        "uncapped pack use `bin/snapshot` instead (writes `snapshot_<LABEL>.md` at the repo root)."
+                      end
         [
           "### 5. Rehydrate files locally (mirror extraction)",
           "To turn this `.md` back into a working tree:",
@@ -76,10 +89,9 @@ module Master
           "1. Create a temp workspace, e.g. `mktemp -d` → `$SNAP/work`.",
           "2. For each `## \\`relative/path\\`` heading, recreate directory structure under `$SNAP/work`.",
           "3. Copy the fenced block body **exactly** (preserve newlines; strip only the outer ```lang fences).",
-          "4. Binaries and large files are **listed only** (not inlined) — do not expect base64 blocks.",
-          "5. Repeat for **both** `MASTER_snapshot.md` and `OPERATOR_snapshot.md` when present:",
-          "   - `$SNAP/work/MASTER/...` from MASTER sections",
-          "   - `$SNAP/work/OPENBSD/...` from OPERATOR sections",
+          binary_note,
+          "5. Repeat for every sibling snapshot file present (e.g. MASTER + RAILS + OPENBSD), each",
+          "   extracting to its own subtree under `$SNAP/work`.",
           "6. Verify: file count vs Tree, spot-check hashes, run targeted tests from the mirrored tree.",
           "",
           "Do not edit the mirrored tree until you have a written assessment and a trace for the path",
@@ -88,8 +100,8 @@ module Master
         ]
       end
 
-      def render(label: "MASTER")
-        lines(label:).join("\n")
+      def render(label: "MASTER", full_inline: false)
+        lines(label:, full_inline:).join("\n")
       end
     end
   end

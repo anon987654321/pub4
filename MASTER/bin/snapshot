@@ -2,17 +2,22 @@
 # frozen_string_literal: true
 #
 # Readable source snapshots — one markdown per repo subtree, git-tracked text only.
-# Media, vendored deps, generated assets, and the .master cache never inline; files
-# over the cap are listed, not pasted. This is the full-snapshot tool; the small
-# boot-context snapshot still lives in MASTER/lib/trace/snapshot_publisher.rb.
+# Media, vendored deps, generated assets, and the .master cache never inline --
+# but every git-tracked TEXT file is, in full, no size cap, no "large file, not
+# inlined" placeholders (unlike SnapshotPublisher's small boot-context digest).
+# This is the full-snapshot tool; the small boot-context snapshot still lives in
+# MASTER/lib/trace/snapshot_publisher.rb.
 #
 #   bin/snapshot [all|MASTER|RAILS|OPENBSD|OPERATOR] [--out DIR]
 #
 # Default: all present pillars, written as snapshot_<LABEL>.md at the pub4 repo root
-# (LLM-shareable codebase packs — git-tracked text only).
+# (LLM-shareable codebase packs — git-tracked text only). Each file embeds
+# SnapshotAgentGuide's protocol so another LLM opening it cold knows how to work
+# through it (orient -> cross-reference -> trace -> assess -> rehydrate).
 
 require "optparse"
 require_relative "../lib/trace/snapshot_collector"
+require_relative "../lib/trace/snapshot_agent_guide"
 
 REPO_ROOT = File.expand_path("../..", __dir__) # pub4 (parent of MASTER/)
 # Real monorepo pillars first; OPERATOR is optional/legacy.
@@ -54,12 +59,13 @@ def snapshot(label, out_dir, repo_root)
     return
   end
 
+  # cap: nil -- this pack promises "everything, in full" to the LLM reading it;
+  # `large` is therefore always empty, never a truncation bucket to render.
   parts = Master::Trace::SnapshotCollector.partition(
-    Master::Trace::SnapshotCollector.collect_paths(label:, repo_root:, target: target)
+    Master::Trace::SnapshotCollector.collect_paths(label:, repo_root:, target: target), cap: nil
   )
   inlined = parts[:inlined]
-  large = parts[:large]
-  if inlined.empty? && large.empty?
+  if inlined.empty?
     warn "snapshot: skip #{label} (no git-tracked text files)"
     return
   end
@@ -71,24 +77,22 @@ def snapshot(label, out_dir, repo_root)
   File.open(dest, "w") do |io|
     io.puts "# #{label} — source snapshot", ""
     io.puts "Generated #{Time.now.utc.strftime('%Y-%m-%d %H:%M UTC')} · git #{git_sha} · " \
-            "#{inlined.size} files · #{Master::Trace::SnapshotCollector::POLICY_SUMMARY}.", ""
+            "#{inlined.size} files, every one inlined in full (no size cap, no placeholders) · " \
+            "git-tracked text only (binaries/vendor/generated assets excluded, see policy below).", ""
     io.puts "Share this file with another LLM as the full readable #{label} codebase pack.", ""
+    io.puts Master::Trace::SnapshotAgentGuide.render(label:, full_inline: true), ""
     io.puts "## Tree", "```"
     inlined.each { |path| io.puts rel_path(path, repo_root) }
-    io.puts "```"
-    unless large.empty?
-      io.puts "", "## Large files (listed, not inlined)"
-      large.each { |path| io.puts "- `#{rel_path(path, repo_root)}` (#{(File.size(path) / 1024.0).round} KB)" }
-    end
-    io.puts "", "## Files"
+    io.puts "```", ""
+    io.puts "## Files"
     inlined.each do |path|
       body = File.read(path, encoding: "UTF-8").scrub
       wrap = fence(body)
-      io.puts "", "### #{rel_path(path, repo_root)}", "", "#{wrap}#{LANG[File.extname(path).downcase] || "text"}", body, wrap
+      io.puts "", "## `#{rel_path(path, repo_root)}`", "", "#{wrap}#{LANG[File.extname(path).downcase] || "text"}", body, wrap
     end
   end
   puts "snapshot: #{label} -> #{dest} (#{(File.size(dest) / 1024.0 / 1024).round(1)} MB, " \
-       "#{inlined.size} files#{large.empty? ? '' : ", #{large.size} large listed"})"
+       "#{inlined.size} files, all inlined in full)"
 end
 
 require "shellwords"
