@@ -13,13 +13,13 @@ module Shared
       max_font_weights: 3,
       max_type_sizes: 8,
       max_selector_classes: 2,
-      max_css_file_lines: 200
+      max_css_file_lines: 200,
     }.freeze
 
     SPACING = {
       base_unit: 8,
       scale: [4, 8, 16, 24, 32, 48, 64].freeze,
-      touch_target_px: { min: 44, recommended: 48 }
+      touch_target_px: { min: 44, recommended: 48 },
     }.freeze
 
     PRESERVATION = {
@@ -38,19 +38,19 @@ module Shared
         _dashboard.scss
         _vertical_dating.scss
         _vertical_playlist.scss
-      ].freeze
+      ].freeze,
     }.freeze
 
     MOTION = {
       max_transition_ms: 300,
-      require_reduced_motion_override: true
+      require_reduced_motion_override: true,
     }.freeze
 
     ACCESSIBILITY = {
       wcag_target: "aaa",
       normal_text_contrast: 7.0,
       touch_target_px: { min: 44, recommended: 48 },
-      skip_to_main_required: true
+      skip_to_main_required: true,
     }.freeze
 
     CODE = {
@@ -58,7 +58,7 @@ module Shared
       max_parameters: 3,
       max_nesting: 3,
       require_guard_clauses: true,
-      require_tracked_source_files: true
+      require_tracked_source_files: true,
     }.freeze
 
     def self.to_h
@@ -68,7 +68,7 @@ module Shared
         preservation: PRESERVATION,
         motion: MOTION,
         accessibility: ACCESSIBILITY,
-        code: CODE
+        code: CODE,
       }
     end
   end

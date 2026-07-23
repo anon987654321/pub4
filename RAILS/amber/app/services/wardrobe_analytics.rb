@@ -21,7 +21,7 @@ class WardrobeAnalytics
       tips: tips,
       tips_source: "rules",
       overdue_challenges: DeclutterChallenge.where(user: user).overdue.count,
-      active_challenges: DeclutterChallenge.where(user: user).active.count
+      active_challenges: DeclutterChallenge.where(user: user).active.count,
     }
   end
 
@@ -45,7 +45,7 @@ class WardrobeAnalytics
       ("Repair or release items marked for repair" if items.where(lifecycle_state: "repair").exists?),
       ("Build one outfit around an underused piece" if items.any?(&:underused?)),
       ("#{items.declutter_box.count} items waiting in the declutter box" if items.declutter_box.exists?),
-      ("#{DeclutterChallenge.where(user: user).overdue.count} wear challenges are overdue" if DeclutterChallenge.where(user: user).overdue.exists?)
+      ("#{DeclutterChallenge.where(user: user).overdue.count} wear challenges are overdue" if DeclutterChallenge.where(user: user).overdue.exists?),
     ].compact
   end
 end

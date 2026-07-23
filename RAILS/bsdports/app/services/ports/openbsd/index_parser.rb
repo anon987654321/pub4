@@ -19,7 +19,7 @@ module Ports
           category: category,
           comment: parts[2].to_s.strip,
           maintainer: parts[3].to_s.strip,
-          full_pkgname: parts[0].to_s.strip
+          full_pkgname: parts[0].to_s.strip,
         }
       end
 

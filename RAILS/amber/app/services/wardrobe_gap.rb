@@ -6,7 +6,7 @@ class WardrobeGap
     "Bottoms" => 3,
     "Shoes" => 2,
     "Outerwear" => 1,
-    "Accessories" => 2
+    "Accessories" => 2,
   }.freeze
 
   CONNECTORS = [
@@ -31,7 +31,7 @@ class WardrobeGap
         owned: count,
         target: minimum,
         missing: minimum - count,
-        reason: "A resilient wardrobe usually needs at least #{minimum} #{category.downcase}."
+        reason: "A resilient wardrobe usually needs at least #{minimum} #{category.downcase}.",
       }
     end + connector_gaps
   end
@@ -58,7 +58,7 @@ class WardrobeGap
         kind: "connector",
         category: connector[:category],
         name: connector[:name],
-        reason: "Missing #{connector[:name]} for easier outfit combinations."
+        reason: "Missing #{connector[:name]} for easier outfit combinations.",
       }
     end
   end

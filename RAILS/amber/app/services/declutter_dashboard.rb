@@ -20,7 +20,7 @@ class DeclutterDashboard
       duplicate_groups: DuplicateDetector.new(@user).groups.count,
       amount_recovered: @user.declutter_outcomes.sum(:amount_recovered_cents).to_i / 100.0,
       top_candidates: top_candidates(active),
-      matrix: matrix(active)
+      matrix: matrix(active),
     }
   end
 

@@ -7,7 +7,7 @@ class WardrobeMediaJob < ApplicationJob
 
   VARIANTS = {
     thumb: { resize_to_limit: [ 240, 240 ] },
-    card: { resize_to_limit: [ 720, 960 ] }
+    card: { resize_to_limit: [ 720, 960 ] },
   }.freeze
 
   def self.pending_for?(item_id)

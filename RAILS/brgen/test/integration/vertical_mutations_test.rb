@@ -65,7 +65,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     assert_difference -> { Marketplace::Order.count }, 1 do
       post marketplace_listing_orders_path(listing), params: {
         marketplace_order: { message: "Still available?" },
-        quantity: 1
+        quantity: 1,
       }
     end
     assert_redirected_to marketplace_listing_path(listing)
@@ -145,8 +145,8 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
         takeaway_order: {
           delivery_address: "Torgallmenningen 1",
           special_instructions: "No onion",
-          items: { item.id.to_s => "2" }
-        }
+          items: { item.id.to_s => "2" },
+        },
       }
     end
     order = Takeaway::Order.order(:id).last
@@ -165,7 +165,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { Playlist::Track.count }, 1 do
       post playlist_playlist_imports_path(playlist), params: {
-        urls: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC\n"
+        urls: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC\n",
       }
     end
     assert_redirected_to playlist_playlist_path(playlist)

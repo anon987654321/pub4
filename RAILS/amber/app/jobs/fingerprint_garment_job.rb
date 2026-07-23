@@ -19,7 +19,7 @@ class FingerprintGarmentJob < ApplicationJob
       metadata: {
         kind: "fingerprint_not_embedding",
         text: item.embedding_text,
-        fingerprinted_at: Time.current.iso8601
+        fingerprinted_at: Time.current.iso8601,
       }
     )
   end
