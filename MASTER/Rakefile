@@ -111,6 +111,12 @@ namespace :test do
     FileList["test/core/test_*.rb"].each { |f| ruby "-Itest", f }
   end
 
+  desc "Subsystem-mirrored tests (test/cli, io, fix, lib/**) -- not covered by :test's flat test/test_*.rb glob"
+  task :subsystems do
+    files = FileList["test/cli/test_*.rb", "test/io/test_*.rb", "test/fix/test_*.rb", "test/lib/**/*_test.rb"]
+    files.each { |f| ruby "-Itest", f }
+  end
+
   desc "Live web HTTP/browser tests (requires Falcon on MASTER_WEB_PORT)"
   task :integration_web do
     %w[test/test_web_http.rb test/test_browser.rb].each { |file| ruby "-Itest", file }
