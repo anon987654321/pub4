@@ -386,34 +386,6 @@ data_visualization:
   small_multiples_require_identical_scales: true
   sparklines_no_frames_or_ticks: true
   action: Remove non-data ink unless it adds comprehension.
-code_craft:
-  naming:
-    paths: Rails-parameterized slug density — snake_case; each token a concrete noun or verb (style.yml
-      naming.paths)
-    classes: CamelCase nouns
-    methods: snake_case verbs
-    predicates: question_mark
-    mutators: bang_when_dangerous
-    constants: SCREAMING_SNAKE_CASE
-  functions:
-    max_lines: 20
-    ideal_lines: 10
-    max_parameters: 3
-    single_responsibility: true
-    command_query_separation: true
-    flag_arguments_allowed: false
-    side_effects_allowed_in_queries: false
-  refactoring:
-    two_hats: true
-    refactor_without_behavior_change: true
-    tests_before_large_refactor: true
-    boy_scout_rule: true
-  ruby:
-    dependency_injection: true
-    guard_clauses_first: true
-    law_of_demeter: true
-    shameless_green_before_abstraction: true
-    flocking_rules: true
 automated_css_analysis:
   flag:
   - line length outside typography.line_length bounds
