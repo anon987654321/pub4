@@ -173,6 +173,15 @@
             </nav>
           </div>
         <% end %>
+        <% if !vertical_surface? && current_page?(root_path) %>
+          <iframe
+            class="home-ai-embed"
+            src="<%= master_web_url %>"
+            title="<%= master_embed_title %>"
+            allow="microphone; autoplay; encrypted-media; fullscreen"
+            referrerpolicy="strict-origin-when-cross-origin"
+            loading="eager"></iframe>
+        <% end %>
         <% if current_page?(root_path) && Current.user.present? %>
           <%= render "shared/feed_compose" %>
         <% end %>
