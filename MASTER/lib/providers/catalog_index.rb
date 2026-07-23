@@ -6,7 +6,7 @@ require "net/http"
 require "sqlite3"
 require "time"
 require "uri"
-require_relative "../master_paths"
+require_relative "../boot/paths"
 
 # Zeitwerk-ignored (see lib/master.rb's ignore list) and required directly by
 # bin/provider-catalog, which doesn't load the full Master boot chain --

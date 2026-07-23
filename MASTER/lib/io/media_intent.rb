@@ -3,7 +3,7 @@
 require "fileutils"
 require "shellwords"
 require "time"
-require_relative "../master_paths"
+require_relative "../boot/paths"
 require_relative "script_dispatch"
 
 module Master

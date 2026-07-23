@@ -3,7 +3,7 @@
 require "open3"
 require "shellwords"
 require "rbconfig"
-require_relative "../master_paths"
+require_relative "../boot/paths"
 require_relative "../result"
 require_relative "exec"
 

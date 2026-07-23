@@ -12,8 +12,7 @@ module Master
         # from silently accumulating new files with no deliberate decision.
         class LibRootDisciplineRule < Rule
           ALLOWED_ROOT_FILES = %w[
-            builder.rb master.rb master_boot.rb master_data.rb
-            master_paths.rb master_runtime.rb memory.rb pressure_engine.rb
+            builder.rb master.rb memory.rb pressure_engine.rb
             result.rb security_error.rb unwrap_error.rb
           ].freeze
 

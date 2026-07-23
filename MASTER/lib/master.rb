@@ -138,7 +138,7 @@ module Master
   ]
   rule_fragments.each { |name| loader.ignore(File.join(__dir__, "review", "scan", "rules", name)) }
   %w[
-    master_paths.rb master_data.rb master_runtime.rb master_boot.rb pub4
+    pub4
     providers/catalog_index.rb
     builder/boot_phases.rb builder/ai_boot.rb review/llm_dispatcher
   ].each { |relative| loader.ignore(File.join(__dir__, relative)) }
