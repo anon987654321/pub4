@@ -89,7 +89,16 @@ if [[ $shed -eq 1 ]]; then
       fi
     fi
   done
-  pkill -f 'tts-worker --daemon' 2>/dev/null || true
+  # tts-worker daemons used to be killed here too, at the same LOAD_WARN
+  # tier as shedding amber/bsdports. On this box, load sits at LOAD_WARN or
+  # above almost continuously (observed 3.3-6.4 over a full session, never
+  # below 2.5) -- so the warm TTS socket pool was being reaped on nearly
+  # every 5-minute tick, forcing every synthesis onto the slow cold-boot
+  # oneshot path (fresh Ruby+Bundler+EventMachine+TLS handshake per request)
+  # instead of a warm socket. TTS is core (see master's /health "tts is
+  # mandatory per operator"), not optional like amber/bsdports, and the two
+  # small idle tts-worker processes aren't what's driving load. Genuine
+  # crisis-tier cleanup (LOAD_CRIT) below still reaps and respawns them.
 fi
 
 # Restore path: undo our own shedding once pressure has genuinely cleared.

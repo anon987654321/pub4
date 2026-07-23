@@ -300,16 +300,24 @@ module Master
 
       def synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk: nil, **opts)
         clear_last_error!
-        TtsSupervisor.ensure_daemon!
         text_str = clean_text(text)
         return false if text_str.empty?
 
         voice, style_config = resolve_streaming_style(text_str, opts)
-        return false unless edge_tts_available?
 
-        voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
-        return true if attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
-        return true if attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
+        if edge_tts_available?
+          TtsSupervisor.ensure_daemon!
+          voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+          return true if attempt_socket_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
+          return true if attempt_oneshot_synthesis(text_str, voice_name, style_config, output_path, on_chunk)
+        end
+
+        # Edge TTS is a third-party network call (Microsoft) that can time out
+        # or be unreachable independent of anything local; without this, a
+        # single Edge hiccup meant no audio at all even though espeak-ng sits
+        # right there. synthesize() (the non-streaming caller) already had
+        # this fallback -- this path (the one TtsJob actually uses) didn't.
+        return true if attempt_espeak_synthesis(text_str, output_path, on_chunk)
 
         @last_error ||= "streaming synthesis produced empty audio"
         false
@@ -356,6 +364,26 @@ module Master
           audio_path: output_path,
         )
         return false unless path && File.exist?(output_path) && File.size(output_path) > 0
+
+        on_chunk&.call(File.size(output_path))
+        true
+      end
+
+      def attempt_espeak_synthesis(text_str, output_path, on_chunk)
+        return false unless espeak_path
+
+        wav_path = synthesize_espeak(text_str)
+        return false unless wav_path
+
+        # output_path is always the caller's fixed *.mp3 cache path (TtsJob),
+        # so espeak's wav needs transcoding, not just a file move -- reuse the
+        # same ffmpeg conversion the say/Kokoro engines already rely on.
+        ok = Engines.convert_to_mp3(wav_path, output_path)
+        unless ok && File.exist?(output_path) && File.size(output_path) > 0
+          warn_tts("espeak fallback: mp3 conversion failed")
+          File.unlink(wav_path) rescue nil
+          return false
+        end
 
         on_chunk&.call(File.size(output_path))
         true
