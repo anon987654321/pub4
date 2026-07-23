@@ -7,7 +7,7 @@
   --c-accent: oklch(78% 0.10 300);
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
-  --x-font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
   --font-label: "JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);

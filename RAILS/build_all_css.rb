@@ -226,7 +226,7 @@ def verify_face_css
   body = File.read(path)
   anchors = DesignTokens.load.fetch("face_root").fetch("anchors")
   missing = [
-    "--text: #{anchors.fetch('x_text')}",
+    "--x-text: #{anchors.fetch('x_text')}",
     "JetBrainsMono Nerd Font",
   ].reject { |m| body.include?(m) }
   missing.map { |m| "MASTER/web face.css missing #{m}" }
