@@ -1,6 +1,5 @@
 import "pub4/hotwire"
 import "controllers"
-import "brgen_shell"
 
 if ("periodicSync" in navigator && "serviceWorker" in navigator) {
   navigator.serviceWorker.ready.then(reg => {

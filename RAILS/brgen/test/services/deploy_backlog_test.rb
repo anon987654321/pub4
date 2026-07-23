@@ -794,8 +794,10 @@ class DeployBacklogTest < Minitest::Test
     assert_includes show, 'x-post-show'
     assert_includes show, 'x_feed_icon'
     refute_includes show, 'post_show'
-    assert_includes app_js, 'brgen_shell'
-    assert_includes read_brgen('config/importmap.rb'), 'brgen_shell'
+    refute_includes app_js, 'brgen_shell'
+    refute_includes read_brgen('config/importmap.rb'), 'brgen_shell'
+    assert_includes File.read(File.join(ROOT, 'shared/frontend/stimulus_boot.js')), 'pub4/brgen_shell'
+    assert_includes File.read(File.join(ROOT, 'shared/config/importmap_baseline.rb')), 'pub4/brgen_shell'
     assert_includes File.read(File.join(ROOT, 'shared/app/assets/stylesheets/_x_base.scss')), '--x-radius-card: 16px'
     refute File.exist?(File.join(ROOT, 'brgen/app/controllers/playlist_controller.rb'))
     refute File.exist?(File.join(ROOT, 'brgen/app/views/shared/_vote.html.erb'))

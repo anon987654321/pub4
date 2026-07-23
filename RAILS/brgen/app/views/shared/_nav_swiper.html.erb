@@ -1,5 +1,5 @@
 <div class="nav_swiper" data-controller="nav-swiper" data-nav-swiper-target="root">
-  <nav id="nav_sections" class="nav_swiper_bar" role="tablist" aria-label="Sections">
+  <nav id="nav_sections" class="nav_swiper_bar" role="tablist" aria-label="Sections" data-brgen-shell-target="navSections">
     <% brgen_nav_groups.each do |group_label, items| %>
       <div class="nav_swiper_group" role="group" aria-label="<%= group_label.capitalize %>">
         <% items.each do |label, href| %>

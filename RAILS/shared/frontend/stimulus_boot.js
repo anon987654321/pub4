@@ -34,6 +34,7 @@ import CharacterCounter from "pub4/character_counter"
 import LuxuryProduct from "pub4/luxury_product"
 import ScrollReveal from "pub4/scroll_reveal"
 import ScrollChrome from "pub4/scroll_chrome"
+import BrgenShell from "pub4/brgen_shell"
 import XAction from "pub4/x_action"
 import BottomSheet from "pub4/bottom_sheet"
 import Autosave from "pub4/autosave"
@@ -81,6 +82,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("luxury-product", LuxuryProduct)
   application.register("scroll-reveal", ScrollReveal)
   application.register("scroll-chrome", ScrollChrome)
+  application.register("brgen-shell", BrgenShell)
   application.register("x-action", XAction)
   application.register("bottom-sheet", BottomSheet)
   application.register("autosave", Autosave)

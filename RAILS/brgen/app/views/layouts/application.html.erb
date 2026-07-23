@@ -39,7 +39,7 @@
   <%= javascript_importmap_tags %>
 </head>
 <body class="<%= body_surface_classes %>"
-      data-controller="feed-hotkey browser-fingerprint"
+      data-controller="feed-hotkey browser-fingerprint brgen-shell"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <% unless vertical_surface? %>
@@ -79,7 +79,7 @@
     <button id="push-enable-btn" class="push-enable-btn" hidden>Enable notifications</button>
   <% end %>
 
-  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="City network">
+  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="City network" data-brgen-shell-target="carousel">
     <div class="carousel-container" role="list">
       <% %w[
         brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
