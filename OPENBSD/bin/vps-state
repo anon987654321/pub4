@@ -109,7 +109,7 @@ unless Pub4::Environment.on_vps?
   exit 0
 end
 
-apps_yml = YAML.safe_load(File.read(File.join(ROOT, "DEPLOY", "rails", "apps.yml")))
+apps_yml = YAML.safe_load(File.read(File.join(ROOT, "RAILS", "apps.yml")))
 ports = apps_yml.fetch("apps").transform_values { |m| m.fetch("port").to_i }
 
 payload = {
