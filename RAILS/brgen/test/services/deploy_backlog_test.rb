@@ -436,7 +436,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/comments/_form.html.erb')), 'textarea-autogrow'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id, post.anonymous?]'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard"'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard popover"'
     assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_copyable.html.erb')),
                     'data-controller="clipboard"'
 
