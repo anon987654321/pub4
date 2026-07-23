@@ -11104,49 +11104,6 @@ def dilla_pad_wave(t, _v, chord, sustain, bar_i = 0)
   "(#{voices.join('+')})"
 end
 
-def dilla_drum_filter(snare_env, hat_env, open_env, duration, sample_input: nil)
-  filter = []
-  room_on = ENV.fetch("RIR_ROOM", "1") != "0"
-  filter << (room_on ? "[0:a]aformat=channel_layouts=stereo,asplit=2[kick][kick_room_src]" \
-                      : "[0:a]aformat=channel_layouts=stereo[kick]")
-  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=140[bass]"
-  filter << (room_on ? "[2:a]aformat=channel_layouts=stereo,asplit=4[ns][nh][no][ns_room_src]" \
-                      : "[2:a]aformat=channel_layouts=stereo,asplit=3[ns][nh][no]")
-  filter << "[ns]volume='(#{snare_env})':eval=frame,highpass=f=160,bandpass=f=1600:w=2600[snare]"
-  filter << "[nh]volume='(#{hat_env})':eval=frame,highpass=f=6500[hats]"
-  filter << "[no]volume='(#{open_env})':eval=frame,bandpass=f=5600:w=5200[open]"
-  filter << "[4:a]aformat=channel_layouts=stereo,#{DillaAutomation.pad_character_filter(cutoff_hz: 2800, phaser_speed: 0.12, phaser_decay: 0.35)},adelay=9|13,aecho=0.18:0.22:120:0.22[pads]"
-  filter << "[5:a]aformat=channel_layouts=stereo,highpass=f=120,lowpass=f=5000,aecho=0.18:0.22:90:0.28[chop]"
-  labels  = %w[[kick] [bass] [snare] [hats] [open] [pads] [chop]]
-  weights = %w[1.15 0.88 0.82 0.42 0.35 0.90 0.55]
-  # Room print: a very quiet, dark, short-slap ambience send off kick+snare
-  # only (the two transient-rich sources) -- reads as "the kit was in a
-  # room," not a reverb tail. Keyed by the same hits, not a separate layer
-  # needing new samples. RIR_ROOM=0 to disable (e.g. for a drier mode) --
-  # the asplit points above are conditional too, since an unconsumed split
-  # output pad is an ffmpeg filtergraph error, not a silent no-op.
-  if room_on
-    filter << "[kick_room_src][ns_room_src]amix=inputs=2:weights=1.0 0.8:duration=first," \
-              "lowpass=f=900,aecho=0.42:0.3:55:0.32,volume=0.13[room]"
-    labels  << "[room]"
-    weights << "1.0"
-  end
-  if sample_input
-    filter << "[#{sample_input}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-              "highpass=f=80,lowpass=f=14000,acrusher=bits=12:samples=2:mix=0.22[sample]"
-    labels  << "[sample]"
-    weights << "0.72"
-  end
-  filter << "[3:a]volume=0.06,highpass=f=120,lowpass=f=6000[vinyl]"
-  sat = Math.tanh(1.55).round(6)
-  filter << "#{labels.join}[vinyl]amix=inputs=#{labels.length + 1}:weights=#{weights.join(' ')} 0.08:duration=first," \
-            "aeval=exprs='tanh(1.55*val(0))/#{sat}|tanh(1.55*val(1))/#{sat}'," \
-            "acompressor=threshold=-22dB:ratio=2.8:attack=18:release=110:makeup=4," \
-            "acrusher=bits=12:samples=1.69:mix=0.18," \
-            "equalizer=f=45:width_type=o:width=1.2:g=2," \
-            "alimiter=limit=0.93:level_out=0.95[out]"
-  filter.join(";")
-end
 
 # --- Sample-based drum engine (MPC one-shots + Ruby mixer) ---
 
