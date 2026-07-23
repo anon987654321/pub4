@@ -79,11 +79,11 @@ ANTI_BEAUTIFICATION_NEGATIVE = "generic influencer face, overly young face, teen
 # diversity quota deterministically instead of risking repeats by chance.
 EXPRESSION_POOL = [
   "a calm neutral expression", "a slight natural smile", "a direct steady gaze",
-  "mid-laugh candid expression", "a thoughtful downward glance",
+  "mid-laugh candid expression", "a thoughtful downward glance"
 ].freeze
 POSE_POOL = [
   "facing camera directly", "three-quarter turn", "profile turn",
-  "looking over one shoulder", "leaning slightly forward",
+  "looking over one shoulder", "leaning slightly forward"
 ].freeze
 WARDROBE_POOL = ["wool coat", "simple knit sweater", "plain white shirt", "denim jacket", "dark turtleneck"].freeze
 BACKGROUND_POOL = ["plain studio backdrop", "fjord shoreline", "Bergen street corner", "cafe window", "mountain road"].freeze

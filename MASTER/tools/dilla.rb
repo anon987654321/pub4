@@ -48,6 +48,8 @@ module DillaEntrypoint
     "PAD_LAYERS" => "1",
     "CHOIR_VOX" => "1",
     "CHOIR_VOX_GAIN" => "0.28",
+    "VOCAL_CARVE" => "1",
+    "STREAM_DRUM_ROTATE" => "1",
     "LEAD_VOICE" => "soul_prophet",
     "LEAD_ARP_MODE" => "flylo_spiral",
     "KICKS" => "1",
@@ -142,7 +144,7 @@ if __FILE__ == $PROGRAM_NAME
   track = DillaEntrypoint.track_for(options[:track] || "get_dis_money")
   output = options[:output] || File.join(Dir.pwd, ".master", "media", "dilla_#{track}_beat.mp3")
   FileUtils.mkdir_p(File.dirname(output))
-  env = DillaEntrypoint.product_env(track: track)
+  env = DillaEntrypoint.product_env(track:)
   ok = system(env, RbConfig.ruby, *DillaEntrypoint.engine_args(track, output, options[:bars]))
   abort "warn: dilla render failed" unless ok && File.file?(output)
   length_label = options[:bars] >= 64 ? "full-length" : "preview"

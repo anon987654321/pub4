@@ -53,7 +53,7 @@ module Pub4Audio
         "-ac", "2",
         "-codec:a", "libmp3lame",
         "-b:a", bitrate,
-        output,
+        output
       ]
     end
 

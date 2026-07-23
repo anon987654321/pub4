@@ -307,7 +307,7 @@ GRAIN_LOGNORM_MEAN = Math.exp(GRAIN_LOGNORM_SIGMA**2 / 2.0)
 PRINT_STOCKS = {
   kodak_2383: {
     hd: { r: [0.03, 0.98, 0.18, 1.38], g: [0.02, 0.97, 0.18, 1.34], b: [0.04, 0.96, 0.18, 1.28] },
-    grain: 3, warmth: 0.055, cool_shadow: 0.042,
+    grain: 3, warmth: 0.055, cool_shadow: 0.042
   },
   kodak_2302: {
     hd: { r: [0.05, 0.95, 0.18, 1.50], g: [0.05, 0.95, 0.18, 1.50], b: [0.05, 0.95, 0.18, 1.50] },

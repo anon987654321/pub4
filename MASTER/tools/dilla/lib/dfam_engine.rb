@@ -5,7 +5,7 @@
 module DfamEngine
   DEFAULT_PATCH = {
     osc1_hz: 80, osc2_hz: 120, fm_pct: 30, noise_pct: 20,
-    filter_hz: 2000, res_pct: 40, decay_ms: 200,
+    filter_hz: 2000, res_pct: 40, decay_ms: 200
   }.freeze
 
   DEFAULT_PATTERN = {

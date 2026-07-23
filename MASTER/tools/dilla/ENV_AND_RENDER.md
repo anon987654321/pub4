@@ -90,7 +90,10 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `RENDER_MODE` | `dilla` (default) or `warp` / sketch modes |
 | `POCKET_SET` | `neo_soul` (default), `classic`, `dusty`, `industrial` |
 | `KICK_GAIN` / `DRUM_BUS_VOL` | Quiet kit bus (~0.68 / 0.95) |
-| `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah on chord tones (`1` / `0.28` default) |
+| `CHOIR_VOX` / `CHOIR_VOX_GAIN` | Soft ooh/aah on chord tones (`1` / `0.28` default; soft-fails) |
+| `VOCAL_CARVE` | Carve pads under rap stem (`1` when rap on) |
+| `STREAM_CREATIVE` / `STREAM_PUNCH` | Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — **off** by default |
+| `DILLA_SH_TIMEOUT` | Kill hung ffmpeg/fluidsynth (default 120s) |
 | `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
 | `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |
 | `LEAD_ARP` / `HARMONY_LEAD` / `SCALE_LEAD` | Lead layers |
@@ -161,6 +164,16 @@ sidechain amix → sonitex → analog → heuristics → loudnorm
 - **Progressions:** full pack (priority first: `get_dis_money`, neo-soul, untitled, …)
 - **Drums:** `STREAM_DRUM_ROTATION` — soulful kits only (`dilla_slight`, `mpc3000`, …)
 - **No style sequence** — one DNA every slot; mix knobs only (`STREAM_COMFORT`, etc.)
+- **Style DNA wins** after force; `STREAM_CREATIVE_MAX` only when `STREAM_CREATIVE=1` or `STREAM_PUNCH=1`
+
+## Full playlist demo
+
+```sh
+cd MASTER/tools/dilla
+SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
+# resume skips existing parts; DEMO_FORCE=1 re-renders all
+# DEMO_TRACK_TIMEOUT=150 DEMO_ALBUM_NORM=1
+```
 
 ---
 
