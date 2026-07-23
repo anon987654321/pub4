@@ -148,8 +148,10 @@
 }
 .feed-action-menu-list a,
 .feed-action-menu-list button {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: 44px;
   padding: var(--space-1) var(--space-2);
   border: 0;
   background: none;
