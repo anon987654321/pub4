@@ -839,7 +839,7 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:acid_pluck_lead, role: :lead, program: 38, weight: 2.2, fs_gain: 1.3, gate: 0.48, octave: 1,
               arp_styles: %i[up skip_up euclidean], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :up, subdiv: 8, gate: 0.45, vel: 0.52 },
-              fx: "lowpass=f=1800:width_type=q:width=1.1,tremolo=f=0.0:d=0,equalizer=f=400:t=o:w=1.2:g=2.0"),
+              fx: "lowpass=f=1800:width_type=q:width=1.1,equalizer=f=400:t=o:w=1.2:g=2.0"),
   synth_patch(:glass_arp_lead, role: :lead, program: 98, weight: 2.6, fs_gain: 1.28, gate: 0.55, octave: 3,
               arp_styles: %i[spiral quint_spread pingpong], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :spiral, subdiv: 6, gate: 0.58, vel: 0.46 },
@@ -877,7 +877,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "chorus=0.5:0.7:38|48:0.24|0.2:0.28|0.24:1.15|1.4,aecho=0.46:0.4:140|260:0.26|0.14,equalizer=f=2600:t=o:w=1.3:g=3.0,lowpass=f=6000"),
   synth_patch(:sh101_sequence, role: :scale_lead, program: 38, weight: 2.9, fs_gain: 1.3, gate: 0.48, octave: 2,
               arp_styles: %i[up euclidean skip_up], midi_fx: MIDI_FX_SCALE_LEAD,
-              fx: "lowpass=f=2400:width_type=q:width=1.0,tremolo=f=0.0:d=0,aecho=0.38:0.32:80|150:0.2|0.1,equalizer=f=400:t=o:w=1.2:g=2.4,equalizer=f=2800:t=h:w=1.2:g=2.0"),
+              fx: "lowpass=f=2400:width_type=q:width=1.0,aecho=0.38:0.32:80|150:0.2|0.1,equalizer=f=400:t=o:w=1.2:g=2.4,equalizer=f=2800:t=h:w=1.2:g=2.0"),
 ].freeze
 
 SYNTH_PATCH_BY_ROLE = SYNTH_PATCH_CATALOG.group_by { |p| p[:role] }.freeze
@@ -5549,18 +5549,21 @@ TRACK_PRESETS = {
     bpm: 86, progression: :tritone_sub, chord_bars: 2, phrase_bars: 16, swing: 58,
     feel: :organic, stereo_pan: true
   },
-  # Hybrid: techno's four-on-the-floor physicality (feel: :techno_house is
-  # the same real DRUM_PATTERN_SETS entry generated_techno uses -- straight
-  # kicks, dense 16th hats) at swing's engine floor (50 -- SWING is clamped
-  # 50..66 everywhere in this file, so "straighter than dilla" tops out
-  # here, not at true 0 swing), carrying the full harmonic engine most
-  # techno never touches: tritone-sub-capable functional progression,
-  # theory-scored voice-leading, fugue-conversation ghost answers, rotating
-  # drum archetypes, room print. concrete_soul_engine (see below) then
-  # forces the mix harder (see the function for what/why).
+  # Hybrid: base feel stays Dilla-character (:syncopated_slash_ninth, same
+  # pocket family as get_dis_money) so DRUM_STYLE_ALTERNATE genuinely
+  # alternates -- CONCRETE_SOUL_MIX turns that on, flipping every other
+  # phrase_bars-block into :techno_house's real four-on-the-floor
+  # DRUM_PATTERN_SETS entry (straight kicks, dense 16th hats). Swing at
+  # this engine's floor (50 -- SWING is clamped 50..66 everywhere in this
+  # file, so "straighter than dilla" tops out here, not true 0 swing) so
+  # neither phrase type feels like it's fighting the other's pocket. Carries
+  # the full harmonic engine most techno never touches: tritone-sub-capable
+  # functional progression, theory-scored voice-leading, fugue-conversation
+  # ghost answers, rotating drum archetypes, room print. CONCRETE_SOUL_MIX
+  # (see below) then forces the mix harder.
   concrete_soul: {
     bpm: 138, progression: :tritone_sub, chord_bars: 4, phrase_bars: 16, swing: 50,
-    feel: :techno_house, voicing: :rootless, stereo_pan: true
+    feel: :syncopated_slash_ninth, voicing: :rootless, stereo_pan: true
   },
   fourth_third_sixth_second_turn: {
     bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
@@ -8006,6 +8009,11 @@ CONCRETE_SOUL_MIX = {
   "DRUM_BUS_VOL" => "1.0", "DRUM_BUS_GAIN" => "1.0", "DRUM_MIX_WEIGHT" => "1.0",
   "RIR_ROOM" => "1", # concrete/warehouse ambience -- this is the one place
   # the room-print layer is the point, not a subtle extra.
+  # Every other phrase flips the drum pattern vocabulary from concrete_soul's
+  # base :syncopated_slash_ninth (Dilla pocket) to :techno_house (straight
+  # four-on-the-floor) -- the actual "alternates between J Dilla drums and
+  # HATE techno drums" request, not just a mix-character difference.
+  "DRUM_STYLE_ALTERNATE" => "1",
 }.freeze
 
 def apply_concrete_soul_mix!(track)
@@ -8056,6 +8064,22 @@ def apply_drum_archetype!(bar, phrase_bars)
   @last_drum_archetype = name
   bundle.each { |key, value| ENV[key] = value }
   record_config_provenance!("DRUM_ARCHETYPE", "apply_drum_archetype![#{name}]", "force")
+end
+
+# Alternates the actual drum PATTERN vocabulary (DRUM_PATTERN_SETS[:default
+# feel] vs DRUM_PATTERN_SETS[:techno_house]) per phrase, not just the timing/
+# velocity knobs apply_drum_archetype! rotates. feel is a plain local in
+# dilla_schedule's per-bar loop (dilla_kick_pattern/dilla_snare_steps/etc.
+# all take it as a parameter re-read every bar), so reassigning it here
+# genuinely swaps which pattern set the next bar draws from -- not a
+# separate render pass or crossfade. Off by default (DRUM_STYLE_ALTERNATE=1
+# to enable) since it changes a track's core character; concrete_soul turns
+# it on via CONCRETE_SOUL_MIX.
+def alternating_drum_feel(bar, phrase_bars, base_feel)
+  return base_feel unless ENV.fetch("DRUM_STYLE_ALTERNATE", "0") != "0"
+
+  length = phrase_bars.to_i.positive? ? phrase_bars.to_i : 8
+  (bar / length).even? ? base_feel : :techno_house
 end
 
 SLASH_BASS_PROFILES = %i[
@@ -10728,6 +10752,13 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     (1...n_bars).each { |b| bar_starts << bar_starts.last + DillaRhythm.bar_duration_sec(b - 1, beat_p) }
   end
 
+  # feel gets reassigned per-phrase below (alternating_drum_feel) when
+  # DRUM_STYLE_ALTERNATE is on; original_feel keeps the preset's own value
+  # so alternation toggles base<->techno_house every phrase instead of
+  # drifting once it flips (feel itself would otherwise become the "base"
+  # for the next comparison).
+  original_feel = feel
+
   n_bars.times do |bar|
     base = bar_starts[bar]
     bar_bpm = DillaRhythm.bar_bpm(bar)
@@ -10735,6 +10766,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     section = dilla_section(bar, n_bars)
     apply_motif_recall!(bar)
     apply_drum_archetype!(bar, phrase_bars)
+    feel = alternating_drum_feel(bar, phrase_bars, original_feel)
     ghost_tier = ghost_tier_for(bar, section)
     sec_gain = dilla_section_gain(bar, n_bars, chord_phases:, pad_chords:,
                                   chord_bars:, phrase_bars:)
