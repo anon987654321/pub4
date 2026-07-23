@@ -80,6 +80,7 @@ module Master
           "mode" => command(:dispatch_mode, d[:root]),
           "map" => command(:dispatch_map, d[:root]),
           "maturity" => command(:dispatch_maturity, d[:root]),
+          "laws" => command(:dispatch_laws, d[:root]),
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
           "replay" => command(:dispatch_replay, d[:root], d[:trace]),
           "graph" => command(:dispatch_graph, d[:root], d[:code_index], d[:reference_graph]),

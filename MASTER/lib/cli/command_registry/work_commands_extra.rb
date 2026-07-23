@@ -258,6 +258,42 @@ module Master
           evidence: #{entry.evidence}
         TEXT
       end
+
+      # The 8-law constitutional self-test gate is the single most load-bearing
+      # check in the codebase (blocks /fix entirely on any violation), but the
+      # law names are Latin-abstract enough that decoding one meant reading
+      # self_test.rb itself. Surfaces name -> plain-English meaning ->
+      # enforcing method, sourced from the same data/rules.yml the gate
+      # actually reads, so this can never drift from what SelfTest enforces.
+      def dispatch_laws(root:, ctx: nil)
+        arg = arg_for(ctx).to_s.strip.upcase
+        laws = Master.load_yaml(File.join(root, "data", "rules.yml")).dig("self_test", "laws_apply_to_self") || {}
+        return "no self_test.laws_apply_to_self entries in data/rules.yml" if laws.empty?
+        return laws_report(laws) if arg.empty?
+
+        law_detail(laws, arg)
+      end
+
+      def laws_report(laws)
+        laws.map { |law, meaning| "#{law.ljust(18)} #{meaning}" }.join("\n")
+      end
+
+      def law_detail(laws, arg)
+        return "unknown law #{arg.inspect} — try /laws for the full list" unless laws.key?(arg)
+
+        "#{arg}\n#{laws[arg]}\nenforced by: Master::Review::Scan::SelfTest (#{LAW_METHODS.fetch(arg, "law_checks")})"
+      end
+
+      LAW_METHODS = {
+        "ROBUSTNESS" => "bare_rescue_findings (+ deploy/timeout/js-catch/library-verify checks)",
+        "SINGULARITY" => "duplicate_rule_id_findings (+ cross-yaml/deploy duplicate-id checks)",
+        "LINEARITY" => "structural_findings(NestingDepthRule)",
+        "PROXIMITY" => "rule_test_proximity_findings",
+        "ABSTRACTION" => "structural_findings(GodClassRule)",
+        "DENSITY" => "structural_findings(SmallFunctionsRule)",
+        "KERNEL_ADHERENCE" => "kernel_wiring_findings",
+        "PRINCIPLE_MAP" => "principle_map_findings",
+      }.freeze
     end
   end
 end

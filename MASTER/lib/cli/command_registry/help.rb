@@ -34,6 +34,10 @@ module Master
           summary: "maturity scorecard: what's proven working, not just claimed",
           detail: ["/maturity", "/maturity verified|smoke|broken", "/maturity <subsystem_id>"],
         },
+        "laws" => {
+          summary: "constitutional self-test: the 8 laws, plain-English, decoded",
+          detail: ["/laws", "/laws <LAW_NAME>", "Sourced from data/rules.yml so it can't drift from what SelfTest enforces."],
+        },
         "through" => {
           summary: "full singularity pass (auto-sequenced)",
           detail: [
