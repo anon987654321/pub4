@@ -414,15 +414,6 @@ code_craft:
     law_of_demeter: true
     shameless_green_before_abstraction: true
     flocking_rules: true
-  smells:
-    long_method_threshold: 15
-    long_parameter_list_threshold: 3
-    deep_nesting_threshold: 3
-    duplicate_similarity_threshold: 0.8
-    primitive_obsession: warn
-    feature_envy: warn
-    shotgun_surgery: warn
-    type_switching: replace_with_polymorphism
 automated_css_analysis:
   flag:
   - line length outside typography.line_length bounds
