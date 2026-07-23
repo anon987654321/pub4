@@ -32,8 +32,8 @@ end
 def social_token_markers
   social = DesignTokens.load.fetch("social")
   [
-    "--text: #{social.fetch('x_text')}",
-    "--accent: #{social.fetch('x_accent')}",
+    "--text: #{social.fetch('text')}",
+    "--accent: #{social.fetch('accent')}",
     "JetBrainsMono Nerd Font",
   ].freeze
 end
@@ -100,17 +100,17 @@ def sync_static_tokens!
     /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
     :root {
       color-scheme: dark;
-      --bg: #{social.fetch("x_bg")};
-      --surface: #{social.fetch("x_surface")};
-      --surface-elevated: #{social.fetch("x_surface_elevated")};
-      --search-bg: #{social.fetch("x_search_bg")};
-      --text: #{social.fetch("x_text")};
-      --text-secondary: #{social.fetch("x_text_secondary")};
-      --border: #{social.fetch("x_border")};
+      --bg: #{social.fetch("bg")};
+      --surface: #{social.fetch("surface")};
+      --surface-elevated: #{social.fetch("surface_elevated")};
+      --search-bg: #{social.fetch("search_bg")};
+      --text: #{social.fetch("text")};
+      --text-secondary: #{social.fetch("text_secondary")};
+      --border: #{social.fetch("border")};
       --hover: color-mix(in srgb, var(--text) 10%, transparent);
       --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
-      --accent: #{social.fetch("x_accent")};
-      --danger: #{social.fetch("x_danger")};
+      --accent: #{social.fetch("accent")};
+      --danger: #{social.fetch("danger")};
       --font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
       --weight-normal: 400;
       --weight-medium: 500;

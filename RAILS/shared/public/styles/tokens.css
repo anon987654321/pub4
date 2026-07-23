@@ -1,28 +1,28 @@
 /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
 :root {
   color-scheme: dark;
-  --x-bg: #17161c;
-  --x-surface: #17161c;
-  --x-surface-elevated: #211f28;
-  --x-search-bg: #232030;
-  --x-text: #d8d6e0;
-  --x-text-secondary: #8a879c;
-  --x-border: #46435a;
-  --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
-  --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
-  --x-accent: #7c6fd6;
-  --x-danger: #d1594a;
-  --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
-  --x-weight-normal: 400;
-  --x-weight-medium: 500;
-  --x-weight-bold: 700;
-  --x-weight-heavy: 800;
-  --x-radius-xs: 4px;
-  --x-radius-sm: 8px;
-  --x-radius-md: 12px;
-  --x-radius-card: 16px;
-  --x-radius-lg: 16px;
-  --x-radius-pill: 9999px;
+  --bg: #17161c;
+  --surface: #17161c;
+  --surface-elevated: #211f28;
+  --search-bg: #232030;
+  --text: #d8d6e0;
+  --text-secondary: #8a879c;
+  --border: #46435a;
+  --hover: color-mix(in srgb, var(--text) 10%, transparent);
+  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --accent: #7c6fd6;
+  --danger: #d1594a;
+  --font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
   --transition-fast: 180ms;
   --transition-normal: 300ms;
   --z-chrome: 10;
@@ -31,26 +31,26 @@
   --z-modal: 1000;
   --z-toast: 1100;
   --z-skip: 2000;
-  --color-background: var(--x-bg);
-  --color-midtone: var(--x-text-secondary);
-  --color-highlight: var(--x-surface);
-  --color-accent: var(--x-accent);
-  --color-border: var(--x-border);
-  --text-primary: var(--x-text);
-  --text-secondary: var(--x-text-secondary);
+  --color-background: var(--bg);
+  --color-midtone: var(--text-secondary);
+  --color-highlight: var(--surface);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-secondary);
 }
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
-    --x-bg: #ffffff;
-    --x-text: #0f1419;
-    --x-text-secondary: #536471;
-    --x-border: #eff3f4;
-    --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
-    --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
-    --color-background: var(--x-bg);
-    --color-highlight: var(--x-bg);
-    --text-primary: var(--x-text);
-    --text-secondary: var(--x-text-secondary);
+    --bg: #ffffff;
+    --text: #0f1419;
+    --text-secondary: #536471;
+    --border: #eff3f4;
+    --hover: color-mix(in srgb, var(--text) 10%, transparent);
+    --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+    --color-background: var(--bg);
+    --color-highlight: var(--bg);
+    --text-primary: var(--text);
+    --text-secondary: var(--text-secondary);
   }
 }
