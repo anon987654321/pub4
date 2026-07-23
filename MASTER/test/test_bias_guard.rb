@@ -10,13 +10,13 @@ class TestBiasGuard < Minitest::Test
 
     def to_h
       {
-        action: action,
-        reason: reason,
-        weight: weight,
-        confidence: confidence,
-        impact: impact,
-        kind: kind,
-        rank: self[:rank]
+        action:,
+        reason:,
+        weight:,
+        confidence:,
+        impact:,
+        kind:,
+        rank: self[:rank],
       }
     end
   end
@@ -29,7 +29,7 @@ class TestBiasGuard < Minitest::Test
       weight: 0.8,
       confidence: 0.9,
       impact: 0.9,
-      kind: :violation
+      kind: :violation,
     )
 
     annotated = guard.annotate(proposal)

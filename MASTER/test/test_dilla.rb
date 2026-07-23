@@ -82,9 +82,81 @@ class TestDilla < Minitest::Test
     assert_equal result.fetch("dispatch_keys").sort, result.fetch("commands")
     refute result.fetch("has_aliases_const"), "COMMAND_ALIASES should be gone"
     assert_includes result.fetch("dispatch_keys"), "dilla"
+    assert_includes result.fetch("dispatch_keys"), "demo-all"
     refute_includes result.fetch("dispatch_keys"), "comfort"
     refute_includes result.fetch("dispatch_keys"), "warp"
     refute_includes result.fetch("dispatch_keys"), "camel"
+  end
+
+  def test_stream_defaults_keep_style_dna_not_creative_max
+    result = eval_in_engine(<<~RUBY)
+      %w[STREAM_CREATIVE STREAM_PUNCH STREAM_COMFORT DILLA_COMFORT LA_BEAT_PROGRESSION
+         VINYL SELF_SAMPLE CONV_REVERB STREAM_LUFS PAD_VOL].each { |k| ENV.delete(k) }
+      ENV["SPEAK"] = "0"
+      apply_stream_listenability_defaults!
+      puts JSON.generate(
+        comfort: comfort_mode?,
+        creative: stream_creative_mode?,
+        la_beat: ENV["LA_BEAT_PROGRESSION"],
+        vinyl: ENV["VINYL"],
+        self_sample: ENV["SELF_SAMPLE"],
+        conv: ENV["CONV_REVERB"],
+        lufs: ENV["STREAM_LUFS"],
+        pad_vol: ENV["PAD_VOL"],
+        crossfade: ENV["STREAM_CROSSFADE"],
+        drum_rotate: ENV["STREAM_DRUM_ROTATE"],
+        vocal_carve: ENV["VOCAL_CARVE"],
+        choir: ENV["CHOIR_VOX"]
+      )
+    RUBY
+    refute result.fetch("comfort")
+    refute result.fetch("creative")
+    assert_equal "0", result.fetch("la_beat"), "style DNA keeps curated progressions"
+    assert_equal "0", result.fetch("vinyl")
+    assert_equal "0", result.fetch("self_sample")
+    assert_equal "0", result.fetch("conv")
+    assert_equal "-16.5", result.fetch("lufs")
+    assert_equal "62", result.fetch("pad_vol")
+    assert_equal "0.12", result.fetch("crossfade")
+    assert_equal "1", result.fetch("drum_rotate")
+    assert_equal "1", result.fetch("vocal_carve")
+    assert_equal "1", result.fetch("choir")
+  end
+
+  def test_stream_creative_mode_opt_in_forces_wild_layer
+    result = eval_in_engine(<<~RUBY)
+      ENV["STREAM_CREATIVE"] = "1"
+      ENV["SPEAK"] = "0"
+      apply_stream_listenability_defaults!
+      puts JSON.generate(
+        creative: stream_creative_mode?,
+        la_beat: ENV["LA_BEAT_PROGRESSION"],
+        vinyl: ENV["VINYL"],
+        lufs: ENV["STREAM_LUFS"]
+      )
+    RUBY
+    assert result.fetch("creative")
+    assert_equal "1", result.fetch("la_beat")
+    assert_equal "1", result.fetch("vinyl")
+    assert_equal "-14.5", result.fetch("lufs")
+  end
+
+  def test_sh_timeout_helper_and_soft_choir_helpers_exist
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        timeout: sh_timeout_sec,
+        has_system_timeout: respond_to?(:system_with_timeout, true),
+        choir_methods: respond_to?(:choir_vox_enabled?, true) &&
+                       respond_to?(:choir_chord_tone_events, true),
+        soft_max_keys: STREAM_CREATIVE_MAX.keys.sort,
+        style_safe_keys: STREAM_STYLE_SAFE.keys.sort
+      )
+    RUBY
+    assert_operator result.fetch("timeout"), :>=, 30
+    assert result.fetch("has_system_timeout")
+    assert result.fetch("choir_methods")
+    refute_includes result.fetch("soft_max_keys"), "SPEAK"
+    assert_includes result.fetch("style_safe_keys"), "STREAM_DRUM_ROTATE"
   end
 
   def test_single_engine_mode_empty_render_mode_is_dilla
@@ -628,12 +700,12 @@ class TestDilla < Minitest::Test
     # Pocket DNA + overlay kit are both on under dilla style defaults.
     assert result.fetch("pocket_drums") || !result.fetch("kicks_enabled")
     # FlyLo overlay grid is optional per track; when present, pocket 2&4 snares.
-    if result.fetch("grid_bpm")
-      assert_equal 92, result.fetch("grid_bpm")
-      assert_includes result.fetch("flylo_kicks"), 0
-      assert_includes result.fetch("flylo_snares"), 4
-      assert_includes result.fetch("flylo_snares"), 12
-    end
+    return unless result.fetch("grid_bpm")
+
+    assert_equal 92, result.fetch("grid_bpm")
+    assert_includes result.fetch("flylo_kicks"), 0
+    assert_includes result.fetch("flylo_snares"), 4
+    assert_includes result.fetch("flylo_snares"), 12
   end
 
   def test_la_beat_progression_varies_chords_and_lengths

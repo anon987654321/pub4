@@ -9,7 +9,7 @@ class TestFindingMetadata < Minitest::Test
       message: "hardcoded secret",
       line: 4,
       reversibility: "cheap",
-      blast_radius: { "files_touched" => 1 }
+      blast_radius: { "files_touched" => 1 },
     )
 
     assert_equal "SECRET_PROXIMITY", finding.rule
@@ -26,8 +26,8 @@ class TestFindingMetadata < Minitest::Test
         severity: :info,
         mode: :opportunity,
         reversibility: "surgical",
-        blast_radius: { "files_touched" => 2 }
-      }
+        blast_radius: { "files_touched" => 2 },
+      },
     })
 
     findings = rule.send(:parse_findings, "PATTERN_EXTRACTION:12:extract strategy")

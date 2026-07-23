@@ -9,7 +9,7 @@ class TestConstitutionTriage < Minitest::Test
       { rule: "EMPTY_RESCUE", file: File.join(Master::ROOT, "lib/ground/config.rb") },
       { rule: "magic_number", file: File.join(Master::ROOT, "lib/ground/config.rb") },
       { rule: "SQL_INJECTION", file: File.join(Master::ROOT, "lib/review/scan/rules/yaml_bridge_rules.rb") },
-      { rule: "SCAN_TIMEOUT", file: File.join(Master::ROOT, "lib/slow.rb") }
+      { rule: "SCAN_TIMEOUT", file: File.join(Master::ROOT, "lib/slow.rb") },
     ]
 
     buckets = triage.buckets(findings).to_h { |bucket| [bucket.name, bucket.findings.size] }
