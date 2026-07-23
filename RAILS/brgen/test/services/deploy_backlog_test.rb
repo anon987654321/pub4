@@ -142,8 +142,11 @@ class DeployBacklogTest < Minitest::Test
     end
 
     helper_source = File.read(File.join(ROOT, 'brgen/app/helpers/application_helper.rb'))
-    assert_includes helper_source, 'responsive_image_tag'
     assert_includes helper_source, 'lazy_image_blurhash_value'
+
+    # responsive_image_tag was hoisted into shared/ (byte-identical dupe with amber's copy)
+    shared_helper_source = File.read(File.join(ROOT, 'shared/app/helpers/application_helper.rb'))
+    assert_includes shared_helper_source, 'responsive_image_tag'
   end
 
   def test_activity_graph_emits_across_vertical_models
@@ -441,10 +444,13 @@ class DeployBacklogTest < Minitest::Test
                     'data-controller="clipboard"'
 
     helper_source = File.read(File.join(ROOT, 'amber/app/helpers/application_helper.rb'))
-    assert_includes helper_source, 'content_tag(:picture)'
-    assert_includes helper_source, 'type: "image/webp"'
-    assert_includes helper_source, 'loading: "lazy"'
     assert_includes helper_source, 'responsive_image_url'
+
+    # content_tag(:picture)/responsive_image_tag was hoisted into shared/ (byte-identical dupe with brgen's copy)
+    shared_helper_source = File.read(File.join(ROOT, 'shared/app/helpers/application_helper.rb'))
+    assert_includes shared_helper_source, 'content_tag(:picture)'
+    assert_includes shared_helper_source, 'type: "image/webp"'
+    assert_includes shared_helper_source, 'loading: "lazy"'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/items/show.html.erb')), 'responsive_image_tag photo'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/outfits/dressing_room.html.erb')),
                     'responsive_image_url(item.photos.first'
