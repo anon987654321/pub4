@@ -54,8 +54,13 @@ module Pub4
       socket = Socket.tcp(host, port, connect_timeout: 0.2)
       socket.close
       true
-    rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "Environment.port_open?")
+    rescue StandardError
+      # A closed/refused/timed-out port is the routine, expected negative
+      # result this method exists to report -- not worth Master::Ground::
+      # Swallow's ledger, which also isn't loaded in this module's standalone
+      # callers (bin/vps-state, integrity_gate.rb) that never boot the full
+      # Master:: namespace. Referencing it here raised NameError and masked
+      # the real (harmless) connection-refused underneath it.
       false
     end
 
