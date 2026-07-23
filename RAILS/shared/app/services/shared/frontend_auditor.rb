@@ -186,7 +186,7 @@ module Shared
       Shared::FrontendRuleSet::PRESERVATION[:protected_stylesheet_files].any? { |name| path.end_with?(name) }
     end
 
-    PUB4_STACK_PARTIAL_RE = %r{/_(?:minimal|tokens|animations|zen_shell|stack|x_shell)(?:_brgen)?\.scss\z}
+    PUB4_STACK_PARTIAL_RE = %r{/_(?:minimal|tokens|animations|zen_shell|stack|shell)(?:_brgen)?\.scss\z}
 
     def css_file_size_violation?(path, body)
       return false if protected_stylesheet?(path)

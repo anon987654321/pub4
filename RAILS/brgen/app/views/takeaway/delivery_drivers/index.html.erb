@@ -11,12 +11,12 @@
   <div class="order-list" role="list" aria-label="Delivery drivers">
     <% @delivery_drivers.each do |driver| %>
       <% label = driver.user.display_name.presence || driver.user.email_address.split("@").first %>
-      <%= render "shared/x_card",
+      <%= render "shared/feed_card",
         name: label,
         meta: "#{driver.vehicle_type.presence&.humanize || 'Vehicle not set'} · #{driver.available? ? 'Available' : 'Unavailable'}",
         content: (driver.location? ? "#{driver.current_lat}, #{driver.current_lng}" : nil),
         url: takeaway_delivery_driver_path(driver),
-        class: "x-takeaway" %>
+        class: "takeaway" %>
     <% end %>
   </div>
 <% else %>

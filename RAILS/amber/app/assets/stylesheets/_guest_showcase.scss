@@ -1,19 +1,19 @@
 /* Guest wardrobe carousels — Google-clean light band below logo (brgen fade + x spacing). */
 
 .amber-wardrobe-showcase {
-  --showcase-bg: var(--x-surface, #ffffff);
-  --showcase-text: var(--x-text, #2c2824);
-  --showcase-muted: var(--x-text-secondary, #6b665f);
-  --showcase-border: var(--x-border, #e6e0d8);
-  --showcase-chip: var(--x-search-bg, #ebe4da);
-  --showcase-accent: var(--x-accent, #8c7a5e);
+  --showcase-bg: var(--surface, #ffffff);
+  --showcase-text: var(--text, #2c2824);
+  --showcase-muted: var(--text-secondary, #6b665f);
+  --showcase-border: var(--border, #e6e0d8);
+  --showcase-chip: var(--search-bg, #ebe4da);
+  --showcase-accent: var(--accent, #8c7a5e);
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   background: var(--showcase-bg);
   color: var(--showcase-text);
   border-bottom: 1px solid var(--showcase-border);
   padding: var(--space-3) 0 var(--space-4);
-  font-family: var(--x-font);
+  font-family: var(--font);
 }
 
 .wardrobe-carousel-row {
@@ -66,7 +66,7 @@
   display: block;
   width: 4.5rem;
   height: 4.5rem;
-  border-radius: var(--x-radius-card);
+  border-radius: var(--radius-card);
   overflow: hidden;
   border: 1px solid var(--showcase-border);
   background: var(--showcase-bg);
@@ -95,7 +95,7 @@
         transparent 1px,
         transparent 5px
       ),
-      color-mix(in srgb, var(--swatch, var(--x-search-bg, #ebe4da)) 72%, var(--x-surface, #ffffff));
+      color-mix(in srgb, var(--swatch, var(--search-bg, #ebe4da)) 72%, var(--surface, #ffffff));
   }
 
   &__img {

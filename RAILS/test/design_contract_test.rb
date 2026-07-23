@@ -5,10 +5,10 @@
 require "yaml"
 require "minitest/autorun"
 
-class XDesignContractTest < Minitest::Test
+class DesignContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SHARED = File.join(ROOT, "shared")
-  X_BASE = File.join(SHARED, "app", "assets", "stylesheets", "_x_base.scss")
+  DIALECT_TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_dialect_tokens.scss")
   TOKENS_YML = File.join(SHARED, "design_tokens.yml")
   TOKENS_CSS = File.join(SHARED, "public", "styles", "tokens.css")
   TOKENS_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_tokens.scss")
@@ -16,32 +16,33 @@ class XDesignContractTest < Minitest::Test
   BOTTOM_SHEET_JS = File.join(SHARED, "frontend", "bottom_sheet_controller.js")
   STIMULUS_BOOT_JS = File.join(SHARED, "frontend", "stimulus_boot.js")
   IMPORTMAP_BASELINE = File.join(SHARED, "config", "importmap_baseline.rb")
-  X_MODAL_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_x_modal.scss")
+  MODAL_SCSS = File.join(SHARED, "app", "assets", "stylesheets", "_modal.scss")
   THEME_BOOTSTRAP = File.join(SHARED, "app", "views", "shared", "_theme_bootstrap.html.erb")
-  X_ACTION_JS = File.join(SHARED, "frontend", "x_action_controller.js")
-  X_ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_x_action_bar.html.erb")
-  X_ICON = File.join(SHARED, "app", "views", "shared", "_x_icon.html.erb")
+  ACTION_JS = File.join(SHARED, "frontend", "action_controller.js")
+  ACTION_BAR = File.join(SHARED, "app", "views", "shared", "_action_bar.html.erb")
+  ICON_PARTIAL = File.join(SHARED, "app", "views", "shared", "_icon.html.erb")
   ENGINE_RB = File.join(SHARED, "lib", "shared", "engine.rb")
   HOTWIRE_JS = File.join(SHARED, "frontend", "hotwire.js")
   FLEET_ROUTES = File.join(SHARED, "config", "routes", "fleet.rb")
   APPS = %w[amber brgen bsdports].freeze
   FLAT_DESIGN_PATTERN = /box-shadow|text-shadow|backdrop-filter/i
+  DIALECT_PARTIALS = %w[_dialect_tokens.scss _shell.scss _shell_widgets.scss _responsive.scss _modal.scss].freeze
 
   SCSS_PARAM_MAP = {
-    "x_bg" => "bg",
-    "x_surface" => "surface",
-    "x_surface_elevated" => "surface-elevated",
-    "x_text" => "text",
-    "x_text_secondary" => "text-secondary",
-    "x_border" => "border",
-    "x_accent" => "accent",
-    "x_danger" => "danger",
+    "bg" => "bg",
+    "surface" => "surface",
+    "surface_elevated" => "surface-elevated",
+    "text" => "text",
+    "text_secondary" => "text-secondary",
+    "border" => "border",
+    "accent" => "accent",
+    "danger" => "danger",
   }.freeze
 
-  def test_social_tokens_match_x_base_defaults
+  def test_social_tokens_match_dialect_tokens_defaults
     social = YAML.safe_load_file(TOKENS_YML).fetch("social")
-    scss = File.read(X_BASE)
-    dark_block = mixin_block(scss, "x-dark-tokens")
+    scss = File.read(DIALECT_TOKENS_SCSS)
+    dark_block = mixin_block(scss, "dark-tokens")
 
     SCSS_PARAM_MAP.each do |yaml_key, scss_param|
       next unless social.key?(yaml_key)
@@ -49,13 +50,14 @@ class XDesignContractTest < Minitest::Test
       expected = social.fetch(yaml_key)
       pattern = /\$#{Regexp.escape(scss_param)}:\s*(#[0-9a-f]{3,8})/i
       match = dark_block.match(pattern)
-      assert match, "_x_base.scss missing default for $#{scss_param}"
+      assert match, "_dialect_tokens.scss missing default for $#{scss_param}"
       assert_equal expected.downcase, match[1].downcase, "drift: #{yaml_key}"
     end
   end
 
   def test_no_shadow_blur_in_x_partials
-    Dir[File.join(SHARED, "app", "assets", "stylesheets", "_x_*.scss")].each do |path|
+    DIALECT_PARTIALS.each do |name|
+      path = File.join(SHARED, "app", "assets", "stylesheets", name)
       body = File.read(path)
       refute_match(FLAT_DESIGN_PATTERN, body, "#{path} must stay flat (no shadow/blur)")
     end
@@ -76,7 +78,7 @@ class XDesignContractTest < Minitest::Test
     js = File.read(BOTTOM_SHEET_JS)
     boot = File.read(STIMULUS_BOOT_JS)
     importmap = File.read(IMPORTMAP_BASELINE)
-    modal = File.read(X_MODAL_SCSS)
+    modal = File.read(MODAL_SCSS)
 
     assert_includes js, 'static targets = ["sheet", "backdrop"]'
     assert_includes js, "pointerDown(event)"
@@ -87,26 +89,26 @@ class XDesignContractTest < Minitest::Test
     assert_includes modal, ".dialog"
   end
 
-  def test_x_action_controller_posts_body
-    js = File.read(X_ACTION_JS)
+  def test_action_controller_posts_body
+    js = File.read(ACTION_JS)
     assert_includes js, "URLSearchParams"
   end
 
-  def test_shared_x_ui_helper_initializer_registered
+  def test_shared_ui_helper_initializer_registered
     engine = File.read(ENGINE_RB)
-    assert_includes engine, 'initializer "shared.x_ui_helper"'
-    assert_includes engine, "helper Shared::XUiHelper"
+    assert_includes engine, 'initializer "shared.ui_helper"'
+    assert_includes engine, "helper Shared::UiHelper"
   end
 
-  def test_x_action_bar_contract
-    partial = File.read(X_ACTION_BAR)
-    assert_includes partial, 'data-controller="x-action"'
+  def test_action_bar_contract
+    partial = File.read(ACTION_BAR)
+    assert_includes partial, 'data-controller="action"'
     assert_includes partial, 'data-clipboard-target="source"'
     assert_includes partial, 'like_count.positive? ? like_count : ""'
-    assert File.file?(X_ICON)
+    assert File.file?(ICON_PARTIAL)
     %w[reply repost like share].each do |name|
-      assert File.file?(File.join(SHARED, "app", "views", "shared", "x_icons", "_#{name}.html.erb")),
-             "missing x_icons/_#{name}.html.erb"
+      assert File.file?(File.join(SHARED, "app", "views", "shared", "icons", "_#{name}.html.erb")),
+             "missing icons/_#{name}.html.erb"
     end
   end
 
@@ -121,9 +123,9 @@ class XDesignContractTest < Minitest::Test
     assert_includes fleet, 'post "web_vitals", to: "web_vitals#create"'
   end
 
-  def test_stack_forwards_x_modal
+  def test_stack_forwards_modal
     stack = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_stack.scss"))
-    assert_includes stack, '@forward "x_modal"'
+    assert_includes stack, '@forward "modal"'
   end
 
   def test_compiled_css_no_box_shadow_in_shared_x_builds

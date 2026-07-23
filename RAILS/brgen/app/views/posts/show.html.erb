@@ -3,18 +3,18 @@
 <% content_for :json_ld, json_ld_for(@post, type: :article) %>
 <%= turbo_stream_from @post %>
 
-<article class="x-post-show">
+<article class="feed-post-show">
   <%= turbo_frame_tag "post-vote-#{@post.id}" do %>
-    <div class="x-post-votes" role="group" aria-label="Post score">
+    <div class="feed-post-votes" role="group" aria-label="Post score">
       <% if authenticated? %>
         <%= button_to post_vote_path(@post), params: { vote: { value: 1 } },
               class: "vote-btn#{" active-up" if @post.upvoted_by?(Current.user)}",
               form: { class: "vote-form" },
               aria: { label: "Upvote" } do %>
-          <%= render "shared/x_feed_icon", name: "upvote" %>
+          <%= render "shared/feed_icon", name: "upvote" %>
         <% end %>
       <% else %>
-        <span class="vote-btn" aria-hidden="true"><%= render "shared/x_feed_icon", name: "upvote" %></span>
+        <span class="vote-btn" aria-hidden="true"><%= render "shared/feed_icon", name: "upvote" %></span>
       <% end %>
       <span class="vote-score"
             data-controller="animated-number"
@@ -27,15 +27,15 @@
               class: "vote-btn down#{" active-down" if @post.downvoted_by?(Current.user)}",
               form: { class: "vote-form" },
               aria: { label: "Downvote" } do %>
-          <%= render "shared/x_feed_icon", name: "downvote" %>
+          <%= render "shared/feed_icon", name: "downvote" %>
         <% end %>
       <% else %>
-        <span class="vote-btn down" aria-hidden="true"><%= render "shared/x_feed_icon", name: "downvote" %></span>
+        <span class="vote-btn down" aria-hidden="true"><%= render "shared/feed_icon", name: "downvote" %></span>
       <% end %>
     </div>
   <% end %>
 
-  <p class="x-post-show-meta">
+  <p class="feed-post-show-meta">
     <% if @post.community %>
       <%= link_to @post.community.name, community_path(@post.community) %> ·
     <% end %>
@@ -60,12 +60,12 @@
     <div class="post_body"><%= sanitize @post.content, tags: %w[p br strong em b i ul ol li], attributes: [] %></div>
   <% end %>
 
-  <div class="x-post-actions">
-    <button type="button" class="x-act" data-controller="share"
+  <div class="feed-post-actions">
+    <button type="button" class="feed-action" data-controller="share"
             data-share-title-value="<%= @post.title %>"
             data-share-url-value="<%= request.original_url %>"
             data-action="click->share#share" aria-label="Share post">
-      <%= render "shared/x_feed_icon", name: "share" %> Share
+      <%= render "shared/feed_icon", name: "share" %> Share
     </button>
   </div>
 </article>

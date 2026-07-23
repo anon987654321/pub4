@@ -45,19 +45,19 @@
   color: var(--text-dim);
 }
 
-.x-post-show {
+.feed-post-show {
   padding: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 
-.x-post-show .x-post-votes {
+.feed-post-show .feed-post-votes {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
 
-.x-post-show h1 {
+.feed-post-show h1 {
   font-size: clamp(1.25rem, 3vw, 1.5rem);
   font-weight: 800;
   line-height: 1.5;
@@ -65,30 +65,30 @@
   letter-spacing: -0.02em;
 }
 
-.x-post-show .post_body {
+.feed-post-show .post_body {
   font-size: 1rem;
   line-height: 1.55;
   color: var(--text);
   margin-bottom: var(--space-4);
 }
 
-.x-post-show .post_body p {
+.feed-post-show .post_body p {
   margin: 0 0 var(--space-3);
 }
 
-.x-post-show .post-image {
+.feed-post-show .post-image {
   width: 100%;
-  border-radius: var(--x-radius-card);
+  border-radius: var(--radius-card);
   margin-bottom: var(--space-4);
 }
 
-.x-post-show-meta {
+.feed-post-show-meta {
   font-size: 0.8125rem;
   color: var(--text-dim);
   margin-bottom: var(--space-2);
 }
 
-.x-post-show .x-post-actions {
+.feed-post-show .feed-post-actions {
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-3);

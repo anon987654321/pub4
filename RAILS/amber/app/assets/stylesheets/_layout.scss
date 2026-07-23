@@ -1,5 +1,5 @@
 /* Amber's toteme/necessaire-inspired chrome has no dividing borders anywhere
-   in the shell — override the shared x-shell main-content column rule. */
+   in the shell — override the shared shell main-content column rule. */
 main#main-content,
 main[role="main"] {
   border-inline: none;
@@ -22,7 +22,7 @@ main[role="main"] {
 h1,
 h2 {
   margin-bottom: var(--space-sm);
-  font-family: var(--x-font);
+  font-family: var(--font);
   font-weight: 800;
   letter-spacing: -0.01em;
 }

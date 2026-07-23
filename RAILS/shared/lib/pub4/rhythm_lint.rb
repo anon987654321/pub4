@@ -5,7 +5,7 @@ require "set"
 
 module Pub4
   # Validates every spacing-tagged token in design_tokens.yml and the shared
-  # _tokens.scss/_x_base.scss custom properties against MASTER's own
+  # _tokens.scss/_dialect_tokens.scss custom properties against MASTER's own
   # design_rules.yml pixel_perfection.eight_px_rhythm allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
   # can never drift apart the way _tokens.scss and design_tokens.yml did
@@ -63,7 +63,7 @@ module Pub4
 
     def scss_paths
       base = File.expand_path("../../app/assets/stylesheets", __dir__)
-      [File.join(base, "_tokens.scss"), File.join(base, "_x_base.scss")]
+      [File.join(base, "_tokens.scss"), File.join(base, "_dialect_tokens.scss")]
     end
 
     def to_px(value, unit)

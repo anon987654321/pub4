@@ -7,14 +7,14 @@
   gap: var(--space-2xs, 0.25rem);
   padding: var(--space-6, 2rem) var(--space-4, 1rem);
   text-align: center;
-  border: 1px solid var(--x-border, var(--border));
-  border-radius: var(--x-radius-md, 12px);
+  border: 1px solid var(--border, var(--border));
+  border-radius: var(--radius-md, 12px);
   max-width: 28rem;
   margin-inline: auto;
-  color: var(--x-text-secondary, var(--text-dim));
+  color: var(--text-secondary, var(--text-dim));
   font-size: 0.9375rem;
   line-height: 1.5;
-  background: var(--x-surface-elevated, var(--surface2, transparent));
+  background: var(--surface-elevated, var(--surface2, transparent));
 }
 
 .empty-state-icon {
@@ -23,11 +23,11 @@
   width: 2.5rem;
   height: 2.5rem;
   margin-block-end: var(--space-2xs, 0.25rem);
-  border: 1px solid var(--x-border, var(--border));
-  border-radius: var(--x-radius-pill, 9999px);
+  border: 1px solid var(--border, var(--border));
+  border-radius: var(--radius-pill, 9999px);
   font-size: 0.75rem;
   line-height: 1;
-  color: var(--x-text-secondary, var(--text-dim));
+  color: var(--text-secondary, var(--text-dim));
   opacity: 0.85;
 }
 
@@ -39,17 +39,17 @@
   margin: 0 auto var(--space-2xs, 0.25rem);
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid var(--x-border, var(--border));
-  border-radius: var(--x-radius-pill, 9999px);
+  border: 1px solid var(--border, var(--border));
+  border-radius: var(--radius-pill, 9999px);
   font-size: 0.75rem;
-  color: var(--x-text-secondary, var(--text-dim));
+  color: var(--text-secondary, var(--text-dim));
 }
 
 .empty-state-title {
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--x-text, var(--text));
+  color: var(--text, var(--text));
   letter-spacing: -0.01em;
 }
 
@@ -57,11 +57,11 @@
 .empty-state p {
   margin: 0;
   max-width: 28em;
-  color: var(--x-text-secondary, var(--text-dim));
+  color: var(--text-secondary, var(--text-dim));
 }
 
 .empty-state a {
-  color: var(--x-accent, var(--accent));
+  color: var(--accent, var(--accent));
   font-weight: 600;
 }
 
@@ -83,7 +83,7 @@ body.wscons .empty-state,
 body[data-theme="wscons"] .empty-state,
 :root:has(body.bsdports) .empty-state {
   border-radius: 0;
-  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono, ui-monospace, monospace);
   background: transparent;
 }
 
@@ -100,13 +100,13 @@ body[data-theme="wscons"] .empty-state,
   gap: var(--space-3, 0.75rem);
   align-items: start;
   padding-block: var(--space-2, 0.5rem);
-  border-bottom: 1px solid var(--x-border, var(--border));
+  border-bottom: 1px solid var(--border, var(--border));
 }
 
 .search-skeleton-avatar {
   width: 40px;
   height: 40px;
-  border-radius: var(--x-radius-pill, 9999px);
+  border-radius: var(--radius-pill, 9999px);
 }
 
 .search-skeleton-lines {
@@ -136,12 +136,12 @@ body[data-theme="wscons"] .empty-state,
 
 /* Shared skeleton if app did not define one */
 .skeleton {
-  border-radius: var(--x-radius-sm, 8px);
+  border-radius: var(--radius-sm, 8px);
   background: linear-gradient(
     90deg,
-    var(--x-hover-subtle, rgba(216, 214, 224, 0.03)) 0%,
-    var(--x-hover, rgba(216, 214, 224, 0.1)) 50%,
-    var(--x-hover-subtle, rgba(216, 214, 224, 0.03)) 100%
+    var(--hover-subtle, rgba(216, 214, 224, 0.03)) 0%,
+    var(--hover, rgba(216, 214, 224, 0.1)) 50%,
+    var(--hover-subtle, rgba(216, 214, 224, 0.03)) 100%
   );
   background-size: 200% 100%;
   animation: shared-skeleton-shimmer 1.2s ease-in-out infinite;

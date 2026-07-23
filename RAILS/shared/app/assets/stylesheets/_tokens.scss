@@ -1,39 +1,39 @@
-@use "x_base" as x;
+@use "dialect_tokens" as x;
 
 // Shared light-theme override set — used identically by [data-theme="light"]
 // and the @media(prefers-color-scheme:light) fallback below, so it's defined once.
 @mixin semantic-light-overrides {
-  @include x.x-light-tokens;
+  @include x.light-tokens;
   color-scheme: light;
-  --color-background: var(--x-bg);
-  --color-midtone: var(--x-text-secondary);
-  --color-highlight: var(--x-surface);
-  --color-accent: var(--x-accent);
-  --color-border: var(--x-border);
-  --color-midtone-tint: var(--x-hover);
-  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+  --color-background: var(--bg);
+  --color-midtone: var(--text-secondary);
+  --color-highlight: var(--surface);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-midtone-tint: var(--hover);
+  --gradient-hero: linear-gradient(135deg, var(--bg) 0%, var(--surface-elevated) 100%);
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.65) 0%, transparent 60%);
-  --text-primary: var(--x-text);
-  --text-secondary: var(--x-text-secondary);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-secondary);
 }
 
 :root {
-  @include x.x-dark-tokens;
+  @include x.dark-tokens;
   color-scheme: dark;
-  --color-background: var(--x-bg);
-  --color-midtone: var(--x-text-secondary);
-  --color-highlight: var(--x-surface);
-  --color-accent: var(--x-accent);
-  --color-danger: var(--x-danger);
+  --color-background: var(--bg);
+  --color-midtone: var(--text-secondary);
+  --color-highlight: var(--surface);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
   --color-warning: #c9a227;
   --color-success: #00ba7c;
   --color-overlay: rgb(0 0 0 / 0.4);
-  --color-border: var(--x-border);
-  --color-midtone-tint: var(--x-hover);
-  --gradient-hero: linear-gradient(135deg, var(--x-bg) 0%, var(--x-surface-elevated) 100%);
+  --color-border: var(--border);
+  --color-midtone-tint: var(--hover);
+  --gradient-hero: linear-gradient(135deg, var(--bg) 0%, var(--surface-elevated) 100%);
   --gradient-card-scrim: linear-gradient(to top, rgb(0 0 0 / 0.8) 0%, transparent 60%);
-  --text-primary: var(--x-text);
-  --text-secondary: var(--x-text-secondary);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-secondary);
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -67,8 +67,8 @@
   --z-modal: 1000;
   --z-toast: 1100;
   --z-skip: 2000;
-  --color-primary: var(--x-text);
-  --color-surface: var(--x-surface);
+  --color-primary: var(--text);
+  --color-surface: var(--surface);
 
   /* Luxury minimalist extensions (Aesop/Toteme/Nécessaire inspired) */
   /* Warm neutrals, generous breathing room, refined for product/wardrobe UIs */
@@ -105,7 +105,7 @@
 
 @media (prefers-contrast: high) {
   :root {
-    --color-border: var(--x-text);
+    --color-border: var(--text);
     --text-secondary: var(--text-primary);
   }
 }

@@ -1,4 +1,4 @@
-/* Brgen extensions on shared x_widgets — cards, sort tabs, feed article chrome
+/* Brgen extensions on shared shell_widgets — cards, sort tabs, feed article chrome
    Mobile-first base, desktop overrides.
    Avoids duplicating shared x- primitives.
 */
@@ -12,7 +12,7 @@
 .sort-tab {
   padding: 14px 16px; /* mobile tighter */
   text-align: center;
-  font: 0.875rem/1 var(--x-font);
+  font: 0.875rem/1 var(--font);
   font-weight: 500;
   color: var(--text-dim);
   transition: background var(--transition-fast), color var(--transition-fast);
@@ -52,9 +52,9 @@
   }
 }
 
-.post-grid .x-post,
-.deal-grid .x-post,
-.store-grid .x-post {
+.post-grid .feed-card,
+.deal-grid .feed-card,
+.store-grid .feed-card {
   height: 100%;
 }
 

@@ -1,8 +1,8 @@
-# Canonical design token anchors — keep in sync with _x_base.scss defaults and face.css :root.
+# Canonical design token anchors — keep in sync with _dialect_tokens.scss defaults and face.css :root.
 # Regenerate face :root: ruby RAILS/scripts/generate_face_root_css.rb
 #
 # Dialect → consumer map (do not merge casually):
-#   social       → brgen + shared x_shell (IRIX flat dark/light)
+#   social       → brgen + shared shell (IRIX flat dark/light)
 #   light        → light-mode overlay for social apps (theme toggle)
 #   luxury       → amber wardrobe (Aesop/Toteme warm neutrals)
 #   openbsd_wscons → bsdports terminal green (opt-in via body class)
@@ -23,9 +23,9 @@ shared_chrome:
   color_warning: "#c9a227"
   color_info: "#5b9fd4"
   color_danger: "#d1594a"
-  focus_ring: "2px solid var(--x-accent, var(--accent, currentColor))"
-  elev_1: "1px solid var(--x-border)"
-  elev_2: "1px solid var(--x-border)"
+  focus_ring: "2px solid var(--accent, var(--accent, currentColor))"
+  elev_1: "1px solid var(--border)"
+  elev_2: "1px solid var(--border)"
   transition_fast: "180ms"
   transition_normal: "300ms"
   ease_out: "cubic-bezier(0.25,0.1,0.25,1)"
@@ -128,72 +128,72 @@ face_root:
 
 # BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
 # from pub/__OLD_BACKUPS/BRGEN_OLD. True neutral grayscale, no accent hue,
-# Arial. x_chrome_bg is the utility-bar tone (darker than x_bg), mirroring
+# Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
 # the original's dark #333 bar against a white page.
 brgen_old_dark:
-  x_bg: "#1a1a1a"
-  x_surface: "#1a1a1a"
-  x_surface_elevated: "#1a1a1a"
-  x_search_bg: "#222222"
-  x_text: "#e0e0e0"
-  x_text_secondary: "#969696"
-  x_border: "#333333"
-  x_accent: "#f2f2f2"
-  x_accent_hover: "#d0d0d0"
-  x_danger: "#d1594a"
-  x_font: "Arial, Helvetica, sans-serif"
-  x_chrome_bg: "#0d0d0d"
-  x_radius_xs: "4px"
-  x_radius_sm: "8px"
-  x_radius_md: "12px"
-  x_radius_pill: "9999px"
-  x_radius_card: "8px"
-  x_radius_lg: "8px"
+  bg: "#1a1a1a"
+  surface: "#1a1a1a"
+  surface_elevated: "#1a1a1a"
+  search_bg: "#222222"
+  text: "#e0e0e0"
+  text_secondary: "#969696"
+  border: "#333333"
+  accent: "#f2f2f2"
+  accent_hover: "#d0d0d0"
+  danger: "#d1594a"
+  font: "Arial, Helvetica, sans-serif"
+  chrome_bg: "#0d0d0d"
+  radius_xs: "4px"
+  radius_sm: "8px"
+  radius_md: "12px"
+  radius_pill: "9999px"
+  radius_card: "8px"
+  radius_lg: "8px"
 
 openbsd_wscons:
-  x_bg: "#000000"
-  x_surface: "#000000"
-  x_surface_elevated: "#0a140a"
-  x_search_bg: "#0f1a0f"
-  x_text: "#63c363"
-  x_text_secondary: "#3d7a3d"
-  x_border: "#1a3a1a"
-  x_hover: "rgba(99, 195, 99, 0.1)"
-  x_hover_subtle: "rgba(99, 195, 99, 0.03)"
-  x_accent: "#63c363"
-  x_accent_hover: "#4fa34f"
-  x_danger: "#ff6b6b"
-  x_font: '"JetBrains Mono", ui-monospace, monospace'
-  x_font_size: "12px"
-  x_line_height: "16px"
-  x_radius_pill: "0"
-  x_radius_card: "0"
+  bg: "#000000"
+  surface: "#000000"
+  surface_elevated: "#0a140a"
+  search_bg: "#0f1a0f"
+  text: "#63c363"
+  text_secondary: "#3d7a3d"
+  border: "#1a3a1a"
+  hover: "rgba(99, 195, 99, 0.1)"
+  hover_subtle: "rgba(99, 195, 99, 0.03)"
+  accent: "#63c363"
+  accent_hover: "#4fa34f"
+  danger: "#ff6b6b"
+  font: '"JetBrains Mono", ui-monospace, monospace'
+  font_size: "12px"
+  line_height: "16px"
+  radius_pill: "0"
+  radius_card: "0"
 
-# Dark flat SGI-IRIX/8-bit chrome — used by the shared stack social apps (_x_base.scss), not MASTER face.
+# Dark flat SGI-IRIX/8-bit chrome — used by the shared stack social apps (_dialect_tokens.scss), not MASTER face.
 # Flat: no bevels, no box-shadow. Subtle radii for cards and controls. Cool
 # graphite/indigo palette in place of x.com's black/blue.
 social:
-  x_bg: "#17161c"
-  x_surface: "#17161c"
-  x_surface_elevated: "#211f28"
-  x_search_bg: "#232030"
-  x_text: "#d8d6e0"
-  x_text_secondary: "#8a879c"
-  x_border: "#46435a"
-  x_hover: "rgba(216, 214, 224, 0.1)"
-  x_hover_subtle: "rgba(216, 214, 224, 0.03)"
-  x_accent: "#7c6fd6"
-  x_accent_hover: "#9686e8"
-  x_danger: "#d1594a"
-  x_font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-  x_font_size: "16px"
-  x_line_height: "20px"
-  x_radius_xs: "4px"
-  x_radius_sm: "8px"
-  x_radius_md: "12px"
-  x_radius_pill: "9999px"
-  x_radius_card: "16px"
-  x_radius_lg: "16px"
+  bg: "#17161c"
+  surface: "#17161c"
+  surface_elevated: "#211f28"
+  search_bg: "#232030"
+  text: "#d8d6e0"
+  text_secondary: "#8a879c"
+  border: "#46435a"
+  hover: "rgba(216, 214, 224, 0.1)"
+  hover_subtle: "rgba(216, 214, 224, 0.03)"
+  accent: "#7c6fd6"
+  accent_hover: "#9686e8"
+  danger: "#d1594a"
+  font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+  font_size: "16px"
+  line_height: "20px"
+  radius_xs: "4px"
+  radius_sm: "8px"
+  radius_md: "12px"
+  radius_pill: "9999px"
+  radius_card: "16px"
+  radius_lg: "16px"
   # social = soft (not CRT-flat zeros — those are face_root / openbsd_wscons)
   space_2xs: "0.25rem"
   space_xs: "0.5rem"
@@ -208,25 +208,25 @@ social:
   transition_normal: "300ms"
   ease_out: "cubic-bezier(0.25,0.1,0.25,1)"
   ease_spring: "cubic-bezier(0.32,0.72,0,1)"
-  x_sidebar: "275px"
-  x_feed_max: "600px"
-  x_widgets: "350px"
-  x_layout_max: "1265px"
+  sidebar: "275px"
+  feed_max: "600px"
+  widgets: "350px"
+  layout_max: "1265px"
 
 light:
   # Indigo/graphite light — not Twitter blue. Keeps brand across dark/light.
-  x_bg: "#f7f6fa"
-  x_surface: "#ffffff"
-  x_surface_elevated: "#eeedf3"
-  x_search_bg: "#e8e6ef"
-  x_text: "#1a1824"
-  x_text_secondary: "#5c586e"
-  x_border: "#d4d1de"
-  x_hover: "rgba(26, 24, 36, 0.1)"
-  x_hover_subtle: "rgba(26, 24, 36, 0.03)"
-  x_accent: "#5b4fc4"
-  x_accent_hover: "#4a3fb0"
-  x_danger: "#d1594a"
+  bg: "#f7f6fa"
+  surface: "#ffffff"
+  surface_elevated: "#eeedf3"
+  search_bg: "#e8e6ef"
+  text: "#1a1824"
+  text_secondary: "#5c586e"
+  border: "#d4d1de"
+  hover: "rgba(26, 24, 36, 0.1)"
+  hover_subtle: "rgba(26, 24, 36, 0.03)"
+  accent: "#5b4fc4"
+  accent_hover: "#4a3fb0"
+  danger: "#d1594a"
 
 # brgen vertical accent map (single source — mirrored in _vertical_shell.scss)
 vertical_accents:

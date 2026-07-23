@@ -2,29 +2,29 @@
   # x.com-style card component for brgen and all subapps
   # Structure: avatar + content (header + body + media + actions)
   # Usage example:
-  #   render "shared/x_card",
+  #   render "shared/feed_card",
   #     avatar_url: "...",
   #     name: "Name", handle: "@handle", time: "2h",
   #     title: "Main text",
   #     meta: "location · condition",
   #     actions: capture { ... },
   #     url: path,
-  #     class: "x-listing"
+  #     class: "listing"
 %>
 
-<article class="x-post <%= local_assigns[:class] %>" <%= local_assigns[:data_attributes] || "" %>>
-  <div class="x-avatar">
+<article class="feed-card <%= local_assigns[:class] %>" <%= local_assigns[:data_attributes] || "" %>>
+  <div class="feed-card-avatar">
     <% if local_assigns[:avatar_url].present? %>
-      <%= image_tag local_assigns[:avatar_url], class: "x-avatar-img", alt: local_assigns[:name] || "avatar" %>
+      <%= image_tag local_assigns[:avatar_url], class: "feed-card-avatar-img", alt: local_assigns[:name] || "avatar" %>
     <% else %>
       <% monogram = (local_assigns[:name] || "?").first.upcase %>
-      <div class="x-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= local_assigns[:name] || "Anonymous" %> monogram"><%= monogram %></div>
+      <div class="feed-card-avatar-placeholder monogram monogram--<%= monogram.ord % 6 %>" role="img" aria-label="<%= local_assigns[:name] || "Anonymous" %> monogram"><%= monogram %></div>
     <% end %>
   </div>
 
-  <div class="x-content">
-    <div class="x-header">
-      <span class="x-name">
+  <div class="feed-card-content">
+    <div class="feed-card-header">
+      <span class="feed-card-name">
         <% if local_assigns[:url] %>
           <%= link_to local_assigns[:name], local_assigns[:url], class: "link-inherit" %>
         <% else %>
@@ -32,15 +32,15 @@
         <% end %>
       </span>
       <% if local_assigns[:handle] %>
-        <span class="x-handle"><%= local_assigns[:handle] %></span>
+        <span class="feed-card-handle"><%= local_assigns[:handle] %></span>
       <% end %>
       <% if local_assigns[:time] %>
-        <span class="x-time">· <%= local_assigns[:time] %></span>
+        <span class="feed-card-time">· <%= local_assigns[:time] %></span>
       <% end %>
     </div>
 
     <% if local_assigns[:title].present? %>
-      <div class="x-text">
+      <div class="feed-card-text">
         <% if local_assigns[:url] %>
           <%= link_to local_assigns[:title], local_assigns[:url] %>
         <% else %>
@@ -50,19 +50,19 @@
     <% end %>
 
     <% if local_assigns[:content].present? %>
-      <div class="x-body"><%= local_assigns[:content] %></div>
+      <div class="feed-card-body"><%= local_assigns[:content] %></div>
     <% end %>
 
     <% if local_assigns[:meta].present? %>
-      <div class="x-meta"><%= local_assigns[:meta] %></div>
+      <div class="feed-card-meta"><%= local_assigns[:meta] %></div>
     <% end %>
 
     <% if local_assigns[:media].present? %>
-      <div class="x-media"><%= local_assigns[:media] %></div>
+      <div class="feed-card-media"><%= local_assigns[:media] %></div>
     <% end %>
 
     <% if local_assigns[:actions].present? %>
-      <div class="x-actions">
+      <div class="feed-card-actions">
         <%= local_assigns[:actions] %>
       </div>
     <% end %>

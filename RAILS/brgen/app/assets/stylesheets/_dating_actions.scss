@@ -7,8 +7,8 @@
 
 .swipe-bio {
   margin: 0;
-  font: var(--text-sm) / 1.5 var(--x-font);
-  color: var(--dating-muted, var(--x-text-secondary));
+  font: var(--text-sm) / 1.5 var(--font);
+  color: var(--dating-muted, var(--text-secondary));
 }
 
 .swipe-chips {
@@ -18,8 +18,8 @@
 }
 
 .swipe-chips .chip {
-  border-radius: var(--x-radius-pill);
-  font: var(--text-xs) / 1 var(--x-font);
+  border-radius: var(--radius-pill);
+  font: var(--text-xs) / 1 var(--font);
   padding: var(--space-1) var(--space-2);
 }
 
@@ -40,7 +40,7 @@
      down to 48, since ux_laws.fitts favors larger for primary actions. */
   width: var(--space-16);
   height: var(--space-16);
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   border: 2px solid transparent;
   font-size: var(--text-xl);
   line-height: 1.5;

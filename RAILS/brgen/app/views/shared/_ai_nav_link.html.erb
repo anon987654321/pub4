@@ -3,7 +3,7 @@
       class: local_assigns.fetch(:class_name, "nav-item"),
       aria: { label: "AI assistant" },
       data: { turbo: false } do %>
-  <%= x_icon :sparkles, size: 26 %>
+  <%= icon :sparkles, size: 26 %>
   <% if local_assigns.fetch(:show_label, true) %>
     <span>AI</span>
   <% end %>

@@ -1,7 +1,7 @@
-<%= render "shared/x_card",
+<%= render "shared/feed_card",
   avatar_url: nil,
   name: store.name,
   handle: store.vertical&.humanize,
   content: (store.description.present? ? store.description : nil),
   url: marketplace_shop_path(store.slug),
-  class: "x-store" %>
+  class: "store" %>

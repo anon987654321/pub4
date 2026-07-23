@@ -1,14 +1,14 @@
 /* Dating — immersive vertical branding (Inter, neon intro). Core x shell hidden via _vertical_shell. */
 body.vertical-dating {
-  --dating-bg: var(--x-bg);
-  --dating-ink: var(--x-text);
-  --dating-muted: var(--x-text-secondary);
-  --dating-card: var(--x-surface-elevated);
-  --dating-border: var(--x-border);
+  --dating-bg: var(--bg);
+  --dating-ink: var(--text);
+  --dating-muted: var(--text-secondary);
+  --dating-card: var(--surface-elevated);
+  --dating-border: var(--border);
   --dating-accent: var(--vertical-dating-accent, #00d4aa);
   --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
-  --dating-pass: var(--x-danger, #d1594a);
-  --font-primary: "Inter", var(--x-font);
+  --dating-pass: var(--danger, #d1594a);
+  --font-primary: "Inter", var(--font);
   background: var(--dating-bg);
   color: var(--dating-ink);
   font-family: var(--font-primary);
@@ -37,12 +37,12 @@ body.vertical-dating .app-shell {
   background: var(--dating-bg);
 }
 
-body.vertical-dating .x-match {
+body.vertical-dating .match {
   border-bottom: 1px solid var(--dating-border);
 }
 
-body.vertical-dating .x-match .x-avatar-img {
-  border-radius: var(--x-radius-pill);
+body.vertical-dating .match .feed-card-avatar-img {
+  border-radius: var(--radius-pill);
   object-fit: cover;
 }
 

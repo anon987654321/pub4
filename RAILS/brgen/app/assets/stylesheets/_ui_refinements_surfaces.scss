@@ -9,20 +9,20 @@
 .field .helper {
   min-height: 1.1em;
   font-size: var(--text-sm, 0.875rem);
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
-.field .error { color: var(--x-danger); }
+.field .error { color: var(--danger); }
 
 /* Empty state styles live in shared/_empty_state.scss */
 
 /* Skeleton */
 .skeleton {
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    var(--x-hover-subtle) 0%,
-    var(--x-hover) 50%,
-    var(--x-hover-subtle) 100%
+    var(--hover-subtle) 0%,
+    var(--hover) 50%,
+    var(--hover-subtle) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
@@ -40,14 +40,14 @@
   padding-inline: max(0px, env(safe-area-inset-left));
 }
 html {
-  -webkit-tap-highlight-color: color-mix(in srgb, var(--x-accent, var(--accent)) 18%, transparent);
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--accent, var(--accent)) 18%, transparent);
 }
 
 /* High contrast */
 @media (prefers-contrast: more) {
   :root {
-    --x-border: var(--x-text-secondary);
-    --x-text-secondary: var(--x-text);
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
   }
   a { text-decoration: underline; }
 }
@@ -58,17 +58,17 @@ html {
   .skeleton {
     animation: none !important;
   }
-  .x-act:active { transform: none; }
+  .feed-action:active { transform: none; }
 }
 
 /* prefers-contrast + link affordance in body text */
-.x-card .body a,
+.card-embed .body a,
 .post-body a,
 .article-body a {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.x-card .body a:hover,
+.card-embed .body a:hover,
 .post-body a:hover {
-  color: var(--x-accent);
+  color: var(--accent);
 }

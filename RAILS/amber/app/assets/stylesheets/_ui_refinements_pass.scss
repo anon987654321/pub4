@@ -6,7 +6,7 @@
   --letter-display: 0.04em;
   --focus-ring: 2px solid var(--accent);
   --tap-min: 44px;
-  --elev-1: 1px solid var(--x-border);
+  --elev-1: 1px solid var(--border);
 }
 
 /* a11y floor + touch targets — mirrors brgen's _ui_refinements_pass.scss.
@@ -26,7 +26,7 @@ body {
 .brand,
 .logo-banner,
 .logo-bar {
-  border-bottom: 1px solid var(--x-border, var(--color-extra-light-grey));
+  border-bottom: 1px solid var(--border, var(--color-extra-light-grey));
 }
 
 /* Caprasimo display */
@@ -64,11 +64,11 @@ h1, .display, .wordmark {
       -45deg,
       transparent,
       transparent 6px,
-      color-mix(in srgb, var(--x-border) 55%, transparent) 6px,
-      color-mix(in srgb, var(--x-border) 55%, transparent) 7px
+      color-mix(in srgb, var(--border) 55%, transparent) 6px,
+      color-mix(in srgb, var(--border) 55%, transparent) 7px
     ),
-    var(--x-surface-elevated, #f0ebe3);
-  color: var(--x-text-secondary);
+    var(--surface-elevated, #f0ebe3);
+  color: var(--text-secondary);
   display: grid;
   place-items: center;
   text-transform: uppercase;
@@ -85,12 +85,12 @@ h1, .display, .wordmark {
 }
 
 .skeleton {
-  border-radius: var(--x-radius-sm, 6px);
+  border-radius: var(--radius-sm, 6px);
   background: linear-gradient(
     90deg,
-    var(--x-hover-subtle) 0%,
-    var(--x-hover) 50%,
-    var(--x-hover-subtle) 100%
+    var(--hover-subtle) 0%,
+    var(--hover) 50%,
+    var(--hover-subtle) 100%
   );
   background-size: 200% 100%;
   animation: amber-skeleton 1.2s ease-in-out infinite;
@@ -108,8 +108,8 @@ h1, .display, .wordmark {
 
 @media (prefers-contrast: more) {
   :root {
-    --x-border: var(--x-text-secondary);
-    --x-text-secondary: var(--x-text);
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
   }
   a { text-decoration: underline; }
 }
@@ -133,7 +133,7 @@ h1, .display, .wordmark {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.85rem;
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
 .sustainability-grade {
   font-weight: 700;
@@ -160,7 +160,7 @@ h1, .display, .wordmark {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
 
 /* Swiper peek */
@@ -180,5 +180,5 @@ h1, .display, .wordmark {
 }
 
 @media (prefers-contrast: more) {
-  :root { --x-border: #2c2824; }
+  :root { --border: #2c2824; }
 }

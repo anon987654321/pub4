@@ -1,0 +1,60 @@
+<%# locals: record, reply_path: nil, share_url: nil, liked: false, like_count: 0, repost_count: 0, view_count: nil, comment_count: 0 %>
+<% like_count = local_assigns.fetch(:like_count, 0).to_i %>
+<div class="feed-card-actions">
+  <% if local_assigns[:reply_path].present? %>
+    <%= link_to reply_path, class: "feed-action feed-action--reply", aria: { label: "Reply" } do %>
+      <%= icon(:reply, size: 18) %>
+      <% if comment_count.to_i.positive? %>
+        <span class="feed-action-count"><%= comment_count %></span>
+      <% end %>
+    <% end %>
+  <% else %>
+    <button type="button" class="feed-action feed-action--reply" aria-label="Reply" disabled>
+      <%= icon(:reply, size: 18) %>
+    </button>
+  <% end %>
+
+  <button type="button" class="feed-action feed-action--repost" aria-label="Repost">
+    <%= icon(:repost, size: 18) %>
+    <% if local_assigns.fetch(:repost_count, 0).to_i.positive? %>
+      <span class="feed-action-count"><%= repost_count %></span>
+    <% end %>
+  </button>
+
+  <button type="button"
+          class="feed-action feed-action--like<%= " active" if local_assigns[:liked] %>"
+          data-controller="action"
+          data-action="action#toggle"
+          data-action-url-value="<%= reactions_path %>"
+          data-action-target-gid-value="<%= record.to_signed_global_id %>"
+          data-action-kind-value="like"
+          data-action-count-value="<%= like_count %>"
+          aria-label="Like">
+    <%= icon(:like, size: 18) %>
+    <span class="feed-action-count" data-action-target="count"><%= like_count.positive? ? like_count : "" %></span>
+  </button>
+
+  <% if local_assigns[:view_count].present? %>
+    <span class="feed-action feed-action--views" aria-label="<%= view_count %> views">
+      <%= icon(:views, size: 18) %>
+      <span class="feed-action-count"><%= view_count %></span>
+    </span>
+  <% end %>
+
+  <% if local_assigns[:share_url].present? %>
+    <span data-controller="clipboard" data-clipboard-success-content-value="Copied">
+      <input type="hidden" data-clipboard-target="source" value="<%= share_url %>" aria-hidden="true" tabindex="-1">
+      <button type="button"
+              class="feed-action feed-action--share"
+              aria-label="Share"
+              data-action="click->clipboard#copy"
+              data-clipboard-target="button">
+        <%= icon(:share, size: 18) %>
+      </button>
+    </span>
+  <% else %>
+    <button type="button" class="feed-action feed-action--share" aria-label="Share" disabled>
+      <%= icon(:share, size: 18) %>
+    </button>
+  <% end %>
+</div>

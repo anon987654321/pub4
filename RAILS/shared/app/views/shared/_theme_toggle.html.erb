@@ -1,5 +1,5 @@
 <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
   data-controller="theme-toggle" data-theme-toggle-storage-key-value="<%= local_assigns.fetch(:storage_key, "pub4-theme") %>" data-action="change->theme-toggle#persist">
 <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
-  <%= x_icon :sun, size: 20 %>
+  <%= icon :sun, size: 20 %>
 </label>

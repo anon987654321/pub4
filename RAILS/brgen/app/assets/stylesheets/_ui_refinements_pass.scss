@@ -6,8 +6,8 @@
   --color-success: #00ba7c;
   --color-warning: #c9a227;
   --color-info: #5b9fd4;
-  --elev-1: 1px solid var(--x-border, var(--border));
-  --elev-2: 1px solid var(--x-border, var(--border));
+  --elev-1: 1px solid var(--border, var(--border));
+  --elev-2: 1px solid var(--border, var(--border));
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --measure-body: 66ch;
@@ -17,13 +17,13 @@
 }
 
 /* G · a11y floor + touch targets */
-:where(button, .btn, .x-act, .nav-item, .nav_link, a.chip, .push-enable-btn) {
+:where(button, .btn, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-btn) {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }
 
-.x-count,
-.x-time,
+.feed-action-count,
+.feed-card-time,
 .price,
 .duration-chip,
 [data-count],
@@ -32,7 +32,7 @@ time {
 }
 
 /* H · list perf — taller intrinsic for media cards to reduce scroll jump */
-.x-card,
+.card-embed,
 .feed-post,
 .restaurant-card,
 .listing-card,
@@ -43,8 +43,8 @@ time {
 .video-card,
 .channel-card,
 .listing-card:has(img),
-.feed-post:has(.x-media),
-.x-card:has(.x-media) {
+.feed-post:has(.feed-card-media),
+.card-embed:has(.feed-card-media) {
   contain-intrinsic-size: auto 280px;
 }
 
@@ -54,17 +54,17 @@ time {
 .toast,
 .nearby-alerts > * {
   border: var(--elev-1);
-  border-radius: var(--x-radius-sm, 8px);
-  background: var(--x-surface-elevated, var(--surface));
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface-elevated, var(--surface));
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   z-index: var(--z-toast, 1100);
 }
 
-.flash-notice { border-color: color-mix(in srgb, var(--color-success) 40%, var(--x-border)); }
-.flash-alert { border-color: color-mix(in srgb, var(--x-danger) 50%, var(--x-border)); }
+.flash-notice { border-color: color-mix(in srgb, var(--color-success) 40%, var(--border)); }
+.flash-alert { border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
 
 /* Post body measure */
-.x-card .body,
+.card-embed .body,
 .post-body,
 .article-body {
   max-width: var(--measure-body);
@@ -73,7 +73,7 @@ time {
 /* Nav swiper active underline already present — strengthen + peek */
 .nav_link.active {
   border-bottom-width: 2px;
-  border-bottom-color: var(--x-accent, var(--accent));
+  border-bottom-color: var(--accent, var(--accent));
   font-weight: 700;
 }
 
@@ -103,7 +103,7 @@ time {
 }
 
 /* Vote punch */
-.x-act:active {
+.feed-action:active {
   transform: scale(0.94);
   transition: transform var(--transition-fast) var(--ease-out);
 }
@@ -126,22 +126,22 @@ body.vertical-tv .tv-poster {
   aspect-ratio: 16 / 9;
   object-fit: cover;
   width: 100%;
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
 }
 body.vertical-tv .duration-chip {
   position: absolute;
   inset-block-end: var(--space-2xs);
   inset-inline-end: var(--space-2xs);
   padding: 0.1rem 0.35rem;
-  font: 700 0.7rem/1 var(--x-font-mono, ui-monospace, monospace);
+  font: 700 0.7rem/1 var(--font-mono, ui-monospace, monospace);
   background: color-mix(in srgb, #000 72%, transparent);
   border-radius: 2px;
 }
 body.vertical-tv .live-badge::before {
   content: "● ";
-  /* Fallback must match the real --x-danger token (#d1594a in every dialect)
+  /* Fallback must match the real --danger token (#d1594a in every dialect)
      — this was a stale Twitter-red (#f4212e) leftover, not this app's color. */
-  color: var(--x-danger, #d1594a);
+  color: var(--danger, #d1594a);
 }
 
 /* Takeaway sold out — text badge, not color-only */
@@ -156,10 +156,10 @@ body.vertical-takeaway .sold-out-badge {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border: 1px solid var(--x-border);
+  border: 1px solid var(--border);
   padding: 0.1rem 0.35rem;
-  border-radius: var(--x-radius-xs, 4px);
-  color: var(--x-text-secondary);
+  border-radius: var(--radius-xs, 4px);
+  color: var(--text-secondary);
 }
 /* Fallback when markup only has data-available (no badge span) */
 body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::after {
@@ -170,19 +170,19 @@ body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::afte
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border: 1px solid var(--x-border);
+  border: 1px solid var(--border);
   padding: 0.1rem 0.35rem;
-  border-radius: var(--x-radius-xs, 4px);
-  color: var(--x-text-secondary);
+  border-radius: var(--radius-xs, 4px);
+  color: var(--text-secondary);
 }
 
 /* Playlist embed controls */
 body.vertical-playlist .playlist-player button,
 body.vertical-playlist [data-controller="playlist-player"] button {
-  color: var(--x-accent);
+  color: var(--accent);
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }
 body.vertical-playlist input[type="range"] {
-  accent-color: var(--x-accent);
+  accent-color: var(--accent);
 }

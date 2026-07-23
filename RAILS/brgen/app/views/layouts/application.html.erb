@@ -51,7 +51,7 @@
           reapplies the same value on connect). %>
       <script src="/theme_boot.js"></script>
       <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
-        <%= x_icon :sun, size: 20 %>
+        <%= icon :sun, size: 20 %>
       </label>
     </div>
   <% end %>
@@ -102,38 +102,38 @@
         <nav role="navigation" data-turbo-permanent aria-label="Primary navigation">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
-            <%= x_icon :home, size: 26 %>
+            <%= icon :home, size: 26 %>
             <span>Home</span>
           <% end %>
           <%= render "shared/ai_nav_link" %>
           <%= link_to communities_path, class: nav_cls.(communities_path) do %>
-            <%= x_icon :explore, size: 26 %>
+            <%= icon :explore, size: 26 %>
             <span>Explore</span>
           <% end %>
           <%= link_to global_search_path, class: nav_cls.(global_search_path) do %>
-            <%= x_icon :search, size: 26 %>
+            <%= icon :search, size: 26 %>
             <span>Search</span>
           <% end %>
           <%= link_to notifications_path, class: nav_cls.(notifications_path) do %>
-            <%= x_icon :notifications, size: 26 %>
+            <%= icon :notifications, size: 26 %>
             <span>Notifications</span>
           <% end %>
           <%= link_to conversations_path, class: nav_cls.(conversations_path) do %>
-            <%= x_icon :messages, size: 26 %>
+            <%= icon :messages, size: 26 %>
             <span>Messages</span>
           <% end %>
           <%= link_to nearby_path, class: nav_cls.(nearby_path) do %>
-            <%= x_icon :nearby, size: 26 %>
+            <%= icon :nearby, size: 26 %>
             <span>Nearby</span>
           <% end %>
           <% if authenticated? %>
             <%= link_to user_path(Current.user), class: nav_cls.(user_path(Current.user)) do %>
-              <%= x_icon :profile, size: 26 %>
+              <%= icon :profile, size: 26 %>
               <span>Profile</span>
             <% end %>
           <% else %>
             <%= link_to new_session_path, class: nav_cls.(new_session_path) do %>
-              <%= x_icon :sign_in, size: 26 %>
+              <%= icon :sign_in, size: 26 %>
               <span>Sign in</span>
             <% end %>
           <% end %>
@@ -150,7 +150,7 @@
           </div>
         <% end %>
         <a href="<%= new_post_path %>" class="compose-btn">
-          <%= x_icon :compose, size: 22, css_class: "compose-icon" %>
+          <%= icon :compose, size: 22, css_class: "compose-icon" %>
           <span class="compose-label">Post</span>
         </a>
       </aside>
@@ -186,7 +186,7 @@
               data-action="click->edge-swiper#toggle" aria-label="Show widgets" aria-expanded="false"></button>
       <aside class="widgets" aria-label="Widgets" data-edge-swiper-target="root">
         <%= form_with url: global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
-          <%= x_icon :search, size: 19 %>
+          <%= icon :search, size: 19 %>
           <%= form.search_field :q, value: params[:q], placeholder: "Search Brgen", aria: { label: "Search Brgen" } %>
           <%= form.submit "Search", class: "visually-hidden" %>
         <% end %>
@@ -199,23 +199,23 @@
 
     <nav role="navigation" class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
       <%= link_to root_path, class: "tab-item", aria: { label: "Home", current: current_page?(root_path) ? "page" : nil } do %>
-        <%= x_icon :home, size: 26 %>
+        <%= icon :home, size: 26 %>
       <% end %>
       <%= link_to communities_path, class: "tab-item", aria: { label: "Explore communities", current: current_page?(communities_path) ? "page" : nil } do %>
-        <%= x_icon :explore, size: 26 %>
+        <%= icon :explore, size: 26 %>
       <% end %>
       <%= render "shared/ai_nav_link", class_name: "tab-item", show_label: false %>
       <%= link_to conversations_path, class: "tab-item", aria: { label: "Messages", current: current_page?(conversations_path) ? "page" : nil } do %>
-        <%= x_icon :messages, size: 26 %>
+        <%= icon :messages, size: 26 %>
       <% end %>
       <%= link_to nearby_path, class: "tab-item", aria: { label: "Nearby", current: current_page?(nearby_path) ? "page" : nil } do %>
-        <%= x_icon :nearby, size: 26 %>
+        <%= icon :nearby, size: 26 %>
       <% end %>
       <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
-        <%= x_icon :menu, size: 26 %>
+        <%= icon :menu, size: 26 %>
       </button>
       <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
-        <%= x_icon :compose, size: 24 %>
+        <%= icon :compose, size: 24 %>
       <% end %>
     </nav>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>

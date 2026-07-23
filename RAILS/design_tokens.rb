@@ -64,7 +64,7 @@ module DesignTokens
     FACE_ORDER.each do |key|
       lines << "  --#{key.tr('_', '-')}: #{anchors.fetch(key)};"
     end
-    lines << "  --x-font-mono: #{data.fetch('font_mono')};"
+    lines << "  --font-mono: #{data.fetch('font_mono')};"
     lines << "  --font-label: #{data.fetch('font_label')};"
     lines << "  color-scheme: dark;"
     %w[top right bottom left].each do |side|
@@ -105,7 +105,7 @@ module DesignTokens
     true
   end
 
-  def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_x_base.scss"))
+  def scss_anchor_drift?(path = File.join(ROOT, "shared", "app", "assets", "stylesheets", "_dialect_tokens.scss"))
     return "missing #{path}" unless File.file?(path)
 
     scss = read_utf8(path)
@@ -126,7 +126,7 @@ module DesignTokens
 
     return nil if drifted.empty?
 
-    "_x_base.scss defaults drifted from design_tokens.yml anchors: #{drifted.join(', ')}"
+    "_dialect_tokens.scss defaults drifted from design_tokens.yml anchors: #{drifted.join(', ')}"
   end
 
   def face_root_drift?(path)

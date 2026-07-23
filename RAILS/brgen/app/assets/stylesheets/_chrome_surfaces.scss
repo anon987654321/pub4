@@ -45,7 +45,7 @@
 .flash-alert {
   margin: var(--space-3) var(--space-4) 0;
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.875rem;
 }
 
@@ -88,7 +88,7 @@
   text-decoration: none;
 }
 .notification-card .notification-title-link:hover {
-  color: var(--x-accent, var(--accent));
+  color: var(--accent, var(--accent));
   text-decoration: underline;
 }
 .notification-actions {
@@ -106,9 +106,9 @@
 
 .activity-event {
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  border: 1px solid var(--x-border, var(--border));
-  border-radius: var(--x-radius-md, 12px);
-  background: var(--x-surface-elevated, var(--surface2));
+  border: 1px solid var(--border, var(--border));
+  border-radius: var(--radius-md, 12px);
+  background: var(--surface-elevated, var(--surface2));
 }
 
 .activity-event h2 {
@@ -117,12 +117,12 @@
 }
 
 .activity-event-link {
-  color: var(--x-text, var(--text));
+  color: var(--text, var(--text));
   text-decoration: none;
 }
 
 .activity-event-link:hover {
-  color: var(--x-accent, var(--accent));
+  color: var(--accent, var(--accent));
   text-decoration: underline;
 }
 

@@ -20,7 +20,7 @@ body.vertical-maps article.place dl {
   grid-template-columns: auto 1fr;
   gap: 0.35rem 1rem;
   padding: 1rem;
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--maps-border);
 }
@@ -67,7 +67,7 @@ body.vertical-maps .place-list {
 
 body.vertical-maps .place-card {
   padding: 0.85rem 1rem;
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--maps-border);
 }

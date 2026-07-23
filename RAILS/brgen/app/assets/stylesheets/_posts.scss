@@ -7,7 +7,7 @@
   transition: background var(--transition-fast);
 }
 
-.post-card:hover { background: var(--x-hover-subtle); }
+.post-card:hover { background: var(--hover-subtle); }
 
 .vote-col {
   width: 36px;
@@ -23,32 +23,32 @@
 .vote-btn {
   background: none;
   border: none;
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--text-base);
   line-height: 1.5;
   min-height: 44px;
   min-width: 44px;
   padding: var(--space-1);
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.vote-btn:hover { color: var(--upvote); background: var(--x-hover); }
-.vote-btn.down:hover { color: var(--downvote); background: var(--x-hover-subtle); }
+.vote-btn:hover { color: var(--upvote); background: var(--hover); }
+.vote-btn.down:hover { color: var(--downvote); background: var(--hover-subtle); }
 .vote-btn.active-up { color: var(--upvote); }
 .vote-btn.active-down { color: var(--downvote); }
-.vote-score { font: 700 var(--text-xs) / 1 var(--x-font); color: var(--x-text-secondary); }
+.vote-score { font: 700 var(--text-xs) / 1 var(--font); color: var(--text-secondary); }
 
 .post-body { flex: 1; min-width: 0; }
-.post-meta { font: var(--text-sm) / 1.5 var(--x-font); color: var(--x-text-secondary); margin-bottom: var(--space-1); }
-.post-meta a { color: var(--x-text-secondary); }
-.post-meta .community { color: var(--x-text); font-weight: 700; }
-.post-title { font: 500 var(--text-sm) / 1.5 var(--x-font); color: var(--x-text); margin-bottom: var(--space-3); }
-.post-title a { color: var(--x-text); }
+.post-meta { font: var(--text-sm) / 1.5 var(--font); color: var(--text-secondary); margin-bottom: var(--space-1); }
+.post-meta a { color: var(--text-secondary); }
+.post-meta .community { color: var(--text); font-weight: 700; }
+.post-title { font: 500 var(--text-sm) / 1.5 var(--font); color: var(--text); margin-bottom: var(--space-3); }
+.post-title a { color: var(--text); }
 .post-title a:hover { text-decoration: underline; }
 
 .post-actions { display: flex; gap: 0; }
@@ -57,16 +57,16 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  color: var(--x-text-secondary);
-  font: var(--text-sm) / 1 var(--x-font);
+  color: var(--text-secondary);
+  font: var(--text-sm) / 1 var(--font);
   padding: var(--space-2);
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   transition: color var(--transition-fast), background var(--transition-fast);
 }
 
-.post-actions a:hover { color: var(--x-accent); background: var(--x-hover); text-decoration: none; }
+.post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
 
-.post_body { color: var(--x-text); line-height: 1.7; font-size: var(--text-base); }
+.post_body { color: var(--text); line-height: 1.7; font-size: var(--text-base); }
 .post_body p { margin: 0 0 1.2em; }
 .post_body p:last-child { margin-bottom: 0; }
 .post_body ul, .post_body ol { margin: 0 0 1.2em; padding-inline-start: 1.5em; }
@@ -75,7 +75,7 @@
 .post_body li { margin-bottom: 4px; }
 .post_body a { text-decoration: underline; }
 
-/* Comments — nested thread aligned with x-post-show */
+/* Comments — nested thread aligned with feed-post-show */
 .comment-form-wrap { padding: var(--space-4) var(--space-4) var(--space-6); }
 
 .comment_item {
@@ -121,15 +121,15 @@
 .field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
 .field--check { flex-direction: row; align-items: center; gap: var(--space-2); }
 
-label { display: block; font-size: var(--text-sm); color: var(--x-text-secondary); }
+label { display: block; font-size: var(--text-sm); color: var(--text-secondary); }
 
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=url], input[type=search], textarea, select {
   width: 100%;
   padding: var(--space-2);
-  background: var(--x-surface-elevated);
+  background: var(--surface-elevated);
   border: 0;
-  border-radius: var(--x-radius-sm);
-  color: var(--x-text);
+  border-radius: var(--radius-sm);
+  color: var(--text);
   font-size: var(--text-sm);
   font-family: inherit;
   outline: none;
@@ -139,7 +139,7 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 input[type=file] {
   max-width: 100%;
   padding: var(--space-2) 0;
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
 
 input[type=file]::file-selector-button {
@@ -147,13 +147,13 @@ input[type=file]::file-selector-button {
   margin-inline-end: var(--space-2);
   padding-inline: var(--space-3);
   border: 0;
-  border-radius: var(--x-radius-pill);
-  background: var(--x-surface-elevated);
-  color: var(--x-text);
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--text);
   cursor: pointer;
 }
 
-input:focus, textarea:focus, select:focus { background: var(--x-hover); }
+input:focus, textarea:focus, select:focus { background: var(--hover); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 @media (prefers-reduced-motion: reduce) {

@@ -12,10 +12,10 @@
   <div class="post-grid">
     <% @saved_searches.each do |saved_search| %>
       <% search_actions = capture do %>
-        <%= link_to "Run", marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "x-act x-act--primary" %>
-        <%= button_to "Delete", marketplace_saved_search_path(saved_search), method: :delete, class: "x-act" %>
+        <%= link_to "Run", marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "feed-action feed-action--primary" %>
+        <%= button_to "Delete", marketplace_saved_search_path(saved_search), method: :delete, class: "feed-action" %>
       <% end %>
-      <%= render "shared/x_card",
+      <%= render "shared/feed_card",
         name: saved_search.title,
         meta: [
           saved_search.query.presence || "Any query",
@@ -25,7 +25,7 @@
         ].compact.join(" · "),
         actions: search_actions,
         url: marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id),
-        class: "x-listing" %>
+        class: "listing" %>
     <% end %>
   </div>
 <% else %>

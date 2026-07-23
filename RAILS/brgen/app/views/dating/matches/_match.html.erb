@@ -1,11 +1,11 @@
 <% other = match.other_user(Current.user) %>
 <% match_actions = capture do %>
-  <%= button_to "Message", user_conversations_path(other), method: :post, class: "x-act x-act--primary" %>
+  <%= button_to "Message", user_conversations_path(other), method: :post, class: "feed-action feed-action--primary" %>
 <% end %>
-<%= render "shared/x_card",
+<%= render "shared/feed_card",
   avatar_url: (other.dating_profile&.photos&.attached? ? url_for(other.dating_profile.photos.first) : nil),
   name: other.display_name || other.email_address.split("@").first,
   url: user_path(other),
-  content: capture { %(<p class="x-meta">Matched on #{match.created_at.to_date}</p>).html_safe },
+  content: capture { %(<p class="feed-card-meta">Matched on #{match.created_at.to_date}</p>).html_safe },
   actions: match_actions,
-  class: "x-match" %>
+  class: "match" %>

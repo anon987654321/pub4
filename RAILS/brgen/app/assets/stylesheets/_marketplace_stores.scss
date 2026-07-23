@@ -13,11 +13,11 @@
   gap: var(--space-3);
 }
 
-.store-grid .x-store,
+.store-grid .store,
 .listing-card {
   min-width: 0;
-  border: 1px solid var(--x-border);
-  border-radius: var(--x-radius-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .store-form form,

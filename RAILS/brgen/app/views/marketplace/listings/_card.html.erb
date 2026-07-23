@@ -1,16 +1,16 @@
 <% listing_actions = capture do %>
-  <%= link_to "View", marketplace_listing_path(listing), class: "x-act" %>
+  <%= link_to "View", marketplace_listing_path(listing), class: "feed-action" %>
   <% if authenticated? %>
-    <%= button_to "Add to cart", marketplace_listing_orders_path(listing), params: { quantity: 1 }, class: "x-act x-act--primary" %>
+    <%= button_to "Add to cart", marketplace_listing_orders_path(listing), params: { quantity: 1 }, class: "feed-action feed-action--primary" %>
   <% end %>
 <% end %>
 <% listing_content = capture do %>
-  <div class="x-price"><%= listing.price_display %></div>
+  <div class="price"><%= listing.price_display %></div>
   <% if listing.reviews_count.to_i.positive? %>
-    <div class="x-meta"><%= number_with_precision(listing.rating, precision: 1) %> ★ <%= pluralize(listing.reviews_count, "review") %></div>
+    <div class="feed-card-meta"><%= number_with_precision(listing.rating, precision: 1) %> ★ <%= pluralize(listing.reviews_count, "review") %></div>
   <% end %>
 <% end %>
-<%= render "shared/x_card",
+<%= render "shared/feed_card",
   avatar_url: (listing.photos.attached? ? url_for(listing.photos.first) : nil),
   name: listing.title,
   handle: listing.user&.display_name ? "@#{listing.user.display_name.parameterize}" : nil,
@@ -25,5 +25,5 @@
   content: listing_content,
   actions: listing_actions,
   url: marketplace_listing_path(listing),
-  class: "x-listing",
+  class: "listing",
   data_attributes: "data-product-id=\"#{listing.id}\"" %>

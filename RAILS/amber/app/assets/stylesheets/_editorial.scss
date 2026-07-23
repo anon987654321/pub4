@@ -14,7 +14,7 @@
   font-size: 0.9375rem;
   line-height: 1.5;
   color: var(--text);
-  font-family: var(--x-font);
+  font-family: var(--font);
 }
 
 .feed-post-meta,
@@ -29,7 +29,7 @@
    reading a post feels like the same product as the guest hero and logo. */
 .feed-post-meta-author {
   color: var(--text);
-  font-family: var(--amber-editorial-serif, var(--x-font));
+  font-family: var(--amber-editorial-serif, var(--font));
   font-style: italic;
   font-weight: 400;
 }
@@ -39,7 +39,7 @@
   margin: 1.5rem 0;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--surface2);
 }
 

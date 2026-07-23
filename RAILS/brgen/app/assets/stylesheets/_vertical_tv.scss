@@ -1,7 +1,7 @@
 /* TV — Odyssey-style cinematic watch + postpro/repligen media polish */
 body.vertical-tv {
-  --tv-stage: var(--x-bg);
-  --tv-accent: var(--x-accent, #d6473f);
+  --tv-stage: var(--bg);
+  --tv-accent: var(--accent, #d6473f);
 }
 
 body.vertical-tv main {
@@ -12,14 +12,14 @@ body.vertical-tv .page-header h1 {
   font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--x-text);
+  color: var(--text);
 }
 
 body.vertical-tv .tv-media,
 body.vertical-tv .video-player {
   width: 100%;
   max-height: min(72vh, 720px);
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   background: var(--tv-stage);
 }
 
@@ -28,12 +28,12 @@ body.vertical-tv .repligen-hero,
 body.vertical-tv .tv-media-image.repligen-hero {
   object-fit: cover;
   background: var(--tv-stage);
-  border: 1px solid var(--x-border);
+  border: 1px solid var(--border);
 }
 
 body.vertical-tv .live-badge {
   background: var(--tv-accent);
-  color: var(--x-text);
+  color: var(--text);
   border: none;
   font-weight: 800;
   animation: tv-live-pulse 2s ease-in-out infinite;
@@ -44,25 +44,25 @@ body.vertical-tv .live-badge {
   50% { opacity: 0.72; }
 }
 
-body.vertical-tv .x-tv {
+body.vertical-tv .tv {
   margin-bottom: var(--space-2);
 }
 
 body.vertical-tv .preset-strip {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
+  border-bottom: 1px solid var(--border);
 }
 
 body.vertical-tv .preset-opt input:checked + span {
   background: var(--tv-accent);
   border-color: var(--tv-accent);
-  color: var(--x-text);
+  color: var(--text);
 }
 
 body.vertical-tv .btn-primary {
   background: var(--tv-accent);
-  color: var(--x-text);
-  border-radius: var(--x-radius-pill);
+  color: var(--text);
+  border-radius: var(--radius-pill);
 }
 
 body.vertical-tv [data-controller="tv-player"] {
@@ -85,15 +85,15 @@ body.vertical-tv .show-card {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--x-border);
-  border-radius: var(--x-radius-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   text-decoration: none;
   color: inherit;
   transition: background var(--transition-fast);
 }
 
 body.vertical-tv .show-card:hover {
-  background: var(--x-hover-subtle);
+  background: var(--hover-subtle);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,13 +5,13 @@ body[class*="vertical-"] .compose-box {
   display: none;
 }
 
-/* Per-vertical accent identity. Overriding --x-accent cascades to --accent,
+/* Per-vertical accent identity. Overriding --accent cascades to --accent,
    --upvote, --focus-ring and the turbo bar, so each vertical's buttons, links,
    and active states read as its own place rather than the shared indigo. The
    second selector carries the accent into light mode on browsable verticals
    (immersive ones hide #dark-toggle, so it simply never matches there). */
 /* Single accent map — keep in sync with design_tokens.yml vertical_accents.
-   Do not re-set --x-accent in ui_refinements or vertical-local sheets. */
+   Do not re-set --accent in ui_refinements or vertical-local sheets. */
 $vertical-accents: (
   marketplace: (#8c7a5e, #6f6149),
   tv:          (#d6473f, #b83a33),
@@ -24,8 +24,8 @@ $vertical-accents: (
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v},
   body.vertical-#{$v} #dark-toggle:checked ~ .theme-root {
-    --x-accent: #{list.nth($c, 1)};
-    --x-accent-hover: #{list.nth($c, 2)};
+    --accent: #{list.nth($c, 1)};
+    --accent-hover: #{list.nth($c, 2)};
     --vertical-#{$v}-accent: #{list.nth($c, 1)};
     --vertical-#{$v}-accent-hover: #{list.nth($c, 2)};
   }
@@ -35,7 +35,7 @@ body[class*="vertical-"] main {
   padding-top: 0;
 }
 
-/* Immersive verticals: full-screen product surface, all x-shell chrome hidden.
+/* Immersive verticals: full-screen product surface, all shell chrome hidden.
    Browsable verticals (marketplace/takeaway/tv) keep the sidebar + widgets and
    are intentionally excluded. .feed-header is already hidden above for every
    vertical, so it is omitted here. */
@@ -57,17 +57,17 @@ body[class*="vertical-"] main {
 
 body.vertical-marketplace [data-controller="live-search"],
 body.vertical-takeaway [data-controller="live-search"] {
-  background: var(--x-search-bg, var(--x-surface));
-  border-bottom: 1px solid var(--x-border);
+  background: var(--search-bg, var(--surface));
+  border-bottom: 1px solid var(--border);
   padding: var(--space-3) var(--space-4);
 }
 
 body.vertical-marketplace .search-form input[type="search"],
 body.vertical-takeaway .search-form input[type="search"] {
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--x-border);
-  background: var(--x-bg);
+  border: 1px solid var(--border);
+  background: var(--bg);
   width: 100%;
 }
 

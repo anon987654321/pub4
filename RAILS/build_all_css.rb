@@ -32,8 +32,8 @@ end
 def social_token_markers
   social = DesignTokens.load.fetch("social")
   [
-    "--x-text: #{social.fetch('x_text')}",
-    "--x-accent: #{social.fetch('x_accent')}",
+    "--text: #{social.fetch('x_text')}",
+    "--accent: #{social.fetch('x_accent')}",
     "JetBrainsMono Nerd Font",
   ].freeze
 end
@@ -100,28 +100,28 @@ def sync_static_tokens!
     /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
     :root {
       color-scheme: dark;
-      --x-bg: #{social.fetch("x_bg")};
-      --x-surface: #{social.fetch("x_surface")};
-      --x-surface-elevated: #{social.fetch("x_surface_elevated")};
-      --x-search-bg: #{social.fetch("x_search_bg")};
-      --x-text: #{social.fetch("x_text")};
-      --x-text-secondary: #{social.fetch("x_text_secondary")};
-      --x-border: #{social.fetch("x_border")};
-      --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
-      --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
-      --x-accent: #{social.fetch("x_accent")};
-      --x-danger: #{social.fetch("x_danger")};
-      --x-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
-      --x-weight-normal: 400;
-      --x-weight-medium: 500;
-      --x-weight-bold: 700;
-      --x-weight-heavy: 800;
-      --x-radius-xs: 4px;
-      --x-radius-sm: 8px;
-      --x-radius-md: 12px;
-      --x-radius-card: 16px;
-      --x-radius-lg: 16px;
-      --x-radius-pill: 9999px;
+      --bg: #{social.fetch("x_bg")};
+      --surface: #{social.fetch("x_surface")};
+      --surface-elevated: #{social.fetch("x_surface_elevated")};
+      --search-bg: #{social.fetch("x_search_bg")};
+      --text: #{social.fetch("x_text")};
+      --text-secondary: #{social.fetch("x_text_secondary")};
+      --border: #{social.fetch("x_border")};
+      --hover: color-mix(in srgb, var(--text) 10%, transparent);
+      --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+      --accent: #{social.fetch("x_accent")};
+      --danger: #{social.fetch("x_danger")};
+      --font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+      --weight-normal: 400;
+      --weight-medium: 500;
+      --weight-bold: 700;
+      --weight-heavy: 800;
+      --radius-xs: 4px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-card: 16px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
       --transition-fast: 180ms;
       --transition-normal: 300ms;
       --z-chrome: 10;
@@ -130,27 +130,27 @@ def sync_static_tokens!
       --z-modal: 1000;
       --z-toast: 1100;
       --z-skip: 2000;
-      --color-background: var(--x-bg);
-      --color-midtone: var(--x-text-secondary);
-      --color-highlight: var(--x-surface);
-      --color-accent: var(--x-accent);
-      --color-border: var(--x-border);
-      --text-primary: var(--x-text);
-      --text-secondary: var(--x-text-secondary);
+      --color-background: var(--bg);
+      --color-midtone: var(--text-secondary);
+      --color-highlight: var(--surface);
+      --color-accent: var(--accent);
+      --color-border: var(--border);
+      --text-primary: var(--text);
+      --text-secondary: var(--text-secondary);
     }
     @media (prefers-color-scheme: light) {
       :root {
         color-scheme: light;
-        --x-bg: #ffffff;
-        --x-text: #0f1419;
-        --x-text-secondary: #536471;
-        --x-border: #eff3f4;
-        --x-hover: color-mix(in srgb, var(--x-text) 10%, transparent);
-        --x-hover-subtle: color-mix(in srgb, var(--x-text) 3%, transparent);
-        --color-background: var(--x-bg);
-        --color-highlight: var(--x-bg);
-        --text-primary: var(--x-text);
-        --text-secondary: var(--x-text-secondary);
+        --bg: #ffffff;
+        --text: #0f1419;
+        --text-secondary: #536471;
+        --border: #eff3f4;
+        --hover: color-mix(in srgb, var(--text) 10%, transparent);
+        --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+        --color-background: var(--bg);
+        --color-highlight: var(--bg);
+        --text-primary: var(--text);
+        --text-secondary: var(--text-secondary);
       }
     }
   CSS
@@ -226,7 +226,7 @@ def verify_face_css
   body = File.read(path)
   anchors = DesignTokens.load.fetch("face_root").fetch("anchors")
   missing = [
-    "--x-text: #{anchors.fetch('x_text')}",
+    "--text: #{anchors.fetch('x_text')}",
     "JetBrainsMono Nerd Font",
   ].reject { |m| body.include?(m) }
   missing.map { |m| "MASTER/web face.css missing #{m}" }

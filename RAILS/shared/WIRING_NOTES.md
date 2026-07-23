@@ -79,7 +79,7 @@ bundle exec ruby -e 'require "./config/environment"; require "importmap/commands
 bin/rails test
 ```
 
-Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/x_design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
+Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
 
 ## x.com parity recovery (2026-07-20)
 
@@ -87,7 +87,7 @@ Recovered from deleted execute-plan stack (tags: `recover/x-parity-stack`, `reco
 
 | Piece | Location |
 |-------|----------|
-| Contract tests | `RAILS/test/x_design_contract_test.rb`, `shared/test/lib/design_tokens_test.rb` |
+| Contract tests | `RAILS/test/design_contract_test.rb`, `shared/test/lib/design_tokens_test.rb` |
 | Web vitals (1% sample) | `shared/frontend/hotwire.js` → `POST /web_vitals` (`WebVitalsController`, `fleet.rb`) |
 | Bottom sheet | `shared/frontend/bottom_sheet_controller.js` (`pub4/bottom_sheet`) |
 | Modal / sheet CSS | `shared/app/assets/stylesheets/_x_modal.scss` (via `@forward "x_modal"` in `_stack.scss`) |
@@ -100,7 +100,7 @@ Recovered from deleted execute-plan stack (tags: `recover/x-parity-stack`, `reco
 **Gates (from repo root):**
 
 ```bash
-ruby RAILS/test/x_design_contract_test.rb
+ruby RAILS/test/design_contract_test.rb
 ruby RAILS/shared/test/lib/design_tokens_test.rb
 ruby RAILS/build_all_css.rb --check
 ruby RAILS/frontend_auditor_gate.rb
@@ -124,9 +124,9 @@ ruby RAILS/frontend_auditor_gate.rb
 - text `#d8d6e0`, secondary `#8a879c`, border `#46435a`
 - Light mode: indigo `#5b4fc4` on cool gray paper — **not** Twitter blue
 
-**Layout:** single-column feed (`--x-feed-max: 600px`) with edge-swiper sidebar/widgets panels (`_x_shell.scss`). Tab bar is the always-reachable nav. Verticals may hide chrome via `_vertical_shell.scss`.
+**Layout:** single-column feed (`--feed-max: 600px`) with edge-swiper sidebar/widgets panels (`_x_shell.scss`). Tab bar is the always-reachable nav. Verticals may hide chrome via `_vertical_shell.scss`.
 
-**Vertical accents:** single map in `design_tokens.yml` → `vertical_accents` and `_vertical_shell.scss` only. Do not re-set `--x-accent` in ui_refinements or vertical-local sheets.
+**Vertical accents:** single map in `design_tokens.yml` → `vertical_accents` and `_vertical_shell.scss` only. Do not re-set `--accent` in ui_refinements or vertical-local sheets.
 
 **Empty states:** `shared/app/views/shared/_empty_state.html.erb` + `_empty_state.scss`.
 

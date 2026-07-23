@@ -8,12 +8,12 @@
   <turbo-frame id="tv-live-streams" data-turbo-action="replace">
   <%= tag.div class: "live-stream-grid", role: "list", "aria-label": "Live streams list" do %>
     <% @live_streams.each do |live_stream| %>
-      <%= render "shared/x_card",
+      <%= render "shared/feed_card",
         name: live_stream.title,
         meta: live_stream.status,
         content: live_stream.description,
         url: tv_live_stream_path(live_stream),
-        class: "x-tv" %>
+        class: "tv" %>
     <% end %>
     <% if @live_streams.empty? %>
       <%= render "shared/empty_state", title: "No live streams", body: "Nothing live right now." %>

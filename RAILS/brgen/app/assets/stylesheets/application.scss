@@ -1,7 +1,7 @@
 @use "stack_brgen" as *;
-@use "x_shell";
-@use "x_widgets";
-@use "x_responsive";
+@use "shell";
+@use "shell_widgets";
+@use "responsive";
 @use "_root";
 @use "_canvas";
 @use "_nav";
@@ -36,7 +36,7 @@
 @use "vertical_maps_place";
 @use "vertical_messenger_list";
 @use "vertical_messenger_thread";
-@use "_x_card_modifiers";
+@use "_card_modifiers";
 @use "_chrome_polish";
 @use "_chrome_surfaces";
 @use "_ui_refinements_pass";

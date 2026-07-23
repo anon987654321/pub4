@@ -7,9 +7,9 @@
 }
 
 .deal-card {
-  background: var(--x-surface-elevated);
-  border: 1px solid var(--x-border);
-  border-radius: var(--x-radius-card);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -18,13 +18,13 @@
   color: inherit;
 }
 
-.deal-card:hover { background: var(--x-hover); text-decoration: none; }
+.deal-card:hover { background: var(--hover); text-decoration: none; }
 
 .deal-card-img {
   position: relative;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: var(--x-search-bg);
+  background: var(--search-bg);
 }
 
 .deal-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -33,19 +33,19 @@
   position: absolute;
   top: var(--space-2);
   inset-inline-start: var(--space-2);
-  background: var(--x-text);
-  color: var(--x-bg);
-  font: 700 var(--text-xs) / 1 var(--x-font);
+  background: var(--text);
+  color: var(--bg);
+  font: 700 var(--text-xs) / 1 var(--font);
   padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   letter-spacing: .03em;
 }
 
 .deal-card-body { padding: var(--space-3) var(--space-3) var(--space-3); flex: 1; display: flex; flex-direction: column; gap: var(--space-1); }
 
 .deal-card-title {
-  font: 500 var(--text-sm) / 1.5 var(--x-font);
-  color: var(--x-text);
+  font: 500 var(--text-sm) / 1.5 var(--font);
+  color: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -53,29 +53,29 @@
 }
 
 .deal-price {
-  font: 800 var(--text-xl) / 1 var(--x-font);
-  color: var(--x-text);
+  font: 800 var(--text-xl) / 1 var(--font);
+  color: var(--text);
   margin-top: auto;
   padding-top: var(--space-1);
 }
 
 .deal-price-original {
-  font: var(--text-xs) / 1 var(--x-font);
-  color: var(--x-text-secondary);
+  font: var(--text-xs) / 1 var(--font);
+  color: var(--text-secondary);
   text-decoration: line-through;
 }
 
-.deal-meta { font: var(--text-xs) / 1 var(--x-font); color: var(--x-text-secondary); }
+.deal-meta { font: var(--text-xs) / 1 var(--font); color: var(--text-secondary); }
 
 .deal-cta {
   display: block;
   margin: 0 var(--space-3) var(--space-3);
   padding: var(--space-2);
   text-align: center;
-  background: var(--x-text);
-  color: var(--x-bg);
-  border-radius: var(--x-radius-pill);
-  font: 700 var(--text-sm) / 1 var(--x-font);
+  background: var(--text);
+  color: var(--bg);
+  border-radius: var(--radius-pill);
+  font: 700 var(--text-sm) / 1 var(--font);
   text-decoration: none;
 }
 
@@ -85,7 +85,7 @@
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .deal-search input { flex: 1; }
@@ -94,7 +94,7 @@
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--x-border);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -118,11 +118,11 @@
 
 /* Marketplace listing show polish for x.com presentability */
 .marketplace-listing .listing-price {
-  font: 800 1.5rem / 1 var(--x-font);
-  color: var(--x-text);
+  font: 800 1.5rem / 1 var(--font);
+  color: var(--text);
 }
 .marketplace-listing .dim {
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
 .marketplace-listing .listing-description {
   margin-top: var(--space-4);
@@ -145,16 +145,16 @@
 
 .store-card {
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--x-radius-sm);
-  background: var(--x-surface-elevated);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
   transition: background var(--transition-fast);
 }
 
-.store-card:hover { background: var(--x-hover); }
+.store-card:hover { background: var(--hover); }
 
 .featured-deals {
   padding: var(--space-4);
-  border-bottom: 1px solid var(--x-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .featured-deals h2 {
@@ -164,7 +164,7 @@
   text-transform: uppercase;
 }
 
-.featured-deals .x-post.x-deal {
+.featured-deals .feed-card.deal {
   margin-bottom: var(--space-2);
 }
 

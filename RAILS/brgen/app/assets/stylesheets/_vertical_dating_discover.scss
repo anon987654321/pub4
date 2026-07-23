@@ -12,12 +12,12 @@ body.vertical-dating .page-header {
   margin-inline: auto;
   margin-bottom: var(--space-3);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--x-border);
+  border-bottom: 1px solid var(--border);
 }
 
 body.vertical-dating header .dim {
   color: var(--dating-muted);
-  font: var(--text-xs) / 1 var(--x-font);
+  font: var(--text-xs) / 1 var(--font);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0;
@@ -39,8 +39,8 @@ body.vertical-dating header nav {
 
 body.vertical-dating .btn-ghost {
   color: var(--dating-muted);
-  border-color: var(--x-border);
-  font: var(--text-xs) / 1 var(--x-font);
+  border-color: var(--border);
+  font: var(--text-xs) / 1 var(--font);
 }
 
 body.vertical-dating .dating-discover {
@@ -51,7 +51,7 @@ body.vertical-dating .dating-discover {
 body.vertical-dating .swipe-card {
   background: var(--dating-card);
   border-color: var(--dating-border);
-  border-radius: var(--x-radius-card);
+  border-radius: var(--radius-card);
 }
 
 body.vertical-dating .swipe-bio {
@@ -62,9 +62,9 @@ body.vertical-dating .btn,
 body.vertical-dating .btn-primary,
 body.vertical-dating .swipe-signin {
   background: linear-gradient(90deg, var(--dating-accent), var(--dating-accent-warm));
-  color: var(--x-text);
+  color: var(--text);
   border: none;
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   font-weight: 600;
 }
 

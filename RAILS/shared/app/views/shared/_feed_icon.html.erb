@@ -1,0 +1,7 @@
+<%# locals: (name:, size: 18) %>
+<%# Lucide icons (ISC), outlined -- delegates to the shared shared/icons
+    set so brgen's feed row and the cross-app action_bar draw from the
+    same icon source. %>
+<% size = local_assigns.fetch(:size, 18) %>
+<% icon_name = { "comment" => :messages, "repost" => :repost, "upvote" => :upvote, "downvote" => :downvote, "more" => :more, "share" => :share }.fetch(local_assigns[:name].to_s) %>
+<%= icon icon_name, size: size, css_class: "act-icon" %>

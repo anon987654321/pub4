@@ -29,13 +29,13 @@ body.vertical-marketplace .deal-grid {
 
 body.vertical-marketplace .deal-card {
   background: var(--shop-luxury-bg);
-  border: 1px solid var(--x-border);
-  border-radius: var(--x-radius-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 body.vertical-marketplace .deal-card:hover {
-  background: var(--x-hover);
+  background: var(--hover);
   border-color: var(--shop-cta);
 }
 
@@ -59,19 +59,19 @@ body.vertical-marketplace .deal-cta,
 body.vertical-marketplace .deal-cat.active {
   background: var(--shop-cta);
   color: var(--shop-cta-text);
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
 }
 
 body.vertical-marketplace .deal-search {
-  background: var(--x-search-bg, var(--x-surface));
+  background: var(--search-bg, var(--surface));
   padding: var(--space-4) var(--space-4);
 }
 
 body.vertical-marketplace .deal-search input {
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   padding: var(--space-3) var(--space-4);
-  background: var(--x-bg);
-  border: 1px solid var(--x-border);
+  background: var(--bg);
+  border: 1px solid var(--border);
 }
 
 body.vertical-marketplace .deal-cats {
@@ -80,7 +80,7 @@ body.vertical-marketplace .deal-cats {
 }
 
 body.vertical-marketplace .deal-cat {
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: 0.06em;

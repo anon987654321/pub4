@@ -8,19 +8,19 @@ module Pub4
   # "known good" set for each token name from three places, since this
   # codebase spreads real definitions across all of them:
   #   1. design_tokens.yml dialect blocks (x_search_bg: "#...", etc.)
-  #   2. _x_base.scss mixin parameter defaults ($accent: #... -> --x-accent)
+  #   2. _dialect_tokens.scss mixin parameter defaults ($accent: #... -> --accent)
   #   3. literal `--token: #hex;` CSS declarations anywhere
-  # --x-accent / --x-accent-hover are exempt: by design they legitimately
+  # --accent / --accent-hover are exempt: by design they legitimately
   # take a different value per vertical/app, so "matches no known value"
   # would be noise, not a bug, for those two specifically.
   #
-  # Catches the class of bug found 2026-07-21: --x-danger's fallback was a
+  # Catches the class of bug found 2026-07-21: --danger's fallback was a
   # stale Twitter red (#f4212e) that matched none of its real definitions.
   module FallbackDriftLint
     FALLBACK = /var\(\s*--([\w-]+)\s*,\s*#([0-9a-fA-F]{3,8})\s*\)/
     LITERAL_DEF = /--([\w-]+)\s*:\s*#([0-9a-fA-F]{3,8})/
     MIXIN_PARAM_DEF = /\$([\w-]+)\s*:\s*#([0-9a-fA-F]{3,8})/
-    EXEMPT = %w[x-accent x-accent-hover].freeze
+    EXEMPT = %w[accent accent-hover].freeze
 
     Violation = Struct.new(:file, :line, :token, :fallback_hex)
 
@@ -86,8 +86,8 @@ module Pub4
           if value.is_a?(String) && value =~ /\A#([0-9a-fA-F]{3,8})\z/
             known[key.to_s.tr("_", "-")] << Regexp.last_match(1).downcase
           elsif value.is_a?(Hash) && value["accent"] # vertical_accents-style nested block
-            known["x-accent"] << value["accent"].to_s.delete("#").downcase
-            known["x-accent-hover"] << value["hover"].to_s.delete("#").downcase if value["hover"]
+            known["accent"] << value["accent"].to_s.delete("#").downcase
+            known["accent-hover"] << value["hover"].to_s.delete("#").downcase if value["hover"]
           end
         end
       end
@@ -97,7 +97,7 @@ module Pub4
       scss_files.each do |path|
         File.foreach(path, encoding: "UTF-8") do |line|
           line.scan(LITERAL_DEF).each { |name, hex| known[name.downcase] << hex.downcase }
-          line.scan(MIXIN_PARAM_DEF).each { |name, hex| known["x-#{name.downcase}"] << hex.downcase }
+          line.scan(MIXIN_PARAM_DEF).each { |name, hex| known[name.downcase] << hex.downcase }
         end
       end
     end

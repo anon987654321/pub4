@@ -6,13 +6,13 @@ body.vertical-messenger header[aria-label="Conversation header"] {
 
 body.vertical-messenger header[aria-label="Conversation header"] h1 {
   margin: 0 0 var(--space-1);
-  font: 700 1.25rem / 1 var(--x-font);
+  font: 700 1.25rem / 1 var(--font);
   letter-spacing: -0.02em;
 }
 
 body.vertical-messenger header[aria-label="Conversation header"] nav a {
   color: var(--msg-muted);
-  font: var(--text-sm) / 1 var(--x-font);
+  font: var(--text-sm) / 1 var(--font);
   text-decoration: none;
 }
 
@@ -27,7 +27,7 @@ body.vertical-messenger .disappearing-settings select {
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
   color: var(--msg-ink);
-  border-radius: var(--x-radius-sm);
+  border-radius: var(--radius-sm);
   padding: 0.25rem 0.5rem;
 }
 
@@ -76,23 +76,23 @@ body.vertical-messenger #messages {
 body.vertical-messenger #messages article {
   max-width: 82%;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--x-radius-card);
+  border-radius: var(--radius-card);
   border: 1px solid transparent;
 }
 
 body.vertical-messenger #messages article[data-from="self"] {
   align-self: flex-end;
   background: var(--msg-bubble-self);
-  color: var(--x-text);
-  border: 1px solid color-mix(in srgb, var(--x-accent) 40%, var(--msg-border));
-  border-bottom-right-radius: var(--x-radius-sm);
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--msg-border));
+  border-bottom-right-radius: var(--radius-sm);
 }
 
 body.vertical-messenger #messages article[data-from="peer"] {
   align-self: flex-start;
   background: var(--msg-bubble-peer);
   border-color: var(--msg-border);
-  border-bottom-left-radius: var(--x-radius-sm);
+  border-bottom-left-radius: var(--radius-sm);
 }
 
 /* Disappearing-thread signature: a bubble's own border visibly erodes as it
@@ -115,7 +115,7 @@ body.vertical-messenger #messages article header {
   margin-bottom: var(--space-1);
   font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
-  font-family: var(--x-font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono, ui-monospace, monospace);
   opacity: 0.78;
 }
 
@@ -131,7 +131,7 @@ body.vertical-messenger #messages article p {
 
 body.vertical-messenger #messages article img {
   margin-top: 0.5rem;
-  border-radius: var(--x-radius-md);
+  border-radius: var(--radius-md);
   max-width: 100%;
 }
 
@@ -149,7 +149,7 @@ body.vertical-messenger #new_message textarea {
   resize: vertical;
   min-height: 4rem;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--x-radius-md);
+  border-radius: var(--radius-md);
   border: 1px solid var(--msg-border);
   background: var(--msg-surface);
   color: var(--msg-ink);
@@ -165,7 +165,7 @@ body.vertical-messenger #new_message input[type="submit"] {
   border: none;
   border-radius: var(--radius-pill);
   background: var(--msg-accent);
-  color: var(--x-text);
+  color: var(--text);
   font-weight: 600;
   cursor: pointer;
 }

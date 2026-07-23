@@ -76,7 +76,7 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   line-height: 0; // intentional: collapses inline-SVG descender gap
-  background: var(--x-surface, #ffffff);
+  background: var(--surface, #ffffff);
   position: sticky;
   top: 0;
   z-index: calc(var(--z-nav) + 1);
@@ -129,7 +129,7 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   line-height: 0;
-  background: var(--x-surface, #ffffff);
+  background: var(--surface, #ffffff);
 
   .amber-instance {
     width: 100%;
@@ -155,7 +155,7 @@
 .amber-guest-hero .title {
   max-width: 28rem;
   margin-inline: auto;
-  font-family: var(--amber-editorial-serif, var(--x-font));
+  font-family: var(--amber-editorial-serif, var(--font));
   font-size: clamp(1.35rem, 3vw, 1.75rem);
   font-weight: 400;
   margin-block: 0;
@@ -168,7 +168,7 @@
   color: var(--text-dim);
   margin-block: 0;
   font-size: var(--text-sm);
-  line-height: var(--x-line-height);
+  line-height: var(--line-height);
 }
 
 .amber-guest-hero .actions {

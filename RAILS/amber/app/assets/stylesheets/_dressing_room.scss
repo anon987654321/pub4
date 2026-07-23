@@ -92,7 +92,7 @@
   gap: var(--space-sm);
   padding: var(--space-sm);
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: var(--x-radius-xs);
+  border-radius: var(--radius-xs);
 }
 
 .zone-tag {
@@ -107,7 +107,7 @@
 .carousel-btn {
   background: none;
   border: 1px solid var(--color-extra-light-grey);
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   /* 44px is the Fitts's-law touch-target floor (design_rules.yml ux_laws.fitts) —
      the old var(--space-3) box was 12px, smaller than its own glyph. */
   width: 44px;
@@ -121,7 +121,7 @@
   flex-shrink: 0;
 
   &:hover {
-    background: var(--x-hover);
+    background: var(--hover);
   }
 }
 

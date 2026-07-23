@@ -1,17 +1,17 @@
-@use "x_base" as x;
+@use "dialect_tokens" as x;
 
 :root {
-  @include x.x-luxury-light-tokens;
-  @include x.x-app-root-tokens;
+  @include x.luxury-light-tokens;
+  @include x.app-root-tokens;
   color-scheme: light;
-  --accent: var(--x-accent);
-  --accent-hover: var(--x-accent-hover);
-  --color-black: var(--x-bg);
-  --color-white: var(--x-text);
-  --color-extra-light-grey: var(--x-border);
-  --color-grey-text: var(--x-text-secondary);
+  --accent: var(--accent);
+  --accent-hover: var(--accent-hover);
+  --color-black: var(--bg);
+  --color-white: var(--text);
+  --color-extra-light-grey: var(--border);
+  --color-grey-text: var(--text-secondary);
   --color-success: #00ba7c;
-  --color-danger: var(--x-danger);
+  --color-danger: var(--danger);
   --color-warning: #c9a227;
   --color-info: #5b9fd4;
   --space-2xs: 0.25rem;
@@ -20,14 +20,14 @@
   --space-md: 1.5rem;
   --space-lg: 2rem;
   --space-xl: 3rem;
-  --font-size-base: var(--x-font-size);
+  --font-size-base: var(--font-size);
   --line-height-base: 1.6;
   --app-accent: var(--accent);
   --color-badge: var(--accent);
-  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
   --focus-ring: 2px solid var(--accent);
   --tap-min: 44px;
-  --elev-1: 1px solid var(--x-border);
+  --elev-1: 1px solid var(--border);
   --turbo-progress-bar-color: var(--accent);
 }
 
@@ -42,17 +42,17 @@
 }
 
 #dark-toggle:checked ~ .theme-root {
-  @include x.x-luxury-dark-tokens;
-  @include x.x-app-root-tokens;
+  @include x.luxury-dark-tokens;
+  @include x.app-root-tokens;
   color-scheme: dark;
-  --accent: var(--x-accent);
-  --accent-hover: var(--x-accent-hover);
-  --color-black: var(--x-bg);
-  --color-white: var(--x-text);
-  --color-extra-light-grey: var(--x-border);
-  --color-grey-text: var(--x-text-secondary);
-  --color-danger: var(--x-danger);
+  --accent: var(--accent);
+  --accent-hover: var(--accent-hover);
+  --color-black: var(--bg);
+  --color-white: var(--text);
+  --color-extra-light-grey: var(--border);
+  --color-grey-text: var(--text-secondary);
+  --color-danger: var(--danger);
   --app-accent: var(--accent);
   --color-badge: var(--accent);
-  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--x-surface-elevated));
+  --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));
 }

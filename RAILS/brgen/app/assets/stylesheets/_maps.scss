@@ -5,10 +5,10 @@
 .media-gallery__item {
   scroll-snap-align: start;
   display: block;
-  border-radius: var(--x-radius-card);
+  border-radius: var(--radius-card);
   overflow: hidden;
-  border: 1px solid var(--x-border);
-  background: var(--x-surface);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .media-gallery__item img {
@@ -37,9 +37,9 @@
   display: block;
   width: var(--space-3);
   height: var(--space-3);
-  border-radius: var(--x-radius-pill);
+  border-radius: var(--radius-pill);
   border: 2px solid rgba(255, 255, 255, .82);
-  background: var(--x-accent);
+  background: var(--accent);
 }
 
 .map-marker--food span {
@@ -58,19 +58,19 @@
 
 .map-popup p {
   margin: 0;
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
 
 .map-popup a {
-  color: var(--x-accent);
+  color: var(--accent);
   font-weight: 900;
   text-decoration: none;
 }
 
 .maplibregl-popup-content {
-  border-radius: var(--x-radius-card);
+  border-radius: var(--radius-card);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--x-border);
+  border: 1px solid var(--border);
 }
 
 .match-overlay {
@@ -87,9 +87,9 @@
 .match-overlay__card {
   width: min(24rem, 100%);
   padding: var(--space-5);
-  border-radius: var(--x-radius-card);
-  background: var(--x-surface);
-  border: 1px solid var(--x-border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  border: 1px solid var(--border);
   text-align: center;
 }
 
@@ -98,7 +98,7 @@
   text-transform: uppercase;
   letter-spacing: .18em;
   font-size: var(--text-xs);
-  color: var(--x-text-secondary);
+  color: var(--text-secondary);
 }
 
 @keyframes matchFadeIn {
