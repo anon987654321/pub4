@@ -89,6 +89,18 @@ task :selftest do
   exit(summary.ok? ? 0 : 1)
 end
 
+desc "Fast error/critical-only scan of lib/ (Fix::SelfCheck) -- a quick fail-fast gate ahead of the heavier rake constitution triage scan"
+task :selfcheck do
+  $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+  require "master"
+  report = Master::Fix::SelfCheck.new(root: __dir__).quick
+  puts report.summary
+  unless report.clean?
+    report.by_rule.sort_by { |_, count| -count }.first(8).each { |rule, count| puts "  #{rule}: #{count}" }
+  end
+  exit(report.clean? ? 0 : 1)
+end
+
 desc "Eager-load all Zeitwerk-managed constants"
 task :autoload do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))

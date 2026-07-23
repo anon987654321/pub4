@@ -35,6 +35,7 @@ failures << "core_smoke" unless run_step("core smoke", RUBY, File.join(ROOT, "co
 
 if ENV["MASTER_CI_FULL"] == "1"
   failures << "smoke" unless run_step("smoke", File.join(ROOT, "bin", "smoke"))
+  failures << "selfcheck" unless run_step("selfcheck", RUBY, "-S", "rake", "selfcheck")
   failures << "constitution" unless run_step("constitution", RUBY, "-S", "rake", "constitution")
 end
 
