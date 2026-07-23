@@ -41,13 +41,13 @@ module DillaHarmony
     "m" => "m9", "maj" => "maj9", "7" => "13", "m7" => "m9", "maj7" => "maj9",
     "Fm" => "Fm9", "Ab" => "Abmaj9", "Db" => "Dbmaj7", "Dbmaj7" => "Dbmaj9",
     "Bbm" => "Bbm7", "Cm" => "Cm7", "Dm" => "Dm9", "Gm" => "Gm9", "Am" => "Am9",
-    "Cmaj" => "Cmaj9", "Fmaj" => "Fmaj9", "Gmaj" => "Gmaj9", "Ebmaj7" => "Ebmaj9",
+    "Cmaj" => "Cmaj9", "Fmaj" => "Fmaj9", "Gmaj" => "Gmaj9", "Ebmaj7" => "Ebmaj9"
   }.freeze
 
   CONTRAST_VOICINGS = {
     quartal: :drop2, drop2: :rootless, rootless: :spread, cluster: :spread,
     spread: :quartal, drop3: :spread, so_what: :quartal, kenny_barron: :drop2,
-    bill_evans: :rootless,
+    bill_evans: :rootless
   }.freeze
 
   @last_progression_chords = nil
@@ -563,7 +563,24 @@ module DillaHarmony
     if defined?(DillaTheoryRuntime)
       pads = DillaTheoryRuntime.refine_progression!(pads, cfg:)
     end
+    report_harmony_beauty!(pads, cfg)
     [pads, phases]
+  end
+
+  # Theory-grounded scoring (DillaHarmonyScore: voice-leading distance,
+  # common-tone retention, contrary motion, root-motion strength -- see that
+  # file's header) after theory refinement has already run, so the report
+  # reflects what actually got rendered, not the pre-refinement draft.
+  # Informational only for now (BEAUTY_REPORT=1 to see it) -- not a gate,
+  # since a false-reject here would silently swap out a fine progression for
+  # no reason anyone could audit after the fact.
+  def report_harmony_beauty!(pads, cfg)
+    return unless defined?(DillaHarmonyScore) && ENV["BEAUTY_REPORT"] == "1"
+
+    analysis = DillaHarmonyScore.analyze(pads)
+    warn "harmony-beauty: #{cfg[:track]} score=#{analysis[:score]} #{analysis[:breakdown]}"
+  rescue StandardError => e
+    warn "harmony-beauty: scoring failed (#{e.class}: #{e.message})"
   end
 
   def beautify_pipeline(pads, cfg, phases: [])
@@ -582,6 +599,7 @@ module DillaHarmony
     if defined?(DillaTheoryRuntime)
       pads = DillaTheoryRuntime.refine_progression!(pads, cfg:)
     end
+    report_harmony_beauty!(pads, cfg)
     [pads, phases]
   end
 

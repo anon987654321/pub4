@@ -19,6 +19,7 @@ DillaMusicGems.bootstrap!
 require_relative "lib/dilla_dmesg"
 require_relative "lib/composition_engine"
 require_relative "lib/groove_score"
+require_relative "lib/harmony_score"
 require_relative "lib/producer_dna"
 require_relative "lib/harmony_engine"
 require_relative "lib/harmony_lead"
@@ -580,6 +581,9 @@ SYNTH_PATCH_CATALOG = [
               fx: "lowpass=f=2200,equalizer=f=95:t=o:w=0.8:g=3.5,aphaser=speed=0.1:decay=0.55"),
   synth_patch(:moog_bleeding_edge, role: :warm, program: 91, weight: 1.8, mix: 0.85, fs_gain: 1.5,
               color: "Moog + tape drift",
+              midi_fx: MIDI_FX_PAD_WARM,
+              arp_styles: %i[up downup quint_spread],
+              midi_arp: { style: :up, subdiv: 4, gate: 0.88, vel: 0.26 },
               fx: "vibrato=f=0.18:d=0.014,tremolo=f=0.55:d=0.12,aecho=0.42:0.52:100|190:0.28|0.14,lowpass=f=3000"),
   synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.78, fs_gain: 1.52,
               color: "Prophet-5 poly",
@@ -592,6 +596,9 @@ SYNTH_PATCH_CATALOG = [
               fx: "chorus=0.52:0.72:38|48:0.24|0.2:0.28|0.24:1.1|1.4,aecho=0.35:0.45:90|170:0.25|0.12"),
   synth_patch(:prophet_rev2_bleeding, role: :warm, program: 87, weight: 1.7, mix: 0.74, fs_gain: 1.48,
               color: "Rev2 hybrid supersaw bed",
+              midi_fx: MIDI_FX_PAD_WARM,
+              arp_styles: %i[updown pingpong coltrane],
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24 },
               fx: "chorus=0.55:0.75:42|52:0.28|0.22:0.3|0.25:1.2|1.5,aphaser=speed=0.14:decay=0.48,lowpass=f=4000"),
   synth_patch(:juno_strings, role: :warm, program: 50, weight: 2.2, mix: 0.72,
               fx: "chorus=0.55:0.75:40|55:0.3|0.25:0.35|0.3:1.1|1.5"),
@@ -900,8 +907,12 @@ PAD_VOICE_PRESETS = {
 PAD_LAYER_STACKS = {
   stack_soul: [
     { id: :rhodes_cafe_warm, mix: 1.22, role: :ep },
-    { id: :moog_model_d, mix: 0.95, role: :warm },
-    { id: :prophet_5_pad, mix: 0.72, role: :warm },
+    # Swapped from moog_model_d/prophet_5_pad (vintage Model D + Prophet-5)
+    # to their modern siblings for a less "retro pad" default character --
+    # both patches picked up the same midi_fx/arp_styles/midi_arp the
+    # vintage ones had, so this isn't a downgrade in movement, just tone.
+    { id: :moog_bleeding_edge, mix: 0.95, role: :warm },
+    { id: :prophet_rev2_bleeding, mix: 0.72, role: :warm },
     { id: :juno_chorus_wash, mix: 0.42, role: :texture },
   ],
   stack_glass: [
@@ -5494,6 +5505,19 @@ TRACK_PRESETS = {
     bpm: 80, progression: :chromatic_mediant, chord_bars: 2, phrase_bars: 16, swing: 0,
     feel: :techno_house, stereo_pan: true
   },
+  # generate_coltrane_changes/generate_modal_interchange (GENERATED_STYLE_ROUTES
+  # above) were reachable only via a raw GEN_STYLE=coltrane|modal_interchange
+  # env override with no discoverable named preset -- both are real, working,
+  # theory-grounded generators (major-third symmetric substitution; borrowed
+  # chords from the parallel mode) that just had no entry here.
+  generated_coltrane: {
+    bpm: 88, progression: :coltrane, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :organic, stereo_pan: true
+  },
+  generated_modal_interchange: {
+    bpm: 84, progression: :modal_interchange, chord_bars: 2, phrase_bars: 16, swing: 56,
+    feel: :organic, stereo_pan: true
+  },
   fourth_third_sixth_second_turn: {
     bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
@@ -7380,8 +7404,15 @@ DILLA_BEST_DEFAULTS = {
   # donuts_warm's hf_rolloff/groove_wear_lp sit at 2200/2600Hz (see the
   # "not a 2 kHz blanket" comment on its donuts_soul sibling) and its
   # out_comp_ratio runs a full point hotter — buries presence/air and
-  # sits crest factor right at the reject-gate floor. DILLA_STYLE_DEFAULTS
-  # already uses donuts_soul; this table (applied first) was overriding it.
+  # sits crest factor right at the reject-gate floor. This table is a
+  # soft-fill only (apply_best_defaults!), so it never wins against
+  # DILLA_STYLE_DEFAULTS' force-applied donuts_warm/vinyl_hot on the actual
+  # dilla render path (verified: dilla.rb dilla <out> prints donuts_warm) --
+  # it only matters for callers that reach this table without also going
+  # through apply_dilla_style!(force: true). Kept at the safer donuts_soul/
+  # broadcast for those; if the crest-factor risk above ever actually bites
+  # (quality-gate reject, not just "close to the floor"), that's the signal
+  # DILLA_STYLE_DEFAULTS' donuts_warm choice needs revisiting too.
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
@@ -9059,6 +9090,81 @@ def default_render!(argv = ARGV)
   else
     render_dilla(dest, n_bars)
   end
+end
+
+# Bare `ruby dilla.rb` (no args, no options) used to mean "continuous live
+# stream" -- a `stream()` infinite loop needing afplay/ffplay to real
+# speakers, which never terminates and can't run headless/over SSH. Sensible
+# default instead: render a short demo.wav that actually showcases the
+# engine's range (every named TRACK_PRESETS style, a few bars each,
+# concatenated), matching "convention over configuration" -- no ENV knobs
+# required to get a real, finite result. `ruby dilla.rb stream` still gives
+# the old continuous behavior explicitly for anyone at a machine with speakers.
+MEDLEY_DEFAULT_BARS = 4
+
+def medley_styles
+  list = if ENV["MEDLEY_STYLES"] && !ENV["MEDLEY_STYLES"].to_s.strip.empty?
+           ENV["MEDLEY_STYLES"].split(",").map(&:strip).reject(&:empty?)
+         else
+           TRACK_PRESETS.keys.map(&:to_s)
+         end
+  limit = ENV["MEDLEY_LIMIT"]&.to_i
+  limit && limit.positive? ? list.first(limit) : list
+end
+
+# Each style renders in its own subprocess (mirrors .all_tracks_demo/fill_holes.rb
+# and stream()'s own exec-per-track pattern) -- dilla.rb mutates a lot of
+# process-global ENV/state per render that isn't guaranteed to reset cleanly
+# for a second render in the same process; a fresh interpreter per style sidesteps
+# that entirely instead of auditing every mutation site for safety.
+def showcase_demo!(dest = File.join(ROOT, "demo.wav"))
+  bars = (ENV["MEDLEY_BARS"] || MEDLEY_DEFAULT_BARS.to_s).to_i.clamp(1, 64)
+  styles = medley_styles
+  dmesg("showcase: #{styles.length} styles x #{bars} bars -> #{File.basename(dest)}", unit: "demo0", parent: "dilla0")
+  parts = []
+  Dir.mktmpdir("dilla_medley") do |tmp|
+    styles.each_with_index do |style, i|
+      part = File.join(tmp, format("%03d_%s.wav", i, style))
+      env = {
+        "PATH" => ENV["PATH"], "HOME" => ENV["HOME"],
+        "SPEAK" => "0", "RAP_VOCAL" => "0", "CHOIR_VOX" => "0", "SELF_SAMPLE" => "0",
+        "STREAM_CONTINUOUS" => "0", "DILLA_STREAMING" => "0",
+        "TRACK" => style, "PROGRESSION" => style, "BARS" => bars.to_s,
+      }
+      dmesg("showcase [#{i + 1}/#{styles.length}] #{style}", unit: "demo0", parent: "dilla0")
+      rendered = false
+      timed_out = false
+      begin
+        Timeout.timeout(ENV.fetch("MEDLEY_TRACK_TIMEOUT", "180").to_i) do
+          _out, status = Open3.capture2e(env, Gem.ruby, __FILE__, "dilla", part, bars.to_s)
+          rendered = status.success? && File.file?(part) && File.size(part) > 50_000
+        end
+      rescue Timeout::Error
+        timed_out = true
+        dmesg_warn("showcase: #{style} timed out, skipping")
+        system("pkill", "-9", "-f", "dilla.rb dilla .*#{Regexp.escape(part)}", out: File::NULL, err: File::NULL)
+      end
+      if rendered
+        parts << part
+      elsif !timed_out
+        dmesg_warn("showcase: #{style} produced no usable audio, skipping")
+      end
+    end
+
+    if parts.empty?
+      dmesg_warn("showcase: no styles rendered successfully")
+      return false
+    end
+
+    list_file = File.join(tmp, "concat.txt")
+    File.write(list_file, parts.map { |p| "file #{Shellwords.escape(p)}" }.join("\n"))
+    FileUtils.mkdir_p(File.dirname(dest))
+    system("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_file, "-c", "copy", dest,
+           out: File::NULL, err: File::NULL)
+  end
+  ok = File.file?(dest) && File.size(dest) > 0
+  dmesg(ok ? "showcase: wrote #{dest} (#{parts.length}/#{styles.length} styles)" : "showcase: failed", unit: "demo0", parent: "dilla0")
+  ok
 end
 
 def stream_play_track!(bars_count)
@@ -13325,6 +13431,15 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     comp_note = ", performer=#{s.performer}/#{s.groove_dna} gen=#{s.generation}"
   end
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note}#{comp_note})"
+ensure
+  # The call at the TOP of this method only clears ITS OWN pid's leftovers
+  # from a *previous* call in the same long-lived process (stream()'s loop);
+  # it never fires for a fresh one-shot process, since a new pid has no
+  # scratch yet at start. Without this, every subprocess-per-render caller
+  # (showcase_demo!, .all_tracks_demo/fill_holes.rb) leaked its own
+  # .dilla_harmonic.<pid>.wav.*/.dilla_drums.<pid>.wav scratch forever --
+  # `ensure` so it still fires if this method raises partway through.
+  cleanup_render_scratch!
 end
 
 def industrial_techno_section(bar)
@@ -15971,13 +16086,13 @@ if __FILE__ == $PROGRAM_NAME
   end
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: continuous stream — one DNA, rotating progressions + drums.
-    normalize_render_mode!
-    ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
-    ENV["STREAM_SOUL"] = "1" if ENV["STREAM_SOUL"].to_s.empty?
-    ENV["STREAM_CONTINUOUS"] = "1" if ENV["STREAM_CONTINUOUS"].to_s.empty?
-    apply_dilla_style!(force: false)
-    stream((ENV["BARS"] || ENV["STREAM_BARS"] || "16").to_i)
+    # Bare invoke: render demo.wav showcasing every named style/progression,
+    # a few bars each. Used to default to stream() (an infinite live-playback
+    # loop needing afplay/ffplay + real speakers) -- that's still available
+    # explicitly via `ruby dilla.rb stream`, but convention-over-configuration
+    # means the zero-args path should finish and produce a real file, runnable
+    # headless/over SSH, not hang forever waiting on an audio device.
+    showcase_demo!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!
