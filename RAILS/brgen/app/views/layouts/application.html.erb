@@ -51,9 +51,7 @@
           reapplies the same value on connect). %>
       <script src="/theme_boot.js"></script>
       <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-          <path d="M12 3a1 1 0 0 1 1 1v1.06a7 7 0 0 1 5.94 5.94H20a1 1 0 1 1 0 2h-1.06A7 7 0 0 1 13 18.94V20a1 1 0 1 1-2 0v-1.06A7 7 0 0 1 5.06 13H4a1 1 0 1 1 0-2h1.06A7 7 0 0 1 11 5.06V4a1 1 0 0 1 1-1zm0 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
-        </svg>
+        <%= x_icon :sun, size: 20 %>
       </label>
     </div>
   <% end %>
@@ -104,38 +102,38 @@
         <nav role="navigation" data-turbo-permanent aria-label="Primary navigation">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM19 19.5a.5.5 0 01-.5.5H15v-6a1 1 0 00-1-1h-4a1 1 0 00-1 1v6H5.5a.5.5 0 01-.5-.5V8.429l7-4.375 7 4.375V19.5z"/></svg>
+            <%= x_icon :home, size: 26 %>
             <span>Home</span>
           <% end %>
           <%= render "shared/ai_nav_link" %>
           <%= link_to communities_path, class: nav_cls.(communities_path) do %>
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5 4.694 0 8.5 3.806 8.5 8.5 0 1.986-.682 3.815-1.814 5.262l4.776 4.776-1.414 1.414-4.776-4.776A8.461 8.461 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
+            <%= x_icon :explore, size: 26 %>
             <span>Explore</span>
           <% end %>
           <%= link_to global_search_path, class: nav_cls.(global_search_path) do %>
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M10.25 3.75a7.25 7.25 0 105.66 5.66l4.1 4.1 1.06-1.06-4.1-4.1A7.25 7.25 0 0010.25 3.75zm0 1.5a5.75 5.75 0 110 11.5 5.75 5.75 0 010-11.5z"/></svg>
+            <%= x_icon :search, size: 26 %>
             <span>Search</span>
           <% end %>
           <%= link_to notifications_path, class: nav_cls.(notifications_path) do %>
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.521 3.51 7.521 8 0 4.42-3.584 8-8.005 8h-1.061l-.503.501c-.854.854-1.993 1.374-3.249 1.414l-1.82.055.055-1.82c.04-1.256.56-2.395 1.414-3.249l.501-.503V10zm8.005-6c-3.317 0-6.005 2.686-6.005 6v1.957l-.494.494A3.95 3.95 0 002.093 15H2.05l-.03 1.002 1.001-.03.066-.002c.793-.024 1.52-.36 2.049-.889l.494-.494H7.756c3.317 0 6.005-2.686 6.005-6s-2.688-6-6.005-6z"/></svg>
+            <%= x_icon :notifications, size: 26 %>
             <span>Notifications</span>
           <% end %>
           <%= link_to conversations_path, class: nav_cls.(conversations_path) do %>
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5V18c0 1.381-1.119 2.5-2.5 2.5H9.72l-4.938 2.914A1.25 1.25 0 013 22.33V18h-.5c-.932 0-1.75-.643-1.952-1.556A2.507 2.507 0 011.998 16V5.5zm2.5-.5a.5.5 0 00-.5.5V16h2v5.498l4.062-2.396.22-.102H19.498a.5.5 0 00.5-.5V5.5a.5.5 0 00-.5-.5h-15z"/></svg>
+            <%= x_icon :messages, size: 26 %>
             <span>Messages</span>
           <% end %>
           <%= link_to nearby_path, class: nav_cls.(nearby_path) do %>
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <%= x_icon :nearby, size: 26 %>
             <span>Nearby</span>
           <% end %>
           <% if authenticated? %>
             <%= link_to user_path(Current.user), class: nav_cls.(user_path(Current.user)) do %>
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M5.5 4.5a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zM2 19.25c0-2.9 3.6-5.25 8-5.25s8 2.35 8 5.25V21H2v-1.75z"/></svg>
+              <%= x_icon :profile, size: 26 %>
               <span>Profile</span>
             <% end %>
           <% else %>
             <%= link_to new_session_path, class: nav_cls.(new_session_path) do %>
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M13.91 8.41L15.32 7 21 12.68l-5.68 5.68-1.41-1.41 3.26-3.27H3v-2h14.17l-3.26-3.27z"/></svg>
+              <%= x_icon :sign_in, size: 26 %>
               <span>Sign in</span>
             <% end %>
           <% end %>
@@ -152,7 +150,7 @@
           </div>
         <% end %>
         <a href="<%= new_post_path %>" class="compose-btn">
-          <svg class="compose-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          <%= x_icon :compose, size: 22, css_class: "compose-icon" %>
           <span class="compose-label">Post</span>
         </a>
       </aside>
@@ -188,7 +186,7 @@
               data-action="click->edge-swiper#toggle" aria-label="Show widgets" aria-expanded="false"></button>
       <aside class="widgets" aria-label="Widgets" data-edge-swiper-target="root">
         <%= form_with url: global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
-          <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5 4.694 0 8.5 3.806 8.5 8.5 0 1.986-.682 3.815-1.814 5.262l4.776 4.776-1.414 1.414-4.776-4.776A8.461 8.461 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
+          <%= x_icon :search, size: 19 %>
           <%= form.search_field :q, value: params[:q], placeholder: "Search Brgen", aria: { label: "Search Brgen" } %>
           <%= form.submit "Search", class: "visually-hidden" %>
         <% end %>
@@ -201,23 +199,23 @@
 
     <nav role="navigation" class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
       <%= link_to root_path, class: "tab-item", aria: { label: "Home", current: current_page?(root_path) ? "page" : nil } do %>
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696z"/></svg>
+        <%= x_icon :home, size: 26 %>
       <% end %>
       <%= link_to communities_path, class: "tab-item", aria: { label: "Explore communities", current: current_page?(communities_path) ? "page" : nil } do %>
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5 4.694 0 8.5 3.806 8.5 8.5 0 1.986-.682 3.815-1.814 5.262l4.776 4.776-1.414 1.414-4.776-4.776A8.461 8.461 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
+        <%= x_icon :explore, size: 26 %>
       <% end %>
       <%= render "shared/ai_nav_link", class_name: "tab-item", show_label: false %>
       <%= link_to conversations_path, class: "tab-item", aria: { label: "Messages", current: current_page?(conversations_path) ? "page" : nil } do %>
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5V16c0 1.381-1.119 2.5-2.5 2.5H4.498v.83A1.25 1.25 0 012.25 20.33V5.5z"/></svg>
+        <%= x_icon :messages, size: 26 %>
       <% end %>
       <%= link_to nearby_path, class: "tab-item", aria: { label: "Nearby", current: current_page?(nearby_path) ? "page" : nil } do %>
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <%= x_icon :nearby, size: 26 %>
       <% end %>
       <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M4 7h16v2H4zm0 8h16v2H4zm0-4h16v2H4z"/></svg>
+        <%= x_icon :menu, size: 26 %>
       </button>
       <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2zM4 11h16v2H4z"/></svg>
+        <%= x_icon :compose, size: 24 %>
       <% end %>
     </nav>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>

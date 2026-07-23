@@ -15,8 +15,8 @@ module Shared
       "local" => "📍",
     }.freeze
 
-    def x_icon(name, size: 18)
-      render(partial: "shared/x_icon", locals: { name: name.to_sym, size: size })
+    def x_icon(name, size: 18, css_class: nil)
+      render(partial: "shared/x_icon", locals: { name: name.to_sym, size: size, css_class: css_class })
     end
 
     def x_reaction_glyph(kind)

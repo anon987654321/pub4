@@ -22,10 +22,10 @@
         <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
       </div>
       <div class="compose-actions">
-        <button type="button" class="compose-action" title="Add photo" disabled>📷</button>
-        <button type="button" class="compose-action" title="Poll" disabled>📊</button>
-        <button type="button" class="compose-action" title="Emoji" disabled>😊</button>
-        <button type="button" class="compose-action" title="Location" disabled>📍</button>
+        <button type="button" class="compose-action" title="Add photo" disabled><%= x_icon :camera, size: 18 %></button>
+        <button type="button" class="compose-action" title="Poll" disabled><%= x_icon :chart, size: 18 %></button>
+        <button type="button" class="compose-action" title="Emoji" disabled><%= x_icon :smile, size: 18 %></button>
+        <button type="button" class="compose-action" title="Location" disabled><%= x_icon :nearby, size: 18 %></button>
       </div>
       <div class="compose-submit">
         <% if guest? %>
