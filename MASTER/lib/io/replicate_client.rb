@@ -5,6 +5,7 @@ require "net/http"
 require "uri"
 require_relative "replicate_client/asset_transfer"
 require_relative "replicate_client/training"
+require_relative "../ground/failure_taxonomy"
 
 module Master
   module Io
@@ -167,7 +168,7 @@ module Master
             raise "Replicate API #{code}: #{res.body}"
           rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
             last_error = e.message
-            sleep(2**attempt) if attempt < attempts - 1
+            sleep(Master::Ground::FailureTaxonomy.backoff_seconds(attempt)) if attempt < attempts - 1
           end
         end
         raise last_error

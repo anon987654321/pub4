@@ -40,7 +40,12 @@ module Master
         attempt < info[:max_retries].to_i
       end
 
-      def backoff_seconds(attempt)
+      def backoff_seconds(attempt) = self.class.backoff_seconds(attempt)
+
+      # Class-level so callers that just want the capped exponential formula
+      # (e.g. Io::ReplicateClient's HTTP retry loop) don't need to instantiate
+      # a full FailureTaxonomy (which loads rules.yml) just for this.
+      def self.backoff_seconds(attempt)
         [2**attempt, 60].min
       end
 
