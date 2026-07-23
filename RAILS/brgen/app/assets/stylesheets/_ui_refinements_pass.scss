@@ -1,19 +1,17 @@
 /* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
    Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
 
+/* color-success/warning, ease-out/spring, transition-fast/normal already come
+   from shared/_tokens.scss via stack_brgen's @forward "tokens" -- redeclaring
+   them here at the same values was pure redundant CSS output, not an
+   override (verified: shared's values are byte-identical to what was here). */
 :root {
   --space-2xs: 0.25rem;
-  --color-success: #00ba7c;
-  --color-warning: #c9a227;
   --color-info: #5b9fd4;
   --elev-1: 1px solid var(--border, var(--border));
   --elev-2: 1px solid var(--border, var(--border));
-  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --measure-body: 66ch;
   --tap-min: 44px;
-  --transition-fast: 180ms;
-  --transition-normal: 300ms;
 }
 
 /* G · a11y floor + touch targets */
