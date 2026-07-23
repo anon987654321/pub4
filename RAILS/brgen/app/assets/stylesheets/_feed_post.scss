@@ -124,6 +124,45 @@
   height: 1.125rem;
 }
 
+/* "More actions" dropdown -- real menu instead of a dead tooltip stub.
+   Ported concept from the real 2014 desktop.css .overflow_panel (a
+   triangle-arrow submenu off the post's more-trigger); this is the modern
+   equivalent, using the same dropdown pattern as the sidebar's own
+   More menu rather than reintroducing a bespoke CSS-triangle popover. */
+.feed-action-menu {
+  position: relative;
+  display: inline-flex;
+}
+.feed-action-menu-list {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: calc(100% + var(--space-2));
+  display: grid;
+  gap: var(--space-1);
+  min-width: 10rem;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  z-index: var(--z-ui, 90);
+}
+.feed-action-menu-list a,
+.feed-action-menu-list button {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: none;
+  border-radius: var(--radius-xs);
+  color: inherit;
+  text-decoration: none;
+  text-align: start;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.feed-action-menu-list a:hover,
+.feed-action-menu-list button:hover { background: var(--hover); }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
