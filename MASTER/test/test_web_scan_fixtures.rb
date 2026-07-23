@@ -4,23 +4,6 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 
 class TestWebScanFixtures < Minitest::Test
-  def rule(id)
-    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      instance = klass.new
-      instance if instance.id == id
-    rescue ArgumentError
-      nil
-    end
-    candidates.first || flunk("missing rule #{id}")
-  end
-
-  def assert_finding(rule, code, path, message)
-    findings = rule.check(code, path:)
-    refute_empty findings
-    assert findings.any? { |finding| finding[:message].include?(message) },
-      "expected #{rule.id} containing #{message.inspect}, got #{findings.inspect}"
-  end
-
   def test_html_lang_flags_missing_lang
     assert_finding rule("HTML_LANG"), "<html><body></body></html>", "page.html", "lang="
   end

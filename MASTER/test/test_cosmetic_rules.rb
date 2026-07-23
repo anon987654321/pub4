@@ -4,16 +4,6 @@ require_relative "test_helper"
 require "review/scan/rule_dsl"
 
 class TestCosmeticRules < Minitest::Test
-  def rule(id)
-    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      instance = klass.new
-      instance if instance.id == id
-    rescue ArgumentError
-      nil
-    end
-    candidates.first || flunk("missing rule #{id}")
-  end
-
   def test_ruby_snake_methods_flags_camel_case
     findings = rule("RUBY_SNAKE_METHODS").check("def fetchAlbum\nend\n", path: "lib/foo.rb")
     refute_empty findings

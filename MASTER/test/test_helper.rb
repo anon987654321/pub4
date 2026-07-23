@@ -41,4 +41,25 @@ Minitest::Test.class_eval do
     Master.install_hash_dig_compat!
     super
   end
+
+  # Shared by every scan-rule test (test_cosmetic_rules, test_web_rules,
+  # test_web_scan_fixtures, test_scan_rule_contracts) -- was copy-pasted
+  # byte-identical in all four before this hoist.
+  def rule(id, path: nil)
+    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
+      instance = klass.new
+      instance if instance.id == id
+    rescue ArgumentError
+      nil
+    end
+    candidates.first || flunk("missing rule #{id}")
+  end
+
+  def assert_finding(rule, code, path, message)
+    findings = rule.check(code, path:)
+
+    refute_empty findings
+    assert findings.any? { |finding| finding[:message].include?(message) },
+      "expected #{rule.id} finding containing #{message.inspect}, got #{findings.inspect}"
+  end
 end

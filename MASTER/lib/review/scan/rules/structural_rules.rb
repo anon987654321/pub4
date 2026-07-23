@@ -46,13 +46,6 @@ module Master
             @auto_fix = false
           end
 
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
-          end
-
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
@@ -87,13 +80,6 @@ module Master
             @severity = :error
             @rule_tags = %i[SOLID SRP]
             @auto_fix = false
-          end
-
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
           end
 
           def check_ast(ast, _code, path:)
@@ -161,13 +147,6 @@ module Master
             @auto_fix = false
           end
 
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
-          end
-
           def check_ast(ast, _code, path:)
             return [] unless ast
             deep = []
@@ -198,13 +177,6 @@ module Master
             @severity = :warning
             @rule_tags = %i[CQS CLEAN_CODE]
             @auto_fix = false
-          end
-
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
           end
 
           def check_ast(ast, _code, path:)
@@ -264,13 +236,6 @@ module Master
             @auto_fix = false
           end
 
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
-          end
-
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
@@ -309,13 +274,6 @@ module Master
             @severity = :warning
             @rule_tags = %i[SOLID LSP]
             @auto_fix = false
-          end
-
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
           end
 
           def check_ast(ast, _code, path:)
@@ -390,13 +348,6 @@ module Master
             @auto_fix = false
           end
 
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
-          end
-
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
@@ -443,13 +394,6 @@ module Master
             @severity = :warning
             @rule_tags = %i[SOLID ISP]
             @auto_fix = false
-          end
-
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
           end
 
           def check_ast(ast, _code, path:)

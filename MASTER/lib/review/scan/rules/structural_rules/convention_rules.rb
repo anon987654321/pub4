@@ -89,13 +89,6 @@ module Master
             @auto_fix = false
           end
 
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
-          end
-
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
@@ -136,13 +129,6 @@ module Master
             @severity = :info
             @rule_tags = %i[DESIGN OPPORTUNITY]
             @auto_fix = false
-          end
-
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
           end
 
           def check_ast(ast, code, path:)
@@ -207,13 +193,6 @@ module Master
             @severity = :info
             @rule_tags = %i[SRP SOLID]
             @auto_fix = false
-          end
-
-          def check(code, path:)
-            return [] unless path.to_s.end_with?(".rb", ".rake")
-            check_ast(Prism.parse(code).value, code, path:)
-          rescue StandardError
-            []
           end
 
           def check_ast(ast, _code, path:)

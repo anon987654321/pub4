@@ -139,24 +139,4 @@ class TestScanRuleContracts < Minitest::Test
     assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: good)
     assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: File.join(Master::ROOT, "data", "skills", "README.md"))
   end
-
-  private
-
-  def rule(id, path: nil)
-    candidates = Master::Review::Scan::Rule.registry.filter_map do |klass|
-      instance = klass.new
-      instance if instance.id == id
-    rescue ArgumentError
-      nil
-    end
-    candidates.first || flunk("missing rule #{id}")
-  end
-
-  def assert_finding(rule, code, path, message)
-    findings = rule.check(code, path:)
-
-    refute_empty findings
-    assert findings.any? { |finding| finding[:message].include?(message) },
-      "expected #{rule.id} finding containing #{message.inspect}, got #{findings.inspect}"
-  end
 end
