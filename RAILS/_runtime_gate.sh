@@ -48,27 +48,33 @@ rails_runtime_gate() {
   if [[ -n $app_name ]]; then
     local secret
     secret=$(app_secret_for "$app_name")
+    deploy_status "$app_name" "runtime gate: bundle install"
     run_rails_as_app "$app_name" "$app_dir" \
       "bundle34 config unset without && bundle34 install --jobs=2" \
-      || { log_err "ci bundle install failed"; return 1; }
+      || { deploy_status "$app_name" "runtime gate: bundle install" "failed"; log_err "ci bundle install failed"; return 1; }
+    deploy_status "$app_name" "runtime gate: bundle check"
     run_rails_as_app "$app_name" "$app_dir" bundle34 check \
-      || { log_err "bundle check failed"; return 1; }
+      || { deploy_status "$app_name" "runtime gate: bundle check" "failed"; log_err "bundle check failed"; return 1; }
+    deploy_status "$app_name" "runtime gate: db:prepare"
     run_rails_as_app "$app_name" "$app_dir" \
       "SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails db:prepare" \
-      || { log_err "db:prepare failed"; return 1; }
+      || { deploy_status "$app_name" "runtime gate: db:prepare" "failed"; log_err "db:prepare failed"; return 1; }
+    deploy_status "$app_name" "runtime gate: secondary dbs"
     rails_prepare_secondary_dbs_as_app "$app_name" "$app_dir" \
-      || return 1
+      || { deploy_status "$app_name" "runtime gate: secondary dbs" "failed"; return 1; }
+    deploy_status "$app_name" "runtime gate: assets precompile"
     rails_assets_precompile_as_app "$app_name" "$app_dir" \
-      || return 1
+      || { deploy_status "$app_name" "runtime gate: assets precompile" "failed"; return 1; }
     if [[ -x ${app_dir}/bin/ci ]]; then
       local rails_tree=${PUB4_RAILS_ROOT:-/home/dev/pub4/RAILS}
       if [[ -d $rails_tree ]]; then
         chmod o+x /home/dev 2>/dev/null || true
         chmod -R a+rX "$rails_tree" 2>/dev/null || true
       fi
+      deploy_status "$app_name" "runtime gate: bin/ci"
       run_rails_as_app "$app_name" "$app_dir" \
         "SECRET_KEY_BASE=${secret} PUB4_RAILS_ROOT=${rails_tree} RAILS_ENV=test CI=1 PUB4_CI_GUARD=1 bundle34 exec bin/ci" \
-        || { log_err "bin/ci failed"; return 1; }
+        || { deploy_status "$app_name" "runtime gate: bin/ci" "failed"; log_err "bin/ci failed"; return 1; }
     fi
   else
     (cd "$app_dir" && bundle_exec check) || { log_err "bundle check failed"; return 1; }

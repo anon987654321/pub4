@@ -44,6 +44,36 @@ rescue StandardError
   nil
 end
 
+# In-progress deploy status (RAILS/_core.sh's deploy_status, written by both
+# the SKIP_CI=1 path and vps_ci.sh). "running" with a pid that no longer
+# exists means a deploy died mid-step rather than finishing -- surface that
+# distinctly from a genuinely live one so it doesn't read as still-in-flight.
+def deploy_in_progress(app)
+  path = File.join(STAMP_DIR, "deploy_status", "#{app}.json")
+  return nil unless File.file?(path)
+
+  status = JSON.parse(File.read(path))
+  return nil if status["state"] != "running"
+
+  status["stale"] = !pid_alive?(status["pid"])
+  status
+rescue StandardError
+  nil
+end
+
+def pid_alive?(pid)
+  return false unless pid
+
+  Process.kill(0, pid.to_i)
+  true
+rescue Errno::ESRCH
+  false
+rescue Errno::EPERM
+  true # exists, just owned by another user (e.g. root vs. dev)
+rescue StandardError
+  false
+end
+
 def app_row(name, port)
   dev_sha = git_short(ROOT)
   deployed_root = Pub4::Environment.deployed_app_root(name)
@@ -63,7 +93,15 @@ def app_row(name, port)
     port: port,
     port_state: port_listening?(port),
     last_deploy: deploy_stamp(name),
+    deploy_in_progress: deploy_in_progress(name),
   }
+end
+
+def print_deploy_in_progress(status)
+  return unless status
+
+  flag = status["stale"] ? "STALE (pid #{status['pid']} gone -- deploy likely crashed mid-step)" : "pid #{status['pid']}"
+  puts "           DEPLOY IN PROGRESS: #{status['step']} (since #{status['started_at']}, #{flag})"
 end
 
 unless Pub4::Environment.on_vps?
@@ -83,6 +121,7 @@ payload = {
     port: Integer(ENV.fetch("MASTER_WEB_PORT", "53187")),
     port_state: port_listening?(Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))),
     last_deploy: deploy_stamp("master"),
+    deploy_in_progress: deploy_in_progress("master"),
   },
   apps: APPS.map { |name| app_row(name, ports.fetch(name)) },
 }
@@ -95,6 +134,7 @@ else
   puts
   m = payload[:master]
   puts format("master%-10s service=%-8s port :%-5s %-9s", "", m[:service], m[:port], m[:port_state])
+  print_deploy_in_progress(m[:deploy_in_progress])
   puts
   payload[:apps].each do |row|
     drift = row[:drift] ? "DRIFT" : "sync"
@@ -103,6 +143,7 @@ else
     if row[:last_deploy]
       puts "           last_deploy: #{row[:last_deploy]['sha']} @ #{row[:last_deploy]['at']}"
     end
+    print_deploy_in_progress(row[:deploy_in_progress])
   end
   puts
   puts "note: dev SHA != deployed SHA until zsh OPENBSD/vps_ci.sh <app> runs"

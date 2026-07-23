@@ -75,6 +75,15 @@ shed=0
 if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
 if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 
+# Load-history log: LOAD_WARN/LOAD_CRIT above were set from a single evening's
+# observation (itself skewed high by concurrent deploys/agent activity, not a
+# calm baseline) -- recalibrating them again by guesswork would repeat the
+# same mistake. This gives a real dataset (`awk '{print $4}' | sort -n` etc.)
+# to recalibrate from once enough ticks have accumulated. One line/5min ==
+# ~2000 lines/week; rotated weekly via newsyslog (OPENBSD/etc/newsyslog.conf).
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed" \
+  >> /var/log/resource_guard_history.log 2>/dev/null || true
+
 if [[ -f $ALL_APPS_FLAG ]]; then
   exit 0
 fi

@@ -11,6 +11,12 @@ app_dir=/home/${app}/app
 shared_dir=/home/${app}/shared
 [[ -d $app_dir ]] || { print -u2 "missing $app_dir"; exit 1 }
 
+# deploy_status (from RAILS/_core.sh) -- same in-progress status file the
+# SKIP_CI=1 path (_deploy.sh/_runtime_gate.sh) writes, so `bin/vps-state`
+# is one place to check regardless of which deploy path is running.
+[[ -f ${repo}/RAILS/_core.sh ]] && . "${repo}/RAILS/_core.sh"
+command -v deploy_status >/dev/null 2>&1 || deploy_status() { :; }
+
 export PUB4_CI_GUARD=1
 export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 
@@ -75,12 +81,15 @@ sync_from_repo() {
 npm_cache=/home/${app}/.npm
 cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
+deploy_status "$app" "sync tree"
 sync_from_repo
 ensure_ci_lock
 ci_rails_root=/home/${app}/pub4-rails/RAILS
 doas chmod o+x /home/dev 2>/dev/null || true
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true
-doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'"
+deploy_status "$app" "bundle install + bin/ci"
+doas sh -c "su -m ${app} -c 'export HOME=/home/${app}; export PUB4_ROOT=${repo}; export PUB4_CI_GUARD=1; export PUB4_CI_APP=${app}; export PUB4_RAILS_ROOT=${ci_rails_root}; export NPM_CONFIG_CACHE=${npm_cache}; export XDG_CACHE_HOME=${cache_home}; export BUNDLE_USER_HOME=/home/${app}/.bundle; cd ${app_dir} && bundle34 config unset without 2>/dev/null || true && bundle34 config unset deployment 2>/dev/null || true && bundle34 install --jobs=2 && bundle34 exec bin/ci'" \
+  || { deploy_status "$app" "bundle install + bin/ci" "failed"; exit 1; }
 
 sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null || echo unknown)
 started=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -88,3 +97,4 @@ doas mkdir -p /var/db/pub4 2>/dev/null || true
 doas tee "/var/db/pub4/last_deploy_${app}.json" >/dev/null <<EOF
 {"app":"${app}","sha":"${sha}","at":"${started}","status":"ci_ok","host":"$(hostname)"}
 EOF
+deploy_status "$app" "done" "done"

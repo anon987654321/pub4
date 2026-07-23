@@ -25,3 +25,22 @@ need_cmd() {
     log_ok "$cmd found"
   done
 }
+
+# deploy_status APP_NAME STEP [STATE] — single source of truth for "is a
+# deploy running right now and what step is it on." Before this, the only way
+# to tell a live deploy apart from a hung/crashed process was ps/rcctl
+# archaeology (grepping for db:schema:load, bin/ci, etc. and guessing from
+# elapsed CPU time). STATE defaults to "running"; pass "done" or "failed" to
+# close out the run. One file per app (not one shared file) so concurrent
+# deploys of different apps don't clobber each other's state.
+# Read with: cat /var/db/pub4/deploy_status/<app>.json (or `bin/vps-state`).
+DEPLOY_STATUS_DIR=/var/db/pub4/deploy_status
+deploy_status() {
+  local app=$1 step=$2 state=${3:-running}
+  local now
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  DEPLOY_STATUS_STARTED_AT=${DEPLOY_STATUS_STARTED_AT:-$now}
+  ${_PRIV} mkdir -p "$DEPLOY_STATUS_DIR" 2>/dev/null || true
+  print -- "{\"app\":\"${app}\",\"step\":\"${step}\",\"state\":\"${state}\",\"pid\":$$,\"started_at\":\"${DEPLOY_STATUS_STARTED_AT}\",\"updated_at\":\"${now}\"}" \
+    | ${_PRIV} tee "${DEPLOY_STATUS_DIR}/${app}.json" >/dev/null 2>&1 || true
+}

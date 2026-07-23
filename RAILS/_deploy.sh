@@ -26,6 +26,7 @@ deploy_tracked_app() {
   [[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1; }
 
   log "${app_name} — deploying tracked tree → ${APP_DIR}"
+  deploy_status "$app_name" "sync tree"
 
   id "$app_name" >/dev/null 2>&1 || doas useradd -m -L daemon -s /bin/ksh "$app_name"
   doas mkdir -p "$APP_DIR"
@@ -42,8 +43,10 @@ deploy_tracked_app() {
   fi
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
 
+  deploy_status "$app_name" "master scan"
   if ! master_scan_dep "$app_name"; then
     log "MASTER scan violations — aborting per rules.yml"
+    deploy_status "$app_name" "master scan" "failed"
     exit 1
   fi
 
@@ -73,6 +76,7 @@ deploy_tracked_app() {
   print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
   doas chown -R "${app_name}:${app_name}" "${APP_DIR}/.bundle"
 
+  deploy_status "$app_name" "bundle install"
   bundle_install_as_app "$APP_NAME" "$APP_DIR"
   log_ok "production bundle installed for ${app_name}"
   migrate_sqlite_db_to_storage_if_needed "$APP_NAME" "$APP_DIR"
@@ -81,7 +85,8 @@ deploy_tracked_app() {
   # which silently swallowed every deploy's runtime gate (precompile + bin/ci)
   # behind it -- this app_name may not have a running service yet on first deploy.
   doas rcctl stop "$app_name" 2>/dev/null || true
-  db_create_migrate_as_app "$APP_NAME" "$APP_DIR" || exit 1
+  deploy_status "$app_name" "db migrate"
+  db_create_migrate_as_app "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "db migrate" "failed"; exit 1; }
   log_ok "database migrated for ${app_name}"
   if [[ -f ${APP_DIR}/db/seeds.rb && ${SEED_ON_DEPLOY:-} == 1 ]]; then
     db_seed_as_app "$APP_NAME" "$APP_DIR"
@@ -90,17 +95,20 @@ deploy_tracked_app() {
   install_rcd "$APP_NAME" "$APP_DIR" "$APP_PORT" "$APP_NAME"
   [[ -n $APP_DOMAIN ]] && relayd_add_relay "$APP_DOMAIN" "$APP_PORT"
 
-  rails_runtime_gate "$APP_NAME" "$APP_DIR" || exit 1
+  rails_runtime_gate "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "runtime gate" "failed"; exit 1; }
   if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
+    deploy_status "$app_name" "demo seed"
     if [[ $app_name == brgen ]]; then
       seed_bergen_demo_as_app "$APP_DIR"
     elif [[ $app_name == amber ]]; then
       seed_amber_demo_as_app "$APP_DIR"
     fi
   fi
+  deploy_status "$app_name" "restart"
   doas rcctl restart "$APP_NAME" || doas rcctl start "$APP_NAME"
   if [[ $app_name == brgen ]]; then
     warm_brgen_after_restart "$APP_PORT"
   fi
+  deploy_status "$app_name" "done" "done"
   log_ok "$APP_NAME live on :$APP_PORT"
 }
