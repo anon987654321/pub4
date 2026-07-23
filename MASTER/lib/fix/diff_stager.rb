@@ -3,6 +3,7 @@
 require "diffy"
 require "fileutils"
 require "json"
+require "time"
 
 module Master
   module Fix
@@ -29,6 +30,7 @@ module Master
         @mutex = Mutex.new
         @pending = []
         @counter = 0
+        load_persisted!
       end
 
       def stage(path:, new_content:, tool: "unknown")
@@ -136,12 +138,39 @@ module Master
           File.join(stage_dir, "#{entry.id}.json"),
           JSON.generate({
             id: entry.id, path: entry.path, tool: entry.tool,
+            old_content: entry.old_content, new_content: entry.new_content,
             created_at: entry.created_at.iso8601,
             stats: entry.diff_stats
           }),
         )
       rescue StandardError => e
         @bus&.publish("diff_stager:persist_error", error: e.message)
+      end
+
+      # Restores @pending from .master/pending/*.json sidecars written by a
+      # prior process, so staged-but-not-yet-applied/discarded edits survive
+      # a restart instead of silently vanishing from `pending`/`size` while
+      # their sidecar files remain on disk forever.
+      def load_persisted!
+        return unless Dir.exist?(stage_dir)
+
+        loaded = Dir.glob(File.join(stage_dir, "*.json")).filter_map { |f| load_entry(f) }
+        return if loaded.empty?
+
+        @pending = loaded.sort_by(&:id)
+        @counter = @pending.map(&:id).max
+      end
+
+      def load_entry(path)
+        data = JSON.parse(File.read(path), symbolize_names: true)
+        Entry.new(
+          id: data[:id], path: data[:path], tool: data[:tool],
+          old_content: data[:old_content], new_content: data[:new_content],
+          created_at: Time.parse(data[:created_at]),
+        )
+      rescue StandardError => e
+        @bus&.publish("diff_stager:load_error", path:, error: e.message)
+        nil
       end
 
       def remove_persisted(entry)
