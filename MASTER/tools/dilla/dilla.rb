@@ -2567,6 +2567,32 @@ def generate_coltrane_changes(root_hz:, length: 8, seed: nil)
   end
 end
 
+# Tritone substitution: a dominant (V7) shares its tritone (3rd+7th) with
+# the dominant chord a tritone (6 semitones) away, so replacing one for the
+# other keeps the same pull toward resolution while the bass moves
+# chromatically into the tonic instead of by a 4th/5th. Real, well-defined
+# jazz theory (not a producer's signature move) -- substitutes at degree 5
+# with sub_chance, same functional-motion engine as generate_progression.
+def generate_tritone_sub_progression(root_hz:, mode: :minor, length: 8, seed: nil, sub_chance: 0.45)
+  rng = seed ? Random.new(seed) : Random.new
+  semitones = SCALE_SEMITONES.fetch(mode)
+  quality_for = SCALE_DEGREE_QUALITY.fetch(mode)
+  degree = 1
+  Array.new(length) do
+    substituted = degree == 5 && rng.rand < sub_chance
+    chord_root = if substituted
+                   root_hz * (2**((semitones[(degree - 1) % 7] + 6) / 12.0))
+                 else
+                   root_hz * (2**(semitones[(degree - 1) % 7] / 12.0))
+                 end
+    quality = substituted ? "7" : quality_for.fetch(degree, "m9")
+    label = substituted ? "trisub#{degree}7" : "deg#{degree}#{quality}"
+    chord = { name: label, hz: chord_from_quality(chord_root, quality) }
+    degree = weighted_pick(rng, DEGREE_TRANSITIONS.fetch(degree, { 1 => 1 }))
+    chord
+  end
+end
+
 def generate_backdoor_progression(root_hz:, mode: :minor, length: 8, seed: nil)
   rng = seed ? Random.new(seed) : Random.new
   semitones = SCALE_SEMITONES.fetch(mode)
@@ -4630,6 +4656,7 @@ GENERATED_STYLE_ROUTES = {
   backdoor: :generate_backdoor_progression,
   slash: :generate_slash_progression,
   modal_interchange: :generate_modal_interchange,
+  tritone_sub: :generate_tritone_sub_progression,
 }.freeze
 
 def route_generated_style(style, root_hz:, mode:, length:, seed:)
@@ -5517,6 +5544,23 @@ TRACK_PRESETS = {
   generated_modal_interchange: {
     bpm: 84, progression: :modal_interchange, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :organic, stereo_pan: true
+  },
+  generated_tritone_sub: {
+    bpm: 86, progression: :tritone_sub, chord_bars: 2, phrase_bars: 16, swing: 58,
+    feel: :organic, stereo_pan: true
+  },
+  # Hybrid: techno's four-on-the-floor physicality (feel: :techno_house is
+  # the same real DRUM_PATTERN_SETS entry generated_techno uses -- straight
+  # kicks, dense 16th hats) at swing's engine floor (50 -- SWING is clamped
+  # 50..66 everywhere in this file, so "straighter than dilla" tops out
+  # here, not at true 0 swing), carrying the full harmonic engine most
+  # techno never touches: tritone-sub-capable functional progression,
+  # theory-scored voice-leading, fugue-conversation ghost answers, rotating
+  # drum archetypes, room print. concrete_soul_engine (see below) then
+  # forces the mix harder (see the function for what/why).
+  concrete_soul: {
+    bpm: 138, progression: :tritone_sub, chord_bars: 4, phrase_bars: 16, swing: 50,
+    feel: :techno_house, voicing: :rootless, stereo_pan: true
   },
   fourth_third_sixth_second_turn: {
     bpm: 86, progression: :fourth_third_sixth_second_turn, chord_bars: 2, phrase_bars: 16, swing: 56,
@@ -7524,7 +7568,12 @@ DILLA_STYLE_DEFAULTS = {
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
   "TRACK" => "get_dis_money",
   "PROGRESSION" => "get_dis_money",
-  "BPM" => "92",
+  # BPM deliberately NOT set here (get_dis_money's own TRACK_PRESETS entry
+  # already has bpm: 92, so this was redundant for the default track and a
+  # real bug for every other one: resolve_bpm checks ENV["BPM"] before
+  # preset[:bpm], and this soft-fill ran before any track-specific preset
+  # was ever consulted -- every track's own tuned bpm (86, 88, 138, ...)
+  # was silently clobbered back to 92 for the entire session tonight.
   "BARS" => "32",
   "FORM" => "camel_32",
   "COMPOSITION" => "1",
@@ -7907,6 +7956,107 @@ GHOST_TIERS = {
   pocket:  { mul: 1.0,  steps_scale: 1.0,  fill_mul: 1.0 },
   accent:  { mul: 1.28, steps_scale: 1.18, fill_mul: 1.45 },
 }.freeze
+
+# Phrase-level compositional archetypes -- each bundle reuses existing,
+# already-tested per-bar-read ENV knobs (groove_engine.rb reads SNARE_EARLY/
+# KICK_LATE/HATS_LATE/POCKET_KICK_SILENCE/KICK_FREEHAND live at scheduling
+# time, not once at setup, so mutating them mid-render genuinely changes the
+# next bar's feel) rather than new step-array generation. Named after the
+# drum-composition ideas they approximate; "hat disagreement" and "barline
+# slip" are real-mechanism approximations (no literal per-role swing bypass
+# or cross-bar anticipation exists yet), not literal implementations.
+DRUM_ARCHETYPES = {
+  # No kick on 1 some bars; bass implies the downbeat instead.
+  negative_space:     { "POCKET_KICK_SILENCE" => "1", "SNARE_EARLY" => "0", "KICK_LATE" => "0", "KICK_FREEHAND" => "0", "GHOST_TIER" => "whisper" },
+  # Snare lands early, kick answers after it, kit stays default-loose.
+  late_answer_kick:    { "POCKET_KICK_SILENCE" => "0", "SNARE_EARLY" => "1", "KICK_LATE" => "1", "KICK_FREEHAND" => "1", "GHOST_TIER" => "pocket" },
+  # Ghost notes carry more weight than the backbeat itself.
+  ghost_led_backbeat:  { "POCKET_KICK_SILENCE" => "0", "SNARE_EARLY" => "0", "KICK_LATE" => "0", "KICK_FREEHAND" => "0", "GHOST_TIER" => "accent" },
+  # Approximation: hats stay on-grid (HATS_LATE=0) while kick/snare keep
+  # their own independent early/late push -- not a literal separate swing
+  # lane, but reads as "hats disagreeing with the kit" in practice.
+  hat_disagreement:    { "POCKET_KICK_SILENCE" => "0", "SNARE_EARLY" => "1", "KICK_LATE" => "0", "HATS_LATE" => "0", "KICK_FREEHAND" => "0", "GHOST_TIER" => "pocket" },
+  # Approximation: KICK_FREEHAND's cyclic unquantized nudge is the closest
+  # existing mechanism to "anticipates the next bar" without new per-bar
+  # lookahead scheduling.
+  barline_slip:        { "POCKET_KICK_SILENCE" => "0", "SNARE_EARLY" => "0", "KICK_LATE" => "0", "KICK_FREEHAND" => "1", "GHOST_TIER" => "pocket" },
+}.freeze
+DRUM_ARCHETYPE_ORDER = DRUM_ARCHETYPES.keys.freeze
+
+def drum_archetype_rotation_enabled?
+  ENV.fetch("DRUM_ARCHETYPE_ROTATE", "1") != "0"
+end
+
+# concrete_soul: techno's physicality (harder sidechain pump, more headroom
+# for kick/bass, no vinyl-warmth coloration) layered onto the untouched
+# harmonic/fugue/archetype engine, rather than a separate synthesis path
+# (render_techno) reimplementing harmony from scratch. Only touches mix
+# character knobs that already exist and are already used elsewhere in this
+# file for other tracks -- no new filter chains invented here. Every value
+# is a force (this track name is the only thing that should ever set it
+# this way, so soft-fill's "don't clobber an explicit override" caution
+# doesn't apply).
+CONCRETE_SOUL_MIX = {
+  "SIDECHAIN_STYLE" => "flylo", # the harder-pump of the two real options
+  "ANALOG_CHAIN" => "broadcast", # least-colored chain -- no vinyl warmth
+  "SONITEX" => "donuts_soul", "SONITEX_PRESET" => "donuts_soul",
+  "VINYL" => "0",
+  "GHOST_TIER" => "accent",
+  "KICK_GAIN" => "0.85",
+  "DRUM_BUS_VOL" => "1.0", "DRUM_BUS_GAIN" => "1.0", "DRUM_MIX_WEIGHT" => "1.0",
+  "RIR_ROOM" => "1", # concrete/warehouse ambience -- this is the one place
+  # the room-print layer is the point, not a subtle extra.
+}.freeze
+
+def apply_concrete_soul_mix!(track)
+  return unless track.to_s == "concrete_soul"
+
+  CONCRETE_SOUL_MIX.each do |key, value|
+    ENV[key] = value
+    record_config_provenance!(key, "CONCRETE_SOUL_MIX", "force")
+  end
+end
+
+# FUGUE_CONVERSATION: every new voice answers an existing rhythmic motif,
+# scoped to a real, already-available signal rather than new cross-voice
+# data plumbing -- arrange_fugue_progression already tags each bar's phase
+# (exposition/development/recapitulation/coda) via chord_phase_at, which the
+# per-bar loop already computes for every track, fugue-form or not. During
+# development/recapitulation, the ghost-snare "countersubject" answers the
+# bar's own kick pattern (the "subject") a short beat later, rather than
+# drawing from its own independent pattern pool. Exposition/coda are left
+# alone -- a fugue states its subject plainly first and lets it go quiet at
+# the end; answering everywhere would just be a denser kit, not a dialogue.
+FUGUE_GHOST_ANSWER_STEPS = 16
+FUGUE_GHOST_ANSWER_OFFSET = 3 # dotted-eighth-ish answer, not a flat echo
+
+def fugue_conversation_enabled?
+  ENV.fetch("FUGUE_CONVERSATION", "1") != "0"
+end
+
+def fugue_ghost_answer_steps(kick_pattern, phase)
+  return [] unless fugue_conversation_enabled?
+  return [] unless %i[development recapitulation].include?(phase)
+
+  kick_pattern.map { |step| (step + FUGUE_GHOST_ANSWER_OFFSET) % FUGUE_GHOST_ANSWER_STEPS }
+end
+
+# Reassigned once per phrase (not per bar -- these read as a section's
+# character, not a bar-to-bar flicker). Deterministic by phrase index, not
+# random, so the same render is reproducible.
+def apply_drum_archetype!(bar, phrase_bars)
+  return unless drum_archetype_rotation_enabled?
+
+  length = phrase_bars.to_i.positive? ? phrase_bars.to_i : 8
+  phrase_index = bar / length
+  name = DRUM_ARCHETYPE_ORDER[phrase_index % DRUM_ARCHETYPE_ORDER.length]
+  bundle = DRUM_ARCHETYPES.fetch(name)
+  return if @last_drum_archetype == name
+
+  @last_drum_archetype = name
+  bundle.each { |key, value| ENV[key] = value }
+  record_config_provenance!("DRUM_ARCHETYPE", "apply_drum_archetype![#{name}]", "force")
+end
 
 SLASH_BASS_PROFILES = %i[
   syncopated_slash_ninth syncopated_slash_alt slash_neo_soul slash_ninth_cycle
@@ -8843,6 +8993,7 @@ def apply_dilla_style!(force: false)
   track = ENV["TRACK"].to_s
   track = "get_dis_money" if track.empty?
   apply_track_soul_profile!(track, force:)
+  apply_concrete_soul_mix!(track)
   reassert_dilla_style_locks! if force
   reassert_pad_lead_locks!
   ensure_learned_engine_seeded!
@@ -9136,7 +9287,15 @@ def showcase_demo!(dest = File.join(ROOT, "demo.wav"))
       timed_out = false
       begin
         Timeout.timeout(ENV.fetch("MEDLEY_TRACK_TIMEOUT", "180").to_i) do
-          _out, status = Open3.capture2e(env, Gem.ruby, __FILE__, "dilla", part, bars.to_s)
+          # unsetenv_others: true -- without it Process.spawn (which Open3
+          # delegates to) MERGES env onto the parent's inherited environment
+          # rather than replacing it, so anything set for the outer showcase
+          # invocation itself (BEAUTY_REPORT, MEDLEY_*, whatever a caller's
+          # shell exported) leaks into what's supposed to be an isolated
+          # child render. Same class of bug MASTER's own tts-worker spawn
+          # path was hardened against.
+          _out, status = Open3.capture2e(env, Gem.ruby, __FILE__, "dilla", part, bars.to_s,
+                                          unsetenv_others: true)
           rendered = status.success? && File.file?(part) && File.size(part) > 50_000
         end
       rescue Timeout::Error
@@ -9795,7 +9954,7 @@ end
 
 GENERATED_STYLES = %i[
   functional planing chromatic_mediant polytonal negative_harmony neapolitan
-  coltrane backdoor slash modal_interchange
+  coltrane backdoor slash modal_interchange tritone_sub
 ].freeze
 
 def resolve_pad_chord_symbol(n)
@@ -10575,6 +10734,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
     beat_p_bar = 60.0 / bar_bpm
     section = dilla_section(bar, n_bars)
     apply_motif_recall!(bar)
+    apply_drum_archetype!(bar, phrase_bars)
     ghost_tier = ghost_tier_for(bar, section)
     sec_gain = dilla_section_gain(bar, n_bars, chord_phases:, pad_chords:,
                                   chord_bars:, phrase_bars:)
@@ -10697,6 +10857,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       ghost_steps = dilla_ghost_steps(bar, feel, section:)
       ghost_steps += [1, 9] if feel == :loose_pocket && bar.odd?
       ghost_steps += [5] if feel == :loose_pocket && bar.even?
+      ghost_steps += fugue_ghost_answer_steps(pattern, phase)
       ghost_steps.uniq.each do |step|
         next if drop_bar
         t = [base + step * step_p +
@@ -10913,9 +11074,12 @@ end
 
 def dilla_drum_filter(snare_env, hat_env, open_env, duration, sample_input: nil)
   filter = []
-  filter << "[0:a]aformat=channel_layouts=stereo[kick]"
+  room_on = ENV.fetch("RIR_ROOM", "1") != "0"
+  filter << (room_on ? "[0:a]aformat=channel_layouts=stereo,asplit=2[kick][kick_room_src]" \
+                      : "[0:a]aformat=channel_layouts=stereo[kick]")
   filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=140[bass]"
-  filter << "[2:a]aformat=channel_layouts=stereo,asplit=3[ns][nh][no]"
+  filter << (room_on ? "[2:a]aformat=channel_layouts=stereo,asplit=4[ns][nh][no][ns_room_src]" \
+                      : "[2:a]aformat=channel_layouts=stereo,asplit=3[ns][nh][no]")
   filter << "[ns]volume='(#{snare_env})':eval=frame,highpass=f=160,bandpass=f=1600:w=2600[snare]"
   filter << "[nh]volume='(#{hat_env})':eval=frame,highpass=f=6500[hats]"
   filter << "[no]volume='(#{open_env})':eval=frame,bandpass=f=5600:w=5200[open]"
@@ -10923,6 +11087,18 @@ def dilla_drum_filter(snare_env, hat_env, open_env, duration, sample_input: nil)
   filter << "[5:a]aformat=channel_layouts=stereo,highpass=f=120,lowpass=f=5000,aecho=0.18:0.22:90:0.28[chop]"
   labels  = %w[[kick] [bass] [snare] [hats] [open] [pads] [chop]]
   weights = %w[1.15 0.88 0.82 0.42 0.35 0.90 0.55]
+  # Room print: a very quiet, dark, short-slap ambience send off kick+snare
+  # only (the two transient-rich sources) -- reads as "the kit was in a
+  # room," not a reverb tail. Keyed by the same hits, not a separate layer
+  # needing new samples. RIR_ROOM=0 to disable (e.g. for a drier mode) --
+  # the asplit points above are conditional too, since an unconsumed split
+  # output pad is an ffmpeg filtergraph error, not a silent no-op.
+  if room_on
+    filter << "[kick_room_src][ns_room_src]amix=inputs=2:weights=1.0 0.8:duration=first," \
+              "lowpass=f=900,aecho=0.42:0.3:55:0.32,volume=0.13[room]"
+    labels  << "[room]"
+    weights << "1.0"
+  end
   if sample_input
     filter << "[#{sample_input}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
               "highpass=f=80,lowpass=f=14000,acrusher=bits=12:samples=2:mix=0.22[sample]"
