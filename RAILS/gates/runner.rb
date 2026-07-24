@@ -43,6 +43,7 @@ GATE_MAP = {
   surface_schema:        "surface_schema_gate.rb",
   design_metrics:        "design_metrics_gate.rb",
   visual_quality:        "visual_quality_gate.rb",
+  calibration:           "calibration_gate.rb",
   apps_yml:              "apps_yml_validator.rb",
   shared_wiring:         "shared_wiring_gate.rb",
   constitutional_scan:   "constitutional_scan_gate.rb",
@@ -66,6 +67,7 @@ GATE_COVERED_BY = {
   surface_schema:      :layout_suite,
   design_metrics:      :layout_suite,
   visual_quality:      :layout_suite,
+  calibration:         :layout_suite,
   frontend_auditor:    :layout_suite,
 }.freeze
 
@@ -96,6 +98,7 @@ IN_PROCESS = {
   surface_schema:        ["lib/surface_schema_gate", "Deploy::SurfaceSchemaGate", {}],
   design_metrics:        ["lib/design_metrics_gate", "Deploy::DesignMetricsGate", {}],
   visual_quality:        ["lib/visual_quality_gate", "Deploy::VisualQualityGate", {}],
+  calibration:           ["lib/calibration_gate", "Deploy::CalibrationGate", {}],
 }.freeze
 
 # Keep subprocess for multi-step / arg-forwarding gates.

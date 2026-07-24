@@ -1,0 +1,175 @@
+# Human calibration set for design gates (P5).
+# Labels: pass | soft | fail
+# Gate agreement keeps scores from drifting into cargo-cult regex.
+#
+# Process (monthly):
+#   1. Add ~20 labeled screens (fixture or captured HTML path)
+#   2. ruby RAILS/gates/runner.rb calibration
+#   3. Review false positives/negatives + weight suggestions
+#   4. Optionally apply: GATE_CALIBRATION_APPLY=1
+#
+# human is ground truth. Gate scores are hypotheses.
+
+schema: 1
+agreement_floor: 0.85
+# Soft-band: human=soft accepts gate pass OR soft fail OR score within 15 of target
+soft_band: 15
+
+# Optional weight overrides applied when GATE_CALIBRATION_APPLY=1 writes
+# calibration_weights.yml (visual quality dimensions).
+tune:
+  quality_weights:
+    landmarks: 20
+    hierarchy: 20
+    cta_budget: 15
+    guest_open: 15
+    dialect_purity: 15
+    density: 15
+  quality_target: 80
+  layout_search_target: 90
+  exemplar_min_ratio: 0.85
+
+labels:
+  # --- Marketplace tile ---
+  - id: marketplace_tile_good
+    fixture: fixtures/exemplars/good_marketplace_tile.html
+    surface: marketplace
+    exemplar: marketplace_tile
+    human: pass
+    rater: seed
+    notes: "Tise/Bol price-first whole-card tile"
+
+  - id: marketplace_tile_bad
+    fixture: fixtures/exemplars/bad_marketplace_tile.html
+    surface: marketplace
+    exemplar: marketplace_tile
+    human: fail
+    rater: seed
+    notes: "Title-first + feed-card dialect leak"
+
+  # --- Dating card ---
+  - id: dating_card_good
+    fixture: fixtures/exemplars/good_dating_card.html
+    surface: dating
+    exemplar: dating_card
+    human: pass
+    rater: seed
+
+  - id: dating_card_bad
+    fixture: fixtures/exemplars/bad_dating_card.html
+    surface: dating
+    exemplar: dating_card
+    human: fail
+    rater: seed
+    notes: "Retail chrome, no face-first card"
+
+  # --- Live card ---
+  - id: live_card_good
+    fixture: fixtures/exemplars/good_live_card.html
+    surface: live
+    exemplar: live_card
+    human: pass
+    rater: seed
+
+  - id: live_card_bad
+    fixture: fixtures/exemplars/bad_live_card.html
+    surface: live
+    exemplar: live_card
+    human: fail
+    rater: seed
+    notes: "Marketplace dialect + identity chrome"
+
+  # --- Full first screens / surface schemas ---
+  - id: marketplace_first_good
+    fixture: fixtures/exemplars/good_marketplace_first_screen.html
+    surface: marketplace
+    exemplar: marketplace_first_screen
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: marketplace_listings_schema_good
+    fixture: fixtures/surfaces/good_marketplace_listings.html
+    surface: marketplace
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: marketplace_listings_schema_bad
+    fixture: fixtures/surfaces/bad_marketplace_listings.html
+    surface: marketplace
+    quality: true
+    human: fail
+    rater: seed
+    notes: "Auth wall + missing nav/landmarks"
+
+  - id: live_feed_schema_good
+    fixture: fixtures/surfaces/good_live_feed.html
+    surface: live
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: live_feed_schema_bad
+    fixture: fixtures/surfaces/bad_live_feed.html
+    surface: live
+    quality: true
+    human: fail
+    rater: seed
+
+  - id: dating_home_schema_good
+    fixture: fixtures/surfaces/good_dating_home.html
+    surface: dating
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: dating_home_schema_bad
+    fixture: fixtures/surfaces/bad_dating_home.html
+    surface: dating
+    quality: true
+    human: fail
+    rater: seed
+
+  - id: messenger_good
+    fixture: fixtures/surfaces/good_messenger_inbox.html
+    surface: social
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: messenger_bad
+    fixture: fixtures/surfaces/bad_messenger_inbox.html
+    surface: social
+    quality: true
+    human: fail
+    rater: seed
+
+  - id: brgen_home_good
+    fixture: fixtures/surfaces/good_brgen_home.html
+    surface: social
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: brgen_home_bad
+    fixture: fixtures/surfaces/bad_brgen_home.html
+    surface: social
+    quality: true
+    human: fail
+    rater: seed
+
+  # Soft example: thin but not evil — optional partial quality
+  - id: marketplace_cart_good
+    fixture: fixtures/surfaces/good_marketplace_cart.html
+    surface: marketplace
+    quality: true
+    human: pass
+    rater: seed
+
+  - id: marketplace_cart_bad
+    fixture: fixtures/surfaces/bad_marketplace_cart.html
+    surface: marketplace
+    quality: true
+    human: fail
+    rater: seed

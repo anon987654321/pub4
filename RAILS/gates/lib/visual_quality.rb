@@ -14,12 +14,27 @@ module Deploy
       end
     end
 
+    CALIBRATION_WEIGHTS = File.join(File.expand_path("..", __dir__), "data", "calibration_weights.yml")
+
     def self.load(path = DATA)
       YAML.safe_load_file(path).fetch("quality")
     end
 
+    # Merge human-calibration weight overrides when present (P5).
+    def self.load_with_calibration(path = DATA)
+      base = load(path)
+      return base unless File.file?(CALIBRATION_WEIGHTS)
+
+      cal = YAML.safe_load_file(CALIBRATION_WEIGHTS)
+      if cal["quality_weights"].is_a?(Hash)
+        base["weights"] = base.fetch("weights").merge(cal["quality_weights"])
+      end
+      base["target_score"] = cal["quality_target"] if cal["quality_target"]
+      base
+    end
+
     def initialize(config: nil)
-      @config = config || self.class.load
+      @config = config || self.class.load_with_calibration
       @weights = @config.fetch("weights")
       @rules = @config.fetch("rules")
       @target = @config["target_score"].to_i

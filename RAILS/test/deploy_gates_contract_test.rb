@@ -105,6 +105,14 @@ class DeployGatesContractTest < Minitest::Test
     assert File.directory?(File.join(ROOT, "gates", "fixtures", "exemplars"))
   end
 
+  def test_runner_registers_calibration
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    assert_includes source, "calibration:"
+    assert_includes source, "CalibrationGate"
+    assert File.file?(File.join(ROOT, "gates", "data", "calibration.yml"))
+    assert File.file?(File.join(ROOT, "gates", "lib", "gate_calibration.rb"))
+  end
+
   def test_surface_schema_fixtures_exist
     dir = File.join(ROOT, "gates", "fixtures", "surfaces")
     assert File.directory?(dir)
@@ -129,6 +137,7 @@ class DeployGatesContractTest < Minitest::Test
     assert_match(/surface_schema:\s*:layout_suite/, source)
     assert_match(/design_metrics:\s*:layout_suite/, source)
     assert_match(/visual_quality:\s*:layout_suite/, source)
+    assert_match(/calibration:\s*:layout_suite/, source)
   end
 
   def test_production_gate_runs_apps_yml_validator_in_process
