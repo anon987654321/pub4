@@ -89,8 +89,8 @@
     end
 %>
 {
-  "name": <%= app_name.to_json %>,
-  "short_name": <%= short_name.to_json %>,
+  "name": <%= raw app_name.to_json %>,
+  "short_name": <%= raw short_name.to_json %>,
   "icons": [
     {
       "src": "/icon-192.png",
@@ -113,11 +113,11 @@
   "display": "standalone",
   "scope": "/",
   "id": "/",
-  "description": <%= description.to_json %>,
+  "description": <%= raw description.to_json %>,
   "theme_color": "#000000",
   "background_color": "#000000",
-  "lang": <%= (Current.locale.presence || "en").to_s.to_json %>,
-  "shortcuts": <%= shortcuts.to_json %>,
+  "lang": <%= raw (Current.locale.presence || "en").to_s.to_json %>,
+  "shortcuts": <%= raw shortcuts.to_json %>,
   "share_target": {
     "action": "/share",
     "method": "POST",
