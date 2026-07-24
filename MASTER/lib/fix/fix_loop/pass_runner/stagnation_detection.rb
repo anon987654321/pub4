@@ -23,6 +23,7 @@ module Master
             snap = violation_snapshot(found)
             if seen_snapshots.include?(snap)
               @bus&.publish("fix_loop:oscillation", pass:, violations: found.size)
+              @homeostat&.observe(:llm_failure)
               trigger_rollback("fix loop oscillation")
               return true
             end
@@ -35,6 +36,7 @@ module Master
             return false unless recurring
 
             @bus&.publish("fix_loop:cycle_detected", pass:, threshold: @plateau_window, violation: recurring)
+            @homeostat&.observe(:llm_failure)
             trigger_rollback("fix loop cycle detected")
             true
           end
@@ -44,6 +46,7 @@ module Master
             return false unless history.size >= window && history.last(window).uniq.size == 1
 
             @bus&.publish("fix_loop:plateau", pass:, violations: found.size)
+            @homeostat&.observe(:llm_failure)
             true
           end
 

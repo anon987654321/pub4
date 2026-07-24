@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../ground/bias_guard"
+require_relative "../priority"
+require_relative "../../ground/law_resolver"
 
 module Master
   module Fix
@@ -23,20 +24,25 @@ module Master
           deps = load_deps
           priors = load_priors
           ext_wts = extension_weights
-          bias_guard = Master::Ground::BiasGuard.new(root: @root)
+          law_resolver = Master::Ground::LawResolver.new
+          rules_index = Priority.rules_index(root: @root)
           sorted = @rules.each_with_index.sort_by do |r, i|
             base_prior = priors.dig(r.id, "prior_p").to_f
             modifiers = priors.dig(r.id, "language_modifiers") || {}
             adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
             frequency = violation_counts[r.id].to_f + adjusted
-            density = bias_guard.priority_score(
-              severity: rule_severity(r),
-              frequency:,
-              age_days: violation_age_days(r.id),
-            )
             quality = @learnings&.fix_quality(rule: r.id) || 0.5
-            tier2 = tier2?(r.id) ? 1 : 0
-            [-tier2, -density, -quality, i]
+            # tier2 stays a strict lexicographic primary key, not folded into
+            # score()'s additive bonus: a high-frequency generic rule's score
+            # can exceed a rare tier2 rule's +50 bonus, which would silently
+            # break the "tier2 quality rules always come first" guarantee
+            # test_fix_loop_priorities.rb depends on. score() still computes
+            # law- and quality-aware ranking for everything else.
+            score = Priority.score(
+              rule_id: r.id, severity: rule_severity(r), frequency:,
+              age_days: violation_age_days(r.id), law_resolver:, rules_index:, quality:,
+            )
+            [tier2?(r.id) ? 0 : 1, -score, i]
           end.map(&:first)
           topo_sort(sorted, deps)
         end

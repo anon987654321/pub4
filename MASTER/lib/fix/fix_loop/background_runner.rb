@@ -17,6 +17,7 @@ module Master
             begin
               run(target)
               break if halted?
+              @homeostat&.observe(:idle_tick)
               @bus&.publish("fix_loop:idle", sleep: idle_sleep, cycle: cycles, max_cycles:)
               sleep idle_sleep
             rescue StandardError => e

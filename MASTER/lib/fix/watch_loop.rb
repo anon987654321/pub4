@@ -17,13 +17,14 @@ module Master
       WATCH_EXTENSIONS   = %w[.rb .erb .yml .yaml .json .toml .js .css .html].freeze
       SKIP_DIRS          = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
 
-      def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil)
+      def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil, fix_loop: nil)
         @rules    = rules
         @agent    = agent
         @scanner  = scanner
         @root     = root
         @bus      = bus
         @learnings = learnings
+        @fix_loop = fix_loop
         @queue     = Queue.new
         @mtime_map = {}
         @in_progress = Mutex.new
@@ -70,11 +71,19 @@ module Master
       def run_rules_on(path)
         return unless File.exist?(path)
         mark_in_progress(path) do
-          applicable = @rules.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
-          applicable.each do |rule|
-            rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-            result = rl.run_once([path])
-            @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
+          # Prefer a single-file FixLoop pass when one's available, so a
+          # watched-file edit gets the same stagnation detection and commit
+          # gating as the batch path instead of WatchLoop's own simpler
+          # per-rule loop (which has neither).
+          if @fix_loop
+            @fix_loop.run(path, max_passes: 3, budget_seconds: 120, incremental: true)
+          else
+            applicable = @rules.select { |r| r.respond_to?(:applies_to?) ? r.applies_to?(path) : true }
+            applicable.each do |rule|
+              rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
+              result = rl.run_once([path])
+              @bus&.publish("watch_loop:file_pass", file: path, rule: rule.id, **result)
+            end
           end
         end
       rescue StandardError => e

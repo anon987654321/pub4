@@ -24,6 +24,19 @@ module Master
       def quick = run(severity_filter: QUICK_SEVERITIES)
       def full = run(severity_filter: nil)
 
+      # Hard gate for callers about to start background autofix or other
+      # self-mutation: refuse (by returning a non-clean report) when MASTER's
+      # own lib/ tree already carries violations, and publish self_violation
+      # so any subscriber (e.g. FixLoop#halt!) reacts the same way it would
+      # to a violation discovered mid-run.
+      def gate!(bus: nil)
+        report = quick
+        return report if report.clean?
+
+        bus&.publish("self_violation", violations: report.total, by_rule: report.by_rule)
+        report
+      end
+
       private
 
       def run(severity_filter:)

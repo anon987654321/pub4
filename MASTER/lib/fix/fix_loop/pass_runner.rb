@@ -23,7 +23,7 @@ module Master
 
         def initialize(bus:, committer:, loop_scanner:, llm_router:, rollback:, root:,
                        rules:, agent:, scanner:, learnings:, preamble:,
-                       clean_runs_required:, plateau_window:, ground_truth: nil)
+                       clean_runs_required:, plateau_window:, ground_truth: nil, homeostat: nil)
           @bus = bus
           @committer = committer
           @loop_scanner = loop_scanner
@@ -40,6 +40,7 @@ module Master
           @violation_counts = Hash.new(0)
           @rule_recurrence = Hash.new(0)
           @ground_truth = ground_truth
+          @homeostat = homeostat
         end
 
         def violations(files) = @loop_scanner.violations(files)
@@ -54,6 +55,7 @@ module Master
           return handle_clean_pass(files, pass_mtimes, pass, consecutive_clean) if found.empty?
           return PassResult.new(status: :plateau, consecutive_clean: 0) if stagnant?(history, seen_snapshots, recurring_violations, found, pass)
 
+          @homeostat&.observe(:llm_call)
           run_llm_stage(found, files, pass, deadline)
           PassResult.new(status: :continue, consecutive_clean: 0)
         end
@@ -103,6 +105,7 @@ module Master
           end
           clean_count = consecutive_clean + 1
           @bus&.publish("fix_loop:clean", pass:, consecutive_clean: clean_count)
+          @homeostat&.observe(:llm_success)
           status = clean_count >= @clean_runs_required ? :clean : :continue
           PassResult.new(status:, message: "clean after #{pass} pass(es)", consecutive_clean: clean_count)
         end

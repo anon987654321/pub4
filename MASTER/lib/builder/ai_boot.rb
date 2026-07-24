@@ -127,7 +127,7 @@ module Master
       learnings = infra[:learnings]
       rollback = Fix::Rollback.new(root:, bus:)
       fix_loop = build_fix_loop(root:, infra:, agent:, scanner:, axioms:, rules:, learnings:, rollback:, bus:, git:)
-      watch_loop = build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:)
+      watch_loop = build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
       { standing:, git:, rollback:, fix_loop:, watch_loop: }
     end
 
@@ -148,17 +148,30 @@ module Master
         rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:, rollback:,
         incremental: ENV["MASTER_INCREMENTAL"] == "1",
         ground_truth: infra[:ground_truth], preserve_user_intent: infra[:preserve_user_intent],
-        law_resolver: infra[:law_resolver]
+        law_resolver: infra[:law_resolver], homeostat: infra[:homeostat]
       )
-      fix_loop.start_background!(root) if ENV["MASTER_AUTOFIX"] == "1"
+      start_fix_loop_background(fix_loop, root:, bus:) if ENV["MASTER_AUTOFIX"] == "1"
       fix_loop
     end
 
+    # Pre-flight: refuse to start background self-mutation if MASTER's own
+    # lib/ tree is already dirty by its own rules -- autofix compounding on
+    # top of an existing violation is exactly the runaway-loop shape the
+    # oscillation/cycle/plateau detectors exist to catch after the fact.
+    def start_fix_loop_background(fix_loop, root:, bus:)
+      report = Fix::SelfCheck.new(root:).gate!(bus:)
+      unless report.clean?
+        bus&.publish("fix_loop:background_refused", reason: "selfcheck dirty", total: report.total)
+        return
+      end
+      fix_loop.start_background!(root)
+    end
+
     # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
-    def build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:)
+    def build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop: nil)
       return unless ENV["MASTER_WATCH"] == "1"
 
-      wl = Fix::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:)
+      wl = Fix::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
       Thread.new { wl.run }.tap { |t| t.abort_on_exception = false }
       wl
     end
@@ -172,6 +185,15 @@ module Master
       bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
       bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
       bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
+
+      # Close the Homeostat loop for the fix_loop events PassRunner/
+      # StagnationDetection/BackgroundRunner don't already observe directly
+      # (they only see their own instance's state, not bus-level events).
+      homeostat = fix_loop.instance_variable_get(:@homeostat)
+      return unless homeostat
+
+      bus.subscribe("fix_loop:llm_skipped") { homeostat.observe(:llm_failure) }
+      bus.subscribe("fix_loop:timeout") { homeostat.observe(:llm_failure) }
     end
 
     # MASTER_WATCHER=0 disables the OpenBSD load watcher; on by default.

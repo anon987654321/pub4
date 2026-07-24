@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "time"
 require_relative "severity"
+require_relative "priority"
 
 module Master
   module Fix
@@ -13,6 +14,10 @@ module Master
       # alongside activity.jsonl's 1.2GB, together filling the disk and
       # crashing an in-progress /fix round. Same rotate-not-truncate fix.
       LOG_MAX_BYTES = 25 * 1024 * 1024
+      # How many rotated generations (.1, .2, ...) to keep before the oldest
+      # is discarded, so a slow-burn conflict-heavy period doesn't just move
+      # the unbounded-growth problem from one file to an unbounded set of them.
+      LOG_GENERATIONS = 3
       DRY_RULES = %w[DRY duplicate_code].freeze
       WET_AHA = "WET/AHA".freeze
       DUPLICATION_THRESHOLD = 3
@@ -22,7 +27,7 @@ module Master
         @bus = bus
         @config = config || load_config
         @law_resolver = law_resolver || Ground::LawResolver.new
-        @rules_index = build_rules_index
+        @rules_index = Priority.rules_index(root: @root)
       end
 
       def filter_findings(findings)
@@ -32,14 +37,23 @@ module Master
       end
 
       def reject_higher_priority?(original_violation:, before:, after:, path:)
-        original_rank = Severity.rank(original_violation[:severity] || original_violation["severity"])
+        orig_rule = (original_violation[:rule] || original_violation["rule"]).to_s
+        orig_severity = (original_violation[:severity] || original_violation["severity"]).to_s
+        baseline = { rule_id: orig_rule, severity: orig_severity.to_sym,
+                     law_resolver: @law_resolver, rules_index: @rules_index }
         introduced = after.map { |finding| normalize(finding).merge("file" => path) } -
                      before.map { |finding| normalize(finding).merge("file" => path) }
-        blocker = introduced.find { |finding| Severity.rank(finding["severity"]) > original_rank }
+        blocker = introduced.find do |finding|
+          Priority.higher?(
+            { rule_id: finding["rule"], severity: finding["severity"].to_s.to_sym,
+              law_resolver: @law_resolver, rules_index: @rules_index },
+            baseline,
+          )
+        end
         return false unless blocker
 
         log_conflict(
-          rule_a: original_violation[:rule] || original_violation["rule"],
+          rule_a: orig_rule,
           rule_b: blocker["rule"],
           resolution: "reject fix: introduced higher-priority #{blocker["severity"]} finding",
           file: path,
@@ -94,15 +108,6 @@ module Master
         end
       end
 
-      def build_rules_index
-        Master.flatten_rules(Master.load_rules(root: @root).fetch("rules", {}))
-          .each_with_object({}) do |entry, index|
-            next unless entry.is_a?(Hash) && entry["id"]
-
-            index[entry["id"].to_s] = entry
-          end
-      end
-
       def log_conflict(rule_a:, rule_b:, resolution:, file:, line:)
         payload = {
           timestamp: Time.now.utc.iso8601,
@@ -134,6 +139,12 @@ module Master
       def rotate_log_if_oversized!
         return unless File.exist?(log_path) && File.size(log_path) > LOG_MAX_BYTES
 
+        oldest = "#{log_path}.#{LOG_GENERATIONS}"
+        File.delete(oldest) if File.exist?(oldest)
+        (LOG_GENERATIONS - 1).downto(1) do |i|
+          src = "#{log_path}.#{i}"
+          File.rename(src, "#{log_path}.#{i + 1}") if File.exist?(src)
+        end
         File.rename(log_path, "#{log_path}.1")
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "ConflictResolver.rotate_log_if_oversized")

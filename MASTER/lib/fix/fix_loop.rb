@@ -30,11 +30,12 @@ module Master
 
       def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil,
                      rollback: nil, incremental: false, ground_truth: nil, preserve_user_intent: nil,
-                     law_resolver: nil)
+                     law_resolver: nil, homeostat: nil)
         @rules       = rules
         @axioms      = axioms
         @root        = root
         @bus         = bus
+        @homeostat   = homeostat
         @incremental = incremental
         @halted      = false
         @halt_reason = nil
@@ -43,7 +44,7 @@ module Master
         @file_collector = FileCollector.new(root:, bus:)
         @rule_order     = RuleOrder.new(rules:, learnings:, bus:, root:)
         @pass_runner    = build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
-          ground_truth:, preserve_user_intent:, law_resolver:)
+          ground_truth:, preserve_user_intent:, law_resolver:, homeostat: @homeostat)
         # Wire ReflexionLedger for strict self-correction per rules.yml (AK102, self-application)
         @reflexions = Trace::ReflexionLedger.new(event_bus: bus, root:) if bus
       end
@@ -83,7 +84,7 @@ module Master
       private
 
       def build_pass_runner(rules:, agent:, scanner:, root:, bus:, learnings:, rollback:,
-        ground_truth:, preserve_user_intent:, law_resolver:)
+        ground_truth:, preserve_user_intent:, law_resolver:, homeostat: nil)
         committer    = Committer.new(git: @git, bus:, root:,
                                      ground_truth:, preserve_user_intent:)
         conflict_resolver = ConflictResolver.new(root:, bus:, law_resolver:)
@@ -96,7 +97,7 @@ module Master
           rules:, agent:, scanner:, learnings:, preamble:,
           clean_runs_required:,
           plateau_window:,
-          ground_truth:
+          ground_truth:, homeostat:
         )
       end
 
@@ -114,6 +115,7 @@ module Master
 
       def run_one_pass(i, files:, target:, deadline:, budget_seconds:, state:)
         pass = i + 1
+        @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
         if Time.now >= deadline
           @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
           return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
