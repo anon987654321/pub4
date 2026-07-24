@@ -33,8 +33,11 @@
   position: fixed;
   inset: 0;
   z-index: 1;
-  touch-action: manipulation;
-  background: var(--color-bg);
+  touch-action: none;
+  background: #000;
+  /* Let the GPU composite the rAF surface; avoid extra CSS filters here. */
+  will-change: contents;
+  contain: strict;
 }
 
 .radio-header {
@@ -105,6 +108,8 @@
 
 .radio-cursor {
   position: fixed;
+  top: 0;
+  left: 0;
   width: 24px;
   height: 24px;
   border: 2px solid rgba(255, 255, 255, 0.8);
@@ -112,7 +117,9 @@
   pointer-events: none;
   z-index: 1000;
   mix-blend-mode: difference;
-  transition: var(--transition);
+  /* Position/scale driven every frame via transform — no CSS transition lag. */
+  transition: none;
+  will-change: transform, opacity;
   display: none;
 }
 
