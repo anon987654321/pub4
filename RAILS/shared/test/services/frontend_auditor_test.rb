@@ -88,6 +88,24 @@ class FrontendAuditorTest < Minitest::Test
     HTML
   end
 
+  def test_product_pen_stylesheets_are_info_only
+    Dir.mktmpdir do |tmpdir|
+      pen = Pathname(tmpdir).join("app/assets/stylesheets/_search_yep.scss")
+      pen.dirname.mkpath
+      pen.write(<<~SCSS)
+        .search { box-shadow: 0 0 10px #000; left: 0; font-size: 8px; }
+        .a.b.c.d { color: red; }
+      SCSS
+
+      findings = Shared::FrontendAuditor.call(root: tmpdir)
+      pen_findings = findings.select { |f| f.path.to_s.end_with?("_search_yep.scss") }
+
+      assert pen_findings.any? { |f| f.rule == :product_pen && f.severity == :info }
+      assert pen_findings.none? { |f| f.severity == :warning || f.severity == :error },
+             "pen CSS must not hygiene-fail: #{pen_findings.map { |f| [f.severity, f.rule] }.inspect}"
+    end
+  end
+
   private
 
   def assert_view_rule(contents, rule, layout: false)

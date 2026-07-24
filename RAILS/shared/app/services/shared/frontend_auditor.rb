@@ -123,6 +123,13 @@ module Shared
     end
 
     def scan_style(path, body)
+      # Documented product pens (yep search, jOx, Amazon nav/logo) keep exact CSS —
+      # same allow-list as css_constitution / GateAutofix. Do not hygiene-fail them.
+      if path.match?(PEN_STYLE_PATH_PATTERN)
+        add(:info, path, :product_pen, "Documented product pen — exact CSS preserved (constitution allow-list)")
+        return
+      end
+
       add(:info, path, :keyframes, "Keyframes detected; mark restored animations as protected") if body.match?(KEYFRAMES_PATTERN)
       add(:info, path, :font_face, "Font-face detected; keep font declarations in dedicated/protected file") if body.match?(FONT_FACE_PATTERN)
       add(:warning, path, :important, "Use of !important detected; prefer cascade and specificity") if important_violations?(body)
@@ -132,12 +139,9 @@ module Shared
       end
       add(:warning, path, :selector_specificity, "Selector exceeds #{Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes]} class selectors; flatten the selector chain") if selector_depths(body).any? { |depth| depth > Shared::FrontendRuleSet::TYPOGRAPHY[:max_selector_classes] }
       add(:warning, path, :will_change, "will-change detected; restrict it to active animations or component connect/disconnect hooks") if body.match?(WILL_CHANGE_PATTERN)
-      pen_style = path.match?(PEN_STYLE_PATH_PATTERN)
-      unless pen_style
-        add(:warning, path, :paint_cost, "box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
-        add(:warning, path, :flat_design, "box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
-        add(:warning, path, :flat_design, "backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
-      end
+      add(:warning, path, :paint_cost, "box-shadow hover detected; prefer background-color, opacity, or transform for hover states") if body.match?(BOX_SHADOW_HOVER_PATTERN)
+      add(:warning, path, :flat_design, "box-shadow detected; this repo's design system is flat -- use a 1px border for separation instead") if body.match?(BOX_SHADOW_PATTERN)
+      add(:warning, path, :flat_design, "backdrop-filter/filter blur() detected; this repo's design system is flat -- use a solid background instead") if body.match?(BACKDROP_BLUR_PATTERN)
       add(:info, path, :color_inherit, "color: inherit detected; good for preventing default link colors") if body.match?(COLOR_INHERIT_PATTERN)
       body.scan(/font-size:\s*(\d+(?:\.\d+)?)px/i).flatten.each do |size|
         add(:warning, path, :small_font, "Font size #{size}px is below 16px") if size.to_f < Shared::FrontendRuleSet::TYPOGRAPHY[:body_font_px][:min]
