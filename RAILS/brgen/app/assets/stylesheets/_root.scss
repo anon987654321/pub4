@@ -173,6 +173,26 @@ body.vertical-marketplace #navBar {
 
 .feed-hint { padding: 0 var(--space-4) var(--space-2); }
 
+/* Guest open funnel on the home intro (Live → marketplace → messages). */
+.guest-demo-path {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+}
+
+.guest-demo-path a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.guest-demo-hint {
+  opacity: 0.75;
+  font-weight: 400;
+}
+
 @media (min-width: 1265px) {
   .compose-label { display: inline; }
   .compose-icon { display: none; }

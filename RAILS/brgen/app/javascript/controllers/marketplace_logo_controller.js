@@ -130,9 +130,9 @@ export default class extends Controller {
         targets: this.numberTarget,
         duration: 3000,
         round: 1,
-        textContent: 9,
         easing: "easeInOutQuad",
         complete: () => this.#burst(anime),
+        textContent: 9
       })
 
     this.animations = [smileyface, switchStroke, shoppingCart]

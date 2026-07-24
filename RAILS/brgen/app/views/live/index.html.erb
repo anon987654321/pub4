@@ -16,9 +16,10 @@
   </nav>
 </div>
 
-<p class="live-crosslinks dim">
-  <%= link_to "Nearby people", nearby_path %> ·
-  <%= link_to "Channels", channels_path %> ·
+<p class="live-crosslinks dim" aria-label="Also open without signup">
+  <%= link_to "Marketplace", marketplace_root_url %> ·
+  <%= link_to "Messages", "//messenger.#{Current.domain}/" %> ·
+  <%= link_to "Nearby", nearby_path %> ·
   <%= link_to "City feed", root_path %>
 </p>
 
