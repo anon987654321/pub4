@@ -1,0 +1,35 @@
+<%# Fleet floating chat bar (bottom-right). Brgen loads the geo room turbo-frame;
+    other apps deep-link to local messaging or Brgen nearby. %>
+<% widget_title = local_assigns.fetch(:title, respond_to?(:nearby_widget_path) ? "#nearby" : "chat") %>
+<div class="nearby-chat-widget" data-controller="reveal">
+  <button type="button" class="nearby-chat-widget-tab" data-action="reveal#toggle" aria-expanded="false" aria-controls="nearby-chat-widget-panel">
+    <%= icon :messages, size: 16 %>
+    <span><%= respond_to?(:nearby_widget_path) ? "nearby" : "chat" %></span>
+  </button>
+
+  <div id="nearby-chat-widget-panel" class="nearby-chat-widget-panel hidden" data-reveal-target="item">
+    <header class="nearby-chat-widget-header">
+      <span><%= widget_title %></span>
+      <button type="button" class="nearby-chat-widget-close" data-action="reveal#toggle" aria-label="Close">&times;</button>
+    </header>
+    <% if respond_to?(:nearby_widget_path) %>
+      <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path, loading: "lazy" do %>
+        <p class="dim nearby-chat-widget-empty">Loading…</p>
+      <% end %>
+    <% elsif respond_to?(:messages_path) %>
+      <p class="dim nearby-chat-widget-empty">
+        <% if respond_to?(:authenticated?) && authenticated? %>
+          <%= link_to "Open messages", messages_path %>
+        <% elsif respond_to?(:new_session_path) %>
+          <%= link_to "Sign in", new_session_path %> to message people on this app.
+        <% else %>
+          Messages are available after you sign in.
+        <% end %>
+      </p>
+    <% else %>
+      <p class="dim nearby-chat-widget-empty">
+        <%= link_to "Open nearby chat on Brgen", "https://brgen.no/nearby", rel: "noopener" %>
+      </p>
+    <% end %>
+  </div>
+</div>

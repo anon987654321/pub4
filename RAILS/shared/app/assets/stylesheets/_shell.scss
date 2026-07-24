@@ -1,12 +1,9 @@
-/* Skip-to-content link: visually hidden until keyboard focus reveals it.
-   None of the three apps had this rule compiled in at all (brgen had a
-   correct version in shared/_minimal.scss, but never @use'd that file;
-   amber and bsdports had no rule whatsoever) -- so the link rendered with
-   default browser <a> static positioning: permanently visible, overlapping
-   the fixed-position city-carousel/brand chrome in the top-left corner. */
+/* Skip-to-content: clipped off-screen until keyboard focus.
+   Never leave a painted pill at top-left (playlist tunnel especially —
+   a light-on-dark skip chip used to read as a white rectangle). */
 .skip-link {
   position: fixed;
-  inset-block-start: -3rem;
+  inset-block-start: 0.75rem;
   inset-inline-start: 0.75rem;
   z-index: var(--z-skip, 2000);
   padding: 0.5rem 0.75rem;
@@ -15,7 +12,17 @@
   text-decoration: none;
   font-size: 0.875rem;
   border-radius: var(--radius-pill);
-  transition: inset-block-start 150ms ease;
+  /* Hard hide — no partial paint if top-offset math fails. */
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Forced colors (Windows High Contrast) — ported from zen_shell */
@@ -40,8 +47,17 @@
   }
 }
 
-.skip-link:focus {
-  inset-block-start: 0.75rem;
+.skip-link:focus,
+.skip-link:focus-visible {
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  opacity: 1;
+  pointer-events: auto;
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -125,7 +141,7 @@ main[role="main"] {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   outline: none;
   pointer-events: auto;
   z-index: 1;
@@ -174,7 +190,7 @@ main[role="main"] {
   border: none !important;
   border-radius: 0 !important;
   outline: none !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   background: transparent !important;
   color: var(--text);
   margin: 4px 0 8px;
@@ -186,7 +202,7 @@ main[role="main"] {
   background: transparent !important;
   border: none !important;
   outline: none !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   opacity: 0.85;
   text-decoration: none;
 }
@@ -196,7 +212,7 @@ main[role="main"] {
   justify-content: flex-start;
   border: none !important;
   outline: none !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   background: transparent !important;
 }
 .brand-text {

@@ -119,7 +119,7 @@ nav .brand {
 .skip-link,
 .skip-nav {
   position: fixed;
-  inset-block-start: -3rem;
+  inset-block-start: 0.75rem;
   inset-inline-start: 0.75rem;
   /* Skip-links get the scale's own top tier (design_tokens' --z-skip: 2000)
      — was hardcoded to 1000, tying it with modals instead of outranking them. */
@@ -130,11 +130,31 @@ nav .brand {
   text-decoration: none;
   font-size: 0.875rem;
   border-radius: var(--radius-pill);
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .skip-link:focus,
-.skip-nav:focus {
-  inset-block-start: 0.75rem;
+.skip-link:focus-visible,
+.skip-nav:focus,
+.skip-nav:focus-visible {
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  opacity: 1;
+  pointer-events: auto;
   outline: 2px solid var(--light-blue);
   outline-offset: 2px;
 }

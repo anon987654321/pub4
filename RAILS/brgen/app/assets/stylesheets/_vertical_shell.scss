@@ -59,8 +59,10 @@ body[class*="vertical-"] main {
 }
 
 /* Playlist owns its wordmark in .radio-header — hide the global fixed mark
-   so the tunnel surface is not dual-branded. */
-body.vertical-playlist .brgen-logo-mark {
+   so the tunnel surface is not dual-branded. Also kill the global skip-link
+   (radio-tunnel has its own .radio-skip-link) so no light pill leaks top-left. */
+body.vertical-playlist .brgen-logo-mark,
+body.vertical-playlist > .skip-link {
   display: none !important;
 }
 
