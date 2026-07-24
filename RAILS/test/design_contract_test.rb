@@ -25,7 +25,13 @@ class DesignContractTest < Minitest::Test
   HOTWIRE_JS = File.join(SHARED, "frontend", "hotwire.js")
   FLEET_ROUTES = File.join(SHARED, "config", "routes", "fleet.rb")
   APPS = %w[amber brgen bsdports].freeze
-  FLAT_DESIGN_PATTERN = /box-shadow|text-shadow|backdrop-filter/i
+  # Match real elevation, not "box-shadow: none" flat overrides (same exception
+  # as RAILS/gates/lib/gate_autofix.rb and css constitution detection).
+  FLAT_DESIGN_PATTERN = /
+    box-shadow\s*:\s*(?!none\b)[^;]+
+    | text-shadow\s*:\s*(?!none\b)[^;]+
+    | backdrop-filter\s*:\s*(?!none\b)[^;]+
+  /ix
   DIALECT_PARTIALS = %w[_dialect_tokens.scss _shell.scss _shell_widgets.scss _responsive.scss _modal.scss].freeze
 
   SCSS_PARAM_MAP = {
