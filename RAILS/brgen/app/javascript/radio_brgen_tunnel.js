@@ -117,7 +117,12 @@ class AudioEngine {
 class VisualEngine {
   constructor(canvas) {
     this.canvas = canvas
-    this.ctx = canvas.getContext("2d", { willReadFrequently: true })
+    // willReadFrequently forces software (CPU) rendering to speed up frequent
+    // getImageData reads -- but this canvas only reads once, on resize; every
+    // animation frame is a putImageData write. Leaving it on disables GPU
+    // compositing for the per-frame cost (up to ~32k manually drawn line
+    // segments) for no benefit, which reads as freezing/stutter over time.
+    this.ctx = canvas.getContext("2d")
     this.particles = []
     this.centers = []
     this.mouse = { x: 0, y: 0, down: false, active: false }

@@ -9,6 +9,10 @@ module Shared
       include Authentication
       include Shared::PunditAuthorization
       include Shared::PagyPagination
+      # Rails' automatic helper inclusion only scans the host app's app/helpers/,
+      # not pub4-shared's (a separate engine gem) -- see brgen's
+      # ApplicationController for the same fix and the full explanation.
+      helper Shared::StimulusFormHelper
       allow_browser versions: :modern
       turbo_refreshes_with :morph, scroll: :preserve
       stale_when_importmap_changes

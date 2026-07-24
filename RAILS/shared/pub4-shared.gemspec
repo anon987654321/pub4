@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "pundit", ">= 2.3"
   spec.add_dependency "rotp", ">= 6.3"
   spec.add_dependency "rqrcode", ">= 2.2"
+  spec.add_dependency "chunky_png", ">= 1.4"
   spec.add_dependency "omniauth", ">= 2.1"
   spec.add_dependency "omniauth-google-oauth2", ">= 1.1"
   spec.add_dependency "omniauth-github", ">= 2.0"

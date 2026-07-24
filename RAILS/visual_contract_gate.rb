@@ -64,6 +64,36 @@ module VisualContractGate
     JS
   end
 
+  # Diffs the prior screenshot at the same path (rolling baseline from the last
+  # capture run) against the freshly captured one. Same-dimension mismatch only:
+  # a viewport/layout size change isn't a pixel regression, it's a new baseline.
+  def pixel_diff(baseline_bytes:, screenshot_path:, diff_path:)
+    require "chunky_png"
+    baseline = ChunkyPNG::Image.from_blob(baseline_bytes)
+    current = ChunkyPNG::Image.from_file(screenshot_path)
+    return { pixel_diff_count: nil, pixel_diff_ratio: nil, pixel_diff_image: nil } unless baseline.width == current.width && baseline.height == current.height
+
+    baseline_pixels = baseline.pixels
+    current_pixels = current.pixels
+    diff_count = baseline_pixels.each_index.count { |i| baseline_pixels[i] != current_pixels[i] }
+    if diff_count.positive?
+      pixels = Array.new(baseline_pixels.length) do |i|
+        baseline_pixels[i] == current_pixels[i] ? ChunkyPNG::Color::TRANSPARENT : ChunkyPNG::Color.rgba(255, 0, 64, 255)
+      end
+      ChunkyPNG::Image.new(current.width, current.height, pixels).save(diff_path)
+    end
+    { pixel_diff_count: diff_count, pixel_diff_ratio: (diff_count.to_f / baseline_pixels.length).round(6), pixel_diff_image: diff_count.positive? ? diff_path : nil }
+  end
+
+  # Classic Selenium `driver.manage.logs` was removed from selenium-webdriver's
+  # Ruby bindings; newer versions only expose console output via BiDi. Degrade to
+  # an empty list rather than crash the whole capture when it's unavailable.
+  def browser_console_errors(driver)
+    return [] unless driver.manage.respond_to?(:logs)
+
+    driver.manage.logs.get(:browser).select { |log| log.level == "SEVERE" }.map(&:message)
+  end
+
   def capture(base:, app:, output: File.expand_path("visual_contract", __dir__))
     require "selenium-webdriver"
     FileUtils.mkdir_p(output)
@@ -80,13 +110,16 @@ module VisualContractGate
       sleep 0.15
       slug = [cell[:app], cell[:state], cell[:viewport]].join("-")
       screenshot = File.join(output, "#{slug}.png")
+      baseline_bytes = File.binread(screenshot) if File.file?(screenshot)
       driver.save_screenshot(screenshot)
+      diff = baseline_bytes ? pixel_diff(baseline_bytes:, screenshot_path: screenshot, diff_path: File.join(output, "#{slug}-diff.png")) : { pixel_diff_count: nil, pixel_diff_ratio: nil, pixel_diff_image: nil }
       {
         app: cell[:app], state: cell[:state], viewport: cell[:viewport], route: cell[:route],
         status: driver.execute_script("return performance.getEntriesByType('navigation')[0]?.responseStatus || null"),
         title: driver.title, screenshot: screenshot,
         screenshot_sha256: Digest::SHA256.file(screenshot).hexdigest,
-        console_errors: driver.manage.logs.get(:browser).select { |log| log.level == "SEVERE" }.map(&:message),
+        **diff,
+        console_errors: browser_console_errors(driver),
         accessibility_violations: accessibility_violations(driver), lenses: LENSES
       }
     end
@@ -104,7 +137,9 @@ if ARGV.delete("--capture")
   results = VisualContractGate.capture(base:, app:)
   path = File.expand_path("visual_contract/#{app}-manifest.json", __dir__)
   File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
-  puts "ok: captured #{results.length} visual states -> #{path}"
+  drifted = results.select { |row| row[:pixel_diff_count].to_i.positive? }
+  drift_note = drifted.empty? ? "" : " (#{drifted.length} states drifted, #{drifted.map { |row| row[:pixel_diff_count] }.sum} px total)"
+  puts "ok: captured #{results.length} visual states -> #{path}#{drift_note}"
 else
   puts "ok: #{rows.length} seeded visual contract cells across #{VisualContractGate::ROUTES.length} apps"
 end
