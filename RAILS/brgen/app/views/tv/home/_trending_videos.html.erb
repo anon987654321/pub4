@@ -1,5 +1,5 @@
 <section id="tv-trending-videos" class="video-grid" role="list" aria-label="Trending videos">
-  <%= render @trending %>
+  <%= render partial: "tv/videos/tv_video", collection: @trending, as: :tv_video %>
 </section>
 
 <%= render "shared/infinite_scroll_sentinel",

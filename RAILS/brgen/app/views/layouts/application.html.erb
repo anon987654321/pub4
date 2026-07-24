@@ -42,6 +42,9 @@
       data-controller="feed-hotkey browser-fingerprint brgen-shell"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <a class="skip-link" href="#main-content">Skip to main content</a>
+  <%= link_to root_path, class: "brgen-logo-mark", aria: { label: "Brgen home" } do %>
+    <span class="brand-text">brgen</span>
+  <% end %>
   <% unless vertical_surface? %>
     <div role="region" aria-label="Theme">
       <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
@@ -161,7 +164,8 @@
       <main id="main-content" role="main" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(root_path) %>
           <div class="feed-header">
-            <h1 class="feed-brand-mark">brgen</h1>
+            <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces). %>
+            <h1 class="visually-hidden">Home</h1>
             <nav class="feed-tabs" aria-label="Subapps">
               <% subapp_nav_items.each do |label, url| %>
                 <%= link_to label, url, class: "feed-tab" %>
@@ -219,9 +223,7 @@
       <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
         <%= icon :menu, size: 26 %>
       </button>
-      <%= link_to new_post_path, class: "compose-fab", aria: { label: "New post" } do %>
-        <%= icon :compose, size: 24 %>
-      <% end %>
+      <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
     </nav>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
     <section class="mobile-sheet" aria-label="Quick actions" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">

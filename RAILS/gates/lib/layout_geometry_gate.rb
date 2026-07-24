@@ -5,6 +5,7 @@ require "uri"
 require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../crawl_support"
+require_relative "brgen_vertical_surfaces"
 
 module Deploy
   # First-screen contract + hierarchy + touch geometry (MASTER layout_rules / Fitts).
@@ -12,15 +13,11 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
 
-    SURFACES = [
-      { app: "brgen", port_key: "brgen", path: "/", host: nil,
+    BASE_SURFACES = [
+      { app: "brgen", port_key: "brgen", path: "/", host: nil, label: "core_ip",
         first_screen: [%r{skip-link|Skip to main}i, %r{<main\b|main-content}i, %r{<h1\b}i],
         css_touch: [%w[brgen/app/assets/stylesheets/_nav.scss min-height:\s*44px],
                     %w[brgen/app/assets/stylesheets/_marketplace.scss min-height:\s*44px]] },
-      { app: "brgen", port_key: "brgen", path: "/", host: "markedsplass.brgen.no", label: "marketplace",
-        first_screen: [%r{navBar|Markedsplass}i, %r{class=["']search|Search}i, %r{deal-grid|deal-card|listing}i],
-        css_touch: [%w[brgen/app/assets/stylesheets/_marketplace_cards.scss deal-card],
-                    %w[shared/app/assets/stylesheets/_search_yep.scss \.search]] },
       { app: "amber", port_key: "amber", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
         css_touch: [%w[amber/app/assets/stylesheets/_jsfiddle_chrome.scss jox-buttons]] },
@@ -31,6 +28,23 @@ module Deploy
         first_screen: [%r{search|port}i, %r{<main\b|main-content}i],
         css_touch: [] },
     ].freeze
+
+    SURFACES = (
+      BASE_SURFACES + BrgenVerticalSurfaces::SURFACES.map do |s|
+        {
+          app: "brgen",
+          port_key: "brgen",
+          path: s[:path],
+          host: s[:host],
+          label: "vertical_#{s[:label]}",
+          first_screen: s[:expect_body] + [%r{skip-link|main-content|<main\b}i],
+          css_touch: s[:label].to_s.start_with?("marketplace") ? [
+            %w[brgen/app/assets/stylesheets/_marketplace_cards.scss deal-card],
+            %w[shared/app/assets/stylesheets/_search_yep.scss \.search],
+          ] : [],
+        }
+      end
+    ).freeze
 
     def self.run
       new.run
@@ -86,13 +100,15 @@ module Deploy
         @result.fail("layout_geometry first_screen: #{label} missing #{pat.inspect}") unless body.match?(pat)
       end
 
-      # Hierarchy: at most one h1 in document source
-      h1s = body.scan(/<h1\b/i).size
-      @result.fail("layout_geometry hierarchy: #{label} has #{h1s} h1 (want 1)") if h1s > 1
-      @result.warn("layout_geometry hierarchy: #{label} has no h1") if h1s.zero?
+      # Hierarchy: at most one h1 in document source (skip auth-only shells)
+      unless label.include?("messenger") || label.include?("cart")
+        h1s = body.scan(/<h1\b/i).size
+        @result.fail("layout_geometry hierarchy: #{label} has #{h1s} h1 (want ≤1)") if h1s > 1
+        @result.warn("layout_geometry hierarchy: #{label} has no h1") if h1s.zero?
+      end
 
-      # Scan-path: search or primary nav should appear before late footer content
-      if surface[:label] == "marketplace"
+      # Scan-path: marketplace search/nav before product grid
+      if label.include?("marketplace") && !label.include?("cart")
         search_i = body =~ /class=["'][^"']*search|id=["']navBar/i
         grid_i = body =~ /deal-grid|deal-card/i
         if search_i && grid_i && search_i > grid_i

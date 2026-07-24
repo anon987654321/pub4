@@ -1,13 +1,14 @@
+<% display_name = profile.user&.display_name.presence || profile.user&.email_address.to_s.split("@").first.presence || "anon" %>
 <article
   class="swipe-card swipe-card--stack-<%= index %>"
   data-user-id="<%= profile.user_id %>"
 >
   <div class="swipe-photo">
     <% if profile.photos.attached? %>
-      <%= lazy_image_tag profile.photos.first, alt: profile.user.display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash") %>
+      <%= lazy_image_tag profile.photos.first, alt: display_name, blurhash: profile.photos.first.try(:metadata).try(:[], "blurhash") %>
     <% else %>
       <div class="swipe-placeholder">
-        <span><%= profile.user.email_address.first.upcase %></span>
+        <span><%= display_name.to_s.first.upcase %></span>
       </div>
     <% end %>
     <span class="swipe-stamp swipe-stamp--like" aria-hidden="true">LIKE</span>
@@ -15,7 +16,7 @@
     <div class="swipe-overlay">
       <div class="swipe-meta">
         <h2 class="swipe-name">
-          <%= profile.user.email_address.split("@").first %>
+          <%= display_name %>
           <% if profile.age %><span class="swipe-age">, <%= profile.age %></span><% end %>
         </h2>
         <% if profile.location.present? || profile.neighborhood&.name.present? %>

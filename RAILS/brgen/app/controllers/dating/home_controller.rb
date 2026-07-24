@@ -29,7 +29,8 @@ class Dating::HomeController < Dating::BaseController
   end
 
   def candidate_scope
-    scope = Dating::Profile.visible.includes(:user, :neighborhood, photos_attachments: :blob)
+    # joins(:user) drops orphan profiles (visible but user deleted) that crash the card.
+    scope = Dating::Profile.visible.joins(:user).includes(:user, :neighborhood, photos_attachments: :blob)
     return scope unless authenticated?
 
     profile = current_dating_profile

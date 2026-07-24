@@ -4,6 +4,8 @@
   background-color: #232f3e;
   height: 100px;
   color: white;
+  /* Clear fixed .brgen-logo-mark (city brand) on the left. */
+  padding-inline-start: 5.5rem;
 }
 
 #topHalf {

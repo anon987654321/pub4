@@ -79,6 +79,55 @@ a:hover { text-decoration: underline; }
 
 .brand-wordmark {
   border-radius: var(--radius-sm);
+  justify-content: flex-start;
+}
+
+/* City brand: fixed top-left, left-aligned, same on core + every vertical. */
+.brgen-logo-mark {
+  position: fixed;
+  z-index: calc(var(--z-chrome, 10) + 1);
+  top: max(0.5rem, env(safe-area-inset-top, 0px));
+  inset-inline-start: max(0.75rem, env(safe-area-inset-left, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.35rem 0.75rem;
+  font: 800 1.0625rem / 1 var(--font);
+  letter-spacing: -0.03em;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.brgen-logo-mark .brand-text {
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+}
+
+.brgen-logo-mark:hover {
+  background: var(--hover-subtle, var(--hover));
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* Compose is the top expand box — never a bottom-right FAB on brgen. */
+.compose-fab {
+  display: none !important;
+}
+
+/* Verticals: leave room under fixed brand so product chrome is not covered. */
+body[class*="vertical-"] main#main-content,
+body[class*="vertical-"] main[role="main"] {
+  padding-top: 3.25rem;
+}
+
+/* Marketplace Amazon bar sits under the fixed brand strip. */
+body.vertical-marketplace #navBar {
+  margin-top: 0;
 }
 
 .feed-hint { padding: 0 var(--space-4) var(--space-2); }

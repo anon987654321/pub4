@@ -33,5 +33,5 @@
 
 <section role="region" aria-label="Recent content">
   <h2>Recent</h2>
-  <%= render @recent %>
+  <%= render partial: "tv/videos/tv_video", collection: @recent, as: :tv_video %>
 </section>

@@ -7,6 +7,7 @@ require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../crawl_support"
 require_relative "gate_autofix"
+require_relative "brgen_vertical_surfaces"
 
 module Deploy
   # Critical-path user flows + MASTER design/principle semantics.
@@ -121,22 +122,35 @@ module Deploy
       },
     ].freeze
 
-    FLOW_PATHS = {
-      "brgen" => [
-        { path: "/", expect_status: (200..399), expect_body: [/main|Markedsplass|brgen|feed/i], host: nil },
-        { path: "/", expect_status: (200..399), expect_body: [/navBar|Markedsplass|search|listing/i], host: "markedsplass.brgen.no", label: "marketplace_root" },
-        { path: "/cart", expect_status: (200..399), expect_body: [/Cart|Sign|session|Login|password|navBar|Markedsplass|account/i], host: "markedsplass.brgen.no", label: "marketplace_cart" },
-        { path: "/session/new", expect_status: (200..399), expect_body: [/Sign|Log|password|session|Vipps|Google/i], host: nil, label: "sign_in" },
-      ],
-      "amber" => [
-        { path: "/", expect_status: (200..399), expect_body: [/Amber|wardrobe|main|Signup|Login|jox|item/i], host: nil },
-        { path: "/session/new", expect_status: (200..399), expect_body: [/Sign|Log|password|session/i], host: nil, label: "sign_in" },
-      ],
-      "bsdports" => [
-        { path: "/", expect_status: (200..399), expect_body: [/port|BSD|main|BSDports/i], host: nil },
-        { path: "/ports", expect_status: (200..399), expect_body: [/port|search|category/i], host: nil, label: "ports_index" },
-      ],
-    }.freeze
+    FLOW_PATHS = begin
+      brgen_paths = BrgenVerticalSurfaces::SURFACES.map do |s|
+        {
+          path: s[:path],
+          host: s[:host],
+          label: "vertical_#{s[:label]}",
+          expect_status: (200..399),
+          expect_body: s[:expect_body],
+        }
+      end
+      brgen_paths << {
+        path: "/session/new",
+        host: nil,
+        label: "sign_in",
+        expect_status: (200..399),
+        expect_body: [/Sign|Log|password|session|Vipps|Google/i],
+      }
+      {
+        "brgen" => brgen_paths,
+        "amber" => [
+          { path: "/", expect_status: (200..399), expect_body: [/Amber|wardrobe|main|Signup|Login|jox|item/i], host: nil },
+          { path: "/session/new", expect_status: (200..399), expect_body: [/Sign|Log|password|session/i], host: nil, label: "sign_in" },
+        ],
+        "bsdports" => [
+          { path: "/", expect_status: (200..399), expect_body: [/port|BSD|main|BSDports/i], host: nil },
+          { path: "/ports", expect_status: (200..399), expect_body: [/port|search|category/i], host: nil, label: "ports_index" },
+        ],
+      }
+    end.freeze
 
     SOURCE_FLOW_MARKERS = {
       "brgen" => {
