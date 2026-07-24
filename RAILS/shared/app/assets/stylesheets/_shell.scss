@@ -161,24 +161,30 @@ main[role="main"] {
   width: 52px;
   height: 52px;
   border-radius: 0;
+  border: 0;
+  background: transparent;
   color: var(--text);
   margin: 4px 0 8px;
-  transition: background var(--transition-fast, 180ms);
+  transition: opacity var(--transition-fast, 180ms);
 }
 .brand:hover {
-  background: var(--hover);
+  background: transparent;
+  opacity: 0.85;
   text-decoration: none;
 }
 .brand-wordmark {
   width: auto;
   padding: 0 12px;
   justify-content: flex-start;
+  border: 0;
+  background: transparent;
 }
 .brand-text {
   font-family: var(--font);
   font-size: 1.0625rem;
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.02em;
+  font-weight: var(--weight-bold, 700);
+  letter-spacing: -0.03em;
+  text-transform: none;
 }
 .sidebar nav {
   display: flex;

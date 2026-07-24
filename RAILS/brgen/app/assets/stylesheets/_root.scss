@@ -75,14 +75,22 @@ a:hover { text-decoration: underline; }
   inset: 0;
 }
 
-.brand-text { text-transform: uppercase; }
-
-.brand-wordmark {
-  border-radius: var(--radius-sm);
-  justify-content: flex-start;
+/* Wordmark is lowercase "brgen" (MASTER .top-left-logo) — never a bordered chip. */
+.brand-text {
+  text-transform: none;
+  letter-spacing: -0.03em;
+  font-weight: 800;
 }
 
-/* City brand: fixed top-left, left-aligned, same on core + every vertical. */
+.brand-wordmark {
+  border-radius: 0;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+}
+
+/* City brand: fixed top-left, identical on core + every vertical.
+   Matches MASTER face.css .top-left-logo — pure type, no box/border/bg. */
 .brgen-logo-mark {
   position: fixed;
   z-index: calc(var(--z-chrome, 10) + 1);
@@ -93,25 +101,35 @@ a:hover { text-decoration: underline; }
   justify-content: flex-start;
   min-height: 44px;
   min-width: 44px;
-  padding: 0.35rem 0.75rem;
-  font: 800 1.0625rem / 1 var(--font);
+  padding: 0.25rem 0.35rem;
+  font: 800 clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
   letter-spacing: -0.03em;
   color: var(--text);
   text-decoration: none;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  text-rendering: optimizeLegibility;
 }
 
 .brgen-logo-mark .brand-text {
-  text-transform: uppercase;
-  letter-spacing: -0.03em;
+  text-transform: none;
+  letter-spacing: inherit;
+  font-weight: inherit;
 }
 
-.brgen-logo-mark:hover {
-  background: var(--hover-subtle, var(--hover));
+.brgen-logo-mark:hover,
+.brgen-logo-mark:focus-visible {
+  background: transparent;
   text-decoration: none;
   color: var(--text);
+  opacity: 0.85;
+}
+
+/* One brand surface only — fixed mark is canonical (sidebar would double it
+   and historically used a different box treatment). */
+.sidebar > .brand.brand-wordmark {
+  display: none;
 }
 
 /* Compose is the top expand box — never a bottom-right FAB on brgen. */
