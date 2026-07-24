@@ -49,10 +49,19 @@ body[class*="vertical-"] main {
     .city-carousel,
     .widget-search,
     .mobile-sheet,
-    .mobile-sheet-backdrop {
-      display: none;
+    .mobile-sheet-backdrop,
+    .nav_swiper,
+    .nav_swiper_grip,
+    .edge-grip {
+      display: none !important;
     }
   }
+}
+
+/* Playlist owns its wordmark in .radio-header — hide the global fixed mark
+   so the tunnel surface is not dual-branded. */
+body.vertical-playlist .brgen-logo-mark {
+  display: none !important;
 }
 
 body.vertical-marketplace [data-controller="live-search"],

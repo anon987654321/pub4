@@ -86,9 +86,9 @@ body.vertical-playlist .playlist-index {
   .radio-start-message { animation: none; }
 }
 
-/* Prefer-contrast used to put filter:contrast() on the canvas every frame
-   of rAF paint — expensive and made the tunnel hitch. Keep contrast via
-   stroke palette in JS instead. */
+@media (prefers-contrast: high) {
+  .radio-tunnel canvas { filter: contrast(150%); }
+}
 
 /* Playlist detail player (library drill-down) */
 .playlist-app {

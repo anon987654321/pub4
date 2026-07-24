@@ -117,235 +117,214 @@ class AudioEngine {
 class VisualEngine {
   constructor(canvas) {
     this.canvas = canvas
-    // GPU-friendly 2d context — path strokes instead of ImageData pixel plots.
-    this.ctx = canvas.getContext("2d", { alpha: false, desynchronized: true })
-    this.rings = []
+    // willReadFrequently forces software (CPU) rendering to speed up frequent
+    // getImageData reads -- but this canvas only reads once, on resize; every
+    // animation frame is a putImageData write. Leaving it on disables GPU
+    // compositing for the per-frame cost (up to ~32k manually drawn line
+    // segments) for no benefit, which reads as freezing/stutter over time.
+    this.ctx = canvas.getContext("2d")
+    this.particles = []
+    this.centers = []
     this.mouse = { x: 0, y: 0, down: false, active: false }
     this.touch = { x: 0, y: 0, active: false }
     this.time = 0
-    this.colorInvert = 0
-    this.audioBoost = 0
-    this.reducedMotion = typeof matchMedia === "function" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches
+    this.colorInvertValue = 0
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
-    // Densities tuned for stable ~60fps path rendering (not ImageData Bresenham).
     this.config = {
-      fov: 280,
-      depth: 560,
-      speed: 42, // world units per second (delta-time scaled)
-      spin: 0.28, // rad/s tunnel twist
-      particleCountPerRow: this.isMobile ? 28 : 40,
-      rowCount: this.isMobile ? 56 : 90,
-      radius: 78
+      fov: 250,
+      speed: 0.75,
+      particleCountPerRow: this.isMobile ? 32 : 64,
+      rowCount: this.isMobile ? 125 : 250
     }
     this.stars = []
-    this._sorted = []
     this.resize()
   }
 
   resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, this.isMobile ? 1.25 : 1.5)
     this.w = Math.max(1, window.innerWidth)
     this.h = Math.max(1, window.innerHeight)
-    this.canvas.width = Math.round(this.w * dpr)
-    this.canvas.height = Math.round(this.h * dpr)
-    this.canvas.style.width = `${this.w}px`
-    this.canvas.style.height = `${this.h}px`
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    this.ctx.imageSmoothingEnabled = true
+    this.canvas.width = this.w
+    this.canvas.height = this.h
+    this.ctx.fillStyle = "#000000"
+    this.ctx.fillRect(0, 0, this.w, this.h)
+    this.imageData = this.ctx.getImageData(0, 0, this.w, this.h)
+    this.data = this.imageData.data
     this.centerX = this.w / 2
     this.centerY = this.h / 2
-    this.initRings()
-    this.initStars()
-  }
-
-  initRings() {
-    this.rings = []
-    const { rowCount, particleCountPerRow, fov, depth, radius } = this.config
-    const zStep = depth / rowCount
-    const angleStep = (Math.PI * 2) / particleCountPerRow
-    for (let i = 0; i < rowCount; i++) {
-      const points = []
-      for (let j = 0; j < particleCountPerRow; j++) {
-        points.push({ angle: j * angleStep, x2d: 0, y2d: 0 })
-      }
-      this.rings.push({
-        z: -fov + i * zStep,
-        cx: this.centerX,
-        cy: this.centerY,
-        points
-      })
-    }
-  }
-
-  initStars() {
+    this.initParticles()
+    // Reintegrated star field from c7c8effcd historical
     this.stars = []
-    const n = this.isMobile ? 48 : 72
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < 80; i++) {
       this.stars.push({
-        x: (Math.random() - 0.5) * this.w * 2.2,
-        y: (Math.random() - 0.5) * this.h * 2.2,
-        z: Math.random() * this.config.depth - this.config.fov,
-        brightness: Math.random() * 0.55 + 0.35
+        x: (Math.random() - 0.5) * this.w * 2,
+        y: (Math.random() - 0.5) * this.h * 2,
+        z: Math.random() * this.config.fov * 2 - this.config.fov,
+        brightness: Math.random() * 0.5 + 0.5
       })
     }
   }
 
-  // Exponential smoothing independent of frame rate: half-life style lerp.
-  _smoothToward(current, target, dtMs, halfLifeMs) {
-    if (halfLifeMs <= 0) return target
-    const k = 1 - Math.exp((-Math.LN2 * dtMs) / halfLifeMs)
-    return current + (target - current) * k
+  initParticles() {
+    this.particles = []
+    this.centers = []
+    const zStep = 12
+    for (let i = 0; i < this.config.rowCount; i++) {
+      const z = -this.config.fov + i * zStep
+      const row = []
+      const angleStep = (Math.PI * 2) / this.config.particleCountPerRow
+      for (let j = 0; j < this.config.particleCountPerRow; j++) {
+        const angle = j * angleStep
+        const radius = 75
+        row.push({
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius,
+          z,
+          x2d: 0,
+          y2d: 0,
+          angle,
+          radius,
+          radiusAudio: radius,
+          segments: this.config.particleCountPerRow,
+          index: j
+        })
+      }
+      this.particles.push(row)
+      this.centers.push({ x: this.centerX, y: this.centerY })
+    }
   }
 
-  update(audioData, dtMs) {
-    if (!this.rings.length) this.initRings()
-    const dt = Math.max(0, Math.min(dtMs, 40)) / 1000 // seconds, cap spike
-    if (this.reducedMotion) {
-      this.audioBoost = audioData.average || 0
-      this._projectRings(audioData)
-      return
+  clearImageData() {
+    for (let i = 0, l = this.data.length; i < l; i += 4) {
+      this.data[i] = 0
+      this.data[i + 1] = 0
+      this.data[i + 2] = 0
+      this.data[i + 3] = 255
     }
+  }
 
+  setPixel(x, y, r, g, b, a) {
+    if (x > 0 && x < this.w && y > 0 && y < this.h) {
+      const i = (x + y * this.w) * 4
+      this.data[i] = Math.min(255, Math.max(0, r))
+      this.data[i + 1] = Math.min(255, Math.max(0, g))
+      this.data[i + 2] = Math.min(255, Math.max(0, b))
+      this.data[i + 3] = Math.min(255, Math.max(0, a))
+    }
+  }
+
+  drawLine(x1, y1, x2, y2, r, g, b, a) {
+    const dx = Math.abs(x2 - x1)
+    const dy = Math.abs(y2 - y1)
+    const sx = x1 < x2 ? 1 : -1
+    const sy = y1 < y2 ? 1 : -1
+    let err = dx - dy
+    let lx = x1
+    let ly = y1
+    while (true) {
+      this.setPixel(lx, ly, r, g, b, a)
+      if (lx === x2 && ly === y2) break
+      const e2 = 2 * err
+      if (e2 > -dy) { err -= dy; lx += sx }
+      if (e2 < dx) { err += dx; ly += sy }
+    }
+  }
+
+  softInvert(value) {
+    for (let j = 0, n = this.data.length; j < n; j += 4) {
+      this.data[j] = Math.abs(value - this.data[j])
+      this.data[j + 1] = Math.abs(value - this.data[j + 1])
+      this.data[j + 2] = Math.abs(value - this.data[j + 2])
+      this.data[j + 3] = 255
+    }
+  }
+
+  update(audioData) {
+    this.time += 0.005
+    if (!this.particles.length || !this.centers.length) { this.initParticles(); return }
     const audioIntensity = Math.max(0, Math.min(1, audioData.average || 0))
-    this.audioBoost = this._smoothToward(this.audioBoost, audioIntensity, dtMs, 80)
-    this.time += dt * this.config.spin * (1 + this.audioBoost * 0.35)
-
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
     const interactionY = this.touch.active ? this.touch.y : this.mouse.y
     const isInteracting = (this.touch.active || this.mouse.active) && this.mouse.down
     const isPressed = this.mouse.down
-    const direction = isPressed ? 1 : -1
-    const speed = this.config.speed * direction * (1 + this.audioBoost * 0.25)
-    const { fov, depth } = this.config
-    const halfDepth = depth
+    let sortNeeded = false
 
-    for (let i = 0; i < this.rings.length; i++) {
-      const ring = this.rings[i]
-      // Continuous z travel — wrap without reordering array mid-frame jumps.
-      ring.z += speed * dt
-      if (ring.z > fov) ring.z -= halfDepth
-      else if (ring.z < -fov) ring.z += halfDepth
-
+    this.particles.forEach((row, i) => {
+      const center = this.centers[i]
       if (isInteracting) {
-        const pull = (ring.z - fov) / 500
-        const targetCx = (this.centerX - interactionX) * pull + this.centerX
-        const targetCy = (this.centerY - interactionY) * pull + this.centerY
-        ring.cx = this._smoothToward(ring.cx, targetCx, dtMs, 45)
-        ring.cy = this._smoothToward(ring.cy, targetCy, dtMs, 45)
+        center.x = (this.centerX - interactionX) * ((row[0].z - this.config.fov) / 500) + this.centerX
+        center.y = (this.centerY - interactionY) * ((row[0].z - this.config.fov) / 500) + this.centerY
       } else {
-        ring.cx = this._smoothToward(ring.cx, this.centerX, dtMs, 220)
-        ring.cy = this._smoothToward(ring.cy, this.centerY, dtMs, 220)
+        center.x += (this.centerX - center.x) * 0.015
+        center.y += (this.centerY - center.y) * 0.015
       }
+      row.forEach(particle => {
+        const audioBoost = audioIntensity * 0.5
+        particle.radiusAudio = particle.radius + audioBoost * 8
+        const targetZ = particle.z + (isPressed ? this.config.speed : -this.config.speed)
+        particle.z += (targetZ - particle.z) * 0.1
+        if (particle.z > this.config.fov) { particle.z -= this.config.fov * 2; sortNeeded = true }
+        else if (particle.z < -this.config.fov) { particle.z += this.config.fov * 2; sortNeeded = true }
+        const scale = this.config.fov / (this.config.fov + particle.z)
+        particle.x2d = (particle.x * scale) + center.x
+        particle.y2d = (particle.y * scale) + center.y
+        particle.x = Math.cos(particle.angle + this.time) * particle.radiusAudio
+        particle.y = Math.sin(particle.angle + this.time) * particle.radiusAudio
+      })
+    })
+
+    if (sortNeeded && this.particles.every(row => row.length > 0)) {
+      this.particles.sort((a, b) => b[0].z - a[0].z)
+      this.centers = this.particles.map((_, i) => this.centers[i] || { x: this.centerX, y: this.centerY })
     }
 
-    this._projectRings(audioData)
+    // Update stars from historical c7c8effcd
+    this.audioBoost = (audioData.average || 0) * 0.5
+    this.stars.forEach(star => {
+      star.z += (isPressed ? this.config.speed : -this.config.speed) * 0.5
+      if (star.z > this.config.fov) star.z -= this.config.fov * 2
+      else if (star.z < -this.config.fov) star.z += this.config.fov * 2
+      star.x = (Math.random() - 0.5) * this.w * 2 * (this.config.fov / (this.config.fov + star.z)) + this.centerX * 0.1 // rough
+    })
 
-    // Stars drift with tunnel, no per-frame random jumps.
-    for (let i = 0; i < this.stars.length; i++) {
-      const star = this.stars[i]
-      star.z += speed * 0.55 * dt
-      if (star.z > fov) star.z -= halfDepth
-      else if (star.z < -fov) star.z += halfDepth
-    }
-
-    const invertTarget = isPressed ? 1 : 0
-    this.colorInvert = this._smoothToward(this.colorInvert, invertTarget, dtMs, 120)
-  }
-
-  _projectRings(audioData) {
-    const { fov, radius } = this.config
-    const radiusLive = radius + this.audioBoost * 10 + (audioData.bass || 0) * 4
-    const spin = this.time
-    for (let i = 0; i < this.rings.length; i++) {
-      const ring = this.rings[i]
-      const denom = fov + ring.z
-      if (denom <= 0.001) continue
-      const scale = fov / denom
-      const pts = ring.points
-      for (let j = 0; j < pts.length; j++) {
-        const p = pts[j]
-        const a = p.angle + spin
-        p.x2d = Math.cos(a) * radiusLive * scale + ring.cx
-        p.y2d = Math.sin(a) * radiusLive * scale + ring.cy
-      }
-    }
+    if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 5)
+    else this.colorInvertValue = Math.max(0, this.colorInvertValue - 5)
   }
 
   render() {
-    const ctx = this.ctx
-    const { w, h } = this
-    ctx.fillStyle = "#000"
-    ctx.fillRect(0, 0, w, h)
-    if (!this.rings.length) return
-
-    // Back-to-front paint order for soft depth (no per-frame object churn).
-    const sorted = this._sorted
-    sorted.length = this.rings.length
-    for (let i = 0; i < this.rings.length; i++) sorted[i] = this.rings[i]
-    sorted.sort((a, b) => b.z - a.z)
-
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
-    const n = sorted.length
-
-    for (let i = 0; i < n; i++) {
-      const ring = sorted[i]
-      const pts = ring.points
-      if (!pts.length) continue
-      const depthT = Math.max(0, Math.min(1, (ring.z + this.config.fov) / this.config.depth))
-      const blue = Math.round(40 + depthT * 180)
-      const green = Math.round(blue * 0.45)
-      const alpha = 0.22 + depthT * 0.55
-      ctx.strokeStyle = `rgba(0, ${green}, ${blue}, ${alpha})`
-      ctx.lineWidth = 0.75 + depthT * 0.9
-
-      // Circumference
-      ctx.beginPath()
-      ctx.moveTo(pts[0].x2d, pts[0].y2d)
-      for (let j = 1; j < pts.length; j++) ctx.lineTo(pts[j].x2d, pts[j].y2d)
-      ctx.closePath()
-      ctx.stroke()
-
-      // Longitudinal ribs to the next-deeper ring (by original z-neighbor via
-      // index in sorted list is wrong; pick nearest in z among remaining).
-      if (i + 1 < n) {
-        const next = sorted[i + 1]
-        const nextPts = next.points
-        if (nextPts.length === pts.length) {
-          ctx.beginPath()
-          for (let j = 0; j < pts.length; j += 2) {
-            ctx.moveTo(pts[j].x2d, pts[j].y2d)
-            ctx.lineTo(nextPts[j].x2d, nextPts[j].y2d)
-          }
-          ctx.stroke()
+    this.clearImageData()
+    if (!this.particles.length) return
+    this.particles.forEach((row, i) => {
+      const prevRow = i > 0 ? this.particles[i - 1] : null
+      row.forEach((particle, j) => {
+        const prevInRow = j > 0 ? row[j - 1] : row[row.length - 1]
+        const lineColorValue = Math.round(i / this.particles.length * 200)
+        this.drawLine(
+          particle.x2d | 0, particle.y2d | 0,
+          prevInRow.x2d | 0, prevInRow.y2d | 0,
+          0, Math.round(lineColorValue / 2), lineColorValue, 128
+        )
+        if (prevRow) {
+          const prevInPrevRow = j === 0 ? prevRow[prevRow.length - 1] : prevRow[j - 1]
+          this.drawLine(
+            particle.x2d | 0, particle.y2d | 0,
+            prevInPrevRow.x2d | 0, prevInPrevRow.y2d | 0,
+            0, Math.round(lineColorValue / 2), lineColorValue, 128
+          )
         }
+      })
+    })
+    if (this.colorInvertValue > 0) this.softInvert(this.colorInvertValue)
+    // Draw stars from c7c8effcd historical
+    this.stars.forEach(star => {
+      const scale = this.config.fov / (this.config.fov + star.z)
+      const sx = star.x * scale + this.centerX * 0.5 // approximate center
+      const sy = star.y * scale + this.centerY * 0.5
+      if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
+        const b = Math.floor(star.brightness * 200 + (this.audioBoost || 0) * 50)
+        this.setPixel(sx | 0, sy | 0, b, b, b + 20, 180)
       }
-    }
-
-    // Stars
-    for (let i = 0; i < this.stars.length; i++) {
-      const star = this.stars[i]
-      const denom = this.config.fov + star.z
-      if (denom <= 0.001) continue
-      const scale = this.config.fov / denom
-      const sx = star.x * scale + this.centerX
-      const sy = star.y * scale + this.centerY
-      if (sx < 0 || sx > w || sy < 0 || sy > h) continue
-      const b = Math.floor(star.brightness * 180 + this.audioBoost * 60)
-      ctx.fillStyle = `rgba(${b}, ${b}, ${Math.min(255, b + 24)}, 0.75)`
-      ctx.fillRect(sx, sy, 1.25, 1.25)
-    }
-
-    // Press invert as a cheap full-canvas composite (not a pixel loop).
-    if (this.colorInvert > 0.01) {
-      ctx.save()
-      ctx.globalCompositeOperation = "difference"
-      ctx.globalAlpha = this.colorInvert * 0.85
-      ctx.fillStyle = "#fff"
-      ctx.fillRect(0, 0, w, h)
-      ctx.restore()
-    }
+    })
+    this.ctx.putImageData(this.imageData, 0, 0)
   }
 
   setTouch(x, y, active) {
@@ -363,9 +342,9 @@ class VisualEngine {
 
   setPerformanceMode(value) {
     this.isMobile = value
-    this.config.particleCountPerRow = value ? 24 : 40
-    this.config.rowCount = value ? 48 : 90
-    this.initRings()
+    this.config.particleCountPerRow = value ? 32 : 64
+    this.config.rowCount = value ? 125 : 250
+    this.initParticles()
   }
 }
 
@@ -416,9 +395,9 @@ export class RadioBrgen {
       nextTrack: () => this.audioEngine.nextTrack()
     }
     const visFolder = this.gui.addFolder("Visualization")
-    visFolder.add(guiParams, "particleCount", 16, 64, 4).name("Segments per Ring").onChange(v => {
+    visFolder.add(guiParams, "particleCount", 32, 128, 8).name("Particles per Row").onChange(v => {
       this.visualEngine.config.particleCountPerRow = Math.round(v)
-      this.visualEngine.initRings()
+      this.visualEngine.initParticles()
     })
     const audioFolder = this.gui.addFolder("Audio Reactivity")
     audioFolder.add(guiParams, "bassInfluence", 0, 2).name("Bass Influence").onChange(v => { this.audioEngine.bassInfluence = v })
@@ -523,23 +502,25 @@ export class RadioBrgen {
 
   updateCursor(x, y) {
     if (!this.cursor || window.innerWidth < 768) return
-    // Direct transform only — no CSS transition fighting rAF (reads as lag).
+    this.cursor.style.left = `${x - 12}px`
+    this.cursor.style.top = `${y - 12}px`
     const intensity = this.audioEngine.bassLevel + this.audioEngine.audioLevel
-    const scale = 1 + intensity * 0.25
-    this.cursor.style.transform = `translate3d(${x - 12}px, ${y - 12}px, 0) scale(${scale})`
+    this.cursor.style.transform = `scale(${1 + intensity * 0.3})`
     this.cursor.style.opacity = `${0.8 + intensity * 0.15}`
   }
 
   startAnimation() {
-    // Delta-time loop: motion stays smooth at any FPS. A single throw inside
-    // update()/render() must not kill the loop forever.
-    this._lastFrame = performance.now()
-    const loop = (now) => {
+    // A single throw inside update()/render() previously killed the entire
+    // animation forever -- requestAnimationFrame is never rescheduled once
+    // an exception unwinds past this closure, and canvas particle math is
+    // exactly the kind of code that hits a rare NaN/divide-by-zero after a
+    // few seconds of continuous audio-driven motion. Skip the bad frame,
+    // keep the loop alive, so a transient glitch reads as a stutter, not
+    // a dead animation.
+    const loop = () => {
       try {
-        const dt = Math.min(40, Math.max(0, now - this._lastFrame))
-        this._lastFrame = now
         const audioData = this.audioEngine.getAudioData()
-        this.visualEngine.update(audioData, dt)
+        this.visualEngine.update(audioData)
         this.visualEngine.render()
       } catch (error) {
         if (typeof console !== "undefined" && console.warn) {
@@ -548,7 +529,7 @@ export class RadioBrgen {
       }
       this._raf = requestAnimationFrame(loop)
     }
-    this._raf = requestAnimationFrame(loop)
+    loop()
   }
 
   destroy() {
