@@ -17,9 +17,6 @@
     "tts:viseme:plan": { targets: ["face"], fields: ["frames", "visemes", "duration"] },
     "tts:job_cancelled": { targets: ["face"], fields: ["job_id", "reason"] },
     "user:expression": { targets: ["face", "ecology"], fields: ["expression", "blendshapes", "source"] },
-    "face3d:ready": { targets: ["face"], fields: ["topology", "mode"] },
-    "face3d:nonblank": { targets: ["face"], fields: ["lit_pixels"] },
-    "face3d:error": { targets: ["face"], fields: ["raw"] },
     "self_violation": { targets: ["face"], fields: [] }
   };
 

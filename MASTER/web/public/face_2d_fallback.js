@@ -33,65 +33,128 @@ function start2DFallback() {
 
   stop2DFallback();
 
-  // Anatomical wireframe head, built once per resize (not per frame) as
-  // Path2D so the per-frame cost stays a handful of stroke(path) calls.
-  // Wireframe, not filled illustration, deliberately: the real WebGL face
-  // this placeholder stands in for is itself described as "the wireframe
-  // mesh" (see MASTER/web/CLAUDE.md) -- this keeps the placeholder visually
-  // continuous with the thing it's waiting on, instead of a mismatched style.
-  let head = null;
+  // Anatomical point cloud, used directly as particle targets -- built once
+  // per resize, not per frame. Adapted from face3d_geometry.js's
+  // buildHomoFuturaMask() (the "evolved-human" anatomical rig: outline,
+  // crown, brow, eye, pupil, nose, mouth, chin, cheek zones via line3/ring3/
+  // disc3 point generators) rather than hand-rolled bezier curves, since
+  // that geometry already existed and was more anatomically considered than
+  // a first pass would be. face3d's WebGL renderer/blendshape rig around it
+  // was not ported -- only the static point layout, which is all a particle
+  // field needs. See DECISIONS.md-adjacent MASTER/web/CLAUDE.md: the real
+  // WebGL face is "the wireframe mesh", so tracing wireframe-style anatomy
+  // (not a filled illustration) keeps this placeholder visually continuous
+  // with what it's standing in for.
+  let particles = [];
 
-  const smoothPath = (points) => {
-    const path = new Path2D();
-    path.moveTo(points[0][0], points[0][1]);
-    for (let i = 1; i < points.length - 1; i += 1) {
-      const [cx0, cy0] = points[i];
-      const [nx, ny] = points[i + 1];
-      path.quadraticCurveTo(cx0, cy0, (cx0 + nx) / 2, (cy0 + ny) / 2);
+  const line3 = (x0, y0, z0, x1, y1, z1, n) => {
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      const t = n > 1 ? i / (n - 1) : 0;
+      out.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z0 + (z1 - z0) * t]);
     }
-    const last = points[points.length - 1];
-    path.lineTo(last[0], last[1]);
-    return path;
+    return out;
   };
 
-  const buildHead = (w, h, cx, cy) => {
-    const rw = w * 0.23;
-    const rh = h * 0.34;
-    // One continuous jaw/skull contour: temple -> cheekbone -> jaw angle -> chin -> mirror.
-    const outline = smoothPath([
-      [cx - rw * 0.55, cy - rh * 0.92],
-      [cx - rw * 1.02, cy - rh * 0.2],
-      [cx - rw * 0.86, cy + rh * 0.48],
-      [cx - rw * 0.4, cy + rh * 0.92],
-      [cx, cy + rh * 1.04],
-      [cx + rw * 0.4, cy + rh * 0.92],
-      [cx + rw * 0.86, cy + rh * 0.48],
-      [cx + rw * 1.02, cy - rh * 0.2],
-      [cx + rw * 0.55, cy - rh * 0.92],
-    ]);
-    const browL = smoothPath([[cx - rw * 0.62, cy - rh * 0.2], [cx - rw * 0.34, cy - rh * 0.34], [cx - rw * 0.08, cy - rh * 0.22]]);
-    const browR = smoothPath([[cx + rw * 0.08, cy - rh * 0.22], [cx + rw * 0.34, cy - rh * 0.34], [cx + rw * 0.62, cy - rh * 0.2]]);
-    const cheekL = smoothPath([[cx - rw * 0.7, cy], [cx - rw * 0.5, cy + rh * 0.22], [cx - rw * 0.22, cy + rh * 0.3]]);
-    const cheekR = smoothPath([[cx + rw * 0.22, cy + rh * 0.3], [cx + rw * 0.5, cy + rh * 0.22], [cx + rw * 0.7, cy]]);
-    const nose = smoothPath([[cx, cy - rh * 0.12], [cx - rw * 0.04, cy + rh * 0.1], [cx - rw * 0.09, cy + rh * 0.16]]);
-    const noseR = smoothPath([[cx, cy - rh * 0.12], [cx + rw * 0.04, cy + rh * 0.1], [cx + rw * 0.09, cy + rh * 0.16]]);
-    const lipTop = smoothPath([[cx - rw * 0.16, cy + rh * 0.42], [cx - rw * 0.05, cy + rh * 0.38], [cx, cy + rh * 0.41], [cx + rw * 0.05, cy + rh * 0.38], [cx + rw * 0.16, cy + rh * 0.42]]);
-    const lipBottom = smoothPath([[cx - rw * 0.14, cy + rh * 0.44], [cx, cy + rh * 0.51], [cx + rw * 0.14, cy + rh * 0.44]]);
-    const accents = [
-      [cx - rw * 0.62, cy - rh * 0.2],
-      [cx + rw * 0.62, cy - rh * 0.2],
-      [cx - rw * 0.7, cy],
-      [cx + rw * 0.7, cy],
-      [cx, cy + rh * 1.02],
-    ];
-    return { outline, browL, browR, cheekL, cheekR, nose, noseR, lipTop, lipBottom, accents, cx, cy, rw, rh };
+  const ring3 = (cx, cy, cz, rx, ry, n, zWave = 0) => {
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      const a = (i / n) * Math.PI * 2;
+      out.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry, cz + Math.sin(a * 2) * zWave]);
+    }
+    return out;
   };
+
+  const disc3 = (cx, cy, cz, r, n) => {
+    const out = [];
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < n; i += 1) {
+      const t = (i + 0.5) / n;
+      const rr = r * Math.sqrt(t);
+      const a = i * golden;
+      out.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz]);
+    }
+    return out;
+  };
+
+  const mouthAnchors = (n) => {
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      const t = n > 1 ? i / (n - 1) : 0;
+      out.push([(t - 0.5) * 2 * 0.34, 0.58, 0.42]);
+    }
+    return out;
+  };
+
+  // buildHomoFuturaMask, trimmed to the anchor positions only (drops the
+  // zone/blendshape rig -- unused by a static particle field).
+  const buildAnchors = () => {
+    const a = [];
+    for (let i = 0; i < 80; i += 1) {
+      const t = i / 79;
+      const y = -1.02 + t * 1.92;
+      const w = 0.14 + 0.46 * Math.sin(t * Math.PI);
+      const z = 0.06 * Math.sin(t * Math.PI);
+      a.push([-w, y, z], [w, y, z]);
+    }
+    for (let i = 0; i < 14; i += 1) {
+      const t = (i - 6.5) / 6.5;
+      a.push(...line3(t * 0.06, -0.82, 0.16, t * 0.14, -1.18 - Math.abs(t) * 0.10, 0.08, 8));
+    }
+    a.push(...line3(-0.36, -0.26, 0.20, -0.10, -0.20, 0.30, 12));
+    a.push(...line3(0.10, -0.20, 0.30, 0.36, -0.26, 0.20, 12));
+    a.push(...ring3(-0.27, -0.12, 0.40, 0.15, 0.09, 32, 0.012));
+    a.push(...ring3(0.27, -0.12, 0.40, 0.15, 0.09, 32, 0.012));
+    a.push(...disc3(-0.27, -0.12, 0.48, 0.048, 10));
+    a.push(...disc3(0.27, -0.12, 0.48, 0.048, 10));
+    a.push(...line3(0, -0.30, 0.42, 0, 0.28, 0.52, 24));
+    a.push(...ring3(-0.05, 0.34, 0.50, 0.030, 0.018, 6));
+    a.push(...ring3(0.05, 0.34, 0.50, 0.030, 0.018, 6));
+    a.push(...mouthAnchors(28));
+    a.push(...line3(-0.10, 0.68, 0.14, 0.10, 0.68, 0.14, 8));
+    a.push(...disc3(-0.34, 0.20, 0.22, 0.042, 8));
+    a.push(...disc3(0.34, 0.20, 0.22, 0.042, 8));
+    return a;
+  };
+
+  const ANCHORS = buildAnchors();
+  // Structural landmarks for the bio-luminescent accent nodes -- outer brow
+  // corners, cheekbones, chin -- expressed in the same anchor unit space.
+  const ACCENT_ANCHORS = [[-0.36, -0.26, 0.20], [0.36, -0.26, 0.20], [-0.34, 0.20, 0.22], [0.34, 0.20, 0.22], [0, 0.68, 0.14]];
+
+  const project = (anchor, cx, cy, sx, sy) => [cx + anchor[0] * sx, cy + anchor[1] * sy, anchor[2]];
+
+  const syncParticles = (targets, w, h) => {
+    if (particles.length !== targets.length) {
+      particles = targets.map(([tx, ty, z]) => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        tx,
+        ty,
+        z,
+        seed: Math.random() * Math.PI * 2,
+      }));
+    } else {
+      targets.forEach(([tx, ty, z], i) => {
+        particles[i].tx = tx;
+        particles[i].ty = ty;
+        particles[i].z = z;
+      });
+    }
+  };
+
+  let accents = [];
 
   const resize = () => {
     const ratio = window.devicePixelRatio || 1;
     canvas.width = Math.max(1, Math.floor(canvas.clientWidth * ratio));
     canvas.height = Math.max(1, Math.floor(canvas.clientHeight * ratio));
-    head = buildHead(canvas.width, canvas.height, canvas.width * 0.5, canvas.height * 0.44);
+    const cx = canvas.width * 0.5;
+    const cy = canvas.height * 0.44;
+    const sx = canvas.width * 0.23 * 1.7;
+    const sy = canvas.height * 0.34;
+    syncParticles(ANCHORS.map((anchor) => project(anchor, cx, cy, sx, sy)), canvas.width, canvas.height);
+    accents = ACCENT_ANCHORS.map((anchor) => project(anchor, cx, cy, sx, sy));
   };
   resize();
   window.addEventListener("resize", resize);
@@ -151,42 +214,26 @@ function start2DFallback() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    const { outline, browL, browR, cheekL, cheekR, nose, noseR, lipTop, lipBottom, accents, cx, cy, rw, rh } = head;
-    const lineAlpha = 0.22 + breath * 0.08;
-    ctx.lineWidth = Math.max(1, w * 0.0012);
-    ctx.strokeStyle = `rgba(150,155,160,${lineAlpha.toFixed(3)})`;
-    ctx.stroke(outline);
-    ctx.strokeStyle = `rgba(150,155,160,${(lineAlpha * 0.8).toFixed(3)})`;
-    [browL, browR, cheekL, cheekR, nose, noseR].forEach((path) => ctx.stroke(path));
-    ctx.strokeStyle = `rgba(190,195,200,${(lineAlpha * 1.1).toFixed(3)})`;
-    ctx.stroke(lipTop);
-    ctx.stroke(lipBottom);
-
-    // Eyes: almond socket outline (static path) + iris ring + pupil (dynamic, per-frame).
-    [-1, 1].forEach((side) => {
-      const ex = cx + side * rw * 0.34;
-      const ey = cy - rh * 0.08;
-      const socketW = rw * 0.17;
-      const socketH = rh * 0.09;
-      ctx.beginPath();
-      ctx.moveTo(ex - socketW, ey);
-      ctx.quadraticCurveTo(ex, ey - socketH, ex + socketW, ey);
-      ctx.quadraticCurveTo(ex, ey + socketH * 0.7, ex - socketW, ey);
-      ctx.strokeStyle = `rgba(160,165,170,${lineAlpha.toFixed(3)})`;
-      ctx.stroke();
-
-      const irisR = rh * 0.045;
-      const pupilX = ex + Math.sin(phase * 0.5) * irisR * 0.3;
-      const pupilY = ey + Math.cos(phase * 0.7) * irisR * 0.25;
-      ctx.beginPath();
-      ctx.arc(pupilX, pupilY, irisR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(210,215,220,${(lineAlpha * 1.2).toFixed(3)})`;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(pupilX, pupilY, irisR * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(210,215,220,${(lineAlpha * 0.9).toFixed(3)})`;
-      ctx.fill();
+    // Single white pixel particles, scattered on first build, easing toward
+    // their target position on the anatomical point cloud every frame --
+    // slow enough to read as flying/assembling, not snapping into place.
+    // Same particle objects persist across resizes (syncParticles just
+    // updates tx/ty/z), so a resize reflows the field instead of
+    // re-scattering it. z (depth, from the source anchor -- higher is
+    // further forward, e.g. nose/mouth vs. the outline/crown at the back)
+    // gives a cheap depth-of-field cue: nothing extra to compute, the value
+    // was already carried along for free.
+    const settleAlpha = 0.55 + breath * 0.25;
+    ctx.fillStyle = "#fff";
+    particles.forEach((p) => {
+      p.x += (p.tx - p.x) * 0.02;
+      p.y += (p.ty - p.y) * 0.02;
+      const twinkle = 0.5 + 0.5 * Math.sin(phase * 2 + p.seed);
+      const depth = 0.55 + (p.z || 0) * 0.7;
+      ctx.globalAlpha = settleAlpha * depth * (0.6 + twinkle * 0.4);
+      ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
     });
+    ctx.globalAlpha = 1;
 
     // Bio-luminescent accent nodes at structural landmarks (brow/cheek/chin) --
     // the one "future human" flourish, kept small and few so it reads as

@@ -1,6 +1,5 @@
 "use strict";
 
-// face3d only when WebGL is disabled: _hasWebGL = false keeps low-end boot cheap.
 // Check WebGL before paying THREE's 1.3MB parse cost
 const _wglCv = document.createElement('canvas');
 const _hasCanvas = typeof _wglCv.getContext === 'function';
@@ -28,7 +27,6 @@ let cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn = document.getElementById('zin');
-const face3dToggleBtn = document.querySelector('[data-act="face3d-toggle"]');
 const ttsLive = document.getElementById('tts-live');
 const uiStatus = document.getElementById('ui-status');
 const rootBody = document.body;

@@ -58,14 +58,6 @@
       palette: "review",
       zones: ["habitats", "flows", "clusters", "storms", "dead_zones", "growth"],
       events: ["memory:retriev", "tool", "scan", "sweep", "audit", "pressure:high"]
-    },
-    face3d: {
-      id: "face3d",
-      label: "Semantic Bitmap Face",
-      renderer: "face3d_renderer.js",
-      palette: "operator",
-      status: "planned",
-      events: []
     }
   };
 

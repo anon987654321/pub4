@@ -407,10 +407,10 @@
     });
   }
 
-  // Honour the deferred-boot contract: nothing heavy (THREE.js, the face3d WebGL
-  // preview, the cluster miner) may load at page load — only after the primer tap.
-  // Eager boot here wedged the main thread before the tap could register (dead "tap
-  // to start"). _primerFired is the cross-module flag the inline boot sets in go().
+  // Honour the deferred-boot contract: nothing heavy (THREE.js, the cluster miner)
+  // may load at page load — only after the primer tap. Eager boot here wedged the
+  // main thread before the tap could register (dead "tap to start"). _primerFired
+  // is the cross-module flag the inline boot sets in go().
   function whenPrimed(run) {
     if (window._primerFired) { run(); return; }
     let done = false;
@@ -425,11 +425,6 @@
 
   function bootExperimentalVisuals() {
     const params = new URLSearchParams(window.location.search);
-    // The face3d_preview is a legacy 2D-canvas Papua-mask painter that grabs the
-    // shared #face canvas with getContext('2d'). A canvas can only ever hold one
-    // context type, so booting it permanently blocks the real WebGL 3D face from
-    // ever initializing on #face. It is now strictly OPT-IN — never auto-on.
-    const face3d = params.get("face3d") === "1" || localStorage.getItem("master_face3d") === "1";
     const clusters = params.get("clusters") === "1";
 
     if (clusters && !window.MASTERClusterMiner) {
@@ -439,12 +434,6 @@
       script.onload = () => emitVisual("clusters:ready", { topology: "neural", entropy: 0.18, confidence: 0.86, mode: "clusters" });
       script.onerror = () => emitVisual("clusters:error", { topology: "serpent", entropy: 0.62, confidence: 0.36, mode: "error" });
       document.head.appendChild(script);
-    }
-
-    if (face3d) {
-      import(window.MASTER_ASSET_PATHS?.face3dPreview || "/face3d_preview.js")
-        .then(() => emitVisual("face3d:ready", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "face3d" }))
-        .catch(error => emitVisual("face3d:error", { topology: "serpent", entropy: 0.70, confidence: 0.30, mode: "error", raw: String(error?.message || error) }));
     }
   }
 

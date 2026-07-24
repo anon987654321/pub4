@@ -19,7 +19,7 @@
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
   <script nonce="<%= content_security_policy_nonce %>">
     // Deferred-boot contract, enforced at the platform level: no WebGL context may be
-    // created before the primer tap. THREE.js/face3d parse + WebGL init is heavy enough
+    // created before the primer tap. THREE.js parse + WebGL init is heavy enough
     // to wedge the main thread; if a stale or regressed asset boots it at page load, the
     // "tap to start" handler never runs and the tap looks dead (recurring bug: 930a35ca5,
     // a9aa0a6f6, f9b6aa57e). 2D canvases (cognition ecology) are untouched. After the tap
@@ -51,8 +51,7 @@
       faceVisionBundle: "<%= asset_path("face_vision.bundle.js") %>",
       faceRuntime: "<%= asset_path("face.runtime.js") %>",
       visemePacks: "<%= asset_path("viseme_packs.json") %>",
-      clusterMiner: "<%= asset_path("cluster_miner.js") %>",
-      face3dPreview: "<%= asset_path("face3d_preview.js") %>"
+      clusterMiner: "<%= asset_path("cluster_miner.js") %>"
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -101,7 +100,6 @@
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
   <canvas id="face" role="img" aria-label="MASTER face — visual state mirror" tabindex="-1"></canvas>
   <div id="face-status-live" class="face-status-live" aria-live="polite" aria-atomic="true"></div>
-  <canvas id="face3d-overlay" aria-hidden="true"></canvas>
   <div id="mic-dot" aria-hidden="true"></div>
   <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
   <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
@@ -269,7 +267,6 @@
     <button id="photo-button" type="button" aria-label="Attach photo">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
     <span class="pp">user</span><span class="sep2">$ </span>
-    <button type="button" class="tool" data-act="face3d-toggle" aria-label="Toggle evolved-human face overlay" aria-pressed="false">⬡</button>
     <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 

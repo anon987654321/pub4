@@ -1189,27 +1189,6 @@ focusBtn?.addEventListener('click', () => toggleFocusMode());
 // still available via spacebar push-to-talk and the 'm' keyboard shortcut
 // (ttsToggleMic), and via the "hey master" wake phrase when opted in.
 
-// Evolved-human overlay toggle: reads/writes the same localStorage flag
-// face3d_preview.js checks at boot. That module computes FACE3D_ACTIVE once
-// at load time and wires its own rAF loop from scratch, so flipping it live
-// without restarting that whole boot sequence isn't worth the complexity --
-// a reload is simple, correct, and rare enough (a deliberate opt-in toggle,
-// not a per-turn action) that the cost is negligible.
-if (face3dToggleBtn) {
-  const FACE3D_KEY = 'master_face3d';
-  try {
-    if (localStorage.getItem(FACE3D_KEY) === '1') {
-      face3dToggleBtn.setAttribute('aria-pressed', 'true');
-      rootBody.dataset.face3d = '1';
-    }
-  } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_read", err); }
-  face3dToggleBtn.addEventListener('click', () => {
-    let enabled = false;
-    try { enabled = localStorage.getItem(FACE3D_KEY) === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_click_read", err); }
-    try { localStorage.setItem(FACE3D_KEY, enabled ? '0' : '1'); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:face3d_toggle_write", err); }
-    location.reload();
-  });
-}
 fontScaleInput?.addEventListener('input', () => applyUiScale(parseFloat(fontScaleInput.value)));
 
 if (fontScaleInput) {
