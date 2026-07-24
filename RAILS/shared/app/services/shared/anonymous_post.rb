@@ -2,7 +2,9 @@
 
 module Shared
   class AnonymousPost
-    LIMIT = 2
+    # Soft guest quota — enough for real use, low enough to slow spray spam.
+    # Sign-up removes the cap entirely (allowed? returns true for non-guests).
+    LIMIT = 15
 
     def initialize(request:, user:)
       @request = request

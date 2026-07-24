@@ -12,7 +12,12 @@ module Shared
     end
 
     class_methods do
+      # Public pages still run resume_session when guests are supported so
+      # anonymous visitors get a soft Current.user (Craigslist-style: use the
+      # product without signup). require_real_user remains the identity gate.
       def allow_unauthenticated_access(**options)
+        return if ::User.column_names.include?("guest")
+
         skip_before_action :resume_session, **options
       end
     end
@@ -63,14 +68,18 @@ module Shared
       root_path
     end
 
+    # Real account only (email/password session). Identity-bound actions:
+    # permanent profile edits, ownership admin, account settings.
     def require_real_user
       return if authenticated?
 
       redirect_to new_session_path, alert: "Sign in to continue"
     end
 
+    # Any usable identity including soft guests. Core product actions
+    # (post, message, list, swipe, cart) use this — no signup required.
     def require_user_session
-      return if authenticated?
+      return if Current.user.present?
 
       redirect_to new_session_path, alert: "Sign in to continue"
     end

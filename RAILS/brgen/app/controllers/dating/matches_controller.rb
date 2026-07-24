@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Dating::MatchesController < Dating::BaseController
-  before_action :require_real_user
+  before_action :require_user_session
 
   def index
     @pagy, @matches = pagy(

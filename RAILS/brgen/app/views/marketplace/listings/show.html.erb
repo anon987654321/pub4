@@ -8,9 +8,9 @@
     <h1><%= @listing.title %></h1>
   </div>
   <nav role="navigation" aria-label="Listing actions" class="marketplace-actions">
-    <% if authenticated? && Current.user == @listing.user %>
+    <% if Current.user.present? && Current.user == @listing.user %>
       <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
-    <% elsif authenticated? %>
+    <% elsif Current.user.present? %>
       <%= render "marketplace/listings/favorite_button",
             listing: @listing,
             favorited: @listing.favorite_for(Current.user).present? %>
@@ -32,7 +32,7 @@
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share">Share</button>
-  <% if !@listing.sold? && authenticated? && Current.user != @listing.user %>
+  <% if !@listing.sold? && Current.user.present? && Current.user != @listing.user %>
     <div class="listing-actions listing-actions--inline">
       <%= button_to "Message seller", user_conversations_path(@listing.user), method: :post, class: "btn btn-ghost" %>
     </div>
@@ -67,7 +67,7 @@
   <% end %>
 </div>
 
-<% if authenticated? && Current.user != @listing.user && !@listing.sold? %>
+<% if Current.user.present? && Current.user != @listing.user && !@listing.sold? %>
   <div id="make-offer" class="section-divider">
     <p class="section-heading--md">Make an offer</p>
     <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
@@ -84,7 +84,7 @@
   </div>
 <% end %>
 
-<% if authenticated? && Current.user == @listing.user %>
+<% if Current.user.present? && Current.user == @listing.user %>
   <div class="section-divider">
     <p class="section-heading--md">Seller dashboard</p>
     <div class="chips">

@@ -3,11 +3,11 @@
   <header>
     <span><%= comment.user&.username || "anon" %></span>
     <span> · <span data-controller="timeago"><%= time_ago_in_words(comment.created_at) %> ago</span></span>
-    <% if authenticated? %>
+    <% if Current.user.present? %>
       ·
       <% root = comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable.commentable %>
       <%= link_to "reply", "#reply-#{comment.id}", data: { action: "click->reply#toggle" } %>
-      <% if comment.user == Current.user %>
+      <% if comment.user == Current.user && authenticated? %>
         <%= button_to "delete", comment, method: :delete, data: { turbo_confirm: "Delete?" } %>
       <% end %>
     <% end %>
@@ -22,7 +22,7 @@
     <% end %>
   <% end %>
 
-  <% if authenticated? %>
+  <% if Current.user.present? %>
     <section id="reply-<%= comment.id %>" hidden>
       <%= form_with url: post_comments_path(comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable), data: { turbo: true } do |f| %>
         <%= f.hidden_field :parent_id, value: comment.id %>

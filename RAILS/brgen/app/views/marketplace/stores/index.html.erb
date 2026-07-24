@@ -4,7 +4,7 @@
       active: "stores",
       search_url: marketplace_shops_path(vertical: params[:vertical]),
       search_placeholder: "Give me all your money",
-      cart_count: (authenticated? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
+      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%= tag.section class: "marketplace-stores", role: "region", "aria-label": "Marketplace stores" do %>
   <%= tag.h1 class: "visually-hidden" do %><%= t("marketplace.stores.title", default: "Stores") %><% end %>

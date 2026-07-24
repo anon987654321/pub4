@@ -5,7 +5,7 @@ module Maps
     include Shared::LiveSearchable
 
     allow_unauthenticated_access only: %i[index show]
-    before_action :require_real_user, only: :check_in
+    before_action :require_user_session, only: :check_in
 
     def index
       scope = Place.includes(:city, :neighborhood)

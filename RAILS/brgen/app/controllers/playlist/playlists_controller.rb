@@ -2,6 +2,7 @@
 
 class Playlist::PlaylistsController < Playlist::BaseController
   allow_unauthenticated_access only: %i[index show]
+  before_action :require_user_session, only: %i[new create]
   before_action :set_playlist, only: %i[show embed edit update destroy]
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 

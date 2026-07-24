@@ -4,6 +4,7 @@ module Playlist
   class SetsController < ApplicationController
     include Shared::LiveSearchable
 
+    before_action :require_user_session, only: %i[new create]
     before_action :set_set, only: %i[show edit update destroy]
     before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
@@ -35,7 +36,7 @@ module Playlist
 
     def create
       @set = Playlist::Set.new(set_params)
-      @set.user = current_user if respond_to?(:current_user, true)
+      @set.user = Current.user
 
       if @set.save
         @set.record_activity!("PlaylistSetCreated", actor: Current.user, source_vertical: "playlist")

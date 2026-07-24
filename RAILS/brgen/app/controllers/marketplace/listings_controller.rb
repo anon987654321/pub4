@@ -8,7 +8,9 @@ class Marketplace::ListingsController < Marketplace::BaseController
     with: -> { redirect_to marketplace_listings_path, alert: "Try again later." }
 
   allow_unauthenticated_access only: %i[index show]
+  before_action :require_user_session, only: %i[new create]
   before_action :set_listing, only: %i[show edit update destroy]
+  # 2FA only for real accounts; guests list without identity ceremony.
   before_action -> { require_two_factor!(Current.user) }, only: %i[new create], if: :authenticated?
 
   def index
@@ -33,9 +35,9 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def show
     authorize @listing
     @listing.increment!(:views_count)
-    @order = Marketplace::Order.new if authenticated?
+    @order = Marketplace::Order.new if Current.user.present?
     @reviews = @listing.reviews.includes(:user).order(created_at: :desc)
-    @review = Marketplace::Review.new if authenticated? && @listing.reviewable_by?(Current.user)
+    @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
   end
 
   def new
@@ -128,7 +130,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   end
 
   def favorited_listing_ids_for(*collections)
-    return Set.new unless authenticated?
+    return Set.new unless Current.user.present?
 
     ids = collections.flatten.compact.filter_map do |row|
       row.is_a?(Marketplace::Deal) ? row.listing_id : row.id

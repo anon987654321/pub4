@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Playlist::ListeningPartiesController < Playlist::BaseController
-    before_action :require_real_user
+    before_action :require_user_session
     before_action :set_set
     before_action :set_party,     only: %i[show update destroy]
     before_action :require_host!, only: %i[update destroy]

@@ -11,7 +11,8 @@ module Marketplace
     end
 
     def create?
-      user.present? && !user.guest?
+      # Craigslist-style: anyone can list without signup (soft guest ok).
+      user.present?
     end
 
     def update?

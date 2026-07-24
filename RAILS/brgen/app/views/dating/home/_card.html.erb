@@ -37,12 +37,12 @@
     </div>
   </div>
 
-  <% if authenticated? %>
+  <% if Current.user.present? %>
     <div class="swipe-actions">
       <%= button_tag "✕", type: "button", class: "swipe-action swipe-action--pass", title: "Pass", aria: { label: "Pass" }, data: { action: "click->swipe#pass" } %>
       <%= button_tag "♥", type: "button", class: "swipe-action swipe-action--like", title: "Like", aria: { label: "Like" }, data: { action: "click->swipe#like" } %>
     </div>
   <% else %>
-    <%= link_to "Logg inn for å sveipe", new_session_path, class: "btn swipe-signin" %>
+    <p class="dim swipe-signin">Refresh to start swiping — no signup needed.</p>
   <% end %>
 </article>

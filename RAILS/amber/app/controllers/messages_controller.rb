@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MessagesController < ApplicationController
-  before_action :require_real_user
+  before_action :require_user_session
 
   def index
     @messages = Message.where(sender: Current.user).or(Message.where(recipient: Current.user)).includes(:sender, :recipient).recent

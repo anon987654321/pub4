@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class Dating::ProfilesController < Dating::BaseController
-  before_action :require_real_user
+  # Soft guest profiles allowed — no signup to start dating.
+  before_action :require_user_session
   before_action :set_profile, only: %i[show edit update]
 
   def show; end

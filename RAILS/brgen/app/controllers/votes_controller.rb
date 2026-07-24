@@ -5,7 +5,7 @@
 # karma side-effects and city-specific behavior.
 # See RAILS/shared/WIRING_NOTES.md "Deferred DRY".
 class VotesController < ApplicationController
-  before_action :require_real_user
+  before_action :require_user_session
 
   def create
     @votable = find_votable

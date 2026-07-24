@@ -1,8 +1,8 @@
 <% listing = local_assigns.fetch(:listing) %>
 <% favorited = local_assigns.fetch(:favorited) {
-     authenticated? && listing.favorite_for(Current.user).present?
+     Current.user.present? && listing.favorite_for(Current.user).present?
    } %>
-<% if authenticated? %>
+<% if Current.user.present? %>
   <% if favorited %>
     <%= button_to marketplace_listing_favorite_path(listing),
           method: :delete,
@@ -19,11 +19,5 @@
           aria: { label: "Save listing", pressed: false } do %>
       <%= icon :like, size: 18 %>
     <% end %>
-  <% end %>
-<% else %>
-  <%= link_to new_session_path,
-        class: "deal-fav",
-        aria: { label: "Sign in to save" } do %>
-    <%= icon :like, size: 18 %>
   <% end %>
 <% end %>

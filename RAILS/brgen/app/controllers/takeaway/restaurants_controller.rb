@@ -21,7 +21,7 @@ class Takeaway::RestaurantsController < Takeaway::BaseController
 
   def show
     @menu_items = @restaurant.menu_items.available
-    @favorited = authenticated? && Current.user.takeaway_favorite_restaurants.exists?(restaurant: @restaurant)
+    @favorited = Current.user.present? && Current.user.takeaway_favorite_restaurants.exists?(restaurant: @restaurant)
     @reviews = load_neighbour_reviews
     @can_review = can_leave_review?
   end

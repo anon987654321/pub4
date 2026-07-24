@@ -35,7 +35,7 @@ class NearbyController < ApplicationController
   def widget
     lat = Current.user&.latitude
     lng = Current.user&.longitude
-    @located = authenticated? && lat && lng
+    @located = Current.user.present? && lat && lng
     return unless @located
 
     @conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)

@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 class Dating::HomeController < Dating::BaseController
-  before_action :require_real_user, only: :next
+  before_action :require_user_session, only: :next
 
   def index
+    # Guests browse + swipe immediately. Real users with a paused/missing
+    # profile are nudged to complete it; guests are never forced to sign up.
     if authenticated?
       profile = current_dating_profile
       unless profile&.visible?
@@ -16,8 +18,6 @@ class Dating::HomeController < Dating::BaseController
   end
 
   def next
-    return require_real_user unless authenticated?
-
     @profile = candidate_scope.order(Arel.sql("RANDOM()")).first
     head :no_content unless @profile
   end
@@ -25,13 +25,15 @@ class Dating::HomeController < Dating::BaseController
   private
 
   def current_dating_profile
+    return nil unless Current.user
+
     @current_dating_profile ||= Dating::Profile.find_by(user_id: Current.user.id)
   end
 
   def candidate_scope
     # joins(:user) drops orphan profiles (visible but user deleted) that crash the card.
     scope = Dating::Profile.visible.joins(:user).includes(:user, :neighborhood, photos_attachments: :blob)
-    return scope unless authenticated?
+    return scope unless Current.user.present?
 
     profile = current_dating_profile
     liked_ids = Dating::Like.where(liker_id: Current.user.id).pluck(:likee_id)

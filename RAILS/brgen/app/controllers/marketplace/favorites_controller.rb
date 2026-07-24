@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Marketplace::FavoritesController < Marketplace::BaseController
+  before_action :require_user_session
   before_action :set_listing
 
   def create

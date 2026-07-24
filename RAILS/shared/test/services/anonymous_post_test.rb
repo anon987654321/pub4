@@ -26,11 +26,11 @@ class AnonymousPostTest < Minitest::Test
   def test_guest_allowed_until_limit
     service = build_service(user: @guest, fingerprint: "a" * 64)
     assert service.allowed?
-    assert_equal 2, service.remaining
+    assert_equal Shared::AnonymousPost::LIMIT, service.remaining
   end
 
   def test_guest_blocked_after_limit
-    Shared::AnonymousPostQuota.create!(fingerprint: "b" * 64, post_count: 2)
+    Shared::AnonymousPostQuota.create!(fingerprint: "b" * 64, post_count: Shared::AnonymousPost::LIMIT)
     service = build_service(user: @guest, fingerprint: "b" * 64)
     refute service.allowed?
     assert_equal 0, service.remaining

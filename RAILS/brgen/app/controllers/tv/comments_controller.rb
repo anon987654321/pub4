@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Tv::CommentsController < Tv::BaseController
-  before_action :require_real_user
+  before_action :require_user_session
   before_action :set_video
 
   def create

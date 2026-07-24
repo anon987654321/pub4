@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 # Public IRC-style rooms. A channel is a group Conversation resolved by slug
-# (see Conversation::CHANNELS); posting reuses MessagesController, so only signed
-# -in users write — everyone shows up under an anonymous handle, bots under their
-# persona name.
+# (see Conversation::CHANNELS); posting reuses MessagesController. Guests and
+# signed-in users both write — humans show as anonymous handles, bots as personas.
 class ChannelsController < ApplicationController
   def index
     @city = Current.city_record
@@ -21,7 +20,7 @@ class ChannelsController < ApplicationController
                     end
     return redirect_to(channels_path, alert: "No such channel.") unless @conversation
 
-    if authenticated?
+    if Current.user.present?
       @conversation.join!(Current.user)
       @conversation.mark_read_for!(Current.user)
     end

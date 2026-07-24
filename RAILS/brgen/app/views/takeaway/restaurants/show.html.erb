@@ -5,9 +5,9 @@
   <nav role="navigation" aria-label="Restaurant actions">
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
-    <% elsif authenticated? && @favorited %>
+    <% elsif Current.user.present? && @favorited %>
       <%= button_to "Unsave", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
-    <% elsif authenticated? %>
+    <% elsif Current.user.present? %>
       <%= button_to "Save", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
   </nav>
@@ -40,7 +40,7 @@
   <h2>Menu</h2>
   <% if @menu_items.empty? %>
     <%= render "shared/empty_state", title: "No menu items yet", body: "The kitchen has not listed food yet." %>
-  <% elsif authenticated? %>
+  <% elsif Current.user.present? %>
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
         <article class="menu-row<%= " sold-out" unless item.available? %>" data-available="<%= item.available? %>">
