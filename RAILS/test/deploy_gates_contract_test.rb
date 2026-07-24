@@ -74,18 +74,42 @@ class DeployGatesContractTest < Minitest::Test
       port_inventory_gate
       schema_migration_gate
       phantom_foreign_keys_gate
+      surface_schema_gate
+      dom_surface_schema
+      guest_flow_persona
     ].each do |name|
       assert File.file?(File.join(ROOT, "gates", "lib", "#{name}.rb")), "missing gates/lib/#{name}.rb"
     end
+  end
+
+  def test_runner_registers_surface_schema
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    assert_includes source, "surface_schema:"
+    assert_includes source, "SurfaceSchemaGate"
+  end
+
+  def test_surface_schema_fixtures_exist
+    dir = File.join(ROOT, "gates", "fixtures", "surfaces")
+    assert File.directory?(dir)
+    assert Dir.glob(File.join(dir, "good_*.html")).size >= 4
+    assert Dir.glob(File.join(dir, "bad_*.html")).size >= 4
+  end
+
+  def test_gate_result_supports_severity
+    source = File.read(File.join(OPENBSD_ROOT, "lib", "gate_result.rb"))
+    assert_includes source, "severity:"
+    assert_includes source, "soft_failures"
+    assert_includes source, "GATE_STRICT_SOFT"
   end
 
   def test_runner_deduplicates_leaf_gates_under_composites
     source = File.read(File.join(ROOT, "gates", "runner.rb"))
     assert_includes source, "GATE_COVERED_BY"
     assert_includes source, "resolve_gates"
-    assert_includes source, "master_web_assets: :production"
-    assert_includes source, "apps_yml:          :production"
-    assert_includes source, "domain_alignment:  :release"
+    assert_match(/master_web_assets:\s*:production/, source)
+    assert_match(/apps_yml:\s*:production/, source)
+    assert_match(/domain_alignment:\s*:release/, source)
+    assert_match(/surface_schema:\s*:layout_suite/, source)
   end
 
   def test_production_gate_runs_apps_yml_validator_in_process

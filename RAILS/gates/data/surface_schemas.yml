@@ -1,0 +1,130 @@
+# DOM / HTML surface schemas for layout + flow gates (P1).
+# Markers are structural patterns on rendered HTML or view source — not CSS selectors.
+# severity: hard (merge block) | soft (warn unless GATE_STRICT_SOFT=1)
+# principle: MASTER principle_map cluster id for fail messages.
+#
+# order: list of marker ids; earlier markers must appear before later ones in the document.
+
+schemas:
+  marketplace_listings:
+    label: marketplace listings
+    principle: hierarchy / catalog_retail
+    dialect: marketplace
+    severity_default: hard
+    markers:
+      skip_or_main:
+        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+        principle: accessibility
+      nav_bar:
+        pattern: 'id="navBar"|id=''navBar'''
+        principle: consistency
+      search:
+        pattern: 'marketplace-nav-search|class="[^"]*search|name="q"'
+        principle: affordance
+      product_grid:
+        pattern: 'deal-grid|deal-card'
+        principle: hierarchy
+      sell_or_cart:
+        pattern: 'Cart|Sell|listings/new|marketplace_cart'
+        principle: good_design_is_useful
+        severity: soft
+    order:
+      - [nav_bar, product_grid]
+      - [search, product_grid]
+    forbidden:
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest-open surface must not auth-wall browse
+      - pattern: 'class="[^"]*feed-card'
+        principle: dialect_purity
+        severity: soft
+        note: social feed-card dialect should not dominate retail grid
+
+  marketplace_cart:
+    label: marketplace cart
+    principle: good_design_is_useful
+    dialect: marketplace
+    severity_default: hard
+    markers:
+      skip_or_main:
+        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      cart_chrome:
+        pattern: 'Cart|Your Cart|cart'
+      empty_or_items:
+        pattern: 'empty|offer|listing|pending|Checkout|Send'
+    forbidden:
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest cart is a core capability
+
+  live_feed:
+    label: live hyperlocal feed
+    principle: clarity / hyperlocal
+    dialect: social
+    severity_default: hard
+    markers:
+      skip_or_main:
+        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      live_heading:
+        pattern: '<h1[^>]*>\s*Live|Live · nearby|>Live<'
+      sort_tabs:
+        pattern: 'live-sort|sort=hot|sort=fresh|>Hot<|>New<'
+      rules_or_compose:
+        pattern: 'live-rules|live-compose|ground rules|Local &amp; anonymous|Local & anonymous|Share location'
+      feed_region:
+        pattern: 'live-feed|live-card|Quiet around here|Waiting for'
+    order:
+      - [live_heading, feed_region]
+    forbidden:
+      - pattern: 'Sign in to continue'
+        principle: clarity
+      - pattern: 'Logg inn for å sveipe'
+        principle: clarity
+        severity: soft
+
+  dating_home:
+    label: dating discover
+    principle: hierarchy / face
+    dialect: dating
+    severity_default: hard
+    markers:
+      skip_or_main:
+        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      discover:
+        pattern: 'Oppdag|swipe|dating|profile'
+      card_or_empty:
+        pattern: 'swipe-card|swipe-action|No profiles|empty|swipe-signin'
+    forbidden:
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        severity: soft
+
+  messenger_inbox:
+    label: messenger inbox
+    principle: good_design_is_useful
+    dialect: social
+    severity_default: hard
+    markers:
+      skip_or_main:
+        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      messages_chrome:
+        pattern: 'Messages|messenger-compose|conversation'
+    forbidden:
+      - pattern: 'Sign in to continue'
+        principle: clarity
+        note: guest messenger is a core capability
+
+  brgen_home:
+    label: brgen home feed
+    principle: hierarchy / social
+    dialect: social
+    severity_default: hard
+    markers:
+      skip_or_main:
+        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      home:
+        pattern: 'Home|feed|Bergen|local-feed|compose'
+      live_entry:
+        pattern: 'href="/live"|Live →|live_path|>live<'
+        principle: progressive_disclosure
+        severity: soft

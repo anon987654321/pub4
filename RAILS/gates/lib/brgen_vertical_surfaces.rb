@@ -24,13 +24,20 @@ module Deploy
         label: "marketplace_cart",
         host: "markedsplass.#{APEX}",
         path: "/cart",
-        expect_body: [/Cart|Sign|session|Login|password|navBar|Markedsplass|account/i],
+        # Guest-open cart — do not require sign-in chrome
+        expect_body: [/Cart|Your Cart|navBar|Markedsplass|empty|offer/i],
+      },
+      {
+        label: "live",
+        host: APEX,
+        path: "/live",
+        expect_body: [/Live|live-feed|live-compose|ground rules|Hot|New|anon/i],
       },
       {
         label: "dating",
         host: "dating.#{APEX}",
         path: "/",
-        expect_body: [/dating|swipe|Oppdag|Logg inn|profile|main/i],
+        expect_body: [/dating|swipe|Oppdag|profile|main|swipe-action/i],
       },
       {
         label: "playlist",
@@ -66,8 +73,8 @@ module Deploy
         label: "messenger",
         host: "messenger.#{APEX}",
         path: "/",
-        # Guest often redirected to sign-in — accept either inbox chrome or auth
-        expect_body: [/conversation|message|Sign|session|Login|password|messenger/i],
+        # Guest-open messenger — inbox chrome without signup wall
+        expect_body: [/conversation|Messages|messenger-compose|message/i],
       },
     ].freeze
 

@@ -6,12 +6,31 @@ require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../crawl_support"
 require_relative "brgen_vertical_surfaces"
+require_relative "dom_surface_schema"
 
 module Deploy
   # First-screen contract + hierarchy + touch geometry (MASTER layout_rules / Fitts).
   class LayoutGeometryGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
+
+    # Map surface labels (from SURFACES / verticals) → schema ids.
+    # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
+    SCHEMA_FOR_LABEL = {
+      "vertical_marketplace" => "marketplace_listings",
+      "vertical_marketplace_cart" => "marketplace_cart",
+      "vertical_live" => "live_feed",
+      "vertical_dating" => "dating_home",
+      "vertical_messenger" => "messenger_inbox",
+      "vertical_core" => "brgen_home",
+      "core_ip" => "brgen_home",
+      "core" => "brgen_home",
+      "marketplace" => "marketplace_listings",
+      "marketplace_cart" => "marketplace_cart",
+      "live" => "live_feed",
+      "dating" => "dating_home",
+      "messenger" => "messenger_inbox",
+    }.freeze
 
     BASE_SURFACES = [
       { app: "brgen", port_key: "brgen", path: "/", host: nil, label: "core_ip",
@@ -114,6 +133,16 @@ module Deploy
         if search_i && grid_i && search_i > grid_i
           @result.fail("layout_geometry scan_path: #{label} search appears after product grid")
         end
+      end
+
+      # Structural DOM surface schema (P1) — principle-tagged markers + order.
+      raw_label = surface[:label].to_s
+      schema_id = SCHEMA_FOR_LABEL[raw_label] ||
+                  SCHEMA_FOR_LABEL[label] ||
+                  SCHEMA_FOR_LABEL[label.split("/").last.to_s]
+      if schema_id
+        @schema_checker ||= DomSurfaceSchema.new
+        @schema_checker.apply_to_result!(@result, body, schema_id)
       end
     rescue StandardError => e
       @result.fail("layout_geometry: #{label} #{e.class}: #{e.message}")

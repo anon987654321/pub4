@@ -8,12 +8,15 @@ require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../../crawl_support"
 require_relative "gate_autofix"
 require_relative "brgen_vertical_surfaces"
+require_relative "guest_flow_persona"
+require_relative "dom_surface_schema"
 
 module Deploy
   # Critical-path user flows + MASTER design/principle semantics.
   # Source checks always run. Live HTTP runs when app ports are open.
   # Master principles are mapped to concrete detectables (not vibes).
   # GATE_AUTOFIX=1 remeasures design contracts after mechanical CSS patches.
+  # Guest persona probes assert Craigslist-style no-signup capabilities.
   class UserFlowGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
@@ -43,6 +46,7 @@ module Deploy
         source_flow_checks(app)
         live_flow_checks(app)
       end
+      guest_capability_checks(inventory)
       @result
     end
 
@@ -156,6 +160,7 @@ module Deploy
       "brgen" => {
         "marketplace cart" => %w[app/controllers/marketplace/carts_controller.rb app/views/marketplace/carts/show.html.erb],
         "marketplace nav bar" => %w[app/views/marketplace/_nav_bar.html.erb],
+        "live hyperlocal feed" => %w[app/controllers/live_controller.rb app/views/live/index.html.erb],
         "yep search surface" => %w[../shared/app/assets/stylesheets/_search_yep.scss],
         "payment scaffold or honest stub" => %w[
           app/services/marketplace/payments/stripe_checkout.rb
@@ -320,12 +325,29 @@ module Deploy
         @result.fail("#{app.name}/#{label}: body missing #{pat.inspect}") unless body.match?(pat)
       end
 
+      # Guest-open surfaces must not present the hard auth wall copy.
+      if body.match?(/Sign in to continue/i) && guest_open_label?(label)
+        @result.fail("#{app.name}/#{label}: auth wall on guest-open surface (principle=clarity)", severity: :hard)
+      end
+
       # Semantic HTML floor on live pages (MASTER accessibility cluster)
       if body.include?("<html")
         @result.fail("#{app.name}/#{label}: missing skip or main landmark") unless body.match?(/main-content|<main\b/i)
       end
     rescue StandardError => e
       @result.fail("#{app.name}/#{label}: #{e.class}: #{e.message}")
+    end
+
+    def guest_open_label?(label)
+      label.to_s.match?(/marketplace|live|dating|messenger|core|cart|home|vertical_/i)
+    end
+
+    def guest_capability_checks(inventory)
+      brgen = inventory.apps.find { |a| a.name == "brgen" }
+      return unless brgen
+
+      open = CrawlSupport.port_open?("127.0.0.1", brgen.port)
+      GuestFlowPersona.new(port: brgen.port).run_brgen_probes!(@result, port_open: open)
     end
 
     def fetch_with_host(url, host: nil, timeout: 15)
