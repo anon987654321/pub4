@@ -35,5 +35,11 @@ export default class extends Controller {
     if (this.hasStatusTarget) {
       this.statusTarget.textContent = event.detail.success ? "Results updated" : "Search could not be completed"
     }
+    // vYroQxg .search.active when live results are on screen
+    const shell = this.element.classList.contains("search") ? this.element : this.element.closest(".search")
+    if (shell) {
+      const q = this.hasInputTarget ? this.inputTarget.value.trim() : ""
+      shell.classList.toggle("active", q.length > 0 && event.detail?.success !== false)
+    }
   }
 }

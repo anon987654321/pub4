@@ -184,6 +184,12 @@
   50% { opacity: 0.6; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .radio-start-message {
+    animation: none !important;
+  }
+}
+
 .radio-youtube-container {
   position: fixed;
   inset-block-start: -1000px;

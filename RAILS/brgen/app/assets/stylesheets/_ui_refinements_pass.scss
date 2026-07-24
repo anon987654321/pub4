@@ -106,13 +106,6 @@ time {
   transition: transform var(--transition-fast) var(--ease-out);
 }
 
-/* Marketplace storefront type (accent from _vertical_shell only) */
-body.vertical-marketplace h1,
-body.vertical-marketplace .page-header h1 {
-  font-family: "Libre Baskerville", Georgia, serif;
-  letter-spacing: -0.02em;
-}
-
 /* TV 16:9 + duration chip */
 body.vertical-tv .video-card,
 body.vertical-tv .channel-card {

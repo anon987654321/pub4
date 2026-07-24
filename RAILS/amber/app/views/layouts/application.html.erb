@@ -39,10 +39,19 @@
 <%= render "shared/theme_toggle", storage_key: "amber-theme" %>
 
 <div class="theme-root">
-<header class="amber-logo-banner" aria-label="Amber">
+<header class="amber-logo-banner amber-logo-banner--jox" aria-label="Amber">
   <%= link_to root_path, aria: { label: "Amber home" } do %>
-    <%= render "shared/logo", id_prefix: "banner" %>
+    <%= render "shared/jox_logo" %>
   <% end %>
+  <div class="jox-buttons buttons">
+    <% if authenticated? %>
+      <%= link_to "Account", user_path(Current.user) %>
+      <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
+    <% else %>
+      <%= link_to "Signup", new_session_path %>
+      <%= link_to "Login", new_session_path %>
+    <% end %>
+  </div>
 </header>
 
 <% unless authenticated? %>

@@ -33,6 +33,13 @@ GATE_MAP = {
   schema_migration:      "schema_migration_gate.rb",
   stimulus_components:   "stimulus_components_adoption_gate.rb",
   visual_contract:       "visual_contract_gate.rb",
+  user_flow:             "user_flow_gate.rb",
+  css_constitution:      "css_constitution_gate.rb",
+  layout_geometry:       "layout_geometry_gate.rb",
+  dialect_purity:        "dialect_purity_gate.rb",
+  payment_honesty:       "payment_honesty_gate.rb",
+  layout_search:         "layout_search_gate.rb",
+  layout_suite:          "layout_suite_gate.rb",
   apps_yml:              "apps_yml_validator.rb",
   shared_wiring:         "shared_wiring_gate.rb",
   constitutional_scan:   "constitutional_scan_gate.rb",
@@ -40,13 +47,20 @@ GATE_MAP = {
 
 # Leaf gates already executed inside a composite gate on the same runner invocation.
 GATE_COVERED_BY = {
-  apps_yml:          :production,
-  master_web_assets: :production,
-  master_tts:        :production,
-  domain_alignment:  :release,
+  apps_yml:            :production,
+  master_web_assets:   :production,
+  master_tts:          :production,
+  domain_alignment:    :release,
   frontend_production: :release,
-  frontend_auditor:  :release,
   stimulus_components: :release,
+  # layout_suite owns the professional layout + CSS stack (includes frontend_auditor)
+  css_constitution:    :layout_suite,
+  layout_geometry:     :layout_suite,
+  dialect_purity:      :layout_suite,
+  payment_honesty:     :layout_suite,
+  layout_search:       :layout_suite,
+  user_flow:           :layout_suite,
+  frontend_auditor:    :layout_suite,
 }.freeze
 
 # In-process Deploy::* callables. Value is [relative require under gates/, class name, optional kwargs].
@@ -66,6 +80,13 @@ IN_PROCESS = {
   apps_yml:              ["lib/apps_yml_validator", "Deploy::AppsYmlValidator", {}],
   shared_wiring:         ["lib/shared_wiring_gate", "Deploy::SharedWiringGate", {}],
   constitutional_scan:   ["lib/constitutional_scan_gate", "Deploy::ConstitutionalScanGate", {}],
+  user_flow:             ["lib/user_flow_gate", "Deploy::UserFlowGate", {}],
+  css_constitution:      ["lib/css_constitution_gate", "Deploy::CssConstitutionGate", {}],
+  layout_geometry:       ["lib/layout_geometry_gate", "Deploy::LayoutGeometryGate", {}],
+  dialect_purity:        ["lib/dialect_purity_gate", "Deploy::DialectPurityGate", {}],
+  payment_honesty:       ["lib/payment_honesty_gate", "Deploy::PaymentHonestyGate", {}],
+  layout_search:         ["lib/layout_search_gate", "Deploy::LayoutSearchGate", {}],
+  layout_suite:          ["lib/layout_suite_gate", "Deploy::LayoutSuiteGate", {}],
 }.freeze
 
 # Keep subprocess for multi-step / arg-forwarding gates.
@@ -118,6 +139,9 @@ def emit_gate_result(key, result)
     warn "[gates] #{key}: in-process gate did not return GateResult"
     return false
   end
+
+  autofix_off = ENV["GATE_AUTOFIX"].to_s.strip.downcase.match?(/\A(0|false|no|off)\z/)
+  warn "[gates] GATE_AUTOFIX #{autofix_off ? 'off (report-only)' : 'on (fix + remeasure)'}"
 
   result.warnings.each { |warning| warn "  - #{warning}" } if result.warnings.any?
   if result.ok?

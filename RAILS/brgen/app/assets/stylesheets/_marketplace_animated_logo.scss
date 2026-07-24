@@ -1,0 +1,115 @@
+/* zYaJege marketplace banner — exact layout/geometry from source pen.
+   Placement only: transparent banner background, white foreground for yellow/dark header. */
+
+.banner_wrapper,
+.banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.banner_wrapper {
+  padding: 10px 0 28px;
+  margin: 20px 0;
+}
+
+/* Header slot: pen used margin/padding for a standalone demo; collapse into #logo. */
+#logoWrapper .banner_wrapper {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.banner {
+  width: 300px;
+  height: 280px;
+  overflow: hidden;
+  position: relative;
+  background-color: transparent;
+  color: white;
+}
+
+#logoWrapper .banner {
+  width: 100px;
+  height: 100px;
+}
+
+.banner path,
+.banner use {
+  stroke: #fff;
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.smileyface {
+  position: absolute;
+  transform: scale(3);
+  width: 49px;
+  height: 45px;
+  display: flex;
+}
+
+#logoWrapper .smileyface {
+  transform: scale(1.35);
+}
+
+.shopping_cart,
+.number_animate {
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+}
+
+.shopping_cart {
+  position: absolute;
+  transform: scale(3);
+  width: 56px;
+  height: 38px;
+  margin-left: -20px;
+}
+
+#logoWrapper .shopping_cart {
+  transform: scale(1.2);
+  margin-left: -8px;
+}
+
+.number_animate {
+  position: relative;
+  left: 8px;
+  top: -34px;
+  color: white;
+  font-weight: normal;
+  font-size: 70px;
+  z-index: 5;
+}
+
+#logoWrapper .number_animate {
+  font-size: 28px;
+  left: 4px;
+  top: -14px;
+}
+
+.number_animate span {
+  position: relative;
+  right: -2px;
+}
+
+.marketplace .banner > span {
+  font-weight: normal;
+  font-size: 4px;
+  position: absolute;
+  margin-top: -64px;
+  margin-right: -64px;
+  opacity: 0;
+  color: white;
+}
+
+#logoWrapper .marketplace .banner > span {
+  font-size: 3px;
+  margin-top: -24px;
+  margin-right: -24px;
+}

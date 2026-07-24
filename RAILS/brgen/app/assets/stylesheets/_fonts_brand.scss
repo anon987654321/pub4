@@ -25,7 +25,7 @@ $latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,
   }
 }
 
-// Libre Baskerville — marketplace serif display.
+// Libre Baskerville — kept for optional editorial surfaces; not marketplace UI.
 @font-face {
   font-family: "Libre Baskerville";
   src: local("Libre Baskerville"),
@@ -55,4 +55,21 @@ $latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,
   font-style: italic;
   font-display: optional;
   unicode-range: #{$latin};
+}
+
+// Pangram Pangram — marketplace TOP OFFERS only (drop licensed woff2 into
+// public/fonts/). Until files exist, local() + Arial fallback in
+// .marketplace-top-offers --offer-display keeps catalog readable.
+// License: App/Web from pangrampangram.com — not free for production.
+@each $w in (400, 600, 700) {
+  @font-face {
+    font-family: "PP Neue Montreal";
+    src: local("PP Neue Montreal"),
+         local("Neue Montreal"),
+         url("/fonts/pp-neue-montreal-latin-#{$w}-normal.woff2") format("woff2");
+    font-weight: $w;
+    font-style: normal;
+    font-display: optional;
+    unicode-range: #{$latin};
+  }
 }

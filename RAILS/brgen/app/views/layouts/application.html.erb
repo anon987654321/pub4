@@ -26,10 +26,10 @@
   <%= yield :head %>
   <%# Brand fonts are self-hosted (see _fonts_brand.scss); preload only the face
       this surface actually uses so it is ready before first text paint. %>
-  <% if active_vertical == :marketplace %>
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/libre-baskerville-latin-400-normal.woff2" crossorigin>
-  <% elsif active_vertical.in?(%i[dating maps messenger]) %>
+  <% if active_vertical.in?(%i[dating maps messenger]) %>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-400-normal.woff2" crossorigin>
+  <% elsif active_vertical == :marketplace && File.file?(Rails.root.join("public/fonts/pp-neue-montreal-latin-700-normal.woff2")) %>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/pp-neue-montreal-latin-700-normal.woff2" crossorigin>
   <% end %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">

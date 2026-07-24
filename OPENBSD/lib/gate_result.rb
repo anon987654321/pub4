@@ -21,6 +21,12 @@ module Deploy
       @failures.empty?
     end
 
+    def merge!(other)
+      Array(other.failures).each { |m| fail(m) }
+      Array(other.warnings).each { |m| warn(m) }
+      self
+    end
+
     def report!(success_message)
       unless @warnings.empty?
         Kernel.warn "Warnings:"
@@ -37,3 +43,4 @@ module Deploy
     end
   end
 end
+

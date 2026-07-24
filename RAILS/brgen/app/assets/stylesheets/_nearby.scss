@@ -93,7 +93,6 @@
   font: 0.8125rem/1 var(--font-mono);
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.24);
 }
 
 .nearby-chat-widget-tab:hover { border-color: var(--text-dim); }
@@ -109,7 +108,6 @@
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
 }

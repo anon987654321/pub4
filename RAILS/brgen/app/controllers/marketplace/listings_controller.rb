@@ -24,6 +24,8 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @pagy, @listings = pagy(scope.recent)
     @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
     @categories = Marketplace::Category.roots.includes(:children)
+    @top_offers = top_offers_for_index
+    @favorited_listing_ids = favorited_listing_ids_for(@listings, @top_offers)
 
     finish_live_search(partial: "marketplace/listings/live_search_results")
   end
@@ -100,5 +102,39 @@ class Marketplace::ListingsController < Marketplace::BaseController
       distance = listing.distance_to(lat, lng)
       distances[listing.id] = distance if distance
     end
+  end
+
+  # Featured deals first; fill with popular active listings. Hidden while
+  # searching or category-filtering so the grid stays the primary answer.
+  def top_offers_for_index
+    return [] if live_search_query.present? || params[:category_id].present?
+
+    limit = 6
+    deals = Marketplace::Deal.active.featured
+      .includes(listing: { photos_attachments: :blob })
+      .limit(limit)
+      .to_a
+    return deals if deals.size >= limit
+
+    seen = deals.filter_map { |deal| deal.listing_id }
+    fillers = policy_scope(Marketplace::Listing).active
+      .with_attached_photos
+      .includes(:category)
+      .where.not(id: seen)
+      .popular
+      .limit(limit - deals.size)
+      .to_a
+    deals + fillers
+  end
+
+  def favorited_listing_ids_for(*collections)
+    return Set.new unless authenticated?
+
+    ids = collections.flatten.compact.filter_map do |row|
+      row.is_a?(Marketplace::Deal) ? row.listing_id : row.id
+    end
+    return Set.new if ids.empty?
+
+    Current.user.marketplace_favorites.where(listing_id: ids).pluck(:listing_id).to_set
   end
 end

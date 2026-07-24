@@ -1,0 +1,55 @@
+<%# Curated rail above the catalog. Display type: Pangram Pangram (see _fonts_brand).
+    Body/price stay on the brgen Arial stack. %>
+<% offers = local_assigns[:offers] || @top_offers %>
+<% if offers.present? %>
+<section class="marketplace-top-offers" aria-labelledby="top-offers-heading">
+  <header class="marketplace-top-offers-header">
+    <p class="top-offers-kicker">Top offers</p>
+    <h2 id="top-offers-heading" class="top-offers-heading">Picked for the city</h2>
+    <p class="top-offers-lede dim">Featured deals and high-signal listings — denser than the feed, still flat.</p>
+  </header>
+
+  <div class="top-offers-rail" role="list">
+    <% offers.each do |offer| %>
+      <% if offer.is_a?(Marketplace::Deal) %>
+        <% listing = offer.listing %>
+        <% photo = listing&.photos&.attached? ? listing.photos.first : nil %>
+        <% badge = offer.badge.presence || (offer.discount_percent.present? ? "#{offer.discount_percent.to_i}% off" : "Deal") %>
+        <%= link_to marketplace_deal_path(offer), class: "top-offer-card", role: "listitem" do %>
+          <div class="top-offer-media">
+            <% if photo %>
+              <%= responsive_image_tag photo, alt: "", widths: [480, 960], sizes: "(max-width: 768px) 80vw, 320px" %>
+            <% else %>
+              <div class="deal-card-placeholder" aria-hidden="true"><span><%= offer.headline.to_s.first&.upcase || "%" %></span></div>
+            <% end %>
+            <span class="deal-badge"><%= badge %></span>
+          </div>
+          <div class="top-offer-body">
+            <% if listing %><div class="deal-price"><%= listing.price_display %></div><% end %>
+            <p class="top-offer-title"><%= offer.headline %></p>
+            <% if listing %><p class="deal-meta"><%= listing.title %></p><% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <% listing = offer %>
+        <% photo = listing.photos.attached? ? listing.photos.first : nil %>
+        <%= link_to marketplace_listing_path(listing), class: "top-offer-card", role: "listitem" do %>
+          <div class="top-offer-media">
+            <% if photo %>
+              <%= responsive_image_tag photo, alt: "", widths: [480, 960], sizes: "(max-width: 768px) 80vw, 320px" %>
+            <% else %>
+              <div class="deal-card-placeholder" aria-hidden="true"><span><%= listing.title.to_s.first&.upcase || "?" %></span></div>
+            <% end %>
+            <span class="deal-badge deal-badge--soft">Top</span>
+          </div>
+          <div class="top-offer-body">
+            <div class="deal-price"><%= listing.price_display %></div>
+            <p class="top-offer-title"><%= listing.title %></p>
+            <p class="deal-meta"><%= [listing.location, listing.category&.name].compact.join(" · ") %></p>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+<% end %>

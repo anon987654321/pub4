@@ -1,11 +1,21 @@
-<%# Shared live-search form — Turbo Stream responses via pub4-shared %>
-<div data-controller="live-search" role="search" aria-label="<%= label %>" data-action="turbo:submit-end->live-search#complete">
+<%# Shared live-search form — Turbo Stream responses via pub4-shared.
+    Surface: vYroQxg .search (yep.com) exact styles. %>
+<div
+  class="search"
+  data-controller="live-search search-focus"
+  role="search"
+  aria-label="<%= label %>"
+  data-action="turbo:submit-end->live-search#complete"
+>
   <%= form_with url: url, method: :get, data: { turbo_stream: true, live_search_target: "form" } do |f| %>
     <div class="search-form">
       <%= f.search_field :q,
             value: query,
             placeholder: placeholder,
-            data: { live_search_target: "input", action: "input->live-search#input" },
+            data: {
+              live_search_target: "input",
+              action: "input->live-search#input focus->search-focus#focus blur->search-focus#blur"
+            },
             aria: { label: "Search query", controls: "live_search_results" } %>
       <% if local_assigns[:filter_fields_proc] %>
         <%= filter_fields_proc.call(f) %>

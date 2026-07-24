@@ -11,7 +11,7 @@
 <% end %>
 
 <% if @categories.any? %>
-  <div class="deal-cats">
+  <div class="deal-cats" aria-label="Categories">
     <%= link_to "All", marketplace_listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
     <% @categories.each do |cat| %>
       <%= link_to cat.name, marketplace_listings_path(category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
@@ -19,9 +19,13 @@
   </div>
 <% end %>
 
+<% if @top_offers.present? && live_search_query.blank? && params[:category_id].blank? %>
+  <%= render "marketplace/top_offers", offers: @top_offers %>
+<% end %>
+
 <% if @listings.any? %>
   <%= turbo_frame_tag "marketplace-listings", target: "_top" do %>
-    <div class="deal-grid" id="marketplace-listings">
+    <div class="deal-grid" id="marketplace-listings" aria-label="Listings">
       <% @listings.each do |listing| %>
         <%= render "marketplace/listings/card", listing: listing, distance_km: @listing_distances&.fetch(listing.id, nil) %>
       <% end %>

@@ -1,0 +1,125 @@
+/* Amazon Nav Bar — exact styles from source pen (Josue Matos / amazon-nav-bar). */
+
+#navBar {
+  background-color: #232f3e;
+  height: 100px;
+  color: white;
+}
+
+#topHalf {
+  height: 50px;
+}
+
+#bottomHalf {
+  height: 50px;
+}
+
+#logo {
+  height: 100px;
+  position: absolute;
+  top: -25px;
+}
+
+#logoWrapper {
+  margin-bottom: 20px;
+  display: inline-block;
+  position: relative;
+  width: 150px;
+}
+
+#backToSchool {
+  height: 50px;
+  float: right;
+  margin-right: 20px;
+}
+
+#navBar input {
+  vertical-align: top;
+  margin-top: 10px;
+  border-radius: 10px;
+  height: 20px;
+  width: 500px;
+}
+
+#department {
+  font-size: 25px;
+  padding: 10px;
+  margin-left: 30px;
+  font-weight: bold;
+  display: inline-block;
+  vertical-align: top;
+  margin-top: 10px;
+}
+
+#sections {
+  display: inline-block;
+}
+
+#navBar .section {
+  display: inline-block;
+  vertical-align: top;
+  font-size: 15px;
+  margin-top: 25px;
+  margin-left: 10px;
+  color: white;
+  text-decoration: none;
+}
+
+#accountStuff {
+  display: inline-block;
+  float: right;
+  margin-right: 20px;
+}
+
+/* Search form sits inline like the pen's bare <input>. */
+#navBar .marketplace-nav-search {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0;
+  width: 500px;
+  max-width: calc(100vw - 200px);
+  background-color: #ccc;
+  border: 1px solid #ccc;
+  border-radius: 30px;
+  font-size: 18px;
+}
+
+#navBar .marketplace-nav-search input {
+  vertical-align: top;
+  margin-top: 0;
+  border-radius: 30px;
+  height: auto;
+  width: 100%;
+  padding: 16px 24px;
+  background: transparent;
+  outline: none;
+  border: none;
+}
+
+#navBar .marketplace-nav-search.focus,
+#navBar .marketplace-nav-search.active {
+  background-color: white;
+  border-color: white;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 8px 0px;
+}
+
+#navBar .marketplace-logo-link {
+  display: block;
+  height: 100px;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Live search under the Amazon bar — yep.com surface */
+body.vertical-marketplace main > .search,
+body.vertical-marketplace .marketplace-deals > .search,
+body.vertical-marketplace .marketplace-stores > .search,
+body.vertical-marketplace #live_search_results {
+  margin: 16px;
+}
+
+body.vertical-marketplace main > [data-controller*="live-search"],
+body.vertical-marketplace .search {
+  margin-inline: 16px;
+  margin-block: 12px;
+}

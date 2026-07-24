@@ -1,9 +1,12 @@
 <% content_for :title, t("marketplace.deals.title", default: "Deals") %>
 
-<%= tag.section class: "marketplace-deals", role: "region", "aria-label": "Marketplace deals" do %>
-  <%= tag.header role: "banner", "aria-label": "Deals header" do %>
-    <%= tag.h1 t("marketplace.deals.title", default: "Deals") %>
-  <% end %>
+<%= render "marketplace/nav_bar",
+      active: "deals",
+      search_url: marketplace_deals_path,
+      search_placeholder: "Give me all your money",
+      cart_count: (authenticated? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
-  <%= live_search_index url: marketplace_deals_path, results_partial: "marketplace/deals/live_search_results", placeholder: "Search deals…", label: "Deals search", frame_id: "marketplace-deals" %>
+<%= tag.section class: "marketplace-deals", role: "region", "aria-label": "Marketplace deals" do %>
+  <%= tag.h1 class: "visually-hidden" do %><%= t("marketplace.deals.title", default: "Deals") %><% end %>
+  <%= live_search_index url: marketplace_deals_path, results_partial: "marketplace/deals/live_search_results", placeholder: "Search...", label: "Deals search", frame_id: "marketplace-deals" %>
 <% end %>

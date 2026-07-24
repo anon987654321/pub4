@@ -174,6 +174,11 @@ Rails.application.routes.draw do
       resource :cart, only: :show, controller: "carts" do
         post :send_offers
       end
+      resource :checkout, only: %i[create show], controller: "checkouts"
+      namespace :webhooks do
+        post :stripe, to: "webhooks#stripe"
+        post :vipps, to: "webhooks#vipps"
+      end
       resources :categories, only: :show, param: :id
       resources :saved_searches, only: %i[index create destroy]
     end

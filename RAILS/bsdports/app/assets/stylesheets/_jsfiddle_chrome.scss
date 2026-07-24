@@ -1,0 +1,103 @@
+/* jOxVvNE structure on openbsd_wscons palette (same geometry as amber pen). */
+
+.nav-visible--jox {
+  position: relative;
+}
+
+.jox-logo {
+  display: flex;
+  position: relative;
+  min-height: 56px;
+  margin: 8px 0 16px;
+}
+
+.jox-logo .frames div {
+  height: 50px;
+  width: 20px;
+  position: absolute;
+  opacity: 0;
+}
+
+.jox-logo .frames div:nth-of-type(1) {
+  top: 8px;
+  left: 4px;
+}
+
+.jox-logo .frames div:nth-of-type(2) {
+  top: 2px;
+  left: 14px;
+}
+
+.jox-logo .frames div:nth-of-type(3) {
+  top: -2px;
+  left: 26px;
+}
+
+.jox-logo .type {
+  height: 19px;
+  width: 116px;
+  position: relative;
+  top: 18px;
+  left: 84px;
+  transform: scale(1.4);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.jox-buttons {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 8px;
+  z-index: 20;
+}
+
+.jox-buttons > * {
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 12px 20px;
+  margin: 6px;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--surface-elevated);
+}
+
+.jox-buttons > *:nth-of-type(1) {
+  background: var(--surface-elevated);
+  border-radius: 7px;
+}
+
+.jox-buttons > *:nth-of-type(2) {
+  background: var(--accent);
+  color: #000;
+  border-radius: 40px;
+  border-color: var(--accent);
+}
+
+/* yep search on CRT: keep pen geometry, green ink */
+body .search {
+  background-color: #0f1a0f;
+  border: 1px solid #1a3a1a;
+  color: var(--text);
+}
+
+body .search input {
+  color: var(--text);
+}
+
+body .search input::placeholder {
+  color: var(--text-secondary);
+}
+
+body .search.focus,
+body .search.active {
+  background-color: #0a140a;
+  border-color: var(--accent);
+  box-shadow: rgba(99, 195, 99, 0.25) 0px 1px 8px 0px;
+}

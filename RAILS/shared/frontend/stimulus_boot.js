@@ -24,6 +24,7 @@ import Carousel from "@stimulus-components/carousel"
 import StimulusReflex from "stimulus_reflex"
 import ApplicationController from "controllers/application_controller"
 import LiveSearch from "pub4/live_search"
+import SearchFocus from "pub4/search_focus"
 import OfflinePage from "pub4/offline_page"
 import InstallPrompt from "pub4/install_prompt"
 import ThemeToggle from "pub4/theme_toggle"
@@ -73,6 +74,7 @@ const COMPONENT_REGISTRATIONS = [
 
 export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("live-search", LiveSearch)
+  application.register("search-focus", SearchFocus)
   application.register("offline-page", OfflinePage)
   application.register("install-prompt", InstallPrompt)
   application.register("theme-toggle", ThemeToggle)

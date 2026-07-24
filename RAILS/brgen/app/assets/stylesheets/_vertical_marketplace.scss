@@ -1,12 +1,5 @@
-/* Marketplace — intentional vertical branding (serif editorial, warm CTA).
-   Scoped to .vertical-marketplace; core shell uses shared x.com tokens. */
-body.vertical-marketplace {
-  --shop-luxury-serif: "Libre Baskerville", "Georgia", "Times New Roman", serif;
-  --shop-cta: oklch(75% 0.17 55);
-  --shop-cta-text: var(--text);
-  --shop-luxury-bg: var(--surface);
-  --shop-editorial-tracking: 0.12em;
-}
+/* Marketplace vertical — BRGEN_OLD shell + taupe accent.
+   Catalog type = Arial (--font). Display PP only in .marketplace-top-offers. */
 
 body.vertical-marketplace main {
   max-width: 1280px;
@@ -14,57 +7,53 @@ body.vertical-marketplace main {
 
 body.vertical-marketplace .page-header h1,
 body.vertical-marketplace .marketplace-deals h1 {
-  font-family: var(--shop-luxury-serif);
-  font-weight: 400;
-  letter-spacing: var(--shop-editorial-tracking);
-  text-transform: uppercase;
-  font-size: var(--text-sm);
+  font-family: var(--font);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.25rem;
+  text-transform: none;
 }
 
 body.vertical-marketplace .deal-grid {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-4) var(--space-8);
+  gap: var(--space-3);
 }
 
-body.vertical-marketplace .deal-card {
-  background: var(--shop-luxury-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}
-
+body.vertical-marketplace a.deal-card:hover,
 body.vertical-marketplace .deal-card:hover {
-  background: var(--hover);
-  border-color: var(--shop-cta);
+  border-color: var(--accent);
 }
 
 body.vertical-marketplace .deal-card-img {
-  aspect-ratio: 3 / 4;
-}
-
-body.vertical-marketplace .deal-card-title {
-  font-family: var(--shop-luxury-serif);
-  font-size: var(--text-sm);
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  aspect-ratio: 1 / 1;
 }
 
 body.vertical-marketplace .deal-price {
-  font-size: var(--text-base);
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: 800;
 }
 
-body.vertical-marketplace .deal-cta,
+body.vertical-marketplace .deal-cat.active,
+body.vertical-marketplace .marketplace-subnav .feed-tab.active {
+  border-bottom-color: var(--accent);
+}
+
 body.vertical-marketplace .deal-cat.active {
-  background: var(--shop-cta);
-  color: var(--shop-cta-text);
-  border-radius: var(--radius-pill);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+body.vertical-marketplace .deal-rating {
+  color: var(--accent);
+}
+
+body.vertical-marketplace .marketplace-top-offers .top-offer-card:hover {
+  border-color: var(--accent);
 }
 
 body.vertical-marketplace .deal-search {
   background: var(--search-bg, var(--surface));
-  padding: var(--space-4) var(--space-4);
+  padding: var(--space-3) var(--space-4);
 }
 
 body.vertical-marketplace .deal-search input {
@@ -76,34 +65,13 @@ body.vertical-marketplace .deal-search input {
 
 body.vertical-marketplace .deal-cats {
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4) var(--space-4);
-}
-
-body.vertical-marketplace .deal-cat {
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-body.vertical-marketplace .deal-meta::before {
-  content: "★ ";
-  color: var(--shop-cta);
-}
-
-body.vertical-marketplace .sidebar-card h3 {
-  font-family: var(--shop-luxury-serif);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--text-xs);
+  padding: var(--space-3) var(--space-4);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
+  body.vertical-marketplace a.deal-card,
+  body.vertical-marketplace .deal-card,
+  body.vertical-marketplace .deal-cat {
     transition: none !important;
   }
 }

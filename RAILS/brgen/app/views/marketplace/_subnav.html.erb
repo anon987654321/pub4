@@ -1,0 +1,21 @@
+<%# Secondary marketplace IA — same feed-tab grammar as the brgen front page. %>
+<nav class="marketplace-subnav feed-tabs" role="tablist" aria-label="Marketplace sections">
+  <%= link_to "Listings", marketplace_listings_path,
+        class: "feed-tab#{" active" if local_assigns[:active].to_s == "listings"}",
+        role: "tab",
+        "aria-selected": local_assigns[:active].to_s == "listings" %>
+  <%= link_to "Deals", marketplace_deals_path,
+        class: "feed-tab#{" active" if local_assigns[:active].to_s == "deals"}",
+        role: "tab",
+        "aria-selected": local_assigns[:active].to_s == "deals" %>
+  <%= link_to "Stores", marketplace_shops_path,
+        class: "feed-tab#{" active" if local_assigns[:active].to_s == "stores"}",
+        role: "tab",
+        "aria-selected": local_assigns[:active].to_s == "stores" %>
+  <% if authenticated? %>
+    <%= link_to "Cart", marketplace_cart_path,
+          class: "feed-tab#{" active" if local_assigns[:active].to_s == "cart"}",
+          role: "tab",
+          "aria-selected": local_assigns[:active].to_s == "cart" %>
+  <% end %>
+</nav>

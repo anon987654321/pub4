@@ -1,0 +1,69 @@
+/* vYroQxg — recreating yep.com search (exact pen styles). */
+
+.search {
+  width: 480px;
+  max-width: 100%;
+  background-color: #ccc;
+  border: 1px solid #ccc;
+  border-radius: 30px;
+  font-size: 18px;
+  transition: all 100ms ease-in-out;
+}
+
+.search input,
+.search input[type="search"],
+.search input[type="text"] {
+  background: transparent;
+  outline: none;
+  border: none;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: inherit;
+  color: inherit;
+}
+
+.search input::placeholder,
+.search input:placeholder-shown {
+  color: #aaa;
+}
+
+.search.focus,
+.search.active {
+  background-color: white;
+  border-color: white;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 8px 0px;
+}
+
+.search.active {
+  border-radius: 16px;
+}
+
+.search.active #live_results,
+.search.active .live_results {
+  border-top: 1px solid #ccc;
+  padding: 0 24px;
+}
+
+.search.active #live_results a,
+.search.active .live_results a {
+  display: block;
+}
+
+/* Map existing live-search markup onto the same surface. */
+.search .search-form {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.search .search-form input[type="submit"],
+.search .search-form .btn {
+  display: none;
+}
+
+.search .search-form select,
+.search .search-form input[type="number"] {
+  display: none;
+}

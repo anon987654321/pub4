@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -12,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_24_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -338,12 +336,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_010000) do
     t.datetime "created_at", null: false
     t.integer "listing_id", null: false
     t.text "message"
+    t.datetime "paid_at"
+    t.string "payment_provider"
+    t.string "payment_reference"
+    t.string "payment_status", default: "unpaid", null: false
     t.integer "price_cents"
     t.integer "quantity", default: 1, null: false
     t.string "status"
     t.datetime "updated_at", null: false
     t.index ["buyer_id"], name: "index_marketplace_orders_on_buyer_id"
     t.index ["listing_id"], name: "index_marketplace_orders_on_listing_id"
+    t.index ["payment_reference"], name: "index_marketplace_orders_on_payment_reference"
+    t.index ["payment_status"], name: "index_marketplace_orders_on_payment_status"
   end
 
   create_table "marketplace_reviews", force: :cascade do |t|

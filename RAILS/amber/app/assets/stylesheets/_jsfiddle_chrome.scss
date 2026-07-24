@@ -1,0 +1,250 @@
+/* jOxVvNE — CodePen/jsFiddle-inspired chrome (exact pen rules). */
+
+.amber-logo-banner--jox {
+  position: relative;
+}
+
+.jox-logo {
+  display: flex;
+  position: relative;
+}
+
+.jox-logo .frames div {
+  height: 50px;
+  width: 20px;
+  position: absolute;
+  opacity: 0;
+}
+
+.jox-logo .frames div:nth-of-type(1) {
+  top: 8px;
+  left: 4px;
+}
+
+.jox-logo .frames div:nth-of-type(2) {
+  top: 2px;
+  left: 14px;
+}
+
+.jox-logo .frames div:nth-of-type(3) {
+  top: -2px;
+  left: 26px;
+}
+
+.jox-logo .type {
+  height: 19px;
+  width: 116px;
+  position: relative;
+  top: 18px;
+  left: 84px;
+  transform: scale(1.4);
+}
+
+.jox-buttons {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 8px;
+  z-index: 20;
+}
+
+.jox-buttons > * {
+  border: none;
+  border-radius: 30px;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 12px 20px;
+  margin: 6px;
+  font-family: sans-serif;
+  color: black;
+}
+
+.jox-buttons > *:nth-of-type(1) {
+  background: #efefef;
+  border-radius: 7px;
+}
+
+.jox-buttons > *:nth-of-type(2) {
+  background: #000084;
+  color: white;
+  border-radius: 40px;
+}
+
+.create {
+  position: relative;
+  margin-top: 80px;
+  width: 420px;
+}
+
+.create-button {
+  background: #efefef;
+  border-radius: 25px;
+  border: none;
+  display: inline-block;
+  min-width: 200px;
+  padding: 16px 20px 14px;
+  position: relative;
+  transition: width 300ms, padding 300ms;
+  cursor: pointer;
+  font-family: sans-serif;
+  color: black;
+}
+
+.create-button.expanded {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.create-inner {
+  overflow: hidden;
+  transition: width 300ms;
+}
+
+.create-text {
+  font-size: 18px;
+  font-weight: bold;
+  transition: transform 300ms;
+}
+
+.create-text.expanded {
+  transform: translateX(0px);
+}
+
+.menu {
+  opacity: 0;
+  transform: translateY(0);
+  transition: opacity 50ms 0ms;
+}
+
+.menu.show {
+  opacity: 1;
+  transition: opacity 200ms 200ms;
+}
+
+.new-pen {
+  color: #555;
+  cursor: pointer;
+  display: block;
+  font-size: 1.2rem;
+  font-weight: bold;
+  left: 28px;
+  padding: 20px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  top: 9px;
+  width: 261px;
+}
+
+.new-pen.show {
+  pointer-events: all;
+}
+
+.new-pen-svg {
+  fill: #0ebeff;
+  width: 23px;
+  height: 23px;
+  margin-right: 10px;
+}
+
+.new-pen-text {
+  vertical-align: top;
+}
+
+.new-pen-from-template {
+  background: #f7f7f7;
+  border-bottom: 1px solid #e2e2e2;
+  border-top: 1px solid #e2e2e2;
+  color: #666;
+  cursor: pointer;
+  display: block;
+  height: 22px;
+  left: 29px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  top: 76px;
+  width: 280px;
+}
+
+.new-project {
+  border-right: 1px solid #e2e2e2;
+  cursor: pointer;
+  font-weight: bold;
+  height: 24px;
+  left: 28px;
+  line-height: 24px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  top: 120px;
+  width: 130px;
+}
+
+.new-project-svg {
+  cursor: pointer;
+  fill: #ffdd40;
+  height: 20px;
+  margin-right: 7px;
+  position: relative;
+  top: -2px;
+  vertical-align: middle;
+  width: 20px;
+}
+
+.new-post {
+  cursor: pointer;
+  font-weight: bold;
+  height: 24px;
+  left: 179px;
+  line-height: 24px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  top: 120px;
+  width: 130px;
+}
+
+.new-post-svg {
+  fill: #47cf73;
+  cursor: pointer;
+  height: 20px;
+  margin-right: 7px;
+  position: relative;
+  top: -2px;
+  vertical-align: middle;
+  width: 20px;
+}
+
+.carbon-example {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 8px;
+  margin: 100px 5px;
+  width: 295px;
+  border-radius: 6px;
+  box-shadow: 0 2px 20px 0 rgba(0, 0, 0, 0.1);
+}
+
+.carbon-example .inner-wrapper p {
+  font-size: 12px;
+  line-height: 1.33;
+  margin: 8px 0;
+  color: black;
+  font-family: sans-serif;
+}
+
+.carbon-example .inner-wrapper p.fine-print {
+  font-size: 8px;
+  color: #c5cdd0;
+  line-height: 1.25;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.carbon-example img {
+  margin-right: 9px;
+  max-width: 125px;
+}

@@ -21,6 +21,8 @@ module VisualContractGate
     brgen: {
       public: "/", sign_in: "/session/new", empty: "/?q=visual-contract-no-match",
       results: "/?sort=latest", error: "/404-visual-contract", offline: "/offline",
+      # Marketplace vertical (Host markedsplass.* in capture when available)
+      marketplace: "/", marketplace_sign_in: "/session/new",
     },
     amber: {
       public: "/", sign_in: "/session/new", wardrobe: "/items", item: "/items/1",

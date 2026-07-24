@@ -1,5 +1,11 @@
 <% content_for :title, "Your Cart" %>
 
+<%= render "marketplace/nav_bar",
+      active: "cart",
+      search_url: marketplace_listings_path,
+      search_placeholder: "Give me all your money",
+      cart_count: @cart_items.size %>
+
 <div class="page-header" role="banner" aria-label="Cart header">
   <h1>Your Cart</h1>
   <p class="dim"><%= pluralize(@cart_items.size, "item") %></p>
@@ -26,10 +32,22 @@
 
   <div class="cart-summary">
     <p><strong>Total: <%= @cart_total / 100.0 %> NOK</strong></p>
-    <p class="dim">This will send offers to the sellers. They can accept or decline individually.</p>
+    <p class="dim">Pay with Vipps (NO) or Stripe (cards), or send classic offers sellers accept/decline.</p>
+
+    <div class="cart-pay-actions" role="group" aria-label="Payment methods">
+      <%= button_to "Pay with Vipps", marketplace_checkout_path,
+            method: :post, params: { provider: "vipps" },
+            class: "btn btn-primary cart-pay-vipps",
+            form: { data: { turbo: false } } %>
+      <%= button_to "Pay with Stripe", marketplace_checkout_path,
+            method: :post, params: { provider: "stripe" },
+            class: "btn btn-ghost cart-pay-stripe",
+            form: { data: { turbo: false } } %>
+    </div>
+    <p class="hint mt-8">Without VIPPS_EPAYMENT_* / STRIPE_SECRET_KEY the cart fails honestly (“not configured”) — never fakes a charge.</p>
 
     <%= button_to "Send all offers", send_offers_marketplace_cart_path,
-          method: :post, class: "btn btn-primary",
+          method: :post, class: "btn btn-ghost",
           data: { turbo_confirm: "Notify all sellers about your pending offers?" } %>
     <p class="hint mt-8">Sellers get a notification for each pending offer. They accept or decline individually.</p>
   </div>
