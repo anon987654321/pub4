@@ -10,6 +10,7 @@ require_relative "layout_search_gate"
 require_relative "user_flow_gate"
 require_relative "surface_schema_gate"
 require_relative "design_metrics_gate"
+require_relative "visual_quality_gate"
 require_relative "frontend_auditor_gate_logic"
 
 module Deploy
@@ -26,6 +27,7 @@ module Deploy
       UserFlowGate,
       SurfaceSchemaGate,
       DesignMetricsGate,
+      VisualQualityGate,
       FrontendAuditorGate,
     ].freeze
 

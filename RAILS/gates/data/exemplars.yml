@@ -1,0 +1,157 @@
+# Structural exemplars for design skill scoring (P3).
+# Not pixel clones of Newegg/Hinge/Jodel — document-order + marker grammar
+# that encode "what good looks like" for each dialect.
+#
+# score: points awarded when pattern matches (max per exemplar = sum of parts)
+# required: hard fail if missing (severity hard)
+# weight used for total quality rollup
+
+exemplars:
+  marketplace_tile:
+    label: marketplace product tile (Tise/Bol/Newegg grammar)
+    dialect: marketplace
+    principle: hierarchy / catalog_retail
+    target_score: 85
+    parts:
+      - id: root_card
+        pattern: 'class="[^"]*deal-card'
+        points: 15
+        required: true
+      - id: whole_card_hit
+        pattern: 'deal-card-hit'
+        points: 15
+        required: true
+      - id: media_before_body
+        order: ['deal-card-img|deal-card-media', 'deal-card-body']
+        points: 20
+        required: true
+      - id: price_before_title
+        order: ['deal-price', 'deal-card-title']
+        points: 25
+        required: true
+      - id: meta_row
+        pattern: 'deal-meta'
+        points: 10
+      - id: no_social_feed_card
+        forbid: 'class="[^"]*feed-card'
+        points: 15
+        required: true
+
+  dating_card:
+    label: dating swipe card (Hinge/Raya face-first)
+    dialect: dating
+    principle: hierarchy / face
+    target_score: 80
+    parts:
+      - id: root_card
+        pattern: 'class="[^"]*swipe-card'
+        points: 20
+        required: true
+      - id: photo_first
+        order: ['swipe-photo|swipe-placeholder', 'swipe-body|swipe-actions|swipe-bio']
+        points: 25
+        required: true
+      - id: primary_actions
+        pattern: 'swipe-action'
+        points: 20
+        required: true
+      - id: like_and_pass
+        pattern: 'swipe-action--like'
+        points: 10
+      - id: pass_action
+        pattern: 'swipe-action--pass'
+        points: 10
+      - id: low_chrome
+        forbid: 'navBar|deal-grid|compose-box'
+        points: 15
+
+  live_card:
+    label: live hyperlocal note (Jodel grammar)
+    dialect: social
+    principle: clarity / hyperlocal
+    target_score: 80
+    parts:
+      - id: root_card
+        pattern: 'class="[^"]*live-card'
+        points: 20
+        required: true
+      - id: anon_author
+        pattern: 'live-card-author|>anon<|anon'
+        points: 15
+        required: true
+      - id: body
+        pattern: 'live-card-body'
+        points: 15
+        required: true
+      - id: vote_or_actions
+        pattern: 'live-card-actions|feed-action|post_vote'
+        points: 15
+      - id: no_identity_chrome
+        forbid: 'avatar_url|compose-avatar|author-handle|@\w+'
+        points: 15
+        # soft-ish: @ in content is rare in structure
+        required: false
+      - id: no_retail_dialect
+        forbid: 'deal-card|navBar|deal-price'
+        points: 20
+        required: true
+
+  marketplace_first_screen:
+    label: marketplace catalog first screen
+    dialect: marketplace
+    principle: reading_patterns / catalog
+    target_score: 85
+    parts:
+      - id: nav_before_grid
+        order: ['navBar', 'deal-grid|deal-card']
+        points: 25
+        required: true
+      - id: search_present
+        pattern: 'marketplace-nav-search|name="q"'
+        points: 20
+        required: true
+      - id: single_h1
+        # scored in visual_quality; here require at least one h1
+        pattern: '<h1\b'
+        points: 15
+        required: true
+      - id: cart_or_sell
+        pattern: 'Cart|Sell|listings/new'
+        points: 15
+      - id: guest_open
+        forbid: 'Sign in to continue'
+        points: 25
+        required: true
+
+# Page-level visual quality rubric (HTML structure; not pixel baseline).
+quality:
+  target_score: 80
+  weights:
+    landmarks: 20
+    hierarchy: 20
+    cta_budget: 15
+    guest_open: 15
+    dialect_purity: 15
+    density: 15
+  rules:
+    landmarks:
+      require_any:
+        - 'skip-link|Skip to main'
+        - '#main-content|<main\b'
+    hierarchy:
+      max_h1: 1
+      min_h1: 0  # warn soft if 0
+    cta_budget:
+      # too many peer primary actions above fold (Hick)
+      max_submit_buttons: 4
+      max_btn_primary: 3
+    guest_open:
+      forbid: 'Sign in to continue'
+    dialect_purity:
+      # surface-specific overrides applied in code
+      marketplace_forbids: 'swipe-card|feed-card'
+      live_forbids: 'deal-card|navBar'
+      dating_forbids: 'deal-grid|navBar'
+    density:
+      # soft: extreme short pages with almost no structure
+      min_bytes: 400

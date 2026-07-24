@@ -96,6 +96,15 @@ class DeployGatesContractTest < Minitest::Test
     assert File.file?(File.join(ROOT, "gates", "lib", "design_metrics_gate.rb"))
   end
 
+  def test_runner_registers_visual_quality
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    assert_includes source, "visual_quality:"
+    assert_includes source, "VisualQualityGate"
+    assert File.file?(File.join(ROOT, "gates", "lib", "exemplar_structure.rb"))
+    assert File.file?(File.join(ROOT, "gates", "lib", "visual_quality.rb"))
+    assert File.directory?(File.join(ROOT, "gates", "fixtures", "exemplars"))
+  end
+
   def test_surface_schema_fixtures_exist
     dir = File.join(ROOT, "gates", "fixtures", "surfaces")
     assert File.directory?(dir)
@@ -119,6 +128,7 @@ class DeployGatesContractTest < Minitest::Test
     assert_match(/domain_alignment:\s*:release/, source)
     assert_match(/surface_schema:\s*:layout_suite/, source)
     assert_match(/design_metrics:\s*:layout_suite/, source)
+    assert_match(/visual_quality:\s*:layout_suite/, source)
   end
 
   def test_production_gate_runs_apps_yml_validator_in_process
