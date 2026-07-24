@@ -130,11 +130,13 @@ class VisualEngine {
     this.time = 0
     this.colorInvertValue = 0
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
+    // Classic c7c8effcd / Radio Bergen tunnel: fov 250, speed 0.75, dense rings.
     this.config = {
       fov: 250,
       speed: 0.75,
-      particleCountPerRow: this.isMobile ? 32 : 64,
-      rowCount: this.isMobile ? 125 : 250
+      particleCountPerRow: this.isMobile ? 32 : 48,
+      // zStep matches historical (4 desktop / 6 low-end) so rings fill -fov..+fov.
+      zStep: this.isMobile ? 6 : 4
     }
     this.stars = []
     this.resize()
@@ -152,7 +154,6 @@ class VisualEngine {
     this.centerX = this.w / 2
     this.centerY = this.h / 2
     this.initParticles()
-    // Reintegrated star field from c7c8effcd historical
     this.stars = []
     for (let i = 0; i < 80; i++) {
       this.stars.push({
@@ -167,14 +168,14 @@ class VisualEngine {
   initParticles() {
     this.particles = []
     this.centers = []
-    const zStep = 12
-    for (let i = 0; i < this.config.rowCount; i++) {
-      const z = -this.config.fov + i * zStep
+    const { fov, zStep, particleCountPerRow } = this.config
+    const radius = 75
+    const angleStep = (Math.PI * 2) / particleCountPerRow
+    // Historical: for (z = -fov; z < fov; z += zStep)
+    for (let z = -fov; z < fov; z += zStep) {
       const row = []
-      const angleStep = (Math.PI * 2) / this.config.particleCountPerRow
-      for (let j = 0; j < this.config.particleCountPerRow; j++) {
+      for (let j = 0; j < particleCountPerRow; j++) {
         const angle = j * angleStep
-        const radius = 75
         row.push({
           x: Math.cos(angle) * radius,
           y: Math.sin(angle) * radius,
@@ -184,7 +185,7 @@ class VisualEngine {
           angle,
           radius,
           radiusAudio: radius,
-          segments: this.config.particleCountPerRow,
+          segments: particleCountPerRow,
           index: j
         })
       }
@@ -245,14 +246,19 @@ class VisualEngine {
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
     const interactionY = this.touch.active ? this.touch.y : this.mouse.y
     const isInteracting = (this.touch.active || this.mouse.active) && this.mouse.down
+    // Classic: hold = reverse (fly out), release = fly forward into the tunnel.
     const isPressed = this.mouse.down
+    const { fov, speed } = this.config
+    // Direct z step every frame (original). A prior 0.1 lerp made effective
+    // speed ~0.075 — almost frozen compared to the classic 0.75 fly.
+    const zDelta = isPressed ? speed : -speed
     let sortNeeded = false
 
     this.particles.forEach((row, i) => {
       const center = this.centers[i]
       if (isInteracting) {
-        center.x = (this.centerX - interactionX) * ((row[0].z - this.config.fov) / 500) + this.centerX
-        center.y = (this.centerY - interactionY) * ((row[0].z - this.config.fov) / 500) + this.centerY
+        center.x = (this.centerX - interactionX) * ((row[0].z - fov) / 500) + this.centerX
+        center.y = (this.centerY - interactionY) * ((row[0].z - fov) / 500) + this.centerY
       } else {
         center.x += (this.centerX - center.x) * 0.015
         center.y += (this.centerY - center.y) * 0.015
@@ -260,15 +266,16 @@ class VisualEngine {
       row.forEach(particle => {
         const audioBoost = audioIntensity * 0.5
         particle.radiusAudio = particle.radius + audioBoost * 8
-        const targetZ = particle.z + (isPressed ? this.config.speed : -this.config.speed)
-        particle.z += (targetZ - particle.z) * 0.1
-        if (particle.z > this.config.fov) { particle.z -= this.config.fov * 2; sortNeeded = true }
-        else if (particle.z < -this.config.fov) { particle.z += this.config.fov * 2; sortNeeded = true }
-        const scale = this.config.fov / (this.config.fov + particle.z)
-        particle.x2d = (particle.x * scale) + center.x
-        particle.y2d = (particle.y * scale) + center.y
+        particle.z += zDelta
+        if (particle.z > fov) { particle.z -= fov * 2; sortNeeded = true }
+        else if (particle.z < -fov) { particle.z += fov * 2; sortNeeded = true }
+        // Guard FOV singularity (z ≈ -fov) so scale never blows up / NaNs.
+        const denom = Math.max(0.5, fov + particle.z)
+        const scale = fov / denom
         particle.x = Math.cos(particle.angle + this.time) * particle.radiusAudio
         particle.y = Math.sin(particle.angle + this.time) * particle.radiusAudio
+        particle.x2d = (particle.x * scale) + center.x
+        particle.y2d = (particle.y * scale) + center.y
       })
     })
 
@@ -277,13 +284,12 @@ class VisualEngine {
       this.centers = this.particles.map((_, i) => this.centers[i] || { x: this.centerX, y: this.centerY })
     }
 
-    // Update stars from historical c7c8effcd
     this.audioBoost = (audioData.average || 0) * 0.5
     this.stars.forEach(star => {
-      star.z += (isPressed ? this.config.speed : -this.config.speed) * 0.5
-      if (star.z > this.config.fov) star.z -= this.config.fov * 2
-      else if (star.z < -this.config.fov) star.z += this.config.fov * 2
-      star.x = (Math.random() - 0.5) * this.w * 2 * (this.config.fov / (this.config.fov + star.z)) + this.centerX * 0.1 // rough
+      // Historical: star.z -= speed * 2 (always fly toward camera)
+      star.z += zDelta * 2
+      if (star.z > fov) star.z -= fov * 2
+      else if (star.z < -fov) star.z += fov * 2
     })
 
     if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 5)
@@ -342,8 +348,8 @@ class VisualEngine {
 
   setPerformanceMode(value) {
     this.isMobile = value
-    this.config.particleCountPerRow = value ? 32 : 64
-    this.config.rowCount = value ? 125 : 250
+    this.config.particleCountPerRow = value ? 32 : 48
+    this.config.zStep = value ? 6 : 4
     this.initParticles()
   }
 }
