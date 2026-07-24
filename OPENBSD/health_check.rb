@@ -63,7 +63,7 @@ rescue StandardError => e
 end
 
 def load_standalone_apps
-  path = File.join(ROOT, "OPENBSD", "master.json")
+  path = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
   return {} unless File.file?(path)
 
   data = JSON.parse(File.read(path))
@@ -79,7 +79,7 @@ def load_standalone_apps
     ]
   end
 rescue StandardError => e
-  warn "master.json standalone_apps unreadable: #{e.class}: #{e.message}"
+  warn "deploy_inventory.json standalone_apps unreadable: #{e.class}: #{e.message}"
   {}
 end
 

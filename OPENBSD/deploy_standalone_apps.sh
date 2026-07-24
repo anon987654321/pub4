@@ -1,11 +1,11 @@
 #!/usr/bin/env zsh
-# Deploy apps listed in OPENBSD/master.json standalone_apps (e.g. BPLAN).
+# Deploy apps listed in OPENBSD/deploy_inventory.json standalone_apps (e.g. bizplan).
 # Run on VPS as dev: zsh OPENBSD/deploy_standalone_apps.sh
 set -euo pipefail
 
 SCRIPT_DIR=${0:a:h}
 PUB4=${PUB4:-${SCRIPT_DIR:h}}
-MASTER_JSON=${MASTER_JSON:-${SCRIPT_DIR}/master.json}
+MASTER_JSON=${MASTER_JSON:-${SCRIPT_DIR}/deploy_inventory.json}
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 
@@ -16,7 +16,7 @@ typeset -a names scripts
 names=("${(@f)$(jq -r '.standalone_apps[]?.name // empty' "$MASTER_JSON")}")
 scripts=("${(@f)$(jq -r '.standalone_apps[]?.deploy_script // empty' "$MASTER_JSON")}")
 
-(( ${#names[@]} > 0 )) || { log "no standalone_apps in master.json"; exit 0; }
+(( ${#names[@]} > 0 )) || { log "no standalone_apps in deploy_inventory.json"; exit 0; }
 
 log "standalone deploy — ${#names[@]} app(s)"
 

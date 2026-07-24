@@ -27,7 +27,7 @@ else
     failures << "relayd: missing Host route for #{domain}" unless relayd.include?(domain)
   end
 
-  master_json = File.join(ROOT, "OPENBSD", "master.json")
+  master_json = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
   if File.file?(master_json)
     standalone = JSON.parse(File.read(master_json)).fetch("standalone_apps", [])
     standalone.each do |entry|

@@ -1,7 +1,7 @@
 # Domain candidates recovered from pub3.
 #
 # This is not authoritative production config. Reconcile with:
-# - OPENBSD/master.json
+# - OPENBSD/deploy_inventory.json
 # - RAILS/apps.yml
 # - OPENBSD/OPERATOR.sh
 # - relayd/httpd/acme-client templates

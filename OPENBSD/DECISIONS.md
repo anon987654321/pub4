@@ -2,6 +2,19 @@
 
 Deploy and VPS policy. Agent/runtime policy lives in `MASTER/DECISIONS.md`.
 
+## No Fourth Public App Until brgen Boundaries Hold (2026-07)
+
+**Status:** accepted  
+**Context:** brgen already hosts many verticals (social, marketplace, dating, playlist, takeaway, TV, maps, live, messenger) in one deployable Rails app. Historical restarts (aight → ai3 → pub2 → pub3 → pub4) repeatedly expanded surface before isolation and shared contracts were boring.
+
+**Decision:** Do not add a **fourth public Rails app** (beyond brgen, amber, bsdports) until:
+
+1. High-churn brgen verticals (marketplace, dating, takeaway at minimum) are **namespaced engines** with their own migrations and test boundaries (still one `rc.d` service is fine).
+2. Cross-cutting money (**øre/cents**) and **trust/identity** primitives live in `RAILS/shared` with unit tests consumed by more than one app.
+3. CI runs **layout_suite** (design craft) plus **/up smoke** for all three inventory apps on every relevant change.
+
+**Consequences:** New product energy goes into Bergen density (seed, guest demo path Live → listing → message) and engine extraction, not `hjerterom`/`blognet`-class launches. Horizon ideas stay in `RAILS/apps.horizon.yml` with `agent: ignore` until the three gates above are green.
+
 ## Repo Layout (2026-07)
 
 - `RAILS/` — Rails apps + shared engine (was `DEPLOY/rails`)

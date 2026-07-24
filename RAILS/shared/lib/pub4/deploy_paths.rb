@@ -17,33 +17,33 @@ module Pub4
 
     def postpro_candidates
       [
-        repo_join("MASTER/tools/postpro/postpro.rb"),
-        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/postpro/postpro.rb"),
-        rails_root.join("../../MASTER/tools/postpro/postpro.rb"),
+        repo_join("studio/postpro/postpro.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/postpro/postpro.rb"),
+        rails_root.join("../../studio/postpro/postpro.rb"),
       ]
     end
 
     def repligen_candidates
       [
-        repo_join("MASTER/tools/repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/repligen.rb"),
-        rails_root.join("../../MASTER/tools/repligen.rb"),
+        repo_join("studio/repligen.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/repligen.rb"),
+        rails_root.join("../../studio/repligen.rb"),
       ]
     end
 
     def dilla_candidates
       [
-        repo_join("MASTER/tools/dilla.rb"),
-        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/dilla.rb"),
-        rails_root.join("../../MASTER/tools/dilla.rb"),
+        repo_join("studio/dilla/engine.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/dilla/engine.rb"),
+        rails_root.join("../../studio/dilla/engine.rb"),
       ]
     end
 
     def radio_bergen_study_candidates
       [
-        repo_join("MASTER/tools/audio/radio_bergen_study.rb"),
-        Pathname.new("#{DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_study.rb"),
-        rails_root.join("../../MASTER/tools/audio/radio_bergen_study.rb"),
+        repo_join("studio/radio-bergen/radio_bergen_study.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/radio-bergen/radio_bergen_study.rb"),
+        rails_root.join("../../studio/radio-bergen/radio_bergen_study.rb"),
       ]
     end
 

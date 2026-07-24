@@ -142,6 +142,10 @@ stores = num_stores.times.map do |i|
 end
 
 listings_per = (5 * SEED_SCALE).clamp(1, 10)
+bergen_lat = seed_city&.latitude.to_f
+bergen_lng = seed_city&.longitude.to_f
+bergen_lat = 60.3913 if bergen_lat.zero?
+bergen_lng = 5.3221 if bergen_lng.zero?
 listings = stores.flat_map do |store|
   listings_per.times.map do
     Marketplace::Listing.create!(
@@ -152,12 +156,41 @@ listings = stores.flat_map do |store|
       price_cents: rand(1000..50_000),
       category: Marketplace::Category.all.sample,
       location: Faker::Address.city,
+      latitude: bergen_lat + rand(-0.05..0.05),
+      longitude: bergen_lng + rand(-0.06..0.06),
       status: 'active',
       created_at: rand(1..60).days.ago,
       views_count: rand((100 * SEED_SCALE)..(10000 * SEED_SCALE))
     )
   end
 end
+
+# Live hyperlocal notes (guest demo density on /live)
+live_count = (12 * SEED_SCALE).clamp(8, 80)
+live_count.times do |i|
+  user = users.sample
+  body = [
+    "Noen i nærheten av #{Faker::Address.community}?",
+    "Ledig plass på buss — #{Faker::Lorem.word}",
+    "Gratis #{Faker::Food.dish} utenfor #{Faker::Address.street_name}",
+    Faker::Lorem.sentence(word_count: 8),
+  ].sample
+  next if body.blank?
+
+  post = Post.new(
+    user: user,
+    city: seed_city,
+    content: body.truncate(Post::LIVE_CONTENT_MAX),
+    title: body.truncate(80),
+    created_at: rand(1..48).hours.ago
+  )
+  post.stamp_live_location!(
+    lat: bergen_lat + rand(-0.03..0.03),
+    lng: bergen_lng + rand(-0.04..0.04)
+  )
+  post.save!
+end
+puts "Live: #{Post.live.count} geo-stamped notes"
 
 # Some orders
 listings.sample(20).each do |listing|
@@ -402,7 +435,7 @@ if places.any?
 end
 
 puts "\nBrgen + subapps fully seeded with fictive Faker data (scale=#{SEED_SCALE})."
-puts "Users: #{User.count}, Posts: #{Post.count}, Marketplace listings: #{Marketplace::Listing.count}"
+puts "Users: #{User.count}, Posts: #{Post.count} (Live: #{Post.live.count}), Marketplace listings: #{Marketplace::Listing.count}"
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
 place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count : 0
 puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"

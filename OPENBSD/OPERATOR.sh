@@ -815,9 +815,9 @@ stage_2() {
 
   configure_relayd
 
-  if [[ -f ${REPO_ROOT}/BPLAN/rails/bplan.sh ]]; then
-    log INFO "Deploying BPLAN standalone (bplan.sh)"
-    if ! su -l dev -c "zsh ${REPO_ROOT}/BPLAN/rails/bplan.sh"; then
+  if [[ -f ${REPO_ROOT}/bizplan/rails/bplan.sh ]]; then
+    log INFO "Deploying bizplan standalone (bplan.sh)"
+    if ! su -l dev -c "zsh ${REPO_ROOT}/bizplan/rails/bplan.sh"; then
       log WARN "bplan.sh deploy failed — set /etc/bplan.env and rerun"
     fi
   fi

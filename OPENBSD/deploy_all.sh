@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # Workstation orchestrator: sync pub4 to VPS and run OPENBSD/OPERATOR.sh.
 #
-# Canonical app list: OPENBSD/master.json (active Rails apps).
+# Canonical app list: OPENBSD/deploy_inventory.json (active Rails apps).
 # NOT deployed (archived installers only)
 #   → see OPENBSD/archive/recovery/manifest.json
 #
@@ -37,13 +37,13 @@ typeset run_per_app=0
 [[ ${1:-} == --per-app ]] && run_per_app=1
 
 typeset -a APPS
-if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/master.json ]]; then
-  APPS=("${(@f)$(jq -r '.apps[].name' "${DEPLOY_ROOT}/master.json")}")
+if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/deploy_inventory.json ]]; then
+  APPS=("${(@f)$(jq -r '.apps[].name' "${DEPLOY_ROOT}/deploy_inventory.json")}")
 else
   APPS=(brgen amber bsdports)
 fi
 
-log "pub4 deploy — ${#APPS[@]} apps from master.json"
+log "pub4 deploy — ${#APPS[@]} apps from deploy_inventory.json"
 log "Archived (not in this run): see archive/recovery"
 
 log "Testing VPS connectivity..."
@@ -82,11 +82,11 @@ if (( run_per_app )); then
   done
 fi
 
-if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/master.json ]]; then
+if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/deploy_inventory.json ]]; then
   typeset -a STANDALONE
-  STANDALONE=("${(@f)$(jq -r '.standalone_apps[]?.name // empty' "${DEPLOY_ROOT}/master.json")}")
+  STANDALONE=("${(@f)$(jq -r '.standalone_apps[]?.name // empty' "${DEPLOY_ROOT}/deploy_inventory.json")}")
   if (( ${#STANDALONE[@]} > 0 )); then
-    log "Standalone apps (master.json standalone_apps)..."
+    log "Standalone apps (deploy_inventory.json standalone_apps)..."
     vssh "cd ${REMOTE_PUB4} && zsh OPENBSD/deploy_standalone_apps.sh 2>&1 | tee /tmp/standalone_deploy.log" \
       || log "WARN: standalone deploy — see /tmp/standalone_deploy.log"
   fi
@@ -98,7 +98,7 @@ if command -v jq >/dev/null 2>&1; then
   while IFS=$'\t' read -r app port; do
     vssh "nc -z 127.0.0.1 ${port}" 2>/dev/null && log "  ${app} listening on :${port}" \
       || log "WARN: ${app} not listening on :${port}"
-  done < <(jq -r '(.apps[]?, .standalone_apps[]?) | [.name, .port] | @tsv' "${DEPLOY_ROOT}/master.json")
+  done < <(jq -r '(.apps[]?, .standalone_apps[]?) | [.name, .port] | @tsv' "${DEPLOY_ROOT}/deploy_inventory.json")
 fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then

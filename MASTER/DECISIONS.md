@@ -4,6 +4,10 @@ Agent and runtime policy. Deploy and VPS policy lives in `OPENBSD/DECISIONS.md`.
 
 This file records intentional shapes that may otherwise look like bugs.
 
+## Portfolio Freeze Aligns With OPENBSD (2026-07)
+
+See `OPENBSD/DECISIONS.md` — **No Fourth Public App Until brgen Boundaries Hold**. MASTER work should prefer subtraction (one generated agent context, structural vs cosmetic scan severity) over new portfolio apps. Do not invent a seventh product surface from agent sessions without that ADR being revisited.
+
 ## Two Master Spines
 
 `lib/` and `core/` are intentionally separate load paths. `lib/` is the gem, CLI, loop, judge, reach, trace, voice, and web-facing runtime. `core/` is a small isolated constitutional fold loaded on its own path by the core tests and `bin/master-core`.

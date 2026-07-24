@@ -1,0 +1,56 @@
+name: Layout suite + app smoke
+
+# Design craft gates + inventory /up contract.
+# If GitHub billing blocks auto-runs, use workflow_dispatch or local:
+#   GATE_AUTOFIX=0 ruby RAILS/gates/runner.rb layout_suite
+#   sh OPENBSD/bin/smoke-apps.sh
+
+on:
+  workflow_dispatch:
+  # Uncomment when billing allows:
+  # push:
+  #   paths:
+  #     - "RAILS/**"
+  #     - "OPENBSD/lib/gate_result.rb"
+  #     - ".github/workflows/layout-suite.yml"
+  # pull_request:
+  #   paths:
+  #     - "RAILS/**"
+  #     - "OPENBSD/lib/gate_result.rb"
+
+jobs:
+  layout_suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: false
+
+      - name: Layout suite (source + fixture gates; no live app required)
+        env:
+          GATE_AUTOFIX: "0"
+        run: ruby RAILS/gates/runner.rb layout_suite
+
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: apps.yml inventory sanity
+        run: |
+          ruby -e '
+            require "yaml"
+            d = YAML.safe_load_file("RAILS/apps.yml")
+            apps = d.fetch("apps")
+            %w[brgen amber bsdports].each do |name|
+              abort "missing app #{name}" unless apps[name]
+              abort "#{name} missing port" unless apps[name]["port"]
+              abort "#{name} missing deploy_script" unless apps[name]["deploy_script"]
+            end
+            ports = apps.values.map { |m| m["port"].to_i }
+            abort "duplicate ports" unless ports.uniq.size == ports.size
+            puts "inventory ok: #{apps.keys.join(", ")}"
+          '

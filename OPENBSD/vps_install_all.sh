@@ -32,8 +32,8 @@ doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || log "WARN: master not ok"
 
 typeset -a APPS
-if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/OPENBSD/master.json ]]; then
-  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/OPENBSD/master.json")}")
+if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/OPENBSD/deploy_inventory.json ]]; then
+  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/OPENBSD/deploy_inventory.json")}")
 else
   APPS=(brgen amber bsdports)
 fi
@@ -54,7 +54,7 @@ for app in $APPS; do
 done
 
 if [[ -f ${PUB4}/OPENBSD/deploy_standalone_apps.sh ]]; then
-  log "=== Standalone apps (BPLAN, etc.) ==="
+  log "=== Standalone apps (bizplan, etc.) ==="
   zsh "${PUB4}/OPENBSD/deploy_standalone_apps.sh" || log "WARN: standalone deploy failed"
 fi
 

@@ -10,7 +10,7 @@ module CrawlSupport
   ROOT = File.expand_path("..", __dir__)
   MANIFEST = File.join(__dir__, "crawl_manifest.yml")
   APPS_YML = File.join(__dir__, "apps.yml")
-  MASTER_JSON = File.join(ROOT, "OPENBSD", "master.json")
+  MASTER_JSON = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
 
   module_function
 
@@ -23,7 +23,7 @@ module CrawlSupport
     json_by_name.each do |name, row|
       meta = yml[name]
       unless meta
-        out << "inventory: #{name} in master.json but missing from apps.yml"
+        out << "inventory: #{name} in deploy_inventory.json but missing from apps.yml"
         next
       end
       out << "inventory: #{name} port mismatch json=#{row["port"]} yml=#{meta["port"]}" if row["port"].to_i != meta["port"].to_i
@@ -33,7 +33,7 @@ module CrawlSupport
     yml.each_key do |name|
       next if json_by_name.key?(name)
       next if %w[aight_production_ai multimedia_tts].include?(name)
-      out << "inventory: #{name} in apps.yml but missing from master.json"
+      out << "inventory: #{name} in apps.yml but missing from deploy_inventory.json"
     end
     out
   end

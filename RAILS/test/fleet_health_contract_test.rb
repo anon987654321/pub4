@@ -26,7 +26,7 @@ class FleetHealthContractTest < Minitest::Test
   def test_master_json_mirrors_apps_yml
     require "yaml"
     require "json"
-    master = JSON.parse(File.read(File.expand_path("../../OPENBSD/master.json", __dir__)))
+    master = JSON.parse(File.read(File.expand_path("../../OPENBSD/deploy_inventory.json", __dir__)))
     apps_yml = YAML.safe_load(File.read(File.join(ROOT, "apps.yml"))).fetch("apps")
     expected = apps_yml.map { |name, meta| [name, meta["domain"], meta["port"]] }.sort
     actual = master.fetch("apps").map { |row| [row["name"], row["domain"], row["port"]] }.sort

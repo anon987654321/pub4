@@ -485,6 +485,7 @@ module Brgen
         seed_users
         seed_posts(communities)
         seed_listings
+        seed_live_posts
         seed_playlists
         seed_dating
         seed_dating_likes
@@ -503,15 +504,20 @@ module Brgen
     end
 
     def ensure_communities
-      admin = User.strict_loading(false).find_by(email_address: "admin@#{@city.domain}") ||
-              User.strict_loading(false).find_by(username: "admin_#{@city.slug}") ||
-              User.strict_loading(false).create!(
-                email_address: "admin@#{@city.domain}",
-                username: "admin_#{@city.slug}",
-                password: "password123",
-                password_confirmation: "password123",
-                city: @city
-              )
+      # Admin may pre-exist outside this tenant scope (username "admin" vs "admin_<slug>").
+      admin = ActsAsTenant.without_tenant do
+        User.strict_loading(false).find_by(email_address: "admin@#{@city.domain}") ||
+          User.strict_loading(false).find_by(username: "admin_#{@city.slug}") ||
+          User.strict_loading(false).find_by(username: "admin", city_id: @city.id) ||
+          User.strict_loading(false).find_by(username: "admin") ||
+          User.strict_loading(false).create!(
+            email_address: "admin@#{@city.domain}",
+            username: "admin_#{@city.slug}",
+            password: "password123",
+            password_confirmation: "password123",
+            city: @city
+          )
+      end
 
       Brgen::CityContent.community_slugs_for(@city.country_code).index_with do |slug|
         Community.find_or_create_by!(slug: slug, city: @city) do |community|
@@ -572,6 +578,10 @@ module Brgen
 
     def seed_listings
       category = Marketplace::Category.first || Marketplace::Category.create!(name: "Diverse", slug: "diverse-bergen")
+      base_lat = @city.latitude.to_f
+      base_lng = @city.longitude.to_f
+      base_lat = 60.3913 if base_lat.zero?
+      base_lng = 5.3221 if base_lng.zero?
 
       LISTINGS.each do |row|
         next if Marketplace::Listing.exists?(title: row[:title])
@@ -580,15 +590,66 @@ module Brgen
         listing = Marketplace::Listing.create!(
           user: user,
           title: row[:title],
-          description: "Hentes i #{@city.name}. PM for detaljer.",
+          description: "Hentes i #{@city.name}. PM for detaljer. (Guest kan sende bud uten konto.)",
           price_cents: row[:price_cents],
           category: category,
           location: @city.name,
+          latitude: base_lat + rand(-0.03..0.03),
+          longitude: base_lng + rand(-0.04..0.04),
           status: "active",
           created_at: rand(2..21).days.ago
         )
         if @attach_media
           DemoMedia.attach_remote_postpro!(listing, :photos, seed: row[:image], preset: "portrait")
+        end
+      end
+    end
+
+    # Jodel-shaped Live notes: short, anonymous, geo-stamped for /live demo density.
+    LIVE_NOTES = [
+      { hours_ago: 0.5, body: "Noen som har sett røyk over Damsgård? Eller bare tåke?" },
+      { hours_ago: 1, body: "Ledig sitteplass på bybanen mot Fyllingsdalen, vogn 2." },
+      { hours_ago: 2, body: "Gratis kaffe på uteservering ved Torget — ta med egen kopp." },
+      { hours_ago: 3, body: "Hunden min rømte ved Nordnesparken, brun terrier, svarer på Pip." },
+      { hours_ago: 4, body: "Pepperkakebyen-kø er kort akkurat nå (hverdag 14:00)." },
+      { hours_ago: 5, body: "Noen som trenger et paraplylån på Bryggen? Har en ekstra." },
+      { hours_ago: 8, body: "Stille på Fløyen i kveld — nesten ingen turister." },
+      { hours_ago: 12, body: "Lydsjekk: er det konsert på Logen i kveld eller bare øving?" },
+      { hours_ago: 18, body: "Fisketorget lukter skikkelig godt. Anbefaler reker." },
+      { hours_ago: 24, body: "Regnværsdag: beste bibliotekkroken er 2. etasje, vindu mot dammen." },
+    ].freeze
+
+    def seed_live_posts
+      base_lat = @city.latitude.to_f
+      base_lng = @city.longitude.to_f
+      base_lat = 60.3913 if base_lat.zero?
+      base_lng = 5.3221 if base_lng.zero?
+      users = @users_by_username.values
+      return if users.empty?
+
+      LIVE_NOTES.each_with_index do |row, i|
+        # Idempotent: one Live note per body prefix in city
+        next if Post.live.where(city: @city).where("content LIKE ?", "#{row[:body][0, 40]}%").exists?
+
+        user = users[i % users.size]
+        body = row[:body]
+        post = Post.new(
+          user: user,
+          city: @city,
+          content: body,
+          title: body.truncate(80),
+          created_at: row[:hours_ago].hours.ago + rand(0..20).minutes
+        )
+        post.stamp_live_location!(
+          lat: base_lat + rand(-0.02..0.02),
+          lng: base_lng + rand(-0.03..0.03)
+        )
+        post.save!
+        post.record_activity!("BergenLiveSeed") if post.respond_to?(:record_activity!)
+
+        # A few upvotes so Hot tab isn't empty
+        users.sample([ 2, users.size ].min).each do |voter|
+          post.votes.find_or_create_by!(user: voter) { |vote| vote.value = 1 }
         end
       end
     end

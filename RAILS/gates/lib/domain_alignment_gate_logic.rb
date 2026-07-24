@@ -15,7 +15,7 @@ module Deploy
     ROOT = Pathname.new(File.expand_path("../../..", __dir__))
     OPENBSD = ROOT.join("OPENBSD", "OPERATOR.sh")
     REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
-    MASTER_JSON = ROOT.join("OPENBSD", "master.json")
+    MASTER_JSON = ROOT.join("OPENBSD", "deploy_inventory.json")
     RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
     COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
     MASTER_ONLY_SUBAPPS = %w[ai].freeze
@@ -77,15 +77,15 @@ module Deploy
         expected_apps.each do |name, exp|
           entry = master[:apps][name]
           unless entry
-            result.fail("master.json missing #{name}")
+            result.fail("deploy_inventory.json missing #{name}")
             next
           end
-          result.fail("master.json domain mismatch for #{name}: #{entry['domain']} != #{exp[:domain]}") if entry["domain"] != exp[:domain]
-          result.fail("master.json port mismatch for #{name}: #{entry['port']} != #{exp[:port]}") if entry["port"].to_i != exp[:port]
+          result.fail("deploy_inventory.json domain mismatch for #{name}: #{entry['domain']} != #{exp[:domain]}") if entry["domain"] != exp[:domain]
+          result.fail("deploy_inventory.json port mismatch for #{name}: #{entry['port']} != #{exp[:port]}") if entry["port"].to_i != exp[:port]
         end
         m = master[:master] || {}
         if m["domain"] != "ai.brgen.no" || m["port"].to_i != 53187
-          result.fail("master.json master_face mismatch: #{m['domain']}:#{m['port']}")
+          result.fail("deploy_inventory.json master_face mismatch: #{m['domain']}:#{m['port']}")
         end
       end
 

@@ -25,11 +25,17 @@ source_gates = [
   ["frontend", "RAILS/frontend_production_gate.rb"],
   ["schema", "RAILS/schema_migration_gate.rb"],
   ["asset freshness", "RAILS/generated_asset_freshness_gate.rb"],
+  # Design craft stack (P0–P5); GATE_AUTOFIX off in CI-like checks
+  ["layout suite", "RAILS/gates/runner.rb", "layout_suite"],
 ]
 
-source_gates.each do |name, path|
+source_gates.each do |entry|
+  name = entry[0]
+  path = entry[1]
+  extra = entry[2..] || []
   key = name.tr(" ", "_")
-  failures << key unless runner.run(name, RUBY, path)
+  env = name == "layout suite" ? { "GATE_AUTOFIX" => "0" } : {}
+  failures << key unless runner.run(name, RUBY, path, *extra, env: env)
 end
 
 # Static family contracts (no app boot / Ruby 3.4 required).

@@ -30,6 +30,10 @@ class BergenDemoSeederTest < ActiveSupport::TestCase
     assert Comment.where(commentable: post).count >= 2
     assert Marketplace::Listing.exists?(title: "Brukt sykkel — Bergen sentrum")
     assert Dating::Profile.joins(:user).exists?(users: { username: "emilie_floyen" })
+
+    live = Post.live.where(city: @city)
+    assert_operator live.count, :>=, Brgen::BergenDemoSeeder::LIVE_NOTES.size
+    assert live.all? { |p| p.anonymous? && p.latitude.present? && p.longitude.present? }
   end
 
   test "seeds radio bergen playlist from manifest" do
