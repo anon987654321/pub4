@@ -564,9 +564,13 @@ footer {
 /* Grid context polish (e.g. marketplace feed-cards in .post-grid)
    Mobile-first: full-bleed image on small screens, reverts on desktop.
 */
-.feed-card.listing,
-.feed-card.deal,
-.feed-card.store {
+// :is(...) rather than 3 repeated compound selectors -- dart-sass's
+// compressed-mode minifier has a real bug that strips the first selector's
+// class qualifier from a long comma-separated list like this one, leaving a
+// bare ".feed-card-avatar" that then overrides every ordinary post avatar
+// site-wide. Confirmed live on brgen (same pattern, see _card_modifiers.scss
+// there for the full writeup). :is() sidesteps it entirely.
+.feed-card:is(.listing, .deal, .store) {
   background: var(--surface2);
   border-radius: 8px;
   margin-bottom: 0;
@@ -574,9 +578,7 @@ footer {
   flex-direction: column;
   gap: 8px;
 }
-.feed-card.listing .feed-card-avatar,
-.feed-card.deal .feed-card-avatar,
-.feed-card.store .feed-card-avatar {
+.feed-card:is(.listing, .deal, .store) .feed-card-avatar {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
@@ -599,15 +601,11 @@ footer {
     flex-wrap: nowrap;
   }
   /* Restore horizontal for product cards on desktop */
-  .feed-card.listing,
-  .feed-card.deal,
-  .feed-card.store {
+  .feed-card:is(.listing, .deal, .store) {
     flex-direction: row;
     gap: 12px;
   }
-  .feed-card.listing .feed-card-avatar,
-  .feed-card.deal .feed-card-avatar,
-  .feed-card.store .feed-card-avatar {
+  .feed-card:is(.listing, .deal, .store) .feed-card-avatar {
     width: 80px;
     height: 80px;
     aspect-ratio: auto;

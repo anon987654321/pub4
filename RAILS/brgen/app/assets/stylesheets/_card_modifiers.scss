@@ -26,14 +26,16 @@
   font-weight: 600;
 }
 
-.feed-card.listing,
-.feed-card.deal,
-.feed-card.store,
-.feed-card.community,
-.feed-card.match,
-.feed-card.playlist,
-.feed-card.tv,
-.feed-card.takeaway {
+// :is(...) rather than 8 repeated compound selectors -- dart-sass's
+// compressed-mode minifier has a real bug where a long comma-separated
+// selector list like ".feed-card.listing .feed-card-avatar, .feed-card.deal
+// .feed-card-avatar, ..." gets corrupted: the FIRST selector's ".listing"
+// qualifier is silently stripped down to a bare ".feed-card-avatar", which
+// then matches (and visually breaks) every ordinary post avatar site-wide,
+// not just listing/deal/etc cards. Confirmed live on production. :is()
+// compiles to one selector instead of eight, sidestepping the bug entirely
+// (verified: `style: :compressed` output stays correct with this form).
+.feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -43,14 +45,7 @@
   gap: 8px;
 }
 
-.feed-card.listing .feed-card-avatar,
-.feed-card.deal .feed-card-avatar,
-.feed-card.store .feed-card-avatar,
-.feed-card.community .feed-card-avatar,
-.feed-card.match .feed-card-avatar,
-.feed-card.playlist .feed-card-avatar,
-.feed-card.tv .feed-card-avatar,
-.feed-card.takeaway .feed-card-avatar {
+.feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) .feed-card-avatar {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
@@ -60,27 +55,13 @@
 }
 
 @media (min-width: 768px) {
-  .feed-card.listing,
-  .feed-card.deal,
-  .feed-card.store,
-  .feed-card.community,
-  .feed-card.match,
-  .feed-card.playlist,
-  .feed-card.tv,
-  .feed-card.takeaway {
+  .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
     flex-direction: row;
     gap: 12px;
     padding: 12px 16px;
   }
 
-  .feed-card.listing .feed-card-avatar,
-  .feed-card.deal .feed-card-avatar,
-  .feed-card.store .feed-card-avatar,
-  .feed-card.community .feed-card-avatar,
-  .feed-card.match .feed-card-avatar,
-  .feed-card.playlist .feed-card-avatar,
-  .feed-card.tv .feed-card-avatar,
-  .feed-card.takeaway .feed-card-avatar {
+  .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) .feed-card-avatar {
     width: 80px;
     height: 80px;
     aspect-ratio: auto;
