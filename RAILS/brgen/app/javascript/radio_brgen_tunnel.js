@@ -384,7 +384,10 @@ export class RadioBrgen {
   }
 
   setupGUI() {
+    // Dev-only: dat.GUI autoPlace is a light panel that collides with the
+    // top-left brand on the immersive playlist surface.
     if (typeof window.dat === "undefined") return
+    if (!window.location.search.includes("datgui=1")) return
     this.gui = new window.dat.GUI({ autoPlace: true, width: 280 })
     const guiParams = {
       particleCount: this.visualEngine.config.particleCountPerRow,

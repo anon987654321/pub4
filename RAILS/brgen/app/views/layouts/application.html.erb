@@ -41,7 +41,11 @@
 <body class="<%= body_surface_classes %>"
       data-controller="feed-hotkey browser-fingerprint brgen-shell"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <%# Immersive playlist owns the full-bleed tunnel — no global skip pill (it
+      paints as a light rectangle in the brand corner) and no second wordmark. %>
+  <% unless active_vertical.to_s == "playlist" %>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+  <% end %>
   <%= link_to root_path, class: "brgen-logo-mark", aria: { label: "Brgen home" } do %>
     <span class="brand-text">brgen</span>
   <% end %>

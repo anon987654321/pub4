@@ -58,12 +58,37 @@ body[class*="vertical-"] main {
   }
 }
 
-/* Playlist owns its wordmark in .radio-header — hide the global fixed mark
-   so the tunnel surface is not dual-branded. Also kill the global skip-link
-   (radio-tunnel has its own .radio-skip-link) so no light pill leaks top-left. */
-body.vertical-playlist .brgen-logo-mark,
-body.vertical-playlist > .skip-link {
+/* Playlist uses the same fixed city brand (.brgen-logo-mark) as every other
+   surface. Kill any residual skip-link (light pill) and the tunnel's duplicate
+   radio-header wordmark so nothing can sit on top of / push the brand. */
+body.vertical-playlist > .skip-link,
+body.vertical-playlist .skip-link,
+body.vertical-playlist .radio-header {
   display: none !important;
+}
+
+/* Tunnel skip-link: never paint until keyboard focus (no 1×1 residue). */
+body.vertical-playlist .radio-skip-link {
+  display: none !important;
+  background: transparent !important;
+}
+
+body.vertical-playlist .radio-skip-link:focus,
+body.vertical-playlist .radio-skip-link:focus-visible {
+  display: inline-block !important;
+  background: var(--color-accent, var(--accent)) !important;
+}
+
+/* dat.GUI autoPlace is a light panel that steals the top chrome. */
+body.vertical-playlist .dg.ac {
+  display: none !important;
+}
+
+/* Brand mark sits above the tunnel canvas (z:50). */
+body.vertical-playlist .brgen-logo-mark {
+  display: inline-flex !important;
+  z-index: calc(var(--z-toast, 1100) + 1);
+  color: var(--color-text, var(--text));
 }
 
 body.vertical-marketplace [data-controller="live-search"],

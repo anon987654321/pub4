@@ -13,7 +13,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Default: fully unmounted from paint (display:none). Focus-only reveal
+   is handled under body.vertical-playlist in _vertical_shell.scss. */
 .radio-skip-link {
+  display: none;
   position: absolute;
   inset-block-start: var(--space-sm);
   inset-inline-start: var(--space-sm);
@@ -23,29 +26,6 @@
   text-decoration: none;
   border-radius: var(--border-radius);
   z-index: 1000;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.radio-skip-link:focus,
-.radio-skip-link:focus-visible {
-  width: auto;
-  height: auto;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  clip-path: none;
-  white-space: normal;
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .radio-tunnel canvas {
