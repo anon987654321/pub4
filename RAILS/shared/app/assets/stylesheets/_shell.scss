@@ -22,11 +22,16 @@
 @media (forced-colors: active) {
   .skip-link,
   .btn,
-  .edge-grip,
   .tab-bar a,
   .nav_link {
     forced-color-adjust: none;
     border: 1px solid ButtonText;
+  }
+  .edge-grip,
+  .theme-toggle {
+    forced-color-adjust: none;
+    border: none !important;
+    background: transparent !important;
   }
   .card-embed,
   .empty-state,
@@ -106,24 +111,26 @@ main[role="main"] {
   transform: translateX(0);
 }
 
-/* Edge-reveal grip — ported from the real 2014 mobile.css `nav .arrow`
-   (pub/__OLD_BACKUPS/BRGEN_OLD): a fade-to-background gradient with a
-   chevron overlaid, rather than a floating rounded pill. Chevron direction
-   mirrors which column it reveals: "›" at the left edge points in toward
-   the hidden sidebar, "‹" at the right edge points in toward the hidden
-   widgets column. Still a real 44px-min touch target (Fitts). */
+/* Edge-reveal grip — chevron only (no gradient blob / sphere). Swipe from
+   the edge still works via edge_swiper; grip is a bare text affordance. */
 .edge-grip {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 64px;
+  width: 28px;
+  height: 48px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
-  border: 0;
-  background: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
   pointer-events: auto;
   z-index: 1;
   cursor: pointer;
+  opacity: 0.45;
 }
 .edge-grip::after {
   content: "";
@@ -132,23 +139,27 @@ main[role="main"] {
   inset-inline-start: 0;
   inset-inline-end: 0;
   transform: translateY(-50%);
-  font-size: 28px;
+  font-size: 22px;
   line-height: 1;
   color: var(--text-secondary);
-  transition: color var(--transition-fast, 180ms);
+  transition: color var(--transition-fast, 180ms), opacity var(--transition-fast, 180ms);
 }
 .edge-grip-left {
   inset-inline-start: 0;
-  background: linear-gradient(to right, var(--bg) 55%, transparent 100%);
+  background: transparent !important;
 }
-.edge-grip-left::after { content: "\203A"; text-align: start; padding-inline-start: 6px; }
+.edge-grip-left::after { content: "\203A"; text-align: start; padding-inline-start: 4px; }
 .edge-grip-right {
   inset-inline-end: 0;
-  background: linear-gradient(to left, var(--bg) 55%, transparent 100%);
+  background: transparent !important;
 }
-.edge-grip-right::after { content: "\2039"; text-align: end; padding-inline-end: 6px; }
+.edge-grip-right::after { content: "\2039"; text-align: end; padding-inline-end: 4px; }
+.edge-grip:hover { opacity: 0.9; background: transparent !important; }
 .edge-grip:hover::after { color: var(--text); }
-.edge-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.edge-grip:focus-visible {
+  outline: none;
+  opacity: 0.9;
+}
 .sidebar-swiper.revealed .edge-grip-left,
 .widgets-swiper.revealed .edge-grip-right {
   opacity: 0;
@@ -255,14 +266,15 @@ main[role="main"] {
   display: none;
   flex-shrink: 0;
 }
+/* Compose FAB is a circular sphere — never shown on brgen (top compose box). */
 .compose-fab {
+  display: none !important;
   position: fixed;
   inset-inline-end: calc(16px + var(--safe-right, 0px));
   bottom: calc(70px + var(--safe-bottom, 0px));
   width: 54px;
   height: 54px;
-  border-radius: var(--radius-pill);
-  display: flex;
+  border-radius: 0;
   align-items: center;
   justify-content: center;
   background: var(--accent);

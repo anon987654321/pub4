@@ -93,6 +93,7 @@
   pointer-events: none;
 }
 
+/* Theme control — icon only, no circular sphere/chip behind it. */
 .theme-toggle {
   position: fixed;
   top: calc(0.75rem + var(--safe-top, 0px));
@@ -103,15 +104,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-pill);
-  background: var(--surface-elevated);
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
   color: var(--text);
   cursor: pointer;
-  transition: background var(--transition-fast, 180ms), color var(--transition-fast, 180ms);
+  opacity: 0.75;
+  transition: opacity var(--transition-fast, 180ms), color var(--transition-fast, 180ms);
 }
 
-.theme-toggle:hover {
-  background: var(--hover);
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  opacity: 1;
   text-decoration: none;
 }
 
