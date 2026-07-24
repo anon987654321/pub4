@@ -131,7 +131,7 @@ face_root:
 # Arial. chrome_bg is the utility-bar tone (darker than bg), mirroring
 # the original's dark #333 bar against a white page.
 brgen_old_dark:
-  bg: "#1a1a1a"
+  bg: "#000000"
   surface: "#1a1a1a"
   surface_elevated: "#1a1a1a"
   search_bg: "#222222"

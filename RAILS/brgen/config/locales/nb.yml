@@ -4,7 +4,7 @@ nb:
     name: "Brgen"
   feed:
     title: "Lokale nyheter"
-    compose_prompt: "Hva skjer i Bergen i dag?"
+    compose_prompt: "Del noe spennende nå"
     post_action: "Publiser"
     guest_hint: "Du poster som anon · %{limit} innlegg per nettleser"
     advanced_post: "Utvidet innlegg med bilde"

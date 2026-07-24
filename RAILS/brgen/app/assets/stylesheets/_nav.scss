@@ -17,6 +17,13 @@
   letter-spacing: -0.02em;
 }
 
+/* brgen wordmark, top-left of the feed -- same weight/tracking as MASTER's
+   own .top-left-logo treatment, just sized for the feed header context. */
+.feed-brand-mark {
+  letter-spacing: -0.03em;
+  text-transform: none;
+}
+
 .feed-tabs {
   display: flex;
   gap: 0;
@@ -77,16 +84,16 @@ a.feed-tab { text-decoration: none; }
   background: #000;
 }
 
-/* Compose — flat feed row, not floating card */
+/* Compose — styled input box (rounded), expands into the full Tiptap composer on focus. */
 .compose-box {
   display: flex;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--surface-elevated);
-  border-bottom: 1px solid var(--border);
-  margin: 0;
-  border-radius: 0;
-  transition: background var(--transition-fast, 180ms);
+  border: 1px solid var(--border);
+  margin: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
 }
 
 .compose-label-visible { display: block; color: var(--text); font-weight: 700; margin-bottom: var(--space-1); }
@@ -154,6 +161,16 @@ a.feed-tab { text-decoration: none; }
   opacity: 0.5;
   cursor: default;
 }
+
+/* Photo/video/audio are real <label> triggers around a hidden file input,
+   not disabled placeholder buttons -- give them the enabled treatment. */
+label.compose-action {
+  opacity: 1;
+  cursor: pointer;
+  transition: color var(--transition-fast, 180ms);
+}
+label.compose-action:hover { color: var(--text); }
+.compose-action--attached { color: var(--accent); }
 .compose-submit { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
 .compose-as { font-size: var(--font-size); }
 .compose-hint { font-size: var(--font-size); margin: var(--space-2) 0 0; }

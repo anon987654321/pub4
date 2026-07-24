@@ -22,7 +22,21 @@
         <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
       </div>
       <div class="compose-actions">
-        <button type="button" class="compose-action" title="Add photo" disabled><%= icon :camera, size: 18 %></button>
+        <label class="compose-action" title="Add photo">
+          <%= icon :camera, size: 18 %>
+          <%= f.file_field :image, accept: "image/*", capture: "environment",
+                class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+        </label>
+        <label class="compose-action" title="Record video">
+          <%= icon :video, size: 18 %>
+          <%= f.file_field :video, accept: "video/*", capture: "environment",
+                class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+        </label>
+        <label class="compose-action" title="Record audio">
+          <%= icon :mic, size: 18 %>
+          <%= f.file_field :audio, accept: "audio/*", capture: "user",
+                class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+        </label>
         <button type="button" class="compose-action" title="Poll" disabled><%= icon :chart, size: 18 %></button>
         <button type="button" class="compose-action" title="Emoji" disabled><%= icon :smile, size: 18 %></button>
         <button type="button" class="compose-action" title="Location" disabled><%= icon :nearby, size: 18 %></button>

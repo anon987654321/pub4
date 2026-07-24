@@ -11,6 +11,8 @@ class Post < ApplicationRecord
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
 
   has_one_attached :image
+  has_one_attached :video
+  has_one_attached :audio
   process_media_variants :image, variants: {
     card: { resize_to_limit: [ 800, 800 ], format: :webp },
     hero: { resize_to_limit: [ 1_200, 1_200 ], format: :webp }

@@ -26,6 +26,13 @@ export default class extends Controller {
     if (this.hasFooterTarget) this.footerTarget.hidden = true
   }
 
+  // Toggles a visible "attached" state on the enclosing <label> so picking a
+  // file gives some feedback -- the <input> itself is visually-hidden.
+  mediaSelected(event) {
+    const label = event.target.closest("label")
+    if (label) label.classList.toggle("compose-action--attached", event.target.files.length > 0)
+  }
+
   syncTitle() {
     if (!this.hasTitleTarget) return
 

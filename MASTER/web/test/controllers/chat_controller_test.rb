@@ -7,7 +7,7 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_includes response.body, "tap to start"
+    assert_includes response.body, "launch AI"
     assert_includes response.body, "MASTER_ASSET_PATHS"
     assert_includes response.body, "function loadFace"
     assert_includes response.body, "window.__MASTER_FACE_IMPORT__"

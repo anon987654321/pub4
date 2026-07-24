@@ -122,7 +122,7 @@
 // to the dark end instead of collapsed into it. Kept in sync with
 // design_tokens.yml brgen_old_dark:.
 @mixin brgen-old-dark-tokens {
-  --bg: #1a1a1a;
+  --bg: #000000;
   --surface: #1a1a1a;
   --surface-elevated: #1a1a1a;
   --search-bg: #222222;

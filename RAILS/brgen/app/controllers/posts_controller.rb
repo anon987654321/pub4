@@ -112,7 +112,7 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :preset)
+    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :video, :audio, :preset)
   end
 
   def share_title
