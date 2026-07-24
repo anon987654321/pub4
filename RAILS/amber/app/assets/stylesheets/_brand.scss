@@ -115,6 +115,28 @@
   }
 }
 
+/* Persistent top-nav instance of the logo: the base .amber-logo-banner
+   sizing above is hero-scale (up to 500px tall), fine for a one-time
+   full-bleed splash but far too tall for chrome that stays sticky on every
+   scroll position. Cap it to ordinary nav height instead. */
+.amber-logo-banner--nav {
+  justify-content: space-between;
+  padding-inline: var(--space-md, 1rem);
+}
+
+.amber-logo-banner--nav .amber-instance {
+  width: auto;
+  height: 40px;
+  max-height: 40px;
+  margin-inline: 0;
+}
+
+.amber-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+}
+
 /* Guest hero still uses the same logo mark full-bleed */
 .amber-guest-hero {
   display: flex;

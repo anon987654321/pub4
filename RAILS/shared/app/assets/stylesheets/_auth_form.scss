@@ -1,0 +1,64 @@
+/* Shared sign-in/sign-up form shell — shared/_offline_page.scss's sibling.
+   Explicit top padding: pages using this aren't guaranteed the ambient
+   clearance the home feed gets from its own header block, and this form
+   is short enough to otherwise sit directly under the fixed brand/nav
+   chrome every app pins to the top of the viewport. */
+.auth-form {
+  max-width: 22rem;
+  margin-inline: auto;
+  padding: clamp(4.5rem, 12vw, 6rem) var(--space-4, 1rem) var(--space-8, 3rem);
+}
+
+.auth-form h1 {
+  margin: 0 0 var(--space-4, 1rem);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.auth-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: var(--space-3, 0.75rem);
+}
+
+.auth-form .field label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.auth-form .field--check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-form input[type="email"],
+.auth-form input[type="password"],
+.auth-form input[type="text"] {
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--search-bg, var(--surface));
+  color: var(--text);
+  font: inherit;
+}
+
+.auth-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.auth-form .actions {
+  margin-top: var(--space-4, 1rem);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-form p:last-of-type {
+  margin-top: var(--space-3, 0.75rem);
+  font-size: 0.875rem;
+}

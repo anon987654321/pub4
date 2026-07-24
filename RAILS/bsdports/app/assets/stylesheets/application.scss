@@ -4,6 +4,13 @@
 @use "jsfiddle_chrome";
 @use "empty_state";
 @use "offline_page";
+@use "auth_form";
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
 /* openbsd_wscons — green terminal identity (UI_REFINEMENTS §E) */
 :root {

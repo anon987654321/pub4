@@ -29,27 +29,24 @@
 </head>
 <body data-pwa-key="bsdports" data-controller="pwa-standalone">
 <a class="skip-link" href="#main-content">Skip to main content</a>
-<nav class="nav-visible nav-visible--jox" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
+<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
   <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
   <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>
   <%= link_to "Maintainers", maintainers_path, aria: { current: current_page?(maintainers_path) ? 'page' : nil } %>
-  <div class="jox-buttons buttons">
+  <div class="nav-actions">
     <% if authenticated? %>
       <%= render "shared/inbox_link" %>
-      <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+      <%= link_to "Sign out", session_path, class: "btn-ghost", data: { turbo_method: :delete, turbo_prefetch: false } %>
     <% else %>
-      <%= link_to "Signup", new_session_path %>
-      <%= link_to "Sign in", new_session_path %>
+      <%= link_to "Sign in", new_session_path, class: "btn-ghost" %>
     <% end %>
   </div>
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main id="main-content" role="main">
-  <%= link_to root_path, class: "logo", aria: { label: "OpenBSD ports" } do %>
-    <%= render "shared/jox_logo" %>
-  <% end %>
+  <%= link_to "BSDports", root_path, class: "logo", aria: { label: "OpenBSD ports" } %>
   <%= yield %>
 </main>
 <%= render "shared/install_prompt" %>
