@@ -160,15 +160,22 @@ main[role="main"] {
   justify-content: center;
   width: 52px;
   height: 52px;
-  border-radius: 0;
-  border: 0;
-  background: transparent;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
   color: var(--text);
   margin: 4px 0 8px;
   transition: opacity var(--transition-fast, 180ms);
 }
-.brand:hover {
-  background: transparent;
+.brand:hover,
+.brand:focus,
+.brand:focus-visible {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   opacity: 0.85;
   text-decoration: none;
 }
@@ -176,8 +183,10 @@ main[role="main"] {
   width: auto;
   padding: 0 12px;
   justify-content: flex-start;
-  border: 0;
-  background: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 .brand-text {
   font-family: var(--font);
