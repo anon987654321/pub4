@@ -14,7 +14,7 @@
       <button type="button" class="feed-action" data-controller="clipboard popover" data-clipboard-source-value="<%= post_url(post) %>" data-action="click->clipboard#copy mouseenter->popover#show mouseleave->popover#hide focus->popover#show blur->popover#hide" aria-label="Share post"><%= render "shared/feed_icon", name: "share" %><template data-popover-target="content"><div data-popover-target="card">Share</div></template></button>
     <% end %>
     <%= render "shared/feed_card",
-      avatar_url: nil,
+      avatar_url: post.author_avatar_url,
       name: post.author_name,
       handle: (post.community ? "@#{post.community.slug}" : nil),
       time: time_ago_in_words(post.created_at),

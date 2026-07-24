@@ -144,6 +144,35 @@
   --radius-lg: 8px;
 }
 
+// BRGEN_OLD light — the actual 2014 palette (pub/__OLD_BACKUPS/BRGEN_OLD/
+// app/assets/stylesheets/all.css): `body { color: #222 }` on the browser's
+// plain white, dark #333 utility bar, black (#000) reserved for
+// .has_media_feed only -- not a page background. Same true-grayscale, zero-
+// accent-hue philosophy as brgen-old-dark-tokens, just the light half of it;
+// --accent lands on that same near-black rather than inventing a hue.
+@mixin brgen-old-light-tokens {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-elevated: #f2f2f2;
+  --search-bg: #f0f0f0;
+  --text: #222222;
+  --text-secondary: #666666;
+  --border: #d9d9d9;
+  --hover: color-mix(in srgb, var(--text) 8%, transparent);
+  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --accent: #1a1a1a;
+  --accent-hover: #000000;
+  --danger: #d1594a;
+  --font: Arial, Helvetica, sans-serif;
+  --chrome-bg: #333333;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-pill: 9999px;
+  --radius-card: 8px;
+  --radius-lg: 8px;
+}
+
 // Non-token application aliases layered over either dialect theme. The
 // dialect mixins (dark-tokens, light-tokens, brgen-old-dark-tokens, etc.)
 // now set --bg/--text/--accent/etc. directly -- no more --x- prefixed raw

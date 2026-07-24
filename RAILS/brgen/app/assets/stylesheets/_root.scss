@@ -28,14 +28,13 @@
   min-height: 100vh;
 }
 
-/* No light companion yet for brgen_old_dark -- the toggle stays wired
-   (existing theme_toggle_controller.js markup untouched) but is inert
-   until one exists, rather than falling back to the old indigo light
-   theme this direction is replacing. */
+/* Light companion: the actual 2014 BRGEN_OLD palette (see
+   brgen-old-light-tokens), not the generic indigo light theme. Dark stays
+   the default (:root above); checking the toggle switches to light. */
 #dark-toggle:checked ~ .theme-root {
-  @include x.brgen-old-dark-tokens;
+  @include x.brgen-old-light-tokens;
   @include x.app-root-tokens;
-  color-scheme: dark;
+  color-scheme: light;
   --font-size: 18px;
 }
 

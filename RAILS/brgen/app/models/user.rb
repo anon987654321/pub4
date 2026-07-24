@@ -27,6 +27,12 @@ class User < ApplicationRecord
   # persona name so the room can tell an agent from a lurker.
   def channel_handle = bot? ? (username.presence || "bot") : anon_handle
 
+  # BRGEN_OLD's per-user identicon (see AvatarsController). Callers that show
+  # this alongside a genuinely anonymous name (Post#author_avatar_url,
+  # channel messages) must not use it -- a consistent pattern would
+  # re-identify the same "anon" across posts even though the name doesn't.
+  def avatar_url = Rails.application.routes.url_helpers.avatar_user_path(self)
+
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?
   end

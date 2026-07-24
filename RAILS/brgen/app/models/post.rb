@@ -43,6 +43,15 @@ class Post < ApplicationRecord
   def comment_count = comments.count
   def author_name   = (anonymous? || user&.guest?) ? "anon" : (user&.username.presence || "anon")
 
+  # Same anon check as author_name -- an identicon is only safe to show
+  # alongside a real name. Showing it under "anon" too would give every
+  # anonymous post from the same user a matching visual signature, letting
+  # readers correlate "anon" posts by eye even though the name can't.
+  def author_avatar_url
+    return nil if anonymous? || user&.guest?
+    user&.avatar_url
+  end
+
   def reading_time_minutes
     text = ActionView::Base.full_sanitizer.sanitize(content.to_s)
     words = text.scan(/[[:alnum:]]+(?:['-][[:alnum:]]+)*/).size

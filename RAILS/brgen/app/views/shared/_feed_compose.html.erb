@@ -1,5 +1,9 @@
 <%= form_with model: Post.new, url: posts_path, class: "compose-box", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
-  <div class="compose-avatar" aria-hidden="true"><%= guest? ? "G" : (Current.user.username&.first&.upcase || "B") %></div>
+  <% if guest? %>
+    <div class="compose-avatar" aria-hidden="true">G</div>
+  <% else %>
+    <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
+  <% end %>
   <div class="compose-inner" data-controller="tiptap-editor">
     <%= f.label :content, "Post to Bergen", class: "compose-label-visible" %>
     <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>

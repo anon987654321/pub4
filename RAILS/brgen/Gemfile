@@ -39,6 +39,7 @@ gem 'image_processing'
 gem 'pagy'
 gem 'ruby-vips'
 gem 'webpush'
+gem 'quilt' # BRGEN_OLD's identicon avatars (pub/__OLD_BACKUPS/BRGEN_OLD)
 
 # Real-time + LLM + structured data (per ruby_style.yml stimulus_reflex_stack + SEO requirements)
 gem 'futurism'

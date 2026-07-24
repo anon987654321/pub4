@@ -111,6 +111,7 @@ a.feed-tab { text-decoration: none; }
   flex-shrink: 0;
   display: grid;
   place-items: center;
+  object-fit: cover;
   font-weight: 700;
   font-size: var(--font-size);
   color: var(--text-secondary);

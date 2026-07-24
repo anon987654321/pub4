@@ -150,6 +150,26 @@ brgen_old_dark:
   radius_card: "8px"
   radius_lg: "8px"
 
+brgen_old_light:
+  bg: "#ffffff"
+  surface: "#ffffff"
+  surface_elevated: "#f2f2f2"
+  search_bg: "#f0f0f0"
+  text: "#222222"
+  text_secondary: "#666666"
+  border: "#d9d9d9"
+  accent: "#1a1a1a"
+  accent_hover: "#000000"
+  danger: "#d1594a"
+  font: "Arial, Helvetica, sans-serif"
+  chrome_bg: "#333333"
+  radius_xs: "4px"
+  radius_sm: "8px"
+  radius_md: "12px"
+  radius_pill: "9999px"
+  radius_card: "8px"
+  radius_lg: "8px"
+
 openbsd_wscons:
   bg: "#000000"
   surface: "#000000"
