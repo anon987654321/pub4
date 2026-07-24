@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_24_180000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -700,11 +700,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_24_120000) do
     t.text "content"
     t.datetime "created_at", null: false
     t.integer "karma"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["city_id"], name: "index_posts_on_city_id"
     t.index ["community_id"], name: "index_posts_on_community_id"
+    t.index ["latitude", "longitude"], name: "index_posts_on_latitude_and_longitude"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 

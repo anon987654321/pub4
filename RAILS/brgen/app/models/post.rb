@@ -2,6 +2,7 @@
 
 class Post < ApplicationRecord
   include CityTenantable
+  include Shared::GeoLocatable
 
   include Shared::Votable
   include Shared::Commentable
@@ -9,6 +10,13 @@ class Post < ApplicationRecord
   include Shared::Reactable
   include Shared::MediaProcessable
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
+
+  # Jodel-style Live posts: short, hyperlocal, anonymous-by-default.
+  LIVE_CONTENT_MAX = 500
+  LIVE_RADIUS_KM_DEFAULT = 10.0
+  LIVE_RADIUS_KM_MAX = 20.0
+  # Coarsen stored coords (~1 km) so Live cannot leak exact GPS.
+  LIVE_LOCATION_PRECISION = 2
 
   has_one_attached :image
   has_one_attached :video
@@ -25,6 +33,7 @@ class Post < ApplicationRecord
 
   validates :title,   presence: true, length: { maximum: 300 }
   validates :content, length: { maximum: 40_000 }
+  validate :live_content_length, if: :live?
 
   broadcasts_refreshes
 
@@ -35,20 +44,31 @@ class Post < ApplicationRecord
   scope :hot,    -> { left_joins(:votes).group(:id).order(VOTE_SQL) }
   scope :fresh,  -> { order(created_at: :desc) }
   scope :top,    -> { left_joins(:votes).group(:id).order(TOP_SQL) }
+  # Geo-stamped Live posts (Jodel layer). Not all posts are Live.
+  scope :live,   -> { where.not(latitude: nil).where.not(longitude: nil) }
   scope :search, ->(q) {
     ids = connection.select_values(sanitize_sql_array([ "SELECT rowid FROM posts_fts WHERE posts_fts MATCH ?", q ]))
     ids.any? ? where(id: ids) : none
   }
 
+  def live? = latitude.present? && longitude.present?
+
+  def stamp_live_location!(lat:, lng:)
+    self.latitude  = lat.to_f.round(LIVE_LOCATION_PRECISION)
+    self.longitude = lng.to_f.round(LIVE_LOCATION_PRECISION)
+    self.anonymous = true
+    self
+  end
+
   def comment_count = comments.count
-  def author_name   = (anonymous? || user&.guest?) ? "anon" : (user&.username.presence || "anon")
+  def author_name   = (anonymous? || user&.guest? || live?) ? "anon" : (user&.username.presence || "anon")
 
   # Same anon check as author_name -- an identicon is only safe to show
   # alongside a real name. Showing it under "anon" too would give every
   # anonymous post from the same user a matching visual signature, letting
   # readers correlate "anon" posts by eye even though the name can't.
   def author_avatar_url
-    return nil if anonymous? || user&.guest?
+    return nil if anonymous? || user&.guest? || live?
     user&.avatar_url
   end
 
@@ -58,5 +78,14 @@ class Post < ApplicationRecord
     return 0 if words.zero?
 
     (words / READING_WORDS_PER_MINUTE.to_f).ceil
+  end
+
+  private
+
+  def live_content_length
+    return if content.blank?
+    return if content.to_s.length <= LIVE_CONTENT_MAX
+
+    errors.add(:content, "is too long for Live (max #{LIVE_CONTENT_MAX} characters)")
   end
 end

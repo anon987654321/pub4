@@ -88,6 +88,7 @@ module ApplicationHelper
     domain = Current.domain
     [
       ["front", root_path],
+      ["live", live_path],
       ["AI", brgen_ai_url],
       ["marketplace", "//#{marketplace_host}/"],
       ["dating", "//dating.#{domain}/"],

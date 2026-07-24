@@ -221,6 +221,9 @@ Rails.application.routes.draw do
   get "nearby/room" => "nearby#room", as: :nearby_room
   get "nearby/widget" => "nearby#widget", as: :nearby_widget
   post "nearby" => "nearby#create"
+  # Jodel-shaped hyperlocal Live feed (short, anonymous, radius-ranked).
+  get "live" => "live#index", as: :live
+  post "live" => "live#create"
   resources :channels, only: %i[index show], param: :slug
   get "search" => "search#index", as: :global_search
   get "sitemap.xml" => "sitemaps#index", as: :sitemap

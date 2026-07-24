@@ -2,7 +2,10 @@
 
 <div class="page-header" role="banner"><h1>Nearby</h1></div>
 
-<p class="channel-crosslink dim">Prefer a room? <%= link_to "Join a public channel →", channels_path %></p>
+<p class="channel-crosslink dim">
+  <%= link_to "Live feed (anonymous notes nearby)", live_path %> ·
+  Prefer a room? <%= link_to "Join a public channel →", channels_path %>
+</p>
 
 <% unless @located %>
   <div class="section-divider--24">
