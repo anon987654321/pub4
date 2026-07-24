@@ -125,6 +125,7 @@ main[role="main"] {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
   outline: none;
   pointer-events: auto;
   z-index: 1;
@@ -173,6 +174,7 @@ main[role="main"] {
   border: none !important;
   border-radius: 0 !important;
   outline: none !important;
+  box-shadow: none !important;
   background: transparent !important;
   color: var(--text);
   margin: 4px 0 8px;
@@ -184,6 +186,7 @@ main[role="main"] {
   background: transparent !important;
   border: none !important;
   outline: none !important;
+  box-shadow: none !important;
   opacity: 0.85;
   text-decoration: none;
 }
@@ -193,6 +196,7 @@ main[role="main"] {
   justify-content: flex-start;
   border: none !important;
   outline: none !important;
+  box-shadow: none !important;
   background: transparent !important;
 }
 .brand-text {
