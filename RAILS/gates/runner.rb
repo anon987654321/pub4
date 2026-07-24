@@ -35,6 +35,7 @@ GATE_MAP = {
   visual_contract:       "visual_contract_gate.rb",
   user_flow:             "user_flow_gate.rb",
   css_constitution:      "css_constitution_gate.rb",
+  css_minify_integrity:  "css_minify_integrity_gate.rb",
   layout_geometry:       "layout_geometry_gate.rb",
   dialect_purity:        "dialect_purity_gate.rb",
   payment_honesty:       "payment_honesty_gate.rb",
@@ -59,6 +60,7 @@ GATE_COVERED_BY = {
   stimulus_components: :release,
   # layout_suite owns the professional layout + CSS stack (includes frontend_auditor)
   css_constitution:    :layout_suite,
+  css_minify_integrity: :layout_suite,
   layout_geometry:     :layout_suite,
   dialect_purity:      :layout_suite,
   payment_honesty:     :layout_suite,
@@ -90,6 +92,7 @@ IN_PROCESS = {
   constitutional_scan:   ["lib/constitutional_scan_gate", "Deploy::ConstitutionalScanGate", {}],
   user_flow:             ["lib/user_flow_gate", "Deploy::UserFlowGate", {}],
   css_constitution:      ["lib/css_constitution_gate", "Deploy::CssConstitutionGate", {}],
+  css_minify_integrity:  ["lib/css_minify_integrity_gate", "Deploy::CssMinifyIntegrityGate", {}],
   layout_geometry:       ["lib/layout_geometry_gate", "Deploy::LayoutGeometryGate", {}],
   dialect_purity:        ["lib/dialect_purity_gate", "Deploy::DialectPurityGate", {}],
   payment_honesty:       ["lib/payment_honesty_gate", "Deploy::PaymentHonestyGate", {}],

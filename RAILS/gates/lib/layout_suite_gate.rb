@@ -3,6 +3,7 @@
 require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "gate_autofix"
 require_relative "css_constitution_gate"
+require_relative "css_minify_integrity_gate"
 require_relative "layout_geometry_gate"
 require_relative "dialect_purity_gate"
 require_relative "payment_honesty_gate"
@@ -21,6 +22,7 @@ module Deploy
   class LayoutSuiteGate
     LEAVES = [
       CssConstitutionGate,
+      CssMinifyIntegrityGate,
       DialectPurityGate,
       LayoutGeometryGate,
       LayoutSearchGate,

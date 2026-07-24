@@ -564,12 +564,10 @@ footer {
 /* Grid context polish (e.g. marketplace feed-cards in .post-grid)
    Mobile-first: full-bleed image on small screens, reverts on desktop.
 */
-// :is(...) rather than 3 repeated compound selectors -- dart-sass's
-// compressed-mode minifier has a real bug that strips the first selector's
-// class qualifier from a long comma-separated list like this one, leaving a
-// bare ".feed-card-avatar" that then overrides every ordinary post avatar
-// site-wide. Confirmed live on brgen (same pattern, see _card_modifiers.scss
-// there for the full writeup). :is() sidesteps it entirely.
+// :is(...) rather than 3 repeated compound selectors (see _card_modifiers.scss
+// in brgen for the fuller writeup -- the dart-sass corruption theory there
+// didn't hold up under a later re-test; likely a stale Propshaft manifest
+// instead). Keeping :is() anyway: one selector instead of three, no worse.
 .feed-card:is(.listing, .deal, .store) {
   background: var(--surface2);
   border-radius: 8px;

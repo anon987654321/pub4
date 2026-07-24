@@ -26,15 +26,14 @@
   font-weight: 600;
 }
 
-// :is(...) rather than 8 repeated compound selectors -- dart-sass's
-// compressed-mode minifier has a real bug where a long comma-separated
-// selector list like ".feed-card.listing .feed-card-avatar, .feed-card.deal
-// .feed-card-avatar, ..." gets corrupted: the FIRST selector's ".listing"
-// qualifier is silently stripped down to a bare ".feed-card-avatar", which
-// then matches (and visually breaks) every ordinary post avatar site-wide,
-// not just listing/deal/etc cards. Confirmed live on production. :is()
-// compiles to one selector instead of eight, sidestepping the bug entirely
-// (verified: `style: :compressed` output stays correct with this form).
+// :is(...) rather than 8 repeated compound selectors. This was originally
+// written up as a dart-sass compressed-mode corruption bug after avatars
+// broke site-wide in production, but a later re-test against the exact
+// pre-fix source (same sass-embedded version) compiled cleanly -- the
+// actual cause was more likely a stale Propshaft asset manifest serving an
+// old CSS build under the current URL (a separate, confirmed footgun; see
+// MASTER/web/CLAUDE.md). Keeping :is() anyway: it's one selector instead
+// of eight and no worse either way.
 .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
   background: var(--surface2);
   border: 1px solid var(--border);
