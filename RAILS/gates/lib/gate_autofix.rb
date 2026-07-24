@@ -151,7 +151,7 @@ module Deploy
 
     def strip_flat_violations(body)
       body
-        .gsub(/box-shadow\s*:[^;]+;/i, "/* autofix: removed box-shadow (flat UI) */")
+        .gsub(/box-shadow\s*:\s*(?!none\b)[^;]+;/i, "/* autofix: removed box-shadow (flat UI) */")
         .gsub(/text-shadow\s*:[^;]+;/i, "/* autofix: removed text-shadow (flat UI) */")
         .gsub(/backdrop-filter\s*:[^;]+;/i, "/* autofix: removed backdrop-filter (flat UI) */")
         .gsub(/filter\s*:[^;]*\bblur\([^)]*\)[^;]*;/i, "/* autofix: removed filter blur (flat UI) */")
