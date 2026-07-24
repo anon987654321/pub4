@@ -70,7 +70,7 @@ body.vertical-playlist .playlist-index {
 
 @media (min-width: 768px) {
   body.vertical-playlist .radio-tunnel { cursor: none; }
-  body.vertical-playlist .radio-cursor { display: block; }
+  /* .radio-cursor stays hidden until JS adds .is-active on first move */
   .radio-track-display { max-width: 350px; }
 }
 

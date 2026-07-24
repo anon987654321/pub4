@@ -511,6 +511,9 @@ export class RadioBrgen {
 
   updateCursor(x, y) {
     if (!this.cursor || window.innerWidth < 768) return
+    // Only paint the white crosshair once we have a real pointer position —
+    // otherwise it sits at (0,0) as a hollow square on the brand corner.
+    this.cursor.classList.add("is-active")
     this.cursor.style.left = `${x - 12}px`
     this.cursor.style.top = `${y - 12}px`
     const intensity = this.audioEngine.bassLevel + this.audioEngine.audioLevel
