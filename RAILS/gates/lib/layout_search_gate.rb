@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "layout_search"
 
 module Deploy
-  # Bounded design-search: score legal marketplace layout candidates; enforce winner.
-  # Axes are finite; hard constraints cannot be traded (MASTER hard floor).
+  # Bounded multi-candidate layout search for marketplace.
+  # Enumerates legal design axes, scores Fitts/Hick/resistance/catalog,
+  # requires observed tree == winner (or top-N) and hard floors.
   class LayoutSearchGate
     ROOT = File.expand_path("../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
@@ -12,63 +14,6 @@ module Deploy
     CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_marketplace_cards.scss")
     NAV = File.join(RAILS, "brgen/app/views/marketplace/_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "shared/app/assets/stylesheets/_search_yep.scss")
-
-    # Candidate definitions (structural only — no runtime CSS mutation).
-    CANDIDATES = {
-      price_first_tile: {
-        desc: "Tise/Bol: price before title on product tile",
-        hard: true,
-        score: lambda { |ctx|
-          card = ctx[:card]
-          price_i = card.index("deal-price")
-          title_i = card.index("deal-card-title")
-          return 0 unless price_i && title_i
-          price_i < title_i ? 40 : 5
-        },
-      },
-      photo_first: {
-        desc: "Photo media before body on tile",
-        hard: true,
-        score: lambda { |ctx|
-          card = ctx[:card]
-          img = card.index("deal-card-img") || card.index("deal-card-media")
-          body = card.index("deal-card-body")
-          return 0 unless img && body
-          img < body ? 25 : 5
-        },
-      },
-      amazon_nav_present: {
-        desc: "Amazon-style #navBar on marketplace surfaces",
-        hard: true,
-        score: lambda { |ctx|
-          ctx[:nav].include?("navBar") || ctx[:nav].include?("id=\"navBar\"") ? 20 : 0
-        },
-      },
-      yep_search_surface: {
-        desc: "Yep.com .search surface for live search",
-        hard: true,
-        score: lambda { |ctx|
-          ctx[:search].include?(".search") && ctx[:search].include?("border-radius: 30px") ? 15 : 0
-        },
-      },
-      whole_card_hit: {
-        desc: "Whole-card link (least resistance) vs multi-CTA grid",
-        hard: false,
-        score: lambda { |ctx|
-          card = ctx[:card]
-          if card.include?("deal-card-hit") || card.match?(/link_to.*deal-card/)
-            15
-          elsif card.scan(/button_to|deal-cta/).size > 2
-            5 # more resistance
-          else
-            10
-          end
-        },
-      },
-    }.freeze
-
-    TARGET_SCORE = 90
-    MAX_RESISTANCE = 30
 
     def self.run
       new.run
@@ -79,31 +24,10 @@ module Deploy
       ctx = load_ctx
       return @result if ctx.nil?
 
-      scores = {}
-      CANDIDATES.each do |id, spec|
-        s = spec[:score].call(ctx)
-        scores[id] = s
-        if spec[:hard] && s < 15
-          @result.fail("layout_search hard fail: #{id} — #{spec[:desc]} (score #{s})")
-        end
-      end
-
-      total = scores.values.sum
-      # Resistance: inverse of soft scores (higher resistance = worse)
-      resistance = [100 - total, 0].max
-      @result.warn("layout_search: scores=#{scores.inspect} total=#{total} resistance=#{resistance}")
-
-      if total < TARGET_SCORE
-        @result.fail("layout_search: total #{total} < target #{TARGET_SCORE} (least-resistance floor)")
-      end
-      if resistance > MAX_RESISTANCE
-        @result.fail("layout_search: resistance #{resistance} > max #{MAX_RESISTANCE}")
-      end
-
-      # Prefer price-first over title-first (document winner)
-      if scores[:price_first_tile].to_i >= 40
-        @result.warn("layout_search winner: price_first_tile + photo_first (Tise/Bol natural catalog)")
-      end
+      search = LayoutSearch.new
+      report = search.report(ctx)
+      emit_report!(report)
+      enforce!(report)
       @result
     end
 
@@ -121,6 +45,93 @@ module Deploy
         nav: File.read(NAV),
         search: File.read(SEARCH),
       }
+    end
+
+    def emit_report!(report)
+      win = report[:winner]
+      obs = report[:observed]
+      ranking = report[:ranking]
+
+      @result.warn(
+        "layout_search: space=#{report[:space_size]} legal=#{report[:legal_size]} " \
+        "target=#{report[:target]} max_rank=#{report[:max_rank]}"
+      )
+
+      if win
+        @result.warn(
+          "layout_search winner: score=#{win.score} axes=#{win.axes.inspect} " \
+          "breakdown=#{win.breakdown.inspect}"
+        )
+      else
+        @result.fail("layout_search: no legal candidates in space")
+        return
+      end
+
+      # Top-5 ranking for design review
+      ranking.first(5).each_with_index do |c, i|
+        mark = c.id == obs.id ? " ← observed" : ""
+        @result.warn("layout_search rank ##{i + 1}: #{c.score} #{short_axes(c.axes)}#{mark}")
+      end
+
+      obs_c = report[:observed_candidate]
+      @result.warn(
+        "layout_search observed: rank=#{report[:observed_rank] || '∉ legal'} " \
+        "score=#{obs_c.score} axes=#{obs.axes.inspect} hard_required=#{report[:hard_required_ok]}"
+      )
+    end
+
+    def enforce!(report)
+      win = report[:winner]
+      return unless win
+
+      obs = report[:observed]
+      obs_c = report[:observed_candidate]
+      rank = report[:observed_rank]
+
+      unless report[:hard_required_ok]
+        missing = report_hard_gaps(obs.axes, report)
+        @result.fail(
+          "layout_search hard floor: observed missing required axes #{missing.join(', ')} " \
+          "(MASTER catalog floor — not tradable)"
+        )
+      end
+
+      if obs_c.score < report[:target]
+        @result.fail(
+          "layout_search: observed score #{obs_c.score} < target #{report[:target]} " \
+          "(least-resistance / Fitts-Hick floor) breakdown=#{obs_c.breakdown.inspect}"
+        )
+      end
+
+      if rank.nil?
+        @result.fail("layout_search: observed layout not in legal candidate set")
+        return
+      end
+
+      if rank > report[:max_rank]
+        @result.fail(
+          "layout_search: observed rank ##{rank} > max_winner_rank #{report[:max_rank]} — " \
+          "winner is #{short_axes(win.axes)} (score #{win.score}); " \
+          "observed #{short_axes(obs.axes)} (score #{obs_c.score}). " \
+          "principle=least_resistance"
+        )
+      elsif rank == 1
+        @result.warn("layout_search: observed IS winner (design search locked)")
+      end
+    end
+
+    def report_hard_gaps(axes, report)
+      # re-read hard required from search config via winner path
+      search = LayoutSearch.new
+      search.hard_required.filter_map do |axis, variant|
+        next if axes[axis.to_s] == variant.to_s
+
+        "#{axis}=#{variant} (have #{axes[axis.to_s]})"
+      end
+    end
+
+    def short_axes(axes)
+      axes.map { |k, v| "#{k.split('_').first}=#{v}" }.join(" ")
     end
   end
 end
