@@ -117,53 +117,44 @@ class AudioEngine {
 class VisualEngine {
   constructor(canvas) {
     this.canvas = canvas
-    // Classic ImageData tunnel look. Avoid willReadFrequently (CPU-only path).
-    this.ctx = canvas.getContext("2d", { alpha: false })
+    // willReadFrequently forces software (CPU) rendering to speed up frequent
+    // getImageData reads -- but this canvas only reads once, on resize; every
+    // animation frame is a putImageData write. Leaving it on disables GPU
+    // compositing for the per-frame cost (up to ~32k manually drawn line
+    // segments) for no benefit, which reads as freezing/stutter over time.
+    this.ctx = canvas.getContext("2d")
     this.particles = []
+    this.centers = []
     this.mouse = { x: 0, y: 0, down: false, active: false }
     this.touch = { x: 0, y: 0, active: false }
     this.time = 0
     this.colorInvertValue = 0
-    this.audioBoost = 0
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
-    // Densities keep the classic mesh look but stay light enough to actually
-    // animate (old 250×64 ImageData path often dropped to ~1–2fps = "frozen").
     this.config = {
       fov: 250,
-      // World units per second — always moving, delta-time scaled.
-      speed: 55,
-      spin: 0.55,
-      particleCountPerRow: this.isMobile ? 28 : 40,
-      rowCount: this.isMobile ? 70 : 100,
-      zStep: 8,
-      radius: 75
+      speed: 0.75,
+      particleCountPerRow: this.isMobile ? 32 : 64,
+      rowCount: this.isMobile ? 125 : 250
     }
     this.stars = []
-    this._lastTs = 0
     this.resize()
   }
 
   resize() {
-    // Cap backing store so ImageData clears stay cheap on retina.
-    const dpr = Math.min(window.devicePixelRatio || 1, this.isMobile ? 1 : 1.25)
-    this.w = Math.max(1, Math.floor(window.innerWidth * dpr))
-    this.h = Math.max(1, Math.floor(window.innerHeight * dpr))
+    this.w = Math.max(1, window.innerWidth)
+    this.h = Math.max(1, window.innerHeight)
     this.canvas.width = this.w
     this.canvas.height = this.h
-    this.canvas.style.width = `${window.innerWidth}px`
-    this.canvas.style.height = `${window.innerHeight}px`
     this.ctx.fillStyle = "#000000"
     this.ctx.fillRect(0, 0, this.w, this.h)
     this.imageData = this.ctx.getImageData(0, 0, this.w, this.h)
     this.data = this.imageData.data
-    // Fast clear via Uint32 view (0xFF000000 = opaque black little-endian).
-    this._buf32 = new Uint32Array(this.data.buffer)
     this.centerX = this.w / 2
     this.centerY = this.h / 2
     this.initParticles()
+    // Reintegrated star field from c7c8effcd historical
     this.stars = []
-    const starN = this.isMobile ? 40 : 64
-    for (let i = 0; i < starN; i++) {
+    for (let i = 0; i < 80; i++) {
       this.stars.push({
         x: (Math.random() - 0.5) * this.w * 2,
         y: (Math.random() - 0.5) * this.h * 2,
@@ -175,13 +166,15 @@ class VisualEngine {
 
   initParticles() {
     this.particles = []
-    const { rowCount, particleCountPerRow, fov, zStep, radius } = this.config
-    const angleStep = (Math.PI * 2) / particleCountPerRow
-    for (let i = 0; i < rowCount; i++) {
-      const z = -fov + i * zStep
+    this.centers = []
+    const zStep = 12
+    for (let i = 0; i < this.config.rowCount; i++) {
+      const z = -this.config.fov + i * zStep
       const row = []
-      for (let j = 0; j < particleCountPerRow; j++) {
+      const angleStep = (Math.PI * 2) / this.config.particleCountPerRow
+      for (let j = 0; j < this.config.particleCountPerRow; j++) {
         const angle = j * angleStep
+        const radius = 75
         row.push({
           x: Math.cos(angle) * radius,
           y: Math.sin(angle) * radius,
@@ -191,21 +184,16 @@ class VisualEngine {
           angle,
           radius,
           radiusAudio: radius,
+          segments: this.config.particleCountPerRow,
           index: j
         })
       }
-      // Center lives on the row so z-sort never detaches warp perspective.
-      row.cx = this.centerX
-      row.cy = this.centerY
       this.particles.push(row)
+      this.centers.push({ x: this.centerX, y: this.centerY })
     }
   }
 
   clearImageData() {
-    if (this._buf32) {
-      this._buf32.fill(0xff000000)
-      return
-    }
     for (let i = 0, l = this.data.length; i < l; i += 4) {
       this.data[i] = 0
       this.data[i + 1] = 0
@@ -215,19 +203,16 @@ class VisualEngine {
   }
 
   setPixel(x, y, r, g, b, a) {
-    x = x | 0
-    y = y | 0
     if (x > 0 && x < this.w && y > 0 && y < this.h) {
       const i = (x + y * this.w) * 4
-      this.data[i] = r
-      this.data[i + 1] = g
-      this.data[i + 2] = b
-      this.data[i + 3] = a
+      this.data[i] = Math.min(255, Math.max(0, r))
+      this.data[i + 1] = Math.min(255, Math.max(0, g))
+      this.data[i + 2] = Math.min(255, Math.max(0, b))
+      this.data[i + 3] = Math.min(255, Math.max(0, a))
     }
   }
 
   drawLine(x1, y1, x2, y2, r, g, b, a) {
-    x1 = x1 | 0; y1 = y1 | 0; x2 = x2 | 0; y2 = y2 | 0
     const dx = Math.abs(x2 - x1)
     const dy = Math.abs(y2 - y1)
     const sx = x1 < x2 ? 1 : -1
@@ -235,8 +220,6 @@ class VisualEngine {
     let err = dx - dy
     let lx = x1
     let ly = y1
-    // Bail on degenerate / off-screen segments early.
-    if (dx + dy > this.w + this.h) return
     while (true) {
       this.setPixel(lx, ly, r, g, b, a)
       if (lx === x2 && ly === y2) break
@@ -247,143 +230,120 @@ class VisualEngine {
   }
 
   softInvert(value) {
-    const v = value | 0
-    if (v <= 0) return
     for (let j = 0, n = this.data.length; j < n; j += 4) {
-      this.data[j] = Math.abs(v - this.data[j])
-      this.data[j + 1] = Math.abs(v - this.data[j + 1])
-      this.data[j + 2] = Math.abs(v - this.data[j + 2])
+      this.data[j] = Math.abs(value - this.data[j])
+      this.data[j + 1] = Math.abs(value - this.data[j + 1])
+      this.data[j + 2] = Math.abs(value - this.data[j + 2])
+      this.data[j + 3] = 255
     }
   }
 
-  update(audioData, dtMs) {
-    const dt = Math.max(0.001, Math.min((dtMs || 16.7) / 1000, 0.05))
-    this.time += this.config.spin * dt
-    if (!this.particles.length) { this.initParticles(); return }
-
+  update(audioData) {
+    this.time += 0.005
+    if (!this.particles.length || !this.centers.length) { this.initParticles(); return }
     const audioIntensity = Math.max(0, Math.min(1, audioData.average || 0))
-    this.audioBoost = audioIntensity * 0.5
     const interactionX = this.touch.active ? this.touch.x : this.mouse.x
     const interactionY = this.touch.active ? this.touch.y : this.mouse.y
     const isInteracting = (this.touch.active || this.mouse.active) && this.mouse.down
     const isPressed = this.mouse.down
-    // Always fly the tunnel (press reverses). Old code used z += 0.1 * 0.75
-    // ≈ 0.075 units/frame which looked frozen next to the heavy ImageData paint.
-    const dir = isPressed ? 1 : -1
-    const zVel = this.config.speed * dir * (1 + audioIntensity * 0.35)
-    const depth = this.config.fov * 2
-    const fov = this.config.fov
-    const radiusBase = this.config.radius
+    let sortNeeded = false
 
-    for (let i = 0; i < this.particles.length; i++) {
-      const row = this.particles[i]
-      const z0 = row[0].z
+    this.particles.forEach((row, i) => {
+      const center = this.centers[i]
       if (isInteracting) {
-        const pull = (z0 - fov) / 500
-        row.cx = (this.centerX - interactionX) * pull + this.centerX
-        row.cy = (this.centerY - interactionY) * pull + this.centerY
+        center.x = (this.centerX - interactionX) * ((row[0].z - this.config.fov) / 500) + this.centerX
+        center.y = (this.centerY - interactionY) * ((row[0].z - this.config.fov) / 500) + this.centerY
       } else {
-        row.cx += (this.centerX - row.cx) * Math.min(1, 2.5 * dt)
-        row.cy += (this.centerY - row.cy) * Math.min(1, 2.5 * dt)
+        center.x += (this.centerX - center.x) * 0.015
+        center.y += (this.centerY - center.y) * 0.015
       }
+      row.forEach(particle => {
+        const audioBoost = audioIntensity * 0.5
+        particle.radiusAudio = particle.radius + audioBoost * 8
+        const targetZ = particle.z + (isPressed ? this.config.speed : -this.config.speed)
+        particle.z += (targetZ - particle.z) * 0.1
+        if (particle.z > this.config.fov) { particle.z -= this.config.fov * 2; sortNeeded = true }
+        else if (particle.z < -this.config.fov) { particle.z += this.config.fov * 2; sortNeeded = true }
+        const scale = this.config.fov / (this.config.fov + particle.z)
+        particle.x2d = (particle.x * scale) + center.x
+        particle.y2d = (particle.y * scale) + center.y
+        particle.x = Math.cos(particle.angle + this.time) * particle.radiusAudio
+        particle.y = Math.sin(particle.angle + this.time) * particle.radiusAudio
+      })
+    })
 
-      const radiusAudio = radiusBase + audioIntensity * 10
-      for (let j = 0; j < row.length; j++) {
-        const particle = row[j]
-        particle.radiusAudio = radiusAudio
-        particle.z += zVel * dt
-        if (particle.z > fov) particle.z -= depth
-        else if (particle.z < -fov) particle.z += depth
-        // Guard near-camera singularity (z ≈ -fov → infinite scale / NaN freeze).
-        const denom = fov + particle.z
-        const scale = denom > 0.5 ? fov / denom : fov / 0.5
-        particle.x = Math.cos(particle.angle + this.time) * radiusAudio
-        particle.y = Math.sin(particle.angle + this.time) * radiusAudio
-        particle.x2d = particle.x * scale + row.cx
-        particle.y2d = particle.y * scale + row.cy
-      }
+    if (sortNeeded && this.particles.every(row => row.length > 0)) {
+      this.particles.sort((a, b) => b[0].z - a[0].z)
+      this.centers = this.particles.map((_, i) => this.centers[i] || { x: this.centerX, y: this.centerY })
     }
 
-    // Sort by depth without detaching centers (centers are on the row).
-    this.particles.sort((a, b) => b[0].z - a[0].z)
+    // Update stars from historical c7c8effcd
+    this.audioBoost = (audioData.average || 0) * 0.5
+    this.stars.forEach(star => {
+      star.z += (isPressed ? this.config.speed : -this.config.speed) * 0.5
+      if (star.z > this.config.fov) star.z -= this.config.fov * 2
+      else if (star.z < -this.config.fov) star.z += this.config.fov * 2
+      star.x = (Math.random() - 0.5) * this.w * 2 * (this.config.fov / (this.config.fov + star.z)) + this.centerX * 0.1 // rough
+    })
 
-    for (let i = 0; i < this.stars.length; i++) {
-      const star = this.stars[i]
-      star.z += zVel * 0.55 * dt
-      if (star.z > fov) star.z -= depth
-      else if (star.z < -fov) star.z += depth
-    }
-
-    if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 8)
-    else this.colorInvertValue = Math.max(0, this.colorInvertValue - 8)
+    if (isPressed) this.colorInvertValue = Math.min(255, this.colorInvertValue + 5)
+    else this.colorInvertValue = Math.max(0, this.colorInvertValue - 5)
   }
 
   render() {
     this.clearImageData()
     if (!this.particles.length) return
-    const n = this.particles.length
-    for (let i = 0; i < n; i++) {
-      const row = this.particles[i]
+    this.particles.forEach((row, i) => {
       const prevRow = i > 0 ? this.particles[i - 1] : null
-      const lineColorValue = Math.round((i / n) * 200)
-      const g = (lineColorValue / 2) | 0
-      const b = lineColorValue
-      for (let j = 0; j < row.length; j++) {
-        const particle = row[j]
+      row.forEach((particle, j) => {
         const prevInRow = j > 0 ? row[j - 1] : row[row.length - 1]
+        const lineColorValue = Math.round(i / this.particles.length * 200)
         this.drawLine(
-          particle.x2d, particle.y2d,
-          prevInRow.x2d, prevInRow.y2d,
-          0, g, b, 128
+          particle.x2d | 0, particle.y2d | 0,
+          prevInRow.x2d | 0, prevInRow.y2d | 0,
+          0, Math.round(lineColorValue / 2), lineColorValue, 128
         )
         if (prevRow) {
-          // Match index to previous ring (same angular slot), not j-1 wrap mess.
-          const prevInPrevRow = prevRow[j] || prevRow[prevRow.length - 1]
+          const prevInPrevRow = j === 0 ? prevRow[prevRow.length - 1] : prevRow[j - 1]
           this.drawLine(
-            particle.x2d, particle.y2d,
-            prevInPrevRow.x2d, prevInPrevRow.y2d,
-            0, g, b, 128
+            particle.x2d | 0, particle.y2d | 0,
+            prevInPrevRow.x2d | 0, prevInPrevRow.y2d | 0,
+            0, Math.round(lineColorValue / 2), lineColorValue, 128
           )
         }
-      }
-    }
+      })
+    })
     if (this.colorInvertValue > 0) this.softInvert(this.colorInvertValue)
-    for (let i = 0; i < this.stars.length; i++) {
-      const star = this.stars[i]
-      const denom = this.config.fov + star.z
-      if (denom <= 0.5) continue
-      const scale = this.config.fov / denom
-      const sx = star.x * scale + this.centerX
-      const sy = star.y * scale + this.centerY
+    // Draw stars from c7c8effcd historical
+    this.stars.forEach(star => {
+      const scale = this.config.fov / (this.config.fov + star.z)
+      const sx = star.x * scale + this.centerX * 0.5 // approximate center
+      const sy = star.y * scale + this.centerY * 0.5
       if (sx > 0 && sx < this.w && sy > 0 && sy < this.h) {
-        const br = Math.floor(star.brightness * 200 + this.audioBoost * 50)
-        this.setPixel(sx, sy, br, br, br + 20, 180)
+        const b = Math.floor(star.brightness * 200 + (this.audioBoost || 0) * 50)
+        this.setPixel(sx | 0, sy | 0, b, b, b + 20, 180)
       }
-    }
+    })
     this.ctx.putImageData(this.imageData, 0, 0)
   }
 
   setTouch(x, y, active) {
-    const sx = this.w / Math.max(1, window.innerWidth)
-    const sy = this.h / Math.max(1, window.innerHeight)
-    this.touch.x = Math.max(0, Math.min(x * sx, this.w))
-    this.touch.y = Math.max(0, Math.min(y * sy, this.h))
+    this.touch.x = Math.max(0, Math.min(x, this.w))
+    this.touch.y = Math.max(0, Math.min(y, this.h))
     this.touch.active = active
   }
 
   setMouse(x, y, down, active) {
-    const sx = this.w / Math.max(1, window.innerWidth)
-    const sy = this.h / Math.max(1, window.innerHeight)
-    this.mouse.x = Math.max(0, Math.min(x * sx, this.w))
-    this.mouse.y = Math.max(0, Math.min(y * sy, this.h))
+    this.mouse.x = Math.max(0, Math.min(x, this.w))
+    this.mouse.y = Math.max(0, Math.min(y, this.h))
     this.mouse.down = down
     this.mouse.active = active
   }
 
   setPerformanceMode(value) {
     this.isMobile = value
-    this.config.particleCountPerRow = value ? 24 : 40
-    this.config.rowCount = value ? 55 : 100
+    this.config.particleCountPerRow = value ? 32 : 64
+    this.config.rowCount = value ? 125 : 250
     this.initParticles()
   }
 }
@@ -435,7 +395,7 @@ export class RadioBrgen {
       nextTrack: () => this.audioEngine.nextTrack()
     }
     const visFolder = this.gui.addFolder("Visualization")
-    visFolder.add(guiParams, "particleCount", 16, 64, 4).name("Particles per Row").onChange(v => {
+    visFolder.add(guiParams, "particleCount", 32, 128, 8).name("Particles per Row").onChange(v => {
       this.visualEngine.config.particleCountPerRow = Math.round(v)
       this.visualEngine.initParticles()
     })
@@ -550,15 +510,17 @@ export class RadioBrgen {
   }
 
   startAnimation() {
-    // Delta-time motion so the tunnel always flies, even when frames hitch.
-    // A single throw must not kill the loop forever.
-    this._lastFrame = performance.now()
-    const loop = (now) => {
+    // A single throw inside update()/render() previously killed the entire
+    // animation forever -- requestAnimationFrame is never rescheduled once
+    // an exception unwinds past this closure, and canvas particle math is
+    // exactly the kind of code that hits a rare NaN/divide-by-zero after a
+    // few seconds of continuous audio-driven motion. Skip the bad frame,
+    // keep the loop alive, so a transient glitch reads as a stutter, not
+    // a dead animation.
+    const loop = () => {
       try {
-        const dt = Math.min(40, Math.max(0, now - this._lastFrame))
-        this._lastFrame = now
         const audioData = this.audioEngine.getAudioData()
-        this.visualEngine.update(audioData, dt)
+        this.visualEngine.update(audioData)
         this.visualEngine.render()
       } catch (error) {
         if (typeof console !== "undefined" && console.warn) {
@@ -567,7 +529,7 @@ export class RadioBrgen {
       }
       this._raf = requestAnimationFrame(loop)
     }
-    this._raf = requestAnimationFrame(loop)
+    loop()
   }
 
   destroy() {
