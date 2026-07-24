@@ -24,7 +24,7 @@ module Rails
     end
 
     def offline
-      render partial: "shared/offline_page", locals: { app_name: "Brgen", storage_key: "brgen" }
+      render partial: "shared/offline_page", layout: "application", locals: { app_name: "brgen", storage_key: "brgen" }
     end
 
     private
