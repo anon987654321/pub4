@@ -104,7 +104,7 @@ module Deploy
       doc = Nokogiri::HTML5(html)
       result.fail("#{app.name}: rendered page missing title") if doc.at("title").to_s.strip.empty?
       result.fail("#{app.name}: rendered page missing main landmark") unless doc.at("main")
-      result.fail("#{app.name}: rendered page missing primary navigation") unless doc.at('nav[aria-label*="navigation" i], nav[aria-label*="Primary" i], nav')
+      result.fail("#{app.name}: rendered page missing primary navigation") unless doc.at("nav")
       result.fail("#{app.name}: rendered page missing visible heading") unless doc.at("h1, h2")
       result.fail("#{app.name}: rendered page has too few navigable links") if doc.css("a[href]").size < 3
 

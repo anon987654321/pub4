@@ -78,7 +78,7 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     assert follower.following?(subject)
   end
 
-  test "maps check-in requires authentication" do
+  test "maps check-in works for guests without signup" do
     host! "maps.brgen.no"
     place = Place.create!(
       city: @city,
@@ -88,8 +88,10 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
       longitude: 5.32
     )
 
-    post check_in_maps_place_path(place), params: { note: "hello" }
-    assert_redirected_to new_session_path
+    assert_difference -> { PlaceCheckIn.count }, 1 do
+      post check_in_maps_place_path(place), params: { note: "hello" }
+    end
+    assert_redirected_to maps_place_path(place)
   end
 
   test "maps check-in persists for signed-in user" do

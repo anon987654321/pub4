@@ -4,7 +4,7 @@ require "test_helper"
 
 class LiveControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @city = City.first || City.create!(name: "Bergen", domain: "brgen.no", slug: "bergen")
+    @city = City.first || City.create!(name: "Bergen", domain: "brgen.no", slug: "bergen", country_code: "NO", locale: "nb")
     host! "brgen.no"
   end
 
