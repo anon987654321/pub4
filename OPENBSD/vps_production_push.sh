@@ -9,6 +9,9 @@ cd "$repo"
 git pull --ff-only origin main
 
 export SKIP_CI=1
+# Production push is a fast path: skip full bin/ci runtime gate (OOM-prone on 1GB).
+# Precompile + migrate still run via deploy_tracked_app / vps-deploy.
+export SKIP_RUNTIME_GATE=${SKIP_RUNTIME_GATE:-1}
 
 echo "==> master"
 zsh "$repo/OPENBSD/vps_deploy_master.sh"
@@ -17,13 +20,13 @@ echo "==> brgen"
 zsh "$repo/OPENBSD/bin/vps-deploy" brgen
 
 # Default ON for guest demo path (Live + marketplace density). Opt out: DEMO_SEED_ON_DEPLOY=0
+# doas only permits dev→root; app user hop is doas sh + su -m (see RAILS/_database.sh).
 if [[ ${DEMO_SEED_ON_DEPLOY:-1} == 1 ]]; then
   echo "==> bergen demo seed (posts, Live notes, listings)"
-  doas -u brgen sh -c 'cd /home/brgen/app && RAILS_ENV=production bundle exec rails runner "
-    city = City.find_by(domain: \"brgen.no\") or raise \"brgen.no city missing\"
-    Brgen::BergenDemoSeeder.new(city, attach_media: false).seed!
-    puts \"bergen_posts=#{Post.where(city: city).count} live=#{Post.live.where(city: city).count} listings=#{Marketplace::Listing.count} demo=#{Post.exists?(title: \"Regnværsdag på Bryggen\")}\"
-  "'
+  # shellcheck disable=SC1091
+  source "${repo}/RAILS/_core.sh"
+  source "${repo}/RAILS/_database.sh"
+  seed_bergen_demo_as_app /home/brgen/app
 fi
 
 echo "==> amber"
