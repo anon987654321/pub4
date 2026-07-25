@@ -1,0 +1,1960 @@
+{
+  "vocals": [
+    {
+      "slug": "slum_village",
+      "artist": "Slum Village",
+      "source": "https://www.youtube.com/watch?v=tah5UC2hdrk",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/slum_village/vocals.wav",
+      "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260718_144652",
+      "bpm_estimate": 100.0,
+      "phrases": [
+        {
+          "start": 8.963,
+          "end": 8.963,
+          "strength": 0.1197
+        },
+        {
+          "start": 18.53,
+          "end": 18.53,
+          "strength": 0.1628
+        },
+        {
+          "start": 19.087,
+          "end": 19.412,
+          "strength": 0.1534
+        },
+        {
+          "start": 20.341,
+          "end": 20.341,
+          "strength": 0.131
+        },
+        {
+          "start": 21.13,
+          "end": 21.13,
+          "strength": 0.1174
+        },
+        {
+          "start": 24.474,
+          "end": 24.799,
+          "strength": 0.1566
+        },
+        {
+          "start": 25.31,
+          "end": 25.31,
+          "strength": 0.1173
+        },
+        {
+          "start": 25.913,
+          "end": 26.239,
+          "strength": 0.1581
+        },
+        {
+          "start": 27.028,
+          "end": 27.864,
+          "strength": 0.2241
+        },
+        {
+          "start": 28.561,
+          "end": 28.561,
+          "strength": 0.1202
+        },
+        {
+          "start": 29.536,
+          "end": 29.536,
+          "strength": 0.1229
+        },
+        {
+          "start": 30.047,
+          "end": 30.14,
+          "strength": 0.1358
+        },
+        {
+          "start": 30.929,
+          "end": 30.929,
+          "strength": 0.1296
+        },
+        {
+          "start": 31.393,
+          "end": 31.393,
+          "strength": 0.131
+        },
+        {
+          "start": 31.858,
+          "end": 31.858,
+          "strength": 0.1542
+        },
+        {
+          "start": 32.322,
+          "end": 32.322,
+          "strength": 0.152
+        },
+        {
+          "start": 35.016,
+          "end": 35.016,
+          "strength": 0.1803
+        },
+        {
+          "start": 36.177,
+          "end": 36.177,
+          "strength": 0.1353
+        },
+        {
+          "start": 36.92,
+          "end": 37.198,
+          "strength": 0.1859
+        },
+        {
+          "start": 37.756,
+          "end": 37.756,
+          "strength": 0.1378
+        },
+        {
+          "start": 38.684,
+          "end": 38.684,
+          "strength": 0.1173
+        },
+        {
+          "start": 39.474,
+          "end": 39.66,
+          "strength": 0.1727
+        },
+        {
+          "start": 41.006,
+          "end": 41.146,
+          "strength": 0.1303
+        },
+        {
+          "start": 41.889,
+          "end": 42.075,
+          "strength": 0.1324
+        },
+        {
+          "start": 42.585,
+          "end": 42.725,
+          "strength": 0.1192
+        },
+        {
+          "start": 43.328,
+          "end": 43.654,
+          "strength": 0.1449
+        },
+        {
+          "start": 44.489,
+          "end": 44.489,
+          "strength": 0.1364
+        },
+        {
+          "start": 45.047,
+          "end": 45.047,
+          "strength": 0.1414
+        },
+        {
+          "start": 45.883,
+          "end": 46.347,
+          "strength": 0.2378
+        },
+        {
+          "start": 47.09,
+          "end": 47.74,
+          "strength": 0.2162
+        },
+        {
+          "start": 48.344,
+          "end": 48.762,
+          "strength": 0.154
+        },
+        {
+          "start": 49.273,
+          "end": 50.248,
+          "strength": 0.2435
+        },
+        {
+          "start": 50.852,
+          "end": 51.734,
+          "strength": 0.1547
+        },
+        {
+          "start": 52.431,
+          "end": 52.709,
+          "strength": 0.1837
+        },
+        {
+          "start": 53.313,
+          "end": 54.428,
+          "strength": 0.2315
+        },
+        {
+          "start": 54.985,
+          "end": 55.217,
+          "strength": 0.174
+        },
+        {
+          "start": 55.681,
+          "end": 56.517,
+          "strength": 0.2027
+        },
+        {
+          "start": 56.889,
+          "end": 56.889,
+          "strength": 0.1982
+        },
+        {
+          "start": 57.353,
+          "end": 57.353,
+          "strength": 0.1983
+        },
+        {
+          "start": 57.771,
+          "end": 57.771,
+          "strength": 0.166
+        },
+        {
+          "start": 58.561,
+          "end": 58.561,
+          "strength": 0.1881
+        },
+        {
+          "start": 58.979,
+          "end": 58.979,
+          "strength": 0.1463
+        },
+        {
+          "start": 59.907,
+          "end": 60.279,
+          "strength": 0.1547
+        },
+        {
+          "start": 60.651,
+          "end": 61.486,
+          "strength": 0.1882
+        },
+        {
+          "start": 61.904,
+          "end": 62.694,
+          "strength": 0.1781
+        },
+        {
+          "start": 63.251,
+          "end": 63.251,
+          "strength": 0.1601
+        },
+        {
+          "start": 63.716,
+          "end": 63.716,
+          "strength": 0.1257
+        },
+        {
+          "start": 64.319,
+          "end": 64.319,
+          "strength": 0.1348
+        },
+        {
+          "start": 64.877,
+          "end": 64.877,
+          "strength": 0.1947
+        },
+        {
+          "start": 65.248,
+          "end": 65.248,
+          "strength": 0.1791
+        },
+        {
+          "start": 65.898,
+          "end": 66.038,
+          "strength": 0.1298
+        },
+        {
+          "start": 66.548,
+          "end": 66.827,
+          "strength": 0.2124
+        },
+        {
+          "start": 67.291,
+          "end": 67.291,
+          "strength": 0.1426
+        },
+        {
+          "start": 67.709,
+          "end": 67.709,
+          "strength": 0.1939
+        },
+        {
+          "start": 68.267,
+          "end": 68.592,
+          "strength": 0.1664
+        },
+        {
+          "start": 69.799,
+          "end": 70.171,
+          "strength": 0.1906
+        },
+        {
+          "start": 70.774,
+          "end": 70.774,
+          "strength": 0.1728
+        },
+        {
+          "start": 71.703,
+          "end": 71.703,
+          "strength": 0.1541
+        },
+        {
+          "start": 72.121,
+          "end": 72.121,
+          "strength": 0.152
+        },
+        {
+          "start": 72.586,
+          "end": 72.586,
+          "strength": 0.1755
+        },
+        {
+          "start": 73.514,
+          "end": 73.514,
+          "strength": 0.1465
+        },
+        {
+          "start": 74.768,
+          "end": 74.861,
+          "strength": 0.1528
+        },
+        {
+          "start": 76.719,
+          "end": 76.951,
+          "strength": 0.1645
+        },
+        {
+          "start": 77.555,
+          "end": 77.555,
+          "strength": 0.1221
+        },
+        {
+          "start": 78.205,
+          "end": 78.483,
+          "strength": 0.1493
+        },
+        {
+          "start": 79.226,
+          "end": 79.412,
+          "strength": 0.1668
+        },
+        {
+          "start": 81.734,
+          "end": 81.734,
+          "strength": 0.1233
+        },
+        {
+          "start": 82.245,
+          "end": 82.338,
+          "strength": 0.1203
+        },
+        {
+          "start": 84.799,
+          "end": 84.799,
+          "strength": 0.1192
+        },
+        {
+          "start": 85.635,
+          "end": 85.635,
+          "strength": 0.1636
+        },
+        {
+          "start": 86.75,
+          "end": 87.493,
+          "strength": 0.1489
+        },
+        {
+          "start": 88.143,
+          "end": 88.143,
+          "strength": 0.1191
+        },
+        {
+          "start": 88.84,
+          "end": 90.047,
+          "strength": 0.2203
+        },
+        {
+          "start": 90.465,
+          "end": 90.651,
+          "strength": 0.1659
+        },
+        {
+          "start": 91.115,
+          "end": 92.508,
+          "strength": 0.1727
+        },
+        {
+          "start": 93.112,
+          "end": 93.437,
+          "strength": 0.1773
+        },
+        {
+          "start": 94.087,
+          "end": 94.319,
+          "strength": 0.1582
+        },
+        {
+          "start": 94.691,
+          "end": 95.016,
+          "strength": 0.1564
+        },
+        {
+          "start": 95.945,
+          "end": 96.734,
+          "strength": 0.2105
+        },
+        {
+          "start": 97.152,
+          "end": 97.152,
+          "strength": 0.1936
+        },
+        {
+          "start": 97.524,
+          "end": 97.524,
+          "strength": 0.1469
+        },
+        {
+          "start": 98.081,
+          "end": 98.081,
+          "strength": 0.1479
+        },
+        {
+          "start": 98.731,
+          "end": 99.335,
+          "strength": 0.1637
+        },
+        {
+          "start": 99.706,
+          "end": 100.078,
+          "strength": 0.1898
+        },
+        {
+          "start": 100.635,
+          "end": 100.635,
+          "strength": 0.1963
+        },
+        {
+          "start": 101.611,
+          "end": 102.168,
+          "strength": 0.2082
+        },
+        {
+          "start": 102.539,
+          "end": 102.539,
+          "strength": 0.1596
+        },
+        {
+          "start": 103.097,
+          "end": 103.515,
+          "strength": 0.1538
+        },
+        {
+          "start": 104.072,
+          "end": 104.304,
+          "strength": 0.1523
+        },
+        {
+          "start": 104.722,
+          "end": 105.001,
+          "strength": 0.1925
+        },
+        {
+          "start": 105.558,
+          "end": 105.558,
+          "strength": 0.2395
+        },
+        {
+          "start": 106.022,
+          "end": 107.462,
+          "strength": 0.1734
+        },
+        {
+          "start": 108.019,
+          "end": 108.019,
+          "strength": 0.1187
+        },
+        {
+          "start": 108.623,
+          "end": 108.948,
+          "strength": 0.2356
+        },
+        {
+          "start": 109.645,
+          "end": 109.97,
+          "strength": 0.1804
+        },
+        {
+          "start": 110.573,
+          "end": 111.502,
+          "strength": 0.2155
+        },
+        {
+          "start": 112.199,
+          "end": 112.524,
+          "strength": 0.1529
+        },
+        {
+          "start": 113.081,
+          "end": 113.638,
+          "strength": 0.2016
+        },
+        {
+          "start": 114.567,
+          "end": 114.567,
+          "strength": 0.1806
+        },
+        {
+          "start": 114.939,
+          "end": 114.939,
+          "strength": 0.1932
+        },
+        {
+          "start": 115.496,
+          "end": 115.496,
+          "strength": 0.165
+        },
+        {
+          "start": 117.354,
+          "end": 117.354,
+          "strength": 0.1309
+        },
+        {
+          "start": 120.744,
+          "end": 120.744,
+          "strength": 0.1358
+        },
+        {
+          "start": 121.487,
+          "end": 121.673,
+          "strength": 0.181
+        },
+        {
+          "start": 122.323,
+          "end": 122.323,
+          "strength": 0.1186
+        },
+        {
+          "start": 123.019,
+          "end": 123.019,
+          "strength": 0.1574
+        },
+        {
+          "start": 123.902,
+          "end": 124.041,
+          "strength": 0.1663
+        },
+        {
+          "start": 124.877,
+          "end": 124.877,
+          "strength": 0.1584
+        },
+        {
+          "start": 125.574,
+          "end": 125.574,
+          "strength": 0.1307
+        },
+        {
+          "start": 126.502,
+          "end": 126.502,
+          "strength": 0.124
+        },
+        {
+          "start": 129.567,
+          "end": 129.567,
+          "strength": 0.1252
+        },
+        {
+          "start": 130.078,
+          "end": 132.307,
+          "strength": 0.3641
+        },
+        {
+          "start": 132.725,
+          "end": 133.004,
+          "strength": 0.2372
+        },
+        {
+          "start": 133.515,
+          "end": 133.933,
+          "strength": 0.2068
+        },
+        {
+          "start": 134.49,
+          "end": 134.769,
+          "strength": 0.231
+        },
+        {
+          "start": 135.233,
+          "end": 136.162,
+          "strength": 0.3507
+        },
+        {
+          "start": 136.58,
+          "end": 136.58,
+          "strength": 0.1534
+        },
+        {
+          "start": 136.998,
+          "end": 137.276,
+          "strength": 0.2767
+        },
+        {
+          "start": 137.694,
+          "end": 138.252,
+          "strength": 0.2475
+        },
+        {
+          "start": 138.623,
+          "end": 138.762,
+          "strength": 0.1947
+        },
+        {
+          "start": 139.134,
+          "end": 139.784,
+          "strength": 0.2565
+        },
+        {
+          "start": 140.156,
+          "end": 140.62,
+          "strength": 0.1958
+        },
+        {
+          "start": 141.084,
+          "end": 141.084,
+          "strength": 0.1504
+        },
+        {
+          "start": 141.456,
+          "end": 141.549,
+          "strength": 0.1658
+        },
+        {
+          "start": 142.013,
+          "end": 142.292,
+          "strength": 0.23
+        },
+        {
+          "start": 142.71,
+          "end": 142.803,
+          "strength": 0.1735
+        },
+        {
+          "start": 143.174,
+          "end": 144.428,
+          "strength": 0.2203
+        },
+        {
+          "start": 144.8,
+          "end": 144.8,
+          "strength": 0.3193
+        },
+        {
+          "start": 145.357,
+          "end": 145.682,
+          "strength": 0.195
+        },
+        {
+          "start": 147.029,
+          "end": 147.958,
+          "strength": 0.2413
+        },
+        {
+          "start": 148.608,
+          "end": 148.84,
+          "strength": 0.2212
+        },
+        {
+          "start": 149.211,
+          "end": 149.211,
+          "strength": 0.1817
+        },
+        {
+          "start": 149.722,
+          "end": 149.722,
+          "strength": 0.2201
+        },
+        {
+          "start": 150.28,
+          "end": 150.419,
+          "strength": 0.1506
+        },
+        {
+          "start": 151.255,
+          "end": 151.348,
+          "strength": 0.1896
+        },
+        {
+          "start": 151.719,
+          "end": 151.719,
+          "strength": 0.1703
+        },
+        {
+          "start": 152.23,
+          "end": 152.23,
+          "strength": 0.18
+        },
+        {
+          "start": 152.602,
+          "end": 152.602,
+          "strength": 0.1339
+        },
+        {
+          "start": 153.112,
+          "end": 153.112,
+          "strength": 0.1191
+        },
+        {
+          "start": 153.948,
+          "end": 154.134,
+          "strength": 0.1435
+        },
+        {
+          "start": 154.738,
+          "end": 154.738,
+          "strength": 0.119
+        },
+        {
+          "start": 155.249,
+          "end": 155.388,
+          "strength": 0.2665
+        },
+        {
+          "start": 156.177,
+          "end": 156.177,
+          "strength": 0.1836
+        },
+        {
+          "start": 156.642,
+          "end": 157.153,
+          "strength": 0.2081
+        },
+        {
+          "start": 157.617,
+          "end": 157.71,
+          "strength": 0.1374
+        },
+        {
+          "start": 158.267,
+          "end": 158.267,
+          "strength": 0.1285
+        },
+        {
+          "start": 159.335,
+          "end": 159.335,
+          "strength": 0.1895
+        },
+        {
+          "start": 159.707,
+          "end": 159.707,
+          "strength": 0.1772
+        },
+        {
+          "start": 160.078,
+          "end": 160.821,
+          "strength": 0.1754
+        },
+        {
+          "start": 161.193,
+          "end": 161.193,
+          "strength": 0.2553
+        },
+        {
+          "start": 161.611,
+          "end": 162.168,
+          "strength": 0.2241
+        },
+        {
+          "start": 162.865,
+          "end": 162.865,
+          "strength": 0.1353
+        },
+        {
+          "start": 163.701,
+          "end": 163.979,
+          "strength": 0.1964
+        },
+        {
+          "start": 164.583,
+          "end": 165.001,
+          "strength": 0.195
+        },
+        {
+          "start": 165.512,
+          "end": 165.837,
+          "strength": 0.3056
+        },
+        {
+          "start": 166.441,
+          "end": 166.766,
+          "strength": 0.154
+        },
+        {
+          "start": 167.695,
+          "end": 167.695,
+          "strength": 0.1234
+        },
+        {
+          "start": 168.623,
+          "end": 168.623,
+          "strength": 0.1277
+        },
+        {
+          "start": 169.599,
+          "end": 169.599,
+          "strength": 0.1422
+        },
+        {
+          "start": 170.481,
+          "end": 170.481,
+          "strength": 0.118
+        },
+        {
+          "start": 171.874,
+          "end": 171.874,
+          "strength": 0.1198
+        },
+        {
+          "start": 173.732,
+          "end": 173.964,
+          "strength": 0.1865
+        },
+        {
+          "start": 175.171,
+          "end": 175.404,
+          "strength": 0.1351
+        },
+        {
+          "start": 176.1,
+          "end": 176.425,
+          "strength": 0.1768
+        },
+        {
+          "start": 179.304,
+          "end": 179.304,
+          "strength": 0.12
+        },
+        {
+          "start": 180.14,
+          "end": 180.14,
+          "strength": 0.1774
+        },
+        {
+          "start": 180.605,
+          "end": 180.605,
+          "strength": 0.2025
+        },
+        {
+          "start": 181.023,
+          "end": 181.023,
+          "strength": 0.1264
+        },
+        {
+          "start": 181.998,
+          "end": 181.998,
+          "strength": 0.1745
+        },
+        {
+          "start": 182.695,
+          "end": 182.927,
+          "strength": 0.1328
+        },
+        {
+          "start": 184.274,
+          "end": 184.274,
+          "strength": 0.1696
+        },
+        {
+          "start": 186.131,
+          "end": 186.456,
+          "strength": 0.1782
+        },
+        {
+          "start": 187.524,
+          "end": 187.849,
+          "strength": 0.1442
+        },
+        {
+          "start": 188.685,
+          "end": 188.871,
+          "strength": 0.1882
+        },
+        {
+          "start": 189.475,
+          "end": 189.475,
+          "strength": 0.1273
+        },
+        {
+          "start": 190.218,
+          "end": 190.218,
+          "strength": 0.1217
+        },
+        {
+          "start": 191.054,
+          "end": 191.147,
+          "strength": 0.1435
+        },
+        {
+          "start": 191.704,
+          "end": 191.797,
+          "strength": 0.1519
+        },
+        {
+          "start": 192.586,
+          "end": 192.726,
+          "strength": 0.1407
+        },
+        {
+          "start": 193.562,
+          "end": 193.654,
+          "strength": 0.1456
+        },
+        {
+          "start": 194.165,
+          "end": 194.165,
+          "strength": 0.1401
+        }
+      ],
+      "ingested_at": "2026-07-18T12:49:29Z",
+      "title": "Get Dis Money",
+      "album": "Fantastic, Vol. 2",
+      "note": "Slum Village / Dilla production — real rapping for Camel stream",
+      "isolated": true,
+      "last_fit": {
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/slum_village/fit_86_32bars.wav",
+        "beat_bpm": 86.0,
+        "n_bars": 32,
+        "offset_sec": 18.53,
+        "phrase_start": 18.53,
+        "tempo_ratio": 0.86,
+        "rms_db": -18.44
+      }
+    },
+    {
+      "slug": "jonas_v",
+      "artist": "Jonas V",
+      "source": "https://www.youtube.com/watch?v=aTdDmMmt5VU",
+      "title": "Kunst",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/vocals.wav",
+      "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260718_221000",
+      "bpm_estimate": 88.93,
+      "phrases": [
+        {
+          "start": 0.511,
+          "end": 0.511,
+          "strength": 0.2557
+        },
+        {
+          "start": 1.207,
+          "end": 1.858,
+          "strength": 0.2731
+        },
+        {
+          "start": 2.322,
+          "end": 2.461,
+          "strength": 0.2682
+        },
+        {
+          "start": 2.833,
+          "end": 2.833,
+          "strength": 0.2012
+        },
+        {
+          "start": 3.204,
+          "end": 3.39,
+          "strength": 0.2824
+        },
+        {
+          "start": 5.48,
+          "end": 5.712,
+          "strength": 0.239
+        },
+        {
+          "start": 6.223,
+          "end": 6.223,
+          "strength": 0.191
+        },
+        {
+          "start": 6.641,
+          "end": 6.827,
+          "strength": 0.2692
+        },
+        {
+          "start": 7.941,
+          "end": 7.941,
+          "strength": 0.2523
+        },
+        {
+          "start": 8.545,
+          "end": 8.545,
+          "strength": 0.2413
+        },
+        {
+          "start": 9.149,
+          "end": 9.149,
+          "strength": 0.2226
+        },
+        {
+          "start": 11.378,
+          "end": 11.378,
+          "strength": 0.2638
+        },
+        {
+          "start": 11.935,
+          "end": 12.121,
+          "strength": 0.2671
+        },
+        {
+          "start": 12.585,
+          "end": 12.585,
+          "strength": 0.261
+        },
+        {
+          "start": 13.142,
+          "end": 13.514,
+          "strength": 0.2116
+        },
+        {
+          "start": 14.861,
+          "end": 15.511,
+          "strength": 0.354
+        },
+        {
+          "start": 15.975,
+          "end": 16.44,
+          "strength": 0.3652
+        },
+        {
+          "start": 16.858,
+          "end": 16.858,
+          "strength": 0.2381
+        },
+        {
+          "start": 17.322,
+          "end": 17.322,
+          "strength": 0.2403
+        },
+        {
+          "start": 18.576,
+          "end": 19.876,
+          "strength": 0.3402
+        },
+        {
+          "start": 20.294,
+          "end": 20.526,
+          "strength": 0.3095
+        },
+        {
+          "start": 21.362,
+          "end": 21.362,
+          "strength": 0.2
+        },
+        {
+          "start": 21.966,
+          "end": 23.266,
+          "strength": 0.3172
+        },
+        {
+          "start": 23.731,
+          "end": 26.192,
+          "strength": 0.2758
+        },
+        {
+          "start": 26.749,
+          "end": 26.749,
+          "strength": 0.2849
+        },
+        {
+          "start": 27.121,
+          "end": 27.121,
+          "strength": 0.2208
+        },
+        {
+          "start": 27.585,
+          "end": 27.585,
+          "strength": 0.2245
+        },
+        {
+          "start": 28.003,
+          "end": 29.35,
+          "strength": 0.2646
+        },
+        {
+          "start": 29.768,
+          "end": 29.768,
+          "strength": 0.2406
+        },
+        {
+          "start": 30.14,
+          "end": 30.14,
+          "strength": 0.2587
+        },
+        {
+          "start": 30.557,
+          "end": 30.557,
+          "strength": 0.2379
+        },
+        {
+          "start": 31.022,
+          "end": 31.3,
+          "strength": 0.2338
+        },
+        {
+          "start": 31.858,
+          "end": 32.787,
+          "strength": 0.2596
+        },
+        {
+          "start": 33.158,
+          "end": 33.158,
+          "strength": 0.2281
+        },
+        {
+          "start": 33.576,
+          "end": 33.576,
+          "strength": 0.2684
+        },
+        {
+          "start": 33.994,
+          "end": 33.994,
+          "strength": 0.2309
+        },
+        {
+          "start": 34.458,
+          "end": 34.876,
+          "strength": 0.2326
+        },
+        {
+          "start": 35.294,
+          "end": 35.619,
+          "strength": 0.2765
+        },
+        {
+          "start": 36.177,
+          "end": 37.013,
+          "strength": 0.2453
+        },
+        {
+          "start": 37.431,
+          "end": 37.431,
+          "strength": 0.239
+        },
+        {
+          "start": 37.941,
+          "end": 38.266,
+          "strength": 0.2242
+        },
+        {
+          "start": 38.777,
+          "end": 38.777,
+          "strength": 0.2206
+        },
+        {
+          "start": 39.149,
+          "end": 39.799,
+          "strength": 0.2146
+        },
+        {
+          "start": 40.588,
+          "end": 40.914,
+          "strength": 0.2456
+        },
+        {
+          "start": 41.285,
+          "end": 41.703,
+          "strength": 0.1949
+        },
+        {
+          "start": 42.121,
+          "end": 42.121,
+          "strength": 0.2384
+        },
+        {
+          "start": 42.585,
+          "end": 43.05,
+          "strength": 0.2332
+        },
+        {
+          "start": 43.607,
+          "end": 43.607,
+          "strength": 0.1732
+        },
+        {
+          "start": 44.257,
+          "end": 44.257,
+          "strength": 0.2553
+        },
+        {
+          "start": 44.815,
+          "end": 44.815,
+          "strength": 0.2239
+        },
+        {
+          "start": 45.186,
+          "end": 45.186,
+          "strength": 0.2238
+        },
+        {
+          "start": 45.79,
+          "end": 45.79,
+          "strength": 0.2122
+        },
+        {
+          "start": 46.161,
+          "end": 47.787,
+          "strength": 0.2238
+        },
+        {
+          "start": 48.205,
+          "end": 48.205,
+          "strength": 0.1903
+        },
+        {
+          "start": 49.366,
+          "end": 49.366,
+          "strength": 0.2602
+        },
+        {
+          "start": 49.969,
+          "end": 50.294,
+          "strength": 0.2274
+        },
+        {
+          "start": 50.991,
+          "end": 51.363,
+          "strength": 0.2126
+        },
+        {
+          "start": 51.78,
+          "end": 51.78,
+          "strength": 0.238
+        },
+        {
+          "start": 52.198,
+          "end": 52.431,
+          "strength": 0.219
+        },
+        {
+          "start": 53.034,
+          "end": 53.034,
+          "strength": 0.2459
+        },
+        {
+          "start": 53.685,
+          "end": 53.87,
+          "strength": 0.1992
+        },
+        {
+          "start": 54.753,
+          "end": 55.403,
+          "strength": 0.1966
+        },
+        {
+          "start": 55.821,
+          "end": 55.821,
+          "strength": 0.1796
+        },
+        {
+          "start": 56.471,
+          "end": 56.471,
+          "strength": 0.202
+        },
+        {
+          "start": 57.307,
+          "end": 57.957,
+          "strength": 0.216
+        },
+        {
+          "start": 58.654,
+          "end": 58.654,
+          "strength": 0.2193
+        },
+        {
+          "start": 59.025,
+          "end": 60.186,
+          "strength": 0.2273
+        },
+        {
+          "start": 60.558,
+          "end": 60.558,
+          "strength": 0.1815
+        },
+        {
+          "start": 61.208,
+          "end": 61.672,
+          "strength": 0.2435
+        },
+        {
+          "start": 63.158,
+          "end": 63.344,
+          "strength": 0.2299
+        },
+        {
+          "start": 63.762,
+          "end": 63.994,
+          "strength": 0.2116
+        },
+        {
+          "start": 64.412,
+          "end": 64.412,
+          "strength": 0.1855
+        },
+        {
+          "start": 65.945,
+          "end": 65.945,
+          "strength": 0.2005
+        },
+        {
+          "start": 67.431,
+          "end": 67.431,
+          "strength": 0.2429
+        },
+        {
+          "start": 67.849,
+          "end": 68.36,
+          "strength": 0.2081
+        },
+        {
+          "start": 68.824,
+          "end": 68.824,
+          "strength": 0.1834
+        },
+        {
+          "start": 70.403,
+          "end": 70.403,
+          "strength": 0.198
+        },
+        {
+          "start": 70.867,
+          "end": 70.867,
+          "strength": 0.1951
+        },
+        {
+          "start": 71.285,
+          "end": 71.285,
+          "strength": 0.1972
+        },
+        {
+          "start": 72.586,
+          "end": 72.678,
+          "strength": 0.188
+        },
+        {
+          "start": 73.05,
+          "end": 73.05,
+          "strength": 0.2017
+        },
+        {
+          "start": 73.839,
+          "end": 73.839,
+          "strength": 0.1945
+        },
+        {
+          "start": 74.304,
+          "end": 74.304,
+          "strength": 0.2225
+        },
+        {
+          "start": 74.722,
+          "end": 74.722,
+          "strength": 0.2076
+        },
+        {
+          "start": 75.093,
+          "end": 75.604,
+          "strength": 0.2506
+        },
+        {
+          "start": 76.022,
+          "end": 76.44,
+          "strength": 0.2401
+        },
+        {
+          "start": 77.276,
+          "end": 77.276,
+          "strength": 0.1802
+        },
+        {
+          "start": 77.74,
+          "end": 77.74,
+          "strength": 0.2039
+        },
+        {
+          "start": 78.158,
+          "end": 78.158,
+          "strength": 0.207
+        },
+        {
+          "start": 78.576,
+          "end": 78.669,
+          "strength": 0.2064
+        },
+        {
+          "start": 79.412,
+          "end": 79.598,
+          "strength": 0.246
+        },
+        {
+          "start": 80.248,
+          "end": 81.548,
+          "strength": 0.2294
+        },
+        {
+          "start": 83.87,
+          "end": 84.103,
+          "strength": 0.2012
+        },
+        {
+          "start": 84.567,
+          "end": 84.567,
+          "strength": 0.1777
+        },
+        {
+          "start": 85.031,
+          "end": 85.031,
+          "strength": 0.1849
+        },
+        {
+          "start": 85.403,
+          "end": 85.403,
+          "strength": 0.1796
+        },
+        {
+          "start": 86.239,
+          "end": 86.889,
+          "strength": 0.2127
+        },
+        {
+          "start": 87.307,
+          "end": 87.307,
+          "strength": 0.2089
+        },
+        {
+          "start": 87.725,
+          "end": 88.004,
+          "strength": 0.2159
+        },
+        {
+          "start": 88.607,
+          "end": 88.607,
+          "strength": 0.1829
+        },
+        {
+          "start": 89.304,
+          "end": 89.443,
+          "strength": 0.2165
+        },
+        {
+          "start": 90.14,
+          "end": 90.744,
+          "strength": 0.2276
+        },
+        {
+          "start": 91.533,
+          "end": 91.533,
+          "strength": 0.2001
+        },
+        {
+          "start": 91.905,
+          "end": 91.905,
+          "strength": 0.2071
+        },
+        {
+          "start": 92.276,
+          "end": 92.369,
+          "strength": 0.2029
+        },
+        {
+          "start": 92.74,
+          "end": 92.74,
+          "strength": 0.173
+        },
+        {
+          "start": 93.994,
+          "end": 94.459,
+          "strength": 0.195
+        },
+        {
+          "start": 94.83,
+          "end": 95.713,
+          "strength": 0.242
+        },
+        {
+          "start": 96.131,
+          "end": 96.131,
+          "strength": 0.1832
+        },
+        {
+          "start": 96.595,
+          "end": 96.595,
+          "strength": 0.1812
+        },
+        {
+          "start": 97.431,
+          "end": 97.431,
+          "strength": 0.2025
+        },
+        {
+          "start": 100.217,
+          "end": 100.217,
+          "strength": 0.2091
+        },
+        {
+          "start": 101.285,
+          "end": 101.285,
+          "strength": 0.1872
+        },
+        {
+          "start": 101.982,
+          "end": 101.982,
+          "strength": 0.192
+        },
+        {
+          "start": 102.354,
+          "end": 102.354,
+          "strength": 0.1837
+        },
+        {
+          "start": 103.05,
+          "end": 104.304,
+          "strength": 0.207
+        },
+        {
+          "start": 104.768,
+          "end": 104.768,
+          "strength": 0.1917
+        },
+        {
+          "start": 105.372,
+          "end": 105.372,
+          "strength": 0.1914
+        },
+        {
+          "start": 105.744,
+          "end": 105.744,
+          "strength": 0.2037
+        },
+        {
+          "start": 106.44,
+          "end": 106.44,
+          "strength": 0.2107
+        },
+        {
+          "start": 106.858,
+          "end": 106.858,
+          "strength": 0.177
+        },
+        {
+          "start": 107.23,
+          "end": 107.23,
+          "strength": 0.2497
+        },
+        {
+          "start": 107.741,
+          "end": 107.833,
+          "strength": 0.1914
+        },
+        {
+          "start": 108.437,
+          "end": 108.716,
+          "strength": 0.1985
+        },
+        {
+          "start": 110.899,
+          "end": 111.177,
+          "strength": 0.2067
+        },
+        {
+          "start": 111.549,
+          "end": 111.549,
+          "strength": 0.1891
+        },
+        {
+          "start": 112.199,
+          "end": 112.617,
+          "strength": 0.2202
+        },
+        {
+          "start": 113.081,
+          "end": 113.267,
+          "strength": 0.181
+        },
+        {
+          "start": 113.685,
+          "end": 113.685,
+          "strength": 0.2025
+        },
+        {
+          "start": 114.567,
+          "end": 115.264,
+          "strength": 0.203
+        },
+        {
+          "start": 115.635,
+          "end": 115.728,
+          "strength": 0.2209
+        },
+        {
+          "start": 116.286,
+          "end": 116.286,
+          "strength": 0.2118
+        },
+        {
+          "start": 116.889,
+          "end": 117.121,
+          "strength": 0.2056
+        },
+        {
+          "start": 117.725,
+          "end": 118.375,
+          "strength": 0.2072
+        },
+        {
+          "start": 119.118,
+          "end": 119.118,
+          "strength": 0.2129
+        },
+        {
+          "start": 119.49,
+          "end": 119.908,
+          "strength": 0.2029
+        },
+        {
+          "start": 120.558,
+          "end": 120.79,
+          "strength": 0.2128
+        },
+        {
+          "start": 121.208,
+          "end": 121.208,
+          "strength": 0.174
+        },
+        {
+          "start": 121.626,
+          "end": 121.812,
+          "strength": 0.2263
+        },
+        {
+          "start": 122.323,
+          "end": 122.88,
+          "strength": 0.2135
+        },
+        {
+          "start": 123.344,
+          "end": 123.669,
+          "strength": 0.2234
+        },
+        {
+          "start": 124.877,
+          "end": 124.877,
+          "strength": 0.1917
+        },
+        {
+          "start": 125.248,
+          "end": 125.341,
+          "strength": 0.1853
+        },
+        {
+          "start": 127.385,
+          "end": 127.385,
+          "strength": 0.2237
+        },
+        {
+          "start": 128.081,
+          "end": 128.081,
+          "strength": 0.2106
+        },
+        {
+          "start": 128.685,
+          "end": 128.685,
+          "strength": 0.2004
+        },
+        {
+          "start": 129.103,
+          "end": 129.103,
+          "strength": 0.1948
+        },
+        {
+          "start": 130.821,
+          "end": 130.821,
+          "strength": 0.2017
+        },
+        {
+          "start": 131.239,
+          "end": 131.239,
+          "strength": 0.1854
+        },
+        {
+          "start": 132.122,
+          "end": 132.261,
+          "strength": 0.2111
+        },
+        {
+          "start": 132.911,
+          "end": 132.911,
+          "strength": 0.1836
+        },
+        {
+          "start": 134.629,
+          "end": 134.629,
+          "strength": 0.2141
+        },
+        {
+          "start": 135.512,
+          "end": 135.512,
+          "strength": 0.2068
+        },
+        {
+          "start": 136.348,
+          "end": 136.348,
+          "strength": 0.2316
+        },
+        {
+          "start": 138.995,
+          "end": 138.995,
+          "strength": 0.235
+        },
+        {
+          "start": 139.413,
+          "end": 139.413,
+          "strength": 0.1818
+        },
+        {
+          "start": 139.877,
+          "end": 139.877,
+          "strength": 0.2054
+        },
+        {
+          "start": 141.967,
+          "end": 143.314,
+          "strength": 0.2187
+        },
+        {
+          "start": 143.732,
+          "end": 143.964,
+          "strength": 0.2058
+        },
+        {
+          "start": 145.403,
+          "end": 145.589,
+          "strength": 0.2288
+        },
+        {
+          "start": 146.007,
+          "end": 146.704,
+          "strength": 0.2325
+        },
+        {
+          "start": 147.168,
+          "end": 147.4,
+          "strength": 0.1848
+        },
+        {
+          "start": 148.515,
+          "end": 148.84,
+          "strength": 0.1895
+        },
+        {
+          "start": 149.258,
+          "end": 149.629,
+          "strength": 0.1913
+        },
+        {
+          "start": 150.187,
+          "end": 150.187,
+          "strength": 0.2057
+        },
+        {
+          "start": 151.023,
+          "end": 151.023,
+          "strength": 0.1768
+        },
+        {
+          "start": 152.694,
+          "end": 152.694,
+          "strength": 0.1927
+        },
+        {
+          "start": 153.159,
+          "end": 153.159,
+          "strength": 0.1891
+        },
+        {
+          "start": 153.577,
+          "end": 153.577,
+          "strength": 0.1948
+        },
+        {
+          "start": 154.877,
+          "end": 154.877,
+          "strength": 0.1828
+        },
+        {
+          "start": 155.341,
+          "end": 155.341,
+          "strength": 0.196
+        },
+        {
+          "start": 156.131,
+          "end": 156.131,
+          "strength": 0.1873
+        },
+        {
+          "start": 156.595,
+          "end": 156.595,
+          "strength": 0.2168
+        },
+        {
+          "start": 157.013,
+          "end": 157.013,
+          "strength": 0.2045
+        },
+        {
+          "start": 157.385,
+          "end": 157.896,
+          "strength": 0.2503
+        },
+        {
+          "start": 158.314,
+          "end": 158.732,
+          "strength": 0.2386
+        },
+        {
+          "start": 159.103,
+          "end": 159.103,
+          "strength": 0.1792
+        },
+        {
+          "start": 159.568,
+          "end": 159.568,
+          "strength": 0.18
+        },
+        {
+          "start": 159.985,
+          "end": 159.985,
+          "strength": 0.2002
+        },
+        {
+          "start": 160.45,
+          "end": 160.45,
+          "strength": 0.1989
+        },
+        {
+          "start": 160.868,
+          "end": 160.868,
+          "strength": 0.1796
+        },
+        {
+          "start": 161.704,
+          "end": 161.89,
+          "strength": 0.2383
+        },
+        {
+          "start": 162.54,
+          "end": 163.84,
+          "strength": 0.2309
+        },
+        {
+          "start": 166.162,
+          "end": 166.394,
+          "strength": 0.2031
+        },
+        {
+          "start": 166.812,
+          "end": 166.812,
+          "strength": 0.1817
+        },
+        {
+          "start": 167.277,
+          "end": 167.277,
+          "strength": 0.1853
+        },
+        {
+          "start": 167.695,
+          "end": 167.695,
+          "strength": 0.1799
+        },
+        {
+          "start": 168.577,
+          "end": 168.763,
+          "strength": 0.2178
+        },
+        {
+          "start": 169.366,
+          "end": 169.599,
+          "strength": 0.2029
+        },
+        {
+          "start": 170.017,
+          "end": 170.295,
+          "strength": 0.207
+        },
+        {
+          "start": 170.713,
+          "end": 170.899,
+          "strength": 0.187
+        },
+        {
+          "start": 171.595,
+          "end": 171.735,
+          "strength": 0.2138
+        },
+        {
+          "start": 172.431,
+          "end": 173.314,
+          "strength": 0.2498
+        },
+        {
+          "start": 173.825,
+          "end": 173.825,
+          "strength": 0.2007
+        },
+        {
+          "start": 174.196,
+          "end": 174.196,
+          "strength": 0.2077
+        },
+        {
+          "start": 174.568,
+          "end": 174.66,
+          "strength": 0.2083
+        },
+        {
+          "start": 175.032,
+          "end": 175.032,
+          "strength": 0.1756
+        },
+        {
+          "start": 176.239,
+          "end": 176.75,
+          "strength": 0.1961
+        },
+        {
+          "start": 177.122,
+          "end": 177.215,
+          "strength": 0.2163
+        },
+        {
+          "start": 177.586,
+          "end": 177.586,
+          "strength": 0.1738
+        }
+      ],
+      "ingested_at": "2026-07-18T20:21:36Z",
+      "isolated": true,
+      "voice_only": true,
+      "last_fit": {
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_95_8bars.wav",
+        "beat_bpm": 95.0,
+        "n_bars": 8,
+        "offset_sec": 1.975,
+        "phrase_start": 1.207,
+        "source_bpm": 88.93,
+        "tempo_ratio": 1.0683,
+        "rms_db": -17.948,
+        "sub_bleed_db": -44.34,
+        "voice_only": true
+      }
+    }
+  ],
+  "updated_at": "2026-07-23T22:01:35Z"
+}

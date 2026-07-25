@@ -59,7 +59,7 @@ module Master
 
       def default_demo_paths(root = Master::ROOT)
         [
-          File.join(root, "tools/dilla/demo.wav"),
+          File.join(Master::REPO_ROOT, "studio/dilla/demo.wav"),
           File.join(root, ".master/media/dilla_beat.mp3"),
           File.join(Dir.pwd, "demo.wav"),
         ]

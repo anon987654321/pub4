@@ -6,7 +6,7 @@ require "fileutils"
 require "open3"
 
 module Shared
-  # Runs MASTER/tools/dilla.rb generate and attaches audio to a record.
+  # Runs studio/dilla/engine.rb and attaches audio to a record.
   module DillaProcessor
     STYLES = %w[dilla flylo baroque bach neo-soul neo_soul jazz].freeze
     DEFAULT_BARS = 12
@@ -84,8 +84,11 @@ module Shared
     end
 
     def run_script(style, output, bars)
-      # Kit-forward profile is applied inside MASTER/tools/dilla.rb (PRODUCT_KIT_ENV).
+      # Kit-forward profile now comes from the engine's own DILLA_BEST_DEFAULTS /
+      # DILLA_STYLE_DEFAULTS soft-fill (RENDER_MODE=dilla) -- there's no
+      # separate wrapper env table to keep in sync with those anymore.
       # Only pass process-level overrides here so Solid Queue matches chat renders.
+      track = style.to_s.downcase.tr("-", "_")
       env = {
         "DILLA_RAW" => ENV.fetch("DILLA_RAW", "0"),
         "STREAM_CONTINUOUS" => "0",
@@ -94,12 +97,14 @@ module Shared
         "RAP_VOCAL" => ENV.fetch("RAP_VOCAL", "jonas_v"),
         "RENDER_MODE" => "dilla"
       }
-      cmd = [
-        RbConfig.ruby, script.to_s, "generate",
-        "--style", style.to_s,
-        "--output", output.to_s,
-        "--bars", bars.to_s
-      ]
+      # Leave TRACK/PROGRESSION unset for the generic "dilla" style so the
+      # engine's own default-progression resolution picks it, same as an
+      # unadorned `ruby engine.rb dilla`.
+      unless track.empty? || track == "dilla"
+        env["TRACK"] = track
+        env["PROGRESSION"] = track
+      end
+      cmd = [RbConfig.ruby, script.to_s, "dilla", output.to_s, bars.to_s]
       out, err, status = Open3.capture3(env, *cmd)
       log("dilla stdout: #{out.lines.last.to_s.strip}") if out.to_s.strip != ""
       log("dilla stderr: #{err.lines.last.to_s.strip}") if !status.success? && err.to_s.strip != ""

@@ -17,9 +17,9 @@ module Brgen
       def manifest_candidates
         [
           rails_root.join("config/radio_bergen/tracks.yml"),
-          rails_root.join("../../../MASTER/tools/audio/radio_bergen_tracks.yml").expand_path,
-          Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_tracks.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_tracks.yml"),
+          rails_root.join("../../../studio/radio-bergen/radio_bergen_tracks.yml").expand_path,
+          Pub4::DeployPaths.repo_join("studio/radio-bergen/radio_bergen_tracks.yml"),
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/studio/radio-bergen/radio_bergen_tracks.yml"),
         ]
       end
 
@@ -35,9 +35,9 @@ module Brgen
       def sonic_learnings_candidates
         [
           rails_root.join("config/radio_bergen/sonic.yml"),
-          rails_root.join("../../../MASTER/tools/audio/radio_bergen_sonic.yml").expand_path,
-          Pub4::DeployPaths.repo_join("MASTER/tools/audio/radio_bergen_sonic.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/tools/audio/radio_bergen_sonic.yml"),
+          rails_root.join("../../../studio/radio-bergen/radio_bergen_sonic.yml").expand_path,
+          Pub4::DeployPaths.repo_join("studio/radio-bergen/radio_bergen_sonic.yml"),
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/studio/radio-bergen/radio_bergen_sonic.yml"),
         ]
       end
 
@@ -94,8 +94,8 @@ module Brgen
           "$ git dig --follow pub4/index.html",
           "object: pub2 monolithic index.html → playlist.brgen.no warp tunnel",
           "archive: #{meta['source_archive'] || 'anon987654321/pub2'} @ #{pub2_head}",
-          "manifest: MASTER/tools/audio/radio_bergen_tracks.yml",
-          "learnings: MASTER/tools/audio/radio_bergen_sonic.yml (ruby radio_bergen_study.rb)",
+          "manifest: studio/radio-bergen/radio_bergen_tracks.yml",
+          "learnings: studio/radio-bergen/radio_bergen_sonic.yml (ruby radio_bergen_study.rb)",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "excavated: #{local_count} local_mp3 metadata rows · #{youtube_count} youtube references",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",

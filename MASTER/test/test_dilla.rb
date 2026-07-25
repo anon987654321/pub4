@@ -6,12 +6,11 @@ require "open3"
 require "rbconfig"
 require "timeout"
 
-# Dilla engine (tools/dilla/dilla.rb) defines top-level constants, so probes
+# Dilla engine (studio/dilla/engine.rb) defines top-level constants, so probes
 # load it in a subprocess — loading here would leak ROOT/OUTPUT_DIR into the
 # shared test process. CLI dispatch is guarded by `__FILE__ == $PROGRAM_NAME`.
 class TestDilla < Minitest::Test
-  ENGINE = File.expand_path("../tools/dilla/dilla.rb", __dir__)
-  WRAPPER = File.expand_path("../tools/dilla.rb", __dir__)
+  ENGINE = File.expand_path("../../studio/dilla/engine.rb", __dir__)
 
   # A hung probe (coltrane-gem hang — see README) used to pin a
   # dilla_test_probe process near 100% CPU forever with no output and no
@@ -167,18 +166,6 @@ class TestDilla < Minitest::Test
     RUBY
     assert_equal "dilla", result.fetch("mode")
     assert result.fetch("dilla")
-  end
-
-  def test_product_entry_is_track_only
-    require_relative "../tools/dilla"
-    assert_equal "get_dis_money", DillaEntrypoint.track_for(nil)
-    assert_equal "neo_soul", DillaEntrypoint.track_for("neo_soul")
-    env = DillaEntrypoint.product_env(track: "get_dis_money")
-    assert_equal "dilla", env["RENDER_MODE"]
-    assert_equal "get_dis_money", env["TRACK"]
-    assert_equal "1", env["CHOIR_VOX"]
-    assert_equal "0", env["FM_DRUMS"]
-    assert_equal "0.68", env["KICK_GAIN"]
   end
 
   def test_choir_chord_tones_are_thinned_mid_upper
@@ -1300,7 +1287,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_mix_metrics_returns_band_levels_when_demo_present
-    demo = File.expand_path("../tools/dilla/demo.wav", __dir__)
+    demo = File.expand_path("../../studio/dilla/demo.wav", __dir__)
     skip "demo.wav missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
     result = eval_in_engine(<<~RUBY)
@@ -1356,23 +1343,6 @@ class TestDilla < Minitest::Test
     assert lines.any? { |l| l.match?(/\Awarn0 at dilla0: warn /) }, lines.inspect
     lines.each do |l|
       assert_equal l, l.downcase, "dmesg lines must be lowercase: #{l}"
-    end
-  end
-
-  def test_wrapper_style_mapping_produces_engine_flags
-    # The wrapper's execution is guarded, so it loads cleanly in-process and
-    # only defines the DillaEntrypoint namespace.
-    load WRAPPER unless defined?(DillaEntrypoint)
-    args = DillaEntrypoint.engine_args("flylo", "/tmp/out.mp3", 112)
-    assert_includes args, "--track=chromatic_mediant_drift"
-    assert_includes args, "--sidechain=1"
-    assert_equal "112", args.last
-    assert_equal "dilla", args[1]
-
-    # Every flag the wrapper emits must be one the engine accepts.
-    engine_flags = eval_in_engine("puts JSON.generate(FLAG_ENV.keys)")
-    DillaEntrypoint::SETTINGS_FOR_TRACK.each_value do |settings|
-      assert_empty settings.keys - engine_flags, "wrapper emits flags the engine doesn't know"
     end
   end
 

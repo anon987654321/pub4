@@ -57,7 +57,7 @@ module Master
               "preserve existing visual identity",
               "use Ruby QualityFramework sound rules from Deliberation",
               "when proposing Dilla-style timing, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-              "do not invent a second critique system inside tools/dilla — perfect via MASTER commands",
+              "do not invent a second critique system inside studio/dilla — perfect via MASTER commands",
             ],
           },
           dilla: {
@@ -67,8 +67,8 @@ module Master
               "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer", "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
             ],
             files: %w[
-              tools/dilla/dilla.rb tools/dilla/lib/master_heuristics.rb
-              tools/dilla.rb lib/voice/dilla.rb lib/voice/production_dna.rb
+              ../studio/dilla/engine.rb ../studio/dilla/lib/master_heuristics.rb
+              lib/voice/dilla.rb lib/voice/production_dna.rb
               lib/io/analog_capabilities.rb
             ],
             quality_kind: :sound,
@@ -87,16 +87,39 @@ module Master
               "prefer existing FLAG_ENV / DILLA_STYLE_DEFAULTS knobs over new files",
               "use Master::Voice::Dilla and ProductionDna for timing/DNA; use MixMetrics for evidence",
               "multi-solution then cherry-pick is mandatory (QualityFramework general rule)",
-              "surgical ENV/mix changes only — no second crit engine inside tools/dilla",
+              "surgical ENV/mix changes only — no second crit engine inside studio/dilla",
+            ],
+          },
+          # General: whatever MASTER is currently processing (usually the
+          # path /scan and /fix just touched), not a fixed product surface.
+          # panel: nil -> build_panel falls back to every persona, since a
+          # scanned path could be Ruby, JS, CSS, or YAML.
+          general: {
+            preset_key: "general_critique",
+            max_bytes: 32_768,
+            panel: nil,
+            files: [].freeze,
+            quality_kind: :general,
+            ideation_prompt: "For each issue, propose 3 concrete solutions, then cherry-pick the " \
+                             "single best fix per problem -- prefer the smallest change that actually " \
+                             "resolves it over a rewrite.",
+            cycles_default: 1,
+            start_event: :general_critique_start,
+            done_event: :general_critique_done,
+            constraints: [
+              "surgical, minimal changes that fit existing conventions in the file",
+              "distinguish measurable violations from subjective taste",
+              "no speculative abstractions or unrequested refactors",
             ],
           },
         }.freeze
 
-        def initialize(mode:, agent:, event_bus: nil, audio_path: nil)
+        def initialize(mode:, agent:, event_bus: nil, audio_path: nil, files: nil)
           @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
           @agent = agent
           @bus = event_bus
           @audio_path = audio_path
+          @files_override = files
         end
 
         def run
@@ -152,7 +175,11 @@ module Master
         end
 
         def build_payload(preset)
-          files = Array(preset["files"]).any? ? preset["files"] : @mode[:files]
+          files = if Array(@files_override).any?
+                    @files_override
+                  else
+                    Array(preset["files"]).any? ? preset["files"] : @mode[:files]
+                  end
           combined = files.filter_map { |rel| read_truncated(rel) }.join("\n\n")
           metrics = mix_metrics_block if @mode[:include_mix_metrics]
           combined = [metrics, combined].compact.join("\n\n") if metrics
@@ -170,8 +197,11 @@ module Master
         end
 
         def read_truncated(rel)
-          path = File.join(Master::ROOT, rel)
-          return unless File.exist?(path)
+          # @files_override entries (whatever /scan or /fix just processed)
+          # come in as absolute paths already; preset/mode file lists are
+          # MASTER-root-relative.
+          path = rel.to_s.start_with?("/") ? rel.to_s : File.join(Master::ROOT, rel)
+          return unless File.file?(path)
 
           raw = File.read(path, encoding: "utf-8")
           raw = raw.byteslice(0, @mode[:max_bytes]) + "\n... [truncated]" if raw.bytesize > @mode[:max_bytes]
@@ -186,12 +216,22 @@ module Master
         def domain_context
           return ui_domain_context if @mode[:preset_key] == "ui_critique"
           return sound_domain_context if @mode[:preset_key] == "sound_critique"
-          dilla_domain_context if @mode[:preset_key] == "dilla_critique"
+          return dilla_domain_context if @mode[:preset_key] == "dilla_critique"
+          general_domain_context if @mode[:preset_key] == "general_critique"
+        end
+
+        def general_domain_context
+          <<~CTX
+          Reviewing whatever MASTER just scanned or fixed -- not a fixed product
+          surface, so judge each file on its own conventions rather than a
+          house style. Process: each persona critiques → multi-solution
+          ideation per issue → cherry-pick best.
+        CTX
         end
 
         def dilla_domain_context
           <<~CTX
-          Review the Dilla audio engine (tools/dilla) and any measured mix metrics.
+          Review the Dilla audio engine (studio/dilla) and any measured mix metrics.
           Goal: best possible pad-forward single-style render.
           Evaluate spectral hierarchy (pad vs sub), HF air, presence, groove density,
           headroom/crest, curated harmony, and platform loudness.

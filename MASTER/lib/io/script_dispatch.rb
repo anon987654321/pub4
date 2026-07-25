@@ -41,11 +41,15 @@ module Master
       # discoverable in every case.
       def script_path(requested_root, tool)
         # A tool entrypoint is either tools/<tool>.rb or, once it grows its own
-        # directory, tools/<tool>/<tool>.rb (e.g. postpro/postpro.rb).
+        # directory, tools/<tool>/<tool>.rb (e.g. postpro/postpro.rb). Media
+        # tools (dilla, postpro, repligen) were extracted out of MASTER/tools/
+        # into the sibling studio/<tool>/<tool>.rb — checked last so anything
+        # still living under MASTER/tools/ keeps taking priority.
         candidates = [requested_root, MasterPaths.root].uniq.flat_map do |candidate|
           [File.join(candidate, "tools", "#{tool}.rb"),
            File.join(candidate, "tools", tool, "#{tool}.rb")]
         end
+        candidates << File.join(MasterPaths.repo, "studio", tool, "#{tool}.rb")
         candidates.find { |candidate| File.file?(candidate) } || candidates.first
       end
 
@@ -54,6 +58,9 @@ module Master
         # root — the parent of the MASTER checkout — so relative asset/config
         # paths resolve identically regardless of the tool's file layout.
         return File.expand_path("..", requested_root) if script.start_with?(File.join(requested_root, "tools") + File::SEPARATOR)
+        # studio/<tool> scripts run from their own directory — that's where
+        # their scratch/.cache, samples/, and project/ state live.
+        return File.dirname(script) if script.start_with?(File.join(MasterPaths.repo, "studio") + File::SEPARATOR)
         return requested_root if File.directory?(requested_root)
 
         MasterPaths.repo

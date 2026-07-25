@@ -25,9 +25,9 @@ module Pub4
 
     def repligen_candidates
       [
-        repo_join("studio/repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/repligen.rb"),
-        rails_root.join("../../studio/repligen.rb"),
+        repo_join("studio/repligen/repligen.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/repligen/repligen.rb"),
+        rails_root.join("../../studio/repligen/repligen.rb"),
       ]
     end
 

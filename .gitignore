@@ -74,19 +74,25 @@ MASTER/snapshot.md
 .master/
 MASTER/output/
 
-# MASTER/tools/dilla build artifacts and local audio scratch
-# (was DEPLOY/tools/dilla/ before the 2026-07 DEPLOY->OPERATOR/RAILS/OPENBSD
-# split — dilla itself lives under MASTER/tools/, never moved to OPERATOR)
-MASTER/tools/dilla/analysis/
-# .cache/ is the engine's consolidated scratch dir (SCRATCH_DIR in dilla.rb);
+# studio/dilla build artifacts and local audio scratch
+# (moved 2026-07-25 from MASTER/tools/dilla/ to the sibling studio/dilla/;
+# dilla itself never moved to OPERATOR)
+studio/dilla/analysis/
+# .cache/ is the engine's consolidated scratch dir (SCRATCH_DIR in engine.rb);
 # the dotfile patterns below it catch strays from pre-.cache versions.
-MASTER/tools/dilla/.cache/
-MASTER/tools/dilla/.dilla_*
+studio/dilla/.cache/
+studio/dilla/.dilla_*
 # pre-.cache engine versions wrote this into whatever directory they ran
 # from — match it anywhere until no old-code process remains
 .dilla_progressions_log.txt
-MASTER/tools/dilla/.live_tmp.wav
-MASTER/tools/dilla/dilla_beat_live*.mp3
+studio/dilla/.live_tmp.wav
+studio/dilla/dilla_beat_live*.mp3
+# Python venvs for the audio tools studio/dilla and studio/radio-bergen shell
+# out to (demucs stem separation, librosa analysis) — rebuilt locally, never shipped.
+studio/dilla/.venv-demucs/
+studio/radio-bergen/.venv/
+# ad-hoc check renders left in the tool's own directory by manual listening passes
+studio/dilla/check_*.wav
 RAILS/*/app/assets/builds/*.css.map
 
 # NSD zone and DNSSEC outputs are regenerated from OPENBSD/var/nsd templates.

@@ -16,7 +16,7 @@ class TestDillaCouncil < Minitest::Test
     assert_equal "dilla_critique", dilla[:preset_key]
     assert dilla[:include_mix_metrics]
     assert_match(/cherry-pick/i, dilla[:ideation_prompt])
-    assert_includes dilla[:files], "tools/dilla/dilla.rb"
+    assert_includes dilla[:files], "../studio/dilla/engine.rb"
   end
 
   def test_dilla_panel_personas_exist_in_council_yaml
@@ -48,7 +48,7 @@ class TestDillaCouncil < Minitest::Test
   end
 
   def test_mix_metrics_from_demo_when_present
-    demo = File.join(Master::ROOT, "tools/dilla/demo.wav")
+    demo = File.join(Master::ROOT, "../studio/dilla/demo.wav")
     skip "demo.wav missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
     m = Master::Voice::MixMetrics.from_path(demo)

@@ -1,0 +1,642 @@
+{
+  "track": "neo_soul",
+  "performer": "herbie",
+  "groove_dna": "endtroducing",
+  "generation": 55,
+  "best_score": 68.13,
+  "motifs": [
+    {
+      "id": "hook",
+      "degrees": [
+        0,
+        2,
+        1
+      ],
+      "rhythm": [
+        1.0,
+        0.5,
+        0.5,
+        1.0
+      ],
+      "state": "A_double_prime"
+    },
+    {
+      "id": "bass_motif",
+      "degrees": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "rhythm": [
+        1.0,
+        1.0,
+        0.5,
+        0.5
+      ],
+      "state": "A_double_prime"
+    }
+  ],
+  "callbacks": [
+    {
+      "bar": "0",
+      "motif_id": "hook",
+      "state": "A"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "32",
+      "motif_id": "hook",
+      "state": "A_double_prime"
+    },
+    {
+      "bar": "48",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    }
+  ],
+  "tension_curve": [
+    0.1226,
+    0.094,
+    0.6896,
+    0.6783,
+    0.7481,
+    0.65,
+    0.3059,
+    0.05
+  ],
+  "arrangement": [
+    {
+      "bar": "0",
+      "section": "intro"
+    },
+    {
+      "bar": "1",
+      "section": "intro"
+    },
+    {
+      "bar": "2",
+      "section": "intro"
+    },
+    {
+      "bar": "3",
+      "section": "intro"
+    },
+    {
+      "bar": "4",
+      "section": "verse"
+    },
+    {
+      "bar": "5",
+      "section": "verse"
+    },
+    {
+      "bar": "6",
+      "section": "verse"
+    },
+    {
+      "bar": "7",
+      "section": "verse"
+    }
+  ],
+  "critique_log": [
+    {
+      "gen": 0,
+      "score": 68.13,
+      "critique": {
+        "groove": 70,
+        "harmony": 80,
+        "hook": 95,
+        "variation": 52,
+        "stereo": 88,
+        "lufs": 65
+      }
+    },
+    {
+      "gen": 1,
+      "score": 67.62,
+      "critique": {
+        "groove": 70,
+        "harmony": 80,
+        "hook": 95,
+        "variation": 55,
+        "stereo": 88,
+        "lufs": 65
+      }
+    }
+  ]
+}

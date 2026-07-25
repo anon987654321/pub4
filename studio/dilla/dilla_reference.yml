@@ -1,0 +1,79 @@
+# dilla_reference.yml — sourced material and quality gates for the Dilla
+# engine, pulled from documented interviews, track analysis, and producer
+# consensus (Dan Charnas "Dilla Time"; Ethan Hein analyses; forum/tutorial
+# consensus on MPC-era mixing). Loaded once at boot by dilla.rb:
+#   - documented_progressions merge into HARMONY_PROFILES (producer_dna.rb)
+#     as additive entries — existing named profiles (e.g. slum_players,
+#     chromatic_mediant_drift) are NOT overwritten, since some are original
+#     Dilla/FlyLo-inspired compositions rather than direct transcriptions.
+#   - loss_gates are hard reject thresholds checked before a take is
+#     promoted into project/promoted_profiles.json (see promote_progression_hook!
+#     in dilla.rb and DillaMaster.passes_loss_gates? in lib/master_heuristics.rb).
+#
+# Chord symbols are limited to what DillaLofiMachine.chord_from_symbol can
+# parse (see CHORD_SUFFIXES / CHORD_VOICINGS in lib/producer_dna.rb) — a few
+# symbols here were simplified from the original documented voicing (13th ->
+# 7th, alt tensions spelled as "alt") either because that exact extension
+# isn't in the parser's vocabulary, or because DillaMusicGems (the coltrane
+# gem adapter) hangs on the literal symbol. See the "source_note" per entry.
+
+documented_progressions:
+  slum_village_players_documented:
+    producer: dilla
+    key: "C minor"
+    bpm: 91
+    swing: 56
+    chord_bars: 2
+    phrase_bars: 16
+    voicing: rootless
+    chords: [Cm9, Fm9, Bb7, Ebmaj7, Abmaj7, Dm7b5, G7alt, Cm9]
+    source: "Slum Village - Fantastic Vol. 2, 'Players' (documented track analysis)"
+    source_note: "Original voicing is Bb13/G7#5#9; simplified to Bb7/G7alt — '13' isn't a parseable extension here, 'alt' already covers the #5/#9 tensions."
+
+  slum_village_intro_documented:
+    producer: dilla
+    key: "C minor"
+    bpm: 91
+    swing: 56
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Cm9, Fm9, Bb7, Ebmaj7]
+    source: "Slum Village - Fantastic Vol. 2, 'Intro'"
+    source_note: "Bb13 simplified to Bb7, same reason as Players above."
+
+  flylo_beginners_falafel_documented:
+    producer: flylo
+    key: "C major"
+    bpm: 86
+    swing: 54
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Dm9, G7, Cmaj9, Fmaj7]
+    source: "Flying Lotus - Los Angeles, 'Beginners Falafel'"
+    source_note: "G13 simplified to G7."
+
+  flylo_camel_documented:
+    producer: flylo
+    key: "C major"
+    bpm: 86
+    swing: 54
+    chord_bars: 2
+    phrase_bars: 8
+    voicing: rootless
+    chords: [Dm9, G7, Cmaj9, Fmaj7]
+    source: "Flying Lotus - Los Angeles, 'Camel'"
+    source_note: "Fmaj7#11 simplified to Fmaj7 — '#11' isn't a parseable extension here. Distinct from the existing chromatic_mediant_drift/quartal_west_coast profiles used by RENDER_MODE=camel, which are original FlyLo-inspired compositions, not transcriptions of this track."
+
+# Hard pre-flight rejects, not just advisory scores — a take failing any of
+# these should not be promoted even if beauty/groove scored well.
+loss_gates:
+  crest_factor_min_db: 6.0
+  source: "peak-to-RMS below 6dB reads as over-compressed/lacking punch"
+  mud_max_db_200_400hz: -12.0
+  mud_source: "sustained energy above -12dBFS in the 200-400Hz 'mud zone' masks snare body"
+  kick_bass_correlation_max: 0.95
+  correlation_source: "kick/bass micro-timing correlation above 0.95 reads as quantized/robotic"
+  stereo_phase_correlation_min: 0.30
+  phase_source: "L/R phase correlation below 0.30 anywhere risks cancellation when summed to mono (phone/laptop speakers, club mono sends)"
