@@ -8,7 +8,7 @@
   color: var(--color-text);
   background: var(--color-bg);
   overflow: hidden;
-  cursor: none;
+  cursor: auto;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -100,30 +100,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: min(300px, 60vw);
-}
-
-/* Custom crosshair — parked off-screen until the first pointer move.
-   Previously `display:block` on desktop left a white 24×24 square at (0,0)
-   that sat on the city brand in the top-left corner. */
-.radio-cursor {
-  position: fixed;
-  inset-block-start: -9999px;
-  inset-inline-start: -9999px;
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  border-radius: 0;
-  pointer-events: none;
-  z-index: 1000;
-  mix-blend-mode: difference;
-  transition: opacity var(--transition), transform var(--transition);
-  display: none;
-  opacity: 0;
-}
-
-.radio-cursor.is-active {
-  display: block;
-  opacity: 0.85;
 }
 
 .radio-overlay {

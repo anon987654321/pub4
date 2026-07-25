@@ -2,7 +2,14 @@
   <% if @located %>
     <%= turbo_stream_from @conversation %>
 
-    <ul id="messages" class="nearby-chat-widget-log">
+    <% if @messages.blank? %>
+      <div class="nearby-chat-widget-empty">
+        <strong>You’re in the room</strong>
+        <p>No messages yet within ~10&nbsp;km. Say hi as <strong><%= Current.user.anon_handle %></strong>.</p>
+      </div>
+    <% end %>
+
+    <ul id="messages" class="nearby-chat-widget-log" aria-live="polite">
       <% @messages.each do |m| %>
         <%= render "messages/message", message: m %>
       <% end %>
@@ -11,13 +18,25 @@
     <%= form_with model: @message, url: conversation_messages_path(@conversation),
                   id: "new_message", class: "nearby-chat-widget-composer",
                   data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
-      <%= f.text_area :content, rows: 1, placeholder: "Message as #{Current.user.anon_handle}…", maxlength: 500 %>
+      <%= f.text_area :content, rows: 1, placeholder: "Message as #{Current.user.anon_handle}…", maxlength: 500, aria: { label: "Message" } %>
       <%= f.hidden_field :message_type, value: "text" %>
       <%= f.submit "Send", class: "btn btn-primary btn-sm" %>
     <% end %>
-  <% elsif authenticated? %>
-    <p class="dim nearby-chat-widget-empty">Share your location on the <%= link_to "nearby page", nearby_path %> to join the chat.</p>
+  <% elsif Current.user.present? %>
+    <div class="nearby-chat-widget-empty">
+      <strong>Share location to join</strong>
+      <p>Nearby chat is radius-scoped (~10&nbsp;km). Enable location on the nearby page so we can drop you in the room with people around you.</p>
+      <%= link_to "Enable location", nearby_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      <% unless authenticated? %>
+        <%= link_to "Sign in for a permanent account", new_session_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
   <% else %>
-    <p class="dim nearby-chat-widget-empty"><%= link_to "Sign in", new_session_path %> and share your location to chat with everyone nearby.</p>
+    <div class="nearby-chat-widget-empty">
+      <strong>Hyperlocal chat</strong>
+      <p>Talk to people near you — anonymous handles, messages fade. Sign in and share location to join the room.</p>
+      <%= link_to "Sign in", new_session_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      <%= link_to "What is nearby?", nearby_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+    </div>
   <% end %>
 </turbo-frame>

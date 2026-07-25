@@ -143,20 +143,14 @@ section h2 {
   border-radius: 0;
 }
 
-/* Fleet nearby/chat bar — bottom-right on every app (brgen/amber/bsdports).
-   Sits above immersive chrome (radio-tunnel z:50, app-shell, tab bar). */
+/* Fleet nearby/chat bar — flush to the bottom-right edge (safe-area only). */
 .nearby-chat-widget {
   position: fixed;
-  bottom: calc(16px + var(--safe-bottom, 0px));
-  inset-inline-end: calc(16px + var(--safe-right, 0px));
+  bottom: var(--safe-bottom, 0px);
+  inset-inline-end: var(--safe-right, 0px);
   z-index: var(--z-toast, 1100);
   font-family: var(--font-mono, ui-monospace, monospace);
   pointer-events: auto;
-}
-
-/* Clear playlist now-playing chip in the same corner. */
-body.vertical-playlist .nearby-chat-widget {
-  bottom: calc(72px + var(--safe-bottom, 0px));
 }
 
 .nearby-chat-widget-tab {
@@ -165,9 +159,12 @@ body.vertical-playlist .nearby-chat-widget {
   gap: 6px;
   background: var(--surface2, var(--surface-elevated, #211f28));
   border: 1px solid var(--border, #46435a);
-  border-radius: var(--radius-sm, 8px);
+  border-block-end: 0;
+  border-inline-end: 0;
+  border-radius: var(--radius-sm, 8px) 0 0 0;
   color: var(--text, #d8d6e0);
-  padding: 0.5rem 0.875rem;
+  padding: 0.625rem 0.95rem;
+  min-height: 44px;
   font: 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -179,17 +176,25 @@ body.vertical-playlist .nearby-chat-widget {
 
 .nearby-chat-widget-panel {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: 0;
   inset-inline-end: 0;
-  width: min(340px, calc(100vw - 32px));
-  height: min(440px, calc(100vh - 140px));
+  width: min(360px, 100vw);
+  height: min(460px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
   background: var(--surface2, var(--surface-elevated, #211f28));
   border: 1px solid var(--border, #46435a);
-  border-radius: var(--radius-card, 16px);
+  border-block-end: 0;
+  border-inline-end: 0;
+  border-radius: var(--radius-card, 16px) 0 0 0;
   overflow: hidden;
   animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+/* When open, hide the tab under the panel (panel owns the corner). */
+.nearby-chat-widget:has(.nearby-chat-widget-panel:not(.hidden)) .nearby-chat-widget-tab {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @keyframes nearby-widget-in {
@@ -251,24 +256,70 @@ body.vertical-playlist .nearby-chat-widget {
   font-size: 0.8125rem;
 }
 
+.nearby-chat-widget-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .nearby-chat-widget-empty {
-  padding: 0.875rem;
-  font-size: 0.8125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0.95rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text, #d8d6e0);
+}
+
+.nearby-chat-widget-empty p {
+  margin: 0;
   color: var(--text-dim, var(--text-secondary, #8a879c));
 }
 
-.nearby-chat-widget-empty a {
+.nearby-chat-widget-empty strong {
+  color: var(--text, #d8d6e0);
+  font-weight: 700;
+}
+
+.nearby-chat-widget-empty a,
+.nearby-chat-widget-cta {
   color: var(--accent, #7c6fd6);
+}
+
+.nearby-chat-widget-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border, #46435a);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg, #17161c);
+  text-decoration: none;
+  font: 600 0.8125rem/1 var(--font-mono, ui-monospace, monospace);
+  width: fit-content;
+}
+
+.nearby-chat-widget-cta:hover {
+  border-color: var(--text-dim, var(--text-secondary, #8a879c));
+  text-decoration: none;
+}
+
+.nearby-chat-widget-log li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border, #46435a) 55%, transparent);
+}
+
+.nearby-chat-widget-log li:last-child {
+  border-bottom: 0;
 }
 
 @media (max-width: 480px) {
   .nearby-chat-widget-panel {
-    width: calc(100vw - 24px);
-    inset-inline-end: -8px;
-  }
-
-  body.vertical-playlist .nearby-chat-widget {
-    bottom: calc(88px + var(--safe-bottom, 0px));
+    width: 100vw;
+    height: min(70vh, 520px);
   }
 }
 

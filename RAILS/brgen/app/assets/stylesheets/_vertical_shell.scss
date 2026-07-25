@@ -84,11 +84,20 @@ body.vertical-playlist .dg.ac {
   display: none !important;
 }
 
-/* Brand mark sits above the tunnel canvas (z:50). */
+/* Brand mark sits above the tunnel canvas (z:50) — a touch larger + tighter
+   to the corner than the fleet default. */
 body.vertical-playlist .brgen-logo-mark {
   display: inline-flex !important;
   z-index: calc(var(--z-toast, 1100) + 1);
   color: var(--color-text, var(--text));
+  top: max(0.2rem, env(safe-area-inset-top, 0px));
+  inset-inline-start: max(0.35rem, env(safe-area-inset-left, 0px));
+  padding: 0.1rem 0.15rem;
+  min-height: 0;
+  min-width: 0;
+  font-size: clamp(1.2rem, 3.6vw, 1.55rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 body.vertical-marketplace [data-controller="live-search"],

@@ -33,9 +33,12 @@ class NearbyController < ApplicationController
   # Same join as #room, but renders in place instead of redirecting to the full
   # channel page -- the widget IS the frame, there's nowhere to navigate to.
   def widget
+    # Always render the frame shell (guest CTA / location prompt / room) so the
+    # popup is never a blank box when lazy load or auth state is partial.
     lat = Current.user&.latitude
     lng = Current.user&.longitude
-    @located = Current.user.present? && lat && lng
+    @located = Current.user.present? && lat.present? && lng.present?
+    @messages = []
     return unless @located
 
     @conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)

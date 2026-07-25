@@ -358,7 +358,6 @@ export class RadioBrgen {
   constructor(options = {}) {
     this.canvas = options.canvas
     this.overlay = options.overlay
-    this.cursor = options.cursor
     this.onStart = options.onStart
     this.isStarted = false
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
@@ -444,7 +443,6 @@ export class RadioBrgen {
     const onMouseMove = (e) => {
       if (!this.isStarted) return
       this.visualEngine.setMouse(e.clientX, e.clientY, this.visualEngine.mouse.down, true)
-      this.updateCursor(e.clientX, e.clientY)
     }
     const onMouseDown = (e) => {
       if (!this.isStarted) return
@@ -483,14 +481,12 @@ export class RadioBrgen {
         const touch = e.touches[0]
         this.visualEngine.setTouch(touch.clientX, touch.clientY, true)
         this.visualEngine.setMouse(touch.clientX, touch.clientY, true, false)
-        this.updateCursor(touch.clientX, touch.clientY)
       }
       const onTouchMove = (e) => {
         if (!this.isStarted) return
         e.preventDefault()
         const touch = e.touches[0]
         this.visualEngine.setTouch(touch.clientX, touch.clientY, true)
-        this.updateCursor(touch.clientX, touch.clientY)
       }
       const onTouchEnd = (e) => {
         if (!this.isStarted) return
@@ -507,18 +503,6 @@ export class RadioBrgen {
         ["document", "touchend", onTouchEnd]
       )
     }
-  }
-
-  updateCursor(x, y) {
-    if (!this.cursor || window.innerWidth < 768) return
-    // Only paint the white crosshair once we have a real pointer position —
-    // otherwise it sits at (0,0) as a hollow square on the brand corner.
-    this.cursor.classList.add("is-active")
-    this.cursor.style.left = `${x - 12}px`
-    this.cursor.style.top = `${y - 12}px`
-    const intensity = this.audioEngine.bassLevel + this.audioEngine.audioLevel
-    this.cursor.style.transform = `scale(${1 + intensity * 0.3})`
-    this.cursor.style.opacity = `${0.8 + intensity * 0.15}`
   }
 
   startAnimation() {
