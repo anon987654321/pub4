@@ -41,7 +41,7 @@ module Master
           case @session.phase.to_s
           when "discover" then [prop(action: "/scan", reason: "discover phase — survey state", weight: 0.4)]
           when "implement" then [prop(action: "/diff", reason: "implement phase — review staging", weight: 0.45)]
-          when "audit" then [prop(action: "/council", reason: "audit phase — convene council", weight: 0.5)]
+          when "audit" then [prop(action: "/review", reason: "audit phase — convene council", weight: 0.5)]
           else []
           end
         end
@@ -224,7 +224,7 @@ module Master
           return [] unless new_patterns
 
           [prop(
-            action: "/council",
+            action: "/review",
             reason: "#{new_patterns.first(3).join(', ')} surfaced repeatedly but are not in soul.yml; consider adding a constitutional axiom",
             weight: 0.64,
           )]
