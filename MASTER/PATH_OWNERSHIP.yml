@@ -150,3 +150,26 @@ ownership:
     purpose: local runtime state, cache, memory, traces
     risk: local
     check: none
+  tools/:
+    purpose: repo-hygiene and verification one-offs (security sweep, inventory,
+      convergence evidence gate) — distinct from script/'s style/canon gates
+      and bin/'s runtime entry points
+    risk: medium
+    check: ruby -Ilib:test spec/tools/lifecycle_tools_spec.rb
+  script/:
+    purpose: style guide sync and canon generation gates run from Rakefile
+    risk: medium
+    check: bin/check
+  docs/:
+    purpose: human-curated reference notes not consumed by code
+    risk: low
+    check: none
+  reports/:
+    purpose: generated report snapshots (dossiers, screenshots) — regenerate,
+      don't hand-edit
+    risk: local
+    check: none
+  completions/:
+    purpose: shell completion script for bin/cli
+    risk: low
+    check: none
