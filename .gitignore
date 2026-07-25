@@ -11,6 +11,10 @@ vendor/bundle
 RAILS/*/public/assets/
 MASTER/web/public/assets/
 
+# visual_contract_gate.rb screenshot/diff renders — regenerated every gate
+# run from live app pages; only the *-manifest.json baselines are tracked.
+RAILS/visual_contract/*.png
+
 # Logs and databases
 *.log
 *.log.*
