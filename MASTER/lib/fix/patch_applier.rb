@@ -31,7 +31,9 @@ module Master
           f.flush
           _out, err, status = Master::Io::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
           return Failure.new(reason: err.strip[0, 200]) unless status.success?
+          result = File.read(f.path)
           return Failure.new(reason: "no change") if result.strip == @original.strip
+          Success.new(source: result)
         end
       rescue StandardError => e
         Failure.new(reason: e.message[0, 200])
