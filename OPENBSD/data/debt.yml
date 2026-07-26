@@ -14,6 +14,76 @@ open:
       or run amber on-demand. After restarts: master → brgen → amber → relayd.
       Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional).
 
+  # --- Security review 2026-07-27. VERIFIED BY INSPECTION, not yet fixed.
+  - id: internet_app_runs_as_passwordless_root_user
+    tag: operator-priority
+    summary: >
+      etc/doas.conf:1 is `permit nopass keepenv dev as root` — blanket,
+      passwordless, keepenv, no cmd restriction — while etc/rc.d/master:12 sets
+      daemon_user="dev". MASTER is the internet-facing app on ai.brgen.no, so
+      ANY code execution as dev is root with no password. brgen/amber/bsdports
+      correctly run as their own users; only master does not.
+      NOTE scoping doas via cmd rules (as etc/doas.conf.example documents) does
+      NOT work here: the deploy pipeline invokes `doas zsh` 27x, `doas sh` 8x,
+      `doas ksh` 6x, `doas su` 2x — a root shell is equivalent to blanket root.
+      The real fix is a dedicated master user + chown, not doas scoping.
+      The chat entry point into exec was closed 2026-07-27 (see git log,
+      "stop visitor chat reaching the Fold"), but the escalation primitive
+      remains for any other code-exec-as-dev path.
+  - id: root_dot_sources_dev_owned_repo_every_5min
+    tag: operator-priority
+    summary: >
+      etc/crontab.vm23:12 runs resource_guard.sh as root every 5 minutes, and
+      resource_guard.sh:64-68 dot-sources ${GUARD_REPO:-/home/dev/pub4}/OPENBSD/
+      validate_doas.ksh and stale_ci_cleanup.ksh — i.e. root EXECUTES files from
+      a dev-owned git checkout. Write access to either file is root code
+      execution within 5 minutes, independent of doas.
+      Consequence for remediation: install_doas_conf_from_repo then copies the
+      REPO's doas.conf over /etc/doas.conf, so hand-editing /etc/doas.conf on
+      the host is reverted on the next tick. Fix the repo file first.
+      Also validate_doas.ksh:30 writes /tmp/doas.conf.install.$$ (PID-predictable,
+      world-writable dir) and cp's it to /etc/doas.conf without -h/-P.
+  - id: secrets_in_process_argv_and_world_readable_home
+    tag: operator-priority
+    summary: >
+      etc/rc.d/{master,brgen,amber,bsdports,bplan} pass SECRET_KEY_BASE,
+      MASTER_BRIDGE_TOKEN and the LLM API keys inside daemon_flags, so they
+      become ksh argv readable by any local account via `ps auxww`. A foothold
+      in one app user yields every other app's SECRET_KEY_BASE — cross-app
+      signed-cookie forgery. Compounded by vps_ci.sh:88 / RAILS/_runtime_gate.sh:71
+      running `chmod o+x /home/dev` while OPERATOR.sh installs /home/dev/.zshrc
+      at mode 644 with real keys in it. Move secrets to the sourced /etc/*.env.
+  - id: committed_rails_master_key_public_repo
+    tag: operator-priority
+    summary: >
+      MASTER/web/config/master.key and credentials.yml.enc are tracked AND
+      present on origin/main of github.com/anon987654321/pub4, which is PUBLIC
+      (verified: unauthenticated API returns 200). Listed in two .gitignore
+      files, but ignoring never untracks. Blast radius is limited — the file
+      contains only secret_key_base, and production does not use it (MASTER runs
+      SECRET_KEY_BASE_DUMMY=1; the Rails apps read SECRET_KEY_BASE from
+      /etc/*.env) — but it must be untracked, rotated, and purged from history.
+  - id: payment_webhooks_unverified
+    tag: operator-priority
+    summary: >
+      marketplace/webhooks_controller.rb checks only that a Stripe-Signature
+      header is PRESENT and never computes the HMAC; the Vipps handler has no
+      check at all. Both are public POSTs with skip_forgery_protection and no
+      rate limit, and order ids are sequential — forge an event, mark any order
+      paid, trigger fulfilment. UNVERIFIED by me; from the 2026-07-27 review.
+  - id: brgen_allow_unauthenticated_access_is_a_noop
+    tag: operator-priority
+    summary: >
+      shared/.../authentication.rb:18-22 returns early when User has a `guest`
+      column, so in brgen allow_unauthenticated_access does nothing and
+      resume_session mints a real User row for every anonymous visitor. Every
+      "requires a session" control in brgen is therefore reachable by anyone.
+      Also a DoS: has_secure_password means each cookieless request costs a
+      bcrypt hash (measured 460ms at cost 12) plus a write under SQLite's single
+      writer — roughly 2 req/s saturates the 1-vCPU VM — and
+      Shared::PruneGuestUsersJob is never enqueued or scheduled anywhere, with
+      no index on users.guest, so the rows accumulate permanently.
+
   # --- RAILS audit 2026-07-26. The crash-level items from this pass are fixed
   # (see git log and the closed: entries below); what remains open here is
   # structural — gates, coverage, and non-raising dead wiring.
