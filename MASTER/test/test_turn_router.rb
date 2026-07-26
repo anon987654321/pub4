@@ -16,15 +16,25 @@ class TurnRouterTest < Minitest::Test
     }
   end
 
+  # A coding goal that Infer does not promote to an operator command: "fix the
+  # bug" now routes to /fix via THROUGH_COMMANDS, so it no longer reaches the
+  # Fold. This message stays plain language all the way down.
   def test_plain_language_routes_to_fold
     fold = { reason: :complete, turns: 1, summary: "done", transcript: [] }
     Master.stub(:any_api_key_present?, true) do
       Master::CLI::CoreBridge.stub(:run, fold) do
-        result = Master::CLI::TurnRouter.call(message: "fix the bug", container: build_container)
+        result = Master::CLI::TurnRouter.call(message: "implement pagination for posts", container: build_container)
         assert result.ok?
         assert_match(/core: complete/, result.value[:rendered])
       end
     end
+  end
+
+  def test_fix_language_is_promoted_to_operator_command_not_fold
+    inferred = Master::CLI::TurnRouter.infer_operator_command("fix the bug", container: build_container)
+
+    refute_nil inferred, "expected Infer to promote 'fix the bug' to an operator command"
+    assert_includes Master::CLI::TurnRouter::THROUGH_COMMANDS, inferred[:command]
   end
 
   def test_slash_routes_to_command_registry

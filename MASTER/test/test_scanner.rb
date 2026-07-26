@@ -114,7 +114,10 @@ class TestScanner < Minitest::Test
 
       out, = capture_io { scanner.scan_dir(dir, stream: true) }
 
-      assert_includes out, "scan: [1/1] sample.rb 1 violation(s)"
+      # dmesg-style progress: attach line, per-file hit, checkpoint, completion.
+      assert_includes out, "scan0 at mainbus0: files=1 stream=on"
+      assert_includes out, "scan0: hit 1/1 sample.rb +1"
+      assert_includes out, "scan0: complete=yes files=1 violations=1"
     end
   end
 

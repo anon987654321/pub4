@@ -3,11 +3,19 @@
 require_relative "test_helper"
 
 class TestAesthetic < Minitest::Test
-  def test_defaults_to_wscons
+  def test_defaults_to_brutalist
     with_env("MASTER_AESTHETIC" => nil) do
+      assert_equal "brutalist", Master::Voice::Aesthetic.mode
+      assert Master::Voice::Aesthetic.brutalist?
+      refute Master::Voice::Aesthetic.wscons?
+      refute Master::Voice::Aesthetic.phosphor?
+    end
+  end
+
+  def test_wscons_mode_is_opt_in
+    with_env("MASTER_AESTHETIC" => "wscons") do
       assert_equal "wscons", Master::Voice::Aesthetic.mode
       assert Master::Voice::Aesthetic.wscons?
-      refute Master::Voice::Aesthetic.phosphor?
     end
   end
 
@@ -18,9 +26,9 @@ class TestAesthetic < Minitest::Test
     end
   end
 
-  def test_unknown_mode_falls_back_to_wscons
+  def test_unknown_mode_falls_back_to_brutalist
     with_env("MASTER_AESTHETIC" => "neon") do
-      assert_equal "wscons", Master::Voice::Aesthetic.mode
+      assert_equal "brutalist", Master::Voice::Aesthetic.mode
     end
   end
 
