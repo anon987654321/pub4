@@ -112,13 +112,25 @@ class AiController < ApplicationController
     end
   end
 
+  # Writes a StylePreference, not the old table-less StyleProfile: preferences
+  # are the backed concept (style_preferences table, User has_many, consumed by
+  # OutfitCompatibility#preference_fit). The questionnaire sets *the* aesthetic,
+  # so the previous one is replaced rather than accumulated — the table's unique
+  # index is [user_id, kind, name], which would otherwise leave a user holding
+  # several contradictory aesthetics.
   def style_profile
     if request.post? || params[:answers].present?
       answers = params[:answers] || {}
       result = WardrobeAi.new(Current.user).infer_style_profile(answers)
-      profile = Current.user.style_profile || Current.user.build_style_profile
       aesthetic = result["aesthetic"].presence || "minimal"
-      profile.update!(style_preferences: aesthetic, body_type: answers[:body_type])
+
+      StylePreference.transaction do
+        Current.user.style_preferences.where(kind: :aesthetic).where.not(name: aesthetic).destroy_all
+        Current.user.style_preferences
+               .find_or_initialize_by(kind: :aesthetic, name: aesthetic)
+               .update!(weight: 1.0, metadata: { body_type: answers[:body_type] }.compact)
+      end
+
       redirect_to user_path(Current.user), notice: "Style profile set to #{aesthetic}"
     end
   end
