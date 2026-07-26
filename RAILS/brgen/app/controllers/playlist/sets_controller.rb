@@ -12,8 +12,15 @@ module Playlist
       scope = Playlist::Set.publicly_listed
       if live_search_query.present?
         set_ids = apply_live_search(scope, columns: %w[name description], vertical: "playlist").pluck(:id)
-        track_ids = Playlist::Track.where("name LIKE :q OR artist LIKE :q", q: "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%").pluck(:playlist_set_id)
-        scope = scope.where(id: (set_ids + track_ids).uniq)
+        # playlist_tracks has `title`, not `name`, and carries no playlist_set_id —
+        # sets reach tracks through playlist_set_tracks. The previous raw query
+        # named both missing columns, so any non-blank search raised
+        # "no such column: playlist_set_id".
+        matching_tracks = Playlist::Track
+                          .where("title LIKE :q OR artist LIKE :q", q: "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%")
+                          .select(:id)
+        track_set_ids = Playlist::SetTrack.where(playlist_track_id: matching_tracks).pluck(:playlist_set_id)
+        scope = scope.where(id: (set_ids + track_set_ids).uniq)
       end
       @pagy, @sets = pagy(scope)
       finish_live_search(partial: "playlist/sets/live_search_results")
