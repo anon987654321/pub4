@@ -723,4 +723,44 @@ foundations:
     principle: 'Every artifact obeys four maxims: say enough and no more (quantity),
       assert nothing false (quality), stay relevant (relation), be clear and orderly
       (manner).'
+substrate:
+  metaphysics:
+    axiom: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+    principle: No inside-check of a self-describing ruleset is complete; never
+      change more than an imperfect check could catch. Humility as axiom.
+    acknowledged_limits:
+      self_application:
+        name: "Gödel / liar's paradox"
+        symptom: sweep grades the code that runs sweep
+        mitigation: bounded diffs; council quorum; lint as external second witness
+      mimesis:
+        name: anti-simulation paradox (Plato)
+        symptom: pretending not to pretend is still pretending
+        mitigation: ground_truth_check; evidence_scoring over self-report
+      incommensurability:
+        name: value pluralism (Berlin)
+        symptom: security and typography share no common scale
+        mitigation: schedule values in pipeline time; never rank across domains
+      akrasia:
+        name: cheap-path degradation (Aristotle)
+        symptom: shortcuts compound until the shortcut is the road
+        mitigation: veto_patterns; violation_age; work spent against decay each pass
+  semantics:
+    principle: rules.yml is a translation layer. Each foundation speaks its own
+      language (math, grammar, type, security); all are rendered into one shared
+      dialect of yaml promises. Meaning lives in the mapping, not the words.
+    grounds:
+    - foundations
+    - principle_map
+    - rule_deps
+  logic:
+    principle: Values are scheduled, not ranked. Order in time replaces rank in
+      value wherever domains are incommensurable.
+    scheduling:
+      pre_execute_veto: guard
+      post_execute_review:
+      - council
+      - lint
+    note: principle_priorities ranks within domains only; cross-domain conflicts
+      resolve by pipeline position.
 rules: {}
