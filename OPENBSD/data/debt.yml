@@ -14,6 +14,87 @@ open:
       or run amber on-demand. After restarts: master → brgen → amber → relayd.
       Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional).
 
+  # --- RAILS audit 2026-07-26. Crash-level items from the same pass are
+  # already fixed (see git log: webhooks routing, post mentions, TV episodes,
+  # listing broadcast, bsdports inbox link / categories / recurring.yml).
+  - id: playlist_missing_tables
+    tag: operator-priority
+    summary: >
+      brgen Playlist::TimestampedComment and Playlist::AudioVersion set
+      table_name to playlist_timestamped_comments / playlist_audio_versions;
+      neither table exists in db/schema.rb nor in any of the 92 migrations.
+      /playlists/:id 500s today (playlists_controller.rb:20), track deletion
+      500s, and the timestamped-comments reflex + player JS both fail.
+      Decide: add the two migrations, or delete the models and call sites.
+  - id: bsdports_missing_social_tables
+    tag: operator-priority
+    summary: >
+      bsdports includes Shared::Reactable (has_many :reactions, dependent:
+      :destroy) but its 12-table schema has no reactions table, so deleting
+      any comment 500s. Same latent shape on Watch, Dependency, User,
+      SecurityAdvisory. reactions_controller.rb exists with its routes
+      disabled — dead file. Pairs with BSDPORTS_SOCIAL=1 gating.
+  - id: bsdports_missing_cable_cache_schema
+    tag: operator-priority
+    summary: >
+      bsdports/config/database.yml declares cache, queue and cable production
+      DBs and cable.yml sets adapter: solid_cable, but db/ has only
+      queue_schema.rb. amber and brgen have all three. db:prepare yields empty
+      cache/cable DBs, so any Turbo Stream broadcast or cache write fails.
+  - id: amber_style_profile_missing
+    tag: operator-priority
+    summary: >
+      amber ai_controller.rb:119 calls Current.user.style_profile /
+      build_style_profile, but no has_one :style_profile exists on amber's
+      User and StyleProfile has no style_profiles table (schema has an
+      unrelated style_preferences). POST /ai/style always 500s.
+  - id: brgen_pwa_service_worker_stale
+    tag: operator-priority
+    summary: >
+      brgen app/views/pwa/service-worker.js precache manifest lists 39
+      assets/controllers/*.js URLs, 19 of which have no source file (incl.
+      hello_controller and bottom_sheet_controller, both recorded as removed
+      in UI_REFINEMENTS.md). Workbox aborts install on any 404, so the SW
+      never activates and offline mode is dead. Likely just needs
+      npm ci && npm run build:pwa. amber and bsdports are clean.
+  - id: rails_gates_not_wired
+    tag: operator-priority
+    summary: >
+      Five gates are invoked by no runner, deploy script or CI entrypoint:
+      shared_wiring, stimulus_components_adoption, release, visual_contract,
+      constitutional_scan. Nothing calls gates/runner.rb --all, and
+      _deploy.sh runs zero Ruby gates. Worse, the whole design-craft stack
+      (layout_geometry, surface_schema, visual_quality, user_flow,
+      design_metrics, human_walkthrough, payment_honesty, guest_flow) warns
+      and returns when the app port is closed — i.e. always, in CI. This is
+      why the marketplace webhook routing bug survived: payment_honesty_gate
+      only greps routes.rb for the string /checkout|webhooks/.
+      Also: visual_contract_gate computes drift/a11y counts and never exits
+      non-zero; release_gate exits 0 when bundler is missing;
+      constitutional_scan_gate downgrades all findings to warnings;
+      generated_asset_gate compares a service-worker path no app uses.
+  - id: rails_coverage_contract_is_tautological
+    tag: operator-priority
+    summary: >
+      test/controller_coverage_contract_test.rb and model_coverage_contract_test.rb
+      assert only that source files contain class/def strings — they never boot
+      Rails or call a method, so they pass against a body of `raise`. Real
+      controller-test coverage: amber 30/31 missing, brgen 74/83, bsdports 11/12.
+      Money and trust paths (stripe/vipps checkout, moderation_workflow,
+      trust_score, account_merger, identity_assurer, shared/sso_token) have
+      zero tests; sso_token also has no replay/nonce protection on its 120s token.
+  - id: rails_silent_wiring_breaks
+    tag: agent-ignore
+    summary: >
+      Non-raising but dead: pwa-standalone Stimulus controller referenced in
+      amber+bsdports layouts does not exist; offline-feed emitted by amber
+      item cards is brgen-only; submit->form-submit#lock and click->reply#toggle
+      target methods/controllers that do not exist (reply form is permanently
+      hidden); content_for :body_attrs is never yielded so notification badges
+      never clear; several Turbo broadcasts use implicit to_partial_path with
+      no matching partial; shared/prune_guest_users_job is never enqueued;
+      mailer.html.erb subject line has an || vs ?: precedence bug.
+
 closed:
   - id: solid_queue_worker_proof
     resolution: vps-deploy loads queue schema via rails_prepare_secondary_dbs_as_app and runs solid_queue_proof.sh before stamp
