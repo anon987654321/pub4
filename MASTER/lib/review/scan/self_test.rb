@@ -89,7 +89,7 @@ module Master
         end
 
         def timeout_findings
-          targets = ruby_lib_paths.select { |p| p.include?("/reach/") || p.include?("/judge/llm") }
+          targets = ruby_lib_paths.select { |p| p.include?("/io/") || p.include?("/review/llm") }
           targets.flat_map do |path|
             # Strip full-line comments first -- a file that only *mentions*
             # Open3/Net::HTTP in prose (e.g. explaining a caller's behavior)

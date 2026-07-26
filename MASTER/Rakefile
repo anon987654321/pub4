@@ -31,7 +31,7 @@ desc "Deep scan lib/ — triage scanner self-findings separately from actionable
 task :constitution do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"
-  require "judge/scan/constitution_triage"
+  require "review/scan/constitution_triage"
 
   root    = __dir__
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root:)

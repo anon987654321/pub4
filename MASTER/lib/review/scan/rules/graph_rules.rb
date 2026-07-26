@@ -99,7 +99,7 @@ module Master
             line_num = code.each_line.with_index(1).find { |l, _| l.include?(name) }&.last || 1
             finding(
               line: line_num,
-              message: "scan_depths references phantom class #{name} — #{snake}.rb not found in judge/scan/rules/",
+              message: "scan_depths references phantom class #{name} — #{snake}.rb not found in review/scan/rules/",
             )
           end
 

@@ -63,7 +63,7 @@ module Master
           end
 
           def check(_code, path:)
-            return [] unless path.include?("/judge/scan/rules/") && path.end_with?("_rule.rb")
+            return [] unless path.include?("/review/scan/rules/") && path.end_with?("_rule.rb")
 
             base = File.basename(path, ".rb")
             test_glob = File.join(@test_dir, "**", "#{base}_test.rb")

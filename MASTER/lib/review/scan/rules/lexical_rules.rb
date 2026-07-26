@@ -10,7 +10,7 @@ module Master
   RuleDSL.rule :NO_DEBUG,
     severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     description: "no debug breakpoints in committed code" do |src, path:|
-    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/rules/")
     scan_lines(src, /\b(binding\.pry|debugger|byebug|binding\.irb)\b/, message: "debug breakpoint")
   end
 
@@ -32,7 +32,7 @@ module Master
   RuleDSL.rule :LONG_LINE,
     severity: :info, tags: %i[READABILITY], autofix: false,
     description: "lines exceeding 120 characters" do |src, path:|
-    next [] if path.to_s.match?(%r{/voice/personality\.rb|/reach/llm\.rb})
+    next [] if path.to_s.match?(%r{/voice/personality\.rb|/io/llm\.rb})
     src.each_line.with_index(1).filter_map do |line, n|
       finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120
     end
@@ -49,7 +49,7 @@ module Master
   RuleDSL.rule :TODO_FIXME,
     severity: :info, tags: %i[COMPLETENESS], autofix: false,
     description: "unresolved work markers" do |src, path:|
-    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/rules/")
     scan_lines(src, /\b(TODO|FIXME|HACK|XXX)\b/, message: "unresolved marker — resolve or delete")
   end
 
@@ -62,21 +62,21 @@ module Master
   RuleDSL.rule :SILENT_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "blanket rescue discards error without logging or re-raising" do |src, path:|
-    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/rules/")
     SilentRescue.scan(src, narrow: false).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
   RuleDSL.rule :NARROW_SILENT_RESCUE,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
     description: "narrow-class rescue discards error without logging or re-raising" do |src, path:|
-    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/rules/")
     SilentRescue.scan(src, narrow: true).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
   RuleDSL.rule :EMPTY_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     description: "empty rescue swallows errors silently" do |src, path:|
-    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("/review/scan/rules/")
     lines = src.lines
     lines.each_with_index.filter_map do |line, index|
       n = index + 1

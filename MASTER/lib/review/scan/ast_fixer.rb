@@ -133,7 +133,7 @@ module Master
         end
 
         def normalise_null_comparison(src)
-          return src if @path.to_s.include?("/judge/scan/")
+          return src if @path.to_s.include?("/review/scan/")
 
           changed = false
           out = src.gsub(/(?<![<>!])=\s*NULL\b/i) { changed = true; "IS NULL" }

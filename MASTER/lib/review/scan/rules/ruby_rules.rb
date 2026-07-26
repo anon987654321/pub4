@@ -61,7 +61,7 @@ module Master
         RuleDSL.rule :KERNEL_COERCION,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
           description: "use Array(), Hash(), String() coercions" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           scan_lines(src, /(\w+)\s*\|\|\s*\[\](?!\s*<<)/,
             message: "nil-or-empty array — prefer Array(foo) for nil-safe coercion")
         end
@@ -76,7 +76,7 @@ module Master
         RuleDSL.rule :HASH_FETCH,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
           description: "prefer Hash#fetch over [] with ||" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next unless (m = stripped.match(/(@{0,2}\w+)\[:\w+\]\s*\|\|(?!=)/))

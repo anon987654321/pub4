@@ -3,7 +3,6 @@
 require "yaml"
 require "fileutils"
 require_relative "atomic_write"
-require_relative "config_accessors"
 
 module Master
   module Ground

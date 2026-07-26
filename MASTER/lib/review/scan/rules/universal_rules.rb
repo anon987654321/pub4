@@ -10,7 +10,7 @@ module Master
         RuleDSL.rule :NO_MULTIPLE_LANGUAGES,
           severity: :warning, tags: %i[SMALL_PARTS],
           description: "one medium per artifact" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           scan_lines(src, /<%|<script\b|<style\b/,
             message: "mixed medium — extract to a dedicated file")
         end
@@ -18,7 +18,7 @@ module Master
         RuleDSL.rule :SAFE_NAVIGATION,
           severity: :warning, tags: %i[READABILITY],
           description: "use null-safe navigation over nil-guard && chains" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             next unless line.match?(/(\w+)\s*&&\s*\1\.\w+/)
             next if line.match?(/[!=<>]=|[<>]|\?\s*\w/)
@@ -98,7 +98,7 @@ module Master
         RuleDSL.rule :TYPOGRAPHIC_EXCELLENCE,
           severity: :info, tags: %i[TYPOGRAPHY],
           description: "typographic excellence in user-facing text" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
             next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
@@ -112,7 +112,7 @@ module Master
         RuleDSL.rule :TYPOGRAPHY_DISCIPLINE,
           severity: :info, tags: %i[TYPOGRAPHY],
           description: "hierarchy via weight and brightness, not decoration" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped == "---" || stripped.start_with?("---") && path.end_with?(".yml", ".yaml")
@@ -125,7 +125,7 @@ module Master
         RuleDSL.rule :NULL_BLINDNESS,
           severity: :error, tags: %i[CORRECTNESS],
           description: "comparisons against nullable columns must use IS NULL" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           scan_lines(src, /IS NULL|IS NOT NULL|== nil.*column|column.*== nil/,
             message: "NULL comparison — use IS NULL / IS NOT NULL in SQL; .nil? in Ruby")
         end
@@ -150,7 +150,7 @@ module Master
         RuleDSL.rule :UNBOUNDED_RETRY,
           severity: :error, tags: %i[ROBUSTNESS],
           description: "retry loops must have a max_attempts cap and backoff" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
@@ -167,7 +167,7 @@ module Master
         RuleDSL.rule :ONE_SOURCE,
           severity: :warning, tags: %i[COUPLING],
           description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           next [] if path.to_s.include?("master.rb")
           patterns = [
             [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
@@ -184,7 +184,7 @@ module Master
           severity: :warning, tags: %i[ANTI_SIMULATION DENSITY],
           description: "future tense implies without evidence — use indicative past" do |src, path:|
           next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.strip.start_with?("#")
             next unless line.match?(/\b(will\s+\w+|would\s+\w+|let('s|\s+us)\s+\w+|I\s+will\s+|we\s+will\s+)/i)
@@ -196,7 +196,7 @@ module Master
         RuleDSL.rule :COMPLETION_THEATER,
           severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
           description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
-          next [] if path.to_s.include?("/judge/scan/rules/")
+          next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")

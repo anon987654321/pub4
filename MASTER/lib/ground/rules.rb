@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "rule_accessors"
-require_relative "rule_prompt_blocks"
-
 module Master
   module Ground
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
