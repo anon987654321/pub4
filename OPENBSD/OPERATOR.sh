@@ -396,7 +396,7 @@ stage_1() {
 
   /sbin/pfctl -d || log WARN "pf disable failed"
   /sbin/pfctl -e || { log ERROR "pf enable failed"; exit 1 }
-  install_template etc/pf.stage1.conf /etc/pf.conf
+  install_static etc/pf.stage1.conf /etc/pf.conf
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
   /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf failed"; exit 1 }
 
@@ -757,7 +757,7 @@ stage_2() {
   # ordinary deploys the way a threshold sized for a bigger box would.
   (( _mem_free_kb < 20000 )) && { log ERROR "Insufficient free memory (${_fre_field} free)"; exit 1 }
 
-  install_template etc/pf.conf /etc/pf.conf
+  install_static etc/pf.conf /etc/pf.conf
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
   /sbin/pfctl -f /etc/pf.conf  || { log ERROR "pf failed"; exit 1 }
 
