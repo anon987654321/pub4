@@ -14,49 +14,9 @@ open:
       or run amber on-demand. After restarts: master → brgen → amber → relayd.
       Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional).
 
-  # --- RAILS audit 2026-07-26. Crash-level items from the same pass are
-  # already fixed (see git log: webhooks routing, post mentions, TV episodes,
-  # listing broadcast, bsdports inbox link / categories / recurring.yml).
-  - id: playlist_missing_tables
-    tag: operator-priority
-    summary: >
-      brgen Playlist::TimestampedComment and Playlist::AudioVersion set
-      table_name to playlist_timestamped_comments / playlist_audio_versions;
-      neither table exists in db/schema.rb nor in any of the 92 migrations.
-      /playlists/:id 500s today (playlists_controller.rb:20), track deletion
-      500s, and the timestamped-comments reflex + player JS both fail.
-      Decide: add the two migrations, or delete the models and call sites.
-  - id: bsdports_missing_social_tables
-    tag: operator-priority
-    summary: >
-      bsdports includes Shared::Reactable (has_many :reactions, dependent:
-      :destroy) but its 12-table schema has no reactions table, so deleting
-      any comment 500s. Same latent shape on Watch, Dependency, User,
-      SecurityAdvisory. reactions_controller.rb exists with its routes
-      disabled — dead file. Pairs with BSDPORTS_SOCIAL=1 gating.
-  - id: bsdports_missing_cable_cache_schema
-    tag: operator-priority
-    summary: >
-      bsdports/config/database.yml declares cache, queue and cable production
-      DBs and cable.yml sets adapter: solid_cable, but db/ has only
-      queue_schema.rb. amber and brgen have all three. db:prepare yields empty
-      cache/cable DBs, so any Turbo Stream broadcast or cache write fails.
-  - id: amber_style_profile_missing
-    tag: operator-priority
-    summary: >
-      amber ai_controller.rb:119 calls Current.user.style_profile /
-      build_style_profile, but no has_one :style_profile exists on amber's
-      User and StyleProfile has no style_profiles table (schema has an
-      unrelated style_preferences). POST /ai/style always 500s.
-  - id: brgen_pwa_service_worker_stale
-    tag: operator-priority
-    summary: >
-      brgen app/views/pwa/service-worker.js precache manifest lists 39
-      assets/controllers/*.js URLs, 19 of which have no source file (incl.
-      hello_controller and bottom_sheet_controller, both recorded as removed
-      in UI_REFINEMENTS.md). Workbox aborts install on any 404, so the SW
-      never activates and offline mode is dead. Likely just needs
-      npm ci && npm run build:pwa. amber and bsdports are clean.
+  # --- RAILS audit 2026-07-26. The crash-level items from this pass are fixed
+  # (see git log and the closed: entries below); what remains open here is
+  # structural — gates, coverage, and non-raising dead wiring.
   - id: rails_gates_not_wired
     tag: operator-priority
     summary: >
@@ -96,6 +56,33 @@ open:
       mailer.html.erb subject line has an || vs ?: precedence bug.
 
 closed:
+  - id: playlist_missing_tables
+    resolution: >
+      migration 20260726120000 creates playlist_timestamped_comments and
+      playlist_audio_versions; columns derived from the models and
+      Track#replace_audio!. Verified chronological ordering + audio_versions
+      create (2026-07-26)
+  - id: bsdports_missing_social_tables
+    resolution: >
+      Shared::Reactable now declares the association only when a Reaction
+      constant exists and returns false/0 otherwise, matching
+      ActivityTrackable's degradation. bsdports/amber no longer raise on
+      destroy; brgen keeps dependent: :destroy unchanged (2026-07-26)
+  - id: bsdports_missing_cable_cache_schema
+    resolution: >
+      cable_schema.rb + cache_schema.rb copied from brgen (identical
+      solid_cable 3.0.12 / solid_cache 1.0.10); both verified to load into an
+      in-memory SQLite DB (2026-07-26)
+  - id: amber_style_profile_missing
+    resolution: >
+      /ai/style rewritten onto StylePreference (the table-backed concept) and
+      the table-less StyleProfile model deleted; questionnaire replaces rather
+      than accumulates the aesthetic (2026-07-26)
+  - id: brgen_pwa_service_worker_stale
+    resolution: >
+      19 sourceless entries filtered out of the precache manifest in place;
+      90 entries remain, node --check passes. A real `npm run build:pwa`
+      remains the source of truth for future asset changes (2026-07-26)
   - id: solid_queue_worker_proof
     resolution: vps-deploy loads queue schema via rails_prepare_secondary_dbs_as_app and runs solid_queue_proof.sh before stamp
   - id: tts_host_binary
