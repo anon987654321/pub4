@@ -411,6 +411,125 @@ module DillaHarmony
     [diff, 12.0 - diff].min
   end
 
+  # --- Steiner-tree-derived voice leading -----------------------------------
+  #
+  # voice_lead_chords above only minimizes motion locally, one chord-to-chord
+  # transition at a time (greedy nearest-neighbor) -- it has no way to see
+  # that, say, chord 6 shares almost all its harmony with chord 2, four
+  # chords back, rather than with chord 5 right before it. A Steiner tree
+  # finds the minimum-cost network connecting a whole set of terminals,
+  # adding shared junction points ("Steiner points") wherever that lowers
+  # total cost; when two terminals coincide exactly, the optimal tree routes
+  # them through one shared point rather than wiring each independently.
+  # Chords with identical or near-identical pitch-class content are exactly
+  # that case: recurring harmony is a natural Steiner point:
+  #
+  # This treats each chord as a graph node (not individual tones -- per-tone
+  # pitch-class overlap is far too common in tonal music, a diatonic
+  # progression shares scale tones constantly, so it's too noisy a signal;
+  # whole-chord harmonic identity recurring is a much rarer, more meaningful
+  # one). For each chord, its tree parent is whichever earlier chord is
+  # cheapest to connect to under "harmonic distance" (how many pitch classes
+  # differ) -- always its chronological predecessor unless some earlier
+  # chord is a near-exact repeat, in which case it reconnects straight back
+  # to that repeat's own realized register instead of drifting through
+  # whatever came between. When nothing recurs, every chord's parent is
+  # simply its predecessor, so this degrades to plain greedy chaining --
+  # dilla's own CHORD_PROGRESSIONS/generate_progression material is
+  # loop-structured (the normal case for this engine), so exact-repeat
+  # recurrence across a loop boundary is the common, not the edge, case.
+
+  def steiner_voice_lead(chords, rootless: false)
+    return chords if chords.length <= 1
+    parent = steiner_chord_parents(chords)
+    steiner_realize_chords(chords, parent, rootless:)
+  rescue StandardError
+    voice_lead_chords(chords, rootless:)
+  end
+
+  def steiner_chord_pcs(chord)
+    chord[:hz].map { |h| hz_to_midi(h).round % 12 }.uniq
+  end
+
+  # Symmetric pitch-class-set difference, i.e. how much the two chords'
+  # harmony actually differs. A non-adjacent chord is only ever a candidate
+  # parent when its harmony is a near-exact match (diff <= 1) -- anything
+  # short of that must never be able to outbid the true chronological
+  # predecessor, even marginally, since partial pitch-class overlap is the
+  # normal, constant background noise of tonal music, not a meaningful
+  # recurrence signal. The chronological predecessor (distance 1) is always
+  # a candidate regardless of overlap, so this can only ever add long-range
+  # continuity on top of plain adjacent chaining, never replace it with
+  # something worse-fitting.
+  def steiner_chord_cost(pcs_a, pcs_b, i, j)
+    diff = (pcs_b - pcs_a).length + (pcs_a - pcs_b).length
+    return Float::INFINITY if diff > 1 && (i - j).abs > 1
+    diff + (i - j).abs * 0.05
+  end
+
+  # O(n^2): for each chord, scan every earlier chord and keep whichever is
+  # cheapest to connect to. Always scoped to j < i, so parent[i] < i for
+  # every i -- a tree rooted at chord 0 with no ordering ambiguity, safe to
+  # resolve in plain chronological order.
+  def steiner_chord_parents(chords)
+    pcs = chords.map { |c| steiner_chord_pcs(c) }
+    parent = {}
+    (1...chords.length).each do |i|
+      best_j = i - 1
+      best_cost = steiner_chord_cost(pcs[i - 1], pcs[i], i - 1, i)
+      (0...(i - 1)).each do |j|
+        cost = steiner_chord_cost(pcs[j], pcs[i], j, i)
+        next unless cost < best_cost
+        best_cost = cost
+        best_j = j
+      end
+      parent[i] = best_j
+    end
+    parent
+  end
+
+  # `resolved[i]` deliberately holds the raw per-voice register (before
+  # register-clamp dedup/capping), matching how voice_lead_chords threads
+  # its own `prev` from one step to the next -- feeding the trimmed public
+  # `hz` back in as the next anchor set would silently drop anchor points.
+  # A chord anchors to its MST parent -- its chronological predecessor
+  # unless an earlier chord is a near-exact repeat -- so a genuine repeat
+  # reconnects straight to that earlier passage's register instead of
+  # drifting through whatever came between.
+  def steiner_realize_chords(chords, parent, rootless:)
+    resolved = {}
+    led = Array.new(chords.length)
+    chords.each_with_index do |chord, i|
+      voiced = if i.zero?
+                 decorate_chord(chord, voicing: :spread, rootless:)[:hz].map { |h| hz_to_midi(h) }.sort
+               else
+                 steiner_voice_step(chord, resolved.fetch(parent[i]))
+               end
+      resolved[i] = voiced
+      hz = clamp_register(voiced).map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
+      led[i] = { name: chord[:name], hz:, bass_hz: chord[:bass_hz] || hz.min }
+    end
+    led
+  end
+
+  # Same nearest-anchor matching voice_lead_chords uses per adjacent step,
+  # generalized to anchor against any prior chord's realized register (its
+  # MST parent), not just the immediately preceding one. Returns raw
+  # per-voice midis, not the deduped/capped public hz -- see
+  # steiner_realize_chords.
+  def steiner_voice_step(chord, anchor_register)
+    targets = chord[:hz].map { |h| hz_to_midi(h) }.sort
+    anchors = anchor_register.dup
+    targets.map do |target|
+      anchor = anchors.empty? ? target : anchors.min_by { |a| pitch_class_dist(a, target) }
+      anchors.delete(anchor) if anchors.length > 1
+      m = target + ((anchor - target) / 12.0).round * 12.0
+      m += 12.0 while m < PAD_MIDI_MIN
+      m -= 12.0 while m > PAD_MIDI_MAX
+      m
+    end.sort
+  end
+
   def bass_voice_lead(chords)
     return chords if chords.length < 2
     prev_bass = hz_to_midi(chords.first[:bass_hz] || chords.first[:hz].min)
