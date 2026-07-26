@@ -38,7 +38,7 @@ vm23_tmux() {
      tmux new-session -d -s ${session} ${(q)cmd}"
 }
 
-if [[ $(basename -- "$0") == ssh_vm23.sh ]]; then
+if [[ $ZSH_EVAL_CONTEXT == toplevel ]]; then
   case "${1:-}" in
     tmux)
       shift

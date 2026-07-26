@@ -740,9 +740,22 @@ stage_2() {
 
   check_dns_propagation
 
-  typeset _mem_line; _mem_line=$(vmstat -s | while IFS= read -r _l; do [[ $_l == *"free memory"* ]] && print -r -- "$_l" && break; done)
-  typeset _mem_free=${${(z)_mem_line}[1]}
-  (( _mem_free < 512000 )) && { log ERROR "Insufficient free memory"; exit 1 }
+  # `vmstat -s`'s "free memory" line doesn't exist on every OpenBSD release
+  # (absent on 7.8) -- read plain `vmstat`'s "fre" column instead, which is
+  # always present and (unlike -s) matches what top(1) reports as Free.
+  typeset _fre_field; _fre_field=${${(z)$(vmstat | tail -1)}[4]}
+  typeset _mem_free_kb
+  case $_fre_field in
+    *G) _mem_free_kb=$(( ${_fre_field%G} * 1024 * 1024 )) ;;
+    *M) _mem_free_kb=$(( ${_fre_field%M} * 1024 )) ;;
+    *K) _mem_free_kb=${_fre_field%K} ;;
+    *)  _mem_free_kb=$_fre_field ;;
+  esac
+  # This VPS runs brgen+amber+bsdports+MASTER on ~900MB total RAM -- a few
+  # tens of MB free is its normal steady state, not a crisis. This floor
+  # catches genuine exhaustion (a leak, a runaway process) without blocking
+  # ordinary deploys the way a threshold sized for a bigger box would.
+  (( _mem_free_kb < 20000 )) && { log ERROR "Insufficient free memory (${_fre_field} free)"; exit 1 }
 
   install_template etc/pf.conf /etc/pf.conf
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
