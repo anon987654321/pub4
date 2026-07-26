@@ -77,8 +77,12 @@ module Master
           STRATEGIES.select { |strategy| send(strategy.predicate) }
         end
 
+        # reduce, not each_with_object: the accumulator here is the rewritten source,
+        # so each step must *return* the next value. each_with_object discards the
+        # block result and hands the original string back every time, which silently
+        # reduced every transform to a no-op.
         def apply_transforms(src, transforms)
-          transforms.each_with_object(src) do |transform, current|
+          transforms.reduce(src) do |current, transform|
             transform_labels = @transforms.dup
             candidate = send(transform, current)
             next candidate unless ruby? && candidate != current && parses?(current) && !parses?(candidate)
@@ -86,6 +90,7 @@ module Master
             # Transform turned valid Ruby into unparseable Ruby — a line-heuristic misfire on a
             # multi-line construct. Discard it (and any label it recorded); keep the prior source.
             @transforms.replace(transform_labels)
+            current
           end
         end
 
