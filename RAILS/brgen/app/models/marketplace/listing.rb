@@ -43,7 +43,7 @@ class Marketplace::Listing < ApplicationRecord
     self.longitude ||= Current.user&.longitude if defined?(Current) && Current.respond_to?(:user)
   end
 
-  after_create_commit { broadcast_append_later_to "marketplace:listings", partial: "marketplace/listings/listing", locals: { listing: self } }
+  after_create_commit { broadcast_append_later_to "marketplace:listings", partial: "marketplace/listings/card", locals: { listing: self } }
 
   scope :active,   -> { where(status: "active") }
   scope :recent,   -> { order(created_at: :desc) }

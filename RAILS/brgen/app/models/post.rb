@@ -29,7 +29,7 @@ class Post < ApplicationRecord
   belongs_to :user
   belongs_to :community, optional: true
 
-  has_many :mentions, dependent: :destroy
+  has_many :mentions, as: :mentionable, dependent: :destroy
 
   validates :title,   presence: true, length: { maximum: 300 }
   validates :content, length: { maximum: 40_000 }
