@@ -9,6 +9,8 @@ module Master
         include DeliberationSynthesis
         include DeliberationPromptBuilder
 
+        attr_reader :agent, :bus
+
         MAX_CONCURRENT = 4
         MAX_CODE_BYTES = 8_192
         TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze

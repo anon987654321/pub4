@@ -19,7 +19,7 @@ module Master
         amber bsdports brgen ai dating messenger
       ].freeze
 
-      APP_PORTS_PATH = File.join(Master::DEPLOY_ROOT, "master.json").freeze
+      APP_PORTS_PATH = File.join(Master::DEPLOY_ROOT, "deploy_inventory.json").freeze
 
       def initialize(root: Master::ROOT, event_bus: nil, web_fetch: nil)
         @root = root

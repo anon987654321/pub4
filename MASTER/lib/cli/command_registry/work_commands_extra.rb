@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../tribunal_feedback"
+require_relative "../../review/council/critique"
 
 module Master
   module CLI
@@ -167,10 +168,40 @@ module Master
         arg = arg_for(ctx)
         return "usage: /critique <file|text>" if arg.empty?
         path = expand_or_root(arg, root)
+        return general_council_critique(deliberation, path) if deliberation&.agent && File.exist?(path)
+
         payload = File.exist?(path) ? snapshot_artifact(path) : arg
         run_deliberation(deliberation:, payload:, context: "explicit /critique session") do |feedback|
           TribunalFeedback.new(feedback).render_full
         end
+      end
+
+      # Same persona-panel -> ideation -> cherry-pick pipeline the product
+      # critiques (ui/sound/dilla) use, generalized to whatever /scan or
+      # /fix just processed instead of a fixed file list.
+      def general_council_critique(deliberation, path)
+        files = File.directory?(path) ? snapshot_files(path) : [path]
+        return "critique: no reviewable files under #{path}" if files.empty?
+
+        critic = Master::Review::Council::Critique.new(
+          mode: :general, agent: deliberation.agent, event_bus: deliberation.bus, files:,
+        )
+        result = critic.run
+        return "critique: #{result.message}" unless result.ok?
+
+        general_critique_report(result.value!, path)
+      rescue StandardError => e
+        "critique failed: #{e.class}: #{e.message}"
+      end
+
+      def general_critique_report(data, path)
+        lines = ["critique #{path}: #{Array(data[:cherry_picks]).size} cherry-pick(s) (MASTER council)"]
+        Array(data[:feedback]).each do |f|
+          first = f[:feedback].to_s.lines.first.to_s.strip
+          lines << "  [#{f[:persona]}] #{first}"
+        end
+        Array(data[:cherry_picks]).each { |p| lines << "  cherry: #{p}" }
+        lines.join("\n")
       end
 
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)

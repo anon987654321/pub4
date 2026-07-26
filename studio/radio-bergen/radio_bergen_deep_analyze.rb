@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 # frozen_string_literal: true
 
-# Thin wrapper — dossier + deep analysis lives in studio/dilla/dilla.rb
-require_relative "../dilla/dilla"
+# Thin wrapper — dossier + deep analysis lives in studio/dilla/engine.rb
+require_relative "../dilla/engine"
 
 if $PROGRAM_NAME == __FILE__
   path = RadioBergenStudy.write_dossiers!

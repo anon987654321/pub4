@@ -16150,10 +16150,10 @@ DISPATCH = {
     puts "measured #{data.dig('meta', 'measured_local')}/#{data.dig('meta', 'tracks')} tracks"
   },
   "radio-bergen-librosa" => lambda {
-    py = File.expand_path("../audio/.venv/bin/python3", ROOT)
-    script = File.expand_path("../audio/radio_bergen_librosa_analyze.py", ROOT)
+    py = File.expand_path("../radio-bergen/.venv/bin/python3", ROOT)
+    script = File.expand_path("../radio-bergen/radio_bergen_librosa_analyze.py", ROOT)
     unless File.executable?(py) && File.file?(script)
-      abort "librosa venv missing — run: cd MASTER/tools/audio && python3 -m venv .venv && .venv/bin/pip install librosa pyyaml"
+      abort "librosa venv missing — run: cd studio/radio-bergen && python3 -m venv .venv && .venv/bin/pip install librosa pyyaml"
     end
     sh! py, script
   },

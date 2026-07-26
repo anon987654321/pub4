@@ -1,0 +1,605 @@
+{
+  "generated_at": "2026-07-24T19:58:27Z",
+  "results": [
+    {
+      "app": "bsdports",
+      "state": "public",
+      "viewport": "desktop",
+      "route": "/",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-public-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "public",
+      "viewport": "compact",
+      "route": "/",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-public-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "public",
+      "viewport": "mobile",
+      "route": "/",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-public-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "empty",
+      "viewport": "desktop",
+      "route": "/ports?q=visual-contract-no-match",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-empty-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "empty",
+      "viewport": "compact",
+      "route": "/ports?q=visual-contract-no-match",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-empty-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "empty",
+      "viewport": "mobile",
+      "route": "/ports?q=visual-contract-no-match",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-empty-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "results",
+      "viewport": "desktop",
+      "route": "/ports?q=git",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-results-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "results",
+      "viewport": "compact",
+      "route": "/ports?q=git",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-results-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "results",
+      "viewport": "mobile",
+      "route": "/ports?q=git",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-results-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "detail",
+      "viewport": "desktop",
+      "route": "/ports/1",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-detail-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "detail",
+      "viewport": "compact",
+      "route": "/ports/1",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-detail-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "detail",
+      "viewport": "mobile",
+      "route": "/ports/1",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-detail-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "advisory",
+      "viewport": "desktop",
+      "route": "/ports/1#cves-security-advisories",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-advisory-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "advisory",
+      "viewport": "compact",
+      "route": "/ports/1#cves-security-advisories",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-advisory-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "advisory",
+      "viewport": "mobile",
+      "route": "/ports/1#cves-security-advisories",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-advisory-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "dependency",
+      "viewport": "desktop",
+      "route": "/ports/1#this-package-requires",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-dependency-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "dependency",
+      "viewport": "compact",
+      "route": "/ports/1#this-package-requires",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-dependency-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "dependency",
+      "viewport": "mobile",
+      "route": "/ports/1#this-package-requires",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-dependency-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "error",
+      "viewport": "desktop",
+      "route": "/404-visual-contract",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-error-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "error",
+      "viewport": "compact",
+      "route": "/404-visual-contract",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-error-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "error",
+      "viewport": "mobile",
+      "route": "/404-visual-contract",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-error-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "offline",
+      "viewport": "desktop",
+      "route": "/offline",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-offline-desktop.png",
+      "screenshot_sha256": "cc28fcad2139c7c973730584b4c5199eb78cf1a802c0760e26126ab683cb20ae",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "offline",
+      "viewport": "compact",
+      "route": "/offline",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-offline-compact.png",
+      "screenshot_sha256": "83c3ee1e355511698afc84287177dc0e5b11c99d0a4b9db8ef8cfef1f69b23b0",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    },
+    {
+      "app": "bsdports",
+      "state": "offline",
+      "viewport": "mobile",
+      "route": "/offline",
+      "status": null,
+      "title": "bsdports.org",
+      "screenshot": "/Users/mac/Documents/GitHub/pub4/RAILS/visual_contract/bsdports-offline-mobile.png",
+      "screenshot_sha256": "50c2533fbc480fc2817f5a06d97515bd3da9a2c74abbb1a23ca0ed95307e4d4b",
+      "pixel_diff_count": null,
+      "pixel_diff_ratio": null,
+      "pixel_diff_image": null,
+      "console_errors": [],
+      "accessibility_violations": [
+        "image_without_alt",
+        "image_without_alt"
+      ],
+      "lenses": [
+        "task_completion",
+        "accessibility",
+        "editorial_character",
+        "system_trust",
+        "first_use"
+      ]
+    }
+  ]
+}

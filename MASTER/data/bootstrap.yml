@@ -21,7 +21,7 @@ sections:
     Triage: /status, /tail, /dmesg, bin/probe. Key events: pipeline:stage_start, review:verdict, scan:progress, route:resolved.
   replicate: |-
     Cloud media via Replicate API (data/providers.yml). Token: REPLICATE_API_TOKEN or ~/.config/repligen/config.json.
-    Grade stills: MASTER/tools/postpro/postpro.rb, /postpro.
+    Grade stills: studio/postpro/postpro.rb, /postpro.
     Motion critique: lib/review/council/motion_critique.rb. Env: MOTION_CRITIQUE_VISION, COMFYUI_URL, COMFYUI_WRAPPER_URL.
   conventions: |-
     Inviolable law: data/soul.yml, data/rules.yml. Evidence mandatory — no hedges without command output or diffs.

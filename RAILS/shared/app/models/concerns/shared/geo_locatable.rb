@@ -17,14 +17,15 @@ module Shared
       # Models should have decimal latitude, longitude columns (or override lat/lng readers).
     end
 
-    module_function
-
     # Stable grid-cell id for "everyone roughly within `km` of each other" grouping
     # (e.g. a shared geo-scoped chat room) -- not for precise membership, since two
     # points on opposite sides of a cell edge can be `km` apart yet land in
-    # different cells. Same lat-corrected bbox math as `nearby` above, just used
+    # different cells. Same lat-corrected bbox math as `nearby` below, just used
     # to bucket instead of to filter. Deterministic and pure Ruby (no geohash gem).
-    def cell_id(lat:, lng:, km: 10.0)
+    # A module method (Shared::GeoLocatable.cell_id(...)), not `module_function` --
+    # that would also privatize the plain instance methods below (geo?,
+    # distance_to) for every including model, breaking their external callers.
+    def self.cell_id(lat:, lng:, km: 10.0)
       d_lat = km / EARTH_KM * (180.0 / Math::PI)
       d_lng = d_lat / Math.cos([lat.to_f.abs, 0.0001].max * Math::PI / 180.0)
       cell_lat = (lat.to_f / d_lat).floor
