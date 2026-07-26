@@ -36,11 +36,11 @@ class FaceStateSpec < Minitest::Test
   # worth fixing deliberately (e.g. render this as .js.erb, or fetch a small
   # JSON config at boot) rather than papering over here — this spec pins the
   # values actually shipping today so drift is visible, not the YAML's.
-  def test_visual_governor_is_quiet_and_freezes_on_fail
+  def test_visual_governor_is_quiet_and_freezes_only_on_explicit_signal
     source = read("web/public/visual_governor.js")
     assert_includes source, "const maxFps = 24"
     assert_includes source, "const maxParticles = 200"
-    assert_includes source, "freezeOnFail: true"
-    assert_includes source, "dataset.masterState === \"fail\""
+    assert_includes source, "freezeOnFail: false"
+    assert_includes source, "dataset.visualRuntime === \"frozen\""
   end
 end
