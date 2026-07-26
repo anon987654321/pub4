@@ -16,6 +16,53 @@ class TurnRouterTest < Minitest::Test
     }
   end
 
+  def teardown
+    Fiber[:master_visitor] = nil
+  end
+
+  # Security: ai.brgen.no serves the open internet, and AuthTier only *labels*
+  # tokenless requests "visitor" rather than rejecting them. Everything past the
+  # visitor check in TurnRouter.call can reach real capability — the Fold reaches
+  # Core::World#do_exec with model-chosen argv, and infer_operator_command
+  # reconstructs slash commands from plain English (defeating the leading-"/"
+  # block in chat_controller#message). Visitors must land on casual_reply only.
+  def test_visitor_cannot_reach_fold_or_command_registry
+    %w[fix\ the\ bug run\ master\ through\ itself implement\ pagination\ for\ posts].each do |message|
+      Fiber[:master_visitor] = true
+      reached = :none
+
+      Master::CLI::TurnRouter.stub(:run_fold, ->(*, **) { reached = :fold; Master::Result.ok({ rendered: "" }) }) do
+        Master::CLI::TurnRouter.stub(:dispatch_inferred, ->(*, **) { reached = :command; Master::Result.ok({ rendered: "" }) }) do
+          Master::CLI::TurnRouter.stub(:casual_reply, ->(*, **) { reached = :casual; Master::Result.ok({ rendered: "" }) }) do
+            Master::CLI::TurnRouter.call(message:, container: build_container)
+          end
+        end
+      end
+
+      assert_equal :casual, reached, "visitor message #{message.inspect} escaped to #{reached}"
+    end
+  end
+
+  def test_run_fold_refuses_visitors_directly
+    Fiber[:master_visitor] = true
+    result = Master::CLI::TurnRouter.run_fold("do something", container: build_container)
+
+    assert result.err?
+    assert_match(/not available to visitors/, result.message.to_s)
+    assert_equal :policy, result.category
+  end
+
+  def test_authenticated_turns_still_reach_fold
+    Fiber[:master_visitor] = nil
+    reached = :none
+
+    Master::CLI::TurnRouter.stub(:run_fold, ->(*, **) { reached = :fold; Master::Result.ok({ rendered: "" }) }) do
+      Master::CLI::TurnRouter.call(message: "implement pagination for posts", container: build_container)
+    end
+
+    assert_equal :fold, reached
+  end
+
   # A coding goal that Infer does not promote to an operator command: "fix the
   # bug" now routes to /fix via THROUGH_COMMANDS, so it no longer reaches the
   # Fold. This message stays plain language all the way down.

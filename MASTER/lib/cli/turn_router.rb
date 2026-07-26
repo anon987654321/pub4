@@ -18,6 +18,16 @@ module Master
         return dispatch_slash(text, container:, felt_sense:, on_turn:) if text.start_with?("/")
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)
 
+        # Visitors (no web token — i.e. the open internet on ai.brgen.no) get the
+        # conversational path only. Everything below this line can reach real
+        # capability: infer_operator_command *reconstructs* a slash command from
+        # plain English, which defeats the leading-"/" block in
+        # chat_controller#message, and run_fold reaches Core::World#do_exec,
+        # whose argv/env are model-chosen. Fiber[:master_visitor] previously
+        # gated only the advertised LLM tool list (tool_registry.rb), never the
+        # Fold or the command registry.
+        return casual_reply(text, container:, felt_sense:, on_chunk:) if visitor?
+
         inferred = infer_operator_command(text, container:)
         return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
         return dispatch_through_workflow(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
@@ -25,6 +35,8 @@ module Master
 
         run_fold(text, container:, on_turn:)
       end
+
+      def visitor? = Fiber[:master_visitor] == true
 
       def dispatch_through_workflow(text, container:, felt_sense: nil, on_turn: nil)
         dispatch_inferred({ command: "through", args: through_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
@@ -141,6 +153,10 @@ module Master
 
       def run_fold(goal, container:, on_turn: nil)
         goal = goal.to_s.strip
+        # Defence in depth: TurnRouter.call already routes visitors to
+        # casual_reply, but run_fold is also reachable via dispatch_slash when
+        # Intake classifies input as :llm. The Fold can exec; visitors cannot.
+        return Master::Result.err("fold: not available to visitors", category: :policy) if visitor?
         return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
         root, risk = assess_fold_risk(goal, container:)
