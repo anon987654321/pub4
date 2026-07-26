@@ -42,7 +42,7 @@ class TestPhantomRecovery < Minitest::Test
   end
 
   def test_judge_agent_calls_master_phantom_recovery
-    source = File.read(File.join(Master::ROOT, "lib", "judge", "agent.rb"))
+    source = File.read(File.join(Master::ROOT, "lib", "review", "agent.rb"))
     assert_includes source, "Master::PhantomRecovery.handle"
     refute_match(/(?<!Master::)PhantomRecovery\.handle/, source)
   end
