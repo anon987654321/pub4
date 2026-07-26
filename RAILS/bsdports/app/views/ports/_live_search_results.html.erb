@@ -1,22 +1,4 @@
 <% if @category %>
   <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
-<%= turbo_frame_tag "ports", target: "_top" do %>
-<ul id="ports" role="list" aria-label="OpenBSD ports list" class="port-list">
-  <% @ports.each do |port| %>
-    <%= render "ports/row", port: %>
-  <% end %>
-</ul>
-<% if @ports.empty? %>
-  <%= render "shared/empty_state",
-        title: "No ports found",
-        body: "Try another query — e.g. git, python, or a category." %>
-<% end %>
-<%= render "shared/infinite_scroll_sentinel",
-           pagy: @pagy,
-           reflex: "PortsInfiniteScrollReflex#load_more",
-           sentinel_id: "bsdports-ports-sentinel",
-           q: params[:q],
-           category_id: params[:category_id],
-           sort: params[:sort] %>
-<% end %>
+<%= render "ports/list" %>

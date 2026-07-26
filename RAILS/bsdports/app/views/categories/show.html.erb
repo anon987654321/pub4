@@ -3,4 +3,6 @@
   <h1><%= @category.name %></h1>
   <p><%= @category.description %></p>
 </header>
-<%= render "ports/index" %>
+<%# ports/index is a full template, not a partial — rendering it raised
+    MissingTemplate on every category page. The list body lives in ports/_list. %>
+<%= render "ports/list" %>

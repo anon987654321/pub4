@@ -1,3 +1,5 @@
-<% if authenticated? %>
+<%# respond_to? guard: bsdports gates the social routes behind BSDPORTS_SOCIAL=1,
+    so notifications_path is undefined there and every signed-in page raised. %>
+<% if authenticated? && respond_to?(:notifications_path) %>
   <%= link_to "Inbox", notifications_path, class: local_assigns.fetch(:class_name, "nav-link") %>
 <% end %>

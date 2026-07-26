@@ -2,10 +2,10 @@ production:
   nightly_ports_import:
     class: PortsImportJob
     queue: bulk
-    args:
-      - platform_slug: openbsd
-      - tree_path: null
-      - use_ftp_fallback: true
+    # No args: PortsImportJob#perform takes keywords only, and these three
+    # values were identical to its defaults. As a YAML sequence they were
+    # splatted positionally (3 hashes into a kwargs-only method) and raised
+    # ArgumentError, so the nightly import never ran.
     schedule: every day at 3am
 
   advisory_refresh:
