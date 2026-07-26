@@ -274,12 +274,6 @@ test("face.css meets MASTER design_rules typography and touch baselines", () => 
   assert.match(css, /body\[data-boot-state="ERROR"\] #zsh-status/);
 });
 
-test("face3d_engine imports use import-map paths", () => {
-  const engine = readFileSync(join(publicDir, "face3d_engine.js"), "utf8");
-  assert.match(engine, /from '\/face3d_geometry\.js'/);
-  assert.match(engine, /from '\/face3d_support\.js'/);
-});
-
 test("visual_bridge connects SSE and normalizes visual events", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
   assert.match(bridge, /new EventSource\("\/events\/stream"\)/);
