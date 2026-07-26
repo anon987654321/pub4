@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_24_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_26_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -538,6 +538,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_24_180000) do
     t.index ["neighborhood_id"], name: "index_places_on_neighborhood_id"
   end
 
+  create_table "playlist_audio_versions", force: :cascade do |t|
+    t.bigint "byte_size"
+    t.datetime "created_at", null: false
+    t.string "original_filename", limit: 255
+    t.integer "track_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["track_id"], name: "index_playlist_audio_versions_on_track_id"
+    t.index ["user_id"], name: "index_playlist_audio_versions_on_user_id"
+  end
+
   create_table "playlist_collaborations", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "playlist_id"
@@ -673,6 +684,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_24_180000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_playlist_sets_on_user_id"
+  end
+
+  create_table "playlist_timestamped_comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.float "timestamp_seconds"
+    t.integer "track_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["track_id", "timestamp_seconds", "created_at"], name: "index_playlist_timestamped_comments_chronological"
+    t.index ["track_id"], name: "index_playlist_timestamped_comments_on_track_id"
+    t.index ["user_id"], name: "index_playlist_timestamped_comments_on_user_id"
   end
 
   create_table "playlist_tracks", force: :cascade do |t|
@@ -1141,6 +1164,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_24_180000) do
   add_foreign_key "place_check_ins", "users"
   add_foreign_key "places", "cities"
   add_foreign_key "places", "neighborhoods"
+  add_foreign_key "playlist_audio_versions", "playlist_tracks", column: "track_id"
+  add_foreign_key "playlist_audio_versions", "users"
   add_foreign_key "playlist_collaborations", "playlist_sets", column: "set_id"
   add_foreign_key "playlist_collaborations", "users"
   add_foreign_key "playlist_dilla_sketches", "playlist_playlists", column: "playlist_id"
@@ -1165,6 +1190,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_24_180000) do
   add_foreign_key "playlist_set_tracks", "playlist_tracks"
   add_foreign_key "playlist_set_tracks", "users"
   add_foreign_key "playlist_sets", "users"
+  add_foreign_key "playlist_timestamped_comments", "playlist_tracks", column: "track_id"
+  add_foreign_key "playlist_timestamped_comments", "users"
   add_foreign_key "playlist_tracks", "users"
   add_foreign_key "posts", "cities"
   add_foreign_key "posts", "communities"
