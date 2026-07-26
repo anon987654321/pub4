@@ -40,7 +40,7 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 - Maps: cool cartography blue-gray, solid accent buttons
 
 ### D · amber luxury
-- `x-luxury-light-tokens` / `x-luxury-dark-tokens` wired in `_variables.scss`
+- `luxury-light-tokens` / `luxury-dark-tokens` wired in `_variables.scss`
 - Caprasimo display, editorial grid (collapses on small screens)
 - Placeholder tiles with flat diagonal hatch; sustainability grade chip
 - Empty/skeleton/high-contrast floor

@@ -114,7 +114,7 @@ ruby RAILS/frontend_auditor_gate.rb
 | Dialect | Apps | Radius | Notes |
 |---------|------|--------|-------|
 | `social` | brgen (+ verticals) | soft 4/8/12/16 | Graphite/indigo |
-| `luxury` | amber | soft 6/10/14 | Warm paper (`x-luxury-*-tokens`) |
+| `luxury` | amber | soft 6/10/14 | Warm paper (`luxury-*-tokens`) |
 | `openbsd_wscons` | bsdports | **0** CRT-flat | Green mono terminal |
 | `face_root` | MASTER web face | **0** CRT-flat | Operator face only |
 
