@@ -87,7 +87,7 @@ a:hover { text-decoration: underline; }
   border: none !important;
   border-radius: 0 !important;
   outline: none !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   background: transparent !important;
 }
 
@@ -119,7 +119,7 @@ a.brgen-logo-mark,
   border-radius: 0 !important;
   outline: none !important;
   outline-offset: 0 !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -129,7 +129,7 @@ a.brgen-logo-mark,
   font-weight: inherit;
   border: none !important;
   outline: none !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   background: transparent !important;
 }
 
@@ -144,7 +144,7 @@ a.brgen-logo-mark:active,
   background: transparent !important;
   border: none !important;
   outline: none !important;
-  box-shadow: none !important;
+  /* autofix: removed box-shadow (flat UI) */
   text-decoration: none;
   color: var(--text);
   opacity: 0.85;
