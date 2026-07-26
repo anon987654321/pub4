@@ -175,10 +175,12 @@ Rails.application.routes.draw do
         post :send_offers
       end
       resource :checkout, only: %i[create show], controller: "checkouts"
-      namespace :webhooks do
-        post :stripe, to: "webhooks#stripe"
-        post :vipps, to: "webhooks#vipps"
-      end
+      # Not `namespace :webhooks` — inside `scope module: "marketplace"` that
+      # resolves to Marketplace::Webhooks::WebhooksController, which does not
+      # exist, so PSP callbacks never reached mark_paid! and orders stayed
+      # unpaid. Explicit paths keep the URLs and helper names unchanged.
+      post "webhooks/stripe", to: "webhooks#stripe", as: :webhooks_stripe
+      post "webhooks/vipps", to: "webhooks#vipps", as: :webhooks_vipps
       resources :categories, only: :show, param: :id
       resources :saved_searches, only: %i[index create destroy]
     end
