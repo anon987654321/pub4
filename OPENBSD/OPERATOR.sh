@@ -24,7 +24,7 @@ zmodload zsh/datetime
 
 typeset -a TMPFILES
 SCRIPT_DIR=${0:a:h}
-REPO_ROOT=${SCRIPT_DIR:h:h}
+REPO_ROOT=${SCRIPT_DIR:h}
 CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 
 # Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
