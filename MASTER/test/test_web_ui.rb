@@ -435,23 +435,16 @@ class TestWebUI < Minitest::Test
     assert_includes bridge, "applyPressure"
   end
 
-  def test_face3d_consumes_tts_events_and_reports_nonblank_frames
-    preview = File.read(File.expand_path("../web/public/face3d_preview.js", __dir__))
-    renderer = File.read(File.expand_path("../web/public/face3d_renderer.js", __dir__))
-    events = File.read(File.expand_path("../web/public/master_events.js", __dir__))
-
-    assert_includes preview, 'addEventListener("tts:playback:start"'
-    assert_includes preview, 'addEventListener("tts:viseme"'
-    assert_includes preview, "engine.speakFrame"
-    assert_includes preview, "face3d:nonblank"
-    assert_includes preview, "FACE3D_ACTIVE"
-    assert_includes preview, "bootFace3d"
-    assert_includes renderer, "lastLitPixels"
-    assert_includes events, '"face3d:nonblank"'
-    part1 = File.read(File.expand_path("../web/public/face.part1.txt", __dir__))
-    assert_includes part1, "face3d only"
-    assert_includes part1, "_hasWebGL = false"
-  end
+  # NOTE: the legacy face3d_preview.js/face3d_renderer.js WebGL-overlay pair
+  # this test used to cover was deliberately removed in 6f186797 ("MASTER/web:
+  # remove legacy face3d (Papua-mask) overlay, port homo_futura geometry") --
+  # it was a footgun 2D-canvas painter that could permanently block the real
+  # WebGL face by grabbing the shared #face canvas context. face3d:nonblank
+  # is gone from master_events.js and "face3d only"/"_hasWebGL = false" are
+  # gone from face.part1.txt too; nothing here still applies. See also
+  # test_face_semantics_routes_expression_through_blend_bridge_not_pools for
+  # the one intentionally-remaining FACE3D_ACTIVE reference (a harmless dead
+  # flag check in face_semantics.js the removal commit chose to leave).
 
   def test_public_asset_manifest_matches_source_files
     public_dir = File.expand_path("../web/public", __dir__)

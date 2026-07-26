@@ -184,6 +184,7 @@
   };
   boot();
 })();
+
 // MASTER particle face 2026 — vision features 1–40 (semantic, TTS, fusion).
 (() => {
   "use strict";
@@ -545,6 +546,7 @@
     window.dispatchEvent(new CustomEvent("face:primer-preview", { detail: { ts: performance.now() } }));
   });
 })();
+
 // MASTER particle face 2026 — vision features 41–80 (fusion, SSE cinema, perf).
 (() => {
   "use strict";
@@ -1055,6 +1057,7 @@
     }, 1000);
   })();
 })();
+
 // MASTER particle face 2026 — vision features 81–118 (interaction, aesthetic, a11y).
 (() => {
   "use strict";
@@ -1615,6 +1618,7 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
     window.MASTER_FACE_VISION.describeTts = () => V.run(94, { type: "describe:api", detail: {} });
   })();
 })();
+
 // MASTER particle face 2026 — vision features 119–150 (reliability, frontier).
 (() => {
   "use strict";
@@ -2179,3 +2183,4 @@ V.register(118, "degraded WebGL UI trigger", (ctx) => {
 
   window.MASTER_FACE_VISION?.boot?.();
 })();
+
