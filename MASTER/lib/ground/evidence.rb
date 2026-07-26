@@ -109,7 +109,6 @@ module Master
 
       # Fallback verifier for unknown source types — requires explicit :verified key
       def explicitly_verified?(source) = value(source, :verified) == true
-      def explicitly_verified?(source) = value(source, :verified) == true
 
       def total_trust(sources)
         weights = sources.select { |source| source[:verified] }.map { |source| source[:trust] }

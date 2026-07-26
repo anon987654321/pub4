@@ -7,8 +7,12 @@ require_relative "environment"
 
 module Pub4
   class StatusReport
+    # Literal, not Master::Ground::Config::DEFAULT_WEB_PORT: this reporter is a
+    # cross-repo diagnostic that must still boot when the Master runtime cannot
+    # (it only requires environment.rb). Keep in sync with lib/ground/config.rb.
+    DEFAULT_MASTER_WEB_PORT = 53_187
     PORTS = {
-      "MASTER web" => Integer(ENV.fetch("MASTER_WEB_PORT", Master::Ground::Config::DEFAULT_WEB_PORT.to_s)),
+      "MASTER web" => Integer(ENV.fetch("MASTER_WEB_PORT", DEFAULT_MASTER_WEB_PORT.to_s)),
       "brgen" => 38_182,
       "amber" => 61_352,
       "bsdports" => 47_312,

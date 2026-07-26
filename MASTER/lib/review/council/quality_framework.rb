@@ -190,8 +190,8 @@ module Master
         }.freeze
 
         def self.questions
-          council = if File.exist?(Deliberation::Master::COUNCIL_PATH)
-                      Master.load_yaml(Deliberation::Master::COUNCIL_PATH).fetch("questions", {})
+          council = if File.exist?(Master::COUNCIL_PATH)
+                      Master.load_yaml(Master::COUNCIL_PATH).fetch("questions", {})
                     else
                       {}
                     end

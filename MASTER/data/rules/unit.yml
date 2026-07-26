@@ -642,6 +642,8 @@ unit:
   - markdown
   - ruby
 - id: RAILS_THIN_CONTROLLER_SEMANTIC
+  name: Controllers delegate business rules to models and services
+  autofix: false
   severity: warning
   tier: solid
   mode: violation
@@ -651,6 +653,8 @@ unit:
     multi-model orchestration, or heavy queries instead of delegating to models/services.
     Cite method names. If not a controller or already thin, CLEAN.
 - id: RAILS_VIEW_PURITY
+  name: Views present assigns and hold no business logic
+  autofix: false
   severity: warning
   tier: solid
   mode: violation
@@ -661,6 +665,8 @@ unit:
     persistence, multi-step condition trees that belong in helpers/models). Prefer
     CLEAN when the view only presents assigns.
 - id: AESTHETIC_FLAT_SEMANTIC
+  name: Flat surfaces on an 8px rhythm, no ornamental depth
+  autofix: false
   severity: info
   tier: cosmetic
   mode: opportunity
@@ -673,6 +679,8 @@ unit:
     uneven spacing off 8px rhythm, weak hierarchy, and decorative particles. Propose
     concrete token/spacing/type fixes. If already flat and rhythmic, CLEAN.'
 - id: AESTHETIC_RAMS_SEMANTIC
+  name: Useful, understandable, unobtrusive, honest, thorough
+  autofix: false
   severity: info
   tier: cosmetic
   mode: opportunity
