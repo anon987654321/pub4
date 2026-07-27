@@ -1,0 +1,62 @@
+/* MASTER face embed — shared by brgen and amber.
+   Flat, no ornament: a labelled bar over a framed viewport, matching the
+   house flat/brutalist direction rather than a floating card.
+
+   Sizing: the face is a centred head, so it reads badly in a wide letterbox.
+   aspect-ratio gives it a near-square viewport on phones and widens gently on
+   desktop, with a hard max-height so it never pushes the feed below the fold. */
+.ai-embed {
+  border-block-end: 1px solid var(--border);
+  background: var(--surface, #000);
+}
+
+.ai-embed-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-block-end: 1px solid var(--border);
+}
+
+.ai-embed-heading {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--text-secondary);
+}
+
+.ai-embed-open {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--text);
+    text-decoration: underline;
+  }
+}
+
+.ai-embed-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: #000;
+  aspect-ratio: 4 / 3;
+  max-block-size: min(70vh, 560px);
+
+  @media (min-width: 40rem) {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* The face animates continuously; honour the same guard the rest of the shell
+   uses so it does not autoplay motion for users who opted out. */
+@media (prefers-reduced-motion: reduce) {
+  .ai-embed-frame {
+    max-block-size: min(50vh, 420px);
+  }
+}

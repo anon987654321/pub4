@@ -75,15 +75,6 @@ a.feed-tab { text-decoration: none; }
    (not the dedicated /ai page's 100% -- that page IS the iframe; here it's
    one element among the feed chrome above it and the compose row below).
    Shorter on narrow phones so it doesn't eat the whole first screen. */
-.home-ai-embed {
-  display: block;
-  width: 100%;
-  height: clamp(280px, 40vh, 420px);
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: #000;
-}
-
 /* Compose — styled input box (rounded), expands into the full Tiptap composer on focus. */
 .compose-box {
   display: flex;

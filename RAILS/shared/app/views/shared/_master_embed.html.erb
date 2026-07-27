@@ -1,0 +1,24 @@
+<%# The MASTER face (ai.brgen.no), embedded as a first-class surface rather than
+    an unlabelled black rectangle. Shared so brgen and amber cannot drift.
+
+    Locals:
+      heading — section heading; defaults to the app's master_embed_title
+      eager   — true to load immediately (above the fold). Defaults to false:
+                the face boots a WebGL/THREE scene, so keeping it off the
+                critical path matters on a 1 vCPU host. %>
+<% heading = local_assigns.fetch(:heading, master_embed_title) %>
+<% eager = local_assigns.fetch(:eager, false) %>
+<section class="ai-embed" aria-labelledby="ai-embed-heading">
+  <div class="ai-embed-bar">
+    <h2 id="ai-embed-heading" class="ai-embed-heading"><%= heading %></h2>
+    <%= link_to "Open", master_web_url, class: "ai-embed-open",
+                target: "_blank", rel: "noopener" %>
+  </div>
+  <iframe
+    class="ai-embed-frame"
+    src="<%= master_web_url %>"
+    title="<%= heading %>"
+    allow="microphone; autoplay; encrypted-media; fullscreen"
+    referrerpolicy="strict-origin-when-cross-origin"
+    loading="<%= eager ? "eager" : "lazy" %>"></iframe>
+</section>

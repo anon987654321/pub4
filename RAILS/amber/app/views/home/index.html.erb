@@ -1,4 +1,9 @@
 <% content_for :title, "Dashboard" %>
+
+<%# amber had no MASTER face surface at all; brgen has carried it on its home
+    page since the embed landed. Same shared partial, amber's own heading. %>
+<%= render "shared/master_embed", heading: "ask amber" %>
+
 <% if authenticated? %>
   <% if @weather %>
     <div class="weather-bar">
