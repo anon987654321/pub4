@@ -30,6 +30,30 @@ open:
       The chat entry point into exec was closed 2026-07-27 (see git log,
       "stop visitor chat reaching the Fold"), but the escalation primitive
       remains for any other code-exec-as-dev path.
+  - id: doas_keepenv_is_a_root_rce
+    tag: operator-priority
+    summary: >
+      etc/doas.conf:1 uses `keepenv`, which preserves the caller's environment
+      across the privilege boundary. For a Ruby stack that includes RUBYOPT,
+      RUBYLIB, GEM_HOME and BUNDLE_*, so `RUBYOPT=-r/tmp/x.rb doas <anything>`
+      is arbitrary code execution as root by construction — no shell required.
+      MASTER/bin/tts-worker:18-22 already scrubs exactly that variable set
+      before boot because it does not trust it; keepenv hands the same set to
+      root.
+      This is INDEPENDENT of command scoping: dropping keepenv does not
+      restrict which commands run, so it does not hit the `doas zsh` problem
+      that makes cmd rules unworkable. It is the cheapest real reduction
+      available.
+      Do NOT simply delete keepenv: OPERATOR.sh:875 reads
+      ${I_UNDERSTAND_DNS_WIPE:-0} from the environment and the documented call
+      is `I_UNDERSTAND_DNS_WIPE=1 doas zsh OPERATOR.sh --stage-1`, so that gate
+      needs env to cross. Use an allowlist instead:
+        permit nopass setenv { I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK } dev as root
+      SEQUENCING: the repo's doas.conf IS the live config — resource_guard.sh
+      on the host copies it to /etc/doas.conf every 5 minutes, so any edit
+      propagates to production within one tick. Land the resource_guard fix
+      (committed, not yet deployed) and verify doas syntax on the VM with
+      `doas -C /etc/doas.conf -u dev id` before changing this file.
   - id: root_dot_sources_dev_owned_repo_every_5min
     tag: operator-priority
     summary: >
