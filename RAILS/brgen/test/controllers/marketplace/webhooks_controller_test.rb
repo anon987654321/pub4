@@ -10,6 +10,9 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
   SECRET = "whsec_test_secret"
 
   setup do
+    # The webhook routes live inside constraints(subdomain: MARKETPLACE_SUBDOMAINS),
+    # so the default www.example.com host 404s before reaching the controller.
+    host! "markedsplass.example.com"
     @seller = User.create!(email_address: "wh_seller@example.com", password: "secret1234")
     @buyer  = User.create!(email_address: "wh_buyer@example.com",  password: "secret1234")
     @category = Marketplace::Category.create!(name: "Probe", slug: "probe-#{SecureRandom.hex(4)}")

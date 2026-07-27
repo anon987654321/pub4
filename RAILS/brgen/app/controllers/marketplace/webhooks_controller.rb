@@ -21,7 +21,7 @@ class Marketplace::WebhooksController < ActionController::Base
     if event["type"] == "checkout.session.completed"
       ref = event.dig("data", "object", "id")
       order_id = event.dig("data", "object", "metadata", "order_id") || event.dig("data", "object", "client_reference_id")
-      order = Marketplace::Order.find_by(id: order_id) || Marketplace::Order.find_by(payment_reference: ref)
+      order = payable_scope.find_by(id: order_id) || payable_scope.find_by(payment_reference: ref)
       mark_paid(order, ref)
     end
     head :ok
@@ -35,7 +35,7 @@ class Marketplace::WebhooksController < ActionController::Base
 
     payload = JSON.parse(body)
     ref = payload["reference"] || payload.dig("payment", "reference")
-    order = Marketplace::Order.find_by(payment_reference: ref)
+    order = payable_scope.find_by(payment_reference: ref)
     state = payload["name"] || payload["state"] || payload.dig("payment", "state")
     mark_paid(order, ref) if state.to_s.match?(/AUTHORIZED|CAPTURED|SALE|RESERVED/i)
     head :ok
@@ -44,6 +44,15 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   private
+
+  # mark_paid! notifies both the seller (listing.user) and the buyer, and reads
+  # the listing title. Every model here is strict_loading by default (shared
+  # ApplicationRecord) and production raises on a violation, so the associations
+  # that path touches are preloaded rather than walked lazily. Marketplace::Order
+  # also guards each of those reads itself — this just avoids the extra queries.
+  def payable_scope
+    Marketplace::Order.includes(:buyer, listing: :user)
+  end
 
   # Only transition orders that are actually awaiting payment, so a replayed or
   # duplicated event cannot re-open a refunded or cancelled order.
