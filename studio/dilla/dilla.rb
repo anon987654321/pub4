@@ -13713,7 +13713,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:)
       if fit && File.file?(fit)
         rap_tmp = "#{destination}.rap#{File.extname(destination)}"
-        mix_rap_vocal_layer!(destination, fit, rap_tmp)
+        mix_rap_vocal_layer!(destination, fit, rap_tmp, beat_bpm: cfg[:bpm])
         FileUtils.mv(rap_tmp, destination)
         puts "rap-vocal: mixed #{rap_slug} → #{destination}"
       end
@@ -15543,32 +15543,40 @@ def rap_vocal_mix_params
   bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "1.0").to_f
   voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "1.0").to_f
   sparkle_db = ENV.fetch("RAP_VOCAL_SPARKLE_DB", "3.0").to_f
-  { vocal_vol:, bed_w:, voc_w:, sparkle_db: }
+  hpf_hz = ENV.fetch("RAP_VOCAL_HPF", "90").to_f
+  lowmid_cut_db = ENV.fetch("RAP_VOCAL_LOWMID_CUT_DB", "2.0").to_f
+  { vocal_vol:, bed_w:, voc_w:, sparkle_db:, hpf_hz:, lowmid_cut_db: }
 end
 
-# Rebuilt from a direct A/B: the old chain (HPF -> dual notch EQ -> lowpass
-# -> stacked presence EQ -> gate -> compressor -> sidechain duck) measured
-# fine in isolation (real RMS gain, no clipping after the earlier fix) but
-# the *combination* made a confirmed-good vocal source (verified by ear,
-# unprocessed, played standalone) imperceptible once mixed with the beat --
-# reproducible across many render configs. A plain, unprocessed direct
-# amix (no EQ, no gate, no compressor, no sidechain) is what actually
-# worked. This keeps that as the base: gentle rumble-only highpass, a light
-# high-shelf for top-end sparkle (not the old stacked mid-presence boost),
-# straight amix, single limiter for safety.
-def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
+# Mirrors DillaGroove's snare pocket push (role_timing_offset's early-snare
+# tick offset) so the vocal's overall entry lands in the pushed pocket the
+# backbeat sits in, instead of dead-on-grid. A rap vocal phrases off the
+# snare, not the kick; this nudges the clip's anchor, not per-syllable timing.
+def rap_vocal_pocket_nudge_sec(beat_bpm)
+  return 0.0 if ENV["RAP_VOCAL_POCKET_NUDGE"] == "0"
+  return 0.0 unless defined?(DillaGroove) && DillaGroove.enabled?
+  beat_p = 60.0 / beat_bpm.to_f
+  tick = beat_p / 96.0
+  mul = DillaGroove.pocket_dna? ? 4 : 3
+  tick * mul
+end
+
+# Gain staging is load-bearing here. amix runs normalize=0, so the weights
+# are absolute: the voice reaches the limiter at vocal_vol*voc_w against the
+# bed at bed_w. Push that ratio too far and alimiter clamps on every vocal
+# peak and applies the reduction to the whole mix, taking the kit down with
+# it. Keep the ratio modest and let the voice sit, rather than buying
+# presence with gain the limiter then reclaims from the drums. Filter chain
+# stays single-stage on purpose (no gate/compressor/sidechain): that
+# combination previously made a good vocal source disappear once mixed.
+def mix_rap_vocal_layer!(beat_path, vocal_path, dest, beat_bpm: nil)
   mix = rap_vocal_mix_params
-  # Gain staging is load-bearing here. amix runs normalize=0, so the weights
-  # are absolute: the voice reaches the limiter at vocal_vol*voc_w against the
-  # bed at bed_w. Push that ratio far enough and alimiter clamps on every vocal
-  # peak and applies the reduction to the WHOLE mix, so the kit disappears
-  # without anything having ducked it. Measured on get_dis_money at 1.85*1.75
-  # vs 0.72 (+13dB): kick -9.2dB, snare -7.0dB against the same render with
-  # RAP_VOCAL=0. At 1.0/1.0/1.0 the kit loses only 2.4dB, which is ordinary
-  # summing headroom. Keep the ratio modest and let the voice sit, rather than
-  # buying presence with gain the limiter then takes back out of the drums.
+  nudge = beat_bpm ? rap_vocal_pocket_nudge_sec(beat_bpm) : 0.0
+  trim = nudge.positive? ? "atrim=start=#{nudge.round(4)},asetpts=PTS-STARTPTS," : ""
   filter = [
-    "[1:a]aformat=channel_layouts=stereo,highpass=f=60,treble=g=#{mix[:sparkle_db]}:f=9000:width_type=o:width=1.2," \
+    "[1:a]aformat=channel_layouts=stereo,#{trim}highpass=f=#{mix[:hpf_hz]}," \
+    "bass=g=-#{mix[:lowmid_cut_db]}:f=300:width_type=o:width=1.0," \
+    "treble=g=#{mix[:sparkle_db]}:f=9000:width_type=o:width=1.2," \
     "volume=#{mix[:vocal_vol]}[v0]",
     "[0:a][v0]amix=inputs=2:weights=#{mix[:bed_w]} #{mix[:voc_w]}:duration=first:dropout_transition=0:normalize=0," \
     "alimiter=limit=0.96:level_out=0.97[out]",
