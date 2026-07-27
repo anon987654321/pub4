@@ -178,16 +178,25 @@ module DillaMaster
     { harshness: delta.round(2), needs_notch: delta > 6.0 }
   end
 
+  # harmony_score kept in the signature for call-site compatibility but no
+  # longer used: it used to force "boost_sub" whenever chord/voicing quality
+  # was mediocre, regardless of the actual measured low/mid balance -- two
+  # unrelated quality dimensions conflated into one wrong EQ recommendation.
+  # refine_deep_mix_env! trusts this recommendation directly (bumps
+  # KICK_GAIN on "boost_sub" with no independent delta check), so a bad
+  # chord score alone could silently push the kick louder for no acoustic
+  # reason. render_quality_acceptable?'s sub_ok already worked around this
+  # by re-checking low_mid_delta itself -- that guard is now redundant but
+  # harmless.
   def sub_kick_balance(spectrum, harmony_score = nil)
     low = spectrum[:low] || spectrum["low"] || -18.0
     mid = spectrum[:mid] || spectrum["mid"] || -22.0
     ratio = low.to_f - mid.to_f
     rec = if ratio < -8
-"boost_sub"
-else
-ratio > 2 ? "reduce_sub" : "ok"
-end
-    rec = "boost_sub" if harmony_score && harmony_score < 65
+            "boost_sub"
+          else
+            ratio > 2 ? "reduce_sub" : "ok"
+          end
     { low_mid_delta: ratio.round(2), recommendation: rec }
   end
 

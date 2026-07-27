@@ -33,9 +33,9 @@ module Pub4
 
     def dilla_candidates
       [
-        repo_join("studio/dilla/engine.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/dilla/engine.rb"),
-        rails_root.join("../../studio/dilla/engine.rb"),
+        repo_join("studio/dilla/dilla.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/dilla/dilla.rb"),
+        rails_root.join("../../studio/dilla/dilla.rb"),
       ]
     end
 

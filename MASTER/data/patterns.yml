@@ -873,7 +873,7 @@ repo_topics:
     confidence: high
     local_evidence:
     - MASTER/lib/voice/production_dna.rb
-    - studio/dilla/engine.rb
+    - studio/dilla/dilla.rb
     pattern: 'Dilla/Madlib/FlyLo timing, chord voicings, analog drift, low-pass warmth,
       sampler grit, and live-triggered imperfection are encoded as reusable production
       DNA.

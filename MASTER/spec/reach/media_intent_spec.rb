@@ -47,17 +47,34 @@ class MediaIntentSpec < Minitest::Test
   end
 
   def test_routes_bach_and_flylo_to_distinct_full_track_styles
-    styles = []
+    calls = []
     runner = lambda do |**kwargs|
-      styles << kwargs[:arg]
+      calls << kwargs
       Master::Result.ok("rendered")
     end
     Master::Io::ScriptDispatch.stub(:run, runner) do
       assert MediaIntent.dispatch("create a Bach-inspired instrumental").ok?
       assert MediaIntent.dispatch("make a Flying Lotus beat").ok?
     end
-    assert styles.any? { |args| args.include?("--style baroque") }
-    assert styles.any? { |args| args.include?("--style flylo") }
+    assert(calls.any? { |c| c[:env]&.fetch("TRACK", nil) == "baroque" })
+    assert(calls.any? { |c| c[:env]&.fetch("TRACK", nil) == "flylo" })
+  end
+
+  def test_generate_beat_invokes_the_dilla_cli_verb_not_the_removed_wrapper_flags
+    captured = nil
+    runner = lambda do |**kwargs|
+      captured = kwargs
+      Master::Result.ok("rendered")
+    end
+    Master::Io::ScriptDispatch.stub(:run, runner) do
+      result = MediaIntent.dispatch("make me a beat")
+      assert result.ok?
+    end
+    assert_equal "dilla", captured[:tool]
+    # engine CLI is `dilla.rb dilla <output> <bars>` -- no --style/--output/generate flags
+    assert_match(/\Adilla\s+\S+\s+\d+\z/, captured[:arg])
+    assert_equal "dilla", captured[:env]["RENDER_MODE"]
+    refute captured[:env].key?("TRACK"), "plain 'dilla' style should not force TRACK, letting the engine pick its own default progression"
   end
 
   def test_routes_explicit_image_requests_to_repligen

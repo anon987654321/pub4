@@ -49,7 +49,7 @@ and writes `radio_bergen_sonic.yml` for the stream engine.
 
 ```sh
 ruby MASTER/tools/audio/radio_bergen_study.rb
-ruby MASTER/tools/dilla/dilla.rb radio-bergen-study
+ruby studio/dilla/dilla.rb radio-bergen-study
 ```
 
 With local audio files on disk (optional ffprobe analysis):

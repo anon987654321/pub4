@@ -23,6 +23,15 @@ class DeployPathsTest < Minitest::Test
     end
   end
 
+  def test_dilla_resolves_under_studio
+    with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
+      script = Pub4::DeployPaths.dilla_script
+      assert script, "expected dilla script"
+      assert_includes script.to_s, "/studio/dilla/dilla.rb"
+      assert File.file?(script)
+    end
+  end
+
   def test_deploy_root_from_pub4_root
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => nil, "PUB4_DEPLOY_ROOT" => nil) do
       assert_equal File.join(repo_root, "OPENBSD"), Pub4::DeployPaths.deploy_root.to_s

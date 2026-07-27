@@ -67,7 +67,7 @@ module Master
               "Electronic Music Producer", "Sound Engineer", "Label Executive", "Graphic Designer", "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
             ],
             files: %w[
-              ../studio/dilla/engine.rb ../studio/dilla/lib/master_heuristics.rb
+              ../studio/dilla/dilla.rb ../studio/dilla/lib/master_heuristics.rb
               lib/voice/dilla.rb lib/voice/production_dna.rb
               lib/io/analog_capabilities.rb
             ],

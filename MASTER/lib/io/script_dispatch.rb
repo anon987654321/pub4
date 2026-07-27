@@ -13,14 +13,15 @@ module Master
     module ScriptDispatch
       module_function
 
-      def run(root:, tool:, arg: "")
+      def run(root:, tool:, arg: "", env: {})
         requested_root = File.expand_path(root.to_s.empty? ? Dir.pwd : root)
         script = script_path(requested_root, tool)
         return Result.err("#{tool}: missing tool entrypoint #{script}", category: :validation) unless File.file?(script)
 
         argv = Shellwords.split(arg.to_s)
+        cmd = env.empty? ? [RbConfig.ruby] : [env.transform_keys(&:to_s).transform_values(&:to_s), RbConfig.ruby]
         out, status = Master::Io::Exec.capture2e(
-          RbConfig.ruby,
+          *cmd,
           script,
           *argv,
           chdir: working_directory(requested_root, script),

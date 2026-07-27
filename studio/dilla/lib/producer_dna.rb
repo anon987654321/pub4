@@ -610,8 +610,7 @@ module DillaLofiMachine
   # broader curated harmony pack so stream/demo cycles progressions + colors.
   STREAM_ROTATION = %w[
     get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
-    maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
-    major7_relative_minor_turn sus_add9_ballad
+    maj7_minor_cycle
     neo_soul_pocket erykah_minor warm_minor_arc minor_turnaround
     quartal_west_coast slash_ninth_cycle dorian_iv_loop gospel_bIII
     minor_iv_loop two_chord_hypnosis relative_major_turn
@@ -619,7 +618,20 @@ module DillaLofiMachine
     chromatic_mediant_drift lydian_glass_cycle pedal_upper_structures
     bossa_major9_turn phrygian_gold_arc mixo_sus_loop common_tone_drift
     glasper_quartal minMaj_color church_sus jazz_ballad_waltz
+    two_chord_luminous coltrane_lite_triad drone_quartal_wash waltz_relative_lift
+    half_time_gospel_plagal double_time_pocket whole_tone_bridge upper_triad_tower
+    minor_add9_lullaby dominant_chain_home
+    aydin_jazz_turn aydin_modal_quartal bach_circle_descent bach_descending_bass
+    backdoor_resolve bvi_bvii_minor deceptive_turn dominant_turn donda_minor
+    electronium_classic ii_v_i_major ii_v_i_minor iv_borrow_minor keys_woman
+    major_lifting minor_line_cliche minor_triad_walk modal_safe neo_iv_cycle
+    neo_soul plagal_jazz slash_neo_soul slow_ballad_wash soul stevie_bVII
+    suspended_ballad timeless_authentic turnaround_ii_v watermelon_turn
   ].freeze
+  # HARMONY_PROFILES also carries a handful of *_documented entries (sourced
+  # from dilla_reference.yml) -- literal reference transcriptions, not
+  # deliberately excluded here so stream/demo rotation stays generative
+  # rather than replaying citation-grade transcriptions verbatim.
 
   CURATED_PROGRESSIONS = HARMONY_PROFILES.keys.freeze
 
@@ -758,9 +770,21 @@ module DillaLofiMachine
     hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
     extra = intervals.max + 2
     hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
-    voiced = hz.sort.last(voices)
+    # Root is always the lowest of these same-octave interval frequencies,
+    # so `hz.sort.last(voices)` silently dropped it for any template longer
+    # than `voices` (m9/m11/maj9 all list 5 intervals against the default
+    # voices: 4) -- e.g. Cm11 came out as [Eb, F, G, Bb], no C at all, wrong
+    # pitch classes entirely once octave-wrapped below. Root now always
+    # survives the trim; only the extensions get thinned.
+    root = hz.min
+    rest = (hz - [root]).sort.last([voices - 1, 0].max)
+    voiced = ([root] + rest).sort
     midis = voiced.map { |h| 69.0 + 12.0 * Math.log2(h / 440.0) }
-    midis = midis.map { |m| m + 12.0 while m < 50.0; m -= 12.0 while m > 76.0; m }
+    # `m + 12.0` (not `+=`) here never reassigns m, so `while m < 50.0` used
+    # to spin forever for any note landing below MIDI 50 (e.g. "C7sus" ->
+    # quality "7" -> some octave lands there) -- looked exactly like the
+    # documented coltrane-gem hang but had nothing to do with coltrane.
+    midis = midis.map { |m| m += 12.0 while m < 50.0; m -= 12.0 while m > 76.0; m }
     midis.map { |m| (440.0 * (2.0**((m - 69.0) / 12.0))).round(2) }.uniq.first(voices)
   end
 

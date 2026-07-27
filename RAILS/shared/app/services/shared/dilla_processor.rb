@@ -6,7 +6,7 @@ require "fileutils"
 require "open3"
 
 module Shared
-  # Runs studio/dilla/engine.rb and attaches audio to a record.
+  # Runs studio/dilla/dilla.rb and attaches audio to a record.
   module DillaProcessor
     STYLES = %w[dilla flylo baroque bach neo-soul neo_soul jazz].freeze
     DEFAULT_BARS = 12

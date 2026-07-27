@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "timeout"
+
 # Thin adapter over community Ruby music gems (GitHub-sourced).
 #   coltrane  — pedrozath/coltrane — chord parsing, voicings, progression analysis
 #   midilib   — jimm/midilib — Standard MIDI File I/O
@@ -25,7 +27,7 @@ module DillaMusicGems
     require "ostruct"
     require "head_music"
     require "coltrane"
-    require File.expand_path("../../../lib/boot/hash_dig_compat", __dir__)
+    require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
     Master.install_hash_dig_compat!
     require "midilib"
     require "wavefile"
@@ -126,7 +128,10 @@ module DillaMusicGems
     names = symbols.map { |s| coltrane_chord_name(s) }.compact
     return if names.length < 2
 
-    hits = ::Coltrane::Progression.find(*names)
+    # coltrane has hung indefinitely on specific chord symbols (Dm7b5, Cmaj9
+    # — see README / producer_dna.rb#chord_from_symbol); bound it the same
+    # way rather than let a render freeze forever with no exception raised.
+    hits = Timeout.timeout(1.5) { ::Coltrane::Progression.find(*names) }
     return if hits.empty?
 
     best = hits.first
@@ -154,8 +159,11 @@ module DillaMusicGems
       qualities.each do |q|
         cname = "#{root}#{q}"
         begin
-          chord = ::Coltrane::Chord.new(name: cname)
-          chord_pcs = chord.notes.map { |n| n.integer % 12 }.uniq.sort
+          # Same bounded-hang precaution as progression_analysis/chord_from_symbol:
+          # any single Chord.new(name:) in this up-to-84-iteration sweep can hang.
+          chord_pcs = Timeout.timeout(1.5) do
+            ::Coltrane::Chord.new(name: cname).notes.map { |n| n.integer % 12 }.uniq.sort
+          end
           overlap = (chord_pcs & pcs).length
           next if overlap < 3
           hits << { name: cname, overlap:, coverage: overlap.to_f / chord_pcs.length }

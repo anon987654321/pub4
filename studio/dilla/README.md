@@ -6,10 +6,12 @@ Tests: `MASTER/test/test_dilla.rb`.
 
 ## Entry points
 
-- `MASTER/tools/dilla/dilla.rb` — engine (`ruby dilla.rb help`)
-- `MASTER/tools/dilla.rb` — product wrapper (`generate --track …`)
+- `studio/dilla/dilla.rb` — the engine, single entry point (`ruby dilla.rb help`)
 
-Product path (brgen): `Shared::DillaProcessor` → wrapper → engine → Active Storage.
+There is no separate product wrapper anymore — it was folded into the engine
+(`DILLA_BEST_DEFAULTS` / `DILLA_STYLE_DEFAULTS` soft-fill under `RENDER_MODE=dilla`
+does what the old wrapper's `PRODUCT_ENV` table did).
+Product path (brgen): `Shared::DillaProcessor` → engine → Active Storage.
 
 **No styles. No command aliases.** Optional ENV knobs only
 (`STREAM_COMFORT`, `RENDER_MODE=warp`, `THEORY_BACH=1`, …).
@@ -17,7 +19,7 @@ Product path (brgen): `Shared::DillaProcessor` → wrapper → engine → Active
 ## Usage
 
 ```sh
-cd MASTER/tools/dilla
+cd studio/dilla
 
 # Continuous stream (rotates progressions + drums)
 ruby dilla.rb
@@ -26,11 +28,11 @@ SPEAK=1 ruby dilla.rb stream 16
 # One-shot
 ruby dilla.rb dilla out.wav 12
 TRACK=neo_soul THEORY_BACH=1 ruby dilla.rb dilla out.wav 16
-
-# Product
-cd MASTER
-ruby tools/dilla.rb generate --track get_dis_money --bars 12 --output /tmp/beat.mp3
 ```
+
+Product path (from RAILS, e.g. `Shared::DillaProcessor`) shells out the same
+way, with `RENDER_MODE=dilla` and `TRACK`/`PROGRESSION` set from the record's
+style — see `RAILS/shared/app/services/shared/dilla_processor.rb`.
 
 ## Theory runtime (Bach + Dilla as Ruby)
 
@@ -69,7 +71,7 @@ sparse pocket kit (+ optional rap stem)
 
 ```sh
 cd MASTER && bundle install
-bundle exec ruby tools/dilla/dilla.rb debug
+cd ../studio/dilla && bundle exec ruby dilla.rb debug
 ```
 
 ## Tests

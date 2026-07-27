@@ -284,6 +284,12 @@ module DillaComposition
       s.instance_variable_set(:@tension_curve, data["tension_curve"] || s.build_tension_curve(n_bars))
       s.instance_variable_set(:@critique_log, data["critique_log"] || [])
       s
+    rescue StandardError
+      # An interrupted save! (crash, kill -9, disk full) can leave session.json
+      # truncated/invalid; a fresh session beats a hard crash on every
+      # session/jam/evolve/critique/listen_loop command (same fallback style as
+      # load_playlist_catalog, promoted_profiles.json, learned_engine.json).
+      new(track: default_track, n_bars:)
     end
   end
 

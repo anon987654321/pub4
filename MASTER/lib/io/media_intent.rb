@@ -71,6 +71,8 @@ module Master
         POSTPRO_PRESETS.find { |pattern, _preset| text.match?(pattern) }&.last || "cinematic"
       end
 
+      DEFAULT_BEAT_BARS = 12
+
       def generate_beat(text, root:)
         style = if text.match?(/\bbach|baroque\b/i)
                   "baroque"
@@ -86,8 +88,14 @@ module Master
         output_dir = MEDIA_OUTPUT_DIR
         FileUtils.mkdir_p(output_dir)
         output = File.join(output_dir, "#{style}-#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}.mp3")
-        args = ["generate", "--style", style, "--output", output]
-        result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |v| Shellwords.escape(v) }.join(" "))
+        # Mirror Shared::DillaProcessor#run_script: the engine's CLI is
+        # `dilla.rb dilla <output> <bars>` — style/track selection happens via
+        # TRACK/PROGRESSION ENV, not CLI flags (there is no --style/--output flag).
+        track = style.tr("-", "_")
+        env = { "RENDER_MODE" => "dilla", "SPEAK" => "0" }
+        env.merge!("TRACK" => track, "PROGRESSION" => track) unless track == "dilla"
+        args = ["dilla", output, DEFAULT_BEAT_BARS.to_s]
+        result = ScriptDispatch.run(root:, tool: "dilla", arg: args.map { |v| Shellwords.escape(v) }.join(" "), env:)
         result.ok? ? Result.ok({ output: result.value!, rendered: result.value!, media: :dilla, path: output }) : result
       end
     end

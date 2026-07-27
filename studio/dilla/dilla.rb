@@ -6,6 +6,18 @@
 #
 # Usage: ruby dilla.rb help
 
+# lib/music_gems must load — and bootstrap! must run — before anything else
+# requires a gem this Gemfile.lock pins (json 2.19.1, yaml/psych, ostruct):
+# whichever code activates a gem name first wins for the whole process, and an
+# unconstrained `require "json"`/`require "yaml"` below would activate
+# whatever version ships as a Ruby default gem (e.g. json 2.20.0 on 3.4.9),
+# so bootstrap!'s own `require "bundler/setup"` then conflicts and silently
+# disables coltrane/midilib/wavefile/head_music for the rest of the process
+# (bootstrap! rescues LoadError). Real invocations run plain `ruby dilla.rb`,
+# not `bundle exec`, so this ordering is the only thing that pins it correctly.
+require_relative "lib/music_gems"
+DillaMusicGems.bootstrap!
+
 require "fileutils"
 require "json"
 require "yaml"
@@ -14,8 +26,7 @@ require "tmpdir"
 require_relative "../../MASTER/lib/io/analog_capabilities"
 require "open3"
 require "timeout"
-require_relative "lib/music_gems"
-DillaMusicGems.bootstrap!
+require_relative "lib/mixer"
 require_relative "lib/dilla_dmesg"
 require_relative "lib/composition_engine"
 require_relative "lib/groove_score"
@@ -395,6 +406,11 @@ MASTER_LUFS_BY_STYLE = {
   neo_soul: -18.5,
   default: -17.0,
 }.freeze
+
+# dilla_quality's acceptable-loudness range, ±1.5dB tolerance around the
+# whole intentional style spread above (resolve_master_lufs also drops as
+# low as -20.0 for dilla/donuts texture -- covered by the low end here).
+DILLA_QUALITY_LUFS_TARGET = ((MASTER_LUFS_BY_STYLE.values.min - 1.5)..(MASTER_LUFS_BY_STYLE.values.max + 1.5)).freeze
 
 LRA_BY_STYLE = {
   dilla: 13.0,
@@ -4877,8 +4893,17 @@ SONITEX_PRESETS = {
   ),
   extreme:  SONITEX_STX1269,
   donuts_warm: SONITEX_STX1260.merge(
-    crush_bits: 12, crush_sr: 1.85, crush_mix: 0.42, crush_post_lp: 2100,
-    dist_drive: 1.48, dist_mix: 0.62, hf_rolloff: 2200, groove_wear_lp: 2600,
+    # hf_rolloff/groove_wear_lp/crush_post_lp all previously sat at
+    # 2100-2600Hz — three separate `lowpass=` stages chained back-to-back in
+    # dilla_master_filters (see that method), not one filter each tuned in
+    # isolation across different commits. Stacked, they compounded into a
+    # near-total void from ~2.5kHz to ~19kHz on the whole mix bus (confirmed
+    # via sox spectrogram) -- no snare crack, hat shimmer, or vocal presence
+    # survived, reading as boxy/muffled/"digital" rather than warm. Widened
+    # to stay noticeably darker than donuts_soul (14200/12000/8500) without
+    # the total void.
+    crush_bits: 12, crush_sr: 1.85, crush_mix: 0.42, crush_post_lp: 6000,
+    dist_drive: 1.48, dist_mix: 0.62, hf_rolloff: 7000, groove_wear_lp: 9500,
     head_bump_hz: 58, head_bump_db: 5.2, warmth_db: 5.5, lf_rolloff: 38,
     wow_depth: 0.009, flutter_depth: 0.005, stereo_width: 1.12, hiss_amp: 0.0022,
     out_comp_threshold: -17, out_comp_ratio: 3.2, out_comp_makeup: 2.4,
@@ -6299,11 +6324,17 @@ def dilla_quality(path, baseline_path = nil)
     harshness:, sub_kick_balance: sub_kick,
     ml_notes: (ENV["DILLA_ML"] == "1" ? [DillaMl.ddsp_stub_note] : nil),
     loudness_range_lu: loudness["input_lra"]&.to_f, mono_rms_db: mono, spectral_rms_db: spectrum,
-    target: { integrated_lufs: -14.0..-11.0, true_peak_max_dbtp: -1.0 }, warnings: [],
+    # MASTER_LUFS_BY_STYLE targets -17..-20 (dilla/donuts as low as -20) --
+    # deliberately pulled down from a "-14..-11 radio-ready" figure after
+    # direct feedback that the louder target was "way too loud"/fatiguing
+    # (see MASTER_LUFS_BY_STYLE's own comment). This target/warning used to
+    # still check the old broadcast-loud range, so it flagged a false
+    # "too quiet" warning on every single correctly-targeted dilla render.
+    target: { integrated_lufs: DILLA_QUALITY_LUFS_TARGET, true_peak_max_dbtp: -1.0 }, warnings: [],
     capabilities: Master::Io::AnalogCapabilities.for(:dilla).last(5).map { |entry| entry[:id] }
   )
   report[:warnings] << "true peak exceeds -1 dBTP" if report[:true_peak_dbtp] && report[:true_peak_dbtp] > -1.0
-  report[:warnings] << "master is outside radio-ready -14..-11 LUFS range" if report[:integrated_lufs] && !(-14.0..-11.0).cover?(report[:integrated_lufs])
+  report[:warnings] << "master is outside the #{DILLA_QUALITY_LUFS_TARGET} LUFS range" if report[:integrated_lufs] && !DILLA_QUALITY_LUFS_TARGET.cover?(report[:integrated_lufs])
   if baseline_path && File.file?(baseline_path)
     baseline = JSON.parse(File.read(baseline_path), symbolize_names: true)
     old = baseline[:spectral_rms_db] || {}
@@ -6862,31 +6893,44 @@ def sonitex_tape_filters(input_tag = "mix", out_tag: "snx_out")
   dry_w = (1.0 - s[:dist_mix]).round(3)
   wet_w = s[:dist_mix].round(3)
   pop_dyn = s[:pop_amp].round(3)
-  [
-    "[#{input_tag}]acompressor=threshold=#{s[:comp_threshold]}dB:ratio=#{s[:comp_ratio]}:attack=#{s[:comp_attack]}:release=#{s[:comp_release]}:makeup=#{s[:comp_makeup]}[snx1]",
-    "[snx1]extrastereo=m=#{s[:stereo_width]}[snx2]",
-    "[snx2]asplit=2[snx_dry][snx_wet]",
-    "[snx_wet]equalizer=f=2800:t=o:w=1.2:g=#{s[:dist_pre_emph_db]},lowpass=f=#{s[:dist_pre_lp]}[snx_pre]",
-    "[snx_pre]aeval=exprs='tanh(#{d}*(val(0)+#{s[:dist_dc]}))/#{n}|tanh(#{d}*(val(1)+#{s[:dist_dc]}))/#{n}'[snx_sat]",
-    "[snx_sat]equalizer=f=2800:t=o:w=1.2:g=#{-s[:dist_pre_emph_db]}[snx_de]",
-    "[snx_dry][snx_de]amix=inputs=2:weights=#{dry_w} #{wet_w}:duration=longest[snx3]",
-    "[snx3]highpass=f=#{s[:lf_rolloff]}:width_type=q:width=0.9," \
-    "equalizer=f=#{s[:head_bump_hz]}:t=o:w=0.82:g=#{s[:head_bump_db]}," \
-    "equalizer=f=82:t=o:w=2:g=#{s[:warmth_db]}," \
-    "lowpass=f=#{s[:hf_rolloff]}:width_type=q:width=0.85," \
-    "lowpass=f=#{s[:groove_wear_lp]}[snx4]",
-    "[snx4]vibrato=f=#{s[:wow_rate]}:d=#{s[:wow_depth]}[snx5]",
-    "[snx5]vibrato=f=#{s[:flutter_hz]}:d=#{s[:flutter_depth]}[snx6]",
-    "[snx6]lowpass=f=#{s[:phone_lp]},equalizer=f=#{s[:sibilance_hz]}:t=o:w=1.1:g=#{s[:sibilance_db]}[snx7]",
-    "[snx7]aeval=exprs='(val(0)+#{s[:hiss_amp]}*(random(0)-0.5))|" \
-    "(val(1)+#{s[:hiss_amp]}*(random(1)-0.5))'[snx8]",
-    "[snx8]aeval=exprs='val(0)+if(lt(random(2),#{s[:pop_rate]}),(random(3)-0.5)*#{pop_dyn}*max(0.15,1-1.8*abs(val(0))),0)|" \
-    "val(1)+if(lt(random(4),#{s[:click_rate]}),(random(5)-0.5)*#{(pop_dyn * 0.55).round(3)}*max(0.15,1-1.8*abs(val(1))),0)'[snx9]",
-    "[snx9]acrusher=bits=#{s[:crush_bits]}:samples=#{s[:crush_sr]}:mix=#{s[:crush_mix]}[snx10]",
-    "[snx10]lowpass=f=#{s[:crush_post_lp]}[snx11]",
-    "[snx11]aeval=exprs='#{HEDD}'[snx12]",
-    "[snx12]acompressor=threshold=#{s[:out_comp_threshold]}dB:ratio=#{s[:out_comp_ratio]}:attack=22:release=120:makeup=#{s[:out_comp_makeup]}[#{out_tag}]",
-  ]
+  # Each Device is one self-contained labeled ffmpeg segment (input/output
+  # tags already embedded) -- .to_a below is byte-identical to the plain
+  # array literal this replaced, just introspectable (`ruby dilla.rb tracks`).
+  chain = DillaMixer::DeviceChain.new([
+    DillaMixer::Device.new(:comp,
+      "[#{input_tag}]acompressor=threshold=#{s[:comp_threshold]}dB:ratio=#{s[:comp_ratio]}:attack=#{s[:comp_attack]}:release=#{s[:comp_release]}:makeup=#{s[:comp_makeup]}[snx1]"),
+    DillaMixer::Device.new(:stereo_width, "[snx1]extrastereo=m=#{s[:stereo_width]}[snx2]"),
+    DillaMixer::Device.new(:split_dry_wet, "[snx2]asplit=2[snx_dry][snx_wet]"),
+    DillaMixer::Device.new(:pre_emphasis,
+      "[snx_wet]equalizer=f=2800:t=o:w=1.2:g=#{s[:dist_pre_emph_db]},lowpass=f=#{s[:dist_pre_lp]}[snx_pre]"),
+    DillaMixer::Device.new(:saturate,
+      "[snx_pre]aeval=exprs='tanh(#{d}*(val(0)+#{s[:dist_dc]}))/#{n}|tanh(#{d}*(val(1)+#{s[:dist_dc]}))/#{n}'[snx_sat]"),
+    DillaMixer::Device.new(:de_emphasis, "[snx_sat]equalizer=f=2800:t=o:w=1.2:g=#{-s[:dist_pre_emph_db]}[snx_de]"),
+    DillaMixer::Device.new(:dry_wet_mix, "[snx_dry][snx_de]amix=inputs=2:weights=#{dry_w} #{wet_w}:duration=longest[snx3]"),
+    DillaMixer::Device.new(:tone_shape,
+      "[snx3]highpass=f=#{s[:lf_rolloff]}:width_type=q:width=0.9," \
+      "equalizer=f=#{s[:head_bump_hz]}:t=o:w=0.82:g=#{s[:head_bump_db]}," \
+      "equalizer=f=82:t=o:w=2:g=#{s[:warmth_db]}," \
+      "lowpass=f=#{s[:hf_rolloff]}:width_type=q:width=0.85," \
+      "lowpass=f=#{s[:groove_wear_lp]}[snx4]"),
+    DillaMixer::Device.new(:wow, "[snx4]vibrato=f=#{s[:wow_rate]}:d=#{s[:wow_depth]}[snx5]"),
+    DillaMixer::Device.new(:flutter, "[snx5]vibrato=f=#{s[:flutter_hz]}:d=#{s[:flutter_depth]}[snx6]"),
+    DillaMixer::Device.new(:phone_sibilance,
+      "[snx6]lowpass=f=#{s[:phone_lp]},equalizer=f=#{s[:sibilance_hz]}:t=o:w=1.1:g=#{s[:sibilance_db]}[snx7]"),
+    DillaMixer::Device.new(:hiss,
+      "[snx7]aeval=exprs='(val(0)+#{s[:hiss_amp]}*(random(0)-0.5))|" \
+      "(val(1)+#{s[:hiss_amp]}*(random(1)-0.5))'[snx8]"),
+    DillaMixer::Device.new(:pops_clicks,
+      "[snx8]aeval=exprs='val(0)+if(lt(random(2),#{s[:pop_rate]}),(random(3)-0.5)*#{pop_dyn}*max(0.15,1-1.8*abs(val(0))),0)|" \
+      "val(1)+if(lt(random(4),#{s[:click_rate]}),(random(5)-0.5)*#{(pop_dyn * 0.55).round(3)}*max(0.15,1-1.8*abs(val(1))),0)'[snx9]"),
+    DillaMixer::Device.new(:crush, "[snx9]acrusher=bits=#{s[:crush_bits]}:samples=#{s[:crush_sr]}:mix=#{s[:crush_mix]}[snx10]"),
+    DillaMixer::Device.new(:crush_post_lp, "[snx10]lowpass=f=#{s[:crush_post_lp]}[snx11]"),
+    DillaMixer::Device.new(:exciter, "[snx11]aeval=exprs='#{HEDD}'[snx12]"),
+    DillaMixer::Device.new(:output_comp,
+      "[snx12]acompressor=threshold=#{s[:out_comp_threshold]}dB:ratio=#{s[:out_comp_ratio]}:attack=22:release=120:makeup=#{s[:out_comp_makeup]}[#{out_tag}]"),
+  ])
+  @last_sonitex_device_chain = chain
+  chain.to_a
 end
 
 # Dilla drum bus — NY parallel compression, sub bump, mix low-pass from measured centroid (~1061 Hz).
@@ -8184,11 +8228,6 @@ STREAM_EXTRA_DEFAULTS = {
   "DRUM_MIX_WEIGHT" => "0.95",
   "DRUM_AIR_DB" => "1.8",
   "DRUM_PRESENCE_DB" => "1.5",
-  "HARM_MIX_WEIGHT" => "1.05",
-  "HARM_BUS_VOL" => "1.35",
-  "HARMONIC_PADS_WEIGHT" => "1.05",
-  "HARMONIC_PADS_VOLUME" => "1.15",
-  "PAD_VOL" => "58",
   "RADIO_BERGEN" => "0",
   "STREAM_ITERATE" => "1",
   "SPEECH_MAX_SEGMENTS" => "1",
@@ -8945,7 +8984,16 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
   distinct = chords ? chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }.uniq.length : 0
   return unless distinct >= 6
   FileUtils.mkdir_p(DillaComposition::PROJECT_DIR)
-  data = File.exist?(PROMOTED_PROFILES_PATH) ? JSON.parse(File.read(PROMOTED_PROFILES_PATH)) : {}
+  data = begin
+    File.exist?(PROMOTED_PROFILES_PATH) ? JSON.parse(File.read(PROMOTED_PROFILES_PATH)) : {}
+  rescue JSON::ParserError => e
+    # A corrupt file used to hit the blanket `rescue StandardError` below and
+    # return without ever rewriting it -- permanently disabling promotion
+    # learning from that point on. Reset and self-repair on the next write
+    # instead of staying wedged forever.
+    warn "promoted_profiles.json corrupt (#{e.message}), resetting"
+    {}
+  end
   key = track.to_s.downcase.tr("-", "_")
   data[key] = (data[key] || 0) + 1
   data["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
@@ -15489,6 +15537,8 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
   # sidechain ducks bed under voice so rap sits on top of pads/drums.
   sc = ENV.fetch("RAP_VOCAL_SIDECHAIN", "1") != "0"
   # Keep filter graph as one line — empty segments from heredoc joins break ffmpeg.
+  # Vocal mixing is its own domain (dynamics/ducking relative to other tracks),
+  # not a mastering-chain Device list — kept as plain strings, not DillaMixer.
   v_chain = [
     "[1:a]aformat=channel_layouts=stereo",
     "highpass=f=140:width_type=q:width=0.707",

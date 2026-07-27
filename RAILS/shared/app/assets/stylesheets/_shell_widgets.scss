@@ -153,6 +153,15 @@ section h2 {
   pointer-events: auto;
 }
 
+/* The playlist page's now-playing/player bar sits flush across the bottom
+   edge -- without this offset the chat tab sits underneath it and eats no
+   clicks itself, but the player bar (rendered after it) intercepts the
+   click instead. Restored after a46dc643e dropped it while flattening the
+   widget to the true corner everywhere else. */
+body.vertical-playlist .nearby-chat-widget {
+  bottom: calc(72px + var(--safe-bottom, 0px));
+}
+
 .nearby-chat-widget-tab {
   display: flex;
   align-items: center;
@@ -191,8 +200,16 @@ section h2 {
   animation: nearby-widget-in 180ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
 
+/* The closed state. This rule has to live here, next to the widget, because
+   the widget is a shared partial rendered by every app's layout: it used to
+   rely on a bare `.hidden { display: none }` utility that only brgen defined,
+   so on amber and bsdports the panel was permanently expanded. The class
+   selector above also outranks the UA sheet's [hidden] rule, so being
+   explicit is required, not merely defensive. */
+.nearby-chat-widget-panel[hidden] { display: none; }
+
 /* When open, hide the tab under the panel (panel owns the corner). */
-.nearby-chat-widget:has(.nearby-chat-widget-panel:not(.hidden)) .nearby-chat-widget-tab {
+.nearby-chat-widget:has(.nearby-chat-widget-panel:not([hidden])) .nearby-chat-widget-tab {
   visibility: hidden;
   pointer-events: none;
 }
@@ -320,6 +337,10 @@ section h2 {
   .nearby-chat-widget-panel {
     width: 100vw;
     height: min(70vh, 520px);
+  }
+
+  body.vertical-playlist .nearby-chat-widget {
+    bottom: calc(88px + var(--safe-bottom, 0px));
   }
 }
 

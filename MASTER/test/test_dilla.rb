@@ -6,11 +6,11 @@ require "open3"
 require "rbconfig"
 require "timeout"
 
-# Dilla engine (studio/dilla/engine.rb) defines top-level constants, so probes
+# Dilla engine (studio/dilla/dilla.rb) defines top-level constants, so probes
 # load it in a subprocess — loading here would leak ROOT/OUTPUT_DIR into the
 # shared test process. CLI dispatch is guarded by `__FILE__ == $PROGRAM_NAME`.
 class TestDilla < Minitest::Test
-  ENGINE = File.expand_path("../../studio/dilla/engine.rb", __dir__)
+  ENGINE = File.expand_path("../../studio/dilla/dilla.rb", __dir__)
 
   # A hung probe (coltrane-gem hang — see README) used to pin a
   # dilla_test_probe process near 100% CPU forever with no output and no
@@ -111,7 +111,9 @@ class TestDilla < Minitest::Test
     refute result.fetch("comfort")
     refute result.fetch("creative")
     assert_equal "0", result.fetch("la_beat"), "style DNA keeps curated progressions"
-    assert_equal "0", result.fetch("vinyl")
+    # DILLA_STYLE_DEFAULTS' canonical DNA carries VINYL=1 (this path runs
+    # through apply_dilla_style!(force: true) via apply_stream_listenability_defaults!).
+    assert_equal "1", result.fetch("vinyl")
     assert_equal "0", result.fetch("self_sample")
     assert_equal "0", result.fetch("conv")
     assert_equal "-16.5", result.fetch("lufs")
@@ -265,7 +267,7 @@ class TestDilla < Minitest::Test
     result = eval_in_engine(<<~RUBY)
       hz = [174.61, 207.65, 261.63, 311.13] # Fm7
       bad = %i[quartal drop2 drop3 spread cluster].filter_map do |style|
-        voiced = apply_voicing(hz, style)
+        voiced = DillaHarmony.apply_voicing(hz, style:)
         ok = voiced.is_a?(Array) && voiced.length.between?(1, 5) &&
              voiced.all? { |v| v.is_a?(Float) && v.positive? } && voiced == voiced.uniq
         style unless ok
@@ -343,7 +345,12 @@ class TestDilla < Minitest::Test
        %w[TRACK PROGRESSION RENDER_MODE]).each { |k| ENV.delete(k) }
       apply_best_defaults!
       apply_dilla_style!(force: false)
-      conflicts = DILLA_BEST_DEFAULTS.select { |k, v|
+      # SONITEX/SONITEX_PRESET/ANALOG_CHAIN/VINYL are a documented, intentional
+      # exception (see DILLA_BEST_DEFAULTS' own comment on those keys): BEST
+      # keeps the safer donuts_soul/broadcast for callers that never force
+      # style, while STYLE force-applies donuts_warm/vinyl_hot/VINYL=1.
+      known_exceptions = %w[SONITEX SONITEX_PRESET ANALOG_CHAIN VINYL]
+      conflicts = DILLA_BEST_DEFAULTS.reject { |k, _| known_exceptions.include?(k) }.select { |k, v|
         DILLA_STYLE_DEFAULTS.key?(k) && v.to_s != DILLA_STYLE_DEFAULTS[k].to_s
       }
       puts JSON.generate(
@@ -379,8 +386,13 @@ class TestDilla < Minitest::Test
     assert_equal "1", result.fetch("master")
     assert_equal "stack_soul", result.fetch("pad_voice")
     assert_equal "held", result.fetch("pad_arp")
-    assert_equal "broadcast", result.fetch("analog")
-    assert_equal "0.68", result.fetch("kick_gain")
+    # DILLA_STYLE_DEFAULTS carries vinyl_hot (see its own comment on why
+    # DILLA_BEST_DEFAULTS keeps the safer broadcast for other callers) --
+    # it wins here too since apply_dilla_style! fill/forces ANALOG_CHAIN.
+    assert_equal "vinyl_hot", result.fetch("analog")
+    # 0.68 is the STREAM-only quiet-kit-bus value (STREAM_EXTRA_DEFAULTS);
+    # the one-shot best+style path this test exercises agrees on 0.88.
+    assert_equal "0.88", result.fetch("kick_gain")
     assert_equal "1", result.fetch("composition")
     assert_equal "1", result.fetch("groove_engine")
     assert_equal "1", result.fetch("pocket_dna")
@@ -677,7 +689,11 @@ class TestDilla < Minitest::Test
     RUBY
     assert_equal "dilla", result.fetch("mode")
     assert_equal "get_dis_money", result.fetch("track")
-    assert_equal "92", result.fetch("bpm")
+    # DILLA_STYLE_DEFAULTS deliberately does NOT force BPM (see its own
+    # comment): forcing "92" here used to silently clobber every other
+    # track's own tuned tempo. resolve_bpm falls back to the track preset
+    # itself (still 92 for get_dis_money) when ENV["BPM"] is unset.
+    assert_nil result.fetch("bpm")
     assert_includes %w[0 1], result.fetch("kicks")
     assert_equal "jonas_v", result.fetch("rap"), "style default is kit + Jonas V; RAP_VOCAL=0 for instrumental"
     assert_nil result.fetch("stream_track")
@@ -813,8 +829,9 @@ class TestDilla < Minitest::Test
     assert_equal "erykah_dust_lead", result.fetch("voice_id").to_s
     assert_equal "soul_wash", result.fetch("arp_mode").to_s
     assert_equal "soul_wash", result.fetch("preset_key").to_s
-    assert_equal "pingpong", result.fetch("lead_style").to_s
-    assert_equal 4, result.fetch("lead_subdiv")
+    # MORPH_LEAD_ARP_CYCLE's soul_wash preset style is :updown (see its own table).
+    assert_equal "updown", result.fetch("lead_style").to_s
+    assert_equal 2, result.fetch("lead_subdiv")
     assert_equal "erykah", result.fetch("track_voice")
     assert_equal "erykah_dust", result.fetch("track_arp")
   end
@@ -1039,9 +1056,13 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_equal "dilla", result.fetch("mode")
-    assert_equal "donuts_soul", result.fetch("sonitex")
-    assert_equal "broadcast", result.fetch("analog")
-    assert_equal "0", result.fetch("vinyl")
+    # DILLA_STYLE_DEFAULTS carries donuts_warm/vinyl_hot/VINYL=1 (see the
+    # comment on DILLA_BEST_DEFAULTS' own donuts_soul/broadcast entries --
+    # that table intentionally keeps the safer values for callers that don't
+    # go through apply_dilla_style!(force: true); this test does).
+    assert_equal "donuts_warm", result.fetch("sonitex")
+    assert_equal "vinyl_hot", result.fetch("analog")
+    assert_equal "1", result.fetch("vinyl")
     assert_equal "0", result.fetch("self_sample")
     assert_equal "1", result.fetch("lock")
     assert_equal "0", result.fetch("wild")

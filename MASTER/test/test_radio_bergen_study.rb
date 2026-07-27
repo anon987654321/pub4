@@ -3,7 +3,7 @@
 require "yaml"
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../studio/dilla/engine"
+require_relative "../../studio/dilla/dilla"
 
 class RadioBergenStudyUnitTest < Minitest::Test
   FAST_AUDIO = ->(path) { path ? { duration_seconds: 180.0 } : nil }.freeze

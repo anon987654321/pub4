@@ -16,7 +16,7 @@ class TestDillaCouncil < Minitest::Test
     assert_equal "dilla_critique", dilla[:preset_key]
     assert dilla[:include_mix_metrics]
     assert_match(/cherry-pick/i, dilla[:ideation_prompt])
-    assert_includes dilla[:files], "../studio/dilla/engine.rb"
+    assert_includes dilla[:files], "../studio/dilla/dilla.rb"
   end
 
   def test_dilla_panel_personas_exist_in_council_yaml

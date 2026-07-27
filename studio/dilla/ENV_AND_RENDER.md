@@ -7,10 +7,13 @@ Sources of truth:
 
 | Path | Role |
 |------|------|
-| `dilla.rb` | Engine: `DILLA_STYLE_DEFAULTS`, `DILLA_BEST_DEFAULTS`, stream tables, render |
-| `../dilla.rb` | Product wrapper: `PRODUCT_ENV` (kit/vox/mix mirror of style DNA) |
+| `dilla.rb` | Engine: `DILLA_STYLE_DEFAULTS`, `DILLA_BEST_DEFAULTS`, stream tables, render, DISPATCH |
 | `lib/theory_runtime.rb` | Bach + Dilla voicing operators (not styles) |
 | `lib/groove_engine.rb` | Sparse pocket phrases + micro-timing |
+
+There is no separate product wrapper — `RAILS/shared/app/services/shared/dilla_processor.rb`
+shells straight out to this file with `RENDER_MODE=dilla` and `TRACK`/`PROGRESSION`
+set from the requested style (see `Shared::DillaProcessor#run_script`).
 
 Inspect after a path that records provenance:
 
@@ -24,16 +27,14 @@ ruby dilla.rb config-provenance
 
 Lower layers only **soft-fill** (set if empty). Later **force** overwrites.
 
-### Product one-shot (`tools/dilla.rb generate`)
+### Product one-shot (`Shared::DillaProcessor` → `ruby dilla.rb dilla <out> <bars>`)
 
 ```
-1. PRODUCT_ENV               force via system(env, …) — mirrors style DNA
-2. process ENV overrides     operator shell keys win for product keys
-3. engine boot
-4. apply_best_defaults!      soft: RENDER_MODE table → DILLA_BEST → optional DILLA_DEEP
-5. apply_dilla_style!        soft STYLE DNA (product path)
-6. CLI flags / TRACK         --track= etc.
-7. render_dilla
+1. process ENV overrides     DillaProcessor sets RENDER_MODE=dilla, TRACK/PROGRESSION, RAP_VOCAL, …
+2. engine boot
+3. apply_best_defaults!      soft: RENDER_MODE table → DILLA_BEST → optional DILLA_DEEP
+4. apply_dilla_style!        soft STYLE DNA
+5. render_dilla
 ```
 
 ### Stream (`ruby dilla.rb` / `ruby dilla.rb stream`)
@@ -65,7 +66,6 @@ Lower layers only **soft-fill** (set if empty). Later **force** overwrites.
 
 | Table | Verb | Role |
 |-------|------|------|
-| `PRODUCT_ENV` | force (spawn) | Product kit/vox/mix (wrapper) |
 | `RENDER_MODE_DEFAULTS` | soft | sketch/record/perform/long_soul/golden/**warp** |
 | `DILLA_BEST_DEFAULTS` | soft | Baseline knobs aligned with STYLE (no soft-fill conflicts) |
 | `DILLA_DEEP_DEFAULTS` | soft | Quality gates + pocket jitter when deep |
@@ -114,26 +114,17 @@ Full DNA is large (mix bus dB, harmonic stem weights). Prefer
 ## One-shot render path
 
 ```sh
-cd MASTER
-ruby tools/dilla.rb generate --track get_dis_money --bars 12 --output /tmp/beat.wav
-# engine:
-# PRODUCT_ENV + ruby tools/dilla/dilla.rb dilla /tmp/beat.wav --track=get_dis_money … 12
+cd studio/dilla
+TRACK=get_dis_money PROGRESSION=get_dis_money ruby dilla.rb dilla /tmp/beat.wav 12
 ```
 
-### 1. Wrapper (`tools/dilla.rb`)
-
-1. Parse `--track`, `--bars`, `--output` (no `--style`)
-2. `product_env` = `PRODUCT_ENV` + shell overrides
-3. `engine_args` → `dilla.rb dilla <out> --sonitex=… --analog-chain=… --track=… [bars]`
-4. `system(env, ruby, *args)`
-
-### 2. Engine CLI (`DISPATCH["dilla"]`)
+### 1. Engine CLI (`DISPATCH["dilla"]`)
 
 1. Destination + bars
 2. Best defaults (unless `DILLA_RAW`) + style DNA
 3. `render_dilla(dest, bars)`
 
-### 3. `render_dilla` (core)
+### 2. `render_dilla` (core)
 
 ```
 require ffmpeg · cleanup · pick_render_seed!
@@ -153,9 +144,9 @@ render_harmonic_wav:
 sidechain amix → sonitex → analog → heuristics → loudnorm
 ```
 
-### 4. Product attach (RAILS)
+### 3. Product attach (RAILS)
 
-`Shared::DillaProcessor.render_to_file!` → wrapper → Active Storage.
+`Shared::DillaProcessor.render_to_file!` → engine → Active Storage.
 
 ---
 
@@ -169,7 +160,7 @@ sidechain amix → sonitex → analog → heuristics → loudnorm
 ## Full playlist demo
 
 ```sh
-cd MASTER/tools/dilla
+cd studio/dilla
 SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 # resume skips existing parts; DEMO_FORCE=1 re-renders all
 # DEMO_TRACK_TIMEOUT=150 DEMO_ALBUM_NORM=1
@@ -180,7 +171,7 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 ## Provenance debugging
 
 ```sh
-cd MASTER/tools/dilla
+cd studio/dilla
 SPEAK=0 BARS=4 ruby -e '
   load "dilla.rb"
   apply_best_defaults!
@@ -203,5 +194,4 @@ SPEAK=0 BARS=4 ruby -e '
 | `lib/composition_engine.rb` | Form, performers |
 | `lib/master_heuristics.rb` | Master FX + loss gates |
 | `lib/music_gems.rb` | coltrane / head_music / midilib / wavefile |
-| `../dilla.rb` | Product entry + `PRODUCT_ENV` |
 | `README.md` | Usage summary |
