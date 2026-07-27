@@ -15543,8 +15543,14 @@ def rap_vocal_mix_params
   # Defaults raised — isolation leaves voice ≈−18 dBFS; mix 1.3 left it inaudible.
   vocal_vol = ENV.fetch("RAP_VOCAL_MIX", style == "chop" ? "2.4" : "2.8").to_f
   duck = ENV.fetch("RAP_VOCAL_DUCK", "0.55").to_f
-  top_eq = style == "chop" ? "equalizer=f=2800:t=o:w=2:g=4.5" : "equalizer=f=2900:t=o:w=1.6:g=5.5"
-  presence = style == "chop" ? "equalizer=f=3600:t=o:w=1.4:g=3.5," : "equalizer=f=3200:t=o:w=1.2:g=4.5,"
+  # top_eq + presence stack in the SAME 2900-3200Hz band (~10dB combined at
+  # the old 5.5/4.5 values) -- verified this overflows ffmpeg's equalizer
+  # filter internally ("Channel 0/1 clipping" from the filter itself, before
+  # any downstream volume/limiter stage even runs -- a limiter after the
+  # fact cannot undo distortion that already happened inside the EQ). Halved
+  # both so the combined boost in that band stays clean.
+  top_eq = style == "chop" ? "equalizer=f=2800:t=o:w=2:g=1.4" : "equalizer=f=2900:t=o:w=1.6:g=1.6"
+  presence = style == "chop" ? "equalizer=f=3600:t=o:w=1.4:g=1.1," : "equalizer=f=3200:t=o:w=1.2:g=1.3,"
   { vocal_vol:, duck:, top_eq:, presence: }
 end
 
@@ -15568,7 +15574,16 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
     # Softer gate — previous 0.012 threshold + range killed quiet syllables.
     "agate=threshold=0.006:ratio=2:attack=2:release=100:range=0.01:makeup=2.5",
     "acompressor=threshold=-20dB:ratio=2:attack=4:release=90:makeup=5",
-    "volume=#{mix[:vocal_vol]}[v0]",
+    "volume=#{mix[:vocal_vol]}",
+    # top_eq+presence stack ~10dB of boost in the same 2900-3200Hz band right
+    # before this volume multiply, with nothing downstream to catch the
+    # result -- verified clipping ("Channel 0/1 clipping" from ffmpeg's own
+    # equalizer stage) on the real jonas_v fit at RAP_VOCAL_MIX=2.8, worse at
+    # higher operator-set values. A clipped vocal reads as distorted noise,
+    # not "missing" -- this is very likely why it wasn't perceived as vocals
+    # despite being present at a technically-correct dB level. Limiter here
+    # keeps the loudness win from RAP_VOCAL_MIX/WEIGHT without the distortion.
+    "alimiter=limit=0.95:level_out=0.95[v0]",
   ].join(",")
   if sc
     filter = [
