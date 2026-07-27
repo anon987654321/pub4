@@ -77,6 +77,12 @@ open:
       signed-cookie forgery. Compounded by vps_ci.sh:88 / RAILS/_runtime_gate.sh:71
       running `chmod o+x /home/dev` while OPERATOR.sh installs /home/dev/.zshrc
       at mode 644 with real keys in it. Move secrets to the sourced /etc/*.env.
+      Also vps_ci.sh:22-28 (ensure_ci_lock) runs, as root via `doas sh -c`,
+      `touch /var/tmp/pub4-ci.lock` then `chmod 666` on it — a fixed, predictable
+      path in a world-writable directory with no -h/-P, so a pre-planted symlink
+      redirects the root chmod onto an attacker-chosen file. PUB4_CI_LOCK is
+      env-overridable (vps_master_scan.sh:7). Move the lock to a root-owned dir
+      (e.g. /var/db/pub4/ci.lock) and drop the 666.
   - id: committed_rails_master_key_public_repo
     tag: operator-priority
     summary: >
