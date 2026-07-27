@@ -119,8 +119,9 @@ class OutfitsController < ApplicationController
   private
 
   def set_outfit
-    # items is preloaded for Outfit#total_wears (sums in Ruby); privacy_setting
-    # for authorize_view! — User is strict_loading, so a lazy load raises.
+    # privacy_setting is preloaded because authorize_view! consults it via
+    # WardrobeVisibilityPolicy; User is strict_loading, so a lazy load raises.
+    # items is preloaded for Outfit#total_wears, which sums in Ruby.
     @outfit = Outfit.includes(:items, user: :privacy_setting).find(params[:id])
   end
 

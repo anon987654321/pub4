@@ -8,7 +8,7 @@ class ItemsController < ApplicationController
   before_action :authorize!, only: %i[edit update destroy spark_joy clear_joy declutter wear archive restore]
   # show was in the set_ list but not the authorize! list, and set_item is an
   # unscoped Item.find — so GET /items/:id returned any user's item (brand,
-  # price, purchase date, photos). Gate on viewability, not ownership, so
+  # price, purchase date, photos). Gate on viewability rather than ownership so
   # public and follower wardrobes still browse.
   before_action :authorize_view!, only: %i[show]
   skip_before_action :verify_authenticity_token, only: [ :share ]
@@ -27,11 +27,11 @@ class ItemsController < ApplicationController
   def show
     @item.record_activity!("AmberItemViewed", source_vertical: "amber")
     @ai_available = WardrobeAi.configured?
-    # AffiliateLink.new, not affiliate_links.build: build appends the unsaved
-    # record to the loaded association, so the view's affiliate_links.any?
-    # became true for items with none and built a delete path from a nil id,
-    # raising "missing required keys: [:id]". Every item without an
-    # affiliate link 500'd.
+    # AffiliateLink.new, not @item.affiliate_links.build: build appends the
+    # unsaved record to the loaded association, so the view's
+    # `@item.affiliate_links.any?` became true for items with none and then
+    # built a delete path from link.id == nil, raising "missing required keys:
+    # [:id]". Every item without an affiliate link 500'd.
     @affiliate_link = @item.affiliate_links.first || AffiliateLink.new(item: @item)
   end
 

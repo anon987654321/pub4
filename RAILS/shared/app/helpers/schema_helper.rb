@@ -129,9 +129,10 @@ module SchemaHelper
       "description" => listing.try(:description)&.truncate(300),
       "url" => schema_url_for(listing),
       "sku" => listing.try(:id)&.to_s,
-      # try(:name), not &.name: only brgen's User responds to #name. amber's does
-      # not, so &.name raised NoMethodError and took out every amber
-      # /items/:id render via json_ld_for(@item, type: :product).
+      # try(:name), not &.name: only brgen's User responds to #name. amber's
+      # does not, so &.name raised NoMethodError and took out every
+      # amber /items/:id render via json_ld_for(@item, type: :product).
+      # Every other branch in this helper already uses try(:name).
       "brand" => { "@type" => "Brand", "name" => listing.try(:user).try(:name) || "Local Seller" },
       "offers" => {
         "@type" => "Offer",
