@@ -105,6 +105,15 @@ sends agents there as the canonical guide. `START_HERE.md:10` describes
 
 **operator-priority** — TTS end-to-end audio depends on host binaries such as `edge-tts` and `espeak`. Web wiring can be correct while synthesis is unavailable locally. Check `GET /health` deploy.tts_socket and `test -S .master/tts.sock` on vm23.
 
+**ffmpeg is not installed on vm23** (verified 2026-07-27). `OPENBSD/OPERATOR.sh:391`
+pkg_adds `… fd espeak` with no ffmpeg, and nothing else in `OPENBSD/` installs it.
+`lib/voice/engines.rb` gates on `ffmpeg?` (:307), so `concat_mp3` (:234) and the
+WAV→MP3 conversion (:297) **silently skip in production** — no error, just
+un-concatenated or unconverted audio. Works on a Mac, degrades on the VPS,
+which is the worst failure shape. Either add `ffmpeg` to that pkg_add line or
+make the guard report through `lib/voice/output_guard.rb` instead of returning
+quietly. Any future post-synthesis DSP would no-op the same way.
+
 ## Not Debt
 
 - Two `Master::` spines.
