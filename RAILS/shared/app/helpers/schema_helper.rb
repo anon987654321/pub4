@@ -129,12 +129,18 @@ module SchemaHelper
       "description" => listing.try(:description)&.truncate(300),
       "url" => schema_url_for(listing),
       "sku" => listing.try(:id)&.to_s,
-      "brand" => { "@type" => "Brand", "name" => listing.try(:user)&.name || "Local Seller" },
+      # try(:name), not &.name: only brgen's User responds to #name. amber's does
+      # not, so &.name raised NoMethodError and took out every amber
+      # /items/:id render via json_ld_for(@item, type: :product).
+      "brand" => { "@type" => "Brand", "name" => listing.try(:user).try(:name) || "Local Seller" },
       "offers" => {
         "@type" => "Offer",
         "price" => price,
         "priceCurrency" => listing.try(:currency) || "NOK",
-        "availability" => listing.sold? ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+        # try(:sold?), not sold?: this branch was written for brgen's
+        # Marketplace::Listing but amber renders its Item through it, and Item
+        # has no #sold?. nil is falsy, so unknown reads as InStock.
+        "availability" => listing.try(:sold?) ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
         "url" => schema_url_for(listing),
       }.compact,
     }

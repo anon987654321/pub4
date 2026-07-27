@@ -6,6 +6,11 @@ class ItemsController < ApplicationController
   before_action :require_real_user
   before_action :set_item, only: %i[show edit update destroy spark_joy clear_joy declutter wear archive restore]
   before_action :authorize!, only: %i[edit update destroy spark_joy clear_joy declutter wear archive restore]
+  # show was in the set_ list but not the authorize! list, and set_item is an
+  # unscoped Item.find — so GET /items/:id returned any user's item (brand,
+  # price, purchase date, photos). Gate on viewability, not ownership, so
+  # public and follower wardrobes still browse.
+  before_action :authorize_view!, only: %i[show]
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
@@ -22,7 +27,12 @@ class ItemsController < ApplicationController
   def show
     @item.record_activity!("AmberItemViewed", source_vertical: "amber")
     @ai_available = WardrobeAi.configured?
-    @affiliate_link = @item.affiliate_links.first || @item.affiliate_links.build
+    # AffiliateLink.new, not affiliate_links.build: build appends the unsaved
+    # record to the loaded association, so the view's affiliate_links.any?
+    # became true for items with none and built a delete path from a nil id,
+    # raising "missing required keys: [:id]". Every item without an
+    # affiliate link 500'd.
+    @affiliate_link = @item.affiliate_links.first || AffiliateLink.new(item: @item)
   end
 
   def new
@@ -127,10 +137,18 @@ class ItemsController < ApplicationController
 
   private
 
-  def set_item = @item = Item.includes(:user).find(params[:id])
+  # privacy_setting is preloaded because authorize_view! consults it via
+  # WardrobeVisibilityPolicy; User is strict_loading, so a lazy load raises.
+  def set_item = @item = Item.includes(:affiliate_links, user: :privacy_setting).find(params[:id])
 
   def authorize!
     redirect_to(items_path, alert: "Unauthorized") unless @item.user_id == Current.user&.id
+  end
+
+  def authorize_view!
+    return if WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @item.user).can_view_wardrobe?
+
+    redirect_to(items_path, alert: "Unauthorized")
   end
 
   def apply_lifecycle_filter(scope)

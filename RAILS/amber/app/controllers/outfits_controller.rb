@@ -5,7 +5,13 @@ class OutfitsController < ApplicationController
 
   before_action :require_real_user
   before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
-  before_action :authorize!, only: %i[edit update destroy share wear]
+  # reorder mutates outfit_items via update_all and was set_ but never
+  # authorized — any signed-in user could reorder another user's outfit.
+  before_action :authorize!, only: %i[edit update destroy share wear reorder]
+  # show and like were likewise unauthorized. Gate them on viewability rather
+  # than ownership: liking someone else's outfit is legitimate, reading a
+  # private wardrobe is not.
+  before_action :authorize_view!, only: %i[show like]
 
   def index
     scope = Current.user.outfits.with_attached_image.includes(items: { photos_attachments: :blob }).order(created_at: :desc)
@@ -113,11 +119,19 @@ class OutfitsController < ApplicationController
   private
 
   def set_outfit
-    @outfit = Outfit.includes(:user).find(params[:id])
+    # items is preloaded for Outfit#total_wears (sums in Ruby); privacy_setting
+    # for authorize_view! — User is strict_loading, so a lazy load raises.
+    @outfit = Outfit.includes(:items, user: :privacy_setting).find(params[:id])
   end
 
   def authorize!
     redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user_id == Current.user&.id
+  end
+
+  def authorize_view!
+    return if WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @outfit.user).can_view_wardrobe?
+
+    redirect_to(outfits_path, alert: "Unauthorized")
   end
 
   def outfit_params
