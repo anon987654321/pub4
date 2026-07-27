@@ -30,6 +30,22 @@ open:
       The chat entry point into exec was closed 2026-07-27 (see git log,
       "stop visitor chat reaching the Fold"), but the escalation primitive
       remains for any other code-exec-as-dev path.
+  - id: bplan_is_deployed_but_has_no_source_here
+    tag: operator-priority
+    summary: >
+      bplan is a live public service — etc/relayd.conf routes
+      bplan.pub.healthcare to it, etc/rc.d/bplan starts it, etc/bplan.env.sample
+      and a doas rule exist — but there is no RAILS/bplan in this repository and
+      no entry in RAILS/apps.yml, which START_HERE.md names as the feature
+      source of truth.
+      Consequence: every review in the 2026-07-26/27 pass structurally could not
+      see it. None of the security, scalability or gate findings apply to it,
+      and none of the fixes reached it. It also runs the same rc.d shape as the
+      other apps, so it very likely carries the same secrets-in-daemon_flags
+      exposure (rails-app.tmpl:3) with nobody able to confirm.
+      On a .healthcare domain this is the highest-uncertainty surface in the
+      estate. Either bring the source in-tree and add it to apps.yml, or record
+      where it actually lives and who reviews it.
   - id: doas_keepenv_is_a_root_rce
     tag: operator-priority
     summary: >
