@@ -9,12 +9,13 @@ set -euo pipefail
 # dot-sourcing from the dev-owned checkout makes repo write access equivalent to
 # root code execution. The repo path stays as a fallback for a laptop/dev run,
 # where the checkout is already the operator's own.
-GUARD_LIBEXEC=${GUARD_LIBEXEC:-/usr/local/libexec}
+GUARD_HELPER=/usr/local/libexec/stale_ci_cleanup.ksh
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-if [[ -f ${GUARD_LIBEXEC}/stale_ci_cleanup.ksh ]]; then
-  . ${GUARD_LIBEXEC}/stale_ci_cleanup.ksh
-elif [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then
-  . ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh
+if [[ -f $GUARD_HELPER ]]; then
+  . $GUARD_HELPER
+elif [[ -f ${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh ]]; then
+  # Laptop/dev fallback only — on the VM the installed copy above wins.
+  . ${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh
 fi
 
 echo "=== before ==="

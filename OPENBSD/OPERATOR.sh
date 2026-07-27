@@ -162,6 +162,9 @@ install_root_configs() {
   [[ -f /etc/daily.local ]] && chmod 755 /etc/daily.local
   for f in /etc/rc.d/*(N); do chmod 755 "$f"; done
   for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
+  # libexec holds helpers root dot-sources (stale_ci_cleanup.ksh); they must be
+  # root-owned and not group/world writable or the sourcing is a root RCE.
+  for f in /usr/local/libexec/*(N); do [[ -f $f ]] && chown root:wheel "$f" && chmod 755 "$f"; done
 
   if [[ -f /etc/doas.conf ]]; then
     if ! su dev -c 'doas id' 2>/dev/null | grep -q 'uid=0(root)'; then
