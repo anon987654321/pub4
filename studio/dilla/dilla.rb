@@ -929,6 +929,10 @@ SYNTH_PATCH_BY_ID = SYNTH_PATCH_CATALOG.each_with_object({}) { |p, h| h[p[:id]] 
 # Pad voice stacks — classic analog + curated experimental electronic.
 # stack_soul = multi-preset layer (EP + Moog + Prophet + texture) for rich beds.
 PAD_VOICE_PRESETS = {
+  # True single-voice preset -- every other named preset here carries at
+  # least an :ep + :warm layer, so PAD_LAYERS=0 alone never actually
+  # produces one voice; this is the only entry that does.
+  rhodes_solo: { ep: :rhodes_mark1 },
   rhodes:  { ep: :rhodes_mark1, warm: :juno_chorus_wash },
   moog:    { ep: :rhodes_cafe_warm, warm: :moog_model_d },
   prophet: { ep: :rhodes_mark1, warm: :prophet_5_pad },
@@ -15348,10 +15352,25 @@ end
 # Never auto-fallback to random catalog entries (that pulled in sirkel_sag).
 RAP_VOCAL_BLOCKLIST = %w[sirkel_sag].freeze
 
+# Tracks with a real, same-song vocal stem already in the catalog --
+# preferred over the blanket "jonas_v" style-DNA default (jonas_v's own
+# source, "Kunst", isn't tied to any particular progression). slum_village's
+# catalog entry is literally titled "Get Dis Money", the same song
+# get_dis_money's chords are transcribed from.
+TRACK_MATCHED_VOCAL_SLUG = {
+  "get_dis_money" => "slum_village",
+  "syncopated_slash_ninth" => "slum_village", # same GDM slash cycle -- see producer_dna.rb
+}.freeze
+
 def rap_vocal_stream_slug
   slug = ENV["RAP_VOCAL"].to_s.strip
   return if slug.empty? || slug == "0"
   return if RAP_VOCAL_BLOCKLIST.include?(slug)
+  if slug == "auto" || slug == "jonas_v"
+    track = ENV["TRACK"].to_s.downcase.tr("-", "_")
+    matched = TRACK_MATCHED_VOCAL_SLUG[track]
+    return matched if matched
+  end
   if slug == "auto"
     cat = rap_vocal_load_catalog
     pick = Array(cat["vocals"]).find do |v|
