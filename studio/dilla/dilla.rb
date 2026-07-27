@@ -7728,9 +7728,9 @@ DILLA_STYLE_DEFAULTS = {
   # Jonas V isolated vocals — sit on top of the kit, not under pads.
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
-  "RAP_VOCAL_MIX" => "1.85",
-  "RAP_VOCAL_WEIGHT" => "1.75",
-  "RAP_VOCAL_BED_WEIGHT" => "0.72",
+  "RAP_VOCAL_MIX" => "1.15",
+  "RAP_VOCAL_WEIGHT" => "1.0",
+  "RAP_VOCAL_BED_WEIGHT" => "1.0",
   "RAP_VOCAL_DUCK" => "0.58",
   "RAP_VOCAL_SIDECHAIN" => "1",
   "LA_BEAT_PROGRESSION" => "0",
@@ -7891,9 +7891,9 @@ DILLA_COMFORT_DEFAULTS = {
   # Jonas V — loud enough to hear (previous 1.35 left voice ≈−18dB under bed).
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
-  "RAP_VOCAL_MIX" => "3.2",
-  "RAP_VOCAL_WEIGHT" => "2.6",
-  "RAP_VOCAL_BED_WEIGHT" => "0.52",
+  "RAP_VOCAL_MIX" => "1.15",
+  "RAP_VOCAL_WEIGHT" => "1.0",
+  "RAP_VOCAL_BED_WEIGHT" => "1.0",
   "RAP_VOCAL_DUCK" => "0.42",
   "RAP_VOCAL_SIDECHAIN" => "1",
   # Held pad bed, real attack/release (not the tightened 900/2200 techno
@@ -8023,9 +8023,9 @@ STREAM_SOUL_DEFAULTS = {
   # Jonas V acapella (rap-vocal ingest) — tempo-fit per track BPM.
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
-  "RAP_VOCAL_MIX" => "1.55",
-  "RAP_VOCAL_WEIGHT" => "1.35",
-  "RAP_VOCAL_BED_WEIGHT" => "0.92",
+  "RAP_VOCAL_MIX" => "1.15",
+  "RAP_VOCAL_WEIGHT" => "1.0",
+  "RAP_VOCAL_BED_WEIGHT" => "1.0",
   "RAP_VOCAL_DUCK" => "0.72",
   "RAP_VOCAL_SIDECHAIN" => "1",
   "SIDECHAIN_STYLE" => "flylo",
@@ -8246,9 +8246,9 @@ STREAM_EXTRA_DEFAULTS = {
   # Jonas V vocals — loud, tempo-matched.
   "RAP_VOCAL" => "jonas_v",
   "RAP_VOCAL_STYLE" => "rap",
-  "RAP_VOCAL_MIX" => "1.85",
-  "RAP_VOCAL_WEIGHT" => "1.75",
-  "RAP_VOCAL_BED_WEIGHT" => "0.72",
+  "RAP_VOCAL_MIX" => "1.15",
+  "RAP_VOCAL_WEIGHT" => "1.0",
+  "RAP_VOCAL_BED_WEIGHT" => "1.0",
   "RAP_VOCAL_DUCK" => "0.58",
   "RAP_VOCAL_SIDECHAIN" => "1",
   "VOCAL_CARVE" => "1",
@@ -15539,9 +15539,9 @@ end
 
 def rap_vocal_mix_params
   # Voice-forward: pads/kit stay under speech so Jonas V is obvious on speakers.
-  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "3.0").to_f
+  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "1.15").to_f
   bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "1.0").to_f
-  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "3.0").to_f
+  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "1.0").to_f
   sparkle_db = ENV.fetch("RAP_VOCAL_SPARKLE_DB", "3.0").to_f
   { vocal_vol:, bed_w:, voc_w:, sparkle_db: }
 end
@@ -15558,6 +15558,15 @@ end
 # straight amix, single limiter for safety.
 def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
   mix = rap_vocal_mix_params
+  # Gain staging is load-bearing here. amix runs normalize=0, so the weights
+  # are absolute: the voice reaches the limiter at vocal_vol*voc_w against the
+  # bed at bed_w. Push that ratio far enough and alimiter clamps on every vocal
+  # peak and applies the reduction to the WHOLE mix, so the kit disappears
+  # without anything having ducked it. Measured on get_dis_money at 1.85*1.75
+  # vs 0.72 (+13dB): kick -9.2dB, snare -7.0dB against the same render with
+  # RAP_VOCAL=0. At 1.0/1.0/1.0 the kit loses only 2.4dB, which is ordinary
+  # summing headroom. Keep the ratio modest and let the voice sit, rather than
+  # buying presence with gain the limiter then takes back out of the drums.
   filter = [
     "[1:a]aformat=channel_layouts=stereo,highpass=f=60,treble=g=#{mix[:sparkle_db]}:f=9000:width_type=o:width=1.2," \
     "volume=#{mix[:vocal_vol]}[v0]",
