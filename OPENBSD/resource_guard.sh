@@ -61,13 +61,19 @@ else
   fi
 fi
 
-GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-if [[ -r ${GUARD_REPO}/OPENBSD/validate_doas.ksh ]]; then
-  . ${GUARD_REPO}/OPENBSD/validate_doas.ksh
-  install_doas_conf_from_repo "${GUARD_REPO}/OPENBSD/etc/doas.conf" resource-guard || true
-fi
-if [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then
-  . ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh
+# This script runs as root from cron every 5 minutes (etc/crontab.vm23).
+# It used to dot-source validate_doas.ksh and stale_ci_cleanup.ksh out of
+# ${GUARD_REPO:-/home/dev/pub4} — a dev-owned git checkout — which meant write
+# access to either file was root code execution within 5 minutes, entirely
+# independent of doas. It also called install_doas_conf_from_repo, so the repo's
+# doas.conf was copied over /etc/doas.conf on every tick and any hand-hardening
+# of the live file was reverted.
+#
+# Root now sources only root-owned absolute paths, installed at deploy time.
+# Nothing here reads from a user-writable tree.
+GUARD_LIBEXEC=${GUARD_LIBEXEC:-/usr/local/libexec}
+if [[ -f ${GUARD_LIBEXEC}/stale_ci_cleanup.ksh ]]; then
+  . ${GUARD_LIBEXEC}/stale_ci_cleanup.ksh
   stale_ci_cleanup "$load" "$mem_avail_pct"
 fi
 

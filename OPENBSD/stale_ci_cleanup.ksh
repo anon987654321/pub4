@@ -26,12 +26,16 @@ stale_ci_cleanup() {
   pkill -U dev -f 'ruby.*bin/cli' 2>/dev/null || true
 }
 
-heal_doas_conf() {
-  typeset repo=${GUARD_REPO:-/home/dev/pub4}
-  typeset helper="${repo}/OPENBSD/validate_doas.ksh"
-  [[ -r $helper ]] || return 0
-  . "$helper"
-  install_doas_conf_from_repo "${repo}/OPENBSD/etc/doas.conf" resource-guard || true
-}
-
-heal_doas_conf
+# heal_doas_conf removed deliberately. It ran at load time, so merely sourcing
+# this file made root dot-source validate_doas.ksh from ${GUARD_REPO:-/home/dev/pub4}
+# — a dev-owned checkout — and then copy that repo's doas.conf over
+# /etc/doas.conf. Two consequences:
+#
+#   1. Write access to either repo file was root code execution on the next
+#      5-minute cron tick, with no doas involved.
+#   2. Any hardening of the live /etc/doas.conf was reverted within 5 minutes,
+#      and validate_doas_works actively rolled back configs where dev was not
+#      root — so the system re-asserted passwordless root for dev.
+#
+# doas policy must not be auto-synced from a user-writable tree. Change
+# /etc/doas.conf deliberately, by hand or via a root-owned installer.

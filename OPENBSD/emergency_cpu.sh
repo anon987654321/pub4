@@ -5,8 +5,15 @@ set -euo pipefail
 #
 # Typical cause: Falcon crash-loops, hung bundle install, assets:precompile on restart.
 
+# Prefer the root-owned installed copy; this script is run as root, and
+# dot-sourcing from the dev-owned checkout makes repo write access equivalent to
+# root code execution. The repo path stays as a fallback for a laptop/dev run,
+# where the checkout is already the operator's own.
+GUARD_LIBEXEC=${GUARD_LIBEXEC:-/usr/local/libexec}
 GUARD_REPO=${GUARD_REPO:-/home/dev/pub4}
-if [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then
+if [[ -f ${GUARD_LIBEXEC}/stale_ci_cleanup.ksh ]]; then
+  . ${GUARD_LIBEXEC}/stale_ci_cleanup.ksh
+elif [[ -f ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh ]]; then
   . ${GUARD_REPO}/OPENBSD/stale_ci_cleanup.ksh
 fi
 
