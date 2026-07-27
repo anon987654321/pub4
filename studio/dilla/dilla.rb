@@ -14145,7 +14145,7 @@ def help
                                    yt-dlp → demucs → isolated vocals + phrase/BPM catalog
       rap-vocal fit <slug>         Time-stretch + bar-align vocals to current BPM/BARS
       rap-vocal list               Show ingested vocal catalog
-      RAP_VOCAL=<slug> on render/stream  Auto-fit (atempo+bar phase) + mix (RAP_VOCAL_MIX, RAP_VOCAL_DUCK)
+      RAP_VOCAL=<slug> on render/stream  Auto-fit (atempo+bar phase) + mix (RAP_VOCAL_MIX, RAP_VOCAL_WEIGHT, RAP_VOCAL_BED_WEIGHT, RAP_VOCAL_SPARKLE_DB)
       LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths (stream soul)
       FLYLO_DRUM_OVERLAY=1             FlyLo overlay; Camel grid on quartal_west_coast / flylo_camel
       clean <in> [out]             Denoise + loudnorm
@@ -15538,70 +15538,32 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
 end
 
 def rap_vocal_mix_params
-  style = ENV.fetch("RAP_VOCAL_STYLE", "rap")
   # Voice-forward: pads/kit stay under speech so Jonas V is obvious on speakers.
-  # Defaults raised — isolation leaves voice ≈−18 dBFS; mix 1.3 left it inaudible.
-  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", style == "chop" ? "2.4" : "2.8").to_f
-  duck = ENV.fetch("RAP_VOCAL_DUCK", "0.55").to_f
-  # top_eq + presence stack in the SAME 2900-3200Hz band (~10dB combined at
-  # the old 5.5/4.5 values) -- verified this overflows ffmpeg's equalizer
-  # filter internally ("Channel 0/1 clipping" from the filter itself, before
-  # any downstream volume/limiter stage even runs -- a limiter after the
-  # fact cannot undo distortion that already happened inside the EQ). Halved
-  # both so the combined boost in that band stays clean.
-  top_eq = style == "chop" ? "equalizer=f=2800:t=o:w=2:g=1.4" : "equalizer=f=2900:t=o:w=1.6:g=1.6"
-  presence = style == "chop" ? "equalizer=f=3600:t=o:w=1.4:g=1.1," : "equalizer=f=3200:t=o:w=1.2:g=1.3,"
-  { vocal_vol:, duck:, top_eq:, presence: }
+  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "3.0").to_f
+  bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "1.0").to_f
+  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "3.0").to_f
+  sparkle_db = ENV.fetch("RAP_VOCAL_SPARKLE_DB", "3.0").to_f
+  { vocal_vol:, bed_w:, voc_w:, sparkle_db: }
 end
 
+# Rebuilt from a direct A/B: the old chain (HPF -> dual notch EQ -> lowpass
+# -> stacked presence EQ -> gate -> compressor -> sidechain duck) measured
+# fine in isolation (real RMS gain, no clipping after the earlier fix) but
+# the *combination* made a confirmed-good vocal source (verified by ear,
+# unprocessed, played standalone) imperceptible once mixed with the beat --
+# reproducible across many render configs. A plain, unprocessed direct
+# amix (no EQ, no gate, no compressor, no sidechain) is what actually
+# worked. This keeps that as the base: gentle rumble-only highpass, a light
+# high-shelf for top-end sparkle (not the old stacked mid-presence boost),
+# straight amix, single limiter for safety.
 def mix_rap_vocal_layer!(beat_path, vocal_path, dest)
   mix = rap_vocal_mix_params
-  bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "0.65").to_f
-  voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "2.2").to_f
-  # Voice-only path: HPF kills residual kit; soft gate so speech is not clipped out;
-  # sidechain ducks bed under voice so rap sits on top of pads/drums.
-  sc = ENV.fetch("RAP_VOCAL_SIDECHAIN", "1") != "0"
-  # Keep filter graph as one line — empty segments from heredoc joins break ffmpeg.
-  # Vocal mixing is its own domain (dynamics/ducking relative to other tracks),
-  # not a mastering-chain Device list — kept as plain strings, not DillaMixer.
-  v_chain = [
-    "[1:a]aformat=channel_layouts=stereo",
-    "highpass=f=140:width_type=q:width=0.707",
-    "equalizer=f=70:t=h:w=1:g=-14",
-    "equalizer=f=120:t=h:w=1.2:g=-6",
-    "lowpass=f=7800",
-    "#{mix[:presence]}#{mix[:top_eq]}".sub(/,\z/, ""),
-    # Softer gate — previous 0.012 threshold + range killed quiet syllables.
-    "agate=threshold=0.006:ratio=2:attack=2:release=100:range=0.01:makeup=2.5",
-    "acompressor=threshold=-20dB:ratio=2:attack=4:release=90:makeup=5",
-    "volume=#{mix[:vocal_vol]}",
-    # top_eq+presence stack ~10dB of boost in the same 2900-3200Hz band right
-    # before this volume multiply, with nothing downstream to catch the
-    # result -- verified clipping ("Channel 0/1 clipping" from ffmpeg's own
-    # equalizer stage) on the real jonas_v fit at RAP_VOCAL_MIX=2.8, worse at
-    # higher operator-set values. A clipped vocal reads as distorted noise,
-    # not "missing" -- this is very likely why it wasn't perceived as vocals
-    # despite being present at a technically-correct dB level. Limiter here
-    # keeps the loudness win from RAP_VOCAL_MIX/WEIGHT without the distortion.
-    "alimiter=limit=0.95:level_out=0.95[v0]",
-  ].join(",")
-  if sc
-    filter = [
-      v_chain,
-      "[0:a]volume=#{mix[:duck]}[bed0]",
-      # Duck bed when voice present (main=bed0, sidechain=v0).
-      "[bed0][v0]sidechaincompress=threshold=0.025:ratio=3.5:attack=5:release=160:makeup=1:mix=0.85[bed]",
-      "[bed][v0]amix=inputs=2:weights=#{bed_w} #{voc_w}:duration=first:dropout_transition=0:normalize=0," \
-      "alimiter=limit=0.96:level_out=0.97[out]",
-    ].join(";")
-  else
-    filter = [
-      v_chain,
-      "[0:a]volume=#{mix[:duck]}[bed]",
-      "[bed][v0]amix=inputs=2:weights=#{bed_w} #{voc_w}:duration=first:dropout_transition=0:normalize=0," \
-      "alimiter=limit=0.96:level_out=0.97[out]",
-    ].join(";")
-  end
+  filter = [
+    "[1:a]aformat=channel_layouts=stereo,highpass=f=60,treble=g=#{mix[:sparkle_db]}:f=9000:width_type=o:width=1.2," \
+    "volume=#{mix[:vocal_vol]}[v0]",
+    "[0:a][v0]amix=inputs=2:weights=#{mix[:bed_w]} #{mix[:voc_w]}:duration=first:dropout_transition=0:normalize=0," \
+    "alimiter=limit=0.96:level_out=0.97[out]",
+  ].join(";")
   sh! "ffmpeg", "-y", "-i", beat_path, "-i", vocal_path,
       "-filter_complex", filter,
       "-map", "[out]", *codec_for(dest), dest
