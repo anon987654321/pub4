@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_27_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -68,6 +68,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_26_120000) do
     t.index ["locality", "created_at"], name: "index_activity_events_on_locality_and_created_at"
     t.index ["object_type", "object_id"], name: "index_activity_events_on_object_type_and_object_id"
     t.index ["source_vertical", "created_at"], name: "index_activity_events_on_source_vertical_and_created_at"
+  end
+
+  create_table "affiliate_products", force: :cascade do |t|
+    t.string "category", limit: 120
+    t.text "click_url", null: false
+    t.decimal "commission_rate", precision: 6, scale: 3
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 8
+    t.text "description"
+    t.string "external_id", limit: 128, null: false
+    t.text "image_url"
+    t.boolean "in_stock", default: true, null: false
+    t.datetime "last_seen_at"
+    t.string "market", limit: 8
+    t.string "merchant", limit: 200
+    t.boolean "placeholder", default: false, null: false
+    t.integer "price_cents"
+    t.string "program_id", limit: 64
+    t.string "source", limit: 32, null: false
+    t.string "title", limit: 300, null: false
+    t.datetime "updated_at", null: false
+    t.index ["last_seen_at"], name: "index_affiliate_products_on_last_seen_at"
+    t.index ["market", "category", "last_seen_at"], name: "index_affiliate_products_on_market_category_freshness"
+    t.index ["source", "external_id"], name: "index_affiliate_products_on_source_and_external_id", unique: true
   end
 
   create_table "anonymous_post_quotas", force: :cascade do |t|

@@ -57,21 +57,27 @@ admin = User.find_or_create_by!(email_address: 'admin@brgen.no') do |u|
 end
 
 num_users = (50 * SEED_SCALE).clamp(10, 5000)
-users = num_users.times.map do |i|
-  # A real-sounding name (this app's display_name is just username), not the
-  # old "seed0_xkq3f7" -- first_name+last_name directly (not Faker::Name.name)
-  # avoids odd baked-in prefixes/suffixes ("Prof.", "Esq.", "III") in a
-  # username. The numeric suffix stays for guaranteed uniqueness at up to
-  # 5000 draws, where real-name collisions become plausible.
-  name_slug = "#{Faker::Name.first_name} #{Faker::Name.last_name}".parameterize(separator: '_')
-  User.create!(
-    email_address: "seed#{i}@#{Faker::Internet.domain_name}",
-    password: 'password123',
-    password_confirmation: 'password123',
-    username: "#{name_slug}_#{i}",
-    latitude: 60.39 + rand(-0.1..0.1),
-    longitude: 5.33 + rand(-0.1..0.1)
-  )
+# This file is the Bergen-anchored seed (it hardcodes 60.39/5.33 below), but it
+# never set a Faker locale, so the bulk users came out English-named
+# ("Jerrell Bernier") in a Norwegian city. PerCitySeeder handles the other
+# domains with their own locales.
+users = Brgen::CityContent.with_faker_locale('NO') do
+  num_users.times.map do |i|
+    # A real-sounding name (this app's display_name is just username), not the
+    # old "seed0_xkq3f7" -- first_name+last_name directly (not Faker::Name.name)
+    # avoids odd baked-in prefixes/suffixes ("Prof.", "Esq.", "III") in a
+    # username. The numeric suffix stays for guaranteed uniqueness at up to
+    # 5000 draws, where real-name collisions become plausible.
+    name_slug = "#{Faker::Name.first_name} #{Faker::Name.last_name}".parameterize(separator: '_')
+    User.create!(
+      email_address: "seed#{i}@#{Faker::Internet.domain_name}",
+      password: 'password123',
+      password_confirmation: 'password123',
+      username: "#{name_slug}_#{i}",
+      latitude: 60.39 + rand(-0.1..0.1),
+      longitude: 5.33 + rand(-0.1..0.1)
+    )
+  end
 end
 
 seed_city = City.find_by(domain: 'brgen.no') || City.first
@@ -89,13 +95,16 @@ end
 
 # Core posts + activity — scale for popular impression (high views/likes)
 posts_per = (4 * SEED_SCALE).clamp(1, 20)
+city_display_name = seed_city&.name.presence || 'Bergen'
 posts = users.sample([30, users.size].min).flat_map do |user|
   posts_per.times.map do
     Post.create!(
       user: user,
       community: communities.sample,
-      title: Faker::Lorem.sentence(word_count: 5),
-      content: Faker::Lorem.paragraph(sentence_count: 4),
+      # Was Faker::Lorem — Latin filler in a Norwegian city feed is the single
+      # most obvious tell that a feed is seeded. See Brgen::PlausibleContent.
+      title: Brgen::PlausibleContent.post_title(city_display_name),
+      content: Brgen::PlausibleContent.post_body,
       created_at: rand(1..90).days.ago
     )
   end
@@ -131,10 +140,11 @@ end
 
 num_stores = (12 * SEED_SCALE).clamp(5, 200)
 stores = num_stores.times.map do |i|
-  name = Faker::Company.name
+  # Faker::Company.name produces American agency names ("Stokes-Bernier") that
+  # read as obviously foreign on a Bergen shopfront.
   Marketplace::Store.create!(
     owner: users.sample,
-    name: name,
+    name: Brgen::PlausibleContent.store_name,
     slug: "seed-store-#{i}-#{Faker::Internet.slug}",
     description: Faker::Company.catch_phrase,
     vertical: Marketplace::Store::VERTICALS.sample
@@ -146,16 +156,28 @@ bergen_lat = seed_city&.latitude.to_f
 bergen_lng = seed_city&.longitude.to_f
 bergen_lat = 60.3913 if bergen_lat.zero?
 bergen_lng = 5.3221 if bergen_lng.zero?
+# Leaf categories only (a listing filed under the "electronics" root rather
+# than "electronics-phones" can't have a title that matches it).
+categories_by_slug = Marketplace::Category.where.not(parent_id: nil).index_by(&:slug)
+leaf_slugs = categories_by_slug.keys
 listings = stores.flat_map do |store|
   listings_per.times.map do
+    # Product first, then the category it actually belongs in — the reverse
+    # (category first, then any title from that root) shelved a 55" TV under
+    # electronics-audio and winter boots under clothing-outerwear.
+    title, leaf_slug = Brgen::PlausibleContent.listing_for(leaf_slugs)
+    category = categories_by_slug[leaf_slug]
+    bydel = Brgen::PlausibleContent::BERGEN_BYDELER.sample
     Marketplace::Listing.create!(
       user: store.owner,
       store: store,
-      title: Faker::Commerce.product_name,
-      description: Faker::Lorem.paragraph,
+      title: title,
+      description: Brgen::PlausibleContent.listing_body(bydel: bydel),
       price_cents: rand(1000..50_000),
-      category: Marketplace::Category.all.sample,
-      location: Faker::Address.city,
+      category: category,
+      # This was Faker::Address.city on a record carrying Bergen lat/lng, so
+      # listings advertised a random world city while mapping to Bergen.
+      location: bydel,
       latitude: bergen_lat + rand(-0.05..0.05),
       longitude: bergen_lng + rand(-0.06..0.06),
       status: 'active',
@@ -273,14 +295,18 @@ puts "Playlist: #{playlists.size} playlists, tracks, sets"
 # CityTenantable adds belongs_to :city; string column :city is display label only (not the association).
 ActsAsTenant.current_tenant = seed_city if seed_city
 city_label = seed_city&.name.presence || "Bergen"
-cuisines = %w[Norwegian Italian Chinese Japanese Indian Thai Mexican Pizza Burger Kebab]
+# Cuisine now travels with the restaurant name (PlausibleContent.restaurant_for).
 num_rest = (15 * SEED_SCALE).clamp(5, 100)
-restaurants = num_rest.times.map do
+restaurants = num_rest.times.map do |i|
+  # Faker::Restaurant.name is US-styled ("The Rusty Spoon") and the address was
+  # a Faker street that doesn't exist in Bergen. Name and cuisine come from the
+  # same pair so a place called "Ramen Bergen" isn't filed as Mexican.
+  name, cuisine = Brgen::PlausibleContent.restaurant_for(i)
   Takeaway::Restaurant.create!(
     user: users.sample,
-    name: Faker::Restaurant.name,
-    cuisine_type: cuisines.sample,
-    address: Faker::Address.street_address,
+    name: name,
+    cuisine_type: cuisine,
+    address: Brgen::PlausibleContent.street_address,
     active: true,
     delivery_fee_cents: rand(2000..6000),
     min_order_cents: rand(8000..15_000),
@@ -290,11 +316,14 @@ restaurants = num_rest.times.map do
 end
 
 restaurants.each do |rest|
-  rand(6..12).times do
+  # Menu now matches the restaurant's own cuisine, in Norwegian, rather than
+  # Faker::Food's English dishes served at a Bergen kebab house.
+  dishes = Brgen::PlausibleContent.dishes_for(rest.cuisine_type)
+  dishes.sample(rand(4..dishes.size)).each do |(name, description)|
     Takeaway::MenuItem.create!(
       restaurant: rest,
-      name: Faker::Food.dish,
-      description: Faker::Food.description,
+      name: name,
+      description: description,
       price_cents: rand(6000..18_000),
       available: true
     )
@@ -345,22 +374,25 @@ puts "Takeaway: #{restaurants.size} restaurants, menu items, orders, reviews, dr
 
 # --- TV subapp ---
 num_ch = (8 * SEED_SCALE).clamp(3, 50)
+channel_names = Brgen::PlausibleContent::TV_CHANNEL_NAMES.shuffle
 channels = num_ch.times.map do |i|
   Tv::Channel.create!(
     user: users.sample,
-    name: "#{Faker::Company.name} TV",
+    # Was "#{Faker::Company.name} TV" — a US company name with TV bolted on.
+    name: channel_names[i % channel_names.size] + (i >= channel_names.size ? " #{i}" : ''),
     slug: "seed-tv-#{i}-#{Faker::Internet.slug}",
-    description: Faker::Lorem.sentence
+    description: Brgen::PlausibleContent.post_body
   )
 end
 
 videos = channels.flat_map do |ch|
-  3.times.map do
+  # Faker::Movie.title put Hollywood features on a local city channel.
+  Brgen::PlausibleContent::TV_VIDEO_TITLES.sample(3).map do |title|
     Tv::Video.create!(
       user: ch.user,
       channel: ch,
-      title: Faker::Movie.title,
-      description: Faker::Lorem.sentence,
+      title: title,
+      description: Brgen::PlausibleContent.post_body,
       status: 'published',
       duration_seconds: rand(60..300),
       published_at: rand(1..30).days.ago
@@ -385,10 +417,16 @@ if ActiveRecord::Base.connection.table_exists?(:places)
   city = City.first
   num_places = (25 * SEED_SCALE).clamp(10, 500)
   places = num_places.times.map do
+    kind = %w[cafe bar shop park restaurant].sample
+    kind_label = { 'cafe' => 'Kafé', 'bar' => 'Bar', 'shop' => 'Butikk',
+                   'park' => 'Park', 'restaurant' => 'Restaurant' }.fetch(kind)
     Place.create!(
       city: city,
-      name: "#{Faker::Company.name} #{%w[Cafe Bar Shop Park].sample}",
-      kind: %w[cafe bar shop park restaurant].sample,
+      # Was "#{Faker::Company.name} Cafe". Anchoring to a real Bergen street or
+      # bydel gives a name that could plausibly be on a sign there.
+      name: "#{kind_label} #{[ Brgen::PlausibleContent::BERGEN_BYDELER,
+                               Brgen::PlausibleContent::BERGEN_STREETS ].sample.sample}",
+      kind: kind,
       latitude: 60.39 + rand(-0.06..0.06),
       longitude: 5.33 + rand(-0.06..0.06)
     )
@@ -404,17 +442,42 @@ users.sample(12).each do |u1|
   next if u1 == u2
 
   conv = Conversation.find_or_create_direct(u1, u2)
-  3.times do
+  # Short Norwegian DM openers instead of Faker::Lorem Latin — these are read
+  # in the inbox and the corner chat widget, where Latin is glaring.
+  openers = [
+    'Hei! Er den fortsatt til salgs?', 'Går det bra å hente i morgen?',
+    'Takk for sist!', 'Kan du sende et bilde av den?',
+    'Jeg er interessert — når passer det?', 'Er prisen forhandlingsbar?',
+    'Sees vi på lørdag?', 'Har du prøvd stedet i Marken?',
+    'Beklager sent svar, hektisk uke.', 'Det passer fint for meg.'
+  ]
+  openers.sample(3).each do |body|
     Message.create!(
       conversation: conv,
       sender: [u1, u2].sample,
-      content: Faker::Lorem.sentence(word_count: 7),
+      content: body,
       message_type: 'text'
     )
   end
 end
 
 puts 'Messages: conversations and messages seeded'
+
+# --- Affiliate inventory ---
+# Real TradeDoubler products need an approved publisher account (see
+# app/services/tradedoubler.rb). Until TRADEDOUBLER_TOKEN exists, seed flagged
+# placeholders so the deals sidebar and the weekly_deals newsletter have
+# something to render; `rake affiliate:import` replaces them with real rows and
+# `rake affiliate:drop_placeholders` clears these out.
+if defined?(AffiliateProduct) && AffiliateProduct.table_exists?
+  if Tradedoubler.configured?
+    imported = Tradedoubler.import!
+    puts "Affiliate: imported #{imported} real TradeDoubler product(s)"
+  else
+    placed = Brgen::AffiliatePlaceholders.seed!
+    puts "Affiliate: #{placed} placeholder product(s) (TRADEDOUBLER_TOKEN unset — flagged placeholder: true)"
+  end
+end
 
 # --- Final activity/notifications for feed ---
 if places.any?
@@ -435,7 +498,11 @@ if places.any?
 end
 
 puts "\nBrgen + subapps fully seeded with fictive Faker data (scale=#{SEED_SCALE})."
-puts "Users: #{User.count}, Posts: #{Post.count} (Live: #{Post.live.count}), Marketplace listings: #{Marketplace::Listing.count}"
+# User is tenant-scoped and a tenant is current by this point, so a bare
+# User.count reported 0 right after "Created 101 users" — the bulk users carry
+# no city_id. Count without the tenant scope so the summary matches reality.
+total_users = ActsAsTenant.without_tenant { User.count }
+puts "Users: #{total_users}, Posts: #{Post.count} (Live: #{Post.live.count}), Marketplace listings: #{Marketplace::Listing.count}"
 puts "Dating profiles: #{Dating::Profile.count}, Takeaway restaurants: #{Takeaway::Restaurant.count}"
 place_count = ActiveRecord::Base.connection.table_exists?(:places) ? Place.count : 0
 puts "TV channels: #{Tv::Channel.count}, Places: #{place_count}"

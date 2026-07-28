@@ -18,15 +18,14 @@ module Brgen
       ActsAsTenant.with_tenant(@city) do
         admin = seed_admin
         communities = seed_communities(admin)
-        # Faker::Config.locale is process-global, not scoped to this block --
-        # every city in a seed_all! run shares it, so it must be restored
-        # afterward or the next city inherits whatever locale this one set.
-        previous_locale = Faker::Config.locale
-        Faker::Config.locale = Brgen::CityContent.locale_for(country)
-        users = seed_users
-        seed_posts(admin, users, communities)
-      ensure
-        Faker::Config.locale = previous_locale
+        # with_faker_locale owns both halves of the locale switch: pointing
+        # Faker at the city's language, and admitting that locale to
+        # I18n.available_locales so Faker can actually reach the data. Setting
+        # Faker::Config.locale alone silently produced English names.
+        Brgen::CityContent.with_faker_locale(country) do
+          users = seed_users
+          seed_posts(admin, users, communities)
+        end
       end
     end
 
@@ -34,13 +33,34 @@ module Brgen
 
     def seed_admin
       email = "admin@#{@city.domain}"
-      User.strict_loading(false).find_or_create_by!(email_address: email) do |user|
-        user.username = "admin_#{@city.slug}"
-        user.password = user.password_confirmation = "password123"
-        user.city = @city
-        user.latitude = @city.latitude
-        user.longitude = @city.longitude
+
+      # Email uniqueness is global, but User is tenant-scoped (CityTenantable),
+      # and seed! runs inside with_tenant. So a find_or_create_by! here cannot
+      # see an admin row that has no city_id — and db/seeds.rb creates exactly
+      # one of those ("admin@brgen.no", before it assigns a tenant). The find
+      # missed it, the create hit the global uniqueness validation, and the
+      # whole db:seed run died with "Email address er allerede i bruk" on every
+      # replant after the first.
+      existing = ActsAsTenant.without_tenant do
+        User.strict_loading(false).find_by(email_address: email)
       end
+
+      if existing
+        # Adopt an unassigned admin into the city that owns its domain, but
+        # never reassign one that already belongs to a different city.
+        existing.update!(city: @city) if existing.city_id.nil?
+        return existing
+      end
+
+      User.strict_loading(false).create!(
+        email_address: email,
+        username: "admin_#{@city.slug}",
+        password: "password123",
+        password_confirmation: "password123",
+        city: @city,
+        latitude: @city.latitude,
+        longitude: @city.longitude
+      )
     end
 
     def country
@@ -82,13 +102,17 @@ module Brgen
 
     def seed_posts(admin, users, communities)
       pool = users + [ admin ]
+      # Faker::Lorem is Latin in every locale, so localising Faker did nothing
+      # for post bodies. PlausibleContent carries real sentences; Norwegian
+      # cities get Norwegian, everywhere else falls back to English.
+      norwegian = Brgen::PlausibleContent.norwegian_country?(country)
       @posts_per_city.times do
         Post.create!(
           user: pool.sample,
           city: @city,
           community: communities.sample,
-          title: Faker::Lorem.sentence(word_count: 5),
-          content: "#{@city.name}: #{Faker::Lorem.paragraph(sentence_count: 3)}"
+          title: Brgen::PlausibleContent.post_title(@city.name, norwegian: norwegian),
+          content: Brgen::PlausibleContent.post_body(norwegian: norwegian)
         )
       end
     end
