@@ -9992,10 +9992,18 @@ TRACK_LAYER_PROFILES = {
   },
 }.freeze
 
+# What the caller actually asked for, captured before any layer applies its
+# defaults. A track profile describes how a track sounds when nothing else is
+# said; it should never overrule something typed on the command line. Without
+# this, :four_seven's RAP_VOCAL => "0" (right for a set that has no vocals in it)
+# silently discarded an explicit RAP_VOCAL=sa_g,gunnhild.
+DILLA_BOOT_ENV = ENV.to_h.freeze
+
 def apply_track_layer_profile!(track, force: true)
   profile = TRACK_LAYER_PROFILES[track.to_s.downcase.tr("-", "_").to_sym] or return []
   applied = []
   profile.each do |env_key, value|
+    next if DILLA_BOOT_ENV.key?(env_key) && !DILLA_BOOT_ENV[env_key].to_s.empty?
     next if !force && ENV[env_key] && !ENV[env_key].empty?
     ENV[env_key] = value.to_s
     applied << env_key
@@ -14914,17 +14922,25 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       FileUtils.rm_f(dry_mix)
     end
   end
-  if (rap_slug = rap_vocal_stream_slug)
+  rap_vocal_stream_slugs.each_with_index do |rap_slug, vi|
     begin
-      fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:)
-      if fit && File.file?(fit)
-        rap_tmp = "#{destination}.rap#{File.extname(destination)}"
-        mix_rap_vocal_layer!(destination, fit, rap_tmp, beat_bpm: cfg[:bpm])
-        FileUtils.mv(rap_tmp, destination)
-        puts "rap-vocal: mixed #{rap_slug} → #{destination}"
+      fit = with_env("RAP_VOCAL" => rap_slug) do
+        rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:)
       end
+      next unless fit && File.file?(fit)
+
+      rap_tmp = "#{destination}.rap#{vi}#{File.extname(destination)}"
+      # Each additional voice is trimmed back a little so a stack does not add
+      # up to more than one lead: the first take sits where the anchor puts it,
+      # every one after it a few dB under.
+      trim = vi.zero? ? nil : (ENV.fetch("RAP_VOCAL_STACK_DB", "-3.5").to_f * vi)
+      with_env(trim ? { "RAP_VOCAL_ANCHOR_DB" => (ENV.fetch("RAP_VOCAL_ANCHOR_DB", "0.0").to_f + trim).to_s } : {}) do
+        mix_rap_vocal_layer!(destination, fit, rap_tmp, beat_bpm: cfg[:bpm])
+      end
+      FileUtils.mv(rap_tmp, destination)
+      puts "rap-vocal: mixed #{rap_slug}#{trim ? format(' (%+.1f dB)', trim) : ''} → #{destination}"
     rescue StandardError, SystemExit => e
-      warn "rap-vocal: skipped (#{e.class}) — #{e.message}"
+      warn "rap-vocal: #{rap_slug} skipped (#{e.class}) — #{e.message}"
     end
   end
   if punk_guitar_enabled?
@@ -16687,6 +16703,30 @@ RAP_VOCAL_BLOCKLIST = %w[sirkel_sag].freeze
 # slum_village stem). Emptied on request: gunnhild is the only vocal source;
 # the mechanism stays for when that decision changes.
 TRACK_MATCHED_VOCAL_SLUG = {}.freeze
+
+# RAP_VOCAL accepts a comma-separated list, so takes can be stacked rather than
+# swapped: RAP_VOCAL=sa_g,gunnhild layers both. Each is fitted and mixed in
+# turn, and because mix_rap_vocal_layer! anchors every stem against the beat it
+# has just been mixed into, the second voice sits against the first rather than
+# against the bare instrumental -- so stacking does not run the level away.
+def rap_vocal_stream_slugs
+  raw = ENV["RAP_VOCAL"].to_s.strip
+  return [] if raw.empty? || raw == "0"
+  return Array(rap_vocal_stream_slug).compact unless raw.include?(",")
+
+  raw.split(",").map(&:strip).reject(&:empty?).filter_map do |one|
+    with_env("RAP_VOCAL" => one) { rap_vocal_stream_slug }
+  end.uniq
+end
+
+# Run a block with ENV temporarily overridden, restoring exactly what was there.
+def with_env(overrides)
+  previous = overrides.keys.to_h { |k| [k, ENV[k]] }
+  overrides.each { |k, v| ENV[k] = v.to_s }
+  yield
+ensure
+  previous.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+end
 
 def rap_vocal_stream_slug
   slug = ENV["RAP_VOCAL"].to_s.strip
