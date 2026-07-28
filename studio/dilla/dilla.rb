@@ -15574,22 +15574,106 @@ def rap_vocal_voice_polish_filter
 end
 
 # First substantial phrase — skip instrumental intro left in the "vocals" stem.
-def rap_vocal_phrase_start(phrases, min_strength: 0.22)
-  Array(phrases).filter_map do |p|
+# Start of the densest stretch of actual singing, given how much audio the fit
+# needs. Choosing the *earliest* strong phrase is wrong for any stem with gaps:
+# gunnhild has a short pocket of singing at 0-16s, then 80 seconds of nothing,
+# then its real verse at 96-128s. Starting at the earliest phrase (1.7s) drags
+# a 32-bar fit straight through the dead middle. Scoring windows by voiced
+# coverage picks the verse instead, and needs no threshold tuned per stem.
+def rap_vocal_content_offset(path, needed_sec)
+  r = begin
+    frame_energy(path, highpass: 200, lowpass: 6_000)
+  rescue StandardError
+    nil
+  end
+  return unless r && r[:frames].is_a?(Array) && r[:frames].any?
+
+  hop = r[:hop_seconds].to_f
+  return unless hop.positive?
+
+  vals = r[:frames].map { |f| f.is_a?(Array) ? f.last.to_f : f.to_f }
+  peak = vals.max.to_f
+  return unless peak.positive?
+
+  voiced = vals.map { |v| v > peak * 0.06 ? 1 : 0 }
+  # Score a modest window, not the full length the fit needs. A long render can
+  # need more continuous singing than the stem physically contains -- gunnhild
+  # holds ~32s of real verse against the 88s a 32-bar fit consumes -- and
+  # scoring at that length picks the least-bad window spanning the dead middle
+  # (measured: 25% voiced) instead of the verse. Locating the densest short
+  # region lands on the verse every time; the crossfade loop in rap_vocal_fit!
+  # is what covers the remaining duration.
+  win = [[(([needed_sec, 16.0].min) / hop).round, 1].max, voiced.size - 1].min
+  return 0.0 if win < 1
+
+  # Rolling sum: best-scoring window start, ties going to the earlier one.
+  sum = voiced.first(win).sum
+  best_sum = sum
+  best_i = 0
+  (win...voiced.size).each do |i|
+    sum += voiced[i] - voiced[i - win]
+    if sum > best_sum
+      best_sum = sum
+      best_i = i - win + 1
+    end
+  end
+  (best_i * hop).round(3)
+end
+
+# Earliest phrase strong enough to be real speech rather than residual bleed.
+# The threshold is RELATIVE to the strongest phrase in this stem, because
+# onset strength scales with the stem's level and stems vary by tens of dB.
+# A fixed 0.22 floor meant a quiet stem had almost nothing clear it: gunnhild
+# had 2 of 16 phrases qualify, both near the very end, so the fit started at
+# 116.5s of a 128s file and looped the last 11s over and over. Scaling to the
+# stem keeps the same intent -- skip the weak stuff, start at real singing --
+# without assuming a level.
+def rap_vocal_phrase_start(phrases, min_strength: nil)
+  entries = Array(phrases).filter_map do |p|
     s = (p["start"] || p[:start]).to_f
     st = (p["strength"] || p[:strength]).to_f
     next if s < 1.0
-    next if st.positive? && st < min_strength
-    s
-  end.min
+    [s, st]
+  end
+  return if entries.empty?
+
+  peak = entries.map(&:last).max.to_f
+  floor = min_strength || (peak.positive? ? [peak * 0.6, 0.22].min : 0.0)
+  strong = entries.select { |(_, st)| st <= 0.0 || st >= floor }
+  (strong.empty? ? entries : strong).map(&:first).min
 end
+
+# Level the isolation chain expects to see. Its two agate stages fire on
+# ABSOLUTE thresholds (0.028 and 0.016), so they only mean anything if the stem
+# arrives somewhere near this. Demucs output level varies enormously between
+# sources -- measured here: slum_village -9.8 dB, jonas_v -18.0 dB, gunnhild
+# -46.8 dB -- and a stem whose PEAK (0.0245) sits below the first gate's
+# threshold is erased in its entirety. That is what happened to gunnhild: its
+# main verse went from 98% voiced in the raw demucs stem to 5% after cleaning,
+# and because the result overwrote the source and set isolated: true, the
+# damage looked like a bad recording rather than a bad gate.
+RAP_VOCAL_CLEAN_TARGET_DB = (ENV["RAP_VOCAL_CLEAN_TARGET_DB"] || -18.0).to_f
 
 def rap_vocal_clean_stem!(src, dest = nil, aggressive: true)
   dest ||= src.sub(/\.wav\z/i, ".clean.wav")
   dest = "#{src}.clean.wav" if dest == src
   chain = aggressive ? rap_vocal_isolation_filter : rap_vocal_voice_polish_filter
+  pre = ""
+  if aggressive
+    measured = begin
+      band_rms(src, highpass: 200, lowpass: 6_000)
+    rescue StandardError
+      nil
+    end
+    if measured&.finite? && measured < RAP_VOCAL_CLEAN_TARGET_DB
+      gain = (RAP_VOCAL_CLEAN_TARGET_DB - measured).clamp(0.0, 36.0)
+      pre = "volume=#{gain.round(2)}dB,"
+      dmesg("vocal clean: stem at #{measured.round(1)}dB, pre-gain +#{gain.round(1)}dB into gate range",
+            unit: "vox0", parent: "dilla0")
+    end
+  end
   sh! "ffmpeg", "-y", "-i", src,
-      "-af", "#{chain},loudnorm=I=-17:TP=-2.5:LRA=7,alimiter=limit=0.93:level_out=0.94",
+      "-af", "#{pre}#{chain},loudnorm=I=-17:TP=-2.5:LRA=7,alimiter=limit=0.93:level_out=0.94",
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
   dest
 end
@@ -15783,12 +15867,23 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   # -- honor it outright. Only auto-picked offsets get floored to the real
   # speech onset, since that floor exists to skip residual intro thump, not
   # to override someone choosing a different section on purpose.
+  phrase_start = nil
   if bar_offset
     ss = bar_offset
   else
+    # Pick the region by content first -- the densest `duration * ratio`
+    # seconds of actual singing -- then let the phrase/bar logic nudge within
+    # it. Falls back to the old earliest-strong-phrase rule if the content
+    # scan cannot run.
+    needed = duration * ratio
+    content = rap_vocal_content_offset(vocal_path, needed)
     phrase_start = rap_vocal_phrase_start(phrases) || 0.0
-    offset = rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases:)
-    ss = [offset, phrase_start].max
+    ss = if content
+           bar_nudge = rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases:).to_f
+           (content + (bar_nudge % ((60.0 / beat_bpm) * 4.0))).round(3)
+         else
+           [rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases:), phrase_start].max
+         end
   end
   out_dir = File.dirname(vocal_path)
   fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars.wav")
