@@ -6,7 +6,6 @@
   align-items: baseline;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-bottom: 1px solid var(--border);
 }
 
 .profile-header h1 {
@@ -47,7 +46,6 @@
 
 .feed-post-show {
   padding: var(--space-4);
-  border-bottom: 1px solid var(--border);
 }
 
 .feed-post-show .feed-post-votes {
@@ -96,7 +94,6 @@
 
 .post-show-aside {
   padding: var(--space-4);
-  border-top: 1px solid var(--border);
   color: var(--text-dim);
   font-size: 0.875rem;
 }
@@ -109,7 +106,6 @@
 
 #comments-section {
   padding: var(--space-4);
-  border-top: 1px solid var(--border);
 }
 
 #comments-section h3 {
@@ -125,7 +121,6 @@
 
 .page-header {
   padding: var(--space-4);
-  border-bottom: 1px solid var(--border);
 }
 
 .page-header h1 {
@@ -142,7 +137,6 @@
 
 .local-feed-intro {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
   font-size: 0.875rem;
   color: var(--text-dim);
 }

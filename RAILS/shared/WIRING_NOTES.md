@@ -138,7 +138,20 @@ ruby RAILS/frontend_auditor_gate.rb
 
 **Empty states:** `shared/app/views/shared/_empty_state.html.erb` + `_empty_state.scss`.
 
-**Flat rule, no exceptions:** no `box-shadow`, `text-shadow`, `backdrop-filter`, or `filter: blur()/drop-shadow()` in app CSS. Separation = 1px hairline borders or solid backgrounds.
+**Flat rule, no exceptions:** no `box-shadow`, `text-shadow`, `backdrop-filter`, or `filter: blur()/drop-shadow()` in app CSS.
+
+**Separation is space, not lines** (operator decision, 2026-07-28 — this reverses
+the previous "separation = 1px hairline borders"). Stacked elements are told
+apart by the gap between them; reach for padding, margin or `gap` first. The
+home feed alone carried 35 bordered elements, 25 of them one hairline per post,
+each competing with the text it was meant to organise.
+
+Still legitimate, because these are not separators:
+- form-field and control outlines (affordance — you must see where to type)
+- inline-direction accent markers (`border-inline-start: 3px solid var(--accent)`)
+- state indicators (the active tab's underline)
+
+A solid `background` still separates fine where a surface genuinely differs.
 
 **Feed actions:** use `shared/_x_feed_icon.html.erb` SVG icons — not emoji.
 

@@ -16,7 +16,6 @@
   scrollbar-width: none;
   padding-block-start: var(--safe-top);
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
   transform: translateY(-100%);
   /* Hidden while closed so the off-screen section links leave the tab order;
      visibility flips only after the slide-up finishes (delay = transform time). */

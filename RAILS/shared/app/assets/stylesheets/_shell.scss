@@ -322,7 +322,6 @@ main[role="main"] {
   display: flex;
   min-height: 54px;
   background: var(--surface-elevated);
-  border-top: 1px solid var(--border);
   z-index: var(--z-nav, 80);
   padding-bottom: var(--safe-bottom, 0px);
   /* "Hide bars on scroll to free up space" -- ported from the real 2014

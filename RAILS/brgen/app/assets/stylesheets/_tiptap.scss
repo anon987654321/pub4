@@ -16,6 +16,44 @@
    flush-left editor as the feed composer, just a taller resting height. */
 .tiptap_mount--post .tiptap_area { min-height: 160px; }
 
+/* A 160px borderless editor on the page background is indistinguishable from
+   empty page: the post form read as a title, a stray "10,000", then a void.
+   A solid surface says "type here" without drawing a box around it — lines
+   separate, surfaces afford. */
+.compose-surface {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4) var(--space-5);
+}
+
+.compose-surface .compose-input,
+.compose-surface .tiptap_area {
+  background: transparent;
+  border: 0;
+  width: 100%;
+}
+
+/* The toolbar belongs to the text above it, so it sits at the foot of the same
+   surface rather than floating on the page below it. */
+.compose-surface .tiptap_toolbar {
+  padding-block-start: var(--space-2);
+}
+
+/* Inside the field, out of the text's way, and quiet until the budget is
+   nearly spent. */
+.compose-surface .char-counter {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline-end: var(--space-3);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.compose-surface:focus-within .char-counter { opacity: 1; }
+
 .tiptap_area p { margin: 0 0 0.5em; }
 .tiptap_area p:last-child { margin-bottom: 0; }
 .tiptap_area ul { list-style: disc; padding-inline-start: 1.4em; margin: 0 0 0.5em; }

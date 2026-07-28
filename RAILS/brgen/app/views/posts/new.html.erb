@@ -6,32 +6,42 @@
   <% draft_key = "brgen-post-#{@community&.to_param || 'global'}-new" %>
   <%= form_with(model: [@community, @post].compact, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
     <%= render "shared/errors", object: @post %>
+    <%# Title is the only required field, so it is the only one marked. Labelling
+        the other three "(optional)" said the same thing three times and made
+        the form read as a list of things you need not do. %>
     <div class="field">
-      <%= f.label :community_id, "Community (optional)" %>
-      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: "— no community —" } %>
+      <%= f.label :community_id, "Community" %>
+      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: "Anywhere in Bergen" } %>
     </div>
     <div class="field">
       <%= f.label :title %>
-      <%= f.text_field :title, placeholder: "Title", autofocus: true, required: true %>
+      <%= f.text_field :title, autofocus: true, required: true %>
     </div>
     <%# tiptap-editor, the same controller the feed composer uses: the textarea
         stays the submitted field and the no-JS fallback, and is hidden only
         once Tiptap has actually mounted. (This form previously used a second,
         near-duplicate tiptap-composer controller that never booted — see the
         deleted tiptap_composer_controller.js.) %>
+    <%# One surface holds the whole editor: the textarea, the Tiptap mount that
+        replaces it, the toolbar and the counter. They were four siblings on the
+        page background before, so the 160px mount read as a void between a
+        stray number and three orphaned buttons. %>
     <div class="field" data-controller="tiptap-editor">
-      <%= f.label :content, "Body (optional)" %>
-      <div data-controller="character-counter" data-character-counter-countdown-value="true">
-        <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, class: "compose-input",
+      <%= f.label :content, "Body" %>
+      <div class="compose-surface" data-controller="character-counter" data-character-counter-countdown-value="true">
+        <%= f.text_area :content, rows: 5, class: "compose-input",
               maxlength: 10000,
               data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
+        <div class="tiptap_mount tiptap_mount--post" data-tiptap-editor-target="mount" hidden></div>
+        <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
+        </div>
+        <%# Bottom-right, inside the field, and quiet until you are typing — it
+            used to render "10,000" above an empty editor, where it read as a
+            stray number rather than a budget. %>
         <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-      </div>
-      <div class="tiptap_mount tiptap_mount--post" data-tiptap-editor-target="mount" hidden></div>
-      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
-        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
-        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
-        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
       </div>
     </div>
     <div class="field" data-controller="media-picker direct-upload">
@@ -44,18 +54,22 @@
       <div class="media-actions">
         <button type="button" class="media-btn" data-action="click->media-picker#trigger">
           <%= icon :camera, size: 20 %>
-          Photo / Camera
+          Add photo
         </button>
       </div>
       <div class="media-preview" data-media-picker-target="preview"></div>
-      <div class="preset-strip">
+      <%# Five unlabelled pills wrapping onto two lines, offering to restyle a
+          photo nobody had chosen yet. They belong to the image, so they appear
+          with it — media-picker reveals this once a file is picked. %>
+      <fieldset class="preset-strip" data-media-picker-target="presets" hidden>
+        <legend class="preset-strip-legend">Look</legend>
         <% %w[none portrait landscape street blockbuster].each do |p| %>
           <label class="preset-opt">
             <%= f.radio_button :preset, p %>
             <span><%= p.capitalize %></span>
           </label>
         <% end %>
-      </div>
+      </fieldset>
     </div>
     <% if authenticated? %>
       <div class="field field--check">
@@ -63,7 +77,7 @@
         <%= f.label :anonymous, "Post anonymously" %>
       </div>
     <% else %>
-      <p class="dim mb-12">Posting as <strong>anon</strong> · <%= link_to "sign in", new_session_path %> to use your name</p>
+      <p class="dim mb-12">Posting as <strong>anon</strong>. <%= link_to "Sign in", new_session_path %> to use your name.</p>
     <% end %>
     <div class="field">
       <%= f.submit "Post", class: "btn btn-primary" %>

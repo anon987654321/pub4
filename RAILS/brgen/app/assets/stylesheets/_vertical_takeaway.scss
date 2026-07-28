@@ -16,7 +16,6 @@ body.vertical-takeaway .page-header h1 {
 body.vertical-takeaway .deal-search,
 body.vertical-takeaway form[role="search"] {
   background: var(--search-bg);
-  border-bottom: 1px solid var(--border);
   padding: var(--space-3) var(--space-4);
 }
 
@@ -42,7 +41,6 @@ body.vertical-takeaway .restaurant-card {
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
 }
 
 body.vertical-takeaway article:hover,
@@ -109,7 +107,6 @@ body.vertical-takeaway .chip {
 }
 
 body.vertical-takeaway .order-list .feed-card.takeaway {
-  border-bottom: 1px solid var(--border);
 }
 
 body.vertical-takeaway .order-list .feed-card.takeaway:hover {

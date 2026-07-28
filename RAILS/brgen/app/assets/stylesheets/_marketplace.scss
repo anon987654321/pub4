@@ -39,7 +39,6 @@
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
 }
 
 .deal-search input {
@@ -50,7 +49,6 @@
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -135,7 +133,6 @@
 
 .featured-deals {
   padding: var(--space-4) 0 0;
-  border-bottom: 1px solid var(--border);
 }
 
 .featured-deals h2 {

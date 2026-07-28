@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "preview", "filters"]
+  static targets = ["input", "preview", "filters", "presets"]
 
   connect() {
     this.objectUrls = []
@@ -39,10 +39,23 @@ export default class extends Controller {
     this.#renderPreview(transfer.files)
   }
 
+  // Photo-look presets belong to a photo. Shown once there is one, hidden again
+  // when the last thumbnail is removed.
+  #syncPresets(hasImages) {
+    if (!this.hasPresetsTarget) return
+
+    this.presetsTarget.toggleAttribute("hidden", !hasImages)
+  }
+
   #renderPreview(files) {
-    if (!this.hasPreviewTarget || !files?.length) return
+    if (!this.hasPreviewTarget) return
+    if (!files?.length) {
+      this.#syncPresets(false)
+      return
+    }
     this.#clearObjectUrls()
     this.previewTarget.innerHTML = ""
+    this.#syncPresets(Array.from(files).some((file) => file.type.startsWith("image/")))
 
     Array.from(files).slice(0, 6).forEach((file, index) => {
       if (!file.type.startsWith("image/")) return

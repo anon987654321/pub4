@@ -84,26 +84,24 @@ body.vertical-playlist .dg.ac {
   display: none !important;
 }
 
-/* Brand mark sits above the tunnel canvas (z:50) — a touch larger + tighter
-   to the corner than the fleet default. */
+/* Brand mark sits above the tunnel canvas (z:50). Position and size are the
+   fleet default and stay that way — the wordmark lands in the same place on
+   every surface, so it reads as one product rather than a set of lookalikes.
+
+   This block used to be "a touch larger + tighter to the corner", which put
+   the mark at (6, 4) 53x23 here against (14, 9) 63x44 everywhere else: it
+   visibly jumped when you moved between playlist and anything else. The only
+   thing playlist genuinely needs is to win the stacking contest with the
+   tunnel canvas. */
 body.vertical-playlist .brgen-logo-mark {
   display: inline-flex !important;
   z-index: calc(var(--z-toast, 1100) + 1);
   color: var(--color-text, var(--text));
-  top: max(0.2rem, env(safe-area-inset-top, 0px));
-  inset-inline-start: max(0.35rem, env(safe-area-inset-left, 0px));
-  padding: 0.1rem 0.15rem;
-  min-height: 0;
-  min-width: 0;
-  font-size: clamp(1.2rem, 3.6vw, 1.55rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
 }
 
 body.vertical-marketplace [data-controller="live-search"],
 body.vertical-takeaway [data-controller="live-search"] {
   background: var(--search-bg, var(--surface));
-  border-bottom: 1px solid var(--border);
   padding: var(--space-3) var(--space-4);
 }
 
