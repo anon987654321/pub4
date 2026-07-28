@@ -60,7 +60,10 @@ class Post < ApplicationRecord
     self
   end
 
-  def comment_count = comments.count
+  # Reads the counter cache column the post is already loaded with. This was
+  # comments.count, which queries even when the association is loaded — two
+  # queries per feed post, 50 on the home page alone.
+  def comment_count = comments_count
   def author_name   = (anonymous? || user&.guest? || live?) ? "anon" : (user&.username.presence || "anon")
 
   # Same anon check as author_name -- an identicon is only safe to show

@@ -6,7 +6,9 @@ class Comment < ApplicationRecord
   tracks_activity created: "CommentCreated", source_vertical: "social", actor: :user
 
   belongs_to :user
-  belongs_to :commentable, polymorphic: true, touch: true
+  # counter_cache is opt-in per type on a polymorphic belongs_to: Rails only
+  # maintains it where the column exists, and posts is the one that has it.
+  belongs_to :commentable, polymorphic: true, touch: true, counter_cache: :comments_count
 
   validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
 
