@@ -141,6 +141,14 @@ module DillaLofiMachine
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: (0..15).to_a,
       ghosts: [], claps: [4, 12], perc: [2, 6, 10, 14]
     },
+    # Transcribed from a D'Angelo reference track via learn_source! (onset
+    # detection on the demucs drums.wav stem, step_grid in project/learnings/
+    # last_learn.json) -- not hand-tuned, this is what the analysis measured.
+    dangelo_learned: {
+      swing: 58, humanize: 3, bpm: 80, mode: :dilla_time,
+      kicks: [0, 2, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15], snares: [0, 2, 9], hats: [0, 4, 9],
+      ghosts: [5, 11], claps: [2, 9], perc: [1, 7]
+    },
   }.freeze
 
   LOFI_DEFAULTS = {
@@ -815,6 +823,9 @@ module DillaLofiMachine
     when "rhodes", "blend" then :rhodes
     when "moog" then :moog
     when "prophet" then :prophet
+    # Band-limited three-oscillator detuned saw stack (see analog_pad in
+    # dilla.rb's native_waveform_body) -- the only saw here that does not alias.
+    when "analog", "analog_pad" then :analog_pad
     else
       { sine: :rhodes, triangle: :prophet, square: :organ, sawtooth: :moog }[pad_waveform]
     end

@@ -5399,6 +5399,19 @@ CHORD_PROGRESSIONS = {
   detroit_suspension: %w[Fm9 Abmaj9low Dbmaj9 G7sus C7b9 Fm9 Bbm9 Eb7],
   donuts_short_memory: %w[Fm9 Dbmaj9 Fm9 Dbmaj9 Fm9 Bbm9 Fm9 Dbmaj9],
   fugue_conversation_arc: %w[Fm9 Dbmaj9 Cm9 Fm9 Gbmaj9 Dbmaj9 Bbm9 Eb7],
+  # --- Generic Fantastic-era soul templates (2026-07-28). Deliberately named for
+  # their harmonic function, not for any song. minor_soul_loop was NOT added: it
+  # duplicates :minor_major_ninth_pair note-for-note and that name is already
+  # taken here by a different rotation.
+  warm_minor_arc:  %w[Fm9 Dbmaj9 Abmaj9 Ebmaj9],
+  iv_v_i_minor:    %w[Fm9 Bbm9 Cmaj9 Am9],
+  # Slash chords with a descending bass -- exercises the :bass_hz pedal path.
+  stepwise_bass:   %w[Cm9/Bb Fm7/Ab Bbm7/Gb Ebmaj9],
+  modal_fourth:    %w[Fm7 Bb7 Ebmaj7 Abmaj7],
+  suspended_blues: %w[Fm9 Bb7sus Ebmaj9 A7b9],
+  # Static C pedal under moving upper structures.
+  pedal_drone:     %w[Fm/C Bbm/C Abmaj7/C G7sus/C],
+  eight_bar_soul_arc: %w[Fm9 Bbm9 Ebmaj9 Abmaj9 Dbmaj9 Cm7 Bb7sus Fm9],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
@@ -11729,12 +11742,50 @@ def native_fm_waveform_body(frequency, index_expr:, bloom: 0.2, drift: "1", detu
   "0.70*#{carrier}+#{bloom.round(3)}*sin(2*PI*#{f}*#{drift}*t)+0.12*sin(2*PI*#{det_up}*#{drift}*t)"
 end
 
+# Additive (band-limited) sawtooth as an ffmpeg expression: sum sin(2*PI*n*f*t)/n
+# for n = 1..N. Every other saw in native_waveform_body is the naive
+# 2*mod(f*t,1)-1, whose instantaneous phase reset generates harmonics all the way
+# up and folds everything above Nyquist back down as inharmonic grit -- audible
+# as fizz on sustained pads. Summing partials instead is anti-aliased by
+# construction: N is capped so N*f stays under Nyquist, so high notes simply get
+# fewer partials. (PolyBLEP would be the usual fix, but it is a per-sample
+# technique and this path emits an expression string for aevalsrc, not a Ruby
+# sample loop -- see archive/hiphop_techno_experiment.rb for the sample-loop
+# version.) HARMONIC_CAP keeps the expression from exploding: a chord is ~5
+# voices x 3 detuned oscillators x N terms, per event.
+SAW_HARMONIC_CAP = (ENV["SAW_HARMONICS"] || 8).to_i.clamp(2, 24)
+
+def band_limited_saw_expr(frequency, drift)
+  nyquist = SAMPLE_RATE / 2.0
+  n_max = [(nyquist / frequency).floor, SAW_HARMONIC_CAP].min
+  n_max = 1 if n_max < 1
+  (1..n_max).map do |n|
+    "#{(1.0 / n).round(4)}*sin(2*PI*#{(frequency * n).round(4)}*#{drift}*t)"
+  end.join("+")
+end
+
 def native_waveform_body(frequency, wave:, bloom: 0.2, drift: "1", detune: 0.004, phase_seed: 0.0,
                          fm_index_expr: nil, mod_ratio_expr: nil, fm_feedback: 0.0)
   f = frequency.round(4)
   det_up = (frequency * (1.0 + detune)).round(4)
   det_dn = (frequency * (1.0 - detune)).round(4)
   case wave
+  when :analog_pad
+    # Three-oscillator detuned saw stack, the classic warm analog pad. The
+    # detune has to be in real cents to do anything: the beating between
+    # oscillators IS the sound. (A proposal that suggested this used
+    # [-0.03, 0, 0.03] "cents" applied as 2**(c/1200) -- 0.0000173%, so all
+    # three oscillators came out bit-identical and it was just a louder saw.)
+    cents = (ENV["ANALOG_PAD_DETUNE_CENTS"] || 7.0).to_f.clamp(0.0, 50.0)
+    spread = ->(c) { (frequency * (2.0**(c / 1200.0))).round(4) }
+    [
+      "0.42*(#{band_limited_saw_expr(spread.call(-cents), drift)})",
+      "0.36*(#{band_limited_saw_expr(f, drift)})",
+      "0.42*(#{band_limited_saw_expr(spread.call(cents), drift)})",
+      # Sub octave for body, and a touch of breath noise for analog air.
+      "#{bloom.round(3)}*sin(2*PI*#{(frequency * 0.5).round(4)}*#{drift}*t)",
+      "0.015*(random(0)-0.5)",
+    ].join("+")
   when :saw
     "0.55*(2*mod(#{f}*#{drift}*t,1)-1)+0.22*(2*mod(#{det_up}*#{drift}*t,1)-1)+0.18*(2*mod(#{det_dn}*#{drift}*t,1)-1)"
   when :triangle
