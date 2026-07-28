@@ -3508,14 +3508,141 @@ def sample_fx_chain(beat_p)
   end
 end
 
-def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
+# Real chopping: the source is sliced at its transients and RE-SEQUENCED, not
+# played back linearly with effects over the top. That distinction is the whole
+# technique -- a filter chain on a looping sample still plays the same bar in
+# the same order forever, which is why treating it only with tape/crush/phaser
+# still sounds like the original loop.
+#
+# Dilla's method on an MPC3000: slice to pads, play them back in a different
+# order, truncate the tails so chops stutter, repitch with varispeed (which
+# moves pitch and time together -- asetrate, not a formant-preserving shift),
+# and let the hits land off the grid rather than quantised.
+#
+# Flying Lotus pushes the same idea further out: fewer, longer fragments,
+# reversed slices, wider pitch, and heavy per-chop filtering so successive
+# chops do not share a tone.
+CHOP_STYLES = {
+  dilla: { density: 0.42, reverse: 0.06, stutter: 0.16, pitch: [1.0, 1.0, 1.0, 0.944, 1.059, 0.891],
+           gate: 0.85, drift_ms: 22, lp: [nil, nil, 6000], hp: 60 },
+  flylo: { density: 0.3, reverse: 0.2, stutter: 0.1, pitch: [1.0, 1.0, 0.794, 1.26, 0.667, 1.498],
+           gate: 1.5, drift_ms: 34, lp: [nil, 2400, 5200], hp: 90 },
+}.freeze
+
+def sample_chop_style
+  s = ENV.fetch("SAMPLE_CHOP", "0").to_s.downcase
+  return nil if %w[0 off none].include?(s)
+
+  CHOP_STYLES.key?(s.to_sym) ? s.to_sym : :dilla
+end
+
+def sample_chop_points(path)
+  r = frame_energy(path, highpass: 150, lowpass: 6_000)
+  pts = peak_frames(r[:frames], r[:hop_seconds]).map { |p| p[:time].to_f }.select(&:positive?)
+  return pts if pts.size >= 4
+
+  # No usable transients: fall back to an even 16th grid across the source.
+  dur = audio_duration_sec(path).to_f
+  step = dur / 16.0
+  (0...16).map { |i| (i * step).round(4) }
+end
+
+# Builds the filtergraph for a chopped bed. Returns [graph_parts, out_label] or
+# nil. Each chop is an independent atrim of the source, so this graph grows with
+# the chop count -- that is what sh_filter_complex! spills to a script file.
+def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
+  cfg = CHOP_STYLES.fetch(style)
+  pts = sample_chop_points(src_path)
+  src_dur = audio_duration_sec(src_path).to_f
+  return if pts.empty? || src_dur <= 0
+
+  rng = Random.new((@render_seed || 7).to_i + 90_210)
+  step_p = beat_p / 4.0
+  steps = (duration / step_p).floor
+  max_chops = ENV.fetch("SAMPLE_CHOP_MAX", "160").to_i
+
+  chops = []
+  s = 0
+  while s < steps && chops.size < max_chops
+    unless rng.rand < cfg[:density]
+      s += 1
+      next
+    end
+    # Where in the source this chop comes from. Deliberately NOT the position it
+    # lands in -- reordering is the point.
+    src_i = rng.rand(pts.size)
+    from = pts[src_i]
+    nxt = pts[src_i + 1] || src_dur
+    avail = [nxt - from, 0.05].max
+
+    stutter = rng.rand < cfg[:stutter] ? [2, 3].sample(random: rng) : 1
+    slot = step_p * (stutter > 1 ? 1 : [1, 1, 2, 2, 4].sample(random: rng))
+    take = [[avail, slot * cfg[:gate]].min, 0.04].max
+    pitch = cfg[:pitch].sample(random: rng)
+    rev = rng.rand < cfg[:reverse]
+    lp = cfg[:lp].sample(random: rng)
+    drift = ((rng.rand * 2 - 1) * cfg[:drift_ms]).round
+
+    stutter.times do |k|
+      break if chops.size >= max_chops
+
+      at = ((s + k) * step_p * 1000).round + drift
+      next if at.negative? || (s + k) >= steps
+
+      chops << { from:, take:, pitch:, rev:, lp:, at: }
+    end
+    s += stutter > 1 ? stutter : [1, 1, 2].sample(random: rng)
+  end
+  return if chops.empty?
+
+  parts = ["[#{idx}:a]asplit=#{chops.size}#{chops.each_index.map { |i| "[cs#{i}]" }.join}"]
+  labels = []
+  chops.each_with_index do |c, i|
+    chain = ["[cs#{i}]atrim=start=#{c[:from].round(4)}:duration=#{c[:take].round(4)}",
+             "asetpts=PTS-STARTPTS"]
+    chain << "areverse" if c[:rev]
+    if (c[:pitch] - 1.0).abs > 0.001
+      chain << "asetrate=#{(SAMPLE_RATE * c[:pitch]).round}"
+      chain << "aresample=#{SAMPLE_RATE}"
+    end
+    chain << "highpass=f=#{cfg[:hp]}"
+    chain << "lowpass=f=#{c[:lp]}" if c[:lp]
+    # Short edges: a hard slice clicks, and the tail truncation IS the stutter.
+    chain << "afade=t=in:st=0:d=0.004"
+    chain << "afade=t=out:st=#{[c[:take] - 0.012, 0.004].max.round(4)}:d=0.012"
+    chain << "adelay=#{c[:at]}|#{c[:at]}"
+    parts << "#{chain.join(',')}[ch#{i}]"
+    labels << "[ch#{i}]"
+  end
+  parts << "#{labels.join}amix=inputs=#{labels.size}:duration=longest:normalize=0," \
+           "atrim=0:#{duration},apad=whole_dur=#{duration},alimiter=limit=0.95[chopped]"
+  [parts, "chopped", chops.size]
+end
+
+def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm, src_path: nil)
   # Tempo-match rather than resample: the loop was warped in the DAW at its own
   # BPM, so play it at the render's tempo instead of letting it drift.
   ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
   tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
   vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
-  alt = sample_alt_gain_expr(60.0 / target_bpm, foreground: true)
+  beat_p = 60.0 / target_bpm
+  alt = sample_alt_gain_expr(beat_p, foreground: true)
   gain = alt ? "volume='#{vol}*(#{alt})':eval=frame," : "volume=#{vol},"
+
+  # Chopped path replaces linear playback entirely -- it re-sequences the source
+  # rather than decorating it, so there is nothing to run the loop through.
+  if (style = sample_chop_style) && src_path
+    built = build_sample_chop_graph(idx, duration, beat_p, src_path, style)
+    if built
+      parts, label, n = built
+      dmesg("sample chop: #{n} slices, #{style} feel", unit: "harm0", parent: "dilla0")
+      tail = ["[#{label}]#{gain}highpass=f=45," \
+              "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
+              "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}[loopbed]"]
+      return (parts + tail).join(";")
+    end
+  end
+
   # Character before the corrective EQ, so the crusher and saturation work on
   # the loop as recorded rather than on an already-carved signal.
   fx = sample_fx_chain(60.0 / target_bpm)
@@ -14091,7 +14218,11 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   loop_entry = sample_loop_for(cfg[:track])
   loop_idx = nil
   if loop_entry
-    command += ["-stream_loop", "-1", "-i", loop_entry[:path]]
+    # Only loop the input for linear playback. The chopper slices from inside
+    # the source and positions each slice itself, so it needs the file once --
+    # feeding an endless stream into 100+ asplit branches would never settle.
+    command += ["-stream_loop", "-1"] unless sample_chop_style
+    command += ["-i", loop_entry[:path]]
     loop_idx = idx
     idx += 1
   end
@@ -14175,7 +14306,8 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     mix_weights << ENV.fetch("BASS_MIX_WEIGHT", "1.15").to_s
   end
   if loop_idx
-    filt << build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm])
+    filt << build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm],
+                                     src_path: loop_entry[:path])
     mix_labels << "[loopbed]"
     mix_weights << ENV.fetch("SAMPLE_LOOP_WEIGHT", "0.9").to_s
     dmesg("sample bed #{File.basename(loop_entry[:path])} @#{loop_entry[:bpm].round}bpm -> #{cfg[:bpm].round}bpm",
