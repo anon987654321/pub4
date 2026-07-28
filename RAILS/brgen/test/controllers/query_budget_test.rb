@@ -62,6 +62,68 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # A stronger, cheaper guard than a per-page number: an N+1 is by definition
+  # the same query shape repeated, so normalise binds and look for repeats. This
+  # caught 20 ActiveStorage lookups on tv and 14 city lookups on takeaway, both
+  # of which a per-page budget would have had to be told about in advance.
+  REPEAT_ALLOWANCE = 2
+
+  def repeated_shapes
+    shapes = Hash.new(0)
+    sub = ActiveSupport::Notifications.subscribe("sql.active_record") do |_n, _s, _f, _i, payload|
+      next if payload[:name].to_s.in?(%w[SCHEMA TRANSACTION])
+      next if payload[:sql].include?("schema_migrations")
+
+      shapes[payload[:sql].gsub(/\d+/, "?").gsub(/'[^']*'/, "?").squeeze(" ")] += 1
+    end
+    yield
+    shapes.select { |_, n| n > REPEAT_ALLOWANCE }
+  ensure
+    ActiveSupport::Notifications.unsubscribe(sub)
+  end
+
+  # Each vertical needs rows before this can prove anything: with an empty table
+  # there is nothing to repeat over, and the assertion passes for the wrong
+  # reason. Checked by reintroducing takeaway's N+1 — with no restaurants seeded
+  # the test stayed green, which is exactly the failure mode a coverage test
+  # must not have.
+  def seed_vertical_rows(count)
+    owner = User.strict_loading(false).create!(
+      email_address: "vertical-#{SecureRandom.hex(4)}@brgen.no",
+      password: "password123", city: @city,
+    )
+    channel = Tv::Channel.create!(user: owner, name: "Ch #{SecureRandom.hex(3)}", slug: "ch-#{SecureRandom.hex(4)}")
+
+    count.times do |i|
+      # active is a nullable boolean with no schema default, and the index
+      # scopes to where(active: true) — seeds without it render an empty page,
+      # which is how the first version of this test passed while the N+1 it was
+      # written for was still present.
+      Takeaway::Restaurant.create!(
+        user: owner, name: "Kro #{i}-#{SecureRandom.hex(2)}", address: "Storgata #{i}",
+        cuisine_type: "nordic", city: @city, active: true,
+      )
+      Tv::Video.create!(user: owner, channel:, title: "Video #{i}")
+    end
+  end
+
+  test "no vertical index repeats a query per row" do
+    ActsAsTenant.with_tenant(@city) do
+      seed_posts(6)
+      seed_vertical_rows(6)
+
+      { "brgen.no" => "/", "tv.brgen.no" => "/", "takeaway.brgen.no" => "/" }.each do |vhost, path|
+        host! vhost
+        get path
+        assert_response :success, "#{vhost}#{path} did not render"
+
+        repeats = repeated_shapes { get path }
+        assert_empty repeats.map { |sql, n| "#{vhost}: #{n}x #{sql[0, 80]}" },
+                     "one query per row is an N+1"
+      end
+    end
+  end
+
   test "comment_count reads the counter cache rather than counting rows" do
     ActsAsTenant.with_tenant(@city) do
       seed_posts(1)
