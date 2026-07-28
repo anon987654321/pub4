@@ -868,7 +868,7 @@ SYNTH_PATCH_CATALOG = [
   # --- Experimental electronic pads (musical, not noise) ---
   synth_patch(:glass_fm_pad, role: :warm, program: 98, weight: 2.6, mix: 0.72, fs_gain: 1.38,
               midi_fx: MIDI_FX_PAD_WARM,
-              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.08:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
+              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.1:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
   synth_patch(:vapor_supersaw, role: :warm, program: 0, sf2: :supersaw, weight: 2.4, mix: 0.68, fs_gain: 1.36,
               midi_fx: MIDI_FX_PAD_WARM,
               fx: "chorus=0.55:0.75:40|50:0.28|0.24:0.32|0.28:1.2|1.5,lowpass=f=4800,aecho=0.4:0.36:140|260:0.22|0.12"),
@@ -3460,6 +3460,54 @@ def sample_alt_gain_expr(beat_p, foreground:, hi: 1.0, lo: 0.25)
   "#{lo}+#{(hi - lo).round(4)}*#{on}*#{edge}"
 end
 
+# Character treatments for a sampled bed. The loop this was written against is
+# already dusty and band-limited (nothing above ~10 kHz, energy piled between
+# 120 Hz and 2.5 kHz, crest factor 1.7), so these lean into that rather than
+# trying to open it up: tape movement, 12-bit grit, saturation. Chosen with
+# SAMPLE_FX; SAMPLE_FX=0 leaves the loop clean.
+#
+# Rates that should lock to the grid take the beat period, so the wobble and
+# any gating stay musical instead of drifting against the drums.
+def sample_fx_chain(beat_p)
+  name = ENV.fetch("SAMPLE_FX", "dusty").to_s.downcase
+  return nil if %w[0 off none clean].include?(name)
+
+  sixteenth = (1.0 / (beat_p / 4.0)).round(3)   # Hz
+  dotted8 = ((beat_p * 0.75) * 1000).round        # ms
+  case name
+  when "chop"
+    # Retrigger feel: gate on 16ths, then a dotted-eighth throw so the chops
+    # trail into each other the way an MPC pad held over the beat does.
+    ["tremolo=f=#{sixteenth}:d=0.42",
+     "aecho=0.92:0.32:#{dotted8}:0.28",
+     "equalizer=f=200:t=o:w=1.2:g=2.0",
+     "acrusher=bits=12:mode=log:aa=1",
+     "asoftclip=type=tanh"]
+  when "warped"
+    # Heavier tape drift plus phasing, for the seasick end of the spectrum.
+    ["vibrato=f=0.9:d=0.22",
+     "aphaser=speed=0.15:decay=0.5:delay=3",
+     "flanger=delay=4:depth=3:speed=0.12",
+     "equalizer=f=1800:t=h:w=1400:g=-2.5",
+     "asoftclip=type=tanh"]
+  when "crushed"
+    ["acrusher=bits=8:mode=log:aa=1",
+     "equalizer=f=160:t=o:w=1.1:g=3.0",
+     "equalizer=f=2600:t=h:w=1600:g=-4.0",
+     "asoftclip=type=atan",
+     "alimiter=limit=0.95"]
+  else # "dusty" -- the default: SP-era wobble, grit and roll-off
+    ["vibrato=f=0.35:d=0.06",
+     "aphaser=speed=0.1:decay=0.3:delay=2",
+     "equalizer=f=250:t=o:w=1.2:g=2.2",
+     "equalizer=f=900:t=o:w=1.4:g=-1.2",
+     "equalizer=f=3500:t=h:w=2200:g=-3.0",
+     "acrusher=bits=12:mode=log:aa=1",
+     "stereotools=mlev=0.9:slev=1.18",
+     "asoftclip=type=tanh"]
+  end
+end
+
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # Tempo-match rather than resample: the loop was warped in the DAW at its own
   # BPM, so play it at the render's tempo instead of letting it drift.
@@ -3468,7 +3516,11 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
   alt = sample_alt_gain_expr(60.0 / target_bpm, foreground: true)
   gain = alt ? "volume='#{vol}*(#{alt})':eval=frame," : "volume=#{vol},"
-  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}#{gain}" \
+  # Character before the corrective EQ, so the crusher and saturation work on
+  # the loop as recorded rather than on an already-carved signal.
+  fx = sample_fx_chain(60.0 / target_bpm)
+  fx_chain = fx ? "#{fx.join(',')}," : ""
+  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}#{gain}#{fx_chain}" \
     "highpass=f=45," \
     "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
     "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}," \
