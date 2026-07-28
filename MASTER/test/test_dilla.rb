@@ -1445,4 +1445,57 @@ class TestDilla < Minitest::Test
       assert duration.to_f.positive?, "rendered file has no measurable duration"
     end
   end
+
+  # rap_vocal_fold_bpm decides what tempo a vocal "is" before anything stretches
+  # it, so a wrong answer here cannot be corrected downstream. Its pool used to
+  # include b*1.5, b/1.5, b*4/3 and b*3/4 — factors that move where the beats
+  # fall rather than just which octave you count them in. gunnhild measured
+  # ~116, 116 * 3/4 = 87.0 landed inside the old 74-100 window and won for being
+  # nearest 90, so every fit stretched a 120 BPM vocal as if it were 87.
+  def test_bpm_folding_uses_octaves_only
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        from_116: rap_vocal_fold_bpm(116.0, target: 92.0),
+        from_120: rap_vocal_fold_bpm(120.0, target: 92.0),
+        from_45:  rap_vocal_fold_bpm(45.0,  target: 92.0),
+        from_184: rap_vocal_fold_bpm(184.0, target: 92.0)
+      )
+    RUBY
+
+    # Every answer must be the source tempo times a power of two.
+    { "from_116" => 116.0, "from_120" => 120.0, "from_45" => 45.0, "from_184" => 184.0 }.each do |key, src|
+      folded = result.fetch(key).to_f
+      ratio = folded / src
+      octaves = Math.log2(ratio)
+      assert_in_delta octaves.round, octaves, 0.001,
+                      "#{key}: #{src} -> #{folded} is not an octave fold (x#{ratio.round(3)})"
+    end
+
+    refute_equal 87.0, result.fetch("from_116").to_f,
+                 "116 * 3/4 = 87 is the meter-shifting fold that mis-tempoed gunnhild"
+  end
+
+  # The aligner scores the vocal's own onsets, so it has to grid them at the
+  # vocal's own bar length. It was passed the target tempo instead: at 87 source
+  # against a 92 beat it compared onsets spaced 2.759s to a 2.609s grid, and the
+  # offset it returned meant nothing.
+  def test_bar_offset_grids_at_the_tempo_it_is_given
+    result = eval_in_engine(<<~RUBY)
+      # Onsets exactly one 120 BPM bar apart (2.0s), offset by 0.5s.
+      phrases = (0..7).map { |i| { "start" => 0.5 + (i * 2.0) } }
+      puts JSON.generate(
+        at_120: rap_vocal_best_bar_offset("/dev/null", 120.0, phrases: phrases),
+        at_92:  rap_vocal_best_bar_offset("/dev/null", 92.0, phrases: phrases)
+      )
+    RUBY
+
+    # Given the right tempo it finds the phase; the bar repeats, so any whole
+    # number of bars off 0.5 is the same answer.
+    at_120 = result.fetch("at_120").to_f
+    assert_in_delta 0.5, at_120 % 2.0, 0.05,
+                    "should lock to the 0.5s phase of a 2.0s bar, got #{at_120}"
+
+    refute_in_delta at_120, result.fetch("at_92").to_f, 0.001,
+                    "gridding at the wrong tempo must not coincidentally agree"
+  end
 end

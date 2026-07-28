@@ -5384,6 +5384,12 @@ MIX_DUR = 146
 MIX_BPM = 118.6
 LIVESET_MIN = (ENV["LIVESET_MIN"] || 60).to_i
 LIVESET_PERIODS = [97, 113, 127, 149, 163, 179, 193, 211, 227, 251].freeze
+# The one vocal source. Every RAP_VOCAL default points here, so it cannot drift
+# to whichever take was easiest to process that week. Other slugs remain in the
+# catalogue and are still selectable by naming them explicitly -- what changed is
+# that nothing reaches them by default or by rotation.
+RAP_VOCAL_SOURCE = "gunnhild"
+
 VOCALS = {
   processed: File.join(ROOT, "vocals_processed.wav"),
   precise:   File.join(ROOT, "vocals_precise.wav"),
@@ -8543,11 +8549,12 @@ DILLA_STYLE_DEFAULTS = {
   "BACKBEAT_CLAP" => "0",
   # Isolated rap vocals — sit on top of the kit, not under pads. Placement is
   # RAP_VOCAL_ANCHOR_DB (0.0 = level with the beat); this is the taste trim.
-  # sa_g replaces gunnhild as the default test vocal. Measured: 108s at
-  # -18.4 dB with 78-100% voiced coverage across its whole length, against
-  # gunnhild which has two usable pockets in 128s and needed +23 dB of pre-gain
-  # to survive the isolation chain at all. RAP_VOCAL=gunnhild still selects it.
-  "RAP_VOCAL" => "sa_g",
+  # gunnhild is the only vocal source (operator decision). It is also the harder
+  # one -- two usable pockets in 128s, needing pre-gain to survive the isolation
+  # chain -- which is why this default had drifted to sa_g. Defaulting to the
+  # easy source hid that problem rather than fixing it; the isolation and fit
+  # path has to handle this voice, so this is what it runs against.
+  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
   "RAP_VOCAL_STYLE" => "rap",
   "RAP_VOCAL_MIX" => "1.0",
   "RAP_VOCAL_WEIGHT" => "1.0",
@@ -8825,11 +8832,12 @@ DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "DRUM_PEAK_LIFT_DB" => "0",
   "POCKET_RUSH" => "1",
   # Jonas V — loud enough to hear (previous 1.35 left voice ≈−18dB under bed).
-  # sa_g replaces gunnhild as the default test vocal. Measured: 108s at
-  # -18.4 dB with 78-100% voiced coverage across its whole length, against
-  # gunnhild which has two usable pockets in 128s and needed +23 dB of pre-gain
-  # to survive the isolation chain at all. RAP_VOCAL=gunnhild still selects it.
-  "RAP_VOCAL" => "sa_g",
+  # gunnhild is the only vocal source (operator decision). It is also the harder
+  # one -- two usable pockets in 128s, needing pre-gain to survive the isolation
+  # chain -- which is why this default had drifted to sa_g. Defaulting to the
+  # easy source hid that problem rather than fixing it; the isolation and fit
+  # path has to handle this voice, so this is what it runs against.
+  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
   "RAP_VOCAL_DUCK" => "0.42",
   "RAP_VOCAL_SIDECHAIN" => "1",
   # Held pad bed, real attack/release (not the tightened 900/2200 techno
@@ -8934,11 +8942,12 @@ STREAM_SOUL_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "FLYLO_DRUM_OVERLAY" => "0",
   "FLYLO_OVERLAY_GAIN" => "0.85",
   # Jonas V acapella (rap-vocal ingest) — tempo-fit per track BPM.
-  # sa_g replaces gunnhild as the default test vocal. Measured: 108s at
-  # -18.4 dB with 78-100% voiced coverage across its whole length, against
-  # gunnhild which has two usable pockets in 128s and needed +23 dB of pre-gain
-  # to survive the isolation chain at all. RAP_VOCAL=gunnhild still selects it.
-  "RAP_VOCAL" => "sa_g",
+  # gunnhild is the only vocal source (operator decision). It is also the harder
+  # one -- two usable pockets in 128s, needing pre-gain to survive the isolation
+  # chain -- which is why this default had drifted to sa_g. Defaulting to the
+  # easy source hid that problem rather than fixing it; the isolation and fit
+  # path has to handle this voice, so this is what it runs against.
+  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
   "RAP_VOCAL_DUCK" => "0.72",
   "SYNTH_MORPH" => "0",
   "LEAD_MORPH" => "0",
@@ -9158,11 +9167,12 @@ STREAM_EXTRA_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "STREAM_TRACK_TIMEOUT" => "300",
   "STREAM_DRUM_ROTATE" => "1",
   # Jonas V vocals — loud, tempo-matched.
-  # sa_g replaces gunnhild as the default test vocal. Measured: 108s at
-  # -18.4 dB with 78-100% voiced coverage across its whole length, against
-  # gunnhild which has two usable pockets in 128s and needed +23 dB of pre-gain
-  # to survive the isolation chain at all. RAP_VOCAL=gunnhild still selects it.
-  "RAP_VOCAL" => "sa_g",
+  # gunnhild is the only vocal source (operator decision). It is also the harder
+  # one -- two usable pockets in 128s, needing pre-gain to survive the isolation
+  # chain -- which is why this default had drifted to sa_g. Defaulting to the
+  # easy source hid that problem rather than fixing it; the isolation and fit
+  # path has to handle this voice, so this is what it runs against.
+  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
   "LEAD_FORCE_ARP" => "1",
   "ARTIST_VERIFIED_ONLY" => "0",
   # Stay aligned with style DNA — creative wildness is opt-in (STREAM_CREATIVE=1).
@@ -16659,27 +16669,61 @@ def rap_vocal_clean_stem!(src, dest = nil, aggressive: true)
   dest
 end
 
-def rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases: nil)
+# Finds the offset, in the vocal's OWN timeline, whose bar grid best lines up
+# with where the singing actually lands.
+#
+# It used to grid against the *target* bar length while scoring *source-time*
+# onsets. Those are only the same length when the vocal is already at the beat's
+# tempo. gunnhild is 87 against a 92 BPM beat, so the search compared onsets
+# spaced ~2.759s to a 2.609s grid: 5.7% out, accumulating to most of a bar over
+# 16, and the offset it returned was meaningless. That is the whole of "not beat
+# matched" — atempo got the tempo right and the phase was never right.
+#
+# source_bpm is the vocal's tempo; the caller stretches by beat_bpm/source_bpm
+# afterwards, which maps this source grid exactly onto the beat's.
+def rap_vocal_best_bar_offset(vocal_path, source_bpm, phrases: nil)
   phrase_times = Array(phrases).filter_map { |p| p["start"] || p[:start] }
   if phrase_times.empty?
     rhythm = frame_energy(vocal_path, highpass: 300, lowpass: 6000)
     phrase_times = peak_frames(rhythm[:frames], rhythm[:hop_seconds]).map { |p| p[:time] }
   end
   return 0.0 if phrase_times.empty?
-  bar_sec = (60.0 / beat_bpm.to_f) * 4.0
+
+  bar_sec = (60.0 / source_bpm.to_f) * 4.0
+  beat_sec = bar_sec / 4.0
+  # Tolerance scales with tempo rather than a fixed 60ms: at 87 BPM a beat is
+  # 690ms, so 60ms is ~9% of a beat here and a different fraction at any other
+  # tempo.
+  window = beat_sec * 0.08
   best = 0.0
-  best_score = -1
-  (0..(bar_sec * 40)).each do |i|
-    offset = i * 0.025
-    score = phrase_times.count do |t|
+  best_score = -1.0
+
+  # Search one whole bar in 5ms steps. The old loop stepped 25ms over a range
+  # derived from the bar length, which at slower tempos ran well past a bar and
+  # scored the same phase repeatedly.
+  steps = (bar_sec / 0.005).round
+  (0..steps).each do |i|
+    offset = i * 0.005
+    # Weight downbeats above backbeats above the other beats: a vocal phrase
+    # starting on beat 1 is worth more evidence than one starting on beat 4.
+    score = phrase_times.sum do |t|
       rel = (t - offset) % bar_sec
-      rel < 0.06 || (bar_sec - rel) < 0.06 || (rel - bar_sec / 2.0).abs < 0.06
+      dist_to_beat = [rel % beat_sec, beat_sec - (rel % beat_sec)].min
+      next 0.0 if dist_to_beat > window
+
+      beat_index = ((rel / beat_sec).round % 4)
+      case beat_index
+      when 0 then 1.0
+      when 2 then 0.6
+      else 0.3
+      end
     end
     next unless score > best_score
+
     best_score = score
     best = offset
   end
-  best.round(3)
+  best.round(4)
 end
 
 def rap_vocal_resolve(slug_or_path)
@@ -16689,8 +16733,10 @@ def rap_vocal_resolve(slug_or_path)
   vocals = Array(cat["vocals"])
   return if vocals.empty?
   if raw.empty? || raw == "auto"
-    idx = (@stream_iterate_count || 0) % vocals.length
-    return vocals[idx]
+    # Was `vocals[iterate_count % vocals.length]`, which rotated the stream
+    # through every catalogued voice -- slum_village, jonas_v, singers_unlimited
+    # -- so "auto" meant "whoever is next", not "the vocal".
+    return vocals.find { |v| v["slug"] == RAP_VOCAL_SOURCE } || vocals.first
   end
   vocals.find { |v| v["slug"] == raw || v["artist"].to_s.casecmp(raw).zero? } ||
     vocals.find { |v| v["slug"].to_s.include?(raw) }
@@ -16797,24 +16843,97 @@ end
 
 # Fold raw onset BPM into the stream pocket (≈76–100). Avoids the 66.7 trap
 # where *2 → 133 and /2 → 66.7 forever (never lands in-range).
-def rap_vocal_fold_bpm(raw)
+# Folds a measured tempo to the octave nearest the beat it has to sit against.
+#
+# Octaves only. The pool used to include b*1.5, b/1.5, b*4/3 and b*3/4, and
+# those do not preserve where the beats are — they re-grid the whole take at a
+# different meter. That is how gunnhild came to be catalogued at 87 BPM: the
+# analyser measured ~116, 116 * 3/4 = 87.0 landed inside the 74-100 window and
+# won for being nearest 90. Every fit since has been stretching a 120 BPM vocal
+# as though it were 87, which no phase correction downstream can rescue.
+#
+# Folding toward `target` rather than a fixed 90 also picks the smaller stretch:
+# a 120 BPM vocal over a 92 BPM beat is a 0.77x slowdown at 120, or a 1.53x
+# speedup at 60. Both are legal; the first does far less damage to the voice.
+def rap_vocal_fold_bpm(raw, target: nil)
   b = raw.to_f
   return unless b.positive?
-  pool = [b, b * 2, b / 2.0, b * 1.5, b / 1.5, b * 4 / 3.0, b * 3 / 4.0]
-  in_range = pool.select { |x| x.between?(74.0, 100.0) }
-  pick = if in_range.any?
-           in_range.min_by { |x| (x - 90.0).abs }
-         else
-           # Closest to 90 even if outside
-           pool.min_by { |x| (x - 90.0).abs }
-         end
-  pick.round(2)
+
+  pool = (-2..2).map { |k| b * (2.0**k) }.select { |x| x.between?(40.0, 220.0) }
+  return b.round(2) if pool.empty?
+
+  aim = target.to_f.positive? ? target.to_f : 90.0
+  # Nearest in log space: the cost of a stretch is its ratio, not its
+  # difference in BPM.
+  pool.min_by { |x| (Math.log(x / aim)).abs }.round(2)
 end
 
-# Prefer ENV override, then catalog, then fresh analysis; fold into hip-hop range.
-def rap_vocal_source_bpm(entry, vocal_path)
+# Measures a vocal's tempo from its own onsets: for each candidate BPM, take the
+# best phase and count onsets landing within 10% of a beat. The true tempo spikes
+# well clear of the field; a take with no steady pulse produces no spike, which
+# is worth knowing before trying to stretch it onto a grid.
+#
+# Verified against a synthesised 100 BPM click: 39/39 onsets on grid at 100,
+# 20/39 at the neighbours.
+def rap_vocal_measure_bpm(vocal_path, range: (60..180))
+  onsets = rap_vocal_onset_times(vocal_path)
+  return nil if onsets.size < 8
+
+  scored = range.map do |bpm|
+    beat = 60.0 / bpm
+    tol = beat * 0.10
+    best = 0
+    (0..(beat / 0.005).to_i).each do |i|
+      phase = i * 0.005
+      hits = onsets.count { |t| r = (t - phase) % beat; [r, beat - r].min < tol }
+      best = hits if hits > best
+    end
+    [bpm.to_f, best]
+  end
+
+  bpm, hits = scored.max_by { |(_, h)| h }
+  # A random phase hits ~20% at this tolerance. Below 1.6x that there is no
+  # pulse worth trusting, so say so rather than returning a confident number.
+  return nil if hits < onsets.size * 0.32
+
+  bpm
+end
+
+def rap_vocal_onset_times(vocal_path, hop: 0.010)
+  rate = 8000
+  raw = IO.popen(["ffmpeg", "-v", "error", "-i", vocal_path, "-ac", "1",
+                  "-ar", rate.to_s, "-f", "s16le", "-"], "rb", &:read)
+  samples = raw.to_s.unpack("s<*")
+  return [] if samples.empty?
+
+  frame = (rate * hop).to_i
+  env = samples.each_slice(frame).map { |c| Math.sqrt(c.sum { |s| (s / 32_768.0)**2 } / c.size) }
+
+  window = 12
+  last = -1.0
+  env.each_with_index.filter_map do |e, i|
+    next if i < window
+
+    floor = env[(i - window)...i].sum / window
+    t = i * hop
+    next unless e > floor * 2.2 && e > 0.004
+    next if t - last < 0.12
+
+    last = t
+  end
+end
+
+# Prefer ENV override, then a real measurement, then the stored estimate.
+def rap_vocal_source_bpm(entry, vocal_path, target: nil)
   forced = ENV["RAP_VOCAL_BPM"].to_f
   return forced if forced.positive?
+
+  # Measurement first. The stored bpm_estimate is whatever the ingest analyser
+  # said once, already folded — gunnhild sat at 87 for weeks against a source
+  # that measures 120, and nothing downstream could tell.
+  measured = rap_vocal_measure_bpm(vocal_path)
+  return rap_vocal_fold_bpm(measured, target:) if measured
+
   candidates = []
   if entry.is_a?(Hash)
     candidates << entry["bpm_estimate"].to_f
@@ -16826,8 +16945,7 @@ def rap_vocal_source_bpm(entry, vocal_path)
     candidates << analysis&.dig(:bpm_estimate_kick).to_f
     candidates << analysis&.dig(:bpm_estimate_snare).to_f
   end
-  raw = candidates.find { |b| b&.positive? }
-  rap_vocal_fold_bpm(raw)
+  rap_vocal_fold_bpm(candidates.find { |b| b&.positive? }, target:)
 end
 
 def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
@@ -16862,7 +16980,7 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
     isolated = true
   end
   beat_bpm = beat_bpm.to_f
-  vocal_bpm = rap_vocal_source_bpm(entry, vocal_path)
+  vocal_bpm = rap_vocal_source_bpm(entry, vocal_path, target: beat_bpm)
   vocal_bpm = beat_bpm unless vocal_bpm&.positive?
   # Clamp stretch: extreme atempo starts to chipmunk/garble speech.
   ratio = (beat_bpm / vocal_bpm).clamp(0.5, 2.0)
@@ -16884,10 +17002,20 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
     content = rap_vocal_content_offset(vocal_path, needed)
     phrase_start = rap_vocal_phrase_start(phrases) || 0.0
     ss = if content
-           bar_nudge = rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases:).to_f
-           (content + (bar_nudge % ((60.0 / beat_bpm) * 4.0))).round(3)
+           # Snap the content region to the vocal's own bar grid, so the cut
+           # starts on a downbeat and stays on the grid once stretched.
+           #
+           # This was `content + (bar_nudge % target_bar_seconds)`: it added a
+           # remainder of one measurement to the start of another, in a
+           # different tempo's units. Whatever came out was not a bar boundary
+           # in either timeline.
+           source_bar = (60.0 / vocal_bpm) * 4.0
+           phase = rap_vocal_best_bar_offset(vocal_path, vocal_bpm, phrases:).to_f
+           bars_in = ((content - phase) / source_bar).round
+           [phase + (bars_in * source_bar), 0.0].max.round(4)
          else
-           [rap_vocal_best_bar_offset(vocal_path, beat_bpm, phrases:), phrase_start].max
+           # Same grid as above — the vocal's own, not the beat's.
+           [rap_vocal_best_bar_offset(vocal_path, vocal_bpm, phrases:), phrase_start].max
          end
   end
   out_dir = File.dirname(vocal_path)
