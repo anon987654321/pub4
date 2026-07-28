@@ -31,7 +31,13 @@ class Marketplace::Review < ApplicationRecord
   # id with nothing preloaded — so this raised StrictLoadingViolation *after*
   # the delete had committed: the review was gone and the cached listing rating
   # still counted it.
+  #
+  # The destroyed? guard is the other half: when the listing itself is being
+  # destroyed, its reviews cascade first and each one tries to refresh a rating
+  # on a record that is already gone ("cannot update a destroyed record"). There
+  # is nothing to refresh in that case — the listing is going too.
   def refresh_listing_rating
-    strict_safe(:listing)&.update_rating!
+    listing = strict_safe(:listing)
+    listing.update_rating! if listing && !listing.destroyed?
   end
 end
