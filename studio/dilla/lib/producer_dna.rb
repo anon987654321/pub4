@@ -117,6 +117,16 @@ module DillaLofiMachine
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [2, 10], claps: [4, 12], perc: [3, 11]
     },
+    # Transcribed from a 92 BPM Ableton set (4_seven): two Drum Racks, one
+    # kick one DMX analog clap, both playing an identical 2-bar pattern. Kick
+    # on the downbeat, the 16th right after it, and beat 3; clap on the plain
+    # backbeat. Straight -- the set has no groove pool or shuffle on it, so the
+    # swing here is minimal rather than the usual Dilla lean.
+    four_seven: {
+      swing: 52, humanize: 2, bpm: 92, mode: :straight_sixteenth,
+      kicks: [0, 2, 8], snares: [4, 12], hats: [],
+      ghosts: [], claps: [4, 12], perc: []
+    },
     dilla_drunk: {
       swing: 62, humanize: 4, bpm: 92, mode: :dilla_time,
       kicks: [0, 3, 6, 10, 13], snares: [4, 7, 12],
