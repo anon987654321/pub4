@@ -117,6 +117,70 @@ zsh OPENBSD/vps_ci.sh brgen   # vm23: mutex + load gate
 bundle34 exec bin/ci            # direct (auto-guarded on VPS via Pub4::CiGuard)
 ```
 
+## Rendered gates (browser-measured)
+
+The gates above analyse source. These measure what Chrome actually laid out.
+
+```zsh
+ruby RAILS/gates/runner.rb rendered_suite    # every browser-backed gate
+ruby RAILS/gates/runner.rb geometry          # or a single leaf
+ruby RAILS/gates/runner.rb flow_journey gate_mutation   # pure, no browser needed
+GATE_SURFACES=brgen/marketplace ruby RAILS/gates/runner.rb geometry   # narrow a run
+```
+
+No gem dependency: `gates/lib/cdp_session.rb` speaks the Chrome DevTools
+Protocol over a WebSocket it implements with stdlib only. ferrum/selenium exist
+only inside app bundles, and gates run under bare `ruby`. Chrome is found via
+`CHROME_PATH` or the usual locations; without it every gate here degrades to a
+warning rather than failing.
+
+| Gate | Measures |
+|------|----------|
+| `geometry` | Rendered Fitts targets, centre-pixel occlusion, horizontal overflow, computed contrast, token conformance, 8px rhythm |
+| `reflow` | 16-width sweep 320→1600px; overflow at any width, breakpoint fingerprint |
+| `keyboard_flow` | Real Tab presses: skip-link position, document order, focus-ring visibility |
+| `journey_invariant` | Idempotence, back-button equivalence, no-JS landmark parity |
+| `cross_app` | Shared chrome and layout-mounted Stimulus agree across all three apps |
+| `layout_snapshot` | Committed rect/style baselines in `gates/data/layout_snapshots/` |
+| `flow_journey` | `gates/data/flows.yml` journeys with postconditions on state |
+| `gate_mutation` | Breaks good fixtures and asserts the suite notices |
+
+**Why geometry rather than grepping CSS.** `layout_geometry_gate` asserts
+`_nav.scss` contains the string `min-height: 44px`. `geometry` asserts the box
+is 44px tall in a real browser at that viewport, that nothing covers its centre
+pixel, and that its text clears WCAG AA against its composited background — with
+`var()`/`oklch`/`color-mix` resolved, which `DesignMetrics.parse_hex`
+structurally cannot do.
+
+**Subdomain verticals are reachable.** Chrome launches with
+`--host-resolver-rules`, so `markedsplass.brgen.no` and the other verticals are
+probed in a browser. Selenium could not set a `Host` header, which is why
+`design_metrics_gate`'s optional probe skips markedsplass entirely.
+
+**Snapshots, not screenshots.** `visual_contract_gate` reads its baseline from
+whatever PNG sits at the destination path and then overwrites it, and
+`RAILS/visual_contract/*.png` is gitignored — so a regression is reported once,
+becomes the new baseline, and does not exist at all on a fresh checkout.
+`layout_snapshot` commits a rect/style JSON instead: tracked, reviewable,
+immune to antialiasing and GPU differences, and a diff reads
+`nav.tab-bar: h 48→32` rather than "8,214 pixels changed". Baselines are
+accepted only under `GATE_SNAPSHOT_UPDATE=1`, deliberately **not** under
+`GATE_AUTOFIX` — blessing a regression is the behaviour this replaces.
+
+**Autofix.** `geometry` and `reflow` write corrective rules into a generated
+`_autofix_geometry.scss` per app, register the `@use`, and rebuild CSS before
+remeasuring. Additive and quarantined on purpose: a rendered violation names a
+selector, not a source rule, and the cascade rather than any one declaration
+produced the box — so rewriting a guessed rule would be a guess. Revert by
+deleting the partial and its `@use` line. Rounds and dry-run come from the
+shared `GateAutofix` policy (`GATE_AUTOFIX=0`, `GATE_AUTOFIX_DRY=1`,
+`GATE_AUTOFIX_ROUNDS=n`).
+
+Token colours are never rewritten automatically — `design_metrics` prints the
+hex that would clear AA and leaves the brand decision to a human.
+
+Unit coverage: `ruby RAILS/test/gates/rendered_gates_test.rb`.
+
 ## Apps.yml validator
 
 Registered in `gates/runner.rb` as `apps_yml`:

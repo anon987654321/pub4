@@ -1,0 +1,112 @@
+{
+  "title": "Map — Brgen",
+  "viewport": [
+    1440,
+    900
+  ],
+  "scroll_width": 1440,
+  "h1_count": 0,
+  "landmarks": {
+    "main": true,
+    "nav": true,
+    "skip": true
+  },
+  "elements": [
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 672,
+        "y": 0,
+        "w": 96,
+        "h": 900
+      },
+      "color": "#e0e0e0",
+      "bg": "#12151c",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#map-search",
+      "tag": "input",
+      "rect": {
+        "x": 18,
+        "y": 25,
+        "w": 239,
+        "h": 40
+      },
+      "color": "#e0e0e0",
+      "bg": "#12151c",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#map>div.maplibregl-canvas-container.maplibregl-interactive>canvas.maplibregl-canvas",
+      "tag": "canvas",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "color": "#e0e0e0",
+      "bg": "#12151c",
+      "font_size": 12,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
+      "key": "html>body.vertical-maps>a.brgen-logo-mark",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 9,
+        "w": 63,
+        "h": 44
+      },
+      "color": "#e0e0e0",
+      "bg": "#12151c",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
+      "tag": "button",
+      "rect": {
+        "x": 1328,
+        "y": 856,
+        "w": 112,
+        "h": 44
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
+      "tag": "a",
+      "rect": {
+        "x": 266,
+        "y": 27,
+        "w": 112,
+        "h": 44
+      },
+      "color": "#969696",
+      "bg": "#12151c",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    }
+  ]
+}

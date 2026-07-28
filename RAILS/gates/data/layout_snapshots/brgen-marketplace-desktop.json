@@ -1,0 +1,352 @@
+{
+  "title": "Markedsplass — Brgen",
+  "viewport": [
+    1440,
+    900
+  ],
+  "scroll_width": 1440,
+  "h1_count": 1,
+  "landmarks": {
+    "main": true,
+    "nav": true,
+    "skip": true
+  },
+  "elements": [
+    {
+      "key": "#accountStuff>a.section",
+      "tag": "a",
+      "rect": {
+        "x": 863,
+        "y": 229,
+        "w": 46,
+        "h": 20
+      },
+      "color": "#ffffff",
+      "bg": "#232f3e",
+      "font_size": 15,
+      "line_height": 20,
+      "display": "inline-block",
+      "position": "static"
+    },
+    {
+      "key": "#live_search_results>div.deal-cats>a.deal-cat",
+      "tag": "a",
+      "rect": {
+        "x": 502,
+        "y": 251,
+        "w": 47,
+        "h": 44
+      },
+      "color": "#000000",
+      "bg": "#8c7a5e",
+      "font_size": 15.8,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#live_search_results>section.marketplace-top-offers>div.top-offers-rail>a.top-offer-card",
+      "tag": "a",
+      "rect": {
+        "x": 502,
+        "y": 455,
+        "w": 436,
+        "h": 646
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#live_search_results>section.marketplace-top-offers>header.marketplace-top-offers-header",
+      "tag": "header",
+      "rect": {
+        "x": 484,
+        "y": 327,
+        "w": 472,
+        "h": 129
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#logo",
+      "tag": "a",
+      "rect": {
+        "x": 554,
+        "y": 34,
+        "w": 100,
+        "h": 100
+      },
+      "color": "#ffffff",
+      "bg": "#232f3e",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 420,
+        "y": 0,
+        "w": 600,
+        "h": 9874
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>div.search>form",
+      "tag": "form",
+      "rect": {
+        "x": 485,
+        "y": 172,
+        "w": 478,
+        "h": 49
+      },
+      "color": "#e0e0e0",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#main-content>h1",
+      "tag": "h1",
+      "rect": {
+        "x": 467,
+        "y": 158,
+        "w": 1,
+        "h": 1
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 36,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
+      "key": "#q",
+      "tag": "input",
+      "rect": {
+        "x": 485,
+        "y": 172,
+        "w": 368,
+        "h": 49
+      },
+      "color": "#aaaaaa",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#sections>a.section",
+      "tag": "a",
+      "rect": {
+        "x": 564,
+        "y": 184,
+        "w": 51,
+        "h": 20
+      },
+      "color": "#ffffff",
+      "bg": "#232f3e",
+      "font_size": 15,
+      "line_height": 20,
+      "display": "inline-block",
+      "position": "static"
+    },
+    {
+      "key": "#top-offers-heading",
+      "tag": "h2",
+      "rect": {
+        "x": 502,
+        "y": 351,
+        "w": 436,
+        "h": 36
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 31.5,
+      "line_height": 36.2,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form",
+      "tag": "form",
+      "rect": {
+        "x": 555,
+        "y": 84,
+        "w": 498,
+        "h": 52
+      },
+      "color": "#ffffff",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>input",
+      "tag": "input",
+      "rect": {
+        "x": 555,
+        "y": 84,
+        "w": 498,
+        "h": 52
+      },
+      "color": "#aaaaaa",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "inline-block",
+      "position": "static"
+    },
+    {
+      "key": "body.vertical-marketplace>div.theme-root>div.app-shell>nav.tab-bar",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 846,
+        "w": 1440,
+        "h": 54
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "div.app-shell>div.layout>div.sidebar-swiper>button.edge-grip.edge-grip-left",
+      "tag": "button",
+      "rect": {
+        "x": 0,
+        "y": 426,
+        "w": 44,
+        "h": 48
+      },
+      "color": "#ffffff",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "fixed"
+    },
+    {
+      "key": "div.app-shell>div.layout>div.widgets-swiper>button.edge-grip.edge-grip-right",
+      "tag": "button",
+      "rect": {
+        "x": 1396,
+        "y": 426,
+        "w": 44,
+        "h": 48
+      },
+      "color": "#ffffff",
+      "bg": "#000000",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "fixed"
+    },
+    {
+      "key": "div.app-shell>section.mobile-sheet>div.mobile-sheet-links>a",
+      "tag": "a",
+      "rect": {
+        "x": 18,
+        "y": 931,
+        "w": 1404,
+        "h": 52
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "div.theme-root>div.app-shell>nav.tab-bar>a.tab-item",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 846,
+        "w": 240,
+        "h": 54
+      },
+      "color": "#8c7a5e",
+      "bg": "#1a1a1a",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "div.theme-root>div.app-shell>nav.tab-bar>button.tab-item.tab-item-button",
+      "tag": "button",
+      "rect": {
+        "x": 1200,
+        "y": 846,
+        "w": 240,
+        "h": 54
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "html>body.vertical-marketplace>a.brgen-logo-mark",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 9,
+        "w": 63,
+        "h": 44
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "html>body.vertical-marketplace>div.nearby-chat-widget>button.nearby-chat-widget-tab",
+      "tag": "button",
+      "rect": {
+        "x": 1328,
+        "y": 802,
+        "w": 112,
+        "h": 44
+      },
+      "color": "#e0e0e0",
+      "bg": "#1a1a1a",
+      "font_size": 14.6,
+      "line_height": 14.6,
+      "display": "flex",
+      "position": "static"
+    }
+  ]
+}

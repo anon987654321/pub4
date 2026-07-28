@@ -1,0 +1,118 @@
+# User journeys as state machines with postconditions on state.
+#
+# The existing user_flow_gate probes a list of URLs and asserts a regex appears
+# in each body. That cannot tell you whether add-to-cart changed the cart, or
+# whether a "guest-open" surface quietly redirected to the sign-in page and
+# returned 200 from there. These flows assert relations between steps:
+# counts that must move, redirects that must or must not happen, final paths.
+#
+# steps[].count captures an integer from the body by counting regex matches;
+# assert[] then compares captures to each other or to literals. No expression
+# evaluation — {left, op, right} only, where right may name another capture.
+
+flows:
+  - id: bsdports_search_narrows
+    app: bsdports
+    description: Searching a catalogue must return fewer results than browsing it, and not zero.
+    requires_data: [total]
+    steps:
+      - name: browse_all
+        get: /ports
+        expect_status: [200]
+        count: { pattern: 'href="/ports/[^"]+"', as: total }
+      - name: search_git
+        get: /ports?q=git
+        expect_status: [200]
+        count: { pattern: 'href="/ports/[^"]+"', as: hits }
+    assert:
+      - { left: total, op: ">", right: 0, why: "browsing the catalogue shows something" }
+      - { left: hits, op: ">", right: 0, why: "a common term finds matches (search is wired to data)" }
+      - { left: hits, op: "<=", right: total, why: "a query narrows, never widens" }
+
+  - id: bsdports_empty_state_has_next_step
+    app: bsdports
+    description: A no-match search is a dead end unless it offers an action (NO_DEAD_ENDS).
+    steps:
+      - name: no_match
+        get: /ports?q=zzz-no-such-port-exists
+        expect_status: [200]
+        expect_body:
+          - '(?i)no (results|ports|matches)|nothing|empty|try'
+        count: { pattern: 'href="/ports/[^"]+"', as: hits }
+        expect_any:
+          - '(?i)<a[^>]+href="/ports"'
+          - '(?i)clear|reset|browse|all ports|try again'
+    assert:
+      - { left: hits, op: "==", right: 0, why: "a nonsense query returns no rows" }
+
+  - id: brgen_guest_marketplace_browse
+    app: brgen
+    description: Marketplace browsing must work without an account and without a redirect to sign-in.
+    steps:
+      - name: listings
+        get: /
+        host: markedsplass.brgen.no
+        expect_status: [200]
+        expect_final_path: /
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - 'navBar|deal-grid|deal-card|listings|Markedsplass'
+
+  - id: brgen_cart_is_honest_about_auth
+    app: brgen
+    description: >
+      The cart requires a session (carts_controller: require_user_session). Whatever it
+      does, it must not answer 200 with an empty shell — either it shows a cart, or it
+      sends the visitor somewhere that explains what to do next.
+    steps:
+      - name: cart
+        get: /cart
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+        expect_any:
+          - '(?i)cart|handlekurv|sign in|log in|logg inn|session'
+
+  - id: brgen_sign_in_reachable_from_home
+    app: brgen
+    description: A visitor must be able to reach sign-in from the front page by following a link.
+    steps:
+      - name: home
+        get: /
+        host: brgen.no
+        expect_status: [200]
+        expect_any:
+          - 'href="/session/new"'
+      - name: sign_in
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /session/new
+        expect_any:
+          - '(?i)password|sign in|logg inn|vipps|google'
+
+  - id: brgen_live_is_guest_open
+    app: brgen
+    description: The hyperlocal feed is the product's core loop and must not gate on signup.
+    steps:
+      - name: live
+        get: /live
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /live
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: amber_wardrobe_browse
+    app: amber
+    description: Wardrobe index must render for a visitor and link to individual items.
+    steps:
+      - name: home
+        get: /
+        expect_status: [200]
+      - name: items
+        get: /items
+        expect_status: [200]
+        count: { pattern: 'href="/items/[0-9]+"', as: items }
+    assert:
+      - { left: items, op: ">=", right: 0, why: "index renders whether or not it is seeded" }

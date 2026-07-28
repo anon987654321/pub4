@@ -48,6 +48,17 @@ GATE_MAP = {
   apps_yml:              "apps_yml_validator.rb",
   shared_wiring:         "shared_wiring_gate.rb",
   constitutional_scan:   "constitutional_scan_gate.rb",
+  # Rendered-browser gates (need Chrome + a booted app; degrade to warnings).
+  rendered_suite:        "rendered_suite_gate.rb",
+  geometry:              "geometry_gate.rb",
+  layout_snapshot:       "layout_snapshot_gate.rb",
+  journey_invariant:     "journey_invariant_gate.rb",
+  reflow:                "reflow_gate.rb",
+  keyboard_flow:         "keyboard_flow_gate.rb",
+  cross_app:             "cross_app_equivalence_gate.rb",
+  # Pure gates (no browser, no running app).
+  flow_journey:          "flow_journey_gate.rb",
+  gate_mutation:         "gate_mutation_gate.rb",
 }.freeze
 
 # Leaf gates already executed inside a composite gate on the same runner invocation.
@@ -71,6 +82,14 @@ GATE_COVERED_BY = {
   visual_quality:      :layout_suite,
   calibration:         :layout_suite,
   frontend_auditor:    :layout_suite,
+  # rendered_suite owns every browser-backed gate; each launches Chrome, so
+  # running a leaf twice in one invocation is pure wall-clock waste.
+  geometry:            :rendered_suite,
+  layout_snapshot:     :rendered_suite,
+  journey_invariant:   :rendered_suite,
+  reflow:              :rendered_suite,
+  keyboard_flow:       :rendered_suite,
+  cross_app:           :rendered_suite,
 }.freeze
 
 # In-process Deploy::* callables. Value is [relative require under gates/, class name, optional kwargs].
@@ -102,6 +121,15 @@ IN_PROCESS = {
   design_metrics:        ["lib/design_metrics_gate", "Deploy::DesignMetricsGate", {}],
   visual_quality:        ["lib/visual_quality_gate", "Deploy::VisualQualityGate", {}],
   calibration:           ["lib/calibration_gate", "Deploy::CalibrationGate", {}],
+  rendered_suite:        ["lib/rendered_suite_gate", "Deploy::RenderedSuiteGate", {}],
+  geometry:              ["lib/geometry_gate", "Deploy::GeometryGate", {}],
+  layout_snapshot:       ["lib/layout_snapshot_gate", "Deploy::LayoutSnapshotGate", {}],
+  journey_invariant:     ["lib/journey_invariant_gate", "Deploy::JourneyInvariantGate", {}],
+  reflow:                ["lib/reflow_gate", "Deploy::ReflowGate", {}],
+  keyboard_flow:         ["lib/keyboard_flow_gate", "Deploy::KeyboardFlowGate", {}],
+  cross_app:             ["lib/cross_app_equivalence_gate", "Deploy::CrossAppEquivalenceGate", {}],
+  flow_journey:          ["lib/flow_journey_gate", "Deploy::FlowJourneyGate", {}],
+  gate_mutation:         ["lib/gate_mutation_gate", "Deploy::GateMutationGate", {}],
 }.freeze
 
 # Keep subprocess for multi-step / arg-forwarding gates.

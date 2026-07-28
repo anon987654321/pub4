@@ -41,6 +41,67 @@ module Deploy
       ((lighter + 0.05) / (darker + 0.05)).round(2)
     end
 
+    # Nudge a foreground hex along the luminance axis until it clears `target`
+    # against `bg`, preserving hue and saturation. Returns nil when even pure
+    # black or white cannot reach the target (a background that light or dark
+    # needs a different background, not a different text colour).
+    #
+    # Used to *suggest* a value in gate output. Token colours are brand
+    # decisions and are deliberately never rewritten automatically.
+    def suggest_contrast_fix(fg_hex, bg_hex, target)
+      fg = parse_hex(fg_hex)
+      bg = parse_hex(bg_hex)
+      return nil unless fg && bg
+
+      toward = relative_luminance(bg) > 0.5 ? [0, 0, 0] : [255, 255, 255]
+      best = nil
+      # 40 steps at 2.5% each covers the full range with sub-perceptual jumps.
+      (1..40).each do |step|
+        t = step / 40.0
+        candidate = fg.each_with_index.map { |c, i| (c + (toward[i] - c) * t).round }
+        hex = "#" + candidate.map { |c| c.to_s(16).rjust(2, "0") }.join
+        ratio = contrast_ratio(hex, bg_hex)
+        next unless ratio && ratio >= target
+
+        best = { hex: hex, ratio: ratio }
+        break
+      end
+      best
+    end
+
+    # Which token keys read as foreground vs background, and which light/dark
+    # mode they belong to. Pairing a light-mode text colour against a dark-mode
+    # surface would invent a combination the UI never renders.
+    MODE_PREFIX = /\A(light|dark)_/
+    FOREGROUND_KEY = /\A(?:light_|dark_)?(text|text_secondary|muted|accent|accent_hover|link)\z/
+    BACKGROUND_KEY = /\A(?:light_|dark_)?(bg|surface|surface_elevated|search_bg|chrome_bg)\z/
+
+    # All plausible fg/bg pairings within a dialect, mode-matched.
+    def token_pairs(dialect_name, dialect)
+      return [] unless dialect.is_a?(Hash)
+
+      mode = ->(key) { key.to_s[MODE_PREFIX, 1] }
+      fgs = dialect.keys.select { |k| k.to_s.match?(FOREGROUND_KEY) }
+      bgs = dialect.keys.select { |k| k.to_s.match?(BACKGROUND_KEY) }
+      pairs = []
+      fgs.each do |fg|
+        bgs.each do |bg|
+          next unless mode.call(fg) == mode.call(bg)
+
+          fg_value = dialect[fg]
+          bg_value = dialect[bg]
+          next unless fg_value && bg_value
+
+          ratio = contrast_ratio(fg_value, bg_value)
+          next unless ratio
+
+          pairs << { label: "#{dialect_name}.#{fg}/#{bg}", fg: fg_value, bg: bg_value,
+                     fg_key: fg, bg_key: bg, ratio: ratio }
+        end
+      end
+      pairs
+    end
+
     # rem/em/px → px assuming 16px root
     def to_px(value, root_px: 16.0)
       s = value.to_s.strip

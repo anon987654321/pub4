@@ -112,45 +112,49 @@ module Deploy
       end
     end
 
+    # Enumerate the whole mode-matched fg/bg space per dialect instead of a
+    # hand-written list of eight pairs.
+    #
+    # The old list checked text/bg and text/surface only, and passed — while
+    # social.accent/bg sat at 4.37 and `color: var(--accent)` was being used as
+    # a text colour in dozens of rules. Anything the author forgets to list is
+    # invisible to a list.
+    #
+    # Severity is deliberately soft here: this enumerates pairings that *could*
+    # occur, and a token pair the UI never actually renders is not a defect.
+    # GeometryGate hard-fails the same threshold on pairs it observes rendered,
+    # which is the difference between a possibility and a fact.
     def check_token_contrast
       normal_min = @rules.dig("typography", "accessibility", "normal_text_contrast").to_f
       normal_min = 7.0 if normal_min <= 0 # design_rules AAA default
-      pairs = []
 
-      pair_specs = [
-        ["social", "text", "bg"],
-        ["social", "text", "surface"],
-        ["light", "text", "bg"],
-        ["brgen_old_light", "text", "bg"],
-        ["brgen_old_dark", "text", "bg"],
-        ["luxury", "light_text", "light_bg"],
-        ["luxury", "dark_text", "dark_bg"],
-        ["openbsd_wscons", "text", "bg"],
-      ]
-
-      pair_specs.each do |dialect, fg_key, bg_key|
-        dialect_data = @tokens[dialect]
-        next unless dialect_data.is_a?(Hash)
-
-        fg = dialect_data[fg_key]
-        bg = dialect_data[bg_key]
-        next unless fg && bg
-
-        ratio = DesignMetrics.contrast_ratio(fg, bg)
-        next unless ratio
-
-        label = "#{dialect}.#{fg_key}/#{bg_key}"
-        if ratio < 4.5
-          @result.fail("design_metrics contrast: #{label} ratio #{ratio} < 4.5 (WCAG AA) principle=accessibility", severity: :hard)
-        elsif ratio < normal_min
-          @result.fail(
-            "design_metrics contrast: #{label} ratio #{ratio} < design_rules #{normal_min} (AAA target) principle=accessibility",
-            severity: :soft
-          )
-        end
-        pairs << [label, ratio]
+      pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) }
+      if pairs.empty?
+        @result.fail("design_metrics contrast: no token pairs resolved from design_tokens.yml", severity: :soft)
+        return
       end
-      @result.warn("design_metrics contrast: checked #{pairs.size} token pairs") if pairs.any?
+
+      below_aa = pairs.select { |p| p[:ratio] < 4.5 }
+      below_aaa = pairs.select { |p| p[:ratio] >= 4.5 && p[:ratio] < normal_min }
+
+      below_aa.sort_by { |p| p[:ratio] }.each do |pair|
+        suggestion = DesignMetrics.suggest_contrast_fix(pair[:fg], pair[:bg], 4.5)
+        hint = suggestion ? " — #{pair[:fg_key]} #{suggestion[:hex]} would reach #{suggestion[:ratio]}" : ""
+        @result.fail(
+          "design_metrics contrast: #{pair[:label]} #{pair[:fg]} on #{pair[:bg]} = #{pair[:ratio]} < 4.5 (WCAG AA)" \
+          "#{hint} principle=accessibility",
+          severity: :soft
+        )
+      end
+
+      if below_aaa.any?
+        @result.warn(
+          "design_metrics contrast: #{below_aaa.size} pair(s) between 4.5 and the design_rules AAA target " \
+          "#{normal_min} — #{below_aaa.sort_by { |p| p[:ratio] }.first(3).map { |p| "#{p[:label]}=#{p[:ratio]}" }.join(', ')}"
+        )
+      end
+      @result.warn("design_metrics contrast: enumerated #{pairs.size} mode-matched token pairs " \
+                   "across #{@tokens.keys.size} dialects (#{below_aa.size} below AA)")
     end
 
     def check_touch_targets

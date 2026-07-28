@@ -1,0 +1,78 @@
+# Surfaces probed by GeometryProbe (rendered measurement, not source grep).
+#
+# brgen's vertical subdomains are derived from BrgenVerticalSurfaces so the
+# host list has exactly one definition. Everything else is declared here.
+#
+# `host:` is optional — omit it and the surface is probed over loopback.
+# Only brgen needs a real Host: its vertical routing is driven by subdomain.
+#
+# viewports: named [width, height]. `snapshot: true` opts a surface into the
+# committed layout-snapshot baseline (gates/data/layout_snapshots/).
+
+viewports:
+  mobile: [390, 844]
+  compact: [1024, 768]
+  desktop: [1440, 900]
+
+# Width sweep for the reflow gate — WCAG 1.4.10 floor through desktop.
+reflow_widths: [320, 360, 390, 414, 480, 540, 600, 680, 768, 834, 900, 1024, 1180, 1280, 1440, 1600]
+
+include_brgen_verticals: true
+brgen_vertical_viewports: [mobile, desktop]
+
+surfaces:
+  - app: brgen
+    label: sign_in
+    host: brgen.no
+    path: /session/new
+    viewports: [mobile, desktop]
+    snapshot: true
+
+  - app: amber
+    label: home
+    path: /
+    viewports: [mobile, compact, desktop]
+    snapshot: true
+  - app: amber
+    label: wardrobe
+    path: /items
+    viewports: [mobile, desktop]
+    snapshot: true
+  - app: amber
+    label: upload
+    path: /items/new
+    viewports: [mobile]
+  - app: amber
+    label: sign_in
+    path: /session/new
+    viewports: [mobile, desktop]
+    snapshot: true
+
+  - app: bsdports
+    label: home
+    path: /
+    viewports: [mobile, compact, desktop]
+    snapshot: true
+  - app: bsdports
+    label: ports_index
+    path: /ports
+    viewports: [mobile, desktop]
+    snapshot: true
+  - app: bsdports
+    label: search_results
+    path: /ports?q=git
+    viewports: [desktop]
+  - app: bsdports
+    label: empty_results
+    path: /ports?q=zzz-no-such-port
+    viewports: [desktop]
+    snapshot: true
+
+# Surfaces whose content is inherently volatile (feeds, seeded records).
+# Snapshot + pixel comparison skip these regions; geometry still measures them.
+volatile_selectors:
+  - ".feed-post time"
+  - ".live-item time"
+  - "[data-relative-time]"
+  - ".deal-card-price"
+  - ".post-meta"
