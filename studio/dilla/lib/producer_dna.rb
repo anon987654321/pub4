@@ -138,11 +138,16 @@ module DillaLofiMachine
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [1, 3, 5, 7, 9, 11, 13, 15],
       ghosts: [6, 14], claps: [4, 12], perc: [6, 14]
     },
+    # Backbeat restored. This shipped with snares on [2, 6, 10, 15] -- no hit on
+    # 4 or 12 anywhere -- which is the same fault the style constructions below
+    # were first written with, and it is why this one did not read as hip-hop.
+    # The abstraction stays in the kick and the near-continuous hats; the extra
+    # snares moved to ghosts, where an off-backbeat hit belongs.
     flylo_abstract: {
-      swing: 54, humanize: 5, bpm: 84, mode: :straight_sixteenth,
-      kicks: [0, 5, 8, 13], snares: [2, 6, 10, 15],
+      swing: 54, humanize: 4, bpm: 84, mode: :straight_sixteenth,
+      kicks: [0, 5, 8, 13], snares: [4, 12],
       hats: [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
-      ghosts: [7, 13], claps: [7, 13], perc: [1, 5, 8, 12]
+      ghosts: [2, 6, 10, 15], claps: [4, 12], perc: [1, 8]
     },
     mpc3000: {
       swing: 62, humanize: 2, bpm: 90, mode: :dilla_time,
@@ -184,6 +189,22 @@ module DillaLofiMachine
     # recording. four_seven and dangelo_learned above are transcriptions and are
     # the only two that can claim to be what a record actually plays; these are
     # arrangements in the manner of, and should not be cited as anyone's part.
+    #
+    # ONE RULE, learned the hard way: the backbeat stays on 4 and 12.
+    #
+    # The first version of this table put dilla_lopsided on snares [5, 13] and
+    # flylo_cosmogramma on [5, 13] too, reasoning that an unusual feel needs an
+    # unusual grid. That is wrong, and every transcription in this file says so:
+    # dilla_slight, four_seven and flylo_camel are all [4, 12], as conventional
+    # as a drum machine preset. What makes those records sound the way they do
+    # is MICROTIMING_MS -- the snare arriving 10-28ms early, hats 12-32ms late,
+    # kick almost on the grid -- measured in milliseconds, not in 16ths. Moving
+    # the backbeat does not produce a drunk hip-hop beat, it produces a beat
+    # that is not hip-hop. Character belongs in the kick placement, the ghosts,
+    # and the swing; the backbeat is the thing the listener sets their clock by.
+    #
+    # humanize also stays in the references' 2-4 range. At 6 it stopped reading
+    # as feel and started reading as an unsteady drummer.
 
     # Donuts-era Dilla: no hats at all. Half that record keeps time with the
     # sample's own noise and lets the kit be only kick and snare, which is why
@@ -194,20 +215,24 @@ module DillaLofiMachine
       ghosts: [14], claps: [], perc: []
     },
     # Slum Village pocket: swung, and the ghosts carry the groove rather than
-    # the backbeat. Snare late, ghosts filling the gap before it.
+    # the backbeat. Kick answers the snare on the "and" of 2 rather than
+    # crowding it.
     dilla_fantastic: {
-      swing: 63, humanize: 4, bpm: 94, mode: :dilla_time,
-      kicks: [0, 3, 8, 11], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
-      ghosts: [3, 7, 11, 15], claps: [12], perc: [6]
+      swing: 63, humanize: 3, bpm: 94, mode: :dilla_time,
+      kicks: [0, 6, 10, 11], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+      ghosts: [7, 15], claps: [12], perc: [6]
     },
-    # The lopsided one. Kick rushes, snare drags, hats stay dead even -- three
-    # voices disagreeing about where the beat is, held together by the hats
-    # being the only honest one. This is the feel people mean by "Dilla time";
-    # the conflict is the point and it should sound slightly wrong.
+    # The lopsided one. Grid is ordinary on purpose -- kick on 1, the "and" of
+    # 2, and beat 3; snare on the backbeat. Everything that makes it lean lives
+    # in swing 66 against dilla_time, where MICROTIMING_MS pulls the snare early
+    # and pushes the hats late while the kick sits near the grid. Three voices
+    # disagreeing by milliseconds, which is the actual mechanism, rather than
+    # three voices disagreeing about which 16th they are on, which is just a
+    # different pattern.
     dilla_lopsided: {
-      swing: 66, humanize: 6, bpm: 90, mode: :dilla_time,
-      kicks: [0, 3, 6, 9], snares: [5, 13], hats: [0, 2, 4, 6, 8, 10, 12, 14],
-      ghosts: [7, 15], claps: [5, 13], perc: [11]
+      swing: 66, humanize: 4, bpm: 90, mode: :dilla_time,
+      kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+      ghosts: [7, 15], claps: [4, 12], perc: [11]
     },
 
     # The Camel grid, moved here so every pattern lives in one table. dilla.rb
@@ -217,36 +242,40 @@ module DillaLofiMachine
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [7], claps: [4, 12], perc: []
     },
-    # Cosmogramma: the backbeat is displaced off 4 and 12 entirely, hats run in
-    # a triplet-ish 3-step cycle against a 16-step bar, so nothing lines up
-    # twice in the same place inside one loop.
+    # Cosmogramma: the HATS carry the polyrhythm -- a 3-step cycle against a
+    # 16-step bar, so they only agree with the downbeat once every three bars.
+    # The kick and snare stay square underneath, which is what stops the
+    # polyrhythm sounding like a mistake instead of a device.
     flylo_cosmogramma: {
-      swing: 52, humanize: 6, bpm: 78, mode: :straight_sixteenth,
-      kicks: [0, 3, 7, 11, 14], snares: [5, 13],
-      hats: [0, 3, 6, 9, 12, 15], ghosts: [2, 8], claps: [5], perc: [1, 10]
+      swing: 52, humanize: 4, bpm: 78, mode: :straight_sixteenth,
+      kicks: [0, 6, 11], snares: [4, 12],
+      hats: [0, 3, 6, 9, 12, 15], ghosts: [2, 14], claps: [4, 12], perc: [10]
     },
-    # Half-time and mostly empty: two kicks and one snare in a whole bar. Space
-    # is the instrument -- this only works under something that fills it.
+    # Half-time and mostly empty. The snare on 8 is beat 3, which IS the
+    # backbeat when the bar is felt at half speed -- the one legitimate way the
+    # snare leaves 4 and 12. Space is the instrument; this only works under
+    # something that fills it.
     flylo_zodiac: {
-      swing: 56, humanize: 4, bpm: 72, mode: :straight_sixteenth,
+      swing: 56, humanize: 3, bpm: 72, mode: :straight_sixteenth,
       kicks: [0, 11], snares: [8], hats: [4, 12],
-      ghosts: [15], claps: [], perc: [6]
+      ghosts: [15], claps: [8], perc: [6]
     },
-    # Loose and ambient: no clap, kick off the grid, hats sparse and late. Meant
-    # to sit under a drone rather than drive anything.
+    # Loose and ambient, also half-time: snare on 8, kick answering it late.
+    # No clap, hats sparse. Meant to sit under a drone rather than drive.
     flylo_massage: {
-      swing: 58, humanize: 7, bpm: 68, mode: :straight_sixteenth,
-      kicks: [0, 9], snares: [12], hats: [3, 7, 11, 15],
+      swing: 58, humanize: 4, bpm: 68, mode: :straight_sixteenth,
+      kicks: [0, 10], snares: [8], hats: [3, 7, 11, 15],
       ghosts: [5], claps: [], perc: [13]
     },
 
-    # Broken-beat neo-soul: backbeat pushed a 16th early on the second half of
-    # the bar so the bar never repeats itself, ghosts under everything.
+    # Broken-beat neo-soul. The break is in the ghosts and the kick, which
+    # syncopate hard around a backbeat that never moves -- displacing the snare
+    # itself was the first version's mistake and made it stop being a groove.
     hiatus_broken: {
-      swing: 61, humanize: 5, bpm: 86, mode: :dilla_time,
-      kicks: [0, 6, 8, 14], snares: [4, 11],
+      swing: 61, humanize: 4, bpm: 86, mode: :dilla_time,
+      kicks: [0, 6, 8, 14], snares: [4, 12],
       hats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 14], ghosts: [2, 7, 9, 15],
-      claps: [4, 11], perc: [3, 12]
+      claps: [4, 12], perc: [3, 11]
     },
     # Late-snare pocket. Nothing clever in the grid at all -- the entire feel is
     # in the snare arriving after you expect it, which is timing, not placement.
@@ -255,11 +284,13 @@ module DillaLofiMachine
       kicks: [0, 10], snares: [4, 12], hats: [0, 4, 8, 12],
       ghosts: [6, 14], claps: [], perc: []
     },
-    # Very sparse, deliberately off: a beat that sounds like a loop of someone
-    # else's beat heard through a wall.
+    # Very sparse: a beat that sounds like someone else's beat heard through a
+    # wall. Only the second backbeat is played -- leaving 4 silent is a choice
+    # about what to omit, which is different from putting the snare somewhere
+    # else, and the ear still counts the bar from 12.
     knxwledge_haze: {
-      swing: 59, humanize: 6, bpm: 82, mode: :dilla_time,
-      kicks: [0, 5, 9], snares: [12], hats: [2, 10],
+      swing: 59, humanize: 4, bpm: 82, mode: :dilla_time,
+      kicks: [0, 6, 10], snares: [12], hats: [2, 10],
       ghosts: [7], claps: [12], perc: [14]
     },
   }.freeze
