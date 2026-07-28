@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "face_manifest_helper"
 
 class FaceStateSpec < Minitest::Test
+  include FaceManifestHelper
+
   ROOT = File.expand_path("../..", __dir__)
 
   def read(path)
@@ -14,9 +17,7 @@ class FaceStateSpec < Minitest::Test
   # the single actual HTML entrypoint. face_state/visual_governor load there via
   # a Rails javascript_include_tag array, not literal <script src> tags.
   def test_layout_loads_face_state_before_visual_scripts
-    source = read("web/app/views/chat/index.html.erb")
-    tag_line = source[/javascript_include_tag\(\*%w\[([^\]]+)\]/, 1].to_s
-    scripts = tag_line.split
+    scripts = shell_manifest
     assert_includes scripts, "face_state"
     assert_includes scripts, "visual_governor"
     assert_operator scripts.index("face_state"), :<, scripts.index("visual_governor")

@@ -34,24 +34,13 @@
         return original.apply(this, arguments);
       };
     })();
+    <%# Rendered from config/face_assets.yml — the one manifest. The eager list
+        and the path map used to be two hand-maintained literals repeating the
+        same twelve names, free to drift apart; the map is now derived. %>
     window.MASTER_ASSET_PATHS = {
-      threeModule: "<%= asset_path("three.face.module.js") %>",
-      faceModulesList: <%= raw(%w[
-        attention_model.js face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
-        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
-        face_perf_guards.js face_brutalist.js
-      ].to_json) %>,
-      faceModules: <%= raw(%w[
-        attention_model.js face_particles.js face_audio_bridge.js face_tts_bridge.js face_expression_bridge.js face_blendshape_bridge.js
-        face_council_multi.js face_phosphor_trail.js face_offscreen_ecology.js face_micro_interactions.js
-        face_perf_guards.js face_brutalist.js
-        face_semantics.js face_minimal_ui.js face_loops_music.js face_loops_nudge.js
-        face_vision.bundle.js cognition_ecology.js cognition_ecology_render.js
-      ].to_h { |name| [name, asset_path(name)] }.to_json) %>,
-      faceVisionBundle: "<%= asset_path("face_vision.bundle.js") %>",
-      faceRuntime: "<%= asset_path("face.runtime.js") %>",
-      visemePacks: "<%= asset_path("viseme_packs.json") %>",
-      clusterMiner: "<%= asset_path("cluster_miner.js") %>"
+      faceModulesList: <%= raw FaceAssets.eager.to_json %>,
+      faceModules: <%= raw FaceAssets.module_names.to_h { |name| [name, asset_path(name)] }.to_json %>,
+      <%= raw FaceAssets.singletons.map { |key, file| "#{key}: #{asset_path(file).to_json}" }.join(",\n      ") %>
     };
   </script>
   <script nonce="<%= content_security_policy_nonce %>">
@@ -274,11 +263,10 @@
   </form>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
-  <%# Deferred boot modules — single ordered manifest, loaded after the shell paints.
-      face.js (the THREE.js WebGL face) is intentionally absent: loadFace() imports it
-      lazily on the primer tap (see the boot script above). %>
-  <%= javascript_include_tag(*%w[face_state visual_governor topology_registry particle_worker
-        sse_contract chat_actions visual_bridge chat master_namespace], defer: true) %>
+  <%# Deferred boot modules, from config/face_assets.yml#shell_manifest — order is
+      the boot contract. face.js (the THREE.js WebGL face) is intentionally absent:
+      loadFace() imports it lazily on the primer tap (see the boot script above). %>
+  <%= javascript_include_tag(*FaceAssets.group("shell_manifest"), defer: true) %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">

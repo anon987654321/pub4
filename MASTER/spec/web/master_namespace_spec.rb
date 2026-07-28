@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "face_manifest_helper"
 
 class MasterNamespaceSpec < Minitest::Test
+  include FaceManifestHelper
+
   ROOT = File.expand_path("../..", __dir__)
 
   def read(path)
@@ -20,9 +23,6 @@ class MasterNamespaceSpec < Minitest::Test
   end
 
   def test_chat_index_loads_master_namespace_in_deferred_manifest
-    index = read("web/app/views/chat/index.html.erb")
-    tag_line = index[/javascript_include_tag\(\*%w\[([^\]]+)\]/, 1].to_s
-
-    assert_includes tag_line.split, "master_namespace"
+    assert_includes shell_manifest, "master_namespace"
   end
 end

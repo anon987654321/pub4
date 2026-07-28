@@ -1,0 +1,89 @@
+---
+# The one list of every JavaScript asset the chat shell loads for the face.
+#
+# Before this file, chat/index.html.erb named them four different ways — a
+# MASTER_ASSET_PATHS object literal, individual <script src> tags, a
+# javascript_include_tag list of *bare names* (no .js), and the face.runtime.js
+# blob — and no single place enumerated the set. Two consequences:
+#
+#   * /etc/rc.d/master's precompile-skip digest covers ~10 named files and
+#     silently misses the other ~30, so editing one and restarting keeps a stale
+#     fingerprint (see web/CLAUDE.md).
+#   * `grep face_state.js` finds nothing, because the include_tag writes
+#     `face_state`. A file can look dead and be live.
+#
+# Order within each group is load order and is part of the boot contract. Read
+# the group comments before moving anything between them.
+
+# Imported eagerly by public/face.js immediately after the primer tap, in this
+# order. particle_kernel consumers must not precede attention_model.
+face_eager:
+  - attention_model.js
+  - face_particles.js
+  - face_audio_bridge.js
+  - face_tts_bridge.js
+  - face_expression_bridge.js
+  - face_blendshape_bridge.js
+  - face_council_multi.js
+  - face_phosphor_trail.js
+  - face_offscreen_ecology.js
+  - face_micro_interactions.js
+  - face_perf_guards.js
+  - face_brutalist.js
+
+# Imported lazily from the tail of face.part5.txt via _deferFaceMod(), after the
+# face itself is up.
+face_runtime_deferred:
+  - face_semantics.js
+  - face_minimal_ui.js
+  - face_loops_music.js
+  - face_loops_nudge.js
+
+# Loaded by public/face_deferred_loader.js once it sees primer:ready — a second,
+# independent layer from the core face runtime.
+face_vision_deferred:
+  - face_vision.bundle.js
+  - cognition_ecology.js
+  - cognition_ecology_render.js
+
+# Non-module assets addressed by name in MASTER_ASSET_PATHS.
+singletons:
+  threeModule: three.face.module.js
+  faceVisionBundle: face_vision.bundle.js
+  faceRuntime: face.runtime.js
+  visemePacks: viseme_packs.json
+  clusterMiner: cluster_miner.js
+
+# The one synchronous, non-deferred script: every deferred ecology/worker module
+# and the post-primer face import may assume window.ParticleKernel already
+# exists, so it cannot be deferred with the rest.
+shell_blocking:
+  - particle_kernel.js
+
+# Plain <script defer> tags in the shell. These stay written out literally in
+# index.html.erb rather than rendered from here: their *positions* differ and
+# are load-bearing — face_2d_fallback sits after the inline boot script so it
+# cannot delay tap wiring, and a test pins that ordering. Listed here so the set
+# is still enumerable; a contract test asserts the view and this file agree.
+shell_early:
+  - face_2d_fallback.js
+  - container_gate.js
+  - face_deferred_loader.js
+
+# javascript_include_tag, deferred, in this order. Written as bare names because
+# that is what the tag takes; every entry is a real public/<name>.js.
+shell_manifest:
+  - face_state
+  - visual_governor
+  - topology_registry
+  - particle_worker
+  - sse_contract
+  - chat_actions
+  - visual_bridge
+  - chat
+  - master_namespace
+
+# Trailing <script defer> tags, after the ordered manifest.
+shell_late:
+  - master_events.js
+  - shortcut_sheet.js

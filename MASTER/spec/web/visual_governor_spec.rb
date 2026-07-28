@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "face_manifest_helper"
 
 class VisualGovernorSpec < Minitest::Test
+  include FaceManifestHelper
+
   ROOT = File.expand_path("../..", __dir__)
   GOVERNOR = File.join(ROOT, "web", "public", "visual_governor.js")
   # layouts/application.html.erb is dead for this purpose — ChatController#index
@@ -32,8 +35,7 @@ class VisualGovernorSpec < Minitest::Test
   # have already run), and that face.js is never eagerly <script>-tagged.
   def test_entrypoint_loads_visual_governor_in_deferred_manifest_before_any_tap
     source = File.read(ENTRYPOINT)
-    tag_line = source[/javascript_include_tag\(\*%w\[([^\]]+)\]/, 1].to_s
-    assert_includes tag_line.split, "visual_governor"
+    assert_includes shell_manifest, "visual_governor"
     refute_match(/<script[^>]+src=["'][^"']*face\.js/, source)
     assert_includes source, 'import("<%= asset_path("face.js") %>")'
   end

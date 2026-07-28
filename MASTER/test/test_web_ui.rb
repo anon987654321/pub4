@@ -160,14 +160,16 @@ class TestWebUI < Minitest::Test
     assert_operator kernel_idx, :<, face_idx
     refute_includes index, '<link rel="prefetch" href="<%= asset_path("face.js") %>" as="script">'
     refute_match(/rel="modulepreload"[^>]+asset_path\("face\.js"\)/, index)
-    # Boot modules ship through the compact javascript_include_tag(*%w[...]) manifest,
-    # so they appear as bare (suffix-less) names, not "<name>.js".
-    assert_includes index, "chat_actions"
-    assert_includes index, "visual_bridge"
+    # Boot modules are declared in web/config/face_assets.yml and rendered from
+    # it; the view no longer names them, so assert against the manifest.
+    manifest = YAML.safe_load_file(File.expand_path("../web/config/face_assets.yml", __dir__))
+    %w[chat_actions visual_bridge visual_governor].each do |name|
+      assert_includes manifest["shell_manifest"], name
+    end
+    %w[cognition_ecology.js cognition_ecology_render.js].each do |name|
+      assert_includes manifest["face_vision_deferred"], name
+    end
     assert_includes index, 'id="cognition-ecology"'
-    assert_includes index, "cognition_ecology"
-    assert_includes index, "cognition_ecology_render"
-    assert_includes index, "visual_governor"
     ecology_idx = index.index("cognition-ecology")
     face_canvas_idx = index.index('id="face"')
     assert_operator ecology_idx, :<, face_canvas_idx
@@ -215,14 +217,30 @@ class TestWebUI < Minitest::Test
     refute_match(/observe\(el,\s*\{[^}]*attributes/, source)
   end
 
-  def test_rc_d_master_digest_globs_all_face_modules
+  def test_rc_d_master_digest_covers_every_manifest_asset
     rc = File.read(File.expand_path("../../OPENBSD/etc/rc.d/master", __dir__))
 
-    # Regression: the precompile-skip digest once named ~10 face files
-    # explicitly, so editing any of the ~30 other standalone face_*.js modules
-    # (e.g. face_state.js) silently skipped precompile on restart and kept a
-    # stale fingerprint live. The digest must glob face_*.js, not enumerate it.
-    assert_includes rc, "face_*.js"
+    # Regression: the precompile-skip digest named its inputs by hand, so
+    # editing a face asset it did not list silently skipped precompile on
+    # restart and kept a stale fingerprint live. A face_*.js glob fixed that for
+    # the face_-prefixed half and left 15 of 38 uncovered — among them
+    # particle_kernel.js, face.runtime.js and three.face.module.js. It now reads
+    # web/config/face_assets.yml, so a new module is covered when it is declared.
+    assert_includes rc, "script/face_asset_paths.rb"
+    assert_includes rc, "cksum $_face_assets"
+  end
+
+  def test_face_asset_paths_script_emits_every_declared_asset
+    web = File.expand_path("../web", __dir__)
+    manifest = YAML.safe_load_file(File.join(web, "config", "face_assets.yml"))
+    declared = %w[face_eager face_runtime_deferred face_vision_deferred shell_blocking shell_early shell_late]
+               .flat_map { |group| Array(manifest[group]) }
+    declared += manifest.fetch("singletons").values
+    declared += Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }
+
+    emitted = `#{RbConfig.ruby} #{File.join(web, "script", "face_asset_paths.rb")}`.lines.map { |l| File.basename(l.strip) }
+
+    assert_equal declared.uniq.sort, emitted.sort
   end
 
   def test_primer_tap_unlocks_prompt_before_face_ready
@@ -465,13 +483,14 @@ class TestWebUI < Minitest::Test
     end
   end
 
+  # Reads web/config/face_assets.yml, which the view now renders from, rather
+  # than scraping a javascript_include_tag(*%w[...]) literal out of the ERB.
   def boot_manifest_sources(index)
-    include_block = index.match(/javascript_include_tag\(\*%w\[(.*?)\]/m)
-    assert include_block, "chat index boot manifest not found"
-
-    manifest_js = include_block[1].split.map { |name| "#{name}.js" }
+    manifest = YAML.safe_load_file(File.expand_path("../web/config/face_assets.yml", __dir__))
+    manifest_js = Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }
     face_parts = index.scan(/face\.part\d+\.txt/).uniq.sort
-    (manifest_js + %w[particle_kernel.js] + face_parts).uniq
+
+    (manifest_js + Array(manifest["shell_blocking"]) + face_parts).uniq
   end
 
   def test_face_tts_audio_graph_uses_compressor_before_analyser

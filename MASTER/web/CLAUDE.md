@@ -56,6 +56,11 @@ code read.
   failed server-TTS request permanently downgrade the session.
 
 **Files:**
+- `config/face_assets.yml`: **the** manifest — every face asset the shell loads,
+  grouped by load phase, order within a group being the boot contract. The view
+  renders `MASTER_ASSET_PATHS` and the deferred `javascript_include_tag` from it
+  (`FaceAssets`), and `/etc/rc.d/master`'s precompile digest reads it through
+  `script/face_asset_paths.rb`. Adding a face module means adding it here.
 - `app/views/chat/index.html.erb`: primer, WebGL guard, boot manifest, lazy `import("face.js")`.
 - `public/face.js`: deferred face loader.
 - `public/face.part*.txt`: split face runtime payload.
@@ -136,14 +141,15 @@ Two things this exposed, both worth heeding:
   `face_state.js` flipped the page from wedged to responsive; a sandbox false-
   hang can't produce that selective result. A raw "it hangs" from one load is
   untrustworthy; a bisect is not.
-- **The rc.d precompile-skip digest is incomplete.** `/etc/rc.d/master`'s
-  `_digest=$(cksum …)` covers only ~10 named files (face.part*, face.css,
-  face.js, container_gate.js, the bundles, index/_face_boot erb). It does NOT
-  include `face_state.js` or the other ~30 standalone `face_*.js` modules — so
-  editing one and restarting master **silently skips precompile** and keeps the
-  stale fingerprint. When editing any face_* module, either add it to that
-  digest list or force `RAILS_ENV=production bundle34 exec rails assets:precompile`
-  manually before restart, then confirm the live fingerprint changed.
+- **The rc.d precompile-skip digest used to be incomplete.** `/etc/rc.d/master`'s
+  `_digest=$(cksum …)` named its inputs by hand, so editing a face module it did
+  not list **silently skipped precompile** on restart and kept the stale
+  fingerprint live. A `face_*.js` glob later fixed that for the face_-prefixed
+  half and still left 15 of 38 uncovered — among them `particle_kernel.js`,
+  `face.runtime.js` and `three.face.module.js`. Since 2026-07-28 the digest
+  reads `config/face_assets.yml` via `script/face_asset_paths.rb`, so a module is
+  covered the moment it is declared. **Declare new face assets in that manifest**
+  — not doing so is now the only way to reproduce the old failure.
 
 ## The primer → face boot sequence
 

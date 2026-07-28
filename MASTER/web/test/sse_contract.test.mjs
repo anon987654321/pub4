@@ -64,7 +64,10 @@ test("visual_bridge logs parse failures instead of silent catch", () => {
 
 test("chat index keeps THREE behind the primer tap", () => {
   const index = readFileSync(join(root, "app", "views", "chat", "index.html.erb"), "utf8");
-  assert.match(index, /three\.face\.module\.js/);
+  // threeModule is declared in config/face_assets.yml; what matters here is that
+  // the view never preloads or prefetches it ahead of the tap.
+  const manifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
+  assert.match(manifest, /three\.face\.module\.js/);
   assert.doesNotMatch(index, /rel="prefetch"[^>]+three\.face\.module\.js/);
   assert.doesNotMatch(index, /rel="modulepreload"[^>]+three\.face\.module\.js/);
 });

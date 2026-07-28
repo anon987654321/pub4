@@ -49,17 +49,21 @@ rc_pre() {
   fi
   _manifest=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
   _stamp=/home/dev/pub4/MASTER/web/tmp/.assets_precompile_stamp
-  _digest=$(cksum /home/dev/pub4/MASTER/web/public/face.part*.txt /home/dev/pub4/MASTER/web/public/face.css \
-    /home/dev/pub4/MASTER/web/public/face.js /home/dev/pub4/MASTER/web/public/container_gate.js \
-    /home/dev/pub4/MASTER/web/public/face.modules.bundle.js /home/dev/pub4/MASTER/web/public/face_vision.bundle.js \
-    /home/dev/pub4/MASTER/web/public/face_deferred_loader.js \
-    /home/dev/pub4/MASTER/web/public/face_wayfinding.js \
-    /home/dev/pub4/MASTER/web/public/chat.js \
-    /home/dev/pub4/MASTER/web/public/chat_actions.js \
-    /home/dev/pub4/MASTER/web/public/visual_bridge.js \
-    /home/dev/pub4/MASTER/web/public/face_minimal_ui.js \
+  # Every asset the chat shell loads comes from web/config/face_assets.yml via
+  # face_asset_paths.rb, so a new face module is covered the moment it is added
+  # to the manifest. The hand-maintained list this replaces covered 23 of 38
+  # files; the 15 it missed included particle_kernel.js, face.runtime.js and
+  # three.face.module.js — edit one of those, restart, and precompile was
+  # silently skipped with a stale fingerprint. The tail below is the non-asset
+  # inputs (stylesheet, service worker, the views themselves), which the
+  # manifest does not and should not describe.
+  _face_assets=$(cd /home/dev/pub4/MASTER/web && ruby34 script/face_asset_paths.rb 2>/dev/null)
+  _digest=$(cksum $_face_assets \
+    /home/dev/pub4/MASTER/web/public/face.part*.txt \
+    /home/dev/pub4/MASTER/web/public/face.css \
+    /home/dev/pub4/MASTER/web/public/face.js \
+    /home/dev/pub4/MASTER/web/public/face.modules.bundle.js \
     /home/dev/pub4/MASTER/web/public/sw.js \
-    /home/dev/pub4/MASTER/web/public/face_*.js \
     /home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
     /home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
   _skip=0

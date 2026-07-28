@@ -9,6 +9,10 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 const viewsDir = join(root, "app", "views");
+// Face assets are declared in config/face_assets.yml and rendered from it, so
+// the view no longer spells their names. Read the manifest as text — Node has
+// no YAML parser and these are presence checks, not structural ones.
+const faceManifest = readFileSync(join(root, "config", "face_assets.yml"), "utf8");
 
 function partSources() {
   return [
@@ -118,7 +122,7 @@ test("master_namespace exposes canonical MASTER facade getters", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(ns, /Object\.defineProperty\(root,\s*name/);
   assert.match(ns, /\["speech"/);
-  assert.match(index, /master_namespace/);
+  assert.match(faceManifest, /master_namespace/);
 });
 
 test("attention_model loads before face modules", () => {
@@ -182,11 +186,11 @@ test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () 
 
 test("chat index wires viseme and experimental asset paths", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
-  assert.match(index, /faceRuntime/);
+  assert.match(faceManifest, /faceRuntime/);
   assert.match(index, /faceModules/);
   assert.doesNotMatch(index, /faceParts/);
-  assert.match(index, /visemePacks/);
-  assert.match(index, /clusterMiner/);
+  assert.match(faceManifest, /visemePacks/);
+  assert.match(faceManifest, /clusterMiner/);
 });
 
 test("visual_bridge emits master:emotion and uses asset paths", () => {
@@ -215,14 +219,16 @@ test("chat index wires digested assets around lazy face boot", () => {
   const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
   assert.match(index, /asset_path\("face\.css"\)/);
   assert.match(index, /asset_path\("face\.js"\)/);
-  assert.match(index, /faceRuntime/);
+  assert.match(faceManifest, /faceRuntime/);
   assert.match(index, /asset_path\("face_2d_fallback\.js"\).*defer/);
   assert.match(index, /function zshEl/);
   assert.doesNotMatch(index, /getElementById\('zsh'\),ui=document\.getElementById\('ui-status'\)/);
   assert.match(index, /asset_path\("particle_kernel\.js"\)/);
-  // Deferred modules now come from one ordered javascript_include_tag manifest, not 9 literal tags.
-  assert.match(index, /javascript_include_tag\(\*%w\[[^\]]*chat_actions[^\]]*\]/);
-  assert.match(index, /%w\[[^\]]*visual_bridge[^\]]*\]/);
+  // Deferred modules come from config/face_assets.yml#shell_manifest, rendered
+  // by the view — not a literal list in the ERB.
+  assert.match(index, /javascript_include_tag\(\*FaceAssets\.group\("shell_manifest"\)/);
+  assert.match(faceManifest, /- chat_actions/);
+  assert.match(faceManifest, /- visual_bridge/);
   assert.match(index, /defer: true/);
   assert.doesNotMatch(index, /rel="modulepreload"[^>]+asset_path\("face\.js"\)/);
   assert.doesNotMatch(index, /<link rel="prefetch"[^>]+asset_path\("three\.face\.module\.js"\)/);

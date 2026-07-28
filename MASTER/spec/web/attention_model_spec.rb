@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "face_manifest_helper"
 
 class AttentionModelSpec < Minitest::Test
+  include FaceManifestHelper
+
   ROOT = File.expand_path("../..", __dir__)
 
   def read(path)
@@ -31,10 +34,7 @@ class AttentionModelSpec < Minitest::Test
 
   def test_face_js_loads_attention_model_first
     source = read("web/public/face.js")
-    index = read("web/app/views/chat/index.html.erb")
-
     assert_includes source, '"attention_model.js"'
-    modules = index[/faceModulesList:.*?%w\[([^\]]+)\]/m, 1].to_s.split
-    assert_equal "attention_model.js", modules.first
+    assert_equal "attention_model.js", face_eager.first
   end
 end

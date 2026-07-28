@@ -28,7 +28,10 @@ class PwaMasterContractTest < Minitest::Test
   def test_chat_shell_links_manifest_and_viseme_assets
     index = read("app/views/chat/index.html.erb")
     assert_match(/pwa_manifest_path/, index)
-    assert_includes index, "visemePacks"
-    assert_includes index, "clusterMiner"
+    # visemePacks and clusterMiner are declared in config/face_assets.yml and
+    # rendered into MASTER_ASSET_PATHS from there, not spelled in the view.
+    manifest = read("config/face_assets.yml")
+    assert_includes manifest, "visemePacks"
+    assert_includes manifest, "clusterMiner"
   end
 end
