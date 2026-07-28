@@ -127,6 +127,20 @@ module DillaLofiMachine
       kicks: [0, 2, 8], snares: [4, 12], hats: [],
       ghosts: [], claps: [4, 12], perc: []
     },
+    # The transcription above is only what the Ableton set literally contains --
+    # two racks, no hats, no ghosts, nothing between the backbeats. Faithful, but
+    # bare on its own. This keeps the kick and clap signature exactly ([0,2,8]
+    # and [4,12]) and fills in the kit around it: straight-eighth hats with a
+    # 16th pickup before each backbeat, ghost snares in the gaps the kick leaves
+    # at 6 and 14, and a light perc accent off the beat. Swing lifted from 52 to
+    # 56 so the hats breathe without pulling the kick off the grid it was
+    # transcribed on.
+    four_seven_full: {
+      swing: 56, humanize: 3, bpm: 92, mode: :dilla_time,
+      kicks: [0, 2, 8], snares: [4, 12],
+      hats: [0, 2, 4, 6, 8, 10, 12, 14, 15],
+      ghosts: [6, 14], claps: [4, 12], perc: [3, 11]
+    },
     dilla_drunk: {
       swing: 62, humanize: 4, bpm: 92, mode: :dilla_time,
       kicks: [0, 3, 6, 10, 13], snares: [4, 7, 12],

@@ -3522,19 +3522,6 @@ end
 # Flying Lotus pushes the same idea further out: fewer, longer fragments,
 # reversed slices, wider pitch, and heavy per-chop filtering so successive
 # chops do not share a tone.
-CHOP_STYLES = {
-  dilla: { density: 0.42, reverse: 0.06, stutter: 0.16, pitch: [1.0, 1.0, 1.0, 0.944, 1.059, 0.891],
-           gate: 0.85, drift_ms: 22, lp: [nil, nil, 6000], hp: 60 },
-  flylo: { density: 0.3, reverse: 0.2, stutter: 0.1, pitch: [1.0, 1.0, 0.794, 1.26, 0.667, 1.498],
-           gate: 1.5, drift_ms: 34, lp: [nil, 2400, 5200], hp: 90 },
-}.freeze
-
-def sample_chop_style
-  s = ENV.fetch("SAMPLE_CHOP", "0").to_s.downcase
-  return nil if %w[0 off none].include?(s)
-
-  CHOP_STYLES.key?(s.to_sym) ? s.to_sym : :dilla
-end
 
 # Pitch of a slice, by autocorrelation. Chopping by ear means knowing what note
 # each pad holds; without that, re-sequencing can only shuffle, and a shuffle of
@@ -3599,6 +3586,47 @@ def sample_chop_analysis(path)
   end
 end
 
+SCALE_TEMPLATES = {
+  minor: [0, 2, 3, 5, 7, 8, 10], major: [0, 2, 4, 5, 7, 9, 11],
+  dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10], lydian: [0, 2, 4, 6, 7, 9, 11],
+}.freeze
+
+# Which scale the source actually sits in, weighted by how long each slice
+# holds its pitch. Without this the chopper can only aim at chord tones, and
+# anything landing between them reads as a wrong note rather than a passing
+# one -- chops that have no musical relationship to each other.
+def sample_scale(path)
+  @sample_scale ||= {}
+  @sample_scale[path] ||= begin
+    weight = Hash.new(0.0)
+    sample_chop_analysis(path).each do |s|
+      next unless s[:f0]&.positive?
+
+      weight[((69 + (12 * Math.log2(s[:f0] / 440.0))).round) % 12] += s[:len]
+    end
+    total = weight.values.sum
+    if total.zero?
+      { root: 0, scale: :minor, pcs: SCALE_TEMPLATES[:minor], fit: 0.0 }
+    else
+      best = nil
+      12.times do |root|
+        SCALE_TEMPLATES.each do |name, ivs|
+          inside = weight.sum { |pc, v| ivs.include?((pc - root) % 12) ? v : 0.0 } / total
+          best = { root:, scale: name, pcs: ivs, fit: inside } if best.nil? || inside > best[:fit]
+        end
+      end
+      best
+    end
+  end
+end
+
+# Absolute pitch classes of the detected scale.
+def sample_scale_pcs(path)
+  sc = sample_scale(path)
+  sc[:pcs].map { |i| (sc[:root] + i) % 12 }
+end
+
 CHOP_STYLES = {
   # gate 1.0 = each chop runs exactly to the next one. Butt-joined rather than
   # overlapping: asked for "less legato, ends connect as if a single sample",
@@ -3611,6 +3639,31 @@ CHOP_STYLES = {
   flylo: { density: 0.4, reverse: 0.16, stutter: 0.12, gate: 1.0, xfade: 0.012,
            drift_ms: 26, octaves: [0, 0, -12, 12], lp: [nil, 2400, 5200], hp: 90,
            max_semitones: 9 },
+  # Loose and dusty: long chops taken close to as recorded, barely repitched,
+  # pushed furthest off the grid of any style. The point is that you hear the
+  # source breathing rather than a grid of fragments.
+  madlib: { density: 0.34, reverse: 0.02, stutter: 0.06, gate: 1.0, xfade: 0.014,
+            drift_ms: 38, octaves: [0, 0, 0, 0, 0, -12], lp: [nil, nil, 4800], hp: 55,
+            max_semitones: 3 },
+  # Machine-gun retrigger: short chops, heavy repeats, tight to the grid. Where
+  # the other styles re-sequence phrases, this one re-sequences single hits.
+  stutter: { density: 0.72, reverse: 0.08, stutter: 0.55, gate: 1.0, xfade: 0.005,
+             drift_ms: 6, octaves: [0, 0, 0, 12], lp: [nil, nil, 7000], hp: 70,
+             max_semitones: 7 },
+  # Sparse and heavy: few chops, each running long, biased an octave down so the
+  # sample reads as a bassline rather than a melody.
+  halftime: { density: 0.18, reverse: 0.1, stutter: 0.04, gate: 1.0, xfade: 0.02,
+              drift_ms: 30, octaves: [-12, -12, 0], lp: [nil, 1800, 3600], hp: 45,
+              max_semitones: 5 },
+  # Slow, sustained, and deliberately overlapping. Everything else here butt-
+  # joins so notes do not ring into each other; this one does the opposite,
+  # because "ethereal and dreamy" IS ring-over -- chops bleed across the seam,
+  # sit an octave up, open softly and decay long. step: 8 puts a chop every half
+  # note instead of every sixteenth, which is the "too fast" complaint answered
+  # directly rather than by thinning a fast grid.
+  ethereal: { density: 0.85, reverse: 0.12, stutter: 0.0, gate: 2.6, xfade: 0.18,
+              drift_ms: 12, octaves: [0, 12, 12], lp: [5200, 3600], hp: 120,
+              max_semitones: 7, step: 8, attack: 0.12, tail: 0.9, wet: true },
 }.freeze
 
 def sample_chop_style
@@ -3640,6 +3693,8 @@ def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
   return if slices.empty?
 
   rng = Random.new((@render_seed || 7).to_i + 90_210)
+  scale_pcs = sample_scale_pcs(src_path)
+  @chop_prev_midi = nil
   step_p = beat_p / 4.0
   steps = (duration / step_p).floor
   max_chops = ENV.fetch("SAMPLE_CHOP_MAX", "160").to_i
@@ -3647,16 +3702,21 @@ def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
 
   # Lay out WHEN each chop starts first, so every chop can be given a length
   # that runs exactly to the next one.
+  # step: is the placement grid in sixteenths -- 1 puts chops on every sixteenth,
+  # 8 on every half note. Slowing the line down is a grid change, not a density
+  # change: thinning a sixteenth grid just leaves ragged gaps, while a coarser
+  # grid gives every chop room to be heard as a note.
+  grid = [(cfg[:step] || 1).to_i, 1].max
   slots = []
   s = 0
   while s < steps && slots.size < max_chops
     unless rng.rand < cfg[:density]
-      s += 1
+      s += grid
       next
     end
     burst = rng.rand < cfg[:stutter] ? [2, 3].sample(random: rng) : 1
-    burst.times { |k| slots << (s + k) if (s + k) < steps }
-    s += burst > 1 ? burst : [1, 1, 2].sample(random: rng)
+    burst.times { |k| slots << (s + (k * grid)) if (s + (k * grid)) < steps }
+    s += grid * (burst > 1 ? burst : [1, 1, 2].sample(random: rng))
   end
   return if slots.empty?
 
@@ -3671,11 +3731,32 @@ def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
     src = nil
     ratio = 1.0
     if target && pitched.any?
-      # Aim at a chord tone, then pick whichever slice reaches it with the
-      # least repitching -- least varispeed damage, most natural result.
-      want = target.sample(random: rng)
-      want *= 2.0 while want < 120.0
-      want /= 2.0 while want > 520.0
+      # Build a LINE, not a series of independent picks. Candidates are the
+      # detected scale's pitch classes across a two-octave window; each is
+      # scored by how well it connects to the note before it. Picking a fresh
+      # chord tone at random each time is what left the chops with no
+      # relationship to one another -- individually in key, collectively noise.
+      chord_pcs = target.map { |h| ((69 + (12 * Math.log2(h / 440.0))).round) % 12 }.uniq
+      strong = (st % (grid * 2)).zero?
+      cands = (48..79).select { |m| scale_pcs.include?(m % 12) }
+      cands = (48..79).to_a if cands.empty?
+      prev = @chop_prev_midi
+      pick = cands.min_by do |m|
+        chordish = chord_pcs.include?(m % 12) ? 0.0 : (strong ? 2.2 : 0.7)
+        motion = if prev
+                   d = (m - prev).abs
+                   # Stepwise is the goal; a small leap is fine; anything past a
+                   # sixth is penalised hard, and repeating the same note is
+                   # discouraged so the line keeps moving.
+                   d.zero? ? 1.6 : (d <= 2 ? 0.0 : (d <= 4 ? 0.5 : (d <= 9 ? 1.4 : 3.0)))
+                 else
+                   0.0
+                 end
+        register = ((m - 64).abs / 24.0)
+        chordish + motion + register + (rng.rand * 0.35)
+      end
+      @chop_prev_midi = pick
+      want = 440.0 * (2.0**((pick - 69) / 12.0))
       best = pitched.min_by do |sl|
         r = want / sl[:f0]
         r *= 2.0 while r < 0.55
@@ -3728,10 +3809,20 @@ def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
     # Trim to exactly the slot, then crossfade only at the seam. The pair of
     # short fades on adjacent chops sums to a continuous handover -- the join is
     # inaudible, but neither note rings on into the next.
-    hold = (c[:span] + cfg[:xfade]).round(4)
+    # gate > 1 lets a chop run past its own slot and ring into the next -- the
+    # overlap that makes a bed dreamy rather than rhythmic. gate == 1 butt-joins.
+    hold = ((c[:span] * (cfg[:gate] || 1.0)) + cfg[:xfade]).round(4)
+    atk = (cfg[:attack] || cfg[:xfade]).to_f
+    tail = (cfg[:tail] || cfg[:xfade]).to_f
     chain << "atrim=0:#{hold}"
-    chain << "afade=t=in:st=0:d=#{cfg[:xfade]}"
-    chain << "afade=t=out:st=#{[hold - cfg[:xfade], 0.002].max.round(4)}:d=#{cfg[:xfade]}"
+    chain << "afade=t=in:st=0:d=#{[atk, hold * 0.45].min.round(4)}:curve=qsin"
+    fade_out = [tail, hold * 0.5].min
+    chain << "afade=t=out:st=#{[hold - fade_out, 0.002].max.round(4)}:d=#{fade_out.round(4)}:curve=qsin"
+    if cfg[:wet]
+      # Long, quiet repeats rather than a reverb device: keeps the tail inside
+      # the chop chain so it decays with the note instead of washing the bus.
+      chain << "aecho=0.88:0.55:#{(c[:span] * 1000 * 0.66).round}|#{(c[:span] * 1000 * 1.33).round}:0.36|0.2"
+    end
     chain << "adelay=#{c[:at]}|#{c[:at]}"
     parts << "#{chain.join(',')}[ch#{i}]"
     labels << "[ch#{i}]"
@@ -6029,7 +6120,7 @@ TRACK_PRESETS = {
     # feel:, not drum_preset: -- dilla picks grids through DRUM_PATTERN_SETS,
     # which merges in DillaLofiMachine::DRUM_PRESETS, so :four_seven there is
     # reachable as a feel and carries the transcribed kick/clap grid verbatim.
-    swing: 52, feel: :four_seven, voicing: :rootless,
+    swing: 56, feel: :four_seven_full, voicing: :rootless,
     intro_bars: 2,
     timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 }
   },
@@ -6487,7 +6578,14 @@ ensure
   # Keep err file only on failure for diagnostics; success cleans up.
 end
 
-def sh!(*command)
+# Source separation is minutes of work, not seconds: htdemucs_ft with shifts on
+# a ~2 minute track runs far past the 120s per-tool cap, so every rap-vocal
+# ingest was being killed mid-separation and leaving an empty stem directory.
+# Slow-by-design tools pass their own budget rather than raising the global one,
+# which exists to stop fluidsynth/ffmpeg hanging the stream forever.
+DEMUX_TIMEOUT_SEC = (ENV["DEMUX_TIMEOUT"] || 1800).to_i
+
+def sh!(*command, timeout: nil)
   argv = command.flatten.map(&:to_s)
   display = argv.join(" ")
   display = "#{display.byteslice(0, 420)}… (#{display.bytesize} bytes)" if display.bytesize > 460
@@ -6502,7 +6600,7 @@ def sh!(*command)
   else
     ok, err_tail, err_path = system_with_timeout(
       argv,
-      timeout_sec: sh_timeout_sec,
+      timeout_sec: timeout || sh_timeout_sec,
       verbose: DillaDmesg.verbose?,
     )
   end
@@ -15922,7 +16020,7 @@ def demux_six(src)
   out = File.join(DEMUX_DIR, "demux")
   FileUtils.mkdir_p(out)
   cmd = demucs_cmd or abort "demucs required — pip install demucs"
-  sh!(*cmd, "-n", DEMUX_MODEL, "-o", out, audio)
+  sh!(*cmd, "-n", DEMUX_MODEL, "-o", out, audio, timeout: DEMUX_TIMEOUT_SEC)
   stem_dir = File.join(out, DEMUX_MODEL, File.basename(audio, ".*"))
   puts "stems -> #{stem_dir}"
   if stem_dir.start_with?(STEM_DIR) && Dir.exist?(stem_dir) && !stems_scan_set(stem_dir).empty?
@@ -15943,7 +16041,8 @@ def demux_vocal_isolate(src)
   FileUtils.mkdir_p(out)
   cmd = demucs_cmd or abort "demucs required — pip install demucs"
   shifts = ENV.fetch("DEMUX_VOCAL_SHIFTS", "2")
-  sh!(*cmd, "-n", DEMUX_VOCAL_MODEL, "--shifts", shifts, "--float32", "-o", out, audio)
+  sh!(*cmd, "-n", DEMUX_VOCAL_MODEL, "--shifts", shifts, "--float32", "-o", out, audio,
+      timeout: DEMUX_TIMEOUT_SEC)
   stem_dir = File.join(out, DEMUX_VOCAL_MODEL, File.basename(audio, ".*"))
   puts "vocal stems -> #{stem_dir}"
   stem_dir
