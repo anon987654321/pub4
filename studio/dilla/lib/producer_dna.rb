@@ -178,6 +178,90 @@ module DillaLofiMachine
       kicks: [0, 2, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15], snares: [0, 2, 9], hats: [0, 4, 9],
       ghosts: [5, 11], claps: [2, 9], perc: [1, 7]
     },
+
+    # ---- style constructions -------------------------------------------------
+    # Everything below is BUILT to a described feel, not measured from a
+    # recording. four_seven and dangelo_learned above are transcriptions and are
+    # the only two that can claim to be what a record actually plays; these are
+    # arrangements in the manner of, and should not be cited as anyone's part.
+
+    # Donuts-era Dilla: no hats at all. Half that record keeps time with the
+    # sample's own noise and lets the kit be only kick and snare, which is why
+    # those beats breathe where a hat pattern would tick.
+    dilla_donuts: {
+      swing: 60, humanize: 3, bpm: 88, mode: :dilla_time,
+      kicks: [0, 7, 10], snares: [4, 12], hats: [],
+      ghosts: [14], claps: [], perc: []
+    },
+    # Slum Village pocket: swung, and the ghosts carry the groove rather than
+    # the backbeat. Snare late, ghosts filling the gap before it.
+    dilla_fantastic: {
+      swing: 63, humanize: 4, bpm: 94, mode: :dilla_time,
+      kicks: [0, 3, 8, 11], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+      ghosts: [3, 7, 11, 15], claps: [12], perc: [6]
+    },
+    # The lopsided one. Kick rushes, snare drags, hats stay dead even -- three
+    # voices disagreeing about where the beat is, held together by the hats
+    # being the only honest one. This is the feel people mean by "Dilla time";
+    # the conflict is the point and it should sound slightly wrong.
+    dilla_lopsided: {
+      swing: 66, humanize: 6, bpm: 90, mode: :dilla_time,
+      kicks: [0, 3, 6, 9], snares: [5, 13], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+      ghosts: [7, 15], claps: [5, 13], perc: [11]
+    },
+
+    # The Camel grid, moved here so every pattern lives in one table. dilla.rb
+    # holds the same steps in FLYLO_CAMEL_DRUM_GRID for the dual-bus overlay.
+    flylo_camel: {
+      swing: 60, humanize: 3, bpm: 86, mode: :dilla_time,
+      kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+      ghosts: [7], claps: [4, 12], perc: []
+    },
+    # Cosmogramma: the backbeat is displaced off 4 and 12 entirely, hats run in
+    # a triplet-ish 3-step cycle against a 16-step bar, so nothing lines up
+    # twice in the same place inside one loop.
+    flylo_cosmogramma: {
+      swing: 52, humanize: 6, bpm: 78, mode: :straight_sixteenth,
+      kicks: [0, 3, 7, 11, 14], snares: [5, 13],
+      hats: [0, 3, 6, 9, 12, 15], ghosts: [2, 8], claps: [5], perc: [1, 10]
+    },
+    # Half-time and mostly empty: two kicks and one snare in a whole bar. Space
+    # is the instrument -- this only works under something that fills it.
+    flylo_zodiac: {
+      swing: 56, humanize: 4, bpm: 72, mode: :straight_sixteenth,
+      kicks: [0, 11], snares: [8], hats: [4, 12],
+      ghosts: [15], claps: [], perc: [6]
+    },
+    # Loose and ambient: no clap, kick off the grid, hats sparse and late. Meant
+    # to sit under a drone rather than drive anything.
+    flylo_massage: {
+      swing: 58, humanize: 7, bpm: 68, mode: :straight_sixteenth,
+      kicks: [0, 9], snares: [12], hats: [3, 7, 11, 15],
+      ghosts: [5], claps: [], perc: [13]
+    },
+
+    # Broken-beat neo-soul: backbeat pushed a 16th early on the second half of
+    # the bar so the bar never repeats itself, ghosts under everything.
+    hiatus_broken: {
+      swing: 61, humanize: 5, bpm: 86, mode: :dilla_time,
+      kicks: [0, 6, 8, 14], snares: [4, 11],
+      hats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 14], ghosts: [2, 7, 9, 15],
+      claps: [4, 11], perc: [3, 12]
+    },
+    # Late-snare pocket. Nothing clever in the grid at all -- the entire feel is
+    # in the snare arriving after you expect it, which is timing, not placement.
+    questlove_pocket: {
+      swing: 64, humanize: 3, bpm: 84, mode: :dilla_time,
+      kicks: [0, 10], snares: [4, 12], hats: [0, 4, 8, 12],
+      ghosts: [6, 14], claps: [], perc: []
+    },
+    # Very sparse, deliberately off: a beat that sounds like a loop of someone
+    # else's beat heard through a wall.
+    knxwledge_haze: {
+      swing: 59, humanize: 6, bpm: 82, mode: :dilla_time,
+      kicks: [0, 5, 9], snares: [12], hats: [2, 10],
+      ghosts: [7], claps: [12], perc: [14]
+    },
   }.freeze
 
   LOFI_DEFAULTS = {
