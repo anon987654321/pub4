@@ -348,31 +348,6 @@ body[data-mode="listening"] #mic-dot {
   animation: micPulse 1.4s var(--ease-in-out) infinite;
 }
 
-/* Evolved-human overlay: an optional, literal anatomical face (homo futura
-   mask) rendered on its own canvas -- never shares #face's WebGL/2D context,
-   which is a real binding conflict, not just a style choice. Off by default;
-   toggled via the toolbar button or ?face3d=1. Small corner picture-in-
-   picture, never the primary identity. */
-#face3d-overlay {
-  display: none;
-  position: fixed;
-  right: calc(var(--inset-r) + 12px);
-  bottom: calc(var(--inset-b) + 12px);
-  width: 132px;
-  height: 132px;
-  border-radius: var(--radius-lg, 12px);
-  border: 1px solid var(--c-border, rgba(255, 255, 255, 0.14));
-  background: #000;
-  overflow: hidden;
-  z-index: var(--z-ui);
-  pointer-events: none;
-}
-body[data-face3d="1"] #face3d-overlay {
-  display: block;
-}
-button[data-act="face3d-toggle"][aria-pressed="true"] {
-  color: var(--c-accent, #fff);
-}
 @keyframes micPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.12); }

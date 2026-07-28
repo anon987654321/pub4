@@ -508,9 +508,12 @@
 
   // 36–40 fusion
   V.register(36, "compositor hint", (ctx) => {
-    const hint = window.FACE3D_ACTIVE ? "face3d" : "particle2d";
+    // The face3d overlay was removed on 2026-07-24 (commit 6f1867972) and
+    // nothing sets window.FACE3D_ACTIVE any more, so this branch always fell
+    // through to "particle2d". There is one compositor.
+    const hint = "particle2d";
     document.documentElement.dataset.compositor = hint;
-    V.css("--face-compositor", hint === "face3d" ? "1" : "0");
+    V.css("--face-compositor", "0");
     window.dispatchEvent(new CustomEvent("face:compositor", { detail: { hint } }));
   });
 

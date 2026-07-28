@@ -187,14 +187,12 @@ test("chat index wires viseme and experimental asset paths", () => {
   assert.doesNotMatch(index, /faceParts/);
   assert.match(index, /visemePacks/);
   assert.match(index, /clusterMiner/);
-  assert.match(index, /face3dPreview/);
 });
 
 test("visual_bridge emits master:emotion and uses asset paths", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
   assert.match(bridge, /master:emotion/);
   assert.match(bridge, /MASTER_ASSET_PATHS\?\.clusterMiner/);
-  assert.match(bridge, /MASTER_ASSET_PATHS\?\.face3dPreview/);
 });
 
 test("chat index includes photo attach", () => {
@@ -243,15 +241,35 @@ test("default application layout removed — chat/index owns boot shell", () => 
   assert.equal(existsSync(layoutPath), false, "dead application layout should stay deleted");
 });
 
-test("face3d preview consumes TTS events and reports nonblank frames", () => {
-  const preview = readFileSync(join(publicDir, "face3d_preview.js"), "utf8");
-  const renderer = readFileSync(join(publicDir, "face3d_renderer.js"), "utf8");
-  assert.match(preview, /FACE3D_ACTIVE/);
-  assert.match(preview, /function bootFace3d/);
-  assert.match(preview, /addEventListener\("tts:playback:start"/);
-  assert.match(preview, /addEventListener\("tts:viseme"/);
-  assert.match(preview, /face3d:nonblank/);
-  assert.match(renderer, /lastLitPixels/);
+// The face3d overlay — a second, competing face painter — was removed on
+// 2026-07-24 (commit 6f1867972). It took a 2D context on the shared #face
+// canvas, and a canvas can only ever hold one context type, so booting it
+// permanently blocked the real WebGL face from initializing. These two tests
+// used to assert its five source files still behaved; they now assert it stays
+// gone, which is the invariant that actually matters.
+test("there is exactly one face renderer", () => {
+  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
+
+  for (const gone of ["face3d_preview.js", "face3d_renderer.js", "face3d_geometry.js",
+                      "face3d_engine.js", "face3d_support.js"]) {
+    assert.ok(!existsSync(join(publicDir, gone)), `${gone} is back`);
+  }
+  assert.doesNotMatch(index, /face3d/, "no overlay canvas, toggle or asset path");
+  assert.doesNotMatch(css, /face3d/, "no styling for a canvas that does not exist");
+  assert.doesNotMatch(bridge, /face3d/, "no dynamic import of the removed overlay");
+});
+
+// The reason the overlay was a footgun in the first place: #face is bound to
+// WebGL by the primary renderer, and a second getContext("2d") on it returns
+// null forever after. The 2D placeholder shown while THREE loads is careful to
+// use its own canvas — keep it that way.
+test("nothing takes a 2D context on the shared #face canvas", () => {
+  const fallback = readFileSync(join(publicDir, "face_2d_fallback.js"), "utf8");
+
+  assert.match(fallback, /getElementById\("face-2d-fallback"\)/);
+  assert.doesNotMatch(fallback, /getElementById\(["']face["']\)\s*\.getContext/);
 });
 
 test("face.css includes subtle visual polish layers", () => {
@@ -377,38 +395,6 @@ test("tts defaults to server style inference and recovers after fallback cooldow
   assert.doesNotMatch(controller, /params\[:style\]\.present\?/);
   assert.doesNotMatch(controller, /params\[:voice\]\.present\?/);
   assert.match(controller, /Voice::Policy\.single_voice_key/);
-});
-
-test("evolved-human face overlay: dedicated canvas, opt-in default, locked mask, composed behavior", () => {
-  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
-  const face3dPreview = readFileSync(join(publicDir, "face3d_preview.js"), "utf8");
-  const face3dRenderer = readFileSync(join(publicDir, "face3d_renderer.js"), "utf8");
-  const index = readFileSync(join(viewsDir, "chat", "index.html.erb"), "utf8");
-  const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  // Own canvas, not #face -- #face is already bound to a WebGL or 2D
-  // context by the primary particle-field renderer; a second getContext
-  // call there would silently return null forever.
-  assert.match(index, /<canvas id="face3d-overlay"/);
-  assert.doesNotMatch(face3dPreview, /getElementById\('face'\)/);
-  assert.match(face3dPreview, /getElementById\('face3d-overlay'\)/);
-  // Opt-in, not on-by-default-on-desktop like the old behavior.
-  assert.doesNotMatch(face3dPreview, /desktop && !reducedMotion/);
-  assert.match(face3dPreview, /localStorage\.getItem\('master_face3d'\) === '1'/);
-  // Locked to homo_futura, not cycling through the unrelated Papua New
-  // Guinea mask set the same engine also renders elsewhere.
-  assert.match(face3dPreview, /engine\.setMask\('homo_futura'\)/);
-  assert.doesNotMatch(face3dPreview, /masks\[maskIdx\]/);
-  // Renderer sizes from its own canvas box, not window.innerWidth/Height --
-  // the old behavior would blow the small corner overlay back up to
-  // fullscreen and fight the CSS that positions it.
-  assert.match(face3dRenderer, /getBoundingClientRect\(\)/);
-  assert.doesNotMatch(face3dRenderer, /const w = window\.innerWidth/);
-  // CSS: hidden by default, small corner picture-in-picture when enabled.
-  assert.match(css, /#face3d-overlay\s*\{[^}]*display:\s*none/);
-  assert.match(css, /body\[data-face3d="1"\]\s*#face3d-overlay/);
-  // Toggle control extends the existing toolbar rather than adding new UI chrome.
-  assert.match(index, /data-act="face3d-toggle"/);
-  assert.match(runtime, /face3dToggleBtn/);
 });
 
 test("dynamic welcome greeting fires once after face boot via the real chat pipeline", () => {
