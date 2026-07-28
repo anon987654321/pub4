@@ -3433,13 +3433,42 @@ def sample_loop_for(track)
   entry if entry && File.file?(entry[:path].to_s)
 end
 
+# Alternate the sampled bed against the engine's own pads instead of running
+# both flat for the whole track. Each takes the foreground for SAMPLE_ALT_BARS
+# bars while the other drops back -- ducked, not muted, so the arrangement stays
+# continuous and the handover reads as a section change rather than a dropout.
+# Both gains come from the SAME phase expression, so they can never both be
+# forward (which is the crowding this is meant to avoid) or both be down.
+def sample_alt_bars
+  n = ENV.fetch("SAMPLE_ALT_BARS", "4").to_i
+  n.positive? ? n : 0
+end
+
+def sample_alt_gain_expr(beat_p, foreground:, hi: 1.0, lo: 0.25)
+  bars = sample_alt_bars
+  return nil unless bars.positive?
+
+  half = (beat_p * 4.0 * bars).round(4)
+  period = (half * 2).round(4)
+  # Raised cosine over an eighth-bar so the swap glides rather than clicks.
+  ramp = [(beat_p * 0.5), 0.05].max.round(4)
+  on = foreground ? "lt(mod(t,#{period}),#{half})" : "gte(mod(t,#{period}),#{half})"
+  # Symmetric edge: ramp up over the first `ramp` seconds of the foreground
+  # half AND back down over its last `ramp` seconds. A one-sided ramp left the
+  # handover as an instant drop from full to floor, which clicks.
+  edge = "min(1,min(mod(t,#{half}),#{half}-mod(t,#{half}))/#{ramp})"
+  "#{lo}+#{(hi - lo).round(4)}*#{on}*#{edge}"
+end
+
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # Tempo-match rather than resample: the loop was warped in the DAW at its own
   # BPM, so play it at the render's tempo instead of letting it drift.
   ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
   tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
   vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
-  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
+  alt = sample_alt_gain_expr(60.0 / target_bpm, foreground: true)
+  gain = alt ? "volume='#{vol}*(#{alt})':eval=frame," : "volume=#{vol},"
+  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}#{gain}" \
     "highpass=f=45," \
     "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
     "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}," \
@@ -3534,7 +3563,12 @@ end).to_f
   fade_in = flylo_primary_drums? ? (harm_fade_dur * 1.35).round(2) : harm_fade_dur
   fade_curve = flylo_primary_drums? ? ":curve=qsin" : ""
   build_cut = flylo_primary_drums? ? -0.8 : -2
-  "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
+  # Opposite phase to the sampled bed, from the same expression, so the two
+  # trade the foreground instead of both sitting forward. Only engaged when a
+  # bed is actually playing -- otherwise the pads would duck against nothing.
+  harm_alt = sample_loop_for(ENV["TRACK"]) ? sample_alt_gain_expr(beat_p, foreground: false) : nil
+  harm_gain = harm_alt ? "volume='#{harm_vol}*(#{harm_alt})':eval=frame," : "volume=#{harm_vol},"
+  "[#{idx}:a]aformat=channel_layouts=stereo,#{harm_gain}" \
     "highpass=f=#{harm_hp},equalizer=f=72:t=o:w=1.2:g=#{sub_shelf}," \
     "equalizer=f=95:t=h:w=120:g=#{sub_cut}," \
     "equalizer=f=420:t=o:w=1.1:g=#{body_boost},equalizer=f=680:t=h:w=900:g=#{mid_boost}," \
@@ -11418,7 +11452,27 @@ end
 # cache exists, not just when the roll happened to land on it.
 ALWAYS_SAMPLED_DRUM_ROLES = %w[hat.wav open_hat.wav snare.wav ghost.wav].freeze
 
+# A track can ship its own oneshots. Checked ahead of everything else --
+# including FM_DRUMS, which is otherwise a whole-kit override -- because a
+# recreation built on the source project's actual kick and clap should not be
+# quietly swapped for a synthesised kit. DRUM_KIT_DIR=<path> overrides.
+TRACK_DRUM_KITS = {
+  four_seven: File.join(CUSTOM_DRUM_DIR, "four_seven"),
+}.freeze
+
+def track_drum_kit_dir
+  explicit = ENV["DRUM_KIT_DIR"].to_s
+  return explicit unless explicit.empty?
+
+  TRACK_DRUM_KITS[ENV["TRACK"].to_s.downcase.tr("-", "_").to_sym]
+end
+
 def drum_sample_path(name)
+  if (kit_dir = track_drum_kit_dir)
+    own = File.join(kit_dir, name)
+    return own if File.exist?(own)
+  end
+
   # Explicit opt-in beats the passive custom-dir cache -- FM_DRUMS=1 is a
   # deliberate whole-kit choice, not a per-role override.
   if fm_drums_enabled?
