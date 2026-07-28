@@ -9454,7 +9454,17 @@ end
 def stream_play_track!(bars_count)
   timeout = stream_track_timeout_sec
   if timeout
-    Timeout.timeout(timeout) { play("dilla", bars_count) }
+    # play() renders, gates, iterates AND THEN blocks on play_audio for the full
+    # length of the track, so wrapping all of it in the render budget meant the
+    # budget was being spent on listening as well as working: a 32-bar track is
+    # ~81s of playback on top of ~102s of render plus analysis, which overran
+    # the 300s budget and killed the track mid-playback -- the stream would
+    # start a track, cut it off partway, and log "timed out ... skipping".
+    # Playback duration is known and is not work, so add it back; the budget
+    # then means what its name says.
+    cfg = dilla_resolve_config
+    track_sec = (60.0 / cfg[:bpm].to_f) * 4.0 * bars_count.to_i
+    Timeout.timeout(timeout + track_sec) { play("dilla", bars_count) }
   else
     play("dilla", bars_count)
   end
