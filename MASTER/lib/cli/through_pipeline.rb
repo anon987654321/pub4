@@ -5,15 +5,34 @@ module Master
     # Full singularity pass: posture → aesthetic scan → deep scan → fix → re-scan → optional critique.
     # Progress is OpenBSD dmesg-style (device at bus: detail).
     class ThroughPipeline
-      Result = Data.define(:target, :mode, :sections, :ok, :unit) do
+      Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages) do
         def render
           lines = sections.flat_map { |title, body| ["# #{title}", body.to_s, ""] }
-          lines << (ok ? "#{unit}: complete" : "#{unit}: complete with open findings")
+          lines << footer
           lines.join("\n")
+        end
+
+        # A pass whose fix stage blew up is not "complete". It used to say so
+        # anyway, because `ok` was derived from scan text alone and never looked
+        # at whether a stage had raised.
+        def footer
+          return "#{unit}: incomplete — #{failed_stages.join(", ")} failed" if failed_stages.any?
+
+          ok ? "#{unit}: complete" : "#{unit}: complete with open findings"
         end
       end
 
+      # A NameError (NoMethodError included) or TypeError out of a stage is a
+      # defect in MASTER, not a finding about the target. Formatting one into
+      # the report as "fix failed: NoMethodError: …" and then printing
+      # "through0: complete" hid two live crashes for days. Operational failures
+      # still degrade to prose so the rest of the pass survives; these do not.
+      # ArgumentError is deliberately absent — stages raise it for bad user
+      # input, which is a real condition and belongs in the report.
+      DEFECT_ERRORS = [NameError, TypeError].freeze
+
       def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, review_crew: nil)
+        @failed_stages = []
         @scanner = scanner
         @fix_loop = fix_loop
         @root = root
@@ -37,13 +56,15 @@ module Master
 
         sections = build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
 
-        ok = sections.none? do |title, body|
+        ok = @failed_stages.empty? && sections.none? do |title, body|
           title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
         end
         elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
         Master::Trace::Dmesg.kv(@unit, complete: true, ok:, elapsed_s: elapsed, target: shell)
-        @bus&.publish("through:complete", target: resolved, apply:, ok:, elapsed_s: elapsed)
-        Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit)
+        @bus&.publish("through:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
+                                          failed_stages: @failed_stages)
+        Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
+                   failed_stages: @failed_stages.dup)
       end
 
       private
@@ -201,8 +222,7 @@ module Master
           ctx: { args: scan_arg },
         )
       rescue StandardError => e
-        Master::Trace::Dmesg.status(unit, "error #{e.class}: #{e.message}")
-        "scan failed: #{e.class}: #{e.message}"
+        stage_failure("scan", unit, e)
       end
 
       def run_fix(abs)
@@ -211,8 +231,18 @@ module Master
         Master::Trace::Dmesg.status("fix0", result.ok? ? "ok #{msg[0, 80]}" : "fail #{result.message}")
         msg
       rescue StandardError => e
-        Master::Trace::Dmesg.status("fix0", "error #{e.class}: #{e.message}")
-        "fix failed: #{e.class}: #{e.message}"
+        stage_failure("fix", "fix0", e)
+      end
+
+      # One place decides what a stage exception means. Defects propagate;
+      # everything else becomes a reported failure that also marks the run
+      # incomplete, so no stage can crash quietly into a "complete" footer.
+      def stage_failure(label, unit, error)
+        raise error if DEFECT_ERRORS.any? { |klass| error.is_a?(klass) }
+
+        @failed_stages << label
+        Master::Trace::Dmesg.status(unit, "error #{error.class}: #{error.message}")
+        "#{label} failed: #{error.class}: #{error.message}"
       end
 
       def run_fix_preview(abs)
@@ -226,7 +256,7 @@ module Master
           "preview: #{result.message}"
         end
       rescue StandardError => e
-        "preview failed: #{e.class}: #{e.message}"
+        stage_failure("preview", "fix0", e)
       end
 
       def run_critique(abs)
@@ -238,13 +268,13 @@ module Master
           ctx: { args: abs },
         )
       rescue StandardError => e
-        "critique failed: #{e.class}: #{e.message}"
+        stage_failure("critique", "crit0", e)
       end
 
       def map_line
         Master::Ground::PrincipleMap.load(root: @root).summary_line
       rescue StandardError => e
-        "principle_map: #{e.message}"
+        stage_failure("principle map", "map0", e)
       end
     end
   end

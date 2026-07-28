@@ -13,10 +13,14 @@ class TestHeartbeat < Minitest::Test
     end
   end
 
+  # Heartbeat#load_jobs reads data/patterns.yml#heartbeat. These fixtures used
+  # to write data/heartbeat.yml, a file that does not exist in the product, so
+  # every test here silently ran Heartbeat's *default* job list instead of the
+  # one it had just written — including snapshot and prune_undo. This one
+  # passed only because the default self_test interval happens to be hourly.
   def test_self_test_job_is_enabled_hourly_from_config
     Dir.mktmpdir do |root|
-      FileUtils.mkdir_p(File.join(root, "data"))
-      File.write(File.join(root, "data", "heartbeat.yml"), <<~YAML)
+      write_heartbeat_jobs(root, <<~YAML)
         - name: self_test
           action: self_test
           interval_seconds: 3600
@@ -26,6 +30,7 @@ class TestHeartbeat < Minitest::Test
       heartbeat = Master::Fix::Heartbeat.new(root:)
 
       assert_includes heartbeat.list, "self_test: every 60m"
+      refute_includes heartbeat.list, "snapshot", "default jobs must not leak in when config is present"
     end
   end
 
@@ -74,15 +79,25 @@ class TestHeartbeat < Minitest::Test
 
   private
 
-  def write_heartbeat_root(root, rules_yaml)
+  def write_heartbeat_jobs(root, jobs_yaml)
     FileUtils.mkdir_p(File.join(root, "data"))
+    File.write(File.join(root, "data", "patterns.yml"), { "heartbeat" => YAML.safe_load(jobs_yaml) }.to_yaml)
+  end
+
+  def write_heartbeat_root(root, rules_yaml)
     FileUtils.mkdir_p(File.join(root, "lib"))
-    File.write(File.join(root, "data", "heartbeat.yml"), <<~YAML)
+    write_heartbeat_jobs(root, <<~YAML)
       - name: self_test
         action: self_test
         interval_seconds: 0
         enabled: true
     YAML
     File.write(File.join(root, "data", "rules.yml"), rules_yaml)
+    # SelfTest's PRINCIPLE_MAP check reports "missing data/principle_map.yml"
+    # against a bare fixture root, which made the "clean scan" case impossible
+    # to reach — it always published heartbeat:violations instead. An empty map
+    # satisfies integrity (nothing to be inconsistent about).
+    File.write(File.join(root, "data", "principle_map.yml"),
+               { "schema" => 1, "version" => "test-fixture", "principles" => {} }.to_yaml)
   end
 end

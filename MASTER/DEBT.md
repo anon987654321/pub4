@@ -13,15 +13,31 @@ This file separates known debt from ordinary TODO work.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **7 findings as of 2026-07-27** (was 6 on 2026-07-26;
-was claimed clean at 0 since 2026-07-16 — that claim was stale, and
-`START_HERE.md`/`AGENTS.md` both lean on it):
+`rake selftest` reports **0 findings as of 2026-07-28** (was 7 on 2026-07-27,
+6 on 2026-07-26; the earlier "clean since 2026-07-16" claim in
+`START_HERE.md`/`AGENTS.md` was stale, so treat this number as true only for
+the commit that carries it).
 
-- `[ABSTRACTION]` `lib/review/council/critique.rb:7` — god class, 308 lines
-- `[DENSITY]` ×6 — `lib/cli/turn_router.rb:15` (new since 2026-07-26),
-  `lib/fix/conflict_resolver.rb:39`,
-  `lib/fix/fix_loop/rule_order.rb:23`, `lib/io/media_intent.rb:76`,
-  `lib/trace/snapshot_agent_guide.rb:74`
+The `[ABSTRACTION]` finding closed by splitting `lib/review/council/critique.rb`
+(308 lines) into three files with distinct jobs: `critique/modes.rb` (the mode
+table — configuration, and a third of the old body), `critique/context.rb` (the
+panel's briefing prose), and `critique/cherry_pick.rb` (idea/critique overlap
+ranking). `Critique` itself is now orchestration only. `Critique::MODES` still
+resolves.
+
+The six `[DENSITY]` findings closed by two different mechanisms, and the
+distinction matters when reading the count:
+
+- Real extractions — `lib/fix/conflict_resolver.rb` (`priority_of`,
+  `findings_introduced`), `lib/trace/snapshot_agent_guide.rb`
+  (`binary_inlining_note`).
+- A change in what DENSITY measures. `lib/review/scan/rules/structural_rules.rb`
+  now counts *code* lines, excluding blank lines and whole-line comments,
+  instead of the raw `start_line..end_line` span. The old measure penalised
+  this codebase's own convention of a rationale paragraph above the tricky
+  line — `Cli::TurnRouter.call` was reported at 22 lines while holding 10 of
+  code and 8 of comment, so the only way to satisfy the rule was to delete the
+  explanation. Do not read the drop as six refactors.
 
 `lib/voice/speech.rb:301` is no longer reported. Note
 `test/test_heartbeat.rb:44` (`self_test_heartbeat_publishes_clean_scan_metrics`)
@@ -56,12 +72,28 @@ the audit itself:
 
 **Broken on contact — operator-priority**
 
-- `/orient bootstrap` returns a message telling you to run `/orient
-  bootstrap`. `BootstrapDocs.keys` has no `bootstrap` key, and it is the
-  first runtime dump advertised in `START_HERE.md`. Still open.
+All clear. Everything listed here on 2026-07-26 is fixed and covered.
 
 Fixed 2026-07-28, each with a regression test
-(`test/test_mode_and_orders.rb`, `test/core/test_world.rb`):
+(`test/test_mode_and_orders.rb`, `test/core/test_world.rb`,
+`test/test_workflow_inference.rb`, `test/test_heartbeat.rb`):
+
+- `/orient bootstrap` answered by telling you to run `/orient bootstrap` —
+  `BootstrapDocs` had no `bootstrap` key, so `cat_orient` fell through to the
+  nil-path branch of `ORIENT_FILES`. It is now an index over the other
+  sections, built from their own first lines so it cannot drift. A guard test
+  asserts every fileless `/orient` topic resolves to a document.
+- `ThroughPipeline` formatted stage crashes into the report as prose and still
+  printed `through0: complete`. `NameError`/`TypeError` now propagate;
+  operational failures degrade to prose *and* mark the run incomplete, naming
+  the stage. `dispatch_critique` used `deliberation&.agent`, which guards nil
+  but not a deliberation without an agent.
+- `TestHeartbeat`'s fixtures wrote `data/heartbeat.yml`, a file the product
+  does not read (`Heartbeat#load_jobs` reads `data/patterns.yml#heartbeat`), so
+  all three tests silently exercised the *default* job list. The clean-scan
+  case was additionally unreachable: a bare fixture root has no
+  `data/principle_map.yml`, which is itself a self-test finding. This was not,
+  as previously recorded here, a symptom of the selftest count.
 
 - `/mode` raised NoMethodError in every form — two unrelated features both
   defined `dispatch_mode` in `Master::CLI::CommandRegistry`. The session

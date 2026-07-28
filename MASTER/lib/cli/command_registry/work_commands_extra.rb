@@ -168,7 +168,11 @@ module Master
         arg = arg_for(ctx)
         return "usage: /critique <file|text>" if arg.empty?
         path = expand_or_root(arg, root)
-        return general_council_critique(deliberation, path) if deliberation&.agent && File.exist?(path)
+        # respond_to?, not `&.agent` — the safe-navigation operator guards a nil
+        # deliberation but not a deliberation that simply has no agent (lean
+        # boot, or a test double), which raised NoMethodError from here.
+        has_agent = deliberation.respond_to?(:agent) && deliberation.agent
+        return general_council_critique(deliberation, path) if has_agent && File.exist?(path)
 
         payload = File.exist?(path) ? snapshot_artifact(path) : arg
         run_deliberation(deliberation:, payload:, context: "explicit /critique session") do |feedback|

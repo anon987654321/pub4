@@ -17,7 +17,15 @@ class TestDilla < Minitest::Test
   # test failure — just a silently-stuck test run. Bounded here: on timeout
   # the child (and its process group, in case it spawned ffmpeg/fluidsynth)
   # gets killed and the test fails loudly instead of hanging the suite.
-  def eval_in_engine(script, timeout: 30)
+  # Every probe loads the whole engine in a fresh subprocess, and `rake test`
+  # runs these alongside 880-odd other tests, so a fixed 30s budget was tight
+  # enough to fire spuriously under load — one run errored here with
+  # Timeout::Error while the next passed. 90s still bounds a genuine hang (the
+  # coltrane-gem case below) without failing on a busy machine; DILLA_PROBE_TIMEOUT
+  # overrides it for slower hosts.
+  PROBE_TIMEOUT = Integer(ENV.fetch("DILLA_PROBE_TIMEOUT", "90"))
+
+  def eval_in_engine(script, timeout: PROBE_TIMEOUT)
     probe = <<~RUBY
       $PROGRAM_NAME = "dilla_test_probe"
       load #{ENGINE.dump}
@@ -219,25 +227,49 @@ class TestDilla < Minitest::Test
     assert_operator result.fetch("max_hat"), :<=, 8, "neo-soul hats must not fill the 16th grid"
   end
 
-  def test_stream_rotates_progressions_and_drums
+  # DILLA_PROGRESSIONS_ONLY defaults to 1 (2026-07-27), which narrows the
+  # rotation to Dilla-produced progressions — 5 tracks, not the 69 of the full
+  # curated rotation. This test used to assert order_n >= 8 and the presence of
+  # untitled_how_does_it_feel, both of which describe the *unfiltered* pool, so
+  # it went red the moment the filter became the default. Pin both modes
+  # instead, and pin the filter's meaning rather than a bare count.
+  def test_stream_rotation_defaults_to_dilla_produced_progressions
     result = eval_in_engine(<<~RUBY)
-      order = stream_track_order
+      order = stream_track_order.map(&:to_s)
+      puts JSON.generate(
+        order:,
+        produced: DILLA_PRODUCED_TRACKS.map(&:to_s),
+        rotation: DillaLofiMachine::STREAM_ROTATION.map(&:to_s)
+      )
+    RUBY
+    order = result.fetch("order")
+    produced = result.fetch("produced")
+    expected = result.fetch("rotation").select { |track| produced.include?(track) }
+
+    assert_equal expected, order, "default rotation is STREAM_ROTATION filtered to Dilla-produced tracks"
+    assert_equal "get_dis_money", order.first
+    refute_empty order
+  end
+
+  def test_stream_rotation_without_the_filter_is_the_full_curated_pool
+    result = eval_in_engine(<<~RUBY)
+      ENV["DILLA_PROGRESSIONS_ONLY"] = "0"
+      order = stream_track_order.map(&:to_s)
+      puts JSON.generate(order_n: order.length, head: order.first(3), has_untitled: order.include?("untitled_how_does_it_feel"))
+    RUBY
+    assert_operator result.fetch("order_n"), :>=, 8
+    assert_equal "get_dis_money", result.fetch("head").first
+    assert result.fetch("has_untitled"), "the unfiltered pool keeps the non-Dilla curated tracks"
+  end
+
+  def test_stream_rotates_drums
+    result = eval_in_engine(<<~RUBY)
       stream_rotate_drums!(0)
       d0 = ENV["DRUM_PRESET"]
       stream_rotate_drums!(1)
       d1 = ENV["DRUM_PRESET"]
-      puts JSON.generate(
-        order_n: order.length,
-        head: order.first(3).map(&:to_s),
-        has_untitled: order.map(&:to_s).include?("untitled_how_does_it_feel"),
-        drum0: d0,
-        drum1: d1,
-        drums_differ: d0 != d1
-      )
+      puts JSON.generate(drum0: d0, drum1: d1, drums_differ: d0 != d1)
     RUBY
-    assert_operator result.fetch("order_n"), :>=, 8
-    assert_equal "get_dis_money", result.fetch("head").first
-    assert result.fetch("has_untitled")
     assert result.fetch("drums_differ"), "drum rotation should change DRUM_PRESET"
   end
 
@@ -695,7 +727,9 @@ class TestDilla < Minitest::Test
     # itself (still 92 for get_dis_money) when ENV["BPM"] is unset.
     assert_nil result.fetch("bpm")
     assert_includes %w[0 1], result.fetch("kicks")
-    assert_equal "jonas_v", result.fetch("rap"), "style default is kit + Jonas V; RAP_VOCAL=0 for instrumental"
+    # gunnhild is the only vocal source (2026-07-27); this asserted jonas_v,
+    # which the style defaults stopped selecting when that decision landed.
+    assert_equal "gunnhild", result.fetch("rap"), "style default is kit + gunnhild; RAP_VOCAL=0 for instrumental"
     assert_nil result.fetch("stream_track")
     refute result.fetch("la_beat"), "curated progressions only (no random planing)"
     assert_equal "camel_32", result.fetch("form")
@@ -1284,11 +1318,37 @@ class TestDilla < Minitest::Test
         analog_chain: ENV["ANALOG_CHAIN"]
       )
     RUBY
-    assert result.fetch("harm").any? { |n| n.start_with?("voicing=") }
-    assert result.fetch("analog").any? { |n| n.start_with?("analog=") }
-    assert result.fetch("track").to_s.length.positive?
-    assert result.fetch("voicing").to_s.length.positive?
-    assert result.fetch("analog_chain").to_s.length.positive?
+    # These used to be five unconditional asserts, and they made this test a coin
+    # flip — the single largest source of this suite's nondeterminism (identical
+    # `rake test` runs alternated between 3 and 4 failures).
+    #
+    # Why: stream_iterate_evolve_harmony! seeds its RNG from
+    # Time.now.to_i + Process.pid + @stream_iterate_count, then only assigns
+    # ENV["TRACK"]/["VOICING"] inside `elsif rng.rand < 0.55` (or a 0.35 branch).
+    # So roughly half of all runs legitimately set nothing, and asserting that
+    # they always do was asserting the dice.
+    #
+    # What is actually contractual: both calls return a note array, and any state
+    # a note *claims* must really be present in ENV. That is the invariant worth
+    # guarding — a note saying "voicing=x" while ENV carries nothing would be a
+    # real bug, and this still catches it.
+    #
+    # To restore the strong assertions, the engine needs a seedable RNG (e.g. a
+    # DILLA_SEED env read in place of the Time/pid seed). That belongs in
+    # studio/dilla/dilla.rb, not here.
+    harm = result.fetch("harm")
+    analog = result.fetch("analog")
+    assert_kind_of Array, harm
+    assert_kind_of Array, analog
+
+    if harm.any? { |n| n.start_with?("voicing=") }
+      assert result.fetch("voicing").to_s.length.positive?, "reported a voicing change but ENV[VOICING] is empty"
+      assert result.fetch("track").to_s.length.positive?, "reported a voicing change but ENV[TRACK] is empty"
+    end
+
+    if analog.any? { |n| n.start_with?("analog=") }
+      assert result.fetch("analog_chain").to_s.length.positive?, "reported an analog change but ENV[ANALOG_CHAIN] is empty"
+    end
   end
 
   def test_dilla_sidechain_style_selects_fast_duck_for_dilla_family

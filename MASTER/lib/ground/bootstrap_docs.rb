@@ -9,8 +9,17 @@ module Master
 
       module_function
 
+      # /orient bootstrap is the first runtime dump START_HERE.md points at, and
+      # it is an index over the other sections rather than one of them. Without
+      # this key, cat_orient fell through to the nil-path branch of ORIENT_FILES
+      # and answered "use /orient bootstrap" — telling you to run what you had
+      # just run.
+      INDEX_KEY = "bootstrap"
+
       def section(name)
         key = name.to_s.strip.downcase
+        return index if key == INDEX_KEY
+
         if key == "deploy"
           require_relative "../deploy/operator_docs"
           return Master::Deploy::OperatorDocs.render_deploy
@@ -23,7 +32,21 @@ module Master
       end
 
       def keys
-        (SECTIONS.keys + load_file_sections.keys).uniq.sort
+        ([INDEX_KEY] + SECTIONS.keys + load_file_sections.keys).uniq.sort
+      end
+
+      # Summaries come from each section's own first line, so the index cannot
+      # drift from the sections it lists. `deploy` is read from the YAML rather
+      # than through #section, which would render the whole operator doc just to
+      # take one line off the top.
+      def index
+        rows = (keys - [INDEX_KEY]).map { |key| "  #{key.ljust(12)} #{summary_for(key)}" }
+        (["bootstrap — runtime agent docs. Read one with /orient <name>:", ""] + rows).join("\n")
+      end
+
+      def summary_for(key)
+        body = key == "deploy" ? load_file_sections["deploy"] : section(key)
+        body.to_s.lines.first.to_s.strip
       end
 
       QUICKSTART = <<~TEXT.strip
