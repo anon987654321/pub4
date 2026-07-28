@@ -141,20 +141,6 @@ module DillaLofiMachine
       hats: [0, 2, 4, 6, 8, 10, 12, 14, 15],
       ghosts: [6, 14], claps: [4, 12], perc: [3, 11]
     },
-    # Transcribed from the MIDI clips in a 729 Starter Pack: 6 kick, 6 snare,
-    # 7 closed-hat and 2 open-hat patterns, folded onto one bar of sixteenths.
-    # Kept as separate variants rather than averaged into a single grid, because
-    # DRUM_PATTERN_SETS picks per bar -- so the kit rotates through the pack's
-    # own patterns as a track runs instead of repeating one bar forever.
-    # Ghosts are not in the pack. Only steps 3, 9 and 11 are left unused by its
-    # kicks and snares, so the ghosts are pairs drawn from those: they fill the
-    # gaps the programming actually leaves rather than fighting it.
-    seven_two_nine: {
-      swing: 54, humanize: 3, bpm: 140, mode: :straight_sixteenth,
-      kicks: [0, 2, 12, 13, 14], snares: [8, 14, 15],
-      hats: [0, 2, 4, 6, 7, 8, 10, 12, 14, 15],
-      ghosts: [3, 9], claps: [8, 14], perc: [3, 11]
-    },
     dilla_drunk: {
       swing: 62, humanize: 4, bpm: 92, mode: :dilla_time,
       kicks: [0, 3, 6, 10, 13], snares: [4, 7, 12],

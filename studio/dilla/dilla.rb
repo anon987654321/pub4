@@ -3670,8 +3670,6 @@ def sample_chop_style
   s = ENV.fetch("SAMPLE_CHOP", "0").to_s.downcase
   return nil if %w[0 off none].include?(s)
 
-  return nil if PHRASE_STYLES.key?(s.to_sym)
-
   CHOP_STYLES.key?(s.to_sym) ? s.to_sym : :dilla
 end
 
@@ -3687,229 +3685,6 @@ def chop_target_hz(step, step_p, beat_p)
   idx = ((step * step_p) / (bar_p * bars)).floor % chords.length
   hz = chords[idx][:hz]
   hz.is_a?(Array) ? hz.map(&:to_f).select(&:positive?) : nil
-end
-
-# Phrase replay -- the approach the transient chopper above gets wrong.
-#
-# Measured on the loop this was built against: it is exactly 4 bars, but its
-# transients sit 10-208ms OFF the beat grid. It is a played performance with its
-# own internal push and drag. Slicing at those transients and re-placing the
-# pieces on a rigid grid quantises the groove away, and repitching each piece
-# separately makes every fragment a different instrument. Between them that is
-# why the chopped versions sounded disconnected.
-#
-# What Dilla and Madlib actually do with a loop like this:
-#   - cut it into musical units (a beat, a half bar), not transient crumbs
-#   - replay those units in a rearranged but PHRASE-SHAPED order -- repeats,
-#     holds and swaps, mostly forward, so the source's own phrasing survives
-#   - keep each unit contiguous, so its internal timing comes through intact
-#   - varispeed the WHOLE bed by one ratio if it needs to move, never per chop
-#   - let the drums and the displacement supply the novelty
-#
-# PHRASE_PATTERNS are unit orders over a 4-unit window. Straight replay first,
-# then the familiar moves: hold the first unit, stutter into the last, swap the
-# middle pair, drop back a unit.
-PHRASE_PATTERNS = [
-  [0, 1, 2, 3], [0, 1, 2, 3], [0, 0, 1, 2], [0, 1, 1, 3],
-  [0, 1, 2, 2], [0, 2, 1, 3], [0, 1, 0, 2], [0, 1, 3, 2],
-].freeze
-
-PHRASE_STYLES = {
-  # Dilla: half-bar units, mostly straight, displaced off the grid rather than
-  # rearranged much. The timing IS the edit.
-  phrase: { unit_beats: 2.0, drift_ms: 26, repeat: 0.22, reverse: 0.0,
-            varispeed: 1.0, lp: nil, hp: 55, gain: 1.0,
-            release: 1.9, swell: 0.35, wet: 0.3, width: 1.2 },
-  # Madlib: take a whole bar at a time, barely touch the order, and let it run.
-  # The "chop" is choosing where the loop starts.
-  loop_flip: { unit_beats: 4.0, drift_ms: 34, repeat: 0.12, reverse: 0.0,
-               varispeed: 1.0, lp: 4800, hp: 50, gain: 1.0,
-               release: 1.5, swell: 0.2, wet: 0.24, width: 1.1 },
-  # One beat per unit: more movement, still phrase-shaped, still no repitch.
-  beat_flip: { unit_beats: 1.0, drift_ms: 18, repeat: 0.3, reverse: 0.04,
-               varispeed: 1.0, lp: nil, hp: 60, gain: 1.0,
-               release: 2.2, swell: 0.4, wet: 0.34, width: 1.25 },
-  # Everything smoothed as far as it will go: units ring nearly three slots
-  # past themselves, every entry is led in by a reversed swell of its own
-  # head, and the tail carries a long wet throw. Nothing is butt-joined --
-  # the overlap is what connects one phrase to the next.
-  silk: { unit_beats: 2.0, drift_ms: 14, repeat: 0.18, reverse: 0.0,
-          varispeed: 1.0, lp: 6200, hp: 90, gain: 0.95,
-          release: 2.8, swell: 0.75, wet: 0.5, width: 1.35, air: true },
-}.freeze
-
-# Harmonic gate. Each unit is scored by how much of its pitched energy sits on
-# the detected scale, so units carrying foreign tones can be pruned before they
-# are ever sequenced.
-#
-# Blue notes are tolerated deliberately. On the loop this was built against, the
-# only two half-bar units scoring below 100% are the two containing an E natural
-# against C minor -- the blues third, and the most characterful thing in the
-# sample. A naive in-scale gate strips exactly that and keeps the blander
-# material, so the raised third, flat fifth and raised sixth count as colour
-# rather than clash. SAMPLE_HARMONY_STRICT=1 removes that tolerance.
-BLUE_INTERVALS = [3, 4, 6, 9, 10].freeze
-
-def sample_unit_harmony(path, unit_len)
-  @sample_unit_harmony ||= {}
-  key = [path, unit_len.round(4), ENV["SAMPLE_HARMONY_STRICT"]]
-  @sample_unit_harmony[key] ||= begin
-    slices = sample_chop_analysis(path)
-    sc = sample_scale(path)
-    allowed = sc[:pcs].dup
-    allowed |= BLUE_INTERVALS unless ENV["SAMPLE_HARMONY_STRICT"] == "1"
-    allowed_pcs = allowed.map { |i| (sc[:root] + i) % 12 }
-    count = (audio_duration_sec(path).to_f / unit_len).floor
-    (0...count).map do |u|
-      a = u * unit_len
-      b = a + unit_len
-      inside = slices.select { |sl| sl[:f0] && sl[:from] < b && (sl[:from] + sl[:len]) > a }
-      if inside.empty?
-        1.0
-      else
-        tot = inside.sum { |sl| sl[:len] }
-        good = inside.sum do |sl|
-          pc = ((69 + (12 * Math.log2(sl[:f0] / 440.0))).round) % 12
-          allowed_pcs.include?(pc) ? sl[:len] : 0.0
-        end
-        tot.positive? ? (good / tot) : 1.0
-      end
-    end
-  end
-end
-
-def sample_harmony_min
-  ENV.fetch("SAMPLE_HARMONY_MIN", "0.6").to_f.clamp(0.0, 1.0)
-end
-
-def sample_phrase_style
-  s = ENV.fetch("SAMPLE_CHOP", "0").to_s.downcase
-  PHRASE_STYLES.key?(s.to_sym) ? s.to_sym : nil
-end
-
-def build_sample_phrase_graph(idx, duration, beat_p, src_path, style)
-  cfg = PHRASE_STYLES.fetch(style)
-  src_dur = audio_duration_sec(src_path).to_f
-  return if src_dur <= 0
-
-  rng = Random.new((@render_seed || 11).to_i + 5150)
-  unit = beat_p * cfg[:unit_beats]
-  units = (src_dur / unit).floor
-  return if units < 2
-
-  # Global varispeed only. ENV can push it; nothing per-unit ever repitches.
-  vs = (ENV["SAMPLE_VARISPEED"] || cfg[:varispeed]).to_f.clamp(0.5, 2.0)
-  slots = (duration / unit).ceil
-  max_chops = ENV.fetch("SAMPLE_CHOP_MAX", "160").to_i
-
-  # Prune units whose pitched content falls outside the scale BEFORE any of them
-  # are sequenced. Gating here rather than after mixing means a clashing unit is
-  # never chosen at all, instead of being chosen and then ducked.
-  scores = sample_unit_harmony(src_path, unit)
-  floor = sample_harmony_min
-  keep = (0...units).select { |u| (scores[u] || 1.0) >= floor }
-  pruned = units - keep.size
-  if keep.empty?
-    keep = (0...units).to_a
-    pruned = 0
-  end
-  if pruned.positive?
-    dmesg("harmony gate: pruned #{pruned}/#{units} units under #{floor}",
-          unit: "harm0", parent: "dilla0")
-  end
-
-  order = []
-  while order.size < slots
-    pat = PHRASE_PATTERNS.sample(random: rng)
-    base = keep.sample(random: rng)
-    pat.each do |o|
-      break if order.size >= slots
-
-      u = (base + o) % units
-      # An offset landing on a pruned unit slides forward to the next kept one
-      # rather than reinstating it.
-      unless keep.include?(u)
-        hop = 0
-        hop += 1 while hop < units && !keep.include?((u + hop) % units)
-        u = (u + hop) % units
-      end
-      # A repeat holds the unit just played -- the stutter that comes from
-      # hitting the same pad again, not from picking a new one.
-      u = order.last if order.any? && rng.rand < cfg[:repeat]
-      order << u
-    end
-  end
-
-  # Each slot emits up to two streams: a reversed swell that leads INTO the unit,
-  # and the unit itself ringing well past its own slot. Both are needed for the
-  # seams to stop being audible -- the swell covers the approach, the long
-  # release covers the departure, and consecutive units overlap through the
-  # middle instead of meeting at a point.
-  streams = []
-  release = (cfg[:release] || 1.0).to_f
-  swell_p = (cfg[:swell] || 0.0).to_f
-  order.first([slots, max_chops].min).each_with_index do |u, i|
-    from = (u * unit).round(4)
-    avail = src_dur - from
-    next if avail < 0.05
-
-    drift = ((rng.rand * 2 - 1) * cfg[:drift_ms]) / 1000.0
-    at = [(i * unit) + drift, 0.0].max
-
-    if swell_p.positive? && rng.rand < swell_p && at > 0.25
-      # The phrase is announced by its own material played backwards -- the
-      # swell is a reversed copy of the head of the very unit it leads into,
-      # so the approach is made of the same sound as the arrival.
-      sw = [unit * 0.45, avail].min
-      streams << { from: from, take: sw.round(4), at: [at - sw, 0.0].max, kind: :swell, len: sw }
-    end
-    take = [unit * release, avail].min
-    streams << { from: from, take: take.round(4), at: at, kind: :body, len: take }
-  end
-  return if streams.empty?
-
-  parts = []
-  labels = []
-  streams.each_with_index do |st, i|
-    chain = ["[cs#{i}]atrim=start=#{st[:from]}:duration=#{st[:take]}", "asetpts=PTS-STARTPTS"]
-    if st[:kind] == :swell
-      chain << "areverse"
-      chain << "volume=0.42"
-      chain << "afade=t=in:st=0:d=#{(st[:len] * 0.9).round(4)}:curve=qsin"
-      chain << "lowpass=f=3200"
-    else
-      chain << "areverse" if cfg[:reverse].to_f.positive? && rng.rand < cfg[:reverse]
-      if (vs - 1.0).abs > 0.001
-        chain << "asetrate=#{(SAMPLE_RATE * vs).round}"
-        chain << "aresample=#{SAMPLE_RATE}"
-      end
-      chain << "highpass=f=#{cfg[:hp]}"
-      chain << "lowpass=f=#{cfg[:lp]}" if cfg[:lp]
-      # qsin at both ends so neither has a corner in it, and a release taking
-      # nearly three quarters of the whole stream.
-      chain << "afade=t=in:st=0:d=#{[unit * 0.12, 0.02].max.round(4)}:curve=qsin"
-      rel = (st[:len] * 0.72).round(4)
-      chain << "afade=t=out:st=#{[st[:len] - rel, 0.01].max.round(4)}:d=#{rel}:curve=qsin"
-      if cfg[:wet].to_f.positive?
-        w = cfg[:wet].to_f
-        chain << "aecho=0.9:#{w.round(2)}:#{(unit * 500).round}|#{(unit * 1500).round}:" \
-                 "#{(w * 0.7).round(2)}|#{(w * 0.4).round(2)}"
-      end
-      chain << "stereowiden=delay=18:feedback=0.28:crossfeed=0.2:drymix=0.85" if cfg[:width].to_f > 1.0
-      chain << "crystalizer=i=1.4:c=1" if cfg[:air]
-    end
-    ms = (st[:at] * 1000).round
-    chain << "adelay=#{ms}|#{ms}"
-    parts << "#{chain.join(',')}[ph#{i}]"
-    labels << "[ph#{i}]"
-  end
-  return if labels.empty?
-
-  head = "[#{idx}:a]asplit=#{labels.size}#{labels.each_index.map { |i| "[cs#{i}]" }.join}"
-  tail = "#{labels.join}amix=inputs=#{labels.size}:duration=longest:normalize=0," \
-         "volume=#{cfg[:gain]},atrim=0:#{duration},apad=whole_dur=#{duration}," \
-         "alimiter=limit=0.95[chopped]"
-  [[head] + parts + [tail], "chopped", labels.size]
 end
 
 def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
@@ -4069,21 +3844,6 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm, src_path: nil)
 
   # Chopped path replaces linear playback entirely -- it re-sequences the source
   # rather than decorating it, so there is nothing to run the loop through.
-  # Phrase replay is checked first: it is a different technique, not a variant
-  # of the transient chopper, and where both could apply the phrase one is the
-  # approach that preserves the source.
-  if (pstyle = sample_phrase_style) && src_path
-    built = build_sample_phrase_graph(idx, duration, beat_p, src_path, pstyle)
-    if built
-      parts, label, n = built
-      dmesg("sample phrase: #{n} units, #{pstyle} replay", unit: "harm0", parent: "dilla0")
-      tail = ["[#{label}]#{gain}highpass=f=45," \
-              "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
-              "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}[loopbed]"]
-      return (parts + tail).join(";")
-    end
-  end
-
   if (style = sample_chop_style) && src_path
     built = build_sample_chop_graph(idx, duration, beat_p, src_path, style)
     if built
@@ -5711,39 +5471,6 @@ MICROTIMING_MS = {
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
 # separately so each voice has its own pocket.
 DRUM_PATTERN_SETS = {
-  # All 21 MIDI clips from a 729 Starter Pack, folded onto one bar of
-  # sixteenths and kept as separate variants. DRUM_PATTERN_SETS picks per bar,
-  # so the kit walks through the pack's own kick, snare and hat programming as
-  # a track runs rather than repeating a single grid. The simple single-grid
-  # version lives in DillaLofiMachine::DRUM_PRESETS as :seven_two_nine; this is
-  # the one worth using, and it needs its own key because DRUM_PRESETS wins the
-  # merge below and would otherwise mask it.
-  #
-  # Ghosts are not in the pack: steps 3, 9 and 11 are the only ones its kicks
-  # and snares never touch, so the ghost variants are drawn from those and fill
-  # the gaps the programming leaves instead of fighting it.
-  seven_two_nine_full: {
-    kicks: [
-      [0, 2, 12, 13, 14], [0, 2, 4, 10, 14], [0, 4, 6, 12, 14],
-      [0, 2, 4, 6, 8, 10], [0, 1, 2, 4, 6], [0, 4, 14]
-    ],
-    snares: [
-      [8, 14, 15], [2, 4, 8, 14], [8, 12, 13, 15],
-      [4, 5, 6, 7, 8, 12, 13, 14, 15], [6, 8, 12, 13, 14, 15], [6, 8, 12]
-    ],
-    ghosts: [[3, 9], [9, 11], [3, 11], [3, 9, 11]],
-    hats: [
-      [0, 2, 4, 6, 7, 8, 10, 12, 14, 15],
-      [0, 2, 4, 6, 7, 8, 10, 11, 12, 13, 14, 15],
-      [0, 2, 4, 6, 8, 10, 11, 12, 13, 14, 15],
-      [0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15],
-      [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 13, 14, 15],
-      [0, 1, 2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15]
-    ],
-    opens: [[0, 4, 8, 12, 14], [8, 12, 14]],
-    claps: [[8, 14, 15], [2, 4, 8, 14]],
-    perc: [[3, 11]],
-  },
   timeless: {
     kicks: [
       [0, 8, 10, 15], [0, 3, 9, 11, 14], [0, 6, 10, 13], [0, 2, 7, 10, 14],
@@ -6382,14 +6109,6 @@ CHORD_PROGRESSIONS = {
   # through bar 1 as the blues third. The E is a bass inflection, not a chord
   # tone, so it is not voiced here.
   minor_blues_step_up: %w[Cm9 Ebmaj9 Fm9 G7b9],
-  # Root motion from the riff material in a 729 Starter Pack project, NOT
-  # transcribed chords -- both .als files there are near-monophonic lines over
-  # four pitch classes (A B C D, and A C D G#), so naming their overlapping note
-  # decays as chords would be inventing harmony that is not in the source. What
-  # IS in it is the i-bIII-iv motion in A minor, and the G# leading tone of the
-  # second file, which is the harmonic-minor colour below.
-  minor_third_fourth_riff: %w[Am9 Cmaj9 Dm9 Am9],
-  harmonic_minor_riff:     %w[Am9 Dm9 E7b9 Am9],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
@@ -9993,27 +9712,15 @@ TRACK_LAYER_PROFILES = {
     # TRACK_PRESETS; the harmony did not. Pin it here.
     "PROGRESSION" => "minor_blues_step_up",
     "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
-    # Phrase replay, not the transient chopper: units stay contiguous so the
-    # source keeps its own groove, and the long releases plus reversed swells
-    # close the seams. SAMPLE_CHOP=dilla still selects the transient version.
-    "SAMPLE_CHOP" => "silk",
     "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
     "MASTER_CHAIN" => "akmd",
   },
 }.freeze
 
-# What the caller actually asked for, captured before any layer applies its
-# defaults. A track profile describes how a track sounds when nothing else is
-# said; it should never overrule something typed on the command line. Without
-# this, :four_seven's RAP_VOCAL => "0" (right for a set that has no vocals in it)
-# silently discarded an explicit RAP_VOCAL=sa_g,gunnhild.
-DILLA_BOOT_ENV = ENV.to_h.freeze
-
 def apply_track_layer_profile!(track, force: true)
   profile = TRACK_LAYER_PROFILES[track.to_s.downcase.tr("-", "_").to_sym] or return []
   applied = []
   profile.each do |env_key, value|
-    next if DILLA_BOOT_ENV.key?(env_key) && !DILLA_BOOT_ENV[env_key].to_s.empty?
     next if !force && ENV[env_key] && !ENV[env_key].empty?
     ENV[env_key] = value.to_s
     applied << env_key
@@ -14932,25 +14639,17 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       FileUtils.rm_f(dry_mix)
     end
   end
-  rap_vocal_stream_slugs.each_with_index do |rap_slug, vi|
+  if (rap_slug = rap_vocal_stream_slug)
     begin
-      fit = with_env("RAP_VOCAL" => rap_slug) do
-        rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:)
-      end
-      next unless fit && File.file?(fit)
-
-      rap_tmp = "#{destination}.rap#{vi}#{File.extname(destination)}"
-      # Each additional voice is trimmed back a little so a stack does not add
-      # up to more than one lead: the first take sits where the anchor puts it,
-      # every one after it a few dB under.
-      trim = vi.zero? ? nil : (ENV.fetch("RAP_VOCAL_STACK_DB", "-3.5").to_f * vi)
-      with_env(trim ? { "RAP_VOCAL_ANCHOR_DB" => (ENV.fetch("RAP_VOCAL_ANCHOR_DB", "0.0").to_f + trim).to_s } : {}) do
+      fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:)
+      if fit && File.file?(fit)
+        rap_tmp = "#{destination}.rap#{File.extname(destination)}"
         mix_rap_vocal_layer!(destination, fit, rap_tmp, beat_bpm: cfg[:bpm])
+        FileUtils.mv(rap_tmp, destination)
+        puts "rap-vocal: mixed #{rap_slug} → #{destination}"
       end
-      FileUtils.mv(rap_tmp, destination)
-      puts "rap-vocal: mixed #{rap_slug}#{trim ? format(' (%+.1f dB)', trim) : ''} → #{destination}"
     rescue StandardError, SystemExit => e
-      warn "rap-vocal: #{rap_slug} skipped (#{e.class}) — #{e.message}"
+      warn "rap-vocal: skipped (#{e.class}) — #{e.message}"
     end
   end
   if punk_guitar_enabled?
@@ -16749,30 +16448,6 @@ RAP_VOCAL_BLOCKLIST = %w[sirkel_sag].freeze
 # slum_village stem). Emptied on request: gunnhild is the only vocal source;
 # the mechanism stays for when that decision changes.
 TRACK_MATCHED_VOCAL_SLUG = {}.freeze
-
-# RAP_VOCAL accepts a comma-separated list, so takes can be stacked rather than
-# swapped: RAP_VOCAL=sa_g,gunnhild layers both. Each is fitted and mixed in
-# turn, and because mix_rap_vocal_layer! anchors every stem against the beat it
-# has just been mixed into, the second voice sits against the first rather than
-# against the bare instrumental -- so stacking does not run the level away.
-def rap_vocal_stream_slugs
-  raw = ENV["RAP_VOCAL"].to_s.strip
-  return [] if raw.empty? || raw == "0"
-  return Array(rap_vocal_stream_slug).compact unless raw.include?(",")
-
-  raw.split(",").map(&:strip).reject(&:empty?).filter_map do |one|
-    with_env("RAP_VOCAL" => one) { rap_vocal_stream_slug }
-  end.uniq
-end
-
-# Run a block with ENV temporarily overridden, restoring exactly what was there.
-def with_env(overrides)
-  previous = overrides.keys.to_h { |k| [k, ENV[k]] }
-  overrides.each { |k, v| ENV[k] = v.to_s }
-  yield
-ensure
-  previous.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
-end
 
 def rap_vocal_stream_slug
   slug = ENV["RAP_VOCAL"].to_s.strip
