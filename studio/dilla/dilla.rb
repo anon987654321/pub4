@@ -5412,6 +5412,178 @@ CHORD_PROGRESSIONS = {
   # Static C pedal under moving upper structures.
   pedal_drone:     %w[Fm/C Bbm/C Abmaj7/C G7sus/C],
   eight_bar_soul_arc: %w[Fm9 Bbm9 Ebmaj9 Abmaj9 Dbmaj9 Cm7 Bb7sus Fm9],
+
+
+  # ==========================================================================
+  # Generic harmonic templates (2026-07-28). Named for the harmonic device they
+  # demonstrate -- never for a song, artist or record. Each entry was checked
+  # three ways before landing: every symbol resolves via resolve_pad_chord_symbol,
+  # nothing duplicates an existing progression exactly or as a rotation, and no
+  # chord is missing its own root/3rd/7th. That last check matters because 13,
+  # m11 and 9 voicings currently drop core tones (C13 comes back with no C,
+  # Cm11 with a C# where the root should be), so those qualities were
+  # substituted out here rather than shipped broken.
+  # ==========================================================================
+  # --- minor cycles / neo-soul ---
+  minor_ninth_descent:      %w[Cm9 Bbm9 Abmaj9 Gm7],
+  minor_fourth_ladder:      %w[Am9 Dm9 Gm9 Cmaj9],
+  minor_plagal_return:      %w[Dm9 Gm9 Dm9 Am9],
+  minor_sixth_glow:         %w[Fm9 Fm6 Bbm9 Ebmaj9],
+  minor_dorian_vamp:        %w[Dm9 G13 Dm9 G13],
+  minor_aeolian_fall:       %w[Am9 Gmaj9 Fmaj9 Em9],
+  minor_line_cliche:        %w[Cm9 Cmaj7 Cm7 Cm6],
+  minor_third_lift:         %w[Fm9 Abmaj9 Bbm9 Dbmaj9],
+  minor_tritone_pivot:      %w[Cm9 Gbmaj9 Fm9 Bbm9],
+  minor_half_step_sigh:     %w[Bbm9 Am9 Abmaj9 Gm7],
+  # --- gospel / plagal ---
+  gospel_four_one:          %w[Ebmaj9 Bb7 Ebmaj9 Fm9],
+  gospel_walk_up:           %w[Cmaj9 Dm9 Em9 Fmaj9],
+  gospel_amen_turn:         %w[Fmaj9 Bb7 Fmaj9 Cmaj9],
+  gospel_six_two_five:      %w[Am9 Dm9 G13 Cmaj9],
+  gospel_flat_seven_lift:   %w[Fmaj9 Ebmaj9 Fmaj9 Bb7],
+  # --- modal ---
+  dorian_two_chord:         %w[Gm9 Cmaj9 Gm9 Cmaj9],
+  phrygian_flat_two:        %w[Em9 Fmaj9 Em9 Fmaj9],
+  lydian_bright_pair:       %w[Cmaj9 Dmaj9 Cmaj9 Gmaj9],
+  mixolydian_rock:          %w[Gmaj9 Fmaj9 Cmaj9 Gmaj9],
+  aeolian_stepdown:         %w[Cm9 Bb7 Abmaj9 Gm7],
+  locrian_shadow:           %w[Bm7b5 Em9 Am9 Dm9],
+  # --- quartal / open ---
+  quartal_stack_rise:       %w[Dm9 Gm11 Cm9 Fm11],
+  quartal_open_pair:        %w[Am9 Dm9 Am9 Em9],
+  quartal_fourths_arc:      %w[Em9 Am9 Dm9 Gm11],
+  # --- descending bass (slash) ---
+  descending_bass_soul:     %w[Cmaj9 Cmaj9/B Am9 Am9/G],
+  descending_bass_minor:    %w[Dm9 Dm9/C Bb7 Am9],
+  descending_bass_gospel:   %w[Fmaj9 Fmaj9/E Dm9 Dm9/C],
+  stepwise_fall_four:       %w[Ebmaj9 Ebmaj9/D Cm9 Cm9/Bb],
+  chromatic_bass_walk:      %w[Cm9 Cm9/B Cm9/Bb Cm9/A],
+  # --- pedal points ---
+  pedal_tonic_shift:        %w[Cmaj9 Fmaj9/C Bbmaj9/C Cmaj9],
+  pedal_dominant_hold:      %w[Gm9/G C9/G Fmaj9/G Gm9/G],
+  pedal_minor_drone:        %w[Am9 Dm9/A Gmaj9/A Am9],
+  pedal_fifth_wash:         %w[Fmaj9/C Ebmaj9/C Dbmaj9/C Cm9],
+  # --- dominant motion / turnarounds ---
+  dominant_cycle_four:      %w[E7 A7 D7 G13],
+  two_five_one_major:       %w[Dm9 G13 Cmaj9 Cmaj9],
+  two_five_one_minor:       %w[Dm7b5 G7b9 Cm9 Cm9],
+  backdoor_resolve:         %w[Fm9 Bb7 Cmaj9 Cmaj9],
+  tritone_sub_turn:         %w[Dm9 Db9 Cmaj9 Cmaj9],
+  altered_dominant_push:    %w[Gm9 C7alt Fmaj9 Fmaj9],
+  rhythm_changes_head:      %w[Bb7 Gm9 Cm9 F13],
+  sus_dominant_float:       %w[G7 G13 Cmaj9 Cmaj9],
+  # --- bossa / brazilian ---
+  bossa_minor_two_five:     %w[Fm9 Bb7b9 Ebmaj9 Ebmaj9],
+  bossa_major_stroll:       %w[Dmaj9 Bm9 Em9 A9],
+  bossa_chromatic_down:     %w[Gmaj9 Gbmaj9 Fmaj9 Emaj9],
+  # --- thirds / coltrane-ish ---
+  major_third_cycle:        %w[Cmaj9 Emaj9 Abmaj9 Cmaj9],
+  minor_third_cycle:        %w[Cm9 Ebm9 Gbm9 Am9],
+  chromatic_mediant_pair:   %w[Cmaj9 Abmaj9 Cmaj9 Emaj9],
+  # --- borrowed / modal interchange ---
+  borrowed_flat_six:        %w[Cmaj9 Abmaj9 Fm9 Cmaj9],
+  borrowed_minor_four:      %w[Fmaj9 Fm9 Cmaj9 Cmaj9],
+  neapolitan_lean:          %w[Cm9 Dbmaj9 G7b9 Cm9],
+  # --- two-chord vamps ---
+  two_chord_minor_vamp:     %w[Fm9 Bbm9],
+  two_chord_major_vamp:     %w[Cmaj9 Fmaj9],
+  two_chord_sus_vamp:       %w[Am9 D7],
+  two_chord_mediant_vamp:   %w[Ebmaj9 Gm9],
+  # --- blues ---
+  minor_blues_head:         %w[Cm9 Fm9 Cm9 G7b9],
+  jazz_blues_turn:          %w[F13 Bb9 F13 C9],
+  slow_blues_soul:          %w[Bb9 Eb7 Bb9 F13],
+  # --- ballad / waltz ---
+  ballad_major_arc:         %w[Fmaj9 Dm9 Gm9 C9],
+  ballad_minor_arc:         %w[Cm9 Abmaj9 Fm9 G7b9],
+  waltz_minor_turn:         %w[Am9 Dm9 E7b9 Am9],
+  # --- ambient / wash ---
+  ambient_major_drift:      %w[Dmaj9 Amaj9 Emaj9 Bmaj9],
+  ambient_minor_drift:      %w[Em9 Bm9 Gmaj9 Dmaj9],
+  suspended_air:            %w[C7 F7 Bb7sus Eb7],
+  # --- longer arcs (8) ---
+  eight_bar_minor_journey:  %w[Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9 Dm7b5 G7b9 Cm9],
+  eight_bar_major_journey:  %w[Fmaj9 Bb7 Em7b5 A7b9 Dm9 Gm9 C9 Fmaj9],
+  eight_bar_modal_drift:    %w[Dm9 Em9 Fmaj9 Gm9 Am9 Bb7 Cmaj9 Dm9],
+  eight_bar_gospel_climb:   %w[Bb7 Cm9 Dm9 Ebmaj9 F13 Gm9 Cm9 Bb7],
+  eight_bar_pedal_arc:      %w[Am9 Dm9/A Fmaj9/A Em9/A Am9 Gmaj9/A Fmaj9/A Am9],
+  eight_bar_descending:     %w[Cmaj9 Cmaj9/B Am9 Am9/G Fmaj9 Fmaj9/E Dm9 G13],
+  # --- cadential devices ---
+  andalusian_fall:          %w[Am9 Gmaj9 Fmaj9 E7b9],
+  deceptive_cadence:        %w[Dm9 G13 Am9 Fmaj9],
+  picardy_lift:             %w[Am9 Dm9 E7b9 Amaj9],
+  half_cadence_hold:        %w[Cmaj9 Am9 Dm9 G7],
+  plagal_soft_close:        %w[Cmaj9 Fm9 Cmaj9 Cmaj9],
+  # --- secondary dominants ---
+  secondary_five_of_two:    %w[Cmaj9 A7b9 Dm9 G13],
+  secondary_five_of_four:   %w[Cmaj9 C7 Fmaj9 Fm9],
+  secondary_five_of_six:    %w[Cmaj9 E7b9 Am9 Dm9],
+  secondary_chain_down:     %w[E7 A7 D7 G7],
+  # --- half-diminished chains ---
+  half_dim_descent:         %w[Dm7b5 Cm7b5 Bm7b5 Bbm7b5],
+  half_dim_to_minor:        %w[Bm7b5 E7b9 Am9 Am9],
+  half_dim_pair:            %w[Em7b5 A7alt Dm9 Gm9],
+  # --- planing / parallel ---
+  parallel_major_planing:   %w[Cmaj9 Dmaj9 Ebmaj9 Fmaj9],
+  parallel_minor_planing:   %w[Cm9 Dm9 Ebm9 Fm9],
+  parallel_sus_planing:     %w[C7 D7 Eb7 F7],
+  whole_tone_climb:         %w[C9 D9 E9 Gb9],
+  # --- upper structure triads over pedal ---
+  upper_structure_c:        %w[Cmaj9 Dmaj9/C Ebmaj9/C Fmaj9/C],
+  upper_structure_f:        %w[Fmaj9 Gmaj9/F Abmaj9/F Bbmaj9/F],
+  upper_structure_minor:    %w[Am9 Bbmaj9/A Cmaj9/A Dm9/A],
+  # --- contrary / inner motion ---
+  inner_voice_climb:        %w[Cm9 Cm9 Cmaj9 C9],
+  inner_voice_fall:         %w[Fmaj9 Fmaj7 F6 Fm6],
+  static_top_reharm:        %w[Cmaj9 Am9 Fmaj9 Dm9],
+  # --- montuno / latin ---
+  montuno_major:            %w[Fmaj9 Bb7 C9 Fmaj9],
+  # --- disco / house four ---
+  four_on_floor_minor:      %w[Am9 Fmaj9 Cmaj9 Gmaj9],
+  four_on_floor_major:      %w[Cmaj9 Gmaj9 Am9 Fmaj9],
+  disco_minor_lift:         %w[Dm9 Gm9 Bb7 Cmaj9],
+  house_sus_pump:           %w[Am9 D7 Gmaj9 Cmaj9],
+  # --- afrobeat / one-chord ---
+  one_chord_dorian:         %w[Gm9 Gm11],
+  one_chord_mixolydian:     %w[C9 C9],
+  afro_two_chord:           %w[Em9 Am9],
+  # --- riff / ostinato ---
+  ostinato_minor_pair:      %w[Cm9 Abmaj9],
+  ostinato_fourth_pair:     %w[Dm9 Gm9],
+  ostinato_tritone_pair:    %w[Fm9 Bmaj9],
+  # --- extended jazz arcs ---
+  circle_of_fifths_full:    %w[Cmaj9 Fmaj9 Bm7b5 E7b9 Am9 Dm9 G13 Cmaj9],
+  turnaround_chromatic:     %w[Cmaj9 Eb7 Dm9 Db7],
+  coltrane_thirds_arc:      %w[Cmaj9 Eb7 Abmaj9 B7 Emaj9 G7 Cmaj9 Cmaj9],
+  minor_line_descent_long:  %w[Am9 Am9/G Fmaj9 Fmaj9/E Dm9 Dm9/C Bm7b5 E7b9],
+  # --- soul / rnb specifics ---
+  rnb_minor_seven_walk:     %w[Dm7 Em7 Fmaj7 Gm7],
+  rnb_sus_resolve:          %w[Gm9 C7 Fmaj9 Fmaj9],
+  quiet_storm_arc:          %w[Ebmaj9 Cm9 Fm9 Bb9],
+  slow_jam_minor:           %w[Bbm9 Ebm9 Abmaj9 Dbmaj9],
+  slow_jam_major:           %w[Abmaj9 Dbmaj9 Ebmaj9 Abmaj9],
+  # --- boom bap / sample flavoured ---
+  boom_bap_minor_loop:      %w[Gm9 Cm9 Gm9 D7b9],
+  boom_bap_major_loop:      %w[Ebmaj9 Abmaj9 Ebmaj9 Bb9],
+  dusty_two_chord:          %w[Bbm9 Ebmaj9],
+  dusty_three_chord:        %w[Fm9 Dbmaj9 Ebmaj9],
+  crate_minor_turn:         %w[Cm9 Fm9 Bb9 Ebmaj9],
+  # --- suspended / open colour ---
+  sus_ladder_up:            %w[C7 Eb7 F7 Ab7],
+  sus_minor_pair:           %w[Am9 Dm9],
+  open_fifth_drift:         %w[Cmaj9 Gmaj9 Dmaj9 Amaj9],
+  # --- darker / tension ---
+  altered_tension_arc:      %w[Cm9 F7alt Bbm9 Eb7alt],
+  diminished_passing:       %w[Cmaj9 Dm9 Ebm9 Em9],
+  chromatic_dominant_fall:  %w[G13 Gb13 F13 E9],
+  minor_major_shadow:       %w[Cm9 Cmaj7 Fm9 Bb9],
+  # --- 8-bar extended ---
+  eight_bar_rnb_arc:        %w[Ebmaj9 Cm9 Fm9 Bb9 Ebmaj9 Abmaj9 Fm9 Bb9],
+  eight_bar_dorian_ride:    %w[Gm9 C9 Gm9 C9 Ebmaj9 Fmaj9 Gm9 Gm9],
+  eight_bar_soul_climb:     %w[Fm9 Gm7b5 Abmaj9 Bbm9 Cm9 Dbmaj9 Eb7 Fm9],
+  eight_bar_cycle_home:     %w[Am9 D7b9 Gm9 C9 Fmaj9 Bm7b5 E7b9 Am9],
+  eight_bar_pedal_dark:     %w[Cm9 Dbmaj9/C Ebmaj9/C Fm9/C Cm9 Abmaj9/C Bbmaj9/C Cm9],
+  eight_bar_bright_arc:     %w[Dmaj9 Bm9 Gmaj9 Amaj9 Dmaj9 Em9 Amaj9 Dmaj9],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {

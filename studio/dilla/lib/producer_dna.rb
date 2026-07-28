@@ -16,6 +16,12 @@ module DillaLofiMachine
     "maj9" => [0, 4, 7, 11, 2],
     "6" => [0, 4, 7, 9],
     "m11" => [0, 3, 7, 10, 5],
+    # Suspended shapes: the 4th replaces the 3rd. Absent until now, so the
+    # "7sus" suffix had nothing to build from and fell through the
+    # fetch-default to "maj9" -- giving a chord with a major third, the exact
+    # note a suspension removes.
+    "sus" => [0, 5, 7],
+    "sus4" => [0, 5, 7, 10],
   }.freeze
 
   NOTE_PC = {
@@ -57,7 +63,9 @@ module DillaLofiMachine
     "Bbm7" => [116.54, 138.59, 174.61, 207.65],
     "Bbm9" => [116.54, 138.59, 174.61, 207.65, 261.63],
     "Eb9" => [155.56, 196.00, 233.08, 311.13, 349.23],
-    "Eb7" => [155.56, 196.00, 233.08, 311.13],
+    # 311.13 was Eb4 -- the root doubled an octave up where the b7 belongs, so
+    # this was a bare Eb triad, not a dominant. 277.18 is Db4.
+    "Eb7" => [155.56, 196.00, 233.08, 277.18],
     "Cm7b5" => [130.81, 155.56, 184.99, 233.08],
     # Root+m3+b5+m7 in D — same shape as Cm7b5 above. Precomputed to bypass a
     # DillaMusicGems.chord_from_symbol hang on "Dm7b5" (the gem adapter never
@@ -80,14 +88,25 @@ module DillaLofiMachine
     "C7b9" => [130.81, 138.59, 164.81, 196.00, 233.08],
     "Fm/C" => [130.81, 174.61, 207.65, 261.63, 311.13],
     "Fmaj9" => [174.61, 220.00, 261.63, 329.63, 392.00],
-    "Bbmaj7" => [116.54, 146.83, 174.61, 207.65, 293.66],
-    "Bbmaj9" => [116.54, 138.59, 174.61, 207.65, 261.63],
+    # 207.65 is Ab3, a MINOR seventh -- this was a Bb7, not Bbmaj7. 220.0 is A3.
+    "Bbmaj7" => [116.54, 146.83, 174.61, 220.00, 293.66],
+    # 138.59 is Db3 (minor third) and 207.65 is Ab3 (minor seventh): this entry
+    # spelled Bbm9 under the name Bbmaj9. D3 is 146.83, A3 is 220.0.
+    "Bbmaj9" => [116.54, 146.83, 174.61, 220.00, 261.63],
     "Abmaj7" => [207.65, 261.63, 311.13, 392.00, 466.16],
   }.freeze
 
+  # Longest-first: `find` takes the first match, so "maj9" must be tried before
+  # "m9" before "m". The trailing "" makes a BARE major triad ("F", "D") parse
+  # at all -- without it chord_from_symbol raised ArgumentError on any plain
+  # triad, and because callers rescue that to nil, every bare-triad chord was
+  # silently dropped from its progression by filter_map. Upper-structure slash
+  # chords are written exactly that way, so `upper_triad_tower` was collapsing
+  # from 8 chords to 3, `drone_quartal_wash` 8 to 5, `pedal_upper_structures`
+  # 8 to 7. It must stay last so it only matches when nothing else does.
   CHORD_SUFFIXES = %w[
     maj9low maj9 maj7 m11 m9 m7 m7b5 7b9 7sus4 7sus 7alt 7 6 m
-  ].freeze
+  ].freeze + [""].freeze
 
   PAD_WAVEFORMS = %i[sine square sawtooth triangle].freeze
 
@@ -713,6 +732,33 @@ module DillaLofiMachine
     DRUM_PRESETS.dig(drum_key, :humanize) || DRUM_PRESETS.dig(DEFAULT_DRUM_PRESET, :humanize) || 0
   end
 
+  # Root / third / seventh a symbol must actually contain. Fifths and
+  # extensions are fair game to drop when thinning a voicing; the third and
+  # seventh are what make the chord that chord.
+  CORE_TONES = {
+    "maj7" => [0, 4, 11], "maj9" => [0, 4, 11], "maj9low" => [0, 4, 11],
+    "m7" => [0, 3, 10], "m9" => [0, 3, 10], "m11" => [0, 3, 10], "m7b5" => [0, 3, 10],
+    "7" => [0, 4, 10], "7b9" => [0, 4, 10], "7alt" => [0, 4, 10],
+    "7sus" => [0, 5, 10], "7sus4" => [0, 5, 10],
+    "6" => [0, 4], "m" => [0, 3], "" => [0, 4],
+  }.freeze
+
+  # The coltrane gem hands back confidently wrong voicings for several
+  # suffixes: "Bbmaj9" comes back as Bb Db F Ab C -- a MINOR ninth -- "C7sus"
+  # as C E G B, a maj7 carrying the exact third the suspension exists to
+  # remove, and "Eb9" with no b7 at all. Nothing downstream noticed because a
+  # chord came back and it had the right root name. Verify the gem's answer
+  # contains the tones the symbol asks for, and fall through to the built-in
+  # suffix parser when it does not.
+  def gem_chord_sane?(sym, chord)
+    return false unless chord.is_a?(Hash) && chord[:hz].is_a?(Array) && chord[:hz].any?
+    m = sym.to_s.match(/\A([A-G][#b]?)(.*)\z/) or return true
+    want = CORE_TONES[m[2].sub(/low\z/i, "")] or return true
+    pc = NOTE_PC[m[1]] or return true
+    got = chord[:hz].map { |h| (69.0 + (12.0 * Math.log2(h / 440.0))).round % 12 }.uniq
+    want.all? { |iv| got.include?((pc + iv) % 12) }
+  end
+
   def chord_from_symbol(sym)
     sym = sym.to_s.strip
     if (hz = CHORD_VOICINGS[sym])
@@ -729,7 +775,7 @@ module DillaLofiMachine
         warn "chord_from_symbol: DillaMusicGems hung on #{sym.inspect}, falling back" if $VERBOSE
         nil
       end
-      return gem_chord if gem_chord
+      return gem_chord if gem_chord && gem_chord_sane?(sym, gem_chord)
     end
     if sym.include?("/")
       upper, bass_note = sym.split("/", 2)
@@ -753,9 +799,20 @@ module DillaLofiMachine
               when "m9" then "m9"
               when "m7", "m7b5" then "m7"
               when "7b9", "7alt", "7" then "7"
-              when "7sus4", "7sus" then "7"
+              # Was mapped to plain "7", which builds [0,4,7,10] -- a MAJOR
+              # THIRD. The one thing a suspended chord must not contain is the
+              # third, so every 7sus in the engine was rendering as an ordinary
+              # dominant (C7sus came out C E G Bb) and the suspension was
+              # silently discarded. "sus4" is [0,5,7,10], the actual shape.
+              when "7sus4", "7sus" then "sus4"
               when "6" then "6"
               when "m" then "m9"
+              # A bare triad stays a plain triad. These appear almost only as
+              # the upper structure of a slash chord (D/Bb, G/D), where the
+              # whole point is a clean triad over a foreign bass -- voicing it
+              # as maj9 like the other defaults would pile on a 7th and 9th
+              # that fight the bass note.
+              when "" then "maj"
               else "maj9"
               end
     octave = low_register ? 2 : 3
