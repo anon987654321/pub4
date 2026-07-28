@@ -4,7 +4,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="x-apple-disable-message-reformatting">
-  <title><%= @edition&.subject || @subject || content_for?(:title) ? yield(:title) : "Newsletter" %></title>
+  <%# `||` binds tighter than `?:`, so this read as (a || b || content_for?) ? yield(:title) : "Newsletter" —
+      it always yielded :title when any source was present, discarding @edition.subject and @subject. %>
+  <title><%= @edition&.subject || @subject || (content_for?(:title) ? yield(:title) : "Newsletter") %></title>
   <% if @edition&.preheader.present? %>
     <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
       <%= @edition.preheader %>

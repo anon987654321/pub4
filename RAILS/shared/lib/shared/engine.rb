@@ -9,8 +9,19 @@ module Shared
     config.paths["db/migrate"] << root.join("db/migrate").to_s
     config.active_record.schema_format = :ruby if config.respond_to?(:active_record)
 
+    %w[app/channels].each { |dir| config.autoload_paths << root.join(dir).to_s }
+
     initializer "shared.view_paths" do
       ActiveSupport.on_load(:action_controller_base) do
+        append_view_path Shared::Engine.root.join("app/views")
+      end
+      # ActionMailer keeps its own view-path stack, so the controller hook above
+      # does not reach it. Without this, a host mailer can only render templates
+      # it carries itself — which is why every app had its own copy of
+      # passwords_mailer/reset.* and of layouts/mailer.*, and why amber and
+      # bsdports were quietly rendering Rails' generated stub layout instead of
+      # the engine's designed one.
+      ActiveSupport.on_load(:action_mailer) do
         append_view_path Shared::Engine.root.join("app/views")
       end
     end

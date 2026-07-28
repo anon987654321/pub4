@@ -59,7 +59,15 @@ Amber and brgen eval `shared/config/routes/social.rb` (notifications, reactions,
 
 ## Shared concerns
 
-Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`, `Notifiable`, `ActivityTrackable`, `GeoLocatable`.
+Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`, `Notifiable`, `ActivityTrackable`, `GeoLocatable`, `StrictSafeAssociations`.
+
+**Strict loading is on everywhere — mind the after-write reads.** `ApplicationRecord` sets `strict_loading_by_default = true` for *all* environments. Only `development.rb` downgrades a violation to a log line (`action_on_strict_loading_violation = :log`); test and production **raise**, because that is Rails' default.
+
+That combination traps state-changing methods that notify someone or emit activity: they `update!` first, then read a `belongs_to` to find the recipient. On a record loaded by id — controller action, PSP webhook, background job — nothing is preloaded, so the read raises *after* the write has committed. The state change sticks, the notification is silently lost, and the caller gets a 500. Retries then no-op because the guard (`payable?`, `may_transition_to?`) is already satisfied.
+
+Fixed instances (2026-07-27): `Shared::ActivityTrackable#tracks_activity` resolved `actor:` with a bare `public_send` inside `after_commit`, *outside* `record_activity!`'s rescue — this affected all 38 models passing `actor:`, and every one with an `updated:` event. Also `Marketplace::Order#mark_paid!/accept!/decline!`, `Takeaway::Order#transition_to!/calculate_totals!`, the `Tv` activity emitters, and the `listing_owner`/`restaurant_owner`/`channel_owner` actor delegates.
+
+Use `strict_safe(:assoc)` / `strict_safe_attribute(:assoc, :column)` from `Shared::StrictSafeAssociations` in those paths. It is **not** a licence to skip preloading — `includes` at the query site is still correct and is what stops the N+1 strict loading exists to catch. This is the safety net for paths where a dropped notification is worse than an extra `SELECT`. Actor resolution now degrades to `nil` rather than raising: analytics must never be why a write fails.
 
 **Commentable:** brgen and amber use polymorphic `comments` + `Shared::Commentable` on `Post`.
 
@@ -137,3 +145,36 @@ ruby RAILS/frontend_auditor_gate.rb
 ## Engine extraction (done)
 
 `install_frontend_baseline.sh` is deprecated. Prune per-app duplicates of shared controllers/partials when found.
+
+## What is *not* extracted, and why (2026-07-28)
+
+A sweep for byte-identical files across amber/brgen/bsdports found 26 of them —
+but only 299 lines in total, because most are 4–9 line files Rails, ActionCable
+or StimulusReflex require the host app to define. Extracted the ones carrying
+real logic:
+
+- `Shared::SsoUserProvisioning` — `find_or_create_sso_user` was identical in all
+  three; only `start_sso_session!` ever differed, and that stays overridable.
+- `Shared::CableIdentity` — `ApplicationCable::Connection`'s cookie→user lookup.
+  `set_current_user` returns true/false rather than the assignment value so
+  brgen's soft-guest path can `super` and then keep looking.
+- `Shared::DraftsActions` — session-backed form autosave.
+- `passwords_mailer/reset.*` and `layouts/mailer.*` now live only in the engine,
+  reachable because `shared.view_paths` appends to **ActionMailer** as well as
+  ActionController. It previously did not, which is why every app carried
+  copies — and why amber and bsdports were rendering Rails' *generated stub*
+  mailer layout, shadowing the designed one, while brgen was not.
+
+Deliberately left duplicated:
+
+- **Framework-required host constants**: `SessionsController`,
+  `PasswordsController`, `ReactionsController`, `FingerprintsController`,
+  `DraftsController`, `Authentication`, the four reflexes,
+  `ApplicationCable::Channel`, `Current`, `Session`,
+  `controllers/{index,application,application_controller}.js`. These are
+  already one-line delegations to the engine; routing, Zeitwerk and
+  StimulusReflex resolve them by bare constant, so the file has to exist.
+- **`jox_logo_controller.js`** (48 lines, amber + bsdports). The shared
+  Stimulus baseline is registered for *all* apps in `frontend/stimulus_boot.js`.
+  Promoting product-specific branding there would ship a jox logo controller to
+  brgen, which does not have that logo. Two copies beats one wrong dependency.
