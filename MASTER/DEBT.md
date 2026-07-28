@@ -13,14 +13,20 @@ This file separates known debt from ordinary TODO work.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **6 findings as of 2026-07-26** (was claimed clean at
-0 since 2026-07-16 — that claim was stale, and `START_HERE.md`/`AGENTS.md`
-both lean on it):
+`rake selftest` reports **7 findings as of 2026-07-27** (was 6 on 2026-07-26;
+was claimed clean at 0 since 2026-07-16 — that claim was stale, and
+`START_HERE.md`/`AGENTS.md` both lean on it):
 
 - `[ABSTRACTION]` `lib/review/council/critique.rb:7` — god class, 308 lines
-- `[DENSITY]` ×5 — `lib/fix/conflict_resolver.rb:39`,
+- `[DENSITY]` ×6 — `lib/cli/turn_router.rb:15` (new since 2026-07-26),
+  `lib/fix/conflict_resolver.rb:39`,
   `lib/fix/fix_loop/rule_order.rb:23`, `lib/io/media_intent.rb:76`,
-  `lib/trace/snapshot_agent_guide.rb:74`, `lib/voice/speech.rb:301`
+  `lib/trace/snapshot_agent_guide.rb:74`
+
+`lib/voice/speech.rb:301` is no longer reported. Note
+`test/test_heartbeat.rb:44` (`self_test_heartbeat_publishes_clean_scan_metrics`)
+fails *because* this count is non-zero — it is a symptom of this track, not an
+independent defect.
 
 Triage each new finding as:
 
@@ -50,20 +56,37 @@ the audit itself:
 
 **Broken on contact — operator-priority**
 
-- `/mode` raises NoMethodError in every form. `work_commands.rb:119` defines
-  `dispatch_mode(root:, ctx:)` and `command_registry.rb:180` defines
-  `dispatch_mode(config, ctx: nil)` in the *same module*; the later load
-  wins and receives a String where a Config is expected.
-- `/mode list` returns blank lines — `work_commands.rb:125` has an empty
-  block body.
 - `/orient bootstrap` returns a message telling you to run `/orient
   bootstrap`. `BootstrapDocs.keys` has no `bootstrap` key, and it is the
-  first runtime dump advertised in `START_HERE.md`.
-- `core/world.rb:167` returns a nil status on the `Timeout::Error` path, so
-  `git_repo?`, `git_has_head?` and `git_capture` all NoMethodError on
-  `.success?` when git wedges — inside the core spine.
-- `Ground::Orders::Backup` is unregistered, and its `src` expands to
-  `/home` rather than the repo root.
+  first runtime dump advertised in `START_HERE.md`. Still open.
+
+Fixed 2026-07-28, each with a regression test
+(`test/test_mode_and_orders.rb`, `test/core/test_world.rb`):
+
+- `/mode` raised NoMethodError in every form — two unrelated features both
+  defined `dispatch_mode` in `Master::CLI::CommandRegistry`. The session
+  posture keeps `/mode` (which is what `help.rb` documents); the
+  reasoning-mode command is now `/reasoning`. A guard test fails if any
+  `dispatch_*` name is ever defined in two of the command modules again.
+- `/mode list` returned blank lines — the map block had an empty body. It
+  now renders every posture through the same formatter as the status line,
+  marking the active one.
+- `core/world.rb` returned a nil status on the `Timeout::Error` path.
+  `bounded_capture2e` now returns `World::TIMED_OUT`, which answers
+  `success?` with false, so a wedged git surfaces as a normal failure
+  instead of a NoMethodError inside the fold. `apply_patch_reverse` was
+  also still on raw `Open3` and is now bounded like every other git call.
+- `Ground::Orders::Backup` is registered (`callable: backup`) and declared
+  in `data/state.yml` as manual + disabled — it pushes the whole tree to a
+  remote host, so it is reachable but does not turn itself on. Its source
+  is `File.expand_path("..", root)`, the repo root, not three levels up.
+
+**Known flake — unreproduced**
+
+`TurnRouterTest#test_run_promotes_to_fold` failed once during the
+2026-07-28 pass (`assert result.ok?` returned false) and did not recur in
+four further full runs; it passes in isolation and alongside the new test
+file. Order-dependent, cause not established.
 
 **Scanner noise — agent-ignore until scan rules are the task**
 

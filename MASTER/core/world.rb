@@ -19,6 +19,19 @@ module Master::Core
   class World
     EXEC_TIMEOUT = 120  # seconds — max time for any subprocess call
 
+    # A subprocess killed by the timeout never exited, so there is no
+    # Process::Status to report. Every caller of bounded_capture2e asks
+    # `.success?`, so handing back nil turned a wedged git into a
+    # NoMethodError raised from inside the fold — the one place that has to
+    # stay standing when the outside world misbehaves. This stands in for the
+    # missing status: not successful, no exit code.
+    TimedOutStatus = Class.new do
+      def success? = false
+      def exitstatus = nil
+      def to_s = "timed out"
+    end
+    TIMED_OUT = TimedOutStatus.new.freeze
+
     def initialize(root:, ask: nil, critique_runner: nil)
       @root = File.expand_path(root)
       @ask = ask
@@ -175,12 +188,15 @@ module Master::Core
       end
 
       [out, status]
-    rescue Timeout::Error => e
-      [("TIMEOUT after #{timeout_sec}s: #{cmd.first}"), nil]
+    rescue Timeout::Error
+      ["TIMEOUT after #{timeout_sec}s: #{cmd.first}", TIMED_OUT]
     end
 
+    # Bounded like every other git call here. This is rollback's no-HEAD path;
+    # leaving it on raw Open3 meant a wedged git could hang rollback forever,
+    # which is exactly the failure the bound exists to prevent.
     def apply_patch_reverse(patch)
-      out, status = Open3.capture2e("git", "-C", @root, "apply", "--reverse", "--binary", "-", stdin_data: patch)
+      out, status = bounded_capture2e("git", "-C", @root, "apply", "--reverse", "--binary", "-", stdin_data: patch)
       raise out.strip unless status.success?
     end
 

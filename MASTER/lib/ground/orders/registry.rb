@@ -17,6 +17,7 @@ module Master
             "architecture_audit" => ArchitectureAudit,
             "aggressive_merge" => AggressiveMerge,
             "constitution_drift" => ConstitutionDrift,
+            "backup" => Backup,
           }
         end
 

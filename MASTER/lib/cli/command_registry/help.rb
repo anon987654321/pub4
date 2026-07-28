@@ -172,6 +172,14 @@ module Master
           summary: "show or switch the active LLM model",
           detail: ["/model", "/model <name>", "Uses routing from data/models.yml."],
         },
+        "reasoning" => {
+          summary: "prompt-wrapping strategy (direct|react|rewoo|code_agent)",
+          detail: [
+            "/reasoning", "/reasoning react",
+            "Sets config.reasoning_mode; templates live in data/prompts/mode_<name>.yml.",
+            "Distinct from /mode, which is the loose|balanced|strict session posture.",
+          ],
+        },
         "memory" => {
           summary: "read or write durable operator memory records",
           detail: ["/memory list", "/memory show <key>", "/memory write <key> …"],
@@ -231,7 +239,7 @@ module Master
       COMMAND_CATEGORIES = {
         "session" => %w[clear save history grep audit tokens cost undo rollback redo],
         "work" => %w[scan fix through workflow review critique self kernel status mode map maturity replay graph resync tail edge-cases],
-        "agent" => %w[run mode task persona btw shell gateway plan rebuild],
+        "agent" => %w[run reasoning task persona btw shell gateway plan rebuild],
         "system" => %w[orient tools tree diff commit snapshot diag reload propose context verify doctor help domain fold],
         "infer" => [],
         "media" => %w[music dilla],

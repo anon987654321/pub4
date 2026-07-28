@@ -23,11 +23,15 @@ module Master
         @cfg = load_cfg
       end
 
-      def current
-        name = resolve_name
-        spec = modes[name] || modes["balanced"] || {}
+      def current = describe(resolve_name)
+
+      # The resolved settings for any named mode, not only the active one, so
+      # `/mode list` can show what each posture does without switching into it.
+      def describe(name)
+        key = name.to_s.strip.downcase
+        spec = modes[key] || modes["balanced"] || {}
         {
-          name:,
+          name: key,
           scan_profile: spec["scan_profile"] || "full",
           council: spec["council"],
           autofix_llm: truthy?(spec.fetch("autofix_llm", true)),
@@ -49,14 +53,15 @@ module Master
         current
       end
 
-      def line
-        c = current
-        council = case c[:council]
+      # Defaults to the active posture; takes a spec so `/mode list` renders
+      # every mode through the same formatter the status line already uses.
+      def line(spec = current)
+        council = case spec[:council]
                   when true then "council=on"
                   when false then "council=off"
-                  else "council=#{c[:council]}"
+                  else "council=#{spec[:council]}"
                   end
-        "mode=#{c[:name]} profile=#{c[:scan_profile]} #{council} fix_passes=#{c[:max_fix_passes]}"
+        "mode=#{spec[:name]} profile=#{spec[:scan_profile]} #{council} fix_passes=#{spec[:max_fix_passes]}"
       end
 
       private

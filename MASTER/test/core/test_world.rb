@@ -80,4 +80,55 @@ class WorldTest < Minitest::Test
       assert_match(/argv must be an array/, obs.message)
     end
   end
+
+  # A timed-out subprocess has no Process::Status. bounded_capture2e used to
+  # return nil in its place, so the moment git actually wedged, every caller
+  # (git_repo?, git_has_head?, git_capture, apply_patch) raised NoMethodError
+  # on nil — from inside the fold, the one part that has to stay standing when
+  # the outside world misbehaves.
+  # Real subprocess, real timeout — the nil status only appeared on the live
+  # rescue path, so a stubbed clock would not have caught it.
+  def test_timeout_yields_a_failed_status_not_nil
+    with_world do |world|
+      previous = ENV["MASTER_EXEC_TIMEOUT"]
+      ENV["MASTER_EXEC_TIMEOUT"] = "1"
+      # Open3's reader threads die noisily when Timeout unwinds the block. That
+      # is the production path too; muting it here only keeps the suite legible.
+      reporting = Thread.report_on_exception
+      Thread.report_on_exception = false
+
+      out, status = world.send(:bounded_capture2e, RbConfig.ruby, "-e", "sleep 2")
+
+      refute_nil status, "a timeout must still answer #success?"
+      refute status.success?
+      assert_match(/TIMEOUT after 1s/, out)
+    ensure
+      Thread.report_on_exception = reporting unless reporting.nil?
+      previous ? ENV["MASTER_EXEC_TIMEOUT"] = previous : ENV.delete("MASTER_EXEC_TIMEOUT")
+    end
+  end
+
+  def test_git_capture_raises_the_timeout_message_when_git_wedges
+    with_world do |world|
+      wedge_git(world)
+      error = assert_raises(RuntimeError) { world.send(:git_capture, "status") }
+      assert_match(/TIMEOUT/, error.message)
+    end
+  end
+
+  def test_checkpoint_survives_a_wedged_git
+    with_world do |world|
+      wedge_git(world)
+      checkpoint = world.checkpoint
+
+      assert_equal "", checkpoint[:patch], "an unreachable git means nothing to capture, not a crash"
+      refute_nil checkpoint[:id]
+    end
+  end
+
+  def wedge_git(world)
+    world.define_singleton_method(:bounded_capture2e) do |*, **|
+      ["TIMEOUT after 1s: git", Master::Core::World::TIMED_OUT]
+    end
+  end
 end

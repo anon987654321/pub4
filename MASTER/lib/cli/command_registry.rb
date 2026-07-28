@@ -98,9 +98,17 @@ module Master
         reasoning_commands(config).merge(persona_commands(config)).merge(flag_commands(config))
       end
 
+      # `/reasoning`, not `/mode`. Two unrelated features both claimed "mode":
+      # this one (config.reasoning_mode — the prompt wrapper, direct|react|
+      # rewoo|code_agent) and Ground::ModePosture (loose|balanced|strict, which
+      # caps fix passes and scan profile). Both defined `dispatch_mode` in this
+      # same module, so the later load silently shadowed the earlier one while
+      # work_commands' table entry won the key — every `/mode` form reached this
+      # method holding a String root and died on `config.reasoning_mode`.
+      # help.rb documents `/mode` as the posture, so the posture keeps the name.
       def reasoning_commands(config)
         {
-          "mode" => command(:dispatch_mode, config),
+          "reasoning" => command(:dispatch_reasoning, config),
           "task" => command(:dispatch_task, config),
         }
       end
@@ -177,11 +185,11 @@ module Master
         config.to_h.inspect
       end
 
-      def dispatch_mode(config, ctx: nil)
+      def dispatch_reasoning(config, ctx: nil)
         arg = arg_for(ctx)
         Master::Review::Modes::SUPPORTED.include?(arg) ?
-          (config["reasoning_mode"] = arg; config.save!; "mode: #{arg}") :
-          "mode: #{config.reasoning_mode} (supported: #{Master::Review::Modes::SUPPORTED.join(", ")})"
+          (config["reasoning_mode"] = arg; config.save!; "reasoning: #{arg}") :
+          "reasoning: #{config.reasoning_mode} (supported: #{Master::Review::Modes::SUPPORTED.join(", ")})"
       end
 
       def dispatch_task(config, ctx: nil)

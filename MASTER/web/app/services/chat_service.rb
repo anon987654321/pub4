@@ -459,7 +459,7 @@ end
     when "fix_loop:plateau" then "plateau #{payload[:violations]} violations"
     when "fix_loop:ast_fixed" then "ast #{payload[:transforms]&.join(",")}"
     when "tribunal:rendered" then "#{payload[:vetoes].to_i.positive? ? "veto" : "pass"} #{payload[:judge]}"
-    when "backup:ok" then "synced #{payload[:bytes]}B"
+    when "backup:ok" then "synced #{payload[:src]}"
     when "backup:error" then "error #{payload[:error]}"
     when "scan:complete" then "#{payload[:count]} violations"
     when "autoloop:cycle" then "autoloop #{payload[:pass]}/#{payload[:max]}"

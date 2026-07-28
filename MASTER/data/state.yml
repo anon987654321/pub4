@@ -45,6 +45,16 @@
   # turn. Opt in deliberately rather than have edits push themselves.
   enabled: false
 
+- name: backup_repo_offsite
+  description: openrsync the repo root to wingman1.openbsd.amsterdam:backup over SSH.
+  trigger: manual
+  callable: backup
+  # Disabled: pushes the entire working tree to a remote host. Every other
+  # callable in the registry is declared here; this one was the exception, so
+  # `callable: backup` resolved to nothing. Declared now so it is reachable and
+  # visible via /orient orders — turn it on deliberately, not by default.
+  enabled: false
+
 - name: restart_master_on_web_edit
   description: Restart MASTER service when web/ files change so edits take effect immediately.
   trigger: event

@@ -120,17 +120,24 @@ module Master
         arg = arg_for(ctx).to_s.strip
         posture = Master::Ground::ModePosture.new(root:)
         return posture.line if arg.empty? || arg == "status"
-
-        if arg == "list"
-          return Master::Ground::ModePosture::MODES.map do |m|
-          end.join("\n")
-        end
+        return mode_list(posture) if arg == "list"
 
         mode = arg.split(/\s+/).first
         c = posture.set!(mode)
         "#{posture.line} — #{c[:description]}"
       rescue ArgumentError => e
         "mode: #{e.message}"
+      end
+
+      # Every posture rendered through the same formatter as the status line,
+      # so what `/mode list` shows and what `/mode` reports cannot drift apart.
+      # The active one is marked; the rest are what you would switch into.
+      def mode_list(posture)
+        active = posture.current[:name]
+        Master::Ground::ModePosture::MODES.map do |name|
+          spec = posture.describe(name)
+          "#{name == active ? '*' : ' '} #{posture.line(spec)} — #{spec[:description]}"
+        end.join("\n")
       end
 
       def dispatch_map(root:, ctx: nil)
