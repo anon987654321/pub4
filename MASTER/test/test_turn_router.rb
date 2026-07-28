@@ -71,7 +71,7 @@ class TurnRouterTest < Minitest::Test
     Master.stub(:any_api_key_present?, true) do
       Master::CLI::CoreBridge.stub(:run, fold) do
         result = Master::CLI::TurnRouter.call(message: "implement pagination for posts", container: build_container)
-        assert result.ok?
+        assert result.ok?, -> { "fold errored: #{result.message}" }
         assert_match(/core: complete/, result.value[:rendered])
       end
     end
@@ -103,7 +103,7 @@ class TurnRouterTest < Minitest::Test
     Master.stub(:any_api_key_present?, true) do
       Master::CLI::CoreBridge.stub(:run, fold) do
         result = Master::CLI::TurnRouter.call(message: "/run add tests", container: build_container)
-        assert result.ok?
+        assert result.ok?, -> { "fold errored: #{result.message}" }
         assert_match(/shipped/, result.value[:rendered])
       end
     end
