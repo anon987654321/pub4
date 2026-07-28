@@ -1,1 +1,0 @@
-// Speech runtime moved to face_speech_runtime.js — concatenated by assets:build_face_runtime.

@@ -18,6 +18,7 @@ module Master::Core
   # This is where the old reach/ (git, web, fs), ops/, and tools/ collapse to.
   class World
     EXEC_TIMEOUT = 120  # seconds — max time for any subprocess call
+    TERM_GRACE = 2      # seconds a killed child gets to exit on TERM before KILL
 
     # A subprocess killed by the timeout never exited, so there is no
     # Process::Status to report. Every caller of bounded_capture2e asks
@@ -175,21 +176,67 @@ module Master::Core
 
     private
 
-    # Bounded subprocess call with hard timeout (prevents wedged processes).
-    # This replaces raw Open3 calls to enforce the ROBUSTNESS constraint in core.
+    # Bounded subprocess call with a hard timeout, which means killing the child
+    # — not just abandoning it.
+    #
+    # This used to wrap Open3.capture3 in Timeout.timeout. Timeout only unwinds
+    # the *block*; the process it spawned keeps running, and Ruby then blocks at
+    # exit waiting for it. Measured: a 1s timeout around `sleep 30` took the full
+    # 30 seconds to return, so the bound this method exists to provide did not
+    # exist. popen3 gives us the pid, so the deadline can actually be enforced:
+    # TERM, a short grace period, then KILL.
     def bounded_capture2e(*cmd, stdin_data: nil)
-      out = err = nil
-      status = nil
       timeout_sec = Integer(ENV.fetch("MASTER_EXEC_TIMEOUT", EXEC_TIMEOUT))
 
-      Timeout.timeout(timeout_sec) do
-        out, err, status = Open3.capture3(*cmd, stdin_data:)
-        out = "#{out}#{err}" if err && !err.empty?
-      end
+      Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thread|
+        write_stdin(stdin, stdin_data)
+        # Readers run off-thread: a child that fills its stdout pipe blocks on
+        # write, so draining only after wait_thread returns would deadlock
+        # exactly the wedged process this bound is for.
+        out_reader = Thread.new { stdout.read }
+        err_reader = Thread.new { stderr.read }
 
-      [out, status]
-    rescue Timeout::Error
-      ["TIMEOUT after #{timeout_sec}s: #{cmd.first}", TIMED_OUT]
+        unless wait_thread.join(timeout_sec)
+          terminate(wait_thread.pid)
+          [out_reader, err_reader].each(&:kill)
+          next ["TIMEOUT after #{timeout_sec}s: #{cmd.first}", TIMED_OUT]
+        end
+
+        out = "#{out_reader.value}#{err_reader.value}"
+        [out, wait_thread.value]
+      end
+    end
+
+    def write_stdin(stdin, data)
+      stdin.write(data) if data
+      stdin.close
+    rescue Errno::EPIPE
+      # The child exited before reading its input; its status is the real signal.
+      nil
+    end
+
+    # TERM first so the child can clean up, KILL if it ignores that. ESRCH means
+    # it exited between the join timing out and this call — already gone.
+    def terminate(pid)
+      Process.kill("TERM", pid)
+      return if wait_for_exit(pid, TERM_GRACE)
+
+      Process.kill("KILL", pid)
+      wait_for_exit(pid, TERM_GRACE)
+    rescue Errno::ESRCH
+      nil
+    end
+
+    def wait_for_exit(pid, seconds)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+      until Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+        return true if Process.waitpid(pid, Process::WNOHANG)
+
+        sleep 0.02
+      end
+      false
+    rescue Errno::ECHILD
+      true
     end
 
     # Bounded like every other git call here. This is rollback's no-HEAD path;
@@ -198,12 +245,6 @@ module Master::Core
     def apply_patch_reverse(patch)
       out, status = bounded_capture2e("git", "-C", @root, "apply", "--reverse", "--binary", "-", stdin_data: patch)
       raise out.strip unless status.success?
-    end
-
-    def self.shell_git(root, operation, message = nil)
-      args = operation == "commit" ? ["commit", "-m", message.to_s] : operation.split
-      out, _ = Open3.capture2e("git", "-C", root, *args)
-      out.strip
     end
   end
 end

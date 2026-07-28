@@ -60,7 +60,21 @@ code read.
 - `public/face.js`: deferred face loader.
 - `public/face.part*.txt`: split face runtime payload.
 - `public/three.face.module.js`: heavy WebGL module, imported only after the
-  primer tap and WebGL feature detection.
+  primer tap and WebGL feature detection. **Generated, not vendored by hand**:
+  `script/build_three_face.sh` npm-installs `three` (pinned in
+  `script/three_build/package.json`, currently 0.184.0) and esbuild-bundles
+  only the ~17 symbols `script/three_face_entry.js` re-exports. To change the
+  three version, edit that package.json and re-run the script — do not patch
+  the output. The tracked bundle is the build artifact; it is committed so the
+  1GB VPS never has to run npm at boot.
+
+  Until 2026-07-28 a second file, `public/three.module.js`, was also tracked:
+  a full unminified three r160 (Dec 2023), 53k lines, over half of everything
+  tracked under `web/`. Nothing imported it — `MASTER_ASSET_PATHS.threeModule`
+  points at `three.face.module.js`, and the only textual match for its name was
+  a license comment inside that bundle. Deleted. If you find yourself adding a
+  raw three build back, check whether the entry-point re-export list is what
+  you actually want to extend instead.
 - `public/visual_bridge.js`: runtime event/SSE bridge.
 - `public/cognition_ecology*.js`: 2D canvas ecology, allowed before primer.
 

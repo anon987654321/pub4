@@ -1,5 +1,8 @@
 // Speech / TTS runtime — concatenated into face.runtime.js by assets:build_face_runtime.
-// Edit here, not face.part4.txt (deprecated stub).
+// This file is where the TTS implementation lives; it used to live in
+// face.part4.txt, which was left behind as a 96-byte stub the build task never
+// read. That stub is gone — the rake task's segment list is the only place that
+// decides what goes into face.runtime.js.
 let actx = null;
 let ambientHumGain = null;
 function initAudio() {

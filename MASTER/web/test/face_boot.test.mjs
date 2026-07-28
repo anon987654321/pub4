@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
@@ -77,12 +77,24 @@ test("face_speech_playback.js holds viseme mouth animation", () => {
   assert.doesNotMatch(part5, /function startVisemeAnim/);
 });
 
-test("face_speech_runtime.js holds TTS implementation outside part4 stub", () => {
+test("face_speech_runtime.js holds the TTS implementation", () => {
   const speech = readFileSync(join(publicDir, "face_speech_runtime.js"), "utf8");
-  const stub = readFileSync(join(publicDir, "face.part4.txt"), "utf8");
   assert.match(speech, /function enqueueSpeech/);
   assert.match(speech, /function ttsTick/);
-  assert.doesNotMatch(stub, /function enqueueSpeech/);
+  // face.part4.txt was a 96-byte "moved to face_speech_runtime.js" stub that
+  // the build task never read. This test used to assert the stub did not
+  // contain enqueueSpeech, which was true of any file that did not exist.
+  assert.ok(!existsSync(join(publicDir, "face.part4.txt")), "the part4 stub is gone");
+});
+
+// The generated runtime is built from exactly the sources the rake task lists,
+// so a part file that stops being read should stop existing.
+test("every face.part*.txt on disk is a source of face.runtime.js", () => {
+  const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
+  for (const name of readdirSync(publicDir).filter((f) => /^face\.part\d+\.txt$/.test(f))) {
+    const body = readFileSync(join(publicDir, name), "utf8").trim();
+    assert.ok(runtime.includes(body.slice(0, 120)), `${name} is not concatenated into face.runtime.js`);
+  }
 });
 
 test("calm profile is default and gates rich idle motion", () => {

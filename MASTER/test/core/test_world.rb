@@ -89,23 +89,54 @@ class WorldTest < Minitest::Test
   # Real subprocess, real timeout — the nil status only appeared on the live
   # rescue path, so a stubbed clock would not have caught it.
   def test_timeout_yields_a_failed_status_not_nil
-    with_world do |world|
-      previous = ENV["MASTER_EXEC_TIMEOUT"]
-      ENV["MASTER_EXEC_TIMEOUT"] = "1"
-      # Open3's reader threads die noisily when Timeout unwinds the block. That
-      # is the production path too; muting it here only keeps the suite legible.
-      reporting = Thread.report_on_exception
-      Thread.report_on_exception = false
-
-      out, status = world.send(:bounded_capture2e, RbConfig.ruby, "-e", "sleep 2")
+    with_bounded_timeout(1) do |world|
+      out, status = world.send(:bounded_capture2e, RbConfig.ruby, "-e", "sleep 30")
 
       refute_nil status, "a timeout must still answer #success?"
       refute status.success?
       assert_match(/TIMEOUT after 1s/, out)
-    ensure
-      Thread.report_on_exception = reporting unless reporting.nil?
-      previous ? ENV["MASTER_EXEC_TIMEOUT"] = previous : ENV.delete("MASTER_EXEC_TIMEOUT")
     end
+  end
+
+  # The bound has to kill the child, not just stop waiting for it. Wrapping
+  # Open3.capture3 in Timeout.timeout only unwound the block: the process kept
+  # running and Ruby blocked on it at exit, so a 1s timeout around `sleep 30`
+  # took 30 seconds. Anything near the deadline proves the kill happened.
+  def test_timeout_kills_the_child_instead_of_waiting_for_it
+    with_bounded_timeout(1) do |world|
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      world.send(:bounded_capture2e, RbConfig.ruby, "-e", "sleep 30")
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+      assert_operator elapsed, :<, 10, "returned after #{elapsed.round(1)}s — the child outlived the bound"
+    end
+  end
+
+  def test_bounded_capture_still_returns_output_and_status_normally
+    with_world do |world|
+      out, status = world.send(:bounded_capture2e, RbConfig.ruby, "-e", "$stdout.print 'o'; $stderr.print 'e'")
+
+      assert_equal "oe", out, "stdout and stderr are merged, in that order"
+      assert status.success?
+    end
+  end
+
+  # A child that outruns its pipe buffer must not deadlock the reader.
+  def test_bounded_capture_survives_output_larger_than_the_pipe_buffer
+    with_world do |world|
+      out, status = world.send(:bounded_capture2e, RbConfig.ruby, "-e", "$stdout.print('x' * 200_000)")
+
+      assert status.success?
+      assert_equal 200_000, out.bytesize
+    end
+  end
+
+  def with_bounded_timeout(seconds)
+    previous = ENV["MASTER_EXEC_TIMEOUT"]
+    ENV["MASTER_EXEC_TIMEOUT"] = seconds.to_s
+    with_world { |world| yield world }
+  ensure
+    previous ? ENV["MASTER_EXEC_TIMEOUT"] = previous : ENV.delete("MASTER_EXEC_TIMEOUT")
   end
 
   def test_git_capture_raises_the_timeout_message_when_git_wedges
