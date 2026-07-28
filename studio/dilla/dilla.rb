@@ -10317,7 +10317,21 @@ end
 
 # Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
 # POCKET_DNA=1. Keep this simple — dense grids are why the kit sounded wrong.
-FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=t6SXXx1Fu_4".freeze
+# Was hardcoded to t6SXXx1Fu_4, which is not the id radio_bergen_tracks.yml
+# gives for Flying Lotus "Camel" (fU9YRGLPDQ8). The manifest is the project's
+# curated reference list, so it wins; read it rather than restating it, so the
+# two cannot drift apart again. Note this corrects the CITATION only -- the grid
+# below is whatever was transcribed by ear, and if it was transcribed from the
+# wrong video no URL change can fix that.
+FLYLO_CAMEL_SOURCE_URL = begin
+  entry = YAML.load_file(RADIO_BERGEN_MANIFEST_PATH)
+               .dig("external_reference", "youtube")
+               &.find { |t| t["title"].to_s.casecmp?("Camel") }
+  entry ? "https://www.youtube.com/watch?v=#{entry['id']}" : nil
+rescue StandardError
+  nil
+end || "https://www.youtube.com/watch?v=fU9YRGLPDQ8"
+FLYLO_CAMEL_SOURCE_URL.freeze
 FLYLO_CAMEL_DRUM_GRID = {
   "bpm" => 86,
   "swing" => 60,
@@ -14207,9 +14221,45 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       warn "punk-guitar: skipped (#{e.class}) — #{e.message}"
     end
   end
+  if DILLA_DRONE
+    begin
+      loop_entry = sample_loop_for(ENV["TRACK"])
+      # Prefer the track's own loop -- a drone made from the record already
+      # playing is a bed under it, not a second unrelated sound on top.
+      drone_src = loop_entry&.dig(:path) || harmonic_tmp
+      drone_tmp = "#{destination}.drone.wav"
+      if dilla_drone_build!(drone_src, drone_tmp, duration:)
+        mixed = "#{destination}.droned#{File.extname(destination)}"
+        sh! "ffmpeg", "-y", "-i", destination, "-i", drone_tmp,
+            "-filter_complex",
+            "[1:a]volume=#{DILLA_DRONE_VOL}[dr];" \
+            "[0:a][dr]amix=inputs=2:duration=first:normalize=0," \
+            "alimiter=limit=0.97:level_out=0.98[out]",
+            "-map", "[out]", *codec_for(mixed), mixed
+        FileUtils.mv(mixed, destination)
+        puts "drone: #{File.basename(drone_src)} stretched under the mix → #{destination}"
+      end
+      FileUtils.rm_f(drone_tmp)
+    rescue StandardError => e
+      warn "drone: skipped (#{e.class}) — #{e.message}"
+    end
+  end
+
   # Final integrated loudness — every track (with or without vocals) same level.
   if ENV.fetch("STREAM_NORMALIZE", "1") != "0" || ENV["DILLA_STREAMING"] == "1"
     normalize_track_loudness!(destination)
+  end
+
+  # After loudness, not before: the brake ends in near-silence, and normalising
+  # a file whose last bar is a fade to nothing pulls the whole track up to
+  # compensate for it.
+  if DILLA_TAPE_STOP
+    begin
+      dilla_tape_stop!(destination, beat_bpm: cfg[:bpm])
+      puts "tape-stop: #{DILLA_TAPE_STOP_BEATS.round} beats of brake → #{destination}"
+    rescue StandardError => e
+      warn "tape-stop: skipped (#{e.class}) — #{e.message}"
+    end
   end
   export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, cfg,
                        use_stem_harmony:)
@@ -16183,6 +16233,108 @@ def rap_vocal_source_bpm(entry, vocal_path, target: nil)
   rap_vocal_fold_bpm(candidates.find { |b| b&.positive? }, target:)
 end
 
+# --- drone bed and tape stop --------------------------------------------------
+#
+# The two effects the engine had no form of. It already owns bitcrush
+# (acrusher), wow/flutter (vibrato), pitch tricks (asetrate), granular pads,
+# detune, reverse grains and drum dropouts -- so those are switches, not work.
+# A stretched drone and a speed brake were genuinely absent.
+
+# Stretches a short slice of the loop into a static harmonic bed. Not real
+# paulstretch (no phase randomisation -- ffmpeg has no such filter), but the
+# audible part of it: overlapping windows so far apart that pitch survives and
+# rhythm does not. Layering three ratios stops the result sounding like one
+# obviously slowed sample.
+DILLA_DRONE = ENV["DILLA_DRONE"] == "1"
+DILLA_DRONE_VOL = (ENV["DILLA_DRONE_VOL"] || 0.16).to_f.clamp(0.0, 1.0)
+DILLA_DRONE_SRC_SEC = (ENV["DILLA_DRONE_SRC_SEC"] || 0.6).to_f.clamp(0.1, 4.0)
+
+def dilla_drone_build!(src, dest, duration:)
+  return nil unless src && File.file?(src)
+
+  # atempo floors at 0.5 per stage, so a 60x stretch is a chain of them. Taking
+  # the same slice at three slightly different rates and stacking them gives the
+  # beating that makes a drone sit still without sounding frozen.
+  layers = [[0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.55],
+            [0.5, 0.5, 0.5, 0.5, 0.5, 0.62]]
+  chain = layers.each_with_index.map do |steps, i|
+    tempo = steps.map { |s| "atempo=#{s}" }.join(",")
+    "[0:a]#{tempo},lowpass=f=1800,highpass=f=70," \
+      "volume=#{(1.0 / layers.size).round(3)}[d#{i}]"
+  end
+  mix = layers.each_index.map { |i| "[d#{i}]" }.join
+  chain << "#{mix}amix=inputs=#{layers.size}:normalize=0[dm]"
+  # A drone that arrives and leaves is a bed; one that just starts is a mistake.
+  fade = [duration * 0.25, 6.0].min.round(2)
+  chain << "[dm]afade=t=in:st=0:d=#{fade}," \
+           "afade=t=out:st=#{(duration - fade).round(2)}:d=#{fade}[dout]"
+  begin
+    sh! "ffmpeg", "-y", "-t", DILLA_DRONE_SRC_SEC.to_s, "-i", src,
+        "-filter_complex", chain.join(";"), "-map", "[dout]",
+        "-t", duration.round(3).to_s, "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-c:a", "pcm_s16le", dest
+    dest
+  rescue StandardError => e
+    warn "drone: #{e.message}"
+    nil
+  end
+end
+
+# Turntable brake over the final bars. asetrate resamples, so pitch and speed
+# fall together the way a real platter does -- which is the point, and why this
+# is not just a fade.
+DILLA_TAPE_STOP = ENV["DILLA_TAPE_STOP"] == "1"
+DILLA_TAPE_STOP_BEATS = (ENV["DILLA_TAPE_STOP_BEATS"] || 4).to_f.clamp(0.5, 32.0)
+
+def dilla_tape_stop!(path, beat_bpm:)
+  total = audio_duration_sec(path).to_f
+  want = (60.0 / beat_bpm) * DILLA_TAPE_STOP_BEATS
+  steps = 14
+  # Slowed audio lasts longer, so the source window has to be SHORTER than the
+  # brake we want to hear. Taking the requested length as the source instead
+  # made "4 beats" produce 8.9 seconds -- a fifth of a 16-bar track. Solve for
+  # the source window whose stretched total lands on the request.
+  rates = (0...steps).map do |i|
+    frac = 1.0 - ((i + 1).to_f / steps)
+    [0.08 + (0.92 * (frac**1.6)), 3000.0 / SAMPLE_RATE].max
+  end
+  stretch = rates.sum { |r| 1.0 / r } / steps
+  brake = want / stretch
+  return path unless total > brake + 1.0
+
+  head = "#{path}.head.wav"
+  tailp = "#{path}.tail.wav"
+  out = "#{path}.stopped.wav"
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-t", (total - brake).round(3).to_s,
+        "-c:a", "pcm_s16le", head
+    # Ramped resample in steps: ffmpeg cannot sweep asetrate continuously, so
+    # the brake is built from short slices at falling rates. 14 is enough that
+    # the steps read as a slide rather than a staircase.
+    slice = brake / steps
+    parts = (0...steps).map do |i|
+      rate = (SAMPLE_RATE * rates[i]).round
+      seg = "#{path}.b#{i}.wav"
+      sh! "ffmpeg", "-y", "-ss", (total - brake + (i * slice)).round(3).to_s,
+          "-t", slice.round(3).to_s, "-i", path,
+          "-af", "asetrate=#{rate},aresample=#{SAMPLE_RATE}",
+          "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", seg
+      seg
+    end
+    list = "#{path}.list.txt"
+    File.write(list, ([head] + parts).map { |f| "file '#{f}'\n" }.join)
+    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list,
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", out
+    FileUtils.mv(out, path)
+    FileUtils.rm_f([head, tailp, list] + parts)
+    path
+  rescue StandardError => e
+    warn "tape stop: #{e.message}"
+    FileUtils.rm_f([head, tailp, out])
+    path
+  end
+end
+
 # --- phrase snapping ---------------------------------------------------------
 #
 # atempo can only fix a take that HAS a tempo. A freely-sung take has no
@@ -16199,6 +16351,38 @@ end
 # hears as being on the beat, and no line is time-warped internally so the
 # delivery inside it stays hers.
 RAP_VOCAL_SNAP_BEATS = (ENV["RAP_VOCAL_SNAP_BEATS"] || 2).to_f
+
+# Dead-on the grid is not the goal -- it is only the reference the lean is
+# measured from. rap_vocal_pocket_nudge_sec already drags the whole vocal 3-4
+# ticks of 96 PPQ behind the beat (20-27ms at 92), but that is one constant for
+# the entire take. Dilla's feel is not constant; it wanders line to line, and
+# the wander is the point. RAP_VOCAL_LEAN_MS sets the base drag, and each line
+# is offset from it by a fixed walk.
+#
+# The walk is a literal table rather than rng: a render has to reproduce, and a
+# "feel" you cannot get back is not a feel, it is an accident.
+RAP_VOCAL_LEAN_MS = (ENV["RAP_VOCAL_LEAN_MS"] || 0).to_f
+RAP_VOCAL_LEAN_WALK = [0, 7, -5, 12, -3, 9, -8, 4, 2, -6, 11, -2].freeze
+
+# Reverse pre-swell: the head of each line, reversed and darkened, arriving
+# exactly as the line starts. Impractical before line placement existed --
+# it needs every downbeat known to the millisecond, which is precisely what
+# snapping produces.
+RAP_VOCAL_SWELL = ENV["RAP_VOCAL_SWELL"] == "1"
+RAP_VOCAL_SWELL_SEC = (ENV["RAP_VOCAL_SWELL_SEC"] || 0.45).to_f.clamp(0.1, 2.0)
+RAP_VOCAL_SWELL_VOL = (ENV["RAP_VOCAL_SWELL_VOL"] || 0.45).to_f.clamp(0.0, 1.5)
+
+# Every segment currently gets a 20ms in / 50ms out fade so seams cannot click.
+# Dilla did not clean his seams -- chop tails ran into the next chop. This lets
+# the collisions through on purpose.
+RAP_VOCAL_RAW_SEAMS = ENV["RAP_VOCAL_RAW_SEAMS"] == "1"
+
+def rap_vocal_line_lean(index)
+  return 0.0 if RAP_VOCAL_LEAN_MS.zero?
+
+  walk = RAP_VOCAL_LEAN_WALK[index % RAP_VOCAL_LEAN_WALK.length]
+  (RAP_VOCAL_LEAN_MS + walk) / 1000.0
+end
 
 # Line detection thresholds. The catalog's stored "phrases" cannot be used for
 # this: they are peak clusters joined at 0.35s, which on sung material collapse
@@ -16292,9 +16476,11 @@ def rap_vocal_snap_placements(lines, total_sec, duration:, grid:, from_sec: 0.0,
     # opening consonant survives, so the segment itself has to be placed that
     # much before the grid line -- otherwise every line sits exactly one
     # pre-roll late, which measured as a flat ~62ms lag on every single line.
-    placements << { ss: cut_a.round(3), len: len.round(3), at: slot.round(3),
-                    lead: (a - cut_a).round(3) }
-    cursor = slot + (len - (a - cut_a)) + gap
+    lean = rap_vocal_line_lean(placements.size)
+    at = [slot + lean, 0.0].max
+    placements << { ss: cut_a.round(3), len: len.round(3), at: at.round(3),
+                    lead: (a - cut_a).round(3), lean: lean.round(4) }
+    cursor = at + (len - (a - cut_a)) + gap
   end
   placements
 end
@@ -16303,18 +16489,50 @@ end
 def rap_vocal_snap_build!(stretched, fit_path, placements, duration:, outer:, tail:)
   inputs = []
   chain = []
-  placements.each_with_index do |p, i|
+  labels = []
+  idx = 0
+
+  placements.each do |p|
     inputs.concat(["-ss", p[:ss].to_s, "-t", p[:len].to_s, "-i", stretched])
     ms = [((p[:at] - p[:lead].to_f) * 1000).round, 0].max
     out_at = [p[:len] - 0.05, 0.0].max
-    chain << "[#{i}:a]afade=t=in:st=0:d=0.02," \
-             "afade=t=out:st=#{out_at.round(3)}:d=0.05," \
-             "adelay=#{ms}|#{ms}[s#{i}]"
+    seam = if RAP_VOCAL_RAW_SEAMS
+             # 3ms is not an articulation, it is only enough to stop the DC step
+             # at a hard cut from popping. The chop tail itself runs on.
+             "afade=t=in:st=0:d=0.003"
+           else
+             "afade=t=in:st=0:d=0.02,afade=t=out:st=#{out_at.round(3)}:d=0.05"
+           end
+    chain << "[#{idx}:a]#{seam},adelay=#{ms}|#{ms}[s#{idx}]"
+    labels << "[s#{idx}]"
+    idx += 1
   end
-  mixed = placements.each_index.map { |i| "[s#{i}]" }.join
+
+  if RAP_VOCAL_SWELL
+    placements.each do |p|
+      swell = [RAP_VOCAL_SWELL_SEC, p[:len]].min
+      next if swell < 0.1
+
+      # Land the swell so it ENDS on the line's own downbeat: start it a swell
+      # earlier, and reverse the line's head so the loudest part is last.
+      at = p[:at] - swell
+      next if at < 0.0
+
+      inputs.concat(["-ss", p[:ss].to_s, "-t", swell.round(3).to_s, "-i", stretched])
+      ms = (at * 1000).round
+      chain << "[#{idx}:a]areverse,lowpass=f=2600," \
+               "aecho=0.8:0.7:#{(swell * 1000 * 0.35).round}:0.45," \
+               "afade=t=in:st=0:d=#{(swell * 0.8).round(3)}," \
+               "volume=#{RAP_VOCAL_SWELL_VOL},adelay=#{ms}|#{ms}[w#{idx}]"
+      labels << "[w#{idx}]"
+      idx += 1
+    end
+  end
+
+  mixed = labels.join
   # normalize=0: amix would otherwise divide by the input count, and with ~30
   # mostly non-overlapping lines that is a ~30x attenuation of every one of them.
-  chain << "#{mixed}amix=inputs=#{placements.size}:normalize=0:dropout_transition=0[snap]"
+  chain << "#{mixed}amix=inputs=#{labels.size}:normalize=0:dropout_transition=0[snap]"
   chain << "[snap]#{outer}#{tail}[vout]"
   sh! "ffmpeg", "-y", *inputs, "-filter_complex", chain.join(";"),
       "-map", "[vout]", "-t", duration.round(3).to_s,
