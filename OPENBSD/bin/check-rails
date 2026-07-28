@@ -25,6 +25,15 @@ source_gates = [
   ["frontend", "RAILS/frontend_production_gate.rb"],
   ["schema", "RAILS/schema_migration_gate.rb"],
   ["asset freshness", "RAILS/generated_asset_freshness_gate.rb"],
+  # Previously invoked by no runner, deploy script or CI entrypoint at all
+  # (OPENBSD/data/debt.yml: rails_gates_not_wired) — they only ever ran when
+  # someone remembered to call them by hand, which meant in practice they did
+  # not run. All four are static source checks, same shape as the gates above,
+  # and all four pass as of 2026-07-27.
+  ["shared wiring", "RAILS/shared_wiring_gate.rb"],
+  ["stimulus adoption", "RAILS/stimulus_components_adoption_gate.rb"],
+  ["css constitution", "RAILS/css_constitution_gate.rb"],
+  ["payment honesty", "RAILS/payment_honesty_gate.rb"],
   # Design craft stack (P0–P5); GATE_AUTOFIX off in CI-like checks
   ["layout suite", "RAILS/gates/runner.rb", "layout_suite"],
 ]

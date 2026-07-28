@@ -32,7 +32,12 @@
     <article class="ai-card">
       <h2><%= s["name"] || "Option #{i + 1}" %></h2>
       <p class="dim"><%= Array(s["items"]).join(", ") %></p>
-      <p><%= s["description"] %></p>
+      <%# The rationale was rendered bare, so a reader couldn't tell it *was* the
+          reasoning rather than a product blurb. Labelling it is the point of the
+          suggestion: you should be able to judge the advice, not just take it. %>
+      <% if s["description"].present? %>
+        <p><strong>Why it works:</strong> <%= s["description"] %></p>
+      <% end %>
       <% if s["source"] %><p class="dim">Source: <%= s["source"] %></p><% end %>
       <% if s["outfit_id"] %>
         <p><%= link_to "View generated outfit", outfit_path(s["outfit_id"]), class: "btn" %></p>

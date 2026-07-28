@@ -4,7 +4,13 @@ require "test_helper"
 
 class LiveControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @city = City.first || City.create!(name: "Bergen", domain: "brgen.no", slug: "bergen", country_code: "NO", locale: "nb")
+    # The old fallback was `City.first || City.create!(...)` without a currency,
+    # but cities.currency is NOT NULL — so whenever this file ran with an empty
+    # cities table (which depends on test order) all three tests died on a
+    # constraint violation rather than testing anything. CitySeed is the
+    # canonical source for the column set, and is what the other suites use.
+    Brgen::CitySeed.sync! if City.table_exists?
+    @city = City.find_by!(domain: "brgen.no")
     host! "brgen.no"
   end
 

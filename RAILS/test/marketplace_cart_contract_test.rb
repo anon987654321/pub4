@@ -18,11 +18,27 @@ class MarketplaceCartContractTest < Minitest::Test
     refute_includes view, "One-click checkout coming soon"
   end
 
-  def test_amber_jobs_are_not_placeholders
+  # Renamed from test_amber_jobs_are_not_placeholders. The old version asserted
+  # that RemoveBackgroundJob includes "PostproProcessor" — i.e. that it does real
+  # work. It does not, deliberately: real ML matting is tracked as planned in
+  # apps.yml, and the job is a no-op retained only so in-flight queue entries
+  # still drain. Making that assertion pass would have meant claiming background
+  # removal the code does not perform, which is exactly the dishonesty the rest
+  # of this suite (and payment_honesty_gate) exists to prevent.
+  #
+  # The real invariant is therefore honesty, not busyness: the job that does work
+  # must route through Postpro, and the job that does not must keep saying so.
+  def test_amber_jobs_are_honest_about_what_they_do
     rembg = File.read(File.join(ROOT, "amber/app/jobs/remove_background_job.rb"))
     seg = File.read(File.join(ROOT, "amber/app/jobs/segment_garment_image_job.rb"))
-    assert_includes rembg, "PostproProcessor"
+
+    # Portrait polish is real and goes through the shared processor.
     assert_includes seg, "PostproProcessor"
+
+    # The retained no-op must not imply matting it doesn't do.
+    assert_includes rembg, "Does not remove backgrounds"
+    assert_includes rembg, "no ML matting"
+
     refute_includes rembg, "placeholder"
     refute_includes seg, "placeholder"
   end

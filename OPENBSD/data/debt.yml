@@ -109,14 +109,6 @@ open:
       contains only secret_key_base, and production does not use it (MASTER runs
       SECRET_KEY_BASE_DUMMY=1; the Rails apps read SECRET_KEY_BASE from
       /etc/*.env) — but it must be untracked, rotated, and purged from history.
-  - id: payment_webhooks_unverified
-    tag: operator-priority
-    summary: >
-      marketplace/webhooks_controller.rb checks only that a Stripe-Signature
-      header is PRESENT and never computes the HMAC; the Vipps handler has no
-      check at all. Both are public POSTs with skip_forgery_protection and no
-      rate limit, and order ids are sequential — forge an event, mark any order
-      paid, trigger fulfilment. UNVERIFIED by me; from the 2026-07-27 review.
   - id: brgen_allow_unauthenticated_access_is_a_noop
     tag: operator-priority
     summary: >
@@ -136,10 +128,16 @@ open:
   - id: rails_gates_not_wired
     tag: operator-priority
     summary: >
-      Five gates are invoked by no runner, deploy script or CI entrypoint:
-      shared_wiring, stimulus_components_adoption, release, visual_contract,
-      constitutional_scan. Nothing calls gates/runner.rb --all, and
-      _deploy.sh runs zero Ruby gates. Worse, the whole design-craft stack
+      PARTIALLY RESOLVED 2026-07-27 — shared_wiring, stimulus_components_adoption,
+      css_constitution and payment_honesty are now in check-rails source_gates and
+      all four pass. Wiring them surfaced three stale contract assertions in the
+      already-wired `rails contracts` step (amber matting jobs, brgen ranking
+      control location, amber archive copy), which is presumably why check-rails
+      was not being run; those are fixed and the runner is now green. STILL OPEN
+      below.
+      Three gates remain invoked by no runner, deploy script or CI entrypoint:
+      release, visual_contract, constitutional_scan. Nothing calls
+      gates/runner.rb --all. Worse, the whole design-craft stack
       (layout_geometry, surface_schema, visual_quality, user_flow,
       design_metrics, human_walkthrough, payment_honesty, guest_flow) warns
       and returns when the app port is closed — i.e. always, in CI. This is
@@ -172,6 +170,35 @@ open:
       mailer.html.erb subject line has an || vs ?: precedence bug.
 
 closed:
+  - id: payment_webhooks_unverified
+    resolution: >
+      Fixed and verified 2026-07-27. marketplace/webhooks_controller.rb now
+      computes HMAC-SHA256 over "<timestamp>.<raw body>" keyed with the whsec_
+      secret, rejects a signed timestamp more than SIGNATURE_TOLERANCE (5 min)
+      from now so a captured request cannot be replayed, and accepts any of
+      several v1 signatures for key rotation. Both handlers fail closed when the
+      secret is unset. Vipps verifies an HMAC Authorization header and rejects
+      everything until VIPPS_WEBHOOK_SECRET is set — its header/signed-string
+      shape still needs confirming against current Vipps MobilePay docs before
+      production use, which is noted in the controller. Covered by
+      brgen/test/controllers/marketplace/webhooks_controller_test.rb (6 tests).
+  - id: marketplace_order_notifications_raised_under_strict_loading
+    resolution: >
+      Fixed 2026-07-27. Shared::ActivityTrackable resolved tracks_activity's
+      `actor:` with a bare public_send inside an after_commit — a lazy belongs_to
+      read — and strict_loading_by_default is true in every environment with only
+      development downgrading a violation to a log line. Any record loaded by id
+      therefore raised *after* its write had committed, outside
+      record_activity!'"'"'s own rescue, turning a successful save into a 500. 38
+      models pass `actor:`; every one with an `updated:` event was affected.
+      Worst case was payments: mark_paid! wrote payment_status=paid, then raised
+      on listing.user, so Stripe received a 500 for a payment that had succeeded
+      and the retry skipped the work because the order was no longer payable? —
+      leaving both parties permanently unnotified. Resolved by
+      Shared::StrictSafeAssociations (resolve by foreign key, keep the preloaded
+      fast path, degrade to a nil actor rather than raise), plus the same fix in
+      Takeaway::Order#transition_to!/calculate_totals!, the Tv activity emitters,
+      and the listing_owner/restaurant_owner/channel_owner actor delegates.
   - id: playlist_missing_tables
     resolution: >
       migration 20260726120000 creates playlist_timestamped_comments and

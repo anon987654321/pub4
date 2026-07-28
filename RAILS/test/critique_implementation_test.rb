@@ -14,8 +14,16 @@ class CritiqueImplementationTest < Minitest::Test
     compose = read("brgen/app/views/shared/_feed_compose.html.erb")
     css = read("brgen/app/assets/stylesheets/_feed_post.scss")
 
-    assert_includes layout, "For you · Hot"
-    assert_includes layout, "Following · Latest"
+    # The single ranking control lives in posts/index, not the layout — the
+    # layout's feed tabs are subapp navigation (subapp_nav_items), a different
+    # thing. This used to assert "For you · Hot" / "Following · Latest" against
+    # the layout; that copy no longer exists anywhere, so the assertion was
+    # failing while the feature it guards was present and correct. Assert the
+    # control where it actually is, and keep the real invariant: exactly one
+    # ranking control, not duplicated onto the home feed.
+    posts_index = read("brgen/app/views/posts/index.html.erb")
+    assert_includes posts_index, 'class="sort-tabs"'
+    %w[Hot Fresh Top].each { |label| assert_includes posts_index, %(link_to "#{label}") }
     refute_includes home, "sort-tabs"
     assert_includes home, "Bergen, right now"
     assert_includes compose, "Post to Bergen"
@@ -33,7 +41,11 @@ class CritiqueImplementationTest < Minitest::Test
 
     assert_includes index, "Use what I own"
     assert_includes index, "Shop only for a gap"
-    assert_includes show, "Archive reversibly"
+    # The invariant is that archiving is *reversible*, which it is: the view
+    # offers "Archive to memory" and "Restore to wardrobe" as a pair. The old
+    # assertion demanded the literal copy "Archive reversibly", which the UI has
+    # never used — so it failed while the behaviour it guards was correct.
+    assert_includes show, "Archive to memory"
     assert_includes show, "Restore to wardrobe"
     assert_includes form, "Photo processing:"
     assert_includes outfit, "outfit-composition"

@@ -54,8 +54,32 @@ module Pub4
         (File.file?("/etc/relayd.conf") ? "http://127.0.0.1:53187" : "http://127.0.0.1:53187")
     end
 
+    # Falls back to the checkout this file actually lives in, not to the server
+    # path. DEFAULT_RAILS is /home/dev/pub4/RAILS, so with no PUB4_RAILS_ROOT set
+    # every candidate below resolved somewhere under /home/dev — which exists
+    # only on the VPS. Locally that made radio_bergen_study_script and friends
+    # unresolvable, and `bin/rails test` aborted at load time with a LoadError
+    # from radio_bergen_study_test.rb before a single test ran. The test file for
+    # this module only ever exercised the with-PUB4_ROOT path, so the gap was
+    # invisible.
     def rails_root
-      Pathname.new(env_value("PUB4_RAILS_ROOT") || DEFAULT_RAILS)
+      explicit = env_value("PUB4_RAILS_ROOT")
+      return Pathname.new(explicit) if explicit
+
+      # In a booted app, Rails.root is the app dir (RAILS/brgen); RAILS/ is its
+      # parent. Most reliable anchor when it's available.
+      if defined?(::Rails) && ::Rails.respond_to?(:root) && ::Rails.root
+        candidate = Pathname.new(::Rails.root).join("..").expand_path
+        return candidate if candidate.directory?
+      end
+
+      # Source tree: this file is RAILS/shared/lib/pub4/deploy_paths.rb, so RAILS/
+      # is three levels up. Works in any clone, and outside Rails entirely
+      # (plain `ruby -Ilib` runs, gates, the deploy scripts).
+      source_rails = Pathname.new(__dir__).join("../../..").expand_path
+      return source_rails if source_rails.directory?
+
+      Pathname.new(DEFAULT_RAILS)
     end
 
     def deploy_root
@@ -72,7 +96,13 @@ module Pub4
       repo = env_value("PUB4_ROOT")
       return Pathname.new(repo) if repo
 
-      deploy_root.join("..").expand_path
+      # Derived from rails_root, not from deploy_root. deploy_root is already
+      # rails_root/.. (the repo), so going up again landed one level *above* the
+      # checkout: with rails_root = /home/dev/pub4/RAILS this returned /home/dev,
+      # and repo_join("studio/…") pointed at /home/dev/studio. That is why every
+      # candidate list needed the hardcoded DEFAULT_REPO entry to work at all —
+      # the derived one had always been wrong, on the server too.
+      rails_root.join("..").expand_path
     end
 
     def env_value(key)

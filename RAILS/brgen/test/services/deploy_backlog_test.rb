@@ -764,7 +764,13 @@ class DeployBacklogTest < Minitest::Test
     assert_includes File.read(File.join(ROOT, 'amber/app/reflexes/outfits_infinite_scroll_reflex.rb')),
                     'outfits/outfit'
 
+    # The sentinel moved out of _live_search_results and into the _list partial
+    # it renders, so asserting on _live_search_results directly went stale even
+    # though ports infinite scroll still works. Follow the render instead: the
+    # search results must reach the list, and the list must carry the reflex.
     assert_includes File.read(File.join(ROOT, 'bsdports/app/views/ports/_live_search_results.html.erb')),
+                    'ports/list'
+    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/ports/_list.html.erb')),
                     'PortsInfiniteScrollReflex#load_more'
     assert_includes File.read(File.join(ROOT, 'bsdports/app/reflexes/ports_infinite_scroll_reflex.rb')),
                     'ports/row'

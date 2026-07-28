@@ -391,7 +391,12 @@ stage_1() {
   typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}
   (( _var_avail < 512000 )) && { log ERROR "Insufficient disk space on /var"; exit 1 }
 
-  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak 2>/tmp/pkg_add.log \
+  # ffmpeg is required, not optional: lib/voice/engines.rb gates concat_mp3 and
+  # the WAV->MP3 conversion on `ffmpeg?` and returns *quietly* when it is absent.
+  # Without it TTS produced un-concatenated or unconverted audio on the VPS with
+  # no error anywhere — working on a Mac and silently degrading in production,
+  # which is the worst failure shape. See MASTER/DEBT.md "Host TTS Binaries".
+  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
