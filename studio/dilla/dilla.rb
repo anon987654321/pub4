@@ -3427,6 +3427,141 @@ TRACK_SAMPLE_LOOPS = {
   nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 103.0 },
 }.freeze
 
+# --- cross-sample processing ---------------------------------------------------
+#
+# Two records treated as one instrument. Both of these produce something neither
+# loop can give on its own, which is the reason to prefer them over another
+# effect applied to a single source.
+#
+#   DILLA_XCONVOLVE=1  one loop becomes the room the other is played in
+#   DILLA_XGATE=1      one loop's harmony, the other's rhythm
+#
+# DILLA_XSAMPLE names the partner track (any key of TRACK_SAMPLE_LOOPS).
+DILLA_XCONVOLVE = ENV["DILLA_XCONVOLVE"] == "1"
+DILLA_XGATE = ENV["DILLA_XGATE"] == "1"
+# Kept short on purpose. A long impulse convolves the partner's whole melody
+# into the source and the result is mush; ~1s reads as a space rather than as a
+# second tune.
+XCONV_IR_SEC = (ENV["DILLA_XCONV_IR_SEC"] || 1.0).to_f.clamp(0.1, 4.0)
+XCONV_WET = (ENV["DILLA_XCONV_WET"] || 0.62).to_f.clamp(0.0, 1.0)
+# The envelope follower's smoothing. Too fast and it transfers individual
+# waveform cycles, which is ring modulation, not gating.
+XGATE_SMOOTH_HZ = (ENV["DILLA_XGATE_SMOOTH_HZ"] || 24).to_i
+XGATE_FLOOR = (ENV["DILLA_XGATE_FLOOR"] || 0.18).to_f.clamp(0.0, 1.0)
+
+def cross_sample_partner_path(self_track)
+  name = ENV["DILLA_XSAMPLE"].to_s.strip
+  return nil if name.empty?
+
+  key = name.downcase.tr("-", "_").to_sym
+  return nil if key.to_s == self_track.to_s.downcase.tr("-", "_")
+
+  path = TRACK_SAMPLE_LOOPS.dig(key, :path)
+  path if path && File.file?(path)
+end
+
+# Builds a short impulse response from the partner: trimmed, banded, and decayed
+# so it does not ring forever. Deliberately NOT loudnorm'd -- afir's own irnorm
+# then fights it, and the level is fixed by measurement after the convolution
+# instead, where it can be matched to the actual source.
+def cross_sample_impulse!(partner, dest)
+  sh! "ffmpeg", "-y", "-t", XCONV_IR_SEC.to_s, "-i", partner,
+      "-af", "highpass=f=90,lowpass=f=9000," \
+             "afade=t=out:st=#{(XCONV_IR_SEC * 0.35).round(3)}:d=#{(XCONV_IR_SEC * 0.65).round(3)}",
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
+  dest
+end
+
+# Convolution output level depends entirely on the impulse's energy, which
+# varies per sample pair, so no fixed gain is right. Measured on this pair:
+# irnorm=1 landed at -62 dB against a -20 dB source (inaudible) and irnorm=0 at
+# -0.2 dB (clipping). So convolve unnormalised, which is at least predictable,
+# then match the source by measurement -- the same measure-then-gain the vocal
+# cleaner uses for the same reason.
+def cross_sample_convolve!(loop_path, partner, dest)
+  ir = "#{dest}.ir.wav"
+  cross_sample_impulse!(partner, ir)
+  raw = "#{dest}.raw.wav"
+  sh! "ffmpeg", "-y", "-i", loop_path, "-i", ir,
+      "-filter_complex",
+      "[0:a][1:a]afir=dry=#{(1.0 - XCONV_WET).round(3)}:wet=#{XCONV_WET}:" \
+      "maxir=#{XCONV_IR_SEC}:irnorm=0[c];" \
+      "[c]highpass=f=45[out]",
+      "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+      "-c:a", "pcm_s16le", raw
+
+  want = band_rms(loop_path, highpass: 20, lowpass: 20_000) rescue nil
+  got = band_rms(raw, highpass: 20, lowpass: 20_000) rescue nil
+  trim = if want&.finite? && got&.finite?
+           (want - got).clamp(-48.0, 24.0)
+         else
+           0.0
+         end
+  sh! "ffmpeg", "-y", "-i", raw,
+      "-af", "volume=#{trim.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
+  dmesg("cross-sample convolve: matched #{got&.round(1)}dB → #{want&.round(1)}dB (#{trim.round(1)}dB)",
+        unit: "xsmp0", parent: "dilla0")
+  FileUtils.rm_f([ir, raw])
+  dest
+end
+
+# The source's harmony driven by the partner's rhythm. amultiply rather than
+# sidechaingate: a gate is a switch and leaves the source's own attacks intact
+# between openings, while multiplying by a rectified, smoothed envelope makes
+# the partner's shape the ONLY amplitude contour the result has.
+def cross_sample_gate!(loop_path, partner, dest, duration:)
+  env_path = "#{dest}.env.wav"
+  # Rectify and smooth into a control signal, floored so the source never fully
+  # disappears in the partner's gaps.
+  sh! "ffmpeg", "-y", "-i", partner,
+      "-af", "highpass=f=60,lowpass=f=8000,aeval=abs(val(0))|abs(val(1))," \
+             "lowpass=f=#{XGATE_SMOOTH_HZ}," \
+             "volume=#{(1.0 - XGATE_FLOOR).round(3)}," \
+             "aeval=val(0)+#{XGATE_FLOOR}|val(1)+#{XGATE_FLOOR}," \
+             "atrim=0:#{duration},apad=whole_dur=#{duration}",
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", env_path
+  sh! "ffmpeg", "-y", "-i", loop_path, "-i", env_path,
+      "-filter_complex",
+      "[0:a]atrim=0:#{duration},apad=whole_dur=#{duration}[src];" \
+      "[src][1:a]amultiply,alimiter=limit=0.95:level_out=0.96[out]",
+      "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+      "-c:a", "pcm_s16le", dest
+  FileUtils.rm_f(env_path)
+  dest
+end
+
+def cross_sample_process(track, loop_path)
+  return loop_path unless DILLA_XCONVOLVE || DILLA_XGATE
+
+  partner = cross_sample_partner_path(track)
+  unless partner
+    warn "cross-sample: DILLA_XSAMPLE=#{ENV['DILLA_XSAMPLE'].inspect} is not another track's loop — skipping"
+    return loop_path
+  end
+
+  out = loop_path
+  begin
+    if DILLA_XCONVOLVE
+      dest = File.join(Dir.tmpdir, "dilla_xconv_#{Process.pid}.wav")
+      out = cross_sample_convolve!(out, partner, dest)
+      puts "cross-sample: convolved with #{File.basename(File.dirname(partner))} " \
+           "(#{XCONV_IR_SEC}s impulse, wet #{XCONV_WET})"
+    end
+    if DILLA_XGATE
+      dest = File.join(Dir.tmpdir, "dilla_xgate_#{Process.pid}.wav")
+      len = audio_duration_sec(out).to_f
+      out = cross_sample_gate!(out, partner, dest, duration: len.positive? ? len.round(3) : 8.0)
+      puts "cross-sample: amplitude taken from #{File.basename(File.dirname(partner))} " \
+           "(floor #{XGATE_FLOOR})"
+    end
+    out
+  rescue StandardError => e
+    warn "cross-sample: #{e.class} — #{e.message}; using the plain loop"
+    loop_path
+  end
+end
+
 def sample_loop_for(track)
   raw = ENV["SAMPLE_LOOP"].to_s
   return if raw == "0"
@@ -3436,7 +3571,14 @@ def sample_loop_for(track)
           else
             { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
           end
-  entry if entry && File.file?(entry[:path].to_s)
+  return unless entry && File.file?(entry[:path].to_s)
+
+  # Memoised: sample_loop_for is called from several places in one render, and
+  # each call would otherwise re-run the convolution.
+  @cross_sample_cache ||= {}
+  key = [track.to_s, entry[:path]]
+  @cross_sample_cache[key] ||= cross_sample_process(track, entry[:path])
+  entry.merge(path: @cross_sample_cache[key])
 end
 
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
