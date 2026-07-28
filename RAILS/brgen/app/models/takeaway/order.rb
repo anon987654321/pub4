@@ -34,7 +34,10 @@ class Takeaway::Order < ApplicationRecord
     # Use in-memory association target so create-with-build works under strict_loading.
     items = order_items.target
     sub = items.sum { |oi| oi.unit_price_cents.to_i * oi.quantity.to_i }
-    fee = restaurant.delivery_fee_cents.to_i
+    # The comment above covers order_items, but the delivery fee was still a lazy
+    # belongs_to read — so this raised on any order loaded from the database
+    # rather than built in memory.
+    fee = strict_safe_attribute(:restaurant, :delivery_fee_cents).to_i
     update!(subtotal_cents: sub, delivery_fee_cents: fee, total_cents: sub + fee)
   end
 
@@ -49,8 +52,23 @@ class Takeaway::Order < ApplicationRecord
     end
 
     update!(status: next_status)
-    deliver_notification(user, title: "Order #{status.humanize.downcase}", body: "Your order from #{restaurant.name} is now #{status.humanize.downcase}.", source: self)
-    record_activity!("TakeawayOrderUpdated", actor: restaurant.user, source_vertical: "takeaway", locality: restaurant[:city], visibility: "private")
+    # `user`, `restaurant.name` and `restaurant.user` are all lazy reads, and an
+    # order loaded by id (controller, driver request, job) has none of them
+    # preloaded. Under strict loading — on in every environment, raising outside
+    # development — this raised immediately after update! had committed the new
+    # status: the order advanced, the customer was never told, and the caller saw
+    # a 500. See Shared::StrictSafeAssociations.
+    label = status.humanize.downcase
+    restaurant_record = strict_safe(:restaurant)
+    deliver_notification(strict_safe(:user),
+      title: "Order #{label}",
+      body: "Your order from #{restaurant_record&.name} is now #{label}.",
+      source: self)
+    record_activity!("TakeawayOrderUpdated",
+      actor: restaurant_record&.user,
+      source_vertical: "takeaway",
+      locality: restaurant_record&.[](:city),
+      visibility: "private")
     true
   end
 

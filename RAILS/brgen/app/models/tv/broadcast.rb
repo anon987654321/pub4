@@ -18,13 +18,17 @@ class Tv::Broadcast < ApplicationRecord
   scope :live,      -> { where(status: "live") }
   scope :scheduled, -> { where(status: "scheduled") }
 
+  # `actor: user` is a lazy belongs_to read, and a broadcast toggled from a
+  # controller is loaded by id with nothing preloaded — so under strict loading
+  # (on in every environment, raising outside development) this raised after
+  # update! had already flipped the status. See Shared::StrictSafeAssociations.
   def go_live!
     update!(status: "live", started_at: Time.current)
-    record_activity!("BroadcastStarted", actor: user, source_vertical: "tv")
+    record_activity!("BroadcastStarted", actor: strict_safe(:user), source_vertical: "tv")
   end
 
   def end_live!
     update!(status: "ended", ended_at: Time.current)
-    record_activity!("BroadcastEnded", actor: user, source_vertical: "tv")
+    record_activity!("BroadcastEnded", actor: strict_safe(:user), source_vertical: "tv")
   end
 end

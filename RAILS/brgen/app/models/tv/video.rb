@@ -42,7 +42,9 @@ class Tv::Video < ApplicationRecord
     saved_change_to_status? && status == "published"
   end
 
+  # Runs in an after_update_commit, where `user` is a lazy belongs_to read on a
+  # video that a controller loaded by id. See Shared::StrictSafeAssociations.
   def record_video_published
-    record_activity!("VideoPublished", actor: user, source_vertical: "tv", visibility: "public")
+    record_activity!("VideoPublished", actor: strict_safe(:user), source_vertical: "tv", visibility: "public")
   end
 end

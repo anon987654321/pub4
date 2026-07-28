@@ -32,4 +32,53 @@ class Dating::MatchTest < ActiveSupport::TestCase
       assert_equal @initiator, match.other_user(@receiver)
     end
   end
+
+  # The test above builds the match with both users already in memory. A match
+  # reached from a controller or a view is found by id with nothing preloaded,
+  # and ApplicationRecord is strict_loading by default — the same shape that
+  # broke Marketplace::Order#mark_paid! and Takeaway::Order#transition_to!.
+  test "other_user on a freshly-found match does not violate strict loading" do
+    ActsAsTenant.with_tenant(@city) do
+      id = Dating::Match.create!(initiator: @initiator, receiver: @receiver, status: "matched").id
+      found = Dating::Match.find(id)
+
+      assert_equal @receiver.id, found.other_user(@initiator).id
+      assert_equal @initiator.id, found.other_user(@receiver).id
+    end
+  end
+
+  test "status is restricted to the three known states" do
+    match = Dating::Match.new(initiator: @initiator, receiver: @receiver, status: "friends")
+
+    assert_not match.valid?
+    assert_includes match.errors[:status], I18n.t("errors.messages.inclusion")
+  end
+
+  test "active scope returns matched and excludes pending" do
+    ActsAsTenant.with_tenant(@city) do
+      matched = Dating::Match.create!(initiator: @initiator, receiver: @receiver, status: "matched")
+      pending = Dating::Match.create!(initiator: @receiver, receiver: @initiator, status: "pending")
+
+      assert_includes Dating::Match.active, matched
+      assert_not_includes Dating::Match.active, pending
+    end
+  end
+
+  # announce_match runs after_create_commit and reaches both users through
+  # other_user, so the lazy read sits on the write path too.
+  test "a matched pair notifies both users on create" do
+    ActsAsTenant.with_tenant(@city) do
+      assert_difference "Notification.count", 2 do
+        Dating::Match.create!(initiator: @initiator, receiver: @receiver, status: "matched")
+      end
+    end
+  end
+
+  test "a pending match announces nothing" do
+    ActsAsTenant.with_tenant(@city) do
+      assert_no_difference "Notification.count" do
+        Dating::Match.create!(initiator: @initiator, receiver: @receiver, status: "pending")
+      end
+    end
+  end
 end

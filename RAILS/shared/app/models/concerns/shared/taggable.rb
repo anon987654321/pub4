@@ -6,7 +6,7 @@ module Shared
     extend ActiveSupport::Concern
 
     included do
-      has_many :taggings, as: :taggable, dependent: :destroy
+      has_many :taggings, as: :taggable, dependent: :destroy, strict_loading: false
       has_many :hashtags, through: :taggings
       after_save :sync_hashtags
     end

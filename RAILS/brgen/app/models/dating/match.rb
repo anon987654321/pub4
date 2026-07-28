@@ -3,6 +3,7 @@
 class Dating::Match < ApplicationRecord
   # Engine-ized Shared (tranche10)
   include Shared::Notifiable
+  include Shared::StrictSafeAssociations
   tracks_activity created: "DatingMatch", source_vertical: "dating", visibility: "private", actor: :initiator
 
   belongs_to :initiator, class_name: "User"
@@ -13,8 +14,12 @@ class Dating::Match < ApplicationRecord
 
   scope :active, -> { where(status: "matched") }
 
+  # Called from views and from announce_match's notification path, on matches
+  # that were found by id — nothing preloaded, and ApplicationRecord is
+  # strict_loading by default, so the plain association read raised. Same shape
+  # as Marketplace::Order#seller and Takeaway::Order#delivery_fee.
   def other_user(user)
-    initiator_id == user.id ? receiver : initiator
+    initiator_id == user.id ? strict_safe(:receiver) : strict_safe(:initiator)
   end
 
   private

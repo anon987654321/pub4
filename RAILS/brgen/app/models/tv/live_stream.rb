@@ -26,12 +26,12 @@ module Tv
 
     def go_live!
       update!(status: "live", started_at: Time.current)
-      record_activity!("LiveStreamStarted", actor: user, source_vertical: "tv")
+      record_activity!("LiveStreamStarted", actor: strict_safe(:user), source_vertical: "tv")
     end
 
     def end_live!
       update!(status: "ended", ended_at: Time.current)
-      record_activity!("LiveStreamEnded", actor: user, source_vertical: "tv")
+      record_activity!("LiveStreamEnded", actor: strict_safe(:user), source_vertical: "tv")
     end
 
     private

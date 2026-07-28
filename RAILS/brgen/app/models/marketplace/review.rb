@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Marketplace::Review < ApplicationRecord
+  include Shared::StrictSafeAssociations
   tracks_activity created: "MarketplaceReviewCreated", source_vertical: "marketplace", actor: :user
 
   belongs_to :user
@@ -26,7 +27,11 @@ class Marketplace::Review < ApplicationRecord
     errors.add(:user, "cannot review your own listing") if listing&.user_id == user_id
   end
 
+  # after_commit fires on destroy too, and a review being destroyed was found by
+  # id with nothing preloaded — so this raised StrictLoadingViolation *after*
+  # the delete had committed: the review was gone and the cached listing rating
+  # still counted it.
   def refresh_listing_rating
-    listing&.update_rating!
+    strict_safe(:listing)&.update_rating!
   end
 end

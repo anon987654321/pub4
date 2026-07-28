@@ -18,6 +18,7 @@ module Tv
       slug
     end
 
-    def channel_owner = channel&.user
+    # tracks_activity actor — see Shared::StrictSafeAssociations.
+  def channel_owner = strict_safe(:channel)&.user
   end
 end

@@ -9,14 +9,12 @@ module Shared
       def tracks_activity(created: nil, updated: nil, source_vertical: "general", visibility: "public", actor: nil)
         if created
           after_commit on: :create do
-            act = actor ? public_send(actor) : activity_actor
-            record_activity!(created, actor: act, source_vertical: source_vertical, visibility: visibility)
+            record_activity!(created, actor: resolved_activity_actor(actor), source_vertical: source_vertical, visibility: visibility)
           end
         end
         if updated
           after_commit on: :update do
-            act = actor ? public_send(actor) : activity_actor
-            record_activity!(updated, actor: act, source_vertical: source_vertical, visibility: visibility)
+            record_activity!(updated, actor: resolved_activity_actor(actor), source_vertical: source_vertical, visibility: visibility)
           end
         end
       end
@@ -39,12 +37,45 @@ module Shared
 
     private
 
-    def activity_actor
-      if respond_to?(:user) && user.present?
-        user
-      elsif defined?(Current) && Current.respond_to?(:user)
-        Current.user
+    # The actor is nearly always a belongs_to (`actor: :user`, `:buyer`,
+    # `:sender`, …). Reading it with a bare public_send inside an after_commit is
+    # a lazy association read, and strict_loading_by_default is true in every
+    # environment with production raising rather than logging. So emitting an
+    # activity event for any record that was loaded from the database — which is
+    # every controller update action — raised *after* the write had committed.
+    #
+    # record_activity! already swallows its own failures ("activity skipped"),
+    # but the old actor lookup happened *outside* that rescue, so it propagated
+    # and turned a successful save into a 500. 38 models pass `actor:`, and every
+    # one with an `updated:` event was affected (Tv::Video, Tv::Channel,
+    # Marketplace::Deal, Marketplace::Store, Takeaway::MenuItem,
+    # Takeaway::Restaurant, Dating::Profile, …).
+    #
+    # Analytics must never be the reason a write fails, so this degrades to a nil
+    # actor instead of raising — matching record_activity!'s existing contract.
+    def resolved_activity_actor(name)
+      return activity_actor if name.nil?
+
+      if self.class.reflect_on_association(name)&.belongs_to?
+        strict_safe(name)
+      else
+        # A plain method such as Marketplace::Deal#listing_owner.
+        public_send(name)
       end
+    rescue StandardError => e
+      Rails.logger.warn("activity actor skipped: #{e.class}: #{e.message}") if defined?(Rails)
+      nil
+    end
+
+    def activity_actor
+      own = if self.class.reflect_on_association(:user)&.belongs_to?
+              strict_safe(:user)
+            elsif respond_to?(:user)
+              user
+            end
+      return own if own.present?
+
+      Current.user if defined?(Current) && Current.respond_to?(:user)
     end
   end
 end

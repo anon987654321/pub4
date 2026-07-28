@@ -17,7 +17,25 @@ class Marketplace::Order < ApplicationRecord
   before_validation { self.status ||= "pending" }
   before_validation { self.payment_status ||= "unpaid" }
 
-  def seller = listing.user
+  # mark_paid! notifies the seller, and a PSP webhook finds the order by id with
+  # nothing preloaded. Walking listing.user there raised StrictLoadingViolation
+  # *after* update! had committed payment_status=paid: the money was recorded,
+  # neither party was notified, and Stripe got a 500 for a payment that had
+  # actually succeeded — then the retry skipped the work because the order was
+  # no longer payable?. See Shared::StrictSafeAssociations.
+  def seller
+    return listing.user if association(:listing).loaded? && listing.association(:user).loaded?
+
+    seller_id = association(:listing).loaded? ? listing.user_id : Marketplace::Listing.where(id: listing_id).pick(:user_id)
+    User.strict_loading(false).find_by(id: seller_id)
+  end
+
+  # Read by the notification bodies below; a lazy association read on any order
+  # that was found by id.
+  def listing_title = strict_safe_attribute(:listing, :title)
+
+  # Notification recipient. belongs_to :buyer is lazily loaded too.
+  def buyer_record = strict_safe(:buyer)
 
   # Cart-like helpers (pending orders act as the buyer's cart)
   def total_cents = (price_cents.presence || listing.price_cents || 0) * (quantity.presence || 1).to_i
@@ -25,12 +43,12 @@ class Marketplace::Order < ApplicationRecord
 
   def accept!
     update!(status: "accepted")
-    deliver_notification(buyer, title: "Offer accepted", body: "Your offer for #{listing.title} was accepted.", source: self)
+    deliver_notification(buyer_record, title: "Offer accepted", body: "Your offer for #{listing_title} was accepted.", source: self)
   end
 
   def decline!
     update!(status: "declined")
-    deliver_notification(buyer, title: "Offer declined", body: "Your offer for #{listing.title} was declined.", source: self)
+    deliver_notification(buyer_record, title: "Offer declined", body: "Your offer for #{listing_title} was declined.", source: self)
   end
 
   def mark_payment_pending!(provider:, reference:)
@@ -49,8 +67,9 @@ class Marketplace::Order < ApplicationRecord
       paid_at: Time.current,
       status: "paid"
     )
-    deliver_notification(seller, title: "Payment received", body: "Payment for #{listing.title} cleared.", source: self)
-    deliver_notification(buyer, title: "Payment confirmed", body: "Your payment for #{listing.title} is confirmed.", source: self)
+    title = listing_title
+    deliver_notification(seller, title: "Payment received", body: "Payment for #{title} cleared.", source: self)
+    deliver_notification(buyer_record, title: "Payment confirmed", body: "Your payment for #{title} is confirmed.", source: self)
   end
 
   def payable?

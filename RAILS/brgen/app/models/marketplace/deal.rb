@@ -27,6 +27,9 @@ module Marketplace
       (starts_at.blank? || starts_at <= Time.current) && (ends_at.blank? || ends_at >= Time.current)
     end
 
-    def listing_owner = listing&.user
+    # Used as the tracks_activity actor, so it runs in an after_commit on a deal
+    # that a controller loaded by id — `listing&.user` was a lazy read that
+    # raised under strict loading. See Shared::StrictSafeAssociations.
+    def listing_owner = strict_safe(:listing)&.user
   end
 end

@@ -5,7 +5,7 @@ module Shared
     extend ActiveSupport::Concern
 
     included do
-      has_many :follows_received, as: :followable, class_name: "Follow", dependent: :destroy
+      has_many :follows_received, as: :followable, class_name: "Follow", dependent: :destroy, strict_loading: false
     end
 
     def followed_by?(user)

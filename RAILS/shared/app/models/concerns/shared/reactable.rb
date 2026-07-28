@@ -17,8 +17,16 @@ module Shared
       Object.const_defined?(:Reaction)
     end
 
+    # strict_loading: false, here and on every other `dependent: :destroy` in
+    # these concerns. ApplicationRecord sets strict_loading_by_default, and a
+    # destroy cascade *must* load its dependents to delete them — there is no
+    # preload that avoids it, so strict loading on such an association can only
+    # ever produce a crash, never catch an N+1 worth catching. Before this,
+    # destroying any reactable/votable/commentable record that had been found by
+    # id (which is every controller `destroy` action) raised
+    # StrictLoadingViolationError.
     included do
-      has_many :reactions, as: :reactable, dependent: :destroy if Shared::Reactable.backed?
+      has_many :reactions, as: :reactable, dependent: :destroy, strict_loading: false if Shared::Reactable.backed?
     end
 
     def reacted_by?(user, kind: "like")

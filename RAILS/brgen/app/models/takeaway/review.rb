@@ -6,6 +6,7 @@ class Takeaway::Review < ApplicationRecord
   include Shared::Notifiable
   include Shared::Reactable
   include Shared::Votable
+  include Shared::StrictSafeAssociations
 
   belongs_to :user
   belongs_to :order, class_name: "Takeaway::Order"
@@ -18,7 +19,9 @@ class Takeaway::Review < ApplicationRecord
 
   private
 
+  # Same as Marketplace::Review#refresh_listing_rating — the callback runs on
+  # destroy, when the review was found by id and nothing is preloaded.
   def refresh_restaurant_rating
-    restaurant&.update_rating!
+    strict_safe(:restaurant)&.update_rating!
   end
 end

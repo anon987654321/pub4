@@ -18,6 +18,8 @@ class Takeaway::MenuItem < ApplicationRecord
   scope :available, -> { where(available: true) }
 
   def price_display = "#{price_cents / 100.0} NOK"
-  def restaurant_owner = restaurant&.user
+  # tracks_activity actor — runs in an after_commit on a menu item loaded by id,
+  # where `restaurant&.user` was a lazy read. See Shared::StrictSafeAssociations.
+  def restaurant_owner = strict_safe(:restaurant)&.user
   def available_for_order? = available? && restaurant&.active?
 end
