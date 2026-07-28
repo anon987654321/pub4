@@ -5606,9 +5606,32 @@ CHORD_PROGRESSIONS = {
   eight_bar_cycle_home:     %w[Am9 D7b9 Gm9 C9 Fmaj9 Bm7b5 E7b9 Am9],
   eight_bar_pedal_dark:     %w[Cm9 Dbmaj9/C Ebmaj9/C Fm9/C Cm9 Abmaj9/C Bbmaj9/C Cm9],
   eight_bar_bright_arc:     %w[Dmaj9 Bm9 Gmaj9 Amaj9 Dmaj9 Em9 Amaj9 Dmaj9],
+  # Root motion transcribed from a 92 BPM Ableton set: an Operator bassline
+  # walking C - Eb - F - G, i-bIII-iv-V in C minor, with an E natural passing
+  # through bar 1 as the blues third. The E is a bass inflection, not a chord
+  # tone, so it is not voiced here.
+  minor_blues_step_up: %w[Cm9 Ebmaj9 Fm9 G7b9],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
+  # Recreation of a 92 BPM Ableton Live 9.7 set (4_seven), transcribed from the
+  # .als rather than approximated by ear. What the set actually contains:
+  #   - a 4-bar frozen audio loop on an audio track (16 beats = 10.43s @92)
+  #   - an Operator FM bass, 2-bar phrase, C-E-C-G / Eb / F / G
+  #   - two Drum Racks: a kick oneshot and a DMX analog clap, 2-bar pattern
+  #   - returns: Ambience Medium reverb, Dotted Eighth Note delay
+  # The bass line is the only unambiguous harmony in the set (the sample carries
+  # the rest), so the progression is its root motion: i-bIII-iv-V in C minor.
+  # Straight sixteenths, not Dilla-lean: the set has no groove pool applied.
+  four_seven: {
+    bpm: 92, progression: :minor_blues_step_up, chord_bars: 1, phrase_bars: 8,
+    # feel:, not drum_preset: -- dilla picks grids through DRUM_PATTERN_SETS,
+    # which merges in DillaLofiMachine::DRUM_PRESETS, so :four_seven there is
+    # reachable as a feel and carries the transcribed kick/clap grid verbatim.
+    swing: 52, feel: :four_seven, voicing: :rootless,
+    intro_bars: 2,
+    timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 }
+  },
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
     feel: :chromatic_planing,
