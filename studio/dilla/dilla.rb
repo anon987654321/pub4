@@ -3419,6 +3419,12 @@ end
 TRACK_SAMPLE_LOOPS = {
   # The frozen 4-bar loop from the 92 BPM Ableton set recreated as :four_seven.
   four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0 },
+  # 4 bars taken from 13.88s of the source, which is where the spoken intro
+  # stops: the low end steps up 7 dB at 13.5s and stays there, while the speech
+  # band drops. 103 BPM is corroborated twice over -- the onset sweep picks 103,
+  # and the strongest self-similarity in the whole take (0.300) sits at 1.16s,
+  # which is two beats at 103 to within a millisecond.
+  nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 103.0 },
 }.freeze
 
 def sample_loop_for(track)
@@ -5979,6 +5985,161 @@ def chord_from_root(root_hz, quality, voices: 5)
   extra = intervals.max + 2
   hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
   hz.sort.first(voices)
+end
+
+# --- keeping a sampled loop's harmony -----------------------------------------
+#
+# A sampled loop brings its own key with it. If the engine generates pads in a
+# different one, the two are simply out of tune with each other and no amount of
+# mixing fixes that. This measures what key the loop is in and moves the
+# generated harmony onto it.
+#
+# Goertzel per semitone rather than an FFT: only 12 pitch classes matter here,
+# and this needs no gem and no sidecar file.
+HARMONIC_KEEP = ENV["HARMONIC_KEEP"] == "1"
+HARMONIC_SHUFFLE = ENV["HARMONIC_SHUFFLE"] == "1"
+CHROMA_RATE = 22_050
+CHROMA_BLOCK_SEC = 0.5
+CHROMA_ANALYSIS_SEC = 8.0
+CHROMA_LOW_HZ = 60.0
+CHROMA_HIGH_HZ = 2000.0
+
+# Krumhansl-Schmuckler key profiles: how strongly each scale degree is weighted
+# in music that is actually in that key. Correlating a measured chroma against
+# all 24 rotations is the standard way to name a key from audio.
+KRUMHANSL_MAJOR = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88].freeze
+KRUMHANSL_MINOR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17].freeze
+
+def goertzel_magnitude(block, freq)
+  coeff = 2.0 * Math.cos(2.0 * Math::PI * freq / CHROMA_RATE)
+  prev = 0.0
+  prev2 = 0.0
+  block.each do |x|
+    cur = x + (coeff * prev) - prev2
+    prev2 = prev
+    prev = cur
+  end
+  Math.sqrt([(prev * prev) + (prev2 * prev2) - (coeff * prev * prev2), 0.0].max)
+end
+
+def sample_chroma(path)
+  @sample_chroma_cache ||= {}
+  return @sample_chroma_cache[path] if @sample_chroma_cache.key?(path)
+
+  @sample_chroma_cache[path] = begin
+    raw = IO.popen(["ffmpeg", "-v", "error", "-t", CHROMA_ANALYSIS_SEC.to_s, "-i", path,
+                    "-ac", "1", "-ar", CHROMA_RATE.to_s, "-f", "s16le", "-"], "rb", &:read)
+    samples = raw.to_s.unpack("s<*").map { |s| s / PCM16_FULL_SCALE }
+    if samples.empty?
+      nil
+    else
+      block = (CHROMA_RATE * CHROMA_BLOCK_SEC).to_i
+      acc = Array.new(12, 0.0)
+      (0...(samples.size / block)).each do |b|
+        chunk = samples[b * block, block]
+        next unless chunk && chunk.size == block
+
+        (2..6).each do |octave|
+          12.times do |pc|
+            freq = 440.0 * (2.0**(((octave * 12) + pc - 57) / 12.0))
+            next unless freq.between?(CHROMA_LOW_HZ, CHROMA_HIGH_HZ)
+
+            acc[pc] += goertzel_magnitude(chunk, freq)
+          end
+        end
+      end
+      peak = acc.max
+      peak.positive? ? acc.map { |v| v / peak } : nil
+    end
+  rescue StandardError => e
+    warn "chroma: #{e.message}"
+    nil
+  end
+end
+
+def correlate(a, b)
+  ma = a.sum / a.size
+  mb = b.sum / b.size
+  num = (0...a.size).sum { |i| (a[i] - ma) * (b[i] - mb) }
+  den = Math.sqrt((0...a.size).sum { |i| (a[i] - ma)**2 } * (0...b.size).sum { |i| (b[i] - mb)**2 })
+  den.positive? ? num / den : 0.0
+end
+
+# => [root_pitch_class, :major|:minor, fit] or nil
+def sample_key(path)
+  ch = sample_chroma(path)
+  return nil unless ch
+
+  best = nil
+  12.times do |rot|
+    rotated = Array.new(12) { |i| ch[(i + rot) % 12] }
+    { major: KRUMHANSL_MAJOR, minor: KRUMHANSL_MINOR }.each do |mode, template|
+      fit = correlate(rotated, template)
+      best = [rot, mode, fit] if best.nil? || fit > best[2]
+    end
+  end
+  best
+end
+
+def hz_to_pitch_class(hz)
+  return 0 unless hz.to_f.positive?
+
+  ((69 + (12 * Math.log2(hz / 440.0))).round % 12)
+end
+
+NOTE_TO_PITCH_CLASS = {
+  "C" => 0, "C#" => 1, "Db" => 1, "D" => 2, "D#" => 3, "Eb" => 3, "E" => 4,
+  "F" => 5, "F#" => 6, "Gb" => 6, "G" => 7, "G#" => 8, "Ab" => 8, "A" => 9,
+  "A#" => 10, "Bb" => 10, "B" => 11
+}.freeze
+
+# Shifts every note letter in a chord symbol, root and slash bass alike, so
+# "Bbm/E" transposed up 3 becomes "Dbm/G". Lower-case suffixes (m, maj, sus,
+# nc) and digits are left alone -- only capital A-G names a pitch here.
+def transpose_chord_name(name, shift)
+  return name if shift.zero?
+
+  name.to_s.gsub(/([A-G])([b#]?)/) do
+    pc = NOTE_TO_PITCH_CLASS["#{Regexp.last_match(1)}#{Regexp.last_match(2)}"]
+    pc ? PITCH_CLASSES[(pc + shift) % 12] : Regexp.last_match(0)
+  end
+end
+
+# Moves every chord by the interval between the pads' own root and the loop's,
+# choosing the shorter direction so the pads do not jump an octave to get there.
+#
+# Names move with the frequencies. Transposing :hz alone left the labels saying
+# what the harmony USED to be, and since beauty_report scores off c[:name] the
+# reported score described a progression that was never rendered.
+def transpose_pads_to(pads, target_pc)
+  return pads if pads.empty?
+
+  current_pc = hz_to_pitch_class(pads.first[:hz].min)
+  shift = (target_pc - current_pc) % 12
+  shift -= 12 if shift > 6
+  return pads if shift.zero?
+
+  factor = 2.0**(shift / 12.0)
+  pads.map do |c|
+    c.merge(hz: c[:hz].map { |h| (h * factor).round(2) },
+            name: transpose_chord_name(c[:name], shift))
+  end
+end
+
+# Reorders chords so their top voice traces one arc -- up to a peak, then down
+# -- instead of wandering. The melody a listener follows is the top note of each
+# chord, so ordering by that is ordering the tune. The first chord stays put:
+# it is the harmonic home, and an arc that does not start at home is just a
+# different wander.
+def shuffle_pads_for_melody(pads)
+  return pads if pads.length < 4
+
+  home, *rest = pads
+  by_top = rest.sort_by { |c| c[:hz].max }
+  rising = []
+  falling = []
+  by_top.each_with_index { |c, i| (i.even? ? rising : falling) << c }
+  [home] + rising + falling.reverse
 end
 
 def generate_progression(root_hz: 130.81, mode: :minor, length: 8, seed: nil)
@@ -9279,6 +9440,19 @@ TRACK_LAYER_PROFILES = {
     # The loop carries the chords; the synth pad only shades under it.
     "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
     "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
+    "MASTER_CHAIN" => "akmd",
+  },
+  # Same shape as four_seven -- the loop carries the harmony, the synths shade
+  # under it -- but this source is denser and sits higher, so the pad is pulled
+  # further back and the loop is not pushed as hard.
+  nightbus: {
+    "PAD_TEXTURE" => "0", "CHOIR_VOX" => "0", "SPEAK" => "0",
+    "LEAD_ARP" => "0", "SCALE_LEAD" => "0", "HARMONY_LEAD" => "0",
+    "CREATIVE_LEAD" => "0", "MELODIC_LEAD" => "0", "EXPERIMENTAL_LEADS" => "0",
+    "LEAD_MORPH" => "0", "SYNTH_MORPH" => "0", "PAD_LAYERS" => "0",
+    "DRUM_CHOPS" => "0", "ECLECTIC_PERC" => "0", "SELF_SAMPLE" => "0",
+    "PAD_VOL" => "26", "HARM_MIX_WEIGHT" => "0.45",
+    "SAMPLE_LOOP_VOL" => "1.1", "SAMPLE_LOOP_WEIGHT" => "1.45",
     "MASTER_CHAIN" => "akmd",
   },
 }.freeze
@@ -13841,6 +14015,26 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       abort "progression too short (#{pads.length} chords) for track=#{cfg[:track]} — check chord symbols"
     end
   end
+  # Before arrangement, so every downstream voice -- pads, bass, leads, the
+  # arrangement's own generated sections -- inherits the loop's key rather than
+  # being transposed one at a time afterwards.
+  if (HARMONIC_KEEP || HARMONIC_SHUFFLE) && !pads.empty?
+    if HARMONIC_KEEP && (loop_path = sample_loop_for(ENV["TRACK"])&.dig(:path))
+      if (root_pc, mode, fit = sample_key(loop_path))
+        was = hz_to_pitch_class(pads.first[:hz].min)
+        pads = transpose_pads_to(pads, root_pc)
+        puts "harmonic keep: loop reads #{PITCH_CLASSES[root_pc]} #{mode} (fit #{fit.round(2)}) — " \
+             "pads #{PITCH_CLASSES[was]} → #{PITCH_CLASSES[root_pc]}"
+      end
+    end
+    if HARMONIC_SHUFFLE
+      before = pads.map { |c| c[:hz].max.round }
+      pads = shuffle_pads_for_melody(pads)
+      after = pads.map { |c| c[:hz].max.round }
+      puts "harmonic shuffle: top voice #{before.join(' ')} → #{after.join(' ')}"
+    end
+  end
+
   fugue_phases = []
   chord_bar_lens = nil
   unless pads.empty?
