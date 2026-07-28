@@ -12311,11 +12311,10 @@ def render_xlead_morph_fluidsynth(path, pad_events, duration, cfg)
   fs_gain = first_patch&.fetch(:fs_gain, 1.38) || 1.38
   sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, midi_path
   FileUtils.rm_f(midi_path)
-  measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (LEAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 26.0)
-  sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(first_patch, duration, boost_db),
+  sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(first_patch, duration, 0.0),
       "-c:a", "pcm_s16le", "#{path}.xlead.wav"
   FileUtils.mv("#{path}.xlead.wav", path)
+  normalize_wav_to_rms!(path, LEAD_TARGET_RMS_DB)
   path
 end
 
@@ -12989,6 +12988,28 @@ LEAD_FX_VARIANTS = [
   "highpass=f=190,vibrato=f=0.55:d=0.016,tremolo=f=0.35:d=0.06,aecho=0.5:0.44:150|260:0.26|0.14,lowpass=f=5800",
 ].freeze
 
+# Trim a rendered stem to a target RMS. Exists because the lead path used to
+# measure the raw fluidsynth output, apply the make-up gain, and only THEN run
+# the patch's fx chain -- and 95 of the catalog's aecho/chorus entries carry
+# attenuating in_gain:out_gain pairs worth -12..-20 dB (the same argument-order
+# mistake fixed on the harmonic bus in f733aa3ee). The fx knocked the lead back
+# down after the gain had already been committed, so LEAD_TARGET_RMS_DB was
+# never actually reached and leads sat far under the kit. Normalising on the way
+# out measures what the listener actually gets.
+def normalize_wav_to_rms!(path, target_db, floor: -24.0, ceil: 26.0)
+  return path unless File.file?(path) && tool_available?("ffmpeg")
+  measured = band_rms(path, highpass: 20, lowpass: 20_000)
+  return path unless measured.finite?
+  gain = (target_db - measured).clamp(floor, ceil)
+  return path if gain.abs < 0.2
+  tmp = "#{path}.norm.wav"
+  sh! "ffmpeg", "-y", "-i", path, "-af",
+      "volume=#{gain.round(2)}dB,alimiter=limit=0.96:level_out=0.97",
+      "-c:a", "pcm_s16le", tmp
+  FileUtils.mv(tmp, path) if File.file?(tmp)
+  path
+end
+
 def lead_post_fx_chain(patch, duration, boost_db)
   base = "volume=#{boost_db.round(2)}dB"
   patch_fx = patch&.dig(:fx)
@@ -13058,13 +13079,12 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
   fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
   sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, lead_voice[:sf2], midi_path
   FileUtils.rm_f(midi_path)
-  measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
   target_db = scale_arp ? (LEAD_TARGET_RMS_DB + 1.5) : LEAD_TARGET_RMS_DB
-  boost_db = (target_db - measured_rms).clamp(0.0, 24.0)
   patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
-  sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(patch, duration, boost_db),
+  sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(patch, duration, 0.0),
       "-c:a", "pcm_s16le", "#{path}.lead.wav"
   FileUtils.mv("#{path}.lead.wav", path)
+  normalize_wav_to_rms!(path, target_db)
   path
 end
 
