@@ -40,6 +40,15 @@ Rails.application.routes.draw do
     resources :reports, only: %i[index update]
   end
 
+  # Declared before the shallow nesting below, which yields GET /posts/:id. That
+  # route matched /posts/new first and sent "new" through as an id, so the
+  # standalone new-post page answered 404 ("Couldn't find Post with id=new")
+  # while new_post_path happily generated the link to it.
+  resources :posts do
+    resources :comments, shallow: true
+    resource :vote, only: [ :create ], controller: "votes"
+  end
+
   resources :communities do
     resources :posts, shallow: true do
       resources :comments, shallow: true do
@@ -47,11 +56,6 @@ Rails.application.routes.draw do
       end
       resource :vote, only: [ :create ], controller: "votes"
     end
-  end
-
-  resources :posts do
-    resources :comments, shallow: true
-    resource :vote, only: [ :create ], controller: "votes"
   end
   patch "drafts/:id", to: "drafts#update", as: :draft
 

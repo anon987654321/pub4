@@ -14,6 +14,12 @@
       </div>
     <% end %>
   </nav>
-  <button type="button" class="nav_swiper_grip" data-action="click->nav-swiper#toggle"
-          aria-label="Show sections" aria-expanded="false" aria-controls="nav_sections" data-nav-swiper-target="grip"></button>
+  <%# Was an always-visible 46x5 grip pill at the top centre. It computed to
+      46x44 with a pill radius, so it painted as a dim grey circle sitting over
+      the nav — the most conspicuous thing on the page and the first thing
+      anyone noticed. The pull-down gesture and pointer-at-the-top-edge reveal
+      cover mouse and touch; this stays for keyboard and assistive tech, and
+      shows itself only on focus, exactly like the skip link above it. %>
+  <button type="button" class="nav_swiper_reveal" data-action="click->nav-swiper#toggle"
+          aria-expanded="false" aria-controls="nav_sections" data-nav-swiper-target="grip">Show sections</button>
 </div>

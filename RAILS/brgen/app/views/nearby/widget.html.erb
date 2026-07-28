@@ -25,8 +25,8 @@
   <% elsif Current.user.present? %>
     <div class="nearby-chat-widget-empty">
       <strong>Share location to join</strong>
-      <p>Nearby chat is radius-scoped (~10&nbsp;km). Enable location on the nearby page so we can drop you in the room with people around you.</p>
-      <%= link_to "Enable location", nearby_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      <p>The room is everyone within about 10&nbsp;km. Share your location to join it.</p>
+      <button type="button" class="nearby-chat-widget-cta" data-action="nearby-chat#locate">Share location</button>
       <% unless authenticated? %>
         <%= link_to "Sign in for a permanent account", new_session_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
       <% end %>

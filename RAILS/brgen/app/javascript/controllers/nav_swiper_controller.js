@@ -23,8 +23,21 @@ export default class extends Controller {
     window.addEventListener("touchend", this.onEnd, { passive: true })
     window.addEventListener("pointerdown", this.onStart, { passive: true })
     window.addEventListener("pointerup", this.onEnd, { passive: true })
+    // Only touchmove was bound, so a mouse could never complete the reveal
+    // gesture — the grip pill was desktop's only way in, which is why removing
+    // it needed a replacement first. A hover into the top few pixels is the
+    // mouse equivalent of the swipe, and costs no permanent chrome.
+    this.onHover = this.onHover.bind(this)
+    if (window.matchMedia("(hover: hover)").matches) {
+      window.addEventListener("pointermove", this.onHover, { passive: true })
+    }
     document.addEventListener("click", this.onAway, true)
     document.addEventListener("keydown", this.onKey)
+  }
+
+  onHover(e) {
+    if (e.pointerType === "touch") return
+    if (!this.revealed && e.clientY <= 2) this.show()
   }
 
   disconnect() {
@@ -33,6 +46,7 @@ export default class extends Controller {
     window.removeEventListener("touchend", this.onEnd)
     window.removeEventListener("pointerdown", this.onStart)
     window.removeEventListener("pointerup", this.onEnd)
+    window.removeEventListener("pointermove", this.onHover)
     document.removeEventListener("click", this.onAway, true)
     document.removeEventListener("keydown", this.onKey)
   }

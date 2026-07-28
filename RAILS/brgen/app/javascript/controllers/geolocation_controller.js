@@ -7,6 +7,11 @@ export default class extends Controller {
   #watch = null
 
   connect() {
+    // Anything that needs coordinates can ask for them without knowing where
+    // this controller lives in the layout.
+    this.onRequest = () => this.#prompt()
+    window.addEventListener("brgen:request-location", this.onRequest)
+
     if (!navigator.geolocation || !this.hasUrlValue) return
     // Skip when document Permissions-Policy denies geolocation (no console spam).
     try {
@@ -25,7 +30,21 @@ export default class extends Controller {
   }
 
   disconnect() {
+    window.removeEventListener("brgen:request-location", this.onRequest)
     if (this.#watch !== null) navigator.geolocation.clearWatch(this.#watch)
+  }
+
+  // A one-shot ask, for surfaces that need coordinates on demand. watchPosition
+  // in connect() only prompts once per page; if the visitor dismissed it there
+  // is otherwise no way back short of browser settings.
+  #prompt() {
+    if (!navigator.geolocation || !this.hasUrlValue) return
+
+    navigator.geolocation.getCurrentPosition(
+      pos => this.#send(pos.coords.latitude, pos.coords.longitude),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10_000 }
+    )
   }
 
   // Called by Turbo Stream when a nearby user is detected server-side.
@@ -45,6 +64,18 @@ export default class extends Controller {
         "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content
       },
       body: JSON.stringify({ latitude: lat, longitude: lng, radius_km: this.radiusKmValue })
-    }).catch(() => {})
+    }).then(() => this.#announceLocated()).catch(() => {})
+  }
+
+  // Anything server-rendered against "do we know where you are" was rendered
+  // before the browser answered that question — the permission prompt resolves
+  // after first paint. The nearby chat widget was the visible casualty: its
+  // frame rendered "Share location to join", location arrived a second later,
+  // and nothing told the frame to reload, so it sat on that dead end for the
+  // whole session. Fires once; watchPosition keeps calling #send as you move.
+  #announceLocated() {
+    if (this.located) return
+    this.located = true
+    window.dispatchEvent(new CustomEvent("brgen:located"))
   }
 }

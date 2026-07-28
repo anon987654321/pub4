@@ -34,6 +34,13 @@ export default class extends Controller {
       this.close()
       if (this.hasTabTarget) this.tabTarget.focus()
     }
+    // The frame is server-rendered against "do we know where you are", which is
+    // false at first paint because the geolocation prompt has not resolved yet.
+    // Without this the panel showed "Share location to join" for the rest of the
+    // session even once location had arrived.
+    this.onLocated = () => this.#reloadFrame()
+    window.addEventListener("brgen:located", this.onLocated, { once: true })
+
     document.addEventListener("click", this.onDocumentClick)
     document.addEventListener("keydown", this.onKeydown)
   }
@@ -41,8 +48,20 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("click", this.onDocumentClick)
     document.removeEventListener("keydown", this.onKeydown)
+    window.removeEventListener("brgen:located", this.onLocated)
     this.observer?.disconnect()
     this.observer = null
+  }
+
+  // Re-fetch by reassigning src: a turbo-frame only reloads when src changes or
+  // .reload() is called, and .reload() is not in every Turbo version this fleet
+  // runs.
+  #reloadFrame() {
+    const frame = this.element.querySelector("turbo-frame[src]")
+    if (!frame) return
+
+    if (typeof frame.reload === "function") frame.reload()
+    else frame.setAttribute("src", frame.getAttribute("src"))
   }
 
   toggle(event) {
@@ -52,6 +71,15 @@ export default class extends Controller {
 
   show() { this.#apply(true, { focus: true }) }
   close() { this.#apply(false, { focus: false }) }
+
+  // The "share location" CTA used to be a link to /nearby with turbo_frame:
+  // "_top" — it closed the chat and navigated the whole page to go and grant a
+  // permission the chat itself could have asked for. Ask here; the reload on
+  // brgen:located then swaps the dead end for the room.
+  locate(event) {
+    event?.preventDefault()
+    window.dispatchEvent(new CustomEvent("brgen:request-location"))
+  }
 
   get open() {
     return this.hasPanelTarget && !this.panelTarget.hasAttribute("hidden")
