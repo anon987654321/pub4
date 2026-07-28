@@ -71,17 +71,24 @@ module Master
         ]
       end
 
+      # Which step-4 note applies depends on which kind of pack this is; the
+      # surrounding template does not otherwise vary. Split out so this method is
+      # the template and that one is the choice.
+      def binary_inlining_note(full_inline:)
+        if full_inline
+          "4. Every git-tracked **text** file is inlined in full — no size cap, no " \
+          "\"large file, not inlined\" placeholders. Binaries (images, fonts, archives) " \
+          "are still not base64-inlined (that once produced multi-GB snapshots); their " \
+          "path just doesn't appear as a fenced block — read them from the real repo if needed."
+        else
+          "4. This is the small boot-context digest: binaries and files over the size cap " \
+          "are **listed only** (not inlined) — do not expect base64 blocks. For a full, " \
+          "uncapped pack use `bin/snapshot` instead (writes `snapshot_<LABEL>.md` at the repo root)."
+        end
+      end
+
       def rehydrate_lines(full_inline: false)
-        binary_note = if full_inline
-                        "4. Every git-tracked **text** file is inlined in full — no size cap, no " \
-                        "\"large file, not inlined\" placeholders. Binaries (images, fonts, archives) " \
-                        "are still not base64-inlined (that once produced multi-GB snapshots); their " \
-                        "path just doesn't appear as a fenced block — read them from the real repo if needed."
-                      else
-                        "4. This is the small boot-context digest: binaries and files over the size cap " \
-                        "are **listed only** (not inlined) — do not expect base64 blocks. For a full, " \
-                        "uncapped pack use `bin/snapshot` instead (writes `snapshot_<LABEL>.md` at the repo root)."
-                      end
+        binary_note = binary_inlining_note(full_inline:)
         [
           "### 5. Rehydrate files locally (mirror extraction)",
           "To turn this `.md` back into a working tree:",
@@ -90,8 +97,14 @@ module Master
           "2. For each `## \\`relative/path\\`` heading, recreate directory structure under `$SNAP/work`.",
           "3. Copy the fenced block body **exactly** (preserve newlines; strip only the outer ```lang fences).",
           binary_note,
-          "5. Repeat for every sibling snapshot file present (e.g. MASTER + RAILS + OPENBSD), each",
-          "   extracting to its own subtree under `$SNAP/work`.",
+          # Names the files SnapshotPublisher actually writes (see its `paths`:
+          # MASTER_snapshot.md / OPERATOR_snapshot.md). This line used to say
+          # "e.g. MASTER + RAILS + OPENBSD", which implied an OPENBSD_snapshot.md
+          # that is never produced — the OpenBSD material ships as
+          # OPERATOR_snapshot.md. An agent following the old wording would look
+          # for a file that does not exist.
+          "5. Repeat for every sibling snapshot file present — typically `MASTER_snapshot.md` and",
+          "   `OPERATOR_snapshot.md` — each extracting to its own subtree under `$SNAP/work`.",
           "6. Verify: file count vs Tree, spot-check hashes, run targeted tests from the mirrored tree.",
           "",
           "Do not edit the mirrored tree until you have a written assessment and a trace for the path",

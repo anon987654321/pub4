@@ -46,20 +46,50 @@ module Master
             @auto_fix = false
           end
 
-          def check_ast(ast, _code, path:)
+          # Counts *code* lines, not the raw start..end span.
+          #
+          # The span version counted comments and blank lines toward method
+          # length, which contradicts this rule's own description ("methods under
+          # 10 lines ideal") — that is about how much logic a method holds, not
+          # how well it is explained. In a codebase whose convention is a
+          # paragraph of rationale above the tricky line, the effect was backwards:
+          # Cli::TurnRouter.call was reported at 22 lines while containing 10 lines
+          # of code and 8 lines of comment, so the only way to satisfy the rule was
+          # to delete the explanation. Penalising documentation is the opposite of
+          # what a quality gate should do.
+          def check_ast(ast, code, path:)
             return [] unless ast
+
+            lines = code.to_s.lines
             findings = []
             visit(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
-              len = node.location.end_line - node.location.start_line
+
+              len = code_length(node, lines)
               next if len <= MAX
-              name = node.name
-              findings << finding(line: node.location.start_line, message: "method #{name} is #{len} lines (max #{MAX}) — extract helpers")
+
+              findings << finding(
+                line: node.location.start_line,
+                message: "method #{node.name} is #{len} code lines (max #{MAX}) — extract helpers",
+              )
             end
             findings
           end
 
           private
+
+          # Body only (between `def` and its `end`), excluding blank lines and
+          # whole-line comments. A trailing comment on a code line still counts,
+          # because that line carries code.
+          def code_length(node, lines)
+            first = node.location.start_line   # 1-based `def` line
+            last  = node.location.end_line     # 1-based `end` line
+            body  = lines[first...(last - 1)] || []
+            body.count do |line|
+              stripped = line.strip
+              !stripped.empty? && !stripped.start_with?("#")
+            end
+          end
 
           def visit(node, &block)
             return unless node.respond_to?(:child_nodes)

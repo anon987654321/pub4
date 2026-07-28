@@ -93,7 +93,12 @@ module Master
         # Inline in chat shell only — keeps first paint off the ~30KB full catalog parse.
         def web_boot_payload_minimal
           runtime_cfg = load("runtime")
-          vm = Master.load_yaml(File.join(Master::REPO_ROOT, "OPENBSD", "openbsd", "vm_resource.yml"), default: {}) rescue {}
+          # Path was "OPENBSD/openbsd/vm_resource.yml" — a doubled segment. The
+          # file is at OPENBSD/vm_resource.yml, so every load printed
+          # "load_yaml: No such file or directory" and fell through to {} via the
+          # rescue, silently defaulting falcon_worker_budget to FALCON_COUNT
+          # instead of the VM's configured master_falcon_workers limit.
+          vm = Master.load_yaml(File.join(Master::REPO_ROOT, "OPENBSD", "vm_resource.yml"), default: {}) rescue {}
           pending = enhancements.count { |item| item["status"].to_s == "pending" }
           falcon_workers = Integer(vm.dig("limits", "master_falcon_workers") || ENV.fetch("FALCON_COUNT", "2"))
 

@@ -36,24 +36,16 @@ module Master
         suppress_lower_priority_laws(rows)
       end
 
+      # Would applying this fix trade the original violation for a worse one?
       def reject_higher_priority?(original_violation:, before:, after:, path:)
-        orig_rule = (original_violation[:rule] || original_violation["rule"]).to_s
-        orig_severity = (original_violation[:severity] || original_violation["severity"]).to_s
-        baseline = { rule_id: orig_rule, severity: orig_severity.to_sym,
-                     law_resolver: @law_resolver, rules_index: @rules_index }
-        introduced = after.map { |finding| normalize(finding).merge("file" => path) } -
-                     before.map { |finding| normalize(finding).merge("file" => path) }
-        blocker = introduced.find do |finding|
-          Priority.higher?(
-            { rule_id: finding["rule"], severity: finding["severity"].to_s.to_sym,
-              law_resolver: @law_resolver, rules_index: @rules_index },
-            baseline,
-          )
+        baseline = priority_of(original_violation)
+        blocker = findings_introduced(before:, after:, path:).find do |finding|
+          Priority.higher?(priority_of(finding), baseline)
         end
         return false unless blocker
 
         log_conflict(
-          rule_a: orig_rule,
+          rule_a: baseline[:rule_id],
           rule_b: blocker["rule"],
           resolution: "reject fix: introduced higher-priority #{blocker["severity"]} finding",
           file: path,
@@ -63,6 +55,26 @@ module Master
       end
 
       private
+
+      # Priority tuple for either shape this class sees: an original violation
+      # (symbol *or* string keys, hence the double lookup) or a normalized
+      # finding (string keys only).
+      def priority_of(row)
+        {
+          rule_id: (row[:rule] || row["rule"]).to_s,
+          severity: (row[:severity] || row["severity"]).to_s.to_sym,
+          law_resolver: @law_resolver,
+          rules_index: @rules_index,
+        }
+      end
+
+      # Findings present after the fix that were not present before it.
+      # Both sides are normalized and file-stamped first so the set difference
+      # compares like with like.
+      def findings_introduced(before:, after:, path:)
+        stamped = ->(rows) { rows.map { |finding| normalize(finding).merge("file" => path) } }
+        stamped.call(after) - stamped.call(before)
+      end
 
       attr_reader :root, :bus, :config
 

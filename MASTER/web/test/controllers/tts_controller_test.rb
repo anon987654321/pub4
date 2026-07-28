@@ -4,10 +4,31 @@ require "test_helper"
 require "fileutils"
 
 class TtsControllerTest < ActionDispatch::IntegrationTest
+  # TtsJob::CACHE_DIR is one directory shared by the whole process group, and
+  # Rails parallelises across 8 forked workers once the suite passes 50 tests.
+  # This setup used to `rm_f` every file in it, so one worker wiped the fixtures
+  # another had just written — the two status/destroy tests failed only in a full
+  # parallel run and passed in isolation at every seed.
+  #
+  # No wipe is needed: job ids are SHA256(voice|style|rate|pitch|text)[0,32], so
+  # each test's files are uniquely keyed by its own inputs and cannot collide with
+  # another test's. Removing only what this test created keeps it parallel-safe.
   setup do
     @cache_dir = TtsJob::CACHE_DIR
     FileUtils.mkdir_p(@cache_dir)
-    FileUtils.rm_f(Dir.glob(@cache_dir.join("*")))
+    @created_job_ids = []
+  end
+
+  teardown do
+    Array(@created_job_ids).each do |job_id|
+      %w[.mp3 .job .err .meta.json].each { |ext| FileUtils.rm_f(@cache_dir.join("#{job_id}#{ext}")) }
+    end
+  end
+
+  # Records the id so teardown cleans up just this test's files.
+  def track(job)
+    (@created_job_ids ||= []) << job.job_id
+    job
   end
 
   test "rejects empty text" do
@@ -35,7 +56,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     text = "hello test"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
-    job = TtsJob.new(text:, voice:, style:)
+    job = track(TtsJob.new(text:, voice:, style:))
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
 
@@ -52,7 +73,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     text = "status ready"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
-    job = TtsJob.new(text:, voice:, style:)
+    job = track(TtsJob.new(text:, voice:, style:))
     File.binwrite(@cache_dir.join("#{job.job_id}.mp3"), "ID3\x03\x00fake-mp3")
     File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
     File.write(
@@ -71,7 +92,7 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     text = "cancel me"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
     style = Master::Voice::Speech.default_style
-    job = TtsJob.new(text:, voice:, style:)
+    job = track(TtsJob.new(text:, voice:, style:))
     cache_path = @cache_dir.join("#{job.job_id}.mp3")
     File.binwrite(cache_path, "ID3\x03\x00fake-mp3")
     File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
