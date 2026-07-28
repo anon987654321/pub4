@@ -868,7 +868,7 @@ SYNTH_PATCH_CATALOG = [
   # --- Experimental electronic pads (musical, not noise) ---
   synth_patch(:glass_fm_pad, role: :warm, program: 98, weight: 2.6, mix: 0.72, fs_gain: 1.38,
               midi_fx: MIDI_FX_PAD_WARM,
-              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.1:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
+              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.08:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
   synth_patch(:vapor_supersaw, role: :warm, program: 0, sf2: :supersaw, weight: 2.4, mix: 0.68, fs_gain: 1.36,
               midi_fx: MIDI_FX_PAD_WARM,
               fx: "chorus=0.55:0.75:40|50:0.28|0.24:0.32|0.28:1.2|1.5,lowpass=f=4800,aecho=0.4:0.36:140|260:0.22|0.12"),
@@ -3411,462 +3411,6 @@ def sonic_vinyl_level(sonic)
   sonic&.dig("synth", "vinyl_noise")&.to_f || 0.08
 end
 
-# Audio loops that play UNDERNEATH the synth arrangement. Deliberately not the
-# stems path (use_stem_harmony), which REPLACES the harmonic bus wholesale --
-# that swaps the engine's harmony out for the sample rather than putting the
-# two together, which is the opposite of what a sampled bed is for. This is its
-# own bus, mixed alongside drums/harm/bass like any other.
-TRACK_SAMPLE_LOOPS = {
-  # The frozen 4-bar loop from the 92 BPM Ableton set recreated as :four_seven.
-  four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0 },
-}.freeze
-
-def sample_loop_for(track)
-  raw = ENV["SAMPLE_LOOP"].to_s
-  return if raw == "0"
-
-  entry = if raw.empty?
-            TRACK_SAMPLE_LOOPS[track.to_s.downcase.tr("-", "_").to_sym]
-          else
-            { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
-          end
-  entry if entry && File.file?(entry[:path].to_s)
-end
-
-# Alternate the sampled bed against the engine's own pads instead of running
-# both flat for the whole track. Each takes the foreground for SAMPLE_ALT_BARS
-# bars while the other drops back -- ducked, not muted, so the arrangement stays
-# continuous and the handover reads as a section change rather than a dropout.
-# Both gains come from the SAME phase expression, so they can never both be
-# forward (which is the crowding this is meant to avoid) or both be down.
-def sample_alt_bars
-  n = ENV.fetch("SAMPLE_ALT_BARS", "4").to_i
-  n.positive? ? n : 0
-end
-
-def sample_alt_gain_expr(beat_p, foreground:, hi: 1.0, lo: 0.25)
-  bars = sample_alt_bars
-  return nil unless bars.positive?
-
-  half = (beat_p * 4.0 * bars).round(4)
-  period = (half * 2).round(4)
-  # Raised cosine over an eighth-bar so the swap glides rather than clicks.
-  ramp = [(beat_p * 0.5), 0.05].max.round(4)
-  on = foreground ? "lt(mod(t,#{period}),#{half})" : "gte(mod(t,#{period}),#{half})"
-  # Symmetric edge: ramp up over the first `ramp` seconds of the foreground
-  # half AND back down over its last `ramp` seconds. A one-sided ramp left the
-  # handover as an instant drop from full to floor, which clicks.
-  edge = "min(1,min(mod(t,#{half}),#{half}-mod(t,#{half}))/#{ramp})"
-  "#{lo}+#{(hi - lo).round(4)}*#{on}*#{edge}"
-end
-
-# Character treatments for a sampled bed. The loop this was written against is
-# already dusty and band-limited (nothing above ~10 kHz, energy piled between
-# 120 Hz and 2.5 kHz, crest factor 1.7), so these lean into that rather than
-# trying to open it up: tape movement, 12-bit grit, saturation. Chosen with
-# SAMPLE_FX; SAMPLE_FX=0 leaves the loop clean.
-#
-# Rates that should lock to the grid take the beat period, so the wobble and
-# any gating stay musical instead of drifting against the drums.
-def sample_fx_chain(beat_p)
-  name = ENV.fetch("SAMPLE_FX", "dusty").to_s.downcase
-  return nil if %w[0 off none clean].include?(name)
-
-  sixteenth = (1.0 / (beat_p / 4.0)).round(3)   # Hz
-  dotted8 = ((beat_p * 0.75) * 1000).round        # ms
-  case name
-  when "chop"
-    # Retrigger feel: gate on 16ths, then a dotted-eighth throw so the chops
-    # trail into each other the way an MPC pad held over the beat does.
-    ["tremolo=f=#{sixteenth}:d=0.42",
-     "aecho=0.92:0.32:#{dotted8}:0.28",
-     "equalizer=f=200:t=o:w=1.2:g=2.0",
-     "acrusher=bits=12:mode=log:aa=1",
-     "asoftclip=type=tanh"]
-  when "warped"
-    # Heavier tape drift plus phasing, for the seasick end of the spectrum.
-    ["vibrato=f=0.9:d=0.22",
-     "aphaser=speed=0.15:decay=0.5:delay=3",
-     "flanger=delay=4:depth=3:speed=0.12",
-     "equalizer=f=1800:t=h:w=1400:g=-2.5",
-     "asoftclip=type=tanh"]
-  when "crushed"
-    ["acrusher=bits=8:mode=log:aa=1",
-     "equalizer=f=160:t=o:w=1.1:g=3.0",
-     "equalizer=f=2600:t=h:w=1600:g=-4.0",
-     "asoftclip=type=atan",
-     "alimiter=limit=0.95"]
-  else # "dusty" -- the default: SP-era wobble, grit and roll-off
-    ["vibrato=f=0.35:d=0.06",
-     "aphaser=speed=0.1:decay=0.3:delay=2",
-     "equalizer=f=250:t=o:w=1.2:g=2.2",
-     "equalizer=f=900:t=o:w=1.4:g=-1.2",
-     "equalizer=f=3500:t=h:w=2200:g=-3.0",
-     "acrusher=bits=12:mode=log:aa=1",
-     "stereotools=mlev=0.9:slev=1.18",
-     "asoftclip=type=tanh"]
-  end
-end
-
-# Real chopping: the source is sliced at its transients and RE-SEQUENCED, not
-# played back linearly with effects over the top. That distinction is the whole
-# technique -- a filter chain on a looping sample still plays the same bar in
-# the same order forever, which is why treating it only with tape/crush/phaser
-# still sounds like the original loop.
-#
-# Dilla's method on an MPC3000: slice to pads, play them back in a different
-# order, truncate the tails so chops stutter, repitch with varispeed (which
-# moves pitch and time together -- asetrate, not a formant-preserving shift),
-# and let the hits land off the grid rather than quantised.
-#
-# Flying Lotus pushes the same idea further out: fewer, longer fragments,
-# reversed slices, wider pitch, and heavy per-chop filtering so successive
-# chops do not share a tone.
-
-# Pitch of a slice, by autocorrelation. Chopping by ear means knowing what note
-# each pad holds; without that, re-sequencing can only shuffle, and a shuffle of
-# a melody is not a better melody.
-def slice_f0(buf, rate, lo: 55.0, hi: 900.0)
-  return nil if buf.size < 512
-
-  n = [buf.size, 8192].min
-  b = buf.first(n)
-  mean = b.sum / n
-  b = b.map { |x| x - mean }
-  min_lag = (rate / hi).floor
-  max_lag = [(rate / lo).ceil, n / 2].min
-  return nil if max_lag <= min_lag
-
-  best = nil
-  best_v = 0.0
-  (min_lag..max_lag).each do |lag|
-    acc = 0.0
-    i = 0
-    while i + lag < n
-      acc += b[i] * b[i + lag]
-      i += 2
-    end
-    if acc > best_v
-      best_v = acc
-      best = lag
-    end
-  end
-  best&.positive? ? (rate.to_f / best) : nil
-end
-
-# Slice the source at its transients and measure each slice once.
-def sample_chop_analysis(path)
-  @sample_chop_analysis ||= {}
-  @sample_chop_analysis[path] ||= begin
-    r = frame_energy(path, highpass: 150, lowpass: 6_000)
-    pts = peak_frames(r[:frames], r[:hop_seconds]).map { |p| p[:time].to_f }.select(&:positive?).sort
-    dur = audio_duration_sec(path).to_f
-    if pts.size < 4
-      step = dur / 16.0
-      pts = (0...16).map { |i| (i * step).round(4) }
-    end
-    rate = (wav_sample_rate(path) rescue SAMPLE_RATE) || SAMPLE_RATE
-    mono = begin
-      load_mono_sample(path)
-    rescue StandardError
-      []
-    end
-    pts.each_with_index.filter_map do |t, i|
-      nxt = pts[i + 1] || dur
-      len = nxt - t
-      next if len < 0.05
-
-      f0 = if mono.any?
-             a = (t * rate).to_i
-             b = [(nxt * rate).to_i, mono.size].min
-             b - a >= 512 ? slice_f0(mono[a...b], rate) : nil
-           end
-      { from: t.round(4), len: len.round(4), f0: }
-    end
-  end
-end
-
-SCALE_TEMPLATES = {
-  minor: [0, 2, 3, 5, 7, 8, 10], major: [0, 2, 4, 5, 7, 9, 11],
-  dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10],
-  mixolydian: [0, 2, 4, 5, 7, 9, 10], lydian: [0, 2, 4, 6, 7, 9, 11],
-}.freeze
-
-# Which scale the source actually sits in, weighted by how long each slice
-# holds its pitch. Without this the chopper can only aim at chord tones, and
-# anything landing between them reads as a wrong note rather than a passing
-# one -- chops that have no musical relationship to each other.
-def sample_scale(path)
-  @sample_scale ||= {}
-  @sample_scale[path] ||= begin
-    weight = Hash.new(0.0)
-    sample_chop_analysis(path).each do |s|
-      next unless s[:f0]&.positive?
-
-      weight[((69 + (12 * Math.log2(s[:f0] / 440.0))).round) % 12] += s[:len]
-    end
-    total = weight.values.sum
-    if total.zero?
-      { root: 0, scale: :minor, pcs: SCALE_TEMPLATES[:minor], fit: 0.0 }
-    else
-      best = nil
-      12.times do |root|
-        SCALE_TEMPLATES.each do |name, ivs|
-          inside = weight.sum { |pc, v| ivs.include?((pc - root) % 12) ? v : 0.0 } / total
-          best = { root:, scale: name, pcs: ivs, fit: inside } if best.nil? || inside > best[:fit]
-        end
-      end
-      best
-    end
-  end
-end
-
-# Absolute pitch classes of the detected scale.
-def sample_scale_pcs(path)
-  sc = sample_scale(path)
-  sc[:pcs].map { |i| (sc[:root] + i) % 12 }
-end
-
-CHOP_STYLES = {
-  # gate 1.0 = each chop runs exactly to the next one. Butt-joined rather than
-  # overlapping: asked for "less legato, ends connect as if a single sample",
-  # which is continuity WITHOUT ring-over. Overlap blurs consecutive notes into
-  # each other; a butt join with a few ms of crossfade reads as one instrument
-  # playing a line.
-  dilla: { density: 0.5, reverse: 0.04, stutter: 0.18, gate: 1.0, xfade: 0.008,
-           drift_ms: 18, octaves: [0, 0, 0, 0, -12], lp: [nil, nil, 6000], hp: 60,
-           max_semitones: 5 },
-  flylo: { density: 0.4, reverse: 0.16, stutter: 0.12, gate: 1.0, xfade: 0.012,
-           drift_ms: 26, octaves: [0, 0, -12, 12], lp: [nil, 2400, 5200], hp: 90,
-           max_semitones: 9 },
-  # Loose and dusty: long chops taken close to as recorded, barely repitched,
-  # pushed furthest off the grid of any style. The point is that you hear the
-  # source breathing rather than a grid of fragments.
-  madlib: { density: 0.34, reverse: 0.02, stutter: 0.06, gate: 1.0, xfade: 0.014,
-            drift_ms: 38, octaves: [0, 0, 0, 0, 0, -12], lp: [nil, nil, 4800], hp: 55,
-            max_semitones: 3 },
-  # Machine-gun retrigger: short chops, heavy repeats, tight to the grid. Where
-  # the other styles re-sequence phrases, this one re-sequences single hits.
-  stutter: { density: 0.72, reverse: 0.08, stutter: 0.55, gate: 1.0, xfade: 0.005,
-             drift_ms: 6, octaves: [0, 0, 0, 12], lp: [nil, nil, 7000], hp: 70,
-             max_semitones: 7 },
-  # Sparse and heavy: few chops, each running long, biased an octave down so the
-  # sample reads as a bassline rather than a melody.
-  halftime: { density: 0.18, reverse: 0.1, stutter: 0.04, gate: 1.0, xfade: 0.02,
-              drift_ms: 30, octaves: [-12, -12, 0], lp: [nil, 1800, 3600], hp: 45,
-              max_semitones: 5 },
-  # Slow, sustained, and deliberately overlapping. Everything else here butt-
-  # joins so notes do not ring into each other; this one does the opposite,
-  # because "ethereal and dreamy" IS ring-over -- chops bleed across the seam,
-  # sit an octave up, open softly and decay long. step: 8 puts a chop every half
-  # note instead of every sixteenth, which is the "too fast" complaint answered
-  # directly rather than by thinning a fast grid.
-  ethereal: { density: 0.85, reverse: 0.12, stutter: 0.0, gate: 2.6, xfade: 0.18,
-              drift_ms: 12, octaves: [0, 12, 12], lp: [5200, 3600], hp: 120,
-              max_semitones: 7, step: 8, attack: 0.12, tail: 0.9, wet: true },
-}.freeze
-
-def sample_chop_style
-  s = ENV.fetch("SAMPLE_CHOP", "0").to_s.downcase
-  return nil if %w[0 off none].include?(s)
-
-  CHOP_STYLES.key?(s.to_sym) ? s.to_sym : :dilla
-end
-
-# Chord tones under a given step, so the chops can be repitched onto the
-# harmony instead of landing wherever the source happened to sit.
-def chop_target_hz(step, step_p, beat_p)
-  chords = @progression_chords
-  return nil unless chords.is_a?(Array) && chords.any?
-
-  bars = (@render_chord_bars || 2).to_i
-  bars = 1 if bars < 1
-  bar_p = beat_p * 4.0
-  idx = ((step * step_p) / (bar_p * bars)).floor % chords.length
-  hz = chords[idx][:hz]
-  hz.is_a?(Array) ? hz.map(&:to_f).select(&:positive?) : nil
-end
-
-def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
-  cfg = CHOP_STYLES.fetch(style)
-  slices = sample_chop_analysis(src_path)
-  return if slices.empty?
-
-  rng = Random.new((@render_seed || 7).to_i + 90_210)
-  scale_pcs = sample_scale_pcs(src_path)
-  @chop_prev_midi = nil
-  step_p = beat_p / 4.0
-  steps = (duration / step_p).floor
-  max_chops = ENV.fetch("SAMPLE_CHOP_MAX", "160").to_i
-  pitched = slices.select { |s| s[:f0]&.positive? }
-
-  # Lay out WHEN each chop starts first, so every chop can be given a length
-  # that runs exactly to the next one.
-  # step: is the placement grid in sixteenths -- 1 puts chops on every sixteenth,
-  # 8 on every half note. Slowing the line down is a grid change, not a density
-  # change: thinning a sixteenth grid just leaves ragged gaps, while a coarser
-  # grid gives every chop room to be heard as a note.
-  grid = [(cfg[:step] || 1).to_i, 1].max
-  slots = []
-  s = 0
-  while s < steps && slots.size < max_chops
-    unless rng.rand < cfg[:density]
-      s += grid
-      next
-    end
-    burst = rng.rand < cfg[:stutter] ? [2, 3].sample(random: rng) : 1
-    burst.times { |k| slots << (s + (k * grid)) if (s + (k * grid)) < steps }
-    s += grid * (burst > 1 ? burst : [1, 1, 2].sample(random: rng))
-  end
-  return if slots.empty?
-
-  slots.uniq!
-  chops = []
-  slots.each_with_index do |st, i|
-    nxt_step = slots[i + 1] || steps
-    span = (nxt_step - st) * step_p
-    next if span <= 0
-
-    target = chop_target_hz(st, step_p, beat_p)
-    src = nil
-    ratio = 1.0
-    if target && pitched.any?
-      # Build a LINE, not a series of independent picks. Candidates are the
-      # detected scale's pitch classes across a two-octave window; each is
-      # scored by how well it connects to the note before it. Picking a fresh
-      # chord tone at random each time is what left the chops with no
-      # relationship to one another -- individually in key, collectively noise.
-      chord_pcs = target.map { |h| ((69 + (12 * Math.log2(h / 440.0))).round) % 12 }.uniq
-      strong = (st % (grid * 2)).zero?
-      cands = (48..79).select { |m| scale_pcs.include?(m % 12) }
-      cands = (48..79).to_a if cands.empty?
-      prev = @chop_prev_midi
-      pick = cands.min_by do |m|
-        chordish = chord_pcs.include?(m % 12) ? 0.0 : (strong ? 2.2 : 0.7)
-        motion = if prev
-                   d = (m - prev).abs
-                   # Stepwise is the goal; a small leap is fine; anything past a
-                   # sixth is penalised hard, and repeating the same note is
-                   # discouraged so the line keeps moving.
-                   d.zero? ? 1.6 : (d <= 2 ? 0.0 : (d <= 4 ? 0.5 : (d <= 9 ? 1.4 : 3.0)))
-                 else
-                   0.0
-                 end
-        register = ((m - 64).abs / 24.0)
-        chordish + motion + register + (rng.rand * 0.35)
-      end
-      @chop_prev_midi = pick
-      want = 440.0 * (2.0**((pick - 69) / 12.0))
-      best = pitched.min_by do |sl|
-        r = want / sl[:f0]
-        r *= 2.0 while r < 0.55
-        r /= 2.0 while r > 1.9
-        (Math.log2(r)).abs
-      end
-      src = best
-      ratio = want / best[:f0]
-      ratio *= 2.0 while ratio < 0.55
-      ratio /= 2.0 while ratio > 1.9
-      # Varispeed costs character: it drags the whole slice's timbre and length
-      # with the pitch. If landing the chord tone would need more than a few
-      # semitones, take the slice as recorded instead -- a natural chop that
-      # sits near the harmony beats a mangled one sitting exactly on it.
-      limit = (cfg[:max_semitones] || 5).to_f
-      ratio = 1.0 if (12.0 * Math.log2(ratio)).abs > limit
-    else
-      src = slices[rng.rand(slices.size)]
-    end
-    oct = cfg[:octaves].sample(random: rng)
-    ratio *= 2.0**(oct / 12.0) if oct.nonzero?
-    ratio = ratio.clamp(0.5, 2.0)
-
-    # Source material must cover the slot AFTER repitch (asetrate speeds the
-    # slice up as it raises pitch), plus the crossfade tail.
-    need = (span + cfg[:xfade]) * ratio
-    take = [need, src[:len]].min
-    take = [take, 0.04].max
-    drift = ((rng.rand * 2 - 1) * cfg[:drift_ms]).round
-    at = (st * step_p * 1000).round + drift
-    next if at.negative?
-
-    chops << { from: src[:from], take: take.round(4), ratio: ratio.round(5),
-               rev: rng.rand < cfg[:reverse], lp: cfg[:lp].sample(random: rng),
-               at:, span: span.round(4) }
-  end
-  return if chops.empty?
-
-  parts = ["[#{idx}:a]asplit=#{chops.size}#{chops.each_index.map { |i| "[cs#{i}]" }.join}"]
-  labels = []
-  chops.each_with_index do |c, i|
-    chain = ["[cs#{i}]atrim=start=#{c[:from]}:duration=#{c[:take]}", "asetpts=PTS-STARTPTS"]
-    chain << "areverse" if c[:rev]
-    if (c[:ratio] - 1.0).abs > 0.001
-      chain << "asetrate=#{(SAMPLE_RATE * c[:ratio]).round}"
-      chain << "aresample=#{SAMPLE_RATE}"
-    end
-    chain << "highpass=f=#{cfg[:hp]}"
-    chain << "lowpass=f=#{c[:lp]}" if c[:lp]
-    # Trim to exactly the slot, then crossfade only at the seam. The pair of
-    # short fades on adjacent chops sums to a continuous handover -- the join is
-    # inaudible, but neither note rings on into the next.
-    # gate > 1 lets a chop run past its own slot and ring into the next -- the
-    # overlap that makes a bed dreamy rather than rhythmic. gate == 1 butt-joins.
-    hold = ((c[:span] * (cfg[:gate] || 1.0)) + cfg[:xfade]).round(4)
-    atk = (cfg[:attack] || cfg[:xfade]).to_f
-    tail = (cfg[:tail] || cfg[:xfade]).to_f
-    chain << "atrim=0:#{hold}"
-    chain << "afade=t=in:st=0:d=#{[atk, hold * 0.45].min.round(4)}:curve=qsin"
-    fade_out = [tail, hold * 0.5].min
-    chain << "afade=t=out:st=#{[hold - fade_out, 0.002].max.round(4)}:d=#{fade_out.round(4)}:curve=qsin"
-    if cfg[:wet]
-      # Long, quiet repeats rather than a reverb device: keeps the tail inside
-      # the chop chain so it decays with the note instead of washing the bus.
-      chain << "aecho=0.88:0.55:#{(c[:span] * 1000 * 0.66).round}|#{(c[:span] * 1000 * 1.33).round}:0.36|0.2"
-    end
-    chain << "adelay=#{c[:at]}|#{c[:at]}"
-    parts << "#{chain.join(',')}[ch#{i}]"
-    labels << "[ch#{i}]"
-  end
-  parts << "#{labels.join}amix=inputs=#{labels.size}:duration=longest:normalize=0," \
-           "atrim=0:#{duration},apad=whole_dur=#{duration},alimiter=limit=0.95[chopped]"
-  [parts, "chopped", chops.size]
-end
-
-def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm, src_path: nil)
-  # Tempo-match rather than resample: the loop was warped in the DAW at its own
-  # BPM, so play it at the render's tempo instead of letting it drift.
-  ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
-  tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
-  vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
-  beat_p = 60.0 / target_bpm
-  alt = sample_alt_gain_expr(beat_p, foreground: true)
-  gain = alt ? "volume='#{vol}*(#{alt})':eval=frame," : "volume=#{vol},"
-
-  # Chopped path replaces linear playback entirely -- it re-sequences the source
-  # rather than decorating it, so there is nothing to run the loop through.
-  if (style = sample_chop_style) && src_path
-    built = build_sample_chop_graph(idx, duration, beat_p, src_path, style)
-    if built
-      parts, label, n = built
-      dmesg("sample chop: #{n} slices, #{style} feel", unit: "harm0", parent: "dilla0")
-      tail = ["[#{label}]#{gain}highpass=f=45," \
-              "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
-              "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}[loopbed]"]
-      return (parts + tail).join(";")
-    end
-  end
-
-  # Character before the corrective EQ, so the crusher and saturation work on
-  # the loop as recorded rather than on an already-carved signal.
-  fx = sample_fx_chain(60.0 / target_bpm)
-  fx_chain = fx ? "#{fx.join(',')}," : ""
-  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}#{gain}#{fx_chain}" \
-    "highpass=f=45," \
-    "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
-    "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}," \
-    "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[loopbed]"
-end
-
 # The bass gets its own bus rather than riding the harmonic one. It used to be
 # mixed into the harmonic render, which is high-passed to keep pad mud out of
 # the kick's way -- and that corner sits ABOVE the bass fundamental (roots land
@@ -3955,12 +3499,7 @@ end).to_f
   fade_in = flylo_primary_drums? ? (harm_fade_dur * 1.35).round(2) : harm_fade_dur
   fade_curve = flylo_primary_drums? ? ":curve=qsin" : ""
   build_cut = flylo_primary_drums? ? -0.8 : -2
-  # Opposite phase to the sampled bed, from the same expression, so the two
-  # trade the foreground instead of both sitting forward. Only engaged when a
-  # bed is actually playing -- otherwise the pads would duck against nothing.
-  harm_alt = sample_loop_for(ENV["TRACK"]) ? sample_alt_gain_expr(beat_p, foreground: false) : nil
-  harm_gain = harm_alt ? "volume='#{harm_vol}*(#{harm_alt})':eval=frame," : "volume=#{harm_vol},"
-  "[#{idx}:a]aformat=channel_layouts=stereo,#{harm_gain}" \
+  "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{harm_vol}," \
     "highpass=f=#{harm_hp},equalizer=f=72:t=o:w=1.2:g=#{sub_shelf}," \
     "equalizer=f=95:t=h:w=120:g=#{sub_cut}," \
     "equalizer=f=420:t=o:w=1.1:g=#{body_boost},equalizer=f=680:t=h:w=900:g=#{mid_boost}," \
@@ -4141,38 +3680,7 @@ def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
 end
 
-# The AKMD / Radio Bergen chain from studio/radio-bergen/akmd_mastering_chain.rb,
-# reproduced stage for stage. It is a broadcast chain: band-limited, forward in
-# the low mids, soft-clipped rather than brick-walled. Offered as an alternative
-# to master_bus_filters_enhanced because that one stacks parallel compression, a
-# sub-150Hz sidechain duck keyed off the harm bus, per-bus RMS matching,
-# convolution reverb and loudnorm -- the comment on the mix assembly already
-# records that the elaborate chain, not the balance numbers, was what failed
-# listening tests. Nine stages, no dynamics keyed off anything else.
-# MASTER_CHAIN=akmd selects it.
-AKMD_MASTER_FILTERS = [
-  "highpass=f=60",
-  "lowpass=f=11500",
-  "equalizer=f=80:t=q:w=1.5:g=3",
-  "equalizer=f=200:t=q:w=1:g=2",
-  "equalizer=f=8000:t=q:w=2:g=-3",
-  "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=4",
-  "asoftclip=type=tanh",
-  "volume=1.5",
-  "alimiter=limit=0.92:attack=3:release=50",
-].freeze
-
-def akmd_master_chain?
-  ENV["MASTER_CHAIN"].to_s.downcase == "akmd"
-end
-
-def akmd_master_filters(input_tag, out_tag: "out")
-  ["[#{input_tag}]#{AKMD_MASTER_FILTERS.join(',')},aresample=#{SAMPLE_RATE}[#{out_tag}]"]
-end
-
 def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: nil)
-  return akmd_master_filters(input_tag) if akmd_master_chain?
-
   unless sonitex_enabled?
     filt = ["[#{input_tag}]acompressor=threshold=-20dB:ratio=2:attack=25:release=120:makeup=1.5[premaster0]"]
     filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
@@ -6104,32 +5612,9 @@ CHORD_PROGRESSIONS = {
   eight_bar_cycle_home:     %w[Am9 D7b9 Gm9 C9 Fmaj9 Bm7b5 E7b9 Am9],
   eight_bar_pedal_dark:     %w[Cm9 Dbmaj9/C Ebmaj9/C Fm9/C Cm9 Abmaj9/C Bbmaj9/C Cm9],
   eight_bar_bright_arc:     %w[Dmaj9 Bm9 Gmaj9 Amaj9 Dmaj9 Em9 Amaj9 Dmaj9],
-  # Root motion transcribed from a 92 BPM Ableton set: an Operator bassline
-  # walking C - Eb - F - G, i-bIII-iv-V in C minor, with an E natural passing
-  # through bar 1 as the blues third. The E is a bass inflection, not a chord
-  # tone, so it is not voiced here.
-  minor_blues_step_up: %w[Cm9 Ebmaj9 Fm9 G7b9],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
-  # Recreation of a 92 BPM Ableton Live 9.7 set (4_seven), transcribed from the
-  # .als rather than approximated by ear. What the set actually contains:
-  #   - a 4-bar frozen audio loop on an audio track (16 beats = 10.43s @92)
-  #   - an Operator FM bass, 2-bar phrase, C-E-C-G / Eb / F / G
-  #   - two Drum Racks: a kick oneshot and a DMX analog clap, 2-bar pattern
-  #   - returns: Ambience Medium reverb, Dotted Eighth Note delay
-  # The bass line is the only unambiguous harmony in the set (the sample carries
-  # the rest), so the progression is its root motion: i-bIII-iv-V in C minor.
-  # Straight sixteenths, not Dilla-lean: the set has no groove pool applied.
-  four_seven: {
-    bpm: 92, progression: :minor_blues_step_up, chord_bars: 1, phrase_bars: 8,
-    # feel:, not drum_preset: -- dilla picks grids through DRUM_PATTERN_SETS,
-    # which merges in DillaLofiMachine::DRUM_PRESETS, so :four_seven there is
-    # reachable as a feel and carries the transcribed kick/clap grid verbatim.
-    swing: 56, feel: :four_seven_full, voicing: :rootless,
-    intro_bars: 2,
-    timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 }
-  },
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
     feel: :chromatic_planing,
@@ -6584,14 +6069,7 @@ ensure
   # Keep err file only on failure for diagnostics; success cleans up.
 end
 
-# Source separation is minutes of work, not seconds: htdemucs_ft with shifts on
-# a ~2 minute track runs far past the 120s per-tool cap, so every rap-vocal
-# ingest was being killed mid-separation and leaving an empty stem directory.
-# Slow-by-design tools pass their own budget rather than raising the global one,
-# which exists to stop fluidsynth/ffmpeg hanging the stream forever.
-DEMUX_TIMEOUT_SEC = (ENV["DEMUX_TIMEOUT"] || 1800).to_i
-
-def sh!(*command, timeout: nil)
+def sh!(*command)
   argv = command.flatten.map(&:to_s)
   display = argv.join(" ")
   display = "#{display.byteslice(0, 420)}… (#{display.bytesize} bytes)" if display.bytesize > 460
@@ -6606,7 +6084,7 @@ def sh!(*command, timeout: nil)
   else
     ok, err_tail, err_path = system_with_timeout(
       argv,
-      timeout_sec: timeout || sh_timeout_sec,
+      timeout_sec: sh_timeout_sec,
       verbose: DillaDmesg.verbose?,
     )
   end
@@ -9686,53 +9164,8 @@ def export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, 
   puts "stems: #{stem_dir}"
 end
 
-# How many voices a track is allowed to put in the air. dilla's default stack is
-# pads + texture + EP + warm + scale lead + lead arp + harmony lead + xlead +
-# granular cloud + choir + melody + chops, and everything after the first few is
-# fighting the rest for the same space -- audibly "too much going on", and the
-# reason a sample bed could not be pushed forward no matter what weight it was
-# given: the master limiter was already flattening a crowded mix.
-#
-# A recreation should carry only what the source has. The 92 BPM Ableton set
-# behind :four_seven is four elements -- a sampled loop, an FM bass, a kick and
-# a clap -- so everything dilla would otherwise pile on top is turned off, and
-# the loop is left to be the harmony, which is its job in the original.
-TRACK_LAYER_PROFILES = {
-  four_seven: {
-    "PAD_TEXTURE" => "0", "PAD_GRANULAR" => "0", "CHOIR_VOX" => "0",
-    "LEAD_ARP" => "0", "SCALE_LEAD" => "0", "HARMONY_LEAD" => "0",
-    "CREATIVE_LEAD" => "0", "MELODIC_LEAD" => "0", "EXPERIMENTAL_LEADS" => "0",
-    "LEAD_MORPH" => "0", "SYNTH_MORPH" => "0", "PAD_LAYERS" => "0",
-    "DRUM_CHOPS" => "0", "ECLECTIC_PERC" => "0", "SELF_SAMPLE" => "0",
-    "RAP_VOCAL" => "0", "SPEAK" => "0",
-    # The loop carries the chords; the synth pad only shades under it.
-    # DILLA_STYLE_DEFAULTS soft-fills TRACK and PROGRESSION, and PROGRESSION
-    # was empty, so the style DNA was quietly substituting get_dis_money for the
-    # progression transcribed from this set. bpm and feel came through from
-    # TRACK_PRESETS; the harmony did not. Pin it here.
-    "PROGRESSION" => "minor_blues_step_up",
-    "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
-    "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
-    "MASTER_CHAIN" => "akmd",
-  },
-}.freeze
-
-def apply_track_layer_profile!(track, force: true)
-  profile = TRACK_LAYER_PROFILES[track.to_s.downcase.tr("-", "_").to_sym] or return []
-  applied = []
-  profile.each do |env_key, value|
-    next if !force && ENV[env_key] && !ENV[env_key].empty?
-    ENV[env_key] = value.to_s
-    applied << env_key
-  end
-  dmesg("layer profile #{track}: #{applied.size} knobs (strip to source arrangement)",
-        unit: "style0", parent: "dilla0") if applied.any?
-  applied
-end
-
 def apply_track_soul_profile!(track, force: false)
   key = track.to_s.downcase.tr("-", "_").to_sym
-  apply_track_layer_profile!(key, force:)
   [TRACK_SOUL_PAD_PROFILES[key], TRACK_SOUL_LEAD_PROFILES[key]].compact.each do |profile|
     profile.each do |env_key, value|
       next if !force && ENV[env_key] && !ENV[env_key].empty?
@@ -11882,27 +11315,7 @@ end
 # cache exists, not just when the roll happened to land on it.
 ALWAYS_SAMPLED_DRUM_ROLES = %w[hat.wav open_hat.wav snare.wav ghost.wav].freeze
 
-# A track can ship its own oneshots. Checked ahead of everything else --
-# including FM_DRUMS, which is otherwise a whole-kit override -- because a
-# recreation built on the source project's actual kick and clap should not be
-# quietly swapped for a synthesised kit. DRUM_KIT_DIR=<path> overrides.
-TRACK_DRUM_KITS = {
-  four_seven: File.join(CUSTOM_DRUM_DIR, "four_seven"),
-}.freeze
-
-def track_drum_kit_dir
-  explicit = ENV["DRUM_KIT_DIR"].to_s
-  return explicit unless explicit.empty?
-
-  TRACK_DRUM_KITS[ENV["TRACK"].to_s.downcase.tr("-", "_").to_sym]
-end
-
 def drum_sample_path(name)
-  if (kit_dir = track_drum_kit_dir)
-    own = File.join(kit_dir, name)
-    return own if File.exist?(own)
-  end
-
   # Explicit opt-in beats the passive custom-dir cache -- FM_DRUMS=1 is a
   # deliberate whole-kit choice, not a per-role override.
   if fm_drums_enabled?
@@ -14466,17 +13879,6 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     bass_bus_idx = idx
     idx += 1
   end
-  loop_entry = sample_loop_for(cfg[:track])
-  loop_idx = nil
-  if loop_entry
-    # Only loop the input for linear playback. The chopper slices from inside
-    # the source and positions each slice itself, so it needs the file once --
-    # feeding an endless stream into 100+ asplit branches would never settle.
-    command += ["-stream_loop", "-1"] unless sample_chop_style
-    command += ["-i", loop_entry[:path]]
-    loop_idx = idx
-    idx += 1
-  end
   stem_map = {}
   stems.each do |key, path|
     command += ["-stream_loop", "-1", "-i", path]
@@ -14555,14 +13957,6 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     filt << build_bass_bus_filter(bass_bus_idx, duration)
     mix_labels << "[bassbus]"
     mix_weights << ENV.fetch("BASS_MIX_WEIGHT", "1.15").to_s
-  end
-  if loop_idx
-    filt << build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm],
-                                     src_path: loop_entry[:path])
-    mix_labels << "[loopbed]"
-    mix_weights << ENV.fetch("SAMPLE_LOOP_WEIGHT", "0.9").to_s
-    dmesg("sample bed #{File.basename(loop_entry[:path])} @#{loop_entry[:bpm].round}bpm -> #{cfg[:bpm].round}bpm",
-          unit: "harm0", parent: "dilla0")
   end
 
   if stem_map[:mids]
@@ -16046,7 +15440,7 @@ def demux_six(src)
   out = File.join(DEMUX_DIR, "demux")
   FileUtils.mkdir_p(out)
   cmd = demucs_cmd or abort "demucs required — pip install demucs"
-  sh!(*cmd, "-n", DEMUX_MODEL, "-o", out, audio, timeout: DEMUX_TIMEOUT_SEC)
+  sh!(*cmd, "-n", DEMUX_MODEL, "-o", out, audio)
   stem_dir = File.join(out, DEMUX_MODEL, File.basename(audio, ".*"))
   puts "stems -> #{stem_dir}"
   if stem_dir.start_with?(STEM_DIR) && Dir.exist?(stem_dir) && !stems_scan_set(stem_dir).empty?
@@ -16067,8 +15461,7 @@ def demux_vocal_isolate(src)
   FileUtils.mkdir_p(out)
   cmd = demucs_cmd or abort "demucs required — pip install demucs"
   shifts = ENV.fetch("DEMUX_VOCAL_SHIFTS", "2")
-  sh!(*cmd, "-n", DEMUX_VOCAL_MODEL, "--shifts", shifts, "--float32", "-o", out, audio,
-      timeout: DEMUX_TIMEOUT_SEC)
+  sh!(*cmd, "-n", DEMUX_VOCAL_MODEL, "--shifts", shifts, "--float32", "-o", out, audio)
   stem_dir = File.join(out, DEMUX_VOCAL_MODEL, File.basename(audio, ".*"))
   puts "vocal stems -> #{stem_dir}"
   stem_dir
