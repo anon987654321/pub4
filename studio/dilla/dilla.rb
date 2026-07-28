@@ -3411,6 +3411,28 @@ def sonic_vinyl_level(sonic)
   sonic&.dig("synth", "vinyl_noise")&.to_f || 0.08
 end
 
+# The bass gets its own bus rather than riding the harmonic one. It used to be
+# mixed into the harmonic render, which is high-passed to keep pad mud out of
+# the kick's way -- and that corner sits ABOVE the bass fundamental (roots land
+# at 82-116 Hz), so the bass was filtered out of the mix it was supposed to
+# anchor. That is also why the earlier attempts to fix it by raising BASS_VOL
+# and lowering the harm corner never moved the master: the level was never the
+# problem, the routing was. The engine's own quality gate had been rejecting
+# every take on "sub=boost_sub (low-mid -9.51 dB)" because of it.
+def build_bass_bus_filter(idx, duration)
+  vol = ENV.fetch("BASS_BUS_VOL", "1.4").to_f
+  sub_g = ENV.fetch("BASS_BUS_SUB_DB", "3.0").to_f
+  mud_g = ENV.fetch("BASS_BUS_MUD_DB", "-1.5").to_f
+  "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{vol}," \
+    "highpass=f=26," \
+    "equalizer=f=70:t=o:w=1.1:g=#{sub_g}," \
+    "equalizer=f=180:t=o:w=1.2:g=#{mud_g}," \
+    "lowpass=f=1400," \
+    "acompressor=threshold=-20dB:ratio=2.4:attack=14:release=150:makeup=1.5," \
+    "atrim=0:#{duration},apad=whole_dur=#{duration}," \
+    "alimiter=limit=0.95:level_out=0.97[bassbus]"
+end
+
 def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade_dur, beat_p, _n_bars)
   lp = sonic_pad_lowpass(sonic)
   build_start = (duration * 0.82).round(2)
@@ -13290,7 +13312,8 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
   path
 end
 
-def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [], cfg: nil, dfam_events: nil)
+def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [], cfg: nil, dfam_events: nil,
+                        pad_post: true)
   cfg ||= dilla_resolve_config
   pick_synth_patches!(cfg) unless @render_ep_patch
   @render_used_fluidsynth_pad = false
@@ -13473,7 +13496,9 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     FileUtils.mv(tmp, path)
     FileUtils.rm_f(dfam_path)
   end
-  warm_dilla_pad_post(path, cfg: cfg || dilla_resolve_config)
+  # Skipped for the bass-only render: this chain is voiced for pads (3.2k
+  # lowpass, chorus, echo, pad-shaped compression) and smears a sine bass.
+  warm_dilla_pad_post(path, cfg: cfg || dilla_resolve_config) if pad_post
 end
 
 # Measured (not guessed) via zero-crossing analysis of the sample body,
@@ -13800,15 +13825,32 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   stem_tempo = (cfg[:bpm] / 90.0).round(4)
   pan_hz = (cfg[:bpm] / 15.0).round(3)
   use_stem_harmony = !stems.empty?
+  bass_bus_tmp = nil
+  bass_bus_idx = nil
+  bass_own_bus = !use_stem_harmony && ENV.fetch("BASS_OWN_BUS", "1") != "0" && events[:bass]&.any?
   unless use_stem_harmony
-    render_harmonic_wav(harmonic_tmp, events[:pad], events[:chop], events[:bass], duration,
+    # Bass is rendered on its own so it can bypass the harmonic bus high-pass,
+    # which sits above its fundamental. Harmonic gets an empty bass list so the
+    # layer is not counted twice.
+    render_harmonic_wav(harmonic_tmp, events[:pad], events[:chop],
+                        bass_own_bus ? [] : events[:bass], duration,
                         melody_events: events[:melody], cfg:, dfam_events: events[:dfam])
+    if bass_own_bus
+      bass_bus_tmp = dilla_render_tmp("bassbus")
+      render_harmonic_wav(bass_bus_tmp, [], [], events[:bass], duration, cfg:, pad_post: false)
+      bass_own_bus = File.file?(bass_bus_tmp) && File.size(bass_bus_tmp) > 1_000
+    end
   end
 
   command = ["ffmpeg", "-y", "-i", drum_tmp]
   idx = 1
   unless use_stem_harmony
     command += ["-i", harmonic_tmp]
+    idx += 1
+  end
+  if bass_own_bus
+    command += ["-i", bass_bus_tmp]
+    bass_bus_idx = idx
     idx += 1
   end
   stem_map = {}
@@ -13879,6 +13921,16 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
       mix_labels << "[harm]"
       mix_weights << ENV.fetch("HARM_MIX_WEIGHT", deep_render? ? "1.55" : "1.38").to_s
     end
+  end
+
+  # Bass joins the master mix directly, alongside drums, never through the harm
+  # bus. Added after the sidechain branch above deliberately: when sidechain is
+  # on it collapses drums+harm into [sc_mix], and the bass should not be ducked
+  # by the same chord-triggered envelope that keeps the pads out of the kick.
+  if bass_own_bus && bass_bus_idx
+    filt << build_bass_bus_filter(bass_bus_idx, duration)
+    mix_labels << "[bassbus]"
+    mix_weights << ENV.fetch("BASS_MIX_WEIGHT", "1.15").to_s
   end
 
   if stem_map[:mids]
