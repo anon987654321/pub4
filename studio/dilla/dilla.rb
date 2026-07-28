@@ -15597,10 +15597,15 @@ def rap_vocal_isolation_filter
     # FFT denoise residual kit hiss / cymbal wash left in demucs vocals.
     "afftdn=nr=14:nf=-28:tn=1",
     # Hard gate: only pass when voice is present (no quiet snare ghosts).
-    "agate=threshold=0.028:ratio=8:attack=2:release=55:range=0.0008:makeup=1.5",
+    # release/range deliberately gentle. At release=55 with range=0.0008 this
+    # slammed to near-silence between syllables -- measured 4 gaps under 150ms
+    # (median 93ms) inside a single 20s phrase, which is the "chopping". The
+    # gate is here to suppress kit bleed BETWEEN phrases, not to articulate
+    # words, so it now ducks by ~24 dB over a quarter second instead of cutting.
+    "agate=threshold=0.022:ratio=4:attack=6:release=260:range=0.06:makeup=1.5",
     "acompressor=threshold=-24dB:ratio=2.4:attack=4:release=90:makeup=3.5",
     # Second gate after makeup so boosted floor does not reappear.
-    "agate=threshold=0.016:ratio=5:attack=1:release=40:range=0.0005:makeup=1",
+    "agate=threshold=0.012:ratio=3:attack=4:release=200:range=0.10:makeup=1",
   ].join(",")
 end
 

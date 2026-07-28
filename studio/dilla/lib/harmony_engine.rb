@@ -110,6 +110,16 @@ module DillaHarmony
     midis = hz.map { |h| hz_to_midi(h) }.sort
     root = midis.first
     ivs = chord_intervals(hz)
+    # A chord with no third is suspended, quartal or a slash upper-structure by
+    # construction -- the missing third is the point. The styles below rebuild a
+    # voicing from assumed intervals and default a missing third to a MAJOR one,
+    # which invents a note the chord does not contain: the E9sus4 written "D/E"
+    # came back carrying a G# third and an F# ninth, neither of them in it. That
+    # made the first chord of the default progression a different chord from the
+    # other five (only the first goes through decorate_chord), which is the lurch
+    # heard once per cycle. Leave such chords as written.
+    return hz unless ivs.any? { |i| [3, 4].include?(i) }
+
     third_iv = ivs.find { |i| [3, 4].include?(i) } || 4
     fifth_iv = ivs.find { |i| [7, 6].include?(i) }
     seventh_iv = ivs.find { |i| [10, 11].include?(i) }
