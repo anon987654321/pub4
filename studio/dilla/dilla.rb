@@ -3536,80 +3536,202 @@ def sample_chop_style
   CHOP_STYLES.key?(s.to_sym) ? s.to_sym : :dilla
 end
 
-def sample_chop_points(path)
-  r = frame_energy(path, highpass: 150, lowpass: 6_000)
-  pts = peak_frames(r[:frames], r[:hop_seconds]).map { |p| p[:time].to_f }.select(&:positive?)
-  return pts if pts.size >= 4
+# Pitch of a slice, by autocorrelation. Chopping by ear means knowing what note
+# each pad holds; without that, re-sequencing can only shuffle, and a shuffle of
+# a melody is not a better melody.
+def slice_f0(buf, rate, lo: 55.0, hi: 900.0)
+  return nil if buf.size < 512
 
-  # No usable transients: fall back to an even 16th grid across the source.
-  dur = audio_duration_sec(path).to_f
-  step = dur / 16.0
-  (0...16).map { |i| (i * step).round(4) }
+  n = [buf.size, 8192].min
+  b = buf.first(n)
+  mean = b.sum / n
+  b = b.map { |x| x - mean }
+  min_lag = (rate / hi).floor
+  max_lag = [(rate / lo).ceil, n / 2].min
+  return nil if max_lag <= min_lag
+
+  best = nil
+  best_v = 0.0
+  (min_lag..max_lag).each do |lag|
+    acc = 0.0
+    i = 0
+    while i + lag < n
+      acc += b[i] * b[i + lag]
+      i += 2
+    end
+    if acc > best_v
+      best_v = acc
+      best = lag
+    end
+  end
+  best&.positive? ? (rate.to_f / best) : nil
 end
 
-# Builds the filtergraph for a chopped bed. Returns [graph_parts, out_label] or
-# nil. Each chop is an independent atrim of the source, so this graph grows with
-# the chop count -- that is what sh_filter_complex! spills to a script file.
+# Slice the source at its transients and measure each slice once.
+def sample_chop_analysis(path)
+  @sample_chop_analysis ||= {}
+  @sample_chop_analysis[path] ||= begin
+    r = frame_energy(path, highpass: 150, lowpass: 6_000)
+    pts = peak_frames(r[:frames], r[:hop_seconds]).map { |p| p[:time].to_f }.select(&:positive?).sort
+    dur = audio_duration_sec(path).to_f
+    if pts.size < 4
+      step = dur / 16.0
+      pts = (0...16).map { |i| (i * step).round(4) }
+    end
+    rate = (wav_sample_rate(path) rescue SAMPLE_RATE) || SAMPLE_RATE
+    mono = begin
+      load_mono_sample(path)
+    rescue StandardError
+      []
+    end
+    pts.each_with_index.filter_map do |t, i|
+      nxt = pts[i + 1] || dur
+      len = nxt - t
+      next if len < 0.05
+
+      f0 = if mono.any?
+             a = (t * rate).to_i
+             b = [(nxt * rate).to_i, mono.size].min
+             b - a >= 512 ? slice_f0(mono[a...b], rate) : nil
+           end
+      { from: t.round(4), len: len.round(4), f0: }
+    end
+  end
+end
+
+CHOP_STYLES = {
+  # gate 1.0 = each chop runs exactly to the next one. Butt-joined rather than
+  # overlapping: asked for "less legato, ends connect as if a single sample",
+  # which is continuity WITHOUT ring-over. Overlap blurs consecutive notes into
+  # each other; a butt join with a few ms of crossfade reads as one instrument
+  # playing a line.
+  dilla: { density: 0.5, reverse: 0.04, stutter: 0.18, gate: 1.0, xfade: 0.008,
+           drift_ms: 18, octaves: [0, 0, 0, 0, -12], lp: [nil, nil, 6000], hp: 60,
+           max_semitones: 5 },
+  flylo: { density: 0.4, reverse: 0.16, stutter: 0.12, gate: 1.0, xfade: 0.012,
+           drift_ms: 26, octaves: [0, 0, -12, 12], lp: [nil, 2400, 5200], hp: 90,
+           max_semitones: 9 },
+}.freeze
+
+def sample_chop_style
+  s = ENV.fetch("SAMPLE_CHOP", "0").to_s.downcase
+  return nil if %w[0 off none].include?(s)
+
+  CHOP_STYLES.key?(s.to_sym) ? s.to_sym : :dilla
+end
+
+# Chord tones under a given step, so the chops can be repitched onto the
+# harmony instead of landing wherever the source happened to sit.
+def chop_target_hz(step, step_p, beat_p)
+  chords = @progression_chords
+  return nil unless chords.is_a?(Array) && chords.any?
+
+  bars = (@render_chord_bars || 2).to_i
+  bars = 1 if bars < 1
+  bar_p = beat_p * 4.0
+  idx = ((step * step_p) / (bar_p * bars)).floor % chords.length
+  hz = chords[idx][:hz]
+  hz.is_a?(Array) ? hz.map(&:to_f).select(&:positive?) : nil
+end
+
 def build_sample_chop_graph(idx, duration, beat_p, src_path, style)
   cfg = CHOP_STYLES.fetch(style)
-  pts = sample_chop_points(src_path)
-  src_dur = audio_duration_sec(src_path).to_f
-  return if pts.empty? || src_dur <= 0
+  slices = sample_chop_analysis(src_path)
+  return if slices.empty?
 
   rng = Random.new((@render_seed || 7).to_i + 90_210)
   step_p = beat_p / 4.0
   steps = (duration / step_p).floor
   max_chops = ENV.fetch("SAMPLE_CHOP_MAX", "160").to_i
+  pitched = slices.select { |s| s[:f0]&.positive? }
 
-  chops = []
+  # Lay out WHEN each chop starts first, so every chop can be given a length
+  # that runs exactly to the next one.
+  slots = []
   s = 0
-  while s < steps && chops.size < max_chops
+  while s < steps && slots.size < max_chops
     unless rng.rand < cfg[:density]
       s += 1
       next
     end
-    # Where in the source this chop comes from. Deliberately NOT the position it
-    # lands in -- reordering is the point.
-    src_i = rng.rand(pts.size)
-    from = pts[src_i]
-    nxt = pts[src_i + 1] || src_dur
-    avail = [nxt - from, 0.05].max
+    burst = rng.rand < cfg[:stutter] ? [2, 3].sample(random: rng) : 1
+    burst.times { |k| slots << (s + k) if (s + k) < steps }
+    s += burst > 1 ? burst : [1, 1, 2].sample(random: rng)
+  end
+  return if slots.empty?
 
-    stutter = rng.rand < cfg[:stutter] ? [2, 3].sample(random: rng) : 1
-    slot = step_p * (stutter > 1 ? 1 : [1, 1, 2, 2, 4].sample(random: rng))
-    take = [[avail, slot * cfg[:gate]].min, 0.04].max
-    pitch = cfg[:pitch].sample(random: rng)
-    rev = rng.rand < cfg[:reverse]
-    lp = cfg[:lp].sample(random: rng)
-    drift = ((rng.rand * 2 - 1) * cfg[:drift_ms]).round
+  slots.uniq!
+  chops = []
+  slots.each_with_index do |st, i|
+    nxt_step = slots[i + 1] || steps
+    span = (nxt_step - st) * step_p
+    next if span <= 0
 
-    stutter.times do |k|
-      break if chops.size >= max_chops
-
-      at = ((s + k) * step_p * 1000).round + drift
-      next if at.negative? || (s + k) >= steps
-
-      chops << { from:, take:, pitch:, rev:, lp:, at: }
+    target = chop_target_hz(st, step_p, beat_p)
+    src = nil
+    ratio = 1.0
+    if target && pitched.any?
+      # Aim at a chord tone, then pick whichever slice reaches it with the
+      # least repitching -- least varispeed damage, most natural result.
+      want = target.sample(random: rng)
+      want *= 2.0 while want < 120.0
+      want /= 2.0 while want > 520.0
+      best = pitched.min_by do |sl|
+        r = want / sl[:f0]
+        r *= 2.0 while r < 0.55
+        r /= 2.0 while r > 1.9
+        (Math.log2(r)).abs
+      end
+      src = best
+      ratio = want / best[:f0]
+      ratio *= 2.0 while ratio < 0.55
+      ratio /= 2.0 while ratio > 1.9
+      # Varispeed costs character: it drags the whole slice's timbre and length
+      # with the pitch. If landing the chord tone would need more than a few
+      # semitones, take the slice as recorded instead -- a natural chop that
+      # sits near the harmony beats a mangled one sitting exactly on it.
+      limit = (cfg[:max_semitones] || 5).to_f
+      ratio = 1.0 if (12.0 * Math.log2(ratio)).abs > limit
+    else
+      src = slices[rng.rand(slices.size)]
     end
-    s += stutter > 1 ? stutter : [1, 1, 2].sample(random: rng)
+    oct = cfg[:octaves].sample(random: rng)
+    ratio *= 2.0**(oct / 12.0) if oct.nonzero?
+    ratio = ratio.clamp(0.5, 2.0)
+
+    # Source material must cover the slot AFTER repitch (asetrate speeds the
+    # slice up as it raises pitch), plus the crossfade tail.
+    need = (span + cfg[:xfade]) * ratio
+    take = [need, src[:len]].min
+    take = [take, 0.04].max
+    drift = ((rng.rand * 2 - 1) * cfg[:drift_ms]).round
+    at = (st * step_p * 1000).round + drift
+    next if at.negative?
+
+    chops << { from: src[:from], take: take.round(4), ratio: ratio.round(5),
+               rev: rng.rand < cfg[:reverse], lp: cfg[:lp].sample(random: rng),
+               at:, span: span.round(4) }
   end
   return if chops.empty?
 
   parts = ["[#{idx}:a]asplit=#{chops.size}#{chops.each_index.map { |i| "[cs#{i}]" }.join}"]
   labels = []
   chops.each_with_index do |c, i|
-    chain = ["[cs#{i}]atrim=start=#{c[:from].round(4)}:duration=#{c[:take].round(4)}",
-             "asetpts=PTS-STARTPTS"]
+    chain = ["[cs#{i}]atrim=start=#{c[:from]}:duration=#{c[:take]}", "asetpts=PTS-STARTPTS"]
     chain << "areverse" if c[:rev]
-    if (c[:pitch] - 1.0).abs > 0.001
-      chain << "asetrate=#{(SAMPLE_RATE * c[:pitch]).round}"
+    if (c[:ratio] - 1.0).abs > 0.001
+      chain << "asetrate=#{(SAMPLE_RATE * c[:ratio]).round}"
       chain << "aresample=#{SAMPLE_RATE}"
     end
     chain << "highpass=f=#{cfg[:hp]}"
     chain << "lowpass=f=#{c[:lp]}" if c[:lp]
-    # Short edges: a hard slice clicks, and the tail truncation IS the stutter.
-    chain << "afade=t=in:st=0:d=0.004"
-    chain << "afade=t=out:st=#{[c[:take] - 0.012, 0.004].max.round(4)}:d=0.012"
+    # Trim to exactly the slot, then crossfade only at the seam. The pair of
+    # short fades on adjacent chops sums to a continuous handover -- the join is
+    # inaudible, but neither note rings on into the next.
+    hold = (c[:span] + cfg[:xfade]).round(4)
+    chain << "atrim=0:#{hold}"
+    chain << "afade=t=in:st=0:d=#{cfg[:xfade]}"
+    chain << "afade=t=out:st=#{[hold - cfg[:xfade], 0.002].max.round(4)}:d=#{cfg[:xfade]}"
     chain << "adelay=#{c[:at]}|#{c[:at]}"
     parts << "#{chain.join(',')}[ch#{i}]"
     labels << "[ch#{i}]"
@@ -9460,6 +9582,11 @@ TRACK_LAYER_PROFILES = {
     "DRUM_CHOPS" => "0", "ECLECTIC_PERC" => "0", "SELF_SAMPLE" => "0",
     "RAP_VOCAL" => "0", "SPEAK" => "0",
     # The loop carries the chords; the synth pad only shades under it.
+    # DILLA_STYLE_DEFAULTS soft-fills TRACK and PROGRESSION, and PROGRESSION
+    # was empty, so the style DNA was quietly substituting get_dis_money for the
+    # progression transcribed from this set. bpm and feel came through from
+    # TRACK_PRESETS; the harmony did not. Pin it here.
+    "PROGRESSION" => "minor_blues_step_up",
     "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
     "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
     "MASTER_CHAIN" => "akmd",
