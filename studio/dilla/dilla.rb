@@ -3455,10 +3455,18 @@ end)
         else
           "equalizer=f=2800:t=h:w=1800:g=#{air_g.round(1)},"
         end
+  # The synthesised bass rides this bus, and its roots land at 82-116 Hz
+  # (E2 for the Get Dis Money pedal). A 110 Hz corner cut the bass fundamental
+  # straight out of the mix, which is why the track had no low end -- and why
+  # the old hz.min bass bug went unnoticed for so long: playing the wrong note
+  # up at 165-208 Hz was the only way the bass got past this filter at all.
+  # Pads cannot be hurt by opening it up: measured across every track, the
+  # lowest voiced pad tone is 164-247 Hz, so nothing pad-side lives below the
+  # old corner. Kept high enough to still shed sub rumble.
   harm_hp = ENV.fetch("HARM_HP_HZ", if deep
-"95"
+"66"
 else
-(flylo_primary_drums? ? "98" : "110")
+(flylo_primary_drums? ? "68" : "70")
 end).to_i
   sub_shelf = ENV.fetch("HARM_SUB_SHELF_DB", if deep
 "2.2"
@@ -4602,6 +4610,11 @@ DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
 BASS_SUSTAIN_SEC = (ENV["BASS_SUSTAIN"] || 1.45).to_f
 BASS_DECAY_RATE = (ENV["BASS_DECAY"] || 1.15).to_f
+# Level of the synthesised sine bass. Was a hardcoded 0.30 with no knob and no
+# entry in HARMONIC_STEM_MIX, which put the whole bass layer ~36 dB under the
+# mix (measured: bass-only stem at -55.8 dB against a -20 dB master) -- audible
+# as "no low end" no matter which note it played. Exposed so it can be tuned.
+BASS_LEVEL = (ENV["BASS_VOL"] || 0.95).to_f
 # Voicemails mix pipeline (make.rb heritage)
 VOICEMAILS_BEAT = ENV.fetch("BEAT", File.join(OUTPUT_DIR, "Voicemails.mp3"))
 MIX_DUR = 146
@@ -7480,10 +7493,11 @@ DILLA_STYLE_DEFAULTS = {
   "ECLECTIC_PERC" => "0",
   "NO_QUANTIZE" => "1",
   "BACKBEAT_CLAP" => "0",
-  # Jonas V isolated vocals — sit on top of the kit, not under pads.
+  # Isolated rap vocals — sit on top of the kit, not under pads. Placement is
+  # RAP_VOCAL_ANCHOR_DB (0.0 = level with the beat); this is the taste trim.
   "RAP_VOCAL" => "gunnhild",
   "RAP_VOCAL_STYLE" => "rap",
-  "RAP_VOCAL_MIX" => "0.85",
+  "RAP_VOCAL_MIX" => "1.0",
   "RAP_VOCAL_WEIGHT" => "1.0",
   "RAP_VOCAL_BED_WEIGHT" => "1.0",
   "RAP_VOCAL_DUCK" => "0.58",
@@ -10235,8 +10249,18 @@ rescue StandardError
 end
 
 def dilla_chord_bass_hz(chord)
-  return 43.65 unless chord.is_a?(Hash) && chord[:hz]&.any?
-  chord[:hz].min
+  return 43.65 unless chord.is_a?(Hash)
+  # Prefer the chord's declared bass over the lowest voiced tone. Slash chords
+  # (D/E, Db/E, … — the whole Get Dis Money cycle) carry their pedal in
+  # :bass_hz, and voice_led_pad_progression deliberately collapses :hz into a
+  # narrow mid register for smooth pad motion. Taking hz.min there meant the
+  # bass followed a voiced upper tone instead of the root: for D/E it played
+  # G#3 (207.7 Hz) rather than E2 (82.4 Hz) — wrong note, and over an octave
+  # above bass register, so the pedal that defines the progression vanished
+  # and the track had no low end. Rootless pads over a real bass is the
+  # correct division of labour; :bass_hz is what makes it work.
+  bass = chord[:bass_hz] || (chord[:hz]&.any? ? chord[:hz].min : nil)
+  bass || 43.65
 end
 
 def hz_to_midi(hz)
@@ -13114,7 +13138,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
                else
                  root
                end
-        sample = v * 0.30 * Math.exp(-tt * BASS_DECAY_RATE) *
+        sample = v * BASS_LEVEL * Math.exp(-tt * BASS_DECAY_RATE) *
                  Math.sin(2 * Math::PI * freq * (1.0 + lfo) * tt)
         left[local_start + i] += sample
         right[local_start + i] += sample
@@ -15431,7 +15455,16 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   if entry.is_a?(Hash) && !isolated
     cleaned = File.join(File.dirname(vocal_path), "vocals.clean.wav")
     rap_vocal_clean_stem!(vocal_path, cleaned, aggressive: true)
+    # Keep the raw demucs stem. This used to `mv` the cleaned file over
+    # vocal_path, destroying the only local copy of the isolation output --
+    # and because the entry is then marked isolated, it never re-cleans, so a
+    # mis-gated clean is permanent with no way back. gunnhild lost its 0-16s
+    # vocal section this way (present in the demucs stem, silent in the working
+    # copy). Point the entry at the cleaned file instead and leave the source.
+    raw_keep = File.join(File.dirname(vocal_path), "vocals.raw.wav")
+    FileUtils.cp(vocal_path, raw_keep) unless File.exist?(raw_keep)
     FileUtils.mv(cleaned, vocal_path)
+    entry["raw_path"] = raw_keep
     entry["isolated"] = true
     entry["voice_only"] = true
     entry["phrases"] = rap_vocal_phrase_onsets(vocal_path)
@@ -15477,12 +15510,48 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
          else
            ",loudnorm=I=#{loudnorm_i}:TP=-2.5:LRA=7,alimiter=limit=#{limiter}:level_out=#{(limiter.to_f + 0.01).round(2)}"
          end
-  sh! "ffmpeg", "-y", "-stream_loop", "-1", "-ss", ss.round(3).to_s, "-i", vocal_path,
-      "-t", duration.round(3).to_s,
-      "-af", "#{voice_chain},#{rap_vocal_atempo_chain(ratio)}," \
-             "asetpts=PTS-STARTPTS," \
-             "afade=t=in:st=0:d=#{fade},afade=t=out:st=#{(duration - fade).round(3)}:d=#{fade}#{tail}",
-      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
+  # Stage 1: process the usable region ONCE (isolation + tempo match), no loop.
+  # The old single-pass version did `-stream_loop -1` with `-ss`, which restarts
+  # at the seek point every wrap, and applied afade only at the outer edges of
+  # the whole output -- so every wrap was an unfaded hard splice landing mid-word.
+  # With gunnhild (11.5s usable from ss) a 32-bar render wrapped ~8 times, which
+  # is exactly the "choppy" report.
+  seg_path = File.join(out_dir, "seg_#{beat_bpm.round}_#{n_bars}bars.wav")
+  sh! "ffmpeg", "-y", "-ss", ss.round(3).to_s, "-i", vocal_path,
+      "-af", "#{voice_chain},#{rap_vocal_atempo_chain(ratio)},asetpts=PTS-STARTPTS",
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", seg_path
+  seg_len = audio_duration_sec(seg_path).to_f
+
+  # Stage 2: fill `duration`. One pass if the segment already covers it;
+  # otherwise repeat it with a real crossfade at each seam so the joins are
+  # inaudible instead of clicking.
+  xfade = ENV.fetch("RAP_VOCAL_XFADE", "0.35").to_f.clamp(0.05, 2.0)
+  xfade = [xfade, seg_len / 3.0].min if seg_len.positive?
+  outer = "afade=t=in:st=0:d=#{fade},afade=t=out:st=#{(duration - fade).round(3)}:d=#{fade}"
+  if seg_len <= 0 || seg_len >= duration
+    sh! "ffmpeg", "-y", "-i", seg_path, "-t", duration.round(3).to_s,
+        "-af", "#{outer}#{tail}",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
+  else
+    # Each crossfade consumes `xfade` of overlap, so n copies span
+    # n*seg_len - (n-1)*xfade.
+    copies = (((duration - xfade) / (seg_len - xfade)).ceil + 1).clamp(2, 64)
+    inputs = Array.new(copies) { ["-i", seg_path] }.flatten
+    chain = []
+    prev = "0:a"
+    (1...copies).each do |i|
+      out = i == copies - 1 ? "xf" : "xf#{i}"
+      chain << "[#{prev}][#{i}:a]acrossfade=d=#{xfade.round(3)}:c1=tri:c2=tri[#{out}]"
+      prev = out
+    end
+    chain << "[#{prev}]#{outer}#{tail}[vout]"
+    dmesg("rap-vocal loop: #{copies} copies of #{seg_len.round(2)}s, #{xfade.round(2)}s crossfades",
+          unit: "vox0", parent: "dilla0")
+    sh! "ffmpeg", "-y", *inputs, "-filter_complex", chain.join(";"),
+        "-map", "[vout]", "-t", duration.round(3).to_s,
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
+  end
+  FileUtils.rm_f(seg_path)
   peak = band_rms(fit_path, highpass: 200, lowpass: 6_000) rescue -90.0
   sub_bleed = band_rms(fit_path, highpass: 30, lowpass: 120) rescue -90.0
   if peak < -50.0
@@ -15510,9 +15579,13 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
 end
 
 def rap_vocal_mix_params
-  # Vocals sit IN the mix, not on top — pulled down from the old 1.15
-  # voice-forward default on request.
-  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "0.85").to_f
+  # Level trim applied on top of the beat-relative anchor below. History: 1.15
+  # (voice-forward) → 0.85 (pulled down on request) → 1.0. At 0.85, combined
+  # with the old -6 dB anchor, the vocal landed ~7 dB under the beat in the
+  # band where the two actually compete, which read as inaudible rather than
+  # as "sitting in the mix". Anchor + trim are separate knobs now so the
+  # placement target and the taste trim can move independently.
+  vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "1.0").to_f
   bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "1.0").to_f
   voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "1.0").to_f
   sparkle_db = ENV.fetch("RAP_VOCAL_SPARKLE_DB", "3.0").to_f
@@ -15551,7 +15624,10 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest, beat_bpm: nil)
   # stem: 1.0 = voice band anchored 6 dB under the full beat.
   beat_rms = band_rms(beat_path, highpass: 20, lowpass: 20_000)
   voice_rms = band_rms(vocal_path, highpass: 150, lowpass: 8_000)
-  norm_db = ((beat_rms - 6.0) - voice_rms).clamp(-12.0, 24.0)
+  # Where the vocal sits relative to the beat, in dB. 0.0 = level with it,
+  # which is normal placement for a lead rap vocal; negative tucks it under.
+  anchor_db = ENV.fetch("RAP_VOCAL_ANCHOR_DB", "0.0").to_f
+  norm_db = ((beat_rms + anchor_db) - voice_rms).clamp(-12.0, 24.0)
   nudge = beat_bpm ? rap_vocal_pocket_nudge_sec(beat_bpm) : 0.0
   trim = nudge.positive? ? "atrim=start=#{nudge.round(4)},asetpts=PTS-STARTPTS," : ""
   filter = [
