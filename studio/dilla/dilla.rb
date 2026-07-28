@@ -4562,8 +4562,14 @@ def warm_dilla_pad_post(path, cfg: nil, sonic: nil)
              "equalizer=f=260:t=o:w=1.0:g=1.2",
              "equalizer=f=900:t=h:w=800:g=0.8",
              "equalizer=f=3200:t=h:w=1400:g=0.6",
-             "aecho=0.34:0.44:90|180:0.2|0.1",
-             "chorus=0.34:0.54:30|40:0.14|0.1:0.18|0.14:0.92|1.15",
+             # aecho/chorus take in_gain:out_gain, NOT a wet/dry mix -- both
+             # scale the whole signal. 0.34:0.44 is 0.15x (-16.7 dB) and
+             # 0.34:0.54 another 0.18x (-12.4 dB); stacked they buried the
+             # entire harmonic bus ~29 dB, which is why the chords were
+             # inaudible under the drums. Effect depth lives in the decays
+             # and depths args, so keep those and run the gains near unity.
+             "aecho=0.9:0.85:90|180:0.2|0.1",
+             "chorus=0.9:0.85:30|40:0.14|0.1:0.18|0.14:0.92|1.15",
              "acompressor=threshold=-22dB:ratio=1.5:attack=65:release=280:makeup=1.5",
              "volume=1.1",
              "alimiter=limit=0.96:level_out=0.98",
@@ -4578,8 +4584,9 @@ def warm_dilla_pad_post(path, cfg: nil, sonic: nil)
              "equalizer=f=1100:t=o:w=0.9:g=-0.6",
              "equalizer=f=3200:t=h:w=1600:g=1.0",
              ("tremolo=f=3.2:d=0.06" if cfg[:style_family] == :dilla),
-             "aecho=0.32:0.42:100|180:0.2|0.1",
-             "chorus=0.36:0.56:30|40:0.16|0.12:0.2|0.18:0.95|1.2",
+             # Same in_gain:out_gain fix as the fluidsynth branch above.
+             "aecho=0.9:0.85:100|180:0.2|0.1",
+             "chorus=0.9:0.85:30|40:0.16|0.12:0.2|0.18:0.95|1.2",
              patch_fx,
              "acompressor=threshold=-24dB:ratio=1.6:attack=60:release=260:makeup=1.6",
              "volume=1.12",
@@ -4610,11 +4617,13 @@ DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
 BASS_SUSTAIN_SEC = (ENV["BASS_SUSTAIN"] || 1.45).to_f
 BASS_DECAY_RATE = (ENV["BASS_DECAY"] || 1.15).to_f
-# Level of the synthesised sine bass. Was a hardcoded 0.30 with no knob and no
-# entry in HARMONIC_STEM_MIX, which put the whole bass layer ~36 dB under the
-# mix (measured: bass-only stem at -55.8 dB against a -20 dB master) -- audible
-# as "no low end" no matter which note it played. Exposed so it can be tuned.
-BASS_LEVEL = (ENV["BASS_VOL"] || 0.95).to_f
+# Level of the synthesised sine bass -- was a hardcoded literal with no knob and
+# no entry in HARMONIC_STEM_MIX. Kept at its original 0.30: the bass only ever
+# sounded missing because warm_dilla_pad_post's aecho/chorus in_gain:out_gain
+# bug was burying the whole harmonic bus ~20 dB. With that fixed, 0.30 puts the
+# bass a couple of dB under the drum bus, which is where it belongs; briefly
+# raising it to 0.95 (before the real cause was found) put it 8 dB over.
+BASS_LEVEL = (ENV["BASS_VOL"] || 0.30).to_f
 # Voicemails mix pipeline (make.rb heritage)
 VOICEMAILS_BEAT = ENV.fetch("BEAT", File.join(OUTPUT_DIR, "Voicemails.mp3"))
 MIX_DUR = 146
