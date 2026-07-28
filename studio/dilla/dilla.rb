@@ -3411,6 +3411,41 @@ def sonic_vinyl_level(sonic)
   sonic&.dig("synth", "vinyl_noise")&.to_f || 0.08
 end
 
+# Audio loops that play UNDERNEATH the synth arrangement. Deliberately not the
+# stems path (use_stem_harmony), which REPLACES the harmonic bus wholesale --
+# that swaps the engine's harmony out for the sample rather than putting the
+# two together, which is the opposite of what a sampled bed is for. This is its
+# own bus, mixed alongside drums/harm/bass like any other.
+TRACK_SAMPLE_LOOPS = {
+  # The frozen 4-bar loop from the 92 BPM Ableton set recreated as :four_seven.
+  four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0 },
+}.freeze
+
+def sample_loop_for(track)
+  raw = ENV["SAMPLE_LOOP"].to_s
+  return if raw == "0"
+
+  entry = if raw.empty?
+            TRACK_SAMPLE_LOOPS[track.to_s.downcase.tr("-", "_").to_sym]
+          else
+            { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
+          end
+  entry if entry && File.file?(entry[:path].to_s)
+end
+
+def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
+  # Tempo-match rather than resample: the loop was warped in the DAW at its own
+  # BPM, so play it at the render's tempo instead of letting it drift.
+  ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
+  tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
+  vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
+  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
+    "highpass=f=45," \
+    "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
+    "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}," \
+    "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[loopbed]"
+end
+
 # The bass gets its own bus rather than riding the harmonic one. It used to be
 # mixed into the harmonic render, which is high-passed to keep pad mud out of
 # the kick's way -- and that corner sits ABOVE the bass fundamental (roots land
@@ -3680,7 +3715,38 @@ def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
 end
 
+# The AKMD / Radio Bergen chain from studio/radio-bergen/akmd_mastering_chain.rb,
+# reproduced stage for stage. It is a broadcast chain: band-limited, forward in
+# the low mids, soft-clipped rather than brick-walled. Offered as an alternative
+# to master_bus_filters_enhanced because that one stacks parallel compression, a
+# sub-150Hz sidechain duck keyed off the harm bus, per-bus RMS matching,
+# convolution reverb and loudnorm -- the comment on the mix assembly already
+# records that the elaborate chain, not the balance numbers, was what failed
+# listening tests. Nine stages, no dynamics keyed off anything else.
+# MASTER_CHAIN=akmd selects it.
+AKMD_MASTER_FILTERS = [
+  "highpass=f=60",
+  "lowpass=f=11500",
+  "equalizer=f=80:t=q:w=1.5:g=3",
+  "equalizer=f=200:t=q:w=1:g=2",
+  "equalizer=f=8000:t=q:w=2:g=-3",
+  "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=4",
+  "asoftclip=type=tanh",
+  "volume=1.5",
+  "alimiter=limit=0.92:attack=3:release=50",
+].freeze
+
+def akmd_master_chain?
+  ENV["MASTER_CHAIN"].to_s.downcase == "akmd"
+end
+
+def akmd_master_filters(input_tag, out_tag: "out")
+  ["[#{input_tag}]#{AKMD_MASTER_FILTERS.join(',')},aresample=#{SAMPLE_RATE}[#{out_tag}]"]
+end
+
 def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: nil)
+  return akmd_master_filters(input_tag) if akmd_master_chain?
+
   unless sonitex_enabled?
     filt = ["[#{input_tag}]acompressor=threshold=-20dB:ratio=2:attack=25:release=120:makeup=1.5[premaster0]"]
     filt << mix_bass_chord_balance_filter("premaster0", out_tag: "premaster")
@@ -5612,9 +5678,32 @@ CHORD_PROGRESSIONS = {
   eight_bar_cycle_home:     %w[Am9 D7b9 Gm9 C9 Fmaj9 Bm7b5 E7b9 Am9],
   eight_bar_pedal_dark:     %w[Cm9 Dbmaj9/C Ebmaj9/C Fm9/C Cm9 Abmaj9/C Bbmaj9/C Cm9],
   eight_bar_bright_arc:     %w[Dmaj9 Bm9 Gmaj9 Amaj9 Dmaj9 Em9 Amaj9 Dmaj9],
+  # Root motion transcribed from a 92 BPM Ableton set: an Operator bassline
+  # walking C - Eb - F - G, i-bIII-iv-V in C minor, with an E natural passing
+  # through bar 1 as the blues third. The E is a bass inflection, not a chord
+  # tone, so it is not voiced here.
+  minor_blues_step_up: %w[Cm9 Ebmaj9 Fm9 G7b9],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
+  # Recreation of a 92 BPM Ableton Live 9.7 set (4_seven), transcribed from the
+  # .als rather than approximated by ear. What the set actually contains:
+  #   - a 4-bar frozen audio loop on an audio track (16 beats = 10.43s @92)
+  #   - an Operator FM bass, 2-bar phrase, C-E-C-G / Eb / F / G
+  #   - two Drum Racks: a kick oneshot and a DMX analog clap, 2-bar pattern
+  #   - returns: Ambience Medium reverb, Dotted Eighth Note delay
+  # The bass line is the only unambiguous harmony in the set (the sample carries
+  # the rest), so the progression is its root motion: i-bIII-iv-V in C minor.
+  # Straight sixteenths, not Dilla-lean: the set has no groove pool applied.
+  four_seven: {
+    bpm: 92, progression: :minor_blues_step_up, chord_bars: 1, phrase_bars: 8,
+    # feel:, not drum_preset: -- dilla picks grids through DRUM_PATTERN_SETS,
+    # which merges in DillaLofiMachine::DRUM_PRESETS, so :four_seven there is
+    # reachable as a feel and carries the transcribed kick/clap grid verbatim.
+    swing: 52, feel: :four_seven, voicing: :rootless,
+    intro_bars: 2,
+    timing: { snare: -6..2, hat_up: 2..8, bass: 4..12, kick_anchor: 0..2, pad: 0..6 }
+  },
   baroque: {
     bpm: 104, progression: :baroque, chord_bars: 1, phrase_bars: 8, swing: 53,
     feel: :chromatic_planing,
@@ -9164,8 +9253,52 @@ def export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, 
   puts "stems: #{stem_dir}"
 end
 
+# How many voices a track is allowed to put in the air. dilla's default stack is
+# pads + texture + EP + warm + scale lead + lead arp + harmony lead + xlead +
+# granular cloud + choir + melody + chops, and everything after the first few is
+# fighting the rest for the same space -- audibly "too much going on", and the
+# reason a sample bed could not be pushed forward no matter what weight it was
+# given: the master limiter was already flattening a crowded mix.
+#
+# A recreation should carry only what the source has. The 92 BPM Ableton set
+# behind :four_seven is four elements -- a sampled loop, an FM bass, a kick and
+# a clap -- so everything dilla would otherwise pile on top is turned off, and
+# the loop is left to be the harmony, which is its job in the original.
+TRACK_LAYER_PROFILES = {
+  four_seven: {
+    "PAD_TEXTURE" => "0", "PAD_GRANULAR" => "0", "CHOIR_VOX" => "0",
+    "LEAD_ARP" => "0", "SCALE_LEAD" => "0", "HARMONY_LEAD" => "0",
+    "CREATIVE_LEAD" => "0", "MELODIC_LEAD" => "0", "EXPERIMENTAL_LEADS" => "0",
+    "LEAD_MORPH" => "0", "SYNTH_MORPH" => "0", "PAD_LAYERS" => "0",
+    "DRUM_CHOPS" => "0", "ECLECTIC_PERC" => "0", "SELF_SAMPLE" => "0",
+    # SPEAK stays off — the source set has no speech in it. RAP_VOCAL does not:
+    # the point of this track now is gunnhild over the sampled loop, and a
+    # profile default that silently discarded an explicit RAP_VOCAL on the
+    # command line made the render look like it had simply ignored the request.
+    "SPEAK" => "0",
+    # The loop carries the chords; the synth pad only shades under it.
+    "PAD_VOL" => "34", "HARM_MIX_WEIGHT" => "0.55",
+    "SAMPLE_LOOP_VOL" => "1.25", "SAMPLE_LOOP_WEIGHT" => "1.6",
+    "MASTER_CHAIN" => "akmd",
+  },
+}.freeze
+
+def apply_track_layer_profile!(track, force: true)
+  profile = TRACK_LAYER_PROFILES[track.to_s.downcase.tr("-", "_").to_sym] or return []
+  applied = []
+  profile.each do |env_key, value|
+    next if !force && ENV[env_key] && !ENV[env_key].empty?
+    ENV[env_key] = value.to_s
+    applied << env_key
+  end
+  dmesg("layer profile #{track}: #{applied.size} knobs (strip to source arrangement)",
+        unit: "style0", parent: "dilla0") if applied.any?
+  applied
+end
+
 def apply_track_soul_profile!(track, force: false)
   key = track.to_s.downcase.tr("-", "_").to_sym
+  apply_track_layer_profile!(key, force:)
   [TRACK_SOUL_PAD_PROFILES[key], TRACK_SOUL_LEAD_PROFILES[key]].compact.each do |profile|
     profile.each do |env_key, value|
       next if !force && ENV[env_key] && !ENV[env_key].empty?
@@ -13879,6 +14012,13 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     bass_bus_idx = idx
     idx += 1
   end
+  loop_entry = sample_loop_for(cfg[:track])
+  loop_idx = nil
+  if loop_entry
+    command += ["-stream_loop", "-1", "-i", loop_entry[:path]]
+    loop_idx = idx
+    idx += 1
+  end
   stem_map = {}
   stems.each do |key, path|
     command += ["-stream_loop", "-1", "-i", path]
@@ -13957,6 +14097,13 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     filt << build_bass_bus_filter(bass_bus_idx, duration)
     mix_labels << "[bassbus]"
     mix_weights << ENV.fetch("BASS_MIX_WEIGHT", "1.15").to_s
+  end
+  if loop_idx
+    filt << build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm])
+    mix_labels << "[loopbed]"
+    mix_weights << ENV.fetch("SAMPLE_LOOP_WEIGHT", "0.9").to_s
+    dmesg("sample bed #{File.basename(loop_entry[:path])} @#{loop_entry[:bpm].round}bpm -> #{cfg[:bpm].round}bpm",
+          unit: "harm0", parent: "dilla0")
   end
 
   if stem_map[:mids]
