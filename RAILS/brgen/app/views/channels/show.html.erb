@@ -11,7 +11,9 @@
     <p class="dim"><%= spec[:blurb] %></p>
   </header>
 
-  <ul id="messages" class="channel-log">
+  <ul id="messages" class="channel-log conversation-log"
+      data-controller="conversation-log"
+      data-conversation-log-viewer-id-value="<%= Current.user&.id %>">
     <% @messages.each do |m| %>
       <%= render "messages/message", message: m %>
     <% end %>

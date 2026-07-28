@@ -1,10 +1,16 @@
 <%# Fleet floating chat bar (flush bottom-right). Brgen loads the geo room;
-    other apps deep-link to local messaging or Brgen nearby. %>
+    other apps deep-link to local messaging or Brgen nearby.
+
+    Open/closed state is the panel's `hidden` attribute, driven by the
+    nearby-chat controller. It used to be the generic `reveal` component
+    toggling a `.hidden` class that only brgen defined, which left the panel
+    permanently open and undismissable on amber and bsdports. %>
 <% widget_title = local_assigns.fetch(:title, respond_to?(:nearby_widget_path) ? "#nearby" : "chat") %>
-<div class="nearby-chat-widget" data-controller="reveal">
+<div class="nearby-chat-widget" data-controller="nearby-chat">
   <button type="button"
           class="nearby-chat-widget-tab"
-          data-action="reveal#toggle"
+          data-nearby-chat-target="tab"
+          data-action="nearby-chat#toggle"
           aria-expanded="false"
           aria-controls="nearby-chat-widget-panel">
     <%= icon :messages, size: 16 %>
@@ -12,13 +18,14 @@
   </button>
 
   <div id="nearby-chat-widget-panel"
-       class="nearby-chat-widget-panel hidden"
-       data-reveal-target="item"
+       class="nearby-chat-widget-panel"
+       data-nearby-chat-target="panel"
        role="dialog"
-       aria-label="<%= widget_title %>">
+       aria-label="<%= widget_title %>"
+       hidden>
     <header class="nearby-chat-widget-header">
       <span><%= widget_title %></span>
-      <button type="button" class="nearby-chat-widget-close" data-action="reveal#toggle" aria-label="Close">&times;</button>
+      <button type="button" class="nearby-chat-widget-close" data-action="nearby-chat#close" aria-label="Close">&times;</button>
     </header>
 
     <div class="nearby-chat-widget-body">

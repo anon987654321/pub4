@@ -18,7 +18,11 @@ class Message < ApplicationRecord
   validates :content, presence: true, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
-  broadcasts_to :conversation, inserts_by: :append, target: "messages"
+  # `targets:` (a CSS selector), not `target:` (one dom id). The corner chat
+  # widget lives in the layout, so on a channel page there were two
+  # id="messages" logs and a turbo-stream append reached only the first —
+  # whichever that happened to be. A selector appends to every open log.
+  broadcasts_to :conversation, inserts_by: :append, targets: ".conversation-log"
 
   after_create :deliver_receipts
   after_create :clear_typing_indicators

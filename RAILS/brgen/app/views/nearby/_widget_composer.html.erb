@@ -1,0 +1,18 @@
+<%# The corner widget's compact composer. Extracted so the turbo_stream
+    response after a send can re-render *this* markup: the shared
+    messages/create.turbo_stream.erb replaces id="new_message" with the
+    full-page channel form, which stripped .nearby-chat-widget-composer and
+    left a page-sized form crammed into a 360px panel after the first send.
+
+    `origin=widget` is what tells MessagesController to answer with the widget
+    composer instead of the page one. %>
+<%= form_with model: Message.new, url: conversation_messages_path(conversation),
+              id: "nearby_widget_message", class: "nearby-chat-widget-composer",
+              data: { turbo: true, controller: "typing-input",
+                      typing_input_url_value: conversation_typing_indicators_path(conversation) } do |f| %>
+  <%= f.text_area :content, rows: 1, placeholder: "Message as #{Current.user.anon_handle}…",
+        maxlength: 500, aria: { label: "Message" } %>
+  <%= f.hidden_field :message_type, value: "text" %>
+  <%= hidden_field_tag "origin", "widget" %>
+  <%= f.submit "Send", class: "btn btn-primary btn-sm" %>
+<% end %>

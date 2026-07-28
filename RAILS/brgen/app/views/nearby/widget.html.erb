@@ -9,19 +9,19 @@
       </div>
     <% end %>
 
-    <ul id="messages" class="nearby-chat-widget-log" aria-live="polite">
+    <%# id is widget-specific (the channel page's log already owns "messages");
+        .conversation-log is what Message#broadcasts_to appends to. %>
+    <ul id="nearby-widget-log" class="nearby-chat-widget-log conversation-log"
+        data-nearby-chat-target="log"
+        data-controller="conversation-log"
+        data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+        aria-live="polite">
       <% @messages.each do |m| %>
         <%= render "messages/message", message: m %>
       <% end %>
     </ul>
 
-    <%= form_with model: @message, url: conversation_messages_path(@conversation),
-                  id: "new_message", class: "nearby-chat-widget-composer",
-                  data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
-      <%= f.text_area :content, rows: 1, placeholder: "Message as #{Current.user.anon_handle}…", maxlength: 500, aria: { label: "Message" } %>
-      <%= f.hidden_field :message_type, value: "text" %>
-      <%= f.submit "Send", class: "btn btn-primary btn-sm" %>
-    <% end %>
+    <%= render "nearby/widget_composer", conversation: @conversation %>
   <% elsif Current.user.present? %>
     <div class="nearby-chat-widget-empty">
       <strong>Share location to join</strong>

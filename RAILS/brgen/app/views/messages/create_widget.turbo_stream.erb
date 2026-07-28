@@ -1,0 +1,5 @@
+<%# Reset the corner widget's own composer. The message itself arrives through
+    Message#broadcasts_to, which appends to every .conversation-log on the page. %>
+<%= turbo_stream.replace "nearby_widget_message" do %>
+  <%= render "nearby/widget_composer", conversation: @conversation %>
+<% end %>

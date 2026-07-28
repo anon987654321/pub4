@@ -23,7 +23,10 @@ class MessagesController < ApplicationController
         )
       end
       respond_to do |format|
-        format.turbo_stream
+        # The corner chat widget and the full channel page post to the same
+        # endpoint but own different composers; answering with the page form
+        # would replace the widget's compact one with page-sized markup.
+        format.turbo_stream { render from_widget? ? :create_widget : :create }
         format.html { redirect_to @conversation }
       end
     else
@@ -32,6 +35,8 @@ class MessagesController < ApplicationController
   end
 
   private
+
+  def from_widget? = params[:origin] == "widget"
 
   def set_conversation
     @conversation = Conversation.for_user(Current.user).find(params[:conversation_id])

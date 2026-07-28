@@ -14,13 +14,25 @@
       <%= f.label :title %>
       <%= f.text_field :title, placeholder: "Title", autofocus: true, required: true %>
     </div>
-    <div class="field" data-controller="tiptap-composer">
+    <%# tiptap-editor, the same controller the feed composer uses: the textarea
+        stays the submitted field and the no-JS fallback, and is hidden only
+        once Tiptap has actually mounted. (This form previously used a second,
+        near-duplicate tiptap-composer controller that never booted — see the
+        deleted tiptap_composer_controller.js.) %>
+    <div class="field" data-controller="tiptap-editor">
       <%= f.label :content, "Body (optional)" %>
-      <div class="tiptap-editor" data-tiptap-composer-target="editor"></div>
       <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, class: "tiptap-input" , maxlength: 10000, data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
+        <%= f.text_area :content, placeholder: "Text (optional)", rows: 5, class: "compose-input",
+              maxlength: 10000,
+              data: { character_counter_target: "input", tiptap_editor_target: "field" } %>
+        <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+      </div>
+      <div class="tiptap_mount tiptap_mount--post" data-tiptap-editor-target="mount" hidden></div>
+      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar" hidden>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
+        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
+      </div>
     </div>
     <div class="field" data-controller="media-picker direct-upload">
       <%= f.file_field :image,

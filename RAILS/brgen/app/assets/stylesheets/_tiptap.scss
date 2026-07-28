@@ -12,6 +12,10 @@
   outline: none;
 }
 
+/* The advanced post form gives the body room to breathe — same borderless,
+   flush-left editor as the feed composer, just a taller resting height. */
+.tiptap_mount--post .tiptap_area { min-height: 160px; }
+
 .tiptap_area p { margin: 0 0 0.5em; }
 .tiptap_area p:last-child { margin-bottom: 0; }
 .tiptap_area ul { list-style: disc; padding-inline-start: 1.4em; margin: 0 0 0.5em; }

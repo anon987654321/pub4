@@ -43,6 +43,8 @@ import DraftStore from "pub4/draft_store"
 import MediaPicker from "pub4/media_picker"
 import FeedCompose from "pub4/feed_compose"
 import EdgeSwiper from "pub4/edge_swiper"
+import NearbyChat from "pub4/nearby_chat"
+import ConversationLog from "pub4/conversation_log"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -92,6 +94,8 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("media-picker", MediaPicker)
   application.register("feed-compose", FeedCompose)
   application.register("edge-swiper", EdgeSwiper)
+  application.register("nearby-chat", NearbyChat)
+  application.register("conversation-log", ConversationLog)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     if (component) application.register(name, component)
