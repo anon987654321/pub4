@@ -22,7 +22,15 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+
+  # :memory_store, not :null_store. StimulusReflex needs a real cache to carry
+  # session state across ActionCable requests, and with :null_store it printed
+  # "StimulusReflex requires caching to be enabled" on every boot and every
+  # reflex path was untestable by construction — the reflexes are shared across
+  # all three apps, so that was the whole reflex layer. A per-process memory
+  # store keeps tests isolated (Rails forks parallel workers, each gets its own)
+  # while letting reflex code actually run.
+  config.cache_store = :memory_store
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

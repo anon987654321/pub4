@@ -23,6 +23,28 @@ class DeployGatesContractTest < Minitest::Test
     end
   end
 
+  # runner.rb's gate_path resolves every GATE_MAP value against RAILS/, but five
+  # shims lived in RAILS/gates/ and css_minify_integrity had none at all. Nothing
+  # broke, because all five run in-process and gate_path was only reached to
+  # print a basename — a trap armed for whoever moved one to subprocess.
+  def test_every_gate_in_the_runner_map_resolves_to_a_file
+    source = File.read(File.join(ROOT, "gates", "runner.rb"))
+    map = source[/GATE_MAP = \{(.*?)\n\}\.freeze/m, 1].to_s
+    names = map.scan(/"([\w.]+\.rb)"/).flatten.uniq
+
+    refute_empty names, "could not parse GATE_MAP out of runner.rb"
+    names.each do |name|
+      assert File.file?(File.join(ROOT, name)),
+             "GATE_MAP points at RAILS/#{name}, which does not exist"
+    end
+  end
+
+  def test_every_gate_shim_lives_at_the_rails_root
+    stragglers = Dir.glob(File.join(ROOT, "gates", "*_gate.rb")).map { |path| File.basename(path) }
+
+    assert_empty stragglers, "gate entrypoints belong at RAILS/, next to the others: #{stragglers}"
+  end
+
   def test_check_rails_wires_new_gates
     source = File.read(File.join(OPENBSD_ROOT, "bin", "check-rails"))
     %w[schema_migration_gate generated_asset_freshness_gate rails_runtime_gate].each do |gate|
