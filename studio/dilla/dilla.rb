@@ -7493,7 +7493,15 @@ DILLA_STYLE_DEFAULTS = {
   "HAT_MICRO" => "1",
   "SWING_JITTER" => "1",
   "GROOVE_ENGINE" => "1",
-  "FM_DRUMS" => "0",
+  # Restored to "1" (2026-07-28). 1e74b12fd made the FM kit the full-replacement
+  # default as an explicit, measured user choice ("User chose full-kit FM
+  # replacement over blending or per-track rotation after reviewing the
+  # tradeoff"; harshness -19.66 dB vs the analog kit's -17.68 dB). Three commits
+  # later 6e5eed932 -- a styles-collapse refactor whose message says nothing
+  # about drums -- added "FM_DRUMS" => "0" here and silently reverted it, so the
+  # engine has been running the analog kit ever since despite fm_drums_enabled?
+  # still defaulting on and the FM_DRUM_DIR comment still claiming "default on".
+  "FM_DRUMS" => "1",
   "RAW_KICK" => "1",
   "DRUM_SAMPLE_RAW" => "1",
   "DRUM_CHOPS" => "0",
@@ -12268,7 +12276,12 @@ def write_pad_smf(path, pad_events, program: PAD_GM_PROGRAM, bank: 0, duration: 
   write_smf(path, events, program:, bank:, duration:, midi_fx: fx)
 end
 
-PAD_TARGET_RMS_DB = -17.5
+# RMS the pad bus is normalised to. Was -17.5, which only balanced against the
+# ~-38 dB drum bus because warm_dilla_pad_post immediately took ~19 dB back off
+# via its aecho/chorus in_gain bug -- the two errors cancelled. With that fixed
+# the level has to be honest here instead: pads land just under the kit, which
+# is what "kit-forward" in DILLA_STYLE_DEFAULTS asks for.
+PAD_TARGET_RMS_DB = (ENV["PAD_TARGET_RMS_DB"] || -39.0).to_f
 
 # Lazily, silently fetches EXTERNAL_SOUNDFONTS/EXTERNAL_DRUM_KIT_REPO on
 # first use so nothing needs to be typed/remembered — but any network
@@ -12375,7 +12388,7 @@ def render_pad_morph_fluidsynth(path, pad_events, duration)
   FileUtils.rm_f(warm_path)
   FileUtils.rm_f(texture_path)
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 18.0)
+  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(-24.0, 18.0)
   sh! "ffmpeg", "-y", "-i", path, "-af",
       "equalizer=f=280:t=o:w=1:g=1.2,equalizer=f=1800:t=h:w=1200:g=0.7," \
       "volume=#{boost_db.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
@@ -12476,7 +12489,7 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
     rendered.each { |(p, _)| FileUtils.rm_f(p) }
   end
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 20.0)
+  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(-24.0, 20.0)
   sh! "ffmpeg", "-y", "-i", path, "-af",
       "equalizer=f=280:t=o:w=1:g=1.6,equalizer=f=900:t=o:w=1.2:g=0.8," \
       "equalizer=f=2200:t=h:w=1400:g=1.0,volume=#{boost_db.round(2)}dB," \
@@ -12492,11 +12505,15 @@ end
 # event, a phrase chop is repitched via asetrate (true tape/chipmunk repitch,
 # artifacts intended) to the chord root plus up to two upper chord tones, so
 # the chop harmonizes itself to the progression regardless of the source key.
-# Default on (SINGERS_CHOP_PADS=0 disables) but silently falls back to the
-# synth pad stack until a stem exists:
+# Default OFF (SINGERS_CHOP_PADS=1 enables). When this succeeds it replaces the
+# synth pad stack *entirely* -- so with it on by default the real pads (the
+# fluidsynth stack, the patch catalog, PAD_VOICE, every voice-leading decision)
+# never reached the mix at all; the chords you heard were repitched vocal chops.
+# It is an effect, not the pad engine, so it has to be opted into. Enable with
+# SINGERS_CHOP_PADS=1, which needs a stem:
 #   ruby dilla.rb rap-vocal ingest singers_unlimited <youtube-url-or-path>
 def singers_chop_pads_enabled?
-  ENV.fetch("SINGERS_CHOP_PADS", "1") != "0"
+  ENV.fetch("SINGERS_CHOP_PADS", "0") != "0"
 end
 
 def singers_chop_source
@@ -12584,7 +12601,7 @@ def render_singers_chop_pads(path, pad_events, duration)
   return unless File.file?(path)
 
   measured_rms = band_rms(path, highpass: 20, lowpass: 20_000)
-  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(0.0, 24.0)
+  boost_db = (PAD_TARGET_RMS_DB - measured_rms).clamp(-24.0, 24.0)
   sh! "ffmpeg", "-y", "-i", path, "-af",
       "equalizer=f=320:t=o:w=1:g=1.2,volume=#{boost_db.round(2)}dB," \
       "alimiter=limit=0.95:level_out=0.96",
