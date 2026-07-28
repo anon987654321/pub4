@@ -16091,6 +16091,17 @@ end
 # Verified against a synthesised 100 BPM click: 39/39 onsets on grid at 100,
 # 20/39 at the neighbours.
 def rap_vocal_measure_bpm(vocal_path, range: (60..180))
+  # Memoised: the fit path asks twice per render -- once for the tempo, once for
+  # "does this take have a pulse at all" -- and the sweep is a few hundred phase
+  # searches over the whole onset list.
+  @rap_vocal_bpm_cache ||= {}
+  key = [vocal_path, range]
+  return @rap_vocal_bpm_cache[key] if @rap_vocal_bpm_cache.key?(key)
+
+  @rap_vocal_bpm_cache[key] = rap_vocal_measure_bpm_uncached(vocal_path, range:)
+end
+
+def rap_vocal_measure_bpm_uncached(vocal_path, range: (60..180))
   onsets = rap_vocal_onset_times(vocal_path)
   return nil if onsets.size < 8
 
@@ -16172,6 +16183,145 @@ def rap_vocal_source_bpm(entry, vocal_path, target: nil)
   rap_vocal_fold_bpm(candidates.find { |b| b&.positive? }, target:)
 end
 
+# --- phrase snapping ---------------------------------------------------------
+#
+# atempo can only fix a take that HAS a tempo. A freely-sung take has no
+# periodic spacing to stretch onto a grid, and measuring this proved it: across
+# source BPMs from 96 to 128 against a 92 BPM beat, gunnhild landed 31%, 20%,
+# 19%, 18%, 25% and 14% of her onsets on the grid, against a ~20% random-phase
+# baseline. Slowing her down made the alignment WORSE. There is no ratio that
+# works because the thing a ratio scales -- the spacing between her syllables --
+# is not constant in the first place.
+#
+# So place instead of stretch: cut the take at its sung lines and start each
+# line on a grid line, letting the silence between lines absorb the drift. The
+# alignment then comes from where each line BEGINS, which is what a listener
+# hears as being on the beat, and no line is time-warped internally so the
+# delivery inside it stays hers.
+RAP_VOCAL_SNAP_BEATS = (ENV["RAP_VOCAL_SNAP_BEATS"] || 2).to_f
+
+# Line detection thresholds. The catalog's stored "phrases" cannot be used for
+# this: they are peak clusters joined at 0.35s, which on sung material collapse
+# to bare onsets -- gunnhild's 100 stored phrases have a MEDIAN LENGTH OF ZERO,
+# so cutting on them yields empty segments. These find voiced spans instead, and
+# were swept against gunnhild for line-sized output: hold 0.14 / rel 0.55 gives
+# 43 lines with a median of 1.23s, about two beats at 92 BPM. A longer hold
+# swallows whole verses (0.20 gives one 13.96s span), a shorter one shatters
+# words (0.06 gives a 0.49s median).
+RAP_VOCAL_LINE_HOLD = (ENV["RAP_VOCAL_LINE_HOLD"] || 0.14).to_f
+RAP_VOCAL_LINE_REL  = (ENV["RAP_VOCAL_LINE_REL"] || 0.55).to_f
+RAP_VOCAL_LINE_MIN  = (ENV["RAP_VOCAL_LINE_MIN"] || 0.35).to_f
+
+# Contiguous voiced spans in the timeline of `path` itself.
+def rap_vocal_line_regions(path, hop: 0.010)
+  rate = 8000
+  raw = IO.popen(["ffmpeg", "-v", "error", "-i", path, "-af",
+                  "highpass=f=200,lowpass=f=6000", "-ac", "1", "-ar", rate.to_s,
+                  "-f", "s16le", "-"], "rb", &:read)
+  samples = raw.to_s.unpack("s<*")
+  return [] if samples.empty?
+
+  frame = (rate * hop).to_i
+  env = samples.each_slice(frame).map { |c| Math.sqrt(c.sum { |s| (s / 32_768.0)**2 } / c.size) }
+  return [] if env.size < 10
+
+  # Relative floor, not absolute: demucs stem levels vary by tens of dB between
+  # sources (measured -9.8 to -46.8), so any fixed threshold either passes
+  # everything or nothing depending on which vocal it meets.
+  sorted = env.sort
+  p90 = sorted[(sorted.size * 0.90).to_i].to_f
+  floor = [p90 * RAP_VOCAL_LINE_REL, 0.0015].max
+  hold_frames = (RAP_VOCAL_LINE_HOLD / hop).to_i
+
+  spans = []
+  start = nil
+  quiet = 0
+  env.each_with_index do |e, i|
+    if e >= floor
+      start ||= i
+      quiet = 0
+    elsif start
+      quiet += 1
+      next unless quiet > hold_frames
+
+      spans << [start * hop, (i - quiet) * hop]
+      start = nil
+    end
+  end
+  spans << [start * hop, (env.size - 1) * hop] if start
+  spans.select { |a, b| b - a >= RAP_VOCAL_LINE_MIN }.map { |a, b| [a.round(3), b.round(3)] }
+end
+
+# Decides where each line lands. Walks the lines in order, putting every one at
+# the next free grid line, and returns [] if the take has too few lines to build
+# from -- the caller then falls back to the uniform stretch rather than
+# rendering something thin.
+def rap_vocal_snap_placements(lines, total_sec, duration:, grid:, from_sec: 0.0, gap:)
+  return [] if lines.size < 4
+
+  pre = 0.06        # keep the consonant that starts the line
+  tail = 0.25       # and the vowel that ends it
+  ordered = lines.select { |(a, _)| a >= from_sec }
+  ordered = lines if ordered.size < 4
+
+  placements = []
+  cursor = 0.0
+  idx = 0
+  # Bounded: one iteration can fail to place (a runt line) without advancing the
+  # cursor, so the loop needs a stop that does not depend on progress.
+  guard = 0
+  while cursor < duration && guard < 512
+    guard += 1
+    a, b = ordered[idx % ordered.size]
+    idx += 1
+
+    # Cut up to the next line's start so a tail is never clipped mid-vowel.
+    nxt = lines.find { |(s, _)| s > a }&.first
+    cut_a = [a - pre, 0.0].max
+    cut_b = [b + tail, nxt || total_sec, total_sec].min
+    len = cut_b - cut_a
+    next if len < RAP_VOCAL_LINE_MIN
+
+    slot = (cursor / grid).ceil * grid
+    break if slot >= duration
+
+    len = [len, duration - slot].min
+    next if len < RAP_VOCAL_LINE_MIN
+
+    # `at` is where the VOICE should land. The cut starts `lead` earlier so the
+    # opening consonant survives, so the segment itself has to be placed that
+    # much before the grid line -- otherwise every line sits exactly one
+    # pre-roll late, which measured as a flat ~62ms lag on every single line.
+    placements << { ss: cut_a.round(3), len: len.round(3), at: slot.round(3),
+                    lead: (a - cut_a).round(3) }
+    cursor = slot + (len - (a - cut_a)) + gap
+  end
+  placements
+end
+
+# Cuts `stretched` into its lines and reassembles them on the grid.
+def rap_vocal_snap_build!(stretched, fit_path, placements, duration:, outer:, tail:)
+  inputs = []
+  chain = []
+  placements.each_with_index do |p, i|
+    inputs.concat(["-ss", p[:ss].to_s, "-t", p[:len].to_s, "-i", stretched])
+    ms = [((p[:at] - p[:lead].to_f) * 1000).round, 0].max
+    out_at = [p[:len] - 0.05, 0.0].max
+    chain << "[#{i}:a]afade=t=in:st=0:d=0.02," \
+             "afade=t=out:st=#{out_at.round(3)}:d=0.05," \
+             "adelay=#{ms}|#{ms}[s#{i}]"
+  end
+  mixed = placements.each_index.map { |i| "[s#{i}]" }.join
+  # normalize=0: amix would otherwise divide by the input count, and with ~30
+  # mostly non-overlapping lines that is a ~30x attenuation of every one of them.
+  chain << "#{mixed}amix=inputs=#{placements.size}:normalize=0:dropout_transition=0[snap]"
+  chain << "[snap]#{outer}#{tail}[vout]"
+  sh! "ffmpeg", "-y", *inputs, "-filter_complex", chain.join(";"),
+      "-map", "[vout]", "-t", duration.round(3).to_s,
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
+  fit_path
+end
+
 def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   bar_offset ||= ENV["RAP_VOCAL_OFFSET"]&.to_f
   entry = rap_vocal_resolve(slug_or_path)
@@ -16208,6 +16358,22 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   vocal_bpm = beat_bpm unless vocal_bpm&.positive?
   # Clamp stretch: extreme atempo starts to chipmunk/garble speech.
   ratio = (beat_bpm / vocal_bpm).clamp(0.5, 2.0)
+
+  # Snap when the take has no measurable pulse, stretch when it has one.
+  # RAP_VOCAL_SNAP=1/0 forces either way.
+  forced_bpm = ENV["RAP_VOCAL_BPM"].to_f.positive?
+  has_pulse = !rap_vocal_measure_bpm(vocal_path).nil?
+  snapping = case ENV["RAP_VOCAL_SNAP"]
+             when "0" then false
+             when "1" then true
+             else !has_pulse
+             end
+  if snapping && !forced_bpm
+    # With no pulse, `vocal_bpm` is a stored guess and stretching by it is the
+    # meaningless operation this path exists to replace. Leave her at her own
+    # speed unless someone asks for a stretch on purpose.
+    ratio = 1.0
+  end
   duration = (60.0 / beat_bpm) * 4.0 * n_bars
   phrases = entry.is_a?(Hash) ? entry["phrases"] : nil
   # An explicit bar_offset (caller or RAP_VOCAL_OFFSET) is a deliberate pick
@@ -16279,7 +16445,31 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   xfade = ENV.fetch("RAP_VOCAL_XFADE", "0.35").to_f.clamp(0.05, 2.0)
   xfade = [xfade, seg_len / 3.0].min if seg_len.positive?
   outer = "afade=t=in:st=0:d=#{fade},afade=t=out:st=#{(duration - fade).round(3)}:d=#{fade}"
-  if seg_len <= 0 || seg_len >= duration
+
+  # seg_path already runs from `ss` to the end of the take, so its lines are the
+  # whole usable performance and the placer picks from all of them.
+  snapped = nil
+  if snapping
+    beat_sec = 60.0 / beat_bpm
+    lines = rap_vocal_line_regions(seg_path)
+    placements = rap_vocal_snap_placements(lines, seg_len, duration:,
+                                           grid: beat_sec * RAP_VOCAL_SNAP_BEATS,
+                                           gap: beat_sec * 0.25)
+    if placements.size >= 4
+      rap_vocal_snap_build!(seg_path, fit_path, placements, duration:, outer:, tail:)
+      snapped = placements
+      dmesg("rap-vocal snap: #{placements.size} lines of #{lines.size} onto a " \
+            "#{RAP_VOCAL_SNAP_BEATS.round}-beat grid (no pulse to stretch)",
+            unit: "vox0", parent: "dilla0")
+    else
+      warn "rap-vocal snap: #{lines.size} lines gave #{placements.size} placements — " \
+           "using the uniform stretch instead"
+    end
+  end
+
+  if snapped
+    nil # built by rap_vocal_snap_build!
+  elsif seg_len <= 0 || seg_len >= duration
     sh! "ffmpeg", "-y", "-i", seg_path, "-t", duration.round(3).to_s,
         "-af", "#{outer}#{tail}",
         "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
@@ -16316,6 +16506,7 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
                           "offset_sec" => ss, "phrase_start" => phrase_start,
                           "source_bpm" => vocal_bpm, "tempo_ratio" => ratio.round(4),
                           "rms_db" => peak, "sub_bleed_db" => sub_bleed,
+                          "snapped_lines" => snapped&.size, "has_pulse" => has_pulse,
                           "voice_only" => true }
     entry["bpm_estimate"] = vocal_bpm if vocal_bpm.positive?
     entry["voice_only"] = true
@@ -16323,8 +16514,9 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
     cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
     rap_vocal_save_catalog!(cat)
   end
+  placed = snapped ? " snapped=#{snapped.size}lines" : ""
   puts "rap-vocal fit: #{fit_path} src=#{vocal_bpm}bpm → #{beat_bpm}bpm " \
-       "ratio=#{ratio.round(3)} start=#{ss}s bars=#{n_bars} " \
+       "ratio=#{ratio.round(3)} start=#{ss}s bars=#{n_bars}#{placed} " \
        "voice≈#{peak.round(1)}dB sub≈#{sub_bleed.round(1)}dB"
   fit_path
 end
