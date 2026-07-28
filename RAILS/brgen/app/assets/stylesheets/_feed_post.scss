@@ -61,9 +61,13 @@
 .feed-card-text a:hover { text-decoration: underline; }
 
 .post-feed { display: block; }
+/* Padding is the only thing separating one post from the next now that the
+   hairline is gone, so it carries that job at every breakpoint — these
+   overrides sit after the base rule and were still on the old, tighter
+   line-era values. */
 .post-feed .feed-card {
   margin: 0;
-  padding: 10px 12px;
+  padding: 14px 12px;
   /* Skip rendering off-screen feed cards; the browser remembers each card's
      real height after first paint (auto), falling back to ~320px before then.
      Scoped to .post-feed so grid/match contexts keep normal sizing. */
@@ -73,14 +77,14 @@
 
 @media (min-width: 768px) {
   .post-feed .feed-card {
-    padding: 12px 16px;
+    padding: 20px 16px;
   }
 }
 
 @media (max-width: 480px) {
   .feed-card,
   .post-feed .feed-card {
-    padding: 10px 12px;
+    padding: 14px 12px;
     gap: 10px;
   }
 }
