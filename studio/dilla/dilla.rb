@@ -6077,6 +6077,27 @@ def sh!(*command)
   abort msg
 end
 
+# ffmpeg takes an entire filtergraph as ONE argv entry, and the native
+# synth graphs grow with the note count -- one aevalsrc per note. At 32 bars
+# (the stream's own default length) the xlead graph crossed the OS argument
+# limit and spawn raised Errno::E2BIG, so every 32-bar render died partway
+# through while 8-bar renders passed and looked fine. -filter_complex_script
+# reads the identical graph from a file instead, which has no such ceiling.
+FILTER_GRAPH_ARG_LIMIT = 60_000
+
+def sh_filter_complex!(graph, *args)
+  return sh!("ffmpeg", "-y", "-filter_complex", graph, *args) if graph.bytesize < FILTER_GRAPH_ARG_LIMIT
+
+  script = dilla_render_tmp("fgraph_#{Process.pid}_#{graph.bytesize}.txt")
+  File.write(script, graph)
+  dmesg("filtergraph #{(graph.bytesize / 1024.0).round}KB via script file", unit: "exec0", parent: "dilla0")
+  begin
+    sh!("ffmpeg", "-y", "-filter_complex_script", script, *args)
+  ensure
+    FileUtils.rm_f(script)
+  end
+end
+
 def capture(*command)
   Open3.capture3(*command.flatten.map(&:to_s))
 end
@@ -12087,7 +12108,7 @@ def render_native_pad_wav(path, pad_events, duration)
     filters << "#{labels.join}amix=inputs=#{labels.length}:duration=longest:normalize=0," \
                "atrim=0:#{duration},alimiter=limit=0.95:level_out=0.96[pads]"
   end
-  sh! "ffmpeg", "-y", "-filter_complex", filters.join(";"), "-map", "[pads]", "-c:a", "pcm_s16le", path
+  sh_filter_complex!(filters.join(";"), "-map", "[pads]", "-c:a", "pcm_s16le", path)
   path
 end
 
@@ -12127,7 +12148,7 @@ def render_native_pad_layer!(voice_path, pad_events, duration, patch)
     filters << "#{labels.join}amix=inputs=#{labels.length}:duration=longest:normalize=0," \
                "atrim=0:#{duration},alimiter=limit=0.95:level_out=0.96[pads]"
   end
-  sh! "ffmpeg", "-y", "-filter_complex", filters.join(";"), "-map", "[pads]", "-c:a", "pcm_s16le", voice_path
+  sh_filter_complex!(filters.join(";"), "-map", "[pads]", "-c:a", "pcm_s16le", voice_path)
   voice_path
 end
 
@@ -12438,8 +12459,7 @@ def render_xlead_native_fm(path, pad_events, duration, cfg)
 
   filters << "#{labels.join}amix=inputs=#{labels.length}:duration=longest:normalize=0," \
              "atrim=0:#{duration},highpass=f=180,lowpass=f=8200,alimiter=limit=0.94:level_out=0.92[xlead]"
-  sh! "ffmpeg", "-y", "-filter_complex", filters.join(";"), "-map", "[xlead]",
-      "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path
+  sh_filter_complex!(filters.join(";"), "-map", "[xlead]", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", path)
   path
 end
 
