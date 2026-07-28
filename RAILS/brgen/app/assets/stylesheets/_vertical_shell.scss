@@ -40,6 +40,10 @@ body[class*="vertical-"] main {
    are intentionally excluded. .feed-header is already hidden above for every
    vertical, so it is omitted here. */
 @each $surface in (maps, dating, messenger, playlist) {
+  /* No tab bar on these, so nothing pinned to the bottom edge needs to clear
+     one — see --tab-bar-h in the shared shell. */
+  body.vertical-#{$surface} { --tab-bar-h: 0px; }
+
   body.vertical-#{$surface} {
     .sidebar,
     .widgets,

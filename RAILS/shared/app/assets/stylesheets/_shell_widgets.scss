@@ -144,9 +144,13 @@ section h2 {
 }
 
 /* Fleet nearby/chat bar — flush to the bottom-right edge (safe-area only). */
+/* Clears the tab bar rather than sitting on it. Flush to the corner meant the
+   tab overlapped the bar's last item on every surface that has one. Verticals
+   that hide the tab bar zero the variable, so the widget drops back to the
+   true corner there. */
 .nearby-chat-widget {
   position: fixed;
-  bottom: var(--safe-bottom, 0px);
+  bottom: calc(var(--tab-bar-h, 0px) + var(--safe-bottom, 0px));
   inset-inline-end: var(--safe-right, 0px);
   z-index: var(--z-toast, 1100);
   font-family: var(--font-mono, ui-monospace, monospace);

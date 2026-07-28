@@ -315,12 +315,18 @@ main[role="main"] {
   margin-inline: auto;
   padding-inline: clamp(16px, 5vw, 48px);
 }
+/* Height published as a variable so anything else pinned to the bottom edge can
+   clear it instead of guessing. The nearby chat tab was flush to the corner and
+   landed on top of this bar's last item — the hamburger — on every surface that
+   has one. */
+:root { --tab-bar-h: 54px; }
+
 .tab-bar {
   position: fixed;
   bottom: 0;
   inset-inline: 0;
   display: flex;
-  min-height: 54px;
+  min-height: var(--tab-bar-h);
   background: var(--surface-elevated);
   z-index: var(--z-nav, 80);
   padding-bottom: var(--safe-bottom, 0px);

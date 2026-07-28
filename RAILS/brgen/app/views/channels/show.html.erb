@@ -33,6 +33,8 @@
       <%= f.submit "Send", class: "btn btn-primary" %>
     <% end %>
   <% else %>
-    <p class="channel-signin dim">Refresh to join the conversation as a guest — no signup needed.</p>
+    <%# "Refresh to join" asked the reader to do the app's job. A guest is
+        minted on the next request either way, so say what is true. %>
+    <p class="channel-signin dim">Anyone can join. No signup needed.</p>
   <% end %>
 </section>

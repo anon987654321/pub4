@@ -44,7 +44,11 @@
             class: "btn btn-ghost cart-pay-stripe",
             form: { data: { turbo: false } } %>
     </div>
-    <p class="hint mt-8">Without VIPPS_EPAYMENT_* / STRIPE_SECRET_KEY the cart fails honestly (“not configured”) — never fakes a charge.</p>
+    <%# Was: "Without VIPPS_EPAYMENT_* / STRIPE_SECRET_KEY the cart fails
+        honestly ("not configured") — never fakes a charge." Environment
+        variable names in a shopping cart are a note to ourselves. The promise
+        underneath is worth keeping; the deploy detail is not. %>
+    <p class="hint mt-8">If a payment provider is unavailable we say so. We never take a payment we cannot process.</p>
 
     <%= button_to "Send all offers", send_offers_marketplace_cart_path,
           method: :post, class: "btn btn-ghost",
