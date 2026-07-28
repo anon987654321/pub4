@@ -10317,21 +10317,13 @@ end
 
 # Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
 # POCKET_DNA=1. Keep this simple — dense grids are why the kit sounded wrong.
-# Was hardcoded to t6SXXx1Fu_4, which is not the id radio_bergen_tracks.yml
-# gives for Flying Lotus "Camel" (fU9YRGLPDQ8). The manifest is the project's
-# curated reference list, so it wins; read it rather than restating it, so the
-# two cannot drift apart again. Note this corrects the CITATION only -- the grid
-# below is whatever was transcribed by ear, and if it was transcribed from the
-# wrong video no URL change can fix that.
-FLYLO_CAMEL_SOURCE_URL = begin
-  entry = YAML.load_file(RADIO_BERGEN_MANIFEST_PATH)
-               .dig("external_reference", "youtube")
-               &.find { |t| t["title"].to_s.casecmp?("Camel") }
-  entry ? "https://www.youtube.com/watch?v=#{entry['id']}" : nil
-rescue StandardError
-  nil
-end || "https://www.youtube.com/watch?v=fU9YRGLPDQ8"
-FLYLO_CAMEL_SOURCE_URL.freeze
+# Was t6SXXx1Fu_4, which is not the id radio_bergen_tracks.yml gives for Flying
+# Lotus "Camel". Corrected to match the manifest, but kept as a literal rather
+# than read from it: this file stays runnable on its own, and a citation is not
+# worth a load-time dependency on a sidecar. Corrects the CITATION only -- the
+# grid below was transcribed by ear, and if it came off the wrong video no id
+# change repairs it.
+FLYLO_CAMEL_SOURCE_URL = "https://www.youtube.com/watch?v=fU9YRGLPDQ8".freeze
 FLYLO_CAMEL_DRUM_GRID = {
   "bpm" => 86,
   "swing" => 60,
@@ -14223,12 +14215,17 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   end
   if DILLA_DRONE
     begin
-      loop_entry = sample_loop_for(ENV["TRACK"])
-      # Prefer the track's own loop -- a drone made from the record already
-      # playing is a bed under it, not a second unrelated sound on top.
-      drone_src = loop_entry&.dig(:path) || harmonic_tmp
+      # Synthesised by default: harmonic_tmp is the engine's own pad/chord bus,
+      # so the drone is built from sound this file made rather than from a
+      # sample on disk, and it is in the render's key by construction.
+      # DILLA_DRONE_SRC=loop takes the track's sampled loop instead.
+      drone_src = if ENV["DILLA_DRONE_SRC"].to_s == "loop"
+                    sample_loop_for(ENV["TRACK"])&.dig(:path) || harmonic_tmp
+                  else
+                    harmonic_tmp
+                  end
       drone_tmp = "#{destination}.drone.wav"
-      if dilla_drone_build!(drone_src, drone_tmp, duration:)
+      if dilla_render_drone!(drone_src, drone_tmp, duration:)
         mixed = "#{destination}.droned#{File.extname(destination)}"
         sh! "ffmpeg", "-y", "-i", destination, "-i", drone_tmp,
             "-filter_complex",
@@ -16249,23 +16246,33 @@ DILLA_DRONE = ENV["DILLA_DRONE"] == "1"
 DILLA_DRONE_VOL = (ENV["DILLA_DRONE_VOL"] || 0.16).to_f.clamp(0.0, 1.0)
 DILLA_DRONE_SRC_SEC = (ENV["DILLA_DRONE_SRC_SEC"] || 0.6).to_f.clamp(0.1, 4.0)
 
-def dilla_drone_build!(src, dest, duration:)
+# atempo floors at 0.5 per stage, so a deep stretch is a chain of them. Six
+# stages of 0.5 is 64x. The last stage differs per layer so the three do not sit
+# exactly on top of each other: identical copies sum to one louder copy, while
+# slightly different ones beat, and the beating is what stops a drone sounding
+# frozen.
+DRONE_LAYER_TEMPOS = [
+  [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+  [0.5, 0.5, 0.5, 0.5, 0.5, 0.55],
+  [0.5, 0.5, 0.5, 0.5, 0.5, 0.62],
+].freeze
+DRONE_LOWPASS_HZ = 1800
+DRONE_HIGHPASS_HZ = 70
+DRONE_FADE_FRACTION = 0.25
+DRONE_FADE_MAX_SEC = 6.0
+
+def dilla_render_drone!(src, dest, duration:)
   return nil unless src && File.file?(src)
 
-  # atempo floors at 0.5 per stage, so a 60x stretch is a chain of them. Taking
-  # the same slice at three slightly different rates and stacking them gives the
-  # beating that makes a drone sit still without sounding frozen.
-  layers = [[0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.55],
-            [0.5, 0.5, 0.5, 0.5, 0.5, 0.62]]
-  chain = layers.each_with_index.map do |steps, i|
-    tempo = steps.map { |s| "atempo=#{s}" }.join(",")
-    "[0:a]#{tempo},lowpass=f=1800,highpass=f=70," \
-      "volume=#{(1.0 / layers.size).round(3)}[d#{i}]"
+  chain = DRONE_LAYER_TEMPOS.each_with_index.map do |stages, i|
+    tempo = stages.map { |s| "atempo=#{s}" }.join(",")
+    "[0:a]#{tempo},lowpass=f=#{DRONE_LOWPASS_HZ},highpass=f=#{DRONE_HIGHPASS_HZ}," \
+      "volume=#{(1.0 / DRONE_LAYER_TEMPOS.size).round(3)}[d#{i}]"
   end
-  mix = layers.each_index.map { |i| "[d#{i}]" }.join
-  chain << "#{mix}amix=inputs=#{layers.size}:normalize=0[dm]"
+  mix = DRONE_LAYER_TEMPOS.each_index.map { |i| "[d#{i}]" }.join
+  chain << "#{mix}amix=inputs=#{DRONE_LAYER_TEMPOS.size}:normalize=0[dm]"
   # A drone that arrives and leaves is a bed; one that just starts is a mistake.
-  fade = [duration * 0.25, 6.0].min.round(2)
+  fade = [duration * DRONE_FADE_FRACTION, DRONE_FADE_MAX_SEC].min.round(2)
   chain << "[dm]afade=t=in:st=0:d=#{fade}," \
            "afade=t=out:st=#{(duration - fade).round(2)}:d=#{fade}[dout]"
   begin
@@ -16286,18 +16293,34 @@ end
 DILLA_TAPE_STOP = ENV["DILLA_TAPE_STOP"] == "1"
 DILLA_TAPE_STOP_BEATS = (ENV["DILLA_TAPE_STOP_BEATS"] || 4).to_f.clamp(0.5, 32.0)
 
+# ffmpeg cannot sweep asetrate continuously, so the brake is short slices at
+# falling rates. 14 is enough that the steps read as a slide, not a staircase.
+TAPE_STOP_STEPS = 14
+# Where the platter ends up, as a fraction of speed. Not 0: the last slice would
+# be stretched to nothing audible and simply pad the file with rumble.
+TAPE_STOP_FINAL_RATE = 0.08
+# >1 makes the fall accelerate, which is how a platter with real inertia stops.
+TAPE_STOP_CURVE = 1.6
+TAPE_STOP_MIN_RATE_HZ = 3000
+
+def dilla_tape_stop_rates
+  (0...TAPE_STOP_STEPS).map do |i|
+    frac = 1.0 - ((i + 1).to_f / TAPE_STOP_STEPS)
+    rest = 1.0 - TAPE_STOP_FINAL_RATE
+    [TAPE_STOP_FINAL_RATE + (rest * (frac**TAPE_STOP_CURVE)),
+     TAPE_STOP_MIN_RATE_HZ.to_f / SAMPLE_RATE].max
+  end
+end
+
 def dilla_tape_stop!(path, beat_bpm:)
   total = audio_duration_sec(path).to_f
   want = (60.0 / beat_bpm) * DILLA_TAPE_STOP_BEATS
-  steps = 14
+  steps = TAPE_STOP_STEPS
   # Slowed audio lasts longer, so the source window has to be SHORTER than the
   # brake we want to hear. Taking the requested length as the source instead
   # made "4 beats" produce 8.9 seconds -- a fifth of a 16-bar track. Solve for
   # the source window whose stretched total lands on the request.
-  rates = (0...steps).map do |i|
-    frac = 1.0 - ((i + 1).to_f / steps)
-    [0.08 + (0.92 * (frac**1.6)), 3000.0 / SAMPLE_RATE].max
-  end
+  rates = dilla_tape_stop_rates
   stretch = rates.sum { |r| 1.0 / r } / steps
   brake = want / stretch
   return path unless total > brake + 1.0
@@ -16396,81 +16419,110 @@ RAP_VOCAL_LINE_HOLD = (ENV["RAP_VOCAL_LINE_HOLD"] || 0.14).to_f
 RAP_VOCAL_LINE_REL  = (ENV["RAP_VOCAL_LINE_REL"] || 0.55).to_f
 RAP_VOCAL_LINE_MIN  = (ENV["RAP_VOCAL_LINE_MIN"] || 0.35).to_f
 
-# Contiguous voiced spans in the timeline of `path` itself.
-def rap_vocal_line_regions(path, hop: 0.010)
-  rate = 8000
+# Analysis rate and band. 8 kHz is plenty for locating syllables -- the band
+# that decides where a voice is has nothing above 6 kHz in it -- and decoding
+# less means the envelope pass costs nothing. Shared with rap_vocal_onset_times.
+RAP_VOCAL_ANALYSIS_RATE = 8_000
+RAP_VOCAL_ANALYSIS_HOP = 0.010
+RAP_VOCAL_VOICE_HIGHPASS_HZ = 200
+RAP_VOCAL_VOICE_LOWPASS_HZ = 6_000
+PCM16_FULL_SCALE = 32_768.0
+
+# The level a "loud" frame is measured against. Not the maximum: one clipped
+# frame would then set the floor for the whole take.
+RAP_VOCAL_LOUD_PERCENTILE = 0.90
+# Below this a frame is silence no matter what the percentile says, so an
+# all-but-silent stem cannot have its own noise promoted into "lines".
+RAP_VOCAL_ABSOLUTE_FLOOR = 0.0015
+RAP_VOCAL_MIN_ANALYSIS_FRAMES = 10
+
+# RMS envelope of `path` in the voice band, one value per hop.
+def rap_vocal_envelope(path, hop: RAP_VOCAL_ANALYSIS_HOP)
   raw = IO.popen(["ffmpeg", "-v", "error", "-i", path, "-af",
-                  "highpass=f=200,lowpass=f=6000", "-ac", "1", "-ar", rate.to_s,
+                  "highpass=f=#{RAP_VOCAL_VOICE_HIGHPASS_HZ}," \
+                  "lowpass=f=#{RAP_VOCAL_VOICE_LOWPASS_HZ}",
+                  "-ac", "1", "-ar", RAP_VOCAL_ANALYSIS_RATE.to_s,
                   "-f", "s16le", "-"], "rb", &:read)
   samples = raw.to_s.unpack("s<*")
   return [] if samples.empty?
 
-  frame = (rate * hop).to_i
-  env = samples.each_slice(frame).map { |c| Math.sqrt(c.sum { |s| (s / 32_768.0)**2 } / c.size) }
-  return [] if env.size < 10
+  frame = (RAP_VOCAL_ANALYSIS_RATE * hop).to_i
+  samples.each_slice(frame).map do |chunk|
+    Math.sqrt(chunk.sum { |s| (s / PCM16_FULL_SCALE)**2 } / chunk.size)
+  end
+end
+
+# The sung lines of a take: contiguous voiced spans, in its own timeline.
+def rap_vocal_sung_lines(path, hop: RAP_VOCAL_ANALYSIS_HOP)
+  env = rap_vocal_envelope(path, hop:)
+  return [] if env.size < RAP_VOCAL_MIN_ANALYSIS_FRAMES
 
   # Relative floor, not absolute: demucs stem levels vary by tens of dB between
   # sources (measured -9.8 to -46.8), so any fixed threshold either passes
   # everything or nothing depending on which vocal it meets.
   sorted = env.sort
-  p90 = sorted[(sorted.size * 0.90).to_i].to_f
-  floor = [p90 * RAP_VOCAL_LINE_REL, 0.0015].max
+  loud = sorted[(sorted.size * RAP_VOCAL_LOUD_PERCENTILE).to_i].to_f
+  floor = [loud * RAP_VOCAL_LINE_REL, RAP_VOCAL_ABSOLUTE_FLOOR].max
   hold_frames = (RAP_VOCAL_LINE_HOLD / hop).to_i
 
-  spans = []
+  lines = []
   start = nil
   quiet = 0
-  env.each_with_index do |e, i|
-    if e >= floor
+  env.each_with_index do |level, i|
+    if level >= floor
       start ||= i
       quiet = 0
     elsif start
       quiet += 1
       next unless quiet > hold_frames
 
-      spans << [start * hop, (i - quiet) * hop]
+      lines << [start * hop, (i - quiet) * hop]
       start = nil
     end
   end
-  spans << [start * hop, (env.size - 1) * hop] if start
-  spans.select { |a, b| b - a >= RAP_VOCAL_LINE_MIN }.map { |a, b| [a.round(3), b.round(3)] }
+  lines << [start * hop, (env.size - 1) * hop] if start
+  lines.select { |from, to| to - from >= RAP_VOCAL_LINE_MIN }
+       .map { |from, to| [from.round(3), to.round(3)] }
 end
 
 # Decides where each line lands. Walks the lines in order, putting every one at
 # the next free grid line, and returns [] if the take has too few lines to build
 # from -- the caller then falls back to the uniform stretch rather than
 # rendering something thin.
-def rap_vocal_snap_placements(lines, total_sec, duration:, grid:, from_sec: 0.0, gap:)
-  return [] if lines.size < 4
+RAP_VOCAL_LINE_PREROLL_SEC = 0.06   # keep the consonant that starts the line
+RAP_VOCAL_LINE_TAIL_SEC = 0.25      # and the vowel that ends it
+RAP_VOCAL_SNAP_MIN_LINES = 4
+# A runt line is skipped without advancing the cursor, so the loop needs a stop
+# that does not depend on making progress.
+RAP_VOCAL_SNAP_MAX_PASSES = 512
 
-  pre = 0.06        # keep the consonant that starts the line
-  tail = 0.25       # and the vowel that ends it
-  ordered = lines.select { |(a, _)| a >= from_sec }
-  ordered = lines if ordered.size < 4
+def rap_vocal_snap_placements(lines, take_sec, duration:, grid:, from_sec: 0.0, gap:)
+  return [] if lines.size < RAP_VOCAL_SNAP_MIN_LINES
+
+  usable = lines.select { |(from, _)| from >= from_sec }
+  usable = lines if usable.size < RAP_VOCAL_SNAP_MIN_LINES
 
   placements = []
   cursor = 0.0
-  idx = 0
-  # Bounded: one iteration can fail to place (a runt line) without advancing the
-  # cursor, so the loop needs a stop that does not depend on progress.
-  guard = 0
-  while cursor < duration && guard < 512
-    guard += 1
-    a, b = ordered[idx % ordered.size]
-    idx += 1
+  taken = 0
+  passes = 0
+  while cursor < duration && passes < RAP_VOCAL_SNAP_MAX_PASSES
+    passes += 1
+    line_from, line_to = usable[taken % usable.size]
+    taken += 1
 
     # Cut up to the next line's start so a tail is never clipped mid-vowel.
-    nxt = lines.find { |(s, _)| s > a }&.first
-    cut_a = [a - pre, 0.0].max
-    cut_b = [b + tail, nxt || total_sec, total_sec].min
-    len = cut_b - cut_a
-    next if len < RAP_VOCAL_LINE_MIN
+    next_from = lines.find { |(from, _)| from > line_from }&.first
+    cut_from = [line_from - RAP_VOCAL_LINE_PREROLL_SEC, 0.0].max
+    cut_to = [line_to + RAP_VOCAL_LINE_TAIL_SEC, next_from || take_sec, take_sec].min
+    length = cut_to - cut_from
+    next if length < RAP_VOCAL_LINE_MIN
 
     slot = (cursor / grid).ceil * grid
     break if slot >= duration
 
-    len = [len, duration - slot].min
-    next if len < RAP_VOCAL_LINE_MIN
+    length = [length, duration - slot].min
+    next if length < RAP_VOCAL_LINE_MIN
 
     # `at` is where the VOICE should land. The cut starts `lead` earlier so the
     # opening consonant survives, so the segment itself has to be placed that
@@ -16478,63 +16530,81 @@ def rap_vocal_snap_placements(lines, total_sec, duration:, grid:, from_sec: 0.0,
     # pre-roll late, which measured as a flat ~62ms lag on every single line.
     lean = rap_vocal_line_lean(placements.size)
     at = [slot + lean, 0.0].max
-    placements << { ss: cut_a.round(3), len: len.round(3), at: at.round(3),
-                    lead: (a - cut_a).round(3), lean: lean.round(4) }
-    cursor = at + (len - (a - cut_a)) + gap
+    lead = line_from - cut_from
+    placements << { from: cut_from.round(3), length: length.round(3),
+                    at: at.round(3), lead: lead.round(3), lean: lean.round(4) }
+    cursor = at + (length - lead) + gap
   end
   placements
 end
 
+SEAM_FADE_IN_SEC = 0.02
+SEAM_FADE_OUT_SEC = 0.05
+# Not an articulation -- just enough to stop the DC step at a hard cut popping.
+SEAM_RAW_FADE_SEC = 0.003
+# Darkened, because a reverse swell that keeps its consonants reads as audio
+# played backwards rather than as a rise into the beat.
+SWELL_LOWPASS_HZ = 2600
+SWELL_ECHO_FRACTION = 0.35
+SWELL_ECHO_DECAY = 0.45
+SWELL_FADE_FRACTION = 0.8
+SWELL_MIN_SEC = 0.1
+
+# One ffmpeg input cut from `stretched`, delayed into place.
+def rap_vocal_placed_input(source, from:, length:, at:, index:, filters:, label:)
+  ms = [(at * 1000).round, 0].max
+  {
+    args: ["-ss", from.round(3).to_s, "-t", length.round(3).to_s, "-i", source],
+    chain: "[#{index}:a]#{filters},adelay=#{ms}|#{ms}[#{label}#{index}]",
+    label: "[#{label}#{index}]",
+  }
+end
+
 # Cuts `stretched` into its lines and reassembles them on the grid.
-def rap_vocal_snap_build!(stretched, fit_path, placements, duration:, outer:, tail:)
-  inputs = []
-  chain = []
-  labels = []
-  idx = 0
+def rap_vocal_render_snapped!(stretched, fit_path, placements, duration:, outer:, tail:)
+  parts = []
 
   placements.each do |p|
-    inputs.concat(["-ss", p[:ss].to_s, "-t", p[:len].to_s, "-i", stretched])
-    ms = [((p[:at] - p[:lead].to_f) * 1000).round, 0].max
-    out_at = [p[:len] - 0.05, 0.0].max
     seam = if RAP_VOCAL_RAW_SEAMS
-             # 3ms is not an articulation, it is only enough to stop the DC step
-             # at a hard cut from popping. The chop tail itself runs on.
-             "afade=t=in:st=0:d=0.003"
+             "afade=t=in:st=0:d=#{SEAM_RAW_FADE_SEC}"
            else
-             "afade=t=in:st=0:d=0.02,afade=t=out:st=#{out_at.round(3)}:d=0.05"
+             out_at = [p[:length] - SEAM_FADE_OUT_SEC, 0.0].max
+             "afade=t=in:st=0:d=#{SEAM_FADE_IN_SEC}," \
+               "afade=t=out:st=#{out_at.round(3)}:d=#{SEAM_FADE_OUT_SEC}"
            end
-    chain << "[#{idx}:a]#{seam},adelay=#{ms}|#{ms}[s#{idx}]"
-    labels << "[s#{idx}]"
-    idx += 1
+    parts << rap_vocal_placed_input(stretched, from: p[:from], length: p[:length],
+                                    at: p[:at] - p[:lead].to_f, index: parts.size,
+                                    filters: seam, label: "s")
   end
 
   if RAP_VOCAL_SWELL
     placements.each do |p|
-      swell = [RAP_VOCAL_SWELL_SEC, p[:len]].min
-      next if swell < 0.1
+      swell = [RAP_VOCAL_SWELL_SEC, p[:length]].min
+      next if swell < SWELL_MIN_SEC
 
       # Land the swell so it ENDS on the line's own downbeat: start it a swell
       # earlier, and reverse the line's head so the loudest part is last.
       at = p[:at] - swell
-      next if at < 0.0
+      next if at.negative?
 
-      inputs.concat(["-ss", p[:ss].to_s, "-t", swell.round(3).to_s, "-i", stretched])
-      ms = (at * 1000).round
-      chain << "[#{idx}:a]areverse,lowpass=f=2600," \
-               "aecho=0.8:0.7:#{(swell * 1000 * 0.35).round}:0.45," \
-               "afade=t=in:st=0:d=#{(swell * 0.8).round(3)}," \
-               "volume=#{RAP_VOCAL_SWELL_VOL},adelay=#{ms}|#{ms}[w#{idx}]"
-      labels << "[w#{idx}]"
-      idx += 1
+      filters = "areverse,lowpass=f=#{SWELL_LOWPASS_HZ}," \
+                "aecho=0.8:0.7:#{(swell * 1000 * SWELL_ECHO_FRACTION).round}:#{SWELL_ECHO_DECAY}," \
+                "afade=t=in:st=0:d=#{(swell * SWELL_FADE_FRACTION).round(3)}," \
+                "volume=#{RAP_VOCAL_SWELL_VOL}"
+      parts << rap_vocal_placed_input(stretched, from: p[:from], length: swell,
+                                      at:, index: parts.size,
+                                      filters:, label: "w")
     end
   end
 
-  mixed = labels.join
+  chain = parts.map { |p| p[:chain] }
   # normalize=0: amix would otherwise divide by the input count, and with ~30
   # mostly non-overlapping lines that is a ~30x attenuation of every one of them.
-  chain << "#{mixed}amix=inputs=#{labels.size}:normalize=0:dropout_transition=0[snap]"
+  chain << "#{parts.map { |p| p[:label] }.join}" \
+           "amix=inputs=#{parts.size}:normalize=0:dropout_transition=0[snap]"
   chain << "[snap]#{outer}#{tail}[vout]"
-  sh! "ffmpeg", "-y", *inputs, "-filter_complex", chain.join(";"),
+  sh! "ffmpeg", "-y", *parts.flat_map { |p| p[:args] },
+      "-filter_complex", chain.join(";"),
       "-map", "[vout]", "-t", duration.round(3).to_s,
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", fit_path
   fit_path
@@ -16669,12 +16739,12 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   snapped = nil
   if snapping
     beat_sec = 60.0 / beat_bpm
-    lines = rap_vocal_line_regions(seg_path)
+    lines = rap_vocal_sung_lines(seg_path)
     placements = rap_vocal_snap_placements(lines, seg_len, duration:,
                                            grid: beat_sec * RAP_VOCAL_SNAP_BEATS,
                                            gap: beat_sec * 0.25)
     if placements.size >= 4
-      rap_vocal_snap_build!(seg_path, fit_path, placements, duration:, outer:, tail:)
+      rap_vocal_render_snapped!(seg_path, fit_path, placements, duration:, outer:, tail:)
       snapped = placements
       dmesg("rap-vocal snap: #{placements.size} lines of #{lines.size} onto a " \
             "#{RAP_VOCAL_SNAP_BEATS.round}-beat grid (no pulse to stretch)",
@@ -16686,7 +16756,7 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   end
 
   if snapped
-    nil # built by rap_vocal_snap_build!
+    nil # built by rap_vocal_render_snapped!
   elsif seg_len <= 0 || seg_len >= duration
     sh! "ffmpeg", "-y", "-i", seg_path, "-t", duration.round(3).to_s,
         "-af", "#{outer}#{tail}",
