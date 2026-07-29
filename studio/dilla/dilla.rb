@@ -3686,6 +3686,13 @@ TRACK_SAMPLE_LOOPS = {
   # behaviour here (semua_untuk_mu measures +1.7 raw and was the LEAST
   # problematic in a mix), so this is a starting point to check in a render
   # rather than a tuned value.
+# 2 bars at 92 BPM from one of the operator's own recordings, restored from
+# git history. Self-similarity picks 5.22s at 0.509, the clearest loop in
+# their own catalogue, and 92 is the tempo kembara_rindu already sits at.
+# C# minor at a Krumhansl fit of 0.70 -- the strongest reading of any of
+# their own tracks -- so it clears the harmonic guard comfortably.
+rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
+            hp: 60, sub_db: -3.0, lp: 6200 },
   lo_borges: { path: File.join(SAMPLE_DIR, "lo_borges", "loop.wav"), bpm: 114.0,
                hp: 60, sub_db: -3.0, lp: 6000 },
 }.freeze
