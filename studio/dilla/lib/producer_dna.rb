@@ -461,6 +461,26 @@ flylo_camel_measured: {
   ghosts: [7, 10, 15], claps: [4, 12], perc: [3, 9, 11]
 },
 
+
+# Built from euclid rather than written by hand. The snare stays on 4 and 12
+# in every one: Euclid sets density and placement of the kick, hats and perc,
+# while the bar still turns where the ear expects.
+euclid_tresillo: {
+  swing: 55, humanize: 3, bpm: 88, mode: :dilla_time,
+  kicks: [0, 3, 6], snares: [4, 12], hats: [0, 3, 5, 7, 10, 12, 14],
+  ghosts: [9, 14], claps: [4, 12], perc: [0, 6]
+},
+euclid_cinquillo: {
+  swing: 54, humanize: 3, bpm: 84, mode: :dilla_time,
+  kicks: [0, 2, 3, 5, 6], snares: [4, 12], hats: [0, 3, 6, 9, 12],
+  ghosts: [7, 15], claps: [4, 12], perc: [2, 10]
+},
+euclid_sparse: {
+  swing: 53, humanize: 3, bpm: 80, mode: :straight_sixteenth,
+  kicks: [0, 3, 6, 9, 12], snares: [8], hats: [0, 6, 12],
+  ghosts: [14], claps: [8], perc: [3, 9]
+},
+
   push_four: {
     swing: 50, humanize: 1, bpm: 90, mode: :straight_sixteenth,
     kicks: [0, 8], snares: [4, 12], hats: [0, 4, 8, 12],
@@ -1164,6 +1184,35 @@ flylo_camel_measured: {
   # ninth and 7b9 its flat nine. The template's own order says which notes are
   # extensions: anything smaller than an interval already seen. Raise those an
   # octave and they both sound right and survive the trim.
+
+# Euclidean rhythms: k onsets spread as evenly as possible over n steps.
+#
+# Bjorklund's algorithm, the same one that generates the timing patterns in a
+# linear accelerator, and it produces most of the world's traditional bell
+# patterns as a side effect -- E(5,8) is the Cuban cinquillo, E(3,8) the
+# tresillo, E(7,16) a common West African bell. They are here because "spread
+# k events evenly over n" is a genuinely different generator from "write the
+# steps down", and it lands hits in places a hand-written grid rarely reaches.
+#
+# The backbeat rule still applies: these set kicks, hats and perc, while the
+# snare stays on 4 and 12. Euclid decides density, not where the bar turns.
+def self.euclid(k, n)
+  return [] if k <= 0 || n <= 0 || k > n
+
+  # Build k groups of [1] and n-k of [0], then repeatedly distribute the
+  # remainder into the groups until the remainder is one or zero.
+  a = Array.new(k) { [1] }
+  b = Array.new(n - k) { [0] }
+  while b.length > 1
+    pairs = [a.length, b.length].min
+    merged = Array.new(pairs) { |i| a[i] + b[i] }
+    rest = a.length > pairs ? a[pairs..] : b[pairs..]
+    a = merged
+    b = rest || []
+  end
+  (a + b).flatten.each_index.select { |i| (a + b).flatten[i] == 1 }
+end
+
   def self.voice_extensions(intervals)
     seen = -1
     intervals.map do |iv|
