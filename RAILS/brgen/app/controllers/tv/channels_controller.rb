@@ -45,7 +45,12 @@ class Tv::ChannelsController < Tv::BaseController
   end
 
   private
-  def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:id]))
+  # params[:slug], not params[:id]: the route declares `param: :slug`, so the
+  # segment arrives under that name and params[:id] is nil. find_by!(slug: nil)
+  # raises RecordNotFound every time, so every channel link on /channels 404'd
+  # — including the ones the index itself renders. The sibling IRC
+  # ChannelsController already reads params[:slug].
+  def set_channel    = (@channel = Tv::Channel.find_by!(slug: params[:slug]))
   def channel_params = params.require(:tv_channel).permit(:name, :description, :banner, :avatar)
 
   def require_channel_owner!
