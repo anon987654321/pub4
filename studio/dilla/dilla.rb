@@ -14599,6 +14599,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     render_harmonic_wav(harmonic_tmp, events[:pad], events[:chop],
                         bass_own_bus ? [] : events[:bass], duration,
                         melody_events: events[:melody], cfg:, dfam_events: events[:dfam])
+    # Pads and chops only. The bass bus is rendered separately below and is
+    # deliberately left out: swelling the low end in and out is heard as an
+    # unsteady mix rather than as playing.
+    organic_breathe!(harmonic_tmp, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
     if bass_own_bus
       bass_bus_tmp = dilla_render_tmp("bassbus")
       render_harmonic_wav(bass_bus_tmp, [], [], events[:bass], duration, cfg:, pad_post: false)
@@ -14620,7 +14624,19 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   loop_entry = sample_loop_for(cfg[:track])
   loop_idx = nil
   if loop_entry
-    command += ["-stream_loop", "-1", "-i", loop_entry[:path]]
+    varied = nil
+    if ORGANIC_VARY
+      varied = organic_vary_loop!(loop_entry[:path], dilla_render_tmp("varyloop"),
+                                  duration:)
+    end
+    if varied
+      # Already covers the full duration with each pass differing, so it must
+      # NOT be stream_looped -- that would repeat the varied bed identically and
+      # put the sameness back at a longer period.
+      command += ["-i", varied]
+    else
+      command += ["-stream_loop", "-1", "-i", loop_entry[:path]]
+    end
     loop_idx = idx
     idx += 1
   end
@@ -16829,6 +16845,159 @@ def rap_vocal_source_bpm(entry, vocal_path, target: nil)
     candidates << analysis&.dig(:bpm_estimate_snare).to_f
   end
   rap_vocal_fold_bpm(candidates.find { |b| b&.positive? }, target:)
+end
+
+# --- breathing --------------------------------------------------------------
+#
+# The engine already owns vibrato, chorus, tremolo, phaser and a drift filter.
+# More of those does not make a pad breathe, because all of them are periodic,
+# independent and fixed-rate: three unrelated motions at constant speed read as
+# a static sound with effects on it. Two things are missing.
+#
+# ORGANIC_BREATH=1  drives loudness and brightness from ONE control signal, so
+#   the pad gets louder and brighter together the way a played instrument does
+#   when the player pushes. Correlation is the whole point; two independent
+#   modulations at the same depths do not sound like this.
+#
+# ORGANIC_SWELL=1   swells across the phrase and relaxes out of it -- the
+#   literal breath. Measured motivation: renders here come out at LRA 2.9, so
+#   bar 1 and bar 17 are equally loud, which no played performance is.
+ORGANIC_BREATH = ENV["ORGANIC_BREATH"] == "1"
+ORGANIC_SWELL = ENV["ORGANIC_SWELL"] == "1"
+ORGANIC_BREATH_DB = (ENV["ORGANIC_BREATH_DB"] || 2.2).to_f.clamp(0.0, 12.0)
+ORGANIC_SWELL_DB = (ENV["ORGANIC_SWELL_DB"] || 3.0).to_f.clamp(0.0, 12.0)
+ORGANIC_SWELL_BARS = (ENV["ORGANIC_SWELL_BARS"] || 4).to_f.clamp(1.0, 32.0)
+# How dark the closed end of the brightness sweep is. The bright branch is the
+# untouched signal, so this is the only tone control here.
+ORGANIC_DARK_HZ = (ENV["ORGANIC_DARK_HZ"] || 1400).to_i
+
+# Three incommensurate rates. A single LFO at 0.13 Hz repeats every 7.7s and the
+# ear learns it; periods of 27s, 16s and 11s sum to something whose repeat is
+# far longer than any track, so it never settles into a pattern. Fixed rather
+# than random so a render reproduces -- an irregularity you cannot get back is
+# an accident, not a character.
+ORGANIC_RATES = [[0.037, 0.45, 0.0], [0.061, 0.35, 1.3], [0.089, 0.20, 2.7]].freeze
+
+# Control signal in 0..1, as an ffmpeg expression over t.
+def organic_control_expr
+  terms = ORGANIC_RATES.map do |hz, amp, phase|
+    "#{amp}*sin(2*PI*#{hz}*t+#{phase})"
+  end
+  "(0.5+0.5*(#{terms.join('+')}))"
+end
+
+# Raised cosine over the phrase: quietest at the phrase boundary, fullest in the
+# middle, so it lands with the chord changes instead of cutting across them.
+def organic_swell_expr(bar_sec)
+  phrase = (bar_sec * ORGANIC_SWELL_BARS).round(4)
+  "(0.5-0.5*cos(2*PI*t/#{phrase}))"
+end
+
+# Returns filter fragments taking [in_label] to [out_label].
+#
+# Brightness is done by crossfading a full-band branch against a lowpassed one,
+# because ffmpeg's lowpass takes a fixed frequency and cannot be swept. Summing
+# a dark copy and a bright copy under complementary time-varying gains gets the
+# same result with filters that do support per-frame evaluation.
+def organic_breath_filters(in_label, out_label, bar_sec:)
+  drive = if ORGANIC_BREATH && ORGANIC_SWELL
+            "(0.5*#{organic_control_expr}+0.5*#{organic_swell_expr(bar_sec)})"
+          elsif ORGANIC_SWELL
+            organic_swell_expr(bar_sec)
+          else
+            organic_control_expr
+          end
+  depth = ORGANIC_SWELL ? ORGANIC_SWELL_DB : ORGANIC_BREATH_DB
+  # Centred on 0 dB so the average level is unchanged and this is heard as
+  # movement rather than as a level change.
+  gain = "(#{depth}*(#{drive}-0.5)*2)"
+
+  [
+    "[#{in_label}]asplit=2[br_a][br_b]",
+    "[br_a]volume=#{'%.4f' % 1.0}:eval=frame[br_bright]",
+    "[br_b]lowpass=f=#{ORGANIC_DARK_HZ}[br_dark]",
+    # Bright rises with the drive, dark falls: same signal, tone opening and
+    # closing with the loudness rather than on its own schedule.
+    "[br_bright]volume='#{drive}':eval=frame[br_bw]",
+    "[br_dark]volume='(1-#{drive})':eval=frame[br_dw]",
+    "[br_bw][br_dw]amix=inputs=2:normalize=0[br_mix]",
+    "[br_mix]volume='exp(#{gain}*0.11512925)':eval=frame[#{out_label}]",
+  ]
+end
+
+# A sampled loop played with -stream_loop is bit-identical every repetition, and
+# nothing acoustic repeats exactly. ORGANIC_VARY=1 pre-builds the bed as N
+# separately-processed copies so each pass differs slightly in pitch, tone and
+# start offset -- the thing that stops a loop sounding stapled to the grid.
+#
+# Deliberately small numbers: past a few cents the loop stops agreeing with the
+# generated harmony, and past ~15ms the drums stop agreeing with themselves.
+ORGANIC_VARY = ENV["ORGANIC_VARY"] == "1"
+ORGANIC_VARY_CENTS = (ENV["ORGANIC_VARY_CENTS"] || 4.0).to_f.clamp(0.0, 30.0)
+ORGANIC_VARY_MS = (ENV["ORGANIC_VARY_MS"] || 8.0).to_f.clamp(0.0, 60.0)
+ORGANIC_VARY_TONE_HZ = (ENV["ORGANIC_VARY_TONE_HZ"] || 1800).to_i
+
+# Fixed walks, one value per repetition, cycling. Reproducibility again: a loop
+# that varies differently on every render cannot be mixed against.
+ORGANIC_VARY_PITCH_WALK = [0.0, 0.6, -0.4, 1.0, -0.8, 0.3, -1.0, 0.7].freeze
+ORGANIC_VARY_TIME_WALK  = [0.0, -0.5, 0.8, -0.2, 0.6, -0.9, 0.3, -0.6].freeze
+ORGANIC_VARY_TONE_WALK  = [0.0, -1.2, 0.8, -0.6, 1.4, -0.3, 0.5, -1.0].freeze
+
+def organic_vary_loop!(src, dest, duration:)
+  return nil unless File.file?(src)
+
+  one = audio_duration_sec(src).to_f
+  return nil unless one.positive?
+
+  reps = ((duration / one).ceil + 1).clamp(1, 64)
+  parts = []
+  chain = []
+  reps.times do |i|
+    cents = ORGANIC_VARY_CENTS * ORGANIC_VARY_PITCH_WALK[i % ORGANIC_VARY_PITCH_WALK.size]
+    shift = ORGANIC_VARY_MS * ORGANIC_VARY_TIME_WALK[i % ORGANIC_VARY_TIME_WALK.size]
+    tone  = ORGANIC_VARY_TONE_HZ * (1.0 + (0.18 * ORGANIC_VARY_TONE_WALK[i % ORGANIC_VARY_TONE_WALK.size]))
+    rate  = (SAMPLE_RATE * (2.0**(cents / 1200.0))).round
+    delay = [shift.round, 0].max
+    parts.concat(["-i", src])
+    # asetrate then aresample is a varispeed: pitch and length move together, as
+    # a tape machine does, rather than a formant-preserving shift that would
+    # sound processed.
+    chain << "[#{i}:a]asetrate=#{rate},aresample=#{SAMPLE_RATE}," \
+             "lowpass=f=#{tone.round},adelay=#{delay}|#{delay}[v#{i}]"
+  end
+  labels = (0...reps).map { |i| "[v#{i}]" }.join
+  chain << "#{labels}concat=n=#{reps}:v=0:a=1[vcat]"
+  chain << "[vcat]atrim=0:#{duration.round(3)},asetpts=PTS-STARTPTS[vout]"
+  begin
+    sh! "ffmpeg", "-y", *parts, "-filter_complex", chain.join(";"),
+        "-map", "[vout]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-c:a", "pcm_s16le", dest
+    dmesg("organic vary: #{reps} passes, +-#{ORGANIC_VARY_CENTS}c / #{ORGANIC_VARY_MS}ms",
+          unit: "harm0", parent: "dilla0")
+    dest
+  rescue StandardError => e
+    warn "organic vary: #{e.message}"
+    nil
+  end
+end
+
+# Applies the breath to a rendered file in place.
+def organic_breathe!(path, bar_sec:)
+  return path unless (ORGANIC_BREATH || ORGANIC_SWELL) && File.file?(path)
+
+  out = "#{path}.breath.wav"
+  chain = organic_breath_filters("0:a", "bout", bar_sec:)
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-filter_complex", chain.join(";"),
+        "-map", "[bout]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-c:a", "pcm_s16le", out
+    FileUtils.mv(out, path)
+    path
+  rescue StandardError => e
+    warn "organic breath: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  end
 end
 
 # --- drone bed and tape stop --------------------------------------------------
