@@ -15867,7 +15867,7 @@ def help
     ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
          PERFORMER=yancey GROOVE_DNA=donuts COMPOSITION=1 GENERATIONS=5 LISTEN_PASSES=3
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
-         KICK_GAIN=0.38 (default) kick/sub level scale — lower if still loud
+         KICK_GAIN=0.88 (0.78 on flylo) kick/sub level scale — lower if still loud
          SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
@@ -19595,6 +19595,16 @@ DISPATCH = {
   "harmony" => -> { harmony(ARGV.shift) },
   "beauty" => -> { beauty_report(ARGV.shift) },
   "crate" => -> { build_crate!(ARGV.shift || CRATE_DIR) },
+"mix-score" => lambda {
+    require_relative "lib/mix_score"
+    a = ARGV.shift
+    b = ARGV.shift
+    if b
+      MixScore.compare(a.to_s, b.to_s)
+    else
+      exit(MixScore.report(a.to_s) ? 0 : 1)
+    end
+  },
   "verify-fx" => lambda {
     require_relative "lib/verify_fx"
     exit(VerifyFx.verify! ? 0 : 1)
