@@ -6,7 +6,11 @@
    aspect-ratio gives it a near-square viewport on phones and widens gently on
    desktop, with a hard max-height so it never pushes the feed below the fold. */
 .ai-embed {
-  background: var(--surface, #000);
+  /* Fallback is --surface's real dark value (brgen-old-dark-tokens in
+     _dialect_tokens.scss), not #000. #000 matched no definition of --surface
+     anywhere, which is exactly the drift fallback_drift_lint exists to catch —
+     and that failing lint had been blocking every brgen deploy. */
+  background: var(--surface, #1a1a1a);
 }
 
 .ai-embed-bar {
