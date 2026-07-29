@@ -3475,13 +3475,22 @@ end
 # own bus, mixed alongside drums/harm/bass like any other.
 TRACK_SAMPLE_LOOPS = {
   # The frozen 4-bar loop from the 92 BPM Ableton set recreated as :four_seven.
-  four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0 },
+  # hp/sub_db are per-loop because the loops differ, and a global setting is
+  # wrong for one of them whichever value it takes. Measured low-versus-mid,
+  # untreated: four_seven -4.9 dB, nightbus -10.3 dB. The Malay loop has a kick
+  # and bass baked into the record; nightbus does not, and highpassing it at 90
+  # would take out low end it needs rather than low end that is in the way.
+  four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0,
+                hp: 90, sub_db: -7.0 },
   # 4 bars taken from 13.88s of the source, which is where the spoken intro
   # stops: the low end steps up 7 dB at 13.5s and stays there, while the speech
   # band drops. 103 BPM is corroborated twice over -- the onset sweep picks 103,
   # and the strongest self-similarity in the whole take (0.300) sits at 1.16s,
   # which is two beats at 103 to within a millisecond.
-  nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 103.0 },
+  # Left flat on purpose -- see the note above. This one is already clear down
+  # there and does not need correcting.
+  nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 103.0,
+              hp: 45, sub_db: 0.0 },
 }.freeze
 
 # --- cross-sample processing ---------------------------------------------------
@@ -3704,8 +3713,10 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # by 0.0 dB, while muting the loop moved it by -4.0 dB. The loop was the whole
   # low end -- which is why turning KICK_GAIN down never fixed a low end that
   # was too loud, across three attempts.
-  hp = ENV.fetch("SAMPLE_LOOP_HP", "45").to_i
-  sub_db = ENV.fetch("SAMPLE_LOOP_SUB_DB", "0").to_f
+  # Per-loop defaults from TRACK_SAMPLE_LOOPS; env still wins when pinned.
+  entry = sample_loop_for(ENV["TRACK"]) || {}
+  hp = (ENV["SAMPLE_LOOP_HP"] || entry[:hp] || 45).to_i
+  sub_db = (ENV["SAMPLE_LOOP_SUB_DB"] || entry[:sub_db] || 0).to_f
   sub_eq = sub_db.zero? ? "" : "equalizer=f=90:t=o:w=1.1:g=#{sub_db},"
   common = "aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
            "highpass=f=#{hp}," \
