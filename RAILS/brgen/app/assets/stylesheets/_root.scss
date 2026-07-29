@@ -99,7 +99,13 @@ a:hover { text-decoration: underline; }
    #navBar already cleared it with a hardcoded 4.75rem; this is that number,
    named, so the next top-left surface inherits the fix instead of rediscovering
    the bug. */
-:root { --brand-mark-inline: 4.75rem; }
+:root {
+  --brand-mark-inline: 4.75rem;
+  /* Mirror of the above for the trailing edge: .theme-toggle is fixed 44px wide
+     at inset-inline-end 0.75rem with z-index 110, so it covered the last
+     .feed-tab exactly the way the brand covered the first one. */
+  --chrome-toggle-inline: 4.25rem;
+}
 
 /* City brand: fixed top-left, identical on core + every vertical.
    MASTER face.css .top-left-logo — type only. Never a bordered/outlined chip. */

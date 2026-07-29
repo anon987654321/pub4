@@ -51,6 +51,10 @@
   padding: var(--space-3) var(--space-4);
   overflow-x: auto;
   scrollbar-width: none;
+  /* Without this the flex item's automatic minimum size sizes the scroller to
+     its content instead of its parent, so the scroll box itself hung 160px past
+     the viewport on /shops at 390px rather than scrolling inside it. */
+  min-width: 0;
 }
 
 .deal-cats::-webkit-scrollbar {
