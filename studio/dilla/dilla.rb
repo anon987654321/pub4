@@ -3686,7 +3686,7 @@ TRACK_SAMPLE_LOOPS = {
   # behaviour here (semua_untuk_mu measures +1.7 raw and was the LEAST
   # problematic in a mix), so this is a starting point to check in a render
   # rather than a tuned value.
-  dmaj_open: { path: File.join(SAMPLE_DIR, "dmaj_open", "loop.wav"), bpm: 114.0,
+  lo_borges: { path: File.join(SAMPLE_DIR, "lo_borges", "loop.wav"), bpm: 114.0,
                hp: 60, sub_db: -3.0, lp: 6000 },
 }.freeze
 
@@ -3699,6 +3699,8 @@ TRACK_SAMPLE_LOOPS = {
 TRACK_SAMPLE_LOOP_ALIASES = {
   four_seven: :kembara_rindu,
   nightbus: :semua_untuk_mu,
+  # dmaj_open was a placeholder for a sample the operator had not yet named.
+  dmaj_open: :lo_borges,
 }.freeze
 
 # --- cross-sample processing ---------------------------------------------------
@@ -4030,11 +4032,72 @@ end
 # and lowering the harm corner never moved the master: the level was never the
 # problem, the routing was. The engine's own quality gate had been rejecting
 # every take on "sub=boost_sub (low-mid -9.51 dB)" because of it.
+# Per-channel analog treatment, applied BEFORE the buses are summed.
+#
+# The master already runs sonitex tape and an analog chain, but that stage only
+# ever sees the sum. A desk does not work that way: every channel saturates on
+# the way in, so each source generates its own harmonics first and those
+# harmonics then intermodulate in the bus. One saturator on the sum cannot
+# produce that, because by the time it runs the sources no longer exist
+# separately.
+#
+# Character differs per bus because the sources do. Drums take the hardest
+# drive -- transients are what saturation flatters. Bass takes the least: it is
+# already the loudest thing in the low end and driving it turns definition into
+# mud. Harmony sits between, where a little bloom thickens pads without
+# blurring their attacks.
+BUS_ANALOG = (ENV["BUS_ANALOG"] || 0).to_f.clamp(0.0, 1.0)
+
+BUS_ANALOG_CHARACTER = {
+  drums: { drive: 1.0, tilt: 2.2, hz: 3200 },
+  bass:  { drive: 0.45, tilt: 0.8, hz: 900 },
+  harm:  { drive: 0.7, tilt: 1.4, hz: 2400 },
+}.freeze
+
+# Small per-bus phase offsets so the buses do not sum perfectly coherently.
+# Real summing is never phase-aligned -- each channel takes a slightly different
+# path -- and that incoherence is most of what "phasy summing" means. The
+# offsets are tiny and fixed: large ones comb-filter, and random ones make a
+# render unreproducible.
+BUS_PHASE_MS = { drums: 0.0, bass: 0.35, harm: 0.62 }.freeze
+
+def bus_analog_filter(bus)
+  return "" if BUS_ANALOG <= 0.0
+
+  c = BUS_ANALOG_CHARACTER.fetch(bus)
+  d = BUS_ANALOG * c[:drive]
+  phase = BUS_PHASE_MS.fetch(bus) * BUS_ANALOG
+  parts = []
+  # Drive hard, clip low, then take the level back out.
+  #
+  # The first version drove by 1.44x into a threshold of 0.76 and measured as
+  # doing nothing at all -- because an individual bus peaks far below the summed
+  # mix, so a threshold set for master levels is never reached and the clipper
+  # never engages. A saturator that never saturates is just a gain stage with a
+  # misleading name. Threshold now scales DOWN with drive so the harder it is
+  # pushed the sooner it bites, which is what the control is supposed to mean.
+  # alimiter, not asoftclip. Tested on a clean 200 Hz sine, where any energy
+  # above 500 Hz can only be harmonics the stage invented: asoftclip produced
+  # -40.8 dB against -40.1 dB clean, which is nothing, at any threshold tried.
+  # acrusher likewise. Drive into a low limiter ceiling gives -19.1 dB, i.e. 21
+  # dB of genuine harmonic content. Two earlier attempts here failed because
+  # they tuned the parameters of a filter that was transparent to begin with --
+  # the primitive was wrong, not the settings.
+  drive = 1.0 + (5.0 * d)
+  parts << "volume=#{drive.round(3)}"
+  parts << "alimiter=limit=#{(0.45 - (0.28 * d)).round(3)}:level_out=1:attack=1:release=20"
+  parts << "volume=#{(1.0 / (1.0 + (2.2 * d))).round(3)}"
+  # Tape tilt: a little lift where the source lives, gentle roll above it.
+  parts << "equalizer=f=#{c[:hz]}:t=o:w=1.4:g=#{(c[:tilt] * d).round(2)}"
+  parts << "adelay=#{(phase * 1000).round}|#{((phase * 1000) * 1.3).round}" if phase.positive?
+  "#{parts.join(',')},"
+end
+
 def build_bass_bus_filter(idx, duration)
   vol = ENV.fetch("BASS_BUS_VOL", "1.4").to_f
   sub_g = ENV.fetch("BASS_BUS_SUB_DB", "3.0").to_f
   mud_g = ENV.fetch("BASS_BUS_MUD_DB", "-1.5").to_f
-  "[#{idx}:a]aformat=channel_layouts=stereo,volume=#{vol}," \
+  "[#{idx}:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:bass)}volume=#{vol}," \
     "highpass=f=26," \
     "equalizer=f=70:t=o:w=1.1:g=#{sub_g}," \
     "equalizer=f=180:t=o:w=1.2:g=#{mud_g}," \
@@ -4267,7 +4330,7 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
              else
                ""
              end
-  "[0:a]aformat=channel_layouts=stereo,volume=#{drum_vol}," \
+  "[0:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:drums)}volume=#{drum_vol}," \
     "equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}#{crush}" \
     "acompressor=threshold=-14dB:ratio=2.2:attack=3:release=60," \
     "equalizer=f=55:t=o:w=0.7:g=#{kick_boost},highpass=f=25#{haas}[drums]"
@@ -17749,8 +17812,30 @@ def organic_vary_loop!(src, dest, duration:)
     # asetrate then aresample is a varispeed: pitch and length move together, as
     # a tape machine does, rather than a formant-preserving shift that would
     # sound processed.
-    chain << "[#{i}:a]asetrate=#{rate},aresample=#{SAMPLE_RATE}," \
-             "lowpass=f=#{tone.round},adelay=#{delay}|#{delay}[v#{i}]"
+    voice = "[#{i}:a]asetrate=#{rate},aresample=#{SAMPLE_RATE}," \
+            "lowpass=f=#{tone.round},adelay=#{delay}|#{delay}"
+
+    if LOOP_CHOP_SLICES > 1
+      # Cut this pass into slices and play them in a rotation. The loop stops
+      # being a part and becomes material, which is what a sampler workflow
+      # does with it. 4ms edges on every slice: a hard cut mid-waveform clicks,
+      # and a click on every slice boundary is the fastest way to make chopping
+      # sound like a fault rather than a choice.
+      order = loop_chop_order(i, LOOP_CHOP_SLICES)
+      slice = one / LOOP_CHOP_SLICES
+      chain << "#{voice}[p#{i}]"
+      chain << "[p#{i}]asplit=#{LOOP_CHOP_SLICES}#{(0...LOOP_CHOP_SLICES).map { |n| "[p#{i}s#{n}]" }.join}"
+      order.each_with_index do |src_slice, pos|
+        chain << "[p#{i}s#{pos}]atrim=#{(src_slice * slice).round(4)}:" \
+                 "#{((src_slice + 1) * slice).round(4)},asetpts=PTS-STARTPTS," \
+                 "afade=t=in:st=0:d=0.004," \
+                 "afade=t=out:st=#{[(slice - 0.004), 0].max.round(4)}:d=0.004[c#{i}_#{pos}]"
+      end
+      cats = (0...LOOP_CHOP_SLICES).map { |n| "[c#{i}_#{n}]" }.join
+      chain << "#{cats}concat=n=#{LOOP_CHOP_SLICES}:v=0:a=1[v#{i}]"
+    else
+      chain << "#{voice}[v#{i}]"
+    end
   end
   labels = (0...reps).map { |i| "[v#{i}]" }.join
   chain << "#{labels}concat=n=#{reps}:v=0:a=1[vcat]"
