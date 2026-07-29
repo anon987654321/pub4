@@ -3480,9 +3480,22 @@ TRACK_SAMPLE_LOOPS = {
   # untreated: four_seven -4.9 dB, nightbus -10.3 dB. The Malay loop has a kick
   # and bass baked into the record; nightbus does not, and highpassing it at 90
   # would take out low end it needs rather than low end that is in the way.
-  four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0,
-                hp: 90, sub_db: -7.0 },
-  # 0:35 to 0:45 of the source, given by the operator. The detector had picked
+  kembara_rindu: { path: File.join(SAMPLE_DIR, "kembara_rindu", "loop.wav"), bpm: 92.0,
+                   hp: 90, sub_db: -7.0 },
+  # 0:36 to 0:46. The operator gave 0:35-0:45 and then asked for the noise at
+  # the front taken out; measured, the first second of that window is a thin
+  # lead-in -- -27 dB overall and -41 dB below 500 Hz, against -16 once the
+  # passage proper enters at 1.0s. Moving the window one second later starts at
+  # full energy and reads slightly cleaner harmonically too (G minor fit 0.836
+  # against 0.813). Still 10 seconds, still 4 bars at 96.
+  #
+  # Note for the next time this comes up: the complaint was "screaming", but
+  # nothing in this window is bright -- the band above 3 kHz never rises above
+  # -38 dB anywhere in it. What was audible as harsh was a quiet, thin entry,
+  # not a loud one, so looking for high-frequency energy would have found
+  # nothing and concluded there was no problem.
+  #
+  # Original note, still true of the boundary: the detector had picked
   # 13.88s off an energy step and was simply wrong: it found where the spoken
   # intro stopped, which is not the same thing as where the passage worth
   # sampling starts. The measurements side with the operator -- this section
@@ -3495,8 +3508,19 @@ TRACK_SAMPLE_LOOPS = {
   # known-good boundary is the only honest way to get a tempo here.
   #
   # Low end left flat: see the note above, this one does not need correcting.
-  nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 96.0,
-              hp: 45, sub_db: 0.0 },
+  semua_untuk_mu: { path: File.join(SAMPLE_DIR, "semua_untuk_mu", "loop.wav"), bpm: 96.0,
+                    hp: 45, sub_db: 0.0 },
+}.freeze
+
+# The working names these two were ingested under, kept pointing at the same
+# entries so anything already written against them keeps working. The song
+# titles are the operator's; the old names were placeholders invented by the
+# ingest (four_seven came off an Ableton set filename, nightbus was made up
+# outright). kembara_rindu is the operator's best recollection rather than a
+# verified title, so it is recorded as their attribution and not as fact.
+TRACK_SAMPLE_LOOP_ALIASES = {
+  four_seven: :kembara_rindu,
+  nightbus: :semua_untuk_mu,
 }.freeze
 
 # --- cross-sample processing ---------------------------------------------------
@@ -3647,7 +3671,8 @@ def sample_loop_for(track)
   return if raw == "0"
 
   entry = if raw.empty?
-            TRACK_SAMPLE_LOOPS[track.to_s.downcase.tr("-", "_").to_sym]
+            key = track.to_s.downcase.tr("-", "_").to_sym
+            TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key)]
           else
             { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
           end
@@ -9832,7 +9857,12 @@ TRACK_LAYER_PROFILES = {
 }.freeze
 
 def apply_track_layer_profile!(track, force: true)
-  profile = TRACK_LAYER_PROFILES[track.to_s.downcase.tr("-", "_").to_sym] or return []
+  # Same aliasing as the loop registry: the profiles are still keyed by the
+  # names these were ingested under, so a render asked for by song title has to
+  # resolve to them or it silently loses its layer settings.
+  key = track.to_s.downcase.tr("-", "_").to_sym
+  key = TRACK_SAMPLE_LOOP_ALIASES.key(key) || key unless TRACK_LAYER_PROFILES.key?(key)
+  profile = TRACK_LAYER_PROFILES[key] or return []
   applied = []
   profile.each do |env_key, value|
     next if !force && ENV[env_key] && !ENV[env_key].empty?
