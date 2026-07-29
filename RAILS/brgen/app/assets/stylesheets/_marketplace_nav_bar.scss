@@ -124,3 +124,70 @@ body.vertical-marketplace .search {
   margin-inline: 16px;
   margin-block: 12px;
 }
+
+/* The source pen assumed a wide desktop bar: #logo is 100px tall, absolutely
+   positioned at top:-25px, inside a #navBar of exactly 100px split into two
+   50px halves. On a phone that mark spans both halves and lands on top of the
+   search field — elementFromPoint at the input's own centre returned .banner,
+   so the search box could not be tapped at all, and the mark also sat over
+   #department's text.
+
+   Below the width the pen was drawn for, size the mark to the top half and put
+   it back in flow so the two halves stack honestly instead of overlapping. The
+   desktop bar above this breakpoint is untouched. */
+@media (max-width: 700px) {
+  #navBar {
+    height: auto;
+    padding-block-end: 8px;
+  }
+
+  #topHalf {
+    height: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #logoWrapper {
+    width: 56px;
+    margin-bottom: 0;
+  }
+
+  #logo {
+    position: static;
+    height: 56px;
+  }
+
+  #logoWrapper .banner,
+  #logoWrapper .banner_wrapper {
+    width: 56px;
+    height: 56px;
+  }
+
+  #navBar .marketplace-nav-search {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+  }
+
+  /* #accountStuff floats right. The pen contained it with a fixed 50px height;
+     once that becomes auto the float escapes the bar and lands on the live
+     search below it, so lay the row out instead of floating inside it. */
+  #bottomHalf {
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  #accountStuff {
+    float: none;
+    margin-right: 0;
+    margin-inline-start: auto;
+  }
+
+  #department {
+    margin-left: 0;
+  }
+}
