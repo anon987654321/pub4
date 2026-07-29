@@ -43,7 +43,10 @@ body.vertical-maps .map-canvas {
 body.vertical-maps .map-hud {
   position: fixed;
   top: max(var(--space-4), env(safe-area-inset-top));
-  inset-inline-start: max(var(--space-4), env(safe-area-inset-left));
+  /* Clear the fixed city brand — it sat on the left edge of #map-search, so a
+     tap meant for the search box navigated home instead. See
+     --brand-mark-inline in _root.scss. */
+  inset-inline-start: max(var(--brand-mark-inline), env(safe-area-inset-left));
   inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
   z-index: var(--z-app);
   display: flex;

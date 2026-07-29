@@ -91,6 +91,16 @@ a:hover { text-decoration: underline; }
   background: transparent !important;
 }
 
+/* Footprint published as a variable so anything a surface anchors to the top
+   inline-start can clear it, the way --tab-bar-h works for the bottom edge.
+   The brand is fixed and takes pointer events, so whatever it lands on stops
+   being clickable: the first .feed-tab on the feed and #map-search on maps
+   both had their left ~63px swallowed, and a tap there navigated home instead.
+   #navBar already cleared it with a hardcoded 4.75rem; this is that number,
+   named, so the next top-left surface inherits the fix instead of rediscovering
+   the bug. */
+:root { --brand-mark-inline: 4.75rem; }
+
 /* City brand: fixed top-left, identical on core + every vertical.
    MASTER face.css .top-left-logo — type only. Never a bordered/outlined chip. */
 a.brgen-logo-mark,

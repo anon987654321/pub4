@@ -28,7 +28,9 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 0 var(--space-4);
+  /* Start clear of the fixed city brand — its left edge used to cover the
+     first tab, so tapping that tab went home instead. */
+  padding: 0 var(--space-4) 0 var(--brand-mark-inline);
   mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
 }

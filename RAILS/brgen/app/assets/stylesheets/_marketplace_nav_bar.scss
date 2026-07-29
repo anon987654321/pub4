@@ -5,7 +5,7 @@
   height: 100px;
   color: white;
   /* Clear fixed borderless .brgen-logo-mark (city brand) on the left. */
-  padding-inline-start: 4.75rem;
+  padding-inline-start: var(--brand-mark-inline);
 }
 
 #topHalf {
