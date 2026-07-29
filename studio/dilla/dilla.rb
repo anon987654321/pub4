@@ -3481,7 +3481,7 @@ TRACK_SAMPLE_LOOPS = {
   # and bass baked into the record; nightbus does not, and highpassing it at 90
   # would take out low end it needs rather than low end that is in the way.
   kembara_rindu: { path: File.join(SAMPLE_DIR, "kembara_rindu", "loop.wav"), bpm: 92.0,
-                   hp: 90, sub_db: -7.0 },
+                   hp: 90, sub_db: -7.0, lp: 5600 },
   # 0:36 to 0:46. The operator gave 0:35-0:45 and then asked for the noise at
   # the front taken out; measured, the first second of that window is a thin
   # lead-in -- -27 dB overall and -41 dB below 500 Hz, against -16 once the
@@ -3509,7 +3509,7 @@ TRACK_SAMPLE_LOOPS = {
   #
   # Low end left flat: see the note above, this one does not need correcting.
   semua_untuk_mu: { path: File.join(SAMPLE_DIR, "semua_untuk_mu", "loop.wav"), bpm: 96.0,
-                    hp: 45, sub_db: 0.0 },
+                    hp: 45, sub_db: 0.0, lp: 5200 },
 
   # 4 bars from 0.32s, where the music starts. The cleanest-looping source of
   # the three by a distance: self-similarity 0.654 against 0.300 for the next
@@ -3531,7 +3531,7 @@ TRACK_SAMPLE_LOOPS = {
   # problematic in a mix), so this is a starting point to check in a render
   # rather than a tuned value.
   dmaj_open: { path: File.join(SAMPLE_DIR, "dmaj_open", "loop.wav"), bpm: 114.0,
-               hp: 60, sub_db: -3.0 },
+               hp: 60, sub_db: -3.0, lp: 6000 },
 }.freeze
 
 # The working names these two were ingested under, kept pointing at the same
@@ -3754,6 +3754,12 @@ def sample_excite_shaper
 end
 
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
+  # Looked up first because the per-loop defaults below all read from it. It was
+  # assigned further down and referenced up here, which in Ruby is nil rather
+  # than an error -- so the per-loop settings would have been silently ignored
+  # instead of failing loudly.
+  entry = sample_loop_for(ENV["TRACK"]) || {}
+
   # Tempo-match rather than resample: the loop was warped in the DAW at its own
   # BPM, so play it at the render's tempo instead of letting it drift.
   ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
@@ -3771,7 +3777,10 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # tempo is already where it should be and only the weight is missing. It is
   # applied as an extra resample and undone with atempo, so the two controls stay
   # independent: one moves both, the other moves only pitch.
-  varispeed = ENV.fetch("SAMPLE_LOOP_VARISPEED", "0") != "0"
+  # Varispeed on by default. Holding a sample's pitch while slowing it is the
+  # modern-sounding choice and the wrong one here: these records were slowed on
+  # a sampler, pitch fell with speed, and that fall is where the weight is.
+  varispeed = ENV.fetch("SAMPLE_LOOP_VARISPEED", entry[:varispeed] == false ? "0" : "1") != "0"
   extra_semis = ENV.fetch("SAMPLE_LOOP_SEMITONES", "0").to_f.clamp(-12.0, 12.0)
 
   tempo = if (ratio - 1.0).abs < 0.001
@@ -3802,7 +3811,6 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # low end -- which is why turning KICK_GAIN down never fixed a low end that
   # was too loud, across three attempts.
   # Per-loop defaults from TRACK_SAMPLE_LOOPS; env still wins when pinned.
-  entry = sample_loop_for(ENV["TRACK"]) || {}
   hp = (ENV["SAMPLE_LOOP_HP"] || entry[:hp] || 45).to_i
   sub_db = (ENV["SAMPLE_LOOP_SUB_DB"] || entry[:sub_db] || 0).to_f
   sub_eq = sub_db.zero? ? "" : "equalizer=f=90:t=o:w=1.1:g=#{sub_db},"
@@ -3833,7 +3841,7 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
            "highpass=f=#{hp}," \
            "#{sub_eq}" \
            "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
-           "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}"
+           "lowpass=f=#{(ENV['SAMPLE_LOOP_LP'] || entry[:lp] || 11_000).to_i}"
   tail = "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS"
 
   return "[#{idx}:a]#{common},#{tail}[loopbed]" if SAMPLE_EXCITE_MIX <= 0.0
@@ -6522,6 +6530,15 @@ end
 #
 # Goertzel per semitone rather than an FFT: only 12 pitch classes matter here,
 # and this needs no gem and no sidecar file.
+# On by default: layering something that disagrees with the sample is a worse
+# outcome than layering nothing, so the guard has to be the default rather than
+# a flag someone remembers to set. HARMONIC_GUARD=0 turns it off.
+HARMONIC_GUARD = ENV.fetch("HARMONIC_GUARD", "1") != "0"
+# 0.55 sits below every musically sensible cut measured here (0.697, 0.71,
+# 0.836) and above the reading from a cut taken off the wrong part of a record
+# (0.27), so it separates the two cases without being tuned to either.
+HARMONIC_GUARD_MIN = (ENV["HARMONIC_GUARD_MIN"] || 0.55).to_f
+
 HARMONIC_KEEP = ENV["HARMONIC_KEEP"] == "1"
 HARMONIC_SHUFFLE = ENV["HARMONIC_SHUFFLE"] == "1"
 CHROMA_RATE = 22_050
@@ -14634,6 +14651,32 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # Before arrangement, so every downstream voice -- pads, bass, leads, the
   # arrangement's own generated sections -- inherits the loop's key rather than
   # being transposed one at a time afterwards.
+  # Anything laid over a sampled loop has to agree with it. Where the loop's key
+  # can be read confidently the generated harmony is moved onto it; where it
+  # cannot, the tonal layers are MUTED rather than guessed at, and the render is
+  # the loop and the kit alone.
+  #
+  # The threshold is not decorative. Krumhansl fit across the loops here runs
+  # 0.697 to 0.836 when the cut is musically sensible, and fell to 0.27 on a cut
+  # taken from the wrong part of the same record. Transposing pads onto a 0.27
+  # reading is not a smaller version of getting it right -- it is a confident
+  # move in an arbitrary direction, and two tonal parts a semitone apart is the
+  # one fault no mixing repairs. Silence is the better failure.
+  loop_for_key = sample_loop_for(ENV["TRACK"])&.dig(:path)
+  if loop_for_key && !pads.empty? && HARMONIC_GUARD
+    key = sample_key(loop_for_key)
+    fit = key ? key[2] : 0.0
+    if fit < HARMONIC_GUARD_MIN
+      warn "harmonic guard: loop key is #{key ? "#{PITCH_CLASSES[key[0]]} #{key[1]}" : 'unreadable'} " \
+           "at fit #{fit.round(2)}, below #{HARMONIC_GUARD_MIN} — muting tonal layers rather than " \
+           "risking a clash. Pin PROGRESSION and set HARMONIC_GUARD=0 to override."
+      %w[PAD_VOL HARM_MIX_WEIGHT].each { |k| ENV[k] = "0" }
+      %w[MELODIC_LEAD SCALE_LEAD LEAD_ARP HARMONY_LEAD PAD_LAYERS PAD_TEXTURE
+         CHOIR_VOX].each { |k| ENV[k] = "0" }
+      pads = []
+    end
+  end
+
   if (HARMONIC_KEEP || HARMONIC_SHUFFLE) && !pads.empty?
     if HARMONIC_KEEP && (loop_path = sample_loop_for(ENV["TRACK"])&.dig(:path))
       if (root_pc, mode, fit = sample_key(loop_path))
@@ -17687,8 +17730,14 @@ def dilla_tape_stop!(path, beat_bpm:)
           "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", seg
       seg
     end
+    # Absolute paths: the concat demuxer resolves relative entries against the
+    # LIST FILE's directory, not the process working directory. With a relative
+    # destination like renders/demos/x.wav the list sat in renders/demos/ and
+    # its entries resolved to renders/demos/renders/demos/... -- so the brake
+    # failed on every relative path and silently returned the unbraked file.
+    # It only ever worked because the first renders wrote to absolute paths.
     list = "#{path}.list.txt"
-    File.write(list, ([head] + parts).map { |f| "file '#{f}'\n" }.join)
+    File.write(list, ([head] + parts).map { |f| "file '#{File.expand_path(f)}'\n" }.join)
     sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list,
         "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", out
     FileUtils.mv(out, path)
@@ -17696,7 +17745,10 @@ def dilla_tape_stop!(path, beat_bpm:)
     path
   rescue StandardError => e
     warn "tape stop: #{e.message}"
-    FileUtils.rm_f([head, tailp, out])
+    # `parts` too. Omitting them left 14 slices beside every failed brake, and
+    # since the failure was silent the leftovers were the only visible sign
+    # anything had gone wrong at all.
+    FileUtils.rm_f([head, tailp, out, "#{path}.list.txt"] + Array(parts))
     path
   end
 end
