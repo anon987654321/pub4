@@ -137,3 +137,16 @@ studio/dilla/samples/crate/
 RAILS/*/storage/*
 !RAILS/*/storage/.keep
 studio/dilla/demo*.wav
+
+# The renders/scratch rules above still name MASTER/tools/dilla/, which stopped
+# existing when dilla moved to studio/dilla on 2026-07-25 — so ~2GB of
+# regenerable audio has been sitting unignored ever since, one `git add -A`
+# away from entering history permanently. Same intent, current path.
+#
+# studio/dilla/samples/ itself stays tracked on purpose (the curated drum kits
+# the generator reads at runtime). Only the machine-produced subtrees are
+# ignored: demux/ is demucs stem output, yt_*.wav are downloaded source rips.
+studio/dilla/renders/
+studio/dilla/.harmony_*.wav
+studio/dilla/samples/demux/
+studio/dilla/samples/yt_*.wav
