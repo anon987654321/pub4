@@ -75,7 +75,17 @@ module DillaMusicGems
     s = sym.to_s.strip
     return if s.empty?
     return if s.match?(/nc\z|fil\z|climax|over|add9|add11|Maj13|DMaj/i)
-    return if s.match?(/7alt|7#11|m7b5|sus|aug|dim/i) && !s.match?(/\A[A-G][#b]?7sus4\z/i)
+    # Qualities the gem either cannot name or names lossily. Everything listed
+    # here falls through to producer_dna's suffix parser, which builds them
+    # from CHORD_TEMPLATES.
+    #
+    # 7b9 and mMaj7 were added 2026-07-29: the gem answered both, so neither
+    # reached the templates, and what it returned had the characteristic note
+    # missing -- G7b9 came back as an unaltered G7 (no Ab at all) and CmMaj7
+    # as a shape with neither the minor third nor the major seventh. A
+    # dominant whose flat nine is gone is just a dominant, which is the same
+    # failure the sus and m7b5 entries above already document.
+    return if s.match?(/7alt|7#11|7b9|m7b5|mmaj7|sus|aug|dim/i) && !s.match?(/\A[A-G][#b]?7sus4\z/i)
 
     s = s.sub(/maj9low\z/i, "M9").sub(/maj9\z/i, "M9").sub(/maj7\z/i, "M7")
          .sub(/maj6\z/i, "M6").sub(/maj\z/i, "M")

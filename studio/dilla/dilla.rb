@@ -5673,7 +5673,14 @@ CHORD_PROGRESSIONS = {
   minor_sixth_glow:         %w[Fm9 Fm6 Bbm9 Ebmaj9],
   minor_dorian_vamp:        %w[Dm9 G13 Dm9 G13],
   minor_aeolian_fall:       %w[Am9 Gmaj9 Fmaj9 Em9],
-  minor_line_cliche:        %w[Cm9 Cmaj7 Cm7 Cm6],
+  # The second chord was Cmaj7 -- C E G B, a MAJOR third -- which is the one
+  # note a minor line cliché must not contain. The device is a top voice
+  # walking C-B-Bb-A over a held minor triad; with a natural third in bar 2
+  # the middle of the phrase turns major and the walk stops reading as a line
+  # at all. It was almost certainly spelled that way because CmMaj7 did not
+  # voice: it mapped through to a shape with neither the minor third nor the
+  # major seventh until the CHORD_TEMPLATES fix on 2026-07-29.
+  minor_line_cliche:        %w[Cm9 CmMaj7 Cm7 Cm6],
   minor_third_lift:         %w[Fm9 Abmaj9 Bbm9 Dbmaj9],
   minor_tritone_pivot:      %w[Cm9 Gbmaj9 Fm9 Bbm9],
   minor_half_step_sigh:     %w[Bbm9 Am9 Abmaj9 Gm7],
@@ -5831,6 +5838,54 @@ CHORD_PROGRESSIONS = {
   # through bar 1 as the blues third. The E is a bass inflection, not a chord
   # tone, so it is not voiced here.
   minor_blues_step_up: %w[Cm9 Ebmaj9 Fm9 G7b9],
+
+  # --- Written against the corrected voicer (2026-07-29) ---
+  #
+  # A census of this table found 72% of every chord symbol in it was some
+  # kind of 9th: 743 ninths against 19 thirteenths, 5 elevenths and 6 triads.
+  # That is why so much of the catalogue sounds like one harmonic colour --
+  # not too few entries, too few qualities across them.
+  #
+  # Two things had to be true before writing more. First, m7b5, mMaj7, m6 and
+  # 7#5 had to actually voice as themselves; until today m7b5 built a plain
+  # minor 7, so every half-diminished ii below would have been a lie. Second,
+  # the qualities had to survive the whole path, which is why none of these
+  # lean on 7b9 or on the 9th of an m9 -- both still lose a note to the
+  # four-voice cap, and a progression should not be written against a chord
+  # the engine cannot yet play.
+  #
+  # These are built, not transcribed. No claim is made that any record plays
+  # them.
+
+  # The minor ii-V that the half-diminished fix makes possible at all: the ii
+  # is genuinely half-diminished and the V genuinely has a raised fifth, so
+  # the pull to Cm is in the chords rather than in the bass alone.
+  minor_two_five_true: %w[Dm7b5 G7#5 Cm9 Cm6],
+
+  # Chromatic mediants without the 9th monoculture -- 13ths and a sus give
+  # each arrival a different upper structure rather than the same stacked 9.
+  mediant_thirteenths: %w[Cmaj13 Abmaj13 Emaj13 Cmaj13 F7sus Bb13 Ebmaj13 Cmaj13],
+
+  # Half-diminished used as colour rather than function: the same shape moved
+  # in whole steps, so the ear hears one chord travelling instead of four.
+  half_dim_planing: %w[Dm7b5 Em7b5 F#m7b5 Am7b5],
+
+  # Quartal over a pedal, resolving to a 6 rather than a 9 -- a plainer, older
+  # sound than the maj9 this table reaches for by default.
+  quartal_pedal_to_six: %w[Am11 Dm11 Gm11 Cmaj13 Am11 Dm11 F7sus C6],
+
+  # Modal interchange: the bIII and bVI are borrowed, and the #5 dominant is
+  # what makes the borrow sound deliberate rather than accidental.
+  borrowed_bright_to_dark: %w[Cmaj9 Ebmaj13 Abmaj9 G7#5 Cmaj9 Fm6 Cmaj9 G7alt],
+
+  # Descending bass under a static-ish top, ending on a minor 6 so the last
+  # chord is neither major nor a minor 7 -- the ambiguity is the point.
+  descending_bass_minor_six: %w[Cm9 Cm9/Bb Abmaj13 G7#5 Cm9 Fm6 Dm7b5 Cm6],
+
+  # Two chords, held long: a suspended dominant that never resolves against a
+  # 13th. Written for the slow FlyLo presets (flylo_massage, flylo_flamagra)
+  # where four changes in a bar would crowd the space they leave.
+  sus_thirteen_hypnosis: %w[F7sus Ebmaj13],
 }.freeze
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {

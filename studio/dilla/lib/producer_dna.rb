@@ -22,6 +22,34 @@ module DillaLofiMachine
     # note a suspension removes.
     "sus" => [0, 5, 7],
     "sus4" => [0, 5, 7, 10],
+    "sus2" => [0, 2, 7],
+
+    # The same class of bug as 7sus above, found 2026-07-29 by counting the
+    # table's vocabulary: 72% of every chord symbol in CHORD_PROGRESSIONS is
+    # some kind of 9th, and the three qualities that would break that monotony
+    # were all being flattened on the way to a voicing.
+    #
+    #   m7b5 mapped to quality "m7"  -> [0,3,7,10], a natural 5th. Every
+    #        half-diminished chord in the engine was a plain minor 7, so the
+    #        ii of every minor ii-V had no tension in it at all.
+    #   7b9  mapped to "7"           -> the b9 discarded.
+    #   7alt mapped to "7"           -> every alteration discarded; "alt"
+    #        rendered identically to an unaltered dominant.
+    #
+    # These are the chords that make a progression sound like it is going
+    # somewhere, which is why adding more entries to CHORD_PROGRESSIONS would
+    # not have helped: the entries were already there and the voicer was
+    # throwing the interesting notes away.
+    "m7b5" => [0, 3, 6, 10],
+    "7b9" => [0, 4, 7, 10, 1],
+    "7#5" => [0, 4, 8, 10],
+    "7alt" => [0, 4, 8, 10, 1],
+    "7#11" => [0, 4, 7, 10, 6],
+    "13" => [0, 4, 7, 10, 9],
+    "maj13" => [0, 4, 7, 11, 9],
+    "maj7#11" => [0, 4, 7, 11, 6],
+    "mmaj7" => [0, 3, 7, 11],
+    "m6" => [0, 3, 7, 9],
   }.freeze
 
   NOTE_PC = {
@@ -104,8 +132,14 @@ module DillaLofiMachine
   # chords are written exactly that way, so `upper_triad_tower` was collapsing
   # from 8 chords to 3, `drone_quartal_wash` 8 to 5, `pedal_upper_structures`
   # 8 to 7. It must stay last so it only matches when nothing else does.
+    # Matched exactly (\A[A-G][#b]?<sfx>\z), so ordering is not significant --
+  # but keep the longer, more specific spellings listed first anyway so the
+  # list reads as "most specific quality wins" if the anchoring ever changes.
   CHORD_SUFFIXES = %w[
-    maj9low maj9 maj7 m11 m9 m7 m7b5 7b9 7sus4 7sus 7alt 7 6 m
+    maj7#11 maj13 maj9low maj9 maj7
+    m7b5 mmaj7 m11 m9 m7 m6
+    7sus4 7sus 7#11 7alt 7#5 7b9 13 7
+    sus2 6 m
   ].freeze + [""].freeze
 
   PAD_WAVEFORMS = %i[sine square sawtooth triangle].freeze
@@ -292,6 +326,68 @@ module DillaLofiMachine
       swing: 59, humanize: 4, bpm: 82, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [12], hats: [2, 10],
       ghosts: [7], claps: [12], perc: [14]
+    },
+
+    # --- Five more in the Flying Lotus manner (BUILT, not transcribed) ---
+    #
+    # The five that were already here cluster in one place: sparse, 68-86 BPM,
+    # kick-and-space. That is one FlyLo and not the only one. These cover
+    # territory the table had nothing for -- stuttered sub, live-drummer
+    # density, half-time, a kick that refuses the downbeat, and warped tape.
+    #
+    # All keep the backbeat on [4, 12] except where omitting a hit is the
+    # stated idea, for the reason argued at the top of this section: moving the
+    # backbeat does not make a beat drunk, it makes it not hip-hop. Character
+    # here is in kick placement, ghost density and swing. The millisecond layer
+    # is FLYLO_TIMING, which attaches to a track profile rather than to a drum
+    # preset -- these presets deliberately carry no `timing:` key, because
+    # DRUM_PRESETS entries are never consulted for it and a key that is silently
+    # ignored is worse than none.
+
+    # Stuttered sub: the kick doubles on consecutive 16ths so the low end
+    # trips rather than lands. Hats stay plainly straight -- the whole event is
+    # in the kick, and giving the hats a pattern too would bury it.
+    flylo_burst: {
+      swing: 54, humanize: 3, bpm: 82, mode: :straight_sixteenth,
+      kicks: [0, 1, 6, 10, 11], snares: [4, 12],
+      hats: [0, 2, 4, 6, 8, 10, 12, 14], ghosts: [7, 15], claps: [12], perc: [3]
+    },
+
+    # A live drummer's density, not a sampler's: hats on all sixteen as a ride
+    # wash with ghosts filling every remaining gap, faster than anything else
+    # in this table. Swing near 50 because a player pushing this hard plays
+    # closer to straight, and the humanize does the rest.
+    flylo_deantoni: {
+      swing: 50, humanize: 4, bpm: 96, mode: :straight_sixteenth,
+      kicks: [0, 3, 8, 11], snares: [4, 12],
+      hats: (0..15).to_a, ghosts: [2, 6, 7, 10, 14, 15], claps: [], perc: [5, 13]
+    },
+
+    # Half-time: one backbeat in the bar at 8 instead of two at 4 and 12, so
+    # the bar reads as half the tempo it is counted at. Hats sit only on the
+    # offbeats, which leaves the downbeats to the sub.
+    flylo_flamagra: {
+      swing: 56, humanize: 3, bpm: 74, mode: :straight_sixteenth,
+      kicks: [0, 3, 9], snares: [8], hats: [2, 6, 10, 14],
+      ghosts: [12], claps: [8], perc: [15]
+    },
+
+    # After the downbeat the kick never lands on a beat again -- 7, 9 and 14
+    # are all "e" and "a" positions. The backbeat is untouched, so the bar
+    # stays legible while the low end argues with it.
+    flylo_offbeat_kick: {
+      swing: 58, humanize: 3, bpm: 80, mode: :dilla_time,
+      kicks: [0, 7, 9, 14], snares: [4, 12],
+      hats: [0, 2, 4, 6, 8, 10, 12, 14], ghosts: [3, 11], claps: [4, 12], perc: [6]
+    },
+
+    # Warped tape: heavy swing, and every hat on the "e" so the whole hat line
+    # sits behind the beat it belongs to. Slowest of the five; the drag is the
+    # point.
+    flylo_warp: {
+      swing: 66, humanize: 4, bpm: 70, mode: :dilla_time,
+      kicks: [0, 6, 10, 13], snares: [4, 12], hats: [1, 5, 9, 13],
+      ghosts: [2, 14], claps: [], perc: [8]
     },
   }.freeze
 
@@ -922,8 +1018,22 @@ module DillaLofiMachine
               when "maj7" then "maj7"
               when "m11" then "m11"
               when "m9" then "m9"
-              when "m7", "m7b5" then "m7"
-              when "7b9", "7alt", "7" then "7"
+              when "m7" then "m7"
+              # Each of these now builds its own shape (see CHORD_TEMPLATES).
+              # They used to collapse: m7b5 -> m7 and 7b9/7alt -> 7, which
+              # discarded the flat five and every alteration.
+              when "m7b5" then "m7b5"
+              when "7b9" then "7b9"
+              when "7alt" then "7alt"
+              when "7#5" then "7#5"
+              when "7#11" then "7#11"
+              when "13" then "13"
+              when "maj13" then "maj13"
+              when "maj7#11" then "maj7#11"
+              when "mmaj7" then "mmaj7"
+              when "m6" then "m6"
+              when "sus2" then "sus2"
+              when "7" then "7"
               # Was mapped to plain "7", which builds [0,4,7,10] -- a MAJOR
               # THIRD. The one thing a suspended chord must not contain is the
               # third, so every 7sus in the engine was rendering as an ordinary
