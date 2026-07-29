@@ -1,0 +1,34 @@
+<% content_for :title, "Create account" %>
+
+<div class="auth-form">
+  <h1>Create account</h1>
+  <p class="dim">You can read and post without one. An account lifts the
+    <%= Shared::AnonymousPost::LIMIT %>-post anonymous limit and keeps what
+    you've already written.</p>
+
+  <%= render "shared/oauth_links" %>
+
+  <%= form_with model: @user, url: users_path do |f| %>
+    <%= render "shared/errors", object: @user %>
+    <div class="field">
+      <%= f.label :email_address, "Email" %>
+      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username" %>
+    </div>
+    <div class="field">
+      <%= f.label :username, "Username (optional)" %>
+      <%= f.text_field :username, autocomplete: "nickname" %>
+    </div>
+    <div class="field">
+      <%= f.label :password %>
+      <%= password_visibility_field f, :password, required: true, autocomplete: "new-password", maxlength: 72 %>
+    </div>
+    <div class="field">
+      <%= f.label :password_confirmation, "Confirm password" %>
+      <%= password_visibility_field f, :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72 %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Create account", class: "btn btn-primary" %>
+    </div>
+    <p><%= link_to "Already have an account? Sign in", new_session_path %></p>
+  <% end %>
+</div>

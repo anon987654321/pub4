@@ -104,8 +104,13 @@
   <% else %>
     <%= render "shared/empty_state", title: "No comments yet", body: "Start the conversation." %>
   <% end %>
-  <% if authenticated? %>
-    <%= form_with url: tv_video_comments_path(@video), data: { turbo: true } do |f| %>
+  <%# Tv::CommentsController asks for require_user_session, so guests may
+      comment; only this form said otherwise. %>
+  <% if authenticated? || guest? %>
+    <%# scope: matters -- Tv::CommentsController requires params[:tv_comment],
+        and without it the field posted as a bare "body" and every comment
+        came back 400. The video-notes form above sets its scope the same way. %>
+    <%= form_with url: tv_video_comments_path(@video), scope: :tv_comment, data: { turbo: true } do |f| %>
       <div class="field">
         <%= f.label :body, "Add a comment" %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">

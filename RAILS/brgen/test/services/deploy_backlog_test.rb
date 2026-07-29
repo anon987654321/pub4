@@ -498,7 +498,7 @@ class DeployBacklogTest < Minitest::Test
     routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
     migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260708120000_create_maps_check_ins_and_listening_parties.rb'))
 
-    assert_includes routes, 'resources :users, only: [ :show ]'
+    assert_includes routes, 'resources :users, only: %i[show new create]'
     assert_includes routes, 'post :check_in'
     assert_includes routes, 'resource :listening_party'
     assert_includes migration, 'create_table :place_check_ins'

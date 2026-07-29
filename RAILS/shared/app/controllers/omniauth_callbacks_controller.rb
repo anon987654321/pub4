@@ -17,10 +17,11 @@ class OmniauthCallbacksController < ::ApplicationController
 
     user = find_or_create_user(auth)
     merge_guest_into(user) if session[:guest_user_id].present?
-    unless complete_login_for(user, remember: true)
-      redirect_to new_session_path, alert: "Sign in failed"
-      return
-    end
+    # Was complete_login_for(user, remember: true) -- a method that exists in no
+    # app and in no gem here, so every successful OAuth callback raised
+    # NoMethodError. start_new_session_for is the one session entry point
+    # (Shared::Authentication); it already sets a permanent signed cookie.
+    start_new_session_for user
 
     redirect_to after_authentication_url, notice: "Signed in with #{auth.provider}"
   end

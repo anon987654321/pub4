@@ -1,6 +1,9 @@
 <%= turbo_stream.replace dom_id(@votable) do %>
-  <% case @votable %>
-  <% when Post %><%= render "posts/post", post: @votable %>
-  <% when Comment %><%= render "comments/comment", comment: @votable %>
+  <%# Not `case`/`when` in separate ERB tags: the newline between them compiles
+      to a string literal sitting between `case` and its first `when`, which is
+      a Ruby syntax error. Every turbo-stream vote (the feed's own vote button)
+      500'd on it -- the vote committed, then the optimistic count rolled back. %>
+  <% if @votable.is_a?(Post) %><%= render "posts/post", post: @votable %>
+  <% elsif @votable.is_a?(Comment) %><%= render "comments/comment", comment: @votable %>
   <% end %>
 <% end %>

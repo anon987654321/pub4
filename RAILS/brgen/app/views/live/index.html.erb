@@ -111,7 +111,10 @@
       </article>
     <% end %>
     <% if @pagy %>
-      <div class="live-pagination"><%== pagy_nav(@pagy) if @pagy.pages > 1 %></div>
+      <%# pagy 43 moved the nav helpers onto the Pagy object itself. pagy_nav
+          was the pagy 9 free function and is not defined here, so this line
+          raised NoMethodError the moment Live had a second page. %>
+      <div class="live-pagination"><%== @pagy.series_nav if @pagy.pages > 1 %></div>
     <% end %>
   <% else %>
     <%= render "shared/empty_state",

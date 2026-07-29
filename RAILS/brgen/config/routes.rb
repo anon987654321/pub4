@@ -67,7 +67,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :users, only: [ :show ] do
+  resources :users, only: %i[show new create] do
     member do
       post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"

@@ -6,7 +6,11 @@
 <article class="feed-post-show">
   <%= turbo_frame_tag "post-vote-#{@post.id}" do %>
     <div class="feed-post-votes" role="group" aria-label="Post score">
-      <% if authenticated? %>
+      <%# Guests vote everywhere else -- the feed card renders a live vote
+          button for them and VotesController only asks for require_user_session.
+          Gating on authenticated? here left a soft guest looking at a dead,
+          aria-hidden icon on the post's own page with nothing explaining why. %>
+      <% if authenticated? || guest? %>
         <%= button_to post_vote_path(@post), params: { vote: { value: 1 } },
               class: "vote-btn#{" active-up" if @post.upvoted_by?(Current.user)}",
               form: { class: "vote-form" },
@@ -22,7 +26,7 @@
             data-animated-number-end-value="<%= @post.score.to_i %>"
             data-animated-number-duration-value="900"
             aria-label="Score"><%= @post.score %></span>
-      <% if authenticated? %>
+      <% if authenticated? || guest? %>
         <%= button_to post_vote_path(@post), params: { vote: { value: -1 } },
               class: "vote-btn down#{" active-down" if @post.downvoted_by?(Current.user)}",
               form: { class: "vote-form" },
@@ -67,6 +71,13 @@
             data-action="click->share#share" aria-label="Share post">
       <%= render "shared/feed_icon", name: "share" %> Share
     </button>
+    <%# shared/_report_button, ReportsController, ModerationWorkflow, the admin
+        queue and the notification job all existed, but no view rendered the
+        partial -- the moderation pipeline had no inlet. Gated on authenticated?
+        because ReportsController requires a real account. %>
+    <% if authenticated? %>
+      <%= render "shared/report_button", target: @post, reason: nil %>
+    <% end %>
   </div>
 </article>
 

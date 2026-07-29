@@ -53,12 +53,19 @@ module Shared
         ip_address: request.remote_ip
       )
       Current.user = user
-      cookies.signed.permanent[:session_id] = { value: Current.session.id, httponly: true, same_site: :lax }
+      # domain: :all for the same reason as the session cookie (see
+      # shared/config/initializers/session_store.rb): the verticals are
+      # subdomains, and a host-only cookie signed you out on the way to them.
+      cookies.signed.permanent[:session_id] = {
+        value: Current.session.id, httponly: true, same_site: :lax, domain: :all
+      }
     end
 
     def terminate_session
       Current.session&.destroy
-      cookies.delete(:session_id)
+      # Same domain as it was written with, or the browser keeps the old one
+      # and sign-out silently does nothing on the next request.
+      cookies.delete(:session_id, domain: :all)
       reset_session
       Current.session = nil
       Current.user = find_or_create_guest_user

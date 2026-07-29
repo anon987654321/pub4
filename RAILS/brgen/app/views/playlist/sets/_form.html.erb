@@ -1,4 +1,7 @@
-<%= form_with model: [:playlist, @set] do |form| %>
+<%# Playlist::Set.model_name.route_key is already "playlist_sets", so the
+    [:playlist, ...] prefix asked for playlist_playlist_sets_path and /sets/new
+    500'd. Plain `model:` resolves to playlist_sets_path / playlist_set_path. %>
+<%= form_with model: @set do |form| %>
   <% if @set.errors.any? %>
     <div class="error"><%= @set.errors.full_messages.to_sentence %></div>
   <% end %>

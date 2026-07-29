@@ -1,7 +1,17 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  include CityTenantable
+  # Deliberately NOT CityTenantable. A person is not a tenant row: email
+  # uniqueness is global, one session follows a visitor across every city
+  # domain, and stranger discovery is radius-based (Shared::GeoLocatable), not
+  # city-based. Tenanting this model scoped every User read to
+  # city_id = current_tenant, and no user row ever carried a city — guests are
+  # created in resume_session, which runs before set_domain_context sets the
+  # tenant, and seeds run outside a request. So every lookup returned nil:
+  # post.user, message.sender and User.nearby all came back empty, which read
+  # as "everything is anonymous" and 500'd anything that called a method on the
+  # author. The city column stays as a home-city hint for the seeders.
+  belongs_to :city, optional: true
   include User::CoreAssociations
   include User::MarketplaceAssociations
   include User::PlaylistAssociations

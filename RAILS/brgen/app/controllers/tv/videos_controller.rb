@@ -10,10 +10,19 @@ class Tv::VideosController < Tv::BaseController
     @video.increment!(:views_count)
   end
 
-  def new  = (@video = Tv::Video.new)
+  # Both actions are routed under a channel; scoping the lookup to the current
+  # user's own channels is the ownership check. create read params[:tv_channel_id],
+  # which no route or form ever set. The parent resource declares `param: :slug`,
+  # so the segment arrives as :channel_slug and carries a slug, not an id --
+  # the same trap ChannelsController#set_channel documents.
+  def new
+    @channel = own_channel
+    @video = Tv::Video.new
+  end
 
   def create
-    channel = Current.user.tv_channels.find(params[:tv_channel_id])
+    channel = own_channel
+    @channel = channel
     @video  = channel.videos.build(video_params.merge(user: Current.user, status: "published", published_at: Time.current))
     if @video.save
       preset = video_params[:preset].presence
@@ -27,8 +36,16 @@ class Tv::VideosController < Tv::BaseController
   def destroy = (@video.destroy and redirect_to tv_root_path)
 
   private
-  def set_video    = (@video = Tv::Video.find(params[:id]))
-  def video_params = params.require(:tv_video).permit(:title, :description, :video_file, :thumbnail, :tv_channel_id, :preset)
+  def own_channel  = Current.user.tv_channels.find_by!(slug: params[:channel_slug])
+  # ApplicationRecord sets strict_loading_by_default, and the show view reads
+  # channel, comments and notes off the record -- unpreloaded that raises
+  # everywhere violations are not downgraded to a log line (i.e. outside
+  # development), so the video page was a 500 in production.
+  def set_video = (@video = Tv::Video.includes(:channel, :user, comments: :user, video_notes: :user).find(params[:id]))
+  # No :tv_channel_id -- the channel comes from the route and is ownership
+  # checked. Permitting it let a submitted id override that check by
+  # reassigning the foreign key on the built record.
+  def video_params = params.require(:tv_video).permit(:title, :description, :video_file, :thumbnail, :preset)
 
   def require_video_owner!
     return if @video.user == Current.user

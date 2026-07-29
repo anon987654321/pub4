@@ -3,7 +3,9 @@
 <%= tag.section class: "tv-live-stream-form" do %>
   <%= tag.h1 t("tv.live_streams.new", default: "New live stream") %>
 
-  <%= form_with model: [:tv, @live_stream] do |form| %>
+  <%# Same doubled-prefix trap as playlist sets: route_key is already
+      "tv_live_streams", and create only exists nested under a channel. %>
+  <%= form_with model: @live_stream, url: tv_channel_live_streams_path(@channel) do |form| %>
     <%= tag.fieldset do %>
       <%= form.label :title %>
       <%= form.text_field :title, required: true %>

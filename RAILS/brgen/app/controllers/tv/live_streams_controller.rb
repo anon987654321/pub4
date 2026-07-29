@@ -14,12 +14,12 @@ module Tv
     end
 
     def new
-      @channel = resolve_channel(params[:channel_id]) if params[:channel_id].present?
+      @channel = resolve_channel(params[:channel_slug]) if params[:channel_slug].present?
       @live_stream = Tv::LiveStream.new(channel: @channel)
     end
 
     def create
-      @channel = resolve_channel(params[:channel_id]) if params[:channel_id].present?
+      @channel = resolve_channel(params[:channel_slug]) if params[:channel_slug].present?
       @live_stream = Tv::LiveStream.new(live_stream_params)
       @live_stream.channel ||= @channel
       @live_stream.user = current_user if respond_to?(:current_user, true)
@@ -70,8 +70,9 @@ module Tv
       redirect_to tv_live_stream_path(@live_stream), alert: "Not authorized"
     end
 
+    # form_with model: @live_stream scopes fields under the model's param_key.
     def live_stream_params
-      params.require(:live_stream).permit(:title, :description, :status, :stream_key)
+      params.require(:tv_live_stream).permit(:title, :description, :status, :stream_key)
     end
   end
 end

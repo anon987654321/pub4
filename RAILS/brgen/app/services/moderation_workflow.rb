@@ -74,6 +74,12 @@ class ModerationWorkflow
 
   def accountable_user(record)
     return record if record.is_a?(User)
+
+    # The reported record arrives from a signed GlobalID with nothing
+    # preloaded, and ApplicationRecord sets strict_loading_by_default. Asking
+    # for its author would raise wherever violations are not downgraded to a
+    # log line -- which is every environment except development.
+    record.strict_loading!(false)
     return record.user if record.respond_to?(:user)
     return record.seller if record.respond_to?(:seller)
     return record.owner if record.respond_to?(:owner)

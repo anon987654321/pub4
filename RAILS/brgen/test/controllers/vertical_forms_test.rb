@@ -1,0 +1,112 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+# Create-forms across the verticals: each of these raised on GET or 400'd on
+# POST because a form URL, a namespace or a param scope disagreed with its
+# controller. Every one of them is reachable from a link in the UI.
+class VerticalFormsTest < ActionDispatch::IntegrationTest
+  setup do
+    Brgen::CitySeed.sync! if City.table_exists?
+    @city = City.find_by!(domain: "brgen.no")
+    @owner = User.strict_loading(false).create!(
+      email_address: "forms_owner@brgen.no", password: "password123", username: "forms_owner", guest: false
+    )
+  end
+
+  def sign_in_as(user)
+    host! "brgen.no"
+    post session_path, params: { email_address: user.email_address, password: "password123" }
+  end
+
+  test "playlist set form renders and creates under the playlist_set scope" do
+    sign_in_as(@owner)
+    host! "playlist.brgen.no"
+
+    get new_playlist_set_path
+    assert_response :success
+    assert_match playlist_sets_path, response.body
+
+    assert_difference -> { Playlist::Set.count }, 1 do
+      post playlist_sets_path, params: { playlist_set: { name: "Contract set" } }
+    end
+    assert_redirected_to playlist_set_path(Playlist::Set.order(:id).last)
+  end
+
+  test "playlist sets and hosted tracks indexes resolve their models" do
+    host! "playlist.brgen.no"
+    # Playlist::Set inside `module Playlist` resolved to Playlist::Playlist::Set.
+    get playlist_sets_path
+    assert_response :success
+    get playlist_hosted_tracks_path
+    assert_response :success
+  end
+
+  test "tv upload and live stream forms render for the channel owner only" do
+    channel = ActsAsTenant.with_tenant(@city) { Tv::Channel.create!(user: @owner, name: "Forms Channel", slug: "forms-channel") }
+    sign_in_as(@owner)
+    host! "tv.brgen.no"
+
+    get new_tv_channel_video_path(channel)
+    assert_response :success
+    assert_match tv_channel_videos_path(channel), response.body
+
+    get new_tv_channel_live_stream_path(channel)
+    assert_response :success
+    assert_difference -> { Tv::LiveStream.count }, 1 do
+      post tv_channel_live_streams_path(channel), params: { tv_live_stream: { title: "Contract stream" } }
+    end
+
+    stranger = User.strict_loading(false).create!(email_address: "stranger@brgen.no", password: "password123", guest: false)
+    sign_in_as(stranger)
+    host! "tv.brgen.no"
+    get new_tv_channel_video_path(channel)
+    assert_response :not_found
+  end
+
+  test "a tv video comment posts under the tv_comment scope" do
+    channel, video = ActsAsTenant.with_tenant(@city) do
+      c = Tv::Channel.create!(user: @owner, name: "Comment Channel", slug: "comment-channel")
+      [ c, c.videos.create!(user: @owner, title: "Clip", status: "published", published_at: Time.current) ]
+    end
+    host! "tv.brgen.no"
+
+    get tv_video_path(video) # mints the guest
+    assert_response :success
+    assert_difference -> { Tv::Comment.count }, 1 do
+      post tv_video_comments_path(video), params: { tv_comment: { body: "nice clip" } }
+    end
+  end
+
+  test "a guest can check in and the page then says so" do
+    place = Place.create!(name: "Fløyen", kind: "landmark", latitude: 60.39, longitude: 5.33, city: @city)
+    host! "maps.brgen.no"
+
+    get maps_place_path(place)
+    assert_response :success
+    assert_difference -> { PlaceCheckIn.count }, 1 do
+      post check_in_maps_place_path(place), params: { note: "hei" }
+    end
+
+    get maps_place_path(place)
+    assert_match(/checked in here recently/, response.body)
+  end
+
+  test "reporting a post locates the signed global id" do
+    community = Community.create!(slug: "reportable", name: "Reportable", user: @owner, city: @city)
+    post_row = Post.create!(user: @owner, community: community, title: "Reportable", content: "hei")
+    sign_in_as(@owner)
+
+    assert_difference -> { ModerationReport.count }, 1 do
+      post reports_path, params: { target_gid: post_row.to_signed_global_id.to_s, reason: "spam" }
+    end
+  end
+
+  test "an unlocatable global id is refused instead of raising" do
+    sign_in_as(@owner)
+    assert_no_difference -> { ModerationReport.count } do
+      post reports_path, params: { target_gid: "not-a-signed-gid", reason: "spam" }
+    end
+    assert_response :redirect
+  end
+end
