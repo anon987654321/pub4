@@ -13,6 +13,10 @@ class ApplicationController < ActionController::Base
   # inclusion path; Shared::StimulusFormHelper wasn't, breaking
   # password_visibility_field on every sessions/new render.
   helper Shared::StimulusFormHelper
+  # Same reason: shared/_ad_slot gates on advertising_consent?, and an ad slot
+  # whose gate raises NoMethodError would take the page down instead of
+  # rendering nothing.
+  helper Shared::ConsentHelper
   turbo_refreshes_with :morph, scroll: :preserve
   stale_when_importmap_changes
 

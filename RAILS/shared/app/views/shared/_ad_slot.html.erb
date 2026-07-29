@@ -1,0 +1,38 @@
+<%# Google AdSense slot.
+
+    Renders NOTHING unless both are true:
+      1. ADSENSE_CLIENT is set (ca-pub-…), and
+      2. the visitor has given consent for advertising cookies.
+
+    Both gates are deliberate, and the second is not optional politeness.
+    brgen serves Norway, so every visitor is in the EEA. Google requires a
+    Consent Management Platform certified against IAB TCF v2.2 before it will
+    serve ads to EEA/UK traffic at all — without one, requests are answered
+    with blank ads, and serving personalised ads without a consent signal is a
+    GDPR violation regardless of what Google does.
+
+    There is no CMP in this app yet. `advertising_consent?` therefore returns
+    false for everyone, so this partial is inert by construction: it can be
+    placed on surfaces now and will start serving only once a CMP is wired and
+    actually records a choice. Defaulting the other way — render the script,
+    fix consent later — is how sites end up serving unconsented ads for months.
+
+    Locals:
+      slot   — AdSense ad slot id (required to render)
+      layout — "auto" (default), "in-article", "in-feed"
+%>
+<% slot = local_assigns[:slot].to_s %>
+<% client = ENV["ADSENSE_CLIENT"].to_s %>
+<% if client.present? && slot.present? && advertising_consent? %>
+  <aside class="ad-slot" aria-label="Advertisement">
+    <%# Labelled, because an unlabelled ad next to real listings is
+        indistinguishable from editorial content. %>
+    <p class="ad-slot-label dim">Advertisement</p>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="<%= client %>"
+         data-ad-slot="<%= slot %>"
+         data-ad-format="<%= local_assigns.fetch(:layout, "auto") %>"
+         data-full-width-responsive="true"></ins>
+  </aside>
+<% end %>

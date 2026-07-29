@@ -1,17 +1,21 @@
 # frozen_string_literal: true
 
 namespace :affiliate do
-  desc "Import TradeDoubler products into AffiliateProduct (needs TRADEDOUBLER_TOKEN)"
+  desc "Import affiliate products from every configured network"
   task :import, [ :category ] => :environment do |_, args|
-    unless Tradedoubler.configured?
+    configured = Affiliate.configured_networks
+    if configured.empty?
       warn <<~MSG
-        TRADEDOUBLER_TOKEN is not set — nothing imported.
+        No affiliate network is configured — nothing imported.
 
-        brgen.no must be an approved TradeDoubler publisher first, and that is a
-        manual process:
-          1. Apply as a publisher; get the site approved.
-          2. Apply to each advertiser programme separately.
-        Then set TRADEDOUBLER_TOKEN (and TRADEDOUBLER_MARKET, default NO).
+        TradeDoubler: brgen.no must be an approved publisher first, and that is
+        a manual, two-step process (apply as publisher, then to each advertiser
+        programme). Then set TRADEDOUBLER_TOKEN (+TRADEDOUBLER_MARKET, default NO).
+
+        Amazon Associates: join the programme for a locale that ships to Norway
+        (there is no amazon.no), make three qualifying sales within 180 days,
+        and only then are PA-API credentials issued. Then set
+        AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY and AMAZON_PARTNER_TAG.
 
         For a populated sidebar in the meantime:
           rake affiliate:seed_placeholders
@@ -19,8 +23,8 @@ namespace :affiliate do
       exit 1
     end
 
-    written = Tradedoubler.import!(category: args[:category])
-    puts "affiliate:import — #{written} product(s) upserted for market #{Tradedoubler.market}"
+    results = Affiliate.import_all!(category: args[:category])
+    results.each { |network, written| puts "affiliate:import — #{network}: #{written} product(s) upserted" }
     puts "  total live rows: #{AffiliateProduct.sellable.real.count}"
   end
 
@@ -31,7 +35,7 @@ namespace :affiliate do
     puts "  live (in stock, seen within #{AffiliateProduct::STALE_AFTER.inspect}): #{AffiliateProduct.sellable.count}"
     puts "  real: #{AffiliateProduct.real.count}   placeholder: #{AffiliateProduct.where(placeholder: true).count}"
     puts "  stale: #{AffiliateProduct.where.not(id: AffiliateProduct.fresh).count}"
-    puts "  token configured: #{Tradedoubler.configured?}"
+    Affiliate.networks.each { |n| puts "  #{n.name}: configured=#{n.configured?}" }
     AffiliateProduct.group(:source).count.each { |source, count| puts "  #{source}: #{count}" }
   end
 
