@@ -3984,9 +3984,20 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # sounds like the whole mix is unstable, while modulating only the sample
   # sounds like the sample came off a record. Two slow rates rather than one so
   # it does not tick.
-  wow_c = ENV.fetch("LOOP_WOW_CENTS", "0").to_f
-  wow = wow_c.zero? ? "" : "vibrato=f=0.31:d=#{(wow_c / 100.0 * 0.06).round(5)}," \
-                           "vibrato=f=0.17:d=#{(wow_c / 100.0 * 0.04).round(5)},"
+# LOOP_WOW is disabled here rather than left in place looking functional.
+#
+# It was built on vibrato, which is transparent in this ffmpeg build: depths
+# of 0.1, 0.5 and 0.9 all produce output identical to the input. A switch that
+# reports a value and changes nothing is worse than one that is absent,
+# because it silently absorbs the attempt to use it.
+#
+# A working implementation already exists in lib/tape_hysteresis.rb --
+# Ornstein-Uhlenbeck drift driving a fractional-delay read, in Ruby, verified.
+# Reach for TAPE_WOW_MS instead, which applies it to the master.
+wow = ""
+if ENV["LOOP_WOW_CENTS"].to_f.positive?
+  warn "LOOP_WOW_CENTS: vibrato is transparent in this ffmpeg build — use TAPE_WOW_MS"
+end
 
   # Tempo-synced delay on the loop. Dotted-8th is 3/16 of a bar and is the
   # figure that reads as hip-hop rather than as an effect: at 92 BPM that is
@@ -17732,9 +17743,23 @@ def sample_morph!(src, dest)
     # Highpass BEFORE the modulation as well as after: modulating the lows and
     # then removing them still leaves their sidebands folded into the range
     # that survives.
-    branches << "[0:a]highpass=f=#{SAMPLE_FM_FLOOR_HZ}," \
-                "vibrato=f=#{mod_hz}:d=#{SAMPLE_FM_DEPTH}#{shift}," \
-                "highpass=f=#{SAMPLE_FM_FLOOR_HZ}[fm#{idx}]"
+# afreqshift, not vibrato. vibrato is TRANSPARENT in this ffmpeg build --
+# depths of 0.1, 0.5 and 0.9 all produce output identical to the input, and
+# identical to each other. The earlier claim here that audio-rate vibrato
+# produced real FM sidebands was wrong: the sweep that appeared to confirm
+# it varied depth and mix together, so what it measured was the highpassed
+# dry copy being blended in, not sidebands at all.
+#
+# Frequency shifting is not the same operation as FM, and saying so matters:
+# FM generates sidebands at multiples of the modulator, while a shift moves
+# every partial by a fixed number of Hz. But it produces genuine inharmonic
+# content -- measured +4.3 dB above 500 Hz on a 200 Hz sine, where vibrato
+# gave 0.0 -- and inharmonic partials are the bell-like quality this was
+# reaching for. The floor still protects the chord tones.
+shift_hz = SAMPLE_FM_SHIFT_HZ.zero? ? (root * (SAMPLE_FM_RATIO - 1.0)).round(2) : SAMPLE_FM_SHIFT_HZ
+branches << "[0:a]highpass=f=#{SAMPLE_FM_FLOOR_HZ}," \
+            "afreqshift=shift=#{shift_hz}:level=1," \
+            "highpass=f=#{SAMPLE_FM_FLOOR_HZ}[fm#{idx}]"
     labels << "[fm#{idx}]"
     weights << SAMPLE_FM_MIX.to_s
     idx += 1
@@ -19499,6 +19524,10 @@ DISPATCH = {
   "harmony" => -> { harmony(ARGV.shift) },
   "beauty" => -> { beauty_report(ARGV.shift) },
   "crate" => -> { build_crate!(ARGV.shift || CRATE_DIR) },
+  "verify-fx" => lambda {
+    require_relative "lib/verify_fx"
+    exit(VerifyFx.verify! ? 0 : 1)
+  },
   "import-midi" => -> { import_midi_drums!(ARGV.shift.to_s) },
   "crit" => -> { crit_session_cli!(ARGV.shift) },
   "phone-preview" => -> { phone_preview(ARGV.shift) },
