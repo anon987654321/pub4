@@ -10353,7 +10353,15 @@ def demo_all(bars_count = 12, destination = nil)
         dmesg_warn("skip #{slug} (no audio)")
       end
     end
-    Dir.glob(File.join(ROOT, ".dilla_*")).each { |p| FileUtils.rm_rf(p) }
+    # PID-scoped, via the helper that already exists for exactly this. The glob
+    # here was ".dilla_*" with no pid in it, so a demo-all run deleted the
+    # scratch files of every OTHER dilla process in the directory, once per
+    # track. A concurrent render then fails in a way that looks like anything
+    # but this: its layer files pass File.exist? in mix_harmonic_wav_stems and
+    # are gone by the time ffmpeg opens them, so the render dies on "No such
+    # file or directory" for a file it just checked for. Every render in this
+    # working copy failed for the ~40 minutes a catalogue demo was running.
+    cleanup_render_scratch!
   end
 
   abort "demo-all: no parts rendered" if parts.empty?
