@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:code.claude.com)",
+      "Bash(zsh.exe -c \"setopt nullglob extendedglob; print -l **/*(/:t) **/*(.N:t) | head -50\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)",
+      "Bash(git pull:*)",
+      "Bash(git rebase:*)",
+      "Bash($arr[1,20])"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

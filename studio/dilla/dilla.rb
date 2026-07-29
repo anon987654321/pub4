@@ -11871,7 +11871,19 @@ def dilla_section_bounds(n_bars)
   intro = [[(n_bars * 0.12).round, 4].max, (n_bars * 0.22).round].min
   outro = [[(n_bars * 0.10).round, 4].max, (n_bars * 0.18).round].min
   body = [n_bars - intro - outro, 8].max
-  cycle = [[body, 16].max, 32].min
+  # Cycle follows the body instead of being floored at 16.
+  #
+  # With the floor, a 16-bar render had a 9-bar body against a 16-bar cycle, so
+  # `pos` never exceeded 8 while breakdown began at 12 and build at 14 -- both
+  # unreachable. Every render up to about 21 bars was therefore intro, main,
+  # outro and nothing else, which is exactly what "loops over and over with no
+  # variation" sounds like. The arrangement was never missing; it was
+  # unreachable at the lengths anyone actually renders.
+  #
+  # Verified: at 16 bars the sections were intro/main/outro and are now
+  # intro/main/breakdown/build/outro. 24 and 32 are unchanged, since their
+  # bodies already exceeded the old floor.
+  cycle = body.clamp(8, 32)
   { intro:, outro:, cycle:, body_start: intro }
 end
 
