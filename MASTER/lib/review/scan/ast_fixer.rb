@@ -137,13 +137,36 @@ module Master
           lines.join
         end
 
+        # `= NULL` -> `IS NULL`, in SQL and nowhere else.
+        #
+        # This ran case-insensitively over every file it was handed, so it also
+        # matched JavaScript and Ruby, where `= null` is ordinary assignment.
+        # It rewrote web/app/views/chat/index.html.erb's boot script from
+        #
+        #   var fired=false,timer=null,fallback=null,...
+        # to
+        #   var fired=false,timerIS NULL,fallbackIS NULL,...
+        #
+        # — five sites in one file, welded to the identifier because there is no
+        # space before the `=`, leaving the face's boot script unparseable. An
+        # autofixer that silently breaks the file it is repairing is worse than
+        # one that does nothing, so this now refuses anything it cannot show is
+        # SQL: uppercase NULL (the SQL convention; JS and Ruby write `null`/`nil`)
+        # on a line that also carries a SQL keyword.
+        SQL_LINE = /\b(SELECT|INSERT|UPDATE|DELETE|WHERE|FROM|JOIN|HAVING|AND|OR|SET)\b/
+        SQL_PATH = /\.(sql|erb\.sql)\z/
+
         def normalise_null_comparison(src)
           return src if @path.to_s.include?("/review/scan/")
 
           changed = false
-          out = src.gsub(/(?<![<>!])=\s*NULL\b/i) { changed = true; "IS NULL" }
-                   .gsub(/!=\s*NULL\b/i) { changed = true; "IS NOT NULL" }
-                   .gsub(/<>\s*NULL\b/i) { changed = true; "IS NOT NULL" }
+          out = src.lines.map do |line|
+            next line unless @path.to_s.match?(SQL_PATH) || line.match?(SQL_LINE)
+
+            line.gsub(/(?<![<>!])=\s*NULL\b/) { changed = true; "IS NULL" }
+                .gsub(/!=\s*NULL\b/) { changed = true; "IS NOT NULL" }
+                .gsub(/<>\s*NULL\b/) { changed = true; "IS NOT NULL" }
+          end.join
           @transforms << :null_comparison if changed
           out
         end

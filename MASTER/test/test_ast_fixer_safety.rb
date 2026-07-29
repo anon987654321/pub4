@@ -75,4 +75,40 @@ class TestAstFixerSafety < Minitest::Test
     refute Prism.parse(out).failure?
     assert_includes out, "b: 2,"
   end
+  # `= NULL` -> `IS NULL` is a SQL repair. It used to run case-insensitively over
+  # every file, so it also matched JavaScript, where `= null` is assignment. It
+  # rewrote web/app/views/chat/index.html.erb's boot script to `timerIS NULL`
+  # — welded, because there is no space before the `=` — leaving the face's boot
+  # script unparseable at five sites in one file.
+  def test_leaves_javascript_null_assignment_alone
+    fixer = null_fixer_for("web/app/views/chat/index.html.erb")
+    js = "var fired=false,timer=null,fallback=null,hintT=null;"
+
+    assert_equal js, fixer.send(:normalise_null_comparison, js)
+  end
+
+  def test_leaves_ruby_nil_and_lowercase_null_alone
+    fixer = null_fixer_for("app/models/thing.rb")
+    ruby = "timer = nil\nvalue = null\n"
+
+    assert_equal ruby, fixer.send(:normalise_null_comparison, ruby)
+  end
+
+  def test_still_repairs_sql_null_comparison
+    fixer = null_fixer_for("db/report.sql")
+    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"
+
+    out = fixer.send(:normalise_null_comparison, sql)
+
+    assert_includes out, "deleted_at IS NULL"
+    assert_includes out, "city_id IS NOT NULL"
+  end
+
+  def null_fixer_for(path)
+    fixer = Master::Review::Scan::AstFixer.allocate
+    fixer.instance_variable_set(:@path, path)
+    fixer.instance_variable_set(:@transforms, [])
+    fixer
+  end
+
 end
