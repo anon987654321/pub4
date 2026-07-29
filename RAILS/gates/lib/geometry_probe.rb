@@ -145,12 +145,44 @@ module Deploy
           '[role=menuitem]', '[role=checkbox]', '[onclick]'
         ].join(',');
 
+        // Anything CSS can express, resolved to sRGB by the browser itself.
+        //
+        // This used to match rgba?() only. Chrome keeps oklch() in computed
+        // style rather than converting it, so every oklch colour parsed as null
+        // and the caller substituted opaque black — which is how the gate came
+        // to report brgen/takeaway as "#000000 on #1a1a1a = 1.21" for text that
+        // is actually a legible red. _vertical_takeaway.scss defines its accents
+        // in oklch, so every takeaway contrast finding was fictional, and
+        // fictional failures are worse than none: they train you to skim past
+        // the real ones sitting in the same list.
+        const _swatch = document.createElement('canvas');
+        _swatch.width = _swatch.height = 1;
+        const _swatchCtx = _swatch.getContext('2d', { willReadFrequently: true });
         const parseRgb = (s) => {
-          const m = String(s).match(/rgba?\\(([^)]+)\\)/);
-          if (!m) return null;
-          const p = m[1].split(/[,\\s\\/]+/).filter(Boolean).map(Number);
-          if (p.length < 3 || p.some(Number.isNaN)) return null;
-          return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+          const str = String(s).trim();
+          if (!str || str === 'transparent') return null;
+          const m = str.match(/rgba?\\(([^)]+)\\)/);
+          if (m) {
+            const p = m[1].split(/[,\\s\\/]+/).filter(Boolean).map(Number);
+            if (p.length >= 3 && !p.some(Number.isNaN)) {
+              return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+            }
+          }
+          if (!_swatchCtx) return null;
+          try {
+            // fillStyle silently ignores a value it cannot parse, so paint over
+            // a known sentinel and treat "unchanged" as unsupported rather than
+            // reading back the sentinel as if it were the real colour.
+            _swatchCtx.clearRect(0, 0, 1, 1);
+            _swatchCtx.fillStyle = '#010203';
+            _swatchCtx.fillStyle = str;
+            if (_swatchCtx.fillStyle === '#010203' && !/^#010203$/i.test(str)) return null;
+            _swatchCtx.fillRect(0, 0, 1, 1);
+            const d = _swatchCtx.getImageData(0, 0, 1, 1).data;
+            return { r: d[0], g: d[1], b: d[2], a: d[3] / 255 };
+          } catch (_) {
+            return null;
+          }
         };
         const over = (fg, bg) => ({
           r: fg.r * fg.a + bg.r * (1 - fg.a),
@@ -244,11 +276,15 @@ module Deploy
             continue;
           }
 
-          const fg = parseRgb(cs.color) || { r: 0, g: 0, b: 0, a: 1 };
+          // No black default. Substituting a colour we could not read invents a
+          // contrast finding out of nothing; leaving fg null makes the caller
+          // skip the check, which is the honest answer for a colour the probe
+          // genuinely cannot resolve.
+          const fg = parseRgb(cs.color);
           const bg = effectiveBg(el);
-          const fgOpaque = fg.a >= 0.999 ? fg : over(fg, bg);
+          const fgOpaque = fg ? (fg.a >= 0.999 ? fg : over(fg, bg)) : null;
 
-          if (ownText) {
+          if (ownText && fgOpaque) {
             const ck = hex(fgOpaque);
             if (ck) colors[ck] = (colors[ck] || 0) + 1;
           }
