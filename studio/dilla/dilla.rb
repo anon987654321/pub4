@@ -3482,14 +3482,20 @@ TRACK_SAMPLE_LOOPS = {
   # would take out low end it needs rather than low end that is in the way.
   four_seven: { path: File.join(SAMPLE_DIR, "four_seven", "loop.wav"), bpm: 92.0,
                 hp: 90, sub_db: -7.0 },
-  # 4 bars taken from 13.88s of the source, which is where the spoken intro
-  # stops: the low end steps up 7 dB at 13.5s and stays there, while the speech
-  # band drops. 103 BPM is corroborated twice over -- the onset sweep picks 103,
-  # and the strongest self-similarity in the whole take (0.300) sits at 1.16s,
-  # which is two beats at 103 to within a millisecond.
-  # Left flat on purpose -- see the note above. This one is already clear down
-  # there and does not need correcting.
-  nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 103.0,
+  # 0:35 to 0:45 of the source, given by the operator. The detector had picked
+  # 13.88s off an energy step and was simply wrong: it found where the spoken
+  # intro stopped, which is not the same thing as where the passage worth
+  # sampling starts. The measurements side with the operator -- this section
+  # reads G minor at a Krumhansl fit of 0.813, against 0.27 for the detector's
+  # cut, on a clean chroma (G, then Bb / Ab / Eb / D / F, a G minor scale).
+  #
+  # 10 seconds is 4 bars at 96 BPM. It contains no onsets at all -- a sustained
+  # melodic passage rather than a rhythmic loop -- which is why onset-based
+  # tempo detection reports nothing for it, and why bar arithmetic against a
+  # known-good boundary is the only honest way to get a tempo here.
+  #
+  # Low end left flat: see the note above, this one does not need correcting.
+  nightbus: { path: File.join(SAMPLE_DIR, "nightbus", "loop.wav"), bpm: 96.0,
               hp: 45, sub_db: 0.0 },
 }.freeze
 
