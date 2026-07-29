@@ -45,13 +45,29 @@ else
   zsh "$repo/OPENBSD/vps_ci.sh" "$app"
 fi
 
-print "vps-deploy: $app (secondary db schemas)"
+# Primary database, then the cache/queue/cable schemas.
+#
+# This used to call rails_prepare_secondary_dbs_as_app directly, so the
+# secondary schemas were loaded on every deploy and the PRIMARY database was
+# never migrated at all. A migration could be written, reviewed, merged and
+# deployed and still not exist in production.
+#
+# That bit twice on 2026-07-29. brgen shipped a counter-cache column its views
+# already read, so every feed render raised NoMethodError and the whole site
+# 500'd until the three pending migrations were run by hand. MASTER/web had no
+# schema tracked at all while cable.yml selected solid_cable, so every
+# ActionCable broadcast wrote to a table that did not exist.
+#
+# db_create_migrate_as_app runs db:prepare, which is idempotent — it creates the
+# database when absent, loads the schema when empty, and otherwise runs only
+# pending migrations — and then does the secondary schemas itself.
+print "vps-deploy: $app (primary db migrate + secondary schemas)"
 . "$repo/RAILS/_core.sh"
 . "$repo/RAILS/_bundle.sh"
 . "$repo/RAILS/_runtime_gate.sh"
 . "$repo/RAILS/_database.sh"
 . "$repo/RAILS/_assets.sh"
-rails_prepare_secondary_dbs_as_app "$app" "/home/${app}/app"
+db_create_migrate_as_app "$app" "/home/${app}/app"
 
 # The SKIP_CI=1 path (${app}.sh -> deploy_tracked_app -> rails_runtime_gate)
 # already precompiles as part of its gate. The default ci+sync path

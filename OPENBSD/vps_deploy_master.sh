@@ -17,11 +17,23 @@ WEB="$ROOT/MASTER/web"
 echo "==> git pull"
 cd "$ROOT" && git pull origin main
 
-echo "==> assets precompile"
 cd "$WEB"
 export LANG=C.UTF-8 LC_ALL=C.UTF-8
 export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
+
+# Primary database. This script had no db step at all, and MASTER/web's schema
+# was not even tracked, so production.sqlite3 sat at zero tables while
+# config/cable.yml selected solid_cable — every ActionCable broadcast on
+# ai.brgen.no wrote to a table that did not exist (found 2026-07-29).
+#
+# db:prepare is idempotent: it creates the database when absent, loads the
+# schema when empty, and otherwise applies only pending migrations.
+echo "==> db prepare"
+bundle34 config set --local without 'development:test' 2>/dev/null || true
+BUNDLE_WITHOUT=development:test bundle34 exec rails db:prepare
+
+echo "==> assets precompile"
 # rc.d master precompiles as root; dev cannot rewrite root-owned public/assets/assets.
 doas rm -rf public/assets
 doas chown -R dev:dev public
