@@ -3697,8 +3697,19 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
   tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
   vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
+  # A sampled record arrives with its own kick and bass already in it, and until
+  # now nothing here could reach them: the highpass was a hardcoded 45 and there
+  # was no shelf. Measured on four_seven with normalisation off, muting the
+  # engine's kick moved the 40-100 Hz band by 0.0 dB and muting the synth bass
+  # by 0.0 dB, while muting the loop moved it by -4.0 dB. The loop was the whole
+  # low end -- which is why turning KICK_GAIN down never fixed a low end that
+  # was too loud, across three attempts.
+  hp = ENV.fetch("SAMPLE_LOOP_HP", "45").to_i
+  sub_db = ENV.fetch("SAMPLE_LOOP_SUB_DB", "0").to_f
+  sub_eq = sub_db.zero? ? "" : "equalizer=f=90:t=o:w=1.1:g=#{sub_db},"
   common = "aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
-           "highpass=f=45," \
+           "highpass=f=#{hp}," \
+           "#{sub_eq}" \
            "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
            "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}"
   tail = "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS"
@@ -16952,8 +16963,20 @@ SAMPLE_FM = ENV["SAMPLE_FM"] == "1"
 SAMPLE_FM_RATIO = (ENV["SAMPLE_FM_RATIO"] || 2.0).to_f.clamp(0.25, 16.0)
 # Modulation index by another name. Past ~0.15 the pitch of the source stops
 # being legible and it becomes texture rather than a note.
-SAMPLE_FM_DEPTH = (ENV["SAMPLE_FM_DEPTH"] || 0.05).to_f.clamp(0.0, 0.4)
-SAMPLE_FM_MIX = (ENV["SAMPLE_FM_MIX"] || 0.45).to_f.clamp(0.0, 1.0)
+# With the floor below doing the protecting, depth can be generous: swept at
+# 0.03/0.05/0.08/0.12 the chord band moved +0.0, +0.0, +0.0, +0.1 dB while the
+# upper band moved -0.4, +0.2, +0.9, +1.5. The constraint is not the depth, it
+# is where the modulation is allowed to reach.
+SAMPLE_FM_DEPTH = (ENV["SAMPLE_FM_DEPTH"] || 0.08).to_f.clamp(0.0, 0.4)
+SAMPLE_FM_MIX = (ENV["SAMPLE_FM_MIX"] || 0.55).to_f.clamp(0.0, 1.0)
+# The FM branch is bandlimited from here up, and this is the whole safety of the
+# effect. Modulating the fundamental and the low harmonics detunes the notes
+# that carry the chord -- the harmony goes sour and it reads as damage rather
+# than as timbre. Above ~700 Hz the sidebands land on overtones, which colours
+# the sound while leaving the pitch and the chord exactly where they were. The
+# first version highpassed at 60 Hz, which is to say not at all, and the result
+# ate the harmonics it was supposed to be decorating.
+SAMPLE_FM_FLOOR_HZ = (ENV["SAMPLE_FM_FLOOR_HZ"] || 700).to_i
 # Inharmonic partials, the other half of the metallic FM character. In Hz, and
 # deliberately small: a few Hz detunes the overtones against each other without
 # moving the perceived pitch.
@@ -17008,7 +17031,12 @@ def sample_morph!(src, dest)
   if SAMPLE_FM
     mod_hz = (root * SAMPLE_FM_RATIO).round(2)
     shift = SAMPLE_FM_SHIFT_HZ.zero? ? "" : ",afreqshift=shift=#{SAMPLE_FM_SHIFT_HZ}"
-    branches << "[0:a]vibrato=f=#{mod_hz}:d=#{SAMPLE_FM_DEPTH}#{shift},highpass=f=60[fm#{idx}]"
+    # Highpass BEFORE the modulation as well as after: modulating the lows and
+    # then removing them still leaves their sidebands folded into the range
+    # that survives.
+    branches << "[0:a]highpass=f=#{SAMPLE_FM_FLOOR_HZ}," \
+                "vibrato=f=#{mod_hz}:d=#{SAMPLE_FM_DEPTH}#{shift}," \
+                "highpass=f=#{SAMPLE_FM_FLOOR_HZ}[fm#{idx}]"
     labels << "[fm#{idx}]"
     weights << SAMPLE_FM_MIX.to_s
     idx += 1
