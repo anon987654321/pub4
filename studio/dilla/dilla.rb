@@ -5810,6 +5810,34 @@ CHORD_PROGRESSIONS = {
   # Chromatic-mediant field — thirds motion, voice-led back to Fm home.
   chromatic_mediant: %w[Dm9 Fm9 AbMaj13s11 Bbm9 Ebmaj9 Cm9 Dbmaj9 Fm9],
   neo_soul: %w[Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9 Cm9 C7b9 Fm9],
+
+  # Written in the keys of the three sampled loops, so the generated harmony
+  # sits where the sample already is and HARMONIC_KEEP has little or nothing to
+  # transpose. A progression a semitone from its bed is the one thing no amount
+  # of mixing repairs.
+  #
+  # These lean on m7b5, 7b9, 11ths and 13ths deliberately: those qualities were
+  # collapsing to plain m7 and dominant 7 until the voicer was fixed, so
+  # progressions written before then had to avoid the vocabulary that makes
+  # neo-soul sound like neo-soul.
+
+  # C minor -- kembara_rindu (fit 0.71).
+  cm_rhodes_cycle: %w[Cm9 Fm9 Bbmaj9 Ebmaj9],
+  cm_chromatic_fall: %w[Cm9 Bbm9 Abmaj9 G7b9],
+  cm_halfdim_turn: %w[Cm9 Dm7b5 G7b9 Cm9],
+  # Two chords for the whole cycle: the hypnosis approach, where the interest
+  # has to come from the drums and the sample rather than from movement.
+  cm_two_chord: %w[Cm9 Fm11],
+
+  # G minor -- semua_untuk_mu (fit 0.836, the cleanest key reading of the three).
+  gm_pedal_rise: %w[Gm9 Cm9 Ebmaj9 F13],
+  gm_halfdim_turn: %w[Gm9 Am7b5 D7b9 Gm9],
+  gm_modal_wash: %w[Gm11 Fmaj9 Ebmaj13 Dm9],
+
+  # D major -- dmaj_open (fit 0.697). Major rather than minor on purpose: every
+  # other progression here is minor, and the sample is not.
+  dmaj_glide: %w[Dmaj9 Bm9 Em11 A13],
+  dmaj_mediant: %w[Dmaj9 F#m9 Bm9 Gmaj13],
   tritone: %w[Cm9 Gbmaj9 Bbm9 Fm9],
   # (syncopated_slash_ninth / climax / untitled / fall_in_love: artist-verified block above)
   chromatic_planing: %w[Fm9 Bbm9 Fm9 Bbm9],
@@ -15003,6 +15031,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # swell applied before it, which is exactly what happened when this lived on
   # the pad bus.
   organic_swell_master!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+  dilla_dropout!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
   mono_bass!(destination)
 
   # After loudness, not before: the brake ends in near-silence, and normalising
@@ -17287,6 +17316,43 @@ def organic_swell_master!(path, bar_sec:)
   return path unless ORGANIC_SWELL
 
   organic_modulate!(path, bar_sec:, mode: :swell, label: "swell")
+end
+
+# Total silence for a fraction of a beat immediately before a downbeat.
+#
+# Not a fade and not a filter -- everything stops, then everything returns. The
+# gap has to land just before the bar line rather than on it: silence AT the
+# downbeat sounds like a dropout, silence leading INTO one sounds like the
+# track was cut, and the ear fills in the missing beat. Applied post-master for
+# the same reason the swell is -- a compressor would pump around the hole and
+# turn a clean cut into a swell of its own.
+DILLA_DROPOUT_EVERY = (ENV["DILLA_DROPOUT_EVERY"] || 0).to_i   # every Nth bar
+DILLA_DROPOUT_BEATS = (ENV["DILLA_DROPOUT_BEATS"] || 0.25).to_f.clamp(0.05, 2.0)
+
+def dilla_dropout!(path, bar_sec:)
+  return path unless DILLA_DROPOUT_EVERY.positive? && File.file?(path)
+
+  gap = (bar_sec / 4.0) * DILLA_DROPOUT_BEATS
+  bar = bar_sec.round(5)
+  # Mute while inside the last `gap` of a bar, on every Nth bar.
+  cond = "gte(mod(t\\,#{bar})\\,#{(bar_sec - gap).round(5)})" \
+         "*eq(mod(floor(t/#{bar})\\,#{DILLA_DROPOUT_EVERY})\\,#{DILLA_DROPOUT_EVERY - 1})"
+  ext = File.extname(path)
+  out = "#{path}.drop#{ext.empty? ? '.wav' : ext}"
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
+  begin
+    sh! "ffmpeg", "-y", "-i", path,
+        "-af", "volume='if(#{cond}\\,0\\,1)':eval=frame",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+    FileUtils.mv(out, path)
+    dmesg("dropout: #{(gap * 1000).round}ms before every #{DILLA_DROPOUT_EVERY} bars",
+          unit: "mix0", parent: "dilla0")
+    path
+  rescue StandardError => e
+    warn "dropout: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  end
 end
 
 # Collapse everything below MONO_BASS_HZ to mono, leave the rest alone.
