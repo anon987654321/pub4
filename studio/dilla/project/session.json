@@ -1052,6 +1052,51 @@
       "bar": "16",
       "motif_id": "hook",
       "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
     }
   ],
   "tension_curve": [
@@ -1136,6 +1181,62 @@
     {
       "bar": "17",
       "section": "bridge"
+    },
+    {
+      "bar": "18",
+      "section": "bridge"
+    },
+    {
+      "bar": "19",
+      "section": "bridge"
+    },
+    {
+      "bar": "20",
+      "section": "solo"
+    },
+    {
+      "bar": "21",
+      "section": "solo"
+    },
+    {
+      "bar": "22",
+      "section": "solo"
+    },
+    {
+      "bar": "23",
+      "section": "solo"
+    },
+    {
+      "bar": "24",
+      "section": "breakdown"
+    },
+    {
+      "bar": "25",
+      "section": "breakdown"
+    },
+    {
+      "bar": "26",
+      "section": "breakdown"
+    },
+    {
+      "bar": "27",
+      "section": "breakdown"
+    },
+    {
+      "bar": "28",
+      "section": "hook"
+    },
+    {
+      "bar": "29",
+      "section": "hook"
+    },
+    {
+      "bar": "30",
+      "section": "hook"
+    },
+    {
+      "bar": "31",
+      "section": "hook"
     }
   ],
   "critique_log": [

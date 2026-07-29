@@ -1,0 +1,93 @@
+{
+  "slug": "gunnhild",
+  "artist": "Gunnhild",
+  "source": "/Users/mac/Downloads/Untitled.flac",
+  "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
+  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/Untitled",
+  "bpm_estimate": 54.5,
+  "phrases": [
+    {
+      "start": 96.084,
+      "end": 96.084,
+      "strength": 0.0091
+    },
+    {
+      "start": 96.595,
+      "end": 96.595,
+      "strength": 0.0227
+    },
+    {
+      "start": 98.174,
+      "end": 98.174,
+      "strength": 0.0214
+    },
+    {
+      "start": 101.053,
+      "end": 101.053,
+      "strength": 0.0083
+    },
+    {
+      "start": 104.165,
+      "end": 104.165,
+      "strength": 0.0087
+    },
+    {
+      "start": 105.511,
+      "end": 105.511,
+      "strength": 0.0167
+    },
+    {
+      "start": 107.648,
+      "end": 107.648,
+      "strength": 0.0263
+    },
+    {
+      "start": 108.112,
+      "end": 108.112,
+      "strength": 0.0131
+    },
+    {
+      "start": 110.713,
+      "end": 110.991,
+      "strength": 0.0222
+    },
+    {
+      "start": 112.803,
+      "end": 112.803,
+      "strength": 0.062
+    },
+    {
+      "start": 114.01,
+      "end": 114.01,
+      "strength": 0.0446
+    },
+    {
+      "start": 114.521,
+      "end": 114.614,
+      "strength": 0.0358
+    },
+    {
+      "start": 115.217,
+      "end": 115.217,
+      "strength": 0.0388
+    },
+    {
+      "start": 116.518,
+      "end": 116.75,
+      "strength": 0.2678
+    },
+    {
+      "start": 117.261,
+      "end": 117.261,
+      "strength": 0.0298
+    },
+    {
+      "start": 117.632,
+      "end": 117.725,
+      "strength": 0.2218
+    }
+  ],
+  "ingested_at": "2026-07-27T11:57:29Z",
+  "isolated": true,
+  "voice_only": true
+}

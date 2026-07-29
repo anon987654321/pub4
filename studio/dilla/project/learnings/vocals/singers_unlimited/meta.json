@@ -1,0 +1,283 @@
+{
+  "slug": "singers_unlimited",
+  "artist": "singers_unlimited",
+  "source": "https://www.youtube.com/watch?v=vu__E2zpT9Y",
+  "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/singers_unlimited/vocals.wav",
+  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/yt_20260727_164211",
+  "bpm_estimate": 70.6,
+  "phrases": [
+    {
+      "start": 0.604,
+      "end": 0.789,
+      "strength": 0.2141
+    },
+    {
+      "start": 1.161,
+      "end": 1.393,
+      "strength": 0.1724
+    },
+    {
+      "start": 1.904,
+      "end": 2.229,
+      "strength": 0.1806
+    },
+    {
+      "start": 3.947,
+      "end": 3.947,
+      "strength": 0.1706
+    },
+    {
+      "start": 5.805,
+      "end": 5.805,
+      "strength": 0.1662
+    },
+    {
+      "start": 7.895,
+      "end": 7.895,
+      "strength": 0.1635
+    },
+    {
+      "start": 9.474,
+      "end": 9.474,
+      "strength": 0.1594
+    },
+    {
+      "start": 9.845,
+      "end": 9.845,
+      "strength": 0.1752
+    },
+    {
+      "start": 11.099,
+      "end": 11.099,
+      "strength": 0.1581
+    },
+    {
+      "start": 12.074,
+      "end": 12.307,
+      "strength": 0.1597
+    },
+    {
+      "start": 17.136,
+      "end": 17.136,
+      "strength": 0.1594
+    },
+    {
+      "start": 17.554,
+      "end": 17.833,
+      "strength": 0.1751
+    },
+    {
+      "start": 28.932,
+      "end": 29.907,
+      "strength": 0.1859
+    },
+    {
+      "start": 30.372,
+      "end": 32.183,
+      "strength": 0.208
+    },
+    {
+      "start": 32.601,
+      "end": 33.205,
+      "strength": 0.218
+    },
+    {
+      "start": 36.78,
+      "end": 37.291,
+      "strength": 0.1993
+    },
+    {
+      "start": 38.174,
+      "end": 38.174,
+      "strength": 0.1709
+    },
+    {
+      "start": 40.542,
+      "end": 41.053,
+      "strength": 0.1823
+    },
+    {
+      "start": 42.771,
+      "end": 42.91,
+      "strength": 0.173
+    },
+    {
+      "start": 50.016,
+      "end": 50.48,
+      "strength": 0.2196
+    },
+    {
+      "start": 50.852,
+      "end": 51.13,
+      "strength": 0.1732
+    },
+    {
+      "start": 51.641,
+      "end": 53.174,
+      "strength": 0.2983
+    },
+    {
+      "start": 53.685,
+      "end": 54.195,
+      "strength": 0.1848
+    },
+    {
+      "start": 54.706,
+      "end": 54.706,
+      "strength": 0.1697
+    },
+    {
+      "start": 57.075,
+      "end": 57.075,
+      "strength": 0.1629
+    },
+    {
+      "start": 60.186,
+      "end": 60.279,
+      "strength": 0.1681
+    },
+    {
+      "start": 60.836,
+      "end": 60.836,
+      "strength": 0.1658
+    },
+    {
+      "start": 64.784,
+      "end": 64.877,
+      "strength": 0.1788
+    },
+    {
+      "start": 65.573,
+      "end": 66.038,
+      "strength": 0.1909
+    },
+    {
+      "start": 77.415,
+      "end": 77.415,
+      "strength": 0.1593
+    },
+    {
+      "start": 81.688,
+      "end": 81.688,
+      "strength": 0.157
+    },
+    {
+      "start": 84.846,
+      "end": 84.846,
+      "strength": 0.1605
+    },
+    {
+      "start": 89.35,
+      "end": 89.583,
+      "strength": 0.1803
+    },
+    {
+      "start": 95.573,
+      "end": 95.666,
+      "strength": 0.1656
+    },
+    {
+      "start": 103.097,
+      "end": 103.097,
+      "strength": 0.1768
+    },
+    {
+      "start": 106.301,
+      "end": 108.484,
+      "strength": 0.2477
+    },
+    {
+      "start": 109.552,
+      "end": 110.063,
+      "strength": 0.1978
+    },
+    {
+      "start": 110.62,
+      "end": 110.806,
+      "strength": 0.1914
+    },
+    {
+      "start": 111.27,
+      "end": 111.642,
+      "strength": 0.19
+    },
+    {
+      "start": 112.013,
+      "end": 112.57,
+      "strength": 0.1982
+    },
+    {
+      "start": 115.496,
+      "end": 115.96,
+      "strength": 0.1899
+    },
+    {
+      "start": 120.883,
+      "end": 120.883,
+      "strength": 0.1577
+    },
+    {
+      "start": 121.301,
+      "end": 121.394,
+      "strength": 0.1664
+    },
+    {
+      "start": 121.812,
+      "end": 121.812,
+      "strength": 0.1651
+    },
+    {
+      "start": 127.988,
+      "end": 129.939,
+      "strength": 0.2197
+    },
+    {
+      "start": 130.543,
+      "end": 131.053,
+      "strength": 0.1761
+    },
+    {
+      "start": 131.471,
+      "end": 131.657,
+      "strength": 0.1997
+    },
+    {
+      "start": 135.93,
+      "end": 135.93,
+      "strength": 0.1824
+    },
+    {
+      "start": 136.812,
+      "end": 136.812,
+      "strength": 0.1606
+    },
+    {
+      "start": 141.177,
+      "end": 141.456,
+      "strength": 0.1917
+    },
+    {
+      "start": 146.936,
+      "end": 147.261,
+      "strength": 0.2132
+    },
+    {
+      "start": 147.865,
+      "end": 148.004,
+      "strength": 0.2037
+    },
+    {
+      "start": 148.84,
+      "end": 148.84,
+      "strength": 0.2135
+    },
+    {
+      "start": 149.397,
+      "end": 149.862,
+      "strength": 0.185
+    }
+  ],
+  "ingested_at": "2026-07-27T14:50:29Z",
+  "isolated": true,
+  "voice_only": true
+}

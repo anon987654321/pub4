@@ -5393,6 +5393,21 @@ LIVESET_PERIODS = [97, 113, 127, 149, 163, 179, 193, 211, 227, 251].freeze
 # that nothing reaches them by default or by rotation.
 RAP_VOCAL_SOURCE = "gunnhild"
 
+# Whether the launch environment explicitly asked for no vocals.
+#
+# Four TRACK presets set "RAP_VOCAL" => RAP_VOCAL_SOURCE and are applied with
+# force:, so RAP_VOCAL=0 on the command line was overwritten before the render
+# ever read it -- asking for no vocals produced a full vocal and a banner that
+# cheerfully reported rap=gunnhild. This is the same failure the comment on
+# four_seven's profile already describes ("a profile default that silently
+# discarded an explicit RAP_VOCAL on the command line made the render look
+# like it had simply ignored the request"), caught then for an explicit ON and
+# missed for an explicit OFF.
+#
+# Captured at load, before any preset runs, because by render time ENV no
+# longer distinguishes "operator said 0" from "a preset said gunnhild".
+VOCALS_EXPLICITLY_OFF = %w[0 off none].include?(ENV["RAP_VOCAL"].to_s.strip.downcase)
+
 VOCALS = {
   processed: File.join(ROOT, "vocals_processed.wav"),
   precise:   File.join(ROOT, "vocals_precise.wav"),
@@ -15068,6 +15083,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   harmonic_tmp = dilla_render_tmp("harmonic")
   render_sample_bus_wav(drum_tmp, events, duration, kit, drum_bus_mapping)
   drum_field_layer!(drum_tmp, duration:)
+    console_strip!(drum_tmp, seed: 11)
   if flylo_drum_overlay_enabled?
     flylo_sub_tmp = dilla_render_tmp("flylo_sub")
     flylo_top_tmp = dilla_render_tmp("flylo_top")
@@ -15125,6 +15141,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     # deliberately left out: swelling the low end in and out is heard as an
     # unsteady mix rather than as playing.
     organic_breathe!(harmonic_tmp, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+    console_strip!(harmonic_tmp, seed: 31)
 # After the breath, before the mix: the loop shapes the pads while they
 # are still a separate bus and can be operated on alone.
 sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
@@ -15395,6 +15412,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   dilla_dropout!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
   tape_hysteresis!(destination)
   master_tilt!(destination)
+  master_smooth!(destination)
   mono_bass!(destination)
 
   # After loudness, not before: the brake ends in near-silence, and normalising
@@ -17189,6 +17207,8 @@ RAP_VOCAL_BLOCKLIST = %w[sirkel_sag].freeze
 TRACK_MATCHED_VOCAL_SLUG = {}.freeze
 
 def rap_vocal_stream_slug
+# Beats the presets: an operator who said 0 gets 0.
+return if VOCALS_EXPLICITLY_OFF
   slug = ENV["RAP_VOCAL"].to_s.strip
   return if slug.empty? || slug == "0"
   return if RAP_VOCAL_BLOCKLIST.include?(slug)
@@ -18067,6 +18087,73 @@ end
 TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0).to_f.clamp(0.0, 1.0)
 TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0).to_f.clamp(0.0, 8.0)
 
+# Per-channel console strip. See lib/console_strip.rb for why this is per
+# channel and not on the master, and for the harmonic measurements.
+#
+# CONSOLE_STRIP is the wet amount, 0 disables. Each bus passes its own
+# instance with its own seed, so the drums and the pads are coloured by
+# different "hardware" rather than by one shared curve -- which is the whole
+# point, and is not reproducible by running the same stage on the mix.
+CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0).to_f.clamp(0.0, 1.0)
+
+# Left and right run as separate instances, offset by one seed. On a desk a
+# stereo pair IS two channels, built to the same design and measuring
+# differently, and the small mismatch between them is a large part of why a
+# console sounds wide. Processing mono and re-widening -- the approach
+# tape_hysteresis! takes, correctly, because magnetisation is not a stereo
+# phenomenon -- would throw that away here, where it is the effect.
+def console_strip!(path, seed: 1, amount: CONSOLE_STRIP)
+  return path unless amount.positive? && File.file?(path)
+
+  require_relative "lib/console_strip"
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  raw = "#{path}.cs_in.raw"
+  cooked = "#{path}.cs_out.raw"
+  ext = File.extname(path)
+  out = "#{path}.console#{ext.empty? ? '.wav' : ext}"
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-f", "s16le", "-acodec", "pcm_s16le",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", raw
+    inter = File.binread(raw).unpack("s<*")
+    left = []
+    right = []
+    inter.each_slice(2) do |l, r|
+      left << (l || 0) / PCM16_FULL_SCALE
+      right << (r || l || 0) / PCM16_FULL_SCALE
+    end
+    left = ConsoleStrip.process(left, rate: SAMPLE_RATE, seed:, amount:)
+    right = ConsoleStrip.process(right, rate: SAMPLE_RATE, seed: seed + 1, amount:)
+    # Match the input peak rather than normalising to full scale. This stage
+    # runs on a bus that is about to be mixed at a measured weight, and a
+    # stage that silently changes its own level makes every downstream mix
+    # number wrong -- which is how the low end got away from this engine
+    # before.
+    in_peak = inter.map(&:abs).max.to_f / PCM16_FULL_SCALE
+    out_peak = [left.map(&:abs).max || 0.0, right.map(&:abs).max || 0.0].max
+    scale = out_peak.positive? && in_peak.positive? ? in_peak / out_peak : 1.0
+    merged = Array.new(left.length * 2)
+    left.each_index do |i|
+      merged[i * 2] = ((left[i] * scale) * 32_767).round.clamp(-32_768, 32_767)
+      merged[(i * 2) + 1] = ((right[i] * scale) * 32_767).round.clamp(-32_768, 32_767)
+    end
+    File.binwrite(cooked, merged.pack("s<*"))
+    sh! "ffmpeg", "-y", "-f", "s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-i", cooked, "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+    FileUtils.mv(out, path)
+    took = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
+    dmesg("console strip: seed #{seed}/#{seed + 1} amount #{amount} (#{took}s)",
+          unit: "cons0", parent: "dilla0")
+    path
+  rescue StandardError => e
+    warn "console strip: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  ensure
+    FileUtils.rm_f([raw, cooked])
+  end
+end
+
 def tape_hysteresis!(path)
   return path unless (TAPE_HYSTERESIS.positive? || TAPE_WOW_MS.positive?) && File.file?(path)
 
@@ -18121,6 +18208,72 @@ end
 # that the lift lands on weight rather than on mud.
 MASTER_TILT_DB = (ENV["MASTER_TILT_DB"] || 0).to_f.clamp(-6.0, 6.0)
 MASTER_TILT_PIVOT = (ENV["MASTER_TILT_PIVOT"] || 700).to_i
+
+# Top-end smoothing -- the thing that makes a mix read as calm rather than
+# distorted, and the most consistent single trait across the 29 reference
+# tracks in MASTER/reports/radio_bergen_track_dossiers.yml.
+#
+# Nine of those dossiers describe the same move in different words: "master
+# lowpass ~3.6 kHz" (Camel, Massage Situation), "high shelf rolled ~9 kHz"
+# (In Space), "limited highs" (Eye), "never harsh top" (Timeless), "Donuts
+# lowpass warmth", and bergen_local's "master LP 2.7-3.1 kHz". Nothing in this
+# engine implemented it; the only top-end control was VINYL.
+#
+# Those numbers are NOT taken literally. A brickwall lowpass at 3.2 kHz makes
+# a record sound like a telephone -- real Donuts and Camel masters have
+# cymbals well above 10 kHz -- so the figure is describing the treatment of
+# the sampled bed, or the perceived centre of the rolloff, not a filter on the
+# whole master. Implemented literally it would destroy the track, which is why
+# this is a pair of gentle shelves instead.
+#
+# Two bands, because "harsh" and "bright" are different problems:
+#
+#   PRESENCE (~3.2 kHz) is where distortion and harshness actually live. This
+#   is the band that makes saturation read as fizz rather than warmth, and it
+#   is what the ear calls "distorted" even when nothing is clipping.
+#
+#   AIR (~9 kHz and up) is brightness. Rolling this alone makes a mix duller
+#   without making it calmer, which is why cutting only here never fixes the
+#   complaint.
+MASTER_SMOOTH_DB = (ENV["MASTER_SMOOTH_DB"] || 0).to_f.clamp(0.0, 12.0)
+MASTER_SMOOTH_HZ = (ENV["MASTER_SMOOTH_HZ"] || 3200).to_i
+MASTER_AIR_DB = (ENV["MASTER_AIR_DB"] || 0).to_f.clamp(0.0, 12.0)
+MASTER_AIR_HZ = (ENV["MASTER_AIR_HZ"] || 9000).to_i
+
+def master_smooth!(path)
+  return path unless (MASTER_SMOOTH_DB.positive? || MASTER_AIR_DB.positive?) && File.file?(path)
+
+  ext = File.extname(path)
+  out = "#{path}.smooth#{ext.empty? ? '.wav' : ext}"
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
+  chain = []
+  # A wide bell on the presence band rather than a shelf: a shelf pulls
+  # everything above the corner down together, taking the cymbals and the
+  # sample's air with it. The harshness is a band, so it gets a band. Width in
+  # octaves, wide enough not to sound like a notch.
+  if MASTER_SMOOTH_DB.positive?
+    chain << "equalizer=f=#{MASTER_SMOOTH_HZ}:t=o:w=1.6:g=#{-MASTER_SMOOTH_DB.round(2)}"
+  end
+  # Air gets a real shelf, because above 9 kHz there is nothing to preserve
+  # the far side of. `treble` and not `equalizer` -- equalizer is a peaking
+  # filter in every configuration, a mistake already made once in this file.
+  chain << "treble=f=#{MASTER_AIR_HZ}:g=#{-MASTER_AIR_DB.round(2)}:width_type=q:w=0.7" if MASTER_AIR_DB.positive?
+  return path if chain.empty?
+
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-af", chain.join(","),
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+    FileUtils.mv(out, path)
+    dmesg("smooth: presence -#{MASTER_SMOOTH_DB} dB @ #{MASTER_SMOOTH_HZ}, " \
+          "air -#{MASTER_AIR_DB} dB @ #{MASTER_AIR_HZ}",
+          unit: "smth0", parent: "dilla0")
+    path
+  rescue StandardError => e
+    warn "master smooth: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  end
+end
 
 def master_tilt!(path)
   return path unless MASTER_TILT_DB.abs > 0.01 && File.file?(path)

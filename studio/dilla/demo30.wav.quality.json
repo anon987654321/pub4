@@ -1,0 +1,57 @@
+{
+  "duration_seconds": 56.842,
+  "bit_rate": 1411210,
+  "schema": "dilla.master.v1",
+  "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/demo30.wav",
+  "delivery": "wav",
+  "integrated_lufs": -16.58,
+  "true_peak_dbtp": -7.56,
+  "harmony_score": 89,
+  "harmony_breakdown": {
+    "overall": 89,
+    "extension": 90,
+    "register": 100,
+    "motion": 100,
+    "clash": 100
+  },
+  "progression_chord_names": [
+    "F/G",
+    "E/G",
+    "Eb/G",
+    "Dm/G",
+    "Dbm/G",
+    "Cm/G",
+    "F/G",
+    "E/G",
+    "Eb/G",
+    "Dm/G"
+  ],
+  "harshness": {
+    "harshness": -11.57,
+    "needs_notch": false
+  },
+  "sub_kick_balance": {
+    "low_mid_delta": 2.7,
+    "recommendation": "reduce_sub"
+  },
+  "ml_notes": null,
+  "loudness_range_lu": 7.0,
+  "mono_rms_db": -15.311,
+  "spectral_rms_db": {
+    "low": -17.283,
+    "mid": -19.981,
+    "high": -31.551
+  },
+  "target": {
+    "integrated_lufs": "-20.5..-15.5",
+    "true_peak_max_dbtp": -1.0
+  },
+  "warnings": [],
+  "capabilities": [
+    196,
+    197,
+    198,
+    199,
+    200
+  ]
+}

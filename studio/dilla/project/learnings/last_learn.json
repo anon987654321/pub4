@@ -1,0 +1,713 @@
+{
+  "source": "https://www.youtube.com/watch?v=tUYG_pTjMBQ",
+  "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404",
+  "analyzed_at": "2026-07-27T13:17:57Z",
+  "bpm_estimate": 80.0,
+  "progression_symbols": [
+    "Fmaj9",
+    "Dm11",
+    "Gm11",
+    "Am11",
+    "Gsus4",
+    "C7#11",
+    "Dm9",
+    "Gm9"
+  ],
+  "progression_insight": {
+    "notation": "IIIM9-im11-ivm11-vim11-im9-ivm9",
+    "scale": "D ",
+    "notes_out": 2,
+    "chords": [
+      "FM9",
+      "Dm11",
+      "Gm11",
+      "Am11",
+      "Dm9",
+      "Gm9"
+    ]
+  },
+  "pitch_classes": [
+    7,
+    5,
+    6,
+    4,
+    2,
+    8,
+    0
+  ],
+  "stems": {
+    "bass.wav": {
+      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/bass.wav",
+      "stem": "bass.wav",
+      "bpm_estimate": 85.3,
+      "swing_hint": "pushed",
+      "texture_hints": [
+        "lofi_rolled",
+        "punchy_transients"
+      ],
+      "drum_density": {
+        "kick_transients_per_min": 31.0,
+        "snare_transients_per_min": 15.5
+      }
+    },
+    "drums.wav": {
+      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/drums.wav",
+      "stem": "drums.wav",
+      "bpm_estimate": 80.0,
+      "swing_hint": "pushed",
+      "texture_hints": [
+        "lofi_rolled",
+        "punchy_transients"
+      ],
+      "drum_density": {
+        "kick_transients_per_min": 9.5,
+        "snare_transients_per_min": 1.5
+      },
+      "step_grid": {
+        "kicks": [
+          0,
+          2,
+          3,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15
+        ],
+        "snares": [
+          0,
+          2,
+          9
+        ],
+        "hats": [
+          0,
+          4,
+          9
+        ],
+        "bar_steps": 16
+      }
+    },
+    "guitar.wav": {
+      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/guitar.wav",
+      "stem": "guitar.wav",
+      "pitch_classes": [
+        5,
+        4,
+        7,
+        6,
+        8,
+        2
+      ],
+      "top_chords": [
+        {
+          "name": "E7alt",
+          "score": 0.53205
+        },
+        {
+          "name": "Fmaj9",
+          "score": 0.52623
+        },
+        {
+          "name": "Bb7#11",
+          "score": 0.51738
+        },
+        {
+          "name": "Dm9",
+          "score": 0.50699
+        },
+        {
+          "name": "G7alt",
+          "score": 0.49411
+        },
+        {
+          "name": "Em9",
+          "score": 0.49117
+        },
+        {
+          "name": "Dm11",
+          "score": 0.46905
+        },
+        {
+          "name": "Em11",
+          "score": 0.46822
+        }
+      ],
+      "coltrane_candidates": [
+        {
+          "name": "Em9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "Gm9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "E7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "Em7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "GM7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "Gm7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "G7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "F#M9",
+          "overlap": 3,
+          "coverage": 0.6
+        }
+      ]
+    },
+    "other.wav": {
+      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/other.wav",
+      "stem": "other.wav",
+      "pitch_classes": [
+        2,
+        8,
+        4,
+        7,
+        6,
+        5
+      ],
+      "top_chords": [
+        {
+          "name": "E7alt",
+          "score": 0.54594
+        },
+        {
+          "name": "Em9",
+          "score": 0.54306
+        },
+        {
+          "name": "G7alt",
+          "score": 0.54038
+        },
+        {
+          "name": "Bb7#11",
+          "score": 0.53537
+        },
+        {
+          "name": "D7#11",
+          "score": 0.50768
+        },
+        {
+          "name": "Dmaj9",
+          "score": 0.50038
+        },
+        {
+          "name": "Am11",
+          "score": 0.4999
+        },
+        {
+          "name": "Em11",
+          "score": 0.49328
+        }
+      ],
+      "coltrane_candidates": [
+        {
+          "name": "Em9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "Gm9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "E7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "Em7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "GM7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "Gm7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "G7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "F#M9",
+          "overlap": 3,
+          "coverage": 0.6
+        }
+      ],
+      "semantics": [
+        "spacious",
+        "warm",
+        "unstable",
+        "forward"
+      ]
+    },
+    "piano.wav": {
+      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/piano.wav",
+      "stem": "piano.wav",
+      "pitch_classes": [
+        7,
+        5,
+        0,
+        6,
+        4,
+        2
+      ],
+      "top_chords": [
+        {
+          "name": "Fmaj9",
+          "score": 0.67932
+        },
+        {
+          "name": "Dm11",
+          "score": 0.6664
+        },
+        {
+          "name": "Gm11",
+          "score": 0.61656
+        },
+        {
+          "name": "Am11",
+          "score": 0.60564
+        },
+        {
+          "name": "Gsus4",
+          "score": 0.58749
+        },
+        {
+          "name": "C7#11",
+          "score": 0.57939
+        },
+        {
+          "name": "Dm9",
+          "score": 0.57128
+        },
+        {
+          "name": "Gm9",
+          "score": 0.55301
+        }
+      ],
+      "coltrane_candidates": [
+        {
+          "name": "Em9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "FM9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "CM9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "CM",
+          "overlap": 3,
+          "coverage": 1.0
+        },
+        {
+          "name": "G7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "C7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "FM7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "CM7",
+          "overlap": 3,
+          "coverage": 0.75
+        }
+      ]
+    },
+    "vocals.wav": {
+      "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260727_151404/vocals.wav",
+      "stem": "vocals.wav",
+      "pitch_classes": [
+        9,
+        8,
+        2,
+        0,
+        4,
+        7
+      ],
+      "top_chords": [
+        {
+          "name": "D7#11",
+          "score": 0.63132
+        },
+        {
+          "name": "Am11",
+          "score": 0.58192
+        },
+        {
+          "name": "Ab7alt",
+          "score": 0.57881
+        },
+        {
+          "name": "Dm9",
+          "score": 0.56664
+        },
+        {
+          "name": "D7alt",
+          "score": 0.5655
+        },
+        {
+          "name": "Dm11",
+          "score": 0.55629
+        },
+        {
+          "name": "Em11",
+          "score": 0.53961
+        },
+        {
+          "name": "Bbmaj9",
+          "score": 0.53883
+        }
+      ],
+      "coltrane_candidates": [
+        {
+          "name": "Am7",
+          "overlap": 4,
+          "coverage": 1.0
+        },
+        {
+          "name": "CM9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "Am9",
+          "overlap": 4,
+          "coverage": 0.8
+        },
+        {
+          "name": "CM",
+          "overlap": 3,
+          "coverage": 1.0
+        },
+        {
+          "name": "Am",
+          "overlap": 3,
+          "coverage": 1.0
+        },
+        {
+          "name": "Em7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "E7",
+          "overlap": 3,
+          "coverage": 0.75
+        },
+        {
+          "name": "A7",
+          "overlap": 3,
+          "coverage": 0.75
+        }
+      ],
+      "semantics": [
+        "spacious",
+        "warm",
+        "unstable",
+        "intimate"
+      ]
+    }
+  },
+  "semantics": [
+    "spacious",
+    "warm",
+    "unstable",
+    "forward"
+  ],
+  "engine_hints": {
+    "track": "fourth_third_sixth_second_turn",
+    "voicing": "spread",
+    "sonitex_preset": "donuts_warm",
+    "analog_chain": "acetate",
+    "bpm": 80,
+    "groove_dna": "endtroducing",
+    "performer": "yancey",
+    "notes": [
+      "coltrane=IIIM9-im11-ivm11-vim11-im9-ivm9 in D ",
+      "chords=Fmaj9-Dm11-Gm11-Am11"
+    ]
+  },
+  "drum_pattern": {
+    "step_grid": {
+      "kicks": [
+        0,
+        2,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13,
+        14,
+        15
+      ],
+      "snares": [
+        0,
+        2,
+        9
+      ],
+      "hats": [
+        0,
+        4,
+        9
+      ],
+      "bar_steps": 16
+    },
+    "bpm_estimate": 80.0,
+    "swing_hint": "pushed",
+    "drum_density": {
+      "kick_transients_per_min": 9.5,
+      "snare_transients_per_min": 1.5
+    }
+  },
+  "melody_hints": [
+    {
+      "pitch_classes": [
+        7,
+        5,
+        0,
+        6,
+        4,
+        2
+      ],
+      "top_chords": [
+        {
+          "name": "Fmaj9",
+          "score": 0.67932
+        },
+        {
+          "name": "Dm11",
+          "score": 0.6664
+        },
+        {
+          "name": "Gm11",
+          "score": 0.61656
+        },
+        {
+          "name": "Am11",
+          "score": 0.60564
+        },
+        {
+          "name": "Gsus4",
+          "score": 0.58749
+        },
+        {
+          "name": "C7#11",
+          "score": 0.57939
+        },
+        {
+          "name": "Dm9",
+          "score": 0.57128
+        },
+        {
+          "name": "Gm9",
+          "score": 0.55301
+        }
+      ]
+    },
+    {
+      "pitch_classes": [
+        2,
+        8,
+        4,
+        7,
+        6,
+        5
+      ],
+      "top_chords": [
+        {
+          "name": "E7alt",
+          "score": 0.54594
+        },
+        {
+          "name": "Em9",
+          "score": 0.54306
+        },
+        {
+          "name": "G7alt",
+          "score": 0.54038
+        },
+        {
+          "name": "Bb7#11",
+          "score": 0.53537
+        },
+        {
+          "name": "D7#11",
+          "score": 0.50768
+        },
+        {
+          "name": "Dmaj9",
+          "score": 0.50038
+        },
+        {
+          "name": "Am11",
+          "score": 0.4999
+        },
+        {
+          "name": "Em11",
+          "score": 0.49328
+        }
+      ]
+    },
+    {
+      "pitch_classes": [
+        5,
+        4,
+        7,
+        6,
+        8,
+        2
+      ],
+      "top_chords": [
+        {
+          "name": "E7alt",
+          "score": 0.53205
+        },
+        {
+          "name": "Fmaj9",
+          "score": 0.52623
+        },
+        {
+          "name": "Bb7#11",
+          "score": 0.51738
+        },
+        {
+          "name": "Dm9",
+          "score": 0.50699
+        },
+        {
+          "name": "G7alt",
+          "score": 0.49411
+        },
+        {
+          "name": "Em9",
+          "score": 0.49117
+        },
+        {
+          "name": "Dm11",
+          "score": 0.46905
+        },
+        {
+          "name": "Em11",
+          "score": 0.46822
+        }
+      ]
+    }
+  ],
+  "copyable_dna": {
+    "drums": {
+      "bpm": 80.0,
+      "swing": "pushed",
+      "kicks": [
+        0,
+        2,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13,
+        14,
+        15
+      ],
+      "snares": [
+        0,
+        2,
+        9
+      ],
+      "hats": [
+        0,
+        4,
+        9
+      ],
+      "density": {
+        "kick_transients_per_min": 9.5,
+        "snare_transients_per_min": 1.5
+      }
+    },
+    "harmony": {
+      "progression": [
+        "Fmaj9",
+        "Dm11",
+        "Gm11",
+        "Am11",
+        "Gsus4",
+        "C7#11",
+        "Dm9",
+        "Gm9"
+      ],
+      "notation": "IIIM9-im11-ivm11-vim11-im9-ivm9",
+      "scale": "D "
+    },
+    "melody": [
+      7,
+      5,
+      6,
+      4,
+      2,
+      8,
+      0
+    ],
+    "engine": {
+      "track": "fourth_third_sixth_second_turn",
+      "voicing": "spread",
+      "sonitex_preset": "donuts_warm",
+      "analog_chain": "acetate",
+      "groove_dna": "endtroducing",
+      "performer": "yancey",
+      "bpm": 80
+    }
+  }
+}
