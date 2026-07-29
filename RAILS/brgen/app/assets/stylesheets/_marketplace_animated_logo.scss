@@ -69,12 +69,12 @@
   transform: scale(3);
   width: 56px;
   height: 38px;
-  margin-left: -20px;
+  margin-inline-start: -20px;
 }
 
 #logoWrapper .shopping_cart {
   transform: scale(1.2);
-  margin-left: -8px;
+  margin-inline-start: -8px;
 }
 
 .number_animate {
@@ -103,7 +103,7 @@
   font-size: 4px;
   position: absolute;
   margin-top: -64px;
-  margin-right: -64px;
+  margin-inline-end: -64px;
   opacity: 0;
   color: white;
 }
@@ -111,5 +111,5 @@
 #logoWrapper .marketplace .banner > span {
   font-size: 3px;
   margin-top: -24px;
-  margin-right: -24px;
+  margin-inline-end: -24px;
 }
