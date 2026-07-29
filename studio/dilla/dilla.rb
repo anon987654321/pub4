@@ -3638,17 +3638,83 @@ def sample_loop_for(track)
   entry.merge(path: @cross_sample_cache[key])
 end
 
+# --- sample loop excitation ---------------------------------------------------
+#
+# Measured on the two registered loops (mono, 44.1k, banded against each one's
+# own loudest band):
+#
+#   four_seven   sub -4.0  low +0.0  lomid -6.9  mid -15.6  hi -39.9  air -52.7
+#   semua 35-45  sub -7.3  low +0.0  lomid -9.5  mid -20.0  hi -32.6  air -33.7
+#
+# four_seven's -39.9/-52.7 is a cliff, not a rolloff: there is essentially no
+# content above 3 kHz. That matters because the only high-frequency stage in
+# this filter is a LOWPASS at 11 kHz -- it has nothing to remove, and no stage
+# anywhere in the sample path puts anything back. An EQ shelf cannot help
+# either; you cannot boost what is not there.
+#
+# The content has to be synthesised from the harmonics of what IS present,
+# which is what an exciter does: split the signal, drive one copy into a
+# non-linearity, high-pass the result so only the newly generated harmonics
+# survive, and blend that under the dry. (Aural Exciter / parallel saturation;
+# see Sound On Sound on restoring HF in pitch-shifted samples.)
+#
+# Character picks which harmonics get generated, and it is the "older or more
+# modern" dial:
+#   even  x + k*x*|x|   2nd/3rd order, tube and transformer bloom -- rounder,
+#                       sits behind the beat, reads as older.
+#   odd   tanh(d*x)     odd-order, console and transistor clipping -- harder
+#                       and more present, reads as modern.
+#
+# Off by default: it changes the sound of every registered loop, and the right
+# amount is per-sample. SAMPLE_EXCITE=0.3 is a sensible starting point for
+# four_seven; a sample that already has air needs far less or none.
+SAMPLE_EXCITE_MIX = (ENV["SAMPLE_EXCITE"] || "0").to_f.clamp(0.0, 1.0)
+SAMPLE_EXCITE_HZ = (ENV["SAMPLE_EXCITE_HZ"] || "2200").to_f
+SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "4.0").to_f.clamp(1.0, 20.0)
+SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downcase
+
+def sample_excite_shaper
+  if SAMPLE_EXCITE_CHARACTER.start_with?("odd")
+    n = Math.tanh(SAMPLE_EXCITE_DRIVE).round(6)
+    "aeval=exprs='tanh(#{SAMPLE_EXCITE_DRIVE}*val(0))/#{n}|tanh(#{SAMPLE_EXCITE_DRIVE}*val(1))/#{n}'"
+  else
+    k = (SAMPLE_EXCITE_DRIVE * 0.06).round(4)
+    "aeval=exprs='val(0)+#{k}*val(0)*abs(val(0))|val(1)+#{k}*val(1)*abs(val(1))'"
+  end
+end
+
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # Tempo-match rather than resample: the loop was warped in the DAW at its own
   # BPM, so play it at the render's tempo instead of letting it drift.
   ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
   tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
   vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
-  "[#{idx}:a]aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
-    "highpass=f=45," \
-    "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
-    "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}," \
-    "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[loopbed]"
+  common = "aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
+           "highpass=f=45," \
+           "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
+           "lowpass=f=#{ENV.fetch('SAMPLE_LOOP_LP', '11000')}"
+  tail = "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS"
+
+  return "[#{idx}:a]#{common},#{tail}[loopbed]" if SAMPLE_EXCITE_MIX <= 0.0
+
+  # The high-pass on the wet branch is the whole trick: it discards the band
+  # the dry signal already covers and keeps only the harmonics the shaper
+  # invented above it, so this adds air instead of adding distortion.
+  #
+  # The blend level rides on the wet branch as a `volume`, NOT as amix
+  # `weights`: the weights value is space-separated ("1 0.3") and a bare space
+  # inside a filtergraph does not survive parsing, so the weights were dropped
+  # and both branches summed at unity. Measured, that raised the low band by
+  # the same 2.4 dB as the air band -- a broadband level increase wearing an
+  # exciter's clothes. With the gain on the branch instead, the low band moves
+  # 0.0 dB and only 3 kHz upward changes, which is the entire point.
+  #
+  # normalize=0 stops amix halving the dry level to make headroom.
+  "[#{idx}:a]#{common},asplit=2[lpdry#{idx}][lpwet#{idx}];" \
+    "[lpwet#{idx}]#{sample_excite_shaper},highpass=f=#{SAMPLE_EXCITE_HZ.round}:poles=2," \
+    "volume=#{SAMPLE_EXCITE_MIX.round(3)}[lpexc#{idx}];" \
+    "[lpdry#{idx}][lpexc#{idx}]amix=inputs=2:normalize=0," \
+    "#{tail}[loopbed]"
 end
 
 # The bass gets its own bus rather than riding the harmonic one. It used to be
