@@ -6077,6 +6077,85 @@ def artist_verified_chords(key)
 end
 
 # Album / track progressions — verified first; rest are experimental / theory pack.
+# --- extended progressions -------------------------------------------------
+#
+# Every one of the 218 progressions above tops out at 8 chords, and 138 of
+# them are exactly 4. At chord_bars 2 a four-chord progression closes its
+# circle every 8 bars, so a 32-bar render walks the same ground four times --
+# which is the "loops too much, same over and over" complaint in its harmonic
+# form rather than its arrangement form.
+#
+# These are 12 and 16 chords, so the cycle is 24-32 bars: the harmony resolves
+# once across the whole beat instead of four times. Longer is not automatically
+# better -- a long progression that merely wanders is worse than a short one
+# that closes -- so each of these is built on a specific device that gives it
+# direction over that distance:
+#
+#   a descending bass line, which carries a listener through changes that
+#   would otherwise feel arbitrary (the reason ii-V chains and chromatic
+#   descents show up in so much neo-soul);
+#
+#   or a delayed return to the tonic, where the first arrival is deliberately
+#   weak and the real cadence is saved for the end.
+#
+# F# minor is over-represented because the reference set is: five of the nine
+# local tracks in the Radio Bergen dossiers sit there, so the keys the pads
+# reach for should too.
+EXTENDED_PROGRESSIONS = {
+  # Stepwise descent from the tonic, twice, resolving the second time. The
+  # first pass lands on the relative major and keeps moving; only the second
+  # takes the C#7alt back home.
+  fsharp_minor_sixteen: %w[
+    F#m9 C#m9 Dmaj9 Amaj9 Bm9 F#m9 G#m7 C#7alt
+    F#m9 Emaj9 Dmaj9 C#7alt Bm9 E7 Amaj9 C#7alt
+  ],
+  # The same key treated modally rather than functionally: no leading tone
+  # until the very end, so it floats and then finally commits.
+  fsharp_dorian_twelve: %w[
+    F#m9 G#m7 Amaj9 Bm9 F#m9 Emaj9
+    Dmaj9 C#m9 Bm11 Emaj9 Amaj9 C#7alt
+  ],
+  # Descending chromatic bass under sustained upper voices -- the device
+  # behind most of what reads as "lush" in this idiom. Root moves
+  # D-C#-C-B-Bb-A across the first half.
+  chromatic_descent_sixteen: %w[
+    Dm9 C#7alt Cmaj9 Bm9 Bbmaj9 Am9 Abdim Gm9
+    Cmaj9 Fmaj9 Bbmaj9 Em9 A7alt Dm9 Gm9 A7alt
+  ],
+  # Gospel plagal motion: the IV is the centre of gravity, not the V. Slow,
+  # warm and unhurried -- the closest thing here to a hymn.
+  gospel_plagal_sixteen: %w[
+    Ebmaj9 Abmaj9 Ebmaj9 Cm9 Fm9 Bb7 Ebmaj9 Abmaj9
+    Gm7 Cm9 Fm9 Bb7 Ebmaj9 Dbmaj9 Abmaj9 Ebmaj9
+  ],
+  # Root movement by thirds rather than fifths, so each change is a
+  # chromatic mediant sharing two tones with the last. Distant keys arrive
+  # without a modulation ever announcing itself.
+  mediant_wander_twelve: %w[
+    Cmaj9 Em9 Abmaj9 Cm9 Ebmaj9 Gm9
+    Bmaj9 D#m9 F#maj9 Bbm9 Dbmaj9 G7alt
+  ],
+  # Reggae-leaning: minor tonic with the flat-seventh and flat-sixth doing
+  # the work, no dominant at all until the last bar. Slow changes, wide
+  # spacing, nothing hurried.
+  roots_minor_twelve: %w[
+    Am9 G6 Fmaj9 G6 Am9 Em9
+    Fmaj9 Cmaj9 Dm9 G6 Am9 E7alt
+  ],
+  # Two ii-V chains a whole step apart, then a long walk home. The harmonic
+  # rhythm is deliberately even so the melody can be the irregular element.
+  two_key_ii_v_sixteen: %w[
+    Dm9 G7 Cmaj9 Cmaj9 Em9 A7 Dmaj9 Dmaj9
+    Bm9 E7 Amaj9 F#m9 Bm9 E7alt Amaj9 A7alt
+  ],
+  # Suspended and quartal throughout: no third in most of these, so the mode
+  # stays ambiguous and the pads read as texture rather than as function.
+  quartal_suspension_twelve: %w[
+    Dsus4 Gsus4 Csus4 Fmaj9 Bbsus4 Ebmaj9
+    Absus4 Dbmaj9 Gbmaj9 Bsus4 Emaj9 Asus4
+  ],
+}.freeze
+
 CHORD_PROGRESSIONS = {
   # Transcribed from a D'Angelo reference track via learn_source!'s chroma
   # analysis (progression_symbols in project/learnings/last_learn.json):
@@ -6456,7 +6535,9 @@ CHORD_PROGRESSIONS = {
   # 13th. Written for the slow FlyLo presets (flylo_massage, flylo_flamagra)
   # where four changes in a bar would crowd the space they leave.
   sus_thirteen_hypnosis: %w[F7sus Ebmaj13],
-}.freeze
+}.merge(EXTENDED_PROGRESSIONS).freeze
+
+
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
   # Recreation of a 92 BPM Ableton Live 9.7 set (4_seven), transcribed from the
