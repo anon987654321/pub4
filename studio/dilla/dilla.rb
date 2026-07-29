@@ -13356,10 +13356,16 @@ def native_waveform_body(frequency, wave:, bloom: 0.2, drift: "1", detune: 0.004
     ].join("+")
   when :saw
     "0.55*(2*mod(#{f}*#{drift}*t,1)-1)+0.22*(2*mod(#{det_up}*#{drift}*t,1)-1)+0.18*(2*mod(#{det_dn}*#{drift}*t,1)-1)"
+  # :triangle and :square took a detune: and threw it away — every caller that
+  # set one got a single-frequency tone with no beating, and nothing said so.
+  # The detuned partial is quiet (0.18) so these keep their shape; what they
+  # gain is movement.
   when :triangle
-    "0.62*(2*abs(2*mod(#{f}*#{drift}*t,1)-1)-1)+0.20*sin(2*PI*#{f}*#{drift}*t)"
+    "0.62*(2*abs(2*mod(#{f}*#{drift}*t,1)-1)-1)+0.20*sin(2*PI*#{f}*#{drift}*t)" \
+      "+0.18*(2*abs(2*mod(#{det_up}*#{drift}*t,1)-1)-1)"
   when :square
-    "0.48*(2*floor(2*mod(#{f}*#{drift}*t,1))-1)+0.28*sin(2*PI*#{f * 2.0}*#{drift}*t)"
+    "0.48*(2*floor(2*mod(#{f}*#{drift}*t,1))-1)+0.28*sin(2*PI*#{f * 2.0}*#{drift}*t)" \
+      "+0.18*(2*floor(2*mod(#{det_dn}*#{drift}*t,1))-1)"
   when :pwm
     pw = "0.35+0.15*sin(2*PI*0.4*t+#{phase_seed.round(3)})"
     "0.5*(2*floor(mod(#{f}*#{drift}*t,1)/(#{pw}))-1)+0.25*sin(2*PI*#{det_up}*#{drift}*t)"
@@ -13369,7 +13375,11 @@ def native_waveform_body(frequency, wave:, bloom: 0.2, drift: "1", detune: 0.004
                                    detune:, feedback: fm_feedback, phase_seed:,
                                    mod_ratio_expr: mod_ratio_expr || "1.5")
   when :organ
-    "0.42*sin(2*PI*#{f}*#{drift}*t)+0.28*sin(2*PI*#{f * 2.0}*#{drift}*t)+0.18*sin(2*PI*#{f * 3.0}*#{drift}*t)+0.12*sin(2*PI*#{f * 4.0}*#{drift}*t)"
+    # Detuned on the fundamental only. A drawbar organ's movement comes from
+    # slightly out-of-tune tonewheels beating against each other, so the
+    # detune: this took and discarded is exactly the parameter it wanted.
+    "0.42*sin(2*PI*#{f}*#{drift}*t)+0.28*sin(2*PI*#{f * 2.0}*#{drift}*t)+0.18*sin(2*PI*#{f * 3.0}*#{drift}*t)+0.12*sin(2*PI*#{f * 4.0}*#{drift}*t)" \
+      "+0.16*sin(2*PI*#{det_up}*#{drift}*t)"
   when :bowed
     "0.55*sin(2*PI*#{f}*#{drift}*t)+0.25*sin(2*PI*#{f * 2.0}*#{drift}*t)+0.12*sin(2*PI*#{f * 3.0}*#{drift}*t)"
   when :juno
