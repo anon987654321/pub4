@@ -15,7 +15,7 @@
 
 <article>
   <p><%= @restaurant.description %></p>
-  <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city %></p>
+  <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city_label %></p>
   <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %> · <%= pluralize(@restaurant.favorites.size, "save") %></p>
 </article>
 

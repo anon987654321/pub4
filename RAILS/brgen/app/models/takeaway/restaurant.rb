@@ -4,6 +4,7 @@ require "zlib"
 
 class Takeaway::Restaurant < ApplicationRecord
   include CityTenantable
+  include Shared::StrictSafeAssociations
 
   include Shared::Notifiable
   include Shared::Reactable
@@ -31,6 +32,14 @@ class Takeaway::Restaurant < ApplicationRecord
 
   def owner?(account)
     user_id == account&.id
+  end
+
+  # This is the one table carrying both a `city` string column and a `city_id`.
+  # CityTenantable's belongs_to shadows the column reader, so `restaurant.city`
+  # in a view renders a City object — or raises on strict loading when the
+  # query did not preload it. Views want the label, so name it.
+  def city_label
+    strict_safe_attribute(:city, :name).presence || self[:city].presence
   end
 
   def delivery_fee_display

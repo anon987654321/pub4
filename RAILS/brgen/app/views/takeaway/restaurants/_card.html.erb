@@ -1,6 +1,6 @@
 <% restaurant_content = capture do %>
   <div class="feed-card-meta">
-    <%= restaurant.city %> · ★ <%= restaurant.rating || "—" %>
+    <%= restaurant.city_label %> · ★ <%= restaurant.rating || "—" %>
   </div>
   <div class="feed-card-meta">
     <span class="eta-badge">25–35 min</span> · Min order: <%= restaurant.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= restaurant.delivery_fee_cents.to_i / 100.0 %> NOK
