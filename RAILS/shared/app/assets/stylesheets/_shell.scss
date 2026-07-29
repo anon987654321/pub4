@@ -261,6 +261,13 @@ main[role="main"] {
 .nav-item svg {
   flex-shrink: 0;
 }
+/* var(--bg), not #fff. --accent is the inverse of --bg in this grayscale
+   system: BRGEN_OLD dark puts it at #f2f2f2 and light at #1a1a1a, and the
+   vertical map paints it orange/red per surface. White text assumed a
+   mid-dark accent that only some verticals have — on brgen home, /live and
+   /session/new the accent IS #f2f2f2, so the primary "Post" button rendered
+   white on near-white at 1.12:1 and was simply invisible. Every other rule
+   painting on --accent already pairs it with --bg. */
 .compose-btn {
   display: flex;
   align-items: center;
@@ -271,7 +278,7 @@ main[role="main"] {
   padding: 0 24px;
   margin-top: 16px;
   background: var(--accent);
-  color: #fff;
+  color: var(--bg);
   border: none;
   border-radius: var(--radius-pill);
   font-size: 17px;
@@ -284,7 +291,7 @@ main[role="main"] {
 .compose-btn:hover {
   opacity: 0.88;
   text-decoration: none;
-  color: #fff;
+  color: var(--bg);
 }
 .compose-icon {
   display: none;
@@ -302,12 +309,12 @@ main[role="main"] {
   align-items: center;
   justify-content: center;
   background: var(--accent);
-  color: #fff;
+  color: var(--bg);
   z-index: var(--z-nav, 80);
   text-decoration: none;
 }
 .compose-fab:hover {
-  color: #fff;
+  color: var(--bg);
   text-decoration: none;
 }
 .compose-fab svg {
