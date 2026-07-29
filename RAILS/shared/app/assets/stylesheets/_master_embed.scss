@@ -55,6 +55,25 @@
   }
 }
 
+/* Bare + big: the brgen front page runs the face as its hero rather than as a
+   labelled widget in the feed. Full-bleed out of main's gutter, near-square on
+   a phone so the head is not letterboxed, and given real height on desktop
+   instead of the 560px cap the in-feed variant uses. */
+.ai-embed--bare {
+  margin-inline: calc(50% - 50vw);
+  background: #000;
+}
+
+.ai-embed--bare .ai-embed-frame {
+  aspect-ratio: 1 / 1;
+  max-block-size: min(78vh, 720px);
+
+  @media (min-width: 40rem) {
+    aspect-ratio: 21 / 9;
+    max-block-size: min(72vh, 760px);
+  }
+}
+
 /* The face animates continuously; honour the same guard the rest of the shell
    uses so it does not autoplay motion for users who opted out. */
 @media (prefers-reduced-motion: reduce) {

@@ -16,17 +16,10 @@
   </aside>
 <% end %>
 
+<%# The "Bergen, right now" blurb that used to sit here was removed: the feed
+    below says what the city is doing far better than a paragraph about it, and
+    the three links it carried are all in the tab bar and the vertical swiper. %>
 <section id="feed-panel" aria-label="Local posts" data-visitor-orientation>
-  <header class="local-feed-intro">
-    <p class="local-feed-kicker">Bergen, right now</p>
-    <p>Neighbourhood notes, weather-window plans, gigs, openings and the useful small things a city tells itself.</p>
-    <p class="dim guest-demo-path" aria-label="Try without signing up">
-      <%= link_to "Live", live_path %> ·
-      <%= link_to "Marketplace", marketplace_root_url %> ·
-      <%= link_to "Messages", "//messenger.#{Current.domain}/" %>
-      <span class="guest-demo-hint">— no signup required</span>
-    </p>
-  </header>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to "Sign in", new_session_path %> to see posts from people you follow.</p>
   <% end %>

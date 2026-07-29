@@ -28,18 +28,36 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Start clear of the fixed city brand — its left edge used to cover the
-     first tab, so tapping that tab went home instead. */
-  padding: 0 var(--space-4) 0 var(--brand-mark-inline);
+  /* Clear the fixed chrome at both ends — the city brand covered the first tab
+     and the theme toggle covered the last one, so tapping either hit the
+     chrome instead of the tab. */
+  padding: 0 var(--chrome-toggle-inline) 0 var(--brand-mark-inline);
   mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, var(--bg) 88%, transparent 100%);
+
+  /* Make the row actually swipeable rather than merely overflowing:
+     - touch-action pan-x hands horizontal drags to this scroller instead of
+       letting the page claim them as a vertical scroll
+     - momentum scrolling on iOS
+     - overscroll containment so swiping past the last vertical does not chain
+       out to the page and trigger pull-to-refresh
+     - scroll snapping so a swipe settles on a vertical instead of mid-word */
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: var(--brand-mark-inline);
 }
 
 .feed-tabs::-webkit-scrollbar { display: none; }
 
 .feed-tab {
-  padding: var(--space-3) var(--space-4);
-  font-size: 0.875rem;
+  /* A touch bigger than the 0.875rem/space-4 it was: these seven verticals are
+     brgen's primary nav, so they should read as destinations, not as metadata.
+     scroll-snap-align pairs with the scroller's snap type above. */
+  padding: var(--space-3) var(--space-5, 1.25rem);
+  font-size: 1rem;
+  scroll-snap-align: start;
   font-weight: 500;
   color: var(--text-dim);
   text-decoration: none;
@@ -88,11 +106,22 @@ a.feed-tab { text-decoration: none; }
   transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
 }
 
-.compose-label-visible { display: block; color: var(--text); font-weight: 700; margin-bottom: var(--space-1); }
+/* At rest the compose is one input line and nothing else — the placeholder
+   carries the prompt, so the heading is for screen readers only, and the hint
+   waits until there is something to hint about. Both come back on focus, when
+   feed_compose_controller adds .compose-box--expanded. */
+.compose-label-visible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.compose-box:not(.compose-box--expanded) .compose-hint { display: none; }
+
 .compose-box:focus-within { background: var(--hover); outline: 1px solid var(--accent); outline-offset: 1px; }
-.local-feed-intro { padding: var(--space-4) var(--space-4) var(--space-6); }
-.local-feed-intro p { margin: 0; }
-.local-feed-kicker { color: var(--text); font-weight: 800; }
 .compose-hint details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 
 .compose-avatar {
@@ -141,7 +170,16 @@ a.feed-tab { text-decoration: none; }
   margin-bottom: var(--space-3);
 }
 
-.compose-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+/* Wraps. On a 390px phone the toolbar, six media actions and the submit came
+   to ~700px on one nowrap row, so the post button sat 300px off the right edge
+   of the screen and could not be reached at all. */
+.compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
 .compose-actions { display: flex; gap: var(--space-3); color: var(--text-secondary); font-size: var(--text-base); }
 .compose-action {
   display: inline-flex;

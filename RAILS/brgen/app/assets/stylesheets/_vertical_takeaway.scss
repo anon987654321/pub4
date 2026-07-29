@@ -6,6 +6,18 @@ body.vertical-takeaway {
   --food-card-radius: var(--radius-md);
 }
 
+/* Takeaway is a storefront, same as markedsplass, and now carries the same
+   two-row #navBar. Opt out of the 600px feed column so the bar can go full
+   bleed and the restaurant grid gets room — otherwise .layout caps it and the
+   header is crushed into a timeline width. */
+body.vertical-takeaway .layout {
+  max-width: 100%;
+}
+
+body.vertical-takeaway main {
+  max-width: 1280px;
+}
+
 body.vertical-takeaway .page-header h1 {
   font-size: var(--text-xl);
   font-weight: 800;

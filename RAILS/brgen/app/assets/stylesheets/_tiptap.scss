@@ -4,12 +4,27 @@
 .tiptap_mount { width: 100%; }
 
 .tiptap_area {
+  position: relative;
   min-height: 44px;
   padding: 10px 0;
   color: var(--text);
   font-size: 20px;
   line-height: 1.5;
   outline: none;
+}
+
+/* Placeholder for the contenteditable. Tiptap swaps the textarea for a
+   ProseMirror surface, which has no placeholder attribute of its own, so the
+   compose prompt vanished the moment the editor loaded and the box read as an
+   empty rectangle. An empty ProseMirror document is exactly one paragraph
+   holding only its trailing <br>, which is what this matches. */
+.tiptap_area:has(> p:only-child > br.ProseMirror-trailingBreak:only-child)::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 0;
+  color: var(--text-secondary);
+  pointer-events: none;
 }
 
 /* The advanced post form gives the body room to breathe — same borderless,

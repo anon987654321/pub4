@@ -1,0 +1,66 @@
+<%# Takeaway header — deliberately the same two-row structure as the
+    marketplace one, per the operator: the two storefronts should read as
+    siblings. It reuses #navBar / #topHalf / #bottomHalf and the .nav-block
+    classes from _marketplace_nav_bar.scss rather than restyling, so the
+    geometry cannot drift between the two verticals.
+
+    Cuisines stand in for marketplace's categories, and "Your orders" for its
+    cart, since takeaway has no basket of its own. %>
+<% active = local_assigns.fetch(:active, "restaurants") %>
+<% search_url = local_assigns.fetch(:search_url, takeaway_restaurants_path) %>
+<% search_placeholder = local_assigns.fetch(:search_placeholder, "Search restaurants") %>
+<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || "Bergen") %>
+
+<div id="navBar">
+  <div id="topHalf">
+    <div id="logoWrapper">
+      <%= link_to takeaway_restaurants_path, id: "logo", class: "marketplace-logo-link nav-hover", aria: { label: "Takeaway" } do %>
+        <span class="nav-logo-word">takeaway<span class="nav-logo-tld">.no</span></span>
+      <% end %>
+    </div>
+
+    <%= link_to nearby_path, class: "nav-block nav-deliver nav-hover" do %>
+      <span class="nav-line-1"><%= icon :nearby, size: 13 %> Deliver to</span>
+      <span class="nav-line-2"><%= deliver_to %></span>
+    <% end %>
+
+    <div class="search marketplace-nav-search" data-controller="search-focus">
+      <%= form_with url: search_url, method: :get, local: true do %>
+        <select name="cuisine" class="nav-search-category" aria-label="Cuisine">
+          <option value="">All</option>
+          <% Takeaway::Restaurant::CUISINE_TYPES.each do |cuisine| %>
+            <option value="<%= cuisine %>" <%= "selected" if params[:cuisine] == cuisine %>><%= cuisine %></option>
+          <% end %>
+        </select>
+        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
+               placeholder="<%= search_placeholder %>" aria-label="Search restaurants"
+               data-action="focus->search-focus#focus blur->search-focus#blur" />
+        <button type="submit" class="nav-search-submit" aria-label="Search"><%= icon :search, size: 20 %></button>
+      <% end %>
+    </div>
+
+    <div id="accountStuff">
+      <%= link_to(authenticated? ? user_path(Current.user) : new_session_path, class: "nav-block nav-hover") do %>
+        <span class="nav-line-1">Hello, <%= authenticated? ? (Current.user.username.presence || "you") : "sign in" %></span>
+        <span class="nav-line-2">Account</span>
+      <% end %>
+      <%= link_to takeaway_orders_path, class: "nav-block nav-hover#{" nav-cart--active" if active == "orders"}" do %>
+        <span class="nav-line-1">Your</span>
+        <span class="nav-line-2">Orders</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="bottomHalf">
+    <%= link_to takeaway_restaurants_path, id: "department", class: "nav-hover" do %>
+      <%= icon :menu, size: 18 %> All
+    <% end %>
+    <div id="sections">
+      <%= link_to "Restaurants", takeaway_restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
+      <%= link_to "Your orders", takeaway_orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
+      <%= link_to "Drivers", takeaway_delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
+      <%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "section nav-hover" if authenticated? %>
+    </div>
+    <div id="subPromo">Local kitchens, 25–35 min</div>
+  </div>
+</div>

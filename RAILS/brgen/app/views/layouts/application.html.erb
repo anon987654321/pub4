@@ -41,11 +41,13 @@
 <body class="<%= body_surface_classes %>"
       data-controller="feed-hotkey browser-fingerprint brgen-shell"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
-  <%# Immersive playlist owns the full-bleed tunnel — no global skip pill (it
-      paints as a light rectangle in the brand corner) and no second wordmark. %>
-  <% unless active_vertical.to_s == "playlist" %>
-    <a class="skip-link" href="#main-content">Skip to main content</a>
-  <% end %>
+  <%# Every surface, playlist included. The skip link must be the first focusable
+      element on the page or it cannot do its job. The playlist tunnel used to
+      opt out because the pill painted as a light rectangle in the brand corner;
+      _shell.scss now clips it to 1×1 with clip-path + opacity:0 (see the comment
+      at the top of that file, which names this tunnel), so there is nothing left
+      to paint. %>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <%= link_to root_path, class: "brgen-logo-mark", aria: { label: "Brgen home" } do %>
     <span class="brand-text">brgen</span>
   <% end %>
@@ -177,8 +179,11 @@
             </nav>
           </div>
         <% end %>
+        <%# The face is the front page's hero: full-bleed and large, with no
+            "ask brgen" bar around it. eager, because it is now the first thing
+            on the page rather than something below the fold. %>
         <% if !vertical_surface? && current_page?(root_path) %>
-          <%= render "shared/master_embed", heading: "ask brgen" %>
+          <%= render "shared/master_embed", heading: "brgen ai", bare: true, eager: true %>
         <% end %>
         <% if current_page?(root_path) && Current.user.present? %>
           <%= render "shared/feed_compose" %>

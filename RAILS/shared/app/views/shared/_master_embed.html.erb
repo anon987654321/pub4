@@ -8,12 +8,20 @@
                 critical path matters on a 1 vCPU host. %>
 <% heading = local_assigns.fetch(:heading, master_embed_title) %>
 <% eager = local_assigns.fetch(:eager, false) %>
-<section class="ai-embed" aria-labelledby="ai-embed-heading">
-  <div class="ai-embed-bar">
-    <h2 id="ai-embed-heading" class="ai-embed-heading"><%= heading %></h2>
-    <%= link_to "Open", master_web_url, class: "ai-embed-open",
-                target: "_blank", rel: "noopener" %>
-  </div>
+<%# bare: the face is the hero rather than a labelled widget, so the chrome bar
+    is dropped and the heading goes to screen readers only. The face still has
+    to be announced — an unlabelled iframe is not navigable. %>
+<% bare = local_assigns.fetch(:bare, false) %>
+<section class="ai-embed<%= " ai-embed--bare" if bare %>" aria-labelledby="ai-embed-heading">
+  <% if bare %>
+    <h2 id="ai-embed-heading" class="visually-hidden"><%= heading %></h2>
+  <% else %>
+    <div class="ai-embed-bar">
+      <h2 id="ai-embed-heading" class="ai-embed-heading"><%= heading %></h2>
+      <%= link_to "Open", master_web_url, class: "ai-embed-open",
+                  target: "_blank", rel: "noopener" %>
+    </div>
+  <% end %>
   <iframe
     class="ai-embed-frame"
     src="<%= master_web_url %>"

@@ -23,7 +23,17 @@ export default class extends Controller {
           })
         ],
         content: this.fieldTarget.value,
-        editorProps: { attributes: { class: "tiptap_area", "aria-label": "Compose" } },
+        // Carry the textarea's placeholder across. Tiptap replaces the field
+        // with a contenteditable, which has no placeholder of its own, so
+        // taking over silently blanked the compose prompt and the box read as
+        // an empty rectangle. _tiptap.scss paints this via ::before.
+        editorProps: {
+          attributes: {
+            class: "tiptap_area",
+            "aria-label": this.fieldTarget.getAttribute("placeholder") || "Compose",
+            "data-placeholder": this.fieldTarget.getAttribute("placeholder") || ""
+          }
+        },
         onUpdate: ({ editor }) => this._sync(editor)
       })
 

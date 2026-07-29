@@ -134,11 +134,18 @@
   overflow: hidden;
 }
 
+/* The vertical shells give search controls a pill radius and their own padding
+   (_vertical_shell.scss). Inside this bar the three controls are one welded
+   unit whose corners come from the form's overflow, so the select has to opt
+   out explicitly or it floats as a detached pill over the input. */
 .nav-search-category {
   flex: 0 0 auto;
   max-width: 140px;
+  height: 100%;
+  margin: 0;
   padding: 0 8px;
   border: 0;
+  border-radius: 0;
   background-color: #e6e6e6;
   color: #111;
   font-size: 12px;
@@ -152,8 +159,11 @@
 #navBar .nav-search-input {
   flex: 1 1 auto;
   min-width: 0;
+  height: 100%;
+  margin: 0;
   padding: 0 10px;
   border: 0;
+  border-radius: 0;
   background: #fff;
   color: #111;
   font-size: 15px;
