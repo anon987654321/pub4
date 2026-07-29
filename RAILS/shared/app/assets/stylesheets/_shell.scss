@@ -89,11 +89,19 @@
   margin: 0 auto;
 }
 
+// The column is .layout's job, so main only supplies the gutter. This used to
+// be duplicated further down the file by a three-column-era rule with the same
+// selector and the same specificity, which therefore won: it gave main its own
+// `flex: 1` inside the column flex container, plus a second `max-width:
+// var(--feed-max)`. The `flex: 1` sized main to the 600px basis rather than to
+// its parent, so on a 390px viewport main rendered 600px wide and every one of
+// the 212 elements inside it overflowed and was clipped -- the whole feed lost
+// its right edge on mobile. Keep this the only rule for these selectors.
 main#main-content,
 main[role="main"] {
   max-width: none;
   margin-inline: 0;
-  padding-inline: 0;
+  padding-inline: clamp(16px, 5vw, 48px);
   min-height: 100vh;
 }
 
@@ -305,15 +313,6 @@ main[role="main"] {
 .compose-fab svg {
   width: 22px;
   height: 22px;
-}
-main#main-content,
-main[role="main"] {
-  flex: 1;
-  min-width: 0;
-  max-width: var(--feed-max);
-  min-height: 100vh;
-  margin-inline: auto;
-  padding-inline: clamp(16px, 5vw, 48px);
 }
 /* Height published as a variable so anything else pinned to the bottom edge can
    clear it instead of guessing. The nearby chat tab was flush to the corner and
