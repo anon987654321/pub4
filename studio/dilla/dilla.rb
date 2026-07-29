@@ -3399,6 +3399,33 @@ def acquire_stream_lock!
   end
 end
 
+# "All his drums are dirty as fuck, sans the kick" -- and the cymbals in
+# particular are swished through phaser and flanger until they are soupy rather
+# than crisp.
+#
+# The dual-bus split already separates exactly the right things: the sub bus is
+# the kick, the top bus is hats, snare and cymbals. So the dirt goes on the top
+# branch and the kick stays untouched, which is the distinction being described
+# rather than an approximation of it. Applying this to the whole kit would
+# smear the one element that has to stay solid.
+#
+# Order matters: modulation BEFORE the EQ, so the phaser's own notches get
+# shaped by the top-end lift rather than fighting it, and light saturation last
+# so it thickens what the modulation produced.
+FLYLO_TOP_DIRT = (ENV["FLYLO_TOP_DIRT"] || 0).to_f.clamp(0.0, 1.0)
+
+def flylo_top_dirt
+  return "" if FLYLO_TOP_DIRT <= 0.0
+
+  d = FLYLO_TOP_DIRT
+  "aphaser=in_gain=0.6:out_gain=0.8:delay=#{(2.5 + (2.0 * d)).round(2)}:" \
+    "decay=#{(0.3 * d).round(3)}:speed=#{(0.35 + (0.5 * d)).round(3)}," \
+    "flanger=delay=#{(3.0 + (4.0 * d)).round(2)}:depth=#{(2.0 * d).round(2)}:" \
+    "regen=#{(12.0 * d).round(1)}:speed=#{(0.28 + (0.4 * d)).round(3)}," \
+    "acrusher=bits=#{(16 - (5 * d)).round}:mode=log:aa=1," \
+    "asoftclip=type=tanh:threshold=#{(1.0 - (0.35 * d)).round(3)},"
+end
+
 def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
   unless File.file?(drum_path)
     warn "flylo merge: missing drum bus — skipping overlay"
@@ -3422,7 +3449,7 @@ def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
       "[1:a]highpass=f=28,lowpass=f=520,equalizer=f=55:t=o:w=0.75:g=6.5," \
       "equalizer=f=110:t=o:w=1.0:g=4.0,equalizer=f=180:t=o:w=1.1:g=3.0," \
       "volume=#{sub_vol}[sub];" \
-      "[2:a]highpass=f=700,equalizer=f=3500:t=o:w=1.3:g=5.5," \
+      "[2:a]#{flylo_top_dirt}highpass=f=700,equalizer=f=3500:t=o:w=1.3:g=5.5," \
   "equalizer=f=6500:t=o:w=1.4:g=6.5,equalizer=f=9000:t=h:w=1.2:g=4.0," \
   "volume=#{top_vol}[top];" \
       "[base][sub][top]amix=inputs=3:duration=first:normalize=0," \
