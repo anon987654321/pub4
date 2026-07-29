@@ -885,9 +885,9 @@ SYNTH_PATCH_CATALOG = [
               fx: "chorus=0.45:0.65:34|44:0.2|0.16:0.24|0.2:1.05|1.3,lowpass=f=5000"),
   # --- Native additive fallbacks (no soundfont) ---
   synth_patch(:native_rhodes, role: :native, program: 0, weight: 2.5, native: { wave: :rhodes, detune: 0.005, bloom: 0.34 }),
-  synth_patch(:native_rhodes_bleeding, role: :native, program: 0, weight: 1.8, native: { wave: :rhodes, detune: 0.008, bloom: 0.42 }),
+  synth_patch(:native_rhodes_bleeding, role: :native, program: 0, weight: 1.8, native: { wave: :rhodes, detune: 0.005, bloom: 0.42 }),
   synth_patch(:native_juno, role: :native, program: 0, native: { wave: :juno, detune: 0.006, bloom: 0.18 }),
-  synth_patch(:native_prophet, role: :native, program: 0, weight: 2.2, native: { wave: :prophet, detune: 0.007, bloom: 0.26 }),
+  synth_patch(:native_prophet, role: :native, program: 0, weight: 2.2, native: { wave: :prophet, detune: 0.005, bloom: 0.26 }),
   synth_patch(:native_moog, role: :native, program: 0, weight: 2.2, native: { wave: :moog, detune: 0.005, bloom: 0.24 }),
   synth_patch(:native_fm_glass, role: :native, program: 0, weight: 2.4,
               native: { wave: :fm, detune: 0.002, bloom: 0.35, fm_index: 2.0, fm_feedback: 0.14 }),
@@ -927,9 +927,9 @@ SYNTH_PATCH_CATALOG = [
   # detune: it was given. Measured over 6s at 220Hz, that produced 0.08 dB of
   # amplitude movement — a static tone. The saw stack gives 4.33 dB, because
   # the beating between detuned oscillators is the sound.
-  synth_patch(:native_warm_pad, role: :native, program: 0, native: { wave: :analog_pad, detune: 0.007, bloom: 0.15 }),
+  synth_patch(:native_warm_pad, role: :native, program: 0, native: { wave: :analog_pad, detune: 0.005, bloom: 0.15 }),
   synth_patch(:native_string, role: :native, program: 0, native: { wave: :bowed, detune: 0.004, bloom: 0.2 }),
-  synth_patch(:native_pwm, role: :native, program: 0, native: { wave: :pwm, detune: 0.008, bloom: 0.25 }),
+  synth_patch(:native_pwm, role: :native, program: 0, native: { wave: :pwm, detune: 0.005, bloom: 0.25 }),
   # --- Experimental electronic pads (musical, not noise) ---
   synth_patch(:glass_fm_pad, role: :warm, program: 98, weight: 2.6, mix: 0.72, fs_gain: 1.38,
               midi_fx: MIDI_FX_PAD_WARM,
