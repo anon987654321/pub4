@@ -936,7 +936,7 @@
       "title": "Kunst",
       "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/vocals.wav",
       "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_6s/yt_20260718_221000",
-      "bpm_estimate": 88.93,
+      "bpm_estimate": 70.0,
       "phrases": [
         {
           "start": 0.511,
@@ -1943,15 +1943,17 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_95_8bars.wav",
-        "beat_bpm": 95.0,
-        "n_bars": 8,
-        "offset_sec": 1.975,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_76_18bars.wav",
+        "beat_bpm": 76.0,
+        "n_bars": 18,
+        "offset_sec": 33.1471,
         "phrase_start": 1.207,
-        "source_bpm": 88.93,
-        "tempo_ratio": 1.0683,
-        "rms_db": -17.948,
-        "sub_bleed_db": -44.34,
+        "source_bpm": 70.0,
+        "tempo_ratio": 1.0857,
+        "rms_db": -18.727,
+        "sub_bleed_db": -43.598,
+        "snapped_lines": null,
+        "has_pulse": true,
         "voice_only": true
       }
     },
@@ -2468,20 +2470,66 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_86_8bars.wav",
-        "beat_bpm": 86.0,
-        "n_bars": 8,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_78_18bars.wav",
+        "beat_bpm": 78.0,
+        "n_bars": 18,
         "offset_sec": 39.5193,
         "phrase_start": 2.972,
         "source_bpm": 61.0,
         "tempo_ratio": 1.0,
-        "rms_db": -18.373,
-        "sub_bleed_db": -39.736,
-        "snapped_lines": 8,
+        "rms_db": -19.089,
+        "sub_bleed_db": -41.583,
+        "snapped_lines": 19,
         "has_pulse": false,
         "voice_only": true
       }
+    },
+    {
+      "slug": "haisam_johann",
+      "artist": "Haisam & Johann",
+      "source": "operator own recording, restored from git history",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/haisam_johann/vocals.wav",
+      "isolated": true,
+      "voice_only": true,
+      "last_fit": {
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/haisam_johann/fit_80_18bars.wav",
+        "beat_bpm": 80.0,
+        "n_bars": 18,
+        "offset_sec": 40.6072,
+        "phrase_start": 0.0,
+        "source_bpm": 77.3,
+        "tempo_ratio": 1.0,
+        "rms_db": -20.289,
+        "sub_bleed_db": -52.127,
+        "snapped_lines": 30,
+        "has_pulse": false,
+        "voice_only": true
+      },
+      "bpm_estimate": 77.3
+    },
+    {
+      "slug": "angelo_johann",
+      "artist": "Angelo Reira & Johann",
+      "source": "operator own recording, restored from git history",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/angelo_johann/vocals.wav",
+      "isolated": true,
+      "voice_only": true,
+      "last_fit": {
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/angelo_johann/fit_76_18bars.wav",
+        "beat_bpm": 76.0,
+        "n_bars": 18,
+        "offset_sec": 0.0,
+        "phrase_start": 0.0,
+        "source_bpm": 76.0,
+        "tempo_ratio": 1.0,
+        "rms_db": -21.903,
+        "sub_bleed_db": -43.169,
+        "snapped_lines": null,
+        "has_pulse": false,
+        "voice_only": true
+      },
+      "bpm_estimate": 76.0
     }
   ],
-  "updated_at": "2026-07-29T01:28:35Z"
+  "updated_at": "2026-07-29T05:34:02Z"
 }

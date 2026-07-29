@@ -136,3 +136,4 @@ studio/dilla/samples/crate/
 # The .keep files stay tracked so the directory survives a clean checkout.
 RAILS/*/storage/*
 !RAILS/*/storage/.keep
+studio/dilla/demo*.wav

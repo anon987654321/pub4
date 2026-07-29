@@ -430,6 +430,36 @@ module DillaLofiMachine
     kicks: [0, 4, 14], snares: [8], hats: [0, 2, 4, 6, 8, 10, 12, 14],
     ghosts: [6, 12], claps: [8], perc: [12, 14]
   },
+
+  # ---- push pads -------------------------------------------------------------
+  # Simple beats of the kind you get tapping pads: straight, sparse, no swing,
+  # nothing clever. A deliberate counterweight to the rest of this table, which
+  # is otherwise entirely devoted to making drums lean, drift and misbehave.
+  # Sometimes the sample is the idea and the kit only has to keep time under it,
+  # and there was nothing here that would simply do that.
+  #
+  # humanize 1 rather than 0: dead-flat machine timing is its own effect, and a
+  # single tick of movement is the difference between simple and sterile.
+  push_four: {
+    swing: 50, humanize: 1, bpm: 90, mode: :straight_sixteenth,
+    kicks: [0, 8], snares: [4, 12], hats: [0, 4, 8, 12],
+    ghosts: [], claps: [4, 12], perc: []
+  },
+  push_eight: {
+    swing: 50, humanize: 1, bpm: 90, mode: :straight_sixteenth,
+    kicks: [0, 6, 8], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [], claps: [4, 12], perc: []
+  },
+  push_halftime: {
+    swing: 50, humanize: 1, bpm: 84, mode: :straight_sixteenth,
+    kicks: [0, 10], snares: [8], hats: [0, 4, 8, 12],
+    ghosts: [], claps: [8], perc: []
+  },
+  push_sparse: {
+    swing: 50, humanize: 1, bpm: 88, mode: :straight_sixteenth,
+    kicks: [0], snares: [8], hats: [4, 12],
+    ghosts: [], claps: [8], perc: []
+  },
 }.freeze
 
   LOFI_DEFAULTS = {
