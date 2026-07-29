@@ -3510,6 +3510,28 @@ TRACK_SAMPLE_LOOPS = {
   # Low end left flat: see the note above, this one does not need correcting.
   semua_untuk_mu: { path: File.join(SAMPLE_DIR, "semua_untuk_mu", "loop.wav"), bpm: 96.0,
                     hp: 45, sub_db: 0.0 },
+
+  # 4 bars from 0.32s, where the music starts. The cleanest-looping source of
+  # the three by a distance: self-similarity 0.654 against 0.300 for the next
+  # best, tempo 114 at 61% on-grid against a 20% baseline, D major at 0.697.
+  #
+  # 114 rather than 120, decided by measurement rather than by preference. The
+  # self-similarity peak sat at exactly 2.00s, which is one bar at 120 and not
+  # at 114, so the two analyses disagreed. Looping each candidate and comparing
+  # the last 100ms against the first settles it: 8.421s (114) rejoins itself at
+  # -1.1 dB, 8.000s (120) at -8.6 dB. The 2.00s peak was a sub-bar repeat inside
+  # the material, not the bar length -- worth remembering, because
+  # self-similarity finds the shortest thing that repeats, which is not
+  # necessarily the musical unit.
+  #
+  # hp/sub_db are provisional. Raw-loop measurement puts this at -6.6 dB
+  # low-versus-mid, close to kembara_rindu's -5.9, which did need clearing --
+  # but raw-loop numbers have already proved a poor predictor of render
+  # behaviour here (semua_untuk_mu measures +1.7 raw and was the LEAST
+  # problematic in a mix), so this is a starting point to check in a render
+  # rather than a tuned value.
+  dmaj_open: { path: File.join(SAMPLE_DIR, "dmaj_open", "loop.wav"), bpm: 114.0,
+               hp: 60, sub_db: -3.0 },
 }.freeze
 
 # The working names these two were ingested under, kept pointing at the same
