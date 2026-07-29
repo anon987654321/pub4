@@ -15359,6 +15359,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # the pad bus.
   organic_swell_master!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
   dilla_dropout!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+  tape_hysteresis!(destination)
   master_tilt!(destination)
   mono_bass!(destination)
 
@@ -17945,6 +17946,62 @@ def dilla_dropout!(path, bar_sec:)
     warn "dropout: #{e.message}"
     FileUtils.rm_f(out)
     path
+  end
+end
+
+# Real tape hysteresis, applied to the finished master.
+#
+# Everything else in this engine that saturates is memoryless -- output is a
+# function of the current sample alone, so the transfer curve is a single line
+# and the same input always gives the same output. Tape is path-dependent: the
+# curve is a loop, and the output at a given level differs depending on whether
+# the signal arrived there rising or falling. Verified on a sine through this
+# model: at input 0.0 the output is 0.0 on the way up and +0.46 on the way down.
+# No waveshaper produces that at any setting, which is the difference between
+# adding harmonics and sounding like a machine.
+#
+# Ruby per-sample DSP is slow, so this is opt-in and reports its cost.
+TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0).to_f.clamp(0.0, 1.0)
+TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0).to_f.clamp(0.0, 8.0)
+
+def tape_hysteresis!(path)
+  return path unless (TAPE_HYSTERESIS.positive? || TAPE_WOW_MS.positive?) && File.file?(path)
+
+  require_relative "lib/tape_hysteresis"
+  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  raw = "#{path}.pre.raw"
+  cooked = "#{path}.post.raw"
+  ext = File.extname(path)
+  out = "#{path}.tape#{ext.empty? ? '.wav' : ext}"
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-f", "s16le", "-acodec", "pcm_s16le",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "1", raw
+    pcm = File.binread(raw).unpack("s<*").map { |s| s / PCM16_FULL_SCALE }
+    pcm = TapeHysteresis.process(pcm, drive: 1.0 + (3.0 * TAPE_HYSTERESIS)) if TAPE_HYSTERESIS.positive?
+    pcm = TapeHysteresis.apply_wow(pcm, rate: SAMPLE_RATE, depth_ms: TAPE_WOW_MS) if TAPE_WOW_MS.positive?
+    peak = pcm.map(&:abs).max
+    pcm = pcm.map { |v| v / peak * 0.94 } if peak&.positive?
+    File.binwrite(cooked, pcm.map { |v| (v * 32_767).round.clamp(-32_768, 32_767) }.pack("s<*"))
+    # Mono through the model, then re-widened against the original: running two
+    # channels doubles a cost that is already the slowest thing here, and tape
+    # magnetisation is not a stereo phenomenon anyway.
+    sh! "ffmpeg", "-y", "-f", "s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "1", "-i", cooked,
+        "-i", path, "-filter_complex",
+        "[0:a]aformat=channel_layouts=stereo[t];" \
+        "[1:a]highpass=f=8000[air];" \
+        "[t][air]amix=inputs=2:weights=1 0.35:duration=first:normalize=0[out]",
+        "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+    FileUtils.mv(out, path)
+    took = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
+    puts "tape: Jiles-Atherton hysteresis#{TAPE_WOW_MS.positive? ? " + O-U wow #{TAPE_WOW_MS}ms" : ''} (#{took}s)"
+    path
+  rescue StandardError => e
+    warn "tape hysteresis: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  ensure
+    FileUtils.rm_f([raw, cooked])
   end
 end
 
