@@ -77,10 +77,24 @@ exit, not the deployed script's outcome. Always verify independently via:
 2. `doas rcctl check <app>`.
 3. A live `curl` against the app's actual URL, not just `/up`.
 
-## `resource_guard.sh` shedding amber/bsdports is expected, not a bug
+## `resource_guard.sh` shedding amber/bsdports — check it actually recovers
 
 Under load, the VPS's `resource_guard.sh` cron sheds `amber`/`bsdports`
-(tracked in `/var/db/resource_guard_shed`). Seeing these oscillate between
-`rcctl(ok)` and `rcctl(failed)` on a loaded VPS is self-recovering behavior,
-not something to fix — check `/var/db/resource_guard_shed` to confirm it's
-the guard and not a real crash before investigating further.
+(tracked in `/var/db/resource_guard_shed`). Check that file first to confirm
+a down app is the guard and not a real crash.
+
+But do not stop there and call it self-recovering, which is what this section
+used to say. Shed and restore are separate gates and they can drift one way.
+Measured on 2026-07-29 over 916 ticks: shedding fired on 48% of ticks while
+the restore gate opened on 19%, and restore only releases one service per
+tick — so amber and bsdports had been down for days, not oscillating.
+`MEM_RESTORE` was 20% against a median availability of 13%, i.e. the window
+sat outside the box's operating range; thresholds are now 8/14 and
+`LOAD_RESTORE` 2.0.
+
+The check that distinguishes the two cases is
+`/var/log/resource_guard_history.log`, which records `load=`, `mem_avail=` and
+`shed=` per tick. If shed ticks vastly outnumber ticks that satisfy
+`shed=0 && mem_avail >= MEM_RESTORE && load < LOAD_RESTORE`, the guard is
+parking those apps, not cycling them, and the thresholds need recalibrating
+against that log rather than against a guess.

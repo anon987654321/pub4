@@ -15,7 +15,13 @@ OPTIONAL="amber bsdports litestream"
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
 LOAD_WARN=2.5
 LOAD_CRIT=5.0
-LOAD_RESTORE=1.5
+# Recalibrated 2026-07-29 from the 916 ticks the history log had accumulated
+# (2026-07-25..29), which is the dataset the note further down asked for.
+# Observed: load p50=1.01 p75=1.69 p90=2.57; mem_avail p50=13 p75=24 p90=28.
+# LOAD_RESTORE was 1.5, below the p50-p75 band, so restore needed the box to be
+# quieter than it usually is. 2.0 sits between p50 and p75 and still stays well
+# under LOAD_WARN, so shed and restore cannot chase each other.
+LOAD_RESTORE=2.0
 # Percent of physical RAM that must be AVAILABLE (free + buffer cache).
 # History (2026-07-11): the guard originally measured vmstat's "pages free"
 # alone, which excludes the OpenBSD buffer cache (~20% of RAM, reclaimable
@@ -24,8 +30,18 @@ LOAD_RESTORE=1.5
 # on nearly every tick — a measurement artifact, not memory pressure. Free +
 # Cache from top(1) is the honest availability signal. MEM_RESTORE > MEM_WARN
 # gives hysteresis so shed/restore can't oscillate around one threshold.
-MEM_WARN=12
-MEM_RESTORE=20
+#
+# Recalibrated 2026-07-29 from the same 916-tick dataset. The hysteresis window
+# was correct in shape but sat outside this box's operating range: median
+# availability is 13%, one point above MEM_WARN, and MEM_RESTORE=20 was above
+# the median entirely. Memory alone caused 334 of the 436 shed events, and the
+# combined restore gate opened on 19% of ticks against shedding on 48% — so the
+# drift was one-way and amber/bsdports stayed down for days rather than
+# self-recovering, which is not what OPENBSD/CLAUDE.md claims. 8/14 keeps the
+# same 6-point hysteresis gap, straddling p50 instead of sitting above it.
+# Cost: more paging for the two optional apps. Swap is 1264M and was at 365M.
+MEM_WARN=8
+MEM_RESTORE=14
 
 load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
 load=${load:-9.9}
