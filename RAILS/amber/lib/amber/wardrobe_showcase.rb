@@ -91,7 +91,15 @@ module Amber
           # box that is long enough for Falcon's container to judge the child
           # blocked and SIGKILL it -- the page returned 200 in 10s and the
           # worker died immediately after, so the site kept going down.
-          DemoWardrobe.items.with_attached_photos.select do |item|
+          # variant_records as well as the blob. with_attached_photos is only
+          # includes(photos_attachments: :blob), and the slide partial renders
+          # each photo through responsive_image_tag at two widths in two formats
+          # -- four variant lookups per image, none of them covered by that
+          # preload. With the images finally attaching, the page went to 544
+          # queries; the blob preload alone does not reach them.
+          DemoWardrobe.items
+                      .includes(photos_attachments: { blob: :variant_records })
+                      .select do |item|
             categories.include?(item.category) && zone_match?(item, filter)
           end
         else
