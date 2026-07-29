@@ -10129,12 +10129,66 @@ DEMO_VOICING_ROTATION = %w[
   rootless spread drop2 quartal bill_evans kenny_barron so_what cluster rootless
 ].freeze
 
-# Render every stream-order progression into one demo.wav (resumable).
+# Every named piece dilla can render, not just the broadcast rotation.
+#
+# STREAM_ROTATION is the 69-track stream order. It misses two catalogues:
+# GENERATED_STYLES (11 generative modes — coltrane, negative_harmony,
+# tritone_sub … resolved by dilla_progression rather than a CHORD_PROGRESSIONS
+# lookup) and four ARTIST_VERIFIED_PROGRESSIONS turnarounds the rotation never
+# reaches. Union is 84, and that is what the demo should represent — a demo of
+# the stream order alone understates what the engine knows.
+#
+# DEMO_CATALOG=stream narrows back to the broadcast rotation.
+def demo_all_order
+  locked = stream_track_order
+  # STREAM_LOCK pinned a single track — honour it rather than expanding.
+  return locked if locked.length <= 1
+  # DEMO_CATALOG=stream reproduces what the broadcast would actually play,
+  # including any DILLA_PROGRESSIONS_ONLY filtering.
+  return locked if ENV["DEMO_CATALOG"].to_s.strip.downcase == "stream"
+
+  # Deliberately STREAM_TRACKS and not stream_track_order: the latter runs
+  # through stream_track_pool, which DILLA_PROGRESSIONS_ONLY narrows to the
+  # Dilla-produced handful. That is right for a broadcast and wrong for a
+  # catalogue demo, which should show everything the engine knows regardless
+  # of what the stream is currently filtered to.
+  base = STREAM_TRACKS.map(&:to_sym)
+  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
+  (base + extra).uniq
+end
+
+# The mp3 is the artifact worth tracking. A full-catalogue WAV runs to hundreds
+# of megabytes and git keeps it forever; at 192kbps the same audio is a few
+# megabytes and still reviewable. The WAV stays on disk as the working master
+# and is not tracked.
+#
+# DEMO_MP3=0 skips the encode; DEMO_MP3_BITRATE overrides 192k.
+def demo_encode_mp3(wav)
+  return nil if ENV.fetch("DEMO_MP3", "1") == "0"
+  return nil unless File.file?(wav)
+
+  mp3 = wav.sub(/\.wav\z/i, "") + ".mp3"
+  bitrate = ENV.fetch("DEMO_MP3_BITRATE", "192k")
+  begin
+    sh! "ffmpeg", "-y", "-i", wav, "-codec:a", "libmp3lame", "-b:a", bitrate, mp3
+  rescue StandardError => e
+    dmesg_warn("demo mp3 encode failed: #{e.message}")
+    return nil
+  end
+  return nil unless File.file?(mp3) && File.size(mp3) > 10_000
+
+  mp3
+end
+
+# Render every catalogue progression into one demo.wav (resumable), then encode
+# the tracked demo.mp3 beside it.
 # Usage: ruby dilla.rb demo-all [bars] [out.wav]
 #   DEMO_FORCE=1 re-render even if part exists
 #   DEMO_CREATIVE=1 (default) rotate pads/leads/MIDI/analog + sparse rap so chords read
 #   DEMO_TRACK_TIMEOUT=300 max seconds per track (creative stacks need headroom)
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
+#   DEMO_CATALOG=stream restrict to STREAM_ROTATION (default: all 84 named pieces)
+#   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
 def demo_all(bars_count = 12, destination = nil)
   bars_count = bars_count.to_i
   bars_count = 12 unless bars_count.positive?
@@ -10171,7 +10225,7 @@ def demo_all(bars_count = 12, destination = nil)
   # Unlock pad/lead so per-slot rotation is not pinned back to stack_soul/held.
   %w[PAD_VOICE PAD_ARP_MODE LEAD_VOICE LEAD_ARP_MODE TRACK PROGRESSION].each { |k| ENV.delete(k) }
 
-  order = stream_track_order
+  order = demo_all_order
   File.write(File.join(out_dir, "order.txt"), order.map(&:to_s).join("\n") + "\n")
   File.write(catalog_path, "")
   dmesg("demo-all tracks=#{order.length} bars=#{bars_count} creative=#{creative ? 1 : 0} → #{dest}",
@@ -10332,9 +10386,14 @@ def demo_all(bars_count = 12, destination = nil)
   rescue StandardError
     nil
   end
+  mp3 = demo_encode_mp3(dest)
   dmesg("wrote #{dest} parts=#{parts.length}/#{order.length} #{(File.size(dest) / 1_000_000.0).round(1)}MB #{dur.round(1)}s",
         unit: "demo0", parent: "dilla0")
   puts "ok: #{dest} (#{parts.length}/#{order.length} tracks, #{dur.round(1)}s)"
+  if mp3
+    dmesg("wrote #{mp3} #{(File.size(mp3) / 1_000_000.0).round(1)}MB", unit: "demo0", parent: "dilla0")
+    puts "ok: #{mp3} (#{(File.size(mp3) / 1_000_000.0).round(1)}MB, tracked artifact)"
+  end
   dest
 end
 
@@ -14931,7 +14990,9 @@ def help
 
     STREAM (non-stop rotation — speakers via afplay/ffplay)
       stream [bars]                    Fast render+play (#{STREAM_BARS_COUNT} bars default)
-      demo-all [bars] [out.wav]        Render every stream track → one demo.wav (resumable)
+      demo-all [bars] [out.wav]        Render all 84 named pieces → demo.wav + demo.mp3 (resumable)
+      DEMO_CATALOG=stream              Restrict demo-all to the 69-track stream rotation
+      DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 192k
       STREAM_CONTINUOUS=1 (default)    Outer shell auto-restarts; per-track timeout skips hangs
       STREAM_TRACK_TIMEOUT=420         Max seconds per track before skip (0 = no limit)
       STREAM_GAP=0.15                  Pause between tracks (0 = back-to-back)
