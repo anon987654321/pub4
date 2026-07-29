@@ -507,7 +507,7 @@ MIDI_FX_LEAD = [
   { cc: 74, curve: :slow_open, start: 68, end: 118 },                 # filter cutoff
   { cc: 91, rate_hz: 0.09, depth: 20, base: 48, curve: :sine },     # reverb send
   { cc: 93, rate_hz: 0.14, depth: 18, base: 40, curve: :sine },     # chorus send
-  { bend: true, rate_hz: 0.38, depth_cents: 18 },                     # pitch LFO
+  { bend: true, rate_hz: 0.38, depth_cents: 8 },                      # pitch LFO
 ].freeze
 MIDI_FX_SCALE_LEAD = [
   { cc: 1, rate_hz: 0.55, depth: 42, base: 36, curve: :sine },
@@ -515,14 +515,14 @@ MIDI_FX_SCALE_LEAD = [
   { cc: 10, rate_hz: 0.2, depth: 16, base: 64, curve: :sine },
   { cc: 74, curve: :slow_open, start: 70, end: 120 },
   { cc: 91, rate_hz: 0.1, depth: 16, base: 42, curve: :sine },
-  { bend: true, rate_hz: 0.45, depth_cents: 14 },
+  { bend: true, rate_hz: 0.45, depth_cents: 8 },
 ].freeze
 # Extra motion when STREAM_LEAD_MIDI_RICH=1 (default on stream).
 MIDI_FX_LEAD_RICH = (
   MIDI_FX_LEAD + [
     { cc: 1, rate_hz: 0.9, depth: 22, base: 40, curve: :sine },
     { cc: 74, rate_hz: 0.35, depth: 30, base: 80, curve: :sine },
-    { bend: true, rate_hz: 0.65, depth_cents: 24 },
+    { bend: true, rate_hz: 0.65, depth_cents: 8 },
   ]
 ).freeze
 
