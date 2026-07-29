@@ -57,6 +57,7 @@ GATE_MAP = {
   keyboard_flow:         "keyboard_flow_gate.rb",
   cross_app:             "cross_app_equivalence_gate.rb",
   # Pure gates (no browser, no running app).
+  deploy_drift:          "deploy_drift_gate.rb",
   flow_journey:          "flow_journey_gate.rb",
   gate_mutation:         "gate_mutation_gate.rb",
 }.freeze
@@ -128,6 +129,7 @@ IN_PROCESS = {
   reflow:                ["lib/reflow_gate", "Deploy::ReflowGate", {}],
   keyboard_flow:         ["lib/keyboard_flow_gate", "Deploy::KeyboardFlowGate", {}],
   cross_app:             ["lib/cross_app_equivalence_gate", "Deploy::CrossAppEquivalenceGate", {}],
+  deploy_drift:          ["lib/deploy_drift_gate", "Deploy::DeployDriftGate", {}],
   flow_journey:          ["lib/flow_journey_gate", "Deploy::FlowJourneyGate", {}],
   gate_mutation:         ["lib/gate_mutation_gate", "Deploy::GateMutationGate", {}],
 }.freeze
