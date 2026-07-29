@@ -125,7 +125,13 @@ module Master
         RuleDSL.rule :NULL_BLINDNESS,
           severity: :error, tags: %i[CORRECTNESS],
           description: "comparisons against nullable columns must use IS NULL" do |src, path:|
-          next [] if path.to_s.include?("/review/scan/rules/")
+          # The whole scan tree, not just rules/. This rule matches the literal
+          # "IS NULL", so it fired five times on ast_fixer.rb — the file whose
+          # normalise_null_comparison *emits* that string, in its replacement
+          # values and in the comment explaining them. The fixer already
+          # excludes "/review/scan/"; the rule excluded only "/review/scan/rules/",
+          # and the two need to agree or the scanner reports its own machinery.
+          next [] if path.to_s.include?("/review/scan/")
           scan_lines(src, /IS NULL|IS NOT NULL|== nil.*column|column.*== nil/,
             message: "NULL comparison — use IS NULL / IS NOT NULL in SQL; .nil? in Ruby")
         end
