@@ -2542,7 +2542,12 @@ def resolve_swing(preset, sonic, time_offset)
          else
            preset.fetch(:swing, 54).to_f + time_offset
          end
-  base.clamp(50.0, 66.0)
+  # Ceiling raised 66 -> 72. The MPC 60 / 3000 swing that both Dilla and FlyLo
+  # worked from goes to roughly 70% on 16ths, and 66 could not reach it -- any
+  # request above 66 was silently clamped down, so the setting people actually
+  # describe was unreachable and the difference read as "close but not it".
+  # The floor stays at 50 (straight); nothing here wants less than straight.
+  base.clamp(50.0, 72.0)
 end
 
 def track_preset(track)
@@ -3426,6 +3431,86 @@ def flylo_top_dirt
     "asoftclip=type=tanh:threshold=#{(1.0 - (0.35 * d)).round(3)},"
 end
 
+# Duck the hats and cymbals out of the kick's way.
+#
+# Named twice in the same discussion for a reason: when a hat lands on the same
+# 16th as the kick, both fight for the same moment and the kick loses definition
+# even though nothing overlaps in frequency. Ducking the top bus for a few tens
+# of milliseconds lets the kick through cleanly and is inaudible as an effect --
+# the hat is still there, it just arrives a fraction behind.
+#
+# The dual-bus split makes this exact rather than approximate: the sub bus IS
+# the kick, so it can key the compressor directly instead of using the whole kit
+# as a trigger and ducking on every snare too.
+FLYLO_HAT_DUCK = (ENV["FLYLO_HAT_DUCK"] || 0).to_f.clamp(0.0, 1.0)
+
+def flylo_duck_split
+  FLYLO_HAT_DUCK.positive? ? ",asplit=2[sub][subkey]" : "[sub]"
+end
+
+def flylo_duck_apply
+  return "[top]" unless FLYLO_HAT_DUCK.positive?
+
+  d = FLYLO_HAT_DUCK
+  # Threshold high, release short. At 0.056 this triggered on anything in the
+  # kick bus above about -25 dBFS, which is most of the time, so it behaved as a
+  # general compressor on the top bus rather than as a duck -- measured, cymbals
+  # lost 2.3 dB in the gaps BETWEEN kicks, where a sidechain should do nothing
+  # whatsoever. A duck has to be deaf to everything except the transient.
+  #
+  # Release also has to finish inside a 16th (183ms at 82 BPM) or the recovery
+  # from one kick is still in progress when the next 16th arrives, which is the
+  # same fault by a slower route.
+  "[topraw];[topraw][subkey]sidechaincompress=" \
+    "threshold=#{(0.35 - (0.12 * d)).round(4)}:ratio=#{(2.0 + (6.0 * d)).round(1)}:" \
+    "attack=#{(4.0 - (2.5 * d)).round(1)}:release=#{(90 - (40 * d)).round}:" \
+    "makeup=1[top]"
+end
+
+# A bed of room noise under the kit, ducked by the kit itself.
+#
+# The point is not that the noise is audible -- it should not be, on its own.
+# It is that continuous low-level room behind the drums removes the silence
+# between hits, and silence between hits is what makes programmed drums sound
+# programmed. Ducking it by the kit keeps it from crowding the transients it is
+# there to support.
+#
+# Sources come from the synthesised crate, so this needs no field recording and
+# no external file. `ruby dilla.rb crate` builds them.
+DRUM_FIELD_LAYER = ENV["DRUM_FIELD_LAYER"].to_s
+DRUM_FIELD_MIX = (ENV["DRUM_FIELD_MIX"] || 0.18).to_f.clamp(0.0, 1.0)
+
+def drum_field_layer!(drum_path, duration:)
+  return drum_path if DRUM_FIELD_LAYER.empty? || !File.file?(drum_path)
+
+  src = File.join(CRATE_DIR, "texture_#{DRUM_FIELD_LAYER}.wav")
+  unless File.file?(src)
+    warn "drum field: no texture_#{DRUM_FIELD_LAYER}.wav in the crate — run `ruby dilla.rb crate`"
+    return drum_path
+  end
+
+  out = "#{drum_path}.field.wav"
+  begin
+    sh! "ffmpeg", "-y", "-i", drum_path, "-stream_loop", "-1", "-i", src,
+        "-filter_complex",
+        "[0:a]asplit=2[dry][key];" \
+        "[1:a]volume=#{DRUM_FIELD_MIX},atrim=0:#{duration.round(3)}," \
+        "apad=whole_dur=#{duration.round(3)}[bed];" \
+        "[bed][key]sidechaincompress=threshold=0.25:ratio=6:attack=3:release=110:makeup=1[ducked];" \
+        "[dry][ducked]amix=inputs=2:duration=first:normalize=0[out]",
+        "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-c:a", "pcm_s16le", out
+    FileUtils.mv(out, drum_path)
+    dmesg("drum field: #{DRUM_FIELD_LAYER} under the kit at #{DRUM_FIELD_MIX}, ducked",
+          unit: "drum0", parent: "dilla0")
+    drum_path
+  rescue StandardError => e
+    warn "drum field: #{e.message}"
+    FileUtils.rm_f(out)
+    drum_path
+  end
+end
+
 def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
   unless File.file?(drum_path)
     warn "flylo merge: missing drum bus — skipping overlay"
@@ -3448,10 +3533,10 @@ def merge_flylo_dual_bus!(drum_path, sub_path, top_path)
       "[0:a]volume=#{base_vol}[base];" \
       "[1:a]highpass=f=28,lowpass=f=520,equalizer=f=55:t=o:w=0.75:g=6.5," \
       "equalizer=f=110:t=o:w=1.0:g=4.0,equalizer=f=180:t=o:w=1.1:g=3.0," \
-      "volume=#{sub_vol}[sub];" \
+      "volume=#{sub_vol}#{flylo_duck_split};" \
       "[2:a]#{flylo_top_dirt}highpass=f=700,equalizer=f=3500:t=o:w=1.3:g=5.5," \
   "equalizer=f=6500:t=o:w=1.4:g=6.5,equalizer=f=9000:t=h:w=1.2:g=4.0," \
-  "volume=#{top_vol}[top];" \
+  "volume=#{top_vol}#{flylo_duck_apply};" \
       "[base][sub][top]amix=inputs=3:duration=first:normalize=0," \
       "alimiter=limit=0.97:level_out=0.98",
       "-c:a", "pcm_s16le", merged
@@ -5487,6 +5572,12 @@ MICROTIMING_MS = {
   clap: -22..-8,
   bass: 18..34,
   pad: 4..16,
+  # Percussion is the one voice that should sound unquantised. Shakers and
+  # hand percussion sit late and loose enough to be almost off-beat, against a
+  # kick locked to the grid -- the looseness reads as a player only because
+  # everything around it is steady. The range is wider than any other role
+  # here on purpose: at hat_up's 12..32 it would just sound like another hat.
+  perc: 22..58,
 }.freeze
 # Curated 16-step drum phrases per feel — rotated bar-to-bar instead of
 # probabilistic organic generation. Kicks/snares/ghosts/hats are authored
@@ -14827,6 +14918,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   drum_tmp     = dilla_render_tmp("drums")
   harmonic_tmp = dilla_render_tmp("harmonic")
   render_sample_bus_wav(drum_tmp, events, duration, kit, drum_bus_mapping)
+  drum_field_layer!(drum_tmp, duration:)
   if flylo_drum_overlay_enabled?
     flylo_sub_tmp = dilla_render_tmp("flylo_sub")
     flylo_top_tmp = dilla_render_tmp("flylo_top")
