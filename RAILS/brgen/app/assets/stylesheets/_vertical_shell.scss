@@ -63,24 +63,17 @@ body[class*="vertical-"] main {
 }
 
 /* Playlist uses the same fixed city brand (.brgen-logo-mark) as every other
-   surface. Kill any residual skip-link (light pill) and the tunnel's duplicate
-   radio-header wordmark so nothing can sit on top of / push the brand. */
-body.vertical-playlist > .skip-link,
-body.vertical-playlist .skip-link,
+   surface. Kill the tunnel's duplicate radio-header wordmark so nothing can sit
+   on top of / push the brand.
+
+   The .skip-link and .radio-skip-link overrides that used to live here were
+   removed 2026-07-29: both set `display: none`, and a display:none element
+   cannot receive focus — so the `:focus` rule meant to reveal the tunnel's skip
+   link could never fire, and this surface had no working skip-to-content at
+   all. The shared .skip-link in _shell.scss is clipped to 1×1 with clip-path +
+   opacity:0, which is the residue-free hide these rules were reaching for. */
 body.vertical-playlist .radio-header {
   display: none !important;
-}
-
-/* Tunnel skip-link: never paint until keyboard focus (no 1×1 residue). */
-body.vertical-playlist .radio-skip-link {
-  display: none !important;
-  background: transparent !important;
-}
-
-body.vertical-playlist .radio-skip-link:focus,
-body.vertical-playlist .radio-skip-link:focus-visible {
-  display: inline-block !important;
-  background: var(--color-accent, var(--accent)) !important;
 }
 
 /* dat.GUI autoPlace is a light panel that steals the top chrome. */
