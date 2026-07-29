@@ -440,6 +440,27 @@ module DillaLofiMachine
   #
   # humanize 1 rather than 0: dead-flat machine timing is its own effect, and a
   # single tick of movement is the difference between simple and sterile.
+
+# The Camel grid as MEASURED, not as simplified.
+#
+# project/learnings/flylo_drums/flylo_camel.json holds what a previous session
+# got from a separated drum stem: kicks [0,3,6,10,13], ghost snares [7,15,10],
+# perc [3,9,11], hat ghosts [1,3,5,9,11,13]. The shipped flylo_camel uses
+# [0,6,10] / [7] / nothing, because the dense version "sounded wrong".
+#
+# That judgement was made before FLYLO_TOP_DIRT existed. Accounts of how these
+# drums are built say the extra hits are meant to be dirty and half-buried --
+# phased, flanged, crushed -- not clean kit hits. A dense grid of clean hits
+# is busy; the same grid through the dirt may be the texture. Kept as a
+# separate preset so the two can be compared rather than one replacing the
+# other on a hunch.
+flylo_camel_measured: {
+  swing: 54, humanize: 3, bpm: 86, mode: :dilla_time,
+  kicks: [0, 3, 6, 10, 13], snares: [4, 12],
+  hats: [0, 2, 4, 6, 8, 10, 12, 14],
+  ghosts: [7, 10, 15], claps: [4, 12], perc: [3, 9, 11]
+},
+
   push_four: {
     swing: 50, humanize: 1, bpm: 90, mode: :straight_sixteenth,
     kicks: [0, 8], snares: [4, 12], hats: [0, 4, 8, 12],
