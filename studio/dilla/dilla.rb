@@ -6382,8 +6382,34 @@ end
 # picking from CHORD_PROGRESSIONS. root_hz sets the key center, mode is
 # :major or :minor, length is chord count. Same seed -> same progression,
 # so a track can be reproduced; no seed -> genuinely new each render.
-def chord_from_root(root_hz, quality, voices: 5)
-  intervals = CHORD_TEMPLATES.fetch(quality)
+# Raises upper extensions into the octave they belong in.
+#
+# CHORD_TEMPLATES writes m9 as [0,3,7,10,2] and 7b9 as [0,4,7,10,1]. Those
+# trailing small numbers are ninths, but taken literally they voice as a major
+# or minor SECOND against the root -- a cluster, not an extension. That is why
+# altered chords sounded blunt even after the qualities were mapped correctly:
+# the note was present and in the wrong octave, which is audibly worse than
+# absent.
+#
+# The template's own ordering says which is which: intervals ascend through the
+# chord tones, so any interval smaller than one already seen is an extension
+# written in its simple form. m9 becomes [0,3,7,10,14], 7b9 [0,4,7,10,13],
+# 7#11 [0,4,7,10,18].
+def voice_extensions(intervals)
+  seen = -1
+  intervals.map do |iv|
+    raised = iv
+    raised += 12 while raised < seen
+    seen = [seen, raised].max
+    raised
+  end
+end
+
+# 6, not 5. Templates like 13 and maj13 carry six chord tones, and at five the
+# sixth was silently dropped -- always the topmost after sorting, which is the
+# extension that names the chord.
+def chord_from_root(root_hz, quality, voices: 6)
+  intervals = voice_extensions(CHORD_TEMPLATES.fetch(quality))
   hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
   extra = intervals.max + 2
   hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices

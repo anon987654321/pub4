@@ -1065,8 +1065,27 @@ module DillaLofiMachine
     (440.0 * (2.0**((midi - 69.0) / 12.0))).round(2)
   end
 
-  def build_voicing(root_hz, quality, voices: 4)
-    intervals = CHORD_TEMPLATES.fetch(quality) { CHORD_TEMPLATES["maj9"] }
+  # Upper extensions are written in simple form in CHORD_TEMPLATES -- m9 is
+  # [0,3,7,10,2] and 7b9 is [0,4,7,10,1] -- so taken literally the "ninth" is a
+  # second against the root. Worse, being the SMALLEST interval it sorts lowest
+  # and is the first thing dropped by the trim below, which is how m9 lost its
+  # ninth and 7b9 its flat nine. The template's own order says which notes are
+  # extensions: anything smaller than an interval already seen. Raise those an
+  # octave and they both sound right and survive the trim.
+  def self.voice_extensions(intervals)
+    seen = -1
+    intervals.map do |iv|
+      raised = iv
+      raised += 12 while raised < seen
+      seen = [seen, raised].max
+      raised
+    end
+  end
+
+  # 5, not 4: the extension that names an altered chord is a fifth or sixth
+  # voice, so a four-voice cap removes precisely the note under discussion.
+  def build_voicing(root_hz, quality, voices: 5)
+    intervals = voice_extensions(CHORD_TEMPLATES.fetch(quality) { CHORD_TEMPLATES["maj9"] })
     hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
     extra = intervals.max + 2
     hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
@@ -1084,7 +1103,16 @@ module DillaLofiMachine
     # to spin forever for any note landing below MIDI 50 (e.g. "C7sus" ->
     # quality "7" -> some octave lands there) -- looked exactly like the
     # documented coltrane-gem hang but had nothing to do with coltrane.
-    midis = midis.map { |m| m += 12.0 while m < 50.0; m -= 12.0 while m > 76.0; m }
+    # Transpose the chord AS A UNIT, not note by note. Folding each note
+    # independently into 50..76 is what destroyed the voicing this method has
+    # just built: an extension raised an octave lands above 76, gets folded back
+    # down, and is a second against the root again -- so the octave placement
+    # above would have been undone one line later. Shifting the whole chord
+    # keeps every interval intact and only moves the register.
+    shift = 0.0
+    shift += 12.0 while midis.min + shift < 50.0
+    shift -= 12.0 while midis.min + shift > 62.0
+    midis = midis.map { |m| m + shift }
     midis.map { |m| (440.0 * (2.0**((m - 69.0) / 12.0))).round(2) }.uniq.first(voices)
   end
 
