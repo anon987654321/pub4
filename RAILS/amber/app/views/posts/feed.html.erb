@@ -8,5 +8,5 @@
       heading: "Style notes",
       blurb: "Weekly wardrobe essays, outfit ideas, and capsule tips. No spam.",
       button_label: "Get the letter" %>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 <% end %>
