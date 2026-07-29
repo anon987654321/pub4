@@ -919,7 +919,15 @@ SYNTH_PATCH_CATALOG = [
               native: { wave: :fm, detune: 0.003, bloom: 0.1, fm_index: 3.4, fm_feedback: 0.1,
                         fm_ratio: { m: 1.0, target_m: 1.0, irrational: false }, pad_release: 0.15 }),
   synth_patch(:native_organ, role: :native, program: 0, native: { wave: :organ, detune: 0.003, bloom: 0.12 }),
-  synth_patch(:native_warm_pad, role: :native, program: 0, native: { wave: :triangle, detune: 0.007, bloom: 0.15 }),
+  # :analog_pad, not :triangle. The three-oscillator detuned saw stack that
+  # native_waveform_body calls "the classic warm analog pad" was unreachable —
+  # no patch anywhere set wave: :analog_pad, so the one lush pad in the engine
+  # was dead code. This patch asked for :triangle, which is
+  # 0.62*triangle(f) + 0.20*sin(f): a single frequency, and it discards the
+  # detune: it was given. Measured over 6s at 220Hz, that produced 0.08 dB of
+  # amplitude movement — a static tone. The saw stack gives 4.33 dB, because
+  # the beating between detuned oscillators is the sound.
+  synth_patch(:native_warm_pad, role: :native, program: 0, native: { wave: :analog_pad, detune: 0.007, bloom: 0.15 }),
   synth_patch(:native_string, role: :native, program: 0, native: { wave: :bowed, detune: 0.004, bloom: 0.2 }),
   synth_patch(:native_pwm, role: :native, program: 0, native: { wave: :pwm, detune: 0.008, bloom: 0.25 }),
   # --- Experimental electronic pads (musical, not noise) ---
