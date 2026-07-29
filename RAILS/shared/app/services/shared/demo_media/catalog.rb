@@ -26,7 +26,14 @@ module Shared
         return unless defined?(Rails)
 
         slug = ENV["DEMO_MEDIA_CITY"].presence
-        slug ||= Current.city_record.slug if defined?(Current) && Current.city_record&.slug.present?
+        # respond_to?, not just defined?. city_record is brgen's multi-tenant
+        # attribute; amber and bsdports define a Current without it, so
+        # `defined?(Current)` was true there and the call raised NoMethodError --
+        # `&.` guards against nil, not against the method not existing. Every
+        # demo image attachment on amber failed with
+        # "undefined method 'city_record' for an instance of Current", which is
+        # why its wardrobe showcase rendered as empty outlined tiles.
+        slug ||= Current.city_record&.slug if defined?(Current) && Current.respond_to?(:city_record)
 
         if slug.present?
           candidate = Rails.root.join("config/demo_media/#{slug}.yml")
