@@ -83,7 +83,15 @@ module Amber
 
       def items_for(key, categories, filter: nil)
         if DemoWardrobe.available?
-          DemoWardrobe.items.select do |item|
+          # with_attached_photos, as DemoWardrobeController already does. The
+          # slide partial asks every item for photos.attached? and photos.first,
+          # so without the preload each of the four zones re-queried the
+          # attachment and blob for every slide it rendered. The guest home page
+          # was issuing 191 queries and spending 6s in views, and on a one-vCPU
+          # box that is long enough for Falcon's container to judge the child
+          # blocked and SIGKILL it -- the page returned 200 in 10s and the
+          # worker died immediately after, so the site kept going down.
+          DemoWardrobe.items.with_attached_photos.select do |item|
             categories.include?(item.category) && zone_match?(item, filter)
           end
         else
