@@ -18,6 +18,20 @@
 require_relative "lib/music_gems"
 DillaMusicGems.bootstrap!
 
+# Everything the caller set before dilla touched the environment.
+#
+# force_env! overwrites unconditionally, so a style table always beat the
+# command line: `SONITEX=heavy ruby dilla.rb ...` rendered donuts_warm,
+# because DILLA_STYLE_DEFAULTS force both SONITEX and SONITEX_PRESET and ran
+# after the caller's value was already in place. That is true of every knob
+# those tables name, not just this one -- the documented environment
+# variables were advisory at best.
+#
+# Captured before any require can mutate ENV. force_env! consults it and
+# records the skip in config_provenance, so `print_config_provenance` shows
+# which values the caller pinned and which a style chose.
+USER_PINNED_ENV = ENV.to_h.freeze
+
 require "fileutils"
 require "json"
 require "yaml"
@@ -450,6 +464,15 @@ else
 end end },
   burst:        ->(n) { [0, 0, 1, 2, 1, 0, 3, 2].cycle.first([n * 3, 18].max) },
   ratchet:      ->(n, rng = Random.new(23)) { base = rng.rand(0...n); (0...[n * 3, 20].max).map { |i| (base + i) % n } },
+  # Bubbles rise: each run starts one note higher than the last and climbs to
+  # the top, so the figure keeps restarting from further up instead of looping
+  # a fixed shape. Repeats of the top note are deliberate -- a bubble reaching
+  # the surface sits there a moment before the next one arrives.
+  bubble_rise:  ->(n) { (0...n).flat_map { |i| ((i...n).to_a + [n - 1]) }.first([n * 3, 12].max) },
+  # Irregular surfacing: mostly the root with sudden darts upward. Seeded, so
+  # the same "randomness" comes back on every render -- an accident you cannot
+  # reproduce is not a part.
+  bubble_pop:   ->(n, rng = Random.new(31)) { Array.new([n * 3, 15].max) { rng.rand < 0.45 ? 0 : rng.rand(0...n) } },
 }.freeze
 
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
@@ -753,6 +776,40 @@ SYNTH_PATCH_CATALOG = [
               arp_styles: %i[spiral fibonacci random_walk], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :spiral, subdiv: 8, gate: 0.56, vel: 0.46 },
               fx: "aecho=0.5:0.45:110|200:0.3|0.16,aphaser=speed=0.12:decay=0.55,lowpass=f=5800"),
+  # --- Bubbles: the liquid Brainfeeder texture ---------------------------
+  #
+  # flylo_fm_shimmer above is the glassy end of this family (GM 98, crystal).
+  # These are the wet end: short gates so each note is a blip rather than a
+  # sustained tone, pitch movement from vibrato instead of from the arp, and
+  # close echo taps so notes overlap into a burble rather than a delay line.
+  #
+  # The resonant peak is what makes them read as liquid at all -- ffmpeg's
+  # lowpass has no resonance control, so the peak is an `equalizer` band just
+  # under the cutoff. Without it these are just quiet blips.
+
+  # Main bubble voice: mid-register, wobbling, notes tumbling over each other.
+  synth_patch(:flylo_bubble, role: :lead, program: 102, weight: 2.3, fs_gain: 1.24, gate: 0.34, octave: 3,
+              arp_styles: %i[bubble_rise bubble_pop spiral], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :bubble_rise, subdiv: 8, gate: 0.34, vel: 0.44 },
+              fx: "vibrato=f=6.5:d=0.28,aecho=0.6:0.55:70|130|210:0.4|0.24|0.14," \
+                  "equalizer=f=1800:t=q:w=1.2:g=6,lowpass=f=6200"),
+
+  # Droplets: higher, faster, drier. Sparse enough to sit over a busy kit.
+  synth_patch(:flylo_droplet, role: :lead, program: 96, weight: 1.9, fs_gain: 1.2, gate: 0.22, octave: 4,
+              arp_styles: %i[bubble_pop stutter ratchet], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :bubble_pop, subdiv: 16, gate: 0.22, vel: 0.38 },
+              fx: "vibrato=f=11:d=0.4,aecho=0.5:0.4:45|95:0.35|0.18,highpass=f=400," \
+                  "equalizer=f=2600:t=q:w=0.9:g=8,lowpass=f=9000"),
+
+  # Submerged: slow, dark and phasing -- the same idea heard from underwater.
+  # Pairs with the sparse slow grids (flylo_massage, flylo_flamagra) where a
+  # fast bubble figure would crowd the space they exist to leave.
+  synth_patch(:flylo_gloop, role: :lead, program: 88, weight: 2.1, fs_gain: 1.3, gate: 0.62, octave: 2,
+              arp_styles: %i[bubble_rise flylo_wobble quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :bubble_rise, subdiv: 4, gate: 0.62, vel: 0.42 },
+              fx: "flanger=delay=4:depth=6:speed=0.4,aphaser=speed=0.25:decay=0.6," \
+                  "lowpass=f=3400,aecho=0.7:0.6:180|320:0.35|0.2"),
+
   synth_patch(:jazz_ballad_lead, role: :lead, program: 73, weight: 2.5, fs_gain: 1.26, gate: 0.7, octave: 2,
               arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :updown, subdiv: 4, gate: 0.72, vel: 0.44 },
@@ -7380,7 +7437,17 @@ end
 
 def sonitex_resolve_preset(track: nil)
   track ||= (ENV["TRACK"] || ENV["PROGRESSION"] || "chromatic_minor_descent").to_s.downcase.tr("-", "_")
-  raw = (ENV["SONITEX_PRESET"] || ENV["SONITEX"]).to_s.strip.downcase
+  # SONITEX is the documented shorthand and SONITEX_PRESET the internal key
+  # the style tables write. Reading the internal one first meant a caller's
+  # SONITEX=heavy lost to whichever preset the style had just forced, so the
+  # shorthand did nothing whenever a style was active -- which is always.
+  # Whichever key the caller actually pinned wins; otherwise keep the old
+  # order.
+  raw = if USER_PINNED_ENV.key?("SONITEX") && !USER_PINNED_ENV.key?("SONITEX_PRESET")
+          ENV["SONITEX"]
+        else
+          ENV["SONITEX_PRESET"] || ENV["SONITEX"]
+        end.to_s.strip.downcase
   if raw.empty?
     # Was :donuts_warm — that preset's hf_rolloff/groove_wear_lp sit at
     # 2200/2600Hz (see its "not a 2 kHz blanket" sibling comment above
@@ -9077,8 +9144,16 @@ end
 def force_env!(table, label: nil)
   table.each do |key, value|
     next if value.nil?
-    ENV[key.to_s] = value.to_s
-    record_config_provenance!(key.to_s, label, "force")
+
+    k = key.to_s
+    # A value the caller put in the environment outranks any style table.
+    # Without this, force_env! silently reverted it (see USER_PINNED_ENV).
+    if USER_PINNED_ENV.key?(k) && ENV[k] == USER_PINNED_ENV[k]
+      record_config_provenance!(k, label, "user-pinned")
+      next
+    end
+    ENV[k] = value.to_s
+    record_config_provenance!(k, label, "force")
   end
 end
 
@@ -16860,6 +16935,50 @@ RAP_VOCAL_SWELL_VOL = (ENV["RAP_VOCAL_SWELL_VOL"] || 0.45).to_f.clamp(0.0, 1.5)
 # the collisions through on purpose.
 RAP_VOCAL_RAW_SEAMS = ENV["RAP_VOCAL_RAW_SEAMS"] == "1"
 
+# Warp each line onto the grid, instead of only starting it there.
+#
+# The measurement above rules out ONE ratio for the whole take, and rightly:
+# a freely-sung take has no constant syllable spacing for a ratio to scale.
+# It does not rule out a ratio PER LINE. Each placed line has a known length
+# and a known slot, so stretching it onto the nearest whole number of grid
+# units is a different operation from stretching the take -- it is what a
+# DAW's warp markers do, and the reason they work on takes atempo cannot.
+#
+# Placement alone fixes where a line BEGINS; a line that runs long still ends
+# between grid lines and the next one starts from a slot it never reached.
+# Warping fixes where it ENDS too.
+#
+# Off by default: it alters delivery inside a line, which placement
+# deliberately preserves, and that is a taste decision rather than a
+# correctness one. RAP_VOCAL_WARP=1 turns it on.
+#
+# The clamp matters more than the ratio. Outside roughly ±14% a stretched
+# voice stops sounding like a performance and starts sounding like a plugin,
+# so a line needing more than that is left alone rather than mangled -- the
+# grid is not worth the formant damage.
+RAP_VOCAL_WARP = ENV["RAP_VOCAL_WARP"] == "1"
+RAP_VOCAL_WARP_MIN = (ENV["RAP_VOCAL_WARP_MIN"] || 0.88).to_f
+RAP_VOCAL_WARP_MAX = (ENV["RAP_VOCAL_WARP_MAX"] || 1.14).to_f
+
+# atempo=r plays r times faster, so a line of `length` becomes length/r. To
+# land on `target` the ratio is length/target. Returns nil when the line is
+# already close enough to a grid multiple to leave alone, or too far from one
+# to reach without audible damage.
+def rap_vocal_warp_ratio(length, grid)
+  return nil unless RAP_VOCAL_WARP
+  return nil if grid <= 0
+
+  units = (length / grid).round
+  return nil if units < 1
+
+  target = units * grid
+  ratio = length / target
+  return nil if (ratio - 1.0).abs < 0.01
+  return nil unless ratio.between?(RAP_VOCAL_WARP_MIN, RAP_VOCAL_WARP_MAX)
+
+  ratio
+end
+
 def rap_vocal_line_lean(index)
   return 0.0 if RAP_VOCAL_LEAN_MS.zero?
 
@@ -16991,9 +17110,16 @@ def rap_vocal_snap_placements(lines, take_sec, duration:, grid:, from_sec: 0.0, 
     lean = rap_vocal_line_lean(placements.size)
     at = [slot + lean, 0.0].max
     lead = line_from - cut_from
+    # Warping changes how long the placed line sounds for, so the cursor has
+    # to advance by the SOUNDED length or every line after this one inherits
+    # the error.
+    warp = rap_vocal_warp_ratio(length, grid)
+    sounded = warp ? length / warp : length
+    sounded_lead = warp ? lead / warp : lead
     placements << { from: cut_from.round(3), length: length.round(3),
-                    at: at.round(3), lead: lead.round(3), lean: lean.round(4) }
-    cursor = at + (length - lead) + gap
+                    at: at.round(3), lead: lead.round(3), lean: lean.round(4),
+                    warp: warp&.round(4) }
+    cursor = at + (sounded - sounded_lead) + gap
   end
   placements
 end
@@ -17025,15 +17151,22 @@ def rap_vocal_render_snapped!(stretched, fit_path, placements, duration:, outer:
   parts = []
 
   placements.each do |p|
+    # atempo runs first, so everything after it is measured in sounded time:
+    # the fade-out lands relative to the warped length, and the pre-roll that
+    # positions the segment shrinks by the same ratio.
+    warp = p[:warp]
+    sounded_len = warp ? p[:length] / warp : p[:length]
+    sounded_lead = warp ? p[:lead].to_f / warp : p[:lead].to_f
     seam = if RAP_VOCAL_RAW_SEAMS
              "afade=t=in:st=0:d=#{SEAM_RAW_FADE_SEC}"
            else
-             out_at = [p[:length] - SEAM_FADE_OUT_SEC, 0.0].max
+             out_at = [sounded_len - SEAM_FADE_OUT_SEC, 0.0].max
              "afade=t=in:st=0:d=#{SEAM_FADE_IN_SEC}," \
                "afade=t=out:st=#{out_at.round(3)}:d=#{SEAM_FADE_OUT_SEC}"
            end
+    seam = "atempo=#{warp.round(4)},#{seam}" if warp
     parts << rap_vocal_placed_input(stretched, from: p[:from], length: p[:length],
-                                    at: p[:at] - p[:lead].to_f, index: parts.size,
+                                    at: p[:at] - sounded_lead, index: parts.size,
                                     filters: seam, label: "s")
   end
 
