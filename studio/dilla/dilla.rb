@@ -15359,6 +15359,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # the pad bus.
   organic_swell_master!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
   dilla_dropout!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+  master_tilt!(destination)
   mono_bass!(destination)
 
   # After loudness, not before: the brake ends in near-silence, and normalising
@@ -17942,6 +17943,53 @@ def dilla_dropout!(path, bar_sec:)
     path
   rescue StandardError => e
     warn "dropout: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  end
+end
+
+# Tilt: lows up as highs come down, pivoting around a midpoint.
+#
+# The reason to tilt rather than shelve the top off. A plain high-shelf cut
+# makes a mix darker AND smaller, because nothing replaces the energy removed --
+# the perceived weight goes with the brightness. A tilt pivots: the bottom rises
+# by the same amount the top falls, so the mix reads as relaxed rather than
+# merely dull, and the loudness barely moves.
+#
+# Two shelves around a pivot rather than one filter, because that is what a tilt
+# is. Pivot at 700 Hz: low enough that it does not thin the body, high enough
+# that the lift lands on weight rather than on mud.
+MASTER_TILT_DB = (ENV["MASTER_TILT_DB"] || 0).to_f.clamp(-6.0, 6.0)
+MASTER_TILT_PIVOT = (ENV["MASTER_TILT_PIVOT"] || 700).to_i
+
+def master_tilt!(path)
+  return path unless MASTER_TILT_DB.abs > 0.01 && File.file?(path)
+
+  ext = File.extname(path)
+  out = "#{path}.tilt#{ext.empty? ? '.wav' : ext}"
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
+  # Negated so the sign reads the way a tilt control does: a NEGATIVE value
+  # tilts down, meaning darker -- lows up, highs down. Unnegated, -3 brightened
+  # (low -0.8 dB, high +0.9 dB), which is the opposite of what asking for -3
+  # implies and the opposite of the chill it exists to produce.
+  half = (-MASTER_TILT_DB / 2.0).round(3)
+  begin
+    sh! "ffmpeg", "-y", "-i", path,
+        # `bass` and `treble`, not `equalizer`. equalizer is a PEAKING filter in
+        # every case -- its `t` parameter selects the unit of the width (h=Hz,
+        # q=Q, o=octaves), not the filter shape. Writing t=h intending "high
+        # shelf" builds a bell 0.7 Hz wide instead, which measured as doing
+        # nothing at all: low and high bands both moved 0.1 dB. Same class of
+        # mistake as reaching for asoftclip to saturate.
+        "-af", "bass=f=#{MASTER_TILT_PIVOT / 4}:g=#{half}:width_type=q:w=0.7," \
+               "treble=f=#{MASTER_TILT_PIVOT * 6}:g=#{-half}:width_type=q:w=0.7",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+    FileUtils.mv(out, path)
+    dmesg("master tilt: #{half > 0 ? '+' : ''}#{half} low / #{-half} high around #{MASTER_TILT_PIVOT}Hz",
+          unit: "mix0", parent: "dilla0")
+    path
+  rescue StandardError => e
+    warn "master tilt: #{e.message}"
     FileUtils.rm_f(out)
     path
   end
