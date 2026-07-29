@@ -16,10 +16,10 @@
       "key": "#main-content",
       "tag": "main",
       "rect": {
-        "x": 522,
+        "x": 420,
         "y": 0,
-        "w": 396,
-        "h": 4539
+        "w": 600,
+        "h": 5749
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -32,7 +32,7 @@
       "key": "#main-content>div.page-header>div>a.btn.btn-ghost",
       "tag": "a",
       "rect": {
-        "x": 712,
+        "x": 814,
         "y": 63,
         "w": 140,
         "h": 44
@@ -48,7 +48,7 @@
       "key": "#main-content>div.page-header>h1",
       "tag": "h1",
       "rect": {
-        "x": 588,
+        "x": 486,
         "y": 73,
         "w": 87,
         "h": 20
@@ -64,10 +64,10 @@
       "key": "#main-content>section",
       "tag": "section",
       "rect": {
-        "x": 570,
+        "x": 468,
         "y": 112,
-        "w": 300,
-        "h": 2799
+        "w": 504,
+        "h": 3946
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -80,10 +80,10 @@
       "key": "#main-content>section>article.tv-card>a.tv-poster-link",
       "tag": "a",
       "rect": {
-        "x": 570,
-        "y": 2939,
-        "w": 300,
-        "h": 169
+        "x": 468,
+        "y": 4086,
+        "w": 504,
+        "h": 284
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -96,9 +96,9 @@
       "key": "#main-content>section>h2",
       "tag": "h2",
       "rect": {
-        "x": 570,
+        "x": 468,
         "y": 112,
-        "w": 300,
+        "w": 504,
         "h": 20
       },
       "color": "#969696",
@@ -112,10 +112,10 @@
       "key": "#tv-trending-videos",
       "tag": "section",
       "rect": {
-        "x": 570,
+        "x": 468,
         "y": 140,
-        "w": 300,
-        "h": 2750
+        "w": 504,
+        "h": 3897
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -128,10 +128,10 @@
       "key": "#tv-trending-videos>article.tv-card>a.tv-poster-link",
       "tag": "a",
       "rect": {
-        "x": 570,
+        "x": 468,
         "y": 140,
-        "w": 300,
-        "h": 169
+        "w": 504,
+        "h": 284
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -144,9 +144,9 @@
       "key": "#tv-trending-videos>article.tv-card>div.tv-card-meta>a.tv-card-title",
       "tag": "a",
       "rect": {
-        "x": 570,
-        "y": 314,
-        "w": 300,
+        "x": 468,
+        "y": 429,
+        "w": 504,
         "h": 23
       },
       "color": "#e0e0e0",
@@ -288,9 +288,9 @@
       "key": "section>article.tv-card>div.tv-card-meta>a.tv-card-title",
       "tag": "a",
       "rect": {
-        "x": 570,
-        "y": 3114,
-        "w": 300,
+        "x": 468,
+        "y": 4375,
+        "w": 504,
         "h": 23
       },
       "color": "#e0e0e0",

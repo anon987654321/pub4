@@ -13,61 +13,13 @@
   },
   "elements": [
     {
-      "key": "#ai-embed-heading",
-      "tag": "h2",
-      "rect": {
-        "x": 486,
-        "y": 58,
-        "w": 88,
-        "h": 20
-      },
-      "color": "#969696",
-      "bg": "#1a1a1a",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "#feed-panel>header.local-feed-intro",
-      "tag": "header",
-      "rect": {
-        "x": 468,
-        "y": 554,
-        "w": 504,
-        "h": 107
-      },
-      "color": "#969696",
-      "bg": "#000000",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "#feed-panel>header.local-feed-intro>p.dim.guest-demo-path>a",
-      "tag": "a",
-      "rect": {
-        "x": 486,
-        "y": 628,
-        "w": 32,
-        "h": 20
-      },
-      "color": "#e0e0e0",
-      "bg": "#000000",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
       "key": "#main-content",
       "tag": "main",
       "rect": {
         "x": 420,
         "y": 0,
         "w": 600,
-        "h": 7074
+        "h": 7465
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -112,14 +64,14 @@
       "key": "#main-content>div.feed-header>nav.feed-tabs>a.feed-tab",
       "tag": "a",
       "rect": {
-        "x": 486,
+        "x": 554,
         "y": 0,
-        "w": 122,
+        "w": 143,
         "h": 49
       },
       "color": "#969696",
       "bg": "#000000",
-      "font_size": 15.8,
+      "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "static"
@@ -129,9 +81,9 @@
       "tag": "form",
       "rect": {
         "x": 486,
-        "y": 384,
+        "y": 680,
         "w": 468,
-        "h": 157
+        "h": 79
       },
       "color": "#e0e0e0",
       "bg": "#1a1a1a",
@@ -141,27 +93,11 @@
       "position": "static"
     },
     {
-      "key": "#main-content>section.ai-embed>div.ai-embed-bar>a",
-      "tag": "a",
-      "rect": {
-        "x": 915,
-        "y": 58,
-        "w": 39,
-        "h": 20
-      },
-      "color": "#969696",
-      "bg": "#1a1a1a",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
       "key": "#post_content",
       "tag": "textarea",
       "rect": {
         "x": 558,
-        "y": 422,
+        "y": 693,
         "w": 1,
         "h": 48
       },
@@ -273,7 +209,7 @@
       "tag": "div",
       "rect": {
         "x": 559,
-        "y": 423,
+        "y": 694,
         "w": 377,
         "h": 50
       },

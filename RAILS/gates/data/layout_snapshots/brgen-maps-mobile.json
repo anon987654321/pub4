@@ -16,9 +16,9 @@
       "key": "#main-content",
       "tag": "main",
       "rect": {
-        "x": 176,
+        "x": 0,
         "y": 0,
-        "w": 39,
+        "w": 390,
         "h": 844
       },
       "color": "#e0e0e0",
@@ -32,9 +32,9 @@
       "key": "#map-search",
       "tag": "input",
       "rect": {
-        "x": 18,
+        "x": 86,
         "y": 25,
-        "w": 234,
+        "w": 167,
         "h": 40
       },
       "color": "#e0e0e0",

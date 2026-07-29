@@ -19,7 +19,7 @@
         "x": 0,
         "y": 0,
         "w": 390,
-        "h": 2251
+        "h": 2254
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -50,7 +50,7 @@
       "rect": {
         "x": 38,
         "y": 116,
-        "w": 166,
+        "w": 315,
         "h": 49
       },
       "color": "#e0e0e0",
@@ -64,14 +64,14 @@
       "key": "#main-content>div.page-header.live-header>nav.live-sort.feed-tabs>a.feed-tab",
       "tag": "a",
       "rect": {
-        "x": 56,
+        "x": 123,
         "y": 116,
-        "w": 62,
+        "w": 75,
         "h": 49
       },
       "color": "#e0e0e0",
       "bg": "#000000",
-      "font_size": 15.8,
+      "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "static"

@@ -13,27 +13,59 @@
   },
   "elements": [
     {
-      "key": "#accountStuff>a.section",
+      "key": "#accountStuff>a.nav-block.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 863,
-        "y": 229,
-        "w": 46,
-        "h": 20
+        "x": 1137,
+        "y": 70,
+        "w": 127,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#cartLink",
+      "tag": "a",
+      "rect": {
+        "x": 1343,
+        "y": 70,
+        "w": 87,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#department",
+      "tag": "a",
+      "rect": {
+        "x": 86,
+        "y": 126,
+        "w": 60,
+        "h": 36
       },
       "color": "#ffffff",
       "bg": "#232f3e",
-      "font_size": 15,
-      "line_height": 20,
-      "display": "inline-block",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
       "position": "static"
     },
     {
       "key": "#live_search_results>div.deal-cats>a.deal-cat",
       "tag": "a",
       "rect": {
-        "x": 502,
-        "y": 251,
+        "x": 82,
+        "y": 256,
         "w": 47,
         "h": 44
       },
@@ -48,10 +80,10 @@
       "key": "#live_search_results>section.marketplace-top-offers>div.top-offers-rail>a.top-offer-card",
       "tag": "a",
       "rect": {
-        "x": 502,
-        "y": 455,
-        "w": 436,
-        "h": 646
+        "x": 82,
+        "y": 460,
+        "w": 309,
+        "h": 487
       },
       "color": "#e0e0e0",
       "bg": "#1a1a1a",
@@ -64,9 +96,9 @@
       "key": "#live_search_results>section.marketplace-top-offers>header.marketplace-top-offers-header",
       "tag": "header",
       "rect": {
-        "x": 484,
-        "y": 327,
-        "w": 472,
+        "x": 64,
+        "y": 332,
+        "w": 720,
         "h": 129
       },
       "color": "#e0e0e0",
@@ -80,26 +112,26 @@
       "key": "#logo",
       "tag": "a",
       "rect": {
-        "x": 554,
-        "y": 34,
-        "w": 100,
-        "h": 100
+        "x": 86,
+        "y": 63,
+        "w": 213,
+        "h": 58
       },
       "color": "#ffffff",
-      "bg": "#232f3e",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
-      "position": "absolute"
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
     },
     {
       "key": "#main-content",
       "tag": "main",
       "rect": {
-        "x": 420,
+        "x": 0,
         "y": 0,
-        "w": 600,
-        "h": 9874
+        "w": 1440,
+        "h": 4101
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -112,8 +144,8 @@
       "key": "#main-content>div.search>form",
       "tag": "form",
       "rect": {
-        "x": 485,
-        "y": 172,
+        "x": 65,
+        "y": 177,
         "w": 478,
         "h": 49
       },
@@ -128,8 +160,8 @@
       "key": "#main-content>h1",
       "tag": "h1",
       "rect": {
-        "x": 467,
-        "y": 158,
+        "x": 47,
+        "y": 163,
         "w": 1,
         "h": 1
       },
@@ -144,9 +176,9 @@
       "key": "#q",
       "tag": "input",
       "rect": {
-        "x": 485,
-        "y": 172,
-        "w": 368,
+        "x": 65,
+        "y": 177,
+        "w": 478,
         "h": 49
       },
       "color": "#aaaaaa",
@@ -157,28 +189,28 @@
       "position": "static"
     },
     {
-      "key": "#sections>a.section",
+      "key": "#sections>a.section.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 564,
-        "y": 184,
-        "w": 51,
-        "h": 20
+        "x": 147,
+        "y": 127,
+        "w": 72,
+        "h": 35
       },
       "color": "#ffffff",
       "bg": "#232f3e",
-      "font_size": 15,
-      "line_height": 20,
-      "display": "inline-block",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "block",
       "position": "static"
     },
     {
       "key": "#top-offers-heading",
       "tag": "h2",
       "rect": {
-        "x": 502,
-        "y": 351,
-        "w": 436,
+        "x": 82,
+        "y": 356,
+        "w": 684,
         "h": 36
       },
       "color": "#e0e0e0",
@@ -189,35 +221,99 @@
       "position": "static"
     },
     {
+      "key": "#topHalf>a.nav-block.nav-deliver.nav-hover",
+      "tag": "a",
+      "rect": {
+        "x": 303,
+        "y": 70,
+        "w": 87,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>a.nav-block.nav-hover",
+      "tag": "a",
+      "rect": {
+        "x": 1093,
+        "y": 70,
+        "w": 39,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
       "key": "#topHalf>div.search.marketplace-nav-search>form",
       "tag": "form",
       "rect": {
-        "x": 555,
-        "y": 84,
-        "w": 498,
-        "h": 52
+        "x": 401,
+        "y": 72,
+        "w": 681,
+        "h": 40
       },
       "color": "#ffffff",
       "bg": "#cccccc",
       "font_size": 18,
-      "line_height": 20,
+      "line_height": 21.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>button.nav-search-submit",
+      "tag": "button",
+      "rect": {
+        "x": 1037,
+        "y": 72,
+        "w": 45,
+        "h": 44
+      },
+      "color": "#111111",
+      "bg": "#febd69",
+      "font_size": 18,
+      "line_height": 21.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>input.nav-search-input",
+      "tag": "input",
+      "rect": {
+        "x": 541,
+        "y": 72,
+        "w": 496,
+        "h": 40
+      },
+      "color": "#111111",
+      "bg": "#ffffff",
+      "font_size": 15,
+      "line_height": 18,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "#topHalf>div.search.marketplace-nav-search>form>input",
-      "tag": "input",
+      "key": "#topHalf>div.search.marketplace-nav-search>form>select.nav-search-category",
+      "tag": "select",
       "rect": {
-        "x": 555,
-        "y": 84,
-        "w": 498,
-        "h": 52
+        "x": 401,
+        "y": 72,
+        "w": 140,
+        "h": 40
       },
-      "color": "#aaaaaa",
-      "bg": "#cccccc",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "inline-block",
+      "color": "#111111",
+      "bg": "#e6e6e6",
+      "font_size": 12,
+      "line_height": null,
+      "display": "block",
       "position": "static"
     },
     {

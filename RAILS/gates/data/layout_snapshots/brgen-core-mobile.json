@@ -13,61 +13,13 @@
   },
   "elements": [
     {
-      "key": "#ai-embed-heading",
-      "tag": "h2",
-      "rect": {
-        "x": 38,
-        "y": 58,
-        "w": 88,
-        "h": 20
-      },
-      "color": "#969696",
-      "bg": "#1a1a1a",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "#feed-panel>header.local-feed-intro",
-      "tag": "header",
-      "rect": {
-        "x": 20,
-        "y": 687,
-        "w": 561,
-        "h": 107
-      },
-      "color": "#969696",
-      "bg": "#000000",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
-      "key": "#feed-panel>header.local-feed-intro>p.dim.guest-demo-path>a",
-      "tag": "a",
-      "rect": {
-        "x": 38,
-        "y": 760,
-        "w": 32,
-        "h": 20
-      },
-      "color": "#e0e0e0",
-      "bg": "#000000",
-      "font_size": 15.8,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
       "key": "#main-content",
       "tag": "main",
       "rect": {
         "x": 0,
         "y": 0,
-        "w": 600,
-        "h": 7184
+        "w": 390,
+        "h": 7111
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -98,7 +50,7 @@
       "rect": {
         "x": 20,
         "y": 0,
-        "w": 561,
+        "w": 351,
         "h": 49
       },
       "color": "#e0e0e0",
@@ -112,14 +64,14 @@
       "key": "#main-content>div.feed-header>nav.feed-tabs>a.feed-tab",
       "tag": "a",
       "rect": {
-        "x": 38,
+        "x": 105,
         "y": 0,
-        "w": 122,
+        "w": 143,
         "h": 49
       },
       "color": "#969696",
       "bg": "#000000",
-      "font_size": 15.8,
+      "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "static"
@@ -129,9 +81,9 @@
       "tag": "form",
       "rect": {
         "x": 38,
-        "y": 521,
-        "w": 525,
-        "h": 152
+        "y": 453,
+        "w": 315,
+        "h": 75
       },
       "color": "#e0e0e0",
       "bg": "#1a1a1a",
@@ -145,7 +97,7 @@
       "tag": "textarea",
       "rect": {
         "x": 109,
-        "y": 559,
+        "y": 466,
         "w": 1,
         "h": 48
       },
@@ -257,8 +209,8 @@
       "tag": "div",
       "rect": {
         "x": 110,
-        "y": 560,
-        "w": 434,
+        "y": 467,
+        "w": 224,
         "h": 50
       },
       "color": "#e0e0e0",

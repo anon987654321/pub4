@@ -13,36 +13,68 @@
   },
   "elements": [
     {
-      "key": "#accountStuff>a.section",
+      "key": "#accountStuff>a.nav-block.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 261,
-        "y": 274,
-        "w": 46,
-        "h": 20
+        "x": 87,
+        "y": 127,
+        "w": 127,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#cartLink",
+      "tag": "a",
+      "rect": {
+        "x": 293,
+        "y": 127,
+        "w": 87,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#department",
+      "tag": "a",
+      "rect": {
+        "x": 86,
+        "y": 296,
+        "w": 60,
+        "h": 36
       },
       "color": "#ffffff",
       "bg": "#232f3e",
-      "font_size": 15,
-      "line_height": 20,
-      "display": "inline-block",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
       "position": "static"
     },
     {
       "key": "#logo",
       "tag": "a",
       "rect": {
-        "x": 105,
-        "y": 34,
-        "w": 100,
-        "h": 100
+        "x": 86,
+        "y": 65,
+        "w": 213,
+        "h": 58
       },
       "color": "#ffffff",
-      "bg": "#232f3e",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
-      "position": "absolute"
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
     },
     {
       "key": "#main-content",
@@ -65,7 +97,7 @@
       "tag": "h1",
       "rect": {
         "x": 38,
-        "y": 173,
+        "y": 348,
         "w": 97,
         "h": 20
       },
@@ -81,7 +113,7 @@
       "tag": "a",
       "rect": {
         "x": 172,
-        "y": 212,
+        "y": 387,
         "w": 193,
         "h": 20
       },
@@ -93,51 +125,115 @@
       "position": "static"
     },
     {
-      "key": "#sections>a.section",
+      "key": "#sections>a.section.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 115,
-        "y": 184,
-        "w": 51,
-        "h": 20
+        "x": 147,
+        "y": 297,
+        "w": 65,
+        "h": 35
       },
       "color": "#ffffff",
       "bg": "#232f3e",
-      "font_size": 15,
-      "line_height": 20,
-      "display": "inline-block",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>a.nav-block.nav-deliver.nav-hover",
+      "tag": "a",
+      "rect": {
+        "x": 86,
+        "y": 175,
+        "w": 87,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>a.nav-block.nav-hover",
+      "tag": "a",
+      "rect": {
+        "x": 303,
+        "y": 72,
+        "w": 39,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
       "position": "static"
     },
     {
       "key": "#topHalf>div.search.marketplace-nav-search>form",
       "tag": "form",
       "rect": {
-        "x": 106,
-        "y": 84,
-        "w": 188,
-        "h": 52
+        "x": 87,
+        "y": 236,
+        "w": 293,
+        "h": 40
       },
       "color": "#ffffff",
       "bg": "#cccccc",
       "font_size": 18,
-      "line_height": 20,
+      "line_height": 21.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>button.nav-search-submit",
+      "tag": "button",
+      "rect": {
+        "x": 334,
+        "y": 236,
+        "w": 45,
+        "h": 44
+      },
+      "color": "#111111",
+      "bg": "#febd69",
+      "font_size": 18,
+      "line_height": 21.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>input.nav-search-input",
+      "tag": "input",
+      "rect": {
+        "x": 179,
+        "y": 236,
+        "w": 156,
+        "h": 40
+      },
+      "color": "#111111",
+      "bg": "#ffffff",
+      "font_size": 15,
+      "line_height": 18,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "#topHalf>div.search.marketplace-nav-search>form>input",
-      "tag": "input",
+      "key": "#topHalf>div.search.marketplace-nav-search>form>select.nav-search-category",
+      "tag": "select",
       "rect": {
-        "x": 106,
-        "y": 84,
-        "w": 188,
-        "h": 52
+        "x": 87,
+        "y": 236,
+        "w": 92,
+        "h": 40
       },
-      "color": "#aaaaaa",
-      "bg": "#cccccc",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "inline-block",
+      "color": "#111111",
+      "bg": "#e6e6e6",
+      "font_size": 12,
+      "line_height": null,
+      "display": "block",
       "position": "static"
     },
     {

@@ -16,9 +16,9 @@
       "key": "#main-content",
       "tag": "main",
       "rect": {
-        "x": 672,
+        "x": 0,
         "y": 0,
-        "w": 96,
+        "w": 1440,
         "h": 900
       },
       "color": "#e0e0e0",
@@ -32,7 +32,7 @@
       "key": "#map-search",
       "tag": "input",
       "rect": {
-        "x": 18,
+        "x": 86,
         "y": 25,
         "w": 239,
         "h": 40
@@ -96,7 +96,7 @@
       "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
       "tag": "a",
       "rect": {
-        "x": 266,
+        "x": 333,
         "y": 27,
         "w": 112,
         "h": 44

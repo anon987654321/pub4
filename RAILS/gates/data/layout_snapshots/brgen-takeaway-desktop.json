@@ -13,29 +13,61 @@
   },
   "elements": [
     {
-      "key": "#main-content",
-      "tag": "main",
+      "key": "#accountStuff>a.nav-block.nav-hover",
+      "tag": "a",
       "rect": {
-        "x": 420,
-        "y": 0,
-        "w": 600,
-        "h": 2869
+        "x": 1275,
+        "y": 67,
+        "w": 89,
+        "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
       "position": "static"
     },
     {
-      "key": "#main-content>div.page-header>h1",
-      "tag": "h1",
+      "key": "#department",
+      "tag": "a",
       "rect": {
-        "x": 486,
-        "y": 73,
-        "w": 88,
-        "h": 20
+        "x": 86,
+        "y": 120,
+        "w": 60,
+        "h": 36
+      },
+      "color": "#ffffff",
+      "bg": "#232f3e",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#logo",
+      "tag": "a",
+      "rect": {
+        "x": 86,
+        "y": 70,
+        "w": 121,
+        "h": 38
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#main-content",
+      "tag": "main",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 2619
       },
       "color": "#e0e0e0",
       "bg": "#000000",
@@ -48,8 +80,8 @@
       "key": "#main-content>div.search>form",
       "tag": "form",
       "rect": {
-        "x": 469,
-        "y": 113,
+        "x": 49,
+        "y": 159,
         "w": 478,
         "h": 49
       },
@@ -61,11 +93,27 @@
       "position": "static"
     },
     {
+      "key": "#main-content>h1",
+      "tag": "h1",
+      "rect": {
+        "x": 47,
+        "y": 157,
+        "w": 1,
+        "h": 1
+      },
+      "color": "#e0e0e0",
+      "bg": "#000000",
+      "font_size": 36,
+      "line_height": 20,
+      "display": "block",
+      "position": "absolute"
+    },
+    {
       "key": "#q",
       "tag": "input",
       "rect": {
-        "x": 469,
-        "y": 113,
+        "x": 49,
+        "y": 159,
         "w": 478,
         "h": 49
       },
@@ -77,18 +125,114 @@
       "position": "static"
     },
     {
+      "key": "#sections>a.section.nav-hover",
+      "tag": "a",
+      "rect": {
+        "x": 147,
+        "y": 121,
+        "w": 99,
+        "h": 35
+      },
+      "color": "#ffffff",
+      "bg": "#232f3e",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
       "key": "#takeaway-restaurants-list",
       "tag": "section",
       "rect": {
-        "x": 468,
-        "y": 163,
-        "w": 504,
-        "h": 2707
+        "x": 48,
+        "y": 209,
+        "w": 1344,
+        "h": 2347
       },
       "color": "#e0e0e0",
       "bg": "#000000",
       "font_size": 18,
       "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>a.nav-block.nav-deliver.nav-hover",
+      "tag": "a",
+      "rect": {
+        "x": 210,
+        "y": 67,
+        "w": 87,
+        "h": 44
+      },
+      "color": "#ffffff",
+      "bg": "#131921",
+      "font_size": 14,
+      "line_height": 16.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form",
+      "tag": "form",
+      "rect": {
+        "x": 308,
+        "y": 69,
+        "w": 956,
+        "h": 40
+      },
+      "color": "#ffffff",
+      "bg": "#cccccc",
+      "font_size": 18,
+      "line_height": 21.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>button.nav-search-submit",
+      "tag": "button",
+      "rect": {
+        "x": 1219,
+        "y": 69,
+        "w": 45,
+        "h": 44
+      },
+      "color": "#111111",
+      "bg": "#febd69",
+      "font_size": 18,
+      "line_height": 21.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>input.nav-search-input",
+      "tag": "input",
+      "rect": {
+        "x": 448,
+        "y": 69,
+        "w": 771,
+        "h": 40
+      },
+      "color": "#111111",
+      "bg": "#ffffff",
+      "font_size": 15,
+      "line_height": 18,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#topHalf>div.search.marketplace-nav-search>form>select.nav-search-category",
+      "tag": "select",
+      "rect": {
+        "x": 308,
+        "y": 69,
+        "w": 140,
+        "h": 40
+      },
+      "color": "#111111",
+      "bg": "#1a1a1a",
+      "font_size": 12,
+      "line_height": null,
       "display": "block",
       "position": "static"
     },

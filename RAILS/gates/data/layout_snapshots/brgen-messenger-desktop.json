@@ -16,9 +16,9 @@
       "key": "#main-content",
       "tag": "main",
       "rect": {
-        "x": 472,
+        "x": 0,
         "y": 0,
-        "w": 496,
+        "w": 1440,
         "h": 900
       },
       "color": "#e0e0e0",
@@ -32,7 +32,7 @@
       "key": "#main-content>div.page-header>h1",
       "tag": "h1",
       "rect": {
-        "x": 538,
+        "x": 66,
         "y": 77,
         "w": 161,
         "h": 20
@@ -48,9 +48,9 @@
       "key": "#main-content>section.empty.empty-state",
       "tag": "section",
       "rect": {
-        "x": 520,
+        "x": 468,
         "y": 221,
-        "w": 400,
+        "w": 504,
         "h": 196
       },
       "color": "#969696",
@@ -80,9 +80,9 @@
       "key": "#main-content>section.messenger-compose>form.messenger-compose-form",
       "tag": "form",
       "rect": {
-        "x": 520,
+        "x": 48,
         "y": 130,
-        "w": 400,
+        "w": 1344,
         "h": 73
       },
       "color": "#e0e0e0",
@@ -96,9 +96,9 @@
       "key": "#username",
       "tag": "input",
       "rect": {
-        "x": 520,
+        "x": 48,
         "y": 156,
-        "w": 280,
+        "w": 1225,
         "h": 47
       },
       "color": "#e0e0e0",
@@ -144,7 +144,7 @@
       "key": "section.messenger-compose>form.messenger-compose-form>div.messenger-compose-row>input.btn",
       "tag": "input",
       "rect": {
-        "x": 809,
+        "x": 1282,
         "y": 156,
         "w": 110,
         "h": 47
