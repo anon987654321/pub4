@@ -1,43 +1,86 @@
-<%# Amazon Nav Bar structure — styles in _marketplace_nav_bar.scss (exact from source pen). %>
+<%# Amazon nav bar — structure follows amazon.com's own two-row header (the
+    source pen is a simplified take on it). Deliberately a faithful clone for
+    now; identity gets moulded toward the house dialect later. Styles in
+    _marketplace_nav_bar.scss.
+
+    The wordmark is Markedsplass, never Amazon's: the layout is what we are
+    reproducing, not someone else's brand. %>
 <% active = local_assigns.fetch(:active, "listings") %>
 <% search_url = local_assigns.fetch(:search_url, marketplace_listings_path) %>
-<% search_placeholder = local_assigns.fetch(:search_placeholder, "Give me all your money") %>
-<% cart_count = local_assigns[:cart_count] %>
+<% search_placeholder = local_assigns.fetch(:search_placeholder, "Search Markedsplass") %>
+<% cart_count = local_assigns[:cart_count].to_i %>
+<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || "Bergen") %>
+<%# Cached: this partial renders on every marketplace page, and the category
+    list changes about never. %>
+<% nav_categories = Rails.cache.fetch("marketplace/nav_categories/v1", expires_in: 1.hour) do
+     Marketplace::Category.order(:name).limit(24).pluck(:name, :slug)
+   end %>
 
 <div id="navBar">
   <div id="topHalf">
     <div id="logoWrapper">
-      <%= link_to marketplace_root_path, id: "logo", class: "marketplace-logo-link", aria: { label: "Markedsplass" } do %>
-        <%= render "marketplace/animated_logo" %>
+      <%= link_to marketplace_root_path, id: "logo", class: "marketplace-logo-link nav-hover", aria: { label: "Markedsplass" } do %>
+        <span class="nav-logo-mark"><%= render "marketplace/animated_logo" %></span>
+        <span class="nav-logo-word">markedsplass<span class="nav-logo-tld">.no</span></span>
       <% end %>
     </div>
+
+    <%= link_to nearby_path, class: "nav-block nav-deliver nav-hover" do %>
+      <span class="nav-line-1"><%= icon :nearby, size: 13 %> Deliver to</span>
+      <span class="nav-line-2"><%= deliver_to %></span>
+    <% end %>
+
     <div class="search marketplace-nav-search" data-controller="search-focus">
       <%= form_with url: search_url, method: :get, local: true do %>
-        <input type="search" name="q" value="<%= params[:q] %>" placeholder="<%= search_placeholder %>" aria-label="Search marketplace" data-action="focus->search-focus#focus blur->search-focus#blur" />
+        <select name="category" class="nav-search-category" aria-label="Search category">
+          <option value="">All</option>
+          <% nav_categories.each do |name, slug| %>
+            <option value="<%= slug %>" <%= "selected" if params[:category] == slug %>><%= name %></option>
+          <% end %>
+        </select>
+        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
+               placeholder="<%= search_placeholder %>" aria-label="Search marketplace"
+               data-action="focus->search-focus#focus blur->search-focus#blur" />
+        <button type="submit" class="nav-search-submit" aria-label="Search"><%= icon :search, size: 20 %></button>
       <% end %>
     </div>
-    <% if local_assigns[:banner_src].present? %>
-      <img id="backToSchool" src="<%= local_assigns[:banner_src] %>" alt="" />
+
+    <%= link_to marketplace_listings_path, class: "nav-block nav-hover" do %>
+      <span class="nav-line-1">&nbsp;</span>
+      <span class="nav-line-2">EN</span>
     <% end %>
+
+    <div id="accountStuff">
+      <%= link_to(authenticated? ? user_path(Current.user) : new_session_path, class: "nav-block nav-hover") do %>
+        <span class="nav-line-1">Hello, <%= authenticated? ? (Current.user.username.presence || "you") : "sign in" %></span>
+        <span class="nav-line-2">Account &amp; Lists</span>
+      <% end %>
+      <%= link_to marketplace_saved_searches_path, class: "nav-block nav-hover" do %>
+        <span class="nav-line-1">Returns</span>
+        <span class="nav-line-2">&amp; Orders</span>
+      <% end %>
+      <%= link_to marketplace_cart_path, id: "cartLink", class: "nav-block nav-cart nav-hover#{" nav-cart--active" if active == "cart"}" do %>
+        <span class="nav-cart-count"><%= cart_count %></span>
+        <%= icon :cart, size: 26, css_class: "nav-cart-icon" %>
+        <span class="nav-line-2">Cart</span>
+      <% end %>
+    </div>
   </div>
 
   <div id="bottomHalf">
-    <div id="department">Departments</div>
+    <%# Amazon's "All" opens a category flyout. There is no categories index
+        route (only :show), so this browses everything rather than being an
+        inert button. %>
+    <%= link_to marketplace_listings_path, id: "department", class: "nav-hover" do %>
+      <%= icon :menu, size: 18 %> All
+    <% end %>
     <div id="sections">
-      <%= link_to "Listings", marketplace_listings_path, class: "section#{" section--active" if active == "listings"}" %>
-      <%= link_to "Today's Deals", marketplace_deals_path, class: "section#{" section--active" if active == "deals"}" %>
-      <%= link_to "Stores", marketplace_shops_path, class: "section#{" section--active" if active == "stores"}" %>
-      <%= link_to "Sell", new_marketplace_listing_path, class: "section" %>
-      <%= link_to "Help", marketplace_listings_path, class: "section" %>
+      <%= link_to "Listings", marketplace_listings_path, class: "section nav-hover#{" section--active" if active == "listings"}" %>
+      <%= link_to "Today's Deals", marketplace_deals_path, class: "section nav-hover#{" section--active" if active == "deals"}" %>
+      <%= link_to "Stores", marketplace_shops_path, class: "section nav-hover#{" section--active" if active == "stores"}" %>
+      <%= link_to "Sell", new_marketplace_listing_path, class: "section nav-hover" %>
+      <%= link_to "Help", marketplace_listings_path, class: "section nav-hover" %>
     </div>
-    <div id="accountStuff">
-      <% if authenticated? %>
-        <%= link_to "Your Account", user_path(Current.user), class: "section" %>
-        <%= link_to "Lists", marketplace_saved_searches_path, class: "section" %>
-      <% else %>
-        <%= link_to "Sign in", new_session_path, class: "section" %>
-      <% end %>
-      <%= link_to "Cart#{cart_count.to_i.positive? ? " (#{cart_count})" : ""}", marketplace_cart_path, class: "section#{" section--active" if active == "cart"}" %>
-    </div>
+    <div id="subPromo">Local sellers, no middleman</div>
   </div>
 </div>

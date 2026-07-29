@@ -4,7 +4,7 @@
 <%= render "marketplace/nav_bar",
       active: "listings",
       search_url: marketplace_listings_path,
-      search_placeholder: "Give me all your money",
+      search_placeholder: "Search Markedsplass",
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <h1 class="visually-hidden">Markedsplass</h1>

@@ -3,7 +3,7 @@
 <%= render "marketplace/nav_bar",
       active: "stores",
       search_url: marketplace_shops_path(vertical: params[:vertical]),
-      search_placeholder: "Give me all your money",
+      search_placeholder: "Search Markedsplass",
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%= tag.section class: "marketplace-stores", role: "region", "aria-label": "Marketplace stores" do %>

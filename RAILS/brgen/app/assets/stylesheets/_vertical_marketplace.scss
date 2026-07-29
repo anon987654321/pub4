@@ -1,6 +1,15 @@
 /* Marketplace vertical — BRGEN_OLD shell + taupe accent.
    Catalog type = Arial (--font). Display PP only in .marketplace-top-offers. */
 
+/* main's 1280px was dead: .layout caps every surface at --feed-max (600px) and
+   main is inside it, so the storefront was rendering in the 600px feed column
+   with an Amazon-width nav bar crushed into it. Opt out of the feed column the
+   same way dating/maps/messenger/playlist already do. A storefront is a grid,
+   not a timeline. */
+body.vertical-marketplace .layout {
+  max-width: 100%;
+}
+
 body.vertical-marketplace main {
   max-width: 1280px;
 }

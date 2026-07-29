@@ -1,117 +1,278 @@
-/* Amazon Nav Bar — exact styles from source pen (Josue Matos / amazon-nav-bar). */
+/* Amazon nav bar — a faithful clone of amazon.com's two-row header, which the
+   source pen (Josue Matos / amazon-nav-bar) is a simplified take on. Held
+   deliberately close to the original for now; moulding it toward the house
+   dialect is a later, separate decision.
+ *
+ * Two house rules still bind, and neither costs fidelity:
+ *   - Flat, no exceptions: Amazon's search-focus glow and the button's vertical
+ *     gradient are dropped for flat fills (WIRING_NOTES "Flat rule").
+ *   - Hit targets stay >= 44px on touch.
+ *
+ * Amazon's own palette, kept literal so the clone reads as the clone it is:
+ *   #131921 top row   #232f3e sub row   #febd69 search button (#f3a847 hover)
+ *   #e6e6e6 category select   #cd9042 cart count
+ */
 
 #navBar {
-  background-color: #232f3e;
-  height: 100px;
-  color: white;
-  /* Clear fixed borderless .brgen-logo-mark (city brand) on the left. */
-  padding-inline-start: var(--brand-mark-inline);
+  /* Amazon's header is edge-to-edge. This partial renders inside main, which
+     carries a clamp() gutter and a max-width, so break out to the viewport. */
+  margin-inline: calc(50% - 50vw);
+  background-color: #131921;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.2;
 }
 
 #topHalf {
-  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 60px;
+  padding-inline: 10px;
+  /* Clear the fixed city brand (.brgen-logo-mark) pinned at the viewport's
+     inline start. See --brand-mark-inline in _root.scss. */
+  padding-inline-start: var(--brand-mark-inline);
 }
 
-#bottomHalf {
-  height: 50px;
+/* Amazon outlines the hovered block rather than tinting it — 1px, no fill. */
+.nav-hover {
+  border: 1px solid transparent;
+  border-radius: 2px;
 }
 
-#logo {
-  height: 100px;
-  position: absolute;
-  top: -25px;
+.nav-hover:hover,
+.nav-hover:focus-visible {
+  border-color: #fff;
 }
+
+/* ---- logo ------------------------------------------------------------- */
 
 #logoWrapper {
-  margin-bottom: 20px;
-  display: inline-block;
-  position: relative;
-  width: 150px;
-}
-
-#backToSchool {
-  height: 50px;
-  float: right;
-  margin-right: 20px;
-}
-
-#navBar input {
-  vertical-align: top;
-  margin-top: 10px;
-  border-radius: 10px;
-  height: 20px;
-  width: 500px;
-}
-
-#department {
-  font-size: 25px;
-  padding: 10px;
-  margin-left: 30px;
-  font-weight: bold;
-  display: inline-block;
-  vertical-align: top;
-  margin-top: 10px;
-}
-
-#sections {
-  display: inline-block;
-}
-
-#navBar .section {
-  display: inline-block;
-  vertical-align: top;
-  font-size: 15px;
-  margin-top: 25px;
-  margin-left: 10px;
-  color: white;
-  text-decoration: none;
-}
-
-#accountStuff {
-  display: inline-block;
-  float: right;
-  margin-right: 20px;
-}
-
-/* Search form sits inline like the pen's bare <input>. */
-#navBar .marketplace-nav-search {
-  display: inline-block;
-  vertical-align: top;
-  margin: 0;
-  width: 500px;
-  max-width: calc(100vw - 200px);
-  background-color: #ccc;
-  border: 1px solid #ccc;
-  border-radius: 30px;
-  font-size: 18px;
-}
-
-#navBar .marketplace-nav-search input {
-  vertical-align: top;
-  margin-top: 0;
-  border-radius: 30px;
-  height: auto;
-  width: 100%;
-  padding: 16px 24px;
-  background: transparent;
-  outline: none;
-  border: none;
-}
-
-#navBar .marketplace-nav-search.focus,
-#navBar .marketplace-nav-search.active {
-  background-color: white;
-  border-color: white;
+  flex: 0 0 auto;
 }
 
 #navBar .marketplace-logo-link {
-  display: block;
-  height: 100px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
   color: inherit;
   text-decoration: none;
 }
 
-/* Live search under the Amazon bar — yep.com surface */
+/* The pen's mark is a fixed composition tuned for a 100px box — its inner
+   scale(1.35)/scale(3) transforms are absolute, so shrinking the box crops it
+   instead of resizing it. Keep the 100px the pen expects and scale the whole
+   thing down into a 44px slot, which preserves its geometry exactly. */
+.nav-logo-mark {
+  display: block;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+}
+
+#logoWrapper .banner_wrapper {
+  width: 100px;
+  height: 100px;
+  margin: 0;
+  padding: 0;
+  transform: scale(0.44);
+  transform-origin: top left;
+}
+
+.nav-logo-word {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.nav-logo-tld {
+  font-size: 12px;
+  color: #ccc;
+}
+
+/* ---- two-line blocks (deliver to, account, orders) --------------------- */
+
+#navBar .nav-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  padding: 4px 9px;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-line-1 {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.nav-line-2 {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nav-deliver .nav-line-1 svg {
+  vertical-align: -2px;
+}
+
+/* ---- search ----------------------------------------------------------- */
+
+#navBar .marketplace-nav-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-inline: 6px;
+}
+
+#navBar .marketplace-nav-search form {
+  display: flex;
+  align-items: stretch;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.nav-search-category {
+  flex: 0 0 auto;
+  max-width: 140px;
+  padding: 0 8px;
+  border: 0;
+  background-color: #e6e6e6;
+  color: #111;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nav-search-category:hover {
+  background-color: #cdcdcd;
+}
+
+#navBar .nav-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 10px;
+  border: 0;
+  background: #fff;
+  color: #111;
+  font-size: 15px;
+  outline: none;
+}
+
+.nav-search-submit {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  border: 0;
+  background-color: #febd69;
+  color: #111;
+  cursor: pointer;
+}
+
+.nav-search-submit:hover {
+  background-color: #f3a847;
+}
+
+/* Amazon rings the whole control on focus. Flat rule forbids a glow, so the
+   ring is a real border on the wrapper instead. */
+#navBar .marketplace-nav-search.focus form,
+#navBar .marketplace-nav-search:focus-within form {
+  outline: 2px solid #febd69;
+  outline-offset: 0;
+}
+
+/* ---- account / cart cluster ------------------------------------------- */
+
+#accountStuff {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+#navBar .nav-cart {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.nav-cart-icon {
+  flex: 0 0 auto;
+}
+
+.nav-cart-count {
+  position: relative;
+  top: -2px;
+  color: #cd9042;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.nav-cart--active {
+  border-color: #febd69;
+}
+
+/* ---- sub row ---------------------------------------------------------- */
+
+#bottomHalf {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 39px;
+  padding-inline: 10px;
+  padding-inline-start: var(--brand-mark-inline);
+  background-color: #232f3e;
+}
+
+#department {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#sections {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#sections::-webkit-scrollbar {
+  display: none;
+}
+
+#navBar .section {
+  padding: 8px;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+#navBar .section--active {
+  font-weight: 700;
+}
+
+#subPromo {
+  margin-inline-start: auto;
+  padding: 8px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+/* ---- live search under the bar (yep.com surface) ---------------------- */
+
 body.vertical-marketplace main > .search,
 body.vertical-marketplace .marketplace-deals > .search,
 body.vertical-marketplace .marketplace-stores > .search,
@@ -125,69 +286,36 @@ body.vertical-marketplace .search {
   margin-block: 12px;
 }
 
-/* The source pen assumed a wide desktop bar: #logo is 100px tall, absolutely
-   positioned at top:-25px, inside a #navBar of exactly 100px split into two
-   50px halves. On a phone that mark spans both halves and lands on top of the
-   search field — elementFromPoint at the input's own centre returned .banner,
-   so the search box could not be tapped at all, and the mark also sat over
-   #department's text.
+/* ---- narrow ----------------------------------------------------------- */
 
-   Below the width the pen was drawn for, size the mark to the top half and put
-   it back in flow so the two halves stack honestly instead of overlapping. The
-   desktop bar above this breakpoint is untouched. */
+/* Amazon's own phone header drops the two-line blocks and puts the search on
+   its own row. Same move here: the top row keeps logo + account + cart, the
+   search wraps beneath it at full width, and the sub row scrolls. */
 @media (max-width: 700px) {
-  #navBar {
-    height: auto;
-    padding-block-end: 8px;
-  }
-
   #topHalf {
-    height: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    padding-block: 6px;
   }
 
-  #logoWrapper {
-    width: 56px;
-    margin-bottom: 0;
-  }
-
-  #logo {
-    position: static;
-    height: 56px;
-  }
-
-  #logoWrapper .banner,
-  #logoWrapper .banner_wrapper {
-    width: 56px;
-    height: 56px;
+  #navBar .nav-deliver {
+    order: 3;
   }
 
   #navBar .marketplace-nav-search {
-    flex: 1 1 auto;
-    width: auto;
-    max-width: none;
+    order: 4;
+    flex-basis: 100%;
+    margin-inline: 0;
   }
 
-  /* #accountStuff floats right. The pen contained it with a fixed 50px height;
-     once that becomes auto the float escapes the bar and lands on the live
-     search below it, so lay the row out instead of floating inside it. */
-  #bottomHalf {
-    height: auto;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 10px;
+  .nav-search-category {
+    max-width: 92px;
   }
 
   #accountStuff {
-    float: none;
-    margin-right: 0;
     margin-inline-start: auto;
   }
 
-  #department {
-    margin-left: 0;
+  #subPromo {
+    display: none;
   }
 }
