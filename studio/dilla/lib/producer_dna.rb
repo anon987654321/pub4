@@ -147,7 +147,7 @@ module DillaLofiMachine
   # 16-step MPC grids: kicks/snares/hats/ghosts/claps/perc + swing/humanize.
   DRUM_PRESETS = {
     dilla_slight: {
-      swing: 57, humanize: 2, bpm: 95, mode: :dilla_time,
+      swing: 55, humanize: 2, bpm: 95, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [2, 10], claps: [4, 12], perc: [3, 11]
     },
@@ -162,13 +162,13 @@ module DillaLofiMachine
       ghosts: [], claps: [4, 12], perc: []
     },
     dilla_drunk: {
-      swing: 62, humanize: 4, bpm: 92, mode: :dilla_time,
+      swing: 56, humanize: 4, bpm: 92, mode: :dilla_time,
       kicks: [0, 3, 6, 10, 13], snares: [4, 7, 12],
       hats: [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15],
       ghosts: [5, 14], claps: [12], perc: [2, 10, 15]
     },
     madlib_dusty: {
-      swing: 60, humanize: 3, bpm: 93, mode: :dilla_time,
+      swing: 56, humanize: 3, bpm: 93, mode: :dilla_time,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [1, 3, 5, 7, 9, 11, 13, 15],
       ghosts: [6, 14], claps: [4, 12], perc: [6, 14]
     },
@@ -178,23 +178,23 @@ module DillaLofiMachine
     # The abstraction stays in the kick and the near-continuous hats; the extra
     # snares moved to ghosts, where an off-backbeat hit belongs.
     flylo_abstract: {
-      swing: 54, humanize: 4, bpm: 84, mode: :straight_sixteenth,
+      swing: 53, humanize: 4, bpm: 84, mode: :straight_sixteenth,
       kicks: [0, 5, 8, 13], snares: [4, 12],
       hats: [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
       ghosts: [2, 6, 10, 15], claps: [4, 12], perc: [1, 8]
     },
     mpc3000: {
-      swing: 62, humanize: 2, bpm: 90, mode: :dilla_time,
+      swing: 55, humanize: 2, bpm: 90, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [2, 9], claps: [4, 12], perc: [3, 11]
     },
     sp303: {
-      swing: 58, humanize: 2, bpm: 96, mode: :dilla_time,
+      swing: 54, humanize: 2, bpm: 96, mode: :dilla_time,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [1, 3, 5, 7, 9, 11, 13, 15],
       ghosts: [], claps: [], perc: [6, 14]
     },
     sp1200: {
-      swing: 54, humanize: 1, bpm: 90, mode: :dilla_time,
+      swing: 53, humanize: 1, bpm: 90, mode: :dilla_time,
       kicks: [0, 4, 8, 12], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [2, 10], claps: [4, 12], perc: []
     },
@@ -213,7 +213,7 @@ module DillaLofiMachine
     # detection on the demucs drums.wav stem, step_grid in project/learnings/
     # last_learn.json) -- not hand-tuned, this is what the analysis measured.
     dangelo_learned: {
-      swing: 58, humanize: 3, bpm: 80, mode: :dilla_time,
+      swing: 55, humanize: 3, bpm: 80, mode: :dilla_time,
       kicks: [0, 2, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15], snares: [0, 2, 9], hats: [0, 4, 9],
       ghosts: [5, 11], claps: [2, 9], perc: [1, 7]
     },
@@ -244,7 +244,7 @@ module DillaLofiMachine
     # sample's own noise and lets the kit be only kick and snare, which is why
     # those beats breathe where a hat pattern would tick.
     dilla_donuts: {
-      swing: 60, humanize: 3, bpm: 88, mode: :dilla_time,
+      swing: 55, humanize: 3, bpm: 88, mode: :dilla_time,
       kicks: [0, 7, 10], snares: [4, 12], hats: [],
       ghosts: [14], claps: [], perc: []
     },
@@ -252,7 +252,7 @@ module DillaLofiMachine
     # the backbeat. Kick answers the snare on the "and" of 2 rather than
     # crowding it.
     dilla_fantastic: {
-      swing: 63, humanize: 3, bpm: 94, mode: :dilla_time,
+      swing: 56, humanize: 3, bpm: 94, mode: :dilla_time,
       kicks: [0, 6, 10, 11], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [7, 15], claps: [12], perc: [6]
     },
@@ -264,7 +264,7 @@ module DillaLofiMachine
     # three voices disagreeing about which 16th they are on, which is just a
     # different pattern.
     dilla_lopsided: {
-      swing: 66, humanize: 4, bpm: 90, mode: :dilla_time,
+      swing: 56, humanize: 4, bpm: 90, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [7, 15], claps: [4, 12], perc: [11]
     },
@@ -272,7 +272,7 @@ module DillaLofiMachine
     # The Camel grid, moved here so every pattern lives in one table. dilla.rb
     # holds the same steps in FLYLO_CAMEL_DRUM_GRID for the dual-bus overlay.
     flylo_camel: {
-      swing: 60, humanize: 3, bpm: 86, mode: :dilla_time,
+      swing: 54, humanize: 3, bpm: 86, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [7], claps: [4, 12], perc: []
     },
@@ -306,7 +306,7 @@ module DillaLofiMachine
     # syncopate hard around a backbeat that never moves -- displacing the snare
     # itself was the first version's mistake and made it stop being a groove.
     hiatus_broken: {
-      swing: 61, humanize: 4, bpm: 86, mode: :dilla_time,
+      swing: 55, humanize: 4, bpm: 86, mode: :dilla_time,
       kicks: [0, 6, 8, 14], snares: [4, 12],
       hats: [0, 2, 3, 5, 6, 8, 10, 11, 13, 14], ghosts: [2, 7, 9, 15],
       claps: [4, 12], perc: [3, 11]
@@ -314,7 +314,7 @@ module DillaLofiMachine
     # Late-snare pocket. Nothing clever in the grid at all -- the entire feel is
     # in the snare arriving after you expect it, which is timing, not placement.
     questlove_pocket: {
-      swing: 64, humanize: 3, bpm: 84, mode: :dilla_time,
+      swing: 56, humanize: 3, bpm: 84, mode: :dilla_time,
       kicks: [0, 10], snares: [4, 12], hats: [0, 4, 8, 12],
       ghosts: [6, 14], claps: [], perc: []
     },
@@ -323,7 +323,7 @@ module DillaLofiMachine
     # about what to omit, which is different from putting the snare somewhere
     # else, and the ear still counts the bar from 12.
     knxwledge_haze: {
-      swing: 59, humanize: 4, bpm: 82, mode: :dilla_time,
+      swing: 54, humanize: 4, bpm: 82, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [12], hats: [2, 10],
       ghosts: [7], claps: [12], perc: [14]
     },
@@ -358,7 +358,7 @@ module DillaLofiMachine
     # in this table. Swing near 50 because a player pushing this hard plays
     # closer to straight, and the humanize does the rest.
     flylo_deantoni: {
-      swing: 50, humanize: 4, bpm: 96, mode: :straight_sixteenth,
+      swing: 55, humanize: 4, bpm: 96, mode: :straight_sixteenth,
       kicks: [0, 3, 8, 11], snares: [4, 12],
       hats: (0..15).to_a, ghosts: [2, 6, 7, 10, 14, 15], claps: [], perc: [5, 13]
     },
@@ -367,7 +367,7 @@ module DillaLofiMachine
     # the bar reads as half the tempo it is counted at. Hats sit only on the
     # offbeats, which leaves the downbeats to the sub.
     flylo_flamagra: {
-      swing: 56, humanize: 3, bpm: 74, mode: :straight_sixteenth,
+      swing: 53, humanize: 3, bpm: 74, mode: :straight_sixteenth,
       kicks: [0, 3, 9], snares: [8], hats: [2, 6, 10, 14],
       ghosts: [12], claps: [8], perc: [15]
     },
@@ -376,7 +376,7 @@ module DillaLofiMachine
     # are all "e" and "a" positions. The backbeat is untouched, so the bar
     # stays legible while the low end argues with it.
     flylo_offbeat_kick: {
-      swing: 58, humanize: 3, bpm: 80, mode: :dilla_time,
+      swing: 54, humanize: 3, bpm: 80, mode: :dilla_time,
       kicks: [0, 7, 9, 14], snares: [4, 12],
       hats: [0, 2, 4, 6, 8, 10, 12, 14], ghosts: [3, 11], claps: [4, 12], perc: [6]
     },
@@ -385,11 +385,52 @@ module DillaLofiMachine
     # sits behind the beat it belongs to. Slowest of the five; the drag is the
     # point.
     flylo_warp: {
-      swing: 66, humanize: 4, bpm: 70, mode: :dilla_time,
+      swing: 54, humanize: 4, bpm: 70, mode: :dilla_time,
       kicks: [0, 6, 10, 13], snares: [4, 12], hats: [1, 5, 9, 13],
       ghosts: [2, 14], claps: [], perc: [8]
     },
-  }.freeze
+  # ---- pack imports --------------------------------------------------------
+  # A third provenance category, and the distinction is the point: these are
+  # neither transcriptions of records (four_seven, dangelo_learned) nor
+  # constructions written to a description (everything above), but grids
+  # extracted from MIDI supplied in a pack the operator licensed. Regenerate
+  # with `ruby dilla.rb import-midi <dir>`.
+  #
+  # A different idiom from the rest of this table and worth having for that:
+  # half-time, with the snare on 8 rather than 4 and 12, sparse kick clusters
+  # and near-continuous 16th hats. Swing stays near straight because this
+  # pocket does not want a lean -- the interest is in the kick placement.
+  pack_729_1: {
+    swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,
+    kicks: [0, 2, 12, 13, 14], snares: [8], hats: [0, 4, 7, 8, 12, 14, 15],
+    ghosts: [14, 15], claps: [8], perc: [4, 12]
+  },
+  pack_729_2: {
+    swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,
+    kicks: [0, 2, 4, 10, 14], snares: [8], hats: [0, 4, 6, 7, 8, 11, 12, 13, 15],
+    ghosts: [2, 4, 14], claps: [8], perc: [12, 14]
+  },
+  pack_729_3: {
+    swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,
+    kicks: [0, 4, 6, 12, 14], snares: [8], hats: [0, 4, 8, 10, 11, 12, 13, 14, 15],
+    ghosts: [12, 13, 15], claps: [8], perc: [4, 12]
+  },
+  pack_729_4: {
+    swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,
+    kicks: [0, 2, 4, 6, 8, 10], snares: [8], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [4, 5, 6, 7, 12, 13, 14, 15], claps: [8], perc: [12, 14]
+  },
+  pack_729_5: {
+    swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,
+    kicks: [0, 1, 2, 4, 6], snares: [8], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [6, 12, 13, 14, 15], claps: [8], perc: [4, 12]
+  },
+  pack_729_6: {
+    swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,
+    kicks: [0, 4, 14], snares: [8], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [6, 12], claps: [8], perc: [12, 14]
+  },
+}.freeze
 
   LOFI_DEFAULTS = {
     bit_depth: 12, vinyl: 0.40, pad_lowpass_hz: 3200, master_lowpass_hz: 2800,

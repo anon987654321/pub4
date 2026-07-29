@@ -2542,12 +2542,18 @@ def resolve_swing(preset, sonic, time_offset)
          else
            preset.fetch(:swing, 54).to_f + time_offset
          end
-  # Ceiling raised 66 -> 72. The MPC 60 / 3000 swing that both Dilla and FlyLo
-  # worked from goes to roughly 70% on 16ths, and 66 could not reach it -- any
-  # request above 66 was silently clamped down, so the setting people actually
-  # describe was unreachable and the difference read as "close but not it".
-  # The floor stays at 50 (straight); nothing here wants less than straight.
-  base.clamp(50.0, 72.0)
+  # Back to 66. This was raised to 72 on the strength of a forum assertion that
+  # MPC swing "goes to about 70% on 16ths". Better sources disagree and are more
+  # specific: the Dilla swing sits around 53-56%, applied to EIGHTH notes, and
+  # the off-kilter quality comes from quantise being off entirely and hits
+  # nudged by hand rather than from a high swing percentage. A ceiling of 72
+  # permits a value no source supports and invites chasing the wrong parameter.
+  #
+  # What those sources describe instead is varying degrees of swing across
+  # different voices, which is SWING_ROLE_SCALE below. That is the
+  # near-polyrhythmic quality; one large global swing is not the same thing and
+  # does not sound like it.
+  base.clamp(50.0, 66.0)
 end
 
 def track_preset(track)
@@ -2967,17 +2973,55 @@ rescue StandardError => e
   warn "progression log write failed: #{e.message}"
 end
 
+# Different degrees of swing on different voices -- the near-polyrhythmic
+# quality described in accounts of both producers, and the thing a single
+# global swing figure cannot produce however large it is set.
+#
+# The kick is 0: locked to the grid, which is what everything else is heard as
+# leaning against. Take that reference away and the leaning stops reading as
+# feel and starts reading as an unsteady tempo. Percussion is furthest behind
+# at 1.45 -- shakers and maracas played deliberately late are named repeatedly
+# as the source of the push and pull against kick and snare.
+SWING_ROLE_SCALE = {
+  kick_anchor: 0.0, kick_sync: 0.15,
+  snare: 0.85, clap: 0.85,
+  hat_down: 1.0, hat_up: 1.1, open: 1.0,
+  ghost: 1.2,
+  perc: 1.45,
+  bass: 0.3, pad: 0.5,
+}.freeze
+SWING_ROLE_SPREAD = ENV.fetch("SWING_ROLE_SPREAD", "1").to_f.clamp(0.0, 3.0)
+
+# Swing above 50 expressed as milliseconds of lean for this role.
+def swing_role_offset_ms(role, beat_p)
+  return 0.0 if SWING_ROLE_SPREAD.zero? || beat_p.nil?
+
+  # resolve_swing needs a preset and sonic that this call site does not have, so
+  # read the pinned value and fall back to the researched figure rather than to
+  # whatever the preset happens to carry. 54 sits inside the 53-56 those sources
+  # give for the Dilla swing.
+  swing = (ENV["SWING"] || 54).to_f
+  return 0.0 unless swing > 50.0
+
+  scale = SWING_ROLE_SCALE[role] || 1.0
+  # An eighth is half a beat; a swing of 66 pushes the off-eighth by 16% of it.
+  ((swing - 50.0) / 100.0) * (beat_p * 500.0) * scale * SWING_ROLE_SPREAD
+end
+
 def cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
   range = timing&.fetch(role, nil) || MICROTIMING_MS.fetch(role)
   cyclic_bar = bar_index % cycle
   seed = (cyclic_bar * 97) + (step_index * 31) + role.hash.abs
   raw = range.begin + (seed % (range.end - range.begin + 1))
   return raw unless beat_p
+
+  # Per-role swing lean, added to every path below that has a beat period.
+  sw = swing_role_offset_ms(role, beat_p)
   tick_ms = (beat_p * 1000.0) / 96.0
   quantized = ((raw / tick_ms).round * tick_ms).round(3)
   if ENV["NO_QUANTIZE"] == "1"
     jitter = Random.new(seed).rand(-2.0..2.0)
-    return (quantized + jitter).round(3)
+    return (quantized + jitter + sw).round(3)
   end
   track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s.downcase.tr("-", "_").to_sym
   ticks = DillaLofiMachine.humanize_ticks_for(track)
@@ -2985,9 +3029,9 @@ def cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
     bpm = 60.0 / beat_p
     h_ms = DillaLofiMachine.humanize_ms(bpm, ticks)
     jitter = Random.new(seed + 17).rand(-h_ms..h_ms)
-    return (quantized + jitter).round(3)
+    return (quantized + jitter + sw).round(3)
   end
-  quantized
+  (quantized + sw).round(3)
 end
 
 def phase_gain_multiplier(phase)
@@ -17389,6 +17433,83 @@ def crate_render_one!(dest, generator, duration, lowpass: nil)
   dest
 end
 
+# Reads a folder of MIDI drum clips and reports them as 16-step grids.
+#
+# A third provenance category, kept distinct from the other two: these are
+# neither transcriptions of records nor constructions of mine, but patterns
+# supplied in a pack the operator licensed. Being able to say which of the three
+# a grid is matters more than having more grids.
+#
+# Note density is deliberately split rather than flattened: a MIDI snare part
+# usually has two or three structural hits and a tail of ghost notes, and
+# folding them together produces a grid that reads as busy rather than as a
+# backbeat with detail under it. The loudest velocities become the part, the
+# rest become ghosts.
+def midi_drum_grid(path, ghost_below: 0.72)
+  require "midilib"
+  seq = MIDI::Sequence.new
+  File.open(path, "rb") { |io| seq.read(io) }
+  hits = []
+  seq.each do |track|
+    track.each do |ev|
+      next unless ev.is_a?(MIDI::NoteOn) && ev.velocity.positive?
+
+      hits << [((ev.time_from_start.to_f / seq.ppqn) * 4).round % 16, ev.velocity]
+    end
+  end
+  return { steps: [], ghosts: [] } if hits.empty?
+
+  peak = hits.map(&:last).max.to_f
+  loud = hits.select { |(_, v)| v >= peak * ghost_below }.map(&:first).uniq.sort
+  soft = hits.reject { |(_, v)| v >= peak * ghost_below }.map(&:first).uniq.sort - loud
+  { steps: loud, ghosts: soft }
+rescue StandardError => e
+  warn "midi #{File.basename(path)}: #{e.message}"
+  { steps: [], ghosts: [] }
+end
+
+def import_midi_drums!(dir)
+  unless File.directory?(dir)
+    warn "import-midi: no such directory #{dir}"
+    return
+  end
+
+  groups = Hash.new { |h, k| h[k] = [] }
+  Dir[File.join(dir, "**", "*.mid")].sort.each do |f|
+    name = File.basename(f, ".mid").downcase
+    role = case name
+           when /open\s*hat/ then :open
+           when /hi\s*hat|hat/ then :hats
+           when /kick/ then :kicks
+           when /snare/ then :snares
+           else next
+           end
+    groups[role] << [f, midi_drum_grid(f)]
+  end
+
+  if groups.empty?
+    warn "import-midi: no kick/snare/hat clips found in #{dir}"
+    return
+  end
+
+  count = [groups[:kicks].size, groups[:snares].size, groups[:hats].size].reject(&:zero?).min || 0
+  puts "# Imported from #{File.basename(dir)} — pack-supplied MIDI, not transcription."
+  (0...count).each do |i|
+    k = groups[:kicks][i]&.last || { steps: [], ghosts: [] }
+    s = groups[:snares][i]&.last || { steps: [], ghosts: [] }
+    h = groups[:hats][i]&.last || { steps: [], ghosts: [] }
+    o = groups[:open][i % [groups[:open].size, 1].max]&.last || { steps: [] }
+    puts "    pack_729_#{i + 1}: {"
+    puts "      swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,"
+    puts "      kicks: #{k[:steps].inspect}, snares: #{s[:steps].inspect}, " \
+         "hats: #{h[:steps].inspect},"
+    puts "      ghosts: #{(s[:ghosts] + k[:ghosts]).uniq.sort.inspect}, " \
+         "claps: #{s[:steps].inspect}, perc: #{o[:steps].inspect}"
+    puts "    },"
+  end
+  count
+end
+
 def build_crate!(dest_dir = CRATE_DIR)
   FileUtils.mkdir_p(dest_dir)
   made = []
@@ -17579,6 +17700,35 @@ ORGANIC_VARY_TONE_HZ = (ENV["ORGANIC_VARY_TONE_HZ"] || 1800).to_i
 ORGANIC_VARY_PITCH_WALK = [0.0, 0.6, -0.4, 1.0, -0.8, 0.3, -1.0, 0.7].freeze
 ORGANIC_VARY_TIME_WALK  = [0.0, -0.5, 0.8, -0.2, 0.6, -0.9, 0.3, -0.6].freeze
 ORGANIC_VARY_TONE_WALK  = [0.0, -1.2, 0.8, -0.6, 1.4, -0.3, 0.5, -1.0].freeze
+
+# Chopping, as opposed to repeating.
+#
+# ORGANIC_VARY already stops each pass being bit-identical, but it still plays
+# the loop front to back every time. Chopping cuts it into slices and plays them
+# in a different order per pass, which is what the sampler workflow actually
+# did: the loop is raw material, not a part.
+#
+# The order is a fixed rotation rather than random. A shuffle that differs every
+# render cannot be mixed against, and more importantly a rotation preserves
+# which slice lands on the downbeat -- slice 0 stays first in most passes, so
+# the bar still starts where the ear expects while its interior rearranges.
+LOOP_CHOP_SLICES = (ENV["LOOP_CHOP_SLICES"] || 0).to_i.clamp(0, 16)
+
+# Rotations applied per pass. The first is identity so pass 1 states the loop
+# plainly before anything is done to it -- rearranging from the very first bar
+# leaves the listener nothing to hear the rearrangement against.
+LOOP_CHOP_ORDERS = [
+  [0, 1, 2, 3, 4, 5, 6, 7],
+  [0, 1, 2, 3, 4, 6, 5, 7],
+  [0, 2, 1, 3, 4, 5, 7, 6],
+  [0, 1, 3, 2, 4, 5, 6, 7],
+  [0, 1, 2, 3, 6, 5, 4, 7],
+].freeze
+
+def loop_chop_order(pass, slices)
+  base = LOOP_CHOP_ORDERS[pass % LOOP_CHOP_ORDERS.size]
+  base.select { |i| i < slices } + (base.size...slices).to_a
+end
 
 def organic_vary_loop!(src, dest, duration:)
   return nil unless File.file?(src)
@@ -19140,6 +19290,7 @@ DISPATCH = {
   "harmony" => -> { harmony(ARGV.shift) },
   "beauty" => -> { beauty_report(ARGV.shift) },
   "crate" => -> { build_crate!(ARGV.shift || CRATE_DIR) },
+  "import-midi" => -> { import_midi_drums!(ARGV.shift.to_s) },
   "crit" => -> { crit_session_cli!(ARGV.shift) },
   "phone-preview" => -> { phone_preview(ARGV.shift) },
   "semantics" => -> { semantics(ARGV.shift) },
