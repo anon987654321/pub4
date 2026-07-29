@@ -3771,7 +3771,30 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   hp = (ENV["SAMPLE_LOOP_HP"] || entry[:hp] || 45).to_i
   sub_db = (ENV["SAMPLE_LOOP_SUB_DB"] || entry[:sub_db] || 0).to_f
   sub_eq = sub_db.zero? ? "" : "equalizer=f=90:t=o:w=1.1:g=#{sub_db},"
+  # Wow on the LOOP only, never the kit. A sampled record has tape or vinyl
+  # instability in it and a drum machine does not; modulating both together
+  # sounds like the whole mix is unstable, while modulating only the sample
+  # sounds like the sample came off a record. Two slow rates rather than one so
+  # it does not tick.
+  wow_c = ENV.fetch("LOOP_WOW_CENTS", "0").to_f
+  wow = wow_c.zero? ? "" : "vibrato=f=0.31:d=#{(wow_c / 100.0 * 0.06).round(5)}," \
+                           "vibrato=f=0.17:d=#{(wow_c / 100.0 * 0.04).round(5)},"
+
+  # Tempo-synced delay on the loop. Dotted-8th is 3/16 of a bar and is the
+  # figure that reads as hip-hop rather than as an effect: at 92 BPM that is
+  # 489ms. Feedback stays low because the loop is already repeating -- a long
+  # tail on a repeating source turns into mud within two bars.
+  echo_beats = ENV.fetch("LOOP_DELAY_BEATS", "0").to_f
+  echo = if echo_beats.positive? && target_bpm.to_f.positive?
+           ms = ((60.0 / target_bpm) * echo_beats * 1000).round
+           "aecho=0.8:#{ENV.fetch('LOOP_DELAY_MIX', '0.32')}:#{ms}:" \
+             "#{ENV.fetch('LOOP_DELAY_FEEDBACK', '0.28')},"
+         else
+           ""
+         end
+
   common = "aformat=channel_layouts=stereo,#{tempo}volume=#{vol}," \
+           "#{wow}#{echo}" \
            "highpass=f=#{hp}," \
            "#{sub_eq}" \
            "equalizer=f=300:t=o:w=1.4:g=#{ENV.fetch('SAMPLE_LOOP_MUD_DB', '-2.0')}," \
@@ -14980,6 +15003,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # swell applied before it, which is exactly what happened when this lived on
   # the pad bus.
   organic_swell_master!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+  mono_bass!(destination)
 
   # After loudness, not before: the brake ends in near-silence, and normalising
   # a file whose last bar is a fade to nothing pulls the whole track up to
@@ -17263,6 +17287,41 @@ def organic_swell_master!(path, bar_sec:)
   return path unless ORGANIC_SWELL
 
   organic_modulate!(path, bar_sec:, mode: :swell, label: "swell")
+end
+
+# Collapse everything below MONO_BASS_HZ to mono, leave the rest alone.
+#
+# Two sources here put uncorrelated energy in the sub: the sampled record has
+# whatever stereo width the original mastering gave it, and the pad stack is
+# deliberately spread. Uncorrelated lows do not add up -- they smear, they
+# partially cancel on any mono playback, and they eat headroom the kick needs.
+# Summing only the bottom keeps the width where width is audible (a listener
+# cannot localise 60 Hz anyway) and gives the low end back its definition.
+MONO_BASS_HZ = (ENV["MONO_BASS_HZ"] || 0).to_i
+
+def mono_bass!(path)
+  return path unless MONO_BASS_HZ.positive? && File.file?(path)
+
+  ext = File.extname(path)
+  out = "#{path}.monobass#{ext.empty? ? '.wav' : ext}"
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
+  chain = [
+    "[0:a]asplit=2[mb_lo][mb_hi]",
+    "[mb_lo]lowpass=f=#{MONO_BASS_HZ}," \
+      "pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1[mb_m]",
+    "[mb_hi]highpass=f=#{MONO_BASS_HZ}[mb_s]",
+    "[mb_m][mb_s]amix=inputs=2:normalize=0[mbout]",
+  ]
+  begin
+    sh! "ffmpeg", "-y", "-i", path, "-filter_complex", chain.join(";"),
+        "-map", "[mbout]", "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+    FileUtils.mv(out, path)
+    path
+  rescue StandardError => e
+    warn "mono bass: #{e.message}"
+    FileUtils.rm_f(out)
+    path
+  end
 end
 
 # --- drone bed and tape stop --------------------------------------------------
