@@ -3757,7 +3757,42 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   # Tempo-match rather than resample: the loop was warped in the DAW at its own
   # BPM, so play it at the render's tempo instead of letting it drift.
   ratio = loop_bpm.to_f.positive? ? (target_bpm / loop_bpm).clamp(0.5, 2.0) : 1.0
-  tempo = (ratio - 1.0).abs < 0.001 ? "" : "atempo=#{ratio.round(5)},"
+
+  # Varispeed: pitch follows speed, the way a record does.
+  #
+  # atempo holds pitch while changing tempo, which is the modern, correct-sounding
+  # option and is not what these records did. Slowing a sample on an MPC or a
+  # turntable drops its pitch with it -- that is where the thickness comes from,
+  # and why a sped-up sample sounds thin no matter how it is EQ'd. asetrate then
+  # aresample reproduces it exactly, and the bar grid still lines up, because
+  # playing a 4-bar loop at ratio r gives 4 bars at r times the tempo either way.
+  #
+  # SAMPLE_LOOP_SEMITONES pitches further WITHOUT changing tempo, for when the
+  # tempo is already where it should be and only the weight is missing. It is
+  # applied as an extra resample and undone with atempo, so the two controls stay
+  # independent: one moves both, the other moves only pitch.
+  varispeed = ENV.fetch("SAMPLE_LOOP_VARISPEED", "0") != "0"
+  extra_semis = ENV.fetch("SAMPLE_LOOP_SEMITONES", "0").to_f.clamp(-12.0, 12.0)
+
+  tempo = if (ratio - 1.0).abs < 0.001
+            ""
+          elsif varispeed
+            "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE},"
+          else
+            "atempo=#{ratio.round(5)},"
+          end
+
+  unless extra_semis.zero?
+    shift = 2.0**(extra_semis / 12.0)
+    # Resample moves pitch and length together; atempo puts the length back.
+    comp = 1.0 / shift
+    stages = []
+    stages << 2.0 while comp / stages.inject(1.0, :*) > 2.0
+    stages << 0.5 while comp / stages.inject(1.0, :*) < 0.5
+    stages << (comp / stages.inject(1.0, :*))
+    tempo += "asetrate=#{(SAMPLE_RATE * shift).round},aresample=#{SAMPLE_RATE}," +
+             stages.map { |s| "atempo=#{s.round(6)}" }.join(",") + ","
+  end
   vol = ENV.fetch("SAMPLE_LOOP_VOL", "0.8").to_f
   # A sampled record arrives with its own kick and bass already in it, and until
   # now nothing here could reach them: the highpass was a hardcoded 45 and there
@@ -6459,8 +6494,19 @@ end
 # 6, not 5. Templates like 13 and maj13 carry six chord tones, and at five the
 # sixth was silently dropped -- always the topmost after sorting, which is the
 # extension that names the chord.
+# There are two CHORD_TEMPLATES tables with different coverage -- this file's
+# and DillaLofiMachine's, which carries m7b5, 7b9, 13, maj13, mmaj7 and m6 that
+# this one lacks. A caller has no way to know which qualities live where, and
+# the failure is a bare KeyError from deep inside a render. Fall through to the
+# other table rather than making every caller guess.
+def chord_template_for(quality)
+  CHORD_TEMPLATES[quality] ||
+    DillaLofiMachine::CHORD_TEMPLATES[quality] ||
+    CHORD_TEMPLATES.fetch("maj9")
+end
+
 def chord_from_root(root_hz, quality, voices: 6)
-  intervals = voice_extensions(CHORD_TEMPLATES.fetch(quality))
+  intervals = voice_extensions(chord_template_for(quality))
   hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
   extra = intervals.max + 2
   hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
@@ -17091,6 +17137,143 @@ def organic_breath_filters(in_label, out_label, bar_sec:, mode: :breath)
   ]
 end
 
+# --- the crate ----------------------------------------------------------------
+#
+# One-shots and sustains to chop, synthesised rather than dug for. Every voice
+# here is built from oscillators and filtered noise, so the crate carries no
+# provenance question and can be regenerated on any machine from this file
+# alone -- which is also why it is a command and not a folder of wav files
+# committed once and never reproducible.
+#
+# The tonal voices are additive: a harmonic series with per-instrument weights
+# and an envelope. That is not a sampled Rhodes and does not pretend to be one,
+# but a Rhodes IS a struck tine with a bell-like odd-harmonic spectrum and a
+# fast attack, and additive synthesis reproduces that description directly.
+CRATE_DIR = File.join(SAMPLE_DIR, "crate").freeze
+
+# [harmonic, amplitude] pairs. Rhodes leans odd (tine), vibes are nearly pure
+# with a slow beat, the analog voices carry a full series shaped by the filter.
+CRATE_VOICES = {
+  rhodes:   { harmonics: [[1, 1.0], [2, 0.28], [3, 0.42], [5, 0.16], [7, 0.08]],
+              attack: 0.004, decay: 2.8, lowpass: 3800, trem: 0.0 },
+  vibes:    { harmonics: [[1, 1.0], [4, 0.18], [9, 0.06]],
+              attack: 0.002, decay: 3.6, lowpass: 5200, trem: 5.5 },
+  cs80:     { harmonics: [[1, 1.0], [2, 0.5], [3, 0.33], [4, 0.25], [5, 0.2], [6, 0.16]],
+              attack: 0.35, decay: 4.0, lowpass: 2600, trem: 0.0 },
+  prophet:  { harmonics: [[1, 1.0], [2, 0.45], [3, 0.3], [4, 0.2], [6, 0.12]],
+              attack: 0.12, decay: 3.2, lowpass: 3200, trem: 0.0 },
+  jupiter:  { harmonics: [[1, 1.0], [2, 0.55], [3, 0.4], [5, 0.22], [7, 0.14], [9, 0.09]],
+              attack: 0.02, decay: 2.2, lowpass: 4400, trem: 0.0 },
+}.freeze
+
+# Chords worth having under the fingers, in the keys the sampled loops read as.
+CRATE_CHORDS = { "Cm9" => [130.81, "m9"], "Fm9" => [174.61, "m9"],
+                 "Ebmaj9" => [155.56, "maj9"], "Gm9" => [196.00, "m9"],
+                 "Dmaj9" => [146.83, "maj9"], "Am7b5" => [220.00, "m7b5"] }.freeze
+
+def crate_tonal_expr(freqs, voice)
+  spec = CRATE_VOICES.fetch(voice)
+  terms = freqs.flat_map do |f|
+    spec[:harmonics].map do |mult, amp|
+      hz = (f * mult).round(3)
+      next nil if hz > 16_000
+
+      "#{(amp / freqs.size / spec[:harmonics].size * 2.4).round(5)}*sin(2*PI*#{hz}*t)"
+    end.compact
+  end
+  # Struck envelope: near-instant rise, exponential fall. `trem` adds the slow
+  # amplitude beat a vibraphone's rotating discs produce.
+  env = "(1-exp(-t/#{spec[:attack]}))*exp(-t/#{spec[:decay]})"
+  env = "#{env}*(1+#{(0.22).round(3)}*sin(2*PI*#{spec[:trem]}*t))" if spec[:trem].positive?
+  ["(#{terms.join('+')})*#{env}", spec[:lowpass]]
+end
+
+# Noise textures. Crackle is impulsive and sparse, hiss is steady and bright,
+# rumble is slow and almost sub -- three different things that all get called
+# "vinyl noise" and do not substitute for each other.
+CRATE_TEXTURES = {
+  vinyl_crackle: "anoisesrc=color=white:amplitude=0.5," \
+                 "highpass=f=1200,lowpass=f=9000," \
+                 "acompressor=threshold=-46dB:ratio=20:attack=0.05:release=8," \
+                 "volume=7dB",
+  tape_hiss:     "anoisesrc=color=white:amplitude=0.06,highpass=f=2500,lowpass=f=13000",
+  turntable_rumble: "anoisesrc=color=brown:amplitude=0.5,lowpass=f=90,volume=4dB",
+  room_tone:     "anoisesrc=color=pink:amplitude=0.12,highpass=f=120,lowpass=f=2200,volume=-6dB",
+}.freeze
+
+# Percussion, synthesised the way the physical thing works: a brush is noise
+# with a fast decay, a conga is a pitched body with a noise transient, a shaker
+# is a burst of high noise and nothing else.
+CRATE_PERCUSSION = {
+  brush_hit:  "anoisesrc=color=white:amplitude=0.8,highpass=f=900,lowpass=f=7000," \
+              "afade=t=out:st=0:d=0.28",
+  shaker:     "anoisesrc=color=white:amplitude=0.7,highpass=f=5000," \
+              "afade=t=out:st=0:d=0.09",
+  conga:      "aevalsrc='0.8*sin(2*PI*196*t)*exp(-t/0.22)+0.3*sin(2*PI*300*t)*exp(-t/0.09)':d=1," \
+              "lowpass=f=2600",
+  rimshot:    "aevalsrc='0.7*sin(2*PI*420*t)*exp(-t/0.035)':d=0.4,highpass=f=250",
+}.freeze
+
+# The texture and percussion strings BEGIN with a generator (anoisesrc,
+# aevalsrc), so they are the input graph, not a filter applied to one. Chaining
+# them onto an anullsrc input fails: a source filter cannot take an input.
+def crate_render_one!(dest, generator, duration, lowpass: nil)
+  post = []
+  post << "lowpass=f=#{lowpass}" if lowpass
+  post << "afade=t=out:st=#{[(duration - 0.05), 0].max.round(3)}:d=0.05"
+  sh! "ffmpeg", "-y", "-f", "lavfi", "-i", generator,
+      "-af", post.join(","), "-t", duration.to_s,
+      "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
+  dest
+end
+
+def build_crate!(dest_dir = CRATE_DIR)
+  FileUtils.mkdir_p(dest_dir)
+  made = []
+
+  CRATE_CHORDS.each do |name, (root, quality)|
+    freqs = chord_from_root(root, quality)
+    CRATE_VOICES.each_key do |voice|
+      expr, lp = crate_tonal_expr(freqs, voice)
+      path = File.join(dest_dir, "#{voice}_#{name}.wav")
+      begin
+        # aevalsrc generates; the null source above is replaced for tonal voices.
+        sh! "ffmpeg", "-y", "-f", "lavfi",
+            "-i", "aevalsrc='#{expr}':d=4:s=#{SAMPLE_RATE}",
+            "-af", "lowpass=f=#{lp},afade=t=out:st=3.6:d=0.4," \
+                   "alimiter=limit=0.9:level_out=0.92",
+            "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", path
+        made << path
+      rescue StandardError => e
+        warn "crate #{voice}/#{name}: #{e.message}"
+      end
+    end
+  end
+
+  CRATE_TEXTURES.each do |name, filter|
+    path = File.join(dest_dir, "texture_#{name}.wav")
+    begin
+      crate_render_one!(path, filter, 8.0)
+      made << path
+    rescue StandardError => e
+      warn "crate #{name}: #{e.message}"
+    end
+  end
+
+  CRATE_PERCUSSION.each do |name, filter|
+    path = File.join(dest_dir, "perc_#{name}.wav")
+    begin
+      crate_render_one!(path, filter, 1.0)
+      made << path
+    rescue StandardError => e
+      warn "crate #{name}: #{e.message}"
+    end
+  end
+
+  puts "crate: #{made.size} files in #{dest_dir}"
+  made
+end
+
 # --- morphing a sample toward FM -----------------------------------------------
 #
 # You cannot frequency-modulate a recording the way an FM operator modulates an
@@ -18785,6 +18968,7 @@ DISPATCH = {
   "melody" => -> { melody(ARGV.shift) },
   "harmony" => -> { harmony(ARGV.shift) },
   "beauty" => -> { beauty_report(ARGV.shift) },
+  "crate" => -> { build_crate!(ARGV.shift || CRATE_DIR) },
   "crit" => -> { crit_session_cli!(ARGV.shift) },
   "phone-preview" => -> { phone_preview(ARGV.shift) },
   "semantics" => -> { semantics(ARGV.shift) },
