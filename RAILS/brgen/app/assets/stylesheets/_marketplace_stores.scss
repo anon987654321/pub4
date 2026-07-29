@@ -2,6 +2,12 @@
 .marketplace-store,
 .store-form {
   display: grid;
+  /* An implicit auto track sizes to max-content, so the widest child set the
+     width: .deal-cats is a horizontal scroller, and its full content stretched
+     the track to 512px inside a 351px section — the scroll box hung past the
+     viewport instead of scrolling inside it. minmax(0, 1fr) caps the track at
+     the container so overflow-x can do its job. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   padding: var(--space-4);
 }

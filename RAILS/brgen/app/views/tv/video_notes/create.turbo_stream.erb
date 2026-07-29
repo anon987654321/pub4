@@ -1,6 +1,6 @@
 <%= turbo_stream.append "video_notes_#{@video.id}" do %>
   <article id="<%= dom_id(@video_note) %>">
-    <p class="dim"><% if @video_note.timestamp.present? %><%= @video_note.timestamp %> · <% end %><%= @video_note.user&.email_address || "viewer" %></p>
+    <p class="dim"><% if @video_note.timestamp.present? %><%= @video_note.timestamp %> · <% end %><%= @video_note.user&.display_name || "viewer" %></p>
     <p><%= @video_note.body %></p>
   </article>
 <% end %>

@@ -19,7 +19,12 @@ class User < ApplicationRecord
 
   include Shared::GeoLocatable
 
-  def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
+  # Never falls through to the email address. This method shadows the users
+  # .display_name column, so the stored name was dead and every caller — the
+  # marketplace seller line, dating matches, takeaway drivers, TV comments —
+  # rendered the local part of a real person's email on a public page instead.
+  # SSO provisioning writes that column; read it.
+  def display_name = guest? ? "anon" : (self[:display_name].presence || username.presence || anon_handle)
 
   def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
 

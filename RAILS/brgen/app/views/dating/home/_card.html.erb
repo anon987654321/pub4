@@ -1,4 +1,4 @@
-<% display_name = profile.user&.display_name.presence || profile.user&.email_address.to_s.split("@").first.presence || "anon" %>
+<% display_name = profile.user&.display_name.presence || "anon" %>
 <article
   class="swipe-card swipe-card--stack-<%= index %>"
   data-user-id="<%= profile.user_id %>"

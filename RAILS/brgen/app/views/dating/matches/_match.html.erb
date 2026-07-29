@@ -4,7 +4,7 @@
 <% end %>
 <%= render "shared/feed_card",
   avatar_url: (other.dating_profile&.photos&.attached? ? url_for(other.dating_profile.photos.first) : nil),
-  name: other.display_name || other.email_address.split("@").first,
+  name: other&.display_name || "anon",
   url: user_path(other),
   content: capture { %(<p class="feed-card-meta">Matched on #{match.created_at.to_date}</p>).html_safe },
   actions: match_actions,

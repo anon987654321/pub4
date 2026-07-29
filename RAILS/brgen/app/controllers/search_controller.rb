@@ -22,6 +22,10 @@ class SearchController < ApplicationController
     @results[:restaurants] = apply_live_search(Takeaway::Restaurant.active, columns: %w[name city cuisine_type], vertical: "takeaway")
     @results[:places] = apply_live_search(Place.all, columns: %w[name kind], vertical: "maps")
 
+    # html/turbo_stream declare themselves but render nothing here, so the
+    # fallthrough below handles them. Without them respond_to knows only json,
+    # and a plain browser navigation to /search?q=... raises UnknownFormat —
+    # every visitor who typed a query and pressed enter got a 406.
     respond_to do |format|
       format.json do
         render json: {
@@ -30,6 +34,8 @@ class SearchController < ApplicationController
           results: @results.transform_values { |scope| scope.limit(8).map { |record| { id: record.id, type: record.class.name, label: global_search_label(record) } } },
         }
       end
+      format.html {}
+      format.turbo_stream {}
     end
     return if performed?
 

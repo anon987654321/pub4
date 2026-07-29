@@ -1,7 +1,16 @@
-// Bottom clearance for fixed mobile chrome only — desktop grid hides tab bar.
-@media (max-width: 768px) {
-  main#main-content,
-  main[role="main"] {
-    padding-bottom: calc(60px + var(--safe-bottom, 0px));
-  }
+// Bottom clearance for the fixed tab bar.
+//
+// This used to be wrapped in @media (max-width: 768px), with the note "desktop
+// grid hides tab bar". That stopped being true when the shell became
+// single-column at every width (see _shell.scss): the tab bar is now the one
+// always-reachable nav and stays fixed on desktop too, so above 768px the last
+// row of every page sat underneath it. Measured at 1440px on takeaway and
+// tv/channels, where a link resolved to .tab-item instead of to itself.
+//
+// Uses the published --tab-bar-h rather than a hardcoded 60px so the clearance
+// tracks the bar instead of drifting from it. Verticals that hide the bar zero
+// that variable and correctly get their space back.
+main#main-content,
+main[role="main"] {
+  padding-bottom: calc(var(--tab-bar-h, 54px) + var(--safe-bottom, 0px) + var(--space-2, 8px));
 }

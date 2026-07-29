@@ -69,7 +69,7 @@
   <div id="video_notes_<%= @video.id %>">
     <% @video.video_notes.chronological.includes(:user).each do |note| %>
       <article id="<%= dom_id(note) %>">
-        <p class="dim"><% if note.timestamp.present? %><%= note.timestamp %> · <% end %><%= note.user&.email_address || "viewer" %></p>
+        <p class="dim"><% if note.timestamp.present? %><%= note.timestamp %> · <% end %><%= note.user&.display_name || "viewer" %></p>
         <p><%= note.body %></p>
       </article>
     <% end %>
@@ -97,7 +97,7 @@
   <% if @video.comments.any? %>
     <% @video.comments.order(created_at: :asc).each do |comment| %>
       <article>
-        <p class="dim"><%= comment.user.email_address %></p>
+        <p class="dim"><%= comment.user&.display_name || "anon" %></p>
         <p><%= comment.body %></p>
       </article>
     <% end %>

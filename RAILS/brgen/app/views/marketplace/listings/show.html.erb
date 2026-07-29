@@ -22,7 +22,7 @@
 
 <article class="marketplace-listing">
   <p class="listing-price"><%= @listing.price_display %></p>
-  <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user.email_address.split("@").first %></p>
+  <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user&.display_name || "anon" %></p>
   <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · <%= pluralize(@listing.reviews_count.to_i, "review") %> · status: <%= @listing.status %></p>
   <% if @listing.reviews_count.to_i.positive? %>
     <p class="dim"><%= number_with_precision(@listing.rating, precision: 1) %> ★ seller interaction rating</p>
@@ -32,9 +32,15 @@
           data-share-title-value="<%= @listing.title %>"
           data-share-url-value="<%= request.original_url %>"
           data-action="click->share#share">Share</button>
-  <% if !@listing.sold? && Current.user.present? && Current.user != @listing.user %>
+  <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
+      seller with no city (or another city) is invisible under this tenant and
+      the association returns nil. Without this guard the != test passes and
+      user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
+      listing page. %>
+  <% seller = @listing.user %>
+  <% if !@listing.sold? && Current.user.present? && seller.present? && Current.user != seller %>
     <div class="listing-actions listing-actions--inline">
-      <%= button_to "Message seller", user_conversations_path(@listing.user), method: :post, class: "btn btn-ghost" %>
+      <%= button_to "Message seller", user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
     </div>
   <% end %>
   <%= render "shared/affiliate_disclosure" %>
@@ -58,7 +64,7 @@
     <% @reviews.each do |review| %>
       <article>
         <strong><%= number_with_precision(review.rating, precision: 0) %> ★</strong>
-        <span class="dim"> — <%= review.user.email_address.split("@").first %></span>
+        <span class="dim"> — <%= review.user&.display_name || "anon" %></span>
         <%= simple_format(review.body) if review.body.present? %>
       </article>
     <% end %>
@@ -100,7 +106,7 @@
     <% if @listing.orders.any? %>
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
-          <strong><%= order.buyer.email_address.split("@").first %></strong>
+          <strong><%= order.buyer&.display_name || "anon" %></strong>
           <span class="dim"> — <%= order.status %></span>
           <% if order.message.present? %><p><%= order.message %></p><% end %>
           <% if order.status == "pending" %>

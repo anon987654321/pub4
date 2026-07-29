@@ -1,4 +1,7 @@
-<%# locals: (playlist:, tracks:, active_track: nil, playlist_name: nil, tracks_count: nil, plays_count: nil) %>
+<%# locals: (playlist:, tracks:, active_track: nil, playlist_name: nil, tracks_count: nil, plays_count: nil, color: "#00d4ff", comments: [], track_comments: {}) %>
+<%# color/comments/track_comments were read via local_assigns below but never
+    declared here. Strict locals raise on any keyword the declaration omits, so
+    show.html.erb — which passes all three — 500'd on every playlist page. %>
 <% rows = tracks.map { |entry| entry.is_a?(Playlist::Track) ? entry : entry.track } %>
 <% active = active_track || rows.first %>
 <% heading = playlist_name || playlist.name %>
