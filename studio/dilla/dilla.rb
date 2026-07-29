@@ -1562,8 +1562,20 @@ def morph_lead_arp_cfg_for_chord(event_idx, patch)
   base.merge(arp_styles: styles.uniq)
 end
 
+# Process.pid in the seed makes every render pick different patches, which is
+# good for a stream that should not repeat itself and fatal for measurement:
+# two renders differing only in one switch also differ in their entire synth
+# voicing, so any A/B between them compares two variables and attributes the
+# result to one. Large effects survive that noise; small ones do not, and
+# several comparisons in this engine's history were probably reading patch
+# variance rather than the change under test.
+#
+# RENDER_SEED pins it. Set it and renders are reproducible and comparable;
+# leave it unset and the old per-process variation is unchanged.
 def patch_cycle_seed(base = 0)
-  base + (@render_seed || 0) + (@stream_iterate_count || 0) * 7919 + Process.pid
+  pinned = ENV["RENDER_SEED"]
+  entropy = pinned && !pinned.empty? ? pinned.to_i : Process.pid
+  base + (@render_seed || 0) + (@stream_iterate_count || 0) * 7919 + entropy
 end
 
 def pick_patch_from_pool(pool, seed: 0)
@@ -15113,6 +15125,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     # deliberately left out: swelling the low end in and out is heard as an
     # unsteady mix rather than as playing.
     organic_breathe!(harmonic_tmp, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+# After the breath, before the mix: the loop shapes the pads while they
+# are still a separate bus and can be operated on alone.
+sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
+                    duration:)
     if bass_own_bus
       bass_bus_tmp = dilla_render_tmp("bassbus")
       render_harmonic_wav(bass_bus_tmp, [], [], events[:bass], duration, cfg:, pad_post: false)
@@ -17436,6 +17452,61 @@ def organic_breath_filters(in_label, out_label, bar_sec:, mode: :breath)
     "[br_bw][br_dw]amix=inputs=2:normalize=0[br_mix]",
     "[br_mix]volume='exp(#{gain}*0.11512925)':eval=frame[#{out_label}]",
   ]
+end
+
+# The sample drives the synths, instead of merely sitting beside them.
+#
+# Until now the loop and the generated parts have coexisted without ever
+# touching: HARMONIC_KEEP puts them in the same key, the mix puts them at
+# compatible levels, and that is the whole of their relationship. This makes
+# the loop the control signal -- its amplitude envelope shapes the pad bus, so
+# when the sample moves the pads move with it, and the two read as one
+# instrument rather than as two things playing at once.
+#
+# amultiply against a smoothed, floored envelope rather than sidechaincompress:
+# a compressor ducks below a threshold and is otherwise absent, while
+# multiplying imposes the sample's shape continuously. The floor stops the pads
+# vanishing in the loop's gaps -- at 0 this becomes a gate and the harmony
+# disappears wherever the sample rests, which is a different effect entirely.
+SAMPLE_DRIVES_PADS = (ENV["SAMPLE_DRIVES_PADS"] || 0).to_f.clamp(0.0, 1.0)
+SAMPLE_DRIVE_FLOOR = (ENV["SAMPLE_DRIVE_FLOOR"] || 0.45).to_f.clamp(0.0, 1.0)
+SAMPLE_DRIVE_SMOOTH_HZ = (ENV["SAMPLE_DRIVE_SMOOTH_HZ"] || 14).to_i
+
+def sample_drives_pads!(harmonic_path, loop_path, duration:)
+  return harmonic_path unless SAMPLE_DRIVES_PADS.positive?
+  return harmonic_path unless harmonic_path && loop_path
+  return harmonic_path unless File.file?(harmonic_path) && File.file?(loop_path)
+
+  env_path = "#{harmonic_path}.drive.wav"
+  out = "#{harmonic_path}.driven.wav"
+  depth = SAMPLE_DRIVES_PADS
+  floor = 1.0 - ((1.0 - SAMPLE_DRIVE_FLOOR) * depth)
+  begin
+    sh! "ffmpeg", "-y", "-stream_loop", "-1", "-i", loop_path,
+        "-af", "highpass=f=80,lowpass=f=6000," \
+               "aeval=abs(val(0))|abs(val(1))," \
+               "lowpass=f=#{SAMPLE_DRIVE_SMOOTH_HZ}," \
+               "volume=#{(1.0 - floor).round(4)}," \
+               "aeval=val(0)+#{floor.round(4)}|val(1)+#{floor.round(4)}," \
+               "atrim=0:#{duration.round(3)},apad=whole_dur=#{duration.round(3)}",
+        "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", env_path
+    sh! "ffmpeg", "-y", "-i", harmonic_path, "-i", env_path,
+        "-filter_complex",
+        "[0:a]atrim=0:#{duration.round(3)},apad=whole_dur=#{duration.round(3)}[pads];" \
+        "[pads][1:a]amultiply,alimiter=limit=0.95:level_out=0.96[out]",
+        "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-c:a", "pcm_s16le", out
+    FileUtils.mv(out, harmonic_path)
+    dmesg("sample drives pads: depth #{depth}, floor #{floor.round(2)}",
+          unit: "harm0", parent: "dilla0")
+    harmonic_path
+  rescue StandardError => e
+    warn "sample drives pads: #{e.message}"
+    FileUtils.rm_f(out)
+    harmonic_path
+  ensure
+    FileUtils.rm_f(env_path)
+  end
 end
 
 # --- the crate ----------------------------------------------------------------
