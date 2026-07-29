@@ -695,18 +695,80 @@ function browserTtsFallbackAllowed() {
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
   return false;
 }
+// speechSynthesis.getVoices() is populated asynchronously in Chrome: it
+// returns [] on first call and fills in on the 'voiceschanged' event. Touch it
+// early so a real voice list exists by the time Voice Mode wants to speak.
+let _browserVoicesPrimed = false;
+function primeBrowserVoices() {
+  if (_browserVoicesPrimed || !('speechSynthesis' in window)) return;
+  _browserVoicesPrimed = true;
+  try {
+    speechSynthesis.getVoices();
+    speechSynthesis.addEventListener('voiceschanged', () => {}, { once: true });
+  } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:voices_prime", err); }
+}
+function pickBrowserVoice(lang) {
+  let voices = [];
+  try { voices = speechSynthesis.getVoices() || []; } catch (_) { return null; }
+  if (!voices.length) return null;
+  const want = String(lang).toLowerCase();
+  const base = want.split('-')[0];
+  return voices.find((v) => (v.lang || '').toLowerCase() === want)
+      || voices.find((v) => (v.lang || '').toLowerCase().startsWith(base))
+      || voices.find((v) => v.default)
+      || voices[0];
+}
+// Warm the voice list as soon as this segment loads, so the first thing said
+// in Voice Mode is not the one utterance that finds getVoices() still empty.
+primeBrowserVoices();
+
+// Time-boxed, per the boot contract: browser speech must never permanently
+// downgrade the session, so a failure parks it for five minutes and then lets
+// it try again.
+const BROWSER_TTS_COOLDOWN_MS = 300000;
+function browserTtsParked() {
+  return tts.browserTtsBrokenUntil ? Date.now() < tts.browserTtsBrokenUntil : false;
+}
+function parkBrowserTts(reason) {
+  tts.browserTtsBrokenUntil = Date.now() + BROWSER_TTS_COOLDOWN_MS;
+  window.MASTER_LOG?.warn?.("face_speech_runtime:browser_tts_parked", reason);
+}
 function speakWithBrowserTTS(text, token) {
   if (!browserTtsFallbackAllowed()) return false;
   if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) return false;
+  if (browserTtsParked()) return false;
+
+  // Returning false here is the whole point: the caller then falls through to
+  // server TTS. Previously this function returned true the moment speak() did
+  // not throw, whether or not anything could ever be spoken. When no voice
+  // matched the utterance language — or the voice list had not loaded yet —
+  // speak() silently did nothing, onstart/onend never fired, tts.playing stayed
+  // true and setTTSLoading(false) never ran. That one bug produced all three
+  // reported symptoms at once: no audio, a mic that never re-armed because
+  // resumeSttAfterSpeech() is only reached from onend, and the same sentence
+  // spoken again each time the watchdog requeued it.
+  const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-GB';
+  const voice = pickBrowserVoice(lang);
+  if (!voice) { primeBrowserVoices(); return false; }
+
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = tts.lang === 'nb' ? 'nb-NO' : 'en-GB';
+  utterance.voice = voice;
+  utterance.lang = voice.lang || lang;
   utterance.rate = getTtsRate();
+
+  let started = false;
+  let startGuard = null;
+  const clearGuard = () => { if (startGuard) { clearTimeout(startGuard); startGuard = null; } };
+
   utterance.onstart = () => {
+    started = true;
+    clearGuard();
     emitTtsEvent('tts:playback:start', { text, backend: 'browser', duration: null });
     startVisemeAnim(text);
     setTTSLoading(false);
   };
   utterance.onend = utterance.onerror = () => {
+    clearGuard();
     if (token !== tts.cancelToken) return;
     emitTtsEvent('tts:playback:end', { text, interrupted: false, backend: 'browser' });
     stopVisemeAnim();
@@ -718,13 +780,32 @@ function speakWithBrowserTTS(text, token) {
     if (State.mode === 'speaking') State.mode = 'idle';
     ttsTick();
   };
+
   try {
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
-    return true;
   } catch (_) {
     return false;
   }
+
+  // speak() accepted it, but acceptance is not utterance. If nothing has begun
+  // shortly after, treat browser speech as unavailable and hand this same text
+  // back to the queue so the server voice says it — rather than stalling the
+  // queue and the mic behind an utterance that will never start or end.
+  startGuard = setTimeout(() => {
+    startGuard = null;
+    if (started || token !== tts.cancelToken) return;
+    try { speechSynthesis.cancel(); } catch (_) { /* already gone */ }
+    parkBrowserTts('speech never started');
+    tts.playing = false;
+    tts.current = null;
+    if (tts.watchdog) { clearTimeout(tts.watchdog); tts.watchdog = null; }
+    if (State.mode === 'speaking') State.mode = 'idle';
+    requeueChunk(text);
+    scheduleTtsTick(50);
+  }, 1500);
+
+  return true;
 }
 
 function ttsTick() {
