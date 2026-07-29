@@ -3589,6 +3589,14 @@ def cross_sample_gate!(loop_path, partner, dest, duration:)
 end
 
 def cross_sample_process(track, loop_path)
+  # Morph first, cross-sample second: convolving a loop that has already been
+  # turned into a chord gives the partner's room to the whole chord, which is
+  # what you want; doing it the other way convolves the room itself into every
+  # transposed copy and smears twice.
+  if SAMPLE_FM || SAMPLE_SCALE
+    morphed = sample_morph!(loop_path, File.join(Dir.tmpdir, "dilla_morph_#{Process.pid}.wav"))
+    loop_path = morphed if morphed && File.file?(morphed)
+  end
   return loop_path unless DILLA_XCONVOLVE || DILLA_XGATE
 
   partner = cross_sample_partner_path(track)
@@ -3631,7 +3639,7 @@ def sample_loop_for(track)
   return unless entry && File.file?(entry[:path].to_s)
 
   # Memoised: sample_loop_for is called from several places in one render, and
-  # each call would otherwise re-run the convolution.
+  # each call would otherwise re-run the morph and the convolution.
   @cross_sample_cache ||= {}
   key = [track.to_s, entry[:path]]
   @cross_sample_cache[key] ||= cross_sample_process(track, entry[:path])
@@ -14862,6 +14870,11 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
     normalize_track_loudness!(destination)
   end
 
+  # After loudness for the same reason the brake is: loudnorm would flatten a
+  # swell applied before it, which is exactly what happened when this lived on
+  # the pad bus.
+  organic_swell_master!(destination, bar_sec: (60.0 / cfg[:bpm]) * 4.0)
+
   # After loudness, not before: the brake ends in near-silence, and normalising
   # a file whose last bar is a fade to nothing pulls the whole track up to
   # compensate for it.
@@ -16899,15 +16912,9 @@ end
 # because ffmpeg's lowpass takes a fixed frequency and cannot be swept. Summing
 # a dark copy and a bright copy under complementary time-varying gains gets the
 # same result with filters that do support per-frame evaluation.
-def organic_breath_filters(in_label, out_label, bar_sec:)
-  drive = if ORGANIC_BREATH && ORGANIC_SWELL
-            "(0.5*#{organic_control_expr}+0.5*#{organic_swell_expr(bar_sec)})"
-          elsif ORGANIC_SWELL
-            organic_swell_expr(bar_sec)
-          else
-            organic_control_expr
-          end
-  depth = ORGANIC_SWELL ? ORGANIC_SWELL_DB : ORGANIC_BREATH_DB
+def organic_breath_filters(in_label, out_label, bar_sec:, mode: :breath)
+  drive = mode == :swell ? organic_swell_expr(bar_sec) : organic_control_expr
+  depth = mode == :swell ? ORGANIC_SWELL_DB : ORGANIC_BREATH_DB
   # Centred on 0 dB so the average level is unchanged and this is heard as
   # movement rather than as a level change.
   gain = "(#{depth}*(#{drive}-0.5)*2)"
@@ -16923,6 +16930,115 @@ def organic_breath_filters(in_label, out_label, bar_sec:)
     "[br_bw][br_dw]amix=inputs=2:normalize=0[br_mix]",
     "[br_mix]volume='exp(#{gain}*0.11512925)':eval=frame[#{out_label}]",
   ]
+end
+
+# --- morphing a sample toward FM -----------------------------------------------
+#
+# You cannot frequency-modulate a recording the way an FM operator modulates an
+# oscillator -- there is no oscillator to modulate. But ffmpeg's vibrato accepts
+# rates up to 20 kHz, and vibrato at an audio rate IS frequency modulation of
+# whatever goes through it: the sidebands at carrier +- modulator are real, and
+# they are what the ear hears as FM.
+#
+# Whether that sounds musical or like a fault is decided by ONE thing: the
+# modulator's relationship to the material's own pitch. A modulator at an
+# integer multiple of the root puts sidebands on harmonics and reads as a
+# brighter, glassier version of the same note. An unrelated rate puts them
+# between harmonics and reads as damage. So the rate is derived from the key
+# this loop is actually in, not set in hertz.
+SAMPLE_FM = ENV["SAMPLE_FM"] == "1"
+# Modulator : root. 1, 2, 3 are harmonic and glassy; 1.414 or 3.5 go bell-like
+# and inharmonic, which is the DX7 tubular-bell trick.
+SAMPLE_FM_RATIO = (ENV["SAMPLE_FM_RATIO"] || 2.0).to_f.clamp(0.25, 16.0)
+# Modulation index by another name. Past ~0.15 the pitch of the source stops
+# being legible and it becomes texture rather than a note.
+SAMPLE_FM_DEPTH = (ENV["SAMPLE_FM_DEPTH"] || 0.05).to_f.clamp(0.0, 0.4)
+SAMPLE_FM_MIX = (ENV["SAMPLE_FM_MIX"] || 0.45).to_f.clamp(0.0, 1.0)
+# Inharmonic partials, the other half of the metallic FM character. In Hz, and
+# deliberately small: a few Hz detunes the overtones against each other without
+# moving the perceived pitch.
+SAMPLE_FM_SHIFT_HZ = (ENV["SAMPLE_FM_SHIFT_HZ"] || 0).to_f.clamp(-200.0, 200.0)
+
+# Scale expansion: the loop layered against transposed copies of itself at
+# degrees of its OWN key, so one sample becomes a chord it was never playing.
+# Degrees are semitones from the detected root -- the default is a minor triad
+# because most of these loops read minor.
+SAMPLE_SCALE = ENV["SAMPLE_SCALE"] == "1"
+SAMPLE_SCALE_DEGREES = (ENV["SAMPLE_SCALE_DEGREES"] || "3,7").split(",").map(&:to_f)
+SAMPLE_SCALE_MIX = (ENV["SAMPLE_SCALE_MIX"] || 0.4).to_f.clamp(0.0, 1.0)
+
+# Root frequency of a detected key, low enough to be the fundamental rather than
+# a harmonic of it.
+def sample_root_hz(path)
+  key = sample_key(path)
+  return 65.41 unless key # C2 if the key cannot be read
+
+  midi = 36 + key[0]
+  (440.0 * (2.0**((midi - 69) / 12.0))).round(3)
+end
+
+# Pitch shift that keeps duration: resample to move pitch, then undo the speed
+# change. atempo floors at 0.5 per stage, so large shifts chain.
+def pitch_shift_filter(semitones)
+  ratio = 2.0**(semitones / 12.0)
+  stages = []
+  comp = 1.0 / ratio
+  while comp > 2.0
+    stages << 2.0
+    comp /= 2.0
+  end
+  while comp < 0.5
+    stages << 0.5
+    comp /= 0.5
+  end
+  stages << comp
+  "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE}," +
+    stages.map { |s| "atempo=#{s.round(6)}" }.join(",")
+end
+
+def sample_morph!(src, dest)
+  return src unless (SAMPLE_FM || SAMPLE_SCALE) && File.file?(src)
+
+  root = sample_root_hz(src)
+  branches = ["[0:a]anull[dry]"]
+  labels = ["[dry]"]
+  weights = ["1.0"]
+  idx = 0
+
+  if SAMPLE_FM
+    mod_hz = (root * SAMPLE_FM_RATIO).round(2)
+    shift = SAMPLE_FM_SHIFT_HZ.zero? ? "" : ",afreqshift=shift=#{SAMPLE_FM_SHIFT_HZ}"
+    branches << "[0:a]vibrato=f=#{mod_hz}:d=#{SAMPLE_FM_DEPTH}#{shift},highpass=f=60[fm#{idx}]"
+    labels << "[fm#{idx}]"
+    weights << SAMPLE_FM_MIX.to_s
+    idx += 1
+  end
+
+  if SAMPLE_SCALE
+    SAMPLE_SCALE_DEGREES.each_with_index do |semi, i|
+      branches << "[0:a]#{pitch_shift_filter(semi)},lowpass=f=6000[sc#{i}]"
+      labels << "[sc#{i}]"
+      # Upper degrees quieter, or the chord overwhelms the note it came from.
+      weights << (SAMPLE_SCALE_MIX * (1.0 - (i * 0.18))).round(3).to_s
+    end
+  end
+
+  chain = branches.dup
+  chain << "#{labels.join}amix=inputs=#{labels.size}:weights=#{weights.join(' ')}:" \
+           "duration=first:normalize=0,alimiter=limit=0.95:level_out=0.96[mout]"
+  begin
+    sh! "ffmpeg", "-y", "-i", src, "-filter_complex", chain.join(";"),
+        "-map", "[mout]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
+        "-c:a", "pcm_s16le", dest
+    note = []
+    note << "FM #{(root * SAMPLE_FM_RATIO).round}Hz (root #{root.round}, ratio #{SAMPLE_FM_RATIO})" if SAMPLE_FM
+    note << "scale +#{SAMPLE_SCALE_DEGREES.map(&:to_i).join('/+')}" if SAMPLE_SCALE
+    puts "sample morph: #{note.join(', ')}"
+    dest
+  rescue StandardError => e
+    warn "sample morph: #{e.message}"
+    src
+  end
 end
 
 # A sampled loop played with -stream_loop is bit-identical every repetition, and
@@ -16981,23 +17097,49 @@ def organic_vary_loop!(src, dest, duration:)
   end
 end
 
-# Applies the breath to a rendered file in place.
-def organic_breathe!(path, bar_sec:)
-  return path unless (ORGANIC_BREATH || ORGANIC_SWELL) && File.file?(path)
+# Applies a modulation to a rendered file in place. `codec` lets the same code
+# serve the intermediate WAV buses and the final mp3/wav master.
+def organic_modulate!(path, bar_sec:, mode:, label:)
+  return path unless File.file?(path)
 
-  out = "#{path}.breath.wav"
-  chain = organic_breath_filters("0:a", "bout", bar_sec:)
+  ext = File.extname(path)
+  out = "#{path}.#{mode}#{ext.empty? ? '.wav' : ext}"
+  chain = organic_breath_filters("0:a", "bout", bar_sec:, mode:)
+  args = ext.downcase == ".wav" || ext.empty? ? ["-c:a", "pcm_s16le"] : codec_for(out)
   begin
     sh! "ffmpeg", "-y", "-i", path, "-filter_complex", chain.join(";"),
-        "-map", "[bout]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
-        "-c:a", "pcm_s16le", out
+        "-map", "[bout]", "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
     FileUtils.mv(out, path)
     path
   rescue StandardError => e
-    warn "organic breath: #{e.message}"
+    warn "organic #{label}: #{e.message}"
     FileUtils.rm_f(out)
     path
   end
+end
+
+def organic_breathe!(path, bar_sec:)
+  return path unless ORGANIC_BREATH
+
+  organic_modulate!(path, bar_sec:, mode: :breath, label: "breath")
+end
+
+# The swell goes on the FINISHED master, not the pad bus.
+#
+# On the pad bus it was inaudible in the mix and the measurements said so: at
+# the 3 dB default the full-mix LRA did not move at all, 3.4 with and without.
+# Two reasons, both structural. Drums and bass hold a constant level, so a pad
+# swelling 3 dB moves the total by a fraction of that. And the master chain --
+# AKMD's acompressor at 3:1, then loudnorm -- exists precisely to remove a few
+# dB of slow level movement; asking it politely not to is not an option.
+#
+# Applied here the movement is common-mode across the whole track and nothing
+# downstream gets to average it away or compress it out. The cost is honest and
+# worth stating: the drums breathe too, because everything does.
+def organic_swell_master!(path, bar_sec:)
+  return path unless ORGANIC_SWELL
+
+  organic_modulate!(path, bar_sec:, mode: :swell, label: "swell")
 end
 
 # --- drone bed and tape stop --------------------------------------------------
