@@ -1024,8 +1024,16 @@ euclid_sparse: {
                   .merge(progression: normalize_profile(track), producer: entry[:producer], drum_preset: drum_key)
     drum = DRUM_PRESETS[drum_key] || DRUM_PRESETS[DEFAULT_DRUM_PRESET]
     preset[:feel] = drum_key
-    preset[:swing] = drum[:swing] if drum && !ENV["SWING"]
-    preset[:bpm] = drum[:bpm] if drum && !ENV["BPM"]
+    # The drum kit only supplies tempo and swing when the harmony profile has
+    # not stated its own. It used to overwrite them unconditionally, which is
+    # backwards for the documented entries out of dilla_reference.yml: tempo and
+    # swing are most of what a transcription exists to preserve, and
+    # slum_village_players_documented (91 BPM, 56% swing) and
+    # flylo_camel_documented (86, 54) both rendered at the generic kit's 95 with
+    # the kit's swing. The transcriptions were present and loading correctly the
+    # whole time; they were just being played at someone else's tempo.
+    preset[:swing] = drum[:swing] if drum && !ENV["SWING"] && !entry[:swing]
+    preset[:bpm] = drum[:bpm] if drum && !ENV["BPM"] && !entry[:bpm]
     preset[:quintuplet] = drum[:mode] == :dilla_time if drum && !ENV["QUINTUPLET"]
     preset
   end
