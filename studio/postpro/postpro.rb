@@ -1066,8 +1066,25 @@ def stock_matrix(image, stock = :kodak_portra, intensity = 1.0)
   flat = (STOCKS[stock] || STOCKS[:kodak_portra])[:matrix]
   return image unless flat.is_a?(Array) && flat.length == 9
 
+  # Rows normalised to sum to 1 so the matrix maps white to white.
+  #
+  # A 3x3 whose rows do not sum to 1 moves neutrals, and six of the fourteen
+  # here do: Velvia's green row sums to 1.08, an eight percent green lift on
+  # every grey in the frame. That is a white-balance shift wearing a saturation
+  # matrix's clothes, and it would be applied on top of the cast the H&D curves
+  # already carry -- the STOCKS header says in as many words that the per-channel
+  # curve offsets are what "create stock colour cast". Two jobs, two mechanisms;
+  # the matrix's job is dye crosstalk, which is what is left once the row sums
+  # are taken out of it.
+  #
+  # Normalised here rather than in the table so the authored numbers stay as
+  # written and no future entry can reintroduce the shift by being typed.
+  rows = flat.each_slice(3).map do |row|
+    sum = row.sum
+    sum.abs < 1e-6 ? row : row.map { |v| v / sum }
+  end
   linear = image.colourspace("scrgb")
-  graded = linear.recomb(flat.each_slice(3).to_a)
+  graded = linear.recomb(rows)
   safe_cast((linear * (1.0 - intensity) + graded * intensity).colourspace("srgb"))
 rescue StandardError => e
   $logger.error "stock_matrix: #{e.message}"
@@ -2937,6 +2954,34 @@ def vocab_check
   no_temp_step = PRESETS.reject { |_, p| (Array(p[:fx]) & %w[spectral_temp color_temp]).any? }.keys
   notes = no_temp_step.empty? ? [] : ["#{no_temp_step.length} presets declare temp: with no spectral_temp/color_temp step " \
                                       "to apply it, so --describe-preset reports a Kelvin figure the render does not use"]
+
+  # A colour matrix whose rows do not sum to 1 shifts neutrals. stock_matrix
+  # normalises them at application time so this cannot reach a render, but a
+  # row that drifts far from 1 usually means a cast was written into the matrix
+  # that belongs in the H&D curve offsets, and that is worth knowing.
+  drifting = STOCKS.filter_map do |name, d|
+    next unless d[:matrix]
+    off = d[:matrix].each_slice(3).map { |r| (r.sum - 1.0).abs }.max
+    [name, off] if off > 0.005
+  end
+  unless drifting.empty?
+    notes << "#{drifting.length} stock matrices have rows that do not sum to 1 " \
+             "(worst: #{drifting.max_by(&:last).first} at #{(drifting.map(&:last).max * 100).round(1)}%); " \
+             "stock_matrix normalises them, but the cast they encode belongs in the H&D offsets"
+  end
+
+  # Every H&D curve has to be a curve: monotonic, with the pivot inside the
+  # range. A non-monotonic one inverts tones somewhere in the middle.
+  STOCKS.merge(PRINT_STOCKS).each do |name, d|
+    d[:hd]&.each do |channel, (dmin, dmax, pivot, gamma)|
+      problems << "#{name} #{channel}: Dmin #{dmin} is not below Dmax #{dmax}" if dmin >= dmax
+      problems << "#{name} #{channel}: pivot #{pivot} is outside (Dmin, Dmax)" unless dmin < pivot && pivot < dmax
+      problems << "#{name} #{channel}: gamma #{gamma} is not positive" if gamma <= 0
+      drops = HD.channel_curve([dmin, dmax, pivot, gamma]).each_cons(2).count { |a, b| b < a }
+      problems << "#{name} #{channel}: curve inverts at #{drops} of 255 steps" if drops.positive?
+    end
+  end
+  (STOCKS.keys - STOCKS.select { |_, d| d[:speed] }.keys).each { |s| problems << "#{s} has no speed:, so grain cannot rate it" }
 
   problems.each { |line| puts "BROKEN #{line}" }
   notes.each { |line| puts "NOTE   #{line}" }
