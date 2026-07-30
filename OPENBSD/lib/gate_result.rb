@@ -91,8 +91,8 @@ module Deploy
       tag = label ? "[#{label}] " : ""
       Array(other.failures).each { |m| @failures << "#{tag}#{m}" }
       Array(other.warnings).each { |w| @warnings << "#{tag}#{w}" }
-      Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" } if other.respond_to?(:soft_failures)
-      Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" } if other.respond_to?(:unchecked)
+      Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" }
+      Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" }
       self
     end
 

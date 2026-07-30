@@ -140,11 +140,11 @@ module Deploy
     def run_nested_gates
       assets = MasterWebAssetsGate.run
       @result.merge!(assets)
-      puts "MASTER/web assets gate passed (#{MasterWebAssetsGate::REQUIRED.size} required assets present)." if assets.ok?
+      puts "MASTER/web assets gate passed (#{MasterWebAssetsGate::REQUIRED.size} required assets present)." if assets.outcome == :passed
 
       tts = MasterTtsGate.run
       @result.merge!(tts)
-      puts "MASTER TTS gate passed." if tts.ok?
+      puts "MASTER TTS gate passed." if tts.outcome == :passed
     end
 
     def fail_app!(app_failures, message)
