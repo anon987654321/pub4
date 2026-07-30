@@ -530,7 +530,7 @@ class TestWebUI < Minitest::Test
   # Memory
   def test_memory_remember_and_recall
     Dir.mktmpdir do |dir|
-      m = Master::Memory.new(root: dir)
+      m = Master::Ground::Memory.new(root: dir)
       m.remember(:user_name, "Osman")
       assert_equal "Osman", m.recall(:user_name)
     end
@@ -538,7 +538,7 @@ class TestWebUI < Minitest::Test
 
   def test_memory_context_summary_nil_when_empty
     Dir.mktmpdir do |dir|
-      m = Master::Memory.new(root: dir)
+      m = Master::Ground::Memory.new(root: dir)
       %w[brain/memory brain/tools brain/identity].each { |key| m.forget(key) }
       assert_nil m.context_summary
     end
@@ -546,7 +546,7 @@ class TestWebUI < Minitest::Test
 
   def test_memory_context_summary_lists_keys
     Dir.mktmpdir do |dir|
-      m = Master::Memory.new(root: dir)
+      m = Master::Ground::Memory.new(root: dir)
       m.remember(:language, "Ruby")
       summary = m.context_summary
       assert_includes summary, "language"

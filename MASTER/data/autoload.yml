@@ -1,0 +1,83 @@
+# Paths under lib/ that Zeitwerk must not autoload, grouped by the reason.
+#
+# This was five ad-hoc lists inside lib/master.rb -- an array, a lone extra
+# ignore, a glob with an inline exception, a second array, and a third array --
+# with no reason recorded against any entry. Adding a file to lib/cli/cli/ broke
+# boot with an error that did not explain itself.
+#
+# Every path here is a file Zeitwerk *cannot* load, not a file someone chose not
+# to name properly: it reopens a constant defined elsewhere, declares a foreign
+# namespace, or is required by hand for load order. `rake lint:autoload` proves
+# that for each entry and fails on any that has become unnecessary -- so this
+# list cannot quietly become a place to hide naming mistakes.
+autoload:
+  # Reopen a class or module that another file defines. The path implies a
+  # constant the file does not define, which is exactly what Zeitwerk rejects.
+  # Splitting a large class across files is the point; these are its parts.
+  reopens_a_constant_defined_elsewhere:
+    # Master::CLI::CLI -- the REPL, split by concern. container.rb is NOT here:
+    # it defines Master::CLI::CLI::Container and autoloads normally.
+    - cli/cli/background_scan.rb
+    - cli/cli/bridge_run.rb
+    - cli/cli/command_handlers.rb
+    - cli/cli/command_ops.rb
+    - cli/cli/repl_flow.rb
+    - cli/cli/result_display.rb
+    - cli/cli/signals.rb
+    - cli/cli/thinking_indicator.rb
+    # command_ops is both a file and a directory of helpers for it.
+    - cli/cli/command_ops
+    # Master::CLI::CommandRegistry -- one file per command family. command.rb
+    # and formatter.rb define their own constants and are left autoloadable.
+    - cli/command_registry/agent_commands.rb
+    - cli/command_registry/core_commands.rb
+    - cli/command_registry/domain_commands.rb
+    - cli/command_registry/help.rb
+    - cli/command_registry/media_commands.rb
+    - cli/command_registry/memory_commands.rb
+    - cli/command_registry/reach_commands.rb
+    - cli/command_registry/system_commands.rb
+    - cli/command_registry/work_commands.rb
+    - cli/command_registry/work_commands_extra.rb
+    - cli/command_registry/work_commands_status.rb
+    # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
+    # shared registry, not a constant of its own. The structural_rules
+    # DIRECTORY beside structural_rules.rb does autoload.
+    - review/scan/rules/cosmetic_rules.rb
+    - review/scan/rules/external_linter_rules.rb
+    - review/scan/rules/graph_rules.rb
+    - review/scan/rules/js_rules.rb
+    - review/scan/rules/lexical_rules.rb
+    - review/scan/rules/meta_rules.rb
+    - review/scan/rules/naming_rules.rb
+    - review/scan/rules/ruby_rules.rb
+    - review/scan/rules/semantic_rules.rb
+    - review/scan/rules/structural_question_rules.rb
+    - review/scan/rules/structural_rules.rb
+    - review/scan/rules/surface_rules.rb
+    - review/scan/rules/universal_rules.rb
+    - review/scan/rules/web_rules.rb
+    - review/scan/rules/yaml_bridge_rules.rb
+    # Master::Builder module functions, split out of builder.rb.
+    - builder/ai_boot.rb
+    - builder/boot_phases.rb
+    # A require aggregator for the review_crew agents.
+    - review/review_crew/agents.rb
+
+  # Declare a constant outside Master::, so the path cannot imply the name.
+  defines_a_foreign_namespace:
+    # RubyLLM::Providers::Bedrock -- pre-defines the constant so ruby_llm never
+    # autoloads openssl.so. Load-bearing; see DEBT.md.
+    - io/bedrock_stub.rb
+    - io/ruby_llm_patch.rb
+    # Pub4:: -- shared with RAILS and OPENBSD, its own tool, not Master::Pub4.
+    - pub4
+
+  # Loaded by hand because order matters or the entrypoint is a plain require.
+  required_manually:
+    # require_relative "boot/boot" at the bottom of lib/master.rb, which must
+    # run after loader.setup.
+    - boot
+    - providers/catalog_index.rb
+    # The directory; llm_dispatcher.rb itself autoloads as LLMDispatcher.
+    - review/llm_dispatcher

@@ -167,6 +167,76 @@ namespace :lint do
     end
   end
 
+  desc "Prove every data/autoload.yml ignore is still necessary"
+  task :autoload do
+    $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+    require "master"
+    groups = YAML.safe_load_file(File.join(__dir__, "data", "autoload.yml")).fetch("autoload")
+    problems = []
+
+    groups.values.flatten.each do |relative|
+      path = File.join(__dir__, "lib", relative)
+      problems << "#{relative}: listed but does not exist" unless File.exist?(path)
+    end
+
+    # A file that reopens a constant must not define its own path-implied one --
+    # otherwise it is autoloadable and the ignore is hiding a naming mistake.
+    groups.fetch("reopens_a_constant_defined_elsewhere").each do |relative|
+      next unless relative.end_with?(".rb")
+
+      path = File.join(__dir__, "lib", relative)
+      next unless File.file?(path)
+
+      expected = Master::LOADER.inflector.camelize(File.basename(relative, ".rb"), path)
+      if File.read(path).match?(/^\s*(class|module)\s+#{Regexp.escape(expected)}\b/)
+        problems << "#{relative}: defines #{expected}, so Zeitwerk can load it — drop the ignore"
+      end
+    end
+
+    groups.fetch("defines_a_foreign_namespace").each do |relative|
+      path = File.join(__dir__, "lib", relative)
+      next unless File.file?(path)
+
+      problems << "#{relative}: declares Master::, not a foreign namespace" if File.read(path).match?(/^module Master\b/)
+    end
+
+    abort "lint:autoload:\n  #{problems.join("\n  ")}" if problems.any?
+    puts "lint:autoload: #{groups.values.flatten.size} ignores, all still necessary"
+  end
+
+  desc "Ratchet: lib/ may shrink or hold, never grow past data/spine.yml's ceiling"
+  task :spine do
+    require "yaml"
+    config = YAML.safe_load_file(File.join(__dir__, "data", "spine.yml")).fetch("spine")
+    ceiling = config.fetch("lib_ceiling")
+    lines = Dir.glob(File.join(__dir__, "lib", "**", "*.rb")).sum { |f| File.readlines(f).size }
+    core_files = Dir.glob(File.join(__dir__, "core", "*.rb")).size
+
+    if core_files > config.fetch("core_files")
+      abort "lint:spine: core/ has #{core_files} files, ceiling is #{config['core_files']} — " \
+            "a new ability is a verb in world.rb and a new constraint is a rule in constitution.rb, " \
+            "not a new concept"
+    end
+
+    if lines > ceiling
+      abort "lint:spine: lib/ is #{lines} lines, ceiling is #{ceiling} (+#{lines - ceiling}). " \
+            "Absorb it, or raise the ceiling in data/spine.yml in a commit that says why."
+    end
+
+    # The ratchet only tightens. Nothing here can raise the ceiling.
+    if lines < ceiling && ENV["RATCHET"] == "1"
+      body = File.read(File.join(__dir__, "data", "spine.yml"))
+      File.write(File.join(__dir__, "data", "spine.yml"),
+                 body.sub(/^  lib_ceiling: \d+$/, "  lib_ceiling: #{lines}"))
+      puts "lint:spine: ratcheted #{ceiling} -> #{lines}"
+    elsif lines < ceiling
+      puts "lint:spine: #{lines}/#{ceiling} lines (#{ceiling - lines} under — " \
+           "run `rake lint:spine RATCHET=1` to record the new low)"
+    else
+      puts "lint:spine: #{lines}/#{ceiling} lines, core/ #{core_files} files"
+    end
+  end
+
   desc "Check top-level YAML registry keys are singular"
   task :data_singularity do
     $LOAD_PATH.unshift(File.join(__dir__, "lib"))
@@ -184,8 +254,8 @@ namespace :lint do
   end
 end
 
-desc "Full audit: constitution + selftest + lint:frozen + lint:data_singularity"
-task audit: %i[constitution selftest lint:frozen lint:data_singularity] do
+desc "Full audit: constitution + selftest + lint:frozen + lint:data_singularity + lint:spine + lint:autoload"
+task audit: %i[constitution selftest lint:frozen lint:data_singularity lint:spine lint:autoload] do
   puts "audit: passed"
 end
 

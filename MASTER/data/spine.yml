@@ -1,0 +1,20 @@
+# The spine ratchet. `rake lint:spine` fails when lib/ grows past the ceiling.
+#
+# core/ABSORPTION.md asserted "the spine never grows" and nothing measured it,
+# so lib/ gained 8,022 lines in the three weeks after core/ landed while core/
+# gained none. An invariant nothing measures is decoration -- the same critique
+# DEBT.md makes of data/limits.yml, where ~28 of 39 top-level keys have no
+# reader. This file is the reader.
+#
+# The ceiling only ever goes down. When lib/ shrinks, run `rake lint:spine
+# RATCHET=1` to record the new low; there is no task that raises it. Raising it
+# is a deliberate edit to this file, in a commit that says why.
+spine:
+  # Total lines across lib/**/*.rb.
+  lib_ceiling: 47316
+  # What the ceiling was when the ratchet was introduced, so drift is legible.
+  lib_at_introduction: 47331
+  introduced: "2026-07-30"
+  # core/ is allowed to grow only by a handler per verb and a rule per
+  # constraint; this is a tripwire on new top-level concepts, not on line count.
+  core_files: 6

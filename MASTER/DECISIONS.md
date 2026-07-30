@@ -16,6 +16,18 @@ Core types live under `Master::Core::` (not top-level `Master::`) so they coexis
 
 Namespace tooling should treat `bin/master-core` as the core load entrypoint.
 
+## The Spine Ratchet Replaces An Unmeasured Invariant
+
+`core/ABSORPTION.md` asserted "the spine never grows" and nothing checked it.
+In the three weeks after `core/` landed, `lib/` gained 8,022 lines and `core/`
+gained none. That file is now `core/SEVERANCE.md`, a record of what was cut
+rather than a plan, and this document is the standing policy on the two spines.
+
+What is enforced instead: `rake lint:spine` reads `data/spine.yml` and fails
+when `lib/` grows past its recorded ceiling or `core/` gains a top-level file.
+The ceiling only ratchets down (`RATCHET=1` records a new low); raising it is a
+deliberate edit with a reason in the commit. Part of `rake audit`.
+
 ## Rule Data Stays Split
 
 `data/rules.yml` is the constitutional rule registry. `data/rules/*.yml` are scanner shards by scope. `data/design_rules.yml`, `data/llm_output_rules.yml`, and `data/rule_deps.yml` each have separate consumers. Merging them would reduce proximity to their owners.

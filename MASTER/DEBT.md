@@ -137,11 +137,29 @@ nothing), `data/models.yml` (`on:` parses as boolean `true`), and
 `data/style.yml` (typography ratio read at the wrong depth, so edits do
 nothing).
 
-**Orphans** — zero references repo-wide: `lib/cli/hot_reload.rb` (while
-`/reload` hardcodes "not supported in this context"), `lib/memory.rb`,
-`lib/cli/routing/risk_classifier.rb`, `lib/ground/axioms/web_vitals.rb`,
-`lib/ground/brutalist_minimalism.rb`, `lib/ground/persistence/sqlite_*.rb`,
-`core/world.rb:187 shell_git`, `Io::Gateway`'s whole adapter layer.
+**Orphans** — closed 2026-07-30. Six files deleted (396 lines):
+`lib/cli/hot_reload.rb` (`/reload` still hardcodes "not supported in this
+context", which is now honest), `lib/cli/routing/risk_classifier.rb`,
+`lib/ground/axioms/web_vitals.rb`, `lib/ground/brutalist_minimalism.rb`,
+`lib/ground/persistence/sqlite_findings.rb`, `sqlite_memory.rb`. Plus
+`lib/memory.rb`, a five-line `Memory = Ground::Memory` alias that only
+`test/test_web_ui.rb` named; its three call sites now name
+`Master::Ground::Memory`.
+
+Three entries on the old list were **wrong**, and the reference sweep is why
+this is worth recording rather than just deleting:
+
+- `lib/ground/persistence/sqlite_store.rb` — the `sqlite_*.rb` glob overreached.
+  `lib/ground/knowledge_store.rb:12` includes it and `test/test_sqlite_store.rb`
+  covers it. Load-bearing.
+- `Io::Gateway` — instantiated at `lib/builder.rb:228` in the live boot, with
+  `test/test_gateway_client_actions.rb` over it. Not an adapter layer nobody
+  calls.
+- `core/world.rb:187 shell_git` — already gone; the line reference was stale.
+
+Same shape as `core/ABSORPTION.md`'s kill list, which was written from names
+rather than references and turned out to be mostly load-bearing. Verify before
+deleting, even when this file says a thing is dead.
 
 **Test coverage** — no test names these constants: `SsrfGuard`,
 `CommitGuard`, `Permissions`, `StandingOrders`, `PatchApplier`,

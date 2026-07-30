@@ -120,30 +120,15 @@ module Master
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
 
-  ignored_files = %w[
-    io/ruby_llm_patch.rb io/bedrock_stub.rb cli/cli/signals.rb cli/cli/command_ops.rb
-    cli/cli/thinking_indicator.rb cli/cli/background_scan.rb cli/cli/command_handlers.rb
-    cli/cli/repl_flow.rb cli/cli/result_display.rb cli/cli/bridge_run.rb review/review_crew/agents.rb
-  ]
-  ignored_files.each { |relative| loader.ignore(File.join(__dir__, relative)) }
-  # command_ops is both a file and a helper directory; we require the file manually.
-  loader.ignore(File.join(__dir__, "cli", "cli", "command_ops"))
-
-  Dir.glob(File.join(__dir__, "cli", "command_registry", "*.rb")).each do |path|
-    loader.ignore(path) unless %w[command.rb formatter.rb].include?(File.basename(path))
+  # data/autoload.yml lists what Zeitwerk must not load, grouped by why. This
+  # was five lists in this file with no reason recorded against any entry, so
+  # adding a file under lib/cli/cli/ broke boot with an error that did not
+  # explain itself. `rake lint:autoload` proves every entry is still necessary.
+  def self.autoload_ignores(root: ROOT)
+    YAML.safe_load_file(File.join(root, "data", "autoload.yml")).fetch("autoload").values.flatten
   end
-  rule_fragments = %w[
-    cosmetic_rules.rb external_linter_rules.rb graph_rules.rb js_rules.rb lexical_rules.rb
-    meta_rules.rb naming_rules.rb ruby_rules.rb semantic_rules.rb structural_question_rules.rb
-    structural_rules.rb surface_rules.rb universal_rules.rb web_rules.rb yaml_bridge_rules.rb
-  ]
-  rule_fragments.each { |name| loader.ignore(File.join(__dir__, "review", "scan", "rules", name)) }
-  %w[
-    pub4
-    providers/catalog_index.rb
-    builder/boot_phases.rb builder/ai_boot.rb review/llm_dispatcher
-  ].each { |relative| loader.ignore(File.join(__dir__, relative)) }
-  loader.ignore(File.join(__dir__, "boot"))
+
+  autoload_ignores.each { |relative| loader.ignore(File.join(__dir__, relative)) }
 
   loader.setup
   LOADER = loader

@@ -11,7 +11,7 @@ Task-scoped entry for coding agents (Cursor, Codex, Grok, Claude Code). Full con
 | Deploy / VPS / rc.d | `topics.deploy` |
 | Persona / voice policy | `topics.persona` |
 | Law / scanners / loop | `START_HERE.md` → Data File Budget; do not merge `data/rules/*.yml` |
-| Extend runtime behavior | `core/ABSORPTION.md` — new ability = Effect verb in `core/world.rb`; else peripheral |
+| Extend runtime behavior | `DECISIONS.md` → Two Master Spines. New ability inside `core/` = one Effect verb in `core/world.rb`; new constraint = one rule in `core/constitution.rb`; anything else is `lib/` and must not grow it (`rake lint:spine`) |
 
 CLI dump: `/orient agent_map` · per-file brief: `/orient patch <path>` (e.g. `/orient patch web/public/face.js`).
 
@@ -30,7 +30,7 @@ On failure, use structured hints: `bin/check --profile=agent --format=brief`
 
 ## Do not touch (unless the task requires it)
 
-1. Do not merge `lib/` and `core/` before absorption cutover.
+1. Do not merge `lib/` and `core/`. The two spines are permanent — see `DECISIONS.md`; what was cut to build `core/`, and what survived the attempt, is recorded in `core/SEVERANCE.md`.
 2. Do not fold `data/rules/*.yml` into `rules.yml` without retuning scanners.
 3. Do not commit `knowledge/`, `output/`, `.master/`.
 4. No WebGL before primer tap (`web/app/views/chat/index.html.erb`).
