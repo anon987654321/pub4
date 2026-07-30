@@ -5,6 +5,9 @@ nb:
   feed:
     title: "Lokale nyheter"
     compose_prompt: "Del noe spennende nå"
+    compose_title: "Opprett innlegg"
+    add_to_post: "Legg til i innlegget"
+    posting_as_guest: "Du poster som gjest"
     post_action: "Publiser"
     guest_hint: "Du poster som anon · %{limit} innlegg per nettleser"
     advanced_post: "Utvidet innlegg med bilde"

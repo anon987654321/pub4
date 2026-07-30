@@ -1,7 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Two shapes share this controller.
+//
+// brgen opens the composer as a <dialog>: the resting row is a thin trigger and
+// the writing surface floats over the feed, so the feed does not reflow when you
+// start writing. amber still expands in place, so expand/collapse stay.
 export default class extends Controller {
-  static targets = ["input", "title", "footer", "box"]
+  static targets = ["input", "title", "footer", "box", "dialog"]
   static values = {
     expandedClass: { type: String, default: "compose-box--expanded" }
   }
@@ -11,18 +16,49 @@ export default class extends Controller {
     this.syncTitle()
   }
 
+  // --- dialog shape (brgen) ---
+
+  open() {
+    if (!this.hasDialogTarget) return this.expand()
+
+    this.dialogTarget.showModal()
+    // Focus the editor, not the first focusable thing in the dialog, which is
+    // the close button -- opening a composer and landing on "close" is the one
+    // control you did not ask for.
+    const editable = this.element.querySelector(".tiptap_area")
+    if (editable) editable.focus()
+    else if (this.hasInputTarget) this.inputTarget.focus()
+  }
+
+  close() {
+    if (this.hasDialogTarget) this.dialogTarget.close()
+  }
+
+  // A native modal's backdrop is painted by the dialog itself, so a click on it
+  // reports the dialog as the target. Anything inside the form reports that
+  // instead, which is how the two are told apart without a separate overlay.
+  backdropClose(event) {
+    if (event.target === this.dialogTarget) this.dialogTarget.close()
+  }
+
+  closed() {
+    this.collapsed = true
+  }
+
+  // --- inline shape (amber) ---
+
   expand() {
     this.collapsed = false
-    this.boxTarget.classList.add(this.expandedClassValue)
+    if (this.hasBoxTarget) this.boxTarget.classList.add(this.expandedClassValue)
     if (this.hasFooterTarget) this.footerTarget.hidden = false
   }
 
   collapse(event) {
-    if (this.inputTarget.value.trim().length > 0) return
+    if (this.hasInputTarget && this.inputTarget.value.trim().length > 0) return
     if (event?.relatedTarget && this.element.contains(event.relatedTarget)) return
 
     this.collapsed = true
-    this.boxTarget.classList.remove(this.expandedClassValue)
+    if (this.hasBoxTarget) this.boxTarget.classList.remove(this.expandedClassValue)
     if (this.hasFooterTarget) this.footerTarget.hidden = true
   }
 
@@ -34,7 +70,7 @@ export default class extends Controller {
   }
 
   syncTitle() {
-    if (!this.hasTitleTarget) return
+    if (!this.hasTitleTarget || !this.hasInputTarget) return
 
     const text = this.inputTarget.value.trim()
     const line = text.split("\n").find((row) => row.trim().length > 0) || text

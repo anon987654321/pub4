@@ -1,0 +1,210 @@
+/* The compose launcher and its floating composer.
+   The resting row used to be a live textarea that grew the feed downward on
+   focus, so the page reflowed under the reader the moment they touched it. Now
+   the resting row is a thin pill of fixed height and the writing surface is a
+   modal <dialog> over the feed. */
+
+.compose-launcher {
+  margin: var(--space-3) var(--space-4);
+}
+
+/* Thin: one row, avatar-height, no vertical padding beyond what centres it.
+   The old box was padding + a 44px min-height input + margins. */
+.compose-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--text-secondary);
+  transition: background var(--transition-fast, 180ms), border-color var(--transition-fast, 180ms);
+}
+
+.compose-trigger:hover {
+  background: var(--hover);
+  border-color: var(--border-strong, var(--border));
+}
+
+.compose-trigger-prompt {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-lg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 32px here, against 40px in the old resting box -- the pill is the thing being
+   made thinner and the avatar sets its height. */
+.compose-trigger .compose-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+/* --- the floating composer --- */
+
+.composer {
+  width: min(500px, calc(100vw - var(--space-4) * 2));
+  max-height: min(90vh, 760px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, var(--radius-sm));
+  background: var(--surface-elevated);
+  color: var(--text);
+  overflow: hidden;
+  /* Sits high rather than dead-centre, so it lands under the cursor that opened
+     it instead of jumping to the middle of a tall screen. */
+  margin-block: 10vh auto;
+}
+
+.composer::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  animation: composer-backdrop-in 180ms ease-out;
+}
+
+/* Slides down into place. The dialog is display:none until showModal(), so the
+   animation runs on open with no JS class toggling. */
+.composer[open] {
+  animation: composer-drop-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes composer-drop-in {
+  from { transform: translateY(-24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes composer-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.composer-form {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.composer-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.composer-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.composer-close {
+  position: absolute;
+  right: var(--space-3);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.composer-close:hover { color: var(--text); }
+
+.composer-author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.composer-author-name {
+  font-weight: 600;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+/* The one part that scrolls. Header, attach row and submit stay put, so the
+   post button never leaves the screen no matter how long the draft gets. */
+.composer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-4);
+}
+
+.composer-body .compose-input,
+.composer-body .tiptap_area {
+  min-height: 120px;
+  font-size: var(--text-lg);
+}
+
+.composer-attach {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.composer-attach-label {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.composer-submit {
+  width: calc(100% - var(--space-4) * 2);
+  margin: var(--space-3) var(--space-4);
+  min-height: 44px;
+}
+
+.composer .compose-hint {
+  padding: 0 var(--space-4) var(--space-4);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.composer .compose-hint details summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* Full-bleed on phones, the way a native sheet behaves. */
+@media (max-width: 767px) {
+  .composer {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100dvh;
+    height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer[open],
+  .composer::backdrop {
+    animation: none;
+  }
+}
+
+/* Verticals hide the launcher the same way they hid the old compose box. */
+body[class*="vertical-"] .compose-launcher {
+  display: none;
+}

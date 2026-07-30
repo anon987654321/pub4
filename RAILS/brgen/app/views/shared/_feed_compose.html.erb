@@ -1,74 +1,98 @@
-<%= form_with model: Post.new, url: posts_path, class: "compose-box", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
-  <% if guest? %>
-    <div class="compose-avatar" aria-hidden="true">G</div>
-  <% else %>
-    <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
-  <% end %>
-  <div class="compose-inner" data-controller="tiptap-editor">
-<%# Collapsed, this is one line and nothing else. The visible "Post to Bergen"
-    heading, and the guest hint below, both used to sit in the collapsed state,
-    which made a resting feed carry three stacked pieces of chrome before you
-    had asked to write anything. The label stays for screen readers (a
-    placeholder is not a label) and the visible copy lives in the placeholder,
-    which is the affordance being asked for. %>
-    <%= f.label :content, "Post to Bergen", class: "visually-hidden" %>
-    <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
-    <%= f.text_area :content,
-          rows: 1,
-          placeholder: t("feed.compose_prompt"),
-          class: "compose-input",
-          data: {
-            controller: "textarea-autogrow",
-            feed_compose_target: "input",
-            tiptap_editor_target: "field",
-            action: "focus->feed-compose#expand input->feed-compose#syncTitle blur->feed-compose#collapse"
-          } %>
-    <div class="tiptap_mount" data-tiptap-editor-target="mount"
-         data-action="focus->feed-compose#expand" hidden></div>
-    <div class="compose-footer" data-feed-compose-target="footer" hidden>
-      <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
-        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
-        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
-        <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
-      </div>
-      <div class="compose-actions">
-        <label class="compose-action" title="Add photo">
-          <%= icon :camera, size: 18 %>
-          <%= f.file_field :image, accept: "image/*", capture: "environment",
-                class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
-        </label>
-        <label class="compose-action" title="Record video">
-          <%= icon :video, size: 18 %>
-          <%= f.file_field :video, accept: "video/*", capture: "environment",
-                class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
-        </label>
-        <label class="compose-action" title="Record audio">
-          <%= icon :mic, size: 18 %>
-          <%= f.file_field :audio, accept: "audio/*", capture: "user",
-                class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
-        </label>
-<%# Poll, Emoji and Location were here as permanently `disabled` buttons. A
-    control that can never be pressed is a dead end -- it advertises a feature
-    that does not exist and gives the reader nothing to do about it, which is
-    what soul.yml's NO_DEAD_ENDS rule is about. Removed rather than hidden: when
-    any of them is built, it comes back as a working button. %>
-      </div>
-      <div class="compose-submit">
+<%# At rest this is one thin pill and nothing else — avatar, prompt, no field.
+    Clicking it opens the composer as a floating dialog rather than growing the
+    feed downward, which is the Facebook shape: the resting row stays the same
+    height whether or not you are writing, and the writing surface gets the
+    whole screen's attention instead of competing with the post below it.
+
+    The <dialog> carries the real form. It is in the DOM at rest (so the browser
+    owns focus trapping, Esc, and the backdrop) but not rendered until
+    showModal(). %>
+<div class="compose-launcher" data-controller="feed-compose">
+  <button type="button" class="compose-trigger" data-action="click->feed-compose#open">
+    <% if guest? %>
+      <span class="compose-avatar" aria-hidden="true">G</span>
+    <% else %>
+      <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
+    <% end %>
+    <span class="compose-trigger-prompt"><%= t("feed.compose_prompt") %></span>
+  </button>
+
+  <dialog class="composer" data-feed-compose-target="dialog"
+          data-action="click->feed-compose#backdropClose close->feed-compose#closed">
+    <%= form_with model: Post.new, url: posts_path, class: "composer-form",
+          data: { feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
+      <header class="composer-header">
+        <h2 class="composer-title"><%= t("feed.compose_title", default: "Post to Bergen") %></h2>
+        <button type="button" class="composer-close" data-action="click->feed-compose#close"
+                aria-label="<%= t("common.close", default: "Close") %>">
+          <%= icon :close, size: 20 %>
+        </button>
+      </header>
+
+      <div class="composer-author">
         <% if guest? %>
-          <%= f.hidden_field :anonymous, value: true %>
-          <span class="dim compose-as">anon</span>
+          <span class="compose-avatar" aria-hidden="true">G</span>
+          <span class="composer-author-name">
+            <%= t("feed.posting_as_guest", default: "Posting as a guest") %>
+            <%= f.hidden_field :anonymous, value: true %>
+          </span>
+        <% else %>
+          <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
+          <span class="composer-author-name"><%= Current.user.display_name %></span>
         <% end %>
-        <%= f.submit t("feed.post_action"), class: "btn btn-primary btn-sm" %>
       </div>
-      <%# Inside the footer, so it appears with the rest of the controls on focus
-          rather than sitting under a resting one-line input. %>
+
+      <div class="composer-body" data-controller="tiptap-editor">
+        <%= f.label :content, t("feed.compose_title", default: "Post to Bergen"), class: "visually-hidden" %>
+        <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
+        <%= f.text_area :content,
+              rows: 3,
+              placeholder: t("feed.compose_prompt"),
+              class: "compose-input",
+              data: {
+                controller: "textarea-autogrow",
+                feed_compose_target: "input",
+                tiptap_editor_target: "field",
+                action: "input->feed-compose#syncTitle"
+              } %>
+        <div class="tiptap_mount" data-tiptap-editor-target="mount" hidden></div>
+        <div class="tiptap_toolbar" data-tiptap-editor-target="toolbar">
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bold" title="Bold"><b>B</b></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#italic" title="Italic"><i>i</i></button>
+          <button type="button" class="tiptap_btn" data-action="mousedown->tiptap-editor#bulletList" title="Bullet list">•</button>
+        </div>
+      </div>
+
+      <div class="composer-attach">
+        <span class="composer-attach-label"><%= t("feed.add_to_post", default: "Add to your post") %></span>
+        <div class="compose-actions">
+          <label class="compose-action" title="Add photo">
+            <%= icon :camera, size: 20 %>
+            <%= f.file_field :image, accept: "image/*", capture: "environment",
+                  class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+          </label>
+          <label class="compose-action" title="Record video">
+            <%= icon :video, size: 20 %>
+            <%= f.file_field :video, accept: "video/*", capture: "environment",
+                  class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+          </label>
+          <label class="compose-action" title="Record audio">
+            <%= icon :mic, size: 20 %>
+            <%= f.file_field :audio, accept: "audio/*", capture: "user",
+                  class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
+          </label>
+        </div>
+      </div>
+
+      <%= f.submit t("feed.post_action"), class: "btn btn-primary composer-submit" %>
+
       <div class="dim compose-hint">
         <% if guest? %>
-          <details><summary>Posting as a guest</summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT) %> The limit slows spam without asking for an account.</p></details>
+          <details><summary><%= t("feed.posting_as_guest", default: "Posting as a guest") %></summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT) %> The limit slows spam without asking for an account.</p></details>
         <% else %>
           <%= link_to t("feed.advanced_post"), new_post_path, class: "link-inherit" %>
         <% end %>
       </div>
-    </div>
-  </div>
-<% end %>
+    <% end %>
+  </dialog>
+</div>
