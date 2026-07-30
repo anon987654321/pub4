@@ -63,7 +63,16 @@ class CreatePartnerMarketing < ActiveRecord::Migration[8.1]
     create_table :partner_conversions do |t|
       t.references :membership, null: false, foreign_key: { to_table: :partner_memberships }, index: true
       t.references :click, foreign_key: { to_table: :partner_clicks }, index: true
-      t.references :order, null: false, foreign_key: { to_table: :marketplace_orders }, index: true
+      # One conversion per order, declared on the reference itself. Attribution
+      # runs from a payment webhook and webhooks are retried, so without the
+      # uniqueness a retry pays the partner twice.
+      #
+      # This was `index: true` plus a separate `add_index ..., unique: true`
+      # below, and both generate the name index_partner_conversions_on_order_id,
+      # so the migration aborted on its own duplicate and no table it declares
+      # was ever created.
+      t.references :order, null: false, foreign_key: { to_table: :marketplace_orders },
+                   index: { unique: true }
       t.string :status, null: false, default: "pending"
       t.integer :order_value_cents, null: false, default: 0
       t.integer :commission_cents, null: false, default: 0
@@ -74,9 +83,6 @@ class CreatePartnerMarketing < ActiveRecord::Migration[8.1]
       t.string :rejected_reason, limit: 200
       t.timestamps
     end
-    # One conversion per order. Attribution runs from a payment webhook, and
-    # webhooks are retried: without this, a retry pays the partner twice.
-    add_index :partner_conversions, :order_id, unique: true
     add_index :partner_conversions, %i[status payable_after]
   end
 end

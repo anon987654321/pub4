@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_30_150000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -531,6 +531,73 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_230000) do
     t.index ["source_type", "source_id"], name: "index_notifications_on_source_type_and_source_id"
     t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
     t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "partner_clicks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.integer "listing_id"
+    t.integer "membership_id", null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.string "visitor_digest", limit: 64
+    t.index ["listing_id"], name: "index_partner_clicks_on_listing_id"
+    t.index ["membership_id"], name: "index_partner_clicks_on_membership_id"
+    t.index ["user_id"], name: "index_partner_clicks_on_user_id"
+    t.index ["visitor_digest", "expires_at"], name: "index_partner_clicks_on_visitor_digest_and_expires_at"
+  end
+
+  create_table "partner_conversions", force: :cascade do |t|
+    t.datetime "approved_at"
+    t.integer "click_id"
+    t.integer "commission_cents", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, default: "NOK", null: false
+    t.integer "membership_id", null: false
+    t.integer "order_id", null: false
+    t.integer "order_value_cents", default: 0, null: false
+    t.datetime "paid_at"
+    t.datetime "payable_after", null: false
+    t.string "rejected_reason", limit: 200
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["click_id"], name: "index_partner_conversions_on_click_id"
+    t.index ["membership_id"], name: "index_partner_conversions_on_membership_id"
+    t.index ["order_id"], name: "index_partner_conversions_on_order_id", unique: true
+    t.index ["status", "payable_after"], name: "index_partner_conversions_on_status_and_payable_after"
+  end
+
+  create_table "partner_memberships", force: :cascade do |t|
+    t.datetime "approved_at"
+    t.datetime "created_at", null: false
+    t.integer "program_id", null: false
+    t.string "status", default: "pending", null: false
+    t.string "token", limit: 32, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["program_id", "user_id"], name: "index_partner_memberships_on_program_id_and_user_id", unique: true
+    t.index ["program_id"], name: "index_partner_memberships_on_program_id"
+    t.index ["token"], name: "index_partner_memberships_on_token", unique: true
+    t.index ["user_id"], name: "index_partner_memberships_on_user_id"
+  end
+
+  create_table "partner_programs", force: :cascade do |t|
+    t.integer "attribution_hours", default: 720, null: false
+    t.boolean "auto_approve_partners", default: false, null: false
+    t.integer "city_id"
+    t.string "commission_model", default: "cpa_percent", null: false
+    t.integer "commission_rate", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "hold_days", default: 30, null: false
+    t.string "name", limit: 120, null: false
+    t.string "status", default: "draft", null: false
+    t.integer "store_id", null: false
+    t.text "terms"
+    t.datetime "updated_at", null: false
+    t.index ["city_id"], name: "index_partner_programs_on_city_id"
+    t.index ["status", "city_id"], name: "index_partner_programs_on_status_and_city_id"
+    t.index ["store_id"], name: "index_partner_programs_on_store_id"
   end
 
   create_table "place_check_ins", force: :cascade do |t|
@@ -1185,6 +1252,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_230000) do
   add_foreign_key "neighborhoods", "cities"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
+  add_foreign_key "partner_clicks", "marketplace_listings", column: "listing_id"
+  add_foreign_key "partner_clicks", "partner_memberships", column: "membership_id"
+  add_foreign_key "partner_clicks", "users"
+  add_foreign_key "partner_conversions", "marketplace_orders", column: "order_id"
+  add_foreign_key "partner_conversions", "partner_clicks", column: "click_id"
+  add_foreign_key "partner_conversions", "partner_memberships", column: "membership_id"
+  add_foreign_key "partner_memberships", "partner_programs", column: "program_id"
+  add_foreign_key "partner_memberships", "users"
+  add_foreign_key "partner_programs", "cities"
+  add_foreign_key "partner_programs", "marketplace_stores", column: "store_id"
   add_foreign_key "place_check_ins", "places"
   add_foreign_key "place_check_ins", "users"
   add_foreign_key "places", "cities"
