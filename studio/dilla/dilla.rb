@@ -1483,7 +1483,7 @@ GALAXY_EP_SUBSTITUTES = %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli].freeze
 
 # Presets that name a specific instrument on purpose — the substitution below
 # would defeat the reason they exist.
-GALAXY_EP_EXEMPT_VOICES = %i[pad_dilla pad_madlib pad_flylo pad_royksopp rhodes_solo].freeze
+GALAXY_EP_EXEMPT_VOICES = %i[rhodes_solo].freeze
 
 def prefer_galaxy_ep(patch)
   return patch unless patch && galaxy_ep_available?
@@ -2666,8 +2666,7 @@ def curated_progression?(cfg)
   #
   # Developing a transcription defeats the point of transcribing it. Every entry
   # in that file is suffixed _documented, which is the marker used here.
-  cfg[:progression].to_s.end_with?("_documented") ||
-    CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym) ||
+  CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym) ||
     DillaLofiMachine::CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
 end
 
@@ -4487,7 +4486,7 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
   # Skipped on short renders (the 8-bar probe/preview path) where a whole bar of
   # fade would be an eighth of the render. DRUM_FADE_IN=0 disables it.
   bar_sec = 4.0 * 60.0 / (cfg[:bpm] || DEFAULT_BPM).to_f
-  drum_fade = if ENV["DRUM_FADE_IN"] == "0" || duration.nil? || duration <= 20
+  drum_fade = if ENV["DRUM_FADE_IN"] == "0" || duration.to_f <= 20
                 ""
               else
                 "afade=t=in:st=0:d=#{bar_sec.round(2)}:curve=qsin,"
@@ -6996,10 +6995,9 @@ end
 def chord_from_root(root_hz, quality, voices: 6)
   intervals = voice_extensions(chord_template_for(quality))
   hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
-  # Octaves of the root, not `max + 2` -- see pad_root_octaves. This was the same
-  # bug as build_voicing's and was fixed twice; now there is one padding rule and
-  # only the trim below differs between the two callers.
-  DillaLofiMachine.pad_root_octaves(hz, root_hz, intervals.max, voices)
+  # See pad_voicing: doubled thirds and sevenths, not stacked roots. One padding
+  # rule for both callers; only the trim below differs.
+  DillaLofiMachine.pad_voicing(hz, root_hz, intervals, voices)
   hz.sort.first(voices)
 end
 
@@ -9512,10 +9510,11 @@ CONCRETE_SOUL_MIX = {
 def apply_concrete_soul_mix!(track)
   return unless track.to_s == "concrete_soul"
 
-  CONCRETE_SOUL_MIX.each do |key, value|
-    ENV[key] = value
-    record_config_provenance!(key, "CONCRETE_SOUL_MIX", "force")
-  end
+  # Called from apply_dilla_style! three lines below the loop that was converted
+  # to style_env_write!, and it was still writing ENV directly — so this table
+  # reverted operator pins for concrete_soul renders after the neighbouring one
+  # had stopped doing it.
+  force_env!(CONCRETE_SOUL_MIX, label: "CONCRETE_SOUL_MIX")
 end
 
 # FUGUE_CONVERSATION: every new voice answers an existing rhythmic motif,
@@ -9559,8 +9558,10 @@ def apply_drum_archetype!(bar, phrase_bars)
   return if @last_drum_archetype == name
 
   @last_drum_archetype = name
-  bundle.each { |key, value| ENV[key] = value }
-  record_config_provenance!("DRUM_ARCHETYPE", "apply_drum_archetype![#{name}]", "force")
+  # Was a bare ENV loop plus one synthetic provenance key, so print_config_provenance
+  # could not show which drum knobs the archetype had moved. force_env! records
+  # each one and honours pins.
+  force_env!(bundle, label: "apply_drum_archetype![#{name}]")
 end
 
 # Alternates the actual drum PATTERN vocabulary (DRUM_PATTERN_SETS[:default
@@ -9898,13 +9899,7 @@ def apply_comfort_style!(force: true)
 end
 
 def soft_fill_env!(table, label: nil)
-  table.each do |key, value|
-    next if value.nil?
-    if ENV[key].nil? || ENV[key].empty?
-      ENV[key] = value.to_s
-      record_config_provenance!(key, label, "fill")
-    end
-  end
+  table.each { |key, value| style_env_write!(key, value, force: false, label:) }
 end
 
 # Overwrite ENV keys (stream creative layer after style force-locks).
@@ -9921,32 +9916,20 @@ end
 def style_env_write!(key, value, force:, label: nil)
   k = key.to_s
   return false if value.nil?
-  return false if !force && ENV[k] && !ENV[k].empty?
+  return false unless force || ENV[k].to_s.empty?
 
   if USER_PINNED_ENV.key?(k) && ENV[k] == USER_PINNED_ENV[k]
-    record_config_provenance!(k, label, "user-pinned") if label
+    record_config_provenance!(k, label, "user-pinned")
     return false
   end
 
   ENV[k] = value.to_s
-  record_config_provenance!(k, label, force ? "force" : "fill") if label
+  record_config_provenance!(k, label, force ? "force" : "fill")
   true
 end
 
 def force_env!(table, label: nil)
-  table.each do |key, value|
-    next if value.nil?
-
-    k = key.to_s
-    # A value the caller put in the environment outranks any style table.
-    # Without this, force_env! silently reverted it (see USER_PINNED_ENV).
-    if USER_PINNED_ENV.key?(k) && ENV[k] == USER_PINNED_ENV[k]
-      record_config_provenance!(k, label, "user-pinned")
-      next
-    end
-    ENV[k] = value.to_s
-    record_config_provenance!(k, label, "force")
-  end
+  table.each { |key, value| style_env_write!(key, value, force: true, label:) }
 end
 
 def print_config_provenance
@@ -12058,7 +12041,11 @@ def voice_led_pad_progression(pads)
   return pads if ENV.fetch("VOICE_LEAD_PADS", "1") == "0"
   style = (ENV["VOICING"] || "rootless").to_s.downcase.tr("-", "_").to_sym
   style = :rootless unless DillaHarmony::VOICING_STYLES.include?(style)
-  led = DillaHarmony.voice_lead_chords(pads, rootless: style != :cluster)
+  # `style` used to be computed and then consulted only for `!= :cluster`, so
+  # VOICING and the per-track VOICING_ROTATION selected nothing: every render got
+  # the default spread shape on chord one and raw template stacks after it. The
+  # style has to reach the voicing engine for the rotation to be audible.
+  led = DillaHarmony.voice_lead_chords(pads, rootless: style != :cluster, voicing: style)
   return pads if led.nil? || led.empty?
   led.map.with_index do |ch, i|
     src = pads[i] || pads.last

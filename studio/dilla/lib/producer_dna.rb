@@ -170,6 +170,12 @@ module DillaLofiMachine
     add9 sus9 sus4 sus2 sus 9 6 m
   ].freeze + [""].freeze
 
+# Compiled once. The interpolated form was rebuilt on every iteration of every
+# call (no /o on an interpolated literal), so a bare "C" — which walks the whole
+# list to the trailing "" — cost 97us before this change set and 198us after it,
+# since the four new suffixes sit ahead of the common ones. Precompiled: 8us.
+SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.freeze
+
   PAD_WAVEFORMS = %i[sine square sawtooth triangle].freeze
 
   # 16-step MPC grids: kicks/snares/hats/ghosts/claps/perc + swing/humanize.
@@ -1198,11 +1204,88 @@ euclid_sparse: {
     QUALITY_ALIASES[sfx] || (CHORD_TEMPLATES.key?(sfx) ? sfx : "maj9")
   end
 
+  def pitch_class_of(hz)
+    (69.0 + (12.0 * Math.log2(hz / 440.0))).round % 12
+  end
+
+  # A slash chord is its upper structure over a foreign bass, capped at the pad's
+  # voice count -- so one voice has to go, and which one is the whole question.
+  #
+  # The rule was `.sort.uniq.first(5)`: trim from the top, on the reasoning that
+  # the top voice is a padded octave doubling. That holds for a four-note template
+  # padded up to five and fails for every five-note ninth voicing, where the top
+  # voice IS the ninth the chord is named after. Measured before this change:
+  # Cm9/Bb came out Bb2 C3 Eb3 G3 Bb3 -- a Cm7 over Bb, Bb doubled, no D anywhere
+  # -- and Cmaj9/G lost its D, Gm9/G its A. Those spellings are most of
+  # stepwise_bass, descending_bass_soul, chromatic_bass_walk and
+  # pedal_dominant_hold, so the ninth that defines the sound was absent from the
+  # progressions built entirely out of it.
+  #
+  # Drop what a player drops: first a voice doubling the bass's pitch class, then
+  # the fifth, then the lowest inner voice. The bass and the top voice always
+  # survive.
+  def trim_slash_voicing(bass_hz, upper_hz, voices: 5)
+    upper = upper_hz.sort
+    drops = upper.length + 1 - voices
+    return ([bass_hz] + upper).sort if drops <= 0
+
+    bass_pc = pitch_class_of(bass_hz)
+    root_pc = pitch_class_of(upper.first)
+    seen = {}
+    upper.each { |h| seen[pitch_class_of(h)] = (seen[pitch_class_of(h)] || 0) + 1 }
+    removed = upper[0..-2].sort_by do |h|
+      pc = pitch_class_of(h)
+      rank = if pc == bass_pc || seen[pc] > 1
+               0 # a doubling: the bass already plays it, or the stack does
+             elsif ((pc - root_pc) % 12) == 7
+               1 # the fifth, the first chord tone a player leaves out
+             else
+               2
+             end
+      # A doubling: take the higher copy, so the shape keeps its lower anchor.
+      # A real chord tone: take the lowest inner voice, which is the one crowding
+      # the bass.
+      [rank, rank.zero? ? -h : h]
+    end.first(drops)
+    ([bass_hz] + (upper - removed)).sort
+  end
+
+  # Memoised, and slash chords resolve before the gem is consulted.
+  #
+  # Both because the gem hangs, not just occasionally but reliably, on bare minor
+  # uppers: DillaMusicGems.chord_from_symbol("Bm") never returns (measured past
+  # 120s), so every such symbol burns the whole Timeout(1.5) budget, and a slash
+  # chord burns it twice — once for "Bm/E", once for the recursive "Bm".
+  # get_dis_money's six chords are D/E Db/E C/E Bm/E Bbm/E Am/E, which cost
+  # progression_for 6.4s and beautify_curated_pipeline 11.3s per render, for
+  # answers that never varied. Hoisting the slash branch above the gem block
+  # takes Am/E from 1609ms to 0.02ms; the memo takes the whole progression to 0ms
+  # after the first parse.
+  #
+  # This got hotter in the same change set that added it: curated_progression?
+  # now routes documented transcriptions through beautify_curated_pipeline.
+  #
+  # CHORD_VOICINGS' lookup stays first — it holds exactly one slash key (Fm/C)
+  # and that hand-written voicing should still win.
   def chord_from_symbol(sym)
     sym = normalize_chord_symbol(sym)
+    @chord_symbol_cache ||= {}
+    if (cached = @chord_symbol_cache[sym])
+      # dup the array: callers voice-lead and transpose these in place.
+      return cached.merge(hz: cached[:hz].dup)
+    end
+
+    chord = uncached_chord_from_symbol(sym)
+    @chord_symbol_cache[sym] = chord if chord
+    chord
+  end
+
+  def uncached_chord_from_symbol(sym)
     if (hz = CHORD_VOICINGS[sym])
       return { name: sym, hz: hz.dup }
     end
+    return slash_chord_from_symbol(sym) if sym.include?("/")
+
     if defined?(DillaMusicGems)
       # The coltrane-gem path has hung indefinitely on specific symbols
       # (Dm7b5, Cmaj9 — see README) with no clear pattern; rather than wait
@@ -1216,26 +1299,9 @@ euclid_sparse: {
       end
       return gem_chord if gem_chord && gem_chord_sane?(sym, gem_chord)
     end
-    if sym.include?("/")
-      upper, bass_note = sym.split("/", 2)
-      ch = chord_from_symbol(upper.strip)
-      bass_hz = note_hz(bass_note.strip, octave: 2)
-      # The bass note goes UNDER the upper structure. It used to overwrite the
-      # structure's lowest voice, which for a rootless triad is its root: D/E
-      # came out E2 F#4 A4 B4 with no D in it, C/E as E2 E4 G4 A4 with no C,
-      # Db/E as E2 F3 G#3 -- an E major triad wearing a Db label. Every slash
-      # chord in get_dis_money, the progression the stream actually plays, was
-      # missing the note it is named after. A slash chord is X over Y, not X
-      # with its root traded for Y.
-      # Trimmed from the top, since adding a voice rather than replacing one
-      # leaves the structure one note wider than the voicing it came from and
-      # the widest of those is a padded octave doubling, not chord tone.
-      hz = ([bass_hz] + ch[:hz]).sort.uniq.first(5)
-      return ch.merge(name: sym, hz:, bass_hz:)
-    end
     low_register = sym.match?(/low\z/i)
     base = sym.sub(/low\z/i, "")
-    suffix = CHORD_SUFFIXES.find { |sfx| base.match?(/\A[A-G][#b]?#{sfx}\z/i) }
+    suffix = SUFFIX_MATCHERS.find { |(_, re)| base.match?(re) }&.first
     raise ArgumentError, "bad chord symbol: #{sym}" unless suffix
 
     root_name = base.match(/\A([A-G][#b]?)/i)[1]
@@ -1245,6 +1311,32 @@ euclid_sparse: {
     root_hz = note_hz(root_name, octave:)
     hz = build_voicing(root_hz, quality)
     { name: sym, hz: }
+  end
+
+# X over Y. Split out of chord_from_symbol so it can run before the coltrane
+  # gem is consulted — the gem hangs on the bare-minor uppers these use.
+  def slash_chord_from_symbol(sym)
+  upper, bass_note = sym.split("/", 2)
+  ch = chord_from_symbol(upper.strip)
+  bass_hz = note_hz(bass_note.strip, octave: 2)
+  # The bass note goes UNDER the upper structure. It used to overwrite the
+  # structure's lowest voice, which for a rootless triad is its root: D/E
+  # came out E2 F#4 A4 B4 with no D in it, C/E as E2 E4 G4 A4 with no C,
+  # Db/E as E2 F3 G#3 -- an E major triad wearing a Db label. Every slash
+  # chord in get_dis_money, the progression the stream actually plays, was
+  # missing the note it is named after. A slash chord is X over Y, not X
+  # with its root traded for Y.
+  # The pad's copy of the bass sits close under the upper structure; :bass_hz
+  # keeps the real octave-2 pitch for the bass layer. Putting E2 itself in the
+  # pad made the chord span more than the pad register (E2..A5 for D/E), and
+  # the register clamp then threw away everything above the window -- leaving
+  # get_dis_money, the default progression, as two voices per chord. The
+  # division of labour dilla_chord_bass_hz documents wants a mid-register pad
+  # over a real bass, not the pad doubling the bass three octaves down.
+  pad_bass = bass_hz
+  pad_bass *= 2.0 while 12.0 * Math.log2(ch[:hz].min / pad_bass) > 17.0
+  hz = trim_slash_voicing(pad_bass.round(2), ch[:hz])
+  return ch.merge(name: sym, hz:, bass_hz:)
   end
 
   def note_hz(name, octave: 3)
@@ -1302,19 +1394,50 @@ end
     end
   end
 
-  # Pad a voicing up to `voices` with the root's next octaves, not `max + 2`.
+  # Fill a voicing up to `voices` with octaves of tones it already contains,
+  # cheapest colour first.
   #
-  # Two semitones above the top of a maj7 (11) is 13 -- a MINOR NINTH -- so
-  # every four-note template short of `voices` had a b9 stacked on it: Dmaj7
-  # measured D F# A C# D#. It also never moved, so a template needing two pad
-  # voices got the same frequency twice. Octaves of the root add weight and
-  # cannot be wrong. Shared with dilla.rb's chord_from_root, which had the same
-  # bug and needed the same fix.
-  def self.pad_root_octaves(hz, root_hz, top_interval, voices)
-    extra = ((top_interval / 12) + 1) * 12
-    while hz.length < voices
-      hz << (root_hz * (2**(extra / 12.0))).round(2)
-      extra += 12
+  # Two earlier rules both put the root on top. `max + 2` stacked a minor ninth
+  # (two semitones above a maj7's 11 is 13): Dmaj7 measured D F# A C# D#. Octaves
+  # of the root fixed that and introduced its own problem -- the root landing
+  # directly above the seventh is a semitone in the top of the voicing (Ebmaj7 as
+  # Eb G Bb D Eb), and a triad padded twice came out D4 Gb4 A4 D5 D6, the root
+  # tripled with the fifth crowded out. Both are the single most un-Dilla move
+  # available: his pads are rootless shells over a bass, never root-doubled
+  # blocks.
+  #
+  # So double the third first, then the seventh, and only then the root -- weight
+  # without changing which pitch classes the chord contains, which also keeps
+  # chord_tones_preserved? satisfied. Any candidate closer than a whole tone to a
+  # voice already present is skipped rather than smeared against it.
+  def self.pad_voicing(hz, root_hz, intervals, voices)
+    return hz if hz.length >= voices
+
+    third = intervals.find { |i| [3, 4].include?(i % 12) }
+    seventh = intervals.find { |i| [10, 11].include?(i % 12) }
+    fifth = intervals.find { |i| (i % 12) == 7 }
+    top = intervals.max
+    preference = [third, seventh, fifth, 0].compact
+    octave = ((top / 12) + 1) * 12
+    # A voicing wider than a twelfth is not a pad, it is two parts. Both earlier
+    # rules ignored span and pushed doublings up as far as they had to: a triad
+    # padded to five came out D4 Gb4 A4 D5 D6, and once the bass of a slash chord
+    # joined it the chord covered E2..D6. The pad register is 29 semitones wide, so
+    # such a chord was thinned back to two voices at the end of the pipeline --
+    # which is what every chord of get_dis_money, the default progression, was
+    # reduced to.
+    span_ceiling = 12.0 * Math.log2(hz.min / root_hz) + 19.0
+    while hz.length < voices && octave <= 36
+      preference.each do |iv|
+        break if hz.length >= voices
+        next if iv + octave > span_ceiling
+
+        cand = (root_hz * (2**((iv + octave) / 12.0))).round(2)
+        next if hz.any? { |h| (12.0 * Math.log2(cand / h)).abs < 2.0 }
+
+        hz << cand
+      end
+      octave += 12
     end
     hz
   end
@@ -1324,7 +1447,7 @@ end
   def build_voicing(root_hz, quality, voices: 5)
     intervals = voice_extensions(CHORD_TEMPLATES.fetch(quality) { CHORD_TEMPLATES["maj9"] })
     hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
-    pad_root_octaves(hz, root_hz, intervals.max, voices)
+    pad_voicing(hz, root_hz, intervals, voices)
     # Root is always the lowest of these same-octave interval frequencies,
     # so `hz.sort.last(voices)` silently dropped it for any template longer
     # than `voices` (m9/m11/maj9 all list 5 intervals against the default

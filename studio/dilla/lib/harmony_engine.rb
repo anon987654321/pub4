@@ -5,7 +5,15 @@
 module DillaHarmony
   SOUL_QUALITIES = %w[maj9 m9 maj7 m7 m11 maj6 6 13 7sus 7alt 7#11 m7b5 sus4].freeze
   PAD_MIDI_MIN = 50.0
-  PAD_MIDI_MAX = 76.0
+  # G5, not E5. At 76 a mid-register 13th sat three semitones above the ceiling,
+  # so the whole chord was transposed down an octave to fit -- a 12-semitone lurch
+  # in the middle of a progression, which is worse than a bright top voice. 50..79
+  # is a Rhodes comp's range and PAD_LOWPASS still shapes the top.
+  PAD_MIDI_MAX = 79.0
+  # hz values are rounded to 2 dp, so a note's MIDI number lands a hair either
+  # side of the integer: D4 measures 61.99998 and E5 measures 76.00003. Every
+  # register comparison needs slack, or a boundary note is silently dropped.
+  MIDI_TOL = 0.5
   MAX_PAD_VOICES = 5
 
   VOICING_STYLES = %i[spread quartal drop2 drop3 rootless so_what kenny_barron bill_evans cluster].freeze
@@ -92,12 +100,93 @@ module DillaHarmony
     (440.0 * (2.0**((midi - 69.0) / 12.0))).round(2)
   end
 
+  # Move the chord into the pad window AS A UNIT.
+  #
+  # This folded each note independently (`m += 12 while m < MIN; m -= 12 while
+  # m > MAX`), which is the exact failure producer_dna's build_voicing documents
+  # and guards against: a rootless spread puts the 9th above MIDI 76, folding it
+  # down an octave lands it *under* the third, and a wide Rhodes voicing arrives
+  # as a semitone cluster in the low-mid. Measured on the Players transcription
+  # before this change: Ebmaj7 voiced D4 Eb4 G4 Bb4 -- the major 7th a semitone
+  # below the root, the harshest interval available -- and the returning Cm9
+  # voiced Eb3 G3 Bb3 C4, root above the 7th with the 9th gone.
   def clamp_register(midis)
-    midis.map do |m|
-      m += 12.0 while m < PAD_MIDI_MIN
-      m -= 12.0 while m > PAD_MIDI_MAX
-      m
+    return midis if midis.empty?
+
+    voiced = midis.sort
+    shift = 0.0
+    shift += 12.0 while voiced.first + shift < PAD_MIDI_MIN - MIDI_TOL
+    while voiced.last + shift > PAD_MIDI_MAX + MIDI_TOL &&
+          voiced.first + shift - 12.0 >= PAD_MIDI_MIN - MIDI_TOL
+      shift -= 12.0
     end
+    voiced = voiced.map { |m| m + shift }
+    # Wider than the window even after transposing: thin from the top. A thinner
+    # chord is still the same chord; one with its top voice folded under the bass
+    # is a different one.
+    # Half-semitone tolerance: hz values are rounded to 2 dp, so a note sitting
+    # exactly on the ceiling (E5 = 659.25 Hz -> MIDI 76.00003) measured as above
+    # it and was thrown away -- which is how G13 lost the thirteenth it is named
+    # for while the four tones below it stayed.
+    kept = voiced.select { |m| m <= PAD_MIDI_MAX + MIDI_TOL }
+    kept.length >= 2 ? kept : voiced.first(2)
+  end
+
+  # Spacing that keeps a pad reading as a chord instead of a smear. A minor third
+  # is the tightest interval that stays clear below the top octave, and a
+  # sustained pad has no business holding a semitone anywhere.
+  MUD_CEIL = 64.0
+
+  def min_voice_gap(low)
+    low < MUD_CEIL ? 3.0 : 2.0
+  end
+
+  # Octave-displace a crowded pair rather than dropping a voice. Every voicing this
+  # runs on was built from known chord functions, so moving one an octave keeps all
+  # of them present. Try both directions before giving up: raise the upper voice,
+  # or if the ceiling is in the way, lower the other one. Raise-or-delete was the
+  # only option here, and per-voice octave alignment in the voice-leading step
+  # lands two voices a semitone apart often enough that it cost real tones -- Bb13
+  # arrived as D4 G4, having lost the seventh with no room above to move it.
+  def open_spacing(midis)
+    voiced = midis.uniq.sort
+    8.times do
+      i = voiced.each_cons(2).find_index { |a, b| (b - a) < min_voice_gap(a) }
+      break unless i
+
+      up = voiced[i + 1] + 12.0
+      down = voiced[i] - 12.0
+      if up <= PAD_MIDI_MAX + MIDI_TOL
+        voiced[i + 1] = up
+      elsif down >= PAD_MIDI_MIN - MIDI_TOL
+        voiced[i] = down
+      else
+        voiced.delete_at(i + 1)
+      end
+      voiced = voiced.uniq.sort
+    end
+    voiced
+  end
+
+  # Keep the comp in one register.
+  #
+  # Per-voice octave alignment minimises motion voice by voice, which lets a
+  # voicing creep upward chord after chord until the ceiling forces it back down
+  # in a single octave drop: measured as a 13-semitone lurch between Fm9 and Bb13
+  # in the Players transcription, after the earlier fixes removed the clusters
+  # that had been hiding it. Anchoring every chord to the first chord's centre
+  # keeps the progression where a player's hands would stay.
+  def anchor_register(midis, centre)
+    return midis if midis.empty? || centre.nil?
+
+    voiced = midis.sort
+    (-2..2).map { |oct| voiced.map { |m| m + oct * 12.0 } }
+           .select { |s| s.first >= PAD_MIDI_MIN - MIDI_TOL && s.last <= PAD_MIDI_MAX + MIDI_TOL }
+           .min_by { |s| ((s.sum / s.length) - centre).abs } || clamp_register(voiced)
+  end
+
+  def register_centre(midis)
+    midis.empty? ? nil : midis.sum / midis.length
   end
 
   def chord_intervals(hz)
@@ -129,14 +218,29 @@ module DillaHarmony
     voiced = case style
              when :so_what, :quartal
                [root, root + 5, root + 10, root + 15].first(MAX_PAD_VOICES)
-             when :rootless, :bill_evans
-               pool = [root + third_iv, root + (seventh_iv || 10), root + (ninth_iv || 14)]
-               pool << root + (eleventh_iv || 17) if eleventh_iv || style == :bill_evans
-               pool << root + third_iv + 12
-               pool.uniq.first(MAX_PAD_VOICES)
-             when :kenny_barron
-               [root + third_iv, root + (seventh_iv || 10), root + (ninth_iv || 14),
-                root + (eleventh_iv || 17)].uniq.first(MAX_PAD_VOICES)
+             when :rootless, :bill_evans, :kenny_barron
+               # Subtractive, not generative.
+               #
+               # These built a shell from assumed intervals -- 3rd, 7th, 9th, 11th,
+               # defaulting each one that was missing (`ninth_iv || 14`). On a 13
+               # chord that discarded the thirteenth and invented a ninth the chord
+               # never had: Bb13 came out Bb D F Ab with a 9th on top, which
+               # chord_tones_preserved? then correctly rejected, so the curated
+               # pipeline threw the voicing away and reverted to a root-position
+               # stack. Half the Players transcription reached the render that way.
+               #
+               # Rootless means "the bass has the root", so take the root out of
+               # what the chord actually contains and leave every other tone alone.
+               # A triad has nothing to spare, so it keeps its root.
+               shell = midis.length >= 4 ? midis.drop(1) : midis
+               # The fifth goes only if there is an extension to keep the chord
+               # recognisable without it. Dropping root and fifth from a plain 7th
+               # leaves two pitch classes, which chord_tones_preserved? rejects --
+               # so Fmaj7 lost its voicing and reverted to a root-position stack.
+               if fifth_iv && shell.map { |m| ((m - root) % 12).round }.uniq.length >= 4
+                 shell = shell.reject { |m| ((m - root) % 12).round == 7 }
+               end
+               shell
              when :drop2
                return hz if midis.length < 4
                ordered = midis.dup
@@ -148,10 +252,16 @@ module DillaHarmony
                ordered[-3] -= 12.0 if ordered[-3] > PAD_MIDI_MIN
                ordered
              when :spread
+               # Only tones the chord has. The ninth was added whenever the chord
+               # had three or more intervals (`if ninth_iv || ivs.length >= 3`,
+               # defaulting to 14), so 13ths, 6ths and altered dominants all
+               # sprouted a ninth and then failed the chord-tone check.
                spread = [root, root + (fifth_iv || 7)]
                spread << root + third_iv + 12
-               spread << root + (seventh_iv || 10) + 12 if seventh_iv
-               spread << root + (ninth_iv == 2 ? 14 : (ninth_iv || 14)) + 12 if ninth_iv || ivs.length >= 3
+               spread << root + seventh_iv + 12 if seventh_iv
+               spread << root + (ninth_iv == 2 ? 14 : ninth_iv) + 12 if ninth_iv
+               spread += ivs.reject { |i| [0, third_iv, fifth_iv, seventh_iv, ninth_iv].include?(i) }
+                             .map { |i| root + i + 12 }
                spread.uniq.first(MAX_PAD_VOICES)
              when :cluster
                [root, root + 1, root + 2, root + 6].first(MAX_PAD_VOICES)
@@ -165,12 +275,25 @@ module DillaHarmony
       voiced = [root + third_iv, root + (seventh_iv || 10) + 12, root + (ninth_iv || 14) + 12] if voiced.length < 3
     end
 
-    clamp_register(voiced.uniq).map { |m| midi_to_hz(m) }.first(MAX_PAD_VOICES)
+    clamp_register(open_spacing(voiced)).map { |m| midi_to_hz(m) }.first(MAX_PAD_VOICES)
   end
 
   def decorate_chord(chord, voicing: :spread, rootless: true)
     hz = apply_voicing(chord[:hz], style: voicing, rootless:)
     { name: chord[:name], hz:, bass_hz: chord[:bass_hz] || chord[:hz].min }
+  end
+
+  # The voicing a progression asked for.
+  #
+  # dilla_reference.yml declares `voicing: rootless` on all four documented
+  # transcriptions and HARMONY_PROFILES carries it through, but the curated
+  # pipeline hardcoded `rootless: false` and the stream's VOICING rotation was
+  # only ever tested for `== :cluster` -- so every Dilla chord played its own root
+  # while dilla_chord_bass_hz played it too, and the rotation was inaudible.
+  def declared_voicing(cfg)
+    raw = DillaLofiMachine.profile_entry(cfg[:track])&.dig(:voicing) || cfg[:voicing]
+    style = raw.to_s.downcase.tr("-", "_").to_sym
+    VOICING_STYLES.include?(style) ? style : :rootless
   end
 
   KEY_ALIASES = {
@@ -368,24 +491,33 @@ module DillaHarmony
   end
 
   # SATB-style voice leading — bottom voice stays bottom, chord identity intact.
-  def voice_lead_chords_indexed(chords, rootless: false)
+  def voice_lead_chords_indexed(chords, rootless: false, voicing: :rootless)
     return chords if chords.length <= 1
-    first_hz = chords.first[:hz].map { |h| hz_to_midi(h) }.sort
-    first_hz = first_hz.drop(1) if rootless && first_hz.length > 3
-    led = [preserve_chord_register(chords.first.merge(hz: clamp_register(first_hz).map { |m| midi_to_hz(m) }))]
+
+    # Shape every chord, not just the first. `targets.drop(1)` was the old
+    # rootless: it removed the bottom voice of a root-position template stack,
+    # which drops the root but leaves the rest of the stack closed and in the
+    # order the template happened to list it. apply_voicing builds the shell the
+    # style actually names (3rd, 7th, 9th for rootless) from the chord's own
+    # intervals, and leaves sus/quartal/slash chords alone.
+    shaped = chords.map { |c| decorate_chord(c, voicing:, rootless:) }
+    led = [preserve_chord_register(shaped.first)]
     prev = led.first[:hz].map { |h| hz_to_midi(h) }.sort
-    chords.drop(1).each do |nxt|
+    centre = register_centre(prev)
+    shaped.drop(1).each do |nxt|
       targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
-      targets = targets.drop(1) if rootless && targets.length > 3
-      n_voices = [prev.length, targets.length, MAX_PAD_VOICES].min
+      # Not `[prev.length, ...].min`: that clamped every chord to the narrowest
+      # voicing seen so far, and since targets are sorted ascending it always cut
+      # from the top. One rootless 3-voice chord early in a progression therefore
+      # deleted the thirteenth from every 13 chord after it -- Bb13 arrived as
+      # D F Ab. `prev[vi] || prev.last` below already handles a shorter anchor.
+      n_voices = [targets.length, MAX_PAD_VOICES].min
       voiced = n_voices.times.map do |vi|
         target = targets[vi] || targets.last
         anchor = prev[vi] || prev.last
-        midi = target + (((anchor - target) / 12.0).round * 12.0)
-        midi += 12.0 while midi < PAD_MIDI_MIN
-        midi -= 12.0 while midi > PAD_MIDI_MAX
-        midi
-      end.sort
+        target + (((anchor - target) / 12.0).round * 12.0)
+      end
+      voiced = anchor_register(clamp_register(open_spacing(voiced)), centre)
       prev = voiced
       hz = voiced.map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
       led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
@@ -393,24 +525,27 @@ module DillaHarmony
     led
   end
 
-  def voice_lead_chords(chords, rootless: false)
+  # Only the first chord was decorated here, so a progression opened with a
+  # rootless spread and then played seven root-position template stacks nudged
+  # into register -- audibly one good chord followed by a block-chord comp.
+  def voice_lead_chords(chords, rootless: false, voicing: :spread)
     return chords if chords.length <= 1
-    led = [decorate_chord(chords.first, voicing: :spread, rootless:)]
+
+    shaped = chords.map { |c| decorate_chord(c, voicing:, rootless:) }
+    led = [shaped.first]
     prev = led.first[:hz].map { |h| hz_to_midi(h) }.sort
-    chords.drop(1).each do |nxt|
+    centre = register_centre(prev)
+    shaped.drop(1).each do |nxt|
       targets = nxt[:hz].map { |h| hz_to_midi(h) }.sort
       anchors = prev.dup
       voiced = targets.map do |target|
         anchor = anchors.empty? ? target : anchors.min_by { |a| pitch_class_dist(a, target) }
         anchors.delete(anchor) if anchors.length > 1
-        shift = ((anchor - target) / 12.0).round
-        midi = target + shift * 12.0
-        midi += 12.0 while midi < PAD_MIDI_MIN
-        midi -= 12.0 while midi > PAD_MIDI_MAX
-        midi
-      end.sort
+        target + ((anchor - target) / 12.0).round * 12.0
+      end
+      voiced = anchor_register(clamp_register(open_spacing(voiced)), centre)
       prev = voiced
-      hz = clamp_register(voiced).map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
+      hz = voiced.map { |m| midi_to_hz(m) }.uniq.first(MAX_PAD_VOICES)
       led << { name: nxt[:name], hz:, bass_hz: nxt[:bass_hz] || nxt[:hz].min }
     end
     led
@@ -561,7 +696,8 @@ module DillaHarmony
   def beautify_curated_pipeline(pads, cfg, phases: [])
     pads = normalize_chord_pads(pads)
     pads, phases = enrich_progression(pads, cfg, phases:, curated: true)
-    pads = voice_lead_chords_indexed(pads, rootless: false)
+    style = declared_voicing(cfg)
+    pads = voice_lead_chords_indexed(pads, rootless: style != :cluster, voicing: style)
     pads = pads.map do |ch|
       next ch if chord_tones_preserved?(ch)
       sym = ch[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "")
@@ -602,7 +738,7 @@ module DillaHarmony
     pads, phases = enrich_progression(pads, cfg, phases:)
     pads = apply_recap_substitutions(pads, cfg, phases)
     pads = insert_secondary_dominants(pads, cfg)
-    pads = voice_lead_chords(pads, rootless: soul_profile?(cfg[:track]))
+    pads = voice_lead_chords(pads, rootless: soul_profile?(cfg[:track]), voicing: declared_voicing(cfg))
     pads = bass_voice_lead(pads)
     pads = validate_and_fix(pads)
     pads = add_turnaround_tags(pads, cfg)
