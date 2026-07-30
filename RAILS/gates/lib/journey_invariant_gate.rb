@@ -58,6 +58,9 @@ module Deploy
       end
 
       check_no_js_parity(live)
+      # Counted per surface, so one surface that could not be measured does not
+      # make the ones that were count for nothing.
+      @result.checked!(live.size)
       # A gate that reports nothing must be distinguishable from a gate that
       # ran nothing, or a silently-empty sweep reads as a pass forever.
       @result.warn("journey_invariant: checked idempotence + back-button on #{live.size} surface(s), " \

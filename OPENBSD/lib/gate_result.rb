@@ -37,6 +37,7 @@ module Deploy
       @warnings = []
       @soft_failures = []
       @unchecked = []
+      @checks_ran = 0
     end
 
     # severity: :hard (default, blocks) | :soft (warn unless GATE_STRICT_SOFT)
@@ -63,15 +64,38 @@ module Deploy
     # measured" reads as a mystery.
     def inconclusive!(reason)
       @unchecked << reason
-      @failures << "[unchecked→hard] #{reason}" if self.class.strict_inconclusive?
       self
+    end
+
+    # Count a check that actually ran, so a gate can say how much it measured.
+    #
+    # Without this the two states are indistinguishable: a passing check records
+    # nothing, so `unchecked.empty?` was the only signal available and one skipped
+    # precondition spoke for the whole gate. human_walkthrough runs source checks
+    # for every app and needs a port only for the live half, so a single parked app
+    # made it report "INCONCLUSIVE (checked nothing)" -- untrue -- and dropped it
+    # from the pass count.
+    def checked!(count = 1)
+      @checks_ran += count
+      self
+    end
+
+    attr_reader :checks_ran
+
+    # Nothing measured at all. This is what GATE_STRICT_INCONCLUSIVE is for, and
+    # it is now decided here rather than inside inconclusive!: promoting at record
+    # time meant a gate that ran fifty checks and skipped one hard-failed on the
+    # deploy host, so `resource_guard.sh` parking amber -- a documented, normal VPS
+    # state -- blocked releases that had nothing wrong with them.
+    def measured_nothing?
+      @checks_ran.zero? && !@unchecked.empty?
     end
 
     def ok?
       @failures.empty?
     end
 
-    # Did this gate actually check the thing it exists to check?
+    # Did this gate check everything it exists to check?
     def conclusive?
       @unchecked.empty?
     end
@@ -79,10 +103,17 @@ module Deploy
     # The one place the three states are ranked. Callers that aggregate gates
     # (RAILS/gates/runner.rb) ask for this instead of re-deriving it from the
     # three lists, so the suite line and a leaf's own output cannot disagree.
+    #
+    # :inconclusive means the gate measured nothing, not that it skipped
+    # something. A gate that checked fifty things and could not check the
+    # fifty-first passed, and says what it skipped -- calling that "checked
+    # nothing" was false, dropped it out of the pass count, and under
+    # GATE_STRICT_INCONCLUSIVE turned a parked app into a blocked deploy.
     def outcome
       return :failed unless ok?
+      return :failed if measured_nothing? && self.class.strict_inconclusive?
 
-      conclusive? ? :passed : :inconclusive
+      measured_nothing? ? :inconclusive : :passed
     end
 
     # label: prefixes every merged message, so a composite's output still names
@@ -93,6 +124,10 @@ module Deploy
       Array(other.warnings).each { |w| @warnings << "#{tag}#{w}" }
       Array(other.soft_failures).each { |m| @soft_failures << "#{tag}#{m}" }
       Array(other.unchecked).each { |m| @unchecked << "#{tag}#{m}" }
+      # A composite measured whatever its leaves measured, or one leaf with no
+      # Chrome would speak for the whole suite the way one app used to speak for
+      # a whole gate.
+      @checks_ran += other.checks_ran if other.respond_to?(:checks_ran)
       self
     end
 
@@ -104,14 +139,27 @@ module Deploy
       emit("Failures:", @failures)
 
       case outcome
-      when :failed then :failed
+      when :failed
+        # The strict-mode failure has no message of its own -- the promotion moved
+        # out of inconclusive! and into outcome -- so say why, or the runner reports
+        # FAILED with nothing under it.
+        if @failures.empty?
+          emit("Failures:", ["nothing measured, and GATE_STRICT_INCONCLUSIVE is set " \
+                             "(#{@unchecked.size} precondition(s) missing)"])
+        end
+        :failed
       when :inconclusive
         # Deliberately not the success message: the point of the third state is
         # that this gate has nothing to report success about.
-        puts "inconclusive: #{@unchecked.size} check(s) did not run (set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
+        puts "inconclusive: nothing measured — #{@unchecked.size} precondition(s) missing " \
+             "(set GATE_STRICT_INCONCLUSIVE=1 to treat as failure)"
         :inconclusive
       else
-        puts success_message if success_message
+        # A pass that skipped something says so, instead of printing a clean
+        # success line over a "Not checked:" block.
+        if success_message
+          puts conclusive? ? success_message : "#{success_message} (#{@checks_ran} check(s) ran, #{@unchecked.size} skipped)"
+        end
         :passed
       end
     end

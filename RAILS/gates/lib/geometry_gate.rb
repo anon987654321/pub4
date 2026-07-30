@@ -82,6 +82,9 @@ module Deploy
         probed += 1
         check_surface(surface, payload)
       end
+      # What was actually measured, so a gate that measured some surfaces and
+      # skipped others is not reported as having measured nothing.
+      @result.checked!(probed)
       @result.warn("geometry: measured #{probed} surface×viewport cells in a real browser")
       @result
     end

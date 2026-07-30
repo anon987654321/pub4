@@ -78,6 +78,9 @@ module Deploy
           "missing after compression: #{missing.inspect}"
         )
       end
+      # This app's stylesheet was compiled and compared; an app without an
+      # application.scss should not make the ones that have it count for nothing.
+      result.checked!
     end
 
     def strip_comments(css)

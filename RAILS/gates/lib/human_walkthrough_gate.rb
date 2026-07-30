@@ -63,6 +63,9 @@ module Deploy
       files.fetch(:nav).each do |label|
         result.fail("#{app.name}: primary visitor nav missing #{label}") unless nav_source.include?(label)
       end
+      # These ran whether or not the app is listening, and saying so is what keeps
+      # one parked app from making the whole gate read as "checked nothing".
+      result.checked!(3 + files.fetch(:nav).length)
 
       if app.name == "brgen"
         result.fail("brgen: sidebar search must submit to global_search_path") unless layout.include?("form_with url: global_search_path")
@@ -70,6 +73,7 @@ module Deploy
           aria_label = /aria:\s*\{[^}]*\blabel:\s*["']#{Regexp.escape(label.tr('\\', ''))}["']/
           result.fail("brgen: mobile tab missing aria label #{label}") unless nav_source.match?(aria_label)
         end
+        result.checked!(6)
       end
     end
 
@@ -95,6 +99,7 @@ module Deploy
       %w[Exception Routing\ Error].each do |bad|
         result.fail("#{app.name}: visitor saw #{bad.tr('\\', '')}") if html.include?(bad.tr("\\", ""))
       end
+      result.checked!(3)
 
       unless nokogiri_available?
         result.warn("#{app.name}: live HTML structure checks skipped (nokogiri unavailable; source checks still ran)")
@@ -114,6 +119,7 @@ module Deploy
         label = input["aria-label"] || input["placeholder"] || "unlabelled search"
         result.fail("#{app.name}: search input is not inside a form (#{label})")
       end
+      result.checked!(5 + doc.css('input[type="search"]').size)
     end
   end
 end

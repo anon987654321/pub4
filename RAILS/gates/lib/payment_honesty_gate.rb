@@ -42,6 +42,10 @@ module Deploy
       @result.fail("payment_honesty: StripeCheckout must raise NotConfigured") unless stripe.match?(/raise NotConfigured/)
       vipps = File.read(File.join(RAILS, "brgen/app/services/marketplace/payments/vipps_checkout.rb"))
       @result.fail("payment_honesty: VippsCheckout must raise NotConfigured") unless vipps.match?(/raise NotConfigured/)
+      # The source contract above is the bulk of this gate and does not need a
+      # booted app; only the cart probe does. Counting it stops a closed brgen port
+      # from reporting the whole gate as having measured nothing.
+      @result.checked!(REQUIRED.size + 2)
 
       live_cart_probe
       @result

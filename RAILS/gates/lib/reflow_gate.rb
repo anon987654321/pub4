@@ -129,6 +129,9 @@ module Deploy
       GeometryProbe.with_browser do |cdp|
         live.each { |surface| sweep(cdp, surface, widths) }
       end
+      # Counted per surface, so one surface that could not be measured does not
+      # make the ones that were count for nothing.
+      @result.checked!(live.size)
       @result.warn("reflow: swept #{widths.length} widths (#{widths.first}–#{widths.last}px) × #{live.size} surface(s)")
       @result
     end

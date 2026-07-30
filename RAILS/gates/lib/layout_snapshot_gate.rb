@@ -105,6 +105,9 @@ module Deploy
           report(surface, diffs, path)
         end
       end
+      # What was actually measured, so a gate that compared some surfaces and
+      # skipped others is not reported as having measured nothing.
+      @result.checked!(compared + written)
 
       @result.warn("layout_snapshot: compared #{compared} surface(s), wrote #{written}") if compared.positive? || written.positive?
       @result
