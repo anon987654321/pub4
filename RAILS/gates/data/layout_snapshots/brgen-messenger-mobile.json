@@ -34,7 +34,7 @@
       "rect": {
         "x": 38,
         "y": 77,
-        "w": 123,
+        "w": 129,
         "h": 20
       },
       "color": "#e0e0e0",
@@ -98,7 +98,7 @@
       "rect": {
         "x": 20,
         "y": 156,
-        "w": 233,
+        "w": 232,
         "h": 47
       },
       "color": "#e0e0e0",
@@ -113,7 +113,7 @@
       "tag": "a",
       "rect": {
         "x": 14,
-        "y": 9,
+        "y": 14,
         "w": 63,
         "h": 44
       },
@@ -128,8 +128,8 @@
       "key": "html>body.vertical-messenger>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 278,
-        "y": 800,
+        "x": 265,
+        "y": 787,
         "w": 112,
         "h": 44
       },
@@ -144,9 +144,9 @@
       "key": "section.messenger-compose>form.messenger-compose-form>div.messenger-compose-row>input.btn",
       "tag": "input",
       "rect": {
-        "x": 262,
+        "x": 260,
         "y": 156,
-        "w": 109,
+        "w": 110,
         "h": 47
       },
       "color": "#e0e0e0",

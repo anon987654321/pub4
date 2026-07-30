@@ -124,7 +124,20 @@ module Deploy
     # Keep only what is structural. Feed items, timestamps and seeded records
     # move for reasons that are not design changes; including them would make
     # the baseline as flaky as the PNG it replaces.
-    VOLATILE_KEY = /feed-card|feed-post|deal-card|live-item|comment_item|post-meta|\[\d+\]/
+    #
+    # The list named `live-item` and `post-meta`, which the live surface has
+    # never rendered -- its markup is `live-card-meta` / `live-card-actions`
+    # under a `#post_<id>` anchor. So 100 of that baseline's 114 elements were
+    # seeded post IDs and the filter caught none of them: the surface drifted on
+    # every reseed, and the only available fix was to re-record it, which is the
+    # habit this filter exists to prevent. Match the record anchor itself
+    # (`#post_2206`, `#comment_88`) rather than trying to enumerate the class
+    # names hung off it, since that is the part that is actually a database id.
+    VOLATILE_KEY = /
+      \#(?:post|comment|listing|item|message|conversation)_\d+ |
+      feed-card|feed-post|deal-card|live-card|live-item|comment_item|post-meta |
+      \[\d+\]
+    /x
     STRUCTURAL_TAG = %w[header nav main footer aside form h1 h2 button a input select textarea].freeze
 
     def distill(payload)

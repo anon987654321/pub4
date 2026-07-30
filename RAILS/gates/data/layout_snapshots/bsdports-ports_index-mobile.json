@@ -101,7 +101,7 @@
         "w": 142,
         "h": 44
       },
-      "color": "#3d7a3d",
+      "color": "#499149",
       "bg": "#000000",
       "font_size": 11.3,
       "line_height": 12,
@@ -117,7 +117,7 @@
         "w": 359,
         "h": 141
       },
-      "color": "#3d7a3d",
+      "color": "#499149",
       "bg": "#000000",
       "font_size": 11.3,
       "line_height": 16.9,
@@ -166,7 +166,7 @@
         "h": 44
       },
       "color": "#63c363",
-      "bg": "#000000",
+      "bg": "#030603",
       "font_size": 11.3,
       "line_height": 12,
       "display": "flex",
@@ -192,8 +192,8 @@
       "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 320,
-        "y": 800,
+        "x": 311,
+        "y": 791,
         "w": 70,
         "h": 44
       },

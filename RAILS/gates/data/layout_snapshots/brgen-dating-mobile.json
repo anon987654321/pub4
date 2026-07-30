@@ -65,7 +65,7 @@
       "tag": "a",
       "rect": {
         "x": 14,
-        "y": 9,
+        "y": 14,
         "w": 63,
         "h": 44
       },
@@ -80,8 +80,8 @@
       "key": "html>body.vertical-dating>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 278,
-        "y": 800,
+        "x": 265,
+        "y": 787,
         "w": 112,
         "h": 44
       },

@@ -205,22 +205,6 @@
       "position": "fixed"
     },
     {
-      "key": "div.app-shell>section.mobile-sheet>div.mobile-sheet-links>a",
-      "tag": "a",
-      "rect": {
-        "x": 18,
-        "y": 875,
-        "w": 354,
-        "h": 52
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
-    },
-    {
       "key": "div.theme-root>div.app-shell>nav.tab-bar>a.tab-item",
       "tag": "a",
       "rect": {
@@ -230,7 +214,7 @@
         "h": 54
       },
       "color": "#d6473f",
-      "bg": "#1a1a1a",
+      "bg": "#202020",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -257,7 +241,7 @@
       "tag": "a",
       "rect": {
         "x": 14,
-        "y": 9,
+        "y": 14,
         "w": 63,
         "h": 44
       },
@@ -272,8 +256,8 @@
       "key": "html>body.vertical-tv>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 278,
-        "y": 746,
+        "x": 265,
+        "y": 733,
         "w": 112,
         "h": 44
       },

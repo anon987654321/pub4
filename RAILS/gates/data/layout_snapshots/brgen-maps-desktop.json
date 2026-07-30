@@ -34,11 +34,11 @@
       "rect": {
         "x": 86,
         "y": 25,
-        "w": 239,
+        "w": 240,
         "h": 40
       },
       "color": "#e0e0e0",
-      "bg": "#12151c",
+      "bg": "#191a1a",
       "font_size": 15.8,
       "line_height": 20,
       "display": "block",
@@ -65,7 +65,7 @@
       "tag": "a",
       "rect": {
         "x": 14,
-        "y": 9,
+        "y": 14,
         "w": 63,
         "h": 44
       },
@@ -80,8 +80,8 @@
       "key": "html>body.vertical-maps>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 1328,
-        "y": 856,
+        "x": 1315,
+        "y": 843,
         "w": 112,
         "h": 44
       },
@@ -96,9 +96,9 @@
       "key": "section>div.map-hud>div.cluster>a.btn.btn-ghost.btn-sm",
       "tag": "a",
       "rect": {
-        "x": 333,
+        "x": 335,
         "y": 27,
-        "w": 112,
+        "w": 111,
         "h": 44
       },
       "color": "#969696",

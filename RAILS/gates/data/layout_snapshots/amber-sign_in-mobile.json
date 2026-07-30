@@ -214,7 +214,7 @@
         "h": 44
       },
       "color": "#2c2824",
-      "bg": "#ffffff",
+      "bg": "#f8f8f8",
       "font_size": 12,
       "line_height": 0,
       "display": "block",
@@ -262,7 +262,7 @@
         "h": 44
       },
       "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "bg": "#f1eee9",
       "font_size": 12,
       "line_height": 19.2,
       "display": "flex",
@@ -272,8 +272,8 @@
       "key": "html>body>div.nearby-chat-widget>button.nearby-chat-widget-tab",
       "tag": "button",
       "rect": {
-        "x": 304,
-        "y": 746,
+        "x": 292,
+        "y": 734,
         "w": 86,
         "h": 44
       },
