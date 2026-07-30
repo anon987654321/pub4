@@ -56,9 +56,7 @@ module Deploy
     def run_leaves
       result = GateResult.new
       LEAVES.each do |klass|
-        leaf = klass.run
-        leaf.failures.each { |f| result.fail("[#{klass.name.split('::').last}] #{f}") }
-        leaf.warnings.each { |w| result.warn("[#{klass.name.split('::').last}] #{w}") }
+        result.merge!(klass.run, label: klass.name.split("::").last)
       end
       result
     end

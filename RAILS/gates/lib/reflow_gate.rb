@@ -108,7 +108,7 @@ module Deploy
     def run
       @result = Result.new
       unless GeometryProbe.available?
-        @result.warn("reflow: no Chrome/Chromium — width sweep not run")
+        @result.inconclusive!("reflow: no Chrome/Chromium — width sweep not run")
         return @result
       end
 
@@ -122,7 +122,7 @@ module Deploy
       GeometryProbe.unreachable_apps(surfaces).each { |app| @result.warn("reflow: #{app} port closed — skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.warn("reflow: no app reachable")
+        @result.inconclusive!("reflow: no app reachable")
         return @result
       end
 

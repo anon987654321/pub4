@@ -51,8 +51,8 @@ module Deploy
 
     def live_cart_probe
       inv = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
-      return @result.warn("payment_honesty: brgen not in inventory") unless inv
-      return @result.warn("payment_honesty: brgen port closed") unless CrawlSupport.port_open?("127.0.0.1", inv.port)
+      return @result.inconclusive!("payment_honesty: brgen not in inventory — live cart not probed") unless inv
+      return @result.inconclusive!("payment_honesty: brgen port closed — live cart not probed") unless CrawlSupport.port_open?("127.0.0.1", inv.port)
 
       # Guest cart should redirect to sign-in or show cart — never 500
       res = fetch("http://127.0.0.1:#{inv.port}/cart", host: "markedsplass.brgen.no")

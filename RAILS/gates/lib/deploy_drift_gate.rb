@@ -20,12 +20,15 @@ module Deploy
   # /var/db/pub4/last_deploy_<app>.json, and `git log <sha>..HEAD -- <paths>`.
   # Nothing was watching them. This does.
   #
-  # Deliberately NOT a soft skip when the stamps are missing. 16 of this suite's
-  # gates already pass having checked nothing when a precondition is absent,
-  # which makes a green run mean less than it looks. Off the deploy host there
-  # are no stamps and this gate genuinely cannot judge, so it says so in a
-  # warning that names the reason — but it never reports success it has not
-  # earned.
+  # Deliberately NOT a soft skip when the stamps are missing. Off the deploy
+  # host there are no stamps and this gate genuinely cannot judge, so it says so
+  # rather than reporting success it has not earned.
+  #
+  # A warning was not enough to carry that: `GateResult#ok?` only asked about
+  # hard failures, so the shim still printed "ok: no deploy drift detected"
+  # directly beneath "Nothing was checked." `GateResult#inconclusive!` is the
+  # third state that fixes it, and the sixteen other gates in this suite that
+  # passed on an absent precondition now use it too.
   class DeployDriftGate
     ROOT = File.expand_path("../../..", __dir__)
     STAMP_DIR = ENV.fetch("PUB4_STAMP_DIR", "/var/db/pub4")
@@ -42,15 +45,15 @@ module Deploy
     def run
       result = GateResult.new
       unless git_repo?
-        result.warn("deploy_drift: not a git checkout at #{ROOT} — cannot compare deployed SHA to HEAD")
+        result.inconclusive!("deploy_drift: not a git checkout at #{ROOT} — cannot compare deployed SHA to HEAD")
         return result
       end
 
       stamps = read_stamps
       if stamps.empty?
-        result.warn(
+        result.inconclusive!(
           "deploy_drift: no deploy stamps under #{STAMP_DIR} — this gate only has something to " \
-          "compare on the deploy host. Nothing was checked."
+          "compare on the deploy host"
         )
         return result
       end
@@ -79,7 +82,7 @@ module Deploy
       result.fail("deploy_drift: #{app} last deploy status is #{status.inspect}, not \"ok\"") unless status == "ok"
 
       unless known_commit?(sha)
-        result.warn("deploy_drift: #{app} deployed #{sha}, which this checkout does not contain — fetch and re-run")
+        result.inconclusive!("deploy_drift: #{app} deployed #{sha}, which this checkout does not contain — fetch and re-run")
         return
       end
 

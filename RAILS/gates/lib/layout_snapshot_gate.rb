@@ -44,7 +44,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.warn("layout_snapshot: no Chrome/Chromium — snapshots not compared")
+        @result.inconclusive!("layout_snapshot: no Chrome/Chromium — snapshots not compared")
         return @result
       end
 
@@ -54,7 +54,7 @@ module Deploy
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.warn("layout_snapshot: no app reachable — nothing compared")
+        @result.inconclusive!("layout_snapshot: no app reachable — nothing compared")
         return @result
       end
 

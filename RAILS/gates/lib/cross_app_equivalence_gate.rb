@@ -49,7 +49,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.warn("cross_app: no Chrome/Chromium — shared chrome not compared")
+        @result.inconclusive!("cross_app: no Chrome/Chromium — shared chrome not compared")
         return @result
       end
 
@@ -61,7 +61,7 @@ module Deploy
       GeometryProbe.unreachable_apps(surfaces).each { |app| @result.warn("cross_app: #{app} port closed — skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.size < 2
-        @result.warn("cross_app: need at least two apps running to compare (have #{live.size})")
+        @result.inconclusive!("cross_app: need at least two apps running to compare (have #{live.size})")
         return @result
       end
 

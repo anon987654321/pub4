@@ -83,7 +83,7 @@ module Deploy
     end
 
     def live_checks(result, app)
-      return result.warn("#{app.name}: live walkthrough skipped; port #{app.port} closed") unless CrawlSupport.port_open?("127.0.0.1", app.port)
+      return result.inconclusive!("#{app.name}: live walkthrough not run; port #{app.port} closed") unless CrawlSupport.port_open?("127.0.0.1", app.port)
 
       response = CrawlSupport.fetch("http://127.0.0.1:#{app.port}/")
       unless response.code.to_i.between?(200, 399)

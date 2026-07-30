@@ -30,7 +30,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.warn("journey_invariant: no Chrome/Chromium — invariants not checked")
+        @result.inconclusive!("journey_invariant: no Chrome/Chromium — invariants not checked")
         return @result
       end
 
@@ -40,7 +40,7 @@ module Deploy
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.warn("journey_invariant: no app reachable")
+        @result.inconclusive!("journey_invariant: no app reachable")
         return @result
       end
 

@@ -53,8 +53,7 @@ module Deploy
           failed.fail("#{name} raised #{e.class}: #{e.message}")
           failed
         end
-        leaf.failures.each { |f| result.fail("[#{name}] #{f}") }
-        leaf.warnings.each { |w| result.warn("[#{name}] #{w}") }
+        result.merge!(leaf, label: name)
       end
       result
     end

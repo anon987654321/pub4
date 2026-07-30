@@ -24,9 +24,7 @@ module Deploy
     end
 
     def run
-      apps_result = AppsYmlValidator.run
-      apps_result.failures.each { |failure| @result.fail(failure) }
-      apps_result.warnings.each { |warning| @result.warn(warning) }
+      @result.merge!(AppsYmlValidator.run)
 
       apps = load_yaml(APPS_YML).fetch("apps")
       env_sample = File.join(RAILS_ROOT, "env.sample")
@@ -141,11 +139,11 @@ module Deploy
 
     def run_nested_gates
       assets = MasterWebAssetsGate.run
-      assets.failures.each { |failure| @result.fail(failure) }
+      @result.merge!(assets)
       puts "MASTER/web assets gate passed (#{MasterWebAssetsGate::REQUIRED.size} required assets present)." if assets.ok?
 
       tts = MasterTtsGate.run
-      tts.failures.each { |failure| @result.fail(failure) }
+      @result.merge!(tts)
       puts "MASTER TTS gate passed." if tts.ok?
     end
 

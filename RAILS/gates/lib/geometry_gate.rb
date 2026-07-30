@@ -59,7 +59,7 @@ module Deploy
       @palette = token_palette
 
       unless GeometryProbe.available?
-        @result.warn("geometry: no Chrome/Chromium — rendered geometry not measured (set CHROME_PATH)")
+        @result.inconclusive!("geometry: no Chrome/Chromium — rendered geometry not measured (set CHROME_PATH)")
         return @result
       end
 
@@ -69,7 +69,7 @@ module Deploy
       end
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.warn("geometry: no app reachable — nothing measured")
+        @result.inconclusive!("geometry: no app reachable — nothing measured")
         return @result
       end
 

@@ -29,7 +29,7 @@ module Deploy
       begin
         require "sass-embedded"
       rescue LoadError
-        result.warn("css_minify_integrity: skipped (sass-embedded gem unavailable)")
+        result.inconclusive!("css_minify_integrity: sass-embedded gem unavailable — no stylesheet compiled")
         return result
       end
 
@@ -41,7 +41,7 @@ module Deploy
 
     def check_app(result, app)
       entry = File.join(RAILS_ROOT, app, "app/assets/stylesheets/application.scss")
-      return result.warn("css_minify_integrity: #{app} has no application.scss") unless File.file?(entry)
+      return result.inconclusive!("css_minify_integrity: #{app} has no application.scss") unless File.file?(entry)
 
       load_paths = [
         File.join(RAILS_ROOT, "shared", "app/assets/stylesheets"),

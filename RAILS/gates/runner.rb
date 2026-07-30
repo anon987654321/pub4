@@ -180,47 +180,48 @@ def run_in_process(key)
 end
 
 def emit_gate_result(key, result)
-  unless result.respond_to?(:ok?)
-    warn "[gates] #{key}: in-process gate did not return GateResult"
-    return false
+  unless result.respond_to?(:render)
+    warn "[gates] #{key}: in-process gate did not return Deploy::GateResult"
+    return :failed
   end
 
   autofix_off = ENV["GATE_AUTOFIX"].to_s.strip.downcase.match?(/\A(0|false|no|off)\z/)
   warn "[gates] GATE_AUTOFIX #{autofix_off ? 'off (report-only)' : 'on (fix + remeasure)'}"
 
-  result.warnings.each { |warning| warn "  - #{warning}" } if result.warnings.any?
-  if result.ok?
-    true
-  else
-    warn "Failures:"
-    result.failures.each { |failure| warn "  - #{failure}" }
-    false
-  end
+  # GateResult owns both the rendering and the three-way classification. A gate
+  # that could not run its check is not a pass: it does not block the suite (off
+  # the deploy host most rendered gates genuinely cannot run), but it must not be
+  # counted in the "ALL PASSED" line either. run_one prints the outcome label.
+  result.render
 end
 
 def run_subprocess(key)
   path = gate_path(key)
   unless File.file?(path)
     warn "[gates] Missing gate file for #{key}: #{path}"
-    return false
+    return :failed
   end
   extra = gate_extra_args(key)
   puts "[gates] visual_contract capture enabled (VISUAL_CAPTURE=1)" if key == :visual_contract && extra.include?("--capture")
   system(*ruby_cmd, path, *extra)
-  $?.success?
+  # A subprocess only tells us its exit status, so an inconclusive gate run this
+  # way still reads as a pass here. Its own output names what it skipped.
+  $?.success? ? :passed : :failed
 end
+
+OUTCOME_LABEL = { passed: "PASSED", failed: "FAILED", inconclusive: "INCONCLUSIVE (checked nothing)" }.freeze
 
 def run_one(key)
   path = gate_path(key)
   puts "\n==> [gates] Running #{key} (#{File.basename(path)})"
-  success =
+  outcome =
     if IN_PROCESS.key?(key) && !SUBPROCESS_ONLY.include?(key)
       run_in_process(key)
     else
       run_subprocess(key)
     end
-  puts success ? "[gates] #{key} PASSED" : "[gates] #{key} FAILED"
-  success
+  puts "[gates] #{key} #{OUTCOME_LABEL.fetch(outcome)}"
+  outcome
 end
 
 def list_gates
@@ -274,10 +275,21 @@ if skipped.any?
   puts "[gates] Skipping #{skipped.join(', ')} (covered by composite gates in this run)"
 end
 
-results = gates_to_run.map { |key| run_one(key) }
+outcomes = gates_to_run.to_h { |key| [key, run_one(key)] }
 
-overall = results.all?
+failed = outcomes.select { |_, o| o == :failed }.keys
+unchecked = outcomes.select { |_, o| o == :inconclusive }.keys
+passed = outcomes.count { |_, o| o == :passed }
 
 puts "\n#{'=' * 50}"
-puts overall ? "[gates] ALL SELECTED GATES PASSED (#{results.size})" : "[gates] SOME GATES FAILED"
-exit overall ? 0 : 1
+if failed.any?
+  puts "[gates] SOME GATES FAILED: #{failed.join(', ')}"
+elsif unchecked.any?
+  # Never claim a coverage number the run did not earn. This line is the whole
+  # point of the third state: "ALL PASSED (24)" used to include gates that had
+  # no Chrome, no listening app and nothing to measure.
+  puts "[gates] #{passed} gate(s) passed, #{unchecked.size} inconclusive: #{unchecked.join(', ')}"
+else
+  puts "[gates] ALL SELECTED GATES PASSED (#{passed})"
+end
+exit failed.any? ? 1 : 0

@@ -48,7 +48,7 @@ module Deploy
     def run
       @result = GateResult.new
       unless GeometryProbe.available?
-        @result.warn("keyboard_flow: no Chrome/Chromium — tab order not walked")
+        @result.inconclusive!("keyboard_flow: no Chrome/Chromium — tab order not walked")
         return @result
       end
 
@@ -56,7 +56,7 @@ module Deploy
       GeometryProbe.unreachable_apps(surfaces).each { |app| @result.warn("keyboard_flow: #{app} port closed — skipped") }
       live = GeometryProbe.reachable(surfaces)
       if live.empty?
-        @result.warn("keyboard_flow: no app reachable")
+        @result.inconclusive!("keyboard_flow: no app reachable")
         return @result
       end
 
