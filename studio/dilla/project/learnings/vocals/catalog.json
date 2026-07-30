@@ -1950,12 +1950,28 @@
         "phrase_start": 1.207,
         "source_bpm": 70.0,
         "tempo_ratio": 1.2617,
-        "rms_db": -18.683,
-        "sub_bleed_db": -43.531,
+        "rms_db": -16.027,
+        "sub_bleed_db": -40.819,
         "snapped_lines": null,
         "has_pulse": true,
+        "key_shift": 0,
+        "progression": "get_dis_money",
         "voice_only": true
-      }
+      },
+      "chroma": [
+        0.0728,
+        0.06988,
+        0.06252,
+        0.0642,
+        0.06501,
+        0.0651,
+        0.0726,
+        0.08172,
+        0.09937,
+        0.11636,
+        0.12505,
+        0.10539
+      ]
     },
     {
       "slug": "gunnhild",
@@ -2470,19 +2486,35 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_86_32bars.wav",
-        "beat_bpm": 86.0,
-        "n_bars": 32,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_83_16bars.wav",
+        "beat_bpm": 82.56,
+        "n_bars": 16,
         "offset_sec": 39.5193,
         "phrase_start": 2.972,
         "source_bpm": 61.0,
         "tempo_ratio": 1.0,
-        "rms_db": -18.932,
-        "sub_bleed_db": -41.21,
-        "snapped_lines": 33,
+        "rms_db": -18.814,
+        "sub_bleed_db": -41.121,
+        "snapped_lines": 16,
         "has_pulse": false,
+        "key_shift": 0,
+        "progression": "time_donut",
         "voice_only": true
-      }
+      },
+      "chroma": [
+        0.05722,
+        0.04625,
+        0.04286,
+        0.06494,
+        0.06375,
+        0.05209,
+        0.07228,
+        0.08805,
+        0.14626,
+        0.15966,
+        0.111,
+        0.09563
+      ]
     },
     {
       "slug": "haisam_johann",
@@ -2531,5 +2563,5 @@
       "bpm_estimate": 76.0
     }
   ],
-  "updated_at": "2026-07-30T12:30:44Z"
+  "updated_at": "2026-07-30T12:59:10Z"
 }
