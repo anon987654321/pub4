@@ -14038,6 +14038,66 @@ def crate_dig!(seam, count)
   puts "provenance: #{CrateDig::MANIFEST.sub("#{ROOT}/", '')}"
 end
 
+# Dig a ccMixter seam — the only legitimate route to reggae, dub and modern
+# breaks, because those idioms postdate the public domain entirely.
+#
+# Everything fetched is CC-BY or freer: commercial use permitted, credit
+# required. The credit obligation is real, so `dug --credits` prints it from the
+# provenance rather than leaving it to memory.
+def cc_dig!(seam, count)
+  unless seam && CrateDig::CC_SEAMS.key?(seam)
+    abort "usage: dig-cc <seam> [n]  — seams: #{CrateDig::CC_SEAMS.keys.join(', ')}"
+  end
+
+  puts "digging ccMixter #{seam} (CC-BY or freer; NC excluded)..."
+  rows = CrateDig.ccmixter_search(seam: seam, rows: count * 3)
+  taken = 0
+
+  rows.each do |row|
+    break if taken >= count
+
+    id = "ccmixter-#{row['upload_id']}"
+    if CrateDig.have?(id)
+      puts "  have: #{id}"
+      next
+    end
+
+    begin
+      file = Array(row["files"]).find { |f| f["file_name"].to_s =~ /\.(mp3|flac|wav|ogg)\z/i }
+      next unless file
+
+      url = file["download_url"] || file["file_url"] ||
+            "https://ccmixter.org/content/#{row['user_name']}/#{file['file_name']}"
+      dest = File.join(CrateDig::DUG, seam, "#{id}#{File.extname(file['file_name'])}")
+      print "  #{row['upload_name'].to_s[0, 40]} — #{row['user_name']} ... "
+      CrateDig.download(url, dest)
+      sha = Digest::SHA256.file(dest).hexdigest
+      CrateDig.record!(CrateDig.ccmixter_entry(row, seam, dest.sub("#{ROOT}/", ""), sha)
+                         .merge("bytes" => File.size(dest)))
+      puts "#{(File.size(dest) / 1024.0 / 1024).round(1)}MB [#{row['license_name']}]"
+      taken += 1
+    rescue StandardError => e
+      puts "skip (#{e.class}: #{e.message.to_s[0, 60]})"
+    end
+  end
+
+  puts "dug #{taken} from ccMixter into #{CrateDig::DUG.sub("#{ROOT}/", '')}/#{seam}/"
+  puts "these require credit — `ruby dilla.rb credits` prints it" if taken.positive?
+end
+
+# CC-BY is free to use and not free of obligation. This is the list you owe.
+def crate_credits
+  rows = CrateDig.manifest["items"].select { |i| i["attribution"] }
+  if rows.empty?
+    puts "no attribution owed — everything dug so far is public domain."
+    return
+  end
+  puts "Credits owed (CC-BY material in the crate):"
+  rows.each { |i| puts "  #{i['attribution']}" }
+  puts
+  puts "#{rows.size} item(s). Public-domain sides carry no obligation and are not listed."
+end
+
 def crate_seams
   puts "seams (archive.org Great 78, filtered to the public domain):"
   CrateDig::SEAMS.each { |name, q| puts format("  %-12s %s", name, q) }
@@ -17106,6 +17166,8 @@ def help
       dig <seam> [n]                 Dig n public-domain sides into samples/dug/
       dig-seams                      List the seams available to dig
       dug                            What has been dug, and under what terms
+      dig-cc <seam> [n]              Dig CC-BY stems (dub, roots, breaks) from ccMixter
+      credits                        Attribution owed for CC-BY material in the crate
     FLAGS (equivalent to the ENV vars below, usable on any command):
       #{FLAG_ENV.keys.map { |k| "--#{k}=…" }.join(' ')}
 
@@ -21303,6 +21365,8 @@ DISPATCH = {
   "fetch-assets" => -> { fetch_assets! },
   "dig" => -> { crate_dig!(ARGV.shift, (ARGV.shift || 8).to_i) },
   "dig-seams" => -> { crate_seams },
+  "dig-cc" => -> { cc_dig!(ARGV.shift, (ARGV.shift || 6).to_i) },
+  "credits" => -> { crate_credits },
   "dug" => -> { dug_list },
   "use-external-kit" => -> { use_external_kit!(ARGV.shift || abort("usage: use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>")) },
   "grade_list" => -> { grade_list },

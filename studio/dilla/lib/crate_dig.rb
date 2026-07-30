@@ -69,6 +69,56 @@ module CrateDig
     !year.nil? && year <= ceiling
   end
 
+  # ccMixter — stems and a cappellas uploaded expressly to be remixed.
+  #
+  # This is the only route to a reggae or dub idiom that is legal to use, and
+  # the reason is worth stating: reggae postdates the public domain by about
+  # forty years. Marley's first sides are 1962 and Mundell's Africa Must Be Free
+  # is 1978, against a PD ceiling of 1925. Searching the Great 78 collection for
+  # reggae, ska, mento, dub, Jamaica, Trinidad or the West Indies returns zero
+  # rows -- not few, zero. That idiom cannot be dug from the public domain
+  # because it did not exist yet.
+  #
+  # lic=open is not optional and must never be relaxed to the default. An
+  # unfiltered ccMixter query returns Attribution-NonCommercial almost
+  # exclusively, and NC means the result cannot be released. Same shape of trap
+  # as a 1947 side in a free archive: available is not the same as usable.
+  CCMIXTER_API = "https://ccmixter.org/api/query"
+
+  # Idiom -> ccMixter tag. These are the seams the names asked for, in the one
+  # place they legitimately exist.
+  CC_SEAMS = {
+    "dub" => "dub",
+    "roots" => "reggae",
+    "dub_stems" => "dub,stems",
+    "spiritual_jazz" => "jazz,spiritual",
+    "breaks" => "drums,breakbeat",
+  }.freeze
+
+  def self.ccmixter_search(seam:, rows: 20)
+    tag = CC_SEAMS.fetch(seam, seam)
+    url = "#{CCMIXTER_API}?f=json&limit=#{rows}&lic=open&tags=#{CGI.escape(tag)}"
+    rows = http_json(url)
+    rows.is_a?(Array) ? rows.reject { |r| r["license_name"].to_s.match?(/noncommercial/i) } : []
+  end
+
+  # CC-BY is free to use commercially and *requires credit*. The provenance file
+  # is therefore not just a record here, it is the credits list -- which is why
+  # artist and licence URL are captured per row rather than inferred.
+  def self.ccmixter_entry(row, seam, path, sha)
+    file = Array(row["files"]).first || {}
+    {
+      "identifier" => "ccmixter-#{row['upload_id']}", "seam" => seam,
+      "year" => row["upload_date_format"].to_s[/\d{4}/],
+      "title" => row["upload_name"], "creator" => row["user_real_name"].to_s.empty? ? row["user_name"] : row["user_real_name"],
+      "source" => row["file_page_url"], "collection" => "ccmixter",
+      "basis" => "#{row['license_name']} — commercial use permitted, attribution required",
+      "rights" => row["license_name"], "licenseurl" => row["license_url"],
+      "attribution" => "#{row['upload_name']} by #{row['user_name']} (#{row['file_page_url']}), #{row['license_name']}",
+      "file" => file["file_name"], "path" => path, "sha256" => sha,
+    }
+  end
+
   # Idiom -> archive.org query fragment. Digging by title is how you end up with
   # the same twelve records everyone else has; these are the seams the producers
   # in question actually worked, expressed as things the metadata can answer.
@@ -139,6 +189,16 @@ module CrateDig
   # inside the response block: returning from inside a streaming block to start
   # a second request nests connections and made a failed hop report the
   # redirect's URL rather than the one that actually 404'd.
+  # ccMixter's content host refuses any request without a Referer from its own
+  # site -- ordinary hotlink protection, and it answers 403 to every User-Agent
+  # including a browser one. Sent per-host rather than always, because sending a
+  # fake Referer to a host that has not asked for one is impolite at best.
+  def request_headers(url)
+    headers = { "User-Agent" => UA }
+    headers["Referer"] = "https://ccmixter.org/" if URI(url).host.to_s.end_with?("ccmixter.org")
+    headers
+  end
+
   def download(url, dest, hops: 5)
     FileUtils.mkdir_p(File.dirname(dest))
     current = url
@@ -152,7 +212,7 @@ module CrateDig
       uri = URI(current)
       Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
                       open_timeout: 10, read_timeout: 180) do |http|
-        http.request(Net::HTTP::Get.new(uri.request_uri, { "User-Agent" => UA })) do |res|
+        http.request(Net::HTTP::Get.new(uri.request_uri, request_headers(current))) do |res|
           if res.is_a?(Net::HTTPRedirection)
             current = URI.join(current, res["location"]).to_s
           elsif res.code.to_i == 200
