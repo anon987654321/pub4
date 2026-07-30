@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../../../design_tokens"
+require_relative "../../../tools/design_tokens"
 
 class DesignTokensTest < Minitest::Test
   FACE_CSS = File.expand_path("../../../../MASTER/web/public/face.css", __dir__)
@@ -34,7 +34,7 @@ class DesignTokensTest < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "face.css")
       File.write(path, <<~CSS)
-        /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
+        /* BEGIN:generated-face-root — ruby RAILS/tools/generate_face_root_css.rb */
         :root {
           --#{key.to_s.tr('_', '-')}: #{stale};
         }
@@ -62,7 +62,7 @@ class DesignTokensTest < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "face.css")
       File.write(path, <<~CSS)
-        /* BEGIN:generated-face-root — ruby RAILS/scripts/generate_face_root_css.rb */
+        /* BEGIN:generated-face-root — ruby RAILS/tools/generate_face_root_css.rb */
         :root { --c-text: #000000; }
         /* END:generated-face-root */
       CSS

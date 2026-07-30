@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../visual_contract_gate"
+require_relative "../gates/visual_contract"
 
 class VisualContractGateTest < Minitest::Test
   def test_each_app_covers_failure_states_and_all_viewports
@@ -13,7 +13,7 @@ class VisualContractGateTest < Minitest::Test
   end
 
   def test_manifest_schema_records_render_and_accessibility_evidence
-    source = File.read(File.expand_path("../visual_contract_gate.rb", __dir__))
+    source = File.read(File.expand_path("../gates/visual_contract.rb", __dir__))
     %w[status title screenshot_sha256 console_errors accessibility_violations pixel_diff_count pixel_diff_ratio pixel_diff_image].each do |field|
       assert_includes source, "#{field}:"
     end

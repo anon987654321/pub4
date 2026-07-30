@@ -78,15 +78,16 @@ rc_pre() {
   # Load-bearing asset gate: refuse to start serving a broken face.js/manifest
   # mismatch (the exact class of bug that wedged the primer boot on 2026-07-10).
   # One self-heal precompile retry before actually blocking the start.
-  _gate=/home/dev/pub4/RAILS/master_web_assets_gate.rb
+  _gate=/home/dev/pub4/RAILS/gates/runner.rb
+  _gate_name=master_web_assets
   if [ -f "$_gate" ]; then
-    _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
+    _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" "$_gate_name" 2>&1)
     _gate_rc=$?
     if [ "$_gate_rc" != "0" ]; then
       logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
       (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
       echo "$_digest" > "$_stamp"
-      _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" 2>&1)
+      _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" "$_gate_name" 2>&1)
       _gate_rc=$?
       if [ "$_gate_rc" != "0" ]; then
         logger -t master "CRITICAL: assets gate still failing after retry, refusing to start with broken assets: $_gate_out"

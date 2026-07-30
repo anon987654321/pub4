@@ -42,15 +42,19 @@ ownership:
     purpose: canonical app/domain/port/deploy inventory
     risk: critical
     check: OPENBSD/bin/check-rails
-  rails/check_production_gate.rb:
+  rails/gates/gates.yml:
+    purpose: the gate registry — every RAILS gate is declared here and nowhere else
+    risk: critical
+    check: OPENBSD/bin/check-rails
+  rails/gates/lib/production.rb:
     purpose: production Rails contract
     risk: high
     check: OPENBSD/bin/check-rails
-  rails/domain_alignment_gate.rb:
+  rails/gates/lib/domain_alignment.rb:
     purpose: domain and inventory consistency
     risk: high
     check: OPENBSD/bin/check-rails
-  rails/frontend*_gate.rb:
+  rails/gates/lib/frontend_*.rb:
     purpose: frontend production/auditor contracts
     risk: medium
     check: OPENBSD/bin/check-rails

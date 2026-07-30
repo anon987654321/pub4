@@ -78,11 +78,13 @@ ruby RAILS/gates/runner.rb constitutional_scan   # MASTER /scan --no-autofix pre
 ruby RAILS/gates/runner.rb --list
 ```
 
-Individual scripts remain for `OPENBSD/bin/check*` and `gate_environment.rb` backward compat.
+`OPENBSD/bin/check-rails` and `gate_environment.rb` go through the same runner,
+naming gates rather than pointing at files. The two entrypoints below are not
+gates in the registry sense and stay callable on their own:
 
 ```zsh
-ruby RAILS/check_production_gate.rb
-ruby RAILS/rails_runtime_gate.rb          # static production checks; add --runtime for bundle/db/ci
+ruby RAILS/gates/runner.rb production
+ruby RAILS/gates/rails_runtime.rb        # static production checks; add --runtime for bundle/db/ci
 cd RAILS/<app> && bin/ci                  # per-app RuboCop, Brakeman, bundler-audit, test
 MASTER/bin/probe rails
 VISUAL_CAPTURE=1 VISUAL_CAPTURE_APP=brgen VISUAL_CAPTURE_BASE=http://127.0.0.1:38182 ruby RAILS/gates/runner.rb visual_contract
@@ -102,11 +104,28 @@ VISUAL_CAPTURE=1 VISUAL_CAPTURE_APP=brgen VISUAL_CAPTURE_BASE=http://127.0.0.1:3
 | `Deploy::SharedWiringGate` | Per-app shared routes, importmap, public assets, Stimulus |
 | `Deploy::ConstitutionalScanGate` | MASTER `/scan --no-autofix` preflight on RAILS apps |
 
-`check_production_gate.rb`, `master_web_assets_gate.rb`, and `master_tts_gate.rb` are thin CLI wrappers. `rails_runtime_gate.rb` calls `Deploy::ProductionGate.run(skip_nested: true)` in-process (avoids re-running nested master gates when `production` and `rails_runtime` both run under `--all`). Set `GATE_SKIP_NESTED=1` when shelling out to `check_production_gate.rb` if you need the same skip from a subprocess.
+**Every gate is declared in `gates/gates.yml` and nowhere else** — one row per
+gate carrying its `require`, its `Deploy::*` class, its pass line, and the
+composite that already runs it as a leaf. `runner.rb` reads that file; so does
+`OPENBSD/lib/gate_environment.rb`'s deploy-time integrity chain, by gate name
+rather than by path. Adding a gate is one row.
 
-`domain_alignment_gate.rb` and most leaf gates use `Deploy::GateResult`. `runner.rb --all` runs those in-process via `gates/lib/` (`IN_PROCESS`); only `release`, `rails_runtime`, and `visual_contract` still subprocess (bundle steps / capture args). Horizon `apps.yml` features remain `agent: ignore` — see `MASTER/DEBT.md` / `OPENBSD/data/debt.yml`.
+This replaced four hand-maintained tables that had to agree with each other
+(`GATE_MAP`, `IN_PROCESS`, `SUBPROCESS_ONLY`, `GATE_COVERED_BY`) plus 37 shim
+scripts at the RAILS root whose only job was to require a class the runner
+already loaded in-process.
 
-`visual_contract_gate.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. `runner.rb` forwards `--capture` when `VISUAL_CAPTURE=1` (optional `VISUAL_CAPTURE_APP`, `VISUAL_CAPTURE_BASE`). Running via `runner.rb --all` without capture only validates route/lens data shapes — not a visual regression pass.
+Most gates run in-process and return a `Deploy::GateResult`; only `release`,
+`rails_runtime`, and `visual_contract` still subprocess (bundle steps, argument
+forwarding), declared with `script:` instead of `require:`/`class:`.
+`gates/rails_runtime.rb` calls `Deploy::ProductionGate.run(skip_nested: true)`
+directly, which avoids re-running nested master gates when `production` and
+`rails_runtime` both run under `--all`; `GATE_SKIP_NESTED=1` gets the same skip
+from `runner.rb production`, declared on that gate as an `env_flags:` row.
+Horizon `apps.yml` features remain `agent: ignore` — see `MASTER/DEBT.md` /
+`OPENBSD/data/debt.yml`.
+
+`gates/visual_contract.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. `runner.rb` forwards `--capture` when `VISUAL_CAPTURE=1` (optional `VISUAL_CAPTURE_APP`, `VISUAL_CAPTURE_BASE`). Running via `runner.rb --all` without capture only validates route/lens data shapes — not a visual regression pass.
 
 On OpenBSD, use the package-qualified Ruby 3.4 commands:
 
@@ -128,7 +147,7 @@ ruby RAILS/gates/runner.rb flow_journey gate_mutation   # pure, no browser neede
 GATE_SURFACES=brgen/marketplace ruby RAILS/gates/runner.rb geometry   # narrow a run
 ```
 
-No gem dependency: `gates/lib/cdp_session.rb` speaks the Chrome DevTools
+No gem dependency: `gates/support/cdp_session.rb` speaks the Chrome DevTools
 Protocol over a WebSocket it implements with stdlib only. ferrum/selenium exist
 only inside app bundles, and gates run under bare `ruby`. Chrome is found via
 `CHROME_PATH` or the usual locations; without it every gate here degrades to a
@@ -183,11 +202,11 @@ Unit coverage: `ruby RAILS/test/gates/rendered_gates_test.rb`.
 
 ## Apps.yml validator
 
-Registered in `gates/runner.rb` as `apps_yml`:
+Registered in `gates/gates.yml` as `apps_yml`:
 
 ```zsh
 ruby RAILS/gates/runner.rb apps_yml
-ruby RAILS/apps_yml_validator.rb   # standalone, same checks
+ruby RAILS/gates/runner.rb apps_yml   # same checks, named once
 ```
 
 Validates: app directories exist, deploy scripts present, unique ports/domains, feature `status: done|planned`.
@@ -229,7 +248,7 @@ Scoped roots use single-prefixed helpers (`marketplace_root_path`, `maps_root_pa
 
 **Operator UI:** MASTER domain bar (`MASTER/web/public/domain_cluster.js`), CLI `/domain <name>` via `SubdomainOrchestrator`.
 
-Gate: `ruby RAILS/domain_alignment_gate.rb`
+Gate: `ruby RAILS/gates/runner.rb domain_alignment`
 
 ## Production readiness
 
@@ -239,7 +258,7 @@ Last updated: 2026-07-15.
 
 ```sh
 ruby RAILS/gates/runner.rb --all
-ruby RAILS/rails_runtime_gate.rb
+ruby RAILS/gates/rails_runtime.rb
 ruby OPENBSD/deploy_smoke_gate.rb
 cd MASTER && bin/probe all
 ```
@@ -281,8 +300,8 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 
 ## Recent changes (2026-07-15)
 
-- **Gates:** `gates/runner.rb` registers `apps_yml` and `shared_wiring`; production/master/domain/frontend/stimulus gates callable in-process via `gates/lib/` and `Deploy::GateResult`. `release_gate.rb` no longer subprocesses those four gates.
-- **Shared wiring gate:** `ruby RAILS/shared_wiring_gate.rb` — verifies all apps eval shared routes/importmap, ship error pages, and register shared Stimulus controllers.
+- **Gates:** every gate is a row in `gates/gates.yml`; production/master/domain/frontend/stimulus gates run in-process via `gates/lib/` and `Deploy::GateResult`. `gates/release.rb` no longer subprocesses those four gates.
+- **Shared wiring gate:** `ruby RAILS/gates/runner.rb shared_wiring` — verifies all apps eval shared routes/importmap, ship error pages, and register shared Stimulus controllers.
 - **Shared wiring:** social routes eval in all three apps; Stimulus compose/save controllers in `shared/frontend/`.
 - **Design/PWA:** line-height and touch-target fixes; reduced-motion guards; error pages in each app `public/`.
 - **Performance:** Active Storage preload on posts, deals, outfits, demo wardrobe, user profiles, dating matches, and TV channels.

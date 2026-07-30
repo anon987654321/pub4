@@ -11,7 +11,7 @@ cd "$PUB4/MASTER" && bundle install
 cd "$PUB4/MASTER/web" && bundle config set --local without 'development test' \
   && RAILS_ENV=production bundle install
 cd "$PUB4/MASTER/web" && RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle exec rails assets:precompile
-ruby "$PUB4/RAILS/master_web_assets_gate.rb"
+ruby "$PUB4/RAILS/gates/runner.rb" master_web_assets
 doas rcctl restart master || doas rcctl start master
 
 APPS=(brgen amber bsdports)

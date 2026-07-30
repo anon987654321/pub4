@@ -31,7 +31,7 @@ else
   bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle || _fail=1
   bundle34 exec rails assets:precompile || _fail=1
 fi
-ruby34 /home/dev/pub4/RAILS/master_web_assets_gate.rb || _fail=1
+ruby34 /home/dev/pub4/RAILS/gates/runner.rb master_web_assets || _fail=1
 if [ "$_fail" -ne 0 ]; then
   echo FAILED precompile_or_gate
   exit 1

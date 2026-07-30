@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/lib/dom_surface_schema"
+require_relative "../../gates/support/dom_surface_schema"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class DomSurfaceSchemaTest < Minitest::Test

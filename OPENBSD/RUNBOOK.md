@@ -252,8 +252,8 @@ Ruby on VPS: `ruby34`, `bundle34`. Never parallel `bin/ci` across SSH sessions.
 OPENBSD/bin/check                         # local static deploy gates
 OPENBSD/bin/check-vps                     # vm23/live health gates; skips off-VPS
 ruby OPENBSD/integrity_gate.rb              # full chain: production, phantom_fk, frontend, relayd, domain_align, crawl
-ruby RAILS/crawl_probe.rb           # HTTP manifest + apps.yml ↔ master.json sync
-MASTER_CRAWL_BROWSER=1 ruby RAILS/crawl_browser.rb   # Ferrum element crawl (VPS)
+ruby RAILS/tools/crawl_probe.rb           # HTTP manifest + apps.yml ↔ master.json sync
+MASTER_CRAWL_BROWSER=1 ruby RAILS/tools/crawl_browser.rb   # Ferrum element crawl (VPS)
 cd MASTER && bundle exec ruby bin/probe integrity deploy crawl crawl-browser
 ```
 
@@ -279,7 +279,7 @@ Any file changed on the VPS under `OPENBSD/` must be copied back to git and comm
   export the app `HOME` and `NPM_CONFIG_CACHE`.
 - MASTER dead tap: precompile `MASTER/web` production assets, restart `master`, then verify
   `https://ai.brgen.no` after the primer tap.
-- relayd/domain drift: run `RAILS/domain_alignment_gate.rb` and
+- relayd/domain drift: run `RAILS/gates/runner.rb domain_alignment` and
   `OPENBSD/deploy_smoke_gate.rb` before restarting relayd.
 - pf lockout: use the server4 console and flush the `bruteforce` table; do not keep reconnecting.
 - Silent TTS: verify `edge-tts` or `espeak` exists before debugging web routes.

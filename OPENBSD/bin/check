@@ -18,9 +18,9 @@ runner = Pub4::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP
 
 failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")
-failures << "production" unless runner.run("production", RUBY, "RAILS/check_production_gate.rb")
-failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/check_phantom_foreign_keys.rb")
-failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/domain_alignment_gate.rb")
+failures << "production" unless runner.run("production", RUBY, "RAILS/gates/runner.rb", "production")
+failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/gates/runner.rb", "phantom_foreign_keys")
+failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/gates/runner.rb", "domain_alignment")
 failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
 
 if profile == "contributor"

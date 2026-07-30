@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/lib/exemplar_structure"
+require_relative "../../gates/support/exemplar_structure"
+require_relative "../../gates/support/visual_quality"
 require_relative "../../gates/lib/visual_quality"
-require_relative "../../gates/lib/visual_quality_gate"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class VisualQualityTest < Minitest::Test

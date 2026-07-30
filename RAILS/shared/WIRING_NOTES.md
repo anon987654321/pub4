@@ -31,7 +31,7 @@ Each app compiles a **single** `app/assets/builds/application.css` via Dart Sass
 - `hotwire.js` — Turbo, theme-meta, PWA SW, nav-reveal (idempotent), minimal-gesture boot
 - `stimulus_boot.js` — full @stimulus-components fleet (incl. password-visibility, nested-form, carousel, read-more, checkbox-select-all), StimulusReflex, Futurism, live-search, offline-page, install-prompt, theme-toggle
 - `Shared::StimulusFormHelper` — `character_counter_field`, `password_visibility_field`, `read_more`
-- Gate: `ruby RAILS/stimulus_components_adoption_gate.rb` (no legacy `char-counter` / duplicate controllers)
+- Gate: `ruby RAILS/gates/runner.rb stimulus_components` (no legacy `char-counter` / duplicate controllers)
 - `theme_meta.js`, `nav_reveal.js`, `live_search_controller.js`, …
 
 **Per-app wiring:**
@@ -87,7 +87,7 @@ bundle exec ruby -e 'require "./config/environment"; require "importmap/commands
 bin/rails test
 ```
 
-Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/frontend_production_gate.rb`.
+Family-level: `ruby RAILS/test/pwa_design_contract_test.rb`, `ruby RAILS/test/design_contract_test.rb`, `ruby RAILS/test/shared_social_routes_test.rb`, `ruby RAILS/gates/runner.rb frontend_production`.
 
 ## x.com parity recovery (2026-07-20)
 
@@ -110,8 +110,8 @@ Recovered from deleted execute-plan stack (tags: `recover/x-parity-stack`, `reco
 ```bash
 ruby RAILS/test/design_contract_test.rb
 ruby RAILS/shared/test/lib/design_tokens_test.rb
-ruby RAILS/build_all_css.rb --check
-ruby RAILS/frontend_auditor_gate.rb
+ruby RAILS/tools/build_all_css.rb --check
+ruby RAILS/gates/runner.rb frontend_auditor
 ```
 
 ## Visual design system (2026-07-19)

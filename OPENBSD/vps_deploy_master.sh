@@ -41,7 +41,7 @@ bundle34 config set --local without 'development:test' 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 check 2>/dev/null || BUNDLE_WITHOUT=development:test bundle34 install
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:build_face_runtime assets:build_face_modules_bundle assets:build_face_vision_bundle 2>/dev/null || true
 BUNDLE_WITHOUT=development:test bundle34 exec rails assets:precompile
-BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/RAILS/master_web_assets_gate.rb"
+BUNDLE_WITHOUT=development:test bundle34 exec ruby "$ROOT/RAILS/gates/runner.rb" master_web_assets
 
 echo "==> sync rc.d master"
 if [ -f "$ROOT/OPENBSD/etc/rc.d/master" ]; then

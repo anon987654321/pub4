@@ -5,8 +5,12 @@ require "minitest/autorun"
 class StimulusComponentsAdoptionTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  def test_gate_script_exists
-    assert File.file?(File.join(ROOT, "stimulus_components_adoption_gate.rb"))
+  def test_gate_is_registered
+    require "yaml"
+    row = YAML.safe_load_file(File.join(ROOT, "gates/gates.yml")).fetch("stimulus_components")
+
+    assert_equal "Deploy::StimulusComponentsGate", row.fetch("class")
+    assert File.file?(File.join(ROOT, "gates/lib/stimulus_components.rb"))
   end
 
   def test_boot_registers_password_visibility_and_nested_form

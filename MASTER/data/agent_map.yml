@@ -65,7 +65,7 @@ topics:
     files:
       - OPENBSD/vps_deploy_master.sh
       - OPENBSD/etc/rc.d/master
-      - RAILS/master_web_assets_gate.rb
+      - RAILS/gates/lib/master_web_assets.rb
       - OPENBSD/bin/vps-deploy
     tests:
       - web/script/probe_http
@@ -214,7 +214,7 @@ patch_briefs:
     topic: face_boot
     tests: [web/test/face_boot.test.mjs]
     deploy: vps-deploy master
-    post: ruby RAILS/scripts/generate_face_root_css.rb
+    post: ruby RAILS/tools/generate_face_root_css.rb
   OPENBSD/etc/rc.d/master:
     check: bin/pub4 status
     topic: deploy

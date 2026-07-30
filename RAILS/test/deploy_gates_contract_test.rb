@@ -2,53 +2,117 @@
 
 require "minitest/autorun"
 require "open3"
+require "yaml"
 
 class DeployGatesContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   REPO_ROOT = File.expand_path("../..", __dir__)
   OPENBSD_ROOT = File.join(REPO_ROOT, "OPENBSD")
 
-  GATE_FILES = %w[
-    schema_migration_gate.rb
-    generated_asset_freshness_gate.rb
-    human_walkthrough_gate.rb
-    rails_runtime_gate.rb
-  ].freeze
+  GATES = YAML.safe_load_file(File.join(ROOT, "gates", "gates.yml")).freeze
 
-  def test_gate_scripts_exist
-    GATE_FILES.each do |name|
-      path = File.join(ROOT, name)
-      assert File.file?(path), "missing #{name}"
-      assert_match(/^(#!|# frozen_string_literal)/, File.read(path, 40), "#{name} should be a Ruby gate script")
+  # Every gate is declared once, in gates.yml. This used to be four tables that
+  # had to agree — runner.rb's GATE_MAP (name -> file), IN_PROCESS (name ->
+  # class), SUBPROCESS_ONLY (their set difference, stored by hand) and
+  # GATE_COVERED_BY — plus 37 shim scripts at the RAILS root whose only job was
+  # to require a class the runner already loaded in-process.
+  def test_every_gate_resolves_to_a_file
+    GATES.each do |name, row|
+      if row.key?("script")
+        assert File.file?(File.join(ROOT, "gates", row["script"])),
+               "#{name} points at gates/#{row['script']}, which does not exist"
+      else
+        assert File.file?(File.join(ROOT, "gates", "#{row.fetch('require')}.rb")),
+               "#{name} requires gates/#{row['require']}, which does not exist"
+        assert_match(/\ADeploy::\w+\z/, row.fetch("class"), "#{name} needs a Deploy::* class")
+      end
     end
   end
 
-  # runner.rb's gate_path resolves every GATE_MAP value against RAILS/, but five
-  # shims lived in RAILS/gates/ and css_minify_integrity had none at all. Nothing
-  # broke, because all five run in-process and gate_path was only reached to
-  # print a basename — a trap armed for whoever moved one to subprocess.
-  def test_every_gate_in_the_runner_map_resolves_to_a_file
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    map = source[/GATE_MAP = \{(.*?)\n\}\.freeze/m, 1].to_s
-    names = map.scan(/"([\w.]+\.rb)"/).flatten.uniq
-
-    refute_empty names, "could not parse GATE_MAP out of runner.rb"
-    names.each do |name|
-      assert File.file?(File.join(ROOT, name)),
-             "GATE_MAP points at RAILS/#{name}, which does not exist"
+  def test_every_gate_declares_exactly_one_of_class_or_script
+    GATES.each do |name, row|
+      in_process = row.key?("require") && row.key?("class")
+      assert in_process ^ row.key?("script"),
+             "#{name} must declare either require+class or script, not both or neither"
     end
   end
 
-  def test_every_gate_shim_lives_at_the_rails_root
-    stragglers = Dir.glob(File.join(ROOT, "gates", "*_gate.rb")).map { |path| File.basename(path) }
+  def test_every_composite_names_a_real_gate
+    GATES.each do |name, row|
+      parent = row["covered_by"]
+      next unless parent
 
-    assert_empty stragglers, "gate entrypoints belong at RAILS/, next to the others: #{stragglers}"
+      assert GATES.key?(parent), "#{name} is covered_by #{parent}, which is not a gate"
+      refute_equal name, parent, "#{name} cannot cover itself"
+    end
   end
 
-  def test_check_rails_wires_new_gates
+  # Every in-process gate loads and answers .run. The old runner named its class
+  # in a second table, so a rename could leave IN_PROCESS pointing at a constant
+  # that no longer existed and nothing failed until that gate was selected.
+  def test_every_in_process_gate_class_loads
+    GATES.reject { |_, row| row.key?("script") }.each do |name, row|
+      require File.join(ROOT, "gates", "#{row.fetch('require')}.rb")
+      klass = Object.const_get(row.fetch("class"))
+
+      assert_respond_to klass, :run, "#{name}: #{row['class']} does not answer .run"
+    end
+  end
+
+  # The counters gates.yml interpolates into its pass lines.
+  def test_pass_message_placeholders_are_known
+    known = %w[apps schemas assets]
+    GATES.each do |name, row|
+      next unless row["pass"]
+
+      row["pass"].scan(/%\{(\w+)\}/).flatten.each do |placeholder|
+        assert_includes known, placeholder, "#{name} interpolates unknown %{#{placeholder}}"
+      end
+    end
+  end
+
+  # The shims are gone; nothing but the runner should be a gate entrypoint.
+  def test_no_gate_entrypoints_survive_at_the_rails_root
+    stragglers = Dir.glob(File.join(ROOT, "*_gate.rb")).map { |path| File.basename(path) }
+
+    assert_empty stragglers, "gates are declared in gates.yml and run by gates/runner.rb: #{stragglers}"
+  end
+
+  # Inside gates/, the _gate suffix says nothing the directory has not already
+  # said, and _gate_logic only ever existed to avoid colliding with a root shim.
+  def test_gate_files_carry_no_redundant_suffix
+    named = Dir.glob(File.join(ROOT, "gates", "**", "*.rb")).map { |path| File.basename(path, ".rb") }
+    redundant = named.select { |name| name.end_with?("_gate", "_gate_logic") }
+
+    assert_empty redundant, "drop the suffix — gates/lib/<name>.rb defines Deploy::<Name>Gate: #{redundant}"
+  end
+
+  # Support code is not a gate. Keeping it in gates/lib/ meant three files
+  # (design_metrics, visual_quality, layout_search) each had a near-twin whose
+  # name differed only by a suffix.
+  def test_gates_lib_holds_only_declared_gates
+    declared = GATES.reject { |_, row| row.key?("script") }.map { |_, row| File.basename(row["require"]) }
+    present = Dir.glob(File.join(ROOT, "gates", "lib", "*.rb")).map { |path| File.basename(path, ".rb") }
+
+    assert_equal declared.sort, present.sort,
+                 "gates/lib/ holds exactly the gates in gates.yml; support code belongs in gates/support/"
+  end
+
+  def test_check_rails_wires_gates_by_name
     source = File.read(File.join(OPENBSD_ROOT, "bin", "check-rails"))
-    %w[schema_migration_gate generated_asset_freshness_gate rails_runtime_gate].each do |gate|
-      assert_includes source, gate
+    assert_includes source, "RAILS/gates/runner.rb"
+    %w[schema_migration generated_asset port_inventory production].each do |gate|
+      assert_match(/"#{gate}"/, source, "check-rails should run the #{gate} gate")
+    end
+  end
+
+  # The deploy-time integrity chain names gates instead of pointing at scripts,
+  # so it cannot outlive a file the way it did when the shims moved.
+  def test_integrity_chain_names_gates_that_exist
+    source = File.read(File.join(OPENBSD_ROOT, "lib", "gate_environment.rb"))
+    assert_includes source, "RAILS/gates/runner.rb"
+    source.scan(/RAILS_GATES, args: %w\[(\w+)\]/).flatten.each do |gate|
+      assert GATES.key?(gate), "integrity chain runs #{gate}, which is not in gates.yml"
     end
   end
 
@@ -60,79 +124,43 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_production_gate_does_not_require_deleted_retired_app_gate
-    source = File.read(File.join(ROOT, "check_production_gate.rb"))
+    source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
 
     refute_includes source, "archive_restore_gate"
   end
 
-  def test_production_gate_runs_in_process_from_lib
-    assert File.file?(File.join(ROOT, "gates", "lib", "production_gate.rb"))
-    source = File.read(File.join(ROOT, "rails_runtime_gate.rb"))
+  def test_rails_runtime_gate_runs_production_in_process
+    assert File.file?(File.join(ROOT, "gates", "lib", "production.rb"))
+    source = File.read(File.join(ROOT, "gates", "rails_runtime.rb"))
     assert_includes source, "Deploy::ProductionGate.run(skip_nested: true)"
     refute_includes source, "GATE_SKIP_NESTED"
   end
 
-  def test_runner_registers_apps_yml_validator
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "apps_yml:"
-    assert_includes source, %q{"apps_yml_validator.rb"}
+  # GATE_SKIP_NESTED was read by the old root shim and ignored by the runner, so
+  # the same gate behaved differently depending on how it was invoked. It is now
+  # declared on the gate itself.
+  def test_production_gate_declares_its_env_flag
+    assert_equal({ "GATE_SKIP_NESTED" => "skip_nested" }, GATES.fetch("production").fetch("env_flags"))
   end
 
-  def test_runner_runs_leaf_gates_in_process
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "IN_PROCESS"
-    assert_includes source, "run_in_process"
-    %w[generated_asset human_walkthrough port_inventory schema_migration phantom_foreign_keys shared_wiring].each do |key|
-      assert_match(/#{key}:\s+\[/, source, "runner IN_PROCESS should include #{key}")
-    end
-    assert_includes source, "SUBPROCESS_ONLY"
-    assert_includes source, ":release"
-  end
-
-  def test_leaf_gate_lib_classes_exist
+  def test_manifest_registers_the_leaf_gates
     %w[
-      generated_asset_gate
-      human_walkthrough_gate
-      port_inventory_gate
-      schema_migration_gate
-      phantom_foreign_keys_gate
-      surface_schema_gate
-      dom_surface_schema
-      guest_flow_persona
-    ].each do |name|
-      assert File.file?(File.join(ROOT, "gates", "lib", "#{name}.rb")), "missing gates/lib/#{name}.rb"
+      apps_yml generated_asset human_walkthrough port_inventory schema_migration
+      phantom_foreign_keys shared_wiring surface_schema design_metrics visual_quality calibration
+    ].each do |gate|
+      assert GATES.key?(gate), "gates.yml should register #{gate}"
+      assert GATES.dig(gate, "class"), "#{gate} should run in-process"
     end
+    assert GATES.dig("release", "script"), "release still shells out and stays a subprocess"
   end
 
-  def test_runner_registers_surface_schema
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "surface_schema:"
-    assert_includes source, "SurfaceSchemaGate"
-  end
-
-  def test_runner_registers_design_metrics
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "design_metrics:"
-    assert_includes source, "DesignMetricsGate"
-    assert File.file?(File.join(ROOT, "gates", "lib", "design_metrics.rb"))
-    assert File.file?(File.join(ROOT, "gates", "lib", "design_metrics_gate.rb"))
-  end
-
-  def test_runner_registers_visual_quality
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "visual_quality:"
-    assert_includes source, "VisualQualityGate"
-    assert File.file?(File.join(ROOT, "gates", "lib", "exemplar_structure.rb"))
-    assert File.file?(File.join(ROOT, "gates", "lib", "visual_quality.rb"))
+  def test_gate_support_files_exist
+    %w[dom_surface_schema guest_flow_persona exemplar_structure visual_quality gate_calibration]
+      .each do |name|
+        assert File.file?(File.join(ROOT, "gates", "support", "#{name}.rb")), "missing gates/support/#{name}.rb"
+      end
     assert File.directory?(File.join(ROOT, "gates", "fixtures", "exemplars"))
-  end
-
-  def test_runner_registers_calibration
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "calibration:"
-    assert_includes source, "CalibrationGate"
     assert File.file?(File.join(ROOT, "gates", "data", "calibration.yml"))
-    assert File.file?(File.join(ROOT, "gates", "lib", "gate_calibration.rb"))
   end
 
   def test_surface_schema_fixtures_exist
@@ -149,23 +177,22 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes source, "GATE_STRICT_SOFT"
   end
 
-  def test_runner_deduplicates_leaf_gates_under_composites
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-    assert_includes source, "GATE_COVERED_BY"
-    assert_includes source, "resolve_gates"
-    assert_match(/master_web_assets:\s*:production/, source)
-    assert_match(/apps_yml:\s*:production/, source)
-    assert_match(/domain_alignment:\s*:release/, source)
-    assert_match(/surface_schema:\s*:layout_suite/, source)
-    assert_match(/design_metrics:\s*:layout_suite/, source)
-    assert_match(/visual_quality:\s*:layout_suite/, source)
-    assert_match(/calibration:\s*:layout_suite/, source)
+  def test_composites_own_their_leaves
+    {
+      "master_web_assets" => "production", "apps_yml" => "production",
+      "domain_alignment" => "release", "surface_schema" => "layout_suite",
+      "design_metrics" => "layout_suite", "visual_quality" => "layout_suite",
+      "calibration" => "layout_suite", "geometry" => "rendered_suite",
+    }.each do |leaf, parent|
+      assert_equal parent, GATES.dig(leaf, "covered_by"), "#{leaf} should be covered by #{parent}"
+    end
+    assert_includes File.read(File.join(ROOT, "gates", "runner.rb")), "resolve_gates"
   end
 
   def test_production_gate_runs_apps_yml_validator_in_process
-    source = File.read(File.join(ROOT, "gates", "lib", "production_gate.rb"))
+    source = File.read(File.join(ROOT, "gates", "lib", "production.rb"))
     assert_includes source, "AppsYmlValidator.run"
-    assert File.file?(File.join(ROOT, "gates", "lib", "apps_yml_validator.rb"))
+    assert File.file?(File.join(ROOT, "gates", "lib", "apps_yml.rb"))
   end
 
   def test_deploy_at_aliases_are_retired

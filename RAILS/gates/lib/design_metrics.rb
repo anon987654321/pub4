@@ -1,209 +1,356 @@
 # frozen_string_literal: true
 
+require "yaml"
+require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "../../../OPENBSD/lib/deploy_inventory"
+require_relative "../../tools/crawl_support"
+require_relative "../support/design_metrics"
+
 module Deploy
-  # Pure-Ruby design measurements against MASTER/data/design_rules.yml.
-  # No browser required. Used by DesignMetricsGate + unit tests.
-  module DesignMetrics
-    module_function
+  # P2: measure design_rules.yml (type, contrast, touch, spacing, measure)
+  # against tokens + SCSS source. Optional live browser hit-targets when
+  # DESIGN_METRICS_BROWSER=1 and Chrome/Selenium are available.
+  class DesignMetricsGate
+    ROOT = File.expand_path("../../..", __dir__)
+    RAILS = File.join(ROOT, "RAILS")
+    MASTER_RULES = File.join(ROOT, "MASTER", "data", "design_rules.yml")
+    TOKENS = File.join(RAILS, "shared", "design_tokens.yml")
+    APPS = %w[brgen amber bsdports shared].freeze
 
-    # WCAG relative luminance for sRGB hex (#rgb / #rrggbb).
-    def parse_hex(color)
-      s = color.to_s.strip
-      return nil if s.empty? || s.start_with?("var(", "oklch", "color-mix", "rgb")
+    # Critical interactive CSS roots (Fitts / touch).
+    TOUCH_FOCUS = {
+      "brgen" => %w[
+        app/assets/stylesheets/_forms.scss
+        app/assets/stylesheets/_nav.scss
+        app/assets/stylesheets/_marketplace.scss
+        app/assets/stylesheets/_posts.scss
+        app/assets/stylesheets/_dating_actions.scss
+        app/assets/stylesheets/_channels.scss
+        app/assets/stylesheets/_live.scss
+      ],
+      "amber" => %w[
+        app/assets/stylesheets/_jsfiddle_chrome.scss
+      ],
+      "bsdports" => %w[
+        app/assets/stylesheets/application.scss
+      ],
+    }.freeze
 
-      s = s.delete_prefix("#")
-      case s.length
-      when 3 then s = s.chars.map { |c| c * 2 }.join
-      when 6 then # ok
-      else return nil
+    def self.run
+      new.run
+    end
+
+    def run
+      @result = GateResult.new
+      unless File.file?(MASTER_RULES)
+        @result.fail("design_metrics: missing MASTER/data/design_rules.yml")
+        return @result
       end
-      return nil unless s.match?(/\A[0-9a-fA-F]{6}\z/)
+      @rules = YAML.safe_load_file(MASTER_RULES)
+      @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
 
-      s.scan(/../).map { |h| h.to_i(16) }
+      check_rules_floor
+      check_token_type_and_measure
+      check_token_contrast
+      check_touch_targets
+      check_line_height_and_body
+      check_spacing_rhythm
+      check_type_scale_budget
+      optional_browser_hit_targets
+      @result
     end
 
-    def relative_luminance(rgb)
-      r, g, b = rgb.map do |c|
-        v = c / 255.0
-        v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055)**2.4
+    private
+
+    def check_rules_floor
+      touch = @rules.dig("layout_rules", "touch", "target_min_px").to_i
+      @result.fail("design_metrics: touch.target_min_px missing/invalid") if touch < 44
+      body_min = @rules.dig("typography", "accessibility", "body_min_px").to_i
+      @result.fail("design_metrics: body_min_px missing") if body_min < 16
+      @result.warn("design_metrics: design_rules loaded (touch≥#{touch}px body≥#{body_min}px)")
+    end
+
+    def check_token_type_and_measure
+      chrome = @tokens["shared_chrome"] || {}
+      body = chrome["font_size_body"]
+      if body
+        px = DesignMetrics.to_px(body) || (body == "1rem" ? 16.0 : nil)
+        min = @rules.dig("typography", "accessibility", "body_min_px").to_f
+        if px && px + 0.01 < min
+          @result.fail("design_metrics type: shared_chrome.font_size_body #{body} (#{px}px) < body_min_px #{min}", severity: :hard)
+        end
+      else
+        @result.fail("design_metrics type: shared_chrome.font_size_body missing", severity: :soft)
       end
-      0.2126 * r + 0.7152 * g + 0.0722 * b
+
+      measure = chrome["measure_body"]
+      if measure && (m = measure.to_s[/\A([\d.]+)ch\z/, 1])
+        ch = m.to_f
+        min_ch = @rules.dig("typography", "line_length", "min_ch").to_f
+        max_ch = @rules.dig("typography", "line_length", "max_ch").to_f
+        if ch < min_ch || ch > max_ch
+          @result.fail(
+            "design_metrics measure: measure_body #{measure} outside #{min_ch}–#{max_ch}ch (principle=hierarchy)",
+            severity: :hard
+          )
+        end
+      else
+        @result.fail("design_metrics measure: shared_chrome.measure_body missing (prefer 66ch)", severity: :soft)
+      end
+
+      # Prose max-width in ch should appear in product CSS (marketplace/posts).
+      sample = read_css(File.join(RAILS, "brgen/app/assets/stylesheets/_marketplace.scss")) +
+               read_css(File.join(RAILS, "brgen/app/assets/stylesheets/_posts.scss"))
+      chs = DesignMetrics.extract_ch_measures(sample)
+      if chs.any?
+        bad = chs.reject { |c| c.between?(@rules.dig("typography", "line_length", "min_ch").to_f, @rules.dig("typography", "line_length", "max_ch").to_f) }
+        bad.each do |c|
+          @result.fail("design_metrics measure: max-width #{c}ch outside ideal range", severity: :soft)
+        end
+      else
+        @result.fail("design_metrics measure: no max-width …ch in marketplace/posts prose", severity: :soft)
+      end
     end
 
-    def contrast_ratio(hex_a, hex_b)
-      a = parse_hex(hex_a)
-      b = parse_hex(hex_b)
-      return nil unless a && b
-
-      l1 = relative_luminance(a)
-      l2 = relative_luminance(b)
-      lighter, darker = [l1, l2].sort.reverse
-      ((lighter + 0.05) / (darker + 0.05)).round(2)
-    end
-
-    # Nudge a foreground hex along the luminance axis until it clears `target`
-    # against `bg`, preserving hue and saturation. Returns nil when even pure
-    # black or white cannot reach the target (a background that light or dark
-    # needs a different background, not a different text colour).
+    # Enumerate the whole mode-matched fg/bg space per dialect instead of a
+    # hand-written list of eight pairs.
     #
-    # Used to *suggest* a value in gate output. Token colours are brand
-    # decisions and are deliberately never rewritten automatically.
-    def suggest_contrast_fix(fg_hex, bg_hex, target)
-      fg = parse_hex(fg_hex)
-      bg = parse_hex(bg_hex)
-      return nil unless fg && bg
+    # The old list checked text/bg and text/surface only, and passed — while
+    # social.accent/bg sat at 4.37 and `color: var(--accent)` was being used as
+    # a text colour in dozens of rules. Anything the author forgets to list is
+    # invisible to a list.
+    #
+    # Severity is deliberately soft here: this enumerates pairings that *could*
+    # occur, and a token pair the UI never actually renders is not a defect.
+    # GeometryGate hard-fails the same threshold on pairs it observes rendered,
+    # which is the difference between a possibility and a fact.
+    def check_token_contrast
+      normal_min = @rules.dig("typography", "accessibility", "normal_text_contrast").to_f
+      normal_min = 7.0 if normal_min <= 0 # design_rules AAA default
 
-      toward = relative_luminance(bg) > 0.5 ? [0, 0, 0] : [255, 255, 255]
-      best = nil
-      # 40 steps at 2.5% each covers the full range with sub-perceptual jumps.
-      (1..40).each do |step|
-        t = step / 40.0
-        candidate = fg.each_with_index.map { |c, i| (c + (toward[i] - c) * t).round }
-        hex = "#" + candidate.map { |c| c.to_s(16).rjust(2, "0") }.join
-        ratio = contrast_ratio(hex, bg_hex)
-        next unless ratio && ratio >= target
-
-        best = { hex: hex, ratio: ratio }
-        break
+      pairs = @tokens.flat_map { |name, dialect| DesignMetrics.token_pairs(name, dialect) }
+      if pairs.empty?
+        @result.fail("design_metrics contrast: no token pairs resolved from design_tokens.yml", severity: :soft)
+        return
       end
-      best
+
+      below_aa = pairs.select { |p| p[:ratio] < 4.5 }
+      below_aaa = pairs.select { |p| p[:ratio] >= 4.5 && p[:ratio] < normal_min }
+
+      below_aa.sort_by { |p| p[:ratio] }.each do |pair|
+        suggestion = DesignMetrics.suggest_contrast_fix(pair[:fg], pair[:bg], 4.5)
+        hint = suggestion ? " — #{pair[:fg_key]} #{suggestion[:hex]} would reach #{suggestion[:ratio]}" : ""
+        @result.fail(
+          "design_metrics contrast: #{pair[:label]} #{pair[:fg]} on #{pair[:bg]} = #{pair[:ratio]} < 4.5 (WCAG AA)" \
+          "#{hint} principle=accessibility",
+          severity: :soft
+        )
+      end
+
+      if below_aaa.any?
+        @result.warn(
+          "design_metrics contrast: #{below_aaa.size} pair(s) between 4.5 and the design_rules AAA target " \
+          "#{normal_min} — #{below_aaa.sort_by { |p| p[:ratio] }.first(3).map { |p| "#{p[:label]}=#{p[:ratio]}" }.join(', ')}"
+        )
+      end
+      @result.warn("design_metrics contrast: enumerated #{pairs.size} mode-matched token pairs " \
+                   "across #{@tokens.keys.size} dialects (#{below_aa.size} below AA)")
     end
 
-    # Which token keys read as foreground vs background, and which light/dark
-    # mode they belong to. Pairing a light-mode text colour against a dark-mode
-    # surface would invent a combination the UI never renders.
-    MODE_PREFIX = /\A(light|dark)_/
-    FOREGROUND_KEY = /\A(?:light_|dark_)?(text|text_secondary|muted|accent|accent_hover|link)\z/
-    BACKGROUND_KEY = /\A(?:light_|dark_)?(bg|surface|surface_elevated|search_bg|chrome_bg)\z/
+    def check_touch_targets
+      min_px = @rules.dig("layout_rules", "touch", "target_min_px").to_f
+      css_map = {}
+      TOUCH_FOCUS.each do |app, rels|
+        rels.each do |rel|
+          path = File.join(RAILS, app, rel)
+          next unless File.file?(path)
 
-    # All plausible fg/bg pairings within a dialect, mode-matched.
-    def token_pairs(dialect_name, dialect)
-      return [] unless dialect.is_a?(Hash)
-
-      mode = ->(key) { key.to_s[MODE_PREFIX, 1] }
-      fgs = dialect.keys.select { |k| k.to_s.match?(FOREGROUND_KEY) }
-      bgs = dialect.keys.select { |k| k.to_s.match?(BACKGROUND_KEY) }
-      pairs = []
-      fgs.each do |fg|
-        bgs.each do |bg|
-          next unless mode.call(fg) == mode.call(bg)
-
-          fg_value = dialect[fg]
-          bg_value = dialect[bg]
-          next unless fg_value && bg_value
-
-          ratio = contrast_ratio(fg_value, bg_value)
-          next unless ratio
-
-          pairs << { label: "#{dialect_name}.#{fg}/#{bg}", fg: fg_value, bg: bg_value,
-                     fg_key: fg, bg_key: bg, ratio: ratio }
+          css_map[path] = File.read(path)
         end
       end
-      pairs
-    end
 
-    # rem/em/px → px assuming 16px root
-    def to_px(value, root_px: 16.0)
-      s = value.to_s.strip
-      case s
-      when /\A(-?[\d.]+)px\z/i then Regexp.last_match(1).to_f
-      when /\A(-?[\d.]+)rem\z/i then Regexp.last_match(1).to_f * root_px
-      when /\A(-?[\d.]+)em\z/i then Regexp.last_match(1).to_f * root_px
-      when /\A(-?[\d.]+)\z/ then Regexp.last_match(1).to_f
-      else nil
+      # Hard: forms/buttons in brgen declare ≥44
+      forms = File.join(RAILS, "brgen/app/assets/stylesheets/_forms.scss")
+      if File.file?(forms)
+        heights = DesignMetrics.extract_min_heights(File.read(forms))
+        unless heights.any? { |h| h + 0.01 >= min_px }
+          @result.fail("design_metrics touch: _forms.scss missing min-height ≥ #{min_px.to_i}px (principle=fitts_law)", severity: :hard)
+        end
+      end
+
+      # Interactive coverage across product CSS
+      DesignMetrics.interactive_touch_coverage(css_map, min_px: min_px).each do |row|
+        next if row[:covered]
+
+        @result.fail(
+          "design_metrics touch: #{row[:label]} lacks min-height ≥ #{min_px.to_i}px in #{row[:paths].map { |p| p.sub(RAILS + '/', '') }.join(', ')} (principle=fitts_law)",
+          severity: :hard
+        )
+      end
+
+      # Flag explicit sub-44 min-heights on interactive-looking rules (soft if not primary)
+      css_map.each do |path, body|
+        body.scan(/min-height\s*:\s*([\d.]+)px/i).flatten.each do |raw|
+          h = raw.to_f
+          next if h + 0.01 >= min_px
+          next if h < 8 # decorative
+
+          # Only hard-fail if on a line with btn/tab/action context within ±2 lines — keep soft for now
+          @result.fail(
+            "design_metrics touch: #{path.sub(RAILS + '/', '')} min-height #{h.to_i}px < #{min_px.to_i}px",
+            severity: :soft
+          )
+        end
       end
     end
 
-    def extract_declarations(css, property)
-      prop = Regexp.escape(property)
-      css.to_s.scan(/#{prop}\s*:\s*([^;}+{]+)/i).flatten.map(&:strip)
-    end
+    def check_line_height_and_body
+      body_acc = @rules.dig("typography", "line_height", "body_accessibility_min").to_f
+      body_min = @rules.dig("typography", "line_height", "body_min").to_f
+      files = %w[
+        brgen/app/assets/stylesheets/_posts.scss
+        brgen/app/assets/stylesheets/_nav.scss
+        brgen/app/assets/stylesheets/_forms.scss
+        brgen/app/assets/stylesheets/_live.scss
+        shared/app/assets/stylesheets/_minimal.scss
+      ]
+      files.each do |rel|
+        path = File.join(RAILS, rel)
+        next unless File.file?(path)
 
-    def extract_min_heights(css)
-      extract_declarations(css, "min-height").filter_map { |v| to_px(v) }
-    end
-
-    def extract_line_heights(css)
-      extract_declarations(css, "line-height").filter_map do |v|
-        next v.to_f if v.match?(/\A[\d.]+\z/)
-
-        # unitless preferred; skip multi-value / normal
-        nil
-      end
-    end
-
-    def extract_font_sizes_px(css, root_px: 16.0)
-      extract_declarations(css, "font-size").filter_map { |v| to_px(v, root_px: root_px) }
-    end
-
-    def extract_ch_measures(css)
-      css.to_s.scan(/max-width\s*:\s*([\d.]+)\s*ch/i).flatten.map(&:to_f)
-    end
-
-    def extract_spacing_px(css, root_px: 16.0)
-      props = %w[margin padding gap row-gap column-gap margin-block margin-inline padding-block padding-inline]
-      values = []
-      props.each do |prop|
-        extract_declarations(css, prop).each do |raw|
-          raw.split(/\s+/).each do |token|
-            px = to_px(token, root_px: root_px)
-            values << px if px && px.positive?
+        lhs = DesignMetrics.extract_line_heights(File.read(path))
+        lhs.each do |lh|
+          if lh + 0.001 < body_min
+            @result.fail("design_metrics line-height: #{rel} has #{lh} < body_min #{body_min} (principle=accessibility)", severity: :hard)
+          elsif lh + 0.001 < body_acc
+            @result.fail("design_metrics line-height: #{rel} has #{lh} < accessibility_min #{body_acc} (principle=accessibility)", severity: :soft)
           end
         end
       end
-      values
     end
 
-    # 8px rhythm: allow exact allowed list or multiples of base with hairline 4.
-    def off_rhythm?(px, allowed:, base: 8)
-      return false if allowed.include?(px.to_i)
-      return false if (px % base).zero?
-      return false if px == 4 || (px % 4).zero? && px < base # hairline
+    def check_spacing_rhythm
+      allowed = Array(@rules.dig("layout_rules", "grid", "allowed_spacing_px")).map(&:to_i)
+      base = @rules.dig("layout_rules", "grid", "base_unit_px").to_i
+      base = 8 if base <= 0
+      allowed = [4, 8, 16, 24, 32, 48, 64] if allowed.empty?
 
-      true
-    end
+      samples = %w[
+        brgen/app/assets/stylesheets/_marketplace.scss
+        brgen/app/assets/stylesheets/_live.scss
+        shared/app/assets/stylesheets/_minimal.scss
+      ]
+      off = []
+      samples.each do |rel|
+        path = File.join(RAILS, rel)
+        next unless File.file?(path)
 
-    def type_scale_ratio(sizes_px)
-      uniq = sizes_px.map { |s| s.round(2) }.uniq.sort
-      return nil if uniq.size < 2
+        DesignMetrics.extract_spacing_px(File.read(path)).each do |px|
+          # ignore fractional rem noise; round to nearest px
+          r = px.round
+          next if r > 128 # section heroes
 
-      ratios = uniq.each_cons(2).map { |a, b| (b / a).round(3) }
-      ratios
-    end
-
-    # Interactive selector clusters that must declare Fitts-safe min-height somewhere nearby.
-    INTERACTIVE_NEEDLES = [
-      [/\.btn\b/, "button .btn"],
-      [/\.tab-item\b|\.tab-bar\b/, "mobile tab bar"],
-      [/\.swipe-action\b/, "dating swipe"],
-      [/\.feed-action\b/, "feed action"],
-      [/listing-buy-bar|\.deal-fav\b/, "marketplace buy/fav"],
-      [/\.compose-submit\b|\.compose-box\b/, "compose"],
-      [/\.channel-composer\b/, "channel composer"],
-    ].freeze
-
-    def extract_box_mins(css)
-      %w[min-height min-width height width].flat_map do |prop|
-        extract_declarations(css, prop).filter_map { |v| to_px(v) }
-      end
-    end
-
-    def interactive_touch_coverage(css_by_path, min_px:)
-      findings = []
-      INTERACTIVE_NEEDLES.each do |needle, label|
-        paths = css_by_path.select { |_p, body| body.match?(needle) }.keys
-        next if paths.empty?
-
-        covered = paths.any? do |p|
-          body = css_by_path[p]
-          # Accept min-height/width or explicit height/width ≥ Fitts floor.
-          # Also treat CSS vars named --space-12+ / --touch as covered (tokenized Fitts).
-          extract_box_mins(body).any? { |h| h + 0.01 >= min_px } ||
-            body.match?(/--space-(1[2-9]|[2-9]\d)|--touch|min-height:\s*44px|height:\s*44px|width:\s*var\(--space-1[2-9]/i)
+          off << [rel, r] if DesignMetrics.off_rhythm?(r, allowed: allowed, base: base)
         end
-        findings << { label: label, paths: paths, covered: covered }
       end
-      findings
+      # Cap soft noise
+      off.uniq.first(12).each do |rel, px|
+        @result.fail("design_metrics rhythm: #{rel} spacing #{px}px not in 8px scale (principle=rhythm)", severity: :soft)
+      end
+    end
+
+    def check_type_scale_budget
+      max_sizes = @rules.dig("typography", "hierarchy", "max_font_sizes").to_i
+      max_sizes = 8 if max_sizes <= 0
+      chrome = @tokens["shared_chrome"] || {}
+      sizes = %w[font_size_meta font_size_body font_size_title font_size_display].filter_map do |k|
+        DesignMetrics.to_px(chrome[k]) if chrome[k]
+      end
+      if sizes.uniq.size > max_sizes
+        @result.fail("design_metrics type_scale: shared_chrome has #{sizes.uniq.size} sizes > max #{max_sizes}", severity: :soft)
+      end
+
+      # Scan brgen SCSS for one-off px font sizes
+      inventory = []
+      Dir.glob(File.join(RAILS, "brgen/app/assets/stylesheets/**/*.scss")).each do |path|
+        next if path.include?("/builds/")
+
+        inventory.concat(DesignMetrics.extract_font_sizes_px(File.read(path)))
+      end
+      uniq = inventory.map { |s| s.round }.uniq
+      if uniq.size > max_sizes + 6 # allow some responsive noise beyond token set
+        @result.fail(
+          "design_metrics type_scale: brgen SCSS uses #{uniq.size} distinct px sizes (budget ~#{max_sizes + 6}) principle=hierarchy",
+          severity: :soft
+        )
+      end
+    end
+
+    def optional_browser_hit_targets
+      return unless %w[1 true yes on].include?(ENV["DESIGN_METRICS_BROWSER"].to_s.strip.downcase)
+
+      begin
+        require "selenium-webdriver"
+      rescue LoadError
+        @result.warn("design_metrics browser: selenium-webdriver not loaded — skip live hit targets")
+        return
+      end
+
+      inventory = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
+      unless inventory && CrawlSupport.port_open?("127.0.0.1", inventory.port)
+        @result.warn("design_metrics browser: brgen port closed — skip live hit targets")
+        return
+      end
+
+      min_px = @rules.dig("layout_rules", "touch", "target_min_px").to_i
+      probes = [
+        { host: "brgen.no", path: "/", selector: ".tab-item, .compose-btn, a.tab-item" },
+        { host: "markedsplass.brgen.no", path: "/", selector: "#navBar a, .deal-fav, .btn" },
+        { host: "brgen.no", path: "/live", selector: ".feed-action, .btn, .live-compose input[type=submit]" },
+      ]
+
+      options = Selenium::WebDriver::Chrome::Options.new
+      options.add_argument("--headless=new")
+      options.add_argument("--disable-gpu")
+      options.add_argument("--window-size=390,844")
+      driver = nil
+      begin
+        driver = Selenium::WebDriver.for(:chrome, options: options)
+        probes.each do |probe|
+          # selenium can't set Host easily — probe apex paths only.
+          next if probe[:host].to_s.include?("markedsplass")
+
+          begin
+            driver.navigate.to("http://127.0.0.1:#{inventory.port}#{probe[:path]}")
+            els = driver.find_elements(css: probe[:selector])
+            if els.empty?
+              @result.fail("design_metrics browser: no elements for #{probe[:selector]} on #{probe[:path]}", severity: :soft)
+              next
+            end
+            els.first(5).each do |el|
+              box = el.size
+              h = box.height.to_f
+              w = box.width.to_f
+              next if h < 1 || w < 1
+
+              next unless [h, w].min + 0.5 < min_px
+
+              @result.fail(
+                "design_metrics browser: #{probe[:path]} element ~#{w.to_i}×#{h.to_i} < #{min_px}px (principle=fitts_law)",
+                severity: :hard
+              )
+            end
+          rescue Selenium::WebDriver::Error::WebDriverError => e
+            @result.warn("design_metrics browser: #{probe[:path]} #{e.class}: #{e.message}")
+          end
+        end
+      ensure
+        driver&.quit
+      end
+    end
+
+    def read_css(path)
+      File.file?(path) ? File.read(path) : ""
     end
   end
 end

@@ -20,6 +20,6 @@ class TestOperatorPlaybook < Minitest::Test
   def test_find_by_id
     row = Master::Ground::OperatorPlaybook.find("rails_phantom_foreign_keys")
     assert row
-    assert_includes row["proof"], "check_phantom_foreign_keys"
+    assert_includes row["proof"], "gates/runner.rb phantom_foreign_keys"
   end
 end

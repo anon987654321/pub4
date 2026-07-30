@@ -741,7 +741,7 @@ known_issues:
   resource_guard_shedding: OPENBSD/resource_guard.sh stops optional Rails apps when load/mem thresholds
     hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin.
   rails_phantom_fk: 'references with foreign_key: true alone creates phantom buyers/listings/likers/orders
-    tables on SQLite — always set to_table. Run ruby RAILS/check_phantom_foreign_keys.rb.'
+    tables on SQLite — always set to_table. Run ruby RAILS/gates/runner.rb phantom_foreign_keys.'
   todo_checkbox_drift: Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb,
     and per-app bin/ci instead of checkbox backlogs.
   tts_broken: Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing

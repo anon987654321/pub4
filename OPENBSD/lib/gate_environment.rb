@@ -11,17 +11,24 @@ module Deploy
       end
     end
 
+    RAILS_GATES = "RAILS/gates/runner.rb"
+
+    # The deploy-time integrity sequence, in order. This is not a registry of
+    # RAILS gates -- that is RAILS/gates/gates.yml, and the rows below name a
+    # gate rather than a file so the two cannot drift. It used to point at
+    # per-gate scripts at the RAILS root; those were shims over the same classes
+    # the runner already loads in-process.
     INTEGRITY_GATES = [
       Gate.new(name: "deploy_identity", path: "OPENBSD/verify_deploy_identity.rb", needs: %i[repo]),
-      Gate.new(name: "production", path: "RAILS/check_production_gate.rb", needs: %i[repo]),
-      Gate.new(name: "phantom_fk", path: "RAILS/check_phantom_foreign_keys.rb", needs: %i[repo]),
-      Gate.new(name: "frontend", path: "RAILS/frontend_production_gate.rb", needs: %i[repo]),
+      Gate.new(name: "production", path: RAILS_GATES, args: %w[production], needs: %i[repo]),
+      Gate.new(name: "phantom_fk", path: RAILS_GATES, args: %w[phantom_foreign_keys], needs: %i[repo]),
+      Gate.new(name: "frontend", path: RAILS_GATES, args: %w[frontend_production], needs: %i[repo]),
       Gate.new(name: "relayd_smoke", path: "OPENBSD/deploy_smoke_gate.rb", needs: %i[repo]),
-      Gate.new(name: "domain_align", path: "RAILS/domain_alignment_gate.rb", needs: %i[repo]),
-      Gate.new(name: "crawl_inventory", path: "RAILS/crawl_probe.rb", needs: %i[repo]),
-      Gate.new(name: "schema_migration", path: "RAILS/schema_migration_gate.rb", needs: %i[repo]),
-      Gate.new(name: "asset_freshness", path: "RAILS/generated_asset_freshness_gate.rb", needs: %i[repo]),
-      Gate.new(name: "human_walkthrough", path: "RAILS/human_walkthrough_gate.rb", needs: %i[repo]),
+      Gate.new(name: "domain_align", path: RAILS_GATES, args: %w[domain_alignment], needs: %i[repo]),
+      Gate.new(name: "crawl_inventory", path: "RAILS/tools/crawl_probe.rb", needs: %i[repo]),
+      Gate.new(name: "schema_migration", path: RAILS_GATES, args: %w[schema_migration], needs: %i[repo]),
+      Gate.new(name: "asset_freshness", path: RAILS_GATES, args: %w[generated_asset], needs: %i[repo]),
+      Gate.new(name: "human_walkthrough", path: RAILS_GATES, args: %w[human_walkthrough], needs: %i[repo]),
       Gate.new(name: "vps_health", path: "OPENBSD/health_check.rb", args: ["--core"], needs: %i[vps live_http], optional: false),
     ].freeze
 

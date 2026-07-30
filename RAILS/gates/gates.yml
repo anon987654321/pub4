@@ -1,0 +1,246 @@
+# The gate registry. One row per gate, and this file is the only place a gate
+# is declared.
+#
+# It replaces four hand-maintained tables that had to agree with each other:
+# runner.rb's GATE_MAP (name -> file), IN_PROCESS (name -> class),
+# SUBPROCESS_ONLY (the set difference of those two, stored by hand) and
+# GATE_COVERED_BY (leaf -> composite). Adding a gate meant editing up to four
+# places, and GATE_MAP's file paths outlived the shims they pointed at.
+#
+# Fields
+#   require     path under RAILS/gates/, loaded before the class is named
+#   class       Deploy::* constant answering .run and returning a GateResult
+#   pass        success line; %{apps} / %{schemas} / %{assets} resolve via
+#               runner.rb's COUNTERS
+#   covered_by  the composite that already runs this gate as a leaf, so --all
+#               does not run it twice
+#   script      set instead of require/class for gates that stay subprocesses
+#   env_flags   ENV name -> keyword argument, passed to .run when the var is "1"
+#
+# Order is run order.
+
+production:
+  require: lib/production
+  class: Deploy::ProductionGate
+  pass: "Production gate passed for %{apps} Rails apps."
+  env_flags:
+    GATE_SKIP_NESTED: skip_nested
+
+domain_alignment:
+  require: lib/domain_alignment
+  class: Deploy::DomainAlignmentGate
+  pass: "Domain alignment gate passed (city domains + master.json/relayd checks)."
+  covered_by: release
+
+frontend_auditor:
+  require: lib/frontend_auditor
+  class: Deploy::FrontendAuditorGate
+  pass: "auditor: 0 warnings"
+  covered_by: layout_suite
+
+frontend_production:
+  require: lib/frontend_production
+  class: Deploy::FrontendProductionGate
+  pass: "Frontend production gate passed (%{apps} apps + MASTER/web layouts)."
+  covered_by: release
+
+generated_asset:
+  require: lib/generated_asset
+  class: Deploy::GeneratedAssetGate
+  pass: "Generated asset freshness gate passed for %{apps} Rails apps."
+
+human_walkthrough:
+  require: lib/human_walkthrough
+  class: Deploy::HumanWalkthroughGate
+  pass: "Human walkthrough gate passed for %{apps} Rails apps."
+
+master_tts:
+  require: lib/master_tts
+  class: Deploy::MasterTtsGate
+  pass: "MASTER TTS gate passed."
+  covered_by: production
+
+master_web_assets:
+  require: lib/master_web_assets
+  class: Deploy::MasterWebAssetsGate
+  pass: "MASTER/web assets gate passed (%{assets} required assets present)."
+  covered_by: production
+
+phantom_foreign_keys:
+  require: lib/phantom_foreign_keys
+  class: Deploy::PhantomForeignKeysGate
+  pass: "phantom_foreign_keys: clean (%{schemas} schemas)"
+
+port_inventory:
+  require: lib/port_inventory
+  class: Deploy::PortInventoryGate
+  pass: "Port inventory gate passed for %{apps} Rails apps."
+
+# Boots each app under its own bundle, so it stays a subprocess.
+rails_runtime:
+  script: rails_runtime.rb
+
+# Multi-step: shells out to rbenv, bundler and per-app CI.
+release:
+  script: release.rb
+
+schema_migration:
+  require: lib/schema_migration
+  class: Deploy::SchemaMigrationGate
+  pass: "Schema/migration gate passed for %{apps} Rails apps."
+
+stimulus_components:
+  require: lib/stimulus_components
+  class: Deploy::StimulusComponentsGate
+  pass: "Stimulus Components adoption gate passed."
+  covered_by: release
+
+# Forwards --capture/--app/--base, so it stays a subprocess.
+visual_contract:
+  script: visual_contract.rb
+
+user_flow:
+  require: lib/user_flow
+  class: Deploy::UserFlowGate
+  pass: "User flow + MASTER design-principle gate passed."
+  covered_by: layout_suite
+
+css_constitution:
+  require: lib/css_constitution
+  class: Deploy::CssConstitutionGate
+  pass: "CSS constitution gate passed (all stylesheets)."
+  covered_by: layout_suite
+
+css_minify_integrity:
+  require: lib/css_minify_integrity
+  class: Deploy::CssMinifyIntegrityGate
+  pass: "css_minify_integrity: ok"
+  covered_by: layout_suite
+
+layout_geometry:
+  require: lib/layout_geometry
+  class: Deploy::LayoutGeometryGate
+  pass: "Layout geometry / first-screen gate passed."
+  covered_by: layout_suite
+
+dialect_purity:
+  require: lib/dialect_purity
+  class: Deploy::DialectPurityGate
+  pass: "Dialect purity gate passed."
+  covered_by: layout_suite
+
+payment_honesty:
+  require: lib/payment_honesty
+  class: Deploy::PaymentHonestyGate
+  pass: "Payment honesty gate passed."
+  covered_by: layout_suite
+
+layout_search:
+  require: lib/layout_search
+  class: Deploy::LayoutSearchGate
+  pass: "Layout search (least-resistance) gate passed."
+  covered_by: layout_suite
+
+# Owns the professional layout + CSS stack, frontend_auditor included.
+layout_suite:
+  require: lib/layout_suite
+  class: Deploy::LayoutSuiteGate
+  pass: "Layout suite passed (CSS + geometry + dialect + payment + flow + auditor)."
+
+surface_schema:
+  require: lib/surface_schema
+  class: Deploy::SurfaceSchemaGate
+  pass: "surface_schema: ok"
+  covered_by: layout_suite
+
+design_metrics:
+  require: lib/design_metrics
+  class: Deploy::DesignMetricsGate
+  pass: "design_metrics: ok"
+  covered_by: layout_suite
+
+visual_quality:
+  require: lib/visual_quality
+  class: Deploy::VisualQualityGate
+  pass: "visual_quality: ok"
+  covered_by: layout_suite
+
+calibration:
+  require: lib/calibration
+  class: Deploy::CalibrationGate
+  pass: "calibration: ok"
+  covered_by: layout_suite
+
+apps_yml:
+  require: lib/apps_yml
+  class: Deploy::AppsYmlValidator
+  pass: "apps.yml validator: OK"
+  covered_by: production
+
+shared_wiring:
+  require: lib/shared_wiring
+  class: Deploy::SharedWiringGate
+  pass: "Shared wiring gate passed (routes, importmap, public assets, Stimulus)."
+
+constitutional_scan:
+  require: lib/constitutional_scan
+  class: Deploy::ConstitutionalScanGate
+  pass: "Constitutional scan preflight completed."
+
+# Owns every browser-backed gate below it. Each leaf launches Chrome, so running
+# one twice in a single invocation is pure wall-clock waste.
+rendered_suite:
+  require: lib/rendered_suite
+  class: Deploy::RenderedSuiteGate
+  pass: "ok: rendered browser suite clean"
+
+geometry:
+  require: lib/geometry
+  class: Deploy::GeometryGate
+  pass: "ok: geometry contracts satisfied (rendered)"
+  covered_by: rendered_suite
+
+layout_snapshot:
+  require: lib/layout_snapshot
+  class: Deploy::LayoutSnapshotGate
+  pass: "ok: layout snapshots match committed baselines"
+  covered_by: rendered_suite
+
+journey_invariant:
+  require: lib/journey_invariant
+  class: Deploy::JourneyInvariantGate
+  pass: "ok: journey invariants hold"
+  covered_by: rendered_suite
+
+reflow:
+  require: lib/reflow
+  class: Deploy::ReflowGate
+  pass: "ok: no overflow across the width sweep"
+  covered_by: rendered_suite
+
+keyboard_flow:
+  require: lib/keyboard_flow
+  class: Deploy::KeyboardFlowGate
+  pass: "ok: keyboard tab order is sound"
+  covered_by: rendered_suite
+
+cross_app:
+  require: lib/cross_app
+  class: Deploy::CrossAppEquivalenceGate
+  pass: "ok: shared chrome agrees across apps"
+  covered_by: rendered_suite
+
+deploy_drift:
+  require: lib/deploy_drift
+  class: Deploy::DeployDriftGate
+  pass: "ok: no deploy drift detected"
+
+flow_journey:
+  require: lib/flow_journey
+  class: Deploy::FlowJourneyGate
+  pass: "ok: user journeys pass with postconditions"
+
+gate_mutation:
+  require: lib/gate_mutation
+  class: Deploy::GateMutationGate
+  pass: "ok: gates detect the defects they exist to prevent"

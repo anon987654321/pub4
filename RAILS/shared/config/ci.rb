@@ -17,15 +17,15 @@ Pub4::CiGuard.run! do
     step "Setup", "bin/setup --skip-server"
     app = File.basename(Dir.getwd)
     css_builder = [
-      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "build_all_css.rb"),
-      "/home/dev/pub4/RAILS/build_all_css.rb",
-      File.expand_path("../..", __dir__) + "/build_all_css.rb",
-      File.expand_path("pub4-rails/RAILS/build_all_css.rb", ENV["HOME"].to_s)
+      ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "tools", "build_all_css.rb"),
+      "/home/dev/pub4/RAILS/tools/build_all_css.rb",
+      File.expand_path("../..", __dir__) + "/tools/build_all_css.rb",
+      File.expand_path("pub4-rails/RAILS/tools/build_all_css.rb", ENV["HOME"].to_s)
     ].compact.find { |candidate| File.readable?(candidate) }
     if css_builder
       step "Styles: pub4 CSS", "#{RbConfig.ruby} #{css_builder} --app #{app}"
     else
-      step "Styles: pub4 CSS", "echo 'build_all_css.rb not found in any known location -- skipping' >&2"
+      step "Styles: pub4 CSS", "echo 'tools/build_all_css.rb not found in any known location -- skipping' >&2"
     end
     pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/pub4")
     pub4_lib ||= File.expand_path("../lib/pub4", __dir__)

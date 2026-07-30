@@ -1395,8 +1395,8 @@ operator_playbook:
     - id: rails_phantom_foreign_keys
       area: rails
       signal: "SQLite no such table main.listings|buyers|likers|orders|menu_items during seed or insert"
-      action: "Never use foreign_key: true alone on namespaced refs — use foreign_key: { to_table: :users } or :marketplace_listings. Run RAILS/check_phantom_foreign_keys.rb."
-      proof: "ruby RAILS/check_phantom_foreign_keys.rb exits 0"
+      action: "Never use foreign_key: true alone on namespaced refs — use foreign_key: { to_table: :users } or :marketplace_listings. Run RAILS/gates/runner.rb phantom_foreign_keys."
+      proof: "ruby RAILS/gates/runner.rb phantom_foreign_keys exits 0"
 
     - id: rails_model_schema_drift
       area: rails

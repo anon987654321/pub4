@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../../gates/lib/guest_flow_persona"
+require_relative "../../gates/support/guest_flow_persona"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 class GuestFlowPersonaTest < Minitest::Test

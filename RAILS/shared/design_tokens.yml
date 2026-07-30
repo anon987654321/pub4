@@ -1,5 +1,5 @@
 # Canonical design token anchors — keep in sync with _dialect_tokens.scss defaults and face.css :root.
-# Regenerate face :root: ruby RAILS/scripts/generate_face_root_css.rb
+# Regenerate face :root: ruby RAILS/tools/generate_face_root_css.rb
 #
 # Dialect → consumer map (do not merge casually):
 #   social       → brgen + shared shell (IRIX flat dark/light)
