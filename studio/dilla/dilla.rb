@@ -3055,7 +3055,7 @@ alias camel_mode? dilla_style?
 # Single engine mode. Empty RENDER_MODE → dilla. Optional knobs stay as ENV
 # (STREAM_COMFORT, RENDER_MODE=warp|long_soul|…), not command aliases.
 def normalize_render_mode!
-  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.strip.empty?
+  ENV["RENDER_MODE"] = DEFAULT_RENDER_MODE if ENV["RENDER_MODE"].to_s.strip.empty?
 end
 
 def camel_drum_entry_bar
@@ -5662,6 +5662,10 @@ def route_generated_style(style, root_hz:, mode:, length:, seed:)
   nil
 end
 
+# The bare-invoke character. Was "dilla" -- the canonical kit-forward DNA --
+# and is now the ambient bed: slower, longer pad envelopes, kick well back,
+# no arp. RENDER_MODE=dilla still gets the old default verbatim.
+DEFAULT_RENDER_MODE = ENV.fetch("DILLA_DEFAULT_MODE", "ambient").freeze
 DEFAULT_BPM = 86.0
 DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
@@ -9941,6 +9945,31 @@ RENDER_MODE_DEFAULTS = {
     "ANALOG_CHAIN" => "vinyl_hot", "CONV_REVERB" => "chamber",
     "TRACK" => "long_soul", "BARS" => "32"
   },
+  # Ambient — the default. Soothing means removing things, not adding a reverb
+  # to a busy arrangement, so this is mostly knobs turned down: no arp, the
+  # kick present but well back, ghosts off the accent tier, one voicing family
+  # held rather than rotated.
+  #
+  # BPM 68 against the engine's 86 default: the swing model is unchanged, there
+  # is simply more time between hits for the pads to decay into. PAD_ATTACK and
+  # PAD_RELEASE are roughly double long_soul's, which is what makes chords
+  # arrive rather than land.
+  #
+  # SONITEX subtle and lo_fi rather than heavy or vinyl_lab: the analog chain is
+  # here for warmth, and crackle plus stylus mistrack is texture that keeps
+  # asking to be noticed.
+  ambient: {
+    "FORM" => "soul_32", "COMPOSITION" => "1", "VOICING" => "bill_evans",
+    "BPM" => "68", "BARS" => "32",
+    "PAD_ATTACK" => "3000", "PAD_RELEASE" => "8000", "PAD_VOL" => "72",
+    "LUSH_SYNTH" => "1", "HARMONY_LEAD" => "1", "LEAD_ARP" => "0",
+    "LONG_STRIPDOWN" => "1", "MOTIF_RECALL" => "1",
+    "GROOVE_DNA" => "donuts", "PERFORMER" => "yancey",
+    "KICKS" => "1", "KICK_GAIN" => "0.62", "GHOST_TIER" => "pocket",
+    "SONITEX" => "subtle", "SONITEX_PRESET" => "subtle",
+    "ANALOG_CHAIN" => "lo_fi", "CONV_REVERB" => "chamber",
+    "TRACK" => "ambient_major_drift"
+  },
   golden: {
     "FORM" => "donuts_time", "COMPOSITION" => "1", "VOICING" => "kenny_barron",
     "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "58",
@@ -11258,7 +11287,7 @@ end
 
 def apply_dilla_style!(force: false)
   normalize_render_mode!
-  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
+  ENV["RENDER_MODE"] = DEFAULT_RENDER_MODE if ENV["RENDER_MODE"].to_s.empty?
   apply_render_mode!
   # Full style DNA only on the dilla path. warp/long_soul/golden/… already
   # soft-filled their own RENDER_MODE_DEFAULTS tables above.
@@ -11331,7 +11360,7 @@ def apply_stream_listenability_defaults!
   ensure_learned_engine_seeded!
   apply_learned_env_for_track!(ENV["TRACK"]) if ENV["TRACK"] && !ENV["TRACK"].empty?
   normalize_render_mode!
-  ENV["RENDER_MODE"] = "dilla" if ENV["RENDER_MODE"].to_s.empty?
+  ENV["RENDER_MODE"] = DEFAULT_RENDER_MODE if ENV["RENDER_MODE"].to_s.empty?
   apply_dilla_style!(force: true)
   # Optional sofa mix knob — not a separate "style".
   force_env!(DILLA_COMFORT_DEFAULTS.reject { |k, _| k.start_with?("SPEAK") }, label: "DILLA_COMFORT_DEFAULTS") if comfort_mode?
@@ -12205,7 +12234,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
          else
            "fast"
          end
-  DillaDmesg.boot!(mode: ENV["RENDER_MODE"] || "dilla", cmd: "stream")
+  DillaDmesg.boot!(mode: ENV["RENDER_MODE"] || DEFAULT_RENDER_MODE, cmd: "stream")
   DillaDmesg.stream!(mode:, bars: bars_count, order_n: order.length)
   dmesg("cycle #{order.first(8).join(',')}#{order.length > 8 ? '…' : ''} (ctrl-c stop)", unit: "stream0", parent: "dilla0")
   dmesg("iterate log #{File.basename(STREAM_ITERATE_LOG.to_s)}", unit: "stream0", parent: "dilla0") if stream_iterate_enabled?
