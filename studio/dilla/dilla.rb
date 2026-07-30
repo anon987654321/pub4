@@ -11522,10 +11522,23 @@ def stream(bars_count = STREAM_BARS_COUNT)
   $stderr.sync = true
   acquire_stream_lock!
   prev_track = ENV["TRACK"]
-  user_pad_locked = (ENV["PAD_VOICE"] && !ENV["PAD_VOICE"].empty?) ||
-                    (ENV["PAD_ARP_MODE"] && !ENV["PAD_ARP_MODE"].empty?)
-  user_lead_locked = (ENV["LEAD_VOICE"] && !ENV["LEAD_VOICE"].empty?) ||
-                     (ENV["LEAD_ARP_MODE"] && !ENV["LEAD_ARP_MODE"].empty?)
+  # USER_PINNED_ENV, not ENV. This is the last of the guards that inferred the
+  # operator's intent from "is the key set", and it is the one that cost the most.
+  #
+  # In a supervisor child every one of these keys arrives populated -- PAD_VOICE
+  # and LEAD_VOICE come from DILLA_BEST_DEFAULTS before the first render -- so both
+  # flags were true whether or not anybody asked for a pad or a lead. That made
+  # apply_track_soul_profile! run with force: false, where style_env_write!
+  # refuses to overwrite a key that already has a value, so no track's
+  # TRACK_SOUL_PAD/LEAD profile ever landed; and it skipped
+  # stream_rotate_voices_and_arps! outright. Measured over one stream's log: 126
+  # consecutive renders on pad=stack_soul/held lead=soul_prophet/flylo_spiral,
+  # every track in the cycle, which is what "it all sounds like one song" is.
+  #
+  # Same fix as sync_progression_to_track! got for PROGRESSION, on the pad/lead
+  # half of the same guard.
+  user_pad_locked = %w[PAD_VOICE PAD_ARP_MODE].any? { |k| !USER_PINNED_ENV[k].to_s.empty? }
+  user_lead_locked = %w[LEAD_VOICE LEAD_ARP_MODE].any? { |k| !USER_PINNED_ENV[k].to_s.empty? }
   @stream_user_pad_locked = user_pad_locked
   @stream_user_lead_locked = user_lead_locked
   apply_stream_listenability_defaults!
@@ -15786,7 +15799,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   end
   if (rap_slug = rap_vocal_stream_slug)
     begin
-      fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:)
+      fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:, progression: cfg[:progression])
       if fit && File.file?(fit)
         rap_tmp = "#{destination}.rap#{File.extname(destination)}"
         mix_rap_vocal_layer!(destination, fit, rap_tmp, beat_bpm: cfg[:bpm])
@@ -19243,7 +19256,227 @@ def rap_vocal_render_snapped!(stretched, fit_path, placements, duration:, outer:
   fit_path
 end
 
-def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
+# --- Vocal key alignment -----------------------------------------------------
+# atempo preserves pitch. That is correct for a tempo fit and it is also why the
+# vocal path has never changed a stem's key: rap_vocal_atempo_chain, asetpts and
+# the crossfade loop all leave pitch alone, and nothing else in the chain touches
+# it. So a stem whose notes sit outside the beat's key stays outside it for the
+# entire render.
+#
+# Measured on gunnhild's 86bpm/32bar fit against time_donut (Dbmaj7 Cm7 Fm7
+# Bbm7 — Db major): the three strongest pitch classes in the vocal are A (17.5%
+# of voiced energy), Ab (14.7%) and B (13.1%). A and B are not in Db major. In
+# total 38.3% of the vocal's energy landed on non-key notes against 32.1% on key
+# notes, with A — a major third against the Fm7 the progression sits on — the
+# single loudest thing in the take.
+#
+# This is a key mismatch, not a detuned stem: the same fit measures -0.6 cents
+# mean deviation from equal temperament, so it is in tune with itself and with
+# A=440. Correcting it needs a transpose, not a fine-tune.
+RAP_VOCAL_KEY_OCTAVES = (3..5).freeze
+# ~130-988 Hz. Below C3 a semitone is narrower than the analysis resolution
+# (3.9 Hz at N=2048/8kHz), so those octaves would smear into their neighbours.
+RAP_VOCAL_KEY_SR = 8_000
+RAP_VOCAL_KEY_N = 2_048
+RAP_VOCAL_KEY_HOP = 1_024
+# A transpose is a real cost -- asetrate resampling shifts formants, so a voice
+# moved far reads as pitched-up/down rather than as the same singer in a new
+# key. Cap it at a whole tone and take the smaller of two near-equal wins.
+RAP_VOCAL_KEY_MAX_SHIFT = 2
+# Don't spend a transpose on a coin-flip: the shift has to move at least this
+# much of the vocal's energy onto key notes to be worth the formant cost.
+RAP_VOCAL_KEY_MIN_GAIN = 0.05
+
+# Chroma vector: 12 pitch classes, framewise Goertzel at each class's frequency
+# in each analysed octave. Goertzel rather than a full FFT because only 36 of
+# 1024 bins are ever read, and framewise rather than one pass over the whole
+# take because a 16s window resolves to 0.06 Hz — far narrower than a sung note
+# wanders, so the energy would smear across bins instead of accumulating.
+def audio_chroma(path)
+  raw = pipe_floats(path, "highpass=f=110,lowpass=f=1100," \
+                          "aformat=sample_fmts=flt:channel_layouts=mono:sample_rates=#{RAP_VOCAL_KEY_SR}")
+  return nil if raw.length < RAP_VOCAL_KEY_N
+
+  targets = RAP_VOCAL_KEY_OCTAVES.flat_map do |octave|
+    (0..11).map do |pc|
+      midi = ((octave + 1) * 12) + pc
+      [pc, 440.0 * (2**((midi - 69) / 12.0))]
+    end
+  end
+  # Goertzel coefficient per target frequency, plus a Hann window reused across
+  # frames.
+  coeffs = targets.map { |pc, hz| [pc, 2.0 * Math.cos(2.0 * Math::PI * hz / RAP_VOCAL_KEY_SR)] }
+  han = Array.new(RAP_VOCAL_KEY_N) { |n| 0.5 - (0.5 * Math.cos(2.0 * Math::PI * n / (RAP_VOCAL_KEY_N - 1))) }
+  chroma = Array.new(12, 0.0)
+  frames = 0
+  pos = 0
+  while pos + RAP_VOCAL_KEY_N <= raw.length
+    win = Array.new(RAP_VOCAL_KEY_N) { |n| raw[pos + n] * han[n] }
+    rms = Math.sqrt(win.sum { |v| v * v } / RAP_VOCAL_KEY_N)
+    # Voiced frames only. Silence and breath carry no key, and a gated stem is
+    # mostly silence — including it just adds a flat floor to every class.
+    if rms > 0.008
+      coeffs.each do |pc, coeff|
+        s1 = 0.0
+        s2 = 0.0
+        i = 0
+        while i < RAP_VOCAL_KEY_N
+          s0 = win[i] + (coeff * s1) - s2
+          s2 = s1
+          s1 = s0
+          i += 1
+        end
+        chroma[pc] += Math.sqrt((s1 * s1) + (s2 * s2) - (coeff * s1 * s2))
+      end
+      frames += 1
+    end
+    pos += RAP_VOCAL_KEY_HOP
+  end
+  return nil if frames.zero?
+
+  total = chroma.sum
+  return nil unless total.positive?
+
+  chroma.map { |v| v / total }
+end
+
+# Root pitch class of a chord name. PAD_CHORD_LOOKUP only holds the voicings the
+# pad engine registered, and the progressions name chords it never registered:
+# time_donut is Dbmaj7/Cm7/Fm7/Bbm7 while the lookup carries the ...maj9/m9
+# forms, so every one of its four chords missed and the whole progression scored
+# as having no harmony at all.
+CHORD_ROOT_RE = /\A([A-G])([b#]?)/
+def chord_name_root_class(name)
+  m = CHORD_ROOT_RE.match(name.to_s)
+  return nil unless m
+
+  base = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }[m[1]]
+  return nil if base.nil?
+
+  case m[2]
+  when "b" then (base - 1) % 12
+  when "#" then (base + 1) % 12
+  else base
+  end
+end
+
+# Third and fifth implied by the name, so a chord the lookup does not carry still
+# contributes the interval that decides major vs minor -- the distinction the
+# vocal actually clashes with.
+def chord_name_tone_classes(name)
+  root = chord_name_root_class(name)
+  return [] if root.nil?
+
+  body = name.to_s.sub(CHORD_ROOT_RE, "").sub(%r{/.*\z}, "")
+  minor = body.match?(/\Am(?!aj)/)
+  dim = body.match?(/\Adim|\A0/)
+  third = if dim || minor then 3 else 4 end
+  fifth = dim ? 6 : 7
+  [root, (root + third) % 12, (root + fifth) % 12]
+end
+
+# How strongly each pitch class belongs to the progression, as a weight rather
+# than a member/non-member flag. A binary set is useless on the slash-chord
+# progressions: get_dis_money (D/E Db/E C/E Bm/E Bbm/E Am/E) unions to all
+# twelve classes, so every shift scored a perfect 100% and the comparison
+# carried no information. Counting how many chords contain a class keeps the
+# tonic centre distinguishable from a passing chromatic tone.
+def progression_pitch_class_weights(progression)
+  names = CHORD_PROGRESSIONS[progression]
+  return nil if names.nil? || names.empty?
+
+  weights = Array.new(12, 0.0)
+  names.each do |name|
+    chord = PAD_CHORD_LOOKUP[name]
+    classes = Array(chord && chord[:hz]).filter_map do |hz|
+      next nil unless hz.to_f.positive?
+      (69 + (12 * Math.log2(hz.to_f / 440.0))).round % 12
+    end
+    classes = chord_name_tone_classes(name) if classes.empty?
+    # Root and third carry the chord's identity; count the whole voicing but
+    # give the root extra weight so the tonic centre wins ties.
+    classes.uniq.each { |c| weights[c] += 1.0 }
+    root = chord_name_root_class(name)
+    weights[root] += 0.5 if root
+  end
+  total = weights.sum
+  return nil unless total.positive?
+
+  weights.map { |w| w / total }
+end
+
+# Pick the transpose that best lines the vocal's energy up with the progression's
+# harmony: the dot product of the vocal chroma against the shifted chord-tone
+# weights. Ties go to the smaller shift, and 0 wins unless a shift clears
+# RAP_VOCAL_KEY_MIN_GAIN relative to it, so a vocal already in key is untouched.
+def rap_vocal_key_shift(chroma, key_weights, max_shift: RAP_VOCAL_KEY_MAX_SHIFT)
+  return 0 if chroma.nil? || key_weights.nil?
+
+  scored = (-max_shift..max_shift).map do |shift|
+    # Shifting the audio up by `shift` moves energy at class c to c+shift, so
+    # compare chroma[c] against the weight of where it lands.
+    fit = (0..11).sum { |c| chroma[c] * key_weights[(c + shift) % 12] }
+    [shift, fit]
+  end
+  base = scored.find { |shift, _| shift.zero? }.last
+  return 0 unless base.positive?
+
+  # The threshold is relative, and it scales with the size of the move. Relative
+  # because the dot product's scale depends on how concentrated the
+  # progression's weights are, so one absolute number would mean different
+  # things for a 4-chord vamp and a 12-class slash cycle. Scaled because the
+  # cost is not flat: a whole tone through asetrate resamples formants by 12%,
+  # which reads as a pitched-up singer rather than the same singer in a new key,
+  # so it has to earn twice what a semitone does. Measured on gunnhild: this is
+  # what separates time_donut (+1 at 5.1%, taken) from its own +2 at 8.7%
+  # (rejected — a bigger move on weaker evidence).
+  qualified = scored.select do |shift, fit|
+    next false if shift.zero?
+    (fit - base) / base >= RAP_VOCAL_KEY_MIN_GAIN * shift.abs
+  end
+  return 0 if qualified.empty?
+
+  qualified.max_by { |shift, fit| [fit.round(6), -shift.abs] }.first
+end
+
+# asetrate raises pitch and tempo together; atempo puts the tempo back. That
+# leaves the take its original length in the new key. Formants move with the
+# resample, which is the reason RAP_VOCAL_KEY_MAX_SHIFT is small.
+def rap_vocal_pitch_shift_chain(semitones)
+  return nil if semitones.to_i.zero?
+
+  ratio = 2**(semitones.to_f / 12.0)
+  "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE}," \
+    "#{rap_vocal_atempo_chain(1.0 / ratio)}"
+end
+
+# Resolved once per fit and cached on the catalog entry: the chroma pass costs a
+# full decode plus 36 Goertzel accumulators per frame, and a stem's key does not
+# change between renders.
+def rap_vocal_resolved_key_shift(entry, vocal_path, progression)
+  return 0 if ENV["RAP_VOCAL_KEY_ALIGN"] == "0"
+
+  forced = ENV["RAP_VOCAL_KEY_SHIFT"]
+  return forced.to_i.clamp(-6, 6) if forced && !forced.strip.empty?
+
+  key_weights = progression_pitch_class_weights(progression)
+  return 0 if key_weights.nil?
+
+  chroma = entry.is_a?(Hash) ? entry["chroma"] : nil
+  if chroma.nil? || chroma.length != 12
+    chroma = audio_chroma(vocal_path)
+    return 0 if chroma.nil?
+    if entry.is_a?(Hash)
+      entry["chroma"] = chroma.map { |v| v.round(5) }
+      cat = rap_vocal_load_catalog
+      cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
+      rap_vocal_save_catalog!(cat)
+    end
+  end
+  rap_vocal_key_shift(chroma, key_weights)
+end
+
+def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progression: nil)
   bar_offset ||= ENV["RAP_VOCAL_OFFSET"]&.to_f
   entry = rap_vocal_resolve(slug_or_path)
   vocal_path = entry.is_a?(Hash) ? entry["vocal_path"] : entry
@@ -19330,7 +19563,13 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
          end
   end
   out_dir = File.dirname(vocal_path)
-  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars.wav")
+  # Transposed into the beat's key in stage 1 below. Resolved here because the
+  # shift has to be part of the filename: bpm+bars alone named the same file for
+  # two tracks at the same tempo in different keys, so whichever rendered first
+  # won and the second silently reused a fit built for someone else's harmony.
+  key_shift = rap_vocal_resolved_key_shift(entry, vocal_path, progression)
+  key_tag = key_shift.zero? ? "" : format("_key%+d", key_shift)
+  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{key_tag}.wav")
   # Already-isolated → light polish only (no second heavy makeup that re-lifts bleed).
   # Fresh/unclean → full voice-only isolation.
   voice_chain = isolated ? rap_vocal_voice_polish_filter : rap_vocal_isolation_filter
@@ -19341,9 +19580,17 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   limiter = ENV.fetch("RAP_VOCAL_LIMITER", "0.93")
   # Stacking this loudnorm+limiter here AND the mix-stage limiter in
   # mix_rap_vocal_layer! double-squashes dynamics into a "maxed"/pumped
-  # feel even with no true clipping. RAP_VOCAL_SKIP_LOUDNORM=1 leaves the
-  # fit at its natural level and trusts the single mix-stage limiter.
-  tail = if ENV["RAP_VOCAL_SKIP_LOUDNORM"] == "1"
+  # feel even with no true clipping.
+  #
+  # Now off by default, because the fit's absolute level does not survive the
+  # mix stage anyway: mix_rap_vocal_layer! measures this file's voice-band RMS
+  # and applies its own norm_db to hit the anchor. So loudnorm's I=-17 target is
+  # discarded a step later and the only thing it leaves behind is LRA=7's
+  # dynamic-range compression plus a second limiter — squashed transients on a
+  # vocal whose own spectrum measures smooth (peak 400-630 Hz, monotonic
+  # rolloff above). That is what reads as hard/sharp once it is also loud.
+  # RAP_VOCAL_SKIP_LOUDNORM=0 restores the old behaviour.
+  tail = if ENV.fetch("RAP_VOCAL_SKIP_LOUDNORM", "1") == "1"
            ""
          else
            ",loudnorm=I=#{loudnorm_i}:TP=-2.5:LRA=7,alimiter=limit=#{limiter}:level_out=#{(limiter.to_f + 0.01).round(2)}"
@@ -19355,8 +19602,18 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
   # With gunnhild (11.5s usable from ss) a 32-bar render wrapped ~8 times, which
   # is exactly the "choppy" report.
   seg_path = File.join(out_dir, "seg_#{beat_bpm.round}_#{n_bars}bars.wav")
+  # Transpose in the same pass as the tempo fit and before the loudnorm/limiter
+  # tail, so the level measured downstream is the level of what actually plays.
+  pitch_chain = rap_vocal_pitch_shift_chain(key_shift)
+  if pitch_chain
+    dmesg("rap-vocal key: #{key_shift.positive? ? '+' : ''}#{key_shift} semitone#{key_shift.abs == 1 ? '' : 's'} " \
+          "into #{progression || 'beat'} key",
+          unit: "vox0", parent: "dilla0")
+  end
+  seg_af = ["#{voice_chain},#{rap_vocal_atempo_chain(ratio)}", pitch_chain, "asetpts=PTS-STARTPTS"]
+           .compact.join(",")
   sh! "ffmpeg", "-y", "-ss", ss.round(3).to_s, "-i", vocal_path,
-      "-af", "#{voice_chain},#{rap_vocal_atempo_chain(ratio)},asetpts=PTS-STARTPTS",
+      "-af", seg_af,
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", seg_path
   seg_len = audio_duration_sec(seg_path).to_f
 
@@ -19428,6 +19685,7 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil)
                           "source_bpm" => vocal_bpm, "tempo_ratio" => ratio.round(4),
                           "rms_db" => peak, "sub_bleed_db" => sub_bleed,
                           "snapped_lines" => snapped&.size, "has_pulse" => has_pulse,
+                          "key_shift" => key_shift, "progression" => progression&.to_s,
                           "voice_only" => true }
     entry["bpm_estimate"] = vocal_bpm if vocal_bpm.positive?
     entry["voice_only"] = true
@@ -19452,10 +19710,16 @@ def rap_vocal_mix_params
   vocal_vol = ENV.fetch("RAP_VOCAL_MIX", "1.0").to_f
   bed_w = ENV.fetch("RAP_VOCAL_BED_WEIGHT", "1.0").to_f
   voc_w = ENV.fetch("RAP_VOCAL_WEIGHT", "1.0").to_f
-  sparkle_db = ENV.fetch("RAP_VOCAL_SPARKLE_DB", "3.0").to_f
+  # 3.0 dB of shelf from 9 kHz up, an octave and a bit wide, on a source that
+  # already gets +2.2 dB at 3.2 kHz from the isolation chain and has no de-esser
+  # anywhere after it. That stacked boost on sibilants is the "sharp" report.
+  # 1.0 dB keeps consonants legible without the top-end edge, and the deesser
+  # below catches what remains.
+  sparkle_db = ENV.fetch("RAP_VOCAL_SPARKLE_DB", "1.0").to_f
+  deess = ENV.fetch("RAP_VOCAL_DEESS", "0.35").to_f.clamp(0.0, 1.0)
   hpf_hz = ENV.fetch("RAP_VOCAL_HPF", "90").to_f
   lowmid_cut_db = ENV.fetch("RAP_VOCAL_LOWMID_CUT_DB", "2.0").to_f
-  { vocal_vol:, bed_w:, voc_w:, sparkle_db:, hpf_hz:, lowmid_cut_db: }
+  { vocal_vol:, bed_w:, voc_w:, sparkle_db:, deess:, hpf_hz:, lowmid_cut_db: }
 end
 
 # Mirrors DillaGroove's snare pocket push (role_timing_offset's early-snare
@@ -19489,8 +19753,13 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest, beat_bpm: nil)
   beat_rms = band_rms(beat_path, highpass: 20, lowpass: 20_000)
   voice_rms = band_rms(vocal_path, highpass: 150, lowpass: 8_000)
   # Where the vocal sits relative to the beat, in dB. 0.0 = level with it,
-  # which is normal placement for a lead rap vocal; negative tucks it under.
-  anchor_db = ENV.fetch("RAP_VOCAL_ANCHOR_DB", "0.0").to_f
+  # negative tucks it under. beat_rms here is the FULL band (20-20k), so 0.0
+  # anchored the voice band level with kick, bass and kit summed together —
+  # which is louder than a lead vocal sits in any mix, and is the "way too loud"
+  # report. History: -6.0 (inaudible, because it stacked with a 0.85 trim) →
+  # 0.0 (too loud) → -3.0. The trim knob is separate now, so the earlier
+  # -6 dB failure does not apply to this value.
+  anchor_db = ENV.fetch("RAP_VOCAL_ANCHOR_DB", "-3.0").to_f
   norm_db = ((beat_rms + anchor_db) - voice_rms).clamp(-12.0, 24.0)
   nudge = beat_bpm ? rap_vocal_pocket_nudge_sec(beat_bpm) : 0.0
   trim = nudge.positive? ? "atrim=start=#{nudge.round(4)},asetpts=PTS-STARTPTS," : ""
@@ -19499,6 +19768,7 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest, beat_bpm: nil)
     "highpass=f=#{mix[:hpf_hz]}," \
     "bass=g=-#{mix[:lowmid_cut_db]}:f=300:width_type=o:width=1.0," \
     "treble=g=#{mix[:sparkle_db]}:f=9000:width_type=o:width=1.2," \
+    "#{mix[:deess].positive? ? "deesser=i=#{mix[:deess].round(2)}:m=0.5:f=0.18," : ''}" \
     "volume=#{mix[:vocal_vol]}[v0]",
     "[0:a][v0]amix=inputs=2:weights=#{mix[:bed_w]} #{mix[:voc_w]}:duration=first:dropout_transition=0:normalize=0," \
     "alimiter=limit=0.96:level_out=0.97[out]",
@@ -20371,7 +20641,7 @@ DISPATCH = {
       slug = ARGV.shift or abort "usage: rap-vocal fit <slug>"
       cfg = dilla_resolve_config
       n_bars = (ENV["BARS"] || bars).to_i
-      rap_vocal_fit!(slug, beat_bpm: cfg[:bpm], n_bars:)
+      rap_vocal_fit!(slug, beat_bpm: cfg[:bpm], n_bars:, progression: cfg[:progression])
     when "list"
       puts JSON.pretty_generate(rap_vocal_load_catalog)
     else
