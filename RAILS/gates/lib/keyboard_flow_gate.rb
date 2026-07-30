@@ -85,10 +85,44 @@ module Deploy
         return
       end
 
-      begin
-        cdp.evaluate("document.body.focus(); if (document.activeElement) document.activeElement.blur();")
+      # Start the walk from the top of the document, provably.
+      #
+      # `document.body.focus()` is a no-op on a body with no tabindex, so on any
+      # page with an autofocus field the blur that follows ran against the
+      # autofocused element and Chrome kept focus inside the form. The walk then
+      # began mid-document and wrapped, so a skip link that is genuinely tab stop
+      # #1 was reported as #16 — measured on amber /session/new, whose
+      # `<input autofocus id="email_address">` put `input#password` first and the
+      # skip link only after the wrap. That is an artifact of where the walk
+      # started, not a defect in the page, and it is exactly the assertion this
+      # gate uses to claim a skip link is misplaced.
+      #
+      # Giving body tabindex=-1 makes focus() actually land, and asserting
+      # activeElement is body (or nothing) before tabbing means a page that fights
+      # the reset is reported as unmeasurable rather than silently mismeasured.
+      focus_reset = begin
+        cdp.evaluate(<<~JS)
+          (() => {
+            if (document.activeElement && document.activeElement !== document.body) {
+              document.activeElement.blur();
+            }
+            document.body.setAttribute("tabindex", "-1");
+            document.body.focus();
+            const a = document.activeElement;
+            return !a || a === document.body || a === document.documentElement;
+          })()
+        JS
       rescue CdpSession::Error
         nil
+      end
+
+      unless focus_reset
+        @result.inconclusive!(
+          "keyboard_flow: #{label} would not release focus to the document, so tab order " \
+          "could not be measured from the start (an autofocus field holding focus reads as a " \
+          "misplaced skip link)"
+        )
+        return
       end
 
       stops = []
