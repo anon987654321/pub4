@@ -244,7 +244,11 @@ end
         ryan: { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
         finn: { breath: 1.02, saccade: 0.20, pulse_floor: 0.10, blink_ms: 3000 },
         andrew: { breath: 0.94, saccade: 0.16, pulse_floor: 0.07, blink_ms: 2600 },
-        pernille: { breath: 1.05, saccade: 0.22, pulse_floor: 0.11, blink_ms: 3100 },
+        # Matches face.part1.txt's 'nb-NO-PernilleNeural' entry, which carries the
+        # deliberate "future-human: composed, steady gaze, still baseline, slow
+        # deliberate blink" tuning. This table had generic values instead, so the
+        # face idled differently depending on which side computed the signature.
+        pernille: { breath: 0.90, saccade: 0.10, pulse_floor: 0.05, blink_ms: 4200 },
         ezinne: { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
         wayne: { breath: 0.92, saccade: 0.15, pulse_floor: 0.06, blink_ms: 2500 },
       }.freeze

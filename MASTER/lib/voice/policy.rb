@@ -7,13 +7,16 @@ module Master
     # Single source of truth for TTS voice policy (data/voice.yml tts section).
     # Persona YAML may list other voices for LLM style; synthesis always uses this policy.
     module Policy
+      # Keep in step with data/voice.yml: this hash is what a missing or
+      # unreadable voice.yml falls back to, so a stale entry here reintroduces
+      # the exact voice/neural mismatch the file's comment describes.
       FALLBACK = {
-        "single_voice" => "ryan",
-        "neural" => "en-GB-RyanNeural",
+        "single_voice" => "pernille",
+        "neural" => "nb-NO-PernilleNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => false,
         "default_rate" => "-8%",
-        "default_pitch" => "-20Hz",
+        "default_pitch" => "+8Hz",
       }.freeze
 
       module_function
@@ -32,12 +35,12 @@ module Master
 
       def single_voice_key
         sym = data["single_voice"].to_s.strip.downcase.to_sym
-        sym = :ryan if sym == :""
+        sym = FALLBACK["single_voice"].to_sym if sym == :""
         sym
       end
 
       def neural_voice
-        data["neural"].to_s.strip.empty? ? "en-GB-RyanNeural" : data["neural"].to_s
+        data["neural"].to_s.strip.empty? ? FALLBACK["neural"] : data["neural"].to_s
       end
 
       def persona_affects_text_only?

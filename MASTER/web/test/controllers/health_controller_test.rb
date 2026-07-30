@@ -13,7 +13,7 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, body.dig("checks", "tts")
     assert body["checks"].key?("git")
     assert body["deploy"].key?("voice_policy")
-    assert_equal "ryan", body.dig("deploy", "voice_policy", "single_voice")
+    assert_equal "pernille", body.dig("deploy", "voice_policy", "single_voice")
     assert body["deploy"].key?("tts_socket")
     assert body["deploy"].key?("face_runtime_digest")
   end

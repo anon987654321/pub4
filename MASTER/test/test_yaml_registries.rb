@@ -137,11 +137,16 @@ class TestRulesYamlRegistry < Minitest::Test
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}
-    assert_equal "ryan", tts["single_voice"]
-    assert_equal "en-GB-RyanNeural", tts["neural"]
+    assert_equal "pernille", tts["single_voice"]
+    assert_equal "nb-NO-PernilleNeural", tts["neural"]
     assert_equal true, tts["persona_affects_text_only"]
-    assert_equal :ryan, Master::Voice::Policy.single_voice_key
-    assert_equal "en-GB-RyanNeural", Master::Voice::Policy.neural_voice
+    assert_equal :pernille, Master::Voice::Policy.single_voice_key
+    assert_equal "nb-NO-PernilleNeural", Master::Voice::Policy.neural_voice
+    # The pair has to agree: single_voice is what Ruby hands the synthesizer,
+    # neural is what the browser reads, and they drifted apart once already.
+    assert_equal tts["neural"], Master::Voice::Speech::VOICES.fetch(tts["single_voice"].to_sym)
+    assert_equal Master::Voice::Policy::FALLBACK["single_voice"], tts["single_voice"]
+    assert_equal Master::Voice::Policy::FALLBACK["neural"], tts["neural"]
   end
 
   def test_standing_order_voice_directives_match_rules_voice_strunk

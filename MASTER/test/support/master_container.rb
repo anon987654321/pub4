@@ -31,7 +31,7 @@ module Master
         YML
         "personas.yml" => <<~YML,
           anchor:
-            voice: en-GB-RyanNeural
+            voice: nb-NO-PernilleNeural
             tts_rate: "-8%"
             tts_pitch: "+8Hz"
             style: clear
@@ -39,8 +39,8 @@ module Master
         YML
         "voice.yml" => <<~YML,
           tts:
-            single_voice: ryan
-            neural: en-GB-RyanNeural
+            single_voice: pernille
+            neural: nb-NO-PernilleNeural
             persona_affects_text_only: true
           voice:
             strunk:

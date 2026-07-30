@@ -7,15 +7,6 @@ require "securerandom"
 class ChatService
   SMOKE_MESSAGES = %w[ping pong health up].freeze
 
-  COUNCIL_PERSONA_VOICE = {
-    "Architect" => :ryan,
-    "Skeptic" => :ryan,
-    "Pragmatist" => :ryan,
-    "Security" => :ryan,
-    "User" => :ryan,
-    "Mentor" => :ryan,
-  }.freeze
-
   WRITE_TOOLS = %w[Write Edit Create FilePatch].freeze
   BUS_DMESG_SKIP = %w[
     infer:resolved infer:confidence tool:before tool:after client_action
@@ -278,7 +269,10 @@ class ChatService
   def write_council_speech(event)
     persona = event[:persona].to_s
     face = Master::Voice::CouncilFace.for_persona(persona)
-    voice = face[:voice] || COUNCIL_PERSONA_VOICE[persona] || Master::Voice::Speech::DEFAULT_VOICE
+    # CouncilFace derives the voice from the single-voice policy, so it is never
+    # nil. The per-persona map that used to sit between these two terms listed
+    # :ryan six times and outlived the policy it was copied from.
+    voice = face[:voice] || Master::Voice::Speech::DEFAULT_VOICE
     sentence = event[:feedback].to_s.strip.split(/(?<=[.!?])\s+/).first(2).join(" ").strip[0, 200]
     return if sentence.empty?
 

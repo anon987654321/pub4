@@ -5,13 +5,18 @@ require "fileutils"
 
 module Master
   module Voice
-    # Single-voice policy: Ryan (en-GB) only; style still varies.
+    # Single-voice policy: whatever data/voice.yml locks; style still varies.
     module WarmErratic
       STATE = File.join(Master::ROOT, ".master", "tts_voice_state.json")
 
-      VOICES = [
-        [:ryan, 100],
-      ].freeze
+      # Read the policy rather than naming a voice: the weight table, pick_voice
+      # and surprise_guest each hardcoded :ryan, so flipping voice.yml left
+      # three call sites still handing the synthesizer the old voice. Methods,
+      # not constants, so this file does not need Policy loaded before it and
+      # so `Policy.reload!` is picked up without a restart.
+      def self.locked_voice = Policy.single_voice_key
+
+      def self.voices = [[locked_voice, 100]]
       SHORT_WORD_COUNT = 12
       MEDIUM_WORD_COUNT = 24
       LONG_WORD_COUNT = 40
@@ -78,11 +83,11 @@ module Master
       end
 
       def pick_voice(style, _text)
-        [:ryan, style]
+        [WarmErratic.locked_voice, style]
       end
 
       def surprise_guest
-        [:ryan, FAST_STYLES.sample]
+        [WarmErratic.locked_voice, FAST_STYLES.sample]
       end
 
       def weighted_choice(items)

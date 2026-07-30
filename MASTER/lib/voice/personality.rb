@@ -11,12 +11,15 @@ module Master
       DEFAULT = :anchor
       AXIOM_DISPLAY_LIMIT = 10
 
+      # Stands in for DEFAULT (:anchor) when personas.yml is missing, so it has to
+      # match that entry. It had drifted into describing anchor's style with
+      # Ryan's voice and an "English (UK)" label anchor never had.
       FALLBACK_PERSONA = {
-        "voice" => "en-GB-RyanNeural",
+        "voice" => "nb-NO-PernilleNeural",
         "tts_rate" => "-8%",
-        "tts_pitch" => "-20Hz",
+        "tts_pitch" => "+8Hz",
         "style" => "clear",
-        "description" => "English (UK). Clear. Curious. Warm editorial voice.",
+        "description" => "Norwegian. Clear. Curious. Warm editorial voice.",
       }.freeze
 
       MOOD_LINES = {
