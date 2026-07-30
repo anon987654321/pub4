@@ -64,6 +64,7 @@ require_relative "../../MASTER/lib/io/analog_capabilities"
 require "open3"
 require "timeout"
 require_relative "lib/mixer"
+require_relative "lib/crate_dig"
 require_relative "lib/dilla_dmesg"
 require_relative "lib/composition_engine"
 require_relative "lib/groove_score"
@@ -13956,6 +13957,80 @@ end
 # Copies one kit's one-shots into CUSTOM_DRUM_DIR, which drum_sample_path
 # already prefers over the synthesized kit — no synthesis code changes
 # needed, this just populates the existing override hook.
+# Dig one seam into samples/dug/, recording provenance per side.
+#
+# Filtered to the public domain before anything is fetched -- see
+# CrateDig.pd_year_ceiling. The engine already refuses to write lyrics from real
+# songs because those are copyrighted; this is the same rule applied to audio,
+# and it is why this exists instead of another yt-dlp call.
+def crate_dig!(seam, count)
+  unless seam && CrateDig::SEAMS.key?(seam)
+    abort "usage: dig <seam> [n]  — seams: #{CrateDig::SEAMS.keys.join(', ')}"
+  end
+
+  puts "digging #{seam} (public domain through #{CrateDig.pd_year_ceiling})..."
+  # Over-fetch: some sides are already held and some carry no usable transfer.
+  docs = CrateDig.search(collection: "great78", seam: seam, rows: count * 3)
+  taken = 0
+
+  docs.each do |doc|
+    break if taken >= count
+
+    id = doc["identifier"]
+    if CrateDig.have?(id)
+      puts "  have: #{id}"
+      next
+    end
+
+    begin
+      file = CrateDig.best_file(id)
+      next unless file
+
+      dest = File.join(CrateDig::DUG, seam, "#{id}#{File.extname(file['name'])}")
+      print "  #{doc['year']}  #{doc['title'].to_s[0, 44]} ... "
+      CrateDig.download(file["url"], dest)
+      CrateDig.record!(
+        "identifier" => id, "seam" => seam, "year" => doc["year"],
+        "title" => doc["title"], "creator" => Array(doc["creator"]).first,
+        "source" => "https://archive.org/details/#{id}", "collection" => "great78",
+        "basis" => "US public domain — published #{doc['year']}, MMA 100-year term expired",
+        "rights" => file["rights"], "licenseurl" => file["licenseurl"],
+        "path" => dest.sub("#{ROOT}/", ""),
+        "sha256" => Digest::SHA256.file(dest).hexdigest, "bytes" => File.size(dest)
+      )
+      puts "#{(File.size(dest) / 1024.0 / 1024).round(1)}MB"
+      taken += 1
+    rescue StandardError => e
+      puts "skip (#{e.class}: #{e.message.to_s[0, 60]})"
+    end
+  end
+
+  puts "dug #{taken} side(s) into #{CrateDig::DUG.sub("#{ROOT}/", '')}/#{seam}/"
+  puts "provenance: #{CrateDig::MANIFEST.sub("#{ROOT}/", '')}"
+end
+
+def crate_seams
+  puts "seams (archive.org Great 78, filtered to the public domain):"
+  CrateDig::SEAMS.each { |name, q| puts format("  %-12s %s", name, q) }
+  puts
+  puts "public domain through #{CrateDig.pd_year_ceiling}; widens by one year each January."
+end
+
+def dug_list
+  items = CrateDig.manifest["items"]
+  if items.empty?
+    puts "nothing dug yet — try: ruby dilla.rb dig jazz_small 8"
+    return
+  end
+  items.group_by { |i| i["seam"] }.each do |seam, rows|
+    puts "#{seam} (#{rows.size})"
+    rows.each { |i| puts format("  %s  %-42s %s", i["year"], i["title"].to_s[0, 42], i["creator"]) }
+  end
+  puts
+  puts "#{items.size} side(s), all US public domain. Source URL, licence and SHA-256 " \
+       "per side in #{File.basename(CrateDig::MANIFEST)}."
+end
+
 def use_external_kit!(kit_name)
   src_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit_name)
   abort "kit '#{kit_name}' not found — run `ruby dilla.rb fetch-assets` first" unless Dir.exist?(src_dir)
@@ -16999,6 +17074,9 @@ def help
       fetch-assets                   Cache CC0 drum WAVs + 2 extra soundfonts
       use-external-kit <name>        Install a fetched kit into samples/drums/custom/
                                       (01-hard-trap | 02-bounce | 03-soulful-vintage)
+      dig <seam> [n]                 Dig n public-domain sides into samples/dug/
+      dig-seams                      List the seams available to dig
+      dug                            What has been dug, and under what terms
     FLAGS (equivalent to the ENV vars below, usable on any command):
       #{FLAG_ENV.keys.map { |k| "--#{k}=…" }.join(' ')}
 
@@ -21194,6 +21272,9 @@ DISPATCH = {
   "bass" => -> { bass((ARGV.shift || 55.0).to_f) },
   "grade" => -> { grade(ARGV.shift, ARGV.shift, ARGV.shift) },
   "fetch-assets" => -> { fetch_assets! },
+  "dig" => -> { crate_dig!(ARGV.shift, (ARGV.shift || 8).to_i) },
+  "dig-seams" => -> { crate_seams },
+  "dug" => -> { dug_list },
   "use-external-kit" => -> { use_external_kit!(ARGV.shift || abort("usage: use-external-kit <01-hard-trap|02-bounce|03-soulful-vintage>")) },
   "grade_list" => -> { grade_list },
   "sonitex_list" => -> { sonitex_list },
