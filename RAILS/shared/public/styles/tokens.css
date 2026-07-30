@@ -11,7 +11,7 @@
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #7c6fd6;
-  --danger: #d1594a;
+  --danger: #e46151;
   --font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
   --weight-normal: 400;
   --weight-medium: 500;
