@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "net/http"
 require "yaml"
 require_relative "../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../tools/crawl_support"
@@ -413,10 +414,41 @@ module Deploy
     # One browser, caller drives navigation. Gates that need more than a single
     # load per surface (idempotence, back-button, tab order, width sweeps) use
     # this rather than paying for a browser launch each.
-    def self.with_browser(root: ROOT)
+    def self.with_browser(root: ROOT, warm: surfaces(DATA, root: root))
+      warm_surfaces(warm)
       CdpSession.open(host_map: host_map(root: root)) do |cdp|
         cdp.on_new_document(DETERMINISM)
         yield cdp
+      end
+    end
+
+    # A plain GET per host before the browser opens.
+    #
+    # The browser budget is 20s, which is generous for a page and nowhere near
+    # enough for a development-mode Rails app compiling a surface for the first
+    # time. Measured cold, brgen's front page reaches readyState complete in
+    # ~13s and can exceed 20 under load; warm it is 3-6s. So keyboard_flow and
+    # journey_invariant reported "unreachable" for surfaces that were serving
+    # 200 to curl the whole time, and the failure looked like a host-resolution
+    # bug -- the vertical subdomains are Host-mapped, so that is the obvious
+    # suspect and it was never the cause.
+    #
+    # Warming here rather than raising the timeout keeps the budget meaningful:
+    # after this, 20s of browser time really does mean the page is wedged.
+    # Net::HTTP rather than CrawlSupport.fetch, which cannot set a Host header --
+    # and the Host is the whole point for the vertical subdomains, which all
+    # resolve to the same port and are told apart by it.
+    def self.warm_surfaces(rows)
+      Array(rows).map { |s| [s.host, s.port] }.uniq.each do |host, port|
+        next unless host && port
+
+        Net::HTTP.start("127.0.0.1", port, open_timeout: 5, read_timeout: 60) do |http|
+          http.request(Net::HTTP::Get.new("/", { "Host" => host }))
+        end
+      rescue StandardError
+        # Unreachable here is not this method's business to report; the probe
+        # that follows records it against the surface it belongs to.
+        nil
       end
     end
 
