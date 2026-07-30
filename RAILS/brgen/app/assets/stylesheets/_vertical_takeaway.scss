@@ -1,6 +1,9 @@
 /* Takeaway — DoorDash urgency + Foodora/Wolt restaurant discovery */
 body.vertical-takeaway {
-  --food-dash: oklch(64% 0.2 30);
+  /* 64% resolved to #ed4c3a = 4.42 on --food-eta-bg (#202020), under the 4.5
+     floor for the 14px bold .eta-badge. 66% clears it at 4.78 without leaving
+     the hue. */
+  --food-dash: oklch(66% 0.2 30);
   --foodora: oklch(52% 0.2 350);
   --food-eta-bg: var(--hover-subtle);
   --food-card-radius: var(--radius-md);

@@ -140,7 +140,7 @@ brgen_old_dark:
   border: "#333333"
   accent: "#f2f2f2"
   accent_hover: "#d0d0d0"
-  danger: "#d1594a"
+  danger: "#e46151"
   font: "Arial, Helvetica, sans-serif"
   chrome_bg: "#0d0d0d"
   radius_xs: "4px"
@@ -160,7 +160,7 @@ brgen_old_light:
   border: "#d9d9d9"
   accent: "#1a1a1a"
   accent_hover: "#000000"
-  danger: "#d1594a"
+  danger: "#b24c3f"
   font: "Arial, Helvetica, sans-serif"
   chrome_bg: "#333333"
   radius_xs: "4px"
@@ -204,7 +204,7 @@ social:
   hover_subtle: "rgba(216, 214, 224, 0.03)"
   accent: "#7c6fd6"
   accent_hover: "#9686e8"
-  danger: "#d1594a"
+  danger: "#e46151"
   font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   font_size: "16px"
   line_height: "20px"
@@ -246,7 +246,7 @@ light:
   hover_subtle: "rgba(26, 24, 36, 0.03)"
   accent: "#5b4fc4"
   accent_hover: "#4a3fb0"
-  danger: "#d1594a"
+  danger: "#a9483c"
 
 # brgen vertical accent map (single source — mirrored in _vertical_shell.scss)
 vertical_accents:

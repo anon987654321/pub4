@@ -1,0 +1,56 @@
+/* Keyboard focus indicator — one owner for the whole design system.
+ *
+ * Before this file there was no active global :focus-visible rule in any app.
+ * _zen_shell.scss has one, but no application.scss imports it, so every visible
+ * focus ring in brgen/amber/bsdports was Chrome's *default* ring — and the only
+ * stops that lost it were the ones whose CSS explicitly said `outline: none`.
+ * keyboard_flow reported 3/25 stops on brgen/core and brgen/marketplace and
+ * 2/25 on amber/wardrobe rendering no ring at all.
+ *
+ * Several of those suppressors are annotated `autofix: removed box-shadow (flat
+ * UI)`: a flat-UI pass stripped the box-shadow that had been the indicator and
+ * left the `outline: none` beside it untouched, so the ring silently vanished.
+ * That is why this belongs in the design system rather than in each component —
+ * an autofix that removes one property must not be able to delete the focus
+ * indicator, and a component author should not have to remember to re-add it.
+ *
+ * outline (not box-shadow) is deliberate: design_tokens' focus_ring is
+ * '2px solid' and the flat_ui rule forbids shadows, so outline is the only
+ * mechanism left that draws a ring.
+ */
+
+:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--accent));
+  outline-offset: 2px;
+}
+
+/* Components that clear the outline so a mouse click does not ring, and then
+ * never restore it for the keyboard. Listed explicitly because most carry
+ * `outline: none !important`, which a plain :focus-visible rule cannot beat.
+ * Keep this list shrinking: the right fix in each case is for the component to
+ * scope its reset to `:focus:not(:focus-visible)` instead.
+ */
+.edge-grip:focus-visible,
+.brand:focus-visible,
+.brand-wordmark:focus-visible,
+.brgen-logo-mark:focus-visible,
+.theme-toggle:focus-visible,
+.tiptap_area:focus-visible,
+.compose-input:focus-visible,
+.amber-compose-input:focus-visible,
+.nav-search-input:focus-visible,
+.widget-search input:focus-visible,
+.search input:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[contenteditable]:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--accent)) !important;
+  outline-offset: 2px;
+}
+
+/* A focusable element that is visually hidden cannot show a ring, so no CSS rule
+ * here can fix one — the remedy is to take it out of the tab order at the markup
+ * (see amber shared/_widgets.html.erb's hidden submit, now tabindex="-1") or to
+ * reveal it on focus the way .skip-link does. Left as a note rather than a rule
+ * so nobody adds an outline here expecting it to help.
+ */
