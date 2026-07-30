@@ -251,38 +251,38 @@ end
 # Dmax caps highlights (shoulder), pivot is the linear midtone fulcrum (≈0.18),
 # gamma is contrast (>1 = steeper). Per-channel offsets create stock colour cast.
 STOCKS = {
-  kodak_portra: { grain: 15,
+  kodak_portra: { grain: 15, speed: 400,
                   sublayers: [{ sensitivity_shift: 0.0, grain_scale: 1.4, weight: 0.45 },
                                { sensitivity_shift: -0.5, grain_scale: 1.0, weight: 0.55 }],
                   matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04],
                   hd: { r: [0.06, 0.93, 0.18, 1.10], g: [0.05, 0.94, 0.18, 1.10], b: [0.04, 0.92, 0.20, 1.05] } },
-  kodak_vision3: { grain: 20,
+  kodak_vision3: { grain: 20, speed: 500,
                    sublayers: [{ sensitivity_shift: 0.3, grain_scale: 1.5, weight: 0.40 },
                                 { sensitivity_shift: 0.0, grain_scale: 1.1, weight: 0.35 },
                                 { sensitivity_shift: -0.6, grain_scale: 0.85, weight: 0.25 }],
                    matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06],
                    hd: { r: [0.07, 0.95, 0.17, 1.15], g: [0.06, 0.95, 0.18, 1.20], b: [0.08, 0.90, 0.20, 1.10] } },
-  kodak_vision3_50d: { grain: 8, matrix: [1.06, -0.03, -0.02, 0.02, 0.96, 0.01, 0.01, -0.05, 1.04],
+  kodak_vision3_50d: { grain: 8, speed: 50, matrix: [1.06, -0.03, -0.02, 0.02, 0.96, 0.01, 0.01, -0.05, 1.04],
                        hd: { r: [0.05, 0.95, 0.18, 1.08], g: [0.04, 0.95, 0.18, 1.12], b: [0.03, 0.93, 0.20, 1.05] } },
-  kodak_vision3_500t: { grain: 20, matrix: [1.10, -0.06, -0.04, 0.04, 0.94, 0.03, 0.04, -0.10, 1.09],
+  kodak_vision3_500t: { grain: 20, speed: 500, matrix: [1.10, -0.06, -0.04, 0.04, 0.94, 0.03, 0.04, -0.10, 1.09],
                         hd: { r: [0.08, 0.95, 0.17, 1.18], g: [0.06, 0.95, 0.18, 1.22], b: [0.10, 0.90, 0.20, 1.15] },
                         focal_plane_offset: 1.1 },
-  cinestill_800t: { grain: 22,
+  cinestill_800t: { grain: 22, speed: 800,
                     sublayers: [{ sensitivity_shift: 0.4, grain_scale: 1.6, weight: 0.35 },
                                  { sensitivity_shift: 0.0, grain_scale: 1.2, weight: 0.40 },
                                  { sensitivity_shift: -0.5, grain_scale: 0.9, weight: 0.25 }],
                     matrix: [1.12, -0.07, -0.05, 0.04, 0.93, 0.03, 0.05, -0.12, 1.10],
                     hd: { r: [0.09, 0.96, 0.17, 1.20], g: [0.07, 0.95, 0.18, 1.25], b: [0.12, 0.88, 0.20, 1.18] },
                     halation: 0.8, focal_plane_offset: 1.2 },
-  ektachrome_100: { grain: 10, matrix: [1.08, -0.04, -0.04, 0.02, 1.02, -0.02, 0.01, -0.08, 1.07],
+  ektachrome_100: { grain: 10, speed: 100, matrix: [1.08, -0.04, -0.04, 0.02, 1.02, -0.02, 0.01, -0.08, 1.07],
                     hd: { r: [0.02, 0.97, 0.18, 1.30], g: [0.02, 0.97, 0.18, 1.35], b: [0.03, 0.96, 0.20, 1.25] } },
-  fuji_velvia: { grain: 8, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
+  fuji_velvia: { grain: 8, speed: 50, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
                  hd: { r: [0.02, 0.97, 0.18, 1.45], g: [0.02, 0.98, 0.18, 1.50], b: [0.03, 0.95, 0.20, 1.40] } },
-  tri_x: { grain: 25, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+  tri_x: { grain: 25, speed: 400, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
             hd: { r: [0.05, 0.95, 0.18, 1.30], g: [0.05, 0.95, 0.18, 1.30], b: [0.05, 0.95, 0.18, 1.30] } },
   # Kodachrome: steep gamma, no in-film couplers, external development process.
   # Punchy reds, heavy yellow separation, minimal shadow fog.
-  kodachrome: { grain: 12, matrix: [1.15, -0.10, -0.05, 0.03, 1.00, -0.03, 0.00, -0.10, 1.10],
+  kodachrome: { grain: 12, speed: 64, matrix: [1.15, -0.10, -0.05, 0.03, 1.00, -0.03, 0.00, -0.10, 1.10],
                 hd: { r: [0.02, 0.97, 0.18, 1.42], g: [0.03, 0.97, 0.18, 1.36], b: [0.04, 0.95, 0.20, 1.20] } },
 
   # --- 2026-07-30 ------------------------------------------------------------
@@ -298,7 +298,7 @@ STOCKS = {
 
   # Reportage black and white. Enormous latitude, forgiving of being wrong by
   # two stops in either direction, and grainier than Tri-X at the same speed.
-  ilford_hp5: { grain: 22,
+  ilford_hp5: { grain: 22, speed: 400,
                 sublayers: [{ sensitivity_shift: 0.2, grain_scale: 1.35, weight: 0.5 },
                             { sensitivity_shift: -0.4, grain_scale: 1.0, weight: 0.5 }],
                 matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
@@ -307,7 +307,7 @@ STOCKS = {
   # Available darkness. Nominally 3200 and actually closer to 1000 pushed hard,
   # which is why the grain is enormous and the highlights never reach full
   # density -- the low Dmax here is the stock, not an error.
-  ilford_delta3200: { grain: 38,
+  ilford_delta3200: { grain: 38, speed: 3200,
                       sublayers: [{ sensitivity_shift: 0.6, grain_scale: 1.9, weight: 0.45 },
                                   { sensitivity_shift: 0.0, grain_scale: 1.3, weight: 0.35 },
                                   { sensitivity_shift: -0.5, grain_scale: 1.0, weight: 0.20 }],
@@ -317,13 +317,13 @@ STOCKS = {
   # The saturated NEGATIVE, which is a different animal from a saturated slide:
   # Velvia's colour comes with Velvia's two-stop latitude, Ektar's does not.
   # Reds are the point.
-  kodak_ektar100: { grain: 6,
+  kodak_ektar100: { grain: 6, speed: 100,
                     matrix: [1.14, -0.09, -0.05, 0.02, 1.03, -0.05, 0.00, -0.09, 1.09],
                     hd: { r: [0.03, 0.96, 0.18, 1.34], g: [0.03, 0.96, 0.18, 1.32], b: [0.04, 0.94, 0.20, 1.28] } },
 
   # The cool one. Everything else in this table warms; Pro 400H leans green and
   # cyan and holds pastel skin, which is the whole reason it was worth having.
-  fuji_pro400h: { grain: 16,
+  fuji_pro400h: { grain: 16, speed: 400,
                   sublayers: [{ sensitivity_shift: 0.1, grain_scale: 1.25, weight: 0.45 },
                               { sensitivity_shift: -0.45, grain_scale: 0.95, weight: 0.55 }],
                   matrix: [0.97, 0.02, 0.01, -0.02, 1.02, 0.00, 0.00, 0.04, 1.02],
@@ -332,7 +332,7 @@ STOCKS = {
   # Instant film. High base fog, a Dmax that never gets near black, and a gamma
   # under 1 -- an integral print developing in daylight in ninety seconds cannot
   # do contrast, and that softness is the look.
-  polaroid_sx70: { grain: 14,
+  polaroid_sx70: { grain: 14, speed: 150,
                    matrix: [1.06, 0.02, -0.04, 0.01, 0.98, 0.03, 0.03, 0.02, 0.99],
                    hd: { r: [0.15, 0.86, 0.20, 0.95], g: [0.14, 0.85, 0.20, 0.93], b: [0.13, 0.84, 0.22, 0.90] } },
 }.freeze
@@ -529,11 +529,11 @@ PRESETS = {
                  stock: :cinestill_800t, temp: 3000, intensity: 0.90,
                  stops: 1.0, exposure_secs: 45.0 },
 
-  tungsten: { fx: %w[optical_blur spectral_temp film_curve orange_mask halation push_pull shadow_lift grain],
+  tungsten: { fx: %w[optical_blur spectral_temp reciprocity_failure film_curve orange_mask halation push_pull shadow_lift grain],
               stock: :kodak_vision3_500t, temp: 3200, intensity: 0.90,
               stops: 0.3, exposure_secs: 8.0 },
 
-  street: { fx: %w[optical_blur tonemap bleach_bypass film_curve adjacency_effects shadow_lift micro_contrast grain],
+  street: { fx: %w[optical_blur tonemap bleach_bypass push_pull film_curve adjacency_effects shadow_lift micro_contrast grain],
             stock: :tri_x, temp: 5600, intensity: 0.90, stops: 1.0 },
 
   war_doc: { fx: %w[optical_blur tonemap push_pull film_curve bleach_bypass green_push grain],
@@ -545,7 +545,7 @@ PRESETS = {
   lith: { fx: %w[optical_blur film_curve push_pull lith_print split_toning grain],
           stock: :tri_x, temp: 5600, intensity: 0.90, stops: 1.5 },
 
-  noir: { fx: %w[optical_blur tonemap film_curve bleach_bypass desaturate shadow_lift grain],
+  noir: { fx: %w[optical_blur tonemap push_pull film_curve bleach_bypass desaturate shadow_lift grain],
           stock: :tri_x, temp: 5600, intensity: 0.90, stops: 2.0 },
 
   dream: { fx: %w[optical_blur vintage_lens film_curve halation bloom_pro desaturate split_toning grain],
@@ -692,6 +692,15 @@ PRESETS = {
   takumar_sun: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask warmth grain],
                  stock: :kodak_ektar100, temp: 5000, intensity: 0.85, lens: "takumar" },
 }.freeze
+
+# Box speed, doubled per stop of push. A preset may override with iso:.
+def preset_effective_iso(preset_data)
+  return preset_data[:iso].to_f if preset_data[:iso]
+
+  box = (STOCKS[preset_data[:stock]] || STOCKS[:kodak_portra])[:speed] || 400
+  stops = Array(preset_data[:fx]).include?("push_pull") ? preset_data.fetch(:stops, 1.0).to_f : 0.0
+  box * (2.0**stops.clamp(-3.0, 4.0))
+end
 
 def halation_tint_for(stock)
   case stock
@@ -1102,7 +1111,13 @@ def color_separate(image, intensity = 0.6)
 end
 
 GRAIN_CELL_BASE = 4.0  # base Perlin cell size in px — larger = coarser grain
-GRAIN_AMP_SCALE = 400.0 # amplitude denominator, tuned for scRGB [0,1] space
+# Amplitude denominator, tuned for scRGB [0,1] space. Rebased from 400 when the
+# ISO term moved to being relative to box speed: the old term was a constant
+# sqrt(800/100) = 2.83 for every preset, so dividing the denominator by that
+# keeps the overall grain level where it was calibrated while letting the speed
+# term vary. (No render has ever shown this grain -- see the fractsurf note in
+# grain() -- so "where it was calibrated" means on paper, not on screen.)
+GRAIN_AMP_SCALE = 141.0
 # 3-tap horizontal convolution kernel for grain anisotropy (film transport direction).
 # Film grain is slightly elongated along the direction of film travel — this
 # kernel applies a subtle horizontal elongation without visible smearing.
@@ -1117,7 +1132,17 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   data      = STOCKS[stock] || STOCKS[:kodak_portra]
   scales    = GRAIN_CHAN_SCALE[stock] || [1.0, 1.0, 1.0]
   sublayers = data[:sublayers] || [{ sensitivity_shift: 0.0, grain_scale: 1.0, weight: 1.0 }]
-  iso_factor     = Math.sqrt(iso / 100.0)
+  # Relative to the stock's OWN box speed, not to a fixed ISO 100.
+  #
+  # sqrt(iso/100) against a per-stock sigma double-counts: data[:grain] already
+  # encodes how grainy this emulsion is (8 for Velvia, 38 for Delta 3200), and
+  # multiplying that by a speed term measured from 100 applies the same spread
+  # twice. Rated at box speed every stock now comes out at its own sigma, which
+  # is what the sigma was calibrated to mean, and the ISO argument does the one
+  # job left over: saying you rated the film at something other than box speed,
+  # which is what pushing is and what pushing costs.
+  box_speed      = (data[:speed] || 400).to_f
+  iso_factor     = Math.sqrt(iso.to_f / box_speed)
   base_amplitude = data[:grain] * iso_factor * intensity / GRAIN_AMP_SCALE
 
   linear = image.colourspace("scrgb")
@@ -2272,7 +2297,15 @@ def preset(image, name)
              when "shadow_lift"         then shadow_lift(result, 0.12, true)
              when "highlight_roll"      then highlight_roll(result, 200, p[:intensity] * 0.50)
              when "micro_contrast"      then micro_contrast(result, 5, p[:intensity] * 0.20)
-             when "grain"               then grain(result, 800, p[:stock], p[:intensity] * 0.30)
+             # Was a hard-coded 800 for every preset. grain's whole ISO term is
+             # sqrt(iso/100), so a constant made it a constant: Velvia 50 and
+             # Delta 3200 were graining at the same speed and differed only by
+             # their sigma. Now each stock states its own box speed, and a push
+             # raises the effective one, which is what pushing IS -- rating the
+             # film faster than it is and paying for it in grain. Safe to change
+             # today of all days: grain raised on every call until this session,
+             # so no render anywhere has a grain pattern to preserve.
+             when "grain"               then grain(result, preset_effective_iso(p), p[:stock], p[:intensity] * 0.30)
              when "color_separate"      then color_separate(result, p[:intensity] * 0.55)
              when "chromatic_aberration" then chromatic_aberration(result, p[:intensity] * 0.25)
              when "vintage_lens"        then vintage_lens(result, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
@@ -2878,9 +2911,38 @@ def vocab_check
   (LENSES.keys - PRESETS.values.filter_map { |p| p[:lens]&.to_sym }.uniq).each { |l| problems << "lens #{l} is defined but no preset uses it" }
   (PRINT_STOCKS.keys - PRESETS.values.filter_map { |p| p[:print_stock] }.uniq).each { |s| problems << "print stock #{s} is defined but no preset uses it" }
 
+  # A preset key is only honoured if some step in the chain reads it. lens: was
+  # the first of these to be found, and it was not the only one -- street and
+  # noir each declared a push with nothing to push, and tungsten an eight-second
+  # exposure with nothing to fail reciprocity over. Same shape, four keys.
+  key_readers = {
+    stops: %w[push_pull], age: %w[faded_print dye_fade expired_film],
+    print_stock: %w[print_film], exposure_secs: %w[reciprocity_failure],
+    k1: %w[lens_distortion], f_number: %w[diffraction_blur], tonemap_ev: %w[tonemap],
+  }
+  PRESETS.each do |name, p|
+    key_readers.each do |key, readers|
+      next unless p.key?(key)
+      next unless (Array(p[:fx]) & readers).empty?
+      problems << "#{name}: sets #{key}: #{p[key].inspect} but has no #{readers.join('/')} step to read it"
+    end
+  end
+
+  # temp: is the same defect at a scale that is an aesthetic decision rather
+  # than a bug fix. 49 of the presets declare a colour temperature and have
+  # neither spectral_temp nor color_temp, so describe_preset prints a Kelvin
+  # figure the render never applied -- but adding a white-balance step to 49
+  # presets would change what every one of them looks like, which is a call for
+  # whoever owns the look, not for a checker. Reported, deliberately not fatal.
+  no_temp_step = PRESETS.reject { |_, p| (Array(p[:fx]) & %w[spectral_temp color_temp]).any? }.keys
+  notes = no_temp_step.empty? ? [] : ["#{no_temp_step.length} presets declare temp: with no spectral_temp/color_temp step " \
+                                      "to apply it, so --describe-preset reports a Kelvin figure the render does not use"]
+
   problems.each { |line| puts "BROKEN #{line}" }
+  notes.each { |line| puts "NOTE   #{line}" }
   puts "#{PRESETS.length} presets, #{STOCKS.length} stocks, #{LENSES.length} lenses, " \
-       "#{implemented.length} effects, #{RECIPE_ALLOWED.length} recipe-allowed — #{problems.length} problem(s)"
+       "#{implemented.length} effects, #{RECIPE_ALLOWED.length} recipe-allowed — " \
+       "#{problems.length} problem(s), #{notes.length} note(s)"
   problems.length
 end
 
