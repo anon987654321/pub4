@@ -1,0 +1,27 @@
+/* Composer at phone width, and with motion turned down. Split out of
+   _composer.scss to keep each file under the auditor's 200-line rule. */
+
+/* Full-bleed on phones, the way a native sheet behaves. */
+@media (max-width: 767px) {
+  .composer {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100dvh;
+    height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer[open],
+  .composer::backdrop {
+    animation: none;
+  }
+}
+
+/* Verticals hide the launcher the same way they hid the old compose box. */
+body[class*="vertical-"] .compose-launcher {
+  display: none;
+}
