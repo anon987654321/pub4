@@ -574,15 +574,48 @@ module DillaHarmony
     end
   end
 
+  # A ii-V that is actually a ii and a V, and actually chords.
+  #
+  # Three things were wrong. Each was built by handing apply_voicing a
+  # single-element array, and one frequency has no third, so the guard at the top
+  # of apply_voicing returned it untouched: every soul profile's turnaround was
+  # two bare notes. The intervals were also swapped against their names -- `-5`
+  # is a fourth below, the same pitch class as the fifth above, so "turn_ii" was
+  # the dominant and "turn_V" the supertonic, and the pair resolved V-ii instead
+  # of ii-V. And the tonic was read as `pads.last[:hz].min`, which stopped being
+  # the root the moment the voicings went rootless: the lowest voice of a rootless
+  # shell is its third or seventh, so the turnaround was transposed to whatever
+  # that happened to be.
+  #
+  # The name is the reliable source for the root, so ask the chord table what the
+  # last chord's root is, and build the two shells from real intervals.
+  TURNAROUND_SHELLS = { turn_ii: [0, 3, 7, 10, 14], turn_V: [0, 4, 7, 10, 21] }.freeze
+
+  # The upper structure's root, not the bass. A slash chord's reference voicing
+  # starts on its bass note by construction, so Cm9/Bb would read as Bb -- a
+  # whole tone off, and the turnaround built a whole tone off with it.
+  def chord_root_midi(chord)
+    sym = chord[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "").split("/").first.to_s.strip
+    hz_to_midi(DillaLofiMachine.chord_from_symbol(sym)[:hz].min)
+  rescue StandardError
+    hz_to_midi(chord[:hz].min)
+  end
+
+  def turnaround_chord(name, root_midi, voicing:, rootless:)
+    hz = TURNAROUND_SHELLS.fetch(name).map { |iv| midi_to_hz(root_midi + iv) }
+    decorate_chord({ name: name.to_s, hz: }, voicing:, rootless:)
+  end
+
   def add_turnaround_tags(pads, cfg)
     return pads if pads.empty?
     return pads unless soul_profile?(cfg[:track])
     return pads if pads.length < 4
-    last = pads.last
-    root = hz_to_midi(last[:hz].min)
-    ii = { name: "turn_ii", hz: apply_voicing([midi_to_hz(root - 5)], style: :rootless) }
-    v = { name: "turn_V", hz: apply_voicing([midi_to_hz(root + 2)], style: :spread) }
-    pads + [ii, v]
+
+    tonic = chord_root_midi(pads.last)
+    style = declared_voicing(cfg)
+    rootless = style != :cluster
+    pads + [turnaround_chord(:turn_ii, tonic + 2, voicing: style, rootless:),
+            turnaround_chord(:turn_V, tonic + 7, voicing: style, rootless:)]
   end
 
   def validate_and_fix(chords)
