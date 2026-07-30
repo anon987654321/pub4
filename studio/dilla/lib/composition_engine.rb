@@ -238,8 +238,18 @@ module DillaComposition
       ENSEMBLE_TIMELINE[section] || ENSEMBLE_TIMELINE[:verse]
     end
 
+    # A callback is identified by where it lands, which motif it recalls and in
+    # which state, so registering the same one twice is not two callbacks.
+    #
+    # This appended unconditionally and the session is persisted, so the list grew
+    # across every render the session survived: session.json reached 354 entries
+    # holding 4 distinct callbacks. Scorer.score_plan reads the length, which is
+    # what made the score meaningless (see the note there).
     def record_callback!(bar, motif_id, state)
-      @callbacks << { bar:, motif_id:, state: }
+      entry = { bar:, motif_id:, state: }
+      return if @callbacks.include?(entry)
+
+      @callbacks << entry
       m = @motifs.find { |mot| mot.id == motif_id }
       m&.evolve!
     end
@@ -276,11 +286,14 @@ module DillaComposition
       s.instance_variable_set(:@generation, data["generation"] || 0)
       s.instance_variable_set(:@best_score, data["best_score"] || 0.0)
       s.instance_variable_set(:@motifs, (data["motifs"] || []).map { |h| MotifCell.from_h(h) })
+      # uniq on load, so a session file written before record_callback! deduped
+      # heals itself the next time it is saved rather than carrying its duplicates
+      # forward forever.
       s.instance_variable_set(:@callbacks, (data["callbacks"] || []).map do |c|
         h = c.transform_keys(&:to_sym)
         { bar: h[:bar].to_i, motif_id: h[:motif_id].to_s,
           state: MotifCell.parse_state(h[:state]) }
-      end)
+      end.uniq)
       s.instance_variable_set(:@tension_curve, data["tension_curve"] || s.build_tension_curve(n_bars))
       s.instance_variable_set(:@critique_log, data["critique_log"] || [])
       s
@@ -421,9 +434,16 @@ module DillaComposition
       prof = session.profile_at(n_bars / 2)
       tension = session.tension_at(n_bars / 2)
       groove = session.groove_profile[:swing] / 70.0
-      novelty = session.generation * 0.02
-      repetition = session.callbacks.length * 0.08
-      release = session.tension_curve.each_cons(2).count { |a, b| b < a } * 0.05
+      # Every term has to be bounded, or the final clamp(0.0, 1.0) hides the
+      # overflow and every candidate scores exactly 1.0 -- which is what happened:
+      # repetition was `callbacks.length * 0.08` against a session holding 354
+      # callbacks, so that term alone contributed 4.25 of a maximum of 1.0 and
+      # pick_best's max_by returned whichever candidate came first. Selection had
+      # silently stopped working. Eight callbacks is full marks for hook
+      # repetition; more is not better, and neither is a longer-lived session.
+      novelty = (session.generation * 0.02).clamp(0.0, 1.0)
+      repetition = (session.callbacks.length / 8.0).clamp(0.0, 1.0)
+      release = (session.tension_curve.each_cons(2).count { |a, b| b < a } * 0.05).clamp(0.0, 1.0)
       voice_lead = cfg[:progression] ? 0.15 : 0.1
       (prof[:melodic_density] * 0.25 + tension * 0.2 + groove * 0.2 + repetition * 0.15 +
        novelty * 0.1 + release * 0.1 + voice_lead).clamp(0.0, 1.0)

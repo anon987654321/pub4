@@ -7716,8 +7716,21 @@ def convert_audio(input, output)
   output
 end
 
+# The five-oscillator sketch, not the engine.
+#
+# This is `ruby dilla.rb render`, and the name is a trap: it builds a fixed
+# ep/bass/kick/snare/hats graph and writes it straight out, with no progression,
+# no arrangement, no vocal and -- the part that misleads most -- no master bus, so
+# its output lands around -19 dBFS peak while a real render is loudnormed to
+# STREAM_LUFS. Comparing two of these to test a master-chain change gives two
+# byte-identical files and proves nothing, because the master chain was never in
+# this path.
+#
+# The engine is `ruby dilla.rb dilla` (render_dilla), which is what stream uses.
 def render(destination = File.join(OUTPUT_DIR, "full_track.mp3"))
   require_tools! "ffmpeg"
+  dmesg("sketch renderer — no progression, no master bus; `dilla` is the engine",
+        unit: "render0", parent: "dilla0")
   FileUtils.mkdir_p(File.dirname(destination))
   duration = render_seconds
   kick_period = (beat_seconds * 2.0).round(6)
@@ -11102,6 +11115,20 @@ def dilla_pinned_keys_decl
   USER_PINNED_ENV.keys.reject { |k| k.start_with?("DILLA_STREAM") }.join(",")
 end
 
+# One demo slot's pad identity. Two call sites wrote these four keys inline, so
+# the rotation and the key list had to be kept in step by hand.
+#
+# PAD_LAYERS was `ENV["PAD_VOICE"].start_with?("stack_") ? "1" : "1"` -- both arms
+# the same value, so the condition never meant anything.
+def demo_slot_pad_env(idx)
+  {
+    "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
+    "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
+    "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
+    "PAD_LAYERS" => "1",
+  }
+end
+
 # Put the operator's values back after anything that rewrites them.
 def restore_explicit_stream_env!
   STREAM_EXPLICIT_ENV.each { |k, v| ENV[k] = v }
@@ -11305,20 +11332,21 @@ def demo_all(bars_count = 12, destination = nil)
     stream_rotate_drums!(idx)
     # Distinct leads / MIDI arps / synth morph per slot (clears patch cache).
     stream_rotate_voices_and_arps!(idx)
-    restore_explicit_stream_env!
-    # Stronger pad identity than stream defaults (avoid every slot = stack_soul held).
-    ENV["PAD_VOICE"] = DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length]
-    ENV["PAD_ARP_MODE"] = DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length]
-    ENV["VOICING"] = DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length]
-    ENV["PAD_LAYERS"] = ENV["PAD_VOICE"].to_s.start_with?("stack_") ? "1" : "1"
+    # Stronger pad identity than stream defaults (avoid every slot = stack_soul
+    # held), written through the pin rule instead of straight into ENV.
+    #
+    # A restore_explicit_stream_env! call used to sit above these lines, and the
+    # lines then overwrote the very keys it exists to protect on the next
+    # statement -- so `PAD_VOICE=prophet ruby dilla.rb demo_all` rendered the
+    # rotation's voice in every slot and the restore bought nothing. force_env!
+    # goes through style_env_write!, which beats the defaults and loses to an
+    # operator pin: the order that was intended.
+    force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]")
     # Track-specific soul pad/lead overlays (force so they win).
     apply_track_soul_profile!(slug, force: true)
     # Re-apply rotation after soul profile so lead/pad keep moving.
     stream_rotate_voices_and_arps!(idx)
-    restore_explicit_stream_env!
-    ENV["PAD_VOICE"] = DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length]
-    ENV["PAD_ARP_MODE"] = DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length]
-    ENV["VOICING"] = DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length]
+    force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]")
     # Sparse rap so chord cycles are audible (a vocal on every slot masked
     # variety). gunnhild is the only vocal source now.
     if rap_every <= 0
@@ -12345,7 +12373,14 @@ def dilla_section_bounds(n_bars)
   # flat compression: the same render measures LRA 1.8 with loudnorm disabled.
   #
   # SECTION_CYCLE overrides it; 16 is two breakdowns across 32 bars, 8 is four.
-  cycle = [(ENV["SECTION_CYCLE"] || 8).to_i, body].min.clamp(4, 32)
+  #
+  # Floor of 5, not 4. At 4 the two thresholds collide -- brk = (4*0.75).floor = 3
+  # and bld = (4*0.875).floor = 3 -- so `pos >= brk && pos < bld` is never true and
+  # :breakdown becomes unreachable, every one of those bars landing on :build
+  # instead. That is the opposite of what a shorter cycle is asked for. 5 is the
+  # shortest cycle that can express both (brk 3, bld 4), and an unparseable value
+  # reaches the floor the same way, since "".to_i is 0.
+  cycle = [(ENV["SECTION_CYCLE"] || 8).to_i, body].min.clamp(5, 32)
   { intro:, outro:, cycle:, body_start: intro }
 end
 
@@ -20396,11 +20431,29 @@ FLAG_ENV = {
   "promotion-beauty-min" => "PROMOTION_BEAUTY_MIN"
 }.freeze
 
+# Flags whose whole point is the value. A bare `--bars` is not a boolean; it is a
+# missing number, and taking it as "1" corrupts the render quietly.
+#
+# `--bars 8` reads like it works and does not: the parser only understands
+# `--key=value`, so it set BARS=1 and left "8" in argv as a positional argument.
+# `ruby dilla.rb render --bars 8 --track slum_village_players_documented out.wav`
+# therefore rendered ONE bar of a track literally named "1" into a file named "8",
+# and the only symptom was `failed: ffmpeg` from a filtergraph built against a
+# 2.79-second duration. Every one of those is silent on its own.
+FLAGS_REQUIRING_VALUE = %w[
+  bars bpm track progression swing voicing seed-text form section-map render-mode
+  drum-preset lead-voice pad-voice pad-arp-mode lead-arp-mode synth-cycle
+  external-kit generations listen-passes stream-track pad-vol kick-gain
+].freeze
+
 def apply_flags!(argv)
   argv.reject! do |arg|
     next false unless arg.start_with?("--")
     key, _, value = arg.delete_prefix("--").partition("=")
     env_name = FLAG_ENV[key] or abort "unknown flag --#{key} — known: #{FLAG_ENV.keys.map { |k| "--#{k}" }.join(' ')}"
+    if value.empty? && FLAGS_REQUIRING_VALUE.include?(key)
+      abort "--#{key} needs a value, and it has to be attached: --#{key}=VALUE (not --#{key} VALUE)"
+    end
     ENV[env_name] = value.empty? ? "1" : value
     true
   end
