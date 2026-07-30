@@ -3,7 +3,6 @@
 module Shared
   # Cross-app SEO, affiliate, and permission-marketing helpers.
   module SeoKit
-    AMAZON_TAG = ENV.fetch("AMAZON_ASSOCIATE_TAG", "")
     DEFAULT_DISCLOSURE = "Some links are affiliate links. We may earn a commission at no extra cost to you."
 
     def meta_description_for(resource, fallback: nil)
