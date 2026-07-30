@@ -2609,12 +2609,38 @@ def style_family(track, feel: nil)
   :default
 end
 
+# A global tempo trim, so "slow the beats down" scales the whole table rather than
+# pinning one number.
+#
+# Every profile carries its own tempo -- 86 on the FlyLo transcriptions, 91 on the
+# Slum Village ones, 96 on the harder pockets -- and the distances between them are
+# the point. BPM=88 would flatten all of them into one tempo and lose what separates
+# a Camel from a Players, so the trim multiplies whatever each track already asked
+# for and the relationships survive.
+#
+# The check is USER_PINNED_ENV, not ENV: the defaults tables write ENV["BPM"]
+# themselves, so gating on that would mean the trim silently stopped applying the
+# moment any style preset ran. An operator who names a tempo still gets it exactly.
+BPM_SCALE_DEFAULT = "0.96"
+
+def bpm_scale
+  return 1.0 if USER_PINNED_ENV["BPM"].to_s.strip.match?(/\A\d/)
+
+  scale = (ENV["BPM_SCALE"] || BPM_SCALE_DEFAULT).to_f
+  scale.positive? ? scale.clamp(0.5, 1.5) : 1.0
+end
+
 def resolve_bpm(preset, _track, sonic)
   env_bpm = ENV["BPM"]&.to_f
-  return env_bpm if env_bpm&.positive?
   sonic_bpm = sonic&.dig("synth", "bpm")&.to_f
-  return sonic_bpm if sonic_bpm&.positive?
-  preset.fetch(:bpm, DEFAULT_BPM).to_f
+  base = if env_bpm&.positive?
+           env_bpm
+         elsif sonic_bpm&.positive?
+           sonic_bpm
+         else
+           preset.fetch(:bpm, DEFAULT_BPM).to_f
+         end
+  (base * bpm_scale).round(2)
 end
 
 def resolve_swing(preset, sonic, time_offset)
@@ -7540,7 +7566,9 @@ def chop_wave(chord, t, v, sustain = 0.55)
 end
 
 def bpm
-  (ENV["BPM"] || DEFAULT_BPM).to_f
+  # Scaled like resolve_bpm's, or this helper and cfg[:bpm] would disagree about
+  # the tempo of the same render.
+  ((ENV["BPM"] || DEFAULT_BPM).to_f * bpm_scale).round(2)
 end
 
 def bars
