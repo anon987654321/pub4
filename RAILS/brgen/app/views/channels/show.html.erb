@@ -9,6 +9,12 @@
     <%= link_to "← channels", channels_path, class: "channel-back" %>
     <h1><%= @conversation.channel_title %></h1>
     <p class="dim"><%= spec[:blurb] %></p>
+    <%# Heartbeat lives on the header, not the log, so it keeps running while the
+        reader scrolls back through history. %>
+    <p class="dim" data-controller="presence"
+       data-presence-url-value="<%= conversation_presence_path(@conversation) %>">
+      <%= render "conversations/presence", conversation: @conversation %>
+    </p>
   </header>
 
   <ul id="messages" class="channel-log conversation-log"

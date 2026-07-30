@@ -79,6 +79,7 @@ Rails.application.routes.draw do
   resources :conversations, only: %i[index show update] do
     resources :messages, only: [ :create ]
     resources :typing_indicators, only: [ :create ]
+    resource :presence, only: %i[create destroy]
   end
 
   constraints(subdomain: TV_SUBDOMAINS) do
@@ -212,6 +213,7 @@ Rails.application.routes.draw do
     resources :conversations, only: %i[show update create] do
       resources :messages, only: %i[create]
       resources :typing_indicators, only: %i[create]
+      resource :presence, only: %i[create destroy]
     end
   end
 

@@ -45,6 +45,7 @@ import FeedCompose from "pub4/feed_compose"
 import EdgeSwiper from "pub4/edge_swiper"
 import NearbyChat from "pub4/nearby_chat"
 import ConversationLog from "pub4/conversation_log"
+import Presence from "pub4/presence"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -96,6 +97,7 @@ export function bootPub4Stimulus(application, { futurism = true } = {}) {
   application.register("edge-swiper", EdgeSwiper)
   application.register("nearby-chat", NearbyChat)
   application.register("conversation-log", ConversationLog)
+  application.register("presence", Presence)
 
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     if (component) application.register(name, component)

@@ -113,3 +113,22 @@ li:focus-within .msg_reaction_picker {
 .conversation_unread_pill:hover {
   background: color-mix(in srgb, var(--accent) 18%, var(--surface-elevated));
 }
+
+/* "N here now" — the live presence count. A dot rather than an icon so it reads
+ * at 11px and needs no asset. Colour is the accent, not green: the palette has
+ * one accent per dialect and inventing a status hue here would break that.
+ */
+.channel_presence {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.channel_presence_dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
