@@ -1943,19 +1943,19 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_88_16bars.wav",
-        "beat_bpm": 88.32,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_87_16bars.wav",
+        "beat_bpm": 87.36,
         "n_bars": 16,
         "offset_sec": 33.1471,
         "phrase_start": 1.207,
         "source_bpm": 70.0,
-        "tempo_ratio": 1.2617,
-        "rms_db": -16.027,
-        "sub_bleed_db": -40.819,
+        "tempo_ratio": 1.248,
+        "rms_db": -16.032,
+        "sub_bleed_db": -40.796,
         "snapped_lines": null,
         "has_pulse": true,
         "key_shift": 0,
-        "progression": "get_dis_money",
+        "progression": "fall_in_love",
         "voice_only": true
       },
       "chroma": [
@@ -1979,7 +1979,7 @@
       "source": "https://www.youtube.com/watch?v=95xXFe3Q2WY",
       "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
       "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
-      "bpm_estimate": 61.0,
+      "bpm_estimate": 122.0,
       "phrases": [
         {
           "start": 2.972,
@@ -2486,19 +2486,19 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_83_16bars.wav",
-        "beat_bpm": 82.56,
-        "n_bars": 16,
-        "offset_sec": 39.5193,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_87_8bars.wav",
+        "beat_bpm": 87.36,
+        "n_bars": 8,
+        "offset_sec": 39.4843,
         "phrase_start": 2.972,
-        "source_bpm": 61.0,
+        "source_bpm": 122.0,
         "tempo_ratio": 1.0,
-        "rms_db": -18.814,
-        "sub_bleed_db": -41.121,
-        "snapped_lines": 16,
+        "rms_db": -16.937,
+        "sub_bleed_db": -38.455,
+        "snapped_lines": 8,
         "has_pulse": false,
         "key_shift": 0,
-        "progression": "time_donut",
+        "progression": "get_dis_money",
         "voice_only": true
       },
       "chroma": [
@@ -2563,5 +2563,5 @@
       "bpm_estimate": 76.0
     }
   ],
-  "updated_at": "2026-07-30T12:59:10Z"
+  "updated_at": "2026-07-30T15:50:35Z"
 }
