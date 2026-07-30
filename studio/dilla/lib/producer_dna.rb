@@ -47,9 +47,27 @@ module DillaLofiMachine
     "7#11" => [0, 4, 7, 10, 6],
     "13" => [0, 4, 7, 10, 9],
     "maj13" => [0, 4, 7, 11, 9],
+    "maj13#11" => [0, 4, 11, 9, 6],
     "maj7#11" => [0, 4, 7, 11, 6],
     "mmaj7" => [0, 3, 7, 11],
     "m6" => [0, 3, 7, 9],
+    # A bare "9" is a dominant with the ninth on top, and "add9" is a triad
+    # with it -- neither had a suffix or a template, so B9, C9 and Dadd9 were
+    # dropped from their progressions rather than voiced.
+    "9" => [0, 4, 7, 10, 2],
+    "add9" => [0, 4, 7, 2],
+    "sus9" => [0, 2, 5, 7],
+    # E9sus4 — the chord Get Dis Money opens on, and it did not parse.
+    #
+    # ARTIST_VERIFIED_PROGRESSIONS names it twice: get_dis_money's source note
+    # says "D/E = E9sus4", and the syncopated_slash_ninth alias spells the
+    # progression as E9sus4/D … E9sus4 outright. Both were unparseable, so
+    # progression_for's filter_map silently dropped them and that alias rendered
+    # 5 of its 7 chords — losing exactly the ninth it is named for. A sus4 with
+    # the b7 and the 9 on top, no third; that suspended colour over the E pedal
+    # is what the Herbie Hancock sample is doing.
+    "9sus4" => [0, 5, 7, 10, 2],
+    "9sus" => [0, 5, 7, 10, 2],
   }.freeze
 
   NOTE_PC = {
@@ -135,11 +153,21 @@ module DillaLofiMachine
     # Matched exactly (\A[A-G][#b]?<sfx>\z), so ordering is not significant --
   # but keep the longer, more specific spellings listed first anyway so the
   # list reads as "most specific quality wins" if the anchoring ever changes.
+  # Longest first: the parser takes the first entry that matches the whole
+  # symbol, so "maj13#11" has to be tried before "maj13", and "add9"/"sus9"
+  # before the bare "9".
+  #
+  # "sus4" and "sus" had templates in CHORD_TEMPLATES but no entry here, and
+  # this list is the whitelist the parser matches against — so `Dsus4` raised
+  # and got filter_map'd away. quartal_suspension_twelve lost all four of its
+  # suspensions, which is every chord the progression is named for. Bare "sus4"
+  # resolves to the template that carries the b7, matching this table's own
+  # convention that 7sus4/7sus alias to "sus4" (see QUALITY_ALIASES).
   CHORD_SUFFIXES = %w[
-    maj7#11 maj13 maj9low maj9 maj7
+    maj13#11 maj7#11 maj13 maj9low maj9 maj7
     m7b5 mmaj7 m11 m9 m7 m6
-    7sus4 7sus 7#11 7alt 7#5 7b9 13 7
-    sus2 6 m
+    9sus4 9sus 7sus4 7sus 7#11 7alt 7#5 7b9 13 7
+    add9 sus9 sus4 sus2 sus 9 6 m
   ].freeze + [""].freeze
 
   PAD_WAVEFORMS = %i[sine square sawtooth triangle].freeze
@@ -1073,15 +1101,37 @@ euclid_sparse: {
     DRUM_PRESETS.dig(drum_key, :humanize) || DRUM_PRESETS.dig(DEFAULT_DRUM_PRESET, :humanize) || 0
   end
 
-  # Root / third / seventh a symbol must actually contain. Fifths and
-  # extensions are fair game to drop when thinning a voicing; the third and
-  # seventh are what make the chord that chord.
+  # Root / third / seventh a symbol must actually contain. Fifths are fair game
+  # to drop when thinning a voicing -- a rootless 9-3-13-b7 with no fifth is a
+  # normal jazz voicing, not a broken one -- but the third and seventh are what
+  # make the chord that chord.
+  #
+  # The named extension counts too. A "9" chord whose ninth is missing or
+  # altered is a different chord: the gem answered Am9 as A C E G Bb, a MINOR
+  # ninth, and every m9 in the engine that is not hardcoded in CHORD_VOICINGS
+  # came back the same way -- Bm9, C#m9, Dm9, Em9, F#m9, G#m9, Gm9, eight of
+  # eight. Root, b3 and b7 were all present, so the old three-tone check passed
+  # it and the pad played a semitone cluster at the top. Whatever names the
+  # chord has to be verified, or this check only catches the errors nobody was
+  # going to make.
   CORE_TONES = {
-    "maj7" => [0, 4, 11], "maj9" => [0, 4, 11], "maj9low" => [0, 4, 11],
-    "m7" => [0, 3, 10], "m9" => [0, 3, 10], "m11" => [0, 3, 10], "m7b5" => [0, 3, 10],
-    "7" => [0, 4, 10], "7b9" => [0, 4, 10], "7alt" => [0, 4, 10],
+    "maj7" => [0, 4, 11], "maj9" => [0, 4, 11, 2], "maj9low" => [0, 4, 11, 2],
+    "m7" => [0, 3, 10], "m9" => [0, 3, 10, 2], "m11" => [0, 3, 10, 5], "m7b5" => [0, 3, 6, 10],
+    "7" => [0, 4, 10], "7b9" => [0, 4, 10, 1], "7alt" => [0, 4, 10],
     "7sus" => [0, 5, 10], "7sus4" => [0, 5, 10],
     "6" => [0, 4], "m" => [0, 3], "" => [0, 4],
+    # Absent entirely until now, and the table failed OPEN -- an unlisted
+    # suffix returned "sane" without looking at a single note. That is how
+    # Bb13 reached a render as Eb F G Ab Bb: no third at all, an eleventh
+    # standing where the third belongs, five adjacent scale tones.
+    "13" => [0, 4, 10, 9], "maj13" => [0, 4, 11, 9], "maj13#11" => [0, 4, 11, 9],
+    "7#11" => [0, 4, 10, 6], "maj7#11" => [0, 4, 11, 6],
+    "9" => [0, 4, 10, 2], "add9" => [0, 4, 2], "sus9" => [0, 5, 2],
+    "7#5" => [0, 4, 10, 8], "sus2" => [0, 2, 7],
+    "m6" => [0, 3, 9], "mmaj7" => [0, 3, 11], "sus" => [0, 5, 7], "sus4" => [0, 5, 10],
+    "min" => [0, 3], "maj" => [0, 4],
+    # No third by definition — the 4th, the b7 and the 9 are what must survive.
+    "9sus4" => [0, 5, 10, 2], "9sus" => [0, 5, 10, 2],
   }.freeze
 
   # The coltrane gem hands back confidently wrong voicings for several
@@ -1094,14 +1144,62 @@ euclid_sparse: {
   def gem_chord_sane?(sym, chord)
     return false unless chord.is_a?(Hash) && chord[:hz].is_a?(Array) && chord[:hz].any?
     m = sym.to_s.match(/\A([A-G][#b]?)(.*)\z/) or return true
-    want = CORE_TONES[m[2].sub(/low\z/i, "")] or return true
-    pc = NOTE_PC[m[1]] or return true
+    # A slash symbol is not this method's business -- the branch below builds it
+    # from its two halves -- and the gem answers nil or hangs on all of them.
+    return true if m[2].include?("/")
+
+    # Fail CLOSED. An unlisted suffix used to return "sane" without looking at
+    # a note, which is the opposite of what a sanity check is for; the built-in
+    # suffix parser below has a template for every suffix in CHORD_SUFFIXES and
+    # is the better answer whenever this table cannot judge.
+    want = CORE_TONES[m[2].sub(/low\z/i, "")] or return false
+    pc = NOTE_PC[m[1]] or return false
     got = chord[:hz].map { |h| (69.0 + (12.0 * Math.log2(h / 440.0))).round % 12 }.uniq
     want.all? { |iv| got.include?((pc + iv) % 12) }
   end
 
+  # Transcription shorthand, not chord quality. Eight symbols in the profile
+  # tables carry an annotation the parser has no template for -- "nc", "fil",
+  # "climax", "over", "s11" -- and progression_for's `rescue ArgumentError; nil`
+  # dropped every one of them silently. chromatic_mediant_drift lost five of its
+  # eight chords that way and fall_in_love lost both of its two, returning nil.
+  # The chord is written right there in front of the annotation; keeping it is
+  # strictly better than losing a bar of harmony to a suffix nobody parsed.
+  def normalize_chord_symbol(sym)
+    sym.to_s.strip
+       .sub(/over([A-G][#b]?)\z/i) { "/#{Regexp.last_match(1)}" }
+       .sub(/s11\z/i, "#11")
+       .sub(/(?:nc|fil|climax)\z/i, "")
+  end
+
+  # A suffix names its own template unless it is spelled differently there.
+  #
+  # This was 26 case arms, 21 of which mapped a suffix to the identically named
+  # CHORD_TEMPLATES key -- so adding a chord quality meant editing the table and
+  # then remembering to edit a case arm that said nothing, and forgetting the arm
+  # voiced the new quality as maj9 with no error. Only the five genuine spelling
+  # differences need stating:
+  #
+  #   7sus/7sus4 -> sus4, because plain "7" is [0,4,7,10] and the one thing a
+  #     suspended chord must not contain is the third (C7sus came out C E G Bb).
+  #   "" -> maj, a bare triad stays a plain triad: these appear almost only as
+  #     the upper structure of a slash chord (D/Bb, G/D), where the whole point
+  #     is a clean triad over a foreign bass, and voicing it as maj9 piles on a
+  #     7th and 9th that fight the bass note.
+  #   m -> m9, maj9low -> maj9 (the "low" is a register, not a quality).
+  #
+  # Unknown suffixes still fall back to maj9, as build_voicing does for a
+  # quality with no template.
+  QUALITY_ALIASES = { "maj9low" => "maj9", "7sus4" => "sus4", "7sus" => "sus4",
+                      "m" => "m9", "" => "maj" }.freeze
+
+  def quality_for_suffix(suffix)
+    sfx = suffix.downcase
+    QUALITY_ALIASES[sfx] || (CHORD_TEMPLATES.key?(sfx) ? sfx : "maj9")
+  end
+
   def chord_from_symbol(sym)
-    sym = sym.to_s.strip
+    sym = normalize_chord_symbol(sym)
     if (hz = CHORD_VOICINGS[sym])
       return { name: sym, hz: hz.dup }
     end
@@ -1122,9 +1220,18 @@ euclid_sparse: {
       upper, bass_note = sym.split("/", 2)
       ch = chord_from_symbol(upper.strip)
       bass_hz = note_hz(bass_note.strip, octave: 2)
-      hz = ch[:hz].dup
-      hz[hz.index(hz.min)] = bass_hz
-      return ch.merge(name: sym, hz: hz.sort.uniq, bass_hz:)
+      # The bass note goes UNDER the upper structure. It used to overwrite the
+      # structure's lowest voice, which for a rootless triad is its root: D/E
+      # came out E2 F#4 A4 B4 with no D in it, C/E as E2 E4 G4 A4 with no C,
+      # Db/E as E2 F3 G#3 -- an E major triad wearing a Db label. Every slash
+      # chord in get_dis_money, the progression the stream actually plays, was
+      # missing the note it is named after. A slash chord is X over Y, not X
+      # with its root traded for Y.
+      # Trimmed from the top, since adding a voice rather than replacing one
+      # leaves the structure one note wider than the voicing it came from and
+      # the widest of those is a padded octave doubling, not chord tone.
+      hz = ([bass_hz] + ch[:hz]).sort.uniq.first(5)
+      return ch.merge(name: sym, hz:, bass_hz:)
     end
     low_register = sym.match?(/low\z/i)
     base = sym.sub(/low\z/i, "")
@@ -1133,43 +1240,7 @@ euclid_sparse: {
 
     root_name = base.match(/\A([A-G][#b]?)/i)[1]
     root_name = root_name[0].upcase + root_name[1..]
-    quality = case suffix.downcase
-              when "maj9low", "maj9" then "maj9"
-              when "maj7" then "maj7"
-              when "m11" then "m11"
-              when "m9" then "m9"
-              when "m7" then "m7"
-              # Each of these now builds its own shape (see CHORD_TEMPLATES).
-              # They used to collapse: m7b5 -> m7 and 7b9/7alt -> 7, which
-              # discarded the flat five and every alteration.
-              when "m7b5" then "m7b5"
-              when "7b9" then "7b9"
-              when "7alt" then "7alt"
-              when "7#5" then "7#5"
-              when "7#11" then "7#11"
-              when "13" then "13"
-              when "maj13" then "maj13"
-              when "maj7#11" then "maj7#11"
-              when "mmaj7" then "mmaj7"
-              when "m6" then "m6"
-              when "sus2" then "sus2"
-              when "7" then "7"
-              # Was mapped to plain "7", which builds [0,4,7,10] -- a MAJOR
-              # THIRD. The one thing a suspended chord must not contain is the
-              # third, so every 7sus in the engine was rendering as an ordinary
-              # dominant (C7sus came out C E G Bb) and the suspension was
-              # silently discarded. "sus4" is [0,5,7,10], the actual shape.
-              when "7sus4", "7sus" then "sus4"
-              when "6" then "6"
-              when "m" then "m9"
-              # A bare triad stays a plain triad. These appear almost only as
-              # the upper structure of a slash chord (D/Bb, G/D), where the
-              # whole point is a clean triad over a foreign bass -- voicing it
-              # as maj9 like the other defaults would pile on a 7th and 9th
-              # that fight the bass note.
-              when "" then "maj"
-              else "maj9"
-              end
+    quality = quality_for_suffix(suffix)
     octave = low_register ? 2 : 3
     root_hz = note_hz(root_name, octave:)
     hz = build_voicing(root_hz, quality)
@@ -1231,13 +1302,29 @@ end
     end
   end
 
+  # Pad a voicing up to `voices` with the root's next octaves, not `max + 2`.
+  #
+  # Two semitones above the top of a maj7 (11) is 13 -- a MINOR NINTH -- so
+  # every four-note template short of `voices` had a b9 stacked on it: Dmaj7
+  # measured D F# A C# D#. It also never moved, so a template needing two pad
+  # voices got the same frequency twice. Octaves of the root add weight and
+  # cannot be wrong. Shared with dilla.rb's chord_from_root, which had the same
+  # bug and needed the same fix.
+  def self.pad_root_octaves(hz, root_hz, top_interval, voices)
+    extra = ((top_interval / 12) + 1) * 12
+    while hz.length < voices
+      hz << (root_hz * (2**(extra / 12.0))).round(2)
+      extra += 12
+    end
+    hz
+  end
+
   # 5, not 4: the extension that names an altered chord is a fifth or sixth
   # voice, so a four-voice cap removes precisely the note under discussion.
   def build_voicing(root_hz, quality, voices: 5)
     intervals = voice_extensions(CHORD_TEMPLATES.fetch(quality) { CHORD_TEMPLATES["maj9"] })
     hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
-    extra = intervals.max + 2
-    hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
+    pad_root_octaves(hz, root_hz, intervals.max, voices)
     # Root is always the lowest of these same-octave interval frequencies,
     # so `hz.sort.last(voices)` silently dropped it for any template longer
     # than `voices` (m9/m11/maj9 all list 5 intervals against the default

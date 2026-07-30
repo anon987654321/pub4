@@ -433,8 +433,20 @@ class TestDilla < Minitest::Test
     assert_equal "get_dis_money", result.fetch("track")
     assert_equal "1", result.fetch("phrase_drift")
     assert_equal "1", result.fetch("swing_jitter")
-    assert_equal "0", result.fetch("fm_drums"), "soul pocket uses sample kit, not FM synth"
-    refute result.fetch("fm_on")
+    # The FM kit is the default, and this assertion used to say the opposite.
+    #
+    # 6e5eed932 added both `"FM_DRUMS" => "0"` to DILLA_BEST_DEFAULTS and the
+    # "soul pocket uses sample kit" expectation here. That commit was a
+    # styles-collapse refactor whose message says nothing about drums; it
+    # silently reverted 1e74b12fd, which had made the FM kit the
+    # full-replacement default as a measured user choice (harshness -19.66 dB
+    # against the analog kit's -17.68 dB). 6d6f922db restored the "1" on
+    # 2026-07-28 and documented why at DILLA_BEST_DEFAULTS' FM_DRUMS key.
+    #
+    # The engine change is the intended one, so the test follows it. Pinning
+    # "0" here left `rake test` red while encoding the rejected choice.
+    assert_equal "1", result.fetch("fm_drums"), "FM kit is the measured default (6d6f922db)"
+    assert result.fetch("fm_on"), "fm_drums_enabled? agrees with the FM_DRUMS default"
     assert_equal "1", result.fetch("kick_double")
     assert_equal "1", result.fetch("kick_drop")
     assert_equal "1", result.fetch("snare_prehit")
@@ -1072,6 +1084,55 @@ class TestDilla < Minitest::Test
     assert_nil result.fetch("stream"), "blocklisted slugs never auto-mix on stream"
   end
 
+  # A pinned pad voice must not pin the progression.
+  #
+  # `STREAM_TRACK=slum_village_players_documented PAD_VOICE=prophet` rendered the
+  # documented transcription's name at its documented 91 BPM while playing
+  # get_dis_money's chords, because stream()'s guard skipped
+  # `ENV["PROGRESSION"] = track` whenever a pad key was set and PROGRESSION was
+  # non-empty — and apply_best_defaults! guarantees it is never empty.
+  def test_pinned_pad_voice_does_not_freeze_the_progression_on_the_default_track
+    result = eval_in_engine(<<~RUBY)
+      ENV["PAD_VOICE"] = "prophet"
+      apply_best_defaults!
+      before = ENV["PROGRESSION"]
+      sync_progression_to_track!("slum_village_players_documented")
+      ENV["TRACK"] = "slum_village_players_documented"
+      cfg = dilla_resolve_config
+      puts JSON.generate(
+        best_default: before,
+        after_sync: ENV["PROGRESSION"],
+        cfg_progression: cfg[:progression].to_s,
+        chords: dilla_progression(cfg[:progression]).map { |c| c[:name].to_s },
+        curated: curated_progression?(cfg)
+      )
+    RUBY
+    assert_equal "get_dis_money", result.fetch("best_default"),
+      "premise: best defaults fill PROGRESSION, so it is never empty"
+    assert_equal "slum_village_players_documented", result.fetch("after_sync")
+    assert_equal "slum_village_players_documented", result.fetch("cfg_progression")
+    assert result.fetch("curated"), "a documented transcription loops, it is not developed"
+    assert_equal %w[Cm9 Fm9 Bb13 Ebmaj7 Abmaj7 Dm7b5 G7alt Cm9], result.fetch("chords"),
+      "the transcribed chords, not get_dis_money's chromatic descent"
+  end
+
+  # The other half of the same guard: an explicitly pinned PROGRESSION survives
+  # the per-track sync, which is what USER_PINNED_ENV exists to protect.
+  def test_explicitly_pinned_progression_survives_the_track_sync
+    result = eval_in_engine(<<~RUBY)
+      # USER_PINNED_ENV is captured at load, so pin through it the way a real
+      # command line would.
+      pinned = USER_PINNED_ENV.dup
+      pinned["PROGRESSION"] = "get_dis_money"
+      Object.send(:remove_const, :USER_PINNED_ENV)
+      Object.const_set(:USER_PINNED_ENV, pinned.freeze)
+      ENV["PROGRESSION"] = "get_dis_money"
+      sync_progression_to_track!("slum_village_players_documented")
+      puts JSON.generate(progression: ENV["PROGRESSION"])
+    RUBY
+    assert_equal "get_dis_money", result.fetch("progression")
+  end
+
   def test_dilla_style_locks_color_and_disables_self_sample
     result = eval_in_engine(<<~RUBY)
       ENV["DILLA_STREAMING"] = "1"
@@ -1341,9 +1402,16 @@ class TestDilla < Minitest::Test
     assert_kind_of Array, harm
     assert_kind_of Array, analog
 
+    # One note per claim. A `voicing=` note is emitted unconditionally, while
+    # ENV[TRACK] is only assigned inside the two probabilistic branches
+    # (`track=` / `promoted=`), so keying the TRACK assertion off `voicing=` left
+    # this test a coin flip after all — it still failed about once per suite run.
     if harm.any? { |n| n.start_with?("voicing=") }
       assert result.fetch("voicing").to_s.length.positive?, "reported a voicing change but ENV[VOICING] is empty"
-      assert result.fetch("track").to_s.length.positive?, "reported a voicing change but ENV[TRACK] is empty"
+    end
+
+    if harm.any? { |n| n.start_with?("track=", "promoted=") }
+      assert result.fetch("track").to_s.length.positive?, "reported a track change but ENV[TRACK] is empty"
     end
 
     if analog.any? { |n| n.start_with?("analog=") }

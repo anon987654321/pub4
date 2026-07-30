@@ -30,7 +30,30 @@ DillaMusicGems.bootstrap!
 # Captured before any require can mutate ENV. force_env! consults it and
 # records the skip in config_provenance, so `print_config_provenance` shows
 # which values the caller pinned and which a style chose.
-USER_PINNED_ENV = ENV.to_h.freeze
+#
+# The stream re-execs itself when this file's mtime changes, and exec inherits
+# the whole environment — including everything apply_best_defaults! and the
+# style tables had already written into it. So after one restart the child's
+# "user pins" contained TRACK/PROGRESSION=get_dis_money, values no user ever
+# typed, and force_env! then refused to let any track's own progression
+# overwrite them. Asking for slum_village_players_documented rendered its name
+# and its 91 BPM over get_dis_money's chords, and no amount of restarting fixed
+# it because each restart re-laundered the same defaults.
+#
+# The restart therefore declares the real pin set, and only those keys count as
+# pinned in the child. Absent the declaration (a normal command line) every
+# environment variable present at load is a pin, as before.
+USER_PINNED_ENV = begin
+  declared = ENV["DILLA_USER_PINNED_KEYS"]
+  captured = ENV.to_h
+  captured.delete("DILLA_USER_PINNED_KEYS")
+  if declared.nil?
+    captured.freeze
+  else
+    keys = declared.split(",")
+    captured.select { |k, _| keys.include?(k) }.freeze
+  end
+end
 
 require "fileutils"
 require "json"
@@ -1011,6 +1034,34 @@ PAD_VOICE_PRESETS = {
   ice:     { ep: :rhodes_dx_blend, warm: :ice_string_pad },
   neon:    { ep: :rhodes_mark1, warm: :neon_ladder },
   pulse:   { ep: :clav_neo_funk, warm: :pwm_sweep_pad },
+  # Producer-grounded presets, from what each actually played rather than from
+  # what sounds lush. Researched 2026-07-30; sources in each entry.
+  #
+  # The point of these is subtraction. Every preset above this block layers an EP
+  # under a warm pad, and stack_soul layers four voices — bigger than anything on
+  # the records being imitated. Dilla's pads came out of a microKORG, Madlib's
+  # chords out of one Rhodes into a Portastudio.
+  #
+  # Dilla: microKORG for "pads, leads and bass sounds" (Mixdown gear rundown);
+  # the Minimoog Voyager Bob Moog sent him in 2002 was bass and melody, not
+  # chords. His Rhodes character is sampled off vinyl, so the EP is the
+  # tape-worn one and the synth layer is thin PWM, not an analog stack.
+  pad_dilla: { ep: :rhodes_vintage_tape, warm: :crystal_pwm },
+  # Madlib: a Fender Rhodes Stage 73, traded for the SP-1200 around 2000, and
+  # essentially nothing else for chords across Yesterdays New Quintet and the
+  # Shades of Blue re-recordings. One voice. No pad. rhodes_solo above is the
+  # only other single-voice entry in this table.
+  pad_madlib: { ep: :rhodes_stage73 },
+  # Flying Lotus: names the Prophet 6 ("most versatile and approachable modern
+  # analog synth") and the Yamaha CS-60/Deckard's Dream as his essentials
+  # (Synth History interview), with a Wurlitzer among the keys.
+  pad_flylo: { ep: :wurli_soul_bite, warm: :prophet_6_warm, warm2: :cs80_ensemble },
+  # Röyksopp: the Juno-106 and MS-20 are the two they say will always be in the
+  # setup; the Juno is the pad half of that pair. Solina and Mellotron stand in
+  # for the PS-3100 and the Mellotron on the Melody A.M. list, and the DX-7 for
+  # the EP attack.
+  pad_royksopp: { ep: :dx7_bell_ep, warm: :juno_strings, warm2: :solina_ensemble,
+                  texture: :mellotron_flute_pad },
   # Multi-layer stacks (rendered as 3–4 FluidSynth passes when PAD_LAYERS=1).
   stack_soul: { ep: :rhodes_cafe_warm, warm: :moog_model_d, warm2: :prophet_5_pad, texture: :juno_chorus_wash },
   stack_glass: { ep: :dx7_bell_ep, warm: :glass_fm_pad, warm2: :prophet_6_warm, texture: :ice_string_pad },
@@ -1428,10 +1479,26 @@ def galaxy_ep_available?
   File.exist?(patch_sf2_path(:galaxy))
 end
 
+GALAXY_EP_SUBSTITUTES = %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli].freeze
+
+# Presets that name a specific instrument on purpose — the substitution below
+# would defeat the reason they exist.
+GALAXY_EP_EXEMPT_VOICES = %i[pad_dilla pad_madlib pad_flylo pad_royksopp rhodes_solo].freeze
+
 def prefer_galaxy_ep(patch)
   return patch unless patch && galaxy_ep_available?
-  return synth_patch_by_id(:galaxy_ep1) if %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli].include?(patch[:id])
-  patch
+  return patch unless GALAXY_EP_SUBSTITUTES.include?(patch[:id])
+  # An explicitly chosen pad voice keeps the EP it names.
+  #
+  # This swap fires whenever the Galaxy soundfont is installed, so
+  # PAD_VOICE=prophet (rhodes_mark1) and PAD_VOICE=rhodes silently rendered
+  # galaxy_ep1 instead. Fine as a default upgrade; not fine as an override of
+  # what was asked for — and fatal for pad_madlib, whose entire content is
+  # "a Fender Rhodes Stage 73 and nothing else".
+  return patch if GALAXY_EP_EXEMPT_VOICES.include?(ENV["PAD_VOICE"]&.downcase&.to_sym)
+  return patch if USER_PINNED_ENV.key?("PAD_VOICE") && ENV["PAD_VOICE"] == USER_PINNED_ENV["PAD_VOICE"]
+
+  synth_patch_by_id(:galaxy_ep1)
 end
 
 def pad_texture_enabled?
@@ -2586,7 +2653,21 @@ def track_preset(track)
 end
 
 def curated_progression?(cfg)
-  CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym) ||
+  # A documented transcription is curated by definition.
+  #
+  # This predicate decides whether a progression loops as written or falls to
+  # arrange_fugue_progression, which develops it into exposition/development/
+  # recapitulation over a pedal. The four entries from dilla_reference.yml were
+  # on neither the local nor the DillaLofiMachine list, so asking for
+  # slum_village_players_documented rendered a fugue: the log read
+  # "TRACK=slum_village_players_documented BPM=91.0 (fugue)" and the chords that
+  # played were D/E, Db/E, C/E, Bm/E, Bbm/E -- a chromatic descent over an E
+  # pedal, with no Cm9, Fm9, Bb13 or Ebmaj7 anywhere in it.
+  #
+  # Developing a transcription defeats the point of transcribing it. Every entry
+  # in that file is suffixed _documented, which is the marker used here.
+  cfg[:progression].to_s.end_with?("_documented") ||
+    CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym) ||
     DillaLofiMachine::CURATED_PROGRESSIONS.include?(cfg[:progression].to_sym)
 end
 
@@ -2852,6 +2933,33 @@ end
 
 def soul_progression_locked?
   ENV["STREAM_SOUL"] == "1" && ENV.fetch("STREAM_LOCK", "0") == "1"
+end
+
+# The progression follows the track unless the caller pinned one.
+#
+# This used to be inline in stream() as
+# `unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?`,
+# which skipped the assignment whenever PAD_VOICE or PAD_ARP_MODE was set — and
+# PROGRESSION is never empty, because apply_best_defaults! fills it with
+# get_dis_money. So asking for a specific pad voice silently froze the harmony
+# on the default track: `STREAM_TRACK=slum_village_players_documented
+# PAD_VOICE=prophet` rendered, and logged, the documented transcription's name
+# at its documented 91 BPM while playing get_dis_money's chords — D/E, Db/E,
+# C/E, Bm/E, Bbm/E, Am/E. curated_progression? was true and the loop arranger
+# ran; it looped the wrong six chords faithfully, which is why the render looked
+# correct in every log line except the chords themselves.
+#
+# Same shape as the two failures already recorded in this file (track presets
+# overwriting RAP_VOCAL=0, the lead guard inferring intent from LEAD_VOICE
+# alone): a guard reading an unrelated key instead of what was actually asked
+# for. USER_PINNED_ENV is the thing that knows.
+def sync_progression_to_track!(track)
+  pinned = USER_PINNED_ENV["PROGRESSION"].to_s
+  dmesg("sync progression #{ENV['PROGRESSION'].inspect}→#{pinned.empty? ? track : "(pinned #{pinned})"}",
+        unit: "harm0", parent: "dilla0")
+  return unless pinned.empty?
+
+  ENV["PROGRESSION"] = track.to_s
 end
 
 # LA beat / FlyLo stream — stitch random long sections with variable bar lengths
@@ -4368,8 +4476,24 @@ def build_drum_bus_filter(cfg, sonic, duration: nil)
              else
                ""
              end
+  # The drum bus had no fade of any kind, so every render opened on a full-level
+  # kit at t=0 while the harm bus waited until bar 2 to fade in
+  # (harm_fade_start in the mix assembly). Direct feedback that "the beginning
+  # is very abrupt" points here: the first thing you hear is a cold hit at full
+  # gain, with nothing under it. One bar of qsin is enough to read as a
+  # downbeat arriving rather than a tape splice, and it stays out of the way of
+  # the harm fade that follows it.
+  #
+  # Skipped on short renders (the 8-bar probe/preview path) where a whole bar of
+  # fade would be an eighth of the render. DRUM_FADE_IN=0 disables it.
+  bar_sec = 4.0 * 60.0 / (cfg[:bpm] || DEFAULT_BPM).to_f
+  drum_fade = if ENV["DRUM_FADE_IN"] == "0" || duration.nil? || duration <= 20
+                ""
+              else
+                "afade=t=in:st=0:d=#{bar_sec.round(2)}:curve=qsin,"
+              end
   "[0:a]aformat=channel_layouts=stereo,#{bus_analog_filter(:drums)}volume=#{drum_vol}," \
-    "equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}#{crush}" \
+    "#{drum_fade}equalizer=f=480:t=h:w=420:g=-1.5,#{flylo_eq}#{crush}" \
     "acompressor=threshold=-14dB:ratio=2.2:attack=3:release=60," \
     "equalizer=f=55:t=o:w=0.7:g=#{kick_boost},highpass=f=25#{haas}[drums]"
 end
@@ -6848,14 +6972,11 @@ end
 # chord tones, so any interval smaller than one already seen is an extension
 # written in its simple form. m9 becomes [0,3,7,10,14], 7b9 [0,4,7,10,13],
 # 7#11 [0,4,7,10,18].
+#
+# One implementation, in the module that owns the templates. This file carried a
+# byte-identical copy.
 def voice_extensions(intervals)
-  seen = -1
-  intervals.map do |iv|
-    raised = iv
-    raised += 12 while raised < seen
-    seen = [seen, raised].max
-    raised
-  end
+  DillaLofiMachine.voice_extensions(intervals)
 end
 
 # 6, not 5. Templates like 13 and maj13 carry six chord tones, and at five the
@@ -6875,8 +6996,10 @@ end
 def chord_from_root(root_hz, quality, voices: 6)
   intervals = voice_extensions(chord_template_for(quality))
   hz = intervals.map { |iv| (root_hz * (2**(iv / 12.0))).round(2) }
-  extra = intervals.max + 2
-  hz << (root_hz * (2**(extra / 12.0))).round(2) while hz.length < voices
+  # Octaves of the root, not `max + 2` -- see pad_root_octaves. This was the same
+  # bug as build_voicing's and was fixed twice; now there is one padding rule and
+  # only the trim below differs between the two callers.
+  DillaLofiMachine.pad_root_octaves(hz, root_hz, intervals.max, voices)
   hz.sort.first(voices)
 end
 
@@ -9769,12 +9892,8 @@ end
 def apply_comfort_style!(force: true)
   return unless comfort_mode?
 
-  verb = force ? "force" : "fill"
   DILLA_COMFORT_DEFAULTS.each do |key, value|
-    next if !force && ENV[key] && !ENV[key].empty?
-
-    ENV[key] = value.to_s
-    record_config_provenance!(key, "DILLA_COMFORT_DEFAULTS", verb)
+    style_env_write!(key, value, force:, label: "DILLA_COMFORT_DEFAULTS")
   end
 end
 
@@ -9789,6 +9908,31 @@ def soft_fill_env!(table, label: nil)
 end
 
 # Overwrite ENV keys (stream creative layer after style force-locks).
+# One writer for every defaults/profile table, so the user-pin rule lives in one
+# place instead of being re-implemented per loop.
+#
+# force_env! got the rule when USER_PINNED_ENV was introduced. Four other loops
+# did not, and each kept its own bare `ENV[k] = v`: apply_dilla_style!'s
+# DILLA_STYLE_DEFAULTS pass, reassert_dilla_style_locks!,
+# apply_track_soul_profile!'s pad/lead profiles, and apply_track_layer_profile!.
+# Every stream boot runs all four through apply_dilla_style!(force: true), so a
+# pinned PAD_VOICE/LEAD_ARP/SYNTH_CYCLE was reverted before the first render and
+# the documented environment variables were, again, advisory.
+def style_env_write!(key, value, force:, label: nil)
+  k = key.to_s
+  return false if value.nil?
+  return false if !force && ENV[k] && !ENV[k].empty?
+
+  if USER_PINNED_ENV.key?(k) && ENV[k] == USER_PINNED_ENV[k]
+    record_config_provenance!(k, label, "user-pinned") if label
+    return false
+  end
+
+  ENV[k] = value.to_s
+  record_config_provenance!(k, label, force ? "force" : "fill") if label
+  true
+end
+
 def force_env!(table, label: nil)
   table.each do |key, value|
     next if value.nil?
@@ -9828,15 +9972,19 @@ def reassert_pad_lead_locks!
   return unless dilla_style?
   DILLA_PAD_LEAD_LOCK_KEYS.each do |key|
     next unless DILLA_STYLE_DEFAULTS.key?(key)
-    ENV[key] = DILLA_STYLE_DEFAULTS[key].to_s
+
+    style_env_write!(key, DILLA_STYLE_DEFAULTS[key], force: true, label: "DILLA_PAD_LEAD_LOCK")
   end
 end
 
 def reassert_dilla_style_locks!
   return unless dilla_style?
+  # Same bypass as apply_dilla_style!'s loop: this reasserts on every track when
+  # STREAM_LOCK=1, so a pin that survived boot was reverted one track later.
   DILLA_STYLE_LOCK_KEYS.each do |key|
     next unless DILLA_STYLE_DEFAULTS.key?(key)
-    ENV[key] = DILLA_STYLE_DEFAULTS[key].to_s
+
+    style_env_write!(key, DILLA_STYLE_DEFAULTS[key], force: true, label: "DILLA_STYLE_LOCK")
   end
   atk = [ENV["PAD_ATTACK"].to_i, DILLA_STYLE_DEFAULTS["PAD_ATTACK"].to_i].max
   rel = [ENV["PAD_RELEASE"].to_i, DILLA_STYLE_DEFAULTS["PAD_RELEASE"].to_i].max
@@ -10386,9 +10534,7 @@ def apply_track_layer_profile!(track, force: true)
   profile = TRACK_LAYER_PROFILES[key] or return []
   applied = []
   profile.each do |env_key, value|
-    next if !force && ENV[env_key] && !ENV[env_key].empty?
-    ENV[env_key] = value.to_s
-    applied << env_key
+    applied << env_key if style_env_write!(env_key, value, force:, label: "TRACK_LAYER_PROFILE")
   end
   dmesg("layer profile #{track}: #{applied.size} knobs (strip to source arrangement)",
         unit: "style0", parent: "dilla0") if applied.any?
@@ -10400,12 +10546,10 @@ def apply_track_soul_profile!(track, force: false)
   apply_track_layer_profile!(key, force:)
   [TRACK_SOUL_PAD_PROFILES[key], TRACK_SOUL_LEAD_PROFILES[key]].compact.each do |profile|
     profile.each do |env_key, value|
-      next if !force && ENV[env_key] && !ENV[env_key].empty?
       # Never demote multi-layer stacks to single-voice presets mid-stream.
-      if env_key == "PAD_VOICE" && ENV["PAD_VOICE"].to_s.start_with?("stack_")
-        next
-      end
-      ENV[env_key] = value.to_s
+      next if env_key == "PAD_VOICE" && ENV["PAD_VOICE"].to_s.start_with?("stack_")
+
+      style_env_write!(env_key, value, force:, label: "TRACK_SOUL_PROFILE")
     end
   end
 end
@@ -10418,11 +10562,16 @@ def apply_dilla_style!(force: false)
   # soft-filled their own RENDER_MODE_DEFAULTS tables above.
   return unless dilla_style?
 
-  verb = force ? "force" : "fill"
+  # Every stream boot calls this with force: true via
+  # apply_stream_listenability_defaults!, and this loop used to write ENV
+  # directly. Measured: launching with `PAD_VOICE=prophet LEAD_ARP=0
+  # SYNTH_CYCLE=0 SYNTH_MORPH=0 STREAM_ROTATE_SYNTH=0` came out of one pass as
+  # `stack_soul / 1 / 1 / 1 / 1` — five pins reverted. The re-enabled rotation
+  # then moved the pad to `blend` and the re-enabled patch cycle picked
+  # rhodes_bleeding_edge/jp8_brass_arp: harsh voices nobody asked for, chosen
+  # because the request had been discarded. style_env_write! holds the pin rule.
   DILLA_STYLE_DEFAULTS.each do |key, value|
-    next if !force && ENV[key] && !ENV[key].empty?
-    ENV[key] = value.to_s
-    record_config_provenance!(key, "DILLA_STYLE_DEFAULTS", verb)
+    style_env_write!(key, value, force:, label: "DILLA_STYLE_DEFAULTS")
   end
   track = ENV["TRACK"].to_s
   track = "get_dis_money" if track.empty?
@@ -10625,7 +10774,12 @@ def log_render_meta(path)
   chords = DillaHarmony.last_progression_chords
   beauty = DillaHarmony.score_beauty(chords)
   patches = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id)].compact.join("/")
-  leads = [@render_scale_lead_patch&.dig(:id), @render_lead_patch&.dig(:id)].compact.join("+")
+  # Same rule as the "wrote" line: don't name lead patches a silent render never used.
+  leads = if lead_arp_enabled?
+            [@render_scale_lead_patch&.dig(:id), @render_lead_patch&.dig(:id)].compact.join("+")
+          else
+            "off"
+          end
   prog = chords&.map { |c| c[:name] }&.join(" → ")
   depth = deep_render? ? "deep" : "standard"
   puts "track=#{ENV['TRACK']} mode=#{depth} patches=#{patches || 'native'} pad_arp=#{pad_arp_mode} " \
@@ -10839,6 +10993,51 @@ def stream_rotate_drums!(index)
 end
 
 # Per-track variety: rotate lead arp mode, lead/pad voice, force true arps + synth cycle.
+# Switches the operator set on the command line, captured before any rotation
+# or profile runs.
+#
+# stream_rotate_voices_and_arps! force-sets LEAD_VOICE, LEAD_ARP, SCALE_LEAD,
+# HARMONY_LEAD, CREATIVE_LEAD, EXPERIMENTAL_LEADS, LEAD_MORPH and MELODIC_LEAD
+# every track. It is guarded by user_lead_locked, but that only becomes true
+# when LEAD_VOICE or LEAD_ARP_MODE is set -- so launching with
+# `HARMONY_LEAD=0 SCALE_LEAD=0 CREATIVE_LEAD=0 LEAD_ARP=0` and no LEAD_VOICE
+# left the guard false and every one of those zeroes was overwritten with a 1
+# on the first track. Asking for pads with no leads produced full arps.
+#
+# Same failure as the track presets overwriting RAP_VOCAL=0: a guard that
+# infers intent from one key instead of reading what was actually asked for.
+#
+# Read from USER_PINNED_ENV rather than re-reading ENV: that constant already
+# answers "what did the operator actually ask for", and in a supervisor child it
+# answers it correctly. A second raw ENV capture treats the parent's own
+# apply_best_defaults! values as operator intent and re-pins them after every
+# rotation -- the same laundering the DILLA_USER_PINNED_KEYS declaration exists
+# to stop.
+STREAM_EXPLICIT_ENV = USER_PINNED_ENV.slice(
+  *%w[
+    PAD_VOICE PAD_ARP_MODE PAD_LAYERS PAD_VOL
+    LEAD_VOICE LEAD_ARP_MODE LEAD_ARP LEAD_MORPH MELODIC_LEAD
+    SCALE_LEAD HARMONY_LEAD CREATIVE_LEAD EXPERIMENTAL_LEADS
+    ANALOG_PAD_DETUNE_CENTS
+  ]
+).reject { |_, v| v.to_s.empty? }.freeze
+
+# What this process tells a child process is genuinely pinned.
+#
+# Both relaunch paths (the supervisor loop and the mtime exec-restart) declare
+# this, and they used to spell it differently -- the supervisor dropped
+# DILLA_STREAM* keys, the restart did not -- so a bug could reproduce on one
+# restart route and not the other. DILLA_STREAM_LAUNCHED / _SUPERVISOR are this
+# file's own plumbing, never operator intent, so they never belong in the pin set.
+def dilla_pinned_keys_decl
+  USER_PINNED_ENV.keys.reject { |k| k.start_with?("DILLA_STREAM") }.join(",")
+end
+
+# Put the operator's values back after anything that rewrites them.
+def restore_explicit_stream_env!
+  STREAM_EXPLICIT_ENV.each { |k, v| ENV[k] = v }
+end
+
 def stream_rotate_voices_and_arps!(track_index)
   return if ENV["STREAM_ROTATE_LEAD"] == "0" && ENV["STREAM_ROTATE_SYNTH"] == "0"
   @stream_iterate_count = (@stream_iterate_count || 0)
@@ -11037,6 +11236,7 @@ def demo_all(bars_count = 12, destination = nil)
     stream_rotate_drums!(idx)
     # Distinct leads / MIDI arps / synth morph per slot (clears patch cache).
     stream_rotate_voices_and_arps!(idx)
+    restore_explicit_stream_env!
     # Stronger pad identity than stream defaults (avoid every slot = stack_soul held).
     ENV["PAD_VOICE"] = DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length]
     ENV["PAD_ARP_MODE"] = DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length]
@@ -11046,6 +11246,7 @@ def demo_all(bars_count = 12, destination = nil)
     apply_track_soul_profile!(slug, force: true)
     # Re-apply rotation after soul profile so lead/pad keep moving.
     stream_rotate_voices_and_arps!(idx)
+    restore_explicit_stream_env!
     ENV["PAD_VOICE"] = DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length]
     ENV["PAD_ARP_MODE"] = DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length]
     ENV["VOICING"] = DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length]
@@ -11193,17 +11394,46 @@ def stream(bars_count = STREAM_BARS_COUNT)
   # Non-stop outer supervisor: any exit except Ctrl-C restarts stream (agent + interactive).
   if ENV.fetch("STREAM_CONTINUOUS", "1") != "0" && ENV["DILLA_STREAM_SUPERVISOR"] != "1"
     stream_log = File.join(ROOT, "stream.log")
+    # Read from USER_PINNED_ENV, not ENV.
+    #
+    # This list is built after apply_best_defaults! has already run, so every
+    # key it names is populated whether or not the caller asked for it. Passing
+    # ENV's value forwarded the engine's own defaults to the child as if the
+    # user had typed them — and in the child they land in USER_PINNED_ENV, where
+    # force_env! and the per-track sync both treat them as untouchable. That is
+    # how `STREAM_TRACK=slum_village_players_documented` ended up locked to
+    # get_dis_money's chords: PROGRESSION was "pinned" to a default nobody
+    # chose. USER_PINNED_ENV holds what the command line actually said.
+    #
+    # PAD_VOICE / PAD_LAYERS / LEAD_* are here because a pinned pad or lead was
+    # silently dropped at the supervisor boundary before: PAD_VOL made the list
+    # but PAD_VOICE did not, so `PAD_VOICE=prophet ruby dilla.rb stream` played
+    # whatever the soul profile chose.
     env_pass = %w[
       RENDER_MODE STREAM_SOUL STREAM_COMFORT STREAM_PUNCH DILLA_COMFORT SPEAK RAP_VOCAL
-      STREAM_DEMO STREAM_TRACK STREAM_LOCK SPEAK
+      STREAM_DEMO STREAM_TRACK STREAM_LOCK
       FLYLO_TOP_MIX FLYLO_SUB_MIX FLYLO_MERGE_BOOST FLYLO_OVERLAY_GAIN FLYLO_DRUM_OVERLAY
       DRUM_BUS_VOL DRUM_BUS_GAIN DRUM_MIX_WEIGHT DRUM_AIR_DB DRUM_PRESENCE_DB
       KICK_GAIN FLYLO_KICK_GAIN POCKET_KICKS FLYLO_DRUMS_ONLY PAD_VOL STREAM_LUFS
       STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH STREAM_DRUM_ROTATE THEORY_RUNTIME THEORY_BACH
-    ].filter_map { |k| ENV[k] && !ENV[k].empty? ? "#{k}=#{Shellwords.escape(ENV[k])}" : nil }
-                 .join(" ")
+      PAD_VOICE PAD_ARP_MODE PAD_LAYERS LEAD_VOICE LEAD_ARP_MODE PROGRESSION SECTION_CYCLE
+      DRUM_PRESET FM_DRUMS SWING BPM DRUM_FADE_IN
+      LEAD_ARP SCALE_LEAD HARMONY_LEAD CREATIVE_LEAD EXPERIMENTAL_LEADS
+      SYNTH_CYCLE SYNTH_MORPH LEAD_MORPH ANALOG_CHAIN SONITEX VINYL
+    ].filter_map do |k|
+      v = USER_PINNED_ENV[k]
+      v.nil? || v.empty? ? nil : "#{k}=#{Shellwords.escape(v)}"
+    end.join(" ")
+    # The env_pass prefix above is additive, not exclusive: this command runs
+    # through a shell that inherits this process's whole environment, including
+    # everything apply_best_defaults! wrote. Naming only the pinned keys in the
+    # prefix therefore did nothing to stop PROGRESSION=get_dis_money reaching
+    # the child, where it read as a user pin and became unoverridable. The child
+    # needs to be told which keys are real, so declare them.
+    pinned_keys = dilla_pinned_keys_decl
     cmd = "cd #{Shellwords.escape(ROOT)} && while true; do " \
-          "DILLA_STREAM_LAUNCHED=1 DILLA_STREAM_SUPERVISOR=1 #{env_pass} " \
+          "DILLA_STREAM_LAUNCHED=1 DILLA_STREAM_SUPERVISOR=1 " \
+          "DILLA_USER_PINNED_KEYS=#{Shellwords.escape(pinned_keys)} #{env_pass} " \
           "ruby #{Shellwords.escape(__FILE__)} stream #{bars_count.to_i} 2>&1 | tee -a #{Shellwords.escape(stream_log)}; " \
           "c=$?; [ $c -eq 130 ] && break; " \
           "echo \"$(date -u +%Y-%m-%dT%H:%M:%SZ) stream exited $c — restart in 2s\" | tee -a #{Shellwords.escape(stream_log)}; " \
@@ -11255,23 +11485,29 @@ def stream(bars_count = STREAM_BARS_COUNT)
         dmesg("dilla.rb mtime changed — exec restart", unit: "stream0", parent: "dilla0")
         ENV["DILLA_STREAM_SUPERVISOR"] = "1"
         ENV["DILLA_STREAM_LAUNCHED"] = "1"
+        # Carry the real pin set across the restart. Without this the child
+        # reads the defaults this process wrote as user intent — see
+        # USER_PINNED_ENV's comment.
+        ENV["DILLA_USER_PINNED_KEYS"] = dilla_pinned_keys_decl
         exec(Gem.ruby, __FILE__, "stream", bars_count.to_s)
       end
       track = item.to_s
       apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
       stream_rotate_voices_and_arps!(idx) unless user_lead_locked
+      restore_explicit_stream_env!
       reassert_pad_lead_locks! unless user_pad_locked
       ENV["TRACK"] = track
-      ENV["PROGRESSION"] = track unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?
+      sync_progression_to_track!(track)
       stream_rotate_drums!(idx)
       reassert_dilla_style_locks! if dilla_style? && ENV["STREAM_LOCK"] == "1"
       if radio_bergen_stream_enabled? && rand < 0.38 && (rb = pick_radio_bergen_stream_track!)
         track = rb
         apply_track_soul_profile!(track, force: !user_pad_locked && !user_lead_locked)
         stream_rotate_voices_and_arps!(idx) unless user_lead_locked
+        restore_explicit_stream_env!
         reassert_pad_lead_locks! unless user_pad_locked
         ENV["TRACK"] = track
-        ENV["PROGRESSION"] = track
+        sync_progression_to_track!(track)
         stream_rotate_drums!(idx)
         stream_track_banner("← playlist.brgen.no")
       else
@@ -12005,19 +12241,25 @@ def dilla_section_bounds(n_bars)
   intro = [[(n_bars * 0.12).round, 4].max, (n_bars * 0.22).round].min
   outro = [[(n_bars * 0.10).round, 4].max, (n_bars * 0.18).round].min
   body = [n_bars - intro - outro, 8].max
-  # Cycle follows the body instead of being floored at 16.
+  # A phrase length, never longer than the body. Both halves of that matter, and
+  # each was learned from a render that sounded broken.
   #
-  # With the floor, a 16-bar render had a 9-bar body against a 16-bar cycle, so
-  # `pos` never exceeded 8 while breakdown began at 12 and build at 14 -- both
-  # unreachable. Every render up to about 21 bars was therefore intro, main,
-  # outro and nothing else, which is exactly what "loops over and over with no
-  # variation" sounds like. The arrangement was never missing; it was
-  # unreachable at the lengths anyone actually renders.
+  # Never longer than the body: with the old floor of 16, a 16-bar render had a
+  # 9-bar body against a 16-bar cycle, so `pos` never exceeded 8 while breakdown
+  # began at 12 and build at 14 -- both unreachable. Every render up to about 21
+  # bars was intro, main, outro and nothing else, which is exactly what "loops
+  # over and over with no variation" sounds like. The arrangement was never
+  # missing; it was unreachable at the lengths anyone actually renders.
   #
-  # Verified: at 16 bars the sections were intro/main/outro and are now
-  # intro/main/breakdown/build/outro. 24 and 32 are unchanged, since their
-  # bodies already exceeded the old floor.
-  cycle = body.clamp(8, 32)
+  # But a phrase length, not the whole body: letting the cycle equal the body
+  # meant a 32-bar render had a 24-bar cycle -- eighteen consecutive bars of
+  # :main with a single breakdown near the end. The loudness envelope measured
+  # 3.1 dB of range against 8.6 dB on demo29, one of the two tracks kept on
+  # merit, whose envelope dips every four or five bars. Flat arrangement, not
+  # flat compression: the same render measures LRA 1.8 with loudnorm disabled.
+  #
+  # SECTION_CYCLE overrides it; 16 is two breakdowns across 32 bars, 8 is four.
+  cycle = [(ENV["SECTION_CYCLE"] || 8).to_i, body].min.clamp(4, 32)
   { intro:, outro:, cycle:, body_start: intro }
 end
 
@@ -12248,6 +12490,8 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
   prev_pad_chord = nil
   cfg_sched = dilla_resolve_config
   bpm_base = cfg_sched[:bpm]
+  # Loop-invariant: cfg_sched[:progression] does not change inside the bar loop.
+  curated_sched = curated_progression?(cfg_sched)
 
   if DillaRhythm.macro_enabled? && %w[1].intersect?([ENV["TEMPO_RAMP"], ENV["BPM_STAIRCASE"], ENV["TEMPO_ACCEL"]])
     bar_starts = [0.0]
@@ -12481,8 +12725,7 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                 else
                   chord
                 end
-    pad_chord = DillaHarmony.fix_chord_for_schedule(pad_chord, prev_pad_chord,
-                                                    curated: curated_progression?(cfg_sched))
+    pad_chord = DillaHarmony.fix_chord_for_schedule(pad_chord, prev_pad_chord, curated: curated_sched)
     cvar = dilla_chord_change_variation(chord_change_i, bar, section, feel, step_p, pad_chord)
     pad_t = base + cvar[:pad_offset] + dilla_timing_ms(:pad, bar, 0, timing, beat_p) / 1000.0
     if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session
@@ -15077,12 +15320,41 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
 
   fugue_phases = []
   chord_bar_lens = nil
+  # Every arranger and pedal decision below reads these three, and two of them
+  # read mutable ENV. Once each, up front: a log line that disagrees with the
+  # branch it exists to explain is worse than no log line, and the same
+  # progression must not be curated for the arranger and uncurated for the pedal.
+  curated = curated_progression?(cfg)
+  la_beat = la_beat_progression_enabled?
+  soul_lock = soul_progression_locked?
   unless pads.empty?
-    pads, fugue_phases, chord_bar_lens = if camel_mode? && la_beat_progression_enabled? && !soul_progression_locked?
+    # Which arranger ran, and on what. A documented transcription asked for by
+    # name rendered as D/E → Db/E → C/E → Bm/E → Bbm/E → Am/E -- parallel
+    # triads planing down by semitone over an E pedal, which only
+    # arrange_fugue/la_beat/camel produce, none of which should be reachable
+    # with a curated progression and STREAM_SOUL+STREAM_LOCK set. Every input to
+    # that decision (cfg[:progression], the three predicates) was correct when
+    # driven directly, so the next render says which branch it actually took
+    # instead of leaving it to be inferred from the chords.
+    arranger = if camel_mode? && la_beat && !soul_lock
+                 :camel
+               elsif la_beat && !soul_lock
+                 :la_beat
+               elsif curated
+                 :loop
+               else
+                 :fugue
+               end
+    dmesg("arrange #{arranger} progression=#{cfg[:progression]} track=#{cfg[:track]} " \
+          "curated=#{curated} la_beat=#{la_beat} " \
+          "soul_lock=#{soul_lock} chords=#{pads.length}→#{needed_chords}",
+          unit: "harm0", parent: "dilla0")
+    pads, fugue_phases, chord_bar_lens = case arranger
+                                         when :camel
                                            arrange_camel_beat_progression(pads, needed_chords, cfg)
-                                         elsif la_beat_progression_enabled? && !soul_progression_locked?
+                                         when :la_beat
                                            arrange_la_beat_progression(pads, needed_chords, cfg)
-                                         elsif curated_progression?(cfg)
+                                         when :loop
                                            lp = arrange_loop_progression(pads, needed_chords, cfg)
                                            [lp[0], lp[1], nil]
                                          else
@@ -15091,14 +15363,10 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
                                          end
   end
   @render_chord_bar_lens = chord_bar_lens
-  pedal_prob = if curated_progression?(cfg)
-                 0.0
-               else
-                 DillaHarmony.pedal_probability(cfg)
-               end
-  pedal_prob = 0.18 if pedal_prob.zero? && !curated_progression?(cfg)
+  pedal_prob = curated ? 0.0 : DillaHarmony.pedal_probability(cfg)
+  pedal_prob = 0.18 if pedal_prob.zero? && !curated
   pads = apply_pedal_point(pads, probability: pedal_prob, seed: cfg[:track].hash.abs) unless pedal_prob.zero?
-  pads, fugue_phases = if curated_progression?(cfg)
+  pads, fugue_phases = if curated
                            DillaHarmony.beautify_curated_pipeline(pads, cfg, phases: fugue_phases)
                          else
                            DillaHarmony.beautify_pipeline(pads, cfg, phases: fugue_phases)
@@ -15115,7 +15383,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   bass_pads = nil
   if slash_bass_enabled?(cfg) && !pads.empty?
     bass_pads = slash_bass_pads_for(pads, cfg)
-  elsif !curated_progression?(cfg) && Random.new(cfg[:track].to_s.hash.abs).rand < 0.1
+  elsif !curated && Random.new(cfg[:track].to_s.hash.abs).rand < 0.1
     bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
                                                          length: pads.length))
   end
@@ -15535,9 +15803,22 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   stem_note = use_stem_harmony ? stems.keys.join("+") : "synth-harmony+melody"
   mix_note  = sonitex_label
   lead_arp_style = lead_arp_cfg_for(@render_lead_patch)&.dig(:style)
-  patch_note = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id),
-                @render_scale_lead_patch&.dig(:id), @render_scale_arp_style,
-                @render_lead_patch&.dig(:id), @render_arp_style, lead_arp_style].compact.join("/")
+  # Only name patches that actually sounded.
+  #
+  # The lead patches are picked before the lead gate is consulted, so this line
+  # listed scale_arp_moog/soul_prophet_arp on renders where lead_arp_enabled? was
+  # false and both event arrays came back empty — i.e. it advertised arps in a
+  # pads-only render. Read alongside "lead=0/off" in the stream banner two lines
+  # later, it directly contradicted the truth, and cost a debugging session
+  # chasing arps that were never in the mix.
+  lead_note = if lead_arp_enabled?
+                [@render_scale_lead_patch&.dig(:id), @render_scale_arp_style,
+                 @render_lead_patch&.dig(:id), @render_arp_style, lead_arp_style]
+              else
+                []
+              end
+  patch_note = [@render_ep_patch&.dig(:id), @render_warm_patch&.dig(:id), *lead_note].compact.join("/")
+  patch_note += " (no lead)" unless lead_arp_enabled?
   kick_note = kicks_enabled? ? "kicks" : "no-kicks"
   comp_note = ""
   if composition_enabled? && instance_variable_defined?(:@composition_session) && @composition_session

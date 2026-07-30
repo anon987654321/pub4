@@ -26,9 +26,9 @@ documented_progressions:
     chord_bars: 2
     phrase_bars: 16
     voicing: rootless
-    chords: [Cm9, Fm9, Bb7, Ebmaj7, Abmaj7, Dm7b5, G7alt, Cm9]
+    chords: [Cm9, Fm9, Bb13, Ebmaj7, Abmaj7, Dm7b5, G7alt, Cm9]
     source: "Slum Village - Fantastic Vol. 2, 'Players' (documented track analysis)"
-    source_note: "Original voicing is Bb13/G7#5#9; simplified to Bb7/G7alt — '13' isn't a parseable extension here, 'alt' already covers the #5/#9 tensions."
+    source_note: "Bb13 restored — the parser gained 13 since this was simplified to Bb7, and the 13th is the soul colour the simplification removed. G7#5#9 stays spelled G7alt, which already covers both tensions."
 
   slum_village_intro_documented:
     producer: dilla
@@ -38,9 +38,9 @@ documented_progressions:
     chord_bars: 2
     phrase_bars: 8
     voicing: rootless
-    chords: [Cm9, Fm9, Bb7, Ebmaj7]
+    chords: [Cm9, Fm9, Bb13, Ebmaj7]
     source: "Slum Village - Fantastic Vol. 2, 'Intro'"
-    source_note: "Bb13 simplified to Bb7, same reason as Players above."
+    source_note: "Bb13 restored, same as Players above."
 
   flylo_beginners_falafel_documented:
     producer: flylo
@@ -50,9 +50,9 @@ documented_progressions:
     chord_bars: 2
     phrase_bars: 8
     voicing: rootless
-    chords: [Dm9, G7, Cmaj9, Fmaj7]
+    chords: [Dm9, G13, Cmaj9, Fmaj7]
     source: "Flying Lotus - Los Angeles, 'Beginners Falafel'"
-    source_note: "G13 simplified to G7."
+    source_note: "G13 restored — parseable now."
 
   flylo_camel_documented:
     producer: flylo
@@ -62,9 +62,9 @@ documented_progressions:
     chord_bars: 2
     phrase_bars: 8
     voicing: rootless
-    chords: [Dm9, G7, Cmaj9, Fmaj7]
+    chords: [Dm9, G13, Cmaj9, Fmaj7#11]
     source: "Flying Lotus - Los Angeles, 'Camel'"
-    source_note: "Fmaj7#11 simplified to Fmaj7 — '#11' isn't a parseable extension here. Distinct from the existing chromatic_mediant_drift/quartal_west_coast profiles used by RENDER_MODE=camel, which are original FlyLo-inspired compositions, not transcriptions of this track."
+    source_note: "Fmaj7#11 and G13 restored — both parse now. The #11 is the lydian shimmer that distinguishes this from Beginners Falafel; with both simplified the two entries were byte-identical in harmony. Still distinct from the chromatic_mediant_drift/quartal_west_coast profiles used by RENDER_MODE=camel, which are original compositions rather than transcriptions."
 
 # Hard pre-flight rejects, not just advisory scores — a take failing any of
 # these should not be promoted even if beauty/groove scored well.
