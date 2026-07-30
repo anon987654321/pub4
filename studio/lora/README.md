@@ -26,3 +26,12 @@ Replicate path (`run_train_replicate.rb`):
 5. Pulls `output.weights` into `weights/ragnhild_v2/` when downloadable
 
 Requires `REPLICATE_API_TOKEN`. Dry-run: `./run_train_replicate.sh --dry-run`. Keep the private model private; do not publish person LoRAs publicly.
+
+## Status
+
+- **ragnhild**: dataset complete (17 captioned images), full pipeline in `training/ragnhild/ai_toolkit/`. `weights/ragnhild_v2/` has no `.safetensors` yet — local MPS training died in the Metal compiler, and the last run failed on the gated FLUX.1-dev repo (needs `HF_TOKEN` with accepted license). An earlier Replicate run trained `basicfeatures/ragnhild:6197a9e1…` (see `ragnhild/weights/replicate_train.log`); with `REPLICATE_API_TOKEN` set, either pull those weights or re-run `--train-replicate`.
+- **johann**: pipeline scaffolded in `training/johann/ai_toolkit/` (trigger `johann`, model `johann_v1`, same dual-track scripts). Dataset holds 3 captioned images (night selfie, indoor cap selfie, dusk park selfie — the latter two face-cropped from `training/johann/sources/`) — still too few to train. Curate up to 12-18 varied photos (angles, light, expressions) into `training/johann/sources/`, caption them into `training/johann/ai_toolkit/dataset/`, then `./run_generate.sh --train` or `--train-replicate`.
+
+## Johann
+
+Samme kjede som Ragnhild: FLUX.1-dev + ai-toolkit LoRA (rank 32, triggerord `johann`), dual-track lokal/RunPod eller Replicate. Kildebilder i `johann/`, trening i `training/johann/ai_toolkit/`, ferdige vekter i `training/johann/ai_toolkit/weights/johann_v1/`. Spørsmålet er det samme: er det Johann?

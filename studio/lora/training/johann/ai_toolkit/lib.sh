@@ -7,7 +7,7 @@ REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../../../.." && pwd)"
 
 AI_TOOLKIT_ROOT="${AI_TOOLKIT_ROOT:-$HOME/ai-toolkit}"
 DATASET_DIR="$SCRIPT_DIR/dataset"
-WEIGHTS_DIR="$SCRIPT_DIR/weights/ragnhild_v2"
+WEIGHTS_DIR="$SCRIPT_DIR/weights/johann_v1"
 SAMPLES_DIR="$WEIGHTS_DIR/samples"
 
 CHECK_SCRIPT="$SCRIPT_DIR/check_hf_flux_access.rb"

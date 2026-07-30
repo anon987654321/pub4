@@ -1,7 +1,7 @@
 #!/bin/sh
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 LOG="$SCRIPT_DIR/train_run.log"
-WEIGHTS="$SCRIPT_DIR/weights/ragnhild_v2"
+WEIGHTS="$SCRIPT_DIR/weights/johann_v1"
 MARKER="$SCRIPT_DIR/step250_reached"
 [ -f "$MARKER" ] && exit 0
 

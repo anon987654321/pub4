@@ -1,0 +1,6 @@
+.DS_Store
+training/*/ai_toolkit/exports/
+training/*/ai_toolkit/train.pid
+training/*/ai_toolkit/step250_reached
+training/*/ai_toolkit/weights/*/samples/
+training/*/ai_toolkit/dataset/.aitk_size.json

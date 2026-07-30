@@ -2,21 +2,21 @@
 # frozen_string_literal: true
 
 # Dual-track train: zip the curated dataset, train via Replicate
-# ostris/flux-dev-lora-trainer, pull LoRA weights into weights/ragnhild_v2/.
+# ostris/flux-dev-lora-trainer, pull LoRA weights into weights/johann_v1/.
 #
 # Usage:
 #   ./run_train_replicate.rb
 #   ./run_train_replicate.rb --dry-run
 #   ./run_train_replicate.rb --async
-#   RAGNHILD_REPLICATE_DEST=you/ragnhild-flux ./run_train_replicate.rb
+#   JOHANN_REPLICATE_DEST=you/johann-flux ./run_train_replicate.rb
 #
 # Env:
 #   REPLICATE_API_TOKEN / REPLICATE_API_KEY / ~/.config/repligen/config.json
-#   RAGNHILD_REPLICATE_DEST   owner/name (default: $username/ragnhild-flux)
-#   RAGNHILD_TRIGGER          default ragnhild
-#   RAGNHILD_REPLICATE_STEPS  default 1000 (Replicate sweet spot; local YAML uses 1800)
+#   JOHANN_REPLICATE_DEST   owner/name (default: $username/johann-flux)
+#   JOHANN_TRIGGER          default johann
+#   JOHANN_REPLICATE_STEPS  default 1000 (Replicate sweet spot; local YAML uses 1800)
 #   REPLICATE_WEBHOOK_URL     optional; also set --async to not poll
-#   RAGNHILD_REPLICATE_TIMEOUT seconds (default 3600)
+#   JOHANN_REPLICATE_TIMEOUT seconds (default 3600)
 
 require "fileutils"
 require "json"
@@ -28,9 +28,9 @@ require "time"
 SCRIPT_DIR = Pathname.new(__dir__).expand_path
 REPO_ROOT = SCRIPT_DIR.join("../../../../../").expand_path
 DATASET_DIR = SCRIPT_DIR.join("dataset")
-WEIGHTS_DIR = SCRIPT_DIR.join("weights/ragnhild_v2")
+WEIGHTS_DIR = SCRIPT_DIR.join("weights/johann_v1")
 EXPORTS_DIR = SCRIPT_DIR.join("exports")
-LOG_PATH = SCRIPT_DIR.join("weights/ragnhild_v2/replicate_train.log")
+LOG_PATH = SCRIPT_DIR.join("weights/johann_v1/replicate_train.log")
 
 MASTER_CLIENT = REPO_ROOT.join("MASTER/lib/io/replicate_client.rb")
 abort "warn: missing #{MASTER_CLIENT}" unless MASTER_CLIENT.file?
@@ -40,11 +40,11 @@ require MASTER_CLIENT.to_s
 options = {
   dry_run: false,
   async: false,
-  destination: ENV["RAGNHILD_REPLICATE_DEST"].to_s.strip,
-  trigger: ENV.fetch("RAGNHILD_TRIGGER", "ragnhild"),
-  steps: (ENV["RAGNHILD_REPLICATE_STEPS"] || "1000").to_i,
-  lora_rank: (ENV["RAGNHILD_REPLICATE_LORA_RANK"] || "16").to_i,
-  timeout: (ENV["RAGNHILD_REPLICATE_TIMEOUT"] || "3600").to_i,
+  destination: ENV["JOHANN_REPLICATE_DEST"].to_s.strip,
+  trigger: ENV.fetch("JOHANN_TRIGGER", "johann"),
+  steps: (ENV["JOHANN_REPLICATE_STEPS"] || "1000").to_i,
+  lora_rank: (ENV["JOHANN_REPLICATE_LORA_RANK"] || "16").to_i,
+  timeout: (ENV["JOHANN_REPLICATE_TIMEOUT"] || "3600").to_i,
   webhook: ENV["REPLICATE_WEBHOOK_URL"].to_s.strip,
 }
 
@@ -53,7 +53,7 @@ OptionParser.new do |p|
   p.on("--dry-run", "Zip + plan only; no upload or train") { options[:dry_run] = true }
   p.on("--async", "Create training and exit (use with webhook or poll later)") { options[:async] = true }
   p.on("--destination OWNER/NAME", "Private model destination") { |v| options[:destination] = v }
-  p.on("--trigger WORD", "Trigger word (default ragnhild)") { |v| options[:trigger] = v }
+  p.on("--trigger WORD", "Trigger word (default johann)") { |v| options[:trigger] = v }
   p.on("--steps N", Integer, "Training steps (default 1000)") { |v| options[:steps] = v }
   p.on("--lora-rank N", Integer, "LoRA rank (default 16; local YAML uses 32)") { |v| options[:lora_rank] = v }
   p.on("--timeout SEC", Integer, "Poll timeout seconds") { |v| options[:timeout] = v }
@@ -111,7 +111,7 @@ end
 images = dataset_images(DATASET_DIR)
 abort "warn: no images in #{DATASET_DIR}" if images.empty?
 
-zip_path = EXPORTS_DIR.join("ragnhild_dataset.zip")
+zip_path = EXPORTS_DIR.join("johann_dataset.zip")
 zip_dataset(DATASET_DIR, zip_path)
 puts "ok: zip #{zip_path} (#{images.length} images, #{File.size(zip_path)} bytes)"
 
@@ -127,8 +127,8 @@ end
 destination = options[:destination]
 if destination.empty?
   username = options[:dry_run] ? "YOUR_USERNAME" : client.account_username
-  abort "warn: could not resolve Replicate username; set RAGNHILD_REPLICATE_DEST=owner/name" if username.to_s.empty?
-  destination = "#{username}/ragnhild-flux"
+  abort "warn: could not resolve Replicate username; set JOHANN_REPLICATE_DEST=owner/name" if username.to_s.empty?
+  destination = "#{username}/johann-flux"
 end
 
 puts "ok: destination #{destination}"
@@ -210,7 +210,7 @@ else
 end
 
 append_log([
-  "lora-train: name=ragnhild images=#{images.length} trigger=#{options[:trigger]}",
+  "lora-train: name=johann images=#{images.length} trigger=#{options[:trigger]}",
   "destination: #{destination}",
   "version: #{version}",
   "training_id: #{training_id}",

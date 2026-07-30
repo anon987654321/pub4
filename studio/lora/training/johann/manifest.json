@@ -1,0 +1,32 @@
+{
+  "name": "johann",
+  "trigger_word": "johann",
+  "model_version": "johann_v1",
+  "orchestrator": "training/johann/ai_toolkit/run_generate.sh",
+  "helpers": {
+    "gate_check": "training/johann/ai_toolkit/check_hf_flux_access.rb",
+    "render_config": "training/johann/ai_toolkit/render_config.rb",
+    "postpro": "training/johann/ai_toolkit/postpro_samples.rb",
+    "ai_toolkit_runner": "training/johann/ai_toolkit/run_ai_toolkit.rb"
+  },
+  "prompts": "training/johann/ai_toolkit/prompts.yaml",
+  "train_config": "training/johann/ai_toolkit/train_johann.yaml",
+  "images_root": "lora",
+  "weights_dir": "training/johann/ai_toolkit/weights/johann_v1",
+  "dataset_dir": "training/johann/ai_toolkit/dataset",
+  "dataset_images": 3,
+  "model": "black-forest-labs/FLUX.1-dev",
+  "upstream": {
+    "name": "ai-toolkit",
+    "entrypoint": "run.py",
+    "note": "only upstream train/generate boundary uses ai-toolkit venv python"
+  },
+  "review": {
+    "identity_first": true,
+    "postpro_after_approval": true
+  },
+  "status": {
+    "blocked_on": "dataset too small: 3 images; curate 12-18 varied source photos (angles, light, expressions) before training",
+    "sources": "training/johann/sources/ holds approved originals; add new photos there, then caption into dataset/"
+  }
+}
