@@ -9,42 +9,95 @@ require "json"
 require "time"
 require "digest"
 require "securerandom"
-require_relative "../lib/io/replicate_client"
-require_relative "../lib/io/script_dispatch"
-require_relative "../lib/io/analog_capabilities"
-require_relative "../lib/master_paths"
+# ../lib/... resolved correctly at MASTER/tools/repligen/ and has resolved to
+# studio/lib/ -- which does not exist -- since the move to studio/, so every
+# invocation of this file has aborted on line 12 with a LoadError since
+# 687c07a43. There is no ../lib/master_paths anywhere in the repo under any
+# prefix; the module lives in MASTER/lib/boot/paths.rb.
+require_relative "../../MASTER/lib/io/replicate_client"
+require_relative "../../MASTER/lib/io/script_dispatch"
+require_relative "../../MASTER/lib/io/analog_capabilities"
+require_relative "../../MASTER/lib/boot/paths"
+# Shellwords.escape is called in maybe_handoff_postpro. Nothing required it, so
+# --postpro reached a NameError instead of a handoff -- the one code path in
+# this file that had never run even before the LoadError above made all of them
+# unreachable.
+require "shellwords"
 
-# Structured fields compose onto the free-text --prompt; each is optional and
-# only known vocabulary keys take effect, so an unrecognized value is a no-op
-# rather than a crash.
+# Structured fields compose onto the free-text --prompt. An unrecognised value
+# used to be documented as "a no-op rather than a crash" -- but compile_prompt
+# looks the key up and .compacts the nil away, so `--stock portra400` produced a
+# prompt with no film stock in it, silently, after paying for the generation and
+# waiting for it. A no-op is the worst of the three options here: a crash costs
+# you nothing and tells you what you meant, and a guess at least renders. See
+# resolve_vocab, which normalises spelling and then refuses what it cannot place.
 STOCK_VOCAB = {
+  # colour negative
   "portra" => "Kodak Portra 400 color negative scan, fine grain, gentle highlight rolloff",
+  "portra800" => "Kodak Portra 800 color negative, warmer grain, low-light latitude",
   "gold" => "Kodak Gold 200 warm consumer color, soft contrast",
-  "trix" => "Kodak Tri-X 400 black and white, silver-rich contrast, visible grain",
+  "ultramax" => "Kodak UltraMax 400 consumer negative, punchy saturation, everyday snapshot color",
+  "ektar" => "Kodak Ektar 100, saturated fine-grain negative, vivid reds",
+  "fuji400h" => "Fujifilm Pro 400H, cool pastel palette, gentle greens and soft skin",
+  "superia" => "Fujifilm Superia 400, green-leaning consumer color, visible grain",
+  "vista" => "Agfa Vista 200, warm mid-contrast consumer negative",
+  # colour reversal
   "provia" => "Fujifilm Provia 100F, neutral saturated color, clean shadows",
+  "velvia" => "Fujifilm Velvia 50 reversal, extreme saturation, deep contrast, no highlight latitude",
+  "ektachrome" => "Kodak Ektachrome E100 slide film, clean neutral color, crisp shadows",
+  "kodachrome" => "Kodachrome 64, dense reds, dark saturated shadows, archival slide look",
+  # tungsten / cine
   "cinestill" => "CineStill 800T tungsten-balanced, halation around highlights",
+  "vision3" => "Kodak Vision3 500T motion picture negative, wide latitude, cinema grade",
+  # black and white
+  "trix" => "Kodak Tri-X 400 black and white, silver-rich contrast, visible grain",
+  "hp5" => "Ilford HP5 Plus 400 black and white, forgiving latitude, classic reportage grain",
+  "fp4" => "Ilford FP4 Plus 125 black and white, fine grain, long tonal scale",
+  "delta3200" => "Ilford Delta 3200 black and white, coarse grain, low-light available darkness",
+  "panf" => "Ilford Pan F Plus 50 black and white, extremely fine grain, glassy midtones",
+  # instant / process
+  "polaroid" => "Polaroid SX-70 instant film, soft focus falloff, milky highlights, pastel cast",
+  "instax" => "Fujifilm Instax instant print, bright flash falloff, small-format softness",
+  "crossprocessed" => "cross-processed E-6 in C-41 chemistry, shifted cyan shadows, blown contrast",
+  "expired" => "expired film stock, colour crossover, unpredictable magenta shift, fogged shadows",
 }.freeze
 
 LENS_VOCAB = {
+  "24mm" => "24mm wide lens, strong perspective, foreground close and background deep",
+  "28mm" => "28mm reportage lens, environmental context without visible distortion",
   "35mm" => "35mm lens, moderate depth of field, slight environmental context",
   "50mm" => "50mm lens, natural perspective, shallow depth of field",
   "85mm" => "85mm portrait lens, compressed background, creamy bokeh",
+  "105mm" => "105mm short telephoto, flattened features, isolated subject",
+  "135mm" => "135mm telephoto, heavy compression, background reduced to tone",
+  "macro" => "macro lens, extreme close focus, paper-thin depth of field",
+  "tilt_shift" => "tilt-shift lens, plane of focus deliberately skewed across the frame",
+  "anamorphic" => "anamorphic lens, oval bokeh, horizontal blue flare, 2.39:1 character",
+  "petzval" => "Petzval lens, swirling background bokeh, sharp centre falling off hard to the edges",
+  "large_format" => "4x5 large-format view camera, immense detail, shallow plane, gentle falloff",
   "medium_format" => "medium-format Hasselblad look, high resolution tonal smoothness",
+  "soft_focus" => "soft-focus portrait lens, halated highlights, detail preserved under the glow",
 }.freeze
 
 CAMERA_HEIGHT_VOCAB = {
-  "eye" => "eye-level camera height",
+  "ground" => "camera on the ground looking up, subject towering",
   "low" => "low camera angle looking slightly up",
+  "hip" => "hip-height camera, candid unposed viewpoint",
+  "eye" => "eye-level camera height",
   "high" => "elevated camera angle looking slightly down",
   "overhead" => "overhead camera angle",
+  "birds_eye" => "bird's-eye view straight down, subject flattened into pattern",
 }.freeze
 
 DISTANCE_VOCAB = {
+  "macro" => "extreme macro detail, a fragment of the subject filling the frame",
   "closeup" => "tight close-up crop, face fills frame",
   "portrait" => "head-and-shoulders portrait crop",
   "half" => "half-body framing",
+  "three_quarter" => "three-quarter body framing, knees up",
   "full" => "full-body framing",
   "wide" => "wide environmental framing, subject small in frame",
+  "establishing" => "distant establishing shot, subject a figure in a landscape",
 }.freeze
 
 LIGHTING_VOCAB = {
@@ -53,21 +106,64 @@ LIGHTING_VOCAB = {
   "backlit" => "backlit rim light, subject silhouetted against source",
   "window" => "window light from camera-left, natural falloff",
   "golden_hour" => "warm low-angle golden-hour sunlight",
+  "rembrandt" => "Rembrandt key light, triangle of light on the shadow-side cheek",
+  "split" => "split lighting, one half of the face lit and the other in shadow",
+  "butterfly" => "butterfly light from above the lens, symmetrical shadow under the nose",
+  "loop" => "loop lighting, small nose shadow angled down the cheek",
+  "rim" => "rim light separating the subject from a dark background",
+  "practical" => "lit only by practical lamps inside the scene, mixed colour temperature",
+  "neon" => "neon sign lighting, saturated magenta and cyan on skin",
+  "candlelight" => "candlelight, very warm, falling off within a metre",
+  "firelight" => "firelight from below, flickering warm key, deep shadow above",
+  "overcast" => "overcast sky as one enormous softbox, shadowless and even",
+  "open_shade" => "open shade, cool ambient fill bounced from the sky",
+  "direct_flash" => "direct on-camera flash, hard shadow behind the subject, falloff to black",
+  "mixed" => "mixed daylight and tungsten, warm interior against cool window light",
+  "projector" => "light thrown by a projector, patterned across the subject",
+  "underwater" => "light refracted through water, moving caustics across the subject",
 }.freeze
 
 WEATHER_VOCAB = {
   "rain" => "Bergen rain, wet pavement reflections, overcast diffusion",
+  "drizzle" => "fine drizzle, everything slightly damp, no visible drops",
+  "downpour" => "heavy downpour, rain visible in the air, soaked surfaces",
   "fog" => "coastal fog, desaturated distance, soft contrast",
+  "haze" => "atmospheric haze, distance washed pale, contrast falling off with depth",
   "clear" => "clear Nordic sky, crisp daylight",
   "snow" => "winter light off snow, cool color temperature",
+  "sleet" => "sleet, half-melted, grey light and wet grey ground",
+  "frost" => "hard frost, low sun, long shadows across white ground",
+  "wind" => "strong wind, hair and fabric in motion, sharp cold light",
+  "storm" => "storm light, dark sky against a lit subject, high contrast",
+  "aurora" => "aurora overhead, green light on snow, deep blue ambient",
 }.freeze
 
 TIME_OF_DAY_VOCAB = {
+  "first_light" => "first light before sunrise, colourless and dim",
   "dawn" => "pale dawn light, low saturation, cool blue shadows",
+  "morning" => "clear morning light, long shadows, cool bright air",
   "midday" => "neutral midday light, even exposure",
+  "afternoon" => "late afternoon light, warming, shadows lengthening",
   "golden_hour" => "golden-hour warmth, long soft shadows",
+  "sunset" => "sunset, the light itself orange, sky brighter than the ground",
+  "dusk" => "dusk, sky still bright and the ground already dark",
   "blue_hour" => "blue-hour ambient light, deep shadow tones",
   "night" => "practical night lighting, mixed color temperature",
+  "midnight" => "deep night, lit only by what is switched on",
+}.freeze
+
+# Every structured field, in the order compile_prompt emits them. Keeping the
+# list here rather than repeating it in compile_prompt, resolve_vocab and the
+# option parser is what makes it possible to add a dimension in one place --
+# and what makes vocab-check able to check all of them without being told.
+VOCABULARIES = {
+  stock: STOCK_VOCAB,
+  lens: LENS_VOCAB,
+  camera_height: CAMERA_HEIGHT_VOCAB,
+  distance: DISTANCE_VOCAB,
+  lighting: LIGHTING_VOCAB,
+  weather: WEATHER_VOCAB,
+  time_of_day: TIME_OF_DAY_VOCAB,
 }.freeze
 
 PLASTIC_SKIN_NEGATIVE = "plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, beauty filter, " \
@@ -77,16 +173,41 @@ ANTI_BEAUTIFICATION_NEGATIVE = "generic influencer face, overly young face, teen
 
 # Cycled per batch index rather than sampled, so a requested batch fills its
 # diversity quota deterministically instead of risking repeats by chance.
+#
+# It did not fill any such quota. All four pools were read at the same index and
+# all four were the same length, so the batch cycled through five tuples and
+# nothing else: --batch 20 asked for twenty variations and got each of five
+# repeated four times, every time, identically. Five of the six hundred and
+# twenty-five combinations these pools describe were reachable at all.
+#
+# Two changes fix it. The pools are now different lengths -- 7, 6, 8, 9, whose
+# least common multiple is 504 -- so the tuple repeats after 504 images rather
+# than after 5, twenty-five times past the --batch ceiling; and each pool is
+# read at its own stride, coprime with that pool's length, so consecutive
+# indices move every field at once instead of marching them in lockstep. A
+# batch of 20 now yields 20 distinct combinations. It yielded 5.
 EXPRESSION_POOL = [
   "a calm neutral expression", "a slight natural smile", "a direct steady gaze",
-  "mid-laugh candid expression", "a thoughtful downward glance"
+  "mid-laugh candid expression", "a thoughtful downward glance",
+  "eyes closed, head slightly tilted", "an unguarded expression caught between two others"
 ].freeze
 POSE_POOL = [
   "facing camera directly", "three-quarter turn", "profile turn",
-  "looking over one shoulder", "leaning slightly forward"
+  "looking over one shoulder", "leaning slightly forward", "turning away from the camera"
 ].freeze
-WARDROBE_POOL = ["wool coat", "simple knit sweater", "plain white shirt", "denim jacket", "dark turtleneck"].freeze
-BACKGROUND_POOL = ["plain studio backdrop", "fjord shoreline", "Bergen street corner", "cafe window", "mountain road"].freeze
+WARDROBE_POOL = [
+  "wool coat", "simple knit sweater", "plain white shirt", "denim jacket",
+  "dark turtleneck", "oversized raincoat", "linen shirt, sleeves rolled", "heavy fisherman's jumper"
+].freeze
+BACKGROUND_POOL = [
+  "plain studio backdrop", "fjord shoreline", "Bergen street corner", "cafe window",
+  "mountain road", "empty car park at night", "wooden dock in rain",
+  "stairwell with a single window", "birch woodland"
+].freeze
+# Coprime with each pool's length, so index * stride visits every entry before
+# repeating any. 1 for the first pool: the strides only need to differ from each
+# other to break the lockstep, and expression is the field a viewer reads first.
+POOL_STRIDES = { expression: 1, pose: 5, wardrobe: 3, background: 4 }.freeze
 
 # What each Replicate model actually accepts. An unknown model falls back to
 # the conservative default rather than failing closed.
@@ -104,15 +225,29 @@ def capability_for(model_id)
   MODEL_CAPABILITIES[model_id] || DEFAULT_CAPABILITY
 end
 
+# Look a value up in one vocabulary, or say so and stop.
+#
+# Spelling is normalised first, because the one thing worse than rejecting
+# "golden-hour" is rejecting it when the table plainly contains golden_hour and
+# the option parser's own flag is spelled --time-of-day with hyphens. Case,
+# hyphens, spaces and surrounding whitespace are all noise here. What is left
+# after that either names an entry or is a mistake, and a mistake is worth a
+# line of output and an exit rather than an image that quietly lacks the thing
+# it was asked for.
+def resolve_vocab(field, value)
+  return nil if value.nil?
+
+  table = VOCABULARIES.fetch(field)
+  key = value.to_s.strip.downcase.tr("- ", "__")
+  return table[key] if table.key?(key)
+
+  flag = "--#{field.to_s.tr('_', '-')}"
+  abort "warn: unknown #{flag} #{value.inspect}\n       known: #{table.keys.join(', ')}"
+end
+
 def compile_prompt(base_prompt, options)
   segments = [base_prompt]
-  segments << STOCK_VOCAB[options[:stock]]
-  segments << LENS_VOCAB[options[:lens]]
-  segments << CAMERA_HEIGHT_VOCAB[options[:camera_height]]
-  segments << DISTANCE_VOCAB[options[:distance]]
-  segments << LIGHTING_VOCAB[options[:lighting]]
-  segments << WEATHER_VOCAB[options[:weather]]
-  segments << TIME_OF_DAY_VOCAB[options[:time_of_day]]
+  VOCABULARIES.each_key { |field| segments << resolve_vocab(field, options[field]) }
   segments.compact.join(", ")
 end
 
@@ -125,8 +260,23 @@ def compile_negative_prompt(options)
   parts.join(", ")
 end
 
-def infer_aspect_ratio(prompt, explicit)
+# --distance is the field that most directly decides the shape of the frame, and
+# it was the field this could not see: inference ran on the raw --prompt before
+# compile_prompt had folded anything into it, so `--distance closeup` produced a
+# 3:2 editorial crop while the word "close-up" typed into the prompt produced
+# 4:5. The structured field and the free text disagreed about which one counted.
+# The explicit --aspect-ratio still wins over both.
+DISTANCE_ASPECT = {
+  "macro" => "1:1", "closeup" => "4:5", "portrait" => "4:5", "half" => "4:5",
+  "three_quarter" => "2:3", "full" => "2:3", "wide" => "16:9", "establishing" => "16:9",
+}.freeze
+
+def infer_aspect_ratio(prompt, explicit, distance = nil)
   return explicit if explicit
+
+  if distance && (ratio = DISTANCE_ASPECT[distance.to_s.strip.downcase.tr("- ", "__")])
+    return ratio
+  end
 
   case prompt
   when /\bportrait\b|\bheadshot\b|\bclose[- ]?up\b/i then "4:5"
@@ -140,12 +290,32 @@ def diversify(prompt, index, batch_size)
   return prompt if batch_size <= 1
 
   parts = [
-    EXPRESSION_POOL[index % EXPRESSION_POOL.length],
-    POSE_POOL[index % POSE_POOL.length],
-    WARDROBE_POOL[index % WARDROBE_POOL.length],
-    BACKGROUND_POOL[index % BACKGROUND_POOL.length],
+    EXPRESSION_POOL[(index * POOL_STRIDES[:expression]) % EXPRESSION_POOL.length],
+    POSE_POOL[(index * POOL_STRIDES[:pose]) % POSE_POOL.length],
+    WARDROBE_POOL[(index * POOL_STRIDES[:wardrobe]) % WARDROBE_POOL.length],
+    BACKGROUND_POOL[(index * POOL_STRIDES[:background]) % BACKGROUND_POOL.length],
   ]
   "#{prompt}, #{parts.join(', ')}"
+end
+
+# The positive half of the same instruction, for models that have no negative
+# prompt at all. Every Flux model is one, including the default -- so on the
+# default model the entire anti-plastic-skin defence was assembled, threaded
+# through four functions, written into the provenance sidecar as if it had been
+# applied, and then dropped on the floor by the input_keys filter in build_input
+# without a word. The sidecar was the worst part: it recorded a negative prompt
+# that was never sent, so the file that exists to make a generation auditable
+# was the thing asserting a constraint the generation never had.
+#
+# You cannot hand Flux a list of things to avoid; naming them in the prompt
+# summons them. What you can do is ask for the opposite in the affirmative,
+# which is what a photographer would have written in the first place.
+POSITIVE_SKIN_GUIDANCE = "natural skin texture with visible pores and fine lines, unretouched, " \
+  "documentary realism, real photographic imperfection"
+
+def negative_prompt_supported?(model_id)
+  cap = capability_for(model_id)
+  !cap[:negative_prompt_key].nil? && cap[:input_keys].include?(cap[:negative_prompt_key])
 end
 
 def build_input(prompt, options, seed:, negative_prompt:)
@@ -186,6 +356,10 @@ def write_provenance(output, prompt, compiled_prompt, negative_prompt, options, 
     prompt:,
     compiled_prompt:,
     negative_prompt:,
+    # Whether the model was actually given it. A sidecar that records a
+    # constraint the request never carried is worse than one that records
+    # nothing, because it is the file you would consult to find out.
+    negative_prompt_sent: !negative_prompt.nil? && negative_prompt_supported?(options[:model]),
     model: options[:model],
     aspect_ratio: options[:aspect_ratio],
     seed:,
@@ -217,7 +391,7 @@ cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models
 blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
 options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-1.1-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
 parser = OptionParser.new do |p|
-  p.banner = "Usage: repligen.rb generate|search|sync|stats|capabilities [options]"
+  p.banner = "Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check [options]"
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
   p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
   p.on("--aspect-ratio RATIO") { |v| options[:aspect_ratio] = v }
@@ -246,20 +420,85 @@ if command == "help"
   puts parser
   exit 0
 end
+# Does everything this file can be asked for actually exist and reach the model?
+#
+# No API calls, no credentials, no cost. It is here because every failure this
+# file had was of the same kind: a value that resolved to nothing and was
+# .compacted away, a negative prompt filtered out by the model's own input_keys
+# and then recorded in the provenance sidecar as if it had been sent, a
+# diversity quota that four same-length pools could not possibly fill. None of
+# them raised. You paid Replicate, waited, and got a picture that was missing
+# the thing you asked for.
+def vocab_check
+  problems = []
+
+  VOCABULARIES.each do |field, table|
+    problems << "#{field} vocabulary is empty" if table.empty?
+    table.each do |key, description|
+      problems << "#{field}.#{key} normalises to #{key.downcase.tr('- ', '__').inspect}, so it can never be matched" \
+        if key != key.downcase.tr("- ", "__")
+      problems << "#{field}.#{key} has no description" if description.to_s.strip.empty?
+    end
+    dupes = table.values.tally.select { |_, n| n > 1 }.keys
+    dupes.each { |d| problems << "#{field} has two keys with the identical description #{d[0, 40].inspect}" }
+  end
+
+  # Every --distance has to have an aspect ratio, or the field silently stops
+  # deciding the shape of the frame for that one value.
+  (DISTANCE_VOCAB.keys - DISTANCE_ASPECT.keys).each { |k| problems << "distance #{k} has no DISTANCE_ASPECT entry" }
+  (DISTANCE_ASPECT.keys - DISTANCE_VOCAB.keys).each { |k| problems << "DISTANCE_ASPECT has #{k}, which is not a --distance value" }
+
+  # A capability whose negative_prompt_key is not in its own input_keys drops
+  # the negative prompt in build_input's filter without saying so.
+  MODEL_CAPABILITIES.each do |model, cap|
+    problems << "#{model} lists no prompt input key" unless cap[:input_keys].include?("prompt")
+    key = cap[:negative_prompt_key]
+    next if key.nil? || cap[:input_keys].include?(key)
+    problems << "#{model} names negative_prompt_key #{key.inspect} but does not list it in input_keys"
+  end
+  problems << "PREVIEW_MODEL #{PREVIEW_MODEL} has no MODEL_CAPABILITIES entry" unless MODEL_CAPABILITIES.key?(PREVIEW_MODEL)
+
+  # The batch diversity claim, checked rather than asserted: --batch tops out at
+  # 20, so twenty consecutive indices must produce twenty distinct combinations.
+  pools = { expression: EXPRESSION_POOL, pose: POSE_POOL, wardrobe: WARDROBE_POOL, background: BACKGROUND_POOL }
+  pools.each do |name, pool|
+    stride = POOL_STRIDES.fetch(name)
+    problems << "#{name} stride #{stride} shares a factor with its length #{pool.length}, so it cannot visit every entry" \
+      if stride.gcd(pool.length) != 1
+  end
+  tuples = (0...20).map { |i| pools.map { |n, pool| pool[(i * POOL_STRIDES.fetch(n)) % pool.length] } }
+  problems << "a batch of 20 produces only #{tuples.uniq.length} distinct combinations" if tuples.uniq.length < 20
+
+  problems.each { |line| puts "BROKEN #{line}" }
+  counts = VOCABULARIES.map { |f, t| "#{f}=#{t.length}" }.join(" ")
+  puts "#{counts}, #{MODEL_CAPABILITIES.length} models — #{problems.length} problem(s)"
+  exit(1) if problems.any?
+end
+
 case command
 when "capabilities"
   puts Master::Io::AnalogCapabilities.report(:repligen)
+when "vocab-check"
+  vocab_check
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
   options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLIGEN_MODEL") && !options[:model_explicit]
-  options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio])
+  options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
   client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
+
+  negative_prompt = compile_negative_prompt(options)
+  # Say it out loud. The request is about to go out without the constraint the
+  # rest of this file spends four functions assembling, and the only reason it
+  # ever looked applied is that nobody was told it was not.
+  unless negative_prompt.nil? || negative_prompt_supported?(options[:model])
+    warn "warn: #{options[:model]} takes no negative prompt; asking for the opposite in the positive instead"
+  end
 
   outputs = (0...options[:batch]).map do |index|
     compiled = compile_prompt(options[:prompt], options)
+    compiled = "#{compiled}, #{POSITIVE_SKIN_GUIDANCE}" if negative_prompt && !negative_prompt_supported?(options[:model])
     varied = diversify(compiled, index, options[:batch])
     seed = options[:seed] ? options[:seed] + index : SecureRandom.random_number(2**31)
-    negative_prompt = compile_negative_prompt(options)
     input = build_input(varied, options, seed:, negative_prompt:)
 
     if options[:dry_run]

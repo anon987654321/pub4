@@ -11,7 +11,12 @@ require "json"
 require "time"
 require "fileutils"
 require "digest"
-require_relative "../lib/io/analog_capabilities"
+# ../lib/io/... was correct at MASTER/tools/postpro/. It has not been correct
+# since the move to studio/, where it resolves to studio/lib/io/ -- a directory
+# that does not exist -- so this file has aborted on its first require, every
+# invocation, since 687c07a43. studio/dilla/dilla.rb reaches the same library
+# by the path below; postpro and repligen were simply never updated with it.
+require_relative "../../MASTER/lib/io/analog_capabilities"
 
 BOOT_TIME = Time.now.freeze
 
@@ -189,7 +194,13 @@ module PostproBootstrap
       exit 1
     end
 
-    profiles_path = "multimedia/camera_profiles"
+    # Anchored to this file, not to the shell's working directory, for the same
+    # reason as REPLIGEN_PATH below: a relative path here meant the profiles
+    # were "not found" from every directory except one nobody runs from. The
+    # directory does not exist in the repo at all today, so this changes a
+    # warning that was wrong in principle into one that is merely accurate --
+    # but it means dropping the profiles in will now be enough to load them.
+    profiles_path = File.expand_path("multimedia/camera_profiles", __dir__)
     camera_profiles = load_camera_profiles(profiles_path)
     config = load_master_config
 
@@ -219,7 +230,14 @@ if BOOTSTRAP[:gems][:vips]
   require "vips"
 end
 
-REPLIGEN_PRESENT = File.exist?("repligen.rb")
+# Was File.exist?("repligen.rb") -- relative to the CURRENT WORKING DIRECTORY,
+# which is wherever the user happened to be, and never the directory repligen
+# lives in. It has been false on every invocation from anywhere, so the
+# --from-repligen branch and the closing hand-off tip were both unreachable.
+# repligen is a sibling of this file, and that relationship does not depend on
+# where the shell was when it started.
+REPLIGEN_PATH = File.expand_path("../repligen/repligen.rb", __dir__)
+REPLIGEN_PRESENT = File.exist?(REPLIGEN_PATH)
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
 $postpro_seed = Integer(ENV.fetch("POSTPRO_SEED", "0"), exception: false) || 0
@@ -266,6 +284,57 @@ STOCKS = {
   # Punchy reds, heavy yellow separation, minimal shadow fog.
   kodachrome: { grain: 12, matrix: [1.15, -0.10, -0.05, 0.03, 1.00, -0.03, 0.00, -0.10, 1.10],
                 hd: { r: [0.02, 0.97, 0.18, 1.42], g: [0.03, 0.97, 0.18, 1.36], b: [0.04, 0.95, 0.20, 1.20] } },
+
+  # --- 2026-07-30 ------------------------------------------------------------
+  # Nine stocks, and seven of them Kodak. The table could do warm-and-forgiving
+  # (Portra), cine (Vision3), saturated reversal (Velvia) and one black and
+  # white — and nothing else at all: no fast grainy B&W, no cool palette, no
+  # instant film, no saturated NEGATIVE as opposed to slide.
+  #
+  # Each new entry carries a row in all five per-stock tables below it, because
+  # a stock missing from GRAIN_CHAN_SCALE silently grains like Portra, one
+  # missing from PUSH_RESPONSE pushes like Portra, and one missing from
+  # FILM_BASE has no base fog. vocab-check now refuses a stock with a gap.
+
+  # Reportage black and white. Enormous latitude, forgiving of being wrong by
+  # two stops in either direction, and grainier than Tri-X at the same speed.
+  ilford_hp5: { grain: 22,
+                sublayers: [{ sensitivity_shift: 0.2, grain_scale: 1.35, weight: 0.5 },
+                            { sensitivity_shift: -0.4, grain_scale: 1.0, weight: 0.5 }],
+                matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+                hd: { r: [0.06, 0.94, 0.18, 1.22], g: [0.06, 0.94, 0.18, 1.22], b: [0.06, 0.94, 0.18, 1.22] } },
+
+  # Available darkness. Nominally 3200 and actually closer to 1000 pushed hard,
+  # which is why the grain is enormous and the highlights never reach full
+  # density -- the low Dmax here is the stock, not an error.
+  ilford_delta3200: { grain: 38,
+                      sublayers: [{ sensitivity_shift: 0.6, grain_scale: 1.9, weight: 0.45 },
+                                  { sensitivity_shift: 0.0, grain_scale: 1.3, weight: 0.35 },
+                                  { sensitivity_shift: -0.5, grain_scale: 1.0, weight: 0.20 }],
+                      matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+                      hd: { r: [0.11, 0.88, 0.18, 1.08], g: [0.11, 0.88, 0.18, 1.08], b: [0.11, 0.88, 0.18, 1.08] } },
+
+  # The saturated NEGATIVE, which is a different animal from a saturated slide:
+  # Velvia's colour comes with Velvia's two-stop latitude, Ektar's does not.
+  # Reds are the point.
+  kodak_ektar100: { grain: 6,
+                    matrix: [1.14, -0.09, -0.05, 0.02, 1.03, -0.05, 0.00, -0.09, 1.09],
+                    hd: { r: [0.03, 0.96, 0.18, 1.34], g: [0.03, 0.96, 0.18, 1.32], b: [0.04, 0.94, 0.20, 1.28] } },
+
+  # The cool one. Everything else in this table warms; Pro 400H leans green and
+  # cyan and holds pastel skin, which is the whole reason it was worth having.
+  fuji_pro400h: { grain: 16,
+                  sublayers: [{ sensitivity_shift: 0.1, grain_scale: 1.25, weight: 0.45 },
+                              { sensitivity_shift: -0.45, grain_scale: 0.95, weight: 0.55 }],
+                  matrix: [0.97, 0.02, 0.01, -0.02, 1.02, 0.00, 0.00, 0.04, 1.02],
+                  hd: { r: [0.05, 0.92, 0.18, 1.05], g: [0.05, 0.93, 0.18, 1.06], b: [0.06, 0.93, 0.20, 1.04] } },
+
+  # Instant film. High base fog, a Dmax that never gets near black, and a gamma
+  # under 1 -- an integral print developing in daylight in ninety seconds cannot
+  # do contrast, and that softness is the look.
+  polaroid_sx70: { grain: 14,
+                   matrix: [1.06, 0.02, -0.04, 0.01, 0.98, 0.03, 0.03, 0.02, 0.99],
+                   hd: { r: [0.15, 0.86, 0.20, 0.95], g: [0.14, 0.85, 0.20, 0.93], b: [0.13, 0.84, 0.22, 0.90] } },
 }.freeze
 
 # Lens character: data-driven table drives vintage_lens().
@@ -276,6 +345,18 @@ LENSES = {
   helios: { micro_contrast: 0.30, chroma: 0.05 },
   cooke: { micro_contrast: 0.20, warmth: 0.10 },
   anamorphic: { micro_contrast: 0.25, chroma: 0.08, flare: 0.50 },
+  # A lens is defined as much by how it fails as by how it resolves, and the
+  # five above are all variations on "sharp, with a little something". These
+  # are the failures: a Petzval that only holds the centre, uncoated glass that
+  # veils, a plastic Lomo meniscus, a soft-focus portrait lens that halates on
+  # purpose. Only the modern Summicron entry is another sharp one, and it is
+  # there so there is something at the top of the range to compare against.
+  petzval: { micro_contrast: 0.35, glow: 0.18, chroma: 0.06 },
+  takumar: { micro_contrast: 0.28, warmth: 0.16, glow: 0.10 },
+  lomo: { micro_contrast: 0.12, chroma: 0.10, glow: 0.16, flare: 0.18 },
+  soft_focus: { micro_contrast: 0.08, glow: 0.45 },
+  uncoated: { micro_contrast: 0.18, glow: 0.20, flare: 0.35, warmth: 0.08 },
+  summicron: { micro_contrast: 0.50, flare: 0.04 },
 }.freeze
 
 # Per-stock R/G/B channel amplitude ratios for grain — mirrors the three
@@ -291,6 +372,11 @@ GRAIN_CHAN_SCALE = {
   fuji_velvia: [1.00, 1.10, 0.90],
   tri_x: [1.00, 1.00, 1.00],
   kodachrome: [1.00, 0.92, 0.82],
+  ilford_hp5: [1.00, 1.00, 1.00],
+  ilford_delta3200: [1.00, 1.00, 1.00],
+  kodak_ektar100: [1.00, 0.86, 0.72],
+  fuji_pro400h: [0.96, 0.92, 0.86],
+  polaroid_sx70: [1.00, 0.94, 0.88],
 }.freeze
 
 # Per-channel spatial frequency ratios for grain — red layer (σ×1.00) is coarsest,
@@ -324,6 +410,20 @@ RECIPROCITY_SHIFT = {
   kodak_vision3: { r: 0.01, g: -0.03, b: 0.10 },
   tri_x: { r: 0.02, g: -0.05, b: 0.16 },
   kodak_portra: { r: 0.01, g: -0.02, b: 0.09 },
+  # Four of the nine stocks had no row here and one had none in PUSH_RESPONSE,
+  # so reciprocity_failure and push_pull fell through to a hard-coded default
+  # and every one of those stocks failed reciprocity like Portra. Reversal
+  # stocks in fact fail hardest and fastest -- Velvia is notorious for going
+  # green past a few seconds -- which is the opposite of the default they got.
+  kodak_vision3_50d: { r: 0.01, g: -0.02, b: 0.08 },
+  ektachrome_100: { r: 0.03, g: -0.06, b: 0.13 },
+  fuji_velvia: { r: 0.04, g: -0.08, b: 0.15 },
+  kodachrome: { r: 0.03, g: -0.05, b: 0.12 },
+  ilford_hp5: { r: 0.02, g: -0.05, b: 0.15 },
+  ilford_delta3200: { r: 0.03, g: -0.06, b: 0.18 },
+  kodak_ektar100: { r: 0.02, g: -0.04, b: 0.11 },
+  fuji_pro400h: { r: 0.01, g: -0.03, b: 0.10 },
+  polaroid_sx70: { r: 0.04, g: -0.03, b: 0.09 },
 }.freeze
 
 # Per-stock push response ratios. Blue dye layer develops faster under push;
@@ -338,10 +438,22 @@ PUSH_RESPONSE = {
   fuji_velvia: { g: 1.00, b: 0.88 },
   ektachrome_100: { g: 0.99, b: 0.91 },
   kodachrome: { g: 0.98, b: 0.90 },
+  kodak_vision3_50d: { g: 1.00, b: 0.95 },
+  # HP5 and Delta are the two stocks people actually push, and they take it
+  # better than anything else here.
+  ilford_hp5: { g: 1.00, b: 0.98 },
+  ilford_delta3200: { g: 1.00, b: 0.99 },
+  kodak_ektar100: { g: 0.99, b: 0.90 },
+  fuji_pro400h: { g: 1.00, b: 0.96 },
+  # An instant print cannot be pushed at all; development is fixed by the pod.
+  polaroid_sx70: { g: 1.00, b: 1.00 },
 }.freeze
 
 # Stocks with integral colored couplers (C-41 process) — get orange mask treatment.
-C41_STOCKS = %i[kodak_portra kodak_vision3 kodak_vision3_50d kodak_vision3_500t cinestill_800t].freeze
+C41_STOCKS = %i[
+  kodak_portra kodak_vision3 kodak_vision3_50d kodak_vision3_500t cinestill_800t
+  kodak_ektar100 fuji_pro400h
+].freeze
 
 # Per-stock film base density tints. Each emulsion has a characteristic base fog
 # color: C-41 negatives are orange-masked; reversal stocks are nearly neutral;
@@ -357,6 +469,13 @@ FILM_BASE = {
   fuji_velvia: [250, 251, 255],
   tri_x: [255, 255, 255],
   kodachrome: [255, 246, 222],
+  ilford_hp5: [255, 255, 255],
+  ilford_delta3200: [255, 255, 255],
+  kodak_ektar100: [255, 244, 224],
+  fuji_pro400h: [255, 247, 233],
+  # An instant print has no film base at all — the "base" is the white receiving
+  # sheet, and what tints it is the reagent, which reads warm.
+  polaroid_sx70: [255, 250, 240],
 }.freeze
 
 # Physics-ordered 6-8 step chains: optical_blur → exposure/temp → film_curve
@@ -366,19 +485,25 @@ PRESETS = {
   portrait: { fx: %w[optical_blur film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
               stock: :kodak_portra, temp: 5200, intensity: 0.85 },
 
-  indie: { fx: %w[optical_blur film_curve orange_mask shadow_lift split_toning chromatic_aberration grain],
+  # vintage_lens was added to the five presets that declare a lens: and to the
+  # anamorphic preset (2026-07-30). It is the only effect that reads LENSES, and
+  # no preset's chain contained it, so `lens: "helios"` and its four siblings
+  # named a lens character that was never applied to anything -- the swirl, the
+  # Cooke warmth, the Leica glow, all declared and all absent. It sits directly
+  # after optical_blur because a lens acts before the emulsion does.
+  indie: { fx: %w[optical_blur vintage_lens film_curve orange_mask shadow_lift split_toning chromatic_aberration grain],
            stock: :kodak_portra, temp: 5400, intensity: 0.85, lens: "helios" },
 
   polaroid: { fx: %w[optical_blur film_curve faded_print warmth bloom_pro shadow_lift grain],
               stock: :kodak_portra, temp: 5000, intensity: 0.85 },
 
-  landscape: { fx: %w[optical_blur spectral_temp film_curve color_separate halation micro_contrast grain],
+  landscape: { fx: %w[optical_blur vintage_lens spectral_temp film_curve stock_matrix color_separate halation micro_contrast grain],
                stock: :fuji_velvia, temp: 5800, intensity: 0.90, lens: "zeiss" },
 
   magic_hour: { fx: %w[optical_blur spectral_temp film_curve halation warmth bloom_pro grain],
                 stock: :fuji_velvia, temp: 4800, intensity: 0.90 },
 
-  reversal: { fx: %w[optical_blur film_curve color_separate halation highlight_roll micro_contrast grain],
+  reversal: { fx: %w[optical_blur film_curve stock_matrix color_separate halation highlight_roll micro_contrast grain],
               stock: :fuji_velvia, temp: 5600, intensity: 0.90 },
 
   process_e6: { fx: %w[optical_blur push_pull film_curve color_separate halation highlight_roll grain],
@@ -390,7 +515,7 @@ PRESETS = {
   blockbuster: { fx: %w[optical_blur tonemap bleach_bypass film_curve orange_mask teal_orange halation print_film grain],
                  stock: :kodak_vision3, temp: 4800, intensity: 0.90, print_stock: :kodak_2383 },
 
-  golden_age: { fx: %w[optical_blur film_curve orange_mask technicolor warmth dir_coupler bloom_pro grain],
+  golden_age: { fx: %w[optical_blur vintage_lens film_curve orange_mask technicolor warmth dir_coupler bloom_pro grain],
                 stock: :kodak_vision3_50d, temp: 5200, intensity: 0.85, lens: "cooke" },
 
   bleached: { fx: %w[optical_blur tonemap bleach_bypass film_curve split_grade highlight_roll grain],
@@ -423,13 +548,13 @@ PRESETS = {
   noir: { fx: %w[optical_blur tonemap film_curve bleach_bypass desaturate shadow_lift grain],
           stock: :tri_x, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  dream: { fx: %w[optical_blur film_curve halation bloom_pro desaturate split_toning grain],
+  dream: { fx: %w[optical_blur vintage_lens film_curve halation bloom_pro desaturate split_toning grain],
            stock: :ektachrome_100, temp: 5800, intensity: 0.85, lens: "leica" },
 
   dreamscape: { fx: %w[optical_blur film_curve halation bloom_pro split_toning grain],
                 stock: :ektachrome_100, temp: 5800, intensity: 0.85 },
 
-  lo_fi: { fx: %w[optical_blur film_curve push_pull faded_print warmth chromatic_aberration grain],
+  lo_fi: { fx: %w[optical_blur vintage_lens film_curve push_pull faded_print warmth chromatic_aberration grain],
            stock: :kodak_portra, temp: 4800, intensity: 0.85, lens: "helios" },
 
   horror: { fx: %w[optical_blur tonemap film_curve bleach_bypass green_push desaturate grain],
@@ -438,16 +563,16 @@ PRESETS = {
   arctic: { fx: %w[optical_blur tonemap film_curve desaturate bleach_bypass highlight_roll grain],
             stock: :tri_x, temp: 6500, intensity: 0.90 },
 
-  kodachrome_look: { fx: %w[optical_blur tonemap film_curve kodachrome_sim dir_coupler halation grain],
+  kodachrome_look: { fx: %w[optical_blur tonemap film_curve stock_matrix kodachrome_sim dir_coupler halation grain],
                      stock: :kodachrome, temp: 5600, intensity: 0.90 },
 
-  technicolor_3strip: { fx: %w[optical_blur spectral_temp film_curve technicolor dir_coupler bloom_pro grain],
+  technicolor_3strip: { fx: %w[optical_blur spectral_temp film_curve stock_matrix technicolor dir_coupler bloom_pro grain],
                         stock: :kodachrome, temp: 5500, intensity: 0.90 },
 
   cross_process: { fx: %w[optical_blur push_pull film_curve color_separate teal_orange split_toning grain],
                    stock: :fuji_velvia, temp: 5500, intensity: 0.90, stops: 0.5 },
 
-  vintage_chrome: { fx: %w[optical_blur film_curve dir_coupler spectral_temp color_separate split_toning grain],
+  vintage_chrome: { fx: %w[optical_blur film_curve stock_matrix dir_coupler spectral_temp color_separate split_toning grain],
                     stock: :ektachrome_100, temp: 5200, intensity: 0.85 },
 
   infrared_look: { fx: %w[optical_blur push_pull infrared film_curve bleach_bypass highlight_roll grain],
@@ -462,8 +587,10 @@ PRESETS = {
   aged_chrome: { fx: %w[optical_blur film_curve dye_fade selenium_tone faded_print grain],
                  stock: :ektachrome_100, temp: 5600, intensity: 0.85, age: 0.60 },
 
-  anamorphic: { fx: %w[optical_blur longitudinal_ca spectral_temp tonemap film_curve anamorphic_flare halation grain],
-                stock: :kodak_vision3_500t, temp: 4200, intensity: 0.90 },
+  # LENSES[:anamorphic] was the one entry in that table no preset reached at
+  # all. The preset named after it is the obvious home for it.
+  anamorphic: { fx: %w[optical_blur vintage_lens longitudinal_ca spectral_temp tonemap film_curve anamorphic_flare halation grain],
+                stock: :kodak_vision3_500t, temp: 4200, intensity: 0.90, lens: "anamorphic" },
 
   contact_print: { fx: %w[optical_blur adjacency_effects film_curve darkroom_print shadow_lift grain],
                    stock: :tri_x, temp: 5600, intensity: 0.85 },
@@ -512,6 +639,58 @@ PRESETS = {
 
   camcorder_glitch: { fx: %w[optical_blur vhs_chroma_delay minidv_block_dropout vhs_tracking_noise crt_scanlines],
                       stock: :kodak_portra, temp: 6500, intensity: 0.85 },
+
+  # ==========================================================================
+  # 2026-07-30. One preset per new stock and per new lens, so nothing added
+  # above is reachable only by hand-editing a recipe.
+  # ==========================================================================
+
+  # HP5 in daylight, developed normally, printed straight. The plainest thing
+  # this file can do, and there was no preset for it: every black-and-white
+  # preset here bleaches, pushes, tones, solarises or otherwise intervenes.
+  # print_stock: kodak_2302 is the black-and-white print film in PRINT_STOCKS,
+  # and until this preset no chain projected onto it — the table had two entries
+  # and one reader.
+  reportage: { fx: %w[optical_blur vintage_lens film_curve adjacency_effects micro_contrast print_film grain],
+               stock: :ilford_hp5, temp: 5600, intensity: 0.85, lens: "summicron", print_stock: :kodak_2302 },
+
+  # Delta 3200 at night, which is the only place it makes sense. Grain is not a
+  # side effect of this preset, it is the subject.
+  available_darkness: { fx: %w[optical_blur film_curve push_pull shadow_lift adjacency_effects grain],
+                        stock: :ilford_delta3200, temp: 3400, intensity: 0.90, stops: 1.5 },
+
+  # Ektar, with the colour matrix doing the work its data was written for.
+  saturated_negative: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask color_separate micro_contrast grain],
+                        stock: :kodak_ektar100, temp: 5500, intensity: 0.90, lens: "zeiss" },
+
+  # Pro 400H: cool, pastel, and the only preset here that does not warm up.
+  pastel_portrait: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask skin_protect highlight_roll grain],
+                     stock: :fuji_pro400h, temp: 6200, intensity: 0.80, lens: "soft_focus" },
+
+  # An SX-70 print: milky blacks, a ceiling on the highlights, and the whole
+  # thing a little faded before it has finished developing.
+  instant_pack: { fx: %w[optical_blur film_curve stock_matrix faded_print film_base_density bloom_pro grain],
+                  stock: :polaroid_sx70, temp: 5800, intensity: 0.85, age: 0.35 },
+
+  # The Petzval swirl, as far as a per-pixel pipeline can carry it: centre
+  # holding, everything else glowing and coming apart at the edges.
+  swirl_portrait: { fx: %w[optical_blur vintage_lens film_curve orange_mask film_curl_vignette skin_protect grain],
+                    stock: :kodak_portra, temp: 5200, intensity: 0.85, lens: "petzval" },
+
+  # Uncoated pre-war glass: no anti-reflection coating, so every highlight
+  # veils the shadows next to it and contrast is a suggestion.
+  uncoated_glass: { fx: %w[optical_blur vintage_lens film_curve shadow_lift adjacency_effects grain],
+                    stock: :ilford_hp5, temp: 5400, intensity: 0.85, lens: "uncoated" },
+
+  # A plastic meniscus and expired consumer film, which is most of what the
+  # word "lomo" ever meant.
+  plastic_lens: { fx: %w[optical_blur vintage_lens film_curve expired_film film_curl_vignette grain],
+                  stock: :fuji_pro400h, temp: 5000, intensity: 0.85, lens: "lomo", age: 0.5 },
+
+  # Radioactive thorium glass yellows with age; a Takumar shot today is warmer
+  # than the one that left the factory.
+  takumar_sun: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask warmth grain],
+                 stock: :kodak_ektar100, temp: 5000, intensity: 0.85, lens: "takumar" },
 }.freeze
 
 def halation_tint_for(stock)
@@ -519,9 +698,10 @@ def halation_tint_for(stock)
   when :kodak_vision3, :kodak_vision3_500t then HALATION_TINT_VISION3
   when :cinestill_800t then HALATION_TINT_VISION3
   when :kodak_portra, :kodak_vision3_50d then HALATION_TINT_PORTRA
-  when :tri_x then HALATION_TINT_TRI_X
+  when :tri_x, :ilford_hp5, :ilford_delta3200 then HALATION_TINT_TRI_X
   when :ektachrome_100 then HALATION_TINT_PORTRA
   when :kodachrome then HALATION_TINT_PORTRA
+  when :kodak_ektar100, :fuji_pro400h, :polaroid_sx70 then HALATION_TINT_PORTRA
   else HALATION_TINT_VISION3
   end
 end
@@ -534,7 +714,12 @@ end
 # from neutral creates the colour cast that defines a stock's look.
 # One maplut at runtime; CPU spent only on cache miss.
 module HD
-  CACHE = {}.freeze
+  # NOT frozen. This is a memo table -- lut_for and calibrated_basis both write
+  # into it on first use -- and freezing it turns every write into a FrozenError.
+  # Combined with the LoadError above, no run of this file has reached a single
+  # preset since the freeze went in: film_curve is in 46 of the 49 chains, and
+  # film_curve calls HD.apply.
+  CACHE = {}
 
   module_function
 
@@ -704,7 +889,12 @@ module Spectral
   D65_KELVIN = 6504.0
   PRIMARY_CENTERS = [611.0, 549.0, 464.0].freeze
   PRIMARY_SIGMA = 30.0
-  CACHE = {}.freeze
+  # NOT frozen. This is a memo table -- lut_for and calibrated_basis both write
+  # into it on first use -- and freezing it turns every write into a FrozenError.
+  # Combined with the LoadError above, no run of this file has reached a single
+  # preset since the freeze went in: film_curve is in 46 of the 49 chains, and
+  # film_curve calls HD.apply.
+  CACHE = {}
 
   module_function
 
@@ -809,25 +999,70 @@ def color_temp(image, kelvin, intensity = 1.0)
   ], [0, 0, 0]))
 end
 
+# Keep skin inside the saturation range skin actually occupies.
+#
+# The previous body ended `image * inv_protection + image * protection_rgb`,
+# where inv_protection is 1 - protection. That is image * (1 - p) + image * p,
+# which is image, for every pixel and every intensity -- an algebraic identity
+# dressed as a blend. It computed a hue mask, a saturation mask, a protection
+# weight and a complement, and then returned its own argument. Everything
+# downstream that leans on it inherited the nothing: the portrait preset lists
+# skin_protect as a step, and teal_orange opens by calling it before pushing
+# oranges into exactly the pixels it was meant to hold back.
+#
+# A "protect" pass that has one image to work with can only do one useful
+# thing: stop skin from going anywhere the grade after it would take it. Real
+# skin sits under roughly half saturation in HSV regardless of tone; capping it
+# there, and only inside the skin hue band, leaves everything else free while
+# taking the headroom out of the faces.
+SKIN_SAT_CEILING = 128.0
+
 def skin_protect(image, intensity = 1.0)
   hsv = image.colourspace("hsv")
   h, s, v = hsv.bandsplit
 
   hue_mask = (h > 25.5) & (h < 63.75)
   sat_mask = (s > 51) & (s < 153)
-  skin_mask = hue_mask & sat_mask
+  skin = (hue_mask & sat_mask).cast("float") / 255.0 * intensity.clamp(0.0, 1.0)
 
-  protection = skin_mask.cast("float") / 255.0 * (1.0 - intensity * 0.7)
-  protection_rgb = protection.bandjoin([protection, protection])
-  inv_protection = protection_rgb.linear(-1, 1)
+  s_f = s.cast("float")
+  capped = (s_f > SKIN_SAT_CEILING).ifthenelse(SKIN_SAT_CEILING, s_f)
+  s_out = (s_f * skin.linear([-1.0], [1.0])) + (capped * skin)
 
-  safe_cast(image * inv_protection + image * protection_rgb)
+  toned = h.bandjoin([s_out.cast("uchar"), v]).copy(interpretation: :hsv)
+  safe_cast(toned.colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "skin_protect: #{e.message}"
+  image
 end
 
 def film_curve(image, stock = :kodak_portra, intensity = 1.0)
   data      = STOCKS[stock] || STOCKS[:kodak_portra]
   developed = HD.apply(image, data)
   safe_cast(image * (1 - intensity) + developed * intensity)
+end
+
+# The other half of a film stock, and until now the half nobody used.
+#
+# Every STOCKS entry carries a 3x3 matrix -- the table's own header calls it
+# "3x3 colour matrix" in its first line -- and grep found exactly zero readers
+# of [:matrix] in the whole file. Nine stocks' worth of hand-tuned dye crosstalk
+# sat there as decoration while film_curve applied the H&D curves alone, which
+# is why the stocks differed in contrast and density and barely in hue.
+#
+# Deliberately NOT folded into film_curve: that would repaint all 46 presets
+# that call it in one move. It is its own step, added to the handful of presets
+# whose entire point is colour separation, and available to any recipe.
+def stock_matrix(image, stock = :kodak_portra, intensity = 1.0)
+  flat = (STOCKS[stock] || STOCKS[:kodak_portra])[:matrix]
+  return image unless flat.is_a?(Array) && flat.length == 9
+
+  linear = image.colourspace("scrgb")
+  graded = linear.recomb(flat.each_slice(3).to_a)
+  safe_cast((linear * (1.0 - intensity) + graded * intensity).colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "stock_matrix: #{e.message}"
+  image
 end
 
 def highlight_roll(image, threshold = 200, intensity = 1.0)
@@ -889,7 +1124,7 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   r, g, b = linear.bandsplit
   luma = r * 0.2126 + g * 0.7152 + b * 0.0722
   # Shadow-biased envelope: luma^0.8 shifts peak toward shadows vs symmetric 4L(1-L)
-  envelope = (luma.linear([1], [0]).pow(0.80) * luma.linear([-1], [1])).linear([4], [0])
+  envelope = ((luma.linear([1], [0])**0.80) * luma.linear([-1], [1])).linear([4], [0])
 
   # Lognormal cluster field: silver halide crystals cluster in groups whose
   # amplitude follows a lognormal distribution. exp(gaussian_noise) produces
@@ -906,7 +1141,16 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
       cell      = [GRAIN_CELL_BASE * (2.0**sl[:sensitivity_shift]) * sl[:grain_scale], 1.5].max.round
       amplitude = base_amplitude * chan_scale * sl[:grain_scale] * sl[:weight]
       perlin    = Vips::Image.perlin(image.width, image.height, cell_size: cell, seed: postpro_seed(100 + ci))
-      fractal   = Vips::Image.fractsurf(image.width, image.height, 2.5, seed: postpro_seed(200 + ci))
+      # Was Vips::Image.fractsurf(w, h, 2.5, seed:). fractsurf takes no seed
+      # argument, in this libvips or any other, so this line raised on every
+      # call -- and grain rescues to `image`, which means the grain step of all
+      # 46 presets that carry one produced a bit-identical copy of its input.
+      # The most-used effect in the file was the one that never ran.
+      #
+      # A second Perlin octave four times coarser is the multi-scale detail the
+      # comment above asks fBm for, and unlike fractsurf it takes the seed this
+      # file threads everywhere for reproducibility.
+      fractal   = Vips::Image.perlin(image.width, image.height, cell_size: [cell * 4, 4].max, seed: postpro_seed(200 + ci))
       raw       = (perlin * 0.70 + fractal * 0.30)
       # Anisotropy: slight horizontal elongation along film-transport axis
       aniso     = raw.conv(GRAIN_ANISO_KERNEL, precision: :float)
@@ -952,6 +1196,11 @@ def vintage_lens(image, type = "zeiss", intensity = 0.7)
     result = safe_cast(Vips::Image.bandjoin([r, g, b]))
   end
   result = warmth(result, spec[:warmth] * intensity) if spec[:warmth]
+  # LENSES has carried a flare: figure on zeiss and anamorphic since it was
+  # written and nothing read it, so a "flare" number described a veiling glare
+  # that no render contained. Uncoated and early-coated glass scatters light
+  # into the shadows; bloom_pro is the veiling this file already has.
+  result = bloom_pro(result, spec[:flare] * intensity) if spec[:flare]
   result
 rescue StandardError => e
   $logger.error "vintage_lens failed: #{e.message}"
@@ -1059,7 +1308,14 @@ def bleach_bypass(image, intensity = 0.5)
   img_f  = image.cast("float") / 255.0
   gray_f = image.colourspace("grey16").colourspace("srgb").cast("float") / 255.0
   screen = (img_f.linear(-1, 1) * gray_f.linear(-1, 1)).linear(-1, 1)
-  shadow_base = gray_f.linear(-1, 1) ** 2.0 * intensity * 0.18
+  # gray_f is three bands (grey16 converted back to sRGB), so bandjoining it to
+  # two copies of itself made a NINE-band image, and adding that to a three-band
+  # one raised "add: not one band or 9 bands" -- caught by the rescue below,
+  # which returned the input. Every bleached, blockbuster, street, war_doc,
+  # noir, horror, arctic and infrared_look render has been missing its bleach
+  # bypass. The shadow term wants a single luminance band to triple.
+  luma_f = image.colourspace("b-w").cast("float") / 255.0
+  shadow_base = (luma_f.linear(-1, 1)**2.0) * intensity * 0.18
   base_rgb = shadow_base.bandjoin([shadow_base, shadow_base])
   result = img_f * (1.0 - intensity) + screen * intensity + base_rgb * intensity
   safe_cast(clamp01(result) * 255.0)
@@ -1273,10 +1529,18 @@ end
 
 # Longitudinal (axial) chromatic aberration: wavelengths focus at different depths.
 # Blue focuses short of the plane; green slightly soft; red sharpest at the focal plane.
+# Axial chromatic aberration: a lens focuses blue in front of the sensor and
+# red behind it, so at any one focus setting the channels are not equally sharp.
+#
+# The sigmas were 0.4*strength and 0.9*strength, which at the strength presets
+# actually pass (0.5) come to 0.2px and 0.45px -- both below the 0.3px floor for
+# green, and both far below what survives being quantised back to 8-bit. The
+# effect ran, raised nothing, and changed not a single pixel value. Widened to
+# where the defocus is visible while still reading as a lens rather than a blur.
 def longitudinal_ca(image, strength = 0.50)
   r, g, b = image.bandsplit
-  g2 = g.gaussblur([0.4 * strength, 0.3].max)
-  b2 = b.gaussblur([0.9 * strength, 0.3].max)
+  g2 = g.gaussblur([0.9 * strength, 0.3].max)
+  b2 = b.gaussblur([2.2 * strength, 0.3].max)
   safe_cast(Vips::Image.bandjoin([r, g2, b2]))
 rescue StandardError => e
   $logger.error "longitudinal_ca: #{e.message}"; image
@@ -1361,7 +1625,7 @@ def newton_rings(image, intensity = 0.12)
   idx   = Vips::Image.xyz(w, h)
   xd    = idx.extract_band(0).cast("float") - cx
   yd    = idx.extract_band(1).cast("float") - cy
-  rad   = (xd * xd + yd * yd).pow(0.5)
+  rad   = ((xd * xd) + (yd * yd))**0.5
   rings = rad.linear([Math::PI * 2.0 / 28.0], [0]).math(:sin).linear([0.5], [0.5])
   fade  = clamp01(rad.linear([-1.2 / [w, h].max], [1.2]))
   mod   = (rings - 0.5) * fade * intensity * 0.10
@@ -1405,9 +1669,13 @@ def film_curl_vignette(image, intensity = 0.45)
   xn   = (idx.extract_band(0).cast("float") - w * 0.5) / (w * 0.5)
   yn   = (idx.extract_band(1).cast("float") - h * 0.5) / (h * 0.5)
   r2   = xn * xn + yn * yn
-  vign = clamp01(r2.pow(4.0).linear([intensity * 6.0], [0]))
+  vign = clamp01((r2**4.0).linear([intensity * 6.0], [0]))
   v3   = vign.bandjoin([vign, vign])
-  safe_cast(clamp01(image.cast("float") / 255.0 * (1.0 - v3)) * 255.0)
+  # `1.0 - v3` asks Ruby to subtract a Vips::Image from a Float, which raises
+  # TypeError -- there is no coercion in that direction. The vips way to write
+  # 1 - x is linear(-1, 1), which is what every other inversion in this file
+  # uses. Rescued to `image`, so the vignette never darkened a corner.
+  safe_cast(clamp01(image.cast("float") / 255.0 * v3.linear([-1.0], [1.0])) * 255.0)
 rescue StandardError => e
   $logger.error "film_curl_vignette: #{e.message}"; image
 end
@@ -1562,7 +1830,7 @@ end
 def selenium_tone(image, intensity = 0.45)
   img_f  = image.cast("float") / 255.0
   luma   = img_f.colourspace("b-w").cast("float") / 255.0
-  shad_w = clamp01(luma.linear([-1], [1]).pow(1.5)) * (intensity * 0.65)
+  shad_w = clamp01(luma.linear([-1], [1])**1.5) * (intensity * 0.65)
   r, g, b = img_f.bandsplit
   result  = Vips::Image.bandjoin([clamp01(r + shad_w * 0.12), g, clamp01(b + shad_w * 0.28)])
   safe_cast(result * 255.0)
@@ -1603,7 +1871,7 @@ end
 # Slight gamma lift + shadow floor raise compress the tonal scale to print-medium range.
 def darkroom_print(image, intensity = 0.50)
   img_f   = image.cast("float") / 255.0
-  lifted  = img_f.pow(1.0 + intensity * 0.28)
+  lifted  = img_f**(1.0 + (intensity * 0.28))
   floored = clamp01(lifted.linear([1.0], [intensity * 0.018]))
   safe_cast(floored * 255.0)
 rescue StandardError => e
@@ -1691,7 +1959,7 @@ def dodgeburn_artifacts(image, intensity = 0.40)
   cx, cy = w / 2.0, h / 2.0
   x = Vips::Image.xyz(w, h).extract_band(0).linear([1.0], [-cx])
   y = Vips::Image.xyz(w, h).extract_band(1).linear([1.0], [-cy])
-  r = (x * x + y * y).pow(0.5).linear([1.0 / [w, h].max], [0.0])
+  r = (((x * x) + (y * y))**0.5).linear([1.0 / [w, h].max], [0.0])
   dodge = r.linear([-intensity * 0.18], [1.0 + intensity * 0.06])
   mask = dodge.bandjoin([dodge, dodge])
   safe_cast(image * mask)
@@ -1748,7 +2016,7 @@ def lens_ghosting(image, intensity = 0.35)
   w, h = image.width, image.height
   luma = image.colourspace(:b_w)
   threshold = 1.0 - intensity * 0.25
-  highlights = luma.more(threshold).gaussblur(12 * intensity)
+  highlights = (luma > threshold).gaussblur(12 * intensity)
   ghost = highlights.gaussblur(6).linear([intensity * 0.12], [0.0])
   offset_x = (w * 0.08).to_i
   offset_y = (h * 0.06).to_i
@@ -1776,10 +2044,13 @@ end
 def tilt_shift(image, intensity = 0.70, focus_y = 0.5)
   w, h = image.width, image.height
   y_img = Vips::Image.xyz(w, h).extract_band(1).linear([1.0 / h], [0.0])
-  dist = (y_img - focus_y).abs.linear([2.0], [0.0]).pow(1.6)
+  dist = (y_img - focus_y).abs.linear([2.0], [0.0])**1.6
   blur_radius = (intensity * 8).clamp(1, 20).to_f
   blurred = image.gaussblur(blur_radius)
-  mask = dist.linear([intensity], [0.0]).clamp(0, 1)
+  # Vips::Image#clamp takes one argument, not two; `.clamp(0, 1)` raised
+  # ArgumentError and the rescue returned the untouched image. clamp01 is the
+  # helper this file already has for exactly this.
+  mask = clamp01(dist.linear([intensity], [0.0]))
   mask3 = mask.bandjoin([mask, mask])
   safe_cast(image * (mask3.linear([-1.0], [1.0])) + blurred * mask3)
 rescue StandardError => e
@@ -1839,12 +2110,18 @@ end
 # Selective sharpening: high-pass at σ=1.2, applied only at high-edge regions.
 # Lifts perceived acuity at detail without amplifying noise in smooth areas.
 def selective_sharpen(image, intensity = 0.70)
-  blurred = image.gaussblur(1.2)
-  detail = image - blurred
-  edge_diff = detail + (blurred - image)
-  edge_luma = edge_diff.extract_band(0) * 0.299 +
-              edge_diff.extract_band(1) * 0.587 +
-              edge_diff.extract_band(2) * 0.114
+  blurred = image.cast("float").gaussblur(1.2)
+  detail = image.cast("float") - blurred
+  # edge_diff was `detail + (blurred - image)`, which is (image - blurred) plus
+  # its own negation: identically zero, at every pixel, for every image. The
+  # mask was therefore always 0, mask3 always 0, and the return value always
+  # `image + detail * 0`. Selective sharpening has never sharpened anything --
+  # including in quality_uplift, the preset that exists to sharpen.
+  #
+  # What the mask wants is where detail is LARGE, which is its magnitude.
+  edge_luma = ((detail.extract_band(0) * 0.299) +
+               (detail.extract_band(1) * 0.587) +
+               (detail.extract_band(2) * 0.114)).abs
   mask = (edge_luma > 8).ifthenelse(1, 0)
   mask3 = mask.bandjoin([mask, mask])
   safe_cast(image + detail * mask3 * (intensity * 0.55))
@@ -1980,6 +2257,7 @@ def preset(image, name)
              when "tonemap"             then tonemap(result, type: :aces, exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
              when "halation"            then halation(result, p[:intensity] * 0.60, tint: halation_tint_for(p[:stock]))
              when "film_curve"          then film_curve(result, p[:stock], p[:intensity])
+             when "stock_matrix"        then stock_matrix(result, p[:stock], p[:intensity] * 0.85)
              when "spectral_temp"       then spectral_temp(result, source_kelvin: 6504, target_kelvin: p[:temp], intensity: p[:intensity] * 0.50)
              when "color_temp"          then color_temp(result, p[:temp], p[:intensity] * 0.50)
              when "dir_coupler"         then dir_coupler(result, p[:intensity] * 0.12)
@@ -2050,7 +2328,13 @@ def preset(image, name)
              when "crt_scanlines"       then crt_scanlines(result, p[:intensity] * 0.35)
              when "minidv_block_dropout" then minidv_block_dropout(result, p[:intensity] * 0.35)
              when "hi8_chroma_noise"    then hi8_chroma_noise(result, p[:intensity] * 0.40)
-             else result
+             else
+               # Was a bare `else result` — an fx name with no arm here returned
+               # the image untouched, and the dmesg line below then reported the
+               # step as having run. A preset could be four steps short of what
+               # it says it is and the log would agree with the preset.
+               PostproBootstrap.dmesg "ERROR fx=#{fx} has no implementation; preset #{name} is short a step"
+               result
              end
     result = result.copy_memory
     GC.start(full_mark: false) if (i % 4).zero?
@@ -2100,7 +2384,12 @@ def leaks_basic(image, intensity)
 end
 
 def sepia_basic(image, intensity)
-  matrix = [0.9, 0.7, 0.2, 0.3, 0.8, 0.1, 0.2, 0.6, 0.1]
+  # recomb wants rows, not a flat run of nine numbers -- given the flat form it
+  # reads a 9x1 matrix and demands a 9-band image, which is what
+  # "recomb: image must one band" was complaining about. Every other recomb in
+  # this file passes nested rows; this one did not, so sepia raised on every
+  # call and took the whole file down with it through random_fx.
+  matrix = [[0.9, 0.7, 0.2], [0.3, 0.8, 0.1], [0.2, 0.6, 0.1]]
   sepia = image.recomb(matrix)
   safe_cast(image.cast("float") * (1.0 - intensity) + sepia.cast("float") * intensity)
 end
@@ -2164,18 +2453,99 @@ RECIPE_ALLOWED = %w[
   anamorphic_flare diffraction_blur scan_noise newton_rings dust_and_hair
   film_curl_vignette selenium_tone dye_fade darkroom_print film_base_density
   paper_texture dodgeburn_artifacts fixing_bath_fog reticulation expired_film
-  gate_weave lens_ghosting ortho_film tilt_shift
+  gate_weave lens_ghosting ortho_film tilt_shift stock_matrix
   adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen
   vhs_luma_bleed vhs_chroma_delay vhs_head_switch_band vhs_tracking_noise
   vhs_interlace_comb crt_phosphor_bloom crt_scanlines minidv_block_dropout hi8_chroma_noise
 ].freeze
 
+# Where a recipe's single number actually belongs.
+#
+# recipe() called send(method, image, intensity) on all 81 allowed effects, on
+# the assumption that every one of them takes an intensity second. Nineteen do
+# not. Their second parameter is a film stock, an RGB triplet, a Kelvin value, a
+# pixel radius, an ISO speed, an f-number, a distortion coefficient, a 0-255
+# threshold or a lens name -- and two of them take keyword arguments only, so
+# {"tonemap": 0.6} raised ArgumentError, was swallowed by the per-file rescue,
+# and the whole image was logged as "Failed" for one line of a recipe.
+#
+# The rest were worse than the crash, because they worked. {"film_curve": 0.7}
+# looked up STOCKS[0.7]; {"color_temp": 0.5} asked for half a Kelvin;
+# {"split_toning": 0.4} handed a Float to something that indexes it as a colour;
+# {"lens_distortion": 0.5} bent the frame the opposite way from every preset,
+# which all pass a negative coefficient. A recipe is the one route in this file
+# where the user writes the numbers themselves, and it was the route that
+# ignored them.
+#
+# Each adapter maps intensity onto the parameter that effect is really about,
+# and reads the rest from the recipe entry when it is written as an object:
+# {"grain": {"intensity": 0.5, "stock": "tri_x", "iso": 1600}}.
+def recipe_stock(params, default = :kodak_portra)
+  name = params["stock"]&.to_sym
+  STOCKS.key?(name) ? name : default
+end
+
+RECIPE_ADAPTERS = {
+  # second positional is a film stock
+  "film_curve" => ->(img, i, p) { film_curve(img, recipe_stock(p), i) },
+  "stock_matrix" => ->(img, i, p) { stock_matrix(img, recipe_stock(p), i) },
+  "emulsion_defocus" => ->(img, _i, p) { emulsion_defocus(img, recipe_stock(p)) },
+  "dye_fade" => ->(img, i, p) { dye_fade(img, recipe_stock(p), i) },
+  "film_base_density" => ->(img, i, p) { film_base_density(img, recipe_stock(p), i * 0.12) },
+  "grain" => ->(img, i, p) { grain(img, (p["iso"] || 800).to_i, recipe_stock(p), i) },
+  # second positional is an RGB triplet
+  "split_toning" => ->(img, i, _p) { split_toning(img, [45, 35, 60], [255, 240, 210], i) },
+  "split_grade" => ->(img, i, _p) { split_grade(img, intensity: i) },
+  "base_tint" => ->(img, i, _p) { base_tint(img, [252, 248, 240], i * 0.15) },
+  "dual_base_density" => ->(img, i, _p) { dual_base_density(img, [255, 248, 235], i * 0.14) },
+  # second positional is a physical quantity on its own scale
+  "highlight_roll" => ->(img, i, p) { highlight_roll(img, (p["threshold"] || 200).to_i, i) },
+  "micro_contrast" => ->(img, i, p) { micro_contrast(img, (p["radius"] || 5).to_i, i) },
+  "clarity" => ->(img, i, p) { clarity(img, (p["radius"] || 15).to_i, i) },
+  "color_temp" => ->(img, i, p) { color_temp(img, (p["kelvin"] || 5600).to_f, i) },
+  "diffraction_blur" => ->(img, i, p) { diffraction_blur(img, (p["f_number"] || 16.0).to_f, i) },
+  # A negative coefficient is barrel distortion, which is what a lens does and
+  # what every preset here asks for. Intensity scales toward it, not away.
+  "lens_distortion" => ->(img, i, p) { lens_distortion(img, (p["k1"] || -(0.05 + (i * 0.15))).to_f) },
+  # Reciprocity failure is a function of exposure TIME. Half a second is no
+  # failure at all, so intensity picks a plausible long exposure instead.
+  "reciprocity_failure" => ->(img, i, p) {
+    reciprocity_failure(img, (p["exposure_seconds"] || (1.0 + (i * 60.0))).to_f, recipe_stock(p, :cinestill_800t))
+  },
+  # keyword-only signatures: these raised rather than misfired
+  "tonemap" => ->(img, i, p) { tonemap(img, type: (p["type"] || "aces").to_sym, exposure: (p["exposure"] || 0.0).to_f, intensity: i) },
+  "spectral_temp" => ->(img, i, p) {
+    spectral_temp(img, source_kelvin: (p["source_kelvin"] || 6504).to_f, target_kelvin: (p["target_kelvin"] || 5600).to_f, intensity: i)
+  },
+  # second positional is a lens name, not a number
+  "vintage_lens" => ->(img, i, p) {
+    type = p["type"].to_s
+    vintage_lens(img, LENSES.key?(type.to_sym) ? type : "zeiss", i)
+  },
+}.freeze
+
 def recipe(image, recipe_data)
   result = image
   recipe_data.each do |fx, params|
+    opts = params.is_a?(Hash) ? params : {}
     intensity = params.is_a?(Hash) ? params["intensity"].to_f : params.to_f
     method = fx.gsub("_professional", "")
-    result = (RECIPE_ALLOWED.include?(method) && respond_to?(method)) ? send(method, result, intensity) : result
+    unless RECIPE_ALLOWED.include?(method)
+      $cli_logger.warn "recipe: #{fx} is not an allowed effect — skipped"
+      next
+    end
+    adapter = RECIPE_ADAPTERS[method]
+    result = if adapter
+               adapter.call(result, intensity, opts)
+             elsif respond_to?(method, true)
+               # The remaining effects genuinely do take an intensity, an age, a
+               # lift, a sigma or a number of stops second, all of which a 0..1
+               # figure means the obvious thing for.
+               send(method, result, intensity)
+             else
+               $cli_logger.warn "recipe: #{fx} is allowed but has no implementation — skipped"
+               result
+             end
   end
   result
 end
@@ -2421,11 +2791,103 @@ def one_shot_mode?
 end
 
 def introspect_mode?
-  (ARGV & %w[--capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
+  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
+end
+
+# Does every preset name things that exist, and does every table have a row for
+# every stock that reaches it?
+#
+# Nothing asked, and the answers were no. preset() returned the image unchanged
+# for an fx name it had no arm for while still logging the step as run; five
+# presets declared a lens that no chain applied; four stocks had no row in
+# RECIPROCITY_SHIFT and one none in PUSH_RESPONSE, so they silently borrowed
+# Portra's; every STOCKS entry carried a colour matrix that nothing read; and
+# recipe() called two thirds of its allowed effects with an intensity in the
+# slot where a stock symbol, an RGB triplet or a Kelvin value belongs.
+#
+# None of it raised. That is the whole reason for this: the failure mode of a
+# table-driven pipeline is not a crash, it is a picture that came out slightly
+# wrong and a log that says everything ran.
+#
+# No image processing and no files touched — it reads the tables.
+def vocab_check
+  implemented = File.read(__FILE__)[/^def preset\(image, name\).*?^end$/m]
+                    .scan(/when "([a-z0-9_]+)"/).flatten.uniq
+  problems = []
+
+  PRESETS.each do |name, p|
+    (Array(p[:fx]) - implemented).each { |fx| problems << "#{name}: fx #{fx.inspect} has no implementation in preset()" }
+    problems << "#{name}: stock #{p[:stock].inspect} is not in STOCKS" unless STOCKS.key?(p[:stock])
+    if p[:print_stock] && !PRINT_STOCKS.key?(p[:print_stock])
+      problems << "#{name}: print_stock #{p[:print_stock].inspect} is not in PRINT_STOCKS"
+    end
+    if p[:lens]
+      problems << "#{name}: lens #{p[:lens].inspect} is not in LENSES" unless LENSES.key?(p[:lens].to_sym)
+      unless Array(p[:fx]).include?("vintage_lens")
+        problems << "#{name}: declares lens #{p[:lens].inspect} but no vintage_lens step to apply it"
+      end
+    end
+    if Array(p[:fx]).include?("vintage_lens") && p[:lens].nil?
+      problems << "#{name}: has a vintage_lens step but names no lens, so it gets the zeiss default"
+    end
+    if Array(p[:fx]).include?("orange_mask") && !C41_STOCKS.include?(p[:stock])
+      problems << "#{name}: orange_mask on #{p[:stock]}, which is not a C-41 stock and has no orange mask"
+    end
+  end
+
+  # A stock reaching an effect whose per-stock table has no row for it does not
+  # fail; it quietly becomes a different stock.
+  { "GRAIN_CHAN_SCALE" => GRAIN_CHAN_SCALE, "FILM_BASE" => FILM_BASE,
+    "PUSH_RESPONSE" => PUSH_RESPONSE, "RECIPROCITY_SHIFT" => RECIPROCITY_SHIFT }.each do |label, table|
+    (STOCKS.keys - table.keys).each { |s| problems << "#{s} has no row in #{label}" }
+    (table.keys - STOCKS.keys).each { |s| problems << "#{label} has a row for #{s}, which is not in STOCKS" }
+  end
+
+  # Every recipe-allowed effect has to be callable the way recipe() calls it.
+  RECIPE_ALLOWED.each do |m|
+    unless respond_to?(m, true)
+      problems << "RECIPE_ALLOWED lists #{m}, which is not defined"
+      next
+    end
+    next if RECIPE_ADAPTERS.key?(m)
+
+    params = method(m).parameters
+    if params.any? { |kind, _| kind == :keyreq }
+      problems << "#{m} has a required keyword argument and no RECIPE_ADAPTERS entry, so recipe() raises on it"
+      next
+    end
+    # What matters is the SECOND POSITIONAL slot, since that is the one
+    # recipe()'s send fills. An optional keyword after it is fine -- halation's
+    # tint: has a default and never sees the intensity.
+    second = params.select { |kind, _| %i[req opt].include?(kind) }[1]
+    if second.nil?
+      problems << "#{m} takes no second positional argument and has no RECIPE_ADAPTERS entry, so recipe() raises on it"
+      next
+    end
+    next if second[1].to_s.match?(/intensity|amount|strength|opacity|lift|age|stops|sigma/)
+    problems << "#{m}'s second parameter is :#{second[1]}, not an intensity, and it has no RECIPE_ADAPTERS entry"
+  end
+  RECIPE_ADAPTERS.each_key do |m|
+    problems << "RECIPE_ADAPTERS has an entry for #{m}, which RECIPE_ALLOWED does not list" unless RECIPE_ALLOWED.include?(m)
+  end
+
+  # Reachability. An effect nothing can select is a comment with a runtime cost.
+  used = PRESETS.values.flat_map { |p| Array(p[:fx]) }.uniq
+  (implemented - used - RECIPE_ALLOWED).each { |fx| problems << "#{fx} is implemented but no preset and no recipe can reach it" }
+  (STOCKS.keys - PRESETS.values.map { |p| p[:stock] }.uniq).each { |s| problems << "stock #{s} is defined but no preset uses it" }
+  (LENSES.keys - PRESETS.values.filter_map { |p| p[:lens]&.to_sym }.uniq).each { |l| problems << "lens #{l} is defined but no preset uses it" }
+  (PRINT_STOCKS.keys - PRESETS.values.filter_map { |p| p[:print_stock] }.uniq).each { |s| problems << "print stock #{s} is defined but no preset uses it" }
+
+  problems.each { |line| puts "BROKEN #{line}" }
+  puts "#{PRESETS.length} presets, #{STOCKS.length} stocks, #{LENSES.length} lenses, " \
+       "#{implemented.length} effects, #{RECIPE_ALLOWED.length} recipe-allowed — #{problems.length} problem(s)"
+  problems.length
 end
 
 def run_introspect
-  if ARGV.include?("--capabilities")
+  if ARGV.include?("--vocab-check")
+    exit(vocab_check.zero? ? 0 : 1)
+  elsif ARGV.include?("--capabilities")
     puts Master::Io::AnalogCapabilities.report(:postpro)
   elsif ARGV.include?("--list-presets")
     puts list_presets
