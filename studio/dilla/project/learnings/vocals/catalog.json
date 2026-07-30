@@ -1943,15 +1943,15 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_76_18bars.wav",
-        "beat_bpm": 76.0,
-        "n_bars": 18,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/jonas_v/fit_88_16bars.wav",
+        "beat_bpm": 88.32,
+        "n_bars": 16,
         "offset_sec": 33.1471,
         "phrase_start": 1.207,
         "source_bpm": 70.0,
-        "tempo_ratio": 1.0857,
-        "rms_db": -18.727,
-        "sub_bleed_db": -43.598,
+        "tempo_ratio": 1.2617,
+        "rms_db": -18.683,
+        "sub_bleed_db": -43.531,
         "snapped_lines": null,
         "has_pulse": true,
         "voice_only": true
@@ -2531,5 +2531,5 @@
       "bpm_estimate": 76.0
     }
   ],
-  "updated_at": "2026-07-29T14:33:20Z"
+  "updated_at": "2026-07-30T12:30:44Z"
 }
