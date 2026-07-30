@@ -10,7 +10,6 @@ class TestCLI < Minitest::Test
     @logging     = Minitest::Mock.new
     @undo        = Minitest::Mock.new
     @config      = Minitest::Mock.new
-    @pipeline    = Minitest::Mock.new
 
     @config.expect(:[], false, ["tts"])
     @config.expect(:prescan?, false)
@@ -23,7 +22,6 @@ class TestCLI < Minitest::Test
       logging:  @logging,
       undo:     @undo,
       config:   @config,
-      pipeline: @pipeline,
     }
 
     @cli = Master::CLI::CLI.new(container: @container)
@@ -322,81 +320,97 @@ class TestCLI < Minitest::Test
     scan.verify
   end
 
-  # handle_command dispatch
-  def test_handle_command_returns_false_for_non_command
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    assert_equal false, @cli.send(:handle_command, "hello world")
+  # Dispatch, ported off `handle_command`.
+  #
+  # These ten tests spent an unknown number of months skipped with the note
+  # "drifted: API moved; port to new dispatcher/CLI shape", which meant the CLI's
+  # own test file ran and asserted nothing about dispatch. The API they were
+  # written against is genuinely gone; the behaviour mostly is not:
+  #
+  # - `handle_command` → `handle_repl_line` (lib/cli/cli/repl_flow.rb), which
+  #   dispatches slash commands in three tables and sends everything else to
+  #   `run_agent_turn`.
+  # - `/save` → `CommandRegistry.dispatch_save`, reached through the turn
+  #   pipeline rather than off the CLI object, so it is tested there.
+  # - `process`/`pipe` no longer call `container[:pipeline]` at all; a turn goes
+  #   through `TurnRouter.call`, so the old `@pipeline.expect(:call, …)` mocks
+  #   were asserting against a collaborator that had stopped being used.
+  # - `/tts` has no dispatch entry anywhere in lib/ and nothing assigns
+  #   `@tts_on` — TTS moved to the web face (`/chat/tts`). The two `/tts` tests
+  #   and the `@tts_on` test were deleted rather than ported: `refute` on an
+  #   instance variable no code sets passes for the wrong reason.
+
+  def test_plain_text_line_is_sent_as_a_turn_not_treated_as_a_command
+    seen = :unset
+    @cli.stub(:run_input, ->(line) { seen = line }) do
+      @cli.send(:handle_repl_line, "hello world")
+    end
+    assert_equal "hello world", seen
   end
 
-  def test_handle_command_save
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    @session.expect(:save!, nil)
-    @renderer.expect(:render, "saved", ["saved"], mode: :success)
-    capture_io { @cli.send(:handle_command, "/save") }
-    @session.verify
+  # An unknown slash command is prose, not an error. Worth pinning because the
+  # old behaviour was the opposite ("unknown command: /foo" via the renderer),
+  # and because a typo'd command now costs a model turn.
+  def test_unknown_slash_command_is_sent_as_a_turn
+    seen = :unset
+    @cli.stub(:run_input, ->(line) { seen = line }) do
+      @cli.send(:handle_repl_line, "/foo")
+    end
+    assert_equal "/foo", seen
   end
 
-  def test_handle_command_exit
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    @session.expect(:save!, nil)
-    capture_io { @cli.send(:handle_command, "/exit") }
-    refute @cli.instance_variable_get(:@running)
-    @session.verify
+  def test_exit_saves_the_session_and_stops_the_repl
+    Dir.mktmpdir do |root|
+      cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root: root))
+      cli.instance_variable_set(:@running, true)
+      @session.expect(:save!, nil)
+      @renderer.expect(:closing, nil)
+
+      capture_io { cli.send(:handle_repl_line, "/exit") }
+
+      refute cli.instance_variable_get(:@running), "/exit must stop the repl loop"
+      @session.verify
+      @renderer.verify
+    end
   end
 
-  def test_handle_command_tts_on
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    # Speech not available in test env — /tts on should stay off → "unavailable"
-    @renderer.expect(:render, "tts: unavailable", [String], mode: :dim)
-    capture_io { @cli.send(:handle_command, "/tts on") }
+  def test_save_command_persists_the_session
+    session = Minitest::Mock.new
+    session.expect(:save!, nil)
+    assert_equal "session saved", Master::CLI::CommandRegistry.dispatch_save(session)
+    session.verify
   end
 
-  def test_handle_command_tts_off
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    @renderer.expect(:render, "tts: off", ["tts: off"], mode: :dim)
-    capture_io { @cli.send(:handle_command, "/tts off") }
-    refute @cli.instance_variable_get(:@tts_on)
+  def test_blank_input_publishes_empty_input_instead_of_running_a_turn
+    bus = Minitest::Mock.new
+    bus.expect(:publish, nil, ["cli:empty_input"], source: :run_input)
+    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, bus: bus))
+
+    assert_nil cli.process("   ")
+    bus.verify
   end
 
-  def test_handle_command_unknown
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    @renderer.expect(:render, "unknown command: /foo", [String], mode: :warning)
-    capture_io { @cli.send(:handle_command, "/foo") }
-    @renderer.verify
+  def test_pipe_dispatches_through_the_repl_line_handler
+    seen = :unset
+    @cli.stub(:handle_repl_line, ->(line) { seen = line; :handled }) do
+      assert_equal :handled, @cli.pipe("  ping  ")
+    end
+    assert_equal "ping", seen, "pipe strips before dispatching"
   end
 
-  # process
-  def test_process_skips_blank_input
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    @pipeline.expect(:call, nil)
-    @cli.send(:process, "   ")
-  end
+  def test_display_result_records_ok_and_err_for_the_exit_code
+    root = Dir.mktmpdir # not a git checkout, so the changed-files footer stays quiet
+    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root: root))
+    @session.expect(:cost, 0.0)
+    @session.expect(:token_est, 0)
 
-  def test_process_ok_result
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    text = "the answer is 42"
-    result = Master::Result.ok(rendered: text)
-    @pipeline.expect(:call, result, [Object])
-    out, _err = capture_io { @cli.send(:process, "what is 6*7") }
-    assert_includes out, text
-    assert @cli.instance_variable_get(:@last_ok)
-  end
+    capture_io { cli.send(:display_result, result: Master::Result.ok(rendered: "42"), accumulated: "42", streamed: true) }
+    assert cli.instance_variable_get(:@last_ok)
+    assert_equal 0, cli.instance_variable_get(:@exit_code)
 
-  def test_process_err_result
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    result = Master::Result.err("model unavailable")
-    @pipeline.expect(:call, result, [Object])
-    @renderer.expect(:render, "[ERR]", ["model unavailable"], mode: :error)
-    capture_io { @cli.send(:process, "fail me") }
-    refute @cli.instance_variable_get(:@last_ok)
-  end
-
-  # pipe
-  def test_pipe_calls_process
-    skip "drifted: API moved; port to new dispatcher/CLI shape"
-    result = Master::Result.ok(rendered: "pong")
-    @pipeline.expect(:call, result, [Object])
-    out, _err = capture_io { @cli.pipe("ping") }
-    assert_includes out, "pong"
+    @renderer.expect(:render, "[ERR]", [String], mode: :error)
+    capture_io { cli.send(:display_result, result: Master::Result.err("model unavailable"), accumulated: "", streamed: false) }
+    refute cli.instance_variable_get(:@last_ok)
+    refute_equal 0, cli.instance_variable_get(:@exit_code)
   end
 end

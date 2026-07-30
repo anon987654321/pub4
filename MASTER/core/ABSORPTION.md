@@ -41,12 +41,12 @@ are no new concepts.
 
 | lib/ subsystem | lines | essence that survives | destination | what dies |
 |---|--:|---|---|---|
-| `reach/` | 6656 | read/write/exec/git/search/path-guard primitives | **World handlers** | lora, comfyui, replicate, video, social_sim, subdomain, bedrock, semantic index/cache, mcp — media & infra accretion |
-| `judge/` | 10621 | the rules that gate effects; "run a check, weigh evidence" | **Constitution rules** + `exec` evidence | scanner engine, council, swarm, consensus, reflexion, embeddings, graph/ref/repo maps, prompt_evolver, code_index |
-| `now/` | 7933 | "propose the next step, act, report" | **Fold + Model** | multi-stage pipeline, command_registry, routing, orchestration, opportunity_surface, web_server |
+| `io/` | 6656 | read/write/exec/git/search/path-guard primitives | **World handlers** | lora, comfyui, replicate, video, social_sim, subdomain, bedrock, semantic index/cache, mcp — media & infra accretion |
+| `review/` | 10621 | the rules that gate effects; "run a check, weigh evidence" | **Constitution rules** + `exec` evidence | scanner engine, council, swarm, consensus, reflexion, embeddings, graph/ref/repo maps, prompt_evolver, code_index |
+| `cli/` | 7933 | "propose the next step, act, report" | **Fold + Model** | multi-stage pipeline, command_registry, routing, orchestration, opportunity_surface, web_server |
 | `ground/` | 6565 | sandbox/taint/secret/axiom **rules**; memory & evidence store | **Constitution rules** + **Memory** | brain_overlay, brutalist_minimalism, cluster_registry, attention_context, dozens of one-off policies |
 | `voice/` | 3260 | (peripheral) TTS | **stays lib**, or an optional `exec` | — |
-| `loop/` | 3014 | rollback; a single budget check | **World rollback** + one Fold guard | governor, homeostat, heartbeat, system_pressure, propose_tree, conflict_resolver, watch/rule/fix loops |
+| `fix/` | 3014 | rollback; a single budget check | **World rollback** + one Fold guard | governor, homeostat, heartbeat, system_pressure, propose_tree, conflict_resolver, watch/rule/fix loops |
 | `trace/` | 2263 | one Observation stream | **Memory / Observation** | event-bus glob routing, telemetry fan-out |
 | `rails/` + `web/` | 758+ | (peripheral) dashboard | **stays**, separate deliverable | — |
 | `providers/` `grok/` | 378 | pick a model, get a chat | **Model** (done) | provider registry ceremony |
@@ -67,19 +67,19 @@ it unblocks dogfooding).
 
 0. **Model adapter** — real LLM → next Effect. *(done: `bea84fda6`)*
 1. **World: read/write/exec/git handlers.** Absorb the ~15 real primitives from
-   `reach/` (`read_file`, `write_file`, `str_replace`, `exec`, `shell`, `list_dir`,
+   `io/` (`read_file`, `write_file`, `str_replace`, `exec`, `shell`, `list_dir`,
    `tree`, `search_files`, `git_operations`, `path_guard`, `atomic_write`,
-   `whitespace_normalizer`). Delete the media/infra half of `reach/`.
+   `whitespace_normalizer`). Delete the media/infra half of `io/`.
 2. **Constitution: the gating rules.** Absorb `ground/{sandbox_policy, taint,
    redactor, immutability, pledge, done_checker, axioms}` as rules. Delete the
    scanner engine; deep static analysis becomes an `exec` evidence source, not a
-   core subsystem. Fold `judge/{commit_guard, output_check, verdict}` into Verdict.
+   core subsystem. Fold `review/{commit_guard, output_check, verdict}` into Verdict.
 3. **Memory: turns + evidence.** Absorb `ground/{memory, evidence, checkpoint,
    unfinished_ledger}` and collapse `trace/` to a single Observation stream.
-4. **Fold: budget + rollback.** Absorb `loop/rollback` into World's transaction and
-   the HostBudget guard into one Fold check. Delete the rest of `loop/`.
-5. **CLI: thin shell.** Reduce `now/cli` + `command_registry` to a dispatcher over
-   `bin/master-core`. Delete `now/` pipeline/stages/routing.
+4. **Fold: budget + rollback.** Absorb `fix/rollback` into World's transaction and
+   the HostBudget guard into one Fold check. Delete the rest of `fix/`.
+5. **CLI: thin shell.** Reduce `cli/` + `command_registry` to a dispatcher over
+   `bin/master-core`. Delete `cli/` pipeline/stages/routing.
 6. **Sever peripherals.** Point `voice`, `rails/web`, `pub4`, `ops` at the core via
    `exec`; delete their reach-into-lib couplings. `lib/master.rb` becomes a shim,
    then goes.
@@ -91,7 +91,7 @@ Each slice: absorb essence → prove green (`rake test:core`, core smoke,
 
 A reference sweep of the media/infra kill list found it is **load-bearing in the
 live lib boot**, not free-floating dead code: `builder.rb`, `builder/boot_phases.rb`,
-`now/command_registry/tool_commands.rb`, `judge/council/motion_critique.rb`,
+`cli/command_registry/tool_commands.rb`, `review/council/motion_critique.rb`,
 `master.rb`, and `master_runtime.rb` all wire it in (`video_chain` alone has 28
 references). So the accretion cannot be peeled off file-by-file while lib runs —
 each subsystem comes out only when the core replaces the layer that boots it
@@ -106,16 +106,16 @@ Verified per-file for live references at migration time (the Phase 1 method), bu
 these carry no coding-agent role and are expected to delete outright once the boot
 layer above them is the core:
 
-- **reach media/infra:** `character_lora_*`, `motion_lora_*`, `comfyui_client`,
+- **io media/infra:** `character_lora_*`, `motion_lora_*`, `comfyui_client`,
   `replicate_client`, `repligen*`, `video_*`, `postpro`, `social_sim/`,
   `subdomain_orchestrator`, `bedrock_stub`, `relayd`, `generation_prompt_refiner`,
   `semantic_index`, `semantic_cache`, `mcp_coordinator`.
-- **judge multi-agent & indexing:** `council/`, `swarm/`, `consensus`, `reflexion`,
+- **review multi-agent & indexing:** `council/`, `swarm/`, `consensus`, `reflexion`,
   `prompt_evolver`, `embeddings`, `graph_retriever`, `reference_graph`,
   `code_index/`, `repo_ecology/`, `repo_map`, `ast_signature`, `eval_harness`.
-- **loop control theatre:** `governor`, `homeostat`, `heartbeat`, `system_pressure`,
+- **fix control theatre:** `governor`, `homeostat`, `heartbeat`, `system_pressure`,
   `propose_tree`, `conflict_resolver`, `soul_proposals`.
-- **now pipeline:** `pipeline`, `stages/`, `orchestration/`, `routing/`,
+- **cli pipeline:** `pipeline`, `stages/`, `orchestration/`, `routing/`,
   `opportunity_surface`, `tribunal_feedback`, `web_server`, `web_secret`.
 - **ground one-offs:** `brain_overlay`, `brutalist_minimalism`, `cluster_registry`,
   `attention_context`, and the long tail of single-use `*_policy` / `*_registry`
@@ -146,8 +146,8 @@ Corrections to earlier assumptions found while severing:
 
 ## The runtime cutover is a reimplementation, not a deletion
 
-What remains is the hard core: `now/` (pipeline, stages, cli — an interactive,
-streaming REPL), `loop/` (background fix/watch loops), and `judge/`'s agent stack
+What remains is the hard core: `cli/` (pipeline, stages, repl — an interactive,
+streaming REPL), `fix/` (background fix/watch loops), and `review/`'s agent stack
 (Review::Agent + council/swarm/consensus/graph over ruby_llm tool-calling). This is
 the **deployed product**: the interactive CLI, the web dashboard at ai.brgen.no,
 sessions, streaming, TTS, standing orders, the event bus.
@@ -157,7 +157,7 @@ under a constitution — in 700 lines. But it is a batch runner, not an interact
 streaming REPL. So finishing the core-first rebuild means one of:
 
 1. **Bridge** — route the CLI's agent turn through the Fold while keeping the
-   interactive shell; retire pipeline/judge stages behind it. Additive, green,
+   interactive shell; retire pipeline/review stages behind it. Additive, green,
    incremental, but a real build (wire core Model/World/Constitution into the
    CLI's root/session/stream).
 2. **Replace** — make the Fold the whole runtime and drop the interactive shell,

@@ -6,8 +6,8 @@ MASTER is a constitutional AI runtime in Ruby. Models propose; the runtime valid
 
 ## Safe First Commands
 
-- `bin/check` — normal contributor gate.
-- `bin/check --profile=agent` — law, scanners, loop, routing (may fail on known debt).
+- `bin/check` — default gate. Runs the **operator** profile (`test`, `spec`, `security_sweep`, `test:core`, `lint:data_singularity`), not the contributor one; `--profile=contributor` is the same list minus `test:core`.
+- `bin/check --profile=agent` — `selftest` + `lint:data_singularity` only (may fail on known debt).
 - `bin/check --profile=web` — face/assets; set `MASTER_WEB_LIVE=1` for live web checks.
 - `bin/check --profile=full` — operator-grade probe path.
 - `bin/check --format=brief` — structured pass/fail with debt hints (pair with any profile).
