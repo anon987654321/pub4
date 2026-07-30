@@ -68,6 +68,20 @@ module DillaLofiMachine
     # is what the Herbie Hancock sample is doing.
     "9sus4" => [0, 5, 7, 10, 2],
     "9sus" => [0, 5, 7, 10, 2],
+    # Symmetrical shapes — no template, no suffix, so every one of them raised
+    # ArgumentError and was swallowed by progression_for's rescue. That is how
+    # chromatic_descent_sixteen lost the Abdim out of its D-C#-C-B-Bb-A-Ab-G
+    # bass walk: the walk is the whole progression, and it was rendering with a
+    # hole where the seventh step goes.
+    #
+    # A diminished chord divides the octave in equal minor thirds and an
+    # augmented one in equal major thirds, which is why they can pivot to four
+    # (or three) keys at once and why they are the standard connective tissue
+    # between two chords that have nothing else in common.
+    "dim" => [0, 3, 6],
+    "dim7" => [0, 3, 6, 9],
+    "aug" => [0, 4, 8],
+    "maj7#5" => [0, 4, 8, 11],
   }.freeze
 
   NOTE_PC = {
@@ -108,7 +122,12 @@ module DillaLofiMachine
     "Fm9" => [174.61, 207.65, 261.63, 311.13, 392.00],
     "Bbm7" => [116.54, 138.59, 174.61, 207.65],
     "Bbm9" => [116.54, 138.59, 174.61, 207.65, 261.63],
-    "Eb9" => [155.56, 196.00, 233.08, 311.13, 349.23],
+    # Same defect the Eb7 note below describes, in the entry directly above it:
+    # 311.13 was Eb4, the root doubled where the b7 goes, leaving an Eb triad
+    # with a ninth on it. gem_chord_sane?'s own docstring cites "Eb9 with no b7
+    # at all" as the gem's failure -- and the hand-written voicing that exists
+    # to bypass the gem had it too. 277.18 is Db4.
+    "Eb9" => [155.56, 196.00, 233.08, 277.18, 349.23],
     # 311.13 was Eb4 -- the root doubled an octave up where the b7 belongs, so
     # this was a bare Eb triad, not a dominant. 277.18 is Db4.
     "Eb7" => [155.56, 196.00, 233.08, 277.18],
@@ -165,9 +184,9 @@ module DillaLofiMachine
   # convention that 7sus4/7sus alias to "sus4" (see QUALITY_ALIASES).
   CHORD_SUFFIXES = %w[
     maj13#11 maj7#11 maj13 maj9low maj9 maj7
-    m7b5 mmaj7 m11 m9 m7 m6
+    maj7#5 m7b5 mmaj7 m11 m9 m7 m6
     9sus4 9sus 7sus4 7sus 7#11 7alt 7#5 7b9 13 7
-    add9 sus9 sus4 sus2 sus 9 6 m
+    dim7 dim aug add9 sus9 sus4 sus2 sus 9 6 m
   ].freeze + [""].freeze
 
 # Compiled once. The interpolated form was rebuilt on every iteration of every
@@ -1138,6 +1157,11 @@ euclid_sparse: {
     "min" => [0, 3], "maj" => [0, 4],
     # No third by definition — the 4th, the b7 and the 9 are what must survive.
     "9sus4" => [0, 5, 10, 2], "9sus" => [0, 5, 10, 2],
+    # A symmetrical chord is nothing but its symmetry: a diminished triad with
+    # a natural fifth in it, or an augmented one, is just a minor or major
+    # triad wearing the wrong name.
+    "dim" => [0, 3, 6], "dim7" => [0, 3, 6, 9], "aug" => [0, 4, 8],
+    "maj7#5" => [0, 4, 8, 11],
   }.freeze
 
   # The coltrane gem hands back confidently wrong voicings for several
@@ -1158,10 +1182,27 @@ euclid_sparse: {
     # a note, which is the opposite of what a sanity check is for; the built-in
     # suffix parser below has a template for every suffix in CHORD_SUFFIXES and
     # is the better answer whenever this table cannot judge.
-    want = CORE_TONES[m[2].sub(/low\z/i, "")] or return false
+    sfx = m[2].sub(/low\z/i, "")
+    want = CORE_TONES[sfx] or return false
     pc = NOTE_PC[m[1]] or return false
     got = chord[:hz].map { |h| (69.0 + (12.0 * Math.log2(h / 440.0))).round % 12 }.uniq
-    want.all? { |iv| got.include?((pc + iv) % 12) }
+    return false unless want.all? { |iv| got.include?((pc + iv) % 12) }
+
+    # Having every tone the symbol asks for is only half the question; the other
+    # half is having nothing it did not. The gem hands back a SIX-note m11 with
+    # a flat ninth stapled on -- Fm11 came out F Gb Ab Bb Eb, a b9 standing
+    # where the fifth belongs -- and the core-tone check above waved it through
+    # because all four tones it looks for were present somewhere in the pile.
+    # A chord with an uninvited semitone against its own root is not the chord
+    # that was asked for, whatever else it contains.
+    #
+    # Only judged when the built-in table knows the quality outright:
+    # quality_for_suffix falls back to "maj9" for anything it cannot place, and
+    # measuring a chord against the wrong template would reject good voicings.
+    quality = QUALITY_ALIASES[sfx.downcase] || sfx.downcase
+    template = CHORD_TEMPLATES[quality] or return true
+    allowed = template.map { |iv| (pc + iv) % 12 }
+    (got - allowed).empty?
   end
 
   # Transcription shorthand, not chord quality. Eight symbols in the profile
@@ -1224,23 +1265,40 @@ euclid_sparse: {
   # Drop what a player drops: first a voice doubling the bass's pitch class, then
   # the fifth, then the lowest inner voice. The bass and the top voice always
   # survive.
-  def trim_slash_voicing(bass_hz, upper_hz, voices: 5)
+  #
+  # root_pc has to be told, not guessed. It used to be read off the lowest note,
+  # which is only the root in root position -- and the voicings that reach here
+  # are routinely inverted. Abmaj9 arrives as C Eb G Ab Bb, so "lowest note" said
+  # C, "the fifth above C" said G, and G is Ab's MAJOR SEVENTH: Abmaj9/F and
+  # Ebmaj9/C were each losing the one interval that separates a maj9 from a 6/9,
+  # in the name of leaving out a fifth that was still sitting there afterwards.
+  def trim_slash_voicing(bass_hz, upper_hz, voices: 5, root_pc: nil)
     upper = upper_hz.sort
     drops = upper.length + 1 - voices
     return ([bass_hz] + upper).sort if drops <= 0
 
     bass_pc = pitch_class_of(bass_hz)
-    root_pc = pitch_class_of(upper.first)
+    root_pc ||= pitch_class_of(upper.first)
     seen = {}
     upper.each { |h| seen[pitch_class_of(h)] = (seen[pitch_class_of(h)] || 0) + 1 }
-    removed = upper[0..-2].sort_by do |h|
+    # Rank by what the note IS, not by where it sits. Protecting the top voice
+    # unconditionally was a proxy for protecting the ninth, and it stopped being
+    # one the moment a voicing arrived with something else up there: Ebmaj9 comes
+    # back as D Eb F G Bb, fifth on top and major seventh at the bottom, so the
+    # rule shielded the one tone a player drops first and spent the cut on the
+    # tone that names the chord. The fifth is expendable in any octave; the third,
+    # the seventh and the extensions are expendable in none.
+    removed = upper.sort_by do |h|
       pc = pitch_class_of(h)
+      interval = (pc - root_pc) % 12
       rank = if pc == bass_pc || seen[pc] > 1
                0 # a doubling: the bass already plays it, or the stack does
-             elsif ((pc - root_pc) % 12) == 7
+             elsif interval == 7
                1 # the fifth, the first chord tone a player leaves out
+             elsif interval.zero?
+               2 # the root: the bass anchors the chord and the ear supplies it
              else
-               2
+               3 # third, seventh, ninth -- what the symbol is actually named for
              end
       # A doubling: take the higher copy, so the shape keeps its lower anchor.
       # A real chord tone: take the lowest inner voice, which is the one crowding
@@ -1335,7 +1393,8 @@ euclid_sparse: {
   # over a real bass, not the pad doubling the bass three octaves down.
   pad_bass = bass_hz
   pad_bass *= 2.0 while 12.0 * Math.log2(ch[:hz].min / pad_bass) > 17.0
-  hz = trim_slash_voicing(pad_bass.round(2), ch[:hz])
+  upper_root = NOTE_PC[upper.strip.match(/\A([A-G][#b]?)/i)&.captures&.first&.then { |r| r[0].upcase + r[1..].to_s }]
+  hz = trim_slash_voicing(pad_bass.round(2), ch[:hz], root_pc: upper_root)
   return ch.merge(name: sym, hz:, bass_hz:)
   end
 

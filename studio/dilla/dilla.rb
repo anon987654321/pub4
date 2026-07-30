@@ -425,7 +425,16 @@ CURATED_PROGRESSIONS = %i[
   minor_dominant_slash_cycle minor_major_ninth_pair minor_ninth_cycle
   jazz baroque suspended_minor_close minor_cycle_descent
   aydin_modal_quartal aydin_jazz_turn bach_circle_descent bach_descending_bass
+  phrygian_dominant_descent lament_ground hexatonic_pole_shiver hexatonic_cycle_ring
+  dawn_ladder dim_stepping_stone sixth_diminished_wheel augmented_hinge
+  lydian_augmented_haze four_station_orbit longing_unresolved neapolitan_door
+  sub_ladder_down parallel_ninth_tide slow_pendulum_major picardy_window
+  bell_chain_of_fifths double_plagal_open dorian_open_window
 ].freeze
+# still_water_pedal and two_moons_pedal are deliberately NOT curated: the
+# comment above says this list skips heavy pedal and bitonal writing, and both
+# of them are exactly that. They stay reachable by name, which is the point of
+# writing them -- they are just not what the rotation should reach for blind.
 
 FLYLO_TRACKS = %i[
   chromatic_mediant chromatic_mediant_drift sus_add9_ballad
@@ -474,7 +483,11 @@ ARP_PATTERN_BUILDERS = {
   fibonacci:    ->(n) { fib = [0, 1]; fib << fib[-1] + fib[-2] while fib.length < n; fib.first(n).map { |i| i % n } },
   pingpong:     ->(n) { (0...n * 2).map { |i| i < n ? i : (n * 2 - 1 - i) } },
   spiral:       ->(n) { (0...n).flat_map { |i| [i, (i + 2) % n] }.first(n * 2) },
-  quint_spread: ->(n) { [0, 2, 4, 1, 3].first(n) },
+  # Was .first(n), which for a two-note chord took [0, 2] -- and 2 modulo 2 is 0,
+  # so the "spread" figure played the same pitch twice. Selecting the degrees
+  # that fit keeps the wide-interval shape at every chord size instead of
+  # collapsing it at small ones.
+  quint_spread: ->(n) { [0, 2, 4, 1, 3].select { |d| d < n } },
   random_walk:  ->(n, rng = Random.new(42)) { cur = 0; Array.new(n * 2) { cur = (cur + rng.rand(-1..1)).clamp(0, n - 1) } },
   euclidean:    ->(n) { hits = 5; steps = n * 2; (0...steps).map { |i| ((i * hits) % steps) < hits ? i % n : nil }.compact },
   coltrane:     ->(n) { [0, 2, 1, 3, 2, 0, 1].first(n * 2) },
@@ -496,6 +509,108 @@ end end },
   # the same "randomness" comes back on every render -- an accident you cannot
   # reproduce is not a part.
   bubble_pop:   ->(n, rng = Random.new(31)) { Array.new([n * 3, 15].max) { rng.rand < 0.45 ? 0 : rng.rand(0...n) } },
+
+  # --- 2026-07-30: figures with a shape rather than a direction -------------
+  #
+  # The nineteen above are almost all answers to "which way does it go" -- up,
+  # down, up then down, up then down but drunk. These are answers to "what is
+  # it doing", which is a different question, and it is the one that separates
+  # an arpeggiator from a melody. Each is a real generative rule, not a
+  # hand-written figure dressed up: given the same chord you can predict what
+  # comes out, and given a different chord it still makes sense.
+
+  # English change ringing. Start with the bells in order and swap adjacent
+  # pairs, alternating which pairs, forever: no note repeats within a row and no
+  # row repeats until every ordering has been rung. Church towers have been
+  # running this algorithm since the 1600s for exactly the reason it works here
+  # -- it is the most even way to keep a small set of pitches from ever settling
+  # into a pattern the ear can finish.
+  plain_hunt: lambda { |n|
+    return [0] if n < 2
+    row = (0...n).to_a
+    rows = [row.dup]
+    (2 * n - 1).times do |r|
+      row = row.dup
+      ((r.even? ? 0 : 1)...(n - 1)).step(2) { |i| row[i], row[i + 1] = row[i + 1], row[i] }
+      rows << row
+    end
+    rows.flatten.first([n * 4, 16].max)
+  },
+  # Step round the chord by the golden ratio and take what you land on. An
+  # irrational step never divides the circle evenly, so the figure never closes
+  # -- but because the ratio is the *most* irrational number, the notes still
+  # spread as evenly as anything can that is not a cycle. Sunflower seeds pack
+  # this way for the same reason.
+  golden_rotation: lambda { |n|
+    phi = 0.6180339887498949
+    Array.new([n * 3, 12].max) { |i| ((i + 1) * phi * n).floor % n }
+  },
+  # Runs that lengthen and then shorten again: one note, two, three, up to the
+  # whole chord, and back down. The chord tones never change, only how far each
+  # breath gets before it turns around.
+  tide: lambda { |n|
+    lengths = (1..n).to_a + (n - 1).downto(1).to_a
+    lengths.flat_map { |len| (0...len).to_a }
+  },
+  # A swing losing energy: the widest interval first, then narrower each pass,
+  # spiralling into the middle of the chord and stopping there.
+  pendulum: lambda { |n|
+    low = 0
+    high = n - 1
+    out = []
+    while low <= high
+      out << low
+      out << high if high != low
+      low += 1
+      high -= 1
+    end
+    out + out.reverse
+  },
+  # Water down steps: three-note falls, each one starting a step higher than the
+  # last, so the figure descends locally and climbs overall.
+  cascade: lambda { |n|
+    (0...n).flat_map { |start| [start, (start - 1) % n, (start - 2) % n] }
+  },
+  # Climb patiently, drop all at once. A bird working its way up a thermal and
+  # then folding its wings.
+  swallow_dive: lambda { |n|
+    (1...n).flat_map { |peak| (0..peak).to_a + [0] }
+  },
+  # Mostly pulled downward, with the occasional wave that pushes back up. The
+  # seed is fixed so the same undertow returns every render.
+  undertow: lambda { |n, rng = Random.new(53)|
+    cur = n - 1
+    Array.new([n * 3, 12].max) do
+      cur = rng.rand < 0.72 ? (cur - 1) % n : (cur + 2) % n
+      cur
+    end
+  },
+  # A phrase and its reply: a rising figure, then the same contour falling, and
+  # answered from a different place in the chord so the reply is recognisably
+  # the same shape without being the same notes. Two halves the ear can tell
+  # apart, which is the one thing an arpeggiator almost never gives you.
+  call_answer: lambda { |n|
+    call = (0...n).to_a
+    call + call.reverse.map { |d| (d + (n / 2)) % n }
+  },
+  # A short cell repeated, with one note of it advancing each time round. The
+  # figure stays recognisable while never being quite the same twice -- prayer
+  # beads, where the count changes and the motion does not.
+  rosary: lambda { |n|
+    (0...n).flat_map { |pass| [0, (1 + pass) % n, (2 + pass) % n] }
+  },
+  # Momentum rather than randomness: the line keeps travelling in whichever
+  # direction it was already going and only occasionally turns, the way a flock
+  # changes direction all at once instead of bird by bird.
+  murmuration: lambda { |n, rng = Random.new(71)|
+    cur = 0
+    dir = 1
+    Array.new([n * 3, 15].max) do
+      dir = -dir if rng.rand < 0.22
+      cur = (cur + dir) % n
+      cur
+    end
+  },
 }.freeze
 
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
@@ -5193,12 +5308,22 @@ end
 # opt-in that reaches for the shapes that are already built but unused.
 ARP_IDM_STYLES = %i[euclidean ratchet random_walk stutter burst].freeze
 
+# The same opt-in for the shape-based figures. They are already reachable --
+# the xlead and lead paths below sample the whole builder table -- but only by
+# chance, and a figure you can only get by luck is one you cannot A/B. This is
+# the switch that asks for them on purpose. ARP_SHAPE_BIAS=1.
+ARP_SHAPE_STYLES = %i[
+  plain_hunt golden_rotation tide pendulum cascade
+  swallow_dive undertow call_answer rosary murmuration
+].freeze
+
 # Each pad/lead chord gets its own arp style, subdiv, gate, swing, and pattern shape.
 def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role: :lead)
   rng = chord_variation_rng(cfg, chord_i, chord, salt: role.hash.abs)
   styles = base_arp_cfg[:arp_styles] || arp_styles_for_patch(patch, base_arp_cfg[:style])
   style = styles[chord_i % styles.length]
   style = ARP_IDM_STYLES.sample(random: rng) if ENV["ARP_IDM_BIAS"] == "1" && rng.rand < 0.65
+  style = ARP_SHAPE_STYLES.sample(random: rng) if ENV["ARP_SHAPE_BIAS"] == "1" && rng.rand < 0.65
   if role == :pad
     subdiv_pool = [base_arp_cfg.fetch(:subdiv, 8), 4, 6, 8].uniq
     pattern_modes = %i[style motif sparse stagger call]
@@ -5615,7 +5740,12 @@ PAD_CHORDS = [
   { name: "Bbm9", hz: [116.54, 138.59, 174.61, 207.65, 261.63] },
   { name: "Gbmaj9", hz: [92.50, 116.54, 138.59, 174.61, 207.65] },
   { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] },
-  { name: "C7#9 Hendrix", hz: [130.81, 155.56, 196.00, 233.08, 277.18] },
+  # Was C Eb G Bb Db: a minor third where the major third goes and a b9 on top
+  # -- Cm7(b9), which is the one chord this is named for not being. The whole
+  # point of the shape is the collision of a major third against a sharp ninth
+  # a tenth above it; spelled a semitone down the #9 becomes a plain minor
+  # third and the collision it exists for never happens.
+  { name: "C7#9 Hendrix", hz: [130.81, 164.81, 196.00, 233.08, 311.13] },
   # Was a byte-for-byte copy of Fmaj9's voicing (b7 instead of maj7, no 13th).
   # Real Fmaj13: root, 3, 5, 13, maj7.
   { name: "Fmaj13", hz: [174.61, 220.00, 261.63, 293.66, 329.63] },
@@ -5636,7 +5766,11 @@ EXTENDED_NINTH_CHORDS = [
   # pedal bass as every other chord in this table.
   { name: "E9sus4/D", hz: [82.41, 220.00, 246.94, 293.66, 369.99] },
   # Ethan Hein: D/E functions as E9sus4 (Get Dis Money / Come Running To Me).
-  { name: "D/E", hz: [82.41, 146.83, 220.00, 246.94, 293.66] },
+  # It only functions that way if the F# is in it. Was E D A B D -- E, the 4th,
+  # the 5th and a doubled b7, with the ninth that earns the "9" in E9sus4
+  # missing and the octave spent doubling a note already there. The D triad the
+  # symbol names needs D, F# and A; F# is that ninth.
+  { name: "D/E", hz: [82.41, 146.83, 185.00, 220.00, 246.94] },
   { name: "Db/E", hz: [82.41, 277.18, 311.13, 349.23, 415.30] },
   { name: "C/E", hz: [82.41, 261.63, 329.63, 392.00, 493.88] },
   { name: "Bm/E", hz: [82.41, 246.94, 293.66, 369.99, 440.00] },
@@ -5997,6 +6131,163 @@ DRUM_PATTERN_SETS = {
     ],
     opens: [6, 14],
   },
+  # ==========================================================================
+  # Feels for dancing (2026-07-30).
+  #
+  # Everything above this line is written for the head and the shoulders: the
+  # Dilla pocket, the drunk lean, the loose behind-the-beat snare. Nothing in it
+  # asks the hips a question. :techno_house was the whole dance vocabulary --
+  # one four-on-the-floor grid, kicks [[0,4,8,12]], no variations at all -- so
+  # "danceable" in this engine meant "the kick is on every beat", which is the
+  # least interesting way anything has ever been danceable.
+  #
+  # These are nine specific answers instead. Each one is a real rhythmic
+  # tradition reduced to its skeleton, and what they mostly have in common is
+  # what they do with the SPACE between the kicks, not the kicks: the tresillo's
+  # 3+3+2 limp, the two-step's missing downbeat, dembow's snare that lands
+  # everywhere the backbeat is not. Grids are 16 sixteenths; swing and timing
+  # come from the preset, not from here.
+  # ==========================================================================
+
+  # UK garage. The kick abandons beat 3 and turns up late instead, so the bar
+  # tips forward and never quite lands -- two steps where four should be. The
+  # hats do the walking that the kick refuses to.
+  two_step: {
+    kicks: [
+      [0, 10], [0, 6, 10], [0, 10, 14], [0, 3, 10], [0, 10, 11],
+      [0, 6, 10, 14], [0, 5, 10], [0, 10, 13]
+    ],
+    snares: [[4, 12], [4, 12], [4, 12, 14], [4, 11, 12], [4, 12, 15]],
+    ghosts: [[7], [2, 7], [7, 14], [2, 7, 14], [6, 13], [3, 7, 11]],
+    hats: [
+      [0, 2, 3, 5, 6, 8, 10, 11, 13, 14], [0, 2, 4, 6, 7, 10, 12, 14],
+      [0, 3, 4, 6, 8, 11, 12, 14], [2, 3, 6, 7, 10, 11, 14, 15],
+      [0, 2, 3, 6, 8, 10, 11, 14]
+    ],
+    opens: [6, 14],
+  },
+  # West London broken beat. Every limb displaced off the grid it belongs on,
+  # and the whole thing still walks. The kick pattern changes every bar on
+  # purpose: bruk is defined by never repeating the same bar twice.
+  broken_beat: {
+    kicks: [
+      [0, 3, 6, 11], [0, 5, 8, 11, 14], [0, 2, 7, 10, 13], [0, 4, 9, 12, 15],
+      [0, 6, 9, 14], [0, 3, 8, 13], [0, 5, 7, 12], [0, 2, 9, 11, 14]
+    ],
+    snares: [[4, 12], [4, 10, 12], [3, 12], [4, 12, 15], [4, 9, 12]],
+    ghosts: [[2, 5, 9, 13], [1, 6, 11, 14], [3, 7, 10, 15], [2, 8, 13], [5, 9, 14]],
+    hats: [
+      [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15], [0, 2, 3, 5, 7, 8, 10, 12, 14, 15],
+      [0, 2, 4, 5, 7, 9, 11, 12, 14], [1, 2, 4, 6, 8, 9, 11, 13, 15]
+    ],
+    opens: [6, 10, 14],
+  },
+  # Amapiano. Four on the floor underneath, and everything else deliberately
+  # between the beats -- the shaker, the log drum, the whole top end sitting on
+  # the offbeat sixteenth. The kick is not the groove here; it is the floor the
+  # groove happens above.
+  amapiano_offbeat: {
+    kicks: [[0, 4, 8, 12], [0, 4, 8, 12, 14], [0, 4, 6, 8, 12], [0, 4, 8, 12, 15]],
+    snares: [[4, 12], [12], [4, 12, 14], [4, 12]],
+    ghosts: [[2, 6, 10, 14], [3, 7, 11, 15], [6, 14], [2, 10], [6, 11, 14]],
+    hats: [
+      [2, 6, 10, 14], [2, 6, 10, 14, 15], [2, 3, 6, 7, 10, 11, 14, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14]
+    ],
+    opens: [2, 6, 10, 14],
+  },
+  # Dembow. The snare goes everywhere the backbeat is not -- and, because the
+  # engine's whole rhythmic assumption is a snare on 4 and 12, that is exactly
+  # why it belongs here. Half the variations keep the backbeat anyway so the
+  # feel can sit under a track that needs one.
+  dembow: {
+    kicks: [[0, 8], [0, 6, 8, 14], [0, 8, 10], [0, 3, 8, 11], [0, 8, 11]],
+    snares: [[3, 6, 11, 14], [3, 6, 11, 14], [4, 12], [3, 7, 11, 14], [4, 6, 12, 14]],
+    ghosts: [[2, 10], [5, 13], [1, 9], [2, 7, 10, 15]],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 2, 3, 4, 6, 8, 10, 11, 12, 14],
+      [0, 4, 8, 12], [0, 2, 4, 6, 8, 10, 12, 14, 15]
+    ],
+    opens: [6, 14],
+  },
+  # 3+3+2. The tresillo -- one bar of sixteenths cut into unequal pieces, which
+  # is the single most widespread rhythmic cell on earth and reaches this file
+  # from about six directions at once. Four on the floor keeps time under it in
+  # half the variations; in the other half nothing does, and it still works.
+  tresillo_house: {
+    kicks: [
+      [0, 3, 6, 8, 11, 14], [0, 3, 6, 8], [0, 6, 8, 14], [0, 3, 8, 11],
+      [0, 4, 8, 12], [0, 3, 6, 10, 14]
+    ],
+    snares: [[4, 12], [4, 12], [4, 12, 14], [4, 11, 12]],
+    ghosts: [[2, 10], [5, 13], [7, 15], [2, 6, 10, 14]],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 1, 2, 4, 6, 8, 9, 10, 12, 14],
+      [0, 3, 6, 8, 11, 14], [2, 6, 10, 14]
+    ],
+    opens: [6, 14],
+  },
+  # Disco. Kick on all four, open hat on all four offbeats, and that alternation
+  # -- down, up, down, up -- is the entire engine. Everything else in the record
+  # is decoration on top of two sounds trading places.
+  disco_boogie: {
+    kicks: [[0, 4, 8, 12], [0, 4, 8, 12], [0, 4, 8, 12, 15], [0, 4, 7, 8, 12]],
+    snares: [[4, 12], [4, 12], [4, 12, 14], [4, 12, 13]],
+    ghosts: [[2, 6, 10, 14], [6, 14], [10], [6, 10, 14]],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      [2, 6, 10, 14], [0, 2, 3, 6, 8, 10, 11, 14]
+    ],
+    opens: [2, 6, 10, 14],
+  },
+  # Batucada. The surdo answers on the second beat rather than announcing the
+  # first, so the bar leans backwards into itself, and the caixa fills every
+  # sixteenth above it. The one feel here where the busiest layer is the quietest.
+  batucada: {
+    kicks: [[0, 8], [0, 6, 8, 14], [0, 8, 11], [3, 8, 11], [0, 8, 10, 14]],
+    snares: [[4, 12], [4, 10, 12], [2, 6, 10, 14], [4, 12, 14]],
+    ghosts: [
+      [1, 3, 5, 7, 9, 11, 13, 15], [2, 3, 6, 7, 10, 11, 14, 15],
+      [1, 2, 5, 6, 9, 10, 13, 14], [0, 3, 6, 10, 12]
+    ],
+    hats: [
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      [0, 2, 3, 5, 6, 8, 10, 11, 13, 14], [0, 3, 6, 10, 12],
+      [0, 1, 3, 4, 6, 8, 9, 11, 12, 14]
+    ],
+    opens: [6, 14],
+  },
+  # Footwork. Kicks arriving in threes against a bar counted in fours, so the
+  # pattern crosses itself every bar and lands back on the downbeat only
+  # occasionally. Sparse up top: the density is all in the low end.
+  footwork_triplet: {
+    kicks: [
+      [0, 3, 6, 8, 11, 14], [0, 1, 2, 8, 9, 10], [0, 3, 5, 8, 11, 13],
+      [0, 2, 4, 8, 10, 12], [0, 5, 10, 15], [0, 3, 6, 9, 12, 15]
+    ],
+    snares: [[4, 12], [12], [4, 12], [12, 14]],
+    ghosts: [[2, 6, 10, 14], [1, 5, 9, 13], [7, 15], [3, 11]],
+    hats: [
+      [0, 2, 4, 6, 8, 10, 12, 14], [0, 3, 6, 9, 12, 15],
+      [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15], [0, 4, 8, 12]
+    ],
+    opens: [6, 14],
+  },
+  # Afrobeats. A kick on the one, one just after the halfway point and one on
+  # the last beat's front edge -- 0, 6, 10, which is the tresillo again, worn
+  # loosely -- under a shaker riding the offbeats and a rim playing clave.
+  afrobeats_pocket: {
+    kicks: [[0, 6, 10], [0, 6, 10, 14], [0, 3, 6, 10], [0, 6, 8, 10], [0, 6, 10, 13]],
+    snares: [[4, 12], [4, 12], [4, 12, 14], [4, 11, 12]],
+    ghosts: [[2, 7, 12, 14], [0, 3, 6, 10, 12], [2, 5, 9, 13], [3, 10, 14]],
+    hats: [
+      [2, 6, 10, 14], [0, 2, 4, 6, 8, 10, 12, 14],
+      [2, 3, 6, 7, 10, 11, 14, 15], [0, 2, 4, 6, 7, 8, 10, 12, 14, 15]
+    ],
+    opens: [6, 14],
+  },
+
   default: {
     kicks: [
       [0, 7, 10, 14], [0, 3, 8, 11, 14], [0, 5, 9, 13], [0, 2, 6, 10, 14],
@@ -6033,13 +6324,22 @@ LOFI_DRUM_FEELS = DillaLofiMachine::DRUM_PRESETS.keys.freeze
 DRUM_FILL_SETS = {
   snare: [
     [10, 11, 12, 13, 14, 15], [8, 9, 10, 11, 12, 14], [6, 8, 10, 12, 13, 14, 15],
-    [9, 10, 11, 12, 14, 15], [11, 12, 13, 14, 15], [8, 10, 12, 13, 14, 15]
+    [9, 10, 11, 12, 14, 15], [11, 12, 13, 14, 15], [8, 10, 12, 13, 14, 15],
+    # Every fill above accelerates into the turn -- the run gets denser as it
+    # approaches 15, which is the one gesture a drum machine reaches for first.
+    # These do something else with the same eight steps: a fill that thins out
+    # instead (the bar emptying rather than filling), one that stutters a single
+    # step, and one built out of triplets against the sixteenths.
+    [8, 9, 10, 12, 14], [8, 10, 12, 15], [12, 13, 15],
+    [9, 12, 15], [8, 11, 14], [10, 13, 15], [8, 9, 11, 12, 14, 15]
   ],
   kicks: [
-    [12, 13, 14, 15], [10, 12, 14, 15], [8, 10, 12, 14, 15], [13, 14, 15], [11, 13, 15]
+    [12, 13, 14, 15], [10, 12, 14, 15], [8, 10, 12, 14, 15], [13, 14, 15], [11, 13, 15],
+    [8, 11, 14], [10, 13], [9, 12, 15], [8, 9, 12, 13, 15]
   ],
   ghosts: [
-    [13, 14, 15], [11, 13, 15], [12, 14, 15], [10, 12, 14, 15]
+    [13, 14, 15], [11, 13, 15], [12, 14, 15], [10, 12, 14, 15],
+    [9, 11, 13, 15], [8, 10, 13], [11, 12, 14], [8, 9, 10, 11, 12, 13, 14, 15]
   ],
 }.freeze
 
@@ -6702,6 +7002,106 @@ CHORD_PROGRESSIONS = {
   # 13th. Written for the slow FlyLo presets (flylo_massage, flylo_flamagra)
   # where four changes in a bar would crowd the space they leave.
   sus_thirteen_hypnosis: %w[F7sus Ebmaj13],
+
+  # ==========================================================================
+  # Devices the table did not have (2026-07-30). Named for the shape the ear
+  # hears rather than the textbook term -- the textbook term is in the comment,
+  # which is where it belongs, because nobody choosing a progression to render
+  # is thinking "I would like a chromaticised descending tetrachord ostinato".
+  #
+  # Three of these could not have been written before today: dim, dim7, aug and
+  # maj7#5 had no template and no suffix, so every symbol using one resolved to
+  # nil and was dropped on the floor. The symmetrical chords are the pivots --
+  # the notes that let harmony change key without asking permission -- and the
+  # table had 227 progressions and not one of them.
+  # ==========================================================================
+
+  # :andalusian_fall already holds the bare i-bVII-bVI-V descent. This is the
+  # mode it implies, stated outright: the second time down, the bVI is replaced
+  # by the bII, the note that makes Phrygian Phrygian, so the fall lands a
+  # semitone above home instead of a whole tone. Flamenco, and half of Turkish
+  # and Arab-Andalusian song, live in the gap between those two versions.
+  phrygian_dominant_descent: %w[Am9 Gmaj9 Fmaj9 E7b9 Am9 Fmaj9 Bbmaj9 E7b9],
+  # The same descent written as a ground bass: D-C#-C-B-Bb-A, a semitone at a
+  # time under held upper voices. Purcell, Bach's Crucifixus, "Hotel
+  # California", every Baroque lament -- the oldest device in this file, and the
+  # reason a chromatic bass reads as grief rather than as chromaticism.
+  lament_ground: %w[Dm9 Dm9/C# Dm9/C Dm9/B Bbmaj9 Gm9 A7b9 Dm9],
+  # C major and Ab minor share exactly one note and no key. The "hexatonic
+  # pole" -- the most distant pair triadic harmony can reach while still moving
+  # every voice by a single step. It does not modulate and it does not resolve;
+  # it just opens a door onto a room that should not be there.
+  hexatonic_pole_shiver: %w[Cmaj9 Abm9 Cmaj9 Abm9],
+  # The full ring that pole sits on: major, its parallel minor, down a major
+  # third, again, again, home. Six stations, every move a single voice by a
+  # semitone, and after six you are back where you started having passed
+  # through three keys. A staircase that closes on itself.
+  hexatonic_cycle_ring: %w[Cmaj9 Cm9 Abmaj9 Abm9 Emaj9 Em9 Cmaj9 Cm9],
+  # One root, seven chords, each a shade brighter than the last: half-diminished,
+  # minor, minor eleventh, suspended, dominant, major, then the raised fourth on
+  # top. The modal brightness order (locrian through lydian) heard as a single
+  # sunrise rather than as seven separate scales, because nothing moves but the
+  # light.
+  dawn_ladder: %w[Cm7b5 Cm9 Cm11 C7sus C7 Cmaj9 Cmaj7#11],
+  # The diminished seventh as a stepping stone: I, the chord a semitone above
+  # it that belongs to no key at all, then ii-V home. Ragtime, stride, and
+  # every gospel pianist's way of getting from one chord to the next one up.
+  dim_stepping_stone: %w[Cmaj9 C#dim7 Dm9 G13],
+  # A sixth chord and the diminished seventh a semitone below it, traded back
+  # and forth. Barry Harris taught this as one eight-note scale rather than two
+  # chords, and that is what it sounds like: harmony that moves without ever
+  # leaving.
+  sixth_diminished_wheel: %w[C6 Bdim7 C6 Fmaj9 C6 Bdim7 Dm9 G13],
+  # The augmented triad divides the octave into three equal parts, so it
+  # belongs to no key and every key -- one chord that can turn the music
+  # anywhere. Used here as a hinge between C major and its flat submediant.
+  augmented_hinge: %w[Cmaj9 Caug Fmaj9 Fm9 Cmaj9 Abmaj9 Caug Cmaj9],
+  # Lydian augmented: a major seventh with both the fourth and the fifth raised.
+  # Two notes out of the key, no dominant anywhere, and it still sounds settled
+  # -- the chord that made mid-century film harmony sound like weather.
+  lydian_augmented_haze: %w[Cmaj9 Cmaj7#5 Fmaj7#11 Dm9 Gmaj9 Cmaj7#5 Am9 Cmaj9],
+  # :coltrane_thirds_arc cuts the octave into three. This cuts it into four --
+  # minor thirds, the diminished axis -- each station reached by its own
+  # dominant. Four keys in eight bars and no two of them adjacent, so the ear
+  # gives up tracking the key and starts hearing the motion itself.
+  four_station_orbit: %w[Cmaj9 Eb7 Ebmaj9 Gb7 Gbmaj9 A7 Amaj9 G7],
+  # Half-diminished into an altered dominant that never lands. A hundred and
+  # fifty years of unresolved longing rendered as four bars that loop.
+  longing_unresolved: %w[Fm7b5 E7b9 Am9 Fm7b5 E7b9 Am9 Dm9 E7b9],
+  # The Neapolitan (bII) walked all the way to its other use: as a flat-sixth
+  # dominant, the tritone substitute, which is the same chord heard from the
+  # other side. The door and the door frame.
+  neapolitan_door: %w[Cm9 Dbmaj9 Abmaj9 G7alt Cm9 Fm9 Db13 Cm9],
+  # A chain of fifths where every dominant is replaced by the chord a tritone
+  # away, so the roots fall by semitone instead of by fifth while the voices
+  # keep the same pull. The long way down that arrives at the same place.
+  sub_ladder_down: %w[Dm9 Db9 Cmaj9 B9 Bbmaj9 A7alt Abmaj9 G13],
+  # One shape sliding: the same major-ninth voicing walked up four steps and
+  # back down, no key, no function, only parallel motion. Debussy's planing --
+  # harmony used as colour rather than as grammar.
+  parallel_ninth_tide: %w[Ebmaj9 Fmaj9 Gbmaj9 Abmaj9 Gbmaj9 Fmaj9 Ebmaj9 Dbmaj9],
+  # Two major sevenths a fifth apart, rocking, and then the slow minor walk
+  # home. Nothing in it is unusual; the tempo and the space are the whole idea.
+  slow_pendulum_major: %w[Gmaj9 Dmaj9 Gmaj9 Bm9 Em9 Am9 Dmaj9 Gmaj9],
+  # A tonic that never moves and upper structures that do all the travelling.
+  # Water that looks still because only the surface is moving.
+  still_water_pedal: %w[Cmaj9 G7sus/C Cmaj9 Dm9/C Cmaj9 Fmaj9/C Cmaj9 G7sus/C],
+  # Bitonal pedal: a C minor bass with triads a tritone and a minor third above
+  # it laid on top. Two keys sounding at once and neither of them winning.
+  two_moons_pedal: %w[Cm9 Gbmaj9/C Cm9 Abmaj9/C Cm9 Ebmaj9/C Cm9 Gbmaj9/C],
+  # A minor arc that ends on the major third of its own tonic -- the Picardy
+  # third, which for two hundred years was simply how a minor piece was allowed
+  # to stop. The window opening on the last bar.
+  picardy_window: %w[Am9 Dm9 Fmaj9 Em9 Am9 Dm9 E7b9 Amaj9],
+  # Every dominant suspended, resolving only into the next suspension, all the
+  # way round the circle of fourths. Bells, not cadences.
+  bell_chain_of_fifths: %w[Am9 D7sus Gmaj9 C7sus Fmaj9 Bb7sus Ebmaj9 Ab7sus],
+  # bVII-IV-I twice over: the plagal cadence applied to itself, so the music
+  # keeps arriving home from one step further out. No leading tone anywhere.
+  double_plagal_open: %w[Bb7 Fmaj9 Cmaj9 Cmaj9 Bb7 Fmaj9 Gmaj9 Cmaj9],
+  # Dorian with the window open: the minor tonic and the major fourth that only
+  # Dorian has, plus the relative major leaning in. Modal, but not static.
+  dorian_open_window: %w[Dm9 G13 Cmaj9 Am9 Dm9 Em9 G13 Dm9],
 }.merge(EXTENDED_PROGRESSIONS).freeze
 
 
@@ -6929,6 +7329,65 @@ TRACK_PRESETS = {
     bpm: 86, progression: :fugue_conversation_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, quintuplet: true, voicing: :spread,
     timing: { snare: -24..-8, hat_up: 14..30, bass: 22..42, kick_anchor: 0..5, pad: 2..14 }
+  },
+
+  # ==========================================================================
+  # One track per dance feel (2026-07-30). A DRUM_PATTERN_SETS entry that no
+  # preset names is only reachable by setting FEEL by hand, and a progression
+  # that no preset names is only reachable by setting PROGRESSION by hand;
+  # these pair each new grid with a new harmony so both arrive by TRACK=name,
+  # show up in the medley, and can be listened to instead of read.
+  #
+  # The tempos are the tradition's own, not the file's usual 84-96 -- a two-step
+  # at 90 is not a two-step -- and the swing is deliberately low across all of
+  # them. The Dilla lean and a dance floor want opposite things from the same
+  # sixteenth: one wants it late and human, the other wants it exactly where the
+  # foot already is.
+  # ==========================================================================
+  two_step: {
+    bpm: 134, progression: :dorian_open_window, chord_bars: 2, phrase_bars: 8, swing: 56,
+    feel: :two_step, stereo_pan: true, voicing: :rootless,
+    timing: { snare: -8..0, hat_up: 6..16, bass: 4..12, kick_anchor: 0..2, pad: 0..8 }
+  },
+  broken_beat: {
+    bpm: 128, progression: :sub_ladder_down, chord_bars: 2, phrase_bars: 8, swing: 58,
+    feel: :broken_beat, stereo_pan: true, voicing: :quartal,
+    timing: { snare: -12..-2, hat_up: 8..20, bass: 6..18, kick_anchor: 0..4, pad: -4..8 }
+  },
+  amapiano_offbeat: {
+    bpm: 112, progression: :still_water_pedal, chord_bars: 4, phrase_bars: 8, swing: 52,
+    feel: :amapiano_offbeat, stereo_pan: true, sidechain: true, voicing: :spread,
+    timing: { snare: -6..2, hat_up: 4..12, bass: 2..10, kick_anchor: 0..2, pad: 0..10 }
+  },
+  dembow: {
+    bpm: 96, progression: :phrygian_dominant_descent, chord_bars: 2, phrase_bars: 8, swing: 50,
+    feel: :dembow, stereo_pan: true, voicing: :close,
+    timing: { snare: -4..2, hat_up: 2..10, bass: 0..8, kick_anchor: 0..2, pad: 0..6 }
+  },
+  tresillo_house: {
+    bpm: 122, progression: :double_plagal_open, chord_bars: 2, phrase_bars: 8, swing: 52,
+    feel: :tresillo_house, stereo_pan: true, sidechain: true, voicing: :quartal,
+    timing: { snare: -6..0, hat_up: 4..12, bass: 2..10, kick_anchor: 0..2, pad: 0..8 }
+  },
+  disco_boogie: {
+    bpm: 118, progression: :bell_chain_of_fifths, chord_bars: 2, phrase_bars: 8, swing: 50,
+    feel: :disco_boogie, stereo_pan: true, sidechain: true, voicing: :drop2,
+    timing: { snare: -4..2, hat_up: 2..8, bass: 0..6, kick_anchor: 0..2, pad: 0..6 }
+  },
+  batucada: {
+    bpm: 104, progression: :picardy_window, chord_bars: 2, phrase_bars: 8, swing: 54,
+    feel: :batucada, stereo_pan: true, voicing: :bill_evans,
+    timing: { snare: -10..-2, hat_up: 6..14, bass: 4..14, kick_anchor: 0..3, pad: 0..10 }
+  },
+  footwork_triplet: {
+    bpm: 160, progression: :hexatonic_cycle_ring, chord_bars: 4, phrase_bars: 8, swing: 50,
+    feel: :footwork_triplet, stereo_pan: true, voicing: :cluster,
+    timing: { snare: -4..2, hat_up: 2..8, bass: 0..6, kick_anchor: 0..2, pad: 0..6 }
+  },
+  afrobeats_pocket: {
+    bpm: 104, progression: :parallel_ninth_tide, chord_bars: 2, phrase_bars: 8, swing: 55,
+    feel: :afrobeats_pocket, stereo_pan: true, voicing: :spread,
+    timing: { snare: -8..0, hat_up: 6..14, bass: 4..14, kick_anchor: 0..3, pad: 0..10 }
   },
 }.freeze
 INDUSTRIAL_BPM_DEFAULT = 132.0
@@ -7913,6 +8372,157 @@ end
 def chords
   PAD_CHORDS.each_with_index { |chord, number| puts "%02d %s %s" % [number + 1, chord[:name], chord[:hz].map { |frequency| frequency.round(2) }.join(" ")] }
 end
+
+# Does every chord symbol the tables name actually come back as that chord?
+#
+# Nothing downstream asks. resolve_pad_chord_symbol answers nil on a symbol it
+# cannot build and progression_for's filter_map drops it without a word, so a
+# progression can render a chord short forever; and a symbol that resolves to
+# the WRONG notes never even loses a chord, it just sounds subtly incorrect in
+# a way no gate measures. Both failures were live when this was written:
+#
+#   Abdim          nil -- chromatic_descent_sixteen's bass walk had a hole in it
+#   C7#9 Hendrix   a minor third and a b9: Cm7b9 under the Hendrix chord's name
+#   D/E            no F#, so the "9" in the E9sus4 it is documented as was gone
+#   Fm11           a b9 where the fifth goes (six-note gem voicing, top 5 kept)
+#   G13            no fifth, no D, an added 9 instead -- in 11 progressions
+#   Eb9            root doubled where the b7 belongs, so a triad with a ninth
+#
+# The rule is DillaLofiMachine::CORE_TONES: the intervals that, if absent, make
+# the symbol name a different chord. A slash chord is judged more leniently on
+# purpose -- trim_slash_voicing spends one of five voices on the bass note and
+# drops a chord tone (nearly always the fifth) to make room, which is the
+# ordinary jazz omission and not a defect.
+def chord_check
+  tables = {
+    "CHORD_PROGRESSIONS" => CHORD_PROGRESSIONS.transform_values { |v| Array(v) },
+    "ARTIST_VERIFIED" => ARTIST_VERIFIED_PROGRESSIONS.to_h { |k, v| [k, Array(v[:chords])] },
+  }
+  seen = {}
+  tables.each_value { |progs| progs.each { |name, syms| syms.each { |s| (seen[s] ||= []) << name } } }
+  # The named voicing tables are checked too: four of the six bugs above were
+  # hand-written entries in them, not parser output.
+  (PAD_CHORD_LOOKUP.keys + DillaLofiMachine::CHORD_VOICINGS.keys).each { |s| seen[s] ||= [] }
+
+  errors = []
+  thin = []
+  seen.keys.sort.each do |sym|
+    chord = resolve_pad_chord_symbol(sym)
+    if chord.nil? || Array(chord[:hz]).empty?
+      errors << [sym, "does not resolve", seen[sym]]
+      next
+    end
+    base = DillaLofiMachine.normalize_chord_symbol(sym)
+    slash = base.include?("/")
+    upper = slash ? base.split("/", 2).first.strip : base
+    m = upper.match(/\A([A-G][#b]?)(.*)\z/) or next
+    want = DillaLofiMachine::CORE_TONES[m[2].sub(/low\z/i, "")] or next
+    root = DillaLofiMachine::NOTE_PC[m[1]] or next
+    got = Array(chord[:hz]).map { |h| DillaLofiMachine.pitch_class_of(h) }.uniq
+    absent = want.reject { |iv| got.include?((root + iv) % 12) }
+    next if absent.empty?
+    names = absent.map { |iv| INTERVAL_NAMES.fetch(iv % 12, iv.to_s) }.join(", ")
+    # One omission in a slash chord is the voice the bass note took.
+    (slash && absent.length == 1 ? thin : errors) << [sym, "missing #{names}", seen[sym]]
+  end
+
+  (thin + errors).each do |sym, why, used_by|
+    where = used_by.empty? ? "voicing table" : used_by.first(3).join(", ")
+    puts format("%-6s %-16s %-28s %s", errors.include?([sym, why, used_by]) ? "BROKEN" : "thin", sym, why, where)
+  end
+  puts "#{seen.size} symbols checked, #{errors.length} broken, #{thin.length} thin (slash-chord omission)"
+  errors.length
+end
+
+# The same question asked of the melodic figures: does every builder in the
+# table actually produce a usable line for every chord size it will be handed?
+#
+# arp_degrees_for calls these blind -- `builder.call(tone_count)` with whatever
+# the chord happens to have -- and takes the result modulo the tone count, so a
+# builder that returns an empty array, a nil, or the same degree over and over
+# does not raise. It renders. As a held note, or as silence, in the middle of a
+# track, once, for one chord, on one render.
+def arp_check
+  problems = 0
+  ARP_PATTERN_BUILDERS.each do |name, builder|
+    (2..7).each do |tones|
+      raw = builder.arity >= 2 ? builder.call(tones, Random.new(9)) : builder.call(tones)
+      unless raw.is_a?(Array) && raw.any? && raw.all?(Integer)
+        puts format("BROKEN %-18s %d tones -> %s", name, tones, raw.inspect)
+        problems += 1
+        next
+      end
+      degrees = raw.map { |d| d % tones }
+      next if degrees.uniq.length > 1
+      puts format("FLAT   %-18s %d tones -> one pitch, %s", name, tones, degrees.first)
+      problems += 1
+    end
+  end
+  puts "#{ARP_PATTERN_BUILDERS.length} arp figures checked, #{problems} problem(s)"
+  problems
+end
+
+# And of the drum grids. A step outside 0..15 lands in the next bar or before
+# the start of this one; a role with no pattern at all takes drum_pattern_pick's
+# fetch straight to KeyError mid-render.
+def drum_check
+  problems = 0
+  DRUM_PATTERN_SETS.each do |feel, set|
+    %i[kicks snares ghosts hats].each do |role|
+      pool = set[role]
+      unless pool.is_a?(Array) && pool.any?
+        puts format("BROKEN %-20s %s: no patterns", feel, role)
+        problems += 1
+        next
+      end
+      pool.each do |steps|
+        stray = Array(steps).reject { |s| s.is_a?(Integer) && s.between?(0, 15) }
+        next if stray.empty?
+        puts format("BROKEN %-20s %s: step(s) outside the bar %s", feel, role, stray.inspect)
+        problems += 1
+      end
+    end
+    stray = Array(set[:opens]).reject { |s| s.is_a?(Integer) && s.between?(0, 15) }
+    next if stray.empty?
+    puts format("BROKEN %-20s opens: %s", feel, stray.inspect)
+    problems += 1
+  end
+  # A preset naming a feel or a progression that does not exist fails silently:
+  # drum_feel_key swallows the first into :default, and the second into whatever
+  # the fallback progression is.
+  TRACK_PRESETS.each do |track, preset|
+    if preset[:feel] && !DRUM_PATTERN_SETS.key?(preset[:feel])
+      puts format("BROKEN %-20s names feel :%s, which does not exist", track, preset[:feel])
+      problems += 1
+    end
+    # A preset's :progression is legal in either of two namespaces -- a key in
+    # the table, or the name of a generator (:planing, :negative_harmony and the
+    # rest of GENERATED_STYLES, which pad_progression routes before it ever
+    # consults the table). Checking only the first reports nine working presets
+    # as broken, which is worse than not checking at all.
+    prog = preset[:progression]
+    next unless prog
+    next if CHORD_PROGRESSIONS.key?(prog) || GENERATED_STYLES.include?(prog) || prog == :generated
+    puts format("BROKEN %-20s names progression :%s, which is neither a table entry nor a generator", track, prog)
+    problems += 1
+  end
+  puts "#{DRUM_PATTERN_SETS.length} drum feels and #{TRACK_PRESETS.length} presets checked, #{problems} problem(s)"
+  problems
+end
+
+# Chords, figures, grids. Everything the engine composes FROM, as opposed to
+# everything it composes -- the vocabulary rather than the sentences. Cheap
+# enough (no audio, no ffmpeg) to run on every change to any of the tables.
+def vocab_check
+  failures = chord_check + arp_check + drum_check
+  puts failures.zero? ? "vocabulary ok" : "#{failures} problem(s)"
+  exit(1) unless failures.zero?
+end
+
+INTERVAL_NAMES = {
+  0 => "root", 1 => "b9", 2 => "9", 3 => "b3", 4 => "3", 5 => "11",
+  6 => "b5", 7 => "5", 8 => "#5", 9 => "13", 10 => "b7", 11 => "maj7",
+}.freeze
 
 def study(kind, input = nil)
   input ||= prompt("audio path")
@@ -9672,11 +10282,20 @@ end
 # separate render pass or crossfade. Off by default (DRUM_STYLE_ALTERNATE=1
 # to enable) since it changes a track's core character; concrete_soul turns
 # it on via CONCRETE_SOUL_MIX.
+#
+# The feel it alternates INTO is now a choice rather than a constant. It was
+# hard-wired to :techno_house, which was the only dance grid that existed when
+# this was written; there are ten now, and "alternate the pattern vocabulary
+# every phrase" is a far more interesting instruction when the other vocabulary
+# can be two-step, dembow or batucada. DRUM_STYLE_ALTERNATE_FEEL names it; an
+# unknown name falls through drum_feel_key to :default rather than erroring, so
+# a typo costs a plain grid and not a render.
 def alternating_drum_feel(bar, phrase_bars, base_feel)
   return base_feel unless ENV.fetch("DRUM_STYLE_ALTERNATE", "0") != "0"
 
   length = phrase_bars.to_i.positive? ? phrase_bars.to_i : 8
-  (bar / length).even? ? base_feel : :techno_house
+  return base_feel if (bar / length).even?
+  ENV.fetch("DRUM_STYLE_ALTERNATE_FEEL", "techno_house").to_s.downcase.tr("-", "_").to_sym
 end
 
 SLASH_BASS_PROFILES = %i[
@@ -16360,6 +16979,9 @@ def help
 
     ANALYSIS & GRADE
       scan | ears | verify | study | grade | grade_list | chords
+      vocab-check                  Chord symbols, arp figures and drum grids — no audio, ~1s.
+                                   Every chord resolves to the chord it is named after, every
+                                   arp builder returns a real line, every grid fits its bar.
 
     COMPOSITION (session in #{DillaComposition::PROJECT_DIR})
       jam [bars]                   Render + play with fresh session (motifs, performers, arrangement)
@@ -20396,6 +21018,7 @@ FLAG_ENV = {
   "bit-depth" => "BIT_DEPTH", "pad-attack" => "PAD_ATTACK", "pad-release" => "PAD_RELEASE",
   "soul-enrich" => "SOUL_ENRICH", "seed-text" => "SEED_TEXT", "tempo-ramp" => "TEMPO_RAMP",
   "markov-drums" => "MARKOV_DRUMS", "groove-lock" => "GROOVE_LOCK", "spectral-arp" => "SPECTRAL_ARP",
+  "arp-idm-bias" => "ARP_IDM_BIAS", "arp-shape-bias" => "ARP_SHAPE_BIAS",
   "industrial-dark" => "INDUSTRIAL_DARK", "reharm-loop" => "REHARM_LOOP", "prime-grid" => "PRIME_GRID",
   "evolve-harmony-w" => "EVOLVE_HARMONY_W", "evolve-groove-w" => "EVOLVE_GROOVE_W",
   "sidechain-style" => "SIDECHAIN_STYLE",
@@ -20475,6 +21098,7 @@ DISPATCH = {
   "render" => -> { render(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
   "verify" => -> { verify(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
   "chords" => -> { chords },
+  "vocab-check" => -> { vocab_check },
   "clean" => -> { clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav")) },
   "stems" => -> { stems(*ARGV) },
   "study" => -> { study(ARGV.shift, ARGV.shift) },
