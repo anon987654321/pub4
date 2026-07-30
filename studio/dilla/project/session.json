@@ -1,8 +1,8 @@
 {
   "track": "neo_soul",
   "performer": "herbie",
-  "groove_dna": "endtroducing",
-  "generation": 55,
+  "groove_dna": "cosmogramma",
+  "generation": 56,
   "best_score": 68.13,
   "motifs": [
     {
@@ -57,16 +57,21 @@
       "bar": "48",
       "motif_id": "hook",
       "state": "A_prime"
+    },
+    {
+      "bar": "32",
+      "motif_id": "hook",
+      "state": "A_prime"
     }
   ],
   "tension_curve": [
-    0.1226,
-    0.094,
-    0.6896,
-    0.6783,
-    0.7481,
-    0.65,
-    0.3059,
+    0.074,
+    0.0707,
+    0.7397,
+    0.638,
+    0.7415,
+    0.7104,
+    0.2886,
     0.05
   ],
   "arrangement": [
@@ -101,6 +106,102 @@
     {
       "bar": "7",
       "section": "verse"
+    },
+    {
+      "bar": "8",
+      "section": "hook"
+    },
+    {
+      "bar": "9",
+      "section": "hook"
+    },
+    {
+      "bar": "10",
+      "section": "hook"
+    },
+    {
+      "bar": "11",
+      "section": "hook"
+    },
+    {
+      "bar": "12",
+      "section": "verse"
+    },
+    {
+      "bar": "13",
+      "section": "verse"
+    },
+    {
+      "bar": "14",
+      "section": "verse"
+    },
+    {
+      "bar": "15",
+      "section": "verse"
+    },
+    {
+      "bar": "16",
+      "section": "bridge"
+    },
+    {
+      "bar": "17",
+      "section": "bridge"
+    },
+    {
+      "bar": "18",
+      "section": "bridge"
+    },
+    {
+      "bar": "19",
+      "section": "bridge"
+    },
+    {
+      "bar": "20",
+      "section": "solo"
+    },
+    {
+      "bar": "21",
+      "section": "solo"
+    },
+    {
+      "bar": "22",
+      "section": "solo"
+    },
+    {
+      "bar": "23",
+      "section": "solo"
+    },
+    {
+      "bar": "24",
+      "section": "breakdown"
+    },
+    {
+      "bar": "25",
+      "section": "breakdown"
+    },
+    {
+      "bar": "26",
+      "section": "breakdown"
+    },
+    {
+      "bar": "27",
+      "section": "breakdown"
+    },
+    {
+      "bar": "28",
+      "section": "hook"
+    },
+    {
+      "bar": "29",
+      "section": "hook"
+    },
+    {
+      "bar": "30",
+      "section": "hook"
+    },
+    {
+      "bar": "31",
+      "section": "hook"
     }
   ],
   "critique_log": [
