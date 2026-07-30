@@ -11,7 +11,7 @@
   $border: #46435a,
   $accent: #7c6fd6,
   $accent-hover: #9686e8,
-  $danger: #d1594a,
+  $danger: #e46151,
   $c-text: oklch(86% 0.02 300),
   $c-accent: oklch(78% 0.10 300),
   $c-danger: oklch(60% 0.14 35),
@@ -64,7 +64,7 @@
   $border: #d4d1de,
   $accent: #5b4fc4,
   $accent-hover: #4a3fb0,
-  $danger: #d1594a
+  $danger: #a9483c
 ) {
   --bg: #{$bg};
   --surface: #{$surface};
@@ -93,7 +93,7 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #8c7a5e;
   --accent-hover: #6f6149;
-  --danger: #d1594a;
+  --danger: #a7473b;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-card: 14px;
@@ -112,7 +112,7 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #a38b6f;
   --accent-hover: #8c7a5e;
-  --danger: #d1594a;
+  --danger: #ea6453;
 }
 
 // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
@@ -133,7 +133,7 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #f2f2f2;
   --accent-hover: #d0d0d0;
-  --danger: #d1594a;
+  --danger: #e46151;
   --font: Arial, Helvetica, sans-serif;
   --chrome-bg: #0d0d0d;
   --radius-xs: 4px;
@@ -162,7 +162,7 @@
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
   --accent: #1a1a1a;
   --accent-hover: #000000;
-  --danger: #d1594a;
+  --danger: #b24c3f;
   --font: Arial, Helvetica, sans-serif;
   --chrome-bg: #333333;
   --radius-xs: 4px;
@@ -183,6 +183,15 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  // How far every corner-anchored piece of chrome sits from its corner: the
+  // top-left city brand, the top-right theme control, the bottom-right chat
+  // widget. They were each written separately and no two agreed -- the brand at
+  // max(0.5rem, safe-top) / max(0.75rem, safe-left), the toggle at
+  // calc(0.75rem + safe), the chat widget flush against the edge -- so the four
+  // corners of the same screen were inset 8px, 12px and 0px. The max() form also
+  // means the inset does not survive a safe area: on a notched phone the brand
+  // sat hard against the safe edge while the toggle kept its 12px.
+  --chrome-inset: 0.75rem;
   --surface2: var(--surface-elevated);
   --text-dim: var(--text-secondary);
   --radius: var(--radius-card);

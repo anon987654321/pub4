@@ -113,8 +113,12 @@ a.brgen-logo-mark,
 .brgen-logo-mark {
   position: fixed;
   z-index: calc(var(--z-chrome, 10) + 1);
-  top: max(0.5rem, env(safe-area-inset-top, 0px));
-  inset-inline-start: max(0.75rem, env(safe-area-inset-left, 0px));
+  /* Same corner inset as the theme control and the chat widget, and additive
+     over the safe area rather than max()'d against it -- see --chrome-inset.
+     This was 0.5rem top / 0.75rem start, so the brand sat 4px higher than the
+     toggle opposite it and lost its inset entirely on a notched phone. */
+  top: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -149,13 +153,18 @@ a.brgen-logo-mark,
   background: transparent !important;
 }
 
+/* :focus-visible is deliberately NOT in this list. It used to be, and because
+   `a.brgen-logo-mark:focus-visible` (0,2,1) outranks the design system's
+   `.brgen-logo-mark:focus-visible` (0,2,0), the wordmark was the one nav element
+   in brgen with no keyboard focus ring at all — keyboard_flow reported it on
+   both /core and /marketplace. The intent here is "no chrome around the
+   wordmark", which `:focus:not(:focus-visible)` expresses without also
+   suppressing the keyboard indicator. */
 a.brgen-logo-mark:hover,
-a.brgen-logo-mark:focus,
-a.brgen-logo-mark:focus-visible,
+a.brgen-logo-mark:focus:not(:focus-visible),
 a.brgen-logo-mark:active,
 .brgen-logo-mark:hover,
-.brgen-logo-mark:focus,
-.brgen-logo-mark:focus-visible,
+.brgen-logo-mark:focus:not(:focus-visible),
 .brgen-logo-mark:active {
   background: transparent !important;
   border: none !important;
@@ -164,6 +173,18 @@ a.brgen-logo-mark:active,
   text-decoration: none;
   color: var(--text);
   opacity: 0.85;
+}
+
+/* Keyboard focus keeps the wordmark's flat look but shows the ring. */
+a.brgen-logo-mark:focus-visible,
+.brgen-logo-mark:focus-visible {
+  background: transparent !important;
+  border: none !important;
+  text-decoration: none;
+  color: var(--text);
+  opacity: 0.85;
+  outline: var(--focus-ring, 2px solid var(--accent)) !important;
+  outline-offset: 2px;
 }
 
 /* One brand surface only — fixed mark is canonical. */

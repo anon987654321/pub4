@@ -96,8 +96,8 @@
 /* Theme control — icon only, no circular sphere/chip behind it. */
 .theme-toggle {
   position: fixed;
-  top: calc(0.75rem + var(--safe-top, 0px));
-  inset-inline-end: calc(0.75rem + var(--safe-right, 0px));
+  top: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
+  inset-inline-end: calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px));
   z-index: 110;
   width: 44px;
   height: 44px;
@@ -143,15 +143,17 @@ section h2 {
   border-radius: 0;
 }
 
-/* Fleet nearby/chat bar — flush to the bottom-right edge (safe-area only). */
-/* Clears the tab bar rather than sitting on it. Flush to the corner meant the
+/* Fleet nearby/chat bar — bottom-right, inset by --chrome-inset like the brand
+   and the theme control. It used to sit flush against the edge while those two
+   kept 12px, so the same screen had its corners spaced three different ways.
+   Clears the tab bar rather than sitting on it: flush to the corner meant the
    tab overlapped the bar's last item on every surface that has one. Verticals
-   that hide the tab bar zero the variable, so the widget drops back to the
-   true corner there. */
+   that hide the tab bar zero the variable, so the widget keeps only the corner
+   inset there. */
 .nearby-chat-widget {
   position: fixed;
-  bottom: calc(var(--tab-bar-h, 0px) + var(--safe-bottom, 0px));
-  inset-inline-end: var(--safe-right, 0px);
+  bottom: calc(var(--tab-bar-h, 0px) + var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px));
+  inset-inline-end: calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px));
   z-index: var(--z-toast, 1100);
   font-family: var(--font-mono, ui-monospace, monospace);
   pointer-events: auto;

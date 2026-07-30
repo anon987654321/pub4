@@ -46,7 +46,11 @@ body.vertical-maps .map-hud {
   /* Clear the fixed city brand — it sat on the left edge of #map-search, so a
      tap meant for the search box navigated home instead. See
      --brand-mark-inline in _root.scss. */
-  inset-inline-start: max(var(--brand-mark-inline), env(safe-area-inset-left));
+  /* Additive, matching the brand it clears: the brand is now offset by the safe
+     area rather than max()'d against it, so a max() clearance here would stop
+     clearing it on a notched phone in landscape -- exactly the overlap the
+     comment below describes, back again on the devices that have a safe area. */
+  inset-inline-start: calc(var(--brand-mark-inline) + var(--safe-left, 0px));
   inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
   z-index: var(--z-app);
   display: flex;
