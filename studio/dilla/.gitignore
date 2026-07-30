@@ -1,0 +1,5 @@
+.DS_Store
+
+# A/B comparison renders from master-chain work; regenerate, do not track.
+full_track_*.wav
+full_track_*.wav.quality.json

@@ -1,7 +1,6 @@
 #!/bin/sh
-# Dual-track: train Johann FLUX LoRA on Replicate (no RunPod SSH).
+# Thin wrapper: names the subject, then hands over to the shared toolkit.
 set -eu
-
-. "$(dirname -- "$0")/lib.sh"
-
-exec ruby "$SCRIPT_DIR/run_train_replicate.rb" "$@"
+SUBJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+export SUBJECT_DIR
+exec "$SUBJECT_DIR/../../../_toolkit/run_train_replicate.sh" "$@"

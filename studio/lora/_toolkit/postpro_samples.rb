@@ -11,7 +11,7 @@ require "shellwords"
 ROOT = Pathname.new(__dir__).expand_path.freeze
 LORA = ROOT.join("..", "..", "..").expand_path.freeze
 IMAGE_EXT = %w[.jpg .jpeg .png .webp].freeze
-SKIP_PREFIX = %w[johann_final_ hf_flux_].freeze
+SKIP_PREFIX = ["#{ENV.fetch("SUBJECT", "")}_final_", "hf_flux_"].freeze
 SKIP_SUFFIX = /(?:contact|grid|reel|_portrait|_cinematic|_quality_uplift|_blockbuster|_magic_hour|_postpro)\b/i
 
 def repo_root

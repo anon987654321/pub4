@@ -5,7 +5,7 @@ require "net/http"
 require "json"
 require "uri"
 
-FLUX_REPO = ENV.fetch("RAGNHILD_FLUX_MODEL", "black-forest-labs/FLUX.1-dev")
+FLUX_REPO = ENV.fetch("LORA_FLUX_MODEL", "black-forest-labs/FLUX.1-dev")
 FLUX_URL = "https://huggingface.co/#{FLUX_REPO}"
 TOKEN_PATHS = [
   File.expand_path("~/.cache/huggingface/token"),
@@ -29,7 +29,7 @@ def read_token
 end
 
 def local_flux_path
-  path = ENV.fetch("RAGNHILD_FLUX_MODEL_PATH", "").strip
+  path = ENV.fetch("LORA_FLUX_MODEL_PATH", "").strip
   path.empty? || !File.directory?(path) ? nil : path
 end
 
@@ -84,7 +84,7 @@ def main
   else
     warn "reason: HTTP #{index.code} #{index.body.to_s.strip[0, 200]}"
   end
-  warn "fix: or set RAGNHILD_FLUX_MODEL_PATH to local FLUX.1-dev"
+  warn "fix: or set LORA_FLUX_MODEL_PATH to local FLUX.1-dev"
   2
 end
 

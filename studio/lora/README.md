@@ -21,11 +21,38 @@ Replicate path (`run_train_replicate.rb`):
 
 1. Zips `dataset/` → `exports/ragnhild_dataset.zip`
 2. Uploads via Replicate Files API
-3. Trains `ostris/flux-dev-lora-trainer` → destination `$user/ragnhild-flux` (override with `RAGNHILD_REPLICATE_DEST`)
+3. Trains `ostris/flux-dev-lora-trainer` → destination `$user/ragnhild-flux` (override with `LORA_REPLICATE_DEST`)
 4. Polls until done (or `--async` + `REPLICATE_WEBHOOK_URL`)
 5. Pulls `output.weights` into `weights/ragnhild_v2/` when downloadable
 
 Requires `REPLICATE_API_TOKEN`. Dry-run: `./run_train_replicate.sh --dry-run`. Keep the private model private; do not publish person LoRAs publicly.
+
+## Toolkit layout
+
+The scripts live once, in `_toolkit/`, and every subject shares them. A subject
+directory holds only what is genuinely its own — `dataset/`, `sources/`,
+`prompts.yaml`, `train_<subject>.yaml`, `weights/` — plus a `subject.env` naming
+the three things that differ:
+
+```sh
+SUBJECT=johann
+MODEL=johann_v1
+TRIGGER=johann
+```
+
+The commands are unchanged: `training/<subject>/ai_toolkit/run_generate.sh` and
+friends are thin wrappers that export `SUBJECT_DIR` and hand over to `_toolkit/`.
+Run a `_toolkit/` script directly and it refuses, because it cannot know which
+subject you meant.
+
+This replaced a per-subject fork. `johann/ai_toolkit` was a byte-for-byte copy of
+`ragnhild/ai_toolkit` apart from the name, so the four path fixes the `studio/`
+move needed had to be made twice, with nothing to catch a missed copy.
+
+Environment knobs are `LORA_*` for every subject (`LORA_DEVICE`, `LORA_LR`,
+`LORA_PROMPT`, `LORA_FLUX_MODEL`, `LORA_REPLICATE_DEST`, …). They used to be
+`RAGNHILD_*` and `JOHANN_*`: a knob named after the subject is not a knob, since
+the subject is already chosen by which directory you are in.
 
 ## Status
 

@@ -3,9 +3,18 @@
 
 require "optparse"
 require "yaml"
+require "pathname"
 
-ROOT = File.expand_path(__dir__)
-BASE = File.join(ROOT, "train_ragnhild.yaml")
+# The subject is chosen by the wrapper that invoked this (see _toolkit/lib.sh):
+# SUBJECT_DIR points at studio/lora/training/<subject>/ai_toolkit, and
+# subject.env there names SUBJECT, MODEL and TRIGGER.
+SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
+MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script directly" }
+SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
+
+# Per-subject data lives with the subject, not with the shared toolkit.
+ROOT = SUBJECT_DIR.to_s
+BASE = File.join(ROOT, "train_#{SUBJECT}.yaml")
 PROMPTS = File.join(ROOT, "prompts.yaml")
 
 ALLOWED_DEVICES = %w[mps cuda cpu].freeze
@@ -17,9 +26,9 @@ def load_mapping(path)
 end
 
 def resolve_device
-  device = ENV.fetch("RAGNHILD_DEVICE", "mps").downcase
+  device = ENV.fetch("LORA_DEVICE", "mps").downcase
   unless ALLOWED_DEVICES.include?(device)
-    abort "warn: RAGNHILD_DEVICE must be one of: #{ALLOWED_DEVICES.join(', ')}"
+    abort "warn: LORA_DEVICE must be one of: #{ALLOWED_DEVICES.join(', ')}"
   end
   device
 end
@@ -29,8 +38,8 @@ def apply_device!(process)
   process["device"] = device
 
   model = process["model"]
-  if ENV.key?("RAGNHILD_LOW_VRAM")
-    low = ENV["RAGNHILD_LOW_VRAM"] != "0"
+  if ENV.key?("LORA_LOW_VRAM")
+    low = ENV["LORA_LOW_VRAM"] != "0"
     model["low_vram"] = low
     model["quantize"] = low
     return
@@ -49,9 +58,9 @@ def apply_device!(process)
     train["optimizer"] = "adamw"
     # bf16 on MPS can yield NaN loss; fp16 is more stable on Apple Silicon.
     train["dtype"] = "fp16"
-    train["lr"] = 1.0e-5 unless ENV.key?("RAGNHILD_LR")
+    train["lr"] = 1.0e-5 unless ENV.key?("LORA_LR")
     # M2 8 GB: single resolution bucket reduces VRAM churn.
-    process["datasets"].first["resolution"] = [512] unless ENV.key?("RAGNHILD_RESOLUTIONS")
+    process["datasets"].first["resolution"] = [512] unless ENV.key?("LORA_RESOLUTIONS")
   end
 end
 
@@ -62,7 +71,7 @@ def build(mode)
 
   process["training_folder"] = File.join(ROOT, "weights")
   process["datasets"].first["folder_path"] = File.join(ROOT, "dataset")
-  requested_prompt = ENV["RAGNHILD_PROMPT"].to_s.strip
+  requested_prompt = ENV["LORA_PROMPT"].to_s.strip
   # A direct request gets one exact prompt, while training keeps the curated suite.
   process["sample"]["prompts"] = requested_prompt.empty? ? prompts.fetch("prompts") : [requested_prompt]
   process["sample"]["neg"] = prompts.fetch("negative")

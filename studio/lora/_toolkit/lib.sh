@@ -1,13 +1,43 @@
 #!/bin/sh
 set -eu
 
+# One toolkit, any subject.
+#
+# This used to be copied per subject: johann/ai_toolkit was ~980 lines identical
+# to ragnhild/ai_toolkit apart from the name, verified by diffing the two with the
+# subject token normalised -- every file matched exactly. The cost was not the
+# disk, it was that a fix had to be made twice: moving lora/ to studio/lora/ broke
+# REPO_ROOT here, TOOLKIT_DIR and two curl URLs in setup_runpod.sh, and an
+# absolute path in watch_step250.sh, and each had to be repaired in both trees
+# with nothing to catch a missed copy.
+#
+# The subject now arrives as SUBJECT_DIR, set by the wrapper in each subject's
+# ai_toolkit/, and subject.env there names the three things that actually differ:
+# SUBJECT, MODEL, TRIGGER. Everything else is shared.
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-LORA_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
-REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../../../.." && pwd)"
+LORA_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
+
+if [ -z "${SUBJECT_DIR:-}" ]; then
+  echo "error: SUBJECT_DIR is not set — run a subject's wrapper, e.g." >&2
+  echo "       studio/lora/training/ragnhild/ai_toolkit/run_generate.sh --all" >&2
+  exit 1
+fi
+SUBJECT_DIR="$(CDPATH= cd -- "$SUBJECT_DIR" && pwd)"
+if [ ! -f "$SUBJECT_DIR/subject.env" ]; then
+  echo "error: no subject.env in $SUBJECT_DIR" >&2
+  exit 1
+fi
+# shellcheck disable=SC1091
+. "$SUBJECT_DIR/subject.env"
+: "${SUBJECT:?subject.env must set SUBJECT}"
+: "${MODEL:?subject.env must set MODEL}"
+TRIGGER="${TRIGGER:-$SUBJECT}"
+export SUBJECT MODEL TRIGGER SUBJECT_DIR
 
 AI_TOOLKIT_ROOT="${AI_TOOLKIT_ROOT:-$HOME/ai-toolkit}"
-DATASET_DIR="$SCRIPT_DIR/dataset"
-WEIGHTS_DIR="$SCRIPT_DIR/weights/ragnhild_v2"
+DATASET_DIR="$SUBJECT_DIR/dataset"
+WEIGHTS_DIR="$SUBJECT_DIR/weights/$MODEL"
 SAMPLES_DIR="$WEIGHTS_DIR/samples"
 
 CHECK_SCRIPT="$SCRIPT_DIR/check_hf_flux_access.rb"

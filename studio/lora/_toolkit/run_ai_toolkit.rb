@@ -16,7 +16,7 @@ if ENV["HF_TOKEN"] && !ENV["HUGGINGFACE_HUB_TOKEN"]
   ENV["HUGGINGFACE_HUB_TOKEN"] = ENV["HF_TOKEN"]
 end
 
-device = ENV.fetch("RAGNHILD_DEVICE", "mps").downcase
+device = ENV.fetch("LORA_DEVICE", "mps").downcase
 if device == "mps"
   # M2 8 GB: FLUX quantize/load needs unified memory past the default MPS cap.
   ENV["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] ||= "0.0"
