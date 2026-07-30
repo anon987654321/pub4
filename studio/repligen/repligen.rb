@@ -286,6 +286,14 @@ def infer_aspect_ratio(prompt, explicit, distance = nil)
   end
 end
 
+# The one diversity field a viewer who cannot see the image needs told: where
+# the subject is. Expression, pose and wardrobe are describable only by looking.
+def batch_background(index, batch_size)
+  return nil if batch_size <= 1
+
+  BACKGROUND_POOL[(index * POOL_STRIDES[:background]) % BACKGROUND_POOL.length]
+end
+
 def diversify(prompt, index, batch_size)
   return prompt if batch_size <= 1
 
@@ -337,8 +345,50 @@ def build_input(prompt, options, seed:, negative_prompt:)
   full.select { |key, _| cap[:input_keys].include?(key.to_s) }
 end
 
-def alt_text_for(prompt)
-  prompt.gsub(/,\s*/, ", ").strip[0, 240]
+# Alt text describes what is in the picture. It is not the prompt.
+#
+# This was the fully compiled, diversified prompt truncated to 240 characters,
+# which meant the accessibility text written into the shared gallery manifest
+# opened with "Kodak Portra 400 color negative scan, fine grain, gentle
+# highlight rolloff, 85mm portrait lens, compressed background, creamy bokeh"
+# and ran out of room before it reached the subject. Someone reading with a
+# screen reader got a film-stock datasheet.
+#
+# Emulsion, glass, weather and hour are how the image was made; a viewer who
+# cannot see it needs what it is OF. Subject, then how much of them is in frame,
+# then where they are.
+ALT_TEXT_FIELDS = %i[distance camera_height].freeze
+
+def alt_text_for(base_prompt, options = {}, background = nil)
+  parts = [base_prompt.to_s.strip]
+  ALT_TEXT_FIELDS.each { |field| parts << resolve_vocab(field, options[field]) }
+  parts << background
+  parts.compact.reject(&:empty?).join(", ").gsub(/,\s*/, ", ").strip[0, 240]
+end
+
+# Vocabulary that contradicts itself. Not fatal — a neon sign at midday is a
+# real photograph, and so is candlelight in an afternoon interior — but two
+# fields describing incompatible light is far more often a mistake than an
+# intention, and the model resolves it by picking one and ignoring the other
+# without saying which.
+VOCAB_CONFLICTS = [
+  [:lighting, %w[golden_hour], :time_of_day, %w[first_light dawn midday night midnight blue_hour]],
+  [:lighting, %w[candlelight firelight neon practical], :time_of_day, %w[morning midday afternoon]],
+  [:lighting, %w[overcast open_shade], :weather, %w[clear]],
+  [:lighting, %w[hard direct_flash], :weather, %w[fog haze downpour]],
+  [:lighting, %w[window golden_hour rembrandt split butterfly loop], :time_of_day, %w[midnight]],
+  [:weather, %w[snow frost aurora], :time_of_day, %w[golden_hour]],
+].freeze
+
+def warn_vocab_conflicts(options)
+  VOCAB_CONFLICTS.each do |field_a, values_a, field_b, values_b|
+    a = options[field_a]&.to_s&.downcase&.tr("- ", "__")
+    b = options[field_b]&.to_s&.downcase&.tr("- ", "__")
+    next unless a && b && values_a.include?(a) && values_b.include?(b)
+
+    warn "warn: --#{field_a.to_s.tr('_', '-')} #{a} and --#{field_b.to_s.tr('_', '-')} #{b} describe " \
+         "incompatible light; the model will honour one of them and not tell you which"
+  end
 end
 
 # Content-addressed so repeated downloads of the same output collapse to one
@@ -469,6 +519,23 @@ def vocab_check
   tuples = (0...20).map { |i| pools.map { |n, pool| pool[(i * POOL_STRIDES.fetch(n)) % pool.length] } }
   problems << "a batch of 20 produces only #{tuples.uniq.length} distinct combinations" if tuples.uniq.length < 20
 
+  # Conflict rules have to name fields and values that exist, or the warning
+  # they exist to raise silently never fires.
+  VOCAB_CONFLICTS.each do |field_a, values_a, field_b, values_b|
+    [[field_a, values_a], [field_b, values_b]].each do |field, values|
+      table = VOCABULARIES[field]
+      if table.nil?
+        problems << "VOCAB_CONFLICTS names field #{field}, which is not a vocabulary"
+        next
+      end
+      (values - table.keys).each { |v| problems << "VOCAB_CONFLICTS names #{field} #{v.inspect}, which is not in that vocabulary" }
+    end
+  end
+
+  # Alt text is built from these; a field that is not a vocabulary resolves to
+  # nothing and the gallery loses that part of its description.
+  (ALT_TEXT_FIELDS - VOCABULARIES.keys).each { |f| problems << "ALT_TEXT_FIELDS names #{f}, which is not a vocabulary" }
+
   problems.each { |line| puts "BROKEN #{line}" }
   counts = VOCABULARIES.map { |f, t| "#{f}=#{t.length}" }.join(" ")
   puts "#{counts}, #{MODEL_CAPABILITIES.length} models — #{problems.length} problem(s)"
@@ -486,6 +553,7 @@ when "generate"
   options[:aspect_ratio] = infer_aspect_ratio(options[:prompt], options[:aspect_ratio], options[:distance])
   client = options[:dry_run] ? nil : Master::Io::ReplicateClient.new
 
+  warn_vocab_conflicts(options)
   negative_prompt = compile_negative_prompt(options)
   # Say it out loud. The request is about to go out without the constraint the
   # rest of this file spends four functions assembling, and the only reason it
@@ -522,7 +590,7 @@ when "generate"
     client.download_url(urls.first, target)
     digest, = cache_blob(target, blob_cache_dir)
     sidecar = write_provenance(target, options[:prompt], varied, negative_prompt, options, seed, digest)
-    append_gallery_manifest(sidecar, alt_text_for(varied))
+    append_gallery_manifest(sidecar, alt_text_for(options[:prompt], options, batch_background(index, options[:batch])))
     maybe_handoff_postpro(target, options[:postpro])
     puts "ok: repligen generated #{target}"
     target
