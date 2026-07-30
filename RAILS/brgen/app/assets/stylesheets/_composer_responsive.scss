@@ -1,5 +1,36 @@
-/* Composer at phone width, and with motion turned down. Split out of
-   _composer.scss to keep each file under the auditor's 200-line rule. */
+/* Composer motion and breakpoints.
+   Split from _composer.scss to keep each file under the 200-line budget. The
+   animation and its prefers-reduced-motion guard must live in the SAME file:
+   css_constitution checks per file, so parking them apart reads as an animation
+   with no guard at all -- which is what the first attempt at this split
+   produced, and what the gate caught. */
+
+/* Slides down into place. The dialog is display:none until showModal(), so the
+   animation runs on open with no JS class toggling. */
+.composer[open] {
+  animation: composer-drop-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.composer[open]::backdrop {
+  animation: composer-backdrop-in 180ms ease-out;
+}
+
+@keyframes composer-drop-in {
+  from { transform: translateY(-24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes composer-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer[open],
+  .composer[open]::backdrop {
+    animation: none;
+  }
+}
 
 /* Full-bleed on phones, the way a native sheet behaves. */
 @media (max-width: 767px) {
@@ -11,13 +42,6 @@
     margin: 0;
     border: 0;
     border-radius: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .composer[open],
-  .composer::backdrop {
-    animation: none;
   }
 }
 

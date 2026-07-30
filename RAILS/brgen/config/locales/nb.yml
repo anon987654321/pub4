@@ -7,9 +7,10 @@ nb:
     compose_prompt: "Del noe spennende nå"
     compose_title: "Opprett innlegg"
     add_to_post: "Legg til i innlegget"
-    posting_as_guest: "Du poster som gjest"
+    posting_as_guest: "Anon"
     post_action: "Publiser"
     guest_hint: "Du poster som anon · %{limit} innlegg per nettleser"
+    guest_limit_why: "Grensen bremser spam uten å kreve konto."
     advanced_post: "Utvidet innlegg med bilde"
   nav:
     sign_in: "Logg inn"

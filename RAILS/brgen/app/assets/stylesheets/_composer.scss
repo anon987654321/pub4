@@ -54,36 +54,33 @@
   width: min(500px, calc(100vw - var(--space-4) * 2));
   max-height: min(90vh, 760px);
   padding: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong, var(--border));
   border-radius: var(--radius-md, var(--radius-sm));
-  background: var(--surface-elevated);
+  /* --surface-elevated sits a hair off the page value, which is right for a
+     card in the feed and wrong for a modal: against a dimmed backdrop the
+     composer read as a border with nothing inside it. The separation is the
+     surface value and a full-strength border -- no drop shadow, which
+     css_constitution.flat_ui refuses and which this design system does not
+     use anywhere else. */
+  background: var(--surface2, var(--surface-elevated));
   color: var(--text);
   overflow: hidden;
-  /* Sits high rather than dead-centre, so it lands under the cursor that opened
-     it instead of jumping to the middle of a tall screen. */
+  /* Sits high rather than dead-centre, so it lands nearer the trigger than the
+     middle of a tall screen.
+     inset-inline and margin-inline are both needed and neither is redundant:
+     margin-block alone replaced the UA's `margin: auto`, which is what was
+     centring it, and the dialog snapped to the left edge of a 1440px viewport
+     (measured at left: 0). Stating the inline axis explicitly means the block
+     axis can be overridden without taking the horizontal centring with it. */
+  inset-inline: 0;
+  margin-inline: auto;
   margin-block: 10vh auto;
 }
 
 .composer::backdrop {
   background: rgb(0 0 0 / 0.55);
-  animation: composer-backdrop-in 180ms ease-out;
 }
 
-/* Slides down into place. The dialog is display:none until showModal(), so the
-   animation runs on open with no JS class toggling. */
-.composer[open] {
-  animation: composer-drop-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
-}
-
-@keyframes composer-drop-in {
-  from { transform: translateY(-24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes composer-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 .composer-form {
   display: flex;
@@ -149,6 +146,34 @@
   font-size: var(--text-lg);
 }
 
+/* Anchored to the bottom of the writing area rather than floating in the
+   middle of it: the editor is min-height 120px, so an unattached toolbar sat
+   in ~90px of blank space belonging to neither the text nor the controls. */
+.composer-body .tiptap_toolbar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+  background: inherit;
+}
+
+/* Was --text-secondary at default weight against a dark surface: the B, the i
+   and the bullet were the dimmest thing in the dialog. */
+.composer-body .tiptap_btn {
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: var(--text-md, 1rem);
+}
+
+.composer-body .tiptap_btn:hover { background: var(--hover); }
+
 .composer-attach {
   display: flex;
   align-items: center;
@@ -177,9 +202,7 @@
   font-size: var(--text-sm, 0.875rem);
 }
 
-.composer .compose-hint details summary {
-  cursor: pointer;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
+.composer .compose-hint p {
+  margin: 0 0 var(--space-1, 0.25rem);
 }
+
