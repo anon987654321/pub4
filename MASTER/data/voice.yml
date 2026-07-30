@@ -16,8 +16,13 @@ tts:
   # persona's own). -20Hz was Ryan's tuning; the anchor persona that owns the
   # Pernille voice is tuned -8%/+8Hz, so carry that here rather than shifting
   # a different voice down by a value picked for en-GB.
-  default_rate: "-8%"
-  default_pitch: "+8Hz"
+  # Smoothed for comfortable long-form listening: slower than the persona's own
+  # -8% and with the +8Hz lift removed, since that lift is what reads as edge on
+  # sustained speech. Both stay well inside the range Azure neural voices render
+  # cleanly (roughly +-15% rate / +-50Hz pitch) — see the malay persona's note on
+  # what -32%/-180Hz did to the engine.
+  default_rate: "-12%"
+  default_pitch: "+0Hz"
 
 voice:
   style: openbsd_dmesg

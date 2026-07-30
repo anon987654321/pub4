@@ -15,8 +15,8 @@ module Master
         "neural" => "nb-NO-PernilleNeural",
         "persona_affects_text_only" => true,
         "stream_live_default" => false,
-        "default_rate" => "-8%",
-        "default_pitch" => "+8Hz",
+        "default_rate" => "-12%",
+        "default_pitch" => "+0Hz",
       }.freeze
 
       module_function
