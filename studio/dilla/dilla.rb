@@ -4559,6 +4559,10 @@ def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: ni
       filt << convolution_reverb_filter("darkened", ir_input_idx, mix: cfg[:style_family] == :flylo ? 0.22 : 0.16, out_tag: "reverbed")
       reverb_out = "reverbed"
     end
+    if analog_smooth_enabled?
+      filt << analog_smooth_filter(reverb_out, out_tag: "smoothed")
+      reverb_out = "smoothed"
+    end
   if duration && !(camel_mode? && ENV.fetch("CAMEL_NO_BREAK", "1") != "0")
     filt << break_filter(reverb_out, duration, out_tag: "broke")
     filt << build_up_filter_enhanced("broke", duration, out_tag: "built")
@@ -4588,6 +4592,12 @@ def master_bus_filters_enhanced(input_tag, cfg:, duration: nil, ir_input_idx: ni
   if ir_input_idx && !(camel_mode? && ENV.fetch("CAMEL_NO_REVERB", "1") != "0")
     filt << convolution_reverb_filter(reverb_out, ir_input_idx, mix: 0.12, out_tag: "reverbed")
     reverb_out = "reverbed"
+  end
+  if analog_smooth_enabled?
+    # After the tape and analog-emulation stages, not instead of them: those
+    # colour the mix, this one takes the edges off whatever they produced.
+    filt << analog_smooth_filter(reverb_out, out_tag: "smoothed")
+    reverb_out = "smoothed"
   end
   # break_filter bitcrushes + silences mid-track — kills pads/leads. Off on Camel.
   if duration && !(camel_mode? && ENV.fetch("CAMEL_NO_BREAK", "1") != "0")
@@ -8478,6 +8488,54 @@ end
 # Darker/deeper tonal color: gentle high rolloff (less brightness/major
 # "shimmer") plus a bit more low-mid weight — moodier without changing any
 # chord quality, on top of the STREAM_TRACKS rotation now leaning minor.
+def analog_smooth_enabled?
+  ENV.fetch("ANALOG_SMOOTH", "1") != "0"
+end
+
+# Round off the two extremes the way a tape machine and a transformer do, rather
+# than the way a filter does.
+#
+# The chain already had a brick lowpass in mood_darken_filter and a limiter at
+# the end, which is not the same thing: a lowpass removes the top instead of
+# softening it, and a limiter flattens peaks without touching what makes them
+# harsh. What was left over at both ends is what a mix engineer takes out by
+# hand -- subsonic rumble under the kick that eats headroom and makes the low end
+# read as flab rather than weight, and the 3 kHz shelf where a synthesised lead
+# and a sampled hat both live, which is where "digital" is actually heard.
+#
+# So, from the bottom up: a two-pole highpass at 30 Hz for the rumble, a narrow
+# cut at 85 Hz for the boom, a wide dip at 3.2 kHz for the harshness, a de-esser
+# for what is harsh only sometimes, then tanh soft clipping -- the analog part,
+# which rounds transients at both ends and adds the low-order harmonics that make
+# the result read as warm instead of merely darker -- and a gentle air shelf last,
+# so it also shapes the harmonics the clipper just generated.
+#
+# ANALOG_SMOOTH=0 turns it off; ANALOG_SMOOTH_STRENGTH scales every move.
+def analog_smooth_filter(input_tag, out_tag: "smoothed", strength: nil)
+  s = (strength || ENV.fetch("ANALOG_SMOOTH_STRENGTH", "1.0").to_f).clamp(0.0, 2.0)
+  boom = (-1.6 * s).round(1)
+  harsh = (-1.5 * s).round(1)
+  air = (-2.0 * s).round(1)
+  # Drive into the clipper and back out, rather than lowering its threshold.
+  #
+  # asoftclip's threshold is absolute, and this stage runs before loudnorm, so a
+  # fixed threshold rounds a hot mix and does nothing at all to a quiet one.
+  # Pre-gain fixes the relationship: only peaks within `drive` dB of full scale
+  # get rounded, whatever the mix level, which is the level-dependent behaviour
+  # the analog stage is imitating in the first place.
+  #
+  # oversample stays at 1. Measured on this ffmpeg (8.1.1), oversample=2 costs
+  # 5.8 dB of level with no gain compensation and generates no harmonics, so it
+  # was pure attenuation that loudnorm would have handed straight back.
+  drive = (3.0 * s).round(1)
+  "[#{input_tag}]highpass=f=30:p=2," \
+    "equalizer=f=85:t=q:w=1.0:g=#{boom}," \
+    "equalizer=f=3200:t=q:w=1.2:g=#{harsh}," \
+    "deesser=i=#{(0.18 * s).round(2)}:m=0.4:f=0.55:s=o," \
+    "volume=#{drive}dB,asoftclip=type=tanh:threshold=1:output=1:oversample=1,volume=-#{drive}dB," \
+    "equalizer=f=8000:t=h:w=4000:g=#{air}[#{out_tag}]"
+end
+
 def mood_darken_filter(input_tag, out_tag: "darkened", strength: 1.0)
   hi_cut = (-3.5 * strength).round(1)
   low_boost = (2.0 * strength).round(1)
