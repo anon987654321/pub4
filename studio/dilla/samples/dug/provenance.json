@@ -16,6 +16,36 @@
       "bytes": 6318456
     },
     {
+      "identifier": "78_barney-google_harings-velvetone-orchestra-rose-conrad_gbia0223843b",
+      "seam": "exotica",
+      "year": 1923,
+      "title": "BARNEY GOOGLE",
+      "creator": "HARING'S VELVETONE ORCHESTRA",
+      "source": "https://archive.org/details/78_barney-google_harings-velvetone-orchestra-rose-conrad_gbia0223843b",
+      "collection": "great78",
+      "basis": "US public domain — published 1923, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/exotica/78_barney-google_harings-velvetone-orchestra-rose-conrad_gbia0223843b.mp3",
+      "sha256": "87cfc5d2942bf049690559b868cac6b005d68028eb6e62b3a56c509ca6a5d19e",
+      "bytes": 6601863
+    },
+    {
+      "identifier": "78_beautiful-ohio_j.-c.-becks-orchestra-mary-earl_gbia0009475a",
+      "seam": "strings",
+      "year": 1919,
+      "title": "Beautiful Ohio",
+      "creator": "J. C. Beck's Orchestra",
+      "source": "https://archive.org/details/78_beautiful-ohio_j.-c.-becks-orchestra-mary-earl_gbia0009475a",
+      "collection": "great78",
+      "basis": "US public domain — published 1919, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/strings/78_beautiful-ohio_j.-c.-becks-orchestra-mary-earl_gbia0009475a.mp3",
+      "sha256": "ee5aad42c35f7d7c0b6c1e310d979c677c93a752171901abf6e01eda11ed50c8",
+      "bytes": 7710208
+    },
+    {
       "identifier": "78_beulah-land_thomas-chalmers-jno-r-sweeney_gbia0420744a",
       "seam": "soul_vocal",
       "year": 1920,
@@ -44,6 +74,21 @@
       "path": "samples/dug/latin/78_capricho-tango_the-continental-tango-band-sentis_gbia3014689a.mp3",
       "sha256": "139c61d46aace520d09a02e427921407665396270f7dec8d6149257fc2725f87",
       "bytes": 5796584
+    },
+    {
+      "identifier": "78_carmensita_hollywood-dance-orchestra-umberto_gbia0551659b",
+      "seam": "latin",
+      "year": 1924,
+      "title": "Carmensita",
+      "creator": "Hollywood Dance Orchestra",
+      "source": "https://archive.org/details/78_carmensita_hollywood-dance-orchestra-umberto_gbia0551659b",
+      "collection": "great78",
+      "basis": "US public domain — published 1924, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/latin/78_carmensita_hollywood-dance-orchestra-umberto_gbia0551659b.mp3",
+      "sha256": "08e4e4bfc193ef7a85b37dc21688df6e71bc0bbb92fe7d7c04e3c9c0a5d20933",
+      "bytes": 4930556
     },
     {
       "identifier": "78_chicago_moulin-rouge-orchestra-fred-fisher_gbia0039641b",
@@ -91,6 +136,21 @@
       "bytes": 7449405
     },
     {
+      "identifier": "78_dixie-blues_louisiana-five-lada-nunez-cawley_gbia0395575a",
+      "seam": "blues",
+      "year": 1919,
+      "title": "DIXIE BLUES",
+      "creator": "LOUISIANA FIVE",
+      "source": "https://archive.org/details/78_dixie-blues_louisiana-five-lada-nunez-cawley_gbia0395575a",
+      "collection": "great78",
+      "basis": "US public domain — published 1919, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/blues/78_dixie-blues_louisiana-five-lada-nunez-cawley_gbia0395575a.mp3",
+      "sha256": "dcb11984b8aff31e26997cd53dbc6ae08d0baf61355b280d78aa8964b99fe785",
+      "bytes": 6406111
+    },
+    {
       "identifier": "78_dont-think-youll-be-missed_blanche-klaise-harrison-lynths-rose_gbia0407765a",
       "seam": "blues",
       "year": 1922,
@@ -106,6 +166,21 @@
       "bytes": 6096717
     },
     {
+      "identifier": "78_felicia-waltz_jaudas-society-orchestra-vernon-eville_gbia0299023a",
+      "seam": "strings",
+      "year": 1917,
+      "title": "Felicia Waltz",
+      "creator": "JAUDAS' SOCIETY ORCHESTRA",
+      "source": "https://archive.org/details/78_felicia-waltz_jaudas-society-orchestra-vernon-eville_gbia0299023a",
+      "collection": "great78",
+      "basis": "US public domain — published 1917, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/strings/78_felicia-waltz_jaudas-society-orchestra-vernon-eville_gbia0299023a.mp3",
+      "sha256": "93792821ad53e9fd84cac1976dc93578c2276ddbeb2e10bea907d04d8872b81d",
+      "bytes": 6009504
+    },
+    {
       "identifier": "78_havana_the-cleveland-society-orchestra-lyman-schonberger_gbia3044977b",
       "seam": "latin",
       "year": 1925,
@@ -119,6 +194,36 @@
       "path": "samples/dug/latin/78_havana_the-cleveland-society-orchestra-lyman-schonberger_gbia3044977b.mp3",
       "sha256": "e518f6db55a16c7aaa1b107298ad32ae08b5f3bd5ac96c3ca00ce6dec6e1d6b1",
       "bytes": 7024911
+    },
+    {
+      "identifier": "78_hawaii-waltz-hawaiian-airs_louise-ferera_gbia0045716b",
+      "seam": "exotica",
+      "year": 1916,
+      "title": "Hawaii Waltz (Hawaiian Airs)",
+      "creator": "Louise & Ferera",
+      "source": "https://archive.org/details/78_hawaii-waltz-hawaiian-airs_louise-ferera_gbia0045716b",
+      "collection": "great78",
+      "basis": "US public domain — published 1916, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/exotica/78_hawaii-waltz-hawaiian-airs_louise-ferera_gbia0045716b.mp3",
+      "sha256": "7a1146f43ee5eda9d4b129b531e45312da1c9d38c32298b39d2fc56bbd6d265f",
+      "bytes": 7207486
+    },
+    {
+      "identifier": "78_hesitation-waltz_ernest-l-stevens-trio-f-henri-klickmann_gbia0191946a",
+      "seam": "strings",
+      "year": 1922,
+      "title": "HESITATION WALTZ",
+      "creator": "ERNEST L. STEVENS' TRIO",
+      "source": "https://archive.org/details/78_hesitation-waltz_ernest-l-stevens-trio-f-henri-klickmann_gbia0191946a",
+      "collection": "great78",
+      "basis": "US public domain — published 1922, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/strings/78_hesitation-waltz_ernest-l-stevens-trio-f-henri-klickmann_gbia0191946a.mp3",
+      "sha256": "f0288306da5e40766bedbfe07a0a9f8c10016dcf434a2334fdace045444c8965",
+      "bytes": 5037407
     },
     {
       "identifier": "78_i-need-thee-every-hour_alma-gluck-louise-homer-annie-s.-hawks-robert-lowry_gbia0012690a",
@@ -151,6 +256,36 @@
       "bytes": 5059103
     },
     {
+      "identifier": "78_ive-got-a-gal-seven-feet-tall_salt-and-pepper-baxter-rogers-mccoy_gbia0087266a",
+      "seam": "exotica",
+      "year": 1924,
+      "title": "I've Got a Gal (Seven Feet Tall)",
+      "creator": "Salt and Pepper",
+      "source": "https://archive.org/details/78_ive-got-a-gal-seven-feet-tall_salt-and-pepper-baxter-rogers-mccoy_gbia0087266a",
+      "collection": "great78",
+      "basis": "US public domain — published 1924, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/exotica/78_ive-got-a-gal-seven-feet-tall_salt-and-pepper-baxter-rogers-mccoy_gbia0087266a.mp3",
+      "sha256": "4c402ea3b7b8255a456e5acd7cd02bc73dc3bcd8a25f71fd26c9ac20ca5f8214",
+      "bytes": 5831166
+    },
+    {
+      "identifier": "78_la-mome-tango_nathan-glantz-and-his-orch-doloire_gbia0046952b",
+      "seam": "latin",
+      "year": 1923,
+      "title": "La Mome Tango",
+      "creator": "Nathan Glantz and His Orch.",
+      "source": "https://archive.org/details/78_la-mome-tango_nathan-glantz-and-his-orch-doloire_gbia0046952b",
+      "collection": "great78",
+      "basis": "US public domain — published 1923, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/latin/78_la-mome-tango_nathan-glantz-and-his-orch-doloire_gbia0046952b.mp3",
+      "sha256": "71fcb51ec90c305137b6490254c44cd99d0fae69a93db82727a10505d26377b8",
+      "bytes": 6540015
+    },
+    {
       "identifier": "78_la-percanta-esta-triste_carlos-gardel-v-greco_gbia0041338b",
       "seam": "latin",
       "year": 1921,
@@ -164,6 +299,21 @@
       "path": "samples/dug/latin/78_la-percanta-esta-triste_carlos-gardel-v-greco_gbia0041338b.mp3",
       "sha256": "5d7d1512ca0d2d4d61840bbb3e7d88a5a1fe4346499458af307317375a030bc1",
       "bytes": 5784003
+    },
+    {
+      "identifier": "78_la-seduccion_hazay-natzy-and-his-orchestra-noceti-jack-green_gbia0478365b",
+      "seam": "latin",
+      "year": 1922,
+      "title": "LA SEDUCCION",
+      "creator": "HAZAY NATZY AND HIS ORCHESTRA",
+      "source": "https://archive.org/details/78_la-seduccion_hazay-natzy-and-his-orchestra-noceti-jack-green_gbia0478365b",
+      "collection": "great78",
+      "basis": "US public domain — published 1922, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/latin/78_la-seduccion_hazay-natzy-and-his-orchestra-noceti-jack-green_gbia0478365b.mp3",
+      "sha256": "da0d46a251d3e13c97d5f71b7ccfb21826cd86839ba4c6e2762b7b1f858b2ceb",
+      "bytes": 7057857
     },
     {
       "identifier": "78_lucky-rock-blues_ma-rainey-lovie-austin-and-her-blues-serenaders-lillie-taylor-ka_gbia0377247b",
@@ -226,6 +376,21 @@
       "bytes": 6884098
     },
     {
+      "identifier": "78_sleep-baby-sleep_george-hubbard_gbia0435611b",
+      "seam": "exotica",
+      "year": 1921,
+      "title": "SLEEP BABY SLEEP",
+      "creator": "GEORGE HUBBARD",
+      "source": "https://archive.org/details/78_sleep-baby-sleep_george-hubbard_gbia0435611b",
+      "collection": "great78",
+      "basis": "US public domain — published 1921, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/exotica/78_sleep-baby-sleep_george-hubbard_gbia0435611b.mp3",
+      "sha256": "2ef1a8ce664148a9dcc080aa4f06fcc5b2d721107d57bbae57888332e7113058",
+      "bytes": 4894999
+    },
+    {
       "identifier": "78_the-alcoholic-blues_vernon-dalhart-al-von-tilzer_gbia0253257b",
       "seam": "blues",
       "year": 1919,
@@ -284,6 +449,36 @@
       "path": "samples/dug/jazz_small/78_theres-a-bend-at-the-end-of-the-swanee_harry-barths-novelty-orchestra-breau-tobia_gbia0316972b.mp3",
       "sha256": "956d84e735c16df0ce3c75c8f8dbf6e978fe3293373deb0cb5ca4841c055c4ce",
       "bytes": 6409637
+    },
+    {
+      "identifier": "78_viva-el-principe_avenue-tango-dance-band-ponce_gbia3002619b",
+      "seam": "latin",
+      "year": 1925,
+      "title": "VIVA EL PRINCIPE",
+      "creator": "AVENUE TANGO DANCE BAND",
+      "source": "https://archive.org/details/78_viva-el-principe_avenue-tango-dance-band-ponce_gbia3002619b",
+      "collection": "great78",
+      "basis": "US public domain — published 1925, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/latin/78_viva-el-principe_avenue-tango-dance-band-ponce_gbia3002619b.mp3",
+      "sha256": "ad4369e6e7de7f7b6b559e9a2b438de28b5c8424e00824a88644d30ced8a82d5",
+      "bytes": 7572961
+    },
+    {
+      "identifier": "78_wonderful-one_selvins-dance-orchestra-terriss-neilan-grofe-whiteman_gbia0510905a",
+      "seam": "strings",
+      "year": 1923,
+      "title": "WONDERFUL ONE",
+      "creator": "Selvin's Dance Orchestra",
+      "source": "https://archive.org/details/78_wonderful-one_selvins-dance-orchestra-terriss-neilan-grofe-whiteman_gbia0510905a",
+      "collection": "great78",
+      "basis": "US public domain — published 1923, MMA 100-year term expired",
+      "rights": null,
+      "licenseurl": null,
+      "path": "samples/dug/strings/78_wonderful-one_selvins-dance-orchestra-terriss-neilan-grofe-whiteman_gbia0510905a.mp3",
+      "sha256": "0dcd8c4fa835035a2bb1d0fb863ce5f6e0f4c5c4ef9d29c7d33e51598f6ee60b",
+      "bytes": 5858563
     },
     {
       "identifier": "78_you-better-keep-babying-baby-or-babys-gonna-bye-bye-you_green-bros-novelty-band_gbia0422386a",
