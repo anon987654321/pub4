@@ -223,13 +223,13 @@
       <%= link_to nearby_path, class: "tab-item", aria: { label: "Nearby", current: current_page?(nearby_path) ? "page" : nil } do %>
         <%= icon :nearby, size: 26 %>
       <% end %>
-      <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" aria-label="More">
+      <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" data-bottom-sheet-target="trigger" aria-expanded="false" aria-label="More">
         <%= icon :menu, size: 26 %>
       </button>
       <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
     </nav>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
-    <section class="mobile-sheet" aria-label="Quick actions" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
+    <section class="mobile-sheet" data-level="0" aria-label="Quick actions" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
       <div class="mobile-sheet-handle"></div>
       <div class="mobile-sheet-links">
         <%= link_to "AI assistant", brgen_ai_url, data: { turbo: false } %>

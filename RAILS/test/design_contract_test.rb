@@ -87,8 +87,17 @@ class DesignContractTest < Minitest::Test
     importmap = File.read(IMPORTMAP_BASELINE)
     modal = File.read(MODAL_SCSS)
 
-    assert_includes js, 'static targets = ["sheet", "backdrop"]'
+    # The targets it must have, not the exact spelling of the line: pinning the
+    # whole array meant adding a target failed a test about sharing the
+    # controller, which is not what this asserts.
+    %w[sheet backdrop].each { |target| assert_match(/static targets = \[[^\]]*"#{target}"/, js) }
     assert_includes js, "pointerDown(event)"
+
+    # Closed, the sheet must be out of the tab order and the accessibility tree.
+    # translateY(100%) alone only moves it off screen, which left an invisible
+    # menu in the tab order of every page.
+    assert_match(/\.mobile-sheet\s*\{[^}]*visibility:\s*hidden/m, modal)
+    assert_match(/\.mobile-sheet\[data-level="1"\][^{]*\{[^}]*visibility:\s*visible/m, modal)
     assert_includes boot, 'import BottomSheet from "pub4/bottom_sheet"'
     assert_includes boot, 'application.register("bottom-sheet", BottomSheet)'
     assert_includes importmap, 'pin "pub4/bottom_sheet", to: "bottom_sheet_controller.js"'

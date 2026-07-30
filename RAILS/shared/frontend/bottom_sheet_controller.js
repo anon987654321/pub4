@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["sheet", "backdrop"]
+  static targets = ["sheet", "backdrop", "trigger"]
   static values = { level: { type: Number, default: 0 } }
 
   connect() {
@@ -33,6 +33,13 @@ export default class extends Controller {
     sheet.style.transform = `translateY(${100 - (this.levelValue * 50)}%)`
     if (this.hasBackdropTarget) {
       this.backdropTarget.dataset.open = this.levelValue > 0 ? "1" : "0"
+    }
+    // The trigger never reported its state, so a screen reader announced
+    // "More, button" identically whether the sheet was open or shut. The closed
+    // sheet is now visibility: hidden, out of the tree entirely, so this is the
+    // only thing that says which way it is.
+    if (this.hasTriggerTarget) {
+      this.triggerTarget.setAttribute("aria-expanded", this.levelValue > 0 ? "true" : "false")
     }
   }
 
