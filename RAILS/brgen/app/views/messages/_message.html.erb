@@ -15,6 +15,7 @@
     <% if receipt&.read? %><span class="dim">· read</span><% end %>
   </header>
   <p><%= message.content %></p>
+  <%= render "messages/reactions", message: message %>
   <% if message.attachment.attached? %>
     <% if message.message_type == "image" %>
       <%= lazy_image_tag message.attachment, alt: message.attachment.filename.base, blurhash: message.attachment.try(:metadata).try(:[], "blurhash") %>

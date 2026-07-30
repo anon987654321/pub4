@@ -1,0 +1,39 @@
+<%# Reaction chips for one chat message, Discord-shaped.
+    Only kinds that someone actually used get a chip, each with its count and a
+    pressed state for the viewer's own reaction. The full picker is not rendered
+    inline -- shared/_reaction_bar draws all seven kinds at once, which is fine
+    under a post but would put 7 buttons on every line of a chat log. Here the
+    picker is revealed on hover/focus of the message (CSS), so a quiet log stays
+    quiet.
+
+    Replaced live by Reaction#broadcast_reaction_change over the conversation's
+    own stream, so the id has to match what that broadcast targets. %>
+<% counts = message.reactions.group(:kind).count %>
+<span class="msg_reactions" id="reactions_<%= dom_id(message) %>">
+  <% counts.sort_by { |kind, n| [ -n, kind ] }.each do |kind, n| %>
+    <% mine = Current.user && message.reacted_by?(Current.user, kind: kind) %>
+    <%= button_to reactions_path,
+          params: { target_gid: message.to_signed_global_id.to_s, kind: kind },
+          data: { turbo_stream: true },
+          class: "msg_reaction_chip#{' is_mine' if mine}",
+          aria: { pressed: mine ? "true" : "false",
+                  label: "#{n} #{kind}#{' — remove yours' if mine}" } do %>
+      <span aria-hidden="true"><%= Reaction.glyph(kind) %></span><span class="msg_reaction_count"><%= n %></span>
+    <% end %>
+  <% end %>
+
+  <% if Current.user %>
+    <span class="msg_reaction_picker" role="group" aria-label="React">
+      <% Reaction::KINDS.each do |kind| %>
+        <%= button_to reactions_path,
+              params: { target_gid: message.to_signed_global_id.to_s, kind: kind },
+              data: { turbo_stream: true },
+              class: "msg_reaction_add",
+              title: kind,
+              aria: { label: "React #{kind}" } do %>
+          <span aria-hidden="true"><%= Reaction.glyph(kind) %></span>
+        <% end %>
+      <% end %>
+    </span>
+  <% end %>
+</span>

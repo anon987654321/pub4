@@ -1,0 +1,115 @@
+/* Chat reactions, message grouping, and the unread pill.
+ *
+ * Flat only: no shadow, no glow, no gradient. State is carried by border and
+ * background, which is what the rest of this design system does and what the
+ * css_constitution gate enforces.
+ */
+
+.msg_reactions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-block-start: var(--space-1);
+  min-height: 24px; /* reserve the row so a first reaction does not reflow the log */
+}
+
+.msg_reaction_chip,
+.msg_reaction_add {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-elevated);
+  color: var(--text);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  cursor: pointer;
+  /* button_to emits a <form>; keep it inline so chips sit on one row. */
+  &,
+  & form {
+    display: inline-flex;
+  }
+}
+
+.msg_reaction_chip:hover,
+.msg_reaction_add:hover {
+  border-color: var(--accent);
+}
+
+/* The viewer's own reaction. Border + tinted fill rather than a shadow. */
+.msg_reaction_chip.is_mine {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-elevated));
+  font-weight: 700;
+}
+
+.msg_reaction_count {
+  font-variant-numeric: tabular-nums; /* counts stop jittering as they tick up */
+}
+
+/* The picker stays out of the way until the line is hovered or something inside
+ * it has focus. Keyboard users get it via :focus-within, so it is not
+ * hover-only — a picker you can only reach with a mouse is not reachable.
+ */
+.msg_reaction_picker {
+  display: inline-flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast, 140ms);
+}
+
+li:hover .msg_reaction_picker,
+li:focus-within .msg_reaction_picker {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  /* No hover on touch, so never hide it there. */
+  .msg_reaction_picker { opacity: 1; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg_reaction_picker { transition: none; }
+}
+
+/* Consecutive lines from one speaker: drop the repeated name/time letterhead
+ * and tighten the gap, so a conversation reads as turns rather than as records.
+ */
+[data-grouped="true"] > header {
+  display: none;
+}
+
+[data-grouped="true"] {
+  margin-block-start: 0;
+  padding-block-start: 0;
+}
+
+/* Reveal the time on hover for a grouped line, which is the only thing lost by
+ * hiding the header.
+ */
+[data-grouped="true"]:hover > header,
+[data-grouped="true"]:focus-within > header {
+  display: block;
+}
+
+.conversation_unread_pill {
+  display: block;
+  margin: var(--space-1) auto 0;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-elevated);
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.conversation_unread_pill:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-elevated));
+}

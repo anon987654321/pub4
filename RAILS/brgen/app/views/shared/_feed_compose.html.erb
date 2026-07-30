@@ -5,7 +5,13 @@
     <%= image_tag Current.user.avatar_url, class: "compose-avatar", alt: "" %>
   <% end %>
   <div class="compose-inner" data-controller="tiptap-editor">
-    <%= f.label :content, "Post to Bergen", class: "compose-label-visible" %>
+<%# Collapsed, this is one line and nothing else. The visible "Post to Bergen"
+    heading, and the guest hint below, both used to sit in the collapsed state,
+    which made a resting feed carry three stacked pieces of chrome before you
+    had asked to write anything. The label stays for screen readers (a
+    placeholder is not a label) and the visible copy lives in the placeholder,
+    which is the affordance being asked for. %>
+    <%= f.label :content, "Post to Bergen", class: "visually-hidden" %>
     <%= f.hidden_field :title, data: { feed_compose_target: "title" } %>
     <%= f.text_area :content,
           rows: 1,
@@ -41,9 +47,11 @@
           <%= f.file_field :audio, accept: "audio/*", capture: "user",
                 class: "visually-hidden", data: { action: "change->feed-compose#mediaSelected" } %>
         </label>
-        <button type="button" class="compose-action" title="Poll" disabled><%= icon :chart, size: 18 %></button>
-        <button type="button" class="compose-action" title="Emoji" disabled><%= icon :smile, size: 18 %></button>
-        <button type="button" class="compose-action" title="Location" disabled><%= icon :nearby, size: 18 %></button>
+<%# Poll, Emoji and Location were here as permanently `disabled` buttons. A
+    control that can never be pressed is a dead end -- it advertises a feature
+    that does not exist and gives the reader nothing to do about it, which is
+    what soul.yml's NO_DEAD_ENDS rule is about. Removed rather than hidden: when
+    any of them is built, it comes back as a working button. %>
       </div>
       <div class="compose-submit">
         <% if guest? %>
@@ -52,13 +60,15 @@
         <% end %>
         <%= f.submit t("feed.post_action"), class: "btn btn-primary btn-sm" %>
       </div>
-    </div>
-    <div class="dim compose-hint">
-      <% if guest? %>
-        <details><summary>Posting as a guest</summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT) %> The limit slows spam without asking for an account.</p></details>
-      <% else %>
-        <%= link_to t("feed.advanced_post"), new_post_path, class: "link-inherit" %>
-      <% end %>
+      <%# Inside the footer, so it appears with the rest of the controls on focus
+          rather than sitting under a resting one-line input. %>
+      <div class="dim compose-hint">
+        <% if guest? %>
+          <details><summary>Posting as a guest</summary><p><%= t("feed.guest_hint", limit: Shared::AnonymousPost::LIMIT) %> The limit slows spam without asking for an account.</p></details>
+        <% else %>
+          <%= link_to t("feed.advanced_post"), new_post_path, class: "link-inherit" %>
+        <% end %>
+      </div>
     </div>
   </div>
 <% end %>
