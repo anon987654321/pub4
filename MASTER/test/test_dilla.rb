@@ -125,7 +125,10 @@ class TestDilla < Minitest::Test
     assert_equal "0", result.fetch("self_sample")
     assert_equal "0", result.fetch("conv")
     assert_equal "-16.5", result.fetch("lufs")
-    assert_equal "62", result.fetch("pad_vol")
+    # Tracks DILLA_STYLE_DEFAULTS["PAD_VOL"], which the pad bed was raised to 72
+    # from 62 so Rhodes/Prophet read over the kit. The assertion here is that the
+    # stream path applies the DNA, not that the DNA holds any one number.
+    assert_equal "72", result.fetch("pad_vol")
     assert_equal "0.12", result.fetch("crossfade")
     assert_equal "1", result.fetch("drum_rotate")
     assert_equal "1", result.fetch("vocal_carve")
