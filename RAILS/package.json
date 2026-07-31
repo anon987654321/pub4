@@ -2,7 +2,7 @@
   "name": "pub4-rails-pwa",
   "private": true,
   "scripts": {
-    "build:pwa": "node scripts/build_workbox.mjs",
+    "build:pwa": "node tools/build_workbox.mjs",
     "test:pwa": "ruby test/pwa_design_contract_test.rb"
   },
   "devDependencies": {

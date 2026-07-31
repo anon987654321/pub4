@@ -10,7 +10,7 @@ module Deploy
     OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
     APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
     RAILS_README = File.join(ROOT, "RAILS", "README.md")
-    PWA_BUILDER = File.join(ROOT, "RAILS", "scripts", "build_workbox.mjs")
+    PWA_BUILDER = File.join(ROOT, "RAILS", "tools", "build_workbox.mjs")
     RETIRED_ACTIVE_PATHS = [
       "OPENBSD/vps_console_install.exp",
       "OPENBSD/vps_console_poll_install.exp",

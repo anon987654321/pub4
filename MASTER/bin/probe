@@ -65,12 +65,12 @@ CHECKS = {
   },
   "rails" => {
     desc: "RAILS production gate",
-    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "check_production_gate.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "gates", "runner.rb"), "production"],
     cwd: REPO_ROOT,
   },
   "phantom_fk" => {
     desc: "Rails schema phantom foreign-key targets",
-    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "check_phantom_foreign_keys.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "gates", "runner.rb"), "phantom_foreign_keys"],
     cwd: REPO_ROOT,
   },
   "playbook" => {
@@ -105,7 +105,7 @@ CHECKS = {
   },
   "crawl" => {
     desc: "HTTP crawl manifest + inventory sync (apps.yml ↔ master.json)",
-    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "crawl_probe.rb")],
+    cmd: [RUBY, File.join(REPO_ROOT, "RAILS", "tools", "crawl_probe.rb")],
     cwd: REPO_ROOT,
   },
   "crawl-browser" => {

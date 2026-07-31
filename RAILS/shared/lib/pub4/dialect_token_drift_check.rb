@@ -6,7 +6,7 @@
 # Fails CI on drift; fix with `ruby RAILS/tools/sync_dialect_tokens.rb`.
 
 pub4_rails_root = ENV["PUB4_RAILS_ROOT"] || File.expand_path("../../..", __dir__)
-require File.join(pub4_rails_root, "design_tokens")
+require File.join(pub4_rails_root, "tools", "design_tokens")
 
 findings = DesignTokens.dialect_token_drift
 if findings.empty?

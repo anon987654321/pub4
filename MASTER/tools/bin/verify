@@ -6,7 +6,7 @@ ruby = ENV.fetch("RUBY", "ruby")
 
 commands = [
   [ruby, File.join(root, "OPENBSD", "verify_deploy_identity.rb")],
-  [ruby, File.join(root, "RAILS", "domain_alignment_gate.rb")],
+  [ruby, File.join(root, "RAILS", "gates", "runner.rb"), "domain_alignment"],
 ]
 
 commands.each do |cmd|
