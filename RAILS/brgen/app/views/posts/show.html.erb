@@ -94,7 +94,7 @@
       <% end %>
     <% else %>
       <li><%= render "shared/empty_state",
-            title: "No comments yet",
+            title: t("empty.no_comments"),
             body: "Be the first to reply — guests can comment without an account.",
             action: { label: "Write a reply", path: "#comments-section" } %></li>
     <% end %>

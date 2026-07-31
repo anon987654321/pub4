@@ -248,7 +248,7 @@ main[role="main"] {
   padding: 0.75rem;
   border-radius: var(--radius-pill);
   color: var(--text-secondary);
-  font-size: 20px;
+  font-size: var(--text-title, 1.25rem);
   font-weight: var(--weight-normal);
   transition: background var(--transition-fast, 180ms), color var(--transition-fast, 180ms);
   width: fit-content;

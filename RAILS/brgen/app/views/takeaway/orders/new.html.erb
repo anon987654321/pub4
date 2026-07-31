@@ -44,8 +44,8 @@
       <% end %>
     <% else %>
       <%= render "shared/empty_state",
-            title: "Nothing available",
-            body: "No menu items are currently available.",
+            title: t("empty.nothing_available"),
+            body: t("empty.no_menu_available"),
             action: { label: "Back to restaurant", path: takeaway_restaurant_path(@restaurant) } %>
     <% end %>
   </section>

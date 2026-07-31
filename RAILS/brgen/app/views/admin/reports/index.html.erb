@@ -38,5 +38,5 @@
   </div>
 <% else %>
   <%# empty_state: no-action-ok — clear queue is the desired end state for moderators %>
-  <%= render "shared/empty_state", title: "No reports yet", body: "Moderation queue is clear." %>
+  <%= render "shared/empty_state", title: t("empty.no_reports"), body: t("empty.reports_clear") %>
 <% end %>

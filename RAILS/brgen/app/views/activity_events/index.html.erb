@@ -25,7 +25,7 @@
   </div>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No activity yet",
+        title: t("empty.no_activity"),
         body: "Events from your network show up here.",
         action: { label: "City feed", path: root_path } %>
 <% end %>

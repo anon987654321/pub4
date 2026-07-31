@@ -6,7 +6,7 @@
 </ul>
 <% if @ports.empty? %>
   <%= render "shared/empty_state",
-        title: "No ports found",
+        title: t("empty.no_ports"),
         body: "Try another query — e.g. git, python, or a category.",
         action: { label: "Browse all ports", path: ports_path } %>
 <% end %>

@@ -35,7 +35,7 @@
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No one nearby",
+          title: t("empty.no_nearby"),
           body: "Check back later — or drop a Live note while you wait.",
           action: { label: "Open Live", path: live_path } %>
   <% end %>

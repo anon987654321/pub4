@@ -77,7 +77,7 @@
   <% end %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No tracks yet",
+        title: t("empty.no_tracks"),
         body: "Add a track to build this set.",
         action: { label: "Browse sets", path: playlist_sets_path } %>
 <% end %>

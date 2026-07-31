@@ -3,7 +3,7 @@
 <%= render "marketplace/nav_bar",
       active: "stores",
       search_url: marketplace_shops_path(vertical: params[:vertical]),
-      search_placeholder: "Search Markedsplass",
+      search_placeholder: t("search.marketplace"),
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%= tag.section class: "marketplace-stores", role: "region", "aria-label": "Marketplace stores" do %>
@@ -16,5 +16,5 @@
     <% end %>
   <% end %>
 
-  <%= live_search_index url: marketplace_shops_path(vertical: params[:vertical]), results_partial: "marketplace/stores/live_search_results", placeholder: "Search...", label: "Store search", frame_id: "marketplace-stores" %>
+  <%= live_search_index url: marketplace_shops_path(vertical: params[:vertical]), results_partial: "marketplace/stores/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.stores_label"), frame_id: "marketplace-stores" %>
 <% end %>

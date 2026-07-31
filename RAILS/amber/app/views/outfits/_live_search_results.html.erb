@@ -9,7 +9,7 @@
 
 <% if @outfits.empty? %>
   <%= render "shared/empty_state",
-        title: "No outfits yet",
+        title: t("empty.no_outfits"),
         body: "Start with a capsule, event, season, or mood.",
         action: { label: "Compose an outfit", path: new_outfit_path } %>
 <% end %>

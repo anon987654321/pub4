@@ -18,9 +18,9 @@
   <% end %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No sets yet",
+        title: t("empty.no_sets"),
         body: "Create or import a set to get started.",
         action: live_search_query.present? ?
-          { label: "Clear search", path: playlist_sets_path } :
+          { label: t("empty.clear_search"), path: playlist_sets_path } :
           { label: "New set", path: new_playlist_set_path } %>
 <% end %>

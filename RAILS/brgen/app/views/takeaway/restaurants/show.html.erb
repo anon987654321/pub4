@@ -40,7 +40,7 @@
   <h2>Menu</h2>
   <% if @menu_items.empty? %>
     <%= render "shared/empty_state",
-          title: "No menu items yet",
+          title: t("empty.no_menu"),
           body: "The kitchen has not listed food yet.",
           action: { label: "All restaurants", path: takeaway_restaurants_path } %>
 
@@ -108,7 +108,7 @@
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No reviews yet",
+          title: t("empty.no_reviews"),
           body: "Order, then leave a rating for neighbours.",
           action: { label: "Browse menu", path: takeaway_restaurant_path(@restaurant, anchor: "menu") } %>
   <% end %>

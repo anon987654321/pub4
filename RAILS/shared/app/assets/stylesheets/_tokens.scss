@@ -36,6 +36,9 @@
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
+  /* Page / section titles — design_tokens shared_chrome.font_size_title */
+  --text-title: 1.25rem;
+  --text-display: 1.75rem;
   /* Every step here sits on design_rules.yml's 8px rhythm
      ([0,4,8,12,16,20,24,32,40,48,64,96]px) — steps 7/9/11/13/14/15 used to
      fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),

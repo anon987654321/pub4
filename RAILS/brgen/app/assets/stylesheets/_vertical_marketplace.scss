@@ -19,7 +19,7 @@ body.vertical-marketplace .marketplace-deals h1 {
   font-family: var(--font);
   font-weight: 800;
   letter-spacing: -0.02em;
-  font-size: 1.25rem;
+  font-size: var(--text-title, 1.25rem);
   text-transform: none;
 }
 

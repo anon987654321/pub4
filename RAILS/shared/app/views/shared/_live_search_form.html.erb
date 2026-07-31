@@ -16,14 +16,14 @@
               live_search_target: "input",
               action: "input->live-search#input focus->search-focus#focus blur->search-focus#blur"
             },
-            aria: { label: "Search query", controls: "live_search_results" } %>
+            aria: { label: t("search.query", default: "Search query"), controls: "live_search_results" } %>
       <% if local_assigns[:filter_fields_proc] %>
         <%= filter_fields_proc.call(f) %>
       <% elsif local_assigns[:extra_fields].present? %>
         <%= extra_fields %>
       <% end %>
       <% if local_assigns.fetch(:show_submit, true) %>
-        <%= f.submit "Search", class: local_assigns.fetch(:submit_class, "btn btn-sm"), aria: { label: "Submit search" } %>
+        <%= f.submit t("search.submit", default: "Search"), class: local_assigns.fetch(:submit_class, "btn btn-sm"), aria: { label: t("search.submit", default: "Search") } %>
       <% end %>
     </div>
   <% end %>

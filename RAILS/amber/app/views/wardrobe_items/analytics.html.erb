@@ -45,7 +45,7 @@
   <h2>Recommendations</h2>
   <% if @recommendations.blank? %>
     <%= render "shared/empty_state",
-          title: "No recommendations yet",
+          title: t("empty.no_recommendations"),
           body: "Wear items and grow the closet — suggestions appear from those signals.",
           action: { label: "Wardrobe", path: items_path } %>
   <% else %>

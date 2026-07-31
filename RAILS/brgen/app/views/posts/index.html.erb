@@ -12,7 +12,7 @@
   <%= link_to "Top", posts_path(sort: "top"), class: "sort-tab#{" active" if params[:sort] == "top"}" %>
 </nav>
 
-<%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: "Search posts…", label: "Post search", frame_id: "brgen-posts" %>
+<%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: t("search.posts"), label: t("search.posts_label"), frame_id: "brgen-posts" %>
 
 <aside>
   <h3>Communities</h3>

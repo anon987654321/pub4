@@ -31,7 +31,7 @@
     <%= render "tv/home/trending_videos" %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No trending videos",
+          title: t("empty.no_trending"),
           body: "Check back as channels publish.",
           action: { label: "All channels", path: tv_channels_path } %>
   <% end %>

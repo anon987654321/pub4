@@ -119,6 +119,8 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Amber/bsdports chrome i18n (auth, layout, guest home, ports search) | Landed 2026-07-31 |
 | Space-not-lines TV/nearby/empty/amber dash | Landed 2026-07-31 |
 | design_rules pixel_perfection alignment (no ornamental box-shadow in polish wave) | Landed 2026-07-31 — floating chrome uses border/surface contrast |
+| Vertical empty + search i18n (marketplace, TV, playlist, takeaway, maps, amber, bsdports) | Landed 2026-07-31 |
+| Type/pixel alignment: --text-title token, page-header 48px rhythm, font var(--font) | Landed 2026-07-31 |
 | Exhaustive model/request coverage | Expand when touching domains (Boy Scout) |
 | In-process `release` / `rails_runtime` / `visual_contract` | Still subprocess by design |
 | SCSS `_ui_refinements*` merge into domain partials | Next touch Boy Scout |

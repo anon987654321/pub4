@@ -21,7 +21,7 @@
   <% end %>
   <% if @planned.empty? %>
     <%= render "shared/empty_state",
-          title: "No outfits planned yet",
+          title: t("empty.no_planned"),
           body: "Pick a date and an outfit above to plan your week.",
           action: { label: "Browse outfits", path: outfits_path } %>
   <% end %>

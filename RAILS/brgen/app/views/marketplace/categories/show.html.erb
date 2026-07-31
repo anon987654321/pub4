@@ -11,7 +11,7 @@
 <% end %>
 <% if @listings.empty? %>
   <%= render "shared/empty_state",
-        title: "Nothing in this category yet",
+        title: t("empty.no_category"),
         body: "Be the first to list something here — no signup needed.",
         action: { label: "Sell something", path: new_marketplace_listing_path } %>
 <% end %>

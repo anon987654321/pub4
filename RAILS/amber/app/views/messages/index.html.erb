@@ -32,7 +32,7 @@
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No messages yet",
+          title: t("empty.no_messages"),
           body: "Send one with the form above, or follow creators to start a circle.",
           action: { label: "Connections", path: connections_path } %>
   <% end %>

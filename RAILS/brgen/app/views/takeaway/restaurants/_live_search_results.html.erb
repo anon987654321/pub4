@@ -6,12 +6,12 @@
   <% if @restaurants.empty? %>
     <% if authenticated? %>
       <%= render "shared/empty_state",
-            title: "No restaurants yet",
+            title: t("empty.no_restaurants"),
             body: "Add the first restaurant for this area.",
             action: { label: "Add one", path: new_takeaway_restaurant_path } %>
     <% else %>
       <%= render "shared/empty_state",
-            title: "No restaurants yet",
+            title: t("empty.no_restaurants"),
             body: "Restaurants will appear here.",
             action: { label: "City feed", path: root_path } %>
     <% end %>

@@ -49,6 +49,13 @@ en:
     categories_label: "Category search"
     maintainers_placeholder: "Search maintainers…"
     maintainers_label: "Maintainer search"
+  empty:
+    no_ports: "No ports found"
+    no_categories: "No categories"
+    no_categories_search: "No categories match this search."
+    no_maintainers: "No maintainers"
+    no_maintainers_search: "No maintainers match this search."
+    clear_search: "Clear search"
   install:
     title: "Install BSDports"
     body: "Ports search and advisories — open from your home screen."

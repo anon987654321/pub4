@@ -38,7 +38,7 @@
     <%= render "tv/channels/channel_videos" %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No videos yet",
+          title: t("empty.no_videos"),
           body: "This channel has no published videos.",
           action: { label: "All channels", path: tv_channels_path } %>
   <% end %>

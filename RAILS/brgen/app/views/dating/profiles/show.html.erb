@@ -20,7 +20,7 @@
     </div>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No photos yet",
+          title: t("empty.no_photos"),
           body: "Add photos on your profile edit screen.",
           action: { label: "Edit profile", path: edit_dating_profile_path } %>
   <% end %>

@@ -9,8 +9,8 @@
 
 <%= live_search_index url: maps_places_path,
                       results_partial: "maps/places/live_search_results",
-                      placeholder: "Search places…",
-                      label: "Place search",
+                      placeholder: t("search.places"),
+                      label: t("search.places_label"),
                       frame_id: "maps-places" do |f| %>
   <%= f.select :kind,
         [["All types", ""]] + Place.distinct.order(:kind).pluck(:kind).compact.map { |k| [k.humanize, k] },

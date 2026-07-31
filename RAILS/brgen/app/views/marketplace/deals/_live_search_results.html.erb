@@ -27,7 +27,7 @@
            q: params[:q] %>
 <% else %>
  <%= render "shared/empty_state",
-       title: "No deals",
-       body: "No deals match this search.",
-       action: { label: "Clear search", path: marketplace_deals_path } %>
+       title: t("empty.no_deals"),
+       body: t("empty.no_deals_search"),
+       action: { label: t("empty.clear_search"), path: marketplace_deals_path } %>
 <% end %>

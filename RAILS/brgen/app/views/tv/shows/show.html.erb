@@ -21,7 +21,7 @@
   </ul>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No episodes yet",
+        title: t("empty.no_episodes"),
         body: "Episodes will show up when published.",
         action: { label: "Back to channel", path: tv_channel_path(@channel) } %>
 <% end %>

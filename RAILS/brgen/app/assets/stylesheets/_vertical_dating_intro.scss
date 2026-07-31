@@ -27,7 +27,7 @@
 
 .dating-intro-title {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  font-family: var(--font);
   font-size: clamp(2.75rem, 12vw, 4.5rem);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -42,7 +42,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  font-family: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  font-family: var(--font);
   font-size: var(--text-sm);
   color: var(--dating-muted);
 }

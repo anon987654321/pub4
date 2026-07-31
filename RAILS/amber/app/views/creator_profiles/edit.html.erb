@@ -17,7 +17,7 @@
     </ul>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No showcase items yet",
+          title: t("empty.no_showcase"),
           body: "Add a wardrobe piece with the form below.",
           action: { label: "Wardrobe", path: items_path } %>
   <% end %>

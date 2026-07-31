@@ -54,5 +54,5 @@
     <% end %>
   </nav>
 
-  <%= live_search_index url: items_path(lifecycle: @lifecycle_filter), results_partial: "items/live_search_results", placeholder: "Search wardrobe by title, brand, category…", label: "Wardrobe search" %>
+  <%= live_search_index url: items_path(lifecycle: @lifecycle_filter), results_partial: "items/live_search_results", placeholder: t("search.wardrobe"), label: t("search.wardrobe_label") %>
 </section>

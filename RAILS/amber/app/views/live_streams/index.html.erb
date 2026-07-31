@@ -30,7 +30,7 @@
       <% end %>
     <% else %>
       <%= render "shared/empty_state",
-            title: "No sessions scheduled",
+            title: t("empty.no_sessions"),
             body: "Use the form above to book a wardrobe hangout or styling appointment.",
             action: { label: "Wardrobe", path: items_path } %>
     <% end %>

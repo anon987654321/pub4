@@ -85,7 +85,7 @@
 }
 
 .nav-logo-word {
-  font-size: 20px;
+  font-size: var(--text-title, 1.25rem);
   font-weight: 700;
   letter-spacing: -0.02em;
 }

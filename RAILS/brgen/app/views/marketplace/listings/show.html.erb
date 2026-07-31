@@ -70,7 +70,7 @@
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No reviews yet",
+          title: t("empty.no_reviews"),
           body: "Buyers can review after an order.",
           action: { label: "Browse listings", path: marketplace_listings_path } %>
   <% end %>
@@ -122,7 +122,7 @@
       <% end %>
     <% else %>
       <%= render "shared/empty_state",
-            title: "No offers yet",
+            title: t("empty.no_offers"),
             body: "Incoming offers will list here.",
             action: { label: "Edit listing", path: edit_marketplace_listing_path(@listing) } %>
     <% end %>

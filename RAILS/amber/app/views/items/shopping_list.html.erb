@@ -15,7 +15,7 @@
   </ul>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No gaps detected",
+        title: t("empty.no_gaps"),
         body: "Your wardrobe looks complete for essentials.",
         action: { label: "Back to wardrobe", path: items_path } %>
 <% end %>
@@ -32,7 +32,7 @@
   </ul>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No recommendations yet",
+        title: t("empty.no_recommendations"),
         body: "Add more items or re-run gap analysis when your closet grows.",
         action: { label: "Add item", path: new_item_path } %>
 <% end %>

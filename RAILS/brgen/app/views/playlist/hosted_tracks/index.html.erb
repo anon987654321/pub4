@@ -20,7 +20,7 @@
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No hosted tracks yet",
+          title: t("empty.no_hosted_tracks"),
           body: "Upload or link a track to host it.",
           action: authenticated? ?
             { label: "Upload track", path: new_playlist_hosted_track_path } :

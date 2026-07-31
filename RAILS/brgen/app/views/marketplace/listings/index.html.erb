@@ -4,12 +4,12 @@
 <%= render "marketplace/nav_bar",
       active: "listings",
       search_url: marketplace_listings_path,
-      search_placeholder: "Search Markedsplass",
+      search_placeholder: t("search.marketplace"),
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <h1 class="visually-hidden">Markedsplass</h1>
 
-<%= live_search_index url: marketplace_listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: "Search...", label: "Search marketplace listings", frame_id: "marketplace-listings" do |f| %>
+<%= live_search_index url: marketplace_listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
   <%= f.select :category_id,
         options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
         { include_blank: "All categories" }, aria: { label: "Filter by category" } %>

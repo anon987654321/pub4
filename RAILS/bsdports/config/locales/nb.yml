@@ -49,6 +49,13 @@ nb:
     categories_label: "Kategorisøk"
     maintainers_placeholder: "Søk maintainere…"
     maintainers_label: "Maintainersøk"
+  empty:
+    no_ports: "Ingen porter funnet"
+    no_categories: "Ingen kategorier"
+    no_categories_search: "Ingen kategorier matcher søket."
+    no_maintainers: "Ingen maintainere"
+    no_maintainers_search: "Ingen maintainere matcher søket."
+    clear_search: "Tøm søk"
   install:
     title: "Installer BSDports"
     body: "Portersøk og advisories — åpne fra hjem-skjermen."

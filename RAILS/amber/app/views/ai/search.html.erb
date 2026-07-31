@@ -13,7 +13,7 @@
   <div class="item-grid"><%= render @items %></div>
 <% elsif @query.present? %>
   <%= render "shared/empty_state",
-        title: "No matches found",
+        title: t("empty.no_matches"),
         body: "Try a broader description, or add the piece if it is missing from your wardrobe.",
         action: { label: "Add item", path: new_item_path } %>
 <% end %>

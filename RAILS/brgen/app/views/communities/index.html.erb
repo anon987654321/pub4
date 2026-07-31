@@ -5,4 +5,4 @@
   <% if authenticated? %><%= link_to "+ New", new_community_path, class: "btn btn-sm" %><% end %>
 </div>
 
-<%= live_search_index url: communities_path, results_partial: "communities/live_search_results", placeholder: "Search communities…", label: "Community search", frame_id: "brgen-communities" %>
+<%= live_search_index url: communities_path, results_partial: "communities/live_search_results", placeholder: t("search.communities"), label: t("search.communities_label"), frame_id: "brgen-communities" %>

@@ -21,7 +21,7 @@
   </div>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No available drivers",
+        title: t("empty.no_drivers"),
         body: "Check back when drivers come online.",
         action: { label: "Restaurants", path: takeaway_restaurants_path } %>
 <% end %>
