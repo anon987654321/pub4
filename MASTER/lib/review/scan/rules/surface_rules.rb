@@ -226,6 +226,51 @@ module Master
             message: "fractional px — prefer integer pixels for pixel-perfect alignment")
         end
 
+        # Family polish (design_rules ui_polish) — ERB chrome must be i18n; titles use tokens.
+        RuleDSL.rule :ERB_HARDCODED_CHROME,
+          severity: :warning, tags: %i[DESIGN I18N RAILS VIEWS], applies_to: HTML_LANGS, autofix: false,
+          description: "empty/search chrome uses t() not hardcoded English (default_locale nb)" do |src, path:|
+          next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
+          next [] if path.to_s.end_with?("shared/_empty_state.html.erb")
+
+          findings = []
+          src.each_line.with_index(1) do |line, num|
+            next if line.include?("t(") || line.include?("I18n.t") || line.include?("chrome_i18n: ok")
+            next if line.lstrip.start_with?("<%#", "#")
+
+            if line.match?(/title:\s*["'](?:No\s|Nothing\s)/) ||
+               line.match?(/placeholder:\s*["']Search/)
+              findings << finding(
+                line: num,
+                message: "hardcoded EN chrome — use t(\"empty.*\") / t(\"search.*\") " \
+                         "(design_rules.ui_polish.chrome_i18n; RAILS chrome_i18n_lint)"
+              )
+            end
+          end
+          findings
+        end
+
+        RuleDSL.rule :TYPE_TITLE_TOKEN,
+          severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
+          description: "page titles use --text-title token not raw 20px" do |src, path:|
+          next [] unless Rules.ui_path?(path)
+
+          findings = []
+          src.each_line.with_index(1) do |line, num|
+            next if line.strip.start_with?("//", "/*", "*")
+            next unless line.match?(/\.page-header\s+h1|page-header h1|sidebar-card h3/i) ||
+                        (line.match?(/font-size\s*:\s*20px/i) && src.lines[[num - 3, 0].max...num].join.match?(/h1|title|header/i))
+
+            if line.match?(/font-size\s*:\s*20px/i)
+              findings << finding(
+                line: num,
+                message: "raw 20px title — use var(--text-title, 1.25rem) (design_rules.ui_polish.type_tokens)"
+              )
+            end
+          end
+          findings
+        end
+
         RuleDSL.rule :FORM_FOLLOWS_FUNCTION,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
           description: "decorative empty wrappers without content/role" do |src, path:|

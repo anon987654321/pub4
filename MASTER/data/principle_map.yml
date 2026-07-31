@@ -520,6 +520,31 @@ principles:
     status: covered
     tags:
     - aesthetic
+  ui_chrome_i18n:
+    meaning: 'Shell/empty/search chrome uses I18n; default locale nb for family apps'
+    detects: hardcoded_en_chrome
+    severity: medium
+    confidence: 0.85
+    operation: wire_i18n_for_literals
+    rule_ids:
+    - ERB_HARDCODED_CHROME
+    status: covered
+    tags:
+    - i18n
+    - ui
+  type_title_token:
+    meaning: 'Page titles use --text-title modular token not raw 20px'
+    detects: one_off_title_px
+    severity: low
+    confidence: 0.75
+    operation: prefer_title_type_token
+    rule_ids:
+    - TYPE_TITLE_TOKEN
+    - TYPE_HIERARCHY
+    status: covered
+    tags:
+    - typography
+    - ui
   flexibility_and_adaptability:
     meaning: 'Design for change over time  '
     detects: rigid_structure

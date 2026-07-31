@@ -155,11 +155,14 @@ module Deploy
         clamp_transitions(body)
       when /logical_props/i
         prefer_logical_props(body)
+      when /text-title|font-size:\s*20px|type_token/i
+        prefer_title_type_token(body)
       else
         # Proactive: if failure mentions path and body has known issues, apply all safe fixers
         body = ensure_reduced_motion(body) if body.match?(/@keyframes|animation\s*:/i) && !body.match?(/prefers-reduced-motion:\s*reduce/i)
         body = strip_flat_violations(body) if body.match?(/box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i)
         body = replace_twitter_blue(body) if body.match?(/#1d9bf0|#1DA1F2/i)
+        body = prefer_title_type_token(body) if body.match?(/font-size\s*:\s*20px/i)
         body
       end
     end
@@ -187,6 +190,11 @@ module Deploy
         .gsub(/text-shadow\s*:[^;]+;/i, "/* autofix: removed text-shadow (flat UI) */")
         .gsub(/backdrop-filter\s*:[^;]+;/i, "/* autofix: removed backdrop-filter (flat UI) */")
         .gsub(/filter\s*:[^;]*\bblur\([^)]*\)[^;]*;/i, "/* autofix: removed filter blur (flat UI) */")
+    end
+
+    # design_rules.ui_polish.type_tokens — page titles not raw 20px
+    def prefer_title_type_token(body)
+      body.gsub(/font-size\s*:\s*20px\b/i, "font-size: var(--text-title, 1.25rem)")
     end
 
     def replace_twitter_blue(body)

@@ -468,3 +468,53 @@ rams_checklist:
   honest: Does UI state match system state without fake progress?
   thorough: Are empty, loading, error, and reduced-motion states designed?
   action: Score UI diffs against Rams criteria in council and aesthetic scan tags.
+
+# Family UI polish playbook — MASTER scanners + RAILS CI ratchets apply these.
+# Implemented 2026-07-31 polish waves; keep automated so re-introduction fails.
+ui_polish:
+  default_locale: nb
+  available_locales: [nb, en]
+  chrome_i18n:
+    action: >
+      Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
+      nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
+      are debt. Ratchet: RAILS/shared/lib/pub4/chrome_i18n_lint.rb (CI).
+      Opt-out: <%# chrome_i18n: ok %> above the line.
+    empty_partial: shared/empty_state
+    empty_requires_action: true
+    empty_cta_lint: RAILS/shared/lib/pub4/empty_state_lint.rb
+    adhoc_empty_lint: RAILS/shared/lib/pub4/adhoc_empty_lint.rb
+  space_not_lines:
+    action: >
+      List/grid cards separate with gap + surface elevation, not hairline
+      box borders. Forms and CRT dialect (bsdports) may keep 1px borders.
+      Prefer border: 0; background: var(--surface-elevated).
+  type_tokens:
+    action: >
+      Page titles use var(--text-title, 1.25rem) and var(--font). Do not hardcode
+      font-size: 20px for headers. Dialect fonts (Caprasimo luxury, JetBrains
+      mono CRT) only on named brand surfaces.
+    tokens:
+      text_title: 1.25rem
+      text_display: 1.75rem
+      page_header_min_height: 48px
+  flat_ui:
+    action: >
+      No ornamental box-shadow/text-shadow/backdrop-filter/filter blur.
+      Floating chrome uses 1px border + elevated surface. GATE_AUTOFIX strips
+      shadows. Exception policy under pixel_perfection.exception_policy.
+  btn_aliases:
+    action: >
+      Family supports both btn-primary and btn--primary (and btn-ghost /
+      btn--ghost). Empty-state CTAs should emit both class names.
+  playbook_order:
+    - strip_flat_ui_shadows
+    - wire_empty_search_to_t
+    - align_page_header_type_tokens
+    - space_not_lines_list_cards
+    - verify_empty_state_cta_lint
+    - verify_chrome_i18n_lint
+  action: >
+    When polishing RAILS or MASTER/web UI, run this playbook. Prefer mechanical
+    autofix + CI ratchets over one-off manual style. Never raise lint baselines
+    to silence new debt.

@@ -279,7 +279,15 @@ erb:
   content_for: [title, description, head, json_ld, widgets, scripts]
   helpers: [tag, class_names, dom_id, sanitize]
   forbidden: [raw_user_html_safe, heredoc_views, inline_script_blocks, bem_classes, utility_class_soup]
-  on_edit: [flatten_if_divitis, extract_repeated_to_partial, wire_i18n_for_literals]
+  on_edit:
+    - flatten_if_divitis
+    - extract_repeated_to_partial
+    - wire_i18n_for_literals
+    # Family polish (design_rules.ui_polish / MASTER/docs/UI_POLISH_PLAYBOOK.md)
+    - strip_flat_ui_shadows
+    - wire_empty_search_to_t
+    - align_page_header_type_tokens
+    - space_not_lines_list_cards
 
 # Conversation directives — how MASTER addresses the user. Operator_directives
 # above shape MASTER's coding work; these shape its dialogue, voice, and
