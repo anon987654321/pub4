@@ -482,7 +482,7 @@ FILM_BASE = {
 # → chemistry → optical_effect → print → grain. One contrast mode and one
 # color temperature approach per preset — no stacking.
 PRESETS = {
-  portrait: { fx: %w[optical_blur film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
+  portrait: { fx: %w[optical_blur spectral_temp film_curve dir_coupler orange_mask skin_protect shadow_lift highlight_roll grain],
               stock: :kodak_portra, temp: 5200, intensity: 0.85 },
 
   # vintage_lens was added to the five presets that declare a lens: and to the
@@ -491,10 +491,10 @@ PRESETS = {
   # named a lens character that was never applied to anything -- the swirl, the
   # Cooke warmth, the Leica glow, all declared and all absent. It sits directly
   # after optical_blur because a lens acts before the emulsion does.
-  indie: { fx: %w[optical_blur vintage_lens film_curve orange_mask shadow_lift split_toning chromatic_aberration grain],
+  indie: { fx: %w[optical_blur spectral_temp vintage_lens film_curve orange_mask shadow_lift split_toning chromatic_aberration grain],
            stock: :kodak_portra, temp: 5400, intensity: 0.85, lens: "helios" },
 
-  polaroid: { fx: %w[optical_blur film_curve faded_print warmth bloom_pro shadow_lift grain],
+  polaroid: { fx: %w[optical_blur spectral_temp film_curve faded_print warmth bloom_pro shadow_lift grain],
               stock: :kodak_portra, temp: 5000, intensity: 0.85 },
 
   landscape: { fx: %w[optical_blur vintage_lens spectral_temp film_curve stock_matrix color_separate halation micro_contrast grain],
@@ -503,29 +503,29 @@ PRESETS = {
   magic_hour: { fx: %w[optical_blur spectral_temp film_curve halation warmth bloom_pro grain],
                 stock: :fuji_velvia, temp: 4800, intensity: 0.90 },
 
-  reversal: { fx: %w[optical_blur film_curve stock_matrix color_separate halation highlight_roll micro_contrast grain],
+  reversal: { fx: %w[optical_blur spectral_temp film_curve stock_matrix color_separate halation highlight_roll micro_contrast grain],
               stock: :fuji_velvia, temp: 5600, intensity: 0.90 },
 
-  process_e6: { fx: %w[optical_blur push_pull film_curve color_separate halation highlight_roll grain],
+  process_e6: { fx: %w[optical_blur spectral_temp push_pull film_curve color_separate halation highlight_roll grain],
                 stock: :ektachrome_100, temp: 5600, intensity: 0.90, stops: 2.0 },
 
   cinematic: { fx: %w[optical_blur spectral_temp tonemap film_curve orange_mask halation shadow_lift print_film grain],
                stock: :kodak_vision3_500t, temp: 4500, intensity: 0.90, print_stock: :kodak_2383 },
 
-  blockbuster: { fx: %w[optical_blur tonemap bleach_bypass film_curve orange_mask teal_orange halation print_film grain],
+  blockbuster: { fx: %w[optical_blur spectral_temp tonemap bleach_bypass film_curve orange_mask teal_orange halation print_film grain],
                  stock: :kodak_vision3, temp: 4800, intensity: 0.90, print_stock: :kodak_2383 },
 
-  golden_age: { fx: %w[optical_blur vintage_lens film_curve orange_mask technicolor warmth dir_coupler bloom_pro grain],
+  golden_age: { fx: %w[optical_blur spectral_temp vintage_lens film_curve orange_mask technicolor warmth dir_coupler bloom_pro grain],
                 stock: :kodak_vision3_50d, temp: 5200, intensity: 0.85, lens: "cooke" },
 
-  bleached: { fx: %w[optical_blur tonemap bleach_bypass film_curve split_grade highlight_roll grain],
+  bleached: { fx: %w[optical_blur spectral_temp tonemap bleach_bypass film_curve split_grade highlight_roll grain],
               stock: :kodak_vision3, temp: 4800, intensity: 0.90 },
 
-  neon_night: { fx: %w[optical_blur push_pull reciprocity_failure film_curve orange_mask halation bloom_pro grain],
+  neon_night: { fx: %w[optical_blur spectral_temp push_pull reciprocity_failure film_curve orange_mask halation bloom_pro grain],
                 stock: :cinestill_800t, temp: 3200, intensity: 0.90,
                 stops: 0.5, exposure_secs: 30.0 },
 
-  tokyo_night: { fx: %w[optical_blur push_pull reciprocity_failure film_curve orange_mask halation teal_orange grain],
+  tokyo_night: { fx: %w[optical_blur spectral_temp push_pull reciprocity_failure film_curve orange_mask halation teal_orange grain],
                  stock: :cinestill_800t, temp: 3000, intensity: 0.90,
                  stops: 1.0, exposure_secs: 45.0 },
 
@@ -533,58 +533,58 @@ PRESETS = {
               stock: :kodak_vision3_500t, temp: 3200, intensity: 0.90,
               stops: 0.3, exposure_secs: 8.0 },
 
-  street: { fx: %w[optical_blur tonemap bleach_bypass push_pull film_curve adjacency_effects shadow_lift micro_contrast grain],
+  street: { fx: %w[optical_blur spectral_temp tonemap bleach_bypass push_pull film_curve adjacency_effects shadow_lift micro_contrast grain],
             stock: :tri_x, temp: 5600, intensity: 0.90, stops: 1.0 },
 
-  war_doc: { fx: %w[optical_blur tonemap push_pull film_curve bleach_bypass green_push grain],
+  war_doc: { fx: %w[optical_blur spectral_temp tonemap push_pull film_curve bleach_bypass green_push grain],
              stock: :tri_x, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  silver_gelatin: { fx: %w[optical_blur film_curve push_pull adjacency_effects shadow_lift highlight_roll grain],
+  silver_gelatin: { fx: %w[optical_blur spectral_temp film_curve push_pull adjacency_effects shadow_lift highlight_roll grain],
                     stock: :tri_x, temp: 5600, intensity: 0.85, stops: 0.5 },
 
-  lith: { fx: %w[optical_blur film_curve push_pull lith_print split_toning grain],
+  lith: { fx: %w[optical_blur spectral_temp film_curve push_pull lith_print split_toning grain],
           stock: :tri_x, temp: 5600, intensity: 0.90, stops: 1.5 },
 
-  noir: { fx: %w[optical_blur tonemap push_pull film_curve bleach_bypass desaturate shadow_lift grain],
+  noir: { fx: %w[optical_blur spectral_temp tonemap push_pull film_curve bleach_bypass desaturate shadow_lift grain],
           stock: :tri_x, temp: 5600, intensity: 0.90, stops: 2.0 },
 
-  dream: { fx: %w[optical_blur vintage_lens film_curve halation bloom_pro desaturate split_toning grain],
+  dream: { fx: %w[optical_blur spectral_temp vintage_lens film_curve halation bloom_pro desaturate split_toning grain],
            stock: :ektachrome_100, temp: 5800, intensity: 0.85, lens: "leica" },
 
-  dreamscape: { fx: %w[optical_blur film_curve halation bloom_pro split_toning grain],
+  dreamscape: { fx: %w[optical_blur spectral_temp film_curve halation bloom_pro split_toning grain],
                 stock: :ektachrome_100, temp: 5800, intensity: 0.85 },
 
-  lo_fi: { fx: %w[optical_blur vintage_lens film_curve push_pull faded_print warmth chromatic_aberration grain],
+  lo_fi: { fx: %w[optical_blur spectral_temp vintage_lens film_curve push_pull faded_print warmth chromatic_aberration grain],
            stock: :kodak_portra, temp: 4800, intensity: 0.85, lens: "helios" },
 
-  horror: { fx: %w[optical_blur tonemap film_curve bleach_bypass green_push desaturate grain],
+  horror: { fx: %w[optical_blur spectral_temp tonemap film_curve bleach_bypass green_push desaturate grain],
             stock: :tri_x, temp: 5600, intensity: 0.90 },
 
-  arctic: { fx: %w[optical_blur tonemap film_curve desaturate bleach_bypass highlight_roll grain],
+  arctic: { fx: %w[optical_blur spectral_temp tonemap film_curve desaturate bleach_bypass highlight_roll grain],
             stock: :tri_x, temp: 6500, intensity: 0.90 },
 
-  kodachrome_look: { fx: %w[optical_blur tonemap film_curve stock_matrix kodachrome_sim dir_coupler halation grain],
+  kodachrome_look: { fx: %w[optical_blur spectral_temp tonemap film_curve stock_matrix kodachrome_sim dir_coupler halation grain],
                      stock: :kodachrome, temp: 5600, intensity: 0.90 },
 
   technicolor_3strip: { fx: %w[optical_blur spectral_temp film_curve stock_matrix technicolor dir_coupler bloom_pro grain],
                         stock: :kodachrome, temp: 5500, intensity: 0.90 },
 
-  cross_process: { fx: %w[optical_blur push_pull film_curve color_separate teal_orange split_toning grain],
+  cross_process: { fx: %w[optical_blur spectral_temp push_pull film_curve color_separate teal_orange split_toning grain],
                    stock: :fuji_velvia, temp: 5500, intensity: 0.90, stops: 0.5 },
 
   vintage_chrome: { fx: %w[optical_blur film_curve stock_matrix dir_coupler spectral_temp color_separate split_toning grain],
                     stock: :ektachrome_100, temp: 5200, intensity: 0.85 },
 
-  infrared_look: { fx: %w[optical_blur push_pull infrared film_curve bleach_bypass highlight_roll grain],
+  infrared_look: { fx: %w[optical_blur spectral_temp push_pull infrared film_curve bleach_bypass highlight_roll grain],
                    stock: :tri_x, temp: 5600, intensity: 0.90, stops: 0.5 },
 
-  cyanotype_look: { fx: %w[optical_blur film_curve desaturate cyanotype shadow_lift grain],
+  cyanotype_look: { fx: %w[optical_blur spectral_temp film_curve desaturate cyanotype shadow_lift grain],
                     stock: :tri_x, temp: 6000, intensity: 0.85 },
 
-  analog_scan: { fx: %w[optical_blur film_curve grain scan_noise dust_and_hair newton_rings],
+  analog_scan: { fx: %w[optical_blur spectral_temp film_curve grain scan_noise dust_and_hair newton_rings],
                  stock: :kodak_portra, temp: 5200, intensity: 0.80 },
 
-  aged_chrome: { fx: %w[optical_blur film_curve dye_fade selenium_tone faded_print grain],
+  aged_chrome: { fx: %w[optical_blur spectral_temp film_curve dye_fade selenium_tone faded_print grain],
                  stock: :ektachrome_100, temp: 5600, intensity: 0.85, age: 0.60 },
 
   # LENSES[:anamorphic] was the one entry in that table no preset reached at
@@ -592,52 +592,52 @@ PRESETS = {
   anamorphic: { fx: %w[optical_blur vintage_lens longitudinal_ca spectral_temp tonemap film_curve anamorphic_flare halation grain],
                 stock: :kodak_vision3_500t, temp: 4200, intensity: 0.90, lens: "anamorphic" },
 
-  contact_print: { fx: %w[optical_blur adjacency_effects film_curve darkroom_print shadow_lift grain],
+  contact_print: { fx: %w[optical_blur spectral_temp adjacency_effects film_curve darkroom_print shadow_lift grain],
                    stock: :tri_x, temp: 5600, intensity: 0.85 },
 
-  aged_kodachrome: { fx: %w[optical_blur film_curve dye_fade kodachrome_sim dir_coupler grain],
+  aged_kodachrome: { fx: %w[optical_blur spectral_temp film_curve dye_fade kodachrome_sim dir_coupler grain],
                      stock: :kodachrome, temp: 5600, intensity: 0.88, age: 0.50 },
 
   wide_angle: { fx: %w[optical_blur lens_distortion spectral_temp film_curve halation grain],
                 stock: :fuji_velvia, temp: 5800, intensity: 0.90, k1: -0.14 },
 
-  cinema_scan: { fx: %w[optical_blur longitudinal_ca tonemap film_curve orange_mask halation bokeh_rendering print_film grain],
+  cinema_scan: { fx: %w[optical_blur spectral_temp longitudinal_ca tonemap film_curve orange_mask halation bokeh_rendering print_film grain],
                  stock: :kodak_vision3, temp: 4600, intensity: 0.90, print_stock: :kodak_2383 },
 
-  diffraction: { fx: %w[optical_blur diffraction_blur film_curve micro_contrast grain],
+  diffraction: { fx: %w[optical_blur spectral_temp diffraction_blur film_curve micro_contrast grain],
                  stock: :fuji_velvia, temp: 5600, intensity: 0.85, f_number: 22.0 },
 
-  nitrate: { fx: %w[optical_blur film_curve dye_fade faded_print adjacency_effects grain scan_noise],
+  nitrate: { fx: %w[optical_blur spectral_temp film_curve dye_fade faded_print adjacency_effects grain scan_noise],
              stock: :kodachrome, temp: 4800, intensity: 0.85, age: 0.80 },
 
-  fiber_print: { fx: %w[optical_blur adjacency_effects darkroom_print paper_texture dodgeburn_artifacts grain],
+  fiber_print: { fx: %w[optical_blur spectral_temp adjacency_effects darkroom_print paper_texture dodgeburn_artifacts grain],
                  stock: :tri_x, temp: 5600, intensity: 0.85 },
 
-  expired: { fx: %w[optical_blur film_curve expired_film gate_weave],
+  expired: { fx: %w[optical_blur spectral_temp film_curve expired_film gate_weave],
              stock: :kodak_portra, temp: 5200, intensity: 0.90, age: 0.65 },
 
-  reticulated: { fx: %w[optical_blur film_curve reticulation fixing_bath_fog grain],
+  reticulated: { fx: %w[optical_blur spectral_temp film_curve reticulation fixing_bath_fog grain],
                  stock: :tri_x, temp: 5600, intensity: 0.80 },
 
-  ortho: { fx: %w[optical_blur ortho_film film_curve adjacency_effects grain],
+  ortho: { fx: %w[optical_blur spectral_temp ortho_film film_curve adjacency_effects grain],
            stock: :tri_x, temp: 5600, intensity: 0.85 },
 
-  tilt_shift_look: { fx: %w[optical_blur film_curve tilt_shift halation grain],
+  tilt_shift_look: { fx: %w[optical_blur spectral_temp film_curve tilt_shift halation grain],
                      stock: :kodak_portra, temp: 5200, intensity: 0.80 },
 
-  haunted: { fx: %w[optical_blur expired_film reticulation fixing_bath_fog lens_ghosting gate_weave grain],
+  haunted: { fx: %w[optical_blur spectral_temp expired_film reticulation fixing_bath_fog lens_ghosting gate_weave grain],
              stock: :kodachrome, temp: 4600, intensity: 0.90, age: 0.80 },
 
-  quality_uplift: { fx: %w[adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen film_curve grain],
+  quality_uplift: { fx: %w[spectral_temp adaptive_contrast film_shoulder clarity edge_aware_nr selective_sharpen film_curve grain],
                     stock: :kodak_portra, temp: 5600, intensity: 0.75 },
 
-  vhs_tape: { fx: %w[optical_blur vhs_luma_bleed vhs_chroma_delay vhs_tracking_noise vhs_interlace_comb vhs_head_switch_band],
+  vhs_tape: { fx: %w[optical_blur spectral_temp vhs_luma_bleed vhs_chroma_delay vhs_tracking_noise vhs_interlace_comb vhs_head_switch_band],
               stock: :kodak_portra, temp: 6500, intensity: 0.80 },
 
-  crt_broadcast: { fx: %w[optical_blur crt_phosphor_bloom crt_scanlines hi8_chroma_noise],
+  crt_broadcast: { fx: %w[optical_blur spectral_temp crt_phosphor_bloom crt_scanlines hi8_chroma_noise],
                    stock: :kodak_portra, temp: 6500, intensity: 0.75 },
 
-  camcorder_glitch: { fx: %w[optical_blur vhs_chroma_delay minidv_block_dropout vhs_tracking_noise crt_scanlines],
+  camcorder_glitch: { fx: %w[optical_blur spectral_temp vhs_chroma_delay minidv_block_dropout vhs_tracking_noise crt_scanlines],
                       stock: :kodak_portra, temp: 6500, intensity: 0.85 },
 
   # ==========================================================================
@@ -651,45 +651,45 @@ PRESETS = {
   # print_stock: kodak_2302 is the black-and-white print film in PRINT_STOCKS,
   # and until this preset no chain projected onto it — the table had two entries
   # and one reader.
-  reportage: { fx: %w[optical_blur vintage_lens film_curve adjacency_effects micro_contrast print_film grain],
+  reportage: { fx: %w[optical_blur spectral_temp vintage_lens film_curve adjacency_effects micro_contrast print_film grain],
                stock: :ilford_hp5, temp: 5600, intensity: 0.85, lens: "summicron", print_stock: :kodak_2302 },
 
   # Delta 3200 at night, which is the only place it makes sense. Grain is not a
   # side effect of this preset, it is the subject.
-  available_darkness: { fx: %w[optical_blur film_curve push_pull shadow_lift adjacency_effects grain],
+  available_darkness: { fx: %w[optical_blur spectral_temp film_curve push_pull shadow_lift adjacency_effects grain],
                         stock: :ilford_delta3200, temp: 3400, intensity: 0.90, stops: 1.5 },
 
   # Ektar, with the colour matrix doing the work its data was written for.
-  saturated_negative: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask color_separate micro_contrast grain],
+  saturated_negative: { fx: %w[optical_blur spectral_temp vintage_lens film_curve stock_matrix orange_mask color_separate micro_contrast grain],
                         stock: :kodak_ektar100, temp: 5500, intensity: 0.90, lens: "zeiss" },
 
   # Pro 400H: cool, pastel, and the only preset here that does not warm up.
-  pastel_portrait: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask skin_protect highlight_roll grain],
+  pastel_portrait: { fx: %w[optical_blur spectral_temp vintage_lens film_curve stock_matrix orange_mask skin_protect highlight_roll grain],
                      stock: :fuji_pro400h, temp: 6200, intensity: 0.80, lens: "soft_focus" },
 
   # An SX-70 print: milky blacks, a ceiling on the highlights, and the whole
   # thing a little faded before it has finished developing.
-  instant_pack: { fx: %w[optical_blur film_curve stock_matrix faded_print film_base_density bloom_pro grain],
+  instant_pack: { fx: %w[optical_blur spectral_temp film_curve stock_matrix faded_print film_base_density bloom_pro grain],
                   stock: :polaroid_sx70, temp: 5800, intensity: 0.85, age: 0.35 },
 
   # The Petzval swirl, as far as a per-pixel pipeline can carry it: centre
   # holding, everything else glowing and coming apart at the edges.
-  swirl_portrait: { fx: %w[optical_blur vintage_lens film_curve orange_mask film_curl_vignette skin_protect grain],
+  swirl_portrait: { fx: %w[optical_blur spectral_temp vintage_lens film_curve orange_mask film_curl_vignette skin_protect grain],
                     stock: :kodak_portra, temp: 5200, intensity: 0.85, lens: "petzval" },
 
   # Uncoated pre-war glass: no anti-reflection coating, so every highlight
   # veils the shadows next to it and contrast is a suggestion.
-  uncoated_glass: { fx: %w[optical_blur vintage_lens film_curve shadow_lift adjacency_effects grain],
+  uncoated_glass: { fx: %w[optical_blur spectral_temp vintage_lens film_curve shadow_lift adjacency_effects grain],
                     stock: :ilford_hp5, temp: 5400, intensity: 0.85, lens: "uncoated" },
 
   # A plastic meniscus and expired consumer film, which is most of what the
   # word "lomo" ever meant.
-  plastic_lens: { fx: %w[optical_blur vintage_lens film_curve expired_film film_curl_vignette grain],
+  plastic_lens: { fx: %w[optical_blur spectral_temp vintage_lens film_curve expired_film film_curl_vignette grain],
                   stock: :fuji_pro400h, temp: 5000, intensity: 0.85, lens: "lomo", age: 0.5 },
 
   # Radioactive thorium glass yellows with age; a Takumar shot today is warmer
   # than the one that left the factory.
-  takumar_sun: { fx: %w[optical_blur vintage_lens film_curve stock_matrix orange_mask warmth grain],
+  takumar_sun: { fx: %w[optical_blur spectral_temp vintage_lens film_curve stock_matrix orange_mask warmth grain],
                  stock: :kodak_ektar100, temp: 5000, intensity: 0.85, lens: "takumar" },
 }.freeze
 
