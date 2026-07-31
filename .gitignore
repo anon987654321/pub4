@@ -75,11 +75,12 @@ RAILS/*/vendor/bundle/
 /snapshot.md
 /snapshot_*.md
 MASTER/snapshot.md
-# Full share-pack snapshots (MASTER/OPENBSD/RAILS/STUDIO, tree + every file
-# verbatim, ~13MB a set). Written here from 2026-07-31 rather than ~/Downloads
-# so they sit beside the code they describe. Visible directory on purpose —
-# a dotfolder hides them from the person who asked for them.
-/snapshots/
+# Full share-pack snapshots (MASTER/OPENBSD/RAILS/STUDIO — tree listing plus
+# every text file verbatim, ~13MB a set). Written into the repo root from
+# 2026-07-31, each carrying its date, so they sit beside the code they
+# describe and are findable without a folder or a dotfolder to look in.
+/*_snapshot_*.md
+/*_snapshot.md
 .master/
 MASTER/output/
 

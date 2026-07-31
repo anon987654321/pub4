@@ -31,9 +31,16 @@ module Master
       # agent-guide), and made "where are the snapshots" a question with a
       # non-obvious answer.
       #
-      # pub4/snapshots/ is gitignored (.gitignore /snapshots/), so a ~13MB set
-      # cannot reach a commit. Deliberately NOT a dotfolder: these exist to be
-      # found and handed to something, and hiding them defeats the purpose.
+      # The repo root itself, with no containing directory. Gitignored via
+      # /*_snapshot_*.md, so a ~13MB set cannot reach a commit. Not a subfolder
+      # and not a dotfolder: these exist to be found and handed to something,
+      # and both of those hide them.
+      #
+      # Every file carries its date, so the set is self-describing where it
+      # lands. Same-day regeneration overwrites that day's file rather than
+      # accumulating — deliberate, because unpruned 13MB sets in a repo root
+      # get very expensive very quickly. If you need two distinct sets in one
+      # day, point MASTER_SNAPSHOT_DIR somewhere.
       #
       # MASTER_SNAPSHOT_DIR still overrides. The ~/Downloads fallback is kept
       # for the case where this file is loaded from outside a checkout, rather
@@ -44,7 +51,7 @@ module Master
         # lib/trace -> lib -> MASTER -> pub4. Three levels, not four: the first
         # ".." already leaves the trace/ directory.
         repo = File.expand_path("../../..", __dir__)
-        File.directory?(File.join(repo, ".git")) ? File.join(repo, "snapshots") : File.expand_path("~/Downloads")
+        File.directory?(File.join(repo, ".git")) ? repo : File.expand_path("~/Downloads")
       end
 
       def write(target:, label:, repo_root: nil, mode: :both)
