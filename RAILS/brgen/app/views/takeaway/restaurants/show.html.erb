@@ -42,7 +42,7 @@
     <%= render "shared/empty_state",
           title: t("empty.no_menu"),
           body: "The kitchen has not listed food yet.",
-          action: { label: "All restaurants", path: takeaway_restaurants_path } %>
+          action: { label: t("actions.all_restaurants"), path: takeaway_restaurants_path } %>
 
   <% elsif Current.user.present? %>
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>

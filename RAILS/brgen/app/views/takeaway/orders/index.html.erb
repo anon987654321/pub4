@@ -1,6 +1,6 @@
-<% content_for :title, "My Orders" %>
+<% content_for :title, t("pages.my_orders") %>
 
-<div class="page-header" role="banner" aria-label="My orders header"><h1>My Orders</h1></div>
+<div class="page-header" role="banner" aria-label="My orders header"><h1><%= t("pages.my_orders") %></h1></div>
 
 <section id="takeaway-orders-list" class="order-list" role="list" aria-label="Order history">
   <% @orders.each do |order| %>

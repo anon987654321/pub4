@@ -1,6 +1,6 @@
-<% content_for :title, "Outfit suggestions" %>
+<% content_for :title, t("pages.suggest_outfits") %>
 <header role="banner" aria-label="AI outfit suggestions header">
-  <h1>Outfit suggestions</h1>
+  <h1><%= t("pages.suggest_outfits") %></h1>
   <% if @ai_available %>
     <p class="dim">OpenRouter + wardrobe metadata<% if Current.user.items.joins(:photos_attachments).exists? %> (vision when photos exist)<% end %>. Shopping links are not used for ranking.</p>
   <% else %>

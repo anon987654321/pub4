@@ -1,6 +1,6 @@
-<% content_for :title, "Style profile" %>
+<% content_for :title, t("pages.style_profile") %>
 
-<h1>Style profile — 5 questions</h1>
+<h1><%= t("pages.style_profile") %></h1>
 <p class="dim">MASTER will infer your aesthetic: minimal, bold or classic.</p>
 
 <%= form_with url: ai_style_profile_path, method: :post, class: "form" do |f| %>

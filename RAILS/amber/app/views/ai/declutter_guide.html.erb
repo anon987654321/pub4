@@ -1,5 +1,5 @@
-<% content_for :title, "Declutter guide" %>
-<h1>Declutter guide</h1>
+<% content_for :title, t("pages.declutter_guide") %>
+<h1><%= t("pages.declutter_guide") %></h1>
 <p><%= link_to "Declutter dashboard", declutter_index_path, class: "btn" %></p>
 <% if @candidates.any? %>
   <p class="dim">Items to consider letting go:</p>

@@ -1,5 +1,5 @@
-<% content_for :title, "Mood Board Match" %>
-<h1>Mood board match</h1>
+<% content_for :title, t("pages.mood_board") %>
+<h1><%= t("pages.mood_board") %></h1>
 <%= form_with url: ai_mood_board_path, method: :get do |f| %>
   <div class="field">
     <%= f.label :description, "Describe the aesthetic or paste a style reference" %>

@@ -54,7 +54,7 @@
 
 <nav role="navigation" aria-label="Order actions">
   <%= link_to "Reorder", takeaway_restaurant_path(@order.restaurant), class: "btn" %>
-  <%= link_to "All orders", takeaway_orders_path, class: "btn btn-ghost" %>
+  <%= link_to t("actions.all_orders"), takeaway_orders_path, class: "btn btn-ghost" %>
   <% if authenticated? && @order.restaurant.owner?(Current.user) && @order.advanceable? %>
     <% Takeaway::Order::TRANSITIONS.fetch(@order.status, []).each do |status| %>
       <%= button_to status.humanize, takeaway_order_path(@order), method: :patch, params: { status: status }, class: "btn btn-primary" %>

@@ -20,14 +20,14 @@
     </div>
 
     <%= link_to nearby_path, class: "nav-block nav-deliver nav-hover" do %>
-      <span class="nav-line-1"><%= icon :nearby, size: 13 %> Deliver to</span>
+      <span class="nav-line-1"><%= icon :nearby, size: 13 %> <%= t("storefront.deliver_to") %></span>
       <span class="nav-line-2"><%= deliver_to %></span>
     <% end %>
 
     <div class="search marketplace-nav-search" data-controller="search-focus">
       <%= form_with url: search_url, method: :get, local: true do %>
-        <select name="cuisine" class="nav-search-category" aria-label="Cuisine">
-          <option value="">All</option>
+        <select name="cuisine" class="nav-search-category" aria-label="<%= t("storefront.cuisine") %>">
+          <option value=""><%= t("storefront.all") %></option>
           <% Takeaway::Restaurant::CUISINE_TYPES.each do |cuisine| %>
             <option value="<%= cuisine %>" <%= "selected" if params[:cuisine] == cuisine %>><%= cuisine %></option>
           <% end %>
@@ -41,26 +41,26 @@
 
     <div id="accountStuff">
       <%= link_to(authenticated? ? user_path(Current.user) : new_session_path, class: "nav-block nav-hover") do %>
-        <span class="nav-line-1">Hello, <%= authenticated? ? (Current.user.username.presence || "you") : "sign in" %></span>
-        <span class="nav-line-2">Account</span>
+        <span class="nav-line-1"><%= t("storefront.hello") %> <%= authenticated? ? (Current.user.username.presence || t("storefront.you")) : t("storefront.sign_in") %></span>
+        <span class="nav-line-2"><%= t("storefront.account") %></span>
       <% end %>
       <%= link_to takeaway_orders_path, class: "nav-block nav-hover#{" nav-cart--active" if active == "orders"}" do %>
-        <span class="nav-line-1">Your</span>
-        <span class="nav-line-2">Orders</span>
+        <span class="nav-line-1"><%= t("storefront.your") %></span>
+        <span class="nav-line-2"><%= t("storefront.orders") %></span>
       <% end %>
     </div>
   </div>
 
   <div id="bottomHalf">
     <%= link_to takeaway_restaurants_path, id: "department", class: "nav-hover" do %>
-      <%= icon :menu, size: 18 %> All
+      <%= icon :menu, size: 18 %> <%= t("storefront.all") %>
     <% end %>
     <div id="sections">
-      <%= link_to "Restaurants", takeaway_restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
-      <%= link_to "Your orders", takeaway_orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
-      <%= link_to "Drivers", takeaway_delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
-      <%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "section nav-hover" if authenticated? %>
+      <%= link_to t("storefront.restaurants"), takeaway_restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
+      <%= link_to t("storefront.your_orders"), takeaway_orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
+      <%= link_to t("storefront.drivers"), takeaway_delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
+      <%= link_to t("storefront.add_restaurant"), new_takeaway_restaurant_path, class: "section nav-hover" if authenticated? %>
     </div>
-    <div id="subPromo">Local kitchens, 25–35 min</div>
+    <div id="subPromo"><%= t("storefront.sub_promo_food") %></div>
   </div>
 </div>

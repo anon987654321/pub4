@@ -1,5 +1,5 @@
-<% content_for :title, "Colour Palette" %>
-<h1>Wardrobe Colour Palette</h1>
+<% content_for :title, t("pages.colour_palette") %>
+<h1><%= t("pages.colour_palette_title") %></h1>
 <% if @result["source"] %><p class="dim">Source: <%= @result["source"] %></p><% end %>
 
 <% if @swatches.present? %>

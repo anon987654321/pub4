@@ -5,7 +5,7 @@
     <p class="dim">Takeaway operations</p>
     <h1><%= @delivery_driver.user&.display_name || "anon" %></h1>
   </div>
-  <%= link_to "All drivers", takeaway_delivery_drivers_path, class: "btn btn-ghost btn-sm" %>
+  <%= link_to t("actions.all_drivers"), takeaway_delivery_drivers_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
 <article role="article" aria-label="Driver details">

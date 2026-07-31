@@ -1,6 +1,6 @@
-<% content_for :title, "Packing list generator" %>
+<% content_for :title, t("pages.packing_list") %>
 
-<h1>Packing list generator</h1>
+<h1><%= t("pages.packing_list") %></h1>
 <p class="dim">Select trip duration and climate. MASTER suggests outfits from your wardrobe.</p>
 
 <%= form_with url: ai_packing_list_path, method: :get, class: "form" do |f| %>

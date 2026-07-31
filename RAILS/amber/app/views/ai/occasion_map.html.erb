@@ -1,5 +1,5 @@
-<% content_for :title, "Occasion Coverage" %>
-<h1>Occasion coverage map</h1>
+<% content_for :title, t("pages.occasion_map") %>
+<h1><%= t("pages.occasion_map") %></h1>
 <div class="occasion-grid">
   <% @coverage.each do |occasion, items| %>
     <div class="occasion-card occasion-card--<%= items.size < 2 ? 'sparse' : 'covered' %>">

@@ -1,4 +1,4 @@
-<% content_for :title, "Your Cart" %>
+<% content_for :title, t("pages.cart") %>
 
 <%= render "marketplace/nav_bar",
       active: "cart",
@@ -7,7 +7,7 @@
       cart_count: @cart_items.size %>
 
 <div class="page-header" role="banner" aria-label="Cart header">
-  <h1>Your Cart</h1>
+  <h1><%= t("pages.cart") %></h1>
   <p class="dim"><%= pluralize(@cart_items.size, "item") %></p>
 </div>
 
