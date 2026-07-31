@@ -12561,7 +12561,11 @@ def demo_all(bars_count = 12, destination = nil)
   track_timeout = 300 unless track_timeout.positive?
   force = ENV["DEMO_FORCE"] == "1"
   creative = ENV.fetch("DEMO_CREATIVE", "1") != "0"
-  rap_every = (ENV["DEMO_RAP_EVERY"] || "4").to_i
+  # No vocals in the demo. The demo exists to show the engine's harmony, groove
+  # and tone across 84 pieces; a voice on top is the loudest thing in the mix and
+  # it masks exactly what is being demonstrated. Set DEMO_RAP_EVERY=4 to put the
+  # old every-fourth-track rap back.
+  rap_every = (ENV["DEMO_RAP_EVERY"] || "0").to_i
 
   ENV["SPEAK"] ||= "0"
   ENV["STREAM_CONTINUOUS"] = "0"
@@ -12638,7 +12642,10 @@ def demo_all(bars_count = 12, destination = nil)
     else
       ENV["RAP_VOCAL"] = (idx % rap_every).zero? ? "gunnhild" : "0"
     end
-    ENV["CHOIR_VOX"] = creative && (idx % 3).zero? ? "1" : ENV.fetch("CHOIR_VOX", "1")
+    # This read as "choir on every third creative slot", but the fallback was
+    # "1" — so the other two thirds got a choir too, and the condition only
+    # decided which branch turned it on. Choir is a vocal; the demo has none.
+    ENV["CHOIR_VOX"] = ENV.fetch("CHOIR_VOX", "0")
 
     dmesg(
       "render #{idx + 1}/#{order.length} #{slug} " \
