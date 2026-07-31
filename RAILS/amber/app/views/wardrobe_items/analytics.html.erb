@@ -36,6 +36,7 @@
   <% if @analytics[:tips].any? %>
     <% @analytics[:tips].each do |tip| %><p><%= tip %></p><% end %>
   <% else %>
+    <%# empty_state: no-action-ok — calm state when heuristics have nothing urgent %>
     <p class="dim">No urgent wardrobe tips right now.</p>
   <% end %>
 </section>
@@ -43,7 +44,10 @@
 <section>
   <h2>Recommendations</h2>
   <% if @recommendations.blank? %>
-    <p class="dim">No recommendations yet.</p>
+    <%= render "shared/empty_state",
+          title: "No recommendations yet",
+          body: "Wear items and grow the closet — suggestions appear from those signals.",
+          action: { label: "Wardrobe", path: items_path } %>
   <% else %>
     <% @recommendations.each do |recommendation| %>
       <article>

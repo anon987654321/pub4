@@ -16,7 +16,10 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="dim">No showcase items yet.</p>
+    <%= render "shared/empty_state",
+          title: "No showcase items yet",
+          body: "Add a wardrobe piece with the form below.",
+          action: { label: "Wardrobe", path: items_path } %>
   <% end %>
 
   <%= form_with url: creator_profile_wardrobe_items_path(handle: @profile.handle), method: :post, class: "form-wrap" do |f| %>

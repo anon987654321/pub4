@@ -1,7 +1,16 @@
 <%= turbo_frame_tag "tv-channels-list", target: "_top" do %>
 <section id="tv-channels-list" role="region" aria-label="TV channel results">
-  <% @channels.each do |c| %>
-    <%= render "tv/channels/row", channel: c %>
+  <% if @channels.any? %>
+    <% @channels.each do |c| %>
+      <%= render "tv/channels/row", channel: c %>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: "No channels",
+          body: live_search_query.present? ? "No channels match this search." : "Channels will appear when creators publish.",
+          action: live_search_query.present? ?
+            { label: "Clear search", path: tv_channels_path } :
+            { label: "TV home", path: tv_root_path } %>
   <% end %>
 </section>
 

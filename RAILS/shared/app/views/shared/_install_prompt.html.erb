@@ -1,7 +1,10 @@
-<%# PWA install prompt — shown after third visit when beforeinstallprompt fires %>
+<%# PWA install prompt — shown after third visit when beforeinstallprompt fires.
+    Locals: title (optional), body (optional). Defaults stay generic for unknown hosts. %>
+<% title = local_assigns[:title].presence || "Install this app" %>
+<% body = local_assigns[:body].presence || "Get quicker access from your home screen." %>
 <div id="install-prompt" class="install-prompt" hidden data-controller="install-prompt">
-  <strong>Install this app</strong>
-  <p>Get quicker access from your home screen.</p>
+  <strong><%= title %></strong>
+  <p><%= body %></p>
   <div class="install-prompt-actions">
     <button type="button" class="install-prompt-secondary" data-action="click->install-prompt#dismiss">Not now</button>
     <button type="button" class="install-prompt-primary" data-action="click->install-prompt#install">Install</button>

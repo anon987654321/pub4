@@ -34,8 +34,14 @@
       </article>
     <% end %>
   <% else %>
-    <%= render "shared/empty_state", title: "No one nearby", body: "Check back later." %>
+    <%= render "shared/empty_state",
+          title: "No one nearby",
+          body: "Check back later — or drop a Live note while you wait.",
+          action: { label: "Open Live", path: live_path } %>
   <% end %>
 <% else %>
-  <%= render "shared/empty_state", title: "Waiting for location", body: "Allow location to see people nearby." %>
+  <%= render "shared/empty_state",
+        title: "Waiting for location",
+        body: "Allow location to see people nearby.",
+        action: { label: "Open Live", path: live_path } %>
 <% end %>

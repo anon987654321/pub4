@@ -10,6 +10,9 @@
     <%= render "tv/videos/tv_video", video: @video %>
   </div>
 <% else %>
-  <%= render "shared/empty_state", title: "Video coming soon", body: "This episode is not ready to play." %>
+  <%= render "shared/empty_state",
+        title: "Video coming soon",
+        body: "This episode is not ready to play.",
+        action: { label: "Back to show", path: tv_channel_show_path(@channel, @show) } %>
 <% end %>
 

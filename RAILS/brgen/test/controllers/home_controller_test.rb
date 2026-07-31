@@ -13,6 +13,10 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # per browser and PostsController#create allows anonymous posts.
     assert_includes response.body, "compose-launcher"
     assert_includes response.body, "feed-panel"
+    assert_includes response.body, "city-home-intro"
+    assert_includes response.body, "Bergen, right now"
+    # AI is a chip / sidebar link, not an eager above-fold iframe hero.
+    assert_not_includes response.body, 'class="ai-embed-frame"'
     assert_not_includes response.body, 'class="master-embed-frame"'
     assert_match(/aside class="sidebar"[\s\S]*?#{Regexp.escape(Rails.application.config.x.master_web_url)}/, response.body)
     assert_includes response.body, 'aria-label="AI assistant"'
@@ -33,5 +37,14 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'class="master-embed-frame"'
     assert_includes response.body, Rails.application.config.x.master_web_url
+  end
+
+  def test_sign_in_is_chrome_light
+    host! "brgen.no"
+    get new_session_path
+    assert_response :success
+    assert_includes response.body, "auth-surface"
+    assert_includes response.body, "auth-form-lead"
+    assert_match(new_user_path, response.body)
   end
 end

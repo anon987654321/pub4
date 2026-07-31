@@ -1,5 +1,6 @@
 /* Shared empty state — shared/_empty_state.html.erb + legacy .empty-state markup */
 
+/* Separation is space, not a box border (operator 2026-07-28). */
 .empty,
 .empty-state {
   display: grid;
@@ -7,14 +8,14 @@
   gap: var(--space-2xs, 0.25rem);
   padding: var(--space-6, 2rem) var(--space-4, 1rem);
   text-align: center;
-  border: 1px solid var(--border, var(--border));
+  border: 0;
   border-radius: var(--radius-md, 12px);
   max-width: 28rem;
   margin-inline: auto;
   color: var(--text-secondary, var(--text-dim));
   font-size: 0.9375rem;
   line-height: 1.5;
-  background: var(--surface-elevated, var(--surface2, transparent));
+  background: transparent;
 }
 
 .empty-state-icon {

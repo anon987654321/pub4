@@ -16,9 +16,24 @@
   </aside>
 <% end %>
 
-<%# The "Bergen, right now" blurb that used to sit here was removed: the feed
-    below says what the city is doing far better than a paragraph about it, and
-    the three links it carried are all in the tab bar and the vertical swiper. %>
+<section class="city-home-intro" aria-label="City orientation">
+  <h2 class="city-home-intro-title">Bergen, right now</h2>
+  <p class="city-home-intro-body">
+    Neighbourhood notes, weather-window plans, gigs, openings and the useful small things a city tells itself.
+  </p>
+  <p class="city-home-paths">
+    <%= link_to "Live", live_path %>
+    <span class="city-home-sep" aria-hidden="true">·</span>
+    <%= link_to "Marketplace", marketplace_root_url %>
+    <span class="city-home-sep" aria-hidden="true">·</span>
+    <%= link_to "Messages", conversations_path %>
+    <span class="city-home-note"> — no signup required</span>
+  </p>
+  <p class="city-home-ai">
+    <%= link_to "Ask Brgen AI", root_path(master: 1), class: "city-home-ai-link", data: { turbo: false } %>
+  </p>
+</section>
+
 <section id="feed-panel" aria-label="Local posts" data-visitor-orientation>
   <% if home_feed_following? && !authenticated? %>
     <p class="dim feed-hint"><%= link_to "Sign in", new_session_path %> to see posts from people you follow.</p>

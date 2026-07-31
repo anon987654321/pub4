@@ -154,7 +154,10 @@
       </button>
     <% end %>
     <% if tracks.empty? %>
-      <%= render "shared/empty_state", title: "No tracks yet", body: "Add or import tracks to play." %>
+      <%= render "shared/empty_state",
+            title: "No tracks yet",
+            body: "Add or import tracks to play.",
+            action: { label: "Library", path: playlist_root_path } %>
     <% end %>
   </section>
 

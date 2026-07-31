@@ -1,25 +1,50 @@
 <% content_for :title, "Create profile" %>
 
-<div class="page-header" role="banner"><h1>Create your profile</h1></div>
+<div class="page-header" role="banner">
+  <h1>Create your profile</h1>
+  <p class="dim">Three steps to start — photos, about you, who you are looking for. Details can wait.</p>
+</div>
 
-<div class="form-wrap">
+<div class="form-wrap dating-profile-form">
   <% draft_key = "brgen-dating-profile-new" %>
   <%= form_with(model: @profile, url: dating_profile_path, data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
     <%= render "shared/errors", object: @profile %>
-    <div class="field"><%= f.label :bio, "About you" %><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :bio, rows: 4, maxlength: 500, data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div></div>
-    <div class="field"><%= f.label :gender %><%= f.select :gender, Dating::Profile::GENDERS, { include_blank: "—" } %></div>
-    <div class="field"><%= f.label :looking_for, "Looking for" %><%= f.select :looking_for, Dating::Profile::LOOKING_FOR, { include_blank: "—" } %></div>
-    <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99 %></div>
-    <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+
+    <fieldset class="dating-profile-essentials">
+      <legend class="visually-hidden">Essentials</legend>
+      <div class="field">
+        <%= f.label :photos, "Photos" %>
+        <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
+        <p class="dim">Add at least one clear photo when you can.</p>
+      </div>
+      <div class="field">
+        <%= f.label :bio, "About you" %>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+          <%= f.text_area :bio, rows: 4, maxlength: 500, data: { character_counter_target: "input" } %>
+          <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="field">
+        <%= f.label :looking_for, "Looking for" %>
+        <%= f.select :looking_for, Dating::Profile::LOOKING_FOR, { include_blank: "—" } %>
+      </div>
+    </fieldset>
+
+    <details class="dating-profile-more">
+      <summary>More details (optional)</summary>
+      <div class="field"><%= f.label :gender %><%= f.select :gender, Dating::Profile::GENDERS, { include_blank: "—" } %></div>
+      <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99 %></div>
+      <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+      <div class="field">
+        <%= f.label :neighborhood_id, "Bydel / Neighbourhood" %>
+        <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
+      </div>
+      <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, "Make profile visible" %></div>
+    </details>
+
     <div class="field">
-      <%= f.label :neighborhood_id, "Bydel / Neighbourhood" %>
-      <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
+      <%= f.submit "Save", class: "btn btn-primary" %>
+      <span class="dim" data-autosave-target="status" aria-live="polite"></span>
     </div>
-    <div class="field"><%= f.label :photos, "Photos" %><%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
-    <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, "Make profile visible" %></div>
-    <div class="field"><%= f.submit "Save", class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
   <% end %>
 </div>

@@ -16,6 +16,9 @@
       <%= render "notifications/notification", notification: notification %>
     <% end %>
   <% else %>
-    <%= render "shared/empty_state", title: "No notifications yet", body: "Updates will appear here." %>
+    <%= render "shared/empty_state",
+          title: "No notifications yet",
+          body: "Updates will appear here.",
+          action: { label: "Home", path: root_path } %>
   <% end %>
 <% end %>

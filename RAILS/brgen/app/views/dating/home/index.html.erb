@@ -39,7 +39,11 @@
       </div>
       <nav role="navigation" aria-label="Dating navigation">
         <%= link_to "Matcher", dating_matches_path, class: "btn btn-ghost" %>
-        <% if authenticated? %><%= link_to "Profil", edit_dating_profile_path, class: "btn btn-ghost" %><% end %>
+        <% if Current.user&.dating_profile.present? %>
+          <%= link_to "Profil", edit_dating_profile_path, class: "btn btn-ghost" %>
+        <% elsif Current.user.present? %>
+          <%= link_to "Lag profil", new_dating_profile_path, class: "btn btn-ghost" %>
+        <% end %>
       </nav>
     </div>
 
@@ -57,17 +61,13 @@
           <% end %>
         </div>
         <% if @profiles.empty? %>
-          <% if authenticated? %>
-            <%= render "shared/empty_state",
-                  title: "No profiles nearby",
-                  body: "Widen your range or update your profile.",
-                  action: { label: "Edit profile", path: edit_dating_profile_path } %>
-          <% else %>
-            <%= render "shared/empty_state",
-                  title: "No profiles nearby",
-                  body: "Sign in to discover people nearby.",
-                  action: { label: "Sign in", path: new_session_path } %>
-          <% end %>
+          <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
+          <%= render "shared/empty_state",
+                title: "No profiles nearby",
+                body: "Widen your range, check back later, or finish your profile so others can find you.",
+                action: Current.user&.dating_profile.present? ?
+                  { label: "Edit profile", path: edit_dating_profile_path } :
+                  { label: "Create profile", path: new_dating_profile_path } %>
         <% end %>
         <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
       </section>

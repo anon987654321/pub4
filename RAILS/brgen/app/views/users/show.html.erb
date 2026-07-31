@@ -22,6 +22,9 @@
   <% if @posts.any? %>
     <%= render partial: "posts/post", collection: @posts %>
   <% else %>
-    <%= render "shared/empty_state", title: "No posts yet", body: "Nothing published on this profile." %>
+    <%= render "shared/empty_state",
+          title: "No posts yet",
+          body: "Nothing published on this profile.",
+          action: { label: "City feed", path: root_path } %>
   <% end %>
 </section>

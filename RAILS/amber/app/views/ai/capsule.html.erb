@@ -43,5 +43,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: "Wardrobe too thin",
-        body: "Add more items to your wardrobe first." %>
+        body: "Add more items to your wardrobe first.",
+        action: { label: "Add item", path: new_item_path } %>
 <% end %>

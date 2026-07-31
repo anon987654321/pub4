@@ -201,6 +201,23 @@
   margin: 0;
 }
 
+.amber-guest-secondary {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.amber-guest-secondary a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.amber-guest-secondary a:hover,
+.amber-guest-secondary a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 .amber-footer {
   margin-block-start: var(--luxury-space-xl);
   padding: var(--luxury-space-xl) var(--luxury-space-md) var(--luxury-space-lg);

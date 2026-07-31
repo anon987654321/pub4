@@ -1,16 +1,20 @@
 <div class="auth-form">
   <h1>New password</h1>
+  <p class="auth-form-lead">Choose a new password for your account.</p>
   <%= form_with model: @user, url: password_path(params[:token]), method: :put do |f| %>
     <div class="field">
       <%= f.label :password, "New password" %>
-      <%= password_visibility_field f, :password, autocomplete: "new-password"  %>
+      <%= password_visibility_field f, :password, autocomplete: "new-password" %>
     </div>
     <div class="field">
       <%= f.label :password_confirmation, "Confirm password" %>
-      <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password"  %>
+      <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password" %>
     </div>
     <div class="actions">
       <%= f.submit "Set password", class: "btn btn--primary" %>
     </div>
+    <p class="auth-form-footer">
+      <%= link_to "Back to sign in", new_session_path %>
+    </p>
   <% end %>
 </div>

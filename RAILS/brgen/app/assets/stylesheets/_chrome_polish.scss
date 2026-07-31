@@ -1,5 +1,77 @@
 /* Shell polish — profile, discovery, post detail, thread summary */
 
+/* Guest/city home orientation — sits above the feed, not under an AI hero. */
+.city-home-intro {
+  padding: var(--space-4, 1rem) 0 var(--space-3, 0.75rem);
+  max-width: var(--measure-body, 66ch);
+}
+
+.city-home-intro-title {
+  margin: 0 0 var(--space-2, 0.5rem);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.city-home-intro-body {
+  margin: 0 0 var(--space-3, 0.75rem);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-secondary, var(--text-dim));
+}
+
+.city-home-paths {
+  margin: 0 0 var(--space-2, 0.5rem);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.35rem;
+}
+
+.city-home-paths a {
+  font-weight: 700;
+  color: var(--accent, var(--text));
+  text-decoration: none;
+}
+
+.city-home-paths a:hover,
+.city-home-paths a:focus-visible {
+  text-decoration: underline;
+}
+
+.city-home-sep {
+  color: var(--text-secondary, var(--text-dim));
+  opacity: 0.7;
+}
+
+.city-home-note {
+  color: var(--text-secondary, var(--text-dim));
+  font-weight: 400;
+}
+
+.city-home-ai {
+  margin: 0;
+}
+
+.city-home-ai-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary, var(--text-dim));
+  text-decoration: none;
+}
+
+.city-home-ai-link:hover,
+.city-home-ai-link:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 .profile-header {
   display: flex;
   flex-wrap: wrap;

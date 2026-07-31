@@ -41,7 +41,10 @@
             <% end %>
           </ol>
         <% else %>
-          <p class="dim">No items tagged for this phase yet.</p>
+          <%= render "shared/empty_state",
+                title: "No items in this phase",
+                body: "Tag life phases on items to fill this column.",
+                action: { label: "Wardrobe", path: items_path } %>
         <% end %>
       </article>
     <% end %>
@@ -71,6 +74,9 @@
       <% end %>
     </ol>
   <% else %>
-    <p class="dim">Wear items to build your style timeline.</p>
+    <%= render "shared/empty_state",
+          title: "No wear history yet",
+          body: "Wear items to build your style timeline.",
+          action: { label: "Wardrobe", path: items_path } %>
   <% end %>
 </section>

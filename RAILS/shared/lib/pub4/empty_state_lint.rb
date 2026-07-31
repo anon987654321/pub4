@@ -17,7 +17,10 @@ module Pub4
     OPT_OUT = "empty_state: no-action-ok"
     # Ratchet ceiling: raise only when a specific new gap is a deliberate,
     # reviewed decision -- never bump this just to make a failing run pass.
-    BASELINE = 48
+    # Zero gaps as of 2026-07-31 residual vertical empty-state CTA pass.
+    # Deliberate no-CTA sites use `<%# empty_state: no-action-ok %>`.
+    # Never raise to silence a new gap.
+    BASELINE = 0
 
     Finding = Struct.new(:file, :line)
 

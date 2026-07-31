@@ -1,5 +1,9 @@
 <div class="auth-form">
   <h1>Sign in</h1>
+  <p class="auth-form-lead">
+    Search ports without an account.
+    Sign in to watch packages and save notes.
+  </p>
   <%= render "shared/oauth_links" %>
   <%= form_with url: session_path do |f| %>
     <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
@@ -12,8 +16,10 @@
       <%= password_visibility_field f, :password, required: true, autocomplete: "current-password", maxlength: 72 %>
     </div>
     <div class="actions">
-      <%= f.submit "Sign in", class: "btn" %>
+      <%= f.submit "Sign in", class: "btn btn-primary" %>
     </div>
-    <p><%= link_to "Forgot password?", new_password_path %></p>
+    <p class="auth-form-footer">
+      <%= link_to "Forgot password?", new_password_path %>
+    </p>
   <% end %>
 </div>

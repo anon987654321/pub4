@@ -18,7 +18,10 @@
       </article>
     <% end %>
     <% if @connections.empty? %>
-      <%= render "shared/empty_state", title: "No connections yet", body: "Follow creators to build your circle." %>
+      <%= render "shared/empty_state",
+            title: "No connections yet",
+            body: "Follow creators to build your circle.",
+            action: { label: "Home", path: root_path } %>
     <% end %>
   </section>
 <% end %>

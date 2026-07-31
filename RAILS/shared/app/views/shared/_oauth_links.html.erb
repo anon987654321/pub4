@@ -1,15 +1,22 @@
-<nav class="oauth-links" aria-label="Sign in options">
-  <% oauth_providers = Rails.application.config.x.oauth_provider_slugs.to_a %>
-  <% if oauth_providers.include?("vipps") %>
-    <%= button_to "Sign in with Vipps", "/auth/vipps", method: :post, class: "btn btn-primary oauth-vipps", data: { turbo: false } %>
-  <% end %>
-  <% if oauth_providers.include?("google_oauth2") %>
-    <%= button_to "Sign in with Google", "/auth/google_oauth2", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
-  <% end %>
-  <% if oauth_providers.include?("snapchat") %>
-    <%= button_to "Sign in with Snapchat", "/auth/snapchat", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
-  <% end %>
-  <% if oauth_providers.include?("github") %>
-    <%= button_to "Sign in with GitHub", "/auth/github", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
-  <% end %>
-</nav>
+<%# Only render when at least one OmniAuth provider is configured.
+    An empty <nav> was painting dead space on sign-in. %>
+<% oauth_providers = Rails.application.config.x.oauth_provider_slugs.to_a
+   known = %w[vipps google_oauth2 snapchat github]
+   active = known.select { |slug| oauth_providers.include?(slug) } %>
+<% if active.any? %>
+  <nav class="oauth-links" aria-label="Sign in options">
+    <% if active.include?("vipps") %>
+      <%= button_to "Sign in with Vipps", "/auth/vipps", method: :post, class: "btn btn-primary oauth-vipps", data: { turbo: false } %>
+    <% end %>
+    <% if active.include?("google_oauth2") %>
+      <%= button_to "Sign in with Google", "/auth/google_oauth2", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+    <% end %>
+    <% if active.include?("snapchat") %>
+      <%= button_to "Sign in with Snapchat", "/auth/snapchat", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+    <% end %>
+    <% if active.include?("github") %>
+      <%= button_to "Sign in with GitHub", "/auth/github", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+    <% end %>
+  </nav>
+  <p class="oauth-divider" aria-hidden="true">or email</p>
+<% end %>

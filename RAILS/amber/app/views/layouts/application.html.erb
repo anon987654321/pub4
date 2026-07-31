@@ -32,7 +32,8 @@
   <%= json_ld_script(organization_json_ld(site_name: "Amber", url: root_url)) %>
   <%= javascript_importmap_tags %>
 </head>
-<body data-pwa-key="amber"
+<body class="<%= "auth-surface" if controller_path.in?(%w[sessions passwords registrations]) %>"
+      data-pwa-key="amber"
       data-controller="pwa-standalone browser-fingerprint"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
 <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -114,7 +115,9 @@
 </div>
 </div>
 
-<%= render "shared/install_prompt" %>
+<%= render "shared/install_prompt",
+      title: "Install Amber",
+      body: "Your wardrobe offline — outfits and wear tracking on the home screen." %>
 <%= render "shared/nearby_chat_widget" %>
 </body>
 </html>

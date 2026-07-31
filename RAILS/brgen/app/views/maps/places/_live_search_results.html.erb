@@ -14,5 +14,8 @@
                kind: params[:kind] %>
   <% end %>
 <% else %>
-  <%= render "shared/empty_state", title: "No places", body: "No places match this search." %>
+  <%= render "shared/empty_state",
+        title: "No places",
+        body: "No places match this search.",
+        action: { label: "Clear search", path: maps_places_path } %>
 <% end %>

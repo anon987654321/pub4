@@ -16,7 +16,10 @@
         class: "tv" %>
     <% end %>
     <% if @live_streams.empty? %>
-      <%= render "shared/empty_state", title: "No live streams", body: "Nothing live right now." %>
+      <%= render "shared/empty_state",
+            title: "No live streams",
+            body: "Nothing live right now.",
+            action: { label: "TV home", path: tv_root_path } %>
     <% end %>
   <% end %>
   </turbo-frame>

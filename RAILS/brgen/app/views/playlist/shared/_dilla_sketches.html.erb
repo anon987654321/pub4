@@ -46,7 +46,8 @@
   <% else %>
     <%= render "shared/empty_state",
           title: "No sketches yet",
-          body: "Save a beat from the lab or paste JSON state below." %>
+          body: "Save a beat from the lab or paste JSON state below.",
+          action: { label: "Browse playlists", path: playlist_root_path } %>
   <% end %>
 
   <% if can_manage %>

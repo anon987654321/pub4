@@ -17,5 +17,8 @@
             q: params[:q] %>
  <% end %>
 <% else %>
- <%= render "shared/empty_state", title: "No communities", body: "No communities match this search." %>
+ <%= render "shared/empty_state",
+       title: "No communities",
+       body: "No communities match this search.",
+       action: { label: "Clear search", path: communities_path } %>
 <% end %>

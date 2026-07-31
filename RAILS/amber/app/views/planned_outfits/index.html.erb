@@ -20,7 +20,10 @@
     </div>
   <% end %>
   <% if @planned.empty? %>
-    <p class="dim">No outfits planned yet.</p>
+    <%= render "shared/empty_state",
+          title: "No outfits planned yet",
+          body: "Pick a date and an outfit above to plan your week.",
+          action: { label: "Browse outfits", path: outfits_path } %>
   <% end %>
 </div>
 <% end %>

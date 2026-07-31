@@ -82,9 +82,12 @@
     <p class="body">Catalog what you own, plan outfits, spot what you never wear, and get capsule suggestions before you buy more.</p>
     <p class="actions">
       <%= link_to "Browse demo wardrobe", demo_wardrobe_path, class: "btn btn--primary" %>
-      <%= link_to "Sign in", new_session_path, class: "btn btn--ghost" %>
       <%= link_to "Create account", new_registration_path, class: "btn btn--ghost" %>
-      <%= link_to "Talk to MASTER", root_path(master: 1), class: "btn btn--ghost" %>
+    </p>
+    <p class="dim amber-guest-secondary">
+      <%= link_to "Sign in", new_session_path %>
+      <span aria-hidden="true"> · </span>
+      <%= link_to "Ask Amber AI", root_path(master: 1), data: { turbo: false } %>
     </p>
   </section>
 
@@ -94,7 +97,10 @@
     <% if @guest_posts&.any? %>
       <%= render @guest_posts %>
     <% else %>
-      <p class="dim">No posts yet — share an #ootd thought above.</p>
+      <%= render "shared/empty_state",
+            title: "No posts yet",
+            body: "Share an #ootd thought above — guests can post without an account.",
+            action: { label: "Browse demo wardrobe", path: demo_wardrobe_path } %>
     <% end %>
     <%== pagy_nav(@pagy) if @pagy&.pages.to_i > 1 %>
   </section>

@@ -36,6 +36,7 @@
   <% if @video.description.present? %>
     <p class="mt-12"><%= simple_format(@video.description) %></p>
   <% else %>
+    <%# empty_state: no-action-ok — missing description is not a dead end; channel link is below %>
     <%= render "shared/empty_state", title: "No description", body: "This video has no write-up yet." %>
   <% end %>
 </article>
@@ -102,7 +103,10 @@
       </article>
     <% end %>
   <% else %>
-    <%= render "shared/empty_state", title: "No comments yet", body: "Start the conversation." %>
+    <%= render "shared/empty_state",
+          title: "No comments yet",
+          body: "Start the conversation — guests can comment without an account.",
+          action: { label: "Channel", path: tv_channel_path(@video.channel) } %>
   <% end %>
   <%# Tv::CommentsController asks for require_user_session, so guests may
       comment; only this form said otherwise. %>

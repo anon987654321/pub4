@@ -21,12 +21,19 @@
   <% end %>
 </section>
 
-<section>
-  <% @messages.each do |message| %>
-    <article class="<%= "message--unread" if message.read_at.nil? && message.recipient_id == Current.user.id %>">
-      <strong><%= message.sender == Current.user ? "To #{message.recipient.display_name}" : "From #{message.sender.display_name}" %></strong>
-      <p><%= message.body %></p>
-      <p class="dim"><%= time_ago_in_words(message.created_at) %> ago<% if message.read_at.nil? && message.recipient_id == Current.user.id %> · was unread<% elsif message.read_at %> · read<% end %></p>
-    </article>
+<section aria-label="Message history">
+  <% if @messages.any? %>
+    <% @messages.each do |message| %>
+      <article class="<%= "message--unread" if message.read_at.nil? && message.recipient_id == Current.user.id %>">
+        <strong><%= message.sender == Current.user ? "To #{message.recipient.display_name}" : "From #{message.sender.display_name}" %></strong>
+        <p><%= message.body %></p>
+        <p class="dim"><%= time_ago_in_words(message.created_at) %> ago<% if message.read_at.nil? && message.recipient_id == Current.user.id %> · was unread<% elsif message.read_at %> · read<% end %></p>
+      </article>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: "No messages yet",
+          body: "Send one with the form above, or follow creators to start a circle.",
+          action: { label: "Connections", path: connections_path } %>
   <% end %>
 </section>

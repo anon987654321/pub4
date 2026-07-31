@@ -37,6 +37,9 @@
   <% if @videos.any? %>
     <%= render "tv/channels/channel_videos" %>
   <% else %>
-    <%= render "shared/empty_state", title: "No videos yet", body: "This channel has no published videos." %>
+    <%= render "shared/empty_state",
+          title: "No videos yet",
+          body: "This channel has no published videos.",
+          action: { label: "All channels", path: tv_channels_path } %>
   <% end %>
 </section>

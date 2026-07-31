@@ -10,7 +10,10 @@
             body: "Add the first restaurant for this area.",
             action: { label: "Add one", path: new_takeaway_restaurant_path } %>
     <% else %>
-      <%= render "shared/empty_state", title: "No restaurants yet", body: "Restaurants will appear here." %>
+      <%= render "shared/empty_state",
+            title: "No restaurants yet",
+            body: "Restaurants will appear here.",
+            action: { label: "City feed", path: root_path } %>
     <% end %>
   <% end %>
 </section>

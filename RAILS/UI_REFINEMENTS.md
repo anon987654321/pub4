@@ -76,6 +76,25 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Vertical accent CSS vars exported (`--vertical-*-accent`) | Landed |
 | Amber item wear/cost tests + bsdports dependency cycle tests | Landed |
 
+## 2026-07-31 onboarding / auth polish (landed)
+
+| Item | Status |
+|------|--------|
+| Auth chrome-light (`body.auth-surface`) — hide tab bar, nearby, edge grips, nav swiper | Landed |
+| Auth form CSS — password grid, OAuth empty-nav guard, footer row, lead copy | Landed |
+| brgen guest home — city intro first; AI demoted to chip (`?master=1` full embed) | Landed |
+| Empty-state space-not-lines + CTAs (home search, ports, amber items); baseline 48→44 | Landed |
+| Amber guest CTA hierarchy + wardrobe “More tools” progressive disclosure | Landed |
+| Dating intro CSS `filter` removed (flat UI) | Landed |
+| Password + 2FA views on shared `.auth-form` shell (all apps) | Landed |
+| Guest-truth: communities post CTA, takeaway order copy | Landed |
+| Search/empty CTAs batch (communities, posts, deals, shops, places, restaurants, live, nearby, conversations, notifications, amber outfits/connections/capsule, bsdports categories/maintainers) | Landed |
+| empty_state_lint baseline 48 → 0 (all empties have CTA or no-action-ok) | Landed |
+| Deep pass: ad-hoc empties→shared partial (amber + cart + TV channels) | Landed |
+| Dating guest discover truth + progressive profile form | Landed |
+| Product install prompts (brgen / amber / bsdports) | Landed |
+| Vertical purpose intros (takeaway, TV home) | Landed |
+
 ## Intentionally residual (product/ops, not pure CSS)
 
 | Item | Why residual |

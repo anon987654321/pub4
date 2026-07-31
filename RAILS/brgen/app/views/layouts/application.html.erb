@@ -179,12 +179,9 @@
             </nav>
           </div>
         <% end %>
-        <%# The face is the front page's hero: full-bleed and large, with no
-            "ask brgen" bar around it. eager, because it is now the first thing
-            on the page rather than something below the fold. %>
-        <% if !vertical_surface? && current_page?(root_path) %>
-          <%= render "shared/master_embed", heading: "brgen ai", bare: true, eager: true %>
-        <% end %>
+        <%# City feed + compose first. AI lives as a compact chip in the home
+            intro (and full-page via ?master=1), not as an eager above-fold hero
+            that pushed "Bergen, right now" and guest paths below the fold. %>
         <% if current_page?(root_path) && Current.user.present? %>
           <%= render "shared/feed_compose" %>
         <% end %>
@@ -247,7 +244,9 @@
     </section>
   </div>
   </div>
-  <%= render "shared/install_prompt" %>
+  <%= render "shared/install_prompt",
+        title: "Install Brgen",
+        body: "Live notes, marketplace, and nearby — one tap from your home screen." %>
   <%= render "shared/nearby_chat_widget" %>
 </body>
 </html>

@@ -12,7 +12,7 @@
   <% end %>
 </header>
 
-<% if authenticated? %>
+<% if Current.user.present? %>
   <p><%= link_to "+ New post in #{@community.name}", new_community_post_path(@community) %></p>
 <% end %>
 
@@ -21,23 +21,16 @@
     <%= render "posts/post", post: post %>
   <% end %>
 <% else %>
-  <% if authenticated? %>
-    <%= render "shared/empty_state",
-          title: "No posts yet",
-          body: "Start the conversation in #{@community.name}.",
-          action: { label: "New post", path: new_community_post_path(@community) } %>
-  <% else %>
-    <%= render "shared/empty_state",
-          title: "No posts yet",
-          body: "Start the conversation in #{@community.name}.",
-          action: { label: "Sign in to post", path: new_session_path } %>
-  <% end %>
+  <%= render "shared/empty_state",
+        title: "No posts yet",
+        body: "Start the conversation in #{@community.name} — guests can post without an account.",
+        action: { label: "New post", path: new_community_post_path(@community) } %>
 <% end %>
 
 <aside>
   <h3>About <%= @community.name %></h3>
   <p><%= @community.description.presence || "No description." %></p>
-  <% if authenticated? %>
+  <% if Current.user.present? %>
     <p><%= link_to "New post", new_community_post_path(@community) %></p>
   <% end %>
 </aside>

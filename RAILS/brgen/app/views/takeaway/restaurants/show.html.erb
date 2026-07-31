@@ -36,10 +36,14 @@
   </section>
 <% end %>
 
-<section>
+<section id="menu">
   <h2>Menu</h2>
   <% if @menu_items.empty? %>
-    <%= render "shared/empty_state", title: "No menu items yet", body: "The kitchen has not listed food yet." %>
+    <%= render "shared/empty_state",
+          title: "No menu items yet",
+          body: "The kitchen has not listed food yet.",
+          action: { label: "All restaurants", path: takeaway_restaurants_path } %>
+
   <% elsif Current.user.present? %>
     <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
@@ -87,7 +91,9 @@
         </div>
       </article>
     <% end %>
-    <p><%= link_to "Sign in to order", new_session_path %></p>
+    <p class="dim">Reload to place an order — guests can order without signup.</p>
+    <p><%= link_to "Reload", takeaway_restaurant_path(@restaurant), class: "btn btn-primary" %></p>
+
   <% end %>
 </section>
 
@@ -101,7 +107,10 @@
       </article>
     <% end %>
   <% else %>
-    <%= render "shared/empty_state", title: "No reviews yet", body: "Order, then leave a rating for neighbours." %>
+    <%= render "shared/empty_state",
+          title: "No reviews yet",
+          body: "Order, then leave a rating for neighbours.",
+          action: { label: "Browse menu", path: takeaway_restaurant_path(@restaurant, anchor: "menu") } %>
   <% end %>
 </section>
 

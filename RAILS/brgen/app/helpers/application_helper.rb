@@ -131,7 +131,13 @@ module ApplicationHelper
   def body_surface_classes
     parts = []
     parts << "vertical-#{active_vertical}" if active_vertical
+    parts << "auth-surface" if auth_surface?
     parts.join(" ")
+  end
+
+  # Sign-in / sign-up / password reset — chrome-light body (no tab bar, nearby, edge grips).
+  def auth_surface?
+    controller_path.in?(%w[sessions passwords users two_factor_setups])
   end
 
   def inferred_vertical_from_controller

@@ -11,6 +11,9 @@
   <% if @item.spark_joy? %>
     <p class="chip">Spark joy</p>
   <% end %>
-  <p class="hint">Sign in to track wears, declutter scores, and AI outfit suggestions on your own wardrobe.</p>
-  <p><%= link_to "Sign in", new_session_path, class: "btn btn--primary" %></p>
+  <p class="hint">Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe.</p>
+  <p class="actions">
+    <%= link_to "Create account", new_registration_path, class: "btn btn--primary" %>
+    <%= link_to "Sign in", new_session_path, class: "btn btn--ghost" %>
+  </p>
 </article>

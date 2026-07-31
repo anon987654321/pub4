@@ -29,5 +29,8 @@
     <% end %>
   </div>
 <% else %>
-  <p class="dim">No showcase items yet.</p>
+  <%= render "shared/empty_state",
+        title: "No showcase items yet",
+        body: "Add pieces from your wardrobe when you edit this profile.",
+        action: { label: "Edit showcase", path: edit_my_creator_profile_path } %>
 <% end %>

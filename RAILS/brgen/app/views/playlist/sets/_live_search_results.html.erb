@@ -17,5 +17,10 @@
                q: params[:q] %>
   <% end %>
 <% else %>
-  <%= render "shared/empty_state", title: "No sets yet", body: "Create or import a set to get started." %>
+  <%= render "shared/empty_state",
+        title: "No sets yet",
+        body: "Create or import a set to get started.",
+        action: live_search_query.present? ?
+          { label: "Clear search", path: playlist_sets_path } :
+          { label: "New set", path: new_playlist_set_path } %>
 <% end %>

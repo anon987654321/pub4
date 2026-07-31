@@ -12,5 +12,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: "No notifications",
-        body: "Offers, orders, and local updates will appear here." %>
+        body: "Offers, orders, and local updates will appear here.",
+        action: { label: "Home", path: root_path } %>
 <% end %>

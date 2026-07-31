@@ -8,7 +8,10 @@
       <%= render "playlist/playlists/row", playlist: %>
     <% end %>
     <% if playlists.empty? %>
-      <%= render "shared/empty_state", title: "No playlists yet", body: "Create one to start the radio." %>
+      <%= render "shared/empty_state",
+            title: "No playlists yet",
+            body: "Create one to start the radio.",
+            action: { label: "New playlist", path: new_playlist_playlist_path } %>
     <% end %>
   </div>
 

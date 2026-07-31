@@ -10,7 +10,8 @@
 <% if @outfits.empty? %>
   <%= render "shared/empty_state",
         title: "No outfits yet",
-        body: "Start with a capsule, event, season, or mood." %>
+        body: "Start with a capsule, event, season, or mood.",
+        action: { label: "Compose an outfit", path: new_outfit_path } %>
 <% end %>
 
 <%= render "shared/infinite_scroll_sentinel",

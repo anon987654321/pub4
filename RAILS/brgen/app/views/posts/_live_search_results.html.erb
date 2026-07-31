@@ -24,5 +24,8 @@
 <% else %>
   <%= render "shared/empty_state",
         title: "No posts",
-        body: live_search_query.present? ? "No posts match this search." : "Nothing here yet." %>
+        body: live_search_query.present? ? "No posts match this search." : "Nothing here yet.",
+        action: live_search_query.present? ?
+          { label: "Clear search", path: posts_path } :
+          { label: "Post to Bergen", path: new_post_path } %>
 <% end %>

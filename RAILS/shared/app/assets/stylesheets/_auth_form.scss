@@ -3,6 +3,32 @@
    clearance the home feed gets from its own header block, and this form
    is short enough to otherwise sit directly under the fixed brand/nav
    chrome every app pins to the top of the viewport. */
+
+/* Chrome-light auth: keep brand + theme; hide app chrome that fights the form. */
+body.auth-surface {
+  .tab-bar,
+  .nearby-chat-widget,
+  .nearby-alerts,
+  .edge-grip,
+  .nav_swiper,
+  .city-carousel,
+  .mobile-sheet,
+  .mobile-sheet-backdrop,
+  .sidebar-swiper,
+  .widgets-swiper,
+  .push-enable-btn {
+    display: none !important;
+  }
+
+  /* Main is the form only — no feed gutters competing for attention. */
+  main#main-content,
+  main[role="main"] {
+    max-width: 28rem;
+    margin-inline: auto;
+    min-height: 100dvh;
+  }
+}
+
 .auth-form {
   max-width: 22rem;
   margin-inline: auto;
@@ -10,10 +36,29 @@
 }
 
 .auth-form h1 {
-  margin: 0 0 var(--space-4, 1rem);
+  margin: 0 0 var(--space-2, 0.5rem);
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.auth-form-lead {
+  margin: 0 0 var(--space-4, 1rem);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary, var(--text-dim));
+}
+
+.auth-form-lead a {
+  color: var(--accent, var(--text));
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-form-lead a:hover,
+.auth-form-lead a:focus-visible {
+  text-decoration: underline;
 }
 
 .auth-form .field {
@@ -36,7 +81,9 @@
 
 .auth-form input[type="email"],
 .auth-form input[type="password"],
-.auth-form input[type="text"] {
+.auth-form input[type="text"],
+.auth-form .password-field input {
+  width: 100%;
   min-height: 44px;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
@@ -44,11 +91,29 @@
   background: var(--search-bg, var(--surface));
   color: var(--text);
   font: inherit;
+  box-sizing: border-box;
 }
 
-.auth-form input:focus-visible {
+.auth-form input:focus-visible,
+.auth-form .password-field input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+/* Password + Show on one row; input takes remaining width. */
+.auth-form .password-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-2, 0.5rem);
+  align-items: center;
+}
+
+.auth-form .password-field .password-toggle,
+.auth-form .password-field .btn {
+  min-height: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .auth-form .actions {
@@ -58,7 +123,87 @@
   gap: 0.75rem;
 }
 
-.auth-form p:last-of-type {
-  margin-top: var(--space-3, 0.75rem);
+.auth-form .actions .btn,
+.auth-form .actions input[type="submit"] {
+  min-height: 44px;
+}
+
+.auth-form-footer {
+  margin-top: var(--space-4, 1rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
   font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text-secondary, var(--text-dim));
+}
+
+.auth-form-footer a {
+  color: var(--accent, var(--text));
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.auth-form-footer a:hover,
+.auth-form-footer a:focus-visible {
+  text-decoration: underline;
+}
+
+.auth-form-footer-sep {
+  color: var(--text-secondary, var(--text-dim));
+  opacity: 0.7;
+  user-select: none;
+}
+
+/* OAuth block — only rendered when at least one provider is configured. */
+.oauth-links {
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.oauth-links .btn,
+.oauth-links button {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  margin: 0 0 var(--space-4, 1rem);
+  font-size: 0.8125rem;
+  color: var(--text-secondary, var(--text-dim));
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-form-qr {
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.auth-form-qr svg,
+.auth-form-qr img {
+  max-width: 12rem;
+  height: auto;
+}
+
+/* CRT apps: zero radius on auth controls. */
+body.wscons .auth-form input,
+body.wscons .auth-form .password-field input,
+body[data-theme="wscons"] .auth-form input,
+:root:has(body.bsdports) .auth-form input {
+  border-radius: 0;
 }

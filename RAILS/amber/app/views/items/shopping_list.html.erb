@@ -14,7 +14,10 @@
     <% end %>
   </ul>
 <% else %>
-  <p>No gaps detected. Your wardrobe looks complete for essentials!</p>
+  <%= render "shared/empty_state",
+        title: "No gaps detected",
+        body: "Your wardrobe looks complete for essentials.",
+        action: { label: "Back to wardrobe", path: items_path } %>
 <% end %>
 
 <h2>MASTER purchase recommendations</h2>
@@ -28,7 +31,10 @@
     <% end %>
   </ul>
 <% else %>
-  <p>No recommendations yet. Run the gap analysis or add more items.</p>
+  <%= render "shared/empty_state",
+        title: "No recommendations yet",
+        body: "Add more items or re-run gap analysis when your closet grows.",
+        action: { label: "Add item", path: new_item_path } %>
 <% end %>
 
 <%= link_to "Back to wardrobe", items_path, class: "btn" %>

@@ -1,5 +1,6 @@
 <div class="auth-form">
   <h1>Reset password</h1>
+  <p class="auth-form-lead">We will email a link to set a new password.</p>
   <%= form_with url: passwords_path do |f| %>
     <div class="field">
       <%= f.label :email_address, "Email" %>
@@ -8,5 +9,8 @@
     <div class="actions">
       <%= f.submit "Send reset link", class: "btn btn--primary" %>
     </div>
+    <p class="auth-form-footer">
+      <%= link_to "Back to sign in", new_session_path %>
+    </p>
   <% end %>
 </div>

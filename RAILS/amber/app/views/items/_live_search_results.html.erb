@@ -22,7 +22,8 @@
 <% if @items.empty? %>
   <%= render "shared/empty_state",
         title: "No wardrobe items yet",
-        body: "Add your first item to start recommendations, capsules, and decluttering." %>
+        body: "Add a photo, tag it, then get an outfit — three steps to a working closet.",
+        action: { label: "Add your first item", path: new_item_path } %>
 <% end %>
 
 <%= render "shared/infinite_scroll_sentinel",

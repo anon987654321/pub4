@@ -56,5 +56,8 @@
     <p class="hint mt-8">Sellers get a notification for each pending offer. They accept or decline individually.</p>
   </div>
 <% else %>
-  <p>Your cart is empty. <%= link_to "Browse the marketplace", marketplace_root_path %>.</p>
+  <%= render "shared/empty_state",
+        title: "Your cart is empty",
+        body: "Browse listings and send offers — guests can shop without signup.",
+        action: { label: "Browse marketplace", path: marketplace_root_path } %>
 <% end %>

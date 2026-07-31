@@ -69,7 +69,10 @@
       </article>
     <% end %>
   <% else %>
-    <%= render "shared/empty_state", title: "No reviews yet", body: "Buyers can review after an order." %>
+    <%= render "shared/empty_state",
+          title: "No reviews yet",
+          body: "Buyers can review after an order.",
+          action: { label: "Browse listings", path: marketplace_listings_path } %>
   <% end %>
 </div>
 
@@ -118,7 +121,10 @@
         </article>
       <% end %>
     <% else %>
-      <%= render "shared/empty_state", title: "No offers yet", body: "Incoming offers will list here." %>
+      <%= render "shared/empty_state",
+            title: "No offers yet",
+            body: "Incoming offers will list here.",
+            action: { label: "Edit listing", path: edit_marketplace_listing_path(@listing) } %>
     <% end %>
     <%= button_to "Remove listing", marketplace_listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm m-16" %>
   </div>

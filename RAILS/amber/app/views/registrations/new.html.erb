@@ -1,5 +1,8 @@
 <div class="auth-form">
   <h1>Create account</h1>
+  <p class="auth-form-lead">
+    Catalog what you own, plan outfits, and spot what you never wear.
+  </p>
   <%= form_with model: User.new, url: registration_path do |f| %>
     <div class="field">
       <%= f.label :email_address, "Email" %>
@@ -7,15 +10,17 @@
     </div>
     <div class="field">
       <%= f.label :password %>
-      <%= password_visibility_field f, :password, autocomplete: "new-password"  %>
+      <%= password_visibility_field f, :password, autocomplete: "new-password" %>
     </div>
     <div class="field">
       <%= f.label :password_confirmation, "Confirm password" %>
-      <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password"  %>
+      <%= password_visibility_field f, :password_confirmation, autocomplete: "new-password" %>
     </div>
     <div class="actions">
       <%= f.submit "Create account", class: "btn btn--primary" %>
     </div>
-    <p><%= link_to "Already have an account? Sign in", new_session_path %></p>
+    <p class="auth-form-footer">
+      <%= link_to "Already have an account? Sign in", new_session_path %>
+    </p>
   <% end %>
 </div>

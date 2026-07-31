@@ -31,5 +31,8 @@
     <% end %>
   </ul>
 <% else %>
-  <%= render "shared/empty_state", title: "No conversations yet", body: "Message someone from a profile or match." %>
+  <%= render "shared/empty_state",
+        title: "No conversations yet",
+        body: "Message someone from a profile or match — no signup required.",
+        action: { label: "Nearby", path: nearby_path } %>
 <% end %>
