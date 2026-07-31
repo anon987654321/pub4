@@ -77,21 +77,42 @@ module Master
           STRATEGIES.select { |strategy| send(strategy.predicate) }
         end
 
-        # reduce, not each_with_object: the accumulator here is the rewritten source,
-        # so each step must *return* the next value. each_with_object discards the
-        # block result and hands the original string back every time, which silently
-        # reduced every transform to a no-op.
+        # An explicit accumulator loop, deliberately — not reduce, not
+        # each_with_object.
+        #
+        # The accumulator is the rewritten source, so each step must produce the
+        # next value. each_with_object returns the object and throws the block
+        # result away, which turns every transform into a no-op; all thirteen
+        # transform tests fail at once and nothing else does.
+        #
+        # It has been written as `reduce(src)` and rewritten to
+        # `each_with_object(src)` twice, by the LLM fix sweep applying rule
+        # EACH_WITH_OBJECT (data/rules/line.yml). That rule's lexical detector
+        # requires `reduce({})` — a fresh empty hash — and never matched this
+        # line; the sweep applied it from the rule's *name* instead. Fixed once
+        # in 5d8d49401, reintroduced by 8962ce5f7, and again after 4e964ce12.
+        #
+        # So this is written as a plain loop with a named accumulator: there is
+        # no `reduce` for that rule to recognise, and the data-flow is on the
+        # page rather than in a method's return-value contract. The rule has
+        # also been narrowed, but the code should not depend on that.
         def apply_transforms(src, transforms)
-          transforms.reduce(src) do |current, transform|
+          current = src
+          transforms.each do |transform|
             transform_labels = @transforms.dup
             candidate = send(transform, current)
-            next candidate unless ruby? && candidate != current && parses?(current) && !parses?(candidate)
 
-            # Transform turned valid Ruby into unparseable Ruby — a line-heuristic misfire on a
-            # multi-line construct. Discard it (and any label it recorded); keep the prior source.
-            @transforms.replace(transform_labels)
-            current
+            if ruby? && candidate != current && parses?(current) && !parses?(candidate)
+              # Transform turned valid Ruby into unparseable Ruby — a line-heuristic
+              # misfire on a multi-line construct. Discard it (and any label it
+              # recorded); keep the prior source.
+              @transforms.replace(transform_labels)
+              next
+            end
+
+            current = candidate
           end
+          current
         end
 
         def parses?(src) = !Prism.parse(src).failure?

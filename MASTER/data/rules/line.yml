@@ -38,12 +38,33 @@ line:
   - ruby
 - id: EACH_WITH_OBJECT
   source: Ruby Style Guide / RuboCop Style/EachWithObject
-  name: Prefer each_with_object over inject for hash building
+  name: Prefer each_with_object over inject when seeding a fresh empty collection
   tier: style
   severity: warning
   autofix: false
-  detect_lexical: "\\.(inject|reduce)\\(\\s*\\{\\s*\\}\\s*\\)"
-  fix: Use .each_with_object({}) — eliminates mutable-return footgun.
+  detect_lexical: "\\.(inject|reduce)\\(\\s*(\\{\\s*\\}|\\[\\s*\\])\\s*\\)"
+  # Narrow on purpose, and the narrowing is load-bearing rather than pedantic.
+  #
+  # The two forms are not interchangeable: each_with_object yields the object
+  # and ignores the block's value, reduce threads the block's return value into
+  # the next step. Swapping them is only safe when the accumulator is a fresh
+  # empty collection the block mutates in place. Where the block *returns* the
+  # next accumulator — a rewritten string, a running total — the swap silently
+  # makes every step a no-op.
+  #
+  # That is not hypothetical. The LLM fix sweep applied this rule twice to
+  # AstFixer#apply_transforms, whose accumulator is the rewritten source, and
+  # both times reduced all thirteen AST transforms to no-ops (5d8d49401,
+  # 8962ce5f7). The lexical detector never matched that line — it requires a
+  # literal `{}` or `[]` — so the sweep was acting on the rule's name alone.
+  # Hence the name and fix text now state the precondition instead of implying
+  # the forms are equivalent.
+  fix: >-
+    Only when the argument is a literal {} or [] that the block mutates in place.
+    Do NOT rewrite reduce/inject whose block returns the next accumulator
+    (a rebuilt string, a running total, a folded hash) — each_with_object
+    discards that return value and the fold becomes a no-op. If in doubt, leave
+    reduce alone.
   languages:
   - ruby
 - id: KEYWORD_ARGS
