@@ -1,5 +1,17 @@
-# address                target local user
-johann@brgen.no          johann
-# Catch-all for the domain goes to johann too; without this, mail to any other
-# brgen.no address is rejected at RCPT rather than silently blackholed.
-@brgen.no                johann
+# address              local user
+johann@brgen.no        johann
+
+# RFC 5321 requires postmaster to be reachable, the zone CAA record names
+# hostmaster for incident reports, and abuse is expected by every reputation
+# service. All three were accepted at SMTP and then TempFailed on delivery,
+# because with a wildcard the maildir action expands %{dest.user} to the
+# ORIGINAL localpart -- /home/hostmaster/Maildir -- not to the mapped user.
+# Explicit entries expand to the user they name.
+postmaster@brgen.no    johann
+hostmaster@brgen.no    johann
+abuse@brgen.no         johann
+dmarc@brgen.no         johann
+
+# Anything else at the domain. Safe now that the maildir path resolves from the
+# MAPPED user rather than the recipient localpart.
+@brgen.no              johann
