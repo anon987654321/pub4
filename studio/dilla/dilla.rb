@@ -5496,6 +5496,16 @@ end
 
 # When true, lead uses subdiv arps (spiral/skip/…); when false, slow melodic phrases.
 def lead_true_arp_mode?
+  # NO_ARP covers leads, not just pads. It only ever reached pad_arp_mode, so
+  # "stop using arpeggiators" silenced the pad arps and left the leads running
+  # theirs — and both STREAM_STYLE_SAFE and stream_iterate set LEAD_FORCE_ARP=1
+  # on every track, so the forced flag won every time. This has to be checked
+  # before that flag rather than after it.
+  #
+  # False here does not silence the lead; it routes it to slow melodic phrases
+  # instead of subdiv arp figures, which is what was being asked for.
+  return false if no_arp?
+
   return false if ENV["MELODIC_LEAD"] == "1" && ENV["LEAD_FORCE_ARP"] != "1"
   return true if ENV["LEAD_FORCE_ARP"] == "1" || ENV["MELODIC_LEAD"] == "0"
   mode = (ENV["LEAD_ARP_MODE"] || lead_arp_mode || "").to_s
