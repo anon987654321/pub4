@@ -11,10 +11,33 @@ module Master
 
         attr_reader :agent, :bus
 
+        # Kept at 4 deliberately. collect_parallel runs personas in slices of
+        # this size, so halving it doubles the number of batches: measured
+        # 2026-07-31, four concurrent calls take ~203s each and two take ~118s,
+        # which over 26 personas is 7 x 203 = 1421s against 13 x 118 = 1534s.
+        # Lower concurrency buys per-call margin and spends more total wall
+        # clock, which is the opposite of what it looks like it does.
         MAX_CONCURRENT = 4
         MAX_CODE_BYTES = 8_192
         TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
-        TOTAL_BUDGET_S = 120
+        # One deadline for the WHOLE council, not per persona or per batch —
+        # see collect_parallel, which computes it once and hands the same
+        # instant to every join_or_kill.
+        #
+        # At 120s this made most of the council structurally unreachable. A
+        # single persona answering a real critique prompt took 114-134s on this
+        # machine, so the first batch of four consumed the entire budget and
+        # batches two through seven were killed the moment they were joined.
+        # MIN_QUORUM = 3 is the only reason it ever returned a verdict: the
+        # 2026-07-31 critique that "passed" was three voices out of twenty-six,
+        # which is exactly the three it printed.
+        #
+        # 600s covers roughly three batches, so around twelve personas answer
+        # instead of three. Hearing all twenty-six needs ~1421s, which is a
+        # legitimate choice and a 24-minute critique per subsystem — three of
+        # them in a full gate. The arithmetic is written down so that is an
+        # informed one-line change rather than a guess.
+        TOTAL_BUDGET_S = 600
         MIN_QUORUM = 3
         CONVERGENCE_ROUNDS = 3
         CONVERGENCE_OVERLAP = 0.7

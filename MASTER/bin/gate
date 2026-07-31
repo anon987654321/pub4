@@ -101,8 +101,37 @@ def git_diff(*paths)
   run_command("git", "diff", "--", *paths, chdir: REPO)
 end
 
+# The chain ends with a clean tree or it does not end.
+#
+# This is not a bug in /fix and the message used to imply it was one. A full-fix
+# gate runs /scan, /fix, /scan, /critique, /review and then asserts nothing is
+# left modified — which says "/fix found nothing to do", i.e. the tree was
+# already conformant. A first run after real work SHOULD fail here: /fix changed
+# files, the diff is printed directly above, and the operator reviews it, commits
+# it and runs again. That is the workflow, and nothing recorded it.
+#
+# What made it look broken was run_command's generic abort:
+#
+#   err: command failed: git diff --exit-code -- MASTER
+#
+# which names a git invocation rather than the situation, gives no hint that the
+# diff above is the thing to look at, and reads identically whether /fix wrote
+# something or the tree was dirty before the gate even started.
 def assert_clean(*paths)
-  run_command("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
+  _stdout, status = Open3.capture2e("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
+  return if status.success?
+
+  changed, = Open3.capture2e("git", "diff", "--name-only", "--", *paths, chdir: REPO)
+  files = changed.split("\n").reject(&:empty?)
+  abort <<~ERR
+    err: #{paths.join(", ")} is not clean after the chain — #{files.length} file(s) modified:
+    #{files.first(20).map { |f| "      #{f}" }.join("\n")}
+    #{files.length > 20 ? "      ... and #{files.length - 20} more\n" : ""}
+    The diff is printed above. This is the expected outcome when /fix had work to
+    do: review those changes, commit them, and run the gate again. It is only a
+    problem if you did not expect /fix to touch them, or if the tree was already
+    dirty before the gate started.
+  ERR
 end
 
 puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'}"
