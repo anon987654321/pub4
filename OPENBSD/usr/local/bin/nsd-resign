@@ -25,10 +25,34 @@ rescue
   nil
 end
 
+# One KSK and one ZSK — the newest of each — not every key file on disk.
+#
+# ldns-signzone publishes a DNSKEY record for every key it is handed, so
+# globbing K#{zone}.+*.key meant each zone published every key ever generated
+# for it and no key could ever be retired: signing was the thing keeping them
+# alive. Measured 2026-07-31, all 58 zones published 12 DNSKEYs apiece (six
+# KSKs, six ZSKs) from 696 key files on disk, and a DNSKEY response for
+# brgen.no came to 997 bytes — close enough to the 1232-byte practical UDP
+# ceiling that a couple more rotations would have pushed every zone to TCP.
+#
+# The deeper problem is that a rollover is impossible while this is true. The
+# point of a rollover is to publish the new key, wait, then withdraw the old
+# one, and "withdraw" here had no mechanism: the old key file stays, so the old
+# key stays signed and published forever.
+#
+# Selecting by mtime rather than key tag because tags are hashes of the key
+# material and carry no ordering.
 def keys_for(zone)
-  Dir[File.join(ZONES_DIR, "K#{zone}.+*.key")].map { |k|
-    k.sub(/\.key$/, "")
-  }
+  newest = { 257 => nil, 256 => nil }
+  Dir[File.join(ZONES_DIR, "K#{zone}.+*.key")].each do |path|
+    flags = File.read(path)[/DNSKEY\s+(\d+)/, 1].to_i
+    next unless newest.key?(flags)
+    current = newest[flags]
+    newest[flags] = path if current.nil? || File.mtime(path) > File.mtime(current)
+  rescue StandardError
+    next
+  end
+  newest.values.compact.map { |path| path.sub(/\.key$/, "") }
 end
 
 def sign(zone, zone_file, keys, expiry)
