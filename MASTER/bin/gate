@@ -50,11 +50,38 @@ def run_command(*argv, chdir: ROOT)
   abort "err: command failed: #{argv.join(" ")}" unless status.success?
 end
 
+# A stage that could not measure did not pass.
+#
+# bin/cli exits 0 when a command runs to completion, and /critique runs to
+# completion whether or not its council answered. On 2026-07-31 a full
+# scan-only gate printed "ok: MASTER gate scan-only complete" and exited 0 with
+# all three of its critique stages dead: MASTER and OPENBSD reached a quorum of
+# 2 personas out of 26, and RAILS reported "critique failed: claude-cli: timed
+# out after 60s" outright. The scanners had run, so the gate called it green --
+# but a green gate is a claim that the code was reviewed, and nothing had been.
+#
+# This is the rule DECISIONS already records for gates in general (932195cf8,
+# "inconclusive should mean nothing measured, not something skipped"). The exit
+# status is not the only signal a stage emits; when a stage says in its own
+# output that it could not reach a verdict, that is the verdict.
+INCONCLUSIVE = [
+  /quorum not reached/,
+  /^critique failed:/,
+  /^scan failed:/,
+  /^review failed:/,
+].freeze
+
 def run_master_line(line)
   puts "master> #{line}"
   stdout, status = Open3.capture2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: ROOT, stdin_data: "#{line}\n")
   puts stdout
   abort "err: MASTER command failed: #{line}" unless status.success?
+
+  hit = INCONCLUSIVE.find { |pattern| stdout.match?(pattern) }
+  return unless hit
+
+  evidence = stdout.lines.grep(hit).map(&:strip).first
+  abort "err: #{line} exited 0 but reached no verdict: #{evidence}"
 end
 
 def git_diff(*paths)
