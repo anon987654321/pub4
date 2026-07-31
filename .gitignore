@@ -169,3 +169,8 @@ studio/dilla/samples/yt_*.wav
 # .venv-demucs, .all_tracks_demo). Generated audio should be findable by
 # anyone looking at the tree, and all of it is regenerable.
 studio/dilla/scratch/
+
+# dilla engine scratch strays (anywhere in repo)
+.dilla_progressions_log.txt
+studio/dilla/.cache/
+studio/dilla/.dilla_*
