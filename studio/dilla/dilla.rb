@@ -107,7 +107,10 @@ OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", Dir.pwd)
 # dotfiles in the invoking directory or next to the source. Safe to wipe,
 # with one exception: the progressions log (see log_progression!) is the
 # only record of generated progressions, which never repeat.
-SCRATCH_DIR = ENV.fetch("DILLA_SCRATCH_DIR", File.join(ROOT, ".cache"))
+# scratch/, not .cache/: hidden folders make generated audio invisible to
+# anyone looking at the project, and this engine writes a lot of it. One
+# visible directory holds all of it, gitignored as a whole.
+SCRATCH_DIR = ENV.fetch("DILLA_SCRATCH_DIR", File.join(ROOT, "scratch"))
 
 def scratch_path(name)
   FileUtils.mkdir_p(SCRATCH_DIR)
@@ -1988,7 +1991,23 @@ PAD_ARP_PRESETS = {
                 arp_styles: %i[up downup quint_spread] },
 }.freeze
 
+# NO_ARP=1 wins over everything, including a preset.
+#
+# PAD_ARP was only ever a fallback: this reads ENV["PAD_ARP_MODE"] first, which
+# is what the style presets write, so setting PAD_ARP=held did nothing on the 48
+# of 53 presets that name a mode — wash on 25, shimmer on 9, pulse on 6, figure
+# and duo on 3 each. Only 5 are held. An operator asking for no arpeggiators was
+# being overruled by the table, silently, on almost every track.
+#
+# Forcing :held here also stops the lead arp: lead_arp_mode is
+# PAD_TO_LEAD_ARP[pad_arp_mode], and lead_arp_preset_key only reaches the legacy
+# path when pad_arp_mode != :held. One switch, both layers, which is what "stop
+# using arpeggiators" has to mean.
+def no_arp? = ENV["NO_ARP"] == "1"
+
 def pad_arp_mode
+  return :held if no_arp?
+
   raw = ENV["PAD_ARP_MODE"]&.downcase
   sym = raw&.to_sym
   return sym if sym && PAD_ARP_LAYER_MODES.key?(sym)
@@ -4025,7 +4044,7 @@ def flylo_top_bus_mapping
 end
 
 def dilla_render_tmp(tag)
-  File.join(ROOT, ".dilla_#{tag}.#{Process.pid}.wav")
+  File.join(SCRATCH_DIR, "dilla_#{tag}.#{Process.pid}.wav")
 end
 
 # PID-scoped temp files (drums/harmonic/flylo_*/pads.wav.L0/.smf.mid/etc.)
@@ -4038,10 +4057,10 @@ end
 # makes each track start from a guaranteed-clean slate instead of trusting
 # leftovers from whatever the last track did.
 def cleanup_render_scratch!
-  Dir.glob(File.join(ROOT, ".dilla_*.#{Process.pid}.*")).each { |f| FileUtils.rm_f(f) }
+  Dir.glob(File.join(SCRATCH_DIR, "dilla_*.#{Process.pid}.*")).each { |f| FileUtils.rm_f(f) }
 end
 
-STREAM_LOCK_PATH = File.join(ROOT, ".dilla_stream.lock").freeze
+STREAM_LOCK_PATH = scratch_path("dilla_stream.lock").freeze
 
 def acquire_stream_lock!
   if File.exist?(STREAM_LOCK_PATH)
@@ -8356,7 +8375,7 @@ def tool_available?(name)
   ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |directory| File.executable?(File.join(directory, name)) }
 end
 
-DEMUX_VENV_PYTHON = File.join(ROOT, ".venv-demucs", "bin", "python").freeze
+DEMUX_VENV_PYTHON = File.join(scratch_path("venv-demucs"), "bin", "python").freeze
 
 def demucs_cmd
   return %w[demucs] if tool_available?("demucs")
@@ -8513,7 +8532,7 @@ end
 def start_groove_preview
   return unless tool_available?("ffplay")
 
-  tmp = File.join(ROOT, ".groove_tmp.wav")
+  tmp = File.join(SCRATCH_DIR, "groove_tmp.wav")
   render_dilla(tmp, [8, bars].max)
   pid = spawn("ffplay", "-nodisp", "-loop", "0", tmp, out: "/dev/null", err: "/dev/null")
   [pid, tmp]
@@ -10022,8 +10041,8 @@ end
 
 # Instant playback — cached WAV, no render wait.
 def live_now
-  harm = File.join(ROOT, ".harmony_loud.wav")
-  full = File.join(ROOT, ".live_tmp.wav")
+  harm = File.join(SCRATCH_DIR, "harmony_loud.wav")
+  full = File.join(SCRATCH_DIR, "live_tmp.wav")
   path = File.exist?(harm) ? harm : full
   abort "no cache — run: ruby dilla.rb regenerate" unless File.exist?(path)
   play_loop(path)
@@ -10031,9 +10050,9 @@ end
 
 # Harmony-forward stem mix from cached drum + harmonic renders.
 def build_harmony_loud(
-  drums: File.join(ROOT, ".dilla_drums.wav"),
-  harmonic: File.join(ROOT, ".dilla_harmonic.wav"),
-  out: File.join(ROOT, ".harmony_loud.wav")
+  drums: File.join(SCRATCH_DIR, "dilla_drums.wav"),
+  harmonic: File.join(SCRATCH_DIR, "dilla_harmonic.wav"),
+  out: File.join(SCRATCH_DIR, "harmony_loud.wav")
 )
   abort "missing #{drums}" unless File.exist?(drums)
   abort "missing #{harmonic}" unless File.exist?(harmonic)
@@ -10066,8 +10085,8 @@ end
 def regenerate(bars_count = 16)
   require_tools! "ffmpeg"
   bars_count = (ENV["BARS"] || bars_count).to_i
-  tmp = File.join(ROOT, ".live_tmp.wav")
-  harm = File.join(ROOT, ".harmony_loud.wav")
+  tmp = File.join(SCRATCH_DIR, "live_tmp.wav")
+  harm = File.join(SCRATCH_DIR, "harmony_loud.wav")
   puts "regenerating #{bars_count} bars (TRACK=#{ENV['TRACK'] || 'timeless'})…"
   render_dilla(tmp, bars_count, keep_stems: true)
   build_harmony_loud
@@ -10077,9 +10096,9 @@ end
 
 # Chords + melody up front — loops .harmony_loud.wav.
 def harmony_now
-  harm = File.join(ROOT, ".harmony_loud.wav")
-  drums = File.join(ROOT, ".dilla_drums.wav")
-  harmonic = File.join(ROOT, ".dilla_harmonic.wav")
+  harm = File.join(SCRATCH_DIR, "harmony_loud.wav")
+  drums = File.join(SCRATCH_DIR, "dilla_drums.wav")
+  harmonic = File.join(SCRATCH_DIR, "dilla_harmonic.wav")
   if ENV["REBUILD"] == "1" || !File.exist?(harm)
     if File.exist?(drums) && File.exist?(harmonic)
       build_harmony_loud
@@ -10092,7 +10111,7 @@ end
 
 # Loop full master — .live_tmp.wav via ffplay.
 def live(bars_count = 32)
-  tmp = File.join(ROOT, ".live_tmp.wav")
+  tmp = File.join(SCRATCH_DIR, "live_tmp.wav")
   unless File.exist?(tmp)
     quick = [4, bars_count].min
     puts "no cache — warming #{quick} bars first (~15s)"
@@ -12416,7 +12435,7 @@ def demo_all(bars_count = 12, destination = nil)
   bars_count = 12 unless bars_count.positive?
   dest = destination.to_s
   dest = File.join(ROOT, "demo.wav") if dest.empty?
-  out_dir = File.join(ROOT, ".all_tracks_demo")
+  out_dir = File.join(SCRATCH_DIR, "all_tracks_demo")
   FileUtils.mkdir_p(out_dir)
   log_path = File.join(out_dir, "demo_all.log")
   catalog_path = File.join(out_dir, "catalog.txt")
@@ -16608,7 +16627,7 @@ end
 PROGRESSION_LOG_PATH = File.join(SCRATCH_DIR, "progressions_log.txt")
 LEGACY_PROGRESSION_LOGS = [
   File.join(OUTPUT_DIR, ".dilla_progressions_log.txt"),
-  File.join(ROOT, ".dilla_progressions_log.txt"),
+  File.join(SCRATCH_DIR, "dilla_progressions_log.txt"),
 ].freeze
 
 # Older versions wrote the log as a dotfile into the invoking directory —
@@ -17378,7 +17397,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
     ind_stab: load_mono_sample(drum_sample_path("ind_stab.wav")),
   }
   stab_hits = events[:stab].map { |t, v| [t, v, :ind_stab] }
-  drum_tmp  = File.join(ROOT, ".ind_drums.wav")
+  drum_tmp  = File.join(SCRATCH_DIR, "ind_drums.wav")
   render_sample_bus_wav(
     drum_tmp,
     events.merge(stab: stab_hits),
@@ -17451,7 +17470,7 @@ def composition_jam(n_bars = 16)
   n_bars = (ENV["BARS"] || n_bars).to_i
   sess = composition_session!(n_bars:, force_new: true)
   puts "jam — #{sess.track} | performer=#{sess.performer} groove=#{sess.groove_dna} | #{n_bars} bars"
-  dest = File.join(ROOT, ".jam_tmp.wav")
+  dest = File.join(SCRATCH_DIR, "jam_tmp.wav")
   render_dilla(dest, n_bars, keep_stems: true)
   play_loop(dest)
 end
@@ -17463,7 +17482,7 @@ def composition_evolve(n_bars = 16, generations = 5)
   reset_composition_session!
   sess = composition_session!(n_bars:, force_new: true)
   cfg = dilla_resolve_config
-  dest = File.join(ROOT, ".evolve_best.wav")
+  dest = File.join(SCRATCH_DIR, "evolve_best.wav")
   render_fn = lambda do |session|
     @composition_session = session
     out = File.join(SCRATCH_DIR, "evolve_gen#{session.generation}.wav")
@@ -17481,8 +17500,8 @@ def composition_evolve(n_bars = 16, generations = 5)
 end
 
 def composition_critique(path = nil)
-  path ||= File.join(ROOT, ".live_tmp.wav")
-  path = File.join(ROOT, ".jam_tmp.wav") unless File.file?(path)
+  path ||= File.join(SCRATCH_DIR, "live_tmp.wav")
+  path = File.join(SCRATCH_DIR, "jam_tmp.wav") unless File.file?(path)
   abort "no render to critique — run: ruby dilla.rb jam" unless File.file?(path)
   report = dilla_quality(path)
   sess = composition_session!(n_bars: bars)
@@ -17552,7 +17571,7 @@ def composition_listen_loop(n_bars = 16)
   ENV["COMPOSITION"] = "1"
   n_bars = (ENV["BARS"] || n_bars).to_i
   max_passes = (ENV["LISTEN_PASSES"] || 3).to_i
-  dest = File.join(ROOT, ".listen_loop.wav")
+  dest = File.join(SCRATCH_DIR, "listen_loop.wav")
   render_fn = ->(pass) { render_dilla(File.join(SCRATCH_DIR, "listen_pass#{pass}.wav"), n_bars); dest }
   analyze_fn = ->(path) { dilla_quality(path) }
   path = DillaComposition::ListeningLoop.converge(render_fn:, analyze_fn:, max_passes:)
@@ -17995,7 +18014,7 @@ def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.
     hat: load_mono_sample(drum_sample_path("hat.wav")),
     open_hat: load_mono_sample(drum_sample_path("open_hat.wav")),
   }
-  drum_tmp = File.join(ROOT, ".madlib_drums.wav")
+  drum_tmp = File.join(SCRATCH_DIR, "madlib_drums.wav")
   render_sample_bus_wav(
     drum_tmp,
     events, duration, kit,
@@ -21478,7 +21497,7 @@ end
 
 def ensure_demucs_ready!
   return if demucs_available?
-  venv = File.join(ROOT, ".venv-demucs")
+  venv = File.join(SCRATCH_DIR, "venv-demucs")
   unless File.directory?(venv)
     sh! "python3", "-m", "venv", venv
   end
