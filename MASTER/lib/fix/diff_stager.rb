@@ -166,7 +166,7 @@ module Master
         Entry.new(
           id: data[:id], path: data[:path], tool: data[:tool],
           old_content: data[:old_content], new_content: data[:new_content],
-          created_at: Time.parse(data[:created_at]),
+          created_at: Time.parse(data[:created_at])
         )
       rescue StandardError => e
         @bus&.publish("diff_stager:load_error", path:, error: e.message)

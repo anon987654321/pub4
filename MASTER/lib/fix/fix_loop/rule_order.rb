@@ -40,7 +40,7 @@ module Master
             # law- and quality-aware ranking for everything else.
             score = Priority.score(
               rule_id: r.id, severity: rule_severity(r), frequency:,
-              age_days: violation_age_days(r.id), law_resolver:, rules_index:, quality:,
+              age_days: violation_age_days(r.id), law_resolver:, rules_index:, quality:
             )
             [tier2?(r.id) ? 0 : 1, -score, i]
           end.map(&:first)
