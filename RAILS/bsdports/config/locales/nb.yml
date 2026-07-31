@@ -56,6 +56,14 @@ nb:
     no_maintainers: "Ingen maintainere"
     no_maintainers_search: "Ingen maintainere matcher søket."
     clear_search: "Tøm søk"
+  pages:
+    ports: "OpenBSD-porter"
+    categories: "Kategorier"
+    maintainers: "Maintainere"
+    comment: "Kommentar"
+  actions:
+    all_categories: "Alle kategorier"
+    all_maintainers: "Alle maintainere"
   install:
     title: "Installer BSDports"
     body: "Portersøk og advisories — åpne fra hjem-skjermen."

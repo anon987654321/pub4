@@ -1,11 +1,11 @@
-<% content_for :title, "Wardrobe" %>
+<% content_for :title, t("pages.wardrobe") %>
 <%= turbo_stream_from "items" %>
 
 <section data-controller="filter" role="region" aria-label="Wardrobe items">
   <header role="banner" aria-label="Wardrobe header">
     <div>
       <p class="dim">Closet intelligence</p>
-      <h1>Wardrobe (<%= @pagy.count %>)</h1>
+      <h1><%= t("pages.wardrobe") %> (<%= @pagy.count %>)</h1>
     </div>
     <div class="wardrobe-action-groups">
       <nav role="navigation" aria-label="Primary wardrobe actions" class="wardrobe-action-group">

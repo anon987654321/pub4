@@ -182,6 +182,19 @@ en:
     reports_clear: "Moderation queue is clear."
     no_sessions: "No sessions scheduled"
     create_playlist: "Create one to start the radio."
+  actions:
+    add_one: "Add one"
+    sell_something: "Sell something"
+    new_set: "New set"
+    tv_home: "TV home"
+    city_feed: "City feed"
+    compose_outfit: "Compose an outfit"
+    all_categories: "All categories"
+    all_maintainers: "All maintainers"
+    save_search_body: "Search the marketplace, then save the search."
+  pages:
+    account: "Account"
+    two_factor: "Two-factor authentication"
   install:
     title: "Install Brgen"
     body: "Live notes, marketplace, and nearby — one tap from your home screen."

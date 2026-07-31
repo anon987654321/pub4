@@ -8,12 +8,12 @@
       <%= render "shared/empty_state",
             title: t("empty.no_restaurants"),
             body: "Add the first restaurant for this area.",
-            action: { label: "Add one", path: new_takeaway_restaurant_path } %>
+            action: { label: t("actions.add_one"), path: new_takeaway_restaurant_path } %>
     <% else %>
       <%= render "shared/empty_state",
             title: t("empty.no_restaurants"),
             body: "Restaurants will appear here.",
-            action: { label: "City feed", path: root_path } %>
+            action: { label: t("empty.city_feed"), path: root_path } %>
     <% end %>
   <% end %>
 </section>

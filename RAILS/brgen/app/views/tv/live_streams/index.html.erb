@@ -19,7 +19,7 @@
       <%= render "shared/empty_state",
             title: t("empty.no_live_streams"),
             body: "Nothing live right now.",
-            action: { label: "TV home", path: tv_root_path } %>
+            action: { label: t("actions.tv_home"), path: tv_root_path } %>
     <% end %>
   <% end %>
   </turbo-frame>

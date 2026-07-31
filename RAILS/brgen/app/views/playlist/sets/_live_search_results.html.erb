@@ -22,5 +22,5 @@
         body: "Create or import a set to get started.",
         action: live_search_query.present? ?
           { label: t("empty.clear_search"), path: playlist_sets_path } :
-          { label: "New set", path: new_playlist_set_path } %>
+          { label: t("actions.new_set"), path: new_playlist_set_path } %>
 <% end %>

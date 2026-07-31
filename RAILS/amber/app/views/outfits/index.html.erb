@@ -1,13 +1,13 @@
-<% content_for :title, "Outfits" %>
+<% content_for :title, t("pages.outfits") %>
 <%= turbo_stream_from "outfits" %>
 
-<header role="banner" aria-label="Outfits header">
+<header role="banner" aria-label="<%= t("pages.outfits") %>">
   <div>
     <p class="dim">Style combinations</p>
-    <h1>Outfits</h1>
+    <h1><%= t("pages.outfits") %></h1>
   </div>
-  <nav role="navigation" aria-label="Outfit actions">
-    <%= link_to "New outfit", new_outfit_path, class: "btn" %>
+  <nav role="navigation" aria-label="<%= t("pages.outfits") %>">
+    <%= link_to t("pages.new_outfit"), new_outfit_path, class: "btn" %>
     <%= link_to "Dressing room", dressing_room_outfits_path, class: "btn" %>
     <%= link_to t("amber.nav.ai_suggest", default: "Outfit suggestions"), ai_suggest_outfits_path, class: "btn" %>
   </nav>

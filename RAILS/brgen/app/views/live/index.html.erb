@@ -18,7 +18,7 @@
 
 <p class="live-crosslinks dim" aria-label="Also open without signup">
   <%= link_to "Marketplace", marketplace_root_url %> ·
-  <%= link_to "Messages", "//messenger.#{Current.domain}/" %> ·
+  <%= link_to t("nav.messages"), "//messenger.#{Current.domain}/" %> ·
   <%= link_to "Nearby", nearby_path %> ·
   <%= link_to "City feed", root_path %>
 </p>
@@ -121,7 +121,7 @@
           title: @located ? "Quiet around here" : "Waiting for the first Live notes",
           body: @located ? "Be the first to drop a short anonymous note nearby." : "Enable location or check back when locals start posting.",
           action: @located ?
-            { label: "City feed", path: root_path } :
+            { label: t("empty.city_feed"), path: root_path } :
             { label: "Nearby", path: nearby_path } %>
   <% end %>
 </section>

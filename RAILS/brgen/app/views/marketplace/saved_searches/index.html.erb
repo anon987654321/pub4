@@ -31,6 +31,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_saved_searches"),
-        body: "Search the marketplace, then save the search.",
+        body: t("actions.save_search_body"),
         action: { label: "Browse listings", path: marketplace_listings_path } %>
 <% end %>

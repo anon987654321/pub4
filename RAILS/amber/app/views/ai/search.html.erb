@@ -1,5 +1,5 @@
 <% content_for :title, "Search Wardrobe" %>
-<h1>Search your wardrobe</h1>
+<h1><%= t("pages.search_wardrobe") %></h1>
 <%= form_with url: ai_search_path, method: :get do |f| %>
   <div class="field-row">
     <%= f.search_field :q, value: @query, placeholder: "e.g. something warm but not bulky for a meeting", autofocus: true, class: "input input--wide" %>
@@ -15,5 +15,5 @@
   <%= render "shared/empty_state",
         title: t("empty.no_matches"),
         body: "Try a broader description, or add the piece if it is missing from your wardrobe.",
-        action: { label: "Add item", path: new_item_path } %>
+        action: { label: t("pages.add_item"), path: new_item_path } %>
 <% end %>

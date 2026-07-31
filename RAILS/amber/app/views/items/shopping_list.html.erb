@@ -1,6 +1,6 @@
 <% content_for :title, "Shopping list" %>
 
-<h1>Shopping list — gaps to fill</h1>
+<h1><%= t("pages.shopping_list") %></h1>
 
 <% if @gaps.any? %>
   <ul>
@@ -34,7 +34,7 @@
   <%= render "shared/empty_state",
         title: t("empty.no_recommendations"),
         body: "Add more items or re-run gap analysis when your closet grows.",
-        action: { label: "Add item", path: new_item_path } %>
+        action: { label: t("pages.add_item"), path: new_item_path } %>
 <% end %>
 
 <%= link_to "Back to wardrobe", items_path, class: "btn" %>

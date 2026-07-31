@@ -54,3 +54,17 @@ GATE_AUTOFIX=1 ruby RAILS/gates/runner.rb layout_suite
 # MASTER aesthetic scan (surface rules include ERB_HARDCODED_CHROME)
 # via normal review/scan path on RAILS + MASTER/web views
 ```
+
+## Locale key map (family)
+
+| Key prefix | Use for |
+|------------|---------|
+| `nav.*` | Primary/sidebar/tab chrome |
+| `auth.*` | Sign-in/register/password |
+| `empty.*` | `shared/empty_state` titles/bodies |
+| `search.*` | Live-search placeholders/labels |
+| `pages.*` | Page `<h1>` / `content_for :title` |
+| `actions.*` | Empty CTAs and shared action labels |
+| `install.*` | PWA install prompt |
+
+When adding a vertical empty or search field: add nb+en keys first, then wire `t()`, then confirm `chrome_i18n_lint` stays at baseline 0.

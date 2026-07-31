@@ -56,6 +56,14 @@ en:
     no_maintainers: "No maintainers"
     no_maintainers_search: "No maintainers match this search."
     clear_search: "Clear search"
+  pages:
+    ports: "OpenBSD ports"
+    categories: "Categories"
+    maintainers: "Maintainers"
+    comment: "Comment"
+  actions:
+    all_categories: "All categories"
+    all_maintainers: "All maintainers"
   install:
     title: "Install BSDports"
     body: "Ports search and advisories — open from your home screen."

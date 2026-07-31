@@ -182,6 +182,19 @@ nb:
     reports_clear: "Moderasjonskøen er tom."
     no_sessions: "Ingen økter planlagt"
     create_playlist: "Opprett en for å starte radioen."
+  actions:
+    add_one: "Legg til en"
+    sell_something: "Selg noe"
+    new_set: "Nytt sett"
+    tv_home: "TV-hjem"
+    city_feed: "Byfeed"
+    compose_outfit: "Sett sammen antrekk"
+    all_categories: "Alle kategorier"
+    all_maintainers: "Alle maintainere"
+    save_search_body: "Søk i markedsplassen, og lagre søket."
+  pages:
+    account: "Konto"
+    two_factor: "Tofaktorautentisering"
   install:
     title: "Installer Brgen"
     body: "Live, markedsplass og i nærheten — ett trykk fra hjem-skjermen."

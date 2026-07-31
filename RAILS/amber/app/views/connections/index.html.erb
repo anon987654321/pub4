@@ -1,7 +1,7 @@
 <% content_for :title, "Connections" %>
 
 <header role="banner" aria-label="Connections header">
-  <h1>Connections</h1>
+  <h1><%= t("pages.connections") %></h1>
 </header>
 
 <%= turbo_frame_tag "connections" do %>
@@ -21,7 +21,7 @@
       <%= render "shared/empty_state",
             title: t("empty.no_connections"),
             body: "Follow creators to build your circle.",
-            action: { label: "Home", path: root_path } %>
+            action: { label: t("nav.home", default: "Home"), path: root_path } %>
     <% end %>
   </section>
 <% end %>

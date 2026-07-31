@@ -1,5 +1,5 @@
 <div class="auth-form">
-  <h1>Two-factor authentication</h1>
+  <h1><%= t("pages.two_factor", default: "Two-factor authentication") %></h1>
   <p class="auth-form-lead">Scan the QR code or enter the secret in your authenticator app.</p>
 
   <% if @qr.present? %>

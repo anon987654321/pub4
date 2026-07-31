@@ -31,6 +31,6 @@
   <h3>About <%= @community.name %></h3>
   <p><%= @community.description.presence || "No description." %></p>
   <% if Current.user.present? %>
-    <p><%= link_to "New post", new_community_post_path(@community) %></p>
+    <p><%= link_to t("nav.new_post"), new_community_post_path(@community) %></p>
   <% end %>
 </aside>

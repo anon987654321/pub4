@@ -1,6 +1,6 @@
 <% content_for :title, "Planner" %>
 <%= turbo_stream_from "planned_outfits" %>
-<h1>Outfit Planner</h1>
+<h1><%= t("pages.planner") %></h1>
 <%= form_with model: PlannedOutfit.new, url: planned_outfits_path do |f| %>
   <div class="field-row">
     <%= f.date_field :planned_date, min: Date.today, class: "input" %>

@@ -1,7 +1,7 @@
 <% content_for :title, "Messages" %>
 
 <header role="banner" aria-label="Messages header">
-  <h1>Messages</h1>
+  <h1><%= t("pages.messages") %></h1>
   <% if @unread_count.to_i.positive? %>
     <p class="dim"><%= pluralize(@unread_count, "unread message") %> — marked read when you open this page.</p>
   <% else %>

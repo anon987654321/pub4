@@ -8,7 +8,7 @@
     cart, since takeaway has no basket of its own. %>
 <% active = local_assigns.fetch(:active, "restaurants") %>
 <% search_url = local_assigns.fetch(:search_url, takeaway_restaurants_path) %>
-<% search_placeholder = local_assigns.fetch(:search_placeholder, "Search restaurants") %>
+<% search_placeholder = local_assigns.fetch(:search_placeholder, t("search.restaurants")) %>
 <% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || "Bergen") %>
 
 <div id="navBar">
@@ -33,9 +33,9 @@
           <% end %>
         </select>
         <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
-               placeholder="<%= search_placeholder %>" aria-label="Search restaurants"
+               placeholder="<%= search_placeholder %>" aria-label="<%= t("search.restaurants_label") %>"
                data-action="focus->search-focus#focus blur->search-focus#blur" />
-        <button type="submit" class="nav-search-submit" aria-label="Search"><%= icon :search, size: 20 %></button>
+        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 20 %></button>
       <% end %>
     </div>
 
