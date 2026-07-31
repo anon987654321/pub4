@@ -17,7 +17,7 @@
   <%= f.text_area :body, rows: 3 , data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.submit "Send", class: "btn" %></div>
+    <div class="field"><%= f.submit t("actions.send"), class: "btn" %></div>
   <% end %>
 </section>
 
