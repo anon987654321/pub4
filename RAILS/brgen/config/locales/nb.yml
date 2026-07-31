@@ -197,6 +197,7 @@ nb:
     all_drivers: "Alle sjåfører"
     all_cuisines: "Alle kjøkken"
     save: "Lagre"
+    send: "Send"
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"

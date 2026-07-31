@@ -197,6 +197,7 @@ en:
     all_drivers: "All drivers"
     all_cuisines: "All cuisines"
     save: "Save"
+    send: "Send"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
