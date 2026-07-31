@@ -5090,7 +5090,23 @@ AKMD_MASTER_FILTERS = [
   "equalizer=f=200:t=q:w=1:g=2",
   "equalizer=f=8000:t=q:w=2:g=-3",
   "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=2",
+  # A symmetric curve cannot produce even harmonics. tanh and atan are both
+  # odd-symmetric — f(-x) = -f(x) — so only odd orders exist. Measured on a
+  # 220 Hz sine: 2nd harmonic at -131 dB, which is the numerical noise floor,
+  # against a 3rd at -81. Odd orders dominating by 51 dB is the transistor edge;
+  # the tube warmth people reach for is the 2nd.
+  #
+  # Crane Song's HEDD exposes exactly this split as triode vs pentode. The route
+  # to it is asymmetry — historically a DC bias into the non-linearity, so the
+  # curve treats the two halves of the wave differently. 0.15 measures even
+  # orders 9.8 dB above odd with the 2nd at -60; 0.08 and 0.25 give +8.3 and
+  # +10.5, so this sits mid-range rather than at an extreme.
+  #
+  # The highpass after is not optional: biasing leaves DC on the output and
+  # asymmetric clipping leaves more. Measured offset after it is 0.000002.
+  "dcshift=shift=0.15",
   "asoftclip=type=atan:threshold=0.72:output=1.28:oversample=4",
+  "highpass=f=25",
   "volume=2.1",
   "alimiter=limit=0.92:attack=3:release=50",
 ].freeze
