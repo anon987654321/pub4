@@ -39,11 +39,14 @@ module Pub4
       ]
     end
 
+    # The study script is a thin wrapper around RadioBergenStudy, which lives in
+    # dilla.rb. It moved with the rest of studio/radio-bergen when that directory
+    # was removed; same three-candidate shape as its neighbours above.
     def radio_bergen_study_candidates
       [
-        repo_join("studio/radio-bergen/radio_bergen_study.rb"),
-        Pathname.new("#{DEFAULT_REPO}/studio/radio-bergen/radio_bergen_study.rb"),
-        rails_root.join("../../studio/radio-bergen/radio_bergen_study.rb"),
+        repo_join("studio/dilla/scripts/radio_bergen_study.rb"),
+        Pathname.new("#{DEFAULT_REPO}/studio/dilla/scripts/radio_bergen_study.rb"),
+        rails_root.join("../../studio/dilla/scripts/radio_bergen_study.rb"),
       ]
     end
 

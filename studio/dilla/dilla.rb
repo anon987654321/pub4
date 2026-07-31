@@ -2391,8 +2391,16 @@ def patch_voice_for(patch)
   { sf2: path, bank: patch[:bank], program: patch[:program], patch: }
 end
 
-RADIO_BERGEN_SONIC_PATH = File.expand_path("../radio-bergen/radio_bergen_sonic.yml", ROOT).freeze
-RADIO_BERGEN_MANIFEST_PATH = File.expand_path("../radio-bergen/radio_bergen_tracks.yml", ROOT).freeze
+# Measured reference sonic profiles. These lived in studio/radio-bergen until
+# that directory was removed — brgen's playlist replaced what it served. The
+# file is dilla's own data: it merges over INLINE_RADIO_BERGEN_LEARNINGS and is
+# a write! target, so it moved here rather than being inlined.
+RADIO_BERGEN_SONIC_PATH = File.expand_path("reference_sonic.yml", ROOT).freeze
+# The track manifest is brgen's data, not the studio's — brgen serves the
+# playlist, and RadioBergenManifest already looked in config/radio_bergen/
+# first. It lives there outright now, and dilla reads across to it.
+RADIO_BERGEN_MANIFEST_PATH =
+  File.expand_path("../../RAILS/brgen/config/radio_bergen/tracks.yml", ROOT).freeze
 
 # Study playlist.brgen.no manifest → sonic learnings (also: ruby dilla.rb radio-bergen-study).
 module RadioBergenStudy
@@ -5093,8 +5101,10 @@ def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
 end
 
-# The AKMD / Radio Bergen chain from studio/radio-bergen/akmd_mastering_chain.rb,
-# reproduced stage for stage. It is a broadcast chain: band-limited, forward in
+# The AKMD / Radio Bergen chain, reproduced stage for stage. It came from
+# studio/radio-bergen/akmd_mastering_chain.rb, which was a description of this
+# chain and nothing else — no caller, no runtime role — so it went with the rest
+# of that directory rather than being carried along as a duplicate of a comment. It is a broadcast chain: band-limited, forward in
 # the low mids, soft-clipped rather than brick-walled. Offered as an alternative
 # to master_bus_filters_enhanced because that one stacks parallel compression, a
 # sub-150Hz sidechain duck keyed off the harm bus, per-bus RMS matching,
@@ -22102,10 +22112,11 @@ DISPATCH = {
     puts "measured #{data.dig('meta', 'measured_local')}/#{data.dig('meta', 'tracks')} tracks"
   },
   "radio-bergen-librosa" => lambda {
-    py = File.expand_path("../radio-bergen/.venv/bin/python3", ROOT)
-    script = File.expand_path("../radio-bergen/radio_bergen_librosa_analyze.py", ROOT)
+    py = File.expand_path("venv-librosa/bin/python3", ROOT)
+    script = File.expand_path("scripts/librosa_analyze.py", ROOT)
     unless File.executable?(py) && File.file?(script)
-      abort "librosa venv missing — run: cd studio/radio-bergen && python3 -m venv .venv && .venv/bin/pip install librosa pyyaml"
+      abort "librosa venv missing — run: cd studio/dilla && python3 -m venv venv-librosa && " \
+            "venv-librosa/bin/pip install librosa pyyaml"
     end
     sh! py, script
   },

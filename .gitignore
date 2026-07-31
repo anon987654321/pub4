@@ -97,10 +97,11 @@ studio/dilla/.dilla_*
 .dilla_progressions_log.txt
 studio/dilla/.live_tmp.wav
 studio/dilla/dilla_beat_live*.mp3
-# Python venvs for the audio tools studio/dilla and studio/radio-bergen shell
-# out to (demucs stem separation, librosa analysis) — rebuilt locally, never shipped.
+# Python venvs the audio tools shell out to (demucs stem separation, librosa
+# analysis) — rebuilt locally, never shipped. The librosa venv moved here with
+# the rest of studio/radio-bergen when that directory was removed.
 studio/dilla/.venv-demucs/
-studio/radio-bergen/.venv/
+studio/dilla/venv-librosa/
 # ad-hoc check renders left in the tool's own directory by manual listening passes
 studio/dilla/check_*.wav
 # demo-all's per-piece scratch: 84 intermediate WAVs plus concat/order/catalog

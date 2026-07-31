@@ -14,13 +14,13 @@ module Brgen
         Pub4::DeployPaths.first_file(lessons_candidates)
       end
 
+      # One candidate now, not four. The three fallbacks pointed into
+      # studio/radio-bergen, which no longer exists — brgen serves this playlist,
+      # so the manifest lives in brgen's own config where the first candidate
+      # always looked. In development that path resolves directly; in production
+      # it is the same path, so there is nothing left to fall back to.
       def manifest_candidates
-        [
-          rails_root.join("config/radio_bergen/tracks.yml"),
-          rails_root.join("../../../studio/radio-bergen/radio_bergen_tracks.yml").expand_path,
-          Pub4::DeployPaths.repo_join("studio/radio-bergen/radio_bergen_tracks.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/studio/radio-bergen/radio_bergen_tracks.yml"),
-        ]
+        [rails_root.join("config/radio_bergen/tracks.yml")]
       end
 
       def lessons_candidates

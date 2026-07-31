@@ -79,18 +79,3 @@ overlay_shared_bin() {
   log_ok "shared bin stubs overlaid"
 }
 
-# brgen cannot read /home/dev (mode 700) — copy Radio Bergen manifest into the app tree.
-overlay_brgen_radio_manifest() {
-  local app_dir=$1
-  local repo=${PUB4_ROOT:-/home/dev/pub4}
-  local manifest=${repo}/MASTER/tools/audio/radio_bergen_tracks.yml
-  local lessons=${repo}/MASTER/data/lessons/pub_archive_restore.yml
-
-  [[ -f $manifest ]] || { log_err "missing Radio Bergen manifest: $manifest"; exit 1; }
-
-  doas mkdir -p "${app_dir}/config/radio_bergen"
-  doas cp "$manifest" "${app_dir}/config/radio_bergen/tracks.yml"
-  [[ -f $lessons ]] && doas cp "$lessons" "${app_dir}/config/radio_bergen/archive_lessons.yml"
-  doas chown -R brgen:brgen "${app_dir}/config/radio_bergen"
-  log "ok Radio Bergen manifest overlaid → config/radio_bergen/"
-}

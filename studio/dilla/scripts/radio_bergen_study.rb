@@ -3,7 +3,10 @@
 # frozen_string_literal: true
 
 # Thin wrapper — study logic lives in studio/dilla/dilla.rb (RadioBergenStudy).
-require_relative "../dilla/dilla"
+#
+# Was "../dilla/dilla", correct from studio/radio-bergen/. From studio/dilla/scripts/
+# that resolves to studio/dilla/dilla/dilla, one level too deep.
+require_relative "../dilla"
 
 if $PROGRAM_NAME == __FILE__
   json = ARGV.include?("--json")
