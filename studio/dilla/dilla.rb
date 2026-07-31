@@ -10962,8 +10962,20 @@ def stream_deep?
   ENV["STREAM_DEEP"] == "1"
 end
 
+# On unless switched off, which is the opposite of how this shipped.
+#
+# It read `== "1"`, so a bare `ruby dilla.rb out.wav` rendered with no quality
+# gate at all — only `record`, `perform` and the stream-soul path opted in. That
+# left the engine's own judgement of a mix as something you had to remember to
+# ask for, while COMPOSITION and STREAM_ITERATE were both on unless disabled. A
+# feature defaulting on while the check on its output defaults off is backwards:
+# the cost of a gated render is time, the cost of an ungated one is not knowing.
+#
+# STREAM_FAST_DEFAULTS still sets "0" explicitly for the ~15-30s/track stream
+# path, and that stays deliberate — a broadcast that pauses to re-render is
+# worse than one that occasionally plays a thin track.
 def quality_gate_enabled?
-  ENV["DILLA_QUALITY_GATE"] == "1"
+  ENV.fetch("DILLA_QUALITY_GATE", "1") != "0"
 end
 
 def stream_iterate_enabled?
