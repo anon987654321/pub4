@@ -1127,6 +1127,192 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:sh101_sequence, role: :scale_lead, program: 38, weight: 2.9, fs_gain: 1.3, gate: 0.48, octave: 2,
               arp_styles: %i[up euclidean skip_up], midi_fx: MIDI_FX_SCALE_LEAD,
               fx: "lowpass=f=2400:width_type=q:width=1.0,aecho=0.38:0.32:80|150:0.2|0.1,equalizer=f=400:t=o:w=1.2:g=2.4,equalizer=f=2800:t=h:w=1.2:g=2.0"),
+
+  # --- Yamaha grand (lite SF2) — acoustic piano body GM never quite nails ---
+  synth_patch(:yamaha_grand, role: :ep, program: 0, sf2: :yamaha, weight: 3.0, mix: 1.15, fs_gain: 1.55,
+              color: "Yamaha C grand", midi_fx: MIDI_FX_PAD_EP,
+              fx: "aecho=0.32:0.38:70|130:0.18|0.08,lowpass=f=6200,equalizer=f=220:t=o:w=1:g=1.4"),
+  synth_patch(:yamaha_soft_pedal, role: :ep, program: 0, bank: 1, sf2: :yamaha, weight: 2.4, mix: 1.05, fs_gain: 1.48,
+              color: "soft pedal grand", midi_fx: MIDI_FX_PAD_EP,
+              fx: "lowpass=f=4200,tremolo=f=0.12:d=0.02,aecho=0.4:0.45:100|180:0.2|0.1"),
+  synth_patch(:yamaha_honky, role: :ep, program: 3, sf2: :yamaha, weight: 1.8, mix: 1.0, fs_gain: 1.42,
+              color: "honky-tonk edge", midi_fx: MIDI_FX_PAD_EP,
+              fx: "acrusher=bits=12:samples=1.5:mix=0.08,equalizer=f=2800:t=h:w=1.2:g=1.6,lowpass=f=5000"),
+  synth_patch(:yamaha_ballad_lead, role: :lead, program: 0, sf2: :yamaha, weight: 2.6, fs_gain: 1.28, gate: 0.72, octave: 2,
+              arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.74, vel: 0.44 },
+              fx: "aecho=0.5:0.48:160|300:0.26|0.14,lowpass=f=4800"),
+  synth_patch(:yamaha_scale_arp, role: :scale_lead, program: 0, sf2: :yamaha, weight: 2.5, fs_gain: 1.22, gate: 0.6, octave: 2,
+              arp_styles: %i[updown skip_up], midi_fx: MIDI_FX_SCALE_LEAD,
+              fx: "aecho=0.42:0.38:90|170:0.2|0.1,lowpass=f=5000"),
+
+  # --- VintageDreams Waves (fluid-synth bundled SF2) — rare / wave-table colour ---
+  synth_patch(:vintage_dream_pad, role: :warm, program: 88, sf2: :vintage_dreams, weight: 2.8, mix: 0.72, fs_gain: 1.4,
+              color: "VintageDreams warm pad", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.5:0.7:36|46:0.22|0.18:0.26|0.22:1.1|1.35,lowpass=f=4000,aecho=0.35:0.4:100|190:0.2|0.1"),
+  synth_patch(:vintage_dream_ep, role: :ep, program: 4, sf2: :vintage_dreams, weight: 2.2, mix: 1.05, fs_gain: 1.5,
+              color: "VintageDreams EP", midi_fx: MIDI_FX_PAD_EP,
+              fx: "tremolo=f=0.3:d=0.05,lowpass=f=4600"),
+  synth_patch(:vintage_dream_lead, role: :lead, program: 81, sf2: :vintage_dreams, weight: 2.4, fs_gain: 1.32, gate: 0.58, octave: 2,
+              arp_styles: %i[spiral updown], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :spiral, subdiv: 8, gate: 0.56, vel: 0.5 },
+              fx: "chorus=0.48:0.68:34|44:0.22|0.18:0.26|0.22:1.1|1.35,lowpass=f=5200"),
+  synth_patch(:vintage_dream_bell, role: :texture, program: 98, sf2: :vintage_dreams, mix: 0.18,
+              color: "VintageDreams crystal", fx: "aecho=0.5:0.55:120|220:0.28|0.14,highpass=f=400"),
+  synth_patch(:vintage_dream_choir, role: :warm, program: 52, sf2: :vintage_dreams, weight: 1.6, mix: 0.4, fs_gain: 1.18,
+              color: "VintageDreams choir", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "highpass=f=200,aecho=0.48:0.52:110|200:0.28|0.14,lowpass=f=3600"),
+
+  # --- Giga HQ FM GM — more of the FM bank beyond fm_bowed_pad ---
+  synth_patch(:giga_fm_ep, role: :ep, program: 4, sf2: :giga_fm, weight: 2.5, mix: 1.08, fs_gain: 1.52,
+              color: "Giga FM Rhodes", midi_fx: MIDI_FX_PAD_EP,
+              fx: "tremolo=f=0.32:d=0.05,aecho=0.38:0.42:70|130:0.22|0.1,lowpass=f=4800"),
+  synth_patch(:giga_fm_bell, role: :warm, program: 98, sf2: :giga_fm, weight: 2.3, mix: 0.7, fs_gain: 1.36,
+              color: "Giga FM glass bell", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "aecho=0.5:0.45:100|190:0.3|0.16,aphaser=speed=0.1:decay=0.55,lowpass=f=5600"),
+  synth_patch(:giga_fm_lead, role: :lead, program: 81, sf2: :giga_fm, weight: 2.4, fs_gain: 1.3, gate: 0.56, octave: 2,
+              arp_styles: %i[spiral fibonacci], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :spiral, subdiv: 8, gate: 0.54, vel: 0.48 },
+              fx: "aecho=0.48:0.42:110|200:0.28|0.14,lowpass=f=5400"),
+  synth_patch(:giga_fm_bass_lead, role: :lead, program: 38, sf2: :giga_fm, weight: 2.2, fs_gain: 1.34, gate: 0.62, octave: 1,
+              arp_styles: %i[up downup], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 4, gate: 0.64, vel: 0.54 },
+              fx: "lowpass=f=2200,equalizer=f=120:t=o:w=0.9:g=2.8"),
+  synth_patch(:giga_fm_choir, role: :warm, program: 52, sf2: :giga_fm, weight: 1.5, mix: 0.38, fs_gain: 1.15,
+              color: "Giga FM choir", fx: "highpass=f=240,lowpass=f=3400,volume=0.85"),
+
+  # --- Supersaw collection — more than three leads ---
+  synth_patch(:supersaw_pad, role: :warm, program: 1, sf2: :supersaw, weight: 2.5, mix: 0.7, fs_gain: 1.38,
+              color: "Supersaw pad bed", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.55:0.75:40|50:0.28|0.24:0.32|0.28:1.2|1.5,lowpass=f=4500"),
+  synth_patch(:supersaw_4, role: :lead, program: 5, sf2: :supersaw, weight: 2.0, fs_gain: 1.3, gate: 0.55, octave: 2,
+              arp_styles: %i[pingpong spiral], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :pingpong, subdiv: 8, gate: 0.54, vel: 0.5 },
+              fx: "chorus=0.52:0.72:38|48:0.26|0.22:0.3|0.26:1.15|1.4,lowpass=f=5800"),
+  synth_patch(:supersaw_5, role: :lead, program: 9, sf2: :supersaw, weight: 1.9, fs_gain: 1.28, gate: 0.52, octave: 2,
+              arp_styles: %i[euclidean skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :euclidean, subdiv: 8, gate: 0.5, vel: 0.52 },
+              fx: "tremolo=f=4.2:d=0.12,aecho=0.5:0.42:150|280:0.28|0.14"),
+  synth_patch(:supersaw_scale, role: :scale_lead, program: 2, sf2: :supersaw, weight: 2.2, fs_gain: 1.24, gate: 0.58, octave: 2,
+              arp_styles: %i[updown spiral], midi_fx: MIDI_FX_SCALE_LEAD,
+              fx: "chorus=0.48:0.68:36|46:0.24|0.2:0.28|0.24:1.1|1.35,lowpass=f=5200"),
+
+  # --- GM programs the catalog had never opened (harmonic/world/soul colour) ---
+  synth_patch(:harmonica_soul, role: :lead, program: 22, weight: 2.0, fs_gain: 1.28, gate: 0.7, octave: 2,
+              arp_styles: %i[updown motif], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.72, vel: 0.46 },
+              fx: "vibrato=f=0.55:d=0.016,aecho=0.45:0.4:140|260:0.24|0.12,lowpass=f=4200"),
+  synth_patch(:accordion_waltz, role: :ep, program: 21, weight: 1.6, mix: 0.95, fs_gain: 1.4,
+              color: "accordion ballroom", midi_fx: MIDI_FX_PAD_EP,
+              fx: "chorus=0.4:0.55:28|38:0.16|0.12:0.2|0.16:0.95|1.15,lowpass=f=4000"),
+  synth_patch(:nylon_guitar_pad, role: :ep, program: 24, weight: 2.1, mix: 1.0, fs_gain: 1.45,
+              color: "nylon guitar chord", midi_fx: MIDI_FX_PAD_EP,
+              fx: "aecho=0.38:0.4:80|150:0.2|0.1,lowpass=f=4800"),
+  synth_patch(:steel_string, role: :lead, program: 25, weight: 2.0, fs_gain: 1.26, gate: 0.55, octave: 2,
+              arp_styles: %i[skip_up up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.52, vel: 0.5 },
+              fx: "highpass=f=180,lowpass=f=5000,aecho=0.35:0.35:60|110:0.18|0.08"),
+  synth_patch(:clean_jazz_guitar, role: :lead, program: 26, weight: 2.3, fs_gain: 1.28, gate: 0.64, octave: 2,
+              arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.68, vel: 0.48 },
+              fx: "chorus=0.35:0.5:26|34:0.14|0.1:0.16|0.14:0.9|1.1,lowpass=f=4600"),
+  synth_patch(:overdrive_hook, role: :lead, program: 29, weight: 1.8, fs_gain: 1.32, gate: 0.5, octave: 1,
+              arp_styles: %i[donda_stab skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :donda_stab, subdiv: 8, gate: 0.48, vel: 0.56 },
+              fx: "acompressor=threshold=-18dB:ratio=3.5:attack=5:release=70,lowpass=f=4000"),
+  synth_patch(:slap_bass_lead, role: :lead, program: 36, weight: 2.1, fs_gain: 1.3, gate: 0.48, octave: 1,
+              arp_styles: %i[up skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 8, gate: 0.46, vel: 0.54 },
+              fx: "equalizer=f=180:t=o:w=1:g=2.5,highpass=f=60,lowpass=f=2800"),
+  synth_patch(:synth_bass_deep, role: :lead, program: 39, weight: 2.4, fs_gain: 1.35, gate: 0.7, octave: 1,
+              arp_styles: %i[up downup], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 4, gate: 0.72, vel: 0.56 },
+              fx: "lowpass=f=1800:width_type=q:width=0.9,equalizer=f=90:t=o:w=0.8:g=3.2"),
+  synth_patch(:tremolo_strings, role: :warm, program: 44, weight: 2.2, mix: 0.68, fs_gain: 1.34,
+              color: "tremolo strings", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "tremolo=f=5.5:d=0.14,lowpass=f=3800,aecho=0.4:0.42:120|220:0.22|0.1"),
+  synth_patch(:pizzicato_scatter, role: :lead, program: 45, weight: 2.0, fs_gain: 1.24, gate: 0.35, octave: 2,
+              arp_styles: %i[skip_up euclidean], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.32, vel: 0.48 },
+              fx: "aecho=0.4:0.38:70|130:0.22|0.1,highpass=f=200"),
+  synth_patch(:harp_gliss, role: :texture, program: 46, mix: 0.16,
+              color: "harp dust", fx: "aecho=0.5:0.55:90|170:0.28|0.14,highpass=f=300"),
+  synth_patch(:orchestral_harp_pad, role: :warm, program: 46, weight: 1.7, mix: 0.55, fs_gain: 1.28,
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "aecho=0.48:0.5:140|260:0.26|0.12,lowpass=f=4200"),
+  synth_patch(:french_horn_pad, role: :warm, program: 60, weight: 2.0, mix: 0.62, fs_gain: 1.32,
+              color: "horn bed", midi_fx: MIDI_FX_PAD_WARM,
+              fx: "lowpass=f=3200,aecho=0.42:0.45:160|300:0.24|0.12"),
+  synth_patch(:muted_trumpet_lead, role: :lead, program: 59, weight: 2.1, fs_gain: 1.28, gate: 0.66, octave: 2,
+              arp_styles: %i[coltrane updown], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :coltrane, subdiv: 6, gate: 0.64, vel: 0.48 },
+              fx: "vibrato=f=0.42:d=0.012,lowpass=f=3600"),
+  synth_patch(:trombone_soul, role: :lead, program: 57, weight: 1.9, fs_gain: 1.3, gate: 0.7, octave: 1,
+              arp_styles: %i[up coltrane], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 4, gate: 0.72, vel: 0.5 },
+              fx: "lowpass=f=3000,aecho=0.4:0.4:150|280:0.22|0.1"),
+  synth_patch(:english_horn, role: :lead, program: 69, weight: 1.8, fs_gain: 1.24, gate: 0.72, octave: 2,
+              arp_styles: %i[updown], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.74, vel: 0.44 },
+              fx: "vibrato=f=0.5:d=0.014,lowpass=f=3400"),
+  synth_patch(:bassoon_dark, role: :lead, program: 70, weight: 1.7, fs_gain: 1.26, gate: 0.7, octave: 1,
+              arp_styles: %i[up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 4, gate: 0.72, vel: 0.48 },
+              fx: "lowpass=f=2400,equalizer=f=200:t=o:w=1:g=1.8"),
+  synth_patch(:piccolo_spark, role: :lead, program: 72, weight: 1.6, fs_gain: 1.2, gate: 0.4, octave: 3,
+              arp_styles: %i[bubble_pop skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :bubble_pop, subdiv: 16, gate: 0.28, vel: 0.4 },
+              fx: "highpass=f=600,aecho=0.45:0.4:60|110:0.24|0.1"),
+  synth_patch(:bottle_blow, role: :texture, program: 76, mix: 0.14,
+              fx: "aecho=0.5:0.55:180|320:0.28|0.14,lowpass=f=2800"),
+  synth_patch(:shakuhachi_breath, role: :lead, program: 77, weight: 2.0, fs_gain: 1.26, gate: 0.75, octave: 2,
+              arp_styles: %i[updown spiral], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 4, gate: 0.78, vel: 0.42 },
+              fx: "vibrato=f=0.6:d=0.02,aecho=0.55:0.5:200|360:0.3|0.16,lowpass=f=3800"),
+  synth_patch(:ocarina_folk, role: :lead, program: 79, weight: 1.7, fs_gain: 1.22, gate: 0.6, octave: 3,
+              arp_styles: %i[up skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :up, subdiv: 8, gate: 0.58, vel: 0.44 },
+              fx: "aecho=0.42:0.4:90|160:0.22|0.1,lowpass=f=5000"),
+  synth_patch(:sitar_drone, role: :lead, program: 104, weight: 2.0, fs_gain: 1.28, gate: 0.7, octave: 2,
+              arp_styles: %i[spiral coltrane], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :spiral, subdiv: 6, gate: 0.68, vel: 0.46 },
+              fx: "aecho=0.5:0.48:130|240:0.28|0.14,lowpass=f=4200"),
+  synth_patch(:shamisen_pluck, role: :lead, program: 106, weight: 1.9, fs_gain: 1.24, gate: 0.42, octave: 2,
+              arp_styles: %i[skip_up euclidean], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.4, vel: 0.5 },
+              fx: "highpass=f=200,aecho=0.35:0.35:50|90:0.2|0.1"),
+  synth_patch(:fiddle_reel, role: :lead, program: 110, weight: 1.8, fs_gain: 1.26, gate: 0.55, octave: 2,
+              arp_styles: %i[updown skip_up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :updown, subdiv: 8, gate: 0.52, vel: 0.48 },
+              fx: "vibrato=f=0.7:d=0.015,lowpass=f=4800"),
+  synth_patch(:steel_drums, role: :lead, program: 114, weight: 2.0, fs_gain: 1.26, gate: 0.5, octave: 2,
+              arp_styles: %i[skip_up pingpong], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.48, vel: 0.46 },
+              fx: "aecho=0.45:0.42:100|180:0.26|0.12,lowpass=f=5600"),
+  synth_patch(:tinkle_bell, role: :texture, program: 112, mix: 0.12,
+              fx: "aecho=0.55:0.5:80|150:0.3|0.15,highpass=f=800"),
+  synth_patch(:agogo_perc, role: :texture, program: 113, mix: 0.1,
+              fx: "highpass=f=600,aecho=0.3:0.3:40|80:0.15|0.08"),
+  synth_patch(:taiko_thud, role: :texture, program: 116, mix: 0.14,
+              fx: "lowpass=f=800,equalizer=f=80:t=o:w=0.8:g=3"),
+  synth_patch(:synth_drum_texture, role: :texture, program: 118, mix: 0.12,
+              fx: "acrusher=bits=10:samples=2:mix=0.2,lowpass=f=2400"),
+  synth_patch(:seashore_bed, role: :texture, program: 122, mix: 0.08,
+              fx: "highpass=f=200,lowpass=f=4000,volume=0.6"),
+  synth_patch(:breath_noise, role: :texture, program: 121, mix: 0.1,
+              fx: "highpass=f=400,lowpass=f=3000,volume=0.55"),
+
+  # --- Galaxy EP banks 5–8 (more of the bank already on disk) ---
+  synth_patch(:galaxy_ep3, role: :ep, program: 4, bank: 5, sf2: :galaxy, weight: 2.1, mix: 1.1, fs_gain: 1.55,
+              color: "Galaxy EP bank5", midi_fx: MIDI_FX_PAD_EP,
+              fx: "tremolo=f=0.28:d=0.06,lowpass=f=4600"),
+  synth_patch(:galaxy_ep4, role: :ep, program: 5, bank: 6, sf2: :galaxy, weight: 2.0, mix: 1.08, fs_gain: 1.52,
+              color: "Galaxy EP bank6", midi_fx: MIDI_FX_PAD_EP,
+              fx: "chorus=0.4:0.58:30|40:0.18|0.14:0.22|0.18:0.95|1.2,lowpass=f=4800"),
+  synth_patch(:galaxy_lead, role: :lead, program: 4, bank: 2, sf2: :galaxy, weight: 2.3, fs_gain: 1.3, gate: 0.6, octave: 2,
+              arp_styles: %i[skip_up updown], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :skip_up, subdiv: 8, gate: 0.58, vel: 0.48 },
+              fx: "tremolo=f=0.3:d=0.04,aecho=0.42:0.4:90|160:0.22|0.1,lowpass=f=5000"),
 ].freeze
 
 SYNTH_PATCH_BY_ROLE = SYNTH_PATCH_CATALOG.group_by { |p| p[:role] }.freeze
@@ -1185,6 +1371,23 @@ PAD_VOICE_PRESETS = {
   # Pure FM synthesis, no soundfont samples -- see PAD_LAYER_STACKS below.
   # Opt-in via PAD_VOICE=stack_fm_epiano + NATIVE_FM_PADS=1.
   stack_fm_epiano: { ep: :fm_epiano_body, warm: :fm_epiano_body, warm2: :fm_epiano_bell, texture: :fm_bell_pad },
+  # --- External-SF2 stacks (need `ruby dilla.rb fetch-assets` for full colour) ---
+  yamaha:        { ep: :yamaha_grand, warm: :tremolo_strings },
+  yamaha_solo:   { ep: :yamaha_grand },
+  vintage:       { ep: :vintage_dream_ep, warm: :vintage_dream_pad },
+  vintage_choir: { ep: :vintage_dream_ep, warm: :vintage_dream_choir, texture: :vintage_dream_bell },
+  giga_fm:       { ep: :giga_fm_ep, warm: :giga_fm_bell },
+  giga_stack:    { ep: :giga_fm_ep, warm: :fm_bowed_pad, warm2: :giga_fm_choir },
+  supersaw_bed:  { ep: :rhodes_cafe_warm, warm: :supersaw_pad },
+  nylon_soul:    { ep: :nylon_guitar_pad, warm: :french_horn_pad },
+  orchestral:    { ep: :yamaha_soft_pedal, warm: :tremolo_strings, warm2: :orchestral_harp_pad },
+  harmonica:     { ep: :rhodes_vintage_tape, warm: :french_horn_pad },
+  accordion:     { ep: :accordion_waltz, warm: :juno_chorus_wash },
+  stack_yamaha:  { ep: :yamaha_grand, warm: :yamaha_soft_pedal, warm2: :tremolo_strings, texture: :harp_gliss },
+  stack_vintage: { ep: :vintage_dream_ep, warm: :vintage_dream_pad, warm2: :vintage_dream_choir, texture: :vintage_dream_bell },
+  stack_giga:    { ep: :giga_fm_ep, warm: :giga_fm_bell, warm2: :fm_bowed_pad, texture: :giga_fm_choir },
+  # texture: harp dust (role:texture) — world lead colour lives in LEAD_VOICE=world/sitar
+  stack_world:   { ep: :nylon_guitar_pad, warm: :french_horn_pad, warm2: :orchestral_harp_pad, texture: :harp_gliss },
 }.freeze
 
 # Explicit multi-layer pad stacks: id + amix weight. Order = mix order.
@@ -1217,23 +1420,51 @@ PAD_LAYER_STACKS = {
     { id: :fm_epiano_body, mix: 0.8, role: :warm },
     { id: :fm_epiano_bell, mix: 0.32, role: :texture },
   ],
+  stack_yamaha: [
+    { id: :yamaha_grand, mix: 1.2, role: :ep },
+    { id: :yamaha_soft_pedal, mix: 0.7, role: :warm },
+    { id: :tremolo_strings, mix: 0.45, role: :warm },
+    { id: :harp_gliss, mix: 0.22, role: :texture },
+  ],
+  stack_vintage: [
+    { id: :vintage_dream_ep, mix: 1.1, role: :ep },
+    { id: :vintage_dream_pad, mix: 0.9, role: :warm },
+    { id: :vintage_dream_choir, mix: 0.4, role: :warm },
+    { id: :vintage_dream_bell, mix: 0.2, role: :texture },
+  ],
+  stack_giga: [
+    { id: :giga_fm_ep, mix: 1.12, role: :ep },
+    { id: :giga_fm_bell, mix: 0.85, role: :warm },
+    { id: :fm_bowed_pad, mix: 0.7, role: :warm },
+    { id: :giga_fm_choir, mix: 0.35, role: :texture },
+  ],
+  stack_world: [
+    { id: :nylon_guitar_pad, mix: 1.05, role: :ep },
+    { id: :french_horn_pad, mix: 0.7, role: :warm },
+    { id: :orchestral_harp_pad, mix: 0.5, role: :warm },
+    { id: :harp_gliss, mix: 0.22, role: :texture },
+  ],
 }.freeze
 
 # Morph rotation includes experimental families (good-sounding only).
-PAD_VOICE_MORPH_VOICES = %i[moog prophet glass vapor rhodes neon crystal].freeze
+PAD_VOICE_MORPH_VOICES = %i[moog prophet glass vapor rhodes neon crystal yamaha vintage giga_fm supersaw_bed].freeze
 
 # Soft experimental lead morph — avoid shred/hard noise walls by default.
-LEAD_MORPH_VOICES = %i[flylo prophet moog glass vapor soft].freeze
+LEAD_MORPH_VOICES = %i[flylo prophet moog glass vapor soft yamaha vintage world steel].freeze
 MORPH_LEAD_PATCH_POOL = {
-  hard: %i[saw_lead square_lead dist_guitar charang_bite fm_lead_bell minimoog_lead fifths_lead],
-  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead flute_airy prophet_bleeding_lead],
-  glitch: %i[square_lead voice_lead whistle_hook charang_bite banjo_pluck koto_pluck],
+  hard: %i[saw_lead square_lead dist_guitar charang_bite fm_lead_bell minimoog_lead fifths_lead overdrive_hook],
+  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead flute_airy prophet_bleeding_lead giga_fm_lead],
+  glitch: %i[square_lead voice_lead whistle_hook charang_bite banjo_pluck koto_pluck shamisen_pluck],
   prophet: %i[prophet_lead big_lead_prophet5 soul_prophet_arp warm_prophet_hook prophet_bleeding_lead],
-  moog: %i[moog_ladder_lead minimoog_lead moog_dilla_pocket questlove_moog_lead acid_pluck_lead],
-  shred: %i[dist_guitar charang_bite saw_lead square_lead brass_synth pluck_synth],
-  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell],
-  vapor: %i[vapor_lead supersaw_1 supersaw_2 tame_wobble_lead],
-  soft: %i[soft_synth_lead jazz_ballad_lead nord_stage_lead watermelon_glass],
+  moog: %i[moog_ladder_lead minimoog_lead moog_dilla_pocket questlove_moog_lead acid_pluck_lead synth_bass_deep],
+  shred: %i[dist_guitar charang_bite saw_lead square_lead brass_synth pluck_synth overdrive_hook],
+  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell giga_fm_bell],
+  vapor: %i[vapor_lead supersaw_1 supersaw_2 supersaw_4 tame_wobble_lead],
+  soft: %i[soft_synth_lead jazz_ballad_lead nord_stage_lead watermelon_glass yamaha_ballad_lead],
+  yamaha: %i[yamaha_ballad_lead yamaha_scale_arp clean_jazz_guitar],
+  vintage: %i[vintage_dream_lead giga_fm_lead harmonica_soul],
+  world: %i[sitar_drone shamisen_pluck shakuhachi_breath steel_drums fiddle_reel],
+  steel: %i[steel_string clean_jazz_guitar nylon_guitar_pad steel_drums],
 }.freeze
 MORPH_LEAD_ARP_CYCLE = %i[flylo_spiral prophet_saw moog_rip soul_wash glass_spin vapor_wave neo_quartal].freeze
 
@@ -1386,55 +1617,87 @@ LEAD_VOICE_PRESETS = {
   crystal: :glass_arp_lead,
   acid: :acid_pluck_lead,
   neon: :moog_ladder_lead,
+  yamaha: :yamaha_ballad_lead,
+  vintage: :vintage_dream_lead,
+  giga: :giga_fm_lead,
+  supersaw: :supersaw_4,
+  harmonica: :harmonica_soul,
+  guitar: :clean_jazz_guitar,
+  steel: :steel_string,
+  sitar: :sitar_drone,
+  world: :shakuhachi_breath,
+  horn: :muted_trumpet_lead,
+  brass: :trombone_soul,
+  bass: :synth_bass_deep,
+  steelpan: :steel_drums,
 }.freeze
 
 # Lush + experimental electronic cycles (SYNTH_CYCLE=1).
 LUSH_PATCH_CYCLE_EP = {
-  rhodes: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1],
-  moog: %i[rhodes_mark1 rhodes_vintage_tape rhodes_bleeding_edge galaxy_ep1],
-  prophet: %i[rhodes_mark1 rhodes_cafe_warm rhodes_bleeding_edge galaxy_ep1 galaxy_ep2],
-  blend: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1 galaxy_ep2],
-  glass: %i[dx7_bell_ep galaxy_ep2 rhodes_dx_blend celeste_dust],
-  vapor: %i[rhodes_cafe_warm galaxy_ep1 ep_mark1_dark],
-  crystal: %i[galaxy_ep2 dx_ep_glass vibes_mallet],
-  ice: %i[rhodes_dx_blend galaxy_ep1 celeste_dust],
-  neon: %i[rhodes_mark1 clav_neo_funk],
-  pulse: %i[clav_neo_funk wurli_bite dx7_bell_ep],
+  rhodes: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1 yamaha_grand giga_fm_ep],
+  moog: %i[rhodes_mark1 rhodes_vintage_tape rhodes_bleeding_edge galaxy_ep1 vintage_dream_ep],
+  prophet: %i[rhodes_mark1 rhodes_cafe_warm rhodes_bleeding_edge galaxy_ep1 galaxy_ep2 yamaha_soft_pedal],
+  blend: %i[rhodes_mark1 rhodes_bleeding_edge rhodes_vintage_tape rhodes_cafe_warm rhodes_stage73 galaxy_ep1 galaxy_ep2 yamaha_grand giga_fm_ep vintage_dream_ep],
+  glass: %i[dx7_bell_ep galaxy_ep2 rhodes_dx_blend celeste_dust giga_fm_ep],
+  vapor: %i[rhodes_cafe_warm galaxy_ep1 ep_mark1_dark vintage_dream_ep],
+  crystal: %i[galaxy_ep2 dx_ep_glass vibes_mallet galaxy_ep3],
+  ice: %i[rhodes_dx_blend galaxy_ep1 celeste_dust yamaha_soft_pedal],
+  neon: %i[rhodes_mark1 clav_neo_funk giga_fm_ep],
+  pulse: %i[clav_neo_funk wurli_bite dx7_bell_ep accordion_waltz],
+  yamaha: %i[yamaha_grand yamaha_soft_pedal yamaha_honky soul_piano_tack],
+  vintage: %i[vintage_dream_ep galaxy_ep1 rhodes_vintage_tape],
+  giga_fm: %i[giga_fm_ep dx7_bell_ep galaxy_ep2],
 }.freeze
 
 LUSH_PATCH_CYCLE_WARM = {
-  rhodes: %i[juno_chorus_wash prophet_6_warm tape_string_pad polysynth_soul memorymoon_pad string_orchestra],
+  rhodes: %i[juno_chorus_wash prophet_6_warm tape_string_pad polysynth_soul memorymoon_pad string_orchestra tremolo_strings],
   moog: %i[moog_model_d moog_sub37_pad moog_pad moog_bleeding_edge warm_analog_duo neon_ladder],
-  prophet: %i[prophet_5_pad prophet_6_warm prophet_pad polysynth_soul juno_chorus_wash cs80_ensemble],
-  blend: %i[prophet_5_pad moog_model_d prophet_6_warm moog_sub37_pad juno_chorus_wash polysynth_soul],
-  glass: %i[glass_fm_pad crystal_pwm ice_string_pad],
-  vapor: %i[vapor_supersaw prophet_rev2_bleeding juno_chorus_wash],
+  prophet: %i[prophet_5_pad prophet_6_warm prophet_pad polysynth_soul juno_chorus_wash cs80_ensemble supersaw_pad],
+  blend: %i[prophet_5_pad moog_model_d prophet_6_warm moog_sub37_pad juno_chorus_wash polysynth_soul vintage_dream_pad giga_fm_bell],
+  glass: %i[glass_fm_pad crystal_pwm ice_string_pad giga_fm_bell],
+  vapor: %i[vapor_supersaw prophet_rev2_bleeding juno_chorus_wash supersaw_pad],
   crystal: %i[crystal_pwm glass_fm_pad pwm_sweep_pad],
-  ice: %i[ice_string_pad solina_ensemble tape_string_pad],
+  ice: %i[ice_string_pad solina_ensemble tape_string_pad french_horn_pad],
   neon: %i[neon_ladder moog_bleeding_edge analog_hollow],
   pulse: %i[pwm_sweep_pad crystal_pwm analog_pad1],
+  yamaha: %i[tremolo_strings french_horn_pad tape_string_pad],
+  vintage: %i[vintage_dream_pad vintage_dream_choir supersaw_pad],
+  giga_fm: %i[giga_fm_bell fm_bowed_pad giga_fm_choir],
 }.freeze
 
 LUSH_LEAD_VOICE_POOLS = {
-  donuts: %i[mark1_soul_lead rhodes_lead_comp donuts_wurli_lead],
+  donuts: %i[mark1_soul_lead rhodes_lead_comp donuts_wurli_lead yamaha_ballad_lead],
   soul_prophet: %i[soul_prophet_arp prophet_lead warm_prophet_hook big_lead_prophet5],
   prophet: %i[soul_prophet_arp prophet_lead warm_prophet_hook glasper_ep_lead],
-  moog: %i[moog_dilla_pocket questlove_moog_lead minimoog_lead moog_ladder_lead],
-  neo_pluck: %i[neo_soul_pluck dangelo_clav_lead rhodes_skank_lead],
-  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead],
-  ballad: %i[jazz_ballad_lead nord_stage_lead glasper_ep_lead soft_synth_lead],
-  gospel: %i[gospel_brass_lead stevie_organ_lead],
+  moog: %i[moog_dilla_pocket questlove_moog_lead minimoog_lead moog_ladder_lead synth_bass_deep],
+  neo_pluck: %i[neo_soul_pluck dangelo_clav_lead rhodes_skank_lead steel_string],
+  flylo: %i[flylo_fm_shimmer fm_lead_bell glass_arp_lead giga_fm_lead],
+  ballad: %i[jazz_ballad_lead nord_stage_lead glasper_ep_lead soft_synth_lead yamaha_ballad_lead],
+  gospel: %i[gospel_brass_lead stevie_organ_lead trombone_soul],
   erykah: %i[erykah_dust_lead rhodes_lead_comp mark1_soul_lead],
   watermelon: %i[watermelon_glass nord_stage_lead glasper_ep_lead],
-  soft: %i[soft_synth_lead nord_stage_lead rhodes_lead_comp],
+  soft: %i[soft_synth_lead nord_stage_lead rhodes_lead_comp yamaha_ballad_lead],
   cs: %i[glasper_ep_lead soul_prophet_arp rhodes_lead_comp],
   minimoog: %i[minimoog_lead moog_ladder_lead questlove_moog_lead],
-  pluck: %i[neo_soul_pluck dangelo_clav_lead],
-  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell],
-  vapor: %i[vapor_lead supersaw_1 tame_wobble_lead],
+  pluck: %i[neo_soul_pluck dangelo_clav_lead shamisen_pluck],
+  glass: %i[glass_arp_lead flylo_fm_shimmer fm_lead_bell giga_fm_lead],
+  vapor: %i[vapor_lead supersaw_1 supersaw_4 tame_wobble_lead],
   crystal: %i[glass_arp_lead fm_lead_bell],
   acid: %i[acid_pluck_lead moog_ladder_lead],
   neon: %i[moog_ladder_lead minimoog_lead acid_pluck_lead],
+  yamaha: %i[yamaha_ballad_lead yamaha_scale_arp clean_jazz_guitar],
+  vintage: %i[vintage_dream_lead giga_fm_lead harmonica_soul],
+  giga: %i[giga_fm_lead giga_fm_bass_lead flylo_fm_shimmer],
+  supersaw: %i[supersaw_1 supersaw_2 supersaw_4 vapor_lead],
+  harmonica: %i[harmonica_soul muted_trumpet_lead],
+  guitar: %i[clean_jazz_guitar steel_string nylon_guitar_pad],
+  steel: %i[steel_string steel_drums clean_jazz_guitar],
+  sitar: %i[sitar_drone shamisen_pluck],
+  world: %i[shakuhachi_breath sitar_drone fiddle_reel steel_drums],
+  horn: %i[muted_trumpet_lead trombone_soul english_horn],
+  brass: %i[trombone_soul gospel_brass_lead muted_trumpet_lead],
+  bass: %i[synth_bass_deep slap_bass_lead moog_dilla_pocket],
+  steelpan: %i[steel_drums vibes_mallet],
 }.freeze
 
 # Per-voice families — random cycle picks within these pools each render (SYNTH_CYCLE=1).
@@ -1457,19 +1720,25 @@ PATCH_CYCLE_EP = {
     rhodes_cafe_warm wurli_soul_bite clav_neo_funk dx7_bell_ep galaxy_ep1 galaxy_ep2
     galaxy_ep_bleeding organ_drawbar organ_perc vibes_mallet soul_piano_tack
   ],
-  glass: %i[dx7_bell_ep galaxy_ep2 rhodes_dx_blend celeste_dust],
-  vapor: %i[rhodes_cafe_warm galaxy_ep1 ep_mark1_dark],
-  crystal: %i[galaxy_ep2 dx_ep_glass vibes_mallet],
-  ice: %i[rhodes_dx_blend galaxy_ep1 celeste_dust],
-  neon: %i[rhodes_mark1 clav_neo_funk],
-  pulse: %i[clav_neo_funk wurli_bite dx7_bell_ep],
+  glass: %i[dx7_bell_ep galaxy_ep2 rhodes_dx_blend celeste_dust giga_fm_ep],
+  vapor: %i[rhodes_cafe_warm galaxy_ep1 ep_mark1_dark vintage_dream_ep],
+  crystal: %i[galaxy_ep2 dx_ep_glass vibes_mallet galaxy_ep3],
+  ice: %i[rhodes_dx_blend galaxy_ep1 celeste_dust yamaha_soft_pedal],
+  neon: %i[rhodes_mark1 clav_neo_funk giga_fm_ep],
+  pulse: %i[clav_neo_funk wurli_bite dx7_bell_ep accordion_waltz],
+  yamaha: %i[yamaha_grand yamaha_soft_pedal yamaha_honky soul_piano_tack galaxy_ep1],
+  vintage: %i[vintage_dream_ep galaxy_ep1 rhodes_vintage_tape ep_mark1_dark],
+  giga_fm: %i[giga_fm_ep dx7_bell_ep galaxy_ep2 rhodes_dx_blend],
+  supersaw_bed: %i[rhodes_cafe_warm galaxy_ep1 yamaha_grand],
+  nylon_soul: %i[nylon_guitar_pad rhodes_cafe_warm soul_piano_tack],
+  orchestral: %i[yamaha_soft_pedal yamaha_grand soul_piano_tack],
 }.freeze
 
 PATCH_CYCLE_WARM = {
   rhodes: %i[
     juno_strings juno_chorus_wash solina_ensemble string_orchestra tape_string_pad
     prophet_6_warm slow_attack_pad cs80_ensemble pwm_sweep_pad analog_pad1 mellotron_flute_pad
-    polysynth_soul memorymoon_pad warm_analog_duo
+    polysynth_soul memorymoon_pad warm_analog_duo tremolo_strings
   ],
   moog: %i[
     moog_model_d moog_sub37_pad moog_pad moog_bleeding_edge prophet_rev2_bleeding
@@ -1478,52 +1747,72 @@ PATCH_CYCLE_WARM = {
   prophet: %i[
     prophet_5_pad prophet_6_warm prophet_pad prophet_rev2_bleeding cs80_ensemble
     oberheim_pad pwm_sweep_pad polysynth_soul memorymoon_pad juno_chorus_wash
-    analog_pad1 tape_string_pad
+    analog_pad1 tape_string_pad supersaw_pad
   ],
   blend: %i[
     prophet_5_pad moog_model_d prophet_6_warm moog_sub37_pad juno_strings juno_chorus_wash
     prophet_pad moog_pad cs80_ensemble solina_ensemble string_orchestra warm_analog_duo
     memorymoon_pad tape_string_pad polysynth_soul mellotron_flute_pad analog_hollow
-    slow_attack_pad oberheim_pad
+    slow_attack_pad oberheim_pad vintage_dream_pad giga_fm_bell
   ],
-  glass: %i[glass_fm_pad crystal_pwm ice_string_pad],
-  vapor: %i[vapor_supersaw prophet_rev2_bleeding juno_chorus_wash],
+  glass: %i[glass_fm_pad crystal_pwm ice_string_pad giga_fm_bell],
+  vapor: %i[vapor_supersaw prophet_rev2_bleeding juno_chorus_wash supersaw_pad],
   crystal: %i[crystal_pwm glass_fm_pad pwm_sweep_pad],
-  ice: %i[ice_string_pad solina_ensemble tape_string_pad],
+  ice: %i[ice_string_pad solina_ensemble tape_string_pad french_horn_pad],
   neon: %i[neon_ladder moog_bleeding_edge analog_hollow],
   pulse: %i[pwm_sweep_pad crystal_pwm analog_pad1],
+  yamaha: %i[tremolo_strings french_horn_pad tape_string_pad string_orchestra],
+  vintage: %i[vintage_dream_pad vintage_dream_choir supersaw_pad juno_chorus_wash],
+  giga_fm: %i[giga_fm_bell fm_bowed_pad giga_fm_choir glass_fm_pad],
+  supersaw_bed: %i[supersaw_pad vapor_supersaw prophet_6_warm],
+  nylon_soul: %i[french_horn_pad tape_string_pad juno_chorus_wash],
+  orchestral: %i[tremolo_strings orchestral_harp_pad french_horn_pad string_orchestra],
 }.freeze
 
 LEAD_VOICE_POOLS = {
-  donuts: %i[donuts_wurli_lead mark1_soul_lead wurli_soul_bite rhodes_skank_lead jupiter_superlead],
+  donuts: %i[donuts_wurli_lead mark1_soul_lead wurli_soul_bite rhodes_skank_lead jupiter_superlead yamaha_ballad_lead],
   soul_prophet: %i[soul_prophet_arp jupiter_superlead warm_prophet_hook prophet_bleeding_lead mono_poly_lead],
   prophet: %i[jupiter_superlead soul_prophet_arp warm_prophet_hook mono_poly_lead obxr_sync_lead],
-  moog: %i[moog_dilla_pocket mono_poly_lead questlove_moog_lead minimoog_lead sh101_sequence],
-  neo_pluck: %i[neo_soul_pluck dx7_glass_arp dangelo_clav_lead glass_arp_lead],
-  flylo: %i[flylo_fm_shimmer dx7_glass_arp glass_arp_lead tame_wobble_lead jupiter_superlead],
-  ballad: %i[jazz_ballad_lead cs80_brass_lead nord_stage_lead soft_synth_lead],
-  gospel: %i[cs80_brass_lead gospel_brass_lead stevie_organ_lead jp8_brass_arp],
+  moog: %i[moog_dilla_pocket mono_poly_lead questlove_moog_lead minimoog_lead sh101_sequence synth_bass_deep],
+  neo_pluck: %i[neo_soul_pluck dx7_glass_arp dangelo_clav_lead glass_arp_lead steel_string],
+  flylo: %i[flylo_fm_shimmer dx7_glass_arp glass_arp_lead tame_wobble_lead jupiter_superlead giga_fm_lead],
+  ballad: %i[jazz_ballad_lead cs80_brass_lead nord_stage_lead soft_synth_lead yamaha_ballad_lead],
+  gospel: %i[cs80_brass_lead gospel_brass_lead stevie_organ_lead jp8_brass_arp trombone_soul],
   erykah: %i[erykah_dust_lead portishead_dust_lead rhodes_lead_comp mark1_soul_lead],
   watermelon: %i[watermelon_glass nord_stage_lead dx7_glass_arp rhodes_lead_comp],
-  soft: %i[soft_synth_lead jazz_ballad_lead nord_stage_lead rhodes_lead_comp],
+  soft: %i[soft_synth_lead jazz_ballad_lead nord_stage_lead rhodes_lead_comp yamaha_ballad_lead],
   cs: %i[cs80_brass_lead cs_lead glasper_ep_lead soul_prophet_arp],
   minimoog: %i[minimoog_lead mono_poly_lead questlove_moog_lead moog_dilla_pocket],
-  pluck: %i[neo_soul_pluck dx7_glass_arp dangelo_clav_lead glass_arp_lead],
-  glass: %i[dx7_glass_arp glass_arp_lead flylo_fm_shimmer jupiter_superlead],
-  vapor: %i[vapor_lead jupiter_superlead tame_wobble_lead obxr_sync_lead],
+  pluck: %i[neo_soul_pluck dx7_glass_arp dangelo_clav_lead glass_arp_lead shamisen_pluck],
+  glass: %i[dx7_glass_arp glass_arp_lead flylo_fm_shimmer jupiter_superlead giga_fm_lead],
+  vapor: %i[vapor_lead jupiter_superlead tame_wobble_lead obxr_sync_lead supersaw_4],
   crystal: %i[dx7_glass_arp glass_arp_lead crystal_scale_lead],
   acid: %i[acid_pluck_lead sh101_sequence mono_poly_lead moog_ladder_lead],
   neon: %i[obxr_sync_lead mono_poly_lead jupiter_superlead acid_pluck_lead],
+  yamaha: %i[yamaha_ballad_lead yamaha_scale_arp clean_jazz_guitar],
+  vintage: %i[vintage_dream_lead giga_fm_lead harmonica_soul],
+  giga: %i[giga_fm_lead giga_fm_bass_lead flylo_fm_shimmer],
+  supersaw: %i[supersaw_1 supersaw_2 supersaw_4 vapor_lead],
+  harmonica: %i[harmonica_soul muted_trumpet_lead],
+  guitar: %i[clean_jazz_guitar steel_string],
+  steel: %i[steel_string steel_drums clean_jazz_guitar],
+  sitar: %i[sitar_drone shamisen_pluck],
+  world: %i[shakuhachi_breath sitar_drone fiddle_reel steel_drums],
+  horn: %i[muted_trumpet_lead trombone_soul english_horn],
+  brass: %i[trombone_soul gospel_brass_lead muted_trumpet_lead],
+  bass: %i[synth_bass_deep slap_bass_lead moog_dilla_pocket],
+  steelpan: %i[steel_drums vibes_mallet],
 }.freeze
 
 PATCH_CYCLE_TEXTURE = %i[
   soft_synth_str shimmer_organ ethnic_flute kalimba_dust space_voice reverse_pad_ghost music_box
+  harp_gliss vintage_dream_bell tinkle_bell bottle_blow agogo_perc seashore_bed breath_noise
 ].freeze
 
 PATCH_CYCLE_SCALE_LEAD = %i[
   scale_arp_rhodes scale_arp_prophet scale_arp_moog scale_arp_supersaw crystal_scale_lead
   jp8_brass_arp sh101_sequence dx7_glass_arp jupiter_superlead glass_arp_lead
-  rhodes_lead_comp glasper_ep_lead soul_prophet_arp
+  rhodes_lead_comp glasper_ep_lead soul_prophet_arp yamaha_scale_arp supersaw_scale
 ].freeze
 
 # Named lead-arp figures — tuned for lead register (louder/clearer than legacy pad arp).
@@ -1960,19 +2249,31 @@ def pick_synth_patches!(cfg, bar: 0, n_bars: nil)
 end
 
 def patch_sf2_path(sf2_key)
+  cache = File.expand_path("~/.cache/dilla-soundfonts")
   case sf2_key
   when :galaxy
-    File.join(File.expand_path("~/.cache/dilla-soundfonts"), "galaxy-electric-pianos.sf2")
+    File.join(cache, "galaxy-electric-pianos.sf2")
   when :supersaw
-    File.join(File.expand_path("~/.cache/dilla-soundfonts"), "supersaw-collection.sf2")
+    File.join(cache, "supersaw-collection.sf2")
   when :giga_fm
-    File.join(File.expand_path("~/.cache/dilla-soundfonts"), "giga-hq-fm-gm.sf2")
+    File.join(cache, "giga-hq-fm-gm.sf2")
+  when :yamaha
+    File.join(cache, "yamaha-grand-lite.sf2")
+  when :vintage_dreams
+    # Prefer a copy under the dilla cache (symlinked by fetch_assets!); else
+    # fluid-synth's Homebrew-bundled test bank (public domain-ish demo SF2).
+    cached = File.join(cache, "VintageDreamsWaves-v2.sf2")
+    return cached if File.exist?(cached)
+
+    Dir.glob("/opt/homebrew/Cellar/fluid-synth/*/share/fluid-synth/sf2/VintageDreamsWaves-v2.sf2").first ||
+      Dir.glob("/usr/local/Cellar/fluid-synth/*/share/fluid-synth/sf2/VintageDreamsWaves-v2.sf2").first ||
+      cached
   else
     pad_soundfont_path
   end
 end
 
-EXTERNAL_SF2_KEYS = %i[galaxy supersaw giga_fm].freeze
+EXTERNAL_SF2_KEYS = %i[galaxy supersaw giga_fm yamaha vintage_dreams].freeze
 
 def patch_voice_for(patch)
   return unless patch
@@ -5662,10 +5963,18 @@ def route_generated_style(style, root_hz:, mode:, length:, seed:)
   nil
 end
 
-# The bare-invoke character. Was "dilla" -- the canonical kit-forward DNA --
-# and is now the ambient bed: slower, longer pad envelopes, kick well back,
-# no arp. RENDER_MODE=dilla still gets the old default verbatim.
-DEFAULT_RENDER_MODE = ENV.fetch("DILLA_DEFAULT_MODE", "ambient").freeze
+# The bare-invoke character: the canonical kit-forward DNA — Dilla, and the
+# Flying Lotus side of the same lineage.
+#
+# Briefly defaulted to `ambient` and reverted. Two reasons, and the second is
+# the one that matters: it is not what the engine is for, and it broke seven
+# TestDilla assertions that read this value rather than setting it. That is the
+# tell that the default is part of the engine's contract and not a preference —
+# a mode can be added freely, the default cannot be changed quietly.
+#
+# RENDER_MODE=ambient still selects the ambient bed. It is a mode, not the
+# default, and nothing is lost by keeping it that way.
+DEFAULT_RENDER_MODE = ENV.fetch("DILLA_DEFAULT_MODE", "dilla").freeze
 DEFAULT_BPM = 86.0
 DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
@@ -5821,6 +6130,11 @@ GRADE_PRESETS = {
   sonitex:     { fx: %w[spectral_warmth tape_saturation harmonic_bloom analog_noise wow_flutter vinyl_crackle], stock: :acetate },
   vinyl_lab:   { fx: %w[spectral_warmth tape_saturation harmonic_bloom platter_wow vinyl_crackle stylus_mistrack needle_drop_fade analog_noise], stock: :vinyl },
   dub_chamber: { fx: %w[spectral_warmth tape_saturation dub_delay chamber_reverb analog_noise], stock: :tape_500 },
+  portastudio: { fx: %w[spectral_warmth tape_saturation wow_flutter analog_noise harmonic_bloom], stock: :cassette },
+  shellac:     { fx: %w[spectral_warmth analog_noise vinyl_crackle platter_wow stylus_mistrack], stock: :vinyl },
+  night_bus:   { fx: %w[tape_saturation multiband_tone parallel_compress spectral_warmth], stock: :tape_500 },
+  hi_fi:       { fx: %w[parallel_compress multiband_tone transient_sharpen stereo_width], stock: :tape_250 },
+  spring_room: { fx: %w[spring_reverb spectral_warmth tape_saturation wow_flutter], stock: :acetate },
 }.freeze
 
 # Sonitex STX-1260 — Tone Projects lo-fi life-span workstation (VST).
@@ -5911,6 +6225,44 @@ SONITEX_PRESETS = {
     out_comp_threshold: -15, out_comp_ratio: 4.0, out_comp_makeup: 3.0,
     limit: 0.84, level_out: 0.86
   ),
+  # Cleaner chain for acoustic grand / Yamaha patches — less crush, more air.
+  hi_fi_soul: SONITEX_STX1260.merge(
+    crush_bits: 14, crush_sr: 1.15, crush_mix: 0.08, crush_post_lp: 10_000,
+    dist_drive: 1.05, dist_mix: 0.22, hf_rolloff: 15_500, groove_wear_lp: 13_500,
+    head_bump_hz: 55, head_bump_db: 1.6, warmth_db: 2.0, lf_rolloff: 28,
+    wow_depth: 0.002, flutter_depth: 0.001, stereo_width: 1.08, hiss_amp: 0.0003,
+    out_comp_threshold: -22, out_comp_ratio: 1.8, out_comp_makeup: 1.0,
+    limit: 0.96, level_out: 0.98
+  ),
+  # Warmer Portastudio-ish — more head bump, mild hiss, gentle wow.
+  portastudio: SONITEX_STX1260.merge(
+    crush_bits: 12, crush_sr: 1.55, crush_mix: 0.28, crush_post_lp: 5200,
+    dist_drive: 1.55, dist_mix: 0.55, hf_rolloff: 9800, groove_wear_lp: 7200,
+    head_bump_hz: 72, head_bump_db: 4.8, warmth_db: 4.5, lf_rolloff: 42,
+    wow_depth: 0.01, flutter_depth: 0.006, stereo_width: 1.05, hiss_amp: 0.0055,
+    out_comp_threshold: -18, out_comp_ratio: 2.8, out_comp_makeup: 2.0,
+    limit: 0.9, level_out: 0.9
+  ),
+  # Shellac / 78rpm dust — more crackle/pop, narrower band.
+  shellac_78: SONITEX_STX1260.merge(
+    crush_bits: 11, crush_sr: 1.9, crush_mix: 0.4, crush_post_lp: 4500,
+    dist_drive: 1.7, dist_mix: 0.6, hf_rolloff: 7200, groove_wear_lp: 5500,
+    head_bump_hz: 90, head_bump_db: 3.0, warmth_db: 3.8, lf_rolloff: 80,
+    wow_depth: 0.014, flutter_depth: 0.01, stereo_width: 0.92, hiss_amp: 0.007,
+    pop_rate: 0.0015, pop_amp: 0.28, click_rate: 0.002,
+    out_comp_threshold: -17, out_comp_ratio: 3.0, out_comp_makeup: 2.2,
+    limit: 0.88, level_out: 0.88
+  ),
+  # Night bus — dark, mono-leaning, phone-y.
+  night_bus: SONITEX_STX1260.merge(
+    crush_bits: 12, crush_sr: 1.6, crush_mix: 0.25, crush_post_lp: 4000,
+    dist_drive: 1.4, dist_mix: 0.48, hf_rolloff: 6500, groove_wear_lp: 4800,
+    head_bump_hz: 60, head_bump_db: 5.5, warmth_db: 5.0, lf_rolloff: 45,
+    wow_depth: 0.008, flutter_depth: 0.004, stereo_width: 0.85, hiss_amp: 0.004,
+    phone_lp: 3800, sibilance_db: 2.2,
+    out_comp_threshold: -16, out_comp_ratio: 3.5, out_comp_makeup: 2.6,
+    limit: 0.87, level_out: 0.89
+  ),
 }.freeze
 # Creative analog grade stacks — post-Sonitex film-stock emulation.
 ANALOG_CHAIN_VARIANTS = {
@@ -5943,7 +6295,10 @@ ANALOG_CHAIN_WILD = {
   chamber_dust:  { stock: :cassette,  fx: %w[chamber_reverb vinyl_crackle wow_flutter harmonic_bloom analog_noise stereo_width] },
 }.freeze
 ANALOG_CHAIN_WILD_ROTATE = ANALOG_CHAIN_WILD.keys.freeze
-SONITEX_ROTATE_STREAM = %i[donuts_warm cassette sp1200 subtle scuzz classic heavy].freeze
+SONITEX_ROTATE_STREAM = %i[
+  donuts_warm cassette sp1200 subtle scuzz classic heavy
+  hi_fi_soul portastudio shellac_78 night_bus donuts_soul
+].freeze
 CONV_REVERB_ROTATE = %w[chamber plate spring 0].freeze
 ANALOG_WILD_STOCKS = %i[tape_500 cassette vinyl acetate tape_250].freeze
 GRADE_FX_POOL = %w[
@@ -13931,6 +14286,8 @@ EXTERNAL_SOUNDFONTS = {
   "galaxy-electric-pianos.sf2" => "https://smpldsnds.github.io/soundfonts/soundfonts/galaxy-electric-pianos.sf2",
   "supersaw-collection.sf2" => "https://smpldsnds.github.io/soundfonts/soundfonts/supersaw-collection.sf2",
   "giga-hq-fm-gm.sf2" => "https://smpldsnds.github.io/soundfonts/soundfonts/giga-hq-fm-gm.sf2",
+  # Yamaha C grand (lite) — acoustic piano body the GM bank never quite nails.
+  "yamaha-grand-lite.sf2" => "https://smpldsnds.github.io/soundfonts/soundfonts/yamaha-grand-lite.sf2",
 }.freeze
 EXTERNAL_DRUM_KIT_REPO = "https://github.com/Boochi44/free-drum-samples"
 EXTERNAL_DRUM_KIT_CACHE = File.expand_path("~/.cache/dilla-samples/free-drum-samples")
@@ -13968,6 +14325,22 @@ def fetch_assets!
       sh! "curl", "-sL", "--fail", "-o", dest, url
     end
     assets_verify_or_record!(manifest_path, name, Digest::SHA256.file(dest).hexdigest)
+  end
+
+  # VintageDreamsWaves ships with fluid-synth — copy into the cache so
+  # patch_sf2_path(:vintage_dreams) is stable and checksummed like the rest.
+  vintage_dest = File.join(sf_dir, "VintageDreamsWaves-v2.sf2")
+  unless File.exist?(vintage_dest)
+    src = Dir.glob("/opt/homebrew/Cellar/fluid-synth/*/share/fluid-synth/sf2/VintageDreamsWaves-v2.sf2").first ||
+          Dir.glob("/usr/local/Cellar/fluid-synth/*/share/fluid-synth/sf2/VintageDreamsWaves-v2.sf2").first
+    if src && File.exist?(src)
+      FileUtils.cp(src, vintage_dest)
+      puts "have: VintageDreamsWaves-v2.sf2 (from fluid-synth)"
+    end
+  end
+  if File.exist?(vintage_dest)
+    assets_verify_or_record!(manifest_path, "VintageDreamsWaves-v2.sf2",
+                             Digest::SHA256.file(vintage_dest).hexdigest)
   end
 
   if Dir.exist?(EXTERNAL_DRUM_KIT_CACHE)
@@ -17160,7 +17533,10 @@ def help
       sonitex_list                   List STX-1260 subset presets
 
     EXTERNAL ASSETS (opt-in only — engine is pure-Ruby/ffmpeg by default)
-      fetch-assets                   Cache CC0 drum WAVs + 2 extra soundfonts
+      fetch-assets                   Cache CC0 drum WAVs + extra soundfonts
+                                      (galaxy, supersaw, giga-fm, yamaha-grand + VintageDreams)
+      export-midi [dir]              Write every DRUM_PRESET as GM MIDI clips (default: samples/midi/)
+      import-midi <dir>              MIDI drum clips -> 16-step grids (Ruby hash dump)
       use-external-kit <name>        Install a fetched kit into samples/drums/custom/
                                       (01-hard-trap | 02-bounce | 03-soulful-vintage)
       dig <seam> [n]                 Dig n public-domain sides into samples/dug/
@@ -18956,10 +19332,11 @@ def import_midi_drums!(dir)
   Dir[File.join(dir, "**", "*.mid")].sort.each do |f|
     name = File.basename(f, ".mid").downcase
     role = case name
-           when /open\s*hat/ then :open
-           when /hi\s*hat|hat/ then :hats
-           when /kick/ then :kicks
-           when /snare/ then :snares
+           when /open\s*hat|open_hat/ then :open
+           when /hi\s*hat|hihat|hat/ then :hats
+           when /kick|bd/ then :kicks
+           when /snare|sd|clap/ then :snares
+           when /perc|rim|tom|conga|shaker/ then :perc
            else next
            end
     groups[role] << [f, midi_drum_grid(f)]
@@ -18970,6 +19347,8 @@ def import_midi_drums!(dir)
     return
   end
 
+  slug = File.basename(dir).to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")
+  slug = "pack" if slug.empty?
   count = [groups[:kicks].size, groups[:snares].size, groups[:hats].size].reject(&:zero?).min || 0
   puts "# Imported from #{File.basename(dir)} — pack-supplied MIDI, not transcription."
   (0...count).each do |i|
@@ -18977,15 +19356,132 @@ def import_midi_drums!(dir)
     s = groups[:snares][i]&.last || { steps: [], ghosts: [] }
     h = groups[:hats][i]&.last || { steps: [], ghosts: [] }
     o = groups[:open][i % [groups[:open].size, 1].max]&.last || { steps: [] }
-    puts "    pack_729_#{i + 1}: {"
+    p = groups[:perc][i % [groups[:perc].size, 1].max]&.last || { steps: [] }
+    puts "    #{slug}_#{i + 1}: {"
     puts "      swing: 52, humanize: 2, bpm: 140, mode: :straight_sixteenth,"
     puts "      kicks: #{k[:steps].inspect}, snares: #{s[:steps].inspect}, " \
          "hats: #{h[:steps].inspect},"
     puts "      ghosts: #{(s[:ghosts] + k[:ghosts]).uniq.sort.inspect}, " \
-         "claps: #{s[:steps].inspect}, perc: #{o[:steps].inspect}"
+         "claps: #{s[:steps].inspect}, perc: #{(o[:steps] + p[:steps]).uniq.sort.inspect}"
     puts "    },"
   end
   count
+end
+
+# GM drum map note numbers (channel 9).
+DRUM_MIDI_NOTES = {
+  kick: 36, snare: 38, hat: 42, open: 46, clap: 39, perc: 37, ghost: 38
+}.freeze
+
+MIDI_SEED_DIR = File.join(ROOT, "samples", "midi").freeze
+
+# Write a one-bar 16-step GM drum SMF for a single voice (kick/snare/hat…).
+def write_drum_role_smf(path, steps, note:, velocity: 100, ghost_steps: [], ghost_vel: 48, bpm: 90)
+  # Ticks per 16th at SMF_PPQN (quarter = SMF_PPQN): 16th = PPQN/4.
+  step_ticks = SMF_PPQN / 4
+  channel = 9 # GM drums
+  events = []
+  Array(steps).each do |st|
+    on = st.to_i * step_ticks
+    events << [on, :on, note, velocity]
+    events << [on + (step_ticks / 2), :off, note, 0]
+  end
+  Array(ghost_steps).each do |st|
+    next if Array(steps).include?(st)
+
+    on = st.to_i * step_ticks
+    events << [on, :on, note, ghost_vel]
+    events << [on + (step_ticks / 3), :off, note, 0]
+  end
+  events.sort_by! { |t, kind, *| [t, kind == :off ? 0 : 1] }
+
+  track_events = []
+  last = 0
+  events.each do |tick, kind, n, v|
+    delta = [tick - last, 0].max
+    status = kind == :on ? (0x90 | channel) : (0x80 | channel)
+    track_events << [delta, [status, n, v].pack("C*")]
+    last = tick
+  end
+  # pad to full bar
+  bar_end = 16 * step_ticks
+  track_events << [[bar_end - last, 0].max, [0xFF, 0x2F, 0x00].pack("C*")]
+  track_data = track_events.map { |delta, bytes| midi_vlq(delta) + bytes }.join
+  track_chunk = "MTrk" + [track_data.bytesize].pack("N") + track_data
+  header = "MThd" + [6].pack("N") + [0, 1, SMF_PPQN].pack("n3")
+  FileUtils.mkdir_p(File.dirname(path))
+  File.binwrite(path, header + track_chunk)
+  path
+end
+
+# Export every DRUM_PRESET as split kick/snare/hat MIDI clips under samples/midi/.
+# Re-importable via `ruby dilla.rb import-midi samples/midi/<preset>`.
+def export_midi_drums!(dest_dir = MIDI_SEED_DIR)
+  FileUtils.mkdir_p(dest_dir)
+  written = 0
+  DillaLofiMachine::DRUM_PRESETS.each do |name, grid|
+    preset_dir = File.join(dest_dir, name.to_s)
+    FileUtils.mkdir_p(preset_dir)
+    bpm = grid[:bpm] || 90
+    write_drum_role_smf(File.join(preset_dir, "kick.mid"), grid[:kicks],
+                        note: DRUM_MIDI_NOTES[:kick], velocity: 110, bpm:)
+    write_drum_role_smf(File.join(preset_dir, "snare.mid"), grid[:snares],
+                        note: DRUM_MIDI_NOTES[:snare], velocity: 108,
+                        ghost_steps: grid[:ghosts], ghost_vel: 52, bpm:)
+    write_drum_role_smf(File.join(preset_dir, "hat.mid"), grid[:hats],
+                        note: DRUM_MIDI_NOTES[:hat], velocity: 88, bpm:)
+    if Array(grid[:claps]).any?
+      write_drum_role_smf(File.join(preset_dir, "clap.mid"), grid[:claps],
+                          note: DRUM_MIDI_NOTES[:clap], velocity: 100, bpm:)
+    end
+    if Array(grid[:perc]).any?
+      write_drum_role_smf(File.join(preset_dir, "perc.mid"), grid[:perc],
+                          note: DRUM_MIDI_NOTES[:perc], velocity: 90, bpm:)
+    end
+    # Combined kit SMF (all voices on ch.10) for DAW drag-in.
+    combo = File.join(preset_dir, "#{name}_kit.mid")
+    write_combined_drum_smf(combo, grid)
+    written += 1
+  end
+  puts "export-midi: #{written} presets → #{dest_dir}"
+  written
+end
+
+def write_combined_drum_smf(path, grid)
+  step_ticks = SMF_PPQN / 4
+  channel = 9
+  events = []
+  {
+    kicks: [DRUM_MIDI_NOTES[:kick], 110],
+    snares: [DRUM_MIDI_NOTES[:snare], 108],
+    hats: [DRUM_MIDI_NOTES[:hat], 88],
+    claps: [DRUM_MIDI_NOTES[:clap], 100],
+    perc: [DRUM_MIDI_NOTES[:perc], 90],
+    ghosts: [DRUM_MIDI_NOTES[:ghost], 50],
+  }.each do |role, (note, vel)|
+    Array(grid[role]).each do |st|
+      on = st.to_i * step_ticks
+      events << [on, :on, note, vel]
+      events << [on + (step_ticks / 2), :off, note, 0]
+    end
+  end
+  events.sort_by! { |t, kind, *| [t, kind == :off ? 0 : 1] }
+  track_events = []
+  last = 0
+  events.each do |tick, kind, n, v|
+    delta = [tick - last, 0].max
+    status = kind == :on ? (0x90 | channel) : (0x80 | channel)
+    track_events << [delta, [status, n, v].pack("C*")]
+    last = tick
+  end
+  bar_end = 16 * step_ticks
+  track_events << [[bar_end - last, 0].max, [0xFF, 0x2F, 0x00].pack("C*")]
+  track_data = track_events.map { |delta, bytes| midi_vlq(delta) + bytes }.join
+  track_chunk = "MTrk" + [track_data.bytesize].pack("N") + track_data
+  header = "MThd" + [6].pack("N") + [0, 1, SMF_PPQN].pack("n3")
+  FileUtils.mkdir_p(File.dirname(path))
+  File.binwrite(path, header + track_chunk)
+  path
 end
 
 def build_crate!(dest_dir = CRATE_DIR)
@@ -21332,6 +21828,7 @@ DISPATCH = {
     exit(VerifyFx.verify! ? 0 : 1)
   },
   "import-midi" => -> { import_midi_drums!(ARGV.shift.to_s) },
+  "export-midi" => -> { export_midi_drums!(ARGV.shift || MIDI_SEED_DIR) },
   "crit" => -> { crit_session_cli!(ARGV.shift) },
   "phone-preview" => -> { phone_preview(ARGV.shift) },
   "semantics" => -> { semantics(ARGV.shift) },
