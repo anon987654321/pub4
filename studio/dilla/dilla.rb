@@ -823,7 +823,9 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:voice_oohs, role: :warm, program: 53, weight: 1.3, mix: 0.38, fs_gain: 1.1,
               fx: "highpass=f=260,vibrato=f=0.38:d=0.014,chorus=0.4:0.55:28|42:0.16|0.12:0.2|0.16:1.0|1.2,lowpass=f=3600,volume=0.82"),
   synth_patch(:analog_pad1, role: :warm, program: 88),
-  synth_patch(:analog_pad2, role: :warm, program: 94),
+  # Was program 94 — "metallic pad". Named analog, roled warm, and rendering as
+  # struck metal. 90 is "warm pad", which is what the name always claimed.
+  synth_patch(:analog_pad2, role: :warm, program: 90),
   synth_patch(:analog_pad3, role: :warm, program: 95),
   synth_patch(:string_orchestra, role: :warm, program: 48, fx: "lowpass=f=4200"),
   synth_patch(:slow_attack_pad, role: :warm, program: 49, fx: "acompressor=threshold=-24dB:ratio=1.8:attack=80:release=220"),
@@ -832,7 +834,9 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:memorymoon_pad, role: :warm, program: 88, weight: 2.1, mix: 0.74, fs_gain: 1.4,
               midi_fx: MIDI_FX_PAD_WARM,
               fx: "chorus=0.42:0.62:34|44:0.18|0.14:0.22|0.18:0.95|1.15,lowpass=f=3900"),
-  synth_patch(:warm_analog_duo, role: :warm, program: 94, weight: 2.0, mix: 0.76, fs_gain: 1.38,
+  # Also mis-assigned to 94. Weight 2.0 meant this one was picked twice as
+  # often as its neighbours, so the metallic pad was over-represented.
+  synth_patch(:warm_analog_duo, role: :warm, program: 90, weight: 2.0, mix: 0.76, fs_gain: 1.38,
               midi_fx: MIDI_FX_PAD_WARM,
               fx: "tremolo=f=0.28:d=0.1,aphaser=speed=0.1:decay=0.52,lowpass=f=3400"),
   synth_patch(:tape_string_pad, role: :warm, program: 48, weight: 2.2, mix: 0.7, fs_gain: 1.36,
@@ -2127,9 +2131,32 @@ def patch_cycle_seed(base = 0)
   base + (@render_seed || 0) + (@stream_iterate_count || 0) * 7919 + entropy
 end
 
+# GM chromatic percussion is struck metal — celesta, glockenspiel, music box,
+# vibraphone, marimba, xylophone, tubular bells — and 94 is literally "metallic
+# pad", 98 "crystal", 103 "FX 8 (sci-fi)". None of them belong in a Rhodes /
+# Moog / Prophet record.
+#
+# 16 is deliberately absent: that is the drawbar organ, and a Hammond is not
+# what anyone means by metallic. Excluding it would have cost stevie_organ_lead
+# for no reason.
+METALLIC_PROGRAMS = [9, 10, 11, 12, 13, 14, 15, 94, 98, 99, 103].freeze
+
+def smooth_analog? = ENV.fetch("SMOOTH_ANALOG", "1") != "0"
+
+def metallic_patch?(patch) = patch && METALLIC_PROGRAMS.include?(patch[:program])
+
 def pick_patch_from_pool(pool, seed: 0)
   ids = Array(pool).compact.uniq
   return if ids.empty?
+
+  # Filtered, but never to nothing. A pool that is entirely metallic still has
+  # to return a patch — dropping to nil here would silence the voice rather than
+  # change its colour, which is a worse outcome than one bright preset.
+  if smooth_analog?
+    warm = ids.reject { |i| metallic_patch?(synth_patch_by_id(i)) }
+    ids = warm unless warm.empty?
+  end
+
   rng = Random.new(patch_cycle_seed(seed))
   synth_patch_by_id(ids[rng.rand(ids.length)])
 end
@@ -2260,6 +2287,14 @@ def weighted_patch_pick(role, seed: nil, soulful: true)
       pool = SYNTH_PATCH_BY_ROLE.fetch(role, []).select { |p| allowed.include?(p[:id]) } if pool.empty?
     end
     pool = pool.reject { |p| CREEPY_PATCH_IDS.include?(p[:id]) }
+  end
+  # The metallic filter has to be here too, not only in pick_patch_from_pool.
+  # This is a second, independent selection path — it is how crystal_scale_lead
+  # kept being chosen after the pool filter went in. Same fallback rule: filter,
+  # but never down to an empty pool.
+  if smooth_analog?
+    warm = pool.reject { |p| metallic_patch?(p) }
+    pool = warm unless warm.empty?
   end
   return if pool.empty?
   rng = Random.new(seed || @render_seed || rand(1_000_000))
@@ -5709,6 +5744,12 @@ end
 # stepping 16ths through scale degrees for the full chord sustain.
 def lead_events_scale_arp(pad_events, cfg, duration: nil, n_bars: nil)
   return [] if pad_events.empty?
+  # A third arp path. NO_ARP reached pad_arp_mode, then lead_true_arp_mode?, and
+  # this one still ran 16ths over every chord underneath both — which is why the
+  # render banner kept naming an arp style after the other two were silenced.
+  # Returning empty drops a voice rather than muting the track: the melodic lead
+  # and the pads both still play.
+  return [] if no_arp?
   beat_p = 60.0 / cfg[:bpm]
   bar_p = beat_p * 4.0
   n_bars ||= duration ? (duration / bar_p).ceil : 32
@@ -17334,9 +17375,14 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # pads-only render. Read alongside "lead=0/off" in the stream banner two lines
   # later, it directly contradicted the truth, and cost a debugging session
   # chasing arps that were never in the mix.
+  # The same trap one level down: under NO_ARP the arp styles are still *chosen*
+  # (the patch tables are read before the gate), so this line went on printing
+  # "coltrane/updown/pingpong" for renders where all three arp paths returned
+  # zero events. Naming the styles is conditional on them actually running.
   lead_note = if lead_arp_enabled?
-                [@render_scale_lead_patch&.dig(:id), @render_scale_arp_style,
-                 @render_lead_patch&.dig(:id), @render_arp_style, lead_arp_style]
+                arp_names = no_arp? ? [] : [@render_scale_arp_style, @render_arp_style, lead_arp_style]
+                scale_id = no_arp? ? nil : @render_scale_lead_patch&.dig(:id)
+                [scale_id, @render_lead_patch&.dig(:id), *arp_names]
               else
                 []
               end
