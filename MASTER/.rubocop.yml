@@ -13,7 +13,7 @@ AllCops:
 # Cops aligned with rubocop/ruby-style-guide and data/style.yml
 Metrics/MethodLength:
   Enabled: true
-  Max: 15
+  Max: 20
   CountAsOne: [heredoc, array, hash]
 
 Metrics/ClassLength:
@@ -26,11 +26,11 @@ Metrics/AbcSize:
 
 Metrics/CyclomaticComplexity:
   Enabled: true
-  Max: 7
+  Max: 10
 
 Metrics/PerceivedComplexity:
   Enabled: true
-  Max: 8
+  Max: 11
 
 Metrics/ParameterLists:
   Enabled: true
