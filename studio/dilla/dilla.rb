@@ -667,15 +667,24 @@ MIDI_FX_LEAD_RICH = (
 
 SYNTH_PATCH_CATALOG = [
   # --- Electric keys (EP / Rhodes family) ---
-  synth_patch(:rhodes_mark1, role: :ep, program: 4, weight: 3.2, mix: 1.22, fs_gain: 1.72,
+  # Galaxy SF2 when present — GM program 4 alone never reads as a real Rhodes
+  # (no tine attack, no bell). Bank 2 is Galaxy's Mark-I family.
+  synth_patch(:rhodes_mark1, role: :ep, program: 4, bank: 2, sf2: :galaxy, weight: 3.6, mix: 1.35, fs_gain: 1.85,
               color: "Mark I warm tine",
               midi_fx: MIDI_FX_PAD_EP,
               arp_styles: %i[skip_up euclidean quint_spread],
               midi_arp: { style: :skip_up, subdiv: 8, gate: 0.78, vel: 0.16 },
-              fx: "tremolo=f=0.28:d=0.04,aecho=0.38:0.48:55|110:0.22|0.12,chorus=0.32:0.52:28|38:0.14|0.1:0.18|0.14:0.9|1.15,lowpass=f=5000,equalizer=f=280:t=o:w=1:g=1.8"),
-  synth_patch(:rhodes_stage73, role: :ep, program: 4, weight: 2.8, mix: 1.1, fs_gain: 1.7,
+              # Bell/tine at 2–4 kHz is the Rhodes identity; keep body, light tremolo.
+              fx: "tremolo=f=0.32:d=0.05,equalizer=f=280:t=o:w=1:g=2.2," \
+                  "equalizer=f=2400:t=h:w=1400:g=3.2,equalizer=f=4200:t=h:w=1.2:g=1.8," \
+                  "chorus=0.28:0.48:24|34:0.12|0.08:0.14|0.1:0.85|1.05," \
+                  "aecho=0.35:0.42:50|100:0.18|0.1,lowpass=f=6200"),
+  synth_patch(:rhodes_stage73, role: :ep, program: 4, bank: 3, sf2: :galaxy, weight: 3.2, mix: 1.28, fs_gain: 1.8,
               color: "stage Rhodes bark",
-              fx: "chorus=0.42:0.62:28|38:0.18|0.14:0.22|0.18:0.95|1.25,aecho=0.32:0.4:70|130:0.2|0.1,equalizer=f=3200:t=h:w=1800:g=1.2"),
+              midi_fx: MIDI_FX_PAD_EP,
+              fx: "equalizer=f=900:t=o:w=0.9:g=2.4,equalizer=f=2800:t=h:w=1600:g=2.8," \
+                  "chorus=0.38:0.58:28|38:0.16|0.12:0.2|0.16:0.95|1.2," \
+                  "aecho=0.3:0.38:65|120:0.18|0.1,lowpass=f=5800"),
   synth_patch(:rhodes_tine_wurli, role: :ep, program: 2, weight: 2.2, mix: 1.05, fs_gain: 1.55,
               color: "Wurli bite + tine",
               fx: "equalizer=f=900:t=o:w=0.9:g=2.8,acrusher=bits=12:samples=1.2:mix=0.08,lowpass=f=5200"),
@@ -710,12 +719,15 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:organ_perc, role: :ep, program: 17, weight: 1.4, mix: 1.0, fs_gain: 1.48,
               color: "perc organ", midi_fx: MIDI_FX_PAD_EP,
               fx: "tremolo=f=0.42:d=0.08,lowpass=f=4200"),
-  synth_patch(:rhodes_vintage_tape, role: :ep, program: 4, weight: 2.6, mix: 1.12, fs_gain: 1.62,
+  synth_patch(:rhodes_vintage_tape, role: :ep, program: 4, bank: 2, sf2: :galaxy, weight: 3.0, mix: 1.25, fs_gain: 1.75,
               color: "Rhodes + tape wobble", midi_fx: MIDI_FX_PAD_EP,
-              fx: "tremolo=f=0.22:d=0.04,vibrato=f=0.12:d=0.008,lowpass=f=4400"),
-  synth_patch(:rhodes_cafe_warm, role: :ep, program: 4, weight: 2.4, mix: 1.08, fs_gain: 1.58,
+              fx: "tremolo=f=0.24:d=0.05,vibrato=f=0.14:d=0.01," \
+                  "equalizer=f=2200:t=h:w=1300:g=2.6,equalizer=f=320:t=o:w=1:g=1.6," \
+                  "lowpass=f=5200"),
+  synth_patch(:rhodes_cafe_warm, role: :ep, program: 4, bank: 2, sf2: :galaxy, weight: 3.2, mix: 1.3, fs_gain: 1.78,
               color: "Rhodes cafe warmth", midi_fx: MIDI_FX_PAD_EP,
-              fx: "aecho=0.38:0.42:70|130:0.22|0.1,lowpass=f=4800"),
+              fx: "tremolo=f=0.3:d=0.045,equalizer=f=2600:t=h:w=1500:g=2.8," \
+                  "equalizer=f=300:t=o:w=1:g=1.8,aecho=0.36:0.4:65|120:0.2|0.1,lowpass=f=5600"),
   synth_patch(:wurli_soul_bite, role: :ep, program: 2, weight: 2.3, mix: 1.1, fs_gain: 1.56,
               color: "Wurli soul bite", midi_fx: MIDI_FX_PAD_EP,
               fx: "tremolo=f=0.35:d=0.06,aecho=0.32:0.38:50|90:0.18|0.08,lowpass=f=5200"),
@@ -750,15 +762,21 @@ SYNTH_PATCH_CATALOG = [
               arp_styles: %i[up downup quint_spread],
               midi_arp: { style: :up, subdiv: 4, gate: 0.88, vel: 0.26 },
               fx: "vibrato=f=0.18:d=0.014,tremolo=f=0.55:d=0.12,aecho=0.42:0.52:100|190:0.28|0.14,lowpass=f=3000"),
-  synth_patch(:prophet_5_pad, role: :warm, program: 89, weight: 3.2, mix: 0.78, fs_gain: 1.52,
+  # Supersaw bank = analog poly stack the GM "Pad 2" never delivers.
+  # Wide chorus + gentle LFO is the Prophet bedroom-record character.
+  synth_patch(:prophet_5_pad, role: :warm, program: 0, sf2: :supersaw, weight: 3.6, mix: 1.05, fs_gain: 1.65,
               color: "Prophet-5 poly",
               midi_fx: MIDI_FX_PAD_WARM,
               arp_styles: %i[updown pingpong coltrane],
               midi_arp: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24 },
-              fx: "chorus=0.48:0.68:34|44:0.2|0.16:0.24|0.2:1.05|1.3,vibrato=f=0.18:d=0.01,aecho=0.32:0.4:90|170:0.2|0.1,lowpass=f=4200"),
-  synth_patch(:prophet_6_warm, role: :warm, program: 90, weight: 2.5, mix: 0.76, fs_gain: 1.45,
+              fx: "chorus=0.58:0.78:38|48:0.28|0.22:0.32|0.26:1.2|1.5," \
+                  "vibrato=f=0.16:d=0.012,equalizer=f=220:t=o:w=1:g=2.0," \
+                  "equalizer=f=1800:t=h:w=1200:g=1.6,aecho=0.34:0.42:90|170:0.22|0.12,lowpass=f=5200"),
+  synth_patch(:prophet_6_warm, role: :warm, program: 3, sf2: :supersaw, weight: 3.0, mix: 1.0, fs_gain: 1.58,
               color: "Prophet-6 stereo wash",
-              fx: "chorus=0.52:0.72:38|48:0.24|0.2:0.28|0.24:1.1|1.4,aecho=0.35:0.45:90|170:0.25|0.12"),
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "chorus=0.62:0.82:42|52:0.3|0.26:0.36|0.3:1.25|1.55," \
+                  "equalizer=f=180:t=o:w=1:g=1.8,aecho=0.36:0.44:95|180:0.24|0.12,lowpass=f=5000"),
   # FM-synthesized (not sampled-analog) pad from the giga-hq-fm-gm soundfont --
   # a genuinely different source timbre rather than more ffmpeg fx stacked on
   # the same default GeneralUser-GS patches the other warm pads use.
@@ -774,17 +792,21 @@ SYNTH_PATCH_CATALOG = [
                   "chorus=0.5:0.7:35|45:0.22|0.18:0.25|0.2:1.1|1.3," \
                   "acrusher=bits=9:samples=3:mix=0.22,equalizer=f=3200:t=h:w=1:g=-6," \
                   "aecho=0.9:0.9:60|140:0.3|0.15,aecho=0.9:0.9:420|680:0.28|0.2,volume=2.2"),
-  synth_patch(:prophet_rev2_bleeding, role: :warm, program: 87, weight: 1.7, mix: 0.74, fs_gain: 1.48,
+  synth_patch(:prophet_rev2_bleeding, role: :warm, program: 5, sf2: :supersaw, weight: 2.4, mix: 0.92, fs_gain: 1.55,
               color: "Rev2 hybrid supersaw bed",
               midi_fx: MIDI_FX_PAD_WARM,
               arp_styles: %i[updown pingpong coltrane],
               midi_arp: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24 },
-              fx: "chorus=0.55:0.75:42|52:0.28|0.22:0.3|0.25:1.2|1.5,aphaser=speed=0.14:decay=0.48,lowpass=f=4000"),
+              fx: "chorus=0.6:0.8:44|54:0.3|0.26:0.34|0.28:1.25|1.55," \
+                  "aphaser=speed=0.12:decay=0.48,equalizer=f=1600:t=h:w=1.2:g=1.4,lowpass=f=4800"),
   synth_patch(:juno_strings, role: :warm, program: 50, weight: 2.2, mix: 0.72,
               fx: "chorus=0.55:0.75:40|55:0.3|0.25:0.35|0.3:1.1|1.5"),
   synth_patch(:solina_ensemble, role: :warm, program: 51, fx: "aphaser=speed=0.12:decay=0.5"),
-  synth_patch(:prophet_pad, role: :warm, program: 89, weight: 2.0, mix: 0.78,
-              fx: "vibrato=f=0.32:d=0.018,chorus=0.4:0.6:30|40:0.18|0.14:0.22|0.18:0.95|1.2"),
+  synth_patch(:prophet_pad, role: :warm, program: 1, sf2: :supersaw, weight: 2.6, mix: 0.95, fs_gain: 1.5,
+              color: "Prophet poly bed",
+              midi_fx: MIDI_FX_PAD_WARM,
+              fx: "vibrato=f=0.28:d=0.014,chorus=0.5:0.7:34|44:0.22|0.18:0.28|0.22:1.1|1.35," \
+                  "equalizer=f=200:t=o:w=1:g=1.6,lowpass=f=4800"),
   synth_patch(:oberheim_pad, role: :warm, program: 90, fx: "tremolo=f=4.2:d=0.14"),
   synth_patch(:moog_pad, role: :warm, program: 91, weight: 2.2, mix: 0.8,
               fx: "lowpass=f=2600:width_type=q:width=0.75,tremolo=f=0.35:d=0.1,equalizer=f=160:t=o:w=1:g=2.0"),
@@ -1325,11 +1347,13 @@ PAD_VOICE_PRESETS = {
   # least an :ep + :warm layer, so PAD_LAYERS=0 alone never actually
   # produces one voice; this is the only entry that does.
   rhodes_solo: { ep: :rhodes_mark1 },
-  rhodes:  { ep: :rhodes_mark1, warm: :juno_chorus_wash },
+  # Rhodes front and center; Prophet under it, not Juno strings.
+  rhodes:  { ep: :rhodes_mark1, warm: :prophet_5_pad },
   moog:    { ep: :rhodes_cafe_warm, warm: :moog_model_d },
-  prophet: { ep: :rhodes_mark1, warm: :prophet_5_pad },
+  # Double-Prophet bed under Stage 73 — the poly pad is the character.
+  prophet: { ep: :rhodes_stage73, warm: :prophet_5_pad, warm2: :prophet_6_warm },
   fm:      { ep: :rhodes_cafe_warm, warm: :fm_bowed_pad },
-  blend:   { ep: :rhodes_stage73, warm: :moog_sub37_pad },
+  blend:   { ep: :rhodes_mark1, warm: :prophet_5_pad, warm2: :moog_model_d },
   glass:   { ep: :dx7_bell_ep, warm: :glass_fm_pad },
   vapor:   { ep: :rhodes_cafe_warm, warm: :vapor_supersaw },
   crystal: { ep: :galaxy_ep2, warm: :crystal_pwm },
@@ -1365,9 +1389,12 @@ PAD_VOICE_PRESETS = {
   pad_royksopp: { ep: :dx7_bell_ep, warm: :juno_strings, warm2: :solina_ensemble,
                   texture: :mellotron_flute_pad },
   # Multi-layer stacks (rendered as 3–4 FluidSynth passes when PAD_LAYERS=1).
-  stack_soul: { ep: :rhodes_cafe_warm, warm: :moog_model_d, warm2: :prophet_5_pad, texture: :juno_chorus_wash },
+  # Rhodes + Prophet first; Moog is a thin undercurrent, not a competing bed.
+  stack_soul: { ep: :rhodes_mark1, warm: :prophet_5_pad, warm2: :prophet_6_warm, texture: :moog_model_d },
+  stack_rhodes: { ep: :rhodes_mark1, warm: :rhodes_stage73, warm2: :rhodes_cafe_warm },
+  stack_prophet: { ep: :rhodes_cafe_warm, warm: :prophet_5_pad, warm2: :prophet_6_warm, texture: :prophet_pad },
   stack_glass: { ep: :dx7_bell_ep, warm: :glass_fm_pad, warm2: :prophet_6_warm, texture: :ice_string_pad },
-  stack_vapor: { ep: :rhodes_mark1, warm: :vapor_supersaw, warm2: :moog_sub37_pad, texture: :soft_synth_str },
+  stack_vapor: { ep: :rhodes_mark1, warm: :vapor_supersaw, warm2: :prophet_5_pad, texture: :soft_synth_str },
   # Pure FM synthesis, no soundfont samples -- see PAD_LAYER_STACKS below.
   # Opt-in via PAD_VOICE=stack_fm_epiano + NATIVE_FM_PADS=1.
   stack_fm_epiano: { ep: :fm_epiano_body, warm: :fm_epiano_body, warm2: :fm_epiano_bell, texture: :fm_bell_pad },
@@ -1393,23 +1420,35 @@ PAD_VOICE_PRESETS = {
 # Explicit multi-layer pad stacks: id + amix weight. Order = mix order.
 # Weights favor distinct timbres (EP attack, Moog body, Prophet air, Juno sheen).
 PAD_LAYER_STACKS = {
+  # Mixes tuned so Rhodes tines and Prophet poly dominate; Moog is glue only.
   stack_soul: [
-    { id: :rhodes_cafe_warm, mix: 1.22, role: :ep },
-    { id: :moog_model_d, mix: 0.95, role: :warm },
-    { id: :prophet_5_pad, mix: 0.72, role: :warm },
-    { id: :juno_chorus_wash, mix: 0.42, role: :texture },
+    { id: :rhodes_mark1, mix: 1.45, role: :ep },
+    { id: :prophet_5_pad, mix: 1.05, role: :warm },
+    { id: :prophet_6_warm, mix: 0.75, role: :warm },
+    { id: :moog_model_d, mix: 0.38, role: :texture },
+  ],
+  stack_rhodes: [
+    { id: :rhodes_mark1, mix: 1.4, role: :ep },
+    { id: :rhodes_stage73, mix: 0.85, role: :warm },
+    { id: :rhodes_cafe_warm, mix: 0.55, role: :warm },
+  ],
+  stack_prophet: [
+    { id: :rhodes_cafe_warm, mix: 0.95, role: :ep },
+    { id: :prophet_5_pad, mix: 1.35, role: :warm },
+    { id: :prophet_6_warm, mix: 1.0, role: :warm },
+    { id: :prophet_pad, mix: 0.55, role: :texture },
   ],
   stack_glass: [
     { id: :dx7_bell_ep, mix: 1.08, role: :ep },
     { id: :glass_fm_pad, mix: 0.95, role: :warm },
-    { id: :prophet_6_warm, mix: 0.62, role: :warm },
+    { id: :prophet_6_warm, mix: 0.85, role: :warm },
     { id: :ice_string_pad, mix: 0.38, role: :texture },
   ],
   stack_vapor: [
-    { id: :rhodes_mark1, mix: 1.12, role: :ep },
-    { id: :vapor_supersaw, mix: 0.88, role: :warm },
-    { id: :moog_sub37_pad, mix: 0.62, role: :warm },
-    { id: :soft_synth_str, mix: 0.36, role: :texture },
+    { id: :rhodes_mark1, mix: 1.2, role: :ep },
+    { id: :prophet_5_pad, mix: 0.95, role: :warm },
+    { id: :vapor_supersaw, mix: 0.7, role: :warm },
+    { id: :soft_synth_str, mix: 0.32, role: :texture },
   ],
   # fm_epiano_body twice (roles :ep/:warm) reuses the unison-detune step
   # below (role == :warm && i.positive?) as the DX7 EPiano's "second
@@ -1884,14 +1923,20 @@ def galaxy_ep_available?
   File.exist?(patch_sf2_path(:galaxy))
 end
 
-GALAXY_EP_SUBSTITUTES = %i[rhodes_mark1 rhodes_stage73 rhodes_tine_wurli].freeze
+GALAXY_EP_SUBSTITUTES = %i[
+  rhodes_mark1 rhodes_stage73 rhodes_tine_wurli rhodes_cafe_warm
+  rhodes_vintage_tape rhodes_bleeding_edge rhodes_dx_blend
+].freeze
 
 # Presets that name a specific instrument on purpose — the substitution below
 # would defeat the reason they exist.
-GALAXY_EP_EXEMPT_VOICES = %i[rhodes_solo].freeze
+GALAXY_EP_EXEMPT_VOICES = %i[rhodes_solo pad_madlib].freeze
 
 def prefer_galaxy_ep(patch)
   return patch unless patch && galaxy_ep_available?
+  # Patches already bound to :galaxy keep their bank/program; only GM-default
+  # Rhodes ids get promoted to galaxy_ep1 when the bank is present.
+  return patch if patch[:sf2] == :galaxy
   return patch unless GALAXY_EP_SUBSTITUTES.include?(patch[:id])
   # An explicitly chosen pad voice keeps the EP it names.
   #
@@ -4421,6 +4466,35 @@ def cross_sample_process(track, loop_path)
     warn "cross-sample: #{e.class} — #{e.message}; using the plain loop"
     loop_path
   end
+end
+
+# Is the sample bed itself short of low end, rather than the mix that used it?
+#
+# Measured on the raw SAMPLE_LOOP file, not on the processed bed: the question
+# is what the source had, and cross_sample_process is both expensive and beside
+# the point. Memoised per path — the quality gate asks once per take.
+#
+# Returns false when there is no sample bed at all, so an ordinary render is
+# judged exactly as before.
+def sample_bed_band_limited?(threshold = -9.0)
+  raw = ENV["SAMPLE_LOOP"].to_s
+  return false if raw.empty? || raw == "0" || !File.file?(raw)
+
+  @sample_bed_delta ||= {}
+  delta = @sample_bed_delta[raw] ||= begin
+    DillaMaster.sub_kick_balance(render_spectrum(raw))[:low_mid_delta].to_f
+  rescue StandardError => e
+    warn "sample bed probe: #{e.class} — treating bed as full-range"
+    0.0
+  end
+
+  limited = delta < threshold
+  if limited && !@sample_bed_warned
+    @sample_bed_warned = true
+    warn "quality gate: sample bed #{File.basename(raw)} is band-limited " \
+         "(low-mid #{delta.round(2)} dB) — sub deficit attributed to the source, not the mix"
+  end
+  limited
 end
 
 def sample_loop_for(track)
@@ -10037,17 +10111,17 @@ DILLA_STYLE_DEFAULTS = {
   "VOICING" => "rootless",
   "VOICE_LEAD_PADS" => "1",
   "LEARNED_PROGRESSION" => "0",
-  # Stacked pad: Rhodes + Moog + Prophet + texture (see PAD_LAYER_STACKS).
+  # Rhodes + Prophet stack (Galaxy EP + Supersaw poly) — see PAD_LAYER_STACKS.
   "PAD_VOICE" => "stack_soul",
   # Held pads; arps live on the lead stem (stream rotates LEAD_ARP_MODE).
   "PAD_ARP_MODE" => "held",
-  "PAD_ATTACK" => "1100",
-  "PAD_RELEASE" => "3400",
+  "PAD_ATTACK" => "900",
+  "PAD_RELEASE" => "2800",
   "PAD_LEGATO_VAR" => "1",
   "PAD_LAYERS" => "1",
-  # Soft ooh/aah choir on chord tones (Singers Unlimited–like), under the pad bed.
+  # Quieter choir so Rhodes/Prophet aren't buried under oohs.
   "CHOIR_VOX" => "1",
-  "CHOIR_VOX_GAIN" => "0.28",
+  "CHOIR_VOX_GAIN" => "0.16",
   "LUSH_SYNTH" => "1",
   "LONG_STRIPDOWN" => "0",
   "MOTIF_RECALL" => "1",
@@ -10164,7 +10238,8 @@ DILLA_STYLE_DEFAULTS = {
   "FLYLO_CHORD_DUCK" => "0.9",
   "HARMONIC_PADS_WEIGHT" => "1.12",
   "HARMONIC_PADS_VOLUME" => "1.2",
-  "PAD_VOL" => "62",
+  # Louder pad bed so Rhodes/Prophet read over kit (was 62 — too shy).
+  "PAD_VOL" => "72",
   # Lead must cut over the stacked pad bed.
   "HARMONIC_SCALE_LEAD_WEIGHT" => "1.25",
   "HARMONIC_SCALE_LEAD_VOLUME" => "1.55",
@@ -11809,7 +11884,23 @@ def render_quality_acceptable?(path)
                  (ENV["RENDER_BEAUTY_MIN"] || "70").to_f
                end
   beauty_ok = beauty >= min_beauty && !harsh[:needs_notch]
-  sub_ok = !(deep_render? && sk[:recommendation] == "boost_sub" && sk[:low_mid_delta].to_f < -9.0)
+  # A band-limited source cannot be re-rendered into having low end.
+  #
+  # sub_kick_balance measures low-band minus mid-band dB, and a 78rpm transfer
+  # sits about twelve down by construction — there was nothing below 200Hz on
+  # the shellac to begin with. Feeding one in as SAMPLE_LOOP therefore failed
+  # this gate on every take, and each retry re-rendered a mix whose deficiency
+  # came from the source rather than from the mix, so the loop could not
+  # converge: measured -12.67 dB, three retries a track, no audio for twenty
+  # minutes. Retrying a render to fix the record it sampled is not a gate doing
+  # its job, it is a gate asking the wrong question.
+  #
+  # So the deficit is attributed. If the bed is already past the threshold on
+  # its own, the render did not cause it and cannot cure it; the gate says so
+  # once and stops blocking. The engine's own bass still carries the low end,
+  # and refine_deep_mix_env! still nudges PAD_VOL upward as it always did.
+  sub_ok = !(deep_render? && sk[:recommendation] == "boost_sub" &&
+             sk[:low_mid_delta].to_f < -9.0 && !sample_bed_band_limited?)
   ok = beauty_ok && sub_ok
   if ok && phone_preview_gate_enabled?
     phone_path = DillaMaster.apply_phone_preview!(path)
@@ -12203,10 +12294,13 @@ end
 
 # Pad / arp / voicing pools for demo-all — distinct sonic identity per slot
 # (stream DNA alone keeps stack_soul+held+jonas_v and reads as "one song").
+# Rhodes / Prophet first — glass/vapor/neon are spice, not the main course.
 DEMO_PAD_ROTATION = %w[
-  stack_soul stack_glass stack_vapor rhodes prophet blend moog glass vapor crystal neon
+  stack_rhodes stack_prophet stack_soul rhodes prophet
+  stack_rhodes pad_madlib stack_prophet rhodes_solo prophet
+  stack_soul blend stack_rhodes stack_prophet
 ].freeze
-DEMO_PAD_ARP_ROTATION = %w[held wash shimmer figure duo pulse held wash].freeze
+DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
   rootless spread drop2 quartal bill_evans kenny_barron so_what cluster rootless
 ].freeze
@@ -15491,19 +15585,25 @@ def render_pad_morph_fluidsynth(path, pad_events, duration)
   texture_path = "#{path}.texture.wav"
   ep_mix = 1.0
   warm_mix = 0.68
+  # Use the actual patch SF2 (Galaxy EP / Supersaw Prophet), not always GeneralUser.
+  ep_voice = patch_voice_for(prefer_galaxy_ep(@render_ep_patch || synth_patch_by_id(:rhodes_mark1))) ||
+             { sf2: pad_soundfont_path, bank: 0, program: PAD_GM_PROGRAM, patch: nil }
+  warm_voice = patch_voice_for(@render_warm_patch || synth_patch_by_id(:prophet_5_pad)) ||
+               { sf2: pad_soundfont_path, bank: 0, program: 89, patch: nil }
   ep_midi = "#{ep_path}.smf.mid"
-  _, ep_anchor = write_smf_morph(ep_midi, pad_events, duration:, role: :ep, midi_fx: MIDI_FX_PAD_EP)
-  ep_mix = ep_anchor&.fetch(:mix, 1.0) || 1.0
-  sh! "fluidsynth", "-ni", "-g", (ep_anchor&.fetch(:fs_gain, 1.5) || 1.5).to_s,
-      "-F", ep_path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, ep_midi
+  _, ep_anchor = write_smf_morph(ep_midi, pad_events, duration:, role: :ep,
+                                midi_fx: midi_fx_specs_for_role(:ep, ep_voice[:patch]))
+  ep_mix = ep_anchor&.fetch(:mix, ep_voice[:patch]&.fetch(:mix, 1.2) || 1.2) || 1.2
+  sh! "fluidsynth", "-ni", "-g", (ep_anchor&.fetch(:fs_gain, ep_voice[:patch]&.fetch(:fs_gain, 1.7) || 1.7) || 1.7).to_s,
+      "-F", ep_path, "-r", SAMPLE_RATE.to_s, ep_voice[:sf2], ep_midi
   FileUtils.rm_f(ep_midi)
 
   warm_midi = "#{warm_path}.smf.mid"
   _, warm_anchor = write_smf_morph(warm_midi, pad_events, duration:, role: :warm,
-                                   midi_fx: MIDI_FX_PAD_WARM)
-  warm_mix = warm_anchor&.fetch(:mix, 0.68) || 0.68
-  sh! "fluidsynth", "-ni", "-g", (warm_anchor&.fetch(:fs_gain, 1.5) || 1.5).to_s,
-      "-F", warm_path, "-r", SAMPLE_RATE.to_s, pad_soundfont_path, warm_midi
+                                   midi_fx: midi_fx_specs_for_role(:warm, warm_voice[:patch]))
+  warm_mix = warm_anchor&.fetch(:mix, warm_voice[:patch]&.fetch(:mix, 0.9) || 0.9) || 0.9
+  sh! "fluidsynth", "-ni", "-g", (warm_anchor&.fetch(:fs_gain, warm_voice[:patch]&.fetch(:fs_gain, 1.55) || 1.55) || 1.55).to_s,
+      "-F", warm_path, "-r", SAMPLE_RATE.to_s, warm_voice[:sf2], warm_midi
   FileUtils.rm_f(warm_midi)
 
   texture_voice = resolve_texture_voice
@@ -15584,11 +15684,11 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   voice_key = ENV["PAD_VOICE"]&.downcase&.to_sym
   specs = pad_layer_specs_for_voice(voice_key)
   if specs.nil? || specs.empty?
-    # Fallback 2-layer
+    # Fallback: Rhodes front, Prophet bed (not Moog-heavy).
     specs = [
-      { id: :rhodes_cafe_warm, mix: 1.15, role: :ep },
-      { id: :moog_model_d, mix: 0.85, role: :warm },
-      { id: :prophet_5_pad, mix: 0.55, role: :warm },
+      { id: :rhodes_mark1, mix: 1.4, role: :ep },
+      { id: :prophet_5_pad, mix: 1.0, role: :warm },
+      { id: :prophet_6_warm, mix: 0.65, role: :warm },
     ]
   end
   # Always force at least EP + two warm beds when stack requested.
@@ -15600,6 +15700,9 @@ def render_pad_via_fluidsynth(path, pad_events, duration)
   specs.each_with_index do |spec, i|
     patch = synth_patch_by_id(spec[:id])
     next unless patch
+    # EP layers: Galaxy bank when available. Warm layers keep their own sf2
+    # (Prophet → supersaw, Moog → default GM, …).
+    patch = prefer_galaxy_ep(patch) if (spec[:role] || :warm) == :ep
     voice = patch_voice_for(patch) || resolve_ep_voice
     voice = voice.merge(patch:) if voice[:patch].nil?
     layer_path = "#{path}.L#{i}.wav"
