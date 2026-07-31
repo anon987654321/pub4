@@ -3,7 +3,7 @@
 <div class="wardrobe-slide-card">
   <% if item.is_a?(Item) && item.photos.attached? %>
     <%= link_to slide_path, class: "wardrobe-slide-media", aria: { label: item.title }, title: item.title do %>
-      <%= responsive_image_tag item.photos.first, alt: item.title, widths: [160, 240], sizes: "140px", class: "wardrobe-slide-img" %>
+      <%= responsive_image_tag item.photos.first, alt: item.title, preset: :thumb, sizes: "140px", class: "wardrobe-slide-img" %>
     <% end %>
   <% else %>
     <%= link_to slide_path, class: "wardrobe-slide-media wardrobe-slide-media-swatch", aria: { label: item.title }, title: item.title, style: "--swatch: #{wardrobe_color_swatch(item.color)};" do %>

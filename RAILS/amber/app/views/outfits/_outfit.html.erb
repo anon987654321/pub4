@@ -2,13 +2,13 @@
   <div class="item-photo-wrap">
     <% if outfit.image.attached? %>
       <%= link_to outfit, aria: { label: outfit.name } do %>
-        <%= responsive_image_tag outfit.image, alt: outfit.name, widths: [320, 480, 640], sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
+        <%= responsive_image_tag outfit.image, alt: outfit.name, preset: :card, sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
       <% end %>
     <% else %>
       <div class="outfit-composition item-photo" aria-label="Items in <%= outfit.name %>">
         <% outfit.items.first(4).each do |item| %>
           <% if item.photos.attached? %>
-            <%= responsive_image_tag item.photos.first, alt: item.title, widths: [120, 180], sizes: "90px" %>
+            <%= responsive_image_tag item.photos.first, alt: item.title, preset: :thumb, sizes: "90px" %>
           <% else %>
             <span><%= item.category.to_s.first(2).upcase %></span>
           <% end %>

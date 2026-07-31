@@ -83,22 +83,12 @@ module Amber
 
       def items_for(key, categories, filter: nil)
         if DemoWardrobe.available?
-          # with_attached_photos, as DemoWardrobeController already does. The
-          # slide partial asks every item for photos.attached? and photos.first,
-          # so without the preload each of the four zones re-queried the
-          # attachment and blob for every slide it rendered. The guest home page
-          # was issuing 191 queries and spending 6s in views, and on a one-vCPU
-          # box that is long enough for Falcon's container to judge the child
-          # blocked and SIGKILL it -- the page returned 200 in 10s and the
-          # worker died immediately after, so the site kept going down.
-          # variant_records as well as the blob. with_attached_photos is only
-          # includes(photos_attachments: :blob), and the slide partial renders
-          # each photo through responsive_image_tag at two widths in two formats
-          # -- four variant lookups per image, none of them covered by that
-          # preload. With the images finally attaching, the page went to 544
-          # queries; the blob preload alone does not reach them.
+          # with_photos_for_display preloads attachments, blobs, and
+          # variant_records. The slide partial used to invent multi-width webp
+          # variants (N cold lookups per image); it now uses named :thumb
+          # variants preprocessed by WardrobeMediaJob.
           DemoWardrobe.items
-                      .includes(photos_attachments: { blob: :variant_records })
+                      .with_photos_for_display
                       .select do |item|
             categories.include?(item.category) && zone_match?(item, filter)
           end

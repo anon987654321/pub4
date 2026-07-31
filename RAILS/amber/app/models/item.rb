@@ -18,7 +18,25 @@ class Item < ApplicationRecord
   has_many :wear_logs, dependent: :destroy
   has_many :affiliate_links, dependent: :destroy
   has_many :declutter_challenges, dependent: :destroy
-  has_many_attached :photos
+
+  # Named variants match WardrobeMediaJob — keep dimensions in lockstep so
+  # list/show helpers hit preprocessed digests instead of inventing new sizes.
+  PHOTO_VARIANTS = {
+    thumb: { resize_to_limit: [ 240, 240 ] },
+    card: { resize_to_limit: [ 720, 960 ] },
+  }.freeze
+
+  has_many_attached :photos do |attachable|
+    PHOTO_VARIANTS.each do |name, transformations|
+      attachable.variant(name, **transformations)
+    end
+  end
+
+  # photos_attachments + blob + variant_records so responsive_image_tag does not
+  # N+1 variant lookups on grid/carousel pages (see wardrobe_showcase).
+  scope :with_photos_for_display, -> {
+    includes(photos_attachments: { blob: :variant_records })
+  }
 
   validates :title, :category, presence: true
   validates :times_worn, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true

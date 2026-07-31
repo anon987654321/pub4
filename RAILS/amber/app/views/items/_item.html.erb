@@ -3,7 +3,7 @@
 <article class="item-card item-card--luxury" id="<%= dom_id(item) %>" data-id="<%= item.id %>" data-category="<%= item.category %>" data-controller="offline-feed luxury-product" data-offline-feed-key-value="amber-items" data-offline-feed-title-value="<%= item.title %>" data-offline-feed-url-value="<%= item_path(item) %>" data-offline-feed-meta-value="<%= [item.category, item.color, item.brand].compact.join(" · ") %>">
   <div class="item-photo-wrap">
     <% if item.photos.attached? %>
-      <%= responsive_image_tag item.photos.first, alt: item.title, widths: [320, 480, 640], sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
+      <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
     <% end %>
     <nav role="navigation" aria-label="Item actions">
       <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>

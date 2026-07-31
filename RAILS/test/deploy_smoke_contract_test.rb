@@ -75,6 +75,10 @@ class DeploySmokeContractTest < Minitest::Test
     baseline = read(File.join(ROOT, "shared/config/environments/production_baseline.rb"))
     assert_includes baseline, "config.public_file_server.enabled = true"
     assert_includes baseline, "config.public_file_server.headers"
+    assert_includes baseline, 'ENV["CDN_ASSET_HOST"]'
+    assert_includes baseline, "config.asset_host"
+    sample = read(File.join(ROOT, "env.sample"))
+    assert_includes sample, "CDN_ASSET_HOST"
   end
 
   def test_brgen_solid_cache_schema_present

@@ -13,7 +13,7 @@ class OutfitsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   end
 
   def outfits_scope
-    scope = Current.user.outfits.order(created_at: :desc)
+    scope = Current.user.outfits.with_images_for_display.order(created_at: :desc)
     return scope unless element.dataset["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

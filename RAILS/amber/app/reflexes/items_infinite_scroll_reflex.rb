@@ -13,7 +13,7 @@ class ItemsInfiniteScrollReflex < Shared::InfiniteScrollReflex
   end
 
   def items_scope
-    scope = Current.user.items.recent
+    scope = Current.user.items.with_photos_for_display.recent
     return scope unless element.dataset["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

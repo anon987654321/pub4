@@ -88,9 +88,28 @@ class AmberBacklogTest < Minitest::Test
     assert_includes media_job, "enqueue_once(FingerprintGarmentJob"
     assert_includes media_job, "enqueue_once(CalculateSustainabilityJob"
     assert_includes media_job, "MediaProcessingJob.perform_now"
+    assert_includes media_job, "Item::PHOTO_VARIANTS"
     assert_includes ai, "packing_list_items.find_or_create_by!"
     assert_includes read("app/services/wardrobe_ai.rb"), "def fingerprint_for"
     assert_includes read("app/services/wardrobe_ai.rb"), "def self.configured?"
+  end
+
+  def test_wardrobe_list_paths_use_named_variants_and_display_preloads
+    item = read("app/models/item.rb")
+    helper = read("app/helpers/application_helper.rb")
+    items_controller = read("app/controllers/items_controller.rb")
+    items_reflex = read("app/reflexes/items_infinite_scroll_reflex.rb")
+    item_partial = read("app/views/items/_item.html.erb")
+
+    assert_includes item, "PHOTO_VARIANTS"
+    assert_includes item, "with_photos_for_display"
+    assert_includes item, "attachable.variant"
+    assert_includes helper, "IMAGE_PRESETS"
+    assert_includes helper, "named_responsive_image_tag"
+    assert_includes items_controller, "with_photos_for_display"
+    assert_includes items_reflex, "with_photos_for_display"
+    assert_includes item_partial, "preset: :card"
+    refute_includes item_partial, "widths:"
   end
 
   def test_konmari_and_honesty_paths_are_wired

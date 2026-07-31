@@ -7,7 +7,7 @@
   <% if @item.photos.attached? %>
     <div class="luxury-photos">
       <% @item.photos.each do |photo| %>
-        <%= responsive_image_tag photo, alt: @item.title, widths: [480, 640, 960], sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
+        <%= responsive_image_tag photo, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 520px", class: "item-photo luxury-photo" %>
       <% end %>
     </div>
   <% end %>

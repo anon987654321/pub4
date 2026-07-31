@@ -7,7 +7,22 @@ class Outfit < ApplicationRecord
   belongs_to :user
   has_many :outfit_items, dependent: :destroy
   has_many :items, through: :outfit_items
-  has_one_attached :image
+
+  # Same card/thumb sizes as Item photos for grid consistency.
+  IMAGE_VARIANTS = Item::PHOTO_VARIANTS
+
+  has_one_attached :image do |attachable|
+    IMAGE_VARIANTS.each do |name, transformations|
+      attachable.variant(name, **transformations)
+    end
+  end
+
+  scope :with_images_for_display, -> {
+    includes(
+      image_attachment: { blob: :variant_records },
+      items: { photos_attachments: { blob: :variant_records } }
+    )
+  }
 
   validates :name, presence: true
   accepts_nested_attributes_for :outfit_items, allow_destroy: true, reject_if: :reject_blank_outfit_item

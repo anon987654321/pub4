@@ -14,7 +14,7 @@ class ItemsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :share ]
 
   def index
-    scope = Current.user.items.with_attached_photos
+    scope = Current.user.items.with_photos_for_display
     scope = apply_lifecycle_filter(scope)
     scope = scope.recent
     scope = apply_live_search(scope, columns: %w[title brand category color material], vertical: "wardrobe") if live_search_query.present?
@@ -139,7 +139,14 @@ class ItemsController < ApplicationController
 
   # privacy_setting is preloaded because authorize_view! consults it via
   # WardrobeVisibilityPolicy; User is strict_loading, so a lazy load raises.
-  def set_item = @item = Item.includes(:affiliate_links, user: :privacy_setting).find(params[:id])
+  # photos + variant_records avoid N+1 when show renders each photo srcset.
+  def set_item
+    @item = Item.includes(
+      :affiliate_links,
+      { photos_attachments: { blob: :variant_records } },
+      user: :privacy_setting
+    ).find(params[:id])
+  end
 
   def authorize!
     redirect_to(items_path, alert: "Unauthorized") unless @item.user_id == Current.user&.id

@@ -14,7 +14,7 @@ class OutfitsController < ApplicationController
   before_action :authorize_view!, only: %i[show like]
 
   def index
-    scope = Current.user.outfits.with_attached_image.includes(items: { photos_attachments: :blob }).order(created_at: :desc)
+    scope = Current.user.outfits.with_images_for_display.order(created_at: :desc)
     if live_search_query.present?
       scope = apply_live_search(scope, columns: %w[name season category occasion], vertical: "outfits")
       item_ids = Current.user.items.where("title LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(live_search_query)}%").pluck(:id)
@@ -27,7 +27,7 @@ class OutfitsController < ApplicationController
   end
 
   def dressing_room
-    base = Current.user.items.active_wardrobe.with_attached_photos
+    base = Current.user.items.active_wardrobe.with_photos_for_display
     @zones = {
       head:   base.where(category: "Accessories"),
       top:    base.where(category: %w[Tops Outerwear]),

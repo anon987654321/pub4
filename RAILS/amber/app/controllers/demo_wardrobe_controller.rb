@@ -7,12 +7,12 @@ class DemoWardrobeController < ApplicationController
 
   def index
     @demo_user = Amber::DemoWardrobe.user
-    @pagy, @items = pagy(Amber::DemoWardrobe.items.with_attached_photos.recent)
-    @outfits = Amber::DemoWardrobe.outfits.limit(6)
+    @pagy, @items = pagy(Amber::DemoWardrobe.items.with_photos_for_display.recent)
+    @outfits = Amber::DemoWardrobe.outfits.with_images_for_display.limit(6)
   end
 
   def show
-    @item = Amber::DemoWardrobe.items.with_attached_photos.find(params[:id])
+    @item = Amber::DemoWardrobe.items.with_photos_for_display.find(params[:id])
   end
 
   private
