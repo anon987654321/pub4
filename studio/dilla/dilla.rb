@@ -8940,6 +8940,20 @@ def drum_check
     puts format("BROKEN %-20s names progression :%s, which is neither a table entry nor a generator", track, prog)
     problems += 1
   end
+  # Every feel has to be reachable by SOME door, or it is a grid nobody can
+  # play. There are two doors and they are easy to confuse: TRACK=<name> picks
+  # a preset, which names a feel; --drum-preset=<name> reaches anything merged
+  # in from DillaLofiMachine::DRUM_PRESETS. Checked 2026-07-31 when the table
+  # grew 56 -> 78 while TRACK_PRESETS stayed at 61, which looked like 22 new
+  # orphans and was not — all of them came in through the lofi merge, so they
+  # answer to --drum-preset. Nothing enforced that, though, and a feel added
+  # straight into DRUM_PATTERN_SETS without a preset would be reachable only by
+  # someone who already knew its name.
+  reachable = TRACK_PRESETS.values.filter_map { |p| p[:feel] }.to_set | LOFI_DRUM_FEELS.to_set | Set[:default]
+  (DRUM_PATTERN_SETS.keys - reachable.to_a).each do |feel|
+    puts format("BROKEN feel :%s has no TRACK_PRESETS entry and is not a lofi preset — only FEEL= by hand reaches it", feel)
+    problems += 1
+  end
   puts "#{DRUM_PATTERN_SETS.length} drum feels and #{TRACK_PRESETS.length} presets checked, #{problems} problem(s)"
   problems
 end
