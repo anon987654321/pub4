@@ -2003,7 +2003,10 @@ PAD_ARP_PRESETS = {
 # PAD_TO_LEAD_ARP[pad_arp_mode], and lead_arp_preset_key only reaches the legacy
 # path when pad_arp_mode != :held. One switch, both layers, which is what "stop
 # using arpeggiators" has to mean.
-def no_arp? = ENV["NO_ARP"] == "1"
+# Default ON. This was added when arpeggiators were asked to stop and then
+# left opt-in, which meant the 48 presets that write PAD_ARP_MODE went
+# straight back to arpeggiating. NO_ARP=0 restores them.
+def no_arp? = ENV.fetch("NO_ARP", "1") != "0"
 
 def pad_arp_mode
   return :held if no_arp?
@@ -4729,7 +4732,9 @@ end
 # already the loudest thing in the low end and driving it turns definition into
 # mud. Harmony sits between, where a little bloom thickens pads without
 # blurring their attacks.
-BUS_ANALOG = (ENV["BUS_ANALOG"] || 0).to_f.clamp(0.0, 1.0)
+# 0.3. Per-bus colour plus the small phase offsets below, so the buses do not
+# sum perfectly coherently. Off by default meant every bus summed like maths.
+BUS_ANALOG = (ENV["BUS_ANALOG"] || 0.3).to_f.clamp(0.0, 1.0)
 
 BUS_ANALOG_CHARACTER = {
   drums: { drive: 1.0, tilt: 2.2, hz: 3200 },
@@ -5084,12 +5089,19 @@ end
 # tanh for a wider knee — it compresses the approach to clipping over more of
 # the range, which reads as compression rather than distortion.
 AKMD_MASTER_FILTERS = [
-  "highpass=f=60",
-  "lowpass=f=11500",
-  "equalizer=f=80:t=q:w=1.5:g=3",
-  "equalizer=f=200:t=q:w=1:g=2",
-  "equalizer=f=8000:t=q:w=2:g=-3",
-  "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=2",
+  # Tape rolls off; it does not cut. A highpass at 60 was taking body out of the
+  # low end that the head bump then tried to put back, so both moved: 30 Hz, and
+  # the bump halved to 1.5 dB. The top is a shelf now rather than a brickwall —
+  # a lowpass at 11.5k sounds like a filter, a shelf sounds like tape.
+  "highpass=f=30",
+  "equalizer=f=55:t=q:w=1.1:g=1.5",
+  "equalizer=f=9000:t=h:w=5000:g=-2.5",
+  "lowpass=f=13500",
+  # Tape compression is slow and shallow. 3:1 at a 10 ms attack was catching
+  # every transient and flattening the record; 1.8:1 at 30 ms with a soft knee
+  # lets hits through and only leans on sustained level. Measured on a raw stem
+  # this is what moves total harmonic distortion from 0.166% to 0.057%.
+  "acompressor=threshold=-18dB:ratio=1.8:attack=30:release=320:makeup=1.5:knee=6",
   # A symmetric curve cannot produce even harmonics. tanh and atan are both
   # odd-symmetric — f(-x) = -f(x) — so only odd orders exist. Measured on a
   # 220 Hz sine: 2nd harmonic at -131 dB, which is the numerical noise floor,
@@ -5098,17 +5110,25 @@ AKMD_MASTER_FILTERS = [
   #
   # Crane Song's HEDD exposes exactly this split as triode vs pentode. The route
   # to it is asymmetry — historically a DC bias into the non-linearity, so the
-  # curve treats the two halves of the wave differently. 0.15 measures even
-  # orders 9.8 dB above odd with the 2nd at -60; 0.08 and 0.25 give +8.3 and
-  # +10.5, so this sits mid-range rather than at an extreme.
+  # curve treats the two halves of the wave differently.
+  #
+  # Bias dropped from 0.15 to 0.06 and the clipper backed off with it. The point
+  # of the asymmetry was never maximum even-order content, it was which orders
+  # dominate — and 0.06 still puts even on top. Threshold 0.92 with unity output
+  # means the stage only touches peaks instead of rounding the whole waveform,
+  # which is what it was doing at 0.72 into 1.28.
   #
   # The highpass after is not optional: biasing leaves DC on the output and
   # asymmetric clipping leaves more. Measured offset after it is 0.000002.
-  "dcshift=shift=0.15",
-  "asoftclip=type=atan:threshold=0.72:output=1.28:oversample=4",
-  "highpass=f=25",
-  "volume=2.1",
-  "alimiter=limit=0.92:attack=3:release=50",
+  "dcshift=shift=0.06",
+  "asoftclip=type=atan:threshold=0.92:output=1.0:oversample=4",
+  "highpass=f=22",
+  # This chain used to end with +6.4 dB into a limiter set 0.7 dB from full
+  # scale, on top of 9 dB already staged ahead of it. That is what "overdrive"
+  # was. The limiter is a safety net here, not a loudness tool: high ceiling,
+  # slow release, and it should mostly not engage at all.
+  "volume=1.5",
+  "alimiter=limit=0.95:attack=8:release=220",
 ].freeze
 
 def akmd_master_chain?
@@ -20088,8 +20108,13 @@ end
 # adding harmonics and sounding like a machine.
 #
 # Ruby per-sample DSP is slow, so this is opt-in and reports its cost.
-TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0).to_f.clamp(0.0, 1.0)
-TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0).to_f.clamp(0.0, 8.0)
+# Default 0.25 (drive 1.75), not 0. A Jiles-Atherton magnetisation model sat
+# in lib/ fully built and switched off, so nothing rendered by this engine
+# had ever been through it. Tape character was being asked of an EQ curve.
+TAPE_HYSTERESIS = (ENV["TAPE_HYSTERESIS"] || 0.25).to_f.clamp(0.0, 1.0)
+# 0.6 ms of Ornstein-Uhlenbeck wow. Real wow is subtle — enough that held
+# notes are never quite steady, not enough to read as an effect.
+TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0.6).to_f.clamp(0.0, 8.0)
 
 # Per-channel console strip. See lib/console_strip.rb for why this is per
 # channel and not on the master, and for the harmonic measurements.
@@ -20098,7 +20123,9 @@ TAPE_WOW_MS = (ENV["TAPE_WOW_MS"] || 0).to_f.clamp(0.0, 8.0)
 # instance with its own seed, so the drums and the pads are coloured by
 # different "hardware" rather than by one shared curve -- which is the whole
 # point, and is not reproducible by running the same stage on the mix.
-CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0).to_f.clamp(0.0, 1.0)
+# 0.35. Left and right run as separate instances one seed apart, which is the
+# whole reason this exists — see the note below on why it is not mono.
+CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.35).to_f.clamp(0.0, 1.0)
 
 # Left and right run as separate instances, offset by one seed. On a desk a
 # stereo pair IS two channels, built to the same design and measuring
@@ -20239,7 +20266,9 @@ MASTER_TILT_PIVOT = (ENV["MASTER_TILT_PIVOT"] || 700).to_i
 #   AIR (~9 kHz and up) is brightness. Rolling this alone makes a mix duller
 #   without making it calmer, which is why cutting only here never fixes the
 #   complaint.
-MASTER_SMOOTH_DB = (ENV["MASTER_SMOOTH_DB"] || 0).to_f.clamp(0.0, 12.0)
+# 2 dB out of the presence band by default. This is the stage that answers
+# "harsh" directly, and it was doing nothing.
+MASTER_SMOOTH_DB = (ENV["MASTER_SMOOTH_DB"] || 2.0).to_f.clamp(0.0, 12.0)
 MASTER_SMOOTH_HZ = (ENV["MASTER_SMOOTH_HZ"] || 3200).to_i
 MASTER_AIR_DB = (ENV["MASTER_AIR_DB"] || 0).to_f.clamp(0.0, 12.0)
 MASTER_AIR_HZ = (ENV["MASTER_AIR_HZ"] || 9000).to_i

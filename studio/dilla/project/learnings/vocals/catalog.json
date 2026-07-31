@@ -2486,16 +2486,16 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_79_4bars.wav",
-        "beat_bpm": 78.72,
-        "n_bars": 4,
-        "offset_sec": 43.4537,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_78_32bars.wav",
+        "beat_bpm": 78.2,
+        "n_bars": 32,
+        "offset_sec": 39.5193,
         "phrase_start": 2.972,
         "source_bpm": 61.0,
         "tempo_ratio": 1.0,
-        "rms_db": -16.871,
-        "sub_bleed_db": -38.634,
-        "snapped_lines": 4,
+        "rms_db": -17.592,
+        "sub_bleed_db": -39.849,
+        "snapped_lines": 34,
         "has_pulse": false,
         "key_shift": 0,
         "progression": "get_dis_money",
@@ -2563,5 +2563,5 @@
       "bpm_estimate": 76.0
     }
   ],
-  "updated_at": "2026-07-31T16:54:20Z"
+  "updated_at": "2026-07-31T17:36:58Z"
 }

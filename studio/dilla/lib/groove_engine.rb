@@ -375,13 +375,13 @@ module DillaGroove
   GROOVE_FEELS = {
     # Unchanged from the inline values, so nothing moves unless asked.
     boom_bap: { snare: -4, snare_plain: -3, clap: -4, kick_anchor: 1, kick: 3,
-                hat: 2, hat_up: 3, ghost: 1 },
+                hat: 2, hat_up: 3, ghost: 1, bass: 0 },
 
     # Snare behind, hats holding the grid. The hats are the reference the snare
     # is late against — drag them too and the whole bar just sounds slow rather
     # than lurching.
     dilla_drag: { snare: 4, snare_plain: 3, clap: 4, kick_anchor: -1, kick: 0,
-                  hat: 0, hat_up: 1, ghost: 2 },
+                  hat: 0, hat_up: 1, ghost: 2, bass: -2 },
 
     # Camel: the kick displaced off the grid rather than merely late, hats a
     # touch ahead so the top stutters against a snare that drags further than
@@ -395,7 +395,7 @@ module DillaGroove
     # hats-against-everything, and that is what reads as broken rather than
     # merely swung.
     camel: { snare: 5, snare_plain: 4, clap: 5, kick_anchor: 2, kick: 4,
-             hat: -1, hat_up: 0, ghost: 3 },
+             hat: -1, hat_up: 0, ghost: 3, bass: 2 },
   }.freeze
 
   def groove_feel
@@ -425,6 +425,23 @@ module DillaGroove
       tick * (role.to_sym == :hat_up ? feel[:hat_up] : feel[:hat])
     when :ghost
       tick * feel[:ghost]
+    when :bass
+      # The bass was the one voice with no entry here, so it fell to the `else`
+      # and stayed pinned to the grid in every feel. That made a groove switch a
+      # drums-against-a-metronome change rather than a change in how the band
+      # sits together.
+      #
+      # It is the D'Angelo point. On Voodoo the drums drag and the bass does not
+      # follow them down — Pino sits fractionally ahead of Questlove, and the
+      # pocket is the *distance between them*, not either one's distance from a
+      # click. A dragging snare over a locked bass only widens that gap by the
+      # snare's own lateness; moving the bass the other way widens it by both.
+      #
+      # boom_bap stays at 0, which is exactly what the `else` returned, so
+      # nothing moves unless the feel is switched.
+      return 0.0 if ENV["BASS_FEEL"] == "0"
+
+      tick * feel.fetch(:bass, 0)
     else
       0.0
     end
