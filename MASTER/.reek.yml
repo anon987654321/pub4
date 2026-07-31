@@ -1,4 +1,18 @@
 # Reek configuration for MASTER
+#
+# Who reads this: nothing, by default — and that is easy to get wrong. reek
+# appears in no CI step, but lib/review/scan/rules/external_linter_rules.rb
+# defines a "reek" scan rule that shells out to `reek --format json <path>`,
+# which picks this file up. That rule returns early unless
+# MASTER_EXTERNAL_LINT=1, and nothing in lib/, bin/, data/ or OPENBSD sets it.
+#
+# So these thresholds are inert today and become live the moment someone
+# exports that variable. Worth knowing before flipping it: max_methods was
+# lowered from 25 to 10 on 2026-07-31 to match the scanner's own METHOD_LIMIT,
+# which took TooManyMethods across MASTER/lib from 6 findings to 85. Those are
+# not new god classes — the scanner has been reporting them all along and reek
+# was the one disagreeing — but /scan output would grow by that much in one
+# step.
 detectors:
   # Module/class comments not required — naming + structure is the doc.
   IrresponsibleModule:
