@@ -69,6 +69,19 @@ INCONCLUSIVE = [
   /^critique failed:/,
   /^scan failed:/,
   /^review failed:/,
+  # A fix pass that ran out of clock did not finish fixing. Observed on the
+  # 2026-07-31 full-fix run: /fix prescanned, found 233 cross-file risks,
+  # completed ONE pass, printed "wall-clock timeout (1800s) after 1 pass(es)",
+  # exited 0, and the gate counted the stage as done. The scan on either side of
+  # it reported the identical 110 violations in the identical categories, so the
+  # measure/fix/verify sandwich verified that nothing had moved and called it a
+  # pass.
+  #
+  # This is deliberately not softened to a warning. The whole point of the
+  # stage is that the tree afterwards is better than the tree before; if the
+  # budget ran out mid-pass, nobody knows whether it is, and "nobody knows" is
+  # the state this file exists to refuse.
+  /wall-clock timeout/,
 ].freeze
 
 def run_master_line(line)
