@@ -12,5 +12,8 @@
 <% if @items&.any? %>
   <div class="item-grid"><%= render @items %></div>
 <% elsif @query.present? %>
-  <p class="dim">No matches found.</p>
+  <%= render "shared/empty_state",
+        title: "No matches found",
+        body: "Try a broader description, or add the piece if it is missing from your wardrobe.",
+        action: { label: "Add item", path: new_item_path } %>
 <% end %>

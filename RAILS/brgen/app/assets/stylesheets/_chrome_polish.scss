@@ -1,4 +1,5 @@
-/* Shell polish — profile, discovery, post detail, thread summary */
+/* Shell polish — profile, discovery, post detail, thread summary.
+   Includes former _ui_refinements_pass.scss (merged 2026-07-31). */
 
 /* Guest/city home orientation — sits above the feed, not under an AI hero. */
 .city-home-intro {
@@ -218,4 +219,186 @@
   font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text);
+}
+/* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
+   Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
+
+/* color-success/warning, ease-out/spring, transition-fast/normal already come
+   from shared/_tokens.scss via stack_brgen's @forward "tokens" -- redeclaring
+   them here at the same values was pure redundant CSS output, not an
+   override (verified: shared's values are byte-identical to what was here). */
+:root {
+  --space-2xs: 0.25rem;
+  --color-info: #5b9fd4;
+  --elev-1: 1px solid var(--border, var(--border));
+  --elev-2: 1px solid var(--border, var(--border));
+  --measure-body: 66ch;
+  --tap-min: 44px;
+}
+
+/* G · a11y floor + touch targets */
+:where(button, .btn, .feed-action, .nav-item, .nav_link, a.chip, .push-enable-btn) {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+
+.feed-action-count,
+.feed-card-time,
+.price,
+.duration-chip,
+[data-count],
+time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* H · list perf — taller intrinsic for media cards to reduce scroll jump */
+.card-embed,
+.feed-post,
+.restaurant-card,
+.listing-card,
+.item-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
+}
+.video-card,
+.channel-card,
+.listing-card:has(img),
+.feed-post:has(.feed-card-media),
+.card-embed:has(.feed-card-media) {
+  contain-intrinsic-size: auto 280px;
+}
+
+/* Flash / toast flat card */
+.flash-notice,
+.flash-alert,
+.toast,
+.nearby-alerts > * {
+  border: var(--elev-1);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface-elevated, var(--surface));
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  z-index: var(--z-toast, 1100);
+}
+
+.flash-notice { border-color: color-mix(in srgb, var(--color-success) 40%, var(--border)); }
+.flash-alert { border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
+
+/* Post body measure */
+.card-embed .body,
+.post-body,
+.article-body {
+  max-width: var(--measure-body);
+}
+
+/* Nav swiper active underline already present — strengthen + peek */
+.nav_link.active {
+  border-bottom-width: 2px;
+  border-bottom-color: var(--accent, var(--accent));
+  font-weight: 700;
+}
+
+.nav_swiper_bar {
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--space-2xs);
+}
+
+.nav_link {
+  scroll-snap-align: start;
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* City carousel as interactive links */
+.city-carousel a.carousel-slide {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.55;
+}
+.city-carousel a.carousel-slide.active,
+.city-carousel a.carousel-slide:focus-visible {
+  opacity: 1;
+  outline: var(--focus-ring, 2px solid var(--accent));
+  outline-offset: 2px;
+}
+
+/* Vote punch */
+.feed-action:active {
+  transform: scale(0.94);
+  transition: transform var(--transition-fast) var(--ease-out);
+}
+
+/* TV 16:9 + duration chip */
+body.vertical-tv .video-card,
+body.vertical-tv .channel-card {
+  position: relative;
+}
+body.vertical-tv .video-card img,
+body.vertical-tv .channel-card img,
+body.vertical-tv .tv-poster {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+body.vertical-tv .duration-chip {
+  position: absolute;
+  inset-block-end: var(--space-2xs);
+  inset-inline-end: var(--space-2xs);
+  padding: 0.1rem 0.35rem;
+  font: 700 0.7rem/1 var(--font-mono, ui-monospace, monospace);
+  background: color-mix(in srgb, #000 72%, transparent);
+  border-radius: 2px;
+}
+body.vertical-tv .live-badge::before {
+  content: "● ";
+  /* No hex fallback: --danger is set by the dialect mixin at :root for every
+     dialect, and it is a different value in each one (#e46151, #b24c3f,
+     #a9483c, …). #d1594a is design_tokens.yml's color_danger, a different
+     token — writing it here as "the" --danger was drift waiting to happen,
+     the same way the stale Twitter-red (#f4212e) it replaced was. */
+  color: var(--danger);
+}
+
+/* Takeaway sold out — text badge, not color-only */
+body.vertical-takeaway .sold-out,
+body.vertical-takeaway [data-available="false"] {
+  opacity: 0.55;
+}
+body.vertical-takeaway .sold-out-badge {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs, 4px);
+  color: var(--text-secondary);
+}
+/* Fallback when markup only has data-available (no badge span) */
+body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::after {
+  content: "Sold out";
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs, 4px);
+  color: var(--text-secondary);
+}
+
+/* Playlist embed controls */
+body.vertical-playlist .playlist-player button,
+body.vertical-playlist [data-controller="playlist-player"] button {
+  color: var(--accent);
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+body.vertical-playlist input[type="range"] {
+  accent-color: var(--accent);
 }

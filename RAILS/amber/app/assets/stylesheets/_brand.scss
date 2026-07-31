@@ -255,3 +255,187 @@
   font-size: var(--luxury-font-meta);
   color: var(--luxury-muted);
 }
+/* Amber luxury refinements (UI_REFINEMENTS §D) */
+
+:root {
+  --space-2xs: 0.25rem;
+  --line-height-relaxed: 1.6;
+  --letter-display: 0.04em;
+  --focus-ring: 2px solid var(--accent);
+  --tap-min: 44px;
+  --elev-1: 1px solid var(--border);
+}
+
+/* a11y floor + touch targets — mirrors brgen's _ui_refinements_pass.scss.
+   Amber only had this scoped to the edge-swiper grip; every other button
+   here (including .carousel-btn) had no floor at all. :where() keeps
+   specificity at 0 so any more specific button rule still wins on size. */
+:where(button, .btn, a.chip, .carousel-btn) {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+
+body {
+  line-height: var(--line-height-relaxed);
+  letter-spacing: 0.01em;
+}
+
+.brand,
+.logo-banner,
+.logo-bar {
+  border-bottom: 1px solid var(--border, var(--color-extra-light-grey));
+}
+
+/* Caprasimo display */
+h1, .display, .wordmark {
+  font-family: "Caprasimo", Georgia, serif;
+  letter-spacing: var(--letter-display);
+  font-weight: 400;
+}
+
+/* Editorial grid: first card larger */
+.items-grid,
+.wardrobe-grid {
+  display: grid;
+  gap: var(--space-md, 1.5rem);
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+.items-grid > :first-child,
+.wardrobe-grid > :first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+@media (max-width: 36rem) {
+  .items-grid > :first-child,
+  .wardrobe-grid > :first-child {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
+.item-photo--placeholder,
+.item-card.is-empty {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 6px,
+      color-mix(in srgb, var(--border) 55%, transparent) 6px,
+      color-mix(in srgb, var(--border) 55%, transparent) 7px
+    ),
+    var(--surface-elevated, #f0ebe3);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  min-height: 8rem;
+  aspect-ratio: 3 / 4;
+  border: var(--elev-1);
+}
+
+/* Empty / skeleton floor for wardrobe */
+.empty-state {
+  max-width: 24rem;
+}
+
+.skeleton {
+  border-radius: var(--radius-sm, 6px);
+  background: linear-gradient(
+    90deg,
+    var(--hover-subtle) 0%,
+    var(--hover) 50%,
+    var(--hover-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: amber-skeleton 1.2s ease-in-out infinite;
+  min-height: 1rem;
+}
+
+@keyframes amber-skeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
+  }
+  a { text-decoration: underline; }
+}
+
+/* Edge swiper grips */
+[data-controller="edge-swiper"] button,
+.edge-swiper-grip {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+}
+[data-controller="edge-swiper"] button:focus-visible,
+.edge-swiper-grip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Sustainability meter */
+.sustainability-meter,
+.sustainability-grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.sustainability-grade {
+  font-weight: 700;
+  color: var(--accent);
+  border: var(--elev-1);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm, 6px);
+}
+
+/* Look rail */
+.look-rail {
+  display: flex;
+  gap: var(--space-sm, 0.75rem);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-block: var(--space-sm);
+}
+.look-rail > * {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  max-width: 12rem;
+}
+.look-rail .eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+/* Swiper peek */
+.wardrobe-swiper .swiper-slide {
+  width: auto;
+  max-width: 70%;
+  aspect-ratio: 3 / 4;
+}
+
+:where(button, .btn, a.btn):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --border: #2c2824; }
+}

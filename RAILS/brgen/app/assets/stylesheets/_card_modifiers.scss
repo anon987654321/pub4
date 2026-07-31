@@ -34,9 +34,10 @@
 // old CSS build under the current URL (a separate, confirmed footgun; see
 // MASTER/web/CLAUDE.md). Keeping :is() anyway: it's one selector instead
 // of eight and no worse either way.
+/* Space, not hairlines — elevated surface only (family "separation is space"). */
 .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
   background: var(--surface2);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-card);
   margin-bottom: 0;
   padding: 10px 12px;

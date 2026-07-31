@@ -1,4 +1,5 @@
-/* Shell surfaces — cart, community, flash, sidebar, empty states */
+/* Shell surfaces — cart, community, flash, sidebar, empty states.
+   Includes former _ui_refinements_surfaces.scss (merged 2026-07-31). */
 
 /* Rows are separated by the gap, not by rules between them. */
 .cart-items {
@@ -123,4 +124,78 @@
 
 .activity-event-cta {
   margin: 0.5rem 0 0;
+}
+/* UI_REFINEMENTS surfaces — forms, empty, skeleton, motion, contrast */
+
+/* Forms — reserved error slot */
+.field {
+  display: grid;
+  gap: var(--space-2xs);
+}
+.field .error,
+.field .helper {
+  min-height: 1.1em;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary);
+}
+.field .error { color: var(--danger); }
+
+/* Empty state styles live in shared/_empty_state.scss */
+
+/* Skeleton */
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--hover-subtle) 0%,
+    var(--hover) 50%,
+    var(--hover-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  min-height: 1rem;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Safe area + tap highlight */
+.sidebar,
+.nav_swiper,
+.push-enable-btn {
+  padding-inline: max(0px, env(safe-area-inset-left));
+}
+html {
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--accent, var(--accent)) 18%, transparent);
+}
+
+/* High contrast */
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--text-secondary);
+    --text-secondary: var(--text);
+  }
+  a { text-decoration: underline; }
+}
+
+/* Reduced motion — keep identity, kill ambient */
+@media (prefers-reduced-motion: reduce) {
+  .city-carousel,
+  .skeleton {
+    animation: none !important;
+  }
+  .feed-action:active { transform: none; }
+}
+
+/* prefers-contrast + link affordance in body text */
+.card-embed .body a,
+.post-body a,
+.article-body a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.card-embed .body a:hover,
+.post-body a:hover {
+  color: var(--accent);
 }

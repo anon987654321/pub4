@@ -14,6 +14,18 @@ export default class extends Controller {
   connect() {
     this.collapsed = true
     this.syncTitle()
+    // Successful posts count as install-prompt "value" (earlier PWA offer).
+    this._onSubmitEnd = (event) => {
+      if (event.detail?.success === false) return
+      window.dispatchEvent(new CustomEvent("pub4:install-value"))
+    }
+    this.element.addEventListener("turbo:submit-end", this._onSubmitEnd)
+  }
+
+  disconnect() {
+    if (this._onSubmitEnd) {
+      this.element.removeEventListener("turbo:submit-end", this._onSubmitEnd)
+    }
   }
 
   // --- dialog shape (brgen) ---
