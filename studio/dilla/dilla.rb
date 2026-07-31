@@ -14539,7 +14539,11 @@ def cc_dig!(seam, count)
       print "  #{row['upload_name'].to_s[0, 40]} — #{row['user_name']} ... "
       CrateDig.download(url, dest)
       sha = Digest::SHA256.file(dest).hexdigest
-      CrateDig.record!(CrateDig.ccmixter_entry(row, seam, dest.sub("#{ROOT}/", ""), sha)
+      # file_name is the file actually downloaded. ccmixter_entry used to record
+      # files.first while this picks the first *audio* file, so any upload whose
+      # first file is a zip recorded a name that did not match its own sha256.
+      CrateDig.record!(CrateDig.ccmixter_entry(row, seam, dest.sub("#{ROOT}/", ""), sha,
+                                               file_name: file["file_name"])
                          .merge("bytes" => File.size(dest)))
       puts "#{(File.size(dest) / 1024.0 / 1024).round(1)}MB [#{row['license_name']}]"
       taken += 1
@@ -14583,8 +14587,15 @@ def dug_list
     rows.each { |i| puts format("  %s  %-42s %s", i["year"], i["title"].to_s[0, 42], i["creator"]) }
   end
   puts
-  puts "#{items.size} side(s), all US public domain. Source URL, licence and SHA-256 " \
-       "per side in #{File.basename(CrateDig::MANIFEST)}."
+  # Was "all US public domain", printed over a manifest that by then held six
+  # CC-BY items. Public domain carries no obligation and CC-BY carries credit;
+  # a summary that flattens them tells the reader they owe nothing.
+  pd = items.count { |i| i["collection"] != "ccmixter" }
+  cc = items.size - pd
+  parts = ["#{pd} public-domain side(s)"]
+  parts << "#{cc} CC-licensed (credit owed — run `ruby dilla.rb credits`)" if cc.positive?
+  puts "#{parts.join(', ')}. Source URL, licence and SHA-256 per side in " \
+       "#{File.basename(CrateDig::MANIFEST)}."
 end
 
 def use_external_kit!(kit_name)

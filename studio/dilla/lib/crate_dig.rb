@@ -102,28 +102,73 @@ module CrateDig
     "jazz" => "jazz",
   }.freeze
 
+  # lic=open is necessary and not sufficient. Measured over 40 rows it returns
+  # Attribution 34, Attribution 4, CC0 1 — and Attribution Share-Alike 1.
+  #
+  # Share-Alike is copyleft: a derivative must itself be licensed Share-Alike.
+  # That is a materially different obligation from plain BY, and a beat built on
+  # a BY-SA sample cannot be released under ordinary terms. The crate happened to
+  # contain none, which was luck rather than a filter. Rejected here by default;
+  # CRATE_ALLOW_SHARE_ALIKE=1 opts in for someone who genuinely intends to
+  # release copyleft.
+  SHARE_ALIKE = /share[-\s]?alike|\bsa\b/i
+  NONCOMMERCIAL = /noncommercial|\bnc\b/i
+
+  def self.share_alike_allowed? = ENV["CRATE_ALLOW_SHARE_ALIKE"] == "1"
+
+  def self.usable_licence?(name)
+    text = name.to_s
+    return false if text.match?(NONCOMMERCIAL)
+    return false if text.match?(SHARE_ALIKE) && !share_alike_allowed?
+
+    true
+  end
+
   def self.ccmixter_search(seam:, rows: 20)
     tag = CC_SEAMS.fetch(seam, seam)
     url = "#{CCMIXTER_API}?f=json&limit=#{rows}&lic=open&tags=#{CGI.escape(tag)}"
     rows = http_json(url)
-    rows.is_a?(Array) ? rows.reject { |r| r["license_name"].to_s.match?(/noncommercial/i) } : []
+    return [] unless rows.is_a?(Array)
+
+    rows.select { |r| usable_licence?(r["license_name"]) }
   end
 
   # CC-BY is free to use commercially and *requires credit*. The provenance file
   # is therefore not just a record here, it is the credits list -- which is why
   # artist and licence URL are captured per row rather than inferred.
-  def self.ccmixter_entry(row, seam, path, sha)
-    file = Array(row["files"]).first || {}
+  #
+  # The attribution follows Creative Commons' own TASL shape: Title, Author,
+  # Source, Licence — with the licence as a URI, not a human name, and an
+  # explicit statement that the work was modified. The first version gave title,
+  # author, page URL and a licence *name*; a credit without the licence URI and
+  # without declaring modification does not discharge BY.
+  #
+  # `file:` is the file actually downloaded, passed in by the caller. It used to
+  # be files.first while the downloader picked the first *audio* file, so on any
+  # upload whose first file is a zip the recorded name did not match the
+  # recorded sha256.
+  def self.ccmixter_entry(row, seam, path, sha, file_name: nil)
+    upstream = row.dig("upload_extra", "featuring").to_s.strip
+    author = row["user_real_name"].to_s.empty? ? row["user_name"] : row["user_real_name"]
+    credit = +"\"#{row['upload_name']}\" by #{author} (#{row['file_page_url']}), " \
+              "licensed under #{row['license_url']} — modified (chopped and processed)"
+    # ccMixter uploads are frequently remixes of other ccMixter uploads, and BY
+    # runs with the work: the upstream contributors the page credits are owed
+    # the same attribution the uploader is.
+    credit << ", featuring #{upstream}" unless upstream.empty?
     {
       "identifier" => "ccmixter-#{row['upload_id']}", "seam" => seam,
       "year" => row["upload_date_format"].to_s[/\d{4}/],
-      "title" => row["upload_name"], "creator" => row["user_real_name"].to_s.empty? ? row["user_name"] : row["user_real_name"],
+      "title" => row["upload_name"], "creator" => author,
       "source" => row["file_page_url"], "collection" => "ccmixter",
-      "basis" => "#{row['license_name']} — commercial use permitted, attribution required",
+      "basis" => "#{row['license_name']} — commercial use permitted, attribution required" \
+                 "#{row['license_name'].to_s.match?(SHARE_ALIKE) ? ', derivative must be Share-Alike' : ''}",
       "rights" => row["license_name"], "licenseurl" => row["license_url"],
-      "attribution" => "#{row['upload_name']} by #{row['user_name']} (#{row['file_page_url']}), #{row['license_name']}",
-      "file" => file["file_name"], "path" => path, "sha256" => sha,
-    }
+      "upstream" => (upstream.empty? ? nil : upstream),
+      "attribution" => credit,
+      "file" => file_name || Array(row["files"]).first&.dig("file_name"),
+      "path" => path, "sha256" => sha,
+    }.compact
   end
 
   # Idiom -> archive.org query fragment. Digging by title is how you end up with
