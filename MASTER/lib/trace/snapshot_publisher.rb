@@ -21,8 +21,30 @@ module Master
 
       module_function
 
+      # Beside the code they describe, not in ~/Downloads.
+      #
+      # A snapshot is a share-pack of the repo — tree listing plus every text
+      # file verbatim — and writing it to the browser's download folder mixed it
+      # in with everything else that lands there, left stale copies nobody
+      # noticed (an OPERATOR_snapshot.md survived eighteen days after OPERATOR
+      # was folded into OPENBSD, still being offered to agents by the snapshot
+      # agent-guide), and made "where are the snapshots" a question with a
+      # non-obvious answer.
+      #
+      # pub4/snapshots/ is gitignored (.gitignore /snapshots/), so a ~13MB set
+      # cannot reach a commit. Deliberately NOT a dotfolder: these exist to be
+      # found and handed to something, and hiding them defeats the purpose.
+      #
+      # MASTER_SNAPSHOT_DIR still overrides. The ~/Downloads fallback is kept
+      # for the case where this file is loaded from outside a checkout, rather
+      # than writing into whatever directory happens to be current.
       def output_dir
-        File.expand_path(ENV.fetch("MASTER_SNAPSHOT_DIR", "~/Downloads"))
+        return File.expand_path(ENV["MASTER_SNAPSHOT_DIR"]) if ENV["MASTER_SNAPSHOT_DIR"]
+
+        # lib/trace -> lib -> MASTER -> pub4. Three levels, not four: the first
+        # ".." already leaves the trace/ directory.
+        repo = File.expand_path("../../..", __dir__)
+        File.directory?(File.join(repo, ".git")) ? File.join(repo, "snapshots") : File.expand_path("~/Downloads")
       end
 
       def write(target:, label:, repo_root: nil, mode: :both)
