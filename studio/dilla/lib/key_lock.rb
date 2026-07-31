@@ -102,9 +102,25 @@ module KeyLock
     delta > 6 ? delta - 12 : delta
   end
 
-  # Transposes a progression so it resolves to the shared tonic. Hash chords keep
-  # every other field — only :name moves — because the hz array, if present, is
-  # re-derived downstream from the symbol.
+  # Transposes a progression so it resolves to the shared tonic.
+  #
+  # The :hz array moves with the name. The first version deleted it, on the
+  # assumption that it would be re-derived downstream from the symbol — some
+  # paths do that (harmony_engine's normalize_chord_pads), but the lead does not:
+  # lead_scale_locked_tones_hz opens with `return [] unless chord[:hz]&.any?`
+  # and derives the lead's entire note pool from those frequencies. An hz-less
+  # chord therefore silently switched the lead's scale lock off, so the leads
+  # stopped following the harmony they were playing over — audible as a lead in
+  # a different key from the chords underneath it.
+  #
+  # Transposing the frequencies is also simply more honest than dropping them:
+  # a semitone shift is a ratio, the array is already in Hz, and re-deriving from
+  # a symbol loses any voicing the source data encoded.
+  def transpose_hz(list, semitones)
+    ratio = 2.0**(semitones / 12.0)
+    Array(list).map { |hz| (hz.to_f * ratio).round(2) }
+  end
+
   def lock(chords, target_name = target)
     return chords unless enabled?
 
@@ -116,8 +132,10 @@ module KeyLock
 
     Array(chords).map do |chord|
       if chord.is_a?(Hash)
-        moved = transpose_symbol(chord_name(chord), semis)
-        chord.merge(name: moved).tap { |h| h.delete(:hz) }
+        moved = chord.merge(name: transpose_symbol(chord_name(chord), semis))
+        hz = chord[:hz] || chord["hz"]
+        moved[:hz] = transpose_hz(hz, semis) if hz.respond_to?(:map) && !Array(hz).empty?
+        moved
       else
         transpose_symbol(chord, semis)
       end
