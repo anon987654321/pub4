@@ -1,6 +1,7 @@
 # The spine ratchet. `rake lint:spine` fails when lib/ grows past the ceiling.
 #
-# core/ABSORPTION.md asserted "the spine never grows" and nothing measured it,
+# core/SEVERANCE.md (written as ABSORPTION.md) asserted "the spine never grows"
+# and nothing measured it,
 # so lib/ gained 8,022 lines in the three weeks after core/ landed while core/
 # gained none. An invariant nothing measures is decoration -- the same critique
 # DEBT.md makes of data/limits.yml, where ~28 of 39 top-level keys have no
@@ -11,10 +12,29 @@
 # is a deliberate edit to this file, in a commit that says why.
 spine:
   # Total lines across lib/**/*.rb.
-  lib_ceiling: 47316
+  #
+  # RAISED 2026-07-31, 47316 -> 47583 (+267), the first raise since the ratchet
+  # landed one day earlier. Every one of those lines is scan/fix/review tooling
+  # from eleven commits that day -- cross_file_analysis +98 (rules that measure
+  # code instead of their own regexes), ast_fixer +62 (it was rewriting the
+  # fixtures that prove it works), surface_rules +45, snapshot_publisher +31,
+  # deliberation +25, llm_dispatcher +23. None of it is absorbable by this
+  # file's own standard: core/ takes a handler per verb and a rule per
+  # constraint, and a council timeout budget or an autofixer fixture bug is
+  # neither. Absorbing them would grow the spine with exactly the accretion the
+  # ratchet exists to catch.
+  #
+  # Read the raise as the tripwire working, not as permission. A ceiling that
+  # rises whenever a day's work pushes against it measures nothing, which is the
+  # critique this file makes of data/limits.yml four lines up. If it is raised
+  # again without lib/ ever falling back, the honest conclusion is that "the
+  # spine never grows" is not the invariant anyone is holding, and the number
+  # should be replaced by one that is.
+  lib_ceiling: 47583
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
+  raised: ["2026-07-31: 47316 -> 47583, scan/fix/review tooling, not absorbable"]
   # core/ is allowed to grow only by a handler per verb and a rule per
   # constraint; this is a tripwire on new top-level concepts, not on line count.
   core_files: 6
