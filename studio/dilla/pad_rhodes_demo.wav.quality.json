@@ -1,0 +1,56 @@
+{
+  "duration_seconds": 21.678,
+  "bit_rate": 1411228,
+  "schema": "dilla.master.v1",
+  "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/pad_rhodes_demo.wav",
+  "delivery": "wav",
+  "integrated_lufs": -17.1,
+  "true_peak_dbtp": -1.41,
+  "harmony_score": 91,
+  "harmony_breakdown": {
+    "overall": 91,
+    "extension": 100,
+    "register": 100,
+    "motion": 100,
+    "clash": 100
+  },
+  "progression_chord_names": [
+    "D/E",
+    "Db/E",
+    "C/E",
+    "Bm/E",
+    "Bbm/E",
+    "Am/E",
+    "D/E",
+    "Db/E",
+    "C/E"
+  ],
+  "harshness": {
+    "harshness": -21.16,
+    "needs_notch": false
+  },
+  "sub_kick_balance": {
+    "low_mid_delta": -2.21,
+    "recommendation": "ok"
+  },
+  "ml_notes": null,
+  "loudness_range_lu": 8.6,
+  "mono_rms_db": -17.546,
+  "spectral_rms_db": {
+    "low": -21.818,
+    "mid": -19.613,
+    "high": -40.771
+  },
+  "target": {
+    "integrated_lufs": "-20.5..-15.5",
+    "true_peak_max_dbtp": -1.0
+  },
+  "warnings": [],
+  "capabilities": [
+    196,
+    197,
+    198,
+    199,
+    200
+  ]
+}

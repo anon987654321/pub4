@@ -1979,7 +1979,7 @@
       "source": "https://www.youtube.com/watch?v=95xXFe3Q2WY",
       "vocal_path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/vocals.wav",
       "stem_dir": "/Users/mac/Documents/GitHub/pub4/studio/dilla/samples/demux/htdemucs_ft/yt_20260729_001607",
-      "bpm_estimate": 61.0,
+      "bpm_estimate": 122.0,
       "phrases": [
         {
           "start": 2.972,
@@ -2486,19 +2486,19 @@
       "isolated": true,
       "voice_only": true,
       "last_fit": {
-        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_68_32bars_key+2.wav",
-        "beat_bpm": 68.0,
-        "n_bars": 32,
-        "offset_sec": 39.5193,
+        "path": "/Users/mac/Documents/GitHub/pub4/studio/dilla/project/learnings/vocals/gunnhild/fit_88_8bars.wav",
+        "beat_bpm": 88.32,
+        "n_bars": 8,
+        "offset_sec": 39.4843,
         "phrase_start": 2.972,
-        "source_bpm": 61.0,
+        "source_bpm": 122.0,
         "tempo_ratio": 1.0,
-        "rms_db": -17.162,
-        "sub_bleed_db": -41.349,
-        "snapped_lines": 41,
+        "rms_db": -16.89,
+        "sub_bleed_db": -38.409,
+        "snapped_lines": 8,
         "has_pulse": false,
-        "key_shift": 2,
-        "progression": "time_donut",
+        "key_shift": 0,
+        "progression": "get_dis_money",
         "voice_only": true
       },
       "chroma": [
@@ -2563,5 +2563,5 @@
       "bpm_estimate": 76.0
     }
   ],
-  "updated_at": "2026-07-30T22:56:17Z"
+  "updated_at": "2026-07-31T12:37:07Z"
 }
