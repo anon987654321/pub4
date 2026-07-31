@@ -18,7 +18,28 @@ module Master
       CACHE_WINDOW = 4
       REACT_MAX_STEPS = 8
       MS_PER_SECOND = 1000
-      CLAUDE_CLI_TIMEOUT_S = 60
+      # 60 was below the floor for the work the council does — not tight, but
+      # unreachable. Measured 2026-07-31 on this machine, `claude --print
+      # --model sonnet` against a 5KB code-review prompt (a SMALL one by council
+      # standards, 120 lines and no persona system prompt):
+      #
+      #   one call, nothing else running   134s, 115s, 114s
+      #   two concurrent                   118s, both finished
+      #   four concurrent (MAX_CONCURRENT) 203s wall, one call still unfinished
+      #                                    when a 200s outer timeout killed it
+      #
+      # A single persona could not answer inside 60s with the machine otherwise
+      # idle, so every council was decided by whichever two personas the
+      # scheduler happened to favour. That is what "quorum not reached (2/26)"
+      # was: not disagreement, not an outage, just a stopwatch set below the
+      # length of the task.
+      #
+      # 300 covers the four-concurrent case with headroom. MASTER_CLAUDE_CLI_TIMEOUT
+      # still overrides it. Note the shape of those numbers if this needs tuning
+      # again: going from two concurrent to four roughly doubles per-call
+      # latency for the same total throughput, so MAX_CONCURRENT buys nothing
+      # here and costs margin.
+      CLAUDE_CLI_TIMEOUT_S = 300
       CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
       VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
       NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze

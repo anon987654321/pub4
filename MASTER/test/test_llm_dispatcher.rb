@@ -116,7 +116,14 @@ class TestLLMDispatcher < Minitest::Test
     result = dispatcher.send(:send_claude_cli, "claude-sonnet-4-6", [{ role: "user", content: "hi" }], sys: nil)
     assert_instance_of Master::Result::Err, result
     assert_equal :timeout, result.category
-    assert_match(/timed out after 60s/, result.message)
+    # Asserts that the message reports THE configured timeout, not that the
+    # configured timeout is any particular number. Pinning the literal 60 here
+    # meant the one test covering this path failed the moment the default was
+    # corrected — a test that fails when a value is tuned is testing the value,
+    # and the value is not what this test is for. test_claude_cli_timeout_reads_env_override
+    # below already covers where the number comes from.
+    expected = Master::Review::LLMDispatcher.const_get(:CLAUDE_CLI_TIMEOUT_S)
+    assert_match(/timed out after #{expected}s/, result.message)
   end
 
   def test_claude_cli_timeout_reads_env_override
