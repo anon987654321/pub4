@@ -6,12 +6,16 @@
 <% end %>
 <% end %>
 
+<%# auto_start defaults true (including minimal playlist home) — same spirit as
+    MASTER face embed autostart. Overlay stays as a silent-autoplay fallback. %>
+<% auto_start = local_assigns.fetch(:auto_start, true) %>
+<% hide_overlay = local_assigns.fetch(:hide_overlay, auto_start) %>
 <%= tag.div(
-      class: "radio-tunnel",
+      class: "radio-tunnel#{' radio-tunnel--autostart' if auto_start}",
       data: {
         controller: "radio-tunnel",
         radio_tunnel_tracks_value: radio_tunnel_catalog,
-        radio_tunnel_auto_start_value: local_assigns.fetch(:auto_start, !local_assigns.fetch(:minimal, false))
+        radio_tunnel_auto_start_value: auto_start
       }
     ) do %>
 
@@ -52,7 +56,7 @@
   <div
     class="radio-overlay"
     data-radio-tunnel-target="overlay"
-    <%= 'hidden' if local_assigns.fetch(:hide_overlay, false) %>
+    <%= "hidden" if hide_overlay %>
     aria-labelledby="radio-overlay-title"
   >
     <h2 id="radio-overlay-title" class="visually-hidden">Radio Bergen</h2>

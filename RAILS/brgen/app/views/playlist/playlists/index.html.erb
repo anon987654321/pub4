@@ -1,3 +1,5 @@
 <% content_for :title, "playlist.brgen.no" %>
 
-<%= render "playlist/playlists/radio_tunnel", minimal: true %>
+<%# Immersive home: auto-start radio (no "tap to start" gate). Overlay only
+    reappears if the browser blocks YouTube autoplay. %>
+<%= render "playlist/playlists/radio_tunnel", minimal: true, auto_start: true %>
