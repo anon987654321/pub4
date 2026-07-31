@@ -38,7 +38,7 @@ module Master
       def check_symbol(name)
         needle = name.to_s.split("::").last
         files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
-        hit = files.find { |file| File.read(file, encoding: "utf-8").include?(needle) }
+        hit = files.find { |file| File.read(file, encoding: "UTF-8").include?(needle) }
         Check.new(kind: :symbol, target: name, ok: !!hit, detail: hit && relative(hit))
       rescue StandardError => e
         Check.new(kind: :symbol, target: name, ok: false, detail: e.message)
@@ -46,7 +46,7 @@ module Master
 
       def check_reference(file, needle)
         path = File.join(@root, file.to_s)
-        ok = File.file?(path) && File.read(path, encoding: "utf-8").include?(needle.to_s)
+        ok = File.file?(path) && File.read(path, encoding: "UTF-8").include?(needle.to_s)
         Check.new(kind: :reference, target: "#{file}:#{needle}", ok:, detail: nil)
       rescue StandardError => e
         Check.new(kind: :reference, target: "#{file}:#{needle}", ok: false, detail: e.message)

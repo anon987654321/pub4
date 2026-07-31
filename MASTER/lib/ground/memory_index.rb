@@ -27,7 +27,7 @@ module Master
       def rebuild!
         previous = load_index
         docs = files.each_with_object({}) do |path, out|
-          body = File.read(path, encoding: "utf-8")
+          body = File.read(path, encoding: "UTF-8")
           hash = Digest::SHA256.hexdigest(body)
           rel = relative(path)
           old = previous[rel]
@@ -47,7 +47,7 @@ module Master
       def load_index
         return {} unless File.file?(index_path)
 
-        JSON.parse(File.read(index_path, encoding: "utf-8"))
+        JSON.parse(File.read(index_path, encoding: "UTF-8"))
       rescue JSON::ParserError => e
         Master::Ground::Swallow.log(e, context: "MemoryIndex.load_index")
         {}

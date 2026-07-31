@@ -160,7 +160,7 @@ module Master
         def best_candidate(candidates, path)
           return if candidates.empty?
           return candidates.first if candidates.size == 1
-          orig = File.read(path, encoding: "utf-8") rescue nil
+          orig = File.read(path, encoding: "UTF-8") rescue nil
           baseline = orig ? (rescan_candidate(orig, path) rescue nil) : nil
           scored = candidates.filter_map do |candidate|
             count = rescan_candidate(candidate, path)

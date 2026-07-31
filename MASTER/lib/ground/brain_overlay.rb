@@ -54,7 +54,7 @@ module Master
         end
         return unless match
 
-        File.read(match, encoding: "utf-8")
+        File.read(match, encoding: "UTF-8")
       end
 
       def reloadable?

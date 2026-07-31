@@ -104,7 +104,7 @@ module Master
           path = rel.to_s.start_with?("/") ? rel.to_s : File.join(Master::ROOT, rel)
           return unless File.file?(path)
 
-          raw = File.read(path, encoding: "utf-8")
+          raw = File.read(path, encoding: "UTF-8")
           raw = raw.byteslice(0, @mode[:max_bytes]) + "\n... [truncated]" if raw.bytesize > @mode[:max_bytes]
           "file: #{rel}\n#{raw}"
         end

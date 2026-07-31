@@ -27,7 +27,7 @@ module Master
 
       def list
         Dir.glob(File.join(dir, "*", "manifest.json")).filter_map do |path|
-          JSON.parse(File.read(path, encoding: "utf-8"))
+          JSON.parse(File.read(path, encoding: "UTF-8"))
         rescue JSON::ParserError => e
           Master::Ground::Swallow.log(e, context: "Checkpoint.list")
           nil
@@ -39,7 +39,7 @@ module Master
         manifest_path = File.join(checkpoint_dir, "manifest.json")
         raise ArgumentError, "checkpoint not found: #{id}" unless File.file?(manifest_path)
 
-        manifest = JSON.parse(File.read(manifest_path, encoding: "utf-8"))
+        manifest = JSON.parse(File.read(manifest_path, encoding: "UTF-8"))
         files = Array(manifest["files"]).map { |path| normalize_relative(path) }
         copy_files(files, from: checkpoint_dir, to: root)
         manifest
