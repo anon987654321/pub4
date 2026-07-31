@@ -106,6 +106,22 @@
     {
       "bar": "7",
       "section": "verse"
+    },
+    {
+      "bar": "8",
+      "section": "hook"
+    },
+    {
+      "bar": "9",
+      "section": "hook"
+    },
+    {
+      "bar": "10",
+      "section": "hook"
+    },
+    {
+      "bar": "11",
+      "section": "hook"
     }
   ],
   "critique_log": [
