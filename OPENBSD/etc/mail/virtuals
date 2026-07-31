@@ -1,0 +1,5 @@
+# address                target local user
+johann@brgen.no          johann
+# Catch-all for the domain goes to johann too; without this, mail to any other
+# brgen.no address is rejected at RCPT rather than silently blackholed.
+@brgen.no                johann
