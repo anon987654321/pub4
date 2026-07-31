@@ -36,7 +36,9 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url(master: 1)
     assert_response :success
     assert_includes response.body, 'class="master-embed-frame"'
-    assert_includes response.body, Rails.application.config.x.master_web_url
+    # Front-page / embed entry must skip the "launch AI" primer.
+    assert_includes response.body, "autostart=1"
+    assert_includes response.body, "embed=1"
   end
 
   def test_sign_in_is_chrome_light

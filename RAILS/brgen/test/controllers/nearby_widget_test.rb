@@ -36,16 +36,18 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match(/nearby-chat#locate/, response.body,
                  "the CTA must ask for location in the widget, not navigate away")
-    refute_match(/turbo_frame.*_top/, response.body)
+    # GPS is optional for *some* anonymous chat — city lobby must stay one tap away.
+    assert_includes response.body, channel_path("brgen")
   end
 
   # A guest is minted on every request, so Current.user is never nil here — the
-  # only thing standing between a visitor and the room is coordinates.
+  # only thing standing between a visitor and the nearby room is coordinates.
   test "the widget is reachable without signing in" do
     get nearby_widget_path
 
     assert_response :success
     assert_select "turbo-frame#nearby-chat-widget-frame"
+    refute_match(/Sign in to message|Sign in to join/i, response.body)
   end
 
   test "with coordinates the widget renders a room you can type in" do

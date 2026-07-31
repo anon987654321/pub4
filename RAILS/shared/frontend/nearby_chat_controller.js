@@ -14,7 +14,7 @@ import { Controller } from "@hotwired/stimulus"
 // aria-expanded truthful, pin the log to the newest line, and survive Turbo
 // navigation so the room stays open while you browse.
 export default class extends Controller {
-  static targets = ["panel", "tab", "log"]
+  static targets = ["panel", "tab", "log", "status"]
   static values = { storageKey: { type: String, default: "pub4:nearby-chat:open" } }
 
   connect() {
@@ -38,8 +38,13 @@ export default class extends Controller {
     // false at first paint because the geolocation prompt has not resolved yet.
     // Without this the panel showed "Share location to join" for the rest of the
     // session even once location had arrived.
-    this.onLocated = () => this.#reloadFrame()
-    window.addEventListener("brgen:located", this.onLocated, { once: true })
+    this.onLocated = () => {
+      this.#setStatus("")
+      this.#reloadFrame()
+    }
+    this.onLocationError = (event) => this.#showLocationError(event?.detail?.reason)
+    window.addEventListener("brgen:located", this.onLocated)
+    window.addEventListener("brgen:location-error", this.onLocationError)
 
     document.addEventListener("click", this.onDocumentClick)
     document.addEventListener("keydown", this.onKeydown)
@@ -49,6 +54,7 @@ export default class extends Controller {
     document.removeEventListener("click", this.onDocumentClick)
     document.removeEventListener("keydown", this.onKeydown)
     window.removeEventListener("brgen:located", this.onLocated)
+    window.removeEventListener("brgen:location-error", this.onLocationError)
     this.observer?.disconnect()
     this.observer = null
   }
@@ -69,7 +75,16 @@ export default class extends Controller {
     this.open ? this.close() : this.show()
   }
 
-  show() { this.#apply(true, { focus: true }) }
+  show() {
+    this.#apply(true, { focus: true })
+    // Opening the dock without coordinates should ask immediately — visitors
+    // should not have to find a second "Share location" button for chat to work.
+    if (this.#needsLocation()) {
+      this.#setStatus("Asking for location…")
+      window.dispatchEvent(new CustomEvent("brgen:request-location"))
+    }
+  }
+
   close() { this.#apply(false, { focus: false }) }
 
   // The "share location" CTA used to be a link to /nearby with turbo_frame:
@@ -78,11 +93,36 @@ export default class extends Controller {
   // brgen:located then swaps the dead end for the room.
   locate(event) {
     event?.preventDefault()
+    this.#setStatus("Asking for location…")
     window.dispatchEvent(new CustomEvent("brgen:request-location"))
   }
 
   get open() {
     return this.hasPanelTarget && !this.panelTarget.hasAttribute("hidden")
+  }
+
+  #needsLocation() {
+    // Server paints a locate CTA when coords are missing; once the room loads
+    // that button is gone.
+    return !!this.element.querySelector("[data-action*='nearby-chat#locate']")
+  }
+
+  #showLocationError(reason) {
+    const messages = {
+      denied: "Location blocked — enable it in the browser for nearby chat, or use #brgen below.",
+      timeout: "Location timed out — try again, or use #brgen below.",
+      unavailable: "Location unavailable — use #brgen below.",
+      blocked: "This page cannot read location — use #brgen below.",
+      server: "Could not save location — try again.",
+      network: "Network error saving location — try again."
+    }
+    this.#setStatus(messages[reason] || messages.unavailable)
+  }
+
+  #setStatus(text) {
+    if (!this.hasStatusTarget) return
+    this.statusTarget.textContent = text || ""
+    this.statusTarget.hidden = !text
   }
 
   #apply(open, { focus }) {
@@ -118,15 +158,13 @@ export default class extends Controller {
   #persist(open) {
     try {
       window.sessionStorage.setItem(this.storageKeyValue, open ? "1" : "0")
-    } catch {
-      /* private mode / storage disabled — open state just won't survive nav */
-    }
+    } catch (_) { /* private mode */ }
   }
 
   #restore() {
     try {
       return window.sessionStorage.getItem(this.storageKeyValue) === "1"
-    } catch {
+    } catch (_) {
       return false
     }
   }

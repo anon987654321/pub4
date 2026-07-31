@@ -39,6 +39,8 @@
   <%= javascript_importmap_tags %>
 </head>
 <body class="<%= body_surface_classes %>"
+      data-layout="document"
+      data-surface="social"
       data-controller="feed-hotkey browser-fingerprint brgen-shell"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <%# Every surface, playlist included. The skip link must be the first focusable

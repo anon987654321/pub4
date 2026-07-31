@@ -301,6 +301,24 @@ body.vertical-playlist .nearby-chat-widget {
   color: var(--text-dim, var(--text-secondary, #8a879c));
 }
 
+.nearby-chat-widget-status {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  border-bottom: 1px solid var(--border, #46435a);
+}
+
+.nearby-chat-widget-status[hidden] {
+  display: none;
+}
+
+.nearby-chat-widget-fallback {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
 .nearby-chat-widget-empty strong {
   color: var(--text, #d8d6e0);
   font-weight: 700;

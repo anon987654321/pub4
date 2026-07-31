@@ -14,10 +14,11 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
-  --inset-t: calc(12px + var(--safe-top));
-  --inset-r: calc(12px + var(--safe-right));
-  --inset-b: calc(12px + var(--safe-bottom));
-  --inset-l: calc(12px + var(--safe-left));
+  --chrome-inset: 0.75rem;
+  --inset-t: calc(var(--chrome-inset) + var(--safe-top));
+  --inset-r: calc(var(--chrome-inset) + var(--safe-right));
+  --inset-b: calc(var(--chrome-inset) + var(--safe-bottom));
+  --inset-l: calc(var(--chrome-inset) + var(--safe-left));
   --face-bg: black;
   --face-fg: var(--c-text);
   --face-muted: color-mix(in srgb, var(--c-text) 35%, transparent);
@@ -34,7 +35,9 @@
   --radius-md: 0;
   --radius-lg: 0;
   --radius-pill: 0;
+  --tap-min: 44px;
   --face-bar-height: 44px;
+  --bar-height: 44px;
   --hud-tier-status: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
   --hud-tier-caption: calc(var(--face-bar-height) + var(--safe-bottom) + 44px);
   /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
@@ -637,27 +640,47 @@ body.brutalist-mode * { border-radius: 0 !important; }
 body.brutalist-mode .message { animation-timing-function: steps(3,end) !important; }
 body[data-primer-flash="1"] canvas#face { filter: contrast(1.12) brightness(1.08); transition: filter 0ms steps(2,end); }
 
+/* Mission control uses document layout chrome (not immersive face overflow). */
 body.mission-control {
   overflow: auto;
-  padding: 1.25rem;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  min-height: 100dvh;
+  padding: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px))
+           calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px))
+           calc(var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px))
+           calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
+  font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
   font-size: 13px;
+  touch-action: manipulation;
+  user-select: text;
+  cursor: auto;
+  -webkit-font-smoothing: antialiased;
+}
+body.mission-control .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: var(--measure-body, 66ch);
 }
 body.mission-control h1 {
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin: 0;
   letter-spacing: 0.04em;
 }
 body.mission-control .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
+  gap: var(--chrome-inset, 0.75rem);
 }
 body.mission-control .panel {
   border: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent);
   padding: 10px 12px;
   background: #000;
+  border-radius: 0;
+  min-height: var(--tap-min, 44px);
 }
 body.mission-control .panel h2 {
   font-size: 11px;
@@ -672,6 +695,10 @@ body.mission-control pre {
 }
 body.mission-control .meta { opacity: 0.65; margin-bottom: 6px; }
 body.mission-control a { color: var(--c-text); }
+body.mission-control a:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
 
 .tool-progress-chip {
   font: 9px/1.2 var(--font-label);
@@ -911,6 +938,12 @@ body[data-uncertain="1"] #zsh-status { opacity: 1; animation: uncertainBlink 900
 
 /* #55 Primer .gone fade */
 #primer.gone { opacity: 0; transform: scale(0.96); pointer-events: none; transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+/* Embeds / front-page autostart: no "launch AI" click overlay (boot still runs go()). */
+body.primer-autostart #primer {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
 
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
 .chip { font: 14px/1.5 var(--font-label); letter-spacing: .08em; padding: 10px 14px; min-height: 44px; border: 1px solid color-mix(in srgb, var(--face-fg) 8%, transparent); border-radius: var(--radius-xs); color: color-mix(in srgb, var(--c-text) 62%, transparent); transition: background 120ms var(--ease-out); }
@@ -1150,21 +1183,46 @@ body[data-history-open="1"] #chat-log {
   transition: margin-left 220ms var(--ease-out);
 }
 
+/* Family skip-link: hard-hide until focus (same contract as RAILS _shell.scss). */
 .skip-link {
   position: fixed;
-  top: -40px;
-  left: 12px;
+  inset-block-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
   z-index: var(--z-skip);
-  padding: 6px 10px;
+  padding: 0.5rem 0.75rem;
+  min-height: var(--tap-min, 44px);
+  display: inline-flex;
+  align-items: center;
   background: #000;
   color: var(--face-fg);
   border: 1px solid var(--border-strong);
-  font: 10px var(--font-label);
+  border-radius: 0;
+  font: 10px/1 var(--font-label);
   text-decoration: none;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.skip-link:focus {
-  top: calc(8px + var(--safe-top));
+.skip-link:focus,
+.skip-link:focus-visible {
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
 }
 
 .debug-panel {

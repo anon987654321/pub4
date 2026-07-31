@@ -1,0 +1,88 @@
+/* Family layout chrome — MASTER face + RAILS apps.
+   Dialects restyle color/type/radius; they must not invent a second z-scale,
+   skip-link, tap floor, or main landmark pattern. See shared/LAYOUT.md. */
+
+/* Defaults when a surface has not loaded dialect tokens yet (error pages,
+   MASTER mission-control). Dialect mixins override these on :root. */
+:root {
+  --chrome-inset: 0.75rem;
+  --tap-min: 44px;
+  --bar-height: 44px;
+  --page-gutter: clamp(16px, 5vw, 48px);
+  --feed-max: 600px;
+  --measure-body: 66ch;
+}
+
+/* Document surfaces (RAILS social/luxury/wscons). Face keeps overflow:hidden. */
+body[data-layout="document"] {
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Shared page header — vertical homes, indexes, auth siblings. */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  margin-block-end: var(--space-4, 1rem);
+  max-width: var(--measure-body, 66ch);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: var(--font-size-title, 1.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.page-header .dim,
+.page-header p {
+  margin: 0.25rem 0 0;
+  max-width: var(--measure-body, 66ch);
+}
+
+/* Prose / lead blocks share one measure with face HUD caption width discipline. */
+.prose-measure,
+.city-home-intro,
+.auth-form-lead,
+.vertical-purpose {
+  max-width: var(--measure-body, 66ch);
+}
+
+/* Touch floor — buttons and primary nav hits (geometry gate also measures this). */
+:where(
+  button,
+  .btn,
+  .tab-item,
+  .nav-item,
+  .nav_link,
+  .feed-action,
+  a.chip,
+  .push-enable-btn,
+  .password-toggle
+) {
+  min-height: var(--tap-min, 44px);
+}
+
+/* Main column gutters — single rule so app shells cannot re-fight each other. */
+main#main-content,
+main[role="main"] {
+  padding-inline: var(--page-gutter, clamp(16px, 5vw, 48px));
+  box-sizing: border-box;
+}
+
+/* Document apps that already pad via .layout > main keep zero double-gutter:
+   when main sits inside .layout (brgen/amber), the shell owns inline padding. */
+.layout > main#main-content,
+.layout > main[role="main"] {
+  padding-inline: 0;
+}
+
+/* Flash / status share toast z-tier with face errors. */
+.flash-notice,
+.flash-alert {
+  z-index: var(--z-toast, 1100);
+}

@@ -33,6 +33,8 @@
   <%= javascript_importmap_tags %>
 </head>
 <body class="<%= "auth-surface" if controller_path.in?(%w[sessions passwords registrations]) %>"
+      data-layout="document"
+      data-surface="luxury"
       data-pwa-key="amber"
       data-controller="pwa-standalone browser-fingerprint"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">

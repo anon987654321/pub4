@@ -11,6 +11,8 @@
 # Light social = indigo on cool paper (not Twitter #1d9bf0). Vertical accents: vertical_accents: below.
 
 # Shared motion + elevation (borders, never box-shadow) — export via CSS vars in apps.
+# Layout chrome is the family contract across MASTER face + RAILS apps (dialects may
+# restyle surfaces; they must not invent a second z-scale, tap floor, or skip-link).
 shared_chrome:
   space_2xs: "0.25rem"
   space_xs: "0.5rem"
@@ -35,6 +37,12 @@ shared_chrome:
   font_size_title: "1.25rem"
   font_size_display: "1.75rem"
   measure_body: "66ch"
+  # Family layout chrome (12px = face inset-t/r/b/l base; 44px = WCAG + face-bar)
+  chrome_inset: "0.75rem"
+  tap_min: "44px"
+  bar_height: "44px"
+  page_gutter: "clamp(16px, 5vw, 48px)"
+  feed_max: "600px"
 
 # Luxury minimalist additions for wardrobe/product UIs (Aesop/Toteme/Nécessaire inspired)
 # Warm neutrals, generous spacing, refined typography. Use in amber + shared product views.
@@ -103,7 +111,11 @@ face_root:
     radius-md: "0"
     radius-lg: "0"
     radius-pill: "0"
+    # Aliases of shared_chrome so face HUD and RAILS tab/chrome share one floor.
+    # chrome-inset is emitted once in generate_face_root_css (before --inset-*).
+    tap-min: "44px"
     face-bar-height: "44px"
+    bar-height: "44px"
     hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"
     hud-tier-caption: "calc(var(--face-bar-height) + var(--safe-bottom) + 44px)"
     # Additive-blending budget: ~17k points; raising size/glow/decay together

@@ -58,9 +58,11 @@ class Conversation < ApplicationRecord
 
   # Anonymous, radius-scoped group room — same public/anonymous/disappearing
   # machinery as CHANNELS above, but bucketed by a ~10km geo grid cell instead
-  # of by city. Deliberately not seeded with bots (NearbyController#room, which
-  # calls this, only ever passes a real signed-in user's own stored lat/lng —
-  # this is meant to read as actual nearby people, not an always-on lobby).
+  # of by city. Soft guests and signed-in users both join (NearbyController
+  # stores lat/lng on Current.user after the browser grants geolocation).
+  # Not seeded with bots — meant to read as people actually nearby, not an
+  # always-on lobby. Empty cells are normal; the city #brgen channel is the
+  # no-GPS anonymous chat fallback.
   GEO_ROOM_RADIUS_KM = 10.0
   GEO_ROOM_SLUG_PREFIX = "nearby-"
 
@@ -68,14 +70,18 @@ class Conversation < ApplicationRecord
 
   def self.find_or_create_geo_room(lat:, lng:)
     slug = "#{GEO_ROOM_SLUG_PREFIX}#{Shared::GeoLocatable.cell_id(lat: lat, lng: lng, km: GEO_ROOM_RADIUS_KM)}"
-    find_by(slug: slug, city_id: nil) || create_geo_room!(slug)
+    # city_id is always nil — scope without tenant so a city tenant cannot hide
+    # an existing cross-city cell room.
+    ActsAsTenant.without_tenant do
+      find_by(slug: slug, city_id: nil) || create_geo_room!(slug)
+    end
   end
 
   def self.create_geo_room!(slug)
-    create!(conversation_type: "group", slug: slug, name: "Nearby chat", disappearing_duration: CHANNEL_TTL)
+    create!(conversation_type: "group", slug: slug, city_id: nil, name: "Nearby chat", disappearing_duration: CHANNEL_TTL)
   rescue ActiveRecord::RecordNotUnique
     # Two nearby visitors opened a fresh room in the same cell at once.
-    find_by!(slug: slug, city_id: nil)
+    ActsAsTenant.without_tenant { find_by!(slug: slug, city_id: nil) }
   end
 
   # "#takeaway · Bergen" once a room is city-scoped; plain "#takeaway" otherwise.

@@ -28,6 +28,8 @@
       <button type="button" class="nearby-chat-widget-close" data-action="nearby-chat#close" aria-label="Close">&times;</button>
     </header>
 
+    <p class="nearby-chat-widget-status dim" data-nearby-chat-target="status" hidden aria-live="polite"></p>
+
     <div class="nearby-chat-widget-body">
       <% if respond_to?(:nearby_widget_path) %>
         <%# Eager load — lazy frames inside display:none never fire IntersectionObserver. %>
@@ -43,18 +45,20 @@
           <% if respond_to?(:authenticated?) && authenticated? %>
             <p>Open your inbox to read and send messages on this app.</p>
             <%= link_to "Open messages", messages_path, class: "nearby-chat-widget-cta" %>
-          <% elsif respond_to?(:new_session_path) %>
-            <p>Sign in to message people on this app.</p>
-            <%= link_to "Sign in", new_session_path, class: "nearby-chat-widget-cta" %>
           <% else %>
-            <p>Messages are available after you sign in.</p>
+            <p>Sign in to use this app’s inbox, or open Brgen for anonymous nearby chat.</p>
+            <% if respond_to?(:new_session_path) %>
+              <%= link_to "Sign in", new_session_path, class: "nearby-chat-widget-cta" %>
+            <% end %>
+            <%= link_to "Open Brgen chat", "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
           <% end %>
         </div>
       <% else %>
         <div class="nearby-chat-widget-empty">
-          <strong>Nearby on Brgen</strong>
-          <p>Chat with people around you on the city network.</p>
-          <%= link_to "Open nearby chat", "https://brgen.no/nearby", class: "nearby-chat-widget-cta", rel: "noopener" %>
+          <strong>Chat on Brgen</strong>
+          <p>City lobby works without GPS. Nearby room needs location on brgen.no.</p>
+          <%= link_to "Open #brgen", "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
+          <%= link_to "Open nearby", "https://brgen.no/nearby", class: "nearby-chat-widget-cta", rel: "noopener" %>
         </div>
       <% end %>
     </div>

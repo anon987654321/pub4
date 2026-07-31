@@ -8,13 +8,17 @@ class LocationsController < ApplicationController
   LOCATION_PRECISION = 2
 
   def update
+    # Soft guests are minted on every request; without a user there is nowhere
+    # to store coordinates and nearby chat can never open.
+    me = Current.user
+    return head :unauthorized unless me
+
     lat = params[:latitude].to_f
     lng = params[:longitude].to_f
     return head :bad_request unless lat.between?(-90, 90) && lng.between?(-180, 180)
 
     lat = lat.round(LOCATION_PRECISION)
     lng = lng.round(LOCATION_PRECISION)
-    me = Current.user
     me.update_columns(latitude: lat, longitude: lng, location_updated_at: Time.current)
 
     # Broadcast to each nearby user that I just arrived/am still near.

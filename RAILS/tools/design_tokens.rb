@@ -70,8 +70,10 @@ module DesignTokens
     %w[top right bottom left].each do |side|
       lines << "  --safe-#{side}: env(safe-area-inset-#{side}, 0px);"
     end
+    # Corner chrome matches RAILS --chrome-inset (shared_chrome.chrome_inset = 0.75rem).
+    lines << "  --chrome-inset: 0.75rem;"
     { "t" => "top", "r" => "right", "b" => "bottom", "l" => "left" }.each do |short, side|
-      lines << "  --inset-#{short}: calc(12px + var(--safe-#{side}));"
+      lines << "  --inset-#{short}: calc(var(--chrome-inset) + var(--safe-#{side}));"
     end
     lines << "  --face-bg: #{data.fetch('face_bg')};"
     derived.each { |k, v| lines << "  --#{k.tr('_', '-')}: #{v};" }

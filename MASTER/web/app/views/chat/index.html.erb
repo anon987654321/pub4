@@ -82,7 +82,14 @@
     #zsh { background: #000; }
   </style>
 </head>
-<body class="zen face-loading" data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face" data-theme="dark" data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
+<body class="zen face-loading"
+      data-layout="face"
+      data-surface="face"
+      data-runtime-profile="boot"
+      data-runtime-visible="true"
+      data-visual-runtime="face"
+      data-theme="dark"
+      data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
   <a href="#zin" class="skip-link">skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div id="ascii-star" aria-hidden="true"></div>
@@ -244,6 +251,19 @@
       addEventListener('keydown',function(e){
         if(!fired&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go();}
       });
+      // Front-page embeds and ?autostart=1 skip the "launch AI" click-to-start
+      // overlay: boot immediately after listeners are wired. Full-page visits to
+      // ai.brgen.no still show the primer (consent + intentional start).
+      try{
+        var q=new URLSearchParams(location.search||'');
+        var embedded=false;
+        try{embedded=window.self!==window.top;}catch(_e){embedded=true;}
+        if(q.get('autostart')==='1'||q.get('embed')==='1'||embedded){
+          document.body.classList.add('primer-autostart');
+          if(p){p.setAttribute('aria-hidden','true');p.tabIndex=-1;}
+          setTimeout(go,0);
+        }
+      }catch(_e){}
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>

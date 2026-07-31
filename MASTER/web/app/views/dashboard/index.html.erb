@@ -3,22 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
   <title>MASTER — mission control</title>
   <link rel="stylesheet" href="/face.css">
 </head>
-<body class="mission-control">
-  <h1><a href="/">← chat</a> · mission control</h1>
-  <div class="grid" id="mission-grid">
-    <div class="panel"><h2>status</h2><pre id="status" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>rtk savings</h2><pre id="rtk" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>active plan</h2><pre id="plan" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>rsi inbox</h2><pre id="rsi" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>skills</h2><pre id="skills" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>context pressure</h2><pre id="pressure" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>provider health</h2><pre id="providers" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>repair queue</h2><pre id="repair" aria-live="polite">loading…</pre></div>
-    <div class="panel"><h2>recent bus</h2><pre id="bus" aria-live="polite">loading…</pre></div>
-  </div>
+<body class="mission-control" data-layout="document" data-surface="face" data-theme="dark">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="page-header" role="banner">
+    <h1><a href="/">← chat</a> · mission control</h1>
+  </header>
+  <main id="main-content" role="main" aria-label="Mission control">
+    <div class="grid" id="mission-grid">
+      <div class="panel"><h2>status</h2><pre id="status" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>rtk savings</h2><pre id="rtk" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>active plan</h2><pre id="plan" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>rsi inbox</h2><pre id="rsi" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>skills</h2><pre id="skills" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>context pressure</h2><pre id="pressure" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>provider health</h2><pre id="providers" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>repair queue</h2><pre id="repair" aria-live="polite">loading…</pre></div>
+      <div class="panel"><h2>recent bus</h2><pre id="bus" aria-live="polite">loading…</pre></div>
+    </div>
+  </main>
   <script>
     async function refresh() {
       const r = await fetch('/dashboard/live');

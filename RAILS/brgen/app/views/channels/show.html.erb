@@ -38,9 +38,10 @@
       <%= f.hidden_field :message_type, value: "text" %>
       <%= f.submit "Send", class: "btn btn-primary" %>
     <% end %>
+    <p class="dim channel-guest-hint">Posting as <strong><%= Current.user.channel_handle %></strong><% if Current.user.guest? %> — no signup<% end %>.</p>
   <% else %>
-    <%# "Refresh to join" asked the reader to do the app's job. A guest is
-        minted on the next request either way, so say what is true. %>
-    <p class="channel-signin dim">Anyone can join. No signup needed.</p>
+    <%# Soft guest should already exist; if not, one round-trip mints it. %>
+    <p class="channel-signin dim">Anyone can join — no signup.</p>
+    <p><%= link_to "Join room", channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
   <% end %>
 </section>

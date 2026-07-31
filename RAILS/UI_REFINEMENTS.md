@@ -94,6 +94,7 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Dating guest discover truth + progressive profile form | Landed |
 | Product install prompts (brgen / amber / bsdports) | Landed |
 | Vertical purpose intros (takeaway, TV home) | Landed |
+| Family layout contract (MASTER + RAILS shared chrome vars, skip-link, landmarks) | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 

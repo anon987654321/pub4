@@ -5,7 +5,7 @@
     <% if @messages.blank? %>
       <div class="nearby-chat-widget-empty">
         <strong>You’re in the room</strong>
-        <p>No messages yet within ~10&nbsp;km. Say hi as <strong><%= Current.user.anon_handle %></strong>.</p>
+        <p>No messages yet within ~10&nbsp;km. Say hi as <strong><%= Current.user.anon_handle %></strong> — no signup.</p>
       </div>
     <% end %>
 
@@ -24,18 +24,24 @@
     <%= render "nearby/widget_composer", conversation: @conversation %>
   <% elsif Current.user.present? %>
     <div class="nearby-chat-widget-empty">
-      <strong>Share location to join</strong>
-      <p>The room is everyone within about 10&nbsp;km. Share your location to join it.</p>
+      <strong>Share location to join nearby</strong>
+      <p>Hyperlocal room is everyone within about 10&nbsp;km. Anonymous handle, messages fade.</p>
       <button type="button" class="nearby-chat-widget-cta" data-action="nearby-chat#locate">Share location</button>
+      <p class="dim nearby-chat-widget-fallback">
+        Or chat now without GPS:
+        <%= link_to "#brgen city lobby", channel_path("brgen"), class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      </p>
       <% unless authenticated? %>
-        <%= link_to "Sign in for a permanent account", new_session_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+        <p class="dim"><%= link_to "Sign in for a permanent account", new_session_path, data: { turbo_frame: "_top" } %></p>
       <% end %>
     </div>
   <% else %>
+    <%# Should not happen on brgen (soft guest is minted every request). Keep a
+        path that still lands in anonymous chat instead of a pure sign-in wall. %>
     <div class="nearby-chat-widget-empty">
-      <strong>Hyperlocal chat</strong>
-      <p>People within about 10&nbsp;km. Anonymous handles, and messages fade.</p>
-      <%= link_to "Sign in", new_session_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      <strong>Anonymous chat</strong>
+      <p>Open the city lobby — no signup. Nearby room needs location after you load a page.</p>
+      <%= link_to "Open #brgen", channel_path("brgen"), class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
       <%= link_to "What is nearby?", nearby_path, class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
     </div>
   <% end %>

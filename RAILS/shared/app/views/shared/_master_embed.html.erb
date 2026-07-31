@@ -24,7 +24,7 @@
   <% end %>
   <iframe
     class="ai-embed-frame"
-    src="<%= master_web_url %>"
+    src="<%= master_web_url(autostart: true, embed: true) %>"
     title="<%= heading %>"
     allow="microphone; autoplay; encrypted-media; fullscreen"
     referrerpolicy="strict-origin-when-cross-origin"

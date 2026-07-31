@@ -1,17 +1,21 @@
 /* Skip-to-content: clipped off-screen until keyboard focus.
+   Same contract as MASTER face.css .skip-link (hard hide until focus).
    Never leave a painted pill at top-left (playlist tunnel especially —
    a light-on-dark skip chip used to read as a white rectangle). */
 .skip-link {
   position: fixed;
-  inset-block-start: 0.75rem;
-  inset-inline-start: 0.75rem;
+  inset-block-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-top, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
   z-index: var(--z-skip, 2000);
   padding: 0.5rem 0.75rem;
+  min-height: var(--tap-min, 44px);
+  display: inline-flex;
+  align-items: center;
   background: var(--text);
   color: var(--bg);
   text-decoration: none;
   font-size: 0.875rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-pill, 0);
   /* Hard hide — no partial paint if top-offset math fails. */
   width: 1px;
   height: 1px;
@@ -97,12 +101,13 @@
 // its parent, so on a 390px viewport main rendered 600px wide and every one of
 // the 212 elements inside it overflowed and was clipped -- the whole feed lost
 // its right edge on mobile. Keep this the only rule for these selectors.
+/* Inline gutter lives in _layout_chrome (family contract). .layout > main
+   zeros padding there so this column only sets height/width. */
 main#main-content,
 main[role="main"] {
   max-width: none;
   margin-inline: 0;
-  padding-inline: clamp(16px, 5vw, 48px);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .sidebar-swiper,

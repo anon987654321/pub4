@@ -27,10 +27,13 @@
   <%= json_ld_script(website_json_ld(site_name: "BSDports", url: root_url, description: "Semantic search for OpenBSD ports.")) %>
   <%= javascript_importmap_tags %>
 </head>
-<body class="<%= "auth-surface" if controller_path.in?(%w[sessions passwords]) %>"
+<body class="wscons <%= "auth-surface" if controller_path.in?(%w[sessions passwords]) %>"
+      data-layout="document"
+      data-surface="wscons"
       data-pwa-key="bsdports"
       data-controller="pwa-standalone">
 <a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="app-shell">
 <nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
   <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
   <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
@@ -51,6 +54,7 @@
   <%= link_to "BSDports", root_path, class: "logo", aria: { label: "OpenBSD ports" } %>
   <%= yield %>
 </main>
+</div>
 <%= render "shared/install_prompt",
       title: "Install BSDports",
       body: "Ports search and advisories — open from your home screen." %>

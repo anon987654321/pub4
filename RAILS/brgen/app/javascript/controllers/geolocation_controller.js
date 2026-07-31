@@ -15,17 +15,21 @@ export default class extends Controller {
     if (!navigator.geolocation || !this.hasUrlValue) return
     // Skip when document Permissions-Policy denies geolocation (no console spam).
     try {
-      if (document.featurePolicy?.allowsFeature && !document.featurePolicy.allowsFeature("geolocation")) return
+      if (document.featurePolicy?.allowsFeature && !document.featurePolicy.allowsFeature("geolocation")) {
+        this.#announceError("blocked")
+        return
+      }
     } catch (_) { /* older browsers */ }
 
     try {
       this.#watch = navigator.geolocation.watchPosition(
         pos => this.#send(pos.coords.latitude, pos.coords.longitude),
-        () => {},
+        err => this.#onGeoError(err),
         { enableHighAccuracy: true, maximumAge: 30_000, timeout: 10_000 }
       )
     } catch (_) {
       // SecurityError when policy blocks geolocation
+      this.#announceError("blocked")
     }
   }
 
@@ -38,11 +42,14 @@ export default class extends Controller {
   // in connect() only prompts once per page; if the visitor dismissed it there
   // is otherwise no way back short of browser settings.
   #prompt() {
-    if (!navigator.geolocation || !this.hasUrlValue) return
+    if (!navigator.geolocation || !this.hasUrlValue) {
+      this.#announceError("unavailable")
+      return
+    }
 
     navigator.geolocation.getCurrentPosition(
       pos => this.#send(pos.coords.latitude, pos.coords.longitude),
-      () => {},
+      err => this.#onGeoError(err),
       { enableHighAccuracy: true, timeout: 10_000 }
     )
   }
@@ -64,7 +71,21 @@ export default class extends Controller {
         "X-CSRF-Token": document.querySelector("meta[name=csrf-token]")?.content
       },
       body: JSON.stringify({ latitude: lat, longitude: lng, radius_km: this.radiusKmValue })
-    }).then(() => this.#announceLocated()).catch(() => {})
+    }).then((response) => {
+      // Only open nearby chat after the server actually stored coordinates.
+      // A 4xx/5xx used to still fire brgen:located, reloading the widget into
+      // the same "Share location" dead end and looking broken.
+      if (response.ok) this.#announceLocated()
+      else this.#announceError("server")
+    }).catch(() => this.#announceError("network"))
+  }
+
+  #onGeoError(err) {
+    const code = err?.code
+    // 1 PERMISSION_DENIED, 2 POSITION_UNAVAILABLE, 3 TIMEOUT
+    if (code === 1) this.#announceError("denied")
+    else if (code === 3) this.#announceError("timeout")
+    else this.#announceError("unavailable")
   }
 
   // Anything server-rendered against "do we know where you are" was rendered
@@ -77,5 +98,9 @@ export default class extends Controller {
     if (this.located) return
     this.located = true
     window.dispatchEvent(new CustomEvent("brgen:located"))
+  }
+
+  #announceError(reason) {
+    window.dispatchEvent(new CustomEvent("brgen:location-error", { detail: { reason } }))
   }
 }
