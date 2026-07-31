@@ -1,9 +1,9 @@
-<% content_for :title, "Takeaway" %>
+<% content_for :title, t("storefront.restaurants") %>
 
 <%= render "takeaway/nav_bar", active: "restaurants" %>
 
 <header class="page-header vertical-purpose" role="banner" data-visitor-orientation>
-  <h1>Order food nearby</h1>
+  <h1><%= t("takeaway.order_food") %></h1>
   <p class="dim">Local kitchens, guest checkout — no signup to place an order.</p>
 </header>
 

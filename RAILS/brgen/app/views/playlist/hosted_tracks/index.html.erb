@@ -1,9 +1,9 @@
-<% content_for :title, "Hosted tracks" %>
+<% content_for :title, t("playlist.hosted_tracks") %>
 
 <div class="page-header" role="banner">
   <div>
     <p class="dim">Playlist</p>
-    <h1>Hosted tracks</h1>
+    <h1><%= t("playlist.hosted_tracks") %></h1>
   </div>
   <% if authenticated? %>
     <%= link_to "Upload track", new_playlist_hosted_track_path, class: "btn btn-primary btn-sm" %>
@@ -23,7 +23,7 @@
           title: t("empty.no_hosted_tracks"),
           body: "Upload or link a track to host it.",
           action: authenticated? ?
-            { label: "Upload track", path: new_playlist_hosted_track_path } :
-            { label: "Browse playlists", path: playlist_root_path } %>
+            { label: t("playlist.upload_track"), path: new_playlist_hosted_track_path } :
+            { label: t("playlist.browse_playlists"), path: playlist_root_path } %>
   <% end %>
 </div>

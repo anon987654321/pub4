@@ -1,6 +1,6 @@
-<% content_for :title, "Edit restaurant" %>
+<% content_for :title, t("takeaway.edit_restaurant") %>
 
-<div class="page-header" role="banner"><h1>Edit restaurant</h1></div>
+<div class="page-header" role="banner"><h1><%= t("takeaway.edit_restaurant") %></h1></div>
 
 <div class="form-wrap">
   <%= form_with model: @restaurant, url: takeaway_restaurant_path(@restaurant), method: :patch do |f| %>
@@ -16,9 +16,9 @@
     <div class="field"><%= f.label :longitude %><%= f.number_field :longitude, step: "0.000001" %></div>
     <div class="field"><%= f.label :phone %><%= f.text_field :phone %></div>
     <div class="field"><%= f.label :cuisine_type %><%= f.select :cuisine_type, Takeaway::Restaurant::CUISINE_TYPES, { include_blank: "—" } %></div>
-    <div class="field"><%= f.label :delivery_fee_cents, "Delivery fee (øre)" %><%= f.number_field :delivery_fee_cents %></div>
-    <div class="field"><%= f.label :min_order_cents, "Min order (øre)" %><%= f.number_field :min_order_cents %></div>
-    <div class="field field--check"><%= f.check_box :active %><%= f.label :active, "Active" %></div>
-    <div class="field"><%= f.submit "Save", class: "btn btn-primary" %></div>
+    <div class="field"><%= f.label :delivery_fee_cents, t("takeaway.delivery_fee") %><%= f.number_field :delivery_fee_cents %></div>
+    <div class="field"><%= f.label :min_order_cents, t("takeaway.min_order") %><%= f.number_field :min_order_cents %></div>
+    <div class="field field--check"><%= f.check_box :active %><%= f.label :active, t("takeaway.active") %></div>
+    <div class="field"><%= f.submit t("takeaway.save"), class: "btn btn-primary" %></div>
   <% end %>
 </div>

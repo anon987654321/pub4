@@ -1,7 +1,7 @@
-<% content_for :title, "New listing" %>
+<% content_for :title, t("marketplace.new_listing") %>
 
 <div class="page-header" role="banner" aria-label="New marketplace listing header">
-  <h1>New listing</h1>
+  <h1><%= t("marketplace.new_listing") %></h1>
 </div>
 
 <turbo-frame id="marketplace-new-listing" data-turbo-action="replace">
@@ -13,7 +13,7 @@
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help">Enter the price in øre; for example, 25000 is NOK 250.</p></div>
+    <div class="field"><%= f.label :price_cents, t("marketplace.price_ore") %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help"><%= t("marketplace.price_help") %></p></div>
     <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>

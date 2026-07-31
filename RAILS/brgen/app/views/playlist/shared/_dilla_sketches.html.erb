@@ -47,7 +47,7 @@
     <%= render "shared/empty_state",
           title: t("empty.no_sketches"),
           body: "Save a beat from the lab or paste JSON state below.",
-          action: { label: "Browse playlists", path: playlist_root_path } %>
+          action: { label: t("playlist.browse_playlists"), path: playlist_root_path } %>
   <% end %>
 
   <% if can_manage %>

@@ -1,4 +1,4 @@
-<% content_for :title, "Matcher" %>
+<% content_for :title, t("dating.matches") %>
 
 <div class="page-header" role="banner" aria-label="Dating matches header">
   <h1>Matcher</h1>
@@ -10,8 +10,8 @@
 <turbo-frame id="dating-matches" data-turbo-action="replace">
 <% if @matches.none? %>
   <%= render "shared/empty_state",
-        title: "Ingen matcher ennå",
-        body: "Fortsett å sveipe — gjensidige likes dukker opp her.",
+        title: t("dating.no_matches"),
+        body: t("dating.no_matches_body"),
         action: { label: "Oppdag", path: dating_root_path } %>
 <% else %>
   <section id="dating-matches-list" class="match-list" role="list" aria-label="Matcher">

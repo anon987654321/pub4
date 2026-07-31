@@ -4,86 +4,87 @@
   # Chrome and then reported as "property 'url' of 'shortcut' not present".
   # Keep shortcuts as same-origin relative paths for the active vertical surface.
   vertical = Current.subapp.to_s
+  city = Current.city.to_s
   app_name, short_name, description, shortcuts =
     case vertical
     when "playlist"
       [
         "Brgen Playlist",
         "Playlist",
-        "Playlists, sets, and radio for #{Current.city}.",
+        t("pwa.desc_playlist", city: city, default: "Playlists, sets, and radio for %{city}."),
         [
-          { "name" => "Playlists", "short_name" => "Home", "url" => "/" },
-          { "name" => "New playlist", "short_name" => "New", "url" => "/playlists/new" },
-          { "name" => "Sets", "short_name" => "Sets", "url" => "/sets" },
+          { "name" => t("pwa.playlists"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.new_playlist"), "short_name" => t("pwa.new"), "url" => "/playlists/new" },
+          { "name" => t("pwa.sets"), "short_name" => t("pwa.sets"), "url" => "/sets" },
         ],
       ]
     when "dating"
       [
         "Brgen Dating",
         "Dating",
-        "Dating in #{Current.city}.",
+        t("pwa.desc_dating", city: city, default: "Dating in %{city}."),
         [
-          { "name" => "Discover", "short_name" => "Home", "url" => "/" },
-          { "name" => "Matches", "short_name" => "Matches", "url" => "/matches" },
-          { "name" => "Profile", "short_name" => "Profile", "url" => "/profile" },
+          { "name" => t("pwa.discover"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.matches"), "short_name" => t("pwa.matches"), "url" => "/matches" },
+          { "name" => t("pwa.profile"), "short_name" => t("pwa.profile"), "url" => "/profile" },
         ],
       ]
     when "tv"
       [
         "Brgen TV",
         "TV",
-        "Live streams and channels for #{Current.city}.",
+        t("pwa.desc_tv", city: city, default: "Live streams and channels for %{city}."),
         [
-          { "name" => "Home", "short_name" => "Home", "url" => "/" },
-          { "name" => "Live", "short_name" => "Live", "url" => "/live_streams" },
+          { "name" => t("pwa.home"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.live"), "short_name" => t("pwa.live"), "url" => "/live_streams" },
         ],
       ]
     when "marketplace"
       [
         "Brgen Marketplace",
         "Shop",
-        "Marketplace for #{Current.city}.",
+        t("pwa.desc_marketplace", city: city, default: "Marketplace for %{city}."),
         [
-          { "name" => "Listings", "short_name" => "Home", "url" => "/" },
-          { "name" => "New listing", "short_name" => "New", "url" => "/listings/new" },
+          { "name" => t("pwa.listings"), "short_name" => t("pwa.home"), "url" => "/" },
+          { "name" => t("pwa.new_listing"), "short_name" => t("pwa.new"), "url" => "/listings/new" },
         ],
       ]
     when "takeaway"
       [
         "Brgen Takeaway",
         "Food",
-        "Takeaway for #{Current.city}.",
+        t("pwa.desc_takeaway", city: city, default: "Takeaway for %{city}."),
         [
-          { "name" => "Restaurants", "short_name" => "Home", "url" => "/" },
+          { "name" => t("pwa.restaurants"), "short_name" => t("pwa.home"), "url" => "/" },
         ],
       ]
     when "maps"
       [
         "Brgen Maps",
         "Maps",
-        "Maps for #{Current.city}.",
+        t("pwa.desc_maps", city: city, default: "Maps for %{city}."),
         [
-          { "name" => "Map", "short_name" => "Home", "url" => "/" },
+          { "name" => t("pwa.map"), "short_name" => t("pwa.home"), "url" => "/" },
         ],
       ]
     when "messenger"
       [
         "Brgen Messenger",
         "Chat",
-        "Messages for #{Current.city}.",
+        t("pwa.desc_messenger", city: city, default: "Messages for %{city}."),
         [
-          { "name" => "Inbox", "short_name" => "Home", "url" => "/" },
+          { "name" => t("pwa.inbox"), "short_name" => t("pwa.home"), "url" => "/" },
         ],
       ]
     else
       [
         "Brgen",
         "Brgen",
-        "City communities across Scandinavia and Europe. Connect, post, and discover your city.",
+        t("pwa.desc_city", default: "City communities across Scandinavia and Europe. Connect, post, and discover your city."),
         [
-          { "name" => "New post", "short_name" => "Post", "url" => "/posts/new" },
-          { "name" => "New listing", "short_name" => "Listing", "url" => "/listings/new" },
-          { "name" => "Activity", "short_name" => "Feed", "url" => "/activity_events" },
+          { "name" => t("nav.new_post"), "short_name" => t("pwa.post"), "url" => "/posts/new" },
+          { "name" => t("pwa.new_listing"), "short_name" => t("pwa.listing"), "url" => "/listings/new" },
+          { "name" => t("pwa.activity"), "short_name" => t("pwa.feed"), "url" => "/activity_events" },
         ],
       ]
     end
@@ -130,7 +131,7 @@
   "description": <%= raw description.to_json %>,
   "theme_color": "#000000",
   "background_color": "#000000",
-  "lang": <%= raw (Current.locale.presence || "en").to_s.to_json %>,
+  "lang": <%= raw (Current.locale.presence || I18n.locale).to_s.to_json %>,
   "shortcuts": <%= raw shortcuts.to_json %>,
   "share_target": {
     "action": "/share",

@@ -63,7 +63,7 @@
         <% if @profiles.empty? %>
           <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
           <%= render "shared/empty_state",
-                title: "Ingen i nærheten",
+                title: t("empty.no_nearby"),
                 body: "Utvid radius, kom tilbake senere, eller fullfør profilen din så andre finner deg.",
                 action: Current.user&.dating_profile.present? ?
                   { label: "Rediger profil", path: edit_dating_profile_path } :

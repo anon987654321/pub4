@@ -1,6 +1,6 @@
-<% content_for :title, "Edit listing" %>
+<% content_for :title, t("marketplace.edit_listing") %>
 
-<div class="page-header" role="banner"><h1>Edit listing</h1></div>
+<div class="page-header" role="banner"><h1><%= t("marketplace.edit_listing") %></h1></div>
 
 <div class="form-wrap">
   <%= form_with model: @listing, url: marketplace_listing_path(@listing), method: :patch do |f| %>
@@ -10,7 +10,7 @@
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-    <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help">Enter the price in øre; for example, 25000 is NOK 250.</p></div>
+    <div class="field"><%= f.label :price_cents, t("marketplace.price_ore") %><%= f.number_field :price_cents, min: 0, inputmode: "numeric", required: true %><p class="form-help"><%= t("marketplace.price_help") %></p></div>
     <div class="field"><%= f.label :condition %><%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
@@ -21,6 +21,6 @@
     </details>
     <div class="field"><%= f.label :status %><%= f.select :status, Marketplace::Listing::STATUSES %></div>
     <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
-    <div class="field"><%= f.submit "Save", class: "btn btn-primary" %></div>
+    <div class="field"><%= f.submit t("actions.save"), class: "btn btn-primary" %></div>
   <% end %>
 </div>

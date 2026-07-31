@@ -17,12 +17,12 @@
       <p class="section-heading">Add a track</p>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_playlist_tracks_path(@playlist), scope: :playlist_track do |f| %>
-          <div class="field"><%= f.text_field :title, placeholder: "Title" %></div>
-          <div class="field"><%= f.text_field :artist, placeholder: "Artist" %></div>
+          <div class="field"><%= f.text_field :title, placeholder: t("playlist.title") %></div>
+          <div class="field"><%= f.text_field :artist, placeholder: t("playlist.artist") %></div>
           <div class="field"><%= f.select :source_type, Playlist::Track::SOURCE_TYPES.reject { |type| type == "whyp" }.map { |type| [type.humanize, type] }, include_blank: "Source" %></div>
-          <div class="field"><%= f.url_field :source_url, placeholder: "URL (optional)" %></div>
+          <div class="field"><%= f.url_field :source_url, placeholder: t("playlist.url_optional") %></div>
           <div class="field"><%= f.datetime_field :expires_at %></div>
-          <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
+          <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
     </div>

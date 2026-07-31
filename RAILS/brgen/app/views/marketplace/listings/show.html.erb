@@ -56,7 +56,7 @@
   <%= f.text_area :body, rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-        <div class="field"><%= f.submit "Post review", class: "btn btn-primary" %></div>
+        <div class="field"><%= f.submit t("marketplace.post_review"), class: "btn btn-primary" %></div>
       <% end %>
     </div>
   <% end %>
@@ -87,7 +87,7 @@
   <%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
-        <div class="field"><%= f.submit "Send offer", class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
+        <div class="field"><%= f.submit t("marketplace.send_offer"), class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
       <% end %>
     </div>
   </div>

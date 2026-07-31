@@ -17,7 +17,7 @@
     <%= render "shared/empty_state",
           title: t("empty.no_collaborators"),
           body: can_manage ? "Invite an editor or viewer by username in the form below." : "Only owners can invite collaborators.",
-          action: { label: "Browse playlists", path: playlist_root_path } %>
+          action: { label: t("playlist.browse_playlists"), path: playlist_root_path } %>
   <% end %>
 
   <% if can_manage %>

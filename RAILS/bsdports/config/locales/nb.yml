@@ -64,6 +64,9 @@ nb:
   actions:
     all_categories: "Alle kategorier"
     all_maintainers: "Alle maintainere"
+  pwa:
+    search_ports: "Søk porter"
+    search: "Søk"
   install:
     title: "Installer BSDports"
     body: "Portersøk og advisories — åpne fra hjem-skjermen."

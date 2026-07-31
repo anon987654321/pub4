@@ -5,14 +5,14 @@
 
 <%= form_with url: ai_packing_list_path, method: :get, class: "form" do |f| %>
   <div class="field">
-    <label>Duration (days)</label>
+    <label><%= t("ai.duration") %></label>
     <%= f.select :duration, (1..14).map { |d| [d, d] }, { selected: params[:duration] } %>
   </div>
   <div class="field">
-    <label>Climate</label>
+    <label><%= t("ai.climate") %></label>
     <%= f.select :climate, ["hot", "cold", "mild", "rainy", "dry"], { selected: params[:climate] } %>
   </div>
-  <div class="actions"><%= f.submit "Generate with MASTER", class: "btn btn--primary" %></div>
+  <div class="actions"><%= f.submit t("ai.generate_master"), class: "btn btn--primary" %></div>
 <% end %>
 
 <% if @result %>

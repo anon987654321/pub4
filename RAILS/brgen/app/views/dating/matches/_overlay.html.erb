@@ -1,9 +1,9 @@
 <div class="match-overlay">
   <div class="match-overlay-card">
     <p class="match-overlay-eyebrow">Dating</p>
-    <h2>It's a match!</h2>
+    <h2><%= t("dating.its_a_match") %></h2>
     <% other = current_user == match.initiator ? match.receiver : match.initiator %>
-    <p><%= other&.display_name || "Someone" %> is ready to chat.</p>
-    <%= link_to "Open messages", conversations_path, class: "btn btn-primary btn-sm" %>
+    <p><%= other&.display_name || t("dating.someone") %> <%= t("dating.ready_to_chat") %></p>
+    <%= link_to t("dating.open_messages"), conversations_path, class: "btn btn-primary btn-sm" %>
   </div>
 </div>

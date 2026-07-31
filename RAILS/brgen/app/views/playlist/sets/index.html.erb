@@ -1,9 +1,9 @@
-<% content_for :title, "Sets" %>
+<% content_for :title, t("playlist.sets") %>
 
 <div class="page-header" role="banner" aria-label="Playlist sets header">
   <div>
     <p class="dim">Local audio collections</p>
-    <h1>Sets</h1>
+    <h1><%= t("playlist.sets") %></h1>
   </div>
   <nav role="navigation" aria-label="Playlist set actions">
     <%= link_to "New set", new_playlist_set_path, class: "btn btn-primary btn-sm" if authenticated? %>

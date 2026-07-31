@@ -1,4 +1,4 @@
-<% content_for :title, "Your profile" %>
+<% content_for :title, t("dating.your_profile") %>
 
 <div class="page-header" role="banner">
   <h1>Your profile</h1>
@@ -21,7 +21,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_photos"),
-          body: "Add photos on your profile edit screen.",
+          body: t("dating.no_photos_body"),
           action: { label: "Edit profile", path: edit_dating_profile_path } %>
   <% end %>
 </section>

@@ -1,4 +1,4 @@
-<% content_for :title, "Edit profile" %>
+<% content_for :title, t("dating.edit_profile") %>
 
 <div class="page-header" role="banner">
   <h1>Edit profile</h1>
@@ -27,18 +27,18 @@
         </div>
       <% end %>
       <div class="field">
-        <%= f.label :photos, "Add photos" %>
+        <%= f.label :photos, t("dating.add_photos") %>
         <%= f.file_field :photos, multiple: true, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
       </div>
       <div class="field">
-        <%= f.label :bio, "About you" %>
+        <%= f.label :bio, t("dating.about_you") %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
           <%= f.text_area :bio, rows: 4, maxlength: 500, data: { character_counter_target: "input" } %>
           <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
         </div>
       </div>
       <div class="field">
-        <%= f.label :looking_for, "Looking for" %>
+        <%= f.label :looking_for, t("dating.looking_for") %>
         <%= f.select :looking_for, Dating::Profile::LOOKING_FOR, { include_blank: "—" } %>
       </div>
     </fieldset>
@@ -49,14 +49,14 @@
       <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99 %></div>
       <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
       <div class="field">
-        <%= f.label :neighborhood_id, "Bydel / Neighbourhood" %>
+        <%= f.label :neighborhood_id, t("dating.neighborhood") %>
         <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
       </div>
       <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, "Make profile visible" %></div>
     </details>
 
     <div class="field">
-      <%= f.submit "Save", class: "btn btn-primary" %>
+      <%= f.submit t("dating.save"), class: "btn btn-primary" %>
       <span class="dim" data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>

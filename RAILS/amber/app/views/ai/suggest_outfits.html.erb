@@ -14,15 +14,15 @@
 <turbo-frame id="amber-ai-suggest" data-turbo-action="replace">
 <%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": "Generate outfit suggestions" } do |f| %>
   <div class="field">
-    <label>Occasion</label>
+    <label><%= t("ai.occasion") %></label>
     <%= f.text_field :occasion, value: params[:occasion], placeholder: "e.g. date, work, travel" %>
   </div>
   <div class="field">
-    <label>Season</label>
+    <label><%= t("ai.season") %></label>
     <%= f.select :season, Item::SEASONS, { selected: params[:season] }, { include_blank: "Any" } %>
   </div>
   <div class="actions">
-    <%= f.submit @ai_available ? "Generate suggestions" : "Generate rule-based suggestions", class: "btn btn--primary" %>
+    <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"), class: "btn btn--primary" %>
     <%= button_to "Generate & save first as outfit", ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
   </div>
 <% end %>

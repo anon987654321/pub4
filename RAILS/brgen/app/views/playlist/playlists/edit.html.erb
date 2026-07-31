@@ -1,6 +1,6 @@
-<% content_for :title, "Edit playlist" %>
+<% content_for :title, t("playlist.edit_playlist") %>
 
-<div class="page-header" role="banner"><h1>Edit playlist</h1></div>
+<div class="page-header" role="banner"><h1><%= t("playlist.edit_playlist") %></h1></div>
 
 <div class="form-wrap">
   <%= form_with model: @playlist, url: playlist_playlist_path(@playlist), method: :patch do |f| %>
@@ -12,6 +12,6 @@
 </div></div>
     <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, "Public" %></div>
     <div class="field field--check"><%= f.check_box :collaborative %><%= f.label :collaborative, "Collaborative" %></div>
-    <div class="field"><%= f.submit "Save", class: "btn btn-primary" %></div>
+    <div class="field"><%= f.submit t("actions.save"), class: "btn btn-primary" %></div>
   <% end %>
 </div>

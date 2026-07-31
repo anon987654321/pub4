@@ -12,7 +12,7 @@
     </div>
     <div class="field">
       <%= f.label :title %>
-      <%= f.text_field :title, placeholder: "Title", autofocus: true, required: true %>
+      <%= f.text_field :title, placeholder: t("playlist.title"), autofocus: true, required: true %>
     </div>
     <div class="field">
       <%= f.label :content, "Body (optional)" %>
@@ -46,7 +46,7 @@
       <%= f.label :anonymous, "Post anonymously" %>
     </div>
     <div class="field">
-      <%= f.submit "Save", class: "btn btn-primary" %>
+      <%= f.submit t("actions.save"), class: "btn btn-primary" %>
       <%= link_to "Cancel", @post, class: "btn btn-ghost" %>
       <span class="dim" data-autosave-target="status" aria-live="polite"></span>
     </div>

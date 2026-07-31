@@ -30,7 +30,7 @@
         <div class="field field--check"><%= f.check_box :available, checked: true %><%= f.label :available %></div>
         <div class="field field--check"><%= f.check_box :vegetarian %><%= f.label :vegetarian %></div>
         <div class="field field--check"><%= f.check_box :vegan %><%= f.label :vegan %></div>
-        <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
+        <div class="field"><%= f.submit t("takeaway.add"), class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>
   </section>
@@ -66,17 +66,17 @@
         </article>
       <% end %>
       <div class="field">
-        <%= f.label :delivery_address, "Delivery address" %>
+        <%= f.label :delivery_address, t("takeaway.delivery_address") %>
         <%= f.text_field :delivery_address, required: true %>
       </div>
       <div class="field">
-        <%= f.label :special_instructions, "Special instructions (optional)" %>
+        <%= f.label :special_instructions, t("takeaway.special_instructions") %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :special_instructions , maxlength: 500, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
       </div>
-      <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
+      <div class="field"><%= f.submit t("takeaway.place_order"), class: "btn btn-primary" %></div>
     <% end %>
   <% else %>
     <% @menu_items.each do |item| %>
@@ -119,17 +119,17 @@
   <h2>Leave a review</h2>
   <%= form_with scope: :takeaway_review, url: takeaway_restaurant_reviews_path(@restaurant) do |f| %>
     <div class="field">
-      <%= f.label :rating, "Rating (1-5)" %>
+      <%= f.label :rating, t("takeaway.rating") %>
       <%= f.number_field :rating, min: 1, max: 5, required: true %>
     </div>
     <div class="field">
-      <%= f.label :body, "Comments (optional)" %>
+      <%= f.label :body, t("takeaway.comments_optional") %>
       <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :body, rows: 3 , maxlength: 1000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>
-    <div class="field"><%= f.submit "Post review", class: "btn btn-primary btn-sm" %></div>
+    <div class="field"><%= f.submit t("marketplace.post_review"), class: "btn btn-primary btn-sm" %></div>
   <% end %>
 </section>
 <% end %>

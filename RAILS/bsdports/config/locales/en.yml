@@ -64,6 +64,9 @@ en:
   actions:
     all_categories: "All categories"
     all_maintainers: "All maintainers"
+  pwa:
+    search_ports: "Search ports"
+    search: "Search"
   install:
     title: "Install BSDports"
     body: "Ports search and advisories — open from your home screen."

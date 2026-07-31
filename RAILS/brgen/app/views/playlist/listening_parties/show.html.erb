@@ -33,7 +33,7 @@
 
   <%= form_with url: playlist_set_listening_party_party_messages_path(@set), method: :post, class: "form-wrap" do |f| %>
     <div class="field field--row">
-      <%= f.text_field :body, placeholder: "Say something…", required: true, class: "field--grow" %>
+      <%= f.text_field :body, placeholder: t("playlist.say_something"), required: true, class: "field--grow" %>
       <%= f.submit "Send", class: "btn btn-primary btn-sm" %>
     </div>
   <% end %>

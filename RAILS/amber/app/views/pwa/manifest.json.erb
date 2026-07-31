@@ -47,16 +47,17 @@
   "background_color": "#FFFFFF",
   "shortcuts": [
     {
-      "name": "Add item",
-      "short_name": "Item",
+      "name": <%= raw t("pwa.add_item").to_json %>,
+      "short_name": <%= raw t("pwa.item").to_json %>,
       "url": "/items/new"
     },
     {
-      "name": "Create outfit",
-      "short_name": "Outfit",
+      "name": <%= raw t("pwa.create_outfit").to_json %>,
+      "short_name": <%= raw t("pwa.outfit").to_json %>,
       "url": "/outfits/new"
     }
   ],
+  "lang": <%= raw I18n.locale.to_s.to_json %>,
   "share_target": {
     "action": "/share",
     "method": "POST",
