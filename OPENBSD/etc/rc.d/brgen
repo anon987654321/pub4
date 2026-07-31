@@ -1,4 +1,10 @@
 #!/bin/ksh
+# rc_pre and the post-start block run curl (a package, /usr/local/bin/curl).
+# rcctl inherits its caller PATH and root cron has no /usr/local/bin, so from
+# a cron restart the /up wait always timed out and the relayd restart behind
+# it was skipped — the app came up with an empty relayd backend table. Same
+# gap that refused to start master outright (see rc.d/master).
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=38182
 APP_DIR=/home/brgen/app
 [ -r /etc/rails/common.env ] && . /etc/rails/common.env

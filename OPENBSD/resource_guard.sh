@@ -6,6 +6,13 @@
 
 set -e
 
+# Runs from root's cron, and everything it starts (rcctl -> rc.d scripts,
+# emergency_cpu.sh) inherits this PATH. Cron's own PATH has no /usr/local/bin,
+# which is where curl, bundle34 and ruby34 live — see rc.d/master for what that
+# cost. The rc.d scripts set their own PATH now; this makes the whole chain
+# independent of who invoked it.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+
 ALL_APPS_FLAG=/var/db/pub4_all_apps
 SHED_STATE=/var/db/resource_guard_shed
 CORE="master brgen"

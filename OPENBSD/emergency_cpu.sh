@@ -1,5 +1,10 @@
 #!/bin/ksh
 set -euo pipefail
+# curl is a package (/usr/local/bin/curl) and resource_guard.sh calls this from
+# root's cron, whose PATH has no /usr/local/bin — so the /up wait below could
+# only ever time out on the path that actually matters, and every crisis
+# restart logged "still down after 75s" whether or not master had come back.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 # Emergency CPU relief for saturated VPS (vm23).
 # Run: doas ksh /home/dev/pub4/OPENBSD/emergency_cpu.sh
 #

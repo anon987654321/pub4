@@ -1,4 +1,14 @@
 #!/bin/ksh
+# rc_pre and the post-start block below run bundle34, ruby34 and curl — all
+# packages in /usr/local/bin. rcctl inherits its caller's PATH, and root's cron
+# PATH has no /usr/local/bin, so every one of them resolved when an operator
+# restarted master from a login shell and none of them resolved when
+# resource_guard.sh's cron tick did. For master that was fatal rather than
+# degraded: the asset gate reported "bundle34: not found", could not tell that
+# apart from broken assets, and took the exit-1 branch that refuses to start.
+# ai.brgen.no was down from 08:20 to 14:50 on 2026-07-31 for exactly this, and
+# again from 15:10 — twice, because the guard's restart is what triggers it.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=53187
 [ -r /etc/master.env ] && . /etc/master.env
 CACHE_VERSION="${CACHE_VERSION:-$(cd /home/dev/pub4 2>/dev/null && git rev-parse --short HEAD 2>/dev/null)}"
