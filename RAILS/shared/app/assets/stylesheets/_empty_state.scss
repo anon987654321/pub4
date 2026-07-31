@@ -24,8 +24,9 @@
   width: 2.5rem;
   height: 2.5rem;
   margin-block-end: var(--space-2xs, 0.25rem);
-  border: 1px solid var(--border, var(--border));
+  border: 0;
   border-radius: var(--radius-pill, 9999px);
+  background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
   font-size: 0.75rem;
   line-height: 1;
   color: var(--text-secondary, var(--text-dim));
@@ -40,8 +41,9 @@
   margin: 0 auto var(--space-2xs, 0.25rem);
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid var(--border, var(--border));
+  border: 0;
   border-radius: var(--radius-pill, 9999px);
+  background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
   font-size: 0.75rem;
   color: var(--text-secondary, var(--text-dim));
 }
@@ -101,7 +103,7 @@ body[data-theme="wscons"] .empty-state,
   gap: var(--space-3, 0.75rem);
   align-items: start;
   padding-block: var(--space-2, 0.5rem);
-  border-bottom: 1px solid var(--border, var(--border));
+  border-bottom: 0;
 }
 
 .search-skeleton-avatar {

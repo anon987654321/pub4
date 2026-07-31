@@ -20,9 +20,9 @@
 .live-rules {
   margin-bottom: var(--space-4);
   padding: var(--space-3);
-  border: 1px solid var(--border, oklch(50% 0.02 260 / 0.25));
+  border: 0;
   border-radius: var(--radius-md, 8px);
-  background: var(--surface, transparent);
+  background: var(--surface-elevated, var(--surface, transparent));
 }
 
 .live-rules summary {
@@ -66,9 +66,9 @@
 
 .live-card {
   padding: var(--space-4);
-  border: 1px solid var(--border, oklch(50% 0.02 260 / 0.25));
+  border: 0;
   border-radius: var(--radius-md, 8px);
-  background: var(--surface, transparent);
+  background: var(--surface-elevated, var(--surface, transparent));
 }
 
 .live-card-meta {

@@ -8,8 +8,9 @@
 .dash-stats dl > div {
   min-width: 0;
   padding: var(--space-sm);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-xs);
+  background: var(--surface-elevated, var(--surface));
 }
 
 .dash-stats dt {
@@ -42,7 +43,7 @@
 
 .weather-bar {
   background: color-mix(in srgb, var(--accent) 15%, var(--surface-elevated));
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-bottom: 0;
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-sm);
   color: var(--accent);
@@ -64,7 +65,7 @@
   gap: var(--space-md);
   align-items: center;
   padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
 }
 
 .plan-date {

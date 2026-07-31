@@ -49,7 +49,7 @@
       _shell.scss now clips it to 1×1 with clip-path + opacity:0 (see the comment
       at the top of that file, which names this tunnel), so there is nothing left
       to paint. %>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
   <%= link_to root_path, class: "brgen-logo-mark", aria: { label: "Brgen home" } do %>
     <span class="brand-text">brgen</span>
   <% end %>
@@ -110,24 +110,24 @@
         <%= link_to root_path, class: "brand brand-wordmark", aria: { label: "Brgen" } do %>
           <span class="brand-text">brgen</span>
         <% end %>
-        <nav role="navigation" data-turbo-permanent aria-label="Primary navigation">
+        <nav role="navigation" data-turbo-permanent aria-label="<%= t("nav.primary_nav") %>">
           <% nav_cls = ->(path) { "nav-item#{" active" if current_page?(path)}" } %>
           <%= link_to root_path, class: nav_cls.(root_path) do %>
             <%= icon :home, size: 26 %>
-            <span>Home</span>
+            <span><%= t("nav.home") %></span>
           <% end %>
           <%= render "shared/ai_nav_link" %>
           <%= link_to communities_path, class: nav_cls.(communities_path) do %>
             <%= icon :explore, size: 26 %>
-            <span>Explore</span>
+            <span><%= t("nav.explore") %></span>
           <% end %>
           <%= link_to global_search_path, class: nav_cls.(global_search_path) do %>
             <%= icon :search, size: 26 %>
-            <span>Search</span>
+            <span><%= t("nav.search") %></span>
           <% end %>
           <%= link_to notifications_path, class: nav_cls.(notifications_path) do %>
             <%= icon :notifications, size: 26 %>
-            <span>Notifications</span>
+            <span><%= t("nav.notifications") %></span>
           <% end %>
           <%= link_to conversations_path, class: nav_cls.(conversations_path) do %>
             <%= icon :messages, size: 26 %>
@@ -166,7 +166,7 @@
         </a>
       </aside>
       <button type="button" class="edge-grip edge-grip-left" data-edge-swiper-target="grip"
-              data-action="click->edge-swiper#toggle" aria-label="Show sidebar" aria-expanded="false"></button>
+              data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
       </div>
 
       <main id="main-content" role="main" data-controller="pull-to-refresh">
@@ -194,7 +194,7 @@
 
       <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
       <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
-              data-action="click->edge-swiper#toggle" aria-label="Show widgets" aria-expanded="false"></button>
+              data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
       <aside class="widgets" aria-label="Widgets" data-edge-swiper-target="root">
         <%= form_with url: global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
           <%= icon :search, size: 19 %>
@@ -208,21 +208,21 @@
       </div>
     </div>
 
-    <nav role="navigation" class="tab-bar" aria-label="Mobile navigation" data-turbo-permanent>
-      <%= link_to root_path, class: "tab-item", aria: { label: "Home", current: current_page?(root_path) ? "page" : nil } do %>
+    <nav role="navigation" class="tab-bar" aria-label="<%= t("nav.mobile_nav") %>" data-turbo-permanent>
+      <%= link_to root_path, class: "tab-item", aria: { label: t("nav.home"), current: current_page?(root_path) ? "page" : nil } do %>
         <%= icon :home, size: 26 %>
       <% end %>
-      <%= link_to communities_path, class: "tab-item", aria: { label: "Explore communities", current: current_page?(communities_path) ? "page" : nil } do %>
+      <%= link_to communities_path, class: "tab-item", aria: { label: t("nav.explore"), current: current_page?(communities_path) ? "page" : nil } do %>
         <%= icon :explore, size: 26 %>
       <% end %>
       <%= render "shared/ai_nav_link", class_name: "tab-item", show_label: false %>
-      <%= link_to conversations_path, class: "tab-item", aria: { label: "Messages", current: current_page?(conversations_path) ? "page" : nil } do %>
+      <%= link_to conversations_path, class: "tab-item", aria: { label: t("nav.messages"), current: current_page?(conversations_path) ? "page" : nil } do %>
         <%= icon :messages, size: 26 %>
       <% end %>
-      <%= link_to nearby_path, class: "tab-item", aria: { label: "Nearby", current: current_page?(nearby_path) ? "page" : nil } do %>
+      <%= link_to nearby_path, class: "tab-item", aria: { label: t("nav.nearby"), current: current_page?(nearby_path) ? "page" : nil } do %>
         <%= icon :nearby, size: 26 %>
       <% end %>
-      <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" data-bottom-sheet-target="trigger" aria-expanded="false" aria-label="More">
+      <button type="button" class="tab-item tab-item-button" data-action="click->bottom-sheet#toggle" data-bottom-sheet-target="trigger" aria-expanded="false" aria-label="<%= t("nav.more") %>">
         <%= icon :menu, size: 26 %>
       </button>
       <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>

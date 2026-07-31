@@ -4,19 +4,19 @@
    known = %w[vipps google_oauth2 snapchat github]
    active = known.select { |slug| oauth_providers.include?(slug) } %>
 <% if active.any? %>
-  <nav class="oauth-links" aria-label="Sign in options">
+  <nav class="oauth-links" aria-label="<%= t("auth.options", default: t("nav.oauth_options", default: "Sign in options")) %>">
     <% if active.include?("vipps") %>
-      <%= button_to "Sign in with Vipps", "/auth/vipps", method: :post, class: "btn btn-primary oauth-vipps", data: { turbo: false } %>
+      <%= button_to t("auth.with_vipps", default: t("nav.oauth_vipps", default: "Sign in with Vipps")), "/auth/vipps", method: :post, class: "btn btn-primary oauth-vipps", data: { turbo: false } %>
     <% end %>
     <% if active.include?("google_oauth2") %>
-      <%= button_to "Sign in with Google", "/auth/google_oauth2", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+      <%= button_to t("auth.with_google", default: t("nav.oauth_google", default: "Sign in with Google")), "/auth/google_oauth2", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
     <% end %>
     <% if active.include?("snapchat") %>
-      <%= button_to "Sign in with Snapchat", "/auth/snapchat", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+      <%= button_to t("auth.with_snapchat", default: t("nav.oauth_snapchat", default: "Sign in with Snapchat")), "/auth/snapchat", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
     <% end %>
     <% if active.include?("github") %>
-      <%= button_to "Sign in with GitHub", "/auth/github", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
+      <%= button_to t("auth.with_github", default: t("nav.oauth_github", default: "Sign in with GitHub")), "/auth/github", method: :post, class: "btn btn-ghost", data: { turbo: false } %>
     <% end %>
   </nav>
-  <p class="oauth-divider" aria-hidden="true">or email</p>
+  <p class="oauth-divider" aria-hidden="true"><%= t("auth.or_email", default: t("nav.oauth_or_email", default: "or email")) %></p>
 <% end %>

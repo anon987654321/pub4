@@ -1,4 +1,4 @@
-<% content_for :title, "Dashboard" %>
+<% content_for :title, t("home.dashboard") %>
 
 <%# amber had no MASTER face surface at all; brgen has carried it on its home
     page since the embed landed. Same shared partial, amber's own heading. %>
@@ -14,21 +14,21 @@
 
   <header class="dash-stats">
     <dl>
-      <div><dt>Items</dt><dd><%= @items_count %></dd></div>
-      <div><dt>Spark joy</dt><dd><%= @joy_count %></dd></div>
-      <div><dt>Never worn</dt><dd><%= @never_worn_count %></dd></div>
-      <div><dt>Utilisation</dt><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
+      <div><dt><%= t("home.items") %></dt><dd><%= @items_count %></dd></div>
+      <div><dt><%= t("home.spark_joy") %></dt><dd><%= @joy_count %></dd></div>
+      <div><dt><%= t("home.never_worn") %></dt><dd><%= @never_worn_count %></dd></div>
+      <div><dt><%= t("home.utilisation") %></dt><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
     </dl>
-    <nav role="navigation" aria-label="Quick actions">
-      <%= link_to "Add item", new_item_path, class: "btn btn--primary" %>
-      <%= link_to "Search wardrobe", ai_search_path, class: "btn" %>
-      <%= link_to "Capsule plan", ai_capsule_path, class: "btn" %>
+    <nav role="navigation" aria-label="<%= t("home.dashboard") %>">
+      <%= link_to t("home.add_item"), new_item_path, class: "btn btn--primary" %>
+      <%= link_to t("home.search_wardrobe"), ai_search_path, class: "btn" %>
+      <%= link_to t("home.capsule_plan"), ai_capsule_path, class: "btn" %>
     </nav>
   </header>
 
   <% if @planned_this_week.any? %>
     <section>
-      <h2>This week</h2>
+      <h2><%= t("home.this_week") %></h2>
       <div class="plan-list">
         <% @planned_this_week.each do |plan| %>
           <div class="plan-row">
@@ -43,7 +43,7 @@
 
   <% if @worst_cpw.any? %>
     <section>
-      <h2>Worst cost-per-wear</h2>
+      <h2><%= t("home.worst_cpw") %></h2>
       <div class="cpw-list">
         <% @worst_cpw.each do |item| %>
           <div class="cpw-row">
@@ -57,17 +57,17 @@
 
   <% if @aging_unworn.any? %>
     <section>
-      <h2>Aging unworn</h2>
+      <h2><%= t("home.aging_unworn") %></h2>
       <div class="item-grid"><%= render @aging_unworn %></div>
     </section>
   <% end %>
 
   <% if @recent_items.any? %>
-    <h2>Recent</h2>
+    <h2><%= t("home.recent") %></h2>
     <div class="item-grid"><%= render @recent_items %></div>
-    <p><%= link_to "All items →", items_path %></p>
+    <p><%= link_to t("home.all_items"), items_path %></p>
   <% else %>
-    <p><%= link_to "Add your first item", new_item_path %></p>
+    <p><%= link_to t("home.first_item"), new_item_path %></p>
   <% end %>
 <% else %>
 <%# The hero leads for a signed-out visitor. It used to sit below the feed,
@@ -78,36 +78,36 @@
       data-visitor-orientation is a bare marker with no controller and no CSS
       behind it, so DOM order was simply render order. %>
   <section class="amber-guest-hero" data-visitor-orientation>
-    <h1 class="title">Amber turns your wardrobe into a working system.</h1>
-    <p class="body">Catalog what you own, plan outfits, spot what you never wear, and get capsule suggestions before you buy more.</p>
+    <h1 class="title"><%= t("home.guest_title") %></h1>
+    <p class="body"><%= t("home.guest_body") %></p>
     <p class="actions">
-      <%= link_to "Browse demo wardrobe", demo_wardrobe_path, class: "btn btn--primary" %>
-      <%= link_to "Create account", new_registration_path, class: "btn btn--ghost" %>
+      <%= link_to t("home.browse_demo"), demo_wardrobe_path, class: "btn btn--primary" %>
+      <%= link_to t("auth.create_account"), new_registration_path, class: "btn btn--ghost" %>
     </p>
     <p class="dim amber-guest-secondary">
-      <%= link_to "Sign in", new_session_path %>
+      <%= link_to t("nav.sign_in"), new_session_path %>
       <span aria-hidden="true"> · </span>
-      <%= link_to "Ask Amber AI", root_path(master: 1), data: { turbo: false } %>
+      <%= link_to t("home.ask_ai"), root_path(master: 1), data: { turbo: false } %>
     </p>
   </section>
 
   <%= render "shared/feed_compose" %>
 
-  <section class="amber-guest-feed" aria-label="Style feed">
+  <section class="amber-guest-feed" aria-label="<%= t("home.style_feed") %>">
     <% if @guest_posts&.any? %>
       <%= render @guest_posts %>
     <% else %>
       <%= render "shared/empty_state",
-            title: "No posts yet",
-            body: "Share an #ootd thought above — guests can post without an account.",
-            action: { label: "Browse demo wardrobe", path: demo_wardrobe_path } %>
+            title: t("empty.no_posts_yet"),
+            body: t("empty.guest_post"),
+            action: { label: t("home.browse_demo"), path: demo_wardrobe_path } %>
     <% end %>
     <%== pagy_nav(@pagy) if @pagy&.pages.to_i > 1 %>
   </section>
 
   <% if @demo_items&.any? %>
     <section>
-      <h2>Demo capsule</h2>
+      <h2><%= t("home.demo_capsule") %></h2>
       <p class="dim"><%= pluralize(@demo_items.size, "piece") %> · <%= pluralize(@demo_outfits&.size.to_i, "outfit") %> — no account required</p>
       <div class="item-grid"><%= render partial: "demo_wardrobe/item", collection: @demo_items %></div>
       <p><%= link_to "Full demo wardrobe →", demo_wardrobe_path %></p>

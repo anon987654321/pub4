@@ -70,8 +70,9 @@ body {
 .search-result {
   font-family: var(--font);
   font-size: var(--font-size);
-  border-bottom: 1px solid var(--border);
-  padding: 0.35rem 0;
+  /* CRT density keeps a hairline — soft green, not box chrome */
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  padding: 0.45rem 0;
 }
 
 .advisory-tag {

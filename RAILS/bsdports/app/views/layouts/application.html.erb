@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -32,32 +32,32 @@
       data-surface="wscons"
       data-pwa-key="bsdports"
       data-controller="pwa-standalone">
-<a class="skip-link" href="#main-content">Skip to main content</a>
+<a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
 <div class="app-shell">
-<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="Primary navigation">
-  <%= link_to "BSDports", root_path, class: "brand", aria: { current: current_page?(root_path) ? 'page' : nil } %>
-  <%= link_to "Ports", ports_path, aria: { current: current_page?(ports_path) ? 'page' : nil } %>
-  <%= link_to "Categories", categories_path, aria: { current: current_page?(categories_path) ? 'page' : nil } %>
-  <%= link_to "Maintainers", maintainers_path, aria: { current: current_page?(maintainers_path) ? 'page' : nil } %>
+<nav class="nav-visible" data-pwa-primary-nav data-turbo-permanent aria-label="<%= t("nav.home") %>">
+  <%= link_to t("app.name"), root_path, class: "brand", aria: { current: current_page?(root_path) ? "page" : nil } %>
+  <%= link_to t("nav.ports"), ports_path, aria: { current: current_page?(ports_path) ? "page" : nil } %>
+  <%= link_to t("nav.categories"), categories_path, aria: { current: current_page?(categories_path) ? "page" : nil } %>
+  <%= link_to t("nav.maintainers"), maintainers_path, aria: { current: current_page?(maintainers_path) ? "page" : nil } %>
   <div class="nav-actions">
     <% if authenticated? %>
       <%= render "shared/inbox_link" %>
-      <%= link_to "Sign out", session_path, class: "btn-ghost", data: { turbo_method: :delete, turbo_prefetch: false } %>
+      <%= link_to t("nav.sign_out"), session_path, class: "btn-ghost", data: { turbo_method: :delete, turbo_prefetch: false } %>
     <% else %>
-      <%= link_to "Sign in", new_session_path, class: "btn-ghost" %>
+      <%= link_to t("nav.sign_in"), new_session_path, class: "btn-ghost" %>
     <% end %>
   </div>
 </nav>
 <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
 <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
 <main id="main-content" role="main">
-  <%= link_to "BSDports", root_path, class: "logo", aria: { label: "OpenBSD ports" } %>
+  <%= link_to t("app.name"), root_path, class: "logo", aria: { label: t("app.name") } %>
   <%= yield %>
 </main>
 </div>
 <%= render "shared/install_prompt",
-      title: "Install BSDports",
-      body: "Ports search and advisories — open from your home screen." %>
+      title: t("install.title"),
+      body: t("install.body") %>
 <%= render "shared/nearby_chat_widget" %>
 </body>
 </html>

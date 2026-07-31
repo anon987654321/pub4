@@ -1,7 +1,7 @@
 body.vertical-messenger header[aria-label="Conversation header"] {
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--msg-border);
+  border-bottom: 0;
 }
 
 body.vertical-messenger header[aria-label="Conversation header"] h1 {

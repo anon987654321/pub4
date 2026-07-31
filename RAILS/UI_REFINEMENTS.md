@@ -115,7 +115,9 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Global `/` hotkey search chrome | App already has feed-hotkey; UI partial optional |
 | Per-app PWA monochrome icons | Landed (brgen/amber/bsdports + manifests) |
 | Full ERB class-soup → bare semantic HTML | Multi-PR product surface; partial via shared primitives |
-| Full i18n of brgen chrome strings | Core home/auth/nav/empty landed (nb default); residual vertical strings remaining |
+| Full i18n of brgen chrome strings | Core home/auth/nav/empty + full primary nav landed; residual vertical product copy remaining |
+| Amber/bsdports chrome i18n (auth, layout, guest home, ports search) | Landed 2026-07-31 |
+| Space-not-lines TV/nearby/empty/amber dash | Landed 2026-07-31 |
 | Exhaustive model/request coverage | Expand when touching domains (Boy Scout) |
 | In-process `release` / `rails_runtime` / `visual_contract` | Still subprocess by design |
 | SCSS `_ui_refinements*` merge into domain partials | Next touch Boy Scout |

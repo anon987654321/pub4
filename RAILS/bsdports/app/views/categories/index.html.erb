@@ -1,4 +1,4 @@
 <% content_for :title, "Categories" %>
 <h1>Categories</h1>
 
-<%= live_search_index url: categories_path, results_partial: "categories/live_search_results", placeholder: "Search categories…", label: "Category search", frame_id: "bsdports-categories" %>
+<%= live_search_index url: categories_path, results_partial: "categories/live_search_results", placeholder: t("ports.categories_placeholder"), label: t("ports.categories_label"), frame_id: "bsdports-categories" %>

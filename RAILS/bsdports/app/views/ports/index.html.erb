@@ -2,11 +2,11 @@
 <header class="page-header" role="banner" aria-label="OpenBSD ports header" data-visitor-orientation data-controller="search-hotkey">
   <h1>OpenBSD ports</h1>
   <p class="ports-purpose">Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?</p>
-  <p class="dim">Search names, exact pkgpaths, maintainers, dependencies and security notes. Press <kbd>/</kbd> or <kbd>⌘K</kbd> to focus search.</p>
-  <nav role="navigation" aria-label="Ports actions">
+  <p class="dim"><%= t("ports.search_hint") %></p>
+  <nav role="navigation" aria-label="<%= t("nav.ports") %>">
     <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
   </nav>
-  <div data-search-hotkey-target="input"><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: "Search name or category/pkgpath…", label: "Search ports", frame_id: "bsdports-ports" %></div>
+  <div data-search-hotkey-target="input"><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div>
 </header>
 
 <% if @categories&.any? %>
