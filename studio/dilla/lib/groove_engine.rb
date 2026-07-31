@@ -357,36 +357,74 @@ module DillaGroove
   # tick offset is a value that could never have existed on the real
   # hardware; whole-tick multipliers keep every offset authentically
   # reachable by the tool this feel is modeled on.
+  # Which way each role leans, in whole ticks. Positive drags, negative pushes.
+  #
+  # The offsets used to be inline and one-directional: snare -3/-4, everything
+  # else positive. That is a real feel — a pushed snare against a dragged kit,
+  # which the code called "laid-back boom-bap tension" — but it was the only one
+  # reachable, and SNARE_EARLY=0 could only switch it off, never reverse it.
+  #
+  # It is also the inverse of the lurch most people mean by "Dilla". On Donuts
+  # and Ruff Draft the snare is the element that drags, against hats that hold
+  # steady; Charnas's thesis is that the feels *conflict*, and which layer lags
+  # is what distinguishes one groove from another. So the polarity is a profile.
+  #
+  # Whole ticks throughout, because the MPC3000 runs at 96 PPQ and its nudge tool
+  # can only land on those positions — a fractional offset is one the hardware
+  # this models could never have produced.
+  GROOVE_FEELS = {
+    # Unchanged from the inline values, so nothing moves unless asked.
+    boom_bap: { snare: -4, snare_plain: -3, clap: -4, kick_anchor: 1, kick: 3,
+                hat: 2, hat_up: 3, ghost: 1 },
+
+    # Snare behind, hats holding the grid. The hats are the reference the snare
+    # is late against — drag them too and the whole bar just sounds slow rather
+    # than lurching.
+    dilla_drag: { snare: 4, snare_plain: 3, clap: 4, kick_anchor: -1, kick: 0,
+                  hat: 0, hat_up: 1, ghost: 2 },
+
+    # Camel: the kick displaced off the grid rather than merely late, hats a
+    # touch ahead so the top stutters against a snare that drags further than
+    # Dilla's.
+    #
+    # Not the widest spread — boom_bap is, at 51.5ms against Camel's 44.2 at
+    # 85 BPM, because its snare is pushed nearly 30ms while its kick drags 22.
+    # What separates Camel is the *direction*: everything below the hats leans
+    # late while the hats lean early, so the top and bottom of the kit pull
+    # apart. boom_bap splits snare-against-everything; Camel splits
+    # hats-against-everything, and that is what reads as broken rather than
+    # merely swung.
+    camel: { snare: 5, snare_plain: 4, clap: 5, kick_anchor: 2, kick: 4,
+             hat: -1, hat_up: 0, ghost: 3 },
+  }.freeze
+
+  def groove_feel
+    key = ENV.fetch("GROOVE_FEEL", "boom_bap").to_s.downcase.to_sym
+    GROOVE_FEELS.fetch(key, GROOVE_FEELS[:boom_bap])
+  end
+
   def role_timing_offset(role, beat_p, _bar, _step)
     return 0.0 unless enabled?
     tick = beat_p / 96.0
+    feel = groove_feel
     case role.to_sym
     when :snare
       return 0.0 if ENV["SNARE_EARLY"] == "0"
-      # Early snare pushes the pocket (classic finger-drum feel).
-      mul = pocket_dna? ? 4 : 3
-      -(tick * mul)
+      tick * (pocket_dna? ? feel[:snare] : feel[:snare_plain])
     when :clap
-      ENV["SNARE_EARLY"] == "0" ? 0.0 : -(tick * 4)
+      ENV["SNARE_EARLY"] == "0" ? 0.0 : tick * feel[:clap]
     when :kick_anchor, :kick_sync, :kick
       return 0.0 if ENV["KICK_LATE"] == "0"
-      # Late kick vs early snare = laid-back boom-bap tension.
-      mul = if pocket_dna?
-role.to_sym == :kick_anchor ? 1 : 3
-else
-0
-end
-      tick * mul
+      # Outside pocket_dna the kick stayed on the grid in every feel; keeping
+      # that, so this switch changes the lean and not how much is quantized.
+      return 0.0 unless pocket_dna?
+
+      tick * (role.to_sym == :kick_anchor ? feel[:kick_anchor] : feel[:kick])
     when :hat, :hat_down, :hat_up, :open
       return 0.0 if ENV["HATS_LATE"] == "0"
-      mul = if pocket_dna?
-role.to_sym == :hat_up ? 3 : 2
-else
-2
-end
-      tick * mul
+      tick * (role.to_sym == :hat_up ? feel[:hat_up] : feel[:hat])
     when :ghost
-      tick * 1
+      tick * feel[:ghost]
     else
       0.0
     end
