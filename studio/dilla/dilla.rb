@@ -619,12 +619,49 @@ end end },
   },
 }.freeze
 
+# ffmpeg's aecho in_gain scales the DRY signal, not only the echo tail. A patch
+# written as aecho=0.28:0.36 therefore loses 18.3 dB against the same chain with
+# no echo at all — measured on pink noise, -49.6 dB against -31.3 dB.
+#
+# That was diagnosed once, in the comment on fm_bowed_pad, and fixed only there.
+# A census of the file found 78 of 133 aecho uses still sitting below 0.5 in_gain:
+# 45 in 0.4-0.5, 27 in 0.3-0.4, six below 0.3. So most patches were quietly
+# attenuating themselves and the handful without a low-gain echo sat on top of
+# them — a 30.9 dB spread across the warm role, between patches that rotate
+# against each other.
+#
+# The fix is the one that comment prescribes: keep in_gain near unity and carry
+# the echo character in the decays instead. Scaling the decays by the same factor
+# preserves the wet/dry ratio rather than just making everything drier, clamped
+# because ffmpeg rejects a decay at or above 1.0.
+#
+# AECHO_NORMALIZE=0 restores the written values exactly.
+AECHO_TARGET_IN_GAIN = 0.9
+AECHO_MAX_DECAY = 0.9
+
+def normalize_aecho_gains(fx)
+  return fx unless fx.is_a?(String) && fx.include?("aecho=")
+  return fx if ENV["AECHO_NORMALIZE"] == "0"
+
+  fx.gsub(/aecho=([\d.]+):([\d.]+):([\d.|]+):([\d.|]+)/) do
+    in_gain = Regexp.last_match(1).to_f
+    out_gain = Regexp.last_match(2)
+    delays = Regexp.last_match(3)
+    decays = Regexp.last_match(4)
+    next Regexp.last_match(0) if in_gain <= 0 || in_gain >= AECHO_TARGET_IN_GAIN
+
+    factor = AECHO_TARGET_IN_GAIN / in_gain
+    lifted = decays.split("|").map { |d| [(d.to_f * factor), AECHO_MAX_DECAY].min.round(3) }
+    "aecho=#{AECHO_TARGET_IN_GAIN}:#{out_gain}:#{delays}:#{lifted.join('|')}"
+  end
+end
+
 # Rich synth patch catalog — GM programs, optional external sf2, native fallback timbres,
 # and per-patch post-FX chains (tremolo/LFO/filter/delay) applied at render time.
 def synth_patch(id, role:, program:, bank: 0, sf2: :default, weight: 1.0, native: nil, mix: 1.0, fx: nil,
                 arp_styles: nil, octave: 2, gate: 0.82, color: nil, fs_gain: 1.5, midi_fx: nil, midi_arp: nil)
   { id:, role:, program:, bank:, sf2:, weight:, native:,
-    mix:, fx:, arp_styles: arp_styles || [:up, :updown], octave:, gate:, color:,
+    mix:, fx: normalize_aecho_gains(fx), arp_styles: arp_styles || [:up, :updown], octave:, gate:, color:,
     fs_gain:, midi_fx:, midi_arp: }
 end
 
@@ -10291,7 +10328,8 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_LEGATO_VAR" => "1",
   "PAD_LAYERS" => "1",
   # Quieter choir so Rhodes/Prophet aren't buried under oohs.
-  "CHOIR_VOX" => "1",
+  # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
+  "CHOIR_VOX" => "0",
   "CHOIR_VOX_GAIN" => "0.16",
   "LUSH_SYNTH" => "1",
   "LONG_STRIPDOWN" => "0",
@@ -10348,7 +10386,8 @@ DILLA_STYLE_DEFAULTS = {
   # chain -- which is why this default had drifted to sa_g. Defaulting to the
   # easy source hid that problem rather than fixing it; the isolation and fit
   # path has to handle this voice, so this is what it runs against.
-  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
+  # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
+  "RAP_VOCAL" => "0",
   "RAP_VOCAL_STYLE" => "rap",
   "RAP_VOCAL_MIX" => "1.0",
   "RAP_VOCAL_WEIGHT" => "1.0",
@@ -10657,7 +10696,8 @@ DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   # chain -- which is why this default had drifted to sa_g. Defaulting to the
   # easy source hid that problem rather than fixing it; the isolation and fit
   # path has to handle this voice, so this is what it runs against.
-  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
+  # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
+  "RAP_VOCAL" => "0",
   "RAP_VOCAL_DUCK" => "0.42",
   "RAP_VOCAL_SIDECHAIN" => "1",
   # Held pad bed, real attack/release (not the tightened 900/2200 techno
@@ -10767,7 +10807,8 @@ STREAM_SOUL_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   # chain -- which is why this default had drifted to sa_g. Defaulting to the
   # easy source hid that problem rather than fixing it; the isolation and fit
   # path has to handle this voice, so this is what it runs against.
-  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
+  # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
+  "RAP_VOCAL" => "0",
   "RAP_VOCAL_DUCK" => "0.72",
   "SYNTH_MORPH" => "0",
   "LEAD_MORPH" => "0",
@@ -11004,7 +11045,8 @@ STREAM_EXTRA_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   # chain -- which is why this default had drifted to sa_g. Defaulting to the
   # easy source hid that problem rather than fixing it; the isolation and fit
   # path has to handle this voice, so this is what it runs against.
-  "RAP_VOCAL" => RAP_VOCAL_SOURCE,
+  # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
+  "RAP_VOCAL" => "0",
   "LEAD_FORCE_ARP" => "1",
   "ARTIST_VERIFIED_ONLY" => "0",
   # Stay aligned with style DNA — creative wildness is opt-in (STREAM_CREATIVE=1).
@@ -16065,7 +16107,10 @@ end
 # Soft choir pad on chord tones (Singers Unlimited–like ooh/aah). Default on
 # via CHOIR_VOX=1; set CHOIR_VOX=0 to disable. Gain via CHOIR_VOX_GAIN (0–1).
 def choir_vox_enabled?
-  ENV.fetch("CHOIR_VOX", "1") != "0" && fluidsynth_pad_available?
+  # Default off, matching DILLA_STYLE_DEFAULTS. This gate is the one that
+  # decides, and it defaulted on — so any path that does not apply the style
+  # table still got a choir.
+  ENV.fetch("CHOIR_VOX", "0") != "0" && fluidsynth_pad_available?
 end
 
 # Thin full pad voicings to 2–3 mid/upper chord tones so choir reads as
