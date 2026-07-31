@@ -12,7 +12,12 @@ APP_DIR=/home/amber/app
 [ -f /etc/rails/amber.env ] && . /etc/rails/amber.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/amber.env}"
 daemon="/bin/ksh"
-daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --bind http://127.0.0.1:${PORT}'"
+# --health-check-timeout: Falcon defaults to 30s, and on 1 vCPU with master and
+# brgen already resident this app has never booted that fast — the container
+# declared startup failed and SIGKILLed its own worker on every restart, which
+# is a large part of why this service kept reading as "shed but never
+# restored". master and brgen have carried 300 since the same discovery.
+daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="amber"
 daemon_execdir="/home/amber/app"
 daemon_logger="daemon.notice"
