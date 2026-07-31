@@ -157,18 +157,36 @@ Drums:
 | `FLYLO_HAT_DUCK` | duck the top bus by the kick bus |
 | `DRUM_FIELD_LAYER` | room tone under the kit, ducked by it |
 
-Movement and master:
+Movement and master. The analog stages are **on by default** as of 2026-07-31 —
+every one of them shipped built and set to `0`, so nothing this engine rendered
+had ever been through them. Set a switch to `0` to get the old behaviour back.
 
-| switch | what |
-|---|---|
-| `BUS_ANALOG` | per-channel saturation before summing |
-| `TAPE_HYSTERESIS` | Jiles-Atherton, RK4 — path-dependent, unlike every other stage |
-| `TAPE_WOW_MS` | Ornstein-Uhlenbeck flutter |
-| `MASTER_TILT_DB` | negative = darker; lows up as highs come down |
-| `MONO_BASS_HZ` | sum below N to mono |
-| `ORGANIC_BREATH` / `ORGANIC_SWELL` | correlated loudness+brightness; phrase swell |
-| `DILLA_DROPOUT_EVERY` | silence just before every Nth downbeat |
-| `DILLA_DRONE` / `DILLA_TAPE_STOP` | stretched bed; platter brake |
+| switch | default | what |
+|---|---|---|
+| `BUS_ANALOG` | `0.3` | per-channel saturation plus small phase offsets, so buses don't sum coherently |
+| `CONSOLE_STRIP` | `0.35` | per-channel desk model; L and R run one seed apart, which is the point |
+| `TAPE_HYSTERESIS` | `0.25` | Jiles-Atherton, RK4 — path-dependent, unlike every other stage |
+| `TAPE_WOW_MS` | `0.6` | Ornstein-Uhlenbeck flutter |
+| `MASTER_SMOOTH_DB` | `2.0` | takes 2 dB out of the presence band; the stage that answers "harsh" |
+| `SMOOTH_ANALOG` | `1` | drop patches on metallic GM programs (chromatic percussion, 94, 98, 99, 103) |
+| `MASTER_TILT_DB` | `0` | negative = darker; lows up as highs come down |
+| `MONO_BASS_HZ` | — | sum below N to mono |
+| `ORGANIC_BREATH` / `ORGANIC_SWELL` | `0` | correlated loudness+brightness; phrase swell |
+| `DILLA_DROPOUT_EVERY` | — | silence just before every Nth downbeat |
+| `DILLA_DRONE` / `DILLA_TAPE_STOP` | `0` | stretched bed; platter brake |
+
+Arps and groove:
+
+| switch | default | what |
+|---|---|---|
+| `NO_ARP` | `1` | held chords and melodic lead phrases; covers **three** separate arp paths |
+| `GROOVE_FEEL` | `boom_bap` | `boom_bap` / `dilla_drag` / `camel` — per-voice tick offsets at 96 PPQ |
+| `BASS_FEEL` | `1` | let the bass take the feel's offset instead of sitting on the grid |
+
+`NO_ARP` reaches `pad_arp_mode`, `lead_true_arp_mode?` and `lead_events_scale_arp`.
+It was added covering only the first, which meant pads went quiet and the leads
+kept arpeggiating — and `STREAM_STYLE_SAFE` and `stream_iterate` both set
+`LEAD_FORCE_ARP=1` per track, so the forced flag won every time.
 
 Vocals (`RAP_VOCAL=<slug>`, `0` to disable):
 
@@ -209,9 +227,24 @@ were all silent — the code ran, returned success, and did nothing.
 - **`KICK_GAIN` will not fix a loud low end** if the loop is making it. Muting
   the kick moved the 40–100 Hz band by 0.0 dB; muting the loop moved it 4.0 dB.
   Reach for `SAMPLE_LOOP_HP` first.
-- **`asoftclip` does not saturate** at any threshold tried. On a clean 200 Hz
-  sine it produced −40.8 dB above 500 Hz against −40.1 clean. `acrusher` the
-  same. Drive into a limiter gives −19.1 dB, i.e. real harmonics.
+- **`asoftclip` needs `oversample`.** Without it the harmonics it makes above
+  Nyquist fold back as inharmonic aliasing, which is the "digital" harshness it
+  was supposed to remove. With `oversample=4` it measurably saturates — an
+  earlier note here said it did not saturate at any threshold, which was
+  measured before the oversampling was there.
+- **A symmetric transfer function cannot make even harmonics.** `tanh` and
+  `atan` are both odd-symmetric, so f(−x) = −f(x) and only odd orders exist. On
+  a 220 Hz sine the 2nd harmonic came back at −131 dB — the numerical floor —
+  against a 3rd at −81. That is the Crane Song triode/pentode split: 2nd reads
+  as warmth, 3rd as edge, and no amount of tuning a symmetric clipper reaches
+  the first. A DC bias into the non-linearity (then high-passed off) flips it
+  even-dominant. Adjusting the threshold was never going to work.
+- **Level staged before a clipper is not loudness, it is distortion.** The
+  master chain had 15.6 dB of cumulative makeup gain ending in +6.4 dB into a
+  limiter set 0.7 dB from full scale. It measured "clean" on flat factor and
+  still sounded overdriven, because flat factor only catches flat-topping.
+  Total harmonic distortion was the measurement that showed it: 0.166%, down to
+  0.057% once the gain came out.
 - **`equalizer` is a peaking filter, always.** Its `t` parameter sets the *unit*
   of the width, not the shape. Shelves are `bass` and `treble`.
 - **Track profiles beat the command line** unless pinned; `USER_PINNED_ENV` is
@@ -223,7 +256,17 @@ were all silent — the code ran, returned success, and did nothing.
   against the list file's directory, so a relative output path silently produced
   no effect at all.
 
-## Three findings that keep recurring
+## Four findings that keep recurring
+
+**A feature can be fully built, correct, documented — and switched off.** Five
+analog stages defaulted to `0`: a Jiles-Atherton magnetisation model, an
+Ornstein-Uhlenbeck wow generator, a per-channel console strip, per-bus
+saturation, and the presence-band de-harsher. Tape character was being asked of
+an EQ curve while the tape model sat unused beside it. Grepping for a feature
+proves it exists; only its default proves it runs. The same failure produced
+three live arpeggiators after arps had been "turned off", and left two patches
+named `analog_pad2` and `warm_analog_duo` sitting on GM program 94, *metallic
+pad* — one of them weighted 2.0, so it came up twice as often as its neighbours.
 
 **Making room beats adding gain.** Drums that seem absent are usually masked;
 most of a 9 dB drum improvement came from lowering other buses, not raising the
