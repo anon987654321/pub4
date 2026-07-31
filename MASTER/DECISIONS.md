@@ -43,3 +43,73 @@ The face runtime must not create a WebGL context before the primer tap. The guar
 ## Self-Test Is A Loud Gate
 
 `rake selftest` runs `rules.yml.self_test` against MASTER itself. It is allowed to fail while known debt remains; the point is to make debt visible and triageable.
+
+## The Cross-File Prescan Is Advisory, And Mostly Measures Itself
+
+`/fix` prints `prescan: N cross-file risk(s)` before it runs. On 2026-07-31 that
+number was 233. All of them were adjudicated against the code; the count is not
+a backlog, and it does not block anything.
+
+**It gates nothing.** `run_fix_and_prescan` calls `anti_sprawl_prescan`, then
+calls `fix_loop.run(target)` unconditionally and joins the two strings. The
+prescan is text printed above the result. A reader — including an agent — can
+easily take "risk(s) — merge/rename before local patch" as a precondition. It is
+not one.
+
+Adjudication of all 231 findings the prescan reproduced (2 of the original 233
+had been fixed in between):
+
+| rule | n | verdict |
+|---|---|---|
+| MAGIC_NUMBER_SPREAD | 88 | artefact |
+| COPY_PASTE_BLOCK | 57 | artefact |
+| PARALLEL_HIERARCHY | 49 | artefact |
+| SCATTERED_CONFIG | 19 | checked clean |
+| CROSS_FILE_DRY | 11 | 1 real, since fixed |
+| SPRAWL | 7 | artefact |
+
+The evidence, so this does not need redoing:
+
+- **MAGIC_NUMBER_SPREAD.** `MAGIC_NUMBER` is `/(?:[2-9]|[1-9]\d{2,})/` — every
+  digit 2 through 9 anywhere, plus any number over 99. Hence "literal 8 recurs
+  in 141 files" and "literal 2026 recurs in 50 files", which is the year. Of the
+  occurrences behind the plausible-looking findings, **32% are already a named
+  constant or a named keyword argument**: `512` is flagged across
+  `PATTERN_CACHE_MAX = 512`, `BINARY_SAMPLE_BYTES = 512`, `rag_chunk_tokens: 512`
+  and the phrase "512-token" in a comment — four meanings, three of them already
+  named. The rule fires on the definitions of the constants it recommends
+  extracting.
+
+- **COPY_PASTE_BLOCK.** 44 of 57 involve at least one non-Ruby file, and
+  **zero** are duplicated first-party Ruby. The top findings are JSON manifests
+  in `reports/screenshots/calibration/`, three timestamped runs of the same
+  tool, which share keys because they are the same schema. "Extract a module or
+  template" is being said about generated test output.
+
+- **PARALLEL_HIERARCHY.** Includes "Master spans 441 class/module hierarchies".
+  `Master` is the root namespace of the entire codebase.
+
+- **SPRAWL.** A case-insensitive word grep: `code.match?(/\bpolicy\b/i)` over
+  `%w[cost auth policy cache notify search activity provider]`, firing at four
+  files. `lib/result.rb` is flagged because error classification talks about
+  policy. It cannot distinguish a scattered concern from a common English word.
+
+- **SCATTERED_CONFIG** was the one worth checking properly, and it came back
+  clean. All five `MASTER_AUTOFIX` reads use the identical `== "1"` idiom;
+  `MASTER_WATCH` likewise; `MASTER_EXEC_TIMEOUT` is read exactly once, into
+  `DEFAULT_TIMEOUT`. No drifting defaults, no contradiction.
+
+- **CROSS_FILE_DRY** held the only real finding: `File.read(..., encoding:)`
+  spelled `"UTF-8"` 32 times and `"utf-8"` 10 times. Normalised in 7fb8cc3d9.
+  The rest are stdlib calls sharing a variable name, and three helpers named
+  `read_text`/`read_file` that are three different error policies — nil-and-log,
+  raise-but-tolerate-bad-bytes, and Result-with-validation — not three copies.
+
+What actually stopped `/fix` was the clock, not the prescan: `fix_loop.rb:121`
+returns `Result.ok("wall-clock timeout (1800s) after N pass(es)")`. Raising
+`RUN_BUDGET_SECONDS` is therefore the real lever if `/fix` needs to finish, and
+an earlier reading of mine that the risks were blocking it was wrong.
+
+Before treating a prescan number as work: reproduce it with
+`CrossFileAnalysis.new(root:).call(paths)` and read the findings. The printed
+eight are `findings.first(8)`, never a representative sample.
