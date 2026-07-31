@@ -9,7 +9,7 @@
     <nav aria-label="About">
       <h2>About</h2>
       <%= link_to "Amber", root_path %>
-      <%= link_to "Sign in", new_session_path unless authenticated? %>
+      <%= link_to t("nav.sign_in"), new_session_path unless authenticated? %>
     </nav>
     <nav aria-label="Support">
       <h2>Support</h2>

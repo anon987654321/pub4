@@ -89,7 +89,11 @@ en:
     title: "Notifications"
     mark_all: "Mark all read"
     empty_title: "No notifications yet"
-    empty_body: "Updates will appear here."
+    empty_body: "Offers, orders, and local updates will appear here."
+    inbox_kicker: "Brgen inbox"
+    unread_count:
+      one: "%{count} unread"
+      other: "%{count} unread"
   search:
     title: "Search Brgen"
     placeholder: "Search posts, listings, TV, playlists…"

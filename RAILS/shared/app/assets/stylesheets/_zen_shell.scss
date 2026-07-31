@@ -115,12 +115,15 @@ input, button, textarea, select {
   border-color: var(--border, var(--color-border));
 }
 
+/* Family alias: brgen/bsdports use btn-ghost; amber often uses btn--ghost */
+.btn-ghost,
 .btn--ghost {
   background: transparent;
   color: var(--text, var(--color-primary));
   border-color: var(--border, var(--color-border));
 }
 
+.btn-ghost:hover,
 .btn--ghost:hover {
   background: var(--hover, var(--color-midtone-tint));
 }

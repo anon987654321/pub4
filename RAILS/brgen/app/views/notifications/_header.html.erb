@@ -1,15 +1,15 @@
-<div class="page-header" role="banner" aria-label="Notifications header">
+<div class="page-header" role="banner" aria-label="<%= t("notifications.title") %>">
   <div>
-    <p class="dim">Brgen inbox</p>
+    <p class="dim"><%= t("notifications.inbox_kicker", default: "Brgen inbox") %></p>
     <h1>
-      Notifications
+      <%= t("notifications.title") %>
       <% if @unread_count.to_i.positive? %>
-        <span class="badge"><%= pluralize(@unread_count, "unread") %></span>
+        <span class="badge"><%= t("notifications.unread_count", count: @unread_count, default: "%{count} unread") %></span>
       <% end %>
     </h1>
   </div>
 
   <% if @unread_count.to_i.positive? %>
-    <%= button_to "Mark all read", read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>
+    <%= button_to t("notifications.mark_all"), read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>
   <% end %>
 </div>

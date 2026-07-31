@@ -20,7 +20,7 @@
       </div>
       <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
       <% if @item.color.present? %>
-        <span class="color-swatch" style="display:inline-block;width:1.25rem;height:1.25rem;border-radius:999px;background:<%= wardrobe_color_swatch(@item.color) %>;border:1px solid #ccc;vertical-align:middle" title="<%= @item.color %>" aria-label="Color <%= @item.color %>"></span>
+        <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= @item.color %>" aria-label="Color <%= @item.color %>"></span>
       <% end %>
     </header>
 

@@ -87,7 +87,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-xs) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0; /* space-not-lines — matches .plan-row */
 }
 
 .cpw-val {

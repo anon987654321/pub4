@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/styles/master_embed.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a class="skip-link" href="#main-content"><%= t("skip_to_content", default: "Skip to main content") %></a>
   <iframe
     class="master-embed-frame"
     src="<%= master_web_url(autostart: true, embed: true) %>"

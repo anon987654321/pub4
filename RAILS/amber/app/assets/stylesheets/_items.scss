@@ -81,6 +81,28 @@
   max-width: 700px;
 }
 
+/* Dynamic color from wardrobe_color_swatch helper — keep magic color out of ERB */
+.color-swatch {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border, #ccc);
+  vertical-align: middle;
+  background: var(--swatch, var(--surface-elevated));
+}
+
+.color-swatch--sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.color-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* 8px */
+}
+
 .item-detail .item-photos {
   display: flex;
   gap: var(--space-sm);

@@ -11,7 +11,7 @@
   <% end %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No notifications",
-        body: "Offers, orders, and local updates will appear here.",
-        action: { label: "Home", path: root_path } %>
+        title: t("notifications.empty_title"),
+        body: t("notifications.empty_body"),
+        action: { label: t("nav.home"), path: root_path } %>
 <% end %>

@@ -89,7 +89,11 @@ nb:
     title: "Varsler"
     mark_all: "Merk alle som lest"
     empty_title: "Ingen varsler ennå"
-    empty_body: "Oppdateringer vises her."
+    empty_body: "Tilbud, ordrer og lokale oppdateringer vises her."
+    inbox_kicker: "Brgen-innboks"
+    unread_count:
+      one: "%{count} ulest"
+      other: "%{count} uleste"
   search:
     title: "Søk i Brgen"
     placeholder: "Søk innlegg, annonser, TV, spillelister…"
