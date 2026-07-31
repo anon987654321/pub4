@@ -5062,15 +5062,36 @@ end
 # records that the elaborate chain, not the balance numbers, was what failed
 # listening tests. Nine stages, no dynamics keyed off anything else.
 # MASTER_CHAIN=akmd selects it.
+# Saturation rather than overdrive. The stages are the same nine; what changed
+# is how hard the clipper is driven and whether its harmonics alias.
+#
+# It used to run makeup=4 into a bare `asoftclip=type=tanh` and then volume=1.5
+# on top — about +7.5 dB pushed into a clipper with threshold at its default of
+# 1, so it only engaged at full scale and engaged hard. That is an overdrive
+# pedal, not a mastering chain.
+#
+# oversample is the change that matters most. It defaults to 1, meaning none:
+# clipping generates harmonics above Nyquist and, with nowhere to go, they fold
+# back down as inharmonic aliasing. That folded content is what makes digital
+# clipping sound fizzy and brittle where analog sounds warm — real saturation
+# has no Nyquist to fold against, its harmonics simply extend and roll off. At
+# 4x the harmonics are generated with headroom and filtered before decimation,
+# so what survives is harmonically related to the signal.
+#
+# The rest is gain staging: less level into the clipper, threshold lowered so it
+# engages gradually across the range instead of slamming at the ceiling, and the
+# level made back up after the non-linearity rather than before it. atan over
+# tanh for a wider knee — it compresses the approach to clipping over more of
+# the range, which reads as compression rather than distortion.
 AKMD_MASTER_FILTERS = [
   "highpass=f=60",
   "lowpass=f=11500",
   "equalizer=f=80:t=q:w=1.5:g=3",
   "equalizer=f=200:t=q:w=1:g=2",
   "equalizer=f=8000:t=q:w=2:g=-3",
-  "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=4",
-  "asoftclip=type=tanh",
-  "volume=1.5",
+  "acompressor=threshold=-20dB:ratio=3:attack=10:release=80:makeup=2",
+  "asoftclip=type=atan:threshold=0.72:output=1.28:oversample=4",
+  "volume=2.1",
   "alimiter=limit=0.92:attack=3:release=50",
 ].freeze
 
