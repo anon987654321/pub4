@@ -1,0 +1,84 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Print the DS record for every signed zone, derived from the KSK that is
+# actually in the signed zone right now.
+#
+# Run on vm23:  doas ruby34 /home/dev/pub4/OPENBSD/bin/ds-records
+#
+# Why this exists rather than a checked-in list of DS records:
+#
+# The `.ds` files sitting in /var/nsd/zones/master are NOT a trustworthy
+# source. Two kinds are there, and both lie:
+#
+#   K<zone>.+013+<tag>.ds   ldns-keygen writes one per key it ever generates,
+#                           for ZSKs as well as KSKs, and never removes them.
+#                           406 of them for 61 zones as of 2026-07-31.
+#   <zone>.ds               hand-made, one zone, 2026-05-18.
+#
+# /usr/local/bin/nsd-resign rotates keys nightly and never touches either. So
+# brgen.no.ds still named key 53444 on 2026-07-31 while the zone had rotated to
+# 46221 — and a DS naming a key the zone no longer publishes is worse than no
+# DS at all: validating resolvers SERVFAIL the whole zone instead of falling
+# back to unsigned. The .signed zone is the only thing that follows rotation,
+# so derive from it every time and never cache the answer.
+#
+# Digest type 2 (SHA-256) only. Type 1 (SHA-1) is deprecated and .no does not
+# want it; type 4 (SHA-384) pairs with algorithm 14, and every zone here is
+# algorithm 13 (ECDSAP256SHA256).
+
+require "base64"
+require "digest"
+
+ZONE_DIR = ENV.fetch("NSD_ZONE_DIR", "/var/nsd/zones/master")
+
+# Owner name in DNS wire format: each label length-prefixed, root label to end.
+# This is the first half of the DS digest input (RFC 4034 s5.1.4).
+def wire_name(name)
+  name.sub(/\.\z/, "").split(".").map { |l| [l.bytesize].pack("C") + l.downcase }.join + "\0"
+end
+
+# RFC 4034 Appendix B. Not a checksum of the key material alone — it runs over
+# the whole DNSKEY RDATA including flags/protocol/algorithm.
+def key_tag(rdata)
+  acc = 0
+  rdata.bytes.each_with_index { |b, i| acc += i.odd? ? b : (b << 8) }
+  acc += (acc >> 16) & 0xFFFF
+  acc & 0xFFFF
+end
+
+zones = Dir.glob(File.join(ZONE_DIR, "*.zone.signed")).sort
+abort "no signed zones under #{ZONE_DIR}" if zones.empty?
+
+unsigned = []
+rows = []
+
+zones.each do |path|
+  zone = File.basename(path, ".zone.signed")
+
+  # Flags 257 is the secure-entry-point bit — the KSK. The ZSK (256) is signed
+  # over by the KSK and never appears in a DS.
+  ksks = File.read(path).scan(
+    /^\S+\s+\d+\s+IN\s+DNSKEY\s+(257)\s+(\d+)\s+(\d+)\s+\(?\s*([A-Za-z0-9+\/=\s]+?)\)?\s*(?:;|\n)/
+  )
+
+  if ksks.empty?
+    unsigned << zone
+    next
+  end
+
+  # More than one KSK means a rollover is mid-flight; publish both so the
+  # registry covers whichever survives.
+  ksks.each do |flags, proto, alg, b64|
+    rdata = [flags.to_i, proto.to_i, alg.to_i].pack("nCC") + Base64.decode64(b64.gsub(/\s+/, ""))
+    rows << format("%s. IN DS %d %d 2 %s", zone, key_tag(rdata), alg.to_i,
+                   Digest::SHA256.hexdigest(wire_name(zone) + rdata))
+  end
+end
+
+puts rows
+warn "\n#{rows.size} DS records from #{zones.size} signed zones"
+warn "no KSK (unsigned): #{unsigned.join(", ")}" unless unsigned.empty?
+warn "\nVerify one before publishing:"
+warn "  dig @46.23.89.226 <zone> DNSKEY +multi | grep 'key id'"
+warn "The KSK's key id must equal the tag printed above for that zone."
