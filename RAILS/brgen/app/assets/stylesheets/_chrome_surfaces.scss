@@ -51,8 +51,8 @@
 }
 
 .flash-alert {
-  background: color-mix(in srgb, var(--danger, #d1594a) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--danger, #d1594a) 28%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
 }
 
 .sidebar-card {

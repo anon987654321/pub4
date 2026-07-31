@@ -130,9 +130,12 @@ body.vertical-tv .duration-chip {
 }
 body.vertical-tv .live-badge::before {
   content: "● ";
-  /* Fallback must match the real --danger token (#d1594a in every dialect)
-     — this was a stale Twitter-red (#f4212e) leftover, not this app's color. */
-  color: var(--danger, #d1594a);
+  /* No hex fallback: --danger is set by the dialect mixin at :root for every
+     dialect, and it is a different value in each one (#e46151, #b24c3f,
+     #a9483c, …). #d1594a is design_tokens.yml's color_danger, a different
+     token — writing it here as "the" --danger was drift waiting to happen,
+     the same way the stale Twitter-red (#f4212e) it replaced was. */
+  color: var(--danger);
 }
 
 /* Takeaway sold out — text badge, not color-only */

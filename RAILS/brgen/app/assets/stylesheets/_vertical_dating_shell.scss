@@ -7,7 +7,7 @@ body.vertical-dating {
   --dating-border: var(--border);
   --dating-accent: var(--vertical-dating-accent, #00d4aa);
   --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
-  --dating-pass: var(--danger, #d1594a);
+  --dating-pass: var(--danger);
   --font-primary: "Inter", var(--font);
   background: var(--dating-bg);
   color: var(--dating-ink);

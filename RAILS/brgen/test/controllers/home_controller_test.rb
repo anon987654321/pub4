@@ -7,7 +7,11 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     host! "brgen.no"
     get root_url
     assert_response :success
-    assert_includes response.body, "compose-box"
+    # The resting composer is `.compose-launcher` (a pill that opens a <dialog>)
+    # since it stopped growing the feed downward; `.compose-box` is now only the
+    # inline live-feed form. A guest still gets it — brgen creates a guest user
+    # per browser and PostsController#create allows anonymous posts.
+    assert_includes response.body, "compose-launcher"
     assert_includes response.body, "feed-panel"
     assert_not_includes response.body, 'class="master-embed-frame"'
     assert_match(/aside class="sidebar"[\s\S]*?#{Regexp.escape(Rails.application.config.x.master_web_url)}/, response.body)
