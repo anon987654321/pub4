@@ -161,7 +161,26 @@ module Master
 
           changed = false
           out = src.lines.map do |line|
-            next line unless @path.to_s.match?(SQL_PATH) || line.match?(SQL_LINE)
+            # In a Ruby file, a line that looks like SQL is a string literal —
+            # a test fixture, a query-builder argument, or documentation — and
+            # rewriting inside one on a line-level regex is guessing at content
+            # the parser could have told us about.
+            #
+            # It has now guessed wrong twice. First it welded a JavaScript
+            # `timer=null` into `timerIS NULL` across five sites of the face's
+            # boot script (84371b070). Then, with the line heuristic added to
+            # narrow it, it rewrote this very rule's own fixture in
+            # test_ast_fixer_safety.rb: `deleted_at = NULL` became `IS NULL`, so
+            # the test fed already-correct SQL and asserted it was correct. A
+            # vacuous test, and thirteen sibling transforms broken alongside it.
+            #
+            # The fixer's source was already excluded above; its tests were not,
+            # and a test for a repair rule contains by construction exactly the
+            # input the rule repairs. Excluding Ruby from the line heuristic
+            # covers that case and every future fixture like it, without a list
+            # of filenames to keep current. A .sql path still always repairs.
+            sql_here = @path.to_s.match?(SQL_PATH) || (!ruby? && line.match?(SQL_LINE))
+            next line unless sql_here
 
             line.gsub(/(?<![<>!])=\s*NULL\b/) { changed = true; "IS NULL" }
                 .gsub(/!=\s*NULL\b/) { changed = true; "IS NOT NULL" }

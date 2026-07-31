@@ -104,6 +104,31 @@ class TestAstFixerSafety < Minitest::Test
     assert_includes out, "city_id IS NOT NULL"
   end
 
+  # The line above is a Ruby string containing SQL, which is exactly the shape
+  # the repair used to rewrite: SQL_LINE matched SELECT/WHERE/AND, `= NULL` was
+  # present, and the file being Ruby did not stop it. So the autofixer edited
+  # this file and turned the fixture two tests up into already-correct SQL —
+  # leaving it asserting that valid SQL is valid, and taking thirteen sibling
+  # transforms down with it when the same pass rewrote apply_transforms.
+  #
+  # A repair rule's own test contains, by construction, the input that rule
+  # repairs. This asserts the fixer cannot touch it.
+  def test_does_not_repair_sql_inside_a_ruby_string_literal
+    fixer = null_fixer_for("test/test_ast_fixer_safety.rb")
+    fixture = %(    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"\n)
+
+    assert_equal fixture, fixer.send(:normalise_null_comparison, fixture)
+  end
+
+  # The same guard as a property rather than an instance: this file must survive
+  # a full fix pass unchanged. If any transform ever starts editing the fixtures
+  # here, this fails loudly instead of the fixtures going quietly wrong.
+  def test_this_test_file_survives_a_full_fix_pass
+    source = File.read(__FILE__)
+
+    assert_equal source, fix(source)
+  end
+
   def null_fixer_for(path)
     fixer = Master::Review::Scan::AstFixer.allocate
     fixer.instance_variable_set(:@path, path)
