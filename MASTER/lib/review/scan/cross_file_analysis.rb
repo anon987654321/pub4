@@ -59,11 +59,38 @@ module Master
           end
         end
 
+        # A number is only "magic" if it is unnamed and distinctive.
+        #
+        # This rule produced 88 of the 231 cross-file findings on 2026-07-31 and
+        # not one was actionable, for three separate reasons, all fixed here:
+        #
+        #   MAGIC_NUMBER matches every digit 2-9 anywhere, so "literal 8 recurs
+        #   in 141 files" — array indices, loop bounds, version fragments. A
+        #   single digit carries no meaning worth naming.
+        #
+        #   It matches four-digit years, so "literal 2026 recurs in 50 files"
+        #   was the current year in comments and timestamps.
+        #
+        #   It counts the right-hand side of constant definitions. 32% of the
+        #   occurrences behind the plausible findings were already named:
+        #   PATTERN_CACHE_MAX = 512, BINARY_SAMPLE_BYTES = 512 and
+        #   rag_chunk_tokens: 512 were reported as one "literal 512" needing a
+        #   named constant. The rule fired on the fix it was recommending, so
+        #   doing what it said made the number go up.
+        NAMED_SITE = /(?:^\s*[A-Z][A-Z0-9_]*\s*=|\b[a-z_][a-z0-9_]*:\s*)\s*\z/
+        YEAR_RANGE = (1900..2100)
+        MAGIC_MIN = 10
+
         def magic_number_spread(files)
           grouped = Hash.new { |hash, key| hash[key] = [] }
           files.each do |path, code|
             code.each_line.with_index(1) do |line, number|
-              line.scan(MAGIC_NUMBER).each { |value| grouped[value] << [path, number] }
+              line.to_enum(:scan, MAGIC_NUMBER).each do
+                value = Regexp.last_match(0)
+                next if magic_number_exempt?(value, prefix: Regexp.last_match.pre_match)
+
+                grouped[value] << [path, number]
+              end
             end
           end
           grouped.filter_map do |value, occurrences|
@@ -73,14 +100,40 @@ module Master
           end
         end
 
+        def magic_number_exempt?(value, prefix:)
+          magnitude = value.to_i.abs
+          return true if magnitude < MAGIC_MIN
+          return true if YEAR_RANGE.cover?(magnitude)
+
+          # Already named: CONST = 512, or keyword: 512.
+          prefix.match?(NAMED_SITE)
+        end
+
+        # Only compare files that share an extension, and only report the ones
+        # that are code.
+        #
+        # Measured 2026-07-31 across MASTER: of 57 findings, 44 involved at
+        # least one non-Ruby file and ZERO were duplicated first-party Ruby. A
+        # five-line window over three JSON manifests from the same tool matches
+        # because they share a schema, not because anyone copied anything, and
+        # "extract a module or template" is not a thing you can do to a data
+        # file. Grouping by extension stops the cross-language matches;
+        # REFACTORABLE keeps the advice attached to files where it is possible.
+        REFACTORABLE = %w[.rb .rake .erb .js .ts .jsx .tsx .zsh .sh].freeze
+
         def copy_paste_blocks(files)
           grouped = Hash.new { |hash, key| hash[key] = [] }
           files.each do |path, code|
+            ext = File.extname(path)
+            next unless REFACTORABLE.include?(ext)
+
             code.lines.each_cons(BLOCK_LINES).with_index(1) do |lines, line|
               block = normalize_block(lines)
               next if block.empty?
 
-              grouped[Digest::SHA256.hexdigest(block)] << [path, line, block]
+              # Extension in the key, so a Ruby block and a shell block that
+              # normalise to the same text are never the same finding.
+              grouped[Digest::SHA256.hexdigest("#{ext}\0#{block}")] << [path, line, block]
             end
           end
           grouped.values.filter_map do |occurrences|
@@ -92,13 +145,34 @@ module Master
 
         def parallel_hierarchies(files)
           families = Hash.new { |hash, key| hash[key] = Set.new }
+          namespaces = Set.new
           files.each do |path, code|
+            # Anything written as a qualifier somewhere is a namespace. This
+            # codebase opens nested modules on separate lines —
+            #   module Master
+            #     module Review
+            #       module Scan
+            # — so splitting the declaration on "::" finds nothing to learn
+            # from; the evidence that Review is a namespace is that other files
+            # say Master::Review::Scan when they refer into it.
+            code.scan(/\b([A-Z]\w*)::/).flatten.each { |qualifier| namespaces << qualifier }
             code.scan(/^\s*(?:class|module)\s+([A-Z][\w:]+)/).flatten.each do |name|
-              families[name.split("::").last.to_s.gsub(/(Controller|Service|Policy|Job|Rule)\z/, "")] << path
+              segments = name.split("::")
+              namespaces.merge(segments[0..-2])
+              families[segments.last.to_s.gsub(/(Controller|Service|Policy|Job|Rule)\z/, "")] << path
             end
           end
           families.filter_map do |stem, paths|
             next if stem.empty? || paths.size < MIN_FILES
+            # A namespace is not a parallel hierarchy, it is a namespace. The
+            # 2026-07-31 run led with "Master spans 441 class/module
+            # hierarchies" — the root module of the codebase — and under it
+            # Review (99), Ground (96), CLI (74) and Io (47), which are the
+            # subsystem namespaces those 441 files nest inside. "Share a base or
+            # collapse the parallel structure" is not something anyone can do
+            # about a namespace, and the four of them accounted for most of the
+            # rule's output.
+            next if namespaces.include?(stem)
 
             build("PARALLEL_HIERARCHY", "#{stem} spans #{paths.size} class/module hierarchies — share a base or collapse the parallel structure")
           end
@@ -113,9 +187,25 @@ module Master
           end
         end
 
+        # A concern is sprawling when the CODE names it, not when the prose
+        # mentions it.
+        #
+        # This matched /\bpolicy\b/i against whole files, comments and strings
+        # included, and fired at four files. On 2026-07-31 it reported "policy"
+        # across 82 files and "cache" across 73 — lib/result.rb among them,
+        # because error classification legitimately talks about policy. Seven
+        # findings, seven common English words. Requiring the word to appear in
+        # a declaration, a method name or a constant keeps the rule's intent
+        # (one concern smeared across unrelated files) and drops the prose.
+        CONCERN_DECLARATION = lambda do |word|
+          w = Regexp.escape(word)
+          /^\s*(?:class|module)\s+\w*#{w}\w*|^\s*def\s+\w*#{w}\w*|^\s*[A-Z][A-Z0-9_]*#{w.upcase}[A-Z0-9_]*\s*=/i
+        end
+
         def sprawl(files)
           CONCERN_WORDS.filter_map do |word|
-            paths = files.filter_map { |path, code| path if code.match?(/\b#{Regexp.escape(word)}\b/i) }
+            matcher = CONCERN_DECLARATION.call(word)
+            paths = files.filter_map { |path, code| path if code.match?(matcher) }
             next if paths.uniq.size < 4 || natural_family?(paths)
 
             build("SPRAWL", "concern #{word.inspect} recurs in #{paths.uniq.size} unrelated files — review ownership before fixing")

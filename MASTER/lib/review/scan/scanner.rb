@@ -18,6 +18,13 @@ module Master
         SKIP_PATH_SEGMENTS = %w[
           .git vendor node_modules tmp log coverage .bundle storage cache dist build
           knowledge fixtures var
+          # reports/ is generated output. Scanning it meant the top
+          # COPY_PASTE_BLOCK findings were JSON manifests from three
+          # screenshot-calibration runs, which share keys because they share a
+          # schema — and the advice attached to them was "extract a module or
+          # template". Nothing in here is authored, so nothing in here can be
+          # refactored.
+          reports
         ].freeze
         SKIP_RELATIVE_PATHS = %w[
           .master runtime web/public/assets web/script/three_build web/node_modules web/tmp web/log

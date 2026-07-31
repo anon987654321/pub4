@@ -118,7 +118,19 @@ module Master
         @homeostat&.observe(:tool_call) # a pass is loop overhead distinct from the LLM call inside it
         if Time.now >= deadline
           @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
-          return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
+          # Err, not ok. A run that stopped because the clock ran out did not
+          # finish fixing, and saying "ok" here is how the 2026-07-31 gate
+          # reported a green MASTER phase whose /fix had completed exactly one
+          # pass: bin/cli exited 0, bin/gate saw success, and the /scan on
+          # either side of it printed the identical 110 violations.
+          #
+          # :timeout matches LLMDispatcher's category for the same situation, so
+          # a caller that wants to treat "ran out of time" differently from
+          # "genuinely failed" can, and one that does not gets the truth by
+          # default. All three callers already handle err: watch_loop ignores
+          # the return, through_pipeline logs "fail", and work_commands_status
+          # renders alternatives.
+          return Result.err("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)", category: :timeout)
         end
 
         result = @pass_runner.run_pass(
