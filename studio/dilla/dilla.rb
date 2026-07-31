@@ -3328,7 +3328,16 @@ def chord_intervals_from_hz(hz)
   midis.map { |m| ((m - root) % 12).round }.uniq
 end
 
-def generate_coltrane_changes(root_hz:, length: 8, seed: nil)
+# mode: is accepted and ignored. route_generated_style passes the same four
+# keywords to every generator, and this was the one signature that did not take
+# it — so the coltrane track raised "unknown keyword: :mode" on every render,
+# failed its retry, and demo-all substituted a silence placeholder. It shipped
+# 33 seconds of silence into the middle of the demo at -70 LUFS.
+#
+# Ignoring it is correct rather than lazy: Coltrane changes are a fixed cycle of
+# major thirds, which is the point of them. They do not vary by mode. The other
+# four routes all accept the keyword.
+def generate_coltrane_changes(root_hz:, mode: nil, length: 8, seed: nil)
   rng = seed ? Random.new(seed) : Random.new
   offsets = [0, 4, 8] # major thirds
   start = offsets.sample(random: rng)
@@ -20287,8 +20296,13 @@ def console_strip!(path, seed: 1, amount: CONSOLE_STRIP)
       merged[(i * 2) + 1] = ((right[i] * scale) * 32_767).round.clamp(-32_768, 32_767)
     end
     File.binwrite(cooked, merged.pack("s<*"))
+    # Same DC problem as the tape stage, an order of magnitude smaller but real:
+    # ConsoleStrip.process turns a DC-free input into one offset by 1.31% of
+    # peak at the default amount of 0.35, 3.84% at 1.0. Any asymmetric
+    # saturation does this, and both models run after the master chain's
+    # highpasses, so nothing downstream was removing it.
     sh! "ffmpeg", "-y", "-f", "s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
-        "-i", cooked, "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
+        "-i", cooked, "-af", "highpass=f=24", "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
     FileUtils.mv(out, path)
     took = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
     dmesg("console strip: seed #{seed}/#{seed + 1} amount #{amount} (#{took}s)",
@@ -20327,7 +20341,18 @@ def tape_hysteresis!(path)
     # magnetisation is not a stereo phenomenon anyway.
     sh! "ffmpeg", "-y", "-f", "s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "1", "-i", cooked,
         "-i", path, "-filter_complex",
-        "[0:a]aformat=channel_layouts=stereo[t];" \
+        # highpass=24 is load-bearing, not tidying. Jiles-Atherton models
+        # remanent magnetisation, and remanence is a DC phenomenon: a DC-free
+        # input comes out of TapeHysteresis.process with DC at 10.3% of peak at
+        # the default drive of 1.75, rising to 15.7% at 4.0. This stage runs
+        # after every highpass in the master chain and then peak-normalises,
+        # which preserves the offset instead of removing it.
+        #
+        # Unfixed, that offset dominated: 22 of 84 demo tracks measured DC up to
+        # -0.62, and the worst was 99.7% subsonic — full-band RMS -4.10 dB
+        # against -4.09 dB below 25 Hz, with the actual music 37 dB underneath
+        # it and the headroom entirely consumed.
+        "[0:a]aformat=channel_layouts=stereo,highpass=f=24[t];" \
         "[1:a]highpass=f=8000[air];" \
         "[t][air]amix=inputs=2:weights=1 0.35:duration=first:normalize=0[out]",
         "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2", *args, out
