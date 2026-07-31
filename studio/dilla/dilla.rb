@@ -66,6 +66,7 @@ require "timeout"
 require_relative "lib/mixer"
 require_relative "lib/crate_dig"
 require_relative "lib/key_lock"
+require_relative "lib/modal_family"
 require_relative "lib/dilla_dmesg"
 require_relative "lib/composition_engine"
 require_relative "lib/groove_score"
@@ -6966,11 +6967,24 @@ def dilla_progressions_only?
   ENV.fetch("DILLA_PROGRESSIONS_ONLY", "1") != "0"
 end
 
+# The Dilla core first, then everything else in the same key and mode.
+#
+# This returned the eight Dilla-produced progressions and stopped, because
+# widening it meant key chaos across a 248-progression catalogue spanning every
+# mode. KeyLock removed that objection — everything resolves to one tonic now —
+# so the pool widens to what shares the scale as well as the root: 203 of 248 at
+# a 0.80 root-fit against Bb Dorian/Aeolian plus the parallel major.
+#
+# Widened outward from the core rather than replacing it. Narrowing to Dilla's
+# own was a deliberate choice (2026-07-27) and those eight stay, first and
+# always. MODAL_ROTATION=0 restores the narrow pool exactly.
 def stream_track_pool
   pool = DillaLofiMachine::STREAM_ROTATION
   return pool unless dilla_progressions_only?
+
   dilla_only = DILLA_PRODUCED_TRACKS.map(&:to_s)
-  pool.select { |t| dilla_only.include?(t) }.then { |p| p.empty? ? dilla_only : p }
+  core = pool.select { |t| dilla_only.include?(t) }.then { |p| p.empty? ? dilla_only : p }
+  ModalFamily.widen(core, CHORD_PROGRESSIONS)
 end
 
 # Every consumer of a verified progression comes through here, so this is where
