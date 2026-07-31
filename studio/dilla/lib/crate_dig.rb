@@ -87,12 +87,19 @@ module CrateDig
 
   # Idiom -> ccMixter tag. These are the seams the names asked for, in the one
   # place they legitimately exist.
+  #
+  # One tag per seam, and that is a constraint rather than a style choice: the
+  # API's `tags` parameter matches a single tag, it does not intersect a comma
+  # list. Shipped first as "dub,stems" and "drums,breakbeat", which matched a
+  # literal tag string nobody has ever used and returned zero rows each, while
+  # `stems` and `drums` alone return thirty apiece. Two dead seams that looked
+  # like an empty corner of the archive rather than a query bug.
   CC_SEAMS = {
     "dub" => "dub",
     "roots" => "reggae",
-    "dub_stems" => "dub,stems",
-    "spiritual_jazz" => "jazz,spiritual",
-    "breaks" => "drums,breakbeat",
+    "stems" => "stems",
+    "drums" => "drums",
+    "jazz" => "jazz",
   }.freeze
 
   def self.ccmixter_search(seam:, rows: 20)
