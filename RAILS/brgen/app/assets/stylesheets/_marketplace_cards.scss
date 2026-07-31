@@ -24,7 +24,7 @@
 a.deal-card,
 .deal-card {
   background: var(--surface-elevated);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-card);
   overflow: hidden;
   display: flex;
@@ -32,13 +32,12 @@ a.deal-card,
   min-width: 0;
   color: inherit;
   text-decoration: none;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 a.deal-card:hover,
 .deal-card:hover {
   background: var(--hover-subtle);
-  border-color: var(--text-secondary);
   text-decoration: none;
 }
 
@@ -90,7 +89,8 @@ a.deal-card:hover,
 .deal-badge--soft {
   background: var(--surface-elevated);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 0;
+  outline: 1px solid var(--border);
 }
 
 .deal-card-body {

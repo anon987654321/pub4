@@ -23,8 +23,8 @@
     <%= render partial: "posts/post", collection: @posts %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No posts yet",
-          body: "Nothing published on this profile.",
-          action: { label: "City feed", path: root_path } %>
+          title: t("empty.no_posts_yet"),
+          body: t("empty.profile_empty"),
+          action: { label: t("empty.city_feed"), path: root_path } %>
   <% end %>
 </section>

@@ -131,38 +131,38 @@
           <% end %>
           <%= link_to conversations_path, class: nav_cls.(conversations_path) do %>
             <%= icon :messages, size: 26 %>
-            <span>Messages</span>
+            <span><%= t("nav.messages") %></span>
           <% end %>
           <%= link_to nearby_path, class: nav_cls.(nearby_path) do %>
             <%= icon :nearby, size: 26 %>
-            <span>Nearby</span>
+            <span><%= t("nav.nearby") %></span>
           <% end %>
           <% if authenticated? %>
             <%= link_to user_path(Current.user), class: nav_cls.(user_path(Current.user)) do %>
               <%= icon :profile, size: 26 %>
-              <span>Profile</span>
+              <span><%= t("nav.profile") %></span>
             <% end %>
           <% else %>
             <%= link_to new_session_path, class: nav_cls.(new_session_path) do %>
               <%= icon :sign_in, size: 26 %>
-              <span>Sign in</span>
+              <span><%= t("nav.sign_in") %></span>
             <% end %>
           <% end %>
         </nav>
         <% if authenticated? %>
           <div class="sidebar-dropdown" data-controller="dropdown" data-action="click@window->dropdown#hide">
-            <button type="button" class="btn btn-ghost btn-sm" data-dropdown-button aria-expanded="false" data-action="click->dropdown#toggle">More</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-dropdown-button aria-expanded="false" data-action="click->dropdown#toggle"><%= t("nav.more") %></button>
             <div class="sidebar-dropdown-menu hidden" data-dropdown-target="menu">
-              <%= link_to "Profile", user_path(Current.user) %>
-              <%= link_to "New post", new_post_path %>
-              <%= link_to "New community", new_community_path %>
-              <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+              <%= link_to t("nav.profile"), user_path(Current.user) %>
+              <%= link_to t("nav.new_post"), new_post_path %>
+              <%= link_to t("nav.new_community"), new_community_path %>
+              <%= link_to t("nav.sign_out"), session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
             </div>
           </div>
         <% end %>
         <a href="<%= new_post_path %>" class="compose-btn">
           <%= icon :compose, size: 22, css_class: "compose-icon" %>
-          <span class="compose-label">Post</span>
+          <span class="compose-label"><%= t("nav.post") %></span>
         </a>
       </aside>
       <button type="button" class="edge-grip edge-grip-left" data-edge-swiper-target="grip"
@@ -198,8 +198,8 @@
       <aside class="widgets" aria-label="Widgets" data-edge-swiper-target="root">
         <%= form_with url: global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
           <%= icon :search, size: 19 %>
-          <%= form.search_field :q, value: params[:q], placeholder: "Search Brgen", aria: { label: "Search Brgen" } %>
-          <%= form.submit "Search", class: "visually-hidden" %>
+          <%= form.search_field :q, value: params[:q], placeholder: t("nav.search_placeholder"), aria: { label: t("nav.search_placeholder") } %>
+          <%= form.submit t("nav.search"), class: "visually-hidden" %>
         <% end %>
         <%= yield :widgets %>
         <%= render "shared/sidebar_discovery" %>
@@ -231,24 +231,24 @@
     <section class="mobile-sheet" data-level="0" aria-label="Quick actions" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
       <div class="mobile-sheet-handle"></div>
       <div class="mobile-sheet-links">
-        <%= link_to "AI assistant", brgen_ai_url, data: { turbo: false } %>
-        <%= link_to "Live", live_path %>
-        <%= link_to "Channels", channels_path %>
-        <%= link_to "New post", new_post_path %>
-        <%= link_to "New community", new_community_path %>
+        <%= link_to t("nav.ai_assistant"), brgen_ai_url, data: { turbo: false } %>
+        <%= link_to t("home.live"), live_path %>
+        <%= link_to t("nav.channels"), channels_path %>
+        <%= link_to t("nav.new_post"), new_post_path %>
+        <%= link_to t("nav.new_community"), new_community_path %>
         <% if authenticated? %>
-          <%= link_to "Profile", user_path(Current.user) %>
-          <%= link_to "Sign out", session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
+          <%= link_to t("nav.profile"), user_path(Current.user) %>
+          <%= link_to t("nav.sign_out"), session_path, data: { turbo_method: :delete, turbo_prefetch: false } %>
         <% else %>
-          <%= link_to "Sign in", new_session_path %>
+          <%= link_to t("nav.sign_in"), new_session_path %>
         <% end %>
       </div>
     </section>
   </div>
   </div>
   <%= render "shared/install_prompt",
-        title: "Install Brgen",
-        body: "Live notes, marketplace, and nearby — one tap from your home screen." %>
+        title: t("install.title"),
+        body: t("install.body") %>
   <%= render "shared/nearby_chat_widget" %>
 </body>
 </html>

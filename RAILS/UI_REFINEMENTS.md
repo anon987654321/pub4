@@ -113,9 +113,9 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Token CSS auto-gen test fail-on-drift | Follow-up for `generate_face_root_css.rb` |
 | Demo wardrobe seed 6–8 items | Data seed, not layout |
 | Global `/` hotkey search chrome | App already has feed-hotkey; UI partial optional |
-| Per-app PWA monochrome icons | Asset design pass |
+| Per-app PWA monochrome icons | Landed (brgen/amber/bsdports + manifests) |
 | Full ERB class-soup → bare semantic HTML | Multi-PR product surface; partial via shared primitives |
-| Full i18n of brgen chrome strings | Locale pass separate from this wave |
+| Full i18n of brgen chrome strings | Core home/auth/nav/empty landed (nb default); residual vertical strings remaining |
 | Exhaustive model/request coverage | Expand when touching domains (Boy Scout) |
 | In-process `release` / `rails_runtime` / `visual_contract` | Still subprocess by design |
 | SCSS `_ui_refinements*` merge into domain partials | Next touch Boy Scout |

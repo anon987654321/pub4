@@ -29,7 +29,7 @@ body.vertical-marketplace .deal-grid {
 
 body.vertical-marketplace a.deal-card:hover,
 body.vertical-marketplace .deal-card:hover {
-  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--hover-subtle, var(--hover)));
 }
 
 body.vertical-marketplace .deal-card-img {

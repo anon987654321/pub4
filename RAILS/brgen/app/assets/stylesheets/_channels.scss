@@ -16,7 +16,7 @@
 
 /* Distinct from TV .channel-card (video posters) */
 .channel-list .channel-card {
-  border: 1px solid var(--border, var(--border));
+  border: 0;
   border-radius: var(--radius-md, 12px);
   background: var(--surface-elevated, var(--surface2));
 }
@@ -64,7 +64,7 @@
 }
 
 .channel-room-header {
-  border-bottom: 1px solid var(--border, var(--border));
+  border-bottom: 0;
   padding-bottom: var(--space-3, 0.75rem);
 }
 

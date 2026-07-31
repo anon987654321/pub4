@@ -67,16 +67,15 @@
   min-width: 0;
   scroll-snap-align: start;
   background: var(--surface-elevated);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-card);
   overflow: hidden;
   color: inherit;
   text-decoration: none;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .top-offer-card:hover {
-  border-color: var(--accent, var(--text-secondary));
   background: var(--hover-subtle);
   text-decoration: none;
 }

@@ -23,9 +23,9 @@
              q: params[:q] %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No posts",
-        body: live_search_query.present? ? "No posts match this search." : "Nothing here yet.",
+        title: t("empty.no_posts"),
+        body: live_search_query.present? ? t("empty.no_posts_search") : t("empty.nothing_yet"),
         action: live_search_query.present? ?
-          { label: "Clear search", path: posts_path } :
-          { label: "Post to Bergen", path: new_post_path } %>
+          { label: t("empty.clear_search"), path: posts_path } :
+          { label: t("empty.post_to_bergen"), path: new_post_path } %>
 <% end %>

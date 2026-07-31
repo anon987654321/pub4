@@ -22,9 +22,9 @@
   <% end %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "No posts yet",
-        body: "Start the conversation in #{@community.name} — guests can post without an account.",
-        action: { label: "New post", path: new_community_post_path(@community) } %>
+        title: t("empty.no_posts_yet"),
+        body: t("empty.start_community", name: @community.name),
+        action: { label: t("nav.new_post"), path: new_community_post_path(@community) } %>
 <% end %>
 
 <aside>

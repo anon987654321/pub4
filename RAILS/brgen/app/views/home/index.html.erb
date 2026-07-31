@@ -2,8 +2,8 @@
 <% content_for :widgets do %>
   <aside class="sidebar-card" data-controller="toggle" data-toggle-class="hidden">
     <div class="row-between">
-      <h2>Communities</h2>
-      <button type="button" class="btn btn-ghost btn-sm" data-action="click->toggle#toggle" aria-label="Toggle communities">Hide</button>
+      <h2><%= t("nav.communities") %></h2>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="click->toggle#toggle" aria-label="<%= t("nav.hide") %>"><%= t("nav.hide") %></button>
     </div>
     <ul data-toggle-target="item">
       <% @communities.each do |c| %>
@@ -11,33 +11,31 @@
       <% end %>
     </ul>
     <% if authenticated? %>
-      <p><%= link_to "+ New community", new_community_path, class: "btn btn-ghost btn-sm" %></p>
+      <p><%= link_to t("nav.new_community"), new_community_path, class: "btn btn-ghost btn-sm" %></p>
     <% end %>
   </aside>
 <% end %>
 
-<section class="city-home-intro" aria-label="City orientation">
-  <h2 class="city-home-intro-title">Bergen, right now</h2>
-  <p class="city-home-intro-body">
-    Neighbourhood notes, weather-window plans, gigs, openings and the useful small things a city tells itself.
-  </p>
+<section class="city-home-intro" aria-label="<%= t("home.intro_title") %>">
+  <h2 class="city-home-intro-title"><%= t("home.intro_title") %></h2>
+  <p class="city-home-intro-body"><%= t("home.intro_body") %></p>
   <p class="city-home-paths">
-    <%= link_to "Live", live_path %>
+    <%= link_to t("home.live"), live_path %>
     <span class="city-home-sep" aria-hidden="true">·</span>
-    <%= link_to "Marketplace", marketplace_root_url %>
+    <%= link_to t("home.marketplace"), marketplace_root_url %>
     <span class="city-home-sep" aria-hidden="true">·</span>
-    <%= link_to "Messages", conversations_path %>
-    <span class="city-home-note"> — no signup required</span>
+    <%= link_to t("home.messages"), conversations_path %>
+    <span class="city-home-note"><%= t("home.no_signup") %></span>
   </p>
   <p class="city-home-ai">
-    <%= link_to "Ask Brgen AI", root_path(master: 1), class: "city-home-ai-link", data: { turbo: false },
-          title: "Opens Brgen AI without the launch overlay" %>
+    <%= link_to t("home.ask_ai"), root_path(master: 1), class: "city-home-ai-link", data: { turbo: false },
+          title: t("home.ask_ai_title") %>
   </p>
 </section>
 
-<section id="feed-panel" aria-label="Local posts" data-visitor-orientation>
+<section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
   <% if home_feed_following? && !authenticated? %>
-    <p class="dim feed-hint"><%= link_to "Sign in", new_session_path %> to see posts from people you follow.</p>
+    <p class="dim feed-hint"><%= link_to t("home.follow_sign_in"), new_session_path %><%= t("home.follow_hint") %></p>
   <% end %>
   <%= render "home/live_search_results" %>
 </section>

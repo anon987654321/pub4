@@ -148,5 +148,6 @@ body.vertical-takeaway .order-status {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   background: var(--surface-elevated);
-  border: 1px solid var(--border);
+  border: 0;
+  box-shadow: 0 4px 24px color-mix(in srgb, var(--bg, #000) 40%, transparent);
 }

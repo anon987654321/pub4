@@ -25,7 +25,7 @@ class CritiqueImplementationTest < Minitest::Test
     assert_includes posts_index, 'class="sort-tabs"'
     %w[Hot Fresh Top].each { |label| assert_includes posts_index, %(link_to "#{label}") }
     refute_includes home, "sort-tabs"
-    assert_includes home, "Bergen, right now"
+    assert_match(/home\.intro_title|Bergen/, home)
     assert_includes compose, "Post to Bergen"
     assert_includes compose, "Posting as a guest"
     assert_includes post, 'aria-label="Share post"'
