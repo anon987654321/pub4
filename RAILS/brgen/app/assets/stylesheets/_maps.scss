@@ -70,8 +70,9 @@
 .maplibregl-popup-content {
   border-radius: var(--radius-card);
   padding: var(--space-3) var(--space-4);
-  border: 0;
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--bg, #000) 40%, transparent);
+  /* Flat UI (design_rules pixel_perfection): contrast, not glow */
+  border: 1px solid var(--border);
+  background: var(--surface-elevated, var(--surface));
 }
 
 .match-overlay {

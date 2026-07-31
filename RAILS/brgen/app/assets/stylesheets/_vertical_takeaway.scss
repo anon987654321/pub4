@@ -143,11 +143,12 @@ body.vertical-takeaway .feed-card.takeaway .feed-card-meta:first-of-type {
 
 body.vertical-takeaway .order-status {
   position: sticky;
-  bottom: calc(70px + var(--safe-bottom));
+  /* 72px = tab-bar clearance on 8px rhythm (design_rules eight_px_rhythm) */
+  bottom: calc(72px + var(--safe-bottom));
   margin: var(--space-4);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   background: var(--surface-elevated);
-  border: 0;
-  box-shadow: 0 4px 24px color-mix(in srgb, var(--bg, #000) 40%, transparent);
+  /* Flat UI (design_rules pixel_perfection): sticky bar uses border contrast, not shadow */
+  border: 1px solid var(--border);
 }

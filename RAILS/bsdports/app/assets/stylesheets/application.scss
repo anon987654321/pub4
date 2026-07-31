@@ -70,9 +70,9 @@ body {
 .search-result {
   font-family: var(--font);
   font-size: var(--font-size);
-  /* CRT density keeps a hairline — soft green, not box chrome */
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  padding: 0.45rem 0;
+  /* CRT list separators (wscons dialect): 1px hairline is allowed; no box-shadow */
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0; /* 8px — design_rules eight_px_rhythm */
 }
 
 .advisory-tag {

@@ -14,12 +14,12 @@
 .nearby-alert {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--surface2);
-  border: 0;
+  gap: 8px;
+  /* Flat UI (design_rules pixel_perfection): no box-shadow; separation via surface + border */
+  background: var(--surface-elevated, var(--surface2));
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--bg, #000) 45%, transparent);
-  padding: 0.75rem 0.875rem;
+  padding: 0.75rem 1rem;
   pointer-events: all;
   animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
 }
