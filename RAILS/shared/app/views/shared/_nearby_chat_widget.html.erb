@@ -1,7 +1,7 @@
 <%# Fleet floating chat bar (flush bottom-right).
     Brgen: ambient chat — #brgen lobby without GPS, #nearby when located.
     Other apps: inbox or deep-link to Brgen. %>
-<% widget_title = local_assigns.fetch(:title, respond_to?(:nearby_widget_path) ? "chat" : "chat") %>
+<% widget_title = local_assigns.fetch(:title, t("chat.title", default: "chat")) %>
 <div class="nearby-chat-widget" data-controller="nearby-chat"
      data-nearby-chat-storage-key-value="pub4:ambient-chat:open">
   <button type="button"
@@ -11,7 +11,7 @@
           aria-expanded="false"
           aria-controls="nearby-chat-widget-panel">
     <%= icon :messages, size: 16 %>
-    <span data-nearby-chat-target="tabLabel"><%= respond_to?(:nearby_widget_path) ? "chat" : "chat" %></span>
+    <span data-nearby-chat-target="tabLabel"><%= widget_title %></span>
   </button>
 
   <div id="nearby-chat-widget-panel"
@@ -22,7 +22,7 @@
        hidden>
     <header class="nearby-chat-widget-header">
       <span data-nearby-chat-target="headerLabel"><%= widget_title %></span>
-      <button type="button" class="nearby-chat-widget-close" data-action="nearby-chat#close" aria-label="Close">&times;</button>
+      <button type="button" class="nearby-chat-widget-close" data-action="nearby-chat#close" aria-label="<%= t("chat.close", default: "Close") %>">&times;</button>
     </header>
 
     <p class="nearby-chat-widget-status dim" data-nearby-chat-target="status" hidden aria-live="polite"></p>
@@ -31,29 +31,29 @@
       <% if respond_to?(:nearby_widget_path) %>
         <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path do %>
           <div class="nearby-chat-widget-empty">
-            <strong>Chat</strong>
-            <p>Loading the room…</p>
+            <strong><%= t("chat.title", default: "Chat") %></strong>
+            <p><%= t("chat.loading", default: "Loading the room…") %></p>
           </div>
         <% end %>
       <% elsif respond_to?(:messages_path) %>
         <div class="nearby-chat-widget-empty">
-          <strong>Messages</strong>
+          <strong><%= t("nav.messages", default: t("messages.title", default: "Messages")) %></strong>
           <% if respond_to?(:authenticated?) && authenticated? %>
-            <p>Open your inbox to read and send messages on this app.</p>
-            <%= link_to "Open messages", messages_path, class: "nearby-chat-widget-cta" %>
+            <p><%= t("chat.open_inbox", default: "Open your inbox to read and send messages on this app.") %></p>
+            <%= link_to t("chat.open_messages", default: "Open messages"), messages_path, class: "nearby-chat-widget-cta" %>
           <% else %>
-            <p>Sign in for this app’s inbox, or chat anonymously on Brgen.</p>
+            <p><%= t("chat.sign_in_inbox", default: "Sign in for this app’s inbox, or chat anonymously on Brgen.") %></p>
             <% if respond_to?(:new_session_path) %>
-              <%= link_to "Sign in", new_session_path, class: "nearby-chat-widget-cta" %>
+              <%= link_to t("nav.sign_in", default: "Sign in"), new_session_path, class: "nearby-chat-widget-cta" %>
             <% end %>
-            <%= link_to "Open Brgen chat", "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
+            <%= link_to t("chat.open_brgen", default: "Open Brgen chat"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
           <% end %>
         </div>
       <% else %>
         <div class="nearby-chat-widget-empty">
-          <strong>Chat on Brgen</strong>
-          <p>City lobby works without GPS.</p>
-          <%= link_to "Open #brgen", "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
+          <strong><%= t("chat.on_brgen", default: "Chat on Brgen") %></strong>
+          <p><%= t("chat.lobby_body", default: "City lobby works without GPS.") %></p>
+          <%= link_to t("chat.open_brgen_channel", default: "Open #brgen"), "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
         </div>
       <% end %>
     </div>

@@ -5,21 +5,21 @@
     <div class="nearby-chat-widget-mode dim" data-nearby-chat-target="mode">
       <% if @located %>
         <strong>#nearby</strong> · ~10&nbsp;km · <%= Current.user.anon_handle %>
-        <button type="button" class="nearby-chat-widget-linkish" data-action="nearby-chat#locate" title="Refresh location">↻</button>
+        <button type="button" class="nearby-chat-widget-linkish" data-action="nearby-chat#locate" title="<%= t("chat.refresh_location") %>">↻</button>
       <% else %>
-        <strong>#brgen</strong> · city lobby · <%= Current.user.channel_handle %>
-        <button type="button" class="nearby-chat-widget-linkish" data-action="nearby-chat#locate">Use location</button>
+        <strong>#brgen</strong> · <%= t("chat.city_lobby") %> · <%= Current.user.channel_handle %>
+        <button type="button" class="nearby-chat-widget-linkish" data-action="nearby-chat#locate"><%= t("chat.use_location") %></button>
       <% end %>
     </div>
 
     <% if @messages.blank? %>
       <div class="nearby-chat-widget-empty">
         <% if @located %>
-          <strong>You’re in the nearby room</strong>
-          <p>No messages yet within ~10&nbsp;km. Say hi — no signup.</p>
+          <strong><%= t("chat.nearby_title") %></strong>
+          <p><%= t("chat.nearby_body") %></p>
         <% else %>
-          <strong>City lobby</strong>
-          <p>Anonymous chat without GPS. Share location anytime for the hyperlocal room.</p>
+          <strong><%= t("chat.lobby_title") %></strong>
+          <p><%= t("chat.lobby_body") %></p>
         <% end %>
       </div>
     <% end %>
@@ -37,8 +37,8 @@
     <%= render "nearby/widget_composer", conversation: @conversation %>
   <% else %>
     <div class="nearby-chat-widget-empty">
-      <strong>Anonymous chat</strong>
-      <p>Loading… if this sticks, open the city lobby.</p>
+      <strong><%= t("chat.title") %></strong>
+      <p><%= t("chat.loading") %></p>
       <%= link_to "Open #brgen", channel_path("brgen"), class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
     </div>
   <% end %>

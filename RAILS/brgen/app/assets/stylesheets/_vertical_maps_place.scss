@@ -22,7 +22,7 @@ body.vertical-maps article.place dl {
   padding: 1rem;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--maps-border);
+  border: 0;
 }
 
 body.vertical-maps article.place dt {
@@ -69,7 +69,7 @@ body.vertical-maps .place-card {
   padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--maps-border);
+  border: 0;
 }
 
 body.vertical-maps .place-card h2 {

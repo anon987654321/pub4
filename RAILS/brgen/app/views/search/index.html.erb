@@ -1,7 +1,7 @@
-<% content_for :title, "Search" %>
+<% content_for :title, t("nav.search") %>
 
 <header class="page-header" role="banner">
-  <h1>Search Brgen</h1>
+  <h1><%= t("search.title") %></h1>
 </header>
 
-<%= live_search_index url: global_search_path, results_partial: "search/live_search_results", placeholder: "Search posts, listings, TV, playlists…", label: "Search all verticals", query: @query %>
+<%= live_search_index url: global_search_path, results_partial: "search/live_search_results", placeholder: t("search.placeholder"), label: t("search.label"), query: @query %>

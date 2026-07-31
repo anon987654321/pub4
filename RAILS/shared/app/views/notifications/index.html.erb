@@ -1,13 +1,13 @@
-<% content_for :title, "Notifications" %>
+<% content_for :title, t("notifications.title", default: "Notifications") %>
 
 <%= turbo_frame_tag "notifications" do %>
-  <div class="page-header" role="banner" aria-label="Notifications header">
+  <div class="page-header" role="banner" aria-label="<%= t("notifications.title", default: "Notifications") %>">
     <div>
-      <h1>Notifications</h1>
+      <h1><%= t("notifications.title", default: "Notifications") %></h1>
     </div>
     <% unread = @notifications.count { |n| !n.read? } %>
     <% if unread.positive? %>
-      <%= button_to "Mark all read", read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>
+      <%= button_to t("notifications.mark_all", default: "Mark all read"), read_all_notifications_path, method: :patch, class: "btn btn-primary", data: { turbo_stream: true } %>
     <% end %>
   </div>
 
@@ -17,8 +17,8 @@
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: "No notifications yet",
-          body: "Updates will appear here.",
-          action: { label: "Home", path: root_path } %>
+          title: t("notifications.empty_title", default: "No notifications yet"),
+          body: t("notifications.empty_body", default: "Updates will appear here."),
+          action: { label: t("nav.home", default: "Home"), path: root_path } %>
   <% end %>
 <% end %>

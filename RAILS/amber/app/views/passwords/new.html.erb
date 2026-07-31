@@ -1,16 +1,16 @@
 <div class="auth-form">
-  <h1>Reset password</h1>
-  <p class="auth-form-lead">We will email a link to set a new password.</p>
+  <h1><%= t("auth.forgot_title") %></h1>
+  <p class="auth-form-lead"><%= t("auth.forgot_lead") %></p>
   <%= form_with url: passwords_path do |f| %>
     <div class="field">
-      <%= f.label :email_address, "Email" %>
+      <%= f.label :email_address, t("auth.email") %>
       <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
     </div>
     <div class="actions">
-      <%= f.submit "Send reset link", class: "btn btn--primary" %>
+      <%= f.submit t("auth.email_reset"), class: "btn btn--primary" %>
     </div>
     <p class="auth-form-footer">
-      <%= link_to "Back to sign in", new_session_path %>
+      <%= link_to t("auth.back_to_sign_in"), new_session_path %>
     </p>
   <% end %>
 </div>
