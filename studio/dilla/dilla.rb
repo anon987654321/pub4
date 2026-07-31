@@ -65,6 +65,7 @@ require "open3"
 require "timeout"
 require_relative "lib/mixer"
 require_relative "lib/crate_dig"
+require_relative "lib/key_lock"
 require_relative "lib/dilla_dmesg"
 require_relative "lib/composition_engine"
 require_relative "lib/groove_score"
@@ -6972,9 +6973,14 @@ def stream_track_pool
   pool.select { |t| dilla_only.include?(t) }.then { |p| p.empty? ? dilla_only : p }
 end
 
+# Every consumer of a verified progression comes through here, so this is where
+# the rotation is brought to one tonal centre. KEY_LOCK=0 restores the
+# original keys; KEY_LOCK_TONIC names a different target.
 def artist_verified_chords(key)
   entry = ARTIST_VERIFIED_PROGRESSIONS[key&.to_sym]
-  entry && entry[:chords]
+  return nil unless entry
+
+  KeyLock.lock(entry[:chords])
 end
 
 # Album / track progressions — verified first; rest are experimental / theory pack.
