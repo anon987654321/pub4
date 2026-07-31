@@ -53,6 +53,7 @@ export default class extends Controller {
   #tryAutoStart() {
     if (!this.app || this.app.isStarted) return
     this.app.start()
+    window.dispatchEvent(new CustomEvent("pub4:install-value"))
     // If autoplay is blocked, re-show the overlay so one tap still unlocks sound.
     this._fallbackTimer = window.setTimeout(() => {
       if (!this.app?.audioEngine?.isPlaying && this.hasOverlayTarget) {

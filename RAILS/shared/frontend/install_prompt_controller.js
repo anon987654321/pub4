@@ -1,8 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 const VISITS_KEY = "install-prompt-visits"
+const VALUE_KEY = "install-prompt-value"
 const DISMISSED_KEY = "install-prompt-dismissed"
 
+// Show after real product value (post / play / chat) OR three visits.
+// Value is marked via: window.dispatchEvent(new CustomEvent("pub4:install-value"))
+// or data-action that calls install-prompt#markValue.
 export default class extends Controller {
   connect() {
     this.deferredPrompt = null
@@ -14,18 +18,28 @@ export default class extends Controller {
       this.deferredPrompt = event
       this.reveal()
     }
+    this.onValue = () => this.markValue()
 
     window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
+    window.addEventListener("pub4:install-value", this.onValue)
     this.reveal()
   }
 
   disconnect() {
     window.removeEventListener("beforeinstallprompt", this.onBeforeInstall)
+    window.removeEventListener("pub4:install-value", this.onValue)
+  }
+
+  markValue() {
+    try { localStorage.setItem(VALUE_KEY, "1") } catch (_) {}
+    this.reveal()
   }
 
   canShow() {
     const visits = Number(localStorage.getItem(VISITS_KEY) || "0")
-    return visits >= 3 && localStorage.getItem(DISMISSED_KEY) !== "1" && this.deferredPrompt
+    const valued = localStorage.getItem(VALUE_KEY) === "1"
+    const ready = valued || visits >= 3
+    return ready && localStorage.getItem(DISMISSED_KEY) !== "1" && this.deferredPrompt
   }
 
   reveal() {

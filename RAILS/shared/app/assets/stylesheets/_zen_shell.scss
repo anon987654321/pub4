@@ -102,6 +102,8 @@ input, button, textarea, select {
   transform: none;
 }
 
+/* Amber and social share primary; keep legacy btn-primary as an alias. */
+.btn-primary,
 .btn--primary {
   background: var(--text, var(--color-primary));
   color: var(--bg, var(--color-highlight));

@@ -75,6 +75,18 @@
   padding: 0.25rem 0.75rem;
 }
 
+/* Minimal home: keep title readable above the tab safe area / home indicator. */
+.radio-now-playing--minimal {
+  inset-block-end: calc(var(--space-lg) + var(--safe-bottom, 0px));
+  inset-inline: var(--space-md);
+  justify-content: center;
+  max-width: min(92vw, 28rem);
+  margin-inline: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
 .radio-note-icon {
   font-size: 1.2em;
   color: var(--color-accent);

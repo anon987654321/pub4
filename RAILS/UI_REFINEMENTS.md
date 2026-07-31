@@ -95,6 +95,12 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Product install prompts (brgen / amber / bsdports) | Landed |
 | Vertical purpose intros (takeaway, TV home) | Landed |
 | Family layout contract (MASTER + RAILS shared chrome vars, skip-link, landmarks) | Landed |
+| Ambient chat dock: #brgen lobby without GPS, #nearby when located | Landed |
+| Playlist minimal now-playing + auto-start | Landed |
+| Amber btn--primary normalize (+ btn-primary alias) | Landed |
+| Dating discover/matches nb chrome | Landed |
+| Install prompt after value event or 3 visits | Landed |
+| Location denied sticky + guest merge flash | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 

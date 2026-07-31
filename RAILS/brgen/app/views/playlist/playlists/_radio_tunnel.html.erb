@@ -46,12 +46,14 @@
       <div class="radio-archaeology-line"><%= line %></div>
     <% end %>
   </aside>
-
-  <div class="radio-now-playing" aria-live="polite">
-    <span class="radio-note-icon" aria-hidden="true">♪</span>
-    <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">J Dilla - Microphone Master</span>
-  </div>
   <% end %>
+
+  <%# Now-playing stays on for minimal home too — auto-start is useless if you
+      cannot see the track. %>
+  <div class="radio-now-playing<%= " radio-now-playing--minimal" if local_assigns.fetch(:minimal, false) %>" aria-live="polite">
+    <span class="radio-note-icon" aria-hidden="true">♪</span>
+    <span class="radio-track-display" data-radio-tunnel-target="trackDisplay">…</span>
+  </div>
 
   <div
     class="radio-overlay"

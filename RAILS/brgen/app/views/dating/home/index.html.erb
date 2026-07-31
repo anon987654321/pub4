@@ -63,11 +63,11 @@
         <% if @profiles.empty? %>
           <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
           <%= render "shared/empty_state",
-                title: "No profiles nearby",
-                body: "Widen your range, check back later, or finish your profile so others can find you.",
+                title: "Ingen i nærheten",
+                body: "Utvid radius, kom tilbake senere, eller fullfør profilen din så andre finner deg.",
                 action: Current.user&.dating_profile.present? ?
-                  { label: "Edit profile", path: edit_dating_profile_path } :
-                  { label: "Create profile", path: new_dating_profile_path } %>
+                  { label: "Rediger profil", path: edit_dating_profile_path } :
+                  { label: "Lag profil", path: new_dating_profile_path } %>
         <% end %>
         <turbo-frame id="dating-next" src="<%= dating_next_path %>" loading="lazy" hidden></turbo-frame>
       </section>

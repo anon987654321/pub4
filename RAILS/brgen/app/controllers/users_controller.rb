@@ -31,9 +31,15 @@ class UsersController < ApplicationController
       return
     end
 
-    merge_guest_into(@user, guest)
+    merged = merge_guest_into(@user, guest)
     start_new_session_for @user
-    redirect_to after_authentication_url, notice: "Welcome to Brgen."
+    notice =
+      if merged
+        "Welcome to Brgen — your guest posts and chats are on this account."
+      else
+        "Welcome to Brgen."
+      end
+    redirect_to after_authentication_url, notice: notice
   end
 
   private
@@ -41,13 +47,15 @@ class UsersController < ApplicationController
   # Carry the guest's posts, comments and conversations onto the new account.
   # Must run before start_new_session_for, which resets the session holding the
   # guest id. A failed merge must not cost the visitor the account they just
-  # made, so it is logged rather than raised.
+  # made, so it is logged rather than raised. Returns true when a merge ran.
   def merge_guest_into(user, guest)
-    return unless guest
+    return false unless guest
 
     AccountMerger.new(guest_user: guest, user: user).call
+    true
   rescue StandardError => error
     Rails.logger.warn("guest merge on signup failed: #{error.message}")
+    false
   end
 
   def user_params

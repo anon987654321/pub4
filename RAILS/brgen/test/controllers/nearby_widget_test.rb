@@ -2,17 +2,7 @@
 
 require "test_helper"
 
-# The floating chat widget is a turbo-frame rendered against "do we know where
-# you are". At first paint the answer is always no — the browser's geolocation
-# prompt has not resolved yet — so the frame rendered a "share location" dead
-# end. Nothing then told it to reload, so it stayed on that dead end for the
-# whole session and the chat appeared not to work at all.
-#
-# The reload is driven by the brgen:located event (geolocation_controller fires
-# it after the first successful PATCH /location; nearby_chat_controller reloads
-# the frame). These cover the two server-rendered ends of that: without
-# coordinates it must offer a way to give them, and with coordinates it must
-# render a room you can actually type in.
+# Ambient chat widget: without GPS → #brgen lobby inline; with GPS → geo room.
 class NearbyWidgetTest < ActionDispatch::IntegrationTest
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
@@ -30,18 +20,15 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "without coordinates the widget offers to ask for them in place" do
+  test "without coordinates the widget opens #brgen lobby with a composer" do
     get nearby_widget_path
 
     assert_response :success
-    assert_match(/nearby-chat#locate/, response.body,
-                 "the CTA must ask for location in the widget, not navigate away")
-    # GPS is optional for *some* anonymous chat — city lobby must stay one tap away.
-    assert_includes response.body, channel_path("brgen")
+    assert_includes response.body, "#brgen"
+    assert_select "form textarea, form input[type=text]"
+    assert_match(/nearby-chat#locate/, response.body)
   end
 
-  # A guest is minted on every request, so Current.user is never nil here — the
-  # only thing standing between a visitor and the nearby room is coordinates.
   test "the widget is reachable without signing in" do
     get nearby_widget_path
 
@@ -50,13 +37,14 @@ class NearbyWidgetTest < ActionDispatch::IntegrationTest
     refute_match(/Sign in to message|Sign in to join/i, response.body)
   end
 
-  test "with coordinates the widget renders a room you can type in" do
+  test "with coordinates the widget renders the nearby room" do
     user = located_user
     post session_path, params: { email_address: user.email_address, password: "password123" }
 
     get nearby_widget_path
 
     assert_response :success
+    assert_includes response.body, "#nearby"
     assert_select "[data-nearby-chat-target=?]", "log"
     assert_select "form textarea, form input[type=text]"
   end

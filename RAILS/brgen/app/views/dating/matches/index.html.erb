@@ -1,20 +1,20 @@
-<% content_for :title, "Matches" %>
+<% content_for :title, "Matcher" %>
 
 <div class="page-header" role="banner" aria-label="Dating matches header">
-  <h1>Matches</h1>
+  <h1>Matcher</h1>
   <nav role="navigation" aria-label="Matches nav">
-    <%= link_to "Discover", dating_root_path, class: "btn btn-ghost btn-sm" %>
+    <%= link_to "Oppdag", dating_root_path, class: "btn btn-ghost btn-sm" %>
   </nav>
 </div>
 
 <turbo-frame id="dating-matches" data-turbo-action="replace">
 <% if @matches.none? %>
   <%= render "shared/empty_state",
-        title: "No matches yet",
-        body: "Keep discovering — mutual likes show up here.",
-        action: { label: "Discover", path: dating_root_path } %>
+        title: "Ingen matcher ennå",
+        body: "Fortsett å sveipe — gjensidige likes dukker opp her.",
+        action: { label: "Oppdag", path: dating_root_path } %>
 <% else %>
-  <section id="dating-matches-list" class="match-list" role="list" aria-label="Matches">
+  <section id="dating-matches-list" class="match-list" role="list" aria-label="Matcher">
     <% @matches.each do |match| %>
       <%= render "dating/matches/match", match: %>
     <% end %>

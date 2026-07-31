@@ -1,12 +1,9 @@
-<%# Fleet floating chat bar (flush bottom-right). Brgen loads the geo room;
-    other apps deep-link to local messaging or Brgen nearby.
-
-    Open/closed state is the panel's `hidden` attribute, driven by the
-    nearby-chat controller. It used to be the generic `reveal` component
-    toggling a `.hidden` class that only brgen defined, which left the panel
-    permanently open and undismissable on amber and bsdports. %>
-<% widget_title = local_assigns.fetch(:title, respond_to?(:nearby_widget_path) ? "#nearby" : "chat") %>
-<div class="nearby-chat-widget" data-controller="nearby-chat">
+<%# Fleet floating chat bar (flush bottom-right).
+    Brgen: ambient chat — #brgen lobby without GPS, #nearby when located.
+    Other apps: inbox or deep-link to Brgen. %>
+<% widget_title = local_assigns.fetch(:title, respond_to?(:nearby_widget_path) ? "chat" : "chat") %>
+<div class="nearby-chat-widget" data-controller="nearby-chat"
+     data-nearby-chat-storage-key-value="pub4:ambient-chat:open">
   <button type="button"
           class="nearby-chat-widget-tab"
           data-nearby-chat-target="tab"
@@ -14,7 +11,7 @@
           aria-expanded="false"
           aria-controls="nearby-chat-widget-panel">
     <%= icon :messages, size: 16 %>
-    <span><%= respond_to?(:nearby_widget_path) ? "nearby" : "chat" %></span>
+    <span data-nearby-chat-target="tabLabel"><%= respond_to?(:nearby_widget_path) ? "chat" : "chat" %></span>
   </button>
 
   <div id="nearby-chat-widget-panel"
@@ -24,7 +21,7 @@
        aria-label="<%= widget_title %>"
        hidden>
     <header class="nearby-chat-widget-header">
-      <span><%= widget_title %></span>
+      <span data-nearby-chat-target="headerLabel"><%= widget_title %></span>
       <button type="button" class="nearby-chat-widget-close" data-action="nearby-chat#close" aria-label="Close">&times;</button>
     </header>
 
@@ -32,11 +29,10 @@
 
     <div class="nearby-chat-widget-body">
       <% if respond_to?(:nearby_widget_path) %>
-        <%# Eager load — lazy frames inside display:none never fire IntersectionObserver. %>
         <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path do %>
           <div class="nearby-chat-widget-empty">
-            <strong>Hyperlocal chat</strong>
-            <p>People near you, right now. Loading the room…</p>
+            <strong>Chat</strong>
+            <p>Loading the room…</p>
           </div>
         <% end %>
       <% elsif respond_to?(:messages_path) %>
@@ -46,7 +42,7 @@
             <p>Open your inbox to read and send messages on this app.</p>
             <%= link_to "Open messages", messages_path, class: "nearby-chat-widget-cta" %>
           <% else %>
-            <p>Sign in to use this app’s inbox, or open Brgen for anonymous nearby chat.</p>
+            <p>Sign in for this app’s inbox, or chat anonymously on Brgen.</p>
             <% if respond_to?(:new_session_path) %>
               <%= link_to "Sign in", new_session_path, class: "nearby-chat-widget-cta" %>
             <% end %>
@@ -56,9 +52,8 @@
       <% else %>
         <div class="nearby-chat-widget-empty">
           <strong>Chat on Brgen</strong>
-          <p>City lobby works without GPS. Nearby room needs location on brgen.no.</p>
+          <p>City lobby works without GPS.</p>
           <%= link_to "Open #brgen", "https://brgen.no/channels/brgen", class: "nearby-chat-widget-cta", rel: "noopener" %>
-          <%= link_to "Open nearby", "https://brgen.no/nearby", class: "nearby-chat-widget-cta", rel: "noopener" %>
         </div>
       <% end %>
     </div>

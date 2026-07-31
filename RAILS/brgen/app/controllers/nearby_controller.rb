@@ -32,16 +32,26 @@ class NearbyController < ApplicationController
   # Compact turbo-frame body for the floating widget (see shared/_nearby_chat_widget).
   # Same join as #room, but renders in place instead of redirecting to the full
   # channel page -- the widget IS the frame, there's nowhere to navigate to.
+  #
+  # Ambient chat: with GPS → geo room; without → #brgen city lobby inline so
+  # anonymous chat "just works" without a second navigation.
   def widget
-    # Always render the frame shell (guest CTA / location prompt / room) so the
-    # popup is never a blank box when lazy load or auth state is partial.
     lat = Current.user&.latitude
     lng = Current.user&.longitude
     @located = Current.user.present? && lat.present? && lng.present?
     @messages = []
-    return unless @located
+    @lobby = false
+    return render_widget_shell unless Current.user.present?
 
-    @conversation = Conversation.find_or_create_geo_room(lat: lat, lng: lng)
+    @conversation =
+      if @located
+        Conversation.find_or_create_geo_room(lat: lat, lng: lng)
+      else
+        @lobby = true
+        Conversation.find_or_create_channel("brgen", city: Current.city_record)
+      end
+    return render_widget_shell unless @conversation
+
     @conversation.join!(Current.user)
     @conversation.mark_read_for!(Current.user)
     ActsAsTenant.without_tenant do
@@ -66,6 +76,10 @@ class NearbyController < ApplicationController
   end
 
   private
+
+  def render_widget_shell
+    # Empty @conversation: template shows locate / lobby CTAs.
+  end
 
   def radius_km
     value = params[:radius_km].presence || DEFAULT_RADIUS_KM

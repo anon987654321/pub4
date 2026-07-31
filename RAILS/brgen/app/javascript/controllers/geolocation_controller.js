@@ -46,6 +46,13 @@ export default class extends Controller {
       this.#announceError("unavailable")
       return
     }
+    // Permanent deny: do not re-open the browser dialog on every chat open.
+    try {
+      if (window.localStorage.getItem("pub4:location-denied") === "1") {
+        this.#announceError("denied")
+        return
+      }
+    } catch (_) { /* private mode */ }
 
     navigator.geolocation.getCurrentPosition(
       pos => this.#send(pos.coords.latitude, pos.coords.longitude),
