@@ -163,7 +163,7 @@ module DillaMusicGems
 
     names = %w[C C# D D# E F F# G G# A A# B]
     roots = pcs.map { |pc| names[pc] }
-    qualities = %w[M m M7 m7 M9 m9 7]
+    qualities = %w[M m M7 m7 M9 m9 7 9 6 m6 M6 dim dim7 aug sus4]
     hits = []
     roots.each do |root|
       qualities.each do |q|

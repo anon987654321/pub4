@@ -27,7 +27,7 @@ class TurnRouterTest < Minitest::Test
   # reconstructs slash commands from plain English (defeating the leading-"/"
   # block in chat_controller#message). Visitors must land on casual_reply only.
   def test_visitor_cannot_reach_fold_or_command_registry
-    %w[fix\ the\ bug run\ master\ through\ itself implement\ pagination\ for\ posts].each do |message|
+    ["fix the bug", "run master through itself", "implement pagination for posts"].each do |message|
       Fiber[:master_visitor] = true
       reached = :none
 

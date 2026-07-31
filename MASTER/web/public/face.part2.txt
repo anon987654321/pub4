@@ -295,8 +295,6 @@ const PERSONA_TINT = {
   Mentor: new Color(1, 1, 1)
 };
 
-
-
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
 function fadeColorTo(c) { colorTarget.copy(c); }
@@ -357,7 +355,6 @@ const _photoEl = document.getElementById('photo');
 if (_photoEl) _photoEl.addEventListener('change', () => {
   if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
 });
-
 
 let lastT = performance.now();
 let _attnEyeClose = 0;

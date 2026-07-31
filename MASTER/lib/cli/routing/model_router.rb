@@ -21,7 +21,7 @@ module Master
           "unclear", "uncertain", "migh#{?t} be", "possibly",
           "probably not", "limited information", "i cannot",
           "i am unable", "i lack the", "not enough information",
-          "i need more"
+          "i need more",
         ].freeze
 
         ESCALATION_CHAIN = %w[cheap default strong].freeze

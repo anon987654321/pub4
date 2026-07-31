@@ -1414,9 +1414,9 @@ class TestDilla < Minitest::Test
       assert result.fetch("track").to_s.length.positive?, "reported a track change but ENV[TRACK] is empty"
     end
 
-    if analog.any? { |n| n.start_with?("analog=") }
+    return unless analog.any? { |n| n.start_with?("analog=") }
       assert result.fetch("analog_chain").to_s.length.positive?, "reported an analog change but ENV[ANALOG_CHAIN] is empty"
-    end
+
   end
 
   def test_dilla_sidechain_style_selects_fast_duck_for_dilla_family

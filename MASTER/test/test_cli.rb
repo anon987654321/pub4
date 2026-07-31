@@ -361,7 +361,7 @@ class TestCLI < Minitest::Test
 
   def test_exit_saves_the_session_and_stops_the_repl
     Dir.mktmpdir do |root|
-      cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root: root))
+      cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root:))
       cli.instance_variable_set(:@running, true)
       @session.expect(:save!, nil)
       @renderer.expect(:closing, nil)
@@ -384,7 +384,7 @@ class TestCLI < Minitest::Test
   def test_blank_input_publishes_empty_input_instead_of_running_a_turn
     bus = Minitest::Mock.new
     bus.expect(:publish, nil, ["cli:empty_input"], source: :run_input)
-    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, bus: bus))
+    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, bus:))
 
     assert_nil cli.process("   ")
     bus.verify
@@ -400,7 +400,7 @@ class TestCLI < Minitest::Test
 
   def test_display_result_records_ok_and_err_for_the_exit_code
     root = Dir.mktmpdir # not a git checkout, so the changed-files footer stays quiet
-    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root: root))
+    cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root:))
     @session.expect(:cost, 0.0)
     @session.expect(:token_est, 0)
 

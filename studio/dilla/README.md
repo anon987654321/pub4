@@ -87,15 +87,19 @@ shortest thing that repeats, which is not necessarily the bar.
 
 ## Drums
 
-36 presets in `lib/producer_dna.rb`, in four categories that are deliberately
+~60 presets in `lib/producer_dna.rb`, in categories that are deliberately
 kept apart. Being able to say which a grid is matters more than having more.
 
 | category | examples | what it means |
 |---|---|---|
 | transcribed | `four_seven`, `dangelo_learned` | measured off a recording |
-| constructed | `dilla_donuts`, `flylo_zodiac` | built to a described feel |
+| constructed | `dilla_donuts`, `flylo_zodiac`, `boom_bap`, `soul_shuffle` | built to a described feel |
 | pack import | `pack_729_1..6` | extracted from licensed MIDI |
 | push pads | `push_four`, `push_sparse` | straight and sparse on purpose |
+| expansion | `afro_clave`, `euclid_five`, `ghost_cloud`, … | more pockets, same backbeat rule |
+
+Export every grid as GM MIDI clips: `ruby dilla.rb export-midi` → `samples/midi/`.
+Re-import a pack folder: `ruby dilla.rb import-midi samples/midi/boom_bap`.
 
 **The backbeat stays on 4 and 12.** Every transcription in the file says so.
 What makes these records sound the way they do is `MICROTIMING_MS` — snare
@@ -145,7 +149,7 @@ Drums:
 
 | switch | what |
 |---|---|
-| `DRUM_PRESET` | any of the 36 |
+| `DRUM_PRESET` | any drum preset key (`ruby -e` / `DRUM_PRESET=boom_bap`) |
 | `NO_QUANTIZE=1` | quantise off entirely |
 | `SWING_ROLE_SPREAD` | how far the per-voice lean spreads |
 | `FLYLO_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |

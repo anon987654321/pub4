@@ -274,7 +274,6 @@ function nearestRateIndex(rate) {
   return best;
 }
 
-
 const GOLD = new Color(1, 1, 1);
 const TINT = {
   idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,

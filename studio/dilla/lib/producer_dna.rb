@@ -554,6 +554,144 @@ euclid_sparse: {
     kicks: [0], snares: [8], hats: [4, 12],
     ghosts: [], claps: [8], perc: []
   },
+
+  # ---- expansion pack (constructed, backbeat-faithful) ---------------------
+  # More distinct pockets without inventing "new" hip-hop by moving the snare.
+  # Character is kick placement, ghost density, swing, and hat pattern only.
+
+  # Classic boom-bap: kick on 1 + "and" of 2 + 3, busy hats, light ghosts.
+  boom_bap: {
+    swing: 55, humanize: 2, bpm: 92, mode: :dilla_time,
+    kicks: [0, 6, 8], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [2, 10], claps: [4, 12], perc: []
+  },
+  # Late kick answer after the backbeat — soul shuffle without relocating snare.
+  soul_shuffle: {
+    swing: 56, humanize: 3, bpm: 88, mode: :dilla_time,
+    kicks: [0, 7, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [5, 13], claps: [12], perc: [3]
+  },
+  # Head-nod pocket: room for the sample; hats only on downbeats + backbeats.
+  head_nod: {
+    swing: 54, humanize: 2, bpm: 86, mode: :dilla_time,
+    kicks: [0, 10], snares: [4, 12], hats: [0, 4, 8, 12],
+    ghosts: [6, 14], claps: [], perc: []
+  },
+  # Busy neo-soul: open hats implied via perc accents, dense ghosts.
+  neo_busy: {
+    swing: 55, humanize: 3, bpm: 90, mode: :dilla_time,
+    kicks: [0, 3, 6, 10], snares: [4, 12],
+    hats: [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14],
+    ghosts: [7, 11, 15], claps: [4, 12], perc: [2, 10]
+  },
+  # Crates: kick clusters on the last 16ths into the next bar.
+  crate_dig: {
+    swing: 54, humanize: 3, bpm: 94, mode: :dilla_time,
+    kicks: [0, 6, 12, 13, 14], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [7, 15], claps: [4, 12], perc: [3]
+  },
+  # UK garage-ish: kick on 1 + snare backbeat + skippy hats (still 4/12 snare).
+  uk_skip: {
+    swing: 52, humanize: 2, bpm: 130, mode: :straight_sixteenth,
+    kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 3, 6, 8, 10, 11, 14],
+    ghosts: [7], claps: [4, 12], perc: [5, 13]
+  },
+  # Trap half-time feel at hip-hop tempo: one strong snare on 8, hats 1/3.
+  trap_half: {
+    swing: 50, humanize: 1, bpm: 70, mode: :straight_sixteenth,
+    kicks: [0, 7, 10], snares: [8], hats: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    ghosts: [], claps: [8], perc: [12]
+  },
+  # Afrobeat clave under a square backbeat — kick follows 3-2 tresillo.
+  afro_clave: {
+    swing: 52, humanize: 2, bpm: 100, mode: :straight_sixteenth,
+    kicks: [0, 3, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [7, 14], claps: [4, 12], perc: [0, 3, 6, 10]
+  },
+  # Samba-ish continuous 16ths with surdo-like kick accents.
+  samba_pulse: {
+    swing: 50, humanize: 2, bpm: 104, mode: :straight_sixteenth,
+    kicks: [0, 7, 8, 14], snares: [4, 12], hats: (0..15).to_a,
+    ghosts: [2, 6, 10, 14], claps: [], perc: [3, 5, 11, 13]
+  },
+  # Reggaeton dembow skeleton — snare still 4/12 so hip-hop clock holds.
+  dembow_lite: {
+    swing: 50, humanize: 1, bpm: 96, mode: :straight_sixteenth,
+    kicks: [0, 6, 10], snares: [4, 12], hats: [0, 4, 8, 12],
+    ghosts: [7, 14], claps: [4, 12], perc: [3, 11]
+  },
+  # Broken beat: kick stutters around an immovable backbeat.
+  broken_kick: {
+    swing: 54, humanize: 3, bpm: 84, mode: :dilla_time,
+    kicks: [0, 1, 5, 8, 11, 14], snares: [4, 12],
+    hats: [0, 2, 4, 6, 8, 10, 12, 14], ghosts: [3, 7, 9, 15], claps: [12], perc: [6]
+  },
+  # Jazz brush: sparse kick, soft ghost snare wash, light hats.
+  jazz_brush: {
+    swing: 56, humanize: 3, bpm: 78, mode: :dilla_time,
+    kicks: [0, 10], snares: [4, 12], hats: [2, 6, 10, 14],
+    ghosts: [1, 3, 5, 7, 9, 11, 13, 15], claps: [], perc: []
+  },
+  # Footwork-adjacent double-time hats at mid tempo — kick still sparse.
+  footwork_lite: {
+    swing: 50, humanize: 2, bpm: 110, mode: :straight_sixteenth,
+    kicks: [0, 8], snares: [4, 12], hats: (0..15).to_a,
+    ghosts: [6, 14], claps: [4, 12], perc: [2, 10]
+  },
+  # Dilla "air" — almost no hats, kick answers late, room for vinyl.
+  air_pocket: {
+    swing: 55, humanize: 3, bpm: 88, mode: :dilla_time,
+    kicks: [0, 11], snares: [4, 12], hats: [8],
+    ghosts: [6, 14], claps: [], perc: []
+  },
+  # SP-era chop pocket: kick on every beat, hats straight, snare backbeat.
+  sp_chop: {
+    swing: 53, humanize: 2, bpm: 96, mode: :dilla_time,
+    kicks: [0, 4, 8, 12], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [3, 11], claps: [4, 12], perc: [6, 14]
+  },
+  # Gospel pocket: kick anticipates the snare ("and" of 1 into 2).
+  gospel_pocket: {
+    swing: 55, humanize: 2, bpm: 82, mode: :dilla_time,
+    kicks: [0, 3, 8, 11], snares: [4, 12], hats: [0, 4, 8, 12],
+    ghosts: [6, 14], claps: [4, 12], perc: []
+  },
+  # Euclid 5-on-16 kick under standard backbeat.
+  euclid_five: {
+    swing: 54, humanize: 3, bpm: 86, mode: :dilla_time,
+    kicks: [0, 3, 6, 10, 13], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [7, 15], claps: [4, 12], perc: [1, 9]
+  },
+  # Euclid 7-on-16 kick — denser low end, hats stay plain.
+  euclid_seven: {
+    swing: 53, humanize: 3, bpm: 88, mode: :dilla_time,
+    kicks: [0, 2, 5, 7, 9, 12, 14], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [6, 10], claps: [4, 12], perc: [3, 11]
+  },
+  # Half-time soul: snare on 8 only (legitimate half-time backbeat).
+  half_soul: {
+    swing: 55, humanize: 3, bpm: 76, mode: :dilla_time,
+    kicks: [0, 6, 11], snares: [8], hats: [0, 4, 8, 12],
+    ghosts: [3, 14], claps: [8], perc: []
+  },
+  # Machine four-on-floor for techno beds under soul pads.
+  four_floor_soul: {
+    swing: 50, humanize: 1, bpm: 118, mode: :straight_sixteenth,
+    kicks: [0, 4, 8, 12], snares: [4, 12], hats: [2, 6, 10, 14],
+    ghosts: [], claps: [4, 12], perc: [0, 8]
+  },
+  # Ghost-heavy MPC — almost all motion is soft hits.
+  ghost_cloud: {
+    swing: 56, humanize: 4, bpm: 90, mode: :dilla_time,
+    kicks: [0, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [1, 3, 5, 7, 9, 11, 13, 15], claps: [], perc: [6, 14]
+  },
+  # Push-and-pull: kick on the "a" of 2, snare locked.
+  push_pull: {
+    swing: 55, humanize: 3, bpm: 92, mode: :dilla_time,
+    kicks: [0, 7, 8, 14], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
+    ghosts: [5, 13], claps: [4, 12], perc: [3]
+  },
 }.freeze
 
   LOFI_DEFAULTS = {

@@ -14,7 +14,7 @@ class TestReplicateClientTrain < Minitest::Test
     }
     assert_equal(
       "https://replicate.delivery/yhqm/example/trained_model.tar",
-      client.training_weights_url(training)
+      client.training_weights_url(training),
     )
   end
 
