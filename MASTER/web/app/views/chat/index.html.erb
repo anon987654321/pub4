@@ -90,11 +90,11 @@
       data-visual-runtime="face"
       data-theme="dark"
       data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
-  <a href="#zin" class="skip-link">Skip to prompt</a>
+  <a href="#zin" class="skip-link"><%= t("skip_to_prompt", default: "Skip to prompt") %></a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div id="ascii-star" aria-hidden="true"></div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
-  <canvas id="face" role="img" aria-label="MASTER face — visual state mirror" tabindex="-1"></canvas>
+  <canvas id="face" role="img" aria-label="<%= t("face.face_aria", default: "MASTER face — visual state mirror") %>" tabindex="-1"></canvas>
   <div id="face-status-live" class="face-status-live" aria-live="polite" aria-atomic="true"></div>
   <div id="mic-dot" aria-hidden="true"></div>
   <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div>
@@ -144,6 +144,9 @@
         var z=zshEl(),ui=uiEl();
         if(z)z.classList.add('live');
         if(ui&&!ui.textContent)ui.textContent='starting';
+        // Keyboard users: land focus in the prompt after primer dismiss.
+        var zin=document.getElementById('zin');
+        if(zin){try{zin.focus({preventScroll:true});}catch(_e){try{zin.focus();}catch(__e){}}}
       }
       function boot(){
         if(started)return true;
@@ -267,19 +270,19 @@
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
-  <main id="chat-shell" role="main" aria-label="MASTER chat">
+  <main id="chat-shell" role="main" aria-label="<%= t("face.chat_aria", default: "MASTER chat") %>">
     <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
   </main>
   <div class="ui-status sr-only" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
-  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
-    <button id="photo-button" type="button" aria-label="Attach photo">+</button>
+  <form id="zsh" role="search" aria-label="<%= t("face.prompt_aria", default: "MASTER prompt") %>" autocomplete="off">
+    <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo", default: "Attach photo") %>">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
     <span class="pp" aria-hidden="true">user</span><span class="sep2" aria-hidden="true">$ </span>
-    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message" required></textarea>
+    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder", default: "ask anything") %>" aria-label="<%= t("face.message_aria", default: "Message") %>" required></textarea>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 
-    <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
+    <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech", default: "Pause or resume speech") %>"></button>
   </form>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>

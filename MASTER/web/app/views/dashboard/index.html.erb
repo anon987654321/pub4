@@ -1,70 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= I18n.locale %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
-  <title>MASTER — mission control</title>
+  <title><%= t("dashboard.title") %></title>
   <link rel="stylesheet" href="/face.css">
 </head>
 <body class="mission-control" data-layout="document" data-surface="face" data-theme="dark">
-  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
   <header class="page-header" role="banner">
-    <h1><a href="/">← chat</a> · mission control</h1>
+    <h1>
+      <a href="/"><%= t("dashboard.heading_chat") %></a>
+      <%= t("dashboard.heading_sep") %>
+      <%= t("dashboard.heading_mission") %>
+    </h1>
   </header>
-  <main id="main-content" role="main" aria-label="Mission control">
-    <div class="grid" id="mission-grid">
-      <div class="panel"><h2>status</h2><pre id="status" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>rtk savings</h2><pre id="rtk" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>active plan</h2><pre id="plan" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>rsi inbox</h2><pre id="rsi" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>skills</h2><pre id="skills" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>context pressure</h2><pre id="pressure" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>provider health</h2><pre id="providers" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>repair queue</h2><pre id="repair" aria-live="polite">loading…</pre></div>
-      <div class="panel"><h2>recent bus</h2><pre id="bus" aria-live="polite">loading…</pre></div>
+  <main id="main-content" role="main" aria-label="<%= t("dashboard.main_label") %>">
+    <div class="grid" id="mission-grid"
+         data-i18n-loading="<%= t("dashboard.loading") %>"
+         data-i18n-none="<%= t("dashboard.empty_none") %>"
+         data-i18n-empty="<%= t("dashboard.empty_empty") %>"
+         data-i18n-quiet="<%= t("dashboard.empty_quiet") %>"
+         data-i18n-breakers-none="<%= t("dashboard.status.breakers_none") %>"
+         data-label-model="<%= t("dashboard.status.model") %>"
+         data-label-ctx="<%= t("dashboard.status.ctx") %>"
+         data-label-tokens="<%= t("dashboard.status.tokens") %>"
+         data-label-cost="<%= t("dashboard.status.cost") %>"
+         data-label-agent-pool="<%= t("dashboard.status.agent_pool") %>"
+         data-label-breakers="<%= t("dashboard.status.breakers") %>"
+         data-label-commands="<%= t("dashboard.rtk.commands") %>"
+         data-label-saved="<%= t("dashboard.rtk.saved") %>"
+         data-label-bytes="<%= t("dashboard.rtk.bytes") %>"
+         data-label-band="<%= t("dashboard.pressure.band") %>"
+         data-label-pct="<%= t("dashboard.pressure.pct") %>"
+         data-label-headroom="<%= t("dashboard.pressure.headroom") %>"
+         data-label-status="<%= t("dashboard.providers.status") %>"
+         data-label-open-breakers="<%= t("dashboard.providers.open_breakers") %>">
+      <div class="panel"><h2><%= t("dashboard.panels.status") %></h2><pre id="status" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.rtk") %></h2><pre id="rtk" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.plan") %></h2><pre id="plan" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.rsi") %></h2><pre id="rsi" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.skills") %></h2><pre id="skills" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.pressure") %></h2><pre id="pressure" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.providers") %></h2><pre id="providers" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.repair") %></h2><pre id="repair" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
+      <div class="panel"><h2><%= t("dashboard.panels.bus") %></h2><pre id="bus" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
     </div>
   </main>
   <script>
+    const grid = document.getElementById('mission-grid');
+    const L = (key, fallback = '') => grid?.dataset[key] || fallback;
+
     async function refresh() {
       const r = await fetch('/dashboard/live');
       const d = await r.json();
       if (d.error) { document.getElementById('status').textContent = d.error; return; }
+      const none = L('i18nBreakersNone', 'none');
       document.getElementById('status').textContent = [
-        `model: ${d.model}`,
-        `ctx: ${d.tokens} tokens`,
-        `cost: $${Number(d.cost || 0).toFixed(4)}`,
-        `agent pool: ${d.agent_pool} active`,
-        `breakers: ${(d.open_breakers || []).join(', ') || 'none'}`
+        `${L('labelModel', 'model')}: ${d.model}`,
+        `${L('labelCtx', 'ctx')}: ${d.tokens} ${L('labelTokens', 'tokens')}`,
+        `${L('labelCost', 'cost')}: $${Number(d.cost || 0).toFixed(4)}`,
+        `${L('labelAgentPool', 'agent pool')}: ${d.agent_pool} active`,
+        `${L('labelBreakers', 'breakers')}: ${(d.open_breakers || []).join(', ') || none}`
       ].join('\n');
       const rtk = d.rtk || {};
       document.getElementById('rtk').textContent = [
-        `commands: ${rtk.commands || 0}`,
-        `saved: ${rtk.saved_pct || 0}%`,
-        `bytes: ${rtk.bytes_out || 0} / ${rtk.bytes_in || 0}`
+        `${L('labelCommands', 'commands')}: ${rtk.commands || 0}`,
+        `${L('labelSaved', 'saved')}: ${rtk.saved_pct || 0}%`,
+        `${L('labelBytes', 'bytes')}: ${rtk.bytes_out || 0} / ${rtk.bytes_in || 0}`
       ].join('\n');
-      document.getElementById('plan').textContent = d.active_plan || '(none)';
-      document.getElementById('rsi').textContent = (d.rsi_inbox || []).map(i => `${i.path}\n${i.excerpt}`).join('\n\n') || '(empty)';
-      document.getElementById('skills').textContent = (d.skills || []).join('\n') || '(none)';
+      document.getElementById('plan').textContent = d.active_plan || L('i18nNone', '(none)');
+      document.getElementById('rsi').textContent = (d.rsi_inbox || []).map(i => `${i.path}\n${i.excerpt}`).join('\n\n') || L('i18nEmpty', '(empty)');
+      document.getElementById('skills').textContent = (d.skills || []).join('\n') || L('i18nNone', '(none)');
       const p = d.context_pressure || {};
       document.getElementById('pressure').textContent = [
-        `band: ${p.band || 'ok'}`,
-        `tokens: ${p.tokens || 0} / ${p.limit || 0}`,
-        `pct: ${p.pct || 0}%`,
-        `headroom: ${p.headroom || 0}`
+        `${L('labelBand', 'band')}: ${p.band || 'ok'}`,
+        `${L('labelTokens', 'tokens')}: ${p.tokens || 0} / ${p.limit || 0}`,
+        `${L('labelPct', 'pct')}: ${p.pct || 0}%`,
+        `${L('labelHeadroom', 'headroom')}: ${p.headroom || 0}`
       ].join('\n');
       const ph = d.provider_health || {};
       document.getElementById('providers').textContent = [
-        `status: ${ph.status || 'unknown'}`,
-        `open breakers: ${(ph.open_breakers || []).join(', ') || 'none'}`,
-        `agent pool: ${ph.agent_pool || 0}`
+        `${L('labelStatus', 'status')}: ${ph.status || 'unknown'}`,
+        `${L('labelOpenBreakers', 'open breakers')}: ${(ph.open_breakers || []).join(', ') || none}`,
+        `${L('labelAgentPool', 'agent pool')}: ${ph.agent_pool || 0}`
       ].join('\n');
       document.getElementById('repair').textContent = (d.repair_queue || []).map((item) => {
         const recent = (item.recent || []).join('\n  ');
         return `${item.path} (${item.count || 0} bytes)\n  ${recent}`;
-      }).join('\n\n') || '(empty)';
-      document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || '(quiet)';
+      }).join('\n\n') || L('i18nEmpty', '(empty)');
+      document.getElementById('bus').textContent = (d.bus_events || []).slice(-12).map(e => JSON.stringify(e)).join('\n') || L('i18nQuiet', '(quiet)');
     }
     refresh();
     setInterval(refresh, 8000);

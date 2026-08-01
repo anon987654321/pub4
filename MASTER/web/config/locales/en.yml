@@ -1,31 +1,55 @@
-# Files in the config/locales directory are used for internationalization and
-# are automatically loaded by Rails. If you want to use locales other than
-# English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t "hello"
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t("hello") %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# To learn more about the API, please read the Rails Internationalization guide
-# at https://guides.rubyonrails.org/i18n.html.
-#
-# Be aware that YAML interprets the following case-insensitive strings as
-# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
-# must be quoted to be interpreted as strings. For example:
-#
-#     en:
-#       "yes": yup
-#       enabled: "ON"
-
 en:
   hello: "Hello world"
+  skip_to_content: "Skip to main content"
+  skip_to_prompt: "Skip to prompt"
+  dashboard:
+    title: "MASTER — mission control"
+    heading_chat: "← chat"
+    heading_sep: "·"
+    heading_mission: "mission control"
+    main_label: "Mission control"
+    loading: "loading…"
+    empty_none: "(none)"
+    empty_empty: "(empty)"
+    empty_quiet: "(quiet)"
+    panels:
+      status: "status"
+      rtk: "rtk savings"
+      plan: "active plan"
+      rsi: "rsi inbox"
+      skills: "skills"
+      pressure: "context pressure"
+      providers: "provider health"
+      repair: "repair queue"
+      bus: "recent bus"
+    status:
+      model: "model"
+      ctx: "ctx"
+      tokens: "tokens"
+      cost: "cost"
+      agent_pool: "agent pool"
+      breakers: "breakers"
+      breakers_none: "none"
+    rtk:
+      commands: "commands"
+      saved: "saved"
+      bytes: "bytes"
+    pressure:
+      band: "band"
+      tokens: "tokens"
+      pct: "pct"
+      headroom: "headroom"
+    providers:
+      status: "status"
+      open_breakers: "open breakers"
+      agent_pool: "agent pool"
+      breakers_none: "none"
+  face:
+    skip_prompt: "Skip to prompt"
+    face_aria: "MASTER face — visual state mirror"
+    chat_aria: "MASTER chat"
+    prompt_aria: "MASTER prompt"
+    message_aria: "Message"
+    attach_photo: "Attach photo"
+    pause_speech: "Pause or resume speech"
+    placeholder: "ask anything"
