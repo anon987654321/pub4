@@ -1,9 +1,9 @@
-<% content_for :title, "Places" %>
+<% content_for :title, t("pages.places") %>
 
-<div class="page-header" role="banner" aria-label="Places header">
-  <h1>Places</h1>
-  <nav role="navigation" aria-label="Places navigation">
-    <%= link_to "Map", maps_root_path, class: "btn btn-ghost" %>
+<div class="page-header" role="banner" aria-label="<%= t("pages.places") %>">
+  <h1><%= t("pages.places") %></h1>
+  <nav role="navigation" aria-label="<%= t("pages.places") %>">
+    <%= link_to t("maps.map"), maps_root_path, class: "btn btn-ghost" %>
   </nav>
 </div>
 

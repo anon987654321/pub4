@@ -116,3 +116,319 @@ flows:
         count: { pattern: 'href="/items/[0-9]+"', as: items }
     assert:
       - { left: items, op: ">=", right: 0, why: "index renders whether or not it is seeded" }
+
+  - id: brgen_guest_nearby_and_live
+    app: brgen
+    description: Nearby and Live form the hyperlocal loop; both stay guest-open.
+    steps:
+      - name: nearby
+        get: /nearby
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /nearby
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)nearby|location|live|share'
+      - name: live
+        get: /live
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /live
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: brgen_guest_search
+    app: brgen
+    description: Global search is reachable and honest when empty.
+    steps:
+      - name: search_empty
+        get: /search?q=
+        host: brgen.no
+        expect_status: [200]
+        expect_any:
+          - '(?i)search|søk|query|result|empty|try'
+      - name: search_term
+        get: /search?q=bergen
+        host: brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: brgen_guest_communities
+    app: brgen
+    description: Community index/browse works without signup.
+    steps:
+      - name: index
+        get: /communities
+        host: brgen.no
+        expect_status: [200]
+        expect_final_path: /communities
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)communit|community|explore|join|create'
+
+  - id: brgen_guest_messenger_inbox
+    app: brgen
+    description: Messenger host and apex conversations stay guest-open.
+    steps:
+      - name: apex_inbox
+        get: /conversations
+        host: brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)message|conversation|messenger|chat|compose'
+      - name: vertical_inbox
+        get: /
+        host: messenger.brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+
+  - id: brgen_guest_dating_discover
+    app: brgen
+    description: Dating discover is guest-browsable (swipe may soft-prompt later).
+    steps:
+      - name: discover
+        get: /
+        host: dating.brgen.no
+        expect_status: [200]
+        expect_final_path: /
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)dating|swipe|oppdag|profile|match'
+
+  - id: brgen_guest_playlist_tv_takeaway_maps
+    app: brgen
+    description: Vertical roots render without hard auth walls.
+    steps:
+      - name: playlist
+        get: /
+        host: spilleliste.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: tv
+        get: /
+        host: tv.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: takeaway
+        get: /
+        host: takeaway.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: maps
+        get: /
+        host: maps.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+
+  - id: brgen_guest_channels
+    app: brgen
+    description: Channel directory is part of ambient chat discovery.
+    steps:
+      - name: channels
+        get: /channels
+        host: brgen.no
+        expect_status: [200]
+        forbid_body:
+          - "Sign in to continue"
+        expect_any:
+          - '(?i)channel|room|chat|live|nearby'
+
+  - id: amber_guest_feed_and_auth
+    app: amber
+    description: Amber home + social feed + sign-in path for a first-time visitor.
+    steps:
+      - name: home
+        get: /
+        expect_status: [200]
+        expect_any:
+          - '(?i)amber|wardrobe|outfit|item|jox'
+      - name: feed
+        get: /posts/feed
+        expect_status: [200, 302, 303]
+      - name: posts
+        get: /posts
+        expect_status: [200]
+      - name: sign_in
+        get: /session/new
+        expect_status: [200]
+        expect_any:
+          - '(?i)password|sign in|logg inn|email'
+
+  - id: amber_demo_and_ai_surfaces
+    app: amber
+    description: Demo wardrobe and AI entry points render without crashing.
+    steps:
+      - name: demo
+        get: /demo
+        expect_status: [200, 302, 303]
+      - name: ai_suggest
+        get: /ai/outfits/suggest
+        expect_status: [200, 302, 303]
+      - name: ai_search
+        get: /ai/search
+        expect_status: [200, 302, 303]
+
+  # --- brgen subapp depth (each vertical beyond root) ---
+
+  - id: brgen_marketplace_depth
+    app: brgen
+    description: Marketplace cart, deals, shops, and sell form stay guest-reachable.
+    steps:
+      - name: root
+        get: /
+        host: markedsplass.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: deals
+        get: /deals
+        host: markedsplass.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: shops
+        get: /shops
+        host: markedsplass.brgen.no
+        expect_status: [200]
+      - name: cart
+        get: /cart
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+      - name: sell
+        get: /listings/new
+        host: markedsplass.brgen.no
+        expect_status: [200, 302, 303]
+
+  - id: brgen_dating_depth
+    app: brgen
+    description: Dating discover + profile create path.
+    steps:
+      - name: discover
+        get: /
+        host: dating.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: profile_new
+        get: /profile/new
+        host: dating.brgen.no
+        expect_status: [200, 302, 303]
+      - name: matches
+        get: /matches
+        host: dating.brgen.no
+        expect_status: [200, 302, 303]
+
+  - id: brgen_playlist_depth
+    app: brgen
+    description: Playlist library, sets, and hosted tracks.
+    steps:
+      - name: root
+        get: /
+        host: spilleliste.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: sets
+        get: /sets
+        host: spilleliste.brgen.no
+        expect_status: [200]
+      - name: hosted
+        get: /hosted_tracks
+        host: spilleliste.brgen.no
+        expect_status: [200]
+      - name: en_host
+        get: /
+        host: playlist.brgen.no
+        expect_status: [200]
+
+  - id: brgen_tv_depth
+    app: brgen
+    description: TV home, channels, and live streams index.
+    steps:
+      - name: root
+        get: /
+        host: tv.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: channels
+        get: /channels
+        host: tv.brgen.no
+        expect_status: [200]
+      - name: live_streams
+        get: /live_streams
+        host: tv.brgen.no
+        expect_status: [200]
+
+  - id: brgen_takeaway_depth
+    app: brgen
+    description: Takeaway restaurants, drivers, and orders surface.
+    steps:
+      - name: root
+        get: /
+        host: takeaway.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: drivers
+        get: /delivery_drivers
+        host: takeaway.brgen.no
+        expect_status: [200]
+      - name: orders
+        get: /orders
+        host: takeaway.brgen.no
+        expect_status: [200, 302, 303]
+
+  - id: brgen_maps_depth
+    app: brgen
+    description: Maps home and places directory.
+    steps:
+      - name: root
+        get: /
+        host: maps.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: places
+        get: /places
+        host: maps.brgen.no
+        # Body may be map canvas-heavy / locale-dependent; status + no crash is the floor.
+        expect_status: [200, 302, 303]
+        forbid_body:
+          - "Routing Error"
+          - "Exception"
+
+  - id: brgen_messenger_and_posts
+    app: brgen
+    description: Messenger host, posts index, session new.
+    steps:
+      - name: messenger
+        get: /
+        host: messenger.brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: posts
+        get: /posts
+        host: brgen.no
+        expect_status: [200]
+        forbid_body: ["Sign in to continue"]
+      - name: session
+        get: /session/new
+        host: brgen.no
+        expect_status: [200]
+
+  - id: master_face_and_dashboard
+    app: master
+    description: MASTER face and mission control render for a visitor.
+    steps:
+      - name: face
+        get: /
+        expect_status: [200]
+        expect_any:
+          - 'id="face"|id="primer"|id="zin"|master'
+      - name: dashboard
+        get: /dashboard
+        expect_status: [200, 302, 303]
+      - name: up
+        get: /up
+        expect_status: [200]

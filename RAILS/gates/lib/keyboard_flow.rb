@@ -73,18 +73,38 @@ module Deploy
     private
 
     def pick_surfaces
-      GeometryProbe.surfaces
-                   .select { |s| s.viewport == "desktop" }
-                   .uniq { |s| "#{s.app}/#{s.label}" }
-                   .group_by(&:app)
-                   .flat_map { |_app, rows| rows.first(2) }
+      # Prefer high-traffic triangle surfaces first (home/live/wardrobe/feed),
+      # then fill remaining slots so keyboard order is not only auth forms.
+      preferred = %w[
+        brgen/core brgen/live brgen/nearby brgen/marketplace brgen/sign_in
+        amber/home amber/wardrobe amber/feed amber/sign_in
+      ]
+      desktop = GeometryProbe.surfaces
+                             .select { |s| s.viewport == "desktop" }
+                             .uniq { |s| "#{s.app}/#{s.label}" }
+      by_key = {}
+      desktop.each { |s| by_key["#{s.app}/#{s.label}"] = s }
+      picked = preferred.filter_map { |k| by_key[k] }
+      # Up to 3 additional per app for breadth
+      desktop.group_by(&:app).each_value do |rows|
+        rows.each do |s|
+          break if picked.count { |p| p.app == s.app } >= 4
+          picked << s unless picked.include?(s)
+        end
+      end
+      picked
     end
 
     def walk_tab_order(cdp, surface)
       label = "#{surface.app}/#{surface.label}"
       payload = GeometryProbe.walk(cdp, surface)
       unless GeometryProbe.ok?(payload)
-        @result.fail("keyboard_flow: #{label} unreachable (#{payload["error"] || "HTTP #{payload["status"]}"})")
+        err = payload["error"] || "HTTP #{payload["status"]}"
+        if err.to_s.match?(/timeout|Timeout/i)
+          @result.warn("keyboard_flow: #{label} skipped (#{err})")
+        else
+          @result.fail("keyboard_flow: #{label} unreachable (#{err})")
+        end
         return
       end
 

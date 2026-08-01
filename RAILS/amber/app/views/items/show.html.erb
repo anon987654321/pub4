@@ -72,7 +72,7 @@
     <%= button_to amber_ai_available? ? "AI analyse joy" : "Heuristic joy check", ai_analyze_item_path(@item), method: :post, class: "btn" %>
     <%= button_to amber_ai_available? ? "AI tag mood" : "Default mood tags", ai_tag_item_path(@item), method: :post, class: "btn" %>
     <%= link_to "Declutter review", review_declutter_path(@item), class: "btn" %>
-    <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
+    <%= link_to t("actions.edit"), edit_item_path(@item), class: "btn" %>
     <% if @item.lifecycle_state == "sentimental_archive" %>
       <%= button_to t("items.restore"), restore_item_path(@item), method: :post, class: "btn" %>
     <% else %>

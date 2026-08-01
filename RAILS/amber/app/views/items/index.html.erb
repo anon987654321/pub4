@@ -1,30 +1,30 @@
 <% content_for :title, t("pages.wardrobe") %>
 <%= turbo_stream_from "items" %>
 
-<section data-controller="filter" role="region" aria-label="Wardrobe items">
-  <header role="banner" aria-label="Wardrobe header">
+<section data-controller="filter" role="region" aria-label="<%= t("wardrobe.items_region") %>">
+  <header role="banner" aria-label="<%= t("wardrobe.header") %>">
     <div>
-      <p class="dim">Closet intelligence</p>
+      <p class="dim"><%= t("wardrobe.closet_intelligence") %></p>
       <h1><%= t("pages.wardrobe") %> (<%= @pagy.count %>)</h1>
     </div>
     <div class="wardrobe-action-groups">
-      <nav role="navigation" aria-label="Primary wardrobe actions" class="wardrobe-action-group">
+      <nav role="navigation" aria-label="<%= t("wardrobe.primary_actions") %>" class="wardrobe-action-group">
         <%= link_to t("home.add_item"), new_item_path, class: "btn btn--primary" %>
-        <%= link_to "Compose an outfit", new_outfit_path, class: "btn" %>
+        <%= link_to t("actions.compose_outfit"), new_outfit_path, class: "btn" %>
       </nav>
       <details class="wardrobe-more-tools">
-        <summary>More tools</summary>
-        <nav role="navigation" aria-label="Use what I own" class="wardrobe-action-group">
-          <h2>Use what I own</h2>
-          <%= link_to "AI pair from my wardrobe", ai_suggest_outfits_path, class: "btn" %>
-          <%= link_to "Packing list", ai_packing_list_path, class: "btn" %>
-          <%= link_to "Declutter thoughtfully", declutter_index_path, class: "btn" %>
+        <summary><%= t("wardrobe.more_tools") %></summary>
+        <nav role="navigation" aria-label="<%= t("wardrobe.use_what_i_own") %>" class="wardrobe-action-group">
+          <h2><%= t("wardrobe.use_what_i_own") %></h2>
+          <%= link_to t("wardrobe.ai_pair"), ai_suggest_outfits_path, class: "btn" %>
+          <%= link_to t("wardrobe.packing_list"), ai_packing_list_path, class: "btn" %>
+          <%= link_to t("wardrobe.declutter_thoughtfully"), declutter_index_path, class: "btn" %>
         </nav>
-        <nav role="navigation" aria-label="Wardrobe records and shopping" class="wardrobe-action-group wardrobe-action-group--secondary">
-          <h2>Records &amp; genuine gaps</h2>
-          <%= link_to "Wear analytics", analytics_wardrobe_items_path, class: "btn" %>
-          <%= link_to "Color palette", ai_palette_path, class: "btn" %>
-          <%= link_to "Shop only for a gap", shopping_list_items_path, class: "btn" %>
+        <nav role="navigation" aria-label="<%= t("wardrobe.records_gaps_nav") %>" class="wardrobe-action-group wardrobe-action-group--secondary">
+          <h2><%= t("wardrobe.records_gaps") %></h2>
+          <%= link_to t("wardrobe.wear_analytics"), analytics_wardrobe_items_path, class: "btn" %>
+          <%= link_to t("wardrobe.color_palette"), ai_palette_path, class: "btn" %>
+          <%= link_to t("wardrobe.shop_gap"), shopping_list_items_path, class: "btn" %>
           <%= button_to t("items.archive_seasonal"), archive_seasonal_items_path, method: :post, class: "btn" %>
           <%= button_to t("items.resurface_seasonal"), resurface_seasonal_items_path, method: :post, class: "btn" %>
         </nav>
@@ -32,25 +32,18 @@
     </div>
   </header>
 
-  <div class="chips" aria-label="Wardrobe analytics summary">
-    <span class="chip"><%= @analytics[:active_items] %> active</span>
-    <span class="chip"><%= @analytics[:never_worn] %> never worn</span>
-    <span class="chip"><%= @analytics[:underused] %> underused</span>
-    <span class="chip"><%= @analytics[:declutter_box] %> box</span>
-    <span class="chip"><%= @analytics[:sentimental_archive] %> memory</span>
-    <% if @analytics[:cost_per_wear] %><span class="chip"><%= number_to_currency(@analytics[:cost_per_wear]) %> avg/wear</span><% end %>
+  <div class="chips" aria-label="<%= t("wardrobe.analytics_summary") %>">
+    <span class="chip"><%= t("wardrobe.chip_active", count: @analytics[:active_items]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_never_worn", count: @analytics[:never_worn]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_underused", count: @analytics[:underused]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_box", count: @analytics[:declutter_box]) %></span>
+    <span class="chip"><%= t("wardrobe.chip_memory", count: @analytics[:sentimental_archive]) %></span>
+    <% if @analytics[:cost_per_wear] %><span class="chip"><%= t("wardrobe.chip_avg_wear", amount: number_to_currency(@analytics[:cost_per_wear])) %></span><% end %>
   </div>
 
-  <nav class="chips" aria-label="Lifecycle filter">
-    <% [
-      ["active", "Active"],
-      ["box", "Declutter box"],
-      ["memory", "Memory archive"],
-      ["seasonal", "Seasonal"],
-      ["repair", "Repair"],
-      ["all", "All"]
-    ].each do |key, label| %>
-      <%= link_to label, items_path(lifecycle: key), class: "chip#{" chip--active" if @lifecycle_filter == key}" %>
+  <nav class="chips" aria-label="<%= t("wardrobe.lifecycle_filter") %>">
+    <% %w[active box memory seasonal repair all].each do |key| %>
+      <%= link_to t("wardrobe.lifecycle.#{key}"), items_path(lifecycle: key), class: "chip#{" chip--active" if @lifecycle_filter == key}" %>
     <% end %>
   </nav>
 

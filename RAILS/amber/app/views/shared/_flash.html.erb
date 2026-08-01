@@ -1,3 +1,14 @@
+<%# NN/g #1 status + #3 freedom: polite region, optional undo action from flash[:undo] %>
 <% flash.each do |type, msg| %>
-  <div class="flash flash--<%= type %>"><%= msg %></div>
+  <% next if type.to_s == "undo" || msg.blank? %>
+  <% role = type.to_s == "alert" ? "alert" : "status" %>
+  <div class="flash flash--<%= type %>" role="<%= role %>" aria-live="<%= role == "alert" ? "assertive" : "polite" %>">
+    <span class="flash-msg"><%= msg %></span>
+    <% if (undo = flash[:undo]).is_a?(Hash) && undo["path"].present? %>
+      <%= button_to undo["label"].presence || t("items.undo_restore"),
+            undo["path"],
+            method: (undo["method"].presence || :post).to_sym,
+            class: "btn btn-ghost btn-sm flash-undo" %>
+    <% end %>
+  </div>
 <% end %>

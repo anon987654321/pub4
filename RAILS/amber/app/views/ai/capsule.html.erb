@@ -6,8 +6,8 @@
     <h1><%= t("pages.capsule_title") %></h1>
   </div>
   <nav role="navigation" aria-label="Capsule actions">
-    <%= link_to "Wardrobe", items_path, class: "btn" %>
-    <%= link_to "Outfits", outfits_path, class: "btn" %>
+    <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
+    <%= link_to t("nav.outfits"), outfits_path, class: "btn" %>
   </nav>
 </header>
 
@@ -42,7 +42,7 @@
   <% end %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "Wardrobe too thin",
-        body: "Add more items to your wardrobe first.",
+        title: t("wardrobe.too_thin"),
+        body: t("wardrobe.add_more_first"),
         action: { label: t("pages.add_item"), path: new_item_path } %>
 <% end %>

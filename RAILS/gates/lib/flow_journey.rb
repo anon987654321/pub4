@@ -29,6 +29,8 @@ module Deploy
       @result = GateResult.new
       flows = Array(YAML.safe_load_file(@path)["flows"])
       ports = Inventory.new(root: @root).apps.to_h { |a| [a.name, a.port] }
+      # MASTER web is not a RAILS/apps.yml row — face + mission control.
+      ports["master"] ||= 53187
 
       ran = 0
       flows.each do |flow|
@@ -100,7 +102,9 @@ module Deploy
         end
       end
 
-      body = response.body
+      # Falcon/Net::HTTP may return BINARY; UTF-8 regexes need a compatible string.
+      body = response.body.to_s.dup.force_encoding(Encoding::UTF_8)
+      body = body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace) unless body.valid_encoding?
       Array(step["expect_body"]).each do |pattern|
         next if Regexp.new(pattern).match?(body)
 

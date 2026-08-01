@@ -6,9 +6,9 @@
       search_placeholder: t("search.marketplace"),
       cart_count: @cart_items.size %>
 
-<div class="page-header" role="banner" aria-label="Cart header">
+<div class="page-header" role="banner" aria-label="<%= t("marketplace.cart_header") %>">
   <h1><%= t("pages.cart") %></h1>
-  <p class="dim"><%= pluralize(@cart_items.size, "item") %></p>
+  <p class="dim"><%= t("marketplace.item", count: @cart_items.size) %></p>
 </div>
 
 <% if @cart_items.any? %>
@@ -31,10 +31,10 @@
   </div>
 
   <div class="cart-summary">
-    <p><strong>Total: <%= @cart_total / 100.0 %> NOK</strong></p>
-    <p class="dim">Pay with Vipps (NO) or Stripe (cards), or send classic offers sellers accept/decline.</p>
+    <p><strong><%= t("marketplace.cart_total", amount: @cart_total / 100.0) %></strong></p>
+    <p class="dim"><%= t("marketplace.cart_pay_hint") %></p>
 
-    <div class="cart-pay-actions" role="group" aria-label="Payment methods">
+    <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
       <%= button_to t("marketplace.pay_vipps"), marketplace_checkout_path,
             method: :post, params: { provider: "vipps" },
             class: "btn btn-primary cart-pay-vipps",
@@ -44,20 +44,16 @@
             class: "btn btn-ghost cart-pay-stripe",
             form: { data: { turbo: false } } %>
     </div>
-    <%# Was: "Without VIPPS_EPAYMENT_* / STRIPE_SECRET_KEY the cart fails
-        honestly ("not configured") — never fakes a charge." Environment
-        variable names in a shopping cart are a note to ourselves. The promise
-        underneath is worth keeping; the deploy detail is not. %>
-    <p class="hint mt-8">If a payment provider is unavailable we say so. We never take a payment we cannot process.</p>
+    <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
 
     <%= button_to t("marketplace.send_all_offers"), send_offers_marketplace_cart_path,
           method: :post, class: "btn btn-ghost",
-          data: { turbo_confirm: "Notify all sellers about your pending offers?" } %>
-    <p class="hint mt-8">Sellers get a notification for each pending offer. They accept or decline individually.</p>
+          data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
+    <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
   </div>
 <% else %>
   <%= render "shared/empty_state",
-        title: "Your cart is empty",
-        body: "Browse listings and send offers — guests can shop without signup.",
-        action: { label: "Browse marketplace", path: marketplace_root_path } %>
+        title: t("marketplace.cart_empty_title"),
+        body: t("marketplace.cart_empty_body"),
+        action: { label: t("marketplace.browse_marketplace"), path: marketplace_root_path } %>
 <% end %>

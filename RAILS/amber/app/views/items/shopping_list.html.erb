@@ -1,4 +1,4 @@
-<% content_for :title, "Shopping list" %>
+<% content_for :title, t("pages.shopping_list") %>
 
 <h1><%= t("pages.shopping_list") %></h1>
 
@@ -16,11 +16,11 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_gaps"),
-        body: "Your wardrobe looks complete for essentials.",
-        action: { label: "Back to wardrobe", path: items_path } %>
+        body: t("wardrobe.gaps_complete"),
+        action: { label: t("actions.back_to_wardrobe"), path: items_path } %>
 <% end %>
 
-<h2>MASTER purchase recommendations</h2>
+<h2><%= t("wardrobe.master_recs") %></h2>
 <% if @recommendations.any? %>
   <ul>
     <% @recommendations.each do |rec| %>
@@ -33,8 +33,8 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_recommendations"),
-        body: "Add more items or re-run gap analysis when your closet grows.",
+        body: t("wardrobe.recs_grow"),
         action: { label: t("pages.add_item"), path: new_item_path } %>
 <% end %>
 
-<%= link_to "Back to wardrobe", items_path, class: "btn" %>
+<%= link_to t("actions.back_to_wardrobe"), items_path, class: "btn" %>

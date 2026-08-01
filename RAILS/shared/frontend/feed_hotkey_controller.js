@@ -1,5 +1,6 @@
 // Hotkey controller — vim-style j/k navigation, Enter open, / search, ? help
 // Triangle feeds: .feed-card (brgen), .feed-post (amber), listings, comments.
+// NN/g #6/#7: recognition over recall — first-visit coach once; ? always shows help.
 import { Controller } from "@hotwired/stimulus"
 
 const ITEM_SEL = [
@@ -13,14 +14,23 @@ const ITEM_SEL = [
   ".card"
 ].join(", ")
 
+const COACH_KEY = "pub4:hotkey-coach:dismissed"
+
 export default class extends Controller {
   static targets = ["item"]
+  static values = {
+    help: { type: String, default: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help" },
+    coach: { type: String, default: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)." },
+    coachDismiss: { type: String, default: "Got it" }
+  }
 
   connect() {
     this.boundHandle = this.handleKey.bind(this)
     document.addEventListener("keydown", this.boundHandle)
     this.index = -1
     this.prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    // First visit: brief coach after layout settles (tab-bar pattern).
+    requestAnimationFrame(() => this.#maybeShowCoach())
   }
 
   disconnect() {
@@ -61,6 +71,7 @@ export default class extends Controller {
     } else if (e.key === "Escape") {
       document.querySelectorAll(".hotkey-focus").forEach((el) => el.classList.remove("hotkey-focus"))
       this.index = -1
+      this.#hideCoach()
     }
   }
 
@@ -120,8 +131,49 @@ export default class extends Controller {
     help.className = "hotkey-help"
     help.setAttribute("role", "status")
     help.setAttribute("aria-live", "polite")
-    help.textContent = "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
+    help.textContent = this.helpValue
     document.body.appendChild(help)
-    setTimeout(() => { if (help?.parentNode) help.parentNode.removeChild(help) }, 2200)
+    setTimeout(() => { if (help?.parentNode) help.parentNode.removeChild(help) }, 2800)
+  }
+
+  #maybeShowCoach() {
+    try {
+      if (localStorage.getItem(COACH_KEY) === "1") return
+    } catch (_) {
+      return
+    }
+    // Only coach when there is something to navigate (feed surface).
+    if (this.#items().length < 1) return
+
+    const coach = document.createElement("div")
+    coach.className = "hotkey-coach"
+    coach.setAttribute("role", "status")
+    coach.setAttribute("aria-live", "polite")
+    coach.innerHTML = ""
+    const text = document.createElement("p")
+    text.className = "hotkey-coach-text"
+    text.textContent = this.coachValue
+    const btn = document.createElement("button")
+    btn.type = "button"
+    btn.className = "hotkey-coach-dismiss"
+    btn.textContent = this.coachDismissValue
+    btn.addEventListener("click", () => {
+      try { localStorage.setItem(COACH_KEY, "1") } catch (_) { /* private mode */ }
+      coach.remove()
+    })
+    coach.appendChild(text)
+    coach.appendChild(btn)
+    document.body.appendChild(coach)
+    this._coachEl = coach
+    // Auto-dismiss after long read window; still marks dismissed so we don't nag.
+    setTimeout(() => {
+      if (!coach.parentNode) return
+      try { localStorage.setItem(COACH_KEY, "1") } catch (_) { /* */ }
+      coach.remove()
+    }, 8000)
+  }
+
+  #hideCoach() {
+    if (this._coachEl?.parentNode) this._coachEl.remove()
   }
 }

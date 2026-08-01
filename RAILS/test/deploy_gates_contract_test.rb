@@ -147,6 +147,7 @@ class DeployGatesContractTest < Minitest::Test
     %w[
       apps_yml generated_asset human_walkthrough port_inventory schema_migration
       phantom_foreign_keys shared_wiring surface_schema design_metrics visual_quality calibration
+      page_simulation flow_journey mobile_flow keyboard_flow
     ].each do |gate|
       assert GATES.key?(gate), "gates.yml should register #{gate}"
       assert GATES.dig(gate, "class"), "#{gate} should run in-process"
@@ -155,7 +156,7 @@ class DeployGatesContractTest < Minitest::Test
   end
 
   def test_gate_support_files_exist
-    %w[dom_surface_schema guest_flow_persona exemplar_structure visual_quality gate_calibration]
+    %w[dom_surface_schema guest_flow_persona exemplar_structure visual_quality gate_calibration page_inventory]
       .each do |name|
         assert File.file?(File.join(ROOT, "gates", "support", "#{name}.rb")), "missing gates/support/#{name}.rb"
       end

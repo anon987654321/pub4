@@ -2,7 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["form", "input", "status"]
-  static values = { delay: { type: Number, default: 300 } }
+  static values = {
+    delay: { type: Number, default: 300 },
+    updating: { type: String, default: "Updating results…" },
+    updated: { type: String, default: "Results updated" },
+    failed: { type: String, default: "Search could not be completed" }
+  }
 
   connect() {
     this.timeout = null
@@ -24,7 +29,7 @@ export default class extends Controller {
     action.searchParams.set("format", "turbo_stream")
     this.formTarget.action = action.pathname + action.search
     this.formTarget.setAttribute("aria-busy", "true")
-    if (this.hasStatusTarget) this.statusTarget.textContent = "Updating results"
+    if (this.hasStatusTarget) this.statusTarget.textContent = this.updatingValue
     this.formTarget.requestSubmit()
   }
 
@@ -33,7 +38,7 @@ export default class extends Controller {
 
     this.formTarget.removeAttribute("aria-busy")
     if (this.hasStatusTarget) {
-      this.statusTarget.textContent = event.detail.success ? "Results updated" : "Search could not be completed"
+      this.statusTarget.textContent = event.detail.success ? this.updatedValue : this.failedValue
     }
     // vYroQxg .search.active when live results are on screen
     const shell = this.element.classList.contains("search") ? this.element : this.element.closest(".search")

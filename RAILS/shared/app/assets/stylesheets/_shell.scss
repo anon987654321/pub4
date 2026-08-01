@@ -493,7 +493,8 @@ html.chrome-hidden .tab-bar {
 }
 
 /* Hotkey chrome — flat toast (no shadow/blur) */
-.hotkey-help {
+.hotkey-help,
+.hotkey-coach {
   position: fixed;
   bottom: 1rem;
   left: 50%;
@@ -508,11 +509,50 @@ html.chrome-hidden .tab-bar {
   background: var(--surface-elevated, var(--surface));
   border: 1px solid var(--border, var(--border));
   border-radius: var(--radius-xs, 3px);
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.hotkey-coach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.hotkey-coach-text {
+  margin: 0;
+  flex: 1 1 12rem;
+}
+
+.hotkey-coach-dismiss {
+  font: inherit;
+  font-size: inherit;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--border, currentColor);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-xs, 3px);
 }
 
 .hotkey-focus {
   outline: 2px solid var(--accent, var(--accent, currentColor));
   outline-offset: 2px;
+}
+
+/* Flash undo CTA (amber archive restore) */
+.flash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flash-undo {
+  margin-inline-start: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -42,6 +42,9 @@
       data-layout="document"
       data-surface="social"
       data-controller="feed-hotkey browser-fingerprint brgen-shell"
+      data-feed-hotkey-help-value="<%= t("hotkeys.help") %>"
+      data-feed-hotkey-coach-value="<%= t("hotkeys.coach") %>"
+      data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>"
       data-browser-fingerprint-url-value="<%= fingerprint_path %>">
   <%# Every surface, playlist included. The skip link must be the first focusable
       element on the page or it cannot do its job. The playlist tunnel used to
@@ -187,8 +190,12 @@
         <% if current_page?(root_path) && Current.user.present? %>
           <%= render "shared/feed_compose" %>
         <% end %>
-        <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
-        <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+        <% if notice.present? %>
+          <p role="status" class="flash-notice" aria-live="polite"><%= notice %></p>
+        <% end %>
+        <% if alert.present? %>
+          <p role="alert" class="flash-alert" aria-live="assertive"><%= alert %></p>
+        <% end %>
         <%= yield %>
       </main>
 

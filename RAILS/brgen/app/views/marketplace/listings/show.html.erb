@@ -9,7 +9,7 @@
   </div>
   <nav role="navigation" aria-label="Listing actions" class="marketplace-actions">
     <% if Current.user.present? && Current.user == @listing.user %>
-      <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? %>
       <%= render "marketplace/listings/favorite_button",
             listing: @listing,

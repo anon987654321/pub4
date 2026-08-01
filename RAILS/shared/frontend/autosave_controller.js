@@ -7,7 +7,11 @@ export default class extends Controller {
   static values = {
     key: String,
     url: String,
-    interval: { type: Number, default: 5000 }
+    interval: { type: Number, default: 5000 },
+    saving: { type: String, default: "Saving…" },
+    saved: { type: String, default: "Saved" },
+    savedLocally: { type: String, default: "Saved locally" },
+    restored: { type: String, default: "Restored" }
   }
 
   static targets = ["status"]
@@ -32,14 +36,14 @@ export default class extends Controller {
 
   markDirty() {
     this.dirty = true
-    this.setStatus("Saving…")
+    this.setStatus(this.savingValue)
   }
 
   async restore() {
     const saved = await get(this.keyValue, STORE)
     if (!saved) return
     this.applySnapshot(saved)
-    this.setStatus("Restored")
+    this.setStatus(this.restoredValue)
   }
 
   async flush() {
@@ -50,7 +54,7 @@ export default class extends Controller {
 
     if (!navigator.onLine || !this.hasUrlValue) {
       this.dirty = false
-      this.setStatus("Saved locally")
+      this.setStatus(this.savedLocallyValue)
       return
     }
 
@@ -67,9 +71,9 @@ export default class extends Controller {
 
     if (response?.ok) {
       this.dirty = false
-      this.setStatus("Saved")
+      this.setStatus(this.savedValue)
     } else {
-      this.setStatus("Saved locally")
+      this.setStatus(this.savedLocallyValue)
     }
   }
 

@@ -1,9 +1,9 @@
-<% content_for :title, "Channels" %>
+<% content_for :title, t("channels.title") %>
 
-<section class="channels-index" aria-label="Public channels">
+<section class="channels-index" aria-label="<%= t("channels.aria") %>">
   <header class="page-header">
-    <h1>Channels<%= " · #{@city.name}" if @city %></h1>
-    <p class="dim">Public rooms<%= " in #{@city.name}" if @city %> — you're anonymous here. Jump in, a few local agents are already around.</p>
+    <h1><%= t("channels.title") %><%= " · #{@city.name}" if @city %></h1>
+    <p class="dim"><%= t("channels.intro", city: (@city ? t("channels.intro_city", name: @city.name) : "")) %></p>
   </header>
 
   <ul class="channel-list" role="list">
@@ -16,8 +16,12 @@
           <span class="channel-meta dim">
             <% if room %>
               <% active = room.recent_active_count %>
-              <% if active.positive? %><span class="channel-live">● <%= pluralize(active, "active") %></span><% else %><%= pluralize(room.messages.size, "message") %><% end %>
-            <% else %>new room<% end %>
+              <% if active.positive? %>
+                <span class="channel-live">● <%= active %> <%= t("channels.active") %></span>
+              <% else %>
+                <%= room.messages.size %> <%= t("channels.message") %>
+              <% end %>
+            <% else %><%= t("channels.new_room") %><% end %>
           </span>
         <% end %>
       </li>

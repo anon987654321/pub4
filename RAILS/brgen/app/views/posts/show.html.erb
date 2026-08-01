@@ -5,7 +5,7 @@
 
 <article class="feed-post-show">
   <%= turbo_frame_tag "post-vote-#{@post.id}" do %>
-    <div class="feed-post-votes" role="group" aria-label="Post score">
+    <div class="feed-post-votes" role="group" aria-label="<%= t("posts.score") %>">
       <%# Guests vote everywhere else -- the feed card renders a live vote
           button for them and VotesController only asks for require_user_session.
           Gating on authenticated? here left a soft guest looking at a dead,
@@ -14,7 +14,7 @@
         <%= button_to post_vote_path(@post), params: { vote: { value: 1 } },
               class: "vote-btn#{" active-up" if @post.upvoted_by?(Current.user)}",
               form: { class: "vote-form" },
-              aria: { label: "Upvote" } do %>
+              aria: { label: t("posts.upvote") } do %>
           <%= render "shared/feed_icon", name: "upvote" %>
         <% end %>
       <% else %>
@@ -25,12 +25,12 @@
             data-animated-number-start-value="0"
             data-animated-number-end-value="<%= @post.score.to_i %>"
             data-animated-number-duration-value="900"
-            aria-label="Score"><%= @post.score %></span>
+            aria-label="<%= t("posts.score") %>"><%= @post.score %></span>
       <% if authenticated? || guest? %>
         <%= button_to post_vote_path(@post), params: { vote: { value: -1 } },
               class: "vote-btn down#{" active-down" if @post.downvoted_by?(Current.user)}",
               form: { class: "vote-form" },
-              aria: { label: "Downvote" } do %>
+              aria: { label: t("posts.downvote") } do %>
           <%= render "shared/feed_icon", name: "downvote" %>
         <% end %>
       <% else %>
@@ -46,7 +46,7 @@
     <%= @post.author_name %> ·
     <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
     <% if @post.reading_time_minutes.positive? %>
-      · <%= @post.reading_time_minutes %> min read
+      · <%= t("posts.min_read", n: @post.reading_time_minutes) %>
     <% end %>
   </p>
 
@@ -68,8 +68,8 @@
     <button type="button" class="feed-action" data-controller="share"
             data-share-title-value="<%= @post.title %>"
             data-share-url-value="<%= request.original_url %>"
-            data-action="click->share#share" aria-label="Share post">
-      <%= render "shared/feed_icon", name: "share" %> Share
+            data-action="click->share#share" aria-label="<%= t("posts.share_post") %>">
+      <%= render "shared/feed_icon", name: "share" %> <%= t("posts.share") %>
     </button>
     <%# shared/_report_button, ReportsController, ModerationWorkflow, the admin
         queue and the notification job all existed, but no view rendered the
@@ -106,11 +106,11 @@
 </section>
 
 <aside class="post-show-aside">
-  <h3>About</h3>
+  <h3><%= t("posts.about") %></h3>
   <% if @post.community %>
     <p><%= @post.community.description.presence || @post.community.name %></p>
-    <%= link_to "View community", community_path(@post.community) %>
+    <%= link_to t("posts.view_community"), community_path(@post.community) %>
   <% else %>
-    <p>brgen — Bergen community platform</p>
+    <p><%= t("posts.community_platform") %></p>
   <% end %>
 </aside>

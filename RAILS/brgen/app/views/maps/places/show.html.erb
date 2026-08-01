@@ -3,7 +3,7 @@
 <div class="page-header" role="banner" aria-label="Place details header">
   <h1><%= @place.name %></h1>
   <nav role="navigation" aria-label="Place navigation">
-    <%= link_to "Back", :back, class: "btn" %>
+    <%= link_to t("actions.back"), :back, class: "btn" %>
   </nav>
 </div>
 
@@ -33,7 +33,7 @@
   </dl>
 
   <p>
-    <%= link_to "Open in map",
+    <%= link_to t("maps.open_in_map"),
         "https://www.openstreetmap.org/?mlat=#{@place.latitude}&mlon=#{@place.longitude}#map=16/#{@place.latitude}/#{@place.longitude}",
         class: "btn", target: "_blank", rel: "noopener" %>
     <%# PlacesController#check_in asks for require_user_session -- the gate that

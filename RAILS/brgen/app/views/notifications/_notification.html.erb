@@ -12,7 +12,7 @@
   </p>
   <div class="notification-actions cluster">
     <% if href.present? %>
-      <%= link_to "Open", href, class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("notifications.open"), href, class: "btn btn-ghost btn-sm" %>
     <% end %>
     <% unless notification.read? %>
       <%= button_to t("actions.mark_read"), notification_path(notification), method: :patch, data: { turbo_stream: true }, class: "btn btn-ghost btn-sm" %>

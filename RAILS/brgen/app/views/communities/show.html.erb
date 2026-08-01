@@ -6,7 +6,7 @@
   <p><strong><%= @community.posts.count %></strong> posts</p>
   <% if authenticated? && Current.user == @community.user %>
     <p class="cluster">
-      <%= link_to "Edit", edit_community_path(@community), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_community_path(@community), class: "btn btn-ghost btn-sm" %>
       <%= button_to t("actions.delete"), community_path(@community), method: :delete, data: { turbo_confirm: t("communities.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </p>
   <% end %>

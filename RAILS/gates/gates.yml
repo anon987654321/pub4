@@ -224,6 +224,13 @@ keyboard_flow:
   pass: "ok: keyboard tab order is sound"
   covered_by: rendered_suite
 
+# Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
+mobile_flow:
+  require: lib/mobile_flow
+  class: Deploy::MobileFlowGate
+  pass: "ok: mobile journey floor holds"
+  covered_by: rendered_suite
+
 cross_app:
   require: lib/cross_app
   class: Deploy::CrossAppEquivalenceGate
@@ -239,6 +246,13 @@ flow_journey:
   require: lib/flow_journey
   class: Deploy::FlowJourneyGate
   pass: "ok: user journeys pass with postconditions"
+
+# Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
+# Source always; live HTTP when triangle ports are open.
+page_simulation:
+  require: lib/page_simulation
+  class: Deploy::PageSimulationGate
+  pass: "ok: page UI/UX simulations clean across inventory"
 
 gate_mutation:
   require: lib/gate_mutation

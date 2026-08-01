@@ -76,6 +76,128 @@ module Deploy
         # Guest-open messenger — inbox chrome without signup wall
         expect_body: [/conversation|Messages|messenger-compose|message/i],
       },
+      # Secondary guest surfaces on the apex (not separate Hosts)
+      {
+        label: "nearby",
+        host: APEX,
+        path: "/nearby",
+        expect_body: [/nearby|location|share|Live|channel/i],
+      },
+      {
+        label: "communities",
+        host: APEX,
+        path: "/communities",
+        expect_body: [/communit|explore|join|create|main/i],
+      },
+      {
+        label: "search",
+        host: APEX,
+        path: "/search",
+        expect_body: [/search|søk|query|result|main/i],
+      },
+      {
+        label: "channels",
+        host: APEX,
+        path: "/channels",
+        expect_body: [/channel|room|chat|live|nearby|main/i],
+      },
+      {
+        label: "conversations",
+        host: APEX,
+        path: "/conversations",
+        expect_body: [/conversation|Messages|messenger|message|chat/i],
+      },
+      {
+        label: "marketplace_deals",
+        host: "markedsplass.#{APEX}",
+        path: "/deals",
+        expect_body: [/deal|offer|Markedsplass|navBar|main/i],
+      },
+      {
+        label: "marketplace_sell",
+        host: "markedsplass.#{APEX}",
+        path: "/listings/new",
+        expect_body: [/list|sell|title|price|navBar|form|main/i],
+      },
+      {
+        label: "marketplace_shops",
+        host: "markedsplass.#{APEX}",
+        path: "/shops",
+        expect_body: [/shop|store|seller|Markedsplass|navBar|main/i],
+      },
+      # Dating secondary
+      {
+        label: "dating_profile_new",
+        host: "dating.#{APEX}",
+        path: "/profile/new",
+        expect_body: [/profile|dating|bio|photo|main|form/i],
+      },
+      {
+        label: "dating_matches",
+        host: "dating.#{APEX}",
+        path: "/matches",
+        # Auth-or-empty OK; must not 500
+        expect_body: [/match|Oppdag|dating|sign|logg|empty|main/i],
+      },
+      # Playlist secondary
+      {
+        label: "playlist_sets",
+        host: "spilleliste.#{APEX}",
+        path: "/sets",
+        expect_body: [/set|playlist|track|main|search/i],
+      },
+      {
+        label: "playlist_hosted",
+        host: "spilleliste.#{APEX}",
+        path: "/hosted_tracks",
+        expect_body: [/track|host|upload|playlist|main/i],
+      },
+      # TV secondary
+      {
+        label: "tv_channels",
+        host: "tv.#{APEX}",
+        path: "/channels",
+        expect_body: [/channel|tv|video|main|stream/i],
+      },
+      {
+        label: "tv_live_streams",
+        host: "tv.#{APEX}",
+        path: "/live_streams",
+        expect_body: [/live|stream|channel|tv|main/i],
+      },
+      # Takeaway secondary
+      {
+        label: "takeaway_orders",
+        host: "takeaway.#{APEX}",
+        path: "/orders",
+        expect_body: [/order|restaurant|takeaway|sign|logg|main|empty/i],
+      },
+      {
+        label: "takeaway_drivers",
+        host: "takeaway.#{APEX}",
+        path: "/delivery_drivers",
+        expect_body: [/driver|delivery|takeaway|main/i],
+      },
+      # Maps secondary
+      {
+        label: "maps_places",
+        host: "maps.#{APEX}",
+        path: "/places",
+        expect_body: [/place|map|nearby|main|search/i],
+      },
+      # Messenger secondary (host + apex already covered)
+      {
+        label: "posts_index",
+        host: APEX,
+        path: "/posts",
+        expect_body: [/post|Hot|Fresh|Top|main|search|feed/i],
+      },
+      {
+        label: "session_new",
+        host: APEX,
+        path: "/session/new",
+        expect_body: [/password|sign|logg|session|Vipps|Google/i],
+      },
     ].freeze
 
     module_function

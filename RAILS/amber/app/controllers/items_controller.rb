@@ -104,12 +104,18 @@ class ItemsController < ApplicationController
 
   def archive
     @item.update!(lifecycle_state: "sentimental_archive")
-    redirect_to @item, notice: "Archived. You can restore this item at any time."
+    # NN/g #3 user control: one-step undo via flash restore CTA
+    flash[:undo] = {
+      "path" => restore_item_path(@item),
+      "method" => "post",
+      "label" => I18n.t("items.undo_restore")
+    }
+    redirect_to @item, notice: I18n.t("items.archived_notice")
   end
 
   def restore
     @item.update!(lifecycle_state: "active")
-    redirect_to @item, notice: "Restored to your active wardrobe."
+    redirect_to @item, notice: I18n.t("items.restored_notice")
   end
 
   def wear

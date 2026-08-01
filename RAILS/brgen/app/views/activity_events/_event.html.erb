@@ -11,6 +11,6 @@
   </p>
   <% if event.locality.present? %><p class="dim"><%= event.locality %></p><% end %>
   <% if href.present? %>
-    <p class="activity-event-cta"><%= link_to "Open", href, class: "btn btn-ghost btn-sm" %></p>
+    <p class="activity-event-cta"><%= link_to t("actions.open"), href, class: "btn btn-ghost btn-sm" %></p>
   <% end %>
 </article>

@@ -1,21 +1,21 @@
 <%= turbo_stream_from "posts" %>
-<% content_for :title, "All posts" %>
+<% content_for :title, t("pages.all_posts") %>
 
-<div class="page-header" role="banner" aria-label="Posts header">
-  <h1>All posts</h1>
-  <%= link_to "+ New post", new_post_path, class: "btn btn-sm" %>
+<div class="page-header" role="banner" aria-label="<%= t("pages.all_posts") %>">
+  <h1><%= t("pages.all_posts") %></h1>
+  <%= link_to t("nav.new_post"), new_post_path, class: "btn btn-sm" %>
 </div>
 
-<nav class="sort-tabs" aria-label="Sort posts">
-  <%= link_to "Hot", posts_path, class: "sort-tab#{" active" unless params[:sort]}" %>
-  <%= link_to "Fresh", posts_path(sort: "fresh"), class: "sort-tab#{" active" if params[:sort] == "fresh"}" %>
-  <%= link_to "Top", posts_path(sort: "top"), class: "sort-tab#{" active" if params[:sort] == "top"}" %>
+<nav class="sort-tabs" aria-label="<%= t("sort.posts") %>">
+  <%= link_to t("sort.hot"), posts_path, class: "sort-tab#{" active" unless params[:sort]}" %>
+  <%= link_to t("sort.fresh"), posts_path(sort: "fresh"), class: "sort-tab#{" active" if params[:sort] == "fresh"}" %>
+  <%= link_to t("sort.top"), posts_path(sort: "top"), class: "sort-tab#{" active" if params[:sort] == "top"}" %>
 </nav>
 
 <%= live_search_index url: posts_path(sort: params[:sort]), results_partial: "posts/live_search_results", placeholder: t("search.posts"), label: t("search.posts_label"), frame_id: "brgen-posts" %>
 
 <aside>
-  <h3>Communities</h3>
+  <h3><%= t("nav.communities") %></h3>
   <ul>
     <% Community.popular.limit(8).each do |c| %>
       <li><%= link_to c.name, community_path(c) %></li>

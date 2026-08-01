@@ -9,4 +9,4 @@
 
 <p><%= @live_stream.description %></p>
 <% if @live_stream.scheduled_at %><p class="dim">Scheduled: <%= @live_stream.scheduled_at %></p><% end %>
-<%= link_to "All style sessions", live_streams_path, class: "btn" %>
+<%= link_to t("live_streams.all"), live_streams_path, class: "btn" %>

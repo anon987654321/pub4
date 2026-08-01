@@ -6,8 +6,8 @@
     <h1><%= t("pages.timeline") %></h1>
   </div>
   <nav role="navigation" aria-label="Style evolution actions">
-    <%= link_to "Analytics", analytics_wardrobe_items_path, class: "btn" %>
-    <%= link_to "Wardrobe", items_path, class: "btn" %>
+    <%= link_to t("pages.analytics"), analytics_wardrobe_items_path, class: "btn" %>
+    <%= link_to t("actions.wardrobe"), items_path, class: "btn" %>
   </nav>
 </header>
 
@@ -44,7 +44,7 @@
           <%= render "shared/empty_state",
                 title: t("empty.no_phase_items"),
                 body: "Tag life phases on items to fill this column.",
-                action: { label: "Wardrobe", path: items_path } %>
+                action: { label: t("actions.wardrobe"), path: items_path } %>
         <% end %>
       </article>
     <% end %>
@@ -77,6 +77,6 @@
     <%= render "shared/empty_state",
           title: t("empty.no_wear_history"),
           body: "Wear items to build your style timeline.",
-          action: { label: "Wardrobe", path: items_path } %>
+          action: { label: t("actions.wardrobe"), path: items_path } %>
   <% end %>
 </section>

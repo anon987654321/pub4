@@ -39,10 +39,10 @@
 </section>
 
 <nav role="navigation" aria-label="Outfit actions">
-  <%= button_to "Like (#{@outfit.likes_count.to_i})", like_outfit_path(@outfit), method: :post, class: "btn" %>
+  <%= button_to t("actions.like_count", count: @outfit.likes_count.to_i), like_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to t("outfits.share_brgen"), share_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to t("outfits.wear_again"), wear_outfit_path(@outfit), method: :post, class: "btn" %>
-  <%= link_to "Edit", edit_outfit_path(@outfit), class: "btn" %>
-  <%= link_to "All outfits", outfits_path, class: "btn" %>
+  <%= link_to t("actions.edit"), edit_outfit_path(@outfit), class: "btn" %>
+  <%= link_to t("nav.outfits"), outfits_path, class: "btn" %>
   <%= button_to t("actions.delete"), @outfit, method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger" %>
 </nav>

@@ -7,6 +7,7 @@ require_relative "layout_snapshot"
 require_relative "journey_invariant"
 require_relative "reflow"
 require_relative "keyboard_flow"
+require_relative "mobile_flow"
 require_relative "cross_app"
 
 module Deploy
@@ -24,6 +25,7 @@ module Deploy
       GeometryGate,
       ReflowGate,
       KeyboardFlowGate,
+      MobileFlowGate,
       JourneyInvariantGate,
       CrossAppEquivalenceGate,
       LayoutSnapshotGate,

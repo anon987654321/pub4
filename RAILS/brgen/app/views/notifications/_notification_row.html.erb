@@ -1,5 +1,5 @@
 <% href = notification_href(notification) %>
-<article id="notification-<%= notification.id %>" role="article" aria-label="Notification" class="notification-card">
+<article id="notification-<%= notification.id %>" role="article" aria-label="<%= t("notifications.aria") %>" class="notification-card">
   <% if href.present? %>
     <h3><%= link_to notification.title, href, class: "notification-title-link" %></h3>
   <% else %>
@@ -12,15 +12,15 @@
   </p>
   <div class="notification-actions cluster">
     <% if href.present? %>
-      <%= link_to "Open", href, class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("notifications.open"), href, class: "btn btn-ghost btn-sm" %>
     <% end %>
     <% unless notification.read? %>
       <button type="button"
         class="btn btn-ghost btn-sm"
         data-reflex="click->NotificationRead#mark_read"
         data-notification-id="<%= notification.id %>"
-        aria-label="Mark notification as read">
-        Mark as read
+        aria-label="<%= t("notifications.mark_as_read") %>">
+        <%= t("actions.mark_read") %>
       </button>
     <% end %>
   </div>

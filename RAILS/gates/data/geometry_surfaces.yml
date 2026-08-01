@@ -47,6 +47,19 @@ surfaces:
     path: /session/new
     viewports: [mobile, desktop]
     snapshot: true
+  - app: amber
+    label: feed
+    path: /posts/feed
+    viewports: [mobile, desktop]
+  - app: amber
+    label: outfits
+    path: /outfits
+    viewports: [mobile, desktop]
+  - app: amber
+    label: demo
+    path: /demo
+    viewports: [mobile]
+  # brgen secondary guest paths live in BrgenVerticalSurfaces (include_brgen_verticals)
 
   - app: bsdports
     label: home

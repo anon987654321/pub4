@@ -1,21 +1,21 @@
-<% content_for :title, "Edit post" %>
+<% content_for :title, t("pages.edit_post") %>
 
-<div class="page-header" role="banner"><h1>Edit post</h1></div>
+<div class="page-header" role="banner"><h1><%= t("pages.edit_post") %></h1></div>
 
 <div class="form-wrap">
   <% draft_key = "brgen-post-#{@post.to_param}" %>
   <%= form_with(model: @post, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
     <%= render "shared/errors", object: @post %>
     <div class="field">
-      <%= f.label :community_id, "Community (optional)" %>
-      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: "— no community —" } %>
+      <%= f.label :community_id, t("posts.community_optional") %>
+      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: t("posts.no_community") } %>
     </div>
     <div class="field">
       <%= f.label :title %>
       <%= f.text_field :title, placeholder: t("playlist.title"), autofocus: true, required: true %>
     </div>
     <div class="field">
-      <%= f.label :content, "Body (optional)" %>
+      <%= f.label :content, t("posts.body_optional") %>
       <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5 , maxlength: 10000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
@@ -29,7 +29,7 @@
             class: "media-input-hidden",
             data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
       <div class="media-actions">
-        <button type="button" class="media-btn" data-action="click->media-picker#trigger">Photo / Camera</button>
+        <button type="button" class="media-btn" data-action="click->media-picker#trigger"><%= t("posts.photo_camera") %></button>
       </div>
       <div class="media-preview" data-media-picker-target="preview"></div>
       <div class="preset-strip">
@@ -43,11 +43,11 @@
     </div>
     <div class="field field--check">
       <%= f.check_box :anonymous %>
-      <%= f.label :anonymous, "Post anonymously" %>
+      <%= f.label :anonymous, t("posts.post_anonymously") %>
     </div>
     <div class="field">
       <%= f.submit t("actions.save"), class: "btn btn-primary" %>
-      <%= link_to "Cancel", @post, class: "btn btn-ghost" %>
+      <%= link_to t("actions.cancel"), @post, class: "btn btn-ghost" %>
       <span class="dim" data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>

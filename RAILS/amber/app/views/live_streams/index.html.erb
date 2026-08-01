@@ -1,14 +1,14 @@
-<% content_for :title, "Style sessions" %>
+<% content_for :title, t("live_streams.title") %>
 
-<header role="banner" aria-label="Style sessions header">
-  <h1>Style sessions</h1>
-  <p class="dim">Schedule a wardrobe hangout or styling appointment. This is a <strong>calendar and status board</strong> — not live video streaming.</p>
+<header role="banner" aria-label="<%= t("live_streams.title") %>">
+  <h1><%= t("live_streams.title") %></h1>
+  <p class="dim"><%= t("wardrobe.sessions_lead") %></p>
 </header>
 
-<section class="form-wrap" aria-label="Schedule style session">
+<section class="form-wrap" aria-label="<%= t("live_streams.schedule_region") %>">
   <%= form_with model: @live_stream do |f| %>
     <%= render "shared/errors", object: @live_stream if lookup_context.exists?("shared/errors", [], true) %>
-    <div class="field"><%= f.label :title, "Session title" %><%= f.text_field :title, required: true %></div>
+    <div class="field"><%= f.label :title, t("wardrobe.session_title") %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
     <div class="field"><%= f.label :scheduled_at %><%= f.datetime_field :scheduled_at %></div>
     <div class="field"><%= f.submit t("live_streams.schedule"), class: "btn" %></div>
@@ -16,7 +16,7 @@
 </section>
 
 <%= turbo_frame_tag "live-streams" do %>
-  <section aria-label="Scheduled style sessions">
+  <section aria-label="<%= t("live_streams.scheduled_region") %>">
     <% if @live_streams.any? %>
       <% @live_streams.each do |stream| %>
         <article>
@@ -31,8 +31,8 @@
     <% else %>
       <%= render "shared/empty_state",
             title: t("empty.no_sessions"),
-            body: "Use the form above to book a wardrobe hangout or styling appointment.",
-            action: { label: "Wardrobe", path: items_path } %>
+            body: t("wardrobe.sessions_empty_body"),
+            action: { label: t("actions.wardrobe"), path: items_path } %>
     <% end %>
   </section>
 <% end %>

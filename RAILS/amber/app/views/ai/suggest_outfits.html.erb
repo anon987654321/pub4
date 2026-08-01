@@ -40,7 +40,7 @@
       <% end %>
       <% if s["source"] %><p class="dim">Source: <%= s["source"] %></p><% end %>
       <% if s["outfit_id"] %>
-        <p><%= link_to "View generated outfit", outfit_path(s["outfit_id"]), class: "btn" %></p>
+        <p><%= link_to t("actions.view_outfit", default: "View outfit"), outfit_path(s["outfit_id"]), class: "btn" %></p>
       <% end %>
     </article>
   <% end %>
@@ -48,5 +48,5 @@
   <p class="dim">Submit the form to compose from clothes you already own.</p>
 <% end %>
 
-<p><%= link_to "Back to wardrobe", items_path %></p>
+<p><%= link_to t("actions.back_to_wardrobe"), items_path %></p>
 </turbo-frame>
