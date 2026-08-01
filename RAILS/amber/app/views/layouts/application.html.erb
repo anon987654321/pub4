@@ -42,8 +42,8 @@
 <%= render "shared/theme_toggle", storage_key: "amber-theme" %>
 
 <div class="theme-root">
-<header class="amber-logo-banner amber-logo-banner--nav" aria-label="Amber">
-  <%= link_to root_path, aria: { label: t("nav.home") } do %>
+<header class="amber-logo-banner amber-logo-banner--nav" aria-label="<%= t("nav.brand_home") %>">
+  <%= link_to root_path, aria: { label: t("nav.brand_home") } do %>
     <%= render "shared/logo" %>
   <% end %>
   <div class="amber-nav-actions">
@@ -64,7 +64,7 @@
   <div class="layout">
     <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
     <aside class="sidebar" data-edge-swiper-target="root">
-      <nav role="navigation" aria-label="Primary navigation">
+      <nav role="navigation" aria-label="<%= t("nav.primary_nav") %>">
         <%= render "shared/sidebar_nav" %>
       </nav>
     </aside>
@@ -72,7 +72,7 @@
             data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
     </div>
 
-    <main id="main-content" role="main" aria-label="<%= t("nav.home") %>">
+    <main id="main-content" role="main" aria-label="<%= t("nav.main") %>">
       <%= render "shared/flash" %>
       <%= yield %>
     </main>

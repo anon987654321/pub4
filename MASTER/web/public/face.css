@@ -128,7 +128,29 @@ body[data-focus-mode="1"] .ui-status,
 body[data-focus-mode="1"] .face-controls,
 body[data-focus-mode="1"] #chat-shell,
 body[data-focus-mode="1"] #ascii-star,
-body[data-focus-mode="1"] #spin-btn {
+body[data-focus-mode="1"] 
+#photo-button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+#photo-button:focus-visible,
+#spin-btn:focus-visible,
+#zin:focus-visible,
+.skip-link:focus-visible {
+  outline: 2px solid var(--c-accent, var(--accent, #7c6fd6));
+  outline-offset: 2px;
+}
+
+#spin-btn {
   opacity: 0;
   pointer-events: none;
 }

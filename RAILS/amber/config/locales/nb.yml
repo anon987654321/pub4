@@ -29,6 +29,9 @@ nb:
     menu_coach: "Menyen er nederst — trykk på stripen eller scroll opp."
     menu_coach_dismiss: "Skjønner"
     mobile_nav: "Mobilnavigasjon"
+    primary_nav: "Hovednavigasjon"
+    brand_home: "Amber hjem"
+    main: "Hovedinnhold"
   auth:
     sign_in: "Logg inn"
     sign_in_lead: "Bla i demogarderoben uten konto. Logg inn for å katalogisere egne plagg og planlegge antrekk."

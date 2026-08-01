@@ -29,6 +29,9 @@ en:
     menu_coach: "Menu is down here — tap the bar or scroll up."
     menu_coach_dismiss: "Got it"
     mobile_nav: "Mobile navigation"
+    primary_nav: "Primary navigation"
+    brand_home: "Amber home"
+    main: "Main content"
   auth:
     sign_in: "Sign in"
     sign_in_lead: "Browse the demo wardrobe without an account. Sign in to catalog your own pieces and plan outfits."

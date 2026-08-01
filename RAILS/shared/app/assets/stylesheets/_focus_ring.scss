@@ -41,8 +41,21 @@
 .nav-search-input:focus-visible,
 .widget-search input:focus-visible,
 .search input:focus-visible,
+.nearby-chat-widget-tab:focus-visible,
+.nearby-chat-widget-close:focus-visible,
+.nearby-chat-widget-linkish:focus-visible,
+.tab-bar-peel:focus-visible,
+.tab-bar-coach-dismiss:focus-visible,
+.tab-bar-coach-show:focus-visible,
+.tab-item:focus-visible,
+.ai-embed-open:focus-visible,
+.comment-reply-toggle:focus-visible,
+.comment-delete:focus-visible,
+.feed-action:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
+button:focus-visible,
+a:focus-visible,
 [contenteditable]:focus-visible {
   outline: var(--focus-ring, 2px solid var(--accent)) !important;
   outline-offset: 2px;

@@ -19,6 +19,16 @@ Do not expand polish into bsdports or studio unless the task names them.
 Shared engine changes must keep all three hosts green (layout tokens, social
 locales, comments, master_embed).
 
+### Triangle a11y floor
+
+| Requirement | Where |
+|-------------|--------|
+| First focusable = skip-link | brgen/amber → `#main-content`; face → `#zin` |
+| `main` with `role="main"` + aria-label | all three |
+| Interactive chrome ≥ 44px | tab bar, peel, chat tab, face photo/spin |
+| `:focus-visible` outline | `_focus_ring.scss` + face.css controls |
+| Landmarks i18n | `nav.sidebar|widgets|main|…` (nb/en) |
+
 ## Order
 
 1. **Flat UI** — strip ornamental `box-shadow` / blur (`GATE_AUTOFIX=1` or

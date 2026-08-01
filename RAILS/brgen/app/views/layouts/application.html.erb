@@ -50,7 +50,7 @@
       at the top of that file, which names this tunnel), so there is nothing left
       to paint. %>
   <a class="skip-link" href="#main-content"><%= t("skip_to_content") %></a>
-  <%= link_to root_path, class: "brgen-logo-mark", aria: { label: "Brgen home" } do %>
+  <%= link_to root_path, class: "brgen-logo-mark", aria: { label: t("nav.brand_home") } do %>
     <span class="brand-text">brgen</span>
   <% end %>
   <% unless vertical_surface? %>
@@ -88,7 +88,7 @@
     <button id="push-enable-btn" class="push-enable-btn" hidden><%= t("push.enable") %></button>
   <% end %>
 
-  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="City network" data-brgen-shell-target="carousel">
+  <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="<%= t("nav.city_network") %>" data-brgen-shell-target="carousel">
     <div class="carousel-container" role="list">
       <% %w[
         brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
@@ -106,7 +106,7 @@
   <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
     <div class="layout">
       <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
-      <aside class="sidebar" aria-label="Sidebar" data-edge-swiper-target="root">
+      <aside class="sidebar" aria-label="<%= t("nav.sidebar") %>" data-edge-swiper-target="root">
         <%= link_to root_path, class: "brand brand-wordmark", aria: { label: "Brgen" } do %>
           <span class="brand-text">brgen</span>
         <% end %>
@@ -169,12 +169,12 @@
               data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_sidebar") %>" aria-expanded="false"></button>
       </div>
 
-      <main id="main-content" role="main" data-controller="pull-to-refresh">
+      <main id="main-content" role="main" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(root_path) %>
           <div class="feed-header">
             <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces). %>
-            <h1 class="visually-hidden">Home</h1>
-            <nav class="feed-tabs" aria-label="Subapps">
+            <h1 class="visually-hidden"><%= t("nav.home") %></h1>
+            <nav class="feed-tabs" aria-label="<%= t("nav.subapps") %>">
               <% subapp_nav_items.each do |label, url| %>
                 <%= link_to label, url, class: "feed-tab" %>
               <% end %>
@@ -195,11 +195,11 @@
       <div class="widgets-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="right">
       <button type="button" class="edge-grip edge-grip-right" data-edge-swiper-target="grip"
               data-action="click->edge-swiper#toggle" aria-label="<%= t("nav.show_widgets") %>" aria-expanded="false"></button>
-      <aside class="widgets" aria-label="Widgets" data-edge-swiper-target="root">
+      <aside class="widgets" aria-label="<%= t("nav.widgets") %>" data-edge-swiper-target="root">
         <%= form_with url: global_search_path, method: :get, class: "widget-search", role: "search", local: true do |form| %>
           <%= icon :search, size: 19 %>
           <%= form.search_field :q, value: params[:q], placeholder: t("nav.search_placeholder"), aria: { label: t("nav.search_placeholder") } %>
-          <%= form.submit t("nav.search"), class: "visually-hidden" %>
+          <%= form.submit t("nav.search"), class: "visually-hidden", tabindex: -1 %>
         <% end %>
         <%= yield :widgets %>
         <%= render "shared/sidebar_discovery" %>
@@ -255,7 +255,7 @@
       <%# No compose-fab: new-post expand lives in the top compose box / Post in sidebar. %>
     </nav>
     <div class="mobile-sheet-backdrop" data-bottom-sheet-target="backdrop" data-action="click->bottom-sheet#close"></div>
-    <section class="mobile-sheet" data-level="0" aria-label="Quick actions" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
+    <section class="mobile-sheet" data-level="0" aria-label="<%= t("nav.quick_actions") %>" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp touchstart->bottom-sheet#pointerDown touchmove->bottom-sheet#pointerMove touchend->bottom-sheet#pointerUp">
       <div class="mobile-sheet-handle"></div>
       <div class="mobile-sheet-links">
         <%= link_to t("nav.ai_assistant"), brgen_ai_url, data: { turbo: false } %>

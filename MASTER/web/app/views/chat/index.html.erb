@@ -90,7 +90,7 @@
       data-visual-runtime="face"
       data-theme="dark"
       data-aesthetic="<%= Master::Voice::Aesthetic.mode %>">
-  <a href="#zin" class="skip-link">skip to prompt</a>
+  <a href="#zin" class="skip-link">Skip to prompt</a>
   <div id="error-live" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
   <div id="ascii-star" aria-hidden="true"></div>
   <canvas id="cognition-ecology" aria-hidden="true"></canvas>
@@ -267,16 +267,16 @@
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
-  <main id="chat-shell" aria-label="MASTER chat">
-    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+  <main id="chat-shell" role="main" aria-label="MASTER chat">
+    <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
   </main>
   <div class="ui-status sr-only" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
   <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <button id="photo-button" type="button" aria-label="Attach photo">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
-    <span class="pp">user</span><span class="sep2">$ </span>
-    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message"></textarea>
+    <span class="pp" aria-hidden="true">user</span><span class="sep2" aria-hidden="true">$ </span>
+    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message" required></textarea>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 
     <button id="spin-btn" type="button" aria-label="Pause or resume speech"></button>
