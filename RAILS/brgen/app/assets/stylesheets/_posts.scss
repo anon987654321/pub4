@@ -107,11 +107,35 @@
 .comment_item a { color: var(--accent); text-decoration: none; }
 .comment_item a:hover { text-decoration: underline; }
 
+.comment_item .comment-replies,
 .comment_item .comment_item {
   margin-inline-start: var(--space-4);
   padding-inline-start: var(--space-3);
   border-inline-start: 2px solid var(--border);
   border-bottom: 0;
+}
+
+/* Reply disclosure — native details, no Stimulus reply controller. */
+.comment-reply {
+  margin-top: var(--space-2);
+}
+.comment-reply-toggle {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  list-style: none;
+}
+.comment-reply-toggle::-webkit-details-marker { display: none; }
+.comment-reply-toggle:hover { text-decoration: underline; }
+.comment-reply[open] .comment-reply-toggle { margin-bottom: var(--space-2); }
+.comment-body { margin: 0; }
+.comment-delete {
+  display: inline;
+  padding: 0;
+  min-height: 0;
+  font: inherit;
+  font-weight: 600;
 }
 
 /* Forms — x.com minimal */

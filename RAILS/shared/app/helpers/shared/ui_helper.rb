@@ -38,6 +38,47 @@ module Shared
       safe_join(Array(items).map { |item| tab_bar_link(item) })
     end
 
+    # Display name for a comment author (works across guest/anon/username shapes).
+    def comment_author_name(comment)
+      user = comment.try(:user)
+      return t("chat.anon", default: "anon") if user.blank?
+
+      user.try(:username).presence ||
+        user.try(:display_name).presence ||
+        user.try(:channel_handle).presence ||
+        user.try(:email_address).to_s.split("@").first.presence ||
+        t("chat.anon", default: "anon")
+    end
+
+    # Polymorphic destroy target: nested [commentable, comment] when the parent
+    # is a Post (amber + brgen nested routes); bare comment for shallow routes.
+    def comment_destroy_arg(comment)
+      parent = comment.try(:commentable)
+      return [ parent, comment ] if parent.present? && parent.persisted?
+
+      comment
+    end
+
+    # Root post for reply forms when comments nest under comments.
+    def comment_root_post(comment)
+      parent = comment.try(:commentable)
+      return parent if parent.is_a?(Post)
+      return parent.commentable if parent.respond_to?(:commentable)
+
+      parent
+    end
+
+    def comment_children(comment)
+      klass = comment.class
+      if klass.respond_to?(:best)
+        klass.where(parent_id: comment.id).best
+      elsif comment.respond_to?(:replies)
+        comment.replies.order(:created_at)
+      else
+        klass.none
+      end
+    end
+
     private
 
     def sidebar_nav_link(item)

@@ -132,3 +132,57 @@ li:focus-within .msg_reaction_picker {
   background: var(--accent);
   flex: none;
 }
+
+/* Fleet comment rows (shared comments/_comment) */
+.comment.comment_item {
+  display: block;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+}
+.comment.comment_item:hover {
+  background: var(--hover-subtle, transparent);
+}
+.comment.comment_item header {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-dim, var(--text-secondary));
+  margin-bottom: var(--space-1, 0.25rem);
+}
+.comment-author {
+  color: var(--text);
+  font-weight: 700;
+}
+.comment-body {
+  color: var(--text);
+  line-height: 1.55;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+.comment-replies {
+  margin-inline-start: var(--space-4, 1rem);
+  padding-inline-start: var(--space-3, 0.75rem);
+  border-inline-start: 2px solid var(--border);
+}
+.comment-reply {
+  margin-top: var(--space-2, 0.5rem);
+}
+.comment-reply-toggle {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  list-style: none;
+}
+.comment-reply-toggle::-webkit-details-marker { display: none; }
+.comment-reply-toggle:hover { text-decoration: underline; }
+.comment-reply[open] .comment-reply-toggle { margin-bottom: var(--space-2, 0.5rem); }
+.comment-delete {
+  display: inline;
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}

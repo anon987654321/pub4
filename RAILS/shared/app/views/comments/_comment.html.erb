@@ -1,0 +1,84 @@
+<%#
+  Fleet comment row — brgen (threaded + AI summary) and amber (flat).
+
+  Features enable by capability, not by app name:
+    - depth attribute when comment.depth exists
+    - reply disclosure when a root post is resolvable and user is present
+    - nested children when parent_id / replies exist
+    - AI thread summary when long_thread? + generate_summary route exist
+
+  locals:
+    comment       — required
+    destroy_arg   — optional override for delete button path/model
+    threaded      — force on/off replies+children (default: auto)
+%>
+<% threaded = local_assigns.fetch(:threaded) { comment.respond_to?(:depth) || comment.respond_to?(:replies) } %>
+<% depth = comment.respond_to?(:depth) ? [ comment.depth.to_i, 4 ].min : 0 %>
+<% destroy_arg = local_assigns.fetch(:destroy_arg) { comment_destroy_arg(comment) } %>
+<% can_delete = (respond_to?(:authenticated?) ? authenticated? : false) && comment.user == Current.user %>
+<% can_interact = Current.user.present? %>
+<% root_post = comment_root_post(comment) if threaded %>
+
+<%= turbo_frame_tag dom_id(comment) do %>
+  <article class="comment comment_item" data-depth="<%= depth %>">
+    <header>
+      <span class="comment-author"><%= comment_author_name(comment) %></span>
+      <span class="comment-time dim">
+        ·
+        <time datetime="<%= comment.created_at.iso8601 %>" data-controller="timeago">
+          <%= time_ago_in_words(comment.created_at) %>
+        </time>
+      </span>
+      <% if can_delete %>
+        <span class="comment-actions">
+          ·
+          <%= button_to t("actions.delete"), destroy_arg,
+                method: :delete,
+                data: { turbo_confirm: t("actions.confirm_delete") },
+                class: "btn btn-ghost btn-sm comment-delete" %>
+        </span>
+      <% end %>
+    </header>
+
+    <p class="comment-body"><%= comment.content %></p>
+
+    <% if threaded && comment.respond_to?(:long_thread?) && comment.long_thread? %>
+      <% if comment.respond_to?(:has_thread_summary?) && comment.has_thread_summary? %>
+        <p class="thread-summary">
+          <strong><%= t("comments.master_summary", default: "MASTER summary:") %></strong>
+          <%= comment.thread_summary %>
+        </p>
+      <% elsif can_interact && respond_to?(:generate_summary_comment_path) %>
+        <%= button_to t("comments.ai_summary"), generate_summary_comment_path(comment),
+              method: :post,
+              class: "btn btn-ghost btn-sm",
+              data: { turbo: true } %>
+      <% end %>
+    <% end %>
+
+    <% if threaded && can_interact && root_post.present? %>
+      <details class="comment-reply">
+        <summary class="comment-reply-toggle"><%= t("comments.reply") %></summary>
+        <%= render "comments/form",
+              comment: comment.class.new,
+              commentable: root_post,
+              parent_id: comment.id,
+              form_id: "reply_form_#{comment.id}",
+              rows: 3,
+              placeholder: t("comments.reply_placeholder"),
+              submit: t("comments.reply") %>
+      </details>
+    <% end %>
+
+    <% if threaded %>
+      <% kids = comment_children(comment) %>
+      <% if kids.any? %>
+        <div class="comment-replies">
+          <% kids.each do |reply| %>
+            <%= render "comments/comment", comment: reply, threaded: true %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </article>
+<% end %>
