@@ -19,8 +19,8 @@
 
 <% if policy(@order).update? %>
   <div class="order-actions">
-    <%= button_to "Accept", marketplace_order_path(@order, accept: true), method: :patch, class: "btn" %>
-    <%= button_to "Decline", marketplace_order_path(@order, decline: true), method: :patch, class: "btn btn-ghost" %>
+    <%= button_to t("marketplace.accept"), marketplace_order_path(@order, accept: true), method: :patch, class: "btn" %>
+    <%= button_to t("marketplace.decline"), marketplace_order_path(@order, decline: true), method: :patch, class: "btn btn-ghost" %>
   </div>
 <% end %>
 

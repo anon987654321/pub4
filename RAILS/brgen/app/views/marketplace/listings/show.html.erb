@@ -40,7 +40,7 @@
   <% seller = @listing.user %>
   <% if !@listing.sold? && Current.user.present? && seller.present? && Current.user != seller %>
     <div class="listing-actions listing-actions--inline">
-      <%= button_to "Message seller", user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
+      <%= button_to t("marketplace.message_seller_btn"), user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
     </div>
   <% end %>
   <%= render "shared/affiliate_disclosure" %>
@@ -114,8 +114,8 @@
           <% if order.message.present? %><p><%= order.message %></p><% end %>
           <% if order.status == "pending" %>
             <div class="cluster mt-8">
-              <%= button_to "Accept", marketplace_listing_order_path(@listing, order), params: { accept: true }, method: :patch, class: "btn btn-primary btn-sm" %>
-              <%= button_to "Decline", marketplace_listing_order_path(@listing, order), params: { decline: true }, method: :patch, class: "btn btn-ghost btn-sm" %>
+              <%= button_to t("marketplace.accept"), marketplace_listing_order_path(@listing, order), params: { accept: true }, method: :patch, class: "btn btn-primary btn-sm" %>
+              <%= button_to t("marketplace.decline"), marketplace_listing_order_path(@listing, order), params: { decline: true }, method: :patch, class: "btn btn-ghost btn-sm" %>
             </div>
           <% end %>
         </article>
@@ -126,7 +126,7 @@
             body: "Incoming offers will list here.",
             action: { label: "Edit listing", path: edit_marketplace_listing_path(@listing) } %>
     <% end %>
-    <%= button_to "Remove listing", marketplace_listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm m-16" %>
+    <%= button_to t("marketplace.remove_listing"), marketplace_listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm m-16" %>
   </div>
 <% end %>
 

@@ -22,7 +22,7 @@
         <div class="text-end">
           <strong><%= item.total_display %></strong>
           <div>
-            <%= button_to "Remove", marketplace_listing_order_path(item.listing, item),
+            <%= button_to t("actions.remove"), marketplace_listing_order_path(item.listing, item),
                   method: :patch, params: { decline: true }, class: "btn btn-ghost btn-sm" %>
           </div>
         </div>
@@ -35,11 +35,11 @@
     <p class="dim">Pay with Vipps (NO) or Stripe (cards), or send classic offers sellers accept/decline.</p>
 
     <div class="cart-pay-actions" role="group" aria-label="Payment methods">
-      <%= button_to "Pay with Vipps", marketplace_checkout_path,
+      <%= button_to t("marketplace.pay_vipps"), marketplace_checkout_path,
             method: :post, params: { provider: "vipps" },
             class: "btn btn-primary cart-pay-vipps",
             form: { data: { turbo: false } } %>
-      <%= button_to "Pay with Stripe", marketplace_checkout_path,
+      <%= button_to t("marketplace.pay_stripe"), marketplace_checkout_path,
             method: :post, params: { provider: "stripe" },
             class: "btn btn-ghost cart-pay-stripe",
             form: { data: { turbo: false } } %>
@@ -50,7 +50,7 @@
         underneath is worth keeping; the deploy detail is not. %>
     <p class="hint mt-8">If a payment provider is unavailable we say so. We never take a payment we cannot process.</p>
 
-    <%= button_to "Send all offers", send_offers_marketplace_cart_path,
+    <%= button_to t("marketplace.send_all_offers"), send_offers_marketplace_cart_path,
           method: :post, class: "btn btn-ghost",
           data: { turbo_confirm: "Notify all sellers about your pending offers?" } %>
     <p class="hint mt-8">Sellers get a notification for each pending offer. They accept or decline individually.</p>

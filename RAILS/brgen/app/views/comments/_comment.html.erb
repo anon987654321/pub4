@@ -18,7 +18,7 @@
     <% if comment.has_thread_summary? %>
       <p class="thread-summary"><strong>MASTER sammendrag:</strong> <%= comment.thread_summary %></p>
     <% elsif authenticated? %>
-      <%= button_to "Vis AI sammendrag (via MASTER)", generate_summary_comment_path(comment), method: :post, class: "btn btn-ghost btn-sm", data: { turbo: true } %>
+      <%= button_to t("comments.ai_summary"), generate_summary_comment_path(comment), method: :post, class: "btn btn-ghost btn-sm", data: { turbo: true } %>
     <% end %>
   <% end %>
 

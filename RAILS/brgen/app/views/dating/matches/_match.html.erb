@@ -1,6 +1,6 @@
 <% other = match.other_user(Current.user) %>
 <% match_actions = capture do %>
-  <%= button_to "Message", user_conversations_path(other), method: :post, class: "feed-action feed-action--primary" %>
+  <%= button_to t("actions.message"), user_conversations_path(other), method: :post, class: "feed-action feed-action--primary" %>
 <% end %>
 <%= render "shared/feed_card",
   avatar_url: (other.dating_profile&.photos&.attached? ? url_for(other.dating_profile.photos.first) : nil),

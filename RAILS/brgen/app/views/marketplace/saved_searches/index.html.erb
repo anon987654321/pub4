@@ -13,7 +13,7 @@
     <% @saved_searches.each do |saved_search| %>
       <% search_actions = capture do %>
         <%= link_to "Run", marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "feed-action feed-action--primary" %>
-        <%= button_to "Delete", marketplace_saved_search_path(saved_search), method: :delete, class: "feed-action" %>
+        <%= button_to t("actions.delete"), marketplace_saved_search_path(saved_search), method: :delete, class: "feed-action" %>
       <% end %>
       <%= render "shared/feed_card",
         name: saved_search.title,

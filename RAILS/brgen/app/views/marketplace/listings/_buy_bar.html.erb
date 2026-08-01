@@ -8,7 +8,7 @@
     <% end %>
   </div>
   <div class="listing-buy-bar-actions">
-    <%= button_to "Add to cart",
+    <%= button_to t("marketplace.add_to_cart"),
           marketplace_listing_orders_path(@listing),
           params: { quantity: 1 },
           class: "btn btn-primary listing-buy-bar-cta" %>
