@@ -256,7 +256,18 @@ were all silent — the code ran, returned success, and did nothing.
   against the list file's directory, so a relative output path silently produced
   no effect at all.
 
-## Four findings that keep recurring
+## Five findings that keep recurring
+
+**When you find a bug here, count the other sites before fixing the one in front
+of you.** This engine's characteristic failure is a correct diagnosis applied
+once. `aecho`'s in_gain scaling the dry signal was written up accurately in the
+comment on `fm_bowed_pad` — and 78 of 133 uses still had it. `NO_ARP` was
+written against one of three arp paths. Five analog stages shipped built,
+documented and set to `0`. `CHOIR_VOX` read as a sparsity control and turned the
+choir on in both branches. In each case the author understood the problem; the
+fix just didn't travel. So: grep the shape, then fix at a choke point —
+`synth_patch` for patch fx, `pick_patch_from_pool` plus `weighted_patch_pick`
+for selection — not at the call sites.
 
 **A feature can be fully built, correct, documented — and switched off.** Five
 analog stages defaulted to `0`: a Jiles-Atherton magnetisation model, an

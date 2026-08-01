@@ -48,6 +48,15 @@ spine:
   raised:
     - "2026-07-31: 47316 -> 47583, scan/fix/review tooling, not absorbable"
     - "2026-08-01: 47583 -> 47660, tts_supervisor process-leak fix (3481e2638)"
+  # How many raises may stand before lint:spine refuses another. The allowance is
+  # spent: at two entries above, the next raise fails the check. A genuine
+  # ratchet down (`rake lint:spine RATCHET=1`) clears the log and earns the
+  # budget back, so this is a budget rather than a countdown.
+  #
+  # This exists because the warning above was ignorable, and was ignored twice by
+  # the same argument both times — that the growth was justified. It usually is.
+  # That is exactly why the number needed teeth rather than prose.
+  consecutive_raises_allowed: 2
   # core/ is allowed to grow only by a handler per verb and a rule per
   # constraint; this is a tripwire on new top-level concepts, not on line count.
   core_files: 6

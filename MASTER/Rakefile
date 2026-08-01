@@ -223,12 +223,32 @@ namespace :lint do
             "Absorb it, or raise the ceiling in data/spine.yml in a commit that says why."
     end
 
+    # The file's own warning, enforced instead of described.
+    #
+    # spine.yml says a ceiling that rises whenever a day's work pushes against it
+    # measures nothing. It was raised on 2026-07-31 and again on 2026-08-01, both
+    # times with a good reason, and a good reason will always be available — that
+    # is the failure mode, not an accident. So the escalation is now a check:
+    # past the allowance, raising is refused until lib/ has actually come down
+    # and been ratcheted. The prose could be ignored; this cannot.
+    raises = Array(config["raised"]).length
+    allowed = config.fetch("consecutive_raises_allowed", 2)
+    if raises > allowed
+      abort "lint:spine: the ceiling has been raised #{raises} times without lib/ ever falling " \
+            "(allowance #{allowed}). Absorb something and run `rake lint:spine RATCHET=1`, or " \
+            "delete lib_ceiling and say in the commit that the spine is not an invariant anyone holds."
+    end
+
     # The ratchet only tightens. Nothing here can raise the ceiling.
     if lines < ceiling && ENV["RATCHET"] == "1"
       body = File.read(File.join(__dir__, "data", "spine.yml"))
-      File.write(File.join(__dir__, "data", "spine.yml"),
-                 body.sub(/^  lib_ceiling: \d+$/, "  lib_ceiling: #{lines}"))
-      puts "lint:spine: ratcheted #{ceiling} -> #{lines}"
+      body = body.sub(/^  lib_ceiling: \d+$/, "  lib_ceiling: #{lines}")
+      # A real fall clears the raise log, which is what makes the allowance a
+      # budget rather than a countdown to a permanent failure. Earning back a
+      # raise requires lib/ to actually come down first.
+      body = body.sub(/^  raised:\n(?:    - .*\n)+/, "  raised: []\n")
+      File.write(File.join(__dir__, "data", "spine.yml"), body)
+      puts "lint:spine: ratcheted #{ceiling} -> #{lines} (raise log cleared)"
     elsif lines < ceiling
       puts "lint:spine: #{lines}/#{ceiling} lines (#{ceiling - lines} under — " \
            "run `rake lint:spine RATCHET=1` to record the new low)"

@@ -4708,6 +4708,18 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
   tempo = if (ratio - 1.0).abs < 0.001
             ""
           elsif varispeed
+            # Say how far the pitch actually moved. BPM_SCALE defaults to 0.96,
+            # which pulls samples down about 0.71 semitones — a real transposition
+            # that nothing in the output ever mentioned, so it read as "the tracks
+            # sound lower" without a number attached to it. It also means a key
+            # lock cannot be checked by ear against a sampled bed unless you know
+            # this figure. Reported, not changed: pitch falling with speed is the
+            # point, per the note above.
+            semis = 12.0 * Math.log2(ratio)
+            if semis.abs > 0.05
+              dmesg(format("varispeed: samples %+.2f semitones (ratio %.4f)", semis, ratio),
+                    unit: "smpl0", parent: "dilla0")
+            end
             "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE},"
           else
             "atempo=#{ratio.round(5)},"
@@ -12555,6 +12567,11 @@ DEMO_VOICING_ROTATION = %w[
 #
 # DEMO_CATALOG=stream narrows back to the broadcast rotation.
 def demo_all_order
+  # An explicit list wins over every other rule here — it is how demo-quick asks
+  # for a sample of the catalogue, and an operator naming tracks means it.
+  named = ENV["DEMO_TRACKS"].to_s.split(",").map(&:strip).reject(&:empty?)
+  return named.map(&:to_sym) unless named.empty?
+
   locked = stream_track_order
   # STREAM_LOCK pinned a single track — honour it rather than expanding.
   return locked if locked.length <= 1
@@ -22264,6 +22281,24 @@ DISPATCH = {
   "demo-all" => lambda do
     bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "12"
     out = ARGV.shift
+    demo_all(bars.to_i, out)
+  end,
+  # demo-all is 84 tracks: ~45 minutes to render and ~47 to listen to. That is
+  # the wrong loop for judging a change, because by the time it finishes you no
+  # longer remember what the last version sounded like. This renders an evenly
+  # spaced sample of the same catalogue under the same settings — 12 tracks,
+  # roughly six minutes each way — so a change can be heard while the previous
+  # one is still fresh. Use demo-all for a final pass.
+  "demo-quick" => lambda do
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "8"
+    out = ARGV.shift || File.join(ROOT, "demo_quick.wav")
+    n = (ENV["DEMO_QUICK_TRACKS"] || "12").to_i.clamp(2, 84)
+    order = demo_all_order
+    # Every nth across the catalogue rather than the first n: the order is not
+    # random, so the head of it is not a fair sample of the whole.
+    step = [order.length / n, 1].max
+    ENV["DEMO_TRACKS"] = order.each_slice(step).map(&:first).first(n).join(",")
+    ENV["DEMO_MP3"] ||= "0"
     demo_all(bars.to_i, out)
   end,
   "live_now" => -> { live_now },
