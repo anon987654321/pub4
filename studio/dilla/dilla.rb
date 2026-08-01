@@ -5616,8 +5616,13 @@ def lead_arp_cfg_for(patch)
          end
   if base
     styles = (base[:arp_styles] || []) | Array(patch&.dig(:arp_styles)) | ARP_PATTERN_BUILDERS.keys.first(8)
-    base.merge(patch&.dig(:midi_arp) || {})
-        .merge(arp_styles: styles.uniq)
+    merged = base.merge(patch&.dig(:midi_arp) || {})
+                 .merge(arp_styles: styles.uniq)
+    # melodic_soul, the default lead mode, sits at gate 0.92 — each note holds
+    # 92% of its slot, so one runs into the next and the line reads as legato
+    # even before portamento is applied. Capping it detaches the notes.
+    merged[:gate] = [merged[:gate] || LEAD_SIMPLE_GATE_MAX, LEAD_SIMPLE_GATE_MAX].min if lead_simple?
+    merged
   else
     patch&.dig(:midi_arp) || {
       style: @render_arp_style || :spiral,
@@ -15440,12 +15445,39 @@ def midi_vlq(number)
   bytes.pack("C*")
 end
 
+# A simpler lead: fewer things moving, and nothing moving the pitch.
+#
+# The lead carried nine simultaneous automation lanes — mod wheel, portamento
+# time, pan, expression, resonance, a filter sweep, reverb and chorus sends, and
+# an 8-cent pitch LFO — on top of a 0.92 gate, which is near-continuous legato.
+# Everything slid into everything else.
+#
+# Two kinds of lane are dropped rather than reduced. `bend:` is a pitch LFO and
+# CC5 is portamento time; both modulate frequency, so they are what makes a line
+# read as gliding rather than as played notes. The rest survive at roughly half
+# depth, which keeps the patch alive without the movement being the subject.
+#
+# LEAD_SIMPLE=0 restores the full automation and the original gates.
+def lead_simple? = ENV.fetch("LEAD_SIMPLE", "1") != "0"
+
+LEAD_SIMPLE_GATE_MAX = 0.6
+LEAD_SIMPLE_DEPTH_SCALE = 0.5
+
+def simplify_lead_midi_fx(specs)
+  return specs unless lead_simple?
+
+  Array(specs).reject { |s| s[:bend] || s[:cc] == 5 }.map do |s|
+    s[:depth] ? s.merge(depth: (s[:depth] * LEAD_SIMPLE_DEPTH_SCALE).round) : s
+  end
+end
+
 def midi_fx_specs_for_role(role, patch = nil)
   base = patch&.dig(:midi_fx)
   if role == :lead || role == :lead_arp
-    rich = ENV.fetch("STREAM_LEAD_MIDI_RICH", "1") != "0"
-    return (rich ? MIDI_FX_LEAD_RICH : MIDI_FX_LEAD) unless base && !base.empty?
-    rich ? (base + MIDI_FX_LEAD_RICH.last(3)) : base
+    # Rich stacks three more lanes on top; simple mode never wants it.
+    rich = !lead_simple? && ENV.fetch("STREAM_LEAD_MIDI_RICH", "1") != "0"
+    return simplify_lead_midi_fx(rich ? MIDI_FX_LEAD_RICH : MIDI_FX_LEAD) unless base && !base.empty?
+    simplify_lead_midi_fx(rich ? (base + MIDI_FX_LEAD_RICH.last(3)) : base)
   elsif role == :scale_lead
     (base && !base.empty?) ? base : MIDI_FX_SCALE_LEAD
   else
