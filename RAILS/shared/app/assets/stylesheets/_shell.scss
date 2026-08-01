@@ -361,11 +361,11 @@ html.chrome-hidden .tab-bar {
   pointer-events: none;
 }
 
-/* Peel grip — only path in when the bar is closed and the visitor is not
-   mid-scroll. 44px tall hit area, thin visual pill (edge-swiper pattern). */
+/* Peel grip — flush bottom-center when the bar is closed. 44px hit area,
+   thin visual pill (edge-swiper pattern). Safe-area only (no chrome-inset). */
 .tab-bar-peel {
   position: fixed;
-  bottom: calc(var(--safe-bottom, 0px) + 4px);
+  bottom: var(--safe-bottom, 0px);
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-nav, 80);
@@ -406,10 +406,10 @@ html.chrome-hidden .tab-bar {
   display: none;
 }
 
-/* First-visit coach — points at the progressive footer menu once. */
+/* First-visit coach — sits just above the flush bottom peel once. */
 .tab-bar-coach {
   position: fixed;
-  bottom: calc(var(--safe-bottom, 0px) + 3.25rem);
+  bottom: calc(var(--safe-bottom, 0px) + 2.75rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: calc(var(--z-nav, 80) + 1);

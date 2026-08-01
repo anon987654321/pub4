@@ -59,17 +59,20 @@
     <div class="field">
       <%= form.label :special_instructions %>
       <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= form.text_area :special_instructions, rows: 3, placeholder: "Door code, allergies, delivery notes…" , maxlength: 500, data: { character_counter_target: "input" } %>
+  <%= form.text_area :special_instructions, rows: 3,
+        placeholder: t("takeaway.special_instructions_placeholder"),
+        maxlength: 500,
+        data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>
   </section>
 
-  <section role="region" aria-label="Payment info">
-    <h2>Payment</h2>
-    <p class="dim">Payment is arranged directly with the restaurant for now.</p>
+  <section role="region" aria-label="<%= t("takeaway.payment_label") %>">
+    <h2><%= t("takeaway.payment") %></h2>
+    <p class="dim"><%= t("takeaway.payment_body") %></p>
   </section>
 
-  <%= form.submit "Place order", class: "btn btn-primary" %>
+  <%= form.submit t("takeaway.place_order"), class: "btn btn-primary" %>
   <span class="dim" data-autosave-target="status" aria-live="polite"></span>
 <% end %>

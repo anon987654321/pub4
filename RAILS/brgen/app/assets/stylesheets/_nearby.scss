@@ -1,8 +1,8 @@
-/* Nearby alerts */
+/* Nearby alerts — clear the flush corner chat tab (~48px) + tab-bar when open. */
 .nearby-alerts {
   position: fixed;
-  bottom: calc(72px + var(--safe-bottom));
-  inset-inline-end: calc(16px + var(--safe-right));
+  bottom: calc(var(--tab-bar-h, 0px) + 3.5rem + var(--safe-bottom, 0px));
+  inset-inline-end: calc(0.5rem + var(--safe-right, 0px));
   z-index: calc(var(--z-splash) - 1);
   display: flex;
   flex-direction: column;

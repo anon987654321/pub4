@@ -1,12 +1,21 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Typing ping + chat composer affordances (Enter sends, Shift+Enter newline).
-// Shared by channel, DM, and any form that opts in via typing-input.
+// Typing ping + chat composer affordances (Enter sends, Shift+Enter newline,
+// empty-send disabled). Shared by channel, DM, and the corner dock.
 export default class extends Controller {
   static values = { url: String }
 
   connect() {
     this.lastPing = 0
+    this.field = this.element.querySelector("textarea, input[type=text]")
+    this.submit = this.element.querySelector("[type=submit]")
+    this.#syncSubmit()
+    this.onInput = () => this.#syncSubmit()
+    this.field?.addEventListener("input", this.onInput)
+  }
+
+  disconnect() {
+    this.field?.removeEventListener("input", this.onInput)
   }
 
   ping() {
@@ -24,11 +33,24 @@ export default class extends Controller {
   composerKeydown(event) {
     if (event.key !== "Enter" || event.shiftKey) return
     if (event.isComposing) return
+    if (!this.#hasContent()) {
+      event.preventDefault()
+      return
+    }
     event.preventDefault()
     const form = event.target.closest("form") || this.element
     if (!(form instanceof HTMLFormElement)) return
     if (typeof form.requestSubmit === "function") form.requestSubmit()
     else form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+  }
+
+  #syncSubmit() {
+    if (!this.submit) return
+    this.submit.disabled = !this.#hasContent()
+  }
+
+  #hasContent() {
+    return (this.field?.value || "").trim().length > 0
   }
 
   get csrf() {

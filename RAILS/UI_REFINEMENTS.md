@@ -99,7 +99,7 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Playlist minimal now-playing + auto-start | Landed |
 | Amber btn--primary normalize (+ btn-primary alias) | Landed |
 | Dating discover/matches nb chrome | Landed |
-| Install prompt after value event or 3 visits | Landed |
+| Install prompt after value only (no visit count) | Landed |
 | Location denied sticky + guest merge flash | Landed |
 | Ambient chat NN/g (lobby without GPS, Enter-send, i18n status) | Landed |
 | Footer tab bar progressive (closed by default; peel + scroll-up) | Landed |
@@ -109,6 +109,10 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Nearby + Live explicit Use location + page reload | Landed |
 | First-visit footer menu coach (dismissible) | Landed |
 | Live page full i18n (nb/en) | Landed |
+| Ambient chat flush bottom-right corner | Landed |
+| Empty-send disabled on chat composers | Landed |
+| Peel flush bottom-center; alerts clear chat tab | Landed |
+| Residual chat EN (messages/new, marketplace order, playlist party) | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 

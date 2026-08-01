@@ -310,6 +310,11 @@ body.vertical-playlist .nearby-chat-widget {
   min-width: 44px;
 }
 
+.nearby-chat-widget-composer .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .nearby-chat-widget-body {
   flex: 1;
   min-height: 0;

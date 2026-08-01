@@ -34,12 +34,20 @@
 
   <%= form_with model: @message, url: conversation_messages_path(@conversation),
                 id: "new_message",
-                data: { turbo: true } do |f| %>
+                data: {
+                  turbo: true,
+                  controller: "typing-input",
+                  action: "keydown->typing-input#composerKeydown"
+                } do |f| %>
     <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-      <%= f.text_area :content, rows: 3, placeholder: "Type message...", data: { character_counter_target: "input" } %>
+      <%= f.text_area :content, rows: 3,
+            placeholder: t("chat.dm_placeholder"),
+            enterkeyhint: "send",
+            aria: { label: t("chat.message_label") },
+            data: { character_counter_target: "input" } %>
       <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
     </div>
     <%= f.hidden_field :message_type, value: "text" %>
-    <p><%= f.submit t("actions.send"), class: "btn" %></p>
+    <p><%= f.submit t("actions.send"), class: "btn btn-primary" %></p>
   <% end %>
 <% end %>
