@@ -1,16 +1,33 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Ambient corner chat dock (brgen: #brgen lobby or #nearby when located).
+// NN/g: status is always visible; location is progressive (explicit only);
+// Escape closes; Enter sends from the composer.
 const LOCATION_DENIED_KEY = "pub4:location-denied"
 
 export default class extends Controller {
   static targets = ["panel", "tab", "log", "status", "tabLabel", "headerLabel", "mode"]
-  static values = { storageKey: { type: String, default: "pub4:ambient-chat:open" } }
+  static values = {
+    storageKey: { type: String, default: "pub4:ambient-chat:open" },
+    labelChat: { type: String, default: "chat" },
+    labelNearby: { type: String, default: "nearby" },
+    statusAsking: { type: String, default: "Asking for location…" },
+    statusDenied: { type: String, default: "Location blocked — staying in #brgen. Enable location in the browser for #nearby." },
+    statusTimeout: { type: String, default: "Location timed out — staying in #brgen." },
+    statusUnavailable: { type: String, default: "Location unavailable — staying in #brgen." },
+    statusBlocked: { type: String, default: "This page cannot read location — #brgen still works." },
+    statusServer: { type: String, default: "Could not save location — try again." },
+    statusNetwork: { type: String, default: "Network error saving location — try again." }
+  }
 
   connect() {
     this.#apply(this.#restore(), { focus: false })
+    this.#syncLabelsFromFrame()
 
-    this.observer = new MutationObserver(() => this.#pinToNewest())
+    this.observer = new MutationObserver(() => {
+      this.#pinToNewest()
+      this.#syncLabelsFromFrame()
+    })
     this.observer.observe(this.element, { childList: true, subtree: true })
 
     this.onDocumentClick = (event) => {
@@ -58,11 +75,8 @@ export default class extends Controller {
 
   show() {
     this.#apply(true, { focus: true })
-    // Soft-ask location only if not permanently denied and still on lobby.
-    if (this.#wantsLocation() && !this.#locationDenied()) {
-      this.#setStatus("Optional: share location for #nearby…")
-      window.dispatchEvent(new CustomEvent("brgen:request-location"))
-    }
+    // Do not auto-prompt for GPS on open (progressive disclosure). Lobby
+    // works without it; visitors opt in via "Use location".
   }
 
   close() { this.#apply(false, { focus: false }) }
@@ -70,12 +84,24 @@ export default class extends Controller {
   locate(event) {
     event?.preventDefault()
     try { window.localStorage.removeItem(LOCATION_DENIED_KEY) } catch (_) {}
-    this.#setStatus("Asking for location…")
+    this.#setStatus(this.statusAskingValue)
     window.dispatchEvent(new CustomEvent("brgen:request-location"))
   }
 
-  // Fired after a successful widget send — install prompt can offer PWA earlier.
-  markInstallValue() {
+  // Enter sends; Shift+Enter keeps a newline (standard chat affordance).
+  composerKeydown(event) {
+    if (event.key !== "Enter" || event.shiftKey) return
+    if (event.isComposing) return
+    event.preventDefault()
+    const form = event.target.closest("form")
+    if (!form) return
+    if (typeof form.requestSubmit === "function") form.requestSubmit()
+    else form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+  }
+
+  // Only count a real send toward install-value (not validation failures).
+  markInstallValue(event) {
+    if (event?.detail && event.detail.success === false) return
     window.dispatchEvent(new CustomEvent("pub4:install-value"))
   }
 
@@ -83,33 +109,39 @@ export default class extends Controller {
     return this.hasPanelTarget && !this.panelTarget.hasAttribute("hidden")
   }
 
-  #wantsLocation() {
-    // Lobby shows "Use location"; geo room shows refresh.
-    return !!this.element.querySelector("[data-action*='nearby-chat#locate']")
-  }
-
-  #locationDenied() {
-    try { return window.localStorage.getItem(LOCATION_DENIED_KEY) === "1" } catch (_) { return false }
-  }
-
   #showLocationError(reason) {
     if (reason === "denied") {
       try { window.localStorage.setItem(LOCATION_DENIED_KEY, "1") } catch (_) {}
     }
     const messages = {
-      denied: "Location blocked — staying in #brgen. Enable location in the browser for #nearby.",
-      timeout: "Location timed out — staying in #brgen.",
-      unavailable: "Location unavailable — staying in #brgen.",
-      blocked: "This page cannot read location — #brgen still works.",
-      server: "Could not save location — try again.",
-      network: "Network error saving location — try again."
+      denied: this.statusDeniedValue,
+      timeout: this.statusTimeoutValue,
+      unavailable: this.statusUnavailableValue,
+      blocked: this.statusBlockedValue,
+      server: this.statusServerValue,
+      network: this.statusNetworkValue
     }
-    this.#setStatus(messages[reason] || messages.unavailable)
+    this.#setStatus(messages[reason] || this.statusUnavailableValue)
     this.#setTab("chat")
   }
 
   #setTab(mode) {
-    const label = mode === "nearby" ? "nearby" : "chat"
+    const label = mode === "nearby" ? this.labelNearbyValue : this.labelChatValue
+    if (this.hasTabLabelTarget) this.tabLabelTarget.textContent = label
+    if (this.hasHeaderLabelTarget) this.headerLabelTarget.textContent = label
+  }
+
+  // After the turbo-frame loads lobby vs nearby, prefer the server mode line.
+  #syncLabelsFromFrame() {
+    const mode = this.hasModeTarget
+      ? this.modeTarget
+      : this.element.querySelector("[data-nearby-chat-target='mode']")
+    if (!mode) return
+    const strong = mode.querySelector("strong")
+    if (!strong) return
+    const text = strong.textContent?.trim()
+    if (!text) return
+    const label = text.replace(/^#/, "")
     if (this.hasTabLabelTarget) this.tabLabelTarget.textContent = label
     if (this.hasHeaderLabelTarget) this.headerLabelTarget.textContent = label
   }

@@ -34,14 +34,17 @@ class NearbyController < ApplicationController
   # channel page -- the widget IS the frame, there's nowhere to navigate to.
   #
   # Ambient chat: with GPS → geo room; without → #brgen city lobby inline so
-  # anonymous chat "just works" without a second navigation.
+  # anonymous chat "just works" without a second navigation. Soft guests are
+  # the identity path (Craigslist-style); never require signup here.
   def widget
-    lat = Current.user&.latitude
-    lng = Current.user&.longitude
-    @located = Current.user.present? && lat.present? && lng.present?
+    me = Current.user
     @messages = []
     @lobby = false
-    return render_widget_shell unless Current.user.present?
+    return render_widget_shell unless me
+
+    lat = me.latitude
+    lng = me.longitude
+    @located = lat.present? && lng.present?
 
     @conversation =
       if @located
@@ -52,8 +55,8 @@ class NearbyController < ApplicationController
       end
     return render_widget_shell unless @conversation
 
-    @conversation.join!(Current.user)
-    @conversation.mark_read_for!(Current.user)
+    @conversation.join!(me)
+    @conversation.mark_read_for!(me)
     ActsAsTenant.without_tenant do
       @messages = @conversation.messages.unexpired.includes(:sender).order(:created_at).last(50).to_a
     end

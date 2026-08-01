@@ -1,5 +1,6 @@
 <%# Reset the corner widget's own composer. The message itself arrives through
-    Message#broadcasts_to, which appends to every .conversation-log on the page. %>
+    Message#broadcasts_to, which appends to every .conversation-log on the page.
+    On validation failure we re-render the same form with the invalid message. %>
 <%= turbo_stream.replace "nearby_widget_message" do %>
-  <%= render "nearby/widget_composer", conversation: @conversation %>
+  <%= render "nearby/widget_composer", conversation: @conversation, message: @message %>
 <% end %>

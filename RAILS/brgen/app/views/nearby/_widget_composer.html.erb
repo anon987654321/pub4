@@ -6,17 +6,23 @@
 
     `origin=widget` is what tells MessagesController to answer with the widget
     composer instead of the page one. %>
-<%= form_with model: Message.new, url: conversation_messages_path(conversation),
+<% handle = Current.user&.channel_handle || t("chat.anon", default: "anon") %>
+<%= form_with model: local_assigns.fetch(:message, Message.new),
+              url: conversation_messages_path(conversation),
               id: "nearby_widget_message", class: "nearby-chat-widget-composer",
               data: {
                 turbo: true,
                 controller: "typing-input",
                 typing_input_url_value: conversation_typing_indicators_path(conversation),
-                action: "turbo:submit-end->nearby-chat#markInstallValue"
+                action: "turbo:submit-end->nearby-chat#markInstallValue keydown->nearby-chat#composerKeydown"
               } do |f| %>
-  <%= f.text_area :content, rows: 1, placeholder: "Message as #{Current.user.channel_handle}…",
-        maxlength: 500, aria: { label: "Message" } %>
+  <%= f.text_area :content, rows: 1,
+        placeholder: t("chat.placeholder", handle: handle, default: "Message as %{handle}…"),
+        maxlength: 500,
+        autocomplete: "off",
+        enterkeyhint: "send",
+        aria: { label: t("chat.message_label", default: "Message") } %>
   <%= f.hidden_field :message_type, value: "text" %>
   <%= hidden_field_tag "origin", "widget" %>
-  <%= f.submit "Send", class: "btn btn-primary btn-sm" %>
+  <%= f.submit t("actions.send", default: "Send"), class: "btn btn-primary btn-sm" %>
 <% end %>

@@ -2,14 +2,25 @@
     Brgen: ambient chat — #brgen lobby without GPS, #nearby when located.
     Other apps: inbox or deep-link to Brgen. %>
 <% widget_title = local_assigns.fetch(:title, t("chat.title", default: "chat")) %>
-<div class="nearby-chat-widget" data-controller="nearby-chat"
-     data-nearby-chat-storage-key-value="pub4:ambient-chat:open">
+<div class="nearby-chat-widget"
+     data-controller="nearby-chat"
+     data-nearby-chat-storage-key-value="pub4:ambient-chat:open"
+     data-nearby-chat-label-chat-value="<%= t("chat.title", default: "chat") %>"
+     data-nearby-chat-label-nearby-value="<%= t("chat.nearby_tab", default: "nearby") %>"
+     data-nearby-chat-status-asking-value="<%= t("chat.status_asking", default: "Asking for location…") %>"
+     data-nearby-chat-status-denied-value="<%= t("chat.status_denied", default: "Location blocked — staying in #brgen. Enable location in the browser for #nearby.") %>"
+     data-nearby-chat-status-timeout-value="<%= t("chat.status_timeout", default: "Location timed out — staying in #brgen.") %>"
+     data-nearby-chat-status-unavailable-value="<%= t("chat.status_unavailable", default: "Location unavailable — staying in #brgen.") %>"
+     data-nearby-chat-status-blocked-value="<%= t("chat.status_blocked", default: "This page cannot read location — #brgen still works.") %>"
+     data-nearby-chat-status-server-value="<%= t("chat.status_server", default: "Could not save location — try again.") %>"
+     data-nearby-chat-status-network-value="<%= t("chat.status_network", default: "Network error saving location — try again.") %>">
   <button type="button"
           class="nearby-chat-widget-tab"
           data-nearby-chat-target="tab"
           data-action="nearby-chat#toggle"
           aria-expanded="false"
-          aria-controls="nearby-chat-widget-panel">
+          aria-controls="nearby-chat-widget-panel"
+          aria-haspopup="dialog">
     <%= icon :messages, size: 16 %>
     <span data-nearby-chat-target="tabLabel"><%= widget_title %></span>
   </button>
@@ -18,18 +29,22 @@
        class="nearby-chat-widget-panel"
        data-nearby-chat-target="panel"
        role="dialog"
+       aria-modal="false"
        aria-label="<%= widget_title %>"
        hidden>
     <header class="nearby-chat-widget-header">
       <span data-nearby-chat-target="headerLabel"><%= widget_title %></span>
-      <button type="button" class="nearby-chat-widget-close" data-action="nearby-chat#close" aria-label="<%= t("chat.close", default: "Close") %>">&times;</button>
+      <button type="button"
+              class="nearby-chat-widget-close"
+              data-action="nearby-chat#close"
+              aria-label="<%= t("chat.close", default: "Close") %>">&times;</button>
     </header>
 
     <p class="nearby-chat-widget-status dim" data-nearby-chat-target="status" hidden aria-live="polite"></p>
 
     <div class="nearby-chat-widget-body">
       <% if respond_to?(:nearby_widget_path) %>
-        <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path do %>
+        <%= turbo_frame_tag "nearby-chat-widget-frame", src: nearby_widget_path, class: "nearby-chat-widget-frame" do %>
           <div class="nearby-chat-widget-empty">
             <strong><%= t("chat.title", default: "Chat") %></strong>
             <p><%= t("chat.loading", default: "Loading the room…") %></p>

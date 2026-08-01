@@ -30,7 +30,17 @@ class MessagesController < ApplicationController
         format.html { redirect_to @conversation }
       end
     else
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        # Keep the dock usable after a validation miss (empty send, etc.).
+        format.turbo_stream do
+          if from_widget?
+            render :create_widget, status: :unprocessable_entity
+          else
+            head :unprocessable_entity
+          end
+        end
+        format.html { render :new, status: :unprocessable_entity }
+      end
     end
   end
 

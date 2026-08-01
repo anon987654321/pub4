@@ -1,34 +1,51 @@
-<turbo-frame id="nearby-chat-widget-frame">
+<turbo-frame id="nearby-chat-widget-frame" class="nearby-chat-widget-frame">
   <% if @conversation.present? && Current.user.present? %>
     <%= turbo_stream_from @conversation %>
 
     <div class="nearby-chat-widget-mode dim" data-nearby-chat-target="mode">
       <% if @located %>
-        <strong>#nearby</strong> · ~10&nbsp;km · <%= Current.user.anon_handle %>
-        <button type="button" class="nearby-chat-widget-linkish" data-action="nearby-chat#locate" title="<%= t("chat.refresh_location") %>">↻</button>
+        <strong>#nearby</strong>
+        <span aria-hidden="true">·</span>
+        <span>~10&nbsp;km</span>
+        <span aria-hidden="true">·</span>
+        <span><%= Current.user.anon_handle %></span>
+        <button type="button"
+                class="nearby-chat-widget-linkish"
+                data-action="nearby-chat#locate"
+                title="<%= t("chat.refresh_location") %>"
+                aria-label="<%= t("chat.refresh_location") %>">↻</button>
       <% else %>
-        <strong>#brgen</strong> · <%= t("chat.city_lobby") %> · <%= Current.user.channel_handle %>
-        <button type="button" class="nearby-chat-widget-linkish" data-action="nearby-chat#locate"><%= t("chat.use_location") %></button>
+        <strong>#brgen</strong>
+        <span aria-hidden="true">·</span>
+        <span><%= t("chat.city_lobby") %></span>
+        <span aria-hidden="true">·</span>
+        <span><%= Current.user.channel_handle %></span>
+        <button type="button"
+                class="nearby-chat-widget-linkish"
+                data-action="nearby-chat#locate"><%= t("chat.use_location") %></button>
       <% end %>
     </div>
-
-    <% if @messages.blank? %>
-      <div class="nearby-chat-widget-empty">
-        <% if @located %>
-          <strong><%= t("chat.nearby_title") %></strong>
-          <p><%= t("chat.nearby_body") %></p>
-        <% else %>
-          <strong><%= t("chat.lobby_title") %></strong>
-          <p><%= t("chat.lobby_body") %></p>
-        <% end %>
-      </div>
-    <% end %>
 
     <ul id="nearby-widget-log" class="nearby-chat-widget-log conversation-log"
         data-nearby-chat-target="log"
         data-controller="conversation-log"
         data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
-        aria-live="polite">
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label="<%= t("chat.log_label", default: "Messages") %>">
+      <% if @messages.blank? %>
+        <li class="nearby-chat-widget-empty-item" role="status">
+          <div class="nearby-chat-widget-empty">
+            <% if @located %>
+              <strong><%= t("chat.nearby_title") %></strong>
+              <p><%= t("chat.nearby_body") %></p>
+            <% else %>
+              <strong><%= t("chat.lobby_title") %></strong>
+              <p><%= t("chat.lobby_body") %></p>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
       <% @messages.each do |m| %>
         <%= render "messages/message", message: m %>
       <% end %>
@@ -36,10 +53,13 @@
 
     <%= render "nearby/widget_composer", conversation: @conversation %>
   <% else %>
+    <%# Soft guests are minted every request on brgen; this branch is recovery
+        if identity or channel create failed — never a pure loading dead end. %>
     <div class="nearby-chat-widget-empty">
-      <strong><%= t("chat.title") %></strong>
-      <p><%= t("chat.loading") %></p>
-      <%= link_to "Open #brgen", channel_path("brgen"), class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
+      <strong><%= t("chat.lobby_title") %></strong>
+      <p><%= t("chat.recovery_body", default: "Could not open the corner room. Use the city lobby instead — no signup.") %></p>
+      <%= link_to t("chat.open_brgen_channel", default: "Open #brgen"), channel_path("brgen"),
+            class: "nearby-chat-widget-cta", data: { turbo_frame: "_top" } %>
     </div>
   <% end %>
 </turbo-frame>
