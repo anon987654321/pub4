@@ -19448,8 +19448,12 @@ end
 # ORGANIC_SWELL=1   swells across the phrase and relaxes out of it -- the
 #   literal breath. Measured motivation: renders here come out at LRA 2.9, so
 #   bar 1 and bar 17 are equally loud, which no played performance is.
-ORGANIC_BREATH = ENV["ORGANIC_BREATH"] == "1"
-ORGANIC_SWELL = ENV["ORGANIC_SWELL"] == "1"
+# Default on. One control signal drives loudness and brightness together, which
+# is how an acoustic source behaves — playing louder is also playing brighter.
+ORGANIC_BREATH = ENV.fetch("ORGANIC_BREATH", "1") != "0"
+# Default on. Swells across a phrase and relaxes out of it, so a loop stops
+# arriving at every bar with identical energy.
+ORGANIC_SWELL = ENV.fetch("ORGANIC_SWELL", "1") != "0"
 ORGANIC_BREATH_DB = (ENV["ORGANIC_BREATH_DB"] || 2.2).to_f.clamp(0.0, 12.0)
 ORGANIC_SWELL_DB = (ENV["ORGANIC_SWELL_DB"] || 3.0).to_f.clamp(0.0, 12.0)
 ORGANIC_SWELL_BARS = (ENV["ORGANIC_SWELL_BARS"] || 4).to_f.clamp(1.0, 32.0)

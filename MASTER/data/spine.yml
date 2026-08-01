@@ -13,6 +13,17 @@
 spine:
   # Total lines across lib/**/*.rb.
   #
+  # RAISED 2026-08-01, 47583 -> 47660 (+77), one day after the previous raise —
+  # which is precisely the pattern the note below warns about, so it is worth
+  # being exact about what it is. All 77 lines are one commit, 3481e2638, and one
+  # file: voice/tts_supervisor.rb, fixing a worker pool that leaked a process a
+  # minute. It is a bug fix in a supervisor, not a new subsystem, and core/ has
+  # no verb or constraint it belongs to.
+  #
+  # Two raises in two days is still the wrong direction. The next one should not
+  # be granted on the strength of "it was only a bug fix" — by then the honest
+  # move is to make lib/ fall back first.
+  #
   # RAISED 2026-07-31, 47316 -> 47583 (+267), the first raise since the ratchet
   # landed one day earlier. Every one of those lines is scan/fix/review tooling
   # from eleven commits that day -- cross_file_analysis +98 (rules that measure
@@ -30,11 +41,13 @@ spine:
   # again without lib/ ever falling back, the honest conclusion is that "the
   # spine never grows" is not the invariant anyone is holding, and the number
   # should be replaced by one that is.
-  lib_ceiling: 47583
+  lib_ceiling: 47660
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
-  raised: ["2026-07-31: 47316 -> 47583, scan/fix/review tooling, not absorbable"]
+  raised:
+    - "2026-07-31: 47316 -> 47583, scan/fix/review tooling, not absorbable"
+    - "2026-08-01: 47583 -> 47660, tts_supervisor process-leak fix (3481e2638)"
   # core/ is allowed to grow only by a handler per verb and a rule per
   # constraint; this is a tripwire on new top-level concepts, not on line count.
   core_files: 6
