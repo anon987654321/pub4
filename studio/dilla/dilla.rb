@@ -5669,6 +5669,16 @@ def xlead_arp_section_density(section, progress)
 end
 
 def melodic_lead_mode?
+  # NO_ARP has to win here, above the MELODIC_LEAD=0 check, or it does nothing.
+  #
+  # stream_rotate_voices_and_arps! sets MELODIC_LEAD=0 on every stream and
+  # demo-all slot. Turning off lead_true_arp_mode? therefore left the lead in
+  # neither state — not a true arp, but blocked from melodic — so it fell
+  # through to lead_arp_events with the preset config still attached, which is
+  # style=skip_up at subdiv 8. Arps were "off" and the lead was still running
+  # eight notes a chord.
+  return true if no_arp?
+
   return false if lead_true_arp_mode?
   return false if ENV["MELODIC_LEAD"] == "0"
   return true if ENV.fetch("MELODIC_LEAD", "0") != "0"
@@ -5685,7 +5695,9 @@ def lead_melodic_phrase_for_chord(time, velocity, chord, sustain, chord_i, cfg, 
   beat_p = 60.0 / cfg[:bpm]
   # Quarter notes (subdiv 1 per beat) — readable top line, not arp soup.
   step_p = beat_p
-  gate = 0.9
+  # Was a hardcoded 0.9, which is legato regardless of LEAD_SIMPLE. The cap has
+  # to apply here too, since this is the path NO_ARP now routes every lead into.
+  gate = lead_simple? ? LEAD_SIMPLE_GATE_MAX : 0.9
   step_dur = step_p * gate
   n_steps = [(sustain / step_p).floor, 2].max
   n_steps = [n_steps, 6].min
@@ -13524,9 +13536,44 @@ def dilla_progression(mode = :maj7_minor_cycle)
 end
 
 # Closest-tone voice leading + close jazz voicing so pads don't thrash register.
+# Not every chord should bloom.
+#
+# 68% of the 1366 chords in the catalogue are ninths — m9 at 35%, maj9 at 33% —
+# against 0.9% maj7 and 2.6% m7. Voiced literally, every chord is as lush as
+# every other, so none of them arrive: an extension only reads as colour when
+# something plainer sits next to it. This is why the harmony felt uniform rather
+# than thin.
+#
+# Rather than rewrite 248 curated progressions, the extension is thinned at
+# voicing time on passing chords — which is what a keys player does. The first
+# and last chord keep their full voicing, because those are the arrival and the
+# turnaround; interior chords lose their topmost tone on an alternating basis.
+# Deterministic by position, so a progression voices the same way every render.
+#
+# HARMONIC_VARIETY=0 voices every chord in full, as before.
+def harmonic_variety? = ENV.fetch("HARMONIC_VARIETY", "1") != "0"
+
+def thin_passing_extensions(pads)
+  return pads unless harmonic_variety? && pads.length >= 4
+
+  pads.map.with_index do |ch, i|
+    next ch unless ch.is_a?(Hash)
+    next ch if i.zero? || i == pads.length - 1 || i.odd?
+
+    hz = Array(ch[:hz])
+    # Four voices is already a seventh chord; thinning below that removes chord
+    # tones rather than colour, so leave those alone.
+    next ch if hz.length <= 4
+
+    ch.merge(hz: hz.sort.first(hz.length - 1))
+  end
+end
+
 def voice_led_pad_progression(pads)
   return pads if pads.nil? || pads.length < 2
   return pads if ENV.fetch("VOICE_LEAD_PADS", "1") == "0"
+
+  pads = thin_passing_extensions(pads)
   style = (ENV["VOICING"] || "rootless").to_s.downcase.tr("-", "_").to_sym
   style = :rootless unless DillaHarmony::VOICING_STYLES.include?(style)
   # `style` used to be computed and then consulted only for `!= :cluster`, so
