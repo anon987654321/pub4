@@ -163,3 +163,5 @@ nb:
   install:
     title: "Installer Amber"
     body: "Garderoben offline — antrekk og bruks-sporing fra hjem-skjermen."
+    not_now: "Ikke nå"
+    action: "Installer"

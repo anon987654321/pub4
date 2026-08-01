@@ -163,3 +163,5 @@ en:
   install:
     title: "Install Amber"
     body: "Your wardrobe offline — outfits and wear tracking on the home screen."
+    not_now: "Not now"
+    action: "Install"

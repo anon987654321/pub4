@@ -70,3 +70,5 @@ en:
   install:
     title: "Install BSDports"
     body: "Ports search and advisories — open from your home screen."
+    not_now: "Not now"
+    action: "Install"

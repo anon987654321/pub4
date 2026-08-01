@@ -70,3 +70,5 @@ nb:
   install:
     title: "Installer BSDports"
     body: "Portersøk og advisories — åpne fra hjem-skjermen."
+    not_now: "Ikke nå"
+    action: "Installer"

@@ -101,6 +101,10 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Dating discover/matches nb chrome | Landed |
 | Install prompt after value event or 3 visits | Landed |
 | Location denied sticky + guest merge flash | Landed |
+| Ambient chat NN/g (lobby without GPS, Enter-send, i18n status) | Landed |
+| Footer tab bar progressive (closed by default; peel + scroll-up) | Landed |
+| Nearby page i18n + lobby path without GPS | Landed |
+| Install prompt action i18n; quieter edge grips | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 

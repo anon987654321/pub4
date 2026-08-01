@@ -140,8 +140,8 @@ main[role="main"] {
   transform: translateX(0);
 }
 
-/* Edge-reveal grip — chevron only (no gradient blob / sphere). Swipe from
-   the edge still works via edge_swiper; grip is a bare text affordance. */
+/* Edge-reveal grip — progressive: nearly invisible until hover/focus.
+   Swipe from the edge still works via edge_swiper without the mark. */
 .edge-grip {
   position: fixed;
   top: 50%;
@@ -159,7 +159,12 @@ main[role="main"] {
   pointer-events: auto;
   z-index: 1;
   cursor: pointer;
-  opacity: 0.45;
+  opacity: 0.18;
+  transition: opacity var(--transition-fast, 180ms);
+}
+@media (hover: none) {
+  /* Touch has no hover — keep a soft permanent affordance. */
+  .edge-grip { opacity: 0.35; }
 }
 .edge-grip::after {
   content: "";

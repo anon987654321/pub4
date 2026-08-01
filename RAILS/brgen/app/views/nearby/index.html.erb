@@ -1,26 +1,32 @@
-<% content_for :title, "Nearby" %>
+<% content_for :title, t("nearby.page_title") %>
 
-<div class="page-header" role="banner"><h1>Nearby</h1></div>
+<div class="page-header" role="banner"><h1><%= t("nearby.page_title") %></h1></div>
 
 <p class="channel-crosslink dim">
-  <%= link_to "Live feed (anonymous notes nearby)", live_path %> ·
-  Prefer a room? <%= link_to "Join a public channel →", channels_path %>
+  <%= link_to t("nearby.live_link"), live_path %> ·
+  <%= t("nearby.prefer_room") %>
+  <%= link_to t("nearby.channels_link"), channels_path %>
 </p>
 
 <% unless @located %>
   <div class="section-divider--24">
-    <p class="section-heading--md">Share your location</p>
-    <p class="dim">Find strangers within <%= @radius_km.to_i %> km and chat anonymously. Your exact position is never shown.</p>
+    <p class="section-heading--md"><%= t("nearby.share_location_title") %></p>
+    <p class="dim"><%= t("nearby.share_location_body", km: @radius_km.to_i) %></p>
+    <p class="dim">
+      <%= t("nearby.lobby_hint_before") %>
+      <%= link_to "#brgen", channel_path("brgen") %>
+      <%= t("nearby.lobby_hint_after") %>
+    </p>
   </div>
 <% end %>
 
 <% if @located %>
   <article class="row-between section-divider--24">
     <div>
-      <strong>Nearby chat room</strong>
-      <p class="dim">Everyone within <%= Conversation::GEO_ROOM_RADIUS_KM.to_i %> km, one shared room, anonymous.</p>
+      <strong><%= t("nearby.room_title") %></strong>
+      <p class="dim"><%= t("nearby.room_body", km: Conversation::GEO_ROOM_RADIUS_KM.to_i) %></p>
     </div>
-    <%= link_to "Join", nearby_room_path, class: "btn btn-primary btn-sm" %>
+    <%= link_to t("nearby.join"), nearby_room_path, class: "btn btn-primary btn-sm" %>
   </article>
 
   <% if @nearby.any? %>
@@ -28,20 +34,20 @@
       <article class="row-between">
         <div>
           <strong><%= u.anon_handle %></strong>
-          <p class="dim"><%= number_with_precision(distance, precision: 1) %> km away · anonymous</p>
+          <p class="dim"><%= t("nearby.distance_away", km: number_with_precision(distance, precision: 1)) %></p>
         </div>
-        <%= button_to "Chat", nearby_path, params: { user_id: u.id }, method: :post, class: "btn btn-primary btn-sm" %>
+        <%= button_to t("nearby.chat"), nearby_path, params: { user_id: u.id }, method: :post, class: "btn btn-primary btn-sm" %>
       </article>
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_nearby"),
-          body: "Check back later — or drop a Live note while you wait.",
-          action: { label: "Open Live", path: live_path } %>
+          body: t("nearby.empty_located_body"),
+          action: { label: t("nearby.open_live"), path: live_path } %>
   <% end %>
 <% else %>
   <%= render "shared/empty_state",
-        title: "Waiting for location",
-        body: "Allow location to see people nearby.",
-        action: { label: "Open Live", path: live_path } %>
+        title: t("nearby.waiting_title"),
+        body: t("nearby.waiting_body"),
+        action: { label: t("nearby.open_live"), path: live_path } %>
 <% end %>
