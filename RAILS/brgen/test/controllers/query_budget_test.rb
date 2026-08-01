@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "base64"
+require "stringio"
 
 # The home feed ran 243 queries for 25 posts. Four aggregates over the
 # collection did it: Votable#score, #voted_by?, Post#comment_count and one
@@ -121,6 +123,71 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
         assert_empty repeats.map { |sql, n| "#{vhost}: #{n}x #{sql[0, 80]}" },
                      "one query per row is an N+1"
       end
+    end
+  end
+
+  # communities#show was the most expensive endpoint in the app: 816 queries and
+  # a 3.5s p50 across 2,584 logged requests on 2026-08-01, worst case 110s. It
+  # had drifted from the feed controllers in two ways at once — it preloaded
+  # :user and :votes but not :community or the image attachment, and it
+  # paginated nothing, so it rendered every post the community had ever held.
+  # The count is what the missing LIMIT costs: a community holding a few hundred
+  # posts pays a few queries for each of them.
+  #
+  # Which of these two tests carries the fix is worth being exact about, because
+  # it is not symmetric. The pagination test below goes red the moment pagy is
+  # removed. The repeat test does NOT independently catch dropping :community or
+  # with_attached_image here — checked by reverting each — because inverse_of
+  # already sets post.community when posts are loaded through the community, and
+  # the ActiveStorage lookups stay under REPEAT_ALLOWANCE. So the preload change
+  # is consistency with the sibling feeds rather than something pinned by a
+  # failing test, and the pagination is what the measured win rests on. The
+  # repeat check still earns its place as a guard against the next N+1 added to
+  # this page.
+  #
+  # A 1x1 PNG: seeding a real attachment at least exercises the ActiveStorage
+  # path rather than answering `post.image.attached?` from an empty preload.
+  PIXEL_PNG = Base64.decode64(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+  )
+
+  def attach_images_to(posts)
+    posts.each_with_index do |post, i|
+      post.image.attach(io: StringIO.new(PIXEL_PNG), filename: "p#{i}.png", content_type: "image/png")
+    end
+  end
+
+  test "a community page does not repeat a query per post" do
+    ActsAsTenant.with_tenant(@city) do
+      seed_posts(12)
+      community = Community.order(:id).last
+      attach_images_to(community.posts.strict_loading(false).to_a)
+
+      get community_path(community)
+      assert_response :success
+
+      repeats = repeated_shapes { get community_path(community) }
+      assert_empty repeats.map { |sql, n| "#{n}x #{sql[0, 90]}" },
+                   "one query per post on communities#show is the N+1 this endpoint was built with"
+    end
+  end
+
+  test "a community page pages its posts instead of rendering all of them" do
+    ActsAsTenant.with_tenant(@city) do
+      seed_posts(30)
+      community = Community.order(:id).last
+
+      get community_path(community)
+      assert_response :success
+
+      # `assigns` is gone in Rails 8 without rails-controller-testing, so count
+      # what actually reached the page: one distinct /posts/:id per rendered card.
+      rendered = response.body.scan(%r{/posts/(\d+)}).flatten.uniq.size
+      assert_operator rendered, :<, 30,
+                      "communities#show rendered all #{rendered} posts; it must paginate like the feeds"
+      assert_operator rendered, :>, 0, "the page rendered no posts at all — the test proves nothing"
+      assert_match(/[?&]page=2/, response.body,
+                   "paging without a link to the next page makes older posts unreachable")
     end
   end
 

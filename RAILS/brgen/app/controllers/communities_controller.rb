@@ -14,8 +14,18 @@ class CommunitiesController < ApplicationController
     finish_live_search(partial: "communities/live_search_results")
   end
 
+  # Same preload set and pagination as PostsController#index and
+  # HomeController#index, which this had drifted from. It preloaded :user and
+  # :votes but not :community or the image attachment, and it paginated nothing
+  # — so it rendered every post a community has ever had, and each one cost a
+  # community lookup plus an ActiveStorage attachment and blob lookup for the
+  # `post.image.attached?` in shared/_post_card.
+  #
+  # Measured over 2,584 logged requests on 2026-08-01: 816 queries and a 3.5s
+  # p50, with a 110s worst case — the slowest endpoint in the app by both.
   def show
-    @posts = @community.posts.hot.includes(:user, :votes)
+    scope = @community.posts.hot.with_attached_image.includes(:user, :community, :votes)
+    @pagy, @posts = pagy(scope)
   end
 
   def new

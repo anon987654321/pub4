@@ -20,6 +20,16 @@
   <% @posts.each do |post| %>
     <%= render "posts/post", post: post %>
   <% end %>
+  <%# This page used to render every post a community had, unpaginated. Now that
+      it pages, the rest still has to be reachable — the infinite-scroll sentinel
+      the feeds use needs a reflex that knows this scope, so a plain link keeps
+      it working without JS until that exists. %>
+  <% if @pagy.next %>
+    <nav class="cluster" aria-label="<%= t("nav.pagination", default: "Pagination") %>">
+      <%= link_to t("actions.load_more", default: "Older posts"),
+                  community_path(@community, page: @pagy.next), rel: "next", class: "btn btn-ghost" %>
+    </nav>
+  <% end %>
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_posts_yet"),
