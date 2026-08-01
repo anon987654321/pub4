@@ -434,8 +434,13 @@ class DeployBacklogTest < Minitest::Test
     wardrobe_form = File.read(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb'))
     assert wardrobe_form.include?('textarea-autogrow') || wardrobe_form.include?('character-counter')
     assert_includes File.read(File.join(ROOT, 'shared/app/views/comments/_form_fields.html.erb')), 'textarea-autogrow'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id, post.anonymous?]'
+    # What matters here is that the post partial is fragment-cached at all. The
+    # exact key was pinned as a literal, which froze an implementation detail:
+    # keying on Current.user&.id meant a per-guest key, and brgen mints a fresh
+    # guest for every cookieless request, so the cache scored zero hits on
+    # crawler traffic. Assert the caching, not the key it happens to use.
+    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post'
+    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard popover"'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'shared/post_card'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'shared/post_card'
