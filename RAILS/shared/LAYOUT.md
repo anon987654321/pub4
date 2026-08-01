@@ -8,6 +8,24 @@ Source of truth: `shared/design_tokens.yml` → `shared_chrome` + `face_root.lay
 CSS: `shared/app/assets/stylesheets/_layout_chrome.scss` (RAILS), face `:root`
 generated into `MASTER/web/public/face.css`.
 
+## Focus triangle (active product surface)
+
+Primary product work targets these three only (unless explicitly scoped elsewhere):
+
+| Surface | Role |
+|---------|------|
+| **brgen** | City social — feed, channels, ambient chat, verticals |
+| **amber** | Luxury wardrobe — outfits, feed compose, soft guests |
+| **MASTER web** | Face + mission control at `ai.brgen.no` — embeddable AI |
+
+Shared glue: `pub4-shared` (layout chrome, comments form/row, social locales,
+`master_embed`, empty states). bsdports / studio remain maintenance-only unless
+named in a task.
+
+Bridge contract: RAILS hosts embed MASTER via `shared/master_embed` +
+`master_web_url(autostart:, embed:)`. Face boot rules stay in
+`MASTER/web/CLAUDE.md` (primer before WebGL; no three.js at first paint).
+
 ## Surfaces
 
 | Surface | Body attributes | Main landmark | Chrome |

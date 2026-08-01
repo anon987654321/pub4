@@ -18,7 +18,7 @@
   <% else %>
     <div class="ai-embed-bar">
       <h2 id="ai-embed-heading" class="ai-embed-heading"><%= heading %></h2>
-      <%= link_to "Open", master_web_url, class: "ai-embed-open",
+      <%= link_to t("master.open", default: "Open"), master_web_url, class: "ai-embed-open",
                   target: "_blank", rel: "noopener" %>
     </div>
   <% end %>

@@ -132,6 +132,10 @@ ruby RAILS/gates/runner.rb frontend_auditor
 - text `#d8d6e0`, secondary `#8a879c`, border `#46435a`
 - Light mode: indigo `#5b4fc4` on cool gray paper — **not** Twitter blue
 
+**Focus triangle:** brgen + amber + MASTER web. Shared engine glue
+(layout, social locales, comments form/row, master_embed). bsdports/studio
+maintenance-only unless named.
+
 **Layout:** single-column feed (`--feed-max: 600px`) with edge-swiper sidebar/widgets panels (`_shell.scss`). Footer tab bar is progressive (closed by default; peel + scroll-up reveal via `scroll-chrome`). Side drawers and top vertical nav are edge-swipe progressive. Verticals may hide chrome via `_vertical_shell.scss`.
 
 **Vertical accents:** single map in `design_tokens.yml` → `vertical_accents` and `_vertical_shell.scss` only. Do not re-set `--accent` in ui_refinements or vertical-local sheets.

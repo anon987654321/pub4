@@ -7,6 +7,18 @@ Scan rules: `MASTER/lib/review/scan/rules/surface_rules.rb`.
 MASTER (council / fix_loop / aesthetic scan) should **run this playbook**, not
 re-invent polish. Never raise lint baselines to silence new debt.
 
+## Focus triangle
+
+Default scope for polish and product UI work:
+
+1. **brgen** — social shell, ambient chat, channels, Live/nearby  
+2. **amber** — luxury shell, feed compose, wardrobe CTAs  
+3. **MASTER web** — face chat (`/`) + mission control; embed host in brgen/amber  
+
+Do not expand polish into bsdports or studio unless the task names them.
+Shared engine changes must keep all three hosts green (layout tokens, social
+locales, comments, master_embed).
+
 ## Order
 
 1. **Flat UI** — strip ornamental `box-shadow` / blur (`GATE_AUTOFIX=1` or

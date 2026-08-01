@@ -22,7 +22,8 @@ module Shared
     end
 
     def master_embed_title
-      @master_embed_title.presence || "AI"
+      @master_embed_title.presence ||
+        (respond_to?(:t) ? t("master.embed_heading", default: t("master.title", default: "AI")) : "AI")
     end
   end
 end

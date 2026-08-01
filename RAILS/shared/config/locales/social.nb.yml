@@ -40,6 +40,11 @@ nb:
   theme:
     region: "Tema"
     toggle: "Bytt til lyst tema"
+  master:
+    title: "AI"
+    open: "Åpne"
+    open_full: "Åpne AI"
+    embed_heading: "AI-assistent"
   messages:
     title: "Meldinger"
     choose_recipient: "Velg mottaker"

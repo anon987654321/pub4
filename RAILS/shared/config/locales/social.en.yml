@@ -42,6 +42,11 @@ en:
   theme:
     region: "Theme"
     toggle: "Toggle light theme"
+  master:
+    title: "AI"
+    open: "Open"
+    open_full: "Open AI"
+    embed_heading: "AI assistant"
   messages:
     title: "Messages"
     choose_recipient: "Choose recipient"
