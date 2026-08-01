@@ -74,13 +74,28 @@ module ModalFamily
   # (2026-07-27), and this keeps those eight while admitting the rest of the
   # catalogue that belongs in the same key and mode. MODAL_ROTATION=0 restores
   # the narrow pool exactly.
-  def widen(core, catalogue)
+  # `always` names progressions that skip the fit test entirely.
+  #
+  # The test is diatonic: it asks what share of a progression's roots fall in one
+  # nine-note collection. That is the right question for 248 catalogue entries of
+  # unknown provenance, and the wrong one for a deliberate two-centre vamp, which
+  # fails it by construction rather than by accident. Jamal's Pavanne locks to
+  # Am7-Bbm7 and scores 0.50; So What locks to Bbm7-Bm7 and scores 0.75, both
+  # under the 0.80 threshold — and a modal vamp a semitone apart is exactly the
+  # device those two records are famous for.
+  #
+  # KeyLock already guarantees one tonal centre, so nothing here is protecting
+  # against key chaos. Hand-curated, sourced progressions are therefore exempt:
+  # they were chosen, and a heuristic for unvetted material should not overrule
+  # that.
+  def widen(core, catalogue, always: [])
     return core unless enabled?
 
+    exempt = Array(always).map(&:to_s)
     extra = catalogue.filter_map do |name, chords|
       next if core.map(&:to_s).include?(name.to_s)
       next unless chords.is_a?(Array) && chords.size >= 2
-      next unless compatible_name?(name, chords)
+      next unless exempt.include?(name.to_s) || compatible_name?(name, chords)
 
       name.to_s
     end

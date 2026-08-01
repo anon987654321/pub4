@@ -7110,6 +7110,43 @@ PAD_CHORD_LOOKUP = (
 # from stream/default when ARTIST_VERIFIED_ONLY=1 (default).
 # ---------------------------------------------------------------------------
 ARTIST_VERIFIED_PROGRESSIONS = {
+  # Ahmad Jamal — his arrangement of Morton Gould's "Pavanne", recorded
+  # 1955-10-25. Jamal supports the melody with a Dm7 vamp and then an Ebm7 vamp:
+  # two minor sevenths a semitone apart, held long enough to stop being chords
+  # and start being places.
+  #
+  # This is the harmony Miles took for "So What" four years later, and the
+  # reason it is worth having here rather than as trivia: it is the origin of
+  # the modal two-chord vamp, and this engine's whole "stay on one centre and
+  # generate interest by other means" problem is the one Jamal solved first.
+  # DillaHarmony already ships a :so_what voicing style; this is what it is named
+  # after.
+  jamal_pavanne: {
+    artist: "Ahmad Jamal", title: "Pavanne", composer: "Morton Gould",
+    recorded: "1955-10-25",
+    chords: %w[Dm7 Ebm7],
+    sources: [
+      "Stuart Nicholson, 'The Ahmad Jamal Live Performances 1958-62': Jamal " \
+      "supports the melody with a Dm7 vamp followed by an Ebm7 vamp, the " \
+      "harmonies that later underpin the A and B sections of So What",
+      "Miles Davis, 1958: 'All my inspiration today comes from the Chicago " \
+      "pianist Ahmad Jamal'",
+    ]
+  },
+  # The same two chords as Miles arranged them: 32-bar AABA, Dm7 for 16, Ebm7
+  # for 8, Dm7 for 8. Written 2:1:1 because chord_bars scales the proportion
+  # rather than the bar count. Coltrane then took Pavanne's eight-bar secondary
+  # theme over this form and called it "Impressions" (1961), so all three pieces
+  # are one lineage and one pair of chords.
+  so_what_modal: {
+    artist: "Miles Davis", title: "So What", album: "Kind of Blue",
+    derived_from: "Ahmad Jamal — Pavanne (1955)",
+    chords: %w[Dm7 Dm7 Ebm7 Dm7],
+    sources: [
+      "Kind of Blue (1959), 32-bar AABA: Dm7 x16, Ebm7 x8, Dm7 x8",
+      "Coltrane's Impressions (1961) reuses the form and harmony",
+    ]
+  },
   # J Dilla — Donuts: "Time (The Donut of the Heart)" — Ab major IV–iii–vi–ii.
   time_donut: {
     artist: "J Dilla", title: "Time (The Donut of the Heart)", album: "Donuts",
@@ -7221,7 +7258,10 @@ def stream_track_pool
 
   dilla_only = DILLA_PRODUCED_TRACKS.map(&:to_s)
   core = pool.select { |t| dilla_only.include?(t) }.then { |p| p.empty? ? dilla_only : p }
-  ModalFamily.widen(core, CHORD_PROGRESSIONS)
+  # Artist-verified entries are exempt from the modal fit test — they carry
+  # sources and were chosen deliberately, so a heuristic tuned for unvetted
+  # catalogue material should not silently drop them.
+  ModalFamily.widen(core, CHORD_PROGRESSIONS, always: ARTIST_VERIFIED_PROGRESSIONS.keys)
 end
 
 # Every consumer of a verified progression comes through here, so this is where
@@ -7334,6 +7374,12 @@ CHORD_PROGRESSIONS = {
   untitled_how_does_it_feel: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
   sus_add9_ballad: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
   alternating_minor7_pair: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+  # Two minor sevenths a semitone apart, held. Jamal 1955; Miles 1959; Coltrane
+  # 1961. Both are exempt from the modal fit test — see the note on
+  # ModalFamily.widen — because a deliberate two-centre vamp fails a diatonic
+  # test by construction, and that vamp is the reason these records matter.
+  jamal_pavanne: %w[Dm7 Ebm7],
+  so_what_modal: %w[Dm7 Dm7 Ebm7 Dm7],
   # --- Experimental / theory (blocked when ARTIST_VERIFIED_ONLY=1) ---
   soul: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9],
   # Smoother minor turn — same key as timeless, less harsh dominant clutter.
