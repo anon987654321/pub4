@@ -88,6 +88,39 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     assert response.headers["X-TTS-Visemes"].present?
   end
 
+  # relayd silently drops any response with more than 8 KB of headers — no body,
+  # no status line, nothing in its log — and the client reads that as a dead TTS
+  # server for the rest of the session. On 2026-08-01 that took speech out on
+  # ai.brgen.no for every reply longer than about nine words, while the short
+  # cached phrases kept playing and made it look like TTS "half worked".
+  #
+  # The viseme plan scales with the text, so this pins the one thing that must
+  # stay bounded no matter how long MASTER talks.
+  test "status keeps headers under the proxy limit for a long reply" do
+    text = "I govern myself with a living constitution and speak in real time " \
+           "with an animated face while writing and running code with my own " \
+           "tools and convening a council for the questions that deserve one."
+    voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
+    style = Master::Voice::Speech.default_style
+    job = track(TtsJob.new(text:, voice:, style:))
+    plan = Master::Voice::Expression.viseme_stream(text, style:, rate: nil)
+    File.binwrite(@cache_dir.join("#{job.job_id}.mp3"), "ID3\x03\x00fake-mp3")
+    File.write(@cache_dir.join("#{job.job_id}.job"), { text:, voice:, style: }.to_json)
+    File.write(
+      @cache_dir.join("#{job.job_id}.meta.json"),
+      { job_id: job.job_id, viseme_plan: plan[:viseme_plan] || plan[:visemes] }.to_json,
+    )
+
+    get "/chat/tts/status", params: { job: job.job_id }
+
+    assert_response :success
+    assert_equal "audio/mpeg", response.media_type
+    header_bytes = response.headers.to_h.sum { |k, v| k.to_s.bytesize + v.to_s.bytesize + 4 }
+    assert_operator header_bytes, :<, 8192,
+                    "response headers are #{header_bytes} bytes; relayd drops the whole " \
+                    "response past 8192, so the audio would never reach the browser"
+  end
+
   test "destroy cancels cached job" do
     text = "cancel me"
     voice = Master::Voice::Speech.resolve_voice(Master::Voice::Speech::DEFAULT_VOICE)
