@@ -30,6 +30,10 @@ module Master
 
       @pool_rr = 0
       @spawn_failures = {}
+      # pid of the daemon this process last spawned for each pool slot, so a
+      # replacement can retire its predecessor instead of orphaning it.
+      @daemon_pids = {}
+      @busy_strikes = {}
 
       module_function
 
@@ -67,15 +71,32 @@ module Master
 
       def ensure_pool_worker!(root:, index:)
         path = socket_path(root, index:)
-        return true if socket_alive?(path)
+        if socket_alive?(path)
+          @busy_strikes[index] = 0
+          return true
+        end
 
         with_daemon_lock(root, index:) do
           return true if socket_alive?(path)
+          return true if busy_not_dead?(path, index)
 
+          # Unlinking the socket without retiring its owner is how this leaked:
+          # the old daemon keeps running on a path nothing can reach any more,
+          # and nothing ever collects it. Measured on vm23 2026-08-01 — 21 live
+          # tts-workers holding 309 MB of a 1007 MB box, one more every minute.
+          #
+          # The trigger is that a worker is single-threaded, so one that is
+          # mid-synthesis cannot answer socket_alive?'s health ping inside its
+          # 1s budget. Busy reads as dead, and each false verdict spawned a
+          # replacement: more workers, more load, more timeouts, more workers.
+          # That climbing memory is what shed amber/bsdports, and the cold start
+          # it forced on nearly every request is what made speech slow.
+          retire_daemon(index)
           File.unlink(path) if File.exist?(path)
           spawn_daemon(root:, path:, index:)
           if wait_for_socket(path)
             @spawn_failures[index] = 0
+            @busy_strikes[index] = 0
             true
           else
             failures = (@spawn_failures[index] ||= 0) + 1
@@ -95,6 +116,62 @@ module Master
           chdir: root, out: log, err: log, close_others: true
         )
         Process.detach(pid)
+        @daemon_pids[index] = pid
+      end
+
+      # A worker that is synthesising cannot answer a health ping, because it is
+      # single-threaded — so a failed probe means "busy" at least as often as it
+      # means "dead", and synthesis can legitimately run 10-20s on this box.
+      # Replacing a busy worker throws away the request it is working on and
+      # forces the next one to pay a cold Ruby+Bundler+EventMachine start, which
+      # is the difference between speech arriving in ~2s and in ~20s.
+      #
+      # So while our own daemon is still running and its socket is still on
+      # disk, treat the slot as occupied and let the caller queue on the socket.
+      # Only after BUSY_STRIKES consecutive silent probes do we conclude it is
+      # genuinely wedged and replace it.
+      BUSY_STRIKES = 3
+
+      def busy_not_dead?(path, index)
+        pid = @daemon_pids[index]
+        return false unless pid && process_alive?(pid) && File.socket?(path)
+
+        strikes = (@busy_strikes[index] ||= 0) + 1
+        @busy_strikes[index] = strikes
+        return false if strikes >= BUSY_STRIKES
+
+        true
+      end
+
+      # Stop the daemon this process started for `index`, if it is still around.
+      # Only ever touches a pid we spawned ourselves — never sweeps by process
+      # name, so a worker belonging to another MASTER process is left alone.
+      def retire_daemon(index)
+        pid = @daemon_pids[index]
+        return if pid.nil?
+
+        @daemon_pids.delete(index)
+        Process.kill("TERM", pid)
+        # It is mid-synthesis often enough to be worth a moment; the caller
+        # retries, and a stuck one must not survive as a memory leak.
+        20.times do
+          break if Process.waitpid(pid, Process::WNOHANG)
+
+          sleep POLL_INTERVAL_S
+        end
+        Process.kill("KILL", pid) if process_alive?(pid)
+      rescue Errno::ESRCH, Errno::ECHILD
+        nil
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "TtsSupervisor.retire_daemon")
+        nil
+      end
+
+      def process_alive?(pid)
+        Process.kill(0, pid)
+        true
+      rescue Errno::ESRCH, Errno::EPERM
+        false
       end
 
       def link_legacy_socket(root)
