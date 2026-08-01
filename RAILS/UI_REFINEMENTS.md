@@ -105,6 +105,10 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Footer tab bar progressive (closed by default; peel + scroll-up) | Landed |
 | Nearby page i18n + lobby path without GPS | Landed |
 | Install prompt action i18n; quieter edge grips | Landed |
+| Channel/DM composer parity (Enter-send, i18n) | Landed |
+| Nearby + Live explicit Use location + page reload | Landed |
+| First-visit footer menu coach (dismissible) | Landed |
+| Live page full i18n (nb/en) | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 

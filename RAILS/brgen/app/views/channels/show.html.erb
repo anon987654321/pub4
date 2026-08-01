@@ -28,20 +28,33 @@
   <p id="typing-indicator" class="dim" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></p>
 
   <% if Current.user.present? %>
+    <% handle = Current.user.channel_handle %>
     <%= form_with model: @message, url: conversation_messages_path(@conversation),
                   id: "new_message", class: "channel-composer",
-                  data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
+                  data: {
+                    turbo: true,
+                    controller: "typing-input",
+                    typing_input_url_value: conversation_typing_indicators_path(@conversation),
+                    action: "keydown->typing-input#composerKeydown input->typing-input#ping"
+                  } do |f| %>
       <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-        <%= f.text_area :content, rows: 2, placeholder: "Message #{@conversation.name} as #{Current.user.channel_handle}…", maxlength: 500, data: { character_counter_target: "input" } %>
+        <%= f.text_area :content, rows: 2,
+              placeholder: t("chat.channel_placeholder", name: @conversation.name, handle: handle),
+              maxlength: 500,
+              enterkeyhint: "send",
+              aria: { label: t("chat.message_label") },
+              data: { character_counter_target: "input" } %>
         <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
       </div>
       <%= f.hidden_field :message_type, value: "text" %>
-      <%= f.submit "Send", class: "btn btn-primary" %>
+      <%= f.submit t("actions.send"), class: "btn btn-primary" %>
     <% end %>
-    <p class="dim channel-guest-hint">Posting as <strong><%= Current.user.channel_handle %></strong><% if Current.user.guest? %> — no signup<% end %>.</p>
+    <p class="dim channel-guest-hint">
+      <%= t("chat.posting_as") %> <strong><%= handle %></strong><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
+    </p>
   <% else %>
     <%# Soft guest should already exist; if not, one round-trip mints it. %>
-    <p class="channel-signin dim">Anyone can join — no signup.</p>
-    <p><%= link_to "Join room", channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
+    <p class="channel-signin dim"><%= t("chat.anyone_join") %></p>
+    <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
   <% end %>
 </section>

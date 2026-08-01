@@ -14,7 +14,7 @@
                 turbo: true,
                 controller: "typing-input",
                 typing_input_url_value: conversation_typing_indicators_path(conversation),
-                action: "turbo:submit-end->nearby-chat#markInstallValue keydown->nearby-chat#composerKeydown"
+                action: "turbo:submit-end->nearby-chat#markInstallValue keydown->typing-input#composerKeydown input->typing-input#ping"
               } do |f| %>
   <%= f.text_area :content, rows: 1,
         placeholder: t("chat.placeholder", handle: handle, default: "Message as %{handle}…"),

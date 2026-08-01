@@ -405,6 +405,62 @@ html.chrome-hidden .tab-bar {
 .tab-bar-peel[hidden] {
   display: none;
 }
+
+/* First-visit coach — points at the progressive footer menu once. */
+.tab-bar-coach {
+  position: fixed;
+  bottom: calc(var(--safe-bottom, 0px) + 3.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: calc(var(--z-nav, 80) + 1);
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-elevated, var(--surface2, #211f28));
+  border: 1px solid var(--border, #46435a);
+  border-radius: var(--radius-sm, 8px);
+  font-family: var(--font-primary, var(--font, system-ui, sans-serif));
+  color: var(--text, #d8d6e0);
+  box-sizing: border-box;
+}
+.tab-bar-coach[hidden] {
+  display: none;
+}
+.tab-bar-coach-text {
+  margin: 0 0 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.tab-bar-coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.tab-bar-coach-dismiss,
+.tab-bar-coach-show {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border, #46435a);
+  background: var(--bg, #17161c);
+  color: var(--text, #d8d6e0);
+  font: 600 0.8125rem/1 var(--font-primary, var(--font, system-ui, sans-serif));
+  cursor: pointer;
+}
+.tab-bar-coach-show {
+  background: var(--accent, #7c6fd6);
+  border-color: var(--accent, #7c6fd6);
+  color: var(--bg, #17161c);
+}
+
+.nearby-locate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.75rem 0 0;
+}
 .tab-item {
   position: relative;
   flex: 1;

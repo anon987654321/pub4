@@ -26,6 +26,8 @@ en:
     show_sidebar: "Show sidebar"
     show_widgets: "Show widgets"
     show_menu: "Show menu"
+    menu_coach: "Menu is down here — tap the bar or scroll up."
+    menu_coach_dismiss: "Got it"
     mobile_nav: "Mobile navigation"
   auth:
     sign_in: "Sign in"

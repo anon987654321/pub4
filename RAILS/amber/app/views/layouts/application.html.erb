@@ -88,6 +88,17 @@
 
   <%= render "shared/footer" %>
 
+  <div class="tab-bar-coach"
+       data-scroll-chrome-target="coach"
+       hidden
+       role="status"
+       aria-live="polite">
+    <p class="tab-bar-coach-text"><%= t("nav.menu_coach", default: "Menu is down here — tap the bar or scroll up.") %></p>
+    <div class="tab-bar-coach-actions">
+      <button type="button" class="tab-bar-coach-dismiss" data-action="scroll-chrome#dismissCoach"><%= t("nav.menu_coach_dismiss", default: "Got it") %></button>
+      <button type="button" class="tab-bar-coach-show" data-action="scroll-chrome#reveal"><%= t("nav.show_menu", default: "Show menu") %></button>
+    </div>
+  </div>
   <button type="button"
           class="tab-bar-peel"
           data-scroll-chrome-target="peel"

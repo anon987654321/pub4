@@ -26,6 +26,8 @@ nb:
     show_sidebar: "Vis sidemeny"
     show_widgets: "Vis widgets"
     show_menu: "Vis meny"
+    menu_coach: "Menyen er nederst — trykk på stripen eller scroll opp."
+    menu_coach_dismiss: "Skjønner"
     mobile_nav: "Mobilnavigasjon"
   auth:
     sign_in: "Logg inn"

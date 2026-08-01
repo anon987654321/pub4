@@ -13,8 +13,9 @@ class PublicNavigationTest < ApplicationSystemTestCase
     assert_no_selector "meta[name='turbo-cache-control'][content='no-cache']", visible: :all
 
     page.current_window.resize_to(390, 844)
-    # Progressive disclosure: tab bar closed by default; peel is the path in.
+    # Progressive disclosure: tab bar closed by default; peel (+ coach) is the path in.
     assert_selector "button.tab-bar-peel", visible: :all
+    assert_selector ".tab-bar-coach", visible: :all
     assert_selector "nav.tab-bar", visible: :all
     assert_selector "nav.tab-bar a[aria-current='page']", visible: :all
   end

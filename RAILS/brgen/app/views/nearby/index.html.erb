@@ -8,18 +8,6 @@
   <%= link_to t("nearby.channels_link"), channels_path %>
 </p>
 
-<% unless @located %>
-  <div class="section-divider--24">
-    <p class="section-heading--md"><%= t("nearby.share_location_title") %></p>
-    <p class="dim"><%= t("nearby.share_location_body", km: @radius_km.to_i) %></p>
-    <p class="dim">
-      <%= t("nearby.lobby_hint_before") %>
-      <%= link_to "#brgen", channel_path("brgen") %>
-      <%= t("nearby.lobby_hint_after") %>
-    </p>
-  </div>
-<% end %>
-
 <% if @located %>
   <article class="row-between section-divider--24">
     <div>
@@ -46,8 +34,20 @@
           action: { label: t("nearby.open_live"), path: live_path } %>
   <% end %>
 <% else %>
-  <%= render "shared/empty_state",
-        title: t("nearby.waiting_title"),
-        body: t("nearby.waiting_body"),
-        action: { label: t("nearby.open_live"), path: live_path } %>
+  <div class="section-divider--24" data-controller="request-location">
+    <p class="section-heading--md"><%= t("nearby.share_location_title") %></p>
+    <p class="dim"><%= t("nearby.share_location_body", km: @radius_km.to_i) %></p>
+    <p class="nearby-locate-actions">
+      <button type="button"
+              class="btn btn-primary btn-sm"
+              data-action="request-location#request"><%= t("chat.use_location") %></button>
+      <%= link_to t("chat.open_brgen_channel"), channel_path("brgen"), class: "btn btn-sm" %>
+      <%= link_to t("nearby.open_live"), live_path, class: "btn btn-sm" %>
+    </p>
+    <p class="dim">
+      <%= t("nearby.lobby_hint_before") %>
+      <%= link_to "#brgen", channel_path("brgen") %>
+      <%= t("nearby.lobby_hint_after") %>
+    </p>
+  </div>
 <% end %>

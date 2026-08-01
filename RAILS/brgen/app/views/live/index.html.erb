@@ -1,36 +1,40 @@
-<% content_for :title, "Live · nearby" %>
+<% content_for :title, t("live.page_title") %>
 
-<div class="page-header live-header" role="banner" aria-label="Live feed header">
+<div class="page-header live-header" role="banner" aria-label="<%= t("live.header_label") %>">
   <div>
-    <h1>Live</h1>
+    <h1><%= t("live.heading") %></h1>
     <p class="dim live-kicker">
-      What’s happening around you — short, anonymous, vote-ranked.
-      <% if @located %>Within <%= number_with_precision(@radius_km, precision: 0) %> km.<% else %>Enable location for the nearby bubble.<% end %>
+      <%= t("live.kicker") %>
+      <% if @located %>
+        <%= t("live.within_km", km: number_with_precision(@radius_km, precision: 0)) %>
+      <% else %>
+        <%= t("live.enable_location_hint") %>
+      <% end %>
     </p>
   </div>
-  <nav class="live-sort feed-tabs" role="tablist" aria-label="Live sort">
-    <%= link_to "Hot", live_path(sort: "hot", radius_km: @radius_km),
+  <nav class="live-sort feed-tabs" role="tablist" aria-label="<%= t("live.sort_label") %>">
+    <%= link_to t("live.sort_hot"), live_path(sort: "hot", radius_km: @radius_km),
           class: "feed-tab#{" active" if @sort == "hot"}", role: "tab", "aria-selected": @sort == "hot" %>
-    <%= link_to "New", live_path(sort: "fresh", radius_km: @radius_km),
+    <%= link_to t("live.sort_new"), live_path(sort: "fresh", radius_km: @radius_km),
           class: "feed-tab#{" active" if @sort == "fresh"}", role: "tab", "aria-selected": @sort == "fresh" %>
   </nav>
 </div>
 
-<p class="live-crosslinks dim" aria-label="Also open without signup">
-  <%= link_to "Marketplace", marketplace_root_url %> ·
+<p class="live-crosslinks dim" aria-label="<%= t("live.also_open") %>">
+  <%= link_to t("home.marketplace"), marketplace_root_url %> ·
   <%= link_to t("nav.messages"), "//messenger.#{Current.domain}/" %> ·
-  <%= link_to "Nearby", nearby_path %> ·
-  <%= link_to "City feed", root_path %>
+  <%= link_to t("nav.nearby"), nearby_path %> ·
+  <%= link_to t("empty.city_feed"), root_path %>
 </p>
 
-<section class="live-rules" aria-label="Live rules">
+<section class="live-rules" aria-label="<%= t("live.rules_label") %>">
   <details>
-    <summary>Local &amp; anonymous — ground rules</summary>
+    <summary><%= t("live.rules_summary") %></summary>
     <ul>
-      <li>No real names, addresses, or doxxing of private people.</li>
-      <li>Posts are short (max <%= Post::LIVE_CONTENT_MAX %> chars) and shown as <strong>anon</strong>.</li>
-      <li>Exact GPS is coarsened — only a rough area is stored.</li>
-      <li>Upvotes surface useful local signal; downvotes bury spam.</li>
+      <li><%= t("live.rule_names") %></li>
+      <li><%= t("live.rule_short", max: Post::LIVE_CONTENT_MAX) %></li>
+      <li><%= t("live.rule_gps") %></li>
+      <li><%= t("live.rule_votes") %></li>
     </ul>
   </details>
 </section>
@@ -40,13 +44,13 @@
     <%= form_with url: live_path, method: :post, class: "compose-box live-compose", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
       <div class="compose-avatar" aria-hidden="true">◎</div>
       <div class="compose-inner">
-        <label class="compose-label-visible" for="live_content">Post to Live as anon</label>
+        <label class="compose-label-visible" for="live_content"><%= t("live.compose_label") %></label>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
           <%= text_area_tag "post[content]", nil,
                 id: "live_content",
                 rows: 2,
                 maxlength: Post::LIVE_CONTENT_MAX,
-                placeholder: "What’s going on near you?",
+                placeholder: t("live.compose_placeholder"),
                 class: "compose-input",
                 required: true,
                 data: {
@@ -58,33 +62,36 @@
           <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
         </div>
         <div class="compose-footer" data-feed-compose-target="footer">
-          <p class="dim compose-hint live-compose-hint">Local · anonymous · no signup needed</p>
+          <p class="dim compose-hint live-compose-hint"><%= t("live.compose_hint") %></p>
           <div class="compose-submit">
-            <span class="dim compose-as">anon</span>
-            <%= f.submit "Post Live", class: "btn btn-primary btn-sm" %>
+            <span class="dim compose-as"><%= t("chat.anon") %></span>
+            <%= f.submit t("live.post_live"), class: "btn btn-primary btn-sm" %>
           </div>
         </div>
       </div>
     <% end %>
   <% else %>
-    <div class="live-locate section-divider--24">
-      <p class="section-heading--md">Share location to post</p>
-      <%# Two sentences saying one thing, the second explaining our own
-          plumbing ("we already listen on this page"). The reader needs the
-          reason and the guarantee, nothing else. %>
-      <p class="dim">A rough position keeps your note to people nearby. Your exact location is never shown.</p>
+    <div class="live-locate section-divider--24" data-controller="request-location">
+      <p class="section-heading--md"><%= t("live.share_to_post_title") %></p>
+      <p class="dim"><%= t("live.share_to_post_body") %></p>
+      <p class="nearby-locate-actions">
+        <button type="button"
+                class="btn btn-primary btn-sm"
+                data-action="request-location#request"><%= t("chat.use_location") %></button>
+        <%= link_to t("chat.open_brgen_channel"), channel_path("brgen"), class: "btn btn-sm" %>
+      </p>
     </div>
   <% end %>
 <% end %>
 
-<section class="live-feed" id="live-feed" aria-label="Live posts nearby">
+<section class="live-feed" id="live-feed" aria-label="<%= t("live.feed_label") %>">
   <% posts = Array(@posts) %>
   <% if posts.any? %>
     <% posts.each do |post| %>
       <article class="live-card" id="<%= dom_id(post) %>">
         <header class="live-card-meta">
-          <span class="live-card-author">anon</span>
-          <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> ago</time>
+          <span class="live-card-author"><%= t("chat.anon") %></span>
+          <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> <%= t("live.ago") %></time>
           <% if @located && post.geo? && Current.user&.geo? %>
             <span class="dim"><%= number_with_precision(post.distance_to(Current.user.latitude, Current.user.longitude), precision: 1) %> km</span>
           <% end %>
@@ -93,7 +100,7 @@
         <footer class="live-card-actions">
           <button type="button"
                   class="feed-action<%= " active" if Current.user.present? && post.upvoted_by?(Current.user) %>"
-                  aria-label="Vote, score <%= post.score %>"
+                  aria-label="<%= t("live.vote_label", score: post.score) %>"
                   aria-pressed="<%= Current.user.present? && post.upvoted_by?(Current.user) %>"
                   data-controller="action"
                   data-action="click->action#toggle"
@@ -103,7 +110,7 @@
             <%= render "shared/feed_icon", name: "upvote" %>
             <span class="feed-action-count" data-action-target="count"><%= post.score %></span>
           </button>
-          <%= link_to post_path(post), class: "feed-action", aria: { label: "Comment" } do %>
+          <%= link_to post_path(post), class: "feed-action", aria: { label: t("live.comment_label") } do %>
             <%= render "shared/feed_icon", name: "comment" %>
             <span class="feed-action-count"><%= post.comment_count %></span>
           <% end %>
@@ -111,17 +118,14 @@
       </article>
     <% end %>
     <% if @pagy %>
-      <%# pagy 43 moved the nav helpers onto the Pagy object itself. pagy_nav
-          was the pagy 9 free function and is not defined here, so this line
-          raised NoMethodError the moment Live had a second page. %>
       <div class="live-pagination"><%== @pagy.series_nav if @pagy.pages > 1 %></div>
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: @located ? "Quiet around here" : "Waiting for the first Live notes",
-          body: @located ? "Be the first to drop a short anonymous note nearby." : "Enable location or check back when locals start posting.",
+          title: @located ? t("live.empty_located_title") : t("live.empty_waiting_title"),
+          body: @located ? t("live.empty_located_body") : t("live.empty_waiting_body"),
           action: @located ?
             { label: t("empty.city_feed"), path: root_path } :
-            { label: "Nearby", path: nearby_path } %>
+            { label: t("nav.nearby"), path: nearby_path } %>
   <% end %>
 </section>

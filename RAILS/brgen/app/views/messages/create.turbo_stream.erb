@@ -1,14 +1,25 @@
 <%= turbo_stream.replace "new_message" do %>
   <%= form_with model: Message.new, url: conversation_messages_path(@conversation),
                 id: "new_message",
-                data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
-    <div class="field">
-      <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :content, rows: 3, placeholder: "Send a message..." , maxlength: 500, data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
+                class: (@conversation.channel? ? "channel-composer" : nil),
+                data: {
+                  turbo: true,
+                  controller: "typing-input",
+                  typing_input_url_value: conversation_typing_indicators_path(@conversation),
+                  action: "keydown->typing-input#composerKeydown input->typing-input#ping"
+                } do |f| %>
+    <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+      <%= f.text_area :content, rows: (@conversation.channel? ? 2 : 3),
+            placeholder: (@conversation.channel? ?
+              t("chat.channel_placeholder", name: @conversation.name, handle: Current.user&.channel_handle || t("chat.anon")) :
+              t("chat.dm_placeholder")),
+            maxlength: 500,
+            enterkeyhint: "send",
+            aria: { label: t("chat.message_label") },
+            data: { character_counter_target: "input" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
     </div>
     <%= f.hidden_field :message_type, value: "text" %>
-    <%= f.submit t("actions.send"), class: "btn" %>
+    <%= f.submit t("actions.send"), class: "btn btn-primary" %>
   <% end %>
 <% end %>
