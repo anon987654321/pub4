@@ -11,7 +11,7 @@
     <div class="field"><%= f.label :title, "Session title" %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
     <div class="field"><%= f.label :scheduled_at %><%= f.datetime_field :scheduled_at %></div>
-    <div class="field"><%= f.submit "Schedule session", class: "btn" %></div>
+    <div class="field"><%= f.submit t("live_streams.schedule"), class: "btn" %></div>
   <% end %>
 </section>
 
@@ -23,8 +23,8 @@
           <h2><%= link_to stream.title, live_stream_path(stream) %></h2>
           <p class="dim"><%= stream.status %> · <%= stream.scheduled_at || stream.created_at %></p>
           <% if stream.user == Current.user %>
-            <%= button_to "Mark live", live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
-            <%= button_to "Mark ended", live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
+            <%= button_to t("live_streams.mark_live"), live_stream_path(stream), method: :patch, params: { start: true }, class: "btn" if stream.status == "scheduled" %>
+            <%= button_to t("live_streams.mark_ended"), live_stream_path(stream), method: :patch, params: { end: true }, class: "btn" if stream.status == "live" %>
           <% end %>
         </article>
       <% end %>

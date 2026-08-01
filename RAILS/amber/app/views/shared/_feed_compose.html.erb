@@ -1,5 +1,10 @@
 <% anon = Shared::AnonymousPost.new(request: request, user: Current.user) %>
-<%= form_with model: Post.new, url: posts_path, class: "amber-compose-box", data: { controller: "feed-compose", feed_compose_target: "box", feed_compose_expanded_class_value: "amber-compose-box--expanded" } do |f| %>
+<%= form_with model: Post.new, url: posts_path, class: "amber-compose-box",
+      data: {
+        controller: "feed-compose",
+        feed_compose_target: "box",
+        feed_compose_expanded_class_value: "amber-compose-box--expanded"
+      } do |f| %>
   <div class="amber-compose-avatar" aria-hidden="true"><%= guest? ? "✦" : (Current.user.profile&.display_name&.first&.upcase || "A") %></div>
   <div class="amber-compose-inner">
     <%= f.text_area :body,

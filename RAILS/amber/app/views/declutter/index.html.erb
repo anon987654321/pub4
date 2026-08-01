@@ -29,7 +29,7 @@
           <li>
             <%= link_to challenge.item.title, review_declutter_path(challenge.item) %>
             — due <%= challenge.due_on %>
-            <%= button_to "Complete", complete_challenge_declutter_path(challenge.item), method: :post, class: "btn-sm" %>
+            <%= button_to t("declutter.complete"), complete_challenge_declutter_path(challenge.item), method: :post, class: "btn-sm" %>
           </li>
         <% end %>
       </ul>

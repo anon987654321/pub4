@@ -167,3 +167,47 @@ nb:
     body: "Garderoben offline — antrekk og bruks-sporing fra hjem-skjermen."
     not_now: "Ikke nå"
     action: "Installer"
+
+  items:
+    occasion_tags: "jobb, casual, formelt"
+    worn_today: "Brukt i dag"
+    no_joy: "Gir ikke glede"
+    sparks_joy: "Gir glede"
+    no_joy_short: "Ingen glede"
+    joy_short: "Glede"
+    wear: "Bruk"
+    restore: "Tilbake til garderobe"
+    archive: "Arkiver til minne"
+    save_link: "Lagre lenke"
+    merchant_placeholder: "f.eks. Finn, Vestiaire"
+    url_placeholder: "https://…"
+    delete_permanent: "Slett permanent"
+    confirm_delete: "Slette dette plagget og bildene permanent? Dette kan ikke angres."
+    archive_seasonal: "Arkiver utenom sesong"
+    resurface_seasonal: "Ta frem denne sesongen"
+  outfits:
+    share_brgen: "Del til brgen"
+    wear_again: "Bruk igjen"
+    weather_placeholder: "Vær (forhåndsutfylt fra Bergen når tilgjengelig)"
+    occasion_placeholder: "Anledning"
+    generate: "Generer antrekk"
+  planned:
+    notes: "Notater…"
+    plan_it: "Planlegg"
+  live_streams:
+    schedule: "Planlegg økt"
+    mark_live: "Merk som live"
+    mark_ended: "Merk som avsluttet"
+  creator:
+    add_showcase: "Legg til showcase"
+  declutter:
+    reason_kept: "minne, gave, sjelden, ubehagelig…"
+    save_review: "Lagre vurdering"
+    declutter_box: "Ryddingsboks"
+    create_challenge: "Opprett utfordring"
+    create_outfit: "Opprett antrekk"
+    complete: "Fullfør"
+  ai_forms:
+    occasion_example: "f.eks. date, jobb, reise"
+    generate_save: "Generer og lagre første som antrekk"
+    search_placeholder: "f.eks. noe varmt men ikke klumpete til møte"

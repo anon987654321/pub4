@@ -1,10 +1,19 @@
+<%# Aligned with brgen comments form chrome (shared comments.* keys). %>
 <%= form_with model: comment, url: post_comments_path(post), id: "comment_form", data: { turbo: true } do |form| %>
-  <p>
-    <%= form.label :content, "Comment" %>
-    <%= form.text_area :content, rows: 3, required: true %>
-  </p>
+  <div class="field">
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+      <%= form.text_area :content,
+            placeholder: t("comments.placeholder"),
+            rows: 3,
+            required: true,
+            maxlength: 10000,
+            aria: { label: t("comments.submit") },
+            data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
+  </div>
   <% if comment.errors.any? %>
-    <p><%= comment.errors.full_messages.to_sentence %></p>
+    <p class="error"><%= comment.errors.full_messages.to_sentence %></p>
   <% end %>
-  <p><%= form.submit "Comment" %></p>
+  <div class="field"><%= form.submit t("comments.submit"), class: "btn btn-primary btn-sm" %></div>
 <% end %>

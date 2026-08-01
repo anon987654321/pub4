@@ -4,9 +4,9 @@
   <p><%= @user.items.count %> items · <%= @user.followers.count %> followers · <%= @user.following.count %> following</p>
   <% if authenticated? && Current.user != @user %>
     <% if Current.user.following?(@user) %>
-      <%= button_to "Unfollow", unfollow_user_path(@user), method: :delete, class: "btn" %>
+      <%= button_to t("actions.unfollow"), unfollow_user_path(@user), method: :delete, class: "btn" %>
     <% else %>
-      <%= button_to "Follow", follow_user_path(@user), method: :post, class: "btn btn--primary" %>
+      <%= button_to t("actions.follow"), follow_user_path(@user), method: :post, class: "btn btn--primary" %>
     <% end %>
   <% end %>
   <% if @user.public_creator? %>

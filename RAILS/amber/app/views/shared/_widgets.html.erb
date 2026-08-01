@@ -6,7 +6,7 @@
     a keyboard trap — keyboard_flow counted it both as a stop with no visible
     ring (a ring cannot be seen on a hidden element) and among 7 off-screen tab
     stops on /wardrobe. Out of the tab order, Enter still submits. %>
-  <%= form.submit "Search", class: "visually-hidden", tabindex: -1 %>
+  <%= form.submit t("search.submit"), class: "visually-hidden", tabindex: -1 %>
 <% end %>
 
 <% if authenticated? && defined?(@items_count) %>

@@ -2,7 +2,7 @@
 <h1><%= t("pages.search_wardrobe") %></h1>
 <%= form_with url: ai_search_path, method: :get do |f| %>
   <div class="field-row">
-    <%= f.search_field :q, value: @query, placeholder: "e.g. something warm but not bulky for a meeting", autofocus: true, class: "input input--wide" %>
+    <%= f.search_field :q, value: @query, placeholder: t("ai_forms.search_placeholder"), autofocus: true, class: "input input--wide" %>
     <%= f.submit t("search.submit"), class: "btn" %>
   </div>
 <% end %>

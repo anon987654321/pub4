@@ -167,3 +167,47 @@ en:
     body: "Your wardrobe offline — outfits and wear tracking on the home screen."
     not_now: "Not now"
     action: "Install"
+
+  items:
+    occasion_tags: "work, casual, formal"
+    worn_today: "Worn today"
+    no_joy: "Doesn't spark joy"
+    sparks_joy: "Sparks joy"
+    no_joy_short: "No joy"
+    joy_short: "Joy"
+    wear: "Wear"
+    restore: "Restore to wardrobe"
+    archive: "Archive to memory"
+    save_link: "Save link"
+    merchant_placeholder: "e.g. Finn, Vestiaire"
+    url_placeholder: "https://…"
+    delete_permanent: "Delete permanently"
+    confirm_delete: "Permanently delete this item and its photos? This cannot be undone."
+    archive_seasonal: "Archive out-of-season"
+    resurface_seasonal: "Resurface this season"
+  outfits:
+    share_brgen: "Share to brgen"
+    wear_again: "Wear again"
+    weather_placeholder: "Weather (prefilled from Bergen when available)"
+    occasion_placeholder: "Occasion"
+    generate: "Generate outfit"
+  planned:
+    notes: "Notes…"
+    plan_it: "Plan it"
+  live_streams:
+    schedule: "Schedule session"
+    mark_live: "Mark live"
+    mark_ended: "Mark ended"
+  creator:
+    add_showcase: "Add to showcase"
+  declutter:
+    reason_kept: "memory, gift, rare, uncomfortable…"
+    save_review: "Save review"
+    declutter_box: "Declutter box"
+    create_challenge: "Create challenge"
+    create_outfit: "Create outfit"
+    complete: "Complete"
+  ai_forms:
+    occasion_example: "e.g. date, work, travel"
+    generate_save: "Generate & save first as outfit"
+    search_placeholder: "e.g. something warm but not bulky for a meeting"

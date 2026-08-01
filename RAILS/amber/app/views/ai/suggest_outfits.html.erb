@@ -15,7 +15,7 @@
 <%= form_with url: ai_suggest_outfits_path, method: :get, class: "form", html: { role: "form", "aria-label": "Generate outfit suggestions" } do |f| %>
   <div class="field">
     <label><%= t("ai.occasion") %></label>
-    <%= f.text_field :occasion, value: params[:occasion], placeholder: "e.g. date, work, travel" %>
+    <%= f.text_field :occasion, value: params[:occasion], placeholder: t("ai_forms.occasion_example") %>
   </div>
   <div class="field">
     <label><%= t("ai.season") %></label>
@@ -23,7 +23,7 @@
   </div>
   <div class="actions">
     <%= f.submit @ai_available ? t("ai.generate_suggestions") : t("ai.generate_rules"), class: "btn btn--primary" %>
-    <%= button_to "Generate & save first as outfit", ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
+    <%= button_to t("ai_forms.generate_save"), ai_generate_outfit_path, method: :post, params: { occasion: params[:occasion], season: params[:season] }, class: "btn", form_class: "inline" %>
   </div>
 <% end %>
 

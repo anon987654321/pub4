@@ -11,6 +11,14 @@ module Shared
 
     %w[app/channels].each { |dir| config.autoload_paths << root.join(dir).to_s }
 
+    initializer "shared.i18n" do |app|
+      # Fleet-wide social chrome keys (actions, comments, chat, post).
+      %w[en nb].each do |locale|
+        path = root.join("config/locales/social.#{locale}.yml")
+        app.config.i18n.load_path << path.to_s if path.exist?
+      end
+    end
+
     initializer "shared.view_paths" do
       ActiveSupport.on_load(:action_controller_base) do
         append_view_path Shared::Engine.root.join("app/views")

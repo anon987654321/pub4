@@ -11,7 +11,7 @@
         <li>
           <%= showcase.item.title %>
           <% if showcase.caption.present? %> — <%= showcase.caption %><% end %>
-          <%= button_to "Remove", creator_profile_wardrobe_item_path(handle: @profile.handle, id: showcase), method: :delete, class: "btn btn-sm" %>
+          <%= button_to t("actions.remove"), creator_profile_wardrobe_item_path(handle: @profile.handle, id: showcase), method: :delete, class: "btn btn-sm" %>
         </li>
       <% end %>
     </ul>
@@ -27,6 +27,6 @@
     <%= f.collection_select :item_id, Current.user.items.order(:title), :id, :title, include_blank: true %>
     <%= f.label :caption, "Caption" %>
     <%= f.text_field :caption %>
-    <%= f.submit "Add to showcase" %>
+    <%= f.submit t("creator.add_showcase") %>
   <% end %>
 </section>

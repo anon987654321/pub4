@@ -1,20 +1,22 @@
-<h1>Share a look</h1>
+<h1><%= t("post.share_look") %></h1>
 <%= form_with model: @post do |f| %>
   <%= render "shared/errors", object: @post %>
   <div class="field">
-    <%= f.label :body, "What are you wearing?" %>
+    <%= f.label :body, t("post.body_label") %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :body, rows: 3, placeholder: "Share your outfit…" , data: { character_counter_target: "input" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
+      <%= f.text_area :body, rows: 3,
+            placeholder: t("post.body_placeholder"),
+            data: { character_counter_target: "input" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
   </div>
   <div class="field">
-    <%= f.label :outfit_id, "Tag an outfit (optional)" %>
+    <%= f.label :outfit_id, t("post.tag_outfit") %>
     <%= f.select :outfit_id, Current.user.outfits.map { |o| [o.name, o.id] }, { include_blank: "—" } %>
   </div>
   <div class="field">
-    <%= f.label :item_id, "Tag an item (optional)" %>
+    <%= f.label :item_id, t("post.tag_item") %>
     <%= f.select :item_id, Current.user.items.map { |i| [i.title, i.id] }, { include_blank: "—" } %>
   </div>
-  <div class="actions"><%= f.submit "Post", class: "btn btn--primary" %></div>
+  <div class="actions"><%= f.submit t("post.submit"), class: "btn btn--primary" %></div>
 <% end %>

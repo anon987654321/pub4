@@ -25,8 +25,8 @@
           <%= link_to "Wear analytics", analytics_wardrobe_items_path, class: "btn" %>
           <%= link_to "Color palette", ai_palette_path, class: "btn" %>
           <%= link_to "Shop only for a gap", shopping_list_items_path, class: "btn" %>
-          <%= button_to "Archive out-of-season", archive_seasonal_items_path, method: :post, class: "btn" %>
-          <%= button_to "Resurface this season", resurface_seasonal_items_path, method: :post, class: "btn" %>
+          <%= button_to t("items.archive_seasonal"), archive_seasonal_items_path, method: :post, class: "btn" %>
+          <%= button_to t("items.resurface_seasonal"), resurface_seasonal_items_path, method: :post, class: "btn" %>
         </nav>
       </details>
     </div>

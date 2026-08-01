@@ -6,11 +6,11 @@
       <%= responsive_image_tag item.photos.first, alt: item.title, preset: :card, sizes: "(max-width: 768px) 50vw, 280px", class: "item-photo" %>
     <% end %>
     <nav role="navigation" aria-label="Item actions">
-      <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>
+      <%= button_to t("items.wear"), wear_item_path(item), method: :post, class: "btn-sm" %>
       <% if item.spark_joy? %>
-        <%= button_to "No joy", clear_joy_item_path(item), method: :post, class: "btn-sm" %>
+        <%= button_to t("items.no_joy_short"), clear_joy_item_path(item), method: :post, class: "btn-sm" %>
       <% else %>
-        <%= button_to "Joy", spark_joy_item_path(item), method: :post, class: "btn-sm" %>
+        <%= button_to t("items.joy_short"), spark_joy_item_path(item), method: :post, class: "btn-sm" %>
       <% end %>
       <%= link_to "Edit", edit_item_path(item), class: "btn-sm" %>
     </nav>

@@ -12,8 +12,8 @@
         <strong><%= other.email_address %></strong>
         <span class="dim"><%= connection.status %></span>
         <% if connection.addressee == Current.user && connection.status == "pending" %>
-          <%= button_to "Accept", connection_path(connection), method: :patch, params: { accept: true }, class: "btn" %>
-          <%= button_to "Block", connection_path(connection), method: :patch, params: { block: true }, class: "btn btn-ghost" %>
+          <%= button_to t("actions.accept"), connection_path(connection), method: :patch, params: { accept: true }, class: "btn" %>
+          <%= button_to t("actions.block"), connection_path(connection), method: :patch, params: { block: true }, class: "btn btn-ghost" %>
         <% end %>
       </article>
     <% end %>
