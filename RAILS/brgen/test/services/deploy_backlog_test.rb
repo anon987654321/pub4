@@ -482,8 +482,8 @@ class DeployBacklogTest < Minitest::Test
     assert_includes brgen_layout, 'brgen_ai_url'
     refute_includes brgen_layout, 'javascript_include_tag "face"'
     refute_includes brgen_layout, 'javascript_include_tag "particle_kernel"'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'Create outfit'
-    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')), 'Search ports'
+    assert_match(/pwa\.create_outfit|Create outfit/, File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')))
+    assert_match(/pwa\.search_ports|Search ports/, File.read(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')))
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'image/*'
 
