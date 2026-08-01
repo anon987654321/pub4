@@ -106,8 +106,7 @@ studio/dilla/venv-librosa/
 studio/dilla/check_*.wav
 # demo-all's per-piece scratch: 84 intermediate WAVs plus concat/order/catalog
 # lists, regenerated on every run and resumable from disk. The demo itself is
-# tracked as studio/dilla/demo.mp3 — 192kbps keeps the whole catalogue in git
-# at a couple of megabytes, where the WAV master runs to hundreds.
+# no longer tracked either — see the demo* rules further down.
 studio/dilla/.all_tracks_demo/
 RAILS/*/app/assets/builds/*.css.map
 
@@ -150,7 +149,12 @@ studio/dilla/samples/dug/**/*.wav
 # The .keep files stay tracked so the directory survives a clean checkout.
 RAILS/*/storage/*
 !RAILS/*/storage/.keep
+# Generated locally by `ruby dilla.rb demo-all`, from the parts in scratch/.
+# It was tracked until 2026-08-01: at 64 MB it was past GitHub's file-size
+# warning and every rebuild added another permanent blob. LFS was tried and
+# rejected -- the account's LFS budget is exhausted.
 studio/dilla/demo*.wav
+studio/dilla/demo*.mp3
 
 # The renders/scratch rules above still name MASTER/tools/dilla/, which stopped
 # existing when dilla moved to studio/dilla on 2026-07-25 — so ~2GB of
