@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "bcrypt"
+
 # AN201: Rails 8 authentication baseline (resume_session, has_secure_password, Session model).
 # Guest users when +guest+ column exists (brgen family). Single engine source — apps alias `Authentication`.
 module Shared
@@ -112,12 +114,30 @@ module Shared
       ::User.find_by(id: guest_id, guest: true) || create_guest_user
     end
 
+    # A guest's password exists only to satisfy has_secure_password. It is random,
+    # never shown to anyone, and can never be used to sign in — `authenticated?`
+    # is false for guests by definition, and the address is guest_*@guest.local.
+    #
+    # Assigning it through `password=` hashed it at BCrypt::Engine.cost, which is
+    # 12 in production and measures 1,025 ms on vm23's single core. Every request
+    # without a session cookie paid that: crawlers, uptime probes, robots.txt,
+    # manifest.json, every asset fetched without credentials. Measured 2026-08-01
+    # on 275,334 logged brgen requests — 38.9% of them landed in one 900-1100 ms
+    # bucket, and the same endpoint answered in 18-24 ms once a cookie existed.
+    # It had also written 102,778 throwaway guest rows, 99.3% of the users table.
+    #
+    # Cost 4 (BCrypt's minimum) takes 5 ms and is exactly as unusable. Real
+    # passwords are untouched — this bypasses the setter for guests only, and any
+    # guest that later becomes a real account gets a full-cost digest then.
+    GUEST_BCRYPT_COST = BCrypt::Engine::MIN_COST
+
     def create_guest_user
-      guest = ::User.create!(
+      guest = ::User.new(
         email_address: "guest_#{SecureRandom.hex(8)}@guest.local",
-        password: SecureRandom.hex(16),
         guest: true
       )
+      guest.password_digest = BCrypt::Password.create(SecureRandom.hex(16), cost: GUEST_BCRYPT_COST)
+      guest.save!
       session[:guest_user_id] = guest.id
       guest
     end
