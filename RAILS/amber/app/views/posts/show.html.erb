@@ -22,7 +22,7 @@
     <%= render partial: "comments/comment", collection: @comments, as: :comment %>
   </div>
   <% if authenticated? %>
-    <%= render "comments/form", comment: @comment, post: @post %>
+    <%= render "comments/form", comment: @comment, commentable: @post %>
   <% end %>
 </section>
 

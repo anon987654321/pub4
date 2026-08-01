@@ -25,6 +25,9 @@ nb:
     reply: "Svar"
     title: "Kommentarer"
     back: "Tilbake"
+    empty_body: "Vær den første til å svare — gjester kan kommentere uten konto."
+    write_reply: "Skriv et svar"
+    ai_summary: "Vis AI-sammendrag (via MASTER)"
   chat:
     title: "chat"
     close: "Lukk"

@@ -115,6 +115,9 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Residual chat EN (messages/new, marketplace order, playlist party) | Landed |
 | Social chrome i18n (comments, channel/DM chrome, theme, push, unread pill) | Landed |
 | Install-value on full-page channel/DM send | Landed |
+| Shared social.en/nb locales in pub4-shared engine | Landed |
+| Shared comments/_form partial (brgen + amber) | Landed |
+| Amber social + product chrome i18n | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 

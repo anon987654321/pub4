@@ -1,0 +1,53 @@
+<%#
+  Fleet comment form — one partial for brgen, amber, and future hosts.
+
+  locals:
+    comment     — Comment instance (required; use Comment.new for empty form)
+    commentable — polymorphic parent (Post, etc.); preferred
+    post        — alias for commentable (amber call sites)
+    url         — optional explicit path (overrides nested model URL)
+    form_id     — DOM id for turbo replace (default "comment_form")
+    rows        — textarea rows (default 3)
+    required    — HTML5 required on content (default true)
+    parent_id   — optional reply parent
+    placeholder — override default t("comments.placeholder")
+    submit      — override default t("comments.submit")
+    maxlength   — default 10_000
+%>
+<% comment = local_assigns.fetch(:comment) %>
+<% commentable = local_assigns[:commentable] || local_assigns[:post] %>
+<% form_id = local_assigns.fetch(:form_id, "comment_form") %>
+<% rows = local_assigns.fetch(:rows, 3) %>
+<% required = local_assigns.fetch(:required, true) %>
+<% maxlength = local_assigns.fetch(:maxlength, 10_000) %>
+<% placeholder = local_assigns.fetch(:placeholder, t("comments.placeholder")) %>
+<% submit = local_assigns.fetch(:submit, t("comments.submit")) %>
+<% parent_id = local_assigns[:parent_id] %>
+<% url = local_assigns[:url] %>
+<% raise ArgumentError, "comment form needs commentable or post (or url:)" if url.blank? && commentable.blank? %>
+
+<% if url.present? %>
+  <%= form_with model: comment, url: url, id: form_id, class: "comment-form", data: { turbo: true } do |form| %>
+    <%= render "comments/form_fields",
+          form: form,
+          comment: comment,
+          parent_id: parent_id,
+          rows: rows,
+          required: required,
+          maxlength: maxlength,
+          placeholder: placeholder,
+          submit: submit %>
+  <% end %>
+<% else %>
+  <%= form_with model: [ commentable, comment ], id: form_id, class: "comment-form", data: { turbo: true } do |form| %>
+    <%= render "comments/form_fields",
+          form: form,
+          comment: comment,
+          parent_id: parent_id,
+          rows: rows,
+          required: required,
+          maxlength: maxlength,
+          placeholder: placeholder,
+          submit: submit %>
+  <% end %>
+<% end %>

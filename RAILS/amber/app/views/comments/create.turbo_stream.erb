@@ -1,2 +1,2 @@
 <%= turbo_stream.append dom_id(@post, "comments"), partial: "comments/comment", locals: { comment: @comment } %>
-<%= turbo_stream.replace "comment_form", partial: "comments/form", locals: { comment: Comment.new, post: @post } %>
+<%= turbo_stream.replace "comment_form", partial: "comments/form", locals: { comment: Comment.new, commentable: @post } %>

@@ -1,0 +1,25 @@
+<%# Fields for shared comments/_form — not rendered alone. %>
+<% if parent_id.present? %>
+  <%= hidden_field_tag :parent_id, parent_id %>
+<% end %>
+<div class="field">
+  <div data-controller="character-counter" data-character-counter-countdown-value="true">
+    <%= form.text_area :content,
+          placeholder: placeholder,
+          rows: rows,
+          required: (required ? true : nil),
+          maxlength: maxlength,
+          aria: { label: submit },
+          data: {
+            character_counter_target: "input",
+            controller: "textarea-autogrow"
+          } %>
+    <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+  </div>
+</div>
+<% if comment.errors.any? %>
+  <p class="error" role="alert"><%= comment.errors.full_messages.to_sentence %></p>
+<% end %>
+<div class="field">
+  <%= form.submit submit, class: "btn btn-primary btn-sm" %>
+</div>

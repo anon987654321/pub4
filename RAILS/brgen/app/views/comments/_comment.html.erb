@@ -23,17 +23,16 @@
   <% end %>
 
   <% if Current.user.present? %>
+    <% root_post = comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable.commentable %>
     <section id="reply-<%= comment.id %>" hidden>
-      <%= form_with url: post_comments_path(comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable), data: { turbo: true } do |f| %>
-        <%= f.hidden_field :parent_id, value: comment.id %>
-        <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-          <%= f.text_area :content, placeholder: t("comments.reply_placeholder"), rows: 3,
-                aria: { label: t("comments.reply") },
-                data: { character_counter_target: "input" } %>
-          <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-        </div>
-        <p><%= f.submit t("comments.reply"), class: "btn btn-primary btn-sm" %></p>
-      <% end %>
+      <%= render "comments/form",
+            comment: Comment.new,
+            commentable: root_post,
+            parent_id: comment.id,
+            form_id: "reply_form_#{comment.id}",
+            rows: 3,
+            placeholder: t("comments.reply_placeholder"),
+            submit: t("comments.reply") %>
     </section>
   <% end %>
 
