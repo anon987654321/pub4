@@ -16,7 +16,10 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   test "signup form is reachable without an account" do
     get new_user_path
     assert_response :success
-    assert_match(/Create account/, response.body)
+    # Assert the translation, not the English string. brgen.no renders in nb, so
+    # a literal "Create account" started failing the moment the page was
+    # localised — through the key it follows whatever locale the host resolves to.
+    assert_includes response.body, I18n.t("auth.create_account")
   end
 
   test "the sign-in page offers a way to create an account" do

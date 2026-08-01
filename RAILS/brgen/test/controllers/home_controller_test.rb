@@ -14,7 +14,9 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "compose-launcher"
     assert_includes response.body, "feed-panel"
     assert_includes response.body, "city-home-intro"
-    assert_includes response.body, "Bergen, right now"
+    # Same as users_controller_test: through the key, so it follows the locale
+    # brgen.no resolves to (nb) rather than pinning the English copy.
+    assert_includes response.body, I18n.t("home.intro_title")
     # AI is a chip / sidebar link, not an eager above-fold iframe hero.
     assert_not_includes response.body, 'class="ai-embed-frame"'
     assert_not_includes response.body, 'class="master-embed-frame"'
