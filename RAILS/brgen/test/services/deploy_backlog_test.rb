@@ -462,7 +462,7 @@ class DeployBacklogTest < Minitest::Test
     end
 
     brgen_manifest = File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb'))
-    assert_includes brgen_manifest, 'New listing'
+    assert_match(/pwa\.new_listing|New listing/, brgen_manifest)
     assert_includes brgen_manifest, 'protocol_handlers'
     assert_includes brgen_manifest, 'web+brgen'
     # Same-origin shortcuts only (cross-subdomain urls break Chrome scope checks)
