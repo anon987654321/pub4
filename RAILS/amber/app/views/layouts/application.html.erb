@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="<%= I18n.locale %>">
+<html lang="<%= I18n.locale %>" class="chrome-hidden">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -60,7 +60,7 @@
   <%= render "shared/wardrobe_showcase" %>
 <% end %>
 
-<div class="app-shell" data-controller="scroll-chrome">
+<div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
   <div class="layout">
     <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
     <aside class="sidebar" data-edge-swiper-target="root">
@@ -88,7 +88,21 @@
 
   <%= render "shared/footer" %>
 
-  <nav role="navigation" class="tab-bar" aria-label="<%= t("nav.home") %>" data-turbo-permanent>
+  <button type="button"
+          class="tab-bar-peel"
+          data-scroll-chrome-target="peel"
+          data-action="scroll-chrome#reveal"
+          aria-controls="app-tab-bar"
+          aria-expanded="false"
+          aria-label="<%= t("nav.show_menu", default: "Show menu") %>"></button>
+  <nav id="app-tab-bar"
+       role="navigation"
+       class="tab-bar"
+       aria-label="<%= t("nav.mobile_nav", default: t("nav.home")) %>"
+       data-scroll-chrome-target="bar"
+       data-turbo-permanent
+       aria-hidden="true"
+       inert>
     <%= link_to root_path, class: "tab-item", aria: { label: t("nav.home"), current: current_page?(root_path) ? "page" : nil } do %>
       <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696z"/></svg>
     <% end %>

@@ -33,6 +33,7 @@ nb:
     search_placeholder: "Søk i Brgen"
     show_sidebar: "Vis sidemeny"
     show_widgets: "Vis widgets"
+    show_menu: "Vis meny"
     mobile_nav: "Mobilnavigasjon"
     primary_nav: "Hovednavigasjon"
     oauth_options: "Innloggingsvalg"

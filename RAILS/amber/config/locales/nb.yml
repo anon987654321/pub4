@@ -25,6 +25,8 @@ nb:
     add_item: "Legg til plagg"
     show_sidebar: "Vis sidemeny"
     show_widgets: "Vis widgets"
+    show_menu: "Vis meny"
+    mobile_nav: "Mobilnavigasjon"
   auth:
     sign_in: "Logg inn"
     sign_in_lead: "Bla i demogarderoben uten konto. Logg inn for å katalogisere egne plagg og planlegge antrekk."

@@ -33,6 +33,7 @@ en:
     search_placeholder: "Search Brgen"
     show_sidebar: "Show sidebar"
     show_widgets: "Show widgets"
+    show_menu: "Show menu"
     mobile_nav: "Mobile navigation"
     primary_nav: "Primary navigation"
     oauth_options: "Sign in options"

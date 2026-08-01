@@ -25,6 +25,8 @@ en:
     add_item: "Add item"
     show_sidebar: "Show sidebar"
     show_widgets: "Show widgets"
+    show_menu: "Show menu"
+    mobile_nav: "Mobile navigation"
   auth:
     sign_in: "Sign in"
     sign_in_lead: "Browse the demo wardrobe without an account. Sign in to catalog your own pieces and plan outfits."

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="<%= Current.locale || I18n.locale %>" dir="ltr">
+<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" class="chrome-hidden">
 <head>
   <meta charset="utf-8">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>
@@ -103,7 +103,7 @@
     </div>
   </div>
 
-  <div class="app-shell" data-controller="scroll-chrome">
+  <div class="app-shell" data-controller="scroll-chrome" data-scroll-chrome-storage-key-value="pub4:tab-bar:open">
     <div class="layout">
       <div class="sidebar-swiper" data-controller="edge-swiper" data-edge-swiper-edge-value="left" data-turbo-permanent>
       <aside class="sidebar" aria-label="Sidebar" data-edge-swiper-target="root">
@@ -208,7 +208,23 @@
       </div>
     </div>
 
-    <nav role="navigation" class="tab-bar" aria-label="<%= t("nav.mobile_nav") %>" data-turbo-permanent>
+    <%# Footer menu is progressive: closed by default (scroll-chrome). Peel +
+        scroll-up reveal; scroll-down hides. %>
+    <button type="button"
+            class="tab-bar-peel"
+            data-scroll-chrome-target="peel"
+            data-action="scroll-chrome#reveal"
+            aria-controls="app-tab-bar"
+            aria-expanded="false"
+            aria-label="<%= t("nav.show_menu", default: "Show menu") %>"></button>
+    <nav id="app-tab-bar"
+         role="navigation"
+         class="tab-bar"
+         aria-label="<%= t("nav.mobile_nav") %>"
+         data-scroll-chrome-target="bar"
+         data-turbo-permanent
+         aria-hidden="true"
+         inert>
       <%= link_to root_path, class: "tab-item", aria: { label: t("nav.home"), current: current_page?(root_path) ? "page" : nil } do %>
         <%= icon :home, size: 26 %>
       <% end %>
