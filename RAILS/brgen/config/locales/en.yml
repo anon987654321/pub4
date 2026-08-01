@@ -382,9 +382,13 @@ en:
     save_note: "Save note"
     comment_placeholder: "Write something…"
     post_comment: "Post comment"
+    subscribe: "Subscribe"
   newsletter:
     email_placeholder: "your@email.com"
     subscribe: "Subscribe"
+    title: "City updates"
+    body: "News and deals from your city, once a week."
+    marketing_consent: "I agree to receive deals and partner offers (optional, unsubscribe any time)"
   pwa:
     home: "Home"
     new: "New"

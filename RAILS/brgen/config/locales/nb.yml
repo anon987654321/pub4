@@ -382,9 +382,13 @@ nb:
     save_note: "Lagre notat"
     comment_placeholder: "Skriv noe…"
     post_comment: "Publiser kommentar"
+    subscribe: "Abonner"
   newsletter:
     email_placeholder: "din@epost.com"
     subscribe: "Abonner"
+    title: "Byoppdateringer"
+    body: "Nyheter og tilbud fra byen din, én gang i uken."
+    marketing_consent: "Jeg godtar å motta tilbud og partnerforslag (valgfritt, avmeld når som helst)"
   pwa:
     home: "Hjem"
     new: "Ny"
