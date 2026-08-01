@@ -433,10 +433,13 @@ class DeployBacklogTest < Minitest::Test
 
     wardrobe_form = File.read(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb'))
     assert wardrobe_form.include?('textarea-autogrow') || wardrobe_form.include?('character-counter')
-    assert_includes File.read(File.join(ROOT, 'shared/app/views/comments/_form.html.erb')), 'textarea-autogrow'
+    assert_includes File.read(File.join(ROOT, 'shared/app/views/comments/_form_fields.html.erb')), 'textarea-autogrow'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id]'
     assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post, Current.user&.id, post.anonymous?]'
     assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard popover"'
+    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'shared/post_card'
+    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'shared/post_card'
+    assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_post_card.html.erb')), 'shared/feed_card'
     assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_copyable.html.erb')),
                     'data-controller="clipboard"'
 

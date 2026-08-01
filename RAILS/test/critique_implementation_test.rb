@@ -28,7 +28,8 @@ class CritiqueImplementationTest < Minitest::Test
     assert_match(/home\.intro_title|Bergen/, home)
     assert_includes compose, "Post to Bergen"
     assert_includes compose, "Posting as a guest"
-    assert_includes post, 'aria-label="Share post"'
+    assert_match(/post\.share|Share post/, post)
+    assert_includes post, "shared/post_card"
     assert_includes css, "min-height: 44px"
   end
 
@@ -45,8 +46,8 @@ class CritiqueImplementationTest < Minitest::Test
     # offers "Archive to memory" and "Restore to wardrobe" as a pair. The old
     # assertion demanded the literal copy "Archive reversibly", which the UI has
     # never used — so it failed while the behaviour it guards was correct.
-    assert_includes show, "Archive to memory"
-    assert_includes show, "Restore to wardrobe"
+    assert_match(/items\.archive|Archive to memory/, show)
+    assert_match(/items\.restore|Restore to wardrobe/, show)
     assert_includes form, "Photo processing:"
     assert_includes outfit, "outfit-composition"
     assert_includes ai, "Why it works:"

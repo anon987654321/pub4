@@ -1,25 +1,30 @@
 <% cache [post, Current.user&.id, post.anonymous?] do %>
-  <article class="feed-post" role="article" aria-label="Post by <%= post.author_name %>">
-    <header class="feed-post-meta feed-post-byline" role="banner" aria-label="Post header">
-      <span class="author">
-        <% if post.anonymous? || post.user&.guest? %>
-          <%= post.author_name %>
-        <% else %>
-          <%= link_to post.author_name, user_path(post.user) %>
-        <% end %>
-      </span>
-      · <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %></time>
-    </header>
-    <div class="feed-post-body feed-post-prose"><%= post.body %></div>
-    <% if post.outfit %><p><em><%= t("post.outfit_label") %>: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em></p><% end %>
-    <% if post.item %><p><em><%= t("post.item_label") %>: <%= link_to post.item.title, item_path(post.item) %></em></p><% end %>
-    <footer>
-      <% unless guest? %>
-        <%= button_to t("post.like_count", count: post.likes_count), like_post_path(post), method: :post %>
-      <% end %>
-      <% if post.user == Current.user && !guest? %>
-        <%= button_to t("actions.delete"), post_path(post), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>
-      <% end %>
-    </footer>
-  </article>
+  <% post_actions = capture do %>
+    <% unless guest? %>
+      <%= button_to t("post.like_count", count: post.likes_count), like_post_path(post), method: :post %>
+    <% end %>
+    <% if post.user == Current.user && !guest? %>
+      <%= button_to t("actions.delete"), post_path(post), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>
+    <% end %>
+  <% end %>
+
+  <% post_meta = capture do %>
+    <% if post.outfit %>
+      <em><%= t("post.outfit_label") %>: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em>
+    <% end %>
+    <% if post.item %>
+      <em><%= t("post.item_label") %>: <%= link_to post.item.title, item_path(post.item) %></em>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/post_card",
+        post: post,
+        variant: :prose,
+        name: post.author_name,
+        url: (post.anonymous? || post.user&.guest? ? nil : user_path(post.user)),
+        content: post.body,
+        title: nil,
+        meta: post_meta.presence,
+        actions: post_actions,
+        frame: false %>
 <% end %>

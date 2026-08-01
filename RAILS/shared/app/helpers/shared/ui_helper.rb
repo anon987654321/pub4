@@ -79,6 +79,30 @@ module Shared
       end
     end
 
+    # Cross-app post author (brgen author_name / amber author_name / fallback).
+    def post_display_name(post)
+      return t("chat.anon", default: "anon") if post.try(:anonymous?) || post.try(:user)&.try(:guest?)
+
+      post.try(:author_name).presence ||
+        post.try(:user)&.try(:display_name).presence ||
+        post.try(:user)&.try(:username).presence ||
+        t("chat.anon", default: "anon")
+    end
+
+    def post_body_text(post)
+      post.try(:body).presence || post.try(:content).presence || post.try(:title).to_s
+    end
+
+    def post_title_text(post)
+      post.try(:title).presence
+    end
+
+    def post_avatar_url(post)
+      return nil if post.try(:anonymous?) || post.try(:user)&.try(:guest?) || post.try(:live?)
+
+      post.try(:author_avatar_url).presence || post.try(:user)&.try(:avatar_url)
+    end
+
     private
 
     def sidebar_nav_link(item)

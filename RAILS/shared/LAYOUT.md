@@ -26,6 +26,11 @@ Bridge contract: RAILS hosts embed MASTER via `shared/master_embed` +
 `master_web_url(autostart:, embed:)`. Face boot rules stay in
 `MASTER/web/CLAUDE.md` (primer before WebGL; no three.js at first paint).
 
+Social primitives (shared engine):
+- `shared/post_card` — brgen `variant: :card`, amber `variant: :prose`
+- `comments/form` + `comments/comment` — capability-aware form/row
+- `social.en.yml` / `social.nb.yml` — actions, comments, post, master keys
+
 ## Surfaces
 
 | Surface | Body attributes | Main landmark | Chrome |
