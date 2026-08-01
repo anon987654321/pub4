@@ -6,7 +6,7 @@
 
 <section class="channel-room" aria-label="Channel">
   <header class="channel-room-header" role="banner">
-    <%= link_to "← channels", channels_path, class: "channel-back" %>
+    <%= link_to t("messages.back_channels"), channels_path, class: "channel-back" %>
     <h1><%= @conversation.channel_title %></h1>
     <p class="dim"><%= spec[:blurb] %></p>
     <%# Heartbeat lives on the header, not the log, so it keeps running while the
@@ -19,7 +19,9 @@
 
   <ul id="messages" class="channel-log conversation-log"
       data-controller="conversation-log"
-      data-conversation-log-viewer-id-value="<%= Current.user&.id %>">
+      data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+      data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
+      data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>">
     <% @messages.each do |m| %>
       <%= render "messages/message", message: m %>
     <% end %>
@@ -35,7 +37,7 @@
                     turbo: true,
                     controller: "typing-input",
                     typing_input_url_value: conversation_typing_indicators_path(@conversation),
-                    action: "keydown->typing-input#composerKeydown input->typing-input#ping"
+                    action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
                   } do |f| %>
       <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
         <%= f.text_area :content, rows: 2,

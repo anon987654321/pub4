@@ -17,7 +17,11 @@ import { Controller } from "@hotwired/stimulus"
 const GROUP_WINDOW_MS = 5 * 60 * 1000
 
 export default class extends Controller {
-  static values = { viewerId: String }
+  static values = {
+    viewerId: String,
+    unreadOne: { type: String, default: "%{count} new message ↓" },
+    unreadOther: { type: String, default: "%{count} new messages ↓" }
+  }
 
   connect() {
     this.unread = 0
@@ -98,7 +102,8 @@ export default class extends Controller {
       this.element.insertAdjacentElement("afterend", this.pill)
     }
     const n = this.unread
-    this.pill.textContent = `${n} new message${n === 1 ? "" : "s"} ↓`
+    const template = n === 1 ? this.unreadOneValue : this.unreadOtherValue
+    this.pill.textContent = template.replace("%{count}", String(n))
     this.pill.setAttribute("aria-live", "polite")
   }
 

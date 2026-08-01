@@ -44,6 +44,12 @@ export default class extends Controller {
     else form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
   }
 
+  // Successful chat send counts as install-value (channel, DM, dock).
+  markValue(event) {
+    if (event?.detail && event.detail.success === false) return
+    window.dispatchEvent(new CustomEvent("pub4:install-value"))
+  }
+
   #syncSubmit() {
     if (!this.submit) return
     this.submit.disabled = !this.#hasContent()

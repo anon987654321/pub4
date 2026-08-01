@@ -1,15 +1,15 @@
 <%= turbo_stream_from @conversation %>
 <% content_for :body_attrs do %>data-action="turbo:load->push#clearBadge"<% end %>
 
-<header role="banner" aria-label="Conversation header">
+<header role="banner" aria-label="<%= t("messages.header_label") %>">
   <h1><%= @conversation.display_name_for(Current.user) %></h1>
-  <nav role="navigation" aria-label="Conversation nav">
-    <%= link_to "← all", conversations_path %>
+  <nav role="navigation" aria-label="<%= t("messages.nav_label") %>">
+    <%= link_to t("messages.back_all"), conversations_path %>
   </nav>
   <%= form_with url: conversation_path(@conversation), method: :patch,
         class: "disappearing-settings#{" disappearing-settings--active" if @conversation.disappearing_messages?}" do |form| %>
     <span class="disappearing-badge" aria-hidden="true"></span>
-    <label for="disappearing">Disappearing messages</label>
+    <label for="disappearing"><%= t("messages.disappearing") %></label>
     <%= form.select :disappearing,
           Conversation::DISAPPEARING_OPTIONS.keys.map { |key| [key, key] },
           { selected: Conversation::DISAPPEARING_OPTIONS.key(@conversation.disappearing_duration) || "off" },
@@ -33,7 +33,7 @@
                 turbo: true,
                 controller: "typing-input",
                 typing_input_url_value: conversation_typing_indicators_path(@conversation),
-                action: "keydown->typing-input#composerKeydown input->typing-input#ping"
+                action: "keydown->typing-input#composerKeydown input->typing-input#ping turbo:submit-end->typing-input#markValue"
               } do |f| %>
   <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
     <%= f.text_area :content, rows: 3,

@@ -80,8 +80,8 @@
       <p class="dim mb-12"><%= t("post.posting_as_anon") %> <strong>anon</strong>. <%= link_to t("nav.sign_in"), new_session_path %><%= t("post.guest_sign_in") %></p>
     <% end %>
     <div class="field">
-      <%= f.submit "Post", class: "btn btn-primary" %>
-      <%= link_to "Cancel", posts_path, class: "btn btn-ghost" %>
+      <%= f.submit t("post.submit"), class: "btn btn-primary" %>
+      <%= link_to t("actions.cancel"), posts_path, class: "btn btn-ghost" %>
       <span class="dim" data-autosave-target="status" aria-live="polite"></span>
     </div>
   <% end %>

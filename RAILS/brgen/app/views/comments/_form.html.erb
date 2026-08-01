@@ -1,12 +1,17 @@
 <%= form_with model: [commentable, comment], id: "comment_form", data: { turbo: true } do |form| %>
   <div class="field">
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= form.text_area :content, placeholder: "What do you think?", rows: 4 , maxlength: 10000, data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
-  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
-</div>
+      <%= form.text_area :content,
+            placeholder: t("comments.placeholder"),
+            rows: 4,
+            maxlength: 10000,
+            aria: { label: t("comments.submit") },
+            data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
+      <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+    </div>
   </div>
   <% if comment.errors.any? %>
     <p class="error"><%= comment.errors.full_messages.to_sentence %></p>
   <% end %>
-  <div class="field"><%= form.submit "Comment", class: "btn btn-primary btn-sm" %></div>
+  <div class="field"><%= form.submit t("comments.submit"), class: "btn btn-primary btn-sm" %></div>
 <% end %>

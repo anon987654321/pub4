@@ -151,10 +151,28 @@ nb:
     start_chat: "Start chat"
     empty_title: "Ingen samtaler ennå"
     empty_body: "Send en melding for å starte."
+    back_all: "← alle"
+    back_channels: "← kanaler"
+    disappearing: "Forsvinnende meldinger"
+    header_label: "Samtaleoverskrift"
+    nav_label: "Samtalenavigasjon"
+    unread_one: "%{count} ny melding ↓"
+    unread_other: "%{count} nye meldinger ↓"
+  comments:
+    placeholder: "Hva tenker du?"
+    submit: "Kommenter"
+    reply_placeholder: "Svar…"
+    reply: "Svar"
+  theme:
+    region: "Tema"
+    toggle: "Bytt til lyst tema"
+  push:
+    enable: "Slå på varsler"
   post:
     new: "Nytt innlegg"
     guest_sign_in: " for å bruke navnet ditt."
     posting_as_anon: "Poster som"
+    submit: "Post"
   empty:
     no_posts: "Ingen innlegg"
     no_posts_search: "Ingen innlegg matcher søket."
@@ -225,6 +243,7 @@ nb:
     all_cuisines: "Alle kjøkken"
     save: "Lagre"
     send: "Send"
+    cancel: "Avbryt"
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"

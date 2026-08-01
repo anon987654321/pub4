@@ -54,14 +54,14 @@
     <span class="brand-text">brgen</span>
   <% end %>
   <% unless vertical_surface? %>
-    <div role="region" aria-label="Theme">
-      <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="Toggle light theme"
+    <div role="region" aria-label="<%= t("theme.region") %>">
+      <input type="checkbox" id="dark-toggle" class="theme-toggle-input" aria-label="<%= t("theme.toggle") %>"
         data-controller="theme-toggle" data-theme-toggle-storage-key-value="brgen-theme" data-action="change->theme-toggle#persist">
       <%# Restore the saved theme at parse time, before .theme-root paints, so a
           saved light theme does not flash dark first (the Stimulus controller
           reapplies the same value on connect). %>
       <script src="/theme_boot.js"></script>
-      <label for="dark-toggle" class="theme-toggle" title="Toggle light theme" aria-hidden="true">
+      <label for="dark-toggle" class="theme-toggle" title="<%= t("theme.toggle") %>" aria-hidden="true">
         <%= icon :sun, size: 20 %>
       </label>
     </div>
@@ -85,7 +85,7 @@
          data-push-subscribe-url-value="<%= push_subscriptions_path %>"
          data-push-unread-value="<%= unread %>"
          data-turbo-permanent></div>
-    <button id="push-enable-btn" class="push-enable-btn" hidden>Enable notifications</button>
+    <button id="push-enable-btn" class="push-enable-btn" hidden><%= t("push.enable") %></button>
   <% end %>
 
   <div id="cityCarousel" class="city-carousel" data-turbo-permanent aria-label="City network" data-brgen-shell-target="carousel">

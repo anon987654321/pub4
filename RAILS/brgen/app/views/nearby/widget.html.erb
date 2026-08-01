@@ -30,6 +30,8 @@
         data-nearby-chat-target="log"
         data-controller="conversation-log"
         data-conversation-log-viewer-id-value="<%= Current.user&.id %>"
+        data-conversation-log-unread-one-value="<%= t("messages.unread_one") %>"
+        data-conversation-log-unread-other-value="<%= t("messages.unread_other") %>"
         aria-live="polite"
         aria-relevant="additions"
         aria-label="<%= t("chat.log_label", default: "Messages") %>">

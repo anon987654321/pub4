@@ -151,10 +151,28 @@ en:
     start_chat: "Start chat"
     empty_title: "No conversations yet"
     empty_body: "Send a message to get started."
+    back_all: "← all"
+    back_channels: "← channels"
+    disappearing: "Disappearing messages"
+    header_label: "Conversation header"
+    nav_label: "Conversation nav"
+    unread_one: "%{count} new message ↓"
+    unread_other: "%{count} new messages ↓"
+  comments:
+    placeholder: "What do you think?"
+    submit: "Comment"
+    reply_placeholder: "Reply…"
+    reply: "Reply"
+  theme:
+    region: "Theme"
+    toggle: "Toggle light theme"
+  push:
+    enable: "Enable notifications"
   post:
     new: "New post"
     guest_sign_in: " to use your name."
     posting_as_anon: "Posting as"
+    submit: "Post"
   empty:
     no_posts: "No posts"
     no_posts_search: "No posts match this search."
@@ -225,6 +243,7 @@ en:
     all_cuisines: "All cuisines"
     save: "Save"
     send: "Send"
+    cancel: "Cancel"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"

@@ -113,6 +113,8 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Empty-send disabled on chat composers | Landed |
 | Peel flush bottom-center; alerts clear chat tab | Landed |
 | Residual chat EN (messages/new, marketplace order, playlist party) | Landed |
+| Social chrome i18n (comments, channel/DM chrome, theme, push, unread pill) | Landed |
+| Install-value on full-page channel/DM send | Landed |
 
 ## Intentionally residual (product/ops, not pure CSS)
 
