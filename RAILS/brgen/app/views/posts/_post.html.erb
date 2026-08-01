@@ -1,5 +1,14 @@
 <%= turbo_frame_tag dom_id(post) do %>
-  <% cache [post, Current.user&.id] do %>
+<%# Keyed on the viewer's vote, not the viewer. The only user-specific output in
+    here is post.upvoted_by?(Current.user), twice — the active class and
+    aria-pressed on the vote button; everything else, shared/_post_card
+    included, derives from the post. Keying on Current.user&.id gave every
+    visitor their own copy, and brgen mints a fresh guest user for every request
+    that arrives without a session cookie, so for crawlers the fragment cache
+    never hit once and each visit wrote 25 single-use entries into the store.
+    voted_by? has three outcomes, so this collapses to at most three variants
+    per post and renders identically. %>
+  <% cache [post, post.voted_by?(Current.user)] do %>
     <% post_actions = capture do %>
       <button type="button" class="feed-action"
               aria-label="<%= t("post.comment_aria", count: post.comment_count, default: "Comment, %{count} comments") %>"
