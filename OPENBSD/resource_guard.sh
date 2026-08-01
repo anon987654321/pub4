@@ -15,8 +15,26 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
 ALL_APPS_FLAG=/var/db/pub4_all_apps
 SHED_STATE=/var/db/resource_guard_shed
+# Consecutive breaching ticks required before anything is shed.
+#
+# Shedding used to fire on a single sample. vm23 is fine at rest — measured
+# 2026-08-01 at 98% idle with zero paging (vmstat pi/po/fr all 0) — and only
+# breaches transiently, when a deploy precompiles assets or an app cold-boots.
+# One 5-minute sample landing inside that window took amber and bsdports down
+# on essentially every deploy, and each restore then cost another tick apiece.
+# Two consecutive breaches means a spike has to last past five minutes to count,
+# which is the difference between "a deploy is running" and "the box is actually
+# out of memory". The LOAD_CRIT path below is untouched and still acts on the
+# first sample, because a genuine crisis should not wait.
+SHED_STRIKES=${GUARD_SHED_STRIKES:-2}
+STRIKE_STATE=/var/db/resource_guard_strikes
 CORE="master brgen"
-OPTIONAL="amber bsdports litestream"
+# Ordered cheapest-to-lose first, because shedding now takes one per tick.
+# litestream leads: it is a backup streamer with no user-facing surface (and
+# per amber-deploy-hazards it is not currently backing anything up), so losing
+# it costs nothing visible. bsdports is a low-traffic ports index. amber is a
+# real app with real users and goes last.
+OPTIONAL="litestream bsdports amber"
 # vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
 # busy, which is routine, not an emergency. Calm baseline ~0.5-1.4,
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.
@@ -124,14 +142,40 @@ if [[ -f $ALL_APPS_FLAG ]]; then
   exit 0
 fi
 
+# Consecutive-breach counter. Reset the moment a tick comes back clean, so
+# strikes only accumulate for sustained pressure, never across unrelated spikes
+# hours apart.
+strikes=0
+if [[ -f $STRIKE_STATE ]]; then
+  strikes=$(cat "$STRIKE_STATE" 2>/dev/null || echo 0)
+  [[ $strikes == +([0-9]) ]] || strikes=0
+fi
 if [[ $shed -eq 1 ]]; then
+  strikes=$((strikes + 1))
+else
+  strikes=0
+fi
+echo "$strikes" > "$STRIKE_STATE" 2>/dev/null || true
+
+if [[ $shed -eq 1 && $strikes -lt $SHED_STRIKES ]]; then
+  logger -t resource-guard \
+    "pressure $strikes/$SHED_STRIKES (load=$load mem_avail=${mem_avail_pct}%) — holding"
+  shed=0
+fi
+
+if [[ $shed -eq 1 ]]; then
+  # One service per tick, the same way restore releases one per tick. Shedding
+  # the whole OPTIONAL list on one breach gave up more than the pressure asked
+  # for and then took three ticks to undo. The list is ordered cheapest-to-lose
+  # first, so a mild breach costs litestream and nothing else.
   for svc in $OPTIONAL; do
     if rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
-      logger -t resource-guard "shed $svc (load=$load mem_avail=${mem_avail_pct}%)"
+      logger -t resource-guard "shed $svc (load=$load mem_avail=${mem_avail_pct}% strikes=$strikes)"
       rcctl stop "$svc" 2>/dev/null || true
       if ! grep -qx "$svc" "$SHED_STATE" 2>/dev/null; then
         echo "$svc" >> "$SHED_STATE"
       fi
+      break
     fi
   done
   # tts-worker daemons used to be killed here too, at the same LOAD_WARN
