@@ -115,6 +115,22 @@ SCRATCH_DIR = ENV.fetch("DILLA_SCRATCH_DIR", File.join(ROOT, "scratch"))
 def scratch_path(name)
   FileUtils.mkdir_p(SCRATCH_DIR)
   File.join(SCRATCH_DIR, name)
+rescue Errno::EACCES, Errno::EROFS => e
+  # Requiring this file has a side effect: STREAM_LOCK_PATH calls scratch_path
+  # at load time, so simply `require`-ing dilla creates a directory. Anything
+  # running as a different user than the checkout's owner then dies on load
+  # rather than on use. That is not hypothetical — brgen's CI runs as user
+  # brgen, its radio_bergen_study_test requires this file, and the whole Rails
+  # suite aborted with EACCES on /home/dev/pub4/studio/dilla/scratch, which
+  # blocked the deploy of an app that has nothing to do with audio.
+  #
+  # A scratch directory is by definition disposable, so fall back to one we can
+  # certainly write instead of taking the process down. DILLA_SCRATCH_DIR still
+  # wins when set.
+  fallback = File.join(Dir.tmpdir, "dilla-scratch-#{Process.uid}")
+  warn "dilla: #{SCRATCH_DIR} is not writable (#{e.class}); using #{fallback}"
+  FileUtils.mkdir_p(fallback)
+  File.join(fallback, name)
 end
 SAMPLE_DIR = File.join(ROOT, "samples")
 DRUM_DIR = File.join(SAMPLE_DIR, "drums")
