@@ -24,9 +24,9 @@
     <div class="form-wrap">
       <%= form_with url: collaborations_path, method: :post do |f| %>
         <div class="field field--row">
-          <%= f.text_field :username, placeholder: "username", class: "field--grow" %>
+          <%= f.text_field :username, placeholder: t("playlist.username"), class: "field--grow" %>
           <%= f.select :role, %w[editor viewer] %>
-          <%= f.submit "Add collaborator", class: "btn btn-primary btn-sm" %>
+          <%= f.submit t("playlist.add_collaborator"), class: "btn btn-primary btn-sm" %>
         </div>
       <% end %>
     </div>

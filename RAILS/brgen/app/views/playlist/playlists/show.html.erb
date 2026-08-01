@@ -31,8 +31,8 @@
       <p class="section-heading">Import links</p>
       <div class="form-wrap form-wrap--flush">
         <%= form_with url: playlist_playlist_imports_path(@playlist), method: :post do |f| %>
-          <div class="field"><%= f.text_area :urls, rows: 4, placeholder: "Paste Spotify, YouTube, SoundCloud, or direct audio URLs, one per line" %></div>
-          <div class="field"><%= f.submit "Import", class: "btn btn-primary btn-sm" %></div>
+          <div class="field"><%= f.text_area :urls, rows: 4, placeholder: t("playlist.import_urls_placeholder") %></div>
+          <div class="field"><%= f.submit t("playlist.import"), class: "btn btn-primary btn-sm" %></div>
         <% end %>
       </div>
     </div>

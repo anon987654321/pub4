@@ -80,7 +80,7 @@
       <div class="field">
         <%= f.label :body, "Add a note" %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :body, rows: 2, placeholder: "Timestamped note…" , maxlength: 2000, data: { character_counter_target: "input" } %>
+  <%= f.text_area :body, rows: 2, placeholder: t("tv.note_placeholder") , maxlength: 2000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
       </div>
@@ -88,7 +88,7 @@
         <%= f.label :timestamp, "Timestamp (seconds)" %>
         <%= f.number_field :timestamp, min: 0, step: 1 %>
       </div>
-      <%= f.submit "Save note", class: "btn btn-primary btn-sm" %>
+      <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
     <% end %>
   <% end %>
 </section>
@@ -118,11 +118,11 @@
       <div class="field">
         <%= f.label :body, "Add a comment" %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :body, rows: 3, placeholder: "Write something…" , maxlength: 1000, data: { character_counter_target: "input" } %>
+  <%= f.text_area :body, rows: 3, placeholder: t("tv.comment_placeholder") , maxlength: 1000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
       </div>
-      <%= f.submit "Post comment", class: "btn btn-primary btn-sm" %>
+      <%= f.submit t("tv.post_comment"), class: "btn btn-primary btn-sm" %>
     <% end %>
   <% end %>
 </section>

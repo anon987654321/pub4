@@ -17,7 +17,7 @@
     <div class="field">
       <%= f.label :content, "Body (optional)" %>
       <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :content, placeholder: "Text (optional)", rows: 5 , maxlength: 10000, data: { character_counter_target: "input" } %>
+  <%= f.text_area :content, placeholder: t("post.text_optional"), rows: 5 , maxlength: 10000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
     </div>

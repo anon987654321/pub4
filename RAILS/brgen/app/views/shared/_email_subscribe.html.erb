@@ -4,13 +4,13 @@
   <%= form_with url: email_subscriptions_path, method: :post do |f| %>
     <div class="field mb-8">
       <%= f.email_field :email, name: "email_subscription[email]",
-            placeholder: "your@email.com", required: true,
+            placeholder: t("newsletter.email_placeholder"), required: true,
             class: "map-search-input" %>
     </div>
     <label class="field--check-label">
       <input type="checkbox" name="email_subscription[agreed_to_marketing]" value="1">
       <span class="dim">I agree to receive deals and partner offers (optional, unsubscribe any time)</span>
     </label>
-    <%= f.submit "Subscribe", class: "btn btn-primary btn-sm btn-block" %>
+    <%= f.submit t("newsletter.subscribe"), class: "btn btn-primary btn-sm btn-block" %>
   <% end %>
 </div>

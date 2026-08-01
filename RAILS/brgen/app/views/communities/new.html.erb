@@ -7,17 +7,17 @@
   <% end %>
   <p>
     <%= f.label :name %>
-    <%= f.text_field :name, placeholder: "e.g. bergen, tech, musikk" %>
+    <%= f.text_field :name, placeholder: t("communities.name_placeholder") %>
   </p>
   <p>
     <%= f.label :description %>
     <div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :description, placeholder: "What is this community about?", rows: 3 , maxlength: 1000, data: { character_counter_target: "input" } %>
+  <%= f.text_area :description, placeholder: t("communities.description_placeholder"), rows: 3 , maxlength: 1000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
   </p>
   <p>
-    <%= f.submit "Create" %>
+    <%= f.submit t("communities.create") %>
     <%= link_to "Cancel", communities_path %>
   </p>
 <% end %>

@@ -12,6 +12,6 @@
 </div></div>
     <div class="field"><%= f.label :avatar %><%= f.file_field :avatar, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
     <div class="field"><%= f.label :banner %><%= f.file_field :banner, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
-    <div class="field"><%= f.submit "Create channel", class: "btn btn-primary" %></div>
+    <div class="field"><%= f.submit t("tv.create_channel"), class: "btn btn-primary" %></div>
   <% end %>
 </div>

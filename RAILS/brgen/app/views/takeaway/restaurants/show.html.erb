@@ -24,9 +24,9 @@
     <h2>Add menu item</h2>
     <div class="form-wrap">
       <%= form_with scope: :takeaway_menu_item, url: takeaway_restaurant_menu_items_path(@restaurant) do |f| %>
-        <div class="field"><%= f.text_field :name, placeholder: "Name", required: true %></div>
-        <div class="field"><%= f.number_field :price_cents, placeholder: "Price (øre)", required: true %></div>
-        <div class="field"><%= f.text_field :description, placeholder: "Description" %></div>
+        <div class="field"><%= f.text_field :name, placeholder: t("takeaway.item_name"), required: true %></div>
+        <div class="field"><%= f.number_field :price_cents, placeholder: t("takeaway.item_price"), required: true %></div>
+        <div class="field"><%= f.text_field :description, placeholder: t("takeaway.item_description") %></div>
         <div class="field field--check"><%= f.check_box :available, checked: true %><%= f.label :available %></div>
         <div class="field field--check"><%= f.check_box :vegetarian %><%= f.label :vegetarian %></div>
         <div class="field field--check"><%= f.check_box :vegan %><%= f.label :vegan %></div>

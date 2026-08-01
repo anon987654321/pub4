@@ -5,7 +5,7 @@
       <%= form.hidden_field :category_id, value: params[:category_id] %>
       <%= form.hidden_field :location, value: params[:location] %>
       <%= form.hidden_field :name, value: "Marketplace search" %>
-      <%= form.submit "Save this search", class: "btn btn-ghost btn-sm" %>
+      <%= form.submit t("marketplace.save_search"), class: "btn btn-ghost btn-sm" %>
     <% end %>
   </div>
 <% end %>

@@ -84,7 +84,7 @@
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
       <%= form_with(model: @order, url: marketplace_listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
         <div class="field"><div data-controller="character-counter" data-character-counter-countdown-value="true">
-  <%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 , data: { character_counter_target: "input" } %>
+  <%= f.text_area :message, placeholder: t("marketplace.message_seller"), rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
         <div class="field"><%= f.submit t("marketplace.send_offer"), class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>

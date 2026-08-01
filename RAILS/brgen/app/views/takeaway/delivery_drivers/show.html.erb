@@ -25,9 +25,9 @@
       <%= form.label :available %>
       <%= form.check_box :available %>
     </div>
-    <div class="field"><%= form.text_field :license_number, placeholder: "License number" %></div>
-    <div class="field"><%= form.text_field :current_lat, placeholder: "Latitude" %></div>
-    <div class="field"><%= form.text_field :current_lng, placeholder: "Longitude" %></div>
-    <%= form.submit "Update", class: "btn btn-primary btn-sm" %>
+    <div class="field"><%= form.text_field :license_number, placeholder: t("takeaway.license_number") %></div>
+    <div class="field"><%= form.text_field :current_lat, placeholder: t("takeaway.latitude") %></div>
+    <div class="field"><%= form.text_field :current_lng, placeholder: t("takeaway.longitude") %></div>
+    <%= form.submit t("takeaway.update"), class: "btn btn-primary btn-sm" %>
   <% end %>
 <% end %>
