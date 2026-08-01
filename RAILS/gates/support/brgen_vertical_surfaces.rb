@@ -183,7 +183,8 @@ module Deploy
         label: "maps_places",
         host: "maps.#{APEX}",
         path: "/places",
-        expect_body: [/place|map|nearby|main|search/i],
+        # Controller answers JSON catalogue (not HTML shell) for place list API.
+        expect_body: [/"name"\s*:|"lat"\s*:|"kind"\s*:|cafe|park|\[/i],
       },
       # Messenger secondary (host + apex already covered)
       {

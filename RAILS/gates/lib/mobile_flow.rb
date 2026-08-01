@@ -94,6 +94,7 @@ module Deploy
       brgen/dating brgen/playlist brgen/tv brgen/takeaway brgen/maps brgen/messenger
       brgen/channels brgen/conversations brgen/search brgen/communities
       amber/home amber/wardrobe amber/feed amber/sign_in
+      bsdports/home bsdports/ports_index
     ].freeze
 
     def self.run = new.run

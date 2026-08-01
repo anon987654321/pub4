@@ -17,7 +17,8 @@ module Deploy
       "brgen/app/services/marketplace/payments/stripe_checkout.rb" => /NotConfigured|configured\?/,
       "brgen/app/services/marketplace/payments/vipps_checkout.rb" => /NotConfigured|configured\?/,
       "brgen/app/controllers/marketplace/checkouts_controller.rb" => /NotConfigured|provider/,
-      "brgen/app/views/marketplace/carts/show.html.erb" => /Pay with Vipps|Pay with Stripe|not configured/i,
+      # i18n keys or EN fallbacks after cart polish
+      "brgen/app/views/marketplace/carts/show.html.erb" => /pay_vipps|pay_stripe|Pay with Vipps|Pay with Stripe|not configured|cart_honest_pay|marketplace\.pay_/i,
       "brgen/config/routes.rb" => /checkout|webhooks/,
     }.freeze
 

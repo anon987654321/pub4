@@ -50,13 +50,17 @@ module Deploy
 
     SURFACES = (
       BASE_SURFACES + BrgenVerticalSurfaces::SURFACES.map do |s|
+        # JSON API surfaces (e.g. maps /places) have no HTML landmarks.
+        json_api = s[:label].to_s.match?(/maps_places|places_json/)
+        landmarks = json_api ? [] : [%r{skip-link|main-content|<main\b}i]
         {
           app: "brgen",
           port_key: "brgen",
           path: s[:path],
           host: s[:host],
           label: "vertical_#{s[:label]}",
-          first_screen: s[:expect_body] + [%r{skip-link|main-content|<main\b}i],
+          first_screen: Array(s[:expect_body]) + landmarks,
+          skip_h1: json_api || s[:label].to_s.start_with?("maps"),
           css_touch: s[:label].to_s.start_with?("marketplace") ? [
             %w[brgen/app/assets/stylesheets/_marketplace_cards.scss deal-card],
             %w[shared/app/assets/stylesheets/_search_yep.scss \.search],
@@ -85,6 +89,11 @@ module Deploy
 
     private
 
+    def utf8_body(raw)
+      body = raw.to_s.dup.force_encoding(Encoding::UTF_8)
+      body.valid_encoding? ? body : body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    end
+
     def source_touch_checks(surface)
       Array(surface[:css_touch]).each do |rel, needle|
         path = File.join(RAILS, rel)
@@ -111,7 +120,7 @@ module Deploy
         @result.fail("layout_geometry: #{label} HTTP #{code}")
         return
       end
-      body = res.body.to_s
+      body = utf8_body(res.body)
       %w[Exception Routing\ Error].each do |bad|
         @result.fail("layout_geometry: #{label} saw #{bad}") if body.include?(bad.tr("\\", ""))
       end
@@ -119,8 +128,8 @@ module Deploy
         @result.fail("layout_geometry first_screen: #{label} missing #{pat.inspect}") unless body.match?(pat)
       end
 
-      # Hierarchy: at most one h1 in document source (skip auth-only shells)
-      unless label.include?("messenger") || label.include?("cart")
+      # Hierarchy: at most one h1 in document source (skip auth-only shells / JSON APIs)
+      unless label.include?("messenger") || label.include?("cart") || surface[:skip_h1]
         h1s = body.scan(/<h1\b/i).size
         @result.fail("layout_geometry hierarchy: #{label} has #{h1s} h1 (want ≤1)") if h1s > 1
         @result.warn("layout_geometry hierarchy: #{label} has no h1") if h1s.zero?

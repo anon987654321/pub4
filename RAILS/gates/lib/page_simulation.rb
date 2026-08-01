@@ -33,6 +33,7 @@ module Deploy
     PORTS = {
       "brgen" => 38182,
       "amber" => 61352,
+      "bsdports" => 47312,
       "master" => 53187,
     }.freeze
 
@@ -48,7 +49,8 @@ module Deploy
 
       pages = PageInventory.all
       PageInventory.write_snapshot!(SNAPSHOT_PATH)
-      @result.warn("page_simulation: inventory #{pages.size} pages (brgen/amber/master)")
+      by = pages.group_by { |p| p[:app] }.transform_values(&:size)
+      @result.warn("page_simulation: inventory #{pages.size} pages #{by.inspect}")
 
       pages.each { |page| simulate_source(page) }
 

@@ -38,6 +38,10 @@ module Deploy
         views: File.join(ROOT, "RAILS", "amber", "app", "views"),
         port_key: "amber",
       },
+      "bsdports" => {
+        views: File.join(ROOT, "RAILS", "bsdports", "app", "views"),
+        port_key: "bsdports",
+      },
       "master" => {
         views: nil, # special-cased
         port_key: "master",
@@ -52,10 +56,19 @@ module Deploy
       { id: "master/swarm", view: "MASTER/web/public/swarm.html", path: "/swarm.html", persona: "guest" },
     ].freeze
 
+    # Guest-open bsdports catalogue paths (family completeness — CRT dialect).
+    BSDPORTS_LIVE = [
+      { id: "bsdports/home", path: "/", persona: "guest" },
+      { id: "bsdports/ports", path: "/ports", persona: "guest" },
+      { id: "bsdports/categories", path: "/categories", persona: "guest" },
+      { id: "bsdports/maintainers", path: "/maintainers", persona: "guest" },
+      { id: "bsdports/session", path: "/session/new", persona: "guest" },
+    ].freeze
+
     module_function
 
     def all
-      brgen_pages + amber_pages + master_pages
+      brgen_pages + amber_pages + bsdports_pages + master_pages
     end
 
     def guest_liveable
@@ -118,6 +131,63 @@ module Deploy
           persona: row[:persona],
           needs_id: false,
         }
+      end
+    end
+
+    def bsdports_pages
+      root = APPS["bsdports"][:views]
+      return BSDPORTS_LIVE.map { |row| bsdports_live_row(row) } unless File.directory?(root)
+
+      discovered = discover(root).map do |abs|
+        parts = relative_parts(abs, root)
+        path, action = bsdports_route(parts)
+        rel = parts.join("/")
+        {
+          id: "bsdports/#{rel}",
+          app: "bsdports",
+          view: abs.sub("#{ROOT}/", ""),
+          abs_view: abs,
+          host: nil,
+          path: path,
+          action: action,
+          persona: path.end_with?("/edit") ? "auth" : "guest",
+          needs_id: path.include?(":id"),
+        }
+      end
+      discovered
+    end
+
+    def bsdports_live_row(row)
+      {
+        id: row[:id],
+        app: "bsdports",
+        view: "RAILS/bsdports/app/views",
+        abs_view: File.join(ROOT, "RAILS", "bsdports", "app", "views", "ports", "index.html.erb"),
+        host: nil,
+        path: row[:path],
+        action: "index",
+        persona: row[:persona],
+        needs_id: false,
+      }
+    end
+
+    def bsdports_route(parts)
+      case parts
+      when %w[ports index], %w[home index] then ["/", "index"]
+      when %w[sessions new] then ["/session/new", "new"]
+      when %w[categories index] then ["/categories", "index"]
+      when %w[categories show] then ["/categories/:id", "show"]
+      when %w[maintainers index] then ["/maintainers", "index"]
+      when %w[maintainers show] then ["/maintainers/:id", "show"]
+      when %w[ports show] then ["/ports/:id", "show"]
+      when %w[ports explore] then ["/ports/:id/explore", "explore"]
+      when %w[comments new]
+        # Nested under ports only — no bare GET /comments/new
+        ["/ports/:id/comments", "new"]
+      else
+        resource = parts[0]
+        action = parts[1] || "index"
+        [rest_path(resource, action), action]
       end
     end
 
@@ -208,6 +278,21 @@ module Deploy
         path = "/" + parts[0..-2].join("/")
         path = "/admin/reports" if parts == %w[admin reports index]
         return [host, path, parts[-1]]
+      end
+
+      # Nested partner/* resources need ids for show/edit
+      if parts[0] == "partner"
+        resource = parts[1]
+        action = parts[2] || "index"
+        path =
+          case action
+          when "index" then "/partner/#{resource}"
+          when "new" then "/partner/#{resource}/new"
+          when "show" then "/partner/#{resource}/:id"
+          when "edit" then "/partner/#{resource}/:id/edit"
+          else "/partner/#{resource}/#{action}"
+          end
+        return [host, path, action]
       end
 
       resource = parts[0]

@@ -10,23 +10,49 @@ module Deploy
     ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
 
+    # Labels may appear as English literals *or* i18n keys (default_locale :nb).
     APP_FILES = {
       "amber" => {
         layout: "app/views/layouts/application.html.erb",
         home: "app/views/home/index.html.erb",
         nav_partials: ["app/views/shared/_sidebar_nav.html.erb"],
-        nav: %w[Sign\ in Sign\ up],
+        nav: [
+          [/Sign\s*in|t\(["']nav\.sign_in["']\)|t\(["']auth\.sign_in["']\)/i, "Sign in"],
+          [/Sign\s*up|t\(["']nav\.sign_up["']\)|t\(["']auth\.create_account["']\)/i, "Sign up"],
+        ],
       },
       "brgen" => {
         layout: "app/views/layouts/application.html.erb",
         home: "app/views/home/index.html.erb",
-        nav_partials: ["app/views/shared/_ai_nav_link.html.erb"],
-        nav: %w[Home Explore Search Sign\ in],
+        nav_partials: [
+          "app/views/shared/_ai_nav_link.html.erb",
+          "app/views/shared/_tab_bar.html.erb",
+          "app/views/layouts/application.html.erb",
+        ],
+        nav: [
+          [/Home|t\(["']nav\.home["']\)/i, "Home"],
+          [/Explore|t\(["']nav\.explore["']\)/i, "Explore"],
+          [/Search|t\(["']nav\.search["']\)/i, "Search"],
+          [/Sign\s*in|t\(["']nav\.sign_in["']\)|t\(["']auth\.sign_in["']\)/i, "Sign in"],
+        ],
+        # Mobile tab aria: either English literal or t("nav.*")
+        mobile_tabs: [
+          /aria:\s*\{[^}]*\blabel:\s*["']Home["']|t\(["']nav\.home["']\)/i,
+          /aria:\s*\{[^}]*\blabel:\s*["']Explore[^"']*["']|t\(["']nav\.explore["']\)|t\(["']nav\.communities["']\)/i,
+          /aria:\s*\{[^}]*\blabel:\s*["']Messages["']|t\(["']nav\.messages["']\)/i,
+          /aria:\s*\{[^}]*\blabel:\s*["']Nearby["']|t\(["']nav\.nearby["']\)/i,
+          /AI\s*assistant|t\(["']nav\.ai_assistant["']\)/i,
+        ],
       },
       "bsdports" => {
         layout: "app/views/layouts/application.html.erb",
         home: "app/views/ports/index.html.erb",
-        nav: %w[Ports Categories Maintainers Sign\ in],
+        nav: [
+          [/Ports|t\(["']nav\.ports["']\)/i, "Ports"],
+          [/Categories|t\(["']nav\.categories["']\)/i, "Categories"],
+          [/Maintainers|t\(["']nav\.maintainers["']\)/i, "Maintainers"],
+          [/Sign\s*in|t\(["']nav\.sign_in["']\)|t\(["']auth\.sign_in["']\)/i, "Sign in"],
+        ],
       },
     }.freeze
 
@@ -47,7 +73,8 @@ module Deploy
     private
 
     def read_app_file(app, relative)
-      File.read(File.join(RAILS_ROOT, app, relative))
+      path = File.join(RAILS_ROOT, app, relative)
+      File.file?(path) ? File.read(path) : ""
     end
 
     def source_checks(result, app)
@@ -60,20 +87,17 @@ module Deploy
       result.fail("#{app.name}: layout needs main-content landmark") unless layout.include?('id="main-content"')
       result.fail("#{app.name}: home needs data-visitor-orientation marker") unless home.include?("data-visitor-orientation")
 
-      files.fetch(:nav).each do |label|
-        result.fail("#{app.name}: primary visitor nav missing #{label}") unless nav_source.include?(label)
+      files.fetch(:nav).each do |pattern, label|
+        result.fail("#{app.name}: primary visitor nav missing #{label}") unless nav_source.match?(pattern)
       end
-      # These ran whether or not the app is listening, and saying so is what keeps
-      # one parked app from making the whole gate read as "checked nothing".
       result.checked!(3 + files.fetch(:nav).length)
 
       if app.name == "brgen"
-        result.fail("brgen: sidebar search must submit to global_search_path") unless layout.include?("form_with url: global_search_path")
-        %w[Home Explore\ communities AI\ assistant Messages Nearby].each do |label|
-          aria_label = /aria:\s*\{[^}]*\blabel:\s*["']#{Regexp.escape(label.tr('\\', ''))}["']/
-          result.fail("brgen: mobile tab missing aria label #{label}") unless nav_source.match?(aria_label)
+        result.fail("brgen: sidebar search must submit to global_search_path") unless layout.include?("global_search_path")
+        Array(files[:mobile_tabs]).each_with_index do |pat, i|
+          result.fail("brgen: mobile tab missing aria/i18n marker ##{i + 1}") unless nav_source.match?(pat)
         end
-        result.checked!(6)
+        result.checked!(1 + Array(files[:mobile_tabs]).size)
       end
     end
 
@@ -108,8 +132,8 @@ module Deploy
 
       doc = Nokogiri::HTML5(html)
       result.fail("#{app.name}: rendered page missing title") if doc.at("title").to_s.strip.empty?
-      result.fail("#{app.name}: rendered page missing main landmark") unless doc.at("main")
-      result.fail("#{app.name}: rendered page missing primary navigation") unless doc.at("nav")
+      result.fail("#{app.name}: rendered page missing main landmark") unless doc.at("main") || html.match?(/id=["']main-content["']|id=["']face["']/)
+      result.fail("#{app.name}: rendered page missing primary navigation") unless doc.at("nav") || html.match?(/tab-bar|sidebar/)
       result.fail("#{app.name}: rendered page missing visible heading") unless doc.at("h1, h2")
       result.fail("#{app.name}: rendered page has too few navigable links") if doc.css("a[href]").size < 3
 

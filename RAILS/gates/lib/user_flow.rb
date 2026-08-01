@@ -317,7 +317,8 @@ module Deploy
         return
       end
 
-      body = response.body.to_s
+      body = response.body.to_s.dup.force_encoding(Encoding::UTF_8)
+      body = body.encode(Encoding::UTF_8, invalid: :replace, undef: :replace) unless body.valid_encoding?
       %w[Exception Routing\ Error].each do |bad|
         @result.fail("#{app.name}/#{label}: saw #{bad}") if body.include?(bad.tr("\\", ""))
       end
