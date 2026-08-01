@@ -9,7 +9,7 @@
 
   <% if authenticated? && Current.user != @user %>
     <%= render "shared/follow_button", user: @user, active: @active_follow %>
-    <%= button_to "Message", user_conversations_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
+    <%= button_to t("actions.message"), user_conversations_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
   <% end %>
 
   <% if @user.dating_profile.present? %>

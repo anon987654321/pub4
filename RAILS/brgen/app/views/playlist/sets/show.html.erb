@@ -8,7 +8,7 @@
   <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
     <div class="cluster">
       <%= link_to "Edit", edit_playlist_set_path(@set), class: "btn btn-ghost btn-sm" %>
-      <%= button_to "Delete", playlist_set_path(@set), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
+      <%= button_to t("actions.delete"), playlist_set_path(@set), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </div>
   <% end %>
 </div>
@@ -27,9 +27,9 @@
   <% if authenticated? %>
     <div class="cluster">
       <% if @set.likes.exists?(user: Current.user) %>
-        <%= button_to "Unlike", playlist_set_like_path(@set), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("actions.unlike"), playlist_set_like_path(@set), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
-        <%= button_to "Like", playlist_set_like_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
+        <%= button_to t("actions.like"), playlist_set_like_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
       <% end %>
       <span class="dim"><%= @set.likes.count %> likes</span>
     </div>
@@ -71,7 +71,7 @@
         <span class="dim"> · <%= set_track.track.duration_formatted %></span>
       </div>
       <% if authenticated? && (Current.user == set_track.user || Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
-        <%= button_to "Remove", playlist_set_track_path(@set, set_track), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("actions.remove"), playlist_set_track_path(@set, set_track), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% end %>
     </article>
   <% end %>
@@ -104,7 +104,7 @@
     <%= link_to "Join party", playlist_set_listening_party_path(@set), class: "btn btn-primary btn-sm" %>
     <span class="dim">Code: <%= @set.listening_party.join_code %></span>
   <% else %>
-    <%= button_to "Start party", playlist_set_listening_party_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
+    <%= button_to t("playlist.start_party"), playlist_set_listening_party_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
   <% end %>
 </section>
 <% end %>

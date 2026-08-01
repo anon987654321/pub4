@@ -8,7 +8,7 @@
       <% root = comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable.commentable %>
       <%= link_to "reply", "#reply-#{comment.id}", data: { action: "click->reply#toggle" } %>
       <% if comment.user == Current.user && authenticated? %>
-        <%= button_to "delete", comment, method: :delete, data: { turbo_confirm: "Delete?" } %>
+        <%= button_to t("actions.delete"), comment, method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>
       <% end %>
     <% end %>
   </header>

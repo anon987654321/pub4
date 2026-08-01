@@ -6,9 +6,9 @@
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? && @favorited %>
-      <%= button_to "Unsave", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <%= button_to t("takeaway.unsave"), takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? %>
-      <%= button_to "Save", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
+      <%= button_to t("takeaway.save_restaurant"), takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
   </nav>
 </div>

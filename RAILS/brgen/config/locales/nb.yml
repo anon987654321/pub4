@@ -245,6 +245,18 @@ nb:
     save: "Lagre"
     send: "Send"
     cancel: "Avbryt"
+    delete: "Slett"
+    remove: "Fjern"
+    update: "Oppdater"
+    create: "Opprett"
+    follow: "Følg"
+    unfollow: "Avfølg"
+    like: "Lik"
+    unlike: "Fjern lik"
+    report: "Rapporter"
+    message: "Melding"
+    mark_read: "Merk som lest"
+    confirm_delete: "Slette?"
   pages:
     account: "Konto"
     two_factor: "Tofaktorautentisering"
@@ -323,6 +335,8 @@ nb:
     beat_name: "Beat-navn (f.eks. dusty flip)"
     notes_instructions: "Notater / instruksjoner (valgfritt)"
     save_sketch_collab: "Lagre skisse for collab"
+    start_party: "Start fest"
+    end_party: "Avslutt fest"
   marketplace:
     new_listing: "Ny annonse"
     edit_listing: "Rediger annonse"
@@ -340,6 +354,8 @@ nb:
     radius_km: "Radius km"
     radius_label: "Radius i kilometer"
   takeaway:
+    unsave: "Fjern lagring"
+    save_restaurant: "Lagre"
     order_food: "Bestill mat i nærheten"
     add_restaurant: "Legg til restaurant"
     edit_restaurant: "Rediger restaurant"
@@ -375,6 +391,7 @@ nb:
     description_placeholder: "Hva handler dette fellesskapet om?"
     create: "Opprett"
     save: "Lagre"
+    confirm_delete: "Slette fellesskapet?"
   tv:
     create_channel: "Opprett kanal"
     upload: "Last opp"
@@ -383,6 +400,7 @@ nb:
     comment_placeholder: "Skriv noe…"
     post_comment: "Publiser kommentar"
     subscribe: "Abonner"
+    unsubscribe: "Avmeld"
   newsletter:
     email_placeholder: "din@epost.com"
     subscribe: "Abonner"

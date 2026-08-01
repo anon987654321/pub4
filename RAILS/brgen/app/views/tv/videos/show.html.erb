@@ -57,7 +57,7 @@
     </p>
     <% if authenticated? && Current.user != @video.channel.user %>
       <% if @video.channel.subscriptions.exists?(user: Current.user) %>
-        <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("tv.unsubscribe"), unsubscribe_tv_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
         <%= button_to t("tv.subscribe"), subscribe_tv_channel_path(@video.channel), method: :post, class: "btn btn-primary btn-sm" %>
       <% end %>

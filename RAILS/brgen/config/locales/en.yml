@@ -245,6 +245,18 @@ en:
     save: "Save"
     send: "Send"
     cancel: "Cancel"
+    delete: "Delete"
+    remove: "Remove"
+    update: "Update"
+    create: "Create"
+    follow: "Follow"
+    unfollow: "Unfollow"
+    like: "Like"
+    unlike: "Unlike"
+    report: "Report"
+    message: "Message"
+    mark_read: "Mark read"
+    confirm_delete: "Delete?"
   pages:
     account: "Account"
     two_factor: "Two-factor authentication"
@@ -323,6 +335,8 @@ en:
     beat_name: "Beat name (e.g. dusty flip)"
     notes_instructions: "Notes / instructions (optional)"
     save_sketch_collab: "Save sketch for collab"
+    start_party: "Start party"
+    end_party: "End party"
   marketplace:
     new_listing: "New listing"
     edit_listing: "Edit listing"
@@ -340,6 +354,8 @@ en:
     radius_km: "Radius km"
     radius_label: "Radius in kilometres"
   takeaway:
+    unsave: "Unsave"
+    save_restaurant: "Save"
     order_food: "Order food nearby"
     add_restaurant: "Add restaurant"
     edit_restaurant: "Edit restaurant"
@@ -375,6 +391,7 @@ en:
     description_placeholder: "What is this community about?"
     create: "Create"
     save: "Save"
+    confirm_delete: "Delete community?"
   tv:
     create_channel: "Create channel"
     upload: "Upload"
@@ -383,6 +400,7 @@ en:
     comment_placeholder: "Write something…"
     post_comment: "Post comment"
     subscribe: "Subscribe"
+    unsubscribe: "Unsubscribe"
   newsletter:
     email_placeholder: "your@email.com"
     subscribe: "Subscribe"

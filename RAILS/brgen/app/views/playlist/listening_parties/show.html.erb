@@ -8,7 +8,7 @@
     <p class="dim">Join code: <strong><%= @party.join_code %></strong></p>
   </div>
   <% if @party.host == Current.user %>
-    <%= button_to "End party", playlist_set_listening_party_path(@set), method: :delete, class: "btn btn-danger btn-sm" %>
+    <%= button_to t("playlist.end_party"), playlist_set_listening_party_path(@set), method: :delete, class: "btn btn-danger btn-sm" %>
   <% end %>
 </div>
 
