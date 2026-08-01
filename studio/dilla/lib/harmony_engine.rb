@@ -422,8 +422,23 @@ module DillaHarmony
       sym = chord[:name].to_s
       sym = substitute_symbol(sym) if soul && !curated && phase == :recapitulation && rng.rand < 0.5
       ch = sym != chord[:name].to_s ? (DillaLofiMachine.chord_from_symbol(sym) rescue chord) : chord
-      out << if curated
+      # chord_voicing is computed a dozen lines above — drop2 through the
+      # development, a contrast voicing at the recapitulation, rootless in
+      # breakdowns — and the curated branch then discarded it and kept the
+      # written register. Since every one of the 248 catalogue progressions is
+      # curated, one voicing shape played through every section of every piece,
+      # and nine voicing styles were never heard.
+      #
+      # The bypass exists to protect artist-verified voicings, which is a real
+      # concern, so it stays reachable: CURATED_PHASE_VOICING=0 restores it. But
+      # the default now varies, because a progression that voices identically in
+      # its breakdown and its recapitulation is not being arranged at all.
+      out << if curated && ENV["CURATED_PHASE_VOICING"] == "0"
                preserve_chord_register(ch)
+             elsif curated
+               # Rootless is for non-curated material, where the engine owns the
+               # bass. Curated chords keep their root.
+               decorate_chord(ch, voicing: chord_voicing, rootless: false)
              else
                decorate_chord(ch, voicing: chord_voicing, rootless: use_rootless)
              end

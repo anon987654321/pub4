@@ -375,13 +375,15 @@ module DillaGroove
   GROOVE_FEELS = {
     # Unchanged from the inline values, so nothing moves unless asked.
     boom_bap: { snare: -4, snare_plain: -3, clap: -4, kick_anchor: 1, kick: 3,
-                hat: 2, hat_up: 3, ghost: 1, bass: 0 },
+                hat: 2, hat_up: 3, ghost: 1, bass: 0,
+                keys: 0, lead: 0 },
 
     # Snare behind, hats holding the grid. The hats are the reference the snare
     # is late against — drag them too and the whole bar just sounds slow rather
     # than lurching.
     dilla_drag: { snare: 4, snare_plain: 3, clap: 4, kick_anchor: -1, kick: 0,
-                  hat: 0, hat_up: 1, ghost: 2, bass: -2 },
+                  hat: 0, hat_up: 1, ghost: 2, bass: -2,
+                  keys: 5, lead: 7 },
 
     # Camel: the kick displaced off the grid rather than merely late, hats a
     # touch ahead so the top stutters against a snare that drags further than
@@ -395,7 +397,8 @@ module DillaGroove
     # hats-against-everything, and that is what reads as broken rather than
     # merely swung.
     camel: { snare: 5, snare_plain: 4, clap: 5, kick_anchor: 2, kick: 4,
-             hat: -1, hat_up: 0, ghost: 3, bass: 2 },
+             hat: -1, hat_up: 0, ghost: 3, bass: 2,
+             keys: 6, lead: 8 },
   }.freeze
 
   def groove_feel
@@ -425,6 +428,32 @@ module DillaGroove
       tick * (role.to_sym == :hat_up ? feel[:hat_up] : feel[:hat])
     when :ghost
       tick * feel[:ghost]
+    when :pad, :ep, :keys, :chord
+      # The whole harmonic layer was pinned to the grid while the rhythm section
+      # leaned around it: at 88 BPM in dilla_drag the snare sat +28.4 ms and the
+      # bass -14.2, and pads, EPs and leads all sat at exactly 0.
+      #
+      # That is backwards for this music. On a Dilla or D'Angelo record the keys
+      # are the *latest* thing in the bar — later than the dragged snare — which
+      # is most of why the harmony sounds unhurried over a groove that is not.
+      # The drums establish the time and the chords refuse to hurry to it.
+      return 0.0 if ENV["KEYS_FEEL"] == "0"
+
+      tick * feel.fetch(:keys, 0)
+    when :lead, :scale_lead, :xlead
+      # Further back still, so the three layers form a hierarchy rather than two
+      # positions: bass ahead, drums leaning, keys behind, lead behind the keys.
+      return 0.0 if ENV["KEYS_FEEL"] == "0"
+
+      tick * feel.fetch(:lead, 0)
+    when :lead_extra
+      # The lead is built on top of a pad event and inherits that event's time,
+      # so it has already taken the :keys offset by the time it is placed. This
+      # returns only the difference, which lets the table above stay absolute
+      # (keys 5, lead 7 means the lead lands at 7, not at 12).
+      return 0.0 if ENV["KEYS_FEEL"] == "0"
+
+      tick * (feel.fetch(:lead, 0) - feel.fetch(:keys, 0))
     when :bass
       # The bass was the one voice with no entry here, so it fell to the `else`
       # and stayed pinned to the grid in every feel. That made a groove switch a

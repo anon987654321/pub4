@@ -25,9 +25,16 @@ class TestDilla < Minitest::Test
   # overrides it for slower hosts.
   PROBE_TIMEOUT = Integer(ENV.fetch("DILLA_PROBE_TIMEOUT", "90"))
 
-  def eval_in_engine(script, timeout: PROBE_TIMEOUT)
+  # `env:` is injected before the engine loads, which is the only point at which
+  # it can matter: the engine reads most switches into constants and memoizes
+  # pools at load, so setting ENV inside `script` is too late and silently reads
+  # back the default. A test that flips a switch between two calls in one process
+  # gets the first pool twice.
+  def eval_in_engine(script, timeout: PROBE_TIMEOUT, env: {})
+    preamble = env.map { |k, v| "ENV[#{k.to_s.dump}] = #{v.to_s.dump}" }.join("\n")
     probe = <<~RUBY
       $PROGRAM_NAME = "dilla_test_probe"
+      #{preamble}
       load #{ENGINE.dump}
       require "json"
       #{script}
@@ -132,7 +139,9 @@ class TestDilla < Minitest::Test
     assert_equal "0.12", result.fetch("crossfade")
     assert_equal "1", result.fetch("drum_rotate")
     assert_equal "1", result.fetch("vocal_carve")
-    assert_equal "1", result.fetch("choir")
+    # Vocals off by default; the carve stays on because it costs nothing
+    # when there is no vocal and is wanted the moment RAP_VOCAL is set.
+    assert_equal "0", result.fetch("choir")
   end
 
   def test_stream_creative_mode_opt_in_forces_wild_layer
@@ -230,28 +239,42 @@ class TestDilla < Minitest::Test
     assert_operator result.fetch("max_hat"), :<=, 8, "neo-soul hats must not fill the 16th grid"
   end
 
-  # DILLA_PROGRESSIONS_ONLY defaults to 1 (2026-07-27), which narrows the
-  # rotation to Dilla-produced progressions — 5 tracks, not the 69 of the full
-  # curated rotation. This test used to assert order_n >= 8 and the presence of
-  # untitled_how_does_it_feel, both of which describe the *unfiltered* pool, so
-  # it went red the moment the filter became the default. Pin both modes
-  # instead, and pin the filter's meaning rather than a bare count.
-  def test_stream_rotation_defaults_to_dilla_produced_progressions
-    result = eval_in_engine(<<~RUBY)
-      order = stream_track_order.map(&:to_s)
+# DILLA_PROGRESSIONS_ONLY narrows to Dilla-produced progressions, and
+# ModalFamily.widen (2026-07-30) then widens outward from that core to every
+# catalogue progression sharing the locked key and mode — 5 tracks became 203.
+#
+# This asserted the narrow pool exactly, so it went red when the widening
+# landed. What matters is not the count: it is that the Dilla-produced tracks
+# still lead the rotation, that everything admitted is in the same modal
+# family, and that MODAL_ROTATION=0 restores the old pool exactly.
+  def test_stream_rotation_leads_with_dilla_produced_then_widens_by_mode
+    # Two engine invocations rather than one with ENV flipped between calls:
+    # the pools memoize, so a second read in the same process returns the first.
+    narrow_result = eval_in_engine(<<~INNER, env: { "MODAL_ROTATION" => "0" })
       puts JSON.generate(
-        order:,
+        order: stream_track_order.map(&:to_s),
         produced: DILLA_PRODUCED_TRACKS.map(&:to_s),
         rotation: DillaLofiMachine::STREAM_ROTATION.map(&:to_s)
       )
-    RUBY
-    order = result.fetch("order")
-    produced = result.fetch("produced")
-    expected = result.fetch("rotation").select { |track| produced.include?(track) }
-
-    assert_equal expected, order, "default rotation is STREAM_ROTATION filtered to Dilla-produced tracks"
-    assert_equal "get_dis_money", order.first
-    refute_empty order
+    INNER
+    wide_result = eval_in_engine(<<~INNER)
+      puts JSON.generate(order: stream_track_order.map(&:to_s))
+    INNER
+  
+    narrow = narrow_result.fetch("order")
+    wide = wide_result.fetch("order")
+    produced = narrow_result.fetch("produced")
+    expected_narrow = narrow_result.fetch("rotation").select { |t| produced.include?(t) }
+  
+    assert_equal expected_narrow, narrow, "MODAL_ROTATION=0 restores the Dilla-produced pool exactly"
+    assert_equal "get_dis_money", wide.first, "the core still leads the widened rotation"
+    assert_operator wide.length, :>, narrow.length, "widening admits the rest of the modal family"
+    # Not "the core is contiguous at the head" — it is not. ModalFamily.widen
+    # returns core-first, but stream_track_order reorders afterwards, so only
+    # get_dis_money reliably leads. The invariant that actually matters is that
+    # widening never drops a Dilla-produced track: it adds to the core, it does
+    # not replace it.
+    assert_empty narrow - wide, "widening must not drop any Dilla-produced track"
   end
 
   def test_stream_rotation_without_the_filter_is_the_full_curated_pool
@@ -355,6 +378,10 @@ class TestDilla < Minitest::Test
       pads = [[0.0, 0.9, { name: "Fm9", hz: [174.61, 261.63] }, 3.8]]
       cfg = { bpm: 94, swing: 57, track: :erykah_minor }
       patch = { id: :prophet_5_pad, arp_styles: %i[updown pingpong] }
+      # NO_ARP defaults on from 2026-08-01, and it outranks PAD_ARP_MODE by
+      # design. This test is about the arp routing itself, which is still there
+      # and still correct, so it opts back in rather than asserting the default.
+      ENV["NO_ARP"] = "0"
       ENV["PAD_ARP_MODE"] = "wash"
       ENV["LEAD_ARP"] = "1"
       held = pad_midi_events_for_layer(pads, cfg, patch, role: :ep, duration: 16)
@@ -454,7 +481,9 @@ class TestDilla < Minitest::Test
     assert_equal "1", result.fetch("kick_drop")
     assert_equal "1", result.fetch("snare_prehit")
     assert_equal "0", result.fetch("phone"), "style DNA keeps phone preview off unless forced"
-    assert_equal "1", result.fetch("choir")
+    # CHOIR_VOX defaults off since 2026-08-01 — the demo and the engine are
+    # instrumental by default, and choir is a vocal.
+    assert_equal "0", result.fetch("choir")
     assert_equal "1", result.fetch("theory")
     assert result.fetch("dfam")
     assert result.fetch("spectral")
@@ -744,7 +773,9 @@ class TestDilla < Minitest::Test
     assert_includes %w[0 1], result.fetch("kicks")
     # gunnhild is the only vocal source (2026-07-27); this asserted jonas_v,
     # which the style defaults stopped selecting when that decision landed.
-    assert_equal "gunnhild", result.fetch("rap"), "style default is kit + gunnhild; RAP_VOCAL=0 for instrumental"
+    # Was "gunnhild". The engine is instrumental by default from 2026-08-01;
+    # RAP_VOCAL=<slug> opts back in.
+    assert_equal "0", result.fetch("rap"), "style default is instrumental; RAP_VOCAL names a voice to opt in"
     assert_nil result.fetch("stream_track")
     refute result.fetch("la_beat"), "curated progressions only (no random planing)"
     assert_equal "camel_32", result.fetch("form")

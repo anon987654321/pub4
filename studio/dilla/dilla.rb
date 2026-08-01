@@ -5688,11 +5688,36 @@ end
 
 # Melodic phrase: 1 note/beat, motif 0-2-1-3, voice-led from previous phrase.
 # Tones are scale-locked to the current pad chord.
+# Let the chord go before the next one arrives.
+#
+# Measured on an 8-bar render: the harmonic stem sounds 100.0% of the track,
+# against 88.6% for drums and 73.1% for bass. Chords hold 97% of their slot and
+# then overlap into the next, so the harmony never stops — there is no moment
+# where the drums are alone and the next chord has to arrive.
+#
+# That is the one thing every writeup of Ahmad Jamal's playing puts first, and
+# it is the reason his records sample so well: the space was already in them.
+# Space is not the absence of an arrangement decision, it is one.
+#
+# Applied to every fourth chord change, and only in the main sections — an intro
+# is already sparse and a breakdown is already the space. HARMONIC_SPACE=0
+# restores the continuous hold; HARMONIC_SPACE_MUL tunes how much is given back.
+def harmonic_space_mul(chord_change_i, section, phase)
+  return 1.0 if ENV["HARMONIC_SPACE"] == "0"
+  return 1.0 unless %i[main recapitulation].include?(section) || phase == :recapitulation
+  return 1.0 unless (chord_change_i % 4).zero?
+
+  (ENV["HARMONIC_SPACE_MUL"] || "0.62").to_f.clamp(0.3, 1.0)
+end
+
 def lead_melodic_phrase_for_chord(time, velocity, chord, sustain, chord_i, cfg, lead_patch,
                                   role: :lead, prev_end_hz: nil)
   tones = lead_scale_locked_tones_hz(chord, lead_patch:)
   return [] if tones.empty?
   beat_p = 60.0 / cfg[:bpm]
+  # The lead sits behind the keys, which already sit behind the drums. `time`
+  # arrives carrying the pad's offset, so only the remainder is added here.
+  time += DillaGroove.role_timing_offset(:lead_extra, beat_p, 0, 0)
   # Quarter notes (subdiv 1 per beat) — readable top line, not arp soup.
   step_p = beat_p
   # Was a hardcoded 0.9, which is legato regardless of LEAD_SIMPLE. The cap has
@@ -14269,7 +14294,8 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
                    1.0
                  end
     sustain = (hold_bars * bar_p * 0.97 * cvar[:sustain_mul] * legato_mul *
-               DillaHarmony.pad_overlap_mul(prev_pad_chord, pad_chord)).round(4)
+               DillaHarmony.pad_overlap_mul(prev_pad_chord, pad_chord) *
+               harmonic_space_mul(chord_change_i, section, phase)).round(4)
     prev_pad_chord = pad_chord
     pad_vel = dilla_velocity(phase == :recapitulation ? 0.96 : 0.92, bar, 0, spread: 0.03) * sec_gain
     pad_vel *= 0.88 if phase == :development
