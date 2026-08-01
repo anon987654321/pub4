@@ -90,6 +90,11 @@ ownership:
     purpose: repo mirror of live /etc configs
     risk: critical
     check: OPENBSD/bin/check-openbsd
+  home/johann/:
+    purpose: repo mirror of the johann@brgen.no mail client (.muttrc, .mailcap,
+      bin/mailimg), installed by OPERATOR.sh's setup_mail_client
+    risk: low
+    check: OPENBSD/bin/check-openbsd
   openbsd/sh/vps_ci.sh:
     purpose: serial app CI entrypoint on vm23
     risk: high

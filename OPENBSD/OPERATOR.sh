@@ -565,6 +565,44 @@ setup_services() {
   log INFO "Services configured. relayd enabled but not started (awaiting configuration)"
 }
 
+setup_mail_client() {
+  log INFO "Setting up johann@brgen.no mailbox and mutt"
+
+  # `mutt` and `w3m` each ship several flavours, so the bare names are
+  # ambiguous and pkg_add would stop to ask. A trailing `--` pins the
+  # flavourless build, which is the one this needs.
+  # w3m renders HTML mail, pdftotext (poppler-utils) flattens PDF
+  # attachments, chafa draws images as terminal blocks -- see ~johann/.mailcap.
+  pkg_add -I mutt-- w3m-- poppler-utils chafa 2>/tmp/pkg_add_mail.log \
+    || { log ERROR "pkg_add (mail client) failed. See /tmp/pkg_add_mail.log"; exit 1 }
+
+  getent passwd johann >/dev/null \
+    || /usr/sbin/useradd -m -c "Johann (brgen.no mail)" -s /bin/ksh johann \
+    || { log ERROR "useradd johann failed"; exit 1 }
+
+  typeset mailhome=/home/johann
+
+  # Maildir++: smtpd delivers into the top level, mutt keeps Sent, Drafts,
+  # Trash and Archive as dot-prefixed siblings of it (see .muttrc's +.Sent).
+  typeset box
+  for box in "" .Sent .Drafts .Trash .Archive; do
+    mkdir -p $mailhome/Maildir/$box/cur $mailhome/Maildir/$box/new $mailhome/Maildir/$box/tmp
+  done
+
+  # install_static, not install_template: mailimg is a shell script full of
+  # ${MAIL_IMG_FMT:-symbols} defaults, which install_template's eval would
+  # expand away at install time.
+  install_static home/johann/.muttrc  $mailhome/.muttrc
+  install_static home/johann/.mailcap $mailhome/.mailcap
+  mkdir -p $mailhome/bin
+  install_static home/johann/bin/mailimg $mailhome/bin/mailimg
+  chmod 755 $mailhome/bin/mailimg
+
+  chown -R johann:johann $mailhome
+  chmod 700 $mailhome/Maildir
+  chmod 600 $mailhome/.muttrc
+}
+
 setup_litestream() {
   log INFO "Setting up litestream"
   mkdir -p /var/backups/litestream
@@ -776,6 +814,8 @@ stage_2() {
   [[ ! -f /etc/ssl/smtp.crt ]] && \
     openssl req -x509 -new -key /etc/ssl/private/smtp.key -out /etc/ssl/smtp.crt -days 365 -subj "/CN=mail.pub.attorney"
   chmod 640 /etc/ssl/private/smtp.key /etc/ssl/smtp.crt
+
+  setup_mail_client
 
   setup_services
 

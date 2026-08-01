@@ -1,0 +1,18 @@
+# Interactive: pressing `v` on an HTML part opens w3m proper -- scrollable,
+# links followable with Enter, `q` hands the terminal back to mutt.
+text/html;  w3m -I %{charset} -T text/html %s; needsterminal; description=HTML
+
+# Inline: auto_view needs a copiousoutput entry, i.e. one that just spits text
+# on stdout for mutt's pager to swallow. -dump renders it, display_link_number
+# appends a numbered [n] reference list of the URLs at the bottom.
+text/html;  w3m -I %{charset} -T text/html -dump -o display_link_number=1; copiousoutput; description=HTML text
+
+# Attachment types that are only readable once flattened to text.
+# (Commands here must not contain a bare ';' -- mailcap uses it as the field
+# separator, so anything after one would be parsed as a new field.)
+application/pdf;  pdftotext -layout %s -; copiousoutput; description=PDF
+text/calendar;    grep -aiE "^(SUMMARY|DTSTART|DTEND|LOCATION|ORGANIZER|ATTENDEE)" %s; copiousoutput; description=Invitation
+
+# Images: on demand only (`v` on the attachment), never inline -- half the
+# images in mail are 1x1 tracking pixels and signature logos.
+image/*;  /home/johann/bin/mailimg %s; needsterminal; description=Image

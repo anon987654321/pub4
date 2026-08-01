@@ -1,0 +1,25 @@
+#!/bin/sh
+# Render an image attachment inside the terminal, for mutt (see ~/.mailcap).
+#
+# Defaults are the lowest common denominator: Unicode half-block "symbols" in
+# 256 colours, which every terminal understands, Apple Terminal included.
+# Ghostty and kitty speak the kitty graphics protocol and 24-bit colour -- the
+# escape codes are just bytes, so they survive the ssh hop untouched and are
+# drawn by the terminal on your Mac, not by this machine. To use them, put
+#
+#     export MAIL_IMG_FMT=kitty        # or: iterm, sixel
+#     export MAIL_IMG_COLORS=full
+#
+# in ~/.profile. Leave them unset when connecting from Apple Terminal, which
+# supports no graphics protocol and would print the raw escapes as garbage.
+fmt=${MAIL_IMG_FMT:-symbols}
+colors=${MAIL_IMG_COLORS:-256}
+size=${MAIL_IMG_SIZE:-100x30}
+
+chafa -f "$fmt" -c "$colors" --size "$size" --animate off "$@"
+
+# mutt has wait_key=no, so without this the image would flash past on the way
+# back to the pager.
+printf '\n[enter] '
+read _
+exit 0
