@@ -6,9 +6,13 @@ class PublicNavigationTest < ApplicationSystemTestCase
   test "home remains usable with Turbo and responsive navigation" do
     visit root_path
 
-    assert_selector "a.skip-link[href='#main-content']", text: "Skip to main content"
+    # Through the keys, not the English copy: brgen.no renders in nb, so these
+    # became "Hopp til hovedinnhold" and "Hovednavigasjon" when the chrome was
+    # localised. What the test is checking is that the skip link and the primary
+    # nav are present and labelled, which is locale-independent.
+    assert_selector "a.skip-link[href='#main-content']", text: I18n.t("skip_to_content")
     assert_selector "main#main-content"
-    assert_selector "nav[aria-label='Primary navigation']"
+    assert_selector "nav[aria-label='#{I18n.t("nav.primary_nav")}']"
     assert_no_selector "meta[name='turbo-cache-control'][content='no-cache']", visible: :all
 
     page.current_window.resize_to(390, 844)

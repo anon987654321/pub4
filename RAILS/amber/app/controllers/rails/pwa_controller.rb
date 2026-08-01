@@ -17,7 +17,15 @@ module Rails
     end
 
     def offline
-      render partial: "shared/offline_page", layout: "application", locals: { app_name: "Amber", storage_key: "amber" }
+# `render partial:` with `layout:` asks for a PARTIAL layout — Rails looks
+# for layouts/_application, which does not exist in any of these apps, so
+# /offline answered 500. It is the page the service worker shows when the
+# visitor has no connection, which is exactly when a 500 is least useful.
+# Rendering the partial to a string and handing that to `render html:`
+# takes the real application layout.
+body = render_to_string(partial: "shared/offline_page",
+                        locals: { app_name: "Amber", storage_key: "amber" })
+render html: body.html_safe, layout: "application"
     end
 
     private
