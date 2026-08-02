@@ -17,7 +17,13 @@ daemon="/bin/ksh"
 # declared startup failed and SIGKILLed its own worker on every restart, which
 # is a large part of why this service kept reading as "shed but never
 # restored". master and brgen have carried 300 since the same discovery.
-daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# SECRET_KEY_BASE is sourced from /etc/amber.env at runtime by the app user and
+# re-exported (the file holds a bare KEY=value, which `.` sets un-exported) —
+# NOT interpolated into daemon_flags, where it landed in falcon's ps(1) argv for
+# any local account to read (debt.yml secrets_in_process_argv). The env file is
+# root:amber 640, so only amber and root can read it (not dev-via-wheel, not
+# another app user). Proven on bsdports first.
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/amber.env && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE HOME=/home/amber && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="amber"
 daemon_execdir="/home/amber/app"
 daemon_logger="daemon.notice"

@@ -12,7 +12,12 @@ APP_DIR=/home/brgen/app
 [ -f /etc/rails/brgen.env ] && . /etc/rails/brgen.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/brgen.env}"
 daemon="/bin/ksh"
-daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# SECRET_KEY_BASE is sourced from /etc/brgen.env at runtime by the app user and
+# re-exported (the file holds a bare KEY=value, which `.` sets un-exported) — NOT
+# interpolated into daemon_flags, where it landed in falcon's ps(1) argv for any
+# local account to read (debt.yml secrets_in_process_argv). /etc/brgen.env is
+# root:brgen 640. PUB4_ROOT/PUB4_RAILS_ROOT are not secrets and stay inline.
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/brgen.env && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"

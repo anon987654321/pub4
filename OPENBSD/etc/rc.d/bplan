@@ -11,7 +11,13 @@ APP_DIR=/home/bplan/app
 [ -r /etc/bplan.env ] && . /etc/bplan.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bplan.env}"
 daemon="/bin/ksh"
-daemon_flags="-c 'cd ${APP_DIR} && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE=${SECRET_KEY_BASE} HOME=/home/bplan BPLAN_VIPPS_NUMBER=${BPLAN_VIPPS_NUMBER:-} && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# SECRET_KEY_BASE (and BPLAN_VIPPS_NUMBER) are sourced from /etc/bplan.env at
+# runtime by the app user and re-exported (the file holds bare KEY=value, which
+# `.` sets un-exported) — NOT interpolated into daemon_flags, where the secret
+# landed in falcon's ps(1) argv (debt.yml secrets_in_process_argv). /etc/bplan.env
+# is root:bplan 640. Same shape as brgen/amber/bsdports; bplan has no source in
+# this repo, so this only takes effect if bplan is ever deployed.
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/bplan.env && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE BPLAN_VIPPS_NUMBER HOME=/home/bplan && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="bplan"
 daemon_execdir="/home/bplan/app"
 daemon_logger="daemon.notice"
