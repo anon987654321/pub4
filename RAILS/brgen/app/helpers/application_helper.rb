@@ -8,7 +8,7 @@ module ApplicationHelper
     image_options[:data] = (image_options[:data] || {}).merge(
       controller: "lazy-image",
       lazy_image_target: "image",
-      lazy_image_src_value: url_for(source)
+      lazy_image_src_value: main_app.url_for(source)
     )
     image_options[:data][:lazy_image_blurhash_value] = blurhash if blurhash.present?
 
@@ -24,10 +24,10 @@ module ApplicationHelper
     widths = Array(widths).map(&:to_i).uniq.sort
     largest = widths.last
     webp_srcset = widths.map do |width|
-      "#{url_for(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
+      "#{main_app.url_for(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
     end.join(", ")
     fallback_srcset = widths.map do |width|
-      "#{url_for(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
+      "#{main_app.url_for(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
     end.join(", ")
 
     content_tag(:picture) do
