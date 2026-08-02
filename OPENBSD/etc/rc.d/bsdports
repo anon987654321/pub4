@@ -25,7 +25,10 @@ daemon="/bin/ksh"
 # env file is root:bsdports 640, so only bsdports (and root) can read it, which
 # also stops a foothold in another app user — or dev — reading this secret at
 # rest. The `. /etc/bsdports.env` below is a literal path, not a secret.
-daemon_flags="-c 'cd ${APP_DIR} && . /etc/bsdports.env && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true HOME=/home/bsdports && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
+# /etc/bsdports.env holds a bare `SECRET_KEY_BASE=...` (no `export`), so sourcing
+# it sets a shell variable that `exec` does NOT inherit — the bare `SECRET_KEY_BASE`
+# in the export list below re-exports the sourced value into falcon's environment.
+daemon_flags="-c 'cd ${APP_DIR} && . /etc/bsdports.env && export RAILS_ENV=production SOLID_QUEUE_IN_PUMA=true SECRET_KEY_BASE HOME=/home/bsdports && exec /usr/local/bin/bundle34 exec falcon serve -n ${FALCON_WORKERS:-1} --health-check-timeout 300 --bind http://127.0.0.1:${PORT}'"
 daemon_user="bsdports"
 daemon_execdir="/home/bsdports/app"
 daemon_logger="daemon.notice"
