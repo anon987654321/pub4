@@ -3,6 +3,13 @@
 module Master
   # YAML loading, validation, and rule-shard composition for Master.*.
   module MasterData
+    # This ENOENT warning is load-bearing — keep it. A doubled path segment in
+    # RuntimeCatalog#web_boot_payload_minimal ("OPENBSD/openbsd/vm_resource.yml")
+    # was found only because every load printed "No such file or directory"
+    # before quietly defaulting. Callers for whom absence is a legitimate answer
+    # should check existence themselves rather than ask this method to go quiet
+    # (see load_rules); the signature stays fixed because several tests stub
+    # this method, and a new keyword here raises ArgumentError inside the stub.
     def load_yaml(path, symbolize_names: false, default: {})
       raise "yaml too large: #{path}" if File.exist?(path) && File.size(path) > MAX_CONSTITUTION_BYTES
 
@@ -29,9 +36,32 @@ module Master
       errors
     end
 
+    # Scanners call this with whatever directory they are scanning
+    # (RuleRegistryAudit, SelfTest, YamlBridgeRules, Fix::Priority all pass
+    # root: @root). For any root but our own, "this project has no rules.yml" is
+    # the answer, not a fault — so absence is quiet there and stays loud for
+    # ROOT, where a missing constitution is a real failure. Before this, every
+    # scanner test against a Dir.mktmpdir root printed
+    # "load_yaml: No such file or directory ... /T/d2026…/data/rules.yml", which
+    # trained readers to scroll past the one warning that has already caught a
+    # genuine path bug.
     def load_rules(root: ROOT)
-      data_dir = root == ROOT ? DATA : File.join(root, "data")
-      base = load_yaml(File.join(data_dir, "rules.yml"))
+      own_root = root == ROOT
+      data_dir = own_root ? DATA : File.join(root, "data")
+      rules_path = File.join(data_dir, "rules.yml")
+      # Skip the read entirely rather than let load_yaml warn: for a foreign
+      # root, "this project has no rules.yml" is the answer, not a fault. Every
+      # scanner passes the directory it is scanning (RuleRegistryAudit, SelfTest,
+      # YamlBridgeRules, Fix::Priority), so each run against a Dir.mktmpdir root
+      # printed "load_yaml: No such file or directory ... /T/d2026…/data/rules.yml"
+      # and taught readers to scroll past the one warning that has already caught
+      # a genuine path bug. Our own ROOT still goes through load_yaml, where a
+      # missing constitution stays loud.
+      base = if own_root || File.exist?(rules_path)
+               load_yaml(rules_path)
+             else
+               {}
+             end
       shards = Dir.glob(File.join(data_dir, "rules", "*.yml")).sort
       return base if shards.empty?
 

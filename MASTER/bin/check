@@ -61,7 +61,12 @@ end
 steps = PROFILES[profile] or abort "check: unknown profile '#{profile}' (have: #{PROFILES.keys.join(', ')})"
 warn "check[web]: live web checks skipped (set MASTER_WEB_LIVE=1)" if profile == "web" && !web_live
 
-timeout = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", profile == "full" ? "600" : "360"))
+# Hang guard, not a performance budget — see CheckRunner::SLOW_STEP_FRACTION.
+# 360 was under `rake test`'s real cost the moment anything else used the CPU
+# (247s measured idle, 2026-08-02), so the gate reported starved-clock timeouts
+# as failing unit tests. CheckRunner now warns on a *passing* step that eats
+# most of its allowance, which is the signal that was missing.
+timeout = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", profile == "full" ? "1200" : "900"))
 runner = Pub4::CheckRunner.new(prefix: "check:#{profile}", root: ROOT, timeout:, quiet: format == "brief")
 
 steps.each { |step| runner.run(*step) }

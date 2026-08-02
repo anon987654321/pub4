@@ -21,16 +21,38 @@ module Pub4
       @results = []
     end
 
+    # The timeout is a hang guard, not a performance budget — a hung step is
+    # infinite, so any generous ceiling catches it equally well. Treating it as
+    # a budget is how `rake test` at 247s started failing a 360s limit on any
+    # machine that was also doing something else, and reported it as
+    # "first_failure: test / category: true_violation", i.e. as if a unit test
+    # had broken. A gate that goes red for reasons unrelated to the code is a
+    # gate people learn to ignore.
+    #
+    # So: warn as soon as a step spends most of its allowance, while it is still
+    # passing. The next person then finds out from a green run that a step is
+    # creeping up, instead of from a red one after it has already tipped over.
+    SLOW_STEP_FRACTION = 0.6
+
     def run(name, *cmd, env: {})
       print "#{@prefix}: #{name.ljust(22)} " unless @quiet
       $stdout.flush unless @quiet
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       out, status = capture(env, *cmd)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
       ok = status.success?
       @results << Result.new(name:, success: ok, output: out)
       if @quiet
         warn "#{@prefix}: #{name} #{ok ? 'ok' : 'fail'}"
       else
         puts(ok ? "ok" : "fail")
+      end
+      if ok && elapsed > @timeout * SLOW_STEP_FRACTION
+        warn format(
+          "%s: %s took %ds of a %ds budget — raise MASTER_CHECK_TIMEOUT or split the step " \
+          "before it starts failing on a busy machine",
+          @prefix, name, elapsed.round, @timeout
+        )
       end
       warn out if !out.empty? && (!ok || ENV["CHECK_VERBOSE"] == "1")
       ok
