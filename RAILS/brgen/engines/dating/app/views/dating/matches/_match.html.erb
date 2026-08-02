@@ -3,7 +3,7 @@
   <%= button_to t("actions.message"), main_app.user_conversations_path(other), method: :post, class: "feed-action feed-action--primary" %>
 <% end %>
 <%= render "shared/feed_card",
-  avatar_url: (other.dating_profile&.photos&.attached? ? url_for(other.dating_profile.photos.first) : nil),
+  avatar_url: (other.dating_profile&.photos&.attached? ? main_app.url_for(other.dating_profile.photos.first) : nil),
   name: other&.display_name || "anon",
   url: main_app.user_path(other),
   content: capture { %(<p class="feed-card-meta">Matched on #{match.created_at.to_date}</p>).html_safe },

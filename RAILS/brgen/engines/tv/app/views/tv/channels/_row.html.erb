@@ -2,7 +2,7 @@
   <% if channel.live? %><span class="live-badge">Live</span><% end %>
 <% end %>
 <%= render "shared/feed_card",
-  avatar_url: (channel.avatar.attached? ? url_for(channel.avatar) : nil),
+  avatar_url: (channel.avatar.attached? ? main_app.url_for(channel.avatar) : nil),
   name: channel.name,
   meta: "#{channel.subscribers_count} subscribers",
   content: channel_content.presence,
