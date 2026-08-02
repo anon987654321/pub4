@@ -11724,15 +11724,37 @@ DILLA_PAD_LEAD_LOCK_KEYS = %w[
 # Drum DNA cycled each stream slot (preset grid + pocket set + sample kit).
 # Applied after style force so DRUM_PRESET locks cannot pin dilla_slight forever.
 # Soulful hip-hop only — no boom_808 / industrial / hard-trap rotation.
+# The kits every stream and every demo track draws from.
+#
+# This was eight entries, all boom-bap, every one flylo: "0" -- so the eleven
+# Flying Lotus presets in DRUM_PRESETS (flylo_abstract, flylo_cosmogramma,
+# flylo_zodiac, flylo_burst, flylo_warp and the rest), the FLYLO_DRUM_OVERLAY
+# switch, and the whole learn-flylo command that transcribes a grid from a
+# record, were unreachable from anything that actually renders. The presets
+# existed and nothing could pick them. A demo of eight tracks came out
+# boom-bap eight times, by construction rather than by choice.
+#
+# Five FlyLo entries added. They are placed at odd indices so a run of
+# consecutive tracks alternates rather than arriving in a block, since the
+# rotation is indexed by track number.
+#
+# The pockets differ from the boom-bap half on purpose. flylo_abstract and
+# flylo_burst are busier and want the straighter pocket under them; dilla_drunk
+# with a FlyLo grid on top is two kinds of drunk at once.
 STREAM_DRUM_ROTATION = [
-  { preset: "dilla_slight", pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "dilla_drunk",  pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "mpc3000",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "madlib_dusty", pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "sp1200",       pocket: "classic",  kit: "03-soulful-vintage", fm: "0", flylo: "0" },
-  { preset: "dilla_slight", pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
-  { preset: "mpc3000",      pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
-  { preset: "dilla_drunk",  pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "dilla_slight",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "flylo_abstract",    pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "1" },
+  { preset: "dilla_drunk",       pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "flylo_cosmogramma", pocket: "classic",  kit: "03-soulful-vintage", fm: "0", flylo: "1" },
+  { preset: "mpc3000",           pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "flylo_zodiac",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "1" },
+  { preset: "madlib_dusty",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "flylo_warp",        pocket: "classic",  kit: "02-bounce",          fm: "1", flylo: "1" },
+  { preset: "sp1200",            pocket: "classic",  kit: "03-soulful-vintage", fm: "0", flylo: "0" },
+  { preset: "flylo_burst",       pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "1" },
+  { preset: "dilla_slight",      pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
+  { preset: "mpc3000",           pocket: "classic",  kit: "02-bounce",          fm: "0", flylo: "0" },
+  { preset: "dilla_drunk",       pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", flylo: "0" },
 ].freeze
 
 # Lead arp modes cycled each stream track (real figures, not held wash).
