@@ -18,7 +18,18 @@ module Shared
       # anonymous visitors get a soft Current.user (Craigslist-style: use the
       # product without signup). require_real_user remains the identity gate.
       def allow_unauthenticated_access(**options)
-        return if ::User.column_names.include?("guest")
+        if ::User.column_names.include?("guest")
+          # It reads like a control and does nothing here: guests already get a soft
+          # Current.user, so skipping resume_session would only deny them one. Say so
+          # where the author is — dev and test — so it is not a silent no-op; stay
+          # quiet in production, where it would be boot noise on every controller.
+          if defined?(Rails) && (Rails.env.development? || Rails.env.test?)
+            Rails.logger&.warn("[auth] allow_unauthenticated_access is a no-op in #{name}: " \
+                               "guests get a soft Current.user by design — gate identity-bound " \
+                               "actions with require_real_user instead.")
+          end
+          return
+        end
 
         skip_before_action :resume_session, **options
       end
