@@ -80,31 +80,42 @@ module Master
           return true if socket_alive?(path)
           return true if busy_not_dead?(path, index)
 
-          # Unlinking the socket without retiring its owner is how this leaked:
-          # the old daemon keeps running on a path nothing can reach any more,
-          # and nothing ever collects it. Measured on vm23 2026-08-01 — 21 live
-          # tts-workers holding 309 MB of a 1007 MB box, one more every minute.
-          #
-          # The trigger is that a worker is single-threaded, so one that is
-          # mid-synthesis cannot answer socket_alive?'s health ping inside its
-          # 1s budget. Busy reads as dead, and each false verdict spawned a
-          # replacement: more workers, more load, more timeouts, more workers.
-          # That climbing memory is what shed amber/bsdports, and the cold start
-          # it forced on nearly every request is what made speech slow.
-          retire_daemon(index)
-          File.unlink(path) if File.exist?(path)
-          spawn_daemon(root:, path:, index:)
-          if wait_for_socket(path)
-            @spawn_failures[index] = 0
-            @busy_strikes[index] = 0
-            true
-          else
-            failures = (@spawn_failures[index] ||= 0) + 1
-            @spawn_failures[index] = failures
-            sleep [POLL_INTERVAL_S * (2**[failures - 1, 4].min), 2.0].min
-            false
-          end
+          replace_worker(root:, path:, index:)
         end
+      end
+
+      # Unlinking the socket without retiring its owner is how this leaked:
+      # the old daemon keeps running on a path nothing can reach any more,
+      # and nothing ever collects it. Measured on vm23 2026-08-01 — 21 live
+      # tts-workers holding 309 MB of a 1007 MB box, one more every minute.
+      #
+      # The trigger is that a worker is single-threaded, so one that is
+      # mid-synthesis cannot answer socket_alive?'s health ping inside its
+      # 1s budget. Busy reads as dead, and each false verdict spawned a
+      # replacement: more workers, more load, more timeouts, more workers.
+      # That climbing memory is what shed amber/bsdports, and the cold start
+      # it forced on nearly every request is what made speech slow.
+      #
+      # Callers hold the pool-slot lock: ensure_pool_worker! is the only one.
+      def replace_worker(root:, path:, index:)
+        retire_daemon(index)
+        File.unlink(path) if File.exist?(path)
+        spawn_daemon(root:, path:, index:)
+        return back_off_after_failed_spawn(index) unless wait_for_socket(path)
+
+        @spawn_failures[index] = 0
+        @busy_strikes[index] = 0
+        true
+      end
+
+      # Exponential back-off, capped at 2s, so a worker that cannot start
+      # (missing edge-tts, no memory) is retried at a decreasing rate instead
+      # of spun on. Always answers false: the slot has no live worker.
+      def back_off_after_failed_spawn(index)
+        failures = (@spawn_failures[index] ||= 0) + 1
+        @spawn_failures[index] = failures
+        sleep [POLL_INTERVAL_S * (2**[failures - 1, 4].min), 2.0].min
+        false
       end
 
       def spawn_daemon(root:, path:, index: 0)
