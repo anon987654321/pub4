@@ -46,7 +46,10 @@ sync_from_repo() {
   local shared_src=$repo/RAILS/shared
   sync_ci_rails_root
   if [[ -d $src ]]; then
-    local -a paths=(test app lib config bin db Gemfile Gemfile.lock)
+    # engines/ carries brgen's vertical Rails engines (path gems in the Gemfile);
+    # without it the copy-tree Gemfile's `path: 'engines/<v>'` resolves to a missing
+    # dir and bundle aborts. See RAILS/brgen/ENGINES.md.
+    local -a paths=(test app lib config bin db engines Gemfile Gemfile.lock)
     local -a existing=()
     local rel
     for rel in "${paths[@]}"; do
@@ -59,12 +62,13 @@ sync_from_repo() {
     # (test/app/lib/config/bin/db) actually disappear from the deployed
     # copy instead of surviving as stale dead code indefinitely.
     local dir_rel
-    for dir_rel in test app lib config bin db; do
+    for dir_rel in test app lib config bin db engines; do
       [[ -d $src/$dir_rel ]] && doas rm -rf "${app_dir}/${dir_rel}"
     done
     doas tar cf - -C "$src" "${existing[@]}" | doas sh -c "cd ${app_dir} && tar xf -"
     doas chown -R "${app}:${app}" "${app_dir}/test" "${app_dir}/app" "${app_dir}/lib" \
-      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
+      "${app_dir}/config" "${app_dir}/bin" "${app_dir}/db" "${app_dir}/engines" \
+      "${app_dir}/Gemfile" "${app_dir}/Gemfile.lock" \
       "${app_dir}"/*.sh(N) 2>/dev/null || true
   fi
   doas mkdir -p "$shared_dir"
