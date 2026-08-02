@@ -79,7 +79,10 @@ module Master
         end
 
         def sysctl_value(key)
-          stdout, status = Master::Io::Exec.capture3("sysctl", "-n", key)
+          # capture3 yields [stdout, stderr, status]. Dropping stderr from the
+          # destructure bound status to a String, so every lookup raised
+          # NoMethodError and macOS silently lost its whole dmesg block.
+          stdout, _stderr, status = Master::Io::Exec.capture3("sysctl", "-n", key)
           return unless status.success?
 
           trimmed = stdout.strip
