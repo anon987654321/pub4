@@ -23,13 +23,13 @@ module DillaHarmony
     major_lifting slash_ninth_cycle two_chord_hypnosis relative_major_turn minor_turnaround
     warm_minor_arc quartal_west_coast slow_ballad_wash minor_triad_walk neo_soul_pocket neo_soul
     dorian_iv_loop backdoor_resolve iv_borrow_minor electronium_loop electronium_classic
-    bvi_bvii_minor ii_v_i_major ii_v_i_minor gospel_bIII stevie_bVII erykah_minor
-    glasper_quartal watermelon_turn church_sus minMaj_color dominant_turn deceptive_turn
-    plagal_jazz slash_neo_soul suspended_ballad minor_line_cliche donda_minor keys_woman
+    bvi_bvii_minor ii_v_i_major ii_v_i_minor gospel_bIII flat_seven_lift warm_minor_vamp
+    modern_quartal_stack funk_sixteenth_turn church_sus minMaj_color dominant_turn deceptive_turn
+    plagal_jazz slash_neo_soul suspended_ballad minor_line_cliche stark_minor_pair piano_soul_turn
     jazz_ballad_waltz turnaround_ii_v modal_safe neo_iv_cycle
-    aydin_modal_quartal aydin_jazz_turn bach_circle_descent bach_descending_bass
+    modal_quartal_ladder minor_two_five_chain circle_fifths_descent walking_bass_descent
     lydian_glass_cycle pedal_upper_structures bossa_major9_turn phrygian_gold_arc
-    two_chord_luminous mixo_sus_loop common_tone_drift coltrane_lite_triad
+    two_chord_luminous mixo_sus_loop common_tone_drift third_cycle_triads
     drone_quartal_wash waltz_relative_lift half_time_gospel_plagal double_time_pocket
     whole_tone_bridge upper_triad_tower minor_add9_lullaby dominant_chain_home
   ].freeze
@@ -87,7 +87,7 @@ module DillaHarmony
   end
 
   def progression_insight(chords)
-    return unless defined?(DillaMusicGems) && DillaMusicGems.coltrane?
+    return unless defined?(DillaMusicGems) && DillaMusicGems.major_third_cycle_full?
     symbols = chords.map { |c| c[:name].to_s.sub(/_pedal\z/, "").sub(/_t\d+\z/, "") }
     DillaMusicGems.progression_analysis(symbols)
   end
@@ -753,7 +753,7 @@ module DillaHarmony
     rescue StandardError
       ch
     end
-    # Bach/Dilla theory runtime (coltrane/head_music when available).
+    # Bach/Dilla theory runtime (major_third_cycle_full/head_music when available).
     if defined?(DillaTheoryRuntime)
       pads = DillaTheoryRuntime.refine_progression!(pads, cfg:)
     end

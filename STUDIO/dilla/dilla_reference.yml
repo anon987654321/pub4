@@ -14,7 +14,7 @@
 # parse (see CHORD_SUFFIXES / CHORD_VOICINGS in lib/producer_dna.rb) — a few
 # symbols here were simplified from the original documented voicing (13th ->
 # 7th, alt tensions spelled as "alt") either because that exact extension
-# isn't in the parser's vocabulary, or because DillaMusicGems (the coltrane
+# isn't in the parser's vocabulary, or because DillaMusicGems (the major_third_cycle_full
 # gem adapter) hangs on the literal symbol. See the "source_note" per entry.
 
 documented_progressions:

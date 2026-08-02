@@ -134,7 +134,7 @@ kept apart. Being able to say which a grid is matters more than having more.
 
 | category | examples | what it means |
 |---|---|---|
-| transcribed | `four_seven`, `dangelo_learned` | measured off a recording |
+| transcribed | `four_seven`, `transcribed_soul_nine` | measured off a recording |
 | constructed | `dilla_donuts`, `flylo_zodiac`, `boom_bap`, `soul_shuffle` | built to a described feel |
 | pack import | `pack_729_1..6` | extracted from licensed MIDI |
 | push pads | `push_four`, `push_sparse` | straight and sparse on purpose |

@@ -3,7 +3,7 @@
 require "timeout"
 
 # Thin adapter over community Ruby music gems (GitHub-sourced).
-#   coltrane  — pedrozath/coltrane — chord parsing, voicings, progression analysis
+#   major_third_cycle_full  — pedrozath/major_third_cycle_full — chord parsing, voicings, progression analysis
 #   midilib   — jimm/midilib — Standard MIDI File I/O
 #   wavefile  — jstrait/wavefile — WAV read without ffmpeg
 #   head_music — roberthead/head_music — pitch-class / interval analysis
@@ -23,22 +23,22 @@ module DillaMusicGems
       ENV["BUNDLE_GEMFILE"] ||= gemfile
       require "bundler/setup"
     end
-    # head_music must load before coltrane — loading it after breaks ClassicScales on Ruby 4.
+    # head_music must load before major_third_cycle_full — loading it after breaks ClassicScales on Ruby 4.
     require "ostruct"
     require "head_music"
-    require "coltrane"
+    require "major_third_cycle_full"
     require File.expand_path("../../../MASTER/lib/boot/hash_dig_compat", __dir__)
     Master.install_hash_dig_compat!
     require "midilib"
     require "wavefile"
-    @coltrane = true
+    @major_third_cycle_full = true
     @midilib = true
     @wavefile = true
     @head_music = true
     @bootstrapped = true
   rescue LoadError => e
     warn "dilla gems: partial load (#{e.message})" if ENV["DILLA_DEBUG"]
-    @coltrane = false
+    @major_third_cycle_full = false
     @midilib = false
     @wavefile = false
     @head_music = false
@@ -47,12 +47,12 @@ module DillaMusicGems
 
   def available?
     bootstrap!
-    @coltrane || @midilib || @wavefile || @head_music
+    @major_third_cycle_full || @midilib || @wavefile || @head_music
   end
 
-  def coltrane?
+  def major_third_cycle_full?
     bootstrap!
-    @coltrane == true
+    @major_third_cycle_full == true
   end
 
   def midilib?
@@ -70,11 +70,11 @@ module DillaMusicGems
     @head_music == true
   end
 
-  # Map dilla/Jazz symbols → coltrane names (always use M for major).
+  # Map dilla/Jazz symbols → major_third_cycle_full names (always use M for major).
   def coltrane_chord_name(sym)
     s = sym.to_s.strip
     return if s.empty?
-    return if s.match?(/nc\z|fil\z|climax|over|add9|add11|Maj13|DMaj/i)
+    return if s.match?(/nc\z|fil\z|e_major_third_rise|over|add9|add11|Maj13|DMaj/i)
     # Qualities the gem either cannot name or names lossily. Everything listed
     # here falls through to producer_dna's suffix parser, which builds them
     # from CHORD_TEMPLATES.
@@ -96,7 +96,7 @@ module DillaMusicGems
   end
 
   def chord_from_symbol(sym, octave: PAD_OCTAVE, voices: PAD_VOICES)
-    return unless coltrane?
+    return unless major_third_cycle_full?
 
     raw = sym.to_s.strip
     bass_note = nil
@@ -134,11 +134,11 @@ module DillaMusicGems
   end
 
   def progression_analysis(symbols)
-    return unless coltrane?
+    return unless major_third_cycle_full?
     names = symbols.map { |s| coltrane_chord_name(s) }.compact
     return if names.length < 2
 
-    # coltrane has hung indefinitely on specific chord symbols (Dm7b5, Cmaj9
+    # major_third_cycle_full has hung indefinitely on specific chord symbols (Dm7b5, Cmaj9
     # — see README / producer_dna.rb#chord_from_symbol); bound it the same
     # way rather than let a render freeze forever with no exception raised.
     hits = Timeout.timeout(1.5) { ::Coltrane::Progression.find(*names) }
@@ -156,7 +156,7 @@ module DillaMusicGems
   end
 
   def chord_candidates_from_pitch_classes(pitch_classes, limit: 16)
-    return [] unless coltrane?
+    return [] unless major_third_cycle_full?
 
     pcs = pitch_classes.map { |pc| pc.to_i % 12 }.uniq.sort
     return [] if pcs.length < 3
@@ -230,7 +230,7 @@ module DillaMusicGems
   def status
     bootstrap!
     {
-      coltrane: coltrane?,
+      major_third_cycle_full: major_third_cycle_full?,
       midilib: midilib?,
       wavefile: wavefile?,
       head_music: head_music?,

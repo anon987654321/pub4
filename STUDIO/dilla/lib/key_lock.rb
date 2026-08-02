@@ -5,8 +5,8 @@
 # The eight Dilla-produced progressions resolve to two centres, and they are a
 # tritone apart — the maximally distant relationship there is:
 #
-#   Bb   time_donut, maj7_minor_cycle, fall_in_love, alternating_minor7_pair
-#   E    get_dis_money, syncopated_slash_ninth, climax, major7_relative_minor_turn
+#   Bb   db_major_minor_fall, maj7_minor_cycle, eb_minor_two_chord, alternating_minor7_pair
+#   E    pedal_e_descent, syncopated_slash_ninth, e_major_third_rise, major7_relative_minor_turn
 #
 # Each is coherent on its own and the pair is not, so a stream alternating
 # between them has no tonal centre at all. Sampling producers do not work this
@@ -39,7 +39,7 @@ module KeyLock
 
   # Default Bb: half the rotation already resolves there, so locking to it moves
   # four progressions instead of eight and keeps the ones most people know
-  # (time_donut, maj7_minor_cycle) at their original pitch.
+  # (db_major_minor_fall, maj7_minor_cycle) at their original pitch.
   def target = ENV.fetch("KEY_LOCK_TONIC", "Bb")
 
   def pitch_class(name) = PITCH_CLASS[name.to_s]
@@ -66,7 +66,7 @@ module KeyLock
   # Normally that is the last chord — these are loops, so the last chord is what
   # turns back to the first.
   #
-  # But a pedal point overrides it, and get_dis_money is exactly that case:
+  # But a pedal point overrides it, and pedal_e_descent is exactly that case:
   # D/E Db/E C/E Bm/E Bbm/E Am/E is a chromatic descent *over a standing E*.
   # Reading its last chord gives A and transposes the whole figure up a semitone,
   # which moves the pedal off E to F and lands the piece a semitone from where

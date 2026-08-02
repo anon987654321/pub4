@@ -59,7 +59,7 @@ module DillaLofiMachine
     "sus9" => [0, 2, 5, 7],
     # E9sus4 — the chord Get Dis Money opens on, and it did not parse.
     #
-    # ARTIST_VERIFIED_PROGRESSIONS names it twice: get_dis_money's source note
+    # ARTIST_VERIFIED_PROGRESSIONS names it twice: pedal_e_descent's source note
     # says "D/E = E9sus4", and the syncopated_slash_ninth alias spells the
     # progression as E9sus4/D … E9sus4 outright. Both were unparseable, so
     # progression_for's filter_map silently dropped them and that alias rendered
@@ -141,7 +141,7 @@ module DillaLofiMachine
     # root+3rd+b7+b9+#9 in G — same altered-dominant shape as C7alt above.
     "G7alt" => [196.00, 246.94, 349.23, 415.30, 466.16],
     # Root+3rd+5th+maj7+9th in C — precomputed for the same reason as Dm7b5:
-    # DillaMusicGems (coltrane gem) hangs on this exact symbol too, cold or
+    # DillaMusicGems (major_third_cycle_full gem) hangs on this exact symbol too, cold or
     # warm process. Worth a real fix in lib/music_gems.rb at some point —
     # this only sidesteps the two symbols the new catalog entries need.
     "Cmaj9" => [130.81, 164.81, 196.00, 246.94, 293.66],
@@ -265,7 +265,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # Transcribed from a D'Angelo reference track via learn_source! (onset
     # detection on the demucs drums.wav stem, step_grid in project/learnings/
     # last_learn.json) -- not hand-tuned, this is what the analysis measured.
-    dangelo_learned: {
+    transcribed_soul_nine: {
       swing: 55, humanize: 3, bpm: 80, mode: :dilla_time,
       kicks: [0, 2, 3, 6, 7, 8, 9, 10, 12, 13, 14, 15], snares: [0, 2, 9], hats: [0, 4, 9],
       ghosts: [5, 11], claps: [2, 9], perc: [1, 7]
@@ -273,7 +273,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
 
     # ---- style constructions -------------------------------------------------
     # Everything below is BUILT to a described feel, not measured from a
-    # recording. four_seven and dangelo_learned above are transcriptions and are
+    # recording. four_seven and transcribed_soul_nine above are transcriptions and are
     # the only two that can claim to be what a record actually plays; these are
     # arrangements in the manner of, and should not be cited as anyone's part.
     #
@@ -453,7 +453,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     },
   # ---- pack imports --------------------------------------------------------
   # A third provenance category, and the distinction is the point: these are
-  # neither transcriptions of records (four_seven, dangelo_learned) nor
+  # neither transcriptions of records (four_seven, transcribed_soul_nine) nor
   # constructions written to a description (everything above), but grids
   # extracted from MIDI supplied in a pack the operator licensed. Regenerate
   # with `ruby dilla.rb import-midi <dir>`.
@@ -711,34 +711,34 @@ euclid_sparse: {
 
   DEFAULT_DRUM_PRESET = :dilla_slight
   DEFAULT_PAD_WAVE = :sine
-  DEFAULT_PROFILE = :get_dis_money
+  DEFAULT_PROFILE = :pedal_e_descent
 
   # Semantic harmony profiles — chord chemistry + groove family, no song names.
   BASE_HARMONY_PROFILES = {
     # Slum Village / Dilla — Get Dis Money (Ethan Hein exact E-pedal slash cycle).
-    get_dis_money: {
+    pedal_e_descent: {
       producer: :dilla, key: "E pedal", bpm: 92, swing: 54,
       chord_bars: 1, phrase_bars: 6, feel: :mpc3000, voicing: :rootless, quintuplet: true,
       drum_preset: :dilla_slight, chords: %w[D/E Db/E C/E Bm/E Bbm/E Am/E], timing: DILLA_TIMING
     },
     # Donuts "Time" researched core — IV–iii–vi–ii in Ab (clean 7ths).
-    time_donut: {
+    db_major_minor_fall: {
       producer: :dilla, key: "Ab / Fm", bpm: 90, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless, quintuplet: true,
       drum_preset: :dilla_slight, chords: %w[Dbmaj7 Cm7 Fm7 Bbm7], timing: DILLA_TIMING
     },
     # Fall in Love = Diana in the Autumn Wind sample (Ebm7–Bbm7).
-    fall_in_love: {
+    eb_minor_two_chord: {
       producer: :dilla, key: "Eb minor", bpm: 91, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :rootless, quintuplet: true,
       drum_preset: :dilla_slight, chords: %w[Ebm7fil Bbm7fil], timing: DILLA_TIMING
     },
-    climax: {
+    e_major_third_rise: {
       producer: :dilla, key: "E major", bpm: 88, swing: 57,
       chord_bars: 2, phrase_bars: 8, feel: :timeless, voicing: :rootless,
       drum_preset: :dilla_slight, chords: %w[Emaj7 G#m7 C#m7 E7climax], timing: DILLA_TIMING
     },
-    untitled_how_does_it_feel: {
+    d_add9_soul_arc: {
       producer: :dilla, key: "D major", bpm: 92, swing: 56,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :rootless,
       drum_preset: :dilla_slight, chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9], timing: DILLA_TIMING
@@ -876,23 +876,23 @@ euclid_sparse: {
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
       drum_preset: :dilla_slight, chords: %w[Fmaj9 Abmaj7 Bbmaj7 Fmaj9], timing: DILLA_TIMING
     },
-    stevie_bVII: {
+    flat_seven_lift: {
       producer: :dilla, key: "C major", bpm: 93, swing: 56,
       chord_bars: 2, phrase_bars: 8, feel: :mpc3000, voicing: :kenny_barron,
       drum_preset: :mpc3000, chords: %w[Cmaj9 Bbmaj7 Fmaj9 G6], timing: DILLA_TIMING
     },
-    erykah_minor: {
+    warm_minor_vamp: {
       producer: :dilla, key: "F# minor", bpm: 87, swing: 58,
       chord_bars: 2, phrase_bars: 16, feel: :madlib_dusty, voicing: :bill_evans,
       drum_preset: :madlib_dusty, chords: %w[F#m9 Bm7 Emaj7 C#m7], timing: MADLIB_TIMING
     },
-    glasper_quartal: {
+    modern_quartal_stack: {
       producer: :flylo, key: "Eb major", bpm: 82, swing: 52,
       chord_bars: 2, phrase_bars: 16, feel: :flylo_abstract, voicing: :quartal,
       stereo_pan: true, sidechain: true,
       drum_preset: :flylo_abstract, chords: %w[Ebmaj9 Cm9 Abmaj9 Bb6], timing: FLYLO_TIMING
     },
-    watermelon_turn: {
+    funk_sixteenth_turn: {
       producer: :dilla, key: "G minor", bpm: 88, swing: 55,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_slight, voicing: :spread,
       drum_preset: :dilla_slight, chords: %w[Gm9 Cm7 Fmaj9 Bbmaj7], timing: DILLA_TIMING
@@ -938,12 +938,12 @@ euclid_sparse: {
       chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :spread,
       drum_preset: :mpc3000, chords: %w[Am Am/G Fmaj7 E7], timing: DILLA_TIMING
     },
-    donda_minor: {
+    stark_minor_pair: {
       producer: :dilla, key: "F minor", bpm: 95, swing: 58,
       chord_bars: 2, phrase_bars: 8, feel: :dilla_drunk, voicing: :drop2,
       drum_preset: :dilla_drunk, chords: %w[Fm7 Abmaj7 Bbm7 Fm7], timing: DILLA_TIMING
     },
-    keys_woman: {
+    piano_soul_turn: {
       producer: :dilla, key: "Eb major", bpm: 84, swing: 55,
       chord_bars: 2, phrase_bars: 16, feel: :madlib_dusty, voicing: :kenny_barron,
       drum_preset: :madlib_dusty, chords: %w[Ebmaj9 Cm9 Fm7 Bb7], timing: MADLIB_TIMING
@@ -983,28 +983,28 @@ euclid_sparse: {
       timing: DILLA_TIMING
     },
     # Aydin Esen — quartal modal wash (Bill Evans / Turkish jazz lineage).
-    aydin_modal_quartal: {
+    modal_quartal_ladder: {
       producer: :dilla, key: "C minor", bpm: 82, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :quartal,
       drum_preset: :dilla_slight,
       chords: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9], timing: DILLA_TIMING
     },
     # Aydin Esen — ii–V chains with altered dominants and rich extensions.
-    aydin_jazz_turn: {
+    minor_two_five_chain: {
       producer: :dilla, key: "Bb major", bpm: 88, swing: 53,
       chord_bars: 2, phrase_bars: 16, feel: :mpc3000, voicing: :bill_evans,
       drum_preset: :mpc3000,
       chords: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9], timing: DILLA_TIMING
     },
     # Bach — circle-of-fifths descent (functional voice-leading).
-    bach_circle_descent: {
+    circle_fifths_descent: {
       producer: :dilla, key: "A minor", bpm: 76, swing: 52,
       chord_bars: 1, phrase_bars: 8, feel: :mpc3000, voicing: :drop2,
       drum_preset: :mpc3000,
       chords: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9], timing: DILLA_TIMING
     },
     # Bach — descending bass (passacaglia motion) in neo-soul voicings.
-    bach_descending_bass: {
+    walking_bass_descent: {
       producer: :dilla, key: "D minor", bpm: 80, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :kenny_barron,
       drum_preset: :dilla_slight,
@@ -1061,7 +1061,7 @@ euclid_sparse: {
       drum_preset: :flylo_abstract,
       chords: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9], timing: FLYLO_TIMING
     },
-    coltrane_lite_triad: {
+    third_cycle_triads: {
       producer: :dilla, key: "F minor stations", bpm: 82, swing: 54,
       chord_bars: 2, phrase_bars: 16, feel: :timeless, voicing: :spread,
       drum_preset: :dilla_slight,
@@ -1151,10 +1151,10 @@ euclid_sparse: {
 
   # Old track ids → semantic profile (backward compat only).
   LEGACY_ALIASES = {
-    timeless: :time_donut,
+    timeless: :db_major_minor_fall,
     players: :neo_soul_pocket,
     neo_soul: :neo_soul,
-    slash_ninth_cycle: :get_dis_money,
+    slash_ninth_cycle: :pedal_e_descent,
     thelonious: :two_chord_hypnosis,
     selfish: :relative_major_turn,
     look_of_love: :minor_turnaround,
@@ -1169,24 +1169,24 @@ euclid_sparse: {
   # Full stream rotation — verified Dilla/SV/D'Angelo songs first, then the
   # broader curated harmony pack so stream/demo cycles progressions + colors.
   STREAM_ROTATION = %w[
-    get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
+    pedal_e_descent db_major_minor_fall eb_minor_two_chord e_major_third_rise d_add9_soul_arc
     maj7_minor_cycle
-    neo_soul_pocket erykah_minor warm_minor_arc minor_turnaround
+    neo_soul_pocket warm_minor_vamp warm_minor_arc minor_turnaround
     quartal_west_coast slash_ninth_cycle dorian_iv_loop gospel_bIII
     minor_iv_loop two_chord_hypnosis relative_major_turn
     electronium_loop fourth_third_sixth_second_turn
     chromatic_mediant_drift lydian_glass_cycle pedal_upper_structures
     bossa_major9_turn phrygian_gold_arc mixo_sus_loop common_tone_drift
-    glasper_quartal minMaj_color church_sus jazz_ballad_waltz
-    two_chord_luminous coltrane_lite_triad drone_quartal_wash waltz_relative_lift
+    modern_quartal_stack minMaj_color church_sus jazz_ballad_waltz
+    two_chord_luminous third_cycle_triads drone_quartal_wash waltz_relative_lift
     half_time_gospel_plagal double_time_pocket whole_tone_bridge upper_triad_tower
     minor_add9_lullaby dominant_chain_home
-    aydin_jazz_turn aydin_modal_quartal bach_circle_descent bach_descending_bass
-    backdoor_resolve bvi_bvii_minor deceptive_turn dominant_turn donda_minor
-    electronium_classic ii_v_i_major ii_v_i_minor iv_borrow_minor keys_woman
+    minor_two_five_chain modal_quartal_ladder circle_fifths_descent walking_bass_descent
+    backdoor_resolve bvi_bvii_minor deceptive_turn dominant_turn stark_minor_pair
+    electronium_classic ii_v_i_major ii_v_i_minor iv_borrow_minor piano_soul_turn
     major_lifting minor_line_cliche minor_triad_walk modal_safe neo_iv_cycle
-    neo_soul plagal_jazz slash_neo_soul slow_ballad_wash soul stevie_bVII
-    suspended_ballad timeless_authentic turnaround_ii_v watermelon_turn
+    neo_soul plagal_jazz slash_neo_soul slow_ballad_wash soul flat_seven_lift
+    suspended_ballad timeless_authentic turnaround_ii_v funk_sixteenth_turn
   ].freeze
   # HARMONY_PROFILES also carries a handful of *_documented entries (sourced
   # from dilla_reference.yml) -- literal reference transcriptions, not
@@ -1311,7 +1311,7 @@ euclid_sparse: {
     "maj7#5" => [0, 4, 8, 11],
   }.freeze
 
-  # The coltrane gem hands back confidently wrong voicings for several
+  # The major_third_cycle_full gem hands back confidently wrong voicings for several
   # suffixes: "Bbmaj9" comes back as Bb Db F Ab C -- a MINOR ninth -- "C7sus"
   # as C E G B, a maj7 carrying the exact third the suspension exists to
   # remove, and "Eb9" with no b7 at all. Nothing downstream noticed because a
@@ -1354,16 +1354,16 @@ euclid_sparse: {
 
   # Transcription shorthand, not chord quality. Eight symbols in the profile
   # tables carry an annotation the parser has no template for -- "nc", "fil",
-  # "climax", "over", "s11" -- and progression_for's `rescue ArgumentError; nil`
+  # "e_major_third_rise", "over", "s11" -- and progression_for's `rescue ArgumentError; nil`
   # dropped every one of them silently. chromatic_mediant_drift lost five of its
-  # eight chords that way and fall_in_love lost both of its two, returning nil.
+  # eight chords that way and eb_minor_two_chord lost both of its two, returning nil.
   # The chord is written right there in front of the annotation; keeping it is
   # strictly better than losing a bar of harmony to a suffix nobody parsed.
   def normalize_chord_symbol(sym)
     sym.to_s.strip
        .sub(/over([A-G][#b]?)\z/i) { "/#{Regexp.last_match(1)}" }
        .sub(/s11\z/i, "#11")
-       .sub(/(?:nc|fil|climax)\z/i, "")
+       .sub(/(?:nc|fil|e_major_third_rise)\z/i, "")
   end
 
   # A suffix names its own template unless it is spelled differently there.
@@ -1461,7 +1461,7 @@ euclid_sparse: {
   # uppers: DillaMusicGems.chord_from_symbol("Bm") never returns (measured past
   # 120s), so every such symbol burns the whole Timeout(1.5) budget, and a slash
   # chord burns it twice — once for "Bm/E", once for the recursive "Bm".
-  # get_dis_money's six chords are D/E Db/E C/E Bm/E Bbm/E Am/E, which cost
+  # pedal_e_descent's six chords are D/E Db/E C/E Bm/E Bbm/E Am/E, which cost
   # progression_for 6.4s and beautify_curated_pipeline 11.3s per render, for
   # answers that never varied. Hoisting the slash branch above the gem block
   # takes Am/E from 1609ms to 0.02ms; the memo takes the whole progression to 0ms
@@ -1492,7 +1492,7 @@ euclid_sparse: {
     return slash_chord_from_symbol(sym) if sym.include?("/")
 
     if defined?(DillaMusicGems)
-      # The coltrane-gem path has hung indefinitely on specific symbols
+      # The major_third_cycle_full-gem path has hung indefinitely on specific symbols
       # (Dm7b5, Cmaj9 — see README) with no clear pattern; rather than wait
       # for the next one to be discovered by a stuck render, bound it and
       # fall through to the built-in suffix parser below on timeout.
@@ -1518,7 +1518,7 @@ euclid_sparse: {
     { name: sym, hz: }
   end
 
-# X over Y. Split out of chord_from_symbol so it can run before the coltrane
+# X over Y. Split out of chord_from_symbol so it can run before the major_third_cycle_full
   # gem is consulted — the gem hangs on the bare-minor uppers these use.
   def slash_chord_from_symbol(sym)
   upper, bass_note = sym.split("/", 2)
@@ -1528,14 +1528,14 @@ euclid_sparse: {
   # structure's lowest voice, which for a rootless triad is its root: D/E
   # came out E2 F#4 A4 B4 with no D in it, C/E as E2 E4 G4 A4 with no C,
   # Db/E as E2 F3 G#3 -- an E major triad wearing a Db label. Every slash
-  # chord in get_dis_money, the progression the stream actually plays, was
+  # chord in pedal_e_descent, the progression the stream actually plays, was
   # missing the note it is named after. A slash chord is X over Y, not X
   # with its root traded for Y.
   # The pad's copy of the bass sits close under the upper structure; :bass_hz
   # keeps the real octave-2 pitch for the bass layer. Putting E2 itself in the
   # pad made the chord span more than the pad register (E2..A5 for D/E), and
   # the register clamp then threw away everything above the window -- leaving
-  # get_dis_money, the default progression, as two voices per chord. The
+  # pedal_e_descent, the default progression, as two voices per chord. The
   # division of labour dilla_chord_bass_hz documents wants a mid-register pad
   # over a real bass, not the pad doubling the bass three octaves down.
   pad_bass = bass_hz
@@ -1630,7 +1630,7 @@ end
     # padded to five came out D4 Gb4 A4 D5 D6, and once the bass of a slash chord
     # joined it the chord covered E2..D6. The pad register is 29 semitones wide, so
     # such a chord was thinned back to two voices at the end of the pipeline --
-    # which is what every chord of get_dis_money, the default progression, was
+    # which is what every chord of pedal_e_descent, the default progression, was
     # reduced to.
     span_ceiling = 12.0 * Math.log2(hz.min / root_hz) + 19.0
     while hz.length < voices && octave <= 36
@@ -1667,7 +1667,7 @@ end
     # `m + 12.0` (not `+=`) here never reassigns m, so `while m < 50.0` used
     # to spin forever for any note landing below MIDI 50 (e.g. "C7sus" ->
     # quality "7" -> some octave lands there) -- looked exactly like the
-    # documented coltrane-gem hang but had nothing to do with coltrane.
+    # documented major_third_cycle_full-gem hang but had nothing to do with major_third_cycle_full.
     # Transpose the chord AS A UNIT, not note by note. Folding each note
     # independently into 50..76 is what destroyed the voicing this method has
     # just built: an extension raised an octave lands above 76, gets folded back

@@ -298,7 +298,7 @@ module DillaGroove
   # happening structurally.
   SECTION_JITTER_MUL = {
     breakdown: 1.35, development: 1.2, bridge: 1.2, intro: 1.15,
-    climax: 0.6, peak: 0.6, hook: 0.6, recapitulation: 0.7
+    e_major_third_rise: 0.6, peak: 0.6, hook: 0.6, recapitulation: 0.7
   }.freeze
 
   def swing_jitter_ms(bpm, step, bar, role: nil, section: nil)
@@ -714,10 +714,10 @@ module DillaGroove
 
   # Rush is a loosening device -- more of it where a section is meant to
   # feel open/unlocked (breakdown, development/bridge), rarer where it
-  # should feel locked in (climax/peak/hook/recap).
+  # should feel locked in (e_major_third_rise/peak/hook/recap).
   SNARE_RUSH_PROB_BY_SECTION = {
     breakdown: 0.20, development: 0.18, bridge: 0.18,
-    climax: 0.04, peak: 0.04, hook: 0.04, recapitulation: 0.05
+    e_major_third_rise: 0.04, peak: 0.04, hook: 0.04, recapitulation: 0.05
   }.freeze
 
   def pocket_snares_hard(bar, section: nil)

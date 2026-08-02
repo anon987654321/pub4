@@ -12,7 +12,7 @@
 # unconstrained `require "json"`/`require "yaml"` below would activate
 # whatever version ships as a Ruby default gem (e.g. json 2.20.0 on 3.4.9),
 # so bootstrap!'s own `require "bundler/setup"` then conflicts and silently
-# disables coltrane/midilib/wavefile/head_music for the rest of the process
+# disables major_third_cycle_full/midilib/wavefile/head_music for the rest of the process
 # (bootstrap! rescues LoadError). Real invocations run plain `ruby dilla.rb`,
 # not `bundle exec`, so this ordering is the only thing that pins it correctly.
 require_relative "lib/music_gems"
@@ -34,10 +34,10 @@ DillaMusicGems.bootstrap!
 # The stream re-execs itself when this file's mtime changes, and exec inherits
 # the whole environment — including everything apply_best_defaults! and the
 # style tables had already written into it. So after one restart the child's
-# "user pins" contained TRACK/PROGRESSION=get_dis_money, values no user ever
+# "user pins" contained TRACK/PROGRESSION=pedal_e_descent, values no user ever
 # typed, and force_env! then refused to let any track's own progression
 # overwrite them. Asking for slum_village_players_documented rendered its name
-# and its 91 BPM over get_dis_money's chords, and no amount of restarting fixed
+# and its 91 BPM over pedal_e_descent's chords, and no amount of restarting fixed
 # it because each restart re-laundered the same defaults.
 #
 # The restart therefore declares the real pin set, and only those keys count as
@@ -180,9 +180,9 @@ module DillaSourceLearn
   def compose_report(source:, stem_dir:, stem_analysis:, full_analysis: nil)
     harmonic = stem_analysis.values_at(*HARMONY_STEMS).compact
     chords = harmonic.flat_map { |s| s[:top_chords] || [] }
-    coltrane = harmonic.filter_map { |s| s[:coltrane_candidates] }.flatten(1)
+    major_third_cycle_full = harmonic.filter_map { |s| s[:coltrane_candidates] }.flatten(1)
     merged_pcs = harmonic.flat_map { |s| s[:pitch_classes] || [] }.tally.sort_by { |_, c| -c }.map(&:first)
-    progression_symbols = (chords + coltrane).map { |c| c[:name] || c["name"] }.compact.uniq.first(8)
+    progression_symbols = (chords + major_third_cycle_full).map { |c| c[:name] || c["name"] }.compact.uniq.first(8)
     progression_insight = nil
     if defined?(DillaHarmony) && progression_symbols.length >= 2
       progression_insight = DillaHarmony.progression_insight(progression_symbols.map { |n| { name: n } })
@@ -216,7 +216,7 @@ module DillaSourceLearn
     analog = semantics&.include?("warm") ? :acetate : :vinyl_hot
     { track:, voicing:, sonitex_preset: sonitex, analog_chain: analog, bpm: bpm&.round,
       groove_dna: bpm && bpm < 88 ? "endtroducing" : "donuts", performer: "yancey",
-      notes: [progression_insight ? "coltrane=#{progression_insight[:notation]} in #{progression_insight[:scale]}" : nil,
+      notes: [progression_insight ? "major_third_cycle_full=#{progression_insight[:notation]} in #{progression_insight[:scale]}" : nil,
               progression_symbols.any? ? "chords=#{progression_symbols.first(4).join('-')}" : nil].compact }
   end
 
@@ -376,7 +376,7 @@ INLINE_SONIC_PROFILES = {
     },
   },
   bergen_akmd_local: {
-    "harmonic" => { "engine_progression" => "erykah_minor", "texture" => "bergen_night_rain" },
+    "harmonic" => { "engine_progression" => "warm_minor_vamp", "texture" => "bergen_night_rain" },
     "synth" => {
       "bpm" => 87, "swing" => 0.17, "pad_lowpass_hz" => 3100, "master_lowpass_hz" => 2700,
       "bass_shelf_db" => 9, "vinyl_noise" => 0.08, "texture" => "akmd_lofi_mastering"
@@ -392,9 +392,9 @@ INLINE_SONIC_PROFILES = {
 INLINE_RADIO_BERGEN_LEARNINGS = {
   "stream_rotation_weights" => {
     "maj7_minor_cycle" => 14, "neo_soul" => 10, "neo_soul_pocket" => 9, "electronium_loop" => 8,
-    "minor_iv_loop" => 7, "players_measured" => 6, "aydin_modal_quartal" => 6, "aydin_jazz_turn" => 5,
-    "bach_circle_descent" => 5, "bach_descending_bass" => 5, "warm_minor_arc" => 4,
-    "slash_neo_soul" => 4, "erykah_minor" => 3, "timeless_authentic" => 3,
+    "minor_iv_loop" => 7, "players_measured" => 6, "modal_quartal_ladder" => 6, "minor_two_five_chain" => 5,
+    "circle_fifths_descent" => 5, "walking_bass_descent" => 5, "warm_minor_arc" => 4,
+    "slash_neo_soul" => 4, "warm_minor_vamp" => 3, "timeless_authentic" => 3,
     "fourth_third_sixth_second_turn" => 2, "quartal_west_coast" => 2
   },
   "stream_env_defaults" => {
@@ -412,14 +412,14 @@ TRACK_SONIC_MAP = {
   maj7_minor_cycle: :dilla_timeless,
   fourth_third_sixth_second_turn: :dilla_timeless,
   timeless_authentic: :dilla_timeless,
-  time_donut: :dilla_timeless,
+  db_major_minor_fall: :dilla_timeless,
   chromatic_minor_descent: :dilla_timeless,
   neo_soul: :dilla_timeless,
   neo_soul_pocket: :slum_players,
-  aydin_modal_quartal: :dilla_timeless,
-  aydin_jazz_turn: :dilla_timeless,
-  bach_circle_descent: :dilla_timeless,
-  bach_descending_bass: :dilla_timeless,
+  modal_quartal_ladder: :dilla_timeless,
+  minor_two_five_chain: :dilla_timeless,
+  circle_fifths_descent: :dilla_timeless,
+  walking_bass_descent: :dilla_timeless,
   electronium_loop: :dilla_timeless,
   electronium_classic: :dilla_timeless,
   minor_soul_loop: :dilla_timeless,
@@ -439,7 +439,7 @@ TRACK_SONIC_MAP = {
 
 # Researched progressions — loop cleanly; skip fugue development + heavy pedal/bitonal.
 CURATED_PROGRESSIONS = %i[
-  maj7_minor_cycle time_donut fall_in_love minor_iv_loop
+  maj7_minor_cycle db_major_minor_fall eb_minor_two_chord minor_iv_loop
   timeless_authentic players_measured fourth_third_sixth_second_turn
   voice_led_minor_arc neo_soul neo_soul_pocket soul minor_soul_loop borrowed_dominant_turn
   chromatic_minor_descent electronium_loop electronium_classic
@@ -447,7 +447,7 @@ CURATED_PROGRESSIONS = %i[
   chromatic_mediant_drift major7_relative_minor_turn alternating_minor7_pair
   minor_dominant_slash_cycle minor_major_ninth_pair minor_ninth_cycle
   jazz baroque suspended_minor_close minor_cycle_descent
-  aydin_modal_quartal aydin_jazz_turn bach_circle_descent bach_descending_bass
+  modal_quartal_ladder minor_two_five_chain circle_fifths_descent walking_bass_descent
   phrygian_dominant_descent lament_ground hexatonic_pole_shiver hexatonic_cycle_ring
   dawn_ladder dim_stepping_stone sixth_diminished_wheel augmented_hinge
   lydian_augmented_haze four_station_orbit longing_unresolved neapolitan_door
@@ -513,7 +513,7 @@ ARP_PATTERN_BUILDERS = {
   quint_spread: ->(n) { [0, 2, 4, 1, 3].select { |d| d < n } },
   random_walk:  ->(n, rng = Random.new(42)) { cur = 0; Array.new(n * 2) { cur = (cur + rng.rand(-1..1)).clamp(0, n - 1) } },
   euclidean:    ->(n) { hits = 5; steps = n * 2; (0...steps).map { |i| ((i * hits) % steps) < hits ? i % n : nil }.compact },
-  coltrane:     ->(n) { [0, 2, 1, 3, 2, 0, 1].first(n * 2) },
+  major_third_cycle_full:     ->(n) { [0, 2, 1, 3, 2, 0, 1].first(n * 2) },
   donda_stab:   ->(n) { [0, 0, 2, 1].cycle.first(n * 2) },
   flylo_wobble: ->(n) { (0...n).flat_map { |i| [i, i, (i + 1) % n] }.first(n * 3) },
   stutter:      ->(n, rng = Random.new(17)) { (0...[n * 4, 24].max).filter_map do |i| if i.even?
@@ -826,7 +826,7 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:prophet_5_pad, role: :warm, program: 0, sf2: :supersaw, weight: 3.6, mix: 1.05, fs_gain: 1.65,
               color: "Prophet-5 poly",
               midi_fx: MIDI_FX_PAD_WARM,
-              arp_styles: %i[updown pingpong coltrane],
+              arp_styles: %i[updown pingpong major_third_cycle_full],
               midi_arp: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24 },
               fx: "chorus=0.58:0.78:38|48:0.28|0.22:0.32|0.26:1.2|1.5," \
                   "vibrato=f=0.16:d=0.012,equalizer=f=220:t=o:w=1:g=2.0," \
@@ -854,7 +854,7 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:prophet_rev2_bleeding, role: :warm, program: 5, sf2: :supersaw, weight: 2.4, mix: 0.92, fs_gain: 1.55,
               color: "Rev2 hybrid supersaw bed",
               midi_fx: MIDI_FX_PAD_WARM,
-              arp_styles: %i[updown pingpong coltrane],
+              arp_styles: %i[updown pingpong major_third_cycle_full],
               midi_arp: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24 },
               fx: "chorus=0.6:0.8:44|54:0.3|0.26:0.34|0.28:1.25|1.55," \
                   "aphaser=speed=0.12:decay=0.48,equalizer=f=1600:t=h:w=1.2:g=1.4,lowpass=f=4800"),
@@ -926,12 +926,12 @@ SYNTH_PATCH_CATALOG = [
   synth_patch(:big_lead_prophet5, role: :lead, program: 87, weight: 2.8, fs_gain: 1.4, arp_styles: %i[pingpong quint_spread], octave: 2,
               fx: "chorus=0.52:0.72:36|46:0.24|0.2:0.28|0.22:1.15|1.45,aecho=0.45:0.38:140|260:0.28|0.16,lowpass=f=5400"),
   synth_patch(:prophet_bleeding_lead, role: :lead, program: 87, sf2: :supersaw, weight: 1.6, fs_gain: 1.38,
-              arp_styles: %i[spiral coltrane], octave: 2,
+              arp_styles: %i[spiral major_third_cycle_full], octave: 2,
               midi_fx: MIDI_FX_LEAD, midi_arp: { style: :spiral, subdiv: 8, gate: 0.54, vel: 0.54 },
               fx: "chorus=0.58:0.78:44|54:0.3|0.25:0.32|0.28:1.25|1.6,aphaser=speed=0.16:decay=0.5,vibrato=f=0.38:d=0.015"),
   synth_patch(:charang_bite, role: :lead, program: 84, arp_styles: %i[up fibonacci], octave: 2,
               fx: "tremolo=f=5.5:d=0.18,aecho=0.5:0.38:140|260:0.28|0.16"),
-  synth_patch(:fifths_lead, role: :lead, program: 86, arp_styles: %i[updown coltrane], octave: 2,
+  synth_patch(:fifths_lead, role: :lead, program: 86, arp_styles: %i[updown major_third_cycle_full], octave: 2,
               fx: "vibrato=f=0.55:d=0.02,lowpass=f=4800"),
   synth_patch(:saw_lead, role: :lead, program: 81, arp_styles: %i[random_walk flylo_wobble], octave: 2,
               midi_fx: MIDI_FX_LEAD, midi_arp: { style: :pingpong, subdiv: 8, gate: 0.55, vel: 0.5 },
@@ -945,7 +945,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "tremolo=f=4.8:d=0.16,aecho=0.55:0.45:180|340:0.3|0.18"),
   synth_patch(:supersaw_3, role: :lead, program: 7, sf2: :supersaw, arp_styles: %i[flylo_wobble random_walk], octave: 2,
               fx: "aphaser=speed=0.18:decay=0.5,vibrato=f=0.4:d=0.015"),
-  synth_patch(:brass_synth, role: :lead, program: 62, arp_styles: %i[up coltrane], octave: 1,
+  synth_patch(:brass_synth, role: :lead, program: 62, arp_styles: %i[up major_third_cycle_full], octave: 1,
               fx: "acompressor=threshold=-20dB:ratio=3:attack=8:release=90,lowpass=f=3800"),
   synth_patch(:soft_synth_lead, role: :lead, program: 88, arp_styles: %i[updown downup], octave: 2,
               fx: "aecho=0.6:0.5:220|400:0.35|0.2,lowpass=f=3400"),
@@ -961,7 +961,7 @@ SYNTH_PATCH_CATALOG = [
               fx: "tremolo=f=6.5:d=0.12,aecho=0.4:0.45:80|150:0.28|0.14"),
   synth_patch(:guitar_muted, role: :lead, program: 28, arp_styles: %i[skip_up donda_stab], octave: 2,
               fx: "lowpass=f=2600,acrusher=bits=11:samples=1.5:mix=0.12"),
-  synth_patch(:dist_guitar, role: :lead, program: 30, arp_styles: %i[coltrane updown], octave: 1,
+  synth_patch(:dist_guitar, role: :lead, program: 30, arp_styles: %i[major_third_cycle_full updown], octave: 1,
               fx: "acompressor=threshold=-18dB:ratio=4:attack=3:release=60,lowpass=f=4200"),
   synth_patch(:pluck_synth, role: :lead, program: 24, arp_styles: %i[up pingpong], octave: 2, gate: 0.55,
               fx: "aecho=0.35:0.4:60|110:0.25|0.12,highpass=f=200"),
@@ -1035,12 +1035,12 @@ SYNTH_PATCH_CATALOG = [
                   "lowpass=f=3400,aecho=0.7:0.6:180|320:0.35|0.2"),
 
   synth_patch(:jazz_ballad_lead, role: :lead, program: 73, weight: 2.5, fs_gain: 1.26, gate: 0.7, octave: 2,
-              arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[updown major_third_cycle_full], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :updown, subdiv: 4, gate: 0.72, vel: 0.44 },
               fx: "vibrato=f=0.45:d=0.012,aecho=0.55:0.48:200|360:0.28|0.14,lowpass=f=4000"),
   synth_patch(:gospel_brass_lead, role: :lead, program: 62, weight: 2.2, fs_gain: 1.3, gate: 0.64, octave: 1,
-              arp_styles: %i[coltrane up quint_spread], midi_fx: MIDI_FX_LEAD,
-              midi_arp: { style: :coltrane, subdiv: 6, gate: 0.62, vel: 0.5 },
+              arp_styles: %i[major_third_cycle_full up quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :major_third_cycle_full, subdiv: 6, gate: 0.62, vel: 0.5 },
               fx: "acompressor=threshold=-22dB:ratio=2.5:attack=12:release=100,lowpass=f=3600"),
   synth_patch(:erykah_dust_lead, role: :lead, program: 4, weight: 2.9, fs_gain: 1.3, gate: 0.6, octave: 2,
               arp_styles: %i[euclidean skip_up], midi_fx: MIDI_FX_LEAD,
@@ -1063,11 +1063,11 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :skip_up, subdiv: 8, gate: 0.54, vel: 0.52 },
               fx: "highpass=f=200,lowpass=f=4200"),
   synth_patch(:stevie_organ_lead, role: :lead, program: 16, weight: 2.1, fs_gain: 1.3, gate: 0.68, octave: 2,
-              arp_styles: %i[coltrane up], midi_fx: MIDI_FX_LEAD,
-              midi_arp: { style: :coltrane, subdiv: 6, gate: 0.7, vel: 0.46 },
+              arp_styles: %i[major_third_cycle_full up], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :major_third_cycle_full, subdiv: 6, gate: 0.7, vel: 0.46 },
               fx: "chorus=0.36:0.52:28|36:0.14|0.1:0.16|0.14:0.9|1.1,lowpass=f=4000"),
   synth_patch(:glasper_ep_lead, role: :lead, program: 4, weight: 2.6, fs_gain: 1.34, gate: 0.6, octave: 2,
-              arp_styles: %i[quint_spread coltrane], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[quint_spread major_third_cycle_full], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :quint_spread, subdiv: 6, gate: 0.62, vel: 0.46 },
               fx: "aecho=0.45:0.4:110|200:0.26|0.14,lowpass=f=4400"),
   synth_patch(:warm_prophet_hook, role: :lead, program: 81, weight: 2.5, fs_gain: 1.36, gate: 0.6, octave: 2,
@@ -1202,8 +1202,8 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :euclidean, subdiv: 8, gate: 0.5, vel: 0.58 },
               fx: "tremolo=f=5.5:d=0.1,chorus=0.4:0.6:32|44:0.2|0.16:0.24|0.2:1.05|1.3,aecho=0.45:0.38:120|220:0.26|0.12,equalizer=f=2400:t=o:w=1.2:g=2.8,lowpass=f=5600"),
   synth_patch(:cs80_brass_lead, role: :lead, program: 62, weight: 2.9, fs_gain: 1.38, gate: 0.64, octave: 1,
-              arp_styles: %i[coltrane updown quint_spread], midi_fx: MIDI_FX_LEAD,
-              midi_arp: { style: :coltrane, subdiv: 6, gate: 0.66, vel: 0.54 },
+              arp_styles: %i[major_third_cycle_full updown quint_spread], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :major_third_cycle_full, subdiv: 6, gate: 0.66, vel: 0.54 },
               fx: "vibrato=f=0.48:d=0.014,chorus=0.42:0.62:28|38:0.18|0.14:0.2|0.18:1.0|1.25,aecho=0.48:0.42:180|320:0.28|0.14,equalizer=f=1800:t=o:w=1.1:g=2.2,lowpass=f=4800"),
   synth_patch(:mono_poly_lead, role: :lead, program: 80, weight: 3.0, fs_gain: 1.4, gate: 0.55, octave: 2,
               arp_styles: %i[up skip_up burst spiral], midi_fx: MIDI_FX_LEAD,
@@ -1214,7 +1214,7 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :spiral, subdiv: 6, gate: 0.52, vel: 0.5 },
               fx: "aecho=0.55:0.48:110|200:0.32|0.16,aphaser=speed=0.11:decay=0.55,highpass=f=420,equalizer=f=4800:t=h:w=1.4:g=2.2,lowpass=f=7200"),
   synth_patch(:jp8_brass_arp, role: :scale_lead, program: 63, weight: 3.0, fs_gain: 1.32, gate: 0.6, octave: 2,
-              arp_styles: %i[updown pingpong coltrane], midi_fx: MIDI_FX_SCALE_LEAD,
+              arp_styles: %i[updown pingpong major_third_cycle_full], midi_fx: MIDI_FX_SCALE_LEAD,
               fx: "chorus=0.5:0.7:38|48:0.24|0.2:0.28|0.24:1.15|1.4,aecho=0.46:0.4:140|260:0.26|0.14,equalizer=f=2600:t=o:w=1.3:g=3.0,lowpass=f=6000"),
   synth_patch(:sh101_sequence, role: :scale_lead, program: 38, weight: 2.9, fs_gain: 1.3, gate: 0.48, octave: 2,
               arp_styles: %i[up euclidean skip_up], midi_fx: MIDI_FX_SCALE_LEAD,
@@ -1231,7 +1231,7 @@ SYNTH_PATCH_CATALOG = [
               color: "honky-tonk edge", midi_fx: MIDI_FX_PAD_EP,
               fx: "acrusher=bits=12:samples=1.5:mix=0.08,equalizer=f=2800:t=h:w=1.2:g=1.6,lowpass=f=5000"),
   synth_patch(:yamaha_ballad_lead, role: :lead, program: 0, sf2: :yamaha, weight: 2.6, fs_gain: 1.28, gate: 0.72, octave: 2,
-              arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[updown major_third_cycle_full], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :updown, subdiv: 4, gate: 0.74, vel: 0.44 },
               fx: "aecho=0.5:0.48:160|300:0.26|0.14,lowpass=f=4800"),
   synth_patch(:yamaha_scale_arp, role: :scale_lead, program: 0, sf2: :yamaha, weight: 2.5, fs_gain: 1.22, gate: 0.6, octave: 2,
@@ -1305,7 +1305,7 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :skip_up, subdiv: 8, gate: 0.52, vel: 0.5 },
               fx: "highpass=f=180,lowpass=f=5000,aecho=0.35:0.35:60|110:0.18|0.08"),
   synth_patch(:clean_jazz_guitar, role: :lead, program: 26, weight: 2.3, fs_gain: 1.28, gate: 0.64, octave: 2,
-              arp_styles: %i[updown coltrane], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[updown major_third_cycle_full], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :updown, subdiv: 4, gate: 0.68, vel: 0.48 },
               fx: "chorus=0.35:0.5:26|34:0.14|0.1:0.16|0.14:0.9|1.1,lowpass=f=4600"),
   synth_patch(:overdrive_hook, role: :lead, program: 29, weight: 1.8, fs_gain: 1.32, gate: 0.5, octave: 1,
@@ -1336,11 +1336,11 @@ SYNTH_PATCH_CATALOG = [
               color: "horn bed", midi_fx: MIDI_FX_PAD_WARM,
               fx: "lowpass=f=3200,aecho=0.42:0.45:160|300:0.24|0.12"),
   synth_patch(:muted_trumpet_lead, role: :lead, program: 59, weight: 2.1, fs_gain: 1.28, gate: 0.66, octave: 2,
-              arp_styles: %i[coltrane updown], midi_fx: MIDI_FX_LEAD,
-              midi_arp: { style: :coltrane, subdiv: 6, gate: 0.64, vel: 0.48 },
+              arp_styles: %i[major_third_cycle_full updown], midi_fx: MIDI_FX_LEAD,
+              midi_arp: { style: :major_third_cycle_full, subdiv: 6, gate: 0.64, vel: 0.48 },
               fx: "vibrato=f=0.42:d=0.012,lowpass=f=3600"),
   synth_patch(:trombone_soul, role: :lead, program: 57, weight: 1.9, fs_gain: 1.3, gate: 0.7, octave: 1,
-              arp_styles: %i[up coltrane], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[up major_third_cycle_full], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :up, subdiv: 4, gate: 0.72, vel: 0.5 },
               fx: "lowpass=f=3000,aecho=0.4:0.4:150|280:0.22|0.1"),
   synth_patch(:english_horn, role: :lead, program: 69, weight: 1.8, fs_gain: 1.24, gate: 0.72, octave: 2,
@@ -1366,7 +1366,7 @@ SYNTH_PATCH_CATALOG = [
               midi_arp: { style: :up, subdiv: 8, gate: 0.58, vel: 0.44 },
               fx: "aecho=0.42:0.4:90|160:0.22|0.1,lowpass=f=5000"),
   synth_patch(:sitar_drone, role: :lead, program: 104, weight: 2.0, fs_gain: 1.28, gate: 0.7, octave: 2,
-              arp_styles: %i[spiral coltrane], midi_fx: MIDI_FX_LEAD,
+              arp_styles: %i[spiral major_third_cycle_full], midi_fx: MIDI_FX_LEAD,
               midi_arp: { style: :spiral, subdiv: 6, gate: 0.68, vel: 0.46 },
               fx: "aecho=0.5:0.48:130|240:0.28|0.14,lowpass=f=4200"),
   synth_patch(:shamisen_pluck, role: :lead, program: 106, weight: 1.9, fs_gain: 1.24, gate: 0.42, octave: 2,
@@ -1597,7 +1597,7 @@ FM_XLEAD_NATIVE_MIX = 0.42
 # Per-track pad character — applied on stream rotation and deep renders unless
 # PAD_VOICE / PAD_ARP_MODE were set on the CLI before launch.
 TRACK_SOUL_PAD_PROFILES = {
-  glasper_quartal:     { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100" },
+  modern_quartal_stack:     { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100" },
   slow_ballad_wash:    { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200" },
   suspended_ballad:    { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3400" },
   neo_soul_pocket:     { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer" },
@@ -1614,8 +1614,8 @@ TRACK_SOUL_PAD_PROFILES = {
   dorian_iv_loop:      { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash" },
   backdoor_resolve:    { "PAD_VOICE" => "moog", "PAD_ARP_MODE" => "pulse" },
   gospel_bIII:         { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "shimmer" },
-  erykah_minor:        { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1000" },
-  watermelon_turn:     { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer" },
+  warm_minor_vamp:        { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1000" },
+  funk_sixteenth_turn:     { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer" },
   church_sus:          { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "held" },
   jazz_ballad_waltz:   { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1400" },
   slash_neo_soul:      { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "duo" },
@@ -1624,10 +1624,10 @@ TRACK_SOUL_PAD_PROFILES = {
   electronium_loop:    { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100", "PAD_RELEASE" => "3200" },
   electronium_classic: { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "shimmer", "PAD_ATTACK" => "980", "PAD_RELEASE" => "2600" },
   fourth_third_sixth_second_turn: { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1400", "PAD_RELEASE" => "3800" },
-  aydin_modal_quartal: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200", "VOICING" => "quartal" },
-  aydin_jazz_turn:     { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer", "PAD_ATTACK" => "1050", "PAD_RELEASE" => "2800", "VOICING" => "bill_evans" },
-  bach_circle_descent: { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "figure", "PAD_ATTACK" => "900", "PAD_RELEASE" => "2400", "VOICING" => "drop2" },
-  bach_descending_bass: { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100", "PAD_RELEASE" => "3000", "VOICING" => "kenny_barron" },
+  modal_quartal_ladder: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200", "VOICING" => "quartal" },
+  minor_two_five_chain:     { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "shimmer", "PAD_ATTACK" => "1050", "PAD_RELEASE" => "2800", "VOICING" => "bill_evans" },
+  circle_fifths_descent: { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "figure", "PAD_ATTACK" => "900", "PAD_RELEASE" => "2400", "VOICING" => "drop2" },
+  walking_bass_descent: { "PAD_VOICE" => "blend", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1100", "PAD_RELEASE" => "3000", "VOICING" => "kenny_barron" },
   timeless_authentic:  { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1300", "PAD_RELEASE" => "3600" },
   long_soul:           { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "74" },
   golden:              { "PAD_VOICE" => "stack_soul", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "PAD_VOL" => "74" },
@@ -1640,7 +1640,7 @@ TRACK_SOUL_PAD_PROFILES = {
   two_chord_luminous:      { "PAD_VOICE" => "crystal", "PAD_ARP_MODE" => "held", "PAD_ATTACK" => "1600", "PAD_RELEASE" => "4200" },
   mixo_sus_loop:           { "PAD_VOICE" => "pulse", "PAD_ARP_MODE" => "pulse", "PAD_ATTACK" => "800", "PAD_RELEASE" => "2200" },
   common_tone_drift:       { "PAD_VOICE" => "glass", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1150", "PAD_RELEASE" => "3200" },
-  coltrane_lite_triad:     { "PAD_VOICE" => "ice", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1000", "PAD_RELEASE" => "2800" },
+  third_cycle_triads:     { "PAD_VOICE" => "ice", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1000", "PAD_RELEASE" => "2800" },
   drone_quartal_wash:      { "PAD_VOICE" => "vapor", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1500", "PAD_RELEASE" => "4000", "VOICING" => "quartal" },
   waltz_relative_lift:     { "PAD_VOICE" => "rhodes", "PAD_ARP_MODE" => "wash", "PAD_ATTACK" => "1200", "PAD_RELEASE" => "3200" },
   half_time_gospel_plagal: { "PAD_VOICE" => "prophet", "PAD_ARP_MODE" => "held", "PAD_ATTACK" => "1400", "PAD_RELEASE" => "3800" },
@@ -1653,7 +1653,7 @@ TRACK_SOUL_PAD_PROFILES = {
 
 # Per-track lead voice + arp figure — pairs with TRACK_SOUL_PAD_PROFILES.
 TRACK_SOUL_LEAD_PROFILES = {
-  glasper_quartal:     { "LEAD_VOICE" => "cs", "LEAD_ARP_MODE" => "neo_quartal" },
+  modern_quartal_stack:     { "LEAD_VOICE" => "cs", "LEAD_ARP_MODE" => "neo_quartal" },
   slow_ballad_wash:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
   suspended_ballad:    { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "soul_wash" },
   neo_soul_pocket:     { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "moog_funk" },
@@ -1670,8 +1670,8 @@ TRACK_SOUL_LEAD_PROFILES = {
   dorian_iv_loop:      { "LEAD_VOICE" => "prophet", "LEAD_ARP_MODE" => "soul_wash" },
   backdoor_resolve:    { "LEAD_VOICE" => "moog", "LEAD_ARP_MODE" => "moog_funk" },
   gospel_bIII:         { "LEAD_VOICE" => "gospel", "LEAD_ARP_MODE" => "gospel_lift" },
-  erykah_minor:        { "LEAD_VOICE" => "erykah", "LEAD_ARP_MODE" => "erykah_dust" },
-  watermelon_turn:     { "LEAD_VOICE" => "watermelon", "LEAD_ARP_MODE" => "donuts_shimmer" },
+  warm_minor_vamp:        { "LEAD_VOICE" => "erykah", "LEAD_ARP_MODE" => "erykah_dust" },
+  funk_sixteenth_turn:     { "LEAD_VOICE" => "watermelon", "LEAD_ARP_MODE" => "donuts_shimmer" },
   church_sus:          { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
   jazz_ballad_waltz:   { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom" },
   slash_neo_soul:      { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
@@ -1680,10 +1680,10 @@ TRACK_SOUL_LEAD_PROFILES = {
   electronium_loop:    { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "LEAD_ARP" => "1", "HARMONY_LEAD" => "1" },
   electronium_classic: { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal" },
   fourth_third_sixth_second_turn: { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1" },
-  aydin_modal_quartal: { "LEAD_VOICE" => "cs", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1" },
-  aydin_jazz_turn:     { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom", "HARMONY_LEAD" => "1" },
-  bach_circle_descent: { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1" },
-  bach_descending_bass: { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1" },
+  modal_quartal_ladder: { "LEAD_VOICE" => "cs", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1" },
+  minor_two_five_chain:     { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom", "HARMONY_LEAD" => "1" },
+  circle_fifths_descent: { "LEAD_VOICE" => "neo_pluck", "LEAD_ARP_MODE" => "neo_quartal", "HARMONY_LEAD" => "1" },
+  walking_bass_descent: { "LEAD_VOICE" => "soft", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1" },
   timeless_authentic:  { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "prophet_glass", "HARMONY_LEAD" => "1" },
   long_soul:           { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   golden:              { "LEAD_VOICE" => "soul_prophet", "LEAD_ARP_MODE" => "soul_wash", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
@@ -1695,7 +1695,7 @@ TRACK_SOUL_LEAD_PROFILES = {
   two_chord_luminous:      { "LEAD_VOICE" => "crystal", "LEAD_ARP_MODE" => "crystal_scatter", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   mixo_sus_loop:           { "LEAD_VOICE" => "acid", "LEAD_ARP_MODE" => "acid_run", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   common_tone_drift:       { "LEAD_VOICE" => "glass", "LEAD_ARP_MODE" => "glass_spin", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
-  coltrane_lite_triad:     { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
+  third_cycle_triads:     { "LEAD_VOICE" => "flylo", "LEAD_ARP_MODE" => "flylo_spiral", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   drone_quartal_wash:      { "LEAD_VOICE" => "vapor", "LEAD_ARP_MODE" => "vapor_wave", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   waltz_relative_lift:     { "LEAD_VOICE" => "ballad", "LEAD_ARP_MODE" => "ballad_bloom", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
   half_time_gospel_plagal: { "LEAD_VOICE" => "gospel", "LEAD_ARP_MODE" => "gospel_lift", "HARMONY_LEAD" => "1", "LEAD_ARP" => "1" },
@@ -1940,15 +1940,15 @@ LEAD_ARP_PRESETS = {
   flylo_spiral:   { style: :spiral, subdiv: 8, gate: 0.58, vel: 0.46,
                     arp_styles: %i[spiral fibonacci random_walk] },
   neo_quartal:    { style: :quint_spread, subdiv: 6, gate: 0.68, vel: 0.46,
-                    arp_styles: %i[quint_spread updown coltrane] },
+                    arp_styles: %i[quint_spread updown major_third_cycle_full] },
   ballad_bloom:   { style: :updown, subdiv: 4, gate: 0.76, vel: 0.44,
-                    arp_styles: %i[updown coltrane] },
+                    arp_styles: %i[updown major_third_cycle_full] },
   pocket_stab:    { style: :donda_stab, subdiv: 8, gate: 0.52, vel: 0.56,
                     arp_styles: %i[donda_stab skip_up euclidean] },
   erykah_dust:    { style: :euclidean, subdiv: 8, gate: 0.72, vel: 0.42,
                     arp_styles: %i[euclidean skip_up] },
-  gospel_lift:    { style: :coltrane, subdiv: 6, gate: 0.64, vel: 0.5,
-                    arp_styles: %i[coltrane up quint_spread] },
+  gospel_lift:    { style: :major_third_cycle_full, subdiv: 6, gate: 0.64, vel: 0.5,
+                    arp_styles: %i[major_third_cycle_full up quint_spread] },
   # Experimental electronic figures (musical, not chaotic).
   glass_spin:     { style: :spiral, subdiv: 6, gate: 0.58, vel: 0.46,
                     arp_styles: %i[spiral quint_spread pingpong] },
@@ -1969,7 +1969,7 @@ EXPERIMENTAL_LEAD_ARP_PRESETS = {
   glitch_walk:   { style: :random_walk, subdiv: 12, gate: 0.4, vel: 0.58,
                    arp_styles: %i[random_walk stutter ratchet euclidean burst] },
   prophet_saw:   { style: :pingpong, subdiv: 6, gate: 0.5, vel: 0.58,
-                   arp_styles: %i[pingpong skip_up coltrane quint_spread] },
+                   arp_styles: %i[pingpong skip_up major_third_cycle_full quint_spread] },
   moog_rip:      { style: :up, subdiv: 4, gate: 0.62, vel: 0.6,
                    arp_styles: %i[up downup quint_spread ratchet stutter] },
   shred_burst:   { style: :burst, subdiv: 8, gate: 0.38, vel: 0.66,
@@ -1977,7 +1977,7 @@ EXPERIMENTAL_LEAD_ARP_PRESETS = {
   stutter_gate:  { style: :stutter, subdiv: 12, gate: 0.35, vel: 0.62,
                    arp_styles: %i[stutter ratchet euclidean skip_up burst] },
   ratchet_funk:  { style: :ratchet, subdiv: 6, gate: 0.48, vel: 0.64,
-                   arp_styles: %i[ratchet updown coltrane burst flylo_wobble] },
+                   arp_styles: %i[ratchet updown major_third_cycle_full burst flylo_wobble] },
 }.freeze
 
 PAD_TO_LEAD_ARP = {
@@ -2047,11 +2047,11 @@ PAD_ARP_PRESETS = {
   ep_shimmer: { style: :skip_up, subdiv: 8, gate: 0.78, vel: 0.16,
                 arp_styles: %i[skip_up euclidean quint_spread] },
   ep_figure:  { style: :fibonacci, subdiv: 6, gate: 0.74, vel: 0.22,
-                arp_styles: %i[fibonacci spiral coltrane] },
+                arp_styles: %i[fibonacci spiral major_third_cycle_full] },
   warm_pulse: { style: :updown, subdiv: 4, gate: 0.86, vel: 0.24,
                 arp_styles: %i[updown pingpong] },
   warm_wash:  { style: :pingpong, subdiv: 3, gate: 0.9, vel: 0.28,
-                arp_styles: %i[pingpong coltrane quint_spread] },
+                arp_styles: %i[pingpong major_third_cycle_full quint_spread] },
   warm_moog:  { style: :up, subdiv: 4, gate: 0.88, vel: 0.26,
                 arp_styles: %i[up downup quint_spread] },
 }.freeze
@@ -2225,7 +2225,7 @@ def render_pinned? = !ENV["RENDER_SEED"].to_s.empty?
 
 # Ruby randomises String#hash and Symbol#hash per process -- SipHash with a key
 # drawn at startup, so hash-flooding cannot be aimed at a long-running server.
-# Measured, three processes asked for "time_donut".hash return
+# Measured, three processes asked for "db_major_minor_fall".hash return
 # 1631596481632401333, -1643377148673927661 and -1069425221180396255.
 #
 # Twenty-six sites in this file built seeds out of that -- the track name, the
@@ -2576,7 +2576,7 @@ module RadioBergenStudy
                          dilla_track: "minor_turnaround", sonic_key: "dilla_timeless", bpm: 86..92 },
     /akmd|mike t|angelo reira|jan hakim|haisam|johann/i => {
       producer: "bergen", performer: "yancey", groove_dna: "donuts",
-      dilla_track: "erykah_minor", sonic_key: "dilla_timeless", bpm: 84..90,
+      dilla_track: "warm_minor_vamp", sonic_key: "dilla_timeless", bpm: 84..90,
       mix: "akmd_lofi_mastering"
     },
     /mochi|itoh/i => { producer: "flylo", performer: "glasper", groove_dna: "wonky",
@@ -2686,7 +2686,7 @@ module RadioBergenStudy
       "mix_notes" => [
         "AKMD local_mp3 rows use pub2 lofi mastering chain (60Hz HPF, 11.5kHz LPF, 80/200Hz boosts, soft clip).",
         "Playlist rotation is Dilla/Slum/FlyLo weighted — bias stream TRACK toward stream_rotation_weights.",
-        "Bergen local artists → erykah_minor / warm pad wash; beat references → mapped producer DNA.",
+        "Bergen local artists → warm_minor_vamp / warm pad wash; beat references → mapped producer DNA.",
         "Never autoplay YouTube in production without rights review — manifest is reference_only_until_rights_review.",
       ],
       "sonic_profiles" => INLINE_RADIO_BERGEN_LEARNINGS["sonic_profiles"],
@@ -2782,7 +2782,7 @@ module RadioBergenStudy
     drums: "Donda-style drunk grid; kick 0,3,6,10,13; dense hat 16ths.",
     texture: "Dark minor loop; heavy bass shelf.",
     harmony: "Fm7–Abmaj7–Bbm7 loop.",
-    dilla_engine: { track: "donda_minor", performer: "questlove" }
+    dilla_engine: { track: "stark_minor_pair", performer: "questlove" }
   },
   "slum_village_get_it_together" => {
     bpm: 92, key: "C minor", drum_preset: :mpc3000, groove_dna: "donuts",
@@ -2818,14 +2818,14 @@ module RadioBergenStudy
     drums: "Slow loose pocket; minimal kick; brush-like hats.",
     texture: "Glasper quartal keys; long reverb.",
     harmony: "Ebmaj9–Cm9–Abmaj9–Bb6.",
-    dilla_engine: { track: "glasper_quartal", performer: "glasper" }
+    dilla_engine: { track: "modern_quartal_stack", performer: "glasper" }
   },
   "slum_village_worlds_full_of_sadness" => {
     bpm: 88, key: "G minor", drum_preset: :dilla_slight, groove_dna: "donuts",
     drums: "Melancholy swing; sparse kicks; rimshot ghosts.",
     texture: "Waterfall pad wash; minor soul loop.",
     harmony: "Gm9–Cm7–Fmaj9–Bbm7 watermelon turn.",
-    dilla_engine: { track: "watermelon_turn", performer: "questlove" }
+    dilla_engine: { track: "funk_sixteenth_turn", performer: "questlove" }
   },
   "a_mochi_takaaki_itoh_sarria_s_mind" => {
     bpm: 124, key: "D mixolydian", drum_preset: :mpc3000, groove_dna: "wonky",
@@ -2859,15 +2859,15 @@ module RadioBergenStudy
     bpm: 87, key: "F# minor", drum_preset: :madlib_dusty, groove_dna: "donuts",
     drums: "Bergen lofi grid; kick 0,4,8,12 with humanize; swung hats; sparse clap.",
     texture: "AKMD mastering chain; night-rain pad; vinyl 0.08; LP 3.1 kHz.",
-    harmony: "erykah_minor bill-evans voicing.",
-    dilla_engine: { track: "erykah_minor", performer: "yancey", mix: "akmd_lofi_mastering" }
+    harmony: "warm_minor_vamp bill-evans voicing.",
+    dilla_engine: { track: "warm_minor_vamp", performer: "yancey", mix: "akmd_lofi_mastering" }
   },
   "akmd_mike_t_alt_kan_skje" => {
     bpm: 88, key: "F# minor", drum_preset: :madlib_dusty, groove_dna: "donuts",
     drums: "Same family as Stailings; slightly busier hat 16ths.",
     texture: "Lo-fi warmth; boosted 80/200 Hz per AKMD chain.",
-    harmony: "erykah_minor cycle.",
-    dilla_engine: { track: "erykah_minor", performer: "yancey" }
+    harmony: "warm_minor_vamp cycle.",
+    dilla_engine: { track: "warm_minor_vamp", performer: "yancey" }
   },
   "akmd_mike_t_jan_hakim_diverse" => {
     bpm: 86, key: "C minor", drum_preset: :mpc3000, groove_dna: "donuts",
@@ -2880,29 +2880,29 @@ module RadioBergenStudy
     bpm: 85, key: "F# minor", drum_preset: :madlib_dusty, groove_dna: "donuts",
     drums: "Slow bergen swing; long kick sustain; rim ghosts.",
     texture: "Hotel-room ambience; heavy reverb on pad; AKMD LP.",
-    harmony: "erykah_minor / keys_woman blend.",
-    dilla_engine: { track: "erykah_minor", performer: "yancey" }
+    harmony: "warm_minor_vamp / piano_soul_turn blend.",
+    dilla_engine: { track: "warm_minor_vamp", performer: "yancey" }
   },
   "angelo_reira_johann_sandviken_hotell_b" => {
     bpm: 84, key: "Eb", drum_preset: :madlib_dusty, groove_dna: "donuts",
     drums: "Companion to A; softer kick velocity; more pad-forward.",
     texture: "Warmer, less drum-forward than A.",
-    harmony: "keys_woman Ebmaj9–Cm9–Fm7–Bb7.",
-    dilla_engine: { track: "keys_woman", performer: "yancey" }
+    harmony: "piano_soul_turn Ebmaj9–Cm9–Fm7–Bb7.",
+    dilla_engine: { track: "piano_soul_turn", performer: "yancey" }
   },
   "haisam_johann_pb1" => {
     bpm: 89, key: "F# minor", drum_preset: :dilla_slight, groove_dna: "donuts",
     drums: "PB-series pocket; crisp snare; tight hats.",
     texture: "Cleaner top than Sandviken; still AKMD-mastered body.",
-    harmony: "erykah_minor with iv_borrow_minor color.",
-    dilla_engine: { track: "erykah_minor", performer: "yancey" }
+    harmony: "warm_minor_vamp with iv_borrow_minor color.",
+    dilla_engine: { track: "warm_minor_vamp", performer: "yancey" }
   },
   "jan_hakim_johann_stailings_a" => {
     bpm: 87, key: "F# minor", drum_preset: :madlib_dusty, groove_dna: "donuts",
     drums: "Stailings variant; drunk hat stagger on 3,9,15.",
     texture: "Canonical Bergen stailings timbre — reference for local rotation.",
-    harmony: "erykah_minor.",
-    dilla_engine: { track: "erykah_minor", performer: "yancey" }
+    harmony: "warm_minor_vamp.",
+    dilla_engine: { track: "warm_minor_vamp", performer: "yancey" }
   },
   "mike_t_jr_rauingar" => {
     bpm: 90, key: "A minor", drum_preset: :dilla_slight, groove_dna: "donuts",
@@ -3117,7 +3117,7 @@ end
       "bergen_local" => {
         "drum_pattern" => "madlib_dusty / mpc3000 hybrid; kicks 0,6,10; swung 8th hats; AKMD chain HPF 60 LPF 11.5k",
         "texture" => "bergen_night_rain pad wash; vinyl 0.07–0.08; bass shelf +9; master LP 2.7–3.1 kHz",
-        "harmony" => "erykah_minor (F#m9–Bm7–Emaj7–C#m7); bill_evans voicing; swing 58%",
+        "harmony" => "warm_minor_vamp (F#m9–Bm7–Emaj7–C#m7); bill_evans voicing; swing 58%",
         "bpm_cluster" => "84–90",
       },
       "dilla_canon" => {
@@ -3129,7 +3129,7 @@ end
       "flylo_canon" => {
         "drum_pattern" => "flylo_abstract broken 16ths; kick 0,5,8,13; displaced snares",
         "texture" => "sidechain pump + jazz haze; quartal voicings; stereo pan hats",
-        "harmony" => "quartal_west_coast / glasper_quartal",
+        "harmony" => "quartal_west_coast / modern_quartal_stack",
         "bpm_cluster" => "82–88",
       },
       "slum_canon" => {
@@ -3152,7 +3152,7 @@ end
         youtube_id: row[:youtube_id], audio_file: audio, analysis: measured,
         production_dossier: reference,
         engine_recommendation: reference&.dig(:dilla_engine) || {
-          track: "erykah_minor", performer: "yancey", groove_dna: "donuts",
+          track: "warm_minor_vamp", performer: "yancey", groove_dna: "donuts",
           kicks: "1", speak: "1", mix: "akmd_lofi_mastering"
         }
       }
@@ -3444,7 +3444,7 @@ end
 
 # mode: is accepted and ignored. route_generated_style passes the same four
 # keywords to every generator, and this was the one signature that did not take
-# it — so the coltrane track raised "unknown keyword: :mode" on every render,
+# it — so the major_third_cycle_full track raised "unknown keyword: :mode" on every render,
 # failed its retry, and demo-all substituted a silence placeholder. It shipped
 # 33 seconds of silence into the middle of the demo at -70 LUFS.
 #
@@ -3459,7 +3459,7 @@ def generate_coltrane_changes(root_hz:, mode: nil, length: 8, seed: nil)
     semitone = start + offsets[i % 3]
     root = root_hz * (2**(semitone / 12.0))
     q = %w[maj9 m9 7].sample(random: rng)
-    { name: "coltrane#{semitone}#{q}", hz: chord_from_quality(root, q) }
+    { name: "major_third_cycle_full#{semitone}#{q}", hz: chord_from_quality(root, q) }
   end
 end
 
@@ -3655,10 +3655,10 @@ end
 # `unless user_pad_locked && ENV["PROGRESSION"] && !ENV["PROGRESSION"].empty?`,
 # which skipped the assignment whenever PAD_VOICE or PAD_ARP_MODE was set — and
 # PROGRESSION is never empty, because apply_best_defaults! fills it with
-# get_dis_money. So asking for a specific pad voice silently froze the harmony
+# pedal_e_descent. So asking for a specific pad voice silently froze the harmony
 # on the default track: `STREAM_TRACK=slum_village_players_documented
 # PAD_VOICE=prophet` rendered, and logged, the documented transcription's name
-# at its documented 91 BPM while playing get_dis_money's chords — D/E, Db/E,
+# at its documented 91 BPM while playing pedal_e_descent's chords — D/E, Db/E,
 # C/E, Bm/E, Bbm/E, Am/E. curated_progression? was true and the loop arranger
 # ran; it looped the wrong six chords faithfully, which is why the render looked
 # correct in every log line except the chords themselves.
@@ -4120,7 +4120,7 @@ end
 def kick_velocity_scale
   # Non-flylo default was cut from ~0.9 to 0.68 chasing a FlyLo-only
   # "drums too hard" complaint, but this default is shared by every
-  # non-flylo track (get_dis_money included) and compounds with
+  # non-flylo track (pedal_e_descent included) and compounds with
   # dilla_role_velocity's already-lower kick_anchor/kick_sync bases --
   # real listening feedback was "absent proper kick drums." Restored
   # toward the pre-cut value; flylo's own 0.78 is untouched.
@@ -5572,13 +5572,13 @@ def harmony_lead_mode
 end
 
 def harmony_lead_cfg_for(patch = nil)
-  style = (ENV["HARMONY_ARP_STYLE"] || "coltrane").to_sym
+  style = (ENV["HARMONY_ARP_STYLE"] || "major_third_cycle_full").to_sym
   {
     style:,
     subdiv: 8,
     gate: 0.68,
     vel: 0.42,
-    arp_styles: patch&.dig(:arp_styles) || %i[coltrane quint_spread call motif updown],
+    arp_styles: patch&.dig(:arp_styles) || %i[major_third_cycle_full quint_spread call motif updown],
   }
 end
 
@@ -6808,7 +6808,7 @@ def warm_dilla_pad_post(path, cfg: nil, sonic: nil)
 end
 
 GENERATED_STYLE_ROUTES = {
-  coltrane: :generate_coltrane_changes,
+  major_third_cycle_full: :generate_coltrane_changes,
   backdoor: :generate_backdoor_progression,
   slash: :generate_slash_progression,
   modal_interchange: :generate_modal_interchange,
@@ -7166,9 +7166,9 @@ GRADE_FX_POOL = %w[
 ].freeze
 SOUL_TRACK_FAMILY = %i[
   maj7_minor_cycle quartal_west_coast slow_ballad_wash minor_iv_loop neo_soul neo_soul_pocket
-  electronium_loop electronium_classic players_measured warm_minor_arc slash_neo_soul erykah_minor
-  aydin_modal_quartal aydin_jazz_turn bach_circle_descent bach_descending_bass
-  timeless_authentic jazz_ballad_waltz ii_v_i_major ii_v_i_minor glasper_quartal
+  electronium_loop electronium_classic players_measured warm_minor_arc slash_neo_soul warm_minor_vamp
+  modal_quartal_ladder minor_two_five_chain circle_fifths_descent walking_bass_descent
+  timeless_authentic jazz_ballad_waltz ii_v_i_major ii_v_i_minor modern_quartal_stack
   fourth_third_sixth_second_turn long_soul golden
 ].freeze
 # Arrangement forms — section lengths in bars (repeats to fill n_bars).
@@ -7666,7 +7666,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
   # generate interest by other means" problem is the one Jamal solved first.
   # DillaHarmony already ships a :so_what voicing style; this is what it is named
   # after.
-  jamal_pavanne: {
+  minor_half_step_pair: {
     artist: "Ahmad Jamal", title: "Pavanne", composer: "Morton Gould",
     recorded: "1955-10-25",
     chords: %w[Dm7 Ebm7],
@@ -7683,7 +7683,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
   # rather than the bar count. Coltrane then took Pavanne's eight-bar secondary
   # theme over this form and called it "Impressions" (1961), so all three pieces
   # are one lineage and one pair of chords.
-  so_what_modal: {
+  dorian_two_chord_modal: {
     artist: "Miles Davis", title: "So What", album: "Kind of Blue",
     derived_from: "Ahmad Jamal — Pavanne (1955)",
     chords: %w[Dm7 Dm7 Ebm7 Dm7],
@@ -7693,7 +7693,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     ]
   },
   # J Dilla — Donuts: "Time (The Donut of the Heart)" — Ab major IV–iii–vi–ii.
-  time_donut: {
+  db_major_minor_fall: {
     artist: "J Dilla", title: "Time (The Donut of the Heart)", album: "Donuts",
     chords: %w[Dbmaj7 Cm7 Fm7 Bbm7],
     sources: [
@@ -7710,7 +7710,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
   # Slum Village — Fall in Love (prod. Dilla) samples Gap Mangione.
   # r/jdilla (bzaiif): "Gap Mangione - Diana in the Autumn Wind".
   # ChordU / engine: two-chord Ebm7–Bbm7 vamp (not the old fabricated Bbm–Ab–Fm).
-  fall_in_love: {
+  eb_minor_two_chord: {
     artist: "Slum Village", title: "Fall in Love", producer: "J Dilla",
     sample: "Gap Mangione — Diana in the Autumn Wind",
     chords: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
@@ -7720,7 +7720,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     ]
   },
   # Slum Village — Get Dis Money. Ethan Hein full transcription of Herbie sample.
-  get_dis_money: {
+  pedal_e_descent: {
     artist: "Slum Village", title: "Get Dis Money", producer: "J Dilla",
     sample: "Herbie Hancock — Come Running To Me (Sunlight, 2:08)",
     chords: %w[D/E Db/E C/E Bm/E Bbm/E Am/E],
@@ -7737,7 +7737,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: ["Ethan Hein Get Dis Money (E9sus4/D naming of D/E)"]
   },
   # Slum Village — Climax (ChordU; was previously wrong-key Fm loop).
-  climax: {
+  e_major_third_rise: {
     artist: "Slum Village", title: "Climax", producer: "J Dilla",
     chords: %w[Emaj7 G#m7 C#m7 E7climax],
     sources: ["ChordU Climax transcription"]
@@ -7748,7 +7748,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: ["ChordU Climax (alias)"]
   },
   # D'Angelo — Untitled (How Does It Feel), Voodoo (Soulquarians / Dilla era).
-  untitled_how_does_it_feel: {
+  d_add9_soul_arc: {
     artist: "D'Angelo", title: "Untitled (How Does It Feel)", album: "Voodoo",
     chords: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
     sources: ["ChordU / Voodoo published chord analysis"]
@@ -7763,7 +7763,7 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     artist: "Slum Village", title: "Fall in Love", producer: "J Dilla",
     sample: "Gap Mangione — Diana in the Autumn Wind",
     chords: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
-    sources: ["Same as fall_in_love"]
+    sources: ["Same as eb_minor_two_chord"]
   },
 }.freeze
 
@@ -7907,24 +7907,24 @@ CHORD_PROGRESSIONS = {
   # substitutes the nearest registered chord in the same root+quality
   # family (m11->m9, sus4->m7, 7#11->7#9) rather than silently dropping
   # unmatched entries, which is what CHORD_PROGRESSIONS.compact does.
-  dangelo_learned: ["Fmaj9", "Dm9", "Gm9", "Am9", "Gm7", "C7#9 Hendrix", "Dm9", "Gm9"],
+  transcribed_soul_nine: ["Fmaj9", "Dm9", "Gm9", "Am9", "Gm7", "C7#9 Hendrix", "Dm9", "Gm9"],
   # --- Artist-verified (see ARTIST_VERIFIED_PROGRESSIONS) ---
-  time_donut: %w[Dbmaj7 Cm7 Fm7 Bbm7],
+  db_major_minor_fall: %w[Dbmaj7 Cm7 Fm7 Bbm7],
   maj7_minor_cycle: %w[Dbmaj9 Cm9 Fm9 Bbm9],
-  fall_in_love: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
-  get_dis_money: %w[D/E Db/E C/E Bm/E Bbm/E Am/E],
+  eb_minor_two_chord: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
+  pedal_e_descent: %w[D/E Db/E C/E Bm/E Bbm/E Am/E],
   syncopated_slash_ninth: %w[E9sus4/D Db/E C/E Bm/E Bbm/E Am/E E9sus4],
-  climax: %w[Emaj7 G#m7 C#m7 E7climax],
+  e_major_third_rise: %w[Emaj7 G#m7 C#m7 E7climax],
   major7_relative_minor_turn: %w[Emaj7 G#m7 C#m7 E7climax],
-  untitled_how_does_it_feel: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
+  d_add9_soul_arc: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
   sus_add9_ballad: %w[Dadd9 A7sus4 G6 C9 F#m9 B9 Em9 Asus9],
   alternating_minor7_pair: %w[Ebm7fil Bbm7fil Ebm7fil Bbm7fil],
   # Two minor sevenths a semitone apart, held. Jamal 1955; Miles 1959; Coltrane
   # 1961. Both are exempt from the modal fit test — see the note on
   # ModalFamily.widen — because a deliberate two-centre vamp fails a diatonic
   # test by construction, and that vamp is the reason these records matter.
-  jamal_pavanne: %w[Dm7 Ebm7],
-  so_what_modal: %w[Dm7 Dm7 Ebm7 Dm7],
+  minor_half_step_pair: %w[Dm7 Ebm7],
+  dorian_two_chord_modal: %w[Dm7 Dm7 Ebm7 Dm7],
   # --- Experimental / theory (blocked when ARTIST_VERIFIED_ONLY=1) ---
   soul: %w[Fm9 Bbm9 Ebmaj9 Dbmaj9],
   # Smoother minor turn — same key as timeless, less harsh dominant clutter.
@@ -7980,7 +7980,7 @@ CHORD_PROGRESSIONS = {
   dmaj_glide: %w[Dmaj9 Bm9 Em11 A13],
   dmaj_mediant: %w[Dmaj9 F#m9 Bm9 Gmaj13],
   tritone: %w[Cm9 Gbmaj9 Bbm9 Fm9],
-  # (syncopated_slash_ninth / climax / untitled / fall_in_love: artist-verified block above)
+  # (syncopated_slash_ninth / e_major_third_rise / untitled / eb_minor_two_chord: artist-verified block above)
   chromatic_planing: %w[Fm9 Bbm9 Fm9 Bbm9],
   ascending_minor_stack: %w[Am9 Dm9 Gm9 Cm9],
   minor_soul_loop: %w[Bbm9 Ebmaj9 Abmaj9 Fm9],
@@ -7995,10 +7995,10 @@ CHORD_PROGRESSIONS = {
   suspended_minor_close: %w[Cm9 Fm9 Bbm9 Ebmaj9],
   # Tritone-sub modulation after main loop.
   chromatic_mediant_drift: %w[Dm9 Cm11nc AbMaj13s11 Gm7 Eb7 A7nc Dmaj9nc DMaj7overG],
-  aydin_modal_quartal: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9],
-  aydin_jazz_turn: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9],
-  bach_circle_descent: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9],
-  bach_descending_bass: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9],
+  modal_quartal_ladder: %w[Cm9 Fmaj9 Bbmaj9 Ebmaj9 Abmaj7 Dm9 Bb7sus Cm9],
+  minor_two_five_chain: %w[Dm9 Gm9 C7b9 Fmaj9 Bbm9 Eb9 Abmaj9 Dm9],
+  circle_fifths_descent: %w[Am9 Dm9 G7 Cmaj9 Fmaj9 Bm7b5 E7b9 Am9],
+  walking_bass_descent: %w[Dm9 Dm/C Bbmaj9 A7 Dm9 Gm9 Cmaj9 Fmaj9],
   # --- Expansion pack (voice-led / modal / form variety) ---
   # Bright Lydian-leaning major cycle (common-tone + stepwise top voices).
   lydian_glass_cycle: %w[Fmaj9 Am9 Gmaj9 Em9 Fmaj9 Dm9 Cmaj9 G7],
@@ -8015,7 +8015,7 @@ CHORD_PROGRESSIONS = {
   # Chromatic-mediant family with shared E common tone (cleaner than raw planing).
   common_tone_drift: %w[Em9 Cmaj9 Am9 Fmaj9 Em9 Gmaj9 Bm9 Em9],
   # Three-tonic lite (major-third stations) — short spiral, home to Fm.
-  coltrane_lite_triad: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9],
+  third_cycle_triads: %w[Fm9 Abmaj9 Bmaj9 Fm9 Dbmaj9 Emaj9 Abmaj9 Fm9],
   # Quartal/open drone over D — atmosphere + lead space.
   drone_quartal_wash: %w[Dm9 G/D C/D Am9 Dm9 Fmaj9/D G/D Dm9],
   # 3/4 relative-major lift waltz (distinct from jazz_ballad_waltz).
@@ -8037,7 +8037,7 @@ CHORD_PROGRESSIONS = {
   minor_iv_lift: %w[Dbmaj9 Fm9 Gbmaj9 B7sus Dbmaj9 Abmaj9 Gbmaj9 Dbmaj9],
   common_tone_sideways: %w[Dbmaj9 Emaj7 Bmaj9 Dbmaj9 Fm9 Abmaj9 Dbmaj9],
   detroit_suspension: %w[Fm9 Abmaj9low Dbmaj9 G7sus C7b9 Fm9 Bbm9 Eb7],
-  donuts_short_memory: %w[Fm9 Dbmaj9 Fm9 Dbmaj9 Fm9 Bbm9 Fm9 Dbmaj9],
+  minor_ninth_two_chord: %w[Fm9 Dbmaj9 Fm9 Dbmaj9 Fm9 Bbm9 Fm9 Dbmaj9],
   fugue_conversation_arc: %w[Fm9 Dbmaj9 Cm9 Fm9 Gbmaj9 Dbmaj9 Bbm9 Eb7],
   # --- Generic Fantastic-era soul templates (2026-07-28). Deliberately named for
   # their harmonic function, not for any song. minor_soul_loop was NOT added: it
@@ -8123,7 +8123,7 @@ CHORD_PROGRESSIONS = {
   bossa_minor_two_five:     %w[Fm9 Bb7b9 Ebmaj9 Ebmaj9],
   bossa_major_stroll:       %w[Dmaj9 Bm9 Em9 A9],
   bossa_chromatic_down:     %w[Gmaj9 Gbmaj9 Fmaj9 Emaj9],
-  # --- thirds / coltrane-ish ---
+  # --- thirds / major_third_cycle_full-ish ---
   major_third_cycle:        %w[Cmaj9 Emaj9 Abmaj9 Cmaj9],
   minor_third_cycle:        %w[Cm9 Ebm9 Gbm9 Am9],
   chromatic_mediant_pair:   %w[Cmaj9 Abmaj9 Cmaj9 Emaj9],
@@ -8201,7 +8201,7 @@ CHORD_PROGRESSIONS = {
   # --- extended jazz arcs ---
   circle_of_fifths_full:    %w[Cmaj9 Fmaj9 Bm7b5 E7b9 Am9 Dm9 G13 Cmaj9],
   turnaround_chromatic:     %w[Cmaj9 Eb7 Dm9 Db7],
-  coltrane_thirds_arc:      %w[Cmaj9 Eb7 Abmaj9 B7 Emaj9 G7 Cmaj9 Cmaj9],
+  third_cycle_arc:      %w[Cmaj9 Eb7 Abmaj9 B7 Emaj9 G7 Cmaj9 Cmaj9],
   minor_line_descent_long:  %w[Am9 Am9/G Fmaj9 Fmaj9/E Dm9 Dm9/C Bm7b5 E7b9],
   # --- soul / rnb specifics ---
   rnb_minor_seven_walk:     %w[Dm7 Em7 Fmaj7 Gm7],
@@ -8342,7 +8342,7 @@ CHORD_PROGRESSIONS = {
   # Two notes out of the key, no dominant anywhere, and it still sounds settled
   # -- the chord that made mid-century film harmony sound like weather.
   lydian_augmented_haze: %w[Cmaj9 Cmaj7#5 Fmaj7#11 Dm9 Gmaj9 Cmaj7#5 Am9 Cmaj9],
-  # :coltrane_thirds_arc cuts the octave into three. This cuts it into four --
+  # :third_cycle_arc cuts the octave into three. This cuts it into four --
   # minor thirds, the diminished axis -- each station reached by its own
   # dominant. Four keys in eight bars and no two of them adjacent, so the ear
   # gives up tracking the key and starts hearing the motion itself.
@@ -8457,27 +8457,27 @@ TRACK_PRESETS = {
     feel: :timeless, quintuplet: true, voicing: :spread,
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
   },
-  time_donut: {
-    bpm: 94, progression: :time_donut, chord_bars: 2, phrase_bars: 8, swing: 54,
+  db_major_minor_fall: {
+    bpm: 94, progression: :db_major_minor_fall, chord_bars: 2, phrase_bars: 8, swing: 54,
     feel: :timeless, quintuplet: true, voicing: :rootless,
     timing: { snare: -24..-8, hat_up: 14..28, bass: 22..40, kick_anchor: 0..5, pad: 2..14, kick_sync: 6..18 }
   },
-  get_dis_money: {
-    bpm: 92, progression: :get_dis_money, chord_bars: 1, phrase_bars: 6, swing: 54,
+  pedal_e_descent: {
+    bpm: 92, progression: :pedal_e_descent, chord_bars: 1, phrase_bars: 6, swing: 54,
     feel: :syncopated_slash_ninth, stereo_pan: true, quintuplet: true, voicing: :rootless,
     timing: { snare: -24..-10, hat_up: 20..36, bass: 28..48, kick_anchor: 0..3 }
   },
-  fall_in_love: {
-    bpm: 91, progression: :fall_in_love, chord_bars: 2, phrase_bars: 8, swing: 57,
+  eb_minor_two_chord: {
+    bpm: 91, progression: :eb_minor_two_chord, chord_bars: 2, phrase_bars: 8, swing: 57,
     feel: :dilla_slight, voicing: :rootless, quintuplet: true,
     timing: { snare: -22..-10, hat_up: 14..28, bass: 22..38, kick_anchor: 0..4 }
   },
-  climax: {
-    bpm: 88, progression: :climax, chord_bars: 2, phrase_bars: 8, swing: 57,
+  e_major_third_rise: {
+    bpm: 88, progression: :e_major_third_rise, chord_bars: 2, phrase_bars: 8, swing: 57,
     feel: :timeless, quintuplet: true, voicing: :rootless
   },
-  untitled_how_does_it_feel: {
-    bpm: 92, progression: :untitled_how_does_it_feel, chord_bars: 2, phrase_bars: 16, swing: 56,
+  d_add9_soul_arc: {
+    bpm: 92, progression: :d_add9_soul_arc, chord_bars: 2, phrase_bars: 16, swing: 56,
     feel: :timeless, stereo_pan: true, voicing: :rootless
   },
   timeless_authentic: {
@@ -8525,12 +8525,12 @@ TRACK_PRESETS = {
     feel: :techno_house, stereo_pan: true
   },
   # generate_coltrane_changes/generate_modal_interchange (GENERATED_STYLE_ROUTES
-  # above) were reachable only via a raw GEN_STYLE=coltrane|modal_interchange
+  # above) were reachable only via a raw GEN_STYLE=major_third_cycle_full|modal_interchange
   # env override with no discoverable named preset -- both are real, working,
   # theory-grounded generators (major-third symmetric substitution; borrowed
   # chords from the parallel mode) that just had no entry here.
   generated_coltrane: {
-    bpm: 88, progression: :coltrane, chord_bars: 2, phrase_bars: 16, swing: 58,
+    bpm: 88, progression: :major_third_cycle_full, chord_bars: 2, phrase_bars: 16, swing: 58,
     feel: :organic, stereo_pan: true
   },
   generated_modal_interchange: {
@@ -8542,7 +8542,7 @@ TRACK_PRESETS = {
     feel: :organic, stereo_pan: true
   },
   # Hybrid: base feel stays Dilla-character (:syncopated_slash_ninth, same
-  # pocket family as get_dis_money) so DRUM_STYLE_ALTERNATE genuinely
+  # pocket family as pedal_e_descent) so DRUM_STYLE_ALTERNATE genuinely
   # alternates -- CONCRETE_SOUL_MIX turns that on, flipping every other
   # phrase_bars-block into :techno_house's real four-on-the-floor
   # DRUM_PATTERN_SETS entry (straight kicks, dense 16th hats). Swing at
@@ -8602,8 +8602,8 @@ TRACK_PRESETS = {
     feel: :syncopated_slash_ninth, quintuplet: true, voicing: :kenny_barron,
     timing: { snare: -26..-10, hat_up: 20..38, bass: 26..48, kick_anchor: 0..4 }
   },
-  donuts_short_memory: {
-    bpm: 90, progression: :donuts_short_memory, chord_bars: 2, phrase_bars: 8, swing: 57,
+  minor_ninth_two_chord: {
+    bpm: 90, progression: :minor_ninth_two_chord, chord_bars: 2, phrase_bars: 8, swing: 57,
     feel: :timeless, quintuplet: true, voicing: :rootless,
     timing: { snare: -24..-10, hat_up: 16..32, bass: 24..44, kick_anchor: 0..4, pad: 3..15 }
   },
@@ -9888,7 +9888,7 @@ def beauty_report(path = nil)
   puts "── Harmony beauty ──"
   breakdown.each { |k, v| puts format("%-12s %s", "#{k}:", v) }
   if analysis
-    puts "── Coltrane progression (github.com/pedrozath/coltrane) ──"
+    puts "── Coltrane progression (github.com/pedrozath/major_third_cycle_full) ──"
     puts "  #{analysis[:notation]} in #{analysis[:scale]} (#{analysis[:notes_out]} notes outside scale)"
   end
   puts "Recommendations:"
@@ -10972,9 +10972,9 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 # RENDER_MODE aliases camel|beat|punch → dilla; comfort|sofa → dilla+flags.
 DILLA_STYLE_DEFAULTS = {
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
-  "TRACK" => "get_dis_money",
-  "PROGRESSION" => "get_dis_money",
-  # BPM deliberately NOT set here (get_dis_money's own TRACK_PRESETS entry
+  "TRACK" => "pedal_e_descent",
+  "PROGRESSION" => "pedal_e_descent",
+  # BPM deliberately NOT set here (pedal_e_descent's own TRACK_PRESETS entry
   # already has bpm: 92, so this was redundant for the default track and a
   # real bug for every other one: resolve_bpm checks ENV["BPM"] before
   # preset[:bpm], and this soft-fill ran before any track-specific preset
@@ -11540,7 +11540,7 @@ DRUM_ARCHETYPE_ORDER = DRUM_ARCHETYPES.keys.freeze
 
 def drum_archetype_rotation_enabled?
   # Off by default -- only ever verified as "renders without crashing," never
-  # actually listened to. Silently changed already-tuned tracks (get_dis_money
+  # actually listened to. Silently changed already-tuned tracks (pedal_e_descent
   # included) by default; real listening feedback was that it made rhythm
   # feel broken/off-grid, not intentionally loose. Opt in with
   # DRUM_ARCHETYPE_ROTATE=1 once it's been through an actual listening pass.
@@ -12667,7 +12667,7 @@ def apply_dilla_style!(force: false)
     style_env_write!(key, value, force:, label: "DILLA_STYLE_DEFAULTS")
   end
   track = ENV["TRACK"].to_s
-  track = "get_dis_money" if track.empty?
+  track = "pedal_e_descent" if track.empty?
   apply_track_soul_profile!(track, force:)
   apply_concrete_soul_mix!(track)
   reassert_dilla_style_locks! if force
@@ -12682,7 +12682,7 @@ def pick_default_track!
   return if ENV["TRACK"] && !ENV["TRACK"].empty?
   mode = ENV["RENDER_MODE"].to_s.downcase
   # Leave TRACK empty for dilla/camel/comfort/empty so DILLA_STYLE_DEFAULTS
-  # soft-fill can supply get_dis_money. Random deep rotation is for stream
+  # soft-fill can supply pedal_e_descent. Random deep rotation is for stream
   # after style force, or non-style modes only.
   return if mode.empty? || %w[dilla camel comfort].include?(mode)
 
@@ -13079,19 +13079,19 @@ end
 # Ctrl-C to stop. Pin one track: STREAM_LOCK=1 + STREAM_TRACK=…
 
 DILLA_STREAM_PRIORITY = %w[
-  get_dis_money time_donut fall_in_love climax untitled_how_does_it_feel
+  pedal_e_descent db_major_minor_fall eb_minor_two_chord e_major_third_rise d_add9_soul_arc
   maj7_minor_cycle alternating_minor7_pair syncopated_slash_ninth
-  neo_soul neo_soul_pocket erykah_minor
+  neo_soul neo_soul_pocket warm_minor_vamp
 ].freeze
 
 STREAM_HEAD_TRACKS = %w[
-  get_dis_money
-  untitled_how_does_it_feel
+  pedal_e_descent
+  d_add9_soul_arc
   neo_soul
   neo_soul_pocket
   chromatic_mediant_drift
   baroque
-  aydin_jazz_turn
+  minor_two_five_chain
 ].freeze
 
 def stream_progression_order
@@ -13334,7 +13334,7 @@ DEMO_VOICING_ROTATION = %w[
 # Every named piece dilla can render, not just the broadcast rotation.
 #
 # STREAM_ROTATION is the 69-track stream order. It misses two catalogues:
-# GENERATED_STYLES (11 generative modes — coltrane, negative_harmony,
+# GENERATED_STYLES (11 generative modes — major_third_cycle_full, negative_harmony,
 # tritone_sub … resolved by dilla_progression rather than a CHORD_PROGRESSIONS
 # lookup) and four ARTIST_VERIFIED_PROGRESSIONS turnarounds the rotation never
 # reaches. Union is 84, and that is what the demo should represent — a demo of
@@ -13892,7 +13892,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
     # user had typed them — and in the child they land in USER_PINNED_ENV, where
     # force_env! and the per-track sync both treat them as untouchable. That is
     # how `STREAM_TRACK=slum_village_players_documented` ended up locked to
-    # get_dis_money's chords: PROGRESSION was "pinned" to a default nobody
+    # pedal_e_descent's chords: PROGRESSION was "pinned" to a default nobody
     # chose. USER_PINNED_ENV holds what the command line actually said.
     #
     # PAD_VOICE / PAD_LAYERS / LEAD_* are here because a pinned pad or lead was
@@ -13917,7 +13917,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
     # The env_pass prefix above is additive, not exclusive: this command runs
     # through a shell that inherits this process's whole environment, including
     # everything apply_best_defaults! wrote. Naming only the pinned keys in the
-    # prefix therefore did nothing to stop PROGRESSION=get_dis_money reaching
+    # prefix therefore did nothing to stop PROGRESSION=pedal_e_descent reaching
     # the child, where it read as a user pin and became unoverridable. The child
     # needs to be told which keys are real, so declare them.
     pinned_keys = dilla_pinned_keys_decl
@@ -14196,7 +14196,7 @@ end
 
 GENERATED_STYLES = %i[
   functional planing chromatic_mediant polytonal negative_harmony neapolitan
-  coltrane backdoor slash modal_interchange tritone_sub
+  major_third_cycle_full backdoor slash modal_interchange tritone_sub
 ].freeze
 
 def resolve_pad_chord_symbol(n)
@@ -18688,7 +18688,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # chasing arps that were never in the mix.
   # The same trap one level down: under NO_ARP the arp styles are still *chosen*
   # (the patch tables are read before the gate), so this line went on printing
-  # "coltrane/updown/pingpong" for renders where all three arp paths returned
+  # "major_third_cycle_full/updown/pingpong" for renders where all three arp paths returned
   # zero events. Naming the styles is conditional on them actually running.
   lead_note = if lead_arp_enabled?
                 arp_names = no_arp? ? [] : [@render_scale_arp_style, @render_arp_style, lead_arp_style]
@@ -20238,7 +20238,7 @@ def analyze_stem_for_learn(path, stem_name)
     ranking = chord_candidates(pcs_hash).first(8)
     result[:pitch_classes] = top_pcs
     result[:top_chords] = ranking.map { |c| { name: c[:chord], score: c[:score] } }
-    if defined?(DillaMusicGems) && DillaMusicGems.coltrane?
+    if defined?(DillaMusicGems) && DillaMusicGems.major_third_cycle_full?
       result[:coltrane_candidates] = DillaMusicGems.chord_candidates_from_pitch_classes(top_pcs, limit: 8)
     end
   end
@@ -20546,7 +20546,7 @@ end
 # Never auto-fallback to random catalog entries (that pulled in sirkel_sag).
 RAP_VOCAL_BLOCKLIST = %w[sirkel_sag].freeze
 
-# Same-song vocal-stem overrides (used to route get_dis_money to the
+# Same-song vocal-stem overrides (used to route pedal_e_descent to the
 # slum_village stem). Emptied on request: gunnhild is the only vocal source;
 # the mechanism stays for when that decision changes.
 TRACK_MATCHED_VOCAL_SLUG = {}.freeze
@@ -22291,7 +22291,7 @@ end
 # it. So a stem whose notes sit outside the beat's key stays outside it for the
 # entire render.
 #
-# Measured on gunnhild's 86bpm/32bar fit against time_donut (Dbmaj7 Cm7 Fm7
+# Measured on gunnhild's 86bpm/32bar fit against db_major_minor_fall (Dbmaj7 Cm7 Fm7
 # Bbm7 — Db major): the three strongest pitch classes in the vocal are A (17.5%
 # of voiced energy), Ab (14.7%) and B (13.1%). A and B are not in Db major. In
 # total 38.3% of the vocal's energy landed on non-key notes against 32.1% on key
@@ -22370,7 +22370,7 @@ end
 
 # Root pitch class of a chord name. PAD_CHORD_LOOKUP only holds the voicings the
 # pad engine registered, and the progressions name chords it never registered:
-# time_donut is Dbmaj7/Cm7/Fm7/Bbm7 while the lookup carries the ...maj9/m9
+# db_major_minor_fall is Dbmaj7/Cm7/Fm7/Bbm7 while the lookup carries the ...maj9/m9
 # forms, so every one of its four chords missed and the whole progression scored
 # as having no harmony at all.
 CHORD_ROOT_RE = /\A([A-G])([b#]?)/
@@ -22405,7 +22405,7 @@ end
 
 # How strongly each pitch class belongs to the progression, as a weight rather
 # than a member/non-member flag. A binary set is useless on the slash-chord
-# progressions: get_dis_money (D/E Db/E C/E Bm/E Bbm/E Am/E) unions to all
+# progressions: pedal_e_descent (D/E Db/E C/E Bm/E Bbm/E Am/E) unions to all
 # twelve classes, so every shift scored a perfect 100% and the comparison
 # carried no information. Counting how many chords contain a class keeps the
 # tonic centre distinguishable from a passing chromatic tone.
@@ -22456,7 +22456,7 @@ def rap_vocal_key_shift(chroma, key_weights, max_shift: RAP_VOCAL_KEY_MAX_SHIFT)
   # cost is not flat: a whole tone through asetrate resamples formants by 12%,
   # which reads as a pitched-up singer rather than the same singer in a new key,
   # so it has to earn twice what a semitone does. Measured on gunnhild: this is
-  # what separates time_donut (+1 at 5.1%, taken) from its own +2 at 8.7%
+  # what separates db_major_minor_fall (+1 at 5.1%, taken) from its own +2 at 8.7%
   # (rejected — a bigger move on weaker evidence).
   qualified = scored.select do |shift, fit|
     next false if shift.zero?

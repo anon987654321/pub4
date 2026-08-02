@@ -15,7 +15,7 @@ require_relative "key_lock"
 # The collection is Bb Dorian/Aeolian — the bittersweet soul region, ♭3 ♭6 ♭7
 # with the Dorian ♮6 available — plus the major third, because the parallel
 # major is not a foreign key. Alternating Bb minor and Bb major is modal
-# interchange, which is idiomatic to this music rather than a mistake; `climax`
+# interchange, which is idiomatic to this music rather than a mistake; `e_major_third_rise`
 # (Bbmaj7 Dm7 Gm7 Bb7) is Dilla's own and it is parallel major.
 FAMILY_DEGREES = %w[Bb C Db D Eb F Gb G Ab].freeze
 

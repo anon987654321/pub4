@@ -59,7 +59,7 @@ module DillaHarmonyLead
   end
 
   def arp_style_for_change(prev_chord, chord, insight: nil)
-    return :coltrane unless prev_chord && chord
+    return :major_third_cycle_full unless prev_chord && chord
     prev_sym = normalized_symbol(prev_chord[:name])
     sym = normalized_symbol(chord[:name])
     return :quint_spread if sym.include?("eb") && prev_sym.include?("bb")
