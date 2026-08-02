@@ -480,7 +480,13 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_source(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
                     'navigator.clearAppBadge'
     assert_includes read_source(File.join(ROOT, 'shared/pwa/service_worker.js')), 'setAppBadge'
-    assert_includes read_source(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js')), 'workbox:core'
+    brgen_sw = read_source(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js'))
+    # Replaced the Workbox precache bundle (frozen fingerprint manifest that drifted
+    # every deploy and 404'd install) with a minimal SW: precache only /offline,
+    # runtime stale-while-revalidate for /assets/. No Workbox precache manifest.
+    assert_includes brgen_sw, '/offline'
+    assert_includes brgen_sw, "url.pathname.startsWith(\"/assets/\")"
+    refute_includes brgen_sw, 'workbox:core'
     brgen_layout = read_source(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
     assert_includes brgen_layout, 'data-push-unread-value='
     assert_includes brgen_layout, 'render "shared/ai_nav_link"'
