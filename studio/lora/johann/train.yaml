@@ -1,0 +1,103 @@
+---
+job: extension
+config:
+  name: johann_v1
+  process:
+  - type: sd_trainer
+    training_folder:
+    device: mps
+    trigger_word: johann
+    network:
+      type: lora
+      linear: 32
+      linear_alpha: 32
+    save:
+      dtype: float16
+      save_every: 250
+      max_step_saves_to_keep: 4
+      push_to_hub: false
+    datasets:
+    - folder_path:
+      caption_ext: txt
+      caption_dropout_rate: 0.08
+      shuffle_tokens: false
+      cache_latents_to_disk: true
+      resolution:
+      - 512
+      - 768
+      - 1024
+    train:
+      batch_size: 1
+      steps: 1800
+      skip_first_sample: true
+      gradient_accumulation_steps: 1
+      train_unet: true
+      train_text_encoder: false
+      gradient_checkpointing: true
+      noise_scheduler: flowmatch
+      optimizer: adamw8bit
+      lr: 0.0001
+      ema_config:
+        use_ema: true
+        ema_decay: 0.995
+      dtype: bf16
+    model:
+      name_or_path: black-forest-labs/FLUX.1-dev
+      is_flux: true
+      quantize: true
+      low_vram: true
+    sample:
+      sampler: flowmatch
+      sample_every: 250
+      width: 1024
+      height: 1024
+      seed: 42
+      walk_seed: true
+      guidance_scale: 3.5
+      sample_steps: 20
+      prompts:
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, Bergen rain-window
+        close portrait, soft grey daylight, steady eyes, natural skin texture, Portra
+        400 scan, muted blacks, fine grain, 85mm lens
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, Hardanger
+        fjord golden-hour portrait, wind in hair, warm rim light, gentle smile, Kodak
+        Gold warmth, soft highlight rolloff, 50mm lens
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, Trondheim
+        cafe cinematic still, tungsten practicals, window-blue fill, quiet expression,
+        lifted shadows, subtle halation, ARRI-style color
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, black-and-white
+        Tri-X documentary headshot, direct gaze, real skin texture, silver-rich contrast,
+        soft grain, 90mm portrait lens
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, Nordic editorial
+        studio portrait, large softbox, clean catchlights, natural mouth and eyes,
+        Hasselblad medium-format feel
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, coastal
+        winter portrait, pale sky, wool coat, cool sea light, calm face, low saturation,
+        cyan shadows, protected skin tone
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, warm kitchen
+        film still, morning side light, shallow depth, lived-in background, honest
+        face proportions, soft color negative grade
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, mountain-road
+        travel portrait, overcast Hardanger light, relaxed posture, documentary realism,
+        neutral colors, gentle analog grain
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, high-fashion
+        but natural portrait, black wool coat, sculpted soft key light, deep muted
+        background, elegant Hollywood color grade
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, candid laughing
+        portrait, Bergen street corner, wet pavement reflections, handheld 35mm photojournalism,
+        warm skin, cool environment
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, simple profile
+        avatar, face centered, plain background, clean catchlights, skin texture intact,
+        realistic color, no stylization
+      - johann, adult Norwegian man, exact likeness, short beard, no hat, identity
+        check portrait, front view, plain light, face shape, eyes, mouth, age, and
+        expression clear before any cinematic grade
+      neg: plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed
+        eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated,
+        anime, illustration, CGI, face swap artifacts, selfie distortion, beauty filter,
+        face morph, identity drift, teenage face, overly young face, generic influencer
+        face, different man, missing beard, clean-shaven
+    meta:
+      name: johann_v1
+      version: '1.0'
+      master_trigger: johann

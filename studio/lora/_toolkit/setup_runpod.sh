@@ -1,13 +1,18 @@
 #!/bin/sh
-# Bootstrap Ragnhild FLUX LoRA training on a RunPod GPU pod (Linux + CUDA).
+# Bootstrap a FLUX LoRA training run on a RunPod GPU pod (Linux + CUDA).
 # Run via SSH after creating a 24GB+ GPU pod (RTX 4090 / A5000 / L4).
+#
+# For a free 16GB T4 instead, the Kaggle lane needs no pod and no SSH:
+#   studio/lora/<subject>/lora --train-kaggle
 set -eu
+
+: "${SUBJECT:?export SUBJECT=<subject> (the directory name under studio/lora/)}"
 
 PUB4_REPO="${PUB4_REPO:-https://github.com/anon987654321/pub4.git}"
 PUB4_BRANCH="${PUB4_BRANCH:-main}"
 AI_TOOLKIT_ROOT="${AI_TOOLKIT_ROOT:-$HOME/ai-toolkit}"
 WORK_ROOT="${WORK_ROOT:-$HOME/pub4}"
-TOOLKIT_DIR="$WORK_ROOT/studio/lora/training/$SUBJECT/ai_toolkit"
+SUBJECT_DIR="$WORK_ROOT/studio/lora/$SUBJECT"
 START_TRAIN=0
 
 usage() {
@@ -22,11 +27,11 @@ RunPod pod settings:
   Disk:    50GB+ container (80GB safer for HF cache)
 
 Before SSH:
-  export HF_TOKEN=hf_...
+  export HF_TOKEN=hf_... SUBJECT=$SUBJECT
 
 On pod:
-  curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/studio/lora/training/$SUBJECT/ai_toolkit/setup_runpod.sh | sh
-  # or git clone pub4 and: ./studio/lora/training/$SUBJECT/ai_toolkit/setup_runpod.sh --train
+  curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/studio/lora/_toolkit/setup_runpod.sh | sh
+  # or git clone pub4 and: ./studio/lora/_toolkit/setup_runpod.sh --train
 EOF
 }
 
@@ -71,18 +76,22 @@ export AI_TOOLKIT_ROOT
 export HF_TOKEN="${HF_TOKEN:-$HUGGINGFACE_HUB_TOKEN}"
 export HUGGINGFACE_HUB_TOKEN="${HUGGINGFACE_HUB_TOKEN:-$HF_TOKEN}"
 
-cd "$TOOLKIT_DIR"
-chmod +x run_generate.sh run_train.sh lib.sh
-./run_generate.sh --check
+if [ ! -d "$SUBJECT_DIR" ]; then
+  echo "warn: no subject at $SUBJECT_DIR" >&2
+  exit 1
+fi
+
+chmod +x "$WORK_ROOT/studio/lora/_toolkit"/*.sh "$SUBJECT_DIR/lora"
+"$SUBJECT_DIR/lora" --check
 
 if [ "$START_TRAIN" -eq 1 ]; then
   echo "ok: starting training in tmux session $SUBJECT"
-  tmux kill-session -t $SUBJECT 2>/dev/null || true
-  tmux new-session -d -s $SUBJECT \
-    "cd '$TOOLKIT_DIR' && ./run_generate.sh --train 2>&1 | tee train_run.log"
+  tmux kill-session -t "$SUBJECT" 2>/dev/null || true
+  tmux new-session -d -s "$SUBJECT" \
+    "'$SUBJECT_DIR/lora' --train 2>&1 | tee '$SUBJECT_DIR/train_run.log'"
   echo "ok: attach with: tmux attach -t $SUBJECT"
 else
   echo "ok: bootstrap done"
   echo "fix: tmux new -s $SUBJECT"
-  echo "fix: cd $TOOLKIT_DIR && ./run_generate.sh --train 2>&1 | tee train_run.log"
+  echo "fix: $SUBJECT_DIR/lora --train 2>&1 | tee $SUBJECT_DIR/train_run.log"
 fi

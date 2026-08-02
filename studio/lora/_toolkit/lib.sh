@@ -12,15 +12,21 @@ set -eu
 # with nothing to catch a missed copy.
 #
 # The subject now arrives as SUBJECT_DIR, set by the wrapper in each subject's
-# ai_toolkit/, and subject.env there names the three things that actually differ:
+# directory, and subject.env there names the three things that actually differ:
 # SUBJECT, MODEL, TRIGGER. Everything else is shared.
+#
+# The wrappers were a smaller instance of the same mistake: six three-line
+# scripts per subject, one per mode, when run_generate.sh already dispatches on
+# a flag. There is now one wrapper, `lora`, per subject. The ai_toolkit/ nesting
+# went with them — it mirrored upstream's layout back when the tree was a fork
+# of it, and a subject directory is already the subject.
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 LORA_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
 
 if [ -z "${SUBJECT_DIR:-}" ]; then
   echo "error: SUBJECT_DIR is not set — run a subject's wrapper, e.g." >&2
-  echo "       studio/lora/training/ragnhild/ai_toolkit/run_generate.sh --all" >&2
+  echo "       studio/lora/subjects/ragnhild/lora --all" >&2
   exit 1
 fi
 SUBJECT_DIR="$(CDPATH= cd -- "$SUBJECT_DIR" && pwd)"
@@ -39,6 +45,9 @@ AI_TOOLKIT_ROOT="${AI_TOOLKIT_ROOT:-$HOME/ai-toolkit}"
 DATASET_DIR="$SUBJECT_DIR/dataset"
 WEIGHTS_DIR="$SUBJECT_DIR/weights/$MODEL"
 SAMPLES_DIR="$WEIGHTS_DIR/samples"
+# Finished portraits belong to the subject. They used to land flat in
+# studio/lora/, which the next subject would also have written into.
+OUT_DIR="$SUBJECT_DIR/out"
 
 CHECK_SCRIPT="$SCRIPT_DIR/check_hf_flux_access.rb"
 POSTPRO_SCRIPT="$SCRIPT_DIR/postpro_samples.rb"
@@ -99,15 +108,16 @@ latest_lora_weights() {
   ' "$WEIGHTS_DIR"
 }
 
-sync_samples_to_lora_root() {
+sync_samples_to_out() {
   if [ ! -d "$SAMPLES_DIR" ]; then
     return 0
   fi
+  mkdir -p "$OUT_DIR"
   for file in "$SAMPLES_DIR"/*; do
     case "$file" in
       *.jpg|*.jpeg|*.png|*.webp)
         name="$(basename "$file")"
-        mv -f "$file" "$LORA_ROOT/$name"
+        mv -f "$file" "$OUT_DIR/$name"
         echo "ok: synced $name"
         ;;
     esac
@@ -116,9 +126,10 @@ sync_samples_to_lora_root() {
 }
 
 run_postpro() {
+  mkdir -p "$OUT_DIR"
   ruby "$POSTPRO_SCRIPT" \
-    --input-dir "$LORA_ROOT" \
-    --output-dir "$LORA_ROOT" \
+    --input-dir "$OUT_DIR" \
+    --output-dir "$OUT_DIR" \
     --presets portrait \
     --limit 12
 }

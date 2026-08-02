@@ -8,35 +8,38 @@ skip_postpro=0
 
 usage() {
   cat <<EOF
-Usage: run_generate.sh [--check | --train | --train-replicate | --generate | --postpro | --all]
+Usage: lora [--check | --train | --train-kaggle | --train-replicate | --generate | --postpro | --all]
 
   --check            HF FLUX gate, toolkit, dataset
   --train            Train LoRA locally / RunPod via ai-toolkit
-  --train-replicate  Zip dataset, train on Replicate (ostris/flux-dev-lora-trainer),
-                     pull weights into weights/$MODEL/
-  --generate         Sample from latest checkpoint, sync, optional postpro
-  --postpro          Portrait postpro on generated samples in lora/
+  --train-kaggle     Train on a free Kaggle T4: push notebook, poll, pull weights
+  --train-replicate  Zip dataset, train on Replicate (ostris/flux-dev-lora-trainer)
+  --generate         Sample from latest checkpoint, then optional postpro
+  --postpro          Portrait postpro on generated samples in out/
   --all              check, generate, postpro (default)
 
-Deliverables: lora/
-Weights:       training/$SUBJECT/ai_toolkit/weights/$MODEL/
+Anything after --train-kaggle or --train-replicate is passed to that lane, e.g.
+  ./lora --train-kaggle --dry-run --steps 600
+  ./lora --train-replicate --dry-run
+
+Deliverables: $SUBJECT_DIR/out/
+Weights:      $SUBJECT_DIR/weights/$MODEL/
 
 Environment:
   HF_TOKEN, HUGGINGFACE_HUB_TOKEN, AI_TOOLKIT_ROOT
-  LORA_DEVICE=mps|cuda|cpu   (default mps; use cuda on GPU VPS)
+  LORA_DEVICE=mps|cuda|cuda_t4|cpu   (default mps; cuda on a 24GB+ GPU,
+                                      cuda_t4 on 16GB Turing — fp16, quantised)
   LORA_LOW_VRAM=0|1          (optional; cuda defaults to 0)
+  LORA_LR, LORA_STEPS, LORA_RESOLUTIONS=512,768
   LORA_FLUX_MODEL_PATH, LORA_SKIP_POSTPRO=1
-  REPLICATE_API_TOKEN            (for --train-replicate)
-  LORA_REPLICATE_DEST=owner/name   (default: \$user/$SUBJECT-flux)
-  LORA_TRIGGER=$SUBJECT
-  LORA_REPLICATE_STEPS=1000
-  LORA_REPLICATE_LORA_RANK=16
-  REPLICATE_WEBHOOK_URL          (optional async notify)
 
-Dual-track train:
-  A) RunPod/local:  ./run_generate.sh --train
-  B) Replicate API: ./run_generate.sh --train-replicate
-     dry-run:       ./run_train_replicate.sh --dry-run
+Three train lanes:
+  A) local/RunPod:  ./lora --train
+  B) Kaggle:        ./lora --train-kaggle       (free, 30 GPU-h/week, 12h/session)
+     needs KAGGLE_USERNAME + KAGGLE_KEY (or ~/.kaggle/kaggle.json), a
+     phone-verified account for internet, and an HF_TOKEN notebook secret
+  C) Replicate:     ./lora --train-replicate    (paid, hosted H100)
+     needs REPLICATE_API_TOKEN
 
 RunPod (24GB+ GPU — RTX 4090 / A5000 / L4):
   1. Create pod: PyTorch 2.x CUDA 12 template, 50GB+ disk
@@ -49,19 +52,20 @@ Exit: 0 ok | 1 setup | 2 HF gate | 3 no weights
 EOF
 }
 
+# A lane flag ends this parse: the remainder is that lane's own argv.
 while [ $# -gt 0 ]; do
   case "$1" in
-    --check) mode="check" ;;
-    --train) mode="train" ;;
-    --train-replicate) mode="train-replicate" ;;
-    --generate) mode="generate" ;;
-    --postpro) mode="postpro" ;;
-    --all) mode="all" ;;
-    --skip-postpro) skip_postpro=1 ;;
+    --check) mode="check"; shift ;;
+    --train) mode="train"; shift ;;
+    --generate) mode="generate"; shift ;;
+    --postpro) mode="postpro"; shift ;;
+    --all) mode="all"; shift ;;
+    --skip-postpro) skip_postpro=1; shift ;;
+    --train-kaggle) mode="train-kaggle"; shift; break ;;
+    --train-replicate) mode="train-replicate"; shift; break ;;
     -h|--help) usage; exit 0 ;;
     *) echo "warn: unknown option $1" >&2; usage >&2; exit 1 ;;
   esac
-  shift
 done
 
 if [ "${LORA_SKIP_POSTPRO:-0}" = "1" ]; then
@@ -89,7 +93,7 @@ require_lora_weights() {
   weights="$(latest_lora_weights || true)"
   if [ -z "${weights:-}" ]; then
     echo "warn: no weights in $WEIGHTS_DIR" >&2
-    echo "fix: $SCRIPT_DIR/run_generate.sh --train" >&2
+    echo "fix: $SUBJECT_DIR/lora --train   (or --train-kaggle)" >&2
     exit 3
   fi
   echo "ok: weights $weights"
@@ -102,7 +106,7 @@ run_generate_samples() {
   render_config generate "$config"
   echo "ok: generating samples"
   run_ai_toolkit "$config"
-  sync_samples_to_lora_root
+  sync_samples_to_out
 }
 
 maybe_postpro() {
@@ -111,34 +115,38 @@ maybe_postpro() {
   fi
 }
 
+report_weights() {
+  weights="$(latest_lora_weights || true)"
+  if [ -n "${weights:-}" ]; then
+    echo "ok: weights $weights"
+  else
+    echo "ok: weights not trained yet"
+  fi
+}
+
 case "$mode" in
   check)
     run_gate_check
     check_dataset
-    weights="$(latest_lora_weights || true)"
-    if [ -n "${weights:-}" ]; then
-      echo "ok: weights $weights"
-    else
-      echo "ok: weights not trained yet"
-    fi
-    echo "ok: images $LORA_ROOT"
+    report_weights
+    echo "ok: images $OUT_DIR"
     ;;
   train)
     run_gate_check
     check_dataset
     sh "$SCRIPT_DIR/run_train.sh"
-    sync_samples_to_lora_root
+    sync_samples_to_out
     maybe_postpro
+    ;;
+  train-kaggle)
+    check_dataset
+    ruby "$SCRIPT_DIR/run_train_kaggle.rb" "$@"
+    report_weights
     ;;
   train-replicate)
     check_dataset
-    ruby "$SCRIPT_DIR/run_train_replicate.rb"
-    weights="$(latest_lora_weights || true)"
-    if [ -n "${weights:-}" ]; then
-      echo "ok: local weights ready for generate: $weights"
-    else
-      echo "ok: train finished; generate via Replicate destination model if no .safetensors yet"
-    fi
+    ruby "$SCRIPT_DIR/run_train_replicate.rb" "$@"
+    report_weights
     ;;
   generate)
     run_gate_check

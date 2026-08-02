@@ -1,0 +1,105 @@
+---
+job: extension
+config:
+  name: ragnhild_v2
+  process:
+  - type: sd_trainer
+    training_folder:
+    device: mps
+    trigger_word: ragnhild
+    network:
+      type: lora
+      linear: 32
+      linear_alpha: 32
+    save:
+      dtype: float16
+      save_every: 250
+      max_step_saves_to_keep: 4
+      push_to_hub: false
+    datasets:
+    - folder_path:
+      caption_ext: txt
+      caption_dropout_rate: 0.08
+      shuffle_tokens: false
+      cache_latents_to_disk: true
+      resolution:
+      - 512
+      - 768
+      - 1024
+    train:
+      batch_size: 1
+      steps: 1800
+      skip_first_sample: true
+      gradient_accumulation_steps: 1
+      train_unet: true
+      train_text_encoder: false
+      gradient_checkpointing: true
+      noise_scheduler: flowmatch
+      optimizer: adamw8bit
+      lr: 0.0001
+      ema_config:
+        use_ema: true
+        ema_decay: 0.995
+      dtype: bf16
+    model:
+      name_or_path: black-forest-labs/FLUX.1-dev
+      is_flux: true
+      quantize: true
+      low_vram: true
+    sample:
+      sampler: flowmatch
+      sample_every: 250
+      width: 1024
+      height: 1024
+      seed: 42
+      walk_seed: true
+      guidance_scale: 3.5
+      sample_steps: 20
+      prompts:
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Nordic
+        editorial portrait in open shade, huge soft north light, neutral grey backdrop,
+        clean catchlights, restrained makeup, Hasselblad medium format, gentle tonal
+        rolloff, 100mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, Hardanger
+        fjord at golden hour, low sun raking across the cheekbone, warm rim light
+        through blowing hair, deep amber highlights, Kodak Gold 200, 50mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, night
+        cafe interior, tungsten practicals behind her, cold blue window fill on the
+        near side, teal and orange separation, lifted milky shadows, ARRI Alexa, 40mm
+        anamorphic
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, hard midday
+        sun, black and white, Kodak Tri-X 400 pushed, deep contrast, sharp nose shadow,
+        real skin texture and pores, photojournalistic, 35mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, high fashion
+        studio, single large softbox above and left, black seamless background, sculpted
+        cheek shadow, glossy skin, editorial beauty lighting, 85mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, neon side
+        street after rain, magenta and cyan signage as the only light sources, wet
+        asphalt reflections, chromatic fringing, handheld, CineStill 800T, 35mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, candlelit
+        room, single flame just off frame, extreme low key, warm falloff into black,
+        heavy grain, most of the face in shadow, 50mm wide open
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, high key
+        commercial portrait, white cyclorama, near shadowless wraparound light, bright
+        airy exposure, crisp clean colour, catalogue photography, 105mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, backlit
+        by a bright window in a steamy room, strong rim separating hair from haze,
+        face in soft bounced shadow, blown highlights, dreamy diffusion, 85mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, snowfield
+        under heavy overcast, flat diffuse light from every direction, cool blue cast,
+        visible breath, pale skin against white, Fuji Pro 400H, 70mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, passenger
+        seat of a moving car, dappled sunlight sweeping through the windshield, handheld
+        documentary framing, motion in the background, warm skin cool glass, 28mm
+      - ragnhild, adult Norwegian woman in her 40s, exact likeness, no hat, shooting
+        straight into the setting sun, heavy anamorphic lens flare, face rim-lit and
+        half in silhouette, dust in the air, orange sky bokeh, 65mm
+      neg: plastic skin, waxy face, over-smoothed, airbrushed, doll, uncanny, deformed
+        eyes, asymmetrical eyes, extra teeth, bad hands, harsh HDR, oversaturated,
+        anime, illustration, CGI, face swap artifacts, cap, hat, selfie distortion,
+        beauty filter, heavy makeup, face morph, identity drift, teenage face, overly
+        young face, generic influencer face, different woman
+    meta:
+      name: ragnhild_v2
+      version: '2.0'
+      master_trigger: ragnhild

@@ -1,0 +1,11 @@
+{
+  "pushed_at": "2026-08-02T22:15:16Z",
+  "kernel": "johann84/ragnhild-flux-lora",
+  "dataset": "johann84/ragnhild-lora",
+  "trigger_word": "ragnhild",
+  "steps": 1800,
+  "accelerator": "NvidiaTeslaT4",
+  "timeout": 32400,
+  "dataset_images": 17,
+  "resumed_from": []
+}

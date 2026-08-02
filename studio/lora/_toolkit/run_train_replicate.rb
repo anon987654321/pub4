@@ -27,8 +27,8 @@ require "time"
 require "pathname"
 
 # The subject is chosen by the wrapper that invoked this (see _toolkit/lib.sh):
-# SUBJECT_DIR points at studio/lora/training/<subject>/ai_toolkit, and
-# subject.env there names SUBJECT, MODEL and TRIGGER.
+# SUBJECT_DIR points at studio/lora/<subject>, and subject.env there names
+# SUBJECT, MODEL and TRIGGER.
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script directly" }
 SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
@@ -39,7 +39,9 @@ SCRIPT_DIR = Pathname.new(__dir__).expand_path
 REPO_ROOT = SCRIPT_DIR.join("../../..").expand_path
 DATASET_DIR = SUBJECT_DIR.join("dataset")
 WEIGHTS_DIR = SUBJECT_DIR.join("weights", MODEL)
-EXPORTS_DIR = SUBJECT_DIR.join("exports")
+# Scratch: the zip we upload and the tar we download. Neither is a deliverable,
+# which is why it is no longer called exports/.
+EXPORTS_DIR = SUBJECT_DIR.join(".cache")
 LOG_PATH = WEIGHTS_DIR.join("replicate_train.log")
 
 MASTER_CLIENT = REPO_ROOT.join("MASTER/lib/io/replicate_client.rb")
@@ -146,7 +148,7 @@ puts "ok: trigger #{options[:trigger]} steps=#{options[:steps]} lora_rank=#{opti
 
 if options[:dry_run]
   puts "ok: dry-run (no upload/train)"
-  puts "tip: ./run_train_replicate.rb   # or run_generate.sh --train-replicate"
+  puts "tip: ./lora --train-replicate"
   exit 0
 end
 
@@ -229,5 +231,5 @@ append_log([
 ])
 
 puts "ok: done destination=#{destination} weights_dir=#{WEIGHTS_DIR}"
-puts "tip: ./run_generate.sh --generate   # local sample if .safetensors present"
+puts "tip: ./lora --generate   # local sample if .safetensors present"
 puts "tip: predict via Replicate on #{destination} (include trigger word in prompts)"

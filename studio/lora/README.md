@@ -1,38 +1,32 @@
-# Ragnhild-portretter
+# Person-LoRA
 
 Dette er ikke et filter lagt over et tilfeldig ansikt. Det er et forsøk på å gi deg tilbake deg selv i lys som er snillere — norsk, voksen, varm, ekte — slik at et bilde kan kjennes som et bedre minne, ikke en fremmed versjon av deg. Målet er et lite sett portretter som tåler nær blikk: ansiktet ditt først, stemning og magi etterpå, aldri omvendt.
 
 FLUX.1-dev er valgt fordi den treffer et sjeldent punkt mellom fotorealisme og kontroll: en stor rectified-flow-transformer som forstår lys, hud, perspektiv og fotografisk språk bedre enn eldre diffusjonsmodeller, og som faktisk lytter til prompten i stedet for å levere generisk AI-glatthet. Den er åpen nok til at vi kan trene en personspesifikk LoRA oppå, sterk nok til at finjustering gir ekte likhet i stedet for bare stil, og presis nok til at vi kan variere location, objektiv og filmstock uten at ansiktet faller fra hverandre — det er derfor den slår raske generalist-generatorer når målet er ett navn, ett ansikt, mange verdener.
 
-Teknisk sett starter vi med 17 kuraterte referansebilder av Ragnhild med tekstcaptions, trener en lav-rang LoRA-adapter (rank 32, triggerord `ragnhild`) oppå diffusjonsmodellen `black-forest-labs/FLUX.1-dev` via flow-matching og ai-toolkit på lokal MPS, slik at modellen lærer en personspesifikk representasjon i vektrommet i stedet for å gjette ansikt fra prompt alene; under trening caches latenter til disk, LoRA-vektene oppdateres over 1800 steg med AdamW 8-bit og EMA, validering skjer med 12 faste fotografiske prompts fra `prompts.yaml`, og hele kjeden styres av Ruby (`check_hf_flux_access.rb`, `render_config.rb`, `postpro_samples.rb`) via `run_generate.sh` — kun ai-toolkit sin `run.py` er Python-grensen — før eventuell `portrait`-postpro. Det skiller seg fra generiske bildegeneratorer som Grok Imagine, GPT-image eller Google Imagen fordi de er generalistiske tekst-til-bilde-modeller uten persistent, personbundet finjustering: de kan lage plausible portretter fra beskrivelse, men holder sjelden stabil identitet på tvers av lys, vinkel, antrekk og stil, og de kan ikke trenes på godkjente kildebilder med en eksplisitt likeness-sløyfe. Her eies hele kjeden lokalt, kan reproduseres og forbedres iterativt, og skiller bevisst mellom kildebaserte portretter, prompt-only forhåndsvisning og ekte LoRA-generering.
+Teknisk sett starter vi med kuraterte referansebilder med tekstcaptions, trener en lav-rang LoRA-adapter (rank 32) oppå diffusjonsmodellen `black-forest-labs/FLUX.1-dev` via flow-matching og ai-toolkit, slik at modellen lærer en personspesifikk representasjon i vektrommet i stedet for å gjette ansikt fra prompt alene; under trening caches latenter til disk, LoRA-vektene oppdateres over 1800 steg med AdamW 8-bit og EMA, validering skjer med 12 faste fotografiske prompts, og hele kjeden styres av Ruby — kun ai-toolkit sin `run.py` er Python-grensen. Det skiller seg fra generiske bildegeneratorer som Grok Imagine, GPT-image eller Google Imagen fordi de er generalistiske tekst-til-bilde-modeller uten persistent, personbundet finjustering: de kan lage plausible portretter fra beskrivelse, men holder sjelden stabil identitet på tvers av lys, vinkel, antrekk og stil, og de kan ikke trenes på godkjente kildebilder med en eksplisitt likeness-sløyfe. Her eies hele kjeden lokalt, kan reproduseres og forbedres iterativt. Spørsmålet er alltid det samme: er det Ragnhild? Er det Johann?
 
-Alle ferdige bilder ligger flatt i denne mappen. Det eneste versjonerte treningsdatasettet er den caption-bærende mappen `training/ragnhild/ai_toolkit/dataset/`; uttrukne videoframes, latent-cache, råkopier og ZIP-bunter regenereres lokalt og versjoneres ikke. Originalvideoer ligger i `training/ragnhild/sources/`, trening og skript i `training/ragnhild/ai_toolkit/`, og ferdige vekter/eksporter i `ragnhild/`. Start med `./run_generate.sh --check` eller `--train`. Prompt-only HF-forhåndsvisninger ble forkastet fordi de ikke ga identitetslikhet. Spørsmålet er alltid det samme: er det Ragnhild?
+## Layout
 
-## Dual-track train (RunPod / local *or* Replicate)
+```
+_toolkit/       the pipeline, once, shared by every subject
+<subject>/      lora  subject.env  train.yaml  dataset/  sources/  weights/  out/
+guides/         narrated walkthroughs (m4a + transcript)
+```
 
-Same dataset and trigger (`ragnhild`); pick the lane that fits ops cost.
+A directory at this root either starts with `_` or is a subject. Inside a
+subject, `sources/` is raw material, `dataset/` is the curated captioned set
+that is the only versioned training input, `weights/` holds checkpoints,
+`retouched/` holds postpro passes over source photographs, and `out/` holds
+generated portraits and nothing else. `.cache/` is scratch and is not versioned.
 
-| Lane | Command | When |
-|------|---------|------|
-| **Local / RunPod** | `training/ragnhild/ai_toolkit/run_generate.sh --train` | Full ai-toolkit control (rank 32, 1800 steps, multi-res YAML) |
-| **Replicate API** | `training/ragnhild/ai_toolkit/run_generate.sh --train-replicate` | No SSH/tmux; ~1000 steps on hosted H100s; private destination model |
+That last line is the distinction the whole project turns on: a photograph of
+Ragnhild that has been graded is not the model saying her name back. Keeping
+them in one directory would make the first real generate run look like it
+appended to work the model never did.
 
-Replicate path (`run_train_replicate.rb`):
-
-1. Zips `dataset/` → `exports/ragnhild_dataset.zip`
-2. Uploads via Replicate Files API
-3. Trains `ostris/flux-dev-lora-trainer` → destination `$user/ragnhild-flux` (override with `LORA_REPLICATE_DEST`)
-4. Polls until done (or `--async` + `REPLICATE_WEBHOOK_URL`)
-5. Pulls `output.weights` into `weights/ragnhild_v2/` when downloadable
-
-Requires `REPLICATE_API_TOKEN`. Dry-run: `./run_train_replicate.sh --dry-run`. Keep the private model private; do not publish person LoRAs publicly.
-
-## Toolkit layout
-
-The scripts live once, in `_toolkit/`, and every subject shares them. A subject
-directory holds only what is genuinely its own — `dataset/`, `sources/`,
-`prompts.yaml`, `train_<subject>.yaml`, `weights/` — plus a `subject.env` naming
-the three things that differ:
+`subject.env` names the three things that differ between one subject and the
+next:
 
 ```sh
 SUBJECT=johann
@@ -40,25 +34,112 @@ MODEL=johann_v1
 TRIGGER=johann
 ```
 
-The commands are unchanged: `training/<subject>/ai_toolkit/run_generate.sh` and
-friends are thin wrappers that export `SUBJECT_DIR` and hand over to `_toolkit/`.
-Run a `_toolkit/` script directly and it refuses, because it cannot know which
-subject you meant.
+Everything else is shared. Environment knobs are `LORA_*` for every subject
+(`LORA_DEVICE`, `LORA_LR`, `LORA_STEPS`, `LORA_PROMPT`, `LORA_FLUX_MODEL`, …):
+a knob named after the subject is not a knob, since the subject is already
+chosen by which directory you are in. Run a `_toolkit/` script directly and it
+refuses, because it cannot know which subject you meant.
 
-This replaced a per-subject fork. `johann/ai_toolkit` was a byte-for-byte copy of
-`ragnhild/ai_toolkit` apart from the name, so the four path fixes the `studio/`
-move needed had to be made twice, with nothing to catch a missed copy.
+## Commands
 
-Environment knobs are `LORA_*` for every subject (`LORA_DEVICE`, `LORA_LR`,
-`LORA_PROMPT`, `LORA_FLUX_MODEL`, `LORA_REPLICATE_DEST`, …). They used to be
-`RAGNHILD_*` and `JOHANN_*`: a knob named after the subject is not a knob, since
-the subject is already chosen by which directory you are in.
+One entry point per subject. `./lora --help` lists the rest.
+
+```sh
+studio/lora/ragnhild/lora --check      # HF gate, toolkit, dataset
+studio/lora/ragnhild/lora --train      # local MPS or a RunPod pod
+studio/lora/ragnhild/lora --generate   # sample from the newest checkpoint
+studio/lora/ragnhild/lora --all        # check, generate, postpro
+```
+
+## Three train lanes
+
+Same dataset and trigger; pick the lane that fits ops cost.
+
+| Lane | Command | Hardware | Cost |
+|------|---------|----------|------|
+| **Kaggle** | `./lora --train-kaggle` | 16 GB T4, 12 h/session, ~30 h/week | free |
+| **Local / RunPod** | `./lora --train` | M2 MPS, or a 24 GB+ pod over SSH | pod hourly |
+| **Replicate** | `./lora --train-replicate` | hosted H100, ~1000 steps | per run |
+
+Anything after the lane flag goes to that lane: `./lora --train-kaggle
+--dry-run --steps 600`.
+
+### Kaggle (`run_train_kaggle.rb`)
+
+Ruby packages the dataset, generates the notebook and its metadata, pushes,
+polls and pulls the weights back. The notebook it writes is a shim: install
+Ruby, clone pub4 and ai-toolkit, hand back to `./lora --train`. The Python
+boundary stays exactly where it is in every other lane.
+
+Two Kaggle limits shape the design. A GPU session is capped at 12 h and the
+weekly quota at ~30 h, so an 1800-step run spans sessions — checkpoints ride
+between them inside the dataset, and ai-toolkit resumes from the newest one, so
+running the lane again continues rather than restarts. And `/kaggle/working` is
+capped at 20 GB while FLUX.1-dev is larger than that, so the model cache goes to
+`/kaggle/tmp` (~60 GB, discarded at session end) and only the LoRA is written to
+the output.
+
+One-time setup on kaggle.com:
+
+1. **API token** — Settings → API → *Create New Token* downloads `kaggle.json`;
+   put it at `~/.kaggle/kaggle.json` (`chmod 600`), or export `KAGGLE_USERNAME`
+   and `KAGGLE_KEY`. Install the CLI: `pipx install kaggle`.
+2. **Phone-verify the account** — Settings → Phone Verification. Without it a
+   notebook cannot reach the internet, so the model download and both git
+   clones fail.
+3. **A notebook secret holding the HF token** — the notebook has to exist before
+   a secret can be attached to it, so push once (`./lora --train-kaggle
+   --async`), open the notebook, then Add-ons → Secrets → attach one. The label
+   is free text and Kaggle offers no lookup by value, so tell the lane which one
+   to read: `--secret LABEL`, or `LORA_KAGGLE_SECRET` in the environment.
+   Defaults to `HF_TOKEN`. The value must be a Hugging Face token that has
+   accepted the FLUX.1-dev licence. Push again.
+
+The notebook and dataset are both created private and should stay that way.
+
+### Replicate (`run_train_replicate.rb`)
+
+Zips `dataset/`, uploads via the Files API, trains
+`ostris/flux-dev-lora-trainer` into a private destination model
+(`$user/<subject>-flux`, override with `LORA_REPLICATE_DEST`), polls, and pulls
+`output.weights` into `weights/$MODEL/`. Requires `REPLICATE_API_TOKEN`. Async
+via `--async` plus `REPLICATE_WEBHOOK_URL`.
+
+### RunPod
+
+24 GB+ GPU (RTX 4090 / A5000 / L4 / A40), PyTorch 2.x + CUDA 12 template,
+50 GB+ disk. `export HF_TOKEN=hf_... SUBJECT=<subject>`, then
+`_toolkit/setup_runpod.sh --train`, then `tmux attach -t <subject>`.
+
+## Devices
+
+`LORA_DEVICE` picks a profile in `render_config.rb`, which rewrites the training
+YAML rather than keeping a config per machine.
+
+| Device | dtype | optimizer | quantize | buckets |
+|--------|-------|-----------|----------|---------|
+| `cuda` | bf16 | adamw8bit | no | 512/768/1024 |
+| `cuda_t4` | fp16 | adamw8bit | yes | 512 |
+| `mps` | fp16 | adamw | yes | 512 |
+
+`cuda_t4` is a profile, not a device ai-toolkit knows — it emits `cuda`. Turing
+has no bf16 at all, so inheriting the `cuda` dtype there is a hard failure
+rather than a slow path, and 16 GB will not hold FLUX.1-dev unquantised.
 
 ## Status
 
-- **ragnhild**: dataset complete (17 captioned images), full pipeline in `training/ragnhild/ai_toolkit/`. `weights/ragnhild_v2/` has no `.safetensors` yet — local MPS training died in the Metal compiler, and the last run failed on the gated FLUX.1-dev repo (needs `HF_TOKEN` with accepted license). An earlier Replicate run trained `basicfeatures/ragnhild:6197a9e1…` (see `ragnhild/weights/replicate_train.log`); with `REPLICATE_API_TOKEN` set, either pull those weights or re-run `--train-replicate`.
-- **johann**: pipeline scaffolded in `training/johann/ai_toolkit/` (trigger `johann`, model `johann_v1`, same dual-track scripts). Dataset holds 3 captioned images (night selfie, indoor cap selfie, dusk park selfie — the latter two face-cropped from `training/johann/sources/`) — still too few to train. Curate up to 12-18 varied photos (angles, light, expressions) into `training/johann/sources/`, caption them into `training/johann/ai_toolkit/dataset/`, then `./run_generate.sh --train` or `--train-replicate`.
+- **ragnhild**: dataset complete (17 captioned images), no `.safetensors` yet —
+  local MPS training died in the Metal compiler and the last run failed on the
+  gated FLUX.1-dev repo (needs `HF_TOKEN` with accepted licence). An earlier
+  Replicate run trained `basicfeatures/ragnhild:6197a9e1…` (see
+  `ragnhild/weights/ragnhild_v2/replicate_train.log`); with
+  `REPLICATE_API_TOKEN` set, either pull those weights or re-run. `retouched/`
+  holds 17 graded source photographs; there is no `out/` yet, because no
+  portrait of Ragnhild has been generated from any LoRA.
+- **johann**: dataset holds 3 captioned images — too few to train. Curate 12-18
+  varied photos (angles, light, expressions) into `johann/sources/`, caption
+  them into `johann/dataset/`, then pick a lane.
 
-## Johann
-
-Samme kjede som Ragnhild: FLUX.1-dev + ai-toolkit LoRA (rank 32, triggerord `johann`), dual-track lokal/RunPod eller Replicate. Kildebilder i `johann/`, trening i `training/johann/ai_toolkit/`, ferdige vekter i `training/johann/ai_toolkit/weights/johann_v1/`. Spørsmålet er det samme: er det Johann?
+The free Kaggle lane exists because neither of the other two has produced FLUX
+weights: one needs hardware this Mac does not have, the other needs money per
+attempt.

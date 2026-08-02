@@ -9,7 +9,9 @@ require "rbconfig"
 require "shellwords"
 
 ROOT = Pathname.new(__dir__).expand_path.freeze
-LORA = ROOT.join("..", "..", "..").expand_path.freeze
+# _toolkit -> lora. This resolved to the repo root, three levels too high, which
+# went unnoticed because lib.sh always passes --input-dir and --output-dir.
+LORA = ROOT.join("..").expand_path.freeze
 IMAGE_EXT = %w[.jpg .jpeg .png .webp].freeze
 SKIP_PREFIX = ["#{ENV.fetch("SUBJECT", "")}_final_", "hf_flux_"].freeze
 SKIP_SUFFIX = /(?:contact|grid|reel|_portrait|_cinematic|_quality_uplift|_blockbuster|_magic_hour|_postpro)\b/i
