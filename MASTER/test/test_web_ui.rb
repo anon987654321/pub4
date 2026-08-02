@@ -288,8 +288,20 @@ class TestWebUI < Minitest::Test
     assert_includes actions, "startsWith('!')"
     assert_includes service, "compaction:done"
     assert_includes service, "ctx:footer"
-    assert_includes dashboard, "mission control"
+    assert_dashboard_copy dashboard, "dashboard.heading_mission", "mission control"
     refute_includes dashboard, 'location.replace("/")'
+  end
+
+  # The dashboard renders through I18n, so asserting the English string against
+  # the template only passed until the view was localised — it then failed on a
+  # view that was more correct, not less. Pin the key in the template and the
+  # copy in the locale file, so the assertion survives a second locale and still
+  # says which words the panel is meant to show.
+  def assert_dashboard_copy(template, key, english)
+    assert_includes template, %(t("#{key}"))
+    locale = YAML.safe_load_file(File.expand_path("../web/config/locales/en.yml", __dir__))
+    value = key.split(".").reduce(locale.fetch("en")) { |node, segment| node.fetch(segment) }
+    assert_equal english, value, "en.yml #{key} drifted from the copy this page promises"
   end
 
   def test_wave3_felt_sense_and_face_part5_wiring
@@ -330,8 +342,8 @@ class TestWebUI < Minitest::Test
     assert_includes index, "skip-link"
     assert_includes index, "error-live"
     assert_includes index, "<textarea id=\"zin\""
-    assert_includes dashboard, "context pressure"
-    assert_includes dashboard, "repair queue"
+    assert_dashboard_copy dashboard, "dashboard.panels.pressure", "context pressure"
+    assert_dashboard_copy dashboard, "dashboard.panels.repair", "repair queue"
   end
 
   def test_wave3_history_export_sparkline_wired
