@@ -154,6 +154,30 @@ Default installs `OPENBSD/{etc,usr,var}`, validates pf/relayd, and restarts serv
 
 After `MASTER/web/` edits: `doas rcctl restart master`. Falcon does not hot-reload.
 
+**`OPENBSD/etc/` is canonical in intent, not in verified-deployability.** Diff
+before you install, every time:
+
+```zsh
+diff -u /etc/relayd.conf OPENBSD/etc/relayd.conf   # read every hunk
+doas cp -p /etc/relayd.conf /etc/relayd.conf.bak-$(date +%Y%m%d-%H%M%S)
+doas install -o root -g wheel -m 644 OPENBSD/etc/relayd.conf /etc/relayd.conf
+doas relayd -n -f /etc/relayd.conf                 # must print "configuration OK"
+doas rcctl restart relayd
+```
+
+On 2026-08-02 the repo copy carried `tls keypair "bplan.pub.healthcare"` for a
+cert that does not exist. relayd refuses to load an absent keypair, so a
+straight repo→live copy would have taken **every** site on the box down. The
+two files had quietly diverged since July precisely because nobody could sync
+them. `OPENBSD/sync.rb` (see *Occasional operator tools*) is the return leg
+that keeps this from building up.
+
+Note also that relayd's `match response header set` **overwrites** whatever the
+backend sent, so the edge value is the only `Permissions-Policy` any browser
+sees, for every app. It has to be the union of what all backends need — a
+`geolocation=()` there silently killed brgen's `#nearby` while the Rails
+initializer said `(self)`.
+
 ## Deploy-all disambiguation
 
 Two “deploy everything” paths on vm23 — pick deliberately:
@@ -165,6 +189,18 @@ Two “deploy everything” paths on vm23 — pick deliberately:
 
 `vps_production_push.sh` is the footgun under pressure: it restarts production without running CI.
 Use `vps_ci_all.sh` unless you explicitly need the fast path and accept the risk.
+
+## Occasional operator tools
+
+Nothing in the repo calls these — they are run by hand, which is exactly why
+they need to be listed somewhere. An orphan script is indistinguishable from a
+dead one until it is written down.
+
+| Script | Run from | What it is for |
+|--------|----------|----------------|
+| `ruby OPENBSD/sync.rb` (as `doas ruby34`) | vm23 | Mirror live `/etc` config **back into** `OPENBSD/`, with secret redaction. The repo→live direction is well travelled; this is the return leg, and skipping it is how `relayd.conf` drifted for weeks (see the warning under *OpenBSD deploy*). |
+| `ruby OPENBSD/ptr_openbsd_amsterdam.rb --ip … --hostname …` | anywhere | Set the PTR record via openbsd.amsterdam's `ptr4`/`ptr6` endpoints. Needed only if the VM's IP changes; `--apply` actually writes. |
+| `zsh OPENBSD/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
 
 ## Self-healing cron (vm23)
 

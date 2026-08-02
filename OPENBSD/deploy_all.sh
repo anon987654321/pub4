@@ -82,16 +82,6 @@ if (( run_per_app )); then
   done
 fi
 
-if command -v jq >/dev/null 2>&1 && [[ -f ${DEPLOY_ROOT}/deploy_inventory.json ]]; then
-  typeset -a STANDALONE
-  STANDALONE=("${(@f)$(jq -r '.standalone_apps[]?.name // empty' "${DEPLOY_ROOT}/deploy_inventory.json")}")
-  if (( ${#STANDALONE[@]} > 0 )); then
-    log "Standalone apps (deploy_inventory.json standalone_apps)..."
-    vssh "cd ${REMOTE_PUB4} && zsh OPENBSD/deploy_standalone_apps.sh 2>&1 | tee /tmp/standalone_deploy.log" \
-      || log "WARN: standalone deploy — see /tmp/standalone_deploy.log"
-  fi
-fi
-
 log "Smoke checks..."
 vssh 'ps aux | grep -E "falcon serve" | grep -v grep' || log "WARN: no Falcon processes"
 if command -v jq >/dev/null 2>&1; then

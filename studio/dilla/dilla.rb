@@ -210,7 +210,7 @@ module DillaSourceLearn
 
   def suggest_engine_patch(progression_symbols:, progression_insight:, bpm:, semantics:)
     track = map_progression_to_track(progression_symbols, progression_insight)
-    voicing = VOICING_ROTATION[(progression_symbols.join.hash.abs) % VOICING_ROTATION.length]
+    voicing = VOICING_ROTATION[(stable_hash(progression_symbols.join)) % VOICING_ROTATION.length]
     sonitex = semantics&.include?("vinyl") || semantics&.include?("dusty") ? :donuts_warm : :cassette
     sonitex = SONITEX_ROTATION[(bpm.to_f.round * 3).to_i % SONITEX_ROTATION.length] if bpm
     analog = semantics&.include?("warm") ? :acetate : :vinyl_hot
@@ -2185,6 +2185,96 @@ def patch_cycle_seed(base = 0)
   base + (@render_seed || 0) + (@stream_iterate_count || 0) * 7919 + entropy
 end
 
+# RENDER_SEED reached patch_cycle_seed above and stopped there. It never crossed
+# into ffmpeg, and ffmpeg is where most of this engine's randomness lives:
+# anoisesrc takes a `seed` whose default is -1, meaning a fresh random seed per
+# process, and all 31 call sites in this file left it at the default.
+#
+# That noise is not a bed under the drums. It IS the snare, the hat, the shaker,
+# the brush, the crackle and the rumble -- CRATE_PERCUSSION synthesises a shaker
+# as "a burst of high noise and nothing else". So every render drew new
+# percussion.
+#
+# Measured, two renders of one track with RENDER_SEED pinned: identical length,
+# 99.0% of sample frames different, the difference sitting 2.3 dB below the
+# signal itself. "Set it and renders are reproducible and comparable" was true
+# of patch selection and of nothing else, which is the more dangerous kind of
+# wrong -- the note above says several past comparisons were probably reading
+# patch variance rather than the change under test, and this says they were also
+# reading a different set of drums.
+#
+# Returns -1 when RENDER_SEED is unset: that is ffmpeg's own default and exactly
+# the per-process variation this file already documents as the unpinned
+# behaviour. Pinning stays opt-in; it just now pins the whole render.
+#
+# `tag` separates the sites, and it has to. One seed shared across all of them
+# makes the snare's noise and the hat's noise the same signal -- correlated in a
+# way two noise sources never are, and audible as phasing rather than as two
+# drums. Knuth's multiplicative constant, folded to anoisesrc's 0..UINT32_MAX.
+NOISE_SEED_STRIDE = 2_654_435_761
+NOISE_SEED_MODULUS = 4_294_967_296
+
+def render_pinned? = !ENV["RENDER_SEED"].to_s.empty?
+
+# Ruby randomises String#hash and Symbol#hash per process -- SipHash with a key
+# drawn at startup, so hash-flooding cannot be aimed at a long-running server.
+# Measured, three processes asked for "time_donut".hash return
+# 1631596481632401333, -1643377148673927661 and -1069425221180396255.
+#
+# Twenty-six sites in this file built seeds out of that -- the track name, the
+# drum role, the groove feel, the chord symbol, the section -- each one reading
+# as deterministic, since the same track name gives the same seed, and none of
+# them deterministic across two runs. RENDER_SEED was being added to a random number,
+# which is why pinning it changed nothing: the pin was real and everything it
+# was added to was not.
+#
+# djb2, which is stable because it is written here rather than provided by the
+# runtime. Non-negative by construction, so the .abs these sites carried is no
+# longer needed.
+def stable_hash(obj)
+  obj.to_s.each_byte.reduce(5381) { |a, b| ((a * 33) + b) % NOISE_SEED_MODULUS }
+end
+
+# A stable number from a tag and the pinned seed. String tags are hashed rather
+# than counted, because a positional counter changes the moment anything is
+# reordered and a render that changes when the code is rearranged is not pinned
+# in any useful sense.
+def seed_for(tag)
+  h = tag.is_a?(Integer) ? tag : tag.to_s.each_byte.reduce(7) { |a, b| ((a * 31) + b) % NOISE_SEED_MODULUS }
+  (ENV["RENDER_SEED"].to_i + (h * NOISE_SEED_STRIDE)) % NOISE_SEED_MODULUS
+end
+
+def noise_seed(tag) = render_pinned? ? seed_for(tag) : -1
+
+# The unpinned branch of both of these is the existing behaviour verbatim, so
+# nothing changes for anyone who has not set RENDER_SEED.
+def render_rand(tag)
+  return rand unless render_pinned?
+
+  seed_for(tag).fdiv(NOISE_SEED_MODULUS)
+end
+
+# Array#sample under a pin, keyed by tag rather than by call order. Order-keying
+# matters here: drum_sample_path is called once per role and a shared sequential
+# RNG would hand a role a different file depending on which roles were resolved
+# before it, so the same seed would give different kits in different arrangements.
+def render_pick(list, tag)
+  list = Array(list)
+  return nil if list.empty?
+  return list.sample unless render_pinned?
+
+  list[seed_for(tag) % list.length]
+end
+
+# Random.new(Time.now.to_i + Process.pid), which four stream-evolution sites
+# used, cannot be pinned by anything -- it re-seeds from the clock on every run
+# by construction.
+def render_rng(tag, drift: 0)
+  return Random.new(seed_for(tag)) if render_pinned?
+
+  Random.new(Time.now.to_i + Process.pid + drift)
+end
+
 # GM chromatic percussion is struck metal — celesta, glockenspiel, music box,
 # vibraphone, marimba, xylophone, tubular bells — and 94 is literally "metallic
 # pad", 98 "crystal", 103 "FX 8 (sci-fi)". None of them belong in a Rhodes /
@@ -2362,7 +2452,7 @@ def weighted_patch_pick(role, seed: nil, soulful: true)
 end
 
 def pick_synth_patches!(cfg, bar: 0, n_bars: nil)
-  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) +
+  seed = (stable_hash(cfg[:track].to_s) % 100_000) + (@render_seed || 0) +
          (pad_synth_cycle_enabled? ? (@stream_iterate_count || 0) * 997 + bar * 13 : 0)
   @render_skip_warm_pad = false
   roles = nil
@@ -3157,7 +3247,7 @@ def pick_radio_bergen_stream_track!
   return unless weights.is_a?(Hash) && weights.any?
   pool = weights.flat_map { |track, count| Array.new(count.to_i.clamp(1, 12), track.to_s) }
   return if pool.empty?
-  picked = pool.sample
+  picked = render_pick(pool, "stream_track_weight")
   ENV["TRACK"] = picked
   defaults = load_radio_bergen_learnings["stream_env_defaults"]
   if defaults.is_a?(Hash)
@@ -3486,11 +3576,11 @@ def arrange_fugue_progression(pads, needed_chords, cfg)
               end
   development = case dev_style
                 when :planing
-                  generate_planing_progression(root_hz: dev_root, length: development_len, seed: cfg[:track].hash.abs)
+                  generate_planing_progression(root_hz: dev_root, length: development_len, seed: stable_hash(cfg[:track]))
                 when :chromatic_mediant
-                  generate_chromatic_mediant_progression(root_hz: dev_root, length: development_len, seed: cfg[:track].hash.abs)
+                  generate_chromatic_mediant_progression(root_hz: dev_root, length: development_len, seed: stable_hash(cfg[:track]))
                 else
-                  generate_progression(root_hz: dev_root, mode: :minor, length: development_len, seed: cfg[:track].hash.abs)
+                  generate_progression(root_hz: dev_root, mode: :minor, length: development_len, seed: stable_hash(cfg[:track]))
                 end
 
   intro_hook = Array.new(exposition) { hook }.flatten
@@ -3584,7 +3674,7 @@ end
 def arrange_la_beat_progression(pads, needed_chords, cfg)
   return arrange_loop_progression(pads, needed_chords, cfg) + [nil] if pads.empty?
 
-  rng = Random.new(patch_cycle_seed(needed_chords + cfg[:track].to_s.hash.abs))
+  rng = Random.new(patch_cycle_seed(needed_chords + stable_hash(cfg[:track].to_s)))
   hook = pads
   out = []
   phases = []
@@ -3653,7 +3743,7 @@ def arrange_camel_beat_progression(pads, needed_chords, cfg)
          end
   return arrange_loop_progression(hook, needed_chords, cfg) + [nil] if hook.length < 2
 
-  rng = Random.new(patch_cycle_seed(needed_chords + cfg[:track].to_s.hash.abs + 86))
+  rng = Random.new(patch_cycle_seed(needed_chords + stable_hash(cfg[:track].to_s) + 86))
   out = []
   phases = []
   chord_lens = []
@@ -3756,7 +3846,7 @@ end
 def cyclic_timing_offset(role, bar_index, step_index, timing, beat_p, cycle: 4)
   range = timing&.fetch(role, nil) || MICROTIMING_MS.fetch(role)
   cyclic_bar = bar_index % cycle
-  seed = (cyclic_bar * 97) + (step_index * 31) + role.hash.abs
+  seed = (cyclic_bar * 97) + (step_index * 31) + stable_hash(role)
   raw = range.begin + (seed % (range.end - range.begin + 1))
   return raw unless beat_p
 
@@ -3817,7 +3907,7 @@ def section_density(bar, n_bars, chord_phases: nil, pad_chords: nil, chord_bars:
 end
 
 def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
-  rng = Random.new(cfg[:track].to_s.hash.abs + 909)
+  rng = Random.new(stable_hash(cfg[:track].to_s) + 909)
   step_p = beat_p / 4.0
   family = cfg[:style_family]
 
@@ -4076,7 +4166,7 @@ end
 
 def flylo_overlay_grid_pick(bar, section, role)
   grids = flylo_overlay_grids_for(section)
-  seed = (@render_seed || 0) + section.hash.abs
+  seed = (@render_seed || 0) + stable_hash(section)
   idx = (bar + seed + (bar / 4)) % grids.length
   Array(grids[idx].fetch(role, [])).dup
 end
@@ -5658,7 +5748,7 @@ end
 def pad_midi_events_for_layer(pad_events, cfg, _patch, role:, duration:)
   return pad_events if pad_events.length < 2
   return pad_events unless la_beat_progression_enabled? || ENV["PAD_LEGATO_VAR"] == "1"
-  rng = Random.new(patch_cycle_seed(role.hash + pad_events.length))
+  rng = Random.new(patch_cycle_seed(stable_hash(role) + pad_events.length))
   beat_p = 60.0 / cfg[:bpm]
   pad_events.map.with_index do |parts, i|
     time, vel, chord, sustain = parts
@@ -5991,8 +6081,8 @@ end
 
 # Per-chord RNG — same progression, different figure/timing every change.
 def chord_variation_rng(cfg, chord_i, chord, salt: 0)
-  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + chord_i * 131 +
-         (chord[:name].to_s.hash.abs % 5000) + salt
+  seed = (stable_hash(cfg[:track].to_s) % 100_000) + (@render_seed || 0) + chord_i * 131 +
+         (stable_hash(chord[:name].to_s) % 5000) + salt
   Random.new(seed)
 end
 
@@ -6017,7 +6107,7 @@ ARP_SHAPE_STYLES = %i[
 
 # Each pad/lead chord gets its own arp style, subdiv, gate, swing, and pattern shape.
 def arp_variation_for_chord(chord_i, chord, cfg, base_arp_cfg, patch: nil, role: :lead)
-  rng = chord_variation_rng(cfg, chord_i, chord, salt: role.hash.abs)
+  rng = chord_variation_rng(cfg, chord_i, chord, salt: stable_hash(role))
   styles = base_arp_cfg[:arp_styles] || arp_styles_for_patch(patch, base_arp_cfg[:style])
   style = styles[chord_i % styles.length]
   style = ARP_IDM_STYLES.sample(random: rng) if ENV["ARP_IDM_BIAS"] == "1" && rng.rand < 0.65
@@ -6186,7 +6276,7 @@ def lead_events_creative(pad_events, cfg, duration: nil, n_bars: nil)
   beat_p = 60.0 / cfg[:bpm]
   bar_p = beat_p * 4.0
   n_bars ||= duration ? (duration / bar_p).ceil : 32
-  seed = (cfg[:track].to_s.hash.abs % 100_000) + (@render_seed || 0) + 8801
+  seed = (stable_hash(cfg[:track].to_s) % 100_000) + (@render_seed || 0) + 8801
   rng = Random.new(seed)
   leitmotif = leitmotif_for(pad_events)
   arp_style = @render_arp_style || :updown
@@ -9773,7 +9863,7 @@ def analog_resolve_variant(track: nil, rotate_index: nil)
   if explicit && !explicit.empty? && explicit != "auto"
     key = explicit.to_sym
     return key if analog_chain_lookup(key)
-    return build_random_wild_analog_chain!(Random.new(Time.now.to_i + Process.pid)) if %w[wild wild_random random].include?(explicit)
+    return build_random_wild_analog_chain!(render_rng("wild_analog_chain")) if %w[wild wild_random random].include?(explicit)
   end
   idx = rotate_index
   unless idx
@@ -9969,7 +10059,7 @@ def synth_impulse_response!(room)
   FileUtils.mkdir_p(SCRATCH_DIR)
   cfg = CONVOLUTION_ROOMS.fetch(room)
   decay_rate = (3.0 / cfg[:decay]).round(3)
-  sh! "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=white:d=#{cfg[:decay] + 0.3}:r=#{SAMPLE_RATE}",
+  sh! "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=white:d=#{cfg[:decay] + 0.3}:r=#{SAMPLE_RATE}:seed=#{noise_seed(1)}",
       "-af", "aeval=exprs='val(0)*exp(-#{decay_rate}*t)|val(1)*exp(-#{decay_rate}*t)',#{cfg[:color]}",
       "-ac", "2", "-ar", SAMPLE_RATE.to_s, path
   path
@@ -11674,7 +11764,7 @@ def stream_evolve_composition!
   sess = composition_session!(n_bars: bars, track:)
   keep_performer = ENV["PERFORMER"]
   keep_groove = ENV["GROOVE_DNA"]
-  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0))
+  rng = render_rng("stream_evolve_0", drift: (@stream_iterate_count || 0) + 0)
   sess.motifs.each { |m| m.evolve! if rng.rand < 0.35 }
   if ENV.fetch("STREAM_EVOLVE_PERFORMER", "0") == "1"
     sess.mutate!
@@ -11695,7 +11785,7 @@ def stream_evolve_pocket!(groove_analysis: nil)
   return unless stream_iterate_enabled?
   cfg = dilla_resolve_config
   return unless DillaComposition::Evolution.dilla_pocket_style?(cfg)
-  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + 17)
+  rng = render_rng("stream_evolve_17", drift: (@stream_iterate_count || 0) + 17)
   events = groove_analysis || (instance_variable_defined?(:@last_drum_events) ? @last_drum_events : nil)
   recs = events ? DillaGrooveScore.evolve_recommendations(DillaGrooveScore.analyze(events)) : {}
   @last_groove_score = recs[:score]
@@ -11741,7 +11831,7 @@ def stream_iterate_evolve_harmony!
   every = [(ENV["STREAM_HARMONY_EVERY"] || ENV["EVOLVE_EVERY"] || "2").to_i, 1].max
   return [] unless (@stream_iterate_count % every).zero?
 
-  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + 31)
+  rng = render_rng("stream_evolve_31", drift: (@stream_iterate_count || 0) + 31)
   notes = []
 
   soul_locked = ENV["STREAM_SOUL"] == "1" && ENV["STREAM_LOCK"] == "1"
@@ -11794,7 +11884,7 @@ def stream_iterate_evolve_flylo_drums!
   every = [(ENV["STREAM_FLYLO_EVERY"] || ENV["EVOLVE_EVERY"] || "2").to_i, 1].max
   return [] unless (@stream_iterate_count % every).zero?
 
-  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + 67)
+  rng = render_rng("stream_evolve_67", drift: (@stream_iterate_count || 0) + 67)
   notes = []
   remove_instance_variable(:@flylo_overlay_grid_cache) if instance_variable_defined?(:@flylo_overlay_grid_cache)
 
@@ -11829,7 +11919,7 @@ def stream_iterate_analog_emulation!
   return [] if every <= 0
   return [] unless (@stream_iterate_count % every).zero?
 
-  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + 53)
+  rng = render_rng("stream_evolve_53", drift: (@stream_iterate_count || 0) + 53)
   notes = []
 
   if ENV.fetch("STREAM_ANALOG_WILD", "1") != "0" && rng.rand < 0.35
@@ -11907,7 +11997,7 @@ def stream_iterate_creative_freedom!
     cfg = dilla_resolve_config
     pick_synth_patches!(cfg, bar: (@stream_iterate_count || 0) * 4)
   end
-  rng = Random.new(Time.now.to_i + Process.pid + (@stream_iterate_count || 0) + (@render_seed || 0))
+  rng = render_rng("arp_style", drift: (@stream_iterate_count || 0) + (@render_seed || 0))
   styles = (@render_lead_patch&.dig(:arp_styles) || ARP_PATTERN_BUILDERS.keys).to_a
   @render_arp_style = styles.sample(random: rng)
   scale_styles = (@render_scale_lead_patch&.dig(:arp_styles) || styles).to_a
@@ -12024,7 +12114,7 @@ end
 def slash_bass_pads_for(pads, cfg)
   return if pads.empty?
   root = pads.first[:hz].min * 0.5
-  generate_slash_progression(root_hz: root, length: pads.length, seed: cfg[:track].to_s.hash.abs)
+  generate_slash_progression(root_hz: root, length: pads.length, seed: stable_hash(cfg[:track].to_s))
 end
 
 def ghost_tier_for(bar, section)
@@ -13836,7 +13926,7 @@ def drum_feel_key(feel)
 end
 
 def drum_pattern_seed(feel)
-  (feel.hash.abs + (@render_seed || 0)) % 10_000
+  (stable_hash(feel) + (@render_seed || 0)) % 10_000
 end
 
 def drum_pattern_pick(bar, feel, role)
@@ -13954,7 +14044,7 @@ def dilla_ghost_steps(bar, feel, section: :main)
   if scale < 1.0
     steps = steps.select.with_index { |_, i| i.even? || bar.odd? }
   elsif scale > 1.0
-    extras = [2, 6, 14].select { |s| !steps.include?(s) && Random.new(bar * 71 + feel.hash).rand < 0.38 }
+    extras = [2, 6, 14].select { |s| !steps.include?(s) && Random.new(bar * 71 + stable_hash(feel)).rand < 0.38 }
     steps += extras
   end
   steps.uniq.sort
@@ -14048,7 +14138,7 @@ def melody_pitch_from_chord(chord, bar, mel_step)
   # Rotate through upper chord tones (3rd, 5th, 7th, 9th) — not always the root.
   color_idx = [1, 2, 3, 0, 2, 1][(bar + mel_step) % 6] % midis.length
   base_midi = midis[color_idx]
-  rng = Random.new((bar * 97) + (mel_step * 41) + chord[:name].to_s.hash.abs)
+  rng = Random.new((bar * 97) + (mel_step * 41) + stable_hash(chord[:name].to_s))
   approach = if composition_enabled? && rng.rand < 0.22
                neighbor = DillaComposition::Counterpoint.neighbor_tone(midi_to_hz(base_midi + 12),
                                                                      direction: rng.rand < 0.5 ? :up : :down)
@@ -14067,7 +14157,7 @@ def schedule_dfam_events!(events, n_bars, beat_p, swing, quintuplet, timing)
   step_p = beat_p / 4.0
   bar_p = beat_p * 4.0
   track = (ENV["TRACK"] || DillaLofiMachine::DEFAULT_PROFILE).to_s
-  pattern = DfamEngine.resolve_pattern(seed: (@render_seed || 0) + track.hash.abs)
+  pattern = DfamEngine.resolve_pattern(seed: (@render_seed || 0) + stable_hash(track))
   patch = DfamEngine.resolve_patch
   ticks = DillaLofiMachine.humanize_ticks_for(track)
   n_bars.times do |bar|
@@ -14606,17 +14696,17 @@ def pick_external_drum_kit!
   end
   track = (ENV["TRACK"] || "").to_s
   soul = DillaHarmony.soul_profile?(track) || ENV["DILLA_STREAMING"] == "1"
-  roll = rand
+  roll = render_rand("external_kit_roll")
   @current_external_kit = if soul
                             if roll < 0.72
                               "03-soulful-vintage"
                             elsif roll < 0.88
                               "02-bounce"
                             else
-                              EXTERNAL_DRUM_KITS.sample
+                              render_pick(EXTERNAL_DRUM_KITS, "external_kit_soul")
                             end
                           elsif roll < 0.35
-                            EXTERNAL_DRUM_KITS.sample
+                            render_pick(EXTERNAL_DRUM_KITS, "external_kit_plain")
                           end
 end
 
@@ -14645,7 +14735,9 @@ def drum_sample_path(name)
     kit ||= "03-soulful-vintage" if ALWAYS_SAMPLED_DRUM_ROLES.include?(name) && Dir.exist?(EXTERNAL_DRUM_KIT_CACHE)
     if kit
       kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit, subdir)
-      picked = Dir.glob(File.join(kit_dir, "*.wav")).sample
+      # .sort first: Dir.glob order is not guaranteed across filesystems, so an
+      # index into an unsorted list is only stable on the machine that made it.
+      picked = render_pick(Dir.glob(File.join(kit_dir, "*.wav")).sort, "kit:#{kit}:#{name}")
       return picked if picked
     end
   end
@@ -14664,18 +14756,18 @@ def generate_drum_kit!
      ["-f", "lavfi", "-i", "aevalsrc='0.9*exp(-t*7.5)*sin(2*PI*(48+210*exp(-t*28))*t)+0.55*exp(-t*95)*sin(2*PI*3200*t)*between(t,0,0.006)':d=0.55:s=#{sr}"],
      "lowpass=f=180,acrusher=bits=12:samples=2:mix=0.42,equalizer=f=55:t=o:w=0.8:g=4,acompressor=threshold=-20dB:ratio=3:attack=3:release=50"],
     ["snare.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.32:color=white:amplitude=0.95", "-f", "lavfi", "-i", "sine=f=195:d=0.32"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.32:color=white:amplitude=0.95:seed=#{noise_seed(2)}", "-f", "lavfi", "-i", "sine=f=195:d=0.32"],
      "[0:a]asplit=2[n][n2];[n]highpass=f=1200,lowpass=f=7000,aeval=exprs='val(0)*exp(-t*32)'[crack];" \
      "[n2]bandpass=f=350:w=500,aeval=exprs='val(0)*exp(-t*18)'[rattle];[1:a]aeval=exprs='val(0)*exp(-t*22)'[body];" \
      "[crack][rattle][body]amix=inputs=3:weights=0.75 0.35 0.45,acrusher=bits=10:samples=2:mix=0.38"],
     ["ghost.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.14:color=pink:amplitude=0.7"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.14:color=pink:amplitude=0.7:seed=#{noise_seed(3)}"],
      "highpass=f=900,lowpass=f=5500,aeval=exprs='val(0)*exp(-t*48)',volume=0.55"],
     ["hat.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.07:color=white:amplitude=1"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.07:color=white:amplitude=1:seed=#{noise_seed(4)}"],
      "highpass=f=7500,lowpass=f=15000,aeval=exprs='val(0)*exp(-t*140)',acrusher=bits=8:samples=1:mix=0.55"],
     ["open_hat.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.42:color=white:amplitude=0.85"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.42:color=white:amplitude=0.85:seed=#{noise_seed(5)}"],
      "highpass=f=6000,bandpass=f=9000:w=5000,aeval=exprs='val(0)*exp(-t*9)'"],
     ["bass_43.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.75*exp(-t*1.1)*sin(2*PI*(43+5*sin(2*PI*0.28*t))*t)':d=1.35:s=#{sr}"],
@@ -14684,12 +14776,12 @@ def generate_drum_kit!
      ["-f", "lavfi", "-i", "aevalsrc='0.95*exp(-t*5.5)*sin(2*PI*(50+520*exp(-t*45))*t)':d=0.65:s=#{sr}"],
      "aeval=exprs='tanh(5.5*val(0))/tanh(5.5)',lowpass=f=140,equalizer=f=52:t=o:w=0.6:g=9,acompressor=threshold=-16dB:ratio=10:attack=1:release=35"],
     ["ind_clap.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.22:color=white:amplitude=1"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.22:color=white:amplitude=1:seed=#{noise_seed(6)}"],
      "[0:a]asplit=3[a][b][c];[a]adelay=0|3,highpass=f=1400,aeval=exprs='val(0)*exp(-t*24)'[c1];" \
      "[b]adelay=12|15,highpass=f=1800,aeval=exprs='val(0)*exp(-(t-0.012)*30)'[c2];[c]bandpass=f=900:w=1800,aeval=exprs='val(0)*exp(-t*20)'[c3];" \
      "[c1][c2][c3]amix=inputs=3,acompressor=threshold=-14dB:ratio=6:attack=1:release=25"],
     ["ind_hat.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.05:color=white:amplitude=1"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.05:color=white:amplitude=1:seed=#{noise_seed(7)}"],
      "highpass=f=9000,aeval=exprs='val(0)*exp(-t*160)',equalizer=f=12000:t=o:w=2:g=4"],
     ["ind_bass_e.wav",
      ["-f", "lavfi", "-i", "aevalsrc='(2*mod(41.2*t,1)-1)*exp(-t*7)*0.8':d=0.24:s=#{sr}"],
@@ -14698,7 +14790,7 @@ def generate_drum_kit!
      ["-f", "lavfi", "-i", "aevalsrc='(2*mod(58.27*t,1)-1)*exp(-t*7)*0.8':d=0.24:s=#{sr}"],
      "lowpass=f=420,aeval=exprs='tanh(2.8*val(0))/tanh(2.8)'"],
     ["ind_stab.wav",
-     ["-f", "lavfi", "-i", "anoisesrc=d=0.35:color=white:amplitude=0.9", "-f", "lavfi", "-i", "sine=f=164.81:d=0.35"],
+     ["-f", "lavfi", "-i", "anoisesrc=d=0.35:color=white:amplitude=0.9:seed=#{noise_seed(8)}", "-f", "lavfi", "-i", "sine=f=164.81:d=0.35"],
      "[0:a]bandpass=f=280:w=900,aeval=exprs='val(0)*exp(-t*14)'[m];[1:a]aeval=exprs='val(0)*exp(-t*11)'[t];" \
      "[m][t]amix=inputs=2:weights=0.7 0.35,lowpass=f=2800"],
   ]
@@ -14735,7 +14827,7 @@ def generate_fm_drum_kit!
      # keeps it from sounding too digitally clean for a kit modeled on
      # dusty analog hardware.
      ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))+0.35*exp(-t*9)*sin(2*PI*42*t)':d=0.6:s=#{sr}",
-      "-f", "lavfi", "-i", "anoisesrc=d=0.6:color=pink:amplitude=0.02"],
+      "-f", "lavfi", "-i", "anoisesrc=d=0.6:color=pink:amplitude=0.02:seed=#{noise_seed(9)}"],
      "[0:a]aeval=exprs='tanh(1.8*val(0))/tanh(1.8)',lowpass=f=240[voice];" \
      "[1:a]lowpass=f=2500[floor];" \
      "[voice][floor]amix=inputs=2:duration=first,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
@@ -14746,14 +14838,14 @@ def generate_fm_drum_kit!
     # 55:58) and slightly punchier decay for real per-alternation contrast.
     ["ind_kick.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*7)*sin(2*PI*60*t+7*exp(-t*34)*sin(2*PI*46*t))+0.32*exp(-t*10)*sin(2*PI*44*t)':d=0.55:s=#{sr}",
-      "-f", "lavfi", "-i", "anoisesrc=d=0.55:color=pink:amplitude=0.02"],
+      "-f", "lavfi", "-i", "anoisesrc=d=0.55:color=pink:amplitude=0.02:seed=#{noise_seed(10)}"],
      "[0:a]aeval=exprs='tanh(2.0*val(0))/tanh(2.0)',lowpass=f=250[voice];" \
      "[1:a]lowpass=f=2500[floor];" \
      "[voice][floor]amix=inputs=2:duration=first,acompressor=threshold=-17dB:ratio=3.5:attack=2:release=40"],
     ["snare.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.8*exp(-t*18)*sin(2*PI*200*t+7*exp(-t*35)*sin(2*PI*330*t))':d=0.3:s=#{sr}",
-      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9",
-      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=pink:amplitude=0.015"],
+      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9:seed=#{noise_seed(11)}",
+      "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=pink:amplitude=0.015:seed=#{noise_seed(12)}"],
      "[1:a]highpass=f=1500,lowpass=f=8000,aeval=exprs='val(0)*exp(-t*30)'[crack];" \
      "[2:a]lowpass=f=3000[floor];" \
      "[0:a][crack][floor]amix=inputs=3:weights=0.65 0.68 1,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
@@ -14815,7 +14907,7 @@ def ensure_drum_chops!
     # deterministic slop (seeded by name, not random-per-run, so the same
     # source always chops the same way) instead of an always-exact cut
     # point is closer to how sample-chopping actually sounds.
-    slop = (Random.new(name.hash.abs).rand(-0.012..0.012)).round(4)
+    slop = (Random.new(stable_hash(name)).rand(-0.012..0.012)).round(4)
     t0 = (bar8 + step_i * step + 0.5 + slop).clamp(0.0, Float::INFINITY).round(3)
     dur = if name.start_with?("kick")
 0.28
@@ -16126,7 +16218,7 @@ def resolve_ep_voice
     return { sf2: pad_soundfont_path, bank: 0, program: PAD_GM_PROGRAM, patch: nil }
   end
   patch_voice_for(@render_ep_patch) || begin
-    program = EP_GM_PROGRAMS.sample
+    program = render_pick(EP_GM_PROGRAMS, "ep_program")
     { sf2: pad_soundfont_path, bank: 0, program:, patch: nil }
   end
 end
@@ -16136,7 +16228,7 @@ def resolve_lead_voice
   if ENV["DILLA_LEAD_PROGRAM"]
     return { sf2: pad_soundfont_path, bank: 0, program: ENV["DILLA_LEAD_PROGRAM"].to_i, patch: @render_lead_patch }
   end
-  patch_voice_for(@render_lead_patch) || { sf2: pad_soundfont_path, bank: 0, program: LEAD_GM_PROGRAMS.sample, patch: nil }
+  patch_voice_for(@render_lead_patch) || { sf2: pad_soundfont_path, bank: 0, program: render_pick(LEAD_GM_PROGRAMS, "lead_program"), patch: nil }
 end
 
 def resolve_texture_voice
@@ -16728,7 +16820,7 @@ def leitmotif_for(pad_events)
     return hook.degrees_for_playback if hook
   end
   seed_source = pad_events.first&.dig(2, :name).to_s
-  rng = Random.new(seed_source.hash.abs % 100_000)
+  rng = Random.new(stable_hash(seed_source) % 100_000)
   length = [3, 4].sample(random: rng)
   Array.new(length) { rng.rand(4) }
 end
@@ -16740,7 +16832,7 @@ def resolve_scale_lead_voice
   end
   patch_voice_for(@render_scale_lead_patch) ||
     patch_voice_for(@render_lead_patch) ||
-    { sf2: pad_soundfont_path, bank: 0, program: LEAD_GM_PROGRAMS.sample, patch: nil }
+    { sf2: pad_soundfont_path, bank: 0, program: render_pick(LEAD_GM_PROGRAMS, "lead_program"), patch: nil }
 end
 
 # Interesting default lead FX — delay, chorus, subtle phaser, air shelf, soft drive.
@@ -16950,7 +17042,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # the same way chop/melody events already are.
   pluck_buffers = pad_events.filter_map do |(t, v, chord, _sustain)|
     next unless chord && chord[:hz]&.any?
-    [t, v, karplus_strong_pluck(chord[:hz].min, 1.1, seed: chord[:name].to_s.hash.abs % 100_000)]
+    [t, v, karplus_strong_pluck(chord[:hz].min, 1.1, seed: stable_hash(chord[:name].to_s) % 100_000)]
   end
   write_stereo_chunks(tones_path, duration) do |chunk_start, chunk_frames, left, right|
     pluck_buffers.each do |(t, v, buf)|
@@ -17320,7 +17412,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   @render_chord_bar_lens = chord_bar_lens
   pedal_prob = curated ? 0.0 : DillaHarmony.pedal_probability(cfg)
   pedal_prob = 0.18 if pedal_prob.zero? && !curated
-  pads = apply_pedal_point(pads, probability: pedal_prob, seed: cfg[:track].hash.abs) unless pedal_prob.zero?
+  pads = apply_pedal_point(pads, probability: pedal_prob, seed: stable_hash(cfg[:track])) unless pedal_prob.zero?
   pads, fugue_phases = if curated
                            DillaHarmony.beautify_curated_pipeline(pads, cfg, phases: fugue_phases)
                          else
@@ -17338,7 +17430,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   bass_pads = nil
   if slash_bass_enabled?(cfg) && !pads.empty?
     bass_pads = slash_bass_pads_for(pads, cfg)
-  elsif !curated && Random.new(cfg[:track].to_s.hash.abs).rand < 0.1
+  elsif !curated && Random.new(stable_hash(cfg[:track].to_s)).rand < 0.1
     bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
                                                          length: pads.length))
   end
@@ -17390,7 +17482,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
         t = (i * step_p8).round(6)
         [t, dilla_velocity(0.55, i / 8, i % 8, spread: 0.15)]
       end
-      cowbell_rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + 41)
+      cowbell_rng = Random.new((stable_hash(cfg[:track].to_s) % 100_000) + 41)
       events[:cowbell] = (0...(duration / beat_p).floor).filter_map do |i|
         next unless cowbell_rng.rand < 0.07
         t = (i * beat_p + cowbell_rng.rand(beat_p * 0.6)).round(6)
@@ -17522,7 +17614,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   unless ENV["CONV_REVERB"] == "0"
     ir_room = ENV["CONV_REVERB"]&.to_sym
     ir_room = :chamber if deep_render? && (!ir_room || !CONVOLUTION_ROOMS.key?(ir_room))
-    ir_room ||= CONVOLUTION_ROOMS.keys.sample
+    ir_room ||= render_pick(CONVOLUTION_ROOMS.keys, "conv_room")
     ir_path = DillaMaster.club_ir_path || synth_impulse_response!(ir_room)
     command += ["-i", ir_path]
     ir_input_idx = idx
@@ -17533,11 +17625,11 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   vinyl_base = sonic_vinyl_level(cfg[:sonic])
   vinyl_amp = vinyl_base.positive? ? DillaMl.groove_synced_vinyl(ghost_n, kick_n, base: vinyl_base) : 0.0
   if vinyl_amp.positive?
-    command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=#{vinyl_amp}:d=#{duration}"]
+    command += ["-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=#{vinyl_amp}:d=#{duration}:seed=#{noise_seed(13)}"]
   end
   turntable_rumble = vinyl_amp.positive? && sonitex_enabled? &&
                      TURNTABLE_RUMBLE_VARIANTS.include?(analog_resolve_variant(track: cfg[:track].to_s))
-  command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.02:d=#{duration}"] if turntable_rumble
+  command += ["-f", "lavfi", "-i", "anoisesrc=color=brown:r=#{SAMPLE_RATE}:amplitude=0.02:d=#{duration}:seed=#{noise_seed(14)}"] if turntable_rumble
 
   # Every attempt to fix chord audibility by tuning EQ/weights/sidechain
   # *within* the elaborate mix chain (NY parallel drum compression, a
@@ -17922,7 +18014,7 @@ def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp
   command += ["-f", "lavfi", "-i", "aevalsrc='0.55*sin(2*PI*38*t)*exp(-mod(t,#{beat_p})*1.8)':d=#{duration}:s=#{SAMPLE_RATE}"]
   rumble_idx = idx
   idx += 1
-  command += ["-f", "lavfi", "-i", "anoisesrc=color=white:amplitude=0.022:d=#{duration}:r=#{SAMPLE_RATE}"]
+  command += ["-f", "lavfi", "-i", "anoisesrc=color=white:amplitude=0.022:d=#{duration}:r=#{SAMPLE_RATE}:seed=#{noise_seed(15)}"]
   noise_idx = idx
 
   filt = []
@@ -18396,8 +18488,8 @@ def render_analog(destination, bar_count: bars)
   inputs = [
     *lavfi("aevalsrc='#{expr_sum(kick)}':d=#{dur}:s=#{SAMPLE_RATE}"),
     *lavfi("aevalsrc='#{expr_sum(bass)}':d=#{dur}:s=#{SAMPLE_RATE}"),
-    *lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{dur}"),
-    *lavfi("anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.04:d=#{dur}"),
+    *lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{dur}:seed=#{noise_seed(16)}"),
+    *lavfi("anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.04:d=#{dur}:seed=#{noise_seed(17)}"),
     *lavfi("aevalsrc='#{expr_sum(pad)}':d=#{dur}:s=#{SAMPLE_RATE}"),
     *lavfi("aevalsrc='#{expr_sum(chop)}':d=#{dur}:s=#{SAMPLE_RATE}"),
     *lavfi("aevalsrc='#{expr_sum(risers + stops)}':d=#{dur}:s=#{SAMPLE_RATE}"),
@@ -18533,7 +18625,7 @@ def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.
   )
 
   command = ["ffmpeg", "-y", "-i", drum_tmp,
-             "-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.028:d=#{duration}"]
+             "-f", "lavfi", "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.028:d=#{duration}:seed=#{noise_seed(18)}"]
   filt = [
     "[0:a]aformat=channel_layouts=stereo[drums]",
     "[1:a]highpass=f=120,lowpass=f=9000,volume=0.22[dust]",
@@ -18675,7 +18767,7 @@ def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
   sh! "ffmpeg", "-y",
       *lavfi("aevalsrc='#{expr_sum(kick_sig)}':d=#{total}:s=#{SAMPLE_RATE}"),
       *lavfi("aevalsrc='#{expr_sum(acid_sig)}':d=#{total}:s=#{SAMPLE_RATE}"),
-      *lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{total}"),
+      *lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.5:d=#{total}:seed=#{noise_seed(19)}"),
       "-filter_complex", filt.tr("\n", " "), "-map", "[out]", "-b:a", "320k", destination
   puts "wrote #{destination}"
 end
@@ -18742,7 +18834,7 @@ def mix_v7
     [voc_dry][voc_plate][voc_ping][voc_shimmer]amix=inputs=4:weights=1.4 0.4 0.35 0.5[voc_wet];
     [voc_wet]volume=1.35[voc_out]
   F
-  mix_render "crackle", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.025:d=300"), map: "[crack_out]", filter: <<~F
+  mix_render "crackle", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.025:d=300:seed=#{noise_seed(20)}"), map: "[crack_out]", filter: <<~F
     [0:a]equalizer=f=3000:t=o:w=3:g=5,equalizer=f=80:t=o:w=1:g=-15,volume=0.18[crack_out]
   F
   mix_render "master v7", mix_out_path(ver), inputs: ["-i", beat_pre, "-i", vocals_pre, "-i", crackle], map: "[out]", args: ["-b:a", "320k"], filter: <<~F
@@ -18778,7 +18870,7 @@ def mix_v8
     [vr]aecho=0.5:0.3:80|160:0.12|0.05[voc_tiny_room];
     [voc_dry][voc_tiny_room]amix=inputs=2:weights=1.0 0.3[voc_out]
   F
-  mix_render "crackle v8", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.05:d=#{MIX_DUR}"), map: "[crack_out]", filter: <<~F
+  mix_render "crackle v8", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.05:d=#{MIX_DUR}:seed=#{noise_seed(21)}"), map: "[crack_out]", filter: <<~F
     [0:a]equalizer=f=4000:t=o:w=3:g=8,equalizer=f=80:t=o:w=1:g=-20,volume=0.3[crack_out]
   F
   mix_render "master v8", mix_out_path(ver), inputs: ["-i", beat_pre, "-i", vocals_pre, "-i", crackle], map: "[out]", args: ["-b:a", "320k"], filter: <<~F
@@ -18821,7 +18913,7 @@ def mix_v9
     [pad_chorus]aphaser=in_gain=0.6:out_gain=0.8:delay=5:decay=0.6:speed=0.15:type=sinusoidal[pad_phase];
     [pad_phase]volume=0.22[pad_out]
   F
-  mix_render "crackle v9", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.02:d=#{MIX_DUR}"), map: "[crack_out]", filter: "[0:a]equalizer=f=5000:t=o:w=3:g=6,equalizer=f=80:t=o:w=1:g=-18,volume=0.12[crack_out]"
+  mix_render "crackle v9", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.02:d=#{MIX_DUR}:seed=#{noise_seed(22)}"), map: "[crack_out]", filter: "[0:a]equalizer=f=5000:t=o:w=3:g=6,equalizer=f=80:t=o:w=1:g=-18,volume=0.12[crack_out]"
   mix_render "master v9", mix_out_path(ver), inputs: ["-i", beat_pre, "-i", vocals_pre, "-i", pad, "-i", crackle], map: "[out]", args: ["-b:a", "320k"], filter: <<~F
     [0:a]volume=0.80[b];[1:a]volume=1.20[v];[2:a]volume=0.25[p];[3:a]volume=0.15[c];
     [b][v][p][c]amix=inputs=4:duration=first:weights=1 1.2 0.25 0.15[mix];
@@ -18861,7 +18953,7 @@ def mix_v10
     [pad_echo]chorus=0.5:0.8:35|45:0.25|0.2:0.35|0.25:1.2|1.6[pad_chorus];
     [pad_chorus]volume=0.18[pad_out]
   F
-  mix_render "crackle v10", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.015:d=#{MIX_DUR}"), map: "[crack_out]", filter: "[0:a]equalizer=f=4500:t=o:w=3:g=5,equalizer=f=80:t=o:w=1:g=-18,volume=0.10[crack_out]"
+  mix_render "crackle v10", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.015:d=#{MIX_DUR}:seed=#{noise_seed(23)}"), map: "[crack_out]", filter: "[0:a]equalizer=f=4500:t=o:w=3:g=5,equalizer=f=80:t=o:w=1:g=-18,volume=0.10[crack_out]"
   mix_render "master v10", mix_out_path(ver), inputs: ["-i", beat_pre, "-i", vocals_pre, "-i", pad, "-i", crackle], map: "[out]", args: ["-b:a", "320k"], filter: <<~F
     [0:a]volume=0.84[b];[1:a]volume=1.22[v];[2:a]volume=0.20[p];[3:a]volume=0.12[c];
     [b][v][p][c]amix=inputs=4:duration=first:weights=1 1.22 0.20 0.12[mix];
@@ -18900,7 +18992,7 @@ def mix_v11
     [voc_wet]aphaser=in_gain=0.5:out_gain=0.7:delay=2:decay=0.3:speed=0.25:type=sinusoidal[voc_phase];
     [voc_phase]volume=1.3[voc_out]
   F
-  mix_render "crackle v11", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.012:d=#{MIX_DUR}"), map: "[crack_out]", filter: "[0:a]equalizer=f=5000:t=o:w=3:g=4,equalizer=f=80:t=o:w=1:g=-18,volume=0.10[crack_out]"
+  mix_render "crackle v11", crackle, inputs: lavfi("anoisesrc=r=44100:color=pink:amplitude=0.012:d=#{MIX_DUR}:seed=#{noise_seed(24)}"), map: "[crack_out]", filter: "[0:a]equalizer=f=5000:t=o:w=3:g=4,equalizer=f=80:t=o:w=1:g=-18,volume=0.10[crack_out]"
   mix_render "master v11", mix_out_path(ver), inputs: ["-i", beat_pre, "-i", vocals_pre, "-i", crackle], map: "[out]", args: ["-b:a", "320k"], filter: <<~F
     [0:a]volume=0.85[b];[1:a]volume=1.25[v];[2:a]volume=0.12[c];
     [b][v][c]amix=inputs=3:duration=first:weights=1 1.25 0.12[mix];
@@ -20013,22 +20105,22 @@ end
 # rumble is slow and almost sub -- three different things that all get called
 # "vinyl noise" and do not substitute for each other.
 CRATE_TEXTURES = {
-  vinyl_crackle: "anoisesrc=color=white:amplitude=0.5," \
+  vinyl_crackle: "anoisesrc=color=white:amplitude=0.5:seed=#{noise_seed(25)}," \
                  "highpass=f=1200,lowpass=f=9000," \
                  "acompressor=threshold=-46dB:ratio=20:attack=0.05:release=8," \
                  "volume=7dB",
-  tape_hiss:     "anoisesrc=color=white:amplitude=0.06,highpass=f=2500,lowpass=f=13000",
-  turntable_rumble: "anoisesrc=color=brown:amplitude=0.5,lowpass=f=90,volume=4dB",
-  room_tone:     "anoisesrc=color=pink:amplitude=0.12,highpass=f=120,lowpass=f=2200,volume=-6dB",
+  tape_hiss:     "anoisesrc=color=white:amplitude=0.06:seed=#{noise_seed(26)},highpass=f=2500,lowpass=f=13000",
+  turntable_rumble: "anoisesrc=color=brown:amplitude=0.5:seed=#{noise_seed(27)},lowpass=f=90,volume=4dB",
+  room_tone:     "anoisesrc=color=pink:amplitude=0.12:seed=#{noise_seed(28)},highpass=f=120,lowpass=f=2200,volume=-6dB",
 }.freeze
 
 # Percussion, synthesised the way the physical thing works: a brush is noise
 # with a fast decay, a conga is a pitched body with a noise transient, a shaker
 # is a burst of high noise and nothing else.
 CRATE_PERCUSSION = {
-  brush_hit:  "anoisesrc=color=white:amplitude=0.8,highpass=f=900,lowpass=f=7000," \
+  brush_hit:  "anoisesrc=color=white:amplitude=0.8:seed=#{noise_seed(29)},highpass=f=900,lowpass=f=7000," \
               "afade=t=out:st=0:d=0.28",
-  shaker:     "anoisesrc=color=white:amplitude=0.7,highpass=f=5000," \
+  shaker:     "anoisesrc=color=white:amplitude=0.7:seed=#{noise_seed(30)},highpass=f=5000," \
               "afade=t=out:st=0:d=0.09",
   conga:      "aevalsrc='0.8*sin(2*PI*196*t)*exp(-t/0.22)+0.3*sin(2*PI*300*t)*exp(-t/0.09)':d=1," \
               "lowpass=f=2600",

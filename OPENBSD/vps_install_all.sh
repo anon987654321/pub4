@@ -53,11 +53,6 @@ for app in $APPS; do
   fi
 done
 
-if [[ -f ${PUB4}/OPENBSD/deploy_standalone_apps.sh ]]; then
-  log "=== Standalone apps (bizplan, etc.) ==="
-  zsh "${PUB4}/OPENBSD/deploy_standalone_apps.sh" || log "WARN: standalone deploy failed"
-fi
-
 log "=== summary ==="
 for app in $APPS; do
   printf '  %s: ' "$app"

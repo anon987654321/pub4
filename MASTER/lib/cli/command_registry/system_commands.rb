@@ -146,6 +146,7 @@ module Master
         [
           pub.write(target: root, label: "MASTER", repo_root:, mode: :archive),
           pub.write(target: File.expand_path("../OPENBSD", root), label: "OPENBSD", repo_root:, mode: :archive),
+          pub.write(target: File.expand_path("../studio", root), label: "STUDIO", repo_root:, mode: :archive),
         ].flatten.join("\n")
       end
 

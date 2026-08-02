@@ -70,10 +70,6 @@ ownership:
     purpose: full OpenBSD installer/deployer
     risk: critical
     check: OPENBSD/bin/check-openbsd
-  deploy_standalone_apps.sh:
-    purpose: deploy deploy_inventory.json standalone_apps (none currently — no-op)
-    risk: high
-    check: zsh -n OPENBSD/deploy_standalone_apps.sh
   ../OPENBSD/etc/:
     purpose: repo mirror of live /etc configs
     risk: critical
