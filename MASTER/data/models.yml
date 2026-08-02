@@ -14,14 +14,27 @@ weights: &weights
   cost: 0.25
 
 fallback_policy:
-  retries_per_tier: 1
-  on:
+  # Error categories that stop retrying a model and move to the next one, read by
+  # ModelRouter#failover_skip_categories.
+  #
+  # Three things were wrong with this block and all three are why it did nothing.
+  # The key was written bare as `on:`, which YAML 1.1 parses as the boolean true —
+  # `fallback_policy["on"]` was nil and `fallback_policy[true]` held the list. It
+  # had no reader at all. And its vocabulary was invented: `network_error`,
+  # `refusal`, `insufficient_balance` and `quota_exceeded` are not Result
+  # categories this codebase produces, so wiring it as written would have matched
+  # nothing. These five are the categories `Result.err(category:)` actually
+  # carries.
+  #
+  # A rate-limited or out-of-budget model cannot succeed on an immediate retry, so
+  # both belong here. `provider_error` deliberately does not: a transient 5xx is
+  # what in-place retry exists for. `retries_per_tier` was removed — the retry
+  # count has one source, `failover.max_retries` below.
+  "on":
     - timeout
-    - network_error
-    - refusal
-    - insufficient_balance
+    - no_api_key
     - rate_limit
-    - quota_exceeded
+    - budget
 
 failover:
   sequence: [fast, default, medium, strong]

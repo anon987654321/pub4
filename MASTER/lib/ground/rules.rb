@@ -19,13 +19,15 @@ module Master
         @data_dir = File.join(@root, "data")
         @rules_path = File.join(@data_dir, "rules.yml")
         @soul_path = File.join(@data_dir, "soul.yml")
-        @workflow_path = Master.limits_path
         @voice_path = Master.data_file("voice.yml")
         @data = load_yaml(@rules_path) || {}
         @voice_data = load_yaml(@voice_path) || {}
         @data["rules"] = load_split_rules
         @soul_data = load_yaml(@soul_path) || {}
-        @workflow = load_yaml(@workflow_path) || {}
+        # limits.yml is no longer parsed here. It was loaded on every Rules
+        # construction purely to back two accessors nobody called; the callers that
+        # do want it (scan_request, fix_loop, mode_posture) each read it themselves,
+        # mtime-cached. `data(:workflow)` still resolves it through DATA_ALIASES.
         @cache = {}
       end
 

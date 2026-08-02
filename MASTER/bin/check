@@ -35,9 +35,15 @@ rake = ->(*task) { [task.join(" "), BUNDLE, "exec", "rake", *task] }
 run_bin = ->(name, *args) { ["bin/#{name} #{args.join(' ')}".strip, RUBY, File.join(ROOT, "bin", name), *args] }
 web_live = ENV["MASTER_WEB_LIVE"] == "1"
 
+# test:subsystems ran in no profile but full (i.e. only through bin/ci), so the 14
+# files under test/{cli,io,fix,lib} were skipped by the gate START_HERE.md tells
+# contributors to run. rake test's glob is test/test_*.rb and does not reach them.
+# 17s, measured 2026-08-01.
 PROFILES = {
-  "operator"    => [rake["test"], rake["spec"], rake["security_sweep"], rake["test:core"], rake["lint:data_singularity"]],
-  "contributor" => [rake["test"], rake["spec"], rake["security_sweep"], rake["lint:data_singularity"]],
+  "operator"    => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
+                    rake["test:core"], rake["lint:data_singularity"]],
+  "contributor" => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
+                    rake["lint:data_singularity"]],
   "agent"       => [rake["selftest"], rake["lint:data_singularity"]],
   "web"         => [["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
                     *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],

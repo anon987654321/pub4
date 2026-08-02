@@ -29,14 +29,24 @@ module Master
         Tempfile.open(["master_patch", ".src"]) do |f|
           f.write(@original)
           f.flush
-          _out, err, status = Master::Io::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
-          return Failure.new(reason: err.strip[0, 200]) unless status.success?
+          out, err, status = Master::Io::Exec.capture3("patch", "--no-backup-if-mismatch", "-s", f.path, stdin_data: @diff)
+          # patch(1) reports a failed hunk on stdout, so err alone gave reason: "".
+          return Failure.new(reason: failure_reason(out, err)) unless status.success?
+
           result = File.read(f.path)
           return Failure.new(reason: "no change") if result.strip == @original.strip
           Success.new(source: result)
         end
       rescue StandardError => e
         Failure.new(reason: e.message[0, 200])
+      end
+
+      private
+
+      def failure_reason(out, err)
+        text = err.to_s.strip
+        text = out.to_s.strip if text.empty?
+        text.empty? ? "patch(1) rejected the diff" : text[0, 200]
       end
     end
   end

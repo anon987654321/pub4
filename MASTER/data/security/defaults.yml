@@ -2,44 +2,81 @@
 
 # MASTER security defaults.
 # Local-first, zero-listener, explicit pairing, fail-closed tool policy.
-
-gateway:
-  listen: false
-  bind: "127.0.0.1"
-  port: 18789
-
-dashboard:
-  enabled: false
-  bind: "127.0.0.1"
-  port: 18800
-
-sessions:
-  main:
-    trust: owner
-    sandbox: none
-  channel_default:
-    trust: untrusted
-    sandbox: restricted
-
-pairing:
-  required_for_remote_channels: true
-  code_ttl_seconds: 600
-  allowlist_path: "MASTER/data/security/allowlist.yml"
+#
+# The file is split into enforced policy and recorded intent, and the split is
+# checked by test/test_security_defaults.rb. Before the split, exactly one key
+# here had a reader — tools.custom.require_review_for_destructive — while the
+# gateway bind, the dashboard, the session trust tiers, the pairing TTL, the
+# ingress rate limit and the five tool deny patterns all read as enforced policy
+# and enforced nothing. One was worse than inert: the ingress limit was also
+# hardcoded in the controller, so the file and the code could disagree with
+# nothing noticing.
+#
+# Add a top-level key only together with its reader. Anything without one belongs
+# under `planned:`, and the test fails either way round.
 
 ingress:
-  # Cron/webhook triggers → POST /ingress/cron/:name or /ingress/webhook/:name
+  # Cron/webhook triggers → POST /ingress/cron/:name or /ingress/webhook/:name.
   # Set MASTER_INGRESS_TOKEN in env.
-  health_path: "/ingress/health"
+  # Read by MASTER/web/app/controllers/ingress_controller.rb.
   rate_limit_per_minute: 30
+  window_seconds: 60
 
 tools:
   custom:
-    enabled: true
-    require_scope: true
+    # Read by lib/cli/destructive_routes.rb#blocking_review?.
     require_review_for_destructive: true
-  deny_patterns:
-    - "secret_read_then_network"
-    - "broad_delete"
-    - "ci_permission_edit"
-    - "unknown_package_install"
-    - "hidden_generated_file"
+
+# Intent with no implementation. Nothing reads any of this, and saying so here is
+# the point: a policy file whose enforced half cannot be told from its aspirational
+# half is how "zero-listener, explicit pairing, fail-closed" came to describe a
+# system with none of the three wired.
+planned:
+  # A local HTTP gateway that does not listen by default. Io::Gateway exists and
+  # is instantiated in the live boot, but it takes no bind/port from here.
+  gateway:
+    listen: false
+    bind: "127.0.0.1"
+    port: 18789
+
+  dashboard:
+    enabled: false
+    bind: "127.0.0.1"
+    port: 18800
+
+  # Per-session trust tiers. There is no session-trust lookup anywhere. The trust
+  # boundary that does exist is in web/app/controllers — visitor chat cannot reach
+  # the Fold, closed 2026-07-27.
+  sessions:
+    main:
+      trust: owner
+      sandbox: none
+    channel_default:
+      trust: untrusted
+      sandbox: restricted
+
+  # Remote-channel pairing. No pairing code exists, and allowlist_path names a
+  # file that has never been created — data/security/ holds only this file.
+  pairing:
+    required_for_remote_channels: true
+    code_ttl_seconds: 600
+    allowlist_path: "MASTER/data/security/allowlist.yml"
+
+  # The health route is declared in web/config/routes.rb, not derived from here.
+  ingress:
+    health_path: "/ingress/health"
+
+  # Risky tool-call shapes to refuse. Implementing these needs a tool-call risk
+  # classifier; the one that existed (lib/cli/routing/risk_classifier.rb) was
+  # deleted as an orphan on 2026-07-30 precisely because nothing called it. Do not
+  # restore it without deciding who calls it — see DEBT.md.
+  tools:
+    custom:
+      enabled: true
+      require_scope: true
+    deny_patterns:
+      - "secret_read_then_network"
+      - "broad_delete"
+      - "ci_permission_edit"
+      - "unknown_package_install"
+      - "hidden_generated_file"

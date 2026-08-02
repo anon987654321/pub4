@@ -12,12 +12,17 @@ module Master
     class SubdomainOrchestrator
       TIER = :guarded
       NAME = "subdomain_orchestrator".freeze
-      DESCRIPTION = "Synchronize or inspect a pub4 subdomain cluster (marketplace, playlist, maps, amber, bsdports, etc.).".freeze
 
       CLUSTER_DOMAINS = %w[
         marketplace playlist takeaway tv messages maps
         amber bsdports brgen ai dating messenger
       ].freeze
+
+      # Named from the constant so the two cannot disagree: the model reads this to
+      # decide whether the tool can serve a request, and `call` rejects anything
+      # outside CLUSTER_DOMAINS. It used to list five of twelve and say "etc.".
+      DESCRIPTION = "Synchronize or inspect a pub4 subdomain cluster " \
+                    "(#{CLUSTER_DOMAINS.join(", ")}).".freeze
 
       APP_PORTS_PATH = File.join(Master::DEPLOY_ROOT, "deploy_inventory.json").freeze
 

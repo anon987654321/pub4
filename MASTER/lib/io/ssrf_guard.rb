@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 require "ipaddr"
 require "resolv"
+# Without this, safe_uri?'s `uri.is_a?(URI::HTTP)` raised NameError into its own
+# blanket rescue and the guard answered false for every URL — web_fetch silently off.
+require "uri"
 
 module Master
   module Io

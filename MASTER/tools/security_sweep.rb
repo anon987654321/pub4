@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 
 require "open3"
 
@@ -12,9 +11,31 @@ SECRET_PATTERNS = [
   /sk-ant-[A-Za-z0-9_\-]{16,}/,
   /AKIA[0-9A-Z]{16}/,
   /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/,
-  /password\s*[:=]\s*["'][^"'\[\]]{8,}["']/i,
   /(?<![a-z_])api_key\s*[:=]\s*["'][^"']{8,}["']/i,
 ].freeze
+
+# The password rule needs the value, not just a match. As a bare pattern —
+# /password\s*[:=]\s*["'][^"'\[\]]{8,}["']/i — it flagged sixteen i18n strings
+# across three apps ("Glemt passord?", "Confirm password", "Update your
+# password"), so `bin/check --profile=contributor` and the operator profile were
+# both failing on translated UI copy. A gate whose failure is always noise is a
+# gate people learn to skip.
+PASSWORD_ASSIGNMENT = /(?<![a-z_])password\s*[:=]\s*["']([^"'\[\]]{8,})["']/i
+PLACEHOLDERS = /\A(?:password123|changeme|example|secret|\[your password\])\z/i
+# Prose, not a credential: one word or hyphenated words with no digit or symbol.
+PROSE_VALUE = /\A[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*[?.!]?\z/
+
+def secretish_password?(value)
+  return false if value.match?(/\s/)          # "Forgot password?" — copy, not a credential
+  return false if value.match?(PLACEHOLDERS)
+  return false if value.match?(PROSE_VALUE) && value.length < 16
+
+  true
+end
+
+def password_hits(body)
+  body.scan(PASSWORD_ASSIGNMENT).flatten.select { |value| secretish_password?(value) }
+end
 
 SKIP_PATH_RE = %r{
   \A(?:OPENBSD/quarantine/|
@@ -51,40 +72,53 @@ def scan_tracked_secrets
 
     SECRET_PATTERNS.each do |pattern|
       next if pattern.source.include?("api_key") && body.include?("API_KEY_PROVIDERS")
-      next if pattern.source.include?("password") && body.match?(/password123|changeme|example|\[your password\]/i)
+
       hits << "#{path}: #{pattern}" if body.match?(pattern)
     end
+
+    found = password_hits(body)
+    hits << "#{path}: password assignment (#{found.size}): #{found.first(3).join(", ")}" if found.any?
   end
   hits
 end
 
-failures = []
+def sweep
+  failures = []
 
-TRACKED_DENY_GLOBS.each do |pattern|
-  tracked = git_ls_files(pattern)
-  failures.concat(tracked.map { |path| "tracked secret artifact: #{path}" })
+  TRACKED_DENY_GLOBS.each do |pattern|
+    tracked = git_ls_files(pattern)
+    failures.concat(tracked.map { |path| "tracked secret artifact: #{path}" })
+  end
+
+  failures.concat(scan_tracked_secrets)
+
+  failures << "virus museum README missing" unless File.file?(File.join(QUARANTINE, "README.md"))
+
+  quarantine_files = git_ls_files("OPENBSD/quarantine/virus_museum")
+  bad_ext = quarantine_files.reject { |path| path.end_with?(".txt") || path.end_with?("README.md") }
+  failures.concat(bad_ext.map { |path| "virus museum non-text file: #{path}" })
+
+  mode_lines, = Open3.capture2("git", "-C", ROOT, "ls-files", "-s", "OPENBSD/quarantine/virus_museum")
+  mode_lines.lines.each do |line|
+    mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
+    failures << "virus museum executable: #{path}" if mode && mode != "100644"
+  end
+
+  [failures, quarantine_files.size]
 end
 
-failures.concat(scan_tracked_secrets)
+# Guarded so test/test_security_sweep.rb can require this file and exercise the
+# password predicate directly. Without it, the only way to test the rule was to
+# run the whole sweep and read its output — which is how the rule shipped with a
+# sixteen-hit false-positive rate on translated UI copy.
+if $PROGRAM_NAME == __FILE__
+  failures, samples = sweep
 
-unless File.file?(File.join(QUARANTINE, "README.md"))
-  failures << "virus museum README missing"
+  if failures.any?
+    warn "Security sweep failures:"
+    failures.each { |failure| warn "  - #{failure}" }
+    exit 1
+  end
+
+  puts "Security sweep passed (#{samples} quarantine samples, 0 tracked secrets)."
 end
-
-quarantine_files = git_ls_files("OPENBSD/quarantine/virus_museum")
-bad_ext = quarantine_files.reject { |path| path.end_with?(".txt") || path.end_with?("README.md") }
-failures.concat(bad_ext.map { |path| "virus museum non-text file: #{path}" })
-
-mode_lines, = Open3.capture2("git", "-C", ROOT, "ls-files", "-s", "OPENBSD/quarantine/virus_museum")
-mode_lines.lines.each do |line|
-  mode, _type, _sha, _stage, path = line.split(/\s+/, 5)
-  failures << "virus museum executable: #{path}" if mode && mode != "100644"
-end
-
-if failures.any?
-  warn "Security sweep failures:"
-  failures.each { |failure| warn "  - #{failure}" }
-  exit 1
-end
-
-puts "Security sweep passed (#{quarantine_files.size} quarantine samples, 0 tracked secrets)."

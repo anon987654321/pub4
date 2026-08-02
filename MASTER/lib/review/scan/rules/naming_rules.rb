@@ -5,14 +5,21 @@ module Master
     module Scan
       stale_config = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["stale_namespaces"] || {}
       stale_constants = Array(stale_config["stale_constants"]).filter_map { |row| row["old"] if row.is_a?(Hash) }
-      stale_pattern = Regexp.union(stale_constants.map { |name| /\b#{Regexp.escape(name)}\b/ })
+      # A retired name counts only as a whole constant path. `\b` sits between a
+      # letter and a colon, so /\bMaster::CLI\b/ matched inside every legitimate
+      # Master::CLI::* reference — 25 of selfcheck's 71 findings, all false.
+      stale_pattern = Regexp.union(
+        stale_constants.map { |name| /(?<![\w:])#{Regexp.escape(name)}(?!::|\w)/ }
+      )
 
       RuleDSL.rule :STALE_NAMESPACE,
         severity: :error,
         tags: %i[ONE_SOURCE],
         applies_to: %i[ruby],
         description: "retired constants must not return" do |source, path:|
-          next [] if stale_constants.empty? || path.end_with?("stale_namespace_rule.rb")
+          # This file names the retired constants, so it flags itself. The old
+          # exemption named stale_namespace_rule.rb, which no longer exists.
+          next [] if stale_constants.empty? || path.end_with?("naming_rules.rb")
 
           scan_lines(source, stale_pattern, message: "retired constant — use data/patterns.yml#stale_namespaces replacement")
         end

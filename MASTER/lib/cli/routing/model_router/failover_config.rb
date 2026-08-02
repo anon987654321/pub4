@@ -24,6 +24,18 @@ module Master
           def failover_skip_ttl_ms
             Ground::ModelSkipCache.skip_ttl_ms
           end
+
+          # Categories that stop retrying a model and move on. nil when unconfigured,
+          # so the caller supplies its own default rather than this file naming a
+          # constant from lib/review and depending on its load order. See DEBT.md,
+          # Inert law and config, for why fallback_policy had no reader.
+          def failover_skip_categories
+            configured = Array(@rules.dig("fallback_policy", "on"))
+                         .map { |name| name.to_s.strip }
+                         .reject(&:empty?)
+                         .map(&:to_sym)
+            configured.empty? ? nil : configured.freeze
+          end
         end
       end
     end

@@ -10,8 +10,26 @@ class IngressController < ApplicationController
   before_action :require_ingress_token!, except: :health
   before_action :enforce_ingress_rate_limit, except: :health
 
-  INGRESS_RATE_LIMIT = 30
-  INGRESS_WINDOW_S = 60
+  # data/security/defaults.yml carried ingress.rate_limit_per_minute: 30 with no
+  # reader while these two constants carried the same numbers — a policy file and
+  # its subject able to disagree without anything noticing. The file is the source
+  # now; the literals stay as the fallback for a checkout without it.
+  DEFAULT_RATE_LIMIT = 30
+  DEFAULT_WINDOW_S = 60
+
+  def self.security_defaults
+    Master.load_yaml(Master.data_path("security/defaults.yml")) || {}
+  rescue StandardError
+    {}
+  end
+
+  def self.rate_limit
+    Integer(security_defaults.dig("ingress", "rate_limit_per_minute") || DEFAULT_RATE_LIMIT)
+  end
+
+  def self.rate_window_seconds
+    Integer(security_defaults.dig("ingress", "window_seconds") || DEFAULT_WINDOW_S)
+  end
 
   def health
     render json: {
@@ -108,6 +126,10 @@ class IngressController < ApplicationController
   end
 
   def enforce_ingress_rate_limit
-    enforce_rate_limit!("master:rl:ingress:#{request.remote_ip}", limit: INGRESS_RATE_LIMIT, window: INGRESS_WINDOW_S)
+    enforce_rate_limit!(
+      "master:rl:ingress:#{request.remote_ip}",
+      limit: self.class.rate_limit,
+      window: self.class.rate_window_seconds
+    )
   end
 end

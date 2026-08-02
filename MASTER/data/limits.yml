@@ -1,112 +1,25 @@
+# Budgets, scan profiles and standing orders — plus, under `guidance:`, a much
+# larger body of agent-facing prose that this file used to present as the same
+# thing.
+#
+# START_HERE.md lists limits.yml as Tier 1, "Law". Measured 2026-08-02: of 38
+# top-level keys, 9 had a reader and 29 had none — 485 of 794 lines. Both generic
+# accessors that might have reached the rest (`Rules#workflow` and
+# `Rules#workflow_rule(key)`) had zero call sites and are deleted. Worse than
+# unread, two of the largest are contradicted: `phases` and `code_principles`
+# describe the same concepts as `Ground::WorkflowPolicy::PHASES` and `::PRINCIPLES`,
+# which are hardcoded Ruby constants that never consult this file. Editing the YAML
+# changed nothing; the Ruby is what ran.
+#
+# So the split is a relabelling, not a deletion. Everything under `guidance:` is
+# still served verbatim by `/orient limits` and is genuinely useful to read — it is
+# simply not enforced by anything, and saying so is the point. test/test_limits_split.rb
+# fails in both directions: an enforced key that loses its reader, and a guidance
+# key that gains one without being promoted.
+#
+# Add a top-level key only together with its reader.
 schema: 1
-file_reading:
-  rule: READ_FULL_FILES
-  statement: Read complete files. Never grep, head, tail, or partial‑read to understand code.
-  rationale: Partial view yields partial (wrong) changes.
-  allowed_exceptions:
-  - grep/search across many unknown files to locate a keyword
-  forbidden:
-  - grep pattern file to understand code structure
-  - head -N file to check structure
-  - tail -N file to check endings
-before_edit:
-  rule: READ_BEFORE_WRITE
-  statement: Read every file that could be affected before editing any file.
-  see_also: edit_context
-  steps:
-  - 'Map the codebase: find all .rb files in lib/'
-  - Trace callers before changing any public method signature
-  - Check Zeitwerk inflectors before renaming classes or files
-  - Run ruby -c FILE after every write
-  - Run ruby -e require_relative after every commit
-edit_context:
-  rule: TIERED_BLAST_RADIUS_READ
-  statement: Read depth scales with change radius — not every edit requires a full-corpus read.
-  always:
-  - Full read of every file you will edit
-  - Re-read from disk immediately before writing
-  - One-hop callers/tests for any public method or constant you change
-  tiers:
-    local_fix:
-      when: single-file bugfix or comment; no signature change
-      read:
-      - target file
-      - matching test file
-      - direct callers
-    module_change:
-      when: new class, renamed constant, or cross-file behavior in one lib/ module
-      read:
-      - module entrypoint
-      - /graph one-hop dependents
-      - affected tests
-    structural_change:
-      when: pipeline stage, scan rule, constitution data, or OPERATOR topology
-      read:
-      - data/soul.yml ABSOLUTE sections
-      - limits.yml scan_profiles
-      - /scan deep on affected tree
-  forbidden:
-  - Edit from grep snippets, partial reads, or conversation memory
-  - Claim a fix without reading the file being changed
-  note: Pairs with llm_ergonomics — external grep/rg for reconnaissance is allowed; production edits require
-    full-file reads.
-code_principles:
-  no_hardcoding:
-    rule: NO_HARDCODED_CONSTANTS
-    statement: Prose, patterns, and config belong in data/*.yml, not Ruby strings.
-  single_source:
-    rule: ONE_SOURCE
-    statement: If it is in a data file, the code reads from there. No duplicates.
-  no_magic_numbers:
-    rule: NAMED_CONSTANTS
-    statement: Extract literals to named constants with .freeze
-  no_bare_rescue:
-    rule: SPECIFIC_RESCUE
-    statement: Always rescue SpecificError => e. Propagate or log via event bus.
-  guard_first:
-    rule: GUARD_CLAUSES_FIRST
-    statement: Return Result.ok(ctx) unless condition before main logic.
-  one_responsibility:
-    rule: SINGLE_RESPONSIBILITY
-    statement: Split if you can name two reasons to change it.
-  cqs:
-    rule: COMMAND_QUERY_SEPARATION
-    statement: Queries return data and do not mutate. Commands mutate and do not return values.
-  inject_deps:
-    rule: DEPENDENCY_INJECTION
-    statement: Never instantiate collaborators inside a method.
-  result_monad:
-    rule: RESULT_MONAD
-    statement: Pipeline stages return Master::Result. Use .ok? and .err?; propagate Err without calling
-      .value!.
-scan_rules:
-  note: DEEP_SCAN_ONLY — every scan runs at deep depth. scan_profiles (cosmetic, core, …) filter the report
-    after the scan; they are not depth tiers.
-  standard_depth:
-  - frozen_string
-  - bare_rescue
-  - explicit
-  - immutable
-  - cqs
-  - self_explaining
-  - long_method
-  - god_class
-  - duplicate_code
-  - prune
-  - srp
-  - pola
-  - nielsen
-  deep_only:
-  - semantic
-  - adversarial
-  hunt_only:
-  - rubocop
-  - reek
-  notes:
-    nielsen: puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are.
-    prune: Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml.
-    semantic: Loads detect_semantic prompts from data/rules.yml scan corpus.
-    deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
+
 principle_groups:
   axioms:
   - frozen_string
@@ -341,42 +254,6 @@ conflicts:
     resolution: favor clarity
   - condition: fix introduces higher priority violation
     resolution: reject fix, report to autoloop
-frontend_protection:
-  statement: Only application.scss is protected — one entry per app; reuse pub4_stack and existing partials
-    (brgen-style) before adding files.
-  protected_files:
-  - application.scss
-  on_view_or_css_edit:
-  - flatten divitis and use semantic landmarks
-  - bare tag targeting per style.yml — no BEM or utility soup in ERB
-  - run Shared::FrontendAuditor on touched paths
-  mailer_exempt:
-  - inline styles in mailer views (email clients require them)
-universal_scope:
-  policy: ALL_PRINCIPLES_ALL_FILES
-  statement: 'All axioms, principles, and philosophies apply to every file in the codebase regardless
-    of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown. Language-specific rules apply only
-    to their target language; universal rules (SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES, etc.)
-    apply everywhere.
-
-    '
-  scan_glob: '**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}'
-  semantic_rules: all_known_languages
-  adversarial_rules: all_known_languages
-incremental_scanning:
-  enabled: true
-  strategy: modified_files_only
-  triggers:
-    full_scan:
-    - new_principle_added
-    - master_yml_modified
-    - user_requests_full_scan
-    incremental:
-    - file_saved
-    - git_stage
-    - git_commit
-  speedup_estimate: 60-85% fewer files on typical edit
-  fallback: full_scan_on_error
 autoloop:
   background: true
   startup_delay: 90
@@ -419,343 +296,10 @@ zeitwerk:
     git_context: GitContext
     ast_edit: AstEdit
     llm: LLM
-anti_sprawl:
-  mode: aggressive
-  hierarchy: openbsd_ruby_roda
-  max_lib_depth: 4
-  fold_suffixes:
-  - _support
-  - _helper
-  - _util
-  - _helpers
-  - _utils
-  forbidden_files:
-  - summary.md
-  - analysis.md
-  - report.md
-  - todo.md
-  - notes.md
-  - changelog.md
-  slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see style.yml
-    naming.paths
-  rule: Flat Hierarchy — merge thin siblings and rename misfit paths before creating files. OpenBSD-flat
-    paths, Zeitwerk-true dense slugs, Roda-tight trees.
 validation:
   after_write: ruby -c lib/FILE.rb
   after_commit: ruby -e "require_relative 'lib/master'; puts 'ok'"
   scan_file: bundle exec ruby bin/cli scan lib/FILE.rb
-phases:
-  discover:
-    id: 1
-    goal: Understand actual need
-    output: Problem statement with success criteria
-    personas:
-    - chaos
-    - user
-    introspect: What assumptions did we make?
-    gates:
-    - no_vague_words
-    - audience_identified
-    - success_measurable
-  analyze:
-    id: 2
-    goal: Break into components
-    output: Component diagram with dependencies
-    personas:
-    - skeptic
-    - maintainer
-    introspect: What did we miss?
-    gates:
-    - components_distinct
-    - dependencies_acyclic
-  ideate:
-    id: 3
-    goal: Generate 15+ alternatives
-    output: List of approaches with trade‑offs
-    personas:
-    - minimalist
-    - chaos
-    introspect: Which ideas surprised us?
-    gates:
-    - count_gte_15
-    - trade_offs_documented
-  design:
-    id: 4
-    goal: Specific architecture
-    output: Interface definitions and error handling
-    personas:
-    - security
-    - accessibility
-    introspect: What could break?
-    gates:
-    - interfaces_explicit
-    - errors_documented
-  implement:
-    id: 5
-    goal: Execute with zero violations
-    output: Working code at 100/100 score
-    personas:
-    - performance
-    - security
-    introspect: Is this the simplest solution?
-    gates:
-    - tests_pass
-    - zero_violations
-  validate:
-    id: 6
-    goal: Prove with evidence
-    output: Test results, benchmarks
-    personas:
-    - skeptic
-    - security
-    introspect: What evidence proves it works?
-    gates:
-    - zero_test_failures
-    - edge_cases_covered
-  deliver:
-    id: 7
-    goal: Ship with monitoring
-    output: Deployed code with dashboards
-    personas:
-    - realist
-    introspect: What would the user complain about?
-    gates:
-    - deployed
-    - monitoring_configured
-  learn:
-    id: 8
-    goal: Extract durable lessons
-    output: Updated defaults, new memory entries, refined rules
-    personas:
-    - skeptic
-    - chaos
-    introspect: What would we do differently next time?
-    gates:
-    - lessons_captured
-    - defaults_updated
-session_startup:
-  reading_tiers:
-    explore:
-      required:
-      - /orient bootstrap
-      optional:
-      - data/soul.yml ABSOLUTE sections
-      note: Recon and analysis — pair with llm_ergonomics; external rg allowed.
-    structural_edit:
-      required:
-      - data/soul.yml
-      - data/rules.yml
-      - data/limits.yml
-      optional:
-      - data/voice.yml
-      - data/style.yml
-      - data/state.yml
-      note: Before production edits and deploy-touching changes.
-    production_ops:
-      required:
-      - data/patterns.yml#operator_playbook
-      optional:
-      - /orient trace
-      note: VPS friction, relayd, recovery — run bin/playbook when signals match.
-  mandatory_reads:
-  - See reading_tiers — /orient bootstrap first; full constitution only for structural edits.
-  playbook_command: bin/playbook — print codified operator lessons when signals match production friction
-  check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
-  scan_before_analysis: Use /scan deep via MASTER, not external agents, for code analysis
-  ssh_edit_pattern: Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc
-corruption_prevention:
-  llm_error_in_file: git checkout HEAD -- data/ && rcctl restart master -- LLM error strings silently
-    overwrite YAML data files when circuit is open and agent#ask returns error string instead of raising
-  sweep_excludes_data: Sweep may scan data/*.yml but must not LLM-rewrite them. Structural violations
-    (duplicate keys, bad indentation) are auto-fixed. Exclude .master/ runtime state files entirely.
-  yaml_type_guards: All load_yaml calls must type-check result before use (is_a?(Array/Hash)) -- circuit-open
-    strings parse as valid YAML scalars
-  ask_raises_on_error: agent#ask must raise StandardError when result.err? -- callers must rescue, never
-    silently propagate error strings as LLM output
-quality_phases:
-  prototype:
-    gates:
-    - functional
-    debt_allowed: high
-    speed: maximize
-  production:
-    gates:
-    - functional
-    - secure
-    - maintainable
-    - performant
-    debt_allowed: none
-    speed: sustainable
-  legacy:
-    gates:
-    - functional
-    - secure
-    changes: surgical_only
-    risk_tolerance: minimal
-principle_reinforcements:
-  dry_and_kiss: multiply_effectiveness
-  evidence_and_reversible: enables_confident_change
-  single_responsibility_and_dependency_injection: enables_isolated_testing
-observability:
-  logging:
-    format: json
-    fields:
-    - timestamp
-    - level
-    - phase
-    - file
-    - evidence_score
-    - decision
-    levels:
-      trace: every_operation
-      debug: decision_points
-      info: phase_transitions
-      warn: evidence_below_threshold
-      error: gate_failures
-  metrics:
-    track:
-    - evidence_score
-    - complexity
-    - coverage
-    - churn
-    - council_consensus
-    export_format: prometheus
-    threshold_alerts: true
-processing_strategies:
-  small_file:
-    condition: size <= 10240
-    method: full_read
-    context: entire_file
-  medium_file:
-    condition: 10240 < size <= 1048576
-    method: streaming
-    context: line_by_line_with_lookahead
-  large_file:
-    condition: size > 1048576
-    method: chunked
-    context: section_by_section
-    checkpoint: per_chunk
-tool_budget:
-  max_calls_per_turn: 40
-  max_consecutive_edits: 8
-  max_consecutive_searches: 10
-  on_exceed: publish budget:exceeded; force /reflect before next call
-antagonisms:
-  minimalism_vs_explicit: explicit wins for safety-critical paths
-  speed_vs_evidence: evidence wins always
-  abstraction_vs_proximity: proximity wins below 3 occurrences
-  dry_vs_singularity: singularity wins for data, dry wins for code
-  completeness_vs_density: density wins; defer completeness to next iteration
-two_stage_council:
-  round_one: each persona votes ack/dissent independently, no debate
-  dissent_threshold: 0.3
-  round_two: only dissenting personas debate, others abstain
-  saves: 60-80% of LLM calls when consensus is clear
-view_thread:
-  emit_event: thread:decision
-  fields:
-  - timestamp
-  - phase
-  - file
-  - decision
-  - alternatives_considered
-  - rationale
-  persist_to: data/threads/${session_id}.jsonl
-  rotate_after_days: 7
-checkpoint_summarization:
-  every_n_turns: 5
-  every_n_tokens: 100000
-  keep_verbatim:
-  - last_3_user_messages
-  - current_violation_set
-  - current_diff
-  summarize:
-  - all_other_turns
-  target_compression: 0.3
-llm_ergonomics:
-  core_principle: Optimize for actual LLM behavior and context limits, not idealized super-agents.
-  guidance:
-  - Provide high-density mental models (/orient bootstrap) before requiring deep constitution reads.
-  - Allow external tools (grep, rg, find) for reconnaissance and understanding. Require constitutional
-    tools only for production changes.
-  - When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence'
-    over perfect ceremony.
-  - Document known friction points openly so future agents can work around them intelligently.
-  - Event emission should be rich and first-class by default so observers (human or visual) can understand
-    internal state without heroic effort.
-  tension_with_rules: This section provides pragmatic guidance for working with real LLM limitations.
-    It does not override any ABSOLUTE rules defined in soul.yml.
-spec_streaming:
-  triggers:
-  - new_module_creation
-  - stub_to_implementation
-  safe_for:
-  - non-overlapping files
-  - additive_changes
-  forbidden_for:
-  - mutating_shared_state
-  - schema_migrations
-live_preview_gate:
-  triggers:
-  - edit under web/app/views/
-  - edit under web/app/assets/
-  require: successful render at preview URL within 10s
-  on_failure: block commit; publish preview:render_failed
-reverse_introspection:
-  cadence: after_every_10_commits
-  sample_size: 5
-  on_disapproval: open issue tagged self_review with proposed reversion
-test_generation:
-  target_dir: test/rules_generated/
-  cadence: on_rule_definition_change
-  coverage_required: 0.8
-self_rewrite_throttle:
-  sensitive_paths:
-  - lib/fix/
-  - lib/ground/
-  - lib/review/security/
-  - bin/cli
-  - data/state.yml
-  autoloop_action: skip with publish autoloop:throttled event; surface to user
-adversarial_questioning:
-  mandate: fires_on_every_scan_and_council_turn
-  questions:
-  - What is wrong with this design that I have not spotted?
-  - What would an attacker do with this code?
-  - What assumption is this built on that could be false?
-  - What breaks at scale or under failure?
-  - Is this wired to anything? Could it be deleted without loss?
-  - Is there a simpler approach that was not taken?
-  - What should be relocated or transformed to a different format?
-  resolution:
-    trivial: autofix immediately — no proposal, no prompt
-    non_trivial: propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick
-    threshold: non-trivial if the fix spans more than one file, touches architecture, or has security
-      implications
-known_issues:
-  relayd_master_empty: After rcctl restart master, relayd may mark master empty until /up health passes
-    — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http "/up" not
-    "/" for master.
-  relayd_stale_backend_tables: After mass app restarts relayctl may show empty/down while local /up is
-    200 — relayd-watchdog (cron */5) restarts relayd when backends are live but tables are stale.
-  resource_guard_shedding: OPENBSD/resource_guard.sh stops optional Rails apps when load/mem thresholds
-    hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin.
-  rails_phantom_fk: 'references with foreign_key: true alone creates phantom buyers/listings/likers/orders
-    tables on SQLite — always set to_table. Run ruby RAILS/gates/runner.rb phantom_foreign_keys.'
-  todo_checkbox_drift: Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb,
-    and per-app bin/ci instead of checkbox backlogs.
-  tts_broken: Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing
-    or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts
-    is installed (pkg_add py3-edge-tts or pip).
-  particle_swarm: Fixed 2026-06-24 — ecology canvas was z-index 0 under face (z-index 1); now z-index
-    2 with screen blend. verify trails/weather visible over face after SSE events.
-  gemfile_separation: MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/ code
-    that is also called from web/ controllers must appear in both. Adding to one only causes LoadError
-    in the other context.
-  tts_worker_process: Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and
-    subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork.
-# OpenBSD dmesg-style progress (device at bus: detail). Default on.
-# ENV MASTER_DMESG=0 disables; MASTER_DMESG=1 forces on.
 dmesg:
   enabled: true
   style: openbsd
@@ -792,3 +336,487 @@ session_modes:
       max_fix_passes: 15
       severity_floor: warning
       description: Full rules, council on, full fix budget
+
+# ---------------------------------------------------------------------------
+# Read by nothing. Reference material for agents via `/orient limits`, kept
+# because it is worth reading and deleted from no-one's reach — but it does not
+# constrain the runtime, and a rule that constrains nothing must not sit beside
+# ones that do.
+guidance:
+  file_reading:
+    rule: READ_FULL_FILES
+    statement: Read complete files. Never grep, head, tail, or partial‑read to understand code.
+    rationale: Partial view yields partial (wrong) changes.
+    allowed_exceptions:
+    - grep/search across many unknown files to locate a keyword
+    forbidden:
+    - grep pattern file to understand code structure
+    - head -N file to check structure
+    - tail -N file to check endings
+  before_edit:
+    rule: READ_BEFORE_WRITE
+    statement: Read every file that could be affected before editing any file.
+    see_also: edit_context
+    steps:
+    - 'Map the codebase: find all .rb files in lib/'
+    - Trace callers before changing any public method signature
+    - Check Zeitwerk inflectors before renaming classes or files
+    - Run ruby -c FILE after every write
+    - Run ruby -e require_relative after every commit
+  edit_context:
+    rule: TIERED_BLAST_RADIUS_READ
+    statement: Read depth scales with change radius — not every edit requires a full-corpus read.
+    always:
+    - Full read of every file you will edit
+    - Re-read from disk immediately before writing
+    - One-hop callers/tests for any public method or constant you change
+    tiers:
+      local_fix:
+        when: single-file bugfix or comment; no signature change
+        read:
+        - target file
+        - matching test file
+        - direct callers
+      module_change:
+        when: new class, renamed constant, or cross-file behavior in one lib/ module
+        read:
+        - module entrypoint
+        - /graph one-hop dependents
+        - affected tests
+      structural_change:
+        when: pipeline stage, scan rule, constitution data, or OPERATOR topology
+        read:
+        - data/soul.yml ABSOLUTE sections
+        - limits.yml scan_profiles
+        - /scan deep on affected tree
+    forbidden:
+    - Edit from grep snippets, partial reads, or conversation memory
+    - Claim a fix without reading the file being changed
+    note: Pairs with llm_ergonomics — external grep/rg for reconnaissance is allowed; production edits require
+      full-file reads.
+  code_principles:
+    no_hardcoding:
+      rule: NO_HARDCODED_CONSTANTS
+      statement: Prose, patterns, and config belong in data/*.yml, not Ruby strings.
+    single_source:
+      rule: ONE_SOURCE
+      statement: If it is in a data file, the code reads from there. No duplicates.
+    no_magic_numbers:
+      rule: NAMED_CONSTANTS
+      statement: Extract literals to named constants with .freeze
+    no_bare_rescue:
+      rule: SPECIFIC_RESCUE
+      statement: Always rescue SpecificError => e. Propagate or log via event bus.
+    guard_first:
+      rule: GUARD_CLAUSES_FIRST
+      statement: Return Result.ok(ctx) unless condition before main logic.
+    one_responsibility:
+      rule: SINGLE_RESPONSIBILITY
+      statement: Split if you can name two reasons to change it.
+    cqs:
+      rule: COMMAND_QUERY_SEPARATION
+      statement: Queries return data and do not mutate. Commands mutate and do not return values.
+    inject_deps:
+      rule: DEPENDENCY_INJECTION
+      statement: Never instantiate collaborators inside a method.
+    result_monad:
+      rule: RESULT_MONAD
+      statement: Pipeline stages return Master::Result. Use .ok? and .err?; propagate Err without calling
+        .value!.
+  scan_rules:
+    note: DEEP_SCAN_ONLY — every scan runs at deep depth. scan_profiles (cosmetic, core, …) filter the report
+      after the scan; they are not depth tiers.
+    standard_depth:
+    - frozen_string
+    - bare_rescue
+    - explicit
+    - immutable
+    - cqs
+    - self_explaining
+    - long_method
+    - god_class
+    - duplicate_code
+    - prune
+    - srp
+    - pola
+    - nielsen
+    deep_only:
+    - semantic
+    - adversarial
+    hunt_only:
+    - rubocop
+    - reek
+    notes:
+      nielsen: puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are.
+      prune: Loads patterns from data/voice.yml (voice.strunk); legacy fallback in rules.yml.
+      semantic: Loads detect_semantic prompts from data/rules.yml scan corpus.
+      deep_caution: deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes.
+  frontend_protection:
+    statement: Only application.scss is protected — one entry per app; reuse pub4_stack and existing partials
+      (brgen-style) before adding files.
+    protected_files:
+    - application.scss
+    on_view_or_css_edit:
+    - flatten divitis and use semantic landmarks
+    - bare tag targeting per style.yml — no BEM or utility soup in ERB
+    - run Shared::FrontendAuditor on touched paths
+    mailer_exempt:
+    - inline styles in mailer views (email clients require them)
+  universal_scope:
+    policy: ALL_PRINCIPLES_ALL_FILES
+    statement: 'All axioms, principles, and philosophies apply to every file in the codebase regardless
+      of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown. Language-specific rules apply only
+      to their target language; universal rules (SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES, etc.)
+      apply everywhere.
+
+      '
+    scan_glob: '**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}'
+    semantic_rules: all_known_languages
+    adversarial_rules: all_known_languages
+  incremental_scanning:
+    enabled: true
+    strategy: modified_files_only
+    triggers:
+      full_scan:
+      - new_principle_added
+      - master_yml_modified
+      - user_requests_full_scan
+      incremental:
+      - file_saved
+      - git_stage
+      - git_commit
+    speedup_estimate: 60-85% fewer files on typical edit
+    fallback: full_scan_on_error
+  anti_sprawl:
+    mode: aggressive
+    hierarchy: openbsd_ruby_roda
+    max_lib_depth: 4
+    fold_suffixes:
+    - _support
+    - _helper
+    - _util
+    - _helpers
+    - _utils
+    forbidden_files:
+    - summary.md
+    - analysis.md
+    - report.md
+    - todo.md
+    - notes.md
+    - changelog.md
+    slug_naming: Rails-parameterized density — snake_case, concrete tokens only, Strunk-clean; see style.yml
+      naming.paths
+    rule: Flat Hierarchy — merge thin siblings and rename misfit paths before creating files. OpenBSD-flat
+      paths, Zeitwerk-true dense slugs, Roda-tight trees.
+  phases:
+    discover:
+      id: 1
+      goal: Understand actual need
+      output: Problem statement with success criteria
+      personas:
+      - chaos
+      - user
+      introspect: What assumptions did we make?
+      gates:
+      - no_vague_words
+      - audience_identified
+      - success_measurable
+    analyze:
+      id: 2
+      goal: Break into components
+      output: Component diagram with dependencies
+      personas:
+      - skeptic
+      - maintainer
+      introspect: What did we miss?
+      gates:
+      - components_distinct
+      - dependencies_acyclic
+    ideate:
+      id: 3
+      goal: Generate 15+ alternatives
+      output: List of approaches with trade‑offs
+      personas:
+      - minimalist
+      - chaos
+      introspect: Which ideas surprised us?
+      gates:
+      - count_gte_15
+      - trade_offs_documented
+    design:
+      id: 4
+      goal: Specific architecture
+      output: Interface definitions and error handling
+      personas:
+      - security
+      - accessibility
+      introspect: What could break?
+      gates:
+      - interfaces_explicit
+      - errors_documented
+    implement:
+      id: 5
+      goal: Execute with zero violations
+      output: Working code at 100/100 score
+      personas:
+      - performance
+      - security
+      introspect: Is this the simplest solution?
+      gates:
+      - tests_pass
+      - zero_violations
+    validate:
+      id: 6
+      goal: Prove with evidence
+      output: Test results, benchmarks
+      personas:
+      - skeptic
+      - security
+      introspect: What evidence proves it works?
+      gates:
+      - zero_test_failures
+      - edge_cases_covered
+    deliver:
+      id: 7
+      goal: Ship with monitoring
+      output: Deployed code with dashboards
+      personas:
+      - realist
+      introspect: What would the user complain about?
+      gates:
+      - deployed
+      - monitoring_configured
+    learn:
+      id: 8
+      goal: Extract durable lessons
+      output: Updated defaults, new memory entries, refined rules
+      personas:
+      - skeptic
+      - chaos
+      introspect: What would we do differently next time?
+      gates:
+      - lessons_captured
+      - defaults_updated
+  session_startup:
+    reading_tiers:
+      explore:
+        required:
+        - /orient bootstrap
+        optional:
+        - data/soul.yml ABSOLUTE sections
+        note: Recon and analysis — pair with llm_ergonomics; external rg allowed.
+      structural_edit:
+        required:
+        - data/soul.yml
+        - data/rules.yml
+        - data/limits.yml
+        optional:
+        - data/voice.yml
+        - data/style.yml
+        - data/state.yml
+        note: Before production edits and deploy-touching changes.
+      production_ops:
+        required:
+        - data/patterns.yml#operator_playbook
+        optional:
+        - /orient trace
+        note: VPS friction, relayd, recovery — run bin/playbook when signals match.
+    mandatory_reads:
+    - See reading_tiers — /orient bootstrap first; full constitution only for structural edits.
+    playbook_command: bin/playbook — print codified operator lessons when signals match production friction
+    check_standing_orders: Verify FSM state before any mutation -- UNCHANGE blocks refactoring
+    scan_before_analysis: Use /scan deep via MASTER, not external agents, for code analysis
+    ssh_edit_pattern: Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc
+  corruption_prevention:
+    llm_error_in_file: git checkout HEAD -- data/ && rcctl restart master -- LLM error strings silently
+      overwrite YAML data files when circuit is open and agent#ask returns error string instead of raising
+    sweep_excludes_data: Sweep may scan data/*.yml but must not LLM-rewrite them. Structural violations
+      (duplicate keys, bad indentation) are auto-fixed. Exclude .master/ runtime state files entirely.
+    yaml_type_guards: All load_yaml calls must type-check result before use (is_a?(Array/Hash)) -- circuit-open
+      strings parse as valid YAML scalars
+    ask_raises_on_error: agent#ask must raise StandardError when result.err? -- callers must rescue, never
+      silently propagate error strings as LLM output
+  quality_phases:
+    prototype:
+      gates:
+      - functional
+      debt_allowed: high
+      speed: maximize
+    production:
+      gates:
+      - functional
+      - secure
+      - maintainable
+      - performant
+      debt_allowed: none
+      speed: sustainable
+    legacy:
+      gates:
+      - functional
+      - secure
+      changes: surgical_only
+      risk_tolerance: minimal
+  principle_reinforcements:
+    dry_and_kiss: multiply_effectiveness
+    evidence_and_reversible: enables_confident_change
+    single_responsibility_and_dependency_injection: enables_isolated_testing
+  observability:
+    logging:
+      format: json
+      fields:
+      - timestamp
+      - level
+      - phase
+      - file
+      - evidence_score
+      - decision
+      levels:
+        trace: every_operation
+        debug: decision_points
+        info: phase_transitions
+        warn: evidence_below_threshold
+        error: gate_failures
+    metrics:
+      track:
+      - evidence_score
+      - complexity
+      - coverage
+      - churn
+      - council_consensus
+      export_format: prometheus
+      threshold_alerts: true
+  processing_strategies:
+    small_file:
+      condition: size <= 10240
+      method: full_read
+      context: entire_file
+    medium_file:
+      condition: 10240 < size <= 1048576
+      method: streaming
+      context: line_by_line_with_lookahead
+    large_file:
+      condition: size > 1048576
+      method: chunked
+      context: section_by_section
+      checkpoint: per_chunk
+  tool_budget:
+    max_calls_per_turn: 40
+    max_consecutive_edits: 8
+    max_consecutive_searches: 10
+    on_exceed: publish budget:exceeded; force /reflect before next call
+  antagonisms:
+    minimalism_vs_explicit: explicit wins for safety-critical paths
+    speed_vs_evidence: evidence wins always
+    abstraction_vs_proximity: proximity wins below 3 occurrences
+    dry_vs_singularity: singularity wins for data, dry wins for code
+    completeness_vs_density: density wins; defer completeness to next iteration
+  two_stage_council:
+    round_one: each persona votes ack/dissent independently, no debate
+    dissent_threshold: 0.3
+    round_two: only dissenting personas debate, others abstain
+    saves: 60-80% of LLM calls when consensus is clear
+  view_thread:
+    emit_event: thread:decision
+    fields:
+    - timestamp
+    - phase
+    - file
+    - decision
+    - alternatives_considered
+    - rationale
+    persist_to: data/threads/${session_id}.jsonl
+    rotate_after_days: 7
+  checkpoint_summarization:
+    every_n_turns: 5
+    every_n_tokens: 100000
+    keep_verbatim:
+    - last_3_user_messages
+    - current_violation_set
+    - current_diff
+    summarize:
+    - all_other_turns
+    target_compression: 0.3
+  llm_ergonomics:
+    core_principle: Optimize for actual LLM behavior and context limits, not idealized super-agents.
+    guidance:
+    - Provide high-density mental models (/orient bootstrap) before requiring deep constitution reads.
+    - Allow external tools (grep, rg, find) for reconnaissance and understanding. Require constitutional
+      tools only for production changes.
+    - When full strict adherence would cause context exhaustion or paralysis, prefer 'good enough + evidence'
+      over perfect ceremony.
+    - Document known friction points openly so future agents can work around them intelligently.
+    - Event emission should be rich and first-class by default so observers (human or visual) can understand
+      internal state without heroic effort.
+    tension_with_rules: This section provides pragmatic guidance for working with real LLM limitations.
+      It does not override any ABSOLUTE rules defined in soul.yml.
+  spec_streaming:
+    triggers:
+    - new_module_creation
+    - stub_to_implementation
+    safe_for:
+    - non-overlapping files
+    - additive_changes
+    forbidden_for:
+    - mutating_shared_state
+    - schema_migrations
+  live_preview_gate:
+    triggers:
+    - edit under web/app/views/
+    - edit under web/app/assets/
+    require: successful render at preview URL within 10s
+    on_failure: block commit; publish preview:render_failed
+  reverse_introspection:
+    cadence: after_every_10_commits
+    sample_size: 5
+    on_disapproval: open issue tagged self_review with proposed reversion
+  test_generation:
+    target_dir: test/rules_generated/
+    cadence: on_rule_definition_change
+    coverage_required: 0.8
+  self_rewrite_throttle:
+    sensitive_paths:
+    - lib/fix/
+    - lib/ground/
+    - lib/review/security/
+    - bin/cli
+    - data/state.yml
+    autoloop_action: skip with publish autoloop:throttled event; surface to user
+  adversarial_questioning:
+    mandate: fires_on_every_scan_and_council_turn
+    questions:
+    - What is wrong with this design that I have not spotted?
+    - What would an attacker do with this code?
+    - What assumption is this built on that could be false?
+    - What breaks at scale or under failure?
+    - Is this wired to anything? Could it be deleted without loss?
+    - Is there a simpler approach that was not taken?
+    - What should be relocated or transformed to a different format?
+    resolution:
+      trivial: autofix immediately — no proposal, no prompt
+      non_trivial: propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick
+      threshold: non-trivial if the fix spans more than one file, touches architecture, or has security
+        implications
+  known_issues:
+    relayd_master_empty: After rcctl restart master, relayd may mark master empty until /up health passes
+      — tracked rc.d waits for local /up then restarts relayd; relayd.conf must use check http "/up" not
+      "/" for master.
+    relayd_stale_backend_tables: After mass app restarts relayctl may show empty/down while local /up is
+      200 — relayd-watchdog (cron */5) restarts relayd when backends are live but tables are stale.
+    resource_guard_shedding: OPENBSD/resource_guard.sh stops optional Rails apps when load/mem thresholds
+      hit unless /var/db/pub4_all_apps exists — use start_all_apps.sh to pin.
+    rails_phantom_fk: 'references with foreign_key: true alone creates phantom buyers/listings/likers/orders
+      tables on SQLite — always set to_table. Run ruby RAILS/gates/runner.rb phantom_foreign_keys.'
+    todo_checkbox_drift: Retired 2026-06-24 — verify ship readiness with bin/probe repo, health_check.rb,
+      and per-app bin/ci instead of checkbox backlogs.
+    tts_broken: Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing
+      or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts
+      is installed (pkg_add py3-edge-tts or pip).
+    particle_swarm: Fixed 2026-06-24 — ecology canvas was z-index 0 under face (z-index 1); now z-index
+      2 with screen blend. verify trails/weather visible over face after SSE events.
+    gemfile_separation: MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/ code
+      that is also called from web/ controllers must appear in both. Adding to one only causes LoadError
+      in the other context.
+    tts_worker_process: Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and
+      subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork.
+  # OpenBSD dmesg-style progress (device at bus: detail). Default on.
+  # ENV MASTER_DMESG=0 disables; MASTER_DMESG=1 forces on.

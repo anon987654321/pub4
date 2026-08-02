@@ -6,6 +6,8 @@ module Master
   module Review
     class Agent
       module FallbackChain
+        # Default when there is no router or no config; the live list comes from
+        # data/models.yml via ModelRouter#failover_skip_categories.
         NON_RETRYABLE = %i[timeout no_api_key].freeze
 
         private
@@ -97,7 +99,15 @@ module Master
         end
 
         def failover_skip_model?(response)
-          response.is_a?(Master::Result::Err) && NON_RETRYABLE.include?(response.category)
+          return false unless response.is_a?(Master::Result::Err)
+
+          skip_categories.include?(response.category)
+        end
+
+        def skip_categories
+          return NON_RETRYABLE unless @model_router.respond_to?(:failover_skip_categories)
+
+          @model_router.failover_skip_categories || NON_RETRYABLE
         end
 
         def backoff_before_retry(model, mode, retry_index)

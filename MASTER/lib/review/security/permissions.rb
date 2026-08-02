@@ -38,9 +38,20 @@ module Master
 
         PIPE_TO_SHELL_RE = /\|\s*(?:ba|z)?sh\b/i.freeze
 
+        # Bare-word entries match on word boundaries; entries holding an operator or
+        # a path stay literal substrings. Plain `include?` blocked by accident —
+        # "sudo" is inside "pseudo", "halt" inside "shalt" — so `grep -rn
+        # shutdown_handler lib` was refused as dangerous.
+        BLOCK_MATCHERS = BLOCKLIST.map do |entry|
+          entry.match?(/\A[a-z0-9 ]+\z/) ? /\b#{Regexp.escape(entry)}\b/ : entry
+        end.freeze
+
         def self.blocked?(command)
           normalized = command.gsub(/[[:space:]]+/, " ").strip.downcase
-          BLOCKLIST.any? { |b| normalized.include?(b) } || command.match?(PIPE_TO_SHELL_RE)
+          matched = BLOCK_MATCHERS.any? do |matcher|
+            matcher.is_a?(Regexp) ? normalized.match?(matcher) : normalized.include?(matcher)
+          end
+          matched || command.match?(PIPE_TO_SHELL_RE)
         end
       end
     end

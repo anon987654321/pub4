@@ -233,12 +233,18 @@ module Master
           "rem units; no !important; no inline style attributes."
       end
 
+      # Reads typography.scale.ratio, not typography["ratio"]: the shallow read meant
+      # the 1.25 fallback was the only value this ever carried, and measure/leading
+      # were literals beside it for the same reason.
       def typography_style_line(typography)
         return unless typography
 
         families = typography.dig("families", "sans") || ""
-        "Typography: Swiss style; one family per surface; #{families}; " \
-          "scale ratio #{typography["ratio"] || 1.25}; measure 65ch; left-align body."
+        ratio = typography.dig("scale", "ratio") || 1.25
+        base = typography.dig("scale", "base") || "16px"
+        "Typography: #{typography["style"] || "swiss"} style; one family per surface; #{families}; " \
+          "scale #{base} × #{ratio}; leading #{typography["leading"] || 1.5}; " \
+          "measure #{typography["measure"] || "65ch"}; left-align body."
       end
 
       def heuristics_style_line(heuristics)

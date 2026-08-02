@@ -46,11 +46,11 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `data/rules/*.yml`, `li
 | Deploy / Rails | `OPENBSD/bin/check-rails --profile=contributor` |
 | Operator / release | `bin/pub4 status` then `OPENBSD/bin/check-full` |
 
-**Do not optimize away:** dual `lib/` + `core/` spines until absorption cutover; `data/rules/` shards (one consumer each); deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
+**Do not optimize away:** the dual `lib/` + `core/` spines — permanent by decision, not pending a cutover (`DECISIONS.md`, "Two Master Spines"; `core/SEVERANCE.md` records why the migration chart was retired); `data/rules/` shards (one consumer each); deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
 
 ## Do Not Touch (unless the task requires it)
 
-1. `lib/` and `core/` are two spines — do not merge before absorption completes.
+1. `lib/` and `core/` are two spines, deliberately and permanently — do not merge them. Restarting absorption would be a product decision with a sponsor and a date, not a refactor (`core/SEVERANCE.md`).
 2. `data/rules/*.yml` shards stay split — do not fold into `rules.yml` without retuning scanners.
 3. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`.
 4. WebGL / face boot stays deferred until primer tap.

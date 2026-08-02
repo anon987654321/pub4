@@ -199,6 +199,14 @@ module Master
         end
 
       # Bias: COMPLETION_THEATER — ellipsis/etc as placeholder outputs.
+      #
+      # A placeholder "etc" is lowercase, bare, and not part of a path. Being loose
+      # about that (/\betc\.?\b/i) matched `require "etc"`, `Etc.nprocessors` and
+      # every /etc/… deploy path — 12 of selfcheck's 71 findings, none real. See
+      # DEBT.md, Scanner noise.
+        PLACEHOLDER_ETC = %r{(?<![\w/])etc\.?(?![\w/])}
+        STDLIB_ETC_REQUIRE = /\brequire\s+["']etc["']/
+
         RuleDSL.rule :COMPLETION_THEATER,
           severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
           description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
@@ -206,7 +214,10 @@ module Master
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
-            next unless stripped.match?(/\.\.\.\s*$/) || stripped.match?(/\betc\.?\b|\betcetera\b/i)
+            next if stripped.match?(STDLIB_ETC_REQUIRE)
+            next unless stripped.match?(/\.\.\.\s*$/) ||
+                        stripped.match?(PLACEHOLDER_ETC) ||
+                        stripped.match?(/\betcetera\b/i)
             finding(line: n, message: "completion theater — implement or delete, never placeholder")
           end
         end

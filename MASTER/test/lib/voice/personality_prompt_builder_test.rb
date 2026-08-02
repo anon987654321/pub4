@@ -33,6 +33,45 @@ class TestPersonalityPromptBuilder < Minitest::Test
     assert_includes core_prompt, "master_output_format"
   end
 
+  # data/style.yml puts the scale at typography.scale.ratio; this line read
+  # typography["ratio"], one level too shallow, so the hardcoded 1.25 fallback was
+  # the only value the prompt ever carried and editing style.yml did nothing.
+  # `measure` and `leading` were literals beside it for the same reason.
+  class Typographer
+    include Master::Voice::PersonalityPromptBuilder
+    public :typography_style_line
+  end
+
+  def test_typography_line_reads_style_yml_rather_than_its_own_fallbacks
+    line = Typographer.new.typography_style_line(
+      "style" => "brutalist",
+      "families" => { "sans" => "Inter" },
+      "scale" => { "base" => "18px", "ratio" => 1.618 },
+      "leading" => 1.35,
+      "measure" => "72ch"
+    )
+
+    assert_includes line, "brutalist style"
+    assert_includes line, "scale 18px × 1.618"
+    assert_includes line, "leading 1.35"
+    assert_includes line, "measure 72ch"
+  end
+
+  def test_typography_line_matches_the_committed_style_yml
+    typography = Master.load_yaml(Master.style_path).fetch("typography")
+    line = Typographer.new.typography_style_line(typography)
+
+    assert_includes line, "scale #{typography.dig("scale", "base")} × #{typography.dig("scale", "ratio")}"
+    assert_includes line, "measure #{typography.fetch("measure")}"
+  end
+
+  def test_typography_line_still_degrades_without_a_scale
+    line = Typographer.new.typography_style_line("families" => { "sans" => "Inter" })
+
+    assert_includes line, "swiss style"
+    assert_includes line, "× 1.25"
+  end
+
   def test_core_and_full_are_cached_independently
     persona = Master::Voice::Personality.new(:trader)
     core = persona.system_prompt(context: :core)

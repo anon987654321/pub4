@@ -6,9 +6,12 @@ module Master
       # Pure data-accessor readers over the loaded YAML — kept in a separate
       # module so NO_GOD_CLASS's AST-based public-method count only sees
       # Rules' own lookup/parsing methods, not this passthrough layer.
+      # `workflow` (the whole limits.yml hash) and `workflow_rule(key)` (a generic
+      # reader for any key in it) both lived here with zero call sites, and between
+      # them they made 29 unread keys in that file look reachable. Deleted with the
+      # split — see data/limits.yml. A generic accessor over a data file is how a
+      # file stops having readers one can name.
       module RuleAccessors
-        def workflow = @workflow.freeze
-
         def voice = @voice ||= (@voice_data["voice"] || @data["voice"] || {}).freeze
         def strunk = @strunk ||= (voice["strunk"] || {}).freeze
         def preserve = @preserve ||= (voice["preserve"] || {}).freeze
@@ -30,7 +33,6 @@ module Master
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
         def scan_depths = @scan_depths ||= (@data["scan_depths"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
-        def workflow_rule(key) = @workflow.dig(key.to_s) || {}
       end
     end
   end
