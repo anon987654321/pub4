@@ -14105,8 +14105,21 @@ end
 def dilla_hat_steps(bar, feel, n_bars: nil)
   steps = drum_pattern_pick(bar, feel, :hats)
   steps = DillaGroove.euclidean(5, 16, rotation: bar % 16) if ENV["EUCLIDEAN_HATS"] == "1"
+  # Replaces rather than adds, and has to stay replaced through the markov line
+  # below. Assigning `steps` here is not enough on its own: `steps + pool` unions
+  # the preset's own bar-locked hat list back in two lines later, which puts the
+  # downbeat under every bar again -- measured, POLYMETER_HATS=3 came back as
+  # [0,2,3,5,6,8,9,11,12,14,15] on bar 1, the precessed cycle OR'd with the
+  # [0,3,6,9,12,15] it was supposed to displace. That is the exact failure this
+  # switch exists to avoid, so the pool is dropped while it is on.
+  poly = DillaGroove.polymeter_hat_steps(bar)
+  steps = poly if poly.any?
   steps += DillaGroove.prime_poly_steps(bar) if ENV["PRIME_GRID"] == "1"
-  pool = DRUM_PATTERN_SETS.fetch(drum_feel_key(feel), DRUM_PATTERN_SETS[:default])[:hats]&.flatten || steps
+  pool = if poly.any?
+           []
+         else
+           DRUM_PATTERN_SETS.fetch(drum_feel_key(feel), DRUM_PATTERN_SETS[:default])[:hats]&.flatten || steps
+         end
   steps = DillaGroove.markov_steps(bar, :hat, steps + pool)
   steps = DillaGroove.trap_morph_hat_density(bar, n_bars || 16, steps) if n_bars
   steps = DillaRhythm.subdivision_density_steps(steps, bar) if defined?(DillaRhythm)

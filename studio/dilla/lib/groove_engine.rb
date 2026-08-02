@@ -595,6 +595,64 @@ module DillaGroove
     PRIMES.flat_map { |p| (0...16).step(p).map { |s| s % 16 } }.uniq.sort
   end
 
+  # A cycle that does not reset at the bar line.
+  #
+  # Everything else in this file lands inside one 16-step bar and starts over:
+  # euclidean(5, 16) is a 16-step figure, prime_poly_steps folds its primes back
+  # with `s % 16`, and drum_pattern_pick returns a per-bar list. That is a
+  # cross-rhythm INSIDE a bar, which is not the same thing as a polymeter, and
+  # the difference is audible -- a figure that resets every bar agrees with the
+  # downbeat every bar, however uneven it is within one.
+  #
+  # This indexes the pattern by the GLOBAL step instead, so an 11-step cycle
+  # against a 16-step bar precesses and only comes back round to the downbeat
+  # after lcm(11, 16) = 176 steps, or 11 bars.
+  #
+  # The gap this fills was a claim rather than a feature. producer_dna.rb's
+  # flylo_cosmogramma preset says its hats are "a 3-step cycle against a 16-step
+  # bar, so they only agree with the downbeat once every three bars" -- but its
+  # pool holds one entry, [0, 3, 6, 9, 12, 15], so drum_pattern_pick returns the
+  # identical list for every bar and the hats hit the downbeat in all of them.
+  # That preset is left alone (nothing moves unless asked); POLYMETER_HATS=3 is
+  # what the comment describes.
+  #
+  # pulses defaults to ONE hit per cycle, not one per position in it. "A 3-step
+  # cycle" is a hit every third step -- [0, 3, 6, 9, ...] -- and the first cut of
+  # this defaulted to `(0...cycle).to_a`, i.e. every residue, which matches every
+  # step and fires continuously. It looked like a working polymeter in the code
+  # and was a 16th-note roll in the output.
+  #
+  # Give pulses to spread more than one hit across the cycle with euclidean, so
+  # POLYMETER_HATS=11 POLYMETER_PULSES=7 is the 7-against-11 that IDM uses.
+  #
+  # Capped at cycle - 1, not at cycle. euclidean(n, n) is every position by
+  # definition, so a cycle filled to its own length has no gap in it, precesses
+  # against nothing and is audible only as a 16th roll -- the same output as the
+  # default bug above, reached by asking for too many pulses instead of too few.
+  # One gap is the minimum that makes a cycle a cycle.
+  def polymeter_steps(bar, cycle:, pulses: nil, steps_per_bar: 16)
+    return [] if cycle.to_i < 2 || steps_per_bar.to_i < 1
+
+    cycle = cycle.to_i
+    n = pulses.to_i.clamp(0, cycle - 1)
+    hits = n > 1 ? euclidean(n, cycle) : [0]
+    return [] if hits.empty?
+
+    base = bar.to_i * steps_per_bar
+    (0...steps_per_bar).select { |s| hits.include?((base + s) % cycle) }
+  end
+
+  # POLYMETER_HATS=<cycle>, optionally POLYMETER_PULSES=<n>. Off unless set,
+  # like every other grid switch here.
+  def polymeter_hat_steps(bar)
+    return [] unless enabled?
+
+    cycle = ENV["POLYMETER_HATS"].to_i
+    return [] unless cycle > 1
+
+    polymeter_steps(bar, cycle:, pulses: ENV["POLYMETER_PULSES"])
+  end
+
   # A lazily-initialized module ivar, not a `NAME = {}` constant -- that
   # constant-literal pattern is exactly what an automated formatting pass
   # kept matching and appending .freeze to (three separate times tonight),

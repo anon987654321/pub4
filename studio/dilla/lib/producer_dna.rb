@@ -329,10 +329,19 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
       ghosts: [7], claps: [4, 12], perc: []
     },
-    # Cosmogramma: the HATS carry the polyrhythm -- a 3-step cycle against a
-    # 16-step bar, so they only agree with the downbeat once every three bars.
-    # The kick and snare stay square underneath, which is what stops the
-    # polyrhythm sounding like a mistake instead of a device.
+    # Cosmogramma: the HATS carry the cross-rhythm -- 3-step spacing across a
+    # 16-step bar, so the last gap is 1 instead of 3 and the figure leans. The
+    # kick and snare stay square underneath, which is what stops it sounding
+    # like a mistake instead of a device.
+    #
+    # This is a cross-rhythm inside the bar, NOT a polymeter, and the note here
+    # used to claim otherwise -- that the hats "only agree with the downbeat
+    # once every three bars". They agree with it in every bar: the pool below
+    # holds one entry, so drum_pattern_pick returns the identical list each time
+    # and step 0 is in all of them. Nothing rotated it. Left as it is because
+    # this is what the preset has always sounded like; the polymeter the old
+    # note described is now real and reachable as POLYMETER_HATS=3, which lands
+    # the 3-cycle on the global step and takes 3 bars to come back round.
     flylo_cosmogramma: {
       swing: 52, humanize: 4, bpm: 78, mode: :straight_sixteenth,
       kicks: [0, 6, 11], snares: [4, 12],
