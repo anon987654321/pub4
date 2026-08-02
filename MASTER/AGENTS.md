@@ -36,6 +36,18 @@ On failure, use structured hints: `bin/check --profile=agent --format=brief`
 4. No WebGL before primer tap (`web/app/views/chat/index.html.erb`).
 5. `tools.yml` lists Repligen/Postpro for slash commands — not LLM-native tools; media routes via `Io::MediaIntent`.
 
+## Concurrent agents — take your own worktree
+
+If more than one agent works this repo at once, each one takes an isolated git
+worktree first: `sh OPENBSD/dev/agent_worktree.sh <your-name>` → work in
+`../pub4-<name>` → push your branch → integrate to `main` by fast-forward/PR. The
+default shared checkout has ONE git index, so concurrent edits collide: a
+`git commit -a` sweeps another agent's half-finished work into your commit, an
+autofix rewrites a file another agent is mid-edit on, and interleaved writes have
+produced silently corrupt files (a `CONTROL_CHARS` scan rule now catches that).
+Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a
+tree; a worktree removes the whole hazard.
+
 ## Patch closeout
 
 Match `EXAMPLES.md`: what changed, exact checks run, known debt called out explicitly.
