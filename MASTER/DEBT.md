@@ -13,10 +13,25 @@ This file separates known debt from ordinary TODO work.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **0 findings as of 2026-07-28** (was 7 on 2026-07-27,
-6 on 2026-07-26; the earlier "clean since 2026-07-16" claim in
-`START_HERE.md`/`AGENTS.md` was stale, so treat this number as true only for
-the commit that carries it).
+`rake selftest` reports **0 findings as of 2026-08-01** (was 2 earlier that day,
+0 on 2026-07-28, 7 on 2026-07-27, 6 on 2026-07-26; the earlier "clean since
+2026-07-16" claim in `START_HERE.md`/`AGENTS.md` was stale, so treat this number
+as true only for the commit that carries it).
+
+The 2026-08-01 pair were both introduced by feature work that did not re-run the
+scan, which is the shape to expect: `[ABSTRACTION] AstFixer is 302 lines` (the
+class had grown two lines past the 300 limit) and `[DENSITY]
+TtsSupervisor#ensure_pool_worker! is 22 code lines`, from the pool-leak fix in
+`3481e2638`. Both closed by extraction rather than by moving a threshold — a new
+`ast_fixer/syntax_transforms.rb` joins the two mixins that already existed,
+taking everything that has to know the source language and leaving `AstFixer` as
+dispatch plus the four whitespace transforms that know nothing; and
+`replace_worker` / `back_off_after_failed_spawn` split the supervisor's respawn
+path out of the lock block.
+
+A second mixin for the whitespace transforms was written and then removed: with
+the syntax transforms gone the class was at 169 lines, so the extra file bought
+nothing but 44 lines against the spine ceiling below.
 
 The `[ABSTRACTION]` finding closed by splitting `lib/review/council/critique.rb`
 (308 lines) into three files with distinct jobs: `critique/modes.rb` (the mode
@@ -51,6 +66,33 @@ Triage each new finding as:
 - rule exemption needed
 - rule threshold too strict
 - known debt to leave alone during unrelated work
+
+### Spine Ceiling Is Over, And The Raise Budget Is Spent
+
+**operator-priority** — `rake lint:spine` is red on the working tree as of
+2026-08-02: `lib/` is 47,837 lines against a ceiling of 47,660 (+177). Naming who
+grew it, since the point of the ratchet is that this is legible:
+
+- ~98 lines from work already uncommitted in the tree before this pass — the
+  `AstFixer` split (`ast_fixer.rb` −128, new `ast_fixer/syntax_transforms.rb` +162)
+  plus `voice/engines.rb`, `voice/mix_metrics.rb` and `voice/tts_supervisor.rb`.
+- ~75 from the 2026-08-01 debt pass (the inert-config wiring, the two narrowed scan
+  rules, the four defects the new tests found). Roughly half of that was rationale
+  comments, since trimmed to a sentence each with the full accounting moved into
+  this file.
+
+`data/spine.yml` says the next raise fails the check: `consecutive_raises_allowed:
+2`, and both entries are used (2026-07-31 and 2026-08-01). Its own note says what to
+do about it — "if it is raised again without `lib/` ever falling back, the honest
+conclusion is that 'the spine never grows' is not the invariant anyone is holding,
+and the number should be replaced by one that is." That is a decision with a
+sponsor, not a ceiling edit, so no agent should grant it.
+
+Worth recording alongside: `lint:spine` counts every line in `lib/**/*.rb`,
+comments included, while `[DENSITY]` was deliberately changed on 2026-07-28 to count
+*code* lines precisely so this codebase's convention of a rationale paragraph above
+the tricky line is not penalised. The two rules therefore pull opposite ways on the
+same edit. Whoever resolves the ceiling should decide which of them means it.
 
 ### Constitution Scan Debt
 
@@ -113,29 +155,98 @@ Fixed 2026-07-28, each with a regression test
   remote host, so it is reachable but does not turn itself on. Its source
   is `File.expand_path("..", root)`, the repo root, not three levels up.
 
-**Known flake — unreproduced**
+**Known flake — cause found and closed 2026-08-02**
 
-`TurnRouterTest#test_run_promotes_to_fold` failed once during the
-2026-07-28 pass (`assert result.ok?` returned false) and did not recur in
-four further full runs; it passes in isolation and alongside the new test
-file. Order-dependent, cause not established.
+`TurnRouterTest` failed intermittently with `assert result.ok?` false — recorded
+on 2026-07-28 as order-dependent and unexplained, and seen again on 2026-08-02 as
+`test_plain_language_routes_to_fold`, this time with a message that named the
+mechanism: `fold errored: chat: undefined method 'call' for an instance of
+#<Class:…>`.
 
-**Scanner noise — agent-ignore until scan rules are the task**
+`CLI#initialize` calls `set_visitor_mode_if_unauthenticated`, which sets
+`Fiber[:master_visitor] = true` whenever the config carries no `web_token`. Every
+container in `test_cli.rb` and `test_cli_bridge.rb` is tokenless, so building one
+flipped the flag — and fiber storage outlives the test. Any later test reaching
+`TurnRouter.call` then took the visitor branch to `casual_reply`, which calls
+`agent.call` on a stub agent that only answers `:model`; hence a chat error inside
+a test about the Fold. `TurnRouterTest` cleared the flag in `teardown`, which
+protected it from itself and from nothing else.
 
-38 of `rake selfcheck`'s 76 findings are false positives from two rules:
-`COMPLETION_THEATER` matches `require "etc"`, `Etc.nprocessors` and
-`/etc/*` paths; `STALE_NAMESPACE` flags every legitimate `Master::CLI::*`
-reference because `\b` matches before `::`.
+Closed by clearing the flag in both CLI test files' `teardown` and, defensively,
+in `TurnRouterTest#setup`. Verified two ways: a probe asserting that building a
+tokenless CLI sets the flag, and that with the flag set `TurnRouter.call` leaves
+the Fold path.
+
+Not a product defect — a real CLI reads a 64-char `web_token` from
+`.master/config.yml`, so the operator is not a visitor. But it is worth knowing
+that constructing a `CLI` object anywhere flips a security-relevant process-wide
+flag that nothing clears; the web path (`application_controller.rb`,
+`chat_service.rb`) sets and clears it per request, the CLI sets it for the life of
+the process.
+
+**Scanner noise** — both named rules narrowed 2026-08-01. `rake selfcheck` went
+**71 → 34**; `STALE_NAMESPACE` 25 → 0 and `COMPLETION_THEATER` 12 → 0.
+
+`STALE_NAMESPACE` built `/\bMaster::CLI\b/`, and `\b` sits between a letter and a
+colon — so it matched inside `Master::CLI::Stages`, and `Master::CLI`'s own recorded
+replacement is `Master::CLI::CLI`. Every legitimate reference under any renamed
+namespace was reported as a retired constant. A retired name now counts only as a
+whole constant path: not followed by `::` or a word character, not preceded by one.
+Its self-exemption also named `stale_namespace_rule.rb`, a file that no longer
+exists — the rule lives in `naming_rules.rb`.
+
+`COMPLETION_THEATER`'s etcetera half was `/\betc\.?\b/i`, matching `require "etc"`,
+`Etc.nprocessors`, and every `/etc/…` path in the deploy code. It is now
+case-sensitive (excluding the `Etc` constant), rejects a neighbouring slash
+(excluding paths), and names the stdlib require outright. The one real finding it
+had been hiding is fixed: `SubdomainOrchestrator::DESCRIPTION` listed five of twelve
+clusters and closed with "etc." in a string the model reads to decide whether the
+tool can serve a request, while `call` rejects anything outside `CLUSTER_DOMAINS`.
+
+`test/test_scan_rule_false_positives.rb` asserts both directions for both rules —
+the false positive is gone *and* the real violation still fires. The remaining 34
+are `EMPTY_RESCUE` (10), `guard_expensive_ops` (9), `SILENT_RESCUE` (9),
+`DEBUG_OUTPUT` (2), `UNBOUNDED_RETRY` (2), `bare_rescue` (1), `fail_visibly` (1);
+the last two are the autofixer that repairs bare rescues flagging its own source.
 
 **Inert law and config**
 
 Roughly 28 of `data/limits.yml`'s 39 top-level keys have no reader, and the
 generic accessor `workflow_rule(key)` has zero call sites — ~70% of 794
-lines of Tier-1 "law" is decoration. Same shape in `data/security/defaults.yml`
-(`deny_patterns`, `code_ttl_seconds`, `rate_limit_per_minute` enforce
-nothing), `data/models.yml` (`on:` parses as boolean `true`), and
-`data/style.yml` (typography ratio read at the wrong depth, so edits do
-nothing).
+lines of Tier-1 "law" is decoration. **Still open.**
+
+Three named instances closed 2026-08-01, each differently, and the difference is
+the interesting part:
+
+- `data/models.yml`'s `fallback_policy` was inert three ways at once: the key was
+  written bare as `on:`, which YAML 1.1 parses as the boolean `true`; nothing read
+  `fallback_policy` at all; and the category names it listed (`network_error`,
+  `refusal`, `insufficient_balance`, `quota_exceeded`) are not categories any
+  `Result.err` in this codebase carries, so wiring it as written would have matched
+  nothing. It now speaks the real vocabulary and
+  `ModelRouter#failover_skip_categories` reads it, replacing the hardcoded
+  `Agent::FallbackChain::NON_RETRYABLE` (which stays as the no-router default). The
+  behavioural change: a rate-limited or out-of-budget model is now skipped rather
+  than retried in place, which it could never have succeeded at.
+  `retries_per_tier` was removed — `failover.max_retries` is the one source.
+  Pinned by `test/test_failover_policy.rb`.
+- `data/style.yml`'s typography ratio was read as `typography["ratio"]`, one level
+  above where the file puts it (`typography.scale.ratio`), so the hardcoded 1.25
+  fallback was the only value the persona prompt ever carried. `measure` and
+  `leading` were literals beside it for the same reason. Fixed in
+  `lib/voice/personality_prompt_builder.rb`.
+- `data/security/defaults.yml` had exactly one key with a reader
+  (`tools.custom.require_review_for_destructive`) out of a file describing a
+  "local-first, zero-listener, explicit pairing, fail-closed" system. The ingress
+  rate limit was worse than inert — the same number was hardcoded in
+  `IngressController`, so file and code could disagree silently. The file is now
+  split into enforced keys and a `planned:` block holding the intent that has no
+  implementation (gateway bind, dashboard, session trust tiers, pairing TTL and
+  allowlist path, the five tool `deny_patterns`), and
+  `test/test_security_defaults.rb` fails in both directions: an enforced key that
+  loses its reader, and a planned key that gains one.
+
+`data/limits.yml` is the remaining instance and the largest.
 
 **Orphans** — closed 2026-07-30. Six files deleted (396 lines):
 `lib/cli/hot_reload.rb` (`/reload` still hardcodes "not supported in this
@@ -157,35 +268,72 @@ this is worth recording rather than just deleting:
   calls.
 - `core/world.rb:187 shell_git` — already gone; the line reference was stale.
 
-Same shape as `core/ABSORPTION.md`'s kill list, which was written from names
-rather than references and turned out to be mostly load-bearing. Verify before
-deleting, even when this file says a thing is dead.
+Same shape as the kill list in the old `core/ABSORPTION.md` (now
+`core/SEVERANCE.md`), which was written from names rather than references and
+turned out to be mostly load-bearing. Verify before deleting, even when this file
+says a thing is dead.
 
-**Test coverage** — no test names these constants: `SsrfGuard`,
-`CommitGuard`, `Permissions`, `StandingOrders`, `PatchApplier`,
-`AtomicWrite`, `GitOperations`, `KeyRotator`. 188 of ~400 `lib/` files have
-no test naming their primary constant. Separately, `rake test:subsystems`
-runs in no `bin/check` profile except `full`, so 14 files under
-`test/{cli,io,fix,lib}/` are skipped by the documented contributor gate.
+**Test coverage** — the eight named constants are covered as of 2026-08-01:
+`SsrfGuard` (`test/io/test_ssrf_guard.rb`), `CommitGuard`
+(`test/lib/review/commit_guard_test.rb`), `Permissions`
+(`test/lib/review/security/permissions_test.rb`), `StandingOrders`
+(`test/lib/ground/standing_orders_test.rb`), `PatchApplier`
+(`test/fix/test_patch_applier.rb`), `AtomicWrite`
+(`test/lib/ground/atomic_write_test.rb`), `GitOperations`
+(`test/io/test_git_operations.rb`), `KeyRotator`
+(`test/lib/ground/key_rotator_test.rb`). Writing them found four live defects, all
+fixed in the same pass — which is the argument for the rest of the list:
 
-**Doc drift** — `core/ABSORPTION.md`'s subsystem table still uses the
-retired folder names `reach/`, `judge/`, `now/`, `loop/`, and `AGENTS.md`
-sends agents there as the canonical guide. `START_HERE.md:10` describes
-`--profile=agent` as "law, scanners, loop, routing"; it is exactly
-`rake selftest` + `rake lint:data_singularity`.
+- `lib/io/ssrf_guard.rb` never required `uri`. `safe_uri?` does
+  `uri.is_a?(URI::HTTP)` inside a blanket rescue, so in any process that had not
+  already loaded `uri` the NameError was swallowed and the guard answered false for
+  every URL: web_fetch silently disabled, one `Swallow.log` line, no other symptom.
+- `Permissions.blocked?` matched its whole blocklist with bare `include?`, so
+  "sudo" inside "pseudo" and "halt" inside "shalt" made `grep -rn
+  shutdown_handler lib` and `grep -rn pseudocode lib` both refuse as dangerous.
+  Bare-word entries now match on word boundaries; operator/path entries stay literal.
+- `PatchApplier` kept only stderr, but `patch(1)` reports a failed hunk on stdout —
+  the most common real failure produced `Failure.new(reason: "")` and the autofix
+  loop logged a rejection with no reason.
+- `GitOperations#dirty_count` counts status *lines*, not files: git collapses a
+  wholly-untracked directory to one `?? lib/` line. Documented in the test rather
+  than changed, since callers only ask "is anything dirty".
+
+188 of ~400 `lib/` files still have no test naming their primary constant.
+
+`rake test:subsystems` now runs in the `operator` and `contributor` profiles
+(17s), so the 14 files under `test/{cli,io,fix,lib}/` are no longer skipped by the
+gate `START_HERE.md` tells contributors to run.
+
+**Doc drift** — closed 2026-08-01. `core/ABSORPTION.md` no longer exists (it is
+`core/SEVERANCE.md`, a record rather than a plan) and `AGENTS.md` no longer sends
+agents there; the retired folder names `reach/`, `judge/`, `now/`, `loop/` appear in
+no current doc. `START_HERE.md:10` already describes `--profile=agent` correctly.
+What was still stale and is now fixed: `START_HERE.md` described the two spines as
+lasting "until absorption cutover" and told agents not to merge them "before
+absorption completes", contradicting `DECISIONS.md`, which frames them as
+permanent.
 
 ### Host TTS Binaries
 
 **operator-priority** — TTS end-to-end audio depends on host binaries such as `edge-tts` and `espeak`. Web wiring can be correct while synthesis is unavailable locally. Check `GET /health` deploy.tts_socket and `test -S .master/tts.sock` on vm23.
 
-**ffmpeg is not installed on vm23** (verified 2026-07-27). `OPENBSD/OPERATOR.sh:391`
-pkg_adds `… fd espeak` with no ffmpeg, and nothing else in `OPENBSD/` installs it.
-`lib/voice/engines.rb` gates on `ffmpeg?` (:307), so `concat_mp3` (:234) and the
-WAV→MP3 conversion (:297) **silently skip in production** — no error, just
-un-concatenated or unconverted audio. Works on a Mac, degrades on the VPS,
-which is the worst failure shape. Either add `ffmpeg` to that pkg_add line or
-make the guard report through `lib/voice/output_guard.rb` instead of returning
-quietly. Any future post-synthesis DSP would no-op the same way.
+**ffmpeg** — closed 2026-08-01, both halves. `OPENBSD/OPERATOR.sh:399` does
+pkg_add ffmpeg at stage 1 (the entry above said it did not; that was true on
+2026-07-27 and stale by the time it was read). And the silent-degradation half
+is gone: `lib/voice/engines.rb`'s two `ffmpeg?` fallbacks — `concat_mp3` and the
+WAV→MP3 conversion — used to return quietly, so a host without ffmpeg served
+un-concatenated or unconverted audio with nothing logged anywhere. They now
+report through `Swallow.log(..., severity: :load_bearing)` naming the
+consequence, so the degraded state is visible instead of merely quiet. `ffmpeg?`
+is also memoized; it was a fork+exec of which(1) per synthesized phrase.
+
+Any future post-synthesis DSP should call `report_missing_ffmpeg` on its own
+fallback path rather than returning silently.
+
+Still true, and the reason this section exists: `pkg_add` succeeding at install
+time is not evidence ffmpeg is on the box now. Check `GET /health`
+deploy.tts_socket and `test -S .master/tts.sock` on vm23.
 
 ## Not Debt
 
@@ -196,7 +344,7 @@ quietly. Any future post-synthesis DSP would no-op the same way.
 - Deferred WebGL boot.
 - Media-generation severance: re-severed 2026-07-14 (`76b11fec4`) after the
   2026-07-08→09 reintroduction; operator decision confirmed permanent
-  2026-07-15. `core/ABSORPTION.md` is the source of truth. If the Ragnhild
+  2026-07-15. `core/SEVERANCE.md` is the source of truth. If the Ragnhild
   LoRA training loop needs generation capability again, express it as
   `core/world.rb` handlers per the original absorption plan — do not restore
   `lib/io/lora_pipeline.rb`/`video_chain.rb`.
