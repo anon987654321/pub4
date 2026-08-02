@@ -38,9 +38,10 @@ deploy_tracked_app() {
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
   overlay_shared_initializers "$APP_DIR"
   overlay_shared_public "$APP_DIR"
-  if [[ $app_name == brgen ]]; then
-    overlay_brgen_radio_manifest "$APP_DIR"
-  fi
+  # (removed) overlay_brgen_radio_manifest — the function was never defined and the
+  # manifest it targeted lives at config/radio_bergen, which the tree sync above
+  # already copies. The orphaned call aborted the SKIP_CI deploy path with
+  # "command not found". The full-CI path never called it. See ENGINES.md notes.
   doas chown -R "${app_name}:${app_name}" "$APP_DIR"
 
   deploy_status "$app_name" "master scan"
