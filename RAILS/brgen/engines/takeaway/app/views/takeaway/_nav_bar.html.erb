@@ -19,7 +19,7 @@
       <% end %>
     </div>
 
-    <%= link_to nearby_path, class: "nav-block nav-deliver nav-hover" do %>
+    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover" do %>
       <span class="nav-line-1"><%= icon :nearby, size: 13 %> <%= t("storefront.deliver_to") %></span>
       <span class="nav-line-2"><%= deliver_to %></span>
     <% end %>
@@ -40,7 +40,7 @@
     </div>
 
     <div id="accountStuff">
-      <%= link_to(authenticated? ? user_path(Current.user) : new_session_path, class: "nav-block nav-hover") do %>
+      <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path, class: "nav-block nav-hover") do %>
         <span class="nav-line-1"><%= t("storefront.hello") %> <%= authenticated? ? (Current.user.username.presence || t("storefront.you")) : t("storefront.sign_in") %></span>
         <span class="nav-line-2"><%= t("storefront.account") %></span>
       <% end %>

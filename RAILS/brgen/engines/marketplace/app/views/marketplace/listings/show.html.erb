@@ -35,12 +35,12 @@
   <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
       seller with no city (or another city) is invisible under this tenant and
       the association returns nil. Without this guard the != test passes and
-      user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
+      main_app.user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
       listing page. %>
   <% seller = @listing.user %>
   <% if !@listing.sold? && Current.user.present? && seller.present? && Current.user != seller %>
     <div class="listing-actions listing-actions--inline">
-      <%= button_to t("marketplace.message_seller_btn"), user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
+      <%= button_to t("marketplace.message_seller_btn"), main_app.user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
     </div>
   <% end %>
   <%= render "shared/affiliate_disclosure" %>
@@ -82,7 +82,7 @@
     <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
-      <%= form_with(model: @order, url: listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
+      <%= form_with(model: @order, url: listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: main_app.draft_path(draft_key)) }) do |f| %>
         <div class="field"><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :message, placeholder: t("marketplace.message_seller"), rows: 3 , data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>

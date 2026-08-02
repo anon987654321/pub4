@@ -95,7 +95,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     host! "marketplace.brgen.no"
     sign_in_with_session_cookie!(buyer)
 
-    post send_offers_marketplace_cart_path
+    post marketplace.send_offers_cart_path
     assert_redirected_to marketplace.cart_path
     assert_match(/Sent 1/, flash[:notice].to_s)
   end
@@ -184,11 +184,11 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
 
     host! "tv.brgen.no"
     sign_in_with_session_cookie!(other)
-    patch go_live_tv_live_stream_path(stream)
+    patch tv.go_live_live_stream_path(stream)
     assert_equal "scheduled", stream.reload.status
 
     sign_in_with_session_cookie!(stream_host)
-    patch go_live_tv_live_stream_path(stream)
+    patch tv.go_live_live_stream_path(stream)
     assert_equal "live", stream.reload.status
   end
 end

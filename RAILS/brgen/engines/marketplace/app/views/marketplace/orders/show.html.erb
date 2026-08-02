@@ -32,7 +32,7 @@
     <% end %>
   </ul>
 
-  <%= form_with model: @message, url: conversation_messages_path(@conversation),
+  <%= form_with model: @message, url: main_app.conversation_messages_path(@conversation),
                 id: "new_message",
                 data: {
                   turbo: true,

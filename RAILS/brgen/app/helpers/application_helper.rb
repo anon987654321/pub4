@@ -70,8 +70,8 @@ module ApplicationHelper
     "#{marketplace_subdomain}.#{Current.domain}"
   end
 
-  def marketplace.root_url(**options)
-    Rails.application.routes.url_helpers.marketplace.root_url(
+  def marketplace_root_url(**options)
+    marketplace.root_url(
       subdomain: marketplace_subdomain,
       host: Current.domain,
       **options

@@ -5,7 +5,7 @@ class Takeaway::ReviewsController < Takeaway::BaseController
 
   def create
     unless authenticated?
-      redirect_to(new_session_path, alert: "Sign in to leave a review")
+      redirect_to(main_app.new_session_path, alert: "Sign in to leave a review")
       return
     end
 

@@ -46,7 +46,7 @@
     </div>
     <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
 
-    <%= button_to t("marketplace.send_all_offers"), send_offers_marketplace_cart_path,
+    <%= button_to t("marketplace.send_all_offers"), send_offers_cart_path,
           method: :post, class: "btn btn-ghost",
           data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
     <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
