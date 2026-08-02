@@ -17,12 +17,18 @@ module Partner
         user: Current.user
       )
 
+      # Both helpers return internal relative paths (Rails *_path helpers or the
+      # "/listings/:id" / "/shops/:slug" fallbacks), never another host — so the
+      # target is always same-origin. allow_other_host: true was therefore unused
+      # and read to Brakeman as an open redirect (params-derived value + off-host
+      # opt-out). Dropping it keeps the same behaviour and lets Rails' default
+      # host guard reject anything that somehow resolves off-site.
       target = if listing
                  marketplace_listing_url_for(listing)
                else
                  marketplace_store_url_for(membership.program.store)
                end
-      redirect_to target, allow_other_host: true
+      redirect_to target
     end
 
     private

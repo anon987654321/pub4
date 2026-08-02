@@ -8,8 +8,6 @@ require 'test_helper'
 # job removes the right rows, the schedule exists, and the index its scan needs
 # is in the schema.
 class PruneGuestUsersJobTest < ActiveSupport::TestCase
-  ROOT = File.expand_path('../../..', __dir__)
-
   def build_guest(created_at:)
     user = User.new(email_address: "guest_#{SecureRandom.hex(6)}@guest.local", guest: true)
     user.password_digest = BCrypt::Password.create('x', cost: BCrypt::Engine::MIN_COST)
@@ -36,7 +34,7 @@ class PruneGuestUsersJobTest < ActiveSupport::TestCase
   end
 
   test 'is scheduled in production' do
-    schedule = YAML.safe_load_file(File.join(ROOT, 'brgen/config/recurring.yml')).fetch('production')
+    schedule = YAML.safe_load_file(Rails.root.join('config/recurring.yml')).fetch('production')
     entry = schedule.fetch('prune_guest_users')
 
     assert_equal 'Shared::PruneGuestUsersJob', entry.fetch('class')
@@ -46,7 +44,7 @@ class PruneGuestUsersJobTest < ActiveSupport::TestCase
   # A daily full scan of the largest table on a 1-vCPU box is the reason the
   # index and the schedule landed in the same change.
   test 'the scan the job performs is indexed' do
-    assert_includes File.read(File.join(ROOT, 'brgen/db/schema.rb')),
+    assert_includes File.read(Rails.root.join('db/schema.rb')),
                     'index_users_on_guest_and_created_at'
   end
 end
