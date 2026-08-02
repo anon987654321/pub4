@@ -14,7 +14,7 @@ module Shared
 
     def find_or_create_sso_user(email:, display_name:)
       normalized = email.to_s.downcase.strip
-      user = User.find_by(email: normalized)
+      user = User.find_by(email_address: normalized)
       return user if user
 
       User.create!(sso_user_attributes(normalized, display_name))
@@ -28,7 +28,7 @@ module Shared
     # cosmetic field.
     def sso_user_attributes(email, display_name)
       password = SecureRandom.hex(24)
-      attrs = { email:, password:, password_confirmation: password }
+      attrs = { email_address: email, password:, password_confirmation: password }
       return attrs if display_name.blank?
 
       %w[display_name name].each do |column|
