@@ -39,7 +39,11 @@ module Deploy
                     %w[brgen/app/assets/stylesheets/_marketplace.scss min-height:\s*44px]] },
       { app: "amber", port_key: "amber", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{Amber|jox|Signup|Login|wardrobe}i],
-        css_touch: [%w[amber/app/assets/stylesheets/_jsfiddle_chrome.scss jox-buttons]] },
+        # Was _jsfiddle_chrome.scss + "jox-buttons", which asserted only that a
+        # class name appeared in a file — not that anything rendered it and not
+        # that it met a target size. Nothing rendered .jox-buttons in either app.
+        # Now the same shape as brgen's: a real 44px floor in a live sheet.
+        css_touch: [%w[amber/app/assets/stylesheets/_items.scss min-height:\s*44px]] },
       { app: "bsdports", port_key: "bsdports", path: "/", host: nil,
         first_screen: [%r{skip-link|Skip to main}i, %r{main-content|<main\b}i, %r{BSD|port}i],
         css_touch: [%w[bsdports/app/assets/stylesheets/application.scss --font]] },

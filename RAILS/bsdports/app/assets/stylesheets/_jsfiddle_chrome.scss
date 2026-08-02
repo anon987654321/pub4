@@ -1,9 +1,5 @@
 /* jOxVvNE structure on openbsd_wscons palette (same geometry as amber pen). */
 
-.nav-visible--jox {
-  position: relative;
-}
-
 .jox-logo {
   display: flex;
   position: relative;
@@ -45,39 +41,6 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.04em;
-}
-
-.jox-buttons {
-  display: flex;
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin: 8px;
-  z-index: 20;
-}
-
-.jox-buttons > * {
-  border: 1px solid var(--border);
-  border-radius: 30px;
-  font-weight: bold;
-  text-decoration: none;
-  padding: 12px 20px;
-  margin: 6px;
-  font-family: var(--font);
-  color: var(--text);
-  background: var(--surface-elevated);
-}
-
-.jox-buttons > *:nth-of-type(1) {
-  background: var(--surface-elevated);
-  border-radius: 7px;
-}
-
-.jox-buttons > *:nth-of-type(2) {
-  background: var(--accent);
-  color: #000;
-  border-radius: 40px;
-  border-color: var(--accent);
 }
 
 /* yep search on CRT: keep pen geometry, green ink */
