@@ -4,14 +4,14 @@
 ############################################################################
 # ARCHIVED 2026-07-26: this is a standalone, unrelated jazz-hop/dark-techno
 # experiment, not the Dilla engine (that's ../dilla.rb, formerly engine.rb).
-# It was dropped into studio/dilla/dilla.rb by the MASTER/tools -> studio
+# It was dropped into STUDIO/dilla/dilla.rb by the MASTER/tools -> studio
 # extraction (687c07a43) and, because ScriptDispatch resolves media tools by
-# studio/<tool>/<tool>.rb convention, silently hijacked every chat-driven
+# STUDIO/<tool>/<tool>.rb convention, silently hijacked every chat-driven
 # "make a beat" request (MediaIntent -> ScriptDispatch tool: "dilla") into
 # this file instead of the real engine. Moved here so the filename no longer
 # collides; kept rather than deleted since every rendered take here failed
 # review, but the DSP work (PolyBLEP osc, RBJ biquad EQ, etc.) may still be
-# salvageable. Standalone, does not require anything under studio/dilla/lib.
+# salvageable. Standalone, does not require anything under STUDIO/dilla/lib.
 ############################################################################
 #
 # DILLA.RB — merged jazz-hop (hiphop mode) + dark techno (techno mode)

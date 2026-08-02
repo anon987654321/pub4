@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 # frozen_string_literal: true
 
-# Thin wrapper — study logic lives in studio/dilla/dilla.rb (RadioBergenStudy).
+# Thin wrapper — study logic lives in STUDIO/dilla/dilla.rb (RadioBergenStudy).
 #
-# Was "../dilla/dilla", correct from studio/radio-bergen/. From studio/dilla/scripts/
-# that resolves to studio/dilla/dilla/dilla, one level too deep.
+# Was "../dilla/dilla", correct from STUDIO/radio-bergen/. From STUDIO/dilla/scripts/
+# that resolves to STUDIO/dilla/dilla/dilla, one level too deep.
 require_relative "../dilla"
 
 if $PROGRAM_NAME == __FILE__

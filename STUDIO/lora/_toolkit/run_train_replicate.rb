@@ -27,7 +27,7 @@ require "time"
 require "pathname"
 
 # The subject is chosen by the wrapper that invoked this (see _toolkit/lib.sh):
-# SUBJECT_DIR points at studio/lora/<subject>, and subject.env there names
+# SUBJECT_DIR points at STUDIO/lora/<subject>, and subject.env there names
 # SUBJECT, MODEL and TRIGGER.
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script directly" }
@@ -35,7 +35,7 @@ SUBJECT_DIR = Pathname.new(ENV.fetch("SUBJECT_DIR")).expand_path.freeze
 
 SCRIPT_DIR = Pathname.new(__dir__).expand_path
 # _toolkit -> lora -> studio -> repo root. This depth had to be corrected in
-# two copies when lora/ moved under studio/; now there is one.
+# two copies when lora/ moved under STUDIO/; now there is one.
 REPO_ROOT = SCRIPT_DIR.join("../../..").expand_path
 DATASET_DIR = SUBJECT_DIR.join("dataset")
 WEIGHTS_DIR = SUBJECT_DIR.join("weights", MODEL)

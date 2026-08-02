@@ -1,0 +1,17 @@
+# idx	title	slug	seed	bars	pad	lead	drums	pocket	kb
+# title is ours and names the file. slug is the engine's internal name
+# for the progression -- pass it to TRACK= to render that piece again.
+# seed is the RENDER_SEED this take was rendered with. Re-roll a track by
+# deleting its mp3 and re-running with a different DEMO_SEED.
+#
+# CAVEAT: a recorded seed narrows a take down, it does not reconstruct it.
+# Two renders with RENDER_SEED pinned are still not bit-identical -- see
+# the note above noise_seed. Treat this column as a lead, not a guarantee.
+00	moss_figure	get_dis_money	4242	16	stack_rhodes		dilla_slight	neo_soul	1020
+01	glass_tower	minor_add9_lullaby	4243	16	stack_prophet	soft	flylo_abstract	classic	1339
+02	silt_window	slash	4244	16	pad_dilla	soft	dilla_drunk	neo_soul	1089
+03	ochre_letter	borrowed_flat_six	4245	16	stack_soul	soft	flylo_cosmogramma	classic	1089
+04	tide_relay	dusty_two_chord	4246	16	rhodes	soft	mpc3000	neo_soul	1089
+05	tallow_stitch	inner_voice_climb	4247	16	pad_flylo	soft	flylo_zodiac	dusty	1089
+06	vellum_figure	minor_two_five_true	4248	16	prophet	soft	madlib_dusty	dusty	1089
+07	paper_stitch	secondary_five_of_six	4249	16	stack_glass	soft	flylo_warp	classic	1089

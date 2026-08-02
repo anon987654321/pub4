@@ -29,7 +29,7 @@ module Master
               Evaluate sonic hierarchy, timing, mix role, accessibility, graceful failure, implementation size, and TTS quality.
             CTX
             "dilla_critique" => <<~CTX,
-              Review the Dilla audio engine (studio/dilla) and any measured mix metrics.
+              Review the Dilla audio engine (STUDIO/dilla) and any measured mix metrics.
               Goal: best possible pad-forward single-style render.
               Evaluate spectral hierarchy (pad vs sub), HF air, presence, groove density,
               headroom/crest, curated harmony, and platform loudness.

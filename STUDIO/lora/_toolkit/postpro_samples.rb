@@ -17,7 +17,7 @@ SKIP_PREFIX = ["#{ENV.fetch("SUBJECT", "")}_final_", "hf_flux_"].freeze
 SKIP_SUFFIX = /(?:contact|grid|reel|_portrait|_cinematic|_quality_uplift|_blockbuster|_magic_hour|_postpro)\b/i
 
 def repo_root
-  ROOT.ascend.find { |path| path.join("studio", "postpro", "postpro.rb").file? }
+  ROOT.ascend.find { |path| path.join("STUDIO", "postpro", "postpro.rb").file? }
 end
 
 def parse_options
@@ -93,9 +93,9 @@ end
 def main
   options = parse_options
   root = repo_root
-  abort "warn: studio/postpro/postpro.rb not found" unless root
+  abort "warn: STUDIO/postpro/postpro.rb not found" unless root
 
-  postpro = options[:postpro] || root.join("studio", "postpro", "postpro.rb")
+  postpro = options[:postpro] || root.join("STUDIO", "postpro", "postpro.rb")
   abort "warn: postpro missing at #{postpro}" unless postpro.file?
   abort "warn: input dir missing #{options[:input_dir]}" unless options[:input_dir].directory?
 

@@ -122,7 +122,7 @@ rescue Errno::EACCES, Errno::EROFS => e
   # running as a different user than the checkout's owner then dies on load
   # rather than on use. That is not hypothetical — brgen's CI runs as user
   # brgen, its radio_bergen_study_test requires this file, and the whole Rails
-  # suite aborted with EACCES on /home/dev/pub4/studio/dilla/scratch, which
+  # suite aborted with EACCES on /home/dev/pub4/STUDIO/dilla/scratch, which
   # blocked the deploy of an app that has nothing to do with audio.
   #
   # A scratch directory is by definition disposable, so fall back to one we can
@@ -2542,7 +2542,7 @@ def patch_voice_for(patch)
   { sf2: path, bank: patch[:bank], program: patch[:program], patch: }
 end
 
-# Measured reference sonic profiles. These lived in studio/radio-bergen until
+# Measured reference sonic profiles. These lived in STUDIO/radio-bergen until
 # that directory was removed — brgen's playlist replaced what it served. The
 # file is dilla's own data: it merges over INLINE_RADIO_BERGEN_LEARNINGS and is
 # a write! target, so it moved here rather than being inlined.
@@ -5340,7 +5340,7 @@ def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
 end
 
 # The AKMD / Radio Bergen chain, reproduced stage for stage. It came from
-# studio/radio-bergen/akmd_mastering_chain.rb, which was a description of this
+# STUDIO/radio-bergen/akmd_mastering_chain.rb, which was a description of this
 # chain and nothing else — no caller, no runtime role — so it went with the rest
 # of that directory rather than being carried along as a duplicate of a comment. It is a broadcast chain: band-limited, forward in
 # the low mids, soft-clipped rather than brick-walled. Offered as an alternative
@@ -23510,7 +23510,7 @@ DISPATCH = {
     py = File.expand_path("venv-librosa/bin/python3", ROOT)
     script = File.expand_path("scripts/librosa_analyze.py", ROOT)
     unless File.executable?(py) && File.file?(script)
-      abort "librosa venv missing — run: cd studio/dilla && python3 -m venv venv-librosa && " \
+      abort "librosa venv missing — run: cd STUDIO/dilla && python3 -m venv venv-librosa && " \
             "venv-librosa/bin/pip install librosa pyyaml"
     end
     sh! py, script

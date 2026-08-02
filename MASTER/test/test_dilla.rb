@@ -6,11 +6,11 @@ require "open3"
 require "rbconfig"
 require "timeout"
 
-# Dilla engine (studio/dilla/dilla.rb) defines top-level constants, so probes
+# Dilla engine (STUDIO/dilla/dilla.rb) defines top-level constants, so probes
 # load it in a subprocess — loading here would leak ROOT/OUTPUT_DIR into the
 # shared test process. CLI dispatch is guarded by `__FILE__ == $PROGRAM_NAME`.
 class TestDilla < Minitest::Test
-  ENGINE = File.expand_path("../../studio/dilla/dilla.rb", __dir__)
+  ENGINE = File.expand_path("../../STUDIO/dilla/dilla.rb", __dir__)
 
   # A hung probe (coltrane-gem hang — see README) used to pin a
   # dilla_test_probe process near 100% CPU forever with no output and no
@@ -1430,7 +1430,7 @@ class TestDilla < Minitest::Test
     #
     # To restore the strong assertions, the engine needs a seedable RNG (e.g. a
     # DILLA_SEED env read in place of the Time/pid seed). That belongs in
-    # studio/dilla/dilla.rb, not here.
+    # STUDIO/dilla/dilla.rb, not here.
     harm = result.fetch("harm")
     analog = result.fetch("analog")
     assert_kind_of Array, harm
@@ -1470,7 +1470,7 @@ class TestDilla < Minitest::Test
   end
 
   def test_mix_metrics_returns_band_levels_when_demo_present
-    demo = File.expand_path("../../studio/dilla/demo.wav", __dir__)
+    demo = File.expand_path("../../STUDIO/dilla/demo.wav", __dir__)
     skip "demo.wav missing" unless File.file?(demo)
     skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
     result = eval_in_engine(<<~RUBY)

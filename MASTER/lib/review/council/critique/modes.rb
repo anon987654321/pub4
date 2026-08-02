@@ -65,7 +65,7 @@ module Master
                 "preserve existing visual identity",
                 "use Ruby QualityFramework sound rules from Deliberation",
                 "when proposing Dilla-style timing, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-                "do not invent a second critique system inside studio/dilla — perfect via MASTER commands",
+                "do not invent a second critique system inside STUDIO/dilla — perfect via MASTER commands",
               ],
             },
             dilla: {
@@ -76,7 +76,7 @@ module Master
                 "Web Designer", "Sound Designer", "Organ Composer", "Hip-Hop Producer", "Skeptic"
               ],
               files: %w[
-                ../studio/dilla/dilla.rb ../studio/dilla/lib/master_heuristics.rb
+                ../STUDIO/dilla/dilla.rb ../STUDIO/dilla/lib/master_heuristics.rb
                 lib/voice/dilla.rb lib/voice/production_dna.rb
                 lib/io/analog_capabilities.rb
               ],
@@ -96,7 +96,7 @@ module Master
                 "prefer existing FLAG_ENV / DILLA_STYLE_DEFAULTS knobs over new files",
                 "use Master::Voice::Dilla and ProductionDna for timing/DNA; use MixMetrics for evidence",
                 "multi-solution then cherry-pick is mandatory (QualityFramework general rule)",
-                "surgical ENV/mix changes only — no second crit engine inside studio/dilla",
+                "surgical ENV/mix changes only — no second crit engine inside STUDIO/dilla",
               ],
             },
             # General: whatever MASTER is currently processing (usually the

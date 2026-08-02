@@ -3,16 +3,16 @@
 # Run via SSH after creating a 24GB+ GPU pod (RTX 4090 / A5000 / L4).
 #
 # For a free 16GB T4 instead, the Kaggle lane needs no pod and no SSH:
-#   studio/lora/<subject>/lora --train-kaggle
+#   STUDIO/lora/<subject>/lora --train-kaggle
 set -eu
 
-: "${SUBJECT:?export SUBJECT=<subject> (the directory name under studio/lora/)}"
+: "${SUBJECT:?export SUBJECT=<subject> (the directory name under STUDIO/lora/)}"
 
 PUB4_REPO="${PUB4_REPO:-https://github.com/anon987654321/pub4.git}"
 PUB4_BRANCH="${PUB4_BRANCH:-main}"
 AI_TOOLKIT_ROOT="${AI_TOOLKIT_ROOT:-$HOME/ai-toolkit}"
 WORK_ROOT="${WORK_ROOT:-$HOME/pub4}"
-SUBJECT_DIR="$WORK_ROOT/studio/lora/$SUBJECT"
+SUBJECT_DIR="$WORK_ROOT/STUDIO/lora/$SUBJECT"
 START_TRAIN=0
 
 usage() {
@@ -30,8 +30,8 @@ Before SSH:
   export HF_TOKEN=hf_... SUBJECT=$SUBJECT
 
 On pod:
-  curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/studio/lora/_toolkit/setup_runpod.sh | sh
-  # or git clone pub4 and: ./studio/lora/_toolkit/setup_runpod.sh --train
+  curl -fsSL https://raw.githubusercontent.com/anon987654321/pub4/main/STUDIO/lora/_toolkit/setup_runpod.sh | sh
+  # or git clone pub4 and: ./STUDIO/lora/_toolkit/setup_runpod.sh --train
 EOF
 }
 
@@ -81,7 +81,7 @@ if [ ! -d "$SUBJECT_DIR" ]; then
   exit 1
 fi
 
-chmod +x "$WORK_ROOT/studio/lora/_toolkit"/*.sh "$SUBJECT_DIR/lora"
+chmod +x "$WORK_ROOT/STUDIO/lora/_toolkit"/*.sh "$SUBJECT_DIR/lora"
 "$SUBJECT_DIR/lora" --check
 
 if [ "$START_TRAIN" -eq 1 ]; then

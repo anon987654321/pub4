@@ -3,7 +3,7 @@
 
 # Third train lane: Kaggle Notebooks. 30 GPU-hours a week, free, on a 16 GB T4.
 #
-# The split is the same one the rest of studio/lora keeps — Ruby owns the whole
+# The split is the same one the rest of STUDIO/lora keeps — Ruby owns the whole
 # chain and Python appears only where the trainer does. Here Ruby packages the
 # dataset, generates the notebook and its metadata, pushes, polls, and pulls the
 # weights back; the notebook it generates is a shim that installs Ruby and hands
@@ -44,7 +44,7 @@ require "pathname"
 require "time"
 
 # The subject is chosen by the wrapper that invoked this (see _toolkit/lib.sh):
-# SUBJECT_DIR points at studio/lora/<subject>, and subject.env there names
+# SUBJECT_DIR points at STUDIO/lora/<subject>, and subject.env there names
 # SUBJECT, MODEL and TRIGGER.
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }
 MODEL = ENV.fetch("MODEL") { abort "run a subject wrapper, not this script directly" }

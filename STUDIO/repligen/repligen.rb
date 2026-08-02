@@ -10,7 +10,7 @@ require "time"
 require "digest"
 require "securerandom"
 # ../lib/... resolved correctly at MASTER/tools/repligen/ and has resolved to
-# studio/lib/ -- which does not exist -- since the move to studio/, so every
+# STUDIO/lib/ -- which does not exist -- since the move to STUDIO/, so every
 # invocation of this file has aborted on line 12 with a LoadError since
 # 687c07a43. There is no ../lib/master_paths anywhere in the repo under any
 # prefix; the module lives in MASTER/lib/boot/paths.rb.
