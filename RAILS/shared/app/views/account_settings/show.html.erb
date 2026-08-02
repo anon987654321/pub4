@@ -3,10 +3,10 @@
 <p><%= Current.user.email_address %></p>
 
 <% if Current.user.deletion_pending? %>
-  <p>Deletion scheduled for <%= l Current.user.deletion_scheduled_at, format: :long %>.</p>
-  <%= button_to "Cancel deletion", cancel_deletion_account_path, method: :post %>
+  <p><%= t("account.deletion_scheduled", on: l(Current.user.deletion_scheduled_at, format: :long)) %></p>
+  <%= button_to t("account.cancel_deletion"), cancel_deletion_account_path, method: :post %>
 <% else %>
-  <%= link_to "Export data", export_account_path %>
-  <%= link_to "Two-factor setup", two_factor_setup_path %>
-  <%= button_to "Delete account", account_path, method: :delete, data: { turbo_confirm: "Delete account in 30 days?" } %>
+  <%= link_to t("account.export"), export_account_path %>
+  <%= link_to t("account.two_factor"), two_factor_setup_path %>
+  <%= button_to t("account.delete"), account_path, method: :delete, data: { turbo_confirm: t("account.delete_confirm") } %>
 <% end %>

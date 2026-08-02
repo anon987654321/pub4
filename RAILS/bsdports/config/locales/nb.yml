@@ -42,6 +42,7 @@ nb:
     empty_title: "Ingen varsler ennå"
     empty_body: "Oppdateringer vises her."
   ports:
+    comment_on: "Kommenter %{name}"
     search_hint: "Søk i navn, eksakte pkgpaths, maintainere, avhengigheter og sikkerhetsnotater. Trykk / eller ⌘K for å fokusere søk."
     search_placeholder: "Søk navn eller category/pkgpath…"
     search_label: "Søk porter"

@@ -1,12 +1,13 @@
-<% content_for :title, "Comment on #{@port.name}" %>
+<% content_for :title, t("ports.comment_on", name: @port.name) %>
 
-<h1>Comment</h1>
+<h1><%= t("pages.comment") %></h1>
 <%= render "shared/errors", object: @comment %>
 <%= form_with url: port_comments_path(@port), data: { turbo: true } do |f| %>
   <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-    <%= f.text_area :content, rows: 4, placeholder: "Add a comment…", data: { character_counter_target: "input" } %>
+    <%= f.label :content, t("comments.write_reply"), class: "visually-hidden" %>
+    <%= f.text_area :content, rows: 4, placeholder: t("comments.placeholder"), data: { character_counter_target: "input" } %>
     <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
   </div>
-  <p><%= f.submit "Comment" %></p>
+  <p><%= f.submit t("comments.submit") %></p>
 <% end %>
-<p><%= link_to "Back to port", @port %></p>
+<p><%= link_to t("comments.back"), @port %></p>

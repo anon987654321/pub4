@@ -39,6 +39,13 @@ en:
     dm_placeholder: "Send a message…"
     message_label: "Message"
     anon: "anon"
+  account:
+    deletion_scheduled: "Deletion scheduled for %{on}."
+    cancel_deletion: "Cancel deletion"
+    export: "Export data"
+    two_factor: "Two-factor setup"
+    delete: "Delete account"
+    delete_confirm: "Delete account in 30 days?"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
     updating_results: "Updating results…"

@@ -37,6 +37,13 @@ nb:
     dm_placeholder: "Send en melding…"
     message_label: "Melding"
     anon: "anon"
+  account:
+    deletion_scheduled: "Sletting planlagt %{on}."
+    cancel_deletion: "Avbryt sletting"
+    export: "Eksporter data"
+    two_factor: "Tofaktoroppsett"
+    delete: "Slett konto"
+    delete_confirm: "Slette kontoen om 30 dager?"
   status:
     updating_results: "Oppdaterer resultater…"
     results_updated: "Resultater oppdatert"

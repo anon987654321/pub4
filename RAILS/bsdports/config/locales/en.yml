@@ -42,6 +42,7 @@ en:
     empty_title: "No notifications yet"
     empty_body: "Updates will appear here."
   ports:
+    comment_on: "Comment on %{name}"
     search_hint: "Search names, exact pkgpaths, maintainers, dependencies and security notes. Press / or ⌘K to focus search."
     search_placeholder: "Search name or category/pkgpath…"
     search_label: "Search ports"
