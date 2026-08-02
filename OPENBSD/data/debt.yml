@@ -340,14 +340,24 @@ open:
       (guest, created_at) index it scans on (migration 20260801160000) and
       brgen/test/jobs/prune_guest_users_job_test.rb over the behaviour.
       The mailer precedence bug was already fixed.
-      NEW, found while checking the broadcasts: six Shared::* social models
-      (Post, Reaction, Follow, Notification, ChatMessage, ReviewCase) have no table
-      in ANY app schema, so they cannot be instantiated — Shared::Post.new raises
-      StatementInvalid. Shared::ReviewCasesController calls
-      Shared::ReviewCase.create! and is not routed, so this is unreachable rather
-      than a live 500. The broadcast contract test asserts the tables stay absent
-      and starts demanding partials the moment one appears. Deciding whether this
-      layer ships or goes is a product call, not a wiring fix.
+      Shared::* social models — PARTIALLY RESOLVED 2026-08-02, and the "six with no
+      table in ANY app" claim was wrong. Only three were genuinely dead and are now
+      CUT: Post (shared_posts) and ChatMessage (shared_chat_messages) exist in no
+      schema, and Follow had zero references (brgen uses an app-local ::Follow on the
+      follows table). Those three could not be instantiated and were the trap.
+      The other three were mis-diagnosed and stay: Shared::Reaction (reactions) and
+      Shared::Notification (notifications) are `defined?(::Reaction/::Notification)`
+      fallbacks over tables brgen and amber both have, and Shared::ReviewCase
+      (review_cases) is live — amber's ReportsController subclasses
+      Shared::ReviewCasesController and amber has the review_cases table, so amber
+      reports create Shared::ReviewCase rows. turbo_broadcast_contract_test's
+      TABLELESS_SHARED had shared_* table names that never exist (shared_reactions vs
+      the real reactions), which is why it read all six as tableless; it now lists
+      only the remaining three with that caveat recorded.
+      STILL OPEN: those three broadcast implicitly on tables that DO exist, so their
+      callbacks can fire into streams with (likely) no subscriber and no partial —
+      the MissingTemplate-job risk this whole entry is about, now isolated to three
+      named models instead of hidden behind a wrong table name.
 
 closed:
   - id: payment_webhooks_unverified
