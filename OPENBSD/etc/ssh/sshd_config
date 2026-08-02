@@ -2,5 +2,17 @@
 # Keep this file in sync with the live VPS /etc/ssh/sshd_config.
 
 PermitRootLogin no
+
+# Key-only. Port 22 here takes thousands of password guesses a day and
+# pf.conf exempts SSH from the bruteforce table, so a guessable credential
+# has no throttle in front of it.
 PasswordAuthentication no
-MaxAuthTries 3
+
+# 3 was spent by a client's own key offers before it reached any other
+# method, and authorized_keys holds 3 keys -- a client presenting them in an
+# unlucky order got "Too many authentication failures" on a valid account.
+MaxAuthTries 6
+
+# Without this there is no sftp at all, and since OpenSSH 9 scp speaks the
+# SFTP protocol too -- both failed with "subsystem request failed".
+Subsystem sftp /usr/libexec/sftp-server
