@@ -37,7 +37,7 @@ class DeployBacklogTest < Minitest::Test
       brgen/config/routes.rb
       bsdports/config/routes.rb
     ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, 'mount SolidQueue::Engine, at: "/admin/jobs"'
       assert_match(/jobs_constraint = lambda \{ \|request\|/, source)
       assert_includes source, "cookie_jar.signed[:session_id]"
@@ -53,16 +53,16 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_cache_health_job_is_scheduled
-    source = File.read(File.join(ROOT, 'brgen/config/recurring.yml'))
+    source = read_source(File.join(ROOT, 'brgen/config/recurring.yml'))
     assert_includes source, 'cache_health_check:'
     assert_includes source, 'class: CacheHealthJob'
     assert_includes source, 'schedule: every day at 4am'
   end
 
   def test_omniauth_wires_installed_providers_to_identity_primitives
-    initializer = File.read(File.join(ROOT, 'shared/config/initializers/omniauth.rb'))
-    callback = File.read(File.join(ROOT, 'shared/app/controllers/omniauth_callbacks_controller.rb'))
-    links = File.read(File.join(ROOT, 'shared/app/views/shared/_oauth_links.html.erb'))
+    initializer = read_source(File.join(ROOT, 'shared/config/initializers/omniauth.rb'))
+    callback = read_source(File.join(ROOT, 'shared/app/controllers/omniauth_callbacks_controller.rb'))
+    links = read_source(File.join(ROOT, 'shared/app/views/shared/_oauth_links.html.erb'))
 
     assert_includes initializer, ':google_oauth2'
     assert_includes initializer, ':github'
@@ -79,12 +79,12 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_nearby_geolocation_uses_explicit_radius_and_exact_distance
-    nearby = File.read(File.join(ROOT, 'brgen/app/controllers/nearby_controller.rb'))
-    locations = File.read(File.join(ROOT, 'brgen/app/controllers/locations_controller.rb'))
-    geolocation = File.read(File.join(ROOT, 'brgen/app/javascript/controllers/geolocation_controller.js'))
-    layout = File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
-    nearby_view = File.read(File.join(ROOT, 'brgen/app/views/nearby/index.html.erb'))
-    dating_matchmaking = File.read(File.join(ROOT, 'brgen/app/services/dating/matchmaking.rb'))
+    nearby = read_source(File.join(ROOT, 'brgen/app/controllers/nearby_controller.rb'))
+    locations = read_source(File.join(ROOT, 'brgen/app/controllers/locations_controller.rb'))
+    geolocation = read_source(File.join(ROOT, 'brgen/app/javascript/controllers/geolocation_controller.js'))
+    layout = read_source(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
+    nearby_view = read_source(File.join(ROOT, 'brgen/app/views/nearby/index.html.erb'))
+    dating_matchmaking = read_source(File.join(ROOT, 'brgen/app/services/dating/matchmaking.rb'))
 
     assert_includes nearby, 'DEFAULT_RADIUS_KM = 10.0'
     assert_includes nearby, 'MAX_RADIUS_KM = 25.0'
@@ -100,9 +100,9 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_moderation_reports_create_flags_and_reputation_effects
-    workflow = File.read(File.join(ROOT, 'brgen/app/services/moderation_workflow.rb'))
-    reports = File.read(File.join(ROOT, 'brgen/app/controllers/reports_controller.rb'))
-    admin = File.read(File.join(ROOT, 'brgen/app/controllers/admin/reports_controller.rb'))
+    workflow = read_source(File.join(ROOT, 'brgen/app/services/moderation_workflow.rb'))
+    reports = read_source(File.join(ROOT, 'brgen/app/controllers/reports_controller.rb'))
+    admin = read_source(File.join(ROOT, 'brgen/app/controllers/admin/reports_controller.rb'))
 
     assert_includes reports, 'ModerationWorkflow.report!'
     assert_includes admin, 'ModerationWorkflow.transition!'
@@ -116,8 +116,8 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_media_pipeline_processes_image_variants_across_upload_surfaces
-    concern = File.read(File.join(ROOT, 'shared/app/models/concerns/shared/media_processable.rb'))
-    job = File.read(File.join(ROOT, 'shared/app/jobs/shared/media_processing_job.rb'))
+    concern = read_source(File.join(ROOT, 'shared/app/models/concerns/shared/media_processable.rb'))
+    job = read_source(File.join(ROOT, 'shared/app/jobs/shared/media_processing_job.rb'))
 
     assert_includes concern, 'process_media_variants'
     assert_includes concern, 'after_commit :enqueue_media_variant_processing'
@@ -135,19 +135,19 @@ class DeployBacklogTest < Minitest::Test
       brgen/app/models/tv/channel.rb
       brgen/app/models/tv/video.rb
     ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, 'include Shared::MediaProcessable'
       assert_includes source, 'process_media_variants'
       assert_includes source, 'format: :webp'
     end
 
-    helper_source = File.read(File.join(ROOT, 'brgen/app/helpers/application_helper.rb'))
+    helper_source = read_source(File.join(ROOT, 'brgen/app/helpers/application_helper.rb'))
     assert_includes helper_source, 'lazy_image_blurhash_value'
     assert_includes helper_source, 'responsive_image_tag'
   end
 
   def test_activity_graph_emits_across_vertical_models
-    concern = File.read(File.join(ROOT, 'shared/app/models/concerns/shared/activity_trackable.rb'))
+    concern = read_source(File.join(ROOT, 'shared/app/models/concerns/shared/activity_trackable.rb'))
     assert_includes concern, 'Shared::DomainEvent.record!'
     assert_includes concern, 'legacy_event_name'
 
@@ -182,36 +182,36 @@ class DeployBacklogTest < Minitest::Test
       'brgen/app/models/dating/dislike.rb' => %w[DatingDislike dating],
     }
 
-    app_record = File.read(File.join(ROOT, 'shared/app/models/application_record.rb'))
+    app_record = read_source(File.join(ROOT, 'shared/app/models/application_record.rb'))
     assert_includes app_record, 'include Shared::ActivityTrackable'
 
     expected_events.each do |relative, (event_name, vertical)|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, 'tracks_activity'
       assert_includes source, event_name
       assert_includes source, "source_vertical: \"#{vertical}\""
     end
 
-    video_source = File.read(File.join(ROOT, 'brgen/app/models/tv/video.rb'))
+    video_source = read_source(File.join(ROOT, 'brgen/app/models/tv/video.rb'))
     assert_includes video_source, 'VideoPublished'
     assert_includes video_source, 'saved_change_to_status?'
 
-    broadcast_source = File.read(File.join(ROOT, 'brgen/app/models/tv/broadcast.rb'))
+    broadcast_source = read_source(File.join(ROOT, 'brgen/app/models/tv/broadcast.rb'))
     assert_includes broadcast_source, 'BroadcastScheduled'
     assert_includes broadcast_source, 'BroadcastStarted'
     assert_includes broadcast_source, 'BroadcastEnded'
   end
 
   def test_marketplace_reviews_and_geo_localized_listings_are_wired
-    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707120000_create_marketplace_reviews_and_geo_listings.rb'))
-    listing = File.read(File.join(ROOT, 'brgen/app/models/marketplace/listing.rb'))
-    review = File.read(File.join(ROOT, 'brgen/app/models/marketplace/review.rb'))
-    listings_controller = File.read(File.join(ROOT, 'brgen/app/controllers/marketplace/listings_controller.rb'))
-    reviews_controller = File.read(File.join(ROOT, 'brgen/app/controllers/marketplace/reviews_controller.rb'))
-    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
-    index = File.read(File.join(ROOT, 'brgen/app/views/marketplace/listings/index.html.erb'))
-    card = File.read(File.join(ROOT, 'brgen/app/views/marketplace/listings/_card.html.erb'))
-    show = File.read(File.join(ROOT, 'brgen/app/views/marketplace/listings/show.html.erb'))
+    migration = read_source(File.join(ROOT, 'brgen/db/migrate/20260707120000_create_marketplace_reviews_and_geo_listings.rb'))
+    listing = read_source(File.join(ROOT, 'brgen/app/models/marketplace/listing.rb'))
+    review = read_source(File.join(ROOT, 'brgen/app/models/marketplace/review.rb'))
+    listings_controller = read_source(File.join(ROOT, 'brgen/app/controllers/marketplace/listings_controller.rb'))
+    reviews_controller = read_source(File.join(ROOT, 'brgen/app/controllers/marketplace/reviews_controller.rb'))
+    routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
+    index = read_source(File.join(ROOT, 'brgen/app/views/marketplace/listings/index.html.erb'))
+    card = read_source(File.join(ROOT, 'brgen/app/views/marketplace/listings/_card.html.erb'))
+    show = read_source(File.join(ROOT, 'brgen/app/views/marketplace/listings/show.html.erb'))
 
     assert_includes migration, 'create_table :marketplace_reviews'
     assert_includes migration, 'add_column :marketplace_listings, :latitude'
@@ -234,25 +234,25 @@ class DeployBacklogTest < Minitest::Test
     assert_includes index, ':radius_km'
     assert_includes card, 'km away'
     assert_includes card, 'reviews_count'
-    assert_includes show, 'marketplace.listing_reviews_path'
+    assert_includes show, 'listing_reviews_path'
     assert_includes show, '@reviews'
   end
 
   def test_playlist_import_embed_schema_trending_and_expiry_are_wired
-    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707121000_add_playlist_import_embed_and_expiry_fields.rb'))
-    playlist = File.read(File.join(ROOT, 'brgen/app/models/playlist/playlist.rb'))
-    track = File.read(File.join(ROOT, 'brgen/app/models/playlist/track.rb'))
-    importer = File.read(File.join(ROOT, 'brgen/app/services/playlist/track_import.rb'))
-    imports_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/imports_controller.rb'))
-    playlists_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/playlists_controller.rb'))
-    tracks_controller = File.read(File.join(ROOT, 'brgen/app/controllers/playlist/tracks_controller.rb'))
-    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
-    schema_helper = File.read(File.join(ROOT, 'shared/app/helpers/schema_helper.rb'))
-    player = File.read(File.join(ROOT, 'brgen/app/views/playlist/playlists/_player.html.erb'))
-    show = File.read(File.join(ROOT, 'brgen/app/views/playlist/playlists/show.html.erb'))
-    index = File.read(File.join(ROOT, 'brgen/app/views/playlist/playlists/index.html.erb'))
-    hosted_form = File.read(File.join(ROOT, 'brgen/app/views/playlist/hosted_tracks/_form.html.erb'))
-    stimulus = File.read(File.join(ROOT, 'brgen/app/javascript/controllers/playlist_player_controller.js'))
+    migration = read_source(File.join(ROOT, 'brgen/db/migrate/20260707121000_add_playlist_import_embed_and_expiry_fields.rb'))
+    playlist = read_source(File.join(ROOT, 'brgen/app/models/playlist/playlist.rb'))
+    track = read_source(File.join(ROOT, 'brgen/app/models/playlist/track.rb'))
+    importer = read_source(File.join(ROOT, 'brgen/app/services/playlist/track_import.rb'))
+    imports_controller = read_source(File.join(ROOT, 'brgen/app/controllers/playlist/imports_controller.rb'))
+    playlists_controller = read_source(File.join(ROOT, 'brgen/app/controllers/playlist/playlists_controller.rb'))
+    tracks_controller = read_source(File.join(ROOT, 'brgen/app/controllers/playlist/tracks_controller.rb'))
+    routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
+    schema_helper = read_source(File.join(ROOT, 'shared/app/helpers/schema_helper.rb'))
+    player = read_source(File.join(ROOT, 'brgen/app/views/playlist/playlists/_player.html.erb'))
+    show = read_source(File.join(ROOT, 'brgen/app/views/playlist/playlists/show.html.erb'))
+    index = read_source(File.join(ROOT, 'brgen/app/views/playlist/playlists/index.html.erb'))
+    hosted_form = read_source(File.join(ROOT, 'brgen/app/views/playlist/hosted_tracks/_form.html.erb'))
+    stimulus = read_source(File.join(ROOT, 'brgen/app/javascript/controllers/playlist_player_controller.js'))
 
     assert_includes migration, 'add_column :playlist_tracks, :expires_at'
     assert_includes migration, 'add_column :playlist_tracks, :privacy'
@@ -281,22 +281,22 @@ class DeployBacklogTest < Minitest::Test
     assert_includes player, 'playlist-embed-frame'
     assert_includes stimulus, 'embedTarget'
     assert_includes show, 'json_ld_for(@playlist, type: :music_playlist)'
-    assert_includes show, 'playlist.playlist_imports_path'
+    assert_includes show, 'playlist_imports_path'
     assert_includes show, 'embed_playlist_playlist_url'
     assert_includes hosted_form, 'form.datetime_field :expires_at'
   end
 
   def test_takeaway_geocoding_menu_availability_and_order_state_machine_are_wired
-    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260707122000_harden_takeaway_geo_availability_and_orders.rb'))
-    restaurant = File.read(File.join(ROOT, 'brgen/app/models/takeaway/restaurant.rb'))
-    menu_item = File.read(File.join(ROOT, 'brgen/app/models/takeaway/menu_item.rb'))
-    order = File.read(File.join(ROOT, 'brgen/app/models/takeaway/order.rb'))
-    order_item = File.read(File.join(ROOT, 'brgen/app/models/takeaway/order_item.rb'))
-    restaurants_controller = File.read(File.join(ROOT, 'brgen/app/controllers/takeaway/restaurants_controller.rb'))
-    orders_controller = File.read(File.join(ROOT, 'brgen/app/controllers/takeaway/orders_controller.rb'))
-    new_view = File.read(File.join(ROOT, 'brgen/app/views/takeaway/restaurants/new.html.erb'))
-    restaurant_show = File.read(File.join(ROOT, 'brgen/app/views/takeaway/restaurants/show.html.erb'))
-    order_show = File.read(File.join(ROOT, 'brgen/app/views/takeaway/orders/show.html.erb'))
+    migration = read_source(File.join(ROOT, 'brgen/db/migrate/20260707122000_harden_takeaway_geo_availability_and_orders.rb'))
+    restaurant = read_source(File.join(ROOT, 'brgen/app/models/takeaway/restaurant.rb'))
+    menu_item = read_source(File.join(ROOT, 'brgen/app/models/takeaway/menu_item.rb'))
+    order = read_source(File.join(ROOT, 'brgen/app/models/takeaway/order.rb'))
+    order_item = read_source(File.join(ROOT, 'brgen/app/models/takeaway/order_item.rb'))
+    restaurants_controller = read_source(File.join(ROOT, 'brgen/app/controllers/takeaway/restaurants_controller.rb'))
+    orders_controller = read_source(File.join(ROOT, 'brgen/app/controllers/takeaway/orders_controller.rb'))
+    new_view = read_source(File.join(ROOT, 'brgen/app/views/takeaway/restaurants/new.html.erb'))
+    restaurant_show = read_source(File.join(ROOT, 'brgen/app/views/takeaway/restaurants/show.html.erb'))
+    order_show = read_source(File.join(ROOT, 'brgen/app/views/takeaway/orders/show.html.erb'))
 
     assert_includes migration, 'change_column_default :takeaway_menu_items, :available'
     assert_includes migration, 'add_index :takeaway_restaurants, %i[latitude longitude]'
@@ -329,12 +329,12 @@ class DeployBacklogTest < Minitest::Test
     assert_includes summary, 'ExampleJob (bulk): 3 failure(s)'
     assert_includes summary, 'brgen queue dead letters'
 
-    source = File.read(File.join(ROOT, 'brgen/config/recurring.yml'))
+    source = read_source(File.join(ROOT, 'brgen/config/recurring.yml'))
     assert_includes source, 'queue_failure_digest:'
     assert_includes source, 'class: QueueFailureDigestJob'
     assert_includes source, 'schedule: every day at 5am'
 
-    job_source = File.read(File.join(ROOT, 'brgen/app/jobs/queue_failure_digest_job.rb'))
+    job_source = read_source(File.join(ROOT, 'brgen/app/jobs/queue_failure_digest_job.rb'))
     assert_includes job_source, 'solid_queue_failed_executions'
     assert_includes job_source, 'QueueFailureMailer.daily_digest'
   end
@@ -347,18 +347,18 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_turbo_navigation_and_cache_controls_are_explicit
-    hotwire = File.read(File.join(ROOT, 'shared/frontend/hotwire.js'))
+    hotwire = read_source(File.join(ROOT, 'shared/frontend/hotwire.js'))
     assert_includes hotwire, 'Turbo.config.drive.progressBarDelay = 100'
 
     %w[
       amber/app/javascript/application.js
       bsdports/app/javascript/application.js
     ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, 'import "pub4/hotwire"'
     end
 
-    assert_includes File.read(File.join(ROOT, 'brgen/app/assets/javascripts/face.js')),
+    assert_includes read_source(File.join(ROOT, 'brgen/app/assets/javascripts/face.js')),
                     'Turbo.config.drive.progressBarDelay = 100'
 
     %w[
@@ -366,7 +366,7 @@ class DeployBacklogTest < Minitest::Test
       bsdports/app/views/layouts/application.html.erb
       brgen/app/views/layouts/application.html.erb
     ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, 'data-turbo-permanent'
       refute_includes source, 'turbo-cache-control", content: "no-cache"'
 
@@ -381,14 +381,14 @@ class DeployBacklogTest < Minitest::Test
       assert_includes haystack, 'turbo_prefetch: false'
     end
 
-    setup = File.read(File.join(ROOT, 'shared/app/controllers/concerns/shared/application_setup.rb'))
+    setup = read_source(File.join(ROOT, 'shared/app/controllers/concerns/shared/application_setup.rb'))
     assert_includes setup, 'turbo_refreshes_with :morph, scroll: :preserve'
 
-    source = File.read(File.join(ROOT, 'shared/frontend/layouts/_nav.html.erb'))
+    source = read_source(File.join(ROOT, 'shared/frontend/layouts/_nav.html.erb'))
     assert_includes source, 'data-turbo-permanent'
     assert_includes source, 'turbo_prefetch: false'
 
-    pagy_source = File.read(File.join(ROOT, 'shared/config/initializers/pagy.rb'))
+    pagy_source = read_source(File.join(ROOT, 'shared/config/initializers/pagy.rb'))
     assert_includes pagy_source, 'data-turbo-prefetch="false"'
     assert_includes pagy_source, 'rel="prefetch"'
   end
@@ -399,14 +399,14 @@ class DeployBacklogTest < Minitest::Test
       brgen/config/database.yml
       bsdports/config/database.yml
     ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, 'journal_mode: WAL'
     end
 
-    source = File.read(File.join(ROOT, 'shared/config/environments/development.rb'))
+    source = read_source(File.join(ROOT, 'shared/config/environments/development.rb'))
     assert_includes source, 'strict_loading_by_default = true'
 
-    source = File.read(File.join(ROOT, 'shared/frontend/stimulus_boot.js'))
+    source = read_source(File.join(ROOT, 'shared/frontend/stimulus_boot.js'))
     %w[
       Clipboard
       Dialog
@@ -428,33 +428,33 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, component
     end
 
-    assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_toast.html.erb')), 'data-controller="toast"'
-    assert_includes File.read(File.join(ROOT, 'shared/frontend/examples.html.erb')), 'data-controller="toast"'
+    assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_toast.html.erb')), 'data-controller="toast"'
+    assert_includes read_source(File.join(ROOT, 'shared/frontend/examples.html.erb')), 'data-controller="toast"'
 
-    wardrobe_form = File.read(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb'))
+    wardrobe_form = read_source(File.join(ROOT, 'amber/app/views/wardrobe_items/_form.html.erb'))
     assert wardrobe_form.include?('textarea-autogrow') || wardrobe_form.include?('character-counter')
-    assert_includes File.read(File.join(ROOT, 'shared/app/views/comments/_form_fields.html.erb')), 'textarea-autogrow'
+    assert_includes read_source(File.join(ROOT, 'shared/app/views/comments/_form_fields.html.erb')), 'textarea-autogrow'
     # What matters here is that the post partial is fragment-cached at all. The
     # exact key was pinned as a literal, which froze an implementation detail:
     # keying on Current.user&.id meant a per-guest key, and brgen mints a fresh
     # guest for every cookieless request, so the cache scored zero hits on
     # crawler traffic. Assert the caching, not the key it happens to use.
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard popover"'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'shared/post_card'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'shared/post_card'
-    assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_post_card.html.erb')), 'shared/feed_card'
-    assert_includes File.read(File.join(ROOT, 'shared/app/views/shared/_copyable.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'cache [post'
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'cache [post'
+    assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'data-controller="clipboard popover"'
+    assert_includes read_source(File.join(ROOT, 'brgen/app/views/posts/_post.html.erb')), 'shared/post_card'
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/posts/_post.html.erb')), 'shared/post_card'
+    assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_post_card.html.erb')), 'shared/feed_card'
+    assert_includes read_source(File.join(ROOT, 'shared/app/views/shared/_copyable.html.erb')),
                     'data-controller="clipboard"'
 
-    helper_source = File.read(File.join(ROOT, 'amber/app/helpers/application_helper.rb'))
+    helper_source = read_source(File.join(ROOT, 'amber/app/helpers/application_helper.rb'))
     assert_includes helper_source, 'responsive_image_url'
     assert_includes helper_source, 'content_tag(:picture)'
     assert_includes helper_source, 'type: "image/webp"'
     assert_includes helper_source, 'loading: "lazy"'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/items/show.html.erb')), 'responsive_image_tag photo'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/outfits/dressing_room.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/items/show.html.erb')), 'responsive_image_tag photo'
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/outfits/dressing_room.html.erb')),
                     'responsive_image_url(item.photos.first'
 
     %w[
@@ -462,11 +462,11 @@ class DeployBacklogTest < Minitest::Test
       amber/app/views/pwa/manifest.json.erb
       bsdports/app/views/pwa/manifest.json.erb
     ].each do |relative|
-      source = File.read(File.join(ROOT, relative))
+      source = read_source(File.join(ROOT, relative))
       assert_includes source, '"shortcuts"'
     end
 
-    brgen_manifest = File.read(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb'))
+    brgen_manifest = read_source(File.join(ROOT, 'brgen/app/views/pwa/manifest.json.erb'))
     assert_match(/pwa\.new_listing|New listing/, brgen_manifest)
     assert_includes brgen_manifest, 'protocol_handlers'
     assert_includes brgen_manifest, 'web+brgen'
@@ -475,36 +475,36 @@ class DeployBacklogTest < Minitest::Test
     assert_includes brgen_manifest, '/playlists/new'
     refute_includes brgen_manifest, 'brgen_ai_url'
     refute_includes brgen_manifest, '//dating.'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
+    assert_includes read_source(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
                     'navigator.setAppBadge'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
+    assert_includes read_source(File.join(ROOT, 'brgen/app/javascript/controllers/push_controller.js')),
                     'navigator.clearAppBadge'
-    assert_includes File.read(File.join(ROOT, 'shared/pwa/service_worker.js')), 'setAppBadge'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js')), 'workbox:core'
-    brgen_layout = File.read(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
+    assert_includes read_source(File.join(ROOT, 'shared/pwa/service_worker.js')), 'setAppBadge'
+    assert_includes read_source(File.join(ROOT, 'brgen/app/views/pwa/service-worker.js')), 'workbox:core'
+    brgen_layout = read_source(File.join(ROOT, 'brgen/app/views/layouts/application.html.erb'))
     assert_includes brgen_layout, 'data-push-unread-value='
     assert_includes brgen_layout, 'render "shared/ai_nav_link"'
     assert_includes brgen_layout, 'brgen_ai_url'
     refute_includes brgen_layout, 'javascript_include_tag "face"'
     refute_includes brgen_layout, 'javascript_include_tag "particle_kernel"'
-    assert_match(/pwa\.create_outfit|Create outfit/, File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')))
-    assert_match(/pwa\.search_ports|Search ports/, File.read(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')))
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'image/*'
+    assert_match(/pwa\.create_outfit|Create outfit/, read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')))
+    assert_match(/pwa\.search_ports|Search ports/, read_source(File.join(ROOT, 'bsdports/app/views/pwa/manifest.json.erb')))
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), '"file_handlers"'
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/pwa/manifest.json.erb')), 'image/*'
 
-    ports_controller = File.read(File.join(ROOT, 'bsdports/app/controllers/ports_controller.rb'))
+    ports_controller = read_source(File.join(ROOT, 'bsdports/app/controllers/ports_controller.rb'))
     assert_includes ports_controller, 'expires_in 10.minutes, public: true'
     assert_includes ports_controller, 'fresh_when(@port, public: true)'
 
-    source = File.read(File.join(ROOT, 'brgen/config/recurring.yml'))
+    source = read_source(File.join(ROOT, 'brgen/config/recurring.yml'))
     assert_includes source, 'cable_health_check:'
     assert_includes source, 'class: CableHealthJob'
     assert_includes source, 'schedule: every hour at minute 7'
   end
 
   def test_brgen_users_maps_checkins_and_listening_parties_are_wired
-    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
-    migration = File.read(File.join(ROOT, 'brgen/db/migrate/20260708120000_create_maps_check_ins_and_listening_parties.rb'))
+    routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
+    migration = read_source(File.join(ROOT, 'brgen/db/migrate/20260708120000_create_maps_check_ins_and_listening_parties.rb'))
 
     assert_includes routes, 'resources :users, only: %i[show new create]'
     assert_includes routes, 'post :check_in'
@@ -517,12 +517,12 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_brgen('app/controllers/playlist/listening_parties_controller.rb'), 'def create'
     assert_includes read_brgen('app/views/users/show.html.erb'), 'follow_button'
     assert_includes read_brgen('app/views/maps/places/show.html.erb'), 'check_in_maps_place_path'
-    assert_includes read_brgen('app/views/playlist/sets/show.html.erb'), 'playlist.set_listening_party_path'
+    assert_includes read_brgen('app/views/playlist/sets/show.html.erb'), 'set_listening_party_path'
   end
 
   def test_bsdports_security_advisory_refresh_job_uses_nvd_service
-    job = File.read(File.join(ROOT, 'bsdports/app/jobs/security_advisory_refresh_job.rb'))
-    recurring = File.read(File.join(ROOT, 'bsdports/config/recurring.yml'))
+    job = read_source(File.join(ROOT, 'bsdports/app/jobs/security_advisory_refresh_job.rb'))
+    recurring = read_source(File.join(ROOT, 'bsdports/config/recurring.yml'))
 
     assert_includes job, 'NvdCve.crossref'
     assert_includes job, 'CURSOR_KEY'
@@ -540,14 +540,14 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, ':two_factor_enabled'
     end
 
-    initializer = File.read(File.join(ROOT, 'shared/config/initializers/auth_extensions.rb'))
+    initializer = read_source(File.join(ROOT, 'shared/config/initializers/auth_extensions.rb'))
     assert_includes initializer, 'Shared::UserAuthExtensions'
-    assert_includes File.read(File.join(ROOT, 'shared/app/models/concerns/shared/user_auth_extensions.rb')),
+    assert_includes read_source(File.join(ROOT, 'shared/app/models/concerns/shared/user_auth_extensions.rb')),
                     'ensure_auth_column!'
   end
 
   def test_playlist_tracks_schema_includes_user_ownership
-    schema = File.read(File.join(ROOT, 'brgen/db/schema.rb'))
+    schema = read_source(File.join(ROOT, 'brgen/db/schema.rb'))
     assert_includes schema, 'create_table "playlist_tracks"'
     assert_includes schema, 't.integer "user_id"', 'brgen schema missing playlist_tracks.user_id'
     assert_includes schema, 'index_playlist_tracks_on_user_id'
@@ -556,7 +556,7 @@ class DeployBacklogTest < Minitest::Test
 
   def test_schema_dumps_include_shared_auth_user_columns
     %w[amber brgen bsdports].each do |app|
-      schema = File.read(File.join(ROOT, app, 'db', 'schema.rb'))
+      schema = read_source(File.join(ROOT, app, 'db', 'schema.rb'))
       assert_includes schema, 't.string "remember_token"', "#{app} schema missing remember_token"
       assert_includes schema, 't.string "magic_link_token"', "#{app} schema missing magic_link_token"
       assert_includes schema, 't.boolean "two_factor_enabled"', "#{app} schema missing two_factor_enabled"
@@ -565,7 +565,7 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_messenger_subdomain_routes_conversations_and_messages
-    routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
     assert_includes routes, 'constraints(subdomain: MESSENGER_SUBDOMAINS)'
     assert_includes routes, 'as: :messenger_root'
     assert_includes routes, 'resources :conversations, only: %i[show update create]'
@@ -613,9 +613,9 @@ class DeployBacklogTest < Minitest::Test
     assert_includes restaurants, 'takeaway-restaurants-sentinel'
     assert_includes channels, 'ChannelsInfiniteScrollReflex#load_more'
     assert_includes channels, 'tv-channels-sentinel'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/reflexes/restaurants_infinite_scroll_reflex.rb')),
+    assert_includes read_source(File.join(ROOT, 'brgen/app/reflexes/restaurants_infinite_scroll_reflex.rb')),
                     'takeaway/restaurants/card'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/reflexes/channels_infinite_scroll_reflex.rb')),
+    assert_includes read_source(File.join(ROOT, 'brgen/app/reflexes/channels_infinite_scroll_reflex.rb')),
                     'tv/channels/row'
   end
 
@@ -645,24 +645,24 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_sitemap_routes_and_shared_builder_across_rails_apps
-    sentinel = File.read(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
-    builder = File.read(File.join(ROOT, 'shared/app/services/shared/sitemap_builder.rb'))
+    sentinel = read_source(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
+    builder = read_source(File.join(ROOT, 'shared/app/services/shared/sitemap_builder.rb'))
 
     assert_includes sentinel, 'data-cuisine'
     assert_includes sentinel, 'data-kind'
     assert_includes builder, 'Builder::XmlMarkup'
 
     %w[amber brgen bsdports].each do |app|
-      routes = File.read(File.join(ROOT, "#{app}/config/routes.rb"))
+      routes = read_source(File.join(ROOT, "#{app}/config/routes.rb"))
       assert_includes routes, 'sitemaps#index', "#{app} missing sitemap route"
       assert File.file?(File.join(ROOT, app, 'app/controllers/sitemaps_controller.rb')),
              "#{app} missing SitemapsController"
-      source = File.read(File.join(ROOT, app, 'app/controllers/sitemaps_controller.rb'))
+      source = read_source(File.join(ROOT, app, 'app/controllers/sitemaps_controller.rb'))
       assert_includes source, 'Shared::Sitemapable'
       assert_includes source, 'sitemap_entries'
     end
 
-    brgen_routes = File.read(File.join(ROOT, 'brgen/config/routes.rb'))
+    brgen_routes = read_source(File.join(ROOT, 'brgen/config/routes.rb'))
     assert_includes brgen_routes, 'robots#show'
     assert_includes read_brgen('app/controllers/sitemaps_controller.rb'), 'Brgen::DomainRegistry.resolve'
   end
@@ -694,7 +694,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes controller, 'def destroy'
     assert File.file?(File.join(ROOT, 'brgen/app/views/communities/edit.html.erb'))
     assert_includes read_brgen('app/reflexes/communities_infinite_scroll_reflex.rb'), 'communities/card'
-    assert_includes File.read(File.join(ROOT, 'brgen/app/assets/stylesheets/_communities.scss')), '.community-list'
+    assert_includes read_source(File.join(ROOT, 'brgen/app/assets/stylesheets/_communities.scss')), '.community-list'
   end
 
   def test_playlist_set_likes_controller_and_ui_are_wired
@@ -705,7 +705,7 @@ class DeployBacklogTest < Minitest::Test
     refute_includes controller, 'module Playlist'
     assert_includes controller, 'find_or_create_by!'
     assert_includes controller, 'destroy_all'
-    assert_includes show, 'playlist.set_like_path'
+    assert_includes show, 'set_like_path' # engine-internal helper (unprefixed inside Playlist::Engine)
     assert_includes show, 'likes.count'
   end
 
@@ -725,13 +725,14 @@ class DeployBacklogTest < Minitest::Test
     assert_includes controller, 'def update'
     assert_includes controller, 'def destroy'
     assert_includes controller, 'authorize_owner'
-    assert File.file?(File.join(ROOT, 'brgen/app/views/marketplace/stores/edit.html.erb'))
+    assert [File.join(ROOT, 'brgen/app/views/marketplace/stores/edit.html.erb'),
+            File.join(ROOT, 'brgen/engines/marketplace/app/views/marketplace/stores/edit.html.erb')].any? { |p| File.file?(p) }
     assert_includes read_brgen('app/assets/stylesheets/_marketplace_stores.scss'), '.store-grid'
     assert_includes read_brgen('app/assets/stylesheets/application.scss'), '_marketplace_stores'
   end
 
   def test_secondary_brgen_verticals_use_infinite_scroll_reflexes
-    sentinel = File.read(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
+    sentinel = read_source(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
     assert_includes sentinel, 'data-channel-slug'
 
     assert_includes read_brgen('app/views/tv/channels/_channel_videos.html.erb'), 'ChannelVideosInfiniteScrollReflex#load_more'
@@ -760,30 +761,30 @@ class DeployBacklogTest < Minitest::Test
   end
 
   def test_satellite_apps_use_infinite_scroll_reflexes
-    sentinel = File.read(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
+    sentinel = read_source(File.join(ROOT, 'shared/app/views/shared/_infinite_scroll_sentinel.html.erb'))
 
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/items/_live_search_results.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/items/_live_search_results.html.erb')),
                     'ItemsInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'amber/app/reflexes/items_infinite_scroll_reflex.rb')),
+    assert_includes read_source(File.join(ROOT, 'amber/app/reflexes/items_infinite_scroll_reflex.rb')),
                     'items/item'
 
-    assert_includes File.read(File.join(ROOT, 'amber/app/views/outfits/_live_search_results.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'amber/app/views/outfits/_live_search_results.html.erb')),
                     'OutfitsInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'amber/app/reflexes/outfits_infinite_scroll_reflex.rb')),
+    assert_includes read_source(File.join(ROOT, 'amber/app/reflexes/outfits_infinite_scroll_reflex.rb')),
                     'outfits/outfit'
 
     # The sentinel moved out of _live_search_results and into the _list partial
     # it renders, so asserting on _live_search_results directly went stale even
     # though ports infinite scroll still works. Follow the render instead: the
     # search results must reach the list, and the list must carry the reflex.
-    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/ports/_live_search_results.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'bsdports/app/views/ports/_live_search_results.html.erb')),
                     'ports/list'
-    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/ports/_list.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'bsdports/app/views/ports/_list.html.erb')),
                     'PortsInfiniteScrollReflex#load_more'
-    assert_includes File.read(File.join(ROOT, 'bsdports/app/reflexes/ports_infinite_scroll_reflex.rb')),
+    assert_includes read_source(File.join(ROOT, 'bsdports/app/reflexes/ports_infinite_scroll_reflex.rb')),
                     'ports/row'
 
-    assert_includes File.read(File.join(ROOT, 'bsdports/app/views/maintainers/show.html.erb')),
+    assert_includes read_source(File.join(ROOT, 'bsdports/app/views/maintainers/show.html.erb')),
                     'MaintainerPortsInfiniteScrollReflex#load_more'
     assert_includes sentinel, 'data-maintainer-id'
   end
@@ -810,28 +811,28 @@ class DeployBacklogTest < Minitest::Test
     refute_includes show, 'post_show'
     refute_includes app_js, 'brgen_shell'
     refute_includes read_brgen('config/importmap.rb'), 'brgen_shell'
-    assert_includes File.read(File.join(ROOT, 'shared/frontend/stimulus_boot.js')), 'pub4/brgen_shell'
-    assert_includes File.read(File.join(ROOT, 'shared/config/importmap_baseline.rb')), 'pub4/brgen_shell'
-    assert_includes File.read(File.join(ROOT, 'shared/app/assets/stylesheets/_dialect_tokens.scss')), '--radius-card: 16px'
+    assert_includes read_source(File.join(ROOT, 'shared/frontend/stimulus_boot.js')), 'pub4/brgen_shell'
+    assert_includes read_source(File.join(ROOT, 'shared/config/importmap_baseline.rb')), 'pub4/brgen_shell'
+    assert_includes read_source(File.join(ROOT, 'shared/app/assets/stylesheets/_dialect_tokens.scss')), '--radius-card: 16px'
     refute File.exist?(File.join(ROOT, 'brgen/app/controllers/playlist_controller.rb'))
     refute File.exist?(File.join(ROOT, 'brgen/app/views/shared/_vote.html.erb'))
-    assert_includes File.read(File.join(ROOT, '_deploy.sh')), 'DEMO_SEED_ON_DEPLOY'
-    assert_includes File.read(File.join(ROOT, 'shared/config/initializers/omniauth.rb')), ':snapchat'
+    assert_includes read_source(File.join(ROOT, '_deploy.sh')), 'DEMO_SEED_ON_DEPLOY'
+    assert_includes read_source(File.join(ROOT, 'shared/config/initializers/omniauth.rb')), ':snapchat'
     refute_includes read_brgen('app/assets/stylesheets/_posts.scss'), '.post_show'
     assert_includes read_brgen('app/assets/stylesheets/_nav.scss'), 'border-bottom-color: var(--accent)'
     assert_includes read_brgen('app/views/layouts/application.html.erb'), 'unless vertical_surface?'
   end
 
   def test_demo_seed_media_uses_shared_postpro_pipeline
-    assert_includes File.read(File.join(ROOT, "shared/app/services/shared/demo_media.rb")), "attach_remote_postpro!"
-    assert_includes File.read(File.join(ROOT, "shared/app/services/shared/postpro_processor.rb")), "PostproProcessor"
+    assert_includes read_source(File.join(ROOT, "shared/app/services/shared/demo_media.rb")), "attach_remote_postpro!"
+    assert_includes read_source(File.join(ROOT, "shared/app/services/shared/postpro_processor.rb")), "PostproProcessor"
     assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "attach_remote_postpro!"
     assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "seed_places"
     assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "seed_takeaway"
     assert_includes read_brgen("lib/brgen/bergen_demo_seeder.rb"), "seed_tv"
     assert File.exist?(File.join(ROOT, "brgen/config/demo_media/bergen.yml")), "bergen demo media catalog"
-    assert_includes File.read(File.join(ROOT, "amber/lib/amber/amber_demo_seeder.rb")), "attach_remote_postpro!"
-    assert_includes File.read(File.join(ROOT, "amber/app/jobs/wardrobe_media_job.rb")), "PostproProcessor.apply_to_record!"
+    assert_includes read_source(File.join(ROOT, "amber/lib/amber/amber_demo_seeder.rb")), "attach_remote_postpro!"
+    assert_includes read_source(File.join(ROOT, "amber/app/jobs/wardrobe_media_job.rb")), "PostproProcessor.apply_to_record!"
   end
 
   def test_brgen_views_have_valid_page_header_open_tags
@@ -843,7 +844,32 @@ class DeployBacklogTest < Minitest::Test
 
   private
 
-  def read_brgen(relative)
-    File.read(File.join(ROOT, 'brgen', relative))
+  # The five verticals moved to mountable engines (engines/<v>/app/...), so a path
+  # like app/models/tv/channel.rb now lives at engines/tv/app/models/tv/channel.rb.
+  # Resolve the host path first, then the engine location, then a flat basename
+  # match for assets that moved without a namespace dir. See brgen/ENGINES.md.
+def read_brgen(relative)
+  read_source(File.join(ROOT, "brgen", relative))
+end
+
+# Resolve a ROOT-based source path, falling back to the mountable engines the
+# five verticals moved into (engines/<v>/app/...), then a flat basename match
+# for assets moved without a namespace dir. Migrations stayed in the host and
+# resolve directly. See brgen/ENGINES.md.
+def read_source(abs)
+  # brgen's routes now span the host plus every vertical engine — read them as one
+  # so "is this route wired" assertions find engine-owned routes too.
+  if abs.end_with?("brgen/config/routes.rb") && File.exist?(abs)
+    brgen_dir = File.dirname(File.dirname(abs)) # .../brgen (abs is .../brgen/config/routes.rb)
+    engine_routes = Dir.glob(File.join(brgen_dir, "engines", "*", "config", "routes.rb")).sort.map { |f| File.read(f) }
+    return ([File.read(abs)] + engine_routes).join("\n")
   end
+  return File.read(abs) if File.exist?(abs)
+  rel = abs.sub(%r{\A#{Regexp.escape(File.join(ROOT, "brgen"))}/}, "")
+  moved = Dir.glob(File.join(ROOT, "brgen", "engines", "*", rel)).first
+  return File.read(moved) if moved
+  flat = Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "**", File.basename(abs))).first
+  return File.read(flat) if flat
+  File.read(abs)
+end
 end
