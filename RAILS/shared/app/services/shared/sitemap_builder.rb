@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Rails 8 dropped this require with ActiveModel::Serializers::Xml; Builder then resolved under Shared and 500'd.
+require "builder"
+
 module Shared
   # Renders a sitemaps.org urlset from plain entries — one XML builder shared
   # by every app instead of each hand-rolling its own escaping/formatting.

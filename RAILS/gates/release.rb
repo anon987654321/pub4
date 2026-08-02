@@ -124,6 +124,8 @@ end
   ../MASTER/web/test/pwa_master_contract_test.rb
   test/shared_social_routes_test.rb
   shared/test/services/frontend_auditor_test.rb
+  shared/test/services/sitemap_builder_test.rb
+  shared/test/services/account_exporter_test.rb
   shared/test/lib/design_tokens_test.rb
   shared/test/lib/pub4/deploy_paths_test.rb
   shared/test/lib/pub4/ci_guard_test.rb
