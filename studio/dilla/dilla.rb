@@ -11067,11 +11067,27 @@ DILLA_STYLE_DEFAULTS = {
   "LINEAR_CHORD_INDEX" => "1",
   # Rotate full progression pack (not only the 10 verified names).
   "ARTIST_VERIFIED_ONLY" => "0",
-  "HARMONY_LEAD" => "1",
-  "SCALE_LEAD" => "1",
-  "CREATIVE_LEAD" => "1",
-  # Real arps (not just slow melodic phrases) — MELODIC_LEAD=0 forces subdiv arps.
-  "MELODIC_LEAD" => "0",
+  # One top line, and it is the counter-line.
+  #
+  # This block used to switch on all four lead layers at once and set
+  # MELODIC_LEAD=0 to force sixteenth-note arps, with the note "real arps (not
+  # just slow melodic phrases)". That was the sound the operator described as
+  # the leads destroying everything: three arp layers over the chords the pads
+  # were already holding, at close to twice their level.
+  #
+  # MELODIC_LEAD=1 is now the default so lead_events_melodic runs everywhere,
+  # not only inside demo-each's steady mode. Rendering a track directly still
+  # produced the old arps until this changed, which meant the fix only existed
+  # in the demo path.
+  #
+  # HARMONY_LEAD, SCALE_LEAD and CREATIVE_LEAD go to 0 for the same reason: the
+  # counter-line is written to answer the chords, and that only works if nothing
+  # else is talking over them. LEAD_ARP stays available for anyone who wants the
+  # old behaviour back explicitly.
+  "HARMONY_LEAD" => "0",
+  "SCALE_LEAD" => "0",
+  "CREATIVE_LEAD" => "0",
+  "MELODIC_LEAD" => "1",
   "LEAD_ARP" => "1",
   "LEAD_ARP_MODE" => "flylo_spiral",
   "LEAD_VOICE" => "soul_prophet",
@@ -13105,10 +13121,40 @@ def stream_drum_rotate_enabled?
 end
 
 # Rotate drum grid / pocket / kit after DNA force so beats actually change.
+# The curated rotation, then every other kit.
+#
+# STREAM_DRUM_ROTATION is hand-built combinations of preset, pocket and kit, and
+# hand-built for a reason: the pairings matter, and a busy grid under a drunk
+# pocket is two kinds of drunk at once. But 62 drum presets exist and the table
+# names ten, so 52 never played -- dilla_donuts, dilla_fantastic,
+# dilla_lopsided, questlove_pocket, knxwledge_haze, every euclid_* and push_*.
+#
+# The curated pairings stay first and in order, so a demo of eight still opens
+# on the house sound. The tail follows with a pocket chosen from each preset's
+# own declared mode rather than at random -- that pairing knowledge is exactly
+# what the curated table encodes, and the reason not to just shuffle everything.
+def drum_rotation_full
+  @drum_rotation_full ||= begin
+    named = STREAM_DRUM_ROTATION.map { |d| d[:preset] }
+    tail = DillaLofiMachine::DRUM_PRESETS.keys.map(&:to_s).sort - named
+    STREAM_DRUM_ROTATION + tail.filter_map do |preset|
+      spec = DillaLofiMachine::DRUM_PRESETS[preset.to_sym] or next
+      pocket = case spec[:mode].to_s
+               when /dilla/ then "neo_soul"
+               when /straight/ then "classic"
+               else "dusty"
+               end
+      { preset:, pocket:, kit: "03-soulful-vintage", fm: "0",
+        flylo: preset.start_with?("flylo") ? "1" : "0" }
+    end
+  end
+end
+
 def stream_rotate_drums!(index)
   return unless stream_drum_rotate_enabled?
 
-  d = STREAM_DRUM_ROTATION[index % STREAM_DRUM_ROTATION.length]
+  table = ENV["DEMO_CURATED_ONLY"] == "1" ? STREAM_DRUM_ROTATION : drum_rotation_full
+  d = table[index % table.length]
   ENV["DRUM_PRESET"] = d[:preset]
   ENV["POCKET_SET"] = d[:pocket]
   ENV["EXTERNAL_KIT"] = d[:kit] if d[:kit] && !d[:kit].empty?
@@ -13295,6 +13341,50 @@ DEMO_VOICING_ROTATION = %w[
 # the stream order alone understates what the engine knows.
 #
 # DEMO_CATALOG=stream narrows back to the broadcast rotation.
+# Every table that decides what the engine can reach, and what it leaves out.
+#
+# A capability nothing selects is a capability nothing tests, which is how a pad
+# patch carried an out-of-range filter value for months without anyone hearing
+# it: the voice was defined, no rotation named it, and the broken chain never
+# ran. The audit lists what is defined against what is reachable, so that gap is
+# a number somebody sees rather than something discovered by ear.
+#
+# Deliberately reports rather than enforces. A few entries SHOULD be
+# unreachable -- a hard-trap kit has no place in this catalogue -- and a check
+# that fails the build on those would just get switched off. A number that moves
+# in the wrong direction is the useful signal.
+def capability_surfaces
+  {
+    "drum presets" => [DillaLofiMachine::DRUM_PRESETS.keys, drum_rotation_full.map { |d| d[:preset] }],
+    "pad voices" => [PAD_VOICE_PRESETS.keys + PAD_LAYER_STACKS.keys,
+                     DEMO_PAD_ROTATION + STREAM_PAD_VOICE_ROTATION],
+    "chord progressions" => [CHORD_PROGRESSIONS.keys, demo_all_order],
+    "lead voices" => [(defined?(LEAD_VOICE_PRESETS) ? LEAD_VOICE_PRESETS.keys : []),
+                      STREAM_LEAD_VOICE_ROTATION],
+    "lead arp styles" => [(defined?(ARP_PATTERN_BUILDERS) ? ARP_PATTERN_BUILDERS.keys : []),
+                          STREAM_LEAD_ARP_ROTATION],
+    "external kits" => [(defined?(EXTERNAL_DRUM_KITS) ? EXTERNAL_DRUM_KITS : []),
+                        drum_rotation_full.map { |d| d[:kit] }],
+    "sample loops" => [TRACK_SAMPLE_LOOPS.keys, demo_all_order],
+  }
+end
+
+def capability_audit!
+  total_missing = 0
+  puts format("  %-22s %8s %10s %6s", "surface", "defined", "reachable", "gap")
+  capability_surfaces.each do |label, (defined_keys, reachable_keys)|
+    d = defined_keys.map(&:to_s).uniq
+    r = reachable_keys.map(&:to_s).uniq
+    missing = (d - r).sort
+    total_missing += missing.length
+    puts format("  %-22s %8d %10d %6d", label, d.length, d.length - missing.length, missing.length)
+    puts "      #{missing.first(24).join(' ')}#{missing.length > 24 ? " …+#{missing.length - 24}" : ''}" unless missing.empty?
+  end
+  puts
+  puts total_missing.zero? ? "  every defined capability is reachable" : "  #{total_missing} unreachable"
+  true
+end
+
 def demo_all_order
   # An explicit list wins over every other rule here — it is how demo-quick asks
   # for a sample of the catalogue, and an operator naming tracks means it.
@@ -13315,7 +13405,36 @@ def demo_all_order
   # of what the stream is currently filtered to.
   base = STREAM_TRACKS.map(&:to_sym)
   extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
-  (base + extra).uniq
+  curated = (base + extra).uniq
+
+  # ...and then everything else, which is most of it.
+  #
+  # The note above says this list "should show everything the engine knows", and
+  # it did not. Those three sources union to 86 entries. CHORD_PROGRESSIONS holds
+  # 250. Measured, 209 progressions could never appear in a catalogue demo --
+  # gospel_walk_up, neapolitan_door, lament_ground, hexatonic_pole_shiver, every
+  # eight_bar_* arc, both whole_tone entries. The engine knew them and no demo
+  # ever played one, which is a large part of why eight tracks drawn from the
+  # same 41 sounded like each other.
+  #
+  # Curated first, so the order of the front of the catalogue is unchanged and
+  # DEMO_TRACKS/demo-quick still sample the good stuff first. The tail is sorted
+  # rather than shuffled: a catalogue should be in a stable order so a track you
+  # heard yesterday is in the same place today.
+  #
+  # DEMO_CURATED_ONLY=1 restores the old 86 for anyone who wants just those.
+  return curated if ENV["DEMO_CURATED_ONLY"] == "1"
+
+  # The sampled beds go in too, and they are the reason this matters.
+  #
+  # TRACK_SAMPLE_LOOPS entries are track names: name one as TRACK and the loop
+  # plays underneath the arrangement on its own bus. All twelve were unreachable
+  # from any demo -- the four hand-cut records and the eight cut from the Sheger
+  # broadcast by `chop`, which was built this session precisely so the engine
+  # could make beats out of them. It could, and no demo ever did.
+  loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_sym).sort
+  tail = (CHORD_PROGRESSIONS.keys.map(&:to_sym).sort - curated - loops)
+  (curated + loops + tail).uniq
 end
 
 # The mp3 is the artifact worth tracking. A full-catalogue WAV runs to hundreds
@@ -23415,6 +23534,15 @@ DISPATCH = {
     require_relative "lib/verify_fx"
     exit(VerifyFx.verify! ? 0 : 1)
   },
+  # What has been built that nothing can select?
+  #
+  # Six separate faults in one session were the same shape: a capability was
+  # finished and no rotation table referenced it, so it never rendered and never
+  # got tested. The counter-line lead, the chopped sample loops, the Flying Lotus
+  # kits, 24 pad voices, a pad whose effect chain had never once opened, and 209
+  # of 250 chord progressions. Each was found by ear or by accident, one at a
+  # time. This finds them all at once.
+  "audit" => -> { exit(capability_audit! ? 0 : 1) },
   "import-midi" => -> { import_midi_drums!(ARGV.shift.to_s) },
   "export-midi" => -> { export_midi_drums!(ARGV.shift || MIDI_SEED_DIR) },
   "crit" => -> { crit_session_cli!(ARGV.shift) },
