@@ -7,18 +7,13 @@
 
 require "open3"
 
-REPO_DOAS = "/home/dev/pub4/OPENBSD/etc/doas.conf"
-VALIDATE_DOAS = "/home/dev/pub4/OPENBSD/validate_doas.ksh"
-
-def heal_doas_conf!
-  return unless Process.uid.zero?
-  return unless File.file?(REPO_DOAS) && File.executable?(VALIDATE_DOAS)
-
-  ok = system("ksh", VALIDATE_DOAS, "install", REPO_DOAS, "config-drift")
-  warn "config-drift: doas heal failed (rolled back if possible)" unless ok
-end
-
-heal_doas_conf!
+# The doas.conf "heal" that used to run here (root executing
+# /home/dev/pub4/OPENBSD/validate_doas.ksh and installing that checkout's
+# doas.conf over /etc/doas.conf every 15 minutes) was removed: it was root code
+# execution from a dev-owned tree and reverted any hand-hardening of the live
+# file. doas policy is installed only by OPERATOR.sh now. This job stays a
+# read-only drift *detector* — it must never write privileged config. See
+# OPENBSD/data/debt.yml root_dot_sources_dev_owned_repo and stale_ci_cleanup.ksh.
 
 failures = []
 

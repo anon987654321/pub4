@@ -6,16 +6,15 @@
 
 require "open3"
 
-REPO_DOAS = "/home/dev/pub4/OPENBSD/etc/doas.conf"
-VALIDATE_DOAS = "/home/dev/pub4/OPENBSD/validate_doas.ksh"
-
-def heal_doas_conf!
-  return unless Process.uid.zero?
-  return unless File.file?(REPO_DOAS) && File.executable?(VALIDATE_DOAS)
-
-  ok = system("ksh", VALIDATE_DOAS, "install", REPO_DOAS, "relayd-watchdog")
-  log("doas heal failed (rolled back if possible)") unless ok
-end
+# The doas.conf "heal" that used to live here ran, as root every 5 minutes,
+#   ksh /home/dev/pub4/OPENBSD/validate_doas.ksh install /home/dev/pub4/OPENBSD/etc/doas.conf
+# — root executing a script AND installing a doas.conf from a dev-owned git
+# checkout, i.e. root code execution on the next tick for anyone who can write
+# either file, plus a silent revert of any hand-hardening of /etc/doas.conf.
+# stale_ci_cleanup.ksh dropped the identical pattern for the same reason; this
+# watchdog and config-drift-check were the two survivors. doas policy is now
+# only installed deliberately by OPERATOR.sh (root-run), never auto-synced from
+# a user-writable tree. See OPENBSD/data/debt.yml root_dot_sources_dev_owned_repo.
 
 BACKENDS = {
   "brgen" => 38182,
@@ -69,8 +68,6 @@ def stale_backends
   end
   stale.uniq { |entry| entry[:name] }
 end
-
-heal_doas_conf!
 
 unless relayd_running?
   restart_relayd("relayd check failed")
