@@ -24,7 +24,7 @@ class CoverageRatchetTest < Minitest::Test
   # Measured 2026-08-01. Raise a number when you add tests; never lower one.
   FLOORS = {
     "amber" => { "controllers" => 1, "models" => 5 },
-    "brgen" => { "controllers" => 14, "models" => 11 },
+    "brgen" => { "controllers" => 15, "models" => 11 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
 
