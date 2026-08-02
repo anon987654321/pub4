@@ -1,3 +1,4 @@
+# reader: Master::Ground::RuntimeCatalog
 # Canonical topologies for the Pixel Field. Each topology names a renderable
 # semantic shape — face, codebase, ecology, attention. The registry consumes
 # this file at boot; particle_kernel.js renders cells per topology rules.

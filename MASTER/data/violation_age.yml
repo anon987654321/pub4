@@ -1,3 +1,4 @@
+# reader: Master::Fix::FixLoop::RuleOrder
 # Rule-id => age-in-days map consulted by Fix::FixLoop::RuleOrder#violation_age_days
 # to weight fix priority toward long-standing violations. Never existed until now;
 # RuleOrder silently rescued the missing-file error every round and fell back to

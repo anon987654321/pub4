@@ -1,3 +1,4 @@
+# reader: Master::Ground::DynamicTools
 # Dynamic HTTP tools — loaded at boot without code changes.
 # Example (disabled):
 # - name: status_ping
