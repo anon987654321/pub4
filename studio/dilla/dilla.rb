@@ -65,6 +65,7 @@ require "open3"
 require "timeout"
 require_relative "lib/mixer"
 require_relative "lib/crate_dig"
+require_relative "lib/radio_chop"
 require_relative "lib/key_lock"
 require_relative "lib/modal_family"
 require_relative "lib/dilla_dmesg"
@@ -4373,7 +4374,13 @@ end
 # that swaps the engine's harmony out for the sample rather than putting the
 # two together, which is the opposite of what a sampled bed is for. This is its
 # own bus, mixed alongside drums/harm/bass like any other.
-TRACK_SAMPLE_LOOPS = {
+#
+# Split in two since `chop` started producing entries of the same shape: the
+# literal below is the hand-cut rack, every value in it argued for in the note
+# above it, and TRACK_SAMPLE_LOOPS is that plus whatever the chopper has
+# registered. Keeping the hand-cut set its own frozen constant means a bad
+# ingest can never overwrite a measurement somebody reasoned their way to.
+TRACK_SAMPLE_LOOPS_BUILTIN = {
   # The frozen 4-bar loop from the 92 BPM Ableton set recreated as :four_seven.
   # hp/sub_db are per-loop because the loops differ, and a global setting is
   # wrong for one of them whichever value it takes. Measured low-versus-mid,
@@ -4440,6 +4447,18 @@ rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
   lo_borges: { path: File.join(SAMPLE_DIR, "lo_borges", "loop.wav"), bpm: 114.0,
                hp: 60, sub_db: -3.0, lp: 6000 },
 }.freeze
+
+# The chopper's rack, merged in under the hand-cut one. Same shape, same bus,
+# same per-loop hp/sub_db/lp fields -- a registered chop is a sample loop in
+# every sense that matters here, selectable by name like any other:
+#
+#   ruby dilla.rb chop                       ingest samples/ubrukte_samples.mp3
+#   TRACK=ubrukte_samples_03 ruby dilla.rb    render over that bed
+#   CHOP_BED=1 ruby dilla.rb                  let the engine pick one by key
+#
+# BUILTIN wins a slug collision. Nothing generated should be able to take a name
+# out from under an entry that was measured by hand.
+TRACK_SAMPLE_LOOPS = RadioChop.registered_loops.merge(TRACK_SAMPLE_LOOPS_BUILTIN).freeze
 
 # The working names these two were ingested under, kept pointing at the same
 # entries so anything already written against them keeps working. The song
@@ -4632,7 +4651,7 @@ def sample_loop_for(track)
 
   entry = if raw.empty?
             key = track.to_s.downcase.tr("-", "_").to_sym
-            TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key)]
+            TRACK_SAMPLE_LOOPS[TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key)] || chopped_bed_for(track)
           else
             { path: raw, bpm: ENV.fetch("SAMPLE_LOOP_BPM", "0").to_f }
           end
@@ -4644,6 +4663,54 @@ def sample_loop_for(track)
   key = [track.to_s, entry[:path]]
   @cross_sample_cache[key] ||= cross_sample_process(track, entry[:path])
   entry.merge(path: @cross_sample_cache[key])
+end
+
+# The chopper's rack as a fallback bed for tracks that have no loop of their own.
+#
+# Off by default (CHOP_BED=1). Most of the rotation was written without a sampled
+# bed under it, and switching one on for every track that lacks one is a change
+# to the sound of the whole catalogue, not a feature.
+#
+# Chosen by key rather than at random, which is the only way this is any use.
+# KEY_LOCK already transposes every progression to one tonic -- Bb by default --
+# so the pads land in a known key on every render, and a bed in a different one
+# is a bed fighting the arrangement. Loops carry their measured pitch class from
+# ingest, so the match is a lookup rather than another analysis pass.
+#
+# Deterministic on the track name, not on rand: the same track has to get the
+# same bed twice in a row or nothing downstream is reproducible.
+def chopped_bed_for(track)
+  return if ENV.fetch("CHOP_BED", "0") == "0"
+
+  # Memoised per track for the same reason sample_loop_for memoises its own
+  # processing: it is called from several places in one render, and without this
+  # the pick is re-derived and re-announced four times a take.
+  @chopped_bed_cache ||= {}
+  return @chopped_bed_cache[track.to_s] if @chopped_bed_cache.key?(track.to_s)
+
+  @chopped_bed_cache[track.to_s] = chopped_bed_pick(track)
+end
+
+def chopped_bed_pick(track)
+  rack = RadioChop.registered_loops
+  return if rack.empty?
+
+  meta = Array(RadioChop.registry["loops"]).select { |l| rack.key?(l["slug"].to_s.to_sym) }
+  wanted = KeyLock.enabled? ? KeyLock.pitch_class(KeyLock.target) : nil
+  in_key = wanted ? meta.select { |l| l["key_pc"] == wanted } : []
+  # Falling back to every loop rather than to none: an out-of-key bed is a
+  # compromise, no bed at all when CHOP_BED was asked for is a dead switch.
+  pool = in_key.empty? ? meta : in_key
+  return if pool.empty?
+
+  pool = pool.sort_by { |l| [-l["score"].to_f, l["slug"].to_s] }
+  pick = pool[track.to_s.sum % pool.length]
+  entry = rack[pick["slug"].to_s.to_sym]
+  return unless entry
+
+  dmesg("chop bed: #{pick['slug']} #{pick['key'] || '?'} @#{pick['bpm']} " \
+        "#{in_key.empty? ? '(no key match)' : '(key-locked)'}", unit: "chop0", parent: "dilla0")
+  entry
 end
 
 # --- sample loop excitation ---------------------------------------------------
@@ -18087,6 +18154,13 @@ def help
       source | download [url|path] [out]  yt-dlp / ffmpeg capture audio
       separate [path]              Demucs 4-stem (htdemucs_ft)
       demux <url|path> [deep]      6-stem demucs (htdemucs_6s) + optional EQ sub-bands
+      chop [path]                  Long recording → bar-aligned sample loops with
+                                   drums and vocals stripped (samples/chopped/).
+                                   Defaults to samples/ubrukte_samples.mp3.
+                                   CHOP_CANDIDATES/CHOP_KEEP/CHOP_SPAN tune it.
+      chop list                    Show the registered rack
+                                   TRACK=<slug> renders over one; CHOP_BED=1 lets
+                                   the engine pick one matching the KEY_LOCK tonic
       learn | ingest <url|path> [--apply] [--deep]
                                    Download → demucs → harmony/rhythm analysis → engine hints
                                    Saves project/learnings/last_learn.json; --apply sets ENV
@@ -19132,6 +19206,73 @@ def demux_deep(src)
   stem_dir = demux_six(src)
   demux_deep_bands!(stem_dir)
   stem_dir
+end
+
+# =============================================================================
+# CHOP (long recording → drumless, vocal-less registered sample loops)
+# =============================================================================
+#
+# The analysis lives in lib/radio_chop.rb; this is the wiring. Both external
+# dependencies are injected rather than reached for from inside the module:
+# demucs_cmd because it has three fallbacks and only this file knows them, and
+# sample_key because the Krumhansl tables and the Goertzel chroma are here.
+
+def chop_dispatch!
+  case ARGV.first
+  when "list" then ARGV.shift; chop_list
+  else chop_ingest!
+  end
+end
+
+def chop_ingest!
+  src = ARGV.find { |a| !a.start_with?("-") }
+  ARGV.delete(src) if src
+  cmd = demucs_cmd or abort "demucs required — " \
+    "python3 -m venv #{scratch_path('venv-demucs')} && " \
+    "#{scratch_path('venv-demucs')}/bin/pip install demucs"
+
+  RadioChop.ingest!(
+    src ? File.expand_path(src) : RadioChop::DEFAULT_SOURCE,
+    demucs: cmd,
+    deep: RadioBergenStudy::DeepAudio,
+    key_probe: method(:sample_key),
+    label: ENV["CHOP_LABEL"],
+    candidates: ENV.fetch("CHOP_CANDIDATES", "16").to_i,
+    keep: ENV.fetch("CHOP_KEEP", "8").to_i,
+    # Wide enough that a loop can be found rather than assumed: the length
+    # search correlates a candidate against the material that follows it, so a
+    # 30s window is what makes a 14s loop answerable at all.
+    span: ENV.fetch("CHOP_SPAN", "30").to_f,
+    scratch: scratch_path("chop_work"),
+    # Separation is the expensive step and its output is keyed by the window it
+    # came from, so a re-run to re-tune the scoring reuses it. CHOP_FRESH=1
+    # throws it away, which is what you want after changing the span or the
+    # source. Not a `--flag`: apply_flags! validates the whole `--` namespace
+    # before dispatch and rejects anything not in its table.
+    fresh: ENV["CHOP_FRESH"] == "1",
+  )
+  chop_list
+rescue RuntimeError => e
+  abort "chop: #{e.message}"
+end
+
+def chop_list
+  loops = Array(RadioChop.registry["loops"])
+  if loops.empty?
+    puts "chop: nothing registered — run: ruby dilla.rb chop [path]"
+    return
+  end
+
+  puts format("%-22s %6s %5s %6s %-9s %6s %7s %7s  %s",
+              "slug", "bpm", "bars", "len", "key", "selfsim", "rejoin", "score", "at")
+  loops.each do |l|
+    puts format("%-22s %6s %5s %6s %-9s %6s %7s %7s  %s",
+                l["slug"], l["bpm"].to_f.positive? ? l["bpm"] : "native", l["bars"] || "-",
+                l["duration_sec"], l["key"] || "-", l["self_similarity"],
+                l["rejoin_db"], l["score"],
+                format("%d:%02d", l["source_start_sec"].to_i / 60, l["source_start_sec"].to_i % 60))
+  end
+  puts "rack: TRACK=<slug> to render over one, CHOP_BED=1 to let the engine pick by key"
 end
 
 def top_pitch_class_indices(pitch_class_hash, limit: 6)
@@ -22576,6 +22717,7 @@ DISPATCH = {
     src = ARGV.shift or abort "usage: ruby dilla.rb demux <url-or-path> [deep]"
     ARGV[0] == "deep" ? demux_deep(src) : demux_six(src)
   end,
+  "chop" => -> { chop_dispatch! },
   "learn" => lambda do
     src = ARGV.shift or abort "usage: ruby dilla.rb learn <url-or-path> [--apply] [--deep]"
     apply = ARGV.delete("--apply")

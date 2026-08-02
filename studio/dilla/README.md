@@ -83,6 +83,48 @@ rejoins at −1.1 dB and 8.000s (120) at −8.6 dB. That settled a disagreement
 between the onset sweep and a self-similarity peak — self-similarity finds the
 shortest thing that repeats, which is not necessarily the bar.
 
+### `chop` — a long recording into a rack of beds
+
+    ruby dilla.rb chop [path]     # default samples/ubrukte_samples.mp3
+    ruby dilla.rb chop list
+
+Scan the whole recording, propose windows that are loud, steady and carrying
+more energy outside the speech band than inside it, run **demucs `htdemucs_6s`**
+over those windows, keep `bass + guitar + piano + other` and drop `drums` and
+`vocals`, then find each loop's length and cut it. Results land in
+`samples/chopped/<slug>/loop.wav` with a row in `samples/chopped/loops.json`,
+and `TRACK_SAMPLE_LOOPS` merges that registry over the hand-cut literal — a
+chopped loop is `TRACK=<slug>`-selectable like any other. `CHOP_BED=1` lets the
+engine pick one for any track that has no bed of its own, matched to the
+`KEY_LOCK` tonic. Off by default: switching a bed on under every track in the
+rotation changes the whole catalogue.
+
+Knobs: `CHOP_CANDIDATES` (16), `CHOP_KEEP` (8), `CHOP_SPAN` (30s),
+`CHOP_FRESH=1` to discard cached separation. Separation is keyed by source
+window, so re-running to re-tune the scoring reuses it.
+
+**This does not overturn the section above.** Picking the *window* is still the
+weak step and its output is a proposal — the section above is why the scan
+proposes sixteen and keeps eight rather than trusting one. What *is* now
+automatic is the part that was always measurable: the **length**. Correlating a
+candidate length against the material that follows it recovers all four hand-cut
+loops when each is looped three times (10.43 → 10.44, 10.00 → 10.00, 5.22 →
+5.22, 8.42 → 8.42), including the ×2 correction `kembara_rindu` needs for
+exactly the reason stated above.
+
+Tempo then follows from length rather than the other way round — `bpm = 240 ×
+bars ÷ seconds` returns all four declared tempos exactly (92, 96, 92, 114).
+That direction matters: onset-based tempo detection has nothing to work with on
+a sustained passage, and `RadioBergenStudy::DeepAudio.estimate_bpm` reports the
+median onset gap, which on this broadcast returned 66.7 BPM for four unrelated
+passages — 66.7 being 18 frames of 0.05s, not a tempo. When no bar count puts a
+length in 70–140 BPM the row carries `bpm 0`, which the loop filter already
+reads as "play at native speed".
+
+Off-air radio is **not licensed material**, and chopping it does not clear it.
+Every row carries `rights: unlicensed`, so a beat built on one can be identified
+before release rather than after. `lib/crate_dig.rb` is the route that clears.
+
 ---
 
 ## Drums
