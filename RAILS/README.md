@@ -298,6 +298,17 @@ doas rcctl restart relayd
 ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 ```
 
+## Recent changes (2026-08-02)
+
+Three endpoints answered 500 in production while 148 simulated pages passed, because `PageInventory` globbed each app's own `app/views` and never `shared/app/views`. Everything the engine renders — account settings, notifications, both password screens, two-factor — sat outside every gate.
+
+- **Shared pages are inventoried.** `PageInventory::SHARED_PAGES` declares them, one row per host app; `uncovered_shared_views` fails `page_simulation` on any non-partial shared view without a row. Inventory 148 → 162.
+- **`/sitemap.xml`** raised `NameError` in all three apps: `SitemapBuilder` used `Builder::XmlMarkup` and nothing required `builder` once Rails 8 dropped `ActiveModel::Serializers::Xml`. `builder` and `csv` are declared engine dependencies now.
+- **`/account/export`** called `Shared::AccountExporter`, which nobody had written. It exists: reflective over the User model, so one implementation covers three unrelated schemas.
+- **amber's social stack** was routed and controllered with no tables. Migration `20260802180000`.
+- **Dead routes.** Bare `resource :session` / `resources :passwords` routed seven actions at controllers implementing three and four. The runtime gate now asks each booted app whether every route resolves to an action method — `rails_runtime.rb --runtime`.
+- **`i18n_resolution_test`** asserts every defaultless `t()` resolves in each app's own locales plus the engine's; bsdports had been shipping `translation_missing` markup into a live region.
+
 ## Recent changes (2026-07-15)
 
 - **Gates:** every gate is a row in `gates/gates.yml`; production/master/domain/frontend/stimulus gates run in-process via `gates/lib/` and `Deploy::GateResult`. `gates/release.rb` no longer subprocesses those four gates.
@@ -315,4 +326,4 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 Canonical orchestrator: `_deploy.sh`. `deploy.sh` is a thin entry shim. Per-app `brgen.sh` / `amber.sh` / `bsdports.sh` source the shared contract.
 
 ---
-*Updated 2026-07-19 — in-process gate runner + controller coverage contract.*
+*Updated 2026-08-02 — shared-engine pages inventoried; three fleet-wide 500s closed.*
