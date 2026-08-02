@@ -4,6 +4,8 @@
 # principle: MASTER principle_map cluster id for fail messages.
 #
 # order: list of marker ids; earlier markers must appear before later ones in the document.
+# counts: pattern with min/max occurrences. Presence markers cannot express "exactly one",
+#   which is why gate_mutation's drop_h1, duplicate_h1 and cta_flood all survived.
 
 schemas:
   marketplace_listings:
@@ -11,9 +13,22 @@ schemas:
     principle: hierarchy / catalog_retail
     dialect: marketplace
     severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
     markers:
-      skip_or_main:
-        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
         principle: accessibility
       nav_bar:
         pattern: 'id="navBar"|id=''navBar'''
@@ -32,6 +47,9 @@ schemas:
       - [nav_bar, product_grid]
       - [search, product_grid]
     forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
       - pattern: 'Sign in to continue'
         principle: clarity
         note: guest-open surface must not auth-wall browse
@@ -45,14 +63,31 @@ schemas:
     principle: good_design_is_useful
     dialect: marketplace
     severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
     markers:
-      skip_or_main:
-        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
       cart_chrome:
         pattern: 'Cart|Your Cart|cart'
       empty_or_items:
         pattern: 'empty|offer|listing|pending|Checkout|Send'
     forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
       - pattern: 'Sign in to continue'
         principle: clarity
         note: guest cart is a core capability
@@ -62,9 +97,26 @@ schemas:
     principle: clarity / hyperlocal
     dialect: social
     severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
     markers:
-      skip_or_main:
-        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      nav:
+        pattern: '<nav\b'
+        principle: consistency
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
       live_heading:
         pattern: '<h1[^>]*>\s*Live|Live · nearby|>Live<'
       sort_tabs:
@@ -76,6 +128,9 @@ schemas:
     order:
       - [live_heading, feed_region]
     forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
       - pattern: 'Sign in to continue'
         principle: clarity
       - pattern: 'Logg inn for å sveipe'
@@ -87,14 +142,31 @@ schemas:
     principle: hierarchy / face
     dialect: dating
     severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
     markers:
-      skip_or_main:
-        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
       discover:
         pattern: 'Oppdag|swipe|dating|profile'
       card_or_empty:
         pattern: 'swipe-card|swipe-action|No profiles|empty|swipe-signin'
     forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
       - pattern: 'Sign in to continue'
         principle: clarity
         severity: soft
@@ -104,12 +176,29 @@ schemas:
     principle: good_design_is_useful
     dialect: social
     severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
     markers:
-      skip_or_main:
-        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
       messages_chrome:
         pattern: 'Messages|messenger-compose|conversation'
     forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
       - pattern: 'Sign in to continue'
         principle: clarity
         note: guest messenger is a core capability
@@ -119,9 +208,27 @@ schemas:
     principle: hierarchy / social
     dialect: social
     severity_default: hard
+    counts:
+      page_heading:
+        pattern: '<h1\b'
+        min: 1
+        max: 1
+        principle: hierarchy
+      primary_actions:
+        pattern: 'btn-primary'
+        max: 6
+        principle: hicks_law
+    forbidden:
+      - pattern: '<button(?![^>]*aria-label=)[^>]*>\s*</button>'
+        principle: accessibility
+        note: button with no accessible name
     markers:
-      skip_or_main:
-        pattern: 'skip-link|Skip to main|#main-content|<main\b'
+      main_landmark:
+        pattern: '<main\b|role="main"'
+        principle: accessibility
+      skip_link:
+        pattern: 'skip-link|Skip to main|#main-content'
+        principle: accessibility
       home:
         pattern: 'Home|feed|Bergen|local-feed|compose'
       live_entry:

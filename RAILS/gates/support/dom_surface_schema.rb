@@ -57,6 +57,22 @@ module Deploy
         end
       end
 
+      # Presence cannot say "exactly one", which is how drop_h1 and duplicate_h1 both survived.
+      (schema["counts"] || {}).each do |cid, spec|
+        found = body.scan(compile(spec["pattern"])).size
+        sev = (spec["severity"] || default_sev).to_sym
+        principle = spec["principle"] || schema["principle"]
+        bound = count_violation(found, spec)
+        next unless bound
+
+        findings << Finding.new(
+          schema_id: schema_id.to_s,
+          severity: sev,
+          principle: principle,
+          message: "surface_schema:#{schema_id} #{cid} #{bound} (#{label}) principle=#{principle}"
+        )
+      end
+
       Array(schema["order"]).each do |pair|
         a, b = pair.map(&:to_s)
         ia = positions[a]
@@ -102,6 +118,13 @@ module Deploy
     end
 
     private
+
+    def count_violation(found, spec)
+      return "found #{found}, needs at least #{spec["min"]}" if spec["min"] && found < spec["min"]
+      return "found #{found}, allows at most #{spec["max"]}" if spec["max"] && found > spec["max"]
+
+      nil
+    end
 
     def compile(pattern)
       return pattern if pattern.is_a?(Regexp)
