@@ -6271,6 +6271,190 @@ end
 # Occasional lead bursts — not every chord gets an arp. When they fire, use
 # intricate patterns (euclidean, fibonacci, flylo wobble, etc.) with
 # call-and-response and patch-specific gate lengths.
+# --- The counter-line -------------------------------------------------------
+#
+# A second tune that answers the chords, instead of a busier copy of them.
+#
+# What was wrong. Every other lead in this file is built by walking the list of
+# pad events -- the chords. For each chord it takes that chord's notes, starts
+# when the chord starts, and stops when the chord stops. So the lead played the
+# same notes as the backing, at the same moment, only faster. That is not a
+# second part. It is the first part again with more notes in it, and it buried
+# the chords rather than answering them.
+#
+# What this does instead. It asks the chords only one question -- "what notes
+# are allowed right now?" -- and decides everything else itself: when to come
+# in, how long to hold, and which way to move.
+#
+# Three rules, all borrowed rather than invented:
+#
+#   Leave gaps. Three to five notes in a four-bar phrase, played in the spaces
+#   between the chords rather than on top of them. This is the standard brief
+#   for a counter-melody in soul and R&B arranging, and it is why the line
+#   reads as an answer.
+#
+#   Move the other way. When the chords rise, fall; when they fall, rise. Two
+#   parts moving in opposite directions stay audible as two parts. Two parts
+#   moving together merge into one thicker part -- which is exactly the failure
+#   above. Bach's counterpoint is built on this, and the open-source
+#   counterpoint generators (foox, music21-tools) score it the same way:
+#   contrary motion rewarded, parallel motion penalised.
+#
+#   Walk, do not jump. Neighbouring notes sound like a tune. Wide leaps sound
+#   like an accident, so they cost something and only win when nothing nearer
+#   fits.
+#
+# Those generators are Python. This engine is pure Ruby with no dependencies,
+# so the rules are written out here rather than pulled in.
+
+# A step is a tone or less. Anything past a fifth is a jump too far to sing.
+LEAD_STEP_SEMITONES = 2
+LEAD_LEAP_MAX = 7
+
+# Where the line is allowed to sit. Roughly the range a person can sing, which
+# keeps it a melody rather than a sound effect.
+LEAD_RANGE_HZ = (220.0..880.0).freeze
+
+# Beats within a bar where a note may start. Never the downbeat: the chord lands
+# there, and the answer should arrive after the question.
+LEAD_ONSET_BEATS = [1.0, 2.5, 3.0].freeze
+
+def melodic_lead_enabled? = ENV.fetch("MELODIC_LEAD", "1") != "0"
+
+# How far apart two pitches are, in semitones. Positive means the second is
+# higher.
+def semitones_between(from_hz, to_hz)
+  return 0.0 unless from_hz&.positive? && to_hz&.positive?
+
+  12.0 * Math.log2(to_hz / from_hz)
+end
+
+# Are these the same note, ignoring which octave it lands in?
+def same_pitch_class?(a_hz, b_hz)
+  offset = semitones_between(a_hz, b_hz).abs % 12
+  offset < 0.25 || offset > 11.75
+end
+
+# Which chord is sounding at this moment. The events are in time order, so the
+# answer is the last one to have started.
+def pad_chord_at(pad_events, time)
+  pad_events
+    .take_while { |(start, *)| start <= time + 1e-6 }
+    .reverse_each
+    .find { |(_, _, chord, _)| chord.is_a?(Hash) && chord[:hz]&.any? }
+    &.fetch(2)
+end
+
+# Rate one candidate note. Higher is better. Nothing here is forbidden outright
+# -- every rule is a cost, so the line can break one when the alternative is
+# worse.
+def lead_note_score(hz, prev_hz, pad_direction, chord)
+  return 0.0 unless hz&.positive?
+  return 1.0 unless prev_hz&.positive?
+
+  move = semitones_between(prev_hz, hz)
+  distance = move.abs
+
+  score = case distance
+          when 0 then -0.6                        # standing still says nothing
+          when ..LEAD_STEP_SEMITONES then 1.0     # a step: how tunes move
+          when ..4 then 0.35                      # a small skip, still singable
+          when ..LEAD_LEAP_MAX then -0.2          # a real jump, needs a reason
+          else -1.0                               # further than anyone sings
+          end
+
+  # The rule that makes this a second voice rather than a thicker first one.
+  unless pad_direction.zero? || move.zero?
+    score += move.positive? == pad_direction.positive? ? -0.5 : 0.8
+  end
+
+  # Notes already in the chord settle; the rest of the scale passes through.
+  score += 0.3 if chord[:hz].any? { |chord_hz| same_pitch_class?(hz, chord_hz) }
+  score
+end
+
+# Which way the chords have just moved: up, down, or nowhere.
+def pad_direction(previous_top, current_top)
+  return 0 unless previous_top && current_top
+
+  current_top <=> previous_top
+end
+
+# Pick the moments in one phrase where the line may speak.
+#
+# The first bar is left alone on purpose -- the chords need a bar to say
+# something before anything answers. The rest are spread evenly rather than
+# chosen at random, because random picks clump and the gaps are the point.
+def lead_onsets_for_phrase(phrase_start, phrase_bars, bar_p, beat_p, wanted, ceiling)
+  candidates = (1...phrase_bars).flat_map do |bar|
+    LEAD_ONSET_BEATS.map { |beat| phrase_start + (bar * bar_p) + (beat * beat_p) }
+  end
+  candidates.select! { |t| t < ceiling - beat_p }
+  return [] if candidates.empty?
+
+  stride = [candidates.length / wanted, 1].max
+  candidates.each_slice(stride).map(&:first).first(wanted)
+end
+
+def lead_events_melodic(pad_events, cfg, duration: nil, n_bars: nil)
+  return [] if pad_events.empty? || !melodic_lead_enabled?
+
+  beat_p = 60.0 / cfg[:bpm]
+  bar_p = beat_p * 4.0
+  total = duration || pad_events.map { |event| event[0].to_f + event[3].to_f }.max
+  return [] unless total.to_f.positive?
+
+  phrase_bars = ENV.fetch("LEAD_PHRASE_BARS", "4").to_i.clamp(1, 16)
+  per_phrase = ENV.fetch("LEAD_NOTES_PER_PHRASE", "4").to_i.clamp(1, 12)
+  answer_chords = ENV.fetch("LEAD_CONTRARY", "1") != "0"
+  rng = Random.new(stable_hash(cfg[:track].to_s) + (@render_seed || 0) + 5501)
+
+  phrase_p = bar_p * phrase_bars
+  previous_hz = nil
+  previous_top = nil
+
+  (total / phrase_p).ceil.times.flat_map do |phrase|
+    onsets = lead_onsets_for_phrase(phrase * phrase_p, phrase_bars, bar_p, beat_p, per_phrase, total)
+
+    onsets.each_with_index.filter_map do |time, index|
+      chord = pad_chord_at(pad_events, time)
+      next unless chord
+
+      tones = scale_tones_for_chord(chord)
+      next if tones.empty?
+
+      top = chord[:hz].max
+      direction = answer_chords ? pad_direction(previous_top, top) : 0
+
+      # Stay in range, and stay near the last note. A line that leaps an octave
+      # every time stops being a line.
+      reachable = tones.select { |hz| LEAD_RANGE_HZ.cover?(hz) }
+      reachable = tones if reachable.empty?
+      if previous_hz
+        near = reachable.select { |hz| semitones_between(previous_hz, hz).abs <= LEAD_LEAP_MAX }
+        reachable = near unless near.empty?
+      end
+
+      # The small random nudge breaks ties between equally good notes so the
+      # same phrase does not come out identical every time. It is seeded, so it
+      # comes out identical for the same track.
+      chosen = reachable.max_by { |hz| lead_note_score(hz, previous_hz, direction, chord) + (rng.rand * 0.15) }
+      next unless chosen
+
+      # Hold until just before the next note. Holding is what makes this sound
+      # like strings or voices rather than a synth being poked.
+      next_time = onsets[index + 1] || (phrase * phrase_p) + phrase_p
+      sustain = [[(next_time - time) * 0.82, beat_p * 0.75].max, total - time].min
+      next if sustain <= 0.05
+
+      previous_hz = chosen
+      previous_top = top
+      velocity = (0.30 + (rng.rand * 0.06)) * (index.zero? ? 1.0 : 0.92)
+      [time, velocity, { name: "counter_lead", hz: [chosen] }, sustain]
+    end
+  end
+end
+
 def lead_events_creative(pad_events, cfg, duration: nil, n_bars: nil)
   return [] if pad_events.empty?
   beat_p = 60.0 / cfg[:bpm]
@@ -12965,6 +13149,38 @@ DEMO_EACH_MANIFEST = File.join(ROOT, "demo_manifest.tsv")
 # a take down rather than reconstructing it.
 def demo_each_seed(idx) = (ENV["DEMO_SEED"] || "4242").to_i + idx
 
+# Our own titles.
+#
+# The internal names describe the harmony -- two_chord_hypnosis, dorian_iv_loop
+# -- and a fair few were taken from the records the progression was studied
+# from. Those are somebody else's titles on our tracks, so the files that come
+# out of here get names of their own.
+#
+# Deterministic, not random at render time: the same track gets the same title
+# every run, so a file you kept still matches its row in the manifest after a
+# re-render. The manifest carries both names, because the internal slug is still
+# how you render the thing again.
+DEMO_TITLE_FIRST = %w[
+  amber ash blue brass cedar clay copper dusk ember fern flint glass grain
+  gravel harbour hollow indigo iron ivory lantern linen marrow mercury moss
+  nickel ochre onyx paper pewter quartz river rust saffron salt shale silt
+  slate smoke solder stone tallow tide tin umber velvet vellum willow
+].freeze
+DEMO_TITLE_SECOND = %w[
+  arc bloom braid channel circuit corridor current drift ferry field figure
+  gate ghost harvest hinge hour ladder lantern letter margin meridian mile
+  motion orbit parlour passage pattern pier quarter relay ribbon room season
+  shelf signal span station stitch switch table thread tower turn valley
+  wander watch weather window
+].freeze
+
+def demo_title(slug, idx)
+  seed = stable_hash(slug.to_s) + (ENV["DEMO_SEED"] || "4242").to_i + idx
+  first = DEMO_TITLE_FIRST[seed % DEMO_TITLE_FIRST.length]
+  second = DEMO_TITLE_SECOND[(seed / DEMO_TITLE_FIRST.length) % DEMO_TITLE_SECOND.length]
+  "#{first}_#{second}"
+end
+
 def demo_all(bars_count = 12, destination = nil)
   bars_count = bars_count.to_i
   bars_count = 12 unless bars_count.positive?
@@ -12989,17 +13205,45 @@ def demo_all(bars_count = 12, destination = nil)
   ENV["SPEAK"] ||= "0"
   ENV["STREAM_CONTINUOUS"] = "0"
   ENV["DILLA_STREAMING"] = "1"
-  ENV["STREAM_ROTATE_LEAD"] = "1"
-  ENV["STREAM_ROTATE_SYNTH"] = "1"
   ENV["STREAM_LEAD_MIDI_RICH"] = "1"
-  ENV["SYNTH_MORPH"] = "1"
-  ENV["LEAD_MORPH"] = "1"
-  ENV["SYNTH_CYCLE"] = "1"
-  if creative
-    ENV["STREAM_ANALOG_WILD"] = "1"
-    ENV["STREAM_CREATIVE_FREEDOM"] = "1"
-    ENV["EXPERIMENTAL_LEADS"] = "1"
-    ENV["FM_NATIVE"] = "1"
+
+  # Steady mode: hold the synthesis still so the WRITING is what varies.
+  #
+  # demo-all was built to show range, and it does that by moving every knob it
+  # has: STREAM_ROTATE_LEAD and STREAM_ROTATE_SYNTH give each track a different
+  # lead voice and arp mode, then SYNTH_MORPH / LEAD_MORPH / SYNTH_CYCLE move
+  # the voice again WITHIN the track, and creative mode adds EXPERIMENTAL_LEADS,
+  # STREAM_CREATIVE_FREEDOM and STREAM_ANALOG_WILD on top. Five consecutive
+  # tracks came out as
+  #
+  #   lead=soul_prophet/flylo_spiral  lead=flylo/neo_quartal  lead=moog/soul_wash
+  #   lead=prophet/moog_funk          lead=neo_pluck/prophet_glass
+  #
+  # -- a different instrument playing a different arp every time, each morphing
+  # as it goes. That is a showcase of the synthesis, and it is the wrong
+  # instrument for judging material: everything sounds restless, and a
+  # progression cannot be blamed or credited for what the randomiser did over
+  # it. The tempo was not the problem -- those takes measured 82-89 BPM, inside
+  # the idiom -- the note motion was.
+  #
+  # So demo-each defaults to steady and demo-all keeps its old behaviour. Set
+  # DEMO_STEADY=0 to get the showcase back, DEMO_STEADY=1 to hold demo-all still.
+  steady = ENV.fetch("DEMO_STEADY", demo_each? ? "1" : "0") != "0"
+  if steady
+    %w[STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH SYNTH_MORPH LEAD_MORPH SYNTH_CYCLE
+       EXPERIMENTAL_LEADS STREAM_CREATIVE_FREEDOM STREAM_ANALOG_WILD].each { |k| ENV[k] = "0" }
+  else
+    ENV["STREAM_ROTATE_LEAD"] = "1"
+    ENV["STREAM_ROTATE_SYNTH"] = "1"
+    ENV["SYNTH_MORPH"] = "1"
+    ENV["LEAD_MORPH"] = "1"
+    ENV["SYNTH_CYCLE"] = "1"
+    if creative
+      ENV["STREAM_ANALOG_WILD"] = "1"
+      ENV["STREAM_CREATIVE_FREEDOM"] = "1"
+      ENV["EXPERIMENTAL_LEADS"] = "1"
+      ENV["FM_NATIVE"] = "1"
+    end
   end
   apply_best_defaults!
   apply_dilla_style!(force: true)
@@ -13018,7 +13262,9 @@ def demo_all(bars_count = 12, destination = nil)
     manifest = DEMO_EACH_MANIFEST
     unless File.file?(manifest) && !force
       File.write(manifest, <<~HEAD)
-        # idx	slug	seed	bars	pad	lead	drums	pocket	kb
+        # idx	title	slug	seed	bars	pad	lead	drums	pocket	kb
+        # title is ours and names the file. slug is the engine's internal name
+        # for the progression -- pass it to TRACK= to render that piece again.
         # seed is the RENDER_SEED this take was rendered with. Re-roll a track by
         # deleting its mp3 and re-running with a different DEMO_SEED.
         #
@@ -13035,7 +13281,9 @@ def demo_all(bars_count = 12, destination = nil)
   order.each_with_index do |track, idx|
     slug = track.to_s
     part = File.join(out_dir, format("%02d_%s.wav", idx, slug))
-    keep_mp3 = File.join(DEMO_EACH_DIR, format("%02d_%s.mp3", idx, slug))
+    # Our title on the file; the engine's slug lives in the manifest, since that
+    # is what you pass back to TRACK= to render it again.
+    keep_mp3 = File.join(DEMO_EACH_DIR, format("%02d_%s.mp3", idx, demo_title(slug, idx)))
     # In each-mode the mp3 is the artifact, so that is what resume looks for.
     # Checking the wav instead would re-render every track that had already been
     # encoded and cleaned up, which is every track.
@@ -13062,10 +13310,14 @@ def demo_all(bars_count = 12, destination = nil)
     ENV["LINEAR_CHORD_INDEX"] = "1"
     ENV["LA_BEAT_PROGRESSION"] = "0"
     ENV["STREAM_LOCK"] = "0"
-    # Distinct kit + pocket per slot.
+    # Distinct kit + pocket per slot. Kept in steady mode: the drums changing
+    # per track is idiom, not restlessness, and it does not move under the
+    # progression the way a rotating lead does.
     stream_rotate_drums!(idx)
     # Distinct leads / MIDI arps / synth morph per slot (clears patch cache).
-    stream_rotate_voices_and_arps!(idx)
+    # Skipped in steady mode -- this and the second call below are what give
+    # every track its own instrument, which is the thing being held still.
+    stream_rotate_voices_and_arps!(idx) unless steady
     # Stronger pad identity than stream defaults (avoid every slot = stack_soul
     # held), written through the pin rule instead of straight into ENV.
     #
@@ -13079,8 +13331,8 @@ def demo_all(bars_count = 12, destination = nil)
     # Track-specific soul pad/lead overlays (force so they win).
     apply_track_soul_profile!(slug, force: true)
     # Re-apply rotation after soul profile so lead/pad keep moving.
-    stream_rotate_voices_and_arps!(idx)
-    force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]")
+    stream_rotate_voices_and_arps!(idx) unless steady
+    force_env!(demo_slot_pad_env(idx), label: "demo_all[#{idx}]") unless steady
     # Sparse rap so chord cycles are audible (a vocal on every slot masked
     # variety). gunnhild is the only vocal source now.
     if rap_every <= 0
@@ -13172,7 +13424,7 @@ def demo_all(bars_count = 12, destination = nil)
         FileUtils.rm_f(part)
         parts << mp3
         File.open(DEMO_EACH_MANIFEST, "a") do |f|
-          f.puts [format("%02d", idx), slug, demo_each_seed(idx), bars_count,
+          f.puts [format("%02d", idx), demo_title(slug, idx), slug, demo_each_seed(idx), bars_count,
                   ENV["PAD_VOICE"], ENV["LEAD_VOICE"], ENV["DRUM_PRESET"],
                   ENV["POCKET_SET"], (File.size(mp3) / 1024)].join("\t")
         end
@@ -16904,6 +17156,46 @@ LEAD_GM_PROGRAMS = [81, 87, 84, 86].freeze
 # Hotter lead target so arps cut over multi-layer pads.
 LEAD_TARGET_RMS_DB = -14.5
 
+# Voices for the counter-line: strings and choirs, not synth leads.
+#
+# The four programs above are all bright synth leads, chosen to cut through. A
+# second voice that has to cut through is a second voice competing, which is the
+# problem this layer exists to solve. Strings and voices do the opposite -- they
+# hold a note and sit behind, so the line is heard as an answer rather than as
+# something shouting over the top.
+#
+# They also suit what the line actually plays. It holds each note for about two
+# beats, and a held note is what strings and choirs are for; a square-wave lead
+# holding for two beats just sounds stuck.
+#
+# These voices are already in the patch table (choir_aahs, voice_oohs,
+# juno_strings, string_orchestra) but only as pads -- every one is registered
+# role: :warm, so nothing could reach them for a melody until now.
+COUNTER_LEAD_PROGRAMS = {
+  choir: 52,          # choir aahs -- the "aah" bed
+  voices: 53,         # voice oohs -- softer, rounder, further back
+  strings: 48,        # string ensemble
+  warm_strings: 49,   # slower attack, arrives under the beat
+  synth_strings: 50,  # solina-ish, the most obviously synthetic of the five
+  synth: 81,          # the old bright lead, if it is ever wanted back
+}.freeze
+
+def counter_lead_program
+  COUNTER_LEAD_PROGRAMS.fetch(ENV.fetch("LEAD_TIMBRE", "choir").downcase.to_sym) do
+    COUNTER_LEAD_PROGRAMS[:choir]
+  end
+end
+
+# Softer than a lead and darker than a pad.
+#
+# Leads here target -14.5 dBFS so an arp can cut over the stack. This one is not
+# trying to cut over anything, so it sits about 6 dB under that, and a lowpass
+# takes the top off. Standard advice for putting a part behind another is to
+# lower it AND roll off its highs -- level alone leaves a small bright thing in
+# front rather than a soft thing behind.
+COUNTER_LEAD_TARGET_RMS_DB = -20.5
+COUNTER_LEAD_LOWPASS_HZ = 5200
+
 def invert_motif(motif)
   top = motif.max
   motif.map { |d| top - d }
@@ -16980,7 +17272,11 @@ def lead_post_fx_chain(patch, duration, boost_db)
   base = "volume=#{boost_db.round(2)}dB"
   patch_fx = patch&.dig(:fx)
   # Blend patch identity FX with a rotating rich chain so every take has motion.
-  variant = LEAD_FX_VARIANTS[((@render_seed || 0) + Process.pid) % LEAD_FX_VARIANTS.length]
+  # Process.pid used to be in here, so the lead came out with a different effect
+  # chain on every single run -- the take you liked could not be got back, and
+  # two renders of one track were never comparable. The render seed alone is
+  # what it was always meant to be keyed on.
+  variant = LEAD_FX_VARIANTS[(@render_seed || 0) % LEAD_FX_VARIANTS.length]
   rich = ENV.fetch("LEAD_FX_RICH", "1") != "0"
   body = if patch_fx && !patch_fx.empty?
            rich ? "#{patch_fx},#{variant}" : patch_fx
@@ -17034,21 +17330,31 @@ def mix_harmonic_wav_stems(destination, duration, **stem_paths)
   true
 end
 
-def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false)
+def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, counter: false)
   return if lead_events.empty? || !fluidsynth_pad_available?
   midi_path = "#{path}.smf.mid"
   lead_voice = scale_arp ? resolve_scale_lead_voice : resolve_lead_voice
   patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
   role = scale_arp ? :scale_lead : :lead
-  write_smf(midi_path, lead_events, program: lead_voice[:program], bank: lead_voice[:bank],
+  # The counter-line borrows the lead's soundfont and takes a strings or choir
+  # program out of it, rather than the bright synth the rotation would pick.
+  program = counter ? counter_lead_program : lead_voice[:program]
+  write_smf(midi_path, lead_events, program:, bank: (counter ? 0 : lead_voice[:bank]),
             duration:, midi_fx: resolve_midi_fx_for(patch, role:), lead_mode: true)
   fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
   sh! "fluidsynth", "-ni", "-g", fs_gain.to_s, "-F", path, "-r", SAMPLE_RATE.to_s, lead_voice[:sf2], midi_path
   FileUtils.rm_f(midi_path)
-  target_db = scale_arp ? (LEAD_TARGET_RMS_DB + 1.5) : LEAD_TARGET_RMS_DB
+  target_db = if counter then COUNTER_LEAD_TARGET_RMS_DB
+              elsif scale_arp then LEAD_TARGET_RMS_DB + 1.5
+              else LEAD_TARGET_RMS_DB
+              end
   patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
-  sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(patch, duration, 0.0),
-      "-c:a", "pcm_s16le", "#{path}.lead.wav"
+  chain = lead_post_fx_chain(patch, duration, 0.0)
+  # Roll the top off before anything else in the chain, so the reverb and the
+  # limiter downstream are working on an already-soft signal rather than
+  # brightening it back up.
+  chain = "lowpass=f=#{COUNTER_LEAD_LOWPASS_HZ},#{chain}" if counter
+  sh! "ffmpeg", "-y", "-i", path, "-af", chain, "-c:a", "pcm_s16le", "#{path}.lead.wav"
   FileUtils.mv("#{path}.lead.wav", path)
   normalize_wav_to_rms!(path, target_db)
   path
@@ -17117,7 +17423,11 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   creative_on = lead_arp_enabled? && ENV.fetch("CREATIVE_LEAD", "0") != "0"
   scale_events = scale_on ? lead_events_scale_arp(pad_events, cfg, duration:, n_bars: n_bars_est) : []
   lead_arp_cfg = lead_arp_cfg_for(@render_lead_patch)
-  lead_arp_ev = lead_arp_enabled? ? lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
+  # The counter-line replaces the arp rather than joining it. Two top lines at
+  # once is the soup the comment above is about, and this one is written to
+  # answer the chords, which only works if nothing else is talking over them.
+  counter_events = lead_events_melodic(pad_events, cfg, duration:, n_bars: n_bars_est)
+  lead_arp_ev = lead_arp_enabled? && counter_events.empty? ? lead_arp_events(pad_events, cfg, lead_arp_cfg) : []
   harmony_lead_cfg = harmony_lead_cfg_for(@render_scale_lead_patch)
   insight = instance_variable_defined?(:@progression_insight) ? @progression_insight : nil
   harmony_lead_ev = harmony_lead_enabled? && ENV.fetch("HARMONY_LEAD", "0") != "0" ?
@@ -17125,7 +17435,11 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   creative_events = creative_on ? lead_events_creative(pad_events, cfg, duration:, n_bars: n_bars_est) : []
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
   harmony_lead_rendered = harmony_lead_ev.any? ? render_lead_via_fluidsynth(harmony_lead_path, harmony_lead_ev, duration, scale_arp: true) : nil
-  lead_arp_rendered = lead_arp_ev.any? ? render_lead_via_fluidsynth(lead_arp_path, lead_arp_ev, duration) : nil
+  lead_arp_rendered = if counter_events.any?
+                        render_lead_via_fluidsynth(lead_arp_path, counter_events, duration, counter: true)
+                      elsif lead_arp_ev.any?
+                        render_lead_via_fluidsynth(lead_arp_path, lead_arp_ev, duration)
+                      end
   xlead_rendered = nil
   if lead_morph_enabled?
     xlead_fs = render_xlead_morph_fluidsynth(xlead_path, pad_events, duration, cfg)

@@ -146,6 +146,8 @@ studio/dilla/venv-librosa/
 # --- studio/lora ------------------------------------------------------------
 
 # Training caches, extracted frames, staging copies, and reproducible bundles.
+# <subject>/.cache/ is every lane's scratch: dataset zips, downloaded trainer
+# tars, staged Kaggle payloads.
 studio/lora/**/.cache/
 studio/lora/**/_frames/
 studio/lora/**/_latent_cache/
@@ -153,3 +155,9 @@ studio/lora/**/.aitk_size.json
 studio/lora/**/raw/
 studio/lora/**/*.zip
 studio/lora/**/*.pid
+
+# ai-toolkit run artifacts: it writes samples and a copy of the config it was
+# handed into the training folder on every run.
+studio/lora/*/train_run.log
+studio/lora/*/weights/*/samples/
+studio/lora/*/weights/*/config.yaml
