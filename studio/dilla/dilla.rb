@@ -12933,12 +12933,46 @@ end
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
 #   DEMO_CATALOG=stream restrict to STREAM_ROTATION (default: all 84 named pieces)
 #   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
+# One file per track instead of one 48-minute concat.
+#
+# The parts already existed -- demo_all has always rendered each track separately
+# and then glued them together -- but they landed in scratch/ under a name nobody
+# would look for, as WAV, and DEMO_FORCE deleted them. Culling a catalogue means
+# playing a track, deciding, and deleting the file, and that needs the files to
+# be findable, small, and named after the track.
+#
+# So: demos/NN_slug.mp3, kept, resumable, no concat. Delete the ones that miss
+# and re-run -- the survivors are skipped and only the gaps re-render.
+def demo_each? = ENV["DEMO_EACH"] == "1"
+
+# The dilla root, beside dilla.rb, not a subfolder. Same argument the scratch/
+# note in .gitignore already makes: generated audio should be findable by anyone
+# looking at the tree. Only the mp3s land here -- order.txt, catalog.txt and the
+# run log stay in scratch, because those are bookkeeping and this directory is
+# meant to be a listening queue.
+DEMO_EACH_DIR = ROOT
+DEMO_EACH_MANIFEST = File.join(ROOT, "demo_manifest.tsv")
+
+# Each track gets its own pinned seed, written into the manifest beside it.
+#
+# This is what makes "weed out the bad seeds" a real operation rather than a
+# figure of speech: a track you like has a number next to it, and a track you
+# do not can be re-rolled by bumping only that number. DEMO_SEED sets the base.
+#
+# Read the caveat in the manifest header before trusting a recorded seed to
+# reproduce a take. Pinning is necessary here and is not yet sufficient: two
+# renders with RENDER_SEED fixed are still not bit-identical, so a seed narrows
+# a take down rather than reconstructing it.
+def demo_each_seed(idx) = (ENV["DEMO_SEED"] || "4242").to_i + idx
+
 def demo_all(bars_count = 12, destination = nil)
   bars_count = bars_count.to_i
   bars_count = 12 unless bars_count.positive?
   dest = destination.to_s
   dest = File.join(ROOT, "demo.wav") if dest.empty?
-  out_dir = File.join(SCRATCH_DIR, "all_tracks_demo")
+  # each-mode writes its mp3s to the dilla root and its transient wav straight
+  # into SCRATCH_DIR, so it creates no directory of its own.
+  out_dir = demo_each? ? SCRATCH_DIR : File.join(SCRATCH_DIR, "all_tracks_demo")
   FileUtils.mkdir_p(out_dir)
   log_path = File.join(out_dir, "demo_all.log")
   catalog_path = File.join(out_dir, "catalog.txt")
@@ -12974,8 +13008,26 @@ def demo_all(bars_count = 12, destination = nil)
   %w[PAD_VOICE PAD_ARP_MODE LEAD_VOICE LEAD_ARP_MODE TRACK PROGRESSION].each { |k| ENV.delete(k) }
 
   order = demo_all_order
-  File.write(File.join(out_dir, "order.txt"), order.map(&:to_s).join("\n") + "\n")
-  File.write(catalog_path, "")
+  # order.txt and catalog.txt record what the manifest already records, so
+  # each-mode writes neither.
+  unless demo_each?
+    File.write(File.join(out_dir, "order.txt"), order.map(&:to_s).join("\n") + "\n")
+    File.write(catalog_path, "")
+  end
+  if demo_each?
+    manifest = DEMO_EACH_MANIFEST
+    unless File.file?(manifest) && !force
+      File.write(manifest, <<~HEAD)
+        # idx	slug	seed	bars	pad	lead	drums	pocket	kb
+        # seed is the RENDER_SEED this take was rendered with. Re-roll a track by
+        # deleting its mp3 and re-running with a different DEMO_SEED.
+        #
+        # CAVEAT: a recorded seed narrows a take down, it does not reconstruct it.
+        # Two renders with RENDER_SEED pinned are still not bit-identical -- see
+        # the note above noise_seed. Treat this column as a lead, not a guarantee.
+      HEAD
+    end
+  end
   dmesg("demo-all tracks=#{order.length} bars=#{bars_count} creative=#{creative ? 1 : 0} → #{dest}",
         unit: "demo0", parent: "dilla0")
 
@@ -12983,12 +13035,24 @@ def demo_all(bars_count = 12, destination = nil)
   order.each_with_index do |track, idx|
     slug = track.to_s
     part = File.join(out_dir, format("%02d_%s.wav", idx, slug))
-    if !force && File.file?(part) && File.size(part) > 100_000 && !part.end_with?("_SILENCE.wav")
+    keep_mp3 = File.join(DEMO_EACH_DIR, format("%02d_%s.mp3", idx, slug))
+    # In each-mode the mp3 is the artifact, so that is what resume looks for.
+    # Checking the wav instead would re-render every track that had already been
+    # encoded and cleaned up, which is every track.
+    if demo_each? && !force && File.file?(keep_mp3) && File.size(keep_mp3) > 20_000
+      dmesg("keep #{File.basename(keep_mp3)}", unit: "demo0", parent: "dilla0")
+      parts << keep_mp3
+      next
+    end
+    if !demo_each? && !force && File.file?(part) && File.size(part) > 100_000 && !part.end_with?("_SILENCE.wav")
       # Reject silence leftovers from prior failed runs.
       dmesg("skip #{File.basename(part)}", unit: "demo0", parent: "dilla0")
       parts << part
       next
     end
+    # Per-track pin, set before any of the rotation helpers below run so they
+    # draw from it too.
+    ENV["RENDER_SEED"] = demo_each_seed(idx).to_s if demo_each?
     FileUtils.rm_f(part)
     FileUtils.rm_f(File.join(out_dir, format("%02d_%s_SILENCE.wav", idx, slug)))
 
@@ -13040,13 +13104,15 @@ def demo_all(bars_count = 12, destination = nil)
       "rap=#{ENV['RAP_VOCAL']}",
       unit: "demo0", parent: "dilla0",
     )
-    File.open(catalog_path, "a") do |f|
-      f.puts format(
-        "%02d %s pad=%s/%s lead=%s/%s voicing=%s drums=%s/%s rap=%s",
-        idx, slug, ENV["PAD_VOICE"], ENV["PAD_ARP_MODE"],
-        ENV["LEAD_VOICE"], ENV["LEAD_ARP_MODE"], ENV["VOICING"],
-        ENV["DRUM_PRESET"], ENV["POCKET_SET"], ENV["RAP_VOCAL"]
-      )
+    unless demo_each?
+      File.open(catalog_path, "a") do |f|
+        f.puts format(
+          "%02d %s pad=%s/%s lead=%s/%s voicing=%s drums=%s/%s rap=%s",
+          idx, slug, ENV["PAD_VOICE"], ENV["PAD_ARP_MODE"],
+          ENV["LEAD_VOICE"], ENV["LEAD_ARP_MODE"], ENV["VOICING"],
+          ENV["DRUM_PRESET"], ENV["POCKET_SET"], ENV["RAP_VOCAL"]
+        )
+      end
     end
 
     ok = false
@@ -13091,7 +13157,32 @@ def demo_all(bars_count = 12, destination = nil)
       end
     end
 
-    if ok
+    if ok && demo_each?
+      # Encode and drop the wav. 86 WAVs is ~500 MB of a directory meant to be
+      # browsed and pruned; the same catalogue as mp3 is a few tens of MB.
+      # demo_encode_mp3 derives its output path from the wav's, so the mp3 lands
+      # beside the wav in scratch and has to be moved. Encoding to scratch and
+      # moving, rather than encoding straight to the root, means a half-written
+      # mp3 from an interrupted run never appears in the listening queue where it
+      # would look like a finished take.
+      mp3 = demo_encode_mp3(part)
+      if mp3
+        FileUtils.mv(mp3, keep_mp3)
+        mp3 = keep_mp3
+        FileUtils.rm_f(part)
+        parts << mp3
+        File.open(DEMO_EACH_MANIFEST, "a") do |f|
+          f.puts [format("%02d", idx), slug, demo_each_seed(idx), bars_count,
+                  ENV["PAD_VOICE"], ENV["LEAD_VOICE"], ENV["DRUM_PRESET"],
+                  ENV["POCKET_SET"], (File.size(mp3) / 1024)].join("\t")
+        end
+        dmesg("ok #{slug} seed=#{demo_each_seed(idx)} #{(File.size(mp3) / 1_000_000.0).round(2)}MB",
+              unit: "demo0", parent: "dilla0")
+      else
+        parts << part
+        dmesg_warn("mp3 encode failed #{slug} — keeping wav")
+      end
+    elsif ok
       parts << part
       dmesg("ok #{slug} #{(File.size(part) / 1_000_000.0).round(2)}MB", unit: "demo0", parent: "dilla0")
     else
@@ -13119,6 +13210,14 @@ def demo_all(bars_count = 12, destination = nil)
   end
 
   abort "demo-all: no parts rendered" if parts.empty?
+
+  if demo_each?
+    dmesg("demo-each: #{parts.length} files in the dilla root", unit: "demo0", parent: "dilla0")
+    puts "#{parts.length} tracks -> #{DEMO_EACH_DIR.sub("#{File.dirname(ROOT)}/", '')}/"
+    puts "delete the ones that miss, then re-run: the survivors are skipped and only the gaps re-render"
+    puts "re-roll one: DEMO_SEED=<n> ruby dilla.rb demo-each   (or delete just that file first)"
+    return parts
+  end
 
   list = File.join(out_dir, "concat.txt")
   File.write(list, parts.map { |p| "file '#{p}'" }.join("\n") + "\n")
@@ -22719,6 +22818,15 @@ DISPATCH = {
     bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "12"
     out = ARGV.shift
     demo_all(bars.to_i, out)
+  end,
+  # Same catalogue, same settings, one mp3 per track in demos/ and no concat.
+  # BARS is read here rather than left to apply_best_defaults!, which sets 32 and
+  # would otherwise silently override the 12 this and demo-all both default to.
+  "demo-each" => lambda do
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "12"
+    ENV["DEMO_EACH"] = "1"
+    ENV["BARS"] = bars.to_s
+    demo_all(bars.to_i)
   end,
   # demo-all is 84 tracks: ~45 minutes to render and ~47 to listen to. That is
   # the wrong loop for judging a change, because by the time it finishes you no
