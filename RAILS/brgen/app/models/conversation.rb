@@ -36,15 +36,22 @@ class Conversation < ApplicationRecord
 
   # Idempotently resolve a channel by slug, seeding its bots + a welcome line
   # the first time it is opened.
+  # `includes(:city)` is load-bearing, not a query tweak: ApplicationRecord sets
+  # strict_loading_by_default, and channel_title reads `city`. A tenant-less
+  # room has city_id = nil, where belongs_to answers nil without ever touching
+  # the association — so the whole city-scoped path (i.e. production) raised
+  # StrictLoadingViolationError on every room open while the tenant-less tests
+  # stayed green. Preload it here, and hand `create!` the record rather than the
+  # id so a freshly seeded room comes back with the target already in memory.
   def self.find_or_create_channel(slug, city: nil)
     slug = slug.to_s
     spec = CHANNELS[slug] or return nil
-    find_by(slug: slug, city_id: city&.id) || create_channel!(slug, spec, city)
+    includes(:city).find_by(slug: slug, city_id: city&.id) || create_channel!(slug, spec, city)
   end
 
   def self.create_channel!(slug, spec, city)
     transaction do
-      channel = create!(conversation_type: "group", slug: slug, city_id: city&.id,
+      channel = create!(conversation_type: "group", slug: slug, city: city,
                         name: spec[:name], vertical: spec[:vertical], disappearing_duration: CHANNEL_TTL)
       ChannelBot.seat_bots(channel, spec[:bots])
       ChannelBot.welcome!(channel)
@@ -53,7 +60,7 @@ class Conversation < ApplicationRecord
   rescue ActiveRecord::RecordNotUnique
     # Two visitors opened the same fresh city channel at once — (slug, city) is
     # unique, so the loser just adopts the winner's row.
-    find_by!(slug: slug, city_id: city&.id)
+    includes(:city).find_by!(slug: slug, city_id: city&.id)
   end
 
   # Anonymous, radius-scoped group room — same public/anonymous/disappearing
