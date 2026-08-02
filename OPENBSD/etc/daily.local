@@ -1,6 +1,8 @@
 #!/bin/sh
 ruby /usr/local/bin/nsd-resign
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
+ruby34 /home/dev/pub4/OPENBSD/config_drift_gate.rb >/tmp/config-drift.out 2>&1 || \
+  logger -t daily.local "repo/live config drift — see /tmp/config-drift.out (e.g. sshd PasswordAuthentication)"
 su -l dev -c '/home/dev/pub4/OPENBSD/backup_priv.sh'
 
 if command -v drill >/dev/null 2>&1; then
