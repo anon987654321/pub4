@@ -60,16 +60,31 @@ open:
       restrict which commands run, so it does not hit the `doas zsh` problem
       that makes cmd rules unworkable. It is the cheapest real reduction
       available.
-      Do NOT simply delete keepenv: OPERATOR.sh:875 reads
-      ${I_UNDERSTAND_DNS_WIPE:-0} from the environment and the documented call
-      is `I_UNDERSTAND_DNS_WIPE=1 doas zsh OPERATOR.sh --stage-1`, so that gate
-      needs env to cross. Use an allowlist instead:
-        permit nopass setenv { I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK } dev as root
-      SEQUENCING: the repo's doas.conf IS the live config — resource_guard.sh
-      on the host copies it to /etc/doas.conf every 5 minutes, so any edit
-      propagates to production within one tick. Land the resource_guard fix
-      (committed, not yet deployed) and verify doas syntax on the VM with
-      `doas -C /etc/doas.conf -u dev id` before changing this file.
+      FIXED 2026-08-02, operator-authorised. The dev rule is now
+        permit nopass setenv { I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK
+                               RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT } dev as root
+      The allowlist was measured rather than taken from this entry's suggestion:
+      those five are the variables that scripts invoked under doas read and never
+      assign themselves. Everything else OPERATOR.sh reads (APP_PORTS, BACKEND_PORT,
+      BRGEN_IP, DOMAIN_BACKEND, HYP_IP, STATE_FILE, TMPFILES) it declares itself, and
+      the deploy scripts export inside the doas'd command string rather than across
+      the boundary — no `VAR=x doas` form exists anywhere in OPENBSD/.
+      keepenv stays on the root->root rule deliberately: it grants an attacker
+      nothing they do not already have, and stripping it would remove the environment
+      the outer dev->root hop just established from under the inner one.
+      SEQUENCING, as this entry warned: the repo file IS the live config, so it
+      reaches vm23 on the next 5-minute tick with no deploy. Two things make that
+      survivable. install_doas_conf_from_repo already validates after installing and
+      rolls back from a timestamped backup — but it only checked `doas id`, which
+      passes with an empty or wrong allowlist, so the net covered lockout and not the
+      risk this change actually carries. validate_doas.ksh now also asserts that an
+      allowlisted variable still crosses (validate_doas_passes_env), so a wrong list
+      rolls itself back within the tick. And vps_safety_gate.rb fails if keepenv ever
+      returns to the dev rule or if I_UNDERSTAND_DNS_WIPE leaves the allowlist.
+      NOT DONE: `doas -C /etc/doas.conf -u dev id` on the VM. SSH from the authoring
+      environment is publickey-denied, so the on-box check this entry asks for has not
+      been run by a human or an agent. Worst case is fail-closed and loud —
+      OPERATOR.sh refuses --stage-1 and names the variable to set.
   - id: root_dot_sources_dev_owned_repo_every_5min
     tag: operator-priority
     summary: >
@@ -81,8 +96,19 @@ open:
       Consequence for remediation: install_doas_conf_from_repo then copies the
       REPO's doas.conf over /etc/doas.conf, so hand-editing /etc/doas.conf on
       the host is reverted on the next tick. Fix the repo file first.
-      Also validate_doas.ksh:30 writes /tmp/doas.conf.install.$$ (PID-predictable,
-      world-writable dir) and cp's it to /etc/doas.conf without -h/-P.
+      The staging-file half is FIXED 2026-08-01. validate_doas.ksh now mktemps
+      inside root-owned 0700 /var/backups/openbsd_setup instead of writing
+      /tmp/doas.conf.install.$$ and copying it over /etc/doas.conf — winning that
+      race let a local account choose the contents of doas.conf, i.e. root by
+      construction. Two more of the same shape were found and fixed in the sweep:
+      OPERATOR.sh's install_tracked_crontab staged root's crontab at
+      /tmp/root_crontab.$$ and fed it straight to crontab(1), and backup_priv.sh
+      wrote the whole encrypted ~/priv archive to a second-granularity predictable
+      /tmp path; both now mktemp in a root- or owner-only directory.
+      STILL OPEN: root continues to dot-source validate_doas.ksh and
+      stale_ci_cleanup.ksh from a dev-owned checkout every 5 minutes, which is the
+      root of the entry. Write access to either file is still root code execution
+      within one tick, independent of the staging path.
   - id: secrets_in_process_argv_and_world_readable_home
     tag: operator-priority
     summary: >
@@ -93,12 +119,18 @@ open:
       signed-cookie forgery. Compounded by vps_ci.sh:88 / RAILS/_runtime_gate.sh:71
       running `chmod o+x /home/dev` while OPERATOR.sh installs /home/dev/.zshrc
       at mode 644 with real keys in it. Move secrets to the sourced /etc/*.env.
-      Also vps_ci.sh:22-28 (ensure_ci_lock) runs, as root via `doas sh -c`,
-      `touch /var/tmp/pub4-ci.lock` then `chmod 666` on it — a fixed, predictable
-      path in a world-writable directory with no -h/-P, so a pre-planted symlink
-      redirects the root chmod onto an attacker-chosen file. PUB4_CI_LOCK is
-      env-overridable (vps_master_scan.sh:7). Move the lock to a root-owned dir
-      (e.g. /var/db/pub4/ci.lock) and drop the 666.
+      The CI-lock half is FIXED 2026-08-01. The lock lives in root-owned 0755
+      /var/db/pub4 via the one definition in OPENBSD/lib/ci_lock.sh, which all three
+      former copies (vps_ci.sh, vps_master_scan.sh, vps_weekly_integrity.sh) now
+      source; the mode dropped from 666 to 644, and a PUB4_CI_LOCK override pointing
+      outside that directory is refused with a message rather than obeyed. An
+      unprivileged account cannot create anything in a root-owned directory, so there
+      is no symlink for root to follow — the fix is the directory, not the flags. The
+      lock file itself is never unlinked on the way through, because a second holder
+      opening a fresh inode is the one thing a mutex exists to prevent.
+      The secrets-in-argv half is STILL OPEN: rc.d daemon_flags still carry
+      SECRET_KEY_BASE, MASTER_BRIDGE_TOKEN and the LLM keys into ksh argv, readable
+      by any local account via ps auxww.
   - id: committed_rails_master_key_public_repo
     tag: operator-priority
     summary: >
@@ -109,6 +141,18 @@ open:
       contains only secret_key_base, and production does not use it (MASTER runs
       SECRET_KEY_BASE_DUMMY=1; the Rails apps read SECRET_KEY_BASE from
       /etc/*.env) — but it must be untracked, rotated, and purged from history.
+      UNTRACKED 2026-08-02 in 139c907e6, operator-authorised. The key stays on disk
+      and `git check-ignore --no-index` confirms MASTER/.gitignore:1 now actually
+      applies, so `git add -A` cannot pull it back. Committed as its own scoped commit
+      after verifying the shared index held nothing else staged — this repository
+      shares one git index across concurrent agent worktrees, so a staged-but-
+      uncommitted deletion would have been the worse end state.
+      Three credentials.yml.enc remain tracked (MASTER/web, RAILS/amber,
+      RAILS/bsdports) and are left alone: ciphertext without a key, and amber and
+      bsdports never had one, which is the same pattern with only the decorative half
+      remaining.
+      STILL OPEN, and neither belongs to an agent: rotate secret_key_base, then purge
+      the blob from history — a force-push to a public repository.
   - id: brgen_allow_unauthenticated_access_is_a_noop
     tag: operator-priority
     summary: >
@@ -116,11 +160,23 @@ open:
       column, so in brgen allow_unauthenticated_access does nothing and
       resume_session mints a real User row for every anonymous visitor. Every
       "requires a session" control in brgen is therefore reachable by anyone.
-      Also a DoS: has_secure_password means each cookieless request costs a
-      bcrypt hash (measured 460ms at cost 12) plus a write under SQLite's single
-      writer — roughly 2 req/s saturates the 1-vCPU VM — and
-      Shared::PruneGuestUsersJob is never enqueued or scheduled anywhere, with
-      no index on users.guest, so the rows accumulate permanently.
+      STILL OPEN, and now documented as deliberate in the concern itself: guests
+      get a soft Current.user on purpose (use the product without signup) and
+      require_real_user is the identity gate. What is unresolved is that
+      allow_unauthenticated_access reads like a control and is a no-op, so an
+      author who writes it gets nothing and no warning.
+      The DoS half is CLOSED. Guest password digests are created at
+      BCrypt::Engine::MIN_COST (5ms) instead of the production cost 12 (measured
+      1,025ms on vm23's single core, hit by 38.9% of 275,334 logged brgen requests);
+      a guest password can never be used to sign in, so cost 4 is exactly as
+      unusable as cost 12.
+      The unbounded-growth half is CLOSED 2026-08-01: Shared::PruneGuestUsersJob is
+      scheduled daily at 3:45am in brgen and amber (both have the guest column;
+      bsdports does not), and migration 20260801160000 adds the
+      (guest, created_at) index its scan needs — without it the job was a full scan
+      of the largest table, 99.3% of which was throwaway guest rows (102,778
+      measured 2026-08-01). Covered by
+      brgen/test/jobs/prune_guest_users_job_test.rb.
 
   # --- RAILS audit 2026-07-26. The crash-level items from this pass are fixed
   # (see git log and the closed: entries below); what remains open here is
@@ -135,18 +191,46 @@ open:
       control location, amber archive copy), which is presumably why check-rails
       was not being run; those are fixed and the runner is now green. STILL OPEN
       below.
-      Three gates remain invoked by no runner, deploy script or CI entrypoint:
-      release, visual_contract, constitutional_scan. Nothing calls
-      gates/runner.rb --all. Worse, the whole design-craft stack
-      (layout_geometry, surface_schema, visual_quality, user_flow,
-      design_metrics, human_walkthrough, payment_honesty, guest_flow) warns
-      and returns when the app port is closed — i.e. always, in CI. This is
-      why the marketplace webhook routing bug survived: payment_honesty_gate
-      only greps routes.rb for the string /checkout|webhooks/.
-      Also: visual_contract_gate computes drift/a11y counts and never exits
-      non-zero; release_gate exits 0 when bundler is missing;
-      constitutional_scan_gate downgrades all findings to warnings;
-      generated_asset_gate compares a service-worker path no app uses.
+      SECOND PASS 2026-08-01 — the wiring half and all four named defects are
+      closed. What remains open is at the bottom.
+      Wiring: page_simulation, flow_journey, gate_mutation and deploy_drift are now
+      in check-rails source_gates. The reason they had been left out did not survive
+      measurement — all four together run in 1.4s off the deploy host, because each
+      degrades to its source half when no app is listening, and deploy_drift reports
+      INCONCLUSIVE rather than green. release, rendered_suite, visual_contract and
+      constitutional_scan run in a new deep tier (--profile=full or
+      CHECK_RAILS_DEEP=1) with its own 2400s timeout, since constitutional_scan
+      alone is four full MASTER scans (measured 1779s).
+      visual_contract_gate: grading extracted into VisualContractGate.grade and
+      graded three ways — a contract route answering 5xx is a hard failure, a11y
+      violations and severe console errors block under VISUAL_STRICT=1 (their live
+      counts have never been measured from this tree), pixel drift is reported and
+      blocks only against an explicit VISUAL_DRIFT_MAX_RATIO because the baseline is
+      the previous capture. Tested without Chrome.
+      release_gate: a missing Bundler no longer exits 0 on the whole gate. Two
+      thirds of it needs no Bundler — eight plain-ruby contract tests and four
+      in-process gate classes still run; only the per-app dartsass and importmap
+      steps are recorded as unchecked, and GATE_STRICT_INCONCLUSIVE=1 makes that
+      blocking.
+      constitutional_scan_gate: parses the violation count out of each scan and
+      compares it against a per-target ceiling in
+      RAILS/gates/data/constitutional_budget.yml (brgen 410, amber 214, bsdports 99,
+      shared 210, measured 2026-08-01), ratcheting down only, same contract as
+      MASTER's rake lint:spine. Chasing zero is still not the goal; adding findings
+      now fails. Verified end to end — all four at ceiling.
+      generated_asset_gate: the service-worker check compared app_dir/public/,
+      which no app has, so both File.file? guards were false and the check was
+      unreachable. It compares app/views/pwa/service-worker.js, where
+      tools/build_workbox.mjs actually writes.
+      Also fixed while in there: the three subprocess gates (release,
+      visual_contract, rails_runtime) are started with system() and do not inherit
+      runner.rb's Encoding.default_external, so under the C locale that
+      integrity_gate.rb deliberately uses they crashed with "invalid byte sequence
+      in US-ASCII" — reproduced in release.rb. All three now require
+      OPENBSD/lib/utf8 themselves.
+      STILL OPEN: the design-craft stack warns and returns when the app port is
+      closed, which off the deploy host is always. payment_honesty_gate still only
+      greps routes.rb for /checkout|webhooks/. Nothing calls gates/runner.rb --all.
   - id: rails_coverage_contract_is_tautological
     tag: operator-priority
     summary: >
@@ -155,19 +239,74 @@ open:
       Rails or call a method, so they pass against a body of `raise`. Real
       controller-test coverage: amber 30/31 missing, brgen 74/83, bsdports 11/12.
       Money and trust paths (stripe/vipps checkout, moderation_workflow,
-      trust_score, account_merger, identity_assurer, shared/sso_token) have
-      zero tests; sso_token also has no replay/nonce protection on its 120s token.
+      trust_score, account_merger, identity_assurer) have zero tests. STILL OPEN.
+      What changed 2026-08-01: the two contracts now say in their own headers that
+      they are apps.yml claim-checks and not coverage, and the real number is
+      recorded and ratcheted in RAILS/test/coverage_ratchet_test.rb — amber 1/30
+      controllers and 5/31 models, brgen 14/87 and 11/98, bsdports 2/11 and 1/13.
+      It fails if a count falls and equally if a count rises without the floor being
+      raised, so the gap is now a number that can only move one way instead of a
+      sentence in this file.
+      shared/sso_token is DONE 2026-08-01, both halves. It has 13 tests
+      (brgen/test/services/shared/sso_token_test.rb) and it is single-use: every
+      token carries a jti that verify claims in the app's cache before returning a
+      payload, so a captured SSO URL is no longer a working login for anyone holding
+      it for the rest of the 120s window. The nonce is app-scoped because the `app`
+      claim plus expected_app already means a brgen token cannot be consumed by
+      amber. NullStore is detected and replaced with a process-local claim rather
+      than trusted, because NullStore answers true to every write and would leave the
+      guard looking present and doing nothing. Tokens minted before jti existed have
+      none, cannot be forged without the secret, and are still accepted.
+      Worth knowing while reading that: nothing in this repository mints an SSO
+      token. The consume half is wired in all three apps and the MASTER side is not
+      here, so this hardened a dormant entry point.
   - id: rails_silent_wiring_breaks
     tag: agent-ignore
     summary: >
-      Non-raising but dead: pwa-standalone Stimulus controller referenced in
-      amber+bsdports layouts does not exist; offline-feed emitted by amber
-      item cards is brgen-only; submit->form-submit#lock and click->reply#toggle
-      target methods/controllers that do not exist (reply form is permanently
-      hidden); content_for :body_attrs is never yielded so notification badges
-      never clear; several Turbo broadcasts use implicit to_partial_path with
-      no matching partial; shared/prune_guest_users_job is never enqueued;
-      mailer.html.erb subject line has an || vs ?: precedence bug.
+      RESOLVED 2026-08-01, with a gate so the class cannot come back silently.
+      Each item and what it turned out to be:
+      pwa-standalone named no controller anywhere and data-pwa-key had no reader —
+      both implemented in shared/frontend/pwa_standalone_controller.js, which
+      stamps [data-pwa-display] and namespaces the install-prompt dismissal by
+      app key.
+      offline-feed was a brgen-local controller emitted by amber item cards, where
+      the importmap eager-loads only that app's own directory — moved to
+      shared/frontend and registered, with shared_wiring forbidding a local copy.
+      submit->form-submit#lock named a method nobody wrote AND sat on two forms
+      with no form-submit controller attached; lock/unlock exist now (deferred a
+      tick so the submitter's own name/value still reaches the request) and the
+      controller is attached to both.
+      click->reply#toggle no longer appears in any view.
+      content_for :body_attrs was never yielded, and could not have worked if it
+      had been: Stimulus resolves an action against the element and its ancestors,
+      and <body> is the push controller's ancestor, not its descendant. brgen's
+      layout yields it now and the two views set data-push-seen, which
+      push_controller reads on turbo:load — its element is data-turbo-permanent so
+      connect() never runs again.
+      The install-prompt partial renders in all three apps and NO app styled it:
+      the moment install_prompt_controller cleared [hidden] it appeared as
+      unstyled text in document flow. Styled in shared _shell_widgets.scss, hidden
+      entirely in standalone launches; all three application.css rebuilt.
+      Turbo broadcasts: worse than "several", and in two groups. Reachable and
+      wired properly — Tv::StreamChat and Tv::VideoNote (both needed target: as
+      well as partial:, and tv/videos/show.html.erb had the container but no
+      turbo_stream_from at all). Reachable but pointing at nothing — Reaction,
+      Playlist::TimestampedComment and SecurityAdvisory each broadcast to a stream
+      with no subscriber, no container and no partial, enqueueing a Solid Queue job
+      per write that raised MissingTemplate on a 1-vCPU box; removed, each with the
+      reason in place. RAILS/test/turbo_broadcast_contract_test.rb pins all of it.
+      prune_guest_users_job is scheduled daily in brgen and amber, with the
+      (guest, created_at) index it scans on (migration 20260801160000) and
+      brgen/test/jobs/prune_guest_users_job_test.rb over the behaviour.
+      The mailer precedence bug was already fixed.
+      NEW, found while checking the broadcasts: six Shared::* social models
+      (Post, Reaction, Follow, Notification, ChatMessage, ReviewCase) have no table
+      in ANY app schema, so they cannot be instantiated — Shared::Post.new raises
+      StatementInvalid. Shared::ReviewCasesController calls
+      Shared::ReviewCase.create! and is not routed, so this is unreachable rather
+      than a live 500. The broadcast contract test asserts the tables stay absent
+      and starts demanding partials the moment one appears. Deciding whether this
+      layer ships or goes is a product call, not a wiring fix.
 
 closed:
   - id: payment_webhooks_unverified

@@ -20,13 +20,9 @@ command -v deploy_status >/dev/null 2>&1 || deploy_status() { :; }
 export PUB4_CI_GUARD=1
 export PUB4_RAILS_ROOT=${PUB4_RAILS_ROOT:-$repo/RAILS}
 
-ensure_ci_lock() {
-  doas sh -c "
-    rm -f /var/tmp/pub4-ci.lock.holder 2>/dev/null || true
-    touch /var/tmp/pub4-ci.lock 2>/dev/null || true
-    chmod 666 /var/tmp/pub4-ci.lock 2>/dev/null || true
-  "
-}
+# Path and safe creation live in OPENBSD/lib/ci_lock.sh — the lock moved out of
+# world-writable /var/tmp, where root was chmod'ing a caller-chosen, symlinkable path.
+. "${repo}/OPENBSD/lib/ci_lock.sh"
 
 sync_ci_rails_root() {
   local mirror=/home/${app}/pub4-rails
@@ -83,7 +79,7 @@ cache_home=/home/${app}/.cache
 print "vps_ci: $app (sync + mutex + load gate)"
 deploy_status "$app" "sync tree"
 sync_from_repo
-ensure_ci_lock
+pub4_ensure_ci_lock >/dev/null
 ci_rails_root=/home/${app}/pub4-rails/RAILS
 doas chmod o+x /home/dev 2>/dev/null || true
 doas chmod -R a+rX "${repo}/MASTER/tools" 2>/dev/null || true

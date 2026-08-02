@@ -10,7 +10,10 @@ RUBY = Pub4::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
-  parser.on("--profile=PROFILE", "contributor (source gates) or operator (default)") { |value| profile = value }
+  parser.on("--profile=PROFILE",
+            "contributor (source gates), operator (default), or full (+ release/rendered/visual/scan)") do |value|
+    profile = value
+  end
 end.parse!
 
 runner = Pub4::CheckRunner.new(prefix: "deploy-rails", root: ROOT, timeout: STEP_TIMEOUT)
@@ -42,11 +45,48 @@ source_gates = [
   ["payment honesty", "payment_honesty"],
   # Design craft stack (P0–P5); GATE_AUTOFIX off in CI-like checks
   ["layout suite", "layout_suite"],
+  # Second wave of the same debt entry. These four were still invoked by nothing
+  # after the 2026-07-27 pass, and the reason given for leaving them out — cost —
+  # did not survive measurement: all four together run in 1.4s off the deploy
+  # host, because each degrades to its source half when no app is listening.
+  # deploy_drift reports INCONCLUSIVE rather than green, which is the point.
+  ["page sim", "page_simulation"],
+  ["flow journey", "flow_journey"],
+  ["gate mutation", "gate_mutation"],
+  ["deploy drift", "deploy_drift"],
 ]
 
 source_gates.each do |name, gate|
   env = name == "layout suite" ? { "GATE_AUTOFIX" => "0" } : {}
   failures << name.tr(" ", "_") unless runner.run(name, RUBY, GATES_RUNNER, gate, env: env)
+end
+
+# Gates that are real but too slow for every run, or need a browser and warm
+# apps. constitutional_scan alone is four full MASTER scans (~21 min measured
+# 2026-08-01), which is why it sat unwired instead of being wired badly.
+# --profile=full is where the cost is acceptable; CHECK_RAILS_DEEP=1 opts in
+# from anywhere.
+deep_gates = [
+  ["release", "release"],
+  ["rendered suite", "rendered_suite"],
+  ["visual contract", "visual_contract"],
+  ["constitutional scan", "constitutional_scan"],
+]
+
+deep = profile == "full" || %w[1 true yes on].include?(ENV["CHECK_RAILS_DEEP"].to_s.strip.downcase)
+if deep
+  # CheckRunner's timeout is per-runner, and the default 240s would kill
+  # constitutional_scan a fifth of the way in — a timeout kill reads as a gate
+  # failure, which is worse than not running it.
+  deep_runner = Pub4::CheckRunner.new(
+    prefix: "deploy-rails", root: ROOT,
+    timeout: Integer(ENV.fetch("DEPLOY_DEEP_CHECK_TIMEOUT", "2400"))
+  )
+  deep_gates.each do |name, gate|
+    failures << name.tr(" ", "_") unless deep_runner.run(name, RUBY, GATES_RUNNER, gate, env: { "GATE_AUTOFIX" => "0" })
+  end
+else
+  deep_gates.each { |name, _| puts "deploy-rails: #{name.ljust(18)} skip — --profile=full or CHECK_RAILS_DEEP=1" }
 end
 
 # Static family contracts (no app boot / Ruby 3.4 required).

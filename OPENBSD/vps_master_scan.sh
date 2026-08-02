@@ -4,7 +4,10 @@
 set -euo pipefail
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
-lock=${PUB4_CI_LOCK:-/var/tmp/pub4-ci.lock}
+# Was `lock=${PUB4_CI_LOCK:-/var/tmp/pub4-ci.lock}`, then root chmod 666'ed exactly
+# that caller-chosen path in a world-writable directory. The helper keeps the lock
+# in root-owned /var/db/pub4 and ignores an override pointing anywhere else.
+. "${repo}/OPENBSD/lib/ci_lock.sh"
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
 load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
@@ -13,11 +16,7 @@ if awk -v l="${load:-99}" -v m="$max_load" 'BEGIN{exit !(l>m)}'; then
   exit 1
 fi
 
-doas sh -c "
-  rm -f ${lock}.holder 2>/dev/null || true
-  touch $lock 2>/dev/null || true
-  chmod 666 $lock 2>/dev/null || true
-" 2>/dev/null || true
+lock=$(pub4_ensure_ci_lock)
 
 cd "$repo/MASTER"
 print "vps_master_scan: lock $lock $*"

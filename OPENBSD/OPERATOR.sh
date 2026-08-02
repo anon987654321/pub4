@@ -108,7 +108,14 @@ install_tracked_crontab() {
   typeset tracked=${SCRIPT_DIR}/etc/crontab.vm23
   [[ -f $tracked ]] || return 0
 
-  typeset root_cron=/tmp/root_crontab.$$
+  # /tmp/root_crontab.$$ was a PID-predictable name in a world-writable directory
+  # that root wrote and then fed straight to crontab(1) — the same shape as the
+  # doas.conf staging file in validate_doas.ksh, and with root's crontab as the
+  # payload. A root-owned 0700 directory has no symlink for root to follow.
+  typeset cron_dir=/var/db/pub4
+  mkdir -p $cron_dir && chmod 700 $cron_dir
+  typeset root_cron
+  root_cron=$(mktemp "${cron_dir}/root_crontab.XXXXXXXXXX") || return 1
   TMPFILES+=($root_cron)
   crontab -l 2>/dev/null > $root_cron || :
 

@@ -3,7 +3,9 @@
 set -eu
 
 ROOT="${PUB4_ROOT:-/home/dev/pub4}"
-LOCK=/var/tmp/pub4-ci.lock
+# One definition of the lock path; it moved out of world-writable /var/tmp.
+. "${ROOT}/OPENBSD/lib/ci_lock.sh"
+LOCK=$(pub4_ci_lock_path)
 LOG=/var/log/pub4/weekly_integrity.log
 
 mkdir -p /var/log/pub4 2>/dev/null || doas mkdir -p /var/log/pub4

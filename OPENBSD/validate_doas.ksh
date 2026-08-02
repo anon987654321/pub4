@@ -2,8 +2,30 @@
 # Install /etc/doas.conf from repo with trailing-newline fix and dev-user validation.
 # Source for functions, or run: ksh validate_doas.ksh check|install SRC [tag]
 
-validate_doas_works() {
+# A canary from doas.conf's setenv allowlist. The dev rule dropped `keepenv` for a
+# `setenv { … }` list, and the old check could not see the difference: `doas id` keeps
+# working perfectly with an empty or wrong allowlist, so the rollback net covered the
+# lockout case and not the case the change actually risks. A lost variable would then
+# surface as OPERATOR.sh refusing --stage-1 with a confusing "rerun with
+# I_UNDERSTAND_DNS_WIPE=1" — half an hour after the config that broke it landed.
+DOAS_ENV_CANARY=${DOAS_ENV_CANARY:-I_UNDERSTAND_DNS_WIPE}
+
+validate_doas_can_reach_root() {
   su dev -c 'doas id' 2>/dev/null | grep -q 'uid=0(root)'
+}
+
+validate_doas_passes_env() {
+  su dev -c "${DOAS_ENV_CANARY}=canary doas printenv ${DOAS_ENV_CANARY}" 2>/dev/null |
+    grep -q '^canary$'
+}
+
+validate_doas_works() {
+  validate_doas_can_reach_root || return 1
+  validate_doas_passes_env || {
+    logger -t doas-guard "doas.conf reaches root but drops ${DOAS_ENV_CANARY} — setenv allowlist is wrong"
+    return 1
+  }
+  return 0
 }
 
 ensure_doas_trailing_newline() {
@@ -28,17 +50,26 @@ install_doas_conf_from_repo() {
   typeset tag=${2:-doas-guard}
   typeset backup=""
   typeset bakdir=/var/backups/openbsd_setup
-  typeset tmp=/tmp/doas.conf.install.$$
+  typeset tmp=""
 
   [ -r "$src" ] || return 0
   [ -w /etc/doas.conf ] || return 0
   cmp -s /etc/doas.conf "$src" 2>/dev/null && return 0
 
   mkdir -p "$bakdir" 2>/dev/null || return 1
+  chmod 700 "$bakdir" 2>/dev/null || true
   backup="$bakdir/doas.conf.$(date +%s).bak"
   [ -f /etc/doas.conf ] && cp /etc/doas.conf "$backup"
 
-  cp "$src" "$tmp" || return 1
+  # The staging file was /tmp/doas.conf.install.$$ — a PID-predictable name in a
+  # world-writable directory, written and copied by root with no -h/-P
+  # (OPENBSD/data/debt.yml: root_dot_sources_dev_owned_repo_every_5min). Winning that
+  # race let a local account decide what root wrote into /etc/doas.conf, which is
+  # root code execution by definition. mktemp in the root-owned 0700 backup
+  # directory removes the vector rather than trying to outrun it.
+  tmp=$(mktemp "$bakdir/doas.conf.install.XXXXXXXXXX") || return 1
+
+  cp "$src" "$tmp" || { rm -f "$tmp"; return 1; }
   ensure_doas_trailing_newline "$tmp" || { rm -f "$tmp"; return 1; }
   cp "$tmp" /etc/doas.conf || { rm -f "$tmp"; return 1; }
   rm -f "$tmp"
