@@ -30,7 +30,29 @@ window._nudgeLoop = (() => {
     'a moth crashed my dreams last night. lovely guest. terrible scheduler.',
     'imagine being a barnacle. just vibing on a whale for forty years. legend.'
   ];
-  const RESEARCH_NUDGES = new URLSearchParams(window.location.search).get('research_nudge') === '1';
+  const _params = new URLSearchParams(window.location.search);
+  const RESEARCH_NUDGES = _params.get('research_nudge') === '1';
+  // Off unless asked for. This loop spoke one of the lines above every 45s with
+  // nothing prompting it, which is what "it keeps saying random nonsensical
+  // facts" was: the moon being a committed pebble is not an answer to anything.
+  //
+  // It also read as latency. ttsTick() sets tts.playing the moment it picks an
+  // utterance, so a nudge owns the channel for its whole synthesis + playback
+  // window (~1-3s of Edge round-trip on an idle box, measured 2026-08-02, plus
+  // ~6-8s of speech) and a reply arriving inside that window cannot start. And
+  // it is not all cache hits on repeat: _quirkifyTts stirs randomised
+  // disfluencies into roughly two of every five renderings, and the cache key
+  // is the decorated string, so those miss IndexedDB and synthesise afresh.
+  //
+  // Fourth instance of the unprompted-blurting class in this file's history
+  // (spoken "scanning" filler, the "still here" idle nudge, the
+  // STT-hears-its-own-TTS echo loop); the previous three were silenced too.
+  function nudgesEnabled() {
+    if (_params.get('nudges') === '1') return true;
+    if (_params.get('nudges') === '0') return false;
+    try { return localStorage.getItem('master:idle-nudges') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:pref_read", err); }
+    return false;
+  }
   const NUDGE_INTERVAL_MS = 45000;
   let last = 0;
   const inputEl = () => document.getElementById('zin');
@@ -55,7 +77,7 @@ window._nudgeLoop = (() => {
       }
     } catch (err) { window.MASTER_LOG?.warn?.("face_loops_nudge:refill_research", err); }
   }
-  if (RESEARCH_NUDGES) {
+  if (RESEARCH_NUDGES && nudgesEnabled()) {
     _refillResearch();
     setInterval(_refillResearch, 600000);
   }
@@ -63,6 +85,10 @@ window._nudgeLoop = (() => {
     if (RESEARCH_NUDGES && _researchCache.length && Math.random() < 0.15) return _researchCache.shift();
     return NUDGES[Math.floor(Math.random() * NUDGES.length)];
   }
+  // Not merely `if (!nudgesEnabled()) return` inside the tick: with the pref off
+  // there is no timer at all, so the default page never wakes up to consider
+  // speaking unprompted.
+  if (!nudgesEnabled()) return { force() {} };
   setInterval(() => {
     if (!eligible()) return;
     if (!F_FACE_NUDGE_TTS?.queue) return;

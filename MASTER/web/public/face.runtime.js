@@ -276,7 +276,6 @@ function nearestRateIndex(rate) {
   return best;
 }
 
-
 const GOLD = new Color(1, 1, 1);
 const TINT = {
   idle: GOLD, claude: GOLD, deepseek: GOLD, gemini: GOLD, gpt: GOLD,
@@ -1273,8 +1272,6 @@ const PERSONA_TINT = {
   Mentor: new Color(1, 1, 1)
 };
 
-
-
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
 function fadeColorTo(c) { colorTarget.copy(c); }
@@ -1335,7 +1332,6 @@ const _photoEl = document.getElementById('photo');
 if (_photoEl) _photoEl.addEventListener('change', () => {
   if (_photoEl.files[0]) { morphCurrent = 0; morphTarget = 1.0; }
 });
-
 
 let lastT = performance.now();
 let _attnEyeClose = 0;
@@ -2820,12 +2816,18 @@ function dropQueuedSpeech(text) {
   if (index >= 0) tts.queue.splice(index, 1);
 }
 
+// Errors first, then the thing the visitor actually asked for, then filler.
+// The nudge lane used to outrank `response`, so an idle-loop line queued while
+// a reply was still waiting on synthesis was spoken *instead of* the reply,
+// first — literally answering a question with "the moon is just a really
+// committed pebble". Filler is by definition the most droppable thing here, so
+// it drains last.
 function nextQueuedSpeech() {
-  return tts.lanes.error[0] || tts.lanes.nudge[0] || tts.lanes.response[0] || tts.queue[0];
+  return tts.lanes.error[0] || tts.lanes.response[0] || tts.lanes.nudge[0] || tts.queue[0];
 }
 
 function dequeueTtsLane() {
-  const text = tts.lanes.error.shift() || tts.lanes.nudge.shift() || tts.lanes.response.shift();
+  const text = tts.lanes.error.shift() || tts.lanes.response.shift() || tts.lanes.nudge.shift();
   if (text) {
     dropQueuedSpeech(text);
     return text;
@@ -2863,6 +2865,16 @@ function enqueueSpeech(text, opts = {}) {
   tts.resumeTime = null;
   tts.resumeWordIndex = null;
   const lane = opts.priority === 'error' ? 'error' : (opts.quirky || opts.nudge ? 'nudge' : 'response');
+  // A real reply makes every queued idle line stale — nobody wants yesterday's
+  // filler read out after their answer. Reordering the lanes alone would only
+  // defer them, not drop them, so the backlog would still be spoken eventually.
+  if (lane === 'response' && tts.lanes.nudge.length) {
+    tts.lanes.nudge.splice(0).forEach((stale) => {
+      dropQueuedSpeech(stale);
+      tts.prefetch.delete(stale);
+      tts.meta.delete(stale);
+    });
+  }
   tts.lanes[lane].push(decorated);
   tts.queue.push(decorated);
   nodImpulse += 0.022;
@@ -3279,6 +3291,12 @@ function ttsSkipHard() {
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
+  // The lanes are the queue that dequeueTtsLane() actually reads; tts.queue is
+  // the flat mirror. Clearing only the mirror left every pending utterance
+  // sitting in tts.lanes.*, so the next tick pulled it straight back out and
+  // Escape/mute/cancel did not cancel anything — it paused the current chunk
+  // and then carried on through the backlog.
+  tts.lanes.error.length = 0; tts.lanes.nudge.length = 0; tts.lanes.response.length = 0;
   tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
   tts.resumeTime = null; tts.resumeWordIndex = null;
   if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }

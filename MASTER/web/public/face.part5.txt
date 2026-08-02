@@ -34,6 +34,12 @@ function ttsSkipHard() {
   tts.outputGain = null;
   stopVisemeAnim();
   tts.visemePlan = null;
+  // The lanes are the queue that dequeueTtsLane() actually reads; tts.queue is
+  // the flat mirror. Clearing only the mirror left every pending utterance
+  // sitting in tts.lanes.*, so the next tick pulled it straight back out and
+  // Escape/mute/cancel did not cancel anything — it paused the current chunk
+  // and then carried on through the backlog.
+  tts.lanes.error.length = 0; tts.lanes.nudge.length = 0; tts.lanes.response.length = 0;
   tts.queue.length = 0; tts.prefetch.clear(); tts.attempts.clear(); tts.playing = false; tts.current = null;
   tts.resumeTime = null; tts.resumeWordIndex = null;
   if (tts.retryTimer) { clearTimeout(tts.retryTimer); tts.retryTimer = null; }
