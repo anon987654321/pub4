@@ -100,17 +100,131 @@ module DillaHarmonyLead
     DillaHarmony.midi_to_hz(midi)
   end
 
-  # Chord → scale degrees (tonal-style heuristics; keeps arps in key with pads).
+  # Chord → scale degrees the lead may use, 0-11 from the chord root.
+  #
+  # This decides every note every lead layer plays: dilla.rb's own
+  # chord_scale_semitones delegates here, and scale_tones_for_chord builds the
+  # melodic lead, the scale arp and the harmony arp out of the result. It was
+  # wrong on the single most common chord in the catalogue.
+  #
+  # The old version tested `name.match?(/7\z/)` for dominant BEFORE it tested
+  # for major, against the whole symbol including its root letter. "cmaj7" ends
+  # in a 7, so every major-seventh chord matched the dominant branch and never
+  # reached the major one:
+  #
+  #   Cmaj7 -> [0,2,4,5,7,9,10]   Mixolydian. Flat 7.
+  #
+  # That hands the lead a Bb to play over a Cmaj7 whose defining tone is B --
+  # a minor second on the chord's most exposed note, on every maj7 in every
+  # progression. Minor chords took the earlier branch and were fine, which is
+  # exactly the shape of the complaint: the pads were right and the lead was
+  # fighting them.
+  #
+  # Dominant 13ths failed the other way. "c13" matches neither /7\z/ nor "maj",
+  # so it fell through to the Ionian default and put a natural 7 over a chord
+  # whose seventh is flat.
+  #
+  # Two changes stop both. The root letter is stripped first, so the suffix is
+  # matched on its own and "maj7" can never look like a dominant. And the order
+  # runs most-specific to least, with the fallthrough last rather than a
+  # dominant rule sitting in front of it.
+  #
+  # The 4th is omitted from the major and dominant sets. The perfect 11th is the
+  # avoid note over both -- it sits a semitone above the major 3rd and buries it
+  # -- and standard practice is to drop it or sharpen it to #11. Minor keeps its
+  # 4th, where the 11th is consonant and is half of what makes m11 voicings
+  # sound the way they do. Chords that ask for the bright colour (lyd, maj9,
+  # maj13) get the #11 instead of nothing.
+  DORIAN      = [0, 2, 3, 5, 7, 9, 10].freeze
+  AEOLIAN     = [0, 2, 3, 5, 7, 8, 10].freeze
+  LOCRIAN     = [0, 2, 3, 5, 6, 8, 10].freeze
+  PHRYGIAN    = [0, 1, 3, 5, 7, 8, 10].freeze
+  LYDIAN      = [0, 2, 4, 6, 7, 9, 11].freeze
+  IONIAN_NO4  = [0, 2, 4, 7, 9, 11].freeze
+  MIXO_NO4    = [0, 2, 4, 7, 9, 10].freeze
+
+  def chord_quality(name)
+    # Slash bass says nothing about the scale -- Bbm/E is still minor -- and the
+    # root letter is what made "maj7" testable as a dominant.
+    normalized_symbol(name).sub(%r{/.*\z}, "").sub(/\A[a-g][#b]?/, "")
+  end
+
   def chord_scale_semitones(chord)
-    name = normalized_symbol(chord[:name])
-    return [0, 2, 3, 5, 7, 9, 10] if name.include?("dor") || name.include?("m11") || name.include?("m9")
-    return [0, 2, 3, 5, 7, 8, 10] if name.match?(/\bm\d/) || name.include?("min") ||
-                                      (name.include?("m") && !name.include?("maj") && !name.include?("dim"))
-    return [0, 2, 3, 5, 6, 8, 10] if name.include?("dim") || name.include?("m7b5")
-    return [0, 1, 3, 5, 7, 8, 10] if name.include?("phry")
-    return [0, 2, 4, 6, 7, 9, 11] if name.include?("lyd") || name.include?("maj13") || name.include?("maj9")
-    return [0, 2, 4, 5, 7, 9, 10] if name.match?(/7\z/) || name.include?("dom") || name.include?("mix")
-    return [0, 2, 4, 5, 7, 9, 11] if name.include?("maj") || name.include?("add9") || name.match?(/\A[a-g][#b]?(6|)\z/)
-    [0, 2, 4, 5, 7, 9, 11]
+    resolve_avoid_notes(scale_from_symbol(chord), chord)
+  end
+
+  def scale_from_symbol(chord)
+    q = chord_quality(chord[:name])
+
+    return LOCRIAN if q.include?("dim") || q.include?("m7b5") || q.include?("o7")
+    return PHRYGIAN if q.include?("phry")
+    # Minor before anything that could match a digit. "maj" is excluded so
+    # "maj7" cannot be read as m-something.
+    # Dorian is the default for minor, not Aeolian, and the clash check is what
+    # settled it rather than taste. Aeolian's b6 sits a semitone above the 5th,
+    # so over Am7 the lead gets an F to play against the chord's E -- the same
+    # avoid-note shape that made maj7 fail, one degree along. Dorian's natural 6
+    # has no note above a chord tone at all, and it is the minor sound this
+    # idiom actually uses. AEOLIAN is kept for a chord that asks for the b6.
+    if q.include?("aeol") || q.include?("nat_minor")
+      return AEOLIAN
+    elsif q.start_with?("dor") || (q.start_with?("m") && !q.start_with?("maj")) ||
+          q.include?("min") || q.start_with?("-")
+      return DORIAN
+    end
+    return LYDIAN if q.include?("lyd") || q.include?("maj9") || q.include?("maj13") || q.include?("#11")
+    return IONIAN_NO4 if q.include?("maj") || q.include?("add9") || q.match?(/\A6?\z/)
+    return MIXO_NO4 if q.match?(/\A(7|9|11|13)/) || q.include?("dom") || q.include?("mix") || q.include?("alt")
+
+    IONIAN_NO4
+  end
+
+  # The chord's own voicing, as semitones from its root.
+  #
+  # The name is a label and the voicing is the fact. Bm7b5 as registered here
+  # sounds a b9 that its symbol never mentions, and a scale chosen from the
+  # symbol alone cannot know that.
+  def voiced_semitones(chord)
+    hz = chord[:hz]
+    return [] unless hz.is_a?(Array) && hz.any?
+
+    pc = root_pitch_class(chord[:name])
+    return [] unless pc
+
+    hz.map { |h| ((69 + (12 * Math.log2(h / 440.0))).round - pc) % 12 }.uniq
+  end
+
+  LETTER_PC = { "c" => 0, "d" => 2, "e" => 4, "f" => 5, "g" => 7, "a" => 9, "b" => 11 }.freeze
+
+  def root_pitch_class(name)
+    # Before the slash: an upper structure over a pedal is still rooted on the
+    # upper structure, which is what chord_root_pc in dilla.rb decides too.
+    m = normalized_symbol(name).split("/").first.to_s.match(/\A([a-g])([#b]?)/)
+    return unless m && (base = LETTER_PC[m[1]])
+
+    (base + (m[2] == "#" ? 1 : 0) - (m[2] == "b" ? 1 : 0)) % 12
+  end
+
+  # Drop scale degrees that sit a semitone ABOVE a note the chord is sounding.
+  #
+  # That interval is the one that reads as a mistake: the scale tone buries the
+  # chord tone under it and the ear hears the clash rather than the colour. A
+  # semitone BELOW is a leading tone and is left alone, because approaching a
+  # chord tone from underneath is how melodies work.
+  #
+  # Doing this against the voicing rather than the symbol is what catches the
+  # three chords the symbol-driven table still got wrong -- C7b9, E7b9 and
+  # Bm7b5 all voice a b9 and were being handed the natural 9 above it.
+  #
+  # Only ever removes, never substitutes, and refuses to strip a scale below
+  # four notes: a lead with nothing left to play is worse than one avoid note.
+  MIN_SCALE_TONES = 4
+
+  def resolve_avoid_notes(scale, chord)
+    tones = voiced_semitones(chord)
+    return scale if tones.empty?
+
+    kept = scale.reject { |s| !tones.include?(s) && tones.include?((s - 1) % 12) }
+    kept.length >= MIN_SCALE_TONES ? kept : scale
   end
 end
