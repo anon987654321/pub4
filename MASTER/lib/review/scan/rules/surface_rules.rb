@@ -441,7 +441,7 @@ module Master
           next [] unless src.match?(/Controller\s+extends|export default class/)
           lines = src.lines.size
           next [] if lines <= 200
-          [finding(line: 1, message: "Stimulus controller #{lines} lines — split targets/actions (progressive enhancement)")]
+          [finding(line: 1, message: "Stimulus controller #{lines} lines — split at 200 (style.yml); move targets/actions out (progressive enhancement)")]
         end
 
         RuleDSL.rule :STIMULUS_PROGRESSIVE,

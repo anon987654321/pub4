@@ -97,14 +97,9 @@ module Master
           [finding(line: 1, message: "JS file #{line_count} lines — split at 300; extract cohesive modules")]
         end
 
-        RuleDSL.rule :STIMULUS_CONTROLLER_SIZE,
-          severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
-          description: "Stimulus controllers over 200 lines — split responsibilities" do |src, path:|
-          next [] unless path.to_s.match?(/_controller\.js\z/)
-          line_count = src.lines.size
-          next [] if line_count <= 200
-          [finding(line: 1, message: "Stimulus controller #{line_count} lines — split at 200 per style.yml")]
-        end
+        # STIMULUS_CONTROLLER_SIZE lives in surface_rules.rb with the rest of the
+        # STIMULUS_* family; the copy that stood here was a duplicate registration of
+        # the same id (SINGULARITY) and double-counted every hit — test_rule_ids_unique.
 
       # A02 MAGIC_COLOR — raw color values must reference design tokens (MAGIC_COLOR).
         RuleDSL.rule :MAGIC_COLOR,
