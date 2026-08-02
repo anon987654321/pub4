@@ -651,6 +651,14 @@ bootstrap_rails_app() {
   secret=${_secret_lines[-1]}
   [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
   [[ -f /etc/${app}.env ]] || print -r -- "SECRET_KEY_BASE=${secret}" > /etc/${app}.env
+  # root:<app> 640, not root:wheel: the rc.d script sources /etc/<app>.env at
+  # runtime *as the app user* (su -l resets the environment, so the secret cannot
+  # be interpolated into daemon_flags without landing in falcon's ps(1) argv —
+  # readable by any local account; see rc.d/<app> and debt.yml
+  # secrets_in_process_argv). Group-<app> lets only that app (and root) read it,
+  # so a foothold in another app user — or dev, which is in wheel — can no longer
+  # read this secret at rest.
+  chown root:${app} /etc/${app}.env 2>/dev/null || true
   chmod 640 /etc/${app}.env 2>/dev/null || true
 
   typeset svc=$app
