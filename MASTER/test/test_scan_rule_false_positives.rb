@@ -89,4 +89,66 @@ class TestScanRuleFalsePositives < Minitest::Test
   def test_the_rules_own_file_is_exempt
     assert_empty findings(:STALE_NAMESPACE, "x = Master::CLI\n", path: "lib/review/scan/rules/naming_rules.rb")
   end
+
+  # --- DEAD_CODE ----------------------------------------------------------
+  # The detector matched a bare \b(return|raise)\b, so every guard clause read as
+  # dead code. It must fire only on an unconditional terminator with reachable
+  # code after it at the same or deeper indent.
+
+  def test_dead_code_ignores_guard_clauses
+    [
+      "def a\n  return value if ready?\n  work\nend\n",
+      "def a\n  raise Boom unless ok\n  work\nend\n",
+      "def a\n  index = return_value\n  index\nend\n",
+      "def a\n  cond ? return : work\n  more\nend\n",
+      "def a\n  return a\nend\n\ndef b\n  work\nend\n",
+    ].each do |source|
+      assert_empty findings(:DEAD_CODE, source), "#{source.inspect} is not unreachable code"
+    end
+  end
+
+  def test_dead_code_still_catches_a_real_unreachable_line
+    refute_empty findings(:DEAD_CODE, "def a\n  return\n  work\nend\n")
+  end
+
+  # --- MAGIC_COLOR --------------------------------------------------------
+  # Token definitions hold raw values; usage cites the token. A documented parody
+  # opts a whole file out; one line opts out inline. It must still catch raw usage.
+
+  def test_magic_color_ignores_definitions_and_intentional_markers
+    [
+      ["  --accent: #7c6fd6;\n", "app/x.scss"],
+      ["  $brand: #7c6fd6;\n", "app/x.scss"],
+      ["  background: #131921; // scan: intentional\n", "app/x.scss"],
+      ["/* scan: intentional-colors */\n  color: #131921;\n", "app/x.scss"],
+    ].each do |source, path|
+      assert_empty findings(:MAGIC_COLOR, source, path: path), "#{source.inspect} is intentional or a definition"
+    end
+  end
+
+  def test_magic_color_still_catches_a_raw_usage
+    refute_empty findings(:MAGIC_COLOR, "  color: #7c6fd6;\n", path: "app/x.scss")
+  end
+
+  def test_magic_color_is_registered_once
+    count = scanner.rules.count { |rule| rule.id.to_s == "MAGIC_COLOR" }
+    assert_equal 1, count, "MAGIC_COLOR must be one rule, not #{count} (SINGULARITY: unique by id)"
+  end
+
+  # --- veto unsafe_calls --------------------------------------------------
+  # Interpolation is the arbitrary-code-execution risk. The arg-array form is the
+  # prescribed FIX and must not be vetoed; an interpolated shell string must be.
+
+  def test_veto_unsafe_calls_allows_the_prescribed_arg_array_form
+    [
+      %(ok = system(RbConfig.ruby, script, "--input", input)\n),
+      %(out, status = Open3.capture2e("git", "-C", root, "status")\n),
+    ].each do |source|
+      assert_empty findings(:veto_patterns, source), "#{source.inspect} is the safe arg-array form"
+    end
+  end
+
+  def test_veto_unsafe_calls_still_catches_interpolated_shell_out
+    refute_empty findings(:veto_patterns, %(system("rm -rf \#{directory}")\n))
+  end
 end

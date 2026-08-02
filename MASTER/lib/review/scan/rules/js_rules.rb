@@ -112,10 +112,23 @@ module Master
           description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
           next [] if path.to_s.match?(%r{/spec/|/test/})
           next [] if File.basename(path.to_s).match?(/\Aface\.part\d+\.txt\z/)
-          findings = scan_lines(src, /#[0-9a-fA-F]{3,6}\b/, message: "raw hex color — use CSS custom property or design token")
-          findings += scan_lines(src, /\brgba?\s*\(/, message: "raw rgb() color — use CSS custom property or design token")
-          findings += scan_lines(src, /\bhsla?\s*\(/, message: "raw hsl() color — use CSS custom property or design token")
-          findings
+          # A documented brand parody or a token source declares raw colors
+          # intentional with `scan: intentional-colors` in its head; one line opts
+          # out with an inline `scan: intentional`. A `--x:`/`$x:` line is a token
+          # definition — where a raw value belongs — not a usage that should cite one.
+          next [] if src.lines.first(20).join.match?(/scan:\s*intentional-colors/)
+
+          definition = /\A\s*(--[\w-]+|\$[\w-]+)\s*:/
+          messages = {
+            /#[0-9a-fA-F]{3,6}\b/ => "raw hex color — use CSS custom property or design token",
+            /\brgba?\s*\(/ => "raw rgb() color — use CSS custom property or design token",
+            /\bhsla?\s*\(/ => "raw hsl() color — use CSS custom property or design token",
+          }
+          src.each_line.with_index(1).flat_map do |line, number|
+            next [] if line.match?(/scan:\s*intentional/) || line.match?(definition)
+
+            messages.filter_map { |pattern, message| finding(line: number, message:) if line.match?(pattern) }
+          end
         end
 
       # A11 OPTIONAL_CHAINING_JS — && guard chains in JavaScript (OPTIONAL_CHAINING).

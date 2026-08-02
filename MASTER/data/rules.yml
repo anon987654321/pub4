@@ -204,7 +204,12 @@ veto_patterns:
     apply: complete_or_track
     violates_law: ROBUSTNESS
   unsafe_calls:
-    detect: system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{
+    # Interpolation is the arbitrary-code-execution risk. `system("cmd", arg, arg)`
+    # is the safe arg-array form style.yml prescribes as the FIX for this, so
+    # vetoing it too was a contradiction and the source's biggest false positive.
+    # Every clause now requires a `#{...}` reaching a shell; the backtick clause is
+    # new (the old regex missed `\#{x}` entirely) and Open3 now covers popen too.
+    detect: system\s*\(\s*["'][^"']*#\{|exec\s*\(\s*["'][^"']*#\{|%x[\{(\[<][^)}\]>]*#\{|`[^`]*#\{|Open3\.\w+\s*\([^)]*#\{
     apply: add_safe_nav
     violates_law: ROBUSTNESS
   race_conditions:

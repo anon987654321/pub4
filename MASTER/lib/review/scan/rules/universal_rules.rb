@@ -143,13 +143,9 @@ module Master
             message: "hardcoded secret — move to environment variable or secrets manager")
         end
 
-        RuleDSL.rule :MAGIC_COLOR,
-          severity: :warning, tags: %i[MAINTAINABILITY],
-          description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
-          next [] if File.basename(path.to_s).match?(/\Aface\.part\d+\.txt\z/)
-          scan_lines(src, /#[0-9a-fA-F]{3,6}\b|rgb\(|rgba\(|hsl\(/,
-            message: "raw color value — reference a CSS custom property or design token")
-        end
+# MAGIC_COLOR lives once, in js_rules.rb (applies_to css/scss/html/js — where colors
+# live). A second copy here with no applies_to double-counted every css/scss color
+# under the same id (a SINGULARITY violation) and added no coverage worth keeping.
 
       # `loop do` is legitimate for event loops and daemons. Only flag `retry`
       # without an obvious cap, and bare `while true` in library code.
