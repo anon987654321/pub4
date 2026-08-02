@@ -16,7 +16,7 @@
         class: "feed-tab#{" active" if local_assigns[:active].to_s == "cart"}",
         role: "tab",
         "aria-selected": local_assigns[:active].to_s == "cart" %>
-  <%= link_to t("storefront.sell"), new_marketplace_listing_path,
+  <%= link_to t("storefront.sell"), new_listing_path,
         class: "feed-tab",
         role: "tab" %>
 </nav>

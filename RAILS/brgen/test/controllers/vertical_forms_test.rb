@@ -23,7 +23,7 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     sign_in_as(@owner)
     host! "playlist.brgen.no"
 
-    get new_playlist_set_path
+    get playlist.new_set_path
     assert_response :success
     assert_match playlist.sets_path, response.body
 
@@ -47,11 +47,11 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     sign_in_as(@owner)
     host! "tv.brgen.no"
 
-    get new_tv_channel_video_path(channel)
+    get tv.new_channel_video_path(channel)
     assert_response :success
     assert_match tv.channel_videos_path(channel), response.body
 
-    get new_tv_channel_live_stream_path(channel)
+    get tv.new_channel_live_stream_path(channel)
     assert_response :success
     assert_difference -> { Tv::LiveStream.count }, 1 do
       post tv.channel_live_streams_path(channel), params: { tv_live_stream: { title: "Contract stream" } }
@@ -60,7 +60,7 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     stranger = User.strict_loading(false).create!(email_address: "stranger@brgen.no", password: "password123", guest: false)
     sign_in_as(stranger)
     host! "tv.brgen.no"
-    get new_tv_channel_video_path(channel)
+    get tv.new_channel_video_path(channel)
     assert_response :not_found
   end
 

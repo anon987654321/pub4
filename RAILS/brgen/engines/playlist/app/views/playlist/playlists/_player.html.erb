@@ -36,7 +36,7 @@
       <h1 class="playlist-top-title" itemprop="name"><%= heading %></h1>
     </div>
     <% if authenticated? %>
-      <%= link_to "New", new_playlist_playlist_path, class: "playlist-top-action" %>
+      <%= link_to "New", new_playlist_path, class: "playlist-top-action" %>
     <% end %>
   </header>
 <% end %>

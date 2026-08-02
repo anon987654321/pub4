@@ -6,7 +6,7 @@
     <h1><%= t("playlist.sets") %></h1>
   </div>
   <nav role="navigation" aria-label="Playlist set actions">
-    <%= link_to "New set", new_playlist_set_path, class: "btn btn-primary btn-sm" if authenticated? %>
+    <%= link_to "New set", new_set_path, class: "btn btn-primary btn-sm" if authenticated? %>
   </nav>
 </div>
 

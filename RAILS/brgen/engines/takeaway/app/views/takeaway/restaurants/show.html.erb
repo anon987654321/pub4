@@ -4,7 +4,7 @@
   <h1><%= @restaurant.name %></h1>
   <nav role="navigation" aria-label="Restaurant actions">
     <% if authenticated? && @restaurant.owner?(Current.user) %>
-      <%= link_to t("actions.edit"), edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? && @favorited %>
       <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? %>

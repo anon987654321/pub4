@@ -59,7 +59,7 @@
       <%= link_to t("storefront.restaurants"), restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
       <%= link_to t("storefront.your_orders"), orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
       <%= link_to t("storefront.drivers"), delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
-      <%= link_to t("storefront.add_restaurant"), new_takeaway_restaurant_path, class: "section nav-hover" if authenticated? %>
+      <%= link_to t("storefront.add_restaurant"), new_restaurant_path, class: "section nav-hover" if authenticated? %>
     </div>
     <div id="subPromo"><%= t("storefront.sub_promo_food") %></div>
   </div>

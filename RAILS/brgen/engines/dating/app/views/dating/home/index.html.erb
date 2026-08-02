@@ -40,9 +40,9 @@
       <nav role="navigation" aria-label="Dating navigation">
         <%= link_to "Matcher", matches_path, class: "btn btn-ghost" %>
         <% if Current.user&.dating_profile.present? %>
-          <%= link_to "Profil", edit_dating_profile_path, class: "btn btn-ghost" %>
+          <%= link_to "Profil", edit_profile_path, class: "btn btn-ghost" %>
         <% elsif Current.user.present? %>
-          <%= link_to "Lag profil", new_dating_profile_path, class: "btn btn-ghost" %>
+          <%= link_to "Lag profil", new_profile_path, class: "btn btn-ghost" %>
         <% end %>
       </nav>
     </div>
@@ -66,8 +66,8 @@
                 title: t("empty.no_nearby"),
                 body: "Utvid radius, kom tilbake senere, eller fullfør profilen din så andre finner deg.",
                 action: Current.user&.dating_profile.present? ?
-                  { label: "Rediger profil", path: edit_dating_profile_path } :
-                  { label: "Lag profil", path: new_dating_profile_path } %>
+                  { label: "Rediger profil", path: edit_profile_path } :
+                  { label: "Lag profil", path: new_profile_path } %>
         <% end %>
         <turbo-frame id="dating-next" src="<%= next_path %>" loading="lazy" hidden></turbo-frame>
       </section>

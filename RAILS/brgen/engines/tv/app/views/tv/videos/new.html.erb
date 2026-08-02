@@ -4,7 +4,7 @@
 
 <div class="form-wrap">
   <%# videos_path does not exist -- upload is only routed under a channel
-      (the one link in, new_tv_channel_video_path), so the channel comes from
+      (the one link in, new_channel_video_path), so the channel comes from
       the URL rather than from a picker the create action never read. %>
   <%= form_with model: @video, url: channel_videos_path(@channel), multipart: true do |f| %>
     <%= render "shared/errors", object: @video %>

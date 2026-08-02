@@ -9,7 +9,7 @@
   </div>
   <nav role="navigation" aria-label="Listing actions" class="marketplace-actions">
     <% if Current.user.present? && Current.user == @listing.user %>
-      <%= link_to t("actions.edit"), edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? %>
       <%= render "marketplace/listings/favorite_button",
             listing: @listing,
@@ -124,7 +124,7 @@
       <%= render "shared/empty_state",
             title: t("empty.no_offers"),
             body: "Incoming offers will list here.",
-            action: { label: "Edit listing", path: edit_marketplace_listing_path(@listing) } %>
+            action: { label: "Edit listing", path: edit_listing_path(@listing) } %>
     <% end %>
     <%= button_to t("marketplace.remove_listing"), listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm m-16" %>
   </div>

@@ -9,7 +9,7 @@ class Dating::HomeController < Dating::BaseController
     if authenticated?
       profile = current_dating_profile
       unless profile&.visible?
-        redirect_to(profile ? edit_dating_profile_path : new_dating_profile_path)
+        redirect_to(profile ? edit_profile_path : new_profile_path)
         return
       end
     end

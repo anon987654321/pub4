@@ -2,7 +2,7 @@
 
 <div class="page-header" role="banner">
   <h1><%= t("dating.your_profile") %></h1>
-  <%= link_to t("dating.edit_profile"), edit_dating_profile_path, class: "btn btn-ghost btn-sm" %>
+  <%= link_to t("dating.edit_profile"), edit_profile_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
 <nav class="sort-tabs" aria-label="Profile sections" role="tablist" data-controller="tabs">
@@ -22,7 +22,7 @@
     <%= render "shared/empty_state",
           title: t("empty.no_photos"),
           body: t("dating.no_photos_body"),
-          action: { label: "Edit profile", path: edit_dating_profile_path } %>
+          action: { label: "Edit profile", path: edit_profile_path } %>
   <% end %>
 </section>
 
@@ -64,7 +64,7 @@
   <article>
     <p class="dim text-sm">
       Your profile is <%= @profile.visible? ? "visible to others in your city" : "hidden — no one can see it" %>.
-      <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_dating_profile_path, class: "link-inherit") %>.
+      <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_profile_path, class: "link-inherit") %>.
     </p>
   </article>
 </section>

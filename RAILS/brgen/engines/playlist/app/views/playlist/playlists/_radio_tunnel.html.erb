@@ -33,8 +33,8 @@
   <% unless local_assigns.fetch(:minimal, false) %>
   <nav class="radio-nav" aria-label="Playlist navigation">
     <% if authenticated? %>
-      <%= link_to "New", new_playlist_playlist_path %>
-      <%= link_to "Upload", new_playlist_hosted_track_path %>
+      <%= link_to "New", new_playlist_path %>
+      <%= link_to "Upload", new_hosted_track_path %>
     <% end %>
     <% if local_assigns.fetch(:show_library, false) %>
       <button type="button" class="radio-nav-btn" data-action="click->radio-tunnel#openLibrary">Library</button>

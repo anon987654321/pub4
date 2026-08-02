@@ -7,7 +7,7 @@
   </div>
   <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
     <div class="cluster">
-      <%= link_to t("actions.edit"), edit_playlist_set_path(@set), class: "btn btn-ghost btn-sm" %>
+      <%= link_to t("actions.edit"), edit_set_path(@set), class: "btn btn-ghost btn-sm" %>
       <%= button_to t("actions.delete"), set_path(@set), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
     </div>
   <% end %>
