@@ -13,11 +13,12 @@ Rails.application.routes.draw do
 
   resource :registration, only: %i[new create]
 
-  resource :session
+  resource :session, only: %i[new create destroy]
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
+  post "fingerprint" => "fingerprints#create"
   instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
-  resources :passwords, param: :token
+  resources :passwords, param: :token, only: %i[new create edit update]
 
   resources :items do
     member do

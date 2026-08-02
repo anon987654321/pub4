@@ -24,6 +24,22 @@ def rails_cmd
   Pub4::RubyRunner.ruby_cmd
 end
 
+# Asks the booted app, not routes.rb: a resource declared without only: routes seven actions
+# whether or not the controller has them, and Rails answers 404 for the ones it does not.
+DEAD_ROUTE_PROBE = <<~RUBY
+  skip = %w[rails/ turbo/ action_mailbox/ active_storage/ solid_queue/ mission_control/]
+  dead = Rails.application.routes.routes.filter_map do |route|
+    controller = route.defaults[:controller].to_s
+    action = route.defaults[:action].to_s
+    next if controller.empty? || action.empty? || skip.any? { |prefix| controller.start_with?(prefix) }
+    klass = "\#{controller}_controller".camelize.safe_constantize
+    next "\#{controller}#\#{action} (no controller)" if klass.nil?
+    next if klass.action_methods.include?(action)
+    "\#{controller}#\#{action}"
+  end.uniq
+  abort("dead routes: \#{dead.join(", ")}") if dead.any?
+RUBY
+
 def run!(cmd, chdir: ROOT, env: nil)
   env_vars = env ? ENV.to_h.merge(env) : ENV.to_h
   stdout, stderr, status = Open3.capture3(env_vars, *cmd, chdir: chdir)
@@ -70,6 +86,10 @@ def runtime_gate!(apps)
     ok, out = run!([rails_cmd, "-S", bundle_cmd, "exec", "rails", "db:prepare"],
       chdir: app_dir, env: { "RAILS_ENV" => "test" })
     failures << "#{name}: db:prepare failed — #{out}" unless ok
+
+    ok, out = run!([rails_cmd, "-S", bundle_cmd, "exec", "rails", "runner", DEAD_ROUTE_PROBE],
+      chdir: app_dir, env: { "RAILS_ENV" => "test" })
+    failures << "#{name}: #{out.lines.grep(/dead routes/).first&.strip || out}" unless ok
 
     ci = File.join(app_dir, "bin", "ci")
     next unless File.executable?(ci)

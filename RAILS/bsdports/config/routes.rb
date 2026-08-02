@@ -10,7 +10,7 @@ Rails.application.routes.draw do
     session_id.present? && ::Session.exists?(id: session_id)
   }
 
-  resource :session
+  resource :session, only: %i[new create destroy]
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
   # Social stack (notifications/reactions/reports/fingerprint) needs tables bsdports
   # does not have. Opt in with BSDPORTS_SOCIAL=1 only after migrations land.
@@ -18,7 +18,7 @@ Rails.application.routes.draw do
     instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
   end
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
-  resources :passwords, param: :token
+  resources :passwords, param: :token, only: %i[new create edit update]
 
   root "ports#index"
   constraints(jobs_constraint) do

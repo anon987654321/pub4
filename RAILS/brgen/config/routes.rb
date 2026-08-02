@@ -29,9 +29,10 @@ Rails.application.routes.draw do
   MAPS_SUBDOMAINS        = Brgen::DomainRegistry::MAPS_SUBDOMAINS
   MESSENGER_SUBDOMAINS   = Brgen::DomainRegistry::MESSENGER_SUBDOMAINS
 
-  resource  :session
-  resources :passwords, param: :token
+  resource  :session, only: %i[new create destroy]
+  resources :passwords, param: :token, only: %i[new create edit update]
   instance_eval(File.read(File.expand_path("../../shared/config/routes/auth.rb", __dir__)))
+  post "fingerprint" => "fingerprints#create"
   instance_eval(File.read(File.expand_path("../../shared/config/routes/fleet.rb", __dir__)))
   resources :activity_events, only: :index
   instance_eval(File.read(File.expand_path("../../shared/config/routes/social.rb", __dir__)))
@@ -45,21 +46,21 @@ Rails.application.routes.draw do
   # standalone new-post page answered 404 ("Couldn't find Post with id=new")
   # while new_post_path happily generated the link to it.
   resources :posts do
-    resources :comments, shallow: true
+    resources :comments, shallow: true, only: %i[create destroy]
     resource :vote, only: [ :create ], controller: "votes"
   end
 
   resources :communities do
     resources :posts, shallow: true do
-      resources :comments, shallow: true do
-        resources :comments, shallow: true, as: :replies
+      resources :comments, shallow: true, only: %i[create destroy] do
+        resources :comments, shallow: true, only: %i[create destroy], as: :replies
       end
       resource :vote, only: [ :create ], controller: "votes"
     end
   end
   patch "drafts/:id", to: "drafts#update", as: :draft
 
-  resources :comments do
+  resources :comments, only: %i[create destroy] do
     resource :vote, only: [ :create ], controller: "votes"
     resources :comments, only: [ :create ], as: :replies
     member do
