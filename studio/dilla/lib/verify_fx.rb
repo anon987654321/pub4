@@ -138,7 +138,55 @@ module VerifyFx
     failed = rows.count { |r| !r[4] }
     puts
     puts failed.zero? ? "  all #{rows.size} stages verified" : "  #{failed} of #{rows.size} FAILED"
+
+    # Before the cleanup, not after: the chain check needs the sine that the
+    # line below deletes. Run after it, every chain fails for want of an input
+    # and the check reports 178 broken patches instead of the one real one --
+    # which is what it did on its first run.
+    broken = verify_patch_chains!(src[:sine])
     src.each_value { |p| FileUtils.rm_f(p) }
-    failed.zero?
+    failed.zero? && broken.zero?
+  end
+
+  # Does every registered patch effect chain even OPEN?
+  #
+  # The checks above ask whether a stage is transparent. This asks something
+  # cruder and, as it turned out, more urgent: whether ffmpeg will accept the
+  # string at all. A chain that fails to open takes every stage in it down --
+  # the render catches the error, logs "patch fx skipped", and hands you the
+  # patch completely dry.
+  #
+  # glass_fm_pad carried aphaser=speed=0.08 against a valid range of [0.1, 2.0].
+  # It had presumably always been wrong, and nobody could have known: the voice
+  # is reachable only through stack_glass, which was one of 24 pad voices that
+  # no rotation table referenced. The moment DEMO_PAD_ROTATION was widened to
+  # include it, it failed twice in one eight-track render.
+  #
+  # One out of 178 chains was broken. The other 177 are the reason this is worth
+  # keeping -- it is cheap, and the failure it catches is invisible in the audio
+  # unless you already know which patch to listen for.
+  def verify_patch_chains!(signal)
+    chains = {}
+    ObjectSpace.each_object(Hash) do |h|
+      id = h[:id]
+      fx = h[:fx]
+      chains[id] = fx if id.is_a?(Symbol) && fx.is_a?(String) && !fx.empty?
+    rescue StandardError
+      nil
+    end
+    return 0 if chains.empty? || signal.nil?
+
+    out = File.join(Dir.tmpdir, "vfx_chain.wav")
+    broken = chains.sort.reject { |_, fx| run("-i", signal, "-af", fx, "-ac", "2", out) }
+    FileUtils.rm_f(out)
+
+    puts
+    if broken.empty?
+      puts "  all #{chains.length} patch fx chains open"
+    else
+      puts "  #{broken.length} of #{chains.length} patch fx chains FAIL to open:"
+      broken.each { |id, fx| puts "    #{id}: #{fx[0, 90]}" }
+    end
+    broken.length
   end
 end

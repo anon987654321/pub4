@@ -1157,7 +1157,14 @@ SYNTH_PATCH_CATALOG = [
   # --- Experimental electronic pads (musical, not noise) ---
   synth_patch(:glass_fm_pad, role: :warm, program: 98, weight: 2.6, mix: 0.72, fs_gain: 1.38,
               midi_fx: MIDI_FX_PAD_WARM,
-              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.08:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
+              # speed=0.1, not 0.08: ffmpeg's aphaser accepts [0.1, 2.0] and
+              # rejects anything below it, which fails the WHOLE chain, not just
+              # the phaser -- so this patch rendered with no effects at all. It
+              # went unnoticed because nothing could select the voice: it is only
+              # reachable through stack_glass, which was one of the 24 pad voices
+              # no rotation referenced. Widening DEMO_PAD_ROTATION reached it for
+              # the first time and it failed immediately, twice.
+              fx: "aecho=0.48:0.42:90|170:0.28|0.14,aphaser=speed=0.1:decay=0.55,lowpass=f=5200,equalizer=f=3200:t=h:w=1600:g=1.4"),
   synth_patch(:vapor_supersaw, role: :warm, program: 0, sf2: :supersaw, weight: 2.4, mix: 0.68, fs_gain: 1.36,
               midi_fx: MIDI_FX_PAD_WARM,
               fx: "chorus=0.55:0.75:40|50:0.28|0.24:0.32|0.28:1.2|1.5,lowpass=f=4800,aecho=0.4:0.36:140|260:0.22|0.12"),
