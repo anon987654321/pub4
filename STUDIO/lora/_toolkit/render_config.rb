@@ -83,6 +83,42 @@ def apply_device!(process)
   end
 end
 
+# Every LORA_* knob that used to be declared and never read.
+#
+# LORA_LR and LORA_RESOLUTIONS only suppressed a device default — the branches
+# above test ENV.key? to hold off their own figure, and then nothing set the
+# one you asked for. LORA_FLUX_MODEL and LORA_FLUX_MODEL_PATH were worse: they
+# moved the licence check in check_hf_flux_access.rb to a repo the trainer did
+# not then load, so a local FLUX checkout passed the gate and downloaded the
+# gated one anyway.
+def apply_env_overrides!(process)
+  lr = ENV["LORA_LR"].to_s.strip
+  process["train"]["lr"] = Float(lr) unless lr.empty?
+
+  resolutions = ENV["LORA_RESOLUTIONS"].to_s.strip
+  unless resolutions.empty?
+    process["datasets"].first["resolution"] = resolutions.split(",").map { |value| Integer(value.strip) }
+  end
+
+  # A path on disk wins over a repo id, since having the weights locally is the
+  # reason to name one.
+  local = ENV["LORA_FLUX_MODEL_PATH"].to_s.strip
+  repo = ENV["LORA_FLUX_MODEL"].to_s.strip
+  process["model"]["name_or_path"] = repo unless repo.empty?
+  process["model"]["name_or_path"] = local unless local.empty?
+
+  # Sessions that end on a wall clock rather than at convergence — Kaggle caps a
+  # GPU session at 12 h — train to a step count and resume from the last save.
+  steps = ENV["LORA_STEPS"].to_s.strip
+  process["train"]["steps"] = Integer(steps) unless steps.empty?
+
+  # Twelve prompts is a real slice of a rented hour. On a machine billed by the
+  # clock the suite is worth less often than on the Mac, where the run is only
+  # competing with itself.
+  sample_every = ENV["LORA_SAMPLE_EVERY"].to_s.strip
+  process["sample"]["sample_every"] = Integer(sample_every) unless sample_every.empty?
+end
+
 def build(mode)
   config = load_mapping(BASE)
   process = config.fetch("config").fetch("process").first
@@ -93,36 +129,7 @@ def build(mode)
   # A direct request gets one exact prompt, while training keeps the curated suite.
   process["sample"]["prompts"] = [requested_prompt] unless requested_prompt.empty?
   apply_device!(process)
-
-  # LORA_LR and LORA_RESOLUTIONS were knobs in name only: the device branches
-  # tested ENV.key? to hold off their own default, and then nothing read the
-  # value, so setting either one just left the config's own figure in place.
-  lr = ENV["LORA_LR"].to_s.strip
-  process["train"]["lr"] = Float(lr) unless lr.empty?
-  resolutions = ENV["LORA_RESOLUTIONS"].to_s.strip
-  unless resolutions.empty?
-    process["datasets"].first["resolution"] = resolutions.split(",").map { |value| Integer(value.strip) }
-  end
-
-  # Same again for the base model: check_hf_flux_access.rb gated on
-  # LORA_FLUX_MODEL and LORA_FLUX_MODEL_PATH, so setting either moved the licence
-  # check to a repo the trainer then did not load. A local path wins, since
-  # having the weights on disk is the reason to name one.
-  local = ENV["LORA_FLUX_MODEL_PATH"].to_s.strip
-  repo = ENV["LORA_FLUX_MODEL"].to_s.strip
-  process["model"]["name_or_path"] = local unless local.empty?
-  process["model"]["name_or_path"] = repo if local.empty? && !repo.empty?
-
-  # Sessions that end on a wall clock rather than at convergence — Kaggle caps a
-  # GPU session at 12 h — train to a step count and resume from the last save.
-  steps = ENV["LORA_STEPS"].to_s.strip
-  process["train"]["steps"] = Integer(steps) unless steps.empty?
-
-  # Twelve prompts at 28 diffusion steps is a real slice of a rented hour. On a
-  # machine billed by the clock the suite is worth less often than on the Mac,
-  # where the run is only competing with itself.
-  sample_every = ENV["LORA_SAMPLE_EVERY"].to_s.strip
-  process["sample"]["sample_every"] = Integer(sample_every) unless sample_every.empty?
+  apply_env_overrides!(process)
 
   if mode == "generate"
     train = process.fetch("train").dup
