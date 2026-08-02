@@ -1,7 +1,7 @@
-<% content_for :title, "New partner program" %>
+<% content_for :title, t("partner.new_title") %>
 
 <section>
-  <h1>New partner program for <%= @store.name %></h1>
+  <h1><%= t("partner.new_heading", store: @store.name) %></h1>
   <%= form_with model: @program, url: partner_programs_path(store_id: @store.slug), class: "form-wrap" do |f| %>
     <%= hidden_field_tag :store_id, @store.slug %>
     <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
@@ -14,13 +14,13 @@
       <%= f.select :commission_model, Partner::Program::COMMISSION_MODELS %>
     </div>
     <div class="field">
-      <%= f.label :commission_rate, "Rate (basis points for %, cents for flat)" %>
+      <%= f.label :commission_rate, t("partner.rate_hint") %>
       <%= f.number_field :commission_rate, required: true, min: 0 %>
     </div>
     <div class="field"><%= f.label :attribution_hours %><%= f.number_field :attribution_hours, min: 1 %></div>
     <div class="field"><%= f.label :hold_days %><%= f.number_field :hold_days, min: 0 %></div>
     <div class="field"><%= f.check_box :auto_approve_partners %><%= f.label :auto_approve_partners %></div>
     <div class="field"><%= f.label :terms %><%= f.text_area :terms, rows: 5 %></div>
-    <%= f.submit "Create program", class: "btn" %>
+    <%= f.submit t("partner.create"), class: "btn" %>
   <% end %>
 </section>

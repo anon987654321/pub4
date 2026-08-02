@@ -1,28 +1,28 @@
-<% content_for :title, "Partner programs" %>
+<% content_for :title, t("partner.programs_title") %>
 
 <section class="partner-programs">
   <header class="cluster">
-    <h1>Partner programs</h1>
-    <p class="dim">Local stores pay city creators for sales you send. Last click wins; no self-referral.</p>
+    <h1><%= t("partner.programs_title") %></h1>
+    <p class="dim"><%= t("partner.programs_lead") %></p>
   </header>
 
   <% if @mine.any? %>
-    <section aria-label="Your memberships">
-      <h2>Your memberships</h2>
+    <section aria-label="<%= t("partner.your_memberships") %>">
+      <h2><%= t("partner.your_memberships") %></h2>
       <ul class="stack">
         <% @mine.each do |m| %>
           <li>
             <%= link_to m.program.name, partner_program_path(m.program) %>
             <span class="tag"><%= m.status %></span>
-            <%= link_to "Dashboard", partner_membership_path(m), class: "btn btn-sm" %>
+            <%= link_to t("partner.dashboard"), partner_membership_path(m), class: "btn btn-sm" %>
           </li>
         <% end %>
       </ul>
     </section>
   <% end %>
 
-  <section aria-label="Open programs">
-    <h2>Open programs</h2>
+  <section aria-label="<%= t("partner.open_programs") %>">
+    <h2><%= t("partner.open_programs") %></h2>
     <% if @programs.any? %>
       <ul class="stack">
         <% @programs.each do |program| %>
@@ -31,18 +31,18 @@
             <p class="dim"><%= program.store&.name %></p>
             <p>
               <% if program.percent? %>
-                <%= program.commission_rate / 100.0 %>% commission
+                <%= t("partner.commission_percent", rate: program.commission_rate / 100.0) %>
               <% else %>
-                <%= program.commission_rate %> øre flat
+                <%= t("partner.commission_flat", rate: program.commission_rate) %>
               <% end %>
-              · <%= program.hold_days %> day hold
+              · <%= t("partner.hold", count: program.hold_days) %>
             </p>
           </li>
         <% end %>
       </ul>
     <% else %>
       <%# adhoc_empty: ok — no viewer-actionable CTA here; programs are created by store owners, not this reader %>
-      <p class="dim">No open partner programs yet. Store owners can create one from their shop page.</p>
+      <p class="dim"><%= t("partner.none_open") %></p>
     <% end %>
   </section>
 </section>

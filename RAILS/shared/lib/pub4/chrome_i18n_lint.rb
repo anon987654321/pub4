@@ -54,7 +54,7 @@ module Pub4
     BASELINES = {
       "empty_title" => 0,
       "search_placeholder" => 0,
-      "aria_label" => 172,
+      "aria_label" => 169,
     }.freeze
 
     # Kept for callers that referenced the old single number.

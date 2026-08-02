@@ -7,47 +7,47 @@
   </header>
 
   <dl class="meta">
-    <dt>Commission</dt>
+    <dt><%= t("partner.commission") %></dt>
     <dd>
       <% if @program.percent? %>
-        <%= @program.commission_rate / 100.0 %>% of order value
+        <%= t("partner.commission_of_order", rate: @program.commission_rate / 100.0) %>
       <% else %>
-        <%= @program.commission_rate %> (model: <%= @program.commission_model %>)
+        <%= t("partner.commission_flat_model", rate: @program.commission_rate, model: @program.commission_model) %>
       <% end %>
     </dd>
-    <dt>Attribution window</dt>
-    <dd><%= @program.attribution_hours %> hours</dd>
-    <dt>Hold before payable</dt>
-    <dd><%= @program.hold_days %> days</dd>
+    <dt><%= t("partner.attribution_window") %></dt>
+    <dd><%= t("partner.hours", count: @program.attribution_hours) %></dd>
+    <dt><%= t("partner.hold_before_payable") %></dt>
+    <dd><%= t("partner.days", count: @program.hold_days) %></dd>
   </dl>
 
   <% if @program.terms.present? %>
     <section>
-      <h2>Terms</h2>
+      <h2><%= t("partner.terms") %></h2>
       <p><%= simple_format @program.terms %></p>
     </section>
   <% end %>
 
-  <nav class="cluster" aria-label="Actions">
+  <nav class="cluster" aria-label="<%= t("partner.actions") %>">
     <% if authenticated? && Current.user == @program.store.owner %>
-      <%= link_to "Edit program", edit_partner_program_path(@program), class: "btn" %>
+      <%= link_to t("partner.edit_program"), edit_partner_program_path(@program), class: "btn" %>
     <% elsif authenticated? %>
       <% if @membership %>
-        <p>Status: <strong><%= @membership.status %></strong></p>
+        <p><%= t("partner.status_label") %> <strong><%= @membership.status %></strong></p>
         <% if @membership.earning? %>
-          <p class="dim">Your link token: <code><%= @membership.token %></code></p>
+          <p class="dim"><%= t("partner.link_token") %> <code><%= @membership.token %></code></p>
           <p>
-            Share:
+            <%= t("partner.share") %>
             <code><%= partner_click_url(token: @membership.token, host: request.host, protocol: request.protocol.delete("://")) rescue "https://#{request.host}/p/#{@membership.token}" %></code>
           </p>
-          <%= link_to "Membership dashboard", partner_membership_path(@membership), class: "btn" %>
+          <%= link_to t("partner.membership_dashboard"), partner_membership_path(@membership), class: "btn" %>
         <% end %>
       <% elsif @program.open? %>
-        <%= button_to "Join program", partner_program_memberships_path(@program), method: :post, class: "btn" %>
+        <%= button_to t("partner.join"), partner_program_memberships_path(@program), method: :post, class: "btn" %>
       <% end %>
     <% else %>
-      <%= link_to "Sign in to join", new_session_path, class: "btn" %>
+      <%= link_to t("partner.sign_in_to_join"), new_session_path, class: "btn" %>
     <% end %>
-    <%= link_to "All programs", partner_programs_path, class: "btn btn-ghost" %>
+    <%= link_to t("partner.all_programs"), partner_programs_path, class: "btn btn-ghost" %>
   </nav>
 </article>
