@@ -1,5 +1,5 @@
 ---
-generated_at: '2026-08-02T16:17:44Z'
+generated_at: '2026-08-02T17:31:05Z'
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -440,8 +440,7 @@ pages:
   needs_id: true
   mode: source
   ok: true
-  findings:
-  - 'brgen/partner/programs/show:L33: residual EN CTA chrome — use t(...)'
+  findings: []
 - id: brgen/playlist/hosted_tracks/edit
   app: brgen
   path: "/hosted_tracks/:id/edit"
@@ -1381,8 +1380,7 @@ pages:
   needs_id: true
   mode: source
   ok: true
-  findings:
-  - 'bsdports/comments/new: 1 form field(s) with no label/aria-label in template'
+  findings: []
 - id: bsdports/maintainers/index
   app: bsdports
   path: "/maintainers"
@@ -2364,7 +2362,7 @@ summary:
     amber: true
     bsdports: true
     master: false
-  hard_findings: 1
-  soft_findings: 2
+  hard_findings: 0
+  soft_findings: 0
   source_ok: 162
   source_total: 162
