@@ -70,8 +70,8 @@ module ApplicationHelper
     "#{marketplace_subdomain}.#{Current.domain}"
   end
 
-  def marketplace_root_url(**options)
-    Rails.application.routes.url_helpers.marketplace_root_url(
+  def marketplace.root_url(**options)
+    Rails.application.routes.url_helpers.marketplace.root_url(
       subdomain: marketplace_subdomain,
       host: Current.domain,
       **options
@@ -169,17 +169,17 @@ module ApplicationHelper
     when Conversation
       record.channel? ? channel_path(record.slug) : conversation_path(record)
     when Marketplace::Listing
-      marketplace_listing_url(record, host: domain, subdomain: marketplace_subdomain)
+      marketplace.listing_url(record, host: domain, subdomain: marketplace_subdomain)
     when Marketplace::Store
-      marketplace_shop_url(record.try(:slug) || record, host: domain, subdomain: marketplace_subdomain)
+      marketplace.shop_url(record.try(:slug) || record, host: domain, subdomain: marketplace_subdomain)
     when Marketplace::Deal
-      marketplace_deal_url(record, host: domain, subdomain: marketplace_subdomain)
+      marketplace.deal_url(record, host: domain, subdomain: marketplace_subdomain)
     when Marketplace::Order
-      marketplace_order_url(record, host: domain, subdomain: marketplace_subdomain)
+      marketplace.order_url(record, host: domain, subdomain: marketplace_subdomain)
     when Takeaway::Restaurant
-      takeaway_restaurant_url(record, host: domain, subdomain: "takeaway")
+      takeaway.restaurant_url(record, host: domain, subdomain: "takeaway")
     when Takeaway::Order
-      takeaway_order_url(record, host: domain, subdomain: "takeaway")
+      takeaway.order_url(record, host: domain, subdomain: "takeaway")
     when Tv::Channel
       tv.channel_url(record, host: domain, subdomain: "tv")
     when Tv::Video
@@ -190,15 +190,15 @@ module ApplicationHelper
     when Tv::LiveStream
       tv.live_stream_url(record, host: domain, subdomain: "tv")
     when Playlist::Set
-      playlist_set_url(record, host: domain, subdomain: "playlist")
+      playlist.set_url(record, host: domain, subdomain: "playlist")
     when Playlist::Playlist
-      playlist_playlist_url(record, host: domain, subdomain: "playlist")
+      playlist.playlist_url(record, host: domain, subdomain: "playlist")
     when Place
       maps_place_url(record, host: domain, subdomain: "maps")
     when Dating::Match
-      dating_matches_url(host: domain, subdomain: "dating")
+      dating.matches_url(host: domain, subdomain: "dating")
     when Dating::Profile
-      dating_profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
+      dating.profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
     when Follow
       user_path(record.follower) if record.try(:follower)
     else
@@ -231,7 +231,7 @@ module ApplicationHelper
 
     case notification.kind.to_s
     when "match"
-      return dating_matches_url(host: domain, subdomain: "dating")
+      return dating.matches_url(host: domain, subdomain: "dating")
     when "follow"
       return user_path(notification.actor) if notification.actor
     when "message"

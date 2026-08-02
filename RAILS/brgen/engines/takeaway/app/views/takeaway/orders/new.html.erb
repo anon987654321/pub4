@@ -1,0 +1,77 @@
+<% content_for :title, "Order from #{@restaurant.name}" %>
+
+<header class="page-header" role="banner" aria-label="Restaurant header">
+  <div>
+    <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.city_label %></p>
+    <h1>Order from <%= @restaurant.name %></h1>
+    <p><%= @restaurant.address %></p>
+  </div>
+</header>
+
+<article role="article" aria-label="Restaurant info">
+  <p><%= @restaurant.description %></p>
+  <div class="chips">
+    <span class="chip">Minimum <%= number_to_currency(@restaurant.min_order_cents.to_i / 100.0, unit: "kr ") %></span>
+    <span class="chip">Delivery <%= number_to_currency(@restaurant.delivery_fee_cents.to_i / 100.0, unit: "kr ") %></span>
+    <span class="chip"><%= @menu_items.size %> available items</span>
+  </div>
+</article>
+
+<%= form_with model: @order, url: restaurant_orders_path(@restaurant), html: { role: "form", "aria-label": "Place takeaway order from #{@restaurant.name}" } do |form| %>
+  <%= render "shared/errors", object: @order %>
+
+  <section role="region" aria-label="Menu">
+    <h2>Menu</h2>
+    <% if @menu_items.any? %>
+      <% @menu_items.each do |item| %>
+        <article class="grid-menu-row">
+          <div>
+            <h3><%= item.name %></h3>
+            <% if item.description.present? %>
+              <p><%= item.description %></p>
+            <% end %>
+            <p class="dim">
+              <%= number_to_currency(item.price_cents.to_i / 100.0, unit: "kr ") %>
+              <% if item.vegetarian? %> · vegetarian<% end %>
+              <% if item.vegan? %> · vegan<% end %>
+            </p>
+          </div>
+          <div>
+            <%= label_tag "takeaway_order_items_#{item.id}", "Qty" %>
+            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}", style: "width:72px" %>
+          </div>
+        </article>
+      <% end %>
+    <% else %>
+      <%= render "shared/empty_state",
+            title: t("empty.nothing_available"),
+            body: t("empty.no_menu_available"),
+            action: { label: "Back to restaurant", path: restaurant_path(@restaurant) } %>
+    <% end %>
+  </section>
+
+  <section role="region" aria-label="Delivery details">
+    <h2>Delivery</h2>
+    <div class="field">
+      <%= form.label :delivery_address %>
+      <%= form.text_field :delivery_address, required: true, autocomplete: "street-address" %>
+    </div>
+    <div class="field">
+      <%= form.label :special_instructions %>
+      <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= form.text_area :special_instructions, rows: 3,
+        placeholder: t("takeaway.special_instructions_placeholder"),
+        maxlength: 500,
+        data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+    </div>
+  </section>
+
+  <section role="region" aria-label="<%= t("takeaway.payment_label") %>">
+    <h2><%= t("takeaway.payment") %></h2>
+    <p class="dim"><%= t("takeaway.payment_body") %></p>
+  </section>
+
+  <%= form.submit t("takeaway.place_order"), class: "btn btn-primary" %>
+<% end %>

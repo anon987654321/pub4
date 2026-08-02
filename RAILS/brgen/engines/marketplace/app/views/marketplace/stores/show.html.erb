@@ -1,0 +1,22 @@
+<% content_for :title, @store.name %>
+
+<%= tag.section class: "marketplace-store" do %>
+  <%= tag.header do %>
+    <%= tag.h1 @store.name %>
+    <%= tag.p @store.vertical&.humanize if @store.vertical.present? %>
+    <%= tag.p @store.description if @store.description.present? %>
+    <% if authenticated? && Current.user == @store.owner %>
+      <%= tag.nav class: "cluster" do %>
+        <%= link_to t("marketplace.stores.edit", default: "Edit store"), edit_marketplace_shop_path(@store.slug), class: "btn btn-ghost btn-sm" %>
+        <%= link_to "Partner program", new_partner_program_path(store_id: @store.slug), class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("marketplace.stores.delete", default: "Delete store"), shop_path(@store.slug), method: :delete, data: { turbo_confirm: t("marketplace.stores.delete_confirm", default: "Delete store?") }, class: "btn btn-danger btn-sm" %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <div class="deal-grid" aria-label="Store listings">
+    <% @listings.each do |listing| %>
+      <%= render "marketplace/listings/card", listing: listing %>
+    <% end %>
+  </div>
+<% end %>

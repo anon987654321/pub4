@@ -23,14 +23,15 @@ class CoverageRatchetTest < Minitest::Test
   # app => { kind => number of sources with a matching *_test.rb }
   # Measured 2026-08-01. Raise a number when you add tests; never lower one —
   # EXCEPT when a vertical is extracted to an engine, which is the one honest
-  # reason a host count falls. brgen 15->13 controllers / 11->10 models on
-  # 2026-08-02 when tv moved to engines/tv: those three counts (channels_controller,
-  # home_controller, comment) were basename collisions — flat host tests that also
-  # match a same-named Tv:: class — so extraction removed a double-count, not
-  # coverage. The host classes of those names are still tested and still counted.
+  # reason a host count falls. brgen 15->12 controllers / 11->10 models on
+  # 2026-08-02 as the five verticals moved to engines/*: those counts were basename
+  # collisions — flat host tests (channels_controller, home_controller, comment, …)
+  # that also matched a same-named vertical class — so extraction removed a
+  # double-count, not coverage. The host classes of those names are still tested and
+  # still counted; the vertical classes are counted from engines/*/app now.
   FLOORS = {
     "amber" => { "controllers" => 1, "models" => 5 },
-    "brgen" => { "controllers" => 13, "models" => 10 },
+    "brgen" => { "controllers" => 12, "models" => 10 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
 

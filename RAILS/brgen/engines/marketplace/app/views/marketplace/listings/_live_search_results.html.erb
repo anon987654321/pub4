@@ -1,0 +1,49 @@
+<% if authenticated? && (params[:q].present? || params[:category_id].present?) %>
+  <div class="form-wrap form-wrap--compact">
+    <%= form_with model: Marketplace::SavedSearch.new, url: saved_searches_path do |form| %>
+      <%= form.hidden_field :query, value: params[:q] %>
+      <%= form.hidden_field :category_id, value: params[:category_id] %>
+      <%= form.hidden_field :location, value: params[:location] %>
+      <%= form.hidden_field :name, value: "Marketplace search" %>
+      <%= form.submit t("marketplace.save_search"), class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @categories.any? %>
+  <div class="deal-cats" aria-label="Categories">
+    <%= link_to "All", listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
+    <% @categories.each do |cat| %>
+      <%= link_to cat.name, listings_path(category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @top_offers.present? && live_search_query.blank? && params[:category_id].blank? %>
+  <%= render "marketplace/top_offers", offers: @top_offers %>
+<% end %>
+
+<% if @listings.any? %>
+  <%= turbo_frame_tag "marketplace-listings", target: "_top" do %>
+    <div class="deal-grid" id="marketplace-listings" aria-label="Listings">
+      <% @listings.each do |listing| %>
+        <%= render "marketplace/listings/card", listing: listing, distance_km: @listing_distances&.fetch(listing.id, nil) %>
+      <% end %>
+    </div>
+
+    <%= render "shared/infinite_scroll_sentinel",
+               pagy: @pagy,
+               reflex: "ListingsInfiniteScrollReflex#load_more",
+               sentinel_id: "marketplace-listings-sentinel",
+               q: params[:q],
+               category_id: params[:category_id],
+               lat: @search_lat,
+               lng: @search_lng,
+               radius_km: @radius_km %>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_listings"),
+        body: "No listings match this search.",
+        action: { label: t("actions.sell_something"), path: new_marketplace_listing_path } %>
+<% end %>

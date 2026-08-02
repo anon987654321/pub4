@@ -94,92 +94,25 @@ Rails.application.routes.draw do
   # top-level mount. Nesting it silently drops the helper. See ENGINES.md.
   mount Tv::Engine, at: "/", as: "tv", constraints: { subdomain: TV_SUBDOMAINS }
 
-  constraints(subdomain: DATING_SUBDOMAINS) do
-    scope module: "dating", as: "dating" do
-      root "home#index"
-      get "next" => "home#next", as: :next
-      resource :profile, only: %i[new create edit update show]
-      resources :likes, only: :create
-      resources :dislikes, only: :create
-      resources :matches, only: :index
-    end
-  end
+  # dating vertical extracted to engines/dating (mountable engine). Top-level mount with
+  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # dating.* mounted helper. See brgen/ENGINES.md.
+  mount Dating::Engine, at: "/", as: "dating", constraints: { subdomain: DATING_SUBDOMAINS }
 
-  constraints(subdomain: PLAYLIST_SUBDOMAINS) do
-    scope module: "playlist", as: "playlist" do
-      root "playlists#index"
-      resources :playlists do
-        member { get :embed }
-        resources :imports, only: :create
-        resources :tracks, only: %i[create destroy]
-        resources :collaborations, only: %i[create destroy]
-        resources :dilla_sketches, only: %i[create update destroy] do
-          member { post :render_audio }
-        end
-      end
-      resources :sets do
-        resources :tracks, only: %i[create destroy]
-        resources :collaborations, only: %i[create destroy]
-        resources :dilla_sketches, only: %i[create update destroy] do
-          member { post :render_audio }
-        end
-        resource :like, only: %i[create destroy]
-        resource :listening_party, only: %i[create show update destroy], controller: "listening_parties" do
-          resources :party_messages, only: :create
-        end
-      end
-      resources :listens, only: :create
-      resources :hosted_tracks
-    end
-  end
+  # playlist vertical extracted to engines/playlist (mountable engine). Top-level mount with
+  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # playlist.* mounted helper. See brgen/ENGINES.md.
+  mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: PLAYLIST_SUBDOMAINS }
 
-  constraints(subdomain: TAKEAWAY_SUBDOMAINS) do
-    scope module: "takeaway", as: "takeaway" do
-      root "restaurants#index"
-      resources :restaurants do
-        resource :favorite_restaurant, only: %i[create destroy]
-        resources :menu_items, only: %i[create destroy]
-        resources :orders, only: %i[new create]
-        resources :reviews, only: %i[create]
-      end
-      resources :delivery_drivers, only: %i[index show update]
-      resources :orders, only: %i[index show update]
-    end
-  end
+  # takeaway vertical extracted to engines/takeaway (mountable engine). Top-level mount with
+  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # takeaway.* mounted helper. See brgen/ENGINES.md.
+  mount Takeaway::Engine, at: "/", as: "takeaway", constraints: { subdomain: TAKEAWAY_SUBDOMAINS }
 
-  constraints(subdomain: MARKETPLACE_SUBDOMAINS) do
-    scope module: "marketplace", as: "marketplace" do
-      root "listings#index"
-      resources :shops, controller: "stores"
-      resources :deals, only: %i[index show]
-      resources :listings do
-        resource :favorite, only: %i[create destroy]
-        resources :orders, only: %i[create update]
-        resources :reviews, only: %i[create]
-      end
-      resources :orders, only: %i[show update]
-
-      # Amazon-like cart (pending orders act as cart items for the buyer)
-      resource :cart, only: :show, controller: "carts" do
-        post :send_offers
-      end
-      resource :checkout, only: %i[create show], controller: "checkouts"
-      # Not `namespace :webhooks` — inside `scope module: "marketplace"` that
-      # resolves to Marketplace::Webhooks::WebhooksController, which does not
-      # exist, so PSP callbacks never reached mark_paid! and orders stayed
-      # unpaid. Explicit paths keep the URLs and helper names unchanged.
-      post "webhooks/stripe", to: "webhooks#stripe", as: :webhooks_stripe
-      post "webhooks/vipps", to: "webhooks#vipps", as: :webhooks_vipps
-      resources :categories, only: :show, param: :id
-      resources :saved_searches, only: %i[index create destroy]
-    end
-
-    # Solidus engines mount only when gems are loaded (SOLIDUS_MARKETPLACE=1 + install).
-    # Native Marketplace::* stays the public storefront until explicit cutover.
-    if defined?(Brgen::SolidusMarketplace) && Brgen::SolidusMarketplace.mountable?
-      mount Spree::Core::Engine, at: "/solidus"
-    end
-  end
+  # marketplace vertical extracted to engines/marketplace (mountable engine). Top-level mount with
+  # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
+  # marketplace.* mounted helper. See brgen/ENGINES.md.
+  mount Marketplace::Engine, at: "/", as: "marketplace", constraints: { subdomain: MARKETPLACE_SUBDOMAINS }
 
   constraints(subdomain: MAPS_SUBDOMAINS) do
     scope module: "maps", as: "maps" do

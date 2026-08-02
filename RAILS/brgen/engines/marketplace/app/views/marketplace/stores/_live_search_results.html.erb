@@ -1,0 +1,23 @@
+<% if live_search_query.present? %>
+ <p class="dim"><%= @stores.size %> results for "<%= live_search_query %>"</p>
+<% end %>
+
+<% if @stores.any? %>
+<div class="store-grid" id="marketplace-stores-grid" role="list" aria-label="Stores list">
+ <% @stores.each do |store| %>
+   <%= render "marketplace/stores/card", store: store %>
+ <% end %>
+</div>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "StoresInfiniteScrollReflex#load_more",
+           sentinel_id: "marketplace-stores-sentinel",
+           q: params[:q],
+           vertical: params[:vertical] %>
+<% else %>
+ <%= render "shared/empty_state",
+       title: t("empty.no_stores"),
+       body: t("empty.no_stores_search"),
+       action: { label: t("empty.clear_search"), path: shops_path } %>
+<% end %>

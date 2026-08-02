@@ -1,0 +1,82 @@
+<%#
+  Shared Dilla sketches list + form for Set and Playlist parents.
+  locals: parent, sketches, render_path_proc, destroy_path_proc (optional), create_url,
+          form_scope (optional), lab_query (optional), can_manage, rich_form (bool)
+%>
+<% sketches = local_assigns[:sketches] || [] %>
+<% can_manage = local_assigns.fetch(:can_manage, false) %>
+<% rich_form = local_assigns.fetch(:rich_form, false) %>
+<section role="region" aria-label="Dilla sketches">
+  <h2>Dilla sketches / beats</h2>
+  <p class="dim">
+    Collaborative beat patterns. Lab:
+    <a href="/dilla/dilla.html<%= local_assigns[:lab_query] %>" target="_blank" rel="noopener">dilla.html</a>
+  </p>
+  <% if sketches.any? %>
+    <% sketches.each do |sk| %>
+      <div class="dilla-sketch">
+        <strong><%= sk.name %></strong>
+        <span class="dim">
+          <%= sk.try(:style).presence || "dilla" %>
+          · <%= sk.try(:bars).presence || 12 %> bars
+          · <%= sk.render_status || "idle" %>
+        </span>
+        by <%= sk.user&.try(:display_name) || sk.user&.email || "anon" %>
+        <% if sk.lab_url.present? %>
+          <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">open in lab</a>
+        <% end %>
+        <% if can_manage %>
+          <%= button_to t("playlist.render"), render_path_proc.call(sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
+          <% if local_assigns[:destroy_path_proc] %>
+            <%= button_to t("actions.remove"), destroy_path_proc.call(sk), method: :delete, class: "btn btn-ghost btn-sm" %>
+          <% end %>
+        <% end %>
+        <% if sk.render.attached? %>
+          <audio controls preload="none" src="<%= url_for(sk.render) %>"></audio>
+        <% end %>
+        <% if sk.try(:track_id).present? %>
+          <span class="dim">track #<%= sk.track_id %></span>
+        <% end %>
+        <% if sk.try(:render_error).present? %>
+          <p class="dim" role="alert"><%= sk.render_error %></p>
+        <% end %>
+        <% if sk.notes.present? %><p class="dim"><%= sk.notes %></p><% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_sketches"),
+          body: "Save a beat from the lab or paste JSON state below.",
+          action: { label: t("playlist.browse_playlists"), path: root_path } %>
+  <% end %>
+
+  <% if can_manage %>
+    <div class="form-wrap">
+      <% if rich_form %>
+        <%= form_with model: [:playlist, parent, Playlist::DillaSketch.new], url: create_url, class: "dilla-sketch-form" do |f| %>
+          <%= f.text_field :name, placeholder: t("playlist.sketch_name"), required: true %>
+          <%= f.select :style, %w[dilla flylo baroque neo-soul jazz], selected: "dilla" %>
+          <%= f.number_field :bars, value: 12, min: 4, max: 64 %>
+          <%= f.text_area :state, value: { pat_: {}, aud_: {}, mix_: { style: "dilla", bars: 12 } }.to_json, rows: 3 %>
+          <%= f.text_field :notes, placeholder: t("playlist.notes_optional") %>
+          <label><input type="checkbox" name="render_now" value="1" checked /> Render now</label>
+          <label><input type="checkbox" name="publish" value="1" checked /> Publish as playlist track</label>
+          <%= f.submit t("playlist.save_sketch"), class: "btn btn-primary btn-sm" %>
+        <% end %>
+      <% else %>
+        <%= form_with url: create_url, scope: local_assigns[:form_scope] || :playlist_dilla_sketch do |f| %>
+          <div class="field"><%= f.text_field :name, placeholder: t("playlist.beat_name"), required: true %></div>
+          <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+            <%= f.text_area :state, placeholder: 'Paste JSON state from lab', rows: 3, data: { character_counter_target: "input" } %>
+            <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+          </div>
+          <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
+            <%= f.text_area :notes, placeholder: t("playlist.notes_instructions"), rows: 2, data: { character_counter_target: "input" } %>
+            <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+          </div>
+          <div class="field"><%= f.submit t("playlist.save_sketch_collab"), class: "btn btn-primary btn-sm" %></div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</section>

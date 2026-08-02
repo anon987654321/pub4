@@ -1,0 +1,133 @@
+<% content_for :title, @listing.title %>
+<% content_for :description, meta_description_for(@listing) %>
+<% content_for :json_ld, json_ld_for(@listing, type: :product) %>
+
+<div class="page-header marketplace-listing-header">
+  <div>
+    <p class="dim">Marketplace / <%= @listing.category&.name || "Listing" %></p>
+    <h1><%= @listing.title %></h1>
+  </div>
+  <nav role="navigation" aria-label="Listing actions" class="marketplace-actions">
+    <% if Current.user.present? && Current.user == @listing.user %>
+      <%= link_to t("actions.edit"), edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
+    <% elsif Current.user.present? %>
+      <%= render "marketplace/listings/favorite_button",
+            listing: @listing,
+            favorited: @listing.favorite_for(Current.user).present? %>
+    <% end %>
+  </nav>
+</div>
+
+<%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
+
+<article class="marketplace-listing">
+  <p class="listing-price"><%= @listing.price_display %></p>
+  <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user&.display_name || "anon" %></p>
+  <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · <%= pluralize(@listing.reviews_count.to_i, "review") %> · status: <%= @listing.status %></p>
+  <% if @listing.reviews_count.to_i.positive? %>
+    <p class="dim"><%= number_with_precision(@listing.rating, precision: 1) %> ★ seller interaction rating</p>
+  <% end %>
+  <div class="listing-description"><%= simple_format(@listing.description) %></div>
+  <button class="btn-share" data-controller="share"
+          data-share-title-value="<%= @listing.title %>"
+          data-share-url-value="<%= request.original_url %>"
+          data-action="click->share#share">Share</button>
+  <%# seller can read back nil: User is acts_as_tenant-scoped on city, so a
+      seller with no city (or another city) is invisible under this tenant and
+      the association returns nil. Without this guard the != test passes and
+      user_conversations_path(nil) raises UrlGenerationError, 500ing the whole
+      listing page. %>
+  <% seller = @listing.user %>
+  <% if !@listing.sold? && Current.user.present? && seller.present? && Current.user != seller %>
+    <div class="listing-actions listing-actions--inline">
+      <%= button_to t("marketplace.message_seller_btn"), user_conversations_path(seller), method: :post, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+  <%= render "shared/affiliate_disclosure" %>
+</article>
+
+<div class="section-divider">
+  <p class="section-heading--md">Reviews</p>
+  <% if @review %>
+    <div class="form-wrap form-wrap--flush">
+      <%= form_with(model: @review, url: listing_reviews_path(@listing)) do |f| %>
+        <div class="field"><%= f.label :rating %><%= f.select :rating, options_for_select((1..5).map { |n| [ "#{n} ★", n ] }) %></div>
+        <div class="field"><%= f.label :body %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
+        <div class="field"><%= f.submit t("marketplace.post_review"), class: "btn btn-primary" %></div>
+      <% end %>
+    </div>
+  <% end %>
+  <% if @reviews.any? %>
+    <% @reviews.each do |review| %>
+      <article>
+        <strong><%= number_with_precision(review.rating, precision: 0) %> ★</strong>
+        <span class="dim"> — <%= review.user&.display_name || "anon" %></span>
+        <%= simple_format(review.body) if review.body.present? %>
+      </article>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_reviews"),
+          body: "Buyers can review after an order.",
+          action: { label: "Browse listings", path: listings_path } %>
+  <% end %>
+</div>
+
+<% if Current.user.present? && Current.user != @listing.user && !@listing.sold? %>
+  <div id="make-offer" class="section-divider">
+    <p class="section-heading--md">Make an offer</p>
+    <p class="dim">Send a short message to the seller. They can accept or decline from this listing page.</p>
+    <div class="form-wrap form-wrap--flush">
+      <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
+      <%= form_with(model: @order, url: listing_orders_path(@listing), data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
+        <div class="field"><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :message, placeholder: t("marketplace.message_seller"), rows: 3 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
+        <div class="field"><%= f.submit t("marketplace.send_offer"), class: "btn btn-primary" %> <span class="dim" data-autosave-target="status" aria-live="polite"></span></div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if Current.user.present? && Current.user == @listing.user %>
+  <div class="section-divider">
+    <p class="section-heading--md">Seller dashboard</p>
+    <div class="chips">
+      <span class="chip"><%= pluralize(@listing.views_count.to_i, "view") %></span>
+      <span class="chip"><%= pluralize(@listing.orders.size, "offer") %></span>
+      <span class="chip"><%= pluralize(@listing.favorites.size, "save") %></span>
+      <span class="chip"><%= @listing.status %></span>
+    </div>
+  </div>
+
+  <div class="section-divider">
+    <p class="section-heading--md">Offers</p>
+    <% if @listing.orders.any? %>
+      <% @listing.orders.includes(:buyer).each do |order| %>
+        <article>
+          <strong><%= order.buyer&.display_name || "anon" %></strong>
+          <span class="dim"> — <%= order.status %></span>
+          <% if order.message.present? %><p><%= order.message %></p><% end %>
+          <% if order.status == "pending" %>
+            <div class="cluster mt-8">
+              <%= button_to t("marketplace.accept"), listing_order_path(@listing, order), params: { accept: true }, method: :patch, class: "btn btn-primary btn-sm" %>
+              <%= button_to t("marketplace.decline"), listing_order_path(@listing, order), params: { decline: true }, method: :patch, class: "btn btn-ghost btn-sm" %>
+            </div>
+          <% end %>
+        </article>
+      <% end %>
+    <% else %>
+      <%= render "shared/empty_state",
+            title: t("empty.no_offers"),
+            body: "Incoming offers will list here.",
+            action: { label: "Edit listing", path: edit_marketplace_listing_path(@listing) } %>
+    <% end %>
+    <%= button_to t("marketplace.remove_listing"), listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm m-16" %>
+  </div>
+<% end %>
+
+<%= render "marketplace/listings/buy_bar" %>

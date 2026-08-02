@@ -16,6 +16,34 @@ PATH
       webpush (>= 1.1)
 
 PATH
+  remote: engines/dating
+  specs:
+    brgen-dating (0.1.0)
+      pub4-shared
+      rails (>= 8.0)
+
+PATH
+  remote: engines/marketplace
+  specs:
+    brgen-marketplace (0.1.0)
+      pub4-shared
+      rails (>= 8.0)
+
+PATH
+  remote: engines/playlist
+  specs:
+    brgen-playlist (0.1.0)
+      pub4-shared
+      rails (>= 8.0)
+
+PATH
+  remote: engines/takeaway
+  specs:
+    brgen-takeaway (0.1.0)
+      pub4-shared
+      rails (>= 8.0)
+
+PATH
   remote: engines/tv
   specs:
     brgen-tv (0.1.0)
@@ -673,6 +701,10 @@ DEPENDENCIES
   axe-core-capybara
   bcrypt (~> 3.1)
   brakeman
+  brgen-dating!
+  brgen-marketplace!
+  brgen-playlist!
+  brgen-takeaway!
   brgen-tv!
   bundler-audit
   capybara

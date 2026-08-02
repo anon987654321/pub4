@@ -1,8 +1,0 @@
-<%= render "shared/feed_card",
-  avatar_url: nil,
-  name: set.name,
-  handle: set.privacy.presence&.humanize || "Public",
-  meta: "#{set.tracks.count} tracks · #{set.formatted_duration}",
-  content: set.description,
-  url: playlist_set_path(set),
-  class: "playlist" %>

@@ -130,7 +130,7 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
     sign_in_with_session_cookie!(user)
 
     assert_difference -> { Playlist::ListeningParty.count }, 1 do
-      post playlist_set_listening_party_path(set)
+      post playlist.set_listening_party_path(set)
     end
 
     party = Playlist::ListeningParty.includes(:host).find_by!(playlist_set_id: set.id)

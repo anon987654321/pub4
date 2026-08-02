@@ -1,0 +1,27 @@
+<% content_for :title, t("dating.matches") %>
+
+<div class="page-header" role="banner" aria-label="Dating matches header">
+  <h1>Matcher</h1>
+  <nav role="navigation" aria-label="Matches nav">
+    <%= link_to "Oppdag", root_path, class: "btn btn-ghost btn-sm" %>
+  </nav>
+</div>
+
+<turbo-frame id="dating-matches" data-turbo-action="replace">
+<% if @matches.none? %>
+  <%= render "shared/empty_state",
+        title: t("dating.no_matches"),
+        body: t("dating.no_matches_body"),
+        action: { label: "Oppdag", path: root_path } %>
+<% else %>
+  <section id="dating-matches-list" class="match-list" role="list" aria-label="Matcher">
+    <% @matches.each do |match| %>
+      <%= render "dating/matches/match", match: %>
+    <% end %>
+  </section>
+
+  <%= render "shared/infinite_scroll_sentinel",
+             pagy: @pagy,
+             reflex: "MatchesInfiniteScrollReflex#load_more",
+             sentinel_id: "dating-matches-sentinel" %>
+<% end %>

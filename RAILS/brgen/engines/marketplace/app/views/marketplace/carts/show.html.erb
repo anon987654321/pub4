@@ -1,0 +1,59 @@
+<% content_for :title, t("pages.cart") %>
+
+<%= render "marketplace/nav_bar",
+      active: "cart",
+      search_url: listings_path,
+      search_placeholder: t("search.marketplace"),
+      cart_count: @cart_items.size %>
+
+<div class="page-header" role="banner" aria-label="<%= t("marketplace.cart_header") %>">
+  <h1><%= t("pages.cart") %></h1>
+  <p class="dim"><%= t("marketplace.item", count: @cart_items.size) %></p>
+</div>
+
+<% if @cart_items.any? %>
+  <div class="cart-items">
+    <% @cart_items.each do |item| %>
+      <div class="cart-item">
+        <div>
+          <strong><%= link_to item.listing.title, listing_path(item.listing) %></strong>
+          <div class="dim"><%= item.listing.price_display %> × <%= item.quantity || 1 %></div>
+        </div>
+        <div class="text-end">
+          <strong><%= item.total_display %></strong>
+          <div>
+            <%= button_to t("actions.remove"), listing_order_path(item.listing, item),
+                  method: :patch, params: { decline: true }, class: "btn btn-ghost btn-sm" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="cart-summary">
+    <p><strong><%= t("marketplace.cart_total", amount: @cart_total / 100.0) %></strong></p>
+    <p class="dim"><%= t("marketplace.cart_pay_hint") %></p>
+
+    <div class="cart-pay-actions" role="group" aria-label="<%= t("marketplace.payment_methods") %>">
+      <%= button_to t("marketplace.pay_vipps"), checkout_path,
+            method: :post, params: { provider: "vipps" },
+            class: "btn btn-primary cart-pay-vipps",
+            form: { data: { turbo: false } } %>
+      <%= button_to t("marketplace.pay_stripe"), checkout_path,
+            method: :post, params: { provider: "stripe" },
+            class: "btn btn-ghost cart-pay-stripe",
+            form: { data: { turbo: false } } %>
+    </div>
+    <p class="hint mt-8"><%= t("marketplace.cart_honest_pay") %></p>
+
+    <%= button_to t("marketplace.send_all_offers"), send_offers_marketplace_cart_path,
+          method: :post, class: "btn btn-ghost",
+          data: { turbo_confirm: t("marketplace.send_offers_confirm") } %>
+    <p class="hint mt-8"><%= t("marketplace.cart_sellers_hint") %></p>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("marketplace.cart_empty_title"),
+        body: t("marketplace.cart_empty_body"),
+        action: { label: t("marketplace.browse_marketplace"), path: root_path } %>
+<% end %>

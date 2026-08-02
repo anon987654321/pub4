@@ -25,20 +25,20 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
 
     get new_playlist_set_path
     assert_response :success
-    assert_match playlist_sets_path, response.body
+    assert_match playlist.sets_path, response.body
 
     assert_difference -> { Playlist::Set.count }, 1 do
-      post playlist_sets_path, params: { playlist_set: { name: "Contract set" } }
+      post playlist.sets_path, params: { playlist_set: { name: "Contract set" } }
     end
-    assert_redirected_to playlist_set_path(Playlist::Set.order(:id).last)
+    assert_redirected_to playlist.set_path(Playlist::Set.order(:id).last)
   end
 
   test "playlist sets and hosted tracks indexes resolve their models" do
     host! "playlist.brgen.no"
     # Playlist::Set inside `module Playlist` resolved to Playlist::Playlist::Set.
-    get playlist_sets_path
+    get playlist.sets_path
     assert_response :success
-    get playlist_hosted_tracks_path
+    get playlist.hosted_tracks_path
     assert_response :success
   end
 

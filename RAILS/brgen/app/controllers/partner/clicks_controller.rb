@@ -34,8 +34,8 @@ module Partner
     private
 
     def marketplace_listing_url_for(listing)
-      if respond_to?(:marketplace_listing_path)
-        marketplace_listing_path(listing)
+      if respond_to?(:marketplace.listing_path)
+        marketplace.listing_path(listing)
       else
         "/listings/#{listing.id}"
       end
@@ -44,8 +44,8 @@ module Partner
     end
 
     def marketplace_store_url_for(store)
-      if respond_to?(:marketplace_shop_path)
-        marketplace_shop_path(store.slug)
+      if respond_to?(:marketplace.shop_path)
+        marketplace.shop_path(store.slug)
       else
         "/shops/#{store.slug}"
       end

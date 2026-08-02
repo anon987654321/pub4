@@ -1,0 +1,142 @@
+# frozen_string_literal: true
+
+class Marketplace::ListingsController < Marketplace::BaseController
+  include Shared::LiveSearchable
+  include Shared::TwoFactorAuth
+
+  rate_limit to: 20, within: 3.minutes, only: %i[create],
+    with: -> { redirect_to listings_path, alert: "Try again later." }
+
+  allow_unauthenticated_access only: %i[index show]
+  before_action :require_user_session, only: %i[new create]
+  before_action :set_listing, only: %i[show edit update destroy]
+  # 2FA only for real accounts; guests list without identity ceremony.
+  before_action -> { require_two_factor!(Current.user) }, only: %i[new create], if: :authenticated?
+
+  def index
+    scope = policy_scope(Marketplace::Listing).with_attached_photos.includes(:user, :category)
+    scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
+    scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    @search_lat = params[:lat].presence
+    @search_lng = params[:lng].presence
+    @radius_km = Marketplace::Listing.radius_from(params[:radius_km].presence || Marketplace::Listing::DEFAULT_RADIUS_KM)
+    if @search_lat.present? && @search_lng.present?
+      scope = scope.near(@search_lat, @search_lng, @radius_km)
+    end
+    @pagy, @listings = pagy(scope.recent)
+    @listing_distances = listing_distances(@listings, @search_lat, @search_lng)
+    @categories = Marketplace::Category.roots.includes(:children)
+    @top_offers = top_offers_for_index
+    @favorited_listing_ids = favorited_listing_ids_for(@listings, @top_offers)
+
+    finish_live_search(partial: "marketplace/listings/live_search_results")
+  end
+
+  def show
+    authorize @listing
+    @listing.increment!(:views_count)
+    @order = Marketplace::Order.new if Current.user.present?
+    @reviews = @listing.reviews.includes(:user).order(created_at: :desc)
+    @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
+  end
+
+  def new
+    authorize Marketplace::Listing
+    @listing   = Marketplace::Listing.new
+    @categories = Marketplace::Category.all
+  end
+
+  def create
+    authorize Marketplace::Listing
+    @listing = Current.user.marketplace_listings.build(listing_params)
+    if @listing.save
+      preset = params[:marketplace_listing][:preset].presence
+      PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
+      Shared::DomainEvent.record!(
+        actor: Current.user, action: "listing.created", subject: @listing,
+        source_vertical: "marketplace", locality: @listing.location
+      )
+      redirect_to listing_path(@listing), notice: "Listed"
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def edit
+    authorize @listing
+    @categories = Marketplace::Category.all
+  end
+
+  def update
+    authorize @listing
+    if @listing.update(listing_params)
+      Shared::DomainEvent.record!(
+        actor: Current.user, action: "listing.updated", subject: @listing,
+        source_vertical: "marketplace", locality: @listing.location
+      )
+      redirect_to listing_path(@listing)
+    else
+      render(:edit, status: :unprocessable_entity)
+    end
+  end
+
+  def destroy
+    authorize @listing
+    @listing.update!(status: "removed")
+    redirect_to listings_path
+  end
+
+  private
+
+  def set_listing = (@listing = Marketplace::Listing.includes(:user, :category, photos_attachments: :blob).find(params[:id]))
+
+  def listing_params
+    params.require(:marketplace_listing).permit(
+      :title, :description, :price_cents, :condition, :status, :location,
+      :latitude, :longitude, :category_id, :preset, photos: []
+    )
+  end
+
+  def listing_distances(listings, lat, lng)
+    return {} if lat.blank? || lng.blank?
+
+    listings.each_with_object({}) do |listing, distances|
+      distance = listing.distance_to(lat, lng)
+      distances[listing.id] = distance if distance
+    end
+  end
+
+  # Featured deals first; fill with popular active listings. Hidden while
+  # searching or category-filtering so the grid stays the primary answer.
+  def top_offers_for_index
+    return [] if live_search_query.present? || params[:category_id].present?
+
+    limit = 6
+    deals = Marketplace::Deal.active.featured
+      .includes(listing: { photos_attachments: :blob })
+      .limit(limit)
+      .to_a
+    return deals if deals.size >= limit
+
+    seen = deals.filter_map { |deal| deal.listing_id }
+    fillers = policy_scope(Marketplace::Listing).active
+      .with_attached_photos
+      .includes(:category)
+      .where.not(id: seen)
+      .popular
+      .limit(limit - deals.size)
+      .to_a
+    deals + fillers
+  end
+
+  def favorited_listing_ids_for(*collections)
+    return Set.new unless Current.user.present?
+
+    ids = collections.flatten.compact.filter_map do |row|
+      row.is_a?(Marketplace::Deal) ? row.listing_id : row.id
+    end
+    return Set.new if ids.empty?
+
+    Current.user.marketplace_favorites.where(listing_id: ids).pluck(:listing_id).to_set
+  end
+end

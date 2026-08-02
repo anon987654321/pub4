@@ -1,0 +1,35 @@
+<% listing = deal.listing %>
+<% photo = listing&.photos&.attached? ? listing.photos.first : nil %>
+<% badge = deal.badge.presence || (deal.discount_percent.present? ? "#{deal.discount_percent.to_i}% off" : nil) %>
+<%= link_to deal_path(deal),
+      class: "deal-card deal",
+      aria: { label: deal.headline } do %>
+  <div class="deal-card-img">
+    <% if photo %>
+      <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
+    <% else %>
+      <div class="deal-card-placeholder" aria-hidden="true">
+        <span><%= deal.headline.to_s.first&.upcase || "%" %></span>
+      </div>
+    <% end %>
+    <% if badge.present? %>
+      <span class="deal-badge"><%= badge %></span>
+    <% end %>
+  </div>
+
+  <div class="deal-card-body">
+    <% if listing %>
+      <div class="deal-price"><%= listing.price_display %></div>
+    <% end %>
+    <h2 class="deal-card-title"><%= deal.headline %></h2>
+    <% if listing %>
+      <p class="deal-card-subtitle"><%= listing.title %></p>
+      <% if listing.reviews_count.to_i.positive? %>
+        <div class="deal-meta deal-meta--rating">
+          <span class="deal-rating"><%= number_with_precision(listing.rating, precision: 1) %> ★</span>
+          <%= pluralize(listing.reviews_count, "review") %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

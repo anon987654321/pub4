@@ -1,0 +1,24 @@
+<% content_for :title, "Markedsplass" %>
+<% content_for :json_ld, json_ld_script(item_list_schema(@listings, title: "Markedsplass")) if @listings.any? %>
+
+<%= render "marketplace/nav_bar",
+      active: "listings",
+      search_url: listings_path,
+      search_placeholder: t("search.marketplace"),
+      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
+
+<h1 class="visually-hidden">Markedsplass</h1>
+
+<%= live_search_index url: listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
+  <%= f.select :category_id,
+        options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
+        { include_blank: "All categories" }, aria: { label: "Filter by category" } %>
+  <%= f.number_field :lat, value: @search_lat, step: "0.000001", placeholder: t("marketplace.latitude"), aria: { label: t("marketplace.latitude") } %>
+  <%= f.number_field :lng, value: @search_lng, step: "0.000001", placeholder: t("marketplace.longitude"), aria: { label: t("marketplace.longitude") } %>
+  <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") } %>
+<% end %>
+
+<% content_for :widgets do %>
+  <%= render "shared/affiliate_deals", category: params[:category_id] %>
+  <%= render "shared/newsletter_cta" %>
+<% end %>

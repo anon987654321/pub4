@@ -66,6 +66,10 @@ end
 gem 'pub4-shared', path: '../shared'
 # TV vertical as a mountable engine (vertical-as-engine pilot; see ENGINES.md).
 gem 'brgen-tv', path: 'engines/tv', require: 'tv'
+gem 'brgen-marketplace', path: 'engines/marketplace', require: 'marketplace'
+gem 'brgen-playlist', path: 'engines/playlist', require: 'playlist'
+gem 'brgen-takeaway', path: 'engines/takeaway', require: 'takeaway'
+gem 'brgen-dating', path: 'engines/dating', require: 'dating'
 
 gem "dartsass-rails", "~> 0.5.1"
 

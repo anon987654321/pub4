@@ -1,0 +1,86 @@
+<%# Amazon nav bar — structure follows amazon.com's own two-row header (the
+    source pen is a simplified take on it). Deliberately a faithful clone for
+    now; identity gets moulded toward the house dialect later. Styles in
+    _marketplace_nav_bar.scss.
+
+    The wordmark is Markedsplass, never Amazon's: the layout is what we are
+    reproducing, not someone else's brand. %>
+<% active = local_assigns.fetch(:active, "listings") %>
+<% search_url = local_assigns.fetch(:search_url, listings_path) %>
+<% search_placeholder = local_assigns.fetch(:search_placeholder, t("search.marketplace")) %>
+<% cart_count = local_assigns[:cart_count].to_i %>
+<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || "Bergen") %>
+<%# Cached: this partial renders on every marketplace page, and the category
+    list changes about never. %>
+<% nav_categories = Rails.cache.fetch("marketplace/nav_categories/v1", expires_in: 1.hour) do
+     Marketplace::Category.order(:name).limit(24).pluck(:name, :slug)
+   end %>
+
+<div id="navBar">
+  <div id="topHalf">
+    <div id="logoWrapper">
+      <%= link_to root_path, id: "logo", class: "marketplace-logo-link nav-hover", aria: { label: "Markedsplass" } do %>
+        <span class="nav-logo-mark"><%= render "marketplace/animated_logo" %></span>
+        <span class="nav-logo-word">markedsplass<span class="nav-logo-tld">.no</span></span>
+      <% end %>
+    </div>
+
+    <%= link_to nearby_path, class: "nav-block nav-deliver nav-hover" do %>
+      <span class="nav-line-1"><%= icon :nearby, size: 13 %> <%= t("storefront.deliver_to") %></span>
+      <span class="nav-line-2"><%= deliver_to %></span>
+    <% end %>
+
+    <div class="search marketplace-nav-search" data-controller="search-focus">
+      <%= form_with url: search_url, method: :get, local: true do %>
+        <select name="category" class="nav-search-category" aria-label="<%= t("search.marketplace_label") %>">
+          <option value=""><%= t("storefront.all") %></option>
+          <% nav_categories.each do |name, slug| %>
+            <option value="<%= slug %>" <%= "selected" if params[:category] == slug %>><%= name %></option>
+          <% end %>
+        </select>
+        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
+               placeholder="<%= search_placeholder %>" aria-label="<%= t("search.marketplace_label") %>"
+               data-action="focus->search-focus#focus blur->search-focus#blur" />
+        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 20 %></button>
+      <% end %>
+    </div>
+
+    <%= link_to listings_path, class: "nav-block nav-hover" do %>
+      <span class="nav-line-1">&nbsp;</span>
+      <span class="nav-line-2">EN</span>
+    <% end %>
+
+    <div id="accountStuff">
+      <%= link_to(authenticated? ? user_path(Current.user) : new_session_path, class: "nav-block nav-hover") do %>
+        <span class="nav-line-1"><%= t("storefront.hello") %> <%= authenticated? ? (Current.user.username.presence || t("storefront.you")) : t("storefront.sign_in") %></span>
+        <span class="nav-line-2"><%= t("storefront.account_lists") %></span>
+      <% end %>
+      <%= link_to saved_searches_path, class: "nav-block nav-hover" do %>
+        <span class="nav-line-1"><%= t("storefront.returns") %></span>
+        <span class="nav-line-2"><%= t("storefront.and_orders") %></span>
+      <% end %>
+      <%= link_to cart_path, id: "cartLink", class: "nav-block nav-cart nav-hover#{" nav-cart--active" if active == "cart"}" do %>
+        <span class="nav-cart-count"><%= cart_count %></span>
+        <%= icon :cart, size: 26, css_class: "nav-cart-icon" %>
+        <span class="nav-line-2"><%= t("storefront.cart") %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="bottomHalf">
+    <%# Amazon's "All" opens a category flyout. There is no categories index
+        route (only :show), so this browses everything rather than being an
+        inert button. %>
+    <%= link_to listings_path, id: "department", class: "nav-hover" do %>
+      <%= icon :menu, size: 18 %> <%= t("storefront.all") %>
+    <% end %>
+    <div id="sections">
+      <%= link_to t("storefront.listings"), listings_path, class: "section nav-hover#{" section--active" if active == "listings"}" %>
+      <%= link_to t("storefront.todays_deals"), deals_path, class: "section nav-hover#{" section--active" if active == "deals"}" %>
+      <%= link_to t("storefront.stores"), shops_path, class: "section nav-hover#{" section--active" if active == "stores"}" %>
+      <%= link_to t("storefront.sell"), new_marketplace_listing_path, class: "section nav-hover" %>
+      <%= link_to t("storefront.help"), listings_path, class: "section nav-hover" %>
+    </div>
+    <div id="subPromo"><%= t("storefront.sub_promo_market") %></div>
+  </div>
+</div>

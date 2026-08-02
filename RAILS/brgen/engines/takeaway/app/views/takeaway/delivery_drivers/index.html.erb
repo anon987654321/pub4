@@ -1,0 +1,27 @@
+<% content_for :title, t("takeaway.delivery_drivers") %>
+
+<div class="page-header" role="banner" aria-label="Delivery drivers header">
+  <div>
+    <p class="dim">Takeaway operations</p>
+    <h1><%= t("takeaway.delivery_drivers") %></h1>
+  </div>
+</div>
+
+<% if @delivery_drivers.any? %>
+  <div class="order-list" role="list" aria-label="Delivery drivers">
+    <% @delivery_drivers.each do |driver| %>
+      <% label = driver.user&.display_name || "anon" %>
+      <%= render "shared/feed_card",
+        name: label,
+        meta: "#{driver.vehicle_type.presence&.humanize || 'Vehicle not set'} · #{driver.available? ? 'Available' : 'Unavailable'}",
+        content: (driver.location? ? "#{driver.current_lat}, #{driver.current_lng}" : nil),
+        url: delivery_driver_path(driver),
+        class: "takeaway" %>
+    <% end %>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_drivers"),
+        body: "Check back when drivers come online.",
+        action: { label: "Restaurants", path: restaurants_path } %>
+<% end %>

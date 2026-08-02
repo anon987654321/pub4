@@ -46,28 +46,28 @@ class SitemapsController < ApplicationController
 
   def playlist_entries
     entries = Playlist::Playlist.public_playlists.limit(PER_MODEL_CAP).map do |playlist|
-      Shared::SitemapBuilder::Entry.new(loc: playlist_playlist_url(playlist), lastmod: playlist.updated_at, changefreq: "weekly", priority: "0.6")
+      Shared::SitemapBuilder::Entry.new(loc: playlist.playlist_url(playlist), lastmod: playlist.updated_at, changefreq: "weekly", priority: "0.6")
     end
     entries + Playlist::Set.publicly_listed.limit(PER_MODEL_CAP).map do |set|
-      Shared::SitemapBuilder::Entry.new(loc: playlist_set_url(set), lastmod: set.updated_at, changefreq: "weekly", priority: "0.5")
+      Shared::SitemapBuilder::Entry.new(loc: playlist.set_url(set), lastmod: set.updated_at, changefreq: "weekly", priority: "0.5")
     end
   end
 
   def takeaway_entries
     Takeaway::Restaurant.active.limit(PER_MODEL_CAP).map do |restaurant|
-      Shared::SitemapBuilder::Entry.new(loc: takeaway_restaurant_url(restaurant), lastmod: restaurant.updated_at, changefreq: "weekly", priority: "0.7")
+      Shared::SitemapBuilder::Entry.new(loc: takeaway.restaurant_url(restaurant), lastmod: restaurant.updated_at, changefreq: "weekly", priority: "0.7")
     end
   end
 
   def marketplace_entries
     entries = Marketplace::Store.active.limit(PER_MODEL_CAP).map do |store|
-      Shared::SitemapBuilder::Entry.new(loc: marketplace_shop_url(store), lastmod: store.updated_at, changefreq: "weekly", priority: "0.6")
+      Shared::SitemapBuilder::Entry.new(loc: marketplace.shop_url(store), lastmod: store.updated_at, changefreq: "weekly", priority: "0.6")
     end
     entries += Marketplace::Listing.active.limit(PER_MODEL_CAP).map do |listing|
-      Shared::SitemapBuilder::Entry.new(loc: marketplace_listing_url(listing), lastmod: listing.updated_at, changefreq: "daily", priority: "0.7")
+      Shared::SitemapBuilder::Entry.new(loc: marketplace.listing_url(listing), lastmod: listing.updated_at, changefreq: "daily", priority: "0.7")
     end
     entries + Marketplace::Deal.active.limit(PER_MODEL_CAP).map do |deal|
-      Shared::SitemapBuilder::Entry.new(loc: marketplace_deal_url(deal), lastmod: deal.updated_at, changefreq: "daily", priority: "0.6")
+      Shared::SitemapBuilder::Entry.new(loc: marketplace.deal_url(deal), lastmod: deal.updated_at, changefreq: "daily", priority: "0.6")
     end
   end
 

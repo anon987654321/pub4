@@ -234,7 +234,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes index, ':radius_km'
     assert_includes card, 'km away'
     assert_includes card, 'reviews_count'
-    assert_includes show, 'marketplace_listing_reviews_path'
+    assert_includes show, 'marketplace.listing_reviews_path'
     assert_includes show, '@reviews'
   end
 
@@ -281,7 +281,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes player, 'playlist-embed-frame'
     assert_includes stimulus, 'embedTarget'
     assert_includes show, 'json_ld_for(@playlist, type: :music_playlist)'
-    assert_includes show, 'playlist_playlist_imports_path'
+    assert_includes show, 'playlist.playlist_imports_path'
     assert_includes show, 'embed_playlist_playlist_url'
     assert_includes hosted_form, 'form.datetime_field :expires_at'
   end
@@ -517,7 +517,7 @@ class DeployBacklogTest < Minitest::Test
     assert_includes read_brgen('app/controllers/playlist/listening_parties_controller.rb'), 'def create'
     assert_includes read_brgen('app/views/users/show.html.erb'), 'follow_button'
     assert_includes read_brgen('app/views/maps/places/show.html.erb'), 'check_in_maps_place_path'
-    assert_includes read_brgen('app/views/playlist/sets/show.html.erb'), 'playlist_set_listening_party_path'
+    assert_includes read_brgen('app/views/playlist/sets/show.html.erb'), 'playlist.set_listening_party_path'
   end
 
   def test_bsdports_security_advisory_refresh_job_uses_nvd_service
@@ -705,7 +705,7 @@ class DeployBacklogTest < Minitest::Test
     refute_includes controller, 'module Playlist'
     assert_includes controller, 'find_or_create_by!'
     assert_includes controller, 'destroy_all'
-    assert_includes show, 'playlist_set_like_path'
+    assert_includes show, 'playlist.set_like_path'
     assert_includes show, 'likes.count'
   end
 

@@ -1,0 +1,32 @@
+<%= form_with model: [:marketplace, store], url: store.persisted? ? shop_path(store.slug) : shops_path do |form| %>
+  <% if store.errors.any? %>
+    <%= tag.section role: "alert" do %>
+      <%= tag.h2 t("shared.errors", default: "Please review the form") %>
+      <%= tag.ul do %>
+        <% store.errors.full_messages.each do |message| %>
+          <%= tag.li message %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :vertical %>
+    <%= form.select :vertical, Marketplace::Store::VERTICALS.map { |vertical| [vertical.humanize, vertical] }, include_blank: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :description %>
+    <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= form.text_area :description, rows: 5 , maxlength: 2000, data: { character_counter_target: "input", controller: "textarea-autogrow" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+  <% end %>
+
+  <%= form.submit %>
+<% end %>

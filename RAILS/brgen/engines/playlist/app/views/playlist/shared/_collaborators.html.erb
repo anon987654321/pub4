@@ -1,0 +1,34 @@
+<%#
+  Shared collaborators block for Playlist::Set and Playlist::Playlist.
+  locals: parent, collaborations, collaborations_path, collaboration_path_proc (optional), can_manage
+%>
+<% collaborations = local_assigns[:collaborations] || parent.collaborations %>
+<% can_manage = local_assigns.fetch(:can_manage) { authenticated? && (Current.user == parent.user || collaborations.exists?(user: Current.user, role: %w[owner editor])) } %>
+<section role="region" aria-label="Collaborators">
+  <h2>Collaborators</h2>
+  <% if collaborations.any? %>
+    <% collaborations.includes(:user).each do |c| %>
+      <span class="dim"><%= c.user&.username || c.user&.email %> (<%= c.role %>)</span>
+      <% if Current.user == parent.user || c.user == Current.user %>
+        <%= button_to t("actions.remove"), collaboration_path_proc.call(c), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_collaborators"),
+          body: can_manage ? "Invite an editor or viewer by username in the form below." : "Only owners can invite collaborators.",
+          action: { label: t("playlist.browse_playlists"), path: root_path } %>
+  <% end %>
+
+  <% if can_manage %>
+    <div class="form-wrap">
+      <%= form_with url: collaborations_path, method: :post do |f| %>
+        <div class="field field--row">
+          <%= f.text_field :username, placeholder: t("playlist.username"), class: "field--grow" %>
+          <%= f.select :role, %w[editor viewer] %>
+          <%= f.submit t("playlist.add_collaborator"), class: "btn btn-primary btn-sm" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>

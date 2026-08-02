@@ -44,7 +44,7 @@ class CrossSubdomainSessionTest < ActionDispatch::IntegrationTest
     guest = User.where(guest: true).order(created_at: :desc).first
 
     host! "takeaway.brgen.no"
-    get takeaway_root_path
+    get takeaway.root_path
     assert_response :success
     assert_equal guest.id, User.where(guest: true).order(created_at: :desc).first.id,
       "a second guest was minted for the takeaway subdomain"

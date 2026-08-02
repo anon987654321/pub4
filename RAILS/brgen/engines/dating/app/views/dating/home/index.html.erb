@@ -1,0 +1,76 @@
+<% content_for :title, "dating" %>
+
+<% content_for :head do %>
+  <%# Inter is self-hosted (see _fonts_brand.scss). %>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-600-normal.woff2" crossorigin>
+  <script src="/vendor/css-doodle.min.js" defer></script>
+<% end %>
+
+<div class="dating-app" data-controller="dating-intro">
+  <section
+    class="dating-intro"
+    data-dating-intro-target="intro"
+    data-action="pointerdown->dating-intro#pointerdown pointermove->dating-intro#pointermove pointerup->dating-intro#pointerup pointercancel->dating-intro#pointercancel"
+    role="dialog"
+    aria-label="Brgen dating"
+    aria-modal="true"
+  >
+    <p class="dating-intro-hint">sveip for å begynne</p>
+
+    <div class="dating-intro-center">
+      <%= render "dating/home/heart" %>
+      <p class="dating-intro-title">dating</p>
+    </div>
+
+    <footer class="dating-intro-trust">
+      <span>Beskyttet med</span>
+      <span class="dating-intro-bankid" aria-label="bankID">
+        <span class="dating-intro-bankid-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        bankID
+      </span>
+    </footer>
+  </section>
+
+  <section class="dating-discover-panel" data-dating-intro-target="discover" hidden aria-hidden="true">
+    <div class="page-header" role="banner" aria-label="Dating discover header">
+      <div>
+        <p class="dim">Lokalt</p>
+        <h1>Oppdag</h1>
+      </div>
+      <nav role="navigation" aria-label="Dating navigation">
+        <%= link_to "Matcher", matches_path, class: "btn btn-ghost" %>
+        <% if Current.user&.dating_profile.present? %>
+          <%= link_to "Profil", edit_dating_profile_path, class: "btn btn-ghost" %>
+        <% elsif Current.user.present? %>
+          <%= link_to "Lag profil", new_dating_profile_path, class: "btn btn-ghost" %>
+        <% end %>
+      </nav>
+    </div>
+
+    <turbo-frame id="dating-discover" data-turbo-action="replace">
+      <section
+        data-controller="swipe"
+        data-swipe-like-url-value="<%= likes_path %>"
+        data-swipe-dislike-url-value="<%= dislikes_path %>"
+        data-action="pointerdown->swipe#pointerDown pointermove->swipe#pointerMove pointerup->swipe#pointerUp pointercancel->swipe#pointerUp touchstart->swipe#pointerDown touchmove->swipe#pointerMove touchend->swipe#pointerUp keydown.left@window->swipe#pass keydown.right@window->swipe#like"
+        class="dating-discover"
+      >
+        <div id="swipe-stack">
+          <% @profiles.each_with_index do |profile, index| %>
+            <%= render "card", profile: profile, index: index %>
+          <% end %>
+        </div>
+        <% if @profiles.empty? %>
+          <%# Soft guests can like/dislike (require_user_session) — do not auth-wall discover. %>
+          <%= render "shared/empty_state",
+                title: t("empty.no_nearby"),
+                body: "Utvid radius, kom tilbake senere, eller fullfør profilen din så andre finner deg.",
+                action: Current.user&.dating_profile.present? ?
+                  { label: "Rediger profil", path: edit_dating_profile_path } :
+                  { label: "Lag profil", path: new_dating_profile_path } %>
+        <% end %>
+        <turbo-frame id="dating-next" src="<%= next_path %>" loading="lazy" hidden></turbo-frame>
+      </section>
+    </turbo-frame>
+  </section>
+</div>

@@ -1,0 +1,12 @@
+<% content_for :title, t("marketplace.deals.title", default: "Deals") %>
+
+<%= render "marketplace/nav_bar",
+      active: "deals",
+      search_url: deals_path,
+      search_placeholder: t("search.marketplace"),
+      cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
+
+<%= tag.section class: "marketplace-deals", role: "region", "aria-label": "Marketplace deals" do %>
+  <%= tag.h1 class: "visually-hidden" do %><%= t("marketplace.deals.title", default: "Deals") %><% end %>
+  <%= live_search_index url: deals_path, results_partial: "marketplace/deals/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.deals_label"), frame_id: "marketplace-deals" %>
+<% end %>

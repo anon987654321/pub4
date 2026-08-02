@@ -1,0 +1,38 @@
+<% content_for :title, @track.title %>
+
+<%= render "playlist/playlists/player",
+      playlist: @track,
+      playlist_name: @track.title,
+      tracks_count: 1,
+      plays_count: @track.listens.count,
+      tracks: [@track],
+      active_track: @track,
+      comments: @comments.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } },
+      track_comments: { @track.id => @comments.map { |c| { time: (c.timestamp_seconds || 0).to_f, text: c.body } } } %>
+
+<% if authenticated? %>
+  <section class="playlist-admin" aria-label="Track management">
+    <div class="cluster">
+      <%= link_to t("actions.edit"), edit_playlist_hosted_track_path(@track), class: "btn btn-ghost btn-sm" %>
+      <%= button_to t("actions.delete"), hosted_track_path(@track), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") }, class: "btn btn-danger btn-sm" %>
+    </div>
+  </section>
+<% end %>
+
+<section class="playlist-analytics" aria-label="Track analytics">
+  <h3>Analytics</h3>
+  <p class="dim"><%= @track.listens.count %> plays · <%= @comments.size %> timestamped comments · <%= @track.audio_versions.count %> prior versions</p>
+  <p class="dim">Privacy: <%= @track.privacy.presence || "private" %> <% if @track.expires_at %>· expires <%= @track.expires_at.to_date %><% end %></p>
+</section>
+
+<% if @comments.any? %>
+  <section class="playlist-details">
+    <h2>Timestamped comments</h2>
+    <% @comments.each do |comment| %>
+      <article>
+        <p class="dim"><%= comment.timestamp_seconds %>s</p>
+        <p><%= comment.body %></p>
+      </article>
+    <% end %>
+  </section>
+<% end %>

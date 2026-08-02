@@ -1,0 +1,11 @@
+<% content_for :title, t("playlist.new_set") %>
+
+<div class="page-header" role="banner">
+  <div>
+    <p class="dim">Playlist set</p>
+    <h1><%= t("playlist.new_set") %></h1>
+  </div>
+  <%= link_to "All sets", sets_path, class: "btn btn-ghost btn-sm" %>
+</div>
+
+<%= render "form", set: @set %>

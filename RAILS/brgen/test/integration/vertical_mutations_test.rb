@@ -63,20 +63,20 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     sign_in_with_session_cookie!(buyer)
 
     assert_difference -> { Marketplace::Order.count }, 1 do
-      post marketplace_listing_orders_path(listing), params: {
+      post marketplace.listing_orders_path(listing), params: {
         marketplace_order: { message: "Still available?" },
         quantity: 1,
       }
     end
-    assert_redirected_to marketplace_listing_path(listing)
+    assert_redirected_to marketplace.listing_path(listing)
 
     order = Marketplace::Order.order(:id).last
     assert_equal "pending", order.status
     assert_equal buyer.id, order.buyer_id
 
     sign_in_with_session_cookie!(seller)
-    patch marketplace_order_path(order), params: { accept: "1" }
-    assert_redirected_to marketplace_order_path(order)
+    patch marketplace.order_path(order), params: { accept: "1" }
+    assert_redirected_to marketplace.order_path(order)
     assert_equal "accepted", order.reload.status
   end
 
@@ -96,7 +96,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     sign_in_with_session_cookie!(buyer)
 
     post send_offers_marketplace_cart_path
-    assert_redirected_to marketplace_cart_path
+    assert_redirected_to marketplace.cart_path
     assert_match(/Sent 1/, flash[:notice].to_s)
   end
 
@@ -107,13 +107,13 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     host! "dating.brgen.no"
     sign_in_with_session_cookie!(a)
     assert_difference -> { Dating::Like.count }, 1 do
-      post dating_likes_path, params: { user_id: b.id }
+      post dating.likes_path, params: { user_id: b.id }
     end
-    assert_redirected_to dating_root_path
+    assert_redirected_to dating.root_path
 
     sign_in_with_session_cookie!(b)
     assert_difference -> { Dating::Match.count }, 1 do
-      post dating_likes_path, params: { user_id: a.id }
+      post dating.likes_path, params: { user_id: a.id }
     end
     assert Dating::Match.active.exists?(initiator_id: a.id, receiver_id: b.id) ||
            Dating::Match.active.exists?(initiator_id: b.id, receiver_id: a.id)
@@ -141,7 +141,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     sign_in_with_session_cookie!(customer)
 
     assert_difference -> { Takeaway::Order.count }, 1 do
-      post takeaway_restaurant_orders_path(restaurant), params: {
+      post takeaway.restaurant_orders_path(restaurant), params: {
         takeaway_order: {
           delivery_address: "Torgallmenningen 1",
           special_instructions: "No onion",
@@ -153,7 +153,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     assert_equal "pending", order.status
     assert_equal customer.id, order.user_id
     assert order.order_items.exists?(menu_item_id: item.id)
-    assert_redirected_to takeaway_order_path(order)
+    assert_redirected_to takeaway.order_path(order)
   end
 
   test "playlist import creates tracks from URLs" do
@@ -164,11 +164,11 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     sign_in_with_session_cookie!(dj)
 
     assert_difference -> { Playlist::Track.count }, 1 do
-      post playlist_playlist_imports_path(playlist), params: {
+      post playlist.playlist_imports_path(playlist), params: {
         urls: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC\n",
       }
     end
-    assert_redirected_to playlist_playlist_path(playlist)
+    assert_redirected_to playlist.playlist_path(playlist)
   end
 
   test "tv live stream go_live requires owner" do
