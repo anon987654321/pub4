@@ -32,7 +32,7 @@ class TurboBroadcastContractTest < Minitest::Test
   APPS = %w[brgen amber bsdports].freeze
   BROADCAST = /broadcast_\w*(?:append|prepend|replace|update|remove|before|after)\w*_(?:later_)?to\b/
 
-  # app/models/tv/stream_chat.rb -> tv/stream_chats/_stream_chat.html.erb
+  # engines/tv/app/models/tv/stream_chat.rb -> tv/stream_chats/_stream_chat.html.erb
   def partial_for(relative)
     parts = relative.sub(/\.rb\z/, "").split("/")
     base = parts.pop
@@ -45,6 +45,10 @@ class TurboBroadcastContractTest < Minitest::Test
   # multi-line call as implicit.
   def implicit_broadcasts(app)
     roots = { File.join(ROOT, app, "app/models") => nil, File.join(ROOT, "shared/app/models") => "shared engine" }
+    # Verticals extracted to mountable engines (engines/*/app/models) carry their
+    # own models now — scan them too, or a broadcast that moves with tv/playlist
+    # would slip the net. See ENGINES.md.
+    Dir.glob(File.join(ROOT, app, "engines/*/app/models")).each { |dir| roots[dir] = "engine" }
     roots.flat_map do |root, _label|
       Dir.glob(File.join(root, "**", "*.rb")).flat_map do |path|
         lines = File.readlines(path)
@@ -68,6 +72,7 @@ class TurboBroadcastContractTest < Minitest::Test
       implicit_broadcasts(app).each do |row|
         wanted = partial_for(row[:file])
         found = [File.join(ROOT, app, "app/views", wanted), File.join(ROOT, "shared/app/views", wanted)]
+        found += Dir.glob(File.join(ROOT, app, "engines/*/app/views", wanted))
         next if found.any? { |candidate| File.file?(candidate) }
 
         missing << "#{app}: #{row[:file]}:#{row[:line]} broadcasts with no partial: and no #{wanted}"
@@ -97,8 +102,8 @@ class TurboBroadcastContractTest < Minitest::Test
   # the page actually renders.
   def test_the_tv_broadcasts_name_both_partial_and_target
     {
-      "brgen/app/models/tv/stream_chat.rb" => %w[tv/stream_chats/stream_chat tv-live-stream-],
-      "brgen/app/models/tv/video_note.rb" => %w[tv/video_notes/video_note video_notes_],
+      "brgen/engines/tv/app/models/tv/stream_chat.rb" => %w[tv/stream_chats/stream_chat tv-live-stream-],
+      "brgen/engines/tv/app/models/tv/video_note.rb" => %w[tv/video_notes/video_note video_notes_],
     }.each do |file, (partial, target)|
       body = File.read(File.join(ROOT, file))
 
@@ -109,8 +114,8 @@ class TurboBroadcastContractTest < Minitest::Test
 
   def test_the_wired_partials_exist
     %w[
-      brgen/app/views/tv/stream_chats/_stream_chat.html.erb
-      brgen/app/views/tv/video_notes/_video_note.html.erb
+      brgen/engines/tv/app/views/tv/stream_chats/_stream_chat.html.erb
+      brgen/engines/tv/app/views/tv/video_notes/_video_note.html.erb
     ].each { |path| assert File.file?(File.join(ROOT, path)), "missing #{path}" }
   end
 
@@ -118,8 +123,8 @@ class TurboBroadcastContractTest < Minitest::Test
   # this pass wired end to end.
   def test_the_tv_streams_have_subscribers
     {
-      "brgen/app/views/tv/live_streams/show.html.erb" => "tv:live_stream:",
-      "brgen/app/views/tv/videos/show.html.erb" => "tv:video:",
+      "brgen/engines/tv/app/views/tv/live_streams/show.html.erb" => "tv:live_stream:",
+      "brgen/engines/tv/app/views/tv/videos/show.html.erb" => "tv:video:",
     }.each do |view, stream|
       body = File.read(File.join(ROOT, view))
 
@@ -131,6 +136,7 @@ class TurboBroadcastContractTest < Minitest::Test
   # the subscriber later, this fails and points at the callback to restore.
   def test_the_removed_streams_still_have_no_subscribers
     views = APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) } +
+            APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "engines/*/app/views/**/*.erb")) } +
             Dir.glob(File.join(ROOT, "shared/app/views/**/*.erb"))
     subscriptions = views.map { |path| File.read(path) }.join("\n")
 

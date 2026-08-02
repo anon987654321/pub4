@@ -1,0 +1,19 @@
+<%= turbo_stream.append "video_notes_#{@video.id}" do %>
+  <%= render "tv/video_notes/video_note", video_note: @video_note %>
+<% end %>
+<%= turbo_stream.replace "video_note_form" do %>
+  <%= form_with url: video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>
+    <div class="field">
+      <%= f.label :body, "Add a note" %>
+      <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 2, placeholder: t("tv.note_placeholder") , maxlength: 2000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+    </div>
+    <div class="field">
+      <%= f.label :timestamp, "Timestamp (seconds)" %>
+      <%= f.number_field :timestamp, min: 0, step: 1 %>
+    </div>
+    <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
+  <% end %>
+<% end %>

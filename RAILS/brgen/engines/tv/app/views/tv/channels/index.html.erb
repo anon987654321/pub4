@@ -1,0 +1,10 @@
+<% content_for :title, "Channels" %>
+
+<div class="page-header" role="banner" aria-label="TV channels header">
+  <h1>Channels</h1>
+  <nav role="navigation" aria-label="TV channel actions">
+    <%= link_to "New channel", new_tv_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
+  </nav>
+</div>
+
+<%= live_search_index url: channels_path, results_partial: "tv/channels/live_search_results", placeholder: t("search.tv"), label: t("search.tv_label"), frame_id: "tv-channels" %>

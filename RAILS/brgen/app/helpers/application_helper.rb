@@ -181,14 +181,14 @@ module ApplicationHelper
     when Takeaway::Order
       takeaway_order_url(record, host: domain, subdomain: "takeaway")
     when Tv::Channel
-      tv_channel_url(record, host: domain, subdomain: "tv")
+      tv.channel_url(record, host: domain, subdomain: "tv")
     when Tv::Video
-      tv_video_url(record, host: domain, subdomain: "tv")
+      tv.video_url(record, host: domain, subdomain: "tv")
     when Tv::Show
       ch = record.try(:channel) || record.try(:tv_channel)
-      tv_channel_show_url(ch, record, host: domain, subdomain: "tv") if ch
+      tv.channel_show_url(ch, record, host: domain, subdomain: "tv") if ch
     when Tv::LiveStream
-      tv_live_stream_url(record, host: domain, subdomain: "tv")
+      tv.live_stream_url(record, host: domain, subdomain: "tv")
     when Playlist::Set
       playlist_set_url(record, host: domain, subdomain: "playlist")
     when Playlist::Playlist

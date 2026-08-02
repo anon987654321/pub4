@@ -1,0 +1,33 @@
+<% content_for :title, "Upload video" %>
+
+<div class="page-header" role="banner"><h1>Upload video</h1></div>
+
+<div class="form-wrap">
+  <%# videos_path does not exist -- upload is only routed under a channel
+      (the one link in, new_tv_channel_video_path), so the channel comes from
+      the URL rather than from a picker the create action never read. %>
+  <%= form_with model: @video, url: channel_videos_path(@channel), multipart: true do |f| %>
+    <%= render "shared/errors", object: @video %>
+    <p class="dim">Uploading to <strong><%= @channel.name %></strong></p>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
+    <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
+    <div class="field"><%= f.label :video_file %><%= f.file_field :video_file, accept: "video/*", required: true, direct_upload: true, data: { controller: "direct-upload" } %></div>
+    <div class="field">
+      <%= f.label :thumbnail %>
+      <%= f.file_field :thumbnail, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %>
+      <div class="preset-strip">
+        <% %w[none portrait landscape street blockbuster].each do |p| %>
+          <label class="preset-opt">
+            <%= f.radio_button :preset, p, checked: p == "blockbuster" %>
+            <span><%= p.capitalize %></span>
+          </label>
+        <% end %>
+      </div>
+      <p class="dim">postpro.rb grades thumbnails — blockbuster for Odyssey-style cinematic.</p>
+    </div>
+    <div class="field"><%= f.submit t("tv.upload"), class: "btn btn-primary" %></div>
+  <% end %>
+</div>

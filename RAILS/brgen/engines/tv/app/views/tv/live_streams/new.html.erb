@@ -1,0 +1,24 @@
+<% content_for :title, t("tv.live_streams.new", default: "New live stream") %>
+
+<%= tag.section class: "tv-live-stream-form" do %>
+  <%= tag.h1 t("tv.live_streams.new", default: "New live stream") %>
+
+  <%# Same doubled-prefix trap as playlist sets: route_key is already
+      "tv_live_streams", and create only exists nested under a channel. %>
+  <%= form_with model: @live_stream, url: channel_live_streams_path(@channel) do |form| %>
+    <%= tag.fieldset do %>
+      <%= form.label :title %>
+      <%= form.text_field :title, required: true %>
+    <% end %>
+
+    <%= tag.fieldset do %>
+      <%= form.label :description %>
+      <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= form.text_area :description, rows: 5 , maxlength: 2000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+    <% end %>
+
+    <%= form.submit %>
+  <% end %>
+<% end %>

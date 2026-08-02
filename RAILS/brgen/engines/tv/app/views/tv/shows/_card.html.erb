@@ -1,0 +1,7 @@
+<%= render "shared/feed_card",
+  avatar_url: nil,
+  name: show.title,
+  content: truncate(show.description, length: 100),
+  meta: "#{show.episodes.count} episodes",
+  url: channel_show_path(channel, show),
+  class: "tv" %>

@@ -37,10 +37,10 @@ class SitemapsController < ApplicationController
 
   def tv_entries
     entries = Tv::Channel.limit(PER_MODEL_CAP).map do |channel|
-      Shared::SitemapBuilder::Entry.new(loc: tv_channel_url(channel), lastmod: channel.updated_at, changefreq: "weekly", priority: "0.6")
+      Shared::SitemapBuilder::Entry.new(loc: tv.channel_url(channel), lastmod: channel.updated_at, changefreq: "weekly", priority: "0.6")
     end
     entries + Tv::Video.published.limit(PER_MODEL_CAP).map do |video|
-      Shared::SitemapBuilder::Entry.new(loc: tv_video_url(video), lastmod: video.updated_at, changefreq: "monthly", priority: "0.5")
+      Shared::SitemapBuilder::Entry.new(loc: tv.video_url(video), lastmod: video.updated_at, changefreq: "monthly", priority: "0.5")
     end
   end
 

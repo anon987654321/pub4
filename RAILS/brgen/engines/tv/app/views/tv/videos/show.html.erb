@@ -1,0 +1,127 @@
+<% content_for :title, @video.title %>
+
+<div class="page-header" role="banner">
+  <div>
+    <p class="dim"><%= link_to @video.channel.name, channel_path(@video.channel) %></p>
+    <h1><%= @video.title %></h1>
+  </div>
+  <button class="btn-share" data-controller="share"
+          data-share-title-value="<%= @video.title %>"
+          data-share-url-value="<%= request.original_url %>"
+          data-action="click->share#share">Share</button>
+</div>
+
+<div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true" data-tv-player-auto-orientation-value="true" data-tv-player-orientation-value="landscape">
+<% if @video.video_file.attached? %>
+  <div class="tv-media">
+    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player #{tv_media_image_classes(@video.video_file)}" %>
+  </div>
+<% elsif @video.thumbnail.attached? %>
+  <div class="tv-media">
+    <%= image_tag @video.thumbnail, class: tv_media_image_classes(@video.thumbnail) %>
+  </div>
+<% end %>
+</div>
+
+<article>
+  <div class="chips">
+    <span class="chip"><span data-controller="animated-number"
+                             data-animated-number-start-value="0"
+                             data-animated-number-end-value="<%= @video.views_count.to_i %>"
+                             data-animated-number-duration-value="900"><%= @video.views_count.to_i %></span> views</span>
+    <span class="chip"><%= @video.duration_formatted %></span>
+    <span class="chip"><%= @video.status %></span>
+    <% if @video.published_at.present? %><span class="chip"><span data-controller="timeago"><%= time_ago_in_words(@video.published_at) %> ago</span></span><% end %>
+  </div>
+  <% if @video.description.present? %>
+    <p class="mt-12"><%= simple_format(@video.description) %></p>
+  <% else %>
+    <%# empty_state: no-action-ok — missing description is not a dead end; channel link is below %>
+    <%= render "shared/empty_state", title: t("empty.no_description"), body: t("empty.no_description_body") %>
+  <% end %>
+</article>
+
+<section>
+  <h2>Channel</h2>
+  <article>
+    <strong><%= link_to @video.channel.name, channel_path(@video.channel) %></strong>
+    <p class="dim">
+      <span data-controller="animated-number"
+            data-animated-number-start-value="0"
+            data-animated-number-end-value="<%= @video.channel.subscribers_count.to_i %>"
+            data-animated-number-duration-value="900"><%= @video.channel.subscribers_count.to_i %></span> subscribers ·
+      <span data-controller="animated-number"
+            data-animated-number-start-value="0"
+            data-animated-number-end-value="<%= @video.channel.total_views.to_i %>"
+            data-animated-number-duration-value="900"><%= @video.channel.total_views.to_i %></span> total views
+    </p>
+    <% if authenticated? && Current.user != @video.channel.user %>
+      <% if @video.channel.subscriptions.exists?(user: Current.user) %>
+        <%= button_to t("tv.unsubscribe"), unsubscribe_tv_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to t("tv.subscribe"), subscribe_tv_channel_path(@video.channel), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
+    <% end %>
+  </article>
+</section>
+
+<section>
+  <h2>Notes</h2>
+  <%# The container existed and the model broadcast to this stream, but nothing
+      subscribed — so a note from another viewer never arrived. %>
+  <%= turbo_stream_from "tv:video:#{@video.id}:notes" %>
+  <div id="video_notes_<%= @video.id %>">
+    <%= render partial: "tv/video_notes/video_note",
+               collection: @video.video_notes.chronological.includes(:user), as: :video_note %>
+  </div>
+  <% if authenticated? %>
+    <%= form_with url: video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>
+      <div class="field">
+        <%= f.label :body, "Add a note" %>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 2, placeholder: t("tv.note_placeholder") , maxlength: 2000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+      </div>
+      <div class="field">
+        <%= f.label :timestamp, "Timestamp (seconds)" %>
+        <%= f.number_field :timestamp, min: 0, step: 1 %>
+      </div>
+      <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
+</section>
+
+<section>
+  <h2>Discussion</h2>
+  <% if @video.comments.any? %>
+    <% @video.comments.order(created_at: :asc).each do |comment| %>
+      <article>
+        <p class="dim"><%= comment.user&.display_name || "anon" %></p>
+        <p><%= comment.body %></p>
+      </article>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_comments"),
+          body: "Start the conversation — guests can comment without an account.",
+          action: { label: "Channel", path: channel_path(@video.channel) } %>
+  <% end %>
+  <%# Tv::CommentsController asks for require_user_session, so guests may
+      comment; only this form said otherwise. %>
+  <% if authenticated? || guest? %>
+    <%# scope: matters -- Tv::CommentsController requires params[:tv_comment],
+        and without it the field posted as a bare "body" and every comment
+        came back 400. The video-notes form above sets its scope the same way. %>
+    <%= form_with url: video_comments_path(@video), scope: :tv_comment, data: { turbo: true } do |f| %>
+      <div class="field">
+        <%= f.label :body, "Add a comment" %>
+        <div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :body, rows: 3, placeholder: t("tv.comment_placeholder") , maxlength: 1000, data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div>
+      </div>
+      <%= f.submit t("tv.post_comment"), class: "btn btn-primary btn-sm" %>
+    <% end %>
+  <% end %>
+</section>

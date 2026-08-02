@@ -1,0 +1,17 @@
+<% content_for :title, "New channel" %>
+
+<div class="page-header" role="banner"><h1>New channel</h1></div>
+
+<div class="form-wrap">
+  <%= form_with model: @channel, url: channels_path do |f| %>
+    <%= render "shared/errors", object: @channel %>
+    <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
+    <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
+  <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
+  <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
+</div></div>
+    <div class="field"><%= f.label :avatar %><%= f.file_field :avatar, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
+    <div class="field"><%= f.label :banner %><%= f.file_field :banner, accept: "image/*", direct_upload: true, data: { controller: "direct-upload" } %></div>
+    <div class="field"><%= f.submit t("tv.create_channel"), class: "btn btn-primary" %></div>
+  <% end %>
+</div>

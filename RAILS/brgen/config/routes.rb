@@ -83,32 +83,12 @@ Rails.application.routes.draw do
     resource :presence, only: %i[create destroy]
   end
 
+  # TV vertical, extracted to a mountable engine (engines/tv). Routes now live in
+  # the engine's config/routes.rb; the host mounts it under the same subdomain
+  # constraint. Host references to its helpers are tv.* (see application_helper,
+  # sitemaps_controller). The pilot for the vertical-as-engine split — see ENGINES.md.
   constraints(subdomain: TV_SUBDOMAINS) do
-    scope module: "tv", as: "tv" do
-      root "home#index"
-      resources :channels, param: :slug do
-        member do
-          post :subscribe
-          delete :unsubscribe
-        end
-        resources :videos, only: %i[new create]
-        resources :live_streams, only: %i[new create]
-        resources :shows, param: :slug, only: %i[index show] do
-          get "episodes/:number", to: "episodes#show", as: :episode, on: :member
-        end
-      end
-      resources :videos, only: %i[show destroy] do
-        resources :video_notes, only: :create
-        resources :comments, only: :create
-      end
-      resources :live_streams, only: %i[index show update destroy] do
-        resources :stream_chats, only: :create
-        member do
-          patch :go_live
-          patch :end_live
-        end
-      end
-    end
+    mount Tv::Engine, at: "/", as: "tv"
   end
 
   constraints(subdomain: DATING_SUBDOMAINS) do

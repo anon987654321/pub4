@@ -49,12 +49,12 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
 
     get new_tv_channel_video_path(channel)
     assert_response :success
-    assert_match tv_channel_videos_path(channel), response.body
+    assert_match tv.channel_videos_path(channel), response.body
 
     get new_tv_channel_live_stream_path(channel)
     assert_response :success
     assert_difference -> { Tv::LiveStream.count }, 1 do
-      post tv_channel_live_streams_path(channel), params: { tv_live_stream: { title: "Contract stream" } }
+      post tv.channel_live_streams_path(channel), params: { tv_live_stream: { title: "Contract stream" } }
     end
 
     stranger = User.strict_loading(false).create!(email_address: "stranger@brgen.no", password: "password123", guest: false)
@@ -71,10 +71,10 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     end
     host! "tv.brgen.no"
 
-    get tv_video_path(video) # mints the guest
+    get tv.video_path(video) # mints the guest
     assert_response :success
     assert_difference -> { Tv::Comment.count }, 1 do
-      post tv_video_comments_path(video), params: { tv_comment: { body: "nice clip" } }
+      post tv.video_comments_path(video), params: { tv_comment: { body: "nice clip" } }
     end
   end
 

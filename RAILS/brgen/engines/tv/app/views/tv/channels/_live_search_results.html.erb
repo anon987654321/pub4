@@ -1,0 +1,22 @@
+<%= turbo_frame_tag "tv-channels-list", target: "_top" do %>
+<section id="tv-channels-list" role="region" aria-label="TV channel results">
+  <% if @channels.any? %>
+    <% @channels.each do |c| %>
+      <%= render "tv/channels/row", channel: c %>
+    <% end %>
+  <% else %>
+    <%= render "shared/empty_state",
+          title: t("empty.no_channels"),
+          body: live_search_query.present? ? "No channels match this search." : "Channels will appear when creators publish.",
+          action: live_search_query.present? ?
+            { label: t("empty.clear_search"), path: channels_path } :
+            { label: t("actions.tv_home"), path: root_path } %>
+  <% end %>
+</section>
+
+<%= render "shared/infinite_scroll_sentinel",
+           pagy: @pagy,
+           reflex: "ChannelsInfiniteScrollReflex#load_more",
+           sentinel_id: "tv-channels-sentinel",
+           q: params[:q] %>
+<% end %>

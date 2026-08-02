@@ -21,29 +21,49 @@ class CoverageRatchetTest < Minitest::Test
   KINDS = %w[controllers models].freeze
 
   # app => { kind => number of sources with a matching *_test.rb }
-  # Measured 2026-08-01. Raise a number when you add tests; never lower one.
+  # Measured 2026-08-01. Raise a number when you add tests; never lower one —
+  # EXCEPT when a vertical is extracted to an engine, which is the one honest
+  # reason a host count falls. brgen 15->13 controllers / 11->10 models on
+  # 2026-08-02 when tv moved to engines/tv: those three counts (channels_controller,
+  # home_controller, comment) were basename collisions — flat host tests that also
+  # match a same-named Tv:: class — so extraction removed a double-count, not
+  # coverage. The host classes of those names are still tested and still counted.
   FLOORS = {
     "amber" => { "controllers" => 1, "models" => 5 },
-    "brgen" => { "controllers" => 15, "models" => 11 },
+    "brgen" => { "controllers" => 13, "models" => 10 },
     "bsdports" => { "controllers" => 2, "models" => 1 },
   }.freeze
+
+  # The app's own app/ dir, plus any mounted vertical engines (engines/*/app).
+  # A vertical extracted to an engine keeps its controllers/models under
+  # engines/<name>/app, so counting only app/ would silently drop them and read
+  # the extraction as a coverage regression. See ENGINES.md.
+  def source_roots(app, kind)
+    [File.join(ROOT, app, "app", kind)] + Dir.glob(File.join(ROOT, app, "engines/*/app", kind))
+  end
 
   # Concerns are mixed into the classes above and tested through them;
   # ApplicationController/ApplicationRecord are framework glue.
   def sources(app, kind)
-    Dir.glob(File.join(ROOT, app, "app", kind, "**", "*.rb"))
+    source_roots(app, kind).flat_map { |root| Dir.glob(File.join(root, "**", "*.rb")) }
        .reject { |path| path.end_with?("application_controller.rb", "application_record.rb") }
        .reject { |path| path.include?("/concerns/") }
   end
 
   # test/controllers/marketplace/orders_controller_test.rb for
   # app/controllers/marketplace/orders_controller.rb, or the flat basename — both
-  # conventions are in use in this tree.
+  # conventions are in use in this tree. For an engine source the test lives beside
+  # the engine (engines/tv/test/models/...), so resolve relative to the source's own
+  # root rather than assuming the host app/.
   def tested?(app, kind, path)
-    rel = path.sub("#{File.join(ROOT, app, "app", kind)}/", "").sub(/\.rb\z/, "")
+    root = source_roots(app, kind).find { |r| path.start_with?("#{r}/") }
+    return false unless root
+
+    base = root.sub(%r{/app/#{Regexp.escape(kind)}\z}, "")
+    rel = path.sub("#{root}/", "").sub(/\.rb\z/, "")
     [
-      File.join(ROOT, app, "test", kind, "#{rel}_test.rb"),
-      File.join(ROOT, app, "test", kind, "#{File.basename(rel)}_test.rb"),
+      File.join(base, "test", kind, "#{rel}_test.rb"),
+      File.join(base, "test", kind, "#{File.basename(rel)}_test.rb"),
     ].any? { |candidate| File.file?(candidate) }
   end
 

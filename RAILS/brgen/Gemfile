@@ -64,6 +64,8 @@ group :test do
 end
 # Engine-ize spike: shared as local path gem (relative from rails/brgen)
 gem 'pub4-shared', path: '../shared'
+# TV vertical as a mountable engine (vertical-as-engine pilot; see ENGINES.md).
+gem 'brgen-tv', path: 'engines/tv'
 
 gem "dartsass-rails", "~> 0.5.1"
 
