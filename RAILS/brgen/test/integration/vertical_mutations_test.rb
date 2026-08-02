@@ -158,17 +158,17 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
 
   test "playlist import creates tracks from URLs" do
     dj = make_user("dj_import")
-    playlist = Playlist::Playlist.create!(name: "Import test", user: dj)
+    pl = Playlist::Playlist.create!(name: "Import test", user: dj)
 
     host! "playlist.brgen.no"
     sign_in_with_session_cookie!(dj)
 
     assert_difference -> { Playlist::Track.count }, 1 do
-      post playlist.playlist_imports_path(playlist), params: {
+      post playlist.playlist_imports_path(pl), params: {
         urls: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC\n",
       }
     end
-    assert_redirected_to playlist.playlist_path(playlist)
+    assert_redirected_to playlist.playlist_path(pl)
   end
 
   test "tv live stream go_live requires owner" do

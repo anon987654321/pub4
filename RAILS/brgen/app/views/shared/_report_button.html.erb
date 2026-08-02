@@ -1,5 +1,5 @@
 <span id="report_<%= dom_id(target) %>">
-  <%= button_to t("actions.report"), reports_path,
+  <%= button_to t("actions.report"), main_app.reports_path,
       params: { target_gid: target.to_signed_global_id.to_s, reason: reason || "other" },
       data: { turbo_stream: true },
       aria: { label: "Report #{target.class.name.downcase}" } %>

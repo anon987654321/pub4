@@ -87,8 +87,8 @@ module ApplicationHelper
   def brgen_nav_items
     domain = Current.domain
     [
-      ["front", root_path],
-      ["live", live_path],
+      ["front", main_app.root_path],
+      ["live", main_app.live_path],
       ["AI", brgen_ai_url],
       ["marketplace", "//#{marketplace_host}/"],
       ["dating", "//dating.#{domain}/"],
@@ -97,8 +97,8 @@ module ApplicationHelper
       ["takeaway", "//takeaway.#{domain}/"],
       ["maps", "//maps.#{domain}/"],
       ["messenger", "//messenger.#{domain}/"],
-      ["channels", channels_path],
-      *(authenticated? ? [] : [["sign up", new_session_path]])
+      ["channels", main_app.channels_path],
+      *(authenticated? ? [] : [["sign up", main_app.new_session_path]])
     ]
   end
 
@@ -161,13 +161,13 @@ module ApplicationHelper
 
     domain = Current.domain.presence || (respond_to?(:request) ? request.host : nil) || "brgen.no"
     case record
-    when Post then post_path(record)
-    when Community then community_path(record)
+    when Post then main_app.post_path(record)
+    when Community then main_app.community_path(record)
     when Comment then record.commentable.present? ? polymorphic_path(record.commentable) : nil
-    when User then user_path(record)
-    when Message then conversation_path(record.conversation) if record.try(:conversation)
+    when User then main_app.user_path(record)
+    when Message then main_app.conversation_path(record.conversation) if record.try(:conversation)
     when Conversation
-      record.channel? ? channel_path(record.slug) : conversation_path(record)
+      record.channel? ? main_app.channel_path(record.slug) : main_app.conversation_path(record)
     when Marketplace::Listing
       marketplace.listing_url(record, host: domain, subdomain: marketplace_subdomain)
     when Marketplace::Store
@@ -194,13 +194,13 @@ module ApplicationHelper
     when Playlist::Playlist
       playlist.playlist_url(record, host: domain, subdomain: "playlist")
     when Place
-      maps_place_url(record, host: domain, subdomain: "maps")
+      main_app.maps_place_url(record, host: domain, subdomain: "maps")
     when Dating::Match
       dating.matches_url(host: domain, subdomain: "dating")
     when Dating::Profile
       dating.profile_url(host: domain, subdomain: "dating") if record.user_id == Current.user&.id
     when Follow
-      user_path(record.follower) if record.try(:follower)
+      main_app.user_path(record.follower) if record.try(:follower)
     else
       polymorphic_path(record) if respond_to?(:polymorphic_path)
     end
@@ -233,10 +233,10 @@ module ApplicationHelper
     when "match"
       return dating.matches_url(host: domain, subdomain: "dating")
     when "follow"
-      return user_path(notification.actor) if notification.actor
+      return main_app.user_path(notification.actor) if notification.actor
     when "message"
       if notification.notifiable.is_a?(Message)
-        return conversation_path(notification.notifiable.conversation)
+        return main_app.conversation_path(notification.notifiable.conversation)
       elsif notification.notifiable.is_a?(Conversation)
         return record_public_href(notification.notifiable)
       end
@@ -252,7 +252,7 @@ module ApplicationHelper
       return href if href.present?
     end
 
-    user_path(notification.actor) if notification.actor
+    main_app.user_path(notification.actor) if notification.actor
   rescue StandardError
     nil
   end
