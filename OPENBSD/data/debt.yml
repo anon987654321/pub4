@@ -145,9 +145,33 @@ open:
       is no symlink for root to follow — the fix is the directory, not the flags. The
       lock file itself is never unlinked on the way through, because a second holder
       opening a fresh inode is the one thing a mutex exists to prevent.
-      The secrets-in-argv half is STILL OPEN: rc.d daemon_flags still carry
-      SECRET_KEY_BASE, MASTER_BRIDGE_TOKEN and the LLM keys into ksh argv, readable
-      by any local account via ps auxww.
+      The secrets half is CLOSED for the three Rails apps 2026-08-02, and the
+      argv claim was corrected by measurement. What ps actually showed on vm23:
+      `ps auxww` (argv) had ZERO SECRET_KEY_BASE hits — the daemon does `exec
+      falcon`, so the ksh whose -c string held the secret is replaced, and rc_bg
+      backgrounds the su/sh wrappers so they are gone from the steady state too.
+      The secret lived in falcon's ENVIRON (`doas ps auxwwe`, root-only, and
+      unavoidable — Rails must read ENV["SECRET_KEY_BASE"]). The genuine cross-
+      account exposure was the ENV FILE at rest: /etc/amber.env and
+      /etc/bsdports.env were root:WHEEL 640, and dev is in wheel, so dev — or any
+      wheel member — could read another app's SECRET_KEY_BASE off disk. brgen.env
+      was already root:brgen.
+      Fix: brgen/amber/bsdports rc.d now `. /etc/<app>.env && export ...
+      SECRET_KEY_BASE ...` inside the exec (as the app user; the env files hold a
+      bare KEY=value so the value must be re-exported, found the hard way when the
+      bsdports canary crash-looped on a blank secret), and the env files are
+      chowned root:<app> 640 (OPERATOR.sh now creates them that way). Verified
+      live: dev can no longer read brgen/amber/bsdports .env, argv exposure is 0,
+      all apps public-200. Rolled out one app at a time, canaried on bsdports.
+      master is deliberately NOT changed: it runs as dev, so its keys are already
+      in a dev-owned falcon environ (no cross-account gain), and master.env is
+      600 root:wheel — sourcing would require loosening it to dev-readable 640,
+      a downgrade for nothing. The boot-window argv flash (su/sh wrappers hold the
+      command string for ~1s at startup) is closed for the apps by not putting the
+      secret in daemon_flags at all; for master it is accepted.
+      STILL OPEN (separate, untouched): vps_ci.sh / RAILS/_runtime_gate.sh run
+      `chmod o+x /home/dev`, and OPERATOR.sh installs /home/dev/.zshrc 644 with real
+      keys in it — a world-traversable home over a key-bearing dotfile.
   - id: committed_rails_master_key_public_repo
     tag: operator-priority
     summary: >
