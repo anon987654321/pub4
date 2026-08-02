@@ -151,4 +151,19 @@ class TestScanRuleFalsePositives < Minitest::Test
   def test_veto_unsafe_calls_still_catches_interpolated_shell_out
     refute_empty findings(:veto_patterns, %(system("rm -rf \#{directory}")\n))
   end
+
+  # --- CONTROL_CHARS ------------------------------------------------------
+  # A concurrent write left SOH bytes wrapping a string literal this session;
+  # this rule catches that corruption class. Tab/newline stay legal. The SOH is
+  # built with 1.chr so the test source itself carries no control character.
+
+  def test_control_chars_ignores_clean_source_and_tabs
+    ["def a\n  work\nend\n", "a\tb\n"].each do |source|
+      assert_empty findings(:CONTROL_CHARS, source), "#{source.inspect} has no control characters"
+    end
+  end
+
+  def test_control_chars_flags_a_stray_soh_byte
+    refute_empty findings(:CONTROL_CHARS, "def a\n  x = #{1.chr}y\nend\n")
+  end
 end

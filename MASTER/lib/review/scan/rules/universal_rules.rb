@@ -262,6 +262,21 @@ module Master
           [finding(line: 1, message: "missing set -euo pipefail after shebang")]
         end
 
+        RuleDSL.rule :CONTROL_CHARS,
+          severity: :error, tags: %i[ROBUSTNESS],
+          description: "no non-printable control characters in source" do |src, path:|
+          # Only tab (9), newline (10), and carriage return (13) are legal in
+          # source. A stray SOH/NUL reads fine in most viewers but breaks parsing
+          # or a byte-compare silently — corruption from a concurrent write or a
+          # tool that left a sentinel byte behind. Checked by ordinal so this rule
+          # carries no control character of its own.
+          src.each_line.with_index(1).filter_map do |line, number|
+            next unless line.each_char.any? { |char| ord = char.ord; ord < 9 || (ord > 13 && ord < 32) || ord == 127 }
+
+            finding(line: number, message: "control character in source — corruption, remove it")
+          end
+        end
+
       end
     end
   end
