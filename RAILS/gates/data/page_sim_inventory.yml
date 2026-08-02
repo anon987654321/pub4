@@ -1,7 +1,7 @@
 ---
 generated_note: Snapshot of Deploy::PageInventory.all — regenerate via page_simulation
   gate
-count: 148
+count: 162
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -1146,6 +1146,118 @@ pages:
   path: "/session/new"
   action: new
   persona: guest
+  needs_id: false
+- id: brgen/shared/account_settings/show
+  app: brgen
+  view: RAILS/shared/app/views/account_settings/show.html.erb
+  host:
+  path: "/account"
+  action: show
+  persona: auth
+  needs_id: false
+- id: amber/shared/account_settings/show
+  app: amber
+  view: RAILS/shared/app/views/account_settings/show.html.erb
+  host:
+  path: "/account"
+  action: show
+  persona: auth
+  needs_id: false
+- id: bsdports/shared/account_settings/show
+  app: bsdports
+  view: RAILS/shared/app/views/account_settings/show.html.erb
+  host:
+  path: "/account"
+  action: show
+  persona: auth
+  needs_id: false
+- id: brgen/shared/two_factor_setups/show
+  app: brgen
+  view: RAILS/shared/app/views/two_factor_setups/show.html.erb
+  host:
+  path: "/two_factor_setup"
+  action: show
+  persona: auth
+  needs_id: false
+- id: amber/shared/two_factor_setups/show
+  app: amber
+  view: RAILS/shared/app/views/two_factor_setups/show.html.erb
+  host:
+  path: "/two_factor_setup"
+  action: show
+  persona: auth
+  needs_id: false
+- id: bsdports/shared/two_factor_setups/show
+  app: bsdports
+  view: RAILS/shared/app/views/two_factor_setups/show.html.erb
+  host:
+  path: "/two_factor_setup"
+  action: show
+  persona: auth
+  needs_id: false
+- id: brgen/shared/passwords/new
+  app: brgen
+  view: RAILS/shared/app/views/passwords/new.html.erb
+  host:
+  path: "/passwords/new"
+  action: new
+  persona: guest
+  needs_id: false
+- id: amber/shared/passwords/new
+  app: amber
+  view: RAILS/shared/app/views/passwords/new.html.erb
+  host:
+  path: "/passwords/new"
+  action: new
+  persona: guest
+  needs_id: false
+- id: bsdports/shared/passwords/new
+  app: bsdports
+  view: RAILS/shared/app/views/passwords/new.html.erb
+  host:
+  path: "/passwords/new"
+  action: new
+  persona: guest
+  needs_id: false
+- id: brgen/shared/passwords/edit
+  app: brgen
+  view: RAILS/shared/app/views/passwords/edit.html.erb
+  host:
+  path: "/passwords/:token/edit"
+  action: edit
+  persona: guest
+  needs_id: true
+- id: amber/shared/passwords/edit
+  app: amber
+  view: RAILS/shared/app/views/passwords/edit.html.erb
+  host:
+  path: "/passwords/:token/edit"
+  action: edit
+  persona: guest
+  needs_id: true
+- id: bsdports/shared/passwords/edit
+  app: bsdports
+  view: RAILS/shared/app/views/passwords/edit.html.erb
+  host:
+  path: "/passwords/:token/edit"
+  action: edit
+  persona: guest
+  needs_id: true
+- id: brgen/shared/notifications/index
+  app: brgen
+  view: RAILS/shared/app/views/notifications/index.html.erb
+  host:
+  path: "/notifications"
+  action: index
+  persona: auth
+  needs_id: false
+- id: amber/shared/notifications/index
+  app: amber
+  view: RAILS/shared/app/views/notifications/index.html.erb
+  host:
+  path: "/notifications"
+  action: index
+  persona: auth
   needs_id: false
 - id: master/face
   app: master

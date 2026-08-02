@@ -48,6 +48,23 @@ module Deploy
       },
     }.freeze
 
+    SHARED_ROOT = File.join(ROOT, "RAILS", "shared", "app", "views")
+
+    # Pages the engine renders inside every host app. Their routes come from
+    # shared/config/routes/{auth,social}.rb, so no filename convention yields them.
+    # uncovered_shared_views fails the simulation when a new one lands without a row.
+    SHARED_PAGES = {
+      %w[account_settings show] => { path: "/account", persona: "auth" },
+      %w[two_factor_setups show] => { path: "/two_factor_setup", persona: "auth" },
+      %w[passwords new] => { path: "/passwords/new", persona: "guest" },
+      %w[passwords edit] => { path: "/passwords/:token/edit", persona: "guest", needs_id: true },
+      # bsdports keeps the social routes behind BSDPORTS_SOCIAL=1.
+      %w[notifications index] => { path: "/notifications", persona: "auth", apps: %w[brgen amber] },
+    }.freeze
+
+    # Rendered by MasterGuestHome inside each app's own home action, so the home row covers it.
+    SHARED_VIEWS_WITHOUT_ROUTE = [%w[shared master_guest]].freeze
+
     MASTER_PAGES = [
       { id: "master/face", view: "MASTER/web/app/views/chat/index.html.erb", path: "/", persona: "guest" },
       { id: "master/dashboard", view: "MASTER/web/app/views/dashboard/index.html.erb", path: "/dashboard", persona: "guest" },
@@ -68,7 +85,39 @@ module Deploy
     module_function
 
     def all
-      brgen_pages + amber_pages + bsdports_pages + master_pages
+      brgen_pages + amber_pages + bsdports_pages + shared_pages + master_pages
+    end
+
+    # One row per host app, because the engine's view is a different page in each.
+    def shared_pages
+      SHARED_PAGES.flat_map do |parts, row|
+        abs = File.join(SHARED_ROOT, "#{parts.join("/")}.html.erb")
+        Array(row[:apps] || %w[brgen amber bsdports]).map do |app|
+          {
+            id: "#{app}/shared/#{parts.join("/")}",
+            app: app,
+            view: abs.sub("#{ROOT}/", ""),
+            abs_view: abs,
+            host: nil,
+            path: row[:path],
+            action: parts.last,
+            persona: row[:persona],
+            needs_id: row.fetch(:needs_id, false),
+          }
+        end
+      end
+    end
+
+    # A shared page nobody declared is a page no simulation ever loads — which is how
+    # /account/export and /notifications both reached production answering 500.
+    def uncovered_shared_views
+      declared = SHARED_PAGES.keys + SHARED_VIEWS_WITHOUT_ROUTE
+      discover(SHARED_ROOT).filter_map do |abs|
+        parts = relative_parts(abs, SHARED_ROOT)
+        next if mailer_parts?(parts) || declared.include?(parts)
+
+        abs.sub("#{ROOT}/", "")
+      end
     end
 
     def guest_liveable

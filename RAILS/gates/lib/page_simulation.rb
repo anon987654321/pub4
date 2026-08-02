@@ -47,6 +47,9 @@ module Deploy
         "summary" => {},
       }
 
+      uncovered = PageInventory.uncovered_shared_views
+      @result.fail("page_simulation: shared view outside the inventory — #{uncovered.join(", ")}") if uncovered.any?
+
       pages = PageInventory.all
       PageInventory.write_snapshot!(SNAPSHOT_PATH)
       by = pages.group_by { |p| p[:app] }.transform_values(&:size)
