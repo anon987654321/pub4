@@ -123,6 +123,7 @@ end
   test/design_contract_test.rb
   ../MASTER/web/test/pwa_master_contract_test.rb
   test/shared_social_routes_test.rb
+  test/i18n_resolution_test.rb
   shared/test/services/frontend_auditor_test.rb
   shared/test/services/sitemap_builder_test.rb
   shared/test/services/account_exporter_test.rb

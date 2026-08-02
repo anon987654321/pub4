@@ -26,6 +26,18 @@ module Shared
       tag.span(glyph, class: "reaction-glyph", aria: { hidden: true })
     end
 
+    # autosave_controller.js falls back to English labels, so a form that omits these announces "Saving…" to nb readers.
+    def autosave_data(key:, url:)
+      {
+        "autosave-key-value": key,
+        "autosave-url-value": url,
+        "autosave-saving-value": t("status.saving"),
+        "autosave-saved-value": t("status.saved"),
+        "autosave-saved-locally-value": t("status.saved_locally"),
+        "autosave-restored-value": t("status.restored"),
+      }
+    end
+
     def feed_tab(label:, path:, active: false)
       link_to label, path, class: "feed-tab#{" active" if active}"
     end

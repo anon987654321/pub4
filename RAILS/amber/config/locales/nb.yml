@@ -158,17 +158,6 @@ nb:
     back_to_ai: "Tilbake til AI-verktøy"
     wardrobe: "Garderobe"
     dressing_room: "Prøverom"
-  status:
-    updating_results: "Oppdaterer resultater…"
-    results_updated: "Resultater oppdatert"
-    search_failed: "Søket kunne ikke fullføres"
-    saving: "Lagrer…"
-    saved: "Lagret"
-    saved_locally: "Lagret lokalt"
-    restored: "Gjenopprettet"
-    posting: "Publiserer…"
-    posted: "Publisert"
-    generating: "Genererer…"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
     coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."

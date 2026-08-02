@@ -284,14 +284,6 @@ nb:
     places: "Steder"
     new_message: "Ny melding"
     home_title: "Bergen"
-  status:
-    updating_results: "Oppdaterer resultater…"
-    results_updated: "Resultater oppdatert"
-    search_failed: "Søket kunne ikke fullføres"
-    saving: "Lagrer…"
-    saved: "Lagret"
-    saved_locally: "Lagret lokalt"
-    restored: "Gjenopprettet"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
     coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."

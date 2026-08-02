@@ -4,7 +4,7 @@
 
 <div class="form-wrap">
   <% draft_key = "brgen-post-#{@community&.to_param || 'global'}-new" %>
-  <%= form_with(model: [@community, @post].compact, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
+  <%= form_with(model: [@community, @post].compact, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
     <%= render "shared/errors", object: @post %>
     <%# Title is the only required field, so it is the only one marked. Labelling
         the other three "(optional)" said the same thing three times and made

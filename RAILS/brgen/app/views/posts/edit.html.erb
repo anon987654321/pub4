@@ -4,7 +4,7 @@
 
 <div class="form-wrap">
   <% draft_key = "brgen-post-#{@post.to_param}" %>
-  <%= form_with(model: @post, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
+  <%= form_with(model: @post, data: { controller: "draft-store autosave form-submit", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
     <%= render "shared/errors", object: @post %>
     <div class="field">
       <%= f.label :community_id, t("posts.community_optional") %>

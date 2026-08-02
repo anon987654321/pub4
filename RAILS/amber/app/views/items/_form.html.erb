@@ -1,5 +1,5 @@
 <% draft_key = "amber-item-#{item.to_param || 'new'}" %>
-<%= form_with(model: item, class: "form", data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
+<%= form_with(model: item, class: "form", data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
   <%= render "shared/errors", object: item %>
   <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
   <div class="field">

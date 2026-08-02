@@ -7,7 +7,7 @@
 
 <div class="form-wrap dating-profile-form">
   <% draft_key = "brgen-dating-profile-new" %>
-  <%= form_with(model: @profile, url: dating_profile_path, data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, "autosave-key-value": draft_key, "autosave-url-value": draft_path(draft_key) }) do |f| %>
+  <%= form_with(model: @profile, url: dating_profile_path, data: { controller: "draft-store autosave", "draft-store-key-value": draft_key, **autosave_data(key: draft_key, url: draft_path(draft_key)) }) do |f| %>
     <%= render "shared/errors", object: @profile %>
 
     <fieldset class="dating-profile-essentials">

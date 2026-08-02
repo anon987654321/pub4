@@ -284,14 +284,6 @@ en:
     places: "Places"
     new_message: "New message"
     home_title: "Bergen"
-  status:
-    updating_results: "Updating results…"
-    results_updated: "Results updated"
-    search_failed: "Search could not be completed"
-    saving: "Saving…"
-    saved: "Saved"
-    saved_locally: "Saved locally"
-    restored: "Restored"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."

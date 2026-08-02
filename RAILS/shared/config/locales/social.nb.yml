@@ -37,6 +37,14 @@ nb:
     dm_placeholder: "Send en melding…"
     message_label: "Melding"
     anon: "anon"
+  status:
+    updating_results: "Oppdaterer resultater…"
+    results_updated: "Resultater oppdatert"
+    search_failed: "Søket kunne ikke fullføres"
+    saving: "Lagrer…"
+    saved: "Lagret"
+    saved_locally: "Lagret lokalt"
+    restored: "Gjenopprettet"
   theme:
     region: "Tema"
     toggle: "Bytt til lyst tema"

@@ -158,17 +158,6 @@ en:
     back_to_ai: "Back to AI tools"
     wardrobe: "Wardrobe"
     dressing_room: "Dressing room"
-  status:
-    updating_results: "Updating results…"
-    results_updated: "Results updated"
-    search_failed: "Search could not be completed"
-    saving: "Saving…"
-    saved: "Saved"
-    saved_locally: "Saved locally"
-    restored: "Restored"
-    posting: "Posting…"
-    posted: "Posted"
-    generating: "Generating…"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
