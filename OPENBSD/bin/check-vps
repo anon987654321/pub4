@@ -21,5 +21,6 @@ runner = Pub4::CheckRunner.new(prefix: "deploy-vps", root: ROOT, timeout: STEP_T
 failures = []
 failures << "health core" unless runner.run("health core", ruby34, "OPENBSD/health_check.rb", "--core")
 failures << "public health" unless runner.run("public health", ruby34, "OPENBSD/health_check.rb", "--public", "--all-ready-apps")
+failures << "config drift" unless runner.run("config drift", ruby34, "OPENBSD/config_drift_gate.rb")
 
 exit(failures.empty? ? 0 : 1)
