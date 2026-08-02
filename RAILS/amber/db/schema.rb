@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_01_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_02_180000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -251,6 +251,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_160000) do
     t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.integer "actor_id"
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.integer "notifiable_id"
+    t.string "notifiable_type"
+    t.json "payload"
+    t.datetime "read_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_id_and_created_at"
+    t.index ["user_id", "read_at"], name: "index_notifications_on_user_id_and_read_at"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "outfit_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "item_id", null: false
@@ -348,6 +365,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_160000) do
     t.index ["user_id"], name: "index_profiles_on_user_id", unique: true
   end
 
+  create_table "reactions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", default: "like", null: false
+    t.integer "reactable_id", null: false
+    t.string "reactable_type", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["reactable_type", "reactable_id"], name: "index_reactions_on_reactable"
+    t.index ["user_id", "reactable_type", "reactable_id", "kind"], name: "idx_reactions_unique_user_target_kind", unique: true
+    t.index ["user_id"], name: "index_reactions_on_user_id"
+  end
+
   create_table "recommendations", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "dismissed_at"
@@ -363,6 +392,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_160000) do
     t.index ["outfit_id"], name: "index_recommendations_on_outfit_id"
     t.index ["user_id", "kind", "dismissed_at"], name: "index_recommendations_on_user_id_and_kind_and_dismissed_at"
     t.index ["user_id"], name: "index_recommendations_on_user_id"
+  end
+
+  create_table "review_cases", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.string "reason"
+    t.integer "reporter_id"
+    t.integer "reviewable_id", null: false
+    t.string "reviewable_type", null: false
+    t.datetime "reviewed_at"
+    t.integer "reviewer_id"
+    t.string "state", default: "open", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reporter_id"], name: "index_review_cases_on_reporter_id"
+    t.index ["reviewable_type", "reviewable_id"], name: "index_review_cases_on_reviewable"
+    t.index ["reviewable_type", "reviewable_id"], name: "index_review_cases_on_reviewable_type_and_reviewable_id"
+    t.index ["reviewer_id"], name: "index_review_cases_on_reviewer_id"
+    t.index ["state", "created_at"], name: "index_review_cases_on_state_and_created_at"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -471,6 +518,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_160000) do
   add_foreign_key "live_streams", "users"
   add_foreign_key "messages", "users", column: "recipient_id"
   add_foreign_key "messages", "users", column: "sender_id"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "outfit_items", "items"
   add_foreign_key "outfit_items", "outfits"
   add_foreign_key "outfits", "users"
@@ -484,9 +533,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_160000) do
   add_foreign_key "posts", "users"
   add_foreign_key "privacy_settings", "users"
   add_foreign_key "profiles", "users"
+  add_foreign_key "reactions", "users"
   add_foreign_key "recommendations", "items"
   add_foreign_key "recommendations", "outfits"
   add_foreign_key "recommendations", "users"
+  add_foreign_key "review_cases", "users", column: "reporter_id"
+  add_foreign_key "review_cases", "users", column: "reviewer_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "style_preferences", "users"
   add_foreign_key "sustainability_metrics", "items"
