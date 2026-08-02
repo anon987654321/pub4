@@ -27,6 +27,18 @@ class TestCLI < Minitest::Test
     @cli = Master::CLI::CLI.new(container: @container)
   end
 
+  # CLI#initialize calls set_visitor_mode_if_unauthenticated, which sets
+  # Fiber[:master_visitor] = true whenever the config carries no web_token —
+  # true of every container built here. Fiber storage outlives the test, so the
+  # flag stayed on for the rest of the process and the next test to reach
+  # TurnRouter took the visitor path: casual_reply instead of the Fold, and
+  # `chat: undefined method 'call'` against a stub agent that only answers
+  # :model. That is DEBT.md's "known flake" in TurnRouterTest — order-dependent,
+  # invisible when the file runs alone, and nothing to do with the router.
+  def teardown
+    Fiber[:master_visitor] = nil
+  end
+
   # container accessor
   def test_container_accessor
     assert_same @container, @cli.container

@@ -3,6 +3,12 @@
 require_relative "test_helper"
 
 class CLIBridgeTest < Minitest::Test
+  # See test_cli.rb: building a CLI with a tokenless config leaves
+  # Fiber[:master_visitor] set for the rest of the process.
+  def teardown
+    Fiber[:master_visitor] = nil
+  end
+
   def build_cli(commands: nil, pipeline: Object.new)
     unless pipeline.respond_to?(:last_timings)
       pipeline.define_singleton_method(:last_timings) { nil }

@@ -16,6 +16,13 @@ class TurnRouterTest < Minitest::Test
     }
   end
 
+  # Both, not just teardown. Clearing on the way out protects this file from
+  # itself; clearing on the way in protects it from every other file, which is
+  # where the leak actually came from (test_cli.rb builds tokenless CLIs).
+  def setup
+    Fiber[:master_visitor] = nil
+  end
+
   def teardown
     Fiber[:master_visitor] = nil
   end
