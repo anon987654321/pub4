@@ -17,16 +17,17 @@ FIXED_SOURCES = [
   "/home/dev/.zshrc",
 ].freeze
 
-# Public DNS data — zone files, signed zones, public keys, DS records.
-# Excludes K*.private (DNSSEC signing keys) and runtime state (*.db).
-NSD_ZONE_GLOBS = %w[
-  /var/nsd/zones/master/*.zone
-  /var/nsd/zones/master/*.zone.signed
-  /var/nsd/zones/master/K*.key
-  /var/nsd/zones/master/K*.ds
-].freeze
-
-SOURCES = (FIXED_SOURCES + NSD_ZONE_GLOBS.flat_map { |g| Dir[g] }).uniq.freeze
+# Zone data is deliberately NOT mirrored. We run our own authoritative nsd and
+# carry a lot of domains: /var/nsd/zones/master holds 61 zones, and the signed
+# artifacts (*.zone.signed, K*.key, K*.ds) are regenerated on every re-sign, so
+# mirroring them would put a churning copy of the DNS into every git diff while
+# the nameserver — not the repo — remains the source of truth. This script used
+# to glob all four patterns; it had simply never been run, which is the only
+# reason the repo is clean of them. nsd.conf stays in FIXED_SOURCES above: that
+# is server configuration, not zone data.
+#
+# Decided 2026-08-02. If you are here to "fix" the missing zones, don't.
+SOURCES = FIXED_SOURCES.uniq.freeze
 
 SECRET_PATTERNS = [
   /(_API_KEY=)\S+/,

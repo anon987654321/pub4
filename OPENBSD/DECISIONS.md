@@ -25,6 +25,22 @@ Deploy and VPS policy. Agent/runtime policy lives in `MASTER/DECISIONS.md`.
 
 OPENBSD targets vm23. macOS local checks are useful, but OpenBSD behavior wins for package names, service management, relayd, pf, NSD, and Ruby command names.
 
+## The Nameserver Owns The Zones, Not The Repo (2026-08-02)
+
+We run our own authoritative nsd with a lot of domains — 61 zones in
+`/var/nsd/zones/master`, none of them in git, and that is deliberate. The
+signed artifacts (`*.zone.signed`, `K*.key`, `K*.ds`) are regenerated on every
+re-sign, so mirroring zone data would put a churning copy of the DNS into every
+diff while the nameserver stays the real source of truth.
+
+`OPENBSD/sync.rb` used to glob all four zone patterns. It had never actually
+been run, which is the only reason the repo is clean of them; the globs are now
+removed so the first person to run it does not import 61 zones by accident.
+`nsd.conf` is still mirrored — that is server configuration, not zone data.
+
+An audit that reports "61 zone files missing from the repo" is describing this
+decision, not a gap. Do not close it.
+
 ## relayd Owns TLS
 
 TLS terminates at relayd. Rails apps must use `config.assume_ssl = true` and must not force SSL themselves.
