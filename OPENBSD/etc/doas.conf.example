@@ -11,11 +11,5 @@ permit nopass dev as root cmd rcctl args restart relayd
 permit nopass dev as root cmd rcctl args enable master
 permit nopass dev as root cmd rcctl args disable master
 
-# BPLAN standalone app (BPLAN/rails/bplan.sh)
-permit nopass dev as root cmd rcctl args restart bplan
-permit nopass dev as root cmd rcctl args start bplan
-permit nopass dev as root cmd rcctl args stop bplan
-permit nopass dev as root cmd rcctl args enable bplan
-
 # OpenRsync backup — permit specific rsync target only
 permit nopass dev as root cmd openrsync

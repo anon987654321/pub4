@@ -89,7 +89,7 @@ module Deploy
         end
       end
 
-      %w[brgen.no ai.brgen.no amber.brgen.no bsdports.org bplan.pub.healthcare].each do |dom|
+      %w[brgen.no ai.brgen.no amber.brgen.no bsdports.org].each do |dom|
         result.fail("relayd.conf missing tls keypair for #{dom}") unless relayd_keys.include?(dom)
       end
 

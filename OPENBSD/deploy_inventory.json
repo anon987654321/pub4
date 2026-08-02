@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_from": "RAILS/apps.yml + bizplan/bplan.yml",
+  "generated_from": "RAILS/apps.yml",
   "generated_at": "2026-07-15",
   "apps": [
     {
@@ -19,17 +19,7 @@
       "port": 47312
     }
   ],
-  "standalone_apps": [
-    {
-      "name": "bplan",
-      "title": "BPLAN",
-      "domain": "bplan.pub.healthcare",
-      "port": 39282,
-      "deploy_script": "bizplan/rails/bplan.sh",
-      "deploy_root": "bizplan/rails",
-      "content_root": "bizplan"
-    }
-  ],
+  "standalone_apps": [],
   "master_face": {
     "name": "master",
     "domain": "ai.brgen.no",

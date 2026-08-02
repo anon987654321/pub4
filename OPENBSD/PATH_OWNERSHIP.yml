@@ -71,21 +71,9 @@ ownership:
     risk: critical
     check: OPENBSD/bin/check-openbsd
   deploy_standalone_apps.sh:
-    purpose: deploy deploy_inventory.json standalone_apps (bizplan)
+    purpose: deploy deploy_inventory.json standalone_apps (none currently — no-op)
     risk: high
     check: zsh -n OPENBSD/deploy_standalone_apps.sh
-  ../bizplan/rails/bplan.sh:
-    purpose: bizplan VPS deploy script
-    risk: critical
-    check: zsh -n bizplan/rails/bplan.sh
-  etc/rc.d/bplan:
-    purpose: Falcon rc.d for bizplan/rails
-    risk: critical
-    check: OPENBSD/bin/check-openbsd
-  etc/bplan.env.sample:
-    purpose: production env template for /etc/bplan.env
-    risk: medium
-    check: test -f OPENBSD/etc/bplan.env.sample
   ../OPENBSD/etc/:
     purpose: repo mirror of live /etc configs
     risk: critical
