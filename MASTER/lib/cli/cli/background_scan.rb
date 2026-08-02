@@ -6,6 +6,9 @@ module Master
       private
 
       def start_background_loop
+        # Built on the main thread, before either scanner thread exists, so both
+        # find the same gate rather than racing to create one.
+        @scan_gate = Mutex.new
         @bg_thread = Thread.new do
           loop do
             break if background_stop_requested?
@@ -18,6 +21,8 @@ module Master
       end
 
       def stop_background_loop
+        @boot_scan_thread&.kill
+        @boot_scan_thread = nil
         return unless @bg_thread
 
         @bg_control << :stop
@@ -41,15 +46,22 @@ module Master
         nil
       end
 
+      # The deep self-scan over lib/ runs 181 rules and takes north of a minute.
+      # Inline it held the prompt hostage for the whole boot, so the operator sat
+      # at "scan…" with no way to type. It reports when it lands instead.
+      def start_boot_scan
+        @boot_scan_thread = Thread.new { @scan_gate.synchronize { boot_scan } }
+      end
+
       def boot_scan
         result = Master::Review::Scan::SelfScan.new(scanner: @refs.scanner, root: @refs.root, event_bus: @refs.bus).call(autofix: false)
         return unless result.ok?
 
         summary = result.value!
         set_violations(summary.violation_count)
-        puts
-        puts @refs.renderer.render(summary.line, mode: :dim)
-        puts
+        $stdout.puts "\n#{@refs.renderer.render(summary.line, mode: :dim)}"
+        $stdout.puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :done)
+        $stdout.flush
       rescue StandardError => e
         @refs.bus&.publish("cli:warn", error: e.message)
       end
@@ -81,7 +93,20 @@ module Master
         end
       end
 
+      # Skips rather than queues: this fires every idle_sleep_seconds, and a tick
+      # that waited its turn would only start a redundant rescan of a tree the
+      # in-flight scan is already covering.
       def background_cycle
+        return unless @scan_gate.try_lock
+
+        begin
+          background_cycle!
+        ensure
+          @scan_gate.unlock
+        end
+      end
+
+      def background_cycle!
         lib_dir = File.join(@refs.root, "lib")
         result  = @refs.scanner.scan_dir(lib_dir, depth: :deep)
         return unless result.ok?

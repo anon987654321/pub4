@@ -195,8 +195,7 @@ module Master
 
       def print_boot_wayfinding
         puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :active)
-        boot_scan
-        puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :done)
+        start_boot_scan
       end
 
       def first_boot_bar
