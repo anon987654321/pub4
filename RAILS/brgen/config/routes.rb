@@ -87,9 +87,12 @@ Rails.application.routes.draw do
   # the engine's config/routes.rb; the host mounts it under the same subdomain
   # constraint. Host references to its helpers are tv.* (see application_helper,
   # sitemaps_controller). The pilot for the vertical-as-engine split — see ENGINES.md.
-  constraints(subdomain: TV_SUBDOMAINS) do
-    mount Tv::Engine, at: "/", as: "tv"
-  end
+  # Mount at the top level with constraints: as a keyword — NOT inside a
+  # `constraints(subdomain:) do … end` block. A mount nested in a constraints
+  # block still routes, but Rails only registers the `as:` mounted-helper proxy
+  # (tv.channel_url, used by application_helper and sitemaps_controller) for a
+  # top-level mount. Nesting it silently drops the helper. See ENGINES.md.
+  mount Tv::Engine, at: "/", as: "tv", constraints: { subdomain: TV_SUBDOMAINS }
 
   constraints(subdomain: DATING_SUBDOMAINS) do
     scope module: "dating", as: "dating" do

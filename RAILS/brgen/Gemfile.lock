@@ -15,6 +15,13 @@ PATH
       rqrcode (>= 2.2)
       webpush (>= 1.1)
 
+PATH
+  remote: engines/tv
+  specs:
+    brgen-tv (0.1.0)
+      pub4-shared
+      rails (>= 8.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -666,6 +673,7 @@ DEPENDENCIES
   axe-core-capybara
   bcrypt (~> 3.1)
   brakeman
+  brgen-tv!
   bundler-audit
   capybara
   dartsass-rails (~> 0.5.1)
