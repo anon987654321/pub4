@@ -17,24 +17,30 @@ require "minitest/autorun"
 #      Playlist::TimestampedComment, SecurityAdvisory) broadcast into streams with no
 #      subscriber and no container at all and were removed rather than wired.
 #
-#   2. The six Shared::* social models still broadcast implicitly, and that is
-#      recorded here rather than exempted: none of their tables exist in any app, so
-#      the callbacks cannot fire. Creating six partials for records that cannot be
-#      created would be decoration. If a migration ever lands, this test starts
-#      demanding the partials — which is the point.
+#   2. The Shared::* social models broadcast implicitly. Three were cut 2026-08-02
+#      (Post, Follow, ChatMessage) — no usable table in any schema and zero references,
+#      so they were the genuinely dead layer. Three remain and are tolerated here rather
+#      than exempted: Shared::ReviewCase backs amber reports and Shared::Reaction/
+#      Notification are `defined?`-guarded fallbacks. Their real tables (reactions/
+#      notifications/review_cases) do exist in brgen/amber, so unlike the cut trio their
+#      broadcasts CAN fire — giving them partials or making the callbacks explicit is the
+#      open follow-up this list is documenting, not resolving.
 class TurboBroadcastContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports].freeze
   BROADCAST = /broadcast_\w*(?:append|prepend|replace|update|remove|before|after)\w*_(?:later_)?to\b/
 
-  # Shared::* models with no table in any app schema. Kept as data so the test says
-  # what it is tolerating and why, and stops tolerating it when a table appears.
+  # Shared::* social models still tolerated here. Post, Follow, and ChatMessage were
+  # cut 2026-08-02 — shared_posts/shared_chat_messages exist in no schema, Shared::Follow
+  # had zero references, and none could be instantiated. The three that remain are NOT
+  # dead: Shared::ReviewCase backs amber's reports, and Shared::Reaction/Notification are
+  # fallbacks behind `defined?(::Reaction/::Notification)`. NOTE their real table_names are
+  # reactions/notifications/review_cases (generic, present in brgen/amber) — the shared_*
+  # names below never exist, so this tolerance is honest for the shared_ ones only;
+  # whether these three should broadcast implicitly at all is the open follow-up.
   TABLELESS_SHARED = {
-    "shared/post.rb" => "shared_posts",
     "shared/reaction.rb" => "shared_reactions",
-    "shared/follow.rb" => "shared_follows",
     "shared/notification.rb" => "shared_notifications",
-    "shared/chat_message.rb" => "shared_chat_messages",
     "shared/review_case.rb" => "shared_review_cases",
   }.freeze
 
