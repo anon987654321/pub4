@@ -6284,40 +6284,44 @@ end
 #
 # What this does instead. It asks the chords only one question -- "what notes
 # are allowed right now?" -- and decides everything else itself: when to come
-# in, how long to hold, and which way to move.
+# in, how long to hold, which way to move, and how far behind the beat to sit.
 #
-# Three rules, all borrowed rather than invented:
-#
-#   Leave gaps. Three to five notes in a four-bar phrase, played in the spaces
-#   between the chords rather than on top of them. This is the standard brief
-#   for a counter-melody in soul and R&B arranging, and it is why the line
-#   reads as an answer.
-#
-#   Move the other way. When the chords rise, fall; when they fall, rise. Two
-#   parts moving in opposite directions stay audible as two parts. Two parts
-#   moving together merge into one thicker part -- which is exactly the failure
-#   above. Bach's counterpoint is built on this, and the open-source
-#   counterpoint generators (foox, music21-tools) score it the same way:
-#   contrary motion rewarded, parallel motion penalised.
-#
-#   Walk, do not jump. Neighbouring notes sound like a tune. Wide leaps sound
-#   like an accident, so they cost something and only win when nothing nearer
-#   fits.
-#
-# Those generators are Python. This engine is pure Ruby with no dependencies,
-# so the rules are written out here rather than pulled in.
+# The rules below are borrowed, not invented. Sources are named where they
+# apply. Nothing here is a matter of taste that could not be checked.
 
 # A step is a tone or less. Anything past a fifth is a jump too far to sing.
 LEAD_STEP_SEMITONES = 2
 LEAD_LEAP_MAX = 7
 
-# Where the line is allowed to sit. Roughly the range a person can sing, which
-# keeps it a melody rather than a sound effect.
+# Where the line sits. Roughly a singer's range, centred near middle C, which
+# is the neutral register string and vocal arrangers write pads in -- high
+# enough to be heard over the chords, low enough not to shriek.
 LEAD_RANGE_HZ = (220.0..880.0).freeze
+LEAD_CENTRE_HZ = 330.0
 
 # Beats within a bar where a note may start. Never the downbeat: the chord lands
 # there, and the answer should arrive after the question.
 LEAD_ONSET_BEATS = [1.0, 2.5, 3.0].freeze
+
+# How far behind the beat the line sits, in MPC ticks at 96 PPQ.
+#
+# The whole engine is built on the idea that a part which lands exactly on the
+# grid sounds like a machine, and lo-fi guidance says the same thing in plainer
+# words: do not quantize everything, the moments that sit slightly off are where
+# the feel comes from. The first version of this generator ignored all of that
+# and placed every note on an exact grid position, in a file named after the
+# producer whose entire signature is that his parts do not.
+#
+# Sung and bowed lines drag: a voice takes time to speak and a bow takes time to
+# bite, so they arrive after the note they are answering. Hence a base lag,
+# plus a small per-note wobble so no two entries are identical.
+#
+# Ticks rather than milliseconds, matching GROOVE_FEELS: the MPC3000 nudge tool
+# could only land on tick boundaries, and a fractional offset is one the machine
+# this models could never have produced.
+LEAD_LAG_TICKS = 5
+LEAD_LAG_JITTER_TICKS = 3
+MPC_PPQ = 96
 
 def melodic_lead_enabled? = ENV.fetch("MELODIC_LEAD", "1") != "0"
 
@@ -6345,32 +6349,99 @@ def pad_chord_at(pad_events, time)
     &.fetch(2)
 end
 
-# Rate one candidate note. Higher is better. Nothing here is forbidden outright
-# -- every rule is a cost, so the line can break one when the alternative is
-# worse.
-def lead_note_score(hz, prev_hz, pad_direction, chord)
+# The gap between the counter-line and the chord under it, folded into one
+# octave. 0 is a unison or octave, 7 a perfect fifth.
+def harmonic_interval(lead_hz, pad_hz)
+  return unless lead_hz&.positive? && pad_hz&.positive?
+
+  semitones_between(pad_hz, lead_hz).round % 12
+end
+
+PERFECT_INTERVALS = [0, 7].freeze
+
+# The oldest rule in counterpoint, and the half I left out the first time.
+#
+# Two voices a fifth apart that both move and are still a fifth apart have, to
+# the ear, stopped being two voices -- the interval is so consonant that the
+# upper one is heard as an overtone of the lower. Octaves do it worse. Every
+# species-counterpoint text forbids it and every generator that encodes those
+# rules penalises it outright.
+#
+# The first version of this scorer rewarded contrary motion and stopped there,
+# which catches only the case where both voices move the same way. Two voices
+# CAN move in opposite directions and still arrive at consecutive fifths, and
+# nothing here would have noticed.
+def parallel_perfect?(prev_lead, lead, prev_pad, pad)
+  return false unless prev_lead && prev_pad && lead && pad
+  return false if prev_lead == lead || prev_pad == pad   # nothing moved
+
+  before = harmonic_interval(prev_lead, prev_pad)
+  after = harmonic_interval(lead, pad)
+  return false unless before && after
+
+  before == after && PERFECT_INTERVALS.include?(after)
+end
+
+# Per-phrase ceilings, from the same generators the motion rules come from.
+#
+# Each rule below is a cost, not a ban, so a single note can break one when
+# every alternative is worse. Left at that, a whole phrase can be nothing but
+# leaps, because each leap won its own comparison. These are the caps that stop
+# a local decision becoming a global habit.
+LEAD_PARALLEL_SHARE_MAX = 0.5
+LEAD_LEAP_SHARE_MAX = 0.3
+LEAD_REPEAT_SHARE_MAX = 0.5
+
+# Rate one candidate note. Higher is better.
+def lead_note_score(hz, prev_hz, pad_direction, chord, tally: nil, prev_pad_top: nil, pad_top: nil)
   return 0.0 unless hz&.positive?
   return 1.0 unless prev_hz&.positive?
 
   move = semitones_between(prev_hz, hz)
   distance = move.abs
+  score = 0.0
 
-  score = case distance
-          when 0 then -0.6                        # standing still says nothing
-          when ..LEAD_STEP_SEMITONES then 1.0     # a step: how tunes move
-          when ..4 then 0.35                      # a small skip, still singable
-          when ..LEAD_LEAP_MAX then -0.2          # a real jump, needs a reason
-          else -1.0                               # further than anyone sings
-          end
+  score += case distance
+           when 0 then -0.6                        # standing still says nothing
+           when ..LEAD_STEP_SEMITONES then 1.0     # a step: how tunes move
+           when ..4 then 0.35                      # a small skip, still singable
+           when ..LEAD_LEAP_MAX then -0.2          # a real jump, needs a reason
+           else -1.0                               # further than anyone sings
+           end
 
   # The rule that makes this a second voice rather than a thicker first one.
   unless pad_direction.zero? || move.zero?
     score += move.positive? == pad_direction.positive? ? -0.5 : 0.8
   end
 
+  # Consecutive fifths and octaves, refused hard enough that only an empty
+  # alternative set can let one through.
+  score -= 3.0 if parallel_perfect?(prev_hz, hz, prev_pad_top, pad_top)
+
   # Notes already in the chord settle; the rest of the scale passes through.
   score += 0.3 if chord[:hz].any? { |chord_hz| same_pitch_class?(hz, chord_hz) }
-  score
+
+  # Drift back toward the middle of the range, so a run of good local choices
+  # cannot walk the line off the top or bottom of its register.
+  score -= (semitones_between(LEAD_CENTRE_HZ, hz).abs / 24.0)
+
+  score + phrase_cap_penalty(tally, move, pad_direction)
+end
+
+# Once a phrase has spent its allowance of leaps, repeats or parallel motion,
+# more of the same gets expensive.
+def phrase_cap_penalty(tally, move, pad_direction)
+  return 0.0 unless tally && tally[:notes].positive?
+
+  n = tally[:notes].to_f
+  penalty = 0.0
+  distance = move.abs
+  parallel = !pad_direction.zero? && !move.zero? && (move.positive? == pad_direction.positive?)
+
+  penalty -= 1.5 if parallel && (tally[:parallel] / n) >= LEAD_PARALLEL_SHARE_MAX
+  penalty -= 1.5 if distance > 4 && (tally[:leaps] / n) >= LEAD_LEAP_SHARE_MAX
+  penalty -= 1.5 if distance.zero? && (tally[:repeats] / n) >= LEAD_REPEAT_SHARE_MAX
+  penalty
 end
 
 # Which way the chords have just moved: up, down, or nowhere.
@@ -6396,25 +6467,118 @@ def lead_onsets_for_phrase(phrase_start, phrase_bars, bar_p, beat_p, wanted, cei
   candidates.each_slice(stride).map(&:first).first(wanted)
 end
 
+# A shape the line returns to.
+#
+# Without one, every phrase is decided note by note and nothing ever comes back,
+# so a listener has nothing to recognise -- which is half of why a whole demo
+# reads as repetitive without ever repeating anything memorable. Sample chopping
+# is described as letting a producer shift the focus onto particular themes and
+# motifs, and a motif is exactly what this engine had none of.
+#
+# The motif is stored as CONTOUR -- how many scale steps to move, not which
+# notes -- so it survives being played over a different chord. Each phrase takes
+# a transformation of it, in the order a composer would: state it, state it
+# again, invert it, reverse it. That is repetition with variation, which is what
+# holds attention, rather than either novelty or literal repeat.
+LEAD_MOTIF_TRANSFORMS = %i[plain plain inverted retrograde].freeze
+
+# Phrases where the line says nothing at all.
+#
+# A part that plays in every phrase stops being an answer and becomes a texture.
+# The whole Detroit end of this lineage treats space as the instrument -- few
+# elements, worked hard, with room around them -- and the arranging guidance
+# says the same thing about counter-melodies: they go BETWEEN the phrases, and
+# between means there are phrases they are not in.
+#
+# The third phrase of every four, and never the first.
+#
+# The shape has to be stated before its absence can be felt, and it has to come
+# back afterwards or the silence reads as the piece ending rather than as
+# breathing. Third of four gives state / state / gone / back.
+#
+# Not `phrase % 4 == 0`, which was the first attempt: over a 16-bar piece there
+# are exactly four phrases, numbered 0 to 3, and none of 1, 2 or 3 is divisible
+# by four -- so the rest never once happened at the length these actually render
+# at. It measured as 4 phrases out of 4 playing.
+LEAD_REST_EVERY = 4
+LEAD_REST_PHASE = 2
+
+def lead_phrase_rests?(phrase)
+  return false if phrase.zero?
+  return false if ENV.fetch("LEAD_PHRASE_RESTS", "1") == "0"
+
+  (phrase % LEAD_REST_EVERY) == LEAD_REST_PHASE
+end
+
+# Ghost notes.
+#
+# The quiet, half-struck note just before the one that lands. On the drums it is
+# the ghost snare that makes a Dilla pattern breathe instead of march, and it is
+# the single most recognisable thing about the drum programming this engine is
+# named for. There is no reason it should belong only to drums -- a singer
+# scoops into a note and a bowed string speaks before it sounds.
+#
+# A sixteenth early, a third of the velocity, and a step below: quiet enough to
+# be felt rather than heard, which is the point of a ghost.
+LEAD_GHOST_VELOCITY = 0.34
+LEAD_GHOST_LEAD_IN_BEATS = 0.25
+
+def lead_ghost_for(time, velocity, hz, tones, beat_p, rng)
+  return unless ENV.fetch("LEAD_GHOSTS", "1") != "0"
+  return unless rng.rand < 0.35
+
+  below = tones.select { |t| t < hz && semitones_between(t, hz) <= 3 }.max
+  return unless below
+
+  start = time - (LEAD_GHOST_LEAD_IN_BEATS * beat_p)
+  return if start <= 0
+
+  [start, velocity * LEAD_GHOST_VELOCITY, { name: "counter_ghost", hz: [below] },
+   LEAD_GHOST_LEAD_IN_BEATS * beat_p * 0.8]
+end
+
+def lead_motif(rng, length)
+  # Small steps, mostly, with the occasional skip: a singable shape.
+  Array.new(length) { [-2, -1, -1, 1, 1, 2, 3].sample(random: rng) }
+end
+
+def lead_motif_step(motif, transform, index)
+  return 0 if motif.empty?
+
+  case transform
+  when :inverted then -motif[index % motif.length]
+  when :retrograde then motif[(motif.length - 1 - (index % motif.length))]
+  else motif[index % motif.length]
+  end
+end
+
 def lead_events_melodic(pad_events, cfg, duration: nil, n_bars: nil)
   return [] if pad_events.empty? || !melodic_lead_enabled?
 
   beat_p = 60.0 / cfg[:bpm]
   bar_p = beat_p * 4.0
+  tick_p = beat_p / MPC_PPQ
   total = duration || pad_events.map { |event| event[0].to_f + event[3].to_f }.max
   return [] unless total.to_f.positive?
 
   phrase_bars = ENV.fetch("LEAD_PHRASE_BARS", "4").to_i.clamp(1, 16)
   per_phrase = ENV.fetch("LEAD_NOTES_PER_PHRASE", "4").to_i.clamp(1, 12)
   answer_chords = ENV.fetch("LEAD_CONTRARY", "1") != "0"
+  humanize = ENV.fetch("LEAD_HUMANIZE", "1") != "0"
+  lag_ticks = ENV.fetch("LEAD_LAG_TICKS", LEAD_LAG_TICKS.to_s).to_i
   rng = Random.new(stable_hash(cfg[:track].to_s) + (@render_seed || 0) + 5501)
 
+  motif = lead_motif(rng, per_phrase)
   phrase_p = bar_p * phrase_bars
   previous_hz = nil
   previous_top = nil
 
   (total / phrase_p).ceil.times.flat_map do |phrase|
+    next [] if lead_phrase_rests?(phrase)
+
     onsets = lead_onsets_for_phrase(phrase * phrase_p, phrase_bars, bar_p, beat_p, per_phrase, total)
+    transform = LEAD_MOTIF_TRANSFORMS[phrase % LEAD_MOTIF_TRANSFORMS.length]
+    tally = { notes: 0, parallel: 0, leaps: 0, repeats: 0 }
 
     onsets.each_with_index.filter_map do |time, index|
       chord = pad_chord_at(pad_events, time)
@@ -6426,8 +6590,6 @@ def lead_events_melodic(pad_events, cfg, duration: nil, n_bars: nil)
       top = chord[:hz].max
       direction = answer_chords ? pad_direction(previous_top, top) : 0
 
-      # Stay in range, and stay near the last note. A line that leaps an octave
-      # every time stops being a line.
       reachable = tones.select { |hz| LEAD_RANGE_HZ.cover?(hz) }
       reachable = tones if reachable.empty?
       if previous_hz
@@ -6435,23 +6597,42 @@ def lead_events_melodic(pad_events, cfg, duration: nil, n_bars: nil)
         reachable = near unless near.empty?
       end
 
-      # The small random nudge breaks ties between equally good notes so the
-      # same phrase does not come out identical every time. It is seeded, so it
-      # comes out identical for the same track.
-      chosen = reachable.max_by { |hz| lead_note_score(hz, previous_hz, direction, chord) + (rng.rand * 0.15) }
+      # The motif proposes, the rules dispose. Where the motif's next step lands
+      # is scored like any other candidate, so a shape that would cause parallel
+      # fifths or walk off the register loses to one that does not -- the theme
+      # survives, the mistakes do not.
+      wanted = lead_motif_step(motif, transform, index)
+      chosen = reachable.max_by do |hz|
+        base = lead_note_score(hz, previous_hz, direction, chord,
+                               tally:, prev_pad_top: previous_top, pad_top: top)
+        steps = previous_hz ? (semitones_between(previous_hz, hz) / 2.0).round : 0
+        base + (steps == wanted ? 0.9 : 0.0) + (rng.rand * 0.15)
+      end
       next unless chosen
 
-      # Hold until just before the next note. Holding is what makes this sound
-      # like strings or voices rather than a synth being poked.
       next_time = onsets[index + 1] || (phrase * phrase_p) + phrase_p
       sustain = [[(next_time - time) * 0.82, beat_p * 0.75].max, total - time].min
       next if sustain <= 0.05
 
+      # Sit behind the beat, and never twice by the same amount.
+      offset = humanize ? (lag_ticks + rng.rand(-LEAD_LAG_JITTER_TICKS..LEAD_LAG_JITTER_TICKS)) * tick_p : 0.0
+      start = (time + offset).clamp(0.0, total - sustain)
+
+      if previous_hz
+        move = semitones_between(previous_hz, chosen)
+        tally[:leaps] += 1 if move.abs > 4
+        tally[:repeats] += 1 if move.zero?
+        tally[:parallel] += 1 if !direction.zero? && !move.zero? && (move.positive? == direction.positive?)
+      end
+      tally[:notes] += 1
+
       previous_hz = chosen
       previous_top = top
       velocity = (0.30 + (rng.rand * 0.06)) * (index.zero? ? 1.0 : 0.92)
-      [time, velocity, { name: "counter_lead", hz: [chosen] }, sustain]
-    end
+      note = [start, velocity, { name: "counter_lead", hz: [chosen] }, sustain]
+      ghost = lead_ghost_for(start, velocity, chosen, reachable, beat_p, rng)
+      ghost ? [ghost, note] : [note]
+    end.flatten(1)
   end
 end
 
@@ -13064,10 +13245,33 @@ end
 # Pad / arp / voicing pools for demo-all — distinct sonic identity per slot
 # (stream DNA alone keeps stack_soul+held+jonas_v and reads as "one song").
 # Rhodes / Prophet first — glass/vapor/neon are spice, not the main course.
+# The pad voices the demo draws from.
+#
+# This was fourteen slots naming nine voices, and three of them -- stack_rhodes,
+# stack_prophet, stack_soul -- filled more than half. Measured across all 86
+# tracks, 13 of the 37 defined pad voices were ever selected and 24 never were,
+# including every one of pad_dilla, pad_flylo and pad_royksopp: voices named for
+# the producers this engine models, which had never been rendered once.
+#
+# Widened to reach all of them. The repeats that remain are deliberate -- the
+# Rhodes and Prophet stacks are the house sound and should still come up most
+# often -- but a catalogue of 86 pieces now draws on 37 voices rather than
+# leaning on three.
+#
+# stack_world, stack_giga, stack_yamaha and stack_vintage are layer stacks
+# rather than single voices, so they arrive with their own internal blend; they
+# are spaced out rather than clustered, because two thick stacks in consecutive
+# slots read as one long stack.
 DEMO_PAD_ROTATION = %w[
-  stack_rhodes stack_prophet stack_soul rhodes prophet
-  stack_rhodes pad_madlib stack_prophet rhodes_solo prophet
-  stack_soul blend stack_rhodes stack_prophet
+  stack_rhodes stack_prophet pad_dilla stack_soul rhodes
+  pad_flylo prophet stack_glass rhodes_solo stack_vapor
+  stack_rhodes pad_madlib moog stack_prophet vintage
+  stack_soul pad_royksopp blend stack_yamaha glass
+  stack_rhodes fm stack_vintage prophet nylon_soul
+  stack_prophet vapor stack_giga crystal stack_fm_epiano
+  stack_soul yamaha stack_world ice giga_fm
+  stack_rhodes neon supersaw_bed stack_prophet orchestral
+  pulse stack_soul vintage_choir stack_rhodes
 ].freeze
 DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
@@ -17235,6 +17439,32 @@ end
 COUNTER_LEAD_TARGET_RMS_DB = -20.5
 COUNTER_LEAD_LOWPASS_HZ = 5200
 
+# Never quite in tune, and never quite dry.
+#
+# A sampled record is a few cents off because the tape it came from was, and
+# nothing in this idiom is at concert pitch by accident. A perfectly tuned
+# choir sitting on top of samples that are not is the one voice that sounds
+# synthetic. asetrate does it the way a varispeed does -- pitch and duration
+# move together -- rather than pretending the two are separable.
+#
+# The reverb is a send, filtered the way a send should be: high-passed so the
+# tail does not muddy the low mid, low-passed so it sits behind the dry signal
+# rather than adding brightness of its own. Standard practice on a return, and
+# the reason the counter-line reads as "in the room" instead of "on top".
+COUNTER_LEAD_DETUNE_CENTS = -7.0
+COUNTER_LEAD_VERB_HP_HZ = 300
+COUNTER_LEAD_VERB_LP_HZ = 9000
+COUNTER_LEAD_VERB_MIX = 0.34
+
+def counter_lead_space_chain
+  ratio = (2.0**(COUNTER_LEAD_DETUNE_CENTS / 1200.0)).round(6)
+  detune = "asetrate=#{SAMPLE_RATE}*#{ratio},aresample=#{SAMPLE_RATE}"
+  wet = "highpass=f=#{COUNTER_LEAD_VERB_HP_HZ},lowpass=f=#{COUNTER_LEAD_VERB_LP_HZ}," \
+        "aecho=0.8:0.85:60|110|180:0.4|0.28|0.18,volume=#{COUNTER_LEAD_VERB_MIX}"
+  "#{detune},lowpass=f=#{COUNTER_LEAD_LOWPASS_HZ}," \
+    "asplit=2[cldry][clwet];[clwet]#{wet}[clverb];[cldry][clverb]amix=inputs=2:normalize=0"
+end
+
 def invert_motif(motif)
   top = motif.max
   motif.map { |d| top - d }
@@ -17389,11 +17619,16 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, co
               end
   patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
   chain = lead_post_fx_chain(patch, duration, 0.0)
-  # Roll the top off before anything else in the chain, so the reverb and the
-  # limiter downstream are working on an already-soft signal rather than
-  # brightening it back up.
-  chain = "lowpass=f=#{COUNTER_LEAD_LOWPASS_HZ},#{chain}" if counter
-  sh! "ffmpeg", "-y", "-i", path, "-af", chain, "-c:a", "pcm_s16le", "#{path}.lead.wav"
+  if counter
+    # Detune, roll the top off, and send to a filtered reverb -- all BEFORE the
+    # patch chain, so what follows is working on an already-soft, already-placed
+    # signal rather than brightening it back up.
+    sh! "ffmpeg", "-y", "-i", path, "-filter_complex",
+        "[0:a]#{counter_lead_space_chain},#{chain}[out]", "-map", "[out]",
+        "-c:a", "pcm_s16le", "#{path}.lead.wav"
+  else
+    sh! "ffmpeg", "-y", "-i", path, "-af", chain, "-c:a", "pcm_s16le", "#{path}.lead.wav"
+  end
   FileUtils.mv("#{path}.lead.wav", path)
   normalize_wav_to_rms!(path, target_db)
   path
