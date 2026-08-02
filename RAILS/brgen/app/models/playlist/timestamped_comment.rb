@@ -12,8 +12,16 @@ module Playlist
 
     scope :chronological, -> { order(:timestamp_seconds, :created_at) }
 
-    after_create_commit do
-      broadcast_append_later_to "playlist:track:#{track_id}:comments"
-    end
+    # There was an after_create_commit here broadcasting to
+    # "playlist:track:<id>:comments" with no partial, no target, and no
+    # turbo_stream_from anywhere in the tree. Every comment enqueued a Solid Queue
+    # job that raised MissingTemplate into a stream with no subscriber — on a
+    # 1-vCPU box, per comment.
+    #
+    # It is removed rather than wired because a DOM append could not have worked
+    # here anyway: hosted_tracks/show.html.erb hands the comments to the player as
+    # JSON (`comments: @comments.map { ... }`), so the live surface is the player's
+    # own state, not an element. Making these live means feeding that JSON, which is
+    # a product decision about the player, not a missing partial.
   end
 end

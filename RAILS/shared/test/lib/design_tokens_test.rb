@@ -71,6 +71,37 @@ class DesignTokensTest < Minitest::Test
     end
   end
 
+  # RAILS/UI_REFINEMENTS.md carried "Token CSS auto-gen test fail-on-drift" as a
+  # follow-up for generate_face_root_css.rb. Every drift predicate below already
+  # existed and every test above proved it works — on a fixture in a tmpdir. Nothing
+  # asserted the committed files, so the generator could go unrun for weeks and the
+  # suite stayed green while face.css and design_tokens.yml disagreed.
+  #
+  # These three run against the real tree. The remedy is in each message, because a
+  # drift failure is a "you forgot to run the generator", not a bug to debug.
+  def test_committed_face_css_matches_design_tokens
+    skip "face.css missing" unless File.file?(FACE_CSS)
+
+    drift = DesignTokens.face_root_drift?(FACE_CSS)
+
+    assert_nil drift, "MASTER/web/public/face.css :root has drifted from " \
+                      "RAILS/shared/design_tokens.yml (#{drift}) — run " \
+                      "`ruby RAILS/tools/generate_face_root_css.rb`"
+  end
+
+  def test_committed_dialect_scss_anchors_match_design_tokens
+    drift = DesignTokens.scss_anchor_drift?
+
+    assert_nil drift, "_dialect_tokens.scss has drifted from design_tokens.yml (#{drift}) — " \
+                      "run `ruby RAILS/tools/sync_dialect_tokens.rb` or the documented sync"
+  end
+
+  def test_committed_dialect_maps_match_design_tokens
+    drift = DesignTokens.dialect_token_drift
+
+    assert_empty drift, "dialect token maps have drifted from design_tokens.yml:\n  #{Array(drift).join("\n  ")}"
+  end
+
   def test_social_tokens_yaml_present
     social = DesignTokens.load.fetch("social")
     %w[bg surface text accent border].each do |key|

@@ -56,6 +56,10 @@ nb:
     no_maintainers: "Ingen maintainere"
     no_maintainers_search: "Ingen maintainere matcher søket."
     clear_search: "Tøm søk"
+  hotkeys:
+    help: "j/k · ↓↑ naviger · Enter åpne · / eller ⌘K søk · esc nullstill · ? hjelp"
+    coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."
+    coach_dismiss: "Skjønner"
   pages:
     ports: "OpenBSD-porter"
     categories: "Kategorier"

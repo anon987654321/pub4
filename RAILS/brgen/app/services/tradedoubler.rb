@@ -1,53 +1,79 @@
 # frozen_string_literal: true
 
-require "net/http"
+require "cgi"
 require "json"
+require "net/http"
+require "uri"
 
-# TradeDoubler product feed client.
+# TradeDoubler partner-marketing client (publisher side).
 #
-# STATUS: brgen.no is not yet an approved TradeDoubler publisher. Everything
-# here is gated on TRADEDOUBLER_TOKEN and returns empty without it, so the
-# deals sidebar degrades to nothing rather than erroring. Approval is a manual,
-# two-step process that cannot be automated from here:
+# STATUS: live calls need an approved publisher site + programme connections +
+# TRADEDOUBLER_TOKEN (PRODUCTS system token). Without a token every write path
+# is a no-op and every read path prefers AffiliateProduct / placeholders.
 #
-#   1. Apply as a publisher and get the site itself approved.
-#   2. Apply to each advertiser programme separately — each approves you on its
-#      own terms, and only approved programmes appear in your feed.
+# Official Products API uses matrix URIs and requires a feed id (fid):
+#   GET https://api.tradedoubler.com/1.0/products.json;fid={id};page=1;pageSize=100?token=…
+# Feeds are listed via productFeeds. Bulk: productsUnlimited + lastUpdated.
 #
-# Once that is done, set TRADEDOUBLER_TOKEN (and TRADEDOUBLER_MARKET, default
-# NO) and run `rake affiliate:import` to populate AffiliateProduct.
-#
-# UNVERIFIED: the response shape below has not been checked against a live
-# response, because that needs a token. `parse` therefore accepts both the
-# nested XML-ish shape ({"products" => {"product" => [...]}}) and the flat JSON
-# shape ({"products" => [...]}) rather than betting on one — the previous
-# version only handled the former, which would have returned zero products on
-# the first real call if the API answers with the latter.
+# Tokens (Account → Manage tokens): PRODUCTS, VOUCHERS, CONVERSIONS. Website ID
+# for Link Converter is separate (TRADEDOUBLER_WEBSITE_ID).
 module Tradedoubler
   BASE = "https://api.tradedoubler.com/1.0"
-  # TradeDoubler caps page size; keep requests modest and paginate instead.
+  LINK_CONVERTER_URL = "https://link.tradedoubler.com/lc"
   PAGE_SIZE = 100
   MAX_PAGES = 20
+  # Search service hard-caps at 1000 products per the docs.
+  SEARCH_HARD_CAP = 1_000
 
-  # `placeholder` travels with the deal so the view can label it. Rendering a
-  # seeded placeholder as an ordinary paid deal would be dishonest to the
-  # visitor and unreconcilable for us.
   Deal = Data.define(:title, :description, :price, :currency, :image_url, :click_url, :merchant, :placeholder)
+  Voucher = Data.define(
+    :external_id, :program_id, :program_name, :code, :title, :short_description,
+    :description, :voucher_type_id, :track_url, :landing_url, :discount_amount,
+    :percentage, :site_specific, :exclusive, :currency, :starts_at, :ends_at
+  )
+  Feed = Data.define(:feed_id, :name, :active, :currency, :language, :product_count, :program_ids, :last_modified)
 
   class << self
-    def token = ENV["TRADEDOUBLER_TOKEN"].presence
-    def market = ENV.fetch("TRADEDOUBLER_MARKET", "NO")
-    def configured? = token.present?
+    def products_token
+      ENV["TRADEDOUBLER_PRODUCTS_TOKEN"].presence || ENV["TRADEDOUBLER_TOKEN"].presence
+    end
 
-    # Read path for views. Prefers the imported table (no outbound call inside a
-    # render, survives an outage, and is what seeds populate); falls back to a
-    # live call only when the table has nothing for this category.
+    def vouchers_token
+      ENV["TRADEDOUBLER_VOUCHERS_TOKEN"].presence || products_token
+    end
+
+    def conversions_token
+      ENV["TRADEDOUBLER_CONVERSIONS_TOKEN"].presence
+    end
+
+    def website_id
+      ENV["TRADEDOUBLER_WEBSITE_ID"].presence
+    end
+
+    def token = products_token
+    def market = ENV.fetch("TRADEDOUBLER_MARKET", "NO")
+    def configured? = products_token.present?
+    def vouchers_configured? = vouchers_token.present?
+    def link_converter_configured? = website_id.present?
+
+    # Comma-separated feed IDs. When blank, import discovers active feeds.
+    def feed_ids
+      raw = ENV["TRADEDOUBLER_FEED_IDS"].to_s
+      raw.split(/[,\s]+/).map(&:strip).reject(&:empty?).map(&:to_i).reject(&:zero?)
+    end
+
+    def import_mode
+      ENV.fetch("TRADEDOUBLER_IMPORT_MODE", "search") # search | unlimited
+    end
+
+    # --- Read path for views -------------------------------------------------
+
     def deals(category: nil, limit: 8)
       stored = stored_deals(category: category, limit: limit)
       return stored if stored.any?
       return [] unless configured?
 
-      Rails.cache.fetch(cache_key(category), expires_in: cache_ttl_for(:search_results)) do
+      Rails.cache.fetch(cache_key("deals", category, limit), expires_in: cache_ttl_for(:search_results)) do
         fetch_deals(category: category, limit: limit)
       end
     end
@@ -61,123 +87,240 @@ module Tradedoubler
                       .limit(limit)
                       .map { |product| to_deal(product) }
     rescue ActiveRecord::StatementInvalid
-      # Pre-migration boot (deploy ordering) must not take down the page.
       []
     end
 
-    # Write path. Walks the feed and upserts into AffiliateProduct.
-    # Returns the number of rows written.
+    def vouchers(limit: 20, site_specific: false, program_id: nil)
+      stored = stored_vouchers(limit: limit, site_specific: site_specific)
+      return stored if stored.any?
+      return [] unless vouchers_configured?
+
+      Rails.cache.fetch(cache_key("vouchers", limit, site_specific, program_id), expires_in: cache_ttl_for(:search_results)) do
+        fetch_vouchers(limit: limit, site_specific: site_specific, program_id: program_id)
+      end
+    end
+
+    def stored_vouchers(limit: 20, site_specific: false)
+      return [] unless defined?(AffiliateVoucher) && AffiliateVoucher.table_exists?
+
+      scope = AffiliateVoucher.live.order(ends_at: :asc)
+      scope = scope.where(site_specific: true) if site_specific
+      scope.limit(limit).map(&:to_struct)
+    rescue ActiveRecord::StatementInvalid
+      []
+    end
+
+    # --- Write path: product import ------------------------------------------
+
     def import!(category: nil, pages: MAX_PAGES)
       return 0 unless configured?
 
+      ids = resolve_feed_ids
+      return 0 if ids.empty?
+
       written = 0
-      (1..pages).each do |page|
-        rows = fetch_page(category: category, page: page)
-        break if rows.empty?
-
-        rows.each do |row|
-          external_id = row[:external_id]
-          # Without a stable network id there is no upsert key, and re-imports
-          # would duplicate the row on every run.
-          next if external_id.blank? || row[:click_url].blank? || row[:title].blank?
-
-          AffiliateProduct.upsert_from_feed!(
-            source: "tradedoubler",
-            external_id: external_id,
-            title: row[:title],
-            description: row[:description],
-            merchant: row[:merchant],
-            program_id: row[:program_id],
-            price_cents: row[:price_cents],
-            currency: row[:currency],
-            image_url: row[:image_url],
-            click_url: row[:click_url],
-            category: category.presence || row[:category],
-            market: market,
-            in_stock: row[:in_stock],
-            placeholder: false
-          )
-          written += 1
-        end
-
-        break if rows.size < PAGE_SIZE
+      ids.each do |fid|
+        written += if import_mode == "unlimited"
+                     import_unlimited!(fid, category: category)
+                   else
+                     import_search!(fid, category: category, pages: pages)
+                   end
       end
-
       written
     end
 
-    def fetch_deals(category:, limit:)
-      fetch_page(category: category, page: 1).first(limit).map do |row|
-        Deal.new(
-          title: row[:title].to_s,
-          description: row[:description].to_s.truncate(120),
-          price: row[:price_cents] ? format("%.2f", row[:price_cents] / 100.0) : "",
-          currency: row[:currency].to_s,
-          image_url: row[:image_url].to_s,
-          click_url: row[:click_url].to_s,
-          merchant: row[:merchant].to_s,
-          placeholder: false
-        )
+    def import_vouchers!(limit: 1_000)
+      return 0 unless vouchers_configured?
+      return 0 unless defined?(AffiliateVoucher) && AffiliateVoucher.table_exists?
+
+      rows = fetch_vouchers(limit: limit, site_specific: false, program_id: nil, persist: false)
+      rows.count do |row|
+        AffiliateVoucher.upsert_from_api!(row)
+        true
       end
     end
 
-    def fetch_page(category:, page: 1)
-      params = { token: token, pageSize: PAGE_SIZE, page: page, format: "json" }
-      params[:category] = category if category.present?
-      uri = URI("#{BASE}/products")
-      uri.query = URI.encode_www_form(params)
+    # --- Feeds ---------------------------------------------------------------
 
-      res = Net::HTTP.get_response(uri)
-      return [] unless res.is_a?(Net::HTTPSuccess)
+    def list_feeds
+      return [] unless configured?
 
-      parse(JSON.parse(res.body))
-    rescue JSON::ParserError, StandardError => e
-      Ground::Swallow.log(e, context: "Tradedoubler.fetch_page")
+      body = get_json(matrix_uri("productFeeds", matrix: {}, token: products_token))
+      Array(body.is_a?(Hash) ? body["feeds"] : body).filter_map do |feed|
+        next unless feed.is_a?(Hash)
+
+        Feed.new(
+          feed_id: feed["feedId"].to_i,
+          name: feed["name"].to_s,
+          active: feed["active"] != false,
+          currency: feed["currencyISOCode"].to_s,
+          language: feed["languageISOCode"].to_s,
+          product_count: feed["numberOfProducts"].to_i,
+          program_ids: Array(feed["programs"]).filter_map { |p| p.is_a?(Hash) ? p["programId"] : nil },
+          last_modified: feed["lastModifiedTime"].to_s
+        )
+      end
+    rescue StandardError => e
+      Ground::Swallow.log(e, context: "Tradedoubler.list_feeds") if defined?(Ground::Swallow)
       []
     end
 
-    # Normalises a feed payload into plain hashes. Tolerant of both response
-    # shapes and of fields arriving either at the top level or under "fields".
+    def resolve_feed_ids
+      configured = feed_ids
+      return configured if configured.any?
+
+      list_feeds.select(&:active).map(&:feed_id).reject(&:zero?)
+    end
+
+    def feed_last_updated(fid)
+      body = get_json(matrix_uri("productsUnlimited/lastUpdated", matrix: { fid: fid }, token: products_token))
+      return nil unless body.is_a?(Hash)
+
+      body["lastUpdatedTime"]
+    rescue StandardError
+      nil
+    end
+
+    # --- HTTP + parse --------------------------------------------------------
+
+    def fetch_page(fid:, category: nil, page: 1, page_size: PAGE_SIZE)
+      matrix = {
+        fid: fid,
+        page: page,
+        pageSize: page_size,
+        limit: [page * page_size, SEARCH_HARD_CAP].min
+      }
+      matrix[:category] = category if category.present?
+      matrix[:language] = language_param if language_param.present?
+
+      body = get_json(matrix_uri("products", matrix: matrix, token: products_token))
+      parse(body)
+    end
+
+    def fetch_unlimited(fid:)
+      body = get_json(matrix_uri("productsUnlimited", matrix: { fid: fid }, token: products_token))
+      parse(body)
+    end
+
+    def fetch_deals(category:, limit:)
+      ids = resolve_feed_ids
+      return [] if ids.empty?
+
+      rows = []
+      ids.each do |fid|
+        rows.concat(fetch_page(fid: fid, category: category, page: 1))
+        break if rows.size >= limit
+      end
+      rows.first(limit).map { |row| row_to_deal(row) }
+    end
+
+    def fetch_vouchers(limit: 20, site_specific: false, program_id: nil, persist: true)
+      matrix = { pageSize: limit, page: 1, dateOutputFormat: "iso8601" }
+      matrix[:siteSpecific] = true if site_specific
+      matrix[:programId] = program_id if program_id.present?
+
+      body = get_json(matrix_uri("vouchers", matrix: matrix, token: vouchers_token))
+      list = body.is_a?(Array) ? body : Array(body.is_a?(Hash) ? body["vouchers"] || body["voucher"] : nil)
+      list.filter_map { |raw| parse_voucher(raw) }
+    rescue StandardError => e
+      Ground::Swallow.log(e, context: "Tradedoubler.fetch_vouchers") if defined?(Ground::Swallow)
+      []
+    end
+
+    # Official + legacy product shapes (nested offers, flat fields, XML-ish).
     def parse(body)
       Array(extract_products(body)).filter_map do |product|
         next unless product.is_a?(Hash)
 
-        fields = product["fields"].is_a?(Hash) ? product["fields"] : {}
-        dig = ->(*keys) { keys.filter_map { |k| product[k] || fields[k] }.first }
+        offer = primary_offer(product)
+        fields = product["fields"]
+        fields = fields.is_a?(Hash) ? fields : {}
+        dig = lambda do |*keys|
+          keys.filter_map do |k|
+            product[k] || fields[k] || (offer.is_a?(Hash) ? offer[k] : nil)
+          end.first
+        end
+
+        image = product["productImage"]
+        image_url = if image.is_a?(Hash)
+                      image["url"]
+                    else
+                      dig.call("imageUrl", "productImage", "imageURL")
+                    end
+
+        price_raw = dig.call("price", "Price", "priceValue")
+        if price_raw.is_a?(Hash)
+          currency = price_raw["currency"].presence
+          price_raw = price_raw["value"]
+        else
+          currency = dig.call("currency", "Currency")
+        end
+        if offer.is_a?(Hash) && offer["priceHistory"].is_a?(Array) && offer["priceHistory"].any?
+          latest = offer["priceHistory"].last
+          if latest.is_a?(Hash)
+            ph = latest["price"] || latest
+            if ph.is_a?(Hash)
+              price_raw ||= ph["value"]
+              currency ||= ph["currency"]
+            else
+              price_raw ||= ph
+            end
+          end
+        end
+
+        availability = dig.call("availability", "inStock")
+        in_stock = case availability.to_s.downcase
+                   when "out of stock", "outofstock", "false", "0", "n", "no" then false
+                   else
+                     ![false, "false", "0", 0].include?(dig.call("inStock"))
+                   end
 
         {
-          external_id: dig.call("productId", "id", "productID", "asin").to_s.presence,
+          external_id: dig.call("productId", "id", "productID", "sourceProductId", "asin").to_s.presence,
           title: dig.call("name", "productName", "title").to_s.presence,
-          description: dig.call("description", "productDescription").to_s.truncate(500),
-          merchant: product.dig("program", "name").presence || dig.call("merchantName", "advertiser").to_s.presence,
+          description: dig.call("description", "productDescription", "shortDescription").to_s.truncate(500),
+          merchant: product.dig("program", "name").presence ||
+                    dig.call("programName", "merchantName", "advertiser").to_s.presence,
           program_id: (product.dig("program", "id") || dig.call("programId")).to_s.presence,
-          price_cents: to_cents(dig.call("price", "Price", "priceValue")),
-          currency: dig.call("currency", "Currency").to_s.presence,
-          image_url: dig.call("imageUrl", "productImage", "imageURL").to_s.presence,
+          price_cents: to_cents(price_raw),
+          currency: currency.to_s.presence,
+          image_url: image_url.to_s.presence,
           click_url: dig.call("productUrl", "clickUrl", "trackingUrl").to_s.presence,
-          category: dig.call("categoryName", "category").to_s.presence,
-          # Absent means "not reported", which should not hide the product.
-          in_stock: ![ false, "false", "0", 0 ].include?(dig.call("inStock", "availability"))
+          category: category_name(product) || dig.call("categoryName", "category").to_s.presence,
+          in_stock: in_stock,
+          feed_id: dig.call("feedId")
         }
       end
     end
 
-    # The two shapes this has to survive. The XML-derived JSON nests the list
-    # under products.product; the plain JSON returns products as an array. A
-    # single-item response may also collapse the array to one object.
     def extract_products(body)
-      return [] unless body.is_a?(Hash)
+      return [] unless body.is_a?(Hash) || body.is_a?(Array)
+      return body if body.is_a?(Array)
 
       products = body["products"] || body["product"] || body["items"]
       products = products["product"] if products.is_a?(Hash) && products.key?("product")
-      products = [ products ] if products.is_a?(Hash)
+      products = [products] if products.is_a?(Hash)
       products
     end
 
-    # Feeds report price as a decimal string ("249.90"), sometimes with a
-    # thousands separator or a currency suffix. Integer minor units downstream.
+    def primary_offer(product)
+      offers = product["offers"]
+      return offers.first if offers.is_a?(Array) && offers.first.is_a?(Hash)
+      return offers if offers.is_a?(Hash)
+
+      nil
+    end
+
+    def category_name(product)
+      cats = product["categories"]
+      return nil unless cats.is_a?(Array) && cats.first.is_a?(Hash)
+
+      cats.first["name"].presence || cats.first["tdCategoryName"].presence
+    end
+
     def to_cents(value)
       return nil if value.blank?
+      return (value * 100).round if value.is_a?(Numeric)
 
       numeric = value.to_s.gsub(/[^0-9.,-]/, "").tr(",", ".")
       return nil if numeric.blank?
@@ -198,16 +341,193 @@ module Tradedoubler
       )
     end
 
-    def cache_key(category)
-      [ "td_deals", market, category.to_s ].join("_")
+    def row_to_deal(row)
+      Deal.new(
+        title: row[:title].to_s,
+        description: row[:description].to_s.truncate(120),
+        price: row[:price_cents] ? format("%.2f", row[:price_cents] / 100.0) : "",
+        currency: row[:currency].to_s,
+        image_url: row[:image_url].to_s,
+        click_url: row[:click_url].to_s,
+        merchant: row[:merchant].to_s,
+        placeholder: false
+      )
+    end
+
+    # EPI helpers for tracked surfaces (appended by views / Link Converter).
+    def epi_for(city: nil, surface: nil, tribe: nil, edition: nil, post_id: nil)
+      parts = []
+      parts << "city:#{city}" if city.present?
+      parts << "surface:#{surface}" if surface.present?
+      parts << "tribe:#{tribe}" if tribe.present?
+      parts << "edition:#{edition}" if edition.present?
+      parts << "post:#{post_id}" if post_id.present?
+      parts.join("|").presence
+    end
+
+    def append_epi(url, epi:, epi2: nil)
+      return url if url.blank? || epi.blank?
+
+      uri = URI(url)
+      params = URI.decode_www_form(uri.query.to_s)
+      params << %w[epi] + [epi]
+      params << %w[epi2] + [epi2] if epi2.present?
+      uri.query = URI.encode_www_form(params)
+      uri.to_s
+    rescue URI::InvalidURIError
+      url
+    end
+
+    def link_converter_remote_url
+      return nil unless link_converter_configured?
+
+      "#{LINK_CONVERTER_URL}?a(#{website_id})"
+    end
+
+    # Download server-side Link Converter script (ad-block resistant path).
+    def sync_link_converter!(local_path:)
+      remote = link_converter_remote_url
+      return false if remote.blank?
+
+      uri = URI(remote)
+      res = Net::HTTP.get_response(uri)
+      return false unless res.is_a?(Net::HTTPSuccess)
+
+      FileUtils.mkdir_p(File.dirname(local_path))
+      File.binwrite(local_path, res.body)
+      true
+    rescue StandardError => e
+      Ground::Swallow.log(e, context: "Tradedoubler.sync_link_converter!") if defined?(Ground::Swallow)
+      false
+    end
+
+    def matrix_uri(path, matrix:, token:, extension: "json")
+      matrix_part = matrix.compact.map do |key, value|
+        Array(value).map { |v| "#{key}=#{CGI.escape(v.to_s)}" }
+      end.flatten.join(";")
+      suffix = matrix_part.empty? ? "" : ";#{matrix_part}"
+      ext = extension.present? ? ".#{extension}" : ""
+      uri = URI("#{BASE}/#{path}#{ext}#{suffix}")
+      uri.query = URI.encode_www_form(token: token)
+      uri
+    end
+
+    def get_json(uri)
+      res = Net::HTTP.get_response(uri)
+      return nil unless res.is_a?(Net::HTTPSuccess)
+
+      JSON.parse(res.body)
+    rescue JSON::ParserError, StandardError => e
+      Ground::Swallow.log(e, context: "Tradedoubler.get_json") if defined?(Ground::Swallow)
+      nil
+    end
+
+    def language_param
+      ENV["TRADEDOUBLER_LANGUAGE"].presence # e.g. nb, no, en
+    end
+
+    def cache_key(*parts)
+      ([ "td", market ] + parts.map(&:to_s)).join("_")
     end
 
     def cache_ttl_for(key_type)
       if defined?(Shared::CachePolicy)
         Shared::CachePolicy.ttl_for(key_type)
       else
-        { search_results: 15.minutes }.fetch(key_type.to_sym)
+        { search_results: 15.minutes }.fetch(key_type.to_sym, 15.minutes)
       end
+    end
+
+    private
+
+    def import_search!(fid, category:, pages:)
+      written = 0
+      (1..pages).each do |page|
+        break if page * PAGE_SIZE > SEARCH_HARD_CAP
+
+        rows = fetch_page(fid: fid, category: category, page: page)
+        break if rows.empty?
+
+        written += upsert_rows(rows, category: category)
+        break if rows.size < PAGE_SIZE
+      end
+      written
+    end
+
+    def import_unlimited!(fid, category:)
+      updated = feed_last_updated(fid)
+      cache_key_lu = "td_unlimited_lu_#{fid}"
+      if updated.present? && Rails.cache.read(cache_key_lu) == updated
+        return 0
+      end
+
+      rows = fetch_unlimited(fid: fid)
+      written = upsert_rows(rows, category: category)
+      Rails.cache.write(cache_key_lu, updated, expires_in: 48.hours) if updated.present?
+      written
+    end
+
+    def upsert_rows(rows, category:)
+      written = 0
+      rows.each do |row|
+        external_id = row[:external_id]
+        next if external_id.blank? || row[:click_url].blank? || row[:title].blank?
+
+        AffiliateProduct.upsert_from_feed!(
+          source: "tradedoubler",
+          external_id: external_id,
+          title: row[:title],
+          description: row[:description],
+          merchant: row[:merchant],
+          program_id: row[:program_id],
+          price_cents: row[:price_cents],
+          currency: row[:currency],
+          image_url: row[:image_url],
+          click_url: row[:click_url],
+          category: category.presence || row[:category],
+          market: market,
+          in_stock: row[:in_stock],
+          placeholder: false
+        )
+        written += 1
+      end
+      written
+    end
+
+    def parse_voucher(raw)
+      return nil unless raw.is_a?(Hash)
+
+      id = (raw["id"] || raw["voucherId"]).to_s.presence
+      return nil if id.blank?
+
+      Voucher.new(
+        external_id: id,
+        program_id: raw["programId"].to_s.presence,
+        program_name: raw["programName"].to_s,
+        code: raw["code"].to_s,
+        title: raw["title"].to_s,
+        short_description: raw["shortDescription"].to_s,
+        description: raw["description"].to_s,
+        voucher_type_id: raw["voucherTypeId"].to_i,
+        track_url: (raw["defaultTrackUri"] || raw["defaultTrackURL"]).to_s,
+        landing_url: raw["landingUrl"].to_s,
+        discount_amount: raw["discountAmount"],
+        percentage: raw["isPercentage"] == true || raw["isPercentage"].to_s == "true",
+        site_specific: raw["siteSpecific"] == true || raw["exclusive"] == true,
+        exclusive: raw["exclusive"] == true,
+        currency: raw["currencyId"].to_s,
+        starts_at: parse_td_time(raw["startDate"] || raw["publishStartDate"]),
+        ends_at: parse_td_time(raw["endDate"] || raw["publishEndDate"])
+      )
+    end
+
+    def parse_td_time(value)
+      return nil if value.blank?
+      return Time.zone.at(value.to_i / 1000.0) if value.to_s.match?(/\A\d{10,}\z/)
+
+      Time.zone.parse(value.to_s)
+    rescue StandardError
+      nil
     end
   end
 end

@@ -56,6 +56,12 @@ en:
     no_maintainers: "No maintainers"
     no_maintainers_search: "No maintainers match this search."
     clear_search: "Clear search"
+  # feed-hotkey is on the layout body now, so / and Cmd/Ctrl-K reach the search from
+  # every page instead of only the ports index.
+  hotkeys:
+    help: "j/k · ↓↑ nav · Enter open · / or ⌘K search · esc clear · ? help"
+    coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."
+    coach_dismiss: "Got it"
   pages:
     ports: "OpenBSD ports"
     categories: "Categories"

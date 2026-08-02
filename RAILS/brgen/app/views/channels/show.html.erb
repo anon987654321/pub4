@@ -2,7 +2,7 @@
 <% content_for :title, @conversation.channel_title %>
 
 <%= turbo_stream_from @conversation %>
-<% content_for :body_attrs do %>data-action="turbo:load->push#clearBadge"<% end %>
+<% content_for :body_attrs do %>data-push-seen="true"<% end %>
 
 <section class="channel-room" aria-label="Channel">
   <header class="channel-room-header" role="banner">

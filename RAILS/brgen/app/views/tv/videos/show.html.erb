@@ -67,13 +67,12 @@
 
 <section>
   <h2>Notes</h2>
+  <%# The container existed and the model broadcast to this stream, but nothing
+      subscribed — so a note from another viewer never arrived. %>
+  <%= turbo_stream_from "tv:video:#{@video.id}:notes" %>
   <div id="video_notes_<%= @video.id %>">
-    <% @video.video_notes.chronological.includes(:user).each do |note| %>
-      <article id="<%= dom_id(note) %>">
-        <p class="dim"><% if note.timestamp.present? %><%= note.timestamp %> · <% end %><%= note.user&.display_name || "viewer" %></p>
-        <p><%= note.body %></p>
-      </article>
-    <% end %>
+    <%= render partial: "tv/video_notes/video_note",
+               collection: @video.video_notes.chronological.includes(:user), as: :video_note %>
   </div>
   <% if authenticated? %>
     <%= form_with url: tv_video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>

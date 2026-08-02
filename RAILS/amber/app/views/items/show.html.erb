@@ -82,13 +82,25 @@
 
   <section class="luxury-section" aria-label="Affiliate link">
     <h2>Affiliate / commerce link</h2>
-    <p class="dim luxury-dim">Optional resale or shop-similar URL for this piece.</p>
+    <p class="dim luxury-dim">Optional resale or shop-similar URL for this piece. Some links may be affiliate links.</p>
     <% if @item.affiliate_links.any? %>
       <ul>
         <% @item.affiliate_links.each do |link| %>
           <li>
             <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank" %>
             <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if @shop_the_look.present? && @shop_the_look.any? %>
+      <h3>Shop the look</h3>
+      <ul class="stack">
+        <% @shop_the_look.each do |suggestion| %>
+          <li>
+            <%= link_to "#{suggestion.merchant}: #{suggestion.title}", suggestion.url,
+                  rel: "sponsored noopener", target: "_blank" %>
+            <span class="tag dim"><%= suggestion.source %></span>
           </li>
         <% end %>
       </ul>

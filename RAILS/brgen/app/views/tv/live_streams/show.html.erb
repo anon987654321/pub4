@@ -26,9 +26,7 @@
     <%= tag.h2 t("tv.live_streams.chat", default: "Chat") %>
     <%= turbo_stream_from "tv:live_stream:#{@live_stream.id}:entries" %>
     <%= tag.div id: "tv-live-stream-#{@live_stream.id}-entries" do %>
-      <% @stream_chats.each do |entry| %>
-        <%= tag.p entry.message %>
-      <% end %>
+      <%= render partial: "tv/stream_chats/stream_chat", collection: @stream_chats, as: :stream_chat %>
     <% end %>
     <% if authenticated? %>
       <%= form_with url: tv_live_stream_stream_chats_path(@live_stream), scope: :stream_chat, data: { turbo: true } do |f| %>

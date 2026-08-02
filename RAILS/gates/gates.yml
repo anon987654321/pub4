@@ -135,6 +135,12 @@ payment_honesty:
   pass: "Payment honesty gate passed."
   covered_by: layout_suite
 
+affiliate_honesty:
+  require: lib/affiliate_honesty
+  class: Deploy::AffiliateHonestyGate
+  pass: "Affiliate honesty gate passed."
+  covered_by: layout_suite
+
 layout_search:
   require: lib/layout_search
   class: Deploy::LayoutSearchGate
@@ -142,10 +148,16 @@ layout_search:
   covered_by: layout_suite
 
 # Owns the professional layout + CSS stack, frontend_auditor included.
+stimulus_wiring:
+  require: lib/stimulus_wiring
+  class: Deploy::StimulusWiringGate
+  pass: "Stimulus wiring gate passed."
+  covered_by: layout_suite
+
 layout_suite:
   require: lib/layout_suite
   class: Deploy::LayoutSuiteGate
-  pass: "Layout suite passed (CSS + geometry + dialect + payment + flow + auditor)."
+  pass: "Layout suite passed (CSS + geometry + dialect + payment + flow + auditor + stimulus)."
 
 surface_schema:
   require: lib/surface_schema

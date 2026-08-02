@@ -2,6 +2,9 @@
 
 require "minitest/autorun"
 
+# Same caveat as controller_coverage_contract_test.rb: this asserts that source files
+# contain the classes and methods apps.yml claims, not that anything is tested. The
+# per-app tested/untested count is in coverage_ratchet_test.rb.
 class ModelCoverageContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 

@@ -1,0 +1,53 @@
+<% content_for :title, @program.name %>
+
+<article class="partner-program">
+  <header>
+    <h1><%= @program.name %></h1>
+    <p class="dim"><%= @program.store&.name %> · <%= @program.status %></p>
+  </header>
+
+  <dl class="meta">
+    <dt>Commission</dt>
+    <dd>
+      <% if @program.percent? %>
+        <%= @program.commission_rate / 100.0 %>% of order value
+      <% else %>
+        <%= @program.commission_rate %> (model: <%= @program.commission_model %>)
+      <% end %>
+    </dd>
+    <dt>Attribution window</dt>
+    <dd><%= @program.attribution_hours %> hours</dd>
+    <dt>Hold before payable</dt>
+    <dd><%= @program.hold_days %> days</dd>
+  </dl>
+
+  <% if @program.terms.present? %>
+    <section>
+      <h2>Terms</h2>
+      <p><%= simple_format @program.terms %></p>
+    </section>
+  <% end %>
+
+  <nav class="cluster" aria-label="Actions">
+    <% if authenticated? && Current.user == @program.store.owner %>
+      <%= link_to "Edit program", edit_partner_program_path(@program), class: "btn" %>
+    <% elsif authenticated? %>
+      <% if @membership %>
+        <p>Status: <strong><%= @membership.status %></strong></p>
+        <% if @membership.earning? %>
+          <p class="dim">Your link token: <code><%= @membership.token %></code></p>
+          <p>
+            Share:
+            <code><%= partner_click_url(token: @membership.token, host: request.host, protocol: request.protocol.delete("://")) rescue "https://#{request.host}/p/#{@membership.token}" %></code>
+          </p>
+          <%= link_to "Membership dashboard", partner_membership_path(@membership), class: "btn" %>
+        <% end %>
+      <% elsif @program.open? %>
+        <%= button_to "Join program", partner_program_memberships_path(@program), method: :post, class: "btn" %>
+      <% end %>
+    <% else %>
+      <%= link_to "Sign in to join", new_session_path, class: "btn" %>
+    <% end %>
+    <%= link_to "All programs", partner_programs_path, class: "btn btn-ghost" %>
+  </nav>
+</article>

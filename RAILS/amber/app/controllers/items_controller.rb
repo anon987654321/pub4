@@ -33,6 +33,7 @@ class ItemsController < ApplicationController
     # built a delete path from link.id == nil, raising "missing required keys:
     # [:id]". Every item without an affiliate link 500'd.
     @affiliate_link = @item.affiliate_links.first || AffiliateLink.new(item: @item)
+    @shop_the_look = ShopTheLook.for_item(@item, limit: 6)
   end
 
   def new

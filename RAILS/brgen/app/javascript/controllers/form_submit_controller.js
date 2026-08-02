@@ -4,11 +4,53 @@ export default class extends Controller {
   connect() {
     this.replaying = false
     this.onSubmit = this.submit.bind(this)
+    this.onSubmitEnd = this.unlock.bind(this)
     this.element.addEventListener("submit", this.onSubmit)
+    // A failed submit (validation, 422, dropped connection) must not leave the
+    // button dead forever, and Turbo restores this form from cache on back.
+    this.element.addEventListener("turbo:submit-end", this.onSubmitEnd)
+    document.addEventListener("turbo:before-cache", this.onSubmitEnd)
+    this.unlock()
   }
 
   disconnect() {
     this.element.removeEventListener("submit", this.onSubmit)
+    this.element.removeEventListener("turbo:submit-end", this.onSubmitEnd)
+    document.removeEventListener("turbo:before-cache", this.onSubmitEnd)
+  }
+
+  // Double-submit guard. Two composer forms have carried
+  // `submit->form-submit#lock` since they were written and this method did not
+  // exist, so on a slow connection every extra tap posted another copy.
+  //
+  // The disable is deferred a tick on purpose: a submit button that is already
+  // disabled while the submit event is still dispatching drops its own
+  // name/value from the entry list, and Turbo reads the submitter from its own
+  // listener whose order relative to this one is not defined. Nothing can tap
+  // twice inside one tick, so deferring costs no protection.
+  //
+  // Idempotent — submit() replays the event through requestSubmit(), so this
+  // fires twice per real submission.
+  lock() {
+    this.locked = true
+    setTimeout(() => { if (this.locked) this._setDisabled(true) }, 0)
+  }
+
+  unlock() {
+    this.locked = false
+    this._setDisabled(false)
+  }
+
+  _setDisabled(state) {
+    this._submitters().forEach((button) => {
+      button.disabled = state
+      if (state) button.setAttribute("aria-busy", "true")
+      else button.removeAttribute("aria-busy")
+    })
+  }
+
+  _submitters() {
+    return Array.from(this.element.querySelectorAll('button[type="submit"], input[type="submit"]'))
   }
 
   submit(event) {
@@ -17,6 +59,9 @@ export default class extends Controller {
     if (errors.length) {
       event.preventDefault()
       this.renderErrors(errors)
+      // Nothing was sent, so lock() (a separate submit action on the same
+      // event) must not leave the button dead.
+      this.unlock()
       return
     }
 

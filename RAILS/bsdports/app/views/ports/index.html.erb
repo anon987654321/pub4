@@ -1,12 +1,15 @@
 <% content_for :title, "Ports" %>
-<header class="page-header" role="banner" aria-label="OpenBSD ports header" data-visitor-orientation data-controller="search-hotkey">
+<%# search-hotkey was a bsdports-local controller binding / and Cmd-K on this page
+    only, so the rest of the app had no search shortcut at all. Both keys are in the
+    shared feed-hotkey controller now, declared once on the layout body. %>
+<header class="page-header" role="banner" aria-label="OpenBSD ports header" data-visitor-orientation>
   <h1><%= t("pages.ports") %></h1>
   <p class="ports-purpose">Answer three questions quickly: what package is this, can this machine install it, and what does the local advisory index know?</p>
   <p class="dim"><%= t("ports.search_hint") %></p>
   <nav role="navigation" aria-label="<%= t("nav.ports") %>">
     <%= link_to "RSS (new last 7 days)", ports_path(format: :rss) %>
   </nav>
-  <div data-search-hotkey-target="input"><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div>
+  <div><%= live_search_index url: ports_path, results_partial: "ports/live_search_results", placeholder: t("ports.search_placeholder"), label: t("ports.search_label"), frame_id: "bsdports-ports" %></div>
 </header>
 
 <% if @categories&.any? %>

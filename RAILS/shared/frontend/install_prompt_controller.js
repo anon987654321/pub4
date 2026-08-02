@@ -1,7 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
+import { installDismissedKey } from "pub4/pwa_standalone"
 
 const VALUE_KEY = "install-prompt-value"
-const DISMISSED_KEY = "install-prompt-dismissed"
+// The unscoped key stays readable so a dismissal from before the key was
+// namespaced still counts; only new writes are scoped.
+const LEGACY_DISMISSED_KEY = "install-prompt-dismissed"
 
 // Progressive install: only after real product value (post / play / chat).
 // Value is marked via: window.dispatchEvent(new CustomEvent("pub4:install-value"))
@@ -35,7 +38,11 @@ export default class extends Controller {
 
   canShow() {
     const valued = localStorage.getItem(VALUE_KEY) === "1"
-    return valued && localStorage.getItem(DISMISSED_KEY) !== "1" && this.deferredPrompt
+    return valued && !this.dismissed() && this.deferredPrompt
+  }
+
+  dismissed() {
+    return [installDismissedKey(), LEGACY_DISMISSED_KEY].some(key => localStorage.getItem(key) === "1")
   }
 
   reveal() {
@@ -43,7 +50,7 @@ export default class extends Controller {
   }
 
   dismiss() {
-    localStorage.setItem(DISMISSED_KEY, "1")
+    localStorage.setItem(installDismissedKey(), "1")
     this.element.hidden = true
   }
 

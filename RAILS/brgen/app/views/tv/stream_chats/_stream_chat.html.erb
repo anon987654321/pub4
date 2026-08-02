@@ -1,0 +1,7 @@
+<%# One chat line. Rendered three ways and it has to be one file: the page loop,
+    the submitter's create.turbo_stream.erb, and Tv::StreamChat's after_create_commit
+    broadcast to everyone else watching. The broadcast used to rely on implicit
+    to_partial_path, which resolved to tv/stream_chats/_stream_chat — this file,
+    which did not exist — so the enqueued job raised MissingTemplate and nobody but
+    the sender ever saw a new message. %>
+<p id="<%= dom_id(stream_chat) %>"><%= stream_chat.message %></p>

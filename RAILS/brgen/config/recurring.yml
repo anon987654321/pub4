@@ -61,6 +61,16 @@ production:
     queue: bulk
     schedule: every day at 2am
 
+  affiliate_import:
+    class: AffiliateImportJob
+    queue: bulk
+    schedule: every day at 3:15am
+
+  link_converter_sync:
+    class: LinkConverterSyncJob
+    queue: bulk
+    schedule: every 5 minutes
+
   monthly_analytics_rollup:
     class: MonthlyAnalyticsRollupJob
     queue: bulk
@@ -70,3 +80,12 @@ production:
     class: ExpiredMessagesSweepJob
     queue: bulk
     schedule: every 15 minutes
+
+  # Written but never scheduled. resume_session mints a real User row for every
+  # cookieless visitor, so this table grows with crawler traffic and nothing was
+  # ever going to remove those rows. Needs the (guest, created_at) index from
+  # migration 20260801160000.
+  prune_guest_users:
+    class: Shared::PruneGuestUsersJob
+    queue: bulk
+    schedule: every day at 3:45am

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "yaml"
 require_relative "../../../OPENBSD/lib/gate_result"
 
 module Deploy
@@ -27,12 +28,27 @@ module Deploy
     # the full gate is ~11 minutes.
     attr_reader :targets, :skipped
 
+    BUDGET_PATH = File.expand_path("../data/constitutional_budget.yml", __dir__)
+    # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
+    VIOLATION_LINE = /^scan: done\b[^\n]*?\b(\d+) violations/
+
     def initialize(targets: nil)
       list = Array(targets).compact
       @skipped = []
       @targets = list.empty? ? default_targets : list
       @result = GateResult.new
+      @measured = {}
     end
+
+    # target basename => ceiling. Readable so the budget is assertable without
+    # paying for a 21-minute scan.
+    def budget
+      @budget ||= (YAML.safe_load_file(BUDGET_PATH)&.dig("targets") || {})
+    rescue StandardError
+      {}
+    end
+
+    attr_reader :measured
 
     def run
       cli = File.join(MASTER, "bin", "cli")
@@ -45,7 +61,32 @@ module Deploy
       started = now
       @targets.each_with_index { |target, index| scan_target(cli, target, index) }
       progress "constitutional scan: #{@targets.size} target(s) in #{(now - started).round}s"
+      maybe_ratchet
       @result
+    end
+
+    # Compares a target's finding count against its recorded ceiling. Chasing zero
+    # is explicitly not the goal here (DEBT.md, Constitution Scan Debt) — what the
+    # ceiling buys is that adding findings fails and lowering the number is a
+    # deliberate commit, which is what routing everything to warn could not do.
+    def judge_count(name, count)
+      @measured[name] = count
+      ceiling = budget[name]
+
+      if ceiling.nil?
+        @result.warn("constitutional scan: #{name} has no ceiling in #{File.basename(BUDGET_PATH)} (#{count} findings)")
+        return
+      end
+
+      if count > ceiling
+        @result.fail("constitutional scan: #{name} #{count} findings exceeds ceiling #{ceiling} " \
+                     "(+#{count - ceiling}) — fix them or record a new ceiling with a reason")
+      elsif count < ceiling
+        @result.warn("constitutional scan: #{name} #{count} findings, under its #{ceiling} ceiling " \
+                     "(-#{ceiling - count}) — GATE_SCAN_RATCHET=1 records the new low")
+      else
+        @result.warn("constitutional scan: #{name} at its #{ceiling} ceiling")
+      end
     end
 
     private
@@ -103,19 +144,42 @@ module Deploy
         stdin_data: "#{line}\n"
       )
       elapsed = (now - started).round
-      progress "#{index + 1}/#{@targets.size} #{File.basename(path)} #{status.success? ? "ok" : "findings"} in #{elapsed}s"
-      if status.success?
-        @result.warn("constitutional scan ok: #{path} (#{stdout.lines.size} lines, #{elapsed}s)")
-      else
-        # Scan may exit non-zero on findings depending on cli; treat hard errors only.
-        if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
-          @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
-        else
-          @result.warn("constitutional scan finished with findings for #{path}")
-        end
+      name = File.basename(path)
+      progress "#{index + 1}/#{@targets.size} #{name} #{status.success? ? "ok" : "findings"} in #{elapsed}s"
+
+      # A crash is not a finding count, and `/scan` exits 0 whether it found 0 or
+      # 410 — so the exit status says almost nothing and the count has to come out
+      # of the output.
+      if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
+        @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
+        return
       end
+
+      count = stdout.to_s[VIOLATION_LINE, 1]
+      if count.nil?
+        @result.inconclusive!("#{name}: scan printed no violation count (#{elapsed}s) — output shape changed?")
+        return
+      end
+
+      @result.checked!
+      judge_count(name, Integer(count))
     rescue StandardError => e
       @result.fail("constitutional scan error for #{path}: #{e.class}: #{e.message}")
+    end
+
+    # Same contract as MASTER's rake lint:spine: the number only moves down, and
+    # only when someone asks for it.
+    def maybe_ratchet
+      return unless ENV["GATE_SCAN_RATCHET"].to_s == "1"
+
+      lowered = @measured.select { |name, count| budget[name] && count < budget[name] }
+      return progress("ratchet: nothing to lower") if lowered.empty?
+
+      updated = budget.merge(lowered)
+      File.write(BUDGET_PATH, File.read(BUDGET_PATH).sub(/^targets:\n(?:  \w+: \d+\n)+/m) do
+        "targets:\n#{updated.sort.map { |name, count| "  #{name}: #{count}\n" }.join}"
+      end)
+      progress "ratchet: #{lowered.map { |name, count| "#{name} → #{count}" }.join(", ")}"
     end
   end
 end

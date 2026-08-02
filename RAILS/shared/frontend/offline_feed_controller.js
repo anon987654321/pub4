@@ -1,3 +1,10 @@
+// Snapshots a feed row into IndexedDB so /offline can list something real.
+//
+// This lived in brgen/app/javascript/controllers/ while amber's item card also
+// emitted data-controller="offline-feed" — amber's importmap eager-loads only
+// its own controllers/ dir, so every amber item silently registered nothing and
+// amber's offline page had no snapshots to show. Shared, pinned, and registered
+// in stimulus_boot, it resolves in all three apps.
 import { Controller } from "@hotwired/stimulus"
 import { get, set } from "idb-keyval"
 

@@ -4,6 +4,18 @@ export default class extends Controller {
   static values = { vapidKey: String, subscribeUrl: String, unread: Number }
 
   async connect() {
+    // This element is data-turbo-permanent, so connect() runs once per full
+    // load and unreadValue never refreshes. Reading a DM therefore has to clear
+    // the badge from a navigation event rather than from a reconnect.
+    //
+    // The two views that want this used to write `turbo:load->push#clearBadge`
+    // into content_for :body_attrs — which the layout never yielded, and which
+    // could not have worked if it had: Stimulus resolves an action against the
+    // element and its ancestors, and <body> is this controller's ancestor, not
+    // its descendant. They now set data-push-seen and this reads it.
+    this.onNavigate = () => { if (document.body.dataset.pushSeen === "true") this.clearBadge() }
+    document.addEventListener("turbo:load", this.onNavigate)
+
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
     this.#syncBadge()
     const reg = await navigator.serviceWorker.ready
@@ -11,6 +23,10 @@ export default class extends Controller {
     if (existing) { await this.#save(existing); return }
     if (Notification.permission === "granted") await this.#subscribe(reg)
     if (Notification.permission === "default") this.#prompt(reg)
+  }
+
+  disconnect() {
+    document.removeEventListener("turbo:load", this.onNavigate)
   }
 
   clearBadge() {

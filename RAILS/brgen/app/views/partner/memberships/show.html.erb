@@ -1,0 +1,40 @@
+<% content_for :title, "Partner membership" %>
+
+<section class="partner-membership">
+  <h1><%= @membership.program.name %></h1>
+  <p class="dim">Status: <%= @membership.status %> · Token: <code><%= @membership.token %></code></p>
+
+  <p>
+    Tracking link:
+    <a href="/p/<%= @membership.token %>"><%= request.base_url %>/p/<%= @membership.token %></a>
+  </p>
+
+  <section>
+    <h2>Recent clicks</h2>
+    <% if @clicks.any? %>
+      <ul>
+        <% @clicks.each do |click| %>
+          <li><%= click.occurred_at %> · expires <%= click.expires_at %><%= " · listing ##{click.listing_id}" if click.listing_id %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="dim">No clicks yet.</p>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Conversions</h2>
+    <% if @conversions.any? %>
+      <ul>
+        <% @conversions.each do |c| %>
+          <li>
+            <%= c.status %> · <%= c.commission_cents %> øre on <%= c.order_value_cents %> ·
+            payable after <%= c.payable_after %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="dim">No conversions yet.</p>
+    <% end %>
+  </section>
+</section>

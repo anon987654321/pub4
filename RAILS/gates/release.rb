@@ -1,6 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# runner.rb sets this for itself, but it starts the three subprocess gates with
+# system(), and a fresh process does not inherit Encoding.default_external. Under
+# the C locale that OPENBSD/integrity_gate.rb deliberately uses, reading UTF-8
+# source raised `invalid byte sequence in US-ASCII` from inside
+# domain_alignment.rb — a crash that could not happen when the same gate class
+# ran in-process.
+require_relative "../../OPENBSD/lib/utf8"
 require "open3"
 require "rbconfig"
 require "timeout"
@@ -88,19 +95,27 @@ end
 RUBY = ruby_cmd
 BUNDLE = bundle_cmd
 
-unless BUNDLE
-  warn "Release gate skipped: bundle/bundle34 not available. Set BUNDLE_CMD to the intended Bundler executable."
-  exit 0
-end
+# A missing Bundler used to `exit 0` on the whole gate — the exact shape
+# GateResult's third state exists to prevent (OPENBSD/data/debt.yml:
+# rails_gates_not_wired, "release_gate exits 0 when bundler is missing"). Two
+# thirds of this gate needs no Bundler at all: eight plain-ruby contract tests
+# and four in-process gate classes. Those still run; only the per-app dartsass
+# and importmap steps are recorded as unchecked.
+UNCHECKED = []
 
-APPS.each do |app|
-  dir = File.join(ROOT, app)
-  run("#{app} dartsass", [*BUNDLE, "exec", *RUBY, "bin/rails", "dartsass:build"], chdir: dir)
-  importmap_audit = [
-    *BUNDLE, "exec", *RUBY, "-e",
-    'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])'
-  ]
-  run("#{app} importmap", importmap_audit, chdir: dir)
+if BUNDLE
+  APPS.each do |app|
+    dir = File.join(ROOT, app)
+    run("#{app} dartsass", [*BUNDLE, "exec", *RUBY, "bin/rails", "dartsass:build"], chdir: dir)
+    importmap_audit = [
+      *BUNDLE, "exec", *RUBY, "-e",
+      'require "./config/environment"; require "importmap/commands"; Importmap::Commands.start(%w[audit])'
+    ]
+    run("#{app} importmap", importmap_audit, chdir: dir)
+  end
+else
+  UNCHECKED << "bundle/bundle34 not on PATH — #{APPS.size} app dartsass + importmap audit step(s) skipped " \
+               "(set BUNDLE_CMD to the intended Bundler executable)"
 end
 
 %w[
@@ -129,10 +144,24 @@ end
   result.failures.each { |failure| FAILURES << "#{label}: #{failure}" }
 end
 
+unless UNCHECKED.empty?
+  warn "Not checked:"
+  UNCHECKED.each { |reason| warn "  - #{reason}" }
+end
+
 if FAILURES.any?
   warn "Release gate failures:"
   FAILURES.each { |failure| warn "  - #{failure}" }
   exit 1
 end
 
-puts "Release gate passed (#{APPS.size} apps + shared)."
+if UNCHECKED.any? && %w[1 true yes on].include?(ENV["GATE_STRICT_INCONCLUSIVE"].to_s.strip.downcase)
+  warn "Release gate: GATE_STRICT_INCONCLUSIVE is set and #{UNCHECKED.size} precondition(s) were missing."
+  exit 1
+end
+
+if UNCHECKED.any?
+  puts "Release gate passed what it could run (#{APPS.size} apps + shared, #{UNCHECKED.size} step group(s) skipped)."
+else
+  puts "Release gate passed (#{APPS.size} apps + shared)."
+end

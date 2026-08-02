@@ -46,7 +46,10 @@ class NewsletterEditionBuilder
 
   def compose_weekly_for(city_name)
     city_record = City.find_by(slug: city_name) || City.find_by(domain: "#{city_name}.no")
-    deals = Tradedoubler.deals(limit: 6)
+    # Prefer real inventory; fall back to any sellable (incl. placeholders) only if empty.
+    deals = Affiliate.deals(limit: 6)
+    deals = attach_epi(deals, city: city_name, surface: "newsletter_weekly")
+    vouchers = Tradedoubler.vouchers(limit: 3, site_specific: true)
     hero = hero_for(city_name:, theme: "curated shopping still life", seed: nil)
     edition = Shared::NewsletterComposer.weekly_deals(
       city_name: label_for(city_name, city_record),
@@ -54,7 +57,39 @@ class NewsletterEditionBuilder
       hero: hero,
       app_name: "Brgen"
     )
-    persist!("weekly_deals", city_name, edition)
+    record = persist!("weekly_deals", city_name, edition)
+    merge_vouchers!(record, vouchers) if vouchers.any?
+    record
+  end
+
+  def attach_epi(deals, city:, surface:)
+    epi = Tradedoubler.epi_for(city: city, surface: surface, edition: Date.current.iso8601)
+    Array(deals).map do |deal|
+      next deal unless deal.respond_to?(:click_url)
+
+      url = Tradedoubler.append_epi(deal.click_url, epi: epi)
+      if deal.respond_to?(:with)
+        deal.with(click_url: url)
+      else
+        deal
+      end
+    end
+  end
+
+  def merge_vouchers!(record, vouchers)
+    existing = Array(record.deals)
+    voucher_rows = vouchers.first(2).map do |v|
+      {
+        "title" => v.title.to_s,
+        "url" => v.track_url.to_s,
+        "description" => [v.short_description, v.code.present? ? "Code: #{v.code}" : nil].compact.join(" — "),
+        "price" => v.discount_amount.to_s,
+        "currency" => v.currency.to_s,
+        "merchant" => v.program_name.to_s,
+        "image_url" => nil
+      }
+    end
+    record.update!(deals: existing + voucher_rows)
   end
 
   def fetch_posts(city_record)

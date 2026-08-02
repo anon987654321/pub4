@@ -4,6 +4,12 @@ require "minitest/autorun"
 
 # Static contract: state-mutating vertical controllers exist with the actions
 # apps.yml claims are done. Complements model_coverage_contract_test.rb.
+#
+# Read the name carefully: this is not test coverage. Nothing here boots Rails or
+# calls a method, so every assertion passes against a body of `raise` — it checks
+# that apps.yml is not claiming a controller or action that does not exist, which is
+# worth having and is all it is. The actual "does this have a test" number lives in
+# coverage_ratchet_test.rb, which records it per app and stops it falling.
 class ControllerCoverageContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 

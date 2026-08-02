@@ -7,6 +7,7 @@ require_relative "css_minify_integrity"
 require_relative "layout_geometry"
 require_relative "dialect_purity"
 require_relative "payment_honesty"
+require_relative "affiliate_honesty"
 require_relative "layout_search"
 require_relative "user_flow"
 require_relative "surface_schema"
@@ -14,6 +15,7 @@ require_relative "design_metrics"
 require_relative "visual_quality"
 require_relative "calibration"
 require_relative "frontend_auditor"
+require_relative "stimulus_wiring"
 
 module Deploy
   # Composite: every layout/CSS professional gate. CSS must pass constitution + auditor + dialect.
@@ -27,12 +29,14 @@ module Deploy
       LayoutGeometryGate,
       LayoutSearchGate,
       PaymentHonestyGate,
+      AffiliateHonestyGate,
       UserFlowGate,
       SurfaceSchemaGate,
       DesignMetricsGate,
       VisualQualityGate,
       CalibrationGate,
       FrontendAuditorGate,
+      StimulusWiringGate,
     ].freeze
 
     def self.run

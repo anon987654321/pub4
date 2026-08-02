@@ -41,7 +41,7 @@
 
 <% if Current.user.present? %>
   <% if @located %>
-    <%= form_with url: live_path, method: :post, class: "compose-box live-compose", data: { controller: "feed-compose", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
+    <%= form_with url: live_path, method: :post, class: "compose-box live-compose", data: { controller: "feed-compose form-submit", feed_compose_target: "box", action: "submit->form-submit#lock" } do |f| %>
       <div class="compose-avatar" aria-hidden="true">◎</div>
       <div class="compose-inner">
         <label class="compose-label-visible" for="live_content"><%= t("live.compose_label") %></label>

@@ -30,26 +30,69 @@ module Pub4
       )
     /x
 
+    # aria-label="…" / aria: { label: "…" } with a literal string.
+    #
+    # RAILS/gates/data/GATE_ADEQUACY.md gap 2: "chrome_i18n_lint only empty titles +
+    # search placeholders; secondary aria-labels still EN." A screen-reader user on
+    # :nb hears English for every one of them, and until this rule existed the number
+    # was unknown — which is the actual problem. It is 172 (measured 2026-08-01, all
+    # three apps plus the shared engine), so the baseline is 172, not 0: translating
+    # them needs Norwegian copy, not a regex, and 172 is the debt this measures rather
+    # than pretends away.
+    #
+    # Same ratchet contract as empty_state_lint, which went 48 → 0 this way.
+    ARIA_LABEL = /
+      (?:aria-label|aria-roledescription)\s*=\s*"[^"<%]{2,80}"
+      |
+      aria:\s*\{[^}]*?label:\s*"[^"<%]{2,80}"
+    /x
+
     OPT_OUT = "chrome_i18n: ok"
+
+    # Per kind, because they are not the same debt. A new hardcoded empty title is a
+    # regression against a solved problem; an aria-label is one more of 158.
+    BASELINES = {
+      "empty_title" => 0,
+      "search_placeholder" => 0,
+      "aria_label" => 172,
+    }.freeze
+
+    # Kept for callers that referenced the old single number.
     BASELINE = 0
 
     Finding = Struct.new(:file, :line, :kind)
 
     module_function
 
+    def counts(findings = scan)
+      BASELINES.keys.to_h { |kind| [kind, findings.count { |f| f.kind == kind }] }
+    end
+
+    def over_baseline(findings = scan)
+      counts(findings).filter_map do |kind, count|
+        baseline = BASELINES.fetch(kind)
+        "#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})" if count > baseline
+      end
+    end
+
     def run
       findings = scan
-      puts "chrome_i18n_lint: #{findings.size} hardcoded EN chrome string#{'s' unless findings.size == 1} " \
-           "(baseline #{BASELINE})"
-      findings.first(30).each { |f| puts "  #{f.file}:#{f.line} [#{f.kind}]" }
-      puts "  …" if findings.size > 30
-
-      if findings.size > BASELINE
-        warn "chrome_i18n_lint: exceeds baseline — use t(\"empty.*\") / t(\"search.*\") or mark #{OPT_OUT}"
-        false
-      else
-        true
+      counts(findings).each do |kind, count|
+        baseline = BASELINES.fetch(kind)
+        note = count < baseline ? " — under baseline, lower it" : ""
+        puts "chrome_i18n_lint: #{kind} #{count} (baseline #{baseline})#{note}"
       end
+
+      exceeded = over_baseline(findings)
+      offenders = findings.select { |f| exceeded.any? { |line| line.start_with?("#{f.kind}:") } }
+      offenders.first(30).each { |f| puts "  #{f.file}:#{f.line} [#{f.kind}]" }
+      puts "  …" if offenders.size > 30
+
+      return true if exceeded.empty?
+
+      warn "chrome_i18n_lint: exceeds baseline — #{exceeded.join("; ")}"
+      warn "chrome_i18n_lint: use t(\"empty.*\") / t(\"search.*\") / t(\"a11y.*\") or mark #{OPT_OUT}"
+      false
     end
 
     def rails_root
@@ -71,6 +114,8 @@ module Pub4
             findings << Finding.new(rel(path), i + 1, "empty_title")
           elsif line.match?(SEARCH_PLACEHOLDER)
             findings << Finding.new(rel(path), i + 1, "search_placeholder")
+          elsif line.match?(ARIA_LABEL)
+            findings << Finding.new(rel(path), i + 1, "aria_label")
           end
         end
       end

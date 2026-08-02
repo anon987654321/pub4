@@ -1,7 +1,7 @@
 ---
 generated_note: Snapshot of Deploy::PageInventory.all — regenerate via page_simulation
   gate
-count: 137
+count: 148
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -315,22 +315,46 @@ pages:
   action: index
   persona: auth
   needs_id: false
-- id: brgen/passwords/edit
+- id: brgen/partner/memberships/show
   app: brgen
-  view: RAILS/brgen/app/views/passwords/edit.html.erb
+  view: RAILS/brgen/app/views/partner/memberships/show.html.erb
   host: brgen.no
-  path: "/passwords/:id/edit"
+  path: "/partner/memberships/:id"
+  action: show
+  persona: guest
+  needs_id: true
+- id: brgen/partner/programs/edit
+  app: brgen
+  view: RAILS/brgen/app/views/partner/programs/edit.html.erb
+  host: brgen.no
+  path: "/partner/programs/:id/edit"
   action: edit
   persona: auth
   needs_id: true
-- id: brgen/passwords/new
+- id: brgen/partner/programs/index
   app: brgen
-  view: RAILS/brgen/app/views/passwords/new.html.erb
+  view: RAILS/brgen/app/views/partner/programs/index.html.erb
   host: brgen.no
-  path: "/passwords/new"
+  path: "/partner/programs"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/partner/programs/new
+  app: brgen
+  view: RAILS/brgen/app/views/partner/programs/new.html.erb
+  host: brgen.no
+  path: "/partner/programs/new"
   action: new
   persona: guest
   needs_id: false
+- id: brgen/partner/programs/show
+  app: brgen
+  view: RAILS/brgen/app/views/partner/programs/show.html.erb
+  host: brgen.no
+  path: "/partner/programs/:id"
+  action: show
+  persona: guest
+  needs_id: true
 - id: brgen/playlist/hosted_tracks/edit
   app: brgen
   view: RAILS/brgen/app/views/playlist/hosted_tracks/edit.html.erb
@@ -1058,6 +1082,70 @@ pages:
   path: "/wardrobe_items/timeline"
   action: timeline
   persona: auth
+  needs_id: false
+- id: bsdports/categories/index
+  app: bsdports
+  view: RAILS/bsdports/app/views/categories/index.html.erb
+  host:
+  path: "/categories"
+  action: index
+  persona: guest
+  needs_id: false
+- id: bsdports/categories/show
+  app: bsdports
+  view: RAILS/bsdports/app/views/categories/show.html.erb
+  host:
+  path: "/categories/:id"
+  action: show
+  persona: guest
+  needs_id: true
+- id: bsdports/comments/new
+  app: bsdports
+  view: RAILS/bsdports/app/views/comments/new.html.erb
+  host:
+  path: "/ports/:id/comments"
+  action: new
+  persona: guest
+  needs_id: true
+- id: bsdports/maintainers/index
+  app: bsdports
+  view: RAILS/bsdports/app/views/maintainers/index.html.erb
+  host:
+  path: "/maintainers"
+  action: index
+  persona: guest
+  needs_id: false
+- id: bsdports/maintainers/show
+  app: bsdports
+  view: RAILS/bsdports/app/views/maintainers/show.html.erb
+  host:
+  path: "/maintainers/:id"
+  action: show
+  persona: guest
+  needs_id: true
+- id: bsdports/ports/index
+  app: bsdports
+  view: RAILS/bsdports/app/views/ports/index.html.erb
+  host:
+  path: "/"
+  action: index
+  persona: guest
+  needs_id: false
+- id: bsdports/ports/show
+  app: bsdports
+  view: RAILS/bsdports/app/views/ports/show.html.erb
+  host:
+  path: "/ports/:id"
+  action: show
+  persona: guest
+  needs_id: true
+- id: bsdports/sessions/new
+  app: bsdports
+  view: RAILS/bsdports/app/views/sessions/new.html.erb
+  host:
+  path: "/session/new"
+  action: new
+  persona: guest
   needs_id: false
 - id: master/face
   app: master

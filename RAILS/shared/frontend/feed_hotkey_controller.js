@@ -42,6 +42,18 @@ export default class extends Controller {
     const editable =
       ["INPUT", "TEXTAREA", "SELECT"].includes(tag) ||
       document.activeElement?.isContentEditable
+
+    // Cmd/Ctrl-K reaches the search from inside a field too — that is the point of
+    // it, and why every app that has one binds both. It came from bsdports' local
+    // search_hotkey_controller, which bound / and Cmd-K on the ports index only; the
+    // rest of bsdports had no search shortcut at all because the layout never
+    // registered a hotkey controller.
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault()
+      this.#focusSearch()
+      return
+    }
+
     if (editable) {
       // Allow Escape to blur composer fields back to the feed.
       if (e.key === "Escape") document.activeElement.blur()

@@ -17,6 +17,11 @@ production:
     class: DeclutterHygieneJob
     queue: default
     schedule: at 6am every day
+  # See brgen's copy: guest rows accumulate permanently without this.
+  prune_guest_users:
+    class: Shared::PruneGuestUsersJob
+    queue: default
+    schedule: every day at 3:45am
 
 development:
   declutter_hygiene:

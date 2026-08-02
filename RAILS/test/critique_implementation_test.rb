@@ -1,11 +1,25 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "yaml"
 
 class CritiqueImplementationTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   def read(path) = File.read(File.join(ROOT, path))
+
+  # These pages render through I18n, so a literal English string stopped being
+  # in the template the moment the page was localised — the assertion failed on
+  # a view that had got better. Pin the key in the template and the copy in that
+  # app's en.yml: the control still has to say this word, and the check survives
+  # the next locale. Two assertions in this file were already rewritten for the
+  # same reason; the comments above them explain each case.
+  def assert_localised(app, template, key, english)
+    assert_includes read("#{app}/app/views/#{template}"), %(t("#{key}"))
+    locale = YAML.safe_load_file(File.join(ROOT, app, "config", "locales", "en.yml")).fetch("en")
+    value = key.split(".").reduce(locale) { |node, segment| node.fetch(segment) }
+    assert_equal english, value, "#{app} en.yml #{key} drifted from the copy #{template} promises"
+  end
 
   def test_brgen_has_one_ranking_control_local_voice_and_accessible_actions
     layout = read("brgen/app/views/layouts/application.html.erb")
@@ -23,7 +37,9 @@ class CritiqueImplementationTest < Minitest::Test
     # ranking control, not duplicated onto the home feed.
     posts_index = read("brgen/app/views/posts/index.html.erb")
     assert_includes posts_index, 'class="sort-tabs"'
-    %w[Hot Fresh Top].each { |label| assert_includes posts_index, %(link_to "#{label}") }
+    { "hot" => "Hot", "fresh" => "Fresh", "top" => "Top" }.each do |key, label|
+      assert_localised "brgen", "posts/index.html.erb", "sort.#{key}", label
+    end
     refute_includes home, "sort-tabs"
     assert_match(/home\.intro_title|Bergen/, home)
     assert_includes compose, "Post to Bergen"
@@ -40,8 +56,8 @@ class CritiqueImplementationTest < Minitest::Test
     outfit = read("amber/app/views/outfits/_outfit.html.erb")
     ai = read("amber/app/views/ai/suggest_outfits.html.erb")
 
-    assert_includes index, "Use what I own"
-    assert_includes index, "Shop only for a gap"
+    assert_localised "amber", "items/index.html.erb", "wardrobe.use_what_i_own", "Use what I own"
+    assert_localised "amber", "items/index.html.erb", "wardrobe.shop_gap", "Shop only for a gap"
     # The invariant is that archiving is *reversible*, which it is: the view
     # offers "Archive to memory" and "Restore to wardrobe" as a pair. The old
     # assertion demanded the literal copy "Archive reversibly", which the UI has
@@ -56,14 +72,21 @@ class CritiqueImplementationTest < Minitest::Test
   def test_bsdports_exposes_operator_decisions_and_uncertainty
     index = read("bsdports/app/views/ports/index.html.erb")
     show = read("bsdports/app/views/ports/show.html.erb")
-    hotkey = read("bsdports/app/javascript/controllers/search_hotkey_controller.js")
+    # The keyboard-first shortcut moved out of a bsdports-local
+    # search_hotkey_controller.js — which bound / and Cmd-K on the ports index and
+    # nowhere else — into the shared feed-hotkey controller registered on every
+    # layout. The claim being pinned is "/ focuses search", not which file holds it.
+    hotkey = read("shared/frontend/feed_hotkey_controller.js")
+    layout = read("bsdports/app/views/layouts/application.html.erb")
 
     assert_includes index, "can this machine install it"
     assert_includes show, "doas pkg_add"
     assert_includes show, "branch unknown · architecture unknown"
     assert_includes show, "This is not the same as a verified clean security record"
     assert_includes show, "Requires → dependencies"
-    assert_includes hotkey, 'event.key === "/"'
+    assert_includes hotkey, 'e.key === "/"'
+    assert_match(/e\.key\.toLowerCase\(\) === "k"/, hotkey)
+    assert_includes layout, "feed-hotkey"
   end
 
   def test_master_primer_names_consent_and_text_fallback

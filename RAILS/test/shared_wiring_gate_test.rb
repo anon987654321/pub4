@@ -39,6 +39,7 @@ class SharedWiringGateTest < Minitest::Test
       controllers/hello_controller.js
       idb-keyval.js
       controllers/bottom_sheet_controller.js
+      controllers/offline_feed_controller.js
     ].each do |needle|
       assert_includes source, needle
     end
@@ -50,6 +51,7 @@ class SharedWiringGateTest < Minitest::Test
         controllers/hello_controller.js
         idb-keyval.js
         controllers/bottom_sheet_controller.js
+        controllers/offline_feed_controller.js
       ].each do |rel|
         path = File.join(ROOT, app, "app/javascript", rel)
         refute File.file?(path), "#{app} still has local #{rel}"

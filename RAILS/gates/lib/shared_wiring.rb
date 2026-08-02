@@ -10,7 +10,9 @@ module Deploy
 
     REQUIRED_ROUTE_FILES = %w[auth.rb fleet.rb social.rb].freeze
     REQUIRED_PUBLIC_FILES = %w[404.html 422.html 500.html styles/errors.css].freeze
-    REQUIRED_STIMULUS_REGISTRATIONS = %w[autosave draft-store media-picker feed-compose scroll-reveal].freeze
+    REQUIRED_STIMULUS_REGISTRATIONS = %w[
+      autosave draft-store media-picker feed-compose scroll-reveal offline-feed pwa-standalone
+    ].freeze
     REQUIRED_SHARED_INITIALIZERS = %w[omniauth.rb auth_extensions.rb].freeze
     REQUIRED_SHARED_CONTROLLERS = %w[shared/reactions_controller.rb].freeze
     REQUIRED_ENV_BASELINES = {
@@ -24,6 +26,7 @@ module Deploy
       controllers/hello_controller.js
       idb-keyval.js
       controllers/bottom_sheet_controller.js
+      controllers/offline_feed_controller.js
     ].freeze
 
     def self.run
@@ -40,7 +43,10 @@ module Deploy
 
       baseline_text = File.read(baseline)
       boot_text = File.read(boot)
-      %w[pub4/autosave pub4/draft_store pub4/media_picker pub4/feed_compose pub4/scroll_reveal].each do |pin|
+      %w[
+        pub4/autosave pub4/draft_store pub4/media_picker pub4/feed_compose pub4/scroll_reveal
+        pub4/offline_feed pub4/pwa_standalone
+      ].each do |pin|
         result.fail("importmap_baseline missing pin #{pin}") unless baseline_text.include?(%("#{pin}"))
       end
       REQUIRED_STIMULUS_REGISTRATIONS.each do |name|

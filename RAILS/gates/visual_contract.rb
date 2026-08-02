@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Subprocess gates are started with system() and do not inherit runner.rb's
+# Encoding.default_external; see the same require in release.rb.
+require_relative "../../OPENBSD/lib/utf8"
 require "json"
 require "digest"
 require "fileutils"
@@ -96,6 +99,48 @@ module VisualContractGate
     driver.manage.logs.get(:browser).select { |log| log.level == "SEVERE" }.map(&:message)
   end
 
+  # Grades a capture. Extracted from the script body so the three severities are
+  # assertable without Chrome and a running app — the reason the old version
+  # never failed on anything was that nothing could see what it decided.
+  #
+  #   hard  — blocks. A contract route answering 5xx, or drift past an explicit
+  #           VISUAL_DRIFT_MAX_RATIO.
+  #   soft  — real defects whose live counts have never been measured from this
+  #           tree, so they block only under strict:. Same shape as
+  #           GateResult's soft failures.
+  #   drift — reported always; a rolling baseline makes any intended change drift.
+  def grade(results, strict: false, drift_max: nil)
+    hard = []
+    soft = []
+
+    results.each do |row|
+      status = row[:status].to_i
+      next if status.zero? # navigation timing unavailable — nothing measured
+      next if row[:state].to_s == "error" && status == 404 # this cell asks for a 404
+      next if status < 500
+
+      hard << "#{row[:state]}/#{row[:viewport]} #{row[:route]} returned #{status}"
+    end
+
+    a11y = results.sum { |row| row[:accessibility_violations].to_a.length }
+    console = results.sum { |row| row[:console_errors].to_a.length }
+    soft << "#{a11y} accessibility violation(s)" if a11y.positive?
+    soft << "#{console} severe console error(s)" if console.positive?
+
+    drifted = results.select { |row| row[:pixel_diff_count].to_i.positive? }
+    worst = drifted.map { |row| row[:pixel_diff_ratio].to_f }.max || 0.0
+    if drift_max && worst > drift_max
+      hard << "pixel drift ratio #{worst.round(6)} exceeds VISUAL_DRIFT_MAX_RATIO=#{drift_max}"
+    end
+
+    hard += soft.map { |message| "[strict] #{message}" } if strict
+
+    {
+      hard:, soft: strict ? [] : soft,
+      drift: { states: drifted.length, pixels: drifted.sum { |row| row[:pixel_diff_count].to_i }, worst_ratio: worst },
+    }
+  end
+
   def capture(base:, app:, output: File.expand_path("../visual_contract", __dir__))
     require "selenium-webdriver"
     FileUtils.mkdir_p(output)
@@ -131,17 +176,39 @@ module VisualContractGate
 end
 
 rows = VisualContractGate.validate!
-if ARGV.delete("--capture")
-  app_i = ARGV.index("--app")
-  base_i = ARGV.index("--base")
-  app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|amber|bsdports required")
-  base = (base_i && ARGV[base_i + 1]) || abort("--base URL required")
-  results = VisualContractGate.capture(base:, app:)
-  path = File.expand_path("../visual_contract/#{app}-manifest.json", __dir__)
-  File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
-  drifted = results.select { |row| row[:pixel_diff_count].to_i.positive? }
-  drift_note = drifted.empty? ? "" : " (#{drifted.length} states drifted, #{drifted.map { |row| row[:pixel_diff_count] }.sum} px total)"
-  puts "ok: captured #{results.length} visual states -> #{path}#{drift_note}"
-else
+unless ARGV.delete("--capture")
   puts "ok: #{rows.length} seeded visual contract cells across #{VisualContractGate::ROUTES.length} apps"
+  return
 end
+
+app_i = ARGV.index("--app")
+base_i = ARGV.index("--base")
+app = (app_i && ARGV[app_i + 1]) || abort("--app brgen|amber|bsdports required")
+base = (base_i && ARGV[base_i + 1]) || abort("--base URL required")
+results = VisualContractGate.capture(base:, app:)
+path = File.expand_path("../visual_contract/#{app}-manifest.json", __dir__)
+File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
+
+# This used to end at `puts "ok: captured …"` with exit 0 no matter what the
+# capture measured (OPENBSD/data/debt.yml: rails_gates_not_wired —
+# "visual_contract_gate computes drift/a11y counts and never exits non-zero").
+# A gate that sees a 500 on the sign-in page and reports "ok" is a report.
+verdict = VisualContractGate.grade(
+  results,
+  strict: %w[1 true yes on].include?(ENV["VISUAL_STRICT"].to_s.strip.downcase),
+  drift_max: ENV["VISUAL_DRIFT_MAX_RATIO"]&.then { |value| Float(value) }
+)
+
+drift = verdict[:drift]
+if drift[:states].positive?
+  warn "Drift: #{drift[:states]} state(s), #{drift[:pixels]} px total, worst ratio #{drift[:worst_ratio].round(6)}"
+end
+verdict[:soft].each { |message| warn "Warning: #{message} (VISUAL_STRICT=1 makes this blocking)" }
+
+unless verdict[:hard].empty?
+  warn "Failures:"
+  verdict[:hard].each { |message| warn "  - #{message}" }
+  exit 1
+end
+
+puts "ok: captured #{results.length} visual states -> #{path}"

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "yaml"
 require "minitest/autorun"
 
 class PwaDesignContractTest < Minitest::Test
@@ -33,22 +34,34 @@ class PwaDesignContractTest < Minitest::Test
     end
   end
 
+  # `<%= raw t("pwa.x").to_json %>` — an interpolated JSON value. Substituting a
+  # string literal leaves a document with the same shape, which is what the
+  # installability assertions below are about.
+  ERB_EXPRESSION = /<%=.*?%>/m
+  # `<% case vertical %>` — control flow. The document's shape then depends on
+  # which branch runs, so there is nothing static to parse.
+  ERB_CONTROL_FLOW = /<%[^=#]/
+
   def test_all_manifests_are_installable
     each_app do |app, root|
       raw = read(root, "app/views/pwa/manifest.json.erb")
-      # brgen manifest is ERB (vertical-scoped shortcuts); other apps stay pure JSON.
-      if app == "brgen"
+      # This used to switch on `app == "brgen"`, on the grounds that brgen's
+      # manifest was the only ERB one. Localising the PWA shortcut labels made
+      # every manifest ERB, and amber's then reached JSON.parse and raised.
+      # Switch on what the file actually contains instead: an app growing or
+      # losing a `case` no longer has to be remembered here.
+      if raw.match?(ERB_CONTROL_FLOW)
         assert_includes raw, '"start_url"'
         assert_includes raw, '"scope"'
         assert_includes raw, "standalone"
         assert_includes raw, "#000000"
-        assert_includes raw, "when \"playlist\""
+        assert_includes raw, "when \"playlist\"" if app == "brgen"
         refute_includes raw, "//dating."
         refute_includes raw, "brgen_ai_url"
         next
       end
 
-      manifest = JSON.parse(raw)
+      manifest = JSON.parse(raw.gsub(ERB_EXPRESSION, '"erb"'))
       assert_equal "/", manifest.fetch("start_url")
       assert_equal "/", manifest.fetch("scope")
       assert_includes %w[standalone fullscreen minimal-ui], manifest.fetch("display")
@@ -59,17 +72,33 @@ class PwaDesignContractTest < Minitest::Test
   end
 
   def test_all_layouts_apply_shared_visual_and_accessibility_baseline
-    each_app do |_app, root|
+    each_app do |app, root|
       layout = read(root, "app/views/layouts/application.html.erb")
       assert_includes layout, "viewport-fit=cover"
       assert_includes layout, 'rel: "manifest"'
       assert_match(/stylesheet_link_tag (?:["'](?:application|app)["']|:app)/, layout)
       assert_match(/<main(?:\s|>)/, layout)
-      assert_includes layout, "aria-label=\"Primary navigation\""
+      assert_primary_nav_labelled(app, root, layout)
     end
   end
 
   private
+
+  # The invariant is that the primary navigation landmark has an accessible
+  # name. `aria-label="Primary navigation"` was the literal proxy for it, and
+  # localising the layouts removed the literal while keeping the landmark — so
+  # the check failed on three layouts that had all got more correct. Assert the
+  # landmark is named through a key that resolves to real copy; the three apps
+  # do not agree on the wording (bsdports says "Home"), and never had to.
+  def assert_primary_nav_labelled(app, root, layout)
+    match = layout.match(/<nav\b[^>]*aria-label="<%=\s*t\(\s*["']([a-z0-9_.]+)["']/m)
+    refute_nil match, "#{app}: no <nav> landmark with a translated aria-label"
+
+    locale = YAML.safe_load_file(File.join(root, "config", "locales", "en.yml")).fetch("en")
+    value = match[1].split(".").reduce(locale) { |node, segment| node&.fetch(segment, nil) }
+    refute_nil value, "#{app}: nav aria-label uses #{match[1]}, which en.yml does not define"
+    refute_empty value.to_s.strip, "#{app}: nav aria-label #{match[1]} is blank"
+  end
 
   def each_app
     APPS.each { |app| yield app, File.join(ROOT, app) }

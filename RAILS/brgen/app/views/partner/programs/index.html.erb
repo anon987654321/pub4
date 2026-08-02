@@ -1,0 +1,47 @@
+<% content_for :title, "Partner programs" %>
+
+<section class="partner-programs">
+  <header class="cluster">
+    <h1>Partner programs</h1>
+    <p class="dim">Local stores pay city creators for sales you send. Last click wins; no self-referral.</p>
+  </header>
+
+  <% if @mine.any? %>
+    <section aria-label="Your memberships">
+      <h2>Your memberships</h2>
+      <ul class="stack">
+        <% @mine.each do |m| %>
+          <li>
+            <%= link_to m.program.name, partner_program_path(m.program) %>
+            <span class="tag"><%= m.status %></span>
+            <%= link_to "Dashboard", partner_membership_path(m), class: "btn btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <section aria-label="Open programs">
+    <h2>Open programs</h2>
+    <% if @programs.any? %>
+      <ul class="stack">
+        <% @programs.each do |program| %>
+          <li class="sidebar-card">
+            <h3><%= link_to program.name, partner_program_path(program) %></h3>
+            <p class="dim"><%= program.store&.name %></p>
+            <p>
+              <% if program.percent? %>
+                <%= program.commission_rate / 100.0 %>% commission
+              <% else %>
+                <%= program.commission_rate %> øre flat
+              <% end %>
+              · <%= program.hold_days %> day hold
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="dim">No open partner programs yet. Store owners can create one from their shop page.</p>
+    <% end %>
+  </section>
+</section>

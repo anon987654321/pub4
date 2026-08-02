@@ -1,0 +1,16 @@
+<% content_for :title, "Edit #{@program.name}" %>
+
+<section>
+  <h1>Edit partner program</h1>
+  <%= form_with model: @program, url: partner_program_path(@program), method: :patch, class: "form-wrap" do |f| %>
+    <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
+    <div class="field"><%= f.label :status %><%= f.select :status, Partner::Program::STATUSES %></div>
+    <div class="field"><%= f.label :commission_model %><%= f.select :commission_model, Partner::Program::COMMISSION_MODELS %></div>
+    <div class="field"><%= f.label :commission_rate %><%= f.number_field :commission_rate, min: 0 %></div>
+    <div class="field"><%= f.label :attribution_hours %><%= f.number_field :attribution_hours, min: 1 %></div>
+    <div class="field"><%= f.label :hold_days %><%= f.number_field :hold_days, min: 0 %></div>
+    <div class="field"><%= f.check_box :auto_approve_partners %><%= f.label :auto_approve_partners %></div>
+    <div class="field"><%= f.label :terms %><%= f.text_area :terms, rows: 5 %></div>
+    <%= f.submit "Save", class: "btn" %>
+  <% end %>
+</section>

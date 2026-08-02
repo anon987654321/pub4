@@ -45,7 +45,8 @@
       data-feed-hotkey-help-value="<%= t("hotkeys.help") %>"
       data-feed-hotkey-coach-value="<%= t("hotkeys.coach") %>"
       data-feed-hotkey-coach-dismiss-value="<%= t("hotkeys.coach_dismiss") %>"
-      data-browser-fingerprint-url-value="<%= fingerprint_path %>">
+      data-browser-fingerprint-url-value="<%= fingerprint_path %>"
+      <%= yield(:body_attrs) if content_for?(:body_attrs) %>>
   <%# Every surface, playlist included. The skip link must be the first focusable
       element on the page or it cannot do its job. The playlist tunnel used to
       opt out because the pill painted as a light rectangle in the brand corner;
@@ -284,5 +285,6 @@
         title: t("install.title"),
         body: t("install.body") %>
   <%= render "shared/nearby_chat_widget" %>
+  <%= render "shared/link_converter" %>
 </body>
 </html>

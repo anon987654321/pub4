@@ -53,8 +53,10 @@ apps:
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeed + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: affiliate inventory persistence (AffiliateProduct),         status: done, notes: "affiliate_products table + upsert_from_feed! + rake affiliate:{import,health,seed_placeholders,drop_placeholders}; deals read the table, not a live call per render" }
-        - { name: TradeDoubler product import,                                status: planned, notes: "BLOCKED ON OPERATOR ACTION: brgen.no is not an approved TradeDoubler publisher. Apply as publisher, then per advertiser programme, then set TRADEDOUBLER_TOKEN (+TRADEDOUBLER_MARKET, default NO) and run rake affiliate:import. Client + parser + tests are in place; response shape is unverified against a live call. Until then rake affiliate:seed_placeholders provides rows flagged placeholder: true." }
-        - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + postpro/repligen hero" }
+        - { name: TradeDoubler product import,                                status: done, notes: "Client uses Products matrix URI + fid, productFeeds discovery, search/unlimited modes, offers parse. Gated on TRADEDOUBLER_TOKEN. Nightly AffiliateImportJob. Live response still needs operator approval of brgen.no as publisher + programmes. Placeholders until then." }
+        - { name: TradeDoubler vouchers + conversions + Link Converter,       status: done, notes: "AffiliateVoucher, AffiliateConversion, POST /webhooks/tradedoubler (fail-closed), LinkConverterSyncJob → public/js/td-lc.js, EPI helpers, weekly newsletter merges exclusives" }
+        - { name: First-party partner marketing UI,                          status: done, notes: "Partner::Program/Membership/Click/Conversion + PartnerMarketing attribution + /partner/programs + /p/:token click redirect" }
+        - { name: permission-marketing newsletters (Seth Godin editions),    status: done, notes: "NewsletterComposer + NewsletterVisuals + NewsletterEdition + postpro/repligen hero; weekly deals use Affiliate + EPI + vouchers" }
         - { name: AI feed ranking,                                         status: planned, agent: ignore }
         - { name: creator monetization,                                    status: planned, agent: ignore }
         - { name: maps surface,                                            status: done, notes: "maps. subdomain, Places index/show, Mapbox home" }
@@ -153,7 +155,7 @@ apps:
         - { name: KonMari declutter loop,                                  status: done, notes: "spark_joy/clear_joy, DeclutterScore, challenges, last-chance→Outfit, 30d box hygiene job" }
         - { name: AI stylist with offline fallbacks,                       status: done, notes: "WardrobeAi OpenRouter when OPENROUTER_API_KEY; heuristics/rules otherwise; honest UI" }
         - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
-        - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD" }
+        - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD + ShopTheLook suggestions" }
         - { name: style sessions (calendar status, not video),             status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }
       planned:
         - { name: fashion embeddings (pgvector),                           status: planned, agent: ignore, notes: "BLOCKER (verified 2026-07-27): pgvector is a Postgres extension and database.yml is sqlite3 in every environment. This is a platform migration, not a feature. FingerprintGarmentJob's CRC32-64 fingerprint is the honest stand-in until then." }

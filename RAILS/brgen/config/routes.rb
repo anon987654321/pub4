@@ -217,6 +217,20 @@ Rails.application.routes.draw do
     end
   end
 
+  # TradeDoubler Conversions API postback (not marketplace-scoped).
+  post "webhooks/tradedoubler" => "webhooks/tradedoubler#create", as: :webhooks_tradedoubler
+
+  # Partner click redirect (last-click attribution for local programs).
+  get "p/:token" => "partner/clicks#show", as: :partner_click
+
+  # Partner program index also available on main city domain (not only markedsplass).
+  namespace :partner do
+    resources :programs, only: %i[index show new create edit update] do
+      resources :memberships, only: :create
+    end
+    resources :memberships, only: :show
+  end
+
   resources :email_subscriptions, only: %i[create destroy], param: :token
   get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
 

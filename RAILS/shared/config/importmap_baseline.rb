@@ -64,6 +64,8 @@ pin "pub4/draft_store", to: "draft_store_controller.js"
 pin "pub4/media_picker", to: "media_picker_controller.js"
 pin "pub4/feed_compose", to: "feed_compose_controller.js"
 pin "pub4/feed_hotkey", to: "feed_hotkey_controller.js"
+pin "pub4/offline_feed", to: "offline_feed_controller.js"
+pin "pub4/pwa_standalone", to: "pwa_standalone_controller.js"
 pin "pwa/offline_store", to: "pwa_offline_store.js"
 pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.mjs"
 # @stimulus-components/lightbox imports this; only brgen pinned it locally,

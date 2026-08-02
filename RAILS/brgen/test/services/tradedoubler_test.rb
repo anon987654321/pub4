@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 require "test_helper"
-# Object#stub, used below to fake the HTTP transport.
 require "minitest/mock"
 
 class TradedoublerTest < ActiveSupport::TestCase
-  # The live response shape could not be verified (brgen.no is not an approved
-  # publisher yet, so there is no token to call with). parse therefore accepts
-  # both plausible shapes, and these tests pin that tolerance down — the
-  # previous implementation only handled the nested XML-ish shape and would have
-  # silently returned zero products if the API answers with flat JSON.
+  # Live response shape is still unverified without a publisher token. parse
+  # accepts nested XML-ish, flat JSON, and official offers[] documents.
+
   test "parses the nested products.product shape" do
     body = {
       "products" => {
@@ -57,8 +54,46 @@ class TradedoublerTest < ActiveSupport::TestCase
     assert_equal 1, rows.size
     assert_equal "xyz789", rows.first[:external_id]
     assert_equal "Salomon Speedcross 6", rows.first[:title]
-    # Comma decimal separator, as Norwegian feeds report it.
     assert_equal 169_900, rows.first[:price_cents]
+  end
+
+  test "parses official offers nested shape" do
+    body = {
+      "productHeader" => { "totalHits" => 1 },
+      "products" => [
+        {
+          "name" => "Dell Monitor",
+          "productImage" => { "url" => "https://img.test/m.jpg" },
+          "description" => "27 inch",
+          "categories" => [ { "name" => "Electronics" } ],
+          "offers" => [
+            {
+              "feedId" => 8976,
+              "productUrl" => "https://pdt.tradedoubler.com/click?a(1)",
+              "sourceProductId" => "SKU-1",
+              "id" => "519de2b6",
+              "programName" => "Dell",
+              "availability" => "In Stock",
+              "priceHistory" => [
+                { "price" => { "value" => "617.28", "currency" => "EUR" }, "date" => 1 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    rows = Tradedoubler.parse(body)
+    assert_equal 1, rows.size
+    row = rows.first
+    assert_equal "519de2b6", row[:external_id]
+    assert_equal "Dell Monitor", row[:title]
+    assert_equal "Dell", row[:merchant]
+    assert_equal 61_728, row[:price_cents]
+    assert_equal "EUR", row[:currency]
+    assert_equal "https://pdt.tradedoubler.com/click?a(1)", row[:click_url]
+    assert_equal "Electronics", row[:category]
+    assert row[:in_stock]
   end
 
   test "collapses a single-object response into one row" do
@@ -81,8 +116,6 @@ class TradedoublerTest < ActiveSupport::TestCase
     assert_nil Tradedoubler.to_cents("")
   end
 
-  # in_stock absent must not be read as out of stock — that would hide every
-  # product from a feed that simply doesn't report availability.
   test "missing availability is treated as in stock" do
     row = Tradedoubler.parse({ "products" => [ { "id" => "a", "name" => "n", "clickUrl" => "u" } ] }).first
     assert row[:in_stock]
@@ -91,28 +124,25 @@ class TradedoublerTest < ActiveSupport::TestCase
     refute out[:in_stock]
   end
 
-  # The parser tests above cover shape. These cover the pipeline the first real
-  # call will actually run: HTTP -> parse -> upsert. Without a token there is no
-  # way to exercise it for real, so the transport is stubbed — but everything
-  # downstream of the response body is the production path.
+  test "matrix_uri builds feed-scoped Products URL" do
+    uri = Tradedoubler.matrix_uri("products", matrix: { fid: 42, page: 1, pageSize: 100 }, token: "abc")
+    assert_includes uri.to_s, "/1.0/products.json;fid=42;page=1;pageSize=100"
+    assert_includes uri.query, "token=abc"
+  end
+
+  test "epi helpers compose and append" do
+    epi = Tradedoubler.epi_for(city: "bergen", surface: "newsletter_weekly", edition: "2026-08-01")
+    assert_equal "city:bergen|surface:newsletter_weekly|edition:2026-08-01", epi
+    url = Tradedoubler.append_epi("https://clk.test/x?a=1", epi: epi)
+    assert_includes url, "epi=city"
+  end
+
   class FakeResponse < Net::HTTPOK
-    def initialize(body)
-      super(nil, "200", "OK")
+    def initialize(body, code: "200")
+      super(nil, code, "OK")
       @body = body
     end
     attr_reader :body
-  end
-
-  def stub_pages(pages)
-    requested = []
-    responder = lambda do |uri|
-      requested << uri
-      page = URI.decode_www_form(uri.query).to_h["page"].to_i
-      FakeResponse.new(JSON.generate("products" => pages[page] || []))
-    end
-    Net::HTTP.stub(:get_response, responder) do
-      yield requested
-    end
   end
 
   def product_row(id)
@@ -122,11 +152,18 @@ class TradedoublerTest < ActiveSupport::TestCase
     }
   end
 
+  def stub_http(responder)
+    Net::HTTP.stub(:get_response, responder) { yield }
+  end
+
   test "import! upserts feed rows and is idempotent across runs" do
     ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
-    stub_pages(1 => [ product_row("a"), product_row("b") ]) do
-      assert_equal 2, Tradedoubler.import!
+    ENV["TRADEDOUBLER_FEED_IDS"] = "99"
+    responder = lambda do |uri|
+      assert_includes uri.to_s, "fid=99"
+      FakeResponse.new(JSON.generate("products" => [ product_row("a"), product_row("b") ]))
     end
+    stub_http(responder) { assert_equal 2, Tradedoubler.import! }
 
     assert_equal 2, AffiliateProduct.where(source: "tradedoubler").count
     row = AffiliateProduct.find_by!(source: "tradedoubler", external_id: "a")
@@ -134,58 +171,83 @@ class TradedoublerTest < ActiveSupport::TestCase
     assert_equal 19_900, row.price_cents
     assert_equal "NOK", row.currency
     assert_equal "NO", row.market
-    refute row.placeholder, "imported rows are real inventory, not placeholders"
+    refute row.placeholder
     assert_not_nil row.last_seen_at
 
-    # A second run must refresh, not duplicate.
-    stub_pages(1 => [ product_row("a"), product_row("b") ]) do
-      Tradedoubler.import!
-    end
+    stub_http(responder) { Tradedoubler.import! }
     assert_equal 2, AffiliateProduct.where(source: "tradedoubler").count
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.delete("TRADEDOUBLER_FEED_IDS")
   end
 
   test "import! paginates until a short page ends the walk" do
     ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
+    ENV["TRADEDOUBLER_FEED_IDS"] = "1"
     full = Array.new(Tradedoubler::PAGE_SIZE) { |i| product_row("p#{i}") }
-    stub_pages(1 => full, 2 => [ product_row("tail") ]) do |requested|
+    requested = []
+    responder = lambda do |uri|
+      requested << uri.to_s
+      page = uri.path[/page=(\d+)/, 1].to_i
+      page = 1 if page.zero?
+      body = page == 1 ? full : [ product_row("tail") ]
+      FakeResponse.new(JSON.generate("products" => body))
+    end
+    stub_http(responder) do
       assert_equal Tradedoubler::PAGE_SIZE + 1, Tradedoubler.import!
-      assert_equal 2, requested.size, "a short second page should stop the walk"
+      assert_equal 2, requested.size
     end
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.delete("TRADEDOUBLER_FEED_IDS")
   end
 
-  # No stable network id means no upsert key, so a re-import would duplicate the
-  # row on every run. Same for a missing click_url: an affiliate row you cannot
-  # click is worthless and would render a dead link.
   test "import! skips rows with no id, click url or title" do
     ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
-    stub_pages(1 => [
-      { "productName" => "No id", "clickUrl" => "https://clk.test/x" },
-      { "id" => "no-url", "productName" => "No click url" },
-      { "id" => "no-title", "clickUrl" => "https://clk.test/y" },
-      product_row("good")
-    ]) do
-      assert_equal 1, Tradedoubler.import!
+    ENV["TRADEDOUBLER_FEED_IDS"] = "1"
+    responder = lambda do |_uri|
+      FakeResponse.new(JSON.generate("products" => [
+        { "productName" => "No id", "clickUrl" => "https://clk.test/x" },
+        { "id" => "no-url", "productName" => "No click url" },
+        { "id" => "no-title", "clickUrl" => "https://clk.test/y" },
+        product_row("good")
+      ]))
     end
+    stub_http(responder) { assert_equal 1, Tradedoubler.import! }
     assert_equal [ "good" ], AffiliateProduct.where(source: "tradedoubler").pluck(:external_id)
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.delete("TRADEDOUBLER_FEED_IDS")
   end
 
   test "import! is a no-op with no token and makes no request" do
     ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.delete("TRADEDOUBLER_PRODUCTS_TOKEN")
     called = false
-    Net::HTTP.stub(:get_response, ->(_uri) { called = true; FakeResponse.new("{}") }) do
+    stub_http(->(_uri) { called = true; FakeResponse.new("{}") }) do
       assert_equal 0, Tradedoubler.import!
     end
-    refute called, "must not call out without a configured token"
+    refute called
+  end
+
+  test "import! is a no-op without feed ids when discovery is empty" do
+    ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
+    ENV.delete("TRADEDOUBLER_FEED_IDS")
+    responder = lambda do |uri|
+      if uri.path.include?("productFeeds")
+        FakeResponse.new(JSON.generate("feeds" => []))
+      else
+        flunk "should not search without feeds: #{uri}"
+      end
+    end
+    stub_http(responder) { assert_equal 0, Tradedoubler.import! }
+  ensure
+    ENV.delete("TRADEDOUBLER_TOKEN")
   end
 
   test "a non-success response yields no rows and does not raise" do
     ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
+    ENV["TRADEDOUBLER_FEED_IDS"] = "1"
     failure = Net::HTTPForbidden.new(nil, "403", "Forbidden")
     Net::HTTP.stub(:get_response, ->(_uri) { failure }) do
       assert_equal 0, Tradedoubler.import!
@@ -193,10 +255,12 @@ class TradedoublerTest < ActiveSupport::TestCase
     assert_equal 0, AffiliateProduct.where(source: "tradedoubler").count
   ensure
     ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.delete("TRADEDOUBLER_FEED_IDS")
   end
 
   test "not configured without a token, and deals falls back to stored rows" do
     ENV.delete("TRADEDOUBLER_TOKEN")
+    ENV.delete("TRADEDOUBLER_PRODUCTS_TOKEN")
     refute Tradedoubler.configured?
 
     AffiliateProduct.upsert_from_feed!(
@@ -208,6 +272,6 @@ class TradedoublerTest < ActiveSupport::TestCase
     deals = Tradedoubler.deals(category: "electronics", limit: 5)
     assert_equal 1, deals.size
     assert_equal "Stored product", deals.first.title
-    assert deals.first.placeholder, "a placeholder row must stay flagged through to the view"
+    assert deals.first.placeholder
   end
 end

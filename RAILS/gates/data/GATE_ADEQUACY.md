@@ -27,7 +27,7 @@ What we have is among the denser Rails UI gate suites: source ratchets, multi-st
 ## Gaps a perfectionist would still flag
 
 1. **Authenticated personas** — no signed-in walk of cart checkout, dating matches, sell form submit, amber wardrobe mutations.
-2. **Residual EN chrome** — `chrome_i18n_lint` only empty titles + search placeholders; secondary aria-labels still EN.
+2. **Residual EN chrome** — measured 2026-08-01 instead of guessed at. `chrome_i18n_lint` now has an `aria_label` rule (both `aria-label="…"` and `aria: { label: "…" }`) and reports per kind: empty titles 0, search placeholders 0, hardcoded aria-labels **172** across the three apps and the shared engine. The aria baseline is 172 rather than 0 because closing it needs Norwegian copy, not a regex; it may only ratchet down, and `RAILS/test/chrome_i18n_lint_test.rb` fails both when a kind exceeds its baseline and when a baseline has been beaten and not lowered. Until then, a screen-reader user on `:nb` hears English for those 172 labels — which is the gap, now with a number on it.
 3. **CDP reliability** — long rendered_suite + cold Falcon → timeouts; mobile/keyboard must not green-wash (inconclusive when &lt;3 surfaces measured).
 4. **MASTER face browser leaf** — not first-class in mobile_flow preferred set / geometry_surfaces.
 5. **Auth + :id pages** — page_sim source-only for show/edit; no seeded live IDs.

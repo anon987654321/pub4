@@ -1,12 +1,26 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "yaml"
 
 class AmberBacklogTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
 
   def read(relative)
     File.read(File.join(ROOT, relative))
+  end
+
+  # These pages render through I18n now, so a literal English string in the
+  # template stopped being there the moment the page was localised — the
+  # assertion failed on a view that had got better, not worse. Pin the key in
+  # the template and the copy in en.yml instead: the page still has to say this
+  # sentence, and the check survives the next locale. Same reasoning as
+  # b369c6213 for brgen's rendered-body tests.
+  def assert_localised(relative, key, english)
+    assert_includes read(relative), %(t("#{key}"))
+    locale = YAML.safe_load_file(File.join(ROOT, "config", "locales", "en.yml")).fetch("en")
+    value = key.split(".").reduce(locale) { |node, segment| node.fetch(segment) }
+    assert_equal english, value, "en.yml #{key} drifted from the copy #{relative} promises"
   end
 
   def test_social_live_message_models_are_persisted_and_routed
@@ -27,9 +41,12 @@ class AmberBacklogTest < Minitest::Test
     assert_includes routes, "resources :live_streams"
     assert_includes routes, "resources :messages"
     assert_includes read("app/views/connections/index.html.erb"), "Connection"
-    assert_includes read("app/views/live_streams/index.html.erb"), "Style sessions"
+    assert_localised "app/views/live_streams/index.html.erb", "live_streams.title", "Style sessions"
     assert_includes read("app/controllers/messages_controller.rb"), "Message sent"
-    assert_includes read("app/views/messages/index.html.erb"), "New message"
+    # "New message" was the compose form's heading before the page was
+    # localised; the form is what the assertion was really about, and it does
+    # not move when the copy does.
+    assert_includes read("app/views/messages/index.html.erb"), "form_with model: @message"
   end
 
   def test_wardrobe_analytics_upload_pipeline_and_outfit_generation_are_wired
@@ -58,8 +75,8 @@ class AmberBacklogTest < Minitest::Test
     assert_includes item_form, "data-controller="
     assert_includes item_form, "direct_upload: true"
     assert_includes media_picker, "drop(event)"
-    assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "Wardrobe analytics"
-    assert_includes read("app/views/wardrobe_items/analytics.html.erb"), "rules, not AI"
+    assert_localised "app/views/wardrobe_items/analytics.html.erb", "pages.analytics", "Wardrobe analytics"
+    assert_localised "app/views/wardrobe_items/analytics.html.erb", "wardrobe.coach_rules", "rules, not AI"
     assert_includes read("app/views/outfits/index.html.erb"), "Generate outfit"
   end
 

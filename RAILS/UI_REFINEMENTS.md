@@ -4,7 +4,7 @@ Implementations for the 2026-07-18 proposal list plus the 2026-07-19 visual
 opportunity pass. Canonical tokens: `RAILS/shared/design_tokens.yml`.
 Ship verification: visual_contract + deploy.
 
-_Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_controller removed, idb-keyval shared)._
+_Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-standalone and offline-feed implemented in the shared engine, global `/` + ⌘K, token drift asserted against the committed tree)._
 
 ## Applied clusters
 
@@ -122,6 +122,23 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | Focus triangle: brgen · amber · MASTER web | Landed |
 | Amber social + product chrome i18n | Landed |
 
+## 2026-08-01 dead-wiring pass (landed)
+
+Everything here rendered, raised nothing, and did nothing — the failure shape this
+file's checklists cannot catch, because a landed row and an inert one look identical
+from the outside. Full accounting in `OPENBSD/data/debt.yml:rails_silent_wiring_breaks`.
+
+| Item | Status |
+|------|--------|
+| `.install-prompt` styled at all — the shared partial rendered in three apps and none styled it, so revealing it showed unstyled text in document flow | Landed |
+| `pwa-standalone` implemented (`[data-pwa-display]` on `<html>`, safe-area inset, install prompt hidden once installed) and `data-pwa-key` given a reader | Landed |
+| `offline-feed` moved brgen-local → shared, so amber item cards actually snapshot | Landed |
+| `form-submit#lock` written (deferred a tick so the submitter's own value still posts) and attached to the two forms that called it | Landed |
+| `content_for :body_attrs` yielded; push badge clears via `data-push-seen` rather than an action `<body>` could never resolve | Landed |
+| Tv chat + video notes broadcast with explicit `partial:`/`target:`; videos/show subscribes to its own stream | Landed |
+| Three broadcasts into streams with no subscriber removed (Reaction, TimestampedComment, SecurityAdvisory) | Landed |
+| `stimulus_wiring` gate: every `data-controller` and `ev->id#method` in ERB resolves, 326 checks | Landed |
+
 ## Intentionally residual (product/ops, not pure CSS)
 
 | Item | Why residual |
@@ -130,9 +147,9 @@ _Last applied: 2026-07-20 (polish wave: flat hotkey toast, tokenized hex, hello_
 | True ML rembg/segmentation | Postpro bridge only; models are infra |
 | Per-glyph typewriter captions vs fade | Product choice — left as fade-capable CSS |
 | Council multi glyph set | Needs face JS state machine work beyond style |
-| Token CSS auto-gen test fail-on-drift | Follow-up for `generate_face_root_css.rb` |
-| Demo wardrobe seed 6–8 items | Data seed, not layout |
-| Global `/` hotkey search chrome | App already has feed-hotkey; UI partial optional |
+| Token CSS auto-gen test fail-on-drift | Landed 2026-08-01 — `design_tokens_test.rb` now asserts the *committed* `face.css`, `_dialect_tokens.scss` and dialect maps against `design_tokens.yml`. Every drift predicate already existed and every test proved it worked on a tmpdir fixture; nothing checked the real tree, so the generator could go unrun for weeks with a green suite |
+| Demo wardrobe seed 6–8 items | Already done and this row was stale — `Amber::AmberDemoSeeder` seeds 17 items and 3 outfits idempotently, covered by `amber/test/lib/amber_demo_seeder_test.rb` |
+| Global `/` hotkey search chrome | Landed 2026-08-01 — `/` and `⌘/Ctrl-K` now reach the search on every page of all three apps. bsdports had neither: its `search-hotkey` was a local controller bound to the ports index only, and its layout registered no hotkey controller at all. `feed-hotkey` moved onto the bsdports body (with `hotkeys.*` in en/nb), Cmd/Ctrl-K joined the shared controller, and the local copy is deleted |
 | Per-app PWA monochrome icons | Landed (brgen/amber/bsdports + manifests) |
 | Full ERB class-soup → bare semantic HTML | Multi-PR product surface; partial via shared primitives |
 | Full i18n of brgen chrome strings | Core home/auth/nav/empty + full primary nav landed; residual vertical product copy remaining |

@@ -51,9 +51,15 @@ class Reaction < ApplicationRecord
   # room is already subscribed to its conversation, so reuse it: one extra
   # broadcast, no extra subscriptions, and reactions land live for everyone in
   # the room rather than only for people who happen to have that message open.
+  #
+  # A generic per-target broadcast to stream_name used to run first in this method
+  # and was missing all three of the things it needed: a partial (the implicit
+  # to_partial_path resolved to reactions/_reaction, which does not exist), a target,
+  # and a subscriber — nothing anywhere subscribes to "brgen:reactions:…". Every
+  # reaction and un-reaction enqueued a job that raised MissingTemplate into a stream
+  # with no listener. Reviving it means subscribing wherever shared/_reaction_bar
+  # renders, which is the 50+ subscriptions the paragraph above rules out.
   def broadcast_reaction_change
-    broadcast_replace_later_to stream_name
-
     msg = target
     return unless msg.is_a?(Message) && msg.conversation
 
