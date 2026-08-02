@@ -13229,10 +13229,7 @@ def demo_all(bars_count = 12, destination = nil)
   # So demo-each defaults to steady and demo-all keeps its old behaviour. Set
   # DEMO_STEADY=0 to get the showcase back, DEMO_STEADY=1 to hold demo-all still.
   steady = ENV.fetch("DEMO_STEADY", demo_each? ? "1" : "0") != "0"
-  if steady
-    %w[STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH SYNTH_MORPH LEAD_MORPH SYNTH_CYCLE
-       EXPERIMENTAL_LEADS STREAM_CREATIVE_FREEDOM STREAM_ANALOG_WILD].each { |k| ENV[k] = "0" }
-  else
+  unless steady
     ENV["STREAM_ROTATE_LEAD"] = "1"
     ENV["STREAM_ROTATE_SYNTH"] = "1"
     ENV["SYNTH_MORPH"] = "1"
@@ -13248,6 +13245,26 @@ def demo_all(bars_count = 12, destination = nil)
   apply_best_defaults!
   apply_dilla_style!(force: true)
   force_env!(STREAM_STYLE_SAFE, label: "STREAM_STYLE_SAFE")
+
+  # Steady has to be applied HERE, after the three calls above, not before them.
+  #
+  # It was written above them and did nothing at all. apply_best_defaults! sets
+  # MELODIC_LEAD=0 and STREAM_STYLE_SAFE sets STREAM_ROTATE_LEAD=1, so every key
+  # steady had just cleared was put straight back, and eight tracks rendered
+  # with the old rotating arps while the log said steady mode was on. The
+  # operator heard it immediately -- "they all sound the same as the old demo"
+  # -- which is what a silent no-op sounds like.
+  #
+  # MELODIC_LEAD=1 is set explicitly rather than left to its default, because
+  # the default is only reached when nothing else has written the key, and by
+  # this point something always has.
+  if steady
+    %w[STREAM_ROTATE_LEAD STREAM_ROTATE_SYNTH SYNTH_MORPH LEAD_MORPH SYNTH_CYCLE
+       EXPERIMENTAL_LEADS STREAM_CREATIVE_FREEDOM STREAM_ANALOG_WILD
+       LEAD_FORCE_ARP SCALE_LEAD CREATIVE_LEAD].each { |k| ENV[k] = "0" }
+    ENV["MELODIC_LEAD"] = "1"
+  end
+
   # Unlock pad/lead so per-slot rotation is not pinned back to stack_soul/held.
   %w[PAD_VOICE PAD_ARP_MODE LEAD_VOICE LEAD_ARP_MODE TRACK PROGRESSION].each { |k| ENV.delete(k) }
 
@@ -17435,6 +17452,21 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   creative_events = creative_on ? lead_events_creative(pad_events, cfg, duration:, n_bars: n_bars_est) : []
   scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
   harmony_lead_rendered = harmony_lead_ev.any? ? render_lead_via_fluidsynth(harmony_lead_path, harmony_lead_ev, duration, scale_arp: true) : nil
+  # Say which lead actually played, and how many notes it played.
+  #
+  # The counter-line silently returned nothing for a whole render batch because
+  # apply_best_defaults! set MELODIC_LEAD=0 after demo_all had cleared it. The
+  # banner still announced steady mode, every take came out with the old arps,
+  # and nothing in the log disagreed. One line here would have caught it in the
+  # first render instead of the eighth.
+  dmesg(if counter_events.any?
+          "lead: counter-line, #{counter_events.length} notes, #{ENV.fetch('LEAD_TIMBRE', 'choir')}"
+        elsif lead_arp_ev.any?
+          "lead: arp, #{lead_arp_ev.length} notes (counter-line off: MELODIC_LEAD=#{ENV['MELODIC_LEAD'].inspect})"
+        else
+          "lead: none"
+        end, unit: "harm0", parent: "dilla0")
+
   lead_arp_rendered = if counter_events.any?
                         render_lead_via_fluidsynth(lead_arp_path, counter_events, duration, counter: true)
                       elsif lead_arp_ev.any?
