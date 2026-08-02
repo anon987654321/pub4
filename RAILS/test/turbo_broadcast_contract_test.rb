@@ -17,36 +17,20 @@ require "minitest/autorun"
 #      Playlist::TimestampedComment, SecurityAdvisory) broadcast into streams with no
 #      subscriber and no container at all and were removed rather than wired.
 #
-#   2. The Shared::* social models broadcast implicitly. Three were cut 2026-08-02
-#      (Post, Follow, ChatMessage) — no usable table in any schema and zero references,
-#      so they were the genuinely dead layer. Three remain and are tolerated here rather
-#      than exempted: Shared::ReviewCase backs amber reports and Shared::Reaction/
-#      Notification are `defined?`-guarded fallbacks. Their real tables (reactions/
-#      notifications/review_cases) do exist in brgen/amber, so unlike the cut trio their
-#      broadcasts CAN fire — giving them partials or making the callbacks explicit is the
-#      open follow-up this list is documenting, not resolving.
+#   2. The Shared::* social models used to broadcast implicitly. Post, Follow, and
+#      ChatMessage were cut 2026-08-02 (no usable table in any schema, zero references).
+#      The three that remained — Reaction, Notification, ReviewCase — kept implicit
+#      broadcasts into shared:reactions/notifications/review_cases, streams with no
+#      subscriber and no partial anywhere. Their tables DO exist (amber even creates
+#      ReviewCase rows), so unlike the cut trio the callbacks could actually fire and
+#      raise MissingTemplate in Solid Queue. Those three callbacks were removed 2026-08-02
+#      — the same treatment the Tv/Playlist dead broadcasts got. There is now no implicit
+#      Shared::* broadcast left to tolerate; the streams are guarded below with the other
+#      removed ones, so re-adding a subscriber without a partial fails this test.
 class TurboBroadcastContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   APPS = %w[brgen amber bsdports].freeze
   BROADCAST = /broadcast_\w*(?:append|prepend|replace|update|remove|before|after)\w*_(?:later_)?to\b/
-
-  # Shared::* social models still tolerated here. Post, Follow, and ChatMessage were
-  # cut 2026-08-02 — shared_posts/shared_chat_messages exist in no schema, Shared::Follow
-  # had zero references, and none could be instantiated. The three that remain are NOT
-  # dead: Shared::ReviewCase backs amber's reports, and Shared::Reaction/Notification are
-  # fallbacks behind `defined?(::Reaction/::Notification)`. NOTE their real table_names are
-  # reactions/notifications/review_cases (generic, present in brgen/amber) — the shared_*
-  # names below never exist, so this tolerance is honest for the shared_ ones only;
-  # whether these three should broadcast implicitly at all is the open follow-up.
-  TABLELESS_SHARED = {
-    "shared/reaction.rb" => "shared_reactions",
-    "shared/notification.rb" => "shared_notifications",
-    "shared/review_case.rb" => "shared_review_cases",
-  }.freeze
-
-  def schema(app) = File.read(File.join(ROOT, app, "db/schema.rb"))
-
-  def table?(app, name) = schema(app).include?(%(create_table "#{name}"))
 
   # app/models/tv/stream_chat.rb -> tv/stream_chats/_stream_chat.html.erb
   def partial_for(relative)
@@ -82,8 +66,6 @@ class TurboBroadcastContractTest < Minitest::Test
 
     APPS.each do |app|
       implicit_broadcasts(app).each do |row|
-        next if TABLELESS_SHARED.key?(row[:file])
-
         wanted = partial_for(row[:file])
         found = [File.join(ROOT, app, "app/views", wanted), File.join(ROOT, "shared/app/views", wanted)]
         next if found.any? { |candidate| File.file?(candidate) }
@@ -95,13 +77,18 @@ class TurboBroadcastContractTest < Minitest::Test
     assert_empty missing, missing.join("\n")
   end
 
-  def test_the_tolerated_shared_models_still_have_no_table_anywhere
-    TABLELESS_SHARED.each do |file, table|
-      APPS.each do |app|
-        refute table?(app, table),
-               "#{app} now has #{table}, so #{file}'s broadcast can fire — give it a partial " \
-               "(#{partial_for(file)}) and remove it from TABLELESS_SHARED"
-      end
+  # The three Shared::* callbacks removed 2026-08-02 must stay removed. If someone
+  # reintroduces `broadcast_*_later_to "shared:..."` without a partial, the scan
+  # above catches the missing partial; this pins the models themselves clean so the
+  # intent (explicit-or-nothing) is legible at the source, not just the view side.
+  def test_the_shared_social_models_do_not_broadcast_implicitly
+    %w[reaction notification review_case].each do |name|
+      body = File.read(File.join(ROOT, "shared/app/models/shared/#{name}.rb"))
+      broadcasts = body.lines.reject { |l| l.strip.start_with?("#") }.select { |l| l.match?(BROADCAST) }
+
+      assert_empty broadcasts,
+                   "shared/#{name}.rb broadcasts again — make it explicit (partial: + target:) " \
+                   "and add its stream a subscriber, or leave the callback out"
     end
   end
 
@@ -147,7 +134,10 @@ class TurboBroadcastContractTest < Minitest::Test
             Dir.glob(File.join(ROOT, "shared/app/views/**/*.erb"))
     subscriptions = views.map { |path| File.read(path) }.join("\n")
 
-    ["brgen:reactions", "playlist:track:", "bsdports:security_advisories"].each do |stream|
+    [
+      "brgen:reactions", "playlist:track:", "bsdports:security_advisories",
+      "shared:reactions", "shared:notifications", "shared:review_cases"
+    ].each do |stream|
       refute_match(/turbo_stream_from[^\n]*#{Regexp.escape(stream)}/, subscriptions,
                    "#{stream} has a subscriber now — restore the broadcast it lost, with an explicit partial")
     end

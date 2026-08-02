@@ -15,7 +15,10 @@ module Shared
     scope :unread, -> { where(read_at: nil) }
     scope :recent, -> { order(created_at: :desc) }
 
-    after_create_commit { broadcast_prepend_later_to "shared:notifications:#{user_id}" }
+    # No broadcast: nothing subscribes to shared:notifications:<user_id> and no
+    # shared/notifications/_notification partial exists (brgen's is app-local at a
+    # different path). Restore as an explicit broadcast_prepend_later_to with a
+    # partial: when a subscriber lands. Pinned by turbo_broadcast_contract_test.rb.
 
     def read?
       read_at.present?

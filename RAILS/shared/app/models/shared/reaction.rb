@@ -12,13 +12,11 @@ module Shared
     validates :kind, inclusion: { in: KINDS }
     validates :user_id, uniqueness: { scope: %i[reactable_type reactable_id kind] }
 
-    after_create_commit { broadcast_replace_later_to stream_name }
-    after_destroy_commit { broadcast_replace_later_to stream_name }
-
-    private
-
-    def stream_name
-      "shared:reactions:#{reactable_type}:#{reactable_id}"
-    end
+    # No broadcast: nothing subscribes to shared:reactions:* and no
+    # shared/reactions/_reaction partial exists, so an implicit broadcast could
+    # only raise ActionView::MissingTemplate inside Solid Queue — never update a
+    # page. When a subscriber and partial are added, restore this as an explicit
+    # broadcast_replace_later_to(stream, partial:, target:). Pinned by
+    # test/turbo_broadcast_contract_test.rb.
   end
 end

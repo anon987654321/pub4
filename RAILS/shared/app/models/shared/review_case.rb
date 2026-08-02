@@ -17,8 +17,12 @@ module Shared
     scope :active, -> { where(state: %w[open reviewing]) }
     scope :recent, -> { order(created_at: :desc) }
 
-    after_create_commit { broadcast_prepend_later_to "shared:review_cases" }
-    after_update_commit { broadcast_replace_later_to "shared:review_cases" }
+    # No broadcast: nothing subscribes to shared:review_cases and no
+    # shared/review_cases/_review_case partial exists. amber creates these rows
+    # (ReportsController), so an implicit broadcast here WOULD enqueue a job that
+    # raises MissingTemplate — the one live crash path of the three. Restore as an
+    # explicit broadcast with a partial: when a moderation stream is built. Pinned
+    # by turbo_broadcast_contract_test.rb.
 
     def close!(user)
       update!(state: "closed", reviewer: user, reviewed_at: Time.current)
