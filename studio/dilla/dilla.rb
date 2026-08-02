@@ -9403,12 +9403,27 @@ def frame_energy(path, highpass:, lowpass:)
   { frames:, hop_seconds: hop.to_f / SAMPLE_RATE, duration_seconds: raw.length.to_f / SAMPLE_RATE }
 end
 
-def band_rms(path, highpass:, lowpass:)
-  raw = pipe_floats(path, "highpass=f=#{highpass},lowpass=f=#{lowpass},aformat=sample_fmts=flt:channel_layouts=mono")
-  return -Float::INFINITY if raw.empty?
+BAND_FILTER_PREFIX = "aformat=sample_fmts=flt:channel_layouts=mono"
 
-  rms = Math.sqrt(raw.sum { |value| value * value } / raw.length)
-  (20.0 * Math.log10([rms, 1.0e-12].max)).round(3)
+# One ffmpeg pass, not a Ruby float array.
+#
+# This used to read the entire decoded stream into memory through pipe_floats:
+# for demo.wav (47 minutes, 496 MB) that is a half-gigabyte String and a
+# 124-million-element Float array, and mix_metrics called it five times over.
+# It timed out MASTER's test_mix_metrics_returns_band_levels_when_demo_present
+# and on vm23's 1 GB it would have taken the box with it.
+#
+# volumedetect computes the same 20·log10(rms) inside ffmpeg. The filter prefix
+# is kept byte-identical to the pipe_floats one because the mono downmix gain
+# depends on it — measured on a 10s slice, flt+mono reads -24.0 dB where s16
+# reads -27.0, and only the former matches what this returned before.
+def band_rms(path, highpass:, lowpass:)
+  filter = "highpass=f=#{highpass},lowpass=f=#{lowpass},#{BAND_FILTER_PREFIX},volumedetect"
+  _output, error, status = capture("ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", filter, "-f", "null", "-")
+  return -Float::INFINITY unless status.success?
+
+  level = error[/mean_volume:\s*(-?[\d.]+)/, 1]
+  level ? level.to_f : -Float::INFINITY
 end
 
 def spectral_windows(path)
@@ -12176,33 +12191,74 @@ end
 # Objective mix meters for piping into MASTER council (not a parallel critique stack).
 # Persona panel, multi-solution ideation, and cherry-pick:
 #   MASTER /dilla crit [path]  or  /dilla-critique  or  /sound-critique
+MIX_METRIC_BANDS = {
+  sub_db: [40, 100],
+  pad_body_db: [100, 300],
+  mids_db: [300, 1200],
+  presence_db: [1200, 4000],
+  air_db: [4000, 12_000],
+}.freeze
+
+# Analysis window, in seconds. Bounded on purpose, and the bound is reported
+# back as analysed_sec rather than applied silently: three minutes is a fair
+# sample of a mix's band balance, and a 47-minute set is not more truthful,
+# only six full decodes more expensive. duration_sec still carries the real
+# length so a reader can see both.
+MIX_METRIC_WINDOW_SEC = Integer(ENV.fetch("DILLA_MIX_WINDOW_SEC", "180"))
+
+# One asplit, six volumedetects, one decode — overall level plus every band.
+# Six separate ffmpeg runs over demo.wav cost 29s; this costs 1.3s.
+def mix_metric_command(path, window_sec)
+  outlets = (0..MIX_METRIC_BANDS.size).map { |index| "[b#{index}]" }
+  chains = ["[b0]#{BAND_FILTER_PREFIX},volumedetect[o0]"]
+  MIX_METRIC_BANDS.each_value.with_index(1) do |(low, high), index|
+    chains << "[b#{index}]highpass=f=#{low},lowpass=f=#{high},#{BAND_FILTER_PREFIX},volumedetect[o#{index}]"
+  end
+  maps = (0..MIX_METRIC_BANDS.size).flat_map { |index| ["-map", "[o#{index}]", "-f", "null", "-"] }
+  ["ffmpeg", "-hide_banner", "-nostats", "-t", window_sec.to_s, "-i", path,
+   "-filter_complex", "[0:a]asplit=#{outlets.size}#{outlets.join};#{chains.join(';')}", *maps]
+end
+
+# ffmpeg tags each filter instance with its position in the graph
+# (`[Parsed_volumedetect_4 @ 0x…] mean_volume: -31.6 dB`) and prints the
+# summaries in reverse order at teardown, so sort by that index rather than
+# trusting the order of the lines.
+def parse_volumedetect(log)
+  readings = {}
+  log.scan(/\[Parsed_volumedetect_(\d+)[^\]]*\]\s+(mean|max)_volume:\s*(-?[\d.]+)/) do |index, kind, value|
+    (readings[index.to_i] ||= {})[kind.to_sym] = value.to_f
+  end
+  readings.keys.sort.map { |index| readings[index] }
+end
+
+# Objective mix meters for piping into MASTER council (not a parallel critique stack).
+# Persona panel, multi-solution ideation, and cherry-pick:
+#   MASTER /dilla crit [path]  or  /dilla-critique  or  /sound-critique
 def mix_metrics(path)
   return unless path && File.file?(path)
-  peak_db = -90.0
-  rms_db = -90.0
-  duration = 0.0
-  begin
-    out, err, = Open3.capture3("ffmpeg", "-hide_banner", "-nostats", "-i", path,
-                               "-af", "volumedetect", "-f", "null", "-")
-    blob = err.to_s + out.to_s
-    peak_db = Regexp.last_match(1).to_f if blob =~ /max_volume:\s*([-\d.]+)/
-    rms_db = Regexp.last_match(1).to_f if blob =~ /mean_volume:\s*([-\d.]+)/
-    out2, = Open3.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                           "-of", "default=noprint_wrappers=1:nokey=1", path)
-    duration = out2.to_s.strip.to_f
-  rescue StandardError
-    nil
-  end
-  crest = (peak_db > -80 && rms_db > -80) ? (10**((peak_db - rms_db) / 20.0)).round(3) : 0.0
+  return unless tool_available?("ffmpeg")
+
+  _out, error, status = capture(*mix_metric_command(path, MIX_METRIC_WINDOW_SEC))
+  overall, *bands = status.success? ? parse_volumedetect(error.to_s) : []
+  overall ||= {}
+  peak_db = overall.fetch(:max, -90.0)
+  rms_db = overall.fetch(:mean, -90.0)
+  duration = audio_duration_sec(path)
   {
-    peak_db:, rms_db:, crest:,
+    peak_db:, rms_db:,
+    crest: (peak_db > -80 && rms_db > -80) ? (10**((peak_db - rms_db) / 20.0)).round(3) : 0.0,
     duration_sec: duration.round(2),
-    sub_db: band_rms(path, highpass: 40, lowpass: 100),
-    pad_body_db: band_rms(path, highpass: 100, lowpass: 300),
-    mids_db: band_rms(path, highpass: 300, lowpass: 1200),
-    presence_db: band_rms(path, highpass: 1200, lowpass: 4000),
-    air_db: band_rms(path, highpass: 4000, lowpass: 12_000)
+    analysed_sec: (duration.positive? ? [duration, MIX_METRIC_WINDOW_SEC.to_f].min : MIX_METRIC_WINDOW_SEC.to_f).round(2),
+    **MIX_METRIC_BANDS.keys.zip(bands.map { |band| band&.fetch(:mean, nil) || -Float::INFINITY }).to_h,
   }
+end
+
+def audio_duration_sec(path)
+  return 0.0 unless tool_available?("ffprobe")
+
+  out, = capture("ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", path)
+  out.to_s.strip.to_f
 end
 
 def crit_session_cli!(path = nil)

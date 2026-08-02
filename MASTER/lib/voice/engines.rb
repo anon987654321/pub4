@@ -233,6 +233,7 @@ module Master
         return FileUtils.cp(parts.first, out_path) if parts.length == 1
         return concat_mp3(parts, out_path, tmp_dir) if ffmpeg?
 
+        report_missing_ffmpeg("synth_edge_melodic", "phrases played separately, output holds only the first")
         FileUtils.cp(parts.first, out_path)
         parts.drop(1).each { |p| system("afplay", p, out: File::NULL, err: File::NULL); File.delete(p) }
         File.size?(out_path)
@@ -300,12 +301,27 @@ module Master
           return ok && File.size?(mp3_path)
         end
 
+        report_missing_ffmpeg("convert_to_mp3", "left as WAV at #{mp3_path.sub(/\.mp3\z/, ".wav")}")
         FileUtils.cp(wav_path, mp3_path.sub(/\.mp3\z/, ".wav"))
         true
       end
 
+      # Both ffmpeg fallbacks used to return quietly, so a host without ffmpeg
+      # served un-concatenated or unconverted audio with nothing logged anywhere
+      # — correct on a Mac, degraded on the VPS, indistinguishable from working.
+      def report_missing_ffmpeg(where, consequence)
+        Master::Ground::Swallow.log(
+          RuntimeError.new("ffmpeg not on PATH — #{consequence}"),
+          context: "Engines.#{where}", severity: :load_bearing
+        )
+      end
+
+      # Memoized: this is asked once per synthesized phrase, and each ask was a
+      # fork+exec of which(1).
       def ffmpeg?
-        system("which", "ffmpeg", out: File::NULL, err: File::NULL)
+        return @ffmpeg unless @ffmpeg.nil?
+
+        @ffmpeg = system("which", "ffmpeg", out: File::NULL, err: File::NULL) || false
       end
     end
   end
