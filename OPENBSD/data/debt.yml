@@ -72,19 +72,24 @@ open:
       keepenv stays on the root->root rule deliberately: it grants an attacker
       nothing they do not already have, and stripping it would remove the environment
       the outer dev->root hop just established from under the inner one.
-      SEQUENCING, as this entry warned: the repo file IS the live config, so it
-      reaches vm23 on the next 5-minute tick with no deploy. Two things make that
-      survivable. install_doas_conf_from_repo already validates after installing and
-      rolls back from a timestamped backup — but it only checked `doas id`, which
-      passes with an empty or wrong allowlist, so the net covered lockout and not the
-      risk this change actually carries. validate_doas.ksh now also asserts that an
-      allowlisted variable still crosses (validate_doas_passes_env), so a wrong list
-      rolls itself back within the tick. And vps_safety_gate.rb fails if keepenv ever
-      returns to the dev rule or if I_UNDERSTAND_DNS_WIPE leaves the allowlist.
-      NOT DONE: `doas -C /etc/doas.conf -u dev id` on the VM. SSH from the authoring
-      environment is publickey-denied, so the on-box check this entry asks for has not
-      been run by a human or an agent. Worst case is fail-closed and loud —
-      OPERATOR.sh refuses --stage-1 and names the variable to set.
+      INSTALLED + VALIDATED LIVE 2026-08-02. This entry's SEQUENCING assumption was
+      wrong: it claimed the repo file "reaches vm23 on the next 5-minute tick with no
+      deploy" via the auto-heal, so nothing else was needed. It never did — the live
+      /etc/doas.conf was verified 2026-08-02 to still be `permit nopass keepenv dev as
+      root`, i.e. the RCE was live in production the whole time while the repo believed
+      it fixed. The auto-heal that was supposed to install it (relayd-watchdog /
+      config-drift-check via validate_doas.ksh install) is itself a root-executes-
+      dev-checkout hole and has now been removed (see
+      root_dot_sources_dev_owned_repo_every_5min), so this file no longer auto-syncs at
+      all. The hardened doas.conf was installed by hand on vm23 via
+      `doas ksh validate_doas.ksh install <repo doas.conf> operator-manual`, which
+      backed up, installed, and passed validate_doas_works (dev->root AND
+      I_UNDERSTAND_DNS_WIPE still crosses). Confirmed live: dev rule is now the setenv
+      allowlist, keepenv removed from it, `doas id`/`doas zsh`/`doas rcctl` all work,
+      and master/brgen/amber/bsdports stayed healthy. keepenv remains on the root->root
+      rule by design. vps_safety_gate.rb pins the repo file. Going forward this file is
+      installed only by a deliberate root run (OPERATOR.sh or validate_doas.ksh
+      install), never a cron tick.
   - id: root_dot_sources_dev_owned_repo_every_5min
     tag: operator-priority
     summary: >
@@ -105,10 +110,22 @@ open:
       /tmp/root_crontab.$$ and fed it straight to crontab(1), and backup_priv.sh
       wrote the whole encrypted ~/priv archive to a second-granularity predictable
       /tmp path; both now mktemp in a root- or owner-only directory.
-      STILL OPEN: root continues to dot-source validate_doas.ksh and
-      stale_ci_cleanup.ksh from a dev-owned checkout every 5 minutes, which is the
-      root of the entry. Write access to either file is still root code execution
-      within one tick, independent of the staging path.
+      CLOSED 2026-08-02. The summary named resource_guard.sh, but that path was
+      already clean — it sources only the root-owned /usr/local/libexec copy of
+      stale_ci_cleanup.ksh, whose own heal_doas_conf was removed earlier. The two
+      real survivors were the root cron scripts relayd-watchdog (*/5) and
+      config-drift-check (*/15): both ran, as root, `ksh /home/dev/pub4/OPENBSD/
+      validate_doas.ksh install /home/dev/pub4/OPENBSD/etc/doas.conf` every tick —
+      root executing a dev-owned script and installing a dev-owned doas.conf, i.e.
+      the RCE this entry describes, plus a silent revert of any hand-hardening.
+      heal_doas_conf! was removed from both; the no-heal copies are installed to
+      /usr/local/bin on vm23. config-drift-check is back to a read-only detector.
+      Nothing root-run now reads or executes from /home/dev/pub4 on a timer.
+      Wrinkle this exposed: because that heal was the only would-be installer of
+      doas.conf and it was not actually working, the hardened doas.conf had never
+      gone live — closing this entry meant installing it by hand (see
+      doas_keepenv_is_a_root_rce). doas.conf now installs only on a deliberate
+      OPERATOR.sh / validate_doas.ksh run.
   - id: secrets_in_process_argv_and_world_readable_home
     tag: operator-priority
     summary: >
