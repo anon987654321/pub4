@@ -2521,19 +2521,23 @@ def lead_patch_allowlist(role)
   end
 end
 
-# The General MIDI programs that are a choir, a string section or a horn line.
+# The General MIDI programs that are a CHOIR. Not strings, not horns.
 #
-# Choir Aahs and Voice Oohs are literally that; 44 to 49 are the orchestral
-# strings and the harp; 60 to 62 are the horns. Held on a slow envelope, stacked
-# three or four deep, they are a church, and that is what the pads sounded like.
+# The first version of this list ran from 44 to 62 and took the string
+# ensembles, the harp and the french horn out with the choirs. That was an
+# overcorrection and it cost the thing it was protecting: strings are how a
+# chord becomes beautiful, and removing them left the pads with nothing to be
+# lush with. The complaint that followed -- no more beautiful chords -- was
+# caused by this line.
 #
-# Dilla used strings and voices constantly -- but sampled off records, arriving
-# with a room and a tape and a player attached. A general-MIDI string ensemble
-# has none of that. It is the sound of the preset, and it is the one texture
-# that pulls this engine away from a beat and toward library music.
+# What actually made the tracks sound like a church was two things together: a
+# literal Choir Aahs patch, and a nine-hundred-millisecond attack swelling under
+# it. The envelope was the larger half. With that fixed, strings are welcome.
 #
-# Set CHORAL_PADS=1 to allow them back.
-CHORAL_GM_PROGRAMS = [44, 45, 46, 47, 48, 49, 52, 53, 54, 60, 61, 62].freeze
+# So the list is now only the voices: Choir Aahs, Voice Oohs, Synth Voice, and
+# the named choir patches caught by the same programs. Set CHORAL_PADS=1 to
+# allow even those.
+CHORAL_GM_PROGRAMS = [52, 53, 54].freeze
 
 def choral_patch?(patch)
   CHORAL_GM_PROGRAMS.include?(patch[:program])
@@ -5476,8 +5480,24 @@ end
 # The returned entry claims the render's own tempo. That is not a fib: the flip
 # was assembled beat by beat at that tempo, so the varispeed stage downstream
 # has nothing left to correct and correctly does nothing.
+# Off by default, and the reason matters more than the switch.
+#
+# A flip cuts a record into pieces and plays a new line from them. That is
+# Dilla's method and it is right for the records he used, where a piece was
+# itself a musical unit -- a chord stab, a bass note, a horn hit. Cut those up
+# and reorder them and you get a new tune out of old parts.
+#
+# These chops are not that. They are flowing melodic passages off an Ethiopian
+# broadcast, and the reason they are worth having is the melody running through
+# them. Cutting a melody into sixteen fragments and reordering by pitch destroys
+# the one thing that made it beautiful; what comes back has the right notes in
+# the wrong order. Played straight, the loop is better, and the operator's
+# judgement on hearing both was blunt about it.
+#
+# So the loop plays, as it did. FLIP=1 for records where chopping is the point.
 def flip_loop_entry(entry, cfg, pads, n_bars)
-  return entry if ENV["FLIP"] == "0" || entry.nil? || !File.file?(entry[:path].to_s)
+  return entry unless ENV["FLIP"] == "1"
+  return entry if entry.nil? || !File.file?(entry[:path].to_s)
 
   tones = chord_pitch_classes(pads)
   return entry if tones.empty?
@@ -11482,7 +11502,7 @@ DEFAULT_RENDER_OUTPUT = File.join(OUTPUT_DIR, "beat.mp3")
 # How slow a chord is allowed to speak and to fade in this style, whatever a
 # progression preset asks for. Both are generous compared with a real Rhodes --
 # the point is to stop a swell, not to forbid sustain.
-DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 120).to_i
+DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 260).to_i
 DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 1400).to_i
 
 DILLA_STYLE_DEFAULTS = {
@@ -11507,8 +11527,8 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_VOICE" => "stack_soul",
   # Held pads; arps live on the lead stem (stream rotates LEAD_ARP_MODE).
   "PAD_ARP_MODE" => "held",
-  "PAD_ATTACK" => "25",
-  "PAD_RELEASE" => "700",
+  "PAD_ATTACK" => "90",
+  "PAD_RELEASE" => "1100",
   "PAD_LEGATO_VAR" => "1",
   "PAD_LAYERS" => "1",
   # Quieter choir so Rhodes/Prophet aren't buried under oohs.

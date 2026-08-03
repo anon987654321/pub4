@@ -311,12 +311,28 @@ module Outboard
   RACKS = {
     # What Donuts went through, as closely as this can be said: a console, then
     # the Crane Song compressor timed to the track, then the GML for the top.
-    donuts: %i[neve_80 hedd_triode stc8 gml_matte mono_bass],
+    #
+    # The triode is NOT in this rack, and the reason is worth keeping.
+    #
+    # On one instrument, second-harmonic distortion at -37 dB is warmth -- the
+    # octave above every note, which the ear files as tone. On a finished mix it
+    # is overdrive, because a mix is not one note: every pair of frequencies in
+    # it intermodulates through the same nonlinearity and produces sums and
+    # differences that belong to no note at all. Measured, this rack with the
+    # triode in it put 1.3 percent distortion on the master, on top of the
+    # SP-1200 and vinyl emulation already in the path, and the samples came back
+    # sounding like guitars through an overdriven amp. Without it: 0.2 percent,
+    # which is where a mastering chain belongs.
+    #
+    # The unit is still here and still measured. It belongs on a single voice.
+    donuts: %i[neve_80 stc8 gml_matte mono_bass],
     # Warmer and slower. The tape machine ahead of everything, so the console
     # colours what the tape already did.
-    tape_first: %i[tape_machine neve_80 hedd_tape stc8 gml_matte mono_bass],
+    # Same reasoning: hedd_tape is a saturator too, and two on a master is one
+    # too many. The tape machine ahead of the console carries the character.
+    tape_first: %i[tape_machine neve_80 stc8 gml_matte mono_bass],
     # Forward and bright, for tracks the drums lead.
-    forward: %i[api_console hedd_pentode stc8 gml_matte mono_bass],
+    forward: %i[api_console stc8 gml_matte mono_bass],
     # The console alone, for when the material arrives already finished.
     light: %i[neve_80 stc8],
   }.freeze
