@@ -9,7 +9,7 @@ FLUX_REPO = ENV.fetch("LORA_FLUX_MODEL", "black-forest-labs/FLUX.1-dev")
 FLUX_URL = "https://huggingface.co/#{FLUX_REPO}"
 TOKEN_PATHS = [
   File.expand_path("~/.cache/huggingface/token"),
-  File.expand_path("~/.huggingface/token")
+  File.expand_path("~/.huggingface/token"),
 ].freeze
 
 def read_token

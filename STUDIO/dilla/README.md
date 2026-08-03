@@ -7,8 +7,11 @@ masters, and writes an mp3 or wav. Everything runs locally through `ffmpeg` and
 
 Tests: `cd MASTER && bundle exec ruby -Itest test/test_dilla.rb`
 
+ENV knobs and the render path in detail: `ENV_AND_RENDER.md`. Operator scripts,
+including `redo_nine.sh`, live under `scripts/`.
+
 ```sh
-cd studio/dilla
+cd STUDIO/dilla
 ruby dilla.rb out.wav 18                 # one render, 18 bars
 TRACK=kembara_rindu ruby dilla.rb out.wav 18
 ruby dilla.rb                            # continuous stream

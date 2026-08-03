@@ -334,7 +334,7 @@ INLINE_SONIC_PROFILES = {
     "synth" => {
       "bpm" => 86, "swing" => 0.16, "pad_lowpass_hz" => 3400, "master_lowpass_hz" => 2800,
       "bass_sustain_bar" => 0.94, "bass_shelf_db" => 9, "vinyl_noise" => 0.06,
-      "texture" => "donuts_lowpass_warmth"
+      "texture" => "donuts_lowpass_warmth",
     },
   },
   flylo_camel: {
@@ -345,7 +345,7 @@ INLINE_SONIC_PROFILES = {
     "synth" => {
       "bpm" => 84, "swing" => 0.12, "pad_lowpass_hz" => 3600, "master_lowpass_hz" => 3600,
       "bass_sustain_bar" => 0.88, "bass_shelf_db" => 6, "vinyl_noise" => 0.08,
-      "sidechain_pump" => true, "texture" => "jazz_haze_sidechain"
+      "sidechain_pump" => true, "texture" => "jazz_haze_sidechain",
     },
   },
   madlib_eye: {
@@ -356,7 +356,7 @@ INLINE_SONIC_PROFILES = {
     "synth" => {
       "bpm" => 96, "swing" => 0.20, "pad_lowpass_hz" => 3200, "master_lowpass_hz" => 3200,
       "bass_sustain_bar" => 0.80, "bass_shelf_db" => 7, "vinyl_noise" => 0.10,
-      "crush_mix" => 0.35, "texture" => "sp303_vinyl_grit"
+      "crush_mix" => 0.35, "texture" => "sp303_vinyl_grit",
     },
   },
   slum_players: {
@@ -367,7 +367,7 @@ INLINE_SONIC_PROFILES = {
     "synth" => {
       "bpm" => 93, "swing" => 0.18, "pad_lowpass_hz" => 3300, "master_lowpass_hz" => 3000,
       "bass_sustain_bar" => 0.92, "bass_shelf_db" => 8, "vinyl_noise" => 0.07,
-      "texture" => "neo_soul_pocket"
+      "texture" => "neo_soul_pocket",
     },
   },
   samiyam_rounded: {
@@ -377,14 +377,14 @@ INLINE_SONIC_PROFILES = {
     "synth" => {
       "bpm" => 96, "swing" => 0.14, "pad_lowpass_hz" => 3000, "master_lowpass_hz" => 2800,
       "bass_sustain_bar" => 0.85, "bass_shelf_db" => 10, "vinyl_noise" => 0.05,
-      "texture" => "modern_dry_punch"
+      "texture" => "modern_dry_punch",
     },
   },
   bergen_akmd_local: {
     "harmonic" => { "engine_progression" => "warm_minor_vamp", "texture" => "bergen_night_rain" },
     "synth" => {
       "bpm" => 87, "swing" => 0.17, "pad_lowpass_hz" => 3100, "master_lowpass_hz" => 2700,
-      "bass_shelf_db" => 9, "vinyl_noise" => 0.08, "texture" => "akmd_lofi_mastering"
+      "bass_shelf_db" => 9, "vinyl_noise" => 0.08, "texture" => "akmd_lofi_mastering",
     },
   },
   chase_swayze_traffic: {
@@ -8734,7 +8734,6 @@ CHORD_PROGRESSIONS = {
   pedal_drone:     %w[Fm/C Bbm/C Abmaj7/C G7sus/C],
   eight_bar_soul_arc: %w[Fm9 Bbm9 Ebmaj9 Abmaj9 Dbmaj9 Cm7 Bb7sus Fm9],
 
-
   # ==========================================================================
   # Generic harmonic templates (2026-07-28). Named for the harmonic device they
   # demonstrate -- never for a song, artist or record. Each entry was checked
@@ -9066,7 +9065,6 @@ CHORD_PROGRESSIONS = {
   # Dorian has, plus the relative major leaning in. Modal, but not static.
   dorian_open_window: %w[Dm9 G13 Cmaj9 Am9 Dm9 Em9 G13 Dm9],
 }.merge(EXTENDED_PROGRESSIONS).freeze
-
 
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
@@ -11117,7 +11115,16 @@ def sonitex_config(track: nil)
   SONITEX_PRESETS.fetch(sonitex_resolve_preset(track:) || :classic)
 end
 
+# Report what the master bus actually did, not what the preset table resolves to.
+#
+# This asked sonitex_resolve_preset directly while master_bus_filters_enhanced
+# gates on sonitex_enabled?, so every sample-backed render printed "Sonitex
+# STX-1260 (donuts_warm)" in its summary while taking the dry branch and
+# applying none of it. The rule that keeps the emulation off old records was
+# working; the only way to check it said the opposite.
 def sonitex_label
+  return "dry" unless sonitex_enabled?
+
   preset = sonitex_resolve_preset
   return "dry" unless preset
   variant = analog_resolve_variant
@@ -12810,9 +12817,16 @@ STREAM_LEAD_ARP_ROTATION = %i[
   crystal_scatter erykah_dust gospel_lift ballad_bloom melodic_soul
 ].freeze
 
+# All 32 of LEAD_VOICE_PRESETS, not the 15 this used to name. capability_audit!
+# reported 17 defined-but-unreachable lead voices: a voice nothing rotates is a
+# voice no demo can play, and minimoog/supersaw/sitar/steelpan/brass are not
+# near-duplicates of what was already here. The first 15 keep their order so the
+# front of the rotation sounds as it did; the rest follow.
 STREAM_LEAD_VOICE_ROTATION = %w[
   soul_prophet flylo moog prophet neo_pluck glass vapor
   crystal acid soft ballad gospel erykah donuts cs
+  minimoog pluck neon yamaha vintage giga supersaw harmonica
+  guitar steel sitar world horn brass bass steelpan watermelon
 ].freeze
 
 STREAM_PAD_VOICE_ROTATION = %w[blend rhodes moog prophet].freeze
@@ -14219,6 +14233,8 @@ DEMO_PAD_ROTATION = %w[
   stack_soul yamaha stack_world ice giga_fm
   stack_rhodes neon supersaw_bed stack_prophet orchestral
   pulse stack_soul vintage_choir stack_rhodes
+  harmonica stack_vapor accordion stack_glass yamaha_solo
+  stack_soul giga_stack stack_prophet texture
 ].freeze
 DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
@@ -14255,8 +14271,14 @@ def capability_surfaces
     "chord progressions" => [CHORD_PROGRESSIONS.keys, demo_all_order],
     "lead voices" => [(defined?(LEAD_VOICE_PRESETS) ? LEAD_VOICE_PRESETS.keys : []),
                       STREAM_LEAD_VOICE_ROTATION],
-    "lead arp styles" => [(defined?(ARP_PATTERN_BUILDERS) ? ARP_PATTERN_BUILDERS.keys : []),
-                          STREAM_LEAD_ARP_ROTATION],
+    # LEAD_ARP_PRESETS, not ARP_PATTERN_BUILDERS. The rotation holds arp *modes*
+    # (flylo_spiral, soul_wash) and the builders are the low-level figures those
+    # modes draw from (up, euclidean, rosary) -- two vocabularies that share no
+    # key, so the old pairing reported 29 of 29 unreachable no matter what was
+    # rotated. The builders are reached at render time by arp_styles unions and
+    # rng sampling, which no rotation list can show.
+    "lead arp modes" => [(defined?(LEAD_ARP_PRESETS) ? LEAD_ARP_PRESETS.keys : []),
+                         STREAM_LEAD_ARP_ROTATION],
     "external kits" => [(defined?(EXTERNAL_DRUM_KITS) ? EXTERNAL_DRUM_KITS : []),
                         drum_rotation_full.map { |d| d[:kit] }],
     "sample loops" => [TRACK_SAMPLE_LOOPS.keys, demo_all_order],
@@ -14557,7 +14579,7 @@ def demo_all(bars_count = 12, destination = nil)
     manifest = DEMO_EACH_MANIFEST
     unless File.file?(manifest) && !force
       File.write(manifest, <<~HEAD)
-        # idx	title	slug	seed	bars	pad	lead	drums	pocket	kb
+        # idx  title  slug  seed  bars  pad  lead  drums  pocket  kb
         # title is ours and names the file. slug is the engine's internal name
         # for the progression -- pass it to TRACK= to render that piece again.
         # seed is the RENDER_SEED this take was rendered with. Re-roll a track by
@@ -16426,7 +16448,6 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
   events[:_groove_meta] = groove_meta
   events
 end
-
 
 # --- Sample-based drum engine (MPC one-shots + Ruby mixer) ---
 

@@ -128,18 +128,18 @@ if (log && window.MASTER_RUNTIME?.enhancements?.includes?.('chat_scroll_snap')) 
 
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
-  d.className = 'message ' + role;
+  d.className = `message ${role}`;
   d.tabIndex = 0;
   d.setAttribute('role', 'article');
-  d.setAttribute('aria-label', role + ' message');
+  d.setAttribute('aria-label', `${role} message`);
   const idx = log.children.length;
   if (idx > 0) {
     const stagger = Math.min(idx, 8) * 48;
-    d.style.animationDelay = stagger + 'ms';
+    d.style.animationDelay = `${stagger}ms`;
     d.dataset.enterStagger = String(stagger);
   }
   const now = new Date();
-  d.dataset.ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  d.dataset.ts = now.getHours().toString().padStart(2,'0') + `:${now.getMinutes}`().toString().padStart(2,'0');
   if (role === 'assistant') {
     const conf = parseFloat(document.body.dataset.confidence || '1');
     d.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
@@ -230,7 +230,7 @@ window._chatConfirmEnhance = (original, enhanced) => new Promise(resolve => {
   note.className = 'enhance-confirm';
   note.innerHTML =
     '<span class="enhance-arrow">\u2192</span> ' +
-    '<span class="enhance-text">' + enhanced.replace(/</g, '&lt;') + '</span> ' +
+    `<span class="enhance-text">${enhanced.replace}`(/</g, '&lt;') + '</span> ' +
     '<span class="enhance-yn">[y/n]</span>';
   log.appendChild(note);
   log.scrollTop = log.scrollHeight;
@@ -330,7 +330,7 @@ window._chatOnError = (reason = '') => {
 function getMsgText(msgEl) {
   const p = msgEl.querySelector('.msg-prompt')?.textContent || '';
   const b = msgEl.querySelector('.msg-body') || msgEl;
-  return (p + ' ' + (b.textContent || '')).trim();
+  return (`${p} ` + (b.textContent || '')).trim();
 }
 
 window._chatRememberReply = (text) => {

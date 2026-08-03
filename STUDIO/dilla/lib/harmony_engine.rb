@@ -49,13 +49,13 @@ module DillaHarmony
     "m" => "m9", "maj" => "maj9", "7" => "13", "m7" => "m9", "maj7" => "maj9",
     "Fm" => "Fm9", "Ab" => "Abmaj9", "Db" => "Dbmaj7", "Dbmaj7" => "Dbmaj9",
     "Bbm" => "Bbm7", "Cm" => "Cm7", "Dm" => "Dm9", "Gm" => "Gm9", "Am" => "Am9",
-    "Cmaj" => "Cmaj9", "Fmaj" => "Fmaj9", "Gmaj" => "Gmaj9", "Ebmaj7" => "Ebmaj9"
+    "Cmaj" => "Cmaj9", "Fmaj" => "Fmaj9", "Gmaj" => "Gmaj9", "Ebmaj7" => "Ebmaj9",
   }.freeze
 
   CONTRAST_VOICINGS = {
     quartal: :drop2, drop2: :rootless, rootless: :spread, cluster: :spread,
     spread: :quartal, drop3: :spread, so_what: :quartal, kenny_barron: :drop2,
-    bill_evans: :rootless
+    bill_evans: :rootless,
   }.freeze
 
   @last_progression_chords = nil

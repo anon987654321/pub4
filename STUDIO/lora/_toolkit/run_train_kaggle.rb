@@ -79,7 +79,7 @@ options = {
   # answers and prints which.
   secret: ENV.fetch("LORA_KAGGLE_SECRET", "HF_TOKEN").split(",").map(&:strip).reject(&:empty?),
   repo: ENV.fetch("PUB4_REPO", "https://github.com/anon987654321/pub4.git"),
-  branch: ENV.fetch("PUB4_BRANCH", "main")
+  branch: ENV.fetch("PUB4_BRANCH", "main"),
 }
 
 OptionParser.new do |parser|
@@ -325,11 +325,11 @@ def notebook_json(source)
       "execution_count" => nil,
       "metadata" => {},
       "outputs" => [],
-      "source" => source.lines
+      "source" => source.lines,
     }],
     "metadata" => {
       "kernelspec" => { "display_name" => "Python 3", "language" => "python", "name" => "python3" },
-      "language_info" => { "name" => "python" }
+      "language_info" => { "name" => "python" },
     },
     "nbformat" => 4,
     "nbformat_minor" => 5

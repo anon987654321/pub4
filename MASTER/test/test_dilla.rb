@@ -260,12 +260,12 @@ class TestDilla < Minitest::Test
     wide_result = eval_in_engine(<<~INNER)
       puts JSON.generate(order: stream_track_order.map(&:to_s))
     INNER
-  
+
     narrow = narrow_result.fetch("order")
     wide = wide_result.fetch("order")
     produced = narrow_result.fetch("produced")
     expected_narrow = narrow_result.fetch("rotation").select { |t| produced.include?(t) }
-  
+
     assert_equal expected_narrow, narrow, "MODAL_ROTATION=0 restores the Dilla-produced pool exactly"
     assert_equal "get_dis_money", wide.first, "the core still leads the widened rotation"
     assert_operator wide.length, :>, narrow.length, "widening admits the rest of the modal family"

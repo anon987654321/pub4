@@ -21,7 +21,9 @@
 # family, which is the only element that told these tracks apart.
 
 set -u
-cd "${0:A:h}"
+# The engine, the samples and ../../.ruby-version are all anchored to the dilla
+# root, so run from there rather than from scripts/.
+cd "${0:A:h}/.."
 
 export HARMONY_LEAD=1 MELODIC_LEAD=1 LEAD_ARP=0 LEAD_FORCE_ARP=0
 export BARS=${BARS:-16}

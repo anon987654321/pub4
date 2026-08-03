@@ -11,9 +11,9 @@ re-invent polish. Never raise lint baselines to silence new debt.
 
 Default scope for polish and product UI work:
 
-1. **brgen** — social shell, ambient chat, channels, Live/nearby  
-2. **amber** — luxury shell, feed compose, wardrobe CTAs  
-3. **MASTER web** — face chat (`/`) + mission control; embed host in brgen/amber  
+1. **brgen** — social shell, ambient chat, channels, Live/nearby
+2. **amber** — luxury shell, feed compose, wardrobe CTAs
+3. **MASTER web** — face chat (`/`) + mission control; embed host in brgen/amber
 
 Do not expand polish into bsdports or studio unless the task names them.
 Shared engine changes must keep all three hosts green (layout tokens, social

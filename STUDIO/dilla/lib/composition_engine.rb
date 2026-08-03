@@ -39,31 +39,31 @@ module DillaComposition
   PERFORMERS = {
     yancey: {
       name: "James Yancey", kick_lag_ms: 8, snare_early_ms: -18, hat_late_ms: 22,
-      velocity_spread: 0.14, gate_mul: 0.88, ghost_boost: 1.15
+      velocity_spread: 0.14, gate_mul: 0.88, ghost_boost: 1.15,
     },
     questlove: {
       name: "Questlove", kick_lag_ms: 2, snare_early_ms: -8, hat_late_ms: 6,
-      velocity_spread: 0.08, gate_mul: 0.95, ghost_boost: 1.35
+      velocity_spread: 0.08, gate_mul: 0.95, ghost_boost: 1.35,
     },
     chris_dave: {
       name: "Chris Dave", kick_lag_ms: 14, snare_early_ms: -12, hat_late_ms: 28,
-      velocity_spread: 0.18, gate_mul: 0.72, ghost_boost: 1.5
+      velocity_spread: 0.18, gate_mul: 0.72, ghost_boost: 1.5,
     },
     karriem: {
       name: "Karriem Riggins", kick_lag_ms: 5, snare_early_ms: -14, hat_late_ms: 12,
-      velocity_spread: 0.11, gate_mul: 0.9, ghost_boost: 1.25
+      velocity_spread: 0.11, gate_mul: 0.9, ghost_boost: 1.25,
     },
     glasper: {
       name: "Robert Glasper", kick_lag_ms: 4, snare_early_ms: -6, hat_late_ms: 10,
-      velocity_spread: 0.1, gate_mul: 1.08, ghost_boost: 0.95
+      velocity_spread: 0.1, gate_mul: 1.08, ghost_boost: 0.95,
     },
     herbie: {
       name: "Herbie Hancock", kick_lag_ms: 3, snare_early_ms: -4, hat_late_ms: 8,
-      velocity_spread: 0.09, gate_mul: 1.12, ghost_boost: 0.88
+      velocity_spread: 0.09, gate_mul: 1.12, ghost_boost: 0.88,
     },
     thundercat: {
       name: "Thundercat", kick_lag_ms: 10, snare_early_ms: -10, hat_late_ms: 18,
-      velocity_spread: 0.12, gate_mul: 0.82, ghost_boost: 1.1
+      velocity_spread: 0.12, gate_mul: 0.82, ghost_boost: 1.1,
     },
     dilla: { name: "Dilla default", kick_lag_ms: 6, snare_early_ms: -12, hat_late_ms: 14,
              velocity_spread: 0.1, gate_mul: 0.92, ghost_boost: 1.2 },
@@ -72,23 +72,23 @@ module DillaComposition
   GROOVE_DNA = {
     donuts: {
       kick_offset_ms: [0, 6, 12, 18, 24], hat_offset_ms: [8, 14, 20, 26],
-      swing: 61, ghost_density: 1.25, velocity_curve: [0.42, 0.52, 0.48, 0.58]
+      swing: 61, ghost_density: 1.25, velocity_curve: [0.42, 0.52, 0.48, 0.58],
     },
     fantastic_vol2: {
       kick_offset_ms: [0, 4, 10, 16], hat_offset_ms: [6, 12, 18],
-      swing: 58, ghost_density: 1.1, velocity_curve: [0.48, 0.55, 0.5, 0.6]
+      swing: 58, ghost_density: 1.1, velocity_curve: [0.48, 0.55, 0.5, 0.6],
     },
     endtroducing: {
       kick_offset_ms: [0, 8, 14], hat_offset_ms: [10, 18, 24],
-      swing: 54, ghost_density: 0.85, velocity_curve: [0.4, 0.46, 0.44, 0.5]
+      swing: 54, ghost_density: 0.85, velocity_curve: [0.4, 0.46, 0.44, 0.5],
     },
     madvillainy: {
       kick_offset_ms: [0, 5, 11, 20], hat_offset_ms: [7, 15, 22],
-      swing: 63, ghost_density: 1.4, velocity_curve: [0.5, 0.62, 0.55, 0.65]
+      swing: 63, ghost_density: 1.4, velocity_curve: [0.5, 0.62, 0.55, 0.65],
     },
     cosmogramma: {
       kick_offset_ms: [0, 10, 18, 26], hat_offset_ms: [12, 20, 28],
-      swing: 66, ghost_density: 1.15, velocity_curve: [0.44, 0.52, 0.5, 0.56]
+      swing: 66, ghost_density: 1.15, velocity_curve: [0.44, 0.52, 0.5, 0.56],
     },
   }.freeze
 

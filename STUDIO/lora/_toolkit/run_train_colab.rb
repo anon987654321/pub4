@@ -34,7 +34,7 @@ options = {
   sample_every: (ENV["LORA_COLAB_SAMPLE_EVERY"] || "500").to_i,
   repo: ENV.fetch("PUB4_REPO", "https://github.com/anon987654321/pub4.git"),
   branch: ENV.fetch("PUB4_BRANCH", "main"),
-  drive: true
+  drive: true,
 }
 
 OptionParser.new do |parser|
@@ -152,13 +152,13 @@ notebook = {
     cell("code", token_cell),
     cell("code", drive_cell(options)),
     cell("code", setup_cell(options)),
-    cell("code", train_cell(options))
+    cell("code", train_cell(options)),
   ],
   "metadata" => {
     "accelerator" => "GPU",
     "colab" => { "provenance" => [], "gpuType" => "T4" },
     "kernelspec" => { "display_name" => "Python 3", "name" => "python3" },
-    "language_info" => { "name" => "python" }
+    "language_info" => { "name" => "python" },
   },
   "nbformat" => 4,
   "nbformat_minor" => 0

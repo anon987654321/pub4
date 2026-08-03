@@ -268,7 +268,7 @@ function _quirkifyTts(text, voice, opts = {}) {
   if (r() < 0.05) {
     const mid = Math.floor(text.length * 0.4);
     const cut = text.indexOf(' ', mid);
-    if (cut > 0) text = text.slice(0, cut) + ' — *cough* — ' + text.slice(cut + 1);
+    if (cut > 0) text = text.slice(0, cut) + ` — *cough* — ${text.slice}`(cut + 1);
   }
   if (r() < 0.04) {
     const words = text.split(' ');
@@ -276,7 +276,7 @@ function _quirkifyTts(text, voice, opts = {}) {
     text = words.join(' ') + " — sorry, mouth full.";
   }
   if (r() < 0.03) {
-    text = "wait — wait. okay. okay. *breathe* — " + text.replace(/\./g, "...") + " — sorry, panicking.";
+    text = `wait — wait. okay. okay. *breathe* — ${text.replace}`(/\./g, "...") + " — sorry, panicking.";
   }
   if (r() < 0.18) {
     const fillers = ['uh, ', 'hmm, ', 'so, ', 'well, ', 'like, ', 'i mean, ', 'okay so, '];

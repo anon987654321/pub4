@@ -298,7 +298,7 @@ module DillaGroove
   # happening structurally.
   SECTION_JITTER_MUL = {
     breakdown: 1.35, development: 1.2, bridge: 1.2, intro: 1.15,
-    e_major_third_rise: 0.6, peak: 0.6, hook: 0.6, recapitulation: 0.7
+    e_major_third_rise: 0.6, peak: 0.6, hook: 0.6, recapitulation: 0.7,
   }.freeze
 
   def swing_jitter_ms(bpm, step, bar, role: nil, section: nil)
@@ -326,13 +326,13 @@ module DillaGroove
     kick: 1.0, kick_anchor: 1.0, kick_sync: 1.0,
     snare: 0.78, clap: 0.78,
     hat: 1.35, hat_down: 1.35, hat_up: 1.35, open: 1.35,
-    ghost: 0.6
+    ghost: 0.6,
   }.freeze
   ROLE_DRIFT_PHASE = {
     kick: 0.0, kick_anchor: 0.0, kick_sync: 0.0,
     snare: Math::PI * 0.6, clap: Math::PI * 0.6,
     hat: Math::PI * 1.3, hat_down: Math::PI * 1.3, hat_up: Math::PI * 1.3, open: Math::PI * 1.3,
-    ghost: Math::PI * 0.25
+    ghost: Math::PI * 0.25,
   }.freeze
 
   # Slow-oscillating timing drift applied on top of per-hit jitter — the

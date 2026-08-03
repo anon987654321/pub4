@@ -128,7 +128,7 @@ body[data-focus-mode="1"] .ui-status,
 body[data-focus-mode="1"] .face-controls,
 body[data-focus-mode="1"] #chat-shell,
 body[data-focus-mode="1"] #ascii-star,
-body[data-focus-mode="1"] 
+body[data-focus-mode="1"]
 #photo-button {
   min-width: 44px;
   min-height: 44px;

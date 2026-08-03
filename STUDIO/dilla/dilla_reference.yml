@@ -1,14 +1,17 @@
 # dilla_reference.yml — sourced material and quality gates for the Dilla
 # engine, pulled from documented interviews, track analysis, and producer
 # consensus (Dan Charnas "Dilla Time"; Ethan Hein analyses; forum/tutorial
-# consensus on MPC-era mixing). Loaded once at boot by dilla.rb:
-#   - documented_progressions merge into HARMONY_PROFILES (producer_dna.rb)
-#     as additive entries — existing named profiles (e.g. slum_players,
+# consensus on MPC-era mixing). Read by lib/, not by dilla.rb — two loaders,
+# each taking one section:
+#   - documented_progressions merge into HARMONY_PROFILES, loaded by
+#     lib/producer_dna.rb (see the load near CHORD_VOICINGS) as additive
+#     entries — existing named profiles (e.g. slum_players,
 #     chromatic_mediant_drift) are NOT overwritten, since some are original
 #     Dilla/FlyLo-inspired compositions rather than direct transcriptions.
-#   - loss_gates are hard reject thresholds checked before a take is
-#     promoted into project/promoted_profiles.json (see promote_progression_hook!
-#     in dilla.rb and DillaMaster.passes_loss_gates? in lib/master_heuristics.rb).
+#   - loss_gates are hard reject thresholds checked before a take is promoted
+#     into project/promoted_profiles.json, loaded by lib/master_heuristics.rb
+#     as REFERENCE_PATH and applied via DillaMaster.passes_loss_gates?, which
+#     dilla.rb calls at the stream and promotion sites.
 #
 # Chord symbols are limited to what DillaLofiMachine.chord_from_symbol can
 # parse (see CHORD_SUFFIXES / CHORD_VOICINGS in lib/producer_dna.rb) — a few

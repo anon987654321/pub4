@@ -45,10 +45,10 @@ refuses, because it cannot know which subject you meant.
 One entry point per subject. `./lora --help` lists the rest.
 
 ```sh
-studio/lora/ragnhild/lora --check      # HF gate, toolkit, dataset
-studio/lora/ragnhild/lora --train      # local MPS or a RunPod pod
-studio/lora/ragnhild/lora --generate   # sample from the newest checkpoint
-studio/lora/ragnhild/lora --all        # check, generate, postpro
+STUDIO/lora/ragnhild/lora --check      # HF gate, toolkit, dataset
+STUDIO/lora/ragnhild/lora --train      # local MPS or a RunPod pod
+STUDIO/lora/ragnhild/lora --generate   # sample from the newest checkpoint
+STUDIO/lora/ragnhild/lora --all        # check, generate, postpro
 ```
 
 ## Three train lanes

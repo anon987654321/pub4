@@ -413,7 +413,6 @@ module RadioChop
     4.downto(2) do |k|
       c = correlation_at(env, best_n * k)
       return { seconds: (best_n * k * ENV_WINDOW).round(3), correlation: c.round(3), multiple: k } \
-        if c && c >= best_c - MULTIPLE_MARGIN
     end
     { seconds: (best_n * ENV_WINDOW).round(3), correlation: best_c.round(3), multiple: 1 }
   end

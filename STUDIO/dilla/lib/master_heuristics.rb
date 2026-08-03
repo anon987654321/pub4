@@ -232,7 +232,7 @@ module DillaMaster
     ok = mid_ok && mud_ok && !harsh[:needs_notch]
     {
       ok:, mid_db: mid.round(2), low_mid_delta: low_mid.round(2),
-      harshness: harsh[:harshness], needs_notch: harsh[:needs_notch]
+      harshness: harsh[:harshness], needs_notch: harsh[:needs_notch],
     }
   end
 end

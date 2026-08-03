@@ -216,7 +216,7 @@ window._dillaBg = (() => {
     if (!playing) return;
     if (F_FACE_TTS?.muted) return;
     if (F_FACE_TTS?.playing) return;
-    if (F_FACE_TTS?.queue && F_FACE_TTS.queue.length >= 2) return;
+    if (F_FACE_TTS?.queue?.length >= 2) return;
     const line = PICKUP_LINES[Math.floor(Math.random() * PICKUP_LINES.length)];
     if (!line) return;
     try {

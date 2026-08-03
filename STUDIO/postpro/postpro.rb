@@ -728,7 +728,7 @@ module HD
   # Combined with the LoadError above, no run of this file has reached a single
   # preset since the freeze went in: film_curve is in 46 of the 49 chains, and
   # film_curve calls HD.apply.
-  CACHE = {}
+  CACHE = {}.freeze
 
   module_function
 
@@ -903,7 +903,7 @@ module Spectral
   # Combined with the LoadError above, no run of this file has reached a single
   # preset since the freeze went in: film_curve is in 46 of the 49 chains, and
   # film_curve calls HD.apply.
-  CACHE = {}
+  CACHE = {}.freeze
 
   module_function
 

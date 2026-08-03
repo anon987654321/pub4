@@ -189,20 +189,20 @@ ANTI_BEAUTIFICATION_NEGATIVE = "generic influencer face, overly young face, teen
 EXPRESSION_POOL = [
   "a calm neutral expression", "a slight natural smile", "a direct steady gaze",
   "mid-laugh candid expression", "a thoughtful downward glance",
-  "eyes closed, head slightly tilted", "an unguarded expression caught between two others"
+  "eyes closed, head slightly tilted", "an unguarded expression caught between two others",
 ].freeze
 POSE_POOL = [
   "facing camera directly", "three-quarter turn", "profile turn",
-  "looking over one shoulder", "leaning slightly forward", "turning away from the camera"
+  "looking over one shoulder", "leaning slightly forward", "turning away from the camera",
 ].freeze
 WARDROBE_POOL = [
   "wool coat", "simple knit sweater", "plain white shirt", "denim jacket",
-  "dark turtleneck", "oversized raincoat", "linen shirt, sleeves rolled", "heavy fisherman's jumper"
+  "dark turtleneck", "oversized raincoat", "linen shirt, sleeves rolled", "heavy fisherman's jumper",
 ].freeze
 BACKGROUND_POOL = [
   "plain studio backdrop", "fjord shoreline", "Bergen street corner", "cafe window",
   "mountain road", "empty car park at night", "wooden dock in rain",
-  "stairwell with a single window", "birch woodland"
+  "stairwell with a single window", "birch woodland",
 ].freeze
 # Coprime with each pool's length, so index * stride visits every entry before
 # repeating any. 1 for the first pool: the strides only need to differ from each

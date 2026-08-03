@@ -10,12 +10,12 @@ MASTER normally chooses it from natural language, so users do not need these
 commands. The CLI remains useful for diagnostics:
 
 ```sh
-ruby studio/repligen/repligen.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
-ruby studio/repligen/repligen.rb search flux --limit 100
-ruby studio/repligen/repligen.rb sync --limit 250
-ruby studio/repligen/repligen.rb stats
-ruby studio/repligen/repligen.rb capabilities
-ruby studio/repligen/repligen.rb vocab-check
+ruby STUDIO/repligen/repligen.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
+ruby STUDIO/repligen/repligen.rb search flux --limit 100
+ruby STUDIO/repligen/repligen.rb sync --limit 250
+ruby STUDIO/repligen/repligen.rb stats
+ruby STUDIO/repligen/repligen.rb capabilities
+ruby STUDIO/repligen/repligen.rb vocab-check
 ```
 
 Every example here said `MASTER/tools/repligen.rb` until 2026-07-30 — a path
@@ -31,7 +31,7 @@ composes onto it from named vocabularies, so a house style is a set of flags
 rather than a paragraph to remember:
 
 ```sh
-ruby studio/repligen/repligen.rb generate \
+ruby STUDIO/repligen/repligen.rb generate \
   --prompt "a fisherman on a dock" \
   --stock hp5 --lens 85mm --distance portrait --camera-height eye \
   --lighting rembrandt --weather drizzle --time-of-day blue_hour \
@@ -99,5 +99,5 @@ describes the subject, the crop, the camera height and the background — not th
 compiled prompt, which is how the image was made rather than what it is of.
 
 `--postpro PRESET` hands the finished file straight to
-`studio/postpro/postpro.rb`. The `capabilities` command emits the executable
+`STUDIO/postpro/postpro.rb`. The `capabilities` command emits the executable
 60-item Repligen/LoRA contract as JSON.

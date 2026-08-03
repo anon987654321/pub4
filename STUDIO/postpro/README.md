@@ -1,12 +1,12 @@
 # postpro
 
 Film emulation for stills — MASTER's image-grading media tool. Entry point:
-`studio/postpro/postpro.rb`.
+`STUDIO/postpro/postpro.rb`.
 
 ## Run
 
 ```sh
-ruby studio/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
+ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
 ```
 
 Run with no arguments for the interactive menu (presets, random effects, or a
@@ -25,14 +25,14 @@ code do, and neither announces it.
 None of these process an image; all take a second or less.
 
 ```sh
-ruby studio/postpro/postpro.rb --vocab-check           # are the tables consistent?
-ruby studio/postpro/postpro.rb --list-presets          # every preset and its chain
-ruby studio/postpro/postpro.rb --list-stocks
-ruby studio/postpro/postpro.rb --list-lenses
-ruby studio/postpro/postpro.rb --describe-preset noir
-ruby studio/postpro/postpro.rb --export-lut cinematic --output cinematic.cube
-ruby studio/postpro/postpro.rb --css-filter portrait
-ruby studio/postpro/postpro.rb --capabilities
+ruby STUDIO/postpro/postpro.rb --vocab-check           # are the tables consistent?
+ruby STUDIO/postpro/postpro.rb --list-presets          # every preset and its chain
+ruby STUDIO/postpro/postpro.rb --list-stocks
+ruby STUDIO/postpro/postpro.rb --list-lenses
+ruby STUDIO/postpro/postpro.rb --describe-preset noir
+ruby STUDIO/postpro/postpro.rb --export-lut cinematic --output cinematic.cube
+ruby STUDIO/postpro/postpro.rb --css-filter portrait
+ruby STUDIO/postpro/postpro.rb --capabilities
 ```
 
 `--vocab-check` is the one to run after touching any table. It verifies that
@@ -81,7 +81,7 @@ look, not for a checker.
 ## Config
 
 Reads `config.multimedia.postpro` from `master.json` (presets, defaults).
-Optional camera profiles load from `studio/postpro/multimedia/camera_profiles`;
+Optional camera profiles load from `STUDIO/postpro/multimedia/camera_profiles`;
 that directory does not exist in the repo today, and its absence is a warning
 rather than an error.
 
@@ -90,11 +90,11 @@ rather than an error.
 - `MASTER/web/app/services/image_presenter.rb` — web photo grading.
 - Rails apps via `Pub4::DeployPaths#postpro_script` (newsletter heroes, TV
   thumbnails); see `RAILS` `Shared::NewsletterVisuals`, brgen `PostproJob`.
-- `studio/repligen/repligen.rb --postpro PRESET` hands a fresh generation
+- `STUDIO/repligen/repligen.rb --postpro PRESET` hands a fresh generation
   straight here.
 
 Invoked programmatically through `Master::Io::ScriptDispatch` (tool name
-`"postpro"`), which resolves `studio/postpro/postpro.rb` and runs it from the
+`"postpro"`), which resolves `STUDIO/postpro/postpro.rb` and runs it from the
 tool's own directory. Natural-language routing goes through `Io::MediaIntent`
 (`/postpro`); it is a slash-command tool, not an LLM-native one (see
 `AGENTS.md`).

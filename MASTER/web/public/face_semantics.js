@@ -254,7 +254,7 @@ window.addEventListener('master:visual', (ev) => {
       mouthCells()[b + window.ParticleKernel.FIELD.arousal] = ex.arousal ?? (hi ? 1.0 : lo ? 0.3 : 0.7);
       if (hi || ex.breath_boost) State.breath = Math.min(1.6, (State.breath || 1.0) + (ex.breath_boost || 0.25));
 
-      const pitch = parseFloat(d.pitch || (d.raw && d.raw.pitch)) || 0;
+      const pitch = parseFloat(d.pitch || (d.raw?.pitch)) || 0;
       if (Math.abs(pitch) > 20) eyePool?.alive && (eyeCells()[b + window.ParticleKernel.FIELD.confidence] = 0.6);
     }
 
@@ -293,7 +293,7 @@ setInterval(() => {
 }, 420);
 
 window.addEventListener('tts:anticipate', (ev) => {
-  const ex = (ev.detail && ev.detail.expression) || {};
+  const ex = (ev.detail?.expression) || {};
   if (!mouthPool || !eyePool) return;
   boostEyePool(0.15);
   for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {

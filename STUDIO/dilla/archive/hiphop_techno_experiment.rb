@@ -170,7 +170,7 @@ module Theory
   NOTE_TO_PC = {
     'C' => 0, 'C#' => 1, 'DB' => 1, 'D' => 2, 'D#' => 3, 'EB' => 3, 'E' => 4,
     'F' => 5, 'F#' => 6, 'GB' => 6, 'G' => 7, 'G#' => 8, 'AB' => 8, 'A' => 9,
-    'A#' => 10, 'BB' => 10, 'B' => 11
+    'A#' => 10, 'BB' => 10, 'B' => 11,
   }.freeze
   PC_NAMES_FLAT = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
   MAJOR_SCALE_SEMITONES = [0, 2, 4, 5, 7, 9, 11].freeze
@@ -187,20 +187,20 @@ module Theory
     alt7: [0, 4, 10, 13, 15],
     # maj7 with the 11th sharped instead of natural — Lydian color,
     # used by the real "industrial_techno_dilla" progression below.
-    maj7sharp11: [0, 4, 7, 11, 18]
+    maj7sharp11: [0, 4, 7, 11, 18],
   }.freeze
   CHORD_SUFFIX = {
     maj: '', min: 'm', sus2: 'sus2',
     maj7: 'maj7', maj9: 'maj9', add9: 'add9', six: '6', m7: 'm7', m9: 'm9', m11: 'm11',
     dom7: '7', dom7sus4: '7sus4', dom9: '9', sus9: 'sus9', dom7sharp9: '7#9', m7b5: 'm7b5', dim7: 'dim7',
-    alt7: '7alt', maj7sharp11: 'maj7#11'
+    alt7: '7alt', maj7sharp11: 'maj7#11',
   }.freeze
 
   PROGRESSIONS = {
     ii_V_I: [[2, :m7], [5, :dom7], [1, :maj9]],
     vi_circle: [[1, :maj9], [6, :m9], [2, :m7], [5, :dom7sus4]],
     pop_jazz: [[1, :maj9], [6, :m7], [4, :maj7], [5, :dom7]],
-    chromatic_drift: [[1, :maj9], ['b7', :maj7], [4, :maj7], [4, :m7]]
+    chromatic_drift: [[1, :maj9], ['b7', :maj7], [4, :maj7], [4, :m7]],
   }.freeze
 
   ABSOLUTE_PROGRESSIONS = {
@@ -229,7 +229,7 @@ module Theory
     industrial_techno_dilla: { bpm: 130, voicing: :spread, fx: :sp1200_authentic,
                                 chords: [[9, :m9], [2, :m7b5], [4, :m7], [5, :maj7sharp11]] },
     erykah_badu_on_and_on: { bpm: 92, voicing: :spread, fx: :dilla_butter,
-                              chords: [[11, :m7], [7, :maj7], [11, :m7], [7, :maj7]] }
+                              chords: [[11, :m7], [7, :maj7], [11, :m7], [7, :maj7]] },
   }.freeze
 
   def self.pitch_class(name)

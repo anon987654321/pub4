@@ -114,7 +114,7 @@ Full DNA is large (mix bus dB, harmonic stem weights). Prefer
 ## One-shot render path
 
 ```sh
-cd studio/dilla
+cd STUDIO/dilla
 TRACK=get_dis_money PROGRESSION=get_dis_money ruby dilla.rb dilla /tmp/beat.wav 12
 ```
 
@@ -160,7 +160,7 @@ sidechain amix → sonitex → analog → heuristics → loudnorm
 ## Full playlist demo
 
 ```sh
-cd studio/dilla
+cd STUDIO/dilla
 SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 # resume skips existing parts; DEMO_FORCE=1 re-renders all
 # DEMO_TRACK_TIMEOUT=150 DEMO_ALBUM_NORM=1
@@ -171,7 +171,7 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 ## Provenance debugging
 
 ```sh
-cd studio/dilla
+cd STUDIO/dilla
 SPEAK=0 BARS=4 ruby -e '
   load "dilla.rb"
   apply_best_defaults!
