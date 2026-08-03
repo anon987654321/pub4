@@ -356,7 +356,7 @@ typography:
   families:
     # Was "Helvetica, Arial, system-ui, sans-serif" -- didn't match either
     # design_rules.yml's stated default (Inter) or what the RAILS apps
-    # actually ship (shared/_x_base.scss's real stack, below). Synced to
+    # actually ship (shared/_dialect_tokens.scss's real stack, below). Synced to
     # the real shipped stack rather than picking a third, different value.
     sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
     mono: "ui-monospace, Menlo, Consolas, monospace"
@@ -390,7 +390,12 @@ nielsen_heuristics:
   - { id: 10, name: help_and_documentation,            rule: "context-sensitive; concrete examples; searchable" }
 
 accessibility:
-  target: wcag_2_2_aaa
+  # Body text earns AAA in both modes (12.51:1 dark, 16.26:1 light, measured
+  # 2026-08-03). The secondary/accent tier does not, and saying "AAA" flatly made
+  # a blanket claim the palette has never met. The live number is a ceiling in
+  # RAILS/gates/data/css_budget.yml (contrast_below_aa / contrast_below_aaa) so it
+  # falls rather than drifts; design_rules.yml keeps 7.0 as the target it moves toward.
+  target: wcag_2_2_aa_with_aaa_body_text
   requirements:
     - keyboard_navigation_complete
     - focus_visible_always

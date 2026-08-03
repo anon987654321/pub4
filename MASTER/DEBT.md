@@ -13,7 +13,9 @@ This file separates known debt from ordinary TODO work.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **0 findings as of 2026-08-01** (was 2 earlier that day,
+`rake selftest` reports **0 findings as of 2026-08-03** (1 earlier that day —
+`[DENSITY] Pub4::CheckRunner#run is 21 code lines`, closed by splitting the
+announce and report halves out of it; 0 on 2026-08-01, was 2 earlier that day,
 0 on 2026-07-28, 7 on 2026-07-27, 6 on 2026-07-26; the earlier "clean since
 2026-07-16" claim in `START_HERE.md`/`AGENTS.md` was stale, so treat this number
 as true only for the commit that carries it).
@@ -67,11 +69,26 @@ Triage each new finding as:
 - rule threshold too strict
 - known debt to leave alone during unrelated work
 
-### Spine Ceiling Is Over, And The Raise Budget Is Spent
+### Spine Ceiling — Closed 2026-08-03 By Deletion
 
-**operator-priority** — `rake lint:spine` is red on the working tree as of
-2026-08-02: `lib/` is 47,837 lines against a ceiling of 47,660 (+177). Naming who
-grew it, since the point of the ratchet is that this is legible:
+`lib/` had reached 48,162 against a 47,660 ceiling (+502) with both raises spent.
+Six files carried 656 lines that nothing referenced — no constant, no path, no
+entry in `autoload.yml`, `load.yml`, the gemspec or the Rakefile:
+`io/text_hygiene.rb`, `voice/visual_runtime.rb`, `pub4/status_report.rb`,
+`ground/evidence_graph.rb`, `cli/orchestration/event_sequence_orchestrator.rb`,
+`review/scan/unit_segmenter.rb`. Deleting them cleared the breach without
+touching a threshold, and the ratchet cleared the raise log, so the allowance is
+earned back rather than spent.
+
+Two things worth carrying forward. The reference sweep matched this file's own
+warning below: the *first* orphan list, built from filename globs, was mostly
+wrong; the one that held matched each file's innermost constant across
+`lib/ core/ bin/ test/ spec/ web/ tools/ data/`. And ratcheting mid-session is a
+trap — recording the new low at 47,506 immediately blocked the +10 that closing
+the `[DENSITY]` finding required. Ratchet once, at the end.
+
+The historical accounting of who grew it, kept because the ratchet exists to make
+this legible:
 
 - ~98 lines from work already uncommitted in the tree before this pass — the
   `AstFixer` split (`ast_fixer.rb` −128, new `ast_fixer/syntax_transforms.rb` +162)
@@ -81,12 +98,12 @@ grew it, since the point of the ratchet is that this is legible:
   comments, since trimmed to a sentence each with the full accounting moved into
   this file.
 
-`data/spine.yml` says the next raise fails the check: `consecutive_raises_allowed:
-2`, and both entries are used (2026-07-31 and 2026-08-01). Its own note says what to
-do about it — "if it is raised again without `lib/` ever falling back, the honest
-conclusion is that 'the spine never grows' is not the invariant anyone is holding,
-and the number should be replaced by one that is." That is a decision with a
-sponsor, not a ceiling edit, so no agent should grant it.
+The rule that made this end in a deletion rather than a ceiling edit:
+`data/spine.yml` sets `consecutive_raises_allowed: 2` and both entries were used
+(2026-07-31, 2026-08-01), so raising was refused. Its own note says why — "if it
+is raised again without `lib/` ever falling back, the honest conclusion is that
+'the spine never grows' is not the invariant anyone is holding". Keep that
+refusal: a raise is a decision with a sponsor, not a ceiling edit.
 
 Worth recording alongside: `lint:spine` counts every line in `lib/**/*.rb`,
 comments included, while `[DENSITY]` was deliberately changed on 2026-07-28 to count
@@ -211,9 +228,12 @@ the last two are the autofixer that repairs bare rescues flagging its own source
 
 **Inert law and config**
 
-Roughly 28 of `data/limits.yml`'s 39 top-level keys have no reader, and the
-generic accessor `workflow_rule(key)` has zero call sites — ~70% of 794
-lines of Tier-1 "law" is decoration. **Still open.**
+`data/limits.yml` has 11 top-level keys and 94 second-level; **44 of the 94 have
+no reader**, and the whole 29-key `guidance:` block is among them. The generic
+accessor `workflow_rule(key)` still has exactly one occurrence — its own
+definition. **Still open.** (Re-measured 2026-08-03; the earlier "28 of 39
+top-level" counted a shape the file no longer has, so the fraction was right and
+the denominator was not.)
 
 Three named instances closed 2026-08-01, each differently, and the difference is
 the interesting part:

@@ -1,4 +1,8 @@
 schema: 1
+# Reverse of the integrity check: registered scan rules that no principle claims.
+# rules.yml declares this direction as law; `rake lint:principle_trace` holds it
+# to a ceiling that only falls. Measured 2026-08-03: 101 of 181.
+rule_trace_ceiling: 101
 version: v110.0-restored
 source: merged master.yml fossil → MASTER runtime principle_map
 clusters:

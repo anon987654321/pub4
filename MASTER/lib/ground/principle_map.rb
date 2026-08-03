@@ -53,6 +53,20 @@ module Master
         findings
       end
 
+      # The reverse of #integrity. rules.yml declares that every registered rule
+      # traces back to a principle; SelfTest only ever checked principle -> rule,
+      # so it reported 0 while this direction stood at 101. Gated by
+      # `rake lint:principle_trace` against a ratcheting ceiling, not a zero the
+      # repo has never met.
+      def untraced_rules(registered_rule_ids:)
+        mapped = principles.each_value.flat_map { |entry| entry.rule_ids.map { |id| id.to_s.upcase } }.to_set
+        Array(registered_rule_ids).map { |id| id.to_s.upcase }.uniq.reject { |id| mapped.include?(id) }.sort
+      end
+
+      def rule_trace_ceiling
+        @data["rule_trace_ceiling"]
+      end
+
       def summary_line
         c = covered.size
         g = gaps.size

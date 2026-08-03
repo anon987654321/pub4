@@ -35,30 +35,40 @@ module Pub4
     SLOW_STEP_FRACTION = 0.6
 
     def run(name, *cmd, env: {})
-      print "#{@prefix}: #{name.ljust(22)} " unless @quiet
-      $stdout.flush unless @quiet
+      announce(name)
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       out, status = capture(env, *cmd)
       elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
       ok = status.success?
       @results << Result.new(name:, success: ok, output: out)
-      if @quiet
-        warn "#{@prefix}: #{name} #{ok ? 'ok' : 'fail'}"
-      else
-        puts(ok ? "ok" : "fail")
-      end
-      if ok && elapsed > @timeout * SLOW_STEP_FRACTION
-        warn format(
-          "%s: %s took %ds of a %ds budget — raise MASTER_CHECK_TIMEOUT or split the step " \
-          "before it starts failing on a busy machine",
-          @prefix, name, elapsed.round, @timeout
-        )
-      end
+      report(name, ok, elapsed)
       warn out if !out.empty? && (!ok || ENV["CHECK_VERBOSE"] == "1")
       ok
     end
 
     private
+
+    def announce(name)
+      return if @quiet
+
+      print "#{@prefix}: #{name.ljust(22)} "
+      $stdout.flush
+    end
+
+    def report(name, ok, elapsed)
+      if @quiet
+        warn "#{@prefix}: #{name} #{ok ? 'ok' : 'fail'}"
+      else
+        puts(ok ? "ok" : "fail")
+      end
+      return unless ok && elapsed > @timeout * SLOW_STEP_FRACTION
+
+      warn format(
+        "%s: %s took %ds of a %ds budget — raise MASTER_CHECK_TIMEOUT or split the step " \
+        "before it starts failing on a busy machine",
+        @prefix, name, elapsed.round, @timeout
+      )
+    end
 
     def capture(env, *cmd)
       output = +""

@@ -4,7 +4,7 @@
 # and nothing measured it,
 # so lib/ gained 8,022 lines in the three weeks after core/ landed while core/
 # gained none. An invariant nothing measures is decoration -- the same critique
-# DEBT.md makes of data/limits.yml, where ~28 of 39 top-level keys have no
+# DEBT.md makes of data/limits.yml, where 44 of 94 second-level keys have no
 # reader. This file is the reader.
 #
 # The ceiling only ever goes down. When lib/ shrinks, run `rake lint:spine
@@ -41,17 +41,26 @@ spine:
   # again without lib/ ever falling back, the honest conclusion is that "the
   # spine never grows" is not the invariant anyone is holding, and the number
   # should be replaced by one that is.
-  lib_ceiling: 47660
+  # RATCHETED 2026-08-03, 47660 -> 47530. lib/ had reached 48,162 (+502) with the
+  # raise allowance spent, so the breach was closed by deleting 656 lines of code
+  # nothing referenced -- six files, verified against every constant across lib/
+  # core/ bin/ test/ spec/ web/ tools/ data/ before removal (DEBT.md, "Spine
+  # Ceiling"). A 632-line net fall for the session.
+  #
+  # Recorded once, at the end. An intermediate ratchet to 47,506 was taken while
+  # the tree still carried an open [DENSITY] finding, and it immediately blocked
+  # the +10 that closing that finding required -- the ratchet had locked in a
+  # state that was not actually clean. Ratchet after the work settles, not during.
+  lib_ceiling: 47530
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
-  raised:
-    - "2026-07-31: 47316 -> 47583, scan/fix/review tooling, not absorbable"
-    - "2026-08-01: 47583 -> 47660, tts_supervisor process-leak fix (3481e2638)"
-  # How many raises may stand before lint:spine refuses another. The allowance is
-  # spent: at two entries above, the next raise fails the check. A genuine
-  # ratchet down (`rake lint:spine RATCHET=1`) clears the log and earns the
-  # budget back, so this is a budget rather than a countdown.
+  raised: []
+  # How many raises may stand before lint:spine refuses another. The allowance was
+  # spent on 2026-08-01 and the 2026-08-03 ratchet cleared the log, which is the
+  # mechanism working: a genuine fall earns the budget back, so this is a budget
+  # rather than a countdown. It also settled the +502 breach by deletion instead
+  # of by a third raise, which is the outcome the refusal exists to force.
   #
   # This exists because the warning above was ignorable, and was ignored twice by
   # the same argument both times — that the growth was justified. It usually is.

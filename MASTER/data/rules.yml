@@ -187,7 +187,10 @@ self_test:
     ABSTRACTION: no class > god_class threshold in lib/
     DENSITY: no method > long_method threshold in lib/
     KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
-    PRINCIPLE_MAP: every registered rule id traces to a data/principle_map.yml entry
+    PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
+      rule, and every covered principle names at least one. The reverse direction —
+      every registered rule traced by some principle — is `rake lint:principle_trace`,
+      a ratcheting ceiling, because it has never been zero.
   fail_action: publish self_violation event; refuse autoloop fixes that don't restore
     the law
 veto_patterns:
