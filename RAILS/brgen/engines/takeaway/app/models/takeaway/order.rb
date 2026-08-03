@@ -26,6 +26,7 @@ class Takeaway::Order < ApplicationRecord
 
   before_validation { self.status ||= "pending" }
   validate :status_transition_allowed, on: :update
+  validate :meets_minimum_order, on: :create
 
   scope :active, -> { where.not(status: TERMINAL_STATUSES) }
   scope :recent, -> { order(created_at: :desc) }
@@ -129,6 +130,21 @@ class Takeaway::Order < ApplicationRecord
 
   def amount_display(cents)
     format("%.2f NOK", cents.to_i / CENTS_PER_KRONE)
+  end
+
+  # The restaurant advertises a minimum-order threshold (shown as a chip on its
+  # page); before this, checkout ignored it and let a 30-kr order through against
+  # a 150-kr minimum. Read items in memory (like calculate_totals!) so this holds
+  # during create-with-build under strict loading; `restaurant` is the in-memory
+  # object the controller assigned, not a lazy DB read.
+  def meets_minimum_order
+    min = restaurant&.min_order_cents.to_i
+    return if min <= 0
+
+    sub = order_items.target.sum { |oi| oi.unit_price_cents.to_i * oi.quantity.to_i }
+    return if sub >= min
+
+    errors.add(:base, "Minimum order for #{restaurant.name} is #{restaurant.min_order_display} — your subtotal is #{amount_display(sub)}.")
   end
 
   def status_transition_allowed

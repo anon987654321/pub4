@@ -105,10 +105,38 @@ module Shared
         env["PROGRESSION"] = track
       end
       cmd = [RbConfig.ruby, script.to_s, "dilla", output.to_s, bars.to_s]
-      out, err, status = Open3.capture3(env, *cmd)
-      log("dilla stdout: #{out.lines.last.to_s.strip}") if out.to_s.strip != ""
-      log("dilla stderr: #{err.lines.last.to_s.strip}") if !status.success? && err.to_s.strip != ""
-      status.success?
+      run_with_timeout(env, cmd)
+    end
+
+    # dilla has hung indefinitely before, pinning a Solid Queue worker forever with
+    # the sketch stuck "rendering". popen3 + a wait timeout frees the worker AND kills
+    # the child (capture3 wrapped in Timeout would leave it running). Reader threads
+    # avoid a pipe-buffer deadlock.
+    def run_with_timeout(env, cmd)
+      require "timeout"
+      seconds = Integer(ENV.fetch("DILLA_SH_TIMEOUT", "900"))
+      Open3.popen3(env, *cmd) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+        out_reader = Thread.new { stdout.read }
+        err_reader = Thread.new { stderr.read }
+        # On the timeout path popen3 closes these pipes out from under the readers,
+        # which would raise a stray IOError — we're abandoning that output anyway.
+        out_reader.report_on_exception = false
+        err_reader.report_on_exception = false
+        begin
+          status = Timeout.timeout(seconds) { wait_thr.value }
+        rescue Timeout::Error
+          Process.kill("TERM", wait_thr.pid) rescue nil
+          [out_reader, err_reader].each(&:kill)
+          log("dilla render timed out after #{seconds}s — killed pid #{wait_thr.pid}")
+          return false
+        end
+        out = out_reader.value.to_s
+        err = err_reader.value.to_s
+        log("dilla stdout: #{out.lines.last.to_s.strip}") if out.strip != ""
+        log("dilla stderr: #{err.lines.last.to_s.strip}") if !status.success? && err.strip != ""
+        status.success?
+      end
     end
 
     def log(message)

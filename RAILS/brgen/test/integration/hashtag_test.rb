@@ -30,4 +30,26 @@ class HashtagTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "#oslotest"
   end
+
+  test "trending ranks by recent taggings, not all-time usage" do
+    ActsAsTenant.with_tenant(@city) do
+      # `stale` has the higher all-time usage_count, but its taggings are old;
+      # `fresh` was used less overall but all within the trending window. Real
+      # trending must surface `fresh` first and drop the purely-stale tag.
+      stale = Hashtag.create!(name: "staletag", usage_count: 99)
+      fresh = Hashtag.create!(name: "freshtag", usage_count: 2)
+      cold  = Hashtag.create!(name: "coldtag", usage_count: 50)
+
+      post = Post.create!(user: @user, title: "t", content: "body")
+      Tagging.create!(hashtag: fresh, taggable: post) # within window (created now)
+      Tagging.create!(hashtag: fresh, taggable: post)
+      old = Tagging.create!(hashtag: stale, taggable: post)
+      old.update_column(:created_at, 30.days.ago)
+      Tagging.create!(hashtag: cold, taggable: post).update_column(:created_at, 30.days.ago)
+
+      names = Hashtag.trending.limit(8).map(&:name)
+      assert_equal "freshtag", names.first, "recently-used tag must lead trending"
+      assert_not_includes names, "coldtag", "a tag with only stale taggings is not trending"
+    end
+  end
 end
