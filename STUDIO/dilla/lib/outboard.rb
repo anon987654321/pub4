@@ -276,9 +276,11 @@ module Outboard
   # Variable-mu units are slow and gentle and the ratio rises with how hard they
   # are hit, so they flatter a mix rather than control it. Used here as glue,
   # never as a limiter.
+  # knee maxes at 8 in this build, not 12. A rejected value fails the WHOLE
+  # chain, so the glue rack rendered nothing at all until this was clamped.
   def fairchild670(threshold: -20, ratio: 1.8)
     "acompressor=threshold=#{threshold}dB:ratio=#{ratio}:attack=25:release=400:" \
-      "knee=12:detection=rms:makeup=1.1"
+      "knee=8:detection=rms:makeup=1.1"
   end
 
   # ------------------------------------------------- Roland RE-201 Space Echo
@@ -374,6 +376,27 @@ module Outboard
     forward: %i[api_console stc8 gml_matte mono_bass],
     # The console alone, for when the material arrives already finished.
     light: %i[neve_80 stc8],
+
+    # Three racks that exist so the compressors are reachable. They were built
+    # and measured and then put in no rack and given no other caller, which is
+    # this codebase's most repeated defect and was worth fixing on its own terms.
+    #
+    # GLUE. A variable-mu limiter flatters a mix rather than controlling it --
+    # slow, gentle, and its ratio rises with how hard it is hit. The Fairchild
+    # before the console rather than after, so the desk colours something already
+    # sitting together.
+    glue: %i[fairchild670 neve_80 gml_matte mono_bass],
+
+    # SMOOTH. The LA-2A has no attack control because a light bulb decides its
+    # timing, and the result is heavy compression you do not hear working. For
+    # material with a wide dynamic range, where the STC-8's tempo pump would be
+    # the wrong kind of audible.
+    smooth: %i[neve_80 la2a pultec_air gml_matte mono_bass],
+
+    # SNAP. The 1176 catches the front of a transient in microseconds, which is
+    # what makes a drum bus sound like a record. Paired with the API, since both
+    # are the fast, forward end of the collection.
+    snap: %i[api_console fet1176 hedd_pentode gml_matte mono_bass],
   }.freeze
 
   DEFAULT_RACK = :donuts
@@ -396,6 +419,12 @@ module Outboard
       when :api_console then api_console
       when :tape_machine then tape_machine
       when :mono_bass then mono_bass
+      when :la2a then la2a
+      when :fet1176 then fet1176
+      when :fairchild670 then fairchild670
+      when :pultec_air then pultec_air
+      when :pultec_low then pultec_low
+      when :space_echo then space_echo
       else
         missing&.call(unit)
         nil
