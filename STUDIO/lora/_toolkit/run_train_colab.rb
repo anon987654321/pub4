@@ -95,8 +95,16 @@ def setup_cell(options)
                         "#{options[:repo]}", "/content/pub4"], check=True)
     else:
         subprocess.run(["git", "-C", "/content/pub4", "pull", "--ff-only"], check=True)
-    print(subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv"],
-                         capture_output=True, text=True).stdout)
+    # Runtime type is a menu item nobody remembers, and a CPU runtime does not
+    # announce itself — it just trains at a rate that never finishes. On Kaggle
+    # the equivalent oversight cost an hour before anything said why, so this
+    # asserts rather than prints.
+    gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+                         capture_output=True, text=True)
+    if gpu.returncode != 0 or not gpu.stdout.strip():
+        raise SystemExit("warn: no GPU on this runtime, so training would never finish. "
+                         "fix: Runtime -> Change runtime type -> T4 GPU, then Run all again.")
+    print("ok: GPU", gpu.stdout.strip())
   PYTHON
 end
 
