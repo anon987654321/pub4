@@ -106,12 +106,18 @@ OPENBSD/var/nsd/zones/master/*
 studio/dilla/renders/
 studio/dilla/demo*.wav
 studio/dilla/demo*.mp3
-# `demo-each` writes the catalogue one mp3 per track into the dilla root, named
-# NN_slug.mp3, to be played and pruned in place. The audio is regenerable;
-# demo_manifest.tsv is not -- it records which seed produced each take, which is
-# the whole point of rendering them separately, so it stays tracked for the same
-# reason samples/dug/provenance.json does.
-studio/dilla/[0-9][0-9]_*.mp3
+# `demo-each` writes the catalogue one mp3 per track into the dilla root as
+# NN_title.mp3. These are TRACKED, against the rule above that generated audio
+# is not, and the exception is deliberate: this set IS the current demo -- the
+# thing you send someone, and the thing the next change gets compared against --
+# and a demo that exists on one machine can serve neither purpose.
+#
+# They are small enough to justify it. Eight tracks at 12-16 bars is under 10 MB,
+# against the 508 MB the full-catalogue concat ran to, which is why demo*.wav
+# and demo*.mp3 two lines up stay ignored.
+#
+# Prune freely: re-running demo-each replaces them, and demo_manifest.tsv beside
+# them records the seed, the engine and the settings behind each take.
 studio/dilla/check_*.wav
 studio/dilla/dilla_beat_live*.mp3
 

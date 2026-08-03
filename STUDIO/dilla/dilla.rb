@@ -13578,6 +13578,30 @@ DEMO_TITLE_SECOND = %w[
   wander watch weather window
 ].freeze
 
+# Is this slot a techno track or a hip-hop one?
+#
+# The engine has two renderers now and a demo that only ever shows one of them
+# is only half a demo. Which slot gets which is decided by a coin flip -- but a
+# SEEDED one, keyed on the track name and the demo seed, so the same catalogue
+# comes out the same way twice and a file you kept still matches its manifest
+# row. Random at render time would mean re-running the demo silently reshuffled
+# what you had already listened to.
+#
+# DEMO_TECHNO_SHARE is the proportion, defaulting to a third: enough that a run
+# of eight lands two or three of them, few enough that the demo still reads as a
+# catalogue of the progressions rather than a techno set with interruptions.
+# 0 renders everything as hip-hop, 1 as techno.
+def demo_techno_share = ENV.fetch("DEMO_TECHNO_SHARE", "0.34").to_f.clamp(0.0, 1.0)
+
+def demo_techno_slot?(idx, slug)
+  share = demo_techno_share
+  return false if share <= 0.0
+  return true if share >= 1.0
+
+  seed = stable_hash("techno:#{slug}") + (ENV["DEMO_SEED"] || "4242").to_i + idx
+  (seed % 1000) < (share * 1000).round
+end
+
 def demo_title(slug, idx)
   seed = stable_hash(slug.to_s) + (ENV["DEMO_SEED"] || "4242").to_i + idx
   first = DEMO_TITLE_FIRST[seed % DEMO_TITLE_FIRST.length]
@@ -13791,7 +13815,22 @@ def demo_all(bars_count = 12, destination = nil)
     ok = false
     begin
       Timeout.timeout(track_timeout) do
-        render_dilla(part, bars_count)
+        if demo_techno_slot?(idx, slug)
+          # Techno slots go through the industrial renderer instead. Length is
+          # matched to what the hip-hop track would have run to, so the two
+          # sit side by side in a demo rather than one being twice the other.
+          prev = ENV["HATE_MIN"]
+          ENV["HATE_MIN"] = ((bars_count * 4 * (60.0 / HATE_BPM)) / 60.0).round(2).to_s
+          begin
+            dmesg("slot #{idx} -> techno", unit: "demo0", parent: "dilla0")
+            render_hate_techno(part.sub(/\.wav\z/, ".mp3"))
+            FileUtils.mv(part.sub(/\.wav\z/, ".mp3"), part) if part.end_with?(".wav")
+          ensure
+            prev ? ENV["HATE_MIN"] = prev : ENV.delete("HATE_MIN")
+          end
+        else
+          render_dilla(part, bars_count)
+        end
       end
       ok = File.file?(part) && File.size(part) > 50_000
     rescue Timeout::Error
