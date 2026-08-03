@@ -653,7 +653,18 @@ learned_smells:
   confidence: 0.99
   autofix: strip_trailing_whitespace
 - id: debug_output
-  pattern: "\\b(?:puts|p|pp|warn)\\b"
+  # Was "\b(?:puts|p|pp|warn)\b" — the bare word anywhere on a line, at 0.97
+  # confidence, with an autofix that REMOVES the call. Two problems.
+  #
+  # `warn` is how a library surfaces a problem it cannot handle, which soul.yml's
+  # FAIL_VISIBLY requires; deleting warn calls is the constitution eating itself.
+  # 61 of them in lib/. And `puts` belongs to NO_PUTS, which already scopes it to
+  # library code and lets the CLI print.
+  #
+  # What is left is the actual debug call: p/pp at the head of a line. `p` is a
+  # legal variable name, so the same operator exclusions the DEBUG_OUTPUT Ruby
+  # rule carries apply here — `p << "…"` is an append, not a print.
+  pattern: "^\\s*pp?\\s+(?!self\\b)(?!<<|==|!=|\\|\\|=|&&=|[+\\-*/%|&^]?=)"
   confidence: 0.97
   autofix: remove_debug_call
 - id: todo_comment
@@ -661,7 +672,17 @@ learned_smells:
   confidence: 0.7
   autofix: create_issue
 - id: magic_number
-  pattern: "\\b\\d{2,}\\b"
+  # Was "\b\d{2,}\b" — any two-digit-or-longer run anywhere, which is 4318
+  # findings across the tree and is mostly years, versions, timestamps and
+  # numbers that already have names.
+  #
+  # cross_file_analysis.rb's MAGIC_NUMBER learned this on 2026-07-31 and carries
+  # the exemptions: skip years, and skip a literal that sits on the right of a
+  # constant assignment or a keyword, because "PATTERN_CACHE_MAX = 512" is the
+  # fix this rule recommends and firing on it made the count go up. The
+  # declarative twin never got them. It does now — the same three exemptions a
+  # single pattern can express.
+  pattern: "(?<![\\w.])(?<!= )(?<!: )(?!19\\d{2}(?![\\d.]))(?!20\\d{2}(?![\\d.]))\\d{2,}(?![\\w.])"
   confidence: 0.85
   autofix: extract_named_constant
 - id: long_line

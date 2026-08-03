@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "psych"
 require "set"
 
 module Master
@@ -31,23 +32,60 @@ module Master
           private
 
           def yaml_findings(code)
-            seen = Set.new
             top = []
             findings = []
             code.each_line.with_index(1) do |line, line_number|
               next unless (match = line.match(/\A(\s*)([A-Za-z0-9_.-]+):/))
 
-              indent = match[1].size
-              key = match[2]
-              top << key if indent.zero?
-              depth = (indent / 2) + 1
-              marker = "#{indent}:#{key}"
-              findings << finding(line: line_number, message: "duplicate configuration key #{key.inspect} at indent #{indent}") if seen.include?(marker)
+              top << match[2] if match[1].size.zero?
+              depth = (match[1].size / 2) + 1
               findings << finding(line: line_number, message: "configuration nesting depth #{depth} exceeds #{MAX_DEPTH}") if depth > MAX_DEPTH
-              seen << marker
             end
+            findings.concat(duplicate_key_findings(code))
             findings << finding(line: 1, message: "#{top.size} top-level configuration keys — group related settings") if top.uniq.size > TOP_LEVEL_LIMIT
             findings
+          end
+
+          # A duplicate key is the same key twice in the SAME mapping, which only
+          # a parser can tell you.
+          #
+          # The old check keyed on "#{indent}:#{key}" across the whole file, so
+          # every sibling record repeating a field name counted as a duplicate.
+          # principle_map.yml scored 1074 findings for having 135 principles that
+          # each declare meaning/detects/severity, and runtime.yml 1729. Across
+          # the tree that was 8166 findings, all of them false: Psych finds
+          # exactly zero real duplicate keys in data/**.yml. It was the single
+          # largest category in MASTER's self-scan and none of it was true.
+          #
+          # An unparseable file gets no verdict rather than a guessed one -- the
+          # depth and top-level-count checks above still run on the raw text.
+          def duplicate_key_findings(code)
+            document = Psych.parse(code)
+            return [] unless document
+
+            findings = []
+            visit_mappings(document) do |node|
+              counts = Hash.new { |hash, key| hash[key] = [] }
+              node.children.each_slice(2) do |key, _value|
+                next unless key.respond_to?(:value)
+
+                counts[key.value] << key
+              end
+              counts.each_value do |nodes|
+                next if nodes.size < 2
+
+                findings << finding(line: nodes.last.start_line + 1,
+                                    message: "duplicate configuration key #{nodes.first.value.inspect} in the same mapping")
+              end
+            end
+            findings
+          rescue Psych::SyntaxError
+            []
+          end
+
+          def visit_mappings(node, &block)
+            yield node if node.is_a?(Psych::Nodes::Mapping)
+            node.children&.each { |child| visit_mappings(child, &block) }
           end
 
           def json_findings(code)
