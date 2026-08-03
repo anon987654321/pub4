@@ -177,6 +177,12 @@ mechanical ones the audit called absent.
 6. Leave the ~30 architecture/aesthetic principles as persona prose. Unchanged, and the
    audit's soundest call.
 
-The reverse invariant is the one still open: `rules.yml:190` declares "every registered
-rule id traces to a `principle_map` entry". Before reconciliation 45 of 180 did; after, 79.
-It is violated **101 times** and nothing checks it.
+The reverse invariant is now gated. `rules.yml:190` declares "every registered rule id
+traces to a `principle_map` entry". Before reconciliation 45 of 180 did; after, 79. It is
+violated **101 times**, and `rake lint:principle_trace` holds that number as a ratcheting
+ceiling in `rake audit` — `RATCHET=1` records a new low, and raising it takes a commit that
+says why. Measured 2026-08-03: `101/101 of 181 registered rules untraced`, so it passes with
+zero headroom and the next unmapped rule turns the audit red.
+
+An earlier revision of this line said "nothing checks it". That was written before the
+ratchet landed in the same session and was stale on arrival.
