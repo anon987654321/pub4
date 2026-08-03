@@ -2561,7 +2561,48 @@
         "voice_only": true
       },
       "bpm_estimate": 76.0
+    },
+    {
+      "slug": "store_p",
+      "artist": "Store P",
+      "source": "https://www.youtube.com/watch?v=hS6KO20EksY",
+      "vocal_path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p/vocals.wav",
+      "stem_dir": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p",
+      "isolated": true,
+      "voice_only": true,
+      "ingested_at": "2026-08-03T20:05:10Z",
+      "chroma": [
+        0.04806,
+        0.026950000000000002,
+        0.06414,
+        0.08132,
+        0.07217,
+        0.14461,
+        0.03924,
+        0.07299,
+        0.05985,
+        0.09554,
+        0.24365,
+        0.05149
+      ],
+      "last_fit": {
+        "path": "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/project/learnings/vocals/store_p/fit_68_8bars_key-2.wav",
+        "beat_bpm": 68.0,
+        "n_bars": 8,
+        "offset_sec": 34.496,
+        "phrase_start": 0.0,
+        "source_bpm": 88.9,
+        "tempo_ratio": 0.7649,
+        "rms_db": -17.4,
+        "sub_bleed_db": -35.4,
+        "snapped_lines": 9,
+        "has_pulse": false,
+        "key_shift": -2,
+        "progression": "lydian_lift_backdoor_turn",
+        "voice_only": true
+      },
+      "bpm_estimate": 88.9
     }
   ],
-  "updated_at": "2026-07-31T19:35:37Z"
+  "updated_at": "2026-08-03T20:06:52Z"
 }

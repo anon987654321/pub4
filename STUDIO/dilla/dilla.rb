@@ -8616,6 +8616,41 @@ CHORD_PROGRESSIONS = {
   # Measured Donuts / timeless engine loop — i–IV–iii–vi–ii–V–bVI–IV.
   timeless_authentic: %w[Fm9 Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Dbmaj9],
   players_measured: %w[Dm7 Eb7 Gm7 D7 Eb7 Gm7 Am7],
+  # F minor, eight bars, one chord each — written for a slow vocal rather than
+  # for a loop. players_measured next door is seven chords with Eb7 and Gm7 each
+  # appearing twice and no cadence, so it circles; under a rapper it never
+  # arrives anywhere and the verse has nothing to land on.
+  #
+  # This one is an arc. bVI carries #11 instead of a plain major 7 so the lift at
+  # bar 2 opens without brightening — the raised fourth is the only altered tone
+  # and it keeps the mode ambiguous between F minor and Db lydian. Bar 4's Eb7sus
+  # is the backdoor left hanging: the third is withheld, so bar 5's Abmaj9 reads
+  # as arrival rather than as another passing chord. Then it darkens fast —
+  # Gm7b5 is the half-diminished ii, C7b9 the real dominant — and resolves home.
+  # A singer gets one bright bar (5) and one point of maximum tension (7); those
+  # are the two places a line wants to break.
+  #
+  # Every symbol is in CHORD_SUFFIXES (m9 mmaj7 maj13#11 m11 maj13 m7b5 7alt). No
+  # slash chords: SUFFIX_MATCHERS is /\A[A-G][#b]?SUFFIX\z/ and would not match.
+  #
+  # Two things carry it, and neither is the chord spelling.
+  #
+  # The bass walks down by step and stays there: F F Db C Bb Ab G, then the leap
+  # to C. An earlier draft of this ran F Db Bb Eb Ab G C, which is the same
+  # harmony and much worse to hear -- the ear tracks the lowest voice, and a bass
+  # that leaps every bar reads as eight separate chords instead of one motion.
+  #
+  # Bars 1-2 are a line cliche on a stationary root: Fm9 to Fmmaj7 raises the
+  # seventh Eb to E natural while everything else holds, so the tension is an
+  # inner voice moving, not a chord change. It buys two bars of harmonic stillness
+  # for a verse to open over, which a progression that changes root every bar
+  # cannot give.
+  #
+  # The cadence is 7alt rather than 7b9. Both are dominants; the altered chord
+  # keeps b9 and adds #9 and b13, so it lands as colour rather than as a
+  # functional pull, and the loop turns over instead of resolving shut. Dilla
+  # suspends far more often than he cadences.
+  lydian_lift_backdoor_turn: %w[Fm9 Fmmaj7 Dbmaj13#11 Cm11 Bbm9 Abmaj13 Gm7b5 C7alt],
   # Hooktheory Donuts "Time" — Ab major IV–iii–vi–ii–V with turnaround.
   fourth_third_sixth_second_turn: %w[Dbmaj9 Cm9 Fm9 Bbm9 Ebmaj9 Abmaj9low Bbm9 Ebmaj9],
   # Full Donuts minor cycle — borrowed dominants + slash colors.
@@ -14401,7 +14436,15 @@ def demo_encode_mp3(wav)
   return nil unless File.file?(wav)
 
   mp3 = wav.sub(/\.wav\z/i, "") + ".mp3"
-  bitrate = ENV.fetch("DEMO_MP3_BITRATE", "192k")
+  # 128k, not 192k, because demo.mp3 is committed and GitHub's hard per-file push
+  # limit is 100 MB with no LFS available here. The curated 86-track catalogue is
+  # 71 minutes, which is 102 MB at 192k -- over the limit, rejected at push, and
+  # discovered only after an hour of rendering. It is 68 MB at 128k.
+  #
+  # This is the one encode setting in the file chosen by a constraint outside the
+  # audio. Raise it for a WAV you are keeping locally, not for the tracked demo,
+  # and re-measure if the catalogue or the bar count grows.
+  bitrate = ENV.fetch("DEMO_MP3_BITRATE", "128k")
   begin
     sh! "ffmpeg", "-y", "-i", wav, "-codec:a", "libmp3lame", "-b:a", bitrate, mp3
   rescue StandardError => e
