@@ -129,8 +129,9 @@ principles:
     severity: high
     confidence: 0.8
     operation: make_explicit
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - CQS
+    status: covered
     tags:
     - code
   balance:
@@ -276,8 +277,12 @@ principles:
     severity: high
     confidence: 0.85
     operation: standardize
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - MEANINGFUL_NAMES
+    - RUBY_SNAKE_METHODS
+    - RUBY_CAMEL_CLASS
+    - NO_ABBREVIATED_IDENTIFIERS
+    status: covered
     tags:
     - ui
   consistent_visual_language:
@@ -286,8 +291,12 @@ principles:
     severity: low
     confidence: 0.75
     operation: improve
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - MAGIC_COLOR
+    - TYPE_HIERARCHY
+    - TYPE_TITLE_TOKEN
+    - EIGHT_PX_RHYTHM
+    status: covered
     tags:
     - aesthetic
   content_driven_design:
@@ -327,8 +336,10 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_constraints
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - MIGRATION_ADD_REFERENCE_NO_FK
+    - MIGRATION_FIND_OR_CREATE_BY
+    status: covered
     tags:
     - code
   datsuzoku:
@@ -358,8 +369,10 @@ principles:
     severity: medium
     confidence: 0.75
     operation: simplify
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - NO_DECORATIVE_FX
+    - FORM_FOLLOWS_FUNCTION
+    status: covered
     tags:
     - aesthetic
   deterministic_tests:
@@ -410,8 +423,11 @@ principles:
     severity: high
     confidence: 0.85
     operation: optimize_queries
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - N_PLUS_ONE
+    - STRICT_LOADING_MISSING
+    - FIND_EACH
+    status: covered
     tags:
     - code
   edge_to_edge_imagery:
@@ -430,8 +446,9 @@ principles:
     severity: medium
     confidence: 0.75
     operation: add_whitespace
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - WHITESPACE_RHYTHM
+    status: covered
     tags:
     - aesthetic
   error_prevention:
@@ -462,8 +479,9 @@ principles:
     severity: high
     confidence: 0.75
     operation: introduce_seam
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - OPEN_CLOSED
+    status: covered
     tags:
     - code
   fail_fast:
@@ -603,8 +621,11 @@ principles:
     severity: low
     confidence: 0.75
     operation: improve
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - NO_DECORATIVE_FX
+    - FORM_FOLLOWS_FUNCTION
+    - AESTHETIC_MINIMALISM
+    status: covered
     tags:
     - aesthetic
   good_design_is_honest:
@@ -700,8 +721,9 @@ principles:
     severity: low
     confidence: 0.75
     operation: improve
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - CONTRAST_TOKENS
+    status: covered
     tags:
     - aesthetic
   human_scale:
@@ -732,8 +754,11 @@ principles:
     severity: high
     confidence: 0.8
     operation: make_explicit
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - IMMUTABLE
+    - CONST_BY_DEFAULT
+    - FROZEN_LITERAL
+    status: covered
     tags:
     - code
   information_architecture:
@@ -752,8 +777,11 @@ principles:
     severity: medium
     confidence: 0.75
     operation: encapsulate
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - LAW_OF_DEMETER
+    - COUPLER_SMELLS
+    - FEATURE_ENVY
+    status: covered
     tags:
     - aesthetic
   internalize_before_writing:
@@ -810,16 +838,6 @@ principles:
     status: covered
     tags:
     - code
-  knowledge_biases:
-    meaning: null
-    detects: null
-    severity: critical
-    confidence: 0.7
-    operation: null
-    rule_ids: []
-    status: gap
-    tags:
-    - code
   law_of_demeter:
     meaning: only talk to immediate friends
     detects: train_wreck
@@ -870,8 +888,9 @@ principles:
     severity: high
     confidence: 0.8
     operation: fix_hierarchy
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - LISKOV
+    status: covered
     tags:
     - code
   locality:
@@ -880,8 +899,9 @@ principles:
     severity: high
     confidence: 0.75
     operation: inline
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - CO_CHANGE_COUPLING
+    status: covered
     tags:
     - code
   loose_coupling:
@@ -890,8 +910,12 @@ principles:
     severity: high
     confidence: 0.8
     operation: introduce_interface
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - DEPENDENCY_INVERSION
+    - COUPLER_SMELLS
+    - LAW_OF_DEMETER
+    - CO_CHANGE_COUPLING
+    status: covered
     tags:
     - code
   ma:
@@ -922,8 +946,10 @@ principles:
     severity: high
     confidence: 0.8
     operation: organize
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - EIGHT_PX_RHYTHM
+    - PIXEL_EXACT
+    status: covered
     tags:
     - code
   metrics_and_alerting:
@@ -942,8 +968,10 @@ principles:
     severity: high
     confidence: 0.8
     operation: introduce_interface
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - DEPENDENCY_INVERSION
+    - INTERFACE_SEGREGATION
+    status: covered
     tags:
     - code
   negative_space:
@@ -964,8 +992,9 @@ principles:
     severity: medium
     confidence: 0.75
     operation: add_whitespace
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - WHITESPACE_RHYTHM
+    status: covered
     tags:
     - aesthetic
   no_god_files:
@@ -995,8 +1024,11 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_guards
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - SAFE_NAVIGATION
+    - NULL_BLINDNESS
+    - HASH_FETCH
+    status: covered
     tags:
     - code
   observability:
@@ -1017,8 +1049,9 @@ principles:
     severity: high
     confidence: 0.75
     operation: introduce_seam
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - OPEN_CLOSED
+    status: covered
     tags:
     - code
   open_floor_plan:
@@ -1037,8 +1070,11 @@ principles:
     severity: high
     confidence: 0.9
     operation: add_logging
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - SILENT_RESCUE
+    - NARROW_SILENT_RESCUE
+    - EMPTY_RESCUE
+    status: covered
     tags:
     - code
   orthogonality:
@@ -1047,18 +1083,10 @@ principles:
     severity: high
     confidence: 0.8
     operation: decouple
-    rule_ids: []
-    status: gap
-    tags:
-    - code
-  output_biases:
-    meaning: null
-    detects: null
-    severity: critical
-    confidence: 0.7
-    operation: null
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - CO_CHANGE_COUPLING
+    - COUPLER_SMELLS
+    status: covered
     tags:
     - code
   pattern:
@@ -1067,20 +1095,11 @@ principles:
     severity: low
     confidence: 0.75
     operation: apply_pattern
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - PATTERN_EXTRACTION
+    status: covered
     tags:
     - aesthetic
-  patterns:
-    meaning: null
-    detects: null
-    severity: critical
-    confidence: 0.7
-    operation: null
-    rule_ids: []
-    status: gap
-    tags:
-    - code
   pilotis:
     meaning: 'Elevated structure on columns, freeing ground level  '
     detects: ground_level_obstruction
@@ -1107,8 +1126,9 @@ principles:
     severity: high
     confidence: 0.8
     operation: reduce_deps
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - LAW_OF_DEMETER
+    status: covered
     tags:
     - code
   privilege_separation:
@@ -1138,8 +1158,9 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_constraints
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - RATE_LIMITING_MISSING
+    status: covered
     tags:
     - code
   rejection_of_ornament:
@@ -1160,8 +1181,9 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_recovery
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - MIGRATION_REMOVE_COLUMN
+    status: covered
     tags:
     - code
   rhythm:
@@ -1234,8 +1256,10 @@ principles:
     severity: high
     confidence: 0.7
     operation: quiet
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - SIGNAL_NOISE
+    - NO_ASCII_LINE_ART
+    status: covered
     tags:
     - code
   sense_of_shelter:
@@ -1254,8 +1278,12 @@ principles:
     severity: high
     confidence: 0.8
     operation: separate
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - THIN_CONTROLLER
+    - NO_LOGIC_IN_VIEW
+    - HELPER_VIEW_ONLY
+    - NO_GOD_CLASS
+    status: covered
     tags:
     - code
   shibui:
@@ -1328,8 +1356,11 @@ principles:
     severity: high
     confidence: 0.75
     operation: expose_structure
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - COMMENT_DRIFT
+    - SIMULATION
+    - COMPLETION_THEATER
+    status: covered
     tags:
     - code
   symmetry_and_balance:
@@ -1388,8 +1419,19 @@ principles:
     severity: critical
     confidence: 0.75
     operation: add_guards
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - ARIA_LABELS
+    - ARIA_INTERACTIVE
+    - IMG_ALT
+    - HTML_LANG
+    - FORM_LABEL
+    - FOCUS_VISIBLE
+    - SKIP_TO_MAIN
+    - TABINDEX_ABOVE_ZERO
+    - REDUCED_MOTION
+    - TOUCH_TARGET_MIN
+    - SEMANTIC_ELEMENTS
+    status: covered
     tags:
     - code
   user_centered_design:
@@ -1462,8 +1504,10 @@ principles:
     severity: medium
     confidence: 0.75
     operation: add_whitespace
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - WHITESPACE_RHYTHM
+    - EIGHT_PX_RHYTHM
+    status: covered
     tags:
     - aesthetic
   yohaku_no_bi:
@@ -1472,8 +1516,9 @@ principles:
     severity: medium
     confidence: 0.75
     operation: add_whitespace
-    rule_ids: []
-    status: gap
+    rule_ids:
+    - WHITESPACE_RHYTHM
+    status: covered
     tags:
     - aesthetic
   you_arent_gonna_need_it:
