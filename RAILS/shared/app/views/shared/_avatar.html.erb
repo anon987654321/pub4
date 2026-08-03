@@ -2,7 +2,7 @@
 <% size = (local_assigns[:size] || 40).to_i %>
 <% size_class = { 24 => "avatar--24", 32 => "avatar--32", 40 => "avatar--40", 48 => "avatar--48", 64 => "avatar--64" }[size] || "avatar--40" %>
 <% if local_assigns[:user]&.respond_to?(:avatar) && local_assigns[:user].avatar.attached? %>
-  <%= image_tag(local_assigns[:user].avatar, class: "avatar #{size_class}", width: size, height: size, alt: local_assigns[:user].respond_to?(:name) ? local_assigns[:user].name : "Avatar") %>
+  <%= image_tag(main_app.url_for(local_assigns[:user].avatar), class: "avatar #{size_class}", width: size, height: size, alt: local_assigns[:user].respond_to?(:name) ? local_assigns[:user].name : "Avatar") %>
 <% else %>
   <% initials = if local_assigns[:user]&.respond_to?(:initials)
                   local_assigns[:user].initials

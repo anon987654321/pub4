@@ -10,7 +10,7 @@
   >
     <div class="media-gallery">
       <% attachments.each do |attachment| %>
-        <a href="<%= url_for(attachment) %>" class="media-gallery-item">
+        <a href="<%= main_app.url_for(attachment) %>" class="media-gallery-item">
           <%= lazy_image_tag attachment, alt: title, blurhash: attachment.try(:metadata).try(:[], "blurhash") %>
         </a>
       <% end %>

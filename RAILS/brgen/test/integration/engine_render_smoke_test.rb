@@ -56,6 +56,20 @@ class EngineRenderSmokeTest < ActionDispatch::IntegrationTest
     assert_response :success, "tv video show 500'd: #{@response.body[0, 300]}"
   end
 
+  test "marketplace listings index renders a card that has an attached photo" do
+    # The 500 that the plain roots test missed: responsive_image_tag(photo) in the
+    # _card partial resolves a variant URL, which dies in the engine routing context.
+    # Only reproduces when the index actually has a listing WITH a photo.
+    category = Marketplace::Category.create!(name: "Smoke", slug: "smoke-#{SecureRandom.hex(4)}")
+    listing = Marketplace::Listing.create!(title: "Smoke listing", price_cents: 1000,
+                                           user: @user, category: category)
+    attach_pixel(listing.photos, "listing.png")
+
+    host! "markedsplass.brgen.no"
+    get "/"
+    assert_response :success, "marketplace index 500'd on a photo card: #{@response.body[0, 300]}"
+  end
+
   test "vertical roots render" do
     {
       "tv.brgen.no" => "/",
