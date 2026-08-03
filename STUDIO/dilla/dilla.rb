@@ -69,6 +69,7 @@ require_relative "lib/radio_chop"
 require_relative "lib/sample_flip"
 require_relative "lib/vocal_chop"
 require_relative "lib/analog_synth"
+require_relative "lib/acapella"
 require_relative "lib/outboard"
 require_relative "lib/key_lock"
 require_relative "lib/modal_family"
@@ -5797,20 +5798,74 @@ def console_master_chain(cfg)
                        missing: ->(unit) { warn "rack #{rack}: no unit named #{unit.inspect} — skipped" })
 end
 
+# No loudnorm in the graph. This is the fix for a track whose level wanders.
+#
+# ffmpeg's loudnorm has two modes and picks between them silently. Given
+# measured values from a first pass it applies ONE static gain -- transparent,
+# which is what mastering means. Given none, as here, it falls back to DYNAMIC
+# normalisation: it rides the gain continuously through the track, pushing quiet
+# passages up and pulling loud ones down, second by second. It hits the target
+# LUFS beautifully and it destroys the arrangement, because every decision about
+# what should be loud gets overruled by a meter.
+#
+# That is what "the overall volume changes all the time" was. Every loudnorm in
+# this engine was the single-pass kind.
+#
+# So the graph now ends at the limiter, and the levelling happens afterwards in
+# normalise_master!, which measures the finished file and applies one number.
 def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
-  lufs = cfg[:master_lufs] || MASTER_TARGET_LUFS
-  lra = cfg[:master_lra] || MASTER_TARGET_LRA
-  # Console before loudnorm, always. Saturation changes both peak and loudness,
-  # so measuring first and colouring after would hand back a track that no
-  # longer hits the target it was normalised to.
+  # Console before the limiter. Saturation changes both peak and loudness, so
+  # colouring after measuring would hand back a track that no longer hits the
+  # target it was measured against.
   console = console_master_chain(cfg)
   head = "[#{input_tag}]#{console ? "#{console}," : ''}"
-  if ENV["DEBUG_NO_LOUDNORM"]
-    return "#{head}alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
-  end
-  "#{head}loudnorm=I=#{lufs}:TP=#{TRUE_PEAK_CEILING_DB}:LRA=#{lra}," \
-    "aresample=#{SAMPLE_RATE}," \
+  "#{head}aresample=#{SAMPLE_RATE}," \
     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
+end
+
+# Measures the finished track and applies a single gain to it.
+#
+# This is the second pass that loudnorm needed and never got. Nothing here moves
+# during the track: one measurement, one number, one limiter to catch whatever
+# the gain pushes over the ceiling. A section that was written quiet stays quiet
+# relative to the rest, which is the whole point of writing it quiet.
+def normalise_master!(path, cfg)
+  return path if ENV["MASTER_NORMALISE"] == "0" || !File.file?(path)
+
+  target = (cfg[:master_lufs] || MASTER_TARGET_LUFS).to_f
+  out, err, status = capture("ffmpeg", "-nostdin", "-hide_banner", "-i", path,
+                             "-af", "loudnorm=I=#{target}:TP=#{TRUE_PEAK_CEILING_DB}:print_format=json",
+                             "-f", "null", "-")
+  unless status.success?
+    warn "master normalise: measurement failed, leaving level as rendered"
+    return path
+  end
+
+  json = (out + err)[/\{\s*"input_i".*?\}/m]
+  measured = json ? (JSON.parse(json)["input_i"].to_f rescue nil) : nil
+  if measured.nil? || measured <= -70.0
+    warn "master normalise: no usable reading#{measured ? " (#{measured} LUFS)" : ''} — leaving level as rendered"
+    return path
+  end
+
+  # Bounded, so a mis-measurement cannot swing a track 30 dB. Anything needing
+  # more than twelve is wrong somewhere earlier and should be found there.
+  gain = (target - measured).clamp(-12.0, 12.0)
+  tmp = "#{path}.norm#{File.extname(path)}"
+  ok = system("ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path,
+              "-af", "volume=#{gain.round(2)}dB," \
+                     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled",
+              *(File.extname(path) == ".mp3" ? ["-c:a", "libmp3lame", "-b:a", "192k"] : []),
+              tmp, out: File::NULL, err: File::NULL)
+  if ok && File.file?(tmp) && File.size(tmp).positive?
+    FileUtils.mv(tmp, path)
+    dmesg("master: #{measured.round(1)} LUFS -> #{target} (#{format('%+.1f', gain)} dB, one static gain)",
+          unit: "mix0", parent: "dilla0")
+  else
+    FileUtils.rm_f(tmp)
+    warn "master normalise: re-encode failed, leaving level as rendered"
+  end
+  path
 end
 
 # The AKMD / Radio Bergen chain, reproduced stage for stage. It came from
@@ -11622,11 +11677,11 @@ DILLA_STYLE_DEFAULTS = {
   "HARMONY_LEAD" => "0",
   "SCALE_LEAD" => "0",
   "CREATIVE_LEAD" => "0",
-  "MELODIC_LEAD" => "1",
-  "LEAD_ARP" => "1",
+  "MELODIC_LEAD" => "0",
+  "LEAD_ARP" => "0",
   "LEAD_ARP_MODE" => "flylo_spiral",
   "LEAD_VOICE" => "soul_prophet",
-  "EXPERIMENTAL_LEADS" => "1",
+  "EXPERIMENTAL_LEADS" => "0",
   "STREAM_LEAD_MIDI_RICH" => "1",
   "STREAM_ROTATE_SYNTH" => "1",
   "STREAM_ROTATE_LEAD" => "1",
@@ -19343,7 +19398,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
       mix_weights = ["1.0"]
     else
       mix_labels << "[harm]"
-      mix_weights << ENV.fetch("HARM_MIX_WEIGHT", deep_render? ? "1.55" : "1.38").to_s
+      mix_weights << ENV.fetch("HARM_MIX_WEIGHT", deep_render? ? "1.70" : "1.52").to_s
     end
   end
 
@@ -19616,6 +19671,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     s = @composition_session
     comp_note = ", performer=#{s.performer}/#{s.groove_dna} gen=#{s.generation}"
   end
+  normalise_master!(destination, cfg)
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, #{cfg[:track]}, #{kick_note}, #{mix_note}, #{stem_note}, patches=#{patch_note}#{comp_note})"
 ensure
   # The call at the TOP of this method only clears ITS OWN pid's leftovers
@@ -25082,6 +25138,9 @@ DISPATCH = {
   # Recovers the voices the chop pipeline separated and then discarded. Needs no
   # new separation: demucs already wrote vocals.wav for every cut it examined.
   "vocal-chop" => -> { VocalChop.build! },
+  # Measures every separated acapella against its own mix and records the
+  # tempo and first downbeat. Fitting happens per render, at that tempo.
+  "acapella" => -> { Acapella.index! },
   # Auditions the built-in synthesiser, one file per patch. PATCH=<name> for one.
   "synth" => -> { synth_audition! },
   # A drum kit cut from our own recordings. The inverse of `chop`: that one
