@@ -24,6 +24,10 @@ Rails.application.routes.draw do
 
   get "tags/:name" => "hashtags#show", as: :hashtag, constraints: { name: /[A-Za-z0-9_]+/ }
 
+  get    "saved" => "bookmarks#index", as: :saved
+  post   "posts/:post_id/bookmark" => "bookmarks#create",  as: :bookmark_post
+  delete "posts/:post_id/bookmark" => "bookmarks#destroy", as: :unbookmark_post
+
   # Legal / info pages, reachable on every city domain without an account
   # (GDPR + TradeDoubler both require them public). See PagesController.
   %w[privacy terms cookies].each do |legal_page|

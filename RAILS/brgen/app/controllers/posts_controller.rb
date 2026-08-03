@@ -29,8 +29,18 @@ class PostsController < ApplicationController
     finish_live_search(partial: "posts/live_search_results")
   end
 
+  COMMENT_SORTS = %w[best new top controversial].freeze
+
   def show
-    @comments    = @post.comments.where(parent_id: nil).best.includes(:user, :votes, replies: [ :user, :votes ])
+    @comment_sort = COMMENT_SORTS.include?(params[:sort]) ? params[:sort] : "best"
+    roots = @post.comments.where(parent_id: nil)
+    roots = case @comment_sort
+            when "new"           then roots.new_first
+            when "top"           then roots.top
+            when "controversial" then roots.controversial
+            else roots.best
+            end
+    @comments    = roots.includes(:user, :votes, replies: [ :user, :votes ])
     @new_comment = Comment.new
   end
 

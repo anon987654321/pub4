@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_110000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -169,6 +169,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_100000) do
     t.index ["blocked_id"], name: "index_blocks_on_blocked_id"
     t.index ["blocker_id", "blocked_id"], name: "index_blocks_on_blocker_id_and_blocked_id", unique: true
     t.index ["blocker_id"], name: "index_blocks_on_blocker_id"
+  end
+
+  create_table "bookmarks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "post_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["post_id"], name: "index_bookmarks_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_bookmarks_on_user_id_and_post_id", unique: true
+    t.index ["user_id"], name: "index_bookmarks_on_user_id"
   end
 
   create_table "cities", force: :cascade do |t|
@@ -1311,6 +1321,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_100000) do
   add_foreign_key "activity_events", "users", column: "actor_id"
   add_foreign_key "blocks", "users", column: "blocked_id"
   add_foreign_key "blocks", "users", column: "blocker_id"
+  add_foreign_key "bookmarks", "posts"
+  add_foreign_key "bookmarks", "users"
   add_foreign_key "comments", "users"
   add_foreign_key "communities", "cities"
   add_foreign_key "community_memberships", "communities"

@@ -35,6 +35,16 @@
       <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
       <span class="chip chip--status"><%= profile.visible? ? "visible" : "paused" %></span>
     </div>
+    <% if Current.user.present? && Current.user != profile.user %>
+      <div class="swipe-safety cluster">
+        <%= render "shared/report_button", target: profile.user, reason: nil %>
+        <% if Current.user.blocking?(profile.user) %>
+          <%= button_to t("block.unblock", default: "Unblock"), main_app.unblock_user_path(profile.user), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <% else %>
+          <%= button_to t("block.block", default: "Block"), main_app.block_user_path(profile.user), method: :post, class: "btn btn-ghost btn-sm" %>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <% if Current.user.present? %>

@@ -91,6 +91,13 @@ class User < ApplicationRecord
   def leave_community!(community) = community_memberships.find_by(community: community)&.destroy
   def member_of?(community) = community_memberships.exists?(community_id: community.id)
 
+  has_many :bookmarks, dependent: :destroy
+  has_many :bookmarked_posts, through: :bookmarks, source: :post
+
+  def bookmark!(post) = bookmarks.find_or_create_by!(post: post)
+  def unbookmark!(post) = bookmarks.find_by(post: post)&.destroy
+  def bookmarked?(post) = bookmarks.exists?(post_id: post.id)
+
   # The subscribe-loop feed: hot posts from every community you've joined.
   def community_feed
     Post.hot.where(community_id: community_memberships.select(:community_id))
