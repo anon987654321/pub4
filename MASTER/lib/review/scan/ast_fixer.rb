@@ -2,6 +2,8 @@
 
 require "prism"
 require "set"
+require "open3"
+require "strscan"
 require_relative "ast_fixer/syntax_transforms"
 require_relative "ast_fixer/web_transforms"
 require_relative "ast_fixer/dead_code_and_commas"
@@ -109,10 +111,10 @@ module Master
             transform_labels = @transforms.dup
             candidate = send(transform, current)
 
-            if ruby? && candidate != current && parses?(current) && !parses?(candidate)
-              # Transform turned valid Ruby into unparseable Ruby — a line-heuristic
-              # misfire on a multi-line construct. Discard it (and any label it
-              # recorded); keep the prior source.
+            if candidate != current && broke_syntax?(current, candidate)
+              # Transform turned valid source into unparseable source — a
+              # line-heuristic misfire on a multi-line construct. Discard it
+              # (and any label it recorded); keep the prior source.
               @transforms.replace(transform_labels)
               next
             end
@@ -122,7 +124,73 @@ module Master
           current
         end
 
+        # The net used to cover Ruby only, so a JS or CSS transform that mangled
+        # a multi-line construct had no backstop at all — the exact asymmetry
+        # that let add_trailing_commas rewrite every CSS `}` as `;,` in
+        # production. Same shape as the Ruby check in all three languages: a
+        # transform is discarded only when the source parsed BEFORE it and stops
+        # parsing after. When no validator is available for a language (no node
+        # on PATH for JS), nothing is measured and nothing is judged.
+        def broke_syntax?(before, after)
+          validator = syntax_validator
+          return false unless validator
+          return false unless send(validator, before)
+
+          !send(validator, after)
+        end
+
+        def syntax_validator
+          return :parses? if ruby?
+          return :javascript_parses? if javascript? && self.class.node_available?
+          return :style_balanced? if style?
+
+          nil
+        end
+
         def parses?(src) = !Prism.parse(src).failure?
+
+        # Both module and script parses are tried because a bundle using
+        # `import` is invalid as a script and a file using `with` is invalid as
+        # a module; accepting either keeps the check a syntax test rather than a
+        # module-system opinion.
+        def javascript_parses?(src)
+          %w[module commonjs].any? { |mode| node_accepts?(src, mode) }
+        end
+
+        def node_accepts?(src, mode)
+          _out, status = Open3.capture2e("node", "--input-type=#{mode}", "--check", stdin_data: src)
+          status.success?
+        rescue StandardError
+          false
+        end
+
+        def self.node_available?
+          return @node_available unless @node_available.nil?
+
+          @node_available = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+            File.executable?(File.join(dir, "node"))
+          end
+        end
+
+        # CSS has no cheap parser to hand, but every failure this net exists to
+        # catch shows up as an unbalanced block. Quotes and comments are skipped
+        # so a brace inside `content: "}"` does not read as structure.
+        def style_balanced?(src)
+          depth = 0
+          scanner = StringScanner.new(src)
+          until scanner.eos?
+            case
+            when scanner.scan(%r{/\*.*?\*/}m) then next
+            when scanner.scan(/"(?:[^"\\]|\\.)*"/) then next
+            when scanner.scan(/'(?:[^'\\]|\\.)*'/) then next
+            when scanner.scan(/\{/) then depth += 1
+            when scanner.scan(/\}/) then depth -= 1
+            else scanner.pos += 1
+            end
+            return false if depth.negative?
+          end
+          depth.zero?
+        end
 
         def expand_tabs(src)
           return src unless src.include?("\t")

@@ -32,6 +32,51 @@ class TestAstFixerSafety < Minitest::Test
     FileUtils.remove_entry(File.dirname(file)) if file
   end
 
+  # The net covered Ruby only, so the CSS and JS transforms that once wrote
+  # `--z-skip: 2000;,` had nothing to catch them. These pin the guard's shape in
+  # every language it now covers: discard only when the source parsed BEFORE the
+  # transform and stops parsing after, and never judge what cannot be measured.
+
+  def fixer(name) = Master::Review::Scan::AstFixer.new(name, "")
+
+  def test_style_balance_check_reads_structure_not_text
+    css = fixer("theme.css")
+
+    assert css.send(:style_balanced?, ".a { color: red; }")
+    assert css.send(:style_balanced?, %(.a { content: "}"; })), "brace inside a string is not structure"
+    assert css.send(:style_balanced?, ".a { /* } */ color: red; }"), "brace inside a comment is not structure"
+    refute css.send(:style_balanced?, ".a { color: red;")
+  end
+
+  def test_css_transform_is_discarded_when_it_unbalances_the_sheet
+    css = fixer("theme.css")
+
+    assert css.send(:broke_syntax?, ".a { color: red; }", ".a { color: red;,")
+    refute css.send(:broke_syntax?, ".a { color: red; }", ".a { color: blue; }")
+  end
+
+  def test_already_broken_source_is_never_blamed_on_the_transform
+    css = fixer("theme.css")
+
+    refute css.send(:broke_syntax?, ".a { color: red;", ".a { color: blue;"),
+           "source did not parse before the transform either"
+  end
+
+  def test_javascript_guard_accepts_module_and_script_syntax
+    skip "node not on PATH" unless Master::Review::Scan::AstFixer.node_available?
+
+    js = fixer("app.js")
+
+    assert js.send(:javascript_parses?, "const a = 1;")
+    assert js.send(:javascript_parses?, 'import x from "y"; export default x;')
+    refute js.send(:javascript_parses?, "const a = ;")
+  end
+
+  def test_no_validator_means_no_verdict
+    assert_nil fixer("notes.md").send(:syntax_validator)
+    refute fixer("notes.md").send(:broke_syntax?, "before", "after")
+  end
+
   def test_never_writes_unparseable_ruby
     out = fix(TRICKY)
     refute Prism.parse(out).failure?, "AstFixer produced unparseable Ruby:\n#{out}"

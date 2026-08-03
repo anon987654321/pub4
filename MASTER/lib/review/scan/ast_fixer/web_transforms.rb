@@ -73,34 +73,110 @@ module Master
             out
           end
 
+          # for-in yields KEYS, for-of yields VALUES, so this rewrite is only
+          # sound when the body never uses the loop variable to index the
+          # collection -- `for (const k in xs) use(xs[k])` becomes
+          # `use(xs[xs[0]])` under for-of. The old form only matched `const`,
+          # which hid the hazard rather than avoiding it: the same body written
+          # with `let` was left alone by accident, not by design. Accept all
+          # three declaration keywords and check the body instead.
+          FOR_IN_HEAD = /for\s*\(\s*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:List|Array|Arr|s))\s*\)/
+          private_constant :FOR_IN_HEAD
+
           def convert_for_in_arrays(src)
             changed = false
-            out = src.gsub(/for\s*\(\s*const\s+([A-Za-z_$][\w$]*)\s+in\s+([A-Za-z_$][\w$]*(?:List|Array|Arr|s))\s*\)/) do
+            out = src.gsub(FOR_IN_HEAD) do |match|
+              variable = Regexp.last_match(1)
+              collection = Regexp.last_match(2)
+              next match if indexes_collection?(src, collection:, variable:)
+
               changed = true
-              "for (const #{Regexp.last_match(1)} of #{Regexp.last_match(2)})"
+              "for (const #{variable} of #{collection})"
             end
             @transforms << :for_of if changed
             out
           end
 
+          def indexes_collection?(source, collection:, variable:)
+            source.match?(/\b#{Regexp.escape(collection)}\s*\[\s*#{Regexp.escape(variable)}\s*\]/)
+          end
+
+          # A concatenation is a chain, not a triple. The old pattern required
+          # exactly literal + identifier + literal, so `base + "/path/" + id`
+          # (identifier first) and any chain longer than three parts were left
+          # alone. Match the whole run of `+`-joined literals and identifier
+          # paths instead, and convert when at least one part is a literal and
+          # one is an interpolation -- a chain of pure literals is concatenation
+          # the parser folds anyway, and a chain of pure identifiers is
+          # arithmetic as far as this transform can tell.
+          # No backreference for the quote: CONCAT_PART is interpolated into
+          # CONCAT_CHAIN more than once, and a `\1` inside it would renumber to
+          # the combined pattern's first group -- so a chain whose first part is
+          # an identifier left that group unset and the whole-chain match failed,
+          # silently falling back to the longest trailing sub-chain.
+          CONCAT_PART = /(?:'[^'`\\\n]*'|"[^"`\\\n]*"|[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)/
+          CONCAT_CHAIN = /#{CONCAT_PART}(?:\s*\+\s*#{CONCAT_PART}){1,}/
+          private_constant :CONCAT_PART, :CONCAT_CHAIN
+
           def convert_string_concat(src)
             changed = false
-            out = src.gsub(/(['"])([^'"`\n]*)\1\s*\+\s*([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)?)\s*\+\s*(['"])([^'"`\n]*)\4/) do
+            out = src.gsub(CONCAT_CHAIN) do |match|
+              literal = template_literal_for(match)
+              next match unless literal
+
               changed = true
-              "`#{Regexp.last_match(2)}${#{Regexp.last_match(3)}}#{Regexp.last_match(5)}`"
+              literal
             end
             @transforms << :template_literals if changed
             out
           end
 
+          def template_literal_for(chain)
+            parts = chain.split(/\s*\+\s*/)
+            return nil unless parts.size > 1
+
+            literals, expressions = parts.partition { |part| part.match?(/\A(['"]).*\1\z/m) }
+            return nil if literals.empty? || expressions.empty?
+            return nil if literals.any? { |part| part.include?("`") || part.include?("${") }
+
+            body = parts.map do |part|
+              literals.include?(part) ? part[1..-2] : "${#{part}}"
+            end.join
+            "`#{body}`"
+          end
+
+          # `a && a.b && a.b.c` used to convert its first link and then stop
+          # forever: the backreference only matched a bare identifier, so once
+          # the head became `a?.b` no later pass could see it as the base of the
+          # next link. The rule kept firing on the tail of every chain it had
+          # already "fixed". Match a dotted base, compare it to the next term
+          # with the optional markers normalised away, and iterate to a fixed
+          # point so one call converts the whole chain.
+          OPTIONAL_LINK = /([A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*)\s*&&\s*([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.([A-Za-z_$][\w$]*)\b/
+          MAX_CHAIN_PASSES = 16
+          private_constant :OPTIONAL_LINK, :MAX_CHAIN_PASSES
+
           def convert_optional_chaining(src)
-            changed = false
-            out = src.gsub(/\b([A-Za-z_$][\w$]*)\s*&&\s*\1\.([A-Za-z_$][\w$]*)\b/) do
-              changed = true
-              "#{Regexp.last_match(1)}?.#{Regexp.last_match(2)}"
+            out = src
+            MAX_CHAIN_PASSES.times do
+              pass = link_optional_chain(out)
+              break if pass == out
+
+              out = pass
             end
-            @transforms << :optional_chaining if changed
+            @transforms << :optional_chaining if out != src
             out
+          end
+
+          def link_optional_chain(src)
+            src.gsub(OPTIONAL_LINK) do |match|
+              base = Regexp.last_match(1)
+              guarded = Regexp.last_match(2)
+              property = Regexp.last_match(3)
+              next match unless base.gsub("?.", ".") == guarded
+
+              "#{base}?.#{property}"
+            end
           end
 
           def logical_properties(src)

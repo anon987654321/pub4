@@ -34,6 +34,59 @@ class TestAstFixerTransforms < Minitest::Test
     assert_includes result[:transforms], :optional_chaining
   end
 
+  # Each of these pins a limit that used to be arbitrary: the chain fix stopped
+  # after one link, for-in only matched `const`, and the concat fix only matched
+  # literal + identifier + literal.
+
+  def test_optional_chaining_converges_over_a_whole_chain
+    result = fix("chain.js", "const x = a && a.b && a.b.c && a.b.c.d;\n")
+
+    assert_includes result[:content], "const x = a?.b?.c?.d;"
+  end
+
+  def test_optional_chaining_is_idempotent_once_converged
+    once = fix("chain.js", "const x = a && a.b && a.b.c;\n")[:content]
+    twice = fix("chain.js", once)
+
+    assert_equal once, twice[:content]
+    refute_includes twice[:transforms], :optional_chaining
+  end
+
+  def test_for_in_converts_let_and_var_declarations
+    %w[let var].each do |keyword|
+      result = fix("loop.js", "for (#{keyword} item in items) {\n  render(item);\n}\n")
+
+      assert_includes result[:content], "for (const item of items)", "#{keyword} declaration"
+    end
+  end
+
+  # for-in yields keys and for-of yields values, so this body would become
+  # items[items[0]] under the rewrite.
+  def test_for_in_refuses_when_the_body_indexes_the_collection
+    result = fix("loop.js", "for (let i in items) {\n  doThing(items[i]);\n}\n")
+
+    assert_includes result[:content], "for (let i in items)"
+    refute_includes result[:transforms], :for_of
+  end
+
+  def test_string_concat_handles_identifier_first_and_longer_chains
+    result = fix("url.js", <<~JS)
+      const url = base + "/path/" + id;
+      const msg = "hi " + a + " and " + b + "!";
+    JS
+
+    assert_includes result[:content], "const url = `${base}/path/${id}`;"
+    assert_includes result[:content], "const msg = `hi ${a} and ${b}!`;"
+  end
+
+  def test_string_concat_leaves_arithmetic_and_folded_literals_alone
+    result = fix("math.js", "const n = x + y;\nconst s = \"a\" + \"b\";\n")
+
+    assert_includes result[:content], "const n = x + y;"
+    assert_includes result[:content], 'const s = "a" + "b";'
+    refute_includes result[:transforms], :template_literals
+  end
+
   def test_keeps_reassigned_var
     result = fix("counter.js", <<~JS)
       var count = 0;
