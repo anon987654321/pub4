@@ -281,6 +281,45 @@ module Outboard
       "knee=12:detection=rms:makeup=1.1"
   end
 
+  # ------------------------------------------------- Roland RE-201 Space Echo
+  #
+  # A tape loop running past three playback heads, with a spring reverb bolted
+  # on. Two photographs of one sit in Flying Lotus's studio, and it is on a great
+  # deal of what he has made.
+  #
+  # What makes it sound like itself is not the delay times -- any box can do
+  # taps. It is that the tape is a physical loop being re-recorded on every pass,
+  # so each repeat is a generation further from the original:
+  #
+  #   DARKER. The tape loses top end every time round. By the fourth repeat
+  #   there is very little above a few kilohertz, which is why a Space Echo tail
+  #   fades into the track instead of cluttering it. A digital delay repeating a
+  #   bright sound stays bright and quickly becomes a mess.
+  #
+  #   UNSTEADY. The transport wows, and the wow accumulates -- the fifth repeat
+  #   has been through it five times. The tail drifts in pitch, which is the
+  #   sound people mean by "tape delay" and the reason a clean one sounds wrong.
+  #
+  #   THREE HEADS. Fixed positions on the loop, not free times, so the taps are
+  #   in a fixed ratio to each other. Modelled here at roughly 1 : 1.9 : 2.8,
+  #   which is where the real heads sit.
+  #
+  # The darkening is done by putting the lowpass BETWEEN two echo stages rather
+  # than after them, so the second stage's repeats are filtered copies of the
+  # first stage's -- which is what a feedback loop through tape actually does,
+  # and what a single filtered send does not.
+  def space_echo(time_ms: 240, feedback: 0.55, mix: 0.4, wow: 0.12)
+    short = time_ms.round
+    medium = (time_ms * 1.9).round
+    long = (time_ms * 2.8).round
+    "asplit=2[se_dry][se_wet];" \
+      "[se_wet]aecho=0.9:#{feedback}:#{short}|#{medium}|#{long}:0.6|0.45|0.3," \
+      "lowpass=f=3200,vibrato=f=0.9:d=#{wow}," \
+      "aecho=0.85:#{(feedback * 0.8).round(2)}:#{(time_ms * 3.6).round}|#{(time_ms * 5.1).round}:0.4|0.25," \
+      "lowpass=f=2200,highpass=f=180,volume=#{mix}[se_verb];" \
+      "[se_dry][se_verb]amix=inputs=2:weights=1 1:normalize=0"
+  end
+
   # ------------------------------------------------------------- mono bass
   #
   # Everything below the crossover collapsed to the centre.

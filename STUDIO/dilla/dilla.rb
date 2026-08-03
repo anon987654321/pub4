@@ -5227,6 +5227,24 @@ def build_bass_bus_filter(idx, duration)
     "alimiter=limit=0.95:level_out=0.97[bassbus]"
 end
 
+# The Space Echo on the pads.
+#
+# Two of them sit in Flying Lotus's studio and it is on a great deal of what he
+# has made. On a chord bed it does something no reverb does: the repeats are
+# darker and less steady than the source, so the pad trails off into something
+# that is recognisably the same chord and recognisably older than it. That is
+# the depth in his records, and it is a delay rather than a reverb doing it.
+#
+# On the pads only. Through the drums it smears the transients the kit exists
+# for, and on the bass it muddies the octave the Pultec was just cleaning.
+def harm_space_echo
+  return nil unless ENV.fetch("SPACE_ECHO", "1") != "0"
+
+  Outboard.space_echo(time_ms: ENV.fetch("SPACE_ECHO_MS", "240").to_f,
+                      feedback: ENV.fetch("SPACE_ECHO_FB", "0.45").to_f,
+                      mix: ENV.fetch("SPACE_ECHO_MIX", "0.3").to_f)
+end
+
 def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade_dur, beat_p, _n_bars)
   lp = sonic_pad_lowpass(sonic)
   build_start = (duration * 0.82).round(2)
@@ -5301,7 +5319,8 @@ end).to_f
     "#{air}equalizer=f=#{lp}:t=o:w=1.0:g=0.8," \
     "afade=t=in:st=#{harm_fade_start}:d=#{fade_in}#{fade_curve}," \
     "afade=t=out:st=#{(duration - outro_fade).round(2)}:d=#{outro_fade}#{fade_curve}," \
-    "equalizer=f=800:t=h:w=600:g=#{build_cut}:enable='between(t,#{build_start},#{duration})'[harm]"
+    "equalizer=f=800:t=h:w=600:g=#{build_cut}:enable='between(t,#{build_start},#{duration})'" \
+    "#{harm_space_echo ? "[harm_pre];[harm_pre]#{harm_space_echo}[harm]" : '[harm]'}"
 end
 
 def sidechain_amix_weights

@@ -237,11 +237,34 @@ module Acapella
   # the room the separator could not remove, a dip where a beat's own midrange
   # sits so the two do not fight, and levelled so a verse does not shout at a
   # chorus.
+  # Sharp, meaning legible -- consonants, not level.
+  #
+  # What makes a rap vocal cut is the top half of speech: the 3 to 5 kHz band
+  # where consonants live, and the air above 8 where breath and sibilance sit.
+  # The old chain lifted 2.6 kHz, which is vowel territory -- it made the voice
+  # louder and no clearer. These lift the parts that carry the words.
+  #
+  # A fast compressor after them, not before: the point is to catch consonant
+  # peaks once they have been raised, so the quiet ones come up to meet the loud
+  # ones. A 2 ms attack is fast enough to see a 't'.
+  #
+  # The de-esser is what lets the rest of it be this bright. Lifting 8 kHz on a
+  # separated stem raises sibilance more than anything else, and a stem carries
+  # separation artefacts up there too. adynamicequalizer pulls 6.5 kHz down only
+  # while 6.5 kHz is loud, so the brightness stays and the spit does not.
+  #
+  # No loudnorm. Single-pass loudnorm is DYNAMIC -- it rides the gain through the
+  # take, which on a rap vocal flattens the delivery, the loud line and the
+  # muttered one arriving at the same level. That is the same fault that was
+  # making the master wander, left in the vocal chain when the master was fixed.
   VOCAL_TONE = "highpass=f=110," \
-               "equalizer=f=380:t=q:w=1.2:g=-2.0," \
-               "equalizer=f=2600:t=q:w=1.0:g=2.0," \
-               "acompressor=threshold=-18dB:ratio=3:attack=6:release=140:makeup=1.2," \
-               "loudnorm=I=-17:TP=-2:LRA=7"
+               "equalizer=f=380:t=q:w=1.2:g=-2.5," \
+               "equalizer=f=3800:t=q:w=1.1:g=3.5," \
+               "equalizer=f=8500:t=h:w=0.7:g=2.5," \
+               "adynamicequalizer=dfrequency=6500:tfrequency=6500:threshold=0.30:" \
+               "ratio=3:attack=2:release=60:mode=cutabove," \
+               "acompressor=threshold=-20dB:ratio=4:attack=2:release=110:knee=4:makeup=1.9," \
+               "alimiter=limit=0.92:level_out=0.94"
 
   # atempo handles 0.5x to 2x per instance. Anything beyond gets chained.
   def atempo_chain(ratio)
@@ -339,18 +362,40 @@ module Acapella
   # A take can be perfectly separated, perfectly in tempo, and still the wrong
   # one for these beats.
   EXCLUDE = (ENV["VOCAL_EXCLUDE"] || "festival girson").downcase.split(",").map(&:strip).freeze
-  PREFER = (ENV["VOCAL_PREFER"] || "store p,dypt,jaja,nais body").downcase.split(",").map(&:strip).freeze
+
+  # An allow-list, not a preference. VOCAL_ONLY= names who may appear at all,
+  # and nothing outside it is used even if that leaves the pool empty and the
+  # track instrumental -- which is the correct outcome, because an instrumental
+  # is a track and the wrong rapper is a mistake.
+  ONLY = (ENV["VOCAL_ONLY"] || "store p").downcase.split(",").map(&:strip).freeze
+
+  # "prod. Store P" is a production credit, not a performance.
+  #
+  # Three titles here name Store P and only two of them are him rapping. On
+  # "Jaja (prod. Store P)" he made the beat and A-laget are on the microphone,
+  # so a plain substring match on his name puts somebody else's voice on the
+  # track. The distinction is in the word before the name.
+  PRODUCER_CREDIT = /\bprod\.?\s*(by\s*)?/i
+
+  def performer?(slug, name)
+    text = slug.to_s.downcase
+    return false unless text.include?(name)
+
+    # Reject only when the sole mention sits behind a production credit.
+    text.split(/[(\[]/).any? do |part|
+      part.include?(name) && !part.match?(PRODUCER_CREDIT)
+    end
+  end
 
   def usable
     index.reject { |v| EXCLUDE.any? { |bad| v["slug"].to_s.downcase.include?(bad) } }
   end
 
-  # Preferred takes first, everything else after, so a seed lands on a preferred
-  # one unless there are none left to land on.
   def ranked
     ok = usable
-    preferred, rest = ok.partition { |v| PREFER.any? { |good| v["slug"].to_s.downcase.include?(good) } }
-    preferred.empty? ? rest : preferred + rest
+    return ok if ONLY.empty?
+
+    ok.select { |v| ONLY.any? { |name| performer?(v["slug"], name) } }
   end
 
   # Picks one vocal for a track, always the same one for the same track name.
@@ -443,7 +488,7 @@ module Acapella
   #
   # Legibility is not loudness. A gentle duck at the right moment does more for
   # intelligibility than three decibels of level, and costs the track nothing.
-  VOCAL_WEIGHT = ENV.fetch("VOCAL_WEIGHT", "0.86")
+  VOCAL_WEIGHT = ENV.fetch("VOCAL_WEIGHT", "0.66")
   VOCAL_DUCK_DB = ENV.fetch("VOCAL_DUCK_DB", "-18")
 
   MIX_GRAPH = <<~GRAPH.gsub("\n", "")
