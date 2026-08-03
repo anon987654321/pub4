@@ -49,7 +49,11 @@ body.vertical-dating .match .feed-card-avatar-img {
 .dating-intro {
   position: fixed;
   inset: 0;
-  z-index: var(--z-splash);
+  // Above --z-toast (1100) so the opaque splash actually covers the host chrome
+  // — the brand logo, the keyboard-shortcuts toast, and the chat widget — which
+  // otherwise bled onto the "sveip for å begynne" screen (--z-splash was 1000,
+  // below the toast). Stays below --z-skip (2000) so the skip link still wins.
+  z-index: calc(var(--z-toast, 1100) + 20);
   display: flex;
   flex-direction: column;
   align-items: center;
