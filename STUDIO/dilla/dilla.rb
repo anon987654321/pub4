@@ -66,6 +66,8 @@ require "timeout"
 require_relative "lib/mixer"
 require_relative "lib/crate_dig"
 require_relative "lib/radio_chop"
+require_relative "lib/sample_flip"
+require_relative "lib/outboard"
 require_relative "lib/key_lock"
 require_relative "lib/modal_family"
 require_relative "lib/dilla_dmesg"
@@ -5337,6 +5339,50 @@ def bridge_filters(input:, output:, n_bars:, bar_sec:, track:, every_bars: 4)
   ["#{input}#{stages.join(',')}#{output}"]
 end
 
+# Hands the record and this track's chords to SampleFlip, and returns a loop
+# entry pointing at what comes back.
+#
+# The returned entry claims the render's own tempo. That is not a fib: the flip
+# was assembled beat by beat at that tempo, so the varispeed stage downstream
+# has nothing left to correct and correctly does nothing.
+def flip_loop_entry(entry, cfg, pads, n_bars)
+  return entry if ENV["FLIP"] == "0" || entry.nil? || !File.file?(entry[:path].to_s)
+
+  tones = chord_pitch_classes(pads)
+  return entry if tones.empty?
+
+  dest = dilla_render_tmp("flip")
+  result = SampleFlip.build!(
+    loop_path: entry[:path], dest:, bpm: cfg[:bpm].to_f,
+    bars: n_bars, chord_tones: tones,
+    seed: stable_hash("flip:#{cfg[:track]}")
+  )
+  unless result
+    dmesg("flip: #{File.basename(entry[:path])} yielded too few usable pieces — looping instead",
+          unit: "harm0", parent: "dilla0")
+    return entry
+  end
+
+  dmesg("flip: #{result[:slices]} pieces off #{File.basename(entry[:path])}, " \
+        "#{result[:events]} notes played over #{tones.length} chords",
+        unit: "harm0", parent: "dilla0")
+  entry.merge(path: result[:path], bpm: cfg[:bpm].to_f, flipped: true)
+end
+
+# The progression as bare note-classes -- C is 0, C sharp is 1, and so on.
+#
+# The flip does not need to know a chord's name, its voicing, or which octave
+# it sits in. It needs to know which notes are in it, so it can pick a piece of
+# record whose pitch is one of them.
+def chord_pitch_classes(pads)
+  return [] if pads.nil? || pads.empty?
+
+  pads.filter_map do |chord|
+    classes = Array(chord[:hz]).filter_map { |hz| hz.to_f.positive? ? hz_to_pitch_class(hz) : nil }.uniq
+    classes.empty? ? nil : classes
+  end
+end
+
 def sidechain_filter_chain(cfg, drum_label: "[drums]")
   return flylo_sidechain_filters(drum_label:) unless cfg[:style_family] == :dilla
 
@@ -5525,20 +5571,16 @@ CONSOLE_TRANSFORMER_HF_HZ = 18_500
 def console_master_chain(cfg)
   return nil if ENV["CONSOLE"] == "0"
 
-  bpm = cfg[:bpm].to_f
-  # An eighth note in milliseconds. Falls back to 300 ms -- a plausible release
-  # either way -- rather than dividing by zero if a caller omits the tempo.
-  release = bpm.positive? ? (60_000.0 / bpm / 2.0).round : 300
-  release = release.clamp(50, 1000)
-  drive = ENV.fetch("CONSOLE_DRIVE", "0.55").to_f
-  [
-    "equalizer=f=#{CONSOLE_TRANSFORMER_LF_HZ}:t=q:w=0.8:g=#{ENV.fetch('CONSOLE_LF_DB', '1.2')}",
-    "asoftclip=type=tanh:param=#{drive}:oversample=4",
-    "aexciter=amount=#{ENV.fetch('CONSOLE_TRIODE', '0.55')}:drive=4:blend=-3:freq=6000:level_out=1",
-    "acompressor=threshold=-14dB:ratio=2:attack=15:release=#{release}:makeup=1.08:detection=rms",
-    "equalizer=f=11000:t=h:w=0.5:g=#{ENV.fetch('CONSOLE_AIR_DB', '2.0')}",
-    "lowpass=f=#{CONSOLE_TRANSFORMER_HF_HZ}",
-  ].join(",")
+  rack = ENV.fetch("RACK", Outboard::DEFAULT_RACK).to_sym
+  unless Outboard::RACKS.key?(rack)
+    warn "rack: no such rack #{rack.inspect} — using #{Outboard::DEFAULT_RACK}. " \
+         "Choices: #{Outboard::RACKS.keys.join(', ')}"
+    rack = Outboard::DEFAULT_RACK
+  end
+  # A unit named in a rack but not built would vanish silently and the rack
+  # would quietly become a shorter rack. Say so instead.
+  Outboard.chain(rack, bpm: cfg[:bpm].to_f,
+                       missing: ->(unit) { warn "rack #{rack}: no unit named #{unit.inspect} — skipped" })
 end
 
 def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
@@ -18957,6 +18999,15 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     idx += 1
   end
   loop_entry = sample_loop_for(cfg[:track])
+  # The flip. Cuts the record into pieces and plays a new line out of them,
+  # against this track's own chords, instead of repeating the record. What comes
+  # back is an ordinary audio file already at the render's tempo, so everything
+  # downstream -- the bridges, the drum carving, the mix weight -- treats it
+  # exactly as it treated the loop and needs no special case.
+  #
+  # Falls back to looping when the record will not yield enough usable pieces.
+  # A worse version of the track is better than no track.
+  loop_entry = flip_loop_entry(loop_entry, cfg, pads, n_bars) if loop_entry
   loop_idx = nil
   if loop_entry
     varied = nil
