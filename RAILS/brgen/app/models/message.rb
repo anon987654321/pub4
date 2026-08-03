@@ -18,11 +18,16 @@ class Message < ApplicationRecord
   validates :content, presence: true, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
-  # `targets:` (a CSS selector), not `target:` (one dom id). The corner chat
-  # widget lives in the layout, so on a channel page there were two
-  # id="messages" logs and a turbo-stream append reached only the first —
-  # whichever that happened to be. A selector appends to every open log.
-  broadcasts_to :conversation, inserts_by: :append, targets: ".conversation-log"
+  # Live delivery. The declarative `broadcasts_to` re-renders _message inside
+  # Turbo's broadcast job (no request), where the reloaded message's belongs_to
+  # reads — conversation.channel?, sender.channel_handle — hit the default :all
+  # strict-loading mode: development LOGS the violation, test and production
+  # RAISE it, so the message saved (200) but never appeared for anyone. Reload
+  # with those associations and strict loading off before broadcasting.
+  # `targets:` (a CSS selector), not `target:` (one dom id): the corner chat
+  # widget lives in the layout, so a channel page has two logs — a selector
+  # appends to every open .conversation-log rather than whichever came first.
+  after_create_commit :broadcast_to_logs
 
   after_create :deliver_receipts
   after_create :clear_typing_indicators
@@ -66,6 +71,16 @@ class Message < ApplicationRecord
   def maybe_summon_bot = ChannelBotReplyJob.set(wait: rand(2..6).seconds).perform_later(id)
 
   private
+
+  def broadcast_to_logs
+    fresh = Message.strict_loading(false).includes(:sender, :conversation).find(id)
+    fresh.broadcast_append_to(
+      conversation,
+      targets: ".conversation-log",
+      partial: "messages/message",
+      locals: { message: fresh }
+    )
+  end
 
   def deliver_receipts
     conversation.participants.where.not(id: sender_id).each do |u|
