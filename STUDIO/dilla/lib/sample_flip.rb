@@ -280,34 +280,105 @@ module SampleFlip
     [0, 4, 7, 8, 12, 15],       # answers itself across the halves
   ].freeze
 
-  # Picks a piece for every slot of the arrangement.
+  # A phrase is two bars long. Long enough to say something, short enough that
+  # the ear has heard it twice before the section turns over.
+  MOTIF_BARS = 2
+
+  # How far the line may roam above and below where it started, counted in
+  # chord tones. Seven degrees is a little over an octave once the degrees are
+  # wrapped onto a three- or four-note chord -- enough range to have a shape,
+  # tight enough to stay one voice rather than wandering off.
+  DEGREE_FLOOR = -2
+  DEGREE_CEILING = 4
+
+  # Composes the phrase.
   #
-  # The rule: whatever chord is playing underneath, choose the piece whose own
-  # pitch is nearest one of that chord's notes, and retune it the rest of the
-  # way. So the flip PLAYS the progression rather than sitting on top of it.
+  # The phrase is stored as a SHAPE rather than as notes: each slot carries a
+  # degree, meaning "the third note of whatever chord is playing", not "an E".
+  # The same shape can then be played over every chord in the progression and
+  # will be in tune with each -- which is how a melody stays recognisable while
+  # the harmony moves underneath it.
   #
-  # A piece is penalised for following itself. Repetition is what a loop does;
-  # avoiding it is most of what makes this sound played.
+  # The shape moves mostly by one degree at a time. Melodies are overwhelmingly
+  # stepwise; leaps are rare and are what a listener remembers. One in four
+  # here, and a leap is followed by a pull back toward the middle, because a
+  # line that leaps twice in the same direction stops sounding like a line.
+  def build_motif(rng)
+    figure = FIGURES[rng.rand(FIGURES.length)]
+    degree = rng.rand(3)
+    MOTIF_BARS.times.flat_map do |bar|
+      # The second bar answers the first rather than repeating it. Using one
+      # figure for both made a two-bar phrase that was really a one-bar phrase
+      # played twice, which is the flat, circular quality the motif was meant to
+      # cure. The answer holds back the last note and pushes into the bar line
+      # instead -- call, then response.
+      slots = bar.zero? ? figure : answer(figure)
+      slots.map do |step|
+        here = degree
+        leap = rng.rand < 0.25
+        move = leap ? [2, 3, -2, -3][rng.rand(4)] : [1, -1][rng.rand(2)]
+        # Turn around at the edges of the range rather than stopping at them.
+        #
+        # Clamping looks like the same thing and is not: a line that keeps
+        # rising against a ceiling produces the SAME degree over and over, and
+        # three identical notes in a row is exactly the flatness the motif is
+        # here to cure. One phrase came out ending "4 4 4". Reflecting sends the
+        # line back down instead, which is also what a melody does when it
+        # reaches its top note.
+        move = -move if (degree + move) > DEGREE_CEILING || (degree + move) < DEGREE_FLOOR
+        degree = (degree + move).clamp(DEGREE_FLOOR, DEGREE_CEILING)
+        # The downbeat is the accent. Everything else sits under it, which is
+        # what makes a bar feel like a bar rather than a row of equal notes.
+        { bar:, step:, degree: here, accent: step.zero? ? 1.0 : 0.82 }
+      end
+    end
+  end
+
+  # The response to a call: the same figure with its last note dropped and a
+  # note added on the final sixteenth, which leans into the next bar's downbeat.
+  # A phrase that ends early and then pushes is a phrase that wants continuing.
+  def answer(figure)
+    kept = figure[0...-1]
+    # A pickup the call does not already contain. Adding a fixed sixteenth here
+    # produced no change at all whenever the figure already ended on it -- the
+    # response came out identical to the call, and the whole call-and-response
+    # was a no-op that read correctly in the source.
+    pickup = [14, 13, 15, 11].find { |p| !kept.include?(p) }
+    (kept + [pickup].compact).sort
+  end
+
+  # Lays the phrase out across the whole track.
+  #
+  # Every repetition is the same shape over a possibly different chord. The
+  # fourth repetition is varied -- the tail of the phrase is re-drawn -- so the
+  # section turns over instead of running on unchanged. That is the oldest trick
+  # in popular music: three the same, the fourth different.
   def arrange(slices, chord_tones, bars:, seed:)
     return [] if slices.empty?
 
     rng = Random.new(seed)
-    figure = FIGURES[rng.rand(FIGURES.length)]
+    motif = build_motif(rng)
+    variant = build_motif(rng)
     events = []
     previous = nil
 
-    bars.times do |bar|
-      tones = chord_tones[bar % chord_tones.length]
-      next if tones.nil? || tones.empty?
+    (0...bars).step(MOTIF_BARS).each_with_index do |bar0, repetition|
+      phrase = ((repetition % 4) == 3) ? variant : motif
+      phrase.each do |note|
+        bar = bar0 + note[:bar]
+        next if bar >= bars
 
-      # A different figure every fourth bar, so the phrase turns over.
-      active = ((bar % 4) == 3) ? FIGURES[(FIGURES.index(figure) + 1) % FIGURES.length] : figure
-      active.each do |step|
-        target = tones[rng.rand(tones.length)]
+        tones = chord_tones[bar % chord_tones.length]
+        next if tones.nil? || tones.empty?
+
+        # The degree, wrapped into the chord actually playing. A shape asking
+        # for its fifth note over a three-note chord gets the second one.
+        target = tones[note[:degree] % tones.length]
         pick = best_slice(slices, target, previous, rng)
         next unless pick
 
-        events << { bar:, step:, slice: pick[:slice], shift: pick[:shift] }
+        events << { bar:, step: note[:step], slice: pick[:slice],
+                    shift: pick[:shift], gain: note[:accent], degree: note[:degree] }
         previous = pick[:slice][:index]
       end
     end
@@ -346,6 +417,19 @@ module SampleFlip
   # sample sounds like a sampler rather than like a pitch-shifter. And each one
   # lands a few milliseconds off its slot, because a person playing pads lands
   # a few milliseconds off, and that lateness is the whole feel.
+  # One note at a time, and each one makes way for the next.
+  #
+  # Pieces used to be laid down at their full length and left to overlap, so
+  # three unrelated fragments of a record could sound at once. That is where
+  # mud comes from, and no amount of mixing repairs it -- the parts genuinely
+  # are all playing. A sampler pad does not behave that way: hitting the next
+  # pad stops the last. So a note now runs until the next note begins, plus a
+  # short tail for it to decay into, and the two overlap only across that tail.
+  #
+  # The tail is thirty-five milliseconds, long enough that consecutive pieces
+  # bleed into one another rather than butt together.
+  RELEASE_SEC = 0.035
+
   def render(mono_l, mono_r, events, bpm:, bars:, seed:)
     beat = 60.0 / bpm
     step_sec = beat / 4.0
@@ -354,28 +438,37 @@ module SampleFlip
     right = Array.new(total, 0.0)
     rng = Random.new(seed ^ 0x5f5f)
 
-    events.each do |event|
-      slice = event[:slice]
-      ratio = 2.0**(event[:shift] / 12.0)
+    # Absolute times first, in order, so each note knows when the next arrives.
+    timed = events.map do |event|
       # Late, and more so on the offbeats -- the drag that makes a figure sit
       # behind the beat instead of on it.
       drag = (event[:step].odd? ? 0.011 : 0.004) + (rng.rand * 0.006)
-      at = (((event[:bar] * 4 * beat) + (event[:step] * step_sec) + drag) * RATE).to_i
-      next if at >= total
+      at = (event[:bar] * 4 * beat) + (event[:step] * step_sec) + drag
+      event.merge(at:)
+    end.sort_by { |e| e[:at] }
 
-      place(left, right, mono_l, mono_r, slice, at, ratio)
+    timed.each_with_index do |event, i|
+      frame = (event[:at] * RATE).to_i
+      next if frame >= total
+
+      following = timed[i + 1]
+      room = following ? (following[:at] - event[:at]) + RELEASE_SEC : event[:slice][:length]
+      place(left, right, mono_l, mono_r, event[:slice], frame,
+            2.0**(event[:shift] / 12.0), room, event[:gain] || 1.0)
     end
     [left, right]
   end
 
-  # Copies one piece into the output, resampled for pitch and faded at the ends.
-  def place(left, right, src_l, src_r, slice, at, ratio)
+  # Copies one piece into the output: resampled for pitch, cut to the room it
+  # has, and faded at both ends.
+  def place(left, right, src_l, src_r, slice, at, ratio, room, gain)
     from = (slice[:start] * RATE).to_i
-    frames = (slice[:length] * RATE).to_i
-    out_frames = (frames / ratio).to_i
+    available = (slice[:length] / ratio * RATE).to_i
+    out_frames = [available, (room * RATE).to_i].min
     return if out_frames < 2
 
-    fade = (EDGE_FADE_SEC * RATE).to_i
+    attack = (EDGE_FADE_SEC * RATE).to_i
+    release = (RELEASE_SEC * RATE).to_i
     i = 0
     while i < out_frames
       dest = at + i
@@ -389,23 +482,24 @@ module SampleFlip
       break if base + 1 >= src_l.length
 
       frac = pos - base
-      gain = edge_gain(i, out_frames, fade)
-      left[dest] += ((src_l[base] * (1 - frac)) + (src_l[base + 1] * frac)) * gain
-      right[dest] += ((src_r[base] * (1 - frac)) + (src_r[base + 1] * frac)) * gain
+      envelope = edge_gain(i, out_frames, attack, release) * gain
+      left[dest] += ((src_l[base] * (1 - frac)) + (src_l[base + 1] * frac)) * envelope
+      right[dest] += ((src_r[base] * (1 - frac)) + (src_r[base + 1] * frac)) * envelope
       i += 1
     end
   end
 
-  def edge_gain(i, total, fade)
-    return 1.0 if fade < 1
-
-    if i < fade
-      i.to_f / fade
-    elsif i > total - fade
-      [(total - i).to_f / fade, 0.0].max
-    else
-      1.0
+  # A fast fade in and a slow fade out. The fade out is a curve rather than a
+  # straight line -- squared, so it falls away quickly at first and then trails,
+  # which is how a struck note decays and a linear ramp is not.
+  def edge_gain(i, total, attack, release)
+    gain = 1.0
+    gain *= i.to_f / attack if attack.positive? && i < attack
+    if release.positive? && i > total - release
+      remaining = [(total - i).to_f / release, 0.0].max
+      gain *= remaining * remaining
     end
+    gain
   end
 
   # ---------------------------------------------------------------- assembling
