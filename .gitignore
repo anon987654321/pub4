@@ -106,6 +106,21 @@ OPENBSD/var/nsd/zones/master/*
 STUDIO/dilla/renders/
 STUDIO/dilla/demo*.wav
 STUDIO/dilla/demo*.mp3
+# demo.mp3 itself is tracked, and only that one name. dilla.rb has always called
+# it "the artifact worth tracking" and printed "(tracked artifact)" to the
+# operator as it wrote the file -- while this rule ignored it. One of the two was
+# wrong for as long as both existed; the code's account is the one being kept.
+#
+# The WAV above stays ignored and that is not an oversight: it is the working
+# master and runs 5-7x the mp3 (130 MB for 25 tracks against roughly 30 MB).
+#
+# Size is the live constraint here, not a formality. GitHub's hard per-file push
+# limit is 100 MB, LFS is not available (see the note at the top of this
+# section), and the curated 86-track demo measures 71 minutes -- which is 102 MB
+# at dilla's default 192kbps and would be REJECTED at push. It fits at 128k
+# (68 MB) or 96k (51 MB). If the catalogue grows or bars go up, re-measure before
+# assuming the next demo still fits.
+!STUDIO/dilla/demo.mp3
 # `demo-each` writes the catalogue one mp3 per track into the dilla root as
 # NN_title.mp3. These are TRACKED, against the rule above that generated audio
 # is not, and the exception is deliberate: this set IS the current demo -- the
@@ -114,7 +129,9 @@ STUDIO/dilla/demo*.mp3
 #
 # They are small enough to justify it. Eight tracks at 12-16 bars is under 10 MB,
 # against the 508 MB the full-catalogue concat ran to, which is why demo*.wav
-# and demo*.mp3 two lines up stay ignored.
+# two lines up stays ignored. demo.mp3 is now the exception to that exception --
+# see its note above; the 508 MB figure is the WAV, and the mp3 of the curated
+# catalogue is a fifth of it.
 #
 # Prune freely: re-running demo-each replaces them, and demo_manifest.tsv beside
 # them records the seed, the engine and the settings behind each take.
