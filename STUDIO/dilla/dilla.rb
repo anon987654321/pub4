@@ -14161,12 +14161,35 @@ end
 #
 # PAD_LAYERS was `ENV["PAD_VOICE"].start_with?("stack_") ? "1" : "1"` -- both arms
 # the same value, so the condition never meant anything.
+# The outboard chain each demo slot is printed through.
+#
+# lib/outboard.rb holds seven racks of measured emulations and demo-all was using
+# exactly one of them, 86 times -- the same signal path on every track in a demo
+# whose entire job is to show range. The pads, arps and voicings already rotate
+# per slot (right below); the analog stage did not, so every slot's character
+# came from the front of the chain and none from the back.
+#
+# Rotated on a different modulus to the pad rotation so the two do not lock into
+# a repeating pair. 7 racks against DEMO_PAD_ROTATION's length share no factor
+# unless that length is a multiple of 7, so the combination walks rather than
+# cycles.
+#
+# RACK is read by the render at dilla.rb's rack resolution and falls back to
+# Outboard::DEFAULT_RACK on an unknown name, so a rack removed from the table
+# degrades to the default rather than failing the slot.
+DEMO_RACK_ROTATION = Outboard::RACKS.keys.map(&:to_s).freeze
+
+def demo_slot_rack(idx)
+  DEMO_RACK_ROTATION[idx % DEMO_RACK_ROTATION.length]
+end
+
 def demo_slot_pad_env(idx)
   {
     "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
     "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
     "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
     "PAD_LAYERS" => "1",
+    "RACK" => demo_slot_rack(idx),
   }
 end
 
@@ -14567,6 +14590,56 @@ end
 # demuxer requires and the one thing it will not check. It probes the FIRST input
 # only and assumes the rest match, so a single odd part is copied through as if it
 # were the format of part 1.
+# Level every part to one target before the demo is assembled. On by default.
+#
+# The demo was not loud in the wrong places, it was TWO RECORDS. Measured across
+# 42 rendered parts: the hip-hop slots sit at -18.7 LUFS with about 9 LU of range
+# and -8 dBFS peaks, and the techno slots at -12.5 LUFS with 24 LU of range and
+# -2.2 dBFS peaks. 6.2 dB apart, alternating, for 71 minutes. The hip-hop tracks
+# were already tightly levelled against each other -- the entire spread was that
+# one seam.
+#
+# DEMO_ALBUM_NORM does not fix this and cannot. It normalises the finished
+# concatenation, which moves the whole thing together and preserves every gap
+# inside it. That is the right behaviour for an album, where the quiet track is
+# quiet on purpose, and the wrong layer entirely for a catalogue demo where the
+# difference between two tracks is an artefact of which renderer drew them.
+# Levelling has to happen per part, before they are joined.
+#
+# normalize_track_loudness! is reused rather than reinvented: its LRA=11 ceiling
+# is the half that matters most here, because the techno slots' problem is as
+# much the 24 LU range as the level, and a gain change alone would leave that.
+def demo_level_parts?
+  ENV.fetch("DEMO_LEVEL", "1") != "0"
+end
+
+# Normalised copies, in a temp directory -- the cached parts in out_dir are never
+# touched. Two reasons, and the second is the one that bites: demo-all is
+# resumable, so mutating parts in place would re-level an already-levelled part
+# on every resume, and levelling is not quite idempotent (each pass re-measures
+# and re-limits). Copies also mean a failed run leaves the expensive renders
+# intact.
+#
+# Decoding each part separately is what makes this safe for mixed codecs too, so
+# this path needs no uniformity check -- it IS the uniformity fix.
+def demo_level_and_join!(parts, out)
+  target = ENV.fetch("DEMO_LEVEL_LUFS", "-16.5").to_f
+  dmesg("level: #{parts.length} parts -> #{target} LUFS", unit: "demo0", parent: "dilla0")
+  Dir.mktmpdir("dilla_level") do |tmp_dir|
+    levelled = parts.each_with_index.map do |p, i|
+      dst = File.join(tmp_dir, format("%03d.wav", i))
+      sh! "ffmpeg", "-y", "-loglevel", "error", "-i", p,
+          "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", dst
+      normalize_track_loudness!(dst, lufs: target)
+      dst
+    end
+    list = File.join(tmp_dir, "concat.txt")
+    File.write(list, levelled.map { |p| "file '#{p}'" }.join("\n") + "\n")
+    sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out
+  end
+  out
+end
+
 def demo_parts_uniform?(parts)
   codecs = parts.map do |p|
     out, status = Open3.capture2e("ffprobe", "-v", "error", "-select_streams", "a:0",
@@ -14583,6 +14656,9 @@ end
 # WAV container and exits 0, so the rescue that used to guard this never fired and
 # the demo shipped a file that opens nowhere. Check the parts first, then copy.
 def demo_join_parts!(parts, list, out)
+  if demo_level_parts?
+    return demo_level_and_join!(parts, out)
+  end
   if demo_parts_uniform?(parts)
     sh! "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", out
     return out
@@ -14818,7 +14894,13 @@ def demo_all(bars_count = 12, destination = nil)
           # matched to what the hip-hop track would have run to, so the two
           # sit side by side in a demo rather than one being twice the other.
           prev = ENV["HATE_MIN"]
+          prev_blocks = ENV["HATE_MIN_BLOCKS"]
           ENV["HATE_MIN"] = ((bars_count * 4 * (60.0 / HATE_BPM)) / 60.0).round(2).to_s
+          # A demo slot is a sample, not a set: one block is a legitimate length
+          # here even though it is not one for a standalone techno render. Without
+          # this the renderer's own floor doubles the slot back and the length
+          # matching on the line above is discarded a second time.
+          ENV["HATE_MIN_BLOCKS"] = "1"
           begin
             dmesg("slot #{idx} -> techno", unit: "demo0", parent: "dilla0")
             techno_mp3 = part.sub(/\.wav\z/, ".mp3")
@@ -14839,6 +14921,7 @@ def demo_all(bars_count = 12, destination = nil)
             FileUtils.rm_f(techno_mp3)
           ensure
             prev ? ENV["HATE_MIN"] = prev : ENV.delete("HATE_MIN")
+            prev_blocks ? ENV["HATE_MIN_BLOCKS"] = prev_blocks : ENV.delete("HATE_MIN_BLOCKS")
           end
         else
           render_dilla(part, bars_count)
@@ -21042,13 +21125,32 @@ end
 
 def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp3"))
   require_tools! "ffmpeg"
-  minutes = (ENV["HATE_MIN"] || 16).to_f.clamp(1.0, 60.0)
+  # The lower clamp is 0.1, not 1.0, and that single number was the whole reason
+  # the demo did not sound like one record.
+  #
+  # demo-all sets HATE_MIN to whatever the hip-hop slot beside it will run to --
+  # 0.33 minutes for 12 bars -- precisely so the two sit side by side, and says so
+  # in a comment at the call site. clamp(1.0, ..) then raised it back to a full
+  # minute without a word. A minute yields ceil(60 / (bar*16)) = 3 blocks = 79.4s
+  # against the hip-hop track's 31.3s, which is the 2.5x the call site exists to
+  # prevent. Measured across 42 parts: techno was 38% of the tracks and 61% of the
+  # runtime.
+  #
+  # 0.1 still guards what the clamp was guarding -- zero, negative, a typo'd
+  # HATE_MIN -- without overruling a caller who has done the arithmetic.
+  minutes = (ENV["HATE_MIN"] || 16).to_f.clamp(0.1, 60.0)
   beat = 60.0 / HATE_BPM
   bar = beat * 4
   step = beat / 4
   tick = beat / MPC_PPQ
   cycle = (bar * HATE_CYCLE_BARS).round(6)
-  blocks = [(minutes * 60.0 / (bar * HATE_BLOCK_BARS)).ceil, 2].max
+  # ...and the block floor is the second half of the same fault. With the clamp
+  # fixed, 0.33 minutes asks for one block; max(.., 2) doubled it back to 53s.
+  # Two blocks is right for a standalone session, where one 16-bar block is not a
+  # techno track. It is wrong for a demo slot, which is a sample and not a set,
+  # so the floor is a knob and demo-all sets it to 1.
+  min_blocks = (ENV["HATE_MIN_BLOCKS"] || 2).to_i.clamp(1, 64)
+  blocks = [(minutes * 60.0 / (bar * HATE_BLOCK_BARS)).ceil, min_blocks].max
   total = (blocks * HATE_BLOCK_BARS * bar).round(3)
 
   # One cycle per layer, then loop it. aeval evaluates per SAMPLE, so
