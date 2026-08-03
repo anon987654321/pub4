@@ -77,19 +77,30 @@ class ChannelBot
     end
   end
 
+  # The first listed bot is the channel op (@), the rest are voices (+).
   def self.seat_bots(channel, handles)
-    Array(handles).each do |handle|
+    Array(handles).each_with_index do |handle, index|
       bot = bot_for(handle) or next
-      channel.join!(bot)
+      channel.join!(bot, role: index.zero? ? "op" : "voice")
     end
   end
 
-  # A canned greeting when a channel first opens — no LLM call on the hot path.
+  # Canned opening lines so a freshly opened room reads alive instead of empty —
+  # no LLM call on the hot path. A couple of turns between the op and the voice,
+  # including a `/help` in backticks to show the code highlighting.
   def self.welcome!(channel)
     spec = Conversation::CHANNELS[channel.slug] or return
     host = bot_for(Array(spec[:bots]).first) or return
+    echo = bot_for(Array(spec[:bots])[1])
+
     channel.messages.create!(sender: host, message_type: "text",
       content: "#{spec[:blurb]} you're anonymous here — say hi.")
+    if echo
+      channel.messages.create!(sender: echo, message_type: "text",
+        content: "type `/help` any time, and keep it local.")
+    end
+    channel.messages.create!(sender: host, message_type: "text",
+      content: "so — what's happening in your city right now?")
   end
 
   # --- replying -----------------------------------------------------------

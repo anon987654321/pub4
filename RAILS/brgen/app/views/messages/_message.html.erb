@@ -6,7 +6,7 @@
     controller turns it into data-from on arrival. %>
 <article data-sender-id="<%= message.sender_id %>" data-from="<%= message.sender_id == Current.user&.id ? "self" : "peer" %>"<%= " data-bot" if in_channel && message.sender.bot? %><%= " data-expiry=\"#{message.expiry_urgency}\"" if message.expiry_urgency %> aria-label="Message from <%= who %>">
   <header>
-    <span><%= who %></span>
+    <span class="msg-nick" style="<%= nick_style(who) %>"><%= who %></span>
     <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>
     <% if message.expires_at %>
       <span class="expiry-chip" data-expiry="<%= message.expiry_urgency %>">· disappears <%= time_ago_in_words(message.expires_at) %></span>
@@ -14,7 +14,7 @@
     <% receipt = message.message_receipts.find_by(user: Current.user) %>
     <% if receipt&.read? %><span class="dim">· read</span><% end %>
   </header>
-  <p><%= message.content %></p>
+  <p><%= format_chat_body(message.content) %></p>
   <%= render "messages/reactions", message: message %>
   <% if message.attachment.attached? %>
     <% if message.message_type == "image" %>

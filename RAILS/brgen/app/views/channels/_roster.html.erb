@@ -1,0 +1,14 @@
+<%# The IRC nick list: ops (@) first, then voices (+). These are the channel's
+    seeded bots; anonymous humans are members and show only in the live count in
+    the header. Each nick carries its stable colour (ChatHelper#nick_style). %>
+<aside class="channel-roster" aria-label="<%= t("chat.roster", default: "In this channel") %>">
+  <ul class="roster-list">
+    <% conversation.conversation_participants.by_rank.includes(:user).each do |member| %>
+      <% next unless member.op? || member.voice? %>
+      <% handle = member.user.channel_handle %>
+      <li class="roster-nick" data-role="<%= member.role %>" style="<%= nick_style(handle) %>">
+        <span class="roster-mode" aria-hidden="true"><%= member.mode_prefix %></span><%= handle %>
+      </li>
+    <% end %>
+  </ul>
+</aside>
