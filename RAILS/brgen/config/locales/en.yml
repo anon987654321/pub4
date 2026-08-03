@@ -1,5 +1,10 @@
 en:
   hello: "Hello"
+  legal:
+    aria: "Legal and information"
+    privacy: "Privacy"
+    terms: "Terms"
+    cookies: "Cookies"
   app:
     name: "Brgen"
   feed:
