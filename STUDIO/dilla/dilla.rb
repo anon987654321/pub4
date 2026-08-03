@@ -19735,9 +19735,20 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   blocks = [(minutes * 60.0 / (bar * HATE_BLOCK_BARS)).ceil, 2].max
   total = (blocks * HATE_BLOCK_BARS * bar).round(3)
 
-  # The core eight bars. Four-to-the-floor with the variations that keep it from
-  # reading as a metronome: a kick roll into the turn, the hats dropping for a
-  # bar so their return is felt, the open hat only on the lift.
+  # One cycle per layer, then loop it.
+  #
+  # The first version built the whole set in a single filtergraph, with aeval
+  # synthesising the kick from a thirty-four-term expression. aeval evaluates
+  # per SAMPLE, so an 8.4-minute render meant 22 million evaluations of that
+  # expression per layer. Measured: 37% CPU for two and a half minutes to write
+  # 2% of the file -- about a two-hour render for eight minutes of audio.
+  #
+  # The fix is also the honest way to build this music. A techno track is a loop
+  # with layers coming in and out, so each layer is synthesised ONCE over its
+  # eight-bar cycle -- 13.2 seconds instead of 504 -- written to disk, then
+  # looped with -stream_loop and gated on absolute time. Same output, 38x less
+  # synthesis, and the structure of the code now matches the structure of the
+  # genre.
   kick_per_bar = Array.new(HATE_CYCLE_BARS) { [0, 4, 8, 12] }
   kick_per_bar[7] = [0, 4, 8, 12, 14, 15]
   clap_per_bar = Array.new(HATE_CYCLE_BARS) { [4, 12] }
@@ -19751,91 +19762,105 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
   # Metallic hits land off the grid on purpose -- a factory does not keep time.
   metal_per_bar = Array.new(HATE_CYCLE_BARS) { [] }
   metal_per_bar[1] = [7]; metal_per_bar[2] = [3, 11]; metal_per_bar[4] = [7, 13]; metal_per_bar[6] = [5]
-  # Minimal melodic content: two notes, an octave apart, and nothing else.
+  # Minimal melodic content: a handful of notes, and nothing else.
   acid_steps = [0, 6, 10, 14]
   acid_notes = [55.00, 55.00, 58.27, 55.00, 65.41, 55.00, 58.27, 51.91]
 
   at = ->(b, s) { ((b * bar) + (s * step)).round(6) }
   gather = ->(rows) { HATE_CYCLE_BARS.times.flat_map { |b| rows[b].map { |s| at.call(b, s) } } }
-
-  kicks = gather.call(kick_per_bar)
-  claps = gather.call(clap_per_bar)
-  hats = gather.call(hat_per_bar)
-  opens = gather.call(open_per_bar)
-  metals = gather.call(metal_per_bar)
-  acids = HATE_CYCLE_BARS.times.flat_map { |b| acid_steps.map { |s| [at.call(b, s), acid_notes[b]] } }
-
   env = lambda do |times, len, decay|
-    times.map do |t|
-      tm = (t % cycle).round(6)
-      "between(mod(t,#{cycle}),#{tm},#{(tm + len).round(6)})*exp(-(mod(t,#{cycle})-#{tm})*#{decay})"
-    end.join("+")
+    times.map { |t| "between(t,#{t},#{(t + len).round(6)})*exp(-(t-#{t})*#{decay})" }.join("+")
   end
 
-  # The kick: a pitch-swept sine, the way a 909 body is built, rather than a
-  # sample. 58 Hz rather than 110 -- this style sits lower than the house-tempo
-  # techno render does.
-  kick_sig = kicks.map do |t|
-    tm = (t % cycle).round(6)
-    dt = "mod(t,#{cycle})-#{tm}"
-    "between(mod(t,#{cycle}),#{tm},#{(tm + 0.22).round(6)})*0.98*exp(-#{dt}*7)*sin(2*PI*(58*#{dt}+190*#{dt}*exp(-#{dt}*26)))"
+  work = scratch_path("hate")
+  FileUtils.mkdir_p(work)
+  parts = {}
+
+  # Kick: pitch-swept sine, bit-crushed, saturated, then compressed. Grit first,
+  # punch after -- compressing a clean kick and distorting the result gives you
+  # a loud clean kick, which is not this genre.
+  kick_sig = gather.call(kick_per_bar).map do |t|
+    "between(t,#{t},#{(t + 0.22).round(6)})*0.98*exp(-(t-#{t})*7)*sin(2*PI*(58*(t-#{t})+190*(t-#{t})*exp(-(t-#{t})*26)))"
   end.join("+")
+  parts[:kick] = File.join(work, "kick.wav")
+  sh! "ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+      "-i", "aevalsrc='#{kick_sig}':s=#{SAMPLE_RATE}:d=#{cycle}",
+      "-af", "aformat=channel_layouts=stereo,acrusher=bits=10:samples=1:mix=0.22," \
+             "aeval='tanh(val(0)*3.2)/tanh(3.2)|tanh(val(1)*3.2)/tanh(3.2)'," \
+             "acompressor=threshold=-12dB:ratio=9:attack=1:release=38:makeup=4," \
+             "equalizer=f=58:t=o:w=0.8:g=5,lowpass=f=7000",
+      "-c:a", "pcm_s16le", parts[:kick]
 
-  sub_sig = kicks.map do |t|
-    tm = (t % cycle).round(6)
-    dt = "mod(t,#{cycle})-#{tm}"
-    "between(mod(t,#{cycle}),#{tm},#{(tm + 0.42).round(6)})*0.5*exp(-#{dt}*4)*sin(2*PI*41*#{dt})"
+  sub_sig = gather.call(kick_per_bar).map do |t|
+    "between(t,#{t},#{(t + 0.42).round(6)})*0.5*exp(-(t-#{t})*4)*sin(2*PI*41*(t-#{t}))"
   end.join("+")
+  parts[:sub] = File.join(work, "sub.wav")
+  sh! "ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+      "-i", "aevalsrc='#{sub_sig}':s=#{SAMPLE_RATE}:d=#{cycle}",
+      "-af", "aformat=channel_layouts=stereo,lowpass=f=90", "-c:a", "pcm_s16le", parts[:sub]
 
-  acid_sig = acids.map do |(t, f)|
-    tm = (t % cycle).round(6)
-    dt = "mod(t,#{cycle})-#{tm}"
-    "between(mod(t,#{cycle}),#{tm},#{(tm + 0.16).round(6)})*0.55*exp(-#{dt}*11)*sin(2*PI*#{f}*#{dt})"
-  end.join("+")
+  acid_sig = HATE_CYCLE_BARS.times.flat_map { |b|
+    acid_steps.map { |s| [at.call(b, s), acid_notes[b]] }
+  }.map { |(t, f)|
+    "between(t,#{t},#{(t + 0.16).round(6)})*0.55*exp(-(t-#{t})*11)*sin(2*PI*#{f}*(t-#{t}))"
+  }.join("+")
+  parts[:acid] = File.join(work, "acid.wav")
+  sh! "ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+      "-i", "aevalsrc='#{acid_sig}':s=#{SAMPLE_RATE}:d=#{cycle}",
+      "-af", "aformat=channel_layouts=stereo," \
+             "aeval='tanh(val(0)*4.5)/tanh(4.5)|tanh(val(1)*4.5)/tanh(4.5)'," \
+             "bandpass=f=520:w=700,aecho=0.7:0.55:#{(step * 3000).round}|#{(step * 6000).round}:0.4|0.22",
+      "-c:a", "pcm_s16le", parts[:acid]
 
-  g = ->(layer) { hate_gate(layer, blocks, bar) }
+  # Noise-derived layers: an envelope over white or pink noise, which is what a
+  # clap, a hat and a sheet of metal all are.
+  {
+    clap:  [gather.call(clap_per_bar),  0.05, 34, "white", 0.55, "bandpass=f=1600:w=2200,aecho=0.6:0.45:37|74:0.28|0.14"],
+    hat:   [gather.call(hat_per_bar),   0.035, 80, "white", 0.34, "highpass=f=8500"],
+    open:  [gather.call(open_per_bar),  0.45, 9,  "white", 0.26, "bandpass=f=7200:w=5200"],
+    metal: [gather.call(metal_per_bar), 0.9,  5,  "white", 0.30,
+            "bandpass=f=3100:w=260,bandpass=f=4700:w=200,aecho=0.8:0.7:170|330|610:0.5|0.32|0.18,highpass=f=900"],
+  }.each do |name, (times, len, decay, colour, gain, chain)|
+    parts[name] = File.join(work, "#{name}.wav")
+    next sh!("ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+             "-i", "anullsrc=r=#{SAMPLE_RATE}:cl=stereo:d=#{cycle}",
+             "-c:a", "pcm_s16le", parts[name]) if times.empty?
 
-  filt = <<~F
-    [0:a]aformat=channel_layouts=stereo,
-         aeval='(#{kick_sig})*(#{g.call(:kick)})|(#{kick_sig})*(#{g.call(:kick)})',
-         acrusher=bits=10:samples=1:mix=0.22,
-         aeval='tanh(val(0)*3.2)/tanh(3.2)|tanh(val(1)*3.2)/tanh(3.2)',
-         acompressor=threshold=-12dB:ratio=9:attack=1:release=38:makeup=4,
-         equalizer=f=58:t=o:w=0.8:g=5,lowpass=f=7000[kick];
-    [1:a]aformat=channel_layouts=stereo,
-         aeval='(#{sub_sig})*(#{g.call(:sub)})|(#{sub_sig})*(#{g.call(:sub)})',
-         lowpass=f=90[sub];
-    [2:a]volume='(#{env.call(claps, 0.05, 34)})*0.55*(#{g.call(:clap)})':eval=frame,
-         bandpass=f=1600:w=2200,aecho=0.6:0.45:37|74:0.28|0.14[clap];
-    [3:a]volume='(#{env.call(hats, 0.035, 80)})*0.34*(#{g.call(:hat)})':eval=frame,
-         highpass=f=8500[hat];
-    [4:a]volume='(#{env.call(opens, 0.45, 9)})*0.26*(#{g.call(:open)})':eval=frame,
-         bandpass=f=7200:w=5200[open];
-    [5:a]volume='(#{env.call(metals, 0.9, 5)})*0.30*(#{g.call(:metal)})':eval=frame,
-         bandpass=f=3100:w=260,bandpass=f=4700:w=200,
-         aecho=0.8:0.7:170|330|610:0.5|0.32|0.18,highpass=f=900[metal];
-    [6:a]volume='(0.05+0.05*sin(2*PI*t/#{(bar * 8).round(3)}))*(#{g.call(:hiss)})':eval=frame,
-         highpass=f=2400,lowpass=f=11000,aecho=0.7:0.6:220|450:0.35|0.2[hiss];
-    [7:a]aformat=channel_layouts=stereo,
-         aeval='(#{acid_sig})*(#{g.call(:acid)})|(#{acid_sig})*(#{g.call(:acid)})',
-         aeval='tanh(val(0)*4.5)/tanh(4.5)|tanh(val(1)*4.5)/tanh(4.5)',
-         bandpass=f=520:w=700,aecho=0.7:0.55:#{(step * 1000 * 3).round}|#{(step * 1000 * 6).round}:0.4|0.22[acid];
-    [kick][sub][clap][hat][open][metal][hiss][acid]amix=inputs=8:duration=longest:normalize=0,
-         highpass=f=26,
-         acompressor=threshold=-15dB:ratio=7:attack=2:release=60:makeup=3.5,
-         alimiter=limit=0.96:level_out=0.94[out]
-  F
+    sh! "ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+        "-i", "anoisesrc=color=#{colour}:r=#{SAMPLE_RATE}:amplitude=0.9:d=#{cycle}:seed=#{noise_seed(41)}",
+        "-af", "aformat=channel_layouts=stereo,volume='(#{env.call(times, len, decay)})*#{gain}':eval=frame,#{chain}",
+        "-c:a", "pcm_s16le", parts[name]
+  end
 
-  inputs = Array.new(2) { lavfi("anullsrc=r=#{SAMPLE_RATE}:cl=stereo:d=#{total}") }.flatten +
-           Array.new(4) { lavfi("anoisesrc=color=white:r=#{SAMPLE_RATE}:amplitude=0.9:d=#{total}:seed=#{noise_seed(41)}") }.flatten +
-           lavfi("anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.9:d=#{total}:seed=#{noise_seed(42)}") +
-           lavfi("anullsrc=r=#{SAMPLE_RATE}:cl=stereo:d=#{total}")
+  # Hydraulic hiss: a slow swell rather than a hit, so it is one long breath per
+  # two bars rather than anything you could tap along to.
+  parts[:hiss] = File.join(work, "hiss.wav")
+  sh! "ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+      "-i", "anoisesrc=color=pink:r=#{SAMPLE_RATE}:amplitude=0.9:d=#{cycle}:seed=#{noise_seed(42)}",
+      "-af", "aformat=channel_layouts=stereo," \
+             "volume='0.05+0.05*sin(2*PI*t/#{(bar * 2).round(3)})':eval=frame," \
+             "highpass=f=2400,lowpass=f=11000,aecho=0.7:0.6:220|450:0.35|0.2",
+      "-c:a", "pcm_s16le", parts[:hiss]
+
+  # Loop each layer to full length, gate it on absolute time, mix.
+  loops = (total / cycle).ceil + 1
+  inputs = parts.keys.flat_map { |k| ["-stream_loop", loops.to_s, "-i", parts[k]] }
+  chains = parts.keys.each_with_index.map do |k, i|
+    gate = hate_gate(k, blocks, bar)
+    stage = gate == "1" ? "anull" : "volume='#{gate}':eval=frame"
+    "[#{i}:a]atrim=0:#{total},asetpts=PTS-STARTPTS,#{stage}[l#{i}]"
+  end
+  mix = parts.keys.each_index.map { |i| "[l#{i}]" }.join
+  graph = "#{chains.join(';')};#{mix}amix=inputs=#{parts.length}:duration=longest:normalize=0," \
+          "highpass=f=26,acompressor=threshold=-15dB:ratio=7:attack=2:release=60:makeup=3.5," \
+          "alimiter=limit=0.96:level_out=0.94[out]"
 
   FileUtils.mkdir_p(File.dirname(destination))
   dmesg("hate: #{HATE_BPM.round} BPM, #{blocks} blocks of #{HATE_BLOCK_BARS} bars, #{(total / 60).round(1)} min",
         unit: "techno0", parent: "dilla0")
-  sh_filter_complex!(filt, *inputs, "-map", "[out]", "-t", total.to_s,
-                     "-c:a", "libmp3lame", "-b:a", "224k", destination)
+  sh! "ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex", graph,
+      "-map", "[out]", "-t", total.to_s, "-c:a", "libmp3lame", "-b:a", "224k", destination
+  FileUtils.rm_rf(work)
   puts "wrote #{destination}"
   destination
 end
