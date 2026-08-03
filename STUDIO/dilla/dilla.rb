@@ -10858,8 +10858,81 @@ def analog_list
   end
 end
 
+# Off wherever a sampled bed is playing.
+#
+# Sonitex here is our emulation of the Sonitex STX-1260, a Danish plugin that
+# models the whole path of a sampler-era record -- and it sits on the MASTER
+# bus, so it does not process the drums and leave the record alone. It processes
+# everything, the record included. On donuts_warm that means twelve-bit crushing
+# at 42 percent wet, a tanh waveshaper at 62 percent wet, and a rolloff from
+# 7 kHz, applied to a sample that was already a broadcast recording of a record.
+#
+# That is one generation of ageing too many, and the wrong direction for this
+# material. The chops arrive with their own age already on them. What they want
+# is the other half of the Cooley principle -- make old things sound new -- which
+# is what sample_modern_chain below does: definition, extension, and the room
+# the broadcast lost, rather than more wear.
+#
+# Synthesised material is the opposite case. It has no age of its own, and
+# giving it some is exactly what the emulation is for, so nothing changes there.
+#
+# SONITEX= set explicitly still wins, so it can be forced back on per render.
+# USER_PINNED_ENV, not ENV -- the same distinction the BPM code makes, and for
+# the same reason. DILLA_STYLE_DEFAULTS writes ENV["SONITEX"] itself, so asking
+# ENV whether anyone set it always answers yes, and the escape hatch defeats the
+# gate it is attached to. The first version of this gate read ENV and did
+# nothing at all.
 def sonitex_enabled?
+  pinned = USER_PINNED_ENV["SONITEX"].to_s.strip
+  return false if sample_backed_render? && pinned.empty?
+
   !sonitex_resolve_preset.nil?
+end
+
+# Is a sampled loop actually playing on this render?
+def sample_backed_render?
+  return false if ENV["SAMPLE_LOOP"].to_s == "0"
+
+  !sample_loop_for(ENV["TRACK"]).nil?
+end
+
+# Makes the old record sound new.
+#
+# The other direction from every other treatment in this engine, and the harder
+# half of what Dave Cooley described: old things new, new things old. Everything
+# here restores something the source lost rather than adding something it never
+# had.
+#
+# A chop off an off-air broadcast has four specific problems, and one stage each:
+#
+#   HISS. Broadcast noise floor and mp3 artefacts. A spectral denoiser removes
+#   what is constant across the whole file, which is exactly what a noise floor
+#   is, while leaving the music that changes.
+#
+#   NO TOP. Broadcast bandwidth and a lossy codec both stop well short of 20 kHz,
+#   so there is simply nothing above about 15. It cannot be equalised back --
+#   boosting silence gives louder silence. It has to be SYNTHESISED, by generating
+#   harmonics from the content just below the cliff. This is what aexciter is
+#   for, and its refusal to touch anything below its frequency -- which made it
+#   useless as a broadband saturator earlier -- is precisely the behaviour wanted
+#   here.
+#
+#   NO SUB. Same story at the bottom, and the same answer: asubboost generates
+#   a fundamental beneath what is there.
+#
+#   NO DEPTH. A broadcast is squashed to near-mono by its own processing.
+#   Widening the sides restores space without touching the centre, where the
+#   melody is.
+def sample_modern_chain
+  return nil if ENV["SAMPLE_MODERN"] == "0"
+
+  [
+    "afftdn=nf=#{ENV.fetch('SAMPLE_DENOISE_DB', '-28')}:tn=1",
+    "adeclick",
+    "aexciter=amount=#{ENV.fetch('SAMPLE_AIR', '1.4')}:drive=6:blend=2:freq=8500:level_out=1",
+    "asubboost=dry=1:wet=#{ENV.fetch('SAMPLE_SUB', '0.35')}:decay=0.6:feedback=0.7:cutoff=110",
+    "stereowiden=delay=18:feedback=0.28:crossfeed=0.25:drymix=0.85",
+  ].join(",")
 end
 
 def sonitex_config(track: nil)
@@ -11561,6 +11634,7 @@ DILLA_PAD_ATTACK_CEILING = (ENV["PAD_ATTACK_CEILING"] || 260).to_i
 DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 1400).to_i
 
 DILLA_STYLE_DEFAULTS = {
+  "BPM" => "92",
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
   "TRACK" => "pedal_e_descent",
   "PROGRESSION" => "pedal_e_descent",
@@ -18399,7 +18473,21 @@ COUNTER_LEAD_LOWPASS_HZ = 5200
 COUNTER_LEAD_DETUNE_CENTS = -7.0
 COUNTER_LEAD_VERB_HP_HZ = 300
 COUNTER_LEAD_VERB_LP_HZ = 9000
-COUNTER_LEAD_VERB_MIX = 0.34
+
+# Drenched, not damp.
+#
+# A lead can be a problem in two ways: it can play the wrong notes, or it can be
+# too present. This one had been rewritten three times for the notes and still
+# sat too far forward, so it comes back pushed into the room instead of onto the
+# front of the mix. At this depth the line reads as atmosphere with a melody
+# inside it rather than as a part demanding attention -- which is what a
+# sixty-percent wet return does, and what a thirty-four-percent one does not.
+#
+# Eight taps out to 1.6 seconds rather than three out to 180 ms. The long ones
+# are what makes it a space; the short ones alone are a slapback.
+COUNTER_LEAD_VERB_MIX = (ENV["LEAD_VERB_MIX"] || 0.62).to_f
+COUNTER_LEAD_VERB_TAPS = "aecho=0.9:0.88:60|110|180|320|520|780|1120|1600:" \
+                         "0.5|0.44|0.38|0.32|0.26|0.2|0.15|0.1"
 
 # No varispeed here. The detune happens at synthesis; see counter_lead_detune.
 #
@@ -18421,8 +18509,13 @@ COUNTER_LEAD_VERB_MIX = 0.34
 # timing untouched, because a frequency written 7 cents flat is 7 cents flat and
 # nothing else moves.
 def counter_lead_space_chain
+  # Two echoes in series, not one: the second smears the first's taps into each
+  # other, which is how a cheap reverb is built and why it stops sounding like
+  # discrete repeats. Modulated slightly so the tail moves instead of ringing on
+  # one pitch.
   wet = "highpass=f=#{COUNTER_LEAD_VERB_HP_HZ},lowpass=f=#{COUNTER_LEAD_VERB_LP_HZ}," \
-        "aecho=0.8:0.85:60|110|180:0.4|0.28|0.18,volume=#{COUNTER_LEAD_VERB_MIX}"
+        "#{COUNTER_LEAD_VERB_TAPS},aecho=0.85:0.8:37|53:0.4|0.32," \
+        "vibrato=f=0.6:d=0.06,volume=#{COUNTER_LEAD_VERB_MIX}"
   "lowpass=f=#{COUNTER_LEAD_LOWPASS_HZ}," \
     "asplit=2[cldry][clwet];[clwet]#{wet}[clverb];[cldry][clverb]amix=inputs=2:normalize=0"
 end

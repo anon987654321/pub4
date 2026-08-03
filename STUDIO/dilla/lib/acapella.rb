@@ -370,11 +370,24 @@ module Acapella
       ratio: fit[:ratio], verse_bars_in: offset_bars }
   end
 
+  # The voice sits IN the track, not on top of it.
+  #
+  # It was mixed at 1.15 against the beat's 1.0 and ducked the beat by a third,
+  # which together put the rapper well out in front -- a vocal-led record, where
+  # what is wanted is a beat with someone on it. Now the voice comes in slightly
+  # under the beat and the duck is halved, so the words stay legible without the
+  # instrumental stepping aside for them.
+  #
+  # Legibility is not loudness. A gentle duck at the right moment does more for
+  # intelligibility than three decibels of level, and costs the track nothing.
+  VOCAL_WEIGHT = ENV.fetch("VOCAL_WEIGHT", "0.86")
+  VOCAL_DUCK_DB = ENV.fetch("VOCAL_DUCK_DB", "-18")
+
   MIX_GRAPH = <<~GRAPH.gsub("\n", "")
     [1:a]aformat=channel_layouts=stereo,asplit=2[vox][key];
     [0:a]aformat=channel_layouts=stereo[bt];
-    [bt][key]sidechaincompress=threshold=-22dB:ratio=3:attack=8:release=220:level_sc=1.0[ducked];
-    [ducked][vox]amix=inputs=2:weights=1.0 1.15:duration=first:normalize=0,
+    [bt][key]sidechaincompress=threshold=#{VOCAL_DUCK_DB}dB:ratio=2:attack=12:release=260:level_sc=1.0[ducked];
+    [ducked][vox]amix=inputs=2:weights=1.0 #{VOCAL_WEIGHT}:duration=first:normalize=0,
     alimiter=limit=0.95:level_out=0.96[out]
   GRAPH
 
