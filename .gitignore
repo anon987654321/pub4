@@ -103,9 +103,9 @@ OPENBSD/var/nsd/zones/master/*
 # record of what each dug side is and why it may be used.
 
 # Engine output
-studio/dilla/renders/
-studio/dilla/demo*.wav
-studio/dilla/demo*.mp3
+STUDIO/dilla/renders/
+STUDIO/dilla/demo*.wav
+STUDIO/dilla/demo*.mp3
 # `demo-each` writes the catalogue one mp3 per track into the dilla root as
 # NN_title.mp3. These are TRACKED, against the rule above that generated audio
 # is not, and the exception is deliberate: this set IS the current demo -- the
@@ -118,52 +118,61 @@ studio/dilla/demo*.mp3
 #
 # Prune freely: re-running demo-each replaces them, and demo_manifest.tsv beside
 # them records the seed, the engine and the settings behind each take.
-studio/dilla/check_*.wav
-studio/dilla/dilla_beat_live*.mp3
+STUDIO/dilla/check_*.wav
+STUDIO/dilla/dilla_beat_live*.mp3
+# Round renders (rN_title.mp3) and their pre-master intermediates. Unlike the
+# NN_title.mp3 demo set above these are per-session takes, not the current demo,
+# so nobody is sent them and nothing is compared against them -- they are the
+# reproducible output the rule at the top of this section describes. 22 MB was
+# sitting untracked here because no pattern named them.
+STUDIO/dilla/r[0-9]_*.mp3
+STUDIO/dilla/*.pre.raw
+# Full-length liveset bounces pulled from a YouTube source rip.
+STUDIO/dilla/liveset_yt_*.wav
 
 # Engine scratch. scratch/ is one visible folder instead of a dozen dot-entries
 # at the project root; the dot-patterns catch strays from pre-scratch versions,
 # and .dilla_progressions_log.txt is unanchored because old code wrote it into
 # whatever directory it ran from.
-studio/dilla/scratch/
-studio/dilla/.cache/
-studio/dilla/.dilla_*
-studio/dilla/.harmony_*.wav
-studio/dilla/.live_tmp.wav
-studio/dilla/.all_tracks_demo/
-studio/dilla/analysis/
+STUDIO/dilla/scratch/
+STUDIO/dilla/.cache/
+STUDIO/dilla/.dilla_*
+STUDIO/dilla/.harmony_*.wav
+STUDIO/dilla/.live_tmp.wav
+STUDIO/dilla/.all_tracks_demo/
+STUDIO/dilla/analysis/
 .dilla_progressions_log.txt
 
 # Machine-produced sample subtrees: demux/ is demucs stem output, yt_*.wav are
 # downloaded source rips, dug/ audio is public domain and re-fetchable from the
 # provenance manifest beside it.
-studio/dilla/samples/demux/
-studio/dilla/samples/yt_*.wav
-studio/dilla/samples/crate/
-studio/dilla/samples/dug/**/*.mp3
-studio/dilla/samples/dug/**/*.flac
-studio/dilla/samples/dug/**/*.wav
+STUDIO/dilla/samples/demux/
+STUDIO/dilla/samples/yt_*.wav
+STUDIO/dilla/samples/crate/
+STUDIO/dilla/samples/dug/**/*.mp3
+STUDIO/dilla/samples/dug/**/*.flac
+STUDIO/dilla/samples/dug/**/*.wav
 
 # Python venvs the audio tools shell out to (demucs stem separation, librosa
 # analysis) — rebuilt locally, never shipped.
-studio/dilla/.venv-demucs/
-studio/dilla/venv-librosa/
+STUDIO/dilla/.venv-demucs/
+STUDIO/dilla/venv-librosa/
 
 # --- studio/lora ------------------------------------------------------------
 
 # Training caches, extracted frames, staging copies, and reproducible bundles.
 # <subject>/.cache/ is every lane's scratch: dataset zips, downloaded trainer
 # tars, staged Kaggle payloads.
-studio/lora/**/.cache/
-studio/lora/**/_frames/
-studio/lora/**/_latent_cache/
-studio/lora/**/.aitk_size.json
-studio/lora/**/raw/
-studio/lora/**/*.zip
-studio/lora/**/*.pid
+STUDIO/lora/**/.cache/
+STUDIO/lora/**/_frames/
+STUDIO/lora/**/_latent_cache/
+STUDIO/lora/**/.aitk_size.json
+STUDIO/lora/**/raw/
+STUDIO/lora/**/*.zip
+STUDIO/lora/**/*.pid
 
 # ai-toolkit run artifacts: it writes samples and a copy of the config it was
 # handed into the training folder on every run.
-studio/lora/*/train_run.log
-studio/lora/*/weights/*/samples/
-studio/lora/*/weights/*/config.yaml
+STUDIO/lora/*/train_run.log
+STUDIO/lora/*/weights/*/samples/
+STUDIO/lora/*/weights/*/config.yaml
