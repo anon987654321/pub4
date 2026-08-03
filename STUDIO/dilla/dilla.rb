@@ -4136,6 +4136,19 @@ def halftime?
   ENV.fetch("HALFTIME", "0") == "1"
 end
 
+# A semitone either side, as ratios. Approaching from below is the default
+# because a leading tone rising into the root is the stronger pull; from above
+# when the next chord is lower, so the line keeps descending rather than
+# doubling back to climb into it.
+APPROACH_BELOW = 0.9438743126816935   # 2 ** (-1/12.0)
+APPROACH_ABOVE = 1.0594630943592953   # 2 ** ( 1/12.0)
+
+# The bass stays low. A fifth above a root already near the top of the register
+# lands in the pads' territory and stops reading as bass at all.
+BASS_REGISTER_TOP = 130.0
+
+def bass_line_enabled? = ENV.fetch("BASS_LINE", "1") != "0"
+
 def bass_slide_enabled?
   ENV.fetch("BASS_SLIDE", "1") != "0"
 end
@@ -14824,6 +14837,97 @@ def dilla_section_legacy(bar, n_bars)
   :main
 end
 
+# --- Parts entering and leaving --------------------------------------------
+#
+# The engine has known about sections for a long time -- intro, main, breakdown,
+# build, outro, with twenty-six places in this file that branch on which one is
+# playing. What none of them did was change WHICH INSTRUMENTS are sounding. Every
+# layer started at bar one, played to the end, and stopped. Bar 1 and bar 16 had
+# the same parts at the same density, which is what "it loops over and over" and
+# "most were repetitive trash" describe: not a lack of ideas, a lack of anything
+# arriving or leaving.
+#
+# An arrangement is mostly subtraction. The intro states the chords with almost
+# nothing under them; the drums arrive and that arrival is the event; the
+# breakdown takes them away again so their return means something; the outro
+# removes one thing at a time. None of that needs new material -- it is the
+# material already rendered, gated in time.
+#
+# Gains rather than mutes, mostly. A layer dropping to zero and back is a hard
+# edit and sounds like one; dropping to a third leaves the part audible as a
+# memory of itself. Zero is reserved for the places a hard entrance is the point.
+SECTION_LAYER_GAIN = {
+  intro:     { drums: 0.0,  bass: 0.30, lead: 0.0,  chops: 0.0,  sample: 0.55 },
+  main:      {},
+  breakdown: { drums: 0.0,  bass: 0.55, chops: 0.0 },
+  build:     { lead: 0.0,   sample: 0.7 },
+  turn:      { lead: 0.0 },
+  outro:     { drums: 0.45, bass: 0.5,  lead: 0.0,  chops: 0.0 },
+}.freeze
+
+def section_layers_enabled? = ENV.fetch("SECTION_LAYERS", "1") != "0"
+
+# The time windows, in seconds, where this layer is not at full level.
+#
+# Contiguous bars sharing a gain are merged into one window: a 16-bar track
+# yields three or four windows rather than sixteen, and ffmpeg is being handed a
+# filter string, not a score.
+def section_layer_windows(layer, n_bars, bar_p)
+  return [] unless section_layers_enabled? && n_bars.to_i.positive?
+
+  spans = []
+  (0...n_bars).each do |bar|
+    gain = SECTION_LAYER_GAIN.dig(dilla_section(bar, n_bars), layer)
+    next if gain.nil?
+
+    if spans.last && spans.last[:gain] == gain && spans.last[:to] == bar
+      spans.last[:to] = bar + 1
+    else
+      spans << { from: bar, to: bar + 1, gain: }
+    end
+  end
+  spans.map { |s| [(s[:from] * bar_p).round(3), (s[:to] * bar_p).round(3), s[:gain]] }
+end
+
+# volume with `enable` rather than one expression: each window is its own stage,
+# which reads as what it is and lets ffmpeg do the timeline arithmetic. An empty
+# result is an empty string, so a layer with nothing to say costs nothing.
+#
+# A short fade at each edge, because a gain change on a sustained pad is a click
+# otherwise. 40ms is under a thirty-second note at any tempo here and inaudible
+# as a fade, which is the point -- it should sound like the part left, not like
+# somebody turned it down.
+SECTION_EDGE_FADE = 0.04
+
+def section_layer_filter(layer, n_bars, bar_p)
+  windows = section_layer_windows(layer, n_bars, bar_p)
+  return "" if windows.empty?
+
+  windows.map do |from, to, gain|
+    a = (from + SECTION_EDGE_FADE).round(3)
+    b = (to - SECTION_EDGE_FADE).round(3)
+    next "" if b <= a
+
+    "volume=#{gain}:enable='between(t,#{a},#{b})'"
+  end.reject(&:empty?).join(",")
+end
+
+# Prefix a layer's own chain with its section envelope.
+#
+# The envelope goes immediately after the input label -- "[0:a]" and friends --
+# because a filtergraph stage is "[in]filters[out]" and the volume has to be
+# inside that, not in front of the label. Inserted at the front of the whole
+# string it produces "volume=...,[0:a]..." which ffmpeg rejects outright.
+#
+# Returns the chain untouched when the layer has no windows, so a track whose
+# sections all want everything at full level pays nothing for this.
+def apply_section_envelope(chain, layer, n_bars, bar_p)
+  env = section_layer_filter(layer, n_bars, bar_p)
+  return chain if env.empty? || chain.to_s.empty?
+
+  chain.sub(/\A(\[[^\]]+\])/) { "#{Regexp.last_match(1)}#{env}," }
+end
+
 def dilla_section(bar, n_bars)
   fs = form_section_at(bar, n_bars)
   return fs if fs
@@ -15121,6 +15225,45 @@ def dilla_schedule(n_bars, beat_p, pad_chords, chord_bars: 4, phrase_bars: nil, 
       bar_bass = [base + bass_pickup, dilla_velocity(0.52, bar, 99, spread: 0.04) * sec_gain, bass_root, bar_p * 0.92]
       bar_bass << slide_from if slide_from
       events[:bass] << bar_bass
+
+      # A line, not a root held for the whole bar.
+      #
+      # The bass was one note per bar: the chord's root, sounded on the downbeat
+      # and sustained for 92% of the bar. That is a bass PART only in the sense
+      # that something low is present. It states the harmony the pads are already
+      # stating, at the moment they state it, which is the same fault the lead
+      # had -- and with the drums and the counter-line both now moving, it was
+      # the last layer standing still.
+      #
+      # Two additions, and no more, because a busy bass under this idiom stops
+      # being a pocket and starts being a solo:
+      #
+      #   Beat 3 gets the fifth, or the octave when the fifth would drop below
+      #   the register. That is the oldest move in bass playing and it is what
+      #   makes a bar feel like it has two halves.
+      #
+      #   The last eighth approaches the NEXT bar's root by a semitone, from
+      #   whichever side is closer. A chromatic approach is how a walking line
+      #   gets somewhere, and it turns a bar line from a seam into a hand-off.
+      #
+      # Both go through dilla_timing_ms like everything else, so they sit in the
+      # same pocket as the note they follow rather than landing on the grid.
+      if bass_line_enabled?
+        fifth = bass_root * 1.5
+        fifth /= 2.0 while fifth > BASS_REGISTER_TOP
+        events[:bass] << [
+          (base + (beat_p * 2) + (dilla_timing_ms(:bass, bar, 8, timing, beat_p) / 1000.0)).round(6),
+          dilla_velocity(0.38, bar, 8, spread: 0.05) * sec_gain, fifth, beat_p * 0.7
+        ]
+
+        nxt = bass_pads && !bass_pads.empty? ? bass_pads[dilla_chord_index(bar + 1, bass_pads, chord_bars:, phrase_bars:)] : nil
+        target = dilla_chord_bass_hz(nxt) || bass_root
+        approach = target * (target >= bass_root ? APPROACH_BELOW : APPROACH_ABOVE)
+        events[:bass] << [
+          (base + (beat_p * 3.5) + (dilla_timing_ms(:bass, bar, 14, timing, beat_p) / 1000.0)).round(6),
+          dilla_velocity(0.32, bar, 14, spread: 0.05) * sec_gain, approach, beat_p * 0.42
+        ]
+      end
       prev_bass_root = bass_root
     end
     if feel == :chromatic_planing
@@ -18477,7 +18620,9 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # have to fight for that space; the harm bus (below) gets the matching
   # cut down where the kick/bass actually live. Genuine frequency-slotting,
   # not another gain adjustment.
-  filt = [build_drum_bus_filter(cfg, cfg[:sonic], duration:)]
+  # Each bus gets its section envelope prefixed onto its own chain, so a layer
+  # leaves and returns instead of playing flat from bar one to the end.
+  filt = [apply_section_envelope(build_drum_bus_filter(cfg, cfg[:sonic], duration:), :drums, n_bars, beat_p * 4.0)]
   mix_labels = ["[drums]"]
   mix_weights = [ENV.fetch("DRUM_MIX_WEIGHT", "0.72").to_s]
   intro_bars = cfg.fetch(:intro_bars, 4)
@@ -18500,12 +18645,14 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # on it collapses drums+harm into [sc_mix], and the bass should not be ducked
   # by the same chord-triggered envelope that keeps the pads out of the kick.
   if bass_own_bus && bass_bus_idx
-    filt << build_bass_bus_filter(bass_bus_idx, duration)
+    filt << apply_section_envelope(build_bass_bus_filter(bass_bus_idx, duration), :bass, n_bars, beat_p * 4.0)
     mix_labels << "[bassbus]"
     mix_weights << ENV.fetch("BASS_MIX_WEIGHT", "1.15").to_s
   end
   if loop_idx
-    filt << build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm])
+    filt << apply_section_envelope(
+      build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm]), :sample, n_bars, beat_p * 4.0
+    )
     mix_labels << "[loopbed]"
     mix_weights << ENV.fetch("SAMPLE_LOOP_WEIGHT", "0.9").to_s
     dmesg("sample bed #{File.basename(loop_entry[:path])} @#{loop_entry[:bpm].round}bpm -> #{cfg[:bpm].round}bpm",
