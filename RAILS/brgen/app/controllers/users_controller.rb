@@ -11,6 +11,7 @@ class UsersController < ApplicationController
     @followers_count = @user.followers.count
     @following_count = @user.following.count
     @active_follow = authenticated? && Current.user.following?(@user)
+    @active_block  = authenticated? && Current.user != @user && Current.user.blocking?(@user)
   end
 
   def new

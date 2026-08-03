@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class MessagesController < ApplicationController
+  rate_limit to: 30, within: 1.minute, only: :create,
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_user_session
   before_action :set_conversation
 

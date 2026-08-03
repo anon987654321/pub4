@@ -68,6 +68,19 @@ class User < ApplicationRecord
     follows_as_follower.find_by(followed: other)&.destroy
   end
 
+  has_many :blocks_as_blocker, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy
+  has_many :blocked_users, through: :blocks_as_blocker, source: :blocked
+
+  def block!(other)
+    return if other == self
+
+    blocks_as_blocker.find_or_create_by!(blocked: other)
+  end
+
+  def unblock!(other) = blocks_as_blocker.find_by(blocked: other)&.destroy
+  def blocking?(other) = blocks_as_blocker.exists?(blocked_id: other.id)
+  def blocked_user_ids = blocks_as_blocker.pluck(:blocked_id)
+
   def update_karma!
     score = Vote.joins("JOIN posts ON posts.id = votes.votable_id AND votes.votable_type = 'Post'")
                 .where(posts: { user_id: id }).sum(:value)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_090000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -159,6 +159,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
     t.integer "post_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["fingerprint"], name: "index_anonymous_post_quotas_on_fingerprint", unique: true
+  end
+
+  create_table "blocks", force: :cascade do |t|
+    t.integer "blocked_id", null: false
+    t.integer "blocker_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["blocked_id"], name: "index_blocks_on_blocked_id"
+    t.index ["blocker_id", "blocked_id"], name: "index_blocks_on_blocker_id_and_blocked_id", unique: true
+    t.index ["blocker_id"], name: "index_blocks_on_blocker_id"
   end
 
   create_table "cities", force: :cascade do |t|
@@ -1289,6 +1299,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "activity_events", "users", column: "actor_id"
+  add_foreign_key "blocks", "users", column: "blocked_id"
+  add_foreign_key "blocks", "users", column: "blocker_id"
   add_foreign_key "comments", "users"
   add_foreign_key "communities", "cities"
   add_foreign_key "conversation_participants", "conversations"

@@ -2,6 +2,9 @@
 
 class PostsController < ApplicationController
   include Shared::FindableBySlug
+  # Flood protection on content creation (Rails 8 built-in), per-user or per-IP.
+  rate_limit to: 12, within: 1.minute, only: :create,
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   include Shared::LiveSearchable
 
   rate_limit to: 30, within: 3.minutes, only: %i[create share],

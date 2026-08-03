@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ReportsController < ApplicationController
+  rate_limit to: 10, within: 1.minute, only: :create,
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_real_user
 
   def create

@@ -5,6 +5,8 @@
 # karma side-effects and city-specific behavior.
 # See RAILS/shared/WIRING_NOTES.md "Deferred DRY".
 class VotesController < ApplicationController
+  rate_limit to: 60, within: 1.minute, only: :create,
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_user_session
 
   def create

@@ -16,6 +16,9 @@ Rails.application.routes.draw do
   post "internal/dilla_publish" => "internal#dilla_publish", as: :internal_dilla_publish
   get "sso/from_master" => "sso#from_master", as: :sso_from_master
 
+  post   "users/:user_id/block" => "blocks#create",  as: :block_user
+  delete "users/:user_id/block" => "blocks#destroy", as: :unblock_user
+
   # Legal / info pages, reachable on every city domain without an account
   # (GDPR + TradeDoubler both require them public). See PagesController.
   %w[privacy terms cookies].each do |legal_page|
