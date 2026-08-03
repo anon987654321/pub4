@@ -35,3 +35,18 @@
           action: { label: t("empty.city_feed"), path: root_path } %>
   <% end %>
 </section>
+
+<% if @activity.any? %>
+  <section class="profile-activity">
+    <h2><%= t("profile.activity", default: "Recent activity") %></h2>
+    <ul class="activity-list">
+      <% @activity.each do |event| %>
+        <li class="dim">
+          <%= t("activity.#{event.event_name.underscore}", default: event.event_name.underscore.humanize) %>
+          <span class="activity-vertical">· <%= event.source_vertical %></span>
+          <time datetime="<%= event.created_at.iso8601 %>"><%= time_ago_in_words(event.created_at) %> ago</time>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

@@ -78,6 +78,9 @@
       <%= link_to t("storefront.listings"), listings_path, class: "section nav-hover#{" section--active" if active == "listings"}" %>
       <%= link_to t("storefront.todays_deals"), deals_path, class: "section nav-hover#{" section--active" if active == "deals"}" %>
       <%= link_to t("storefront.stores"), shops_path, class: "section nav-hover#{" section--active" if active == "stores"}" %>
+      <% if authenticated? %>
+        <%= link_to t("storefront.orders", default: "Orders"), orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
+      <% end %>
       <%= link_to t("storefront.sell"), new_listing_path, class: "section nav-hover" %>
       <%= link_to t("storefront.help"), listings_path, class: "section nav-hover" %>
     </div>
