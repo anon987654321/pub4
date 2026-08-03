@@ -149,7 +149,20 @@ module DillaHarmonyLead
     normalized_symbol(name).sub(%r{/.*\z}, "").sub(/\A[a-g][#b]?/, "")
   end
 
+  # The five notes major and minor agree on: root, second, fourth, fifth,
+  # flat seventh. Missing from it are the third and the sixth -- precisely the
+  # two degrees that differ between the modes. A line drawn from these notes is
+  # consonant over a loop whichever mode it turns out to be in.
+  #
+  # It is also, not by accident, the pentatonic scale that most of the world's
+  # folk music is built from, so playing inside it costs nothing musically.
+  NEUTRAL_PENTATONIC = [0, 2, 5, 7, 10].freeze
+
   def chord_scale_semitones(chord)
+    # Set when the key detector read a root it trusts and a mode it does not.
+    # See the harmonic guard in dilla.rb.
+    return NEUTRAL_PENTATONIC if ENV["MODE_UNCERTAIN"] == "1"
+
     resolve_avoid_notes(scale_from_symbol(chord), chord)
   end
 

@@ -5199,9 +5199,152 @@ def dilla_sidechain_filters(drum_label: "[drums]", harm_label: "[harm]")
   ]
 end
 
-def sidechain_filter_chain(cfg)
-  return flylo_sidechain_filters unless cfg[:style_family] == :dilla
-  ENV.fetch("SIDECHAIN_STYLE", "dilla").to_s == "flylo" ? flylo_sidechain_filters : dilla_sidechain_filters
+# Puts the kit in front by moving the sample out of its way, band by band.
+#
+# The sampled bed joined the master mix undicked, at full bandwidth, while the
+# kit sat behind it. A record and a drum kit occupy the same frequencies -- the
+# record HAS drums in it, or had them until demucs took them out, and it still
+# has the room they were played in. Two full-range signals in one place is what
+# a muddy mix is.
+#
+# Turning the kit up is the wrong repair: it makes a loud muddy mix. Instead the
+# bed is split into three bands and only two of them move.
+#
+#   below 180 Hz   ducks hard when the kick lands. Nothing else may be there.
+#   180 Hz - 3 kHz untouched. This is the body of the record, the reason the
+#                  track exists, and it is not where drums need clarity.
+#   above 3 kHz    ducks lightly on the snare and hats, which is what "crisp"
+#                  actually means -- room at the top for the transient.
+#
+# Each band is keyed by the drums filtered to that same band, so the low band
+# responds to kicks and not to hats. The result is a kit that reads clearly
+# through a bed that still sounds whole.
+DRUM_FORWARD_SPLIT = [180, 3000].freeze
+
+def drum_forward_filters(bed: "[loopbed]", key: "[dr_key]", out: "[bedcarved]")
+  low_thr = ENV.fetch("DRUM_FORWARD_LOW_DB", "-30")
+  air_thr = ENV.fetch("DRUM_FORWARD_AIR_DB", "-26")
+  [
+    # One key signal per band that ducks, filtered to hear only its own drums.
+    "#{key}asplit=2[dk_lo][dk_hi]",
+    "[dk_lo]lowpass=f=#{DRUM_FORWARD_SPLIT[0]}[dkl]",
+    "[dk_hi]highpass=f=#{DRUM_FORWARD_SPLIT[1]}[dkh]",
+    "#{bed}acrossover=split=#{DRUM_FORWARD_SPLIT.join(' ')}:order=4th[bd_lo][bd_mid][bd_hi]",
+    # Fast attack on the low band: the kick's first cycle is the whole point, and
+    # a slow attack lets the bed's own bass through underneath it.
+    "[bd_lo][dkl]sidechaincompress=threshold=#{low_thr}dB:ratio=8:attack=1:release=120:level_sc=1.0[bd_lo_sc]",
+    # Gentler and quicker up top: this is opening a window for a transient, not
+    # pumping. A long release here would breathe audibly on every hat.
+    "[bd_hi][dkh]sidechaincompress=threshold=#{air_thr}dB:ratio=4:attack=0.4:release=55:level_sc=1.0[bd_hi_sc]",
+    "[bd_lo_sc][bd_mid][bd_hi_sc]amix=inputs=3:weights=1 1 1:duration=first:normalize=0#{out}",
+  ]
+end
+
+# Sharpens the kit without raising it.
+#
+# A compressor with a SLOW attack is the transient shaper nobody names as one:
+# by the time it clamps down, the stick hit has already passed through
+# untouched, and what it compresses is the body behind it. The attack therefore
+# stands further above its own tail than it did going in. That is "crisper", and
+# it costs no headroom, unlike simply turning the drums up.
+#
+# The shelf above 7 kHz is the stick and the hat sizzle. Small: this is a lo-fi
+# engine and 3 dB of air is the difference between dull and modern, while 8 dB
+# is the difference between modern and cheap.
+def drum_crisp_chain
+  return nil if ENV["DRUM_CRISP"] == "0"
+
+  attack = ENV.fetch("DRUM_CRISP_ATTACK", "22")
+  air = ENV.fetch("DRUM_CRISP_AIR_DB", "3")
+  "acompressor=threshold=-18dB:ratio=4:attack=#{attack}:release=70:makeup=1.6," \
+    "treble=g=#{air}:f=7000:width_type=q:width=0.7"
+end
+
+# Joins one section of the record to the next the way a producer would.
+#
+# A looped sample restated every four bars announces itself as a loop. What
+# stops it is a gesture in the last beat before the turnover -- something that
+# takes the ear off the seam. Dilla's records are full of these and they are not
+# subtle when you look for them: the filter shuts for half a beat and snaps
+# open on the one; everything drops out and the record plays naked; the whole
+# thing swells up from nothing into the downbeat.
+#
+# Three treatments, chosen per boundary from the track name so a given track
+# always bridges the same way:
+#
+#   :sweep    the lowpass closes over the last beat and opens on the downbeat.
+#             The most common of the three because it is the least tiring.
+#   :dropout  the bed cuts for the back half of the last beat. Silence is a
+#             transition. This is the one that makes the return feel like an
+#             arrival.
+#   :swell    the bed rises from near nothing across the last bar, so the
+#             downbeat is the top of a ramp rather than a restart.
+#
+# Sweeps run through asendcmd rather than an expression because lowpass takes
+# its cutoff as a runtime command, not a per-frame formula -- twelve stepped
+# commands per boundary, geometrically spaced, which the ear reads as a glide.
+BRIDGE_KINDS = %i[sweep dropout swell sweep].freeze
+BRIDGE_SWEEP_STEPS = 12
+BRIDGE_OPEN_HZ = 16_000
+BRIDGE_CLOSED_HZ = 320
+
+def bridge_plan(n_bars, bar_sec, track, every_bars)
+  return [] if every_bars < 1 || n_bars <= every_bars
+
+  rng = Random.new(stable_hash("bridge:#{track}"))
+  # Boundaries are the downbeats between sections. The final bar has no section
+  # after it, so it gets no bridge -- a gesture into silence is just a fade.
+  (every_bars...n_bars).step(every_bars).map do |bar|
+    { at: (bar * bar_sec).round(4), kind: BRIDGE_KINDS[rng.rand(BRIDGE_KINDS.length)] }
+  end
+end
+
+def bridge_filters(input:, output:, n_bars:, bar_sec:, track:, every_bars: 4)
+  plan = bridge_plan(n_bars, bar_sec, track, every_bars)
+  return ["#{input}anull#{output}"] if plan.empty?
+
+  beat = bar_sec / 4.0
+  cmds = []
+  gates = []
+  plan.each do |b|
+    case b[:kind]
+    when :sweep
+      # Close across the last beat, then reopen exactly on the downbeat. The
+      # reopen is a single command, not a ramp: the snap is the effect.
+      BRIDGE_SWEEP_STEPS.times do |i|
+        frac = (i + 1).to_f / BRIDGE_SWEEP_STEPS
+        hz = (BRIDGE_OPEN_HZ * ((BRIDGE_CLOSED_HZ.to_f / BRIDGE_OPEN_HZ)**frac)).round
+        cmds << "#{(b[:at] - beat + (beat * frac)).round(4)} lowpass frequency #{hz}"
+      end
+      cmds << "#{b[:at].round(4)} lowpass frequency #{BRIDGE_OPEN_HZ}"
+    when :dropout
+      gates << "between(t,#{(b[:at] - (beat * 0.5)).round(4)},#{b[:at].round(4)})*1"
+    when :swell
+      # A quarter-power curve rather than a straight line: linear ramps in
+      # amplitude are heard as back-loaded, since loudness follows the log.
+      gates << "between(t,#{(b[:at] - bar_sec).round(4)},#{b[:at].round(4)})*" \
+               "(1-pow((t-#{(b[:at] - bar_sec).round(4)})/#{bar_sec.round(4)},0.25))"
+    end
+  end
+
+  # One volume expression for every dip in the track. Each term is zero outside
+  # its own window, so summing them and subtracting from 1 gives full level
+  # everywhere a bridge is not happening.
+  duck = gates.empty? ? nil : "volume='max(0,1-(#{gates.join('+')}))':eval=frame"
+  stages = ["lowpass=f=#{BRIDGE_OPEN_HZ}"]
+  stages.unshift("asendcmd='#{cmds.join('; ')}'") unless cmds.empty?
+  stages << duck if duck
+  ["#{input}#{stages.join(',')}#{output}"]
+end
+
+def sidechain_filter_chain(cfg, drum_label: "[drums]")
+  return flylo_sidechain_filters(drum_label:) unless cfg[:style_family] == :dilla
+
+  if ENV.fetch("SIDECHAIN_STYLE", "dilla").to_s == "flylo"
+    flylo_sidechain_filters(drum_label:)
+  else
+    dilla_sidechain_filters(drum_label:)
+  end
 end
 
 DILLA_ROLE_VELOCITY_BASE = {
@@ -5341,13 +5484,75 @@ def build_up_filter_enhanced(input_tag, duration, out_tag: "built")
     "equalizer=f=220:t=o:w=1.8:g=2.5:enable='gte(t,#{start_t})'[#{out_tag}]"
 end
 
+# The console and the mastering desk, in that order, before the loudness stage.
+#
+# The master bus ran loudnorm into a limiter and nothing else: correct levels,
+# no character. Everything below is copied from documented practice rather than
+# invented, and each stage names its source.
+#
+# 1. TRANSFORMER BUMP. Seventies Neve desks mixed at roughly microphone level
+#    and brought the signal back up through output transformers. Transformers
+#    are not flat: the core adds a small lift in the low bass and rolls away the
+#    very top. Both are reproduced here, gently, because the effect on a real
+#    desk is small and the temptation to overdo it is what makes emulations
+#    sound like emulations.
+#
+# 2. VOLTAGE-MIXING NONLINEARITY. The "harmonic magic" of the 80-series is
+#    discrete class-A stages departing slightly from linear as they are pushed.
+#    A soft clipper at low drive is the honest version. Oversampled four times,
+#    or the harmonics it creates fold back down the spectrum as aliasing, which
+#    is the one artefact analog cannot produce.
+#
+# 3. TRIODE HARMONICS. Crane Song's HEDD offers triode, pentode and tape.
+#    Triode adds the even-order harmonics of a single-ended tube stage -- the
+#    octave, which the ear hears as warmth rather than distortion. aexciter's
+#    blend control sets the balance between second and third harmonic, so a
+#    negative blend is the triode setting and a positive one the pentode.
+#
+# 4. THE STC-8, TEMPO-LOCKED. This is the specific thing Dave Cooley did to
+#    Donuts: he timed the compressor's release to each track's tempo, to keep
+#    the pump disorienting instead of smoothing it out. Release here is an
+#    eighth note at the track's own BPM, so the bus recovers exactly as the next
+#    off-beat lands and the pump becomes part of the rhythm.
+#
+# 5. MATTE TOP. Cooley used a GML equalizer for top end and said he was not
+#    after a slick top at the time -- a "matte" finish. A matte top is a WIDE,
+#    low shelf placed high, which lifts air without putting an edge on any one
+#    band. A narrow boost is the slick sound he was avoiding.
+CONSOLE_TRANSFORMER_LF_HZ = 55
+CONSOLE_TRANSFORMER_HF_HZ = 18_500
+
+def console_master_chain(cfg)
+  return nil if ENV["CONSOLE"] == "0"
+
+  bpm = cfg[:bpm].to_f
+  # An eighth note in milliseconds. Falls back to 300 ms -- a plausible release
+  # either way -- rather than dividing by zero if a caller omits the tempo.
+  release = bpm.positive? ? (60_000.0 / bpm / 2.0).round : 300
+  release = release.clamp(50, 1000)
+  drive = ENV.fetch("CONSOLE_DRIVE", "0.55").to_f
+  [
+    "equalizer=f=#{CONSOLE_TRANSFORMER_LF_HZ}:t=q:w=0.8:g=#{ENV.fetch('CONSOLE_LF_DB', '1.2')}",
+    "asoftclip=type=tanh:param=#{drive}:oversample=4",
+    "aexciter=amount=#{ENV.fetch('CONSOLE_TRIODE', '0.55')}:drive=4:blend=-3:freq=6000:level_out=1",
+    "acompressor=threshold=-14dB:ratio=2:attack=15:release=#{release}:makeup=1.08:detection=rms",
+    "equalizer=f=11000:t=h:w=0.5:g=#{ENV.fetch('CONSOLE_AIR_DB', '2.0')}",
+    "lowpass=f=#{CONSOLE_TRANSFORMER_HF_HZ}",
+  ].join(",")
+end
+
 def true_peak_guard_for_style(input_tag, cfg, out_tag: "out")
   lufs = cfg[:master_lufs] || MASTER_TARGET_LUFS
   lra = cfg[:master_lra] || MASTER_TARGET_LRA
+  # Console before loudnorm, always. Saturation changes both peak and loudness,
+  # so measuring first and colouring after would hand back a track that no
+  # longer hits the target it was normalised to.
+  console = console_master_chain(cfg)
+  head = "[#{input_tag}]#{console ? "#{console}," : ''}"
   if ENV["DEBUG_NO_LOUDNORM"]
-    return "[#{input_tag}]alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
+    return "#{head}alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
   end
-  "[#{input_tag}]loudnorm=I=#{lufs}:TP=#{TRUE_PEAK_CEILING_DB}:LRA=#{lra}," \
+  "#{head}loudnorm=I=#{lufs}:TP=#{TRUE_PEAK_CEILING_DB}:LRA=#{lra}," \
     "aresample=#{SAMPLE_RATE}," \
     "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled[#{out_tag}]"
 end
@@ -6553,7 +6758,7 @@ def lead_ghost_for(time, velocity, hz, tones, beat_p, rng)
   start = time - (LEAD_GHOST_LEAD_IN_BEATS * beat_p)
   return if start <= 0
 
-  [start, velocity * LEAD_GHOST_VELOCITY, { name: "counter_ghost", hz: [below] },
+  [start, velocity * LEAD_GHOST_VELOCITY, { name: "counter_ghost", hz: [below * counter_lead_detune] },
    LEAD_GHOST_LEAD_IN_BEATS * beat_p * 0.8]
 end
 
@@ -6649,7 +6854,9 @@ def lead_events_melodic(pad_events, cfg, duration: nil, n_bars: nil)
       previous_hz = chosen
       previous_top = top
       velocity = (0.30 + (rng.rand * 0.06)) * (index.zero? ? 1.0 : 0.92)
-      note = [start, velocity, { name: "counter_lead", hz: [chosen] }, sustain]
+      # Detuned in the note, not by varispeeding the finished layer -- see
+      # counter_lead_space_chain for what that cost in timing.
+      note = [start, velocity, { name: "counter_lead", hz: [chosen * counter_lead_detune] }, sustain]
       ghost = lead_ghost_for(start, velocity, chosen, reachable, beat_p, rng)
       ghost ? [ghost, note] : [note]
     end.flatten(1)
@@ -7811,6 +8018,16 @@ end
 # own was a deliberate choice (2026-07-27) and those eight stay, first and
 # always. MODAL_ROTATION=0 restores the narrow pool exactly.
 def stream_track_pool
+  # STREAM_POOL names the rotation outright.
+  #
+  # The pool was DillaLofiMachine::STREAM_ROTATION and nothing else, so a stream
+  # could only ever play the tracks that constant lists -- the sample-backed
+  # ones in TRACK_SAMPLE_LOOPS were unreachable from the stream entirely, the
+  # same fault as the demo's. Naming them is the only way to hear a stream built
+  # on chopped records rather than on synthesised pads.
+  named = ENV["STREAM_POOL"].to_s.split(",").map { |t| t.strip.downcase.tr("-", "_") }.reject(&:empty?)
+  return named.map(&:to_sym) unless named.empty?
+
   pool = DillaLofiMachine::STREAM_ROTATION
   return pool unless dilla_progressions_only?
 
@@ -8808,6 +9025,11 @@ HARMONIC_GUARD = ENV.fetch("HARMONIC_GUARD", "1") != "0"
 # 0.836) and above the reading from a cut taken off the wrong part of a record
 # (0.27), so it separates the two cases without being tuned to either.
 HARMONIC_GUARD_MIN = (ENV["HARMONIC_GUARD_MIN"] || 0.55).to_f
+# Below this the root itself is a guess and everything tonal drops out. Between
+# the two the root stands but the mode does not, and the pads voice without
+# thirds. 0.36 is under the 0.27 misfit measured on a badly placed cut plus a
+# margin, and well under the 0.54 of a cut that was merely modally ambiguous.
+HARMONIC_MUTE_MIN = (ENV["HARMONIC_MUTE_MIN"] || 0.36).to_f
 
 HARMONIC_KEEP = ENV["HARMONIC_KEEP"] == "1"
 HARMONIC_SHUFFLE = ENV["HARMONIC_SHUFFLE"] == "1"
@@ -8944,6 +9166,33 @@ end
 # chord, so ordering by that is ordering the tune. The first chord stays put:
 # it is the harmonic home, and an arc that does not start at home is just a
 # different wander.
+# Rebuilds every chord as root, fifth and ninth -- no third.
+#
+# The third is the note that says major or minor. Drop it and the chord commits
+# to neither, which is what you want under a sample whose mode you could not
+# read: it cannot clash with a reading it never made. What is left is open and
+# slightly austere, the sound of a fifth ringing, and it sits under a horn line
+# or a string section without arguing with either.
+#
+# The ninth is included because root-and-fifth alone is thin across a whole
+# track. A ninth is two fifths stacked, so it belongs to the same consonance and
+# still names no mode.
+QUINTAL_INTERVALS = [0, 7, 14].freeze
+
+def quintal_voicing(pads)
+  pads.map do |chord|
+    root = chord[:hz].min
+    next chord unless root.to_f.positive?
+
+    chord.merge(
+      hz: QUINTAL_INTERVALS.map { |semis| (root * (2.0**(semis / 12.0))).round(2) },
+      # "5" is how a chord with no third has been written on charts for decades.
+      # The suffix has to go, or beauty_report scores a seventh that is not there.
+      name: "#{chord[:name].to_s.sub(/\A([A-G][b#]?).*/) { Regexp.last_match(1) }}5",
+    )
+  end
+end
+
 def shuffle_pads_for_melody(pads)
   return pads if pads.length < 4
 
@@ -9159,7 +9408,18 @@ def sh!(*command)
     return
   end
   if err_tail && !err_tail.strip.empty?
-    dmesg_warn("#{bin} stderr: #{err_tail.lines.first(3).map(&:strip).join(' | ')}")
+    # The LAST lines, and the diagnostic ones by preference.
+    #
+    # This printed the first three lines of the captured tail, which for ffmpeg
+    # are always the input stream dump -- sample rate, channel layout, bitrate.
+    # The line that says what went wrong is the last one. Every failed render
+    # this session reported "duration: n/a, bitrate: 2822 kb/s" and nothing
+    # about the fault, so each one had to be diagnosed by rebuilding the
+    # filtergraph by hand.
+    lines = err_tail.lines.map(&:strip).reject(&:empty?)
+    blamed = lines.grep(/error|invalid|no such|cannot|unable|matches no|not connected|deadlock/i)
+    shown = blamed.empty? ? lines.last(3) : blamed.last(3)
+    dmesg_warn("#{bin} stderr: #{shown.join(' | ')}")
   end
   msg = err_tail.to_s.include?("timeout after") ? "timeout: #{bin}" : "failed: #{bin}"
   dmesg_error(msg)
@@ -13603,9 +13863,17 @@ def demo_techno_slot?(idx, slug)
 end
 
 def demo_title(slug, idx)
-  seed = stable_hash(slug.to_s) + (ENV["DEMO_SEED"] || "4242").to_i + idx
-  first = DEMO_TITLE_FIRST[seed % DEMO_TITLE_FIRST.length]
-  second = DEMO_TITLE_SECOND[(seed / DEMO_TITLE_FIRST.length) % DEMO_TITLE_SECOND.length]
+  # Two independently salted hashes, not one hash divided.
+  #
+  # Taking the second word from `seed / FIRST.length` ties it to the first: djb2
+  # over near-identical inputs returns near-identical values, so a run of slugs
+  # that differ by one character lands in the same quotient bucket. Rendering
+  # the eight Sheger chops produced shale_mile, slate_mile, solder_mile,
+  # tallow_mile, tin_mile, velvet_mile, willow_mile -- seven titles, one word.
+  # Salting the two draws differently decorrelates them.
+  base = "#{slug}:#{ENV['DEMO_SEED'] || '4242'}:#{idx}"
+  first = DEMO_TITLE_FIRST[stable_hash("first:#{base}") % DEMO_TITLE_FIRST.length]
+  second = DEMO_TITLE_SECOND[stable_hash("second:#{base}") % DEMO_TITLE_SECOND.length]
   "#{first}_#{second}"
 end
 
@@ -17803,14 +18071,34 @@ COUNTER_LEAD_VERB_HP_HZ = 300
 COUNTER_LEAD_VERB_LP_HZ = 9000
 COUNTER_LEAD_VERB_MIX = 0.34
 
+# No varispeed here. The detune happens at synthesis; see counter_lead_detune.
+#
+# This chain used to start with asetrate + aresample to pull the voice 7 cents
+# flat. asetrate is a VARISPEED -- it moves pitch and duration together, the way
+# a tape machine does -- and applied to a whole rendered layer rather than to a
+# one-shot sample it stretches the entire performance. At -7 cents the layer
+# plays 0.405% slow, so every note after the first arrives progressively later
+# than the drums it was written against:
+#
+#   over 46s   0.188s late by the end = 1.10 sixteenth notes at 88 BPM
+#   over 60s   0.243s late by the end = 1.43 sixteenths
+#
+# It is never in the same relationship to the beat twice, and it gets worse as
+# the track runs. The operator heard it as "the leads sound off", which is
+# exactly what it was: off the beat, by more than a sixteenth, increasingly.
+#
+# Detuning the NOTES instead gets the same out-of-tune-tape colour with the
+# timing untouched, because a frequency written 7 cents flat is 7 cents flat and
+# nothing else moves.
 def counter_lead_space_chain
-  ratio = (2.0**(COUNTER_LEAD_DETUNE_CENTS / 1200.0)).round(6)
-  detune = "asetrate=#{SAMPLE_RATE}*#{ratio},aresample=#{SAMPLE_RATE}"
   wet = "highpass=f=#{COUNTER_LEAD_VERB_HP_HZ},lowpass=f=#{COUNTER_LEAD_VERB_LP_HZ}," \
         "aecho=0.8:0.85:60|110|180:0.4|0.28|0.18,volume=#{COUNTER_LEAD_VERB_MIX}"
-  "#{detune},lowpass=f=#{COUNTER_LEAD_LOWPASS_HZ}," \
+  "lowpass=f=#{COUNTER_LEAD_LOWPASS_HZ}," \
     "asplit=2[cldry][clwet];[clwet]#{wet}[clverb];[cldry][clverb]amix=inputs=2:normalize=0"
 end
+
+# The ratio to write into a note's frequency, applied where the note is chosen.
+def counter_lead_detune = 2.0**(COUNTER_LEAD_DETUNE_CENTS / 1200.0)
 
 def invert_motif(motif)
   top = motif.max
@@ -18383,22 +18671,58 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   # move in an arbitrary direction, and two tonal parts a semitone apart is the
   # one fault no mixing repairs. Silence is the better failure.
   loop_for_key = sample_loop_for(ENV["TRACK"])&.dig(:path)
+  # A generated progression in one key over a sampled loop in another is two
+  # pieces of music playing at once. HARMONIC_KEEP defaulted OFF, so that is what
+  # every sample-backed render did: the loop in its key, the pads in whatever key
+  # the progression table happened to hold. Presence of a bed is reason enough --
+  # there is no case where you lay pads over a record and want a different key.
+  keep_key = HARMONIC_KEEP || !loop_for_key.nil?
   if loop_for_key && !pads.empty? && HARMONIC_GUARD
     key = sample_key(loop_for_key)
     fit = key ? key[2] : 0.0
-    if fit < HARMONIC_GUARD_MIN
-      warn "harmonic guard: loop key is #{key ? "#{PITCH_CLASSES[key[0]]} #{key[1]}" : 'unreadable'} " \
-           "at fit #{fit.round(2)}, below #{HARMONIC_GUARD_MIN} — muting tonal layers rather than " \
-           "risking a clash. Pin PROGRESSION and set HARMONIC_GUARD=0 to override."
+    label = key ? "#{PITCH_CLASSES[key[0]]} #{key[1]}" : "unreadable"
+    if fit < HARMONIC_MUTE_MIN
+      warn "harmonic guard: loop key is #{label} at fit #{fit.round(2)}, below " \
+           "#{HARMONIC_MUTE_MIN} — muting tonal layers rather than guessing. " \
+           "Pin PROGRESSION and set HARMONIC_GUARD=0 to override."
       %w[PAD_VOL HARM_MIX_WEIGHT].each { |k| ENV[k] = "0" }
       %w[MELODIC_LEAD SCALE_LEAD LEAD_ARP HARMONY_LEAD PAD_LAYERS PAD_TEXTURE
          CHOIR_VOX].each { |k| ENV[k] = "0" }
       pads = []
+    elsif fit < HARMONIC_GUARD_MIN
+      # The middle tier: the root is legible, the mode is not.
+      #
+      # Krumhansl reports a root and a mode together, but they are not equally
+      # certain. The root comes from which pitch class carries the weight, which
+      # a loop states plainly; the mode comes from where the THIRD sits, and a
+      # horn line that never plays its third leaves that question open. Slot 04
+      # read E major at 0.54 against a 0.55 threshold -- almost certainly E,
+      # genuinely unsure whether major or minor.
+      #
+      # Muting the band over that is the wrong trade. So is picking a mode: the
+      # third is exactly the note that clashes if the guess is wrong. Instead we
+      # play chords that HAVE no third -- root, fifth, ninth. That voicing is
+      # consonant against major and minor alike, because the note that
+      # distinguishes them is not in it. Rock guitarists have leaned on this for
+      # fifty years for the same reason.
+      warn "harmonic guard: loop key is #{label} at fit #{fit.round(2)} — root is " \
+           "readable, mode is not. Voicing without thirds so the pads sit under " \
+           "either reading."
+      pads = quintal_voicing(transpose_pads_to(pads, key[0]))
+      ENV["MODE_UNCERTAIN"] = "1"
+      # Leads pick their notes from the chord's scale, and every scale commits to
+      # a third. Only the counter-line survives, restricted below to the tones
+      # that both modes share.
+      %w[SCALE_LEAD LEAD_ARP].each { |k| ENV[k] = "0" }
+      # Already moved onto the loop's root just above; a second pass would
+      # measure the transposed pads against the same target and shift by zero,
+      # but it would also re-introduce the thirds this branch just removed.
+      keep_key = false
     end
   end
 
-  if (HARMONIC_KEEP || HARMONIC_SHUFFLE) && !pads.empty?
-    if HARMONIC_KEEP && (loop_path = sample_loop_for(ENV["TRACK"])&.dig(:path))
+  if (keep_key || HARMONIC_SHUFFLE) && !pads.empty?
+    if keep_key && (loop_path = sample_loop_for(ENV["TRACK"])&.dig(:path))
       if (root_pc, mode, fit = sample_key(loop_path))
         was = hz_to_pitch_class(pads.first[:hz].min)
         pads = transpose_pads_to(pads, root_pc)
@@ -18479,7 +18803,12 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   bass_pads = nil
   if slash_bass_enabled?(cfg) && !pads.empty?
     bass_pads = slash_bass_pads_for(pads, cfg)
-  elsif !curated && Random.new(stable_hash(cfg[:track].to_s)).rand < 0.1
+  # Both branches need the same emptiness check. Only the first had one, and the
+  # harmonic guard above empties `pads` by design -- so a loop that read below
+  # the fit threshold took this branch and died on nil[:hz]. That is the guard
+  # crashing on its own escape hatch: it exists to render the loop and the kit
+  # alone, and instead it lost the track.
+  elsif !curated && !pads.empty? && Random.new(stable_hash(cfg[:track].to_s)).rand < 0.1
     bass_pads = voice_lead_chords(generate_progression(root_hz: pads.first[:hz].min * 0.5, mode: :minor,
                                                          length: pads.length))
   end
@@ -18701,15 +19030,28 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # Each bus gets its section envelope prefixed onto its own chain, so a layer
   # leaves and returns instead of playing flat from bar one to the end.
   filt = [apply_section_envelope(build_drum_bus_filter(cfg, cfg[:sonic], duration:), :drums, n_bars, beat_p * 4.0)]
-  mix_labels = ["[drums]"]
-  mix_weights = [ENV.fetch("DRUM_MIX_WEIGHT", "0.72").to_s]
+  # The kit is sharpened and tapped for a key signal here, once, before anything
+  # downstream decides what to do with it. Doing this inside the sidechain
+  # branch tied both to a preset flag: a track with sidechain off got neither a
+  # crisp kit nor a key to carve the sampled bed with, for no musical reason.
+  drum_label = "[drums]"
+  if ENV["DRUM_FORWARD"] != "0"
+    filt << "[drums]asplit=2[dr_raw][dr_key]"
+    filt << "[dr_raw]#{drum_crisp_chain || 'anull'}[drums_c]"
+    drum_label = "[drums_c]"
+  end
+  mix_labels = [drum_label]
+  # Drums sat at 0.72 under a 0.90 sampled bed and a 1.15 bass -- the quietest
+  # thing in a genre built on them. The carve above buys most of the clarity
+  # back without level, so this is a nudge rather than a shove.
+  mix_weights = [ENV.fetch("DRUM_MIX_WEIGHT", "0.88").to_s]
   intro_bars = cfg.fetch(:intro_bars, 4)
   harm_fade_start = (beat_p * 4.0 * [intro_bars, 2].min).round(2)
   harm_fade_dur = (beat_p * 4.0 * 1.25).round(2)
   unless use_stem_harmony
     filt << build_harm_bus_filter(1, duration, cfg, cfg[:sonic], harm_fade_start, harm_fade_dur, beat_p, n_bars)
     if cfg[:sidechain]
-      filt.concat(sidechain_filter_chain(cfg))
+      filt.concat(sidechain_filter_chain(cfg, drum_label:))
       mix_labels = ["[sc_mix]"]
       mix_weights = ["1.0"]
     else
@@ -18731,10 +19073,44 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
     filt << apply_section_envelope(
       build_sample_loop_filter(loop_idx, duration, loop_entry[:bpm], cfg[:bpm]), :sample, n_bars, beat_p * 4.0
     )
-    mix_labels << "[loopbed]"
+    bed_label = "[loopbed]"
+    if ENV["BRIDGES"] != "0"
+      # Four bars, or the phrase if the phrase is shorter than that.
+      #
+      # Keying this to phrase_bars alone gave a 16-bar track one phrase and
+      # therefore no boundary at all -- the feature was on, correct, and silent.
+      # Four bars is the unit a hip-hop section actually turns on, and it is
+      # where a producer reaches for the filter.
+      every = ENV.fetch("BRIDGE_EVERY_BARS", [cfg[:phrase_bars] || 4, 4].min).to_i
+      plan = bridge_plan(n_bars, beat_p * 4.0, cfg[:track].to_s, every)
+      unless plan.empty?
+        filt.concat(bridge_filters(input: bed_label, output: "[bedbridged]", n_bars:,
+                                   bar_sec: beat_p * 4.0, track: cfg[:track].to_s, every_bars: every))
+        bed_label = "[bedbridged]"
+        dmesg("bridges: #{plan.map { |b| "#{b[:kind]}@#{(b[:at] / (beat_p * 4.0)).round}" }.join(' ')}",
+              unit: "harm0", parent: "dilla0")
+      end
+    end
+    # The kit's third split exists only when the sidechain branch above ran.
+    # Without it there is no key to carve against, and the bed goes in flat.
+    if ENV["DRUM_FORWARD"] != "0"
+      filt.concat(drum_forward_filters(bed: bed_label, key: "[dr_key]", out: "[bedcarved]"))
+      mix_labels << "[bedcarved]"
+      dmesg("drums forward: bed carved at #{DRUM_FORWARD_SPLIT.join('/')} Hz", unit: "harm0", parent: "dilla0")
+    else
+      mix_labels << bed_label
+    end
     mix_weights << ENV.fetch("SAMPLE_LOOP_WEIGHT", "0.9").to_s
     dmesg("sample bed #{File.basename(loop_entry[:path])} @#{loop_entry[:bpm].round}bpm -> #{cfg[:bpm].round}bpm",
           unit: "harm0", parent: "dilla0")
+  end
+
+  # An asplit output that nothing reads never drains, and a filtergraph with an
+  # undrained pad does not finish -- it hangs, with no error to read. The kit
+  # splits three ways unconditionally, so on any render without a carved bed the
+  # third pad has to be tied off here.
+  if ENV["DRUM_FORWARD"] != "0" && !mix_labels.include?("[bedcarved]")
+    filt << "[dr_key]anullsink"
   end
 
   if stem_map[:mids]
