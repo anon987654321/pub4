@@ -86,7 +86,9 @@ task :selftest do
     puts "  [#{check.law}] #{check.findings.size}"
     check.findings.first(5).each { |finding| puts "    #{finding[:path]}:#{finding[:line]}: #{finding[:message]}" }
   end
-  exit(summary.ok? ? 0 : 1)
+  # abort, not exit(0) on success: this task is a prerequisite of `rake audit`,
+  # and exiting zero here ended the process before the five lints after it ran.
+  abort "selftest: #{summary.line}" unless summary.ok?
 end
 
 desc "Fast error/critical-only scan of lib/ (Fix::SelfCheck) -- a quick fail-fast gate ahead of the heavier rake constitution triage scan"
@@ -98,7 +100,7 @@ task :selfcheck do
   unless report.clean?
     report.by_rule.sort_by { |_, count| -count }.first(8).each { |rule, count| puts "  #{rule}: #{count}" }
   end
-  exit(report.clean? ? 0 : 1)
+  abort "selfcheck: #{report.summary}" unless report.clean?
 end
 
 desc "Eager-load all Zeitwerk-managed constants"

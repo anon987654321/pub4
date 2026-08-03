@@ -2,7 +2,6 @@
 
 require "json"
 require "psych"
-require "set"
 
 module Master
   module Review

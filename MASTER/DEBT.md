@@ -69,6 +69,41 @@ Triage each new finding as:
 - rule threshold too strict
 - known debt to leave alone during unrelated work
 
+### Spine Ceiling — Breached Again And Closed By Deletion, 2026-08-03 (second pass)
+
+`lib/` reached 47,568 against the freshly-ratcheted 47,530 ceiling (+38), so `rake audit`
+and `bin/check --profile=full` were red on a clean tree. The whole +38 is one commit,
+`44d8fc5d5`, and one file: `review/scan/rules/structural_question_rules.rb`, where
+`CONFIG_HIERARCHY`'s duplicate-key check was rewritten onto Psych. That is a real bug fix
+— the old check keyed on `"#{indent}:#{key}"` across the whole file and scored 8,166
+findings tree-wide, every one of them false — so it is not a candidate for reverting.
+
+Closed by deleting `lib/ground/cluster_registry.rb`, 109 lines with **zero callers**:
+`ClusterRegistry` appears nowhere in `lib/ core/ bin/ test/ spec/ web/ tools/ data/ script/`,
+the Rakefile or the gemspec, and is not named in `autoload.yml` or `load.yml`. Its only
+mentions repo-wide were `START_HERE.md` prose and its own scan-log entries. Also dropped
+the `require "set"` that the same commit orphaned when it deleted the `seen` set. `lib/` is
+47,458, under the ceiling by 72.
+
+**How it reached `main`:** `rake audit` could not have caught it. `task :selftest`
+ended with `exit(summary.ok? ? 0 : 1)`, and `exit(0)` on success terminated the rake
+process — so of the audit's seven prerequisites, only `constitution` and `selftest` ever
+ran. `lint:frozen`, `lint:data_singularity`, `lint:spine`, `lint:autoload` and
+`lint:principle_trace` were dead in the chain, and the audit's own `audit: passed` line had
+never printed. It reported green by exiting before it measured, which is the same failure
+`bin/gate`'s `INCONCLUSIVE` list exists to catch one layer up. Fixed by aborting on failure
+instead of exiting on success; `:selfcheck` carried the identical bug and got the same fix.
+Verified by forcing a spine breach: `rake selftest lint:spine` exited 0 before, exits 1 now.
+
+Two things this leaves open. First, `lint:spine` counts comment lines and `[DENSITY]`
+deliberately does not, so a commit that adds rationale prose above a tricky line satisfies
+one rule and breaches the other — that tension is now three passes old and still unresolved.
+Second, deleting `ClusterRegistry` orphaned `data/visual_clusters.yml` and
+`data/mobile_web_opportunities.yml`, which have no other reader; `SelfTest`'s `clusters`
+group is a scan exemption, not a loader. Delete both files or give them a consumer. They
+were left in place rather than swept, because `START_HERE.md` records that folding them
+needs a design decision, and so does removing them.
+
 ### Spine Ceiling — Closed 2026-08-03 By Deletion
 
 `lib/` had reached 48,162 against a 47,660 ceiling (+502) with both raises spent.

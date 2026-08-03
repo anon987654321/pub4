@@ -51,7 +51,21 @@ spine:
   # the tree still carried an open [DENSITY] finding, and it immediately blocked
   # the +10 that closing that finding required -- the ratchet had locked in a
   # state that was not actually clean. Ratchet after the work settles, not during.
-  lib_ceiling: 47530
+  #
+  # RATCHETED 2026-08-03 (second pass), 47530 -> 47458. The ceiling above was
+  # breached by +38 within hours of being recorded, by a single commit (44d8fc5d5)
+  # that rewrote CONFIG_HIERARCHY's duplicate-key check onto Psych -- a real fix,
+  # 8,166 false findings removed tree-wide, not something to revert. Closed by
+  # deleting ground/cluster_registry.rb: 109 lines, zero callers anywhere in the
+  # repo, and the only defense of it was START_HERE.md prose describing a reader
+  # that never ran.
+  #
+  # Two ratchets in one day is the ratchet working, but note what it did NOT
+  # settle: lint:spine counts comment lines and [DENSITY] deliberately does not,
+  # so a rationale paragraph above a tricky line satisfies one rule and breaches
+  # the other. Three passes have now been paid for out of dead code instead of
+  # deciding which rule means it.
+  lib_ceiling: 47458
   # What the ceiling was when the ratchet was introduced, so drift is legible.
   lib_at_introduction: 47331
   introduced: "2026-07-30"
