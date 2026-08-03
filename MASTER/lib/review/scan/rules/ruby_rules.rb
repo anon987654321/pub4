@@ -29,6 +29,24 @@ module Master
           [finding(line: 1, message: "auth/sensitive controller missing rate_limit or throttle")]
         end
 
+        # principle_map: strong_parameters (detects mass_assignment_risk). Two
+        # distinct failures, one rule: permit! waives the whitelist wholesale,
+        # and a raw params[] reaching a mass-assignment sink never had one.
+        # Scoped to /app/ rather than /app/controllers/ because a service or
+        # model object handed the params hash carries the same risk.
+        RuleDSL.rule :STRONG_PARAMETERS,
+          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby],
+          description: "mass assignment goes through explicitly permitted attributes" do |src, path:|
+          next [] unless path.include?("/app/")
+
+          blanket = scan_lines(src, /\.permit!/,
+            message: "permit! whitelists every attribute — name the permitted attributes instead")
+          raw = scan_lines(src,
+            /\.(?:new|create!?|update!?|update_attributes!?|assign_attributes)\(\s*params\[/,
+            message: "raw params[] reaches mass assignment — route it through require(...).permit(...)")
+          blanket + raw
+        end
+
         RuleDSL.rule :MIGRATION_ADD_REFERENCE_NO_FK,
           severity: :error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
           description: "add_reference without foreign_key:" do |src, path:|
