@@ -12708,7 +12708,11 @@ STREAM_ITERATE_OVERRIDE_KEYS = %w[
   STREAM_HARMONY_EVERY STREAM_ANALOG_EVERY STREAM_ANALOG_WILD STREAM_LEARN_BIAS
 ].freeze
 
-STREAM_ITERATE_LOG = File.join(ROOT, "stream_iterate.log").freeze
+# In scratch/, not the project root. Both stream logs are regenerated output and
+# belong with the rest of it -- writing them beside dilla.rb put two files in the
+# root that look like source until you open them, and no amount of moving them by
+# hand helps while the code keeps recreating them there.
+STREAM_ITERATE_LOG = File.join(SCRATCH_DIR, "stream_iterate.log").freeze
 
 # Fast stream — render+play without quality gate / listen refine (~15–30s/track).
 STREAM_FAST_DEFAULTS = {
@@ -15064,7 +15068,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
   require_playback_tool!
   # Non-stop outer supervisor: any exit except Ctrl-C restarts stream (agent + interactive).
   if ENV.fetch("STREAM_CONTINUOUS", "1") != "0" && ENV["DILLA_STREAM_SUPERVISOR"] != "1"
-    stream_log = File.join(ROOT, "stream.log")
+    stream_log = File.join(SCRATCH_DIR, "stream.log")
     # Read from USER_PINNED_ENV, not ENV.
     #
     # This list is built after apply_best_defaults! has already run, so every
