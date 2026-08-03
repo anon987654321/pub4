@@ -27,7 +27,7 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
     ActsAsTenant.with_tenant(@city) do
       restaurant = Takeaway::Restaurant.create!(
         user: @owner, name: "Strict Kitchen", address: "Marken 4",
-        cuisine_type: "Norwegian", city: @city
+        cuisine_type: "Norwegian", city: @city, active: true
       )
       created = Takeaway::Order.create!(
         user: @buyer, restaurant: restaurant,
@@ -110,6 +110,52 @@ class Takeaway::OrderTest < ActiveSupport::TestCase
 
       assert_not order.transition_to!("delivered")
       assert_includes order.errors[:status], "cannot transition from pending to delivered"
+    end
+  end
+
+  test "an order below the restaurant minimum is rejected at create" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = Takeaway::Restaurant.create!(
+        user: @owner, name: "Minimum Kitchen", address: "Marken 9",
+        cuisine_type: "Norwegian", city: @city, active: true, min_order_cents: 15_000
+      )
+      item = Takeaway::MenuItem.create!(restaurant: restaurant, name: "Kaffe", price_cents: 3_000, available: true)
+
+      order = restaurant.orders.build(user: @buyer, delivery_address: "Torget 1")
+      order.order_items.build(menu_item: item, quantity: 1, unit_price_cents: item.price_cents)
+
+      assert_not order.save, "30 kr order must not clear a 150 kr minimum"
+      assert(order.errors[:base].any? { |m| m.include?("Minimum order") })
+    end
+  end
+
+  test "an order meeting the minimum saves" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = Takeaway::Restaurant.create!(
+        user: @owner, name: "Just Enough", address: "Marken 11",
+        cuisine_type: "Norwegian", city: @city, active: true, min_order_cents: 15_000
+      )
+      item = Takeaway::MenuItem.create!(restaurant: restaurant, name: "Middag", price_cents: 8_000, available: true)
+
+      order = restaurant.orders.build(user: @buyer, delivery_address: "Torget 1")
+      order.order_items.build(menu_item: item, quantity: 2, unit_price_cents: item.price_cents)
+
+      assert order.save, order.errors.full_messages.join("; ")
+    end
+  end
+
+  test "no minimum set imposes no floor" do
+    ActsAsTenant.with_tenant(@city) do
+      restaurant = Takeaway::Restaurant.create!(
+        user: @owner, name: "No Floor", address: "Marken 13",
+        cuisine_type: "Norwegian", city: @city, active: true
+      )
+      item = Takeaway::MenuItem.create!(restaurant: restaurant, name: "Snack", price_cents: 500, available: true)
+
+      order = restaurant.orders.build(user: @buyer, delivery_address: "Torget 1")
+      order.order_items.build(menu_item: item, quantity: 1, unit_price_cents: item.price_cents)
+
+      assert order.save, order.errors.full_messages.join("; ")
     end
   end
 end
