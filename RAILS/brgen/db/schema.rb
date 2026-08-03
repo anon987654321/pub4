@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_080000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -183,12 +183,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.integer "parent_id"
+    t.datetime "removed_at"
     t.datetime "summary_updated_at"
     t.text "thread_summary"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
     t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["removed_at"], name: "index_comments_on_removed_at"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -881,6 +883,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
+    t.datetime "removed_at"
     t.string "slug"
     t.string "title", null: false
     t.datetime "updated_at", null: false
@@ -889,6 +892,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_070000) do
     t.index ["city_id"], name: "index_posts_on_city_id"
     t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["latitude", "longitude"], name: "index_posts_on_latitude_and_longitude"
+    t.index ["removed_at"], name: "index_posts_on_removed_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 

@@ -5,7 +5,9 @@
       <h2><%= vertical.to_s.humanize %></h2>
       <ul>
         <% records.limit(8).each do |record| %>
-          <li><%= record.try(:title) || record.try(:name) %></li>
+          <% label = record.try(:title) || record.try(:name) || record.try(:display_name) || record.try(:username) %>
+          <% href = record_public_href(record) rescue nil %>
+          <li><%= href ? link_to(label, href) : label %></li>
         <% end %>
       </ul>
     </section>

@@ -17,6 +17,11 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
   <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <%# Share thumbnail: a per-page override (content_for :og_image) or the brand mark,
+      so every link shared to social/chat renders a card instead of bare text. %>
+  <% share_image = content_for?(:og_image) ? yield(:og_image) : "#{request.base_url}/icon.png" %>
+  <meta property="og:image" content="<%= share_image %>">
+  <meta name="twitter:image" content="<%= share_image %>">
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">

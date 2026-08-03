@@ -10,7 +10,12 @@ class SearchController < ApplicationController
     @results = {}
     return if @query.blank?
 
-    @results[:posts] = apply_live_search(Post.all, columns: %w[title content], vertical: "feed")
+    @results[:people] = apply_live_search(
+      User.where(bot: false, guest: false, deleted_at: nil),
+      columns: %w[username display_name],
+      vertical: "people"
+    )
+    @results[:posts] = apply_live_search(Post.kept, columns: %w[title content], vertical: "feed")
     @results[:listings] = apply_live_search(
       Marketplace::Listing.active.includes(:category),
       columns: %w[title description location],

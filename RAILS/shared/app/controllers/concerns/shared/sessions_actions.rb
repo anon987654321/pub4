@@ -14,7 +14,12 @@ module Shared
     end
 
     def create
-      if user = User.authenticate_by(params.permit(:email_address, :password))
+      user = User.authenticate_by(params.permit(:email_address, :password))
+      if user && user.try(:deletion_pending?)
+        # A scheduled-for-deletion account cannot sign back in and quietly keep
+        # itself alive; erasure has teeth (see UserPurgeJob).
+        redirect_to new_session_path, alert: "This account is scheduled for deletion."
+      elsif user
         start_new_session_for user
         redirect_to after_authentication_url
       else

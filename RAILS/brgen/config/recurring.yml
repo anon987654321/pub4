@@ -89,3 +89,9 @@ production:
     class: Shared::PruneGuestUsersJob
     queue: bulk
     schedule: every day at 3:45am
+
+  # GDPR erasure: anonymise accounts whose 30-day deletion grace has elapsed.
+  purge_deleted_users:
+    class: UserPurgeJob
+    queue: bulk
+    schedule: every day at 3:50am
